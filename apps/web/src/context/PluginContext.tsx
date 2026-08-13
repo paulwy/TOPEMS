@@ -3,9 +3,14 @@ import React, { createContext, useContext, useState, useEffect, useCallback, use
 import type { Plugin, TenantInstalledPlugin } from '@/api/plugin';
 import { checkAllPluginsHealth, pluginApi } from '@/api/plugin';
 import { useAuth } from '@/hooks/useAuth';
+import { deploymentConfig } from '@/config/deployment';
 import createLogger from '@/utils/logger';
 
 const logger = createLogger('PluginContext');
+
+// 熔断常量：组件外声明避免 React Hook deps 告警
+const FAILURE_THRESHOLD = 2; // 连续 2 次同类失败即停止轮询
+const TRANSIENT_STATUS = new Set([404, 502, 503]);
 
 export interface PluginContextType {
   installedPlugins: TenantInstalledPlugin[];
@@ -50,12 +55,20 @@ export const PluginProvider: React.FC<PluginProviderProps> = ({ children }) => {
   const [pluginHealth, setPluginHealth] = useState<
     Record<string, { healthy: boolean; status?: string; latency?: number }>
   >({});
-  const [availablePlugins, setAvailablePlugins] = useState<Plugin[]>([]);
+  const [availablePlugins] = useState<Plugin[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const initializedRef = useRef(false);
+  // 服务未就绪熔断：连续 N 次 404/502/503 后暂停轮询
+  const consecutiveFailuresRef = useRef(0);
+  const pollingCancelledRef = useRef(false);
 
   const fetchPlugins = useCallback(async () => {
-    if (!isAuthenticated) {
+    if (!isAuthenticated || pollingCancelledRef.current) {
+      setIsLoading(false);
+      return;
+    }
+    // 部署配置显式禁用插件服务时，跳过所有 API 请求
+    if (!deploymentConfig.features.pluginServiceEnabled) {
       setIsLoading(false);
       return;
     }
@@ -72,12 +85,24 @@ export const PluginProvider: React.FC<PluginProviderProps> = ({ children }) => {
       if (installedRes?.success && installedRes?.data) {
         setInstalledPlugins(installedRes.data);
       }
+      consecutiveFailuresRef.current = 0;
     } catch (error: unknown) {
       const status = (error as { response?: { status?: number } })?.response?.status;
-      if (status === 401) {
-        logger.debug('Plugin fetch skipped: not authenticated');
+      // 401=未登录, 404=插件模块后端未就绪, 502/503=服务离线 均为预期场景，
+      // 降级为 debug，避免 demo 环境控制台 ERROR 刷屏
+      if (status === 401 || status === 404 || status === 502 || status === 503) {
+        logger.debug(`Plugin fetch skipped: status=${status}`);
       } else {
         logger.error('Failed to fetch plugins:', error);
+      }
+      if (status && TRANSIENT_STATUS.has(status)) {
+        consecutiveFailuresRef.current += 1;
+        if (consecutiveFailuresRef.current >= FAILURE_THRESHOLD) {
+          pollingCancelledRef.current = true;
+          logger.debug(
+            `Plugin polling suspended after ${FAILURE_THRESHOLD} transient failures (status=${status}). Refresh page to retry.`
+          );
+        }
       }
     } finally {
       setIsLoading(false);
@@ -115,10 +140,19 @@ export const PluginProvider: React.FC<PluginProviderProps> = ({ children }) => {
       return () => window.removeEventListener('load', scheduleFetch);
     }
 
-    const interval = setInterval(fetchPlugins, 30000);
+    const interval = setInterval(() => {
+      // 熔断期间不再发起请求，也不清除 interval（保持句柄统一管理，成本低）
+      if (!pollingCancelledRef.current) {
+        fetchPlugins();
+      }
+    }, 30000);
     initializedRef.current = true;
 
-    return () => clearInterval(interval);
+    return () => {
+      clearInterval(interval);
+      consecutiveFailuresRef.current = 0;
+      pollingCancelledRef.current = false;
+    };
   }, [isAuthenticated, fetchPlugins]);
 
   const installPlugin = useCallback(

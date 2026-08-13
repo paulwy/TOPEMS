@@ -7,7 +7,12 @@ import { usePermission } from '../../hooks/usePermission';
 import { useResponsive } from '../../hooks/useResponsive';
 import { navigationRegistryV2 } from '@/lib/navigation';
 import type { NavItem } from '@/lib/navigation/types';
-import { useUIStore, useThemeStore } from '@/store';
+import {
+  useUIStore,
+  useThemeStore,
+  useSetUnreadNotificationCount,
+  useUnreadNotificationCount,
+} from '@/store';
 import { getUnreadCount } from '@/api/notification';
 import { apiLogger } from '@/utils/logger';
 import { FloatingAIHelper } from '../ai/FloatingAIHelper';
@@ -43,8 +48,9 @@ export const GlobalLayout: React.FC<GlobalLayoutProps> = ({ children }) => {
   const { isMobile, isTablet, isTabletNarrow } = useResponsive();
   const isDesktop = useMediaQuery(muiTheme.breakpoints.up('lg'));
 
-  // 动态获取未读通知数（移动端审批 Tab 徽章）
-  const [unreadCount, setUnreadCount] = useState<number>(0);
+  // 动态获取未读通知数（移动端审批 Tab 徽章）— 作为应用唯一的 unread 请求源
+  const setUnreadNotificationCount = useSetUnreadNotificationCount();
+  const unreadCount = useUnreadNotificationCount();
 
   useEffect(() => {
     let cancelled = false;
@@ -52,7 +58,7 @@ export const GlobalLayout: React.FC<GlobalLayoutProps> = ({ children }) => {
       try {
         const res = await getUnreadCount();
         if (!cancelled && res.success && typeof res.data === 'number') {
-          setUnreadCount(res.data);
+          setUnreadNotificationCount(res.data);
         }
       } catch (err) {
         apiLogger.debug('Failed to fetch unread count for badge:', err);
@@ -64,7 +70,7 @@ export const GlobalLayout: React.FC<GlobalLayoutProps> = ({ children }) => {
       cancelled = true;
       clearInterval(timer);
     };
-  }, []);
+  }, [setUnreadNotificationCount]);
 
   const shouldShowSidebar = isTablet || isDesktop;
   const isTabletAutoCollapsed = isTabletNarrow;

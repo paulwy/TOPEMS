@@ -20,5 +20,6 @@
 export * from '../themeStore';
 export * from '../uiStore';
 export * from '../notificationStore';
+export * from '../notificationBadgeStore';
 export * from '../notificationSettingsStore';
 export * from '../shortcutsStore';

@@ -16,13 +16,13 @@ import { useNavigate } from 'react-router-dom';
 import { NOTIFICATION_PATHS } from '@/modules/notification/config';
 import {
   getNotifications,
-  getUnreadCount,
   markAllAsRead,
   markAsRead,
   deleteNotification,
 } from '@/api/notification';
 import type { Notification, NotificationTypeEnum } from '@/api/notification';
 import { formatRelativeTime } from '@/utils/format';
+import { useUnreadNotificationCount, useNotificationBadgeStore } from '@/store';
 
 export const HeaderNotifications: React.FC = () => {
   const navigate = useNavigate();
@@ -30,7 +30,9 @@ export const HeaderNotifications: React.FC = () => {
   const [notificationAnchorEl, setNotificationAnchorEl] = useState<HTMLElement | null>(null);
   const notificationOpen = Boolean(notificationAnchorEl);
   const [notifications, setNotifications] = useState<Notification[]>([]);
-  const [unreadCount, setUnreadCount] = useState(0);
+  const unreadCount = useUnreadNotificationCount();
+  const decrementBadge = useNotificationBadgeStore((s) => s.decrement);
+  const setBadgeToZero = useNotificationBadgeStore((s) => s.setUnreadCount);
   const [notificationsLoading, setNotificationsLoading] = useState(false);
 
   const fetchNotificationsData = useCallback(async () => {
@@ -39,29 +41,15 @@ export const HeaderNotifications: React.FC = () => {
       const res = await getNotifications(1, 20);
       if (res.success && res.data) {
         setNotifications(res.data.notifications ?? []);
-        setUnreadCount(res.data.unread_count ?? 0);
+        // 同步徽章计数：用 API 返回的精确值覆盖 store（避免手动减计数偏差）
+        setBadgeToZero(res.data.unread_count ?? 0);
       }
     } catch (_e) {
       /* swallow: API 未就绪时保持空列表 */
     } finally {
       setNotificationsLoading(false);
     }
-  }, []);
-
-  const fetchUnreadCount = useCallback(async () => {
-    try {
-      const res = await getUnreadCount();
-      if (res.success && typeof res.data === 'number') {
-        setUnreadCount(res.data);
-      }
-    } catch (_e) {
-      /* swallow */
-    }
-  }, []);
-
-  useEffect(() => {
-    fetchUnreadCount();
-  }, [fetchUnreadCount]);
+  }, [setBadgeToZero]);
 
   useEffect(() => {
     if (notificationOpen) {
@@ -81,7 +69,7 @@ export const HeaderNotifications: React.FC = () => {
     try {
       await markAllAsRead();
       setNotifications((prev) => prev.map((n) => ({ ...n, is_read: true })));
-      setUnreadCount(0);
+      setBadgeToZero(0);
     } catch (_e) {
       /* swallow */
     }
@@ -91,7 +79,7 @@ export const HeaderNotifications: React.FC = () => {
     try {
       await markAsRead(id);
       setNotifications((prev) => prev.map((n) => (n.id === id ? { ...n, is_read: true } : n)));
-      setUnreadCount((c) => Math.max(0, c - 1));
+      decrementBadge(1);
     } catch (_e) {
       /* swallow */
     }
@@ -101,7 +89,7 @@ export const HeaderNotifications: React.FC = () => {
     try {
       await deleteNotification(id);
       setNotifications((prev) => prev.filter((n) => n.id !== id));
-      if (!read) setUnreadCount((c) => Math.max(0, c - 1));
+      if (!read) decrementBadge(1);
     } catch (_e) {
       /* swallow */
     }

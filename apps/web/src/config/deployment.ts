@@ -21,6 +21,8 @@ export interface FeatureFlags {
   twoFactorRequired: boolean;
   /** IP 白名单开关 */
   ipWhitelistEnabled: boolean;
+  /** 插件服务开关（关闭时 PluginProvider 不发起任何 API 请求） */
+  pluginServiceEnabled: boolean;
 }
 
 export interface DeploymentConfig {
@@ -61,6 +63,7 @@ export const deploymentConfig: DeploymentConfig = {
     ssoEnabled: getEnv('VITE_SSO_ENABLED') === 'true',
     twoFactorRequired: getEnv('VITE_TWO_FACTOR_REQUIRED') === 'true',
     ipWhitelistEnabled: getEnv('VITE_IP_WHITELIST_ENABLED') === 'true',
+    pluginServiceEnabled: getEnv('VITE_PLUGIN_SERVICE_ENABLED') !== 'false', // 默认开启，显式设 false 才禁用
   },
 };
 
