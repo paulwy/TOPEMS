@@ -390,4 +390,64 @@ mod tests {
         let text_format = ResponseFormat::text();
         assert_eq!(text_format.r#type, "text");
     }
+
+    #[test]
+    fn test_chat_message_variants() {
+        let asst = ChatMessage::assistant("Sure!");
+        assert_eq!(asst.role, "assistant");
+        assert_eq!(asst.content, "Sure!");
+
+        let fc = FunctionCall::new("calc", serde_json::json!({"a":1}));
+        let tool_msg = ChatMessage::tool("done", fc);
+        assert_eq!(tool_msg.role, "assistant"); // tool call 由 assistant 发出
+
+        let tr = ChatMessage::tool_result("result body", "calc");
+        assert_eq!(tr.role, "tool");
+        assert_eq!(tr.content, "result body");
+    }
+
+    #[test]
+    fn test_function_definition() {
+        let params = serde_json::json!({
+            "type": "object",
+            "properties": {"query": {"type": "string"}}
+        });
+        let fd = FunctionDefinition::new("search", "Search engine", params);
+        assert_eq!(fd.name, "search");
+        assert_eq!(fd.description, "Search engine");
+    }
+
+    #[test]
+    fn test_chat_completion_response_serde() {
+        let json = r#"{
+            "id": "chatcmpl-123",
+            "object": "chat.completion",
+            "created": 1700000000,
+            "model": "qwen2.5:7b",
+            "choices": [{
+                "index": 0,
+                "message": {"role": "assistant", "content": "Hello!"},
+                "finish_reason": "stop"
+            }],
+            "usage": {"prompt_tokens": 10, "completion_tokens": 5, "total_tokens": 15}
+        }"#;
+        let resp: ChatCompletionResponse = serde_json::from_str(json).unwrap();
+        assert_eq!(resp.id, "chatcmpl-123");
+        assert_eq!(resp.choices.len(), 1);
+        assert_eq!(resp.choices[0].message.content, String::from("Hello!"));
+        assert_eq!(resp.usage.as_ref().unwrap().total_tokens, 15);
+    }
+
+    #[test]
+    fn test_embedding_response_serde() {
+        let json = r#"{
+            "object": "list",
+            "data": [{"object": "embedding", "embedding": [0.1, 0.2, 0.3], "index": 0}],
+            "model": "text-embedding-3-small",
+            "usage": {"prompt_tokens": 8, "completion_tokens": 0, "total_tokens": 8}
+        }"#;
+        let resp: EmbeddingResponse = serde_json::from_str(json).unwrap();
+        assert_eq!(resp.data.len(), 1);
+        assert_eq!(resp.data[0].embedding.len(), 3);
+    }
 }
