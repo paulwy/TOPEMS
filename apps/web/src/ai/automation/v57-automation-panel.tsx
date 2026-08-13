@@ -23,6 +23,11 @@ import {
   TextField,
   Divider,
   Alert,
+  Card,
+  CardHeader,
+  CardContent,
+  Tabs,
+  Tab,
 } from '@mui/material';
 import {
   X as XIcon,
@@ -45,7 +50,6 @@ import {
   HardDrive,
   Package,
 } from 'lucide-react';
-import { V51Card, V51Tabs, V51Button, V51Badge } from '../../design-system/components';
 import {
   smartTester,
   type TestScenario,
@@ -114,37 +118,22 @@ export const V57AutomationPanel: React.FC<{ onClose: () => void }> = ({ onClose 
         <V57PanelHeader onClose={onClose} />
 
         <Box sx={{ flex: 1, overflow: 'auto', bgcolor: 'grey.50' }}>
-          <V51Tabs
-            activeTab={activeTab}
-            onChange={(tab) => setActiveTab(tab as TabId)}
+          <Tabs
+            value={activeTab}
+            onChange={(_, tab) => setActiveTab(tab as TabId)}
             variant='fullWidth'
-            tabs={[
-              {
-                id: 'tests',
-                label: '智能测试',
-                icon: <TestTube size={16} />,
-                content: <TestsTab />,
-              },
-              {
-                id: 'ci',
-                label: 'CI 流水线',
-                icon: <GitBranch size={16} />,
-                content: <CITab />,
-              },
-              {
-                id: 'quality',
-                label: '质量门禁',
-                icon: <Shield size={16} />,
-                content: <QualityTab />,
-              },
-              {
-                id: 'trends',
-                label: '趋势分析',
-                icon: <TrendingUp size={16} />,
-                content: <TrendsTab />,
-              },
-            ]}
-          />
+          >
+            <Tab value='tests' label='智能测试' icon={<TestTube size={16} />} iconPosition='start' />
+            <Tab value='ci' label='CI 流水线' icon={<GitBranch size={16} />} iconPosition='start' />
+            <Tab value='quality' label='质量门禁' icon={<Shield size={16} />} iconPosition='start' />
+            <Tab value='trends' label='趋势分析' icon={<TrendingUp size={16} />} iconPosition='start' />
+          </Tabs>
+          <Box sx={{ flex: 1, overflow: 'auto' }}>
+            {activeTab === 'tests' && <TestsTab />}
+            {activeTab === 'ci' && <CITab />}
+            {activeTab === 'quality' && <QualityTab />}
+            {activeTab === 'trends' && <TrendsTab />}
+          </Box>
         </Box>
       </Box>
     </Box>
@@ -170,10 +159,10 @@ const V57PanelHeader: React.FC<{ onClose: () => void }> = ({ onClose }) => (
       >
         V57.0 AI 前端自动化
       </Typography>
-      <V51Badge
+      <Chip
         label={V57_BADGE}
-        variant='success'
-        size='sm'
+        color='success'
+        size='small'
       />
       <Typography
         variant='caption'
@@ -294,49 +283,51 @@ const TestsTab: React.FC = () => {
         </Grid>
       </Grid>
 
-      <V51Card
-        title='测试场景列表'
-        subtitle={`${filteredScenarios.length} 个场景 (${stats.byType.unit} 单元, ${stats.byType.integration} 集成, ${stats.byType.e2e} E2E)`}
-        headerAction={
-          <Stack
-            direction='row'
-            spacing={1}
-          >
-            <FormControl
-              size='small'
-              sx={{ minWidth: 100 }}
+      <Card variant='outlined'>
+        <CardHeader
+          title='测试场景列表'
+          subheader={`${filteredScenarios.length} 个场景 (${stats.byType.unit} 单元, ${stats.byType.integration} 集成, ${stats.byType.e2e} E2E)`}
+          action={
+            <Stack
+              direction='row'
+              spacing={1}
             >
-              <InputLabel>类型</InputLabel>
-              <Select
-                value={filterType}
-                label='类型'
-                onChange={(e) => setFilterType(e.target.value as TestType | 'all')}
+              <FormControl
+                size='small'
+                sx={{ minWidth: 100 }}
               >
-                <MenuItem value='all'>全部</MenuItem>
-                <MenuItem value='unit'>单元测试</MenuItem>
-                <MenuItem value='integration'>集成测试</MenuItem>
-                <MenuItem value='e2e'>E2E 测试</MenuItem>
-              </Select>
-            </FormControl>
-            <V51Button
-              variant='outline'
-              size='sm'
-              startIcon={<Plus size={14} />}
-              onClick={() => setShowGenerate(true)}
-            >
-              AI 生成
-            </V51Button>
-            <V51Button
-              variant='primary'
-              size='sm'
-              startIcon={<Play size={14} />}
-              onClick={handleRunAll}
-            >
-              运行全部
-            </V51Button>
-          </Stack>
-        }
-      >
+                <InputLabel>类型</InputLabel>
+                <Select
+                  value={filterType}
+                  label='类型'
+                  onChange={(e) => setFilterType(e.target.value as TestType | 'all')}
+                >
+                  <MenuItem value='all'>全部</MenuItem>
+                  <MenuItem value='unit'>单元测试</MenuItem>
+                  <MenuItem value='integration'>集成测试</MenuItem>
+                  <MenuItem value='e2e'>E2E 测试</MenuItem>
+                </Select>
+              </FormControl>
+              <Button
+                variant='outlined'
+                size='small'
+                startIcon={<Plus size={14} />}
+                onClick={() => setShowGenerate(true)}
+              >
+                AI 生成
+              </Button>
+              <Button
+                variant='contained'
+                size='small'
+                startIcon={<Play size={14} />}
+                onClick={handleRunAll}
+              >
+                运行全部
+              </Button>
+            </Stack>
+          }
+        />
+        <CardContent>
         <TableContainer>
           <Table size='small'>
             <TableHead>
@@ -415,14 +406,16 @@ const TestsTab: React.FC = () => {
             </TableBody>
           </Table>
         </TableContainer>
-      </V51Card>
+      </CardContent>
+      </Card>
 
       {selectedScenario && (
-        <V51Card
-          title={`场景详情: ${selectedScenario.name}`}
-          subtitle={selectedScenario.expected_result}
-          sx={{ mt: 2 }}
-        >
+        <Card variant='outlined' sx={{ mt: 2 }}>
+          <CardHeader
+            title={`场景详情: ${selectedScenario.name}`}
+            subheader={selectedScenario.expected_result}
+          />
+          <CardContent>
           <Typography
             variant='subtitle2'
             sx={{ mb: 1, fontWeight: 600 }}
@@ -532,14 +525,14 @@ const TestsTab: React.FC = () => {
               )}
             </>
           )}
-        </V51Card>
+        </CardContent>
+      </Card>
       )}
 
       {coverage && (
-        <V51Card
-          title='覆盖率报告'
-          sx={{ mt: 2 }}
-        >
+        <Card variant='outlined' sx={{ mt: 2 }}>
+          <CardHeader title='覆盖率报告' />
+          <CardContent>
           <Grid
             container
             spacing={2}
@@ -566,7 +559,8 @@ const TestsTab: React.FC = () => {
               />
             </Grid>
           </Grid>
-        </V51Card>
+        </CardContent>
+      </Card>
       )}
 
       {showGenerate && (
@@ -661,20 +655,22 @@ const CITab: React.FC = () => {
         </Grid>
       </Grid>
 
-      <V51Card
-        title='CI 流水线配置'
-        subtitle={`${configs.length} 个流水线`}
-        headerAction={
-          <V51Button
-            variant='primary'
-            size='sm'
-            startIcon={<Plus size={14} />}
-            onClick={() => setShowConfigDialog(true)}
-          >
-            新建流水线
-          </V51Button>
-        }
-      >
+      <Card variant='outlined'>
+        <CardHeader
+          title='CI 流水线配置'
+          subheader={`${configs.length} 个流水线`}
+          action={
+            <Button
+              variant='contained'
+              size='small'
+              startIcon={<Plus size={14} />}
+              onClick={() => setShowConfigDialog(true)}
+            >
+              新建流水线
+            </Button>
+          }
+        />
+        <CardContent>
         <TableContainer>
           <Table size='small'>
             <TableHead>
@@ -741,10 +737,10 @@ const CITab: React.FC = () => {
                     </TableCell>
                     <TableCell>{c.stages.length}</TableCell>
                     <TableCell>
-                      <V51Badge
+                      <Chip
                         label={c.environment || '—'}
-                        size='sm'
-                        variant={c.environment === 'production' ? 'error' : 'info'}
+                        size='small'
+                        color={c.environment === 'production' ? 'error' : 'info'}
                       />
                     </TableCell>
                     <TableCell onClick={(e) => e.stopPropagation()}>
@@ -766,13 +762,15 @@ const CITab: React.FC = () => {
             </TableBody>
           </Table>
         </TableContainer>
-      </V51Card>
+      </CardContent>
+      </Card>
 
-      <V51Card
-        title='最近运行记录'
-        subtitle={`${runs.length} 条记录`}
-        sx={{ mt: 2 }}
-      >
+      <Card variant='outlined' sx={{ mt: 2 }}>
+        <CardHeader
+          title='最近运行记录'
+          subheader={`${runs.length} 条记录`}
+        />
+        <CardContent>
         <TableContainer>
           <Table size='small'>
             <TableHead>
@@ -870,7 +868,8 @@ const CITab: React.FC = () => {
             </TableBody>
           </Table>
         </TableContainer>
-      </V51Card>
+      </CardContent>
+      </Card>
 
       {selectedRun && <RunDetailCard run={selectedRun} />}
 
@@ -961,20 +960,22 @@ const QualityTab: React.FC = () => {
         </Grid>
       </Grid>
 
-      <V51Card
-        title='质量门禁规则'
-        subtitle={`${criteria.filter((c) => c.enabled).length}/${totalCriteria} 已启用`}
-        headerAction={
-          <V51Button
-            variant='primary'
-            size='sm'
-            startIcon={<Gauge size={14} />}
-            onClick={handleEvaluate}
-          >
-            执行门禁
-          </V51Button>
-        }
-      >
+      <Card variant='outlined'>
+        <CardHeader
+          title='质量门禁规则'
+          subheader={`${criteria.filter((c) => c.enabled).length}/${totalCriteria} 已启用`}
+          action={
+            <Button
+              variant='contained'
+              size='small'
+              startIcon={<Gauge size={14} />}
+              onClick={handleEvaluate}
+            >
+              执行门禁
+            </Button>
+          }
+        />
+        <CardContent>
         <TableContainer>
           <Table size='small'>
             <TableHead>
@@ -1083,12 +1084,12 @@ const QualityTab: React.FC = () => {
             </TableBody>
           </Table>
         </TableContainer>
-      </V51Card>
+      </CardContent>
+      </Card>
 
-      <V51Card
-        title='最近门禁结果'
-        sx={{ mt: 2 }}
-      >
+      <Card variant='outlined' sx={{ mt: 2 }}>
+        <CardHeader title='最近门禁结果' />
+        <CardContent>
         <TableContainer>
           <Table size='small'>
             <TableHead>
@@ -1150,7 +1151,8 @@ const QualityTab: React.FC = () => {
             </TableBody>
           </Table>
         </TableContainer>
-      </V51Card>
+      </CardContent>
+      </Card>
 
       {showOverride && selectedCriteria && (
         <OverrideDialog
@@ -1234,10 +1236,12 @@ const TrendsTab: React.FC = () => {
         </Grid>
       </Grid>
 
-      <V51Card
-        title='质量门禁趋势'
-        subtitle={selectedCriteria ? `指标: ${selectedCriteria.name}` : '选择一个门禁规则查看趋势'}
-      >
+      <Card variant='outlined'>
+        <CardHeader
+          title='质量门禁趋势'
+          subheader={selectedCriteria ? `指标: ${selectedCriteria.name}` : '选择一个门禁规则查看趋势'}
+        />
+        <CardContent>
         <Grid
           container
           spacing={2}
@@ -1303,12 +1307,12 @@ const TrendsTab: React.FC = () => {
             )}
           </Grid>
         </Grid>
-      </V51Card>
+      </CardContent>
+      </Card>
 
-      <V51Card
-        title='AI 智能建议'
-        sx={{ mt: 2 }}
-      >
+      <Card variant='outlined' sx={{ mt: 2 }}>
+        <CardHeader title='AI 智能建议' />
+        <CardContent>
         <Stack spacing={2}>
           <Alert
             severity='info'
@@ -1329,7 +1333,8 @@ const TrendsTab: React.FC = () => {
             <strong>安全状态:</strong> 当前无严重安全漏洞，所有依赖均在维护期内。
           </Alert>
         </Stack>
-      </V51Card>
+      </CardContent>
+      </Card>
     </Box>
   );
 };
@@ -1446,11 +1451,12 @@ const TrendChart: React.FC<{ data: TrendPoint[]; criteria: GateCriteria | null }
 };
 
 const RunDetailCard: React.FC<{ run: CIResult }> = ({ run }) => (
-  <V51Card
-    title={`运行详情: ${run.run_id.slice(-12)}`}
-    subtitle={`${run.pipeline} · ${run.status}`}
-    sx={{ mt: 2 }}
-  >
+  <Card variant='outlined' sx={{ mt: 2 }}>
+    <CardHeader
+      title={`运行详情: ${run.run_id.slice(-12)}`}
+      subheader={`${run.pipeline} · ${run.status}`}
+    />
+    <CardContent>
     <Grid
       container
       spacing={2}
@@ -1547,7 +1553,8 @@ const RunDetailCard: React.FC<{ run: CIResult }> = ({ run }) => (
         </Box>
       </>
     )}
-  </V51Card>
+  </CardContent>
+      </Card>
 );
 
 const GenerateTestDialog: React.FC<{
@@ -1609,18 +1616,18 @@ const GenerateTestDialog: React.FC<{
           />
         </Stack>
         <Box sx={{ display: 'flex', gap: 1, justifyContent: 'flex-end', mt: 3 }}>
-          <V51Button
-            variant='outline'
+          <Button
+            variant='outlined'
             onClick={onClose}
           >
             取消
-          </V51Button>
-          <V51Button
-            variant='primary'
+          </Button>
+          <Button
+            variant='contained'
             onClick={() => onGenerate(count, module)}
           >
             生成
-          </V51Button>
+          </Button>
         </Box>
       </Box>
     </Box>
@@ -1688,14 +1695,14 @@ const ConfigPipelineDialog: React.FC<{
           </FormControl>
         </Stack>
         <Box sx={{ display: 'flex', gap: 1, justifyContent: 'flex-end', mt: 3 }}>
-          <V51Button
-            variant='outline'
+          <Button
+            variant='outlined'
             onClick={onClose}
           >
             取消
-          </V51Button>
-          <V51Button
-            variant='primary'
+          </Button>
+          <Button
+            variant='contained'
             disabled={!pipeline.trim()}
             onClick={() =>
               onCreated({
@@ -1723,7 +1730,7 @@ const ConfigPipelineDialog: React.FC<{
             }
           >
             创建
-          </V51Button>
+          </Button>
         </Box>
       </Box>
     </Box>
@@ -1795,19 +1802,19 @@ const OverrideDialog: React.FC<{
           />
         </Stack>
         <Box sx={{ display: 'flex', gap: 1, justifyContent: 'flex-end', mt: 3 }}>
-          <V51Button
-            variant='outline'
+          <Button
+            variant='outlined'
             onClick={onClose}
           >
             取消
-          </V51Button>
-          <V51Button
-            variant='primary'
+          </Button>
+          <Button
+            variant='contained'
             disabled={!reason.trim()}
             onClick={() => onOverride(reason.trim(), by)}
           >
             确认覆盖
-          </V51Button>
+          </Button>
         </Box>
       </Box>
     </Box>
@@ -1846,10 +1853,10 @@ const TestTypeBadge: React.FC<{ type: TestType }> = ({ type }) => {
     e2e: 'E2E',
   };
   return (
-    <V51Badge
+    <Chip
       label={labels[type]}
-      size='sm'
-      variant='info'
+      size='small'
+      color='info'
     />
   );
 };
@@ -1862,10 +1869,10 @@ const PriorityBadge: React.FC<{ priority: TestPriority }> = ({ priority }) => {
     low: 'success',
   };
   return (
-    <V51Badge
+    <Chip
       label={priority}
-      size='sm'
-      variant={variants[priority]}
+      size='small'
+      color={variants[priority]}
     />
   );
 };
@@ -1873,20 +1880,20 @@ const PriorityBadge: React.FC<{ priority: TestPriority }> = ({ priority }) => {
 const TestStatusChip: React.FC<{ status: TestStatus }> = ({ status }) => {
   const configs: Record<
     TestStatus,
-    { label: string; variant: 'success' | 'error' | 'warning' | 'neutral' }
+    { label: string; color: 'success' | 'error' | 'warning' | 'default' }
   > = {
-    pending: { label: '等待', variant: 'neutral' },
-    running: { label: '运行中', variant: 'warning' },
-    passed: { label: '通过', variant: 'success' },
-    failed: { label: '失败', variant: 'error' },
-    skipped: { label: '跳过', variant: 'neutral' },
+    pending: { label: '等待', color: 'default' },
+    running: { label: '运行中', color: 'warning' },
+    passed: { label: '通过', color: 'success' },
+    failed: { label: '失败', color: 'error' },
+    skipped: { label: '跳过', color: 'default' },
   };
   const config = configs[status];
   return (
-    <V51Badge
+    <Chip
       label={config.label}
-      size='sm'
-      variant={config.variant}
+      size='small'
+      color={config.color}
     />
   );
 };
@@ -1894,21 +1901,21 @@ const TestStatusChip: React.FC<{ status: TestStatus }> = ({ status }) => {
 const CIStatusChip: React.FC<{ status: CIStatus }> = ({ status }) => {
   const configs: Record<
     CIStatus,
-    { label: string; variant: 'success' | 'error' | 'warning' | 'neutral' }
+    { label: string; color: 'success' | 'error' | 'warning' | 'default' }
   > = {
-    idle: { label: '空闲', variant: 'neutral' },
-    running: { label: '运行中', variant: 'warning' },
-    success: { label: '成功', variant: 'success' },
-    failed: { label: '失败', variant: 'error' },
-    cancelled: { label: '已取消', variant: 'neutral' },
-    pending: { label: '等待', variant: 'neutral' },
+    idle: { label: '空闲', color: 'default' },
+    running: { label: '运行中', color: 'warning' },
+    success: { label: '成功', color: 'success' },
+    failed: { label: '失败', color: 'error' },
+    cancelled: { label: '已取消', color: 'default' },
+    pending: { label: '等待', color: 'default' },
   };
   const config = configs[status];
   return (
-    <V51Badge
+    <Chip
       label={config.label}
-      size='sm'
-      variant={config.variant}
+      size='small'
+      color={config.color}
     />
   );
 };
@@ -1920,10 +1927,10 @@ const ProviderBadge: React.FC<{ provider: CIProvider }> = ({ provider }) => {
     jenkins: 'Jenkins',
   };
   return (
-    <V51Badge
+    <Chip
       label={labels[provider]}
-      size='sm'
-      variant='info'
+      size='small'
+      color='info'
     />
   );
 };
@@ -1982,17 +1989,17 @@ const GateTypeIcon: React.FC<{ type: GateType }> = ({ type }) => {
 };
 
 const GateActionBadge: React.FC<{ action: GateAction }> = ({ action }) => {
-  const configs: Record<GateAction, { label: string; variant: 'error' | 'warning' | 'info' }> = {
-    block: { label: '阻塞', variant: 'error' },
-    warn: { label: '警告', variant: 'warning' },
-    info: { label: '提示', variant: 'info' },
+  const configs: Record<GateAction, { label: string; color: 'error' | 'warning' | 'info' }> = {
+    block: { label: '阻塞', color: 'error' },
+    warn: { label: '警告', color: 'warning' },
+    info: { label: '提示', color: 'info' },
   };
   const config = configs[action];
   return (
-    <V51Badge
+    <Chip
       label={config.label}
-      size='sm'
-      variant={config.variant}
+      size='small'
+      color={config.color}
     />
   );
 };
@@ -2000,19 +2007,19 @@ const GateActionBadge: React.FC<{ action: GateAction }> = ({ action }) => {
 const GateStatusChip: React.FC<{ status: GateStatus }> = ({ status }) => {
   const configs: Record<
     GateStatus,
-    { label: string; variant: 'success' | 'error' | 'warning' | 'neutral' }
+    { label: string; color: 'success' | 'error' | 'warning' | 'default' }
   > = {
-    passed: { label: '通过', variant: 'success' },
-    failed: { label: '阻塞', variant: 'error' },
-    warned: { label: '警告', variant: 'warning' },
-    skipped: { label: '跳过', variant: 'neutral' },
+    passed: { label: '通过', color: 'success' },
+    failed: { label: '阻塞', color: 'error' },
+    warned: { label: '警告', color: 'warning' },
+    skipped: { label: '跳过', color: 'default' },
   };
   const config = configs[status];
   return (
-    <V51Badge
+    <Chip
       label={config.label}
-      size='sm'
-      variant={config.variant}
+      size='small'
+      color={config.color}
     />
   );
 };

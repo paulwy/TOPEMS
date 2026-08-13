@@ -206,6 +206,9 @@ export const createCustomTheme = (): Theme => {
     gradients,
     components: {
       MuiButton: {
+        defaultProps: {
+          disableElevation: true,
+        },
         styleOverrides: {
           root: {
             textTransform: 'none',
@@ -230,6 +233,11 @@ export const createCustomTheme = (): Theme => {
         },
       },
       MuiTextField: {
+        defaultProps: {
+          variant: 'outlined',
+          size: 'small',
+          fullWidth: false,
+        },
         styleOverrides: {
           root: {
             '& .MuiOutlinedInput-root': {
@@ -242,6 +250,10 @@ export const createCustomTheme = (): Theme => {
         },
       },
       MuiSelect: {
+        defaultProps: {
+          variant: 'outlined',
+          size: 'small',
+        },
         styleOverrides: {
           root: {
             '& .MuiOutlinedInput-root': {
@@ -254,6 +266,9 @@ export const createCustomTheme = (): Theme => {
         },
       },
       MuiCard: {
+        defaultProps: {
+          elevation: 0,
+        },
         styleOverrides: {
           root: {
             borderRadius: semanticTokens.radius.card,
@@ -270,6 +285,10 @@ export const createCustomTheme = (): Theme => {
         },
       },
       MuiDialog: {
+        defaultProps: {
+          maxWidth: 'sm',
+          fullWidth: true,
+        },
         styleOverrides: {
           paper: {
             borderRadius: semanticTokens.radius.dialog,
@@ -285,6 +304,10 @@ export const createCustomTheme = (): Theme => {
         },
       },
       MuiTooltip: {
+        defaultProps: {
+          arrow: true,
+          placement: 'top',
+        },
         styleOverrides: {
           tooltip: {
             borderRadius: semanticTokens.radius.small,
@@ -294,6 +317,9 @@ export const createCustomTheme = (): Theme => {
         },
       },
       MuiChip: {
+        defaultProps: {
+          size: 'medium',
+        },
         styleOverrides: {
           root: {
             borderRadius: semanticTokens.radius.pill,
@@ -303,6 +329,9 @@ export const createCustomTheme = (): Theme => {
         },
       },
       MuiTable: {
+        defaultProps: {
+          size: 'small',
+        },
         styleOverrides: {
           root: {
             borderCollapse: 'separate',
@@ -355,6 +384,10 @@ export const createCustomTheme = (): Theme => {
         },
       },
       MuiTabs: {
+        defaultProps: {
+          indicatorColor: 'primary',
+          textColor: 'primary',
+        },
         styleOverrides: {
           root: {
             minHeight: 48,
@@ -582,6 +615,10 @@ export const createCustomTheme = (): Theme => {
         },
       },
       MuiSkeleton: {
+        defaultProps: {
+          animation: 'wave',
+          variant: 'rounded',
+        },
         styleOverrides: {
           root: {
             borderRadius: designTokens.borderRadius.sm,

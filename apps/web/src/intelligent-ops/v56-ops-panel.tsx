@@ -29,6 +29,7 @@ import {
   DialogTitle,
   DialogContent,
   DialogActions,
+  Card,
 } from '@mui/material';
 import {
   X as XIcon,
@@ -57,7 +58,6 @@ import {
   ArrowUpCircle,
   ArrowDownCircle,
 } from 'lucide-react';
-import { V51Card } from '../design-system/components';
 import {
   autoScaler,
   type ScalingPolicy,
@@ -576,7 +576,7 @@ const ScalingTab: React.FC<{
       </Stack>
 
       <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 3 }}>
-        <V51Card>
+        <Card variant='outlined' sx={{ p: 2 }}>
           <Typography
             variant='subtitle2'
             sx={{ fontWeight: 600, mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}
@@ -666,9 +666,9 @@ const ScalingTab: React.FC<{
               </Paper>
             );
           })}
-        </V51Card>
+        </Card>
 
-        <V51Card>
+        <Card variant='outlined' sx={{ p: 2 }}>
           <Typography
             variant='subtitle2'
             sx={{ fontWeight: 600, mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}
@@ -723,10 +723,10 @@ const ScalingTab: React.FC<{
               </Table>
             </Box>
           )}
-        </V51Card>
+        </Card>
       </Box>
 
-      <V51Card sx={{ mt: 3 }}>
+      <Card variant='outlined' sx={{ p: 2, mt: 3 }}>
         <Typography
           variant='subtitle2'
           sx={{ fontWeight: 600, mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}
@@ -771,7 +771,7 @@ const ScalingTab: React.FC<{
             </Paper>
           ))}
         </Box>
-      </V51Card>
+      </Card>
     </Box>
   );
 };
@@ -870,7 +870,7 @@ const RCATab: React.FC<{
       </Stack>
 
       <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 3 }}>
-        <V51Card>
+        <Card variant='outlined' sx={{ p: 2 }}>
           <Typography
             variant='subtitle2'
             sx={{ fontWeight: 600, mb: 2 }}
@@ -931,9 +931,9 @@ const RCATab: React.FC<{
               ))}
             </List>
           )}
-        </V51Card>
+        </Card>
 
-        <V51Card>
+        <Card variant='outlined' sx={{ p: 2 }}>
           <Typography
             variant='subtitle2'
             sx={{ fontWeight: 600, mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}
@@ -1082,7 +1082,7 @@ const RCATab: React.FC<{
               </Paper>
             </Box>
           )}
-        </V51Card>
+        </Card>
       </Box>
     </Box>
   );
@@ -1144,7 +1144,7 @@ const RepairTab: React.FC<{
       </Stack>
 
       <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 3 }}>
-        <V51Card>
+        <Card variant='outlined' sx={{ p: 2 }}>
           <Typography
             variant='subtitle2'
             sx={{ fontWeight: 600, mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}
@@ -1234,9 +1234,9 @@ const RepairTab: React.FC<{
               </Stack>
             </Paper>
           ))}
-        </V51Card>
+        </Card>
 
-        <V51Card>
+        <Card variant='outlined' sx={{ p: 2 }}>
           <Typography
             variant='subtitle2'
             sx={{ fontWeight: 600, mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}
@@ -1336,7 +1336,7 @@ const RepairTab: React.FC<{
               </Table>
             </Box>
           )}
-        </V51Card>
+        </Card>
       </Box>
     </Box>
   );
@@ -1416,7 +1416,7 @@ const TimelineTab: React.FC<{
       )}
 
       {events.length > 0 && (
-        <V51Card>
+        <Card variant='outlined' sx={{ p: 2 }}>
           <Box sx={{ position: 'relative', pl: 3 }}>
             <Box
               sx={{
@@ -1500,7 +1500,7 @@ const TimelineTab: React.FC<{
               </Box>
             ))}
           </Box>
-        </V51Card>
+        </Card>
       )}
     </Box>
   );

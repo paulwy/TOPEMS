@@ -31,6 +31,7 @@ import {
   DialogTitle,
   DialogContent,
   DialogActions,
+  Card,
 } from '@mui/material';
 import {
   X as XIcon,
@@ -59,7 +60,6 @@ import {
   PlayCircle,
   PauseCircle,
 } from 'lucide-react';
-import { V51Card } from '../../design-system/components';
 import {
   autonomousAgent,
   type Task,
@@ -714,7 +714,7 @@ const TasksTab: React.FC<{
       </Stack>
 
       <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 3 }}>
-        <V51Card>
+        <Card variant='outlined' sx={{ p: 2 }}>
           <Typography
             variant='subtitle2'
             sx={{ fontWeight: 600, mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}
@@ -832,9 +832,9 @@ const TasksTab: React.FC<{
               ))}
             </List>
           )}
-        </V51Card>
+        </Card>
 
-        <V51Card>
+        <Card variant='outlined' sx={{ p: 2 }}>
           <Typography
             variant='subtitle2'
             sx={{ fontWeight: 600, mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}
@@ -843,7 +843,7 @@ const TasksTab: React.FC<{
             Agent 事件日志
           </Typography>
           <EventLog events={events} />
-        </V51Card>
+        </Card>
       </Box>
     </Box>
   );
@@ -1090,7 +1090,7 @@ const WorkflowTab: React.FC<{
       </Stack>
 
       <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 3 }}>
-        <V51Card>
+        <Card variant='outlined' sx={{ p: 2 }}>
           <Typography
             variant='subtitle2'
             sx={{ fontWeight: 600, mb: 2 }}
@@ -1156,9 +1156,9 @@ const WorkflowTab: React.FC<{
               ))}
             </List>
           )}
-        </V51Card>
+        </Card>
 
-        <V51Card>
+        <Card variant='outlined' sx={{ p: 2 }}>
           <Typography
             variant='subtitle2'
             sx={{ fontWeight: 600, mb: 2 }}
@@ -1183,10 +1183,10 @@ const WorkflowTab: React.FC<{
           ) : (
             <Alert severity='info'>选择一个工作流查看详情</Alert>
           )}
-        </V51Card>
+        </Card>
       </Box>
 
-      <V51Card sx={{ mt: 3 }}>
+      <Card variant='outlined' sx={{ p: 2, mt: 3 }}>
         <Typography
           variant='subtitle2'
           sx={{ fontWeight: 600, mb: 2 }}
@@ -1194,7 +1194,7 @@ const WorkflowTab: React.FC<{
           工作流事件日志
         </Typography>
         <EventLog events={events as unknown as AgentEvent[]} />
-      </V51Card>
+      </Card>
 
       <Dialog
         open={showCreateDialog}
@@ -1464,7 +1464,7 @@ const ContextTab: React.FC<{
       </Stack>
 
       <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 3 }}>
-        <V51Card>
+        <Card variant='outlined' sx={{ p: 2 }}>
           <Typography
             variant='subtitle2'
             sx={{ fontWeight: 600, mb: 2 }}
@@ -1561,9 +1561,9 @@ const ContextTab: React.FC<{
               </Stack>
             </Box>
           </Stack>
-        </V51Card>
+        </Card>
 
-        <V51Card>
+        <Card variant='outlined' sx={{ p: 2 }}>
           <Typography
             variant='subtitle2'
             sx={{ fontWeight: 600, mb: 2 }}
@@ -1582,10 +1582,10 @@ const ContextTab: React.FC<{
               ))}
             </List>
           )}
-        </V51Card>
+        </Card>
       </Box>
 
-      <V51Card sx={{ mt: 3 }}>
+      <Card variant='outlined' sx={{ p: 2, mt: 3 }}>
         <Typography
           variant='subtitle2'
           sx={{ fontWeight: 600, mb: 2 }}
@@ -1647,10 +1647,10 @@ const ContextTab: React.FC<{
             </TableContainer>
           )}
         </Box>
-      </V51Card>
+      </Card>
 
       {context.summary && (
-        <V51Card sx={{ mt: 3 }}>
+        <Card variant='outlined' sx={{ p: 2, mt: 3 }}>
           <Typography
             variant='subtitle2'
             sx={{ fontWeight: 600, mb: 1, display: 'flex', alignItems: 'center', gap: 1 }}
@@ -1669,7 +1669,7 @@ const ContextTab: React.FC<{
               {context.summary}
             </Typography>
           </Paper>
-        </V51Card>
+        </Card>
       )}
     </Box>
   );
@@ -1791,7 +1791,7 @@ const MemoryTab: React.FC<{
       </Stack>
 
       <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 3 }}>
-        <V51Card>
+        <Card variant='outlined' sx={{ p: 2 }}>
           <Typography
             variant='subtitle2'
             sx={{ fontWeight: 600, mb: 2 }}
@@ -1921,9 +1921,9 @@ const MemoryTab: React.FC<{
               </Typography>
             </Box>
           </Stack>
-        </V51Card>
+        </Card>
 
-        <V51Card>
+        <Card variant='outlined' sx={{ p: 2 }}>
           <Typography
             variant='subtitle2'
             sx={{ fontWeight: 600, mb: 2 }}
@@ -1950,7 +1950,7 @@ const MemoryTab: React.FC<{
               ))}
             </List>
           )}
-        </V51Card>
+        </Card>
       </Box>
     </Box>
   );

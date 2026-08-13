@@ -26,6 +26,7 @@ import {
   List,
   ListItem,
   ListItemText,
+  Card,
 } from '@mui/material';
 import {
   X as XIcon,
@@ -43,7 +44,6 @@ import {
   Lightbulb,
   Sparkles,
 } from 'lucide-react';
-import { V51Card } from '../../design-system/components';
 import {
   codeReviewer,
   type ReviewResult,
@@ -436,7 +436,7 @@ const OverviewTab: React.FC<{
       </Box>
 
       <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 3 }}>
-        <V51Card>
+        <Card variant='outlined' sx={{ p: 2 }}>
           <Typography
             variant='subtitle2'
             sx={{ fontWeight: 600, mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}
@@ -473,9 +473,9 @@ const OverviewTab: React.FC<{
               );
             })}
           </Stack>
-        </V51Card>
+        </Card>
 
-        <V51Card>
+        <Card variant='outlined' sx={{ p: 2 }}>
           <Typography
             variant='subtitle2'
             sx={{ fontWeight: 600, mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}
@@ -512,9 +512,9 @@ const OverviewTab: React.FC<{
               );
             })}
           </Stack>
-        </V51Card>
+        </Card>
 
-        <V51Card>
+        <Card variant='outlined' sx={{ p: 2 }}>
           <Typography
             variant='subtitle2'
             sx={{ fontWeight: 600, mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}
@@ -523,9 +523,9 @@ const OverviewTab: React.FC<{
             Web Vitals 指标
           </Typography>
           <MetricsList metrics={auditResult.metrics} />
-        </V51Card>
+        </Card>
 
-        <V51Card>
+        <Card variant='outlined' sx={{ p: 2 }}>
           <Typography
             variant='subtitle2'
             sx={{ fontWeight: 600, mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}
@@ -590,7 +590,7 @@ const OverviewTab: React.FC<{
               </Table>
             </TableContainer>
           )}
-        </V51Card>
+        </Card>
       </Box>
     </Box>
   );
@@ -603,7 +603,7 @@ const ScoreCard: React.FC<{
   icon: React.ReactNode;
   subtitle: string;
 }> = ({ title, score, color, icon, subtitle }) => (
-  <V51Card>
+  <Card variant='outlined' sx={{ p: 2 }}>
     <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
       <Box sx={{ color, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
         {icon}
@@ -634,7 +634,7 @@ const ScoreCard: React.FC<{
       value={score}
       sx={{ height: 4, borderRadius: 2, mt: 1, bgcolor: 'grey.200' }}
     />
-  </V51Card>
+  </Card>
 );
 
 const MetricsList: React.FC<{ metrics: AuditMetrics }> = ({ metrics }) => {
@@ -735,14 +735,14 @@ const CodeReviewTab: React.FC<{ result: ReviewResult }> = ({ result }) => {
         </Stack>
       </Stack>
 
-      <V51Card sx={{ mb: 3 }}>
+      <Card variant='outlined' sx={{ p: 2, mb: 3 }}>
         <Typography
           variant='body2'
           color='text.secondary'
         >
           {result.summary}
         </Typography>
-      </V51Card>
+      </Card>
 
       <Stack
         direction='row'
@@ -777,7 +777,7 @@ const CodeReviewTab: React.FC<{ result: ReviewResult }> = ({ result }) => {
       {filtered.length === 0 ? (
         <Alert severity='info'>暂无匹配的问题</Alert>
       ) : (
-        <V51Card>
+        <Card variant='outlined' sx={{ p: 2 }}>
           <TableContainer>
             <Table size='small'>
               <TableHead>
@@ -824,7 +824,7 @@ const CodeReviewTab: React.FC<{ result: ReviewResult }> = ({ result }) => {
               </TableBody>
             </Table>
           </TableContainer>
-        </V51Card>
+        </Card>
       )}
     </Box>
   );
@@ -889,7 +889,7 @@ const SecurityTab: React.FC<{ result: ScanResult }> = ({ result }) => {
       {result.findings.length === 0 ? (
         <Alert severity='success'>未发现安全问题</Alert>
       ) : (
-        <V51Card>
+        <Card variant='outlined' sx={{ p: 2 }}>
           <TableContainer>
             <Table size='small'>
               <TableHead>
@@ -938,7 +938,7 @@ const SecurityTab: React.FC<{ result: ScanResult }> = ({ result }) => {
               </TableBody>
             </Table>
           </TableContainer>
-        </V51Card>
+        </Card>
       )}
     </Box>
   );
@@ -982,7 +982,7 @@ const PerformanceTab: React.FC<{ result: AuditResult }> = ({ result }) => {
       </Stack>
 
       <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 3, mb: 3 }}>
-        <V51Card>
+        <Card variant='outlined' sx={{ p: 2 }}>
           <Typography
             variant='subtitle2'
             sx={{ fontWeight: 600, mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}
@@ -1026,9 +1026,9 @@ const PerformanceTab: React.FC<{ result: AuditResult }> = ({ result }) => {
               );
             })}
           </Stack>
-        </V51Card>
+        </Card>
 
-        <V51Card>
+        <Card variant='outlined' sx={{ p: 2 }}>
           <Typography
             variant='subtitle2'
             sx={{ fontWeight: 600, mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}
@@ -1037,10 +1037,10 @@ const PerformanceTab: React.FC<{ result: AuditResult }> = ({ result }) => {
             Core Web Vitals
           </Typography>
           <MetricsList metrics={result.metrics} />
-        </V51Card>
+        </Card>
       </Box>
 
-      <V51Card>
+      <Card variant='outlined' sx={{ p: 2 }}>
         <Typography
           variant='subtitle2'
           sx={{ fontWeight: 600, mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}
@@ -1108,7 +1108,7 @@ const PerformanceTab: React.FC<{ result: AuditResult }> = ({ result }) => {
             ))}
           </List>
         )}
-      </V51Card>
+      </Card>
     </Box>
   );
 };

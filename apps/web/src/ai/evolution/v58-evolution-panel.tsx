@@ -31,6 +31,7 @@ import {
   DialogTitle,
   DialogContent,
   DialogActions,
+  Card,
 } from '@mui/material';
 import {
   X as XIcon,
@@ -59,7 +60,6 @@ import {
   ShieldCheck,
   Zap,
 } from 'lucide-react';
-import { V51Card } from '../../design-system/components';
 import { modelVersionManager, type Model, type VersionStatus } from './model-versioning';
 import { abTestManager, type Experiment } from './ab-testing';
 import {
@@ -546,7 +546,7 @@ const ModelsTab: React.FC<{
       </Stack>
 
       <Box sx={{ display: 'grid', gridTemplateColumns: '300px 1fr', gap: 3 }}>
-        <V51Card>
+        <Card variant='outlined' sx={{ p: 2 }}>
           <Typography
             variant='subtitle2'
             sx={{ fontWeight: 600, mb: 2 }}
@@ -596,12 +596,12 @@ const ModelsTab: React.FC<{
               })}
             </List>
           )}
-        </V51Card>
+        </Card>
 
         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
           {selectedModel ? (
             <>
-              <V51Card>
+              <Card variant='outlined' sx={{ p: 2 }}>
                 <Stack
                   direction='row'
                   spacing={2}
@@ -639,9 +639,9 @@ const ModelsTab: React.FC<{
                 >
                   负责人: {selectedModel.owner}
                 </Typography>
-              </V51Card>
+              </Card>
 
-              <V51Card>
+              <Card variant='outlined' sx={{ p: 2 }}>
                 <Stack
                   direction='row'
                   spacing={2}
@@ -872,9 +872,9 @@ const ModelsTab: React.FC<{
                       </Paper>
                     );
                   })()}
-              </V51Card>
+              </Card>
 
-              <V51Card>
+              <Card variant='outlined' sx={{ p: 2 }}>
                 <Typography
                   variant='subtitle2'
                   sx={{ fontWeight: 600, mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}
@@ -950,12 +950,12 @@ const ModelsTab: React.FC<{
                 >
                   发布版本
                 </Button>
-              </V51Card>
+              </Card>
             </>
           ) : (
-            <V51Card>
+            <Card variant='outlined' sx={{ p: 2 }}>
               <Alert severity='info'>请选择一个模型查看详情</Alert>
-            </V51Card>
+            </Card>
           )}
         </Box>
       </Box>
@@ -1015,7 +1015,7 @@ const ExperimentsTab: React.FC<{
       </Stack>
 
       <Box sx={{ display: 'grid', gridTemplateColumns: '350px 1fr', gap: 3 }}>
-        <V51Card>
+        <Card variant='outlined' sx={{ p: 2 }}>
           <Typography
             variant='subtitle2'
             sx={{ fontWeight: 600, mb: 2 }}
@@ -1062,12 +1062,12 @@ const ExperimentsTab: React.FC<{
               ))}
             </List>
           )}
-        </V51Card>
+        </Card>
 
         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
           {selectedExp ? (
             <>
-              <V51Card>
+              <Card variant='outlined' sx={{ p: 2 }}>
                 <Stack
                   direction='row'
                   spacing={2}
@@ -1128,9 +1128,9 @@ const ExperimentsTab: React.FC<{
                     variant='outlined'
                   />
                 </Box>
-              </V51Card>
+              </Card>
 
-              <V51Card>
+              <Card variant='outlined' sx={{ p: 2 }}>
                 <Typography
                   variant='subtitle2'
                   sx={{ fontWeight: 600, mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}
@@ -1208,10 +1208,10 @@ const ExperimentsTab: React.FC<{
                 ) : (
                   <Alert severity='info'>暂无数据，请启动实验</Alert>
                 )}
-              </V51Card>
+              </Card>
 
               {significance && (
-                <V51Card>
+                <Card variant='outlined' sx={{ p: 2 }}>
                   <Typography
                     variant='subtitle2'
                     sx={{ fontWeight: 600, mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}
@@ -1302,13 +1302,13 @@ const ExperimentsTab: React.FC<{
                       </Typography>
                     </Paper>
                   )}
-                </V51Card>
+                </Card>
               )}
             </>
           ) : (
-            <V51Card>
+            <Card variant='outlined' sx={{ p: 2 }}>
               <Alert severity='info'>请选择一个实验查看详情</Alert>
-            </V51Card>
+            </Card>
           )}
         </Box>
       </Box>
@@ -1372,7 +1372,7 @@ const SecurityTab: React.FC<{
       </Stack>
 
       <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 2, mb: 3 }}>
-        <V51Card>
+        <Card variant='outlined' sx={{ p: 2 }}>
           <Box sx={{ textAlign: 'center' }}>
             <Gauge
               size={32}
@@ -1393,8 +1393,8 @@ const SecurityTab: React.FC<{
               安全评分
             </Typography>
           </Box>
-        </V51Card>
-        <V51Card>
+        </Card>
+        <Card variant='outlined' sx={{ p: 2 }}>
           <Box sx={{ textAlign: 'center' }}>
             <CheckCircle2
               size={32}
@@ -1413,8 +1413,8 @@ const SecurityTab: React.FC<{
               通过
             </Typography>
           </Box>
-        </V51Card>
-        <V51Card>
+        </Card>
+        <Card variant='outlined' sx={{ p: 2 }}>
           <Box sx={{ textAlign: 'center' }}>
             <AlertTriangle
               size={32}
@@ -1433,8 +1433,8 @@ const SecurityTab: React.FC<{
               警告
             </Typography>
           </Box>
-        </V51Card>
-        <V51Card>
+        </Card>
+        <Card variant='outlined' sx={{ p: 2 }}>
           <Box sx={{ textAlign: 'center' }}>
             <XCircle
               size={32}
@@ -1453,10 +1453,10 @@ const SecurityTab: React.FC<{
               失败
             </Typography>
           </Box>
-        </V51Card>
+        </Card>
       </Box>
 
-      <V51Card>
+      <Card variant='outlined' sx={{ p: 2 }}>
         <Typography
           variant='subtitle2'
           sx={{ fontWeight: 600, mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}
@@ -1531,7 +1531,7 @@ const SecurityTab: React.FC<{
             </TableBody>
           </Table>
         </TableContainer>
-      </V51Card>
+      </Card>
     </Box>
   );
 };
@@ -1614,7 +1614,7 @@ const ThreatsTab: React.FC<{
       </Stack>
 
       <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 2, mb: 3 }}>
-        <V51Card>
+        <Card variant='outlined' sx={{ p: 2 }}>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
             <Lock
               size={24}
@@ -1635,8 +1635,8 @@ const ThreatsTab: React.FC<{
               </Typography>
             </Box>
           </Box>
-        </V51Card>
-        <V51Card>
+        </Card>
+        <Card variant='outlined' sx={{ p: 2 }}>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
             <AlertTriangle
               size={24}
@@ -1657,8 +1657,8 @@ const ThreatsTab: React.FC<{
               </Typography>
             </Box>
           </Box>
-        </V51Card>
-        <V51Card>
+        </Card>
+        <Card variant='outlined' sx={{ p: 2 }}>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
             <Gauge
               size={24}
@@ -1679,8 +1679,8 @@ const ThreatsTab: React.FC<{
               </Typography>
             </Box>
           </Box>
-        </V51Card>
-        <V51Card>
+        </Card>
+        <Card variant='outlined' sx={{ p: 2 }}>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
             <CheckCircle2
               size={24}
@@ -1701,10 +1701,10 @@ const ThreatsTab: React.FC<{
               </Typography>
             </Box>
           </Box>
-        </V51Card>
+        </Card>
       </Box>
 
-      <V51Card>
+      <Card variant='outlined' sx={{ p: 2 }}>
         <Typography
           variant='subtitle2'
           sx={{ fontWeight: 600, mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}
@@ -1883,7 +1883,7 @@ const ThreatsTab: React.FC<{
             ))}
           </Box>
         )}
-      </V51Card>
+      </Card>
     </Box>
   );
 };

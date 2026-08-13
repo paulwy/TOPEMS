@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useCallback, useRef, useMemo } from 'react';
 import { Paper, Box, useTheme, useMediaQuery } from '@mui/material';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useLocation } from 'react-router-dom';
 import { usePermission } from '@/hooks/usePermission';
 import { useServiceStatus } from '@/hooks/useServiceStatus';
 import { useAuthAvatarUrl, useAuthDisplayName, useAuthUserRole } from '@/store/authStore';
@@ -9,6 +9,7 @@ import { navigationRegistryV2 } from '@/lib/navigation';
 import type { NavItem, ModuleCardConfig } from '@/lib/navigation/types';
 import { SUITE_GROUPS } from '@/lib/navigation/types';
 import { DASHBOARD_PATHS } from '@/routes/dashboard';
+import { sizeTokens } from '@/theme/design-tokens';
 
 import { SidebarSearch } from './SidebarSearch';
 import { SidebarFavorites } from './SidebarFavorites';
@@ -28,7 +29,6 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
   forceVisible,
 }) => {
   const theme = useTheme();
-  const navigate = useNavigate();
   const location = useLocation();
   const { checkPermission } = usePermission();
   const { serviceStatuses } = useServiceStatus();
@@ -170,7 +170,7 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
       aria-label='主导航'
       elevation={0}
       sx={{
-        width: collapsed ? 64 : 220,
+        width: collapsed ? sizeTokens.sidebarWidthCollapsed : sizeTokens.sidebarWidth,
         transition: (theme) =>
           `width 300ms ${theme.transitions.easing.sharp}, box-shadow 200ms ${theme.transitions.easing.easeInOut}`,
         height: forceVisible ? '100%' : 'calc(100vh - 56px)',

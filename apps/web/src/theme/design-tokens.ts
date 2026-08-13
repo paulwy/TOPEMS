@@ -13,8 +13,8 @@ export const sizeTokens = {
   modalWidthSm: '480px',
   modalWidthMd: '720px',
   modalWidthLg: '960px',
-  sidebarWidth: '260px',
-  sidebarWidthCollapsed: '72px',
+  sidebarWidth: '220px',
+  sidebarWidthCollapsed: '64px',
   mobileToolbarHeight: '56px',
 } as const;
 

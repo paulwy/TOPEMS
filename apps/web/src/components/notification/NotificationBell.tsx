@@ -91,10 +91,18 @@ const NotificationBell: React.FC<NotificationBellProps> = ({ onNotificationClick
 
       {showPanel && (
         <>
-          {/* eslint-disable-next-line jsx-a11y/no-static-element-interactions, jsx-a11y/click-events-have-key-events */}
           <div
             className='fixed inset-0 z-40'
+            role='button'
+            tabIndex={0}
+            aria-label='关闭通知面板'
             onClick={handleClose}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                handleClose();
+              }
+            }}
           />
           <NotificationPanel
             onClose={handleClose}
