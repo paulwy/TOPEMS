@@ -394,6 +394,15 @@ pub async fn get_batch_statistics(
     }
 }
 
+#[utoipa::path(
+    get,
+    path = "/batches/expiring-soon",
+    tag = "batch",
+    operation_id = "get_expiring_soon",
+    responses(
+        (status = 200, description = "OK"),
+    ),
+)]
 pub async fn get_expiring_soon(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
@@ -429,6 +438,15 @@ pub async fn get_expiring_soon(
     }
 }
 
+#[utoipa::path(
+    get,
+    path = "/batches/expired",
+    tag = "batch",
+    operation_id = "get_expired",
+    responses(
+        (status = 200, description = "OK"),
+    ),
+)]
 pub async fn get_expired(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
@@ -462,6 +480,15 @@ pub async fn get_expired(
     }
 }
 
+#[utoipa::path(
+    post,
+    path = "/batches/{id}/adjust-quantity",
+    tag = "batch",
+    operation_id = "adjust_quantity",
+    responses(
+        (status = 200, description = "OK"),
+    ),
+)]
 pub async fn adjust_quantity(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
@@ -505,6 +532,15 @@ pub async fn adjust_quantity(
     }
 }
 
+#[utoipa::path(
+    post,
+    path = "/batches/{id}/transfer-location",
+    tag = "batch",
+    operation_id = "transfer_location",
+    responses(
+        (status = 200, description = "OK"),
+    ),
+)]
 pub async fn transfer_location(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,

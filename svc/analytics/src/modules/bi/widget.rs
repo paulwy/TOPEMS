@@ -627,6 +627,13 @@ pub async fn get_widget_data(
     }
 }
 
+#[utoipa::path(
+    get,
+    path = "/widget/{id}/data/realtime",
+    tag = "Visualization",
+    operation_id = "get_widget_data_realtime",
+    responses((status = 200, description = "OK")),
+)]
 /// Query real-time data for a widget using ChartService with caching
 pub async fn get_widget_data_realtime(
     State(state): State<AppState>,
@@ -759,6 +766,13 @@ pub async fn get_widget_data_realtime(
     }
 }
 
+#[utoipa::path(
+    post,
+    path = "/widget/{id}/cache/invalidate",
+    tag = "Visualization",
+    operation_id = "invalidate_widget_cache",
+    responses((status = 200, description = "OK")),
+)]
 /// Invalidate widget cache
 pub async fn invalidate_widget_cache(Path(id): Path<Uuid>) -> Json<serde_json::Value> {
     info!("Invalidating cache for widget: {}", id);
@@ -769,6 +783,13 @@ pub async fn invalidate_widget_cache(Path(id): Path<Uuid>) -> Json<serde_json::V
     }))
 }
 
+#[utoipa::path(
+    post,
+    path = "/widget/cache/invalidate-all",
+    tag = "Visualization",
+    operation_id = "invalidate_all_widget_cache",
+    responses((status = 200, description = "OK")),
+)]
 /// Invalidate all widget cache
 pub async fn invalidate_all_widget_cache() -> Json<serde_json::Value> {
     info!("Invalidating all widget cache");

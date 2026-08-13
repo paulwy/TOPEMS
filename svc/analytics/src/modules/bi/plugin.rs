@@ -31,6 +31,13 @@ pub struct PermissionDef {
 }
 
 /// 获取插件信息
+#[utoipa::path(
+    get,
+    path = "/api/plugins/info",
+    tag = "BI-Plugin",
+    operation_id = "get_plugin_info",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn get_plugin_info() -> Json<ApiResponse<PluginInfo>> {
     let runtime_url = get_runtime_url();
     let info = PluginInfo {
@@ -114,6 +121,13 @@ pub async fn get_plugin_info() -> Json<ApiResponse<PluginInfo>> {
 }
 
 /// 插件健康检查
+#[utoipa::path(
+    get,
+    path = "/api/plugins/health",
+    tag = "BI-Plugin",
+    operation_id = "plugin_health_check",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn plugin_health_check(State(state): State<AppState>) -> Json<ApiResponse<()>> {
     match sqlx::query("SELECT 1").fetch_one(&state.pool).await {
         Ok(_) => Json(ApiResponse::success((), "Healthy")),

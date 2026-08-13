@@ -11,6 +11,15 @@ use crate::shared::permission::{check_permission, ModulePermission};
 use topems_shared_auth::auth::Claims;
 use topems_shared_core::response::{api_error, ApiResponse, PaginationParams};
 
+#[utoipa::path(
+    get,
+    path = "/smart-replenishment/safety-stock",
+    tag = "smart_replenishment",
+    operation_id = "list_safety_stock",
+    responses(
+        (status = 200, description = "OK"),
+    ),
+)]
 pub async fn list_safety_stock(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
@@ -81,6 +90,15 @@ pub async fn list_safety_stock(
     }
 }
 
+#[utoipa::path(
+    get,
+    path = "/smart-replenishment/safety-stock/{id}",
+    tag = "smart_replenishment",
+    operation_id = "get_safety_stock",
+    responses(
+        (status = 200, description = "OK"),
+    ),
+)]
 pub async fn get_safety_stock(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
@@ -132,6 +150,15 @@ pub async fn get_safety_stock(
     }
 }
 
+#[utoipa::path(
+    put,
+    path = "/smart-replenishment/safety-stock/{id}",
+    tag = "smart_replenishment",
+    operation_id = "update_safety_stock",
+    responses(
+        (status = 200, description = "OK"),
+    ),
+)]
 pub async fn update_safety_stock(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
@@ -207,6 +234,15 @@ pub async fn update_safety_stock(
     }
 }
 
+#[utoipa::path(
+    post,
+    path = "/smart-replenishment/safety-stock/batch-update",
+    tag = "smart_replenishment",
+    operation_id = "batch_update_safety_stock",
+    responses(
+        (status = 200, description = "OK"),
+    ),
+)]
 pub async fn batch_update_safety_stock(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
@@ -270,6 +306,15 @@ pub async fn batch_update_safety_stock(
     ))
 }
 
+#[utoipa::path(
+    post,
+    path = "/smart-replenishment/safety-stock/calculate",
+    tag = "smart_replenishment",
+    operation_id = "calculate_safety_stock",
+    responses(
+        (status = 200, description = "OK"),
+    ),
+)]
 pub async fn calculate_safety_stock(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,

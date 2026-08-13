@@ -1,7 +1,7 @@
 // 2026-08-07: 部分报表和模型 struct 仅 serde 使用，保留 crate 级 allow
 #![allow(dead_code)]
-mod audit_v52;
-mod compliance_v51;
+pub mod audit_v52;
+pub mod compliance_v51;
 mod cqrs_routes;
 pub mod decision_v60;
 mod event_routes;

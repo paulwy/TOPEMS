@@ -513,6 +513,13 @@ pub async fn validate_permission(
     }))
 }
 
+#[utoipa::path(
+    post,
+    path = "/permission/filter",
+    tag = "Permission",
+    operation_id = "filter_data",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn filter_data(
     State(state): State<AppState>,
     Json(req): Json<FilterDataRequest>,
@@ -576,6 +583,13 @@ pub async fn filter_data(
     }
 }
 
+#[utoipa::path(
+    get,
+    path = "/permission/user/{user_id}",
+    tag = "Permission",
+    operation_id = "get_user_permissions",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn get_user_permissions(
     State(state): State<AppState>,
     Path(user_id): Path<String>,
@@ -637,6 +651,13 @@ pub async fn get_user_permissions(
     }))
 }
 
+#[utoipa::path(
+    get,
+    path = "/permission/rule-types",
+    tag = "Permission",
+    operation_id = "get_permission_rule_types",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn get_permission_rule_types(State(_state): State<AppState>) -> Json<serde_json::Value> {
     info!("Getting permission rule types");
 

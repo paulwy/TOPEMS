@@ -86,6 +86,13 @@ pub struct SubscriptionRow {
     pub created_at: chrono::DateTime<chrono::Utc>,
 }
 
+#[utoipa::path(
+    get,
+    path = "/subscriptions/{id}",
+    tag = "Subscriptions",
+    operation_id = "get_subscription",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn get_subscription(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
@@ -130,6 +137,13 @@ pub async fn get_subscription(
     }
 }
 
+#[utoipa::path(
+    get,
+    path = "/subscriptions",
+    tag = "Subscriptions",
+    operation_id = "list_subscriptions",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn list_subscriptions(State(state): State<AppState>) -> Json<serde_json::Value> {
     info!("Listing subscriptions");
 
@@ -166,6 +180,13 @@ pub async fn list_subscriptions(State(state): State<AppState>) -> Json<serde_jso
     }))
 }
 
+#[utoipa::path(
+    get,
+    path = "/subscriptions/user/{user_id}",
+    tag = "Subscriptions",
+    operation_id = "get_user_subscriptions",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn get_user_subscriptions(
     State(state): State<AppState>,
     Path(user_id): Path<String>,
@@ -210,6 +231,13 @@ pub async fn get_user_subscriptions(
     }))
 }
 
+#[utoipa::path(
+    post,
+    path = "/subscriptions",
+    tag = "Subscriptions",
+    operation_id = "create_subscription",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn create_subscription(
     State(state): State<AppState>,
     Json(req): Json<CreateSubscriptionRequest>,
@@ -246,6 +274,13 @@ pub async fn create_subscription(
     }
 }
 
+#[utoipa::path(
+    put,
+    path = "/subscriptions/{id}",
+    tag = "Subscriptions",
+    operation_id = "update_subscription",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn update_subscription(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
@@ -281,6 +316,13 @@ pub async fn update_subscription(
     }
 }
 
+#[utoipa::path(
+    delete,
+    path = "/subscriptions/{id}",
+    tag = "Subscriptions",
+    operation_id = "delete_subscription",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn delete_subscription(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
@@ -309,6 +351,13 @@ pub async fn delete_subscription(
     }
 }
 
+#[utoipa::path(
+    post,
+    path = "/subscriptions/{id}/toggle",
+    tag = "Subscriptions",
+    operation_id = "toggle_subscription",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn toggle_subscription(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,

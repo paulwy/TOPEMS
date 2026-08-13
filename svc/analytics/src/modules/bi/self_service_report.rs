@@ -375,6 +375,13 @@ pub async fn delete_report(
     }
 }
 
+#[utoipa::path(
+    post,
+    path = "/report/{id}/query",
+    tag = "Reports",
+    operation_id = "query_report_data",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn query_report_data(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
@@ -497,6 +504,13 @@ pub async fn query_report_data(
     }
 }
 
+#[utoipa::path(
+    get,
+    path = "/report/{id}/export",
+    tag = "Reports",
+    operation_id = "export_report",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn export_report(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,

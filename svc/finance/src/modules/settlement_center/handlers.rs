@@ -35,6 +35,13 @@ fn current_user_id(claims: &Claims) -> Option<Uuid> {
 // 统一对账 API
 // ============================================================
 
+#[utoipa::path(
+    get,
+    path = "/api/core/settlement-center/reconciliations",
+    tag = "Settlement-Center",
+    operation_id = "list_reconciliations",
+    responses((status = 200, description = "OK")),
+)]
 /// GET /api/core/settlement-center/reconciliations
 pub async fn list_reconciliations(
     State(state): State<AppState>,
@@ -51,6 +58,13 @@ pub async fn list_reconciliations(
     }
 }
 
+#[utoipa::path(
+    post,
+    path = "/api/core/settlement-center/reconciliations",
+    tag = "Settlement-Center",
+    operation_id = "create_reconciliation",
+    responses((status = 200, description = "OK")),
+)]
 /// POST /api/core/settlement-center/reconciliations
 pub async fn create_reconciliation(
     State(state): State<AppState>,
@@ -79,6 +93,13 @@ pub async fn create_reconciliation(
     }
 }
 
+#[utoipa::path(
+    get,
+    path = "/api/core/settlement-center/reconciliations/{id}",
+    tag = "Settlement-Center",
+    operation_id = "get_reconciliation",
+    responses((status = 200, description = "OK")),
+)]
 /// GET /api/core/settlement-center/reconciliations/{id}
 pub async fn get_reconciliation(
     State(state): State<AppState>,
@@ -96,6 +117,13 @@ pub async fn get_reconciliation(
     }
 }
 
+#[utoipa::path(
+    post,
+    path = "/api/core/settlement-center/reconciliations/{id}/reconcile",
+    tag = "Settlement-Center",
+    operation_id = "reconcile",
+    responses((status = 200, description = "OK")),
+)]
 /// POST /api/core/settlement-center/reconciliations/{id}/reconcile
 pub async fn reconcile(
     State(state): State<AppState>,
@@ -113,6 +141,13 @@ pub async fn reconcile(
     }
 }
 
+#[utoipa::path(
+    post,
+    path = "/api/core/settlement-center/auto-reconcile",
+    tag = "Settlement-Center",
+    operation_id = "auto_reconcile",
+    responses((status = 200, description = "OK")),
+)]
 /// POST /api/core/settlement-center/auto-reconcile
 pub async fn auto_reconcile(
     State(state): State<AppState>,
@@ -136,6 +171,13 @@ pub async fn auto_reconcile(
 // 统一结算 API
 // ============================================================
 
+#[utoipa::path(
+    get,
+    path = "/api/core/settlement-center/settlements",
+    tag = "Settlement-Center",
+    operation_id = "list_settlements",
+    responses((status = 200, description = "OK")),
+)]
 /// GET /api/core/settlement-center/settlements
 pub async fn list_settlements(
     State(state): State<AppState>,
@@ -152,6 +194,13 @@ pub async fn list_settlements(
     }
 }
 
+#[utoipa::path(
+    post,
+    path = "/api/core/settlement-center/settlements",
+    tag = "Settlement-Center",
+    operation_id = "create_settlement",
+    responses((status = 200, description = "OK")),
+)]
 /// POST /api/core/settlement-center/settlements
 pub async fn create_settlement(
     State(state): State<AppState>,
@@ -177,6 +226,13 @@ pub async fn create_settlement(
     }
 }
 
+#[utoipa::path(
+    get,
+    path = "/api/core/settlement-center/settlements/{id}",
+    tag = "Settlement-Center",
+    operation_id = "get_settlement",
+    responses((status = 200, description = "OK")),
+)]
 /// GET /api/core/settlement-center/settlements/{id}
 pub async fn get_settlement(
     State(state): State<AppState>,
@@ -194,6 +250,13 @@ pub async fn get_settlement(
     }
 }
 
+#[utoipa::path(
+    post,
+    path = "/api/core/settlement-center/settlements/{id}/approve",
+    tag = "Settlement-Center",
+    operation_id = "approve_settlement",
+    responses((status = 200, description = "OK")),
+)]
 /// POST /api/core/settlement-center/settlements/{id}/approve
 pub async fn approve_settlement(
     State(state): State<AppState>,
@@ -216,6 +279,13 @@ pub async fn approve_settlement(
 // 关联管理 API
 // ============================================================
 
+#[utoipa::path(
+    post,
+    path = "/api/core/settlement-center/links",
+    tag = "Settlement-Center",
+    operation_id = "create_link",
+    responses((status = 200, description = "OK")),
+)]
 /// POST /api/core/settlement-center/links
 pub async fn create_link(
     State(state): State<AppState>,
@@ -239,6 +309,13 @@ pub async fn create_link(
     }
 }
 
+#[utoipa::path(
+    delete,
+    path = "/api/core/settlement-center/links/{id}",
+    tag = "Settlement-Center",
+    operation_id = "delete_link",
+    responses((status = 200, description = "OK")),
+)]
 /// DELETE /api/core/settlement-center/links/{id}
 pub async fn delete_link(
     State(state): State<AppState>,
@@ -256,6 +333,13 @@ pub async fn delete_link(
     }
 }
 
+#[utoipa::path(
+    get,
+    path = "/api/core/settlement-center/links",
+    tag = "Settlement-Center",
+    operation_id = "list_links",
+    responses((status = 200, description = "OK")),
+)]
 /// GET /api/core/settlement-center/links
 pub async fn list_links(
     State(state): State<AppState>,
@@ -276,6 +360,13 @@ pub async fn list_links(
 // 差异处理 API
 // ============================================================
 
+#[utoipa::path(
+    get,
+    path = "/api/core/settlement-center/differences",
+    tag = "Settlement-Center",
+    operation_id = "list_differences",
+    responses((status = 200, description = "OK")),
+)]
 /// GET /api/core/settlement-center/differences
 pub async fn list_differences(
     State(state): State<AppState>,
@@ -292,6 +383,13 @@ pub async fn list_differences(
     }
 }
 
+#[utoipa::path(
+    post,
+    path = "/api/core/settlement-center/differences",
+    tag = "Settlement-Center",
+    operation_id = "create_difference",
+    responses((status = 200, description = "OK")),
+)]
 /// POST /api/core/settlement-center/differences
 pub async fn create_difference(
     State(state): State<AppState>,
@@ -327,6 +425,13 @@ pub async fn create_difference(
     }
 }
 
+#[utoipa::path(
+    post,
+    path = "/api/core/settlement-center/differences/{id}/approve",
+    tag = "Settlement-Center",
+    operation_id = "approve_difference",
+    responses((status = 200, description = "OK")),
+)]
 /// POST /api/core/settlement-center/differences/{id}/approve
 pub async fn approve_difference(
     State(state): State<AppState>,
@@ -348,6 +453,13 @@ pub async fn approve_difference(
     }
 }
 
+#[utoipa::path(
+    post,
+    path = "/api/core/settlement-center/differences/{id}/reject",
+    tag = "Settlement-Center",
+    operation_id = "reject_difference",
+    responses((status = 200, description = "OK")),
+)]
 /// POST /api/core/settlement-center/differences/{id}/reject
 pub async fn reject_difference(
     State(state): State<AppState>,
@@ -373,6 +485,13 @@ pub async fn reject_difference(
 // 仪表盘与统计 API
 // ============================================================
 
+#[utoipa::path(
+    get,
+    path = "/api/core/settlement-center/dashboard",
+    tag = "Settlement-Center",
+    operation_id = "get_dashboard",
+    responses((status = 200, description = "OK")),
+)]
 /// GET /api/core/settlement-center/dashboard
 pub async fn get_dashboard(
     State(state): State<AppState>,
@@ -388,6 +507,13 @@ pub async fn get_dashboard(
     }
 }
 
+#[utoipa::path(
+    get,
+    path = "/api/core/settlement-center/statistics",
+    tag = "Settlement-Center",
+    operation_id = "get_statistics",
+    responses((status = 200, description = "OK")),
+)]
 /// GET /api/core/settlement-center/statistics
 pub async fn get_statistics(
     State(state): State<AppState>,

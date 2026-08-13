@@ -51,6 +51,15 @@ where
         )
 }
 
+#[utoipa::path(
+    get,
+    path = "/api/wms/inventory-movements",
+    tag = "inventory_movement",
+    operation_id = "list_inventory_movements",
+    responses(
+        (status = 200, description = "OK"),
+    ),
+)]
 async fn list_inventory_movements(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
@@ -145,6 +154,15 @@ async fn list_inventory_movements(
     }
 }
 
+#[utoipa::path(
+    post,
+    path = "/api/wms/inventory-movements",
+    tag = "inventory_movement",
+    operation_id = "create_inventory_movement",
+    responses(
+        (status = 200, description = "OK"),
+    ),
+)]
 async fn create_inventory_movement(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
@@ -217,6 +235,15 @@ async fn create_inventory_movement(
     }
 }
 
+#[utoipa::path(
+    get,
+    path = "/api/wms/inventory-movements/{id}",
+    tag = "inventory_movement",
+    operation_id = "get_inventory_movement",
+    responses(
+        (status = 200, description = "OK"),
+    ),
+)]
 async fn get_inventory_movement(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,

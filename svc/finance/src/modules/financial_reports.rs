@@ -927,6 +927,13 @@ pub struct ConsolidatedExportQuery {
     pub format: Option<String>,
 }
 
+#[utoipa::path(
+    get,
+    path = "/reports/consolidated/{consolidation_id}/export",
+    tag = "Financial-Reports",
+    operation_id = "export_consolidated_report",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn export_consolidated_report(
     State(_state): State<AppState>,
     Extension(_claims): Extension<Claims>,
@@ -2096,6 +2103,13 @@ pub struct ExportQuery {
     pub include_comparison: Option<bool>,
 }
 
+#[utoipa::path(
+    get,
+    path = "/reports/export",
+    tag = "Financial-Reports",
+    operation_id = "export_report",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn export_report(
     State(_state): State<AppState>,
     Extension(_claims): Extension<Claims>,

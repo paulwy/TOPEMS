@@ -104,6 +104,13 @@ pub struct RankItem {
     pub percentage: Option<f64>,
 }
 
+#[utoipa::path(
+    post,
+    path = "/multidim/cube",
+    tag = "Multidim",
+    operation_id = "query_cube",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn query_cube(
     State(state): State<AppState>,
     Json(req): Json<CubeQueryRequest>,
@@ -216,6 +223,13 @@ pub async fn query_cube(
     }
 }
 
+#[utoipa::path(
+    post,
+    path = "/multidim/slice",
+    tag = "Multidim",
+    operation_id = "slice_cube",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn slice_cube(
     State(state): State<AppState>,
     Json(req): Json<CubeQueryRequest>,
@@ -331,6 +345,13 @@ pub async fn slice_cube(
     }
 }
 
+#[utoipa::path(
+    post,
+    path = "/multidim/dice",
+    tag = "Multidim",
+    operation_id = "dice_cube",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn dice_cube(
     State(state): State<AppState>,
     Json(req): Json<CubeQueryRequest>,
@@ -446,6 +467,13 @@ pub async fn dice_cube(
     }
 }
 
+#[utoipa::path(
+    post,
+    path = "/multidim/pivot",
+    tag = "Multidim",
+    operation_id = "pivot_table",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn pivot_table(
     State(state): State<AppState>,
     Json(req): Json<PivotQueryRequest>,
@@ -530,6 +558,13 @@ pub async fn pivot_table(
     }
 }
 
+#[utoipa::path(
+    post,
+    path = "/multidim/rank",
+    tag = "Multidim",
+    operation_id = "rank_data",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn rank_data(
     State(state): State<AppState>,
     Json(req): Json<RankQueryRequest>,
@@ -619,6 +654,13 @@ pub async fn rank_data(
     }
 }
 
+#[utoipa::path(
+    get,
+    path = "/multidim/datasource/{datasource_id}/dimensions",
+    tag = "Multidim",
+    operation_id = "get_available_dimensions",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn get_available_dimensions(
     State(_state): State<AppState>,
     Path(datasource_id): Path<Uuid>,
@@ -665,6 +707,13 @@ pub async fn get_available_dimensions(
     }))
 }
 
+#[utoipa::path(
+    get,
+    path = "/multidim/datasource/{datasource_id}/measures",
+    tag = "Multidim",
+    operation_id = "get_available_measures",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn get_available_measures(
     State(_state): State<AppState>,
     Path(datasource_id): Path<Uuid>,

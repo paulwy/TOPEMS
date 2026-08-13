@@ -45,6 +45,13 @@ pub struct PluginHeartbeat {
 }
 
 /// 获取插件信息
+#[utoipa::path(
+    get,
+    path = "/api/plugins/info",
+    tag = "ERP",
+    operation_id = "get_plugin_info",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn get_plugin_info() -> Json<ApiResponse<PluginInfo>> {
     let runtime_url =
         env::var("RUNTIME_URL").unwrap_or_else(|_| "http://localhost:8010".to_string());
@@ -193,6 +200,13 @@ pub async fn get_plugin_info() -> Json<ApiResponse<PluginInfo>> {
 }
 
 /// 插件健康检查
+#[utoipa::path(
+    get,
+    path = "/api/plugins/health",
+    tag = "ERP",
+    operation_id = "plugin_health_check",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn plugin_health_check(State(state): State<ApiState>) -> Json<ApiResponse<String>> {
     let db_healthy = sqlx::query("SELECT 1").fetch_one(&state.db).await.is_ok();
 

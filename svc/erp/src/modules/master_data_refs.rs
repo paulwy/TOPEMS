@@ -168,6 +168,13 @@ pub async fn list_master_data_refs(
 }
 
 /// 通过 master_data_id 查找本地主数据引用
+#[utoipa::path(
+    get,
+    path = "/api/erp/master-data-refs/{master_data_id}",
+    tag = "Master Data",
+    operation_id = "get_master_data_ref",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn get_master_data_ref(
     State(state): State<ApiState>,
     Path(master_data_id): Path<String>,
@@ -193,6 +200,13 @@ pub async fn get_master_data_ref(
 }
 
 /// 通过 domain + code 查找本地主数据引用
+#[utoipa::path(
+    get,
+    path = "/api/erp/master-data-refs/by-code/{domain}/{code}",
+    tag = "Master Data",
+    operation_id = "get_master_data_ref_by_code",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn get_master_data_ref_by_code(
     State(state): State<ApiState>,
     Path((domain, code)): Path<(String, String)>,
@@ -967,6 +981,13 @@ pub struct RecordAuditRequest {
 }
 
 /// 记录主数据变更审计事件
+#[utoipa::path(
+    post,
+    path = "/api/erp/master-data-refs/audit-trail",
+    tag = "Master Data",
+    operation_id = "record_audit_event",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn record_audit_event(
     State(state): State<ApiState>,
     Json(req): Json<RecordAuditRequest>,
@@ -1132,6 +1153,13 @@ pub struct DataLineageResponse {
 
 /// 查询主数据血缘关系
 /// 展示主数据在各服务间的引用关系（来源服务 → 本地引用）
+#[utoipa::path(
+    get,
+    path = "/api/erp/master-data-refs/{master_data_id}/lineage",
+    tag = "Master Data",
+    operation_id = "get_data_lineage",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn get_data_lineage(
     State(state): State<ApiState>,
     Path(master_data_id): Path<String>,
@@ -1246,6 +1274,13 @@ pub struct VersionQuery {
 }
 
 /// 记录主数据版本快照
+#[utoipa::path(
+    post,
+    path = "/api/erp/master-data-refs/{master_data_id}/versions",
+    tag = "Master Data",
+    operation_id = "record_version",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn record_version(
     State(state): State<ApiState>,
     Path(master_data_id): Path<String>,
@@ -1385,6 +1420,13 @@ pub async fn get_versions(
 }
 
 /// 获取特定版本详情
+#[utoipa::path(
+    get,
+    path = "/api/erp/master-data-refs/{master_data_id}/versions/{version_id}",
+    tag = "Master Data",
+    operation_id = "get_version",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn get_version(
     State(state): State<ApiState>,
     Path((master_data_id, version_id)): Path<(String, String)>,
@@ -1442,6 +1484,13 @@ pub async fn get_version(
 
 /// 回滚到指定版本
 /// 将版本快照写回到 erp_master_data_refs 表，并记录新的版本快照
+#[utoipa::path(
+    post,
+    path = "/api/erp/master-data-refs/{master_data_id}/versions/{version_id}/rollback",
+    tag = "Master Data",
+    operation_id = "rollback_to_version",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn rollback_to_version(
     State(state): State<ApiState>,
     Path((master_data_id, version_id)): Path<(String, String)>,
@@ -1622,6 +1671,13 @@ pub struct AutoMergeRequest {
 /// 比较本地主数据引用与远程服务传入的数据，识别字段级冲突。
 /// 冲突字段包括：name、status、code、local_entity_type
 /// 根据合并策略自动解决部分冲突，或标记为需要手动审查。
+#[utoipa::path(
+    post,
+    path = "/api/erp/master-data-refs/conflicts/detect",
+    tag = "Master Data",
+    operation_id = "detect_conflicts",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn detect_conflicts(
     State(state): State<ApiState>,
     Json(req): Json<DetectConflictsRequest>,
@@ -1985,6 +2041,13 @@ pub async fn list_conflicts(
 }
 
 /// V37.0 AC-9: 获取冲突详情
+#[utoipa::path(
+    get,
+    path = "/api/erp/master-data-refs/conflicts/{conflict_id}",
+    tag = "Master Data",
+    operation_id = "get_conflict",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn get_conflict(
     State(state): State<ApiState>,
     Path(conflict_id): Path<String>,
@@ -2055,6 +2118,13 @@ pub async fn get_conflict(
 /// V37.0 AC-9: 手动解决冲突
 ///
 /// 接受用户提供的解决值，更新冲突状态并应用到本地主数据引用。
+#[utoipa::path(
+    post,
+    path = "/api/erp/master-data-refs/conflicts/{conflict_id}/resolve",
+    tag = "Master Data",
+    operation_id = "resolve_conflict",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn resolve_conflict(
     State(state): State<ApiState>,
     Path(conflict_id): Path<String>,
@@ -2123,6 +2193,13 @@ pub async fn resolve_conflict(
 /// V37.0 AC-9: 自动合并冲突
 ///
 /// 对指定的待审查冲突应用自动合并策略。
+#[utoipa::path(
+    post,
+    path = "/api/erp/master-data-refs/conflicts/{conflict_id}/auto-merge",
+    tag = "Master Data",
+    operation_id = "auto_merge_conflict",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn auto_merge_conflict(
     State(state): State<ApiState>,
     Path(conflict_id): Path<String>,
@@ -2349,6 +2426,13 @@ async fn record_lifecycle_audit(
 }
 
 /// V38.0 AC-10: 归档主数据引用
+#[utoipa::path(
+    post,
+    path = "/api/erp/master-data-refs/{master_data_id}/archive",
+    tag = "Master Data",
+    operation_id = "archive_master_data_ref",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn archive_master_data_ref(
     State(state): State<ApiState>,
     Path(master_data_id): Path<String>,
@@ -2436,6 +2520,13 @@ pub async fn archive_master_data_ref(
 }
 
 /// V38.0 AC-10: 恢复已归档的主数据引用
+#[utoipa::path(
+    post,
+    path = "/api/erp/master-data-refs/{master_data_id}/restore",
+    tag = "Master Data",
+    operation_id = "restore_master_data_ref",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn restore_master_data_ref(
     State(state): State<ApiState>,
     Path(master_data_id): Path<String>,
@@ -2517,6 +2608,13 @@ pub async fn restore_master_data_ref(
 }
 
 /// V38.0 AC-10: 安排销毁计划
+#[utoipa::path(
+    post,
+    path = "/api/erp/master-data-refs/{master_data_id}/schedule-destruction",
+    tag = "Master Data",
+    operation_id = "schedule_destruction",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn schedule_destruction(
     State(state): State<ApiState>,
     Path(master_data_id): Path<String>,
@@ -2604,6 +2702,13 @@ pub async fn schedule_destruction(
 }
 
 /// V38.0 AC-10: 取消销毁计划
+#[utoipa::path(
+    post,
+    path = "/api/erp/master-data-refs/{master_data_id}/cancel-destruction",
+    tag = "Master Data",
+    operation_id = "cancel_destruction",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn cancel_destruction(
     State(state): State<ApiState>,
     Path(master_data_id): Path<String>,
@@ -2687,6 +2792,13 @@ pub async fn cancel_destruction(
 }
 
 /// V38.0 AC-10: 执行销毁（软删除）
+#[utoipa::path(
+    post,
+    path = "/api/erp/master-data-refs/{master_data_id}/destroy",
+    tag = "Master Data",
+    operation_id = "destroy_master_data_ref",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn destroy_master_data_ref(
     State(state): State<ApiState>,
     Path(master_data_id): Path<String>,
@@ -3188,6 +3300,13 @@ fn is_valid_identifier(s: &str) -> bool {
 // --- CRUD handlers ---
 
 /// V39.0 AC-11: 创建质量规则
+#[utoipa::path(
+    post,
+    path = "/api/erp/master-data-refs/quality-rules",
+    tag = "Master Data",
+    operation_id = "create_quality_rule",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn create_quality_rule(
     State(state): State<ApiState>,
     Json(req): Json<CreateQualityRuleRequest>,
@@ -3338,6 +3457,13 @@ pub async fn list_quality_rules(
 }
 
 /// V39.0 AC-11: 获取质量规则详情
+#[utoipa::path(
+    get,
+    path = "/api/erp/master-data-refs/quality-rules/{rule_id}",
+    tag = "Master Data",
+    operation_id = "get_quality_rule",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn get_quality_rule(
     State(state): State<ApiState>,
     Path(rule_id): Path<String>,
@@ -3368,6 +3494,13 @@ pub async fn get_quality_rule(
 }
 
 /// V39.0 AC-11: 更新质量规则
+#[utoipa::path(
+    put,
+    path = "/api/erp/master-data-refs/quality-rules/{rule_id}",
+    tag = "Master Data",
+    operation_id = "update_quality_rule",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn update_quality_rule(
     State(state): State<ApiState>,
     Path(rule_id): Path<String>,
@@ -3455,6 +3588,13 @@ pub async fn update_quality_rule(
 }
 
 /// V39.0 AC-11: 删除质量规则
+#[utoipa::path(
+    delete,
+    path = "/api/erp/master-data-refs/quality-rules/{rule_id}",
+    tag = "Master Data",
+    operation_id = "delete_quality_rule",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn delete_quality_rule(
     State(state): State<ApiState>,
     Path(rule_id): Path<String>,
@@ -3493,6 +3633,13 @@ pub async fn delete_quality_rule(
 /// V39.0 AC-11: 批量执行质量检查
 ///
 /// 查询 erp_master_data_refs → 对每条记录应用匹配规则 → 收集问题 → 生成并持久化报告
+#[utoipa::path(
+    post,
+    path = "/api/erp/master-data-refs/quality-check",
+    tag = "Master Data",
+    operation_id = "run_quality_check",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn run_quality_check(
     State(state): State<ApiState>,
     Json(req): Json<RunQualityCheckRequest>,
@@ -4101,6 +4248,13 @@ pub struct QualityTrendQuery {
 // --- 治理仪表盘 Handler ---
 
 /// V40.0 AC-12: 获取治理仪表盘统计数据
+#[utoipa::path(
+    get,
+    path = "/api/erp/master-data-refs/governance/dashboard",
+    tag = "Master Data",
+    operation_id = "get_governance_dashboard",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn get_governance_dashboard(
     State(state): State<ApiState>,
 ) -> Json<ApiResponse<GovernanceDashboardStats>> {
@@ -4474,6 +4628,13 @@ async fn calculate_domain_quality_score(db: &sqlx::PgPool, domain: &str) -> f64 
 }
 
 /// V40.0 AC-12: 获取数据资产详情
+#[utoipa::path(
+    get,
+    path = "/api/erp/master-data-refs/governance/assets/{domain}",
+    tag = "Master Data",
+    operation_id = "get_data_asset_detail",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn get_data_asset_detail(
     State(state): State<ApiState>,
     Path(domain): Path<String>,
@@ -4773,6 +4934,13 @@ async fn build_full_lineage_graph(
 }
 
 /// V40.0 AC-12: 获取上游血缘
+#[utoipa::path(
+    get,
+    path = "/api/erp/master-data-refs/governance/lineage/{id}/upstream",
+    tag = "Master Data",
+    operation_id = "get_lineage_upstream",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn get_lineage_upstream(
     State(state): State<ApiState>,
     Path(id): Path<String>,
@@ -4847,6 +5015,13 @@ pub async fn get_lineage_upstream(
 }
 
 /// V40.0 AC-12: 获取下游血缘
+#[utoipa::path(
+    get,
+    path = "/api/erp/master-data-refs/governance/lineage/{id}/downstream",
+    tag = "Master Data",
+    operation_id = "get_lineage_downstream",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn get_lineage_downstream(
     State(state): State<ApiState>,
     Path(id): Path<String>,
@@ -9679,6 +9854,13 @@ impl MdmGraphqlStore {
     }
 }
 
+#[utoipa::path(
+    post,
+    path = "/api/erp/master-data/graphql",
+    tag = "Master Data",
+    operation_id = "graphql_endpoint",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn graphql_endpoint(
     State(state): State<ApiState>,
     Json(req): Json<GraphqlRequest>,
@@ -11215,6 +11397,13 @@ pub async fn mdm_gateway_batch(
     Json(ApiResponse::success(responses, "批量请求完成"))
 }
 
+#[utoipa::path(
+    post,
+    path = "/api/erp/master-data/gateway/aggregate",
+    tag = "Master Data",
+    operation_id = "mdm_gateway_aggregate",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn mdm_gateway_aggregate(
     State(state): State<ApiState>,
     Json(req): Json<GatewayAggregateRequest>,
@@ -14388,6 +14577,13 @@ pub async fn trace_downstream_handler(
 }
 
 /// GET /lineage/origin/{id} — 查找数据最初来源
+#[utoipa::path(
+    get,
+    path = "/api/erp/master-data-refs/lineage/origin/{id}",
+    tag = "Master Data",
+    operation_id = "find_data_origin_handler",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn find_data_origin_handler(
     State(state): State<ApiState>,
     Path(id): Path<String>,
@@ -14594,6 +14790,13 @@ fn generate_impact_report(result: &ImpactAnalysisResult) -> String {
 // ==================== Part 2: 影响分析 Handler ====================
 
 /// POST /impact/analyze — 分析变更影响范围
+#[utoipa::path(
+    post,
+    path = "/api/erp/master-data-refs/impact/analyze",
+    tag = "Master Data",
+    operation_id = "analyze_impact_handler",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn analyze_impact_handler(
     State(state): State<ApiState>,
     Json(req): Json<ImpactAnalysisRequest>,
@@ -14604,6 +14807,13 @@ pub async fn analyze_impact_handler(
 }
 
 /// GET /impact/report/{entity_id} — 获取影响分析报告
+#[utoipa::path(
+    get,
+    path = "/api/erp/master-data-refs/impact/report/{entity_id}",
+    tag = "Master Data",
+    operation_id = "get_impact_report_handler",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn get_impact_report_handler(
     State(state): State<ApiState>,
     Path(entity_id): Path<String>,
@@ -14962,6 +15172,13 @@ pub async fn get_lineage_graph_handler(
 }
 
 /// GET /lineage/graph/stats — 获取图谱统计
+#[utoipa::path(
+    get,
+    path = "/api/erp/master-data-refs/lineage/graph/stats",
+    tag = "Master Data",
+    operation_id = "get_graph_stats_handler",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn get_graph_stats_handler(
     State(state): State<ApiState>,
 ) -> Json<ApiResponse<LineageGraphStats>> {
@@ -14971,6 +15188,13 @@ pub async fn get_graph_stats_handler(
 }
 
 /// GET /lineage/critical-paths — 查找关键路径
+#[utoipa::path(
+    get,
+    path = "/api/erp/master-data-refs/lineage/critical-paths",
+    tag = "Master Data",
+    operation_id = "get_critical_paths_handler",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn get_critical_paths_handler(
     State(state): State<ApiState>,
 ) -> Json<ApiResponse<Vec<Vec<String>>>> {
@@ -14980,6 +15204,13 @@ pub async fn get_critical_paths_handler(
 }
 
 /// GET /lineage/circular-deps — 检测循环依赖
+#[utoipa::path(
+    get,
+    path = "/api/erp/master-data-refs/lineage/circular-deps",
+    tag = "Master Data",
+    operation_id = "detect_circular_deps_handler",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn detect_circular_deps_handler(
     State(state): State<ApiState>,
 ) -> Json<ApiResponse<Vec<Vec<String>>>> {
@@ -15450,6 +15681,13 @@ async fn generate_improvement_plan() -> ImprovementPlan {
 // ==================== 成熟度评估 Handlers ====================
 
 /// GET /maturity/assess — 执行全面成熟度评估
+#[utoipa::path(
+    get,
+    path = "/api/erp/master-data-refs/maturity/assess",
+    tag = "Master Data",
+    operation_id = "assess_maturity_handler",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn assess_maturity_handler(
     State(state): State<ApiState>,
 ) -> Json<ApiResponse<MaturityAssessment>> {
@@ -15459,6 +15697,13 @@ pub async fn assess_maturity_handler(
 }
 
 /// GET /maturity/history — 获取历史评估记录
+#[utoipa::path(
+    get,
+    path = "/api/erp/master-data-refs/maturity/history",
+    tag = "Master Data",
+    operation_id = "get_maturity_history_handler",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn get_maturity_history_handler(
     State(state): State<ApiState>,
 ) -> Json<ApiResponse<Vec<MaturityAssessment>>> {
@@ -15468,6 +15713,13 @@ pub async fn get_maturity_history_handler(
 }
 
 /// POST /maturity/compare — 对比两次评估结果
+#[utoipa::path(
+    post,
+    path = "/api/erp/master-data-refs/maturity/compare",
+    tag = "Master Data",
+    operation_id = "compare_assessments_handler",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn compare_assessments_handler(
     State(state): State<ApiState>,
     Json(req): Json<CompareAssessmentsRequest>,
@@ -15480,6 +15732,13 @@ pub async fn compare_assessments_handler(
 }
 
 /// GET /maturity/improvement-plan — 生成改进计划
+#[utoipa::path(
+    get,
+    path = "/api/erp/master-data-refs/maturity/improvement-plan",
+    tag = "Master Data",
+    operation_id = "get_improvement_plan_handler",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn get_improvement_plan_handler(
     State(state): State<ApiState>,
 ) -> Json<ApiResponse<ImprovementPlan>> {
@@ -16025,6 +16284,13 @@ pub async fn search_catalog_handler(
 }
 
 /// GET /catalog/{entry_id} — 获取目录条目详情
+#[utoipa::path(
+    get,
+    path = "/api/erp/master-data-refs/catalog/{entry_id}",
+    tag = "Master Data",
+    operation_id = "get_catalog_entry_handler",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn get_catalog_entry_handler(
     State(state): State<ApiState>,
     Path(entry_id): Path<String>,
@@ -16037,6 +16303,13 @@ pub async fn get_catalog_entry_handler(
 }
 
 /// POST /catalog — 创建目录条目
+#[utoipa::path(
+    post,
+    path = "/api/erp/master-data-refs/catalog",
+    tag = "Master Data",
+    operation_id = "create_catalog_entry_handler",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn create_catalog_entry_handler(
     State(state): State<ApiState>,
     Json(req): Json<CatalogEntryRequest>,
@@ -16047,6 +16320,13 @@ pub async fn create_catalog_entry_handler(
 }
 
 /// PUT /catalog/{entry_id} — 更新目录条目
+#[utoipa::path(
+    put,
+    path = "/api/erp/master-data-refs/catalog/{entry_id}",
+    tag = "Master Data",
+    operation_id = "update_catalog_entry_handler",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn update_catalog_entry_handler(
     State(state): State<ApiState>,
     Path(entry_id): Path<String>,
@@ -16060,6 +16340,13 @@ pub async fn update_catalog_entry_handler(
 }
 
 /// DELETE /catalog/{entry_id} — 删除目录条目
+#[utoipa::path(
+    delete,
+    path = "/api/erp/master-data-refs/catalog/{entry_id}",
+    tag = "Master Data",
+    operation_id = "delete_catalog_entry_handler",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn delete_catalog_entry_handler(
     State(state): State<ApiState>,
     Path(entry_id): Path<String>,
@@ -16076,6 +16363,13 @@ pub async fn delete_catalog_entry_handler(
 }
 
 /// GET /catalog/stats — 获取目录统计
+#[utoipa::path(
+    get,
+    path = "/api/erp/master-data-refs/catalog/stats",
+    tag = "Master Data",
+    operation_id = "get_catalog_stats_handler",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn get_catalog_stats_handler(
     State(state): State<ApiState>,
 ) -> Json<ApiResponse<CatalogStats>> {
@@ -16741,6 +17035,13 @@ async fn get_metadata_stats() -> MetadataStats {
 // ==================== 元数据 Handlers ====================
 
 /// POST /metadata/schemas — 创建元数据 Schema
+#[utoipa::path(
+    post,
+    path = "/api/erp/master-data-refs/metadata/schemas",
+    tag = "Master Data",
+    operation_id = "create_schema_handler",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn create_schema_handler(
     State(state): State<ApiState>,
     Json(req): Json<SchemaRequest>,
@@ -16766,6 +17067,13 @@ pub struct SchemaListQuery {
 }
 
 /// GET /metadata/schemas/{schema_id} — 获取 Schema
+#[utoipa::path(
+    get,
+    path = "/api/erp/master-data-refs/metadata/schemas/{schema_id}",
+    tag = "Master Data",
+    operation_id = "get_schema_handler",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn get_schema_handler(
     State(state): State<ApiState>,
     Path(schema_id): Path<String>,
@@ -16778,6 +17086,13 @@ pub async fn get_schema_handler(
 }
 
 /// PUT /metadata/schemas/{schema_id} — 更新 Schema（版本化）
+#[utoipa::path(
+    put,
+    path = "/api/erp/master-data-refs/metadata/schemas/{schema_id}",
+    tag = "Master Data",
+    operation_id = "update_schema_handler",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn update_schema_handler(
     State(state): State<ApiState>,
     Path(schema_id): Path<String>,
@@ -16794,6 +17109,13 @@ pub async fn update_schema_handler(
 }
 
 /// POST /metadata/validate — 验证记录是否符合 Schema
+#[utoipa::path(
+    post,
+    path = "/api/erp/master-data-refs/metadata/validate",
+    tag = "Master Data",
+    operation_id = "validate_record_handler",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn validate_record_handler(
     State(state): State<ApiState>,
     Json(req): Json<RecordUpsertRequest>,
@@ -16816,6 +17138,13 @@ pub async fn validate_record_handler(
 }
 
 /// POST /metadata/records — 创建/更新元数据记录
+#[utoipa::path(
+    post,
+    path = "/api/erp/master-data-refs/metadata/records",
+    tag = "Master Data",
+    operation_id = "upsert_record_handler",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn upsert_record_handler(
     State(state): State<ApiState>,
     Json(req): Json<RecordUpsertRequest>,
@@ -16841,6 +17170,13 @@ pub async fn query_records_handler(
 }
 
 /// GET /metadata/records/{record_id} — 获取记录
+#[utoipa::path(
+    get,
+    path = "/api/erp/master-data-refs/metadata/records/{record_id}",
+    tag = "Master Data",
+    operation_id = "get_record_handler",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn get_record_handler(
     State(state): State<ApiState>,
     Path(record_id): Path<String>,
@@ -16853,6 +17189,13 @@ pub async fn get_record_handler(
 }
 
 /// POST /metadata/relations — 创建关联关系
+#[utoipa::path(
+    post,
+    path = "/api/erp/master-data-refs/metadata/relations",
+    tag = "Master Data",
+    operation_id = "create_relation_handler",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn create_relation_handler(
     State(state): State<ApiState>,
     Json(req): Json<RelationRequest>,
@@ -16873,6 +17216,13 @@ pub async fn get_relations_handler(
 }
 
 /// GET /metadata/stats — 获取元数据统计
+#[utoipa::path(
+    get,
+    path = "/api/erp/master-data-refs/metadata/stats",
+    tag = "Master Data",
+    operation_id = "get_metadata_stats_handler",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn get_metadata_stats_handler(
     State(state): State<ApiState>,
 ) -> Json<ApiResponse<MetadataStats>> {
@@ -17428,6 +17778,13 @@ async fn get_dashboard_stats() -> DashboardStats {
 // ==================== 仪表盘 Handlers ====================
 
 /// GET /dashboard/{dashboard_id} — 获取仪表盘
+#[utoipa::path(
+    get,
+    path = "/api/erp/master-data-refs/dashboard/{dashboard_id}",
+    tag = "Master Data",
+    operation_id = "get_dashboard_handler",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn get_dashboard_handler(
     State(state): State<ApiState>,
     Path(dashboard_id): Path<String>,
@@ -17440,6 +17797,13 @@ pub async fn get_dashboard_handler(
 }
 
 /// POST /dashboard — 创建仪表盘
+#[utoipa::path(
+    post,
+    path = "/api/erp/master-data-refs/dashboard",
+    tag = "Master Data",
+    operation_id = "create_dashboard_handler",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn create_dashboard_handler(
     State(state): State<ApiState>,
     Json(req): Json<DashboardRequest>,
@@ -17450,6 +17814,13 @@ pub async fn create_dashboard_handler(
 }
 
 /// PUT /dashboard/{dashboard_id} — 更新仪表盘
+#[utoipa::path(
+    put,
+    path = "/api/erp/master-data-refs/dashboard/{dashboard_id}",
+    tag = "Master Data",
+    operation_id = "update_dashboard_handler",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn update_dashboard_handler(
     State(state): State<ApiState>,
     Path(dashboard_id): Path<String>,
@@ -17463,6 +17834,13 @@ pub async fn update_dashboard_handler(
 }
 
 /// DELETE /dashboard/{dashboard_id} — 删除仪表盘
+#[utoipa::path(
+    delete,
+    path = "/api/erp/master-data-refs/dashboard/{dashboard_id}",
+    tag = "Master Data",
+    operation_id = "delete_dashboard_handler",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn delete_dashboard_handler(
     State(state): State<ApiState>,
     Path(dashboard_id): Path<String>,
@@ -17479,6 +17857,13 @@ pub async fn delete_dashboard_handler(
 }
 
 /// GET /dashboard/{dashboard_id}/data — 获取仪表盘数据
+#[utoipa::path(
+    get,
+    path = "/api/erp/master-data-refs/dashboard/{dashboard_id}/data",
+    tag = "Master Data",
+    operation_id = "get_dashboard_data_handler",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn get_dashboard_data_handler(
     State(state): State<ApiState>,
     Path(dashboard_id): Path<String>,
@@ -17491,6 +17876,13 @@ pub async fn get_dashboard_data_handler(
 }
 
 /// GET /dashboard/kpi/summary — 获取 KPI 摘要
+#[utoipa::path(
+    get,
+    path = "/api/erp/master-data-refs/dashboard/kpi/summary",
+    tag = "Master Data",
+    operation_id = "get_kpi_summary_handler",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn get_kpi_summary_handler(
     State(state): State<ApiState>,
 ) -> Json<ApiResponse<Vec<KpiMetric>>> {
@@ -17500,6 +17892,13 @@ pub async fn get_kpi_summary_handler(
 }
 
 /// POST /dashboard/{dashboard_id}/refresh — 刷新仪表盘
+#[utoipa::path(
+    post,
+    path = "/api/erp/master-data-refs/dashboard/{dashboard_id}/refresh",
+    tag = "Master Data",
+    operation_id = "refresh_dashboard_handler",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn refresh_dashboard_handler(
     State(state): State<ApiState>,
     Path(dashboard_id): Path<String>,
@@ -17512,6 +17911,13 @@ pub async fn refresh_dashboard_handler(
 }
 
 /// GET /dashboard/stats — 获取仪表盘统计
+#[utoipa::path(
+    get,
+    path = "/api/erp/master-data-refs/dashboard/stats",
+    tag = "Master Data",
+    operation_id = "get_dashboard_stats_handler",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn get_dashboard_stats_handler(
     State(state): State<ApiState>,
 ) -> Json<ApiResponse<DashboardStats>> {
@@ -18239,6 +18645,13 @@ pub async fn list_report_templates_handler(
 }
 
 /// POST /reports/templates — 创建报告模板
+#[utoipa::path(
+    post,
+    path = "/api/erp/master-data-refs/reports/templates",
+    tag = "Master Data",
+    operation_id = "create_report_template_handler",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn create_report_template_handler(
     State(state): State<ApiState>,
     Json(req): Json<ReportTemplateRequest>,
@@ -18249,6 +18662,13 @@ pub async fn create_report_template_handler(
 }
 
 /// GET /reports/templates/{template_id} — 获取报告模板
+#[utoipa::path(
+    get,
+    path = "/api/erp/master-data-refs/reports/templates/{template_id}",
+    tag = "Master Data",
+    operation_id = "get_report_template_handler",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn get_report_template_handler(
     State(state): State<ApiState>,
     Path(template_id): Path<String>,
@@ -18261,6 +18681,13 @@ pub async fn get_report_template_handler(
 }
 
 /// POST /reports/generate — 生成报告
+#[utoipa::path(
+    post,
+    path = "/api/erp/master-data-refs/reports/generate",
+    tag = "Master Data",
+    operation_id = "generate_report_handler",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn generate_report_handler(
     State(state): State<ApiState>,
     Json(req): Json<GenerateReportRequest>,
@@ -18284,6 +18711,13 @@ pub async fn list_generated_reports_handler(
 }
 
 /// GET /reports/generated/{report_id} — 获取已生成报告
+#[utoipa::path(
+    get,
+    path = "/api/erp/master-data-refs/reports/generated/{report_id}",
+    tag = "Master Data",
+    operation_id = "get_generated_report_handler",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn get_generated_report_handler(
     State(state): State<ApiState>,
     Path(report_id): Path<String>,
@@ -18296,6 +18730,13 @@ pub async fn get_generated_report_handler(
 }
 
 /// POST /reports/schedule — 调度报告
+#[utoipa::path(
+    post,
+    path = "/api/erp/master-data-refs/reports/schedule",
+    tag = "Master Data",
+    operation_id = "schedule_report_handler",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn schedule_report_handler(
     State(state): State<ApiState>,
     Json(req): Json<ScheduleReportRequest>,
@@ -18308,6 +18749,13 @@ pub async fn schedule_report_handler(
 }
 
 /// GET /reports/schedule/{template_id} — 获取报告调度计划
+#[utoipa::path(
+    get,
+    path = "/api/erp/master-data-refs/reports/schedule/{template_id}",
+    tag = "Master Data",
+    operation_id = "get_report_schedule_handler",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn get_report_schedule_handler(
     State(state): State<ApiState>,
     Path(template_id): Path<String>,
@@ -18320,6 +18768,13 @@ pub async fn get_report_schedule_handler(
 }
 
 /// GET /reports/stats — 获取报告自动化统计
+#[utoipa::path(
+    get,
+    path = "/api/erp/master-data-refs/reports/stats",
+    tag = "Master Data",
+    operation_id = "get_report_automation_stats_handler",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn get_report_automation_stats_handler(
     State(state): State<ApiState>,
 ) -> Json<ApiResponse<ReportAutomationStats>> {
@@ -19170,6 +19625,13 @@ pub async fn list_compliance_rules_handler(
 }
 
 /// POST /audit/rules — 创建合规规则
+#[utoipa::path(
+    post,
+    path = "/api/erp/master-data-refs/audit/rules",
+    tag = "Master Data",
+    operation_id = "create_compliance_rule_handler",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn create_compliance_rule_handler(
     State(state): State<ApiState>,
     Json(req): Json<ComplianceRuleRequest>,
@@ -19180,6 +19642,13 @@ pub async fn create_compliance_rule_handler(
 }
 
 /// POST /audit/check — 执行合规检查
+#[utoipa::path(
+    post,
+    path = "/api/erp/master-data-refs/audit/check",
+    tag = "Master Data",
+    operation_id = "run_compliance_check_handler",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn run_compliance_check_handler(
     State(state): State<ApiState>,
     Json(req): Json<ComplianceCheckRequest>,
@@ -19200,6 +19669,13 @@ pub async fn get_audit_findings_handler(
 }
 
 /// POST /audit/findings/{finding_id}/resolve — 解决审计发现
+#[utoipa::path(
+    post,
+    path = "/api/erp/master-data-refs/audit/findings/{finding_id}/resolve",
+    tag = "Master Data",
+    operation_id = "resolve_finding_handler",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn resolve_finding_handler(
     State(state): State<ApiState>,
     Path(finding_id): Path<String>,
@@ -19233,6 +19709,13 @@ pub async fn get_audit_scorecard_handler(
 }
 
 /// GET /audit/stats — 获取合规审计统计
+#[utoipa::path(
+    get,
+    path = "/api/erp/master-data-refs/audit/stats",
+    tag = "Master Data",
+    operation_id = "get_compliance_audit_stats_handler",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn get_compliance_audit_stats_handler(
     State(state): State<ApiState>,
 ) -> Json<ApiResponse<ComplianceAuditStats>> {

@@ -46,6 +46,15 @@ pub(crate) fn suggestion_row_to_json(row: &sqlx::postgres::PgRow) -> serde_json:
     })
 }
 
+#[utoipa::path(
+    get,
+    path = "/smart-replenishment/suggestions",
+    tag = "smart_replenishment",
+    operation_id = "list_suggestions",
+    responses(
+        (status = 200, description = "OK"),
+    ),
+)]
 pub async fn list_suggestions(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
@@ -125,6 +134,15 @@ pub async fn list_suggestions(
     }
 }
 
+#[utoipa::path(
+    get,
+    path = "/smart-replenishment/suggestions/{id}",
+    tag = "smart_replenishment",
+    operation_id = "get_suggestion",
+    responses(
+        (status = 200, description = "OK"),
+    ),
+)]
 pub async fn get_suggestion(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
@@ -161,6 +179,15 @@ pub async fn get_suggestion(
     }
 }
 
+#[utoipa::path(
+    post,
+    path = "/smart-replenishment/suggestions/generate",
+    tag = "smart_replenishment",
+    operation_id = "compute_replenishment",
+    responses(
+        (status = 200, description = "OK"),
+    ),
+)]
 pub async fn compute_replenishment(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
@@ -363,6 +390,15 @@ pub async fn compute_replenishment(
     response
 }
 
+#[utoipa::path(
+    post,
+    path = "/smart-replenishment/suggestions/{id}",
+    tag = "smart_replenishment",
+    operation_id = "confirm_suggestion",
+    responses(
+        (status = 200, description = "OK"),
+    ),
+)]
 pub async fn confirm_suggestion(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
@@ -469,6 +505,15 @@ pub async fn confirm_suggestion(
     response
 }
 
+#[utoipa::path(
+    get,
+    path = "/smart-replenishment/statistics",
+    tag = "smart_replenishment",
+    operation_id = "get_statistics",
+    responses(
+        (status = 200, description = "OK"),
+    ),
+)]
 pub async fn get_statistics(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,

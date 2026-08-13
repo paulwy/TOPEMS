@@ -1655,6 +1655,13 @@ pub async fn auto_audit_scheduler(pool: PgPool) {
 
 // ==================== API Handlers ====================
 
+#[utoipa::path(
+    post,
+    path = "/audit-v52/rules",
+    tag = "Audit-V52",
+    operation_id = "create_audit_rule_handler",
+    responses((status = 200, description = "OK")),
+)]
 async fn create_audit_rule_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -1682,6 +1689,13 @@ async fn list_audit_rules_handler(
     }
 }
 
+#[utoipa::path(
+    put,
+    path = "/audit-v52/rules/{id}",
+    tag = "Audit-V52",
+    operation_id = "update_audit_rule_handler",
+    responses((status = 200, description = "OK")),
+)]
 async fn update_audit_rule_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -1695,6 +1709,13 @@ async fn update_audit_rule_handler(
     }
 }
 
+#[utoipa::path(
+    delete,
+    path = "/audit-v52/rules/{id}",
+    tag = "Audit-V52",
+    operation_id = "delete_audit_rule_handler",
+    responses((status = 200, description = "OK")),
+)]
 async fn delete_audit_rule_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -1739,6 +1760,13 @@ async fn get_audit_findings_handler(
     }
 }
 
+#[utoipa::path(
+    post,
+    path = "/audit-v52/findings/{id}/resolve",
+    tag = "Audit-V52",
+    operation_id = "resolve_finding_handler",
+    responses((status = 200, description = "OK")),
+)]
 async fn resolve_finding_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -1761,6 +1789,13 @@ async fn resolve_finding_handler(
     }
 }
 
+#[utoipa::path(
+    post,
+    path = "/audit-v52/run",
+    tag = "Audit-V52",
+    operation_id = "run_audit_handler",
+    responses((status = 200, description = "OK")),
+)]
 async fn run_audit_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -1773,6 +1808,13 @@ async fn run_audit_handler(
     }
 }
 
+#[utoipa::path(
+    post,
+    path = "/audit-v52/anomaly/detect",
+    tag = "Audit-V52",
+    operation_id = "detect_anomalies_handler",
+    responses((status = 200, description = "OK")),
+)]
 async fn detect_anomalies_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -1817,6 +1859,13 @@ async fn get_anomaly_alerts_handler(
     }
 }
 
+#[utoipa::path(
+    get,
+    path = "/audit-v52/anomaly/summary",
+    tag = "Audit-V52",
+    operation_id = "get_detection_summary_handler",
+    responses((status = 200, description = "OK")),
+)]
 async fn get_detection_summary_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -1828,6 +1877,13 @@ async fn get_detection_summary_handler(
     }
 }
 
+#[utoipa::path(
+    post,
+    path = "/audit-v52/anomaly/config",
+    tag = "Audit-V52",
+    operation_id = "configure_detection_handler",
+    responses((status = 200, description = "OK")),
+)]
 async fn configure_detection_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -1887,6 +1943,13 @@ async fn get_alerts_handler(
     }
 }
 
+#[utoipa::path(
+    post,
+    path = "/audit-v52/alerts/config",
+    tag = "Audit-V52",
+    operation_id = "create_alert_config_handler",
+    responses((status = 200, description = "OK")),
+)]
 async fn create_alert_config_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -1899,6 +1962,13 @@ async fn create_alert_config_handler(
     }
 }
 
+#[utoipa::path(
+    get,
+    path = "/audit-v52/alerts/config/list",
+    tag = "Audit-V52",
+    operation_id = "list_alert_configs_handler",
+    responses((status = 200, description = "OK")),
+)]
 async fn list_alert_configs_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -1910,6 +1980,13 @@ async fn list_alert_configs_handler(
     }
 }
 
+#[utoipa::path(
+    post,
+    path = "/audit-v52/alerts/{id}/acknowledge",
+    tag = "Audit-V52",
+    operation_id = "acknowledge_alert_handler",
+    responses((status = 200, description = "OK")),
+)]
 async fn acknowledge_alert_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
