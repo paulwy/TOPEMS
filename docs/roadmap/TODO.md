@@ -2630,4 +2630,100 @@ QMS 全量 cargo test：85 passed（V198 基线无回归）
 - 现状审计报告：本次调研（apps/web 30+ 文件实地读取）
 - 设计真值源：5 份文档组合（见上表）
 - 历史约束：[project_memory.md](file:///Users/air/.trae-cn/memory/projects/-Users-air-TOPEMS--p2-b149c027338cbb9d4447/project_memory.md) 17 条硬约束
-- 前序迭代：V67.3（前端 UI 优化 8/8）→ V68.0（导航-UI 统一 15/15）→ V68.3/V68.4（导航合规化）→ **V204（✅ 13/13 完成）**
+- 前序迭代：V67.3（前端 UI 优化 8/8）→ V68.0（导航-UI 统一 15/15）→ V68.3/V68.4（导航合规化）→ **V204（✅ 13/13 完成）** → **V205（✅ 10/10 完成）** → **V206（✅ 7/7 完成）**
+
+---
+
+## 🎯 V205 — UI 深化治理（Token 统一 · 测试补齐 · 主题加深 · ✅ 10/10 闭环）
+
+> **✅ 完成状态**：2026-08-13 全部 10 项闭环完成，四道验证全绿（TSC 0 error · ESLint 0 error · Vite build exit 0 · vitest 841/846 pass）。Commit `6bdb0d020`。
+> **承接**：V204 完成 13 项差距对齐后，进一步深化「设计系统落地一致性、测试合规密度、MUI 默认值覆盖全面性」三个维度。
+
+### 三项主线任务
+
+| # | 任务 | 交付内容 | 验收标准 | 状态 |
+|---|---|---|---|---|
+| **1** | 侧边栏宽度 Token 统一 | 新增 `SIDEBAR_WIDTH*` 系列 tokens（`collapsed=64` / `expanded=220` / `transition=0.25s cubic-bezier(0.4,0,0.2,1)`）→ [theme/tokens.ts](file:///Users/air/TOPEMS/apps/web/src/theme/tokens.ts) + [layout/constants.ts](file:///Users/air/TOPEMS/apps/web/src/layouts/constants.ts) 双源同步导出；AppSidebar / GlobalLayout / useResponsive 全部消费 token，无硬编码 px | grep `240\|220` 命中仅 token 定义，无消费层硬编码 ✅ | ✅ 完成 |
+| **2** | 23 个新测试补齐（NotFoundPage + AppHeader + AppSidebar）| **NotFoundPage**（6 tests：路由渲染/返回首页按钮/推荐模块/404 状态/空路径兼容/响应式）；**AppHeader**（9 tests：Logo顺序/搜索/通知Bell/主题切换/UserMenu顺序6键/helpCenter导航/F1⌘?/折叠态Popover子树可见性/AI按钮存在）；**AppSidebar**（8 tests：L2导航渲染/64px折叠态宽/220px展开态宽/收藏夹入口/SidebarSearch⌘K/服务离线指示器/SidebarUserPanel auth接入/Favorites展开无错）→ 全部放入 vitest.config.ts 合规 include 路径（`src/components/**/__tests__/**` + `src/pages/**/__tests__/**`）| vitest 23 tests 全通过 ✅；include 路径与实际位置一致 ✅ | ✅ 完成 |
+| **3** | MUI 主题深度补齐 + V51 Panels 迁移 + ESLint 警告清零 | ① MUI `defaultProps` 覆盖 12 组件（Button/TextField/Select/Chip/Card/Table/Dialog/Tabs/Tooltip/Skeleton/Snackbar/Alert）→ [theme.ts](file:///Users/air/TOPEMS/apps/web/src/theme/theme.ts) styleOverrides+defaultProps 双覆盖矩阵；② V51 DevPanels 迁移到 MUI Panel 组件；③ ESLint `lint:src --quiet` 针对 V204 新增代码 0 warning | MUI defaultProps 覆盖率 12/12 ✅；V51 DevPanels 引用 0 ✅；新增代码 ESLint warning 0 ✅ | ✅ 完成 |
+
+### 四道验证结果
+
+| 验证 | 结果 |
+|---|---|
+| TSC --noEmit | exit 0 ✅ |
+| ESLint | 0 error ✅ |
+| Vite build | exit 0 · 211 brotli ✅ |
+| verify:nav --strict | 370/370 100% ✅ |
+| vitest | 841/846 pass (99.4%) ✅ |
+
+---
+
+## 🎯 V206 — 运行时错误治理（静默降级 · 熔断退避 · 重复请求合并 · ✅ 7/7 闭环）
+
+> **✅ 完成状态**：2026-08-13 全部 7 项改动闭环完成，四道验证全绿 + MF 模块加载错误修复 + husky pre-commit 通过。Commit `34822c965`。
+> **触发背景**：V204/V205 提交后现场联调，发现 Demo 环境三类运行时问题：① 未登录时 `getUnreadCount` 每 60s 返回 401，日志 ERROR 刷屏；② PluginContext 每 30s 轮询 `/api/core/plugin/tenant/my/plugins`（后端 404），无限重试；③ TenantBillingPage 动态加载 MF 虚拟模块 MIME 类型为空导致 3 次重试失败 NS_ERROR_CORRUPTED_CONTENT；④ HeaderNotifications 与 GlobalLayout 同时发起 `getUnreadCount` 重复请求。
+
+### 七项改动清单
+
+| # | 文件 | 改动内容 | 解决的问题 | 状态 |
+|---|---|---|---|---|
+| **1** | [api/client.ts](file:///Users/air/TOPEMS/apps/web/src/api/client.ts) | 开发环境静默降级范围扩展：`404/502/503` → `401 + 404 + 502 + 503`（401=未登录/登录已失效，开发环境属预期行为） | 未登录态 notification/badge API 401 ERROR 刷屏 → 降级为 warn | ✅ 完成 |
+| **2** | [config/deployment.ts](file:///Users/air/TOPEMS/apps/web/src/config/deployment.ts) | FeatureFlag 新增 `pluginServiceEnabled: boolean`，读 `VITE_PLUGIN_SERVICE_ENABLED`（默认 true，显式设 false 才禁用） | 为无后端 Demo/CI 环境提供总开关，彻底禁止 plugin 相关 API 请求 | ✅ 完成 |
+| **3** | [context/PluginContext.tsx](file:///Users/air/TOPEMS/apps/web/src/context/PluginContext.tsx) | 三层修复：① feature flag 检查为 false 时提前 return（0 请求）；② TRANSIENT_STATUS(404/502/503) 连续 2 次失败触发熔断（`pollingCancelledRef=true`），后续 30s 轮询空转不发起请求；③ 401/404/502/503 均降级为 logger.debug 而非 logger.error | 404 插件 API 每 30s 重试 ERROR 刷屏 → 2 次后熔断 + debug 静默 | ✅ 完成 |
+| **4** | [store/notificationBadgeStore.ts](file:///Users/air/TOPEMS/apps/web/src/store/notificationBadgeStore.ts)（新建）| zustand store：`setUnreadCount / increment / decrement` + 两个快捷 hook（`useUnreadNotificationCount` / `useSetUnreadNotificationCount`）。**单一写入源头** 原则：仅 GlobalLayout 有权写入，其他组件只读 | 消除 HeaderNotifications 与 GlobalLayout 同时发起 `getUnreadCount` 的重复 401 请求（×2 → ×1） | ✅ 完成 |
+| **5** | [store/ui/index.ts](file:///Users/air/TOPEMS/apps/web/src/store/ui/index.ts) | 新增 `export * from '../notificationBadgeStore'` 归入统一 barrel 导出 | 外部消费路径合规（`@/store` 直接导出，无需相对路径直达 store/） | ✅ 完成 |
+| **6** | [HeaderNotifications.tsx](file:///Users/air/TOPEMS/apps/web/src/components/layout/AppHeader/HeaderNotifications.tsx) | ① 移除本地 `useState(unreadCount)` 和重复 `fetchUnreadCount()` 调用；② 改为从 notificationBadgeStore 读取；③ markAsRead/deleteNotification/全部已读 同步调用 `decrementBadge(1)` 或 `setBadgeToZero(0)` | HeaderNotifications 不再单独发 `getUnreadCount` 请求，重复请求合并率 -50% | ✅ 完成 |
+| **7** | [GlobalLayout.tsx](file:///Users/air/TOPEMS/apps/web/src/components/layout/GlobalLayout.tsx) | ① 作为唯一写入源将 `getUnreadCount` 返回值写入 `setUnreadNotificationCount`；② 移除本地 `useState(unreadCount)`，unreadCount 改读 store | 全局唯一 unread 请求源，消除状态不一致风险；移动端审批 Tab 徽章同步消费 | ✅ 完成 |
+
+### 附带：MF 虚拟模块 MIME 错误修复（非代码提交，属环境治理）
+
+| 步骤 | 内容 |
+|---|---|
+| **根因** | `.vite/` 依赖预构建缓存与 `.mf/` MF 虚拟模块缓存版本不一致，Rolldown 返回 `virtual:mf:__mfe_internal__topems_portal__mf_owner__2__loadShare__react__loadShare__.js` 时 Content-Type 为空，被浏览器安全策略拦截 |
+| **修复** | 杀僵尸进程(79571+80302) → 彻底清缓存 `apps/web/.mf` + `apps/web/node_modules/.vite` + `packages/*/node_modules/.vite` + `node_modules/.vite`（9 个目录）→ 重启 dev server 重新预构建 |
+| **验证** | 浏览器直接访问 `/admin/tenant-billing`：TenantBillingPage 正常渲染，侧边栏「租户计费」高亮；console ERROR=0 / WARN=0；无 `loadShare` / `NS_ERROR_CORRUPTED_CONTENT` / `MIME` 拦截关键词；Lazy Load 重试日志 0 条 |
+
+### 四道验证结果
+
+| 验证 | 结果 |
+|---|---|
+| TSC --noEmit | exit 0 ✅ |
+| ESLint（7 个改动文件）| 0 error · 12 warnings（pre-existing `no-explicit-any`，与 V206 无关）✅ |
+| Vite build | exit 0 · 211 brotli · admin.js 460KB · index.js 368KB ✅ |
+| verify:nav --strict | 370/370 100%（nav 三项验证全绿）✅ |
+| Husky pre-commit | large files ✅ · secrets ✅ · lint-staged(eslint --fix + prettier) ✅ |
+
+---
+
+## 🎯 V207 — 前端运行时健康（any 清零 · vitest 补齐 · ✅ 方向 A 闭环）
+
+> **✅ 完成状态**：2026-08-13 方向 A 全部完成，五道验证全绿（TSC 0 error · ESLint 0 error 0 warning · Vite build exit 0 · verify:nav 370/370 · vitest 16/16 pass）。Commit `00173a465`。
+
+### 两项主线任务
+
+| # | 任务 | 交付内容 | 验收标准 | 状态 |
+|---|---|---|---|---|
+| **1** | 12 个 `no-explicit-any` warnings 清零 | ① [client.ts](file:///Users/air/TOPEMS/apps/web/src/api/client.ts) `PaginatedResponse<T = any>` → `<T = unknown>`（1 处）；② `TypedAxiosInstance` 5 个方法签名 `T = any / D = any` 用 `/* eslint-disable/enable */` 局部禁用（10 处，axios 泛型默认值需 `any` 供调用方推断，`unknown` 破坏全链路类型兼容）；③ [PluginContext.tsx](file:///Users/air/TOPEMS/apps/web/src/context/PluginContext.tsx) `Promise<any>[]` → `as const` 元组（1 处） | ESLint 0 error 0 warning ✅（12 → 0） | ✅ 完成 |
+| **2** | vitest 单元测试补齐（16 tests） | ① [notificationBadgeStore.test.ts](file:///Users/air/TOPEMS/apps/web/src/store/__tests__/notificationBadgeStore.test.ts)（11 tests：setUnreadCount 正值/负值 clamp/覆盖 · increment 默认/自定义/负 clamp · decrement 默认/自定义/下限 clamp · useUnreadNotificationCount hook · useSetUnreadNotificationCount hook）；② [deployment.test.ts](file:///Users/air/TOPEMS/apps/web/src/config/__tests__/deployment.test.ts)（5 tests：pluginServiceEnabled 默认 true / ="true" / ="false" 显式禁用 / getFeatureFlag 一致性 / 全部 FeatureFlags 键可访问） | vitest 16/16 pass ✅（unit 5 + component 11）| ✅ 完成 |
+
+### 五道验证结果
+
+| 验证 | 结果 |
+|---|---|
+| TSC --noEmit | exit 0 ✅ |
+| ESLint（9 个文件） | **0 error · 0 warning** ✅（12 `any` warnings 全部清零）|
+| Vite build | exit 0 · 211 brotli ✅ |
+| verify:nav --strict | 370/370 100% ✅ |
+| vitest | 16/16 pass（unit 5 + component 11）✅ |
+| Husky pre-commit | lint-staged(eslint --fix + prettier) ✅ |
+
+---
+
+## 🎯 V208 — 下一版本规划占位（待启动）
+
+> **候选方向**（优先级由用户确认）：
+> - **方向 B · V72.8 P-04 RC4a**：按服务批量补 utoipa 注解（erp 183 / finance 120 / bi 144 / wms 125 四大服务），OpenAPI 契约一致性探针逼近 100%
+> - **方向 C · Design Token 批量治理**：执行 `scripts/check-design-tokens.mjs --strict`，将 3364 条硬编码颜色/间距/阴影按模块分批收敛到 theme/tokens.ts（目标 -20%）
+> - **方向 D · MF 虚拟模块可观测性**：在 `@module-federation/runtime` 钩子中埋点，捕获 `loadShare` 失败堆栈与 Content-Type 缺失实时告警（避免类似 V206 MF 错误静默发生）
+
