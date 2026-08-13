@@ -13,7 +13,7 @@ export type { PageAction as PageHeaderAction } from './templates/PageHeader';
 
 // ===== 统一导航组件 (规范版本) =====
 export { MobileNav } from './layout/MobileNav';
-export { Sidebar } from './layout/Sidebar';
+// [已清理] Sidebar - 0 引用（审计 P1-6，死代码删除）
 
 // Common components
 export { Grid } from './common/Grid';
@@ -374,93 +374,11 @@ export type {
 export { AccessLogger, useAccessLogger, PageAccessLogger, ActionLogger } from './AccessLogger';
 export type { AccessLogEntry } from './AccessLogger';
 
-// ===== V51.0 Design System =====
-export * as V51DesignSystem from '@/design-system';
-export { V51DesignSystemPanel } from '@/design-system';
-export {
-  V51Button,
-  V51Card,
-  V51Input,
-  V51Select,
-  V51Table,
-  V51Dialog,
-  V51ToastProvider,
-  useV51Toast,
-  V51Tabs,
-  V51Badge,
-  V51Skeleton,
-  V51SkeletonCard,
-  V51Avatar,
-} from '@/design-system/components';
-export type {
-  V51ButtonProps,
-  V51ButtonVariant,
-  V51ButtonSize,
-  V51ButtonColor,
-  V51CardProps,
-  V51InputProps,
-  V51InputValidationState,
-  V51SelectProps,
-  V51SelectOption,
-  V51TableProps,
-  V51TableColumn,
-  V51SortDirection,
-  V51DialogProps,
-  V51ToastMessage,
-  V51ToastContextValue,
-  V51TabsProps,
-  V51TabItem,
-  V51BadgeProps,
-  V51BadgeVariant,
-  V51BadgeSize,
-  V51SkeletonProps,
-  V51SkeletonCardProps,
-  V51AvatarProps,
-} from '@/design-system/components';
-export {
-  v51DesignTokens,
-  v51ColorPalette,
-  v51DarkColorPalette,
-  v51Typography,
-  v51Spacing,
-  v51BorderRadius,
-  v51Shadows,
-  v51DarkShadows,
-  v51ZIndex,
-  v51Breakpoints,
-  v51Motion,
-  v51SemanticTokens,
-  generateV51CSSVariables,
-  injectV51CSSVariables,
-} from '@/design-system/tokens/v51-tokens';
-export type {
-  V51DesignTokens,
-  V51ColorPalette,
-  V51Typography,
-  V51Spacing,
-  V51BorderRadius,
-  V51Shadows,
-  V51ZIndex,
-  V51Breakpoints,
-  V51Motion,
-  V51SemanticTokens,
-} from '@/design-system/tokens/v51-tokens';
-export { V51ThemeProvider, useV51Theme, themeManager } from '@/design-system/theme-manager';
-export type {
-  V51ThemeMode,
-  V51ThemeConfig,
-  V51ThemeContextValue,
-} from '@/design-system/theme-manager';
-export {
-  v51DesignLint,
-  runColorContrastChecks,
-  generateLintReport,
-  runAllChecks,
-  formatReport,
-} from '@/design-system/design-lint';
-export type {
-  LintIssue,
-  LintReport,
-  ColorContrastCheck,
-  ComponentUsageCheck,
-} from '@/design-system/design-lint';
+// ===== V51.0 Design System [已弃用] =====
+// V51 设计系统已被 MUI 主题 + shared-components 体系替代。
+// 禁止新代码从 @/components 或 @/design-system 引入 V51* 组件/令牌。
+// 业务代码统一使用：
+//   - 组件：@mui/material + @/components/common/* + @topems/shared-components
+//   - 主题：theme/*.ts 中的 MUI ThemeProvider + createTheme
+//   - 令牌：@topems/tokens
+// 现存 12 处 V51 引用仅限 AI/Dev 内部面板，将在 Phase 2+ 分批迁移。

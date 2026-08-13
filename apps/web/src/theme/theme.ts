@@ -241,6 +241,18 @@ export const createCustomTheme = (): Theme => {
           },
         },
       },
+      MuiSelect: {
+        styleOverrides: {
+          root: {
+            '& .MuiOutlinedInput-root': {
+              borderRadius: designTokens.borderRadius.md,
+              '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                borderWidth: '2px',
+              },
+            },
+          },
+        },
+      },
       MuiCard: {
         styleOverrides: {
           root: {

@@ -11,14 +11,13 @@ import {
   bulkMarkAsRead,
   bulkDeleteNotifications,
 } from '@/api/notification';
-import NotificationItem from '@/components/notifications/NotificationItem';
-import NotificationSettings from '@/components/notifications/NotificationSettings';
+import NotificationItem from '@/components/notification/NotificationItem';
+import NotificationSettings from '@/components/notification/NotificationSettings';
 import useNotificationSettings from '@/hooks/useNotificationSettings';
 import { apiLogger } from '@/utils/logger';
 import { PageContainer } from '@/components';
 import { designTokens } from '@/theme/tokens';
 import { useNotificationStore } from '@/store';
-
 
 import { QUERY_KEYS } from '@/lib/reactQuery';
 
@@ -38,7 +37,7 @@ const NotificationCenter: React.FC = () => {
 
   const { settings, toggleSetting } = useNotificationSettings();
 
-  const { data, isError, error, isPending} = useQuery({
+  const { data, isError, error, isPending } = useQuery({
     queryKey: [...QUERY_KEYS.AD_HOC.NOTIFICATIONS_BASE, activeFilter, page],
     queryFn: async () => {
       const typeParam = activeFilter === 'all' ? undefined : activeFilter;
@@ -99,10 +98,11 @@ const NotificationCenter: React.FC = () => {
   const markAllAsReadMutation = useMutation({
     mutationFn: () => markAllAsRead(),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.NOTIFICATIONS_BASE ,
-  exact: false,
-  refetchType: 'active',
-});
+      queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.AD_HOC.NOTIFICATIONS_BASE,
+        exact: false,
+        refetchType: 'active',
+      });
     },
     onError: (error) => {
       apiLogger.error('Failed to mark all as read:', error);
@@ -153,10 +153,11 @@ const NotificationCenter: React.FC = () => {
   const bulkDeleteMutation = useMutation({
     mutationFn: (ids: string[]) => bulkDeleteNotifications(ids),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.NOTIFICATIONS_BASE ,
-  exact: false,
-  refetchType: 'active',
-});
+      queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.AD_HOC.NOTIFICATIONS_BASE,
+        exact: false,
+        refetchType: 'active',
+      });
       setSelectedNotifications(new Set());
     },
     onError: (error) => {
@@ -172,10 +173,11 @@ const NotificationCenter: React.FC = () => {
   const bulkMarkAsReadMutation = useMutation({
     mutationFn: (ids: string[]) => bulkMarkAsRead(ids),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.NOTIFICATIONS_BASE ,
-  exact: false,
-  refetchType: 'active',
-});
+      queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.AD_HOC.NOTIFICATIONS_BASE,
+        exact: false,
+        refetchType: 'active',
+      });
       setSelectedNotifications(new Set());
     },
     onError: (error) => {

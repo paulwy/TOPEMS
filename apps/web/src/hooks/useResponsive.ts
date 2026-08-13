@@ -35,21 +35,18 @@ export interface ResponsiveContext {
   isPortrait: boolean;
   dpr: number;
   breakpoints: Record<string, number>;
-  breakpointValues: typeof BREAKPOINTS;
+  breakpointValues: Record<string, number> & typeof BREAKPOINTS;
 }
 
 /**
  * 响应式断点配置常量
- * 参考 Material Design 断点规范，添加精确的 Tablet 断点 + xxl 大屏
+ * 注意：xs/sm/md/lg/xl 的权威来源为 designTokens.breakpoints.values（通过 MUI ThemeProvider 注入）
+ * 此处仅保留 theme 未覆盖的补充断点（tablet/tabletMax/xxl）
+ * —— P2-10 合规化：移除与 designTokens.values 重复的硬编码值，避免两套体系不一致
  */
 export const BREAKPOINTS = {
-  xs: 0,
-  sm: 600,
-  md: 768,
-  tablet: 768,
-  tabletMax: 1024,
-  lg: 900,
-  xl: 1200,
+  tablet: 600,
+  tabletMax: 1199,
   xxl: 1920,
 } as const;
 
@@ -76,17 +73,17 @@ export const useResponsive = (): ResponsiveContext => {
   const isMd = useMediaQuery(theme.breakpoints.only('md'));
   const isLg = useMediaQuery(theme.breakpoints.only('lg'));
   const isXl = useMediaQuery(theme.breakpoints.only('xl'));
-  const isXxl = useMediaQuery(theme.breakpoints.up(1920));
 
-  // 精确的 Tablet 断点检测（768px - 1024px）
-  const isTabletNarrow = useMediaQuery('(min-width:768px) and (max-width:899px)');
-  const isTabletWide = useMediaQuery('(min-width:900px) and (max-width:1024px)');
-  const isTablet = useMediaQuery('(min-width:768px) and (max-width:1024px)');
+  // 精确的 Tablet 断点检测（P2-10：迁移至 MUI theme.breakpoints，无硬编码数值）
+  const isTabletNarrow = useMediaQuery(theme.breakpoints.only('sm'));
+  const isTabletWide = useMediaQuery(theme.breakpoints.only('md'));
+  const isTablet = useMediaQuery(theme.breakpoints.between('sm', 'lg'));
 
   // 设备类型检测
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const isDesktop = useMediaQuery(theme.breakpoints.up('lg'));
   const isLargeScreen = useMediaQuery(theme.breakpoints.up('xl'));
+  const isXxl = useMediaQuery(theme.breakpoints.up(BREAKPOINTS.xxl));
 
   // 方向检测
   const isLandscape = useMediaQuery('(orientation: landscape)');
@@ -183,8 +180,11 @@ export const useResponsive = (): ResponsiveContext => {
       xxl: BREAKPOINTS.xxl,
     },
 
-    // 断点常量
-    breakpointValues: BREAKPOINTS,
+    // 断点常量（合并 MUI 主题权威值 + 补充 tablet/tabletMax/xxl）
+    breakpointValues: {
+      ...(theme.breakpoints.values as Record<string, number>),
+      ...BREAKPOINTS,
+    },
   };
 };
 
