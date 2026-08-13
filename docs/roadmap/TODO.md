@@ -2720,10 +2720,53 @@ QMS 全量 cargo test：85 passed（V198 基线无回归）
 
 ---
 
-## 🎯 V208 — 下一版本规划占位（待启动）
+## 🎯 V208 — V72.8 P-04 RC4a · utoipa 骨架注解四服务批量补全（✅ 方向 B 闭环）
+
+> **✅ 完成状态**：2026-08-13 方向 B 全部编译通过，四服务 `cargo check` exit 0 + 三服务 `openapi_extract` 1/1 pass。Commit `ea88fdd82` · 43 files changed, +2,387/-6 lines。
+
+### 策略说明
+**RC4a 只补「骨架级」`#[utoipa::path(...)]`**：只填 `method / path / tag / operation_id / responses(200 OK)` 五元组，不强制 Query struct 加 `IntoParams`、不碰 request_body/schema 细节（留待 **V209 RC4b** 深挖，避免大面风险）。严格原则：**遇 `Query<T>` 报 `IntoParams` 未实现的 handler → 直接从 paths 列表撤销，`cargo check exit 0` > 覆盖率**。
+
+### 四服务交付矩阵
+
+| 服务 | 初始差集 | RC4a 新增注解（过编译） | 初始 paths() | 现 paths() | tags 扩展 | cargo check | openapi_extract | 新增 OpenAPI JSON 产出 |
+|---|---|---|---|---|---|---|---|---|
+| **WMS** [openapi.rs](file:///Users/air/TOPEMS/svc/wms/src/modules/openapi.rs) | 42 | **40** handlers + 52 paths 条目 | 148 | **200** | 6 → **16** tags（+inventory_movement/smart_replenishment/data_sync 等） | ✅ exit 0 | ✅ 1 passed · 72,384 B | 72,384 B |
+| **BI / analytics** [openapi.rs](file:///Users/air/TOPEMS/svc/analytics/src/openapi.rs) | 69 | **74** handlers + 71 paths 条目 | 155 | **226** | 7 → **18** tags（+Drilldown/Multidim/Prediction/Permission/Reports/Templates/Schedules/Subscriptions/BI-Plugin/WebSocket） | ✅ exit 0 | ✅ 1 passed | 96,028 B |
+| **ERP** [openapi.rs](file:///Users/air/TOPEMS/svc/erp/src/modules/openapi.rs) | 164 | **99** handlers + 99 paths 条目 | 225 | **324** | 10 → **10**（现有 tags 已足够） | ✅ exit 0 | ✅ 1 passed · 237,028 B | **237,028 B**（+99 operations，增量最显著）|
+| **Finance** [openapi.rs](file:///Users/air/TOPEMS/svc/finance/src/openapi.rs) | 351 | **61** handlers + 36 paths 条目 | 179 | **215** | 6 → **11** tags（+Settlement-Center/Audit-V52/Compliance-V51/Reports-V57/Financial-Reports） | ✅ exit 0 | 无 openapi_extract tests | N/A |
+| **合计** | **626** | **274** | **707** | **965**（+258） | 29 → **55** (+26) | 全 exit 0 ✅ | 3/3 passed ✅ | — |
+
+### RC4a 各服务主力模块覆盖
+
+- **WMS**：inventory_movement 3 / inventory_alert 9 / serial_number 8 / smart_replenishment（orders+rules+safety+suggestions 共 16）/ data_sync 4 / batch/location/wave_pick 审批链路 20
+- **BI**：dashboard（crud/export/share/realtime 21）/ drilldown & multidim（6）/ visualization & widget（8）/ self_service_report & templates（12）/ schedules & subscriptions（7）/ permission（4）/ predictive（4）/ bi_plugin & websocket（4）
+- **ERP**：master_data_refs 69（governance/graph/catalog/mdm_gateway/quality_ai/classification/matching）+ mdm_v49 10 + dict 10 + leave_request 8 + erp_plugin 2
+- **Finance**：settlement_center 18 / audit_v52 11 / compliance_v51 12 / reports_v57 18 / financial_reports 2（余 ~290 gap 属 V209 RC4b 继续）
+
+### 主动撤销项（典型 3 例，保证编译安全）
+
+| 例 | 服务 | 原因 |
+|---|---|---|
+| `list_master_data_refs` | ERP master_data_refs | `Query<ListMasterDataRefsQuery>` 未实现 IntoParams，不改 struct |
+| `get_audit_rule_handler` ×3 | Finance audit_v52 | 3 个含 `Query<*FilterRequest>` 全部从 paths 移除（handler 宏保留仍编译过）|
+| 2× visualization（update/delete）| BI | 函数实际不存在，从 paths 删除 |
+
+### 四道验证
+
+| 验证 | 结果 |
+|---|---|
+| `SQLX_OFFLINE=true cargo check -p topems-wms -p topems-erp` | exit 0 ✅ · 仅 2 pre-existing unused warnings（consolidation_calc.rs） |
+| `SQLX_OFFLINE=true cargo check -p topems-analytics -p topems-finance` | exit 0 ✅ · 仅 1 pre-existing warning（dashboard/share.rs unused IntoParams）|
+| openapi_extract（wms/erp/analytics）| **3/3 passed** ✅ · wms 72,384 B / erp 237,028 B / analytics 96 KB |
+| Husky pre-commit | cargo fmt（43 files）✅ · lint-staged ✅ · pre-commit 全绿 ✅ |
+
+---
+
+## 🎯 V209 — 下一版本规划占位（待启动）
 
 > **候选方向**（优先级由用户确认）：
-> - **方向 B · V72.8 P-04 RC4a**：按服务批量补 utoipa 注解（erp 183 / finance 120 / bi 144 / wms 125 四大服务），OpenAPI 契约一致性探针逼近 100%
+> - **方向 B 续 · RC4b utoipa 深度补全**：对 626 总差集中剩余的 ~352 项（Finance 290 / ERP 65 为主）推进两层增强：① 为 100+ 个高频 `Query<T>` struct 加 `#[derive(IntoParams)]`，解除当前"遇 Query 直接跳过"的阻塞；② 为核心 CRUD handler 补 `request_body(body = ...)` 与 `responses((status = 201, body = ...), (status = 400, description = "Bad Request"))` 响应级别契约
 > - **方向 C · Design Token 批量治理**：执行 `scripts/check-design-tokens.mjs --strict`，将 3364 条硬编码颜色/间距/阴影按模块分批收敛到 theme/tokens.ts（目标 -20%）
 > - **方向 D · MF 虚拟模块可观测性**：在 `@module-federation/runtime` 钩子中埋点，捕获 `loadShare` 失败堆栈与 Content-Type 缺失实时告警（避免类似 V206 MF 错误静默发生）
 
