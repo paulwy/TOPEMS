@@ -347,4 +347,65 @@ mod tests {
         let types = registry.list_event_types();
         assert_eq!(types, vec!["a.created", "b.updated"]);
     }
+
+    #[test]
+    fn test_event_version_default() {
+        let v = EventVersion::default();
+        assert_eq!(v, EventVersion::v1());
+        assert_eq!(format!("{}", v), "v1.0");
+    }
+
+    #[test]
+    fn test_event_version_ordering() {
+        assert!(EventVersion::v1() < EventVersion::v2());
+        assert!(EventVersion::new(1, 0) < EventVersion::new(1, 1));
+        assert!(EventVersion::new(2, 5) > EventVersion::new(2, 3));
+        assert_eq!(EventVersion::new(1, 0), EventVersion::v1());
+    }
+
+    #[test]
+    fn test_event_version_registry_default_empty() {
+        let reg = EventVersionRegistry::default();
+        assert_eq!(reg.list_event_types().len(), 0);
+        assert_eq!(reg.stats().total_event_types, 0);
+    }
+
+    #[test]
+    fn test_register_duplicate_version_is_allowed() {
+        let reg = EventVersionRegistry::new();
+        reg.register(make_entry("evt.x", EventVersion::v1())).unwrap();
+        reg.register(make_entry("evt.x", EventVersion::v1())).unwrap(); // 允许覆盖
+        assert_eq!(reg.get_versions("evt.x").len(), 1);
+    }
+
+    #[test]
+    fn test_get_versions_and_latest_nonexistent() {
+        let reg = EventVersionRegistry::new();
+        assert!(reg.get_versions("no.such.event").is_empty());
+        assert!(reg.get_latest_version("no.such.event").is_none());
+        assert!(reg.get_version("no.such.event", &EventVersion::v1()).is_none());
+        assert!(!reg.check_compatibility("no.such.event", &EventVersion::v1()));
+    }
+
+    #[test]
+    fn test_get_latest_version_picks_highest() {
+        let reg = EventVersionRegistry::new();
+        reg.register(make_entry("evt", EventVersion::v1())).unwrap();
+        reg.register(make_entry("evt", EventVersion::new(2, 5))).unwrap();
+        reg.register(make_entry("evt", EventVersion::new(2, 1))).unwrap();
+
+        let latest = reg.get_latest_version("evt").unwrap();
+        assert_eq!(latest.version, EventVersion::new(2, 5));
+
+        let versions = reg.get_versions("evt");
+        assert_eq!(versions.len(), 3);
+    }
+
+    #[test]
+    fn test_deprecate_nonexistent_is_err() {
+        let reg = EventVersionRegistry::new();
+        reg.register(make_entry("evt", EventVersion::v1())).unwrap();
+        let err = reg.deprecate("evt", EventVersion::v2(), "no such", None);
+        assert!(err.is_err());
+    }
 }
