@@ -92,6 +92,7 @@ jobs:
               - 'apps/desktop/**'
               - 'apps/mobile/**'
               - 'packages/**'
+              - 'scripts/bundle-check.sh'
               - 'pnpm-lock.yaml'
               - 'pnpm-workspace.yaml'
               - 'package.json'
@@ -781,6 +782,9 @@ jobs:
           else
             echo "✅ **All bundle chunks within size budget.**" >> $GITHUB_STEP_SUMMARY
           fi
+
+      - name: Bundle size budget check
+        run: bash scripts/bundle-check.sh --json /tmp/bundle-report.json
 
       - name: Upload build artifacts
         uses: actions/upload-artifact@v5
