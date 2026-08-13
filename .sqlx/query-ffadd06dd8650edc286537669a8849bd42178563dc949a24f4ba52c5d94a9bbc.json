@@ -1,0 +1,88 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n        SELECT pr.id, pr.process_id, pr.work_station_id, pr.equipment_id,\n               pr.operator_id, pr.start_time, pr.end_time,\n               pr.quantity_produced, pr.quantity_defective, pr.status,\n               pp.name as process_name, pp.process_no\n        FROM production_records pr\n        LEFT JOIN production_processes pp ON pr.process_id = pp.id\n        WHERE pr.order_id = $1\n        ORDER BY pr.start_time ASC\n        ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 1,
+        "name": "process_id",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 2,
+        "name": "work_station_id",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 3,
+        "name": "equipment_id",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 4,
+        "name": "operator_id",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 5,
+        "name": "start_time",
+        "type_info": "Timestamp"
+      },
+      {
+        "ordinal": 6,
+        "name": "end_time",
+        "type_info": "Timestamp"
+      },
+      {
+        "ordinal": 7,
+        "name": "quantity_produced",
+        "type_info": "Numeric"
+      },
+      {
+        "ordinal": 8,
+        "name": "quantity_defective",
+        "type_info": "Numeric"
+      },
+      {
+        "ordinal": 9,
+        "name": "status",
+        "type_info": "Varchar"
+      },
+      {
+        "ordinal": 10,
+        "name": "process_name",
+        "type_info": "Varchar"
+      },
+      {
+        "ordinal": 11,
+        "name": "process_no",
+        "type_info": "Varchar"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid"
+      ]
+    },
+    "nullable": [
+      false,
+      true,
+      true,
+      true,
+      true,
+      false,
+      true,
+      true,
+      true,
+      true,
+      false,
+      false
+    ]
+  },
+  "hash": "ffadd06dd8650edc286537669a8849bd42178563dc949a24f4ba52c5d94a9bbc"
+}

@@ -1,0 +1,64 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n        SELECT \n            id, team_id, employee_id, employee_name, employee_code,\n            position, join_date, status\n        FROM team_members\n        WHERE team_id = $1 AND status = 'active'\n        ORDER BY join_date DESC\n        ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 1,
+        "name": "team_id",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 2,
+        "name": "employee_id",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 3,
+        "name": "employee_name",
+        "type_info": "Varchar"
+      },
+      {
+        "ordinal": 4,
+        "name": "employee_code",
+        "type_info": "Varchar"
+      },
+      {
+        "ordinal": 5,
+        "name": "position",
+        "type_info": "Varchar"
+      },
+      {
+        "ordinal": 6,
+        "name": "join_date",
+        "type_info": "Timestamp"
+      },
+      {
+        "ordinal": 7,
+        "name": "status",
+        "type_info": "Varchar"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true
+    ]
+  },
+  "hash": "c24a92b026d8f14fb9f2dc0c965e24ecd2193b79a8e3e760b880dd83d7db5377"
+}

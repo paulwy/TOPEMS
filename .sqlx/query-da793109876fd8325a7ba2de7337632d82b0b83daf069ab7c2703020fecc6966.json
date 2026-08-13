@@ -1,0 +1,103 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n        UPDATE analytics_comparison_analyses\n        SET name = COALESCE($1, name),\n            description = COALESCE($2, description),\n            comparison_type = COALESCE($3, comparison_type),\n            dimension_a = COALESCE($4, dimension_a),\n            dimension_b = COALESCE($5, dimension_b),\n            indicators = COALESCE($6, indicators),\n            filters = COALESCE($7, filters),\n            status = COALESCE($8, status),\n            updated_at = $9\n        WHERE id = $10\n        RETURNING id, name, description, comparison_type, dimension_a, dimension_b,\n                  indicators, filters, status, last_run_at, created_by, created_at, updated_at\n        ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 1,
+        "name": "name",
+        "type_info": "Varchar"
+      },
+      {
+        "ordinal": 2,
+        "name": "description",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 3,
+        "name": "comparison_type",
+        "type_info": "Varchar"
+      },
+      {
+        "ordinal": 4,
+        "name": "dimension_a",
+        "type_info": "Varchar"
+      },
+      {
+        "ordinal": 5,
+        "name": "dimension_b",
+        "type_info": "Varchar"
+      },
+      {
+        "ordinal": 6,
+        "name": "indicators",
+        "type_info": "Jsonb"
+      },
+      {
+        "ordinal": 7,
+        "name": "filters",
+        "type_info": "Jsonb"
+      },
+      {
+        "ordinal": 8,
+        "name": "status",
+        "type_info": "Varchar"
+      },
+      {
+        "ordinal": 9,
+        "name": "last_run_at",
+        "type_info": "Timestamp"
+      },
+      {
+        "ordinal": 10,
+        "name": "created_by",
+        "type_info": "Varchar"
+      },
+      {
+        "ordinal": 11,
+        "name": "created_at",
+        "type_info": "Timestamp"
+      },
+      {
+        "ordinal": 12,
+        "name": "updated_at",
+        "type_info": "Timestamp"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Varchar",
+        "Text",
+        "Varchar",
+        "Varchar",
+        "Varchar",
+        "Jsonb",
+        "Jsonb",
+        "Varchar",
+        "Timestamp",
+        "Uuid"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      true,
+      false,
+      false,
+      false,
+      true,
+      true,
+      false,
+      true,
+      true,
+      true,
+      true
+    ]
+  },
+  "hash": "da793109876fd8325a7ba2de7337632d82b0b83daf069ab7c2703020fecc6966"
+}
