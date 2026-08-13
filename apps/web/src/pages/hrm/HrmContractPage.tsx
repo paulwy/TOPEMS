@@ -49,7 +49,7 @@ export default function HrmContractPage() {
   }, []);
 
   const renewMutation = useMutation({
-    mutationFn: async (args: { contractId: string; values: any }) =>
+    mutationFn: async (args: { contractId: string; values: Record<string, unknown> }) =>
       contractApi.renew(args.contractId, args.values),
     onSuccess: (result) => {
       if (result.code === 0) {

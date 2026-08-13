@@ -96,7 +96,7 @@ export default function WmsOrderFulfillmentPage() {
                 layout='horizontal'
                 verticalAlign='bottom'
               />
-              <Tooltip formatter={(v: any) => [`${v}%`, '准时履约率']} />
+              <Tooltip formatter={(v: unknown) => [`${v}%`, '准时履约率']} />
             </RadialBarChart>
           </ResponsiveContainer>
         </div>

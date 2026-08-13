@@ -5,11 +5,23 @@ use axum::{
     response::Response,
 };
 use opentelemetry::trace::TraceContextExt;
+use std::cell::RefCell;
 use std::time::Instant;
 use tracing::info_span;
 use uuid::Uuid;
 
 use super::{generate_request_id, TraceContext};
+
+thread_local! {
+    static CURRENT_REQUEST_ID: RefCell<Option<String>> = const { RefCell::new(None) };
+}
+
+pub struct RequestIdGuard;
+impl Drop for RequestIdGuard {
+    fn drop(&mut self) {
+        CURRENT_REQUEST_ID.with(|c| *c.borrow_mut() = None);
+    }
+}
 
 #[derive(Clone)]
 pub struct RequestContext {
@@ -22,6 +34,9 @@ pub async fn request_context_middleware(mut request: Request, next: Next) -> Res
 
     let request_id = extract_or_generate_request_id(request.headers());
     let trace_context = extract_or_generate_trace_context(request.headers());
+
+    CURRENT_REQUEST_ID.with(|c| *c.borrow_mut() = Some(request_id.clone()));
+    let _guard = RequestIdGuard;
 
     let trace_id_clone = trace_context.trace_id.clone().unwrap_or_default();
     let span_id_clone = trace_context.span_id.clone().unwrap_or_default();
@@ -58,16 +73,20 @@ pub async fn request_context_middleware(mut request: Request, next: Next) -> Res
         span.record("otel.status_code", "OK");
     }
 
-    response.headers_mut().insert(
-        HeaderName::from_static("x-request-id"),
-        HeaderValue::from_str(&request_id).unwrap(),
-    );
+    if let Ok(val) = HeaderValue::from_str(&request_id) {
+        response.headers_mut().insert(
+            HeaderName::from_static("x-request-id"),
+            val,
+        );
+    }
 
     if let Some(trace_id) = &trace_context.trace_id {
-        response.headers_mut().insert(
-            HeaderName::from_static("x-trace-id"),
-            HeaderValue::from_str(trace_id).unwrap(),
-        );
+        if let Ok(val) = HeaderValue::from_str(trace_id) {
+            response.headers_mut().insert(
+                HeaderName::from_static("x-trace-id"),
+                val,
+            );
+        }
     }
 
     response
@@ -81,7 +100,26 @@ fn extract_or_generate_request_id(headers: &HeaderMap) -> String {
         .unwrap_or_else(|| generate_request_id())
 }
 
+fn resolve_trace_context_from_otel() -> Option<TraceContext> {
+    let ctx = opentelemetry::Context::current();
+    let span = ctx.span();
+    let span_context = span.span_context();
+    if span_context.is_valid() {
+        Some(TraceContext {
+            trace_id: Some(span_context.trace_id().to_string()),
+            span_id: Some(span_context.span_id().to_string()),
+            parent_span_id: None,
+        })
+    } else {
+        None
+    }
+}
+
 fn extract_or_generate_trace_context(headers: &HeaderMap) -> TraceContext {
+    if let Some(otel_ctx) = resolve_trace_context_from_otel() {
+        return otel_ctx;
+    }
+
     let trace_id = headers
         .get("x-trace-id")
         .and_then(|v| v.to_str().ok())
@@ -146,23 +184,23 @@ where
 }
 
 pub fn get_current_request_id() -> Option<String> {
-    let ctx = opentelemetry::Context::current();
-    let span = ctx.span();
-    let span_context = span.span_context();
-    if span_context.is_valid() {
-        Some(span_context.trace_id().to_string())
-    } else {
-        None
-    }
+    CURRENT_REQUEST_ID.with(|c| c.borrow().clone())
 }
 
 pub fn get_current_trace_id() -> Option<String> {
     let ctx = opentelemetry::Context::current();
     let span = ctx.span();
     let span_context = span.span_context();
-    if span_context.is_valid() {
-        Some(span_context.trace_id().to_string())
-    } else {
-        None
-    }
+    span_context
+        .is_valid()
+        .then(|| span_context.trace_id().to_string())
+}
+
+pub fn get_current_span_id() -> Option<String> {
+    let ctx = opentelemetry::Context::current();
+    let span = ctx.span();
+    let span_context = span.span_context();
+    span_context
+        .is_valid()
+        .then(|| span_context.span_id().to_string())
 }

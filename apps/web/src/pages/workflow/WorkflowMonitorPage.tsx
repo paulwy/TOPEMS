@@ -46,7 +46,7 @@ const buildExceptionList = (
 ): WorkflowException[] => {
   const result: WorkflowException[] = [];
 
-  (overdueData || []).forEach((instance: any) => {
+  (overdueData || []).forEach((instance) => {
     result.push({
       id: instance.id,
       instanceId: instance.id,
@@ -59,7 +59,7 @@ const buildExceptionList = (
     });
   });
 
-  (errorData || []).forEach((instance: any) => {
+  (errorData || []).forEach((instance) => {
     result.push({
       id: instance.id,
       instanceId: instance.id,
@@ -213,7 +213,7 @@ export const WorkflowMonitorPage: React.FC = () => {
     },
   ];
 
-  const renderHeaderContent = (_rows: any[], _total: number) => {
+  const renderHeaderContent = (_rows: Record<string, unknown>[], _total: number) => {
     const exceptions = allExceptions;
     const total = exceptions.length;
     const timeoutCount = exceptions.filter((d) => d.exceptionType === 'timeout').length;

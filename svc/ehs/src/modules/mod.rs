@@ -1,6 +1,5 @@
 pub mod accident;
 pub mod data_sync;
-pub mod ehs_compat;
 pub mod ehs_plugin;
 pub mod emergency_drill;
 pub mod emergency_plan;

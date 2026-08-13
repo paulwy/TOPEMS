@@ -4,6 +4,7 @@
 
 import React from 'react';
 import { wmsApi } from '@/api/wms';
+import type { CreateLocationRequest, UpdateLocationRequest } from '@/api/wms';
 import { WMS_PATHS } from '@/modules/wms/config';
 import CrudPage from '@/components/templates/CrudPage';
 import type { CrudApiAdapter } from '@/components/templates/CrudPage';
@@ -23,12 +24,17 @@ const locationApiAdapter: CrudApiAdapter = {
     };
   },
   create: async (data) => {
-    const response = await wmsApi.locations.create(data as any);
+    const response = await wmsApi.locations.create(
+      data as unknown as CreateLocationRequest,
+    );
     if (!response.success) throw new Error('Failed to create location');
     return response.data as unknown as Record<string, unknown>;
   },
   update: async (id, data) => {
-    const response = await wmsApi.locations.update(id, data as any);
+    const response = await wmsApi.locations.update(
+      id,
+      data as unknown as UpdateLocationRequest,
+    );
     if (!response.success) throw new Error('Failed to update location');
     return response.data as unknown as Record<string, unknown>;
   },

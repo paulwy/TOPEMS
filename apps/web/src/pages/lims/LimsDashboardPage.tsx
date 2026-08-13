@@ -2,7 +2,7 @@ import React, { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { FileText, Clock, BarChart3, CheckCircle } from 'lucide-react';
 import { DashboardTemplate } from '@/components/templates';
-import type { StatCardConfig, ChartConfig } from '@/components/templates/DashboardTemplate';
+import type { StatCardConfig, ChartConfig, ChartCard } from '@/components/templates/DashboardTemplate';
 import { PageContainer } from '@/components/common';
 import { useTranslation } from 'react-i18next';
 import { useLimsDashboardSchema } from '@/schemas/lims';
@@ -76,7 +76,7 @@ const LimsDashboardPage: React.FC = () => {
       <DashboardTemplate
         title=''
         statCards={statCards}
-        charts={charts as any}
+        charts={charts as unknown as ChartCard[]}
         loading={loading}
       />
     </PageContainer>

@@ -3,14 +3,14 @@ import CrudPage from '@/components/templates/CrudPage';
 import { createCrudPageAdapter } from '@/schema/crudPageAdapter';
 import { workstationSchema } from '@/schemas/mes';
 import { mesApi } from '@/api/mes';
-import type { WorkStation } from '@/api/mes/types';
+import type { WorkStation, CreateWorkStationRequest } from '@/api/mes/types';
 
 const apiAdapter = createCrudPageAdapter<WorkStation>(
   {
-    list: mesApi.workstations.list as any,
-    create: mesApi.workstations.create as any,
-    update: mesApi.workstations.update as any,
-    delete: mesApi.workstations.delete as any,
+    list: mesApi.workstations.list,
+    create: (data) => mesApi.workstations.create(data as unknown as CreateWorkStationRequest),
+    update: (id, data) => mesApi.workstations.update(id, data as unknown as Partial<WorkStation>),
+    delete: mesApi.workstations.delete,
   },
   { itemsField: 'workstations' }
 );

@@ -1,13 +1,14 @@
 import React from 'react';
 import { Typography, Box } from '@mui/material';
 import { StatusBadge, StatCardGroup } from '@/components';
+import type { StatCardGroupProps } from '@/components/common';
 import type { AccountingSubject } from '@/api/erp';
 
 import { useTranslation } from 'react-i18next';
 
 interface SubjectListPanelProps {
   subjects: AccountingSubject[];
-  subjectStatCards: any[];
+  subjectStatCards: StatCardGroupProps['stats'];
 }
 
 const SubjectListPanel: React.FC<SubjectListPanelProps> = ({ subjects, subjectStatCards }) => {

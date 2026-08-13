@@ -157,7 +157,7 @@ const TemplateFormDialog: React.FC<TemplateFormDialogProps> = ({
               try {
                 const columns = JSON.parse(e.target.value);
                 onFormDataChange({ ...templateFormData, columns });
-              } catch {}
+              } catch (e) { console.error("[Report] Failed to parse JSON column config", e); }
             }}
             multiline
             rows={4}

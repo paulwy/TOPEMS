@@ -248,7 +248,8 @@ export const AsyncAction: Story = {
   },
 };
 
-export const AlertDialog: Story = {
+export const AlertDialogStory: Story = {
+  name: 'AlertDialog',
   args: {
     isOpen: true,
     title: '版本更新通知',
@@ -259,7 +260,8 @@ export const AlertDialog: Story = {
   },
 };
 
-export const ErrorDialog: Story = {
+export const ErrorDialogStory: Story = {
+  name: 'ErrorDialog',
   args: {
     isOpen: true,
     title: '操作失败',

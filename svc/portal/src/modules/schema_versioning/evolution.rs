@@ -242,7 +242,7 @@ pub fn rollback_schema(
 ) -> Option<SchemaVersion> {
     schema_evolution_manager()
         .lock()
-        .unwrap()
+        .unwrap_or_else(|e| e.into_inner())
         .rollback(target_version, rolled_back_by, notes)
 }
 
@@ -256,7 +256,7 @@ pub fn get_current_schema() -> Option<SchemaVersion> {
 pub fn compare_schemas(old_schema: &str, new_schema: &str) -> SchemaCompareResult {
     schema_evolution_manager()
         .lock()
-        .unwrap()
+        .unwrap_or_else(|e| e.into_inner())
         .compare(old_schema, new_schema)
 }
 

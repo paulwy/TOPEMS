@@ -13,7 +13,7 @@ import {
   Target,
 } from 'lucide-react';
 import { DashboardTemplate } from '@/components/templates';
-import type { StatCardConfig, ChartConfig } from '@/components/templates/DashboardTemplate';
+import type { StatCardConfig, ChartConfig, ChartCard, RecentItem, QuickAction } from '@/components/templates/DashboardTemplate';
 import { PageContainer } from '@/components/common';
 import { usePdmDashboardSchema } from '@/schemas/pdm';
 
@@ -84,7 +84,7 @@ const PdmDashboardPage: React.FC = () => {
       <DashboardTemplate
         title=''
         statCards={statCards}
-        charts={chartConfigs as any}
+        charts={chartConfigs as unknown as ChartCard[]}
         loading={loading}
       />
     </PageContainer>

@@ -10,7 +10,7 @@
 SHELL := /bin/bash
 
 .PHONY: help sqlx-prepare sqlx-prepare-pkg sqlx-check sqlx-offline-test \
-        check-online check-offline
+        check-online check-offline check-migrations
 
 # 默认目标
 help: ## 显示本帮助
@@ -38,6 +38,9 @@ check-online: ## 在线 cargo check（需要 DATABASE_URL，可捕获 sqlx 宏�
 
 check-offline: ## 离线 cargo check（SQLX_OFFLINE=true，模拟 CI GitHub Actions 环境）
 	DATABASE_URL= SQLX_OFFLINE=true cargo check --workspace
+
+check-migrations: ## 检查 database/migrations/ 命名规范、序号连续性、禁止修改历史迁移
+	node scripts/check-migrations.mjs
 
 coverage-baseline: ## 快速模式覆盖率基线（13 crates + apps/web vitest）
 	./scripts/ci/coverage-baseline.sh --fast

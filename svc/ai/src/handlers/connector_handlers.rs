@@ -97,7 +97,7 @@ pub async fn create_connector(
             .to_string();
 
         let new_connector = DataConnector {
-            id: Uuid::new_v4().to_string(),
+            id: Uuid::new_v4(),
             name: req.name,
             connector_type: req.connector_type,
             database_type: req.database_type,

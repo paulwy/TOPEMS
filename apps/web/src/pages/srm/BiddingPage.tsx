@@ -1,4 +1,15 @@
 import React, { useState, useCallback } from 'react';
+
+interface BiddingSupplier {
+  id: string;
+  supplier_name: string;
+  bid_amount?: number;
+  delivery_time?: string;
+  contact_person?: string;
+  phone?: string;
+  status?: string;
+}
+
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   Box,
@@ -27,12 +38,12 @@ const BiddingPage: React.FC = () => {
   const { addNotification } = useNotificationStore();
   const [showSupplierDialog, setShowSupplierDialog] = useState(false);
   const [viewingBidding, setViewingBidding] = useState<Bidding | null>(null);
-  const [biddingSuppliers, setBiddingSuppliers] = useState<any[]>([]);
+  const [biddingSuppliers, setBiddingSuppliers] = useState<BiddingSupplier[]>([]);
 
   const apiAdapter = createCrudPageAdapter({
     list: srmApi.listBiddings,
     create: srmApi.createBidding,
-    update: srmApi.updateBidding as any,
+    update: srmApi.updateBidding,
     delete: srmApi.deleteBidding,
   });
 
@@ -102,7 +113,7 @@ const BiddingPage: React.FC = () => {
     try {
       const response = await srmApi.listBiddingSuppliers(bidding.id);
       if (response.success && response.data) {
-        setBiddingSuppliers(response.data);
+        setBiddingSuppliers(response.data as unknown as BiddingSupplier[]);
       } else {
         setBiddingSuppliers([]);
       }
@@ -162,11 +173,11 @@ const BiddingPage: React.FC = () => {
     },
   ];
 
-  const headerContent = (rows: any[], total: number) => {
+  const headerContent = (rows: Record<string, unknown>[], total: number) => {
     const draft = rows.filter((r) => r.status === 'draft').length;
     const published = rows.filter((r) => r.status === 'published').length;
     const bidding = rows.filter((r) => r.status === 'bidding').length;
-    const totalBudget = rows.reduce((sum, r) => sum + (r.budget_amount || 0), 0);
+    const totalBudget = rows.reduce((sum, r) => sum + ((r as Record<string, number>).budget_amount || 0), 0);
 
     return (
       <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap', mb: 2 }}>

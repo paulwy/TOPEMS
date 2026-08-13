@@ -82,7 +82,7 @@ const ReceivablePayablePage: React.FC = () => {
     []
   );
 
-  const renderStatsContent = (rows: any[], total: number) => {
+  const renderStatsContent = (rows: Array<{ original_value?: number; amount?: number; balance?: number; status?: string }>, total: number) => {
     const totalAmount = rows.reduce((sum, item) => sum + (item.amount || 0), 0);
     const pendingAmount = rows
       .filter((item) => item.status === 'pending' || item.status === 'draft')
@@ -173,7 +173,7 @@ const ReceivablePayablePage: React.FC = () => {
         <CrudPage
           schema={receivableSchema}
           apiAdapter={receivableAdapter}
-          headerContent={renderStatsContent as any}
+          headerContent={renderStatsContent}
         />
       )}
 
@@ -181,7 +181,7 @@ const ReceivablePayablePage: React.FC = () => {
         <CrudPage
           schema={payableSchema}
           apiAdapter={payableAdapter}
-          headerContent={renderStatsContent as any}
+          headerContent={renderStatsContent}
         />
       )}
     </PageContainer>

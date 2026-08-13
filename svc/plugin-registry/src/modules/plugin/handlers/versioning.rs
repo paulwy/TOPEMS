@@ -268,11 +268,16 @@ pub async fn check_all_updates(
 ) -> Json<CoreResponse<Vec<UpgradeCheckResult>>> {
     tracing::info!("[Plugin] Checking updates for all plugins");
 
-    let plugins: Vec<Plugin> =
-        sqlx::query_as("SELECT id, code, name, description, category, version, author, homepage, is_published, is_featured, install_count, rating, rating_count, download_url, icon_url, tags, status, is_active, created_at, updated_at FROM core.core_plugins WHERE is_published = true")
+    let plugins: Vec<Plugin> = match sqlx::query_as("SELECT id, code, name, description, category, version, author, homepage, is_published, is_featured, install_count, rating, rating_count, download_url, icon_url, tags, status, is_active, created_at, updated_at FROM core.core_plugins WHERE is_published = true")
             .fetch_all(&state.pool)
             .await
-            .unwrap_or_default();
+        {
+            Ok(p) => p,
+            Err(e) => {
+                tracing::warn!("[Plugin] Failed to fetch published plugins for update check: {}", e);
+                Vec::new()
+            }
+        };
 
     let mut results: Vec<UpgradeCheckResult> = Vec::new();
 

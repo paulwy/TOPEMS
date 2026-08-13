@@ -17,7 +17,6 @@ pub mod contract;
 pub mod department;
 pub mod employee;
 pub mod health;
-pub mod hrm_compat;
 pub mod hrm_plugin;
 pub mod individual_tax_calc;
 pub mod leave;

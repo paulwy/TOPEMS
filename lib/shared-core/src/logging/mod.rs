@@ -2,8 +2,9 @@ pub mod request_middleware;
 pub mod structured_logger;
 
 pub use request_middleware::{
-    get_current_request_id, get_current_trace_id, inject_request_context,
-    request_context_middleware, RequestContext, RequestContextExt,
+    get_current_request_id, get_current_span_id, get_current_trace_id,
+    inject_request_context, request_context_middleware, RequestContext, RequestContextExt,
+    RequestIdGuard,
 };
 pub use structured_logger::{
     generate_request_id, generate_span_id, generate_trace_id, JsonEventFormatter, LogFormat,

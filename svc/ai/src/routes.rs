@@ -19,6 +19,7 @@ use topems_shared::{
     auth_middleware, create_api_info_router, create_cors_layer, register_routes_with_legacy_alias,
 };
 use topems_shared_auth::security::{rate_limit_middleware, RateLimitConfig, RateLimitMiddleware};
+use topems_shared_core::logging::request_context_middleware;
 use topems_shared_observability::telemetry::telemetry_middleware;
 use utoipa::OpenApi;
 
@@ -274,6 +275,7 @@ pub fn create_routes(
             })
         }),
     )
+    .layer(axum::middleware::from_fn(request_context_middleware))
     .layer(axum::middleware::from_fn(telemetry_middleware))
     .layer(prometheus_layer)
     .layer(cors)

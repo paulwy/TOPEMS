@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import type { UseMutationResult } from '@tanstack/react-query';
 import {
   TextField,
   Dialog,
@@ -16,7 +17,11 @@ const CreateFolderModal: React.FC<{
   onClose: () => void;
   onSuccess: () => void;
   parentId?: string | null;
-  createFolderMutation: any;
+  createFolderMutation: UseMutationResult<
+    { success: boolean; message?: string },
+    Error,
+    { name: string; parentId?: string }
+  >;
 }> = ({ isOpen, onClose, onSuccess, parentId, createFolderMutation }) => {
   const [folderName, setFolderName] = useState('');
   const [creating, setCreating] = useState(false);

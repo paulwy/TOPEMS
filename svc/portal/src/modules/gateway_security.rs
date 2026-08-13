@@ -1043,15 +1043,13 @@ impl AccessControlV2 {
             }
         }
 
-        let (decision, reason, matched_policy_id) = if matched_deny.is_some() {
-            let p = matched_deny.unwrap();
+        let (decision, reason, matched_policy_id) = if let Some(p) = matched_deny {
             (
                 AccessDecisionType::Deny,
                 format!("策略 '{}' 拒绝访问", p.resource_pattern),
                 Some(p.id.clone()),
             )
-        } else if matched_allow.is_some() {
-            let p = matched_allow.unwrap();
+        } else if let Some(p) = matched_allow {
             (
                 AccessDecisionType::Allow,
                 format!("策略 '{}' 允许访问", p.resource_pattern),

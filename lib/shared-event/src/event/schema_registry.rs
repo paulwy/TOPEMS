@@ -230,7 +230,7 @@ fn validate_against_schema(
     }
     let obj = schema
         .as_object()
-        .expect("schema must be an object after is_object() check");
+        .unwrap();
 
     // type
     if let Some(type_val) = obj.get("type") {

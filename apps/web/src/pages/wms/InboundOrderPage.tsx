@@ -7,6 +7,10 @@
 
 import React from 'react';
 import { wmsApi } from '@/api/wms';
+import type {
+  InboundOrder,
+  CreateInboundOrderRequest,
+} from '@/api/wms';
 import { WMS_PATHS } from '@/modules/wms/config';
 import CrudPage from '@/components/templates/CrudPage';
 import type { CrudApiAdapter } from '@/components/templates/CrudPage';
@@ -21,7 +25,7 @@ const inboundOrderApiAdapter: CrudApiAdapter = {
     });
     if (!response.success) throw new Error('Failed to fetch inbound orders');
     return {
-      data: response.data.items as any,
+      data: response.data.items as unknown as Record<string, unknown>[],
       total: response.data.total,
     };
   },
@@ -29,12 +33,15 @@ const inboundOrderApiAdapter: CrudApiAdapter = {
     const response = await wmsApi.inboundOrders.create({
       ...data,
       items: [],
-    } as any);
+    } as unknown as CreateInboundOrderRequest);
     if (!response.success) throw new Error('Failed to create inbound order');
     return response.data as unknown as Record<string, unknown>;
   },
   update: async (id, data) => {
-    const response = await wmsApi.inboundOrders.update(id, data as any);
+    const response = await wmsApi.inboundOrders.update(
+      id,
+      data as unknown as Partial<InboundOrder>,
+    );
     if (!response.success) throw new Error('Failed to update inbound order');
     return response.data as unknown as Record<string, unknown>;
   },

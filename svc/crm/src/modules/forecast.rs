@@ -10,6 +10,8 @@ use axum::{
     Json, Router,
 };
 use serde::{Deserialize, Serialize};
+use std::sync::Arc;
+use topems_shared_auth::security::{rate_limit_middleware, RateLimitConfig, RateLimitMiddleware};
 use utoipa::ToSchema;
 
 use super::ApiState;
@@ -414,10 +416,23 @@ pub fn evaluate_all(config: &ForecastConfig) -> ForecastEvaluation {
 // ---------------------------------------------------------------------------
 
 pub fn create_routes() -> Router<ApiState> {
+    let strict_config = RateLimitConfig::new(30, 60)
+        .with_by_user_id(false)
+        .with_by_ip(true);
+    let strict_limiter = Arc::new(RateLimitMiddleware::new(strict_config));
+    let strict_layer = axum::middleware::from_fn({
+        let mw = strict_limiter.clone();
+        move |req, next| {
+            let mw = mw.clone();
+            async move { rate_limit_middleware(mw, req, next).await }
+        }
+    });
+
     Router::new()
         .route("/forecast/predict", post(predict_handler))
         .route("/forecast/methods", get(get_methods))
         .route("/forecast/evaluate", post(evaluate))
+        .layer(strict_layer)
 }
 
 // ---------------------------------------------------------------------------

@@ -313,7 +313,7 @@ pub async fn create_patrol(
                 .or_else(|| {
                     chrono::NaiveDate::parse_from_str(s, "%Y-%m-%d")
                         .ok()
-                        .map(|d| d.and_hms_opt(0, 0, 0).unwrap())
+                        .and_then(|d| d.and_hms_opt(0, 0, 0))
                 })
         }),
         body.status.unwrap_or_else(|| "pending".to_string()),
@@ -409,7 +409,7 @@ pub async fn update_patrol(
                 .or_else(|| {
                     chrono::NaiveDate::parse_from_str(s, "%Y-%m-%d")
                         .ok()
-                        .map(|d| d.and_hms_opt(0, 0, 0).unwrap())
+                        .and_then(|d| d.and_hms_opt(0, 0, 0))
                 })
         }),
         body.status,

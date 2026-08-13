@@ -180,7 +180,7 @@ const MonitorLogsPage: React.FC = () => {
   );
 
   const statsContent = useCallback(
-    (_rows: any[], _total: number) => {
+    (_rows: Record<string, unknown>[], _total: number) => {
       const todayLogs = MOCK_LOGS.filter((l) => {
         const logDate = new Date(l.timestamp).toDateString();
         const today = new Date().toDateString();

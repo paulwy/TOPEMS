@@ -13,6 +13,8 @@ use axum::{
 };
 use chrono::NaiveDate;
 use serde::{Deserialize, Serialize};
+use std::sync::Arc;
+use topems_shared_auth::security::{rate_limit_middleware, RateLimitConfig, RateLimitMiddleware};
 use utoipa::ToSchema;
 use uuid::Uuid;
 
@@ -295,10 +297,23 @@ pub fn compute_rfm_records(raw: Vec<RawRfm>, config: &RfmConfig) -> Vec<RfmRecor
 // ---------------------------------------------------------------------------
 
 pub fn create_routes() -> Router<ApiState> {
+    let strict_config = RateLimitConfig::new(30, 60)
+        .with_by_user_id(false)
+        .with_by_ip(true);
+    let strict_limiter = Arc::new(RateLimitMiddleware::new(strict_config));
+    let strict_layer = axum::middleware::from_fn({
+        let mw = strict_limiter.clone();
+        move |req, next| {
+            let mw = mw.clone();
+            async move { rate_limit_middleware(mw, req, next).await }
+        }
+    });
+
     Router::new()
         .route("/rfm/analyze", post(analyze_rfm))
         .route("/rfm/segments", get(get_segments))
         .route("/rfm/customer/{id}", get(get_customer_rfm))
+        .layer(strict_layer)
 }
 
 // ---------------------------------------------------------------------------

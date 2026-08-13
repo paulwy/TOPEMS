@@ -53,7 +53,7 @@ export interface FrameworkAdapter {
   /** 更新组件属性 */
   update(container: HTMLElement, props: UnifiedProps): void;
   /** 获取组件当前状态（模拟） */
-  getState(): Record<string, any>;
+  getState(): Record<string, unknown>;
   /** 设置错误处理回调 */
   setErrorHandler(handler: (error: Error) => void): void;
 }
@@ -69,7 +69,7 @@ export interface UnifiedLifecycle {
   /** 更新 */
   update: (container: HTMLElement, props: UnifiedProps) => void;
   /** 状态监听 */
-  watch: (callback: (state: Record<string, any>) => void) => () => void;
+  watch: (callback: (state: Record<string, unknown>) => void) => () => void;
   /** 错误回调 */
   error: (error: Error) => void;
 }
@@ -112,13 +112,13 @@ export interface MountedComponent {
  */
 export class ReactAdapter implements FrameworkAdapter {
   readonly framework = FrameworkType.REACT;
-  private component: React.ComponentType<any>;
+  private component: React.ComponentType<object>;
   private root: ReactDOM.Root | null = null;
   private currentProps: UnifiedProps = {};
   private errorHandler: ((error: Error) => void) | null = null;
-  private state: Record<string, any> = {};
+  private state: Record<string, unknown> = {};
 
-  constructor(component: React.ComponentType<any>) {
+  constructor(component: React.ComponentType<object>) {
     this.component = component;
   }
 
@@ -176,13 +176,13 @@ export class ReactAdapter implements FrameworkAdapter {
  */
 export class VueAdapter implements FrameworkAdapter {
   readonly framework = FrameworkType.VUE;
-  private componentDef: any;
-  private app: any = null;
+  private componentDef: unknown;
+  private app: { mount: (el: HTMLElement) => void; unmount: () => void } | null = null;
   private currentProps: UnifiedProps = {};
   private errorHandler: ((error: Error) => void) | null = null;
-  private state: Record<string, any> = {};
+  private state: Record<string, unknown> = {};
 
-  constructor(componentDef: any) {
+  constructor(componentDef: unknown) {
     this.componentDef = componentDef;
   }
 
@@ -253,13 +253,13 @@ export class VueAdapter implements FrameworkAdapter {
  */
 export class AngularAdapter implements FrameworkAdapter {
   readonly framework = FrameworkType.ANGULAR;
-  private componentClass: any;
-  private platformRef: any = null;
+  private componentClass: unknown;
+  private platformRef: { destroy(): void } | null = null;
   private currentProps: UnifiedProps = {};
   private errorHandler: ((error: Error) => void) | null = null;
-  private state: Record<string, any> = {};
+  private state: Record<string, unknown> = {};
 
-  constructor(componentClass: any) {
+  constructor(componentClass: unknown) {
     this.componentClass = componentClass;
   }
 
@@ -331,13 +331,13 @@ export class AngularAdapter implements FrameworkAdapter {
  */
 export class SvelteAdapter implements FrameworkAdapter {
   readonly framework = FrameworkType.SVELTE;
-  private componentDef: any;
-  private instance: any = null;
+  private componentDef: unknown;
+  private instance: { $destroy(): void; $set(props: UnifiedProps): void } | null = null;
   private currentProps: UnifiedProps = {};
   private errorHandler: ((error: Error) => void) | null = null;
-  private state: Record<string, any> = {};
+  private state: Record<string, unknown> = {};
 
-  constructor(componentDef: any) {
+  constructor(componentDef: unknown) {
     this.componentDef = componentDef;
   }
 
@@ -415,7 +415,7 @@ export class CrossFrameworkBridge {
   /** 适配器工厂注册表: framework -> 工厂函数 */
   private readonly adapterFactories = new Map<
     FrameworkType,
-    (component: any) => FrameworkAdapter
+    (component: unknown) => FrameworkAdapter
   >();
   /** 状态监听器 */
   private readonly stateListeners = new Set<(components: MountedComponent[]) => void>();
@@ -426,7 +426,7 @@ export class CrossFrameworkBridge {
 
   /** 注册内置适配器工厂 */
   private registerBuiltInAdapters(): void {
-    this.adapterFactories.set(FrameworkType.REACT, (c) => new ReactAdapter(c));
+    this.adapterFactories.set(FrameworkType.REACT, (c) => new ReactAdapter(c as React.ComponentType<object>));
     this.adapterFactories.set(FrameworkType.VUE, (c) => new VueAdapter(c));
     this.adapterFactories.set(FrameworkType.ANGULAR, (c) => new AngularAdapter(c));
     this.adapterFactories.set(FrameworkType.SVELTE, (c) => new SvelteAdapter(c));
@@ -435,7 +435,7 @@ export class CrossFrameworkBridge {
   /**
    * 创建框架适配器
    */
-  createAdapter(framework: FrameworkType, component: any): FrameworkAdapter {
+  createAdapter(framework: FrameworkType, component: unknown): FrameworkAdapter {
     const factory = this.adapterFactories.get(framework);
     if (!factory) {
       throw new Error(`[CrossFrameworkBridge] 不支持的框架类型: ${framework}`);
@@ -608,7 +608,7 @@ export class CrossFrameworkBridge {
   /** 注册自定义适配器工厂 */
   registerAdapterFactory(
     framework: FrameworkType,
-    factory: (component: any) => FrameworkAdapter
+    factory: (component: unknown) => FrameworkAdapter
   ): void {
     this.adapterFactories.set(framework, factory);
   }

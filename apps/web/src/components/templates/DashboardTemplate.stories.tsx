@@ -48,7 +48,7 @@ const mockStats: StatCard[] = [
   {
     id: 'orders',
     title: '订单数',
-    value: 1,284,
+    value: 1284,
     change: 8.3,
     changeLabel: '较上月',
     icon: <ShoppingCart style={{ width: 24, height: 24 }} />,
@@ -58,7 +58,7 @@ const mockStats: StatCard[] = [
   {
     id: 'users',
     title: '活跃用户',
-    value: 5,680,
+    value: 5680,
     change: -2.1,
     changeLabel: '较上月',
     icon: <Users style={{ width: 24, height: 24 }} />,

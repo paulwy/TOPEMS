@@ -99,7 +99,7 @@ impl AuditLogService {
             timestamp: Utc::now(),
         };
 
-        let mut logs = self.logs.lock().expect("Mutex poisoned");
+        let mut logs = self.logs.lock().unwrap_or_else(|poisoned| poisoned.into_inner());
         logs.push(entry.clone());
         entry
     }
@@ -126,7 +126,7 @@ impl AuditLogService {
             timestamp: Utc::now(),
         };
 
-        let mut logs = self.logs.lock().expect("Mutex poisoned");
+        let mut logs = self.logs.lock().unwrap_or_else(|poisoned| poisoned.into_inner());
         logs.push(entry.clone());
         entry
     }
@@ -142,7 +142,7 @@ impl AuditLogService {
     }
 
     pub fn query_logs(&self, query: AuditLogQuery) -> Vec<AuditLogEntry> {
-        let logs = self.logs.lock().expect("Mutex poisoned");
+        let logs = self.logs.lock().unwrap_or_else(|poisoned| poisoned.into_inner());
 
         logs.iter()
             .filter(|entry| {
@@ -183,12 +183,12 @@ impl AuditLogService {
     }
 
     pub fn get_log_by_id(&self, id: &str) -> Option<AuditLogEntry> {
-        let logs = self.logs.lock().expect("Mutex poisoned");
+        let logs = self.logs.lock().unwrap_or_else(|poisoned| poisoned.into_inner());
         logs.iter().find(|e| e.id == id).cloned()
     }
 
     pub fn count(&self) -> usize {
-        let logs = self.logs.lock().expect("Mutex poisoned");
+        let logs = self.logs.lock().unwrap_or_else(|poisoned| poisoned.into_inner());
         logs.len()
     }
 }

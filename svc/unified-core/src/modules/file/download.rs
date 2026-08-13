@@ -461,7 +461,15 @@ pub async fn get_thumbnail(
     let file_content = if Path::new(&thumbnail_path).exists() {
         match fs::read(&thumbnail_path) {
             Ok(content) => content,
-            Err(_) => fs::read(&file_path).unwrap_or_default(),
+            Err(_) => {
+                match fs::read(&file_path) {
+                    Ok(data) => data,
+                    Err(e) => {
+                        tracing::warn!("Failed to read fallback file {}: {}", file_path, e);
+                        Vec::new()
+                    }
+                }
+            }
         }
     } else {
         // 如果没有缩略图，返回原图

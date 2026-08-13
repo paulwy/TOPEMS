@@ -15,7 +15,7 @@ import {
   Target,
 } from 'lucide-react';
 import { DashboardTemplate } from '@/components/templates';
-import type { StatCardConfig, ChartConfig } from '@/components/templates/DashboardTemplate';
+import type { StatCardConfig, ChartConfig, ChartCard, RecentItem, QuickAction } from '@/components/templates/DashboardTemplate';
 import { PageContainer } from '@/components/common';
 import { useTranslation } from 'react-i18next';
 
@@ -236,10 +236,10 @@ const FinanceDashboardPage: React.FC = () => {
       <DashboardTemplate
         title=''
         statCards={statCards}
-        charts={chartConfigs as any}
-        recentItems={recentItems as any}
+        charts={chartConfigs as unknown as ChartCard[]}
+        recentItems={recentItems as unknown as RecentItem[]}
         recentTitle={t('finance.finance_dashboard_page.text_b66b2e')}
-        quickActions={quickActions as any}
+        quickActions={quickActions as unknown as QuickAction[]}
         quickActionsTitle={t('finance.finance_dashboard_page.action')}
         loading={loading}
       />

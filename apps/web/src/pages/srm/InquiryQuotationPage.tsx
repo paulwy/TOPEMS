@@ -33,7 +33,7 @@ const InquiryQuotationPage: React.FC = () => {
   const apiAdapter = createCrudPageAdapter({
     list: srmApi.listInquiries,
     create: srmApi.createInquiry,
-    update: srmApi.updateInquiry as any,
+    update: srmApi.updateInquiry,
     delete: srmApi.deleteInquiry,
   });
 
@@ -159,11 +159,11 @@ const InquiryQuotationPage: React.FC = () => {
     },
   ];
 
-  const headerContent = (rows: any[], total: number) => {
+  const headerContent = (rows: Record<string, unknown>[], total: number) => {
     const draft = rows.filter((r) => r.status === 'draft').length;
     const published = rows.filter((r) => r.status === 'published').length;
     const inProgress = rows.filter((r) => r.status === 'in_progress').length;
-    const totalQuotations = rows.reduce((sum, r) => sum + (r.quotation_count || 0), 0);
+    const totalQuotations = rows.reduce((sum, r) => sum + ((r as Record<string, number>).quotation_count || 0), 0);
 
     return (
       <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap', mb: 2 }}>

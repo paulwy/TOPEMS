@@ -41,11 +41,26 @@ import { QUERY_KEYS } from '@/lib/reactQuery';
 
 const ct = designTokens.colors;
 
+interface SupplierPortalAnnouncement {
+  id: string;
+  type: string;
+  title: string;
+  date: string;
+}
+
+interface SupplierPortalOrder {
+  id: string;
+  po_no: string;
+  order_date: string;
+  total_amount: number;
+  status: string;
+}
+
 interface PortalData {
   supplier: Supplier | null;
   stats: SupplierPortalStats | null;
-  orders: any[];
-  announcements: any[];
+  orders: SupplierPortalOrder[];
+  announcements: SupplierPortalAnnouncement[]
 }
 
 const SupplierPortalPage: React.FC = () => {
@@ -62,7 +77,7 @@ const SupplierPortalPage: React.FC = () => {
 
       let supplier: Supplier | null = null;
       let stats: SupplierPortalStats | null = null;
-      let orders: any[] = [];
+      let orders: SupplierPortalOrder[] = [];
 
       if (suppliersRes.success && suppliersRes.data && suppliersRes.data.length > 0) {
         const firstSupplier = suppliersRes.data[0];
@@ -90,7 +105,13 @@ const SupplierPortalPage: React.FC = () => {
         try {
           const ordersRes = await srmApi.getSupplierPortalOrders(firstSupplier.id);
           if (ordersRes.success) {
-            orders = ordersRes.data || [];
+            orders = (ordersRes.data || []).map((po) => ({
+              id: po.id,
+              po_no: po.po_no,
+              order_date: po.order_date,
+              total_amount: po.total_amount ?? 0,
+              status: po.status,
+            }));
           }
         } catch (e) {
           orders = [
@@ -126,9 +147,9 @@ const SupplierPortalPage: React.FC = () => {
         }
       }
 
-      let announcements: any[] = [];
+      let announcements: SupplierPortalAnnouncement[] = [];
       if (announcementsRes.success) {
-        announcements = announcementsRes.data || [];
+        announcements = (announcementsRes.data as SupplierPortalAnnouncement[]) || [];
       } else {
         announcements = [
           { id: '1', title: '关于春节期间发货安排的通知', date: '2024-01-15', type: 'important' },

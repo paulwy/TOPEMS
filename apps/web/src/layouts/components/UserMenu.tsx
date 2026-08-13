@@ -19,6 +19,7 @@ import {
 } from '@mui/material';
 import { User, Settings, LogOut, Building2, AlertTriangle, HelpCircle } from 'lucide-react';
 import type { User as UserType } from '@topems/shared-types';
+import { useAuth } from '@/hooks/useAuth';
 
 export const extractInitials = (name: string | null | undefined): string => {
   if (!name || typeof name !== 'string') return 'U';
@@ -48,6 +49,7 @@ export const UserMenu: React.FC<UserMenuProps> = ({
   onHelpCenterClick,
   onLogout,
 }) => {
+  const { logout: authLogout } = useAuth();
   const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null);
   const [confirmOpen, setConfirmOpen] = useState(false);
   const menuOpen = Boolean(anchorEl);
@@ -100,7 +102,7 @@ export const UserMenu: React.FC<UserMenuProps> = ({
     if (onLogout) {
       onLogout();
     } else {
-      console.warn('TODO: wire useAuth logout');
+      authLogout();
     }
   };
 

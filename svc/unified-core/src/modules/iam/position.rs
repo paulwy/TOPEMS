@@ -126,11 +126,10 @@ pub async fn get_position(
     .ok()
     .flatten();
 
-    if row.is_none() {
-        return Json(topems_shared_core::response::error_value(404, "岗位不存在"));
-    }
-
-    let p = row.expect("row should exist after is_none() check");
+    let p = match row {
+        Some(p) => p,
+        None => return Json(topems_shared_core::response::error_value(404, "岗位不存在")),
+    };
 
     let permissions: Vec<String> =
         sqlx::query(r#"SELECT permission FROM iam.position_permissions WHERE position_id = $1"#)

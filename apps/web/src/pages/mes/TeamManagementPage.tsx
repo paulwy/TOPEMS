@@ -239,10 +239,10 @@ function TeamManagementPage() {
         apiAdapter={apiAdapter}
         detailContent={(row: Record<string, unknown>) => <TeamDetailContent row={row} />}
         detailMaxWidth='lg'
-        headerContent={(rows: any[], total: number) => {
-          const active = rows.filter((r: any) => r.status === 'active').length;
-          const inactive = rows.filter((r: any) => r.status === 'inactive').length;
-          const totalMembers = rows.reduce((sum: number, r: any) => sum + (r.member_count || 0), 0);
+        headerContent={(rows, total) => {
+          const active = rows.filter((r) => r.status === 'active').length;
+          const inactive = rows.filter((r) => r.status === 'inactive').length;
+          const totalMembers = rows.reduce((sum: number, r) => sum + (r.member_count || 0), 0);
           return (
             <Box
               sx={{

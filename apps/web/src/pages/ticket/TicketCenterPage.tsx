@@ -404,7 +404,7 @@ const TicketCenterPage: React.FC = () => {
   });
 
   const updateMutation = useMutation({
-    mutationFn: ({ id, data }: { id: string; data: any }) => ticketApi.updateTicket(id, data),
+    mutationFn: ({ id, data }: { id: string; data: unknown }) => ticketApi.updateTicket(id, data as UpdateTicketRequest),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.TICKETS_BASE ,
   exact: false,

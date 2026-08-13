@@ -34,6 +34,7 @@ use conversion_rules::init_conversion_rules_table;
 use mes_erp_sync::MesErpSyncService;
 use models::AppState;
 use topems_shared_bootstrap::{bootstrap_service, resolve_port, run, Application, ServiceConfig};
+use topems_shared_core::logging::request_context_middleware;
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
@@ -103,6 +104,7 @@ async fn main() -> anyhow::Result<()> {
     let final_router = Router::new()
         .merge(business_router)
         .merge(metrics_router)
+        .layer(axum::middleware::from_fn(request_context_middleware))
         .layer(prometheus_layer);
 
     let app = Application {

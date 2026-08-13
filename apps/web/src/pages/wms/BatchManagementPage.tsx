@@ -8,7 +8,7 @@ import { useTranslation } from 'react-i18next';
 import { Layers, ArrowRightLeft } from 'lucide-react';
 import { batchSchema } from '@/schemas/wms/batch';
 import { wmsApi } from '@/api/wms';
-import type { Batch } from '@/api/wms';
+import type { Batch, CreateBatchRequest, UpdateBatchRequest } from '@/api/wms';
 import { designTokens } from '@/theme/tokens';
 
 const ct = designTokens.colors;
@@ -234,14 +234,19 @@ const BatchManagementPage: React.FC = () => {
       };
     },
     create: async (data) => {
-      const response = await wmsApi.batches.create(data as any);
+      const response = await wmsApi.batches.create(
+        data as unknown as CreateBatchRequest,
+      );
       if (!response.success) {
         throw new Error('Failed to create batch');
       }
       return response.data as unknown as Record<string, unknown>;
     },
     update: async (id, data) => {
-      const response = await wmsApi.batches.update(id, data as any);
+      const response = await wmsApi.batches.update(
+        id,
+        data as unknown as UpdateBatchRequest,
+      );
       if (!response.success) {
         throw new Error('Failed to update batch');
       }

@@ -2,7 +2,6 @@ import { vi } from 'vitest';
 
 /**
  * Core browser polyfills needed by all tests (unit + component).
- * Safe to use with isolate:false — no vi.mock calls, no module registry mutations.
  */
 
 // ─── window.matchMedia ─────────────────────────────────────────────────────

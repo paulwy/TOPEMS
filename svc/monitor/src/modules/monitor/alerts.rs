@@ -10,65 +10,7 @@ use crate::AppState;
 use topems_shared_auth::auth::Claims;
 use topems_shared_core::response::ApiResponse;
 
-// Notification integration client
-#[allow(dead_code)]
-struct NotificationClient {
-    base_url: String,
-}
 
-#[allow(dead_code)]
-impl NotificationClient {
-    fn new(base_url: &str) -> Self {
-        Self {
-            base_url: base_url.to_string(),
-        }
-    }
-
-    async fn send_alert_notification(&self, alert: &Alert) -> Result<(), reqwest::Error> {
-        let payload = serde_json::json!({
-            "type": "alert",
-            "title": alert.title.clone(),
-            "message": alert.message.clone(),
-            "severity": alert.severity.clone(),
-            "service_name": alert.service_name.clone(),
-            "timestamp": alert.timestamp.to_rfc3339(),
-        });
-
-        reqwest::Client::new()
-            .post(format!(
-                "{}/api/communication/notification/send",
-                self.base_url
-            ))
-            .json(&payload)
-            .send()
-            .await?;
-
-        Ok(())
-    }
-
-    async fn send_realtime_push(&self, alert: &Alert) -> Result<(), reqwest::Error> {
-        let payload = serde_json::json!({
-            "channel": "alerts",
-            "event": "alert_new",
-            "data": {
-                "id": alert.id.to_string(),
-                "service_name": alert.service_name.clone(),
-                "severity": alert.severity.clone(),
-                "title": alert.title.clone(),
-                "message": alert.message.clone(),
-                "timestamp": alert.timestamp.to_rfc3339(),
-            }
-        });
-
-        reqwest::Client::new()
-            .post(format!("{}/api/communication/push/send", self.base_url))
-            .json(&payload)
-            .send()
-            .await?;
-
-        Ok(())
-    }
-}
 
 // Alert Rule Types
 #[derive(Debug, Serialize, Deserialize)]

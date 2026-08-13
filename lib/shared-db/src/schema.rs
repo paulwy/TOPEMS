@@ -286,13 +286,7 @@ pub async fn verify_table_columns(
             missing.len(),
             missing
         );
-        eprintln!(
-            "[SCHEMA_DEFENSE_STRICT] {schema}.{table} MISSING {n} COLUMNS: {missing:?}",
-            schema = schema,
-            table = table,
-            n = missing.len(),
-            missing = missing
-        );
+
         panic!(
             "[{} schema 自检 严格模式] 列完整性不满足：{}.{} 缺列 {:?}，终止启动",
             service_tag, schema, table, missing

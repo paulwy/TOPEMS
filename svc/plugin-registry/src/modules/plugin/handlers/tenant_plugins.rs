@@ -224,7 +224,13 @@ pub async fn install_plugin(
 
     // 依赖检查：验证插件声明的所有依赖是否已安装且激活
     let deps: Vec<String> = if let Some(deps_json) = &plugin.dependencies {
-        serde_json::from_value(deps_json.clone()).unwrap_or_default()
+        match serde_json::from_value(deps_json.clone()) {
+            Ok(d) => d,
+            Err(e) => {
+                tracing::warn!("[Plugin] Failed to deserialize dependencies for {}: {}", plugin.code, e);
+                Vec::new()
+            }
+        }
     } else {
         vec![]
     };

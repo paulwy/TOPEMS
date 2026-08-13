@@ -1,3 +1,5 @@
+pub mod middleware;
+
 use axum::extract::FromRef;
 use serde::{Deserialize, Serialize};
 use sqlx::postgres::PgPool;

@@ -3,7 +3,6 @@ pub mod data_sync;
 pub mod openapi;
 pub mod purchase_order;
 pub mod scoring_dimension;
-pub mod srm_compat;
 pub mod srm_plugin;
 pub mod statistics;
 pub mod supplier;

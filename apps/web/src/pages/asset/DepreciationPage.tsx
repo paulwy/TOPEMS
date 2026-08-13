@@ -123,21 +123,21 @@ const DepreciationPage: React.FC = () => {
             totalDepreciation: items.reduce((sum, a) => sum + (a.accumulated_depreciation || 0), 0),
             monthlyDepreciation: items.reduce((sum, a) => sum + (a.monthly_depreciation || 0), 0),
           });
-          return { data: items as any[], total: response.data.total || 0 };
+          return { data: items as unknown as Record<string, unknown>[], total: response.data.total || 0 };
         }
         return { data: [], total: 0 };
       },
       create: async (data) => {
         const res = await fixedAssetApi.create(data as Partial<FixedAsset>);
         if (res.success && res.data) {
-          return res.data as any;
+          return res.data as unknown as Record<string, unknown>;
         }
         throw new Error(res.message || t('asset:depreciation.create_fail'));
       },
       update: async (id, data) => {
         const res = await fixedAssetApi.update(id, data as Partial<FixedAsset>);
         if (res.success && res.data) {
-          return res.data as any;
+          return res.data as unknown as Record<string, unknown>;
         }
         throw new Error(res.message || t('asset:depreciation.update_fail'));
       },
@@ -166,7 +166,7 @@ const DepreciationPage: React.FC = () => {
     [handleSingleDepreciate, t]
   );
 
-  const statsContent = (rows: any[], _total: number) => {
+  const statsContent = (rows: FixedAsset[], _total: number) => {
     const currentTotal = rows.length || statsData.total;
     const currentValue =
       rows.length > 0

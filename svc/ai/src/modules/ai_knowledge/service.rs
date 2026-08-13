@@ -398,7 +398,7 @@ pub async fn update_document(
     if let Some(new_kb_id) = req.kb_id {
         let old_kb_id = existing
             .as_ref()
-            .expect("existing should exist after is_some() check")
+            .unwrap()
             .document
             .kb_id;
         if old_kb_id != new_kb_id {

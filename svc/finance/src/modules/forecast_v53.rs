@@ -1147,7 +1147,10 @@ impl BudgetAnalyzer {
         periods.sort();
 
         for period in &periods {
-            let items = period_data.get(*period).unwrap();
+            let items = match period_data.get(*period) {
+                Some(items) => items,
+                None => continue,
+            };
             let budget_sum: f64 = items.iter().map(|v| v.budget_amount).sum();
             let actual_sum: f64 = items.iter().map(|v| v.actual_amount).sum();
             let variance_amount = actual_sum - budget_sum;
@@ -1183,10 +1186,10 @@ impl BudgetAnalyzer {
         };
 
         let overall_trend = if points.len() >= 3 {
-            let recent: Vec<&VarianceTrendPoint> = points.iter().rev().take(3).collect();
-            let first = recent.last().unwrap().variance_percentage;
-            let last = recent.first().unwrap().variance_percentage;
-            let diff = last - first;
+            let recent = points.iter().rev().take(3).collect::<Vec<_>>();
+            let oldest_of_recent = recent.last().map(|p| p.variance_percentage).unwrap_or(0.0);
+            let newest_of_recent = recent.first().map(|p| p.variance_percentage).unwrap_or(0.0);
+            let diff = newest_of_recent - oldest_of_recent;
             if diff > 2.0 {
                 "deteriorating"
             } else if diff < -2.0 {

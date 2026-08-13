@@ -15,7 +15,7 @@ pub mod middleware;
 
 pub use business_spans::*;
 pub use config::*;
-pub use middleware::TelemetryExt;
+pub use middleware::{inject_trace_into_reqwest, TelemetryExt, TracedRequestExt};
 pub use middleware::*;
 
 use opentelemetry::{global, trace::TracerProvider, KeyValue};
@@ -32,7 +32,7 @@ use tracing_subscriber::{
 };
 
 use std::sync::Mutex;
-use topems_shared_core::logging::init_logging;
+use topems_shared_core::logging::{init_logging, JsonEventFormatter, LogFormat};
 
 static TRACER_PROVIDER: Mutex<Option<SdkTracerProvider>> = Mutex::new(None);
 
@@ -94,7 +94,6 @@ pub fn init_telemetry(service_name: &str) -> TelemetryGuard {
     };
 
     let tracer = tracer_provider.tracer(service_name);
-    let otel_layer = OpenTelemetryLayer::new(tracer);
 
     let mut provider_guard = TRACER_PROVIDER.lock().unwrap_or_else(|e| {
         tracing::error!("Lock poisoned: {}", e);
@@ -116,24 +115,64 @@ pub fn init_telemetry(service_name: &str) -> TelemetryGuard {
     const PORT_DIAGNOSTIC_DIRECTIVES: &str =
         "service_discovery=info,rd::ai_integration=info,portal::federation_gateway=debug,portal::graphql_schema=debug,portal::intelligent_gateway=debug";
 
-    let env_filter = EnvFilter::try_from_default_env().unwrap_or_else(|_| {
-        EnvFilter::new(format!(
-            "{service_name}=info,{directives}",
-            service_name = service_name,
-            directives = PORT_DIAGNOSTIC_DIRECTIVES
-        ))
-    });
+    let service_name_clone = service_name;
+    let default_env_filter = || {
+        EnvFilter::try_from_default_env().unwrap_or_else(|_| {
+            EnvFilter::new(format!(
+                "{service_name_clone}=info,{PORT_DIAGNOSTIC_DIRECTIVES}",
+            ))
+        })
+    };
 
-    let fmt_layer = Layer::new().with_writer(std::io::stdout);
+    match LogFormat::from_env() {
+        LogFormat::Json => {
+            let otel_layer = OpenTelemetryLayer::new(tracer);
+            Registry::default()
+                .with(default_env_filter())
+                .with(
+                    Layer::new()
+                        .with_writer(std::io::stdout)
+                        .event_format(JsonEventFormatter::new()),
+                )
+                .with(otel_layer)
+                .try_init()
+                .unwrap_or_else(|e| {
+                    tracing::error!("Failed to initialize tracing subscriber: {}", e);
+                });
+        }
+        LogFormat::File => {
+            let otel_layer = OpenTelemetryLayer::new(tracer);
+            let log_dir = std::env::var("LOG_DIR").unwrap_or_else(|_| "./logs".to_string());
+            std::fs::create_dir_all(&log_dir).unwrap_or_default();
+            let file_appender = tracing_appender::rolling::hourly(&log_dir, service_name_clone);
+            let (non_blocking, _guard) = tracing_appender::non_blocking(file_appender);
+            let _ = _guard;
 
-    Registry::default()
-        .with(env_filter)
-        .with(fmt_layer)
-        .with(otel_layer)
-        .try_init()
-        .unwrap_or_else(|e| {
-            tracing::error!("Failed to initialize tracing subscriber: {}", e);
-        });
+            Registry::default()
+                .with(default_env_filter())
+                .with(
+                    Layer::new()
+                        .with_writer(non_blocking)
+                        .event_format(JsonEventFormatter::new()),
+                )
+                .with(otel_layer)
+                .try_init()
+                .unwrap_or_else(|e| {
+                    tracing::error!("Failed to initialize tracing subscriber: {}", e);
+                });
+        }
+        LogFormat::Text => {
+            let otel_layer = OpenTelemetryLayer::new(tracer);
+            Registry::default()
+                .with(default_env_filter())
+                .with(Layer::new().with_writer(std::io::stdout))
+                .with(otel_layer)
+                .try_init()
+                .unwrap_or_else(|e| {
+                    tracing::error!("Failed to initialize tracing subscriber: {}", e);
+                });
+        }
+    }
 
     tracing::info!(
         "✅ OpenTelemetry initialized (exporter: {:?})",

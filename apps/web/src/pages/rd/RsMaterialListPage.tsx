@@ -13,6 +13,7 @@ import type { Material, CreateMaterialRequest, UpdateMaterialRequest } from '@/a
 import { PageContainer } from '@/components/common';
 import { useNotificationStore } from '@/store';
 import { logger } from '@/utils/logger';
+import { extractErrorMessage } from '@/utils/errors';
 
 import { CACHE_DURATIONS, QUERY_KEYS } from '@/lib/reactQuery';
 
@@ -82,12 +83,12 @@ const RsMaterialListPage: React.FC = () => {
         });
       }
     },
-    onError: (error: any) => {
+    onError: (error: unknown) => {
       logger.error('导入物料失败:', error);
       addNotification({
         type: 'error',
         title: t('rd.material_list_page.notification.import_failed_title'),
-        message: error.message || t('rd.material_list_page.notification.import_failed_message'),
+        message: extractErrorMessage(error, t('rd.material_list_page.notification.import_failed_message')),
       });
     },
   });

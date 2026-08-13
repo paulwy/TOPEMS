@@ -86,9 +86,9 @@ const CRMBillingPage: React.FC = () => {
         if (!response.success) {
           throw new Error(response.message || t('crm.billing.error_load_list'));
         }
-        const data = response.data as any;
-        const items = data?.items || data || [];
-        const total = data?.total || items.length;
+        const raw = response.data as unknown;
+        const items = Array.isArray(raw) ? raw : (raw as { items?: BillingRecord[] }).items ?? [];
+        const total = Array.isArray(raw) ? items.length : ((raw as { total?: number }).total ?? items.length);
         return { data: items, total };
       },
       create: async () => {

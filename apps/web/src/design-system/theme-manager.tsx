@@ -51,7 +51,9 @@ class ThemeManagerSingleton {
       if (stored) {
         return { ...defaultConfig, ...JSON.parse(stored) };
       }
-    } catch {}
+    } catch (e) {
+      console.error("[ThemeManager] Failed to parse stored config", e);
+    }
     return { ...defaultConfig };
   }
 
@@ -59,7 +61,9 @@ class ThemeManagerSingleton {
     if (typeof window === 'undefined') return;
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(this.config));
-    } catch {}
+    } catch (e) {
+      console.error("[ThemeManager] Failed to save config to localStorage", e);
+    }
   }
 
   private setupSystemPreferenceListener(): void {
@@ -71,7 +75,9 @@ class ThemeManagerSingleton {
           this.applyTheme(e.matches ? 'dark' : 'light');
         }
       });
-    } catch {}
+    } catch (e) {
+      console.error("[ThemeManager] Failed to setup system preference listener", e);
+    }
   }
 
   private getResolvedMode(): 'light' | 'dark' {
@@ -116,7 +122,9 @@ class ThemeManagerSingleton {
     for (const listener of this.listeners) {
       try {
         listener({ ...this.config });
-      } catch {}
+      } catch (e) {
+        console.error("[ThemeManager] Listener callback error", e);
+      }
     }
   }
 

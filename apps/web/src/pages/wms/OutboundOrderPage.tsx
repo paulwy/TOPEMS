@@ -4,6 +4,7 @@
 
 import React from 'react';
 import { wmsApi } from '@/api/wms';
+import type { OutboundOrder, CreateOutboundOrderRequest } from '@/api/wms';
 import { WMS_PATHS } from '@/modules/wms/config';
 import CrudPage from '@/components/templates/CrudPage';
 import type { CrudApiAdapter } from '@/components/templates/CrudPage';
@@ -27,12 +28,15 @@ const outboundOrderApiAdapter: CrudApiAdapter = {
       ...data,
       order_type: 'sales_out',
       items: [],
-    } as any);
+    } as unknown as CreateOutboundOrderRequest);
     if (!response.success) throw new Error('Failed to create outbound order');
     return response.data as unknown as Record<string, unknown>;
   },
   update: async (id, data) => {
-    const response = await wmsApi.outboundOrders.update(id, data as any);
+    const response = await wmsApi.outboundOrders.update(
+      id,
+      data as unknown as Partial<OutboundOrder>,
+    );
     if (!response.success) throw new Error('Failed to update outbound order');
     return response.data as unknown as Record<string, unknown>;
   },

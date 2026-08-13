@@ -18,7 +18,6 @@ pub mod purchase_contract;
 pub mod purchase_item;
 pub mod purchase_order;
 pub mod purchase_requisition;
-pub mod scm_compat;
 pub mod scm_plugin;
 pub mod supplier;
 pub mod supplier_admission;

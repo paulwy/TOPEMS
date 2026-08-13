@@ -747,7 +747,13 @@ async fn main() -> anyhow::Result<()> {
                             (axum::http::header::ETAG, etag),
                         ],
                         axum::Json(
-                            serde_json::from_str::<serde_json::Value>(&body).unwrap_or_default(),
+                            match serde_json::from_str::<serde_json::Value>(&body) {
+                                Ok(j) => j,
+                                Err(e) => {
+                                    tracing::warn!("Failed to deserialize GraphQL cache body: {}", e);
+                                    serde_json::Value::Null
+                                }
+                            },
                         ),
                     )
                         .into_response()

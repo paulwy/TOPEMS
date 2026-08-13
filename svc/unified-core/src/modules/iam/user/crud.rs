@@ -12,17 +12,6 @@ use uuid::Uuid;
 
 use super::models::{is_valid_email, record_audit_log, ListUsersParams, UserResponse, UserRow};
 
-#[derive(Debug, Serialize, ToSchema)]
-#[allow(dead_code)]
-#[schema(as = ListUsersResponse)]
-struct ListUsersResponse {
-    users: Vec<UserResponse>,
-    total: i64,
-    page: i64,
-    page_size: i64,
-    total_pages: i64,
-}
-
 #[utoipa::path(
     get,
     path = "/users",

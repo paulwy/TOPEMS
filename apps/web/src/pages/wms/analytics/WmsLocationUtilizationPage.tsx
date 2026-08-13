@@ -71,7 +71,7 @@ export default function WmsLocationUtilizationPage() {
               fontSize={11}
             />
             <Tooltip
-              formatter={(v: any, n: any) => {
+              formatter={(v: unknown, n: unknown) => {
                 const labels: Record<string, string> = {
                   utilization: '已用 %',
                   vacancy: '空置 %',

@@ -2,9 +2,11 @@ import apiClient from '../client';
 import type { ApiResponse } from '../client';
 import { systemParamsApi } from './params';
 import { systemAuditApi } from './audit';
+import { featureFlagApi } from './featureFlag';
 
 export type { SystemConfig, CacheConfig, LogConfig, SystemParams } from './types';
 export type { AuditLog, AuditLogQueryParams, PaginatedAuditLogs } from './types';
+export type { FeatureFlag, FeatureState, FeatureCondition, UpdateFeatureFlagRequest } from './featureFlag';
 
 export interface DictType {
   id: string;
@@ -245,6 +247,6 @@ export const dbStructureApi = {
   },
 };
 
-export { systemParamsApi, systemAuditApi };
+export { systemParamsApi, systemAuditApi, featureFlagApi };
 
-export default { dictTypeApi, dictItemApi, dbStructureApi, systemParamsApi, systemAuditApi };
+export default { dictTypeApi, dictItemApi, dbStructureApi, systemParamsApi, systemAuditApi, featureFlagApi };

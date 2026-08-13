@@ -8,7 +8,6 @@ pub mod equipment_oee;
 pub mod equipment_oee_calc;
 pub mod material_bom;
 pub mod material_requirement;
-pub mod mes_compat;
 pub mod mes_plugin;
 pub mod oee_logic;
 pub mod openapi;

@@ -22,6 +22,7 @@ import { PageContainer } from '@/components/common';
 import { ConfirmDialog } from '@topems/shared-components';
 import { attendanceSchema, leaveSchema } from '@/schemas/hrm';
 import { attendanceApi, leaveApi } from '@/api/hrm';
+import type { AttendanceRecord, LeaveRequest } from '@/api/hrm';
 import { apiLogger } from '@/utils/logger';
 
 
@@ -103,8 +104,8 @@ const HrmAttendancePage: React.FC = () => {
         label: t('hrm.hrm_attendance_page.text_7a712b'),
         icon: <Check size={16} />,
         color: 'success',
-        show: (row: any) => row.status === 'pending',
-        onClick: (row: any) => handleLeaveAction(row.id, 'approve'),
+        show: (row: Record<string, unknown>) => (row.status as string) === 'pending',
+        onClick: (row: Record<string, unknown>) => handleLeaveAction(row.id as string, 'approve'),
       },
       {
         key: 'reject',
@@ -112,8 +113,8 @@ const HrmAttendancePage: React.FC = () => {
         icon: <X size={16} />,
         color: 'error',
         divider: true,
-        show: (row: any) => row.status === 'pending',
-        onClick: (row: any) => handleLeaveAction(row.id, 'reject'),
+        show: (row: Record<string, unknown>) => (row.status as string) === 'pending',
+        onClick: (row: Record<string, unknown>) => handleLeaveAction(row.id as string, 'reject'),
       },
     ],
     [handleLeaveAction, t]
@@ -233,8 +234,8 @@ const StatisticsChips: React.FC<{ selectedDate: string }> = ({ selectedDate }) =
 
   const stats = useMemo(() => {
     const total = records.length;
-    const late = records.filter((r: any) => r.status === 'late').length;
-    const absent = records.filter((r: any) => r.status === 'absent').length;
+    const late = records.filter((r) => r.status === 'late').length;
+    const absent = records.filter((r) => r.status === 'absent').length;
     const present = total - absent;
     const rate = total > 0 ? Math.round((present / total) * 100) : 0;
     return { total, late, absent, present, rate };
@@ -332,7 +333,7 @@ const StatisticsContent: React.FC<{ selectedDate: string }> = ({ selectedDate })
     queryFn: async () => {
       const res = await leaveApi.list({ pagesize: 100 });
       if (res.code === 200) {
-        return res.data?.items || [];
+        return (res.data?.items as LeaveRequest[]) || [];
       }
       return [];
     },
@@ -341,19 +342,19 @@ const StatisticsContent: React.FC<{ selectedDate: string }> = ({ selectedDate })
 
   const stats = useMemo(() => {
     const totalEmployees = records.length;
-    const totalPresent = records.filter((r: any) => r.status !== 'absent').length;
-    const totalLate = records.filter((r: any) => r.status === 'late').length;
-    const totalAbsent = records.filter((r: any) => r.status === 'absent').length;
+    const totalPresent = records.filter((r) => r.status !== 'absent').length;
+    const totalLate = records.filter((r) => r.status === 'late').length;
+    const totalAbsent = records.filter((r) => r.status === 'absent').length;
     const presentRate = totalEmployees > 0 ? Math.round((totalPresent / totalEmployees) * 100) : 0;
     const avgWorkHours =
       records.length > 0
         ? Math.round(
-            (records.reduce((sum: number, r: any) => sum + (r.work_hours || 0), 0) /
+            (records.reduce((sum, r) => sum + (r.work_hours || 0), 0) /
               records.length) *
               10
           ) / 10
         : 0;
-    const pendingLeaves = leaves.filter((l: any) => l.status === 'pending').length;
+    const pendingLeaves = leaves.filter((l) => l.status === 'pending').length;
 
     return {
       totalEmployees,

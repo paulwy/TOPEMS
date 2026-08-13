@@ -18,7 +18,6 @@ pub mod navigation;
 pub mod notifications;
 pub mod orchestration;
 pub mod persisted_query;
-pub mod portal_compat;
 pub mod portal_plugin;
 pub mod query_governance;
 pub mod query_optimizer;

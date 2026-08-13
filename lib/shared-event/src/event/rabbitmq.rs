@@ -22,6 +22,16 @@ use lapin::{
 /// 使用 Fanout 而非 Topic，是因为缓存失效需要无差别广播给所有实例。
 const CACHE_FANOUT_EXCHANGE: &str = "topems.cache.fanout";
 
+/// 死信 Exchange：当消费者 nack(requeue=false) 或消息 TTL 过期时，
+/// 消息被路由到此 Topic Exchange，再转发到 DLX Queue。
+const DLX_EXCHANGE: &str = "topems.events.dlx";
+
+/// 死信队列：存放无法被正常消费的消息，供运维排查/重试。
+const DLX_QUEUE: &str = "topems.events.dead";
+
+/// 主队列路由到 DLX 时使用的 routing key。
+const DLX_ROUTING_KEY: &str = "dead";
+
 #[derive(Debug, Clone)]
 pub struct RabbitMqPublisher {
     channel: Channel,
@@ -79,6 +89,24 @@ impl RabbitMqPublisher {
             )
             .await
             .map_err(|e| super::error::EventError::ConnectionError(e.to_string()))?;
+
+        channel
+            .exchange_declare(
+                DLX_EXCHANGE.into(),
+                ExchangeKind::Topic,
+                ExchangeDeclareOptions {
+                    durable: true,
+                    auto_delete: false,
+                    internal: false,
+                    nowait: false,
+                    passive: false,
+                },
+                FieldTable::default(),
+            )
+            .await
+            .map_err(|e| super::error::EventError::ConnectionError(e.to_string()))?;
+
+        info!("RabbitMQ DLX exchange declared: {}", DLX_EXCHANGE);
 
         let instance_id = format!(
             "{}:{}:{}",
@@ -229,9 +257,50 @@ impl RabbitMqSubscriber {
 
         let queue_name = format!("topems.{}", service_name);
 
+        let mut queue_args = FieldTable::default();
+        queue_args.insert(
+            "x-dead-letter-exchange".into(),
+            lapin::types::AMQPValue::LongString(DLX_EXCHANGE.into()),
+        );
+        queue_args.insert(
+            "x-dead-letter-routing-key".into(),
+            lapin::types::AMQPValue::LongString(DLX_ROUTING_KEY.into()),
+        );
+
         channel
             .queue_declare(
                 queue_name.clone().into(),
+                QueueDeclareOptions {
+                    durable: true,
+                    auto_delete: false,
+                    exclusive: false,
+                    nowait: false,
+                    passive: false,
+                },
+                queue_args,
+            )
+            .await
+            .map_err(|e| super::error::EventError::SubscribeError(e.to_string()))?;
+
+        channel
+            .exchange_declare(
+                DLX_EXCHANGE.into(),
+                ExchangeKind::Topic,
+                ExchangeDeclareOptions {
+                    durable: true,
+                    auto_delete: false,
+                    internal: false,
+                    nowait: false,
+                    passive: false,
+                },
+                FieldTable::default(),
+            )
+            .await
+            .map_err(|e| super::error::EventError::SubscribeError(e.to_string()))?;
+
+        channel
+            .queue_declare(
+                DLX_QUEUE.into(),
                 QueueDeclareOptions {
                     durable: true,
                     auto_delete: false,
@@ -244,9 +313,20 @@ impl RabbitMqSubscriber {
             .await
             .map_err(|e| super::error::EventError::SubscribeError(e.to_string()))?;
 
+        channel
+            .queue_bind(
+                DLX_QUEUE.into(),
+                DLX_EXCHANGE.into(),
+                DLX_ROUTING_KEY.into(),
+                QueueBindOptions { nowait: false },
+                FieldTable::default(),
+            )
+            .await
+            .map_err(|e| super::error::EventError::SubscribeError(e.to_string()))?;
+
         info!(
-            "RabbitMQ subscriber initialized for service: {}",
-            service_name
+            "RabbitMQ subscriber initialized for service: {}, DLX: {} -> {} (routing_key: {})",
+            service_name, DLX_EXCHANGE, DLX_QUEUE, DLX_ROUTING_KEY
         );
 
         Ok(Self {
@@ -298,26 +378,34 @@ impl RabbitMqSubscriber {
                 if let Ok(delivery) = delivery {
                     let event: Event = match serde_json::from_slice(&delivery.data) {
                         Ok(e) => e,
-                        Err(_) => {
+                        Err(err) => {
+                            warn!(
+                                "Failed to deserialize RabbitMQ event, sending to DLX: {}",
+                                err
+                            );
                             let _ = delivery
                                 .nack(lapin::options::BasicNackOptions {
                                     multiple: false,
-                                    requeue: true,
+                                    requeue: false,
                                 })
                                 .await;
                             continue;
                         }
                     };
 
-                    if handler(event).is_ok() {
+                    if handler(event.clone()).is_ok() {
                         let _ = delivery
                             .ack(lapin::options::BasicAckOptions { multiple: false })
                             .await;
                     } else {
+                        warn!(
+                            "RabbitMQ event handler failed, sending to DLX - event_id: {}, type: {:?}",
+                            event.event_id, event.event_type
+                        );
                         let _ = delivery
                             .nack(lapin::options::BasicNackOptions {
                                 multiple: false,
-                                requeue: true,
+                                requeue: false,
                             })
                             .await;
                     }

@@ -106,7 +106,7 @@ const RsReleasePage: React.FC = () => {
         title: '操作成功',
         message: '回滚任务已提交',
       });
-    } catch {}
+    } catch (e) { console.error("[RD] Failed to submit rollback deployment", e); }
   };
 
   const customRowActions: RowAction<Record<string, unknown>>[] = [

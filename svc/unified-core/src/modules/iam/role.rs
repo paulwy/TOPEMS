@@ -27,22 +27,6 @@ struct RoleResponse {
     permission_count: i64,
 }
 
-#[allow(dead_code)]
-#[derive(Debug, Clone, Deserialize)]
-struct CreateRoleRequest {
-    name: String,
-    description: Option<String>,
-    permission_ids: Option<Vec<String>>,
-}
-
-#[allow(dead_code)]
-#[derive(Debug, Clone, Deserialize)]
-struct UpdateRoleRequest {
-    name: Option<String>,
-    description: Option<String>,
-    permission_ids: Option<Vec<String>>,
-}
-
 pub async fn list_roles(State(state): State<AppState>) -> Json<serde_json::Value> {
     tracing::info!("IAM role list_roles called");
 

@@ -111,3 +111,55 @@ where
         self.layer(axum::middleware::from_fn(telemetry_middleware))
     }
 }
+
+/// 给 reqwest::Request 注入当前 trace context（W3C traceparent + 自定义 headers）
+pub fn inject_trace_into_reqwest(req: &mut reqwest::Request) {
+    inject_trace_context(req.headers_mut());
+
+    if let Some(tid) = topems_shared_core::logging::get_current_trace_id() {
+        if let Ok(val) = HeaderValue::from_str(&tid) {
+            req.headers_mut()
+                .insert(HeaderName::from_static("x-trace-id"), val);
+        }
+    }
+    if let Some(rid) = topems_shared_core::logging::get_current_request_id() {
+        if let Ok(val) = HeaderValue::from_str(&rid) {
+            req.headers_mut()
+                .insert(HeaderName::from_static("x-request-id"), val);
+        }
+    }
+}
+
+/// Extension trait 让 reqwest::Request 可以直接 `.with_trace()`
+pub trait TracedRequestExt {
+    fn with_trace(self) -> Self;
+}
+
+impl TracedRequestExt for reqwest::Request {
+    fn with_trace(mut self) -> Self {
+        inject_trace_into_reqwest(&mut self);
+        self
+    }
+}
+
+impl TracedRequestExt for reqwest::RequestBuilder {
+    fn with_trace(mut self) -> Self {
+        let mut headers = HeaderMap::new();
+        inject_trace_context(&mut headers);
+
+        for (key, value) in headers.iter() {
+            if let Ok(v) = value.to_str() {
+                self = self.header(key.clone(), v);
+            }
+        }
+
+        if let Some(tid) = topems_shared_core::logging::get_current_trace_id() {
+            self = self.header("x-trace-id", &tid);
+        }
+        if let Some(rid) = topems_shared_core::logging::get_current_request_id() {
+            self = self.header("x-request-id", &rid);
+        }
+
+        self
+    }
+}

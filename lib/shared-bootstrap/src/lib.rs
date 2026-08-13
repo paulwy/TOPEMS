@@ -686,11 +686,11 @@ pub fn build_application(
         app = app.route("/api-docs/openapi.json", get(move || async move { json }));
     }
 
-    app = app.layer(axum::middleware::from_fn(telemetry_middleware));
-
     if config.enable_request_context {
         app = app.layer(axum::middleware::from_fn(request_context_middleware));
     }
+
+    app = app.layer(axum::middleware::from_fn(telemetry_middleware));
 
     app = app.layer(prometheus_layer).layer(cors);
 

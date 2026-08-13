@@ -2,6 +2,7 @@
 import { defineConfig } from 'vitest/config';
 import react from '@vitejs/plugin-react';
 import path from 'path';
+import fs from 'fs';
 import type { Plugin } from 'vite';
 
 const setupEnv = path.resolve(__dirname, './src/__tests__/setup-env-vitest.ts');
@@ -24,6 +25,7 @@ const setupMocks = path.resolve(__dirname, './src/__tests__/setup-mocks.ts');
  * of which package in pnpm's virtual store is the importer.
  */
 function fixReactTransitionGroup(): Plugin {
+  const ROOT = path.resolve(__dirname, '../../node_modules/react-transition-group');
   const RTG_SUB_PATHS: Record<string, string> = {
     'react-transition-group/TransitionGroupContext': 'TransitionGroupContext.js',
     'react-transition-group/Transition': 'Transition.js',
@@ -36,21 +38,67 @@ function fixReactTransitionGroup(): Plugin {
     name: 'fix-react-transition-group-subpaths',
     enforce: 'pre',
     resolveId(id: string) {
-      // Exact sub-path match
       if (RTG_SUB_PATHS[id]) {
-        return path.resolve(
-          __dirname,
-          `../../node_modules/react-transition-group/cjs/${RTG_SUB_PATHS[id]}`,
-        );
+        return path.resolve(ROOT, `cjs/${RTG_SUB_PATHS[id]}`);
       }
-      // Bare main entry
       if (id === 'react-transition-group') {
-        return path.resolve(
-          __dirname,
-          '../../node_modules/react-transition-group/cjs/react-transition-group.js',
-        );
+        return path.resolve(ROOT, 'cjs/index.js');
       }
       return null;
+    },
+  };
+}
+
+function resolveRtgCjs(file: string) {
+  return path.resolve(
+    __dirname,
+    '../../node_modules/react-transition-group/cjs/',
+    file,
+  );
+}
+
+/**
+ * Auto-fix @opentelemetry/resources ESM bare `.js` imports.
+ *
+ * OTel resources 1.26.x and 1.30.x ship ESM with bare relative imports
+ * like `import { execAsync } from './execAsync'` (missing `.js` extension).
+ * Vite handles this in production builds but Vitest's ESM loader doesn't,
+ * causing ERR_MODULE_NOT_FOUND at test transform time.
+ *
+ * Solution: at config load time, create symlinks from `execAsync` → `execAsync.js`
+ * in every OTel resources machine-id directory under pnpm store.
+ */
+function fixOtelBareImports(): Plugin {
+  return {
+    name: 'fix-otel-bare-imports',
+    configResolved() {
+      const ROOT = path.resolve(__dirname, '../../');
+      const pnpmRoot = path.join(ROOT, 'node_modules/.pnpm');
+      if (!fs.existsSync(pnpmRoot)) return;
+
+      const otelDirs = fs
+        .readdirSync(pnpmRoot)
+        .filter((d) => d.startsWith('@opentelemetry+resources@'));
+
+      for (const pkgDir of otelDirs) {
+        const midDir = path.join(
+          pnpmRoot,
+          pkgDir,
+          'node_modules/@opentelemetry/resources/build/esm/detectors/platform/node/machine-id',
+        );
+        if (!fs.existsSync(midDir)) continue;
+        for (const bare of ['execAsync']) {
+          const jsFile = path.join(midDir, `${bare}.js`);
+          const linkPath = path.join(midDir, bare);
+          if (fs.existsSync(jsFile) && !fs.existsSync(linkPath)) {
+            try {
+              fs.symlinkSync(`${bare}.js`, linkPath);
+            } catch {
+              /* race on parallel runs */
+            }
+          }
+        }
+      }
     },
   };
 }
@@ -59,6 +107,7 @@ export default defineConfig({
   plugins: [
     react(),
     fixReactTransitionGroup(),
+    fixOtelBareImports(),
   ],
   resolve: {
     alias: {
@@ -69,13 +118,26 @@ export default defineConfig({
       '@topems/shared-hooks': path.resolve(__dirname, '../../packages/shared-hooks/src'),
       '@topems/shared-constants': path.resolve(__dirname, '../../packages/shared-constants/src'),
       '@topems/tokens': path.resolve(__dirname, '../../packages/tokens/src'),
-      // Note: react-transition-group aliases removed because they cannot reach
-      // pnpm-isolated @mui/material/node_modules/react-transition-group — handled
-      // by fixReactTransitionGroup() plugin instead.
+      'react-transition-group/TransitionGroupContext': resolveRtgCjs('TransitionGroupContext.js'),
+      'react-transition-group/Transition': resolveRtgCjs('Transition.js'),
+      'react-transition-group/CSSTransition': resolveRtgCjs('CSSTransition.js'),
+      'react-transition-group/SwitchTransition': resolveRtgCjs('SwitchTransition.js'),
+      'react-transition-group/TransitionGroup': resolveRtgCjs('TransitionGroup.js'),
+      'react-transition-group': resolveRtgCjs('index.js'),
     },
     mainFields: ['module', 'main'],
     dedupe: ['react', 'react-dom', 'scheduler'],
     extensions: ['.mjs', '.js', '.ts', '.tsx', '.json'],
+  },
+  optimizeDeps: {
+    include: [
+      'react-transition-group',
+      'react-transition-group/TransitionGroupContext',
+      'react-transition-group/Transition',
+      'react-transition-group/CSSTransition',
+      'react-transition-group/SwitchTransition',
+      'react-transition-group/TransitionGroup',
+    ],
   },
   test: {
     globals: true,

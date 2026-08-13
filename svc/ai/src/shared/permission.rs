@@ -116,7 +116,16 @@ pub async fn check_request_permission(
         }
     };
 
-    let secret = std::env::var("JWT_SECRET").expect("JWT_SECRET must be set in production");
+    let secret = std::env::var("JWT_SECRET")
+        .map_err(|_| {
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                axum::Json(ApiResponse::error(
+                    500,
+                    "服务未配置 JWT_SECRET 环境变量",
+                )),
+            )
+        })?;
     let claims = match verify_jwt_token(token, &secret) {
         Ok(c) => c,
         Err(_) => {
