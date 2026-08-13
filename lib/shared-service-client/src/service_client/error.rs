@@ -64,9 +64,7 @@ mod tests {
 
     #[test]
     fn result_type_alias_works() {
-        let r: ServiceClientResult<i32> = Err(ServiceClientError::ServiceNotFound(
-            "svc".into(),
-        ));
+        let r: ServiceClientResult<i32> = Err(ServiceClientError::ServiceNotFound("svc".into()));
         assert!(r.is_err());
     }
 }
