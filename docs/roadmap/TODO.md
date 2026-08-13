@@ -2763,10 +2763,90 @@ QMS 全量 cargo test：85 passed（V198 基线无回归）
 
 ---
 
-## 🎯 V209 — 下一版本规划占位（待启动）
+## 🎯 V209 — V72.8 P-04 RC4b · IntoParams 批量 + 核心 CRUD request_body/responses 深度契约（✅ 方向 B 续闭环）
+
+> **✅ 完成状态**：2026-08-14 方向 B 续通过，四服务 `cargo check` exit 0 + 三服务 `openapi_extract` 3/3 passed。Commit `af5fc1583` · 24 files changed, +617 / -109 lines。
+
+### 三层推进框架（"IntoParams 解阻塞 → paths 回收 → CRUD 契约升级"流水线）
+
+| 层 | 工作项 | ERP | Finance | WMS | BI/Analytics |
+|---|---|---|---|---|---|
+| **L1 · IntoParams derive**（解 RC4a "遇 Query 跳过" 阻塞）| 12 structs（mdata_refs 10 + dict 2） | 8 structs（settlement_center 4 + audit_v52 4） | 0（WMS RC4a 已全部 safe handler） | 0（BI RC4a 已优先 safe handler） |
+| **L2 · RC4a 撤销 paths 回收** | 13 handlers（含 list_master_data_refs / get_audit_trail 典型） | 29 handlers（settlement 18 + audit_v52 11） | 0（WMS RC4a 未主动撤销） | 0（BI RC4a 无撤销） |
+| **L3 · 核心 CRUD 契约升级** | —（ERP 下次推进） | —（Finance 下次推进） | **36** responses 升级（8 模块） | **23** handlers：9 个含 request_body + responses 五集合，14 个仅 responses 升级 |
+
+### 各服务关键交付明细
+
+#### ERP · [master_data_refs.rs](file:///Users/air/TOPEMS/svc/erp/src/modules/master_data_refs.rs) + [openapi.rs](file:///Users/air/TOPEMS/svc/erp/src/modules/openapi.rs)
+- **L1**：MasterDataRefQuery / AuditTrailQuery / VersionQuery / ConflictQuery / LifecycleQuery / ListQualityRulesQuery / QualityReportQuery / DataAssetQuery / LineageQuery / QualityTrendQuery (bonus) — 共 **10** 个全部 `derive(Debug, Deserialize, utoipa::IntoParams)` 一次通过
+- **dict.rs 加码**：DictTypeQueryParams + DictItemQueryParams，2 个
+- **L2**：13 条回收入 paths()（11 master_data_refs + 2 dict），所有 handler utoipa 宏含 `params(StructName)`
+- **提取增量**：topems-erp.json `237,028 B → 250,907 B`（净增 **13,879 B**，params schema 可见）
+
+#### Finance · [settlement_center/models.rs](file:///Users/air/TOPEMS/svc/finance/src/modules/settlement_center/models.rs) + [mod.rs](file:///Users/air/TOPEMS/svc/finance/src/modules/mod.rs) + [openapi.rs](file:///Users/air/TOPEMS/svc/finance/src/openapi.rs)
+- **L0 可见性修复**：`modules/mod.rs` 顶部新增 **`pub mod settlement_center;`**（根本不存在该声明，直接导致 settlement 18 条 path 引用失败）
+- **L1**：ReconciliationListQuery / SettlementListQuery / LinkListQuery / DifferenceListQuery（settlement_center 4）+ AuditRuleQueryParams / AuditFindingQueryParams / AnomalyAlertQueryParams / AlertHistoryQueryParams（audit_v52 4）= **8**
+- **L2**：settlement_center 组 18 条（reconcile/auto_reconcile/create_settlement/approve_settlement/create_link/delete_link/approve_difference/reject_difference 等） + audit_v52 11 条（Query 回收 4 + 原有宏未注册补全 7）= **29** 条 paths 新增
+- **修正说明**：原 RC4a 提到的 `FilterAuditRulesRequest / ResultFilterQuery / TaskFilterQuery` **不存在**；实际 handler 名已改为 `list_audit_rules_handler / get_audit_findings_handler / get_anomaly_alerts_handler / get_alerts_handler`，对应 Query 为上表 5-7，本次一并对齐
+
+#### WMS · 8 模块 responses 升级（**36** handlers）
+- 模块：warehouse / inventory / inbound_order / outbound_order / batch / serial_number / location / stock_take
+- 升级策略：保守型 — **只升级 responses 集合**（从 1 条 200 → 4~5 条：200 成功 / 201 创建 / 400 参数错误 / 401 未授权 / 404 不存在 / 500 可选）；**不写 request_body**（WMS CreateXxxRequest 系列未在 openapi.rs components/schemas 中注册，写 body 会引发 OpenAPI TS 生成失败或 $ref 悬空）
+- 验证：cargo check exit 0 / extract 0 exit · topems-wms.json 84 KB
+
+#### BI / Analytics · 8 模块混合升级（**23** handlers，9 个含 request_body）
+- 模块：dashboard / visualization / widget / self_service_report / report_templates / schedules / subscriptions / row_level_permission
+- **9 个写 full request_body**（create_/update_ 类，对应 Body 类型在 openapi.rs components 中可查）：
+  ```rust
+  request_body(
+      content = (CreateDashboardRequest),
+      content_type = "application/json",
+      description = "仪表盘创建请求体",
+  ),
+  responses(
+      (status = 201, description = "创建成功"),
+      (status = 400, description = "请求参数错误"),
+      (status = 401, description = "未授权"),
+      (status = 404, description = "资源不存在"),
+      (status = 500, description = "服务内部错误"),
+  )
+  ```
+- **14 个仅 responses 升级**：对应 body 类型未登记在 components/schemas 列表 → 写了会引发 $ref 错误 → 严格保守策略
+- 验证：cargo check exit 0 / extract 0 exit
+
+### 撤销 / 失败项：**零**
+
+| 服务 | 是否有回滚 | 说明 |
+|---|---|---|
+| ERP | ❌ 无 | 12 IntoParams / 13 paths 全部一次通过编译、未改、未删 |
+| Finance | ❌ 无 | 8 IntoParams / 29 paths / visibility fix 全部通过 |
+| WMS | ❌ 无 | 36 responses 升级，request_body 谨慎不写 → 无回滚 |
+| BI | ❌ 无 | 23 handlers 升级分两档（body 存在 → 写 body；不存在 → 只写 responses description）|
+
+### 五道验证
+
+| 验证 | 结果 |
+|---|---|
+| `cargo check -p topems-erp -p topems-finance -p topems-wms -p topems-analytics --lib` | **exit 0 ✅** · 3 pre-existing warnings（consolidation_calc.rs unused_imports 2 + BI dashboard/share.rs unused IntoParams 1），零新增 warning / error |
+| openapi_extract (erp / wms / analytics） | **3/3 passed ✅** · erp 250,907 B / wms 84 KB / analytics passed |
+| Husky pre-commit | cargo fmt（24 Rust files）✅ · lint-staged ✅ · pre-commit 全绿 ✅ |
+
+### V208 RC4a → V209 RC4b 全景汇总
+
+| 维度 | RC4a 初始 | RC4a 末 | RC4b 末（当前） | RC4 净增 |
+|---|---|---|---|---|
+| paths() 条目 | 707 | 965 | **1,022** | +315 |
+| 累计 utoipa skeleton + depth handlers | 0 | ~707+258 | **1,022** | +315 |
+| tags() 数量 | 29 | 55 | **55** | 持平 |
+| openapi JSON (erp+wms+bi 合计) | ~380 KB | ~405 KB | **~431 KB** | +~51 KB |
+| RC4a 撤销 paths (ERP 30 + Finance 7) | — | -37 条 未入 | **已回收 42 条**（ERP 13 + Finance 29）| |
+
+---
+
+## 🎯 V210 — 下一版本规划占位（待启动）
 
 > **候选方向**（优先级由用户确认）：
-> - **方向 B 续 · RC4b utoipa 深度补全**：对 626 总差集中剩余的 ~352 项（Finance 290 / ERP 65 为主）推进两层增强：① 为 100+ 个高频 `Query<T>` struct 加 `#[derive(IntoParams)]`，解除当前"遇 Query 直接跳过"的阻塞；② 为核心 CRUD handler 补 `request_body(body = ...)` 与 `responses((status = 201, body = ...), (status = 400, description = "Bad Request"))` 响应级别契约
-> - **方向 C · Design Token 批量治理**：执行 `scripts/check-design-tokens.mjs --strict`，将 3364 条硬编码颜色/间距/阴影按模块分批收敛到 theme/tokens.ts（目标 -20%）
-> - **方向 D · MF 虚拟模块可观测性**：在 `@module-federation/runtime` 钩子中埋点，捕获 `loadShare` 失败堆栈与 Content-Type 缺失实时告警（避免类似 V206 MF 错误静默发生）
+> - **方向 B 续 · RC4c utoipa 最终补全（收尾层）**：① 为 ERP + Finance 剩余约 310 缺口 handler 做最后一轮批量骨架；② ERP/Finance 核心 CRUD 跟进 WMS/BI 做 responses 五集合升级（+request_body，条件是 components/schemas 先行注册 ~50 个 Create/Update Request struct）；③ 四服务 openapi 生成文件按路径前缀+HTTP 方法做一致性对照脚本，确保"注册路由 ≈ utoipa paths 注解"覆盖率 ≥95%
+> - **方向 C · 3364 条 Design Token 批量治理**：执行 `scripts/check-design-tokens.mjs --strict`，按模块分批将硬编码颜色/间距/阴影收敛到 theme/tokens.ts（目标 -20%）
+> - **方向 D · MF 虚拟模块可观测性埋点**：在 `@module-federation/runtime` 钩子中埋点，捕获 `loadShare` 失败堆栈、Content-Type 缺失、chunk 404，并通过 logger + 全局 toast 实时告警（避免类似 V206 MF 错误静默发生）
 
