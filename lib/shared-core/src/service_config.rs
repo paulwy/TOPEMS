@@ -256,7 +256,7 @@ impl ServiceConfigRegistry {
             (
                 "monitor",
                 "系统监控",
-                8000,
+                8095,
                 ServiceGroup::Analytics,
                 vec!["unified-core"],
                 "/api/monitor",
@@ -609,17 +609,17 @@ mod tests {
 
     #[test]
     fn validate_detects_port_conflict_between_core_and_monitor() {
+        // FIXED: monitor moved to port 8095, no longer conflicts with unified-core:8000
         let reg = ServiceConfigRegistry::new();
         let issues = reg.validate();
-        // unified-core (Standalone, 8000) vs monitor (Standalone, 8000)
         let has_port_conflict = issues.iter().any(|i| {
             i.severity == ValidationSeverity::Error
                 && i.message.contains("conflicts")
                 && (i.service == "unified-core" || i.service == "monitor")
         });
         assert!(
-            has_port_conflict,
-            "应检测到 unified-core 与 monitor 之间的端口冲突: {:?}",
+            !has_port_conflict,
+            "修复后 monitor:8095 与 unified-core:8000 不应再有端口冲突。实际 issues: {:?}",
             issues
         );
     }

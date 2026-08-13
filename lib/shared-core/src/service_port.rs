@@ -19,7 +19,7 @@ pub const UNIFIED_CORE_PORT: u16 = 8000;
 
 // ============ Group 2 独立服务端口（与 config/services.yaml 一一对应）============
 // 权威源：config/services.yaml
-// 注意：doc/monitor 已整合到 unified-core（虚拟服务，共用 8000），不再独立端口
+// 注意：doc 仍是虚拟服务；monitor 已拆到 svc/monitor:8095 独立部署
 //       report 已整合到 analytics（bi），不再独立服务
 
 pub const ERP_PORT: u16 = 8010;
@@ -56,11 +56,16 @@ pub const LOWCODE_PORT: u16 = 8088;
 
 pub const MASTER_DATA_PORT: u16 = 8090;
 
+// ============ 监控服务端口 ============
+
+/// V68.1: monitor 已拆到 svc/monitor 独立部署
+pub const MONITOR_PORT: u16 = 8095;
+
 // ============ 权威分组清单 ============
 
 /// Group 1 — 核心虚拟服务模块列表（由 unified-core:8000 统一承载，K8s Ingress 前缀 `/api/core/*`）
-/// 注意：doc/monitor 已整合为虚拟服务（共用 8000），mail/im/notification 外迁到 communication
-pub const GROUP1_MODULES: &[&str] = &["iam", "flow", "file", "doc", "monitor", "automation"];
+/// 注意：doc 是虚拟服务；monitor 已拆出为独立服务（8095）；mail/im/notification 外迁到 communication
+pub const GROUP1_MODULES: &[&str] = &["iam", "flow", "file", "doc", "automation"];
 
 /// Group 2 — 独立进程服务列表（每个服务独立端口，K8s Ingress 前缀 `/api/{svc}/*`）
 /// 每项 (svc_name, port)
@@ -96,6 +101,8 @@ pub const GROUP2_SERVICES: &[(&str, u16)] = &[
     ("integration", INTEGRATION_PORT),
     // 主数据
     ("master-data", MASTER_DATA_PORT),
+    // 监控（V68.1：拆出独立部署）
+    ("monitor", MONITOR_PORT),
     // 扩展服务（从 unified-core 外迁）
     ("search", SEARCH_PORT),
     ("communication", COMMUNICATION_PORT),
@@ -195,10 +202,10 @@ mod tests {
 
     #[test]
     fn t10_group2_services_length_protection() {
-        // 20 主服务 + master-data + 6 扩展 + analytics 别名 = 28
+        // 20 主服务 + master-data + monitor + 6 扩展 + analytics 别名 = 29
         assert_eq!(
             GROUP2_SERVICES.len(),
-            28,
+            29,
             "GROUP2_SERVICES 条目数变化，说明新增/删除了服务。\
             请同步更新 config/services.yaml 与本单测期望值。"
         );
