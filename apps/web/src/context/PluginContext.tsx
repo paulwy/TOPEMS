@@ -75,8 +75,7 @@ export const PluginProvider: React.FC<PluginProviderProps> = ({ children }) => {
 
     setIsLoading(true);
     try {
-      const promises: Promise<any>[] = [checkAllPluginsHealth()];
-      promises.push(pluginApi.listInstalled());
+      const promises = [checkAllPluginsHealth(), pluginApi.listInstalled()] as const;
 
       const [healthRes, installedRes] = await Promise.all(promises);
 
