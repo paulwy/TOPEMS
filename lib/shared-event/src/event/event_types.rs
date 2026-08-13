@@ -1321,3 +1321,207 @@ pub struct CacheInvalidatedPayload {
     /// 失效发生时间
     pub invalidated_at: DateTime<Utc>,
 }
+
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use uuid::Uuid;
+
+    #[test]
+    fn event_new_generates_id_and_timestamp() {
+        let before = Utc::now();
+        let event = Event::new(
+            EventType::HrmEmployeeCreated,
+            "hrm",
+            serde_json::json!({"employee_id": "00000000-0000-0000-0000-000000000001"}),
+        );
+        let after = Utc::now();
+
+        assert_ne!(event.event_id, Uuid::nil());
+        assert!(event.occurred_at >= before && event.occurred_at <= after);
+        assert_eq!(event.event_type, EventType::HrmEmployeeCreated);
+        assert_eq!(event.source, "hrm");
+        assert!(event.trace_id.is_none());
+        assert!(event.saga_id.is_none());
+        assert!(event.saga_step_id.is_none());
+    }
+
+    #[test]
+    fn event_with_trace_id_sets_and_clears() {
+        let e = Event::new(EventType::PmProjectCreated, "pm", serde_json::json!({}));
+        let e = e.with_trace_id(Some("abc-trace-123".into()));
+        assert_eq!(e.trace_id.as_deref(), Some("abc-trace-123"));
+        let e = e.with_trace_id(None);
+        assert!(e.trace_id.is_none());
+    }
+
+    #[test]
+    fn event_with_saga_context() {
+        let sid = Uuid::new_v4();
+        let stp = Uuid::new_v4();
+        let e = Event::new(EventType::SalesOrderCreated, "erp", serde_json::json!({}))
+            .with_saga_context(sid, stp);
+        assert_eq!(e.saga_id, Some(sid));
+        assert_eq!(e.saga_step_id, Some(stp));
+    }
+
+    #[test]
+    fn event_parse_payload_ok_and_err() {
+        let payload = serde_json::json!({
+            "employee_id": "01900000-0000-4000-8000-000000000001",
+            "name": "Alice",
+            "department": "R&D",
+            "position": "Engineer",
+            "email": "alice@topems.com",
+            "created_at": "2026-01-01T00:00:00Z"
+        });
+        let event = Event::new(EventType::HrmEmployeeCreated, "hrm", payload);
+        let p: HrmEmployeeCreatedPayload = event.parse_payload().unwrap();
+        assert_eq!(p.name, "Alice");
+        assert_eq!(p.email, "alice@topems.com");
+
+        // 类型不匹配 -> Err
+        let bad = Event::new(EventType::HrmEmployeeCreated, "hrm", serde_json::json!({"name":"x"}));
+        let res: Result<HrmEmployeeCreatedPayload, _> = bad.parse_payload();
+        assert!(res.is_err());
+        assert!(res.unwrap_err().contains("解析事件 payload 失败"));
+    }
+
+    #[test]
+    fn event_serde_roundtrip_and_skip_none_saga() {
+        let sid = Uuid::new_v4();
+        let stp = Uuid::new_v4();
+        let e = Event::new(
+            EventType::WmsInventoryItemShipped,
+            "wms",
+            serde_json::json!({"item": "widget"}),
+        ).with_trace_id(Some("trace-xyz".into()))
+         .with_saga_context(sid, stp);
+
+        let json = serde_json::to_string(&e).unwrap();
+        let back: Event = serde_json::from_str(&json).unwrap();
+        assert_eq!(back.event_id, e.event_id);
+        assert_eq!(back.trace_id, Some("trace-xyz".into()));
+        assert_eq!(back.saga_id, Some(sid));
+
+        // 没有 saga 的事件不应出现 saga_* 字段
+        let plain = Event::new(EventType::QmsInspectionCompleted, "qms", serde_json::json!({}));
+        let plain_json = serde_json::to_string(&plain).unwrap();
+        assert!(!plain_json.contains("saga_id"));
+        assert!(!plain_json.contains("saga_step_id"));
+    }
+
+    #[test]
+    fn event_type_display_and_ordering() {
+        assert_eq!(EventType::HrmEmployeeCreated.to_string(), "HrmEmployeeCreated");
+        assert_eq!(EventType::StockInbound.to_string(), "StockInbound");
+        assert_eq!(EventType::CacheInvalidated.to_string(), "CacheInvalidated");
+        assert!(EventType::HrmEmployeeCreated < EventType::HrmEmployeeUpdated);
+        assert!(EventType::HrmEmployeeUpdated < EventType::HrmEmployeeDeleted);
+    }
+
+    #[test]
+    fn cache_invalidated_payload_roundtrip() {
+        let ts = Utc::now();
+        let p = CacheInvalidatedPayload {
+            source_service: "erp".into(),
+            source_instance: "host-1:1234".into(),
+            cache_key_pattern: "tenant:dict:*".into(),
+            invalidation_level: "pattern".into(),
+            reason: Some("record_updated".into()),
+            invalidated_at: ts,
+        };
+        let json = serde_json::to_string(&p).unwrap();
+        let back: CacheInvalidatedPayload = serde_json::from_str(&json).unwrap();
+        assert_eq!(back.source_service, "erp");
+        assert_eq!(back.invalidation_level, "pattern");
+        assert_eq!(back.reason.as_deref(), Some("record_updated"));
+    }
+
+    #[test]
+    fn doc_document_uploaded_payload_roundtrip() {
+        let p = DocDocumentUploadedPayload {
+            document_id: Uuid::new_v4(),
+            document_name: "spec.pdf".into(),
+            file_path: "/uploads/spec.pdf".into(),
+            file_size: Some(1024),
+            uploaded_by: Some("bob".into()),
+            uploaded_at: None,
+        };
+        let json = serde_json::to_string(&p).unwrap();
+        let back: DocDocumentUploadedPayload = serde_json::from_str(&json).unwrap();
+        assert_eq!(back.document_name, "spec.pdf");
+        assert_eq!(back.file_size, Some(1024));
+    }
+
+    #[test]
+    fn sales_order_created_payload_roundtrip() {
+        let p = SalesOrderCreatedPayload {
+            order_id: Uuid::new_v4(),
+            order_no: "SO-2026-0001".into(),
+            customer_id: None,
+            customer_name: Some("Topems Inc".into()),
+            total_amount: Some(12500.00),
+            created_by: Some("alice".into()),
+        };
+        let json = serde_json::to_string(&p).unwrap();
+        let back: SalesOrderCreatedPayload = serde_json::from_str(&json).unwrap();
+        assert_eq!(back.order_no, "SO-2026-0001");
+        assert_eq!(back.total_amount, Some(12500.00));
+    }
+
+    #[test]
+    fn payment_received_payload_roundtrip() {
+        let p = PaymentReceivedPayload {
+            payment_id: Uuid::new_v4(),
+            payment_no: "PAY-001".into(),
+            order_id: None,
+            customer_id: None,
+            amount: 5000.00,
+            payment_method: Some("bank_transfer".into()),
+            received_at: Some(Utc::now()),
+        };
+        let json = serde_json::to_string(&p).unwrap();
+        let back: PaymentReceivedPayload = serde_json::from_str(&json).unwrap();
+        assert_eq!(back.payment_no, "PAY-001");
+        assert_eq!(back.payment_method.as_deref(), Some("bank_transfer"));
+    }
+
+    #[test]
+    fn production_order_created_roundtrip() {
+        let p = ProductionOrderCreatedPayload {
+            order_id: Uuid::new_v4(),
+            order_no: "PO-2026-0001".into(),
+            product_id: None,
+            product_name: Some("Widget Pro".into()),
+            quantity: Some(100.0),
+            planned_start_date: None,
+            created_by: Some("bob".into()),
+        };
+        let json = serde_json::to_string(&p).unwrap();
+        let back: ProductionOrderCreatedPayload = serde_json::from_str(&json).unwrap();
+        assert_eq!(back.order_no, "PO-2026-0001");
+        assert_eq!(back.quantity, Some(100.0));
+    }
+
+    #[test]
+    fn wms_stock_inbound_roundtrip() {
+        let p = StockInboundPayload {
+            inbound_id: Uuid::new_v4(),
+            inbound_no: "IN-2026-001".into(),
+            warehouse_id: None,
+            warehouse_name: Some("WH-MAIN".into()),
+            material_id: None,
+            material_name: Some("Steel Bar".into()),
+            quantity: 500.0,
+            reference_order_id: None,
+            received_by: Some("carol".into()),
+            received_at: Some(Utc::now()),
+        };
+        let json = serde_json::to_string(&p).unwrap();
+        let back: StockInboundPayload = serde_json::from_str(&json).unwrap();
+        assert_eq!(back.inbound_no, "IN-2026-001");
+        assert_eq!(back.material_name.as_deref(), Some("Steel Bar"));
+    }
+}
