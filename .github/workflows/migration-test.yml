@@ -7,6 +7,7 @@ on:
       - 'svc/**/migrations/**'
       - 'database/migrations/**'
       - 'lib/src/migration*/**'
+      - 'scripts/check-migrat*'
       - '.github/workflows/migration-test.yml'
   workflow_dispatch:
 
@@ -37,6 +38,12 @@ jobs:
     
     steps:
       - uses: actions/checkout@v5
+
+      - name: Static check — migration naming convention
+        run: node scripts/check-migration-names.mjs --strict
+
+      - name: Static check — migration integrity
+        run: node scripts/check-migrations.mjs
 
       - name: Install Rust
         uses: dtolnay/rust-toolchain@master
