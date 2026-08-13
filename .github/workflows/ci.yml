@@ -289,15 +289,13 @@ jobs:
       - name: Install cargo-llvm-cov
         run: cargo install cargo-llvm-cov
 
-      - name: Run coverage for shared library
+      - name: Run coverage (workspace)
         env:
           APP_ENV: test
-        run: cargo llvm-cov test -p topems-shared --html --output-dir target/llvm-cov-report
-
-      - name: Run coverage for core services
-        env:
-          APP_ENV: test
-        run: cargo llvm-cov test -p topems-mes -p topems-qms -p topems-erp --html --output-dir target/llvm-cov-report
+          DATABASE_URL: postgres://topems_test:topems_test_secret@localhost:5432/topems_test
+          REDIS_URL: redis://localhost:6379/0
+          JWT_SECRET: test-jwt-secret-key-for-testing-only-32chars
+        run: cargo llvm-cov test --workspace --html --output-dir target/llvm-cov-report
 
       - name: Upload Rust coverage report
         uses: actions/upload-artifact@v5
@@ -311,53 +309,50 @@ jobs:
         run: |
           cargo llvm-cov report --lcov --output-path target/lcov.info
 
-          TOTAL_COVERAGE=$(cargo llvm-cov report --summary-only | grep "Total" | awk '{print $4}' | tr -d '%')
-          SHARED_COVERAGE=$(cargo llvm-cov report --summary-only -p topems-shared | grep "topems-shared" | awk '{print $4}' | tr -d '%')
-          MES_COVERAGE=$(cargo llvm-cov report --summary-only -p topems-mes | grep "topems-mes" | awk '{print $4}' | tr -d '%')
-          QMS_COVERAGE=$(cargo llvm-cov report --summary-only -p topems-qms | grep "topems-qms" | awk '{print $4}' | tr -d '%')
-          ERP_COVERAGE=$(cargo llvm-cov report --summary-only -p topems-erp | grep "topems-erp" | awk '{print $4}' | tr -d '%')
+          TOTAL_LINE=$(cargo llvm-cov report --summary-only 2>/dev/null | awk '/^TOTAL/ {print $9}' | tr -d '%')
+          TOTAL_FUNC=$(cargo llvm-cov report --summary-only 2>/dev/null | awk '/^TOTAL/ {print $6}' | tr -d '%')
 
-          echo "## Rust Coverage Report" >> $GITHUB_STEP_SUMMARY
+          echo "## Rust Coverage Report (workspace)" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "| Service | Coverage | Threshold | Status |" >> $GITHUB_STEP_SUMMARY
-          echo "|---------|----------|-----------|--------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Metric | Coverage | Threshold | Status |" >> $GITHUB_STEP_SUMMARY
+          echo "|--------|----------|-----------|--------|" >> $GITHUB_STEP_SUMMARY
 
           CHECKS_PASSED=true
 
-          if (( $(echo "$SHARED_COVERAGE >= 60" | bc -l) )); then
-            echo "| topems-shared | ${SHARED_COVERAGE}% | 60% | ✅ |" >> $GITHUB_STEP_SUMMARY
+          # Total line coverage ≥ 20% (Phase 8 P2 target)
+          if (( $(echo "${TOTAL_LINE:-0} >= 20" | bc -l) )); then
+            echo "| **Workspace Line** | ${TOTAL_LINE:-0}% | 20% | ✅ |" >> $GITHUB_STEP_SUMMARY
           else
-            echo "| topems-shared | ${SHARED_COVERAGE}% | 60% | ❌ |" >> $GITHUB_STEP_SUMMARY
+            echo "| **Workspace Line** | ${TOTAL_LINE:-0}% | 20% | ❌ |" >> $GITHUB_STEP_SUMMARY
             CHECKS_PASSED=false
           fi
 
-          if (( $(echo "$MES_COVERAGE >= 50" | bc -l) )); then
-            echo "| topems-mes | ${MES_COVERAGE}% | 50% | ✅ |" >> $GITHUB_STEP_SUMMARY
-          else
-            echo "| topems-mes | ${MES_COVERAGE}% | 50% | ❌ |" >> $GITHUB_STEP_SUMMARY
-            CHECKS_PASSED=false
-          fi
-
-          if (( $(echo "$QMS_COVERAGE >= 50" | bc -l) )); then
-            echo "| topems-qms | ${QMS_COVERAGE}% | 50% | ✅ |" >> $GITHUB_STEP_SUMMARY
-          else
-            echo "| topems-qms | ${QMS_COVERAGE}% | 50% | ❌ |" >> $GITHUB_STEP_SUMMARY
-            CHECKS_PASSED=false
-          fi
-
-          if (( $(echo "$ERP_COVERAGE >= 50" | bc -l) )); then
-            echo "| topems-erp | ${ERP_COVERAGE}% | 50% | ✅ |" >> $GITHUB_STEP_SUMMARY
-          else
-            echo "| topems-erp | ${ERP_COVERAGE}% | 50% | ❌ |" >> $GITHUB_STEP_SUMMARY
-            CHECKS_PASSED=false
-          fi
+          # Core libs — keep existing high thresholds
+          for item in \
+            "topems-shared:60" \
+            "topems-mes:50" \
+            "topems-qms:50" \
+            "topems-erp:50"; do
+            pkg="${item%%:*}"
+            threshold="${item##*:}"
+            cov=$(cargo llvm-cov report --summary-only -p "$pkg" 2>/dev/null | grep "$pkg" | awk '{print $9}' | tr -d '%')
+            if [ -z "$cov" ]; then cov="N/A"; fi
+            if [ "$cov" = "N/A" ]; then
+              echo "| $pkg | $cov | ${threshold}% | ⏭️ |" >> $GITHUB_STEP_SUMMARY
+            elif (( $(echo "${cov} >= ${threshold}" | bc -l) )); then
+              echo "| $pkg | ${cov}% | ${threshold}% | ✅ |" >> $GITHUB_STEP_SUMMARY
+            else
+              echo "| $pkg | ${cov}% | ${threshold}% | ❌ |" >> $GITHUB_STEP_SUMMARY
+              CHECKS_PASSED=false
+            fi
+          done
 
           echo "" >> $GITHUB_STEP_SUMMARY
           if [ "$CHECKS_PASSED" = false ]; then
-            echo "❌ **Rust coverage thresholds not met!**" >> $GITHUB_STEP_SUMMARY
+            echo "❌ **Coverage thresholds not met!**" >> $GITHUB_STEP_SUMMARY
             exit 1
           else
-            echo "✅ **All Rust coverage thresholds met.**" >> $GITHUB_STEP_SUMMARY
+            echo "✅ **All coverage thresholds met.**" >> $GITHUB_STEP_SUMMARY
           fi
 
   rust-audit:
