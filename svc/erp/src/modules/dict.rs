@@ -266,6 +266,13 @@ pub async fn list_dict_types(
     }
 }
 
+#[utoipa::path(
+    post,
+    path = "/system/dict-types",
+    tag = "Dict",
+    operation_id = "create_dict_type",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn create_dict_type(
     State(state): State<ApiState>,
     headers: HeaderMap,
@@ -346,6 +353,13 @@ pub async fn create_dict_type(
     response
 }
 
+#[utoipa::path(
+    get,
+    path = "/system/dict-types/{id}",
+    tag = "Dict",
+    operation_id = "get_dict_type",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn get_dict_type(
     State(state): State<ApiState>,
     Path(id): Path<Uuid>,
@@ -370,6 +384,13 @@ pub async fn get_dict_type(
     }
 }
 
+#[utoipa::path(
+    put,
+    path = "/system/dict-types/{id}",
+    tag = "Dict",
+    operation_id = "update_dict_type",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn update_dict_type(
     State(state): State<ApiState>,
     Path(id): Path<Uuid>,
@@ -460,6 +481,13 @@ pub async fn update_dict_type(
     response
 }
 
+#[utoipa::path(
+    delete,
+    path = "/system/dict-types/{id}",
+    tag = "Dict",
+    operation_id = "delete_dict_type",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn delete_dict_type(
     State(state): State<ApiState>,
     Path(id): Path<Uuid>,
@@ -586,6 +614,13 @@ pub async fn list_dict_items(
     }
 }
 
+#[utoipa::path(
+    post,
+    path = "/system/dict-items",
+    tag = "Dict",
+    operation_id = "create_dict_item",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn create_dict_item(
     State(state): State<ApiState>,
     headers: HeaderMap,
@@ -659,6 +694,13 @@ pub async fn create_dict_item(
     response
 }
 
+#[utoipa::path(
+    get,
+    path = "/system/dict-items/{id}",
+    tag = "Dict",
+    operation_id = "get_dict_item",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn get_dict_item(
     State(state): State<ApiState>,
     Path(id): Path<Uuid>,
@@ -683,6 +725,13 @@ pub async fn get_dict_item(
     }
 }
 
+#[utoipa::path(
+    put,
+    path = "/system/dict-items/{id}",
+    tag = "Dict",
+    operation_id = "update_dict_item",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn update_dict_item(
     State(state): State<ApiState>,
     Path(id): Path<Uuid>,
@@ -776,6 +825,13 @@ pub async fn update_dict_item(
     response
 }
 
+#[utoipa::path(
+    delete,
+    path = "/system/dict-items/{id}",
+    tag = "Dict",
+    operation_id = "delete_dict_item",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn delete_dict_item(
     State(state): State<ApiState>,
     Path(id): Path<Uuid>,
@@ -834,6 +890,13 @@ pub async fn delete_dict_item(
     response
 }
 
+#[utoipa::path(
+    post,
+    path = "/system/dict-items/batch",
+    tag = "Dict",
+    operation_id = "batch_create_dict_items",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn batch_create_dict_items(
     State(state): State<ApiState>,
     headers: HeaderMap,
@@ -903,6 +966,13 @@ pub async fn batch_create_dict_items(
     ))
 }
 
+#[utoipa::path(
+    get,
+    path = "/system/dict-types/{id}/items/export",
+    tag = "Dict",
+    operation_id = "export_dict_items",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn export_dict_items(
     State(state): State<ApiState>,
     Path(dict_type_id): Path<Uuid>,

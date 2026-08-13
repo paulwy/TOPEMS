@@ -38,6 +38,15 @@ pub(crate) fn rule_row_to_json(row: &sqlx::postgres::PgRow) -> serde_json::Value
     })
 }
 
+#[utoipa::path(
+    get,
+    path = "/smart-replenishment/rules",
+    tag = "smart_replenishment",
+    operation_id = "list_rules",
+    responses(
+        (status = 200, description = "OK"),
+    ),
+)]
 pub async fn list_rules(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
@@ -103,6 +112,15 @@ pub async fn list_rules(
     }
 }
 
+#[utoipa::path(
+    post,
+    path = "/smart-replenishment/rules",
+    tag = "smart_replenishment",
+    operation_id = "create_rule",
+    responses(
+        (status = 200, description = "OK"),
+    ),
+)]
 pub async fn create_rule(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
@@ -194,6 +212,15 @@ pub async fn create_rule(
     response
 }
 
+#[utoipa::path(
+    get,
+    path = "/smart-replenishment/rules/{id}",
+    tag = "smart_replenishment",
+    operation_id = "get_rule",
+    responses(
+        (status = 200, description = "OK"),
+    ),
+)]
 pub async fn get_rule(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
@@ -229,6 +256,15 @@ pub async fn get_rule(
     }
 }
 
+#[utoipa::path(
+    put,
+    path = "/smart-replenishment/rules/{id}",
+    tag = "smart_replenishment",
+    operation_id = "update_rule",
+    responses(
+        (status = 200, description = "OK"),
+    ),
+)]
 pub async fn update_rule(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
@@ -336,6 +372,15 @@ pub async fn update_rule(
     response
 }
 
+#[utoipa::path(
+    delete,
+    path = "/smart-replenishment/rules/{id}",
+    tag = "smart_replenishment",
+    operation_id = "delete_rule",
+    responses(
+        (status = 200, description = "OK"),
+    ),
+)]
 pub async fn delete_rule(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,

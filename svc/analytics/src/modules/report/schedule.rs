@@ -126,6 +126,13 @@ pub struct ScheduleExecutionRecord {
     pub completed_at: Option<chrono::DateTime<chrono::Utc>>,
 }
 
+#[utoipa::path(
+    get,
+    path = "/schedules",
+    tag = "Schedules",
+    operation_id = "list_schedules",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn list_schedules(State(state): State<AppState>) -> Json<serde_json::Value> {
     info!("Listing schedules");
 
@@ -174,6 +181,13 @@ pub async fn list_schedules(State(state): State<AppState>) -> Json<serde_json::V
     }))
 }
 
+#[utoipa::path(
+    post,
+    path = "/schedules",
+    tag = "Schedules",
+    operation_id = "create_schedule",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn create_schedule(
     State(state): State<AppState>,
     Json(req): Json<CreateScheduleRequest>,
@@ -218,6 +232,13 @@ pub async fn create_schedule(
     }
 }
 
+#[utoipa::path(
+    get,
+    path = "/schedules/{id}",
+    tag = "Schedules",
+    operation_id = "get_schedule",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn get_schedule(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
@@ -271,6 +292,13 @@ pub async fn get_schedule(
     }
 }
 
+#[utoipa::path(
+    put,
+    path = "/schedules/{id}",
+    tag = "Schedules",
+    operation_id = "update_schedule",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn update_schedule(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
@@ -312,6 +340,13 @@ pub async fn update_schedule(
     }
 }
 
+#[utoipa::path(
+    delete,
+    path = "/schedules/{id}",
+    tag = "Schedules",
+    operation_id = "delete_schedule",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn delete_schedule(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
@@ -340,6 +375,13 @@ pub async fn delete_schedule(
     }
 }
 
+#[utoipa::path(
+    post,
+    path = "/schedules/{id}/execute",
+    tag = "Schedules",
+    operation_id = "execute_schedule",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn execute_schedule(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
@@ -373,6 +415,13 @@ pub async fn execute_schedule(
     }
 }
 
+#[utoipa::path(
+    get,
+    path = "/schedules/{id}/history",
+    tag = "Schedules",
+    operation_id = "get_execution_history",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn get_execution_history(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,

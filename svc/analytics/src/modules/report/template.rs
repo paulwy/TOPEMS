@@ -127,6 +127,13 @@ pub struct TemplateListItem {
     pub created_at: Option<chrono::DateTime<chrono::Utc>>,
 }
 
+#[utoipa::path(
+    get,
+    path = "/templates",
+    tag = "Report-Templates",
+    operation_id = "list_templates",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn list_templates(State(state): State<AppState>) -> Json<serde_json::Value> {
     info!("Listing templates");
 
@@ -163,6 +170,13 @@ pub async fn list_templates(State(state): State<AppState>) -> Json<serde_json::V
     }))
 }
 
+#[utoipa::path(
+    post,
+    path = "/templates",
+    tag = "Report-Templates",
+    operation_id = "create_template",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn create_template(
     State(state): State<AppState>,
     Json(req): Json<CreateTemplateRequest>,
@@ -209,6 +223,13 @@ pub async fn create_template(
     }
 }
 
+#[utoipa::path(
+    get,
+    path = "/templates/{id}",
+    tag = "Report-Templates",
+    operation_id = "get_template",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn get_template(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
@@ -275,6 +296,13 @@ pub async fn get_template(
     }
 }
 
+#[utoipa::path(
+    put,
+    path = "/templates/{id}",
+    tag = "Report-Templates",
+    operation_id = "update_template",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn update_template(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
@@ -328,6 +356,13 @@ pub async fn update_template(
     }
 }
 
+#[utoipa::path(
+    delete,
+    path = "/templates/{id}",
+    tag = "Report-Templates",
+    operation_id = "delete_template",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn delete_template(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,

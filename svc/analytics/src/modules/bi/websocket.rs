@@ -14,6 +14,13 @@ use crate::modules::bi::widget::WIDGET_CACHE;
 use crate::shared::AppState;
 
 /// WebSocket endpoint for real-time dashboard data
+#[utoipa::path(
+    get,
+    path = "/ws/bi/dashboard/{id}",
+    tag = "WebSocket",
+    operation_id = "dashboard_websocket",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn dashboard_websocket(
     State(state): State<AppState>,
     Path(dashboard_id): Path<Uuid>,

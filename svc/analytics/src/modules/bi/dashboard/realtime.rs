@@ -12,6 +12,13 @@ use crate::shared::AppState;
 
 use super::models::SetAutoRefreshRequest;
 
+#[utoipa::path(
+    get,
+    path = "/dashboard/{id}/realtime",
+    tag = "Dashboard",
+    operation_id = "query_dashboard_realtime_data",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn query_dashboard_realtime_data(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
@@ -148,6 +155,13 @@ pub async fn query_dashboard_realtime_data(
     }))
 }
 
+#[utoipa::path(
+    post,
+    path = "/dashboard/{id}/refresh",
+    tag = "Dashboard",
+    operation_id = "refresh_dashboard_data",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn refresh_dashboard_data(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
@@ -208,6 +222,13 @@ pub async fn refresh_dashboard_data(
     }
 }
 
+#[utoipa::path(
+    post,
+    path = "/dashboard/{id}/auto-refresh",
+    tag = "Dashboard",
+    operation_id = "set_auto_refresh",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn set_auto_refresh(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,

@@ -302,6 +302,15 @@ pub async fn get_serial_number(
     }
 }
 
+#[utoipa::path(
+    get,
+    path = "/serial-numbers/by-serial/{serial_no}",
+    tag = "serial_number",
+    operation_id = "get_by_serial_no",
+    responses(
+        (status = 200, description = "OK"),
+    ),
+)]
 pub async fn get_by_serial_no(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
@@ -329,6 +338,15 @@ pub async fn get_by_serial_no(
     }
 }
 
+#[utoipa::path(
+    get,
+    path = "/serial-numbers/by-batch/{batch_no}",
+    tag = "serial_number",
+    operation_id = "get_by_batch",
+    responses(
+        (status = 200, description = "OK"),
+    ),
+)]
 pub async fn get_by_batch(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
@@ -533,6 +551,15 @@ pub async fn get_serial_number_statistics(
     }
 }
 
+#[utoipa::path(
+    post,
+    path = "/serial-numbers/{id}/transfer-location",
+    tag = "serial_number",
+    operation_id = "transfer_location",
+    responses(
+        (status = 200, description = "OK"),
+    ),
+)]
 pub async fn transfer_location(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
@@ -578,6 +605,15 @@ pub async fn transfer_location(
     }
 }
 
+#[utoipa::path(
+    get,
+    path = "/serial-numbers/{id}/trace",
+    tag = "serial_number",
+    operation_id = "get_trace",
+    responses(
+        (status = 200, description = "OK"),
+    ),
+)]
 pub async fn get_trace(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,

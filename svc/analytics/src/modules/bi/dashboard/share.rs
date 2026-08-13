@@ -5,11 +5,19 @@ use axum::{
 use chrono::Utc;
 use sqlx::types::Uuid;
 use tracing::info;
+use utoipa::IntoParams;
 
 use crate::shared::AppState;
 
 use super::models::{ShareDashboardRequest, ShareLinkResponse};
 
+#[utoipa::path(
+    post,
+    path = "/dashboard/{id}/share",
+    tag = "Dashboard",
+    operation_id = "create_share_link",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn create_share_link(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
@@ -60,6 +68,13 @@ pub async fn create_share_link(
     }
 }
 
+#[utoipa::path(
+    get,
+    path = "/dashboard/share/{share_id}",
+    tag = "Dashboard",
+    operation_id = "get_shared_dashboard",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn get_shared_dashboard(
     State(state): State<AppState>,
     Path(share_id): Path<Uuid>,
@@ -111,6 +126,13 @@ pub async fn get_shared_dashboard(
     }
 }
 
+#[utoipa::path(
+    get,
+    path = "/dashboard/{id}/shares",
+    tag = "Dashboard",
+    operation_id = "list_share_links",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn list_share_links(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
@@ -160,6 +182,13 @@ pub async fn list_share_links(
     }))
 }
 
+#[utoipa::path(
+    delete,
+    path = "/dashboard/share/{share_id}",
+    tag = "Dashboard",
+    operation_id = "delete_share_link",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn delete_share_link(
     State(state): State<AppState>,
     Path(share_id): Path<Uuid>,

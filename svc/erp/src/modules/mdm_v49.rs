@@ -772,6 +772,13 @@ pub async fn list_lifecycle_entities(
     ))
 }
 
+#[utoipa::path(
+    get,
+    path = "/api/erp/mdm-v49/lifecycle/entities/{master_data_id}",
+    tag = "Master Data",
+    operation_id = "get_lifecycle_entity",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn get_lifecycle_entity(
     State(_state): State<ApiState>,
     Path(master_data_id): Path<String>,
@@ -785,6 +792,13 @@ pub async fn get_lifecycle_entity(
     }
 }
 
+#[utoipa::path(
+    post,
+    path = "/api/erp/mdm-v49/lifecycle/entities",
+    tag = "Master Data",
+    operation_id = "create_lifecycle_entity",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn create_lifecycle_entity(
     State(_state): State<ApiState>,
     Json(payload): Json<serde_json::Value>,
@@ -860,6 +874,13 @@ pub async fn create_lifecycle_entity(
     Json(ApiResponse::success(entity, "生命周期实体已创建"))
 }
 
+#[utoipa::path(
+    post,
+    path = "/api/erp/mdm-v49/lifecycle/entities/{master_data_id}",
+    tag = "Master Data",
+    operation_id = "transition_lifecycle_stage",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn transition_lifecycle_stage(
     State(_state): State<ApiState>,
     Path(master_data_id): Path<String>,
@@ -910,6 +931,13 @@ pub async fn transition_lifecycle_stage(
     Json(ApiResponse::success(entity.clone(), "阶段已流转"))
 }
 
+#[utoipa::path(
+    post,
+    path = "/api/erp/mdm-v49/lifecycle/entities/{master_data_id}/tasks/{task_id}",
+    tag = "Master Data",
+    operation_id = "update_lifecycle_task",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn update_lifecycle_task(
     State(_state): State<ApiState>,
     Path((master_data_id, _task_id)): Path<(String, String)>,
@@ -955,6 +983,13 @@ pub async fn update_lifecycle_task(
     Json(ApiResponse::success(entity.clone(), "任务已更新"))
 }
 
+#[utoipa::path(
+    get,
+    path = "/api/erp/mdm-v49/lifecycle/entities/{master_data_id}/events",
+    tag = "Master Data",
+    operation_id = "get_lifecycle_events",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn get_lifecycle_events(
     State(_state): State<ApiState>,
     Path(master_data_id): Path<String>,
@@ -972,6 +1007,13 @@ pub async fn get_lifecycle_events(
 
 // ==================== 处理器：退役管理 ====================
 
+#[utoipa::path(
+    post,
+    path = "/api/erp/mdm-v49/retirement/plans",
+    tag = "Master Data",
+    operation_id = "create_retirement_plan",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn create_retirement_plan(
     State(_state): State<ApiState>,
     Json(req): Json<RetirementPlanRequest>,
@@ -1102,6 +1144,13 @@ impl RetirementStatus {
     }
 }
 
+#[utoipa::path(
+    get,
+    path = "/api/erp/mdm-v49/retirement/plans/{plan_id}",
+    tag = "Master Data",
+    operation_id = "get_retirement_plan",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn get_retirement_plan(
     State(_state): State<ApiState>,
     Path(plan_id): Path<String>,
@@ -1115,6 +1164,13 @@ pub async fn get_retirement_plan(
     }
 }
 
+#[utoipa::path(
+    post,
+    path = "/api/erp/mdm-v49/retirement/plans/{plan_id}/assess",
+    tag = "Master Data",
+    operation_id = "assess_impact",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn assess_impact(
     State(_state): State<ApiState>,
     Path(plan_id): Path<String>,
@@ -1168,6 +1224,13 @@ pub async fn assess_impact(
     Json(ApiResponse::success(plan.clone(), "影响评估已完成"))
 }
 
+#[utoipa::path(
+    post,
+    path = "/api/erp/mdm-v49/retirement/plans/{plan_id}/notify",
+    tag = "Master Data",
+    operation_id = "notify_stakeholders",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn notify_stakeholders(
     State(_state): State<ApiState>,
     Path(plan_id): Path<String>,
@@ -1188,6 +1251,13 @@ pub async fn notify_stakeholders(
     ))
 }
 
+#[utoipa::path(
+    post,
+    path = "/api/erp/mdm-v49/retirement/plans/{plan_id}/confirm",
+    tag = "Master Data",
+    operation_id = "confirm_retirement_plan",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn confirm_retirement_plan(
     State(_state): State<ApiState>,
     Path(plan_id): Path<String>,

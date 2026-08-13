@@ -28,6 +28,13 @@ pub struct VisualizationResponse {
     pub title: Option<String>,
 }
 
+#[utoipa::path(
+    get,
+    path = "/visualization",
+    tag = "Visualization",
+    operation_id = "list_visualizations",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn list_visualizations(State(_state): State<AppState>) -> Json<serde_json::Value> {
     info!("Listing visualizations");
     Json(serde_json::json!({
@@ -37,6 +44,13 @@ pub async fn list_visualizations(State(_state): State<AppState>) -> Json<serde_j
     }))
 }
 
+#[utoipa::path(
+    post,
+    path = "/visualization",
+    tag = "Visualization",
+    operation_id = "create_visualization",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn create_visualization(
     State(state): State<AppState>,
     Json(req): Json<CreateVisualizationRequest>,
@@ -82,6 +96,13 @@ pub async fn create_visualization(
     }
 }
 
+#[utoipa::path(
+    get,
+    path = "/visualization/{id}",
+    tag = "Visualization",
+    operation_id = "get_visualization",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn get_visualization(State(_state): State<AppState>) -> Json<serde_json::Value> {
     info!("Getting visualization");
     Json(serde_json::json!({
@@ -90,6 +111,13 @@ pub async fn get_visualization(State(_state): State<AppState>) -> Json<serde_jso
     }))
 }
 
+#[utoipa::path(
+    get,
+    path = "/visualization/chart-types",
+    tag = "Visualization",
+    operation_id = "get_chart_types",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn get_chart_types(State(state): State<AppState>) -> Json<serde_json::Value> {
     info!("Getting chart types");
 
@@ -103,6 +131,13 @@ pub async fn get_chart_types(State(state): State<AppState>) -> Json<serde_json::
     }))
 }
 
+#[utoipa::path(
+    post,
+    path = "/visualization/line",
+    tag = "Visualization",
+    operation_id = "generate_line_chart",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn generate_line_chart(
     State(state): State<AppState>,
     Json(req): Json<GenerateChartRequest>,
@@ -127,6 +162,13 @@ pub async fn generate_line_chart(
     }
 }
 
+#[utoipa::path(
+    post,
+    path = "/visualization/bar",
+    tag = "Visualization",
+    operation_id = "generate_bar_chart",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn generate_bar_chart(
     State(state): State<AppState>,
     Json(req): Json<GenerateChartRequest>,
@@ -151,6 +193,13 @@ pub async fn generate_bar_chart(
     }
 }
 
+#[utoipa::path(
+    post,
+    path = "/visualization/pie",
+    tag = "Visualization",
+    operation_id = "generate_pie_chart",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn generate_pie_chart(
     State(state): State<AppState>,
     Json(req): Json<GeneratePieChartRequest>,
@@ -180,6 +229,13 @@ pub async fn generate_pie_chart(
     }
 }
 
+#[utoipa::path(
+    post,
+    path = "/visualization/gauge",
+    tag = "Visualization",
+    operation_id = "generate_gauge_chart",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn generate_gauge_chart(
     State(state): State<AppState>,
     Json(req): Json<GenerateGaugeChartRequest>,
@@ -226,6 +282,13 @@ pub async fn get_drilldown_config(
     }))
 }
 
+#[utoipa::path(
+    put,
+    path = "/widgets/{widget_id}/drilldown",
+    tag = "Drilldown",
+    operation_id = "update_drilldown_config",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn update_drilldown_config(
     State(_state): State<AppState>,
     Path(widget_id): Path<String>,
@@ -262,6 +325,13 @@ pub async fn execute_drilldown(
     }))
 }
 
+#[utoipa::path(
+    get,
+    path = "/dashboards/{dashboard_id}/links",
+    tag = "Visualization",
+    operation_id = "get_chart_link_config",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn get_chart_link_config(
     State(_state): State<AppState>,
     Path(dashboard_id): Path<String>,
@@ -295,6 +365,13 @@ pub async fn update_chart_link_config(
     }))
 }
 
+#[utoipa::path(
+    get,
+    path = "/widgets/{widget_id}/annotations",
+    tag = "Visualization",
+    operation_id = "get_chart_annotations",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn get_chart_annotations(
     State(_state): State<AppState>,
     Path(widget_id): Path<String>,

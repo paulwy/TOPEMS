@@ -52,6 +52,15 @@ where
         .route("/sync/sync-logs", post(get_sync_logs))
 }
 
+#[utoipa::path(
+    post,
+    path = "/sync/outbound-to-shipping",
+    tag = "data_sync",
+    operation_id = "outbound_to_shipping",
+    responses(
+        (status = 200, description = "OK"),
+    ),
+)]
 pub async fn outbound_to_shipping(
     State(state): State<ApiState>,
     Json(req): Json<OutboundToShippingRequest>,
@@ -81,6 +90,15 @@ pub async fn outbound_to_shipping(
         .await
 }
 
+#[utoipa::path(
+    post,
+    path = "/sync/outbound-order/{id}/to-shipping",
+    tag = "data_sync",
+    operation_id = "create_shipping_from_outbound",
+    responses(
+        (status = 200, description = "OK"),
+    ),
+)]
 pub async fn create_shipping_from_outbound(
     State(state): State<ApiState>,
     Path(id): Path<Uuid>,
@@ -243,6 +261,15 @@ pub struct InboundFromScmRequest {
     pub purchase_order_id: String,
 }
 
+#[utoipa::path(
+    post,
+    path = "/sync/inbound-from-scm",
+    tag = "data_sync",
+    operation_id = "create_inbound_from_scm",
+    responses(
+        (status = 200, description = "OK"),
+    ),
+)]
 pub async fn create_inbound_from_scm(
     State(state): State<ApiState>,
     Json(req): Json<InboundFromScmRequest>,
@@ -348,6 +375,15 @@ pub async fn create_inbound_from_scm(
     }
 }
 
+#[utoipa::path(
+    post,
+    path = "/sync/sync-logs",
+    tag = "data_sync",
+    operation_id = "get_sync_logs",
+    responses(
+        (status = 200, description = "OK"),
+    ),
+)]
 pub async fn get_sync_logs(
     State(state): State<ApiState>,
     Json(req): Json<SyncLogsRequest>,

@@ -223,6 +223,13 @@ fn calculate_mse(actual: &[f64], predicted: &[f64]) -> f64 {
     total / n as f64
 }
 
+#[utoipa::path(
+    post,
+    path = "/prediction/moving-average",
+    tag = "Prediction",
+    operation_id = "moving_average_forecast",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn moving_average_forecast(
     State(state): State<AppState>,
     Json(req): Json<MovingAverageRequest>,
@@ -319,6 +326,13 @@ pub async fn moving_average_forecast(
     }))
 }
 
+#[utoipa::path(
+    post,
+    path = "/prediction/exponential-smoothing",
+    tag = "Prediction",
+    operation_id = "exponential_smoothing_forecast",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn exponential_smoothing_forecast(
     State(state): State<AppState>,
     Json(req): Json<ExponentialSmoothingRequest>,
@@ -401,6 +415,13 @@ pub async fn exponential_smoothing_forecast(
     }))
 }
 
+#[utoipa::path(
+    post,
+    path = "/prediction/trend",
+    tag = "Prediction",
+    operation_id = "trend_analysis",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn trend_analysis(
     State(state): State<AppState>,
     Json(req): Json<TrendAnalysisRequest>,
@@ -461,6 +482,13 @@ pub async fn trend_analysis(
     }))
 }
 
+#[utoipa::path(
+    post,
+    path = "/prediction/compare",
+    tag = "Prediction",
+    operation_id = "prediction_comparison",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn prediction_comparison(
     State(state): State<AppState>,
     Json(req): Json<PredictionCompareRequest>,
@@ -547,6 +575,13 @@ pub async fn prediction_comparison(
     }))
 }
 
+#[utoipa::path(
+    get,
+    path = "/prediction/methods",
+    tag = "Prediction",
+    operation_id = "get_prediction_methods",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn get_prediction_methods(State(_state): State<AppState>) -> Json<serde_json::Value> {
     info!("Getting prediction methods");
 

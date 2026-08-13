@@ -1087,6 +1087,13 @@ impl ComplianceReportV51 {
 
 // ==================== API Handlers ====================
 
+#[utoipa::path(
+    post,
+    path = "/compliance-v51/control-points",
+    tag = "Compliance-V51",
+    operation_id = "create_control_point_handler",
+    responses((status = 200, description = "OK")),
+)]
 async fn create_control_point_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -1120,6 +1127,13 @@ async fn list_control_points_handler(
     }
 }
 
+#[utoipa::path(
+    get,
+    path = "/compliance-v51/control-points/{id}",
+    tag = "Compliance-V51",
+    operation_id = "get_control_point_handler",
+    responses((status = 200, description = "OK")),
+)]
 async fn get_control_point_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -1132,6 +1146,13 @@ async fn get_control_point_handler(
     }
 }
 
+#[utoipa::path(
+    put,
+    path = "/compliance-v51/control-points/{id}",
+    tag = "Compliance-V51",
+    operation_id = "update_control_point_handler",
+    responses((status = 200, description = "OK")),
+)]
 async fn update_control_point_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -1145,6 +1166,13 @@ async fn update_control_point_handler(
     }
 }
 
+#[utoipa::path(
+    delete,
+    path = "/compliance-v51/control-points/{id}",
+    tag = "Compliance-V51",
+    operation_id = "delete_control_point_handler",
+    responses((status = 200, description = "OK")),
+)]
 async fn delete_control_point_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -1157,6 +1185,13 @@ async fn delete_control_point_handler(
     }
 }
 
+#[utoipa::path(
+    post,
+    path = "/compliance-v51/control-matrices/generate",
+    tag = "Compliance-V51",
+    operation_id = "generate_control_matrix_handler",
+    responses((status = 200, description = "OK")),
+)]
 async fn generate_control_matrix_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -1170,6 +1205,13 @@ async fn generate_control_matrix_handler(
     }
 }
 
+#[utoipa::path(
+    get,
+    path = "/compliance-v51/control-matrices/{id}",
+    tag = "Compliance-V51",
+    operation_id = "get_control_matrix_handler",
+    responses((status = 200, description = "OK")),
+)]
 async fn get_control_matrix_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -1194,6 +1236,13 @@ async fn list_control_matrices_handler(
     }
 }
 
+#[utoipa::path(
+    post,
+    path = "/compliance-v51/risk-assessments",
+    tag = "Compliance-V51",
+    operation_id = "assess_risk_handler",
+    responses((status = 200, description = "OK")),
+)]
 async fn assess_risk_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -1207,6 +1256,13 @@ async fn assess_risk_handler(
     }
 }
 
+#[utoipa::path(
+    get,
+    path = "/compliance-v51/risk-assessments/{id}",
+    tag = "Compliance-V51",
+    operation_id = "get_risk_assessment_handler",
+    responses((status = 200, description = "OK")),
+)]
 async fn get_risk_assessment_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -1238,6 +1294,13 @@ async fn list_risk_assessments_handler(
     }
 }
 
+#[utoipa::path(
+    get,
+    path = "/compliance-v51/risk-assessments/summary",
+    tag = "Compliance-V51",
+    operation_id = "get_risk_summary_handler",
+    responses((status = 200, description = "OK")),
+)]
 async fn get_risk_summary_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -1249,6 +1312,13 @@ async fn get_risk_summary_handler(
     }
 }
 
+#[utoipa::path(
+    post,
+    path = "/compliance-v51/reports/generate",
+    tag = "Compliance-V51",
+    operation_id = "generate_compliance_report_handler",
+    responses((status = 200, description = "OK")),
+)]
 async fn generate_compliance_report_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -1262,6 +1332,13 @@ async fn generate_compliance_report_handler(
     }
 }
 
+#[utoipa::path(
+    get,
+    path = "/compliance-v51/reports/{id}",
+    tag = "Compliance-V51",
+    operation_id = "get_compliance_report_handler",
+    responses((status = 200, description = "OK")),
+)]
 async fn get_compliance_report_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -1286,6 +1363,13 @@ async fn list_compliance_reports_handler(
     }
 }
 
+#[utoipa::path(
+    get,
+    path = "/compliance-v51/reports/{id}/export",
+    tag = "Compliance-V51",
+    operation_id = "export_compliance_report_handler",
+    responses((status = 200, description = "OK")),
+)]
 async fn export_compliance_report_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,

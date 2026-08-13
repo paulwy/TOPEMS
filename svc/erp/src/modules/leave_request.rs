@@ -267,6 +267,13 @@ pub async fn list_leave_requests(
     }
 }
 
+#[utoipa::path(
+    post,
+    path = "/leave-requests",
+    tag = "ERP",
+    operation_id = "create_leave_request",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn create_leave_request(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
@@ -369,6 +376,13 @@ pub async fn create_leave_request(
     response
 }
 
+#[utoipa::path(
+    get,
+    path = "/leave-requests/{id}",
+    tag = "ERP",
+    operation_id = "get_leave_request",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn get_leave_request(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
@@ -402,6 +416,13 @@ pub async fn get_leave_request(
     }
 }
 
+#[utoipa::path(
+    put,
+    path = "/leave-requests/{id}",
+    tag = "ERP",
+    operation_id = "update_leave_request",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn update_leave_request(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
@@ -522,6 +543,13 @@ pub async fn update_leave_request(
     response
 }
 
+#[utoipa::path(
+    delete,
+    path = "/leave-requests/{id}",
+    tag = "ERP",
+    operation_id = "delete_leave_request",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn delete_leave_request(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
@@ -589,6 +617,13 @@ pub async fn delete_leave_request(
 }
 
 /// 提交请假申请（draft → pending）
+#[utoipa::path(
+    post,
+    path = "/leave-requests/{id}/submit",
+    tag = "ERP",
+    operation_id = "submit_leave_request",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn submit_leave_request(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
@@ -664,6 +699,13 @@ pub async fn submit_leave_request(
 }
 
 /// 审批通过（pending → approved）
+#[utoipa::path(
+    post,
+    path = "/leave-requests/{id}/approve",
+    tag = "ERP",
+    operation_id = "approve_leave_request",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn approve_leave_request(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
@@ -748,6 +790,13 @@ pub async fn approve_leave_request(
 }
 
 /// 驳回（pending → rejected）
+#[utoipa::path(
+    post,
+    path = "/leave-requests/{id}/reject",
+    tag = "ERP",
+    operation_id = "reject_leave_request",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn reject_leave_request(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
@@ -836,6 +885,13 @@ pub async fn reject_leave_request(
 }
 
 /// 撤销（draft / pending → cancelled）
+#[utoipa::path(
+    post,
+    path = "/leave-requests/{id}/cancel",
+    tag = "ERP",
+    operation_id = "cancel_leave_request",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn cancel_leave_request(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,

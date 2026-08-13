@@ -573,6 +573,15 @@ pub async fn get_alert_statistics(
 }
 
 /// 获取预警汇总（简化版）
+#[utoipa::path(
+    get,
+    path = "/alerts/summary",
+    tag = "inventory_alert",
+    operation_id = "get_alert_summary",
+    responses(
+        (status = 200, description = "OK"),
+    ),
+)]
 pub async fn get_alert_summary(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
@@ -645,6 +654,15 @@ pub async fn get_alert_summary(
 }
 
 /// 按仓库获取预警列表
+#[utoipa::path(
+    get,
+    path = "/alerts/by-warehouse",
+    tag = "inventory_alert",
+    operation_id = "get_alerts_by_warehouse",
+    responses(
+        (status = 200, description = "OK"),
+    ),
+)]
 pub async fn get_alerts_by_warehouse(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,

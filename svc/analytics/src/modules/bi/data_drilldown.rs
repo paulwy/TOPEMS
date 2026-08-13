@@ -82,6 +82,13 @@ pub struct DrilldownHistoryListResponse {
     pub total: i64,
 }
 
+#[utoipa::path(
+    get,
+    path = "/drilldown/path",
+    tag = "Drilldown",
+    operation_id = "list_drilldown_paths",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn list_drilldown_paths(State(state): State<AppState>) -> Json<serde_json::Value> {
     info!("Listing drilldown paths");
 
@@ -127,6 +134,13 @@ pub async fn list_drilldown_paths(State(state): State<AppState>) -> Json<serde_j
     }))
 }
 
+#[utoipa::path(
+    post,
+    path = "/drilldown/path",
+    tag = "Drilldown",
+    operation_id = "create_drilldown_path",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn create_drilldown_path(
     State(state): State<AppState>,
     Json(req): Json<CreateDrilldownPathRequest>,
@@ -179,6 +193,13 @@ pub async fn create_drilldown_path(
     }
 }
 
+#[utoipa::path(
+    get,
+    path = "/drilldown/path/{id}",
+    tag = "Drilldown",
+    operation_id = "get_drilldown_path",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn get_drilldown_path(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
@@ -225,6 +246,13 @@ pub async fn get_drilldown_path(
     }
 }
 
+#[utoipa::path(
+    put,
+    path = "/drilldown/path/{id}",
+    tag = "Drilldown",
+    operation_id = "update_drilldown_path",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn update_drilldown_path(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
@@ -282,6 +310,13 @@ pub async fn update_drilldown_path(
     }
 }
 
+#[utoipa::path(
+    delete,
+    path = "/drilldown/path/{id}",
+    tag = "Drilldown",
+    operation_id = "delete_drilldown_path",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn delete_drilldown_path(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
@@ -315,6 +350,13 @@ pub async fn delete_drilldown_path(
     }
 }
 
+#[utoipa::path(
+    post,
+    path = "/drilldown/drill-down",
+    tag = "Drilldown",
+    operation_id = "drill_down",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn drill_down(
     State(state): State<AppState>,
     Json(req): Json<DrilldownQueryRequest>,
@@ -398,6 +440,13 @@ pub async fn drill_down(
     }))
 }
 
+#[utoipa::path(
+    post,
+    path = "/drilldown/roll-up",
+    tag = "Drilldown",
+    operation_id = "roll_up",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn roll_up(
     State(state): State<AppState>,
     Json(req): Json<DrilldownQueryRequest>,
@@ -478,6 +527,13 @@ pub async fn roll_up(
     }))
 }
 
+#[utoipa::path(
+    post,
+    path = "/drilldown/history",
+    tag = "Drilldown",
+    operation_id = "get_drilldown_history",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn get_drilldown_history(
     State(state): State<AppState>,
     Json(req): Json<DrilldownHistoryRequest>,

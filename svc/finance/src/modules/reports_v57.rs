@@ -1299,6 +1299,13 @@ pub struct ReportListQueryParams {
     pub status: Option<String>,
 }
 
+#[utoipa::path(
+    post,
+    path = "/finance-v57/report/template",
+    tag = "Reports-V57",
+    operation_id = "create_template_handler",
+    responses((status = 200, description = "OK")),
+)]
 async fn create_template_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -1312,6 +1319,13 @@ async fn create_template_handler(
     }
 }
 
+#[utoipa::path(
+    get,
+    path = "/finance-v57/report/templates",
+    tag = "Reports-V57",
+    operation_id = "get_templates_handler",
+    responses((status = 200, description = "OK")),
+)]
 async fn get_templates_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -1326,6 +1340,13 @@ async fn get_templates_handler(
 
 // --- Report Generation ---
 
+#[utoipa::path(
+    post,
+    path = "/finance-v57/report/generate",
+    tag = "Reports-V57",
+    operation_id = "generate_report_handler",
+    responses((status = 200, description = "OK")),
+)]
 async fn generate_report_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -1352,6 +1373,13 @@ async fn list_reports_handler(
     }
 }
 
+#[utoipa::path(
+    get,
+    path = "/finance-v57/report/{id}",
+    tag = "Reports-V57",
+    operation_id = "get_report_handler",
+    responses((status = 200, description = "OK")),
+)]
 async fn get_report_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -1365,6 +1393,13 @@ async fn get_report_handler(
     }
 }
 
+#[utoipa::path(
+    get,
+    path = "/finance-v57/report/{id}/download",
+    tag = "Reports-V57",
+    operation_id = "download_report_handler",
+    responses((status = 200, description = "OK")),
+)]
 async fn download_report_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -1378,6 +1413,13 @@ async fn download_report_handler(
     }
 }
 
+#[utoipa::path(
+    delete,
+    path = "/finance-v57/report/{id}",
+    tag = "Reports-V57",
+    operation_id = "delete_report_handler",
+    responses((status = 200, description = "OK")),
+)]
 async fn delete_report_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -1391,6 +1433,13 @@ async fn delete_report_handler(
     }
 }
 
+#[utoipa::path(
+    post,
+    path = "/finance-v57/report/schedule",
+    tag = "Reports-V57",
+    operation_id = "schedule_report_handler",
+    responses((status = 200, description = "OK")),
+)]
 async fn schedule_report_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -1411,6 +1460,13 @@ pub struct AnalysisHistoryQueryParams {
     pub dimension: Option<String>,
 }
 
+#[utoipa::path(
+    post,
+    path = "/finance-v57/analysis",
+    tag = "Reports-V57",
+    operation_id = "analyze_handler",
+    responses((status = 200, description = "OK")),
+)]
 async fn analyze_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -1424,6 +1480,13 @@ async fn analyze_handler(
     }
 }
 
+#[utoipa::path(
+    post,
+    path = "/finance-v57/analysis/pivot",
+    tag = "Reports-V57",
+    operation_id = "pivot_handler",
+    responses((status = 200, description = "OK")),
+)]
 async fn pivot_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -1437,6 +1500,13 @@ async fn pivot_handler(
     }
 }
 
+#[utoipa::path(
+    post,
+    path = "/finance-v57/analysis/drill-down",
+    tag = "Reports-V57",
+    operation_id = "drill_down_handler",
+    responses((status = 200, description = "OK")),
+)]
 async fn drill_down_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -1450,6 +1520,13 @@ async fn drill_down_handler(
     }
 }
 
+#[utoipa::path(
+    post,
+    path = "/finance-v57/analysis/roll-up",
+    tag = "Reports-V57",
+    operation_id = "roll_up_handler",
+    responses((status = 200, description = "OK")),
+)]
 async fn roll_up_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -1463,6 +1540,13 @@ async fn roll_up_handler(
     }
 }
 
+#[utoipa::path(
+    post,
+    path = "/finance-v57/analysis/slice",
+    tag = "Reports-V57",
+    operation_id = "slice_handler",
+    responses((status = 200, description = "OK")),
+)]
 async fn slice_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -1476,6 +1560,13 @@ async fn slice_handler(
     }
 }
 
+#[utoipa::path(
+    post,
+    path = "/finance-v57/analysis/dice",
+    tag = "Reports-V57",
+    operation_id = "dice_handler",
+    responses((status = 200, description = "OK")),
+)]
 async fn dice_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -1489,6 +1580,13 @@ async fn dice_handler(
     }
 }
 
+#[utoipa::path(
+    get,
+    path = "/finance-v57/analysis/history",
+    tag = "Reports-V57",
+    operation_id = "get_analysis_history_handler",
+    responses((status = 200, description = "OK")),
+)]
 async fn get_analysis_history_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -1513,6 +1611,13 @@ pub struct TrendQueryParams {
     pub metric: Option<String>,
 }
 
+#[utoipa::path(
+    post,
+    path = "/finance-v57/forecast",
+    tag = "Reports-V57",
+    operation_id = "generate_forecast_handler",
+    responses((status = 200, description = "OK")),
+)]
 async fn generate_forecast_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -1526,6 +1631,13 @@ async fn generate_forecast_handler(
     }
 }
 
+#[utoipa::path(
+    post,
+    path = "/finance-v57/anomaly/detect",
+    tag = "Reports-V57",
+    operation_id = "detect_anomalies_handler_v57",
+    responses((status = 200, description = "OK")),
+)]
 async fn detect_anomalies_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -1552,6 +1664,13 @@ async fn get_insights_handler(
     }
 }
 
+#[utoipa::path(
+    post,
+    path = "/finance-v57/model/train",
+    tag = "Reports-V57",
+    operation_id = "train_model_handler",
+    responses((status = 200, description = "OK")),
+)]
 async fn train_model_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -1565,6 +1684,13 @@ async fn train_model_handler(
     }
 }
 
+#[utoipa::path(
+    get,
+    path = "/finance-v57/models",
+    tag = "Reports-V57",
+    operation_id = "list_models_handler",
+    responses((status = 200, description = "OK")),
+)]
 async fn list_models_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,

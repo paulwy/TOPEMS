@@ -13,6 +13,13 @@ use crate::shared::AppState;
 
 use super::models::ExportFormatQuery;
 
+#[utoipa::path(
+    get,
+    path = "/dashboard/{id}/export",
+    tag = "Dashboard",
+    operation_id = "export_dashboard",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn export_dashboard(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
@@ -71,6 +78,13 @@ pub async fn export_dashboard(
     }
 }
 
+#[utoipa::path(
+    get,
+    path = "/dashboard/{id}/export/pdf",
+    tag = "Dashboard",
+    operation_id = "export_dashboard_pdf",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn export_dashboard_pdf(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
@@ -231,6 +245,13 @@ fn escape_pdf_string(s: &str) -> String {
         .replace('\\', "\\\\")
 }
 
+#[utoipa::path(
+    get,
+    path = "/dashboard/{id}/export/excel",
+    tag = "Dashboard",
+    operation_id = "export_dashboard_excel",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn export_dashboard_excel(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,

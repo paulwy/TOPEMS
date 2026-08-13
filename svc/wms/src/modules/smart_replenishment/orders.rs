@@ -11,6 +11,15 @@ use crate::shared::permission::{check_permission, ModulePermission};
 use topems_shared_auth::auth::Claims;
 use topems_shared_core::response::{api_error, ApiResponse, PaginationParams};
 
+#[utoipa::path(
+    get,
+    path = "/smart-replenishment/orders",
+    tag = "smart_replenishment",
+    operation_id = "list_orders",
+    responses(
+        (status = 200, description = "OK"),
+    ),
+)]
 pub async fn list_orders(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
@@ -76,6 +85,15 @@ pub async fn list_orders(
     }
 }
 
+#[utoipa::path(
+    post,
+    path = "/smart-replenishment/orders",
+    tag = "smart_replenishment",
+    operation_id = "create_order",
+    responses(
+        (status = 200, description = "OK"),
+    ),
+)]
 pub async fn create_order(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
@@ -176,6 +194,15 @@ pub async fn create_order(
     }
 }
 
+#[utoipa::path(
+    get,
+    path = "/smart-replenishment/orders/{id}",
+    tag = "smart_replenishment",
+    operation_id = "get_order",
+    responses(
+        (status = 200, description = "OK"),
+    ),
+)]
 pub async fn get_order(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
@@ -220,6 +247,15 @@ pub async fn get_order(
     }
 }
 
+#[utoipa::path(
+    put,
+    path = "/smart-replenishment/orders/{id}",
+    tag = "smart_replenishment",
+    operation_id = "update_order",
+    responses(
+        (status = 200, description = "OK"),
+    ),
+)]
 pub async fn update_order(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
@@ -276,6 +312,15 @@ pub async fn update_order(
     }
 }
 
+#[utoipa::path(
+    delete,
+    path = "/smart-replenishment/orders/{id}",
+    tag = "smart_replenishment",
+    operation_id = "delete_order",
+    responses(
+        (status = 200, description = "OK"),
+    ),
+)]
 pub async fn delete_order(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
@@ -309,6 +354,15 @@ pub async fn delete_order(
     }
 }
 
+#[utoipa::path(
+    get,
+    path = "/smart-replenishment/orders/{id}/items",
+    tag = "smart_replenishment",
+    operation_id = "list_order_items",
+    responses(
+        (status = 200, description = "OK"),
+    ),
+)]
 pub async fn list_order_items(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
@@ -365,6 +419,15 @@ pub async fn list_order_items(
     }
 }
 
+#[utoipa::path(
+    post,
+    path = "/smart-replenishment/orders/{id}/confirm",
+    tag = "smart_replenishment",
+    operation_id = "confirm_order",
+    responses(
+        (status = 200, description = "OK"),
+    ),
+)]
 pub async fn confirm_order(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
@@ -409,6 +472,15 @@ pub async fn confirm_order(
     }
 }
 
+#[utoipa::path(
+    post,
+    path = "/smart-replenishment/orders/{id}/complete",
+    tag = "smart_replenishment",
+    operation_id = "complete_order",
+    responses(
+        (status = 200, description = "OK"),
+    ),
+)]
 pub async fn complete_order(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,

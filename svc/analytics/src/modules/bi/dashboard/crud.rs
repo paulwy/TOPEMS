@@ -497,6 +497,13 @@ pub async fn clone_dashboard(
     }
 }
 
+#[utoipa::path(
+    post,
+    path = "/dashboard/import",
+    tag = "Dashboard",
+    operation_id = "import_dashboard",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn import_dashboard(
     State(state): State<AppState>,
     Json(req): Json<ImportDashboardRequest>,

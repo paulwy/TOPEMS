@@ -778,16 +778,37 @@ async fn main() -> anyhow::Result<()> {
 
 // ==================== 公共处理函数 ====================
 
+#[utoipa::path(
+    get,
+    path = "/",
+    tag = "Health",
+    operation_id = "home",
+    responses((status = 200, description = "OK")),
+)]
 async fn home() -> &'static str {
     "TOPEMS Analytics Service API\n\n\
      Unified service for BI (Business Intelligence) and Report\n\n\
      - /health - Health check"
 }
 
+#[utoipa::path(
+    get,
+    path = "/health",
+    tag = "Health",
+    operation_id = "health",
+    responses((status = 200, description = "OK")),
+)]
 async fn health(State(state): State<AppState>) -> ServiceHealth {
     simple_health_check(&state.health_config).await
 }
 
+#[utoipa::path(
+    get,
+    path = "/api/health/detailed",
+    tag = "Health",
+    operation_id = "detailed_health",
+    responses((status = 200, description = "OK")),
+)]
 async fn detailed_health(State(state): State<AppState>) -> Json<ApiResponse<serde_json::Value>> {
     let db_status = match sqlx::query("SELECT 1").fetch_one(&state.pool).await {
         Ok(_) => "healthy",

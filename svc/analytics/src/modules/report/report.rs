@@ -41,6 +41,13 @@ pub struct CreateReportFromTemplateRequest {
     pub created_by: String,
 }
 
+#[utoipa::path(
+    get,
+    path = "/reports",
+    tag = "Reports",
+    operation_id = "list_reports",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn list_reports(State(state): State<AppState>) -> Json<serde_json::Value> {
     info!("Listing reports");
 
@@ -78,6 +85,13 @@ pub async fn list_reports(State(state): State<AppState>) -> Json<serde_json::Val
     }))
 }
 
+#[utoipa::path(
+    post,
+    path = "/reports",
+    tag = "Reports",
+    operation_id = "create_report",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn create_report(
     State(state): State<AppState>,
     Json(req): Json<CreateReportRequest>,
@@ -119,6 +133,13 @@ pub async fn create_report(
     }
 }
 
+#[utoipa::path(
+    post,
+    path = "/reports/from-template",
+    tag = "Reports",
+    operation_id = "create_report_from_template",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn create_report_from_template(
     State(state): State<AppState>,
     Json(req): Json<CreateReportFromTemplateRequest>,
@@ -210,6 +231,13 @@ pub async fn create_report_from_template(
     }
 }
 
+#[utoipa::path(
+    get,
+    path = "/reports/{id}",
+    tag = "Reports",
+    operation_id = "get_report",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn get_report(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
@@ -255,6 +283,13 @@ pub async fn get_report(
     }
 }
 
+#[utoipa::path(
+    put,
+    path = "/reports/{id}",
+    tag = "Reports",
+    operation_id = "update_report",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn update_report(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
@@ -299,6 +334,13 @@ pub async fn update_report(
     }
 }
 
+#[utoipa::path(
+    delete,
+    path = "/reports/{id}",
+    tag = "Reports",
+    operation_id = "delete_report",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn delete_report(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
@@ -327,6 +369,13 @@ pub async fn delete_report(
     }
 }
 
+#[utoipa::path(
+    post,
+    path = "/reports/{id}/export",
+    tag = "Reports",
+    operation_id = "export_report",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn export_report(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
@@ -410,6 +459,13 @@ pub async fn download_export(
     }))
 }
 
+#[utoipa::path(
+    post,
+    path = "/reports/{id}/run",
+    tag = "Reports",
+    operation_id = "run_report",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn run_report(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
