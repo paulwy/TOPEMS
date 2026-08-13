@@ -830,4 +830,218 @@ mod tests {
         let auth_state = AuthState::from_env();
         assert_eq!(auth_state.token_expiry_hours, 24);
     }
+
+    fn make_claims(sub: &str) -> Claims {
+        let now = chrono::Utc::now();
+        let exp = (now + chrono::Duration::hours(1)).timestamp() as usize;
+        Claims {
+            sub: sub.to_string(),
+            username: "u".to_string(),
+            role: "user".to_string(),
+            roles: vec!["user".to_string()],
+            permissions: vec!["iam:users_read".to_string()],
+            is_superuser: false,
+            exp,
+            iat: now.timestamp() as usize,
+            email: None,
+            department: None,
+            tenant_id: None,
+            department_id: None,
+            position_id: None,
+            position_code: None,
+        }
+    }
+
+    fn super_long_secret() -> &'static str {
+        "topems-jwt-secret-key-must-be-at-least-32-characters-long-for-hs256-test"
+    }
+
+    fn another_secret() -> &'static str {
+        "topems-refresh-secret-key-must-be-at-least-32-characters-for-hs256-test"
+    }
+
+    // ===== Claims::user_id =====
+    #[test]
+    fn test_claims_user_id_ok() {
+        let valid_uuid = "123e4567-e89b-12d3-a456-426614174000";
+        let c = make_claims(valid_uuid);
+        let id = c.user_id();
+        assert!(id.is_ok(), "valid uuid should parse");
+        assert_eq!(id.unwrap().to_string(), valid_uuid);
+    }
+
+    #[test]
+    fn test_claims_user_id_err_empty_and_invalid() {
+        let c = make_claims("");
+        assert!(c.user_id().is_err(), "empty sub should fail");
+
+        let c = make_claims("not-a-uuid");
+        assert!(c.user_id().is_err(), "garbage sub should fail");
+    }
+
+    // ===== Claims::has_role =====
+    #[test]
+    fn test_claims_has_role_hit_and_miss() {
+        let mut c = make_claims("123e4567-e89b-12d3-a456-426614174000");
+        c.roles = vec!["admin".to_string(), "user".to_string()];
+        assert!(c.has_role("admin"));
+        assert!(c.has_role("user"));
+        assert!(!c.has_role("superadmin"));
+
+        c.is_superuser = true;
+        assert!(c.has_role("any_role"));
+    }
+
+    // ===== Claims::has_any_permission =====
+    #[test]
+    fn test_claims_has_any_permission_some_hit() {
+        let mut c = make_claims("123e4567-e89b-12d3-a456-426614174000");
+        c.permissions = vec!["a".to_string(), "b".to_string()];
+        assert!(c.has_any_permission(&["a", "x"]));
+        assert!(c.has_any_permission(&["x", "b"]));
+        assert!(!c.has_any_permission(&["x", "y"]));
+
+        c.is_superuser = true;
+        assert!(c.has_any_permission(&["nonexistent"]));
+    }
+
+    // ===== Claims::has_all_permissions =====
+    #[test]
+    fn test_claims_has_all_permissions_partial_miss() {
+        let mut c = make_claims("123e4567-e89b-12d3-a456-426614174000");
+        c.permissions = vec!["a".to_string(), "b".to_string()];
+        assert!(c.has_all_permissions(&["a", "b"]));
+        assert!(c.has_all_permissions(&["a"]));
+        assert!(!c.has_all_permissions(&["a", "b", "c"]));
+        assert!(!c.has_all_permissions(&["c"]));
+
+        c.is_superuser = true;
+        assert!(c.has_all_permissions(&["a", "b", "zzz"]));
+    }
+
+    // ===== Claims::encode + verify_jwt_token roundtrip =====
+    #[test]
+    fn test_claims_encode_verify_roundtrip() {
+        let c = make_claims("123e4567-e89b-12d3-a456-426614174000");
+        let token = c.encode(super_long_secret()).expect("encode ok");
+        assert!(!token.is_empty());
+        let decoded = verify_jwt_token(&token, super_long_secret()).expect("verify ok");
+        assert_eq!(decoded.sub, c.sub);
+        assert_eq!(decoded.username, c.username);
+        assert_eq!(decoded.permissions, c.permissions);
+    }
+
+    #[test]
+    fn test_verify_jwt_token_with_wrong_secret_fails() {
+        let c = make_claims("123e4567-e89b-12d3-a456-426614174000");
+        let token = c.encode(super_long_secret()).expect("encode ok");
+        assert!(verify_jwt_token(&token, another_secret()).is_err());
+    }
+
+    // ===== generate_jwt_token =====
+    #[test]
+    fn test_generate_jwt_token_produces_verifiable_claims() {
+        let uid = "123e4567-e89b-12d3-a456-426614174000";
+        let token = generate_jwt_token(uid, super_long_secret(), 60);
+        assert!(!token.is_empty(), "should not return empty string");
+        let claims = verify_jwt_token(&token, super_long_secret()).expect("roundtrip ok");
+        assert_eq!(claims.sub, uid);
+        assert_eq!(claims.username, uid);
+        assert_eq!(claims.role, "user");
+        assert!(!claims.is_superuser);
+    }
+
+    // ===== generate_refresh_token =====
+    #[test]
+    fn test_generate_refresh_token_unique_and_nonempty() {
+        let a = generate_refresh_token();
+        let b = generate_refresh_token();
+        assert!(!a.is_empty());
+        assert_eq!(a.len(), 64, "32 bytes hex -> 64 chars");
+        assert_ne!(a, b, "two calls should differ");
+    }
+
+    // ===== sign_message + verify_message_signature =====
+    #[test]
+    fn test_sign_verify_roundtrip_and_tamper() {
+        let secret = "my-secret-key-for-signing-test-32chars-xx";
+        let msg = "hello world";
+        let sig = sign_message(msg, secret);
+        assert!(!sig.is_empty());
+        assert_eq!(sig.len(), 64, "HMAC-SHA256 -> 32 bytes hex = 64");
+
+        assert!(verify_message_signature(msg, &sig, secret), "valid sig should pass");
+        assert!(
+            !verify_message_signature("tampered", &sig, secret),
+            "tampered message should fail"
+        );
+        assert!(
+            !verify_message_signature(msg, &sig, "other-secret-32-chars-long-enough!!"),
+            "different secret should fail"
+        );
+
+        let mut bad_sig = sig.clone();
+        bad_sig.replace_range(..1, "0");
+        assert!(
+            !verify_message_signature(msg, &bad_sig, secret),
+            "altered signature should fail"
+        );
+    }
+
+    // ===== AuthState::new =====
+    #[test]
+    fn test_auth_state_new_constructor_and_default_token_expiry() {
+        let s = AuthState::new(
+            super_long_secret().to_string(),
+            another_secret().to_string(),
+            12,
+        );
+        assert_eq!(s.jwt_secret, super_long_secret());
+        assert_eq!(s.refresh_secret, another_secret());
+        assert_eq!(s.token_expiry_hours, 12);
+    }
+
+    // ===== get_permissions =====
+    #[test]
+    fn test_get_permissions_returns_nonempty_list() {
+        let perms = get_permissions();
+        assert!(!perms.is_empty(), "permissions list should be non-empty");
+        let ids: Vec<&str> = perms.iter().map(|p| p.id.as_str()).collect();
+        assert!(ids.contains(&"iam:users_read"));
+        assert!(ids.contains(&"iam:users_create"));
+        assert!(ids.contains(&"iam:roles_read"));
+        assert!(ids.contains(&"pm:projects_read"));
+    }
+
+    // ===== get_roles =====
+    #[test]
+    fn test_get_roles_returns_nonempty_list_with_admin() {
+        let roles = get_roles();
+        assert!(!roles.is_empty(), "roles list should be non-empty");
+        let ids: Vec<&str> = roles.iter().map(|r| r.id.as_str()).collect();
+        assert!(ids.contains(&"admin"));
+        assert!(ids.contains(&"superadmin"));
+        assert!(ids.contains(&"viewer"));
+    }
+
+    // ===== get_role_by_id =====
+    #[test]
+    fn test_get_role_by_id_some_and_none() {
+        let admin = get_role_by_id("admin");
+        assert!(admin.is_some());
+        assert_eq!(admin.unwrap().id, "admin");
+
+        assert!(get_role_by_id("nope").is_none());
+        assert!(get_role_by_id("").is_none());
+    }
+
+    // ===== get_permission_by_id =====
+    #[test]
+    fn test_get_permission_by_id_some_and_none() {
+        let p = get_permission_by_id("iam:users_read");
+        assert!(p.is_some());
+        assert_eq!(p.unwrap().id, "iam:users_read");
+
+        assert!(get_permission_by_id("iam:does_not_exist").is_none());
+    }
 }

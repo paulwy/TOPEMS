@@ -1148,4 +1148,57 @@ mod tests {
         std::env::remove_var("ERP_PORT");
         std::env::remove_var("PORT");
     }
+
+    // ===== derive_service_tag edge cases =====
+    // 注：用户描述 "topems-analytics -> analytics" 是错误的，
+    // 代码实际上做了 `.to_uppercase().replace('-', "_")`，所以返回 "ANALYTICS"。
+    #[test]
+    fn test_derive_service_tag_analytics_is_uppercase() {
+        assert_eq!(derive_service_tag("topems-analytics"), "ANALYTICS");
+        assert_eq!(derive_service_tag("topems-unified-core"), "UNIFIED_CORE");
+    }
+
+    #[test]
+    fn test_derive_service_tag_empty_and_prefix_only() {
+        assert_eq!(derive_service_tag(""), "");
+        assert_eq!(derive_service_tag("topems"), "TOPEMS");
+    }
+
+    #[test]
+    fn test_derive_service_tag_with_numbers() {
+        assert_eq!(derive_service_tag("topems-api-v1"), "API_V1");
+        assert_eq!(derive_service_tag("v1-gateway"), "V1_GATEWAY");
+    }
+
+    // ===== format_db_max_connections_key =====
+    #[test]
+    fn test_format_db_max_connections_key_empty() {
+        assert_eq!(format_db_max_connections_key(""), "_DB_MAX_CONNECTIONS");
+    }
+
+    // ===== parse_max_connections edge cases =====
+    #[test]
+    fn test_parse_max_connections_overflow_falls_back() {
+        // u32::MAX = 4294967295; 更大的数 parse 失败 -> 回退 default
+        assert_eq!(
+            parse_max_connections(Some("9999999999".into()), None, 10),
+            10
+        );
+        assert_eq!(
+            parse_max_connections(
+                Some(format!("{}0", u32::MAX).into()),
+                None,
+                10
+            ),
+            10
+        );
+    }
+
+    #[test]
+    fn test_parse_max_connections_zero_is_valid() {
+        assert_eq!(
+            parse_max_connections(Some("0".into()), Some("20".into()), 10),
+            0
+        );
+    }
 }
