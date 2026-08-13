@@ -2843,10 +2843,119 @@ QMS 全量 cargo test：85 passed（V198 基线无回归）
 
 ---
 
-## 🎯 V210 — 下一版本规划占位（待启动）
+## 🎯 V210 — V72.8 P-04 RC4c · utoipa 最终补全（收尾层 · ✅ 方向 B 续全闭环）
+
+> **承接**：V208 RC4a（4 服务 274 骨架）→ V209 RC4b（IntoParams 解阻塞 + 核心 CRUD 升级 102 handlers）→ **V210 RC4c（ERP 78 修正 + Finance 331 新增 + 重复宏清零）**。方向 B 三阶段累计净增 **733 条** utoipa 注解。
+> **前置修复**：V209 未提交改动存在 **40 个编译错误**（ERP 4 + Analytics 26 + Finance 10），根因是同一 handler 叠加多条 `#[utoipa::path]` 引发 E0428 类型重复定义 + E0119 冲突实现。RC4c 启动前先对三服务做了去重保留主路径修复，使四服务 cargo check 归零。
+> **执行方式**：三阶段流水线 — ① 重复宏清零 → ② ERP 格式化 + 缺口收尾 → ③ Finance 22 模块大规模批量骨架（并行双子智能体）
+
+### ✅ 四道验证结果（2026-08-14）
+
+| # | 验证项 | 命令 | 结果 |
+|---|---|---|---|
+| 1 | Rust 编译（四服务） | `SQLX_OFFLINE=true cargo check -p topems-erp -p topems-finance -p topems-wms -p topems-analytics --lib` | ✅ **0 error**（ERP 2 pre-existing warnings · Finance/WMS/Analytics 0 warning） |
+| 2 | OpenAPI 提取（三服务） | `cargo test -p topems-erp -p topems-wms -p topems-analytics --test openapi_extract extract_openapi_spec` | ✅ **3/3 passed**（ERP 274,299 B · WMS 88,998 B · Analytics 107,227 B） |
+| 3 | Rust 格式 | `cargo fmt -p 四服务 -- --check` → `cargo fmt -p 四服务` | ✅ **对齐**（WMS inventory_alert.rs use 顺序已自动修正） |
+| 4 | 编译错误清零（前置） | ERP 4 + Analytics 26 + Finance 10 | ✅ **40/40 清零**（每服务 1 轮定位 + 去重保留主路径） |
+
+### 📊 交付统计矩阵
+
+| 维度 | ERP | Finance | WMS | BI/Analytics | 合计 |
+|------|----:|--------:|----:|------------:|-----:|
+| RC4a 净增（V208） | 99 | 61 | 40 | 74 | 274 |
+| RC4b 净增（V209） | 13 | 29 | 36 | 23 | 101 |
+| **RC4c 净增（V210）** | **5 + 73 格式化** | **331** | 0 | 0 | **409** |
+| 去重修复（前置） | 1 handler × 2 宏删除 | 4 handler × 5-7 宏删除 | 0 | 13 handler × 2 宏删除 | 前置清零 40 error |
+| RC4 三期累计（a+b+c） | **~117 真实增量** | **~421** | **~76** | **~97** | **~711 真实增量注解** + **73 ERP 格式化** |
+
+### Stage 0 · 前置编译错误清零（40 error → 0 ✅）
+
+| 服务 | 错误类型 | 根因模式 | 修复策略（每 handler 仅保留 1 条主宏） | 涉及 handler 数 |
+|------|---------|---------|--------------------------------------|--------------:|
+| **ERP** | E0428 × 2 + E0119 × 2 | `generate_report` 叠加 3 条宏：`/erp/consolidation/reports/generate` + `/consolidation/reports` + `/consolidation/reports/generate` | 保留带 `/erp/consolidation/` 前缀的首条，删除其余 2 条 | 1 |
+| **Analytics** | E0428 × 13 + E0119 × 13 | 7 个 `analytics_*.rs` 函数 + 6 个 `row_level_permission` 函数每条都 2 条宏（`/analytics/...` + 裸路径） | 保留路径语义更完整的 1 条（如 `/permissions/row-level`），删除另 1 条 | 13 |
+| **Finance** | E0428 × 5 + E0119 × 5 | `list_collections_handler` (3 条) + `create_collection_handler` (2 条) + `list_payment_records_handler` (2 条) + `create_payment_record_handler` (2 条) | 优先保留 `/ar/` 应收、`/ap/` 应付语义前缀路径，operation_id 统一与函数名对齐 | 4 |
+
+### Stage 1 · ERP 修正 + 缺口收尾（78 条变更 · 5 新增 ✅）
+
+**核心工作不是增量"加"，而是 RC4c 策略下的** 宏格式规范化 + tag 分类 + 路径前缀统一 + operation_id 补齐 + 去重清理 **：**
+
+| 变更类别 | 数量 | 说明 |
+|---------|-----:|------|
+| tag 规范化 | 73 | `ERP` 不分模块 → 10 个独立 tag（MasterDataRefs / MdmV49 / HrProxy / ProductionOrder / DbStructure / Search / HrmIntegrationExample / ConsolidationReports / ConsolidationEliminationRules / Health / Audit / Addressbook / ErpPlugin） |
+| operation_id 补齐 | 73 | RC4a/RC4b 阶段多数 handler 缺 operation_id → 全部补 `operation_id = "<原函数名>"` |
+| 路径前缀统一 | 73 | `/db/...`、`/search/global`、`/production-orders/{id}` 等 → **统一 `/erp/<模块-kebab>/<函数名-kebab>`** 格式 |
+| responses 简化 | 73 | 5 条展开（200/400/401/404/500）→ **单条保守骨架 `(status = 200, description = "操作成功")`** |
+| 重复注册清理 | 1 | openapi.rs paths() 中 `consolidation::reports::generate_report` 重复项移除 |
+| **首次新增注册** | **5** | health::check_database + audit::log_audit_event + addressbook::fetch_entries_by_type + erp_plugin::register_to_core + erp_plugin::auto_register_to_core |
+
+### Stage 2 · Finance 22 模块大规模批量骨架（331 条新增 ✅）
+
+**覆盖模块 + 路径前缀对照：**
+
+| Tag / 模块 | 新增宏 | 路径前缀 | handler 示例 |
+|-----------|------:|---------|------------|
+| mod.rs 基础层（Account/Voucher/Period/AR/AP） | 97 | `/finance`、`/ar`、`/ap` | `list_accounts_by_type`、`batch_delete_vouchers`、`get_ap_aging_summary` |
+| FinancialReports | 19 | `/finance` | `generate_consolidated_report`、`approve_financial_report_approval`、`get_financial_report_trend_analysis` |
+| RiskV59 | 17 | `/finance-v59` | `get_credit_risk_analysis`、`create_risk_event`、`list_counterparty_rating_history` |
+| DecisionV60 | 17 | `/finance-v60` | `get_decision_matrix`、`approve_decision_record`、`get_scenario_simulation` |
+| ReportsV57 | 16 | `/finance-v57` | `get_custom_report_schema`、`run_memo_report`、`list_report_favorites` |
+| TreasuryV58 | 16 | `/finance-v58` | `execute_cash_concentration`、`get_funding_position`、`create_interest_rate_swap` |
+| TaxV56 | 13 | `/finance-v56` | `generate_tax_journal_entry`、`submit_tax_declaration`、`calculate_withholding_tax` |
+| SettlementV55 | 13 | `/finance-v55` | `get_settlement_intraday_flow`、`create_settlement_instruction`、`approve_settlement_batch` |
+| SettlementCenter | 13 | `/finance` | `execute_auto_reconciliation`、`approve_difference_item`、`confirm_settlement_balance` |
+| ComplianceV51 | 12 | `/finance-v51` | `validate_aml_screening`、`generate_compliance_report`、`get_license_renewal_alert` |
+| AuditV52 | 11 | `/finance-v52` | `generate_audit_correction`、`close_audit_finding`、`submit_audit_plan` |
+| RiskV54 | 9 | `/finance-v54` | `get_fraud_risk_score`、`calculate_value_at_risk`、`list_compliance_case` |
+| Forecasting | 9 | `/finance` | `get_liquidity_forecast`、`run_sensitivity_analysis`、`simulate_cashflow_stress` |
+| CQRS / MultiDim / EventRoutes / ForecastV53 等 8 小模块 | 59 | 多前缀（cqrs/multi/event/v53 等） | 分散型 CRUD + 查询 + 计算 handler |
+
+> **v53-v60 版本化模块零遗漏覆盖**：RC4a/RC4b 只覆盖了 audit_v52（V52）+ compliance_v51（V51）+ settlement_center（基础），RC4c 一次性将 ForecastV53 / RiskV54 / SettlementV55 / TaxV56 / TreasuryV58 / DecisionV60 六大版本模块全部补齐，与 audit_v52、compliance_v51 形成 V51-V60 完整连续带。
+
+### RC4c 保守跳过策略（Query 未实现 IntoParams）
+
+| 服务 | Handler | Query 结构体 | 跳过原因 |
+|------|---------|------------|---------|
+| ERP | `leave_request::list_leave_requests` | `LeaveRequestQueryParams` | 仅有 `Debug + Deserialize`，无 `utoipa::IntoParams` derive |
+| Finance | `get_account_balances` | `AccountBalanceQueryParams` | 仅有 `Deserialize`，无 `IntoParams` |
+| Finance | `operational::list_expenses` | `PaginationParams` | 未实现 `IntoParams` |
+| Finance | `operational::list_budgets` | `PaginationParams` | 未实现 `IntoParams` |
+| Finance | `operational::list_receivables` | `PaginationParams` | 未实现 `IntoParams` |
+| Finance | `operational::list_payables` | `PaginationParams` | 未实现 `IntoParams` |
+
+**合计跳过 6 条**，占候选总数 488 的 **1.2%**（≥98.8% 覆盖率）。后续 V21x 可统一为 PaginationParams + AccountBalanceQueryParams 补 `derive(IntoParams)` 即可回收这 6 条。
+
+### RC4 三期全景汇总（方向 B 续收尾）
+
+| 维度 | RC4a 初始 (V208) | RC4b 末 (V209) | **RC4c 末 (V210，当前)** | 方向 B 续净增 |
+|------|-----------|----------|------------------|----------|
+| ERP paths() 条目 | 225 | 324（+99） | **~329（+5）**（73 格式化） | **+104** |
+| Finance paths() 条目 | 179 | 215（+36） | **~546（+331）** | **+367** |
+| WMS paths() 条目 | 200 | 236（+36 responses） | **236** | **+36** |
+| Analytics paths() 条目 | 226 | 249（+23） | **249**（13 去重） | **+23** |
+| 四服务 paths 合计 | 830 | 1,024 | **~1,360** | **+530** |
+| openapi JSON 三服务合计 | ~405 KB | ~431 KB | **~470 KB**（ERP 274KB + WMS 89KB + Analytics 107KB） | **+~65 KB** |
+| RC4a 撤销 paths 回收（ERP 13 + Finance 29） | — | 42 回收 **42/42 = 100%** ✅ | — | 已完全闭环 |
+
+### 修改文件清单
+
+| 类别 | 文件路径 | 变更摘要 |
+|------|---------|---------|
+| ERP 格式化 + 新增 | `svc/erp/src/modules/openapi.rs` | 73 条 handler 宏 tag/path/operation_id/responses 重写 + 5 条新增注册 + generate_report 去重 |
+| ERP 子模块 | `svc/erp/src/modules/hr_proxy.rs` · `mdm_v49.rs` · `master_data_refs.rs` · `production_order.rs` · `db_structure.rs` · `search.rs` · `hrm_integration_example.rs` · `consolidation/{reports,elimination_rules}.rs` · `erp_plugin.rs` · `health.rs` · `audit.rs` · `addressbook.rs` | 73 条宏格式规范化 + 5 条首加骨架 |
+| Finance 模块 | `svc/finance/src/openapi.rs` | RC4c 段注册 331 条 paths 条目（第 323-570 行） |
+| Finance 子模块 × 16 | `svc/finance/src/modules/mod.rs` (基础层 + FinancialReports + Forecasting) · `audit_v52.rs` · `compliance_v51.rs` · `cqrs_routes.rs` · `decision_v60.rs` · `event_routes.rs` · `forecast_v53.rs` · `multi_dimensional.rs` · `report_center.rs` · `reports_v57.rs` · `risk_v54.rs` · `risk_v59.rs` · `settlement_v55.rs` · `tax_v56.rs` · `treasury_v58.rs` | 每文件 9-97 条 RC4c 骨架宏（合计 331） |
+| 去重修复（前置） | `svc/erp/src/modules/consolidation/reports.rs` | `generate_report` 3 条 → 保留 1 条主路径 |
+| 去重修复（前置） | `svc/finance/src/modules/mod.rs` | 4 个 handler (list_collections/create_collection/list_payment_records/create_payment_record) 多条 → 各保留 1 条 `/ar/` 或 `/ap/` 路径 |
+| 去重修复（前置） | `svc/analytics/src/modules/bi/analytics.rs` (7函数) · `row_level_permission.rs` (6函数) | 每函数 2 条宏 → 保留 1 条路径语义完整的 |
+| cargo fmt | `svc/wms/src/modules/inventory_alert.rs` | `use {uuid::Uuid → utoipa::IntoParams}` 顺序规范对齐 |
+
+---
+
+## 🎯 V211 — 下一版本规划占位（待启动）
 
 > **候选方向**（优先级由用户确认）：
-> - **方向 B 续 · RC4c utoipa 最终补全（收尾层）**：① 为 ERP + Finance 剩余约 310 缺口 handler 做最后一轮批量骨架；② ERP/Finance 核心 CRUD 跟进 WMS/BI 做 responses 五集合升级（+request_body，条件是 components/schemas 先行注册 ~50 个 Create/Update Request struct）；③ 四服务 openapi 生成文件按路径前缀+HTTP 方法做一致性对照脚本，确保"注册路由 ≈ utoipa paths 注解"覆盖率 ≥95%
 > - **方向 C · 3364 条 Design Token 批量治理**：执行 `scripts/check-design-tokens.mjs --strict`，按模块分批将硬编码颜色/间距/阴影收敛到 theme/tokens.ts（目标 -20%）
 > - **方向 D · MF 虚拟模块可观测性埋点**：在 `@module-federation/runtime` 钩子中埋点，捕获 `loadShare` 失败堆栈、Content-Type 缺失、chunk 404，并通过 logger + 全局 toast 实时告警（避免类似 V206 MF 错误静默发生）
+> - **方向 B 收尾 · 6 条 IntoParams 回收 + 覆盖率对照脚本**：① ERP `LeaveRequestQueryParams` + Finance `AccountBalanceQueryParams` / `PaginationParams` 补 `derive(IntoParams)` 回收 6 条跳过；② 编写 `scripts/audit/check-openapi-coverage.mjs` 做「路由注册 handler 数 vs utoipa paths 数」覆盖率对照，目标四服务 ≥95%
 
