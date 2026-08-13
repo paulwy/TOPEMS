@@ -4,6 +4,7 @@ import { logger } from '@/utils/logger';
 import { loadModuleConfig, coreModuleCodes, type RouteConfig } from '../routes';
 import ProtectedRouteWrapper from './ProtectedRouteWrapper';
 import PageLoader from './PageLoader';
+import NotFoundPage from '@/pages/shared/NotFoundPage';
 // V37.0 Phase 7: 记录用户导航历史 + 触发智能预加载
 import { recordNavigation, prefetchIntelligent } from '@/lib/pwa';
 
@@ -107,6 +108,7 @@ const DynamicRoutes: React.FC = () => {
           />
         );
       })}
+      <Route path='*' element={<NotFoundPage />} />
     </Routes>
   );
 };

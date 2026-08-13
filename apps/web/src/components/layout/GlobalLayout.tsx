@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Box, Typography, useMediaQuery } from '@mui/material';
+import { Box, Typography, useMediaQuery, useTheme } from '@mui/material';
 
 import { useTranslation } from 'react-i18next';
 import { useLocation, useNavigate } from 'react-router-dom';
@@ -13,7 +13,6 @@ import { apiLogger } from '@/utils/logger';
 import { FloatingAIHelper } from '../ai/FloatingAIHelper';
 import { ContextHelpButton } from '../ContextHelpButton';
 import { MobileNav } from './MobileNav';
-import { Sidebar as AIPluginSidebar } from './Sidebar';
 import { AppSidebar } from './AppSidebar';
 import { AppHeader } from './AppHeader';
 import { CommandPalette } from '../ui/CommandPalette';
@@ -24,7 +23,7 @@ import { DASHBOARD_PATHS, MOBILE_TAB_PATHS } from '@/routes/dashboard';
 import { MOBILE_PATHS } from '@/modules/mobile/config';
 import { DOC_PATHS } from '@/modules/doc/config';
 import { AI_PATHS } from '@/modules/ai/config';
-import { getModuleFromPath, writeAICopilotContext } from '@/lib/ai/copilotContext';
+import { writeAICopilotContext } from '@/lib/ai/copilotContext';
 
 interface GlobalLayoutProps {
   children: React.ReactNode;
@@ -40,8 +39,9 @@ export const GlobalLayout: React.FC<GlobalLayoutProps> = ({ children }) => {
   const currentTheme = useThemeStore((state) => state.theme);
   const isCyberpunk = currentTheme === 'cyberpunk';
 
+  const muiTheme = useTheme();
   const { isMobile, isTablet, isTabletNarrow } = useResponsive();
-  const isDesktop = useMediaQuery('(min-width:1025px)');
+  const isDesktop = useMediaQuery(muiTheme.breakpoints.up('lg'));
 
   // 动态获取未读通知数（移动端审批 Tab 徽章）
   const [unreadCount, setUnreadCount] = useState<number>(0);
@@ -83,8 +83,6 @@ export const GlobalLayout: React.FC<GlobalLayoutProps> = ({ children }) => {
       navigationRegistryV2.emitter.off('navigationUpdated', updateNavItems);
     };
   }, [checkPermission]);
-
-  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   const [commandPaletteOpen, setCommandPaletteOpen] = useState(false);
   const openCommandPalette = useCallback(() => setCommandPaletteOpen(true), []);
@@ -172,8 +170,6 @@ export const GlobalLayout: React.FC<GlobalLayoutProps> = ({ children }) => {
     toggleSidebarCollapsed,
     navigate,
   ]);
-
-  const currentModule = getModuleFromPath(location.pathname);
 
   // 移动端底部Tab配置
   const mobileTabs: TabItem[] = [
@@ -272,7 +268,7 @@ export const GlobalLayout: React.FC<GlobalLayoutProps> = ({ children }) => {
       )}
 
       <Box sx={{ display: 'flex', flexDirection: 'row', flex: 1 }}>
-        {/* Sidebar：Tablet 端（768px-1024px）持久化显示，窄平板（768px-899px）自动折叠为图标栏 */}
+        {/* Sidebar：平板端（sm-md = 600px-1199px）持久化显示，窄平板（sm = 600-899px）自动折叠为图标栏 */}
         {shouldShowSidebar && (
           <AppSidebar
             collapsed={isTabletAutoCollapsed || sidebarCollapsed}
@@ -281,7 +277,7 @@ export const GlobalLayout: React.FC<GlobalLayoutProps> = ({ children }) => {
           />
         )}
 
-        {/* < 768px 使用 MobileNav overlay */}
+        {/* < sm (< 600px) 使用 MobileNav overlay */}
         {isMobile && (
           <MobileNav
             open={mobileMenuOpen}
@@ -382,11 +378,6 @@ export const GlobalLayout: React.FC<GlobalLayoutProps> = ({ children }) => {
         </Box>
       </Box>
 
-      <AIPluginSidebar
-        open={sidebarOpen}
-        onClose={() => setSidebarOpen(false)}
-        pluginCode={currentModule || undefined}
-      />
       <FloatingAIHelper />
       <ContextHelpButton />
 

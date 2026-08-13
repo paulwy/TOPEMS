@@ -12,7 +12,6 @@ import { authRoutes, dashboardRoutes, commonRoutes, type RouteConfig } from './i
 import { DASHBOARD_PATHS } from './dashboard';
 import { HRM_PATHS } from '../modules/hrm/config';
 import { CRM_PATHS } from '../modules/crm/config';
-import { ADMIN_PATHS } from '../modules/admin/config';
 import { VITEDeploymentMode } from '@/config/env';
 
 // 懒加载页面：避免影响首屏体积
@@ -156,51 +155,6 @@ const AppRoutes: React.FC = () => {
           />
         )}
 
-        <Route
-          path='/departments'
-          element={
-            <Navigate
-              to={HRM_PATHS.departments}
-              replace
-            />
-          }
-        />
-        <Route
-          path='/employees'
-          element={
-            <Navigate
-              to={HRM_PATHS.employees}
-              replace
-            />
-          }
-        />
-        <Route
-          path='/contracts'
-          element={
-            <Navigate
-              to={HRM_PATHS.contracts}
-              replace
-            />
-          }
-        />
-        <Route
-          path='/reports'
-          element={
-            <Navigate
-              to={HRM_PATHS.reports}
-              replace
-            />
-          }
-        />
-        <Route
-          path='/config-debug'
-          element={
-            <Navigate
-              to={ADMIN_PATHS.configDebug}
-              replace
-            />
-          }
-        />
         <Route
           path='/template-demo'
           element={

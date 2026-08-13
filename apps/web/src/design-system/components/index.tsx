@@ -66,6 +66,7 @@ export interface V51ButtonProps {
   href?: string;
 }
 
+/** @deprecated 使用 MUI Button（@mui/material）替代，配合 MUI 主题使用 */
 export const V51Button: React.FC<V51ButtonProps> = ({
   variant = 'primary',
   size = 'md',
@@ -154,6 +155,7 @@ export interface V51CardProps {
   elevated?: boolean;
 }
 
+/** @deprecated 使用 MUI Card（@mui/material）替代 */
 export const V51Card: React.FC<V51CardProps> = ({
   title,
   subtitle,
@@ -174,8 +176,8 @@ export const V51Card: React.FC<V51CardProps> = ({
     <MuiCard
       sx={{
         borderRadius: v51DesignTokens.borderRadius.xl,
-        backgroundColor: 'var(--v51-surface-card)',
-        border: bordered ? '1px solid var(--v51-border-default)' : 'none',
+        backgroundColor: 'var(--v51-surface-card, #ffffff)',
+        border: bordered ? '1px solid var(--v51-border-default, rgba(0, 0, 0, 0.12))' : 'none',
         boxShadow: elevated ? v51DesignTokens.shadows.md : 'none',
         overflow: 'hidden',
         ...sx,
@@ -185,15 +187,17 @@ export const V51Card: React.FC<V51CardProps> = ({
         <CardHeader
           sx={{
             padding: '16px 20px',
-            borderBottom: children ? '1px solid var(--v51-border-default)' : 'none',
+            borderBottom: children
+              ? '1px solid var(--v51-border-default, rgba(0, 0, 0, 0.12))'
+              : 'none',
             '& .MuiCardHeader-title': {
               fontSize: v51DesignTokens.typography.fontSize.lg,
               fontWeight: v51DesignTokens.typography.fontWeight.semibold,
-              color: 'var(--v51-text-primary)',
+              color: 'var(--v51-text-primary, rgba(0, 0, 0, 0.87))',
             },
             '& .MuiCardHeader-subheader': {
               fontSize: v51DesignTokens.typography.fontSize.sm,
-              color: 'var(--v51-text-secondary)',
+              color: 'var(--v51-text-secondary, rgba(0, 0, 0, 0.6))',
               mt: 0.5,
             },
             ...headerSx,
@@ -217,7 +221,7 @@ export const V51Card: React.FC<V51CardProps> = ({
         <CardActions
           sx={{
             padding: '16px 20px',
-            borderTop: '1px solid var(--v51-border-default)',
+            borderTop: '1px solid var(--v51-border-default, rgba(0, 0, 0, 0.12))',
             gap: 1,
             ...footerSx,
           }}
@@ -258,6 +262,7 @@ export interface V51InputProps {
   inputRef?: React.RefObject<HTMLInputElement>;
 }
 
+/** @deprecated 使用 MUI TextField（@mui/material）替代 */
 export const V51Input: React.FC<V51InputProps> = ({
   label,
   value,
@@ -285,14 +290,14 @@ export const V51Input: React.FC<V51InputProps> = ({
   inputRef,
 }) => {
   const borderColorMap: Record<V51InputValidationState, string> = {
-    default: 'var(--v51-border-default)',
+    default: 'var(--v51-border-default, rgba(0, 0, 0, 0.12))',
     success: v51DesignTokens.colors.success.main,
     warning: v51DesignTokens.colors.warning.main,
     error: v51DesignTokens.colors.error.main,
   };
 
   const helperTextColorMap: Record<V51InputValidationState, string> = {
-    default: 'var(--v51-text-secondary)',
+    default: 'var(--v51-text-secondary, rgba(0, 0, 0, 0.6))',
     success: v51DesignTokens.colors.success.main,
     warning: v51DesignTokens.colors.warning.main,
     error: v51DesignTokens.colors.error.main,
@@ -324,7 +329,7 @@ export const V51Input: React.FC<V51InputProps> = ({
       sx={{
         '& .MuiOutlinedInput-root': {
           borderRadius: v51DesignTokens.borderRadius.lg,
-          backgroundColor: 'var(--v51-surface-card)',
+          backgroundColor: 'var(--v51-surface-card, #ffffff)',
           transition: `border-color ${v51DesignTokens.motion.transition.fast}, box-shadow ${v51DesignTokens.motion.transition.fast}`,
           '& fieldset': {
             borderColor: borderColorMap[validationState],
@@ -333,7 +338,7 @@ export const V51Input: React.FC<V51InputProps> = ({
           '&:hover fieldset': {
             borderColor:
               validationState === 'default'
-                ? 'var(--v51-border-strong)'
+                ? 'var(--v51-border-strong, rgba(0, 0, 0, 0.23))'
                 : borderColorMap[validationState],
           },
           '&.Mui-focused fieldset': {
@@ -346,7 +351,7 @@ export const V51Input: React.FC<V51InputProps> = ({
           fontSize: v51DesignTokens.typography.fontSize.xs,
         },
         '& .MuiInputLabel-root': {
-          color: 'var(--v51-text-secondary)',
+          color: 'var(--v51-text-secondary, rgba(0, 0, 0, 0.6))',
           '&.Mui-focused': {
             color: borderColorMap[validationState],
           },
@@ -387,6 +392,7 @@ export interface V51SelectProps {
   sx?: SxProps<Theme>;
 }
 
+/** @deprecated 使用 MUI Select（@mui/material）替代 */
 export const V51Select: React.FC<V51SelectProps> = ({
   label,
   value,
@@ -421,8 +427,8 @@ export const V51Select: React.FC<V51SelectProps> = ({
       {label && (
         <InputLabel
           sx={{
-            color: 'var(--v51-text-secondary)',
-            '&.Mui-focused': { color: 'var(--v51-color-primary-main)' },
+            color: 'var(--v51-text-secondary, rgba(0, 0, 0, 0.6))',
+            '&.Mui-focused': { color: 'var(--v51-color-primary-main, #3b82f6)' },
           }}
         >
           {label}
@@ -437,15 +443,15 @@ export const V51Select: React.FC<V51SelectProps> = ({
         onClose={() => setOpen(false)}
         sx={{
           borderRadius: v51DesignTokens.borderRadius.lg,
-          backgroundColor: 'var(--v51-surface-card)',
+          backgroundColor: 'var(--v51-surface-card, #ffffff)',
           '& .MuiOutlinedInput-notchedOutline': {
-            borderColor: 'var(--v51-border-default)',
+            borderColor: 'var(--v51-border-default, rgba(0, 0, 0, 0.12))',
           },
           '&:hover .MuiOutlinedInput-notchedOutline': {
-            borderColor: 'var(--v51-border-strong)',
+            borderColor: 'var(--v51-border-strong, rgba(0, 0, 0, 0.23))',
           },
           '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-            borderColor: 'var(--v51-color-primary-main)',
+            borderColor: 'var(--v51-color-primary-main, #3b82f6)',
             borderWidth: '2px',
           },
         }}
@@ -455,7 +461,7 @@ export const V51Select: React.FC<V51SelectProps> = ({
               sx: {
                 borderRadius: v51DesignTokens.borderRadius.lg,
                 boxShadow: v51DesignTokens.shadows.lg,
-                border: '1px solid var(--v51-border-default)',
+                border: '1px solid var(--v51-border-default, rgba(0, 0, 0, 0.12))',
                 mt: 0.5,
               },
             },
@@ -469,7 +475,7 @@ export const V51Select: React.FC<V51SelectProps> = ({
               py: 1,
               position: 'sticky',
               top: 0,
-              bgcolor: 'var(--v51-surface-card)',
+              bgcolor: 'var(--v51-surface-card, #ffffff)',
               zIndex: 1,
             }}
           >
@@ -481,12 +487,12 @@ export const V51Select: React.FC<V51SelectProps> = ({
                 px: 1,
                 py: 0.5,
                 borderRadius: 1,
-                bgcolor: 'var(--v51-fill-subtle)',
+                bgcolor: 'var(--v51-fill-subtle, rgba(0,0,0,0.04))',
               }}
             >
               <Search
                 size={16}
-                style={{ color: 'var(--v51-text-tertiary)' }}
+                style={{ color: 'var(--v51-text-tertiary, rgba(0, 0, 0, 0.38))' }}
               />
               <input
                 autoFocus
@@ -498,7 +504,7 @@ export const V51Select: React.FC<V51SelectProps> = ({
                   outline: 'none',
                   background: 'transparent',
                   fontSize: v51DesignTokens.typography.fontSize.sm,
-                  color: 'var(--v51-text-primary)',
+                  color: 'var(--v51-text-primary, rgba(0, 0, 0, 0.87))',
                   width: '100%',
                 }}
               />
@@ -511,7 +517,7 @@ export const V51Select: React.FC<V51SelectProps> = ({
         >
           <Typography
             sx={{
-              color: 'var(--v51-text-tertiary)',
+              color: 'var(--v51-text-tertiary, rgba(0, 0, 0, 0.38))',
               fontSize: v51DesignTokens.typography.fontSize.sm,
             }}
           >
@@ -539,7 +545,9 @@ export const V51Select: React.FC<V51SelectProps> = ({
         <Typography
           sx={{
             fontSize: v51DesignTokens.typography.fontSize.xs,
-            color: error ? v51DesignTokens.colors.error.main : 'var(--v51-text-secondary)',
+            color: error
+              ? v51DesignTokens.colors.error.main
+              : 'var(--v51-text-secondary, rgba(0, 0, 0, 0.6))',
             mt: 0.5,
           }}
         >
@@ -587,6 +595,7 @@ export interface V51TableProps<T = Record<string, unknown>> {
   density?: 'compact' | 'default' | 'comfortable';
 }
 
+/** @deprecated 使用 @/components/common/DataTable 或 MUI Table 替代 */
 export function V51Table<T extends Record<string, unknown>>({
   columns,
   data,
@@ -675,7 +684,7 @@ export function V51Table<T extends Record<string, unknown>>({
     <Paper
       sx={{
         borderRadius: v51DesignTokens.borderRadius.xl,
-        border: '1px solid var(--v51-border-default)',
+        border: '1px solid var(--v51-border-default, rgba(0, 0, 0, 0.12))',
         overflow: 'hidden',
         ...sx,
       }}
@@ -691,8 +700,8 @@ export function V51Table<T extends Record<string, unknown>>({
                 <TableCell
                   padding='checkbox'
                   sx={{
-                    bgcolor: 'var(--v51-surface-sunken)',
-                    borderBottom: '1px solid var(--v51-border-default)',
+                    bgcolor: 'var(--v51-surface-sunken, rgba(0,0,0,0.02))',
+                    borderBottom: '1px solid var(--v51-border-default, rgba(0, 0, 0, 0.12))',
                   }}
                 >
                   <Checkbox
@@ -707,11 +716,11 @@ export function V51Table<T extends Record<string, unknown>>({
                   key={col.id}
                   align={col.align || 'left'}
                   sx={{
-                    bgcolor: 'var(--v51-surface-sunken)',
-                    borderBottom: '1px solid var(--v51-border-default)',
+                    bgcolor: 'var(--v51-surface-sunken, rgba(0,0,0,0.02))',
+                    borderBottom: '1px solid var(--v51-border-default, rgba(0, 0, 0, 0.12))',
                     fontWeight: v51DesignTokens.typography.fontWeight.semibold,
                     fontSize: v51DesignTokens.typography.fontSize.sm,
-                    color: 'var(--v51-text-secondary)',
+                    color: 'var(--v51-text-secondary, rgba(0, 0, 0, 0.6))',
                     padding: cellPadding,
                     width: col.width,
                   }}
@@ -723,7 +732,7 @@ export function V51Table<T extends Record<string, unknown>>({
                       direction={sortBy === col.id ? sortDirection : 'asc'}
                       onClick={() => handleSort(col.id)}
                       sx={{
-                        '&.Mui-active': { color: 'var(--v51-color-primary-main)' },
+                        '&.Mui-active': { color: 'var(--v51-color-primary-main, #3b82f6)' },
                       }}
                     >
                       {col.label}
@@ -759,7 +768,7 @@ export function V51Table<T extends Record<string, unknown>>({
                 <TableCell
                   colSpan={columns.length + (selectable ? 1 : 0)}
                   align='center'
-                  sx={{ py: 6, color: 'var(--v51-text-tertiary)' }}
+                  sx={{ py: 6, color: 'var(--v51-text-tertiary, rgba(0, 0, 0, 0.38))' }}
                 >
                   {emptyMessage}
                 </TableCell>
@@ -777,10 +786,10 @@ export function V51Table<T extends Record<string, unknown>>({
                     selected={isRowSelected}
                     sx={{
                       '&.Mui-selected': {
-                        bgcolor: 'var(--v51-color-primary-50)',
+                        bgcolor: 'var(--v51-color-primary-50, rgba(59,130,246,0.08))',
                       },
                       '&:hover': {
-                        bgcolor: 'var(--v51-fill-subtle)',
+                        bgcolor: 'var(--v51-fill-subtle, rgba(0,0,0,0.04))',
                       },
                     }}
                   >
@@ -798,10 +807,10 @@ export function V51Table<T extends Record<string, unknown>>({
                         key={col.id}
                         align={col.align || 'left'}
                         sx={{
-                          borderBottom: '1px solid var(--v51-border-subtle)',
+                          borderBottom: '1px solid var(--v51-border-subtle, rgba(0, 0, 0, 0.06))',
                           padding: cellPadding,
                           fontSize: v51DesignTokens.typography.fontSize.sm,
-                          color: 'var(--v51-text-primary)',
+                          color: 'var(--v51-text-primary, rgba(0, 0, 0, 0.87))',
                         }}
                       >
                         {col.render
@@ -846,9 +855,9 @@ export function V51Table<T extends Record<string, unknown>>({
           }}
           rowsPerPageOptions={pageSizeOptions}
           sx={{
-            borderTop: '1px solid var(--v51-border-default)',
+            borderTop: '1px solid var(--v51-border-default, rgba(0, 0, 0, 0.12))',
             fontSize: v51DesignTokens.typography.fontSize.sm,
-            color: 'var(--v51-text-secondary)',
+            color: 'var(--v51-text-secondary, rgba(0, 0, 0, 0.6))',
           }}
         />
       )}
@@ -875,6 +884,7 @@ export interface V51DialogProps {
   sx?: SxProps<Theme>;
 }
 
+/** @deprecated 使用 @/components/common/Dialog 或 MUI Dialog 替代 */
 export const V51Dialog: React.FC<V51DialogProps> = ({
   open,
   onClose,
@@ -903,7 +913,7 @@ export const V51Dialog: React.FC<V51DialogProps> = ({
         '& .MuiDialog-paper': {
           borderRadius: v51DesignTokens.borderRadius['2xl'],
           boxShadow: v51DesignTokens.shadows['2xl'],
-          border: '1px solid var(--v51-border-default)',
+          border: '1px solid var(--v51-border-default, rgba(0, 0, 0, 0.12))',
         },
         ...sx,
       }}
@@ -915,12 +925,12 @@ export const V51Dialog: React.FC<V51DialogProps> = ({
             alignItems: 'center',
             justifyContent: 'space-between',
             pb: 1,
-            borderBottom: '1px solid var(--v51-border-default)',
+            borderBottom: '1px solid var(--v51-border-default, rgba(0, 0, 0, 0.12))',
           }}
         >
           <Typography
             variant='h6'
-            sx={{ fontWeight: 600, color: 'var(--v51-text-primary)' }}
+            sx={{ fontWeight: 600, color: 'var(--v51-text-primary, rgba(0, 0, 0, 0.87))' }}
           >
             {title}
           </Typography>
@@ -928,7 +938,7 @@ export const V51Dialog: React.FC<V51DialogProps> = ({
             <IconButton
               size='small'
               onClick={onClose}
-              sx={{ color: 'var(--v51-text-tertiary)' }}
+              sx={{ color: 'var(--v51-text-tertiary, rgba(0, 0, 0, 0.38))' }}
             >
               <XIcon size={20} />
             </IconButton>
@@ -941,7 +951,7 @@ export const V51Dialog: React.FC<V51DialogProps> = ({
           sx={{
             px: 3,
             py: 2,
-            borderTop: '1px solid var(--v51-border-default)',
+            borderTop: '1px solid var(--v51-border-default, rgba(0, 0, 0, 0.12))',
             gap: 1,
           }}
         >
@@ -1000,6 +1010,7 @@ export interface V51ToastContextValue {
 
 const V51ToastContext = React.createContext<V51ToastContextValue | null>(null);
 
+/** @deprecated 迁移到 useNotification 或 react-hot-toast */
 export const useV51Toast = (): V51ToastContextValue => {
   const ctx = React.useContext(V51ToastContext);
   if (!ctx) throw new Error('useV51Toast must be used within V51ToastProvider');
@@ -1086,7 +1097,7 @@ const V51ToastItem: React.FC<{
         <Typography
           sx={{
             fontSize: v51DesignTokens.typography.fontSize.sm,
-            color: 'var(--v51-text-primary)',
+            color: 'var(--v51-text-primary, rgba(0, 0, 0, 0.87))',
             lineHeight: 1.5,
           }}
         >
@@ -1099,7 +1110,7 @@ const V51ToastItem: React.FC<{
           setVisible(false);
           setTimeout(onClose, 250);
         }}
-        sx={{ color: 'var(--v51-text-tertiary)', flexShrink: 0 }}
+        sx={{ color: 'var(--v51-text-tertiary, rgba(0, 0, 0, 0.38))', flexShrink: 0 }}
       >
         <XIcon size={16} />
       </IconButton>
@@ -1107,6 +1118,7 @@ const V51ToastItem: React.FC<{
   );
 };
 
+/** @deprecated 迁移到 NotificationProvider（@/components/notification）或 react-hot-toast */
 export const V51ToastProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [toasts, setToasts] = React.useState<V51ToastMessage[]>([]);
 
@@ -1184,6 +1196,7 @@ export interface V51TabsProps {
   contentSx?: SxProps<Theme>;
 }
 
+/** @deprecated 使用 MUI Tabs（@mui/material）替代 */
 export const V51Tabs: React.FC<V51TabsProps> = ({
   tabs,
   activeTab: controlledTab,
@@ -1223,13 +1236,18 @@ export const V51Tabs: React.FC<V51TabsProps> = ({
         variant={variant}
         sx={{
           borderBottom:
-            orientation === 'horizontal' ? '1px solid var(--v51-border-default)' : 'none',
-          borderRight: orientation === 'vertical' ? '1px solid var(--v51-border-default)' : 'none',
+            orientation === 'horizontal'
+              ? '1px solid var(--v51-border-default, rgba(0, 0, 0, 0.12))'
+              : 'none',
+          borderRight:
+            orientation === 'vertical'
+              ? '1px solid var(--v51-border-default, rgba(0, 0, 0, 0.12))'
+              : 'none',
           minHeight: 44,
           '& .MuiTabs-indicator': {
             height: 3,
             borderRadius: '3px 3px 0 0',
-            backgroundColor: 'var(--v51-color-primary-main)',
+            backgroundColor: 'var(--v51-color-primary-main, #3b82f6)',
           },
           ...tabSx,
         }}
@@ -1248,14 +1266,14 @@ export const V51Tabs: React.FC<V51TabsProps> = ({
               fontSize: v51DesignTokens.typography.fontSize.sm,
               minWidth: 'auto',
               padding: '12px 20px',
-              color: 'var(--v51-text-secondary)',
+              color: 'var(--v51-text-secondary, rgba(0, 0, 0, 0.6))',
               '&.Mui-selected': {
-                color: 'var(--v51-color-primary-main)',
+                color: 'var(--v51-color-primary-main, #3b82f6)',
                 fontWeight: v51DesignTokens.typography.fontWeight.semibold,
               },
               '&:hover': {
-                color: 'var(--v51-color-primary-main)',
-                backgroundColor: 'var(--v51-fill-subtle)',
+                color: 'var(--v51-color-primary-main, #3b82f6)',
+                backgroundColor: 'var(--v51-fill-subtle, rgba(0,0,0,0.04))',
               },
             }}
           />
@@ -1282,15 +1300,37 @@ export interface V51BadgeProps {
 }
 
 const variantColorMap: Record<V51BadgeVariant, { bg: string; color: string }> = {
-  primary: { bg: 'var(--v51-color-primary-50)', color: 'var(--v51-color-primary-700)' },
-  secondary: { bg: 'var(--v51-color-secondary-50)', color: 'var(--v51-color-secondary-700)' },
-  success: { bg: 'var(--v51-color-success-50)', color: 'var(--v51-color-success-700)' },
-  warning: { bg: 'var(--v51-color-warning-50)', color: 'var(--v51-color-warning-700)' },
-  error: { bg: 'var(--v51-color-error-50)', color: 'var(--v51-color-error-700)' },
-  info: { bg: 'var(--v51-color-info-50)', color: 'var(--v51-color-info-700)' },
-  neutral: { bg: 'var(--v51-fill-muted)', color: 'var(--v51-text-secondary)' },
+  primary: {
+    bg: 'var(--v51-color-primary-50, rgba(59,130,246,0.08))',
+    color: 'var(--v51-color-primary-700, #1d4ed8)',
+  },
+  secondary: {
+    bg: 'var(--v51-color-secondary-50, rgba(139,92,246,0.08))',
+    color: 'var(--v51-color-secondary-700, #6d28d9)',
+  },
+  success: {
+    bg: 'var(--v51-color-success-50, rgba(34,197,94,0.08))',
+    color: 'var(--v51-color-success-700, #15803d)',
+  },
+  warning: {
+    bg: 'var(--v51-color-warning-50, rgba(245,158,11,0.08))',
+    color: 'var(--v51-color-warning-700, #b45309)',
+  },
+  error: {
+    bg: 'var(--v51-color-error-50, rgba(239,68,68,0.08))',
+    color: 'var(--v51-color-error-700, #b91c1c)',
+  },
+  info: {
+    bg: 'var(--v51-color-info-50, rgba(14,165,233,0.08))',
+    color: 'var(--v51-color-info-700, #0369a1)',
+  },
+  neutral: {
+    bg: 'var(--v51-fill-muted, rgba(0,0,0,0.08))',
+    color: 'var(--v51-text-secondary, rgba(0, 0, 0, 0.6))',
+  },
 };
 
+/** @deprecated 使用 StatusBadge（@topems/shared-components）或 MUI Chip 替代 */
 export const V51Badge: React.FC<V51BadgeProps> = ({
   label,
   variant = 'primary',
@@ -1346,6 +1386,7 @@ export interface V51SkeletonProps {
   sx?: SxProps<Theme>;
 }
 
+/** @deprecated 使用 MUI Skeleton（@mui/material）替代 */
 export const V51Skeleton: React.FC<V51SkeletonProps> = ({
   variant = 'rectangular',
   width,
@@ -1360,7 +1401,7 @@ export const V51Skeleton: React.FC<V51SkeletonProps> = ({
       height={height}
       animation={animation}
       sx={{
-        backgroundColor: 'var(--v51-fill-muted)',
+        backgroundColor: 'var(--v51-fill-muted, rgba(0,0,0,0.08))',
         borderRadius: variant === 'circular' ? '50%' : v51DesignTokens.borderRadius.md,
         ...sx,
       }}
@@ -1374,6 +1415,7 @@ export interface V51SkeletonCardProps {
   sx?: SxProps<Theme>;
 }
 
+/** @deprecated 使用 MUI Skeleton（@mui/material）组合替代 */
 export const V51SkeletonCard: React.FC<V51SkeletonCardProps> = ({
   rows = 3,
   showAvatar = false,
@@ -1422,12 +1464,12 @@ export interface V51AvatarProps {
 }
 
 const avatarColors = [
-  'var(--v51-color-primary-main)',
-  'var(--v51-color-secondary-main)',
-  'var(--v51-color-success-main)',
-  'var(--v51-color-warning-main)',
-  'var(--v51-color-error-main)',
-  'var(--v51-color-info-main)',
+  'var(--v51-color-primary-main, #3b82f6)',
+  'var(--v51-color-secondary-main, #8b5cf6)',
+  'var(--v51-color-success-main, #22c55e)',
+  'var(--v51-color-warning-main, #f59e0b)',
+  'var(--v51-color-error-main, #ef4444)',
+  'var(--v51-color-info-main, #0ea5e9)',
 ];
 
 function getInitials(name?: string): string {
@@ -1446,6 +1488,7 @@ function getColorFromName(name?: string): string {
   return avatarColors[Math.abs(hash) % avatarColors.length];
 }
 
+/** @deprecated 使用 MUI Avatar（@mui/material）替代 */
 export const V51Avatar: React.FC<V51AvatarProps> = ({
   src,
   alt,
@@ -1498,7 +1541,7 @@ export const V51Avatar: React.FC<V51AvatarProps> = ({
             height: Math.max(8, config.size * 0.25),
             borderRadius: '50%',
             bgcolor: online ? v51DesignTokens.colors.success.main : 'grey.400',
-            border: '2px solid var(--v51-surface-card)',
+            border: '2px solid var(--v51-surface-card, #ffffff)',
           }}
         />
       )}

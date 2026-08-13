@@ -11,7 +11,7 @@ import {
   Button,
 } from '@mui/material';
 import { Clock, LogOut, Zap, AlertTriangle } from 'lucide-react';
-import { NotificationBell } from '../notifications';
+import { NotificationBell } from '../notification';
 import { ModeToggle } from '../theme/ModeToggle';
 import { useAuth } from '../../hooks/useAuth';
 import { useRole } from '../../hooks/useRole';
