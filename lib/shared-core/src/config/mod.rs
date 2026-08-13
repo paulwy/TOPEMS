@@ -1048,3 +1048,230 @@ fn default_cache_eviction_policy() -> String {
 fn default_cache_write_through() -> bool {
     false
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn cache_config_default_values() {
+        let c = CacheConfig::default();
+        assert_eq!(c.prefix, "topems:");
+        assert_eq!(c.default_ttl, 3600);
+        assert_eq!(c.memory_cache_size, 1000);
+        assert_eq!(c.eviction_policy, "LRU");
+        assert!(!c.write_through);
+        assert!(c.enable_multi_level);
+        assert_eq!(c.l1_ttl, 60);
+        assert_eq!(c.l2_ttl, 3600);
+        assert!(c.enable_cache_warming);
+        assert_eq!(c.warming_concurrency, 4);
+        assert_eq!(c.stats_interval, 60);
+    }
+
+    fn build_devenv() -> DevEnv {
+        DevEnv {
+            app_env: default_app_env(),
+            database_url: default_database_url(),
+            db_host: default_db_host(),
+            db_port: default_db_port(),
+            db_name: default_db_name(),
+            db_user: default_db_user(),
+            db_password: default_db_password(),
+            db_pool_max_size: default_pool_max_size(),
+            db_pool_min_size: default_pool_min_size(),
+            db_connect_timeout: default_connect_timeout(),
+            db_idle_timeout: default_idle_timeout(),
+            jwt_secret: default_jwt_secret(),
+            jwt_expiry_hours: default_jwt_expiry_hours(),
+            jwt_refresh_secret: default_jwt_refresh_secret(),
+            jwt_refresh_expiry_days: default_jwt_refresh_expiry_days(),
+            session_secret: default_session_secret(),
+            session_timeout_minutes: default_session_timeout_minutes(),
+            server_host: default_server_host(),
+            server_port: default_server_port(),
+            cors_origins: default_cors_origins(),
+            cors_methods: default_cors_methods(),
+            cors_credentials: default_cors_credentials(),
+            rate_limit_enabled: default_rate_limit_enabled(),
+            rate_limit_requests: default_rate_limit_requests(),
+            rate_limit_window_secs: default_rate_limit_window(),
+            redis_url: default_redis_url(),
+            redis_host: default_redis_host(),
+            redis_port: default_redis_port(),
+            redis_password: None,
+            redis_db: default_redis_db(),
+            redis_pool_max_size: default_redis_pool_max_size(),
+            cache_prefix: default_cache_prefix(),
+            cache_default_ttl: default_cache_default_ttl(),
+            cache_memory_size: default_cache_memory_size(),
+            cache_eviction_policy: default_cache_eviction_policy(),
+            cache_write_through: default_cache_write_through(),
+            upload_dir: default_upload_dir(),
+            upload_max_size: default_upload_max_size(),
+            allowed_file_types: default_allowed_file_types(),
+            storage_provider: default_storage_provider(),
+            smtp_host: default_smtp_host(),
+            smtp_port: default_smtp_port(),
+            smtp_user: default_smtp_user(),
+            smtp_password: default_smtp_password(),
+            smtp_from: default_smtp_from(),
+            smtp_from_name: default_smtp_from_name(),
+            smtp_use_tls: default_smtp_use_tls(),
+            ollama_base_url: default_ollama_base_url(),
+            ollama_model: default_ollama_model(),
+            ollama_timeout: default_ollama_timeout(),
+            rag_chunk_size: default_rag_chunk_size(),
+            rag_chunk_overlap: default_rag_chunk_overlap(),
+            rag_max_results: default_rag_max_results(),
+            log_level: default_log_level(),
+            log_format: default_log_format(),
+            log_file_enabled: default_log_file_enabled(),
+            log_file_path: default_log_file_path(),
+            log_max_size: default_log_max_size(),
+            log_max_files: default_log_max_files(),
+        }
+    }
+
+    #[test]
+    fn from_devenv_to_appconfig_key_fields() {
+        let env = build_devenv();
+        let cfg: AppConfig = env.into();
+        assert_eq!(cfg.app_env, "development");
+        assert_eq!(cfg.database.host, "localhost");
+        assert_eq!(cfg.database.port, 5432);
+        assert_eq!(cfg.database.pool_max_size, 10);
+        assert_eq!(cfg.database.pool_min_size, 2);
+        assert_eq!(cfg.database.connect_timeout, 10);
+        assert_eq!(cfg.auth.jwt_expiry_hours, 24);
+        assert_eq!(cfg.auth.session_timeout_minutes, 240);
+        assert_eq!(cfg.server.host, "localhost");
+        assert_eq!(cfg.server.port, 8000);
+        assert_eq!(cfg.server.cors_origins,
+            vec!["http://localhost:5173".to_string(), "http://localhost:3000".to_string()]);
+        assert_eq!(cfg.server.cors_methods.len(), 6);
+        assert!(cfg.server.cors_credentials);
+        assert!(!cfg.server.rate_limit_enabled);
+        assert_eq!(cfg.redis.host, "localhost");
+        assert_eq!(cfg.redis.port, 6379);
+        assert_eq!(cfg.redis.db, 0);
+        assert_eq!(cfg.cache.prefix, "topems:");
+        assert!(cfg.cache.enable_multi_level);
+        assert_eq!(cfg.cache.l1_ttl, 60);
+        assert_eq!(cfg.cache.l2_ttl, 3600);
+        assert!(cfg.cache.enable_cache_warming);
+        assert_eq!(cfg.storage.upload_dir, "./uploads");
+        assert_eq!(cfg.storage.storage_provider, "local");
+        assert_eq!(cfg.mail.smtp_port, 1025);
+        assert_eq!(cfg.mail.smtp_from, "topems@localhost");
+        assert!(!cfg.mail.smtp_use_tls);
+        assert_eq!(cfg.ai.ollama_model, "qwen2.5:7b-instruct");
+        assert_eq!(cfg.logging.level, "debug");
+        assert_eq!(cfg.logging.format, "pretty");
+        assert!(!cfg.logging.file_enabled);
+    }
+
+    fn build_testenv() -> TestEnv {
+        TestEnv {
+            app_env: default_app_env(),
+            database_url: default_test_database_url(),
+            db_host: default_db_host(),
+            db_port: default_db_port(),
+            db_name: default_test_db_name(),
+            db_user: default_db_user(),
+            db_password: default_test_db_password(),
+            db_pool_max_size: default_test_pool_max_size(),
+            db_pool_min_size: default_test_pool_min_size(),
+            db_connect_timeout: default_test_connect_timeout(),
+            db_idle_timeout: default_test_idle_timeout(),
+            jwt_secret: default_test_jwt_secret(),
+            jwt_expiry_hours: default_test_jwt_expiry_hours(),
+            jwt_refresh_secret: default_test_jwt_refresh_secret(),
+            jwt_refresh_expiry_days: default_test_jwt_refresh_expiry_days(),
+            session_secret: default_test_session_secret(),
+            session_timeout_minutes: default_test_session_timeout_minutes(),
+            server_host: default_server_host(),
+            server_port: default_test_server_port(),
+            cors_origins: default_test_cors_origins(),
+            cors_methods: default_cors_methods(),
+            cors_credentials: default_cors_credentials(),
+            rate_limit_enabled: default_test_rate_limit_enabled(),
+            rate_limit_requests: default_test_rate_limit_requests(),
+            rate_limit_window_secs: default_rate_limit_window(),
+            redis_url: default_test_redis_url(),
+            redis_host: default_redis_host(),
+            redis_port: default_redis_port(),
+            redis_password: None,
+            redis_db: default_test_redis_db(),
+            redis_pool_max_size: default_redis_pool_max_size(),
+            cache_prefix: default_cache_prefix(),
+            cache_default_ttl: default_cache_default_ttl(),
+            cache_memory_size: default_cache_memory_size(),
+            cache_eviction_policy: default_cache_eviction_policy(),
+            cache_write_through: default_cache_write_through(),
+            upload_dir: default_test_upload_dir(),
+            upload_max_size: default_test_upload_max_size(),
+            allowed_file_types: default_test_allowed_file_types(),
+            storage_provider: default_storage_provider(),
+            smtp_host: default_smtp_host(),
+            smtp_port: default_smtp_port(),
+            smtp_user: default_smtp_user(),
+            smtp_password: default_smtp_password(),
+            smtp_from: default_smtp_from(),
+            smtp_from_name: default_smtp_from_name(),
+            smtp_use_tls: default_smtp_use_tls(),
+            ollama_base_url: default_ollama_base_url(),
+            ollama_model: default_ollama_model(),
+            ollama_timeout: default_test_ollama_timeout(),
+            rag_chunk_size: default_rag_chunk_size(),
+            rag_chunk_overlap: default_rag_chunk_overlap(),
+            rag_max_results: default_rag_max_results(),
+            log_level: default_test_log_level(),
+            log_format: default_log_format(),
+            log_file_enabled: default_log_file_enabled(),
+            log_file_path: default_log_file_path(),
+            log_max_size: default_log_max_size(),
+            log_max_files: default_log_max_files(),
+        }
+    }
+
+    #[test]
+    fn from_testenv_to_appconfig_key_fields() {
+        let env = build_testenv();
+        let cfg: AppConfig = env.into();
+        assert_eq!(cfg.database.name, "topems_test");
+        assert_eq!(cfg.database.password, "topems_test_secret");
+        assert_eq!(cfg.database.pool_max_size, 5);
+        assert_eq!(cfg.database.pool_min_size, 1);
+        assert_eq!(cfg.database.connect_timeout, 5);
+        assert_eq!(cfg.database.idle_timeout, 60);
+        assert_eq!(cfg.auth.jwt_expiry_hours, 1);
+        assert_eq!(cfg.auth.jwt_refresh_expiry_days, 1);
+        assert_eq!(cfg.auth.session_timeout_minutes, 30);
+        assert_eq!(cfg.server.cors_origins,
+            vec!["http://localhost:3000".to_string()]);
+        assert_eq!(cfg.server.rate_limit_requests, 10000);
+        assert_eq!(cfg.redis.db, 1);
+        assert_eq!(cfg.storage.upload_dir, "./test_uploads");
+        assert_eq!(cfg.storage.upload_max_size, 10485760);
+        assert_eq!(cfg.logging.level, "warn");
+    }
+
+    #[test]
+    fn default_functions_smoke() {
+        assert_eq!(default_app_env(), "development");
+        assert_eq!(default_db_host(), "localhost");
+        assert_eq!(default_db_port(), 5432);
+        assert_eq!(default_pool_max_size(), 10);
+        assert_eq!(default_connect_timeout(), 10);
+        assert_eq!(default_server_port(), 8000);
+        assert_eq!(default_redis_port(), 6379);
+        assert_eq!(default_cache_default_ttl(), 3600);
+        assert_eq!(default_cache_memory_size(), 1000);
+        assert_eq!(default_rag_chunk_size(), 500);
+        assert_eq!(default_rag_chunk_overlap(), 50);
+        assert_eq!(default_rag_max_results(), 3);
+        assert_eq!(default_log_max_size(), 50);
+        assert_eq!(default_log_max_files(), 5);
+    }
+}

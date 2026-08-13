@@ -98,3 +98,132 @@ pub fn init_metrics() {
     LazyLock::force(&BUSINESS_OPERATIONS_TOTAL);
     LazyLock::force(&DB_QUERY_DURATION);
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use prometheus::Encoder;
+
+    #[test]
+    fn test_init_metrics_succeeds() {
+        init_metrics();
+    }
+
+    #[test]
+    fn test_init_metrics_is_idempotent() {
+        init_metrics();
+        init_metrics();
+    }
+
+    #[test]
+    fn test_lazy_lock_http_request_duration_accessible() {
+        LazyLock::force(&HTTP_REQUEST_DURATION);
+        let metric = HTTP_REQUEST_DURATION
+            .with_label_values(&["GET", "/test", "200"]);
+        metric.observe(0.042);
+    }
+
+    #[test]
+    fn test_lazy_lock_http_requests_total_accessible() {
+        LazyLock::force(&HTTP_REQUESTS_TOTAL);
+        let metric = HTTP_REQUESTS_TOTAL
+            .with_label_values(&["POST", "/api", "201"]);
+        metric.inc();
+    }
+
+    #[test]
+    fn test_lazy_lock_active_users_accessible() {
+        LazyLock::force(&ACTIVE_USERS);
+        ACTIVE_USERS.set(42);
+        assert_eq!(ACTIVE_USERS.get(), 42);
+        ACTIVE_USERS.inc();
+        assert_eq!(ACTIVE_USERS.get(), 43);
+        ACTIVE_USERS.dec();
+        assert_eq!(ACTIVE_USERS.get(), 42);
+    }
+
+    #[test]
+    fn test_lazy_lock_business_operation_duration_accessible() {
+        LazyLock::force(&BUSINESS_OPERATION_DURATION);
+        let metric = BUSINESS_OPERATION_DURATION
+            .with_label_values(&["user_service", "create_user", "success"]);
+        metric.observe(0.123);
+    }
+
+    #[test]
+    fn test_lazy_lock_business_operations_total_accessible() {
+        LazyLock::force(&BUSINESS_OPERATIONS_TOTAL);
+        let metric = BUSINESS_OPERATIONS_TOTAL
+            .with_label_values(&["user_service", "delete_user", "error"]);
+        metric.inc();
+    }
+
+    #[test]
+    fn test_lazy_lock_db_query_duration_accessible() {
+        LazyLock::force(&DB_QUERY_DURATION);
+        let metric = DB_QUERY_DURATION
+            .with_label_values(&["user_service", "select", "users"]);
+        metric.observe(0.007);
+    }
+
+    #[test]
+    fn test_all_metrics_are_usable_after_init() {
+        init_metrics();
+
+        HTTP_REQUEST_DURATION
+            .with_label_values(&["GET", "/a", "200"])
+            .observe(0.001);
+        HTTP_REQUESTS_TOTAL
+            .with_label_values(&["GET", "/a", "200"])
+            .inc();
+        ACTIVE_USERS.set(1);
+        BUSINESS_OPERATION_DURATION
+            .with_label_values(&["s", "o", "success"])
+            .observe(0.01);
+        BUSINESS_OPERATIONS_TOTAL
+            .with_label_values(&["s", "o", "success"])
+            .inc();
+        DB_QUERY_DURATION
+            .with_label_values(&["s", "q", "t"])
+            .observe(0.001);
+    }
+
+    #[test]
+    fn test_histogram_vec_observe_multiple_times() {
+        init_metrics();
+        let h = HTTP_REQUEST_DURATION.with_label_values(&["GET", "/multi", "200"]);
+        for _ in 0..10 {
+            h.observe(0.05);
+        }
+    }
+
+    #[test]
+    fn test_counter_vec_inc_multiple_times() {
+        init_metrics();
+        let c = HTTP_REQUESTS_TOTAL.with_label_values(&["POST", "/multi", "201"]);
+        for _ in 0..5 {
+            c.inc();
+        }
+    }
+
+    #[test]
+    fn test_observe_operation_macro_ok_path() {
+        init_metrics();
+        let result: Result<i32, &str> = observe_operation!("svc", "op", { Ok(42) });
+        assert_eq!(result, Ok(42));
+    }
+
+    #[test]
+    fn test_observe_operation_macro_err_path() {
+        init_metrics();
+        let result: Result<i32, &str> = observe_operation!("svc", "op_fail", { Err("boom") });
+        assert_eq!(result, Err("boom"));
+    }
+
+    #[test]
+    fn test_observe_db_query_macro() {
+        init_metrics();
+        let value = observe_db_query!("svc", "select", "items", { 99 });
+        assert_eq!(value, 99);
+    }
+}
