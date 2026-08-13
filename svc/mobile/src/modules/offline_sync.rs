@@ -54,6 +54,64 @@ pub struct SyncHistoryResponse {
     pub total: i64,
 }
 
+/// 同步冲突解决策略。
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum ConflictStrategy {
+    /// 始终使用本地版本。
+    PreferLocal,
+    /// 始终使用远端版本。
+    PreferRemote,
+    /// 优先使用较新的版本（按字符串比较；相等时回退到 local）。
+    PreferLatest,
+    /// 拒绝冲突，保留远端版本作为安全默认。
+    Reject,
+}
+
+/// 根据给定策略解决同步冲突，返回最终采用的字符串。
+pub fn resolve_sync_conflict(local: &str, remote: &str, strategy: ConflictStrategy) -> String {
+    if local == remote {
+        return local.to_string();
+    }
+    match strategy {
+        ConflictStrategy::PreferLocal => local.to_string(),
+        ConflictStrategy::PreferRemote => remote.to_string(),
+        ConflictStrategy::PreferLatest => {
+            // 简单按字典序：取较大者作为"较新"，相等时回退到 local。
+            if remote > local {
+                remote.to_string()
+            } else {
+                local.to_string()
+            }
+        }
+        ConflictStrategy::Reject => remote.to_string(),
+    }
+}
+
+/// 校验操作类型是否被支持。
+pub fn is_valid_operation_type(op: &str) -> bool {
+    matches!(op, "create" | "update" | "delete")
+}
+
+/// 校验同步状态字符串是否合法。
+pub fn is_valid_sync_status(status: &str) -> bool {
+    matches!(status, "pending" | "syncing" | "synced" | "failed")
+}
+
+/// 判断是否应继续重试同步：尝试次数小于上限且未同步成功。
+pub fn should_retry_sync(sync_attempts: i32, max_attempts: i32, status: &str) -> bool {
+    if max_attempts <= 0 {
+        return false;
+    }
+    status == "failed" && sync_attempts < max_attempts
+}
+
+/// 计算分页查询的偏移量，并保证不会因 page < 1 而产生负数。
+pub fn compute_pagination_offset(page: i64, size: i64) -> i64 {
+    let page = if page < 1 { 1 } else { page };
+    let size = if size < 1 { 1 } else { size };
+    (page - 1) * size
+}
+
 pub async fn sync_data(
     headers: HeaderMap,
     State(auth_state): State<AuthState>,
@@ -508,4 +566,163 @@ pub async fn retry_failed_sync(
         StatusCode::OK,
         Json(ApiResponse::success(response, "重试完成")),
     )
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    // ---- resolve_sync_conflict ----
+
+    #[test]
+    fn test_resolve_sync_conflict_equal_returns_local() {
+        let result = resolve_sync_conflict("abc", "abc", ConflictStrategy::PreferLocal);
+        assert_eq!(result, "abc");
+    }
+
+    #[test]
+    fn test_resolve_sync_conflict_prefer_local() {
+        let result =
+            resolve_sync_conflict("local-val", "remote-val", ConflictStrategy::PreferLocal);
+        assert_eq!(result, "local-val");
+    }
+
+    #[test]
+    fn test_resolve_sync_conflict_prefer_remote() {
+        let result =
+            resolve_sync_conflict("local-val", "remote-val", ConflictStrategy::PreferRemote);
+        assert_eq!(result, "remote-val");
+    }
+
+    #[test]
+    fn test_resolve_sync_conflict_prefer_latest_remote_newer() {
+        // "remote-zzz" > "local-aaa"
+        let result =
+            resolve_sync_conflict("local-aaa", "remote-zzz", ConflictStrategy::PreferLatest);
+        assert_eq!(result, "remote-zzz");
+    }
+
+    #[test]
+    fn test_resolve_sync_conflict_prefer_latest_local_newer() {
+        // 字典序比较：'z' > 'a'，故 "zzz-aaa" > "aaa-zzz"，local 更"新"。
+        let result = resolve_sync_conflict("zzz-aaa", "aaa-zzz", ConflictStrategy::PreferLatest);
+        assert_eq!(result, "zzz-aaa");
+    }
+
+    #[test]
+    fn test_resolve_sync_conflict_reject_returns_remote() {
+        let result = resolve_sync_conflict("local-val", "remote-val", ConflictStrategy::Reject);
+        assert_eq!(result, "remote-val");
+    }
+
+    #[test]
+    fn test_resolve_sync_conflict_empty_strings() {
+        // 两者都为空 -> 相等 -> 返回空字符串
+        let result = resolve_sync_conflict("", "", ConflictStrategy::PreferLocal);
+        assert_eq!(result, "");
+    }
+
+    #[test]
+    fn test_resolve_sync_conflict_one_empty_prefer_local() {
+        let result = resolve_sync_conflict("", "remote", ConflictStrategy::PreferLocal);
+        assert_eq!(result, "");
+    }
+
+    // ---- is_valid_operation_type ----
+
+    #[test]
+    fn test_is_valid_operation_type_valid() {
+        assert!(is_valid_operation_type("create"));
+        assert!(is_valid_operation_type("update"));
+        assert!(is_valid_operation_type("delete"));
+    }
+
+    #[test]
+    fn test_is_valid_operation_type_invalid() {
+        assert!(!is_valid_operation_type(""));
+        assert!(!is_valid_operation_type("CREATE"));
+        assert!(!is_valid_operation_type("read"));
+        assert!(!is_valid_operation_type("patch"));
+    }
+
+    // ---- is_valid_sync_status ----
+
+    #[test]
+    fn test_is_valid_sync_status_valid() {
+        assert!(is_valid_sync_status("pending"));
+        assert!(is_valid_sync_status("syncing"));
+        assert!(is_valid_sync_status("synced"));
+        assert!(is_valid_sync_status("failed"));
+    }
+
+    #[test]
+    fn test_is_valid_sync_status_invalid() {
+        assert!(!is_valid_sync_status(""));
+        assert!(!is_valid_sync_status("PENDING"));
+        assert!(!is_valid_sync_status("done"));
+        assert!(!is_valid_sync_status("error"));
+    }
+
+    // ---- should_retry_sync ----
+
+    #[test]
+    fn test_should_retry_sync_below_max() {
+        assert!(should_retry_sync(1, 5, "failed"));
+        assert!(should_retry_sync(4, 5, "failed"));
+    }
+
+    #[test]
+    fn test_should_retry_sync_at_max() {
+        // 等于上限时不重试
+        assert!(!should_retry_sync(5, 5, "failed"));
+        assert!(!should_retry_sync(6, 5, "failed"));
+    }
+
+    #[test]
+    fn test_should_retry_sync_non_failed_status() {
+        assert!(!should_retry_sync(0, 5, "synced"));
+        assert!(!should_retry_sync(0, 5, "pending"));
+        assert!(!should_retry_sync(0, 5, "syncing"));
+    }
+
+    #[test]
+    fn test_should_retry_sync_zero_max() {
+        assert!(!should_retry_sync(0, 0, "failed"));
+        assert!(!should_retry_sync(0, -1, "failed"));
+    }
+
+    #[test]
+    fn test_should_retry_sync_negative_attempts() {
+        // 负尝试次数仍小于上限，状态为 failed 时应重试
+        assert!(should_retry_sync(-1, 5, "failed"));
+    }
+
+    // ---- compute_pagination_offset ----
+
+    #[test]
+    fn test_compute_pagination_offset_first_page() {
+        assert_eq!(compute_pagination_offset(1, 20), 0);
+    }
+
+    #[test]
+    fn test_compute_pagination_offset_second_page() {
+        assert_eq!(compute_pagination_offset(2, 20), 20);
+    }
+
+    #[test]
+    fn test_compute_pagination_offset_invalid_page() {
+        assert_eq!(compute_pagination_offset(0, 20), 0);
+        assert_eq!(compute_pagination_offset(-1, 20), 0);
+    }
+
+    #[test]
+    fn test_compute_pagination_offset_invalid_size() {
+        assert_eq!(compute_pagination_offset(2, 0), 1);
+        assert_eq!(compute_pagination_offset(2, -1), 1);
+    }
+
+    #[test]
+    fn test_compute_pagination_offset_large() {
+        assert_eq!(compute_pagination_offset(100, 50), 4950);
+    }
 }

@@ -318,4 +318,216 @@ mod tests {
         assert_eq!(calculate_change_rate(100.0, 150.0), 50.0);
         assert_eq!(calculate_change_rate(100.0, 80.0), -20.0);
     }
+
+    // ---- 新增边界用例 ----
+
+    #[test]
+    fn test_stage_conversion_rate_equal() {
+        assert_eq!(calculate_stage_conversion_rate(50, 50), 100.0);
+    }
+
+    #[test]
+    fn test_stage_conversion_rate_zero_to() {
+        assert_eq!(calculate_stage_conversion_rate(100, 0), 0.0);
+    }
+
+    #[test]
+    fn test_stage_conversion_rate_negative_counts() {
+        // from_count 负数时不除零但语义不合理，实际函数直接计算
+        // 不 panic 即可
+        let _ = calculate_stage_conversion_rate(-5, 10);
+    }
+
+    #[test]
+    fn test_overall_conversion_rate_all_won() {
+        assert_eq!(calculate_overall_conversion_rate(10, 10), 100.0);
+    }
+
+    #[test]
+    fn test_overall_conversion_rate_zero_won() {
+        assert_eq!(calculate_overall_conversion_rate(10, 0), 0.0);
+    }
+
+    #[test]
+    fn test_overall_conversion_rate_won_exceeds_total() {
+        // 语义不合理（won > total）但函数不做校验，确保不 panic
+        let rate = calculate_overall_conversion_rate(10, 15);
+        assert_eq!(rate, 150.0);
+    }
+
+    #[test]
+    fn test_weighted_value_decimal_precision() {
+        // 100 * 33% = 33
+        let v = calculate_weighted_value(Decimal::from(100), Some(33));
+        assert_eq!(v, Decimal::from(33));
+        // 12345 * 50% = 6172.5
+        let v = calculate_weighted_value(Decimal::new(12345, 0), Some(50));
+        assert_eq!(v, Decimal::new(61725, 1));
+    }
+
+    #[test]
+    fn test_conversion_chain_with_zero_counts() {
+        let stages = vec![("lead", 100), ("qualified", 0), ("won", 0)];
+        let chain = calculate_conversion_chain(&stages);
+        assert_eq!(chain.len(), 2);
+        assert_eq!(chain[0].conversion_rate, 0.0); // 0/100
+        assert_eq!(chain[1].conversion_rate, 0.0); // 0/0 → from=0, rate=0
+    }
+
+    #[test]
+    fn test_conversion_chain_two_stages() {
+        let stages = vec![("a", 200), ("b", 50)];
+        let chain = calculate_conversion_chain(&stages);
+        assert_eq!(chain.len(), 1);
+        assert_eq!(chain[0].from_stage, "a");
+        assert_eq!(chain[0].to_stage, "b");
+        assert_eq!(chain[0].from_count, 200);
+        assert_eq!(chain[0].to_count, 50);
+        assert!((chain[0].conversion_rate - 25.0).abs() < 0.001);
+    }
+
+    #[test]
+    fn test_validate_probability_exact_error_message() {
+        let err = validate_probability(-5).unwrap_err();
+        assert!(err.contains("[-0-9]") || err.contains("-5"), "err={}", err);
+        let err = validate_probability(150).unwrap_err();
+        assert!(err.contains("150"), "err={}", err);
+    }
+
+    #[test]
+    fn test_summarize_accuracy_all_same() {
+        let records = vec![
+            AccuracyRecord {
+                accuracy: 0.85,
+                deviation: 10.0,
+                confidence_level: 0.5,
+            },
+            AccuracyRecord {
+                accuracy: 0.85,
+                deviation: 10.0,
+                confidence_level: 0.5,
+            },
+            AccuracyRecord {
+                accuracy: 0.85,
+                deviation: 10.0,
+                confidence_level: 0.5,
+            },
+        ];
+        let s = summarize_accuracy(&records, 0.8);
+        assert!((s.average_accuracy - 0.85).abs() < 0.0001);
+        assert!((s.max_accuracy - 0.85).abs() < 0.0001);
+        assert!((s.min_accuracy - 0.85).abs() < 0.0001);
+        assert_eq!(s.high_confidence_count, 0);
+    }
+
+    #[test]
+    fn test_summarize_accuracy_high_confidence_all() {
+        let records = vec![
+            AccuracyRecord {
+                accuracy: 0.9,
+                deviation: 5.0,
+                confidence_level: 0.95,
+            },
+            AccuracyRecord {
+                accuracy: 0.92,
+                deviation: 3.0,
+                confidence_level: 0.99,
+            },
+        ];
+        let s = summarize_accuracy(&records, 0.8);
+        assert_eq!(s.high_confidence_count, 2);
+        assert_eq!(s.total_records, 2);
+        assert!((s.average_deviation - 4.0).abs() < 0.0001);
+    }
+
+    #[test]
+    fn test_summarize_accuracy_negative_accuracy_valid() {
+        // accuracy 不限制范围，确保统计正确
+        let records = vec![
+            AccuracyRecord {
+                accuracy: -0.5,
+                deviation: 10.0,
+                confidence_level: 0.0,
+            },
+            AccuracyRecord {
+                accuracy: 0.5,
+                deviation: 20.0,
+                confidence_level: 0.0,
+            },
+        ];
+        let s = summarize_accuracy(&records, 0.8);
+        assert!((s.average_accuracy - 0.0).abs() < 0.0001);
+        assert!((s.max_accuracy - 0.5).abs() < 0.0001);
+        assert!((s.min_accuracy - (-0.5)).abs() < 0.0001);
+    }
+
+    #[test]
+    fn test_analyze_trend_exactly_threshold() {
+        // diff == threshold → stable (not improving)
+        let recent = vec![0.8, 0.8, 0.81]; // recent_avg=0.8033, prev=0.8, diff=0.0033
+        assert_eq!(analyze_accuracy_trend(&recent, 0.01), "stable");
+        // diff > threshold
+        let recent = vec![0.7, 0.7, 0.8]; // recent_avg = 0.733, prev = 0.7, diff = 0.033 > 0.01
+        assert_eq!(analyze_accuracy_trend(&recent, 0.01), "improving");
+    }
+
+    #[test]
+    fn test_analyze_trend_n_equals_4() {
+        // n=4 → prev uses indices [0..1] (only 1 point)
+        let recent = vec![0.7, 0.75, 0.85, 0.9];
+        // recent_3 = [0.75, 0.85, 0.9] avg = 2.5/3 = 0.8333
+        // prev     = [0.7]          avg = 0.7
+        // diff = 0.133 > 0.01 → improving
+        assert_eq!(analyze_accuracy_trend(&recent, 0.01), "improving");
+    }
+
+    #[test]
+    fn test_analyze_trend_n_equals_5() {
+        // n=5 → prev uses [0..2] (2 points)
+        let recent = vec![0.6, 0.62, 0.64, 0.8, 0.82];
+        // recent_3 = [0.64, 0.8, 0.82] avg = 2.26/3 ≈ 0.753
+        // prev     = [0.6, 0.62]    avg = 1.22/2 = 0.61
+        // diff ≈ 0.143 → improving
+        assert_eq!(analyze_accuracy_trend(&recent, 0.01), "improving");
+    }
+
+    #[test]
+    fn test_analyze_trend_n_equals_6() {
+        // n=6 → prev uses exactly [n-6..n-3] = [0..3]
+        let recent = vec![0.5, 0.5, 0.5, 0.9, 0.9, 0.9];
+        // recent_3 = [0.9,0.9,0.9] avg = 0.9
+        // prev_3   = [0.5,0.5,0.5] avg = 0.5
+        // diff = 0.4 → improving
+        assert_eq!(analyze_accuracy_trend(&recent, 0.01), "improving");
+    }
+
+    #[test]
+    fn test_analyze_trend_n_equals_2() {
+        assert_eq!(
+            analyze_accuracy_trend(&[0.9, 1.0], 0.01),
+            "insufficient_data"
+        );
+    }
+
+    #[test]
+    fn test_change_rate_no_change() {
+        assert_eq!(calculate_change_rate(100.0, 100.0), 0.0);
+    }
+
+    #[test]
+    fn test_change_rate_current_zero() {
+        assert_eq!(calculate_change_rate(100.0, 0.0), -100.0);
+    }
+
+    #[test]
+    fn test_change_rate_negative_values() {
+        // -100 → -150 : (-150 - (-100)) / (-100) = (-50)/(-100) = 0.5 = 50%
+        assert_eq!(calculate_change_rate(-100.0, -150.0), 50.0);
+    }
+
+    #[test]
+    fn test_change_rate_100x() {
+        // 1 → 100 : (99)/1 = 9900%
+        assert_eq!(calculate_change_rate(1.0, 100.0), 9900.0);
+    }
 }

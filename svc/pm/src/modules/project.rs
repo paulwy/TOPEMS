@@ -15,6 +15,44 @@ use uuid::Uuid;
 
 use crate::models::project::{CreateProjectRequest, Project, UpdateProjectRequest};
 
+// ==================== Pure functions ====================
+
+/// Validates a project status transition.
+///
+/// Allowed transitions:
+/// - draft    -> pending, cancelled
+/// - pending  -> active, cancelled, draft
+/// - active   -> completed, cancelled, pending
+/// - completed -> closed, active
+/// - cancelled -> draft
+/// - Same-state transitions are always valid (no-op).
+pub fn is_valid_project_transition(from: &str, to: &str) -> bool {
+    if from == to {
+        return true;
+    }
+    match from {
+        "draft" => matches!(to, "pending" | "cancelled"),
+        "pending" => matches!(to, "active" | "cancelled" | "draft"),
+        "active" => matches!(to, "completed" | "cancelled" | "pending"),
+        "completed" => matches!(to, "closed" | "active"),
+        "cancelled" => matches!(to, "draft"),
+        "closed" => false,
+        _ => false,
+    }
+}
+
+/// Calculates project completion percentage based on completed vs total phases.
+///
+/// Returns a value in the range `[0.0, 100.0]`.
+/// Returns `0.0` when `total_phases` is zero.
+pub fn project_completion_pct(completed_phases: usize, total_phases: usize) -> f64 {
+    if total_phases == 0 {
+        return 0.0;
+    }
+    let pct = (completed_phases as f64 / total_phases as f64) * 100.0;
+    pct.clamp(0.0, 100.0)
+}
+
 #[derive(Clone)]
 pub struct AppState {
     pub pool: PgPool,
@@ -597,4 +635,94 @@ async fn get_project_gantt(
     };
 
     Json(ApiResponse::success(response, "获取甘特图数据成功"))
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    // ---- is_valid_project_transition ----
+
+    #[test]
+    fn test_same_state_transition_is_valid() {
+        assert!(is_valid_project_transition("draft", "draft"));
+        assert!(is_valid_project_transition("active", "active"));
+        assert!(is_valid_project_transition("completed", "completed"));
+    }
+
+    #[test]
+    fn test_draft_transitions() {
+        assert!(is_valid_project_transition("draft", "pending"));
+        assert!(is_valid_project_transition("draft", "cancelled"));
+        assert!(!is_valid_project_transition("draft", "active"));
+        assert!(!is_valid_project_transition("draft", "completed"));
+    }
+
+    #[test]
+    fn test_pending_transitions() {
+        assert!(is_valid_project_transition("pending", "active"));
+        assert!(is_valid_project_transition("pending", "cancelled"));
+        assert!(is_valid_project_transition("pending", "draft"));
+        assert!(!is_valid_project_transition("pending", "completed"));
+    }
+
+    #[test]
+    fn test_active_transitions() {
+        assert!(is_valid_project_transition("active", "completed"));
+        assert!(is_valid_project_transition("active", "cancelled"));
+        assert!(is_valid_project_transition("active", "pending"));
+        assert!(!is_valid_project_transition("active", "draft"));
+    }
+
+    #[test]
+    fn test_completed_transitions() {
+        assert!(is_valid_project_transition("completed", "closed"));
+        assert!(is_valid_project_transition("completed", "active"));
+        assert!(!is_valid_project_transition("completed", "cancelled"));
+    }
+
+    #[test]
+    fn test_cancelled_and_closed_transitions() {
+        assert!(is_valid_project_transition("cancelled", "draft"));
+        assert!(!is_valid_project_transition("cancelled", "active"));
+        assert!(!is_valid_project_transition("closed", "draft"));
+        assert!(!is_valid_project_transition("closed", "active"));
+    }
+
+    #[test]
+    fn test_unknown_status_transitions() {
+        assert!(!is_valid_project_transition("unknown", "draft"));
+        assert!(!is_valid_project_transition("draft", "unknown"));
+        assert!(!is_valid_project_transition("foo", "bar"));
+    }
+
+    // ---- project_completion_pct ----
+
+    #[test]
+    fn test_completion_zero_total() {
+        assert_eq!(project_completion_pct(0, 0), 0.0);
+        assert_eq!(project_completion_pct(5, 0), 0.0);
+    }
+
+    #[test]
+    fn test_completion_no_phases_done() {
+        assert_eq!(project_completion_pct(0, 10), 0.0);
+    }
+
+    #[test]
+    fn test_completion_all_phases_done() {
+        assert_eq!(project_completion_pct(10, 10), 100.0);
+    }
+
+    #[test]
+    fn test_completion_partial() {
+        assert_eq!(project_completion_pct(3, 4), 75.0);
+        let result = project_completion_pct(1, 3);
+        assert!((result - (100.0 / 3.0)).abs() < 1e-9);
+    }
+
+    #[test]
+    fn test_completion_clamps_overflow() {
+        assert_eq!(project_completion_pct(15, 10), 100.0);
+    }
 }

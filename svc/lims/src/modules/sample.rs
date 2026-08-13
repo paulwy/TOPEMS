@@ -683,7 +683,7 @@ pub async fn transition_sample_stage(
     }
 }
 
-fn get_stage_name(stage: &str) -> String {
+pub fn get_stage_name(stage: &str) -> String {
     LIFECYCLE_STAGES
         .iter()
         .find(|(s, _)| *s == stage)
@@ -813,7 +813,7 @@ pub async fn get_sample_traceability(
     ))
 }
 
-fn calculate_stage_progress(current_stage: &str) -> f64 {
+pub fn calculate_stage_progress(current_stage: &str) -> f64 {
     let stages_order = [
         "received",
         "registered",
@@ -829,4 +829,48 @@ fn calculate_stage_progress(current_stage: &str) -> f64 {
         .position(|s| *s == current_stage)
         .unwrap_or(0);
     (current_idx as f64 / (stages_order.len() - 1) as f64 * 100.0).round() / 100.0
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_get_stage_name_known() {
+        assert_eq!(get_stage_name("received"), "样品接收");
+        assert_eq!(get_stage_name("testing"), "检测中");
+        assert_eq!(get_stage_name("completed"), "检测完成");
+        assert_eq!(get_stage_name("destroyed"), "已销毁");
+    }
+
+    #[test]
+    fn test_get_stage_name_unknown_returns_input() {
+        assert_eq!(get_stage_name("foo_bar"), "foo_bar");
+        assert_eq!(get_stage_name(""), "");
+    }
+
+    #[test]
+    fn test_calculate_stage_progress_first_and_last() {
+        // stages_order.len() = 8, idx=0 → 0, idx=7 → 7/7 = 1.0
+        assert!((calculate_stage_progress("received") - 0.0).abs() < 1e-9);
+        assert!((calculate_stage_progress("destroyed") - 1.0).abs() < 1e-9);
+    }
+
+    #[test]
+    fn test_calculate_stage_progress_milestones() {
+        // testing = idx 2 → 2/7 ≈ 0.29
+        let p = calculate_stage_progress("testing");
+        assert!((p - 0.29).abs() < 1e-2, "testing progress got {p}");
+        // completed = idx 3 → 3/7 ≈ 0.43
+        let p = calculate_stage_progress("completed");
+        assert!((p - 0.43).abs() < 1e-2, "completed progress got {p}");
+        // stored = idx 4 → 4/7 ≈ 0.57
+        let p = calculate_stage_progress("stored");
+        assert!((p - 0.57).abs() < 1e-2, "stored progress got {p}");
+    }
+
+    #[test]
+    fn test_calculate_stage_progress_unknown_is_zero() {
+        assert!((calculate_stage_progress("unknown_state") - 0.0).abs() < 1e-9);
+    }
 }

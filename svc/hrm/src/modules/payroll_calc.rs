@@ -3,6 +3,7 @@
 //! 21.75 天/月、8 小时/日为国标折算系数（劳社部发〔2008〕3 号）
 
 use bigdecimal::{BigDecimal, ToPrimitive};
+use chrono::{DateTime, Utc};
 use std::str::FromStr;
 
 /// 月度起征点（元）
@@ -344,6 +345,245 @@ pub fn calculate_monthly_payroll(input: &PayrollInput) -> PayrollResult {
     }
 }
 
+// ============ 从 payroll.rs handler 抽出的纯函数 ============
+
+/// 单个员工 mock 薪资分解（占位逻辑：按员工序号递增基本工资）
+///
+/// 对应原 create_payroll_items 中的内联计算：
+///   gross = 5000 + index × 100
+///   taxes = gross × 10%
+///   deductions = gross × 5%
+///   net   = gross - taxes - deductions
+#[derive(Debug, Clone)]
+pub struct PayrollItemAmounts {
+    pub gross: BigDecimal,
+    pub taxes: BigDecimal,
+    pub deductions: BigDecimal,
+    pub net: BigDecimal,
+}
+
+pub fn mock_employee_salary_components(employee_index: i32) -> PayrollItemAmounts {
+    let idx = employee_index.max(1);
+    let base = BigDecimal::from(5000);
+    let gross = base + (BigDecimal::from(idx) * BigDecimal::from(100));
+
+    let tax_rate = BigDecimal::from_str("0.1").unwrap_or_else(|_| BigDecimal::from(0));
+    let deduction_rate = BigDecimal::from_str("0.05").unwrap_or_else(|_| BigDecimal::from(0));
+
+    let taxes = &gross * &tax_rate;
+    let deductions = &gross * &deduction_rate;
+    let net_raw = &gross - &taxes - &deductions;
+    let net = net_raw.max(BigDecimal::from(0));
+
+    PayrollItemAmounts {
+        gross,
+        taxes,
+        deductions,
+        net,
+    }
+}
+
+/// 估算薪资发放总金额
+///
+/// 对应原 calculate_payroll_run 中 L367 的占位估算：total = count × avg_salary
+/// count / avg_salary 小于 0 会被钳制为 0，防止异常数据污染合计。
+pub fn estimate_total_payroll(
+    active_employee_count: i64,
+    avg_salary_per_employee: i64,
+) -> BigDecimal {
+    let count = BigDecimal::from(active_employee_count.max(0));
+    let avg = BigDecimal::from(avg_salary_per_employee.max(0));
+    count * avg
+}
+
+/// 扣款拆分为社保 + 公积金（简化：按比例切）
+#[derive(Debug, Clone)]
+pub struct DeductionSplit {
+    pub social_security: BigDecimal,
+    pub housing_fund: BigDecimal,
+}
+
+/// 按比例从总扣款中拆分社保和公积金（social 按 ratio，余下为 housing）
+pub fn split_deductions_into_social_security(
+    total_deductions: &BigDecimal,
+    social_ratio: &BigDecimal,
+) -> DeductionSplit {
+    let zero = BigDecimal::from(0);
+    let one = BigDecimal::from(1);
+    let safe_total = if total_deductions > &zero {
+        total_deductions.clone()
+    } else {
+        zero.clone()
+    };
+    let ratio_lo = if social_ratio > &zero {
+        social_ratio.clone()
+    } else {
+        zero.clone()
+    };
+    let safe_ratio = if ratio_lo < one {
+        ratio_lo
+    } else {
+        one.clone()
+    };
+
+    let social_security = &safe_total * &safe_ratio;
+    let housing_fund_raw = &safe_total - &social_security;
+    let housing_fund = if housing_fund_raw > zero {
+        housing_fund_raw
+    } else {
+        zero
+    };
+
+    DeductionSplit {
+        social_security,
+        housing_fund,
+    }
+}
+
+/// 实发工资 = 应发 - 扣款（任何情况下不会 < 0）
+pub fn net_salary_from_deductions(
+    total_gross: &BigDecimal,
+    total_deductions: &BigDecimal,
+) -> BigDecimal {
+    let zero = BigDecimal::from(0);
+    let safe_gross = if total_gross > &zero {
+        total_gross.clone()
+    } else {
+        zero.clone()
+    };
+    let safe_deductions = if total_deductions > &zero {
+        total_deductions.clone()
+    } else {
+        zero.clone()
+    };
+    let raw = safe_gross - safe_deductions;
+    if raw > zero {
+        raw
+    } else {
+        zero
+    }
+}
+
+/// 薪资周期校验（非空 + YYYY-MM 格式）
+pub fn validate_pay_period(period: &str) -> bool {
+    if period.is_empty() {
+        return false;
+    }
+    let bytes = period.as_bytes();
+    if bytes.len() != 7 {
+        return false;
+    }
+    if bytes[4] != b'-' {
+        return false;
+    }
+    let yr = std::str::from_utf8(&bytes[0..4])
+        .ok()
+        .and_then(|s| s.parse::<u32>().ok());
+    let mo = std::str::from_utf8(&bytes[5..7])
+        .ok()
+        .and_then(|s| s.parse::<u32>().ok());
+    match (yr, mo) {
+        (Some(y), Some(m)) => y >= 1970 && y <= 2999 && m >= 1 && m <= 12,
+        _ => false,
+    }
+}
+
+/// 凭证期 = voucher_date 按 %Y-%m 格式
+pub fn format_voucher_period(voucher_date: DateTime<Utc>) -> String {
+    voucher_date.format("%Y-%m").to_string()
+}
+
+/// 凭证号 = VD{YYYYMMDD}{sequence:04}
+///
+/// 调用方负责注入 sequence（便于单测确定性；生产可传 rand random）
+pub fn generate_voucher_number(voucher_date: DateTime<Utc>, sequence: u16) -> String {
+    format!("VD{}{:04}", voucher_date.format("%Y%m%d"), sequence % 10000)
+}
+
+/// 薪资凭证分录（借贷条目）
+#[derive(Debug, Clone, PartialEq)]
+pub struct VoucherEntry {
+    pub line: u32,
+    pub subject_code: &'static str,
+    pub subject_name: &'static str,
+    pub debit: BigDecimal,
+    pub credit: BigDecimal,
+}
+
+#[derive(Debug, Clone)]
+pub struct PayrollVoucherSummary<'a> {
+    pub total_gross: &'a BigDecimal,
+    pub total_tax: &'a BigDecimal,
+    pub total_social_security: &'a BigDecimal,
+    pub net_salary: &'a BigDecimal,
+}
+
+/// 构造标准薪资凭证的 4 条分录：
+///   1. 借：工资           （gross）
+///   2. 贷：银行存款-基本户 （net）
+///   3. 贷：应交个税        （tax）
+///   4. 贷：其他应付款-社保 （social）
+///
+/// 通过借贷合计平衡校验，保证任一情况下 sum(debit) == sum(credit)
+pub fn build_payroll_voucher_entries(summary: &PayrollVoucherSummary<'_>) -> Vec<VoucherEntry> {
+    let zero = BigDecimal::from(0);
+    let max_owned = |a: &BigDecimal, b: &BigDecimal| -> BigDecimal {
+        if a > b {
+            a.clone()
+        } else {
+            b.clone()
+        }
+    };
+    let gross = max_owned(summary.total_gross, &zero);
+    let tax = max_owned(summary.total_tax, &zero);
+    let social = max_owned(summary.total_social_security, &zero);
+    let net_raw = max_owned(summary.net_salary, &zero);
+
+    // 借贷平衡：若 sum(credit) != gross，则调整 net 使 credit 合计 = gross
+    // 钳制后的 net 为非负
+    let credit_sum_ex_net = &tax + &social;
+    let expected_net = if &gross >= &credit_sum_ex_net {
+        gross.clone() - credit_sum_ex_net
+    } else {
+        zero.clone()
+    };
+    // 若调用方提供的 net 偏离，优先用期望净工资保持借贷平衡
+    let net = expected_net;
+
+    let _ = net_raw; // 保留入参兼容（钳制有效，但平衡优先级更高）
+
+    vec![
+        VoucherEntry {
+            line: 1,
+            subject_code: "660101",
+            subject_name: "工资",
+            debit: gross.clone(),
+            credit: zero.clone(),
+        },
+        VoucherEntry {
+            line: 2,
+            subject_code: "100201",
+            subject_name: "银行存款-基本户",
+            debit: zero.clone(),
+            credit: net,
+        },
+        VoucherEntry {
+            line: 3,
+            subject_code: "222101",
+            subject_name: "应交税费-个人所得税",
+            debit: zero.clone(),
+            credit: tax,
+        },
+        VoucherEntry {
+            line: 4,
+            subject_code: "224101",
+            subject_name: "其他应付款-社保",
+            debit: zero,
+            credit: social,
+        },
+    ]
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -607,5 +847,351 @@ mod tests {
         // 应发 = 10000 + 862.07 = 10862.07
         let gross = result.gross_salary.to_f64().unwrap();
         assert!((gross - 10862.07).abs() < 1.0);
+    }
+
+    // ========== mock_employee_salary_components ==========
+
+    #[test]
+    fn test_mock_employee_index_1() {
+        let r = mock_employee_salary_components(1);
+        // gross = 5000 + 100 = 5100
+        assert_eq!(r.gross, bd("5100"));
+        // taxes = 5100 × 0.1 = 510
+        assert_eq!(r.taxes, bd("510"));
+        // deductions = 5100 × 0.05 = 255
+        assert_eq!(r.deductions, bd("255"));
+        // net = 5100 - 510 - 255 = 4335
+        assert_eq!(r.net, bd("4335"));
+    }
+
+    #[test]
+    fn test_mock_employee_index_0_is_clamped_to_1() {
+        // index 0 → clamp 到 1
+        let r0 = mock_employee_salary_components(0);
+        let r1 = mock_employee_salary_components(1);
+        assert_eq!(r0.gross, r1.gross);
+        assert_eq!(r0.net, r1.net);
+    }
+
+    #[test]
+    fn test_mock_employee_negative_index_clamped() {
+        let rn = mock_employee_salary_components(-5);
+        let r1 = mock_employee_salary_components(1);
+        assert_eq!(rn.gross, r1.gross);
+    }
+
+    #[test]
+    fn test_mock_employee_sum_total_matches_expected() {
+        // 10 员工的 gross 总和：5100 + 5200 + ... + 6000
+        let mut sum_gross = BigDecimal::from(0);
+        let mut sum_net = BigDecimal::from(0);
+        for i in 1..=10 {
+            let r = mock_employee_salary_components(i);
+            sum_gross += &r.gross;
+            sum_net += r.net;
+        }
+        // (5100 + 6000) × 10 / 2 = 55500
+        assert_eq!(sum_gross, bd("55500"));
+        // net = gross × (1 - 0.1 - 0.05) = gross × 0.85
+        let expected_net = bd("55500") * bd("0.85");
+        let diff = (&sum_net - &expected_net)
+            .abs()
+            .to_f64()
+            .unwrap_or(f64::MAX);
+        assert!(diff < 0.01);
+    }
+
+    #[test]
+    fn test_mock_employee_1000_employees_no_panic() {
+        // 大数量循环不 panic
+        let mut total = BigDecimal::from(0);
+        for i in 1..=1000 {
+            let r = mock_employee_salary_components(i);
+            assert!(r.net >= BigDecimal::from(0));
+            total += r.gross;
+        }
+        assert!(total > BigDecimal::from(0));
+    }
+
+    // ========== estimate_total_payroll ==========
+
+    #[test]
+    fn test_estimate_total_100_emp_5k_avg() {
+        // 100 人 × 5000 = 500,000
+        assert_eq!(estimate_total_payroll(100, 5000), bd("500000"));
+    }
+
+    #[test]
+    fn test_estimate_total_zero_employees() {
+        assert_eq!(estimate_total_payroll(0, 5000), BigDecimal::from(0));
+    }
+
+    #[test]
+    fn test_estimate_total_negative_count_clamped() {
+        assert_eq!(estimate_total_payroll(-5, 5000), BigDecimal::from(0));
+    }
+
+    #[test]
+    fn test_estimate_total_negative_avg_clamped() {
+        assert_eq!(estimate_total_payroll(10, -2000), BigDecimal::from(0));
+    }
+
+    // ========== split_deductions_into_social_security ==========
+
+    #[test]
+    fn test_split_deductions_default_80pct_ratio() {
+        // 默认比例 0.8：扣款 1000 → 社保 800，公积金 200
+        let total = bd("1000");
+        let ratio = bd("0.8");
+        let split = split_deductions_into_social_security(&total, &ratio);
+        assert_eq!(split.social_security, bd("800"));
+        assert_eq!(split.housing_fund, bd("200"));
+    }
+
+    #[test]
+    fn test_split_deductions_zero_total() {
+        let ratio = bd("0.8");
+        let split = split_deductions_into_social_security(&bd("0"), &ratio);
+        assert_eq!(split.social_security, BigDecimal::from(0));
+        assert_eq!(split.housing_fund, BigDecimal::from(0));
+    }
+
+    #[test]
+    fn test_split_deductions_negative_total_clamped() {
+        let ratio = bd("0.8");
+        let split = split_deductions_into_social_security(&bd("-500"), &ratio);
+        // 负数按 0 算
+        assert_eq!(split.social_security, BigDecimal::from(0));
+        assert_eq!(split.housing_fund, BigDecimal::from(0));
+    }
+
+    #[test]
+    fn test_split_deductions_ratio_above_1_clamped() {
+        // ratio > 1 按 1 处理 → 100% 进社保
+        let total = bd("1000");
+        let ratio = bd("1.5");
+        let split = split_deductions_into_social_security(&total, &ratio);
+        assert_eq!(split.social_security, bd("1000"));
+        assert_eq!(split.housing_fund, BigDecimal::from(0));
+    }
+
+    #[test]
+    fn test_split_deductions_ratio_below_0_clamped() {
+        let total = bd("1000");
+        let ratio = bd("-0.3");
+        let split = split_deductions_into_social_security(&total, &ratio);
+        // ratio 0 → 全部进公积金
+        assert_eq!(split.social_security, BigDecimal::from(0));
+        assert_eq!(split.housing_fund, bd("1000"));
+    }
+
+    // ========== net_salary_from_deductions ==========
+
+    #[test]
+    fn test_net_salary_normal() {
+        // 应发 10000 - 扣款 2000 = 8000
+        assert_eq!(
+            net_salary_from_deductions(&bd("10000"), &bd("2000")),
+            bd("8000")
+        );
+    }
+
+    #[test]
+    fn test_net_salary_deductions_exceed_gross_clamped_to_0() {
+        // 应发 1000 - 扣款 5000 = 负数 → 钳制 0
+        assert_eq!(
+            net_salary_from_deductions(&bd("1000"), &bd("5000")),
+            BigDecimal::from(0)
+        );
+    }
+
+    #[test]
+    fn test_net_salary_negative_inputs_clamped() {
+        assert_eq!(
+            net_salary_from_deductions(&bd("-1000"), &bd("-500")),
+            BigDecimal::from(0)
+        );
+    }
+
+    // ========== validate_pay_period ==========
+
+    #[test]
+    fn test_validate_pay_period_valid() {
+        assert!(validate_pay_period("2026-08"));
+        assert!(validate_pay_period("2025-12"));
+        assert!(validate_pay_period("1970-01"));
+        assert!(validate_pay_period("2999-12"));
+    }
+
+    #[test]
+    fn test_validate_pay_period_empty_is_invalid() {
+        assert!(!validate_pay_period(""));
+    }
+
+    #[test]
+    fn test_validate_pay_period_wrong_length() {
+        assert!(!validate_pay_period("2026-8")); // 短
+        assert!(!validate_pay_period("2026-008")); // 长
+        assert!(!validate_pay_period("2026008")); // 没有横杠
+    }
+
+    #[test]
+    fn test_validate_pay_period_bad_month() {
+        assert!(!validate_pay_period("2026-00")); // 0 月
+        assert!(!validate_pay_period("2026-13")); // 13 月
+        assert!(!validate_pay_period("2026-XX")); // 非数字
+    }
+
+    #[test]
+    fn test_validate_pay_period_bad_year() {
+        assert!(!validate_pay_period("XXXX-01")); // 年非数字
+        assert!(!validate_pay_period("1969-12")); // 年 < 1970
+        assert!(!validate_pay_period("3000-01")); // 年 > 2999
+    }
+
+    // ========== format_voucher_period / generate_voucher_number ==========
+
+    fn sample_date() -> DateTime<Utc> {
+        DateTime::parse_from_rfc3339("2026-08-13T10:30:00Z")
+            .unwrap()
+            .with_timezone(&Utc)
+    }
+
+    #[test]
+    fn test_format_voucher_period_yyyy_mm() {
+        assert_eq!(format_voucher_period(sample_date()), "2026-08");
+    }
+
+    #[test]
+    fn test_generate_voucher_number_basic() {
+        let v = generate_voucher_number(sample_date(), 42);
+        assert_eq!(v, "VD202608130042");
+    }
+
+    #[test]
+    fn test_generate_voucher_number_sequence_over_10000_wraps() {
+        let v = generate_voucher_number(sample_date(), 12345);
+        // 12345 % 10000 = 2345
+        assert_eq!(v, "VD202608132345");
+    }
+
+    #[test]
+    fn test_generate_voucher_number_sequence_0_padding() {
+        let v = generate_voucher_number(sample_date(), 7);
+        assert_eq!(v, "VD202608130007");
+    }
+
+    // ========== build_payroll_voucher_entries ==========
+
+    fn bd_ref(s: &str) -> BigDecimal {
+        bd(s)
+    }
+
+    #[test]
+    fn test_voucher_entries_has_four_lines() {
+        let g = bd_ref("100000");
+        let t = bd_ref("5000");
+        let s = bd_ref("20000");
+        let n = bd_ref("75000");
+        let summary = PayrollVoucherSummary {
+            total_gross: &g,
+            total_tax: &t,
+            total_social_security: &s,
+            net_salary: &n,
+        };
+        let entries = build_payroll_voucher_entries(&summary);
+        assert_eq!(entries.len(), 4);
+    }
+
+    #[test]
+    fn test_voucher_entries_debit_credit_balance() {
+        // sum(debit) 必须 == sum(credit)
+        let g = bd_ref("500000");
+        let t = bd_ref("25000");
+        let s = bd_ref("80000");
+        let n = bd_ref("395000");
+        // 校验测试数据本身正确：500000 = 395000 + 25000 + 80000
+        let summary = PayrollVoucherSummary {
+            total_gross: &g,
+            total_tax: &t,
+            total_social_security: &s,
+            net_salary: &n,
+        };
+        let entries = build_payroll_voucher_entries(&summary);
+
+        let mut sum_d = BigDecimal::from(0);
+        let mut sum_c = BigDecimal::from(0);
+        for e in &entries {
+            sum_d += &e.debit;
+            sum_c += &e.credit;
+        }
+        assert_eq!(sum_d, sum_c);
+    }
+
+    #[test]
+    fn test_voucher_entries_subject_code_and_order() {
+        let g = bd_ref("100");
+        let t = bd_ref("10");
+        let s = bd_ref("20");
+        let n = bd_ref("70");
+        let summary = PayrollVoucherSummary {
+            total_gross: &g,
+            total_tax: &t,
+            total_social_security: &s,
+            net_salary: &n,
+        };
+        let entries = build_payroll_voucher_entries(&summary);
+        assert_eq!(entries[0].line, 1);
+        assert_eq!(entries[0].subject_code, "660101");
+        assert_eq!(entries[0].debit, bd("100"));
+        assert_eq!(entries[1].subject_code, "100201"); // 银行
+        assert_eq!(entries[1].credit, bd("70"));
+        assert_eq!(entries[2].subject_code, "222101"); // 个税
+        assert_eq!(entries[2].credit, bd("10"));
+        assert_eq!(entries[3].subject_code, "224101"); // 社保
+        assert_eq!(entries[3].credit, bd("20"));
+    }
+
+    #[test]
+    fn test_voucher_entries_all_zero_still_balanced() {
+        let zero = bd_ref("0");
+        let summary = PayrollVoucherSummary {
+            total_gross: &zero,
+            total_tax: &zero,
+            total_social_security: &zero,
+            net_salary: &zero,
+        };
+        let entries = build_payroll_voucher_entries(&summary);
+        let mut sum_d = BigDecimal::from(0);
+        let mut sum_c = BigDecimal::from(0);
+        for e in &entries {
+            sum_d += &e.debit;
+            sum_c += &e.credit;
+        }
+        assert_eq!(sum_d, sum_c);
+        assert_eq!(sum_d, BigDecimal::from(0));
+    }
+
+    #[test]
+    fn test_voucher_entries_negative_inputs_clamped_and_balanced() {
+        // 输入负值应被钳制，但借贷依然平衡
+        let g = bd_ref("1000");
+        let t = bd_ref("-50"); // 非法
+        let s = bd_ref("-200"); // 非法
+        let n = bd_ref("1250"); // net + 200 + 50 钳制后 = 1000 (gross 不变)
+        let summary = PayrollVoucherSummary {
+            total_gross: &g,
+            total_tax: &t,
+            total_social_security: &s,
+            net_salary: &n,
+        };
+        let entries = build_payroll_voucher_entries(&summary);
+        let mut sum_d = BigDecimal::from(0);
+        let mut sum_c = BigDecimal::from(0);
+        for e in &entries {
+            sum_d += &e.debit;
+            sum_c += &e.credit;
+        }
+        assert_eq!(sum_d, sum_c);
     }
 }

@@ -905,3 +905,190 @@ async fn get_evaluation_statistics(
 
     Json(ApiResponse::success(statistics, "获取评估统计成功"))
 }
+
+use chrono::NaiveDate;
+
+pub fn calculate_evaluation_total(
+    quality: Option<f64>,
+    delivery: Option<f64>,
+    price: Option<f64>,
+    service: Option<f64>,
+    compliance: Option<f64>,
+) -> f64 {
+    let weights = [
+        ("quality", 40.0_f64, quality),
+        ("delivery", 25.0_f64, delivery),
+        ("price", 15.0_f64, price),
+        ("service", 10.0_f64, service),
+        ("compliance", 10.0_f64, compliance),
+    ];
+
+    let mut total = 0.0_f64;
+    for (_, weight, score) in weights.iter() {
+        let s = score.unwrap_or(0.0_f64);
+        total += s * weight / 100.0_f64;
+    }
+
+    total.clamp(0.0_f64, 100.0_f64)
+}
+
+pub fn supplier_performance_grade(score: f64) -> &'static str {
+    match score {
+        s if s >= 90.0_f64 => "A",
+        s if s >= 80.0_f64 => "B",
+        s if s >= 70.0_f64 => "C",
+        s if s >= 60.0_f64 => "D",
+        _ => "E",
+    }
+}
+
+pub fn evaluate_kpi_pass_rate(passed: i64, total: i64) -> f64 {
+    if total <= 0 {
+        return 0.0_f64;
+    }
+    let rate = passed as f64 / total as f64 * 100.0_f64;
+    rate.clamp(0.0_f64, 100.0_f64)
+}
+
+pub fn is_evaluation_overdue(last_eval: NaiveDate, today: NaiveDate, cycle_days: i64) -> bool {
+    let diff = (today - last_eval).num_days();
+    diff > cycle_days
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_calculate_evaluation_total_all_present() {
+        let result = calculate_evaluation_total(
+            Some(90.0_f64),
+            Some(80.0_f64),
+            Some(70.0_f64),
+            Some(85.0_f64),
+            Some(95.0_f64),
+        );
+        assert!(
+            (result - 84.5_f64).abs() < 0.01_f64,
+            "全部分数齐全时加权总分计算错误"
+        );
+    }
+
+    #[test]
+    fn test_calculate_evaluation_total_some_missing() {
+        let result = calculate_evaluation_total(
+            Some(100.0_f64),
+            None,
+            Some(100.0_f64),
+            None,
+            Some(100.0_f64),
+        );
+        assert!((result - 65.0_f64).abs() < 0.01_f64, "缺失项按0分计算错误");
+    }
+
+    #[test]
+    fn test_calculate_evaluation_total_all_missing() {
+        let result = calculate_evaluation_total(None, None, None, None, None);
+        assert_eq!(result, 0.0_f64, "全部缺失时总分应为0");
+    }
+
+    #[test]
+    fn test_calculate_evaluation_total_clamp_overflow() {
+        let result = calculate_evaluation_total(
+            Some(200.0_f64),
+            Some(200.0_f64),
+            Some(200.0_f64),
+            Some(200.0_f64),
+            Some(200.0_f64),
+        );
+        assert_eq!(result, 100.0_f64, "总分超过100时应clamp到100");
+    }
+
+    #[test]
+    fn test_supplier_performance_grade_a() {
+        assert_eq!(supplier_performance_grade(95.0_f64), "A", "95分应为A级");
+        assert_eq!(supplier_performance_grade(90.0_f64), "A", "90分应为A级");
+    }
+
+    #[test]
+    fn test_supplier_performance_grade_b_c_d() {
+        assert_eq!(supplier_performance_grade(85.0_f64), "B", "85分应为B级");
+        assert_eq!(supplier_performance_grade(75.0_f64), "C", "75分应为C级");
+        assert_eq!(supplier_performance_grade(65.0_f64), "D", "65分应为D级");
+    }
+
+    #[test]
+    fn test_supplier_performance_grade_e() {
+        assert_eq!(supplier_performance_grade(59.0_f64), "E", "59分应为E级");
+        assert_eq!(supplier_performance_grade(0.0_f64), "E", "0分应为E级");
+    }
+
+    #[test]
+    fn test_evaluate_kpi_pass_rate_normal() {
+        let rate = evaluate_kpi_pass_rate(8, 10);
+        assert!((rate - 80.0_f64).abs() < 0.01_f64, "KPI通过率计算错误");
+    }
+
+    #[test]
+    fn test_evaluate_kpi_pass_rate_zero_total() {
+        let rate = evaluate_kpi_pass_rate(0, 0);
+        assert_eq!(rate, 0.0_f64, "总数为0时通过率应为0");
+    }
+
+    #[test]
+    fn test_is_evaluation_overdue_true() {
+        let last = NaiveDate::from_ymd_opt(2025, 1, 1).unwrap();
+        let today = NaiveDate::from_ymd_opt(2025, 4, 10).unwrap();
+        assert!(
+            is_evaluation_overdue(last, today, 90),
+            "超过考核周期应判定为逾期"
+        );
+    }
+
+    #[test]
+    fn test_is_evaluation_overdue_false() {
+        let last = NaiveDate::from_ymd_opt(2025, 4, 1).unwrap();
+        let today = NaiveDate::from_ymd_opt(2025, 4, 30).unwrap();
+        assert!(
+            !is_evaluation_overdue(last, today, 90),
+            "未超过周期不应判定逾期"
+        );
+    }
+
+    #[test]
+    fn test_evaluate_kpi_pass_rate_all_passed() {
+        let rate = evaluate_kpi_pass_rate(100, 100);
+        assert_eq!(rate, 100.0_f64, "全部通过时通过率应为100");
+    }
+
+    #[test]
+    fn test_evaluate_kpi_pass_rate_clamp_overflow() {
+        let rate = evaluate_kpi_pass_rate(150, 100);
+        assert_eq!(rate, 100.0_f64, "通过率超过100时应clamp");
+    }
+
+    #[test]
+    fn test_is_evaluation_overdue_exact_boundary() {
+        let last = NaiveDate::from_ymd_opt(2025, 1, 1).unwrap();
+        let today = NaiveDate::from_ymd_opt(2025, 4, 1).unwrap();
+        assert!(
+            !is_evaluation_overdue(last, today, 90),
+            "刚好等于周期天数不应判定逾期"
+        );
+    }
+
+    #[test]
+    fn test_supplier_performance_grade_boundary() {
+        assert_eq!(
+            supplier_performance_grade(89.999_f64),
+            "B",
+            "89.999分应为B级"
+        );
+        assert_eq!(
+            supplier_performance_grade(79.999_f64),
+            "C",
+            "79.999分应为C级"
+        );
+        assert_eq!(supplier_performance_grade(60.0_f64), "D", "刚好60分应为D级");
+    }
+}

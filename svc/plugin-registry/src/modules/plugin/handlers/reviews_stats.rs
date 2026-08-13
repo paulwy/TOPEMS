@@ -6,6 +6,53 @@ use axum::{
 use super::super::models::*;
 use crate::{AppState, CoreResponse};
 
+// ============================================================================
+// Pure helper functions (no DB / async) — extracted for unit testing
+// ============================================================================
+
+/// Calculate the weighted average of plugin ratings.
+/// Each review contributes a weight equal to its star value (5★ → weight 5,
+/// 1★ → weight 1), so the weighted average is `Σ(rating²) / Σ(rating)`.
+/// Returns 0.0 for an empty slice.
+pub fn calculate_rating_average(ratings: &[u32]) -> f64 {
+    if ratings.is_empty() {
+        return 0.0;
+    }
+    let weighted_sum: u64 = ratings.iter().map(|&r| (r as u64) * (r as u64)).sum();
+    let weight_total: u64 = ratings.iter().map(|&r| r as u64).sum();
+    if weight_total == 0 {
+        return 0.0;
+    }
+    (weighted_sum as f64) / (weight_total as f64)
+}
+
+/// Compute a rating summary: (weighted average, min, max, count).
+/// For empty slices returns (0.0, 0, 0, 0).
+pub fn rating_summary(ratings: &[u32]) -> (f64, u32, u32, usize) {
+    if ratings.is_empty() {
+        return (0.0, 0, 0, 0);
+    }
+    let weighted_sum: u64 = ratings.iter().map(|&r| (r as u64) * (r as u64)).sum();
+    let weight_total: u64 = ratings.iter().map(|&r| r as u64).sum();
+    let avg = if weight_total == 0 {
+        0.0
+    } else {
+        (weighted_sum as f64) / (weight_total as f64)
+    };
+    let min = *ratings.iter().min().unwrap();
+    let max = *ratings.iter().max().unwrap();
+    (avg, min, max, ratings.len())
+}
+
+/// Compute the standard average (arithmetic mean) of ratings.
+pub fn arithmetic_rating_mean(ratings: &[u32]) -> f64 {
+    if ratings.is_empty() {
+        return 0.0;
+    }
+    let sum: u64 = ratings.iter().map(|&r| r as u64).sum();
+    (sum as f64) / (ratings.len() as f64)
+}
+
 /// Get plugin reviews by code with sorting and filtering
 pub async fn get_plugin_reviews_by_code(
     State(_state): State<AppState>,
@@ -288,4 +335,109 @@ pub async fn get_download_history(
     ];
 
     Json(CoreResponse::success(records, "Download history retrieved"))
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    // ---- calculate_rating_average ----
+
+    #[test]
+    fn rating_average_empty() {
+        assert_eq!(calculate_rating_average(&[]), 0.0);
+    }
+
+    #[test]
+    fn rating_average_single() {
+        // Single 5-star review: (5*5)/(5) = 5.0
+        assert_eq!(calculate_rating_average(&[5]), 5.0);
+    }
+
+    #[test]
+    fn rating_average_mixed() {
+        // [5, 4, 3]: (25 + 16 + 9) / (5 + 4 + 3) = 50 / 12 ≈ 4.1667
+        let avg = calculate_rating_average(&[5, 4, 3]);
+        assert!((avg - 50.0 / 12.0).abs() < 1e-9);
+    }
+
+    #[test]
+    fn rating_average_all_ones() {
+        // [1, 1, 1]: (1 + 1 + 1) / (1 + 1 + 1) = 1.0
+        assert_eq!(calculate_rating_average(&[1, 1, 1]), 1.0);
+    }
+
+    #[test]
+    fn rating_average_all_fives() {
+        // [5, 5]: (25 + 25) / (5 + 5) = 5.0
+        assert_eq!(calculate_rating_average(&[5, 5]), 5.0);
+    }
+
+    #[test]
+    fn rating_average_zero_ratings() {
+        // All zeros: weight_total = 0 -> returns 0.0
+        assert_eq!(calculate_rating_average(&[0, 0]), 0.0);
+    }
+
+    #[test]
+    fn rating_average_higher_weight_for_higher_stars() {
+        // [5, 1] weighted = (25 + 1) / (5 + 1) = 26/6 ≈ 4.333
+        // arithmetic mean would be (5+1)/2 = 3.0; weighted should be > arithmetic
+        let weighted = calculate_rating_average(&[5, 1]);
+        let arithmetic = arithmetic_rating_mean(&[5, 1]);
+        assert!(weighted > arithmetic);
+    }
+
+    // ---- rating_summary ----
+
+    #[test]
+    fn rating_summary_empty() {
+        assert_eq!(rating_summary(&[]), (0.0, 0, 0, 0));
+    }
+
+    #[test]
+    fn rating_summary_single() {
+        let (avg, min, max, count) = rating_summary(&[4]);
+        assert!((avg - 4.0).abs() < 1e-9);
+        assert_eq!(min, 4);
+        assert_eq!(max, 4);
+        assert_eq!(count, 1);
+    }
+
+    #[test]
+    fn rating_summary_multiple() {
+        let (avg, min, max, count) = rating_summary(&[5, 3, 1, 4]);
+        // weighted = (25 + 9 + 1 + 16) / (5 + 3 + 1 + 4) = 51 / 13
+        assert!((avg - 51.0 / 13.0).abs() < 1e-9);
+        assert_eq!(min, 1);
+        assert_eq!(max, 5);
+        assert_eq!(count, 4);
+    }
+
+    #[test]
+    fn rating_summary_all_same() {
+        let (avg, min, max, count) = rating_summary(&[3, 3, 3]);
+        assert!((avg - 3.0).abs() < 1e-9);
+        assert_eq!(min, 3);
+        assert_eq!(max, 3);
+        assert_eq!(count, 3);
+    }
+
+    // ---- arithmetic_rating_mean ----
+
+    #[test]
+    fn arithmetic_mean_empty() {
+        assert_eq!(arithmetic_rating_mean(&[]), 0.0);
+    }
+
+    #[test]
+    fn arithmetic_mean_simple() {
+        // (5 + 4 + 3) / 3 = 4.0
+        assert_eq!(arithmetic_rating_mean(&[5, 4, 3]), 4.0);
+    }
+
+    #[test]
+    fn arithmetic_mean_single() {
+        assert_eq!(arithmetic_rating_mean(&[2]), 2.0);
+    }
 }

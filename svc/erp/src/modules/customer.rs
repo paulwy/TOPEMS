@@ -8,6 +8,10 @@ use uuid::Uuid;
 
 use super::ApiState;
 use crate::models::material::{CreateCustomerRequest, Customer, UpdateCustomerRequest};
+use crate::modules::customer_calc::{
+    build_search_pattern, default_credit_limit, default_customer_status, has_customer_filters,
+    normalize_pagination,
+};
 use crate::shared::permission::{check_permission, ModulePermission};
 use topems_shared::auth::Claims;
 use topems_shared::ApiResponse;
@@ -50,18 +54,17 @@ pub async fn list_customers(
         return e;
     }
 
-    let page = params.page.unwrap_or(1).max(1);
-    let page_size = params.pagesize.unwrap_or(20).min(100);
-    let offset = (page - 1) * page_size;
+    let (page, page_size, offset) = normalize_pagination(params.page, params.pagesize);
 
-    let search_pattern = params.search.as_deref().map(|s| format!("%{}%", s));
+    let search_pattern = build_search_pattern(params.search.as_deref());
     let status_filter = params.status.clone();
     let customer_type_filter = params.customer_type.clone();
 
-    let customers_result = if search_pattern.is_some()
-        || status_filter.is_some()
-        || customer_type_filter.is_some()
-    {
+    let customers_result = if has_customer_filters(
+        params.search.as_deref(),
+        status_filter.as_deref(),
+        customer_type_filter.as_deref(),
+    ) {
         let search = search_pattern.unwrap_or_default();
         let status = status_filter.clone();
         let customer_type = customer_type_filter.clone();
@@ -193,8 +196,8 @@ pub async fn create_customer(
     .bind(body.customer_type)
     .bind(body.industry)
     .bind(body.scale)
-    .bind(body.credit_limit.unwrap_or(0.0))
-    .bind(body.status.unwrap_or_else(|| "active".to_string()))
+    .bind(default_credit_limit(body.credit_limit))
+    .bind(default_customer_status(body.status))
     .fetch_optional(&state.db)
     .await;
 

@@ -16,6 +16,144 @@ use topems_shared_core::response::PaginatedResponse;
 
 use crate::shared::AppState;
 
+// ==================== 纯函数（无副作用，可单测） ====================
+
+/// 语义版本比较：按 `.` 分隔的数字段逐段比较。
+/// 非数字段按字符串字典序比较；缺失的段视为 0。
+/// 支持常见的 `1.2.3`、`v1.2`、`2.0.0-beta` 等格式（后者只比较数字部分）。
+pub fn compare_versions(a: &str, b: &str) -> std::cmp::Ordering {
+    use std::cmp::Ordering;
+    let mut ra = a.trim_start_matches('v').trim_start_matches('V');
+    let mut rb = b.trim_start_matches('v').trim_start_matches('V');
+
+    loop {
+        let (na, rest_a) = parse_segment(ra);
+        let (nb, rest_b) = parse_segment(rb);
+        match (na, nb) {
+            (Some(x), Some(y)) => {
+                match x.cmp(&y) {
+                    Ordering::Equal => {
+                        // 跳过分隔符
+                        ra = rest_a.trim_start_matches('.');
+                        rb = rest_b.trim_start_matches('.');
+                        // 若两侧都空则相等；否则继续比较（缺失段视为 0）
+                        if ra.is_empty() && rb.is_empty() {
+                            return Ordering::Equal;
+                        }
+                    }
+                    other => return other,
+                }
+            }
+            (Some(x), None) => {
+                // b 没有数字段；若 b 已耗尽则比较 a 剩余是否全为 0
+                if rb.is_empty() {
+                    return if x == 0 && all_remaining_zero(ra) {
+                        Ordering::Equal
+                    } else {
+                        Ordering::Greater
+                    };
+                }
+                // b 还有非数字内容，按字典序比较
+                return Ordering::Greater;
+            }
+            (None, Some(y)) => {
+                if ra.is_empty() {
+                    return if y == 0 && all_remaining_zero(rb) {
+                        Ordering::Equal
+                    } else {
+                        Ordering::Less
+                    };
+                }
+                return Ordering::Less;
+            }
+            (None, None) => {
+                // 都没有数字段，按字典序比较剩余字符串
+                return ra.cmp(rb);
+            }
+        }
+    }
+}
+
+/// 检查剩余字符串中的所有数字段是否都为 0（用于版本比较时判定缺失段等价于 0）。
+fn all_remaining_zero(s: &str) -> bool {
+    let mut cur = s;
+    loop {
+        if cur.is_empty() {
+            return true;
+        }
+        let (n, rest) = parse_segment(cur);
+        match n {
+            Some(0) => {
+                cur = rest.trim_start_matches('.');
+            }
+            Some(_) => return false,
+            None => return true, // 非数字段忽略，视为相等
+        }
+    }
+}
+
+/// 取出字符串开头的数字段，返回 (解析后的数字, 剩余字符串)。
+/// 若开头非数字，返回 (None, 原字符串)。
+fn parse_segment(s: &str) -> (Option<u64>, &str) {
+    let idx = s
+        .char_indices()
+        .take_while(|(_, c)| c.is_ascii_digit())
+        .last()
+        .map(|(i, c)| i + c.len_utf8())
+        .unwrap_or(0);
+    let (num_str, rest) = s.split_at(idx);
+    if num_str.is_empty() {
+        (None, s)
+    } else {
+        (num_str.parse::<u64>().ok(), rest)
+    }
+}
+
+/// 计算两组 (key, value) 元数据集合的差异，返回变更描述字符串列表。
+/// 每个变更以 `+`/`-`/`~` 前缀表示新增/删除/修改。
+pub fn diff_metadata(a: &[(&str, &str)], b: &[(&str, &str)]) -> Vec<String> {
+    use std::collections::HashMap;
+    let map_a: HashMap<&str, &str> = a.iter().copied().collect();
+    let map_b: HashMap<&str, &str> = b.iter().copied().collect();
+
+    let mut diffs = Vec::new();
+
+    // 删除的 key（在 a 但不在 b）
+    let mut removed: Vec<&str> = map_a
+        .keys()
+        .filter(|&k| !map_b.contains_key(k))
+        .copied()
+        .collect();
+    removed.sort();
+    for k in removed {
+        diffs.push(format!("- {}: {}", k, map_a[k]));
+    }
+
+    // 新增的 key（在 b 但不在 a）
+    let mut added: Vec<&str> = map_b
+        .keys()
+        .filter(|&k| !map_a.contains_key(k))
+        .copied()
+        .collect();
+    added.sort();
+    for k in added {
+        diffs.push(format!("+ {}: {}", k, map_b[k]));
+    }
+
+    // 修改的 key（在 a 和 b 中都有，但值不同）
+    let mut changed: Vec<&str> = map_a
+        .keys()
+        .filter(|&k| map_b.get(k).is_some() && map_a[*k] != map_b[*k])
+        .copied()
+        .collect();
+    changed.sort();
+    for k in changed {
+        diffs.push(format!("~ {}: {} -> {}", k, map_a[k], map_b[k]));
+    }
+
+    diffs
+}
+
 // ==================== 版本控制 ====================
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
@@ -1358,4 +1496,161 @@ pub async fn revoke_role(
     }
 
     Json(ApiResponse::success_no_data("角色已撤销"))
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::cmp::Ordering;
+
+    // ---------- compare_versions ----------
+
+    #[test]
+    fn test_compare_equal_versions() {
+        assert_eq!(compare_versions("1.2.3", "1.2.3"), Ordering::Equal);
+        assert_eq!(compare_versions("0.0.0", "0.0.0"), Ordering::Equal);
+    }
+
+    #[test]
+    fn test_compare_major_version_difference() {
+        assert_eq!(compare_versions("2.0.0", "1.9.9"), Ordering::Greater);
+        assert_eq!(compare_versions("1.0.0", "2.0.0"), Ordering::Less);
+    }
+
+    #[test]
+    fn test_compare_minor_version_difference() {
+        assert_eq!(compare_versions("1.10.0", "1.9.0"), Ordering::Greater);
+        assert_eq!(compare_versions("1.2.0", "1.10.0"), Ordering::Less);
+    }
+
+    #[test]
+    fn test_compare_patch_version_difference() {
+        assert_eq!(compare_versions("1.2.5", "1.2.4"), Ordering::Greater);
+        assert_eq!(compare_versions("1.2.3", "1.2.10"), Ordering::Less);
+    }
+
+    #[test]
+    fn test_compare_different_segment_counts() {
+        // 1.2 vs 1.2.0 -> 缺失段视为 0，相等
+        assert_eq!(compare_versions("1.2", "1.2.0"), Ordering::Equal);
+        // 1.2.1 vs 1.2 -> 1.2.1 更大
+        assert_eq!(compare_versions("1.2.1", "1.2"), Ordering::Greater);
+        assert_eq!(compare_versions("1.2", "1.2.1"), Ordering::Less);
+    }
+
+    #[test]
+    fn test_compare_with_v_prefix() {
+        assert_eq!(compare_versions("v1.2.3", "1.2.3"), Ordering::Equal);
+        assert_eq!(compare_versions("V1.2.3", "1.2.3"), Ordering::Equal);
+        assert_eq!(compare_versions("v2.0.0", "v1.0.0"), Ordering::Greater);
+    }
+
+    #[test]
+    fn test_compare_with_prerelease_suffix() {
+        // 数字部分相同（1.0.0），剩余字符串按字典序比较
+        // "-beta" > "-alpha" (b > a)
+        assert_eq!(
+            compare_versions("1.0.0-beta", "1.0.0-alpha"),
+            Ordering::Greater
+        );
+        assert_eq!(
+            compare_versions("1.0.0-alpha", "1.0.0-beta"),
+            Ordering::Less
+        );
+        // 主版本号不同时直接看数字
+        assert_eq!(
+            compare_versions("2.0.0-rc1", "1.9.9-stable"),
+            Ordering::Greater
+        );
+    }
+
+    #[test]
+    fn test_compare_empty_strings() {
+        assert_eq!(compare_versions("", ""), Ordering::Equal);
+        // 空字符串与非空比较：空字符串视为较小
+        assert_eq!(compare_versions("", "1.0.0"), Ordering::Less);
+    }
+
+    #[test]
+    fn test_compare_large_versions() {
+        assert_eq!(compare_versions("10.20.30", "9.99.99"), Ordering::Greater);
+        assert_eq!(compare_versions("100.0.0", "99.99.99"), Ordering::Greater);
+    }
+
+    // ---------- diff_metadata ----------
+
+    #[test]
+    fn test_diff_empty_inputs() {
+        let diffs = diff_metadata(&[], &[]);
+        assert!(diffs.is_empty());
+    }
+
+    #[test]
+    fn test_diff_identical_metadata() {
+        let a = &[("name", "alice"), ("age", "30")][..];
+        let b = &[("name", "alice"), ("age", "30")][..];
+        let diffs = diff_metadata(a, b);
+        assert!(diffs.is_empty());
+    }
+
+    #[test]
+    fn test_diff_added_field() {
+        let a = &[("name", "alice")][..];
+        let b = &[("name", "alice"), ("email", "a@b.com")][..];
+        let diffs = diff_metadata(a, b);
+        assert_eq!(diffs.len(), 1);
+        assert!(diffs[0].starts_with("+ email:"));
+    }
+
+    #[test]
+    fn test_diff_removed_field() {
+        let a = &[("name", "alice"), ("email", "a@b.com")][..];
+        let b = &[("name", "alice")][..];
+        let diffs = diff_metadata(a, b);
+        assert_eq!(diffs.len(), 1);
+        assert!(diffs[0].starts_with("- email:"));
+    }
+
+    #[test]
+    fn test_diff_changed_value() {
+        let a = &[("name", "alice")][..];
+        let b = &[("name", "bob")][..];
+        let diffs = diff_metadata(a, b);
+        assert_eq!(diffs.len(), 1);
+        assert!(diffs[0].starts_with("~ name:"));
+        assert!(diffs[0].contains("alice -> bob"));
+    }
+
+    #[test]
+    fn test_diff_all_three_change_types() {
+        let a = &[("k1", "v1"), ("k2", "old"), ("k3", "removed")][..];
+        let b = &[("k1", "v1"), ("k2", "new"), ("k4", "added")][..];
+        let diffs = diff_metadata(a, b);
+        // 应包含：- k3, + k4, ~ k2
+        assert_eq!(diffs.len(), 3);
+        let joined = diffs.join("\n");
+        assert!(joined.contains("- k3: removed"));
+        assert!(joined.contains("+ k4: added"));
+        assert!(joined.contains("~ k2: old -> new"));
+    }
+
+    #[test]
+    fn test_diff_results_are_sorted() {
+        let a = &[("z", "1"), ("a", "1")][..];
+        let b = &[][..];
+        let diffs = diff_metadata(a, b);
+        // 删除项应按 key 字典序排序：a 在 z 之前
+        assert!(diffs[0].contains("a:"));
+        assert!(diffs[1].contains("z:"));
+    }
+
+    #[test]
+    fn test_diff_with_empty_value() {
+        let a = &[("name", "")][..];
+        let b = &[("name", "alice")][..];
+        let diffs = diff_metadata(a, b);
+        assert_eq!(diffs.len(), 1);
+        assert!(diffs[0].contains("name:"));
+        assert!(diffs[0].contains(" -> alice"));
+    }
 }

@@ -473,3 +473,174 @@ async fn list_bidding_suppliers(
         }
     }
 }
+
+pub fn calculate_bid_total(tech: f64, commercial: f64, price_score: f64) -> f64 {
+    let weighted = tech * 0.6_f64 + commercial * 0.3_f64 + price_score * 0.1_f64;
+    weighted.clamp(0.0_f64, 100.0_f64)
+}
+
+pub fn price_scores(prices: &[f64]) -> Vec<f64> {
+    if prices.is_empty() {
+        return vec![];
+    }
+
+    let min_price = prices.iter().cloned().fold(f64::INFINITY, f64::min);
+
+    if min_price <= 0.0_f64 {
+        return prices.iter().map(|_| 0.0_f64).collect();
+    }
+
+    prices
+        .iter()
+        .map(|p| {
+            if *p <= 0.0_f64 {
+                0.0_f64
+            } else {
+                (min_price / *p * 100.0_f64).clamp(0.0_f64, 100.0_f64)
+            }
+        })
+        .collect()
+}
+
+pub fn rank_bidders(totals: &[f64]) -> Vec<usize> {
+    let mut indices: Vec<usize> = (0..totals.len()).collect();
+    indices.sort_by(|a, b| {
+        totals[*b]
+            .partial_cmp(&totals[*a])
+            .unwrap_or(std::cmp::Ordering::Equal)
+    });
+    indices
+}
+
+pub fn check_invalid_bids(prices: &[f64], budget: Option<f64>) -> &'static str {
+    if prices.len() < 3 {
+        return "low_bidders";
+    }
+
+    if let Some(budget_val) = budget {
+        if prices.iter().all(|p| *p > budget_val) {
+            return "over_budget";
+        }
+    }
+
+    if prices.len() >= 3 {
+        let min_price = prices.iter().cloned().fold(f64::INFINITY, f64::min);
+        if min_price > 0.0_f64 {
+            let close_count = prices
+                .iter()
+                .filter(|p| ((*p - min_price) / min_price).abs() < 0.01_f64)
+                .count();
+            if close_count >= 3 {
+                return "collusion_risk";
+            }
+        }
+    }
+
+    "ok"
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_calculate_bid_total_normal() {
+        let result = calculate_bid_total(80.0_f64, 70.0_f64, 90.0_f64);
+        assert!((result - 78.0_f64).abs() < 0.01_f64, "招标综合分计算错误");
+    }
+
+    #[test]
+    fn test_calculate_bid_total_clamp() {
+        let result = calculate_bid_total(200.0_f64, 200.0_f64, 200.0_f64);
+        assert_eq!(result, 100.0_f64, "综合分超过100应clamp到100");
+    }
+
+    #[test]
+    fn test_price_scores_min_gets_100() {
+        let prices = vec![100.0_f64, 120.0_f64, 150.0_f64];
+        let scores = price_scores(&prices);
+        assert_eq!(scores[0], 100.0_f64, "最低价应得到100分");
+        assert!(
+            (scores[1] - 100.0_f64 * 100.0_f64 / 120.0_f64).abs() < 0.01_f64,
+            "第二价格分计算错误"
+        );
+        assert!(
+            (scores[2] - 100.0_f64 * 100.0_f64 / 150.0_f64).abs() < 0.01_f64,
+            "第三价格分计算错误"
+        );
+    }
+
+    #[test]
+    fn test_price_scores_empty() {
+        let prices: Vec<f64> = vec![];
+        assert!(price_scores(&prices).is_empty(), "空输入返回空向量");
+    }
+
+    #[test]
+    fn test_price_scores_zero_price() {
+        let prices = vec![0.0_f64, 100.0_f64];
+        let scores = price_scores(&prices);
+        assert_eq!(scores[0], 0.0_f64, "0价格得0分");
+    }
+
+    #[test]
+    fn test_rank_bidders_descending() {
+        let totals = vec![70.0_f64, 90.0_f64, 80.0_f64];
+        let ranks = rank_bidders(&totals);
+        assert_eq!(ranks, vec![1, 2, 0], "排名应按综合分降序");
+    }
+
+    #[test]
+    fn test_rank_bidders_empty() {
+        let totals: Vec<f64> = vec![];
+        assert!(rank_bidders(&totals).is_empty(), "空输入返回空索引");
+    }
+
+    #[test]
+    fn test_check_invalid_bids_low_bidders() {
+        let prices = vec![100.0_f64, 200.0_f64];
+        assert_eq!(
+            check_invalid_bids(&prices, None),
+            "low_bidders",
+            "少于3家应返回low_bidders"
+        );
+    }
+
+    #[test]
+    fn test_check_invalid_bids_over_budget() {
+        let prices = vec![150.0_f64, 160.0_f64, 170.0_f64];
+        assert_eq!(
+            check_invalid_bids(&prices, Some(100.0_f64)),
+            "over_budget",
+            "全部超预算应返回over_budget"
+        );
+    }
+
+    #[test]
+    fn test_check_invalid_bids_collusion_risk() {
+        let prices = vec![100.0_f64, 100.5_f64, 100.8_f64, 150.0_f64];
+        assert_eq!(
+            check_invalid_bids(&prices, None),
+            "collusion_risk",
+            "3家以上报价差<1%应判定围标风险"
+        );
+    }
+
+    #[test]
+    fn test_check_invalid_bids_ok() {
+        let prices = vec![100.0_f64, 130.0_f64, 160.0_f64];
+        assert_eq!(
+            check_invalid_bids(&prices, Some(200.0_f64)),
+            "ok",
+            "正常情况应返回ok"
+        );
+    }
+
+    #[test]
+    fn test_rank_bidders_ties() {
+        let totals = vec![80.0_f64, 80.0_f64, 70.0_f64];
+        let ranks = rank_bidders(&totals);
+        assert_eq!(ranks.len(), 3, "并列分数应返回相同数量索引");
+        assert!(ranks[0] == 0 || ranks[0] == 1, "并列前两名应为0或1");
+    }
+}

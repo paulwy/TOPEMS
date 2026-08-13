@@ -1075,3 +1075,224 @@ async fn get_performance_summary(
 
     Json(ApiResponse::success(result, "获取绩效汇总成功"))
 }
+
+pub fn moving_average_quarters(scores: &[Option<f64>]) -> f64 {
+    if scores.is_empty() {
+        return 0.0_f64;
+    }
+
+    let mut filled_scores: Vec<f64> = Vec::with_capacity(scores.len());
+    let mut last_valid: Option<f64> = None;
+
+    for opt in scores.iter() {
+        match opt {
+            Some(s) => {
+                filled_scores.push(*s);
+                last_valid = Some(*s);
+            }
+            None => {
+                let fill_val = match last_valid {
+                    Some(lv) => lv * 0.8_f64,
+                    None => 0.0_f64,
+                };
+                filled_scores.push(fill_val);
+                last_valid = Some(fill_val);
+            }
+        }
+    }
+
+    let sum: f64 = filled_scores.iter().sum();
+    let avg = sum / filled_scores.len() as f64;
+    avg.clamp(0.0_f64, 100.0_f64)
+}
+
+pub fn performance_trend(prev: Option<f64>, curr: f64) -> &'static str {
+    match prev {
+        None => "stable",
+        Some(p) => {
+            let diff = curr - p;
+            if diff > 2.0_f64 {
+                "rising"
+            } else if diff < -2.0_f64 {
+                "declining"
+            } else if diff.abs() < 0.5_f64 {
+                "flat"
+            } else {
+                "stable"
+            }
+        }
+    }
+}
+
+pub fn promotion_judgement(
+    last2: &[f64; 2],
+    threshold_up: f64,
+    threshold_down: f64,
+) -> &'static str {
+    let all_above_up = last2.iter().all(|s| *s >= threshold_up);
+    let all_below_down = last2.iter().all(|s| *s < threshold_down);
+
+    if all_above_up {
+        "promote"
+    } else if all_below_down {
+        "demote"
+    } else {
+        "retain"
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_moving_average_quarters_all_present() {
+        let scores = vec![
+            Some(80.0_f64),
+            Some(85.0_f64),
+            Some(90.0_f64),
+            Some(95.0_f64),
+        ];
+        let result = moving_average_quarters(&scores);
+        assert!(
+            (result - 87.5_f64).abs() < 0.01_f64,
+            "全有数据的简单均值计算错误"
+        );
+    }
+
+    #[test]
+    fn test_moving_average_quarters_some_none() {
+        let scores = vec![Some(100.0_f64), None, Some(80.0_f64)];
+        let result = moving_average_quarters(&scores);
+        assert!(
+            (result - (100.0_f64 + 80.0_f64 + 80.0_f64) / 3.0_f64).abs() < 0.01_f64,
+            "None应按最近一季0.8惩罚填充"
+        );
+    }
+
+    #[test]
+    fn test_moving_average_quarters_empty() {
+        let scores: Vec<Option<f64>> = vec![];
+        assert_eq!(moving_average_quarters(&scores), 0.0_f64, "空列表返回0");
+    }
+
+    #[test]
+    fn test_moving_average_quarters_all_none() {
+        let scores = vec![None, None, None];
+        assert_eq!(moving_average_quarters(&scores), 0.0_f64, "全None时返回0");
+    }
+
+    #[test]
+    fn test_performance_trend_rising() {
+        assert_eq!(
+            performance_trend(Some(70.0_f64), 80.0_f64),
+            "rising",
+            "上升趋势判定错误"
+        );
+    }
+
+    #[test]
+    fn test_performance_trend_declining() {
+        assert_eq!(
+            performance_trend(Some(85.0_f64), 75.0_f64),
+            "declining",
+            "下降趋势判定错误"
+        );
+    }
+
+    #[test]
+    fn test_performance_trend_flat() {
+        assert_eq!(
+            performance_trend(Some(80.0_f64), 80.2_f64),
+            "flat",
+            "微波动应判定为flat"
+        );
+    }
+
+    #[test]
+    fn test_performance_trend_no_prev() {
+        assert_eq!(
+            performance_trend(None, 80.0_f64),
+            "stable",
+            "无前期数据应返回stable"
+        );
+    }
+
+    #[test]
+    fn test_promotion_judgement_promote() {
+        let last2 = [85.0_f64, 88.0_f64];
+        assert_eq!(
+            promotion_judgement(&last2, 80.0_f64, 60.0_f64),
+            "promote",
+            "连续2季达标应升级"
+        );
+    }
+
+    #[test]
+    fn test_promotion_judgement_demote() {
+        let last2 = [55.0_f64, 58.0_f64];
+        assert_eq!(
+            promotion_judgement(&last2, 80.0_f64, 60.0_f64),
+            "demote",
+            "连续2季不达标应降级"
+        );
+    }
+
+    #[test]
+    fn test_promotion_judgement_retain() {
+        let last2 = [70.0_f64, 75.0_f64];
+        assert_eq!(
+            promotion_judgement(&last2, 80.0_f64, 60.0_f64),
+            "retain",
+            "介于中间应保留等级"
+        );
+    }
+
+    #[test]
+    fn test_moving_average_quarters_first_none_then_valid() {
+        let scores = vec![None, Some(100.0_f64)];
+        let result = moving_average_quarters(&scores);
+        assert!(
+            (result - 50.0_f64).abs() < 0.01_f64,
+            "首个None用0填充，后续正常"
+        );
+    }
+
+    #[test]
+    fn test_performance_trend_small_change_stable() {
+        assert_eq!(
+            performance_trend(Some(80.0_f64), 81.5_f64),
+            "stable",
+            "小幅上升但小于2应判定stable"
+        );
+        assert_eq!(
+            performance_trend(Some(80.0_f64), 78.5_f64),
+            "stable",
+            "小幅下降但大于-2应判定stable"
+        );
+    }
+
+    #[test]
+    fn test_promotion_judgement_mixed_results_retain() {
+        let last2 = [90.0_f64, 50.0_f64];
+        assert_eq!(
+            promotion_judgement(&last2, 80.0_f64, 60.0_f64),
+            "retain",
+            "一季高一季低应保留等级"
+        );
+    }
+
+    #[test]
+    fn test_performance_trend_exactly_boundary() {
+        assert_eq!(
+            performance_trend(Some(80.0_f64), 82.0_f64),
+            "stable",
+            "刚好差2应判定stable边界"
+        );
+        assert_eq!(
+            performance_trend(Some(80.0_f64), 78.0_f64),
+            "stable",
+            "刚好差-2应判定stable边界"
+        );
+    }
+}

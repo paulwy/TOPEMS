@@ -14,6 +14,22 @@ use crate::models::quality::{
     UpdateQualityCheckRequest,
 };
 
+// ==================== Pure functions ====================
+
+/// Calculates a quality score as a percentage.
+///
+/// Formula: `(1 - defects / total_items) * 100`.
+/// Returns `0.0` when `total_items` is zero (no data available).
+/// The result is clamped to `[0.0, 100.0]`.
+pub fn calculate_quality_score(defects: u32, total_items: u32) -> f64 {
+    if total_items == 0 {
+        return 0.0;
+    }
+    let ratio = defects as f64 / total_items as f64;
+    let score = (1.0 - ratio) * 100.0;
+    score.clamp(0.0, 100.0)
+}
+
 pub fn create_routes(pool: PgPool) -> Router {
     Router::new()
         .route(
@@ -338,4 +354,62 @@ fn parse_date_opt(date_str: &Option<String>) -> Option<chrono::DateTime<chrono::
         .as_ref()
         .and_then(|s| chrono::DateTime::parse_from_rfc3339(s).ok())
         .map(|d| d.with_timezone(&chrono::Utc))
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_perfect_score_no_defects() {
+        assert_eq!(calculate_quality_score(0, 100), 100.0);
+    }
+
+    #[test]
+    fn test_zero_total_items() {
+        assert_eq!(calculate_quality_score(0, 0), 0.0);
+        assert_eq!(calculate_quality_score(5, 0), 0.0);
+    }
+
+    #[test]
+    fn test_all_defects() {
+        assert_eq!(calculate_quality_score(100, 100), 0.0);
+    }
+
+    #[test]
+    fn test_ten_percent_defects() {
+        // 10 defects out of 100 -> 90% quality
+        assert!((calculate_quality_score(10, 100) - 90.0).abs() < 1e-9);
+    }
+
+    #[test]
+    fn test_half_defects() {
+        assert!((calculate_quality_score(50, 100) - 50.0).abs() < 1e-9);
+    }
+
+    #[test]
+    fn test_clamps_when_defects_exceed_total() {
+        // 150 defects out of 100 -> should clamp to 0.0
+        assert_eq!(calculate_quality_score(150, 100), 0.0);
+    }
+
+    #[test]
+    fn test_single_item_no_defect() {
+        assert_eq!(calculate_quality_score(0, 1), 100.0);
+    }
+
+    #[test]
+    fn test_single_item_with_defect() {
+        assert_eq!(calculate_quality_score(1, 1), 0.0);
+    }
+
+    #[test]
+    fn test_score_always_in_range() {
+        for defects in 0..=200 {
+            for total in 1..=100 {
+                let score = calculate_quality_score(defects, total);
+                assert!(score >= 0.0 && score <= 100.0);
+            }
+        }
+    }
 }

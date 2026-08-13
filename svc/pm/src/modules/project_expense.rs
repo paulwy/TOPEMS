@@ -10,6 +10,18 @@ use uuid::Uuid;
 
 use crate::models::project_expense::{CreateExpenseRequest, ProjectExpense, UpdateExpenseRequest};
 
+// ==================== Pure functions ====================
+
+/// Determines whether an expense should be auto-approved.
+///
+/// An expense is approved when:
+/// - `amount` is positive,
+/// - `amount` does not exceed the approval `threshold`, and
+/// - `amount` does not exceed `budget_remaining`.
+pub fn should_approve_expense(amount: f64, threshold: f64, budget_remaining: f64) -> bool {
+    amount > 0.0 && amount <= threshold && amount <= budget_remaining
+}
+
 pub fn create_routes(pool: PgPool) -> Router {
     Router::new()
         .route(
@@ -258,5 +270,55 @@ async fn remove_expense(
             tracing::error!("删除项目费用失败: {}", e);
             Json(ApiResponse::error(500, "删除项目费用失败"))
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_approve_within_threshold_and_budget() {
+        assert!(should_approve_expense(50.0, 100.0, 200.0));
+    }
+
+    #[test]
+    fn test_reject_exceeds_threshold() {
+        assert!(!should_approve_expense(150.0, 100.0, 200.0));
+    }
+
+    #[test]
+    fn test_reject_exceeds_budget() {
+        assert!(!should_approve_expense(150.0, 200.0, 100.0));
+    }
+
+    #[test]
+    fn test_reject_zero_amount() {
+        assert!(!should_approve_expense(0.0, 100.0, 200.0));
+    }
+
+    #[test]
+    fn test_reject_negative_amount() {
+        assert!(!should_approve_expense(-10.0, 100.0, 200.0));
+    }
+
+    #[test]
+    fn test_approve_exact_threshold() {
+        assert!(should_approve_expense(100.0, 100.0, 200.0));
+    }
+
+    #[test]
+    fn test_approve_exact_budget() {
+        assert!(should_approve_expense(100.0, 200.0, 100.0));
+    }
+
+    #[test]
+    fn test_reject_zero_budget() {
+        assert!(!should_approve_expense(50.0, 100.0, 0.0));
+    }
+
+    #[test]
+    fn test_approve_small_amount() {
+        assert!(should_approve_expense(0.01, 100.0, 200.0));
     }
 }

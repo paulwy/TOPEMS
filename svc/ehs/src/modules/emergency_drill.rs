@@ -1,6 +1,7 @@
 //! Emergency drill management - Drill plans, records, evaluation, rectification, and statistics
 
 use axum::{extract::State, http::HeaderMap, routing::*, Extension, Json, Router};
+use chrono::NaiveDate;
 use serde::{Deserialize, Serialize};
 use topems_shared_auth::auth::Claims;
 use topems_shared_core::response::ApiResponse;
@@ -894,4 +895,164 @@ pub async fn list_drill_types(
         serde_json::json!({ "code": "comprehensive", "name": "综合演练" }),
     ];
     Json(ApiResponse::success(types, "获取演练类型成功"))
+}
+
+pub fn drill_score(
+    participation_rate: f64,
+    scenario_completion: f64,
+    response_time_score: f64,
+) -> f64 {
+    let p = participation_rate.clamp(0.0, 100.0);
+    let s = scenario_completion.clamp(0.0, 100.0);
+    let r = response_time_score.clamp(0.0, 100.0);
+    p * 0.30 + s * 0.40 + r * 0.30
+}
+
+pub fn drill_grade(score: f64) -> &'static str {
+    if score >= 90.0 {
+        "优秀"
+    } else if score >= 80.0 {
+        "良好"
+    } else if score >= 70.0 {
+        "合格"
+    } else if score >= 60.0 {
+        "基本合格"
+    } else {
+        "不合格"
+    }
+}
+
+pub fn is_drill_overdue(last_drill: NaiveDate, today: NaiveDate, required_days: i64) -> bool {
+    if required_days <= 0 {
+        return false;
+    }
+    let delta = (today - last_drill).num_days();
+    delta > required_days
+}
+
+pub fn plan_coverage(covered: u32, total: u32) -> f64 {
+    if total == 0 {
+        return 0.0;
+    }
+    let c = covered.min(total) as f64;
+    let t = total as f64;
+    (c / t) * 100.0
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_drill_score_perfect() {
+        let s = drill_score(100.0, 100.0, 100.0);
+        assert!((s - 100.0).abs() < 1e-9);
+    }
+
+    #[test]
+    fn test_drill_score_zero() {
+        let s = drill_score(0.0, 0.0, 0.0);
+        assert!((s - 0.0).abs() < 1e-9);
+    }
+
+    #[test]
+    fn test_drill_score_mixed() {
+        let s = drill_score(80.0, 90.0, 70.0);
+        let expected = 80.0 * 0.30 + 90.0 * 0.40 + 70.0 * 0.30;
+        assert!((s - expected).abs() < 1e-9);
+    }
+
+    #[test]
+    fn test_drill_score_clamping() {
+        let s = drill_score(150.0, -10.0, 200.0);
+        let expected = 100.0 * 0.30 + 0.0 * 0.40 + 100.0 * 0.30;
+        assert!((s - expected).abs() < 1e-9);
+    }
+
+    #[test]
+    fn test_drill_grade_excellent() {
+        assert_eq!(drill_grade(100.0), "优秀");
+        assert_eq!(drill_grade(90.0), "优秀");
+        assert_eq!(drill_grade(95.0), "优秀");
+    }
+
+    #[test]
+    fn test_drill_grade_good() {
+        assert_eq!(drill_grade(89.9), "良好");
+        assert_eq!(drill_grade(85.0), "良好");
+        assert_eq!(drill_grade(80.0), "良好");
+    }
+
+    #[test]
+    fn test_drill_grade_pass() {
+        assert_eq!(drill_grade(79.9), "合格");
+        assert_eq!(drill_grade(75.0), "合格");
+        assert_eq!(drill_grade(70.0), "合格");
+    }
+
+    #[test]
+    fn test_drill_grade_basic_pass() {
+        assert_eq!(drill_grade(69.9), "基本合格");
+        assert_eq!(drill_grade(65.0), "基本合格");
+        assert_eq!(drill_grade(60.0), "基本合格");
+    }
+
+    #[test]
+    fn test_drill_grade_fail() {
+        assert_eq!(drill_grade(59.9), "不合格");
+        assert_eq!(drill_grade(0.0), "不合格");
+        assert_eq!(drill_grade(30.0), "不合格");
+    }
+
+    #[test]
+    fn test_drill_not_overdue() {
+        let last = NaiveDate::from_ymd_opt(2024, 1, 1).unwrap();
+        let today = NaiveDate::from_ymd_opt(2024, 3, 30).unwrap();
+        assert!(!is_drill_overdue(last, today, 90));
+        assert!(!is_drill_overdue(last, today, 89));
+    }
+
+    #[test]
+    fn test_drill_overdue() {
+        let last = NaiveDate::from_ymd_opt(2024, 1, 1).unwrap();
+        let today = NaiveDate::from_ymd_opt(2024, 4, 1).unwrap();
+        assert!(is_drill_overdue(last, today, 90));
+    }
+
+    #[test]
+    fn test_drill_boundary_exact() {
+        let last = NaiveDate::from_ymd_opt(2024, 1, 1).unwrap();
+        let today = NaiveDate::from_ymd_opt(2024, 4, 1).unwrap();
+        assert!(!is_drill_overdue(last, today, 91));
+    }
+
+    #[test]
+    fn test_drill_zero_required_days() {
+        let last = NaiveDate::from_ymd_opt(2020, 1, 1).unwrap();
+        let today = NaiveDate::from_ymd_opt(2024, 1, 1).unwrap();
+        assert!(!is_drill_overdue(last, today, 0));
+        assert!(!is_drill_overdue(last, today, -10));
+    }
+
+    #[test]
+    fn test_coverage_full() {
+        assert!((plan_coverage(10, 10) - 100.0).abs() < 1e-9);
+    }
+
+    #[test]
+    fn test_coverage_zero() {
+        assert_eq!(plan_coverage(0, 10), 0.0);
+        assert_eq!(plan_coverage(0, 0), 0.0);
+    }
+
+    #[test]
+    fn test_coverage_partial() {
+        assert!((plan_coverage(3, 10) - 30.0).abs() < 1e-9);
+        assert!((plan_coverage(5, 8) - 62.5).abs() < 1e-9);
+    }
+
+    #[test]
+    fn test_coverage_overflow() {
+        assert!((plan_coverage(15, 10) - 100.0).abs() < 1e-9);
+    }
 }

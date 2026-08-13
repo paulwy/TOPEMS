@@ -429,3 +429,216 @@ pub async fn delete_task(
         }
     }
 }
+
+// ============================================================================
+// 检验结果判定：参考范围解析 + 数值判定纯函数
+// ============================================================================
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum JudgeResult {
+    InRange,    // 结果在范围内
+    BelowRange, // 低于下限
+    AboveRange, // 高于上限
+    NoRange,    // 无参考范围，无法判定
+    Invalid,    // 结果或范围格式无效
+}
+
+/// 解析 "3.9-6.1" / "<0.5" / ">2000" / "≤100" / "≥0.1" / "NEGATIVE" / "阴性" 等格式
+/// 返回 (lower, upper, lower_inclusive, upper_inclusive)
+///   None 表示无穷 / 缺失
+pub fn parse_reference_range(range: &str) -> Option<(Option<f64>, Option<f64>, bool, bool)> {
+    let r = range.trim();
+    if r.is_empty() {
+        return None;
+    }
+    // 区间格式 min-max
+    if let Some(dash) = r.find('-') {
+        let (a, b) = r.split_at(dash);
+        let lo_s = a.trim();
+        let hi_s = b[1..].trim();
+        if let (Ok(lo), Ok(hi)) = (lo_s.parse::<f64>(), hi_s.parse::<f64>()) {
+            if lo <= hi {
+                return Some((Some(lo), Some(hi), true, true));
+            }
+        }
+    }
+    if let Some(rest) = r.strip_prefix("≤").or_else(|| r.strip_prefix("<=")) {
+        let hi = rest.trim().parse::<f64>().ok()?;
+        return Some((None, Some(hi), true, true));
+    }
+    if let Some(rest) = r.strip_prefix('≤') {
+        let hi = rest.trim().parse::<f64>().ok()?;
+        return Some((None, Some(hi), true, true));
+    }
+    if let Some(rest) = r.strip_prefix('≥').or_else(|| r.strip_prefix(">=")) {
+        let lo = rest.trim().parse::<f64>().ok()?;
+        return Some((Some(lo), None, true, true));
+    }
+    if let Some(rest) = r.strip_prefix('<') {
+        let hi = rest.trim().parse::<f64>().ok()?;
+        return Some((None, Some(hi), true, false));
+    }
+    if let Some(rest) = r.strip_prefix('>') {
+        let lo = rest.trim().parse::<f64>().ok()?;
+        return Some((Some(lo), None, false, true));
+    }
+    // 文本定性参考范围（positive/negative 等）不提供数值判定
+    None
+}
+
+/// 判断结果是否在参考范围内
+pub fn judge_value_against_range(value: f64, reference_range: &str) -> JudgeResult {
+    if !value.is_finite() {
+        return JudgeResult::Invalid;
+    }
+    let Some((lo, hi, lo_inc, hi_inc)) = parse_reference_range(reference_range) else {
+        return JudgeResult::NoRange;
+    };
+    // check lower bound
+    if let Some(l) = lo {
+        let ok = if lo_inc { value >= l } else { value > l };
+        if !ok {
+            return JudgeResult::BelowRange;
+        }
+    }
+    if let Some(h) = hi {
+        let ok = if hi_inc { value <= h } else { value < h };
+        if !ok {
+            return JudgeResult::AboveRange;
+        }
+    }
+    JudgeResult::InRange
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    // ===== parse_reference_range =====
+    #[test]
+    fn test_parse_basic_interval() {
+        // "3.9-6.1"
+        let (lo, hi, li, ui) = parse_reference_range("3.9-6.1").unwrap();
+        assert!((lo.unwrap() - 3.9).abs() < 1e-9);
+        assert!((hi.unwrap() - 6.1).abs() < 1e-9);
+        assert!(li && ui);
+    }
+
+    #[test]
+    fn test_parse_upper_bound_leq_lesseq() {
+        let (lo, hi, _, ui) = parse_reference_range("<=100").unwrap();
+        assert!(lo.is_none());
+        assert!((hi.unwrap() - 100.0).abs() < 1e-9);
+        assert!(ui);
+        let (_, hi, _, ui) = parse_reference_range("≤50").unwrap();
+        assert!((hi.unwrap() - 50.0).abs() < 1e-9);
+        assert!(ui);
+    }
+
+    #[test]
+    fn test_parse_lower_bound_ge_greatereq() {
+        let (lo, hi, li, _) = parse_reference_range(">=0.1").unwrap();
+        assert!(hi.is_none());
+        assert!((lo.unwrap() - 0.1).abs() < 1e-9);
+        assert!(li);
+        let (lo, _, li, _) = parse_reference_range("≥1").unwrap();
+        assert!((lo.unwrap() - 1.0).abs() < 1e-9);
+        assert!(li);
+    }
+
+    #[test]
+    fn test_parse_strict_lt_gt() {
+        // < 10 → upper_inclusive=false
+        let (_, hi, _, ui) = parse_reference_range("<10").unwrap();
+        assert!(!ui);
+        assert!((hi.unwrap() - 10.0).abs() < 1e-9);
+        // > 0 → lower_inclusive=false
+        let (lo, _, li, _) = parse_reference_range(">0").unwrap();
+        assert!(!li);
+        assert!((lo.unwrap() - 0.0).abs() < 1e-9);
+    }
+
+    #[test]
+    fn test_parse_invalid_returns_none() {
+        assert!(parse_reference_range("").is_none());
+        assert!(parse_reference_range("阴性").is_none());
+        assert!(parse_reference_range("abc-def").is_none());
+        assert!(parse_reference_range("10-5").is_none()); // lo>hi 无效
+    }
+
+    // ===== judge_value_against_range =====
+    #[test]
+    fn test_judge_interval_in_range() {
+        assert_eq!(
+            judge_value_against_range(5.0, "3.9-6.1"),
+            JudgeResult::InRange
+        );
+        assert_eq!(
+            judge_value_against_range(3.9, "3.9-6.1"),
+            JudgeResult::InRange
+        );
+        assert_eq!(
+            judge_value_against_range(6.1, "3.9-6.1"),
+            JudgeResult::InRange
+        );
+    }
+
+    #[test]
+    fn test_judge_interval_outside() {
+        assert_eq!(
+            judge_value_against_range(3.8, "3.9-6.1"),
+            JudgeResult::BelowRange
+        );
+        assert_eq!(
+            judge_value_against_range(6.2, "3.9-6.1"),
+            JudgeResult::AboveRange
+        );
+    }
+
+    #[test]
+    fn test_judge_upper_bound_le() {
+        assert_eq!(
+            judge_value_against_range(100.0, "≤100"),
+            JudgeResult::InRange
+        );
+        assert_eq!(
+            judge_value_against_range(100.1, "≤100"),
+            JudgeResult::AboveRange
+        );
+    }
+
+    #[test]
+    fn test_judge_strict_lt() {
+        assert_eq!(
+            judge_value_against_range(10.0, "<10"),
+            JudgeResult::AboveRange
+        );
+        assert_eq!(judge_value_against_range(9.99, "<10"), JudgeResult::InRange);
+    }
+
+    #[test]
+    fn test_judge_strict_gt() {
+        assert_eq!(
+            judge_value_against_range(0.0, ">0"),
+            JudgeResult::BelowRange
+        );
+        assert_eq!(
+            judge_value_against_range(0.0001, ">0"),
+            JudgeResult::InRange
+        );
+    }
+
+    #[test]
+    fn test_judge_no_range_or_invalid() {
+        assert_eq!(judge_value_against_range(1.0, "阴性"), JudgeResult::NoRange);
+        assert_eq!(judge_value_against_range(1.0, ""), JudgeResult::NoRange);
+        assert_eq!(
+            judge_value_against_range(f64::NAN, "0-10"),
+            JudgeResult::Invalid
+        );
+        assert_eq!(
+            judge_value_against_range(f64::INFINITY, "0-10"),
+            JudgeResult::Invalid
+        );
+    }
+}

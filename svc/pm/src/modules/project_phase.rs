@@ -10,6 +10,20 @@ use uuid::Uuid;
 
 use crate::models::project_phase::{CreatePhaseRequest, ProjectPhase, UpdatePhaseRequest};
 
+// ==================== Pure functions ====================
+
+/// Calculates phase progress as a percentage based on completed vs total tasks.
+///
+/// Returns a value in the range `[0.0, 100.0]`.
+/// Returns `0.0` when `total_tasks` is zero.
+pub fn calculate_phase_progress(completed_tasks: usize, total_tasks: usize) -> f64 {
+    if total_tasks == 0 {
+        return 0.0;
+    }
+    let pct = (completed_tasks as f64 / total_tasks as f64) * 100.0;
+    pct.clamp(0.0, 100.0)
+}
+
 pub fn create_routes(pool: PgPool) -> Router {
     Router::new()
         .route(
@@ -259,5 +273,55 @@ async fn delete_phase(
             tracing::error!("删除项目阶段失败: {}", e);
             Json(ApiResponse::error(500, "删除项目阶段失败"))
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_zero_total_tasks() {
+        assert_eq!(calculate_phase_progress(0, 0), 0.0);
+        assert_eq!(calculate_phase_progress(5, 0), 0.0);
+    }
+
+    #[test]
+    fn test_no_completed_tasks() {
+        assert_eq!(calculate_phase_progress(0, 10), 0.0);
+    }
+
+    #[test]
+    fn test_all_completed() {
+        assert_eq!(calculate_phase_progress(10, 10), 100.0);
+        assert_eq!(calculate_phase_progress(1, 1), 100.0);
+    }
+
+    #[test]
+    fn test_half_completed() {
+        assert_eq!(calculate_phase_progress(5, 10), 50.0);
+    }
+
+    #[test]
+    fn test_third_completed() {
+        let result = calculate_phase_progress(1, 3);
+        assert!((result - 33.333_333_333_333_336).abs() < 1e-9);
+    }
+
+    #[test]
+    fn test_clamps_overflow() {
+        assert_eq!(calculate_phase_progress(15, 10), 100.0);
+    }
+
+    #[test]
+    fn test_clamps_negative_ratio_not_possible() {
+        // usize can't be negative, but verify 0/1 = 0
+        assert_eq!(calculate_phase_progress(0, 1), 0.0);
+    }
+
+    #[test]
+    fn test_large_numbers() {
+        assert_eq!(calculate_phase_progress(500_000, 1_000_000), 50.0);
+        assert_eq!(calculate_phase_progress(999_999, 1_000_000), 99.9999);
     }
 }

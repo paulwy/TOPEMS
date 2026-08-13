@@ -6,7 +6,61 @@ use axum::{
 use super::super::models::*;
 use crate::{AppState, CoreResponse};
 
-/// Start plugin upgrade process
+// ============================================================================
+// Pure helper functions (no DB / async) — extracted for unit testing
+// ============================================================================
+
+/// Reuse the semver parser defined in the versioning module.
+pub use super::versioning::{is_breaking_change, parse_plugin_version};
+
+/// Calculate the list of intermediate versions to traverse when upgrading
+/// from `current` to `target`. Each intermediate major version is included
+/// as a synthetic milestone (e.g. "1.0.0" -> "3.0.0" yields ["2.0.0", "3.0.0"]).
+/// Downgrades or invalid inputs return an empty vec.
+pub fn calculate_upgrade_path(current: &str, target: &str) -> Vec<String> {
+    let (cur_major, cur_minor, cur_patch) = match parse_plugin_version(current) {
+        Ok(v) => v,
+        Err(_) => return Vec::new(),
+    };
+    let (tgt_major, tgt_minor, tgt_patch) = match parse_plugin_version(target) {
+        Ok(v) => v,
+        Err(_) => return Vec::new(),
+    };
+
+    // Downgrade -> no path
+    if (tgt_major, tgt_minor, tgt_patch) <= (cur_major, cur_minor, cur_patch) {
+        return Vec::new();
+    }
+
+    let mut path = Vec::new();
+
+    // Walk through each intermediate major version
+    if tgt_major > cur_major {
+        for m in (cur_major + 1)..=tgt_major {
+            // For intermediate majors use .0.0; for the final major, use the
+            // target's actual minor/patch so callers reach the requested version.
+            if m == tgt_major {
+                path.push(format!("{}.{}.{}", tgt_major, tgt_minor, tgt_patch));
+            } else {
+                path.push(format!("{}.0.0", m));
+            }
+        }
+    } else {
+        // Same major: minor or patch bump — direct hop to target
+        path.push(target.to_string());
+    }
+
+    path
+}
+
+/// Determine if a direct upgrade between two versions is "safe" (no major jump).
+pub fn is_safe_upgrade(current: &str, target: &str) -> bool {
+    let cur = parse_plugin_version(current).unwrap_or((0, 0, 0));
+    let tgt = parse_plugin_version(target).unwrap_or((0, 0, 0));
+    tgt >= cur && !is_breaking_change(cur.0, tgt.0)
+}
+
+/// Start plugin upgrade
 pub async fn start_plugin_upgrade(
     State(state): State<AppState>,
     Path(plugin_code): Path<String>,
@@ -295,4 +349,90 @@ pub async fn list_upgrade_tasks(
     ];
 
     Json(CoreResponse::success(tasks, "Tasks retrieved"))
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    // ---- calculate_upgrade_path ----
+
+    #[test]
+    fn upgrade_path_same_version_empty() {
+        assert!(calculate_upgrade_path("1.2.3", "1.2.3").is_empty());
+    }
+
+    #[test]
+    fn upgrade_path_patch_bump() {
+        let path = calculate_upgrade_path("1.0.0", "1.0.5");
+        assert_eq!(path, vec!["1.0.5".to_string()]);
+    }
+
+    #[test]
+    fn upgrade_path_minor_bump() {
+        let path = calculate_upgrade_path("1.0.0", "1.2.0");
+        assert_eq!(path, vec!["1.2.0".to_string()]);
+    }
+
+    #[test]
+    fn upgrade_path_major_bump_single() {
+        let path = calculate_upgrade_path("1.0.0", "2.0.0");
+        assert_eq!(path, vec!["2.0.0".to_string()]);
+    }
+
+    #[test]
+    fn upgrade_path_major_bump_multi() {
+        let path = calculate_upgrade_path("1.0.0", "3.0.0");
+        assert_eq!(path, vec!["2.0.0".to_string(), "3.0.0".to_string()]);
+    }
+
+    #[test]
+    fn upgrade_path_major_with_minor_target() {
+        // 1.0.0 -> 3.5.2 yields ["2.0.0", "3.5.2"]
+        let path = calculate_upgrade_path("1.0.0", "3.5.2");
+        assert_eq!(path, vec!["2.0.0".to_string(), "3.5.2".to_string()]);
+    }
+
+    #[test]
+    fn upgrade_path_downgrade_empty() {
+        assert!(calculate_upgrade_path("2.0.0", "1.0.0").is_empty());
+    }
+
+    #[test]
+    fn upgrade_path_invalid_current_empty() {
+        assert!(calculate_upgrade_path("garbage", "1.0.0").is_empty());
+    }
+
+    #[test]
+    fn upgrade_path_invalid_target_empty() {
+        assert!(calculate_upgrade_path("1.0.0", "garbage").is_empty());
+    }
+
+    // ---- is_safe_upgrade ----
+
+    #[test]
+    fn is_safe_upgrade_patch_true() {
+        assert!(is_safe_upgrade("1.0.0", "1.0.1"));
+    }
+
+    #[test]
+    fn is_safe_upgrade_minor_true() {
+        assert!(is_safe_upgrade("1.0.0", "1.2.0"));
+    }
+
+    #[test]
+    fn is_safe_upgrade_major_false() {
+        assert!(!is_safe_upgrade("1.0.0", "2.0.0"));
+    }
+
+    #[test]
+    fn is_safe_upgrade_downgrade_false() {
+        assert!(!is_safe_upgrade("2.0.0", "1.0.0"));
+    }
+
+    #[test]
+    fn is_safe_upgrade_same_version_true() {
+        // Same version: tgt >= cur and no breaking change -> safe (no-op)
+        assert!(is_safe_upgrade("1.0.0", "1.0.0"));
+    }
 }

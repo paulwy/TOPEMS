@@ -6,6 +6,118 @@ use uuid::Uuid;
 use super::models::*;
 use topems_shared_core::response::ApiResponse;
 
+// =============================================================================
+// Pure functions（无 DB / 无 async / 无外部依赖，仅做计算与格式化）
+// =============================================================================
+
+/// 根据发票行项目（数量、单价）计算发票小计。
+/// 返回 0.0 当列表为空。
+pub fn calculate_invoice_total(items: &[(f64, f64)]) -> f64 {
+    items.iter().map(|(qty, price)| qty * price).sum()
+}
+
+/// 按给定税率计算税额。负税率视为 0，避免异常输出。
+pub fn calculate_tax(amount: f64, tax_rate: f64) -> f64 {
+    if tax_rate < 0.0 {
+        return 0.0;
+    }
+    amount * tax_rate
+}
+
+/// 应用百分比折扣（discount_pct 用百分数表示，例如 10 表示 10%）。
+/// 折扣区间限制在 [0, 100]，超出范围夹紧。
+pub fn apply_discount(amount: f64, discount_pct: f64) -> f64 {
+    let pct = discount_pct.clamp(0.0, 100.0);
+    amount * (1.0 - pct / 100.0)
+}
+
+/// 生成发票号：`{prefix}-{year}-{seq:06}`，例如 `INV-2026-000042`。
+pub fn generate_invoice_number(prefix: &str, year: i32, seq: u64) -> String {
+    format!("{}-{}-{:06}", prefix, year, seq)
+}
+
+/// 判断付款是否逾期。返回 true 当且仅当未支付且当前时间晚于到期时间。
+pub fn is_payment_overdue(due_date: i64, now: i64, paid: bool) -> bool {
+    !paid && now > due_date
+}
+
+/// 计算逾期罚金 = 金额 × 逾期天数 × 日费率。
+/// 逾期天数 ≤ 0 时返回 0；负金额视为 0。
+pub fn calculate_late_fee(amount: f64, overdue_days: i64, daily_rate: f64) -> f64 {
+    if overdue_days <= 0 || amount <= 0.0 || daily_rate <= 0.0 {
+        return 0.0;
+    }
+    amount * overdue_days as f64 * daily_rate
+}
+
+/// 按货币代码格式化金额，例如 `"$100.00"`、`"¥1,234"`（JPY 不带小数）。
+/// 未知货币回退为 `"{amount} {code}"`。
+pub fn format_currency(amount: f64, currency: &str) -> String {
+    match currency.to_uppercase().as_str() {
+        "USD" => format!("${:.2}", amount),
+        "CNY" => format!("¥{:.2}", amount),
+        "EUR" => format!("€{:.2}", amount),
+        "GBP" => format!("£{:.2}", amount),
+        "JPY" => format!("¥{:.0}", amount),
+        other => format!("{:.2} {}", amount, other),
+    }
+}
+
+/// 按比例计算月费分摊。days_in_month ≤ 0 时返回 0。
+pub fn calculate_proration(monthly_amount: f64, days_used: i64, days_in_month: i64) -> f64 {
+    if days_in_month <= 0 || days_used <= 0 {
+        return 0.0;
+    }
+    let used = days_used.min(days_in_month) as f64;
+    monthly_amount * (used / days_in_month as f64)
+}
+
+/// 计算订阅套餐总价。已知 tier：basic=29.99/月、professional=99.99/月、enterprise=199.99/月；
+/// 年付（months >= 12）赠送 2 个月。未知 tier 返回 None。
+pub fn calculate_subscription_price(tier: &str, months: u32) -> Option<f64> {
+    let monthly = match tier {
+        "basic" => 29.99,
+        "professional" => 99.99,
+        "enterprise" => 199.99,
+        _ => return None,
+    };
+    if months == 0 {
+        return Some(0.0);
+    }
+    if months >= 12 {
+        // 年付优惠：每 12 个月只收 10 个月费用
+        let years = months / 12;
+        let remainder = months % 12;
+        Some(monthly * (years as f64 * 10.0 + remainder as f64))
+    } else {
+        Some(monthly * months as f64)
+    }
+}
+
+/// 校验支付金额是否合法：必须 > 0 且 ≤ 发票总额（允许 1 分钱容差）。
+pub fn validate_payment_amount(amount: f64, invoice_total: f64) -> bool {
+    if amount <= 0.0 || invoice_total < 0.0 {
+        return false;
+    }
+    amount <= invoice_total + 0.01
+}
+
+/// 计算退款金额 = amount × (total_days - used_days) / total_days。
+/// used_days >= total_days 返回 0；total_days <= 0 返回 0。
+pub fn calculate_refund(amount: f64, used_days: i64, total_days: i64) -> f64 {
+    if total_days <= 0 || amount <= 0.0 {
+        return 0.0;
+    }
+    if used_days >= total_days {
+        return 0.0;
+    }
+    if used_days < 0 {
+        return amount;
+    }
+    let remaining = (total_days - used_days) as f64;
+    amount * (remaining / total_days as f64)
+}
+
 pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
     sqlx::query(
         r#"
@@ -542,5 +654,397 @@ pub async fn record_usage(
                 &format!("Failed to record usage: {}", e),
             ))
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    // ---- calculate_invoice_total ----
+
+    #[test]
+    fn invoice_total_empty_list_is_zero() {
+        assert_eq!(calculate_invoice_total(&[]), 0.0);
+    }
+
+    #[test]
+    fn invoice_total_single_item() {
+        assert_eq!(calculate_invoice_total(&[(2.0, 5.0)]), 10.0);
+    }
+
+    #[test]
+    fn invoice_total_multiple_items() {
+        let items = vec![(1.0, 100.0), (3.0, 20.0), (2.0, 7.5)];
+        assert_eq!(calculate_invoice_total(&items), 175.0);
+    }
+
+    #[test]
+    fn invoice_total_zero_quantity() {
+        assert_eq!(calculate_invoice_total(&[(0.0, 99.99)]), 0.0);
+    }
+
+    #[test]
+    fn invoice_total_zero_price() {
+        assert_eq!(calculate_invoice_total(&[(5.0, 0.0)]), 0.0);
+    }
+
+    #[test]
+    fn invoice_total_fractional_values() {
+        let items = vec![(1.5, 10.0), (2.5, 4.0)];
+        assert_eq!(calculate_invoice_total(&items), 25.0);
+    }
+
+    // ---- calculate_tax ----
+
+    #[test]
+    fn tax_zero_amount() {
+        assert_eq!(calculate_tax(0.0, 0.1), 0.0);
+    }
+
+    #[test]
+    fn tax_zero_rate() {
+        assert_eq!(calculate_tax(100.0, 0.0), 0.0);
+    }
+
+    #[test]
+    fn tax_normal_rate() {
+        assert_eq!(calculate_tax(100.0, 0.13), 13.0);
+    }
+
+    #[test]
+    fn tax_negative_rate_returns_zero() {
+        assert_eq!(calculate_tax(100.0, -0.1), 0.0);
+    }
+
+    #[test]
+    fn tax_high_rate() {
+        assert_eq!(calculate_tax(50.0, 1.0), 50.0);
+    }
+
+    // ---- apply_discount ----
+
+    #[test]
+    fn discount_zero_pct() {
+        assert_eq!(apply_discount(100.0, 0.0), 100.0);
+    }
+
+    #[test]
+    fn discount_full_pct() {
+        assert_eq!(apply_discount(100.0, 100.0), 0.0);
+    }
+
+    #[test]
+    fn discount_normal() {
+        assert_eq!(apply_discount(200.0, 10.0), 180.0);
+    }
+
+    #[test]
+    fn discount_over_100_clamped() {
+        assert_eq!(apply_discount(100.0, 150.0), 0.0);
+    }
+
+    #[test]
+    fn discount_negative_clamped() {
+        assert_eq!(apply_discount(100.0, -20.0), 100.0);
+    }
+
+    #[test]
+    fn discount_zero_amount() {
+        assert_eq!(apply_discount(0.0, 50.0), 0.0);
+    }
+
+    // ---- generate_invoice_number ----
+
+    #[test]
+    fn invoice_number_basic() {
+        assert_eq!(generate_invoice_number("INV", 2026, 42), "INV-2026-000042");
+    }
+
+    #[test]
+    fn invoice_number_zero_seq() {
+        assert_eq!(generate_invoice_number("INV", 2026, 0), "INV-2026-000000");
+    }
+
+    #[test]
+    fn invoice_number_large_seq_preserves_width() {
+        assert_eq!(
+            generate_invoice_number("BILL", 2026, 1234567),
+            "BILL-2026-1234567"
+        );
+    }
+
+    #[test]
+    fn invoice_number_empty_prefix() {
+        assert_eq!(generate_invoice_number("", 2026, 1), "-2026-000001");
+    }
+
+    #[test]
+    fn invoice_number_year_zero() {
+        assert_eq!(generate_invoice_number("INV", 0, 5), "INV-0-000005");
+    }
+
+    // ---- is_payment_overdue ----
+
+    #[test]
+    fn overdue_unpaid_after_due() {
+        assert!(is_payment_overdue(1_000, 2_000, false));
+    }
+
+    #[test]
+    fn overdue_paid_never_overdue() {
+        assert!(!is_payment_overdue(1_000, 2_000, true));
+    }
+
+    #[test]
+    fn overdue_before_due_date() {
+        assert!(!is_payment_overdue(2_000, 1_000, false));
+    }
+
+    #[test]
+    fn overdue_exactly_at_due_date() {
+        assert!(!is_payment_overdue(2_000, 2_000, false));
+    }
+
+    #[test]
+    fn overdue_unpaid_at_due_date() {
+        assert!(!is_payment_overdue(1_000, 1_000, false));
+    }
+
+    // ---- calculate_late_fee ----
+
+    #[test]
+    fn late_fee_zero_days() {
+        assert_eq!(calculate_late_fee(100.0, 0, 0.01), 0.0);
+    }
+
+    #[test]
+    fn late_fee_negative_days() {
+        assert_eq!(calculate_late_fee(100.0, -5, 0.01), 0.0);
+    }
+
+    #[test]
+    fn late_fee_normal() {
+        assert_eq!(calculate_late_fee(1000.0, 5, 0.001), 5.0);
+    }
+
+    #[test]
+    fn late_fee_zero_amount() {
+        assert_eq!(calculate_late_fee(0.0, 10, 0.01), 0.0);
+    }
+
+    #[test]
+    fn late_fee_negative_amount() {
+        assert_eq!(calculate_late_fee(-100.0, 10, 0.01), 0.0);
+    }
+
+    #[test]
+    fn late_fee_negative_rate() {
+        assert_eq!(calculate_late_fee(100.0, 10, -0.01), 0.0);
+    }
+
+    // ---- format_currency ----
+
+    #[test]
+    fn currency_usd() {
+        assert_eq!(format_currency(100.0, "USD"), "$100.00");
+    }
+
+    #[test]
+    fn currency_cny() {
+        assert_eq!(format_currency(99.5, "CNY"), "¥99.50");
+    }
+
+    #[test]
+    fn currency_eur() {
+        assert_eq!(format_currency(50.25, "EUR"), "€50.25");
+    }
+
+    #[test]
+    fn currency_gbp() {
+        assert_eq!(format_currency(12.0, "GBP"), "£12.00");
+    }
+
+    #[test]
+    fn currency_jpy_no_decimals() {
+        // JPY 不带小数（1234.6 进位到 1235）
+        assert_eq!(format_currency(1234.6, "JPY"), "¥1235");
+    }
+
+    #[test]
+    fn currency_unknown_code_fallback() {
+        assert_eq!(format_currency(10.0, "KRW"), "10.00 KRW");
+    }
+
+    #[test]
+    fn currency_lowercase_normalized() {
+        assert_eq!(format_currency(10.0, "usd"), "$10.00");
+    }
+
+    #[test]
+    fn currency_zero_amount() {
+        assert_eq!(format_currency(0.0, "USD"), "$0.00");
+    }
+
+    // ---- calculate_proration ----
+
+    #[test]
+    fn proration_full_month() {
+        assert_eq!(calculate_proration(100.0, 30, 30), 100.0);
+    }
+
+    #[test]
+    fn proration_zero_days_used() {
+        assert_eq!(calculate_proration(100.0, 0, 30), 0.0);
+    }
+
+    #[test]
+    fn proration_half_month() {
+        assert_eq!(calculate_proration(100.0, 15, 30), 50.0);
+    }
+
+    #[test]
+    fn proration_days_used_exceeds_month_clamped() {
+        assert_eq!(calculate_proration(100.0, 45, 30), 100.0);
+    }
+
+    #[test]
+    fn proration_zero_days_in_month() {
+        assert_eq!(calculate_proration(100.0, 15, 0), 0.0);
+    }
+
+    #[test]
+    fn proration_negative_days_used() {
+        assert_eq!(calculate_proration(100.0, -5, 30), 0.0);
+    }
+
+    #[test]
+    fn proration_zero_amount() {
+        assert_eq!(calculate_proration(0.0, 15, 30), 0.0);
+    }
+
+    // ---- calculate_subscription_price ----
+
+    #[test]
+    fn subscription_basic_one_month() {
+        assert_eq!(calculate_subscription_price("basic", 1), Some(29.99));
+    }
+
+    #[test]
+    fn subscription_professional_six_months() {
+        // 99.99 × 6 = 599.94，浮点误差允许 0.01
+        let result = calculate_subscription_price("professional", 6).unwrap();
+        assert!((result - 599.94).abs() < 0.01);
+    }
+
+    #[test]
+    fn subscription_enterprise_one_year() {
+        // 12 个月按 10 个月计费
+        assert_eq!(calculate_subscription_price("enterprise", 12), Some(1999.9));
+    }
+
+    #[test]
+    fn subscription_zero_months() {
+        assert_eq!(calculate_subscription_price("basic", 0), Some(0.0));
+    }
+
+    #[test]
+    fn subscription_unknown_tier() {
+        assert_eq!(calculate_subscription_price("platinum", 12), None);
+    }
+
+    #[test]
+    fn subscription_year_plus_months() {
+        // 14 = 1 年(10 个月计费) + 2 个月
+        // enterprise: 199.99 × (10 + 2) = 2399.88
+        assert_eq!(
+            calculate_subscription_price("enterprise", 14),
+            Some(2399.88)
+        );
+    }
+
+    #[test]
+    fn subscription_empty_tier() {
+        assert_eq!(calculate_subscription_price("", 12), None);
+    }
+
+    // ---- validate_payment_amount ----
+
+    #[test]
+    fn payment_valid_partial() {
+        assert!(validate_payment_amount(50.0, 100.0));
+    }
+
+    #[test]
+    fn payment_valid_exact() {
+        assert!(validate_payment_amount(100.0, 100.0));
+    }
+
+    #[test]
+    fn payment_zero_amount_invalid() {
+        assert!(!validate_payment_amount(0.0, 100.0));
+    }
+
+    #[test]
+    fn payment_negative_amount_invalid() {
+        assert!(!validate_payment_amount(-10.0, 100.0));
+    }
+
+    #[test]
+    fn payment_over_invoice_invalid() {
+        assert!(!validate_payment_amount(150.0, 100.0));
+    }
+
+    #[test]
+    fn payment_within_one_cent_tolerance() {
+        // 0.005 浮点误差允许
+        assert!(validate_payment_amount(100.005, 100.0));
+    }
+
+    #[test]
+    fn payment_negative_invoice_invalid() {
+        assert!(!validate_payment_amount(10.0, -100.0));
+    }
+
+    // ---- calculate_refund ----
+
+    #[test]
+    fn refund_unused_full() {
+        assert_eq!(calculate_refund(100.0, 0, 30), 100.0);
+    }
+
+    #[test]
+    fn refund_half_used() {
+        assert_eq!(calculate_refund(100.0, 15, 30), 50.0);
+    }
+
+    #[test]
+    fn refund_fully_used_zero() {
+        assert_eq!(calculate_refund(100.0, 30, 30), 0.0);
+    }
+
+    #[test]
+    fn refund_over_used_zero() {
+        assert_eq!(calculate_refund(100.0, 60, 30), 0.0);
+    }
+
+    #[test]
+    fn refund_zero_total_days() {
+        assert_eq!(calculate_refund(100.0, 5, 0), 0.0);
+    }
+
+    #[test]
+    fn refund_negative_used_days_full_refund() {
+        assert_eq!(calculate_refund(100.0, -5, 30), 100.0);
+    }
+
+    #[test]
+    fn refund_zero_amount() {
+        assert_eq!(calculate_refund(0.0, 10, 30), 0.0);
+    }
+
+    #[test]
+    fn refund_negative_amount() {
+        assert_eq!(calculate_refund(-50.0, 5, 30), 0.0);
     }
 }

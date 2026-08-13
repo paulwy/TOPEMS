@@ -8,6 +8,90 @@ use super::super::models::*;
 use crate::{AppState, CoreResponse};
 use topems_shared_auth::auth::Claims;
 
+// ============================================================================
+// Pure helper functions (no DB / async) — extracted for unit testing
+// ============================================================================
+
+/// Check whether a tenant may install additional plugins based on its tier.
+///   free       -> max 5
+///   pro        -> max 20
+///   enterprise -> unlimited
+/// Unknown tiers fall back to the "free" limit.
+pub fn check_tenant_plugin_limit(current_count: usize, tier: &str) -> bool {
+    let limit = match tier.to_lowercase().as_str() {
+        "free" => 5,
+        "pro" => 20,
+        "enterprise" => usize::MAX,
+        _ => 5, // unknown tier defaults to free
+    };
+    current_count < limit
+}
+
+/// Detect a circular dependency in a directed graph of (from, to) edges.
+/// Uses DFS with a "visiting" stack to find back-edges.
+pub fn has_circular_dependency(edges: &[(String, String)]) -> bool {
+    use std::collections::{HashMap, HashSet};
+
+    // Build adjacency list
+    let mut graph: HashMap<&str, Vec<&str>> = HashMap::new();
+    for (from, to) in edges {
+        graph.entry(from.as_str()).or_default().push(to.as_str());
+        // Ensure the `to` node exists in the graph even if it has no outgoing edges
+        graph.entry(to.as_str()).or_default();
+    }
+
+    let mut visited: HashSet<&str> = HashSet::new();
+    let mut on_stack: HashSet<&str> = HashSet::new();
+
+    fn dfs<'a>(
+        node: &'a str,
+        graph: &HashMap<&'a str, Vec<&'a str>>,
+        visited: &mut HashSet<&'a str>,
+        on_stack: &mut HashSet<&'a str>,
+    ) -> bool {
+        if on_stack.contains(node) {
+            return true; // back-edge -> cycle
+        }
+        if visited.contains(node) {
+            return false;
+        }
+        visited.insert(node);
+        on_stack.insert(node);
+        for neighbor in graph.get(node).cloned().unwrap_or_default() {
+            if dfs(neighbor, graph, visited, on_stack) {
+                return true;
+            }
+        }
+        on_stack.remove(node);
+        false
+    }
+
+    for &start in graph.keys() {
+        if dfs(start, &graph, &mut visited, &mut on_stack) {
+            return true;
+        }
+    }
+    false
+}
+
+/// Validate that a plugin code is alphanumeric with optional hyphens,
+/// length 3..=64, and does not start or end with a hyphen.
+pub fn validate_plugin_code(code: &str) -> bool {
+    let len = code.len();
+    if len < 3 || len > 64 {
+        return false;
+    }
+    if code.starts_with('-') || code.ends_with('-') {
+        return false;
+    }
+    code.chars().all(|c| c.is_ascii_alphanumeric() || c == '-')
+}
+
+/// Determine if an uninstall tier requires confirmation. Only Delete does.
+pub fn requires_confirmation(tier: &str) -> bool {
+    tier.eq_ignore_ascii_case("delete")
+}
+
 /// Get tenant's installed plugins
 #[utoipa::path(
     get,
@@ -783,5 +867,192 @@ pub async fn update_plugin(
             Json(CoreResponse::success(p, "Plugin updated"))
         }
         None => Json(CoreResponse::error("Plugin not found")),
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    // ---- check_tenant_plugin_limit ----
+
+    #[test]
+    fn tenant_limit_free_under() {
+        assert!(check_tenant_plugin_limit(4, "free"));
+    }
+
+    #[test]
+    fn tenant_limit_free_at_limit() {
+        assert!(!check_tenant_plugin_limit(5, "free"));
+    }
+
+    #[test]
+    fn tenant_limit_free_over() {
+        assert!(!check_tenant_plugin_limit(6, "free"));
+    }
+
+    #[test]
+    fn tenant_limit_pro_under() {
+        assert!(check_tenant_plugin_limit(19, "pro"));
+    }
+
+    #[test]
+    fn tenant_limit_pro_at_limit() {
+        assert!(!check_tenant_plugin_limit(20, "pro"));
+    }
+
+    #[test]
+    fn tenant_limit_enterprise_unlimited() {
+        assert!(check_tenant_plugin_limit(1_000_000, "enterprise"));
+    }
+
+    #[test]
+    fn tenant_limit_case_insensitive() {
+        assert!(check_tenant_plugin_limit(2, "FREE"));
+        assert!(check_tenant_plugin_limit(2, "Pro"));
+        assert!(check_tenant_plugin_limit(2, "ENTERPRISE"));
+    }
+
+    #[test]
+    fn tenant_limit_unknown_tier_defaults_free() {
+        assert!(!check_tenant_plugin_limit(5, "unknown"));
+        assert!(check_tenant_plugin_limit(2, "unknown"));
+    }
+
+    #[test]
+    fn tenant_limit_zero_count_always_allowed() {
+        assert!(check_tenant_plugin_limit(0, "free"));
+    }
+
+    // ---- has_circular_dependency ----
+
+    #[test]
+    fn circular_empty_no_cycle() {
+        assert!(!has_circular_dependency(&[]));
+    }
+
+    #[test]
+    fn circular_no_cycle_chain() {
+        let edges = vec![
+            ("a".to_string(), "b".to_string()),
+            ("b".to_string(), "c".to_string()),
+            ("c".to_string(), "d".to_string()),
+        ];
+        assert!(!has_circular_dependency(&edges));
+    }
+
+    #[test]
+    fn circular_self_loop() {
+        let edges = vec![("a".to_string(), "a".to_string())];
+        assert!(has_circular_dependency(&edges));
+    }
+
+    #[test]
+    fn circular_simple_cycle() {
+        let edges = vec![
+            ("a".to_string(), "b".to_string()),
+            ("b".to_string(), "a".to_string()),
+        ];
+        assert!(has_circular_dependency(&edges));
+    }
+
+    #[test]
+    fn circular_three_node_cycle() {
+        let edges = vec![
+            ("a".to_string(), "b".to_string()),
+            ("b".to_string(), "c".to_string()),
+            ("c".to_string(), "a".to_string()),
+        ];
+        assert!(has_circular_dependency(&edges));
+    }
+
+    #[test]
+    fn circular_diamond_no_cycle() {
+        // a -> b -> d, a -> c -> d (DAG)
+        let edges = vec![
+            ("a".to_string(), "b".to_string()),
+            ("a".to_string(), "c".to_string()),
+            ("b".to_string(), "d".to_string()),
+            ("c".to_string(), "d".to_string()),
+        ];
+        assert!(!has_circular_dependency(&edges));
+    }
+
+    #[test]
+    fn circular_disconnected_components_one_cycles() {
+        let edges = vec![
+            ("a".to_string(), "b".to_string()),
+            ("x".to_string(), "y".to_string()),
+            ("y".to_string(), "x".to_string()),
+        ];
+        assert!(has_circular_dependency(&edges));
+    }
+
+    // ---- validate_plugin_code ----
+
+    #[test]
+    fn plugin_code_valid_simple() {
+        assert!(validate_plugin_code("abc"));
+    }
+
+    #[test]
+    fn plugin_code_valid_with_hyphens() {
+        assert!(validate_plugin_code("my-plugin-code"));
+    }
+
+    #[test]
+    fn plugin_code_too_short() {
+        assert!(!validate_plugin_code("ab"));
+    }
+
+    #[test]
+    fn plugin_code_too_long() {
+        let long = "a".repeat(65);
+        assert!(!validate_plugin_code(&long));
+    }
+
+    #[test]
+    fn plugin_code_max_length_ok() {
+        let exact = "a".repeat(64);
+        assert!(validate_plugin_code(&exact));
+    }
+
+    #[test]
+    fn plugin_code_leading_hyphen_invalid() {
+        assert!(!validate_plugin_code("-abc"));
+    }
+
+    #[test]
+    fn plugin_code_trailing_hyphen_invalid() {
+        assert!(!validate_plugin_code("abc-"));
+    }
+
+    #[test]
+    fn plugin_code_special_chars_invalid() {
+        assert!(!validate_plugin_code("my plugin!"));
+        assert!(!validate_plugin_code("plugin_underscore"));
+    }
+
+    // ---- requires_confirmation ----
+
+    #[test]
+    fn confirmation_delete_required() {
+        assert!(requires_confirmation("delete"));
+    }
+
+    #[test]
+    fn confirmation_disable_not_required() {
+        assert!(!requires_confirmation("disable"));
+    }
+
+    #[test]
+    fn confirmation_uninstall_not_required() {
+        assert!(!requires_confirmation("uninstall"));
+    }
+
+    #[test]
+    fn confirmation_case_insensitive() {
+        assert!(requires_confirmation("DELETE"));
+        assert!(requires_confirmation("Delete"));
     }
 }

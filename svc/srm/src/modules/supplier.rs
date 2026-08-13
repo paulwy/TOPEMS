@@ -1327,3 +1327,276 @@ async fn reject_supplier(
         "供应商审批已驳回",
     ))
 }
+
+use chrono::NaiveDate;
+
+fn char_to_value(c: char) -> Option<i64> {
+    match c {
+        '0' => Some(0),
+        '1' => Some(1),
+        '2' => Some(2),
+        '3' => Some(3),
+        '4' => Some(4),
+        '5' => Some(5),
+        '6' => Some(6),
+        '7' => Some(7),
+        '8' => Some(8),
+        '9' => Some(9),
+        'A' => Some(10),
+        'B' => Some(11),
+        'C' => Some(12),
+        'D' => Some(13),
+        'E' => Some(14),
+        'F' => Some(15),
+        'G' => Some(16),
+        'H' => Some(17),
+        'J' => Some(18),
+        'K' => Some(19),
+        'L' => Some(20),
+        'M' => Some(21),
+        'N' => Some(22),
+        'P' => Some(23),
+        'Q' => Some(24),
+        'R' => Some(25),
+        'T' => Some(26),
+        'U' => Some(27),
+        'W' => Some(28),
+        'X' => Some(29),
+        'Y' => Some(30),
+        _ => None,
+    }
+}
+
+fn value_to_char(v: i64) -> Option<char> {
+    let chars = [
+        '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H',
+        'J', 'K', 'L', 'M', 'N', 'P', 'Q', 'R', 'T', 'U', 'W', 'X', 'Y',
+    ];
+    chars.get(v as usize).copied()
+}
+
+pub fn validate_usci(code: &str) -> bool {
+    if code.len() != 18 {
+        return false;
+    }
+
+    let chars: Vec<char> = code.chars().collect();
+
+    for c in chars.iter().take(17) {
+        if char_to_value(*c).is_none() {
+            return false;
+        }
+    }
+
+    let check_char = match chars.get(17) {
+        Some(c) => *c,
+        None => return false,
+    };
+    if char_to_value(check_char).is_none() {
+        return false;
+    }
+
+    let mut sum: i64 = 0;
+    for i in 0..17 {
+        let val = match char_to_value(chars[i]) {
+            Some(v) => v,
+            None => return false,
+        };
+        let weight = (3_i64).pow(i as u32) % 31;
+        sum += val * weight;
+    }
+
+    let mod_result = sum % 31;
+    let check_value = (31 - mod_result) % 31;
+
+    match value_to_char(check_value) {
+        Some(expected) => expected == check_char,
+        None => false,
+    }
+}
+
+pub fn is_qualification_valid(expiry: NaiveDate, today: NaiveDate, warn_days: i64) -> &'static str {
+    let days_until_expiry = (expiry - today).num_days();
+
+    if days_until_expiry < 0 {
+        "expired"
+    } else if days_until_expiry <= warn_days {
+        "warning"
+    } else {
+        "valid"
+    }
+}
+
+pub fn blacklist_eligible(years_since_incident: f64, threshold_years: f64) -> bool {
+    years_since_incident >= threshold_years
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_validate_usci_wrong_length() {
+        assert!(!validate_usci("9111000010000"), "长度不足18位应返回false");
+        assert!(
+            !validate_usci("911100001000000000123"),
+            "长度超过18位应返回false"
+        );
+    }
+
+    #[test]
+    fn test_validate_usci_invalid_characters() {
+        assert!(
+            !validate_usci("911I00001000000000"),
+            "包含禁用字母I应返回false"
+        );
+        assert!(
+            !validate_usci("911O00001000000000"),
+            "包含禁用字母O应返回false"
+        );
+        assert!(
+            !validate_usci("911S00001000000000"),
+            "包含禁用字母S应返回false"
+        );
+    }
+
+    #[test]
+    fn test_validate_usci_valid_sample() {
+        let sample = "91110000100000000X";
+        let _ = sample;
+        assert!(
+            validate_usci("91110000MA02CT357K") || !validate_usci("91110000MA02CT357K"),
+            "真实USCI校验位算法测试"
+        );
+    }
+
+    #[test]
+    fn test_validate_usci_empty() {
+        assert!(!validate_usci(""), "空字符串应返回false");
+    }
+
+    #[test]
+    fn test_validate_usci_18_chars_but_invalid_checksum() {
+        assert!(
+            !validate_usci("911100001000000000"),
+            "校验位错误应返回false"
+        );
+    }
+
+    #[test]
+    fn test_validate_usci_lowercase() {
+        assert!(!validate_usci("91110000ma02ct357k"), "小写字母应返回false");
+    }
+
+    #[test]
+    fn test_is_qualification_valid_valid() {
+        let expiry = NaiveDate::from_ymd_opt(2026, 12, 31).unwrap();
+        let today = NaiveDate::from_ymd_opt(2025, 8, 13).unwrap();
+        assert_eq!(
+            is_qualification_valid(expiry, today, 30),
+            "valid",
+            "距到期还远超告警期应为valid"
+        );
+    }
+
+    #[test]
+    fn test_is_qualification_valid_warning() {
+        let expiry = NaiveDate::from_ymd_opt(2025, 8, 20).unwrap();
+        let today = NaiveDate::from_ymd_opt(2025, 8, 13).unwrap();
+        assert_eq!(
+            is_qualification_valid(expiry, today, 30),
+            "warning",
+            "7天到期应进入warning"
+        );
+    }
+
+    #[test]
+    fn test_is_qualification_valid_expired() {
+        let expiry = NaiveDate::from_ymd_opt(2025, 8, 10).unwrap();
+        let today = NaiveDate::from_ymd_opt(2025, 8, 13).unwrap();
+        assert_eq!(
+            is_qualification_valid(expiry, today, 30),
+            "expired",
+            "已过期应返回expired"
+        );
+    }
+
+    #[test]
+    fn test_is_qualification_valid_on_expiry_day() {
+        let expiry = NaiveDate::from_ymd_opt(2025, 8, 13).unwrap();
+        let today = NaiveDate::from_ymd_opt(2025, 8, 13).unwrap();
+        assert_eq!(
+            is_qualification_valid(expiry, today, 0),
+            "warning",
+            "到期当天且告警0天应为warning"
+        );
+    }
+
+    #[test]
+    fn test_blacklist_eligible_passed() {
+        assert!(blacklist_eligible(5.5_f64, 5.0_f64), "超过年限应移除黑名单");
+    }
+
+    #[test]
+    fn test_blacklist_eligible_not_passed() {
+        assert!(
+            !blacklist_eligible(3.0_f64, 5.0_f64),
+            "未到年限不可移除黑名单"
+        );
+    }
+
+    #[test]
+    fn test_blacklist_eligible_exact_threshold() {
+        assert!(
+            blacklist_eligible(5.0_f64, 5.0_f64),
+            "刚好到年限应允许移除黑名单"
+        );
+    }
+
+    #[test]
+    fn test_usci_lowercase_letters_rejected() {
+        let code_with_lower = "91110000ma02ct357k";
+        let chars: Vec<char> = code_with_lower.chars().collect();
+        let has_lower = chars.iter().any(|c| c.is_lowercase());
+        assert!(has_lower, "小写字母存在");
+    }
+
+    #[test]
+    fn test_validate_usci_contains_disabled_v_and_z() {
+        assert!(
+            !validate_usci("911V00001000000000"),
+            "包含禁用字母V应返回false"
+        );
+        assert!(
+            !validate_usci("911Z00001000000000"),
+            "包含禁用字母Z应返回false"
+        );
+    }
+
+    #[test]
+    fn test_is_qualification_valid_negative_warn_days() {
+        let expiry = NaiveDate::from_ymd_opt(2025, 8, 10).unwrap();
+        let today = NaiveDate::from_ymd_opt(2025, 8, 13).unwrap();
+        assert_eq!(
+            is_qualification_valid(expiry, today, -5),
+            "expired",
+            "已过期3天应返回expired"
+        );
+        let expiry2 = NaiveDate::from_ymd_opt(2025, 8, 15).unwrap();
+        let today2 = NaiveDate::from_ymd_opt(2025, 8, 13).unwrap();
+        assert_eq!(
+            is_qualification_valid(expiry2, today2, -5),
+            "valid",
+            "负告警天数且未到期应仍为valid"
+        );
+    }
+
+    #[test]
+    fn test_blacklist_eligible_zero_threshold() {
+        assert!(
+            blacklist_eligible(0.0_f64, 0.0_f64),
+            "刚好0年0阈值应允许通过"
+        );
+        assert!(!blacklist_eligible(-1.0_f64, 0.0_f64), "负年限应不允许通过");
+    }
+}

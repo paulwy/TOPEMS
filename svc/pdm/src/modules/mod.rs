@@ -15,6 +15,7 @@ pub mod production_statistics;
 pub mod production_step;
 pub mod project;
 pub mod version;
+pub mod version_logic;
 pub mod workflow;
 
 pub use openapi::ApiDoc;

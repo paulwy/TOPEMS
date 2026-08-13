@@ -779,3 +779,82 @@ pub async fn close_accident(
         "事故已结案",
     ))
 }
+
+pub fn classify_accident(
+    deaths: u32,
+    serious_injuries: u32,
+    direct_loss_yuan: f64,
+) -> &'static str {
+    if deaths >= 30 || serious_injuries >= 100 || direct_loss_yuan >= 100_000_000.0 {
+        "特别重大"
+    } else if deaths >= 10 || serious_injuries >= 50 || direct_loss_yuan >= 50_000_000.0 {
+        "重大"
+    } else if deaths >= 3 || serious_injuries >= 10 || direct_loss_yuan >= 10_000_000.0 {
+        "较大"
+    } else {
+        "一般"
+    }
+}
+
+pub fn response_target_hours(level: &str) -> f64 {
+    match level {
+        "特别重大" => 1.0,
+        "重大" => 2.0,
+        "较大" => 4.0,
+        "一般" => 8.0,
+        _ => 8.0,
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_classify_general() {
+        assert_eq!(classify_accident(0, 0, 0.0), "一般");
+        assert_eq!(classify_accident(1, 2, 100_000.0), "一般");
+        assert_eq!(classify_accident(2, 9, 9_999_999.0), "一般");
+    }
+
+    #[test]
+    fn test_classify_larger_boundary() {
+        assert_eq!(classify_accident(3, 0, 0.0), "较大");
+        assert_eq!(classify_accident(0, 10, 0.0), "较大");
+        assert_eq!(classify_accident(0, 0, 10_000_000.0), "较大");
+        assert_eq!(classify_accident(9, 49, 49_999_999.0), "较大");
+    }
+
+    #[test]
+    fn test_classify_major() {
+        assert_eq!(classify_accident(10, 0, 0.0), "重大");
+        assert_eq!(classify_accident(0, 50, 0.0), "重大");
+        assert_eq!(classify_accident(0, 0, 50_000_000.0), "重大");
+        assert_eq!(classify_accident(29, 99, 99_999_999.0), "重大");
+    }
+
+    #[test]
+    fn test_classify_especially_major() {
+        assert_eq!(classify_accident(30, 0, 0.0), "特别重大");
+        assert_eq!(classify_accident(0, 100, 0.0), "特别重大");
+        assert_eq!(classify_accident(0, 0, 100_000_000.0), "特别重大");
+        assert_eq!(classify_accident(100, 200, 500_000_000.0), "特别重大");
+    }
+
+    #[test]
+    fn test_classify_combined_conditions() {
+        assert_eq!(classify_accident(5, 20, 20_000_000.0), "较大");
+        assert_eq!(classify_accident(15, 30, 30_000_000.0), "重大");
+        assert_eq!(classify_accident(25, 80, 80_000_000.0), "重大");
+    }
+
+    #[test]
+    fn test_response_target() {
+        assert_eq!(response_target_hours("特别重大"), 1.0);
+        assert_eq!(response_target_hours("重大"), 2.0);
+        assert_eq!(response_target_hours("较大"), 4.0);
+        assert_eq!(response_target_hours("一般"), 8.0);
+        assert_eq!(response_target_hours("未知"), 8.0);
+        assert_eq!(response_target_hours(""), 8.0);
+    }
+}

@@ -11,6 +11,93 @@ use topems_shared_auth::auth::Claims;
 use topems_shared_core::response::ApiResponse;
 use utoipa::ToSchema;
 
+/// 校验反馈评分（1-5 星）
+pub fn validate_rating(rating: i32) -> Result<(), String> {
+    if (1..=5).contains(&rating) {
+        Ok(())
+    } else {
+        Err(format!("rating must be between 1 and 5, got {}", rating))
+    }
+}
+
+/// 根据主题和正文分类反馈类别
+pub fn classify_feedback_category(subject: &str, body: &str) -> &'static str {
+    let combined = format!("{} {}", subject.to_lowercase(), body.to_lowercase());
+    if combined.contains("bug")
+        || combined.contains("error")
+        || combined.contains("crash")
+        || combined.contains("broken")
+        || combined.contains("fail")
+    {
+        return "bug";
+    }
+    if combined.contains("feature")
+        || combined.contains("request")
+        || combined.contains("suggest")
+        || combined.contains("enhancement")
+        || combined.contains("wish")
+    {
+        return "feature";
+    }
+    if combined.contains("great")
+        || combined.contains("awesome")
+        || combined.contains("love")
+        || combined.contains("good")
+        || combined.contains("excellent")
+        || combined.contains("nice")
+    {
+        return "praise";
+    }
+    if combined.contains("slow")
+        || combined.contains("bad")
+        || combined.contains("terrible")
+        || combined.contains("hate")
+        || combined.contains("worst")
+        || combined.contains("angry")
+    {
+        return "complaint";
+    }
+    "other"
+}
+
+/// 根据评分推断情感倾向
+pub fn sentiment_from_rating(rating: i32) -> &'static str {
+    if rating >= 4 {
+        "positive"
+    } else if rating == 3 {
+        "neutral"
+    } else {
+        "negative"
+    }
+}
+
+/// 校验反馈状态转换是否合法
+pub fn is_valid_feedback_transition(from: &str, to: &str) -> bool {
+    if from == to {
+        return true;
+    }
+    match from {
+        "pending" => matches!(to, "open" | "in_progress" | "resolved" | "closed"),
+        "open" | "in_progress" => matches!(to, "resolved" | "closed" | "pending"),
+        "resolved" => matches!(to, "closed" | "open" | "in_progress"),
+        "closed" => false,
+        _ => false,
+    }
+}
+
+/// 计算反馈评分统计（平均分、最低分、最高分、数量）
+pub fn feedback_rating_stats(ratings: &[i32]) -> (f64, i32, i32, usize) {
+    if ratings.is_empty() {
+        return (0.0, 0, 0, 0);
+    }
+    let count = ratings.len();
+    let sum: i64 = ratings.iter().map(|&r| r as i64).sum();
+    let avg = sum as f64 / count as f64;
+    let min = *ratings.iter().min().unwrap();
+    let max = *ratings.iter().max().unwrap();
+    (avg, min, max, count)
+}
+
 #[derive(Debug, Serialize, Deserialize, FromRow, ToSchema)]
 pub struct Feedback {
     pub id: Uuid,
@@ -369,4 +456,218 @@ pub fn feedback_routes() -> Router<PgPool> {
                 .put(response_feedback)
                 .delete(delete_feedback),
         )
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    // ---- validate_rating ----
+
+    #[test]
+    fn test_validate_rating_valid() {
+        for r in 1..=5 {
+            assert!(validate_rating(r).is_ok());
+        }
+    }
+
+    #[test]
+    fn test_validate_rating_invalid_low() {
+        assert!(validate_rating(0).is_err());
+        assert!(validate_rating(-1).is_err());
+        assert!(validate_rating(-100).is_err());
+    }
+
+    #[test]
+    fn test_validate_rating_invalid_high() {
+        assert!(validate_rating(6).is_err());
+        assert!(validate_rating(10).is_err());
+        assert!(validate_rating(100).is_err());
+    }
+
+    #[test]
+    fn test_validate_rating_boundary() {
+        assert!(validate_rating(1).is_ok());
+        assert!(validate_rating(5).is_ok());
+        assert!(validate_rating(0).is_err());
+        assert!(validate_rating(6).is_err());
+    }
+
+    #[test]
+    fn test_validate_rating_error_message() {
+        let err = validate_rating(0).unwrap_err();
+        assert!(err.contains("0"));
+        assert!(err.contains("1"));
+        assert!(err.contains("5"));
+    }
+
+    // ---- classify_feedback_category ----
+
+    #[test]
+    fn test_classify_category_bug() {
+        assert_eq!(classify_feedback_category("Bug report", ""), "bug");
+        assert_eq!(classify_feedback_category("", "app crashes"), "bug");
+        assert_eq!(classify_feedback_category("ERROR", ""), "bug");
+        assert_eq!(classify_feedback_category("broken link", ""), "bug");
+        assert_eq!(classify_feedback_category("login fails", ""), "bug");
+    }
+
+    #[test]
+    fn test_classify_category_feature() {
+        assert_eq!(classify_feedback_category("Feature request", ""), "feature");
+        assert_eq!(
+            classify_feedback_category("", "suggest improvement"),
+            "feature"
+        );
+        assert_eq!(classify_feedback_category("enhancement", ""), "feature");
+        assert_eq!(classify_feedback_category("wish list", ""), "feature");
+    }
+
+    #[test]
+    fn test_classify_category_praise() {
+        assert_eq!(classify_feedback_category("Great app", ""), "praise");
+        assert_eq!(classify_feedback_category("", "love it"), "praise");
+        assert_eq!(classify_feedback_category("excellent work", ""), "praise");
+        assert_eq!(classify_feedback_category("nice design", ""), "praise");
+    }
+
+    #[test]
+    fn test_classify_category_complaint() {
+        assert_eq!(classify_feedback_category("slow loading", ""), "complaint");
+        assert_eq!(classify_feedback_category("bad service", ""), "complaint");
+        assert_eq!(
+            classify_feedback_category("terrible experience", ""),
+            "complaint"
+        );
+        assert_eq!(classify_feedback_category("worst app", ""), "complaint");
+    }
+
+    #[test]
+    fn test_classify_category_other() {
+        assert_eq!(classify_feedback_category("hello", ""), "other");
+        assert_eq!(classify_feedback_category("", "general inquiry"), "other");
+        assert_eq!(classify_feedback_category("question", ""), "other");
+    }
+
+    #[test]
+    fn test_classify_category_case_insensitive() {
+        assert_eq!(classify_feedback_category("BUG", ""), "bug");
+        assert_eq!(classify_feedback_category("FEATURE", ""), "feature");
+        assert_eq!(classify_feedback_category("GREAT", ""), "praise");
+    }
+
+    // ---- sentiment_from_rating ----
+
+    #[test]
+    fn test_sentiment_positive() {
+        assert_eq!(sentiment_from_rating(4), "positive");
+        assert_eq!(sentiment_from_rating(5), "positive");
+        assert_eq!(sentiment_from_rating(6), "positive");
+        assert_eq!(sentiment_from_rating(100), "positive");
+    }
+
+    #[test]
+    fn test_sentiment_neutral() {
+        assert_eq!(sentiment_from_rating(3), "neutral");
+    }
+
+    #[test]
+    fn test_sentiment_negative() {
+        assert_eq!(sentiment_from_rating(1), "negative");
+        assert_eq!(sentiment_from_rating(2), "negative");
+        assert_eq!(sentiment_from_rating(0), "negative");
+        assert_eq!(sentiment_from_rating(-1), "negative");
+    }
+
+    #[test]
+    fn test_sentiment_boundary() {
+        assert_eq!(sentiment_from_rating(3), "neutral");
+        assert_eq!(sentiment_from_rating(4), "positive");
+        assert_eq!(sentiment_from_rating(2), "negative");
+    }
+
+    // ---- is_valid_feedback_transition ----
+
+    #[test]
+    fn test_valid_transition_same_state() {
+        assert!(is_valid_feedback_transition("pending", "pending"));
+        assert!(is_valid_feedback_transition("resolved", "resolved"));
+        assert!(is_valid_feedback_transition("closed", "closed"));
+    }
+
+    #[test]
+    fn test_valid_transition_pending() {
+        assert!(is_valid_feedback_transition("pending", "open"));
+        assert!(is_valid_feedback_transition("pending", "in_progress"));
+        assert!(is_valid_feedback_transition("pending", "resolved"));
+        assert!(is_valid_feedback_transition("pending", "closed"));
+    }
+
+    #[test]
+    fn test_valid_transition_open_in_progress() {
+        assert!(is_valid_feedback_transition("open", "resolved"));
+        assert!(is_valid_feedback_transition("open", "closed"));
+        assert!(is_valid_feedback_transition("in_progress", "resolved"));
+        assert!(is_valid_feedback_transition("in_progress", "closed"));
+    }
+
+    #[test]
+    fn test_invalid_transition_closed() {
+        assert!(!is_valid_feedback_transition("closed", "pending"));
+        assert!(!is_valid_feedback_transition("closed", "open"));
+        assert!(!is_valid_feedback_transition("closed", "resolved"));
+    }
+
+    #[test]
+    fn test_invalid_transition_unknown() {
+        assert!(!is_valid_feedback_transition("unknown", "pending"));
+        assert!(!is_valid_feedback_transition("pending", "unknown"));
+    }
+
+    // ---- feedback_rating_stats ----
+
+    #[test]
+    fn test_rating_stats_empty() {
+        let (avg, min, max, count) = feedback_rating_stats(&[]);
+        assert_eq!(avg, 0.0);
+        assert_eq!(min, 0);
+        assert_eq!(max, 0);
+        assert_eq!(count, 0);
+    }
+
+    #[test]
+    fn test_rating_stats_single() {
+        let (avg, min, max, count) = feedback_rating_stats(&[3]);
+        assert_eq!(avg, 3.0);
+        assert_eq!(min, 3);
+        assert_eq!(max, 3);
+        assert_eq!(count, 1);
+    }
+
+    #[test]
+    fn test_rating_stats_multiple() {
+        let (avg, min, max, count) = feedback_rating_stats(&[1, 2, 3, 4, 5]);
+        assert_eq!(avg, 3.0);
+        assert_eq!(min, 1);
+        assert_eq!(max, 5);
+        assert_eq!(count, 5);
+    }
+
+    #[test]
+    fn test_rating_stats_all_same() {
+        let (avg, min, max, count) = feedback_rating_stats(&[5, 5, 5]);
+        assert_eq!(avg, 5.0);
+        assert_eq!(min, 5);
+        assert_eq!(max, 5);
+        assert_eq!(count, 3);
+    }
+
+    #[test]
+    fn test_rating_stats_avg_precision() {
+        let (avg, min, max, count) = feedback_rating_stats(&[1, 2]);
+        assert!((avg - 1.5).abs() < 0.0001);
+        assert_eq!(min, 1);
+        assert_eq!(max, 2);
+        assert_eq!(count, 2);
+    }
 }

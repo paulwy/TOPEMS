@@ -9,6 +9,47 @@ use uuid::Uuid;
 
 use topems_shared_core::response::ApiResponse;
 
+/// 使用 Haversine 公式计算两点间球面距离（公里）
+pub fn haversine_distance(lat1: f64, lon1: f64, lat2: f64, lon2: f64) -> f64 {
+    const EARTH_RADIUS_KM: f64 = 6371.0;
+    let to_rad = |deg: f64| deg * std::f64::consts::PI / 180.0;
+    let dlat = to_rad(lat2 - lat1);
+    let dlon = to_rad(lon2 - lon1);
+    let a = (dlat / 2.0).sin().powi(2)
+        + to_rad(lat1).cos() * to_rad(lat2).cos() * (dlon / 2.0).sin().powi(2);
+    let c = 2.0 * a.sqrt().asin();
+    EARTH_RADIUS_KM * c
+}
+
+/// 判断点是否在以 center 为圆心、radius_km 为半径的圆形地理围栏内
+pub fn is_within_geofence(
+    lat: f64,
+    lon: f64,
+    center_lat: f64,
+    center_lon: f64,
+    radius_km: f64,
+) -> bool {
+    if radius_km < 0.0 {
+        return false;
+    }
+    haversine_distance(lat, lon, center_lat, center_lon) <= radius_km
+}
+
+/// 从 JSON 坐标对象解析 (lat, lon)，支持 lat/lng、lat/lon 及全名键
+pub fn parse_coordinates(coords: &serde_json::Value) -> Option<(f64, f64)> {
+    let obj = coords.as_object()?;
+    let lat = obj
+        .get("lat")
+        .or_else(|| obj.get("latitude"))
+        .and_then(|v| v.as_f64())?;
+    let lon = obj
+        .get("lng")
+        .or_else(|| obj.get("lon"))
+        .or_else(|| obj.get("longitude"))
+        .and_then(|v| v.as_f64())?;
+    Some((lat, lon))
+}
+
 #[derive(Debug, FromRow, Serialize, Deserialize)]
 pub struct LocationMessage {
     pub id: Uuid,
@@ -749,4 +790,110 @@ pub async fn register_geofence_tables(pool: &PgPool) -> Result<(), sqlx::Error> 
         .await?;
 
     Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use serde_json::json;
+
+    #[test]
+    fn test_haversine_distance_zero() {
+        let d = haversine_distance(30.0, 120.0, 30.0, 120.0);
+        assert!(d.abs() < 1e-6);
+    }
+
+    #[test]
+    fn test_haversine_distance_known_route() {
+        let d = haversine_distance(39.9042, 116.4074, 31.2304, 121.4737);
+        assert!((d - 1067.0).abs() < 10.0, "distance was {}", d);
+    }
+
+    #[test]
+    fn test_haversine_distance_symmetric() {
+        let d1 = haversine_distance(10.0, 20.0, 30.0, 40.0);
+        let d2 = haversine_distance(30.0, 40.0, 10.0, 20.0);
+        assert!((d1 - d2).abs() < 1e-6);
+    }
+
+    #[test]
+    fn test_haversine_distance_antipode() {
+        let d = haversine_distance(0.0, 0.0, 0.0, 180.0);
+        assert!((d - 20015.0).abs() < 50.0, "distance was {}", d);
+    }
+
+    #[test]
+    fn test_haversine_distance_positive() {
+        let d = haversine_distance(0.0, 0.0, 0.0, 1.0);
+        assert!(d > 0.0);
+    }
+
+    #[test]
+    fn test_haversine_distance_small_delta() {
+        let d = haversine_distance(0.0, 0.0, 0.001, 0.0);
+        assert!((d - 0.111).abs() < 0.01, "distance was {}", d);
+    }
+
+    #[test]
+    fn test_is_within_geofence_inside() {
+        assert!(is_within_geofence(30.0, 120.0, 30.0, 120.0, 1.0));
+    }
+
+    #[test]
+    fn test_is_within_geofence_outside() {
+        assert!(!is_within_geofence(30.0, 120.0, 35.0, 125.0, 1.0));
+    }
+
+    #[test]
+    fn test_is_within_geofence_negative_radius() {
+        assert!(!is_within_geofence(30.0, 120.0, 30.0, 120.0, -1.0));
+    }
+
+    #[test]
+    fn test_is_within_geofence_zero_radius() {
+        assert!(is_within_geofence(30.0, 120.0, 30.0, 120.0, 0.0));
+        assert!(!is_within_geofence(30.001, 120.0, 30.0, 120.0, 0.0));
+    }
+
+    #[test]
+    fn test_is_within_geofence_boundary() {
+        assert!(is_within_geofence(31.0, 121.0, 31.0, 121.0, 100.0));
+    }
+
+    #[test]
+    fn test_parse_coordinates_lat_lng() {
+        let coords = json!({"lat": 30.0, "lng": 120.0});
+        assert_eq!(parse_coordinates(&coords), Some((30.0, 120.0)));
+    }
+
+    #[test]
+    fn test_parse_coordinates_lat_lon() {
+        let coords = json!({"lat": 30.0, "lon": 120.0});
+        assert_eq!(parse_coordinates(&coords), Some((30.0, 120.0)));
+    }
+
+    #[test]
+    fn test_parse_coordinates_full_names() {
+        let coords = json!({"latitude": 1.5, "longitude": 2.5});
+        assert_eq!(parse_coordinates(&coords), Some((1.5, 2.5)));
+    }
+
+    #[test]
+    fn test_parse_coordinates_missing_field() {
+        let coords = json!({"lat": 30.0});
+        assert_eq!(parse_coordinates(&coords), None);
+    }
+
+    #[test]
+    fn test_parse_coordinates_not_object() {
+        assert_eq!(parse_coordinates(&json!([1, 2])), None);
+        assert_eq!(parse_coordinates(&json!("string")), None);
+        assert_eq!(parse_coordinates(&json!(null)), None);
+    }
+
+    #[test]
+    fn test_parse_coordinates_non_numeric() {
+        let coords = json!({"lat": "30", "lng": 120.0});
+        assert_eq!(parse_coordinates(&coords), None);
+    }
 }

@@ -9,6 +9,60 @@ use crate::models::{
     Ticket, TicketSlaInfo, TicketSlaPolicy, TicketSlaStats, UpdateSlaPolicyRequest,
 };
 
+// ==================== Pure Functions ====================
+
+/// 判断 SLA 是否已违约：now 超过 created_at + sla_hours*3600 即违约
+pub fn is_sla_breached(created_at: i64, sla_hours: i64, now: i64) -> bool {
+    if sla_hours <= 0 {
+        return false;
+    }
+    let sla_seconds = sla_hours.saturating_mul(3600);
+    now > created_at.saturating_add(sla_seconds)
+}
+
+/// 计算 SLA 剩余秒数；正值表示未到期，负值表示已超时
+pub fn sla_remaining_seconds(created_at: i64, sla_seconds: i64, now: i64) -> i64 {
+    created_at.saturating_add(sla_seconds) - now
+}
+
+/// 计算 SLA 合规率 (0.0 ~ 1.0)
+pub fn sla_compliance_rate(total_tickets: usize, breached: usize) -> f64 {
+    if total_tickets == 0 {
+        return 0.0;
+    }
+    let breached = breached.min(total_tickets);
+    (total_tickets - breached) as f64 / total_tickets as f64
+}
+
+/// 计算响应时间统计 (min, avg, max)
+pub fn response_time_stats(times: &[f64]) -> (f64, f64, f64) {
+    if times.is_empty() {
+        return (0.0, 0.0, 0.0);
+    }
+    let mut min = f64::MAX;
+    let mut max = f64::MIN;
+    let mut sum = 0.0;
+    for &t in times {
+        if t < min {
+            min = t;
+        }
+        if t > max {
+            max = t;
+        }
+        sum += t;
+    }
+    let avg = sum / times.len() as f64;
+    (min, avg, max)
+}
+
+/// 计算工单年龄（天数）
+pub fn ticket_age_days(created_at: i64, now: i64) -> i64 {
+    if now < created_at {
+        return 0;
+    }
+    (now - created_at) / 86400
+}
+
 #[derive(Clone)]
 pub struct TicketSlaService {
     pool: PgPool,
@@ -698,5 +752,206 @@ impl TicketSlaService {
             by_type,
             breach_trend,
         })
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    // ========== is_sla_breached ==========
+
+    #[test]
+    fn test_is_sla_breached_not_breached() {
+        // created at 0, sla 1 hour, now 1800s (30 min) -> not breached
+        assert!(!is_sla_breached(0, 1, 1800));
+    }
+
+    #[test]
+    fn test_is_sla_breached_at_deadline() {
+        // created at 0, sla 1 hour (3600s), now exactly 3600 -> not breached (equal)
+        assert!(!is_sla_breached(0, 1, 3600));
+    }
+
+    #[test]
+    fn test_is_sla_breached_over_deadline() {
+        // created at 0, sla 1 hour, now 3601s -> breached
+        assert!(is_sla_breached(0, 1, 3601));
+    }
+
+    #[test]
+    fn test_is_sla_breached_zero_sla() {
+        assert!(!is_sla_breached(0, 0, 999999));
+    }
+
+    #[test]
+    fn test_is_sla_breached_negative_sla() {
+        assert!(!is_sla_breached(0, -5, 100));
+    }
+
+    #[test]
+    fn test_is_sla_breached_large_values() {
+        let created = 1_700_000_000;
+        let sla_hours = 24;
+        assert!(!is_sla_breached(created, sla_hours, created + 86399));
+        assert!(is_sla_breached(created, sla_hours, created + 86401));
+    }
+
+    #[test]
+    fn test_is_sla_breached_with_offset() {
+        // created at 1000, sla 2 hours (7200s), now 8199 -> not breached
+        assert!(!is_sla_breached(1000, 2, 8199));
+        // now 8201 -> breached
+        assert!(is_sla_breached(1000, 2, 8201));
+    }
+
+    // ========== sla_remaining_seconds ==========
+
+    #[test]
+    fn test_sla_remaining_positive() {
+        // 3600 - 1800 = 1800 remaining
+        assert_eq!(sla_remaining_seconds(0, 3600, 1800), 1800);
+    }
+
+    #[test]
+    fn test_sla_remaining_zero() {
+        assert_eq!(sla_remaining_seconds(0, 3600, 3600), 0);
+    }
+
+    #[test]
+    fn test_sla_remaining_negative() {
+        assert_eq!(sla_remaining_seconds(0, 3600, 7200), -3600);
+    }
+
+    #[test]
+    fn test_sla_remaining_with_offset() {
+        assert_eq!(sla_remaining_seconds(1000, 500, 1300), 200);
+    }
+
+    #[test]
+    fn test_sla_remaining_zero_sla() {
+        assert_eq!(sla_remaining_seconds(100, 0, 200), -100);
+    }
+
+    #[test]
+    fn test_sla_remaining_large_values() {
+        let created = 1_700_000_000;
+        assert_eq!(sla_remaining_seconds(created, 86400, created), 86400);
+        assert_eq!(sla_remaining_seconds(created, 86400, created + 86400), 0);
+        assert_eq!(
+            sla_remaining_seconds(created, 86400, created + 172800),
+            -86400
+        );
+    }
+
+    // ========== sla_compliance_rate ==========
+
+    #[test]
+    fn test_compliance_rate_all_compliant() {
+        assert_eq!(sla_compliance_rate(10, 0), 1.0);
+    }
+
+    #[test]
+    fn test_compliance_rate_all_breached() {
+        assert_eq!(sla_compliance_rate(10, 10), 0.0);
+    }
+
+    #[test]
+    fn test_compliance_rate_half() {
+        assert_eq!(sla_compliance_rate(10, 5), 0.5);
+    }
+
+    #[test]
+    fn test_compliance_rate_zero_total() {
+        assert_eq!(sla_compliance_rate(0, 0), 0.0);
+    }
+
+    #[test]
+    fn test_compliance_rate_breached_exceeds_total() {
+        // breached > total should be clamped
+        assert_eq!(sla_compliance_rate(5, 10), 0.0);
+    }
+
+    #[test]
+    fn test_compliance_rate_one_third() {
+        let rate = sla_compliance_rate(9, 3);
+        assert!((rate - (6.0 / 9.0)).abs() < 1e-9);
+    }
+
+    // ========== response_time_stats ==========
+
+    #[test]
+    fn test_response_stats_empty() {
+        assert_eq!(response_time_stats(&[]), (0.0, 0.0, 0.0));
+    }
+
+    #[test]
+    fn test_response_stats_single() {
+        assert_eq!(response_time_stats(&[5.0]), (5.0, 5.0, 5.0));
+    }
+
+    #[test]
+    fn test_response_stats_multiple() {
+        let (min, avg, max) = response_time_stats(&[1.0, 2.0, 3.0, 4.0, 5.0]);
+        assert_eq!(min, 1.0);
+        assert_eq!(max, 5.0);
+        assert!((avg - 3.0).abs() < 1e-9);
+    }
+
+    #[test]
+    fn test_response_stats_with_negatives() {
+        let (min, avg, max) = response_time_stats(&[-1.0, 0.0, 1.0]);
+        assert_eq!(min, -1.0);
+        assert_eq!(max, 1.0);
+        assert!((avg - 0.0).abs() < 1e-9);
+    }
+
+    #[test]
+    fn test_response_stats_duplicates() {
+        let (min, avg, max) = response_time_stats(&[7.0, 7.0, 7.0]);
+        assert_eq!(min, 7.0);
+        assert_eq!(max, 7.0);
+        assert!((avg - 7.0).abs() < 1e-9);
+    }
+
+    #[test]
+    fn test_response_stats_two_elements() {
+        let (min, avg, max) = response_time_stats(&[3.0, 9.0]);
+        assert_eq!(min, 3.0);
+        assert_eq!(max, 9.0);
+        assert!((avg - 6.0).abs() < 1e-9);
+    }
+
+    // ========== ticket_age_days ==========
+
+    #[test]
+    fn test_ticket_age_zero() {
+        assert_eq!(ticket_age_days(100, 100), 0);
+    }
+
+    #[test]
+    fn test_ticket_age_one_day() {
+        assert_eq!(ticket_age_days(0, 86400), 1);
+    }
+
+    #[test]
+    fn test_ticket_age_partial_day() {
+        assert_eq!(ticket_age_days(0, 86399), 0);
+    }
+
+    #[test]
+    fn test_ticket_age_future() {
+        // now before created -> 0
+        assert_eq!(ticket_age_days(1000, 500), 0);
+    }
+
+    #[test]
+    fn test_ticket_age_multiple_days() {
+        assert_eq!(ticket_age_days(0, 86400 * 7), 7);
+    }
+
+    #[test]
+    fn test_ticket_age_with_offset() {
+        assert_eq!(ticket_age_days(86400, 86400 * 4), 3);
     }
 }

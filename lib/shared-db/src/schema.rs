@@ -140,8 +140,6 @@ pub fn portal_table(table_name: &str) -> String {
 //                   warn 跳过 vs panic（CI 门禁）
 // ============================================================================
 
-use std::collections::BTreeSet;
-
 use sqlx::PgPool;
 
 /// 单列原子加列：ALTER TABLE <schema>.<table> ADD COLUMN IF NOT EXISTS <col> <def>
@@ -152,14 +150,7 @@ pub async fn add_column_if_missing(
     column: &str,
     definition: &str,
 ) -> Result<(), sqlx::Error> {
-    let qualified = match schema {
-        Some(s) => format!(r#""{}"."{}""#, s, table),
-        None => format!(r#""{}""#, table),
-    };
-    let ddl = format!(
-        r#"ALTER TABLE {} ADD COLUMN IF NOT EXISTS "{}" {}"#,
-        qualified, column, definition
-    );
+    let ddl = build_add_column_sql(schema, table, column, definition);
     sqlx::query(&ddl).execute(pool).await?;
     Ok(())
 }
@@ -190,13 +181,67 @@ pub async fn ensure_table_columns(
 
 /// 从环境变量读取严格模式。默认 `false`（宽松）。
 pub fn is_verify_strict() -> bool {
-    matches!(
+    is_verify_strict_from(
         std::env::var("SCHEMA_DEFENSE_VERIFY_STRICT")
             .unwrap_or_default()
-            .to_ascii_lowercase()
             .as_str(),
+    )
+}
+
+/// 严格模式解析的纯函数版本（便于单元测试，不读 env）
+pub fn is_verify_strict_from(env_value: &str) -> bool {
+    matches!(
+        env_value.to_ascii_lowercase().as_str(),
         "1" | "true" | "yes" | "on"
     )
+}
+
+/// 生成 "schema"."table" / "table" 限定名（纯函数）
+pub fn build_qualified_table(schema: Option<&str>, table: &str) -> String {
+    match schema {
+        Some(s) => format!(r#""{}"."{}""#, s, table),
+        None => format!(r#""{}""#, table),
+    }
+}
+
+/// 生成 ALTER TABLE ... ADD COLUMN IF NOT EXISTS 语句（纯函数）
+pub fn build_add_column_sql(
+    schema: Option<&str>,
+    table: &str,
+    column: &str,
+    definition: &str,
+) -> String {
+    format!(
+        r#"ALTER TABLE {} ADD COLUMN IF NOT EXISTS "{}" {}"#,
+        build_qualified_table(schema, table),
+        column,
+        definition
+    )
+}
+
+/// 计算 expected 中存在但 actual 中不存在的列名（保持原顺序）。
+/// 这是 `verify_table_columns` 核心判定逻辑的纯函数版本。
+pub fn detect_missing_columns<'a>(
+    expected: &'a [&'a str],
+    actual: &'a [&'a str],
+) -> Vec<&'a str> {
+    use std::collections::BTreeSet;
+    let actual_set: BTreeSet<&str> = actual.iter().copied().collect();
+    expected
+        .iter()
+        .copied()
+        .filter(|c| !actual_set.contains(c))
+        .collect()
+}
+
+/// 汇总 expected 列集合（带可选 id 列）：用于 run_schema_defense 第二阶段
+pub fn build_expected_columns<'a>(has_id_column: bool, table_columns: &'a [(&'a str, &str)]) -> Vec<&'a str> {
+    let mut out: Vec<&'a str> = Vec::new();
+    if has_id_column {
+        out.push("id");
+    }
+    out.extend(table_columns.iter().map(|(c, _)| *c));
+    out
 }
 
 /// information_schema 列一致性自检：
@@ -224,13 +269,8 @@ pub async fn verify_table_columns(
     .fetch_all(pool)
     .await?;
 
-    let actual: BTreeSet<&str> = rows.iter().map(|(c,)| c.as_str()).collect();
-    let mut missing = Vec::new();
-    for col in expected {
-        if !actual.contains(col) {
-            missing.push(*col);
-        }
-    }
+    let actual: Vec<&str> = rows.iter().map(|(c,)| c.as_str()).collect();
+    let missing = detect_missing_columns(expected, &actual);
 
     if missing.is_empty() {
         return Ok(());
@@ -330,7 +370,7 @@ pub async fn run_schema_defense(
         if has_id {
             expected.push("id");
         }
-        expected.extend(cols_arr.iter().map(|(c, _)| *c));
+        expected.extend(build_expected_columns(false, cols_arr));
         verify_table_columns(pool, schema, tbl, &expected, service_tag).await?;
         verified += 1;
     }
@@ -379,5 +419,136 @@ mod tests {
     #[test]
     fn test_pm_table() {
         assert_eq!(pm_table("projects"), "plugin_pm.projects");
+    }
+
+    #[test]
+    fn test_all_business_schema_helpers_use_plugin_prefix() {
+        // 抽样校验所有 *_table 输出格式，保证前缀拼写统一
+        assert_eq!(crm_table("leads"), "plugin_crm.leads");
+        assert_eq!(qms_table("inspections"), "plugin_qms.inspections");
+        assert_eq!(mes_table("work_orders"), "plugin_mes.work_orders");
+        assert_eq!(wms_table("bins"), "plugin_wms.bins");
+        assert_eq!(srm_table("suppliers"), "plugin_srm.suppliers");
+        assert_eq!(scm_table("inventory"), "plugin_scm.inventory");
+        assert_eq!(pdm_table("drawings"), "plugin_pdm.drawings");
+        assert_eq!(lims_table("samples"), "plugin_lims.samples");
+        assert_eq!(rs_table("requisitions"), "plugin_rs.requisitions");
+        assert_eq!(gis_table("geo_zones"), "plugin_gis.geo_zones");
+        assert_eq!(ehs_table("incidents"), "plugin_ehs.incidents");
+        assert_eq!(bi_table("dashboards"), "plugin_bi.dashboards");
+        assert_eq!(ai_table("prompts"), "plugin_ai.prompts");
+        assert_eq!(im_table("messages"), "plugin_im.messages");
+        assert_eq!(integration_table("syncs"), "plugin_integration.syncs");
+        assert_eq!(mail_table("templates"), "plugin_mail.templates");
+        assert_eq!(mobile_table("pushes"), "plugin_mobile.pushes");
+        assert_eq!(portal_table("notices"), "plugin_portal.notices");
+    }
+
+    #[test]
+    fn test_unified_and_public_shortcuts() {
+        assert_eq!(
+            unified_core_table("tenant_configs"),
+            "unified_core.tenant_configs"
+        );
+        assert_eq!(public_table("companies"), "public.companies");
+    }
+
+    // ===== is_verify_strict_from =====
+    #[test]
+    fn test_is_verify_strict_from_truthy_values() {
+        for v in ["1", "true", "TRUE", "True", "yes", "YES", "on", "On"] {
+            assert!(
+                is_verify_strict_from(v),
+                "expected truthy for env = {}",
+                v
+            );
+        }
+    }
+
+    #[test]
+    fn test_is_verify_strict_from_falsy_values() {
+        for v in ["", "0", "false", "no", "off", "foobar", "TRUE!!!"] {
+            assert!(
+                !is_verify_strict_from(v),
+                "expected falsy for env = {}",
+                v
+            );
+        }
+    }
+
+    // ===== build_qualified_table =====
+    #[test]
+    fn test_build_qualified_table_with_and_without_schema() {
+        assert_eq!(
+            build_qualified_table(Some("ehs"), "events"),
+            r#""ehs"."events""#
+        );
+        assert_eq!(
+            build_qualified_table(None, "global"),
+            r#""global""#
+        );
+    }
+
+    // ===== build_add_column_sql =====
+    #[test]
+    fn test_build_add_column_sql_schema_and_plain() {
+        assert_eq!(
+            build_add_column_sql(Some("plugin_hrm"), "employee", "email", "TEXT NOT NULL"),
+            r#"ALTER TABLE "plugin_hrm"."employee" ADD COLUMN IF NOT EXISTS "email" TEXT NOT NULL"#
+        );
+        assert_eq!(
+            build_add_column_sql(None, "t", "c1", "INT DEFAULT 0"),
+            r#"ALTER TABLE "t" ADD COLUMN IF NOT EXISTS "c1" INT DEFAULT 0"#
+        );
+    }
+
+    // ===== detect_missing_columns =====
+    #[test]
+    fn test_detect_missing_columns_none() {
+        assert!(
+            detect_missing_columns(
+                &["id", "name", "created_at"],
+                &["id", "created_at", "name", "extra"]
+            ).is_empty()
+        );
+    }
+
+    #[test]
+    fn test_detect_missing_columns_preserves_order_and_duplicates_in_expected() {
+        let missing = detect_missing_columns(
+            &["a", "b", "c", "d", "b"],
+            &["a", "c", "x"],
+        );
+        assert_eq!(missing, vec!["b", "d", "b"]);
+    }
+
+    #[test]
+    fn test_detect_missing_columns_empty_cases() {
+        assert!(detect_missing_columns(&[], &["a", "b"]).is_empty());
+        assert_eq!(
+            detect_missing_columns(&["a", "b"], &[]),
+            vec!["a", "b"]
+        );
+    }
+
+    // ===== build_expected_columns =====
+    #[test]
+    fn test_build_expected_columns_with_and_without_id() {
+        let cols = [("name", "TEXT"), ("age", "INT")];
+        assert_eq!(
+            build_expected_columns(true, &cols),
+            vec!["id", "name", "age"]
+        );
+        assert_eq!(
+            build_expected_columns(false, &cols),
+            vec!["name", "age"]
+        );
+    }
+
+    #[test]
+    fn test_build_expected_columns_empty_table() {
+        let cols: [(&str, &str); 0] = [];
+        assert_eq!(build_expected_columns(true, &cols), vec!["id"]);
+        assert!(build_expected_columns(false, &cols).is_empty());
     }
 }

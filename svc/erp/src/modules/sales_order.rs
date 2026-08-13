@@ -8,6 +8,7 @@ use uuid::Uuid;
 
 use super::ApiState;
 use crate::models::material::{CreateSalesOrderRequest, SalesOrder, UpdateSalesOrderRequest};
+use crate::modules::material_calc::{calculate_sales_order_amounts, default_sales_order_status};
 use crate::shared::permission::{check_permission, ModulePermission};
 use topems_shared::auth::Claims;
 use topems_shared::ApiResponse;
@@ -179,12 +180,16 @@ pub async fn create_sales_order(
     };
 
     let order_date = body.order_date.unwrap_or_else(|| Utc::now());
-    let total_amount = body.total_amount.unwrap_or(0.0);
-    let tax_amount = body.tax_amount.unwrap_or(0.0);
-    let discount_amount = body.discount_amount.unwrap_or(0.0);
-    let payable_amount = body
-        .payable_amount
-        .unwrap_or(total_amount + tax_amount - discount_amount);
+    let amounts = calculate_sales_order_amounts(
+        body.total_amount,
+        body.tax_amount,
+        body.discount_amount,
+        body.payable_amount,
+    );
+    let total_amount = amounts.total_amount;
+    let tax_amount = amounts.tax_amount;
+    let discount_amount = amounts.discount_amount;
+    let payable_amount = amounts.payable_amount;
 
     let result = sqlx::query_as::<_, SalesOrder>(
         "INSERT INTO sales_orders (order_no, customer_id, customer_name, order_date, delivery_date, total_amount, tax_amount, discount_amount, payable_amount, status, remark) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11) RETURNING id, order_no, customer_id, customer_name, order_date, delivery_date, total_amount, tax_amount, discount_amount, payable_amount, status, remark, created_at, updated_at",
@@ -198,7 +203,7 @@ pub async fn create_sales_order(
     .bind(tax_amount)
     .bind(discount_amount)
     .bind(payable_amount)
-    .bind(body.status.unwrap_or_else(|| "draft".to_string()))
+    .bind(default_sales_order_status(body.status))
     .bind(body.remark)
     .fetch_optional(&state.db)
     .await;

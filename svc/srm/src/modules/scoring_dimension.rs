@@ -419,3 +419,163 @@ async fn delete_dimension(
         }
     }
 }
+
+pub fn normalize_dimension_score(raw: f64, floor: f64, ceil: f64) -> f64 {
+    if ceil <= floor {
+        return 0.0_f64;
+    }
+    let clamped = raw.clamp(floor, ceil);
+    (clamped - floor) / (ceil - floor) * 100.0_f64
+}
+
+pub fn weighted_score(dims: &[(f64, f64)]) -> Result<f64, String> {
+    if dims.is_empty() {
+        return Err("维度列表不能为空".to_string());
+    }
+
+    let mut total_weight = 0.0_f64;
+    for (score, weight) in dims.iter() {
+        if *score < 0.0_f64 {
+            return Err("存在负的维度分数".to_string());
+        }
+        if *weight <= 0.0_f64 {
+            return Err("所有权重必须大于0".to_string());
+        }
+        total_weight += *weight;
+    }
+
+    if total_weight <= 0.0_f64 {
+        return Err("权重总和必须大于0".to_string());
+    }
+
+    let mut weighted_sum = 0.0_f64;
+    for (score, weight) in dims.iter() {
+        weighted_sum += *score * (*weight / total_weight);
+    }
+
+    Ok(weighted_sum.clamp(0.0_f64, 100.0_f64))
+}
+
+pub fn score_consistency(dims: &[f64]) -> f64 {
+    if dims.is_empty() {
+        return 0.0_f64;
+    }
+
+    let n = dims.len() as f64;
+    let mean = dims.iter().sum::<f64>() / n;
+
+    if mean.abs() < 0.0001_f64 {
+        return 0.0_f64;
+    }
+
+    let variance = dims.iter().map(|x| (*x - mean).powi(2)).sum::<f64>() / n;
+    let std_dev = variance.sqrt();
+
+    std_dev / mean
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_normalize_dimension_score_normal() {
+        let result = normalize_dimension_score(60.0_f64, 0.0_f64, 100.0_f64);
+        assert!((result - 60.0_f64).abs() < 0.01_f64, "标准归一化计算错误");
+    }
+
+    #[test]
+    fn test_normalize_dimension_score_clamp_below_floor() {
+        let result = normalize_dimension_score(-10.0_f64, 0.0_f64, 100.0_f64);
+        assert_eq!(result, 0.0_f64, "低于floor应clamp到floor");
+    }
+
+    #[test]
+    fn test_normalize_dimension_score_clamp_above_ceil() {
+        let result = normalize_dimension_score(150.0_f64, 0.0_f64, 100.0_f64);
+        assert_eq!(result, 100.0_f64, "高于ceil应clamp到ceil");
+    }
+
+    #[test]
+    fn test_normalize_dimension_score_invalid_range() {
+        let result = normalize_dimension_score(50.0_f64, 100.0_f64, 50.0_f64);
+        assert_eq!(result, 0.0_f64, "floor>=ceil时返回0");
+    }
+
+    #[test]
+    fn test_weighted_score_basic() {
+        let dims = vec![(80.0_f64, 40.0_f64), (90.0_f64, 60.0_f64)];
+        let result = weighted_score(&dims).unwrap();
+        assert!((result - 86.0_f64).abs() < 0.01_f64, "加权分计算错误");
+    }
+
+    #[test]
+    fn test_weighted_score_empty_error() {
+        let dims: Vec<(f64, f64)> = vec![];
+        assert!(weighted_score(&dims).is_err(), "空列表应返回Err");
+    }
+
+    #[test]
+    fn test_weighted_score_negative_score_error() {
+        let dims = vec![(-5.0_f64, 50.0_f64), (90.0_f64, 50.0_f64)];
+        assert!(weighted_score(&dims).is_err(), "负分数应返回Err");
+    }
+
+    #[test]
+    fn test_weighted_score_zero_weight_error() {
+        let dims = vec![(80.0_f64, 0.0_f64), (90.0_f64, 50.0_f64)];
+        assert!(weighted_score(&dims).is_err(), "零权重应返回Err");
+    }
+
+    #[test]
+    fn test_score_consistency_high_consistency() {
+        let dims = vec![80.0_f64, 81.0_f64, 79.0_f64, 80.0_f64];
+        let cv = score_consistency(&dims);
+        assert!(cv < 0.1_f64, "高度一致的数据变异系数应很小");
+    }
+
+    #[test]
+    fn test_score_consistency_low_consistency() {
+        let dims = vec![10.0_f64, 90.0_f64, 50.0_f64, 20.0_f64];
+        let cv = score_consistency(&dims);
+        assert!(cv > 0.5_f64, "差异大的数据变异系数应较大");
+    }
+
+    #[test]
+    fn test_score_consistency_zero_mean() {
+        let dims = vec![0.0_f64, 0.0_f64, 0.0_f64];
+        assert_eq!(score_consistency(&dims), 0.0_f64, "均值为0时返回0");
+    }
+
+    #[test]
+    fn test_score_consistency_empty() {
+        let dims: Vec<f64> = vec![];
+        assert_eq!(score_consistency(&dims), 0.0_f64, "空列表返回0");
+    }
+
+    #[test]
+    fn test_normalize_dimension_score_arbitrary_range() {
+        let result = normalize_dimension_score(60.0_f64, 20.0_f64, 80.0_f64);
+        assert!(
+            (result - 66.666_f64).abs() < 0.1_f64,
+            "任意区间归一化计算错误"
+        );
+    }
+
+    #[test]
+    fn test_weighted_score_non_100_total_weight() {
+        let dims = vec![(80.0_f64, 3.0_f64), (90.0_f64, 1.0_f64)];
+        let result = weighted_score(&dims).unwrap();
+        assert!(
+            (result - 82.5_f64).abs() < 0.01_f64,
+            "权重非100总和应按比例归一化"
+        );
+    }
+
+    #[test]
+    fn test_weighted_score_single_dim() {
+        let dims = vec![(88.0_f64, 50.0_f64)];
+        let result = weighted_score(&dims).unwrap();
+        assert!((result - 88.0_f64).abs() < 0.01_f64, "单维度应返回原分数");
+    }
+}

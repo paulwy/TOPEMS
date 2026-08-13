@@ -59,6 +59,21 @@ pub struct UpdateProcessRequest {
     pub estimated_duration: Option<i32>,
 }
 
+#[derive(Debug, Clone, Serialize, sqlx::FromRow)]
+pub struct ProductionProcessRow {
+    pub id: Uuid,
+    pub process_no: String,
+    pub name: String,
+    pub description: Option<String>,
+    pub version: Option<String>,
+    pub status: Option<String>,
+    pub sequence: Option<i32>,
+    pub equipment_required: Option<bool>,
+    pub estimated_duration: Option<i32>,
+    pub created_at: NaiveDateTime,
+    pub updated_at: NaiveDateTime,
+}
+
 #[derive(Debug, Clone, Serialize)]
 pub struct ProductionProcessResponse {
     pub id: Uuid,
@@ -72,6 +87,24 @@ pub struct ProductionProcessResponse {
     pub estimated_duration: i32,
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
+}
+
+impl From<ProductionProcessRow> for ProductionProcessResponse {
+    fn from(r: ProductionProcessRow) -> Self {
+        Self {
+            id: r.id,
+            process_no: r.process_no,
+            name: r.name,
+            description: r.description,
+            version: r.version.unwrap_or_else(|| "1.0".to_string()),
+            status: r.status.unwrap_or_else(|| "active".to_string()),
+            sequence: r.sequence.unwrap_or(0),
+            equipment_required: r.equipment_required.unwrap_or(false),
+            estimated_duration: r.estimated_duration.unwrap_or(0),
+            created_at: naive_to_utc(Some(r.created_at)),
+            updated_at: naive_to_utc(Some(r.updated_at)),
+        }
+    }
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -252,28 +285,27 @@ pub async fn create_process(
         rand::random::<u16>() % 10000
     );
 
-    let result = sqlx::query!(
+    let result = sqlx::query_as::<_, ProductionProcessRow>(
         r#"
         INSERT INTO production_processes (
-            tenant_id, process_no, name, description, version, status,
+            process_no, name, description, version, status,
             sequence, equipment_required, estimated_duration,
             created_at, updated_at
-        ) VALUES ($1, $2, $3, $4, $5, 'active', $6, $7, $8, $9, $9)
+        ) VALUES ($1, $2, $3, $4, 'active', $5, $6, $7, $8, $8)
         RETURNING
             id, process_no, name, description, version,
             status, sequence, equipment_required, estimated_duration,
             created_at, updated_at
         "#,
-        tenant_id,
-        process_no,
-        req.name,
-        req.description,
-        req.version.unwrap_or_else(|| "1.0".to_string()),
-        req.sequence.unwrap_or(0),
-        req.equipment_required.unwrap_or(false),
-        req.estimated_duration.unwrap_or(0),
-        now.naive_utc(),
     )
+    .bind(process_no)
+    .bind(&req.name)
+    .bind(req.description.as_deref())
+    .bind(req.version.unwrap_or_else(|| "1.0".to_string()))
+    .bind(req.sequence.unwrap_or(0))
+    .bind(req.equipment_required.unwrap_or(false))
+    .bind(req.estimated_duration.unwrap_or(0))
+    .bind(now.naive_utc())
     .fetch_one(&state.pool)
     .await;
 
@@ -285,21 +317,10 @@ pub async fn create_process(
         }
     };
 
-    let process = ProductionProcessResponse {
-        id: result.id,
-        process_no: result.process_no,
-        name: result.name,
-        description: result.description,
-        version: result.version.unwrap_or_else(|| "1.0".to_string()),
-        status: result.status.unwrap_or_else(|| "active".to_string()),
-        sequence: result.sequence.unwrap_or(0),
-        equipment_required: result.equipment_required.unwrap_or(false),
-        estimated_duration: result.estimated_duration.unwrap_or(0),
-        created_at: naive_to_utc(result.created_at),
-        updated_at: naive_to_utc(result.updated_at),
-    };
-
-    Json(ApiResponse::success(process, "生产工序创建成功"))
+    Json(ApiResponse::success(
+        ProductionProcessResponse::from(result),
+        "生产工序创建成功",
+    ))
 }
 
 pub async fn get_process(
@@ -315,18 +336,17 @@ pub async fn get_process(
     let tenant_id = tenant::get_tenant_id(&claims, &headers);
     let _ = tenant::set_session_tenant_id(&state.pool, tenant_id).await;
 
-    let result = sqlx::query!(
+    let result = sqlx::query_as::<_, ProductionProcessRow>(
         r#"
         SELECT
             id, process_no, name, description, version,
             status, sequence, equipment_required, estimated_duration,
             created_at, updated_at
         FROM production_processes
-        WHERE id = $1 AND tenant_id = $2 AND deleted_at IS NULL
+        WHERE id = $1 AND deleted_at IS NULL
         "#,
-        id,
-        tenant_id,
     )
+    .bind(id)
     .fetch_optional(&state.pool)
     .await;
 
@@ -339,22 +359,10 @@ pub async fn get_process(
     };
 
     match result {
-        Some(r) => {
-            let process = ProductionProcessResponse {
-                id: r.id,
-                process_no: r.process_no,
-                name: r.name,
-                description: r.description,
-                version: r.version.unwrap_or_else(|| "1.0".to_string()),
-                status: r.status.unwrap_or_else(|| "active".to_string()),
-                sequence: r.sequence.unwrap_or(0),
-                equipment_required: r.equipment_required.unwrap_or(false),
-                estimated_duration: r.estimated_duration.unwrap_or(0),
-                created_at: naive_to_utc(r.created_at),
-                updated_at: naive_to_utc(r.updated_at),
-            };
-            Json(ApiResponse::success(process, "获取生产工序成功"))
-        }
+        Some(r) => Json(ApiResponse::success(
+            ProductionProcessResponse::from(r),
+            "获取生产工序成功",
+        )),
         None => Json(ApiResponse::error(404, "生产工序不存在")),
     }
 }
@@ -373,7 +381,7 @@ pub async fn update_process(
     let tenant_id = tenant::get_tenant_id(&claims, &headers);
     let _ = tenant::set_session_tenant_id(&state.pool, tenant_id).await;
 
-    let result = sqlx::query!(
+    let result = sqlx::query_as::<_, ProductionProcessRow>(
         r#"
         UPDATE production_processes SET
             name = COALESCE($2, name),
@@ -383,22 +391,21 @@ pub async fn update_process(
             equipment_required = COALESCE($6, equipment_required),
             estimated_duration = COALESCE($7, estimated_duration),
             updated_at = $8
-        WHERE id = $1 AND status = 'active' AND tenant_id = $9
+        WHERE id = $1 AND status = 'active'
         RETURNING
             id, process_no, name, description, version,
             status, sequence, equipment_required, estimated_duration,
             created_at, updated_at
         "#,
-        id,
-        req.name,
-        req.description,
-        req.version,
-        req.sequence,
-        req.equipment_required,
-        req.estimated_duration,
-        Utc::now().naive_utc(),
-        tenant_id,
     )
+    .bind(id)
+    .bind(req.name)
+    .bind(req.description)
+    .bind(req.version)
+    .bind(req.sequence)
+    .bind(req.equipment_required)
+    .bind(req.estimated_duration)
+    .bind(Utc::now().naive_utc())
     .fetch_optional(&state.pool)
     .await;
 
@@ -411,22 +418,10 @@ pub async fn update_process(
     };
 
     match result {
-        Some(r) => {
-            let process = ProductionProcessResponse {
-                id: r.id,
-                process_no: r.process_no,
-                name: r.name,
-                description: r.description,
-                version: r.version.unwrap_or_else(|| "1.0".to_string()),
-                status: r.status.unwrap_or_else(|| "active".to_string()),
-                sequence: r.sequence.unwrap_or(0),
-                equipment_required: r.equipment_required.unwrap_or(false),
-                estimated_duration: r.estimated_duration.unwrap_or(0),
-                created_at: naive_to_utc(r.created_at),
-                updated_at: naive_to_utc(r.updated_at),
-            };
-            Json(ApiResponse::success(process, "生产工序更新成功"))
-        }
+        Some(r) => Json(ApiResponse::success(
+            ProductionProcessResponse::from(r),
+            "生产工序更新成功",
+        )),
         None => Json(ApiResponse::error(404, "生产工序不存在或状态不允许修改")),
     }
 }

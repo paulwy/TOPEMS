@@ -15,6 +15,69 @@ use topems_shared_core::response::ApiResponse;
 
 use crate::shared::AppState;
 
+// ==================== 纯函数（无副作用，可单测） ====================
+
+/// 标签规范化：
+/// - 去除首尾空白
+/// - 转为小写
+/// - 将内部连续空白（含空格、制表符、换行）替换为单个连字符 `-`
+/// - 空字符串返回空字符串
+pub fn normalize_tag(tag: &str) -> String {
+    let trimmed = tag.trim();
+    if trimmed.is_empty() {
+        return String::new();
+    }
+    let mut result = String::with_capacity(trimmed.len());
+    let mut prev_dash = false;
+    for ch in trimmed.chars() {
+        if ch.is_whitespace() {
+            if !prev_dash {
+                result.push('-');
+                prev_dash = true;
+            }
+        } else {
+            for lower in ch.to_lowercase() {
+                result.push(lower);
+            }
+            prev_dash = false;
+        }
+    }
+    result
+}
+
+/// 校验生命周期阶段转换是否合法。
+/// 合法阶段：draft → review → approved → published → archived → deprecated
+/// 合法转换：
+/// - 同阶段（self-transition）始终允许
+/// - draft -> review, approved
+/// - review -> approved, draft
+/// - approved -> published, draft
+/// - published -> archived, review
+/// - archived -> deprecated, published
+/// - deprecated -> archived（仅允许回退）
+/// 未知阶段返回 false。
+pub fn is_valid_lifecycle_transition(from: &str, to: &str) -> bool {
+    let f = from.trim().to_lowercase();
+    let t = to.trim().to_lowercase();
+    if f == t {
+        return true;
+    }
+    let allowed: &[(&str, &str)] = &[
+        ("draft", "review"),
+        ("draft", "approved"),
+        ("review", "approved"),
+        ("review", "draft"),
+        ("approved", "published"),
+        ("approved", "draft"),
+        ("published", "archived"),
+        ("published", "review"),
+        ("archived", "deprecated"),
+        ("archived", "published"),
+        ("deprecated", "archived"),
+    ];
+    allowed.iter().any(|(a, b)| *a == f && *b == t)
+}
+
 // ==================== 元数据管理：数据结构 ====================
 
 #[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
@@ -1430,4 +1493,156 @@ pub async fn bulk_transition(
         )
         .await;
     Json(ApiResponse::success(results, "批量生命周期转换完成"))
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    // ---------- normalize_tag ----------
+
+    #[test]
+    fn test_normalize_tag_empty() {
+        assert_eq!(normalize_tag(""), "");
+        assert_eq!(normalize_tag("   "), "");
+        assert_eq!(normalize_tag("\t\n"), "");
+    }
+
+    #[test]
+    fn test_normalize_tag_no_change() {
+        assert_eq!(normalize_tag("alpha"), "alpha");
+        assert_eq!(normalize_tag("v1"), "v1");
+    }
+
+    #[test]
+    fn test_normalize_tag_lowercases() {
+        assert_eq!(normalize_tag("Hello"), "hello");
+        assert_eq!(normalize_tag("MIXEDCase"), "mixedcase");
+    }
+
+    #[test]
+    fn test_normalize_tag_replaces_internal_whitespace() {
+        assert_eq!(normalize_tag("hello world"), "hello-world");
+        assert_eq!(normalize_tag("a b c"), "a-b-c");
+    }
+
+    #[test]
+    fn test_normalize_tag_collapses_multiple_whitespace() {
+        assert_eq!(normalize_tag("a  b"), "a-b");
+        assert_eq!(normalize_tag("a\t\tb"), "a-b");
+        assert_eq!(normalize_tag("a\n\nb"), "a-b");
+        assert_eq!(normalize_tag("a \t\n b"), "a-b");
+    }
+
+    #[test]
+    fn test_normalize_tag_trims_leading_trailing() {
+        assert_eq!(normalize_tag("  hello  "), "hello");
+        assert_eq!(normalize_tag("\tworld\n"), "world");
+        assert_eq!(normalize_tag("  a b  "), "a-b");
+    }
+
+    #[test]
+    fn test_normalize_tag_with_unicode() {
+        // 中文标签保留，但前后空格去除
+        assert_eq!(normalize_tag("  数据  "), "数据");
+        assert_eq!(normalize_tag("数据 治理"), "数据-治理");
+    }
+
+    #[test]
+    fn test_normalize_tag_special_chars_preserved() {
+        // 特殊字符保留（仅空白被替换）
+        assert_eq!(normalize_tag("a_b c"), "a_b-c");
+        assert_eq!(normalize_tag("a.b@c"), "a.b@c");
+    }
+
+    #[test]
+    fn test_normalize_tag_only_whitespace_becomes_empty() {
+        assert_eq!(normalize_tag("     "), "");
+        assert_eq!(normalize_tag("\t\t\t"), "");
+    }
+
+    // ---------- is_valid_lifecycle_transition ----------
+
+    #[test]
+    fn test_lifecycle_self_transition_always_valid() {
+        assert!(is_valid_lifecycle_transition("draft", "draft"));
+        assert!(is_valid_lifecycle_transition("published", "published"));
+        assert!(is_valid_lifecycle_transition("archived", "archived"));
+        // 未知阶段的同阶段也允许（因为 f == t 触发）
+        assert!(is_valid_lifecycle_transition("unknown", "unknown"));
+    }
+
+    #[test]
+    fn test_lifecycle_forward_transition_valid() {
+        assert!(is_valid_lifecycle_transition("draft", "review"));
+        assert!(is_valid_lifecycle_transition("review", "approved"));
+        assert!(is_valid_lifecycle_transition("approved", "published"));
+        assert!(is_valid_lifecycle_transition("published", "archived"));
+        assert!(is_valid_lifecycle_transition("archived", "deprecated"));
+    }
+
+    #[test]
+    fn test_lifecycle_backward_transition_valid() {
+        assert!(is_valid_lifecycle_transition("review", "draft"));
+        assert!(is_valid_lifecycle_transition("approved", "draft"));
+        assert!(is_valid_lifecycle_transition("published", "review"));
+        assert!(is_valid_lifecycle_transition("archived", "published"));
+        assert!(is_valid_lifecycle_transition("deprecated", "archived"));
+    }
+
+    #[test]
+    fn test_lifecycle_skip_transition_valid() {
+        // draft -> approved（跳过 review）
+        assert!(is_valid_lifecycle_transition("draft", "approved"));
+    }
+
+    #[test]
+    fn test_lifecycle_invalid_forward_skip() {
+        // draft -> published（跨多级）不允许
+        assert!(!is_valid_lifecycle_transition("draft", "published"));
+        // draft -> archived 不允许
+        assert!(!is_valid_lifecycle_transition("draft", "archived"));
+        // draft -> deprecated 不允许
+        assert!(!is_valid_lifecycle_transition("draft", "deprecated"));
+    }
+
+    #[test]
+    fn test_lifecycle_invalid_backward() {
+        // published -> approved 不允许（已发布不能回退到已批准）
+        assert!(!is_valid_lifecycle_transition("published", "approved"));
+        // deprecated -> draft 不允许
+        assert!(!is_valid_lifecycle_transition("deprecated", "draft"));
+        // deprecated -> published 不允许（必须先回到 archived）
+        assert!(!is_valid_lifecycle_transition("deprecated", "published"));
+    }
+
+    #[test]
+    fn test_lifecycle_unknown_stage() {
+        // 未知阶段之间的非自身转换不允许
+        assert!(!is_valid_lifecycle_transition("draft", "unknown"));
+        assert!(!is_valid_lifecycle_transition("unknown", "draft"));
+        assert!(!is_valid_lifecycle_transition("foo", "bar"));
+    }
+
+    #[test]
+    fn test_lifecycle_case_insensitive() {
+        assert!(is_valid_lifecycle_transition("Draft", "Review"));
+        assert!(is_valid_lifecycle_transition("DRAFT", "REVIEW"));
+        assert!(is_valid_lifecycle_transition("Published", "Archived"));
+    }
+
+    #[test]
+    fn test_lifecycle_trims_whitespace() {
+        assert!(is_valid_lifecycle_transition("  draft  ", "  review  "));
+        assert!(is_valid_lifecycle_transition("\tdraft\n", "\treview\n"));
+    }
+
+    #[test]
+    fn test_lifecycle_empty_strings() {
+        // 空字符串视为相同阶段
+        assert!(is_valid_lifecycle_transition("", ""));
+        // 空字符串与已知阶段不允许转换
+        assert!(!is_valid_lifecycle_transition("", "draft"));
+        assert!(!is_valid_lifecycle_transition("draft", ""));
+    }
 }

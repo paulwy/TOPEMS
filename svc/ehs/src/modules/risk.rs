@@ -442,3 +442,148 @@ pub async fn delete_control_measure(
     tracing::debug!("Deleting control measure: {}", measure_id);
     Json(ApiResponse::success((), "控制措施删除成功"))
 }
+
+pub fn risk_matrix_score(likelihood: u8, severity: u8) -> u8 {
+    let l = likelihood.min(5).max(1);
+    let s = severity.min(5).max(1);
+    l * s
+}
+
+pub fn matrix_classify(score: u8) -> &'static str {
+    match score {
+        1..=2 => "low",
+        3..=6 => "medium",
+        7..=12 => "high",
+        13..=25 => "critical",
+        _ => "low",
+    }
+}
+
+pub fn lec_score(l: u8, e: u8, c: u8) -> u32 {
+    let lv = l.min(10).max(1) as u32;
+    let ev = e.min(10).max(1) as u32;
+    let cv = c.min(100).max(1) as u32;
+    lv * ev * cv
+}
+
+pub fn lec_classify(lec: u32) -> &'static str {
+    match lec {
+        0..=20 => "轻微风险",
+        21..=70 => "一般风险",
+        71..=160 => "显著风险",
+        161..=320 => "高度风险",
+        _ => "极其危险",
+    }
+}
+
+pub fn residual_risk(inherent: u8, control_effectiveness: f64) -> u8 {
+    let ce = control_effectiveness.clamp(0.0, 1.0);
+    let reduced = inherent as f64 * (1.0 - ce);
+    reduced.round() as u8
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_matrix_score_basic() {
+        assert_eq!(risk_matrix_score(1, 1), 1);
+        assert_eq!(risk_matrix_score(5, 5), 25);
+        assert_eq!(risk_matrix_score(3, 3), 9);
+    }
+
+    #[test]
+    fn test_matrix_score_clamping() {
+        assert_eq!(risk_matrix_score(0, 3), 3);
+        assert_eq!(risk_matrix_score(3, 0), 3);
+        assert_eq!(risk_matrix_score(10, 3), 15);
+        assert_eq!(risk_matrix_score(3, 10), 15);
+    }
+
+    #[test]
+    fn test_matrix_classify_low() {
+        assert_eq!(matrix_classify(1), "low");
+        assert_eq!(matrix_classify(2), "low");
+        assert_eq!(matrix_classify(0), "low");
+    }
+
+    #[test]
+    fn test_matrix_classify_medium() {
+        assert_eq!(matrix_classify(3), "medium");
+        assert_eq!(matrix_classify(4), "medium");
+        assert_eq!(matrix_classify(6), "medium");
+    }
+
+    #[test]
+    fn test_matrix_classify_high() {
+        assert_eq!(matrix_classify(7), "high");
+        assert_eq!(matrix_classify(9), "high");
+        assert_eq!(matrix_classify(12), "high");
+    }
+
+    #[test]
+    fn test_matrix_classify_critical() {
+        assert_eq!(matrix_classify(13), "critical");
+        assert_eq!(matrix_classify(20), "critical");
+        assert_eq!(matrix_classify(25), "critical");
+        assert_eq!(matrix_classify(100), "low");
+    }
+
+    #[test]
+    fn test_lec_score_basic() {
+        assert_eq!(lec_score(1, 1, 1), 1);
+        assert_eq!(lec_score(6, 6, 15), 540);
+        assert_eq!(lec_score(3, 4, 10), 120);
+    }
+
+    #[test]
+    fn test_lec_score_clamping() {
+        assert_eq!(lec_score(0, 5, 5), 25);
+        assert_eq!(lec_score(20, 5, 5), 250);
+        assert_eq!(lec_score(5, 0, 5), 25);
+        assert_eq!(lec_score(5, 20, 5), 250);
+        assert_eq!(lec_score(5, 5, 0), 25);
+        assert_eq!(lec_score(5, 5, 200), 2500);
+    }
+
+    #[test]
+    fn test_lec_classify_all_levels() {
+        assert_eq!(lec_classify(10), "轻微风险");
+        assert_eq!(lec_classify(20), "轻微风险");
+        assert_eq!(lec_classify(21), "一般风险");
+        assert_eq!(lec_classify(70), "一般风险");
+        assert_eq!(lec_classify(71), "显著风险");
+        assert_eq!(lec_classify(160), "显著风险");
+        assert_eq!(lec_classify(161), "高度风险");
+        assert_eq!(lec_classify(320), "高度风险");
+        assert_eq!(lec_classify(321), "极其危险");
+        assert_eq!(lec_classify(1000), "极其危险");
+    }
+
+    #[test]
+    fn test_residual_risk_no_control() {
+        assert_eq!(residual_risk(10, 0.0), 10);
+    }
+
+    #[test]
+    fn test_residual_risk_full_control() {
+        assert_eq!(residual_risk(10, 1.0), 0);
+    }
+
+    #[test]
+    fn test_residual_risk_half_control() {
+        assert_eq!(residual_risk(10, 0.5), 5);
+    }
+
+    #[test]
+    fn test_residual_risk_70pct() {
+        assert_eq!(residual_risk(10, 0.7), 3);
+    }
+
+    #[test]
+    fn test_residual_risk_clamping() {
+        assert_eq!(residual_risk(10, -0.5), 10);
+        assert_eq!(residual_risk(10, 2.0), 0);
+    }
+}

@@ -14,6 +14,395 @@ use crate::shared::AppState;
 use topems_shared_auth::auth::Claims;
 use topems_shared_core::response::ApiResponse;
 
+// =============================================================================
+// Pure functions for BOM (Bill of Materials) computation
+// =============================================================================
+
+/// BOM 边 (父件 part_number → 子件 part_number, 用量 per_unit_assembly)
+pub type BomEdge = (String, String, f64);
+
+/// BOM 展开汇总：对每一层父项 × 子件用量做累积
+/// 输入：Vec<(parent, child, qty_per_parent)>，以及根件 root，要生产的 root_qty
+/// 输出：每个子件所需总用量 HashMap<child_code, total_required>
+/// 含循环检测：如果访问同一条边 2 次即报环（返回 Err 描述）
+pub fn explode_bom(
+    edges: &[BomEdge],
+    root: &str,
+    root_qty: f64,
+) -> Result<HashMap<String, f64>, String> {
+    if root_qty <= 0.0 {
+        return Ok(HashMap::new());
+    }
+    // 构建 children map: parent -> Vec<(child, qty)>
+    let mut children: HashMap<&str, Vec<(&str, f64)>> = HashMap::new();
+    for (p, c, q) in edges {
+        children.entry(p).or_default().push((c.as_str(), *q));
+    }
+    let mut result: HashMap<String, f64> = HashMap::new();
+    // DFS stack: (node, multiplier, visited_path_nodes)
+    let mut stack: Vec<(&str, f64, HashSet<String>)> = Vec::new();
+    {
+        let mut path = HashSet::new();
+        path.insert(root.to_string());
+        stack.push((root, root_qty, path));
+    }
+    while let Some((node, mult, path)) = stack.pop() {
+        match children.get(node) {
+            None => continue,
+            Some(list) => {
+                for (child, qty_per) in list {
+                    let child_mult = mult * qty_per;
+                    // 叶子（没子件）累加；非叶子 DFS
+                    let child_key = child.to_string();
+                    if path.contains(&child_key) {
+                        return Err(format!("循环依赖检测：节点 {} 在路径中重复出现", child_key));
+                    }
+                    // 累计用量
+                    *result.entry(child_key.clone()).or_insert(0.0) += child_mult;
+                    // 如果有子件，继续展开
+                    let child_ref: &str = child;
+                    if children.contains_key(&child_ref) {
+                        let mut new_path = path.clone();
+                        new_path.insert(child_key);
+                        stack.push((child, child_mult, new_path));
+                    }
+                }
+            }
+        }
+    }
+    Ok(result)
+}
+
+/// EBOM → MBOM 用量换算：考虑损耗率、批量倍数、最小包装量
+/// loss_rate ∈ [0,1)（默认 0），pack_multiple 最小包装倍数，min_qty 最小采购量
+pub fn ebom_to_mbom_qty(
+    ebom_quantity: f64,
+    loss_rate: Option<f64>,
+    pack_multiple: Option<f64>,
+    min_qty: Option<f64>,
+) -> f64 {
+    if ebom_quantity <= 0.0 {
+        return 0.0;
+    }
+    let lr = loss_rate.unwrap_or(0.0).clamp(0.0, 0.999);
+    let with_loss = ebom_quantity / (1.0 - lr); // 向上缩放
+    let mut qty = with_loss;
+    if let Some(m) = min_qty {
+        if m > 0.0 && qty < m {
+            qty = m;
+        }
+    }
+    if let Some(p) = pack_multiple {
+        if p > 1.0 {
+            let ratio = qty / p;
+            let ceiled = ratio.ceil();
+            if (ceiled - ratio).abs() > 1e-9 {
+                qty = ceiled * p;
+            }
+        }
+    }
+    qty
+}
+
+/// BOM 汇总总成本：parts_cost = sum(qty_required[i] * unit_cost[i])
+/// unknown_cost_parts: 返回找不到 unit_cost 的 key 列表
+pub fn calculate_total_bom_cost(
+    required: &HashMap<String, f64>,
+    unit_costs: &HashMap<String, f64>,
+) -> (f64, Vec<String>) {
+    let mut total = 0.0_f64;
+    let mut missing = Vec::new();
+    for (k, q) in required {
+        match unit_costs.get(k) {
+            Some(c) if *c >= 0.0 => total += q * c,
+            _ => missing.push(k.clone()),
+        }
+    }
+    (total, missing)
+}
+
+/// BOM 单层子项汇总校验：所有子件成本占比和应 ≈ 100%（加允许误差 tolerance）
+/// 用于成本 roll-up 校验
+pub fn validate_cost_rollup(child_costs: &[f64], parent_cost: f64, tolerance: f64) -> bool {
+    let sum: f64 = child_costs.iter().sum();
+    if parent_cost <= 0.0 {
+        return sum <= tolerance;
+    }
+    ((sum - parent_cost) / parent_cost).abs() <= tolerance
+}
+
+/// BOM 版本对比：按 (part_number, qty) 对两个版本单层列出差异
+/// 返回三类集合：only_in_a / only_in_b / qty_changed (part, qa, qb)
+pub fn diff_bom_single_level(
+    a: &[(&str, f64)],
+    b: &[(&str, f64)],
+) -> (Vec<String>, Vec<String>, Vec<(String, f64, f64)>) {
+    let ma: HashMap<String, f64> = a.iter().map(|(k, v)| (k.to_string(), *v)).collect();
+    let mb: HashMap<String, f64> = b.iter().map(|(k, v)| (k.to_string(), *v)).collect();
+    let mut only_a = Vec::new();
+    let mut only_b = Vec::new();
+    let mut changed = Vec::new();
+    let keys: HashSet<String> = ma.keys().chain(mb.keys()).cloned().collect();
+    for k in keys {
+        match (ma.get(&k), mb.get(&k)) {
+            (Some(va), Some(vb)) if (va - vb).abs() > 1e-9 => {
+                changed.push((k, *va, *vb));
+            }
+            (Some(_), None) => only_a.push(k),
+            (None, Some(_)) => only_b.push(k),
+            _ => {}
+        }
+    }
+    only_a.sort();
+    only_b.sort();
+    changed.sort_by(|x, y| x.0.cmp(&y.0));
+    (only_a, only_b, changed)
+}
+
+/// BOM 层级深度（最大层数），根为 level 1，空子项 = 1
+pub fn bom_max_depth(edges: &[BomEdge], root: &str) -> Result<u32, String> {
+    let mut children: HashMap<&str, Vec<&str>> = HashMap::new();
+    for (p, c, _) in edges {
+        children.entry(p).or_default().push(c.as_str());
+    }
+    // DFS iterative with path
+    let mut stack: Vec<(&str, HashSet<String>, u32)> = Vec::new();
+    let mut root_path = HashSet::new();
+    root_path.insert(root.to_string());
+    stack.push((root, root_path, 1));
+    let mut max_depth: u32 = 0;
+    while let Some((node, path, depth)) = stack.pop() {
+        if depth > max_depth {
+            max_depth = depth;
+        }
+        match children.get(node) {
+            None => continue,
+            Some(list) => {
+                for child in list {
+                    let child_key = child.to_string();
+                    if path.contains(&child_key) {
+                        return Err(format!("循环依赖：{}", child_key));
+                    }
+                    let mut np = path.clone();
+                    np.insert(child_key);
+                    stack.push((child, np, depth + 1));
+                }
+            }
+        }
+    }
+    Ok(max_depth)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    // ============ explode_bom ============
+
+    #[test]
+    fn test_explode_empty_or_zero_qty() {
+        let edges: Vec<BomEdge> = vec![];
+        assert!(explode_bom(&edges, "A", 0.0).unwrap().is_empty());
+        assert!(explode_bom(&edges, "A", 100.0).unwrap().is_empty());
+    }
+
+    #[test]
+    fn test_explode_two_level() {
+        // A → B ×2,  A → C ×1
+        // B → D ×3
+        // root A ×5:
+        //   B = 5×2 = 10
+        //   C = 5×1 = 5
+        //   D = 5×2×3 = 30
+        let edges: Vec<BomEdge> = vec![
+            ("A".into(), "B".into(), 2.0),
+            ("A".into(), "C".into(), 1.0),
+            ("B".into(), "D".into(), 3.0),
+        ];
+        let r = explode_bom(&edges, "A", 5.0).unwrap();
+        assert_eq!(r.get("B").copied(), Some(10.0));
+        assert_eq!(r.get("C").copied(), Some(5.0));
+        assert_eq!(r.get("D").copied(), Some(30.0));
+    }
+
+    #[test]
+    fn test_explode_cycle_detected() {
+        let edges: Vec<BomEdge> =
+            vec![("A".into(), "B".into(), 1.0), ("B".into(), "A".into(), 1.0)];
+        let r = explode_bom(&edges, "A", 1.0);
+        assert!(r.is_err());
+        assert!(r.unwrap_err().contains("循环依赖"));
+    }
+
+    #[test]
+    fn test_explode_shared_subassembly() {
+        // 共享件 C 被多个父项引用：A→B×1, A→C×2, B→C×3
+        // A×1 → B=1, C=2+1*3=5
+        let edges: Vec<BomEdge> = vec![
+            ("A".into(), "B".into(), 1.0),
+            ("A".into(), "C".into(), 2.0),
+            ("B".into(), "C".into(), 3.0),
+        ];
+        let r = explode_bom(&edges, "A", 1.0).unwrap();
+        assert_eq!(r.get("B").copied(), Some(1.0));
+        assert_eq!(r.get("C").copied(), Some(5.0));
+    }
+
+    // ============ ebom_to_mbom_qty ============
+
+    #[test]
+    fn test_ebom_mbom_plain() {
+        // 无参数，数量不变
+        assert!((ebom_to_mbom_qty(100.0, None, None, None) - 100.0).abs() < 1e-9);
+    }
+
+    #[test]
+    fn test_ebom_mbom_with_loss() {
+        // 100 / (1-0.2) = 125
+        let r = ebom_to_mbom_qty(100.0, Some(0.2), None, None);
+        assert!((r - 125.0).abs() < 1e-9);
+    }
+
+    #[test]
+    fn test_ebom_mbom_min_qty() {
+        assert_eq!(ebom_to_mbom_qty(5.0, None, None, Some(50.0)), 50.0);
+    }
+
+    #[test]
+    fn test_ebom_mbom_pack_multiple() {
+        // 110, pack 12 → 120
+        assert_eq!(ebom_to_mbom_qty(110.0, None, Some(12.0), None), 120.0);
+        // 精确倍数不调整
+        assert_eq!(ebom_to_mbom_qty(108.0, None, Some(12.0), None), 108.0);
+    }
+
+    #[test]
+    fn test_ebom_mbom_full_pipeline() {
+        // qty 100, 10% loss → 111.111; min=150 提升到 150；pack 50：150 是 3×50（整数倍）→ 150
+        let r = ebom_to_mbom_qty(100.0, Some(0.1), Some(50.0), Some(150.0));
+        assert!((r - 150.0).abs() < 1e-9);
+        // 再验证：qty 100, 10% loss → 111.111; min=160 → 160；pack 50 → 160/50=3.2 ceil=4 → 200
+        let r2 = ebom_to_mbom_qty(100.0, Some(0.1), Some(50.0), Some(160.0));
+        assert!((r2 - 200.0).abs() < 1e-9);
+    }
+
+    #[test]
+    fn test_ebom_mbom_zero_or_negative_qty() {
+        assert_eq!(
+            ebom_to_mbom_qty(0.0, Some(0.1), Some(10.0), Some(20.0)),
+            0.0
+        );
+        assert_eq!(ebom_to_mbom_qty(-5.0, None, None, None), 0.0);
+    }
+
+    // ============ calculate_total_bom_cost ============
+
+    #[test]
+    fn test_total_cost_basic() {
+        let mut req: HashMap<String, f64> = HashMap::new();
+        req.insert("A".into(), 2.0);
+        req.insert("B".into(), 3.0);
+        let mut cost: HashMap<String, f64> = HashMap::new();
+        cost.insert("A".into(), 10.0);
+        cost.insert("B".into(), 5.0);
+        let (total, miss) = calculate_total_bom_cost(&req, &cost);
+        assert!((total - 35.0).abs() < 1e-9);
+        assert!(miss.is_empty());
+    }
+
+    #[test]
+    fn test_total_cost_missing_cost() {
+        let mut req: HashMap<String, f64> = HashMap::new();
+        req.insert("A".into(), 2.0);
+        req.insert("C".into(), 5.0);
+        let mut cost: HashMap<String, f64> = HashMap::new();
+        cost.insert("A".into(), 10.0);
+        let (total, miss) = calculate_total_bom_cost(&req, &cost);
+        assert!((total - 20.0).abs() < 1e-9);
+        assert_eq!(miss.len(), 1);
+        assert_eq!(miss[0], "C");
+    }
+
+    // ============ validate_cost_rollup ============
+
+    #[test]
+    fn test_rollup_valid() {
+        assert!(validate_cost_rollup(&[30.0, 20.0, 50.0], 100.0, 0.001));
+    }
+
+    #[test]
+    fn test_rollup_invalid() {
+        assert!(!validate_cost_rollup(&[30.0, 20.0], 100.0, 0.001));
+    }
+
+    #[test]
+    fn test_rollup_zero_parent_with_children_should_fail() {
+        assert!(!validate_cost_rollup(&[1.0], 0.0, 0.001));
+    }
+
+    #[test]
+    fn test_rollup_both_zero_ok() {
+        assert!(validate_cost_rollup(&[], 0.0, 0.001));
+    }
+
+    // ============ diff_bom_single_level ============
+
+    #[test]
+    fn test_diff_equal() {
+        let a = [("X", 1.0), ("Y", 2.0)];
+        let b = [("Y", 2.0), ("X", 1.0)];
+        let (oa, ob, ch) = diff_bom_single_level(&a, &b);
+        assert!(oa.is_empty());
+        assert!(ob.is_empty());
+        assert!(ch.is_empty());
+    }
+
+    #[test]
+    fn test_diff_only_a_only_b_changed() {
+        let a = [("X", 1.0), ("Y", 2.0), ("Z", 3.0)];
+        let b = [("X", 1.5), ("Y", 2.0), ("W", 5.0)];
+        let (oa, ob, ch) = diff_bom_single_level(&a, &b);
+        assert_eq!(oa, vec!["Z"]);
+        assert_eq!(ob, vec!["W"]);
+        assert_eq!(ch.len(), 1);
+        assert_eq!(ch[0].0, "X");
+        assert_eq!(ch[0].1, 1.0);
+        assert_eq!(ch[0].2, 1.5);
+    }
+
+    // ============ bom_max_depth ============
+
+    #[test]
+    fn test_depth_just_root() {
+        let edges: Vec<BomEdge> = vec![];
+        assert_eq!(bom_max_depth(&edges, "A").unwrap(), 1);
+    }
+
+    #[test]
+    fn test_depth_two_levels() {
+        let edges: Vec<BomEdge> =
+            vec![("A".into(), "B".into(), 1.0), ("A".into(), "C".into(), 1.0)];
+        assert_eq!(bom_max_depth(&edges, "A").unwrap(), 2);
+    }
+
+    #[test]
+    fn test_depth_three_levels_deep_chain() {
+        let edges: Vec<BomEdge> = vec![
+            ("A".into(), "B".into(), 1.0),
+            ("B".into(), "C".into(), 1.0),
+            ("C".into(), "D".into(), 1.0),
+        ];
+        assert_eq!(bom_max_depth(&edges, "A").unwrap(), 4);
+    }
+
+    #[test]
+    fn test_depth_cycle() {
+        let edges: Vec<BomEdge> =
+            vec![("A".into(), "B".into(), 1.0), ("B".into(), "A".into(), 1.0)];
+        assert!(bom_max_depth(&edges, "A").is_err());
+    }
+}
+
 fn get_tenant_id(claims: &Claims, headers: &axum::http::HeaderMap) -> Uuid {
     claims
         .tenant_id

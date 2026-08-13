@@ -14,6 +14,43 @@ use topems_shared_core::response::ApiResponse;
 
 use crate::shared::AppState;
 
+// ==================== 纯函数（无副作用，可单测） ====================
+
+/// 计算治理成熟度综合分数（0-5 分制）。
+/// - 输入为各维度分数列表（每个维度 0-5 分）
+/// - 各维度 clamp 到 [0,5]，取算术平均
+/// - 空列表返回 0.0
+/// - 结果四舍五入到 2 位小数
+pub fn calculate_maturity_score(dimensions: &[f64]) -> f64 {
+    if dimensions.is_empty() {
+        return 0.0;
+    }
+    let sum: f64 = dimensions.iter().map(|v| v.clamp(0.0, 5.0)).sum();
+    let avg = sum / dimensions.len() as f64;
+    (avg * 100.0).round() / 100.0
+}
+
+/// 根据成熟度分数返回成熟度等级名称（对应 MaturityLevel 枚举）。
+/// - [4.5, 5.0] -> "optimized"
+/// - [3.5, 4.5) -> "managed"
+/// - [2.5, 3.5) -> "defined"
+/// - [1.5, 2.5) -> "developed"
+/// - [0.0, 1.5) -> "initial"
+pub fn maturity_level_name(score: f64) -> &'static str {
+    let s = score.clamp(0.0, 5.0);
+    if s >= 4.5 {
+        "optimized"
+    } else if s >= 3.5 {
+        "managed"
+    } else if s >= 2.5 {
+        "defined"
+    } else if s >= 1.5 {
+        "developed"
+    } else {
+        "initial"
+    }
+}
+
 // ==================== 治理成熟度：数据结构 ====================
 
 #[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
@@ -1581,5 +1618,139 @@ fn parse_step_path(path: &str) -> (String, String) {
         (parts[0].to_string(), parts[1].to_string())
     } else {
         (path.to_string(), path.to_string())
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    // ---------- calculate_maturity_score ----------
+
+    #[test]
+    fn test_maturity_score_empty_returns_zero() {
+        assert_eq!(calculate_maturity_score(&[]), 0.0);
+    }
+
+    #[test]
+    fn test_maturity_score_single_dimension() {
+        assert_eq!(calculate_maturity_score(&[3.0]), 3.0);
+        assert_eq!(calculate_maturity_score(&[5.0]), 5.0);
+        assert_eq!(calculate_maturity_score(&[0.0]), 0.0);
+    }
+
+    #[test]
+    fn test_maturity_score_average_of_dimensions() {
+        // (1+2+3+4+5)/5 = 3.0
+        let dims = [1.0, 2.0, 3.0, 4.0, 5.0];
+        assert_eq!(calculate_maturity_score(&dims), 3.0);
+    }
+
+    #[test]
+    fn test_maturity_score_clamps_high_values() {
+        // 超过 5 的值 clamp 到 5
+        // (5+5+5)/3 = 5.0
+        let dims = [10.0, 100.0, 5.5];
+        assert_eq!(calculate_maturity_score(&dims), 5.0);
+    }
+
+    #[test]
+    fn test_maturity_score_clamps_negative_values() {
+        // 负值 clamp 到 0
+        // (0+0+0)/3 = 0.0
+        let dims = [-1.0, -10.0, -100.0];
+        assert_eq!(calculate_maturity_score(&dims), 0.0);
+    }
+
+    #[test]
+    fn test_maturity_score_rounded_to_2_decimals() {
+        // (1+2+3)/3 = 2.0 (整数)
+        // 改用： (1.1+2.2+3.3)/3 = 6.6/3 = 2.2
+        let dims = [1.1, 2.2, 3.3];
+        assert!((calculate_maturity_score(&dims) - 2.2).abs() < 0.01);
+        // 用会触发多位小数的： (1.0+1.0+1.0+1.0+1.0+1.0+1.0)/7 = 1.0
+        let dims = [1.0; 7];
+        assert_eq!(calculate_maturity_score(&dims), 1.0);
+    }
+
+    #[test]
+    fn test_maturity_score_all_max() {
+        let dims = [5.0, 5.0, 5.0, 5.0];
+        assert_eq!(calculate_maturity_score(&dims), 5.0);
+    }
+
+    #[test]
+    fn test_maturity_score_all_min() {
+        let dims = [0.0, 0.0, 0.0];
+        assert_eq!(calculate_maturity_score(&dims), 0.0);
+    }
+
+    #[test]
+    fn test_maturity_score_mixed_clamped() {
+        // (0+5+2.5)/3 = 7.5/3 = 2.5
+        let dims = [-5.0, 99.0, 2.5];
+        assert!((calculate_maturity_score(&dims) - 2.5).abs() < 0.01);
+    }
+
+    // ---------- maturity_level_name ----------
+
+    #[test]
+    fn test_maturity_level_optimized_boundary() {
+        assert_eq!(maturity_level_name(4.5), "optimized");
+        assert_eq!(maturity_level_name(5.0), "optimized");
+    }
+
+    #[test]
+    fn test_maturity_level_managed() {
+        assert_eq!(maturity_level_name(3.5), "managed");
+        assert_eq!(maturity_level_name(4.49), "managed");
+    }
+
+    #[test]
+    fn test_maturity_level_defined() {
+        assert_eq!(maturity_level_name(2.5), "defined");
+        assert_eq!(maturity_level_name(3.49), "defined");
+    }
+
+    #[test]
+    fn test_maturity_level_developed() {
+        assert_eq!(maturity_level_name(1.5), "developed");
+        assert_eq!(maturity_level_name(2.49), "developed");
+    }
+
+    #[test]
+    fn test_maturity_level_initial() {
+        assert_eq!(maturity_level_name(0.0), "initial");
+        assert_eq!(maturity_level_name(1.49), "initial");
+    }
+
+    #[test]
+    fn test_maturity_level_clamps_above_5() {
+        assert_eq!(maturity_level_name(10.0), "optimized");
+        assert_eq!(maturity_level_name(100.0), "optimized");
+    }
+
+    #[test]
+    fn test_maturity_level_clamps_negative() {
+        assert_eq!(maturity_level_name(-1.0), "initial");
+        assert_eq!(maturity_level_name(-100.0), "initial");
+    }
+
+    #[test]
+    fn test_calculate_then_level_integration() {
+        // 平均分 4.0 -> managed
+        let dims = [4.0, 4.0, 4.0, 4.0];
+        let score = calculate_maturity_score(&dims);
+        assert_eq!(maturity_level_name(score), "managed");
+
+        // 平均分 5.0 -> optimized
+        let dims = [5.0, 5.0];
+        let score = calculate_maturity_score(&dims);
+        assert_eq!(maturity_level_name(score), "optimized");
+
+        // 平均分 0.0 -> initial
+        let dims = [0.0, 0.0, 0.0];
+        let score = calculate_maturity_score(&dims);
+        assert_eq!(maturity_level_name(score), "initial");
     }
 }

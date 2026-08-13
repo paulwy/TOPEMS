@@ -620,6 +620,58 @@ fn metric_status(metric: &BusinessMetric) -> &'static str {
     "healthy"
 }
 
+// ==================== 纯函数（无副作用，便于单元测试） ====================
+
+/// 计算环比变化百分比：(current - previous) / previous * 100。
+/// previous 为 0 时返回 None（无法计算）。
+pub fn calculate_change_percent(current: f64, previous: f64) -> Option<f64> {
+    if previous == 0.0 {
+        return None;
+    }
+    Some((current - previous) / previous * 100.0)
+}
+
+/// 计算达成率：current / target * 100。
+/// target <= 0 时返回 0.0。
+pub fn calculate_achievement_rate(current: f64, target: f64) -> f64 {
+    if target <= 0.0 {
+        return 0.0;
+    }
+    (current / target) * 100.0
+}
+
+/// 根据原始参数判定业务指标状态（与 metric_status 逻辑一致，但接受基本类型）。
+/// - 当有目标值且 code 含 "rate" 或 unit 为 "%" 时，按目标达成率分级
+/// - 否则按 change_percent 绝对值分级
+pub fn classify_metric_status(
+    current: f64,
+    target: Option<f64>,
+    change_percent: Option<f64>,
+    code: &str,
+    unit: &str,
+) -> &'static str {
+    if let Some(target) = target {
+        if code.contains("rate") || unit == "%" {
+            if current >= target {
+                return "healthy";
+            }
+            if current >= target * 0.95 {
+                return "warning";
+            }
+            return "critical";
+        }
+    }
+    if let Some(pct) = change_percent {
+        if pct.abs() < 1.0 {
+            return "healthy";
+        }
+        if pct.abs() < 5.0 {
+            return "warning";
+        }
+    }
+    "healthy"
+}
+
 // ==================== 路由处理器 ====================
 
 #[utoipa::path(
@@ -1035,4 +1087,161 @@ pub fn create_routes() -> Router<AppState> {
                 .put(update_business_metric)
                 .delete(delete_business_metric),
         )
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    // ---- calculate_change_percent ----
+
+    #[test]
+    fn test_calculate_change_percent_increase() {
+        let pct = calculate_change_percent(120.0, 100.0);
+        assert!((pct.unwrap() - 20.0).abs() < 0.001);
+    }
+
+    #[test]
+    fn test_calculate_change_percent_decrease() {
+        let pct = calculate_change_percent(80.0, 100.0);
+        assert!((pct.unwrap() - (-20.0)).abs() < 0.001);
+    }
+
+    #[test]
+    fn test_calculate_change_percent_no_change() {
+        let pct = calculate_change_percent(100.0, 100.0);
+        assert!((pct.unwrap() - 0.0).abs() < 0.001);
+    }
+
+    #[test]
+    fn test_calculate_change_percent_zero_previous() {
+        let pct = calculate_change_percent(100.0, 0.0);
+        assert!(pct.is_none());
+    }
+
+    #[test]
+    fn test_calculate_change_percent_negative_previous() {
+        // (-50 - (-100)) / (-100) * 100 = 50 / -100 * 100 = -50.0
+        let pct = calculate_change_percent(-50.0, -100.0);
+        assert!((pct.unwrap() - (-50.0)).abs() < 0.001);
+    }
+
+    #[test]
+    fn test_calculate_change_percent_zero_current() {
+        let pct = calculate_change_percent(0.0, 100.0);
+        assert!((pct.unwrap() - (-100.0)).abs() < 0.001);
+    }
+
+    // ---- calculate_achievement_rate ----
+
+    #[test]
+    fn test_calculate_achievement_rate_normal() {
+        assert!((calculate_achievement_rate(80.0, 100.0) - 80.0).abs() < 0.001);
+    }
+
+    #[test]
+    fn test_calculate_achievement_rate_exceeded() {
+        assert!((calculate_achievement_rate(120.0, 100.0) - 120.0).abs() < 0.001);
+    }
+
+    #[test]
+    fn test_calculate_achievement_rate_zero_target() {
+        assert_eq!(calculate_achievement_rate(50.0, 0.0), 0.0);
+    }
+
+    #[test]
+    fn test_calculate_achievement_rate_negative_target() {
+        assert_eq!(calculate_achievement_rate(50.0, -10.0), 0.0);
+    }
+
+    #[test]
+    fn test_calculate_achievement_rate_zero_current() {
+        assert_eq!(calculate_achievement_rate(0.0, 100.0), 0.0);
+    }
+
+    #[test]
+    fn test_calculate_achievement_rate_full() {
+        assert!((calculate_achievement_rate(100.0, 100.0) - 100.0).abs() < 0.001);
+    }
+
+    // ---- classify_metric_status ----
+
+    #[test]
+    fn test_classify_metric_status_healthy_rate() {
+        // current >= target, code contains "rate"
+        assert_eq!(
+            classify_metric_status(35.0, Some(30.0), None, "conversion_rate", "%"),
+            "healthy"
+        );
+    }
+
+    #[test]
+    fn test_classify_metric_status_warning_rate() {
+        // current >= target * 0.95 but < target
+        assert_eq!(
+            classify_metric_status(29.0, Some(30.0), None, "conversion_rate", "%"),
+            "warning"
+        );
+    }
+
+    #[test]
+    fn test_classify_metric_status_critical_rate() {
+        // current < target * 0.95
+        assert_eq!(
+            classify_metric_status(20.0, Some(30.0), None, "conversion_rate", "%"),
+            "critical"
+        );
+    }
+
+    #[test]
+    fn test_classify_metric_status_healthy_by_change() {
+        // non-rate code, no target, small change
+        assert_eq!(
+            classify_metric_status(100.0, None, Some(0.5), "order_total", "单"),
+            "healthy"
+        );
+    }
+
+    #[test]
+    fn test_classify_metric_status_warning_by_change() {
+        assert_eq!(
+            classify_metric_status(100.0, None, Some(3.0), "order_total", "单"),
+            "warning"
+        );
+    }
+
+    #[test]
+    fn test_classify_metric_status_large_change_defaults_healthy() {
+        // change_percent >= 5.0 falls through to "healthy" (matches original metric_status)
+        assert_eq!(
+            classify_metric_status(100.0, None, Some(10.0), "order_total", "单"),
+            "healthy"
+        );
+    }
+
+    #[test]
+    fn test_classify_metric_status_no_target_no_change() {
+        assert_eq!(
+            classify_metric_status(100.0, None, None, "order_total", "单"),
+            "healthy"
+        );
+    }
+
+    #[test]
+    fn test_classify_metric_status_unit_percent_without_rate_code() {
+        // unit == "%" triggers rate logic even if code doesn't contain "rate"
+        assert_eq!(
+            classify_metric_status(98.0, Some(100.0), None, "quality", "%"),
+            "warning"
+        );
+    }
+
+    #[test]
+    fn test_classify_metric_status_boundary_95_percent() {
+        // current exactly target * 0.95 => warning
+        assert_eq!(
+            classify_metric_status(28.5, Some(30.0), None, "rate_metric", "%"),
+            "warning"
+        );
+    }
 }

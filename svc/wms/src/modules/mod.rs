@@ -9,6 +9,7 @@ use topems_shared_event::event::EventPublisher;
 
 pub mod audit;
 pub mod batch;
+pub mod discrepancy_logic;
 pub mod replenishment_logic;
 // pub mod cycle_count;
 // pub mod discrepancy;

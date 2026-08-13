@@ -72,6 +72,8 @@ docker-compose.*.yml
 # Testing
 coverage/
 *.lcov
+*.profraw
+*.profdata
 .nyc_output
 apps/web/playwright-report/
 apps/web/test-results/

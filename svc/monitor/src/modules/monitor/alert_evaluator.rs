@@ -88,6 +88,60 @@ pub struct MetricSnapshot {
     pub timestamp: chrono::DateTime<chrono::Utc>,
 }
 
+// ==================== 纯函数（无副作用，便于单元测试） ====================
+
+/// 根据操作符比较当前值与阈值，返回是否触发告警。
+pub fn evaluate_threshold(value: f64, operator: &ThresholdOperator, threshold: f64) -> bool {
+    match operator {
+        ThresholdOperator::GreaterThan => value > threshold,
+        ThresholdOperator::GreaterThanOrEqual => value >= threshold,
+        ThresholdOperator::LessThan => value < threshold,
+        ThresholdOperator::LessThanOrEqual => value <= threshold,
+        ThresholdOperator::Equal => value == threshold,
+        ThresholdOperator::NotEqual => value != threshold,
+    }
+}
+
+/// 根据当前值与 warning/critical 阈值划分告警级别。
+/// - value >= critical => "critical"
+/// - value >= warning  => "warning"
+/// - 否则               => "info"
+pub fn classify_severity(value: f64, warning: f64, critical: f64) -> &'static str {
+    if value >= critical {
+        "critical"
+    } else if value >= warning {
+        "warning"
+    } else {
+        "info"
+    }
+}
+
+/// 从指标快照中按指标类型提取对应的当前值。
+pub fn extract_metric_value(metric_type: &MetricType, snapshot: &MetricSnapshot) -> f64 {
+    match metric_type {
+        MetricType::CpuUsage => snapshot.cpu_usage,
+        MetricType::MemoryUsage => snapshot.memory_usage,
+        MetricType::DiskUsage => snapshot.disk_usage,
+        MetricType::ResponseTime => snapshot.response_time,
+        MetricType::ErrorRate => snapshot.error_rate,
+        MetricType::RequestCount => snapshot.request_count as f64,
+        MetricType::ActiveConnections => snapshot.active_connections as f64,
+        MetricType::DatabasePoolUsage => snapshot.database_pool_usage,
+    }
+}
+
+/// 判断阈值的服务名过滤是否匹配当前快照服务。
+/// 阈值未指定服务名（None）时匹配所有服务。
+pub fn threshold_matches_service(
+    threshold_service: &Option<String>,
+    snapshot_service: &str,
+) -> bool {
+    match threshold_service {
+        None => true,
+        Some(svc) => svc == snapshot_service,
+    }
+}
+
 #[allow(dead_code)]
 struct AlertEvaluatorState {
     thresholds: Vec<AlertThreshold>,
@@ -550,4 +604,288 @@ pub fn create_routes() -> Router<AppState> {
         )
         .route("/thresholds/evaluate", post(evaluate_thresholds))
         .route("/metrics/snapshot", get(get_metric_snapshot))
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use chrono::Utc;
+
+    fn sample_snapshot() -> MetricSnapshot {
+        MetricSnapshot {
+            service_name: "topems-monitor".to_string(),
+            cpu_usage: 50.0,
+            memory_usage: 60.0,
+            disk_usage: 70.0,
+            response_time: 100.0,
+            error_rate: 2.0,
+            request_count: 1000,
+            active_connections: 50,
+            database_pool_usage: 40.0,
+            timestamp: Utc::now(),
+        }
+    }
+
+    // ---- evaluate_threshold ----
+
+    #[test]
+    fn test_evaluate_threshold_greater_than() {
+        assert!(evaluate_threshold(
+            81.0,
+            &ThresholdOperator::GreaterThan,
+            80.0
+        ));
+        assert!(!evaluate_threshold(
+            80.0,
+            &ThresholdOperator::GreaterThan,
+            80.0
+        ));
+        assert!(!evaluate_threshold(
+            79.0,
+            &ThresholdOperator::GreaterThan,
+            80.0
+        ));
+    }
+
+    #[test]
+    fn test_evaluate_threshold_greater_than_or_equal() {
+        assert!(evaluate_threshold(
+            81.0,
+            &ThresholdOperator::GreaterThanOrEqual,
+            80.0
+        ));
+        assert!(evaluate_threshold(
+            80.0,
+            &ThresholdOperator::GreaterThanOrEqual,
+            80.0
+        ));
+        assert!(!evaluate_threshold(
+            79.0,
+            &ThresholdOperator::GreaterThanOrEqual,
+            80.0
+        ));
+    }
+
+    #[test]
+    fn test_evaluate_threshold_less_than() {
+        assert!(evaluate_threshold(79.0, &ThresholdOperator::LessThan, 80.0));
+        assert!(!evaluate_threshold(
+            80.0,
+            &ThresholdOperator::LessThan,
+            80.0
+        ));
+        assert!(!evaluate_threshold(
+            81.0,
+            &ThresholdOperator::LessThan,
+            80.0
+        ));
+    }
+
+    #[test]
+    fn test_evaluate_threshold_less_than_or_equal() {
+        assert!(evaluate_threshold(
+            79.0,
+            &ThresholdOperator::LessThanOrEqual,
+            80.0
+        ));
+        assert!(evaluate_threshold(
+            80.0,
+            &ThresholdOperator::LessThanOrEqual,
+            80.0
+        ));
+        assert!(!evaluate_threshold(
+            81.0,
+            &ThresholdOperator::LessThanOrEqual,
+            80.0
+        ));
+    }
+
+    #[test]
+    fn test_evaluate_threshold_equal() {
+        assert!(evaluate_threshold(80.0, &ThresholdOperator::Equal, 80.0));
+        assert!(!evaluate_threshold(81.0, &ThresholdOperator::Equal, 80.0));
+        assert!(!evaluate_threshold(79.0, &ThresholdOperator::Equal, 80.0));
+    }
+
+    #[test]
+    fn test_evaluate_threshold_not_equal() {
+        assert!(!evaluate_threshold(
+            80.0,
+            &ThresholdOperator::NotEqual,
+            80.0
+        ));
+        assert!(evaluate_threshold(81.0, &ThresholdOperator::NotEqual, 80.0));
+        assert!(evaluate_threshold(79.0, &ThresholdOperator::NotEqual, 80.0));
+    }
+
+    #[test]
+    fn test_evaluate_threshold_zero_values() {
+        assert!(evaluate_threshold(0.0, &ThresholdOperator::Equal, 0.0));
+        assert!(!evaluate_threshold(
+            0.0,
+            &ThresholdOperator::GreaterThan,
+            0.0
+        ));
+        assert!(evaluate_threshold(
+            0.0,
+            &ThresholdOperator::GreaterThanOrEqual,
+            0.0
+        ));
+    }
+
+    #[test]
+    fn test_evaluate_threshold_negative_values() {
+        assert!(evaluate_threshold(-5.0, &ThresholdOperator::LessThan, 0.0));
+        assert!(evaluate_threshold(
+            -5.0,
+            &ThresholdOperator::GreaterThan,
+            -10.0
+        ));
+        assert!(!evaluate_threshold(
+            -5.0,
+            &ThresholdOperator::GreaterThan,
+            0.0
+        ));
+    }
+
+    // ---- classify_severity ----
+
+    #[test]
+    fn test_classify_severity_critical() {
+        assert_eq!(classify_severity(95.0, 80.0, 90.0), "critical");
+        assert_eq!(classify_severity(90.0, 80.0, 90.0), "critical");
+    }
+
+    #[test]
+    fn test_classify_severity_warning() {
+        assert_eq!(classify_severity(85.0, 80.0, 90.0), "warning");
+        assert_eq!(classify_severity(80.0, 80.0, 90.0), "warning");
+    }
+
+    #[test]
+    fn test_classify_severity_info() {
+        assert_eq!(classify_severity(70.0, 80.0, 90.0), "info");
+        assert_eq!(classify_severity(0.0, 80.0, 90.0), "info");
+    }
+
+    #[test]
+    fn test_classify_severity_boundary() {
+        assert_eq!(classify_severity(89.99, 80.0, 90.0), "warning");
+        assert_eq!(classify_severity(79.99, 80.0, 90.0), "info");
+    }
+
+    #[test]
+    fn test_classify_severity_all_equal() {
+        assert_eq!(classify_severity(50.0, 50.0, 50.0), "critical");
+    }
+
+    // ---- extract_metric_value ----
+
+    #[test]
+    fn test_extract_metric_value_cpu() {
+        let snap = sample_snapshot();
+        assert_eq!(extract_metric_value(&MetricType::CpuUsage, &snap), 50.0);
+    }
+
+    #[test]
+    fn test_extract_metric_value_memory() {
+        let snap = sample_snapshot();
+        assert_eq!(extract_metric_value(&MetricType::MemoryUsage, &snap), 60.0);
+    }
+
+    #[test]
+    fn test_extract_metric_value_disk() {
+        let snap = sample_snapshot();
+        assert_eq!(extract_metric_value(&MetricType::DiskUsage, &snap), 70.0);
+    }
+
+    #[test]
+    fn test_extract_metric_value_response_time() {
+        let snap = sample_snapshot();
+        assert_eq!(
+            extract_metric_value(&MetricType::ResponseTime, &snap),
+            100.0
+        );
+    }
+
+    #[test]
+    fn test_extract_metric_value_error_rate() {
+        let snap = sample_snapshot();
+        assert_eq!(extract_metric_value(&MetricType::ErrorRate, &snap), 2.0);
+    }
+
+    #[test]
+    fn test_extract_metric_value_request_count() {
+        let snap = sample_snapshot();
+        assert_eq!(
+            extract_metric_value(&MetricType::RequestCount, &snap),
+            1000.0
+        );
+    }
+
+    #[test]
+    fn test_extract_metric_value_active_connections() {
+        let snap = sample_snapshot();
+        assert_eq!(
+            extract_metric_value(&MetricType::ActiveConnections, &snap),
+            50.0
+        );
+    }
+
+    #[test]
+    fn test_extract_metric_value_db_pool() {
+        let snap = sample_snapshot();
+        assert_eq!(
+            extract_metric_value(&MetricType::DatabasePoolUsage, &snap),
+            40.0
+        );
+    }
+
+    #[test]
+    fn test_extract_metric_value_zero_snapshot() {
+        let snap = MetricSnapshot {
+            service_name: "svc".to_string(),
+            cpu_usage: 0.0,
+            memory_usage: 0.0,
+            disk_usage: 0.0,
+            response_time: 0.0,
+            error_rate: 0.0,
+            request_count: 0,
+            active_connections: 0,
+            database_pool_usage: 0.0,
+            timestamp: Utc::now(),
+        };
+        assert_eq!(extract_metric_value(&MetricType::CpuUsage, &snap), 0.0);
+        assert_eq!(extract_metric_value(&MetricType::RequestCount, &snap), 0.0);
+    }
+
+    // ---- threshold_matches_service ----
+
+    #[test]
+    fn test_threshold_matches_service_none_matches_all() {
+        assert!(threshold_matches_service(&None, "any-service"));
+        assert!(threshold_matches_service(&None, "topems-crm"));
+    }
+
+    #[test]
+    fn test_threshold_matches_service_exact_match() {
+        assert!(threshold_matches_service(
+            &Some("topems-crm".to_string()),
+            "topems-crm"
+        ));
+    }
+
+    #[test]
+    fn test_threshold_matches_service_no_match() {
+        assert!(!threshold_matches_service(
+            &Some("topems-crm".to_string()),
+            "topems-pm"
+        ));
+    }
+
+    #[test]
+    fn test_threshold_matches_service_empty_string() {
+        assert!(threshold_matches_service(&Some("".to_string()), ""));
+        assert!(!threshold_matches_service(&Some("".to_string()), "svc"));
+    }
 }

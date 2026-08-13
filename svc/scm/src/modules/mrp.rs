@@ -4,7 +4,7 @@ use axum::{
     routing::get,
     Json, Router,
 };
-use chrono::Utc;
+use chrono::{Duration, NaiveDate, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::Row;
 use uuid::Uuid;
@@ -15,6 +15,127 @@ use crate::shared::permission::{check_permission, ModulePermission};
 use topems_shared_auth::auth::Claims;
 use topems_shared_core::response::PaginationParams;
 use topems_shared_core::response::{api_error, ApiResponse};
+
+// =============================================================================
+// Pure functions (unit-tested via mrp_logic_tests.rs & inline tests)
+// =============================================================================
+
+/// 净需求计算：毛需求 + 安全库存 + 已分配 − 在库 − 在途，下限为 0
+pub fn calculate_net_requirement(
+    gross_requirement: f64,
+    on_hand: f64,
+    allocated: f64,
+    in_transit: f64,
+    safety_stock: f64,
+) -> f64 {
+    let net = gross_requirement + safety_stock + allocated - on_hand - in_transit;
+    net.max(0.0)
+}
+
+/// 安全库存 = avg_daily_demand × lead_time_days × service_factor，输入不合法时返回 0
+pub fn calculate_safety_stock(
+    avg_daily_demand: f64,
+    lead_time_days: f64,
+    service_factor: f64,
+) -> f64 {
+    if avg_daily_demand < 0.0 || lead_time_days < 0.0 || service_factor < 0.0 {
+        return 0.0;
+    }
+    avg_daily_demand * lead_time_days * service_factor
+}
+
+/// 经济订货批量 EOQ = sqrt(2DS/H)；非法输入返回 Err
+pub fn calculate_eoq(
+    annual_demand: f64,
+    ordering_cost: f64,
+    holding_cost_per_unit: f64,
+) -> Result<f64, String> {
+    if annual_demand < 0.0 {
+        return Err("annual_demand must be non-negative".to_string());
+    }
+    if holding_cost_per_unit <= 0.0 {
+        return Err("holding_cost_per_unit must be > 0".to_string());
+    }
+    if annual_demand == 0.0 {
+        return Ok(0.0);
+    }
+    Ok((2.0 * annual_demand * ordering_cost / holding_cost_per_unit).sqrt())
+}
+
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub enum LotSizingRule {
+    /// Lot-for-Lot：按净需求订货
+    LFL,
+    /// Fixed Order Quantity：固定批量的整数倍
+    FOQ(f64),
+}
+
+/// 批量调整：先按规则选量，再依次应用 min_order_qty 和 pack_multiple（零倍为 0）
+pub fn apply_lot_sizing(
+    requirement: f64,
+    rule: LotSizingRule,
+    min_order_qty: f64,
+    pack_multiple: f64,
+) -> f64 {
+    if requirement <= 0.0 {
+        return 0.0;
+    }
+
+    let after_rule = match rule {
+        LotSizingRule::LFL => requirement,
+        LotSizingRule::FOQ(q) if q <= 0.0 => requirement,
+        LotSizingRule::FOQ(q) => {
+            let batches = (requirement / q).ceil();
+            batches * q
+        }
+    };
+
+    let mut result = after_rule;
+    if min_order_qty > 0.0 && result < min_order_qty {
+        result = min_order_qty;
+    }
+    if pack_multiple > 1.0 {
+        let ratio = result / pack_multiple;
+        let ceiled = ratio.ceil();
+        if (ceiled - ratio).abs() > 1e-9 {
+            result = ceiled * pack_multiple;
+        }
+    }
+    result
+}
+
+/// 订货日期 = 需求日期 − lead_time_days（负提前期会向后推）
+pub fn calculate_order_date(required_date: NaiveDate, lead_time_days: i64) -> NaiveDate {
+    required_date - Duration::days(lead_time_days)
+}
+
+/// 组合建议：安全库存 + 净需求 + LFL 批量
+/// Returns (suggested_qty, safety_stock, net_requirement)
+pub fn compute_mrp_suggestion(
+    gross_requirement: f64,
+    on_hand: f64,
+    allocated: f64,
+    in_transit: f64,
+    lead_time_days: i64,
+    forecast_days: i64,
+    service_factor: f64,
+) -> (f64, f64, f64) {
+    let avg_daily = if forecast_days > 0 && gross_requirement > 0.0 {
+        gross_requirement / forecast_days as f64
+    } else {
+        0.0
+    };
+    let safety_stock = calculate_safety_stock(avg_daily, lead_time_days as f64, service_factor);
+    let net = calculate_net_requirement(
+        gross_requirement,
+        on_hand,
+        allocated,
+        in_transit,
+        safety_stock,
+    );
+    let suggested = apply_lot_sizing(net, LotSizingRule::LFL, 0.0, 1.0);
+    (suggested, safety_stock, net)
+}
 
 pub fn create_routes() -> Router<ApiState> {
     Router::new()

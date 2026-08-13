@@ -9,6 +9,51 @@ use utoipa::ToSchema;
 
 use topems_shared_core::response::ApiResponse;
 
+// ==================== Pure functions ====================
+
+/// Calculates the average progress from a slice of progress percentages.
+///
+/// Returns `0.0` for an empty slice.
+pub fn calculate_average_progress(progresses: &[f64]) -> f64 {
+    if progresses.is_empty() {
+        return 0.0;
+    }
+    let sum: f64 = progresses.iter().sum();
+    sum / progresses.len() as f64
+}
+
+/// Counts risk scores by level, returning `(low, medium, high, critical)`.
+///
+/// Uses the same thresholds as `risk::risk_level_from_score`:
+/// 1–5 low, 6–12 medium, 13–19 high, 20–25 critical.
+pub fn count_risks_by_level(scores: &[u32]) -> (u64, u64, u64, u64) {
+    let mut low = 0u64;
+    let mut medium = 0u64;
+    let mut high = 0u64;
+    let mut critical = 0u64;
+    for &s in scores {
+        match s {
+            1..=5 => low += 1,
+            6..=12 => medium += 1,
+            13..=19 => high += 1,
+            20..=25 => critical += 1,
+            _ => low += 1,
+        }
+    }
+    (low, medium, high, critical)
+}
+
+/// Calculates a completion rate as a percentage.
+///
+/// Returns `0.0` when `total` is zero or negative.
+pub fn calculate_completion_rate(completed: i64, total: i64) -> f64 {
+    if total <= 0 {
+        return 0.0;
+    }
+    let rate = (completed as f64 / total as f64) * 100.0;
+    rate.clamp(0.0, 100.0)
+}
+
 // ============ 类型定义 ============
 
 #[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
@@ -835,4 +880,94 @@ async fn query_status_counts(db: &PgPool, sql: &str) -> Vec<StatusCount> {
         .into_iter()
         .map(|(status, count)| StatusCount { status, count })
         .collect()
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    // ---- calculate_average_progress ----
+
+    #[test]
+    fn test_avg_progress_empty() {
+        assert_eq!(calculate_average_progress(&[]), 0.0);
+    }
+
+    #[test]
+    fn test_avg_progress_single() {
+        assert_eq!(calculate_average_progress(&[75.0]), 75.0);
+    }
+
+    #[test]
+    fn test_avg_progress_multiple() {
+        assert!((calculate_average_progress(&[50.0, 75.0, 100.0]) - 75.0).abs() < 1e-9);
+    }
+
+    #[test]
+    fn test_avg_progress_all_zero() {
+        assert_eq!(calculate_average_progress(&[0.0, 0.0, 0.0]), 0.0);
+    }
+
+    #[test]
+    fn test_avg_progress_mixed() {
+        let result = calculate_average_progress(&[10.0, 20.0, 30.0, 40.0]);
+        assert!((result - 25.0).abs() < 1e-9);
+    }
+
+    // ---- count_risks_by_level ----
+
+    #[test]
+    fn test_count_risks_empty() {
+        assert_eq!(count_risks_by_level(&[]), (0, 0, 0, 0));
+    }
+
+    #[test]
+    fn test_count_risks_all_levels() {
+        // 1=low, 6=medium, 13=high, 20=critical
+        assert_eq!(count_risks_by_level(&[1, 6, 13, 20]), (1, 1, 1, 1));
+    }
+
+    #[test]
+    fn test_count_risks_all_low() {
+        assert_eq!(count_risks_by_level(&[1, 2, 3, 4, 5]), (5, 0, 0, 0));
+    }
+
+    #[test]
+    fn test_count_risks_mixed() {
+        // low: 3, 5 (2), medium: 8, 12 (2), high: 15 (1), critical: 25 (1)
+        assert_eq!(count_risks_by_level(&[3, 5, 8, 12, 15, 25]), (2, 2, 1, 1));
+    }
+
+    #[test]
+    fn test_count_risks_out_of_range_defaults_low() {
+        assert_eq!(count_risks_by_level(&[0, 100]), (2, 0, 0, 0));
+    }
+
+    // ---- calculate_completion_rate ----
+
+    #[test]
+    fn test_completion_rate_zero_total() {
+        assert_eq!(calculate_completion_rate(5, 0), 0.0);
+        assert_eq!(calculate_completion_rate(5, -1), 0.0);
+    }
+
+    #[test]
+    fn test_completion_rate_half() {
+        assert!((calculate_completion_rate(5, 10) - 50.0).abs() < 1e-9);
+    }
+
+    #[test]
+    fn test_completion_rate_full() {
+        assert!((calculate_completion_rate(10, 10) - 100.0).abs() < 1e-9);
+    }
+
+    #[test]
+    fn test_completion_rate_none() {
+        assert_eq!(calculate_completion_rate(0, 10), 0.0);
+    }
+
+    #[test]
+    fn test_completion_rate_clamps_overflow() {
+        assert_eq!(calculate_completion_rate(15, 10), 100.0);
+    }
 }
