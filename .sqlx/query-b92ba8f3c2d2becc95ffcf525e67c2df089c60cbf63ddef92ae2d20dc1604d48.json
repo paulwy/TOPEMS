@@ -1,0 +1,38 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n        SELECT \n            w.current_process_id,\n            pp.name as process_name,\n            COUNT(*) as count,\n            COALESCE(SUM(w.quantity), 0) as quantity\n        FROM wips w\n        LEFT JOIN production_processes pp ON w.current_process_id = pp.id\n        WHERE w.status = 'in_progress'\n        GROUP BY w.current_process_id, pp.name\n        ORDER BY quantity DESC\n        ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "current_process_id",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 1,
+        "name": "process_name",
+        "type_info": "Varchar"
+      },
+      {
+        "ordinal": 2,
+        "name": "count",
+        "type_info": "Int8"
+      },
+      {
+        "ordinal": 3,
+        "name": "quantity",
+        "type_info": "Numeric"
+      }
+    ],
+    "parameters": {
+      "Left": []
+    },
+    "nullable": [
+      true,
+      false,
+      null,
+      null
+    ]
+  },
+  "hash": "b92ba8f3c2d2becc95ffcf525e67c2df089c60cbf63ddef92ae2d20dc1604d48"
+}

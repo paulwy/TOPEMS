@@ -1,0 +1,18 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n        INSERT INTO analytics_comparison_results\n        (id, comparison_id, status, data, summary, generated_at)\n        VALUES ($1, $2, 'success', $3, $4, $5)\n        ",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Uuid",
+        "Jsonb",
+        "Jsonb",
+        "Timestamp"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "754a7b07cba04719fa5af0150ef98f66dfbb71f03a7ab905f55bbf76815f74fb"
+}

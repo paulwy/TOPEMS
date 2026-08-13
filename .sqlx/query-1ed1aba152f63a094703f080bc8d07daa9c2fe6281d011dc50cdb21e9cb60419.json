@@ -1,0 +1,20 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n        SELECT DISTINCT p.code\n        FROM core_permissions p\n        JOIN core_role_permissions rp ON p.id = rp.permission_id\n        JOIN core_user_roles ur ON rp.role_id = ur.role_id\n        JOIN core_users u ON ur.user_id = u.id\n        WHERE u.is_superuser = true\n        ORDER BY p.code\n        ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "code",
+        "type_info": "Varchar"
+      }
+    ],
+    "parameters": {
+      "Left": []
+    },
+    "nullable": [
+      false
+    ]
+  },
+  "hash": "1ed1aba152f63a094703f080bc8d07daa9c2fe6281d011dc50cdb21e9cb60419"
+}

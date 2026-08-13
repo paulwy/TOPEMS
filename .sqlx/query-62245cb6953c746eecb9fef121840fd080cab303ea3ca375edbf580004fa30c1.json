@@ -1,0 +1,22 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n        SELECT COUNT(*) as count\n        FROM core_role_permissions rp\n        JOIN core_permissions p ON rp.permission_id = p.id\n        JOIN core_user_roles ur ON rp.role_id = ur.role_id\n        JOIN core_users u ON ur.user_id = u.id\n        WHERE p.code = $1 AND u.is_superuser = true\n        UNION ALL\n        SELECT COUNT(*) as count\n        FROM core_role_permissions rp\n        JOIN core_permissions p ON rp.permission_id = p.id\n        JOIN core_user_roles ur ON rp.role_id = ur.role_id\n        JOIN core_users u ON ur.user_id = u.id\n        WHERE p.code = $1 AND u.is_superuser = false\n        ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "count",
+        "type_info": "Int8"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Text"
+      ]
+    },
+    "nullable": [
+      null
+    ]
+  },
+  "hash": "62245cb6953c746eecb9fef121840fd080cab303ea3ca375edbf580004fa30c1"
+}

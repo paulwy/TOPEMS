@@ -1,0 +1,14 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n        UPDATE quality_patrols SET deleted_at = NOW() WHERE id = $1\n        ",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Uuid"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "931f4159d5d5910409753305bb896743dc8a8cc9b7397c69e139e000d5fec0a5"
+}

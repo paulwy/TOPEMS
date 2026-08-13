@@ -7,7 +7,7 @@
 //!
 //! OEE 三因子核心计算复用 `oee_logic.rs`，本模块仅补充产能/利用率/瓶颈/维护等周边逻辑。
 
-use chrono::{DateTime, NaiveDate, Utc};
+use chrono::NaiveDate;
 
 // ── 产能计算 ───────────────────────────────────────
 

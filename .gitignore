@@ -61,7 +61,8 @@ packages/**/node_modules/
 # Backend Rust
 **/target/
 **/Cargo.lock
-**/.sqlx/
+svc/*/.sqlx/
+lib/*/.sqlx/
 **/sqlx-data.json
 
 # Docker
