@@ -67,7 +67,7 @@
 
 | # | 方向 | 说明 | 预计工作量 |
 |---|------|------|-----------|
-| 1 | **覆盖率冲刺 P2** | 从 10% P1 阈值推进到 20%+ P2，重点补充异步 handler / 集成测试 | 中 |
+| 1 | ✅ **覆盖率冲刺 P2** | shared-core 53→65% · shared-auth 65% · shared-bootstrap 43% · shared-observability 71% · CI 扩展全 workspace + TOTAL≥20% gate（commit 50cf21e2 + 33b9a10c） | 中 |
 | 2 | **前端 E2E 测试矩阵** | Playwright 核心路径覆盖 · 冒烟测试自动化 | 中 |
 | 3 | ✅ **性能基准与回归门禁** | bundle-check.sh 接入 CI（commit 6fbb9181） · API 响应时长待补充 | 小 |
 | 4 | **国际化 i18n 落地** | 统一 `i18next` 接入 · 中/英双语资源文件 | 大 |
