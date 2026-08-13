@@ -251,10 +251,16 @@ pub async fn get_widgets_by_dashboard(
     post,
     path = "/api/bi/widget",
     tag = "Visualization",
-    request_body = CreateWidgetRequest,
+    request_body(
+        content = CreateWidgetRequest,
+        content_type = "application/json",
+        description = "创建组件请求"
+    ),
     responses(
-        (status = 201, description = "Widget created", body = serde_json::Value),
-        (status = 500, description = "Internal server error")
+        (status = 201, description = "创建成功"),
+        (status = 400, description = "请求参数错误"),
+        (status = 401, description = "未授权"),
+        (status = 500, description = "服务内部错误")
     )
 )]
 pub async fn create_widget(
@@ -382,10 +388,17 @@ pub async fn get_widget(
     params(
         ("id" = uuid::Uuid, Path, description = "Widget ID")
     ),
-    request_body = UpdateWidgetRequest,
+    request_body(
+        content = UpdateWidgetRequest,
+        content_type = "application/json",
+        description = "更新组件请求"
+    ),
     responses(
-        (status = 200, description = "Widget updated", body = serde_json::Value),
-        (status = 500, description = "Internal server error")
+        (status = 200, description = "更新成功"),
+        (status = 400, description = "请求参数错误"),
+        (status = 401, description = "未授权"),
+        (status = 404, description = "资源不存在"),
+        (status = 500, description = "服务内部错误")
     )
 )]
 pub async fn update_widget(
@@ -465,8 +478,10 @@ pub async fn update_widget(
         ("id" = uuid::Uuid, Path, description = "Widget ID")
     ),
     responses(
-        (status = 200, description = "Widget deleted", body = serde_json::Value),
-        (status = 500, description = "Internal server error")
+        (status = 200, description = "删除成功"),
+        (status = 401, description = "未授权"),
+        (status = 404, description = "资源不存在"),
+        (status = 500, description = "服务内部错误")
     )
 )]
 pub async fn delete_widget(

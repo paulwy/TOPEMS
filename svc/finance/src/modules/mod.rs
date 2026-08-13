@@ -15,6 +15,7 @@ mod report_center;
 pub mod reports_v57;
 pub mod risk_v54;
 pub mod risk_v59;
+pub mod settlement_center;
 pub mod settlement_v55;
 mod shared_services;
 pub mod tax_v56;

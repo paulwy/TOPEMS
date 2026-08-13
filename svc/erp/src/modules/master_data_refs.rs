@@ -30,7 +30,7 @@ use topems_shared_core::response::PaginatedResponse;
 
 use super::ApiState;
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, utoipa::IntoParams)]
 pub struct MasterDataRefQuery {
     pub domain: Option<String>,
     pub page: Option<i64>,
@@ -98,6 +98,14 @@ pub struct MasterDataRef {
 }
 
 /// 列出本地主数据引用
+#[utoipa::path(
+    get,
+    path = "/api/erp/master-data-refs",
+    tag = "Master Data",
+    operation_id = "list_master_data_refs",
+    params(MasterDataRefQuery),
+    responses((status = 200, description = "OK")),
+)]
 pub async fn list_master_data_refs(
     State(state): State<ApiState>,
     Query(params): Query<MasterDataRefQuery>,
@@ -1039,6 +1047,14 @@ pub async fn record_audit_event(
 }
 
 /// 查询主数据变更审计历史
+#[utoipa::path(
+    get,
+    path = "/api/erp/master-data-refs/{master_data_id}/audit-trail",
+    tag = "Master Data",
+    operation_id = "get_audit_trail",
+    params(AuditTrailQuery),
+    responses((status = 200, description = "OK")),
+)]
 pub async fn get_audit_trail(
     State(state): State<ApiState>,
     Path(master_data_id): Path<String>,
@@ -1120,7 +1136,7 @@ pub async fn get_audit_trail(
     }
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, utoipa::IntoParams)]
 pub struct AuditTrailQuery {
     pub page: Option<i64>,
     pub page_size: Option<i64>,
@@ -1267,7 +1283,7 @@ pub struct RecordVersionRequest {
     pub changed_by: Option<String>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, utoipa::IntoParams)]
 pub struct VersionQuery {
     pub page: Option<i64>,
     pub page_size: Option<i64>,
@@ -1342,6 +1358,14 @@ pub async fn record_version(
 }
 
 /// 查询主数据版本历史
+#[utoipa::path(
+    get,
+    path = "/api/erp/master-data-refs/{master_data_id}/versions",
+    tag = "Master Data",
+    operation_id = "get_versions",
+    params(VersionQuery),
+    responses((status = 200, description = "OK")),
+)]
 pub async fn get_versions(
     State(state): State<ApiState>,
     Path(master_data_id): Path<String>,
@@ -1644,7 +1668,7 @@ pub struct ConflictDetectionResult {
 }
 
 /// 冲突列表查询参数
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, utoipa::IntoParams)]
 pub struct ConflictQuery {
     pub master_data_id: Option<String>,
     pub status: Option<String>,
@@ -1906,6 +1930,14 @@ pub async fn detect_conflicts(
 }
 
 /// V37.0 AC-9: 列出冲突记录
+#[utoipa::path(
+    get,
+    path = "/api/erp/master-data-refs/conflicts",
+    tag = "Master Data",
+    operation_id = "list_conflicts",
+    params(ConflictQuery),
+    responses((status = 200, description = "OK")),
+)]
 pub async fn list_conflicts(
     State(state): State<ApiState>,
     Query(params): Query<ConflictQuery>,
@@ -2374,7 +2406,7 @@ pub struct DestroyRequest {
     pub reason: Option<String>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, utoipa::IntoParams)]
 pub struct LifecycleQuery {
     pub domain: Option<String>,
     pub keyword: Option<String>,
@@ -2883,6 +2915,14 @@ pub async fn destroy_master_data_ref(
 }
 
 /// V38.0 AC-10: 列出已归档的主数据引用
+#[utoipa::path(
+    get,
+    path = "/api/erp/master-data-refs/archived",
+    tag = "Master Data",
+    operation_id = "list_archived",
+    params(LifecycleQuery),
+    responses((status = 200, description = "OK")),
+)]
 pub async fn list_archived(
     State(state): State<ApiState>,
     Query(params): Query<LifecycleQuery>,
@@ -2960,6 +3000,14 @@ pub async fn list_archived(
 }
 
 /// V38.0 AC-10: 列出待销毁的主数据引用
+#[utoipa::path(
+    get,
+    path = "/api/erp/master-data-refs/pending-destruction",
+    tag = "Master Data",
+    operation_id = "list_pending_destruction",
+    params(LifecycleQuery),
+    responses((status = 200, description = "OK")),
+)]
 pub async fn list_pending_destruction(
     State(state): State<ApiState>,
     Query(params): Query<LifecycleQuery>,
@@ -3212,7 +3260,7 @@ pub struct UpdateQualityRuleRequest {
     pub is_active: Option<bool>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, utoipa::IntoParams)]
 pub struct ListQualityRulesQuery {
     pub domain: Option<String>,
     pub is_active: Option<bool>,
@@ -3226,7 +3274,7 @@ pub struct RunQualityCheckRequest {
     pub rule_ids: Option<Vec<uuid::Uuid>>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, utoipa::IntoParams)]
 pub struct QualityReportQuery {
     pub domain: Option<String>,
     pub page: Option<i64>,
@@ -3362,6 +3410,14 @@ pub async fn create_quality_rule(
 }
 
 /// V39.0 AC-11: 列出质量规则（支持 domain 过滤 + 分页）
+#[utoipa::path(
+    get,
+    path = "/api/erp/master-data-refs/quality-rules",
+    tag = "Master Data",
+    operation_id = "list_quality_rules",
+    params(ListQualityRulesQuery),
+    responses((status = 200, description = "OK")),
+)]
 pub async fn list_quality_rules(
     State(state): State<ApiState>,
     Query(params): Query<ListQualityRulesQuery>,
@@ -3720,6 +3776,14 @@ pub async fn run_quality_check(
 }
 
 /// V39.0 AC-11: 查询质量报告（分页 + domain 过滤）
+#[utoipa::path(
+    get,
+    path = "/api/erp/master-data-refs/quality-report",
+    tag = "Master Data",
+    operation_id = "get_quality_report",
+    params(QualityReportQuery),
+    responses((status = 200, description = "OK")),
+)]
 pub async fn get_quality_report(
     State(state): State<ApiState>,
     Query(params): Query<QualityReportQuery>,
@@ -4227,19 +4291,19 @@ pub struct QualityTrend {
 
 // --- 查询参数类型 ---
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, utoipa::IntoParams)]
 pub struct DataAssetQuery {
     pub domain: Option<String>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, utoipa::IntoParams)]
 pub struct LineageQuery {
     pub master_data_id: Option<String>,
     pub domain: Option<String>,
     pub depth: Option<i32>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, utoipa::IntoParams)]
 pub struct QualityTrendQuery {
     pub period: Option<String>,
     pub domain: Option<String>,
@@ -4526,6 +4590,14 @@ fn get_domain_fields(domain: &str) -> Vec<DataAssetField> {
 }
 
 /// V40.0 AC-12: 列出数据资产目录
+#[utoipa::path(
+    get,
+    path = "/api/erp/master-data-refs/governance/assets",
+    tag = "Master Data",
+    operation_id = "list_data_assets",
+    params(DataAssetQuery),
+    responses((status = 200, description = "OK")),
+)]
 pub async fn list_data_assets(
     State(state): State<ApiState>,
     Query(params): Query<DataAssetQuery>,
@@ -4689,6 +4761,14 @@ pub async fn get_data_asset_detail(
 // --- 血缘可视化 Handlers ---
 
 /// V40.0 AC-12: 获取血缘图
+#[utoipa::path(
+    get,
+    path = "/api/erp/master-data-refs/governance/lineage",
+    tag = "Master Data",
+    operation_id = "get_lineage_graph",
+    params(LineageQuery),
+    responses((status = 200, description = "OK")),
+)]
 pub async fn get_lineage_graph(
     State(state): State<ApiState>,
     Query(params): Query<LineageQuery>,
@@ -5120,6 +5200,14 @@ pub async fn get_lineage_downstream(
 // --- 质量趋势 Handler ---
 
 /// V40.0 AC-12: 获取质量趋势
+#[utoipa::path(
+    get,
+    path = "/api/erp/master-data-refs/governance/quality-trend",
+    tag = "Master Data",
+    operation_id = "get_quality_trend",
+    params(QualityTrendQuery),
+    responses((status = 200, description = "OK")),
+)]
 pub async fn get_quality_trend(
     State(state): State<ApiState>,
     Query(params): Query<QualityTrendQuery>,

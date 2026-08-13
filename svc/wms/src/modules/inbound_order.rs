@@ -187,7 +187,12 @@ pub async fn list_inbound_orders(
     post,
     path = "/api/wms/inbound-orders",
     tag = "wms",
-    responses((status = 200, description = "OK"))
+    responses(
+        (status = 201, description = "创建成功"),
+        (status = 400, description = "请求参数错误"),
+        (status = 401, description = "未授权"),
+        (status = 500, description = "服务内部错误")
+    )
 )]
 pub async fn create_inbound_order(
     State(state): State<ApiState>,
@@ -309,7 +314,12 @@ pub async fn create_inbound_order(
     get,
     path = "/api/wms/inbound-orders/{id}",
     tag = "wms",
-    responses((status = 200, description = "OK"))
+    responses(
+        (status = 200, description = "查询成功", body = InboundOrder, content_type = "application/json"),
+        (status = 401, description = "未授权"),
+        (status = 404, description = "资源不存在"),
+        (status = 500, description = "服务内部错误")
+    )
 )]
 pub async fn get_inbound_order(
     State(state): State<ApiState>,
@@ -346,7 +356,13 @@ pub async fn get_inbound_order(
     put,
     path = "/api/wms/inbound-orders/{id}",
     tag = "wms",
-    responses((status = 200, description = "OK"))
+    responses(
+        (status = 200, description = "更新成功", body = InboundOrder, content_type = "application/json"),
+        (status = 400, description = "请求参数错误"),
+        (status = 401, description = "未授权"),
+        (status = 404, description = "资源不存在"),
+        (status = 500, description = "服务内部错误")
+    )
 )]
 pub async fn update_inbound_order(
     State(state): State<ApiState>,
@@ -456,7 +472,12 @@ pub async fn update_inbound_order(
     delete,
     path = "/api/wms/inbound-orders/{id}",
     tag = "wms",
-    responses((status = 200, description = "OK"))
+    responses(
+        (status = 200, description = "删除成功"),
+        (status = 401, description = "未授权"),
+        (status = 404, description = "资源不存在"),
+        (status = 500, description = "服务内部错误")
+    )
 )]
 pub async fn delete_inbound_order(
     State(state): State<ApiState>,
@@ -833,7 +854,13 @@ pub async fn delete_inbound_order_item(
     post,
     path = "/api/wms/inbound-orders/{id}/confirm",
     tag = "wms",
-    responses((status = 200, description = "OK"))
+    responses(
+        (status = 200, description = "确认成功", body = InboundOrder, content_type = "application/json"),
+        (status = 400, description = "请求参数错误"),
+        (status = 401, description = "未授权"),
+        (status = 404, description = "资源不存在"),
+        (status = 500, description = "服务内部错误")
+    )
 )]
 pub async fn confirm_inbound_order(
     State(state): State<ApiState>,
@@ -907,7 +934,13 @@ pub async fn confirm_inbound_order(
     post,
     path = "/api/wms/inbound-orders/{id}/receive",
     tag = "wms",
-    responses((status = 200, description = "OK"))
+    responses(
+        (status = 200, description = "收货成功"),
+        (status = 400, description = "请求参数错误"),
+        (status = 401, description = "未授权"),
+        (status = 404, description = "资源不存在"),
+        (status = 500, description = "服务内部错误")
+    )
 )]
 pub async fn receive_inbound_order(
     State(state): State<ApiState>,
@@ -1142,7 +1175,13 @@ pub async fn receive_inbound_order(
     post,
     path = "/api/wms/inbound-orders/{id}/complete",
     tag = "wms",
-    responses((status = 200, description = "OK"))
+    responses(
+        (status = 200, description = "完成成功", body = InboundOrder, content_type = "application/json"),
+        (status = 400, description = "请求参数错误"),
+        (status = 401, description = "未授权"),
+        (status = 404, description = "资源不存在"),
+        (status = 500, description = "服务内部错误")
+    )
 )]
 pub async fn complete_inbound_order(
     State(state): State<ApiState>,

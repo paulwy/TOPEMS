@@ -356,7 +356,12 @@ pub async fn list_datasources(
     post,
     path = "/api/bi/data-sources",
     tag = "BI",
-    responses((status = 200, description = "OK", body = serde_json::Value))
+    responses(
+        (status = 201, description = "创建成功"),
+        (status = 400, description = "请求参数错误"),
+        (status = 401, description = "未授权"),
+        (status = 500, description = "服务内部错误")
+    )
 )]
 pub async fn create_datasource(
     State(state): State<AppState>,
@@ -502,7 +507,13 @@ pub async fn get_datasource(
     put,
     path = "/api/bi/data-sources/{id}",
     tag = "BI",
-    responses((status = 200, description = "OK", body = serde_json::Value))
+    responses(
+        (status = 200, description = "更新成功"),
+        (status = 400, description = "请求参数错误"),
+        (status = 401, description = "未授权"),
+        (status = 404, description = "资源不存在"),
+        (status = 500, description = "服务内部错误")
+    )
 )]
 pub async fn update_datasource(
     State(state): State<AppState>,
@@ -600,7 +611,12 @@ pub async fn update_datasource(
     delete,
     path = "/api/bi/data-sources/{id}",
     tag = "BI",
-    responses((status = 200, description = "OK", body = serde_json::Value))
+    responses(
+        (status = 200, description = "删除成功"),
+        (status = 401, description = "未授权"),
+        (status = 404, description = "资源不存在"),
+        (status = 500, description = "服务内部错误")
+    )
 )]
 pub async fn delete_datasource(
     State(state): State<AppState>,

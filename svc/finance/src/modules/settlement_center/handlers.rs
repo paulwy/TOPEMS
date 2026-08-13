@@ -40,6 +40,7 @@ fn current_user_id(claims: &Claims) -> Option<Uuid> {
     path = "/api/core/settlement-center/reconciliations",
     tag = "Settlement-Center",
     operation_id = "list_reconciliations",
+    params(ReconciliationListQuery),
     responses((status = 200, description = "OK")),
 )]
 /// GET /api/core/settlement-center/reconciliations
@@ -176,6 +177,7 @@ pub async fn auto_reconcile(
     path = "/api/core/settlement-center/settlements",
     tag = "Settlement-Center",
     operation_id = "list_settlements",
+    params(SettlementListQuery),
     responses((status = 200, description = "OK")),
 )]
 /// GET /api/core/settlement-center/settlements
@@ -338,6 +340,7 @@ pub async fn delete_link(
     path = "/api/core/settlement-center/links",
     tag = "Settlement-Center",
     operation_id = "list_links",
+    params(LinkListQuery),
     responses((status = 200, description = "OK")),
 )]
 /// GET /api/core/settlement-center/links
@@ -365,6 +368,7 @@ pub async fn list_links(
     path = "/api/core/settlement-center/differences",
     tag = "Settlement-Center",
     operation_id = "list_differences",
+    params(DifferenceListQuery),
     responses((status = 200, description = "OK")),
 )]
 /// GET /api/core/settlement-center/differences

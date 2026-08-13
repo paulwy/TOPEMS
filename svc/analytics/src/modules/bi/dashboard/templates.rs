@@ -70,7 +70,12 @@ pub async fn list_dashboard_templates(State(state): State<AppState>) -> Json<ser
     post,
     path = "/api/bi/dashboard/template",
     tag = "BI",
-    responses((status = 200, description = "OK", body = serde_json::Value))
+    responses(
+        (status = 201, description = "创建成功"),
+        (status = 400, description = "请求参数错误"),
+        (status = 401, description = "未授权"),
+        (status = 500, description = "服务内部错误")
+    )
 )]
 pub async fn create_dashboard_template(
     State(state): State<AppState>,
@@ -182,7 +187,13 @@ pub async fn get_dashboard_template(
     put,
     path = "/api/bi/dashboard/template/{id}",
     tag = "BI",
-    responses((status = 200, description = "OK", body = serde_json::Value))
+    responses(
+        (status = 200, description = "更新成功"),
+        (status = 400, description = "请求参数错误"),
+        (status = 401, description = "未授权"),
+        (status = 404, description = "资源不存在"),
+        (status = 500, description = "服务内部错误")
+    )
 )]
 pub async fn update_dashboard_template(
     State(state): State<AppState>,
@@ -252,7 +263,12 @@ pub async fn update_dashboard_template(
     delete,
     path = "/api/bi/dashboard/template/{id}",
     tag = "BI",
-    responses((status = 200, description = "OK", body = serde_json::Value))
+    responses(
+        (status = 200, description = "删除成功"),
+        (status = 401, description = "未授权"),
+        (status = 404, description = "资源不存在"),
+        (status = 500, description = "服务内部错误")
+    )
 )]
 pub async fn delete_dashboard_template(
     State(state): State<AppState>,

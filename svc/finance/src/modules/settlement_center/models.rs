@@ -85,7 +85,7 @@ pub struct AutoReconcileRequest {
     pub recon_type: Option<String>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, utoipa::IntoParams)]
 pub struct ReconciliationListQuery {
     pub page: Option<i64>,
     pub page_size: Option<i64>,
@@ -157,7 +157,7 @@ pub struct CreateSettlementRequest {
     pub created_by: Option<String>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, utoipa::IntoParams)]
 pub struct SettlementListQuery {
     pub page: Option<i64>,
     pub page_size: Option<i64>,
@@ -195,7 +195,7 @@ pub struct CreateLinkRequest {
     pub remark: Option<String>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, utoipa::IntoParams)]
 pub struct LinkListQuery {
     pub page: Option<i64>,
     pub page_size: Option<i64>,
@@ -241,7 +241,7 @@ pub struct CreateDifferenceRequest {
     pub remark: Option<String>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, utoipa::IntoParams)]
 pub struct DifferenceListQuery {
     pub page: Option<i64>,
     pub page_size: Option<i64>,

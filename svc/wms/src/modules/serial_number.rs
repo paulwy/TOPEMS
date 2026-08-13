@@ -140,7 +140,12 @@ pub async fn list_serial_numbers(
     post,
     path = "/api/wms/serial-numbers",
     tag = "wms",
-    responses((status = 200, description = "OK"))
+    responses(
+        (status = 201, description = "创建成功"),
+        (status = 400, description = "请求参数错误"),
+        (status = 401, description = "未授权"),
+        (status = 500, description = "服务内部错误")
+    )
 )]
 pub async fn create_serial_number(
     State(state): State<ApiState>,
@@ -203,7 +208,12 @@ pub async fn create_serial_number(
     post,
     path = "/api/wms/serial-numbers/bulk",
     tag = "wms",
-    responses((status = 200, description = "OK"))
+    responses(
+        (status = 201, description = "批量创建成功"),
+        (status = 400, description = "请求参数错误"),
+        (status = 401, description = "未授权"),
+        (status = 500, description = "服务内部错误")
+    )
 )]
 pub async fn bulk_create_serial_numbers(
     State(state): State<ApiState>,
@@ -377,7 +387,13 @@ pub async fn get_by_batch(
     put,
     path = "/api/wms/serial-numbers/{id}",
     tag = "wms",
-    responses((status = 200, description = "OK"))
+    responses(
+        (status = 200, description = "更新成功"),
+        (status = 400, description = "请求参数错误"),
+        (status = 401, description = "未授权"),
+        (status = 404, description = "资源不存在"),
+        (status = 500, description = "服务内部错误")
+    )
 )]
 pub async fn update_serial_number(
     State(state): State<ApiState>,
@@ -460,7 +476,12 @@ pub async fn update_serial_number(
     delete,
     path = "/api/wms/serial-numbers/{id}",
     tag = "wms",
-    responses((status = 200, description = "OK"))
+    responses(
+        (status = 200, description = "删除成功"),
+        (status = 401, description = "未授权"),
+        (status = 404, description = "资源不存在"),
+        (status = 500, description = "服务内部错误")
+    )
 )]
 pub async fn delete_serial_number(
     State(state): State<ApiState>,

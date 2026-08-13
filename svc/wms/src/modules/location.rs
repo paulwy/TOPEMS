@@ -146,7 +146,12 @@ pub async fn list_locations(
     post,
     path = "/api/wms/locations",
     tag = "wms",
-    responses((status = 200, description = "OK"))
+    responses(
+        (status = 201, description = "创建成功"),
+        (status = 400, description = "请求参数错误"),
+        (status = 401, description = "未授权"),
+        (status = 500, description = "服务内部错误")
+    )
 )]
 pub async fn create_location(
     State(state): State<ApiState>,
@@ -266,7 +271,13 @@ pub async fn get_location(
     put,
     path = "/api/wms/locations/{id}",
     tag = "wms",
-    responses((status = 200, description = "OK"))
+    responses(
+        (status = 200, description = "更新成功"),
+        (status = 400, description = "请求参数错误"),
+        (status = 401, description = "未授权"),
+        (status = 404, description = "资源不存在"),
+        (status = 500, description = "服务内部错误")
+    )
 )]
 pub async fn update_location(
     State(state): State<ApiState>,
@@ -506,7 +517,12 @@ pub async fn get_location_status(
     post,
     path = "/api/wms/locations/batch",
     tag = "wms",
-    responses((status = 200, description = "OK"))
+    responses(
+        (status = 201, description = "批量创建成功"),
+        (status = 400, description = "请求参数错误"),
+        (status = 401, description = "未授权"),
+        (status = 500, description = "服务内部错误")
+    )
 )]
 pub async fn batch_create_locations(
     State(state): State<ApiState>,
@@ -623,7 +639,12 @@ pub async fn batch_update_locations(
     post,
     path = "/api/wms/locations/batch-delete",
     tag = "wms",
-    responses((status = 200, description = "OK"))
+    responses(
+        (status = 200, description = "批量删除成功"),
+        (status = 400, description = "请求参数错误"),
+        (status = 401, description = "未授权"),
+        (status = 500, description = "服务内部错误")
+    )
 )]
 pub async fn batch_delete_locations(
     State(state): State<ApiState>,
