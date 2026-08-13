@@ -198,7 +198,12 @@ pub async fn list_stock_takes(
     post,
     path = "/api/wms/stock-takes",
     tag = "wms",
-    responses((status = 200, description = "OK"))
+    responses(
+        (status = 201, description = "创建成功"),
+        (status = 400, description = "请求参数错误"),
+        (status = 401, description = "未授权"),
+        (status = 500, description = "服务内部错误")
+    )
 )]
 pub async fn create_stock_take(
     State(state): State<ApiState>,
@@ -322,7 +327,13 @@ pub async fn get_stock_take(
     put,
     path = "/api/wms/stock-takes/{id}",
     tag = "wms",
-    responses((status = 200, description = "OK"))
+    responses(
+        (status = 200, description = "更新成功"),
+        (status = 400, description = "请求参数错误"),
+        (status = 401, description = "未授权"),
+        (status = 404, description = "资源不存在"),
+        (status = 500, description = "服务内部错误")
+    )
 )]
 pub async fn update_stock_take(
     State(state): State<ApiState>,
@@ -494,7 +505,13 @@ pub async fn delete_stock_take(
     post,
     path = "/api/wms/stock-takes/{id}/start",
     tag = "wms",
-    responses((status = 200, description = "OK"))
+    responses(
+        (status = 200, description = "开始盘点成功"),
+        (status = 400, description = "请求参数错误"),
+        (status = 401, description = "未授权"),
+        (status = 404, description = "资源不存在"),
+        (status = 500, description = "服务内部错误")
+    )
 )]
 pub async fn start_stock_take(
     State(state): State<ApiState>,
@@ -804,7 +821,13 @@ pub async fn create_stock_take_item(
     post,
     path = "/api/wms/stock-takes/{id}/count",
     tag = "wms",
-    responses((status = 200, description = "OK"))
+    responses(
+        (status = 200, description = "盘点计数成功"),
+        (status = 400, description = "请求参数错误"),
+        (status = 401, description = "未授权"),
+        (status = 404, description = "资源不存在"),
+        (status = 500, description = "服务内部错误")
+    )
 )]
 pub async fn count_stock_take(
     State(state): State<ApiState>,
@@ -1139,7 +1162,13 @@ pub async fn delete_stock_take_item(
     post,
     path = "/api/wms/stock-takes/{id}/complete",
     tag = "wms",
-    responses((status = 200, description = "OK"))
+    responses(
+        (status = 200, description = "完成盘点成功"),
+        (status = 400, description = "请求参数错误"),
+        (status = 401, description = "未授权"),
+        (status = 404, description = "资源不存在"),
+        (status = 500, description = "服务内部错误")
+    )
 )]
 pub async fn complete_stock_take(
     State(state): State<ApiState>,
@@ -1288,7 +1317,13 @@ pub async fn complete_stock_take(
     post,
     path = "/api/wms/stock-takes/{id}/adjust",
     tag = "wms",
-    responses((status = 200, description = "OK"))
+    responses(
+        (status = 200, description = "调整库存成功"),
+        (status = 400, description = "请求参数错误"),
+        (status = 401, description = "未授权"),
+        (status = 404, description = "资源不存在"),
+        (status = 500, description = "服务内部错误")
+    )
 )]
 pub async fn adjust_stock_take(
     State(state): State<ApiState>,

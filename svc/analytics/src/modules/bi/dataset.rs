@@ -188,7 +188,10 @@ pub async fn get_dataset(
     path = "/api/bi/datasets",
     tag = "BI",
     responses(
-        (status = 200, description = "Dataset created", body = serde_json::Value),
+        (status = 201, description = "创建成功"),
+        (status = 400, description = "请求参数错误"),
+        (status = 401, description = "未授权"),
+        (status = 500, description = "服务内部错误")
     ),
 )]
 pub async fn create_dataset(
@@ -244,7 +247,11 @@ pub async fn create_dataset(
         ("id" = uuid::Uuid, Path, description = "Dataset ID")
     ),
     responses(
-        (status = 200, description = "Dataset updated", body = serde_json::Value),
+        (status = 200, description = "更新成功"),
+        (status = 400, description = "请求参数错误"),
+        (status = 401, description = "未授权"),
+        (status = 404, description = "资源不存在"),
+        (status = 500, description = "服务内部错误")
     ),
 )]
 pub async fn update_dataset(
@@ -294,7 +301,10 @@ pub async fn update_dataset(
         ("id" = uuid::Uuid, Path, description = "Dataset ID")
     ),
     responses(
-        (status = 200, description = "Dataset deleted", body = serde_json::Value),
+        (status = 200, description = "删除成功"),
+        (status = 401, description = "未授权"),
+        (status = 404, description = "资源不存在"),
+        (status = 500, description = "服务内部错误")
     ),
 )]
 pub async fn delete_dataset(

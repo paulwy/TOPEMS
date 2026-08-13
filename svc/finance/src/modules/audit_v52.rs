@@ -159,7 +159,7 @@ pub struct UpdateAuditRuleRequest {
     pub is_active: Option<bool>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, utoipa::IntoParams)]
 pub struct AuditRuleQueryParams {
     pub category: Option<String>,
     pub is_active: Option<bool>,
@@ -182,7 +182,7 @@ pub struct AuditFinding {
     pub resolved_by: Option<String>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, utoipa::IntoParams)]
 pub struct AuditFindingQueryParams {
     pub status: Option<String>,
     pub severity: Option<String>,
@@ -215,7 +215,7 @@ pub struct DetectAnomalyRequest {
     pub end_date: Option<DateTime<Utc>>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, utoipa::IntoParams)]
 pub struct AnomalyAlertQueryParams {
     pub detection_type: Option<String>,
     pub severity: Option<String>,
@@ -261,7 +261,7 @@ pub struct AlertHistory {
     pub created_at: DateTime<Utc>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, utoipa::IntoParams)]
 pub struct AlertHistoryQueryParams {
     pub channel: Option<String>,
     pub is_delivered: Option<bool>,
@@ -1675,6 +1675,14 @@ async fn create_audit_rule_handler(
     }
 }
 
+#[utoipa::path(
+    get,
+    path = "/audit-v52/rules",
+    tag = "Audit-V52",
+    operation_id = "list_audit_rules_handler",
+    params(AuditRuleQueryParams),
+    responses((status = 200, description = "OK")),
+)]
 async fn list_audit_rules_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -1728,6 +1736,14 @@ async fn delete_audit_rule_handler(
     }
 }
 
+#[utoipa::path(
+    get,
+    path = "/audit-v52/findings",
+    tag = "Audit-V52",
+    operation_id = "get_audit_findings_handler",
+    params(AuditFindingQueryParams),
+    responses((status = 200, description = "OK")),
+)]
 async fn get_audit_findings_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -1827,6 +1843,14 @@ async fn detect_anomalies_handler(
     }
 }
 
+#[utoipa::path(
+    get,
+    path = "/audit-v52/anomaly/alerts",
+    tag = "Audit-V52",
+    operation_id = "get_anomaly_alerts_handler",
+    params(AnomalyAlertQueryParams),
+    responses((status = 200, description = "OK")),
+)]
 async fn get_anomaly_alerts_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -1911,6 +1935,14 @@ async fn configure_detection_handler(
     }
 }
 
+#[utoipa::path(
+    get,
+    path = "/audit-v52/alerts/history",
+    tag = "Audit-V52",
+    operation_id = "get_alerts_handler",
+    params(AlertHistoryQueryParams),
+    responses((status = 200, description = "OK")),
+)]
 async fn get_alerts_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,

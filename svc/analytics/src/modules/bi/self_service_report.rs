@@ -130,10 +130,16 @@ pub async fn list_reports(State(state): State<AppState>) -> Json<serde_json::Val
     post,
     path = "/api/bi/report",
     tag = "Report",
-    request_body = CreateReportRequest,
+    request_body(
+        content = CreateReportRequest,
+        content_type = "application/json",
+        description = "创建自助报表请求"
+    ),
     responses(
-        (status = 201, description = "Report created", body = serde_json::Value),
-        (status = 500, description = "Internal server error")
+        (status = 201, description = "创建成功"),
+        (status = 400, description = "请求参数错误"),
+        (status = 401, description = "未授权"),
+        (status = 500, description = "服务内部错误")
     )
 )]
 pub async fn create_report(
@@ -259,10 +265,17 @@ pub async fn get_report(
     params(
         ("id" = uuid::Uuid, Path, description = "Report ID")
     ),
-    request_body = UpdateReportRequest,
+    request_body(
+        content = UpdateReportRequest,
+        content_type = "application/json",
+        description = "更新自助报表请求"
+    ),
     responses(
-        (status = 200, description = "Report updated", body = serde_json::Value),
-        (status = 500, description = "Internal server error")
+        (status = 200, description = "更新成功"),
+        (status = 400, description = "请求参数错误"),
+        (status = 401, description = "未授权"),
+        (status = 404, description = "资源不存在"),
+        (status = 500, description = "服务内部错误")
     )
 )]
 pub async fn update_report(
@@ -338,8 +351,10 @@ pub async fn update_report(
         ("id" = uuid::Uuid, Path, description = "Report ID")
     ),
     responses(
-        (status = 200, description = "Report deleted", body = serde_json::Value),
-        (status = 500, description = "Internal server error")
+        (status = 200, description = "删除成功"),
+        (status = 401, description = "未授权"),
+        (status = 404, description = "资源不存在"),
+        (status = 500, description = "服务内部错误")
     )
 )]
 pub async fn delete_report(

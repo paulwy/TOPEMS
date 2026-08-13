@@ -654,6 +654,21 @@ pub struct VehicleRequest {
         crate::modules::leave_request::update_leave_request,
         crate::modules::leave_request::get_leave_request,
         crate::modules::leave_request::create_leave_request,
+        // === master_data_refs RC4b: Query<T> handlers recovered after IntoParams impl ===
+        crate::modules::master_data_refs::list_master_data_refs,
+        crate::modules::master_data_refs::get_audit_trail,
+        crate::modules::master_data_refs::get_versions,
+        crate::modules::master_data_refs::list_conflicts,
+        crate::modules::master_data_refs::list_archived,
+        crate::modules::master_data_refs::list_pending_destruction,
+        crate::modules::master_data_refs::list_quality_rules,
+        crate::modules::master_data_refs::get_quality_report,
+        crate::modules::master_data_refs::list_data_assets,
+        crate::modules::master_data_refs::get_lineage_graph,
+        crate::modules::master_data_refs::get_quality_trend,
+        // === dict RC4b: Query<T> handlers recovered after IntoParams impl ===
+        crate::modules::dict::list_dict_types,
+        crate::modules::dict::list_dict_items,
     ),
     components(
         schemas(

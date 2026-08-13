@@ -49,7 +49,17 @@ pub async fn list_visualizations(State(_state): State<AppState>) -> Json<serde_j
     path = "/visualization",
     tag = "Visualization",
     operation_id = "create_visualization",
-    responses((status = 200, description = "OK")),
+    request_body(
+        content = CreateVisualizationRequest,
+        content_type = "application/json",
+        description = "创建可视化请求"
+    ),
+    responses(
+        (status = 201, description = "创建成功"),
+        (status = 400, description = "请求参数错误"),
+        (status = 401, description = "未授权"),
+        (status = 500, description = "服务内部错误")
+    )
 )]
 pub async fn create_visualization(
     State(state): State<AppState>,

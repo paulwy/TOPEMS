@@ -120,7 +120,12 @@ pub async fn list_batches(
     post,
     path = "/api/wms/batches",
     tag = "wms",
-    responses((status = 200, description = "OK"))
+    responses(
+        (status = 201, description = "创建成功"),
+        (status = 400, description = "请求参数错误"),
+        (status = 401, description = "未授权"),
+        (status = 500, description = "服务内部错误")
+    )
 )]
 pub async fn create_batch(
     State(state): State<ApiState>,
@@ -183,7 +188,12 @@ pub async fn create_batch(
     get,
     path = "/api/wms/batches/{id}",
     tag = "wms",
-    responses((status = 200, description = "OK"))
+    responses(
+        (status = 200, description = "查询成功"),
+        (status = 401, description = "未授权"),
+        (status = 404, description = "资源不存在"),
+        (status = 500, description = "服务内部错误")
+    )
 )]
 pub async fn get_batch(
     State(state): State<ApiState>,
@@ -221,7 +231,13 @@ pub async fn get_batch(
     put,
     path = "/api/wms/batches/{id}",
     tag = "wms",
-    responses((status = 200, description = "OK"))
+    responses(
+        (status = 200, description = "更新成功"),
+        (status = 400, description = "请求参数错误"),
+        (status = 401, description = "未授权"),
+        (status = 404, description = "资源不存在"),
+        (status = 500, description = "服务内部错误")
+    )
 )]
 pub async fn update_batch(
     State(state): State<ApiState>,
@@ -302,7 +318,12 @@ pub async fn update_batch(
     delete,
     path = "/api/wms/batches/{id}",
     tag = "wms",
-    responses((status = 200, description = "OK"))
+    responses(
+        (status = 200, description = "删除成功"),
+        (status = 401, description = "未授权"),
+        (status = 404, description = "资源不存在"),
+        (status = 500, description = "服务内部错误")
+    )
 )]
 pub async fn delete_batch(
     State(state): State<ApiState>,

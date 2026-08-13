@@ -178,9 +178,11 @@ pub async fn list_inventory(
 #[utoipa::path(
     post,
     path = "/api/wms/inventory",
-    request_body = CreateInventoryItemRequest,
     responses(
-        (status = 200, description = "create_inventory OK")
+        (status = 201, description = "创建成功"),
+        (status = 400, description = "请求参数错误"),
+        (status = 401, description = "未授权"),
+        (status = 500, description = "服务内部错误")
     ),
     tag = "WMS/inventory"
 )]
@@ -272,9 +274,11 @@ pub async fn create_inventory(
     params(
         ("id" = Uuid, Path, description = "id")
     ),
-
     responses(
-        (status = 200, description = "get_inventory OK")
+        (status = 200, description = "查询成功", body = Inventory, content_type = "application/json"),
+        (status = 401, description = "未授权"),
+        (status = 404, description = "资源不存在"),
+        (status = 500, description = "服务内部错误")
     ),
     tag = "WMS/inventory"
 )]
@@ -318,13 +322,15 @@ pub async fn get_inventory(
 #[utoipa::path(
     put,
     path = "/api/wms/inventory/{id}",
-    request_body = UpdateInventoryItemRequest,
     params(
         ("id" = Uuid, Path, description = "id")
     ),
-
     responses(
-        (status = 200, description = "update_inventory OK")
+        (status = 200, description = "更新成功"),
+        (status = 400, description = "请求参数错误"),
+        (status = 401, description = "未授权"),
+        (status = 404, description = "资源不存在"),
+        (status = 500, description = "服务内部错误")
     ),
     tag = "WMS/inventory"
 )]
@@ -547,9 +553,11 @@ pub async fn update_inventory(
     params(
         ("id" = Uuid, Path, description = "id")
     ),
-
     responses(
-        (status = 200, description = "delete_inventory OK")
+        (status = 200, description = "删除成功"),
+        (status = 401, description = "未授权"),
+        (status = 404, description = "资源不存在"),
+        (status = 500, description = "服务内部错误")
     ),
     tag = "WMS/inventory"
 )]

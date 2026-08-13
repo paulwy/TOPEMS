@@ -73,10 +73,16 @@ pub async fn list_dashboards(State(state): State<AppState>) -> Json<serde_json::
     post,
     path = "/api/bi/dashboard",
     tag = "Dashboard",
-    request_body = CreateDashboardRequest,
+    request_body(
+        content = CreateDashboardRequest,
+        content_type = "application/json",
+        description = "创建仪表盘请求"
+    ),
     responses(
-        (status = 201, description = "Dashboard created", body = serde_json::Value),
-        (status = 500, description = "Internal server error")
+        (status = 201, description = "创建成功"),
+        (status = 400, description = "请求参数错误"),
+        (status = 401, description = "未授权"),
+        (status = 500, description = "服务内部错误")
     )
 )]
 pub async fn create_dashboard(
@@ -135,8 +141,10 @@ pub async fn create_dashboard(
         ("id" = uuid::Uuid, Path, description = "Dashboard ID")
     ),
     responses(
-        (status = 200, description = "Dashboard details", body = serde_json::Value),
-        (status = 500, description = "Internal server error")
+        (status = 200, description = "查询成功"),
+        (status = 401, description = "未授权"),
+        (status = 404, description = "资源不存在"),
+        (status = 500, description = "服务内部错误")
     )
 )]
 pub async fn get_dashboard(
@@ -194,10 +202,17 @@ pub async fn get_dashboard(
     params(
         ("id" = uuid::Uuid, Path, description = "Dashboard ID")
     ),
-    request_body = UpdateDashboardRequest,
+    request_body(
+        content = UpdateDashboardRequest,
+        content_type = "application/json",
+        description = "更新仪表盘请求"
+    ),
     responses(
-        (status = 200, description = "Dashboard updated", body = serde_json::Value),
-        (status = 500, description = "Internal server error")
+        (status = 200, description = "更新成功"),
+        (status = 400, description = "请求参数错误"),
+        (status = 401, description = "未授权"),
+        (status = 404, description = "资源不存在"),
+        (status = 500, description = "服务内部错误")
     )
 )]
 pub async fn update_dashboard(
@@ -264,8 +279,10 @@ pub async fn update_dashboard(
         ("id" = uuid::Uuid, Path, description = "Dashboard ID")
     ),
     responses(
-        (status = 200, description = "Dashboard deleted", body = serde_json::Value),
-        (status = 500, description = "Internal server error")
+        (status = 200, description = "删除成功"),
+        (status = 401, description = "未授权"),
+        (status = 404, description = "资源不存在"),
+        (status = 500, description = "服务内部错误")
     )
 )]
 pub async fn delete_dashboard(

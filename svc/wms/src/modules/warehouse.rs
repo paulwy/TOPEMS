@@ -132,9 +132,11 @@ pub async fn list_warehouses(
 #[utoipa::path(
     post,
     path = "/api/wms/warehouses",
-    request_body = CreateWarehouseRequest,
     responses(
-        (status = 200, description = "create_warehouse OK")
+        (status = 201, description = "创建成功"),
+        (status = 400, description = "请求参数错误"),
+        (status = 401, description = "未授权"),
+        (status = 500, description = "服务内部错误")
     ),
     tag = "WMS/warehouse"
 )]
@@ -220,9 +222,11 @@ pub async fn create_warehouse(
     params(
         ("id" = Uuid, Path, description = "id")
     ),
-
     responses(
-        (status = 200, description = "get_warehouse OK")
+        (status = 200, description = "查询成功", body = Warehouse, content_type = "application/json"),
+        (status = 401, description = "未授权"),
+        (status = 404, description = "资源不存在"),
+        (status = 500, description = "服务内部错误")
     ),
     tag = "WMS/warehouse"
 )]
@@ -271,13 +275,15 @@ pub async fn get_warehouse(
 #[utoipa::path(
     put,
     path = "/api/wms/warehouses/{id}",
-    request_body = UpdateWarehouseRequest,
     params(
         ("id" = Uuid, Path, description = "id")
     ),
-
     responses(
-        (status = 200, description = "update_warehouse OK")
+        (status = 200, description = "更新成功", body = Warehouse, content_type = "application/json"),
+        (status = 400, description = "请求参数错误"),
+        (status = 401, description = "未授权"),
+        (status = 404, description = "资源不存在"),
+        (status = 500, description = "服务内部错误")
     ),
     tag = "WMS/warehouse"
 )]
@@ -390,9 +396,11 @@ pub async fn update_warehouse(
     params(
         ("id" = Uuid, Path, description = "id")
     ),
-
     responses(
-        (status = 200, description = "delete_warehouse OK")
+        (status = 200, description = "删除成功"),
+        (status = 401, description = "未授权"),
+        (status = 404, description = "资源不存在"),
+        (status = 500, description = "服务内部错误")
     ),
     tag = "WMS/warehouse"
 )]

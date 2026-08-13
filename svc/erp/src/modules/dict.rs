@@ -37,7 +37,7 @@ pub struct DictItemExport {
     pub status: String,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, utoipa::IntoParams)]
 pub struct DictTypeQueryParams {
     pub page: Option<i64>,
     pub page_size: Option<i64>,
@@ -46,7 +46,7 @@ pub struct DictTypeQueryParams {
     pub status: Option<String>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, utoipa::IntoParams)]
 pub struct DictItemQueryParams {
     pub page: Option<i64>,
     pub page_size: Option<i64>,
@@ -183,6 +183,15 @@ pub fn create_routes() -> Router<ApiState> {
         .layer(axum::middleware::from_fn(require_dict_read_permission))
 }
 
+/// 列出字典类型（分页 + 搜索 + 分类/状态筛选）
+#[utoipa::path(
+    get,
+    path = "/system/dict-types",
+    tag = "Dict",
+    operation_id = "list_dict_types",
+    params(DictTypeQueryParams),
+    responses((status = 200, description = "OK")),
+)]
 pub async fn list_dict_types(
     State(state): State<ApiState>,
     Query(params): Query<DictTypeQueryParams>,
@@ -558,6 +567,15 @@ pub async fn delete_dict_type(
     response
 }
 
+/// 列出指定字典类型下的字典项（分页 + 搜索）
+#[utoipa::path(
+    get,
+    path = "/system/dict-types/{id}/items",
+    tag = "Dict",
+    operation_id = "list_dict_items",
+    params(DictItemQueryParams),
+    responses((status = 200, description = "OK")),
+)]
 pub async fn list_dict_items(
     State(state): State<ApiState>,
     Path(dict_type_id): Path<Uuid>,
