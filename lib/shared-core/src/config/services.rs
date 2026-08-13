@@ -388,6 +388,287 @@ pub fn get_default_port(service_name: &str) -> u16 {
     }
 }
 
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn registry_new_returns_28_default_services() {
+        let r = ServiceRegistry::new();
+        assert_eq!(r.services.len(), 28);
+    }
+
+    #[test]
+    fn registry_default_eq_new() {
+        let a = ServiceRegistry::new();
+        let b = ServiceRegistry::default();
+        assert_eq!(a.services.len(), b.services.len());
+    }
+
+    #[test]
+    fn default_services_all_ports_positive_and_unique() {
+        let svc = ServiceRegistry::default_services();
+        let mut ports = std::collections::HashSet::new();
+        for s in &svc {
+            assert!(s.port > 0, "{} port must be > 0", s.name);
+            assert!(
+                ports.insert(s.port),
+                "duplicate port {} for service {}",
+                s.port,
+                s.name
+            );
+            assert!(s.health_endpoint.starts_with('/'));
+            assert!(s.api_prefix.starts_with("/api"));
+            assert!(!s.name.is_empty());
+            assert!(!s.display_name.is_empty());
+        }
+    }
+
+    #[test]
+    fn get_service_exact_match() {
+        let r = ServiceRegistry::new();
+        let s = r.get_service("topems-billing").expect("found");
+        assert_eq!(s.port, 8085);
+        assert_eq!(s.api_prefix, "/api/billing");
+    }
+
+    #[test]
+    fn get_service_short_name_match() {
+        let r = ServiceRegistry::new();
+        let s = r.get_service("billing").expect("found via short name");
+        assert_eq!(s.name, "topems-billing");
+        assert_eq!(s.port, 8085);
+    }
+
+    #[test]
+    fn get_service_strip_prefix_then_apiprefix() {
+        let r = ServiceRegistry::new();
+        let s = r.get_service("topems-core").expect("found via step 3");
+        assert_eq!(s.name, "unified-core");
+        assert_eq!(s.api_prefix, "/api/core");
+    }
+
+    #[test]
+    fn get_service_by_apiprefix_suffix() {
+        let r = ServiceRegistry::new();
+        let s = r.get_service("bi").expect("found via api_prefix /api/bi");
+        assert_eq!(s.name, "topems-analytics");
+    }
+
+    #[test]
+    fn get_service_not_found() {
+        let r = ServiceRegistry::new();
+        assert!(r.get_service("no-such-service-xyz").is_none());
+    }
+
+    #[test]
+    fn get_service_port_found_vs_default() {
+        let r = ServiceRegistry::new();
+        assert_eq!(r.get_service_port("mes"), 8030);
+        assert_eq!(r.get_service_port("unknown-foo"), 8080);
+    }
+
+    #[test]
+    fn get_service_url_found_vs_default() {
+        let r = ServiceRegistry::new();
+        assert_eq!(r.get_service_url("mes"), "http://localhost:8030");
+        assert_eq!(
+            r.get_service_url("no-such-service"),
+            "http://localhost:8080"
+        );
+    }
+
+    #[test]
+    fn to_map_returns_correct_hashmap() {
+        let r = ServiceRegistry::new();
+        let m = r.to_map();
+        assert_eq!(m.len(), 28);
+        assert!(m.contains_key("unified-core"));
+        assert_eq!(m.get("topems-erp").unwrap().port, 8010);
+    }
+
+    #[test]
+    fn get_all_ports_count_and_values() {
+        let r = ServiceRegistry::new();
+        let ports = r.get_all_ports();
+        assert_eq!(ports.len(), 28);
+        assert!(ports.contains(&8000));
+        assert!(ports.contains(&8090));
+        for p in ports {
+            assert!(p > 0);
+        }
+    }
+
+    #[test]
+    fn get_port_ranges_contains_all_service_ports() {
+        let r = ServiceRegistry::new();
+        let ranges = r.get_port_ranges();
+        assert_eq!(ranges.len(), 9);
+        for s in &r.services {
+            let covered = ranges
+                .iter()
+                .any(|(lo, hi)| s.port >= *lo && s.port <= *hi);
+            assert!(covered, "port {} of {} not in any range", s.port, s.name);
+        }
+    }
+
+    #[test]
+    fn get_default_port_core_variants() {
+        assert_eq!(get_default_port("unified-core"), 8000);
+        assert_eq!(get_default_port("core"), 8000);
+    }
+
+    #[test]
+    fn get_default_port_extended_services() {
+        assert_eq!(get_default_port("search"), 8082);
+        assert_eq!(get_default_port("topems-search"), 8082);
+        assert_eq!(get_default_port("communication"), 8084);
+        assert_eq!(get_default_port("comm"), 8084);
+        assert_eq!(get_default_port("billing"), 8085);
+        assert_eq!(get_default_port("ticket"), 8086);
+        assert_eq!(get_default_port("feedback"), 8087);
+        assert_eq!(get_default_port("lowcode"), 8088);
+    }
+
+    #[test]
+    fn get_default_port_business_services() {
+        assert_eq!(get_default_port("erp"), 8010);
+        assert_eq!(get_default_port("topems-finance"), 8011);
+        assert_eq!(get_default_port("ai"), 8013);
+        assert_eq!(get_default_port("hrm"), 8020);
+        assert_eq!(get_default_port("pm"), 8023);
+        assert_eq!(get_default_port("crm"), 8029);
+        assert_eq!(get_default_port("mes"), 8030);
+        assert_eq!(get_default_port("pdm"), 8031);
+        assert_eq!(get_default_port("scm"), 8040);
+        assert_eq!(get_default_port("wms"), 8041);
+        assert_eq!(get_default_port("srm"), 8042);
+        assert_eq!(get_default_port("qms"), 8050);
+        assert_eq!(get_default_port("lims"), 8051);
+        assert_eq!(get_default_port("ehs"), 8052);
+        assert_eq!(get_default_port("rd"), 8053);
+    }
+
+    #[test]
+    fn get_default_port_analytics_and_portal() {
+        assert_eq!(get_default_port("bi"), 8060);
+        assert_eq!(get_default_port("analytics"), 8060);
+        assert_eq!(get_default_port("topems-analytics"), 8060);
+        assert_eq!(get_default_port("portal"), 8063);
+    }
+
+    #[test]
+    fn get_default_port_infra_and_masterdata() {
+        assert_eq!(get_default_port("mobile"), 8070);
+        assert_eq!(get_default_port("gis"), 8071);
+        assert_eq!(get_default_port("integration"), 8072);
+        assert_eq!(get_default_port("master-data"), 8090);
+        assert_eq!(get_default_port("topems-master-data"), 8090);
+    }
+
+    #[test]
+    fn get_default_port_virtual_services_all_map_to_core() {
+        for name in ["iam", "workflow", "flow", "file", "doc", "monitor",
+                     "tenant", "plugin", "automation", "migration", "master"] {
+            assert_eq!(get_default_port(name), 8000, "{} should map to 8000", name);
+        }
+    }
+
+    #[test]
+    fn get_default_port_legacy_aliases_map_to_communication() {
+        assert_eq!(get_default_port("notification"), 8084);
+        assert_eq!(get_default_port("mail"), 8084);
+        assert_eq!(get_default_port("im"), 8084);
+    }
+
+    #[test]
+    fn get_default_port_unknown_returns_8080() {
+        assert_eq!(get_default_port("totally-unknown"), 8080);
+        assert_eq!(get_default_port(""), 8080);
+    }
+
+    #[test]
+    fn get_service_name_by_port_all_known_ports() {
+        assert_eq!(get_service_name_by_port(8000), Some("unified-core"));
+        assert_eq!(get_service_name_by_port(8082), Some("topems-search"));
+        assert_eq!(get_service_name_by_port(8084), Some("topems-communication"));
+        assert_eq!(get_service_name_by_port(8085), Some("topems-billing"));
+        assert_eq!(get_service_name_by_port(8086), Some("topems-ticket"));
+        assert_eq!(get_service_name_by_port(8087), Some("topems-feedback"));
+        assert_eq!(get_service_name_by_port(8088), Some("topems-lowcode"));
+        assert_eq!(get_service_name_by_port(8010), Some("topems-erp"));
+        assert_eq!(get_service_name_by_port(8011), Some("topems-finance"));
+        assert_eq!(get_service_name_by_port(8013), Some("topems-ai"));
+        assert_eq!(get_service_name_by_port(8020), Some("topems-hrm"));
+        assert_eq!(get_service_name_by_port(8023), Some("topems-pm"));
+        assert_eq!(get_service_name_by_port(8029), Some("topems-crm"));
+        assert_eq!(get_service_name_by_port(8030), Some("topems-mes"));
+        assert_eq!(get_service_name_by_port(8031), Some("topems-pdm"));
+        assert_eq!(get_service_name_by_port(8040), Some("topems-scm"));
+        assert_eq!(get_service_name_by_port(8041), Some("topems-wms"));
+        assert_eq!(get_service_name_by_port(8042), Some("topems-srm"));
+        assert_eq!(get_service_name_by_port(8050), Some("topems-qms"));
+        assert_eq!(get_service_name_by_port(8051), Some("topems-lims"));
+        assert_eq!(get_service_name_by_port(8052), Some("topems-ehs"));
+        assert_eq!(get_service_name_by_port(8053), Some("topems-rd"));
+        assert_eq!(get_service_name_by_port(8060), Some("topems-analytics"));
+        assert_eq!(get_service_name_by_port(8063), Some("topems-portal"));
+        assert_eq!(get_service_name_by_port(8070), Some("topems-mobile"));
+        assert_eq!(get_service_name_by_port(8071), Some("topems-gis"));
+        assert_eq!(get_service_name_by_port(8072), Some("topems-integration"));
+        assert_eq!(get_service_name_by_port(8090), Some("topems-master-data"));
+    }
+
+    #[test]
+    fn get_service_name_by_port_unknown_returns_none() {
+        assert_eq!(get_service_name_by_port(0), None);
+        assert_eq!(get_service_name_by_port(8080), None);
+        assert_eq!(get_service_name_by_port(9999), None);
+        assert_eq!(get_service_name_by_port(65535), None);
+    }
+
+    #[test]
+    fn service_config_serde_roundtrip() {
+        let s = ServiceConfig {
+            name: "topems-mes".to_string(),
+            display_name: "生产执行系统".to_string(),
+            description: "生产过程执行管理".to_string(),
+            port: 8030,
+            health_endpoint: "/health".to_string(),
+            api_prefix: "/api/mes".to_string(),
+        };
+        let json = serde_json::to_string(&s).expect("serialize");
+        let back: ServiceConfig = serde_json::from_str(&json).expect("deserialize");
+        assert_eq!(back.name, s.name);
+        assert_eq!(back.port, s.port);
+        assert_eq!(back.api_prefix, s.api_prefix);
+    }
+
+    #[test]
+    fn service_registry_serde_roundtrip() {
+        let r = ServiceRegistry::new();
+        let json = serde_json::to_string(&r).expect("serialize");
+        let back: ServiceRegistry = serde_json::from_str(&json).expect("deserialize");
+        assert_eq!(back.services.len(), 28);
+    }
+
+    #[test]
+    fn get_service_coverage_core_services_consistency() {
+        let r = ServiceRegistry::new();
+        for s in &r.services {
+            // get_service 应该能找到每个已注册服务
+            let found = r.get_service(&s.name).expect("self lookup");
+            assert_eq!(found.port, s.port);
+            assert_eq!(found.api_prefix, s.api_prefix);
+            // 反向：port -> name 也应该一致（get_service_name_by_port）
+            let name_by_port = get_service_name_by_port(s.port);
+            if let Some(np) = name_by_port {
+                assert_eq!(np, s.name);
+            }
+        }
+    }
+}
+
 pub fn get_service_name_by_port(port: u16) -> Option<&'static str> {
     match port {
         // 核心

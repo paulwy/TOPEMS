@@ -197,6 +197,31 @@ mod tests {
     }
 
     #[test]
+    fn test_log_format_from_env_file() {
+        std::env::set_var("LOG_FORMAT", "file");
+        assert_eq!(LogFormat::from_env(), LogFormat::File);
+        std::env::remove_var("LOG_FORMAT");
+    }
+
+    #[test]
+    fn test_log_format_from_env_case_insensitive() {
+        std::env::set_var("LOG_FORMAT", "JSON");
+        assert_eq!(LogFormat::from_env(), LogFormat::Json);
+        std::env::set_var("LOG_FORMAT", "TEXT");
+        assert_eq!(LogFormat::from_env(), LogFormat::Text);
+        std::env::remove_var("LOG_FORMAT");
+    }
+
+    #[test]
+    fn test_log_format_from_env_unknown_falls_back_to_text() {
+        std::env::set_var("LOG_FORMAT", "xml");
+        assert_eq!(LogFormat::from_env(), LogFormat::Text);
+        std::env::set_var("LOG_FORMAT", "");
+        assert_eq!(LogFormat::from_env(), LogFormat::Text);
+        std::env::remove_var("LOG_FORMAT");
+    }
+
+    #[test]
     fn test_log_format_default() {
         std::env::remove_var("LOG_FORMAT");
         assert_eq!(LogFormat::from_env(), LogFormat::Text);
@@ -211,9 +236,21 @@ mod tests {
     }
 
     #[test]
+    fn test_generate_request_id_uuid_format() {
+        let id = generate_request_id();
+        assert!(uuid::Uuid::parse_str(&id).is_ok());
+    }
+
+    #[test]
     fn test_generate_trace_id() {
         let id = generate_trace_id();
         assert_eq!(id.len(), 36);
+    }
+
+    #[test]
+    fn test_generate_trace_id_uuid_format() {
+        let id = generate_trace_id();
+        assert!(uuid::Uuid::parse_str(&id).is_ok());
     }
 
     #[test]
@@ -223,11 +260,37 @@ mod tests {
     }
 
     #[test]
+    fn test_generate_span_id_hex_only() {
+        let id = generate_span_id();
+        assert!(id.chars().all(|c| c.is_ascii_hexdigit()));
+    }
+
+    #[test]
     fn test_format_level() {
         assert_eq!(format_level(&Level::TRACE), "TRACE");
         assert_eq!(format_level(&Level::DEBUG), "DEBUG");
         assert_eq!(format_level(&Level::INFO), "INFO");
         assert_eq!(format_level(&Level::WARN), "WARN");
         assert_eq!(format_level(&Level::ERROR), "ERROR");
+    }
+
+    #[test]
+    fn test_json_event_formatter_new() {
+        let formatter = JsonEventFormatter::new();
+        let _ = formatter;
+    }
+
+    #[test]
+    fn test_json_event_formatter_default() {
+        let formatter = JsonEventFormatter::default();
+        let _ = formatter;
+    }
+
+    #[test]
+    fn test_log_format_equality() {
+        assert_eq!(LogFormat::Text, LogFormat::Text);
+        assert_eq!(LogFormat::Json, LogFormat::Json);
+        assert_ne!(LogFormat::Text, LogFormat::Json);
+        assert_ne!(LogFormat::Text, LogFormat::File);
     }
 }
