@@ -671,8 +671,14 @@ mod tests {
         assert_eq!(NotificationType::from("warning"), NotificationType::Warning);
         assert_eq!(NotificationType::from("error"), NotificationType::Error);
         assert_eq!(NotificationType::from("system"), NotificationType::System);
-        assert_eq!(NotificationType::from("workflow"), NotificationType::Workflow);
-        assert_eq!(NotificationType::from("reminder"), NotificationType::Reminder);
+        assert_eq!(
+            NotificationType::from("workflow"),
+            NotificationType::Workflow
+        );
+        assert_eq!(
+            NotificationType::from("reminder"),
+            NotificationType::Reminder
+        );
         assert_eq!(NotificationType::from("alert"), NotificationType::Alert);
         assert_eq!(NotificationType::from("message"), NotificationType::Message);
     }

@@ -221,10 +221,7 @@ pub fn build_add_column_sql(
 
 /// 计算 expected 中存在但 actual 中不存在的列名（保持原顺序）。
 /// 这是 `verify_table_columns` 核心判定逻辑的纯函数版本。
-pub fn detect_missing_columns<'a>(
-    expected: &'a [&'a str],
-    actual: &'a [&'a str],
-) -> Vec<&'a str> {
+pub fn detect_missing_columns<'a>(expected: &'a [&'a str], actual: &'a [&'a str]) -> Vec<&'a str> {
     use std::collections::BTreeSet;
     let actual_set: BTreeSet<&str> = actual.iter().copied().collect();
     expected
@@ -235,7 +232,10 @@ pub fn detect_missing_columns<'a>(
 }
 
 /// 汇总 expected 列集合（带可选 id 列）：用于 run_schema_defense 第二阶段
-pub fn build_expected_columns<'a>(has_id_column: bool, table_columns: &'a [(&'a str, &str)]) -> Vec<&'a str> {
+pub fn build_expected_columns<'a>(
+    has_id_column: bool,
+    table_columns: &'a [(&'a str, &str)],
+) -> Vec<&'a str> {
     let mut out: Vec<&'a str> = Vec::new();
     if has_id_column {
         out.push("id");
@@ -457,22 +457,14 @@ mod tests {
     #[test]
     fn test_is_verify_strict_from_truthy_values() {
         for v in ["1", "true", "TRUE", "True", "yes", "YES", "on", "On"] {
-            assert!(
-                is_verify_strict_from(v),
-                "expected truthy for env = {}",
-                v
-            );
+            assert!(is_verify_strict_from(v), "expected truthy for env = {}", v);
         }
     }
 
     #[test]
     fn test_is_verify_strict_from_falsy_values() {
         for v in ["", "0", "false", "no", "off", "foobar", "TRUE!!!"] {
-            assert!(
-                !is_verify_strict_from(v),
-                "expected falsy for env = {}",
-                v
-            );
+            assert!(!is_verify_strict_from(v), "expected falsy for env = {}", v);
         }
     }
 
@@ -483,10 +475,7 @@ mod tests {
             build_qualified_table(Some("ehs"), "events"),
             r#""ehs"."events""#
         );
-        assert_eq!(
-            build_qualified_table(None, "global"),
-            r#""global""#
-        );
+        assert_eq!(build_qualified_table(None, "global"), r#""global""#);
     }
 
     // ===== build_add_column_sql =====
@@ -505,30 +494,23 @@ mod tests {
     // ===== detect_missing_columns =====
     #[test]
     fn test_detect_missing_columns_none() {
-        assert!(
-            detect_missing_columns(
-                &["id", "name", "created_at"],
-                &["id", "created_at", "name", "extra"]
-            ).is_empty()
-        );
+        assert!(detect_missing_columns(
+            &["id", "name", "created_at"],
+            &["id", "created_at", "name", "extra"]
+        )
+        .is_empty());
     }
 
     #[test]
     fn test_detect_missing_columns_preserves_order_and_duplicates_in_expected() {
-        let missing = detect_missing_columns(
-            &["a", "b", "c", "d", "b"],
-            &["a", "c", "x"],
-        );
+        let missing = detect_missing_columns(&["a", "b", "c", "d", "b"], &["a", "c", "x"]);
         assert_eq!(missing, vec!["b", "d", "b"]);
     }
 
     #[test]
     fn test_detect_missing_columns_empty_cases() {
         assert!(detect_missing_columns(&[], &["a", "b"]).is_empty());
-        assert_eq!(
-            detect_missing_columns(&["a", "b"], &[]),
-            vec!["a", "b"]
-        );
+        assert_eq!(detect_missing_columns(&["a", "b"], &[]), vec!["a", "b"]);
     }
 
     // ===== build_expected_columns =====
@@ -539,10 +521,7 @@ mod tests {
             build_expected_columns(true, &cols),
             vec!["id", "name", "age"]
         );
-        assert_eq!(
-            build_expected_columns(false, &cols),
-            vec!["name", "age"]
-        );
+        assert_eq!(build_expected_columns(false, &cols), vec!["name", "age"]);
     }
 
     #[test]

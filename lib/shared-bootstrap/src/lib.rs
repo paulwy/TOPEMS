@@ -889,8 +889,7 @@ pub async fn standard_health_check(
     let database_health = check_database_health(&state.db).await;
     let iam_health = check_iam_health().await;
 
-    let overall_status =
-        rollup_health_status(&[database_health.status, iam_health.status]);
+    let overall_status = rollup_health_status(&[database_health.status, iam_health.status]);
     let status_str = health_status_str(&overall_status).to_string();
 
     axum::Json(ApiResponse::success(status_str, "健康检查"))
@@ -906,7 +905,10 @@ pub async fn standard_health_check_detailed(
     ];
 
     let overall_status = rollup_health_status(
-        &dependencies.iter().map(|d| d.status.clone()).collect::<Vec<_>>(),
+        &dependencies
+            .iter()
+            .map(|d| d.status.clone())
+            .collect::<Vec<_>>(),
     );
 
     let message = overall_health_message(&overall_status);
@@ -939,8 +941,8 @@ pub async fn standard_get_metrics(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use topems_shared_core::health::HealthStatus;
     use std::sync::Mutex;
+    use topems_shared_core::health::HealthStatus;
 
     static ENV_LOCK: Mutex<()> = Mutex::new(());
 
@@ -981,7 +983,10 @@ mod tests {
             format_db_max_connections_key("UNIFIED_CORE"),
             "UNIFIED_CORE_DB_MAX_CONNECTIONS"
         );
-        assert_eq!(format_db_max_connections_key("HRM"), "HRM_DB_MAX_CONNECTIONS");
+        assert_eq!(
+            format_db_max_connections_key("HRM"),
+            "HRM_DB_MAX_CONNECTIONS"
+        );
     }
 
     #[test]
@@ -994,10 +999,7 @@ mod tests {
 
     #[test]
     fn test_parse_max_connections_global_fallback() {
-        assert_eq!(
-            parse_max_connections(None, Some("20".into()), 10),
-            20
-        );
+        assert_eq!(parse_max_connections(None, Some("20".into()), 10), 20);
     }
 
     #[test]
@@ -1059,9 +1061,18 @@ mod tests {
 
     #[test]
     fn test_overall_health_message() {
-        assert_eq!(overall_health_message(&HealthStatus::Healthy), "所有服务运行正常");
-        assert_eq!(overall_health_message(&HealthStatus::Degraded), "部分服务存在问题");
-        assert_eq!(overall_health_message(&HealthStatus::Unhealthy), "存在关键服务故障");
+        assert_eq!(
+            overall_health_message(&HealthStatus::Healthy),
+            "所有服务运行正常"
+        );
+        assert_eq!(
+            overall_health_message(&HealthStatus::Degraded),
+            "部分服务存在问题"
+        );
+        assert_eq!(
+            overall_health_message(&HealthStatus::Unhealthy),
+            "存在关键服务故障"
+        );
     }
 
     #[test]

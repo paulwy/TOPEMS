@@ -44,12 +44,7 @@ impl PaginatedQuery {
     /// - `page_size`: 限制在 [min_size, max_size]（默认 1..=100）
     /// - `sort_dir`: 仅接受 asc / desc（大小写不敏感），其他值回退为 "desc"
     /// - `sort_by`: 仅保留 whitelist 内的值（如果提供了白名单），防止 SQL 注入
-    pub fn normalize(
-        &self,
-        min_size: i64,
-        max_size: i64,
-        sort_whitelist: Option<&[&str]>,
-    ) -> Self {
+    pub fn normalize(&self, min_size: i64, max_size: i64, sort_whitelist: Option<&[&str]>) -> Self {
         let page = self.page.max(1);
         let page_size = self.page_size.clamp(min_size, max_size);
         let sort_dir = normalize_sort_dir(self.sort_dir.as_deref());
@@ -237,7 +232,7 @@ mod tests {
     #[test]
     fn test_paginated_result_clamps_invalid_inputs() {
         // page=0 / page_size=1000 都应该被钳制
-        let r = PaginatedResult::new(vec![1,2,3], 999, 0, 10000);
+        let r = PaginatedResult::new(vec![1, 2, 3], 999, 0, 10000);
         assert_eq!(r.page, 1);
         assert_eq!(r.page_size, 100);
         assert_eq!(r.total_pages, 10);
@@ -370,17 +365,33 @@ mod tests {
 
     #[test]
     fn test_offset_computation() {
-        let q = PaginatedQuery { page: 1, page_size: 10, ..Default::default() };
+        let q = PaginatedQuery {
+            page: 1,
+            page_size: 10,
+            ..Default::default()
+        };
         assert_eq!(q.offset(), 0);
-        let q = PaginatedQuery { page: 2, page_size: 10, ..Default::default() };
+        let q = PaginatedQuery {
+            page: 2,
+            page_size: 10,
+            ..Default::default()
+        };
         assert_eq!(q.offset(), 10);
-        let q = PaginatedQuery { page: 3, page_size: 20, ..Default::default() };
+        let q = PaginatedQuery {
+            page: 3,
+            page_size: 20,
+            ..Default::default()
+        };
         assert_eq!(q.offset(), 40);
     }
 
     #[test]
     fn test_offset_handles_negative_page() {
-        let q = PaginatedQuery { page: -999, page_size: -5, ..Default::default() };
+        let q = PaginatedQuery {
+            page: -999,
+            page_size: -5,
+            ..Default::default()
+        };
         // 负数被 max(1) 视为 page=1, page_size=1
         assert_eq!(q.offset(), 0);
     }

@@ -173,9 +173,8 @@ mod tests {
 
     #[test]
     fn test_suggest_or_rewrite() {
-        let s = suggest_query_optimization(
-            "SELECT id FROM a WHERE status = 1 OR status = 2 LIMIT 50"
-        );
+        let s =
+            suggest_query_optimization("SELECT id FROM a WHERE status = 1 OR status = 2 LIMIT 50");
         assert!(s.reason.contains("UNION ALL"));
     }
 
@@ -222,26 +221,18 @@ mod tests {
 
     #[test]
     fn test_build_in_clause() {
-        assert_eq!(
-            BatchOperations::build_in_clause("id", 0),
-            "id IN ()"
-        );
+        assert_eq!(BatchOperations::build_in_clause("id", 0), "id IN ()");
         assert_eq!(
             BatchOperations::build_in_clause("user_id", 3),
             "user_id IN ($1, $2, $3)"
         );
-        assert_eq!(
-            BatchOperations::build_in_clause("x", 1),
-            "x IN ($1)"
-        );
+        assert_eq!(BatchOperations::build_in_clause("x", 1), "x IN ($1)");
     }
 
     // ===== PaginationOptimizer =====
     #[test]
     fn test_optimize_offset_pagination_keyset() {
-        let sql = PaginationOptimizer::optimize_offset_pagination(
-            "users", "id", Some(42), 50
-        );
+        let sql = PaginationOptimizer::optimize_offset_pagination("users", "id", Some(42), 50);
         assert_eq!(
             sql,
             "SELECT * FROM users WHERE id > 42 ORDER BY id LIMIT 50"
@@ -250,13 +241,8 @@ mod tests {
 
     #[test]
     fn test_optimize_offset_pagination_first_page() {
-        let sql = PaginationOptimizer::optimize_offset_pagination(
-            "orders", "created_at", None, 20
-        );
-        assert_eq!(
-            sql,
-            "SELECT * FROM orders ORDER BY created_at LIMIT 20"
-        );
+        let sql = PaginationOptimizer::optimize_offset_pagination("orders", "created_at", None, 20);
+        assert_eq!(sql, "SELECT * FROM orders ORDER BY created_at LIMIT 20");
     }
 
     #[test]
@@ -274,7 +260,11 @@ mod tests {
             .map(|i| format!("SELECT * FROM users WHERE id = {}", i))
             .collect();
         let ws = NPlusOneDetector::analyze_queries(&queries);
-        assert!(ws.is_empty(), "≤10 同型查询不应告警: got {} warnings", ws.len());
+        assert!(
+            ws.is_empty(),
+            "≤10 同型查询不应告警: got {} warnings",
+            ws.len()
+        );
     }
 
     #[test]
