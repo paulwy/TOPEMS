@@ -24,15 +24,6 @@ struct FileUploadResponse {
     created_at: String,
 }
 
-#[allow(dead_code)]
-#[derive(Debug, Clone, Serialize)]
-struct UploadResult {
-    success: bool,
-    message: String,
-    files: Vec<FileUploadResponse>,
-    failed: Vec<String>,
-}
-
 /// 上传单个文件
 #[utoipa::path(
     post,

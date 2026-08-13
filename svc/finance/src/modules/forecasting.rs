@@ -1263,6 +1263,387 @@ async fn resolve_alert_handler(
     Json(ApiResponse::success(alert, "告警已解决"))
 }
 
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use rust_decimal::Decimal;
+
+    // ==================== safe_divide ====================
+
+    #[test]
+    fn test_safe_divide_normal() {
+        let result = safe_divide(Decimal::from(100), Decimal::from(4));
+        assert_eq!(result, Decimal::from(25));
+    }
+
+    #[test]
+    fn test_safe_divide_zero_denominator() {
+        let result = safe_divide(Decimal::from(100), Decimal::ZERO);
+        assert_eq!(result, Decimal::ZERO);
+    }
+
+    #[test]
+    fn test_safe_divide_negative_numbers() {
+        let result = safe_divide(Decimal::from(-50), Decimal::from(2));
+        assert_eq!(result, Decimal::from(-25));
+    }
+
+    // ==================== safe_percentage ====================
+
+    #[test]
+    fn test_safe_percentage_normal() {
+        let result = safe_percentage(Decimal::from(50), Decimal::from(200));
+        assert_eq!(result, Decimal::from(25));
+    }
+
+    #[test]
+    fn test_safe_percentage_zero_total() {
+        let result = safe_percentage(Decimal::from(50), Decimal::ZERO);
+        assert_eq!(result, Decimal::ZERO);
+    }
+
+    #[test]
+    fn test_safe_percentage_negative_amount() {
+        let result = safe_percentage(Decimal::from(-20), Decimal::from(200));
+        assert_eq!(result, Decimal::from(-10));
+    }
+
+    // ==================== classify_variance ====================
+
+    #[test]
+    fn test_classify_variance_revenue_positive_is_favorable() {
+        let t = BudgetVarianceAnalyzer::classify_variance(Decimal::from(10_000), true);
+        assert_eq!(t, VarianceType::Favorable);
+    }
+
+    #[test]
+    fn test_classify_variance_revenue_negative_is_unfavorable() {
+        let t = BudgetVarianceAnalyzer::classify_variance(Decimal::from(-10_000), true);
+        assert_eq!(t, VarianceType::Unfavorable);
+    }
+
+    #[test]
+    fn test_classify_variance_expense_positive_is_unfavorable() {
+        let t = BudgetVarianceAnalyzer::classify_variance(Decimal::from(10_000), false);
+        assert_eq!(t, VarianceType::Unfavorable);
+    }
+
+    #[test]
+    fn test_classify_variance_expense_negative_is_favorable() {
+        let t = BudgetVarianceAnalyzer::classify_variance(Decimal::from(-10_000), false);
+        assert_eq!(t, VarianceType::Favorable);
+    }
+
+    #[test]
+    fn test_classify_variance_zero_is_neutral() {
+        let t = BudgetVarianceAnalyzer::classify_variance(Decimal::ZERO, true);
+        assert_eq!(t, VarianceType::Neutral);
+        let t2 = BudgetVarianceAnalyzer::classify_variance(Decimal::ZERO, false);
+        assert_eq!(t2, VarianceType::Neutral);
+    }
+
+    // ==================== classify_severity ====================
+
+    #[test]
+    fn test_classify_severity_none() {
+        assert_eq!(
+            BudgetVarianceAnalyzer::classify_severity(Decimal::ZERO),
+            VarianceSeverity::None
+        );
+    }
+
+    #[test]
+    fn test_classify_severity_minor() {
+        assert_eq!(
+            BudgetVarianceAnalyzer::classify_severity(Decimal::from(5)),
+            VarianceSeverity::Minor
+        );
+    }
+
+    #[test]
+    fn test_classify_severity_moderate() {
+        assert_eq!(
+            BudgetVarianceAnalyzer::classify_severity(Decimal::from(15)),
+            VarianceSeverity::Moderate
+        );
+    }
+
+    #[test]
+    fn test_classify_severity_significant() {
+        assert_eq!(
+            BudgetVarianceAnalyzer::classify_severity(Decimal::from(25)),
+            VarianceSeverity::Significant
+        );
+    }
+
+    #[test]
+    fn test_classify_severity_critical() {
+        assert_eq!(
+            BudgetVarianceAnalyzer::classify_severity(Decimal::from(35)),
+            VarianceSeverity::Critical
+        );
+    }
+
+    #[test]
+    fn test_classify_severity_negative() {
+        assert_eq!(
+            BudgetVarianceAnalyzer::classify_severity(Decimal::from(-35)),
+            VarianceSeverity::Critical
+        );
+    }
+
+    // ==================== calculate_confidence ====================
+
+    #[test]
+    fn test_calculate_confidence_normal() {
+        let ci =
+            CashFlowForecaster::calculate_confidence(Decimal::from(100), Decimal::from(50), Decimal::from(80));
+        assert_eq!(ci.confidence_percentage, Decimal::from(80));
+        let net = Decimal::from(50);
+        let deviation = net * Decimal::from(20) / Decimal::from(100);
+        assert_eq!(ci.lower_bound, net - deviation);
+        assert_eq!(ci.upper_bound, net + deviation);
+    }
+
+    #[test]
+    fn test_calculate_confidence_negative_net() {
+        let ci =
+            CashFlowForecaster::calculate_confidence(Decimal::from(50), Decimal::from(120), Decimal::from(90));
+        assert_eq!(ci.confidence_percentage, Decimal::from(90));
+        let net = Decimal::from(-70);
+        let deviation = net * Decimal::from(10) / Decimal::from(100);
+        assert_eq!(ci.lower_bound, net - deviation);
+        assert_eq!(ci.upper_bound, net + deviation);
+    }
+
+    #[test]
+    fn test_calculate_confidence_zero_net() {
+        let ci = CashFlowForecaster::calculate_confidence(
+            Decimal::from(100),
+            Decimal::from(100),
+            Decimal::from(85),
+        );
+        assert_eq!(ci.lower_bound, Decimal::ZERO);
+        assert_eq!(ci.upper_bound, Decimal::ZERO);
+    }
+
+    // ==================== build_item ====================
+
+    #[test]
+    fn test_build_item_revenue_positive_variance() {
+        let item = BudgetVarianceAnalyzer::build_item("6001", "营业收入", 100_000, 120_000, true);
+        assert_eq!(item.account_code, "6001");
+        assert_eq!(item.account_name, "营业收入");
+        assert_eq!(item.budget_amount, Decimal::from(100_000));
+        assert_eq!(item.actual_amount, Decimal::from(120_000));
+        assert_eq!(item.variance, Decimal::from(20_000));
+        assert_eq!(item.variance_percentage, Decimal::from(20));
+        assert_eq!(item.variance_type, VarianceType::Favorable);
+        assert!(!item.explanation.is_empty());
+    }
+
+    #[test]
+    fn test_build_item_expense_negative_variance() {
+        let item = BudgetVarianceAnalyzer::build_item("6602", "管理费用", 100_000, 85_000, false);
+        assert_eq!(item.variance, Decimal::from(-15_000));
+        assert_eq!(item.variance_type, VarianceType::Favorable);
+        assert_eq!(item.variance_percentage, Decimal::from(-15));
+    }
+
+    #[test]
+    fn test_build_item_zero_budget_edge_case() {
+        let item = BudgetVarianceAnalyzer::build_item("X", "科目", 0, 5_000, true);
+        assert_eq!(item.budget_amount, Decimal::ZERO);
+        assert_eq!(item.variance, Decimal::from(5_000));
+        assert_eq!(item.variance_percentage, Decimal::ZERO);
+    }
+
+    #[test]
+    fn test_build_item_zero_variance_neutral() {
+        let item = BudgetVarianceAnalyzer::build_item("X", "科目", 50_000, 50_000, false);
+        assert_eq!(item.variance, Decimal::ZERO);
+        assert_eq!(item.variance_percentage, Decimal::ZERO);
+        assert_eq!(item.variance_type, VarianceType::Neutral);
+    }
+
+    // ==================== generate_variance_explanation ====================
+
+    #[test]
+    fn test_generate_variance_explanation_favorable_positive() {
+        let s = BudgetVarianceAnalyzer::generate_variance_explanation(
+            "营业收入",
+            Decimal::from(20_000),
+            Decimal::from(20),
+            &VarianceType::Favorable,
+        );
+        assert!(s.contains("营业收入"));
+        assert!(s.contains("有利"));
+        assert!(s.contains("超支"));
+    }
+
+    #[test]
+    fn test_generate_variance_explanation_unfavorable_negative() {
+        let s = BudgetVarianceAnalyzer::generate_variance_explanation(
+            "管理费用",
+            Decimal::from(-15_000),
+            Decimal::from(-15),
+            &VarianceType::Unfavorable,
+        );
+        assert!(s.contains("不利"));
+        assert!(s.contains("节约"));
+    }
+
+    #[test]
+    fn test_generate_variance_explanation_neutral_zero() {
+        let s = BudgetVarianceAnalyzer::generate_variance_explanation(
+            "科目",
+            Decimal::ZERO,
+            Decimal::ZERO,
+            &VarianceType::Neutral,
+        );
+        assert!(s.contains("中性"));
+        assert!(s.contains("持平"));
+    }
+
+    // ==================== forecast_cash_flow ====================
+
+    #[test]
+    fn test_forecast_cash_flow_base_scenario() {
+        let f = CashFlowForecaster::forecast_cash_flow("2026Q3", ForecastPeriod::Monthly, ForecastScenario::Base);
+        assert_eq!(f.period_type, ForecastPeriod::Monthly);
+        assert_eq!(f.scenario, ForecastScenario::Base);
+        assert_eq!(f.predicted_inflow, Decimal::from(1_680_000));
+        assert_eq!(f.predicted_outflow, Decimal::from(1_560_000));
+        assert_eq!(f.net_cash_flow, Decimal::from(120_000));
+        assert_eq!(f.confidence_level, Decimal::from(85));
+        assert!(f.end_date > f.start_date);
+    }
+
+    #[test]
+    fn test_forecast_cash_flow_pessimistic_negative_net() {
+        let f = CashFlowForecaster::forecast_cash_flow(
+            "2026Q4",
+            ForecastPeriod::Quarterly,
+            ForecastScenario::Pessimistic,
+        );
+        assert_eq!(f.predicted_inflow, Decimal::from(1_520_000));
+        assert_eq!(f.predicted_outflow, Decimal::from(1_720_000));
+        assert_eq!(f.net_cash_flow, Decimal::from(-200_000));
+        assert_eq!(f.confidence_level, Decimal::from(72));
+    }
+
+    #[test]
+    fn test_forecast_cash_flow_period_duration() {
+        let daily =
+            CashFlowForecaster::forecast_cash_flow("", ForecastPeriod::Daily, ForecastScenario::Base);
+        let quarterly =
+            CashFlowForecaster::forecast_cash_flow("", ForecastPeriod::Quarterly, ForecastScenario::Base);
+        assert!(
+            (quarterly.end_date - quarterly.start_date).num_days()
+                > (daily.end_date - daily.start_date).num_days()
+        );
+    }
+
+    // ==================== update_alert_rule ====================
+
+    #[test]
+    fn test_update_alert_rule_partial() {
+        let original = AlertRule {
+            rule_id: Uuid::new_v4(),
+            name: "old".to_string(),
+            description: "old desc".to_string(),
+            metric: "cash_balance".to_string(),
+            condition: AlertCondition::GreaterThan,
+            threshold: Decimal::from(100),
+            severity: AlertSeverity::Warning,
+            enabled: true,
+        };
+        let req = UpdateAlertRuleRequest {
+            name: Some("new".to_string()),
+            description: None,
+            metric: None,
+            condition: None,
+            threshold: Some(Decimal::from(200)),
+            severity: None,
+            enabled: None,
+        };
+        let updated = SmartAlertSystem::update_alert_rule(original, req);
+        assert_eq!(updated.name, "new");
+        assert_eq!(updated.threshold, Decimal::from(200));
+        assert_eq!(updated.description, "old desc");
+        assert_eq!(updated.metric, "cash_balance");
+        assert_eq!(updated.enabled, true);
+    }
+
+    #[test]
+    fn test_update_alert_rule_all_fields() {
+        let original = AlertRule {
+            rule_id: Uuid::new_v4(),
+            name: "n".to_string(),
+            description: "d".to_string(),
+            metric: "m".to_string(),
+            condition: AlertCondition::GreaterThan,
+            threshold: Decimal::from(1),
+            severity: AlertSeverity::Info,
+            enabled: true,
+        };
+        let req = UpdateAlertRuleRequest {
+            name: Some("N".to_string()),
+            description: Some("D".to_string()),
+            metric: Some("M".to_string()),
+            condition: Some(AlertCondition::LessThan),
+            threshold: Some(Decimal::from(999)),
+            severity: Some(AlertSeverity::Emergency),
+            enabled: Some(false),
+        };
+        let updated = SmartAlertSystem::update_alert_rule(original, req);
+        assert_eq!(updated.name, "N");
+        assert_eq!(updated.description, "D");
+        assert_eq!(updated.metric, "M");
+        assert_eq!(updated.condition, AlertCondition::LessThan);
+        assert_eq!(updated.threshold, Decimal::from(999));
+        assert_eq!(updated.severity, AlertSeverity::Emergency);
+        assert_eq!(updated.enabled, false);
+    }
+
+    // ==================== generate_recommendations ====================
+
+    #[test]
+    fn test_generate_recommendations_known_metric_emergency() {
+        let actions = SmartAlertSystem::generate_recommendations("cash_balance", &AlertSeverity::Emergency);
+        assert!(actions.len() >= 3);
+        let last = actions.last().unwrap();
+        assert!(last.contains("管理层"));
+        assert!(last.contains("应急预案"));
+    }
+
+    #[test]
+    fn test_generate_recommendations_known_metric_warning_no_emergency() {
+        let actions =
+            SmartAlertSystem::generate_recommendations("receivable_overdue_rate", &AlertSeverity::Warning);
+        assert!(actions.len() >= 2);
+        for a in &actions {
+            assert!(!a.contains("管理层"), "Warning 不应附加应急预案");
+        }
+    }
+
+    #[test]
+    fn test_generate_recommendations_unknown_metric() {
+        let actions =
+            SmartAlertSystem::generate_recommendations("unknown_metric", &AlertSeverity::Warning);
+        assert_eq!(actions.len(), 1);
+        assert!(actions[0].contains("持续监控"));
+    }
+
+    #[test]
+    fn test_generate_recommendations_unknown_metric_critical() {
+        let actions =
+            SmartAlertSystem::generate_recommendations("unknown_metric", &AlertSeverity::Critical);
+        assert_eq!(actions.len(), 2);
+        assert!(actions.last().unwrap().contains("应急预案"));
+    }
+}
+
 pub fn create_routes() -> Router<AppState> {
     Router::new()
         .route(

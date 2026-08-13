@@ -84,7 +84,7 @@ const StockTakePage: React.FC = () => {
   };
 
   const createStockTakeMutation = useMutation({
-    mutationFn: (data: any) => wmsApi.stockTakes.create(data),
+    mutationFn: (data: CreateStockTakeRequest) => wmsApi.stockTakes.create(data),
     onSuccess: () => {
       addNotification({
         type: 'success',
@@ -319,14 +319,14 @@ const StockTakePage: React.FC = () => {
             ...item,
             warehouse_name: getWarehouseName(item.warehouse_id),
           }));
-          return { data: items as any[], total: response.data.total || 0 };
+          return { data: items as unknown as Record<string, unknown>[], total: response.data.total || 0 };
         }
         return { data: [], total: 0 };
       },
       create: async (data) => {
         const res = await wmsApi.stockTakes.create(data as unknown as CreateStockTakeRequest);
         if (res.success && res.data) {
-          return { ...res.data, warehouse_name: getWarehouseName(res.data.warehouse_id) } as any;
+          return { ...res.data, warehouse_name: getWarehouseName(res.data.warehouse_id) } as unknown as Record<string, unknown>;
         }
         throw new Error(res.message || '创建失败');
       },

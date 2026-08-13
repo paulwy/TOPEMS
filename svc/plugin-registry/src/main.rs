@@ -62,6 +62,10 @@ async fn main() -> anyhow::Result<()> {
     let protected_routes = Router::new()
         .merge(modules::create_routes())
         .route("/health/detailed", get(detailed_health))
+        .layer(axum::middleware::from_fn_with_state(
+            app_state.auth_state.clone(),
+            shared::middleware::jwt_auth_middleware,
+        ))
         .with_state(app_state.clone());
 
     // plugin-registry 暂未独立生成 OpenAPI 文档

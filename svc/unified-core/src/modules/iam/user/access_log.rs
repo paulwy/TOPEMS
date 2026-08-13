@@ -34,21 +34,6 @@ struct LoginLogRow {
     login_time: chrono::NaiveDateTime,
 }
 
-#[derive(Debug, sqlx::FromRow)]
-#[allow(dead_code)]
-struct AuditLogRow {
-    id: Uuid,
-    user_id: Option<Uuid>,
-    username: Option<String>,
-    action: String,
-    resource_type: Option<String>,
-    resource_id: Option<String>,
-    ip_address: Option<String>,
-    user_agent: Option<String>,
-    status: Option<i16>,
-    created_at: chrono::DateTime<chrono::Utc>,
-}
-
 /// GET /users/{userId}/login-history?limit=10 — 返回用户登录历史
 pub async fn get_login_history(
     State(state): State<AppState>,

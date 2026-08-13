@@ -37,6 +37,7 @@ use topems_shared_core::{
     compression::{CompressionConfig, CompressionMiddleware},
     health::{SimpleHealthConfig, SystemMetrics},
 };
+use topems_shared_core::logging::request_context_middleware;
 use topems_shared_observability::telemetry::TelemetryExt;
 use utoipa::{Modify, OpenApi};
 
@@ -78,6 +79,7 @@ pub use shared::*;
         (name = "Health", description = "健康检查 - 服务健康状态"),
         (name = "Monitor", description = "监控服务 - 指标、告警"),
         (name = "Tenant", description = "租户管理 - 租户CRUD"),
+        (name = "FeatureFlag", description = "特性开关 - Feature Flag 管理接口"),
     ),
     info(
         title = "TOPEMS-unified-core API",
@@ -240,6 +242,11 @@ pub use shared::*;
         // ===== File module - upload =====
         crate::modules::file::upload::upload_file,
         crate::modules::file::upload::upload_multiple,
+        // ===== Feature Flag management =====
+        crate::routes::feature_flag::list_feature_flags,
+        crate::routes::feature_flag::get_feature_flag,
+        crate::routes::feature_flag::update_feature_flag,
+        crate::routes::feature_flag::refresh_feature_flag,
     )
 )]
 pub struct ApiDoc;
@@ -380,7 +387,9 @@ async fn main() -> anyhow::Result<()> {
     ));
     let http_client = Client::new();
 
-    let rate_limit_config = middleware::rate_limit::RateLimitConfig::default();
+    let rate_limit_config = middleware::rate_limit::RateLimitConfig::default()
+        .add_path_rule("/api/core/iam/auth/", 30, 60)
+        .add_path_rule("/api/v1/core/iam/auth/", 30, 60);
     let rate_limit_middleware = std::sync::Arc::new(
         middleware::rate_limit::RateLimitMiddleware::new(rate_limit_config),
     );
@@ -432,6 +441,9 @@ async fn main() -> anyhow::Result<()> {
         input_validation_config,
         metrics,
         encryption,
+        feature_flag_service: std::sync::Arc::new(
+            topems_shared_core::FeatureFlagService::new(),
+        ),
     };
 
     // Spawn background task to cleanup timeout WebSocket connections
@@ -515,6 +527,7 @@ async fn main() -> anyhow::Result<()> {
     let (prometheus_layer, metric_handle) = PrometheusMetricLayer::pair();
 
     let app = routes::create_routes(&state, move || metric_handle.render())
+        .layer(axum::middleware::from_fn(request_context_middleware))
         .with_telemetry()
         .route(
             "/api-docs/openapi.json",

@@ -53,9 +53,9 @@ export interface RuntimeModule {
   /** 模块远程 URL（可选，用于动态 import） */
   url?: string;
   /** 加载函数（动态 import 或自定义 loader） */
-  loaderFn: () => Promise<any>;
+  loaderFn: () => Promise<unknown>;
   /** 已加载的模块实例 */
-  instance?: any;
+  instance?: unknown;
   /** 当前加载状态 */
   status: ModuleLoadStatus;
   /** 加载完成时间戳 */

@@ -146,7 +146,7 @@ const NotificationTemplatesPage: React.FC = () => {
   );
 
   const createMutation = useMutation({
-    mutationFn: (data: any) => createTemplate(data),
+    mutationFn: (data: CreateTemplateRequest) => createTemplate(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.NOTIFICATION_TEMPLATES_BASE ,
   exact: false,
@@ -275,8 +275,8 @@ const NotificationTemplatesPage: React.FC = () => {
     [handlePreview, handleCopy]
   );
 
-  const headerContent = useCallback((rows: any[]) => {
-    const templates = rows as NotificationTemplate[];
+  const headerContent = useCallback((rows: Record<string, unknown>[]) => {
+    const templates = rows as unknown as NotificationTemplate[];
     const totalCount = templates.length;
     const active = templates.filter((t) => t.status === 'active').length;
     const inactive = templates.filter((t) => t.status === 'inactive').length;

@@ -6,6 +6,7 @@ use reqwest::Client;
 use serde::{Deserialize, Serialize};
 use std::sync::{Arc, Mutex};
 use utoipa::ToSchema;
+use uuid::Uuid;
 
 // AI 生成请求
 #[derive(Debug, Serialize, Deserialize, ToSchema)]
@@ -105,8 +106,8 @@ pub struct TemplateOption {
 // 向量嵌入（内存存储用）
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct VectorEmbedding {
-    pub id: String,
-    pub document_id: String,
+    pub id: Uuid,
+    pub document_id: Uuid,
     pub chunk_index: i32,
     pub content: String,
     pub embedding: Vec<f32>,
@@ -116,8 +117,8 @@ pub struct VectorEmbedding {
 // 文档分块（内存存储用）
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct DocumentChunk {
-    pub id: String,
-    pub document_id: String,
+    pub id: Uuid,
+    pub document_id: Uuid,
     pub chunk_index: i32,
     pub content: String,
     pub created_at: String,
@@ -127,7 +128,7 @@ pub struct DocumentChunk {
 // 文档（内存存储用）
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Document {
-    pub id: String,
+    pub id: Uuid,
     pub title: String,
     pub filename: String,
     pub file_path: Option<String>,
@@ -221,8 +222,8 @@ pub struct SearchResult {
 
 #[derive(Debug, Serialize)]
 pub struct ChunkInfo {
-    pub id: String,
-    pub document_id: String,
+    pub id: Uuid,
+    pub document_id: Uuid,
     pub chunk_index: i32,
     pub content: String,
     pub created_at: String,
@@ -262,7 +263,7 @@ pub struct ConnectorConfig {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct DataConnector {
-    pub id: String,
+    pub id: Uuid,
     pub name: String,
     pub connector_type: ConnectorType,
     pub database_type: Option<DatabaseType>,
@@ -292,7 +293,7 @@ pub struct UpdateConnectorRequest {
 
 #[derive(Debug, Serialize, Deserialize, ToSchema)]
 pub struct DataQueryRequest {
-    pub connector_id: String,
+    pub connector_id: Uuid,
     pub query: String,
     pub params: Option<serde_json::Value>,
 }
@@ -306,7 +307,7 @@ pub struct DataQueryResponse {
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct ConnectorStatus {
-    pub connector_id: String,
+    pub connector_id: Uuid,
     pub name: String,
     pub is_connected: bool,
     pub error: Option<String>,
@@ -317,7 +318,7 @@ pub static CONNECTORS: std::sync::OnceLock<Arc<Mutex<Vec<DataConnector>>>> =
 
 #[derive(Debug, Deserialize)]
 pub struct ConnectorQuery {
-    pub id: String,
+    pub id: Uuid,
 }
 
 #[derive(Debug, Serialize, Deserialize, ToSchema)]
@@ -329,7 +330,7 @@ pub struct AiSearchRequest {
 
 #[derive(Debug, Serialize)]
 pub struct AiSearchDocument {
-    pub id: String,
+    pub id: Uuid,
     pub title: String,
     pub content: String,
     pub filename: String,

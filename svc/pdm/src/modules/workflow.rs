@@ -367,7 +367,13 @@ pub async fn start_workflow(
         }
     };
 
-    let steps: Vec<WorkflowStep> = serde_json::from_value(workflow.steps).unwrap_or_default();
+    let steps: Vec<WorkflowStep> = match serde_json::from_value(workflow.steps) {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::warn!("Failed to deserialize workflow steps: {}", e);
+            Vec::new()
+        }
+    };
     let first_step = steps.first();
     let current_step = first_step
         .map(|s| s.step_name.clone())
@@ -570,7 +576,13 @@ pub async fn advance_workflow(
         }
     };
 
-    let steps: Vec<WorkflowStep> = serde_json::from_value(workflow.steps).unwrap_or_default();
+    let steps: Vec<WorkflowStep> = match serde_json::from_value(workflow.steps) {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::warn!("Failed to deserialize workflow definition steps: {}", e);
+            Vec::new()
+        }
+    };
     let current_step_index = steps
         .iter()
         .position(|s| s.step_name == instance.current_step);
@@ -604,8 +616,13 @@ pub async fn advance_workflow(
         },
     };
 
-    let mut history: Vec<serde_json::Value> =
-        serde_json::from_value(instance.history).unwrap_or_default();
+    let mut history: Vec<serde_json::Value> = match serde_json::from_value(instance.history) {
+        Ok(h) => h,
+        Err(e) => {
+            tracing::warn!("Failed to deserialize workflow history: {}", e);
+            Vec::new()
+        }
+    };
     history.push(serde_json::json!({
         "step": instance.current_step,
         "action": action,

@@ -8,6 +8,7 @@
 /// V66.1：Automation 编排虚拟服务（planned 阶段，全部 501 Not Implemented 占位）
 mod automation;
 mod doc;
+pub mod feature_flag;
 mod file;
 mod flow;
 // V68.1 A2.4.2: help 路由已迁移至 svc/portal（/api/portal/help/*），Portal BFF 统一承载用户服务域
@@ -126,6 +127,7 @@ pub fn create_routes(
         .nest("/flow", flow::flow_routes(state))
         .merge(file::file_routes(state))
         .merge(master::master_routes(state))
+        .merge(feature_flag::feature_flag_routes(state))
         // V68.1 A2.2: plugin 路由已迁移至 svc/plugin-registry（端口 8096），后续用服务发现/代理
         // .merge(plugin::plugin_routes(state))
         // V68.1 A2.4.2: help 路由已迁移至 svc/portal（/api/portal/help/*）

@@ -1,4 +1,5 @@
 import React from 'react';
+import type { UseMutationResult } from '@tanstack/react-query';
 import { DocumentPreviewModal } from '@/components/DocumentPreviewModal';
 import { ConfirmDialog } from '@topems/shared-components';
 import CreateFolderModal from './CreateFolderModal';
@@ -16,7 +17,11 @@ interface DocumentModalsProps {
   onCloseCreateFolderModal: () => void;
   onCreateFolderSuccess: () => void;
   selectedFolderId: string | null;
-  createFolderMutation: any;
+  createFolderMutation: UseMutationResult<
+    { success: boolean; message?: string },
+    Error,
+    { name: string; parentId?: string }
+  >;
   previewingFile: PreviewingFile | null;
   onClosePreview: () => void;
   confirmDialogOpen: boolean;

@@ -105,7 +105,7 @@ impl DeploymentConfig {
             .ok()
             .and_then(|v| Uuid::parse_str(&v).ok())
             .unwrap_or_else(|| {
-                Uuid::parse_str("00000000-0000-0000-0000-000000000001").expect("hardcoded UUID should always parse")
+                Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap()
             });
 
         let features = FeatureFlags {

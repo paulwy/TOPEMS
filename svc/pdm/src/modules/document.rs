@@ -632,8 +632,13 @@ pub async fn start_document_approval(
         }
     };
 
-    let steps: Vec<WorkflowStep> =
-        serde_json::from_value(workflow.get("steps")).unwrap_or_default();
+    let steps: Vec<WorkflowStep> = match serde_json::from_value(workflow.get("steps")) {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::warn!("Failed to deserialize document workflow steps: {}", e);
+            Vec::new()
+        }
+    };
     let first_step = steps.first();
     let current_step = first_step
         .map(|s| s.step_name.clone())

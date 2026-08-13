@@ -52,9 +52,7 @@ fn bd(s: &str) -> BigDecimal {
     BigDecimal::from_str(s).unwrap_or_default()
 }
 
-fn approx_eq(a: &BigDecimal, b: &BigDecimal, eps: &str) -> bool {
-    (a - b).abs() <= bd(eps)
-}
+
 
 /// 在给定档位表中计算税额（通用）
 fn tax_by_brackets(taxable_yuan: &BigDecimal, brackets: &[(i64, u32, i64)]) -> BigDecimal {
@@ -212,7 +210,7 @@ pub fn calculate_annual_bonus(
             }
         }
         AnnualBonusMethod::MergeIntoComprehensive => {
-            let ctx = merge_ctx.expect("MergeIntoComprehensive 方法需要 merge_ctx");
+            let ctx = merge_ctx.unwrap();
             // 合并前后的年度综合应纳税所得
             let taxable_before = ctx.annual_taxable();
             let taxable_after = (&taxable_before + bonus).max(bd("0"));
@@ -298,6 +296,14 @@ pub fn labor_service_withholding(lump_sum_income: &BigDecimal) -> BigDecimal {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    fn bd(s: &str) -> BigDecimal {
+        BigDecimal::from_str(s).unwrap_or_default()
+    }
+
+    fn approx_eq(a: &BigDecimal, b: &BigDecimal, eps: &str) -> bool {
+        (a - b).abs() <= bd(eps)
+    }
 
     // ── 累计预扣：简单单月（1 月）──────
 

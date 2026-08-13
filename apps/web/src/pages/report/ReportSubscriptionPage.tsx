@@ -2,7 +2,7 @@ import React, { useMemo } from 'react';
 import { PageContainer } from '@/components/common';
 import CrudPage from '@/components/templates/CrudPage';
 import type { CrudApiAdapter } from '@/components/templates/CrudPage';
-import { reportApi, type ReportSubscription } from '@/api/report';
+import { reportApi, type ReportSubscription, type CreateSubscriptionRequest, type UpdateSubscriptionRequest } from '@/api/report';
 import { subscriptionSchema } from '@/schemas/report';
 
 const ReportSubscriptionPage: React.FC = () => {
@@ -17,14 +17,14 @@ const ReportSubscriptionPage: React.FC = () => {
         return { data, total: data.length };
       },
       create: async (data) => {
-        const response = await reportApi.createSubscription(data as any);
+        const response = await reportApi.createSubscription(data as unknown as CreateSubscriptionRequest);
         if (!response.success) {
           throw new Error(response.message || '创建订阅失败');
         }
         return response.data!;
       },
       update: async (id, data) => {
-        const response = await reportApi.updateSubscription(id, data as any);
+        const response = await reportApi.updateSubscription(id, data as unknown as UpdateSubscriptionRequest);
         if (!response.success) {
           throw new Error(response.message || '更新订阅失败');
         }

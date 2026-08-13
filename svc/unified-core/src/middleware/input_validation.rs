@@ -11,6 +11,7 @@ use topems_shared_core::response::api_error;
 pub struct InputValidationConfig {
     pub max_path_length: usize,
     pub max_query_length: usize,
+    pub max_body_bytes: usize,
     pub detect_sql_injection: bool,
     pub detect_xss: bool,
     pub detect_path_traversal: bool,
@@ -23,6 +24,7 @@ impl Default for InputValidationConfig {
         Self {
             max_path_length: 2048,
             max_query_length: 4096,
+            max_body_bytes: 10 * 1024 * 1024, // 10 MB
             detect_sql_injection: true,
             detect_xss: true,
             detect_path_traversal: true,
@@ -50,6 +52,11 @@ impl InputValidationConfig {
 
     pub fn with_max_query_length(mut self, max: usize) -> Self {
         self.max_query_length = max;
+        self
+    }
+
+    pub fn with_max_body_bytes(mut self, max: usize) -> Self {
+        self.max_body_bytes = max;
         self
     }
 
@@ -92,6 +99,17 @@ pub async fn input_validation_middleware(
 
     if query.len() > config.max_query_length {
         return bad_request("Query string too long").into_response();
+    }
+
+    if let Some(len) = request
+        .headers()
+        .get(axum::http::header::CONTENT_LENGTH)
+        .and_then(|v| v.to_str().ok())
+        .and_then(|s| s.parse::<usize>().ok())
+    {
+        if len > config.max_body_bytes {
+            return bad_request("Request body too large").into_response();
+        }
     }
 
     if config.detect_path_traversal {

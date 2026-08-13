@@ -26,6 +26,7 @@ export const ADMIN_PATHS = {
   performance: '/admin/performance',
   permissionAudit: '/admin/permission-audit',
   monitoringAlert: '/admin/monitoring-alert',
+  featureFlag: '/admin/feature-flag',
 } as const;
 
 // ---- 第二部分：路由配置（供路由系统使用） ----
@@ -262,6 +263,20 @@ export const adminModuleConfig: RouteModuleConfig = {
       group: 'setting',
     },
     {
+      path: ADMIN_PATHS.featureFlag,
+      element: lazyWithRetry(
+        () => import('@/pages/system/FeatureFlagPage'),
+        'FeatureFlagPage'
+      ),
+      module: 'admin',
+      title: '特性开关',
+      code: 'admin-feature-flag',
+      requiredPermissions: ['system:read', 'admin:dashboard:read'],
+      action: 'read',
+      template: 'settings',
+      group: 'setting',
+    },
+    {
       path: ADMIN_PATHS.monitor,
       element: lazyWithRetry(() => import('@/pages/admin/MonitorPage'), 'MonitorPage'),
       module: 'admin',
@@ -476,6 +491,16 @@ export const adminNavConfig: ModuleNavConfig = {
       order: 23,
       group: 'setting',
       description: '多维度限流与防重放保护',
+    },
+    {
+      code: 'admin-feature-flag',
+      label: '特性开关',
+      icon: 'ToggleLeft',
+      path: ADMIN_PATHS.featureFlag,
+      permission: 'system:read',
+      order: 24,
+      group: 'setting',
+      description: '管理系统 Feature Flag 开关',
     },
     {
       code: 'admin-monitor',

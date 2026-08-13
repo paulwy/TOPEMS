@@ -4,10 +4,10 @@ import { reagentSchema } from '@/schemas/lims';
 import { reagentApi } from '@/api/lims';
 
 const apiAdapter = createCrudPageAdapter({
-  list: reagentApi.listReagents as any,
-  create: reagentApi.createReagent as any,
-  update: reagentApi.updateReagent as any,
-  delete: reagentApi.deleteReagent as any,
+  list: reagentApi.listReagents,
+  create: reagentApi.createReagent,
+  update: reagentApi.updateReagent,
+  delete: reagentApi.deleteReagent,
 });
 
 export default function ReagentPage() {

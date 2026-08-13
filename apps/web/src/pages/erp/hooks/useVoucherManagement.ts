@@ -115,7 +115,7 @@ export const useVoucherManagement = () => {
 
   // React Query - Mutations
   const createMutation = useMutation({
-    mutationFn: (data: any) => voucherApi.create(data),
+    mutationFn: (data: unknown) => voucherApi.create(data as Parameters<typeof voucherApi.create>[0]),
     onSuccess: () => {
       addNotification({
         title: t('erp.voucher_mgmt.message.success'),
@@ -137,7 +137,7 @@ export const useVoucherManagement = () => {
   });
 
   const updateMutation = useMutation({
-    mutationFn: ({ id, data }: { id: string; data: any }) => voucherApi.update(id, data),
+    mutationFn: ({ id, data }: { id: string; data: unknown }) => voucherApi.update(id, data as Parameters<typeof voucherApi.update>[1]),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.ERP_VOUCHERS_BASE ,
   exact: false,

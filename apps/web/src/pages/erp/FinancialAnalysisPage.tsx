@@ -187,7 +187,7 @@ const FinancialAnalysisPage: React.FC = () => {
   } | null>({
     queryKey: [...QUERY_KEYS.ERP.FINANCIAL_REPORTS.EXPENSE_ANALYSIS, 'budget', period],
     queryFn: async () => {
-      const response = await (financeReportApi as any).budgetAnalysis({ period });
+      const response = await (financeReportApi as unknown as { budgetAnalysis: (params: { period: string }) => Promise<{ success: boolean; data: { budget_amount: number; actual_amount: number; } | null; message?: string; }> }).budgetAnalysis({ period });
       if (response.success && response.data) {
         return response.data;
       }

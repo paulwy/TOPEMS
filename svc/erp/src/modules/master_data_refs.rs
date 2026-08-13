@@ -5844,6 +5844,7 @@ pub async fn retry_sync_job(
         }
     }
 
+    let job = jobs[job_pos].clone();
     let job_id = id.clone();
     drop(jobs);
 
@@ -5851,8 +5852,6 @@ pub async fn retry_sync_job(
         execute_sync_job(job_id).await;
     });
 
-    let jobs = store.jobs.lock().await;
-    let job = jobs.iter().find(|j| j.id == id).cloned().unwrap();
     Json(ApiResponse::success(job, "同步任务已重试"))
 }
 
@@ -10492,18 +10491,31 @@ async fn handle_merge_master_data(req: &GraphqlRequest) -> Json<GraphqlResponse>
     let source_id = vars.get("source_id").and_then(|v| v.as_str()).unwrap_or("");
     let target_id = vars.get("target_id").and_then(|v| v.as_str()).unwrap_or("");
 
-    if !store.entities.contains_key(source_id) || !store.entities.contains_key(target_id) {
-        return Json(GraphqlResponse {
-            data: None,
-            errors: Some(vec![GraphqlError {
-                message: "Source or target entity not found".to_string(),
-                path: Some(vec!["mergeMasterData".to_string()]),
-            }]),
-        });
-    }
-
-    let source = store.entities.remove(source_id).unwrap();
-    let target = store.entities.get_mut(target_id).unwrap();
+    let source = match store.entities.remove(source_id) {
+        Some(s) => s,
+        None => {
+            return Json(GraphqlResponse {
+                data: None,
+                errors: Some(vec![GraphqlError {
+                    message: "Source or target entity not found".to_string(),
+                    path: Some(vec!["mergeMasterData".to_string()]),
+                }]),
+            });
+        }
+    };
+    let target = match store.entities.get_mut(target_id) {
+        Some(t) => t,
+        None => {
+            store.entities.insert(source_id.to_string(), source);
+            return Json(GraphqlResponse {
+                data: None,
+                errors: Some(vec![GraphqlError {
+                    message: "Source or target entity not found".to_string(),
+                    path: Some(vec!["mergeMasterData".to_string()]),
+                }]),
+            });
+        }
+    };
     target.updated_at = chrono::Utc::now().to_rfc3339();
     target.properties = serde_json::json!({
         "merged_from": source.id,

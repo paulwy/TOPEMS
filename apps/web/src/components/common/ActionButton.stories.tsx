@@ -155,6 +155,6 @@ export const WithTooltip: Story = {
   args: {
     label: '帮助',
     tooltip: '点击获取帮助信息',
-    variant = 'text',
+    variant: 'text',
   },
 };

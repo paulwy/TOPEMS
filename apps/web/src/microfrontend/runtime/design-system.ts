@@ -882,7 +882,7 @@ export class DesignSystemManager {
   }
 
   /** 获取共享状态 */
-  getSharedState(key: string): any {
+  getSharedState(key: string): unknown {
     return this.sharedState.get(key);
   }
 
@@ -895,7 +895,7 @@ export class DesignSystemManager {
   }
 
   /** 监听全局设计系统事件（CustomEvent） */
-  watchEvent(eventType: string, handler: (detail: any) => void): () => void {
+  watchEvent(eventType: string, handler: (detail: unknown) => void): () => void {
     if (typeof window === 'undefined') return () => {};
     const listener = (e: Event) => {
       const customEvent = e as CustomEvent;

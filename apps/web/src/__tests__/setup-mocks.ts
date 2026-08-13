@@ -705,3 +705,12 @@ vi.mock('@/schema', () => ({
 vi.mock('@/components/common/FormBuilder', () => ({
   FormBuilder: () => React.createElement('div', null, 'FormBuilder'),
 }));
+
+// ─── react-transition-group sub-path ESM compatibility is handled by ─────
+// patching MUI's .mjs imports to use explicit `/cjs/` paths (see pretest script).
+
+// ─── Mock react-transition-group subpath Context (MUI 9 imports as bare specifier) ───
+vi.mock('react-transition-group/TransitionGroupContext', () => ({
+  __esModule: true,
+  default: React.createContext({}),
+}));

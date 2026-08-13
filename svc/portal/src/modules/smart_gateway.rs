@@ -640,7 +640,7 @@ impl SmartRouter {
     ) -> RouteMatchResult {
         self.inner
             .lock()
-            .unwrap()
+            .unwrap_or_else(|e| e.into_inner())
             .match_route(path, protocol, headers)
     }
 
@@ -654,7 +654,7 @@ impl SmartRouter {
     pub fn update_route_priority(&self, route_id: &str, priority: u32) -> bool {
         self.inner
             .lock()
-            .unwrap()
+            .unwrap_or_else(|e| e.into_inner())
             .update_route_priority(route_id, priority)
     }
 
@@ -668,7 +668,7 @@ impl SmartRouter {
     pub fn discover_service(&self, service_name: &str, instances: Vec<String>) {
         self.inner
             .lock()
-            .unwrap()
+            .unwrap_or_else(|e| e.into_inner())
             .discover_service(service_name, instances);
     }
 }
@@ -852,7 +852,7 @@ impl AdaptiveDegradationController {
     pub fn get_health_metrics(&self, service_name: &str) -> Option<HealthMetrics> {
         self.inner
             .lock()
-            .unwrap()
+            .unwrap_or_else(|e| e.into_inner())
             .get_health_metrics(service_name)
             .cloned()
     }
@@ -867,7 +867,7 @@ impl AdaptiveDegradationController {
     pub fn trigger_degradation(&self, level: DegradationLevel, service_name: &str) {
         self.inner
             .lock()
-            .unwrap()
+            .unwrap_or_else(|e| e.into_inner())
             .trigger_degradation(level, service_name);
     }
 
@@ -882,7 +882,7 @@ impl AdaptiveDegradationController {
         let state = self
             .inner
             .lock()
-            .unwrap()
+            .unwrap_or_else(|e| e.into_inner())
             .get_circuit_breaker_state(service_name);
         match state {
             CircuitBreakerState::Closed => "closed".to_string(),
@@ -899,7 +899,7 @@ impl AdaptiveDegradationController {
         };
         self.inner
             .lock()
-            .unwrap()
+            .unwrap_or_else(|e| e.into_inner())
             .set_circuit_breaker_state(service_name, cb_state);
     }
 }

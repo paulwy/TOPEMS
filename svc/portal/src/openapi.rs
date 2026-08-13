@@ -13,8 +13,6 @@ use utoipa::OpenApi;
         crate::modules::announcements::create_announcement,
         crate::modules::notifications::get_notifications,
         crate::modules::navigation::get_navigation_menu,
-        // === portal_compat (OpenAPI-only) ===
-        crate::modules::portal_compat::compat_get_api_portal_search_suggestions,
     ),
     tags(
         (name = "Portal", description = "门户"),
@@ -24,7 +22,6 @@ use utoipa::OpenApi;
         (name = "Navigation", description = "导航"),
         (name = "QuickActions", description = "快捷操作"),
         (name = "Health", description = "健康检查"),
-        (name = "Portal-Compat", description = "Portal 前端兼容 OpenAPI 注解"),
     ),
     info(
         title = "TOPEMS-portal API",

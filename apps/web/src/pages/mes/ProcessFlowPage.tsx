@@ -302,7 +302,7 @@ function ProcessFlowPage() {
         apiAdapter={apiAdapter}
         detailContent={(row: Record<string, unknown>) => <ProcessFlowDetailContent row={row} />}
         detailMaxWidth='lg'
-        headerContent={(rows: any[], total: number) => (
+        headerContent={(rows, total) => (
           <Box
             sx={{
               display: 'grid',
@@ -336,7 +336,7 @@ function ProcessFlowPage() {
                 variant='h5'
                 sx={{ fontWeight: 700 }}
               >
-                {rows.filter((r: any) => r.status === 'active').length}
+                {rows.filter((r) => r.status === 'active').length}
               </Typography>
             </Box>
             <Box sx={{ p: 2, bgcolor: 'warning.light', borderRadius: 3 }}>
@@ -350,7 +350,7 @@ function ProcessFlowPage() {
                 variant='h5'
                 sx={{ fontWeight: 700 }}
               >
-                {rows.filter((r: any) => r.status === 'draft').length}
+                {rows.filter((r) => r.status === 'draft').length}
               </Typography>
             </Box>
             <Box sx={{ p: 2, bgcolor: 'grey.100', borderRadius: 3 }}>
@@ -364,7 +364,7 @@ function ProcessFlowPage() {
                 variant='h5'
                 sx={{ fontWeight: 700 }}
               >
-                {rows.filter((r: any) => r.status === 'inactive').length}
+                {rows.filter((r) => r.status === 'inactive').length}
               </Typography>
             </Box>
           </Box>

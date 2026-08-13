@@ -406,7 +406,7 @@ impl EnhancedLineage {
                 id: uuid::Uuid::new_v4().to_string(),
                 source_id: nodes
                     .last()
-                    .expect("nodes is initialized with root_node")
+                    .unwrap()
                     .id
                     .clone(),
                 target_id: node.id.clone(),

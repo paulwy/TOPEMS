@@ -93,8 +93,10 @@ pub fn feedback_rating_stats(ratings: &[i32]) -> (f64, i32, i32, usize) {
     let count = ratings.len();
     let sum: i64 = ratings.iter().map(|&r| r as i64).sum();
     let avg = sum as f64 / count as f64;
-    let min = *ratings.iter().min().unwrap();
-    let max = *ratings.iter().max().unwrap();
+    let (min, max) = match (ratings.iter().min(), ratings.iter().max()) {
+        (Some(&mn), Some(&mx)) => (mn, mx),
+        _ => (0, 0),
+    };
     (avg, min, max, count)
 }
 

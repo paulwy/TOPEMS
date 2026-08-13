@@ -149,12 +149,6 @@ pub async fn get_user_permissions(
     }
 }
 
-#[allow(dead_code)]
-#[derive(Debug, Clone, Deserialize)]
-struct UpdateUserPermissionsRequest {
-    role_ids: Vec<String>,
-}
-
 pub async fn update_user_permissions(
     State(state): State<AppState>,
     Path(user_id): Path<String>,

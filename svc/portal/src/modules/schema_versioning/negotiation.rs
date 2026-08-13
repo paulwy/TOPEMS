@@ -252,14 +252,14 @@ pub fn negotiate_version(
 ) -> NegotiatedVersion {
     version_negotiator()
         .lock()
-        .unwrap()
+        .unwrap_or_else(|e| e.into_inner())
         .negotiate(requested_version, strategy)
 }
 
 pub fn get_supported_versions() -> Vec<SupportedVersion> {
     version_negotiator()
         .lock()
-        .unwrap()
+        .unwrap_or_else(|e| e.into_inner())
         .get_supported_versions()
 }
 
@@ -269,21 +269,21 @@ pub fn deprecate_version(
 ) -> Option<SupportedVersion> {
     version_negotiator()
         .lock()
-        .unwrap()
+        .unwrap_or_else(|e| e.into_inner())
         .deprecate_version(version, sunset_at)
 }
 
 pub fn get_version_status(version: &str) -> VersionStatus {
     version_negotiator()
         .lock()
-        .unwrap()
+        .unwrap_or_else(|e| e.into_inner())
         .get_version_status(version)
 }
 
 pub fn set_default_version(version: String) {
     version_negotiator()
         .lock()
-        .unwrap()
+        .unwrap_or_else(|e| e.into_inner())
         .set_default_version(version);
 }
 
@@ -297,14 +297,14 @@ pub fn set_negotiation_strategy(strategy: VersionNegotiationStrategy) {
 pub fn add_supported_version(version: String, status: VersionStatus) -> SupportedVersion {
     version_negotiator()
         .lock()
-        .unwrap()
+        .unwrap_or_else(|e| e.into_inner())
         .add_version(version, status)
 }
 
 pub(crate) fn get_negotiation_log(limit: usize) -> Vec<NegotiationLogEntry> {
     version_negotiator()
         .lock()
-        .unwrap()
+        .unwrap_or_else(|e| e.into_inner())
         .get_negotiation_log(limit)
 }
 

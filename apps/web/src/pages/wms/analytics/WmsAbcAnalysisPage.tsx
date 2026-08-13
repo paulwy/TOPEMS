@@ -77,7 +77,9 @@ export default function WmsAbcAnalysisPage() {
                 cy='50%'
                 outerRadius={110}
                 innerRadius={50}
-                label={(d: any) => `${d?.category} 类 ${((d?.percent ?? 0) * 100).toFixed(0)}%`}
+                label={(d: { category?: string; percent?: number } | undefined) =>
+                  `${d?.category} 类 ${((d?.percent ?? 0) * 100).toFixed(0)}%`
+                }
               >
                 {abc.map((entry, i) => (
                   <Cell
@@ -87,7 +89,7 @@ export default function WmsAbcAnalysisPage() {
                 ))}
               </Pie>
               <Tooltip
-                formatter={(v: any) => [
+                formatter={(v: unknown) => [
                   `¥${Number(v).toLocaleString()}（${
                     totalAmount ? ((Number(v) / totalAmount) * 100).toFixed(1) : 0
                   }%）`,
@@ -113,7 +115,7 @@ export default function WmsAbcAnalysisPage() {
               />
               <YAxis fontSize={11} />
               <Tooltip
-                formatter={(v: any) => [
+                formatter={(v: unknown) => [
                   `${v}（${totalCount ? ((Number(v) / totalCount) * 100).toFixed(1) : 0}%）`,
                   'SKU 数',
                 ]}

@@ -180,8 +180,8 @@ export const WorkflowInstancesPage: React.FC = () => {
     },
   ];
 
-  const renderHeaderContent = (rows: any[], _total: number) => {
-    const instances = rows as WorkflowInstance[];
+  const renderHeaderContent = (rows: Record<string, unknown>[], _total: number) => {
+    const instances = rows as unknown as WorkflowInstance[];
     const runningCount = instances.filter((i) => i.status === 'running').length;
     const completedCount = instances.filter((i) => i.status === 'completed').length;
     const todayCount = instances.filter((i) => {
@@ -199,9 +199,9 @@ export const WorkflowInstancesPage: React.FC = () => {
     let totalDuration = 0;
     let completedWithDuration = 0;
     instances.forEach((i) => {
-      if (i.status === 'completed' && i.started_at && (i as any).completed_at) {
+      if (i.status === 'completed' && i.started_at && (i as WorkflowInstance & { completed_at?: string }).completed_at) {
         const duration =
-          (new Date((i as any).completed_at).getTime() - new Date(i.started_at!).getTime()) / 1000;
+          (new Date((i as WorkflowInstance & { completed_at?: string }).completed_at!).getTime() - new Date(i.started_at!).getTime()) / 1000;
         totalDuration += duration;
         completedWithDuration++;
       }

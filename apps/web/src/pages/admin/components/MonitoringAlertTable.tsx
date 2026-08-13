@@ -3,6 +3,7 @@
  */
 import React, { useMemo } from 'react';
 import { Box, Typography, Chip } from '@mui/material';
+import type { ChipProps } from '@mui/material';
 import { Clock, AlertCircle, AlertTriangle, Bell } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import ListPageTemplate, {
@@ -152,7 +153,7 @@ export const MonitoringAlertTable: React.FC<MonitoringAlertTableProps> = ({
             <Chip
               label={getLevelLabel(row.level)}
               size='small'
-              color={getLevelColor(row.level) as any}
+              color={getLevelColor(row.level) as ChipProps['color']}
             />
           </Box>
         ),
@@ -209,7 +210,7 @@ export const MonitoringAlertTable: React.FC<MonitoringAlertTableProps> = ({
           <Chip
             label={getStatusLabel(row.status)}
             size='small'
-            color={getStatusColor(row.status) as any}
+            color={getStatusColor(row.status) as ChipProps['color']}
           />
         ),
       },

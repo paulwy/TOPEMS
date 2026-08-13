@@ -231,7 +231,7 @@ pub async fn suggest_for_form(
     }
     let cfg = registry
         .get(&form_type)
-        .expect("form config should exist after contains() check");
+        .unwrap();
     if !cfg.supports("suggest") {
         return Json(api_error(
             400,
@@ -287,7 +287,7 @@ pub async fn enhance_for_form(
     }
     let cfg = registry
         .get(&form_type)
-        .expect("form config should exist after contains() check");
+        .unwrap();
     if !cfg.supports("enhance") {
         return Json(api_error(
             400,

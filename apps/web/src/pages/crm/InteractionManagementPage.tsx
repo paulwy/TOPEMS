@@ -4,15 +4,15 @@ import type { CrudApiAdapter } from '@/components/templates/CrudPage';
 import { interactionSchema } from '@/schemas/crm';
 import { interactionApi } from '@/api/crm';
 
-const apiAdapter: CrudApiAdapter<any> = {
+const apiAdapter: CrudApiAdapter<Record<string, unknown>> = {
   list: async (params) => {
-    const response = await interactionApi.list(params as any);
+    const response = await interactionApi.list(params);
     if (!response.success) {
       throw new Error(response.message || 'Failed to load interactions');
     }
-    const data = response.data as any;
-    const items = data?.items || data || [];
-    const total = data?.total || items.length;
+    const raw = response.data as unknown;
+    const items: Record<string, unknown>[] = Array.isArray(raw) ? raw : (raw as { items?: Record<string, unknown>[] }).items ?? [];
+    const total: number = Array.isArray(raw) ? items.length : ((raw as { total?: number }).total ?? items.length);
     return { data: items, total };
   },
   create: async () => {

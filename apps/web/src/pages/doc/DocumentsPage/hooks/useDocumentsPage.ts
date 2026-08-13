@@ -277,9 +277,9 @@ export const useDocumentsPage = () => {
 
   const toggleStar = useCallback(
     (id: string) => {
-      queryClient.setQueryData(['doc-files', selectedFolderId], (old: any) => {
+      queryClient.setQueryData(['doc-files', selectedFolderId], (old: FileItem[] | undefined) => {
         if (!old) return old;
-        return old.map((f: any) => (f.id === id ? { ...f, starred: !f.starred } : f));
+        return old.map((f: FileItem) => (f.id === id ? { ...f, starred: !f.starred } : f));
       });
     },
     [queryClient, selectedFolderId]

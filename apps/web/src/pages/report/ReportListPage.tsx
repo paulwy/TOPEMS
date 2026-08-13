@@ -166,7 +166,7 @@ const ReportListPage: React.FC = () => {
                     </Typography>
                   </div>
                   <Icon
-                    color={card.color as any}
+                    color={card.color as React.CSSProperties['color']}
                     size={32}
                   />
                 </Box>

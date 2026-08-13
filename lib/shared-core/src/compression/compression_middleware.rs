@@ -134,13 +134,10 @@ impl CompressionMiddleware {
             .and_then(|h| h.to_str().ok())
             .unwrap_or_default();
 
-        let selected_algorithm = self.select_algorithm(accept_encoding);
-
-        if selected_algorithm.is_none() {
-            return next.run(req).await;
-        }
-
-        let algorithm = selected_algorithm.expect("algorithm should be selected");
+        let algorithm = match self.select_algorithm(accept_encoding) {
+            Some(alg) => alg,
+            None => return next.run(req).await,
+        };
         let response = next.run(req).await;
 
         if !self.should_compress(&response) {

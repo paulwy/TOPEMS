@@ -1119,21 +1119,21 @@ impl EnterpriseGovernance {
     fn check_quota(&self, entity_type: &str, entity_id: &str) -> Option<(bool, u64)> {
         self.quota_tracker
             .lock()
-            .unwrap()
+            .unwrap_or_else(|e| e.into_inner())
             .check_quota(entity_type, entity_id)
     }
 
     fn record_quota_usage(&self, entity_type: &str, entity_id: &str) -> u64 {
         self.quota_tracker
             .lock()
-            .unwrap()
+            .unwrap_or_else(|e| e.into_inner())
             .record_usage(entity_type, entity_id)
     }
 
     fn get_quota(&self, entity_type: &str, entity_id: &str) -> Option<QueryQuotaGql> {
         self.quota_tracker
             .lock()
-            .unwrap()
+            .unwrap_or_else(|e| e.into_inner())
             .get_quota(entity_type, entity_id)
     }
 
@@ -1154,7 +1154,7 @@ impl EnterpriseGovernance {
     fn get_approval_request(&self, request_id: &str) -> Option<QueryApprovalRequestGql> {
         self.approval_workflow
             .lock()
-            .unwrap()
+            .unwrap_or_else(|e| e.into_inner())
             .get_request(request_id)
     }
 
@@ -1168,7 +1168,7 @@ impl EnterpriseGovernance {
     fn is_query_approved(&self, query_hash: &str, user_id: &str) -> bool {
         self.approval_workflow
             .lock()
-            .unwrap()
+            .unwrap_or_else(|e| e.into_inner())
             .is_approved(query_hash, user_id)
     }
 
@@ -1196,14 +1196,14 @@ impl EnterpriseGovernance {
     fn set_field_control(&self, input: FieldAccessControlInput) -> FieldAccessControlGql {
         self.governance_engine
             .lock()
-            .unwrap()
+            .unwrap_or_else(|e| e.into_inner())
             .set_field_control(input)
     }
 
     fn get_field_control(&self, field_path: &str) -> Option<FieldAccessControlGql> {
         self.governance_engine
             .lock()
-            .unwrap()
+            .unwrap_or_else(|e| e.into_inner())
             .get_field_control(field_path)
     }
 
@@ -1258,7 +1258,7 @@ pub fn get_persisted_query(query_hash: &str) -> Option<PersistedQueryGql> {
 pub fn get_persisted_query_text(query_hash: &str) -> Option<String> {
     persisted_query_manager()
         .lock()
-        .unwrap()
+        .unwrap_or_else(|e| e.into_inner())
         .get_by_hash(query_hash)
 }
 
@@ -1269,7 +1269,7 @@ pub fn list_persisted_queries(
 ) -> PersistedQueryListGql {
     persisted_query_manager()
         .lock()
-        .unwrap()
+        .unwrap_or_else(|e| e.into_inner())
         .list(page, page_size, status)
 }
 
@@ -1279,7 +1279,7 @@ pub fn update_persisted_query_status(
 ) -> Option<PersistedQueryGql> {
     persisted_query_manager()
         .lock()
-        .unwrap()
+        .unwrap_or_else(|e| e.into_inner())
         .update_status(query_hash, status)
 }
 
@@ -1293,14 +1293,14 @@ pub fn delete_persisted_query(query_hash: &str) -> bool {
 pub fn add_persisted_query_tag(query_hash: &str, tag: &str) -> Option<PersistedQueryGql> {
     persisted_query_manager()
         .lock()
-        .unwrap()
+        .unwrap_or_else(|e| e.into_inner())
         .add_tag(query_hash, tag)
 }
 
 pub fn remove_persisted_query_tag(query_hash: &str, tag: &str) -> Option<PersistedQueryGql> {
     persisted_query_manager()
         .lock()
-        .unwrap()
+        .unwrap_or_else(|e| e.into_inner())
         .remove_tag(query_hash, tag)
 }
 
@@ -1314,7 +1314,7 @@ pub fn search_persisted_queries_by_tag(tag: &str) -> Vec<PersistedQueryGql> {
 pub fn record_persisted_query_usage(query_hash: &str, latency_ms: u64) {
     persisted_query_manager()
         .lock()
-        .unwrap()
+        .unwrap_or_else(|e| e.into_inner())
         .record_usage(query_hash, latency_ms);
 }
 

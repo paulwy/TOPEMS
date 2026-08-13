@@ -2,7 +2,7 @@ import React, { useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Target, TrendingUp, Users, Clock, DollarSign, Package } from 'lucide-react';
 import { DashboardTemplate } from '@/components/templates';
-import type { StatCardConfig, ChartConfig } from '@/components/templates/DashboardTemplate';
+import type { StatCardConfig, ChartConfig, ChartCard, RecentItem, QuickAction } from '@/components/templates/DashboardTemplate';
 import { PageContainer } from '@/components/common';
 import { useTranslation } from 'react-i18next';
 import { useCrmDashboardSchema } from '@/schemas/crm';
@@ -231,7 +231,7 @@ const CrmDashboardPage: React.FC = () => {
       <DashboardTemplate
         title=''
         statCards={statCards}
-        charts={charts as any}
+        charts={charts as unknown as ChartCard[]}
         chartCols={3}
         loading={loading}
       />

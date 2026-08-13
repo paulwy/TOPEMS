@@ -1014,11 +1014,10 @@ async fn start_supplier_approval(
     .fetch_one(&state.db)
     .await;
 
-    if supplier.is_err() {
-        return Json(ApiResponse::<serde_json::Value>::error(404, "供应商不存在"));
-    }
-
-    let supplier_ref = supplier.as_ref().expect("supplier checked above");
+    let supplier_ref = match supplier.as_ref() {
+        Ok(s) => s,
+        Err(_) => return Json(ApiResponse::<serde_json::Value>::error(404, "供应商不存在")),
+    };
     let old_status = supplier_ref.status.clone();
     let supplier_no = supplier_ref.supplier_no.clone();
     let supplier_name = supplier_ref.name.clone();
@@ -1145,11 +1144,10 @@ async fn approve_supplier(
     .fetch_one(&state.db)
     .await;
 
-    if supplier.is_err() {
-        return Json(ApiResponse::<serde_json::Value>::error(404, "供应商不存在"));
-    }
-
-    let supplier_ref = supplier.as_ref().expect("supplier checked above");
+    let supplier_ref = match supplier.as_ref() {
+        Ok(s) => s,
+        Err(_) => return Json(ApiResponse::<serde_json::Value>::error(404, "供应商不存在")),
+    };
     let old_status = supplier_ref.status.clone();
     let supplier_no = supplier_ref.supplier_no.clone();
     let supplier_name = supplier_ref.name.clone();
@@ -1248,11 +1246,10 @@ async fn reject_supplier(
     .fetch_one(&state.db)
     .await;
 
-    if supplier.is_err() {
-        return Json(ApiResponse::<serde_json::Value>::error(404, "供应商不存在"));
-    }
-
-    let supplier_ref = supplier.as_ref().expect("supplier checked above");
+    let supplier_ref = match supplier.as_ref() {
+        Ok(s) => s,
+        Err(_) => return Json(ApiResponse::<serde_json::Value>::error(404, "供应商不存在")),
+    };
     let old_status = supplier_ref.status.clone();
     let supplier_no = supplier_ref.supplier_no.clone();
     let supplier_name = supplier_ref.name.clone();

@@ -35,6 +35,7 @@ use tokio::sync::mpsc;
 use tokio_stream::wrappers::ReceiverStream;
 
 use crate::modules::query_governance::*;
+use topems_shared_observability::telemetry::TracedRequestExt;
 use crate::modules::rate_limiting::*;
 use crate::modules::schema_versioning::*;
 use crate::shared::AppState;
@@ -136,9 +137,15 @@ impl CustomerEntityGql {
             "http://localhost:8010/api/erp/orders?customer_id={}",
             self.id
         );
-        match reqwest::get(&url).await {
+        match shared_http_client().get(&url).with_trace().send().await {
             Ok(resp) if resp.status().is_success() => {
-                let json: serde_json::Value = resp.json().await.unwrap_or_default();
+                let json: serde_json::Value = match resp.json().await {
+                    Ok(j) => j,
+                    Err(e) => {
+                        tracing::warn!("Failed to parse ERP orders response JSON: {}", e);
+                        serde_json::Value::Null
+                    }
+                };
                 let items = json
                     .get("data")
                     .and_then(|d| d.get("items"))
@@ -193,9 +200,15 @@ impl CustomerEntityGql {
             "http://localhost:8029/api/crm/contacts?customer_id={}",
             self.id
         );
-        match reqwest::get(&url).await {
+        match shared_http_client().get(&url).with_trace().send().await {
             Ok(resp) if resp.status().is_success() => {
-                let json: serde_json::Value = resp.json().await.unwrap_or_default();
+                let json: serde_json::Value = match resp.json().await {
+                    Ok(j) => j,
+                    Err(e) => {
+                        tracing::warn!("Failed to parse CRM contacts response JSON: {}", e);
+                        serde_json::Value::Null
+                    }
+                };
                 let items = json
                     .get("data")
                     .and_then(|d| d.get("items"))
@@ -277,9 +290,15 @@ impl EmployeeEntityGql {
             "http://localhost:8020/api/hrm/departments?name={}",
             self.department
         );
-        match reqwest::get(&url).await {
+        match shared_http_client().get(&url).with_trace().send().await {
             Ok(resp) if resp.status().is_success() => {
-                let json: serde_json::Value = resp.json().await.unwrap_or_default();
+                let json: serde_json::Value = match resp.json().await {
+                    Ok(j) => j,
+                    Err(e) => {
+                        tracing::warn!("Failed to parse HRM departments response JSON: {}", e);
+                        serde_json::Value::Null
+                    }
+                };
                 let item = json
                     .get("data")
                     .and_then(|d| d.get("items"))
@@ -339,9 +358,15 @@ impl VoucherEntityGql {
             "http://localhost:8011/api/finance/accounts?voucher_id={}",
             self.id
         );
-        match reqwest::get(&url).await {
+        match shared_http_client().get(&url).with_trace().send().await {
             Ok(resp) if resp.status().is_success() => {
-                let json: serde_json::Value = resp.json().await.unwrap_or_default();
+                let json: serde_json::Value = match resp.json().await {
+                    Ok(j) => j,
+                    Err(e) => {
+                        tracing::warn!("Failed to parse finance accounts response JSON: {}", e);
+                        serde_json::Value::Null
+                    }
+                };
                 let item = json
                     .get("data")
                     .and_then(|d| d.get("items"))
@@ -741,7 +766,7 @@ async fn batch_resolve_entities(
             client
                 .post(&url)
                 .json(&serde_json::json!({ "ids": &uncached_ids }))
-                .send(),
+                .with_trace().send(),
         )
         .await
         {
@@ -789,7 +814,7 @@ async fn batch_resolve_entities(
                 _ => format!("/api/{}/{}/{}", service, entity_type, id),
             };
             let url = format!("{}{}", base_url, path);
-            let data = match reqwest::get(&url).await {
+            let data = match shared_http_client().get(&url).with_trace().send().await {
                 Ok(resp) if resp.status().is_success() => resp
                     .json::<serde_json::Value>()
                     .await
@@ -926,7 +951,7 @@ impl EventBus {
     ) -> broadcast::Receiver<serde_json::Value> {
         self.channels
             .get(&channel)
-            .expect("事件频道必须存在")
+            .unwrap()
             .subscribe()
     }
 }
@@ -1316,9 +1341,15 @@ impl QueryRoot {
 
         let futures = modules.iter().map(|(name, base, path)| async move {
             let url = format!("{}{}", base, path);
-            match reqwest::get(&url).await {
+            match shared_http_client().get(&url).with_trace().send().await {
                 Ok(resp) if resp.status().is_success() => {
-                    let json: serde_json::Value = resp.json().await.unwrap_or_default();
+                    let json: serde_json::Value = match resp.json().await {
+                        Ok(j) => j,
+                        Err(e) => {
+                            tracing::warn!("Failed to parse {} stats response JSON: {}", name, e);
+                            serde_json::Value::Null
+                        }
+                    };
                     let total = json
                         .get("data")
                         .and_then(|d| d.get("total"))
@@ -1414,9 +1445,18 @@ impl QueryRoot {
         };
 
         let url = format!("{}{}", base_url, path);
-        let data = match reqwest::get(&url).await {
+        let data = match shared_http_client().get(&url).with_trace().send().await {
             Ok(resp) if resp.status().is_success() => {
-                resp.json::<serde_json::Value>().await.unwrap_or_default()
+                match resp.json::<serde_json::Value>().await {
+                    Ok(j) => j,
+                    Err(e) => {
+                        tracing::warn!(
+                            "Failed to parse federation entity JSON for {}/{}: {}",
+                            service, id, e
+                        );
+                        serde_json::Value::Null
+                    }
+                }
             }
             _ => {
                 serde_json::json!({"error": "entity not found", "service": service, "entity_type": entity_type, "id": id})
@@ -1574,7 +1614,7 @@ impl QueryRoot {
             client
                 .post(&url)
                 .json(&serde_json::json!({ "ids": ids }))
-                .send(),
+                .with_trace().send(),
         )
         .await
         {
@@ -1651,7 +1691,7 @@ impl QueryRoot {
                             _ => format!("/api/{}/{}/{}", service, entity_type, id),
                         };
                         let single_url = format!("{}{}", base_url, single_path);
-                        let data = match reqwest::get(&single_url).await {
+                        let data = match shared_http_client().get(&single_url).with_trace().send().await {
                             Ok(resp) if resp.status().is_success() => {
                                 resp.json::<serde_json::Value>().await.unwrap_or(serde_json::json!({"error": "parse error"}))
                             }
@@ -1677,9 +1717,15 @@ impl QueryRoot {
         id: String,
     ) -> async_graphql::Result<Option<CustomerEntityGql>> {
         let url = format!("http://localhost:8010/api/erp/customers/{}", id);
-        match reqwest::get(&url).await {
+        match shared_http_client().get(&url).with_trace().send().await {
             Ok(resp) if resp.status().is_success() => {
-                let json: serde_json::Value = resp.json().await.unwrap_or_default();
+                let json: serde_json::Value = match resp.json().await {
+                    Ok(j) => j,
+                    Err(e) => {
+                        tracing::warn!("Failed to parse customer_entity {} JSON: {}", id, e);
+                        serde_json::Value::Null
+                    }
+                };
                 let data = json.get("data").unwrap_or(&json);
                 Ok(Some(CustomerEntityGql {
                     id: data
@@ -1727,9 +1773,15 @@ impl QueryRoot {
         id: String,
     ) -> async_graphql::Result<Option<EmployeeEntityGql>> {
         let url = format!("http://localhost:8020/api/hrm/employees/{}", id);
-        match reqwest::get(&url).await {
+        match shared_http_client().get(&url).with_trace().send().await {
             Ok(resp) if resp.status().is_success() => {
-                let json: serde_json::Value = resp.json().await.unwrap_or_default();
+                let json: serde_json::Value = match resp.json().await {
+                    Ok(j) => j,
+                    Err(e) => {
+                        tracing::warn!("Failed to parse employee_entity {} JSON: {}", id, e);
+                        serde_json::Value::Null
+                    }
+                };
                 let data = json.get("data").unwrap_or(&json);
                 Ok(Some(EmployeeEntityGql {
                     id: data
@@ -1779,9 +1831,15 @@ impl QueryRoot {
         id: String,
     ) -> async_graphql::Result<Option<VoucherEntityGql>> {
         let url = format!("http://localhost:8011/api/finance/vouchers/{}", id);
-        match reqwest::get(&url).await {
+        match shared_http_client().get(&url).with_trace().send().await {
             Ok(resp) if resp.status().is_success() => {
-                let json: serde_json::Value = resp.json().await.unwrap_or_default();
+                let json: serde_json::Value = match resp.json().await {
+                    Ok(j) => j,
+                    Err(e) => {
+                        tracing::warn!("Failed to parse voucher_entity {} JSON: {}", id, e);
+                        serde_json::Value::Null
+                    }
+                };
                 let data = json.get("data").unwrap_or(&json);
                 Ok(Some(VoucherEntityGql {
                     id: data
@@ -2853,7 +2911,7 @@ impl MutationRoot {
 
         match tokio::time::timeout(
             std::time::Duration::from_secs(10),
-            client.post(&url).json(&data).send(),
+            client.post(&url).json(&data).with_trace().send(),
         )
         .await
         {
@@ -2913,7 +2971,7 @@ impl MutationRoot {
 
         match tokio::time::timeout(
             std::time::Duration::from_secs(10),
-            client.put(&url).json(&data).send(),
+            client.put(&url).json(&data).with_trace().send(),
         )
         .await
         {
@@ -2972,7 +3030,7 @@ impl MutationRoot {
 
         match tokio::time::timeout(
             std::time::Duration::from_secs(10),
-            client.delete(&url).send(),
+            client.delete(&url).with_trace().send(),
         )
         .await
         {
@@ -3650,7 +3708,7 @@ impl MutationRoot {
         );
         let limiter = crate::modules::rate_limiting::rate_limiter()
             .lock()
-            .unwrap();
+            .unwrap_or_else(|e| e.into_inner());
         limiter
             .get_configs()
             .into_iter()
@@ -4728,7 +4786,7 @@ fn shared_http_client() -> &'static reqwest::Client {
 async fn check_service_health(url: &str) -> bool {
     match shared_http_client()
         .get(format!("{}/health", url))
-        .timeout(std::time::Duration::from_secs(2))
+        .with_trace().timeout(std::time::Duration::from_secs(2))
         .send()
         .await
     {
@@ -4942,7 +5000,7 @@ async fn resolve_federated_entity(typename: &str, id: &str) -> serde_json::Value
     };
 
     let url = format!("{}{}", base_url, path);
-    match reqwest::get(&url).await {
+    match shared_http_client().get(&url).with_trace().send().await {
         Ok(resp) if resp.status().is_success() => {
             resp.json::<serde_json::Value>().await.unwrap_or_else(|_| {
                 serde_json::json!({"error": "failed to parse response", "__typename": typename, "id": id})
@@ -7906,7 +7964,7 @@ impl AutoGeneratedResolver {
         let url = format!("{}{}", base_url, path);
         let client = shared_http_client();
 
-        match tokio::time::timeout(std::time::Duration::from_secs(5), client.get(&url).send()).await
+        match tokio::time::timeout(std::time::Duration::from_secs(5), client.get(&url).with_trace().send()).await
         {
             Ok(Ok(resp)) if resp.status().is_success() => {
                 match resp.json::<serde_json::Value>().await {
@@ -7965,7 +8023,7 @@ impl AutoGeneratedResolver {
                     client
                         .post(&url)
                         .json(&serde_json::json!({ "ids": uncached_ids }))
-                        .send(),
+                        .with_trace().send(),
                 )
                 .await
                 {
@@ -8054,7 +8112,7 @@ impl AutoGeneratedResolver {
                 let client = shared_http_client();
                 match tokio::time::timeout(
                     std::time::Duration::from_secs(5),
-                    client.get(&url).send(),
+                    client.get(&url).with_trace().send(),
                 )
                 .await
                 {
@@ -8197,7 +8255,7 @@ fn federation_v2_plan_cache() -> &'static Mutex<HashMap<String, FederationQueryP
 fn get_cached_federation_v2_plan(query_hash: &str) -> Option<FederationQueryPlan> {
     federation_v2_plan_cache()
         .lock()
-        .unwrap()
+        .unwrap_or_else(|e| e.into_inner())
         .get(query_hash)
         .cloned()
 }
@@ -8205,7 +8263,7 @@ fn get_cached_federation_v2_plan(query_hash: &str) -> Option<FederationQueryPlan
 fn cache_federation_v2_plan(query_hash: &str, plan: &FederationQueryPlan) {
     federation_v2_plan_cache()
         .lock()
-        .unwrap()
+        .unwrap_or_else(|e| e.into_inner())
         .insert(query_hash.to_string(), plan.clone());
 }
 

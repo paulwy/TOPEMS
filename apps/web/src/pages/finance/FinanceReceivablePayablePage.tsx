@@ -84,23 +84,23 @@ export default function FinanceReceivablePayablePage() {
   const isPaid = (status: string) => status === 'posted';
 
   const totalReceivable = receivables.reduce(
-    (sum: number, r: any) => sum + (r.total_amount || 0),
+    (sum: number, r) => sum + (r.total_amount || 0),
     0
   );
   const pendingReceivable = receivables
-    .filter((r: any) => !isPaid(r.status))
-    .reduce((sum: number, r: any) => sum + ((r.total_amount || 0) - (r.received_amount || 0)), 0);
+    .filter((r) => !isPaid(r.status))
+    .reduce((sum: number, r) => sum + ((r.total_amount || 0) - (r.received_amount || 0)), 0);
   const overdueReceivable = receivables
-    .filter((r: any) => isOverdue(r.due_date) && !isPaid(r.status))
-    .reduce((sum: number, r: any) => sum + ((r.total_amount || 0) - (r.received_amount || 0)), 0);
+    .filter((r) => isOverdue(r.due_date) && !isPaid(r.status))
+    .reduce((sum: number, r) => sum + ((r.total_amount || 0) - (r.received_amount || 0)), 0);
 
-  const totalPayable = payables.reduce((sum: number, p: any) => sum + (p.total_amount || 0), 0);
+  const totalPayable = payables.reduce((sum: number, p) => sum + (p.total_amount || 0), 0);
   const pendingPayable = payables
-    .filter((p: any) => !isPaid(p.status))
-    .reduce((sum: number, p: any) => sum + ((p.total_amount || 0) - (p.paid_amount || 0)), 0);
+    .filter((p) => !isPaid(p.status))
+    .reduce((sum: number, p) => sum + ((p.total_amount || 0) - (p.paid_amount || 0)), 0);
   const overduePayable = payables
-    .filter((p: any) => isOverdue(p.due_date) && !isPaid(p.status))
-    .reduce((sum: number, p: any) => sum + ((p.total_amount || 0) - (p.paid_amount || 0)), 0);
+    .filter((p) => isOverdue(p.due_date) && !isPaid(p.status))
+    .reduce((sum: number, p) => sum + ((p.total_amount || 0) - (p.paid_amount || 0)), 0);
 
   const statCards = useMemo(
     () => [

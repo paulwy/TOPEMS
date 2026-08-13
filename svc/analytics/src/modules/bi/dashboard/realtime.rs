@@ -48,7 +48,7 @@ pub async fn query_dashboard_realtime_data(
         ));
     }
 
-    let dashboard = dashboard.expect("Dashboard should exist after existence check");
+    let dashboard = dashboard.unwrap();
 
     let widgets = match sqlx::query!(
         r#"

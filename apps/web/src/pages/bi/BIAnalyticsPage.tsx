@@ -267,7 +267,7 @@ const BIAnalyticsPage = () => {
   const navigate = useNavigate();
 
   const overviewQuery = useQuery<{
-    overview: any;
+    overview: Record<string, unknown>;
     modulesData: Record<string, unknown>;
   }>({
     queryKey: QUERY_KEYS.AD_HOC.BI_ANALYTICS_OVERVIEW_BASE,
@@ -462,7 +462,7 @@ const BIAnalyticsPage = () => {
     {
       id: 'total-projects',
       title: t('bi.bi_analytics_page.text_3ea3ec'),
-      value: overview?.total_projects || 120,
+      value: (overview?.total_projects as number) ?? 120,
       change: 12.5,
       changeLabel: t('bi.bi_analytics_page.last_month'),
       icon: <BarChart3 size={24} />,
@@ -472,7 +472,7 @@ const BIAnalyticsPage = () => {
     {
       id: 'total-samples',
       title: t('bi.bi_analytics_page.text_14078c'),
-      value: overview?.total_samples || 2450,
+      value: (overview?.total_samples as number) ?? 2450,
       change: 8.3,
       changeLabel: t('bi.bi_analytics_page.last_month'),
       icon: <Database size={24} />,
@@ -482,7 +482,7 @@ const BIAnalyticsPage = () => {
     {
       id: 'pass-rate',
       title: t('bi.bi_analytics_page.pass_rate'),
-      value: overview?.pass_rate || '97.8',
+      value: (overview?.pass_rate as string | number) ?? '97.8',
       unit: '%',
       change: 0.5,
       changeLabel: t('bi.bi_analytics_page.last_month'),
@@ -492,7 +492,7 @@ const BIAnalyticsPage = () => {
     {
       id: 'active-risks',
       title: t('bi.bi_analytics_page.text_b77979'),
-      value: overview?.active_risks || 15,
+      value: (overview?.active_risks as number) ?? 15,
       change: -3.2,
       changeLabel: t('bi.bi_analytics_page.last_month'),
       icon: <AlertCircle size={24} />,
@@ -502,7 +502,7 @@ const BIAnalyticsPage = () => {
   ];
 
   // 构建图表数据
-  const chartData = overview?.chartData || fallbackChartData;
+  const chartData = (overview?.chartData as Array<{ name: string; value: number }> | undefined) ?? fallbackChartData;
 
   // 构建图表卡片
   const chartCards: ChartCardType[] = [

@@ -15,7 +15,7 @@ import {
 } from '@mui/material';
 
 import { limsApi } from '@/api/lims';
-import type { Instrument, MaintenanceRecord } from '@/api/lims';
+import type { Instrument, MaintenanceRecord, CreateMaintenanceRecordRequest } from '@/api/lims';
 import CrudPage from '@/components/templates/CrudPage';
 import type { CrudApiAdapter } from '@/components/templates/CrudPage';
 import { PageContainer } from '@/components/common';
@@ -50,7 +50,9 @@ const LimsInstrumentMaintenancePage: React.FC = () => {
         if (!id) return { data: [], total: 0 };
         const res = await limsApi.listMaintenanceByInstrument(id);
         if (res.success && res.data) {
-          const data = Array.isArray(res.data) ? res.data : (res.data as any).items || [];
+          const data = Array.isArray(res.data)
+            ? res.data
+            : (res.data as { items?: MaintenanceRecord[] }).items || [];
           return { data, total: data.length };
         }
         return { data: [], total: 0 };
@@ -60,14 +62,17 @@ const LimsInstrumentMaintenancePage: React.FC = () => {
         const res = await limsApi.createMaintenance({
           ...data,
           instrument_id: id,
-        } as any);
+        } as unknown as CreateMaintenanceRecordRequest);
         if (!res.success || !res.data) {
           throw new Error(res.message || '创建失败');
         }
         return res.data as MaintenanceRecord;
       },
       update: async (recordId, data) => {
-        const res = await limsApi.updateMaintenance(recordId, data as any);
+        const res = await limsApi.updateMaintenance(
+          recordId,
+          data as unknown as Partial<CreateMaintenanceRecordRequest>,
+        );
         if (!res.success || !res.data) {
           throw new Error(res.message || '更新失败');
         }

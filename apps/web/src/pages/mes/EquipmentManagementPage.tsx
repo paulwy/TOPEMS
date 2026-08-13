@@ -104,7 +104,7 @@ export default function EquipmentManagementPage() {
       });
       setShowMaintenanceDialog(false);
       resetMaintenanceForm();
-    } catch {}
+    } catch (e) { console.error("[MES] Failed to submit equipment maintenance update", e); }
   };
 
   const resetMaintenanceForm = () => {

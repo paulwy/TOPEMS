@@ -39,8 +39,10 @@ pub fn rating_summary(ratings: &[u32]) -> (f64, u32, u32, usize) {
     } else {
         (weighted_sum as f64) / (weight_total as f64)
     };
-    let min = *ratings.iter().min().unwrap();
-    let max = *ratings.iter().max().unwrap();
+    let (min, max) = match (ratings.iter().min(), ratings.iter().max()) {
+        (Some(&mn), Some(&mx)) => (mn, mx),
+        _ => (0, 0),
+    };
     (avg, min, max, ratings.len())
 }
 

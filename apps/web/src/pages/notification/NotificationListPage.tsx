@@ -12,6 +12,7 @@ import {
   bulkMarkAsRead,
   bulkDeleteNotifications,
   type Notification,
+  type NotificationTypeEnum,
 } from '@/api/notification';
 import { NOTIFICATION_PATHS } from '@/modules/notification/config';
 import { useNotificationStore } from '@/store';
@@ -165,7 +166,7 @@ export const NotificationListPage: React.FC = () => {
       const response = await getNotifications(
         1,
         100,
-        typeFilter && typeFilter !== 'all' ? (typeFilter as any) : undefined
+        typeFilter && typeFilter !== 'all' ? (typeFilter as NotificationTypeEnum) : undefined
       );
 
       let notifications: Notification[] = [];
@@ -182,7 +183,7 @@ export const NotificationListPage: React.FC = () => {
             notifications = notifications.filter((n) => n.is_read);
             break;
           case 'important':
-            notifications = notifications.filter((n) => (n as any).important);
+            notifications = notifications.filter((n) => (n as Notification & { important?: boolean }).important);
             break;
         }
 
@@ -195,7 +196,7 @@ export const NotificationListPage: React.FC = () => {
 
         if (importantFilter !== 'all') {
           notifications = notifications.filter((n) =>
-            importantFilter === 'important' ? (n as any).important : !(n as any).important
+            importantFilter === 'important' ? (n as Notification & { important?: boolean }).important : !(n as Notification & { important?: boolean }).important
           );
         }
 
@@ -204,19 +205,19 @@ export const NotificationListPage: React.FC = () => {
         notifications = notifications.slice(start, start + pageSize);
       }
 
-      return { data: notifications as any[], total };
+      return { data: notifications as unknown as Record<string, unknown>[], total };
     },
-    create: async () => ({}) as any,
-    update: async () => ({}) as any,
+    create: async () => ({}) as unknown as Record<string, unknown>,
+    update: async () => ({}) as unknown as Record<string, unknown>,
     delete: async (id: string) => {
       await deleteMutation.mutateAsync(id);
     },
   });
 
   const handleMarkAsRead = useCallback(
-    async (row: any) => {
+    async (row: Record<string, unknown>) => {
       try {
-        await markAsReadMutation.mutateAsync(row.id);
+        await markAsReadMutation.mutateAsync(row.id as string);
         addNotification({
           title: '操作成功',
           message: '通知已标记为已读',
@@ -234,7 +235,7 @@ export const NotificationListPage: React.FC = () => {
   );
 
   const handleMarkAsUnread = useCallback(
-    (_row: any) => {
+    (_row: Record<string, unknown>) => {
       addNotification({
         title: '提示',
         message: '标记为未读功能开发中',
@@ -245,7 +246,7 @@ export const NotificationListPage: React.FC = () => {
   );
 
   const handleToggleImportant = useCallback(
-    (_row: any) => {
+    (_row: Record<string, unknown>) => {
       addNotification({
         title: '提示',
         message: '重要标记功能开发中',

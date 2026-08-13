@@ -29,6 +29,8 @@ const GROUP2_SERVICES = [
   'pdm',
   'scm',
   'wms',
+  'tms',
+  'aps',
   'srm',
   'qms',
   'lims',

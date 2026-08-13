@@ -20,7 +20,6 @@ pub mod project_member;
 pub mod project_milestone;
 pub mod project_phase;
 pub mod project_report;
-pub mod rd_compat;
 pub mod research_cost;
 pub mod rs_plugin;
 pub mod statistics;

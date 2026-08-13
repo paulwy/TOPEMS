@@ -8,6 +8,7 @@ description = "TOPEMS shared auth library - authentication, authorization, middl
 [dependencies]
 topems-shared-core = { path = "../shared-core" }
 topems-shared-event = { path = "../shared-event" }
+topems-shared-observability = { workspace = true }
 
 # 认证依赖
 jsonwebtoken.workspace = true

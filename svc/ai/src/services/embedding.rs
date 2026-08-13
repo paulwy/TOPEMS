@@ -66,7 +66,7 @@ pub async fn load_documents_from_dir(dir: &str) -> Vec<Document> {
         };
 
         docs.push(Document {
-            id: filename.clone(),
+            id: Uuid::new_v4(),
             title,
             filename: filename.clone(),
             file_path: Some(file_path.to_string_lossy().to_string()),
@@ -215,11 +215,11 @@ pub async fn process_document_for_embedding(
         };
 
         for (idx, (chunk_content, embedding)) in chunks.into_iter().zip(embeddings).enumerate() {
-            let chunk_id = Uuid::new_v4().to_string();
+            let chunk_id = Uuid::new_v4();
 
             chunks_storage.push(DocumentChunk {
-                id: chunk_id.clone(),
-                document_id: doc.id.clone(),
+                id: chunk_id,
+                document_id: doc.id,
                 chunk_index: idx as i32,
                 content: chunk_content.clone(),
                 created_at: now.clone(),
@@ -231,7 +231,7 @@ pub async fn process_document_for_embedding(
 
             vectors.push(VectorEmbedding {
                 id: chunk_id,
-                document_id: doc.id.clone(),
+                document_id: doc.id,
                 chunk_index: idx as i32,
                 content: chunk_content,
                 embedding,

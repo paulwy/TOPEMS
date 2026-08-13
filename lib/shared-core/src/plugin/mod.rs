@@ -345,6 +345,32 @@ where
     if !token.is_empty() {
         request = request.header("X-Plugin-Token", &token);
     }
+
+    use opentelemetry::global;
+    use opentelemetry::propagation::Injector;
+    use reqwest::header::{HeaderMap, HeaderName, HeaderValue};
+    struct HeaderMapInjector<'a>(&'a mut HeaderMap);
+    impl<'a> Injector for HeaderMapInjector<'a> {
+        fn set(&mut self, key: &str, value: String) {
+            if let (Ok(name), Ok(val)) = (HeaderName::try_from(key), HeaderValue::try_from(value)) {
+                self.0.insert(name, val);
+            }
+        }
+    }
+    let mut trace_headers = HeaderMap::new();
+    global::get_text_map_propagator(|propagator| {
+        propagator.inject_context(&opentelemetry::Context::current(), &mut HeaderMapInjector(&mut trace_headers));
+    });
+    for (k, v) in trace_headers.iter() {
+        request = request.header(k.clone(), v);
+    }
+    if let Some(tid) = crate::logging::get_current_trace_id() {
+        request = request.header("x-trace-id", &tid);
+    }
+    if let Some(rid) = crate::logging::get_current_request_id() {
+        request = request.header("x-request-id", &rid);
+    }
+
     match request.send().await {
         Ok(response) => {
             if response.status().is_success() {

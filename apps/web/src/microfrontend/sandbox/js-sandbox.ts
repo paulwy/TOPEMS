@@ -159,9 +159,9 @@ export class JavaScriptSandbox {
   /** 是否处于激活状态 */
   private active = false;
   /** window 代理对象 */
-  private proxyWindow: any = null;
+  private proxyWindow: unknown = null;
   /** document 代理对象 */
-  private proxyDocument: any = null;
+  private proxyDocument: unknown = null;
   /** 已检测到的冲突列表 */
   private readonly conflicts: GlobalVarConflict[] = [];
   /** 当前活跃的沙箱（用于全局激活栈） */
@@ -350,19 +350,19 @@ export class JavaScriptSandbox {
   }
 
   /** 获取代理 window（供外部 React 渲染等使用） */
-  getProxyWindow(): any {
+  getProxyWindow(): unknown {
     return this.proxyWindow;
   }
 
   /** 获取代理 document */
-  getProxyDocument(): any {
+  getProxyDocument(): unknown {
     return this.proxyDocument;
   }
 
   // ==================== 内部实现 ====================
 
   /** 创建 window 代理 */
-  private createWindowProxy(): any {
+  private createWindowProxy(): unknown {
     const sandbox = this;
     const target = typeof window !== 'undefined' ? window : {};
     const intercept = this.options.interceptWindow;
@@ -473,7 +473,7 @@ export class JavaScriptSandbox {
   }
 
   /** 创建 document 代理（只读透传 + 写入拦截记录） */
-  private createDocumentProxy(): any {
+  private createDocumentProxy(): unknown {
     const sandbox = this;
     const target = typeof document !== 'undefined' ? document : {};
     return new Proxy(target, {

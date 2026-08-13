@@ -114,10 +114,10 @@ const NotificationArchivePage: React.FC = () => {
         }
       }
 
-      return { data: notifications as any[], total };
+      return { data: notifications, total };
     },
-    create: async () => ({}) as any,
-    update: async () => ({}) as any,
+    create: async () => ({}) as unknown as ArchivedNotification,
+    update: async () => ({}) as unknown as ArchivedNotification,
     delete: async () => {},
   };
 

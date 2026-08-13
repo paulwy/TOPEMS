@@ -788,7 +788,7 @@ export const Colors: Story = {
   render: () => <ColorsComponent />,
 };
 
-export const Typography: Story = {
+export const TypographyDemo: Story = {
   name: '排版系统',
   render: () => <TypographyComponent />,
 };

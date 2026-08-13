@@ -107,7 +107,7 @@ const TrainingPage: React.FC = () => {
       staleTime: CACHE_DURATIONS.MEDIUM,});
   const certificates = (certificatesData as TrainingCertificate[]) || [];
 
-  const statsContent = (_rows: any[], total: number) => (
+  const statsContent = (_rows: Record<string, unknown>[], total: number) => (
     <Box
       sx={{
         display: 'grid',

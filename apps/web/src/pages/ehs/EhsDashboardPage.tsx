@@ -2,7 +2,7 @@ import React, { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { AlertCircle, ClipboardList, CheckCircle, Activity } from 'lucide-react';
 import { DashboardTemplate } from '@/components/templates';
-import type { StatCardConfig, ChartConfig } from '@/components/templates/DashboardTemplate';
+import type { StatCardConfig, ChartConfig, ChartCard, RecentItem, QuickAction } from '@/components/templates/DashboardTemplate';
 import { PageContainer } from '@/components/common';
 import { useTranslation } from 'react-i18next';
 import { useEhsDashboardSchema } from '@/schemas/ehs';
@@ -76,7 +76,7 @@ const EhsDashboardPage: React.FC = () => {
       <DashboardTemplate
         title=''
         statCards={statCards}
-        charts={charts as any}
+        charts={charts as unknown as ChartCard[]}
         loading={loading}
       />
     </PageContainer>

@@ -18,6 +18,7 @@ opentelemetry-semantic-conventions = "0.32"
 tracing-opentelemetry = "0.33"
 tracing.workspace = true
 tracing-subscriber.workspace = true
+tracing-appender = "0.2"
 serde.workspace = true
 serde_json.workspace = true
 chrono.workspace = true

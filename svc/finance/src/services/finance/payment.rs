@@ -19,7 +19,7 @@ impl FinanceService {
         let voucher_date = chrono::DateTime::<Utc>::from_naive_utc_and_offset(
             payment_date
                 .and_hms_opt(0, 0, 0)
-                .expect("Failed to construct datetime from date"),
+                .unwrap(),
             Utc,
         );
         let period = format!("{:04}{:02}", payment_date.year(), payment_date.month());

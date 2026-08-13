@@ -54,10 +54,10 @@ export const DocumentListPage: React.FC = () => {
         }
       }
 
-      return { data: files as any[], total: files.length };
+      return { data: files, total: files.length };
     },
-    create: async () => ({}) as any,
-    update: async () => ({}) as any,
+    create: async () => ({}) as unknown as FileMetadata,
+    update: async () => ({}) as unknown as FileMetadata,
     delete: async (id: string) => {
       await deleteMutation.mutateAsync(id);
     },

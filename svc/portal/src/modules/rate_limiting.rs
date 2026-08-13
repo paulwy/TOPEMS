@@ -991,7 +991,7 @@ pub fn get_rate_limiter_configs() -> Vec<RateLimiterConfigGql> {
 pub fn configure_rate_limiter(service: &str, max_rps: f64, burst: u64, adaptive: bool) {
     rate_limiter()
         .lock()
-        .unwrap()
+        .unwrap_or_else(|e| e.into_inner())
         .configure(service, max_rps, burst, adaptive);
 }
 
@@ -1029,14 +1029,14 @@ pub fn reset_circuit_breaker(service: &str) {
 pub fn circuit_record_failure(service: &str) {
     circuit_breaker_manager()
         .lock()
-        .unwrap()
+        .unwrap_or_else(|e| e.into_inner())
         .record_failure(service);
 }
 
 pub fn get_degradation_configs() -> Vec<ServiceDegradationConfigGql> {
     circuit_breaker_manager()
         .lock()
-        .unwrap()
+        .unwrap_or_else(|e| e.into_inner())
         .get_degradation_configs()
 }
 
@@ -1049,7 +1049,7 @@ pub fn configure_degradation(
 ) {
     circuit_breaker_manager()
         .lock()
-        .unwrap()
+        .unwrap_or_else(|e| e.into_inner())
         .configure_degradation(
             service,
             enabled,
@@ -1062,7 +1062,7 @@ pub fn configure_degradation(
 pub fn get_load_metrics(service: &str) -> Vec<LoadMetricsGql> {
     load_aware_router()
         .lock()
-        .unwrap()
+        .unwrap_or_else(|e| e.into_inner())
         .get_load_metrics(service)
 }
 
@@ -1076,35 +1076,35 @@ pub fn get_all_load_metrics() -> Vec<LoadMetricsGql> {
 pub fn get_instance_healths(service: &str) -> Vec<InstanceHealthGql> {
     load_aware_router()
         .lock()
-        .unwrap()
+        .unwrap_or_else(|e| e.into_inner())
         .get_instance_healths(service)
 }
 
 pub fn get_all_instance_healths() -> Vec<InstanceHealthGql> {
     load_aware_router()
         .lock()
-        .unwrap()
+        .unwrap_or_else(|e| e.into_inner())
         .get_all_instance_healths()
 }
 
 pub fn register_service_instance(service: &str, instance_id: &str, url: &str) {
     load_aware_router()
         .lock()
-        .unwrap()
+        .unwrap_or_else(|e| e.into_inner())
         .register_instance(service, instance_id, url);
 }
 
 pub fn mark_instance_healthy(service: &str, instance_id: &str) {
     load_aware_router()
         .lock()
-        .unwrap()
+        .unwrap_or_else(|e| e.into_inner())
         .mark_healthy(service, instance_id);
 }
 
 pub fn mark_instance_unhealthy(service: &str, instance_id: &str) {
     load_aware_router()
         .lock()
-        .unwrap()
+        .unwrap_or_else(|e| e.into_inner())
         .mark_unhealthy(service, instance_id);
 }
 
@@ -1162,14 +1162,14 @@ pub fn set_routing_rule(
 pub fn delete_routing_rule(rule_id: &str) -> bool {
     load_aware_router()
         .lock()
-        .unwrap()
+        .unwrap_or_else(|e| e.into_inner())
         .delete_routing_rule(rule_id)
 }
 
 pub fn get_routing_rules(service: Option<&str>) -> Vec<RoutingRuleGql> {
     load_aware_router()
         .lock()
-        .unwrap()
+        .unwrap_or_else(|e| e.into_inner())
         .get_routing_rules(service)
 }
 
@@ -2086,7 +2086,7 @@ pub fn register_sub_schema(entry: SubSchemaEntryInput) -> async_graphql::Result<
     let entry_gql = entry.to_entry();
     schema_stitcher()
         .lock()
-        .unwrap()
+        .unwrap_or_else(|e| e.into_inner())
         .upsert_sub_schema(entry_gql.clone());
     Ok(entry_gql)
 }
@@ -2101,7 +2101,7 @@ pub fn remove_sub_schema(service: &str) -> async_graphql::Result<bool> {
 pub fn set_merge_strategy(strategy: TypeMergeStrategy) -> async_graphql::Result<bool> {
     schema_stitcher()
         .lock()
-        .unwrap()
+        .unwrap_or_else(|e| e.into_inner())
         .set_merge_strategy(strategy);
     Ok(true)
 }
@@ -2124,7 +2124,7 @@ pub fn add_field_mapping(rule: FieldMappingRuleInput) -> async_graphql::Result<b
 pub fn remove_field_mapping(source_type: &str, source_field: &str) -> async_graphql::Result<bool> {
     Ok(schema_stitcher()
         .lock()
-        .unwrap()
+        .unwrap_or_else(|e| e.into_inner())
         .remove_field_mapping(source_type, source_field))
 }
 
@@ -2148,7 +2148,7 @@ pub fn cache_set(
         .unwrap_or("default");
     intelligent_cache()
         .lock()
-        .unwrap()
+        .unwrap_or_else(|e| e.into_inner())
         .put(key, bytes, pattern, ttl_sec);
     Ok(intelligent_cache()
         .lock()
@@ -2294,7 +2294,7 @@ impl RateLimitingMutationRoot {
         let entry_gql = entry.to_entry();
         schema_stitcher()
             .lock()
-            .unwrap()
+            .unwrap_or_else(|e| e.into_inner())
             .upsert_sub_schema(entry_gql.clone());
         Ok(entry_gql)
     }
@@ -2307,7 +2307,7 @@ impl RateLimitingMutationRoot {
     ) -> async_graphql::Result<bool> {
         Ok(schema_stitcher()
             .lock()
-            .unwrap()
+            .unwrap_or_else(|e| e.into_inner())
             .remove_sub_schema(&service))
     }
 
@@ -2319,7 +2319,7 @@ impl RateLimitingMutationRoot {
     ) -> async_graphql::Result<bool> {
         schema_stitcher()
             .lock()
-            .unwrap()
+            .unwrap_or_else(|e| e.into_inner())
             .set_merge_strategy(strategy);
         Ok(true)
     }
@@ -2339,7 +2339,7 @@ impl RateLimitingMutationRoot {
         };
         schema_stitcher()
             .lock()
-            .unwrap()
+            .unwrap_or_else(|e| e.into_inner())
             .add_field_mapping(rule.clone());
         Ok(rule)
     }
@@ -2353,7 +2353,7 @@ impl RateLimitingMutationRoot {
     ) -> async_graphql::Result<bool> {
         Ok(schema_stitcher()
             .lock()
-            .unwrap()
+            .unwrap_or_else(|e| e.into_inner())
             .remove_field_mapping(&source_type, &source_field))
     }
 
@@ -2390,7 +2390,7 @@ impl RateLimitingMutationRoot {
     ) -> async_graphql::Result<u64> {
         Ok(intelligent_cache()
             .lock()
-            .unwrap()
+            .unwrap_or_else(|e| e.into_inner())
             .invalidate_pattern(&pattern))
     }
 
@@ -2409,7 +2409,7 @@ impl RateLimitingMutationRoot {
             .set_policy(&policy.key_pattern, ttl, consistency, invalidation);
         Ok(intelligent_cache()
             .lock()
-            .unwrap()
+            .unwrap_or_else(|e| e.into_inner())
             .get_policy(&policy.key_pattern)
             .ok_or_else(|| async_graphql::Error::new("Policy not found after set"))?)
     }
