@@ -16,7 +16,7 @@ use topems_shared::auth::Claims;
 use topems_shared::ApiResponse;
 use topems_shared_core::response::api_error;
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, utoipa::IntoParams)]
 pub struct PaginationParams {
     pub page: Option<i64>,
     pub page_size: Option<i64>,
@@ -50,6 +50,15 @@ pub fn create_routes() -> Router<ApiState> {
         )
 }
 
+#[utoipa::path(
+    get,
+    path = "/erp/production-order/list-production-orders",
+    tag = "ProductionOrder",
+    operation_id = "list_production_orders",
+    responses(
+        (status = 200, description = "操作成功"),
+    ),
+)]
 pub async fn list_production_orders(
     State(state): State<ApiState>,
     Extension(_claims): Extension<Claims>,
@@ -113,6 +122,15 @@ pub async fn list_production_orders(
     }
 }
 
+#[utoipa::path(
+    post,
+    path = "/erp/production-order/create-production-order",
+    tag = "ProductionOrder",
+    operation_id = "create_production_order",
+    responses(
+        (status = 200, description = "操作成功"),
+    ),
+)]
 pub async fn create_production_order(
     State(state): State<ApiState>,
     Extension(_claims): Extension<Claims>,
@@ -180,6 +198,15 @@ pub async fn create_production_order(
     }
 }
 
+#[utoipa::path(
+    get,
+    path = "/erp/production-order/get-production-order",
+    tag = "ProductionOrder",
+    operation_id = "get_production_order",
+    responses(
+        (status = 200, description = "操作成功"),
+    ),
+)]
 pub async fn get_production_order(
     State(state): State<ApiState>,
     Extension(_claims): Extension<Claims>,
@@ -212,6 +239,15 @@ pub async fn get_production_order(
     }
 }
 
+#[utoipa::path(
+    put,
+    path = "/erp/production-order/update-production-order",
+    tag = "ProductionOrder",
+    operation_id = "update_production_order",
+    responses(
+        (status = 200, description = "操作成功"),
+    ),
+)]
 pub async fn update_production_order(
     State(state): State<ApiState>,
     Extension(_claims): Extension<Claims>,
@@ -265,6 +301,15 @@ pub async fn update_production_order(
     }
 }
 
+#[utoipa::path(
+    delete,
+    path = "/erp/production-order/delete-production-order",
+    tag = "ProductionOrder",
+    operation_id = "delete_production_order",
+    responses(
+        (status = 200, description = "操作成功"),
+    ),
+)]
 pub async fn delete_production_order(
     State(state): State<ApiState>,
     Extension(_claims): Extension<Claims>,
@@ -295,6 +340,15 @@ pub async fn delete_production_order(
     }
 }
 
+#[utoipa::path(
+    put,
+    path = "/erp/production-order/update-production-progress",
+    tag = "ProductionOrder",
+    operation_id = "update_production_progress",
+    responses(
+        (status = 200, description = "操作成功"),
+    ),
+)]
 pub async fn update_production_progress(
     State(state): State<ApiState>,
     Extension(_claims): Extension<Claims>,
@@ -343,6 +397,15 @@ pub struct UpdateStatusRequest {
     pub status: String,
 }
 
+#[utoipa::path(
+    put,
+    path = "/erp/production-order/update-production-status",
+    tag = "ProductionOrder",
+    operation_id = "update_production_status",
+    responses(
+        (status = 200, description = "操作成功"),
+    ),
+)]
 pub async fn update_production_status(
     State(state): State<ApiState>,
     Extension(_claims): Extension<Claims>,
@@ -392,6 +455,15 @@ pub struct MesProgressUpdate {
     pub actual_end_date: Option<DateTime<Utc>>,
 }
 
+#[utoipa::path(
+    post,
+    path = "/erp/production-order/receive-mes-progress",
+    tag = "ProductionOrder",
+    operation_id = "receive_mes_progress",
+    responses(
+        (status = 200, description = "操作成功"),
+    ),
+)]
 pub async fn receive_mes_progress(
     State(state): State<ApiState>,
     Extension(_claims): Extension<Claims>,

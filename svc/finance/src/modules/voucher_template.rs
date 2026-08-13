@@ -129,15 +129,12 @@ pub async fn copy_template(
 }
 
 #[utoipa::path(
-    put,
-    path = "/voucher-templates/{templateId}/toggle",
-    tag = "Voucher Template",
-    params(("templateId" = Uuid, Path, description = "模板ID")),
-    request_body = ToggleTemplateRequest,
+    post,
+    path = "/finance/template",
+    tag = "VoucherTemplate",
+    operation_id = "toggle_template",
     responses(
-        (status = 200, description = "启用/禁用凭证模板成功", body = ApiResponse<serde_json::Value>),
-        (status = 404, description = "凭证模板不存在"),
-        (status = 500, description = "服务器内部错误"),
+        (status = 200, description = "操作成功"),
     ),
 )]
 pub async fn toggle_template(
@@ -250,12 +247,11 @@ pub async fn match_template(
 
 #[utoipa::path(
     get,
-    path = "/voucher-templates/{templateId}/usage-stats",
-    tag = "Voucher Template",
-    params(("templateId" = Uuid, Path, description = "模板ID"), UsageStatsQueryParams),
+    path = "/finance/usage_stats",
+    tag = "VoucherTemplate",
+    operation_id = "get_usage_stats",
     responses(
-        (status = 200, description = "获取模板使用统计成功", body = ApiResponse<serde_json::Value>),
-        (status = 500, description = "服务器内部错误"),
+        (status = 200, description = "操作成功"),
     ),
 )]
 pub async fn get_usage_stats(
@@ -323,12 +319,11 @@ pub async fn export_template(
 
 #[utoipa::path(
     post,
-    path = "/voucher-templates/import",
-    tag = "Voucher Template",
+    path = "/finance/template",
+    tag = "VoucherTemplate",
+    operation_id = "import_template",
     responses(
-        (status = 200, description = "导入凭证模板成功", body = ApiResponse<serde_json::Value>),
-        (status = 400, description = "参数错误"),
-        (status = 500, description = "服务器内部错误"),
+        (status = 200, description = "操作成功"),
     ),
 )]
 pub async fn import_template(
@@ -844,13 +839,12 @@ pub struct AutoGenerateRequest {
 }
 
 #[utoipa::path(
-    post,
-    path = "/voucher/generate/auto",
-    tag = "Voucher Generation",
-    request_body = AutoGenerateRequest,
+    get,
+    path = "/finance/generate",
+    tag = "VoucherTemplate",
+    operation_id = "auto_generate",
     responses(
-        (status = 200, description = "自动生成凭证成功", body = ApiResponse<serde_json::Value>),
-        (status = 500, description = "服务器内部错误"),
+        (status = 200, description = "操作成功"),
     ),
 )]
 pub async fn auto_generate(

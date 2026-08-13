@@ -9,7 +9,7 @@ use topems_shared_core::response::ApiResponse;
 
 use super::ApiState;
 
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Deserialize, utoipa::IntoParams)]
 pub struct SearchParams {
     pub query: String,
     pub limit: Option<i64>,
@@ -25,6 +25,15 @@ pub struct SearchResult {
     pub type_name: String,
 }
 
+#[utoipa::path(
+    get,
+    path = "/erp/search/global-search",
+    tag = "Search",
+    operation_id = "global_search",
+    responses(
+        (status = 200, description = "操作成功"),
+    ),
+)]
 async fn global_search(
     State(state): State<ApiState>,
     Query(params): Query<SearchParams>,

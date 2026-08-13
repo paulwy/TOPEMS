@@ -2,22 +2,22 @@
 #![allow(dead_code)]
 pub mod audit_v52;
 pub mod compliance_v51;
-mod cqrs_routes;
+pub mod cqrs_routes;
 pub mod decision_v60;
-mod event_routes;
+pub mod event_routes;
 pub mod financial_reports;
-mod forecast_v53;
-mod forecasting;
-mod multi_dimensional;
+pub mod forecast_v53;
+pub mod forecasting;
+pub mod multi_dimensional;
 pub mod operational;
-mod reconciliation;
-mod report_center;
+pub mod reconciliation;
+pub mod report_center;
 pub mod reports_v57;
 pub mod risk_v54;
 pub mod risk_v59;
 pub mod settlement_center;
 pub mod settlement_v55;
-mod shared_services;
+pub mod shared_services;
 pub mod tax_v56;
 pub mod treasury_v58;
 pub mod voucher_template;
@@ -71,7 +71,7 @@ pub struct AccountBalanceQueryParams {
     project_id: Option<String>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, utoipa::IntoParams)]
 pub struct AuxQueryParams {
     pub aux_type: String,
     pub aux_id: Option<Uuid>,
@@ -173,18 +173,14 @@ async fn create_account(
 
 #[utoipa::path(
     get,
-    path = "/accounts/{id}",
-    tag = "Accounting",
-    params(
-        ("id" = Uuid, Path, description = "科目ID"),
-    ),
+    path = "/finance/get_account/{id}",
+    tag = "Finance",
+    operation_id = "get_account",
     responses(
-        (status = 200, description = "获取会计科目详情成功", body = ApiResponse<Account>),
-        (status = 404, description = "科目不存在"),
-        (status = 500, description = "服务器内部错误"),
+        (status = 200, description = "操作成功"),
     ),
 )]
-async fn get_account(
+pub async fn get_account(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(account_id): Path<Uuid>,
@@ -199,17 +195,14 @@ async fn get_account(
 
 #[utoipa::path(
     get,
-    path = "/accounts/code/{code}",
-    tag = "Accounting",
-    params(
-        ("code" = String, Path, description = "科目编码"),
-    ),
+    path = "/finance/get_account_by_code/{id}",
+    tag = "Finance",
+    operation_id = "get_account_by_code",
     responses(
-        (status = 200, description = "按编码获取会计科目成功", body = ApiResponse<Account>),
-        (status = 500, description = "服务器内部错误"),
+        (status = 200, description = "操作成功"),
     ),
 )]
-async fn get_account_by_code(
+pub async fn get_account_by_code(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(code): Path<String>,
@@ -256,15 +249,14 @@ async fn get_account_balances(
 
 #[utoipa::path(
     get,
-    path = "/accounts",
-    tag = "Accounting",
-    params(AccountQueryParams),
+    path = "/finance/list_accounts",
+    tag = "Finance",
+    operation_id = "list_accounts",
     responses(
-        (status = 200, description = "获取会计科目列表成功", body = ApiResponse<Vec<Account>>),
-        (status = 500, description = "服务器内部错误"),
+        (status = 200, description = "操作成功"),
     ),
 )]
-async fn list_accounts(
+pub async fn list_accounts(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Query(_params): Query<AccountQueryParams>,
@@ -279,15 +271,14 @@ async fn list_accounts(
 
 #[utoipa::path(
     post,
-    path = "/vouchers",
-    tag = "Voucher",
-    request_body = CreateVoucherRequest,
+    path = "/finance/create_voucher",
+    tag = "Finance",
+    operation_id = "create_voucher",
     responses(
-        (status = 200, description = "创建凭证成功", body = ApiResponse<VoucherResponse>),
-        (status = 500, description = "服务器内部错误"),
+        (status = 200, description = "操作成功"),
     ),
 )]
-async fn create_voucher(
+pub async fn create_voucher(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<CreateVoucherRequest>,
@@ -303,18 +294,14 @@ async fn create_voucher(
 
 #[utoipa::path(
     get,
-    path = "/vouchers/{id}",
-    tag = "Voucher",
-    params(
-        ("voucher_id" = Uuid, Path, description = "凭证ID"),
-    ),
+    path = "/finance/get_voucher/{id}",
+    tag = "Finance",
+    operation_id = "get_voucher",
     responses(
-        (status = 200, description = "获取凭证详情成功", body = ApiResponse<VoucherResponse>),
-        (status = 404, description = "凭证不存在"),
-        (status = 500, description = "服务器内部错误"),
+        (status = 200, description = "操作成功"),
     ),
 )]
-async fn get_voucher(
+pub async fn get_voucher(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(voucher_id): Path<Uuid>,
@@ -365,17 +352,14 @@ async fn list_vouchers(
 
 #[utoipa::path(
     post,
-    path = "/vouchers/{id}/submit",
-    tag = "Voucher",
-    params(
-        ("voucher_id" = Uuid, Path, description = "凭证ID"),
-    ),
+    path = "/finance/submit_voucher",
+    tag = "Finance",
+    operation_id = "submit_voucher",
     responses(
-        (status = 200, description = "提交凭证成功", body = ApiResponse<Voucher>),
-        (status = 500, description = "服务器内部错误"),
+        (status = 200, description = "操作成功"),
     ),
 )]
-async fn submit_voucher(
+pub async fn submit_voucher(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(voucher_id): Path<Uuid>,
@@ -389,18 +373,15 @@ async fn submit_voucher(
 }
 
 #[utoipa::path(
-    post,
-    path = "/vouchers/{id}/approve",
-    tag = "Voucher",
-    params(
-        ("voucher_id" = Uuid, Path, description = "凭证ID"),
-    ),
+    get,
+    path = "/finance/approve_voucher",
+    tag = "Finance",
+    operation_id = "approve_voucher",
     responses(
-        (status = 200, description = "审批凭证成功", body = ApiResponse<Voucher>),
-        (status = 500, description = "服务器内部错误"),
+        (status = 200, description = "操作成功"),
     ),
 )]
-async fn approve_voucher(
+pub async fn approve_voucher(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(voucher_id): Path<Uuid>,
@@ -419,17 +400,14 @@ async fn approve_voucher(
 
 #[utoipa::path(
     post,
-    path = "/vouchers/{id}/post",
-    tag = "Voucher",
-    params(
-        ("voucher_id" = Uuid, Path, description = "凭证ID"),
-    ),
+    path = "/finance/post_voucher",
+    tag = "Finance",
+    operation_id = "post_voucher",
     responses(
-        (status = 200, description = "过账凭证成功", body = ApiResponse<Voucher>),
-        (status = 500, description = "服务器内部错误"),
+        (status = 200, description = "操作成功"),
     ),
 )]
-async fn post_voucher(
+pub async fn post_voucher(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(voucher_id): Path<Uuid>,
@@ -478,20 +456,17 @@ async fn update_voucher(
     }
 }
 
+/// V39.0 Phase 7: 删除凭证
 #[utoipa::path(
     delete,
-    path = "/vouchers/{id}",
-    tag = "Voucher",
-    params(
-        ("voucher_id" = Uuid, Path, description = "凭证ID"),
-    ),
+    path = "/finance/delete_voucher/{id}",
+    tag = "Finance",
+    operation_id = "delete_voucher",
     responses(
-        (status = 200, description = "删除凭证成功", body = ApiResponse<()>),
-        (status = 500, description = "服务器内部错误"),
+        (status = 200, description = "操作成功"),
     ),
 )]
-/// V39.0 Phase 7: 删除凭证
-async fn delete_voucher(
+pub async fn delete_voucher(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(voucher_id): Path<Uuid>,
@@ -504,20 +479,17 @@ async fn delete_voucher(
     }
 }
 
+/// V39.0 Phase 7: 反过账凭证
 #[utoipa::path(
     post,
-    path = "/vouchers/{id}/unpost",
-    tag = "Voucher",
-    params(
-        ("voucher_id" = Uuid, Path, description = "凭证ID"),
-    ),
+    path = "/finance/unpost_voucher",
+    tag = "Finance",
+    operation_id = "unpost_voucher",
     responses(
-        (status = 200, description = "反过账凭证成功", body = ApiResponse<Voucher>),
-        (status = 500, description = "服务器内部错误"),
+        (status = 200, description = "操作成功"),
     ),
 )]
-/// V39.0 Phase 7: 反过账凭证
-async fn unpost_voucher(
+pub async fn unpost_voucher(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(voucher_id): Path<Uuid>,
@@ -532,15 +504,14 @@ async fn unpost_voucher(
 
 #[utoipa::path(
     get,
-    path = "/ledger",
-    tag = "Report",
-    params(LedgerQueryParams),
+    path = "/finance/get_ledger/{id}",
+    tag = "Finance",
+    operation_id = "get_ledger",
     responses(
-        (status = 200, description = "获取明细账成功", body = ApiResponse<Vec<LedgerEntry>>),
-        (status = 500, description = "服务器内部错误"),
+        (status = 200, description = "操作成功"),
     ),
 )]
-async fn get_ledger(
+pub async fn get_ledger(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<LedgerQueryParams>,
@@ -590,12 +561,9 @@ async fn get_trial_balance(
     get,
     path = "/balance-sheet/{period}",
     tag = "Report",
-    params(
-        ("period" = String, Path, description = "会计期间"),
-    ),
+    operation_id = "get_balance_sheet",
     responses(
-        (status = 200, description = "获取资产负债表成功", body = ApiResponse<BalanceSheet>),
-        (status = 500, description = "服务器内部错误"),
+        (status = 200, description = "操作成功"),
     ),
 )]
 async fn get_balance_sheet(
@@ -615,12 +583,9 @@ async fn get_balance_sheet(
     get,
     path = "/income-statement/{period}",
     tag = "Report",
-    params(
-        ("period" = String, Path, description = "会计期间"),
-    ),
+    operation_id = "get_income_statement",
     responses(
-        (status = 200, description = "获取利润表成功", body = ApiResponse<IncomeStatement>),
-        (status = 500, description = "服务器内部错误"),
+        (status = 200, description = "操作成功"),
     ),
 )]
 async fn get_income_statement(
@@ -636,6 +601,15 @@ async fn get_income_statement(
     }
 }
 
+#[utoipa::path(
+    post,
+    path = "/finance/period",
+    tag = "Finance",
+    operation_id = "close_period",
+    responses(
+        (status = 200, description = "操作成功"),
+    ),
+)]
 async fn close_period(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -652,6 +626,24 @@ async fn close_period(
         Err(e) => Json(ApiResponse::error(500, &e.to_string())),
     }
 }
+#[utoipa::path(
+    post,
+    path = "/periods/{year}/{month}/open",
+    responses(
+        (status = 200, description = "成功"),
+        (status = 201, description = "创建成功"),
+        (status = 400, description = "请求参数错误"),
+        (status = 401, description = "未授权"),
+        (status = 404, description = "资源不存在"),
+        (status = 500, description = "服务内部错误"),
+    ),
+    params(
+        ("year" = String, Path, description = "年份"),
+        ("month" = String, Path, description = "月份"),
+    ),
+    tag = "Finance",
+    operation_id = "open_period",
+)]
 
 async fn open_period(
     State(state): State<AppState>,
@@ -666,6 +658,15 @@ async fn open_period(
     }
 }
 
+#[utoipa::path(
+    post,
+    path = "/finance/aux_account",
+    tag = "Finance",
+    operation_id = "create_aux_account",
+    responses(
+        (status = 200, description = "操作成功"),
+    ),
+)]
 async fn create_aux_account(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -679,6 +680,15 @@ async fn create_aux_account(
     }
 }
 
+#[utoipa::path(
+    get,
+    path = "/finance/aux_accounts",
+    tag = "Finance",
+    operation_id = "list_aux_accounts",
+    responses(
+        (status = 200, description = "操作成功"),
+    ),
+)]
 async fn list_aux_accounts(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -702,6 +712,22 @@ async fn list_aux_accounts(
         Err(e) => Json(ApiResponse::error(500, &e.to_string())),
     }
 }
+#[utoipa::path(
+    get,
+    path = "/aux-ledger",
+    responses(
+        (status = 200, description = "成功"),
+        (status = 400, description = "请求参数错误"),
+        (status = 401, description = "未授权"),
+        (status = 404, description = "资源不存在"),
+        (status = 500, description = "服务内部错误"),
+    ),
+    params(
+        ("query" = AuxQueryParams, Query, description = "查询参数"),
+    ),
+    tag = "Finance",
+    operation_id = "get_aux_ledger",
+)]
 
 async fn get_aux_ledger(
     State(state): State<AppState>,
@@ -735,6 +761,15 @@ async fn get_aux_ledger(
     }
 }
 
+#[utoipa::path(
+    get,
+    path = "/finance/aux_balance/{id}",
+    tag = "Finance",
+    operation_id = "get_aux_balance",
+    responses(
+        (status = 200, description = "操作成功"),
+    ),
+)]
 async fn get_aux_balance(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -794,15 +829,14 @@ async fn get_cash_flow(
 
 #[utoipa::path(
     post,
-    path = "/vouchers/batch/submit",
-    tag = "Voucher",
-    request_body = BatchVoucherRequest,
+    path = "/finance/batch_submit_vouchers",
+    tag = "Finance",
+    operation_id = "batch_submit_vouchers",
     responses(
-        (status = 200, description = "批量提交凭证成功", body = ApiResponse<BatchVoucherResponse>),
-        (status = 500, description = "服务器内部错误"),
+        (status = 200, description = "操作成功"),
     ),
 )]
-async fn batch_submit_vouchers(
+pub async fn batch_submit_vouchers(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<BatchVoucherRequest>,
@@ -820,15 +854,14 @@ async fn batch_submit_vouchers(
 
 #[utoipa::path(
     post,
-    path = "/vouchers/batch/approve",
-    tag = "Voucher",
-    request_body = BatchVoucherRequest,
+    path = "/finance/batch_approve_vouchers",
+    tag = "Finance",
+    operation_id = "batch_approve_vouchers",
     responses(
-        (status = 200, description = "批量审批凭证成功", body = ApiResponse<BatchVoucherResponse>),
-        (status = 500, description = "服务器内部错误"),
+        (status = 200, description = "操作成功"),
     ),
 )]
-async fn batch_approve_vouchers(
+pub async fn batch_approve_vouchers(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<BatchVoucherRequest>,
@@ -847,15 +880,14 @@ async fn batch_approve_vouchers(
 
 #[utoipa::path(
     post,
-    path = "/vouchers/batch/post",
-    tag = "Voucher",
-    request_body = BatchVoucherRequest,
+    path = "/finance/batch_post_vouchers",
+    tag = "Finance",
+    operation_id = "batch_post_vouchers",
     responses(
-        (status = 200, description = "批量过账凭证成功", body = ApiResponse<BatchVoucherResponse>),
-        (status = 500, description = "服务器内部错误"),
+        (status = 200, description = "操作成功"),
     ),
 )]
-async fn batch_post_vouchers(
+pub async fn batch_post_vouchers(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<BatchVoucherRequest>,
@@ -895,6 +927,15 @@ async fn export_vouchers(
     }
 }
 
+#[utoipa::path(
+    get,
+    path = "/finance/year_end_close",
+    tag = "Finance",
+    operation_id = "year_end_close",
+    responses(
+        (status = 200, description = "操作成功"),
+    ),
+)]
 async fn year_end_close(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -914,12 +955,11 @@ async fn year_end_close(
 
 #[utoipa::path(
     post,
-    path = "/payments",
-    tag = "Payment",
-    request_body = CreatePaymentRequest,
+    path = "/finance/create_payment",
+    tag = "Finance",
+    operation_id = "create_payment_handler",
     responses(
-        (status = 200, description = "创建付款单成功", body = ApiResponse<PaymentResponse>),
-        (status = 500, description = "服务器内部错误"),
+        (status = 200, description = "操作成功"),
     ),
 )]
 pub async fn create_payment_handler(
@@ -1005,10 +1045,9 @@ pub struct PaymentListParams {
     get,
     path = "/payments",
     tag = "Payment",
-    params(PaymentListParams),
+    operation_id = "list_payments_handler",
     responses(
-        (status = 200, description = "获取付款单列表成功", body = ApiResponse<PaymentListResponse>),
-        (status = 500, description = "服务器内部错误"),
+        (status = 200, description = "操作成功"),
     ),
 )]
 pub async fn list_payments_handler(
@@ -1044,14 +1083,11 @@ pub async fn list_payments_handler(
 
 #[utoipa::path(
     put,
-    path = "/payments/{id}",
-    tag = "Payment",
-    params(("payment_id" = Uuid, Path, description = "付款单ID")),
-    request_body = CreatePaymentRequest,
+    path = "/finance/update_payment",
+    tag = "Finance",
+    operation_id = "update_payment_handler",
     responses(
-        (status = 200, description = "更新付款单成功", body = ApiResponse<PaymentResponse>),
-        (status = 404, description = "付款单不存在"),
-        (status = 500, description = "服务器内部错误"),
+        (status = 200, description = "操作成功"),
     ),
 )]
 pub async fn update_payment_handler(
@@ -1098,13 +1134,11 @@ pub async fn delete_payment_handler(
 
 #[utoipa::path(
     post,
-    path = "/payments/{id}/submit",
-    tag = "Payment",
-    params(("payment_id" = Uuid, Path, description = "付款单ID")),
+    path = "/finance/submit_payment",
+    tag = "Finance",
+    operation_id = "submit_payment_handler",
     responses(
-        (status = 200, description = "提交付款单成功", body = ApiResponse<PaymentResponse>),
-        (status = 404, description = "付款单不存在"),
-        (status = 500, description = "服务器内部错误"),
+        (status = 200, description = "操作成功"),
     ),
 )]
 pub async fn submit_payment_handler(
@@ -1131,14 +1165,12 @@ pub async fn submit_payment_handler(
 }
 
 #[utoipa::path(
-    post,
-    path = "/payments/{id}/approve",
-    tag = "Payment",
-    params(("payment_id" = Uuid, Path, description = "付款单ID")),
+    get,
+    path = "/finance/approve_payment",
+    tag = "Finance",
+    operation_id = "approve_payment_handler",
     responses(
-        (status = 200, description = "审批付款单成功", body = ApiResponse<PaymentResponse>),
-        (status = 404, description = "付款单不存在"),
-        (status = 500, description = "服务器内部错误"),
+        (status = 200, description = "操作成功"),
     ),
 )]
 pub async fn approve_payment_handler(
@@ -1206,14 +1238,11 @@ pub async fn reject_payment_handler(
 
 #[utoipa::path(
     post,
-    path = "/payments/{id}/execute",
-    tag = "Payment",
-    params(("payment_id" = Uuid, Path, description = "付款单ID")),
-    request_body = ExecutePaymentRequest,
+    path = "/finance/execute_payment",
+    tag = "Finance",
+    operation_id = "execute_payment_handler",
     responses(
-        (status = 200, description = "执行付款成功", body = ApiResponse<PaymentResponse>),
-        (status = 404, description = "付款单不存在"),
-        (status = 500, description = "服务器内部错误"),
+        (status = 200, description = "操作成功"),
     ),
 )]
 pub async fn execute_payment_handler(
@@ -1243,12 +1272,11 @@ pub struct WriteOffRequest {
 
 #[utoipa::path(
     post,
-    path = "/payments/write-off",
-    tag = "Payment",
-    request_body = WriteOffRequest,
+    path = "/finance/write_off_payment_item",
+    tag = "Finance",
+    operation_id = "write_off_payment_item_handler",
     responses(
-        (status = 200, description = "核销付款明细成功", body = ApiResponse<PaymentResponse>),
-        (status = 500, description = "服务器内部错误"),
+        (status = 200, description = "操作成功"),
     ),
 )]
 pub async fn write_off_payment_item_handler(
@@ -1295,12 +1323,11 @@ pub async fn export_payments_handler(
 
 #[utoipa::path(
     get,
-    path = "/approval-configs",
-    tag = "Approval Config",
+    path = "/finance/list_approval_configs",
+    tag = "Finance",
+    operation_id = "list_approval_configs_handler",
     responses(
-        (status = 200, description = "获取审批配置列表成功", body = ApiResponse<Vec<ApprovalConfigResponse>>),
-        (status = 403, description = "无权限访问审批配置"),
-        (status = 500, description = "服务器内部错误"),
+        (status = 200, description = "操作成功"),
     ),
 )]
 pub async fn list_approval_configs_handler(
@@ -1322,13 +1349,11 @@ pub async fn list_approval_configs_handler(
 
 #[utoipa::path(
     post,
-    path = "/approval-configs",
-    tag = "Approval Config",
-    request_body = CreateApprovalConfigRequest,
+    path = "/finance/create_approval_config",
+    tag = "Finance",
+    operation_id = "create_approval_config_handler",
     responses(
-        (status = 200, description = "创建审批配置成功", body = ApiResponse<ApprovalConfigResponse>),
-        (status = 403, description = "无权限创建审批配置"),
-        (status = 500, description = "服务器内部错误"),
+        (status = 200, description = "操作成功"),
     ),
 )]
 pub async fn create_approval_config_handler(
@@ -1355,14 +1380,11 @@ pub async fn create_approval_config_handler(
 
 #[utoipa::path(
     get,
-    path = "/approval-configs/{id}",
-    tag = "Approval Config",
-    params(("config_id" = Uuid, Path, description = "审批配置ID")),
+    path = "/finance/get_approval_config",
+    tag = "Finance",
+    operation_id = "get_approval_config_handler",
     responses(
-        (status = 200, description = "获取审批配置详情成功", body = ApiResponse<ApprovalConfigResponse>),
-        (status = 403, description = "无权限访问审批配置"),
-        (status = 404, description = "审批配置不存在"),
-        (status = 500, description = "服务器内部错误"),
+        (status = 200, description = "操作成功"),
     ),
 )]
 pub async fn get_approval_config_handler(
@@ -1421,14 +1443,11 @@ pub async fn update_approval_config_handler(
 
 #[utoipa::path(
     delete,
-    path = "/approval-configs/{id}",
-    tag = "Approval Config",
-    params(("config_id" = Uuid, Path, description = "审批配置ID")),
+    path = "/finance/delete_approval_config",
+    tag = "Finance",
+    operation_id = "delete_approval_config_handler",
     responses(
-        (status = 200, description = "删除审批配置成功", body = ApiResponse<()>),
-        (status = 403, description = "无权限删除审批配置"),
-        (status = 404, description = "审批配置不存在"),
-        (status = 500, description = "服务器内部错误"),
+        (status = 200, description = "操作成功"),
     ),
 )]
 pub async fn delete_approval_config_handler(
@@ -1451,6 +1470,15 @@ pub async fn delete_approval_config_handler(
 
 // ========== 审批操作（简化实现，供 ERP 合并报表审批流程调用）==========
 
+#[utoipa::path(
+    post,
+    path = "/finance/approval",
+    tag = "Finance",
+    operation_id = "submit_approval",
+    responses(
+        (status = 200, description = "操作成功"),
+    ),
+)]
 async fn submit_approval(
     State(_state): State<AppState>,
     Extension(_claims): Extension<Claims>,
@@ -1462,6 +1490,20 @@ async fn submit_approval(
         "审批已提交",
     ))
 }
+#[utoipa::path(
+    post,
+    path = "/approvals/approve",
+    responses(
+        (status = 200, description = "成功"),
+        (status = 201, description = "创建成功"),
+        (status = 400, description = "请求参数错误"),
+        (status = 401, description = "未授权"),
+        (status = 404, description = "资源不存在"),
+        (status = 500, description = "服务内部错误"),
+    ),
+    tag = "Finance",
+    operation_id = "approve_approval",
+)]
 
 async fn approve_approval(
     State(_state): State<AppState>,
@@ -1475,6 +1517,15 @@ async fn approve_approval(
     ))
 }
 
+#[utoipa::path(
+    delete,
+    path = "/finance/approval/{id}",
+    tag = "Finance",
+    operation_id = "reject_approval",
+    responses(
+        (status = 200, description = "操作成功"),
+    ),
+)]
 async fn reject_approval(
     State(_state): State<AppState>,
     Extension(_claims): Extension<Claims>,
@@ -1487,6 +1538,15 @@ async fn reject_approval(
     ))
 }
 
+#[utoipa::path(
+    delete,
+    path = "/finance/cancel_approval/{id}",
+    tag = "Finance",
+    operation_id = "cancel_approval",
+    responses(
+        (status = 200, description = "操作成功"),
+    ),
+)]
 async fn cancel_approval(
     State(_state): State<AppState>,
     Extension(_claims): Extension<Claims>,
@@ -1517,11 +1577,11 @@ pub struct FinanceDashboardStats {
 
 #[utoipa::path(
     get,
-    path = "/dashboard",
+    path = "/finance/get_dashboard",
     tag = "Finance",
+    operation_id = "get_dashboard_handler",
     responses(
-        (status = 200, description = "获取财务仪表盘统计成功", body = ApiResponse<FinanceDashboardStats>),
-        (status = 500, description = "服务器内部错误"),
+        (status = 200, description = "操作成功"),
     ),
 )]
 pub async fn get_dashboard_handler(
@@ -1614,16 +1674,14 @@ async fn list_voucher_templates_handler(
 
 #[utoipa::path(
     get,
-    path = "/voucher-templates/{templateId}",
-    tag = "Voucher Template",
-    params(("templateId" = Uuid, Path, description = "模板ID")),
+    path = "/finance/get_voucher_template/{id}",
+    tag = "Finance",
+    operation_id = "get_voucher_template_handler",
     responses(
-        (status = 200, description = "获取凭证模板详情成功", body = ApiResponse<serde_json::Value>),
-        (status = 404, description = "凭证模板不存在"),
-        (status = 500, description = "服务器内部错误"),
+        (status = 200, description = "操作成功"),
     ),
 )]
-async fn get_voucher_template_handler(
+pub async fn get_voucher_template_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(template_id): Path<Uuid>,
@@ -1641,16 +1699,14 @@ async fn get_voucher_template_handler(
 
 #[utoipa::path(
     post,
-    path = "/voucher-templates",
-    tag = "Voucher Template",
-    request_body = serde_json::Value,
+    path = "/finance/create_voucher_template",
+    tag = "Finance",
+    operation_id = "create_voucher_template_handler",
     responses(
-        (status = 200, description = "创建凭证模板成功", body = ApiResponse<serde_json::Value>),
-        (status = 400, description = "参数错误"),
-        (status = 500, description = "服务器内部错误"),
+        (status = 200, description = "操作成功"),
     ),
 )]
-async fn create_voucher_template_handler(
+pub async fn create_voucher_template_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<serde_json::Value>,
@@ -1715,16 +1771,14 @@ async fn update_voucher_template_handler(
 
 #[utoipa::path(
     delete,
-    path = "/voucher-templates/{templateId}",
-    tag = "Voucher Template",
-    params(("templateId" = Uuid, Path, description = "模板ID")),
+    path = "/finance/delete_voucher_template",
+    tag = "Finance",
+    operation_id = "delete_voucher_template_handler",
     responses(
-        (status = 200, description = "删除凭证模板成功", body = ApiResponse<()>),
-        (status = 404, description = "凭证模板不存在"),
-        (status = 500, description = "服务器内部错误"),
+        (status = 200, description = "操作成功"),
     ),
 )]
-async fn delete_voucher_template_handler(
+pub async fn delete_voucher_template_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(template_id): Path<Uuid>,
@@ -1741,17 +1795,15 @@ async fn delete_voucher_template_handler(
 }
 
 #[utoipa::path(
-    post,
-    path = "/voucher-templates/{templateId}/set-default",
-    tag = "Voucher Template",
-    params(("templateId" = Uuid, Path, description = "模板ID")),
+    get,
+    path = "/finance/set_default_template",
+    tag = "Finance",
+    operation_id = "set_default_template_handler",
     responses(
-        (status = 200, description = "设置默认凭证模板成功", body = ApiResponse<serde_json::Value>),
-        (status = 404, description = "凭证模板不存在"),
-        (status = 500, description = "服务器内部错误"),
+        (status = 200, description = "操作成功"),
     ),
 )]
-async fn set_default_template_handler(
+pub async fn set_default_template_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(template_id): Path<Uuid>,
@@ -1766,6 +1818,20 @@ async fn set_default_template_handler(
         Err(e) => Json(ApiResponse::error(500, &e.to_string())),
     }
 }
+#[utoipa::path(
+    post,
+    path = "/voucher-templates/apply",
+    responses(
+        (status = 200, description = "成功"),
+        (status = 201, description = "创建成功"),
+        (status = 400, description = "请求参数错误"),
+        (status = 401, description = "未授权"),
+        (status = 404, description = "资源不存在"),
+        (status = 500, description = "服务内部错误"),
+    ),
+    tag = "Finance",
+    operation_id = "apply_template_handler",
+)]
 
 async fn apply_template_handler(
     State(state): State<AppState>,
@@ -2350,13 +2416,11 @@ pub async fn list_generation_rules_handler(
 
 #[utoipa::path(
     get,
-    path = "/voucher-generation-rules/{ruleId}",
-    tag = "Voucher Generation Rule",
-    params(("ruleId" = Uuid, Path, description = "生成规则ID")),
+    path = "/finance/get_generation_rule",
+    tag = "Finance",
+    operation_id = "get_generation_rule_handler",
     responses(
-        (status = 200, description = "获取凭证生成规则详情成功", body = ApiResponse<serde_json::Value>),
-        (status = 404, description = "生成规则不存在"),
-        (status = 500, description = "服务器内部错误"),
+        (status = 200, description = "操作成功"),
     ),
 )]
 pub async fn get_generation_rule_handler(
@@ -2377,13 +2441,11 @@ pub async fn get_generation_rule_handler(
 
 #[utoipa::path(
     post,
-    path = "/voucher-generation-rules",
-    tag = "Voucher Generation Rule",
-    request_body = serde_json::Value,
+    path = "/finance/create_generation_rule",
+    tag = "Finance",
+    operation_id = "create_generation_rule_handler",
     responses(
-        (status = 200, description = "创建凭证生成规则成功", body = ApiResponse<serde_json::Value>),
-        (status = 400, description = "参数错误"),
-        (status = 500, description = "服务器内部错误"),
+        (status = 200, description = "操作成功"),
     ),
 )]
 pub async fn create_generation_rule_handler(
@@ -2451,13 +2513,11 @@ pub async fn update_generation_rule_handler(
 
 #[utoipa::path(
     delete,
-    path = "/voucher-generation-rules/{ruleId}",
-    tag = "Voucher Generation Rule",
-    params(("ruleId" = Uuid, Path, description = "生成规则ID")),
+    path = "/finance/delete_generation_rule",
+    tag = "Finance",
+    operation_id = "delete_generation_rule_handler",
     responses(
-        (status = 200, description = "删除凭证生成规则成功", body = ApiResponse<()>),
-        (status = 404, description = "生成规则不存在"),
-        (status = 500, description = "服务器内部错误"),
+        (status = 200, description = "操作成功"),
     ),
 )]
 pub async fn delete_generation_rule_handler(
@@ -2479,15 +2539,12 @@ pub struct ToggleRuleRequest {
 }
 
 #[utoipa::path(
-    put,
-    path = "/voucher-generation-rules/{ruleId}/toggle",
-    tag = "Voucher Generation Rule",
-    params(("ruleId" = Uuid, Path, description = "生成规则ID")),
-    request_body = serde_json::Value,
+    get,
+    path = "/finance/toggle_generation_rule",
+    tag = "Finance",
+    operation_id = "toggle_generation_rule_handler",
     responses(
-        (status = 200, description = "启用/禁用凭证生成规则成功", body = ApiResponse<serde_json::Value>),
-        (status = 404, description = "生成规则不存在"),
-        (status = 500, description = "服务器内部错误"),
+        (status = 200, description = "操作成功"),
     ),
 )]
 pub async fn toggle_generation_rule_handler(
@@ -2537,6 +2594,20 @@ pub async fn toggle_generation_rule_handler(
         Err(e) => Json(ApiResponse::error(500, &e.to_string())),
     }
 }
+#[utoipa::path(
+    post,
+    path = "/voucher-generation-rules/test",
+    responses(
+        (status = 200, description = "成功"),
+        (status = 201, description = "创建成功"),
+        (status = 400, description = "请求参数错误"),
+        (status = 401, description = "未授权"),
+        (status = 404, description = "资源不存在"),
+        (status = 500, description = "服务内部错误"),
+    ),
+    tag = "Finance",
+    operation_id = "test_rule_handler",
+)]
 
 async fn test_rule_handler(
     State(state): State<AppState>,
@@ -2559,6 +2630,15 @@ async fn test_rule_handler(
     }
 }
 
+#[utoipa::path(
+    post,
+    path = "/finance/vouchers",
+    tag = "Finance",
+    operation_id = "generate_vouchers_handler",
+    responses(
+        (status = 200, description = "操作成功"),
+    ),
+)]
 async fn generate_vouchers_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -2586,11 +2666,25 @@ async fn generate_vouchers_handler(
 
 // ========== V40.0 Phase 8: U8 导入 ==========
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, utoipa::IntoParams)]
 pub struct U8ImportQueryParams {
     pub status: Option<String>,
     pub source_system: Option<String>,
 }
+#[utoipa::path(
+    post,
+    path = "/u8-import/import",
+    responses(
+        (status = 200, description = "成功"),
+        (status = 201, description = "创建成功"),
+        (status = 400, description = "请求参数错误"),
+        (status = 401, description = "未授权"),
+        (status = 404, description = "资源不存在"),
+        (status = 500, description = "服务内部错误"),
+    ),
+    tag = "Finance",
+    operation_id = "import_vouchers_handler",
+)]
 
 async fn import_vouchers_handler(
     State(state): State<AppState>,
@@ -2614,6 +2708,15 @@ async fn import_vouchers_handler(
     }
 }
 
+#[utoipa::path(
+    post,
+    path = "/finance/import_status",
+    tag = "Finance",
+    operation_id = "get_import_status_handler",
+    responses(
+        (status = 200, description = "操作成功"),
+    ),
+)]
 async fn get_import_status_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -2630,6 +2733,15 @@ async fn get_import_status_handler(
     }
 }
 
+#[utoipa::path(
+    post,
+    path = "/finance/import_records",
+    tag = "Finance",
+    operation_id = "list_import_records_handler",
+    responses(
+        (status = 200, description = "操作成功"),
+    ),
+)]
 async fn list_import_records_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -2654,6 +2766,22 @@ async fn list_import_records_handler(
         Err(e) => Json(ApiResponse::error(500, &e.to_string())),
     }
 }
+#[utoipa::path(
+    get,
+    path = "/u8-import/records/{import_id}",
+    responses(
+        (status = 200, description = "成功"),
+        (status = 400, description = "请求参数错误"),
+        (status = 401, description = "未授权"),
+        (status = 404, description = "资源不存在"),
+        (status = 500, description = "服务内部错误"),
+    ),
+    params(
+        ("import_id" = String, Path, description = "资源 ID"),
+    ),
+    tag = "Finance",
+    operation_id = "get_import_record_handler",
+)]
 
 async fn get_import_record_handler(
     State(state): State<AppState>,
@@ -2671,6 +2799,15 @@ async fn get_import_record_handler(
     }
 }
 
+#[utoipa::path(
+    post,
+    path = "/finance/import",
+    tag = "Finance",
+    operation_id = "rollback_import_handler",
+    responses(
+        (status = 200, description = "操作成功"),
+    ),
+)]
 async fn rollback_import_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -2696,12 +2833,11 @@ pub struct ReceivableQueryParams {
 
 #[utoipa::path(
     get,
-    path = "/receivables",
-    tag = "Receivable",
-    params(ReceivableQueryParams),
+    path = "/finance/list_receivables",
+    tag = "Finance",
+    operation_id = "list_receivables_handler",
     responses(
-        (status = 200, description = "获取应收账款列表成功", body = ApiResponse<serde_json::Value>),
-        (status = 500, description = "服务器内部错误"),
+        (status = 200, description = "操作成功"),
     ),
 )]
 pub async fn list_receivables_handler(
@@ -2782,6 +2918,19 @@ async fn delete_receivable_handler(
         Err(e) => Json(ApiResponse::error(500, &e.to_string())),
     }
 }
+#[utoipa::path(
+    get,
+    path = "/receivables/aging",
+    responses(
+        (status = 200, description = "成功"),
+        (status = 400, description = "请求参数错误"),
+        (status = 401, description = "未授权"),
+        (status = 404, description = "资源不存在"),
+        (status = 500, description = "服务内部错误"),
+    ),
+    tag = "Finance",
+    operation_id = "get_receivable_aging_handler",
+)]
 
 async fn get_receivable_aging_handler(
     State(state): State<AppState>,
@@ -2797,12 +2946,11 @@ async fn get_receivable_aging_handler(
 
 #[utoipa::path(
     post,
-    path = "/receivables/batch",
-    tag = "Receivable",
-    request_body = serde_json::Value,
+    path = "/finance/batch_create_receivables",
+    tag = "Finance",
+    operation_id = "batch_create_receivables_handler",
     responses(
-        (status = 200, description = "批量创建应收账款成功", body = ApiResponse<serde_json::Value>),
-        (status = 500, description = "服务器内部错误"),
+        (status = 200, description = "操作成功"),
     ),
 )]
 pub async fn batch_create_receivables_handler(
@@ -2839,12 +2987,11 @@ pub struct PayableQueryParams {
 
 #[utoipa::path(
     get,
-    path = "/payables",
+    path = "/finance/payables",
     tag = "Payable",
-    params(PayableQueryParams),
+    operation_id = "list_payables_handler",
     responses(
-        (status = 200, description = "获取应付账款列表成功", body = ApiResponse<serde_json::Value>),
-        (status = 500, description = "服务器内部错误"),
+        (status = 200, description = "操作成功"),
     ),
 )]
 pub async fn list_payables_handler(
@@ -2922,6 +3069,19 @@ async fn delete_payable_handler(
         Err(e) => Json(ApiResponse::error(500, &e.to_string())),
     }
 }
+#[utoipa::path(
+    get,
+    path = "/payables/aging",
+    responses(
+        (status = 200, description = "成功"),
+        (status = 400, description = "请求参数错误"),
+        (status = 401, description = "未授权"),
+        (status = 404, description = "资源不存在"),
+        (status = 500, description = "服务内部错误"),
+    ),
+    tag = "Finance",
+    operation_id = "get_payable_aging_handler",
+)]
 
 async fn get_payable_aging_handler(
     State(state): State<AppState>,
@@ -2939,10 +3099,9 @@ async fn get_payable_aging_handler(
     post,
     path = "/payables/batch",
     tag = "Payable",
-    request_body = serde_json::Value,
+    operation_id = "batch_create_payables_handler",
     responses(
-        (status = 200, description = "批量创建应付账款成功", body = ApiResponse<serde_json::Value>),
-        (status = 500, description = "服务器内部错误"),
+        (status = 200, description = "操作成功"),
     ),
 )]
 pub async fn batch_create_payables_handler(
@@ -2969,7 +3128,7 @@ pub async fn batch_create_payables_handler(
 
 // ========== V41.0 Phase 9: 收款管理（Collections）==========
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, utoipa::IntoParams)]
 pub struct CollectionQueryParams {
     pub page: Option<i64>,
     pub page_size: Option<i64>,
@@ -2979,17 +3138,11 @@ pub struct CollectionQueryParams {
 
 #[utoipa::path(
     get,
-    path = "/ar/collections",
-    tag = "Receivable",
-    params(
-        ("page" = Option<i64>, Query, description = "页码"),
-        ("page_size" = Option<i64>, Query, description = "每页数量"),
-        ("status" = Option<String>, Query, description = "状态"),
-        ("customer_id" = Option<String>, Query, description = "客户ID"),
-    ),
+    path = "/finance/collections",
+    tag = "Finance",
+    operation_id = "list_collections_handler",
     responses(
-        (status = 200, description = "获取收款记录列表成功", body = ApiResponse<serde_json::Value>),
-        (status = 500, description = "服务器内部错误"),
+        (status = 200, description = "操作成功"),
     ),
 )]
 pub async fn list_collections_handler(
@@ -3013,6 +3166,22 @@ pub async fn list_collections_handler(
         Err(e) => Json(ApiResponse::error(500, &e.to_string())),
     }
 }
+#[utoipa::path(
+    get,
+    path = "/collections/{collection_id}",
+    responses(
+        (status = 200, description = "成功"),
+        (status = 400, description = "请求参数错误"),
+        (status = 401, description = "未授权"),
+        (status = 404, description = "资源不存在"),
+        (status = 500, description = "服务内部错误"),
+    ),
+    params(
+        ("collection_id" = String, Path, description = "资源 ID"),
+    ),
+    tag = "Finance",
+    operation_id = "get_collection_handler",
+)]
 
 async fn get_collection_handler(
     State(state): State<AppState>,
@@ -3029,12 +3198,11 @@ async fn get_collection_handler(
 
 #[utoipa::path(
     post,
-    path = "/ar/collections",
-    tag = "Receivable",
-    request_body = serde_json::Value,
+    path = "/finance/collection",
+    tag = "Finance",
+    operation_id = "create_collection_handler",
     responses(
-        (status = 200, description = "创建收款记录成功", body = ApiResponse<serde_json::Value>),
-        (status = 500, description = "服务器内部错误"),
+        (status = 200, description = "操作成功"),
     ),
 )]
 pub async fn create_collection_handler(
@@ -3051,6 +3219,15 @@ pub async fn create_collection_handler(
     }
 }
 
+#[utoipa::path(
+    put,
+    path = "/finance/collection/{id}",
+    tag = "Finance",
+    operation_id = "update_collection_handler",
+    responses(
+        (status = 200, description = "操作成功"),
+    ),
+)]
 async fn update_collection_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -3068,6 +3245,15 @@ async fn update_collection_handler(
     }
 }
 
+#[utoipa::path(
+    delete,
+    path = "/finance/collection/{id}",
+    tag = "Finance",
+    operation_id = "delete_collection_handler",
+    responses(
+        (status = 200, description = "操作成功"),
+    ),
+)]
 async fn delete_collection_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -3080,6 +3266,20 @@ async fn delete_collection_handler(
         Err(e) => Json(ApiResponse::error(500, &e.to_string())),
     }
 }
+#[utoipa::path(
+    post,
+    path = "/collections/write-off",
+    responses(
+        (status = 200, description = "成功"),
+        (status = 201, description = "创建成功"),
+        (status = 400, description = "请求参数错误"),
+        (status = 401, description = "未授权"),
+        (status = 404, description = "资源不存在"),
+        (status = 500, description = "服务内部错误"),
+    ),
+    tag = "Finance",
+    operation_id = "write_off_collection_handler",
+)]
 
 async fn write_off_collection_handler(
     State(state): State<AppState>,
@@ -3115,6 +3315,15 @@ async fn write_off_collection_handler(
     }
 }
 
+#[utoipa::path(
+    post,
+    path = "/finance/batch_write_off_collections",
+    tag = "Finance",
+    operation_id = "batch_write_off_collections_handler",
+    responses(
+        (status = 200, description = "操作成功"),
+    ),
+)]
 async fn batch_write_off_collections_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -3146,12 +3355,16 @@ pub struct PaymentRecordQueryParams {
 #[utoipa::path(
     get,
     path = "/ap/payments",
-    tag = "Payment",
     params(PaymentRecordQueryParams),
     responses(
-        (status = 200, description = "获取应付付款记录列表成功", body = ApiResponse<serde_json::Value>),
-        (status = 500, description = "服务器内部错误"),
+        (status = 200, description = "成功"),
+        (status = 400, description = "请求参数错误"),
+        (status = 401, description = "未授权"),
+        (status = 404, description = "资源不存在"),
+        (status = 500, description = "服务内部错误"),
     ),
+    tag = "Finance",
+    operation_id = "list_payment_records_handler",
 )]
 pub async fn list_payment_records_handler(
     State(state): State<AppState>,
@@ -3175,6 +3388,15 @@ pub async fn list_payment_records_handler(
     }
 }
 
+#[utoipa::path(
+    get,
+    path = "/finance/payment_record/{id}",
+    tag = "Finance",
+    operation_id = "get_payment_record_handler",
+    responses(
+        (status = 200, description = "操作成功"),
+    ),
+)]
 async fn get_payment_record_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -3190,12 +3412,11 @@ async fn get_payment_record_handler(
 
 #[utoipa::path(
     post,
-    path = "/ap/payments",
-    tag = "Payment",
-    request_body = serde_json::Value,
+    path = "/finance/create_payment_record",
+    tag = "Finance",
+    operation_id = "create_payment_record_handler",
     responses(
-        (status = 200, description = "创建应付付款记录成功", body = ApiResponse<serde_json::Value>),
-        (status = 500, description = "服务器内部错误"),
+        (status = 200, description = "操作成功"),
     ),
 )]
 pub async fn create_payment_record_handler(
@@ -3216,14 +3437,12 @@ pub async fn create_payment_record_handler(
 }
 
 #[utoipa::path(
-    post,
-    path = "/ap/payments/{id}/approve",
-    tag = "Payment",
-    params(("id" = Uuid, Path, description = "应付付款记录ID")),
+    get,
+    path = "/finance/approve_payment_record",
+    tag = "Finance",
+    operation_id = "approve_payment_record_handler",
     responses(
-        (status = 200, description = "审批应付付款记录成功", body = ApiResponse<serde_json::Value>),
-        (status = 404, description = "付款记录不存在"),
-        (status = 500, description = "服务器内部错误"),
+        (status = 200, description = "操作成功"),
     ),
 )]
 pub async fn approve_payment_record_handler(
@@ -3277,6 +3496,15 @@ pub async fn reject_payment_record_handler(
     }
 }
 
+#[utoipa::path(
+    put,
+    path = "/finance/payment_record/{id}",
+    tag = "Finance",
+    operation_id = "update_payment_record_handler",
+    responses(
+        (status = 200, description = "操作成功"),
+    ),
+)]
 async fn update_payment_record_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -3294,6 +3522,15 @@ async fn update_payment_record_handler(
     }
 }
 
+#[utoipa::path(
+    delete,
+    path = "/finance/payment_record/{id}",
+    tag = "Finance",
+    operation_id = "delete_payment_record_handler",
+    responses(
+        (status = 200, description = "操作成功"),
+    ),
+)]
 async fn delete_payment_record_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -3307,6 +3544,15 @@ async fn delete_payment_record_handler(
     }
 }
 
+#[utoipa::path(
+    post,
+    path = "/finance/write_off_payment_record",
+    tag = "Finance",
+    operation_id = "write_off_payment_record_handler",
+    responses(
+        (status = 200, description = "操作成功"),
+    ),
+)]
 async fn write_off_payment_record_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -3329,6 +3575,20 @@ async fn write_off_payment_record_handler(
         _ => Json(ApiResponse::error(400, "无效的ID格式")),
     }
 }
+#[utoipa::path(
+    post,
+    path = "/payment-records/batch-write-off",
+    responses(
+        (status = 200, description = "成功"),
+        (status = 201, description = "创建成功"),
+        (status = 400, description = "请求参数错误"),
+        (status = 401, description = "未授权"),
+        (status = 404, description = "资源不存在"),
+        (status = 500, description = "服务内部错误"),
+    ),
+    tag = "Finance",
+    operation_id = "batch_write_off_payments_handler",
+)]
 
 async fn batch_write_off_payments_handler(
     State(state): State<AppState>,
@@ -3350,13 +3610,22 @@ async fn batch_write_off_payments_handler(
 
 // ========== V41.0 Phase 9: 账龄分析（Aging）==========
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, utoipa::IntoParams)]
 pub struct AgingQueryParams {
     pub direction: Option<String>,
     pub bucket: Option<String>,
     pub months: Option<i32>,
 }
 
+#[utoipa::path(
+    post,
+    path = "/finance/calculate_receivable_aging",
+    tag = "Finance",
+    operation_id = "calculate_receivable_aging_handler",
+    responses(
+        (status = 200, description = "操作成功"),
+    ),
+)]
 async fn calculate_receivable_aging_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -3369,6 +3638,15 @@ async fn calculate_receivable_aging_handler(
     }
 }
 
+#[utoipa::path(
+    post,
+    path = "/finance/calculate_payable_aging",
+    tag = "Finance",
+    operation_id = "calculate_payable_aging_handler",
+    responses(
+        (status = 200, description = "操作成功"),
+    ),
+)]
 async fn calculate_payable_aging_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -3381,6 +3659,15 @@ async fn calculate_payable_aging_handler(
     }
 }
 
+#[utoipa::path(
+    get,
+    path = "/finance/aging_summary",
+    tag = "Finance",
+    operation_id = "get_aging_summary_handler",
+    responses(
+        (status = 200, description = "操作成功"),
+    ),
+)]
 async fn get_aging_summary_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -3392,6 +3679,22 @@ async fn get_aging_summary_handler(
         Err(e) => Json(ApiResponse::error(500, &e.to_string())),
     }
 }
+#[utoipa::path(
+    get,
+    path = "/aging/detail",
+    responses(
+        (status = 200, description = "成功"),
+        (status = 400, description = "请求参数错误"),
+        (status = 401, description = "未授权"),
+        (status = 404, description = "资源不存在"),
+        (status = 500, description = "服务内部错误"),
+    ),
+    params(
+        ("query" = AgingQueryParams, Query, description = "查询参数"),
+    ),
+    tag = "Finance",
+    operation_id = "get_aging_detail_handler",
+)]
 
 async fn get_aging_detail_handler(
     State(state): State<AppState>,
@@ -3410,6 +3713,15 @@ async fn get_aging_detail_handler(
     }
 }
 
+#[utoipa::path(
+    get,
+    path = "/finance/aging_trend",
+    tag = "Finance",
+    operation_id = "get_aging_trend_handler",
+    responses(
+        (status = 200, description = "操作成功"),
+    ),
+)]
 async fn get_aging_trend_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -3538,12 +3850,11 @@ pub async fn get_voucher_entries(
 
 #[utoipa::path(
     get,
-    path = "/vouchers/{id}/items",
-    tag = "Voucher",
-    params(("id" = Uuid, Path, description = "凭证ID")),
+    path = "/finance/voucher_items",
+    tag = "Finance",
+    operation_id = "get_voucher_items",
     responses(
-        (status = 200, description = "获取凭证明细成功", body = ApiResponse<serde_json::Value>),
-        (status = 500, description = "服务器内部错误"),
+        (status = 200, description = "操作成功"),
     ),
 )]
 pub async fn get_voucher_items(
@@ -3618,12 +3929,11 @@ pub async fn batch_create_vouchers(
 
 #[utoipa::path(
     post,
-    path = "/vouchers/batch-delete",
-    tag = "Voucher",
-    request_body = BatchDeleteVouchersRequest,
+    path = "/finance/batch_delete_vouchers",
+    tag = "Finance",
+    operation_id = "batch_delete_vouchers",
     responses(
-        (status = 200, description = "批量删除凭证成功", body = ApiResponse<serde_json::Value>),
-        (status = 500, description = "服务器内部错误"),
+        (status = 200, description = "操作成功"),
     ),
 )]
 pub async fn batch_delete_vouchers(
@@ -3654,13 +3964,11 @@ pub async fn batch_delete_vouchers(
 
 #[utoipa::path(
     post,
-    path = "/vouchers/{id}/unapprove",
-    tag = "Voucher",
-    params(("id" = Uuid, Path, description = "凭证ID")),
+    path = "/finance/voucher",
+    tag = "Finance",
+    operation_id = "unapprove_voucher",
     responses(
-        (status = 200, description = "反审核凭证成功", body = ApiResponse<serde_json::Value>),
-        (status = 404, description = "凭证不存在"),
-        (status = 500, description = "服务器内部错误"),
+        (status = 200, description = "操作成功"),
     ),
 )]
 pub async fn unapprove_voucher(
@@ -3732,12 +4040,11 @@ pub async fn reverse_voucher(
 
 #[utoipa::path(
     get,
-    path = "/vouchers/next-no",
-    tag = "Voucher",
-    params(NextVoucherNoQuery),
+    path = "/finance/next_voucher_no/{id}",
+    tag = "Finance",
+    operation_id = "get_next_voucher_no",
     responses(
-        (status = 200, description = "获取下一个凭证号成功", body = ApiResponse<serde_json::Value>),
-        (status = 500, description = "服务器内部错误"),
+        (status = 200, description = "操作成功"),
     ),
 )]
 pub async fn get_next_voucher_no(
@@ -3765,12 +4072,11 @@ pub async fn get_next_voucher_no(
 
 #[utoipa::path(
     post,
-    path = "/vouchers/generate",
-    tag = "Voucher",
-    request_body = GenerateVoucherRequest,
+    path = "/finance/voucher_by_template",
+    tag = "Finance",
+    operation_id = "generate_voucher_by_template",
     responses(
-        (status = 200, description = "按模板生成凭证成功", body = ApiResponse<serde_json::Value>),
-        (status = 500, description = "服务器内部错误"),
+        (status = 200, description = "操作成功"),
     ),
 )]
 pub async fn generate_voucher_by_template(
@@ -3834,12 +4140,11 @@ pub async fn import_vouchers_general(
 
 #[utoipa::path(
     post,
-    path = "/vouchers/import/u8",
-    tag = "Voucher",
-    request_body = serde_json::Value,
+    path = "/finance/vouchers_u8",
+    tag = "Finance",
+    operation_id = "import_vouchers_u8",
     responses(
-        (status = 200, description = "U8导入凭证成功", body = ApiResponse<serde_json::Value>),
-        (status = 500, description = "服务器内部错误"),
+        (status = 200, description = "操作成功"),
     ),
 )]
 pub async fn import_vouchers_u8(
@@ -3866,11 +4171,11 @@ pub async fn import_vouchers_u8(
 
 #[utoipa::path(
     get,
-    path = "/period/current",
+    path = "/finance/current_period/{id}",
     tag = "Finance",
+    operation_id = "get_current_period",
     responses(
-        (status = 200, description = "获取当前会计期间成功", body = ApiResponse<serde_json::Value>),
-        (status = 500, description = "服务器内部错误"),
+        (status = 200, description = "操作成功"),
     ),
 )]
 pub async fn get_current_period(
@@ -3890,12 +4195,11 @@ pub async fn get_current_period(
 
 #[utoipa::path(
     get,
-    path = "/periods",
+    path = "/finance/periods",
     tag = "Finance",
-    params(PeriodListQuery),
+    operation_id = "list_periods",
     responses(
-        (status = 200, description = "获取会计期间列表成功", body = ApiResponse<serde_json::Value>),
-        (status = 500, description = "服务器内部错误"),
+        (status = 200, description = "操作成功"),
     ),
 )]
 pub async fn list_periods(
@@ -3963,12 +4267,11 @@ pub async fn open_period_v2(
 
 #[utoipa::path(
     post,
-    path = "/periods/close",
+    path = "/finance/period_v2",
     tag = "Finance",
-    request_body = PeriodActionRequest,
+    operation_id = "close_period_v2",
     responses(
-        (status = 200, description = "关闭会计期间成功", body = ApiResponse<serde_json::Value>),
-        (status = 500, description = "服务器内部错误"),
+        (status = 200, description = "操作成功"),
     ),
 )]
 pub async fn close_period_v2(
@@ -4000,12 +4303,11 @@ pub async fn close_period_v2(
 
 #[utoipa::path(
     post,
-    path = "/periods/close-income",
+    path = "/finance/income_period",
     tag = "Finance",
-    request_body = PeriodActionRequest,
+    operation_id = "close_income_period",
     responses(
-        (status = 200, description = "损益结转成功", body = ApiResponse<serde_json::Value>),
-        (status = 500, description = "服务器内部错误"),
+        (status = 200, description = "操作成功"),
     ),
 )]
 pub async fn close_income_period(
@@ -4051,12 +4353,11 @@ pub async fn year_end_close_v2(
 
 #[utoipa::path(
     post,
-    path = "/reconcile",
-    tag = "Reconciliation",
-    request_body = ReconcileRequest,
+    path = "/finance/reconcile",
+    tag = "Finance",
+    operation_id = "reconcile_handler",
     responses(
-        (status = 200, description = "手动对账成功", body = ApiResponse<serde_json::Value>),
-        (status = 500, description = "服务器内部错误"),
+        (status = 200, description = "操作成功"),
     ),
 )]
 pub async fn reconcile_handler(
@@ -4077,12 +4378,11 @@ pub async fn reconcile_handler(
 
 #[utoipa::path(
     post,
-    path = "/reconcile/auto",
-    tag = "Reconciliation",
-    request_body = AutoReconcileRequest,
+    path = "/finance/reconcile",
+    tag = "Finance",
+    operation_id = "auto_reconcile_handler",
     responses(
-        (status = 200, description = "自动对账成功", body = ApiResponse<serde_json::Value>),
-        (status = 500, description = "服务器内部错误"),
+        (status = 200, description = "操作成功"),
     ),
 )]
 pub async fn auto_reconcile_handler(
@@ -4103,12 +4403,11 @@ pub async fn auto_reconcile_handler(
 
 #[utoipa::path(
     get,
-    path = "/ar/aging",
-    tag = "Receivable",
-    params(ArAgingQuery),
+    path = "/finance/ar_aging/{id}",
+    tag = "Finance",
+    operation_id = "get_ar_aging",
     responses(
-        (status = 200, description = "获取应收账龄分析成功", body = ApiResponse<serde_json::Value>),
-        (status = 500, description = "服务器内部错误"),
+        (status = 200, description = "操作成功"),
     ),
 )]
 pub async fn get_ar_aging(
@@ -4151,16 +4450,11 @@ pub async fn get_ap_aging(
 
 #[utoipa::path(
     get,
-    path = "/accounts/tree",
-    tag = "Accounting",
-    params(
-        ("category" = Option<String>, Query, description = "科目类别"),
-        ("status" = Option<String>, Query, description = "状态"),
-        ("include_disabled" = Option<bool>, Query, description = "包含禁用科目"),
-    ),
+    path = "/finance/account_tree/{id}",
+    tag = "Finance",
+    operation_id = "get_account_tree",
     responses(
-        (status = 200, description = "获取科目树成功", body = ApiResponse<serde_json::Value>),
-        (status = 500, description = "服务器内部错误"),
+        (status = 200, description = "操作成功"),
     ),
 )]
 pub async fn get_account_tree(
@@ -4205,14 +4499,11 @@ pub async fn get_account_tree(
 
 #[utoipa::path(
     put,
-    path = "/accounts/{id}",
-    tag = "Accounting",
-    params(("id" = Uuid, Path, description = "科目ID")),
-    request_body = serde_json::Value,
+    path = "/finance/account/{id}",
+    tag = "Finance",
+    operation_id = "update_account",
     responses(
-        (status = 200, description = "更新科目成功", body = ApiResponse<serde_json::Value>),
-        (status = 404, description = "科目不存在"),
-        (status = 500, description = "服务器内部错误"),
+        (status = 200, description = "操作成功"),
     ),
 )]
 pub async fn update_account(
@@ -4244,13 +4535,11 @@ pub async fn delete_account(
 
 #[utoipa::path(
     post,
-    path = "/accounts/{parentId}/children-batch",
-    tag = "Accounting",
-    params(("parentId" = Uuid, Path, description = "父科目ID")),
-    request_body = serde_json::Value,
+    path = "/finance/batch_create_account_children",
+    tag = "Finance",
+    operation_id = "batch_create_account_children",
     responses(
-        (status = 200, description = "批量创建子科目成功", body = ApiResponse<serde_json::Value>),
-        (status = 500, description = "服务器内部错误"),
+        (status = 200, description = "操作成功"),
     ),
 )]
 pub async fn batch_create_account_children(
@@ -4264,18 +4553,11 @@ pub async fn batch_create_account_children(
 
 #[utoipa::path(
     get,
-    path = "/accounts/opening-balances",
-    tag = "Accounting",
-    params(
-        ("period" = String, Query, description = "期间"),
-        ("account_ids" = Option<String>, Query, description = "科目ID列表"),
-        ("company_id" = Option<String>, Query, description = "公司ID"),
-        ("page" = Option<i32>, Query, description = "页码"),
-        ("pagesize" = Option<i32>, Query, description = "每页数量"),
-    ),
+    path = "/finance/opening_balances",
+    tag = "Finance",
+    operation_id = "get_opening_balances",
     responses(
-        (status = 200, description = "获取期初余额成功", body = ApiResponse<serde_json::Value>),
-        (status = 500, description = "服务器内部错误"),
+        (status = 200, description = "操作成功"),
     ),
 )]
 pub async fn get_opening_balances(
@@ -4291,13 +4573,11 @@ pub async fn get_opening_balances(
 
 #[utoipa::path(
     post,
-    path = "/accounts/{accountId}/opening-balance",
-    tag = "Accounting",
-    params(("accountId" = Uuid, Path, description = "科目ID")),
-    request_body = serde_json::Value,
+    path = "/finance/opening_balance",
+    tag = "Finance",
+    operation_id = "set_opening_balance",
     responses(
-        (status = 200, description = "设置期初余额成功", body = ApiResponse<serde_json::Value>),
-        (status = 500, description = "服务器内部错误"),
+        (status = 200, description = "操作成功"),
     ),
 )]
 pub async fn set_opening_balance(
@@ -4311,12 +4591,11 @@ pub async fn set_opening_balance(
 
 #[utoipa::path(
     post,
-    path = "/accounts/opening-balances/carry-forward",
-    tag = "Accounting",
-    request_body = serde_json::Value,
+    path = "/finance/opening_balance",
+    tag = "Finance",
+    operation_id = "carry_forward_opening_balance",
     responses(
-        (status = 200, description = "结转期初余额成功", body = ApiResponse<String>),
-        (status = 500, description = "服务器内部错误"),
+        (status = 200, description = "操作成功"),
     ),
 )]
 pub async fn carry_forward_opening_balance(
@@ -4331,16 +4610,11 @@ pub async fn carry_forward_opening_balance(
 
 #[utoipa::path(
     get,
-    path = "/counterparty/customers",
-    tag = "Counterparty",
-    params(
-        ("status" = Option<String>, Query, description = "状态"),
-        ("page" = Option<i32>, Query, description = "页码"),
-        ("pagesize" = Option<i32>, Query, description = "每页数量"),
-    ),
+    path = "/finance/counterparty_customers",
+    tag = "Finance",
+    operation_id = "list_counterparty_customers",
     responses(
-        (status = 200, description = "获取客户财务列表成功", body = ApiResponse<serde_json::Value>),
-        (status = 500, description = "服务器内部错误"),
+        (status = 200, description = "操作成功"),
     ),
 )]
 pub async fn list_counterparty_customers(
@@ -4356,13 +4630,11 @@ pub async fn list_counterparty_customers(
 
 #[utoipa::path(
     get,
-    path = "/counterparty/customers/{customerId}",
-    tag = "Counterparty",
-    params(("customerId" = String, Path, description = "客户ID")),
+    path = "/finance/counterparty_customer/{id}",
+    tag = "Finance",
+    operation_id = "get_counterparty_customer",
     responses(
-        (status = 200, description = "获取客户财务信息成功", body = ApiResponse<serde_json::Value>),
-        (status = 404, description = "客户不存在"),
-        (status = 500, description = "服务器内部错误"),
+        (status = 200, description = "操作成功"),
     ),
 )]
 pub async fn get_counterparty_customer(
@@ -4401,16 +4673,11 @@ pub async fn update_counterparty_customer(
 
 #[utoipa::path(
     get,
-    path = "/counterparty/suppliers",
-    tag = "Counterparty",
-    params(
-        ("status" = Option<String>, Query, description = "状态"),
-        ("page" = Option<i32>, Query, description = "页码"),
-        ("pagesize" = Option<i32>, Query, description = "每页数量"),
-    ),
+    path = "/finance/counterparty_suppliers",
+    tag = "Finance",
+    operation_id = "list_counterparty_suppliers",
     responses(
-        (status = 200, description = "获取供应商财务列表成功", body = ApiResponse<serde_json::Value>),
-        (status = 500, description = "服务器内部错误"),
+        (status = 200, description = "操作成功"),
     ),
 )]
 pub async fn list_counterparty_suppliers(
@@ -4426,13 +4693,11 @@ pub async fn list_counterparty_suppliers(
 
 #[utoipa::path(
     get,
-    path = "/counterparty/suppliers/{supplierId}",
-    tag = "Counterparty",
-    params(("supplierId" = String, Path, description = "供应商ID")),
+    path = "/finance/counterparty_supplier/{id}",
+    tag = "Finance",
+    operation_id = "get_counterparty_supplier",
     responses(
-        (status = 200, description = "获取供应商财务信息成功", body = ApiResponse<serde_json::Value>),
-        (status = 404, description = "供应商不存在"),
-        (status = 500, description = "服务器内部错误"),
+        (status = 200, description = "操作成功"),
     ),
 )]
 pub async fn get_counterparty_supplier(
@@ -4448,13 +4713,11 @@ pub async fn get_counterparty_supplier(
 
 #[utoipa::path(
     put,
-    path = "/counterparty/suppliers/{supplierId}",
-    tag = "Counterparty",
-    params(("supplierId" = String, Path, description = "供应商ID")),
-    request_body = serde_json::Value,
+    path = "/finance/counterparty_supplier/{id}",
+    tag = "Finance",
+    operation_id = "update_counterparty_supplier",
     responses(
-        (status = 200, description = "更新供应商财务信息成功", body = ApiResponse<serde_json::Value>),
-        (status = 500, description = "服务器内部错误"),
+        (status = 200, description = "操作成功"),
     ),
 )]
 pub async fn update_counterparty_supplier(
@@ -4473,18 +4736,11 @@ pub async fn update_counterparty_supplier(
 
 #[utoipa::path(
     get,
-    path = "/expense-approvals",
-    tag = "Expense Approval",
-    params(
-        ("page" = Option<i32>, Query, description = "页码"),
-        ("pagesize" = Option<i32>, Query, description = "每页数量"),
-        ("search" = Option<String>, Query, description = "搜索关键词"),
-        ("expense_type" = Option<String>, Query, description = "费用类型"),
-        ("status" = Option<String>, Query, description = "状态"),
-    ),
+    path = "/finance/expense_approvals",
+    tag = "Finance",
+    operation_id = "list_expense_approvals",
     responses(
-        (status = 200, description = "获取费用审批列表成功", body = ApiResponse<serde_json::Value>),
-        (status = 500, description = "服务器内部错误"),
+        (status = 200, description = "操作成功"),
     ),
 )]
 pub async fn list_expense_approvals(
@@ -4518,13 +4774,11 @@ pub async fn create_expense_approval(
 
 #[utoipa::path(
     get,
-    path = "/expense-approvals/{id}",
-    tag = "Expense Approval",
-    params(("id" = String, Path, description = "费用审批ID")),
+    path = "/finance/expense_approval/{id}",
+    tag = "Finance",
+    operation_id = "get_expense_approval",
     responses(
-        (status = 200, description = "获取费用审批成功", body = ApiResponse<serde_json::Value>),
-        (status = 404, description = "费用审批不存在"),
-        (status = 500, description = "服务器内部错误"),
+        (status = 200, description = "操作成功"),
     ),
 )]
 pub async fn get_expense_approval(
@@ -4540,13 +4794,11 @@ pub async fn get_expense_approval(
 
 #[utoipa::path(
     put,
-    path = "/expense-approvals/{id}",
-    tag = "Expense Approval",
-    params(("id" = String, Path, description = "费用审批ID")),
-    request_body = serde_json::Value,
+    path = "/finance/expense_approval/{id}",
+    tag = "Finance",
+    operation_id = "update_expense_approval",
     responses(
-        (status = 200, description = "更新费用审批成功", body = ApiResponse<serde_json::Value>),
-        (status = 500, description = "服务器内部错误"),
+        (status = 200, description = "操作成功"),
     ),
 )]
 pub async fn update_expense_approval(
@@ -4563,12 +4815,11 @@ pub async fn update_expense_approval(
 
 #[utoipa::path(
     delete,
-    path = "/expense-approvals/{id}",
-    tag = "Expense Approval",
-    params(("id" = String, Path, description = "费用审批ID")),
+    path = "/finance/expense_approval/{id}",
+    tag = "Finance",
+    operation_id = "delete_expense_approval",
     responses(
-        (status = 200, description = "删除费用审批成功", body = ApiResponse<String>),
-        (status = 500, description = "服务器内部错误"),
+        (status = 200, description = "操作成功"),
     ),
 )]
 pub async fn delete_expense_approval(
@@ -4581,12 +4832,11 @@ pub async fn delete_expense_approval(
 
 #[utoipa::path(
     post,
-    path = "/expense-approvals/{id}/submit",
-    tag = "Expense Approval",
-    params(("id" = String, Path, description = "费用审批ID")),
+    path = "/finance/expense_approval",
+    tag = "Finance",
+    operation_id = "submit_expense_approval",
     responses(
-        (status = 200, description = "提交费用审批成功", body = ApiResponse<serde_json::Value>),
-        (status = 500, description = "服务器内部错误"),
+        (status = 200, description = "操作成功"),
     ),
 )]
 pub async fn submit_expense_approval(
@@ -4602,12 +4852,11 @@ pub async fn submit_expense_approval(
 
 #[utoipa::path(
     post,
-    path = "/expense-approvals/{id}/approve",
-    tag = "Expense Approval",
-    params(("id" = String, Path, description = "费用审批ID")),
+    path = "/finance/expense_approval",
+    tag = "Finance",
+    operation_id = "approve_expense_approval",
     responses(
-        (status = 200, description = "审批通过成功", body = ApiResponse<serde_json::Value>),
-        (status = 500, description = "服务器内部错误"),
+        (status = 200, description = "操作成功"),
     ),
 )]
 pub async fn approve_expense_approval(
@@ -4648,18 +4897,11 @@ pub async fn reject_expense_approval(
 
 #[utoipa::path(
     get,
-    path = "/reports/account-balance",
-    tag = "Report",
-    params(
-        ("org_id" = String, Query, description = "组织ID"),
-        ("period" = String, Query, description = "期间"),
-        ("account_ids" = Option<String>, Query, description = "科目ID列表"),
-        ("level" = Option<i32>, Query, description = "层级"),
-        ("show_zero_balance" = Option<bool>, Query, description = "显示零余额"),
-    ),
+    path = "/finance/account_balance_report/{id}",
+    tag = "Finance",
+    operation_id = "get_account_balance_report",
     responses(
-        (status = 200, description = "获取科目余额表成功", body = ApiResponse<serde_json::Value>),
-        (status = 500, description = "服务器内部错误"),
+        (status = 200, description = "操作成功"),
     ),
 )]
 pub async fn get_account_balance_report(
@@ -4675,21 +4917,11 @@ pub async fn get_account_balance_report(
 
 #[utoipa::path(
     get,
-    path = "/reports/account-ledger",
-    tag = "Report",
-    params(
-        ("account_id" = String, Query, description = "科目ID"),
-        ("start_period" = String, Query, description = "起始期间"),
-        ("end_period" = String, Query, description = "结束期间"),
-        ("org_id" = Option<String>, Query, description = "组织ID"),
-        ("department_id" = Option<String>, Query, description = "部门ID"),
-        ("project_id" = Option<String>, Query, description = "项目ID"),
-        ("page" = Option<i32>, Query, description = "页码"),
-        ("pagesize" = Option<i32>, Query, description = "每页数量"),
-    ),
+    path = "/finance/account_ledger_report/{id}",
+    tag = "Finance",
+    operation_id = "get_account_ledger_report",
     responses(
-        (status = 200, description = "获取总账成功", body = ApiResponse<serde_json::Value>),
-        (status = 500, description = "服务器内部错误"),
+        (status = 200, description = "操作成功"),
     ),
 )]
 pub async fn get_account_ledger_report(
@@ -4705,18 +4937,11 @@ pub async fn get_account_ledger_report(
 
 #[utoipa::path(
     get,
-    path = "/reports/dimension-detail",
-    tag = "Report",
-    params(
-        ("dimension" = String, Query, description = "维度"),
-        ("dimension_id" = String, Query, description = "维度ID"),
-        ("start_period" = String, Query, description = "起始期间"),
-        ("end_period" = String, Query, description = "结束期间"),
-        ("org_id" = Option<String>, Query, description = "组织ID"),
-    ),
+    path = "/finance/dimension_detail_report/{id}",
+    tag = "Finance",
+    operation_id = "get_dimension_detail_report",
     responses(
-        (status = 200, description = "获取维度明细表成功", body = ApiResponse<serde_json::Value>),
-        (status = 500, description = "服务器内部错误"),
+        (status = 200, description = "操作成功"),
     ),
 )]
 pub async fn get_dimension_detail_report(
@@ -4731,16 +4956,12 @@ pub async fn get_dimension_detail_report(
 }
 
 #[utoipa::path(
-    get,
-    path = "/reports/balance-sheet/export",
-    tag = "Report",
-    params(
-        ("period" = String, Query, description = "期间"),
-        ("org_id" = Option<String>, Query, description = "组织ID"),
-    ),
+    post,
+    path = "/finance/balance_sheet_report",
+    tag = "Finance",
+    operation_id = "export_balance_sheet_report",
     responses(
-        (status = 200, description = "导出资产负债表成功", body = ApiResponse<serde_json::Value>),
-        (status = 500, description = "服务器内部错误"),
+        (status = 200, description = "操作成功"),
     ),
 )]
 pub async fn export_balance_sheet_report(
@@ -4779,16 +5000,12 @@ pub async fn export_income_statement_report(
 }
 
 #[utoipa::path(
-    get,
-    path = "/reports/cash-flow/export",
-    tag = "Report",
-    params(
-        ("period" = String, Query, description = "期间"),
-        ("org_id" = Option<String>, Query, description = "组织ID"),
-    ),
+    post,
+    path = "/finance/cash_flow_report",
+    tag = "Finance",
+    operation_id = "export_cash_flow_report",
     responses(
-        (status = 200, description = "导出现金流量表成功", body = ApiResponse<serde_json::Value>),
-        (status = 500, description = "服务器内部错误"),
+        (status = 200, description = "操作成功"),
     ),
 )]
 pub async fn export_cash_flow_report(

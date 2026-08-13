@@ -1256,6 +1256,20 @@ impl LiquidityOptimizer {
 // ==================== API Handlers ====================
 
 // --- Cash Pool Handlers ---
+#[utoipa::path(
+    post,
+    path = "/finance-v58/pool",
+    responses(
+        (status = 200, description = "成功"),
+        (status = 201, description = "创建成功"),
+        (status = 400, description = "请求参数错误"),
+        (status = 401, description = "未授权"),
+        (status = 404, description = "资源不存在"),
+        (status = 500, description = "服务内部错误"),
+    ),
+    tag = "Finance Treasury V58",
+    operation_id = "create_pool_handler",
+)]
 
 async fn create_pool_handler(
     State(state): State<AppState>,
@@ -1270,6 +1284,15 @@ async fn create_pool_handler(
     }
 }
 
+#[utoipa::path(
+    get,
+    path = "/finance-v58/pool/{id}",
+    tag = "TreasuryV58",
+    operation_id = "get_pool_handler",
+    responses(
+        (status = 200, description = "操作成功"),
+    ),
+)]
 async fn get_pool_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -1283,6 +1306,15 @@ async fn get_pool_handler(
     }
 }
 
+#[utoipa::path(
+    get,
+    path = "/finance-v58/pools",
+    tag = "TreasuryV58",
+    operation_id = "list_pools_handler",
+    responses(
+        (status = 200, description = "操作成功"),
+    ),
+)]
 async fn list_pools_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -1295,6 +1327,15 @@ async fn list_pools_handler(
     }
 }
 
+#[utoipa::path(
+    post,
+    path = "/finance-v58/allocate_funds",
+    tag = "TreasuryV58",
+    operation_id = "allocate_funds_handler",
+    responses(
+        (status = 200, description = "操作成功"),
+    ),
+)]
 async fn allocate_funds_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -1307,6 +1348,20 @@ async fn allocate_funds_handler(
         Err(e) => Json(ApiResponse::error(500, &e.to_string())),
     }
 }
+#[utoipa::path(
+    post,
+    path = "/finance-v58/pool/transfer",
+    responses(
+        (status = 200, description = "成功"),
+        (status = 201, description = "创建成功"),
+        (status = 400, description = "请求参数错误"),
+        (status = 401, description = "未授权"),
+        (status = 404, description = "资源不存在"),
+        (status = 500, description = "服务内部错误"),
+    ),
+    tag = "Finance Treasury V58",
+    operation_id = "transfer_handler",
+)]
 
 async fn transfer_handler(
     State(state): State<AppState>,
@@ -1321,6 +1376,15 @@ async fn transfer_handler(
     }
 }
 
+#[utoipa::path(
+    get,
+    path = "/finance-v58/pool_balance/{id}",
+    tag = "TreasuryV58",
+    operation_id = "get_pool_balance_handler",
+    responses(
+        (status = 200, description = "操作成功"),
+    ),
+)]
 async fn get_pool_balance_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -1334,6 +1398,15 @@ async fn get_pool_balance_handler(
     }
 }
 
+#[utoipa::path(
+    get,
+    path = "/finance-v58/pool_history",
+    tag = "TreasuryV58",
+    operation_id = "get_pool_history_handler",
+    responses(
+        (status = 200, description = "操作成功"),
+    ),
+)]
 async fn get_pool_history_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -1347,6 +1420,15 @@ async fn get_pool_history_handler(
     }
 }
 
+#[utoipa::path(
+    post,
+    path = "/finance-v58/consolidate_cash",
+    tag = "TreasuryV58",
+    operation_id = "consolidate_cash_handler",
+    responses(
+        (status = 200, description = "操作成功"),
+    ),
+)]
 async fn consolidate_cash_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -1361,6 +1443,20 @@ async fn consolidate_cash_handler(
 }
 
 // --- Forecasting Handlers ---
+#[utoipa::path(
+    post,
+    path = "/finance-v58/forecast/scenario",
+    responses(
+        (status = 200, description = "成功"),
+        (status = 201, description = "创建成功"),
+        (status = 400, description = "请求参数错误"),
+        (status = 401, description = "未授权"),
+        (status = 404, description = "资源不存在"),
+        (status = 500, description = "服务内部错误"),
+    ),
+    tag = "Finance Treasury V58",
+    operation_id = "create_scenario_handler",
+)]
 
 async fn create_scenario_handler(
     State(state): State<AppState>,
@@ -1375,6 +1471,15 @@ async fn create_scenario_handler(
     }
 }
 
+#[utoipa::path(
+    post,
+    path = "/finance-v58/forecast",
+    tag = "TreasuryV58",
+    operation_id = "run_forecast_handler",
+    responses(
+        (status = 200, description = "操作成功"),
+    ),
+)]
 async fn run_forecast_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -1388,6 +1493,15 @@ async fn run_forecast_handler(
     }
 }
 
+#[utoipa::path(
+    get,
+    path = "/finance-v58/forecast/{id}",
+    tag = "TreasuryV58",
+    operation_id = "get_forecast_handler",
+    responses(
+        (status = 200, description = "操作成功"),
+    ),
+)]
 async fn get_forecast_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -1401,6 +1515,15 @@ async fn get_forecast_handler(
     }
 }
 
+#[utoipa::path(
+    get,
+    path = "/finance-v58/scenarios",
+    tag = "TreasuryV58",
+    operation_id = "list_scenarios_handler",
+    responses(
+        (status = 200, description = "操作成功"),
+    ),
+)]
 async fn list_scenarios_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -1412,6 +1535,20 @@ async fn list_scenarios_handler(
         Err(e) => Json(ApiResponse::error(500, &e.to_string())),
     }
 }
+#[utoipa::path(
+    post,
+    path = "/finance-v58/forecast/compare",
+    responses(
+        (status = 200, description = "成功"),
+        (status = 201, description = "创建成功"),
+        (status = 400, description = "请求参数错误"),
+        (status = 401, description = "未授权"),
+        (status = 404, description = "资源不存在"),
+        (status = 500, description = "服务内部错误"),
+    ),
+    tag = "Finance Treasury V58",
+    operation_id = "compare_scenarios_handler",
+)]
 
 async fn compare_scenarios_handler(
     State(state): State<AppState>,
@@ -1426,6 +1563,15 @@ async fn compare_scenarios_handler(
     }
 }
 
+#[utoipa::path(
+    get,
+    path = "/finance-v58/forecast_summary",
+    tag = "TreasuryV58",
+    operation_id = "get_forecast_summary_handler",
+    responses(
+        (status = 200, description = "操作成功"),
+    ),
+)]
 async fn get_forecast_summary_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -1438,6 +1584,15 @@ async fn get_forecast_summary_handler(
     }
 }
 
+#[utoipa::path(
+    put,
+    path = "/finance-v58/assumptions/{id}",
+    tag = "TreasuryV58",
+    operation_id = "update_assumptions_handler",
+    responses(
+        (status = 200, description = "操作成功"),
+    ),
+)]
 async fn update_assumptions_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -1454,6 +1609,15 @@ async fn update_assumptions_handler(
 
 // --- Liquidity Handlers ---
 
+#[utoipa::path(
+    get,
+    path = "/finance-v58/liquidity_snapshot/{id}",
+    tag = "TreasuryV58",
+    operation_id = "get_liquidity_snapshot_handler",
+    responses(
+        (status = 200, description = "操作成功"),
+    ),
+)]
 async fn get_liquidity_snapshot_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -1465,6 +1629,20 @@ async fn get_liquidity_snapshot_handler(
         Err(e) => Json(ApiResponse::error(500, &e.to_string())),
     }
 }
+#[utoipa::path(
+    post,
+    path = "/finance-v58/liquidity/optimize",
+    responses(
+        (status = 200, description = "成功"),
+        (status = 201, description = "创建成功"),
+        (status = 400, description = "请求参数错误"),
+        (status = 401, description = "未授权"),
+        (status = 404, description = "资源不存在"),
+        (status = 500, description = "服务内部错误"),
+    ),
+    tag = "Finance Treasury V58",
+    operation_id = "optimize_liquidity_handler",
+)]
 
 async fn optimize_liquidity_handler(
     State(state): State<AppState>,
@@ -1479,6 +1657,15 @@ async fn optimize_liquidity_handler(
     }
 }
 
+#[utoipa::path(
+    get,
+    path = "/finance-v58/recommendations",
+    tag = "TreasuryV58",
+    operation_id = "get_recommendations_handler",
+    responses(
+        (status = 200, description = "操作成功"),
+    ),
+)]
 async fn get_recommendations_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -1491,6 +1678,15 @@ async fn get_recommendations_handler(
     }
 }
 
+#[utoipa::path(
+    post,
+    path = "/finance-v58/action",
+    tag = "TreasuryV58",
+    operation_id = "execute_action_handler",
+    responses(
+        (status = 200, description = "操作成功"),
+    ),
+)]
 async fn execute_action_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -1504,6 +1700,15 @@ async fn execute_action_handler(
     }
 }
 
+#[utoipa::path(
+    get,
+    path = "/finance-v58/targets",
+    tag = "TreasuryV58",
+    operation_id = "get_targets_handler",
+    responses(
+        (status = 200, description = "操作成功"),
+    ),
+)]
 async fn get_targets_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -1515,6 +1720,22 @@ async fn get_targets_handler(
         Err(e) => Json(ApiResponse::error(500, &e.to_string())),
     }
 }
+#[utoipa::path(
+    put,
+    path = "/finance-v58/liquidity/target/{id}",
+    responses(
+        (status = 200, description = "成功"),
+        (status = 400, description = "请求参数错误"),
+        (status = 401, description = "未授权"),
+        (status = 404, description = "资源不存在"),
+        (status = 500, description = "服务内部错误"),
+    ),
+    params(
+        ("id" = String, Path, description = "资源 ID"),
+    ),
+    tag = "Finance Treasury V58",
+    operation_id = "set_target_handler",
+)]
 
 async fn set_target_handler(
     State(state): State<AppState>,
@@ -1530,6 +1751,15 @@ async fn set_target_handler(
     }
 }
 
+#[utoipa::path(
+    get,
+    path = "/finance-v58/optimization_history",
+    tag = "TreasuryV58",
+    operation_id = "get_optimization_history_handler",
+    responses(
+        (status = 200, description = "操作成功"),
+    ),
+)]
 async fn get_optimization_history_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,

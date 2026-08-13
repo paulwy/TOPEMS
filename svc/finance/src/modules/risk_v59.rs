@@ -775,7 +775,7 @@ pub struct UpdateModelRequest {
     pub status: Option<String>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, utoipa::IntoParams)]
 pub struct CompareModelsRequest {
     pub model_ids: Vec<Uuid>,
 }
@@ -1381,6 +1381,20 @@ impl StressTestEngine {
 // ==================== API Handlers ====================
 
 // --- Anti-Fraud Handlers ---
+#[utoipa::path(
+    post,
+    path = "/finance-v59/fraud/analyze",
+    responses(
+        (status = 200, description = "成功"),
+        (status = 201, description = "创建成功"),
+        (status = 400, description = "请求参数错误"),
+        (status = 401, description = "未授权"),
+        (status = 404, description = "资源不存在"),
+        (status = 500, description = "服务内部错误"),
+    ),
+    tag = "Finance Risk V59",
+    operation_id = "analyze_transaction_handler",
+)]
 
 async fn analyze_transaction_handler(
     State(state): State<AppState>,
@@ -1395,6 +1409,15 @@ async fn analyze_transaction_handler(
     }
 }
 
+#[utoipa::path(
+    get,
+    path = "/finance-v59/fraud_decision/{id}",
+    tag = "RiskV59",
+    operation_id = "get_fraud_decision_handler",
+    responses(
+        (status = 200, description = "操作成功"),
+    ),
+)]
 async fn get_fraud_decision_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -1408,11 +1431,20 @@ async fn get_fraud_decision_handler(
     }
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, utoipa::IntoParams)]
 pub struct SignalQueryParams {
     pub signal_type: Option<String>,
 }
 
+#[utoipa::path(
+    get,
+    path = "/finance-v59/signals",
+    tag = "RiskV59",
+    operation_id = "get_signals_handler",
+    responses(
+        (status = 200, description = "操作成功"),
+    ),
+)]
 async fn get_signals_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -1426,6 +1458,15 @@ async fn get_signals_handler(
     }
 }
 
+#[utoipa::path(
+    post,
+    path = "/finance-v59/device",
+    tag = "RiskV59",
+    operation_id = "create_device_handler",
+    responses(
+        (status = 200, description = "操作成功"),
+    ),
+)]
 async fn create_device_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -1438,6 +1479,22 @@ async fn create_device_handler(
         Err(e) => Json(ApiResponse::error(500, &e.to_string())),
     }
 }
+#[utoipa::path(
+    get,
+    path = "/finance-v59/fraud/device/{id}",
+    responses(
+        (status = 200, description = "成功"),
+        (status = 400, description = "请求参数错误"),
+        (status = 401, description = "未授权"),
+        (status = 404, description = "资源不存在"),
+        (status = 500, description = "服务内部错误"),
+    ),
+    params(
+        ("id" = String, Path, description = "资源 ID"),
+    ),
+    tag = "Finance Risk V59",
+    operation_id = "get_device_handler",
+)]
 
 async fn get_device_handler(
     State(state): State<AppState>,
@@ -1460,6 +1517,15 @@ async fn get_device_handler(
     }
 }
 
+#[utoipa::path(
+    get,
+    path = "/finance-v59/blocked_devices",
+    tag = "RiskV59",
+    operation_id = "list_blocked_devices_handler",
+    responses(
+        (status = 200, description = "操作成功"),
+    ),
+)]
 async fn list_blocked_devices_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -1472,6 +1538,15 @@ async fn list_blocked_devices_handler(
     }
 }
 
+#[utoipa::path(
+    post,
+    path = "/finance-v59/rule",
+    tag = "RiskV59",
+    operation_id = "add_rule_handler",
+    responses(
+        (status = 200, description = "操作成功"),
+    ),
+)]
 async fn add_rule_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -1485,6 +1560,15 @@ async fn add_rule_handler(
     }
 }
 
+#[utoipa::path(
+    get,
+    path = "/finance-v59/rules",
+    tag = "RiskV59",
+    operation_id = "get_rules_handler",
+    responses(
+        (status = 200, description = "操作成功"),
+    ),
+)]
 async fn get_rules_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -1498,6 +1582,20 @@ async fn get_rules_handler(
 }
 
 // --- Credit Scoring Handlers ---
+#[utoipa::path(
+    post,
+    path = "/finance-v59/credit/score",
+    responses(
+        (status = 200, description = "成功"),
+        (status = 201, description = "创建成功"),
+        (status = 400, description = "请求参数错误"),
+        (status = 401, description = "未授权"),
+        (status = 404, description = "资源不存在"),
+        (status = 500, description = "服务内部错误"),
+    ),
+    tag = "Finance Risk V59",
+    operation_id = "calculate_score_handler",
+)]
 
 async fn calculate_score_handler(
     State(state): State<AppState>,
@@ -1512,6 +1610,15 @@ async fn calculate_score_handler(
     }
 }
 
+#[utoipa::path(
+    put,
+    path = "/finance-v59/credit_profile/{id}",
+    tag = "RiskV59",
+    operation_id = "get_credit_profile_handler",
+    responses(
+        (status = 200, description = "操作成功"),
+    ),
+)]
 async fn get_credit_profile_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -1525,6 +1632,15 @@ async fn get_credit_profile_handler(
     }
 }
 
+#[utoipa::path(
+    get,
+    path = "/finance-v59/scoring_models",
+    tag = "RiskV59",
+    operation_id = "get_scoring_models_handler",
+    responses(
+        (status = 200, description = "操作成功"),
+    ),
+)]
 async fn get_scoring_models_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -1537,6 +1653,15 @@ async fn get_scoring_models_handler(
     }
 }
 
+#[utoipa::path(
+    post,
+    path = "/finance-v59/model",
+    tag = "RiskV59",
+    operation_id = "create_model_handler",
+    responses(
+        (status = 200, description = "操作成功"),
+    ),
+)]
 async fn create_model_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -1549,6 +1674,22 @@ async fn create_model_handler(
         Err(e) => Json(ApiResponse::error(500, &e.to_string())),
     }
 }
+#[utoipa::path(
+    put,
+    path = "/finance-v59/credit/model/{id}",
+    responses(
+        (status = 200, description = "成功"),
+        (status = 400, description = "请求参数错误"),
+        (status = 401, description = "未授权"),
+        (status = 404, description = "资源不存在"),
+        (status = 500, description = "服务内部错误"),
+    ),
+    params(
+        ("id" = String, Path, description = "资源 ID"),
+    ),
+    tag = "Finance Risk V59",
+    operation_id = "update_model_handler",
+)]
 
 async fn update_model_handler(
     State(state): State<AppState>,
@@ -1564,11 +1705,20 @@ async fn update_model_handler(
     }
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, utoipa::IntoParams)]
 pub struct FactorQueryParams {
     pub entity_id: Option<String>,
 }
 
+#[utoipa::path(
+    post,
+    path = "/finance-v59/score_factors",
+    tag = "RiskV59",
+    operation_id = "get_score_factors_handler",
+    responses(
+        (status = 200, description = "操作成功"),
+    ),
+)]
 async fn get_score_factors_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -1582,6 +1732,15 @@ async fn get_score_factors_handler(
     }
 }
 
+#[utoipa::path(
+    get,
+    path = "/finance-v59/model_comparison/{id}",
+    tag = "RiskV59",
+    operation_id = "get_model_comparison_handler",
+    responses(
+        (status = 200, description = "操作成功"),
+    ),
+)]
 async fn get_model_comparison_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -1595,6 +1754,15 @@ async fn get_model_comparison_handler(
     }
 }
 
+#[utoipa::path(
+    post,
+    path = "/finance-v59/bulk_score",
+    tag = "RiskV59",
+    operation_id = "bulk_score_handler",
+    responses(
+        (status = 200, description = "操作成功"),
+    ),
+)]
 async fn bulk_score_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -1609,6 +1777,20 @@ async fn bulk_score_handler(
 }
 
 // --- Stress Testing Handlers ---
+#[utoipa::path(
+    post,
+    path = "/finance-v59/stress/scenario",
+    responses(
+        (status = 200, description = "成功"),
+        (status = 201, description = "创建成功"),
+        (status = 400, description = "请求参数错误"),
+        (status = 401, description = "未授权"),
+        (status = 404, description = "资源不存在"),
+        (status = 500, description = "服务内部错误"),
+    ),
+    tag = "Finance Risk V59",
+    operation_id = "create_scenario_handler",
+)]
 
 async fn create_scenario_handler(
     State(state): State<AppState>,
@@ -1623,6 +1805,15 @@ async fn create_scenario_handler(
     }
 }
 
+#[utoipa::path(
+    post,
+    path = "/finance-v59/stress_test",
+    tag = "RiskV59",
+    operation_id = "run_stress_test_handler",
+    responses(
+        (status = 200, description = "操作成功"),
+    ),
+)]
 async fn run_stress_test_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -1636,6 +1827,15 @@ async fn run_stress_test_handler(
     }
 }
 
+#[utoipa::path(
+    get,
+    path = "/finance-v59/test_result/{id}",
+    tag = "RiskV59",
+    operation_id = "get_test_result_handler",
+    responses(
+        (status = 200, description = "操作成功"),
+    ),
+)]
 async fn get_test_result_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -1649,6 +1849,15 @@ async fn get_test_result_handler(
     }
 }
 
+#[utoipa::path(
+    get,
+    path = "/finance-v59/scenarios",
+    tag = "RiskV59",
+    operation_id = "list_scenarios_handler",
+    responses(
+        (status = 200, description = "操作成功"),
+    ),
+)]
 async fn list_scenarios_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -1660,6 +1869,20 @@ async fn list_scenarios_handler(
         Err(e) => Json(ApiResponse::error(500, &e.to_string())),
     }
 }
+#[utoipa::path(
+    post,
+    path = "/finance-v59/stress/compare",
+    responses(
+        (status = 200, description = "成功"),
+        (status = 201, description = "创建成功"),
+        (status = 400, description = "请求参数错误"),
+        (status = 401, description = "未授权"),
+        (status = 404, description = "资源不存在"),
+        (status = 500, description = "服务内部错误"),
+    ),
+    tag = "Finance Risk V59",
+    operation_id = "compare_scenarios_handler",
+)]
 
 async fn compare_scenarios_handler(
     State(state): State<AppState>,
@@ -1674,11 +1897,20 @@ async fn compare_scenarios_handler(
     }
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, utoipa::IntoParams)]
 pub struct GetParamsQueryParams {
     pub scenario_id: Option<Uuid>,
 }
 
+#[utoipa::path(
+    get,
+    path = "/finance-v59/scenario_parameters",
+    tag = "RiskV59",
+    operation_id = "get_scenario_parameters_handler",
+    responses(
+        (status = 200, description = "操作成功"),
+    ),
+)]
 async fn get_scenario_parameters_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -1692,6 +1924,15 @@ async fn get_scenario_parameters_handler(
     }
 }
 
+#[utoipa::path(
+    get,
+    path = "/finance-v59/test_summary",
+    tag = "RiskV59",
+    operation_id = "get_test_summary_handler",
+    responses(
+        (status = 200, description = "操作成功"),
+    ),
+)]
 async fn get_test_summary_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,

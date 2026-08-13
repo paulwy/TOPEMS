@@ -890,7 +890,7 @@ pub struct ConfigureChannelRequest {
     pub enabled: Option<bool>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, utoipa::IntoParams)]
 pub struct AlertQueryParams {
     pub status: Option<String>,
     pub severity: Option<String>,
@@ -1175,7 +1175,7 @@ pub struct UpdateTaskRequest {
     pub status: Option<String>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, utoipa::IntoParams)]
 pub struct TaskQueryParams {
     pub task_type: Option<String>,
     pub status: Option<String>,
@@ -1444,6 +1444,20 @@ impl IntelligentScheduler {
 // ==================== API Handlers ====================
 
 // --- Decision Handlers ---
+#[utoipa::path(
+    post,
+    path = "/finance-v60/decision/scenario",
+    responses(
+        (status = 200, description = "成功"),
+        (status = 201, description = "创建成功"),
+        (status = 400, description = "请求参数错误"),
+        (status = 401, description = "未授权"),
+        (status = 404, description = "资源不存在"),
+        (status = 500, description = "服务内部错误"),
+    ),
+    tag = "Finance Decision V60",
+    operation_id = "create_scenario_handler",
+)]
 
 async fn create_scenario_handler(
     State(state): State<AppState>,
@@ -1458,6 +1472,15 @@ async fn create_scenario_handler(
     }
 }
 
+#[utoipa::path(
+    post,
+    path = "/finance-v60/scenario",
+    tag = "DecisionV60",
+    operation_id = "evaluate_scenario_handler",
+    responses(
+        (status = 200, description = "操作成功"),
+    ),
+)]
 async fn evaluate_scenario_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -1472,6 +1495,15 @@ async fn evaluate_scenario_handler(
     }
 }
 
+#[utoipa::path(
+    get,
+    path = "/finance-v60/decision/{id}",
+    tag = "DecisionV60",
+    operation_id = "get_decision_handler",
+    responses(
+        (status = 200, description = "操作成功"),
+    ),
+)]
 async fn get_decision_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -1485,6 +1517,15 @@ async fn get_decision_handler(
     }
 }
 
+#[utoipa::path(
+    get,
+    path = "/finance-v60/scenarios",
+    tag = "DecisionV60",
+    operation_id = "list_scenarios_handler",
+    responses(
+        (status = 200, description = "操作成功"),
+    ),
+)]
 async fn list_scenarios_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -1496,6 +1537,22 @@ async fn list_scenarios_handler(
         Err(e) => Json(ApiResponse::error(500, &e.to_string())),
     }
 }
+#[utoipa::path(
+    get,
+    path = "/finance-v60/decision/{id}/alternatives",
+    responses(
+        (status = 200, description = "成功"),
+        (status = 400, description = "请求参数错误"),
+        (status = 401, description = "未授权"),
+        (status = 404, description = "资源不存在"),
+        (status = 500, description = "服务内部错误"),
+    ),
+    params(
+        ("id" = String, Path, description = "资源 ID"),
+    ),
+    tag = "Finance Decision V60",
+    operation_id = "get_alternatives_handler",
+)]
 
 async fn get_alternatives_handler(
     State(state): State<AppState>,
@@ -1510,6 +1567,15 @@ async fn get_alternatives_handler(
     }
 }
 
+#[utoipa::path(
+    post,
+    path = "/finance-v60/scenarios",
+    tag = "DecisionV60",
+    operation_id = "compare_scenarios_handler",
+    responses(
+        (status = 200, description = "操作成功"),
+    ),
+)]
 async fn compare_scenarios_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -1523,6 +1589,15 @@ async fn compare_scenarios_handler(
     }
 }
 
+#[utoipa::path(
+    get,
+    path = "/finance-v60/decision_history",
+    tag = "DecisionV60",
+    operation_id = "get_decision_history_handler",
+    responses(
+        (status = 200, description = "操作成功"),
+    ),
+)]
 async fn get_decision_history_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -1535,6 +1610,15 @@ async fn get_decision_history_handler(
     }
 }
 
+#[utoipa::path(
+    post,
+    path = "/finance-v60/sensitivity_analysis",
+    tag = "DecisionV60",
+    operation_id = "sensitivity_analysis_handler",
+    responses(
+        (status = 200, description = "操作成功"),
+    ),
+)]
 async fn sensitivity_analysis_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -1550,6 +1634,20 @@ async fn sensitivity_analysis_handler(
 }
 
 // --- Alert Handlers ---
+#[utoipa::path(
+    post,
+    path = "/finance-v60/alert/rule",
+    responses(
+        (status = 200, description = "成功"),
+        (status = 201, description = "创建成功"),
+        (status = 400, description = "请求参数错误"),
+        (status = 401, description = "未授权"),
+        (status = 404, description = "资源不存在"),
+        (status = 500, description = "服务内部错误"),
+    ),
+    tag = "Finance Decision V60",
+    operation_id = "create_alert_rule_handler",
+)]
 
 async fn create_alert_rule_handler(
     State(state): State<AppState>,
@@ -1564,6 +1662,15 @@ async fn create_alert_rule_handler(
     }
 }
 
+#[utoipa::path(
+    get,
+    path = "/finance-v60/alert_rules",
+    tag = "DecisionV60",
+    operation_id = "get_alert_rules_handler",
+    responses(
+        (status = 200, description = "操作成功"),
+    ),
+)]
 async fn get_alert_rules_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -1576,6 +1683,15 @@ async fn get_alert_rules_handler(
     }
 }
 
+#[utoipa::path(
+    post,
+    path = "/finance-v60/alerts",
+    tag = "DecisionV60",
+    operation_id = "evaluate_alerts_handler",
+    responses(
+        (status = 200, description = "操作成功"),
+    ),
+)]
 async fn evaluate_alerts_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -1589,6 +1705,15 @@ async fn evaluate_alerts_handler(
     }
 }
 
+#[utoipa::path(
+    get,
+    path = "/finance-v60/active_alerts",
+    tag = "DecisionV60",
+    operation_id = "get_active_alerts_handler",
+    responses(
+        (status = 200, description = "操作成功"),
+    ),
+)]
 async fn get_active_alerts_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -1601,6 +1726,23 @@ async fn get_active_alerts_handler(
         Err(e) => Json(ApiResponse::error(500, &e.to_string())),
     }
 }
+#[utoipa::path(
+    post,
+    path = "/finance-v60/alert/{id}/acknowledge",
+    responses(
+        (status = 200, description = "成功"),
+        (status = 201, description = "创建成功"),
+        (status = 400, description = "请求参数错误"),
+        (status = 401, description = "未授权"),
+        (status = 404, description = "资源不存在"),
+        (status = 500, description = "服务内部错误"),
+    ),
+    params(
+        ("id" = String, Path, description = "资源 ID"),
+    ),
+    tag = "Finance Decision V60",
+    operation_id = "acknowledge_alert_handler",
+)]
 
 async fn acknowledge_alert_handler(
     State(state): State<AppState>,
@@ -1615,6 +1757,15 @@ async fn acknowledge_alert_handler(
     }
 }
 
+#[utoipa::path(
+    post,
+    path = "/finance-v60/alert",
+    tag = "DecisionV60",
+    operation_id = "resolve_alert_handler",
+    responses(
+        (status = 200, description = "操作成功"),
+    ),
+)]
 async fn resolve_alert_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -1628,6 +1779,15 @@ async fn resolve_alert_handler(
     }
 }
 
+#[utoipa::path(
+    get,
+    path = "/finance-v60/alert_history",
+    tag = "DecisionV60",
+    operation_id = "get_alert_history_handler",
+    responses(
+        (status = 200, description = "操作成功"),
+    ),
+)]
 async fn get_alert_history_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -1640,6 +1800,15 @@ async fn get_alert_history_handler(
     }
 }
 
+#[utoipa::path(
+    post,
+    path = "/finance-v60/channel",
+    tag = "DecisionV60",
+    operation_id = "configure_channel_handler",
+    responses(
+        (status = 200, description = "操作成功"),
+    ),
+)]
 async fn configure_channel_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -1654,6 +1823,20 @@ async fn configure_channel_handler(
 }
 
 // --- Scheduling Handlers ---
+#[utoipa::path(
+    post,
+    path = "/finance-v60/schedule/task",
+    responses(
+        (status = 200, description = "成功"),
+        (status = 201, description = "创建成功"),
+        (status = 400, description = "请求参数错误"),
+        (status = 401, description = "未授权"),
+        (status = 404, description = "资源不存在"),
+        (status = 500, description = "服务内部错误"),
+    ),
+    tag = "Finance Decision V60",
+    operation_id = "create_task_handler",
+)]
 
 async fn create_task_handler(
     State(state): State<AppState>,
@@ -1668,6 +1851,15 @@ async fn create_task_handler(
     }
 }
 
+#[utoipa::path(
+    get,
+    path = "/finance-v60/tasks",
+    tag = "DecisionV60",
+    operation_id = "get_tasks_handler",
+    responses(
+        (status = 200, description = "操作成功"),
+    ),
+)]
 async fn get_tasks_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -1694,6 +1886,15 @@ async fn schedule_task_handler(
     }
 }
 
+#[utoipa::path(
+    post,
+    path = "/finance-v60/task",
+    tag = "DecisionV60",
+    operation_id = "execute_task_handler",
+    responses(
+        (status = 200, description = "操作成功"),
+    ),
+)]
 async fn execute_task_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -1706,6 +1907,22 @@ async fn execute_task_handler(
         Err(e) => Json(ApiResponse::error(500, &e.to_string())),
     }
 }
+#[utoipa::path(
+    get,
+    path = "/finance-v60/schedule/execution/{id}",
+    responses(
+        (status = 200, description = "成功"),
+        (status = 400, description = "请求参数错误"),
+        (status = 401, description = "未授权"),
+        (status = 404, description = "资源不存在"),
+        (status = 500, description = "服务内部错误"),
+    ),
+    params(
+        ("id" = String, Path, description = "资源 ID"),
+    ),
+    tag = "Finance Decision V60",
+    operation_id = "get_execution_handler",
+)]
 
 async fn get_execution_handler(
     State(state): State<AppState>,
@@ -1720,11 +1937,20 @@ async fn get_execution_handler(
     }
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, utoipa::IntoParams)]
 pub struct ExecutionQueryParams {
     pub task_id: Option<Uuid>,
 }
 
+#[utoipa::path(
+    get,
+    path = "/finance-v60/executions",
+    tag = "DecisionV60",
+    operation_id = "list_executions_handler",
+    responses(
+        (status = 200, description = "操作成功"),
+    ),
+)]
 async fn list_executions_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -1738,6 +1964,15 @@ async fn list_executions_handler(
     }
 }
 
+#[utoipa::path(
+    put,
+    path = "/finance-v60/task/{id}",
+    tag = "DecisionV60",
+    operation_id = "update_task_handler",
+    responses(
+        (status = 200, description = "操作成功"),
+    ),
+)]
 async fn update_task_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -1752,6 +1987,15 @@ async fn update_task_handler(
     }
 }
 
+#[utoipa::path(
+    get,
+    path = "/finance-v60/task",
+    tag = "DecisionV60",
+    operation_id = "pause_task_handler",
+    responses(
+        (status = 200, description = "操作成功"),
+    ),
+)]
 async fn pause_task_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -1764,6 +2008,23 @@ async fn pause_task_handler(
         Err(e) => Json(ApiResponse::error(500, &e.to_string())),
     }
 }
+#[utoipa::path(
+    post,
+    path = "/finance-v60/schedule/{id}/resume",
+    responses(
+        (status = 200, description = "成功"),
+        (status = 201, description = "创建成功"),
+        (status = 400, description = "请求参数错误"),
+        (status = 401, description = "未授权"),
+        (status = 404, description = "资源不存在"),
+        (status = 500, description = "服务内部错误"),
+    ),
+    params(
+        ("id" = String, Path, description = "资源 ID"),
+    ),
+    tag = "Finance Decision V60",
+    operation_id = "resume_task_handler",
+)]
 
 async fn resume_task_handler(
     State(state): State<AppState>,

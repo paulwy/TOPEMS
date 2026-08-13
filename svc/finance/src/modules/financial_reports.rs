@@ -147,13 +147,11 @@ pub struct ItemVouchersQuery {
 
 #[utoipa::path(
     get,
-    path = "/reports/item-vouchers",
-    tag = "Report",
-    params(ItemVouchersQuery),
+    path = "/finance/report_item_vouchers",
+    tag = "FinancialReports",
+    operation_id = "get_report_item_vouchers",
     responses(
-        (status = 200, description = "获取报表项目凭证明细成功", body = ApiResponse<serde_json::Value>),
-        (status = 400, description = "参数错误"),
-        (status = 500, description = "服务器内部错误"),
+        (status = 200, description = "操作成功"),
     ),
 )]
 pub async fn get_report_item_vouchers(
@@ -321,13 +319,11 @@ pub struct TrendQuery {
 
 #[utoipa::path(
     get,
-    path = "/reports/trend",
-    tag = "Report",
-    params(TrendQuery),
+    path = "/finance/report_trend",
+    tag = "FinancialReports",
+    operation_id = "get_report_trend",
     responses(
-        (status = 200, description = "获取报表趋势分析成功", body = ApiResponse<serde_json::Value>),
-        (status = 400, description = "参数错误"),
-        (status = 500, description = "服务器内部错误"),
+        (status = 200, description = "操作成功"),
     ),
 )]
 pub async fn get_report_trend(
@@ -460,13 +456,11 @@ pub struct PeriodOverPeriodQuery {
 
 #[utoipa::path(
     get,
-    path = "/reports/period-over-period",
-    tag = "Report",
-    params(PeriodOverPeriodQuery),
+    path = "/finance/report_period_over_period/{id}",
+    tag = "FinancialReports",
+    operation_id = "get_report_period_over_period",
     responses(
-        (status = 200, description = "获取环比分析成功", body = ApiResponse<serde_json::Value>),
-        (status = 400, description = "参数错误"),
-        (status = 500, description = "服务器内部错误"),
+        (status = 200, description = "操作成功"),
     ),
 )]
 pub async fn get_report_period_over_period(
@@ -588,12 +582,11 @@ pub struct ConsolidatedReportQuery {
 
 #[utoipa::path(
     get,
-    path = "/reports/consolidated/{consolidationId}",
-    tag = "Report",
-    params(("consolidationId" = String, Path, description = "合并报表ID"), ConsolidatedReportQuery),
+    path = "/finance/consolidated_report/{id}",
+    tag = "FinancialReports",
+    operation_id = "get_consolidated_report",
     responses(
-        (status = 200, description = "获取合并报表成功", body = ApiResponse<serde_json::Value>),
-        (status = 500, description = "服务器内部错误"),
+        (status = 200, description = "操作成功"),
     ),
 )]
 pub async fn get_consolidated_report(
@@ -770,13 +763,11 @@ pub async fn create_consolidation_entity(
 
 #[utoipa::path(
     put,
-    path = "/reports/consolidated/entities/{entityId}",
-    tag = "Report",
-    params(("entityId" = String, Path, description = "实体ID")),
-    request_body = serde_json::Value,
+    path = "/finance/consolidation_entity/{id}",
+    tag = "FinancialReports",
+    operation_id = "update_consolidation_entity",
     responses(
-        (status = 200, description = "更新合并实体成功", body = ApiResponse<serde_json::Value>),
-        (status = 500, description = "服务器内部错误"),
+        (status = 200, description = "操作成功"),
     ),
 )]
 pub async fn update_consolidation_entity(
@@ -804,12 +795,11 @@ pub async fn update_consolidation_entity(
 
 #[utoipa::path(
     delete,
-    path = "/reports/consolidated/entities/{entityId}",
-    tag = "Report",
-    params(("entityId" = String, Path, description = "实体ID")),
+    path = "/finance/consolidation_entity/{id}",
+    tag = "FinancialReports",
+    operation_id = "delete_consolidation_entity",
     responses(
-        (status = 200, description = "删除合并实体成功", body = ApiResponse<serde_json::Value>),
-        (status = 500, description = "服务器内部错误"),
+        (status = 200, description = "操作成功"),
     ),
 )]
 pub async fn delete_consolidation_entity(
@@ -889,12 +879,11 @@ pub async fn get_intercompany_elims(
 
 #[utoipa::path(
     post,
-    path = "/reports/consolidated/elims",
-    tag = "Report",
-    request_body = serde_json::Value,
+    path = "/finance/intercompany_elimination",
+    tag = "FinancialReports",
+    operation_id = "add_intercompany_elimination",
     responses(
-        (status = 200, description = "创建内部交易抵消分录成功", body = ApiResponse<serde_json::Value>),
-        (status = 500, description = "服务器内部错误"),
+        (status = 200, description = "操作成功"),
     ),
 )]
 pub async fn add_intercompany_elimination(
@@ -966,12 +955,11 @@ pub async fn export_consolidated_report(
 
 #[utoipa::path(
     post,
-    path = "/reports/export/batch",
-    tag = "Report",
-    request_body = serde_json::Value,
+    path = "/finance/batch_export_reports",
+    tag = "FinancialReports",
+    operation_id = "batch_export_reports",
     responses(
-        (status = 200, description = "批量导出报表成功", body = ApiResponse<serde_json::Value>),
-        (status = 500, description = "服务器内部错误"),
+        (status = 200, description = "操作成功"),
     ),
 )]
 pub async fn batch_export_reports(
@@ -1185,14 +1173,11 @@ pub async fn create_report_subscription(
 
 #[utoipa::path(
     put,
-    path = "/reports/subscriptions/{subscriptionId}",
-    tag = "Report",
-    params(("subscriptionId" = String, Path, description = "订阅ID")),
-    request_body = serde_json::Value,
+    path = "/finance/report_subscription/{id}",
+    tag = "FinancialReports",
+    operation_id = "update_report_subscription",
     responses(
-        (status = 200, description = "更新报表订阅成功", body = ApiResponse<serde_json::Value>),
-        (status = 404, description = "报表订阅不存在"),
-        (status = 500, description = "服务器内部错误"),
+        (status = 200, description = "操作成功"),
     ),
 )]
 pub async fn update_report_subscription(
@@ -1268,13 +1253,11 @@ pub async fn delete_report_subscription(
 
 #[utoipa::path(
     post,
-    path = "/reports/subscriptions/{subscriptionId}/send-now",
-    tag = "Report",
-    params(("subscriptionId" = String, Path, description = "订阅ID")),
+    path = "/finance/report_now",
+    tag = "FinancialReports",
+    operation_id = "send_report_now",
     responses(
-        (status = 200, description = "立即发送报表订阅成功", body = ApiResponse<serde_json::Value>),
-        (status = 404, description = "报表订阅不存在"),
-        (status = 500, description = "服务器内部错误"),
+        (status = 200, description = "操作成功"),
     ),
 )]
 pub async fn send_report_now(
@@ -1300,13 +1283,11 @@ pub struct SubscriptionHistoryQuery {
 
 #[utoipa::path(
     get,
-    path = "/reports/subscriptions/{subscriptionId}/history",
-    tag = "Report",
-    params(("subscriptionId" = String, Path, description = "订阅ID"), SubscriptionHistoryQuery),
+    path = "/finance/subscription_history",
+    tag = "FinancialReports",
+    operation_id = "get_subscription_history",
     responses(
-        (status = 200, description = "获取报表订阅发送历史成功", body = ApiResponse<serde_json::Value>),
-        (status = 404, description = "报表订阅不存在"),
-        (status = 500, description = "服务器内部错误"),
+        (status = 200, description = "操作成功"),
     ),
 )]
 pub async fn get_subscription_history(
@@ -1559,12 +1540,11 @@ pub async fn generate_balance_sheet(
 
 #[utoipa::path(
     get,
-    path = "/reports/balance-sheet",
-    tag = "Report",
-    params(GetReportQuery),
+    path = "/finance/balance_sheet/{id}",
+    tag = "FinancialReports",
+    operation_id = "get_balance_sheet",
     responses(
-        (status = 200, description = "获取资产负债表成功", body = ApiResponse<serde_json::Value>),
-        (status = 500, description = "服务器内部错误"),
+        (status = 200, description = "操作成功"),
     ),
 )]
 pub async fn get_balance_sheet(
@@ -1641,12 +1621,11 @@ pub async fn get_balance_sheet_history(
 
 #[utoipa::path(
     post,
-    path = "/reports/income-statement/generate",
-    tag = "Report",
-    request_body = GenerateReportRequest,
+    path = "/finance/income_statement",
+    tag = "FinancialReports",
+    operation_id = "generate_income_statement",
     responses(
-        (status = 200, description = "生成利润表成功", body = ApiResponse<serde_json::Value>),
-        (status = 500, description = "服务器内部错误"),
+        (status = 200, description = "操作成功"),
     ),
 )]
 pub async fn generate_income_statement(
@@ -1681,12 +1660,11 @@ pub async fn generate_income_statement(
 
 #[utoipa::path(
     get,
-    path = "/reports/income-statement",
-    tag = "Report",
-    params(GetReportQuery),
+    path = "/finance/income_statement/{id}",
+    tag = "FinancialReports",
+    operation_id = "get_income_statement",
     responses(
-        (status = 200, description = "获取利润表成功", body = ApiResponse<serde_json::Value>),
-        (status = 500, description = "服务器内部错误"),
+        (status = 200, description = "操作成功"),
     ),
 )]
 pub async fn get_income_statement(
@@ -1766,12 +1744,11 @@ pub async fn get_income_statement_history(
 
 #[utoipa::path(
     post,
-    path = "/reports/cash-flow/generate",
-    tag = "Report",
-    request_body = GenerateReportRequest,
+    path = "/finance/cash_flow",
+    tag = "FinancialReports",
+    operation_id = "generate_cash_flow",
     responses(
-        (status = 200, description = "生成现金流量表成功", body = ApiResponse<serde_json::Value>),
-        (status = 500, description = "服务器内部错误"),
+        (status = 200, description = "操作成功"),
     ),
 )]
 pub async fn generate_cash_flow(
@@ -1856,12 +1833,11 @@ pub async fn get_cash_flow(
 
 #[utoipa::path(
     get,
-    path = "/reports/cash-flow/history",
-    tag = "Report",
-    params(HistoryReportQuery),
+    path = "/finance/cash_flow_history",
+    tag = "FinancialReports",
+    operation_id = "get_cash_flow_history",
     responses(
-        (status = 200, description = "获取现金流量表历史成功", body = ApiResponse<serde_json::Value>),
-        (status = 500, description = "服务器内部错误"),
+        (status = 200, description = "操作成功"),
     ),
 )]
 pub async fn get_cash_flow_history(
@@ -1941,14 +1917,11 @@ pub async fn submit_report_for_approval(
 
 #[utoipa::path(
     post,
-    path = "/reports/approve",
-    tag = "Report",
-    request_body = ApprovalRequest,
+    path = "/finance/report",
+    tag = "FinancialReports",
+    operation_id = "approve_report",
     responses(
-        (status = 200, description = "审批报表成功", body = ApiResponse<serde_json::Value>),
-        (status = 400, description = "参数错误"),
-        (status = 404, description = "报表不存在"),
-        (status = 500, description = "服务器内部错误"),
+        (status = 200, description = "操作成功"),
     ),
 )]
 pub async fn approve_report(
@@ -1979,15 +1952,12 @@ pub async fn approve_report(
 }
 
 #[utoipa::path(
-    post,
-    path = "/reports/reject",
-    tag = "Report",
-    request_body = ApprovalRequest,
+    delete,
+    path = "/finance/report/{id}",
+    tag = "FinancialReports",
+    operation_id = "reject_report",
     responses(
-        (status = 200, description = "驳回报表成功", body = ApiResponse<serde_json::Value>),
-        (status = 400, description = "参数错误"),
-        (status = 404, description = "报表不存在"),
-        (status = 500, description = "服务器内部错误"),
+        (status = 200, description = "操作成功"),
     ),
 )]
 pub async fn reject_report(
@@ -2055,14 +2025,11 @@ pub async fn lock_report(
 
 #[utoipa::path(
     post,
-    path = "/reports/unlock",
-    tag = "Report",
-    request_body = ApprovalRequest,
+    path = "/finance/report",
+    tag = "FinancialReports",
+    operation_id = "unlock_report",
     responses(
-        (status = 200, description = "解锁报表成功", body = ApiResponse<serde_json::Value>),
-        (status = 400, description = "参数错误"),
-        (status = 404, description = "报表不存在"),
-        (status = 500, description = "服务器内部错误"),
+        (status = 200, description = "操作成功"),
     ),
 )]
 pub async fn unlock_report(

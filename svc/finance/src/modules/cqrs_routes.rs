@@ -13,14 +13,14 @@ use crate::shared::AppState;
 use topems_shared::ApiResponse;
 use topems_shared_core::response::PaginatedResponse;
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, utoipa::IntoParams)]
 pub struct VoucherSummaryQueryParams {
     pub page: Option<i64>,
     pub page_size: Option<i64>,
     pub status: Option<String>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, utoipa::IntoParams)]
 pub struct ReceivableAgingQueryParams {
     pub page: Option<i64>,
     pub page_size: Option<i64>,
@@ -36,7 +36,7 @@ pub struct CqrsStatsResponse {
     pub snapshot_count: usize,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, utoipa::IntoParams)]
 pub struct EventsQueryParams {
     pub aggregate_type: Option<String>,
     pub page: Option<u32>,
@@ -50,6 +50,20 @@ pub struct PaginatedEventsResponse {
     pub page: u32,
     pub page_size: u32,
 }
+#[utoipa::path(
+    post,
+    path = "/cqrs/commands/create-voucher",
+    responses(
+        (status = 200, description = "成功"),
+        (status = 201, description = "创建成功"),
+        (status = 400, description = "请求参数错误"),
+        (status = 401, description = "未授权"),
+        (status = 404, description = "资源不存在"),
+        (status = 500, description = "服务内部错误"),
+    ),
+    tag = "Finance CQRS",
+    operation_id = "handle_create_voucher",
+)]
 
 async fn handle_create_voucher(
     Json(req): Json<CreateVoucherCommand>,
@@ -70,6 +84,15 @@ async fn handle_create_voucher(
     }
 }
 
+#[utoipa::path(
+    post,
+    path = "/finance/handle_post_voucher",
+    tag = "CqrsRoutes",
+    operation_id = "handle_post_voucher",
+    responses(
+        (status = 200, description = "操作成功"),
+    ),
+)]
 async fn handle_post_voucher(
     Path(id): Path<String>,
     Json(req): Json<PostVoucherCommand>,
@@ -90,6 +113,15 @@ async fn handle_post_voucher(
     }
 }
 
+#[utoipa::path(
+    put,
+    path = "/finance/handle_reverse_voucher/{id}",
+    tag = "CqrsRoutes",
+    operation_id = "handle_reverse_voucher",
+    responses(
+        (status = 200, description = "操作成功"),
+    ),
+)]
 async fn handle_reverse_voucher(
     Path(id): Path<String>,
     Json(req): Json<ReverseVoucherCommand>,
@@ -109,6 +141,22 @@ async fn handle_reverse_voucher(
         Err(e) => Json(ApiResponse::error(500, &e)),
     }
 }
+#[utoipa::path(
+    get,
+    path = "/cqrs/views/voucher-summary",
+    responses(
+        (status = 200, description = "成功"),
+        (status = 400, description = "请求参数错误"),
+        (status = 401, description = "未授权"),
+        (status = 404, description = "资源不存在"),
+        (status = 500, description = "服务内部错误"),
+    ),
+    params(
+        ("query" = VoucherSummaryQueryParams, Query, description = "查询参数"),
+    ),
+    tag = "Finance CQRS",
+    operation_id = "list_voucher_summary",
+)]
 
 async fn list_voucher_summary(
     Query(params): Query<VoucherSummaryQueryParams>,
@@ -130,6 +178,15 @@ async fn list_voucher_summary(
     }
 }
 
+#[utoipa::path(
+    get,
+    path = "/finance/voucher_summary_by_id",
+    tag = "CqrsRoutes",
+    operation_id = "get_voucher_summary_by_id",
+    responses(
+        (status = 200, description = "操作成功"),
+    ),
+)]
 async fn get_voucher_summary_by_id(
     Path(id): Path<String>,
 ) -> Json<ApiResponse<Option<VoucherSummaryView>>> {
@@ -140,6 +197,15 @@ async fn get_voucher_summary_by_id(
     }
 }
 
+#[utoipa::path(
+    get,
+    path = "/finance/receivable_aging",
+    tag = "CqrsRoutes",
+    operation_id = "list_receivable_aging",
+    responses(
+        (status = 200, description = "操作成功"),
+    ),
+)]
 async fn list_receivable_aging(
     Query(params): Query<ReceivableAgingQueryParams>,
 ) -> Json<ApiResponse<PaginatedResponse<ReceivableAgingView>>> {
@@ -159,6 +225,22 @@ async fn list_receivable_aging(
         Err(e) => Json(ApiResponse::error(500, &e)),
     }
 }
+#[utoipa::path(
+    get,
+    path = "/cqrs/events/{aggregate_id}",
+    responses(
+        (status = 200, description = "成功"),
+        (status = 400, description = "请求参数错误"),
+        (status = 401, description = "未授权"),
+        (status = 404, description = "资源不存在"),
+        (status = 500, description = "服务内部错误"),
+    ),
+    params(
+        ("aggregate_id" = String, Path, description = "资源 ID"),
+    ),
+    tag = "Finance CQRS",
+    operation_id = "get_events",
+)]
 
 async fn get_events(Path(aggregate_id): Path<String>) -> Json<ApiResponse<Vec<EventRecord>>> {
     let context = get_cqrs_context();
@@ -172,6 +254,15 @@ async fn get_events(Path(aggregate_id): Path<String>) -> Json<ApiResponse<Vec<Ev
     }
 }
 
+#[utoipa::path(
+    post,
+    path = "/finance/views",
+    tag = "CqrsRoutes",
+    operation_id = "rebuild_views",
+    responses(
+        (status = 200, description = "操作成功"),
+    ),
+)]
 async fn rebuild_views() -> Json<ApiResponse<()>> {
     let context = get_cqrs_context();
     match context.projector.rebuild_all().await {
@@ -180,6 +271,15 @@ async fn rebuild_views() -> Json<ApiResponse<()>> {
     }
 }
 
+#[utoipa::path(
+    get,
+    path = "/finance/stats",
+    tag = "CqrsRoutes",
+    operation_id = "get_stats",
+    responses(
+        (status = 200, description = "操作成功"),
+    ),
+)]
 async fn get_stats() -> Json<ApiResponse<CqrsStatsResponse>> {
     let context = get_cqrs_context();
     let view_names: Vec<String> = context
@@ -213,6 +313,19 @@ async fn get_stats() -> Json<ApiResponse<CqrsStatsResponse>> {
 
     Json(ApiResponse::success(stats, "查询成功"))
 }
+#[utoipa::path(
+    get,
+    path = "/cqrs/projection-progress",
+    responses(
+        (status = 200, description = "成功"),
+        (status = 400, description = "请求参数错误"),
+        (status = 401, description = "未授权"),
+        (status = 404, description = "资源不存在"),
+        (status = 500, description = "服务内部错误"),
+    ),
+    tag = "Finance CQRS",
+    operation_id = "get_projection_progress",
+)]
 
 async fn get_projection_progress(
     State(_pool): State<PgPool>,
@@ -226,6 +339,15 @@ async fn get_projection_progress(
     }
 }
 
+#[utoipa::path(
+    get,
+    path = "/finance/events_paginated",
+    tag = "CqrsRoutes",
+    operation_id = "list_events_paginated",
+    responses(
+        (status = 200, description = "操作成功"),
+    ),
+)]
 async fn list_events_paginated(
     Query(params): Query<EventsQueryParams>,
 ) -> Json<ApiResponse<PaginatedEventsResponse>> {
@@ -256,6 +378,15 @@ async fn list_events_paginated(
     }
 }
 
+#[utoipa::path(
+    post,
+    path = "/finance/view",
+    tag = "CqrsRoutes",
+    operation_id = "replay_view",
+    responses(
+        (status = 200, description = "操作成功"),
+    ),
+)]
 async fn replay_view(Path(view_name): Path<String>) -> Json<ApiResponse<()>> {
     match get_pg_cqrs_context() {
         Some(ctx) => match ctx.async_projector.replay_view(&view_name).await {

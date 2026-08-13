@@ -66,6 +66,20 @@ pub fn create_routes() -> Router<AppState> {
             axum::routing::get(get_aging_handler),
         )
 }
+#[utoipa::path(
+    post,
+    path = "/reconciliation/sessions",
+    responses(
+        (status = 200, description = "成功"),
+        (status = 201, description = "创建成功"),
+        (status = 400, description = "请求参数错误"),
+        (status = 401, description = "未授权"),
+        (status = 404, description = "资源不存在"),
+        (status = 500, description = "服务内部错误"),
+    ),
+    tag = "Reconciliation",
+    operation_id = "create_session_handler",
+)]
 
 async fn create_session_handler(
     State(state): State<AppState>,
@@ -82,6 +96,15 @@ async fn create_session_handler(
     }
 }
 
+#[utoipa::path(
+    get,
+    path = "/finance/session/{id}",
+    tag = "Reconciliation",
+    operation_id = "get_session_handler",
+    responses(
+        (status = 200, description = "操作成功"),
+    ),
+)]
 async fn get_session_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -96,6 +119,15 @@ async fn get_session_handler(
     }
 }
 
+#[utoipa::path(
+    get,
+    path = "/finance/sessions",
+    tag = "Reconciliation",
+    operation_id = "list_sessions_handler",
+    responses(
+        (status = 200, description = "操作成功"),
+    ),
+)]
 async fn list_sessions_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -122,6 +154,23 @@ async fn list_sessions_handler(
         Err(e) => Json(ApiResponse::error(500, &e.to_string())),
     }
 }
+#[utoipa::path(
+    post,
+    path = "/reconciliation/sessions/{session_id}/items/import",
+    responses(
+        (status = 200, description = "成功"),
+        (status = 201, description = "创建成功"),
+        (status = 400, description = "请求参数错误"),
+        (status = 401, description = "未授权"),
+        (status = 404, description = "资源不存在"),
+        (status = 500, description = "服务内部错误"),
+    ),
+    params(
+        ("session_id" = String, Path, description = "资源 ID"),
+    ),
+    tag = "Reconciliation",
+    operation_id = "import_items_handler",
+)]
 
 async fn import_items_handler(
     State(state): State<AppState>,
@@ -139,6 +188,15 @@ async fn import_items_handler(
     }
 }
 
+#[utoipa::path(
+    post,
+    path = "/finance/match",
+    tag = "Reconciliation",
+    operation_id = "auto_match_handler",
+    responses(
+        (status = 200, description = "操作成功"),
+    ),
+)]
 async fn auto_match_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -153,6 +211,15 @@ async fn auto_match_handler(
     }
 }
 
+#[utoipa::path(
+    post,
+    path = "/finance/session",
+    tag = "Reconciliation",
+    operation_id = "complete_session_handler",
+    responses(
+        (status = 200, description = "操作成功"),
+    ),
+)]
 async fn complete_session_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -166,7 +233,23 @@ async fn complete_session_handler(
         Err(e) => Json(ApiResponse::error(500, &e.to_string())),
     }
 }
-
+#[utoipa::path(
+    get,
+    path = "/reconciliation/sessions/{session_id}/items",
+    responses(
+        (status = 200, description = "成功"),
+        (status = 400, description = "请求参数错误"),
+        (status = 401, description = "未授权"),
+        (status = 404, description = "资源不存在"),
+        (status = 500, description = "服务内部错误"),
+    ),
+    params(
+        ("session_id" = String, Path, description = "资源 ID"),
+        ("query" = ItemsQueryParams, Query, description = "查询参数"),
+    ),
+    tag = "Reconciliation",
+    operation_id = "get_items_handler",
+)]
 #[axum::debug_handler]
 async fn get_items_handler(
     State(state): State<AppState>,
@@ -199,6 +282,15 @@ async fn get_items_handler(
     }
 }
 
+#[utoipa::path(
+    get,
+    path = "/finance/summary",
+    tag = "Reconciliation",
+    operation_id = "get_summary_handler",
+    responses(
+        (status = 200, description = "操作成功"),
+    ),
+)]
 async fn get_summary_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -212,6 +304,22 @@ async fn get_summary_handler(
         Err(e) => Json(ApiResponse::error(500, &e.to_string())),
     }
 }
+#[utoipa::path(
+    put,
+    path = "/reconciliation/items/{item_id}/diff",
+    responses(
+        (status = 200, description = "成功"),
+        (status = 400, description = "请求参数错误"),
+        (status = 401, description = "未授权"),
+        (status = 404, description = "资源不存在"),
+        (status = 500, description = "服务内部错误"),
+    ),
+    params(
+        ("item_id" = String, Path, description = "资源 ID"),
+    ),
+    tag = "Reconciliation",
+    operation_id = "update_diff_handler",
+)]
 
 async fn update_diff_handler(
     State(state): State<AppState>,
@@ -231,18 +339,27 @@ async fn update_diff_handler(
     }
 }
 
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Deserialize, utoipa::IntoParams)]
 pub struct ItemsQueryParams {
     pub source_type: Option<String>,
     pub match_status: Option<String>,
 }
 
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Deserialize, utoipa::IntoParams)]
 pub struct AgingQueryParams {
     pub as_of_date: Option<String>,
     pub direction: String,
 }
 
+#[utoipa::path(
+    get,
+    path = "/finance/report/{id}",
+    tag = "Reconciliation",
+    operation_id = "get_report_handler",
+    responses(
+        (status = 200, description = "操作成功"),
+    ),
+)]
 async fn get_report_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -348,6 +465,20 @@ async fn create_ticket_for_reconciliation(
         }
     }
 }
+#[utoipa::path(
+    post,
+    path = "/reconciliation/items/diff/batch",
+    responses(
+        (status = 200, description = "成功"),
+        (status = 201, description = "创建成功"),
+        (status = 400, description = "请求参数错误"),
+        (status = 401, description = "未授权"),
+        (status = 404, description = "资源不存在"),
+        (status = 500, description = "服务内部错误"),
+    ),
+    tag = "Reconciliation",
+    operation_id = "batch_update_diff_handler",
+)]
 
 async fn batch_update_diff_handler(
     State(state): State<AppState>,
@@ -363,6 +494,15 @@ async fn batch_update_diff_handler(
     }
 }
 
+#[utoipa::path(
+    get,
+    path = "/finance/diff_statistics",
+    tag = "Reconciliation",
+    operation_id = "get_diff_statistics_handler",
+    responses(
+        (status = 200, description = "操作成功"),
+    ),
+)]
 async fn get_diff_statistics_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -377,6 +517,15 @@ async fn get_diff_statistics_handler(
     }
 }
 
+#[utoipa::path(
+    get,
+    path = "/finance/aging/{id}",
+    tag = "Reconciliation",
+    operation_id = "get_aging_handler",
+    responses(
+        (status = 200, description = "操作成功"),
+    ),
+)]
 async fn get_aging_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,

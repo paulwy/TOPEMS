@@ -163,7 +163,7 @@ pub struct UpdateControlPointRequest {
 }
 
 /// 控制点查询参数
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, utoipa::IntoParams)]
 pub struct ControlPointQueryParams {
     pub category: Option<String>,
     pub is_active: Option<bool>,
@@ -193,7 +193,7 @@ pub struct GenerateControlMatrixRequest {
 }
 
 /// 内控矩阵查询参数
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, utoipa::IntoParams)]
 pub struct ControlMatrixQueryParams {
     pub period: Option<String>,
 }
@@ -228,7 +228,7 @@ pub struct CreateRiskAssessmentRequest {
 }
 
 /// 风险评估查询参数
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, utoipa::IntoParams)]
 pub struct RiskAssessmentQueryParams {
     pub control_point_id: Option<Uuid>,
     pub risk_level: Option<String>,
@@ -286,7 +286,7 @@ pub struct GenerateComplianceReportRequest {
 }
 
 /// 合规报告查询参数
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, utoipa::IntoParams)]
 pub struct ComplianceReportQueryParams {
     pub report_type: Option<String>,
 }
@@ -1107,6 +1107,15 @@ async fn create_control_point_handler(
     }
 }
 
+#[utoipa::path(
+    get,
+    path = "/finance-v51/control_points",
+    tag = "ComplianceV51",
+    operation_id = "list_control_points_handler",
+    responses(
+        (status = 200, description = "操作成功"),
+    ),
+)]
 async fn list_control_points_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -1129,10 +1138,12 @@ async fn list_control_points_handler(
 
 #[utoipa::path(
     get,
-    path = "/compliance-v51/control-points/{id}",
-    tag = "Compliance-V51",
+    path = "/finance-v51/control_point/{id}",
+    tag = "ComplianceV51",
     operation_id = "get_control_point_handler",
-    responses((status = 200, description = "OK")),
+    responses(
+        (status = 200, description = "操作成功"),
+    ),
 )]
 async fn get_control_point_handler(
     State(state): State<AppState>,
@@ -1148,10 +1159,12 @@ async fn get_control_point_handler(
 
 #[utoipa::path(
     put,
-    path = "/compliance-v51/control-points/{id}",
-    tag = "Compliance-V51",
+    path = "/finance-v51/control_point/{id}",
+    tag = "ComplianceV51",
     operation_id = "update_control_point_handler",
-    responses((status = 200, description = "OK")),
+    responses(
+        (status = 200, description = "操作成功"),
+    ),
 )]
 async fn update_control_point_handler(
     State(state): State<AppState>,
@@ -1168,10 +1181,12 @@ async fn update_control_point_handler(
 
 #[utoipa::path(
     delete,
-    path = "/compliance-v51/control-points/{id}",
-    tag = "Compliance-V51",
+    path = "/finance-v51/control_point/{id}",
+    tag = "ComplianceV51",
     operation_id = "delete_control_point_handler",
-    responses((status = 200, description = "OK")),
+    responses(
+        (status = 200, description = "操作成功"),
+    ),
 )]
 async fn delete_control_point_handler(
     State(state): State<AppState>,
@@ -1207,10 +1222,12 @@ async fn generate_control_matrix_handler(
 
 #[utoipa::path(
     get,
-    path = "/compliance-v51/control-matrices/{id}",
-    tag = "Compliance-V51",
+    path = "/finance-v51/control_matrix/{id}",
+    tag = "ComplianceV51",
     operation_id = "get_control_matrix_handler",
-    responses((status = 200, description = "OK")),
+    responses(
+        (status = 200, description = "操作成功"),
+    ),
 )]
 async fn get_control_matrix_handler(
     State(state): State<AppState>,
@@ -1224,6 +1241,15 @@ async fn get_control_matrix_handler(
     }
 }
 
+#[utoipa::path(
+    get,
+    path = "/finance-v51/control_matrices",
+    tag = "ComplianceV51",
+    operation_id = "list_control_matrices_handler",
+    responses(
+        (status = 200, description = "操作成功"),
+    ),
+)]
 async fn list_control_matrices_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -1238,10 +1264,12 @@ async fn list_control_matrices_handler(
 
 #[utoipa::path(
     post,
-    path = "/compliance-v51/risk-assessments",
-    tag = "Compliance-V51",
+    path = "/finance-v51/risk",
+    tag = "ComplianceV51",
     operation_id = "assess_risk_handler",
-    responses((status = 200, description = "OK")),
+    responses(
+        (status = 200, description = "操作成功"),
+    ),
 )]
 async fn assess_risk_handler(
     State(state): State<AppState>,
@@ -1258,10 +1286,12 @@ async fn assess_risk_handler(
 
 #[utoipa::path(
     get,
-    path = "/compliance-v51/risk-assessments/{id}",
-    tag = "Compliance-V51",
+    path = "/finance-v51/risk_assessment/{id}",
+    tag = "ComplianceV51",
     operation_id = "get_risk_assessment_handler",
-    responses((status = 200, description = "OK")),
+    responses(
+        (status = 200, description = "操作成功"),
+    ),
 )]
 async fn get_risk_assessment_handler(
     State(state): State<AppState>,
@@ -1274,6 +1304,22 @@ async fn get_risk_assessment_handler(
         Err(e) => Json(ApiResponse::error(500, &e.to_string())),
     }
 }
+#[utoipa::path(
+    get,
+    path = "/compliance-v51/risk-assessments",
+    responses(
+        (status = 200, description = "成功"),
+        (status = 400, description = "请求参数错误"),
+        (status = 401, description = "未授权"),
+        (status = 404, description = "资源不存在"),
+        (status = 500, description = "服务内部错误"),
+    ),
+    params(
+        ("query" = RiskAssessmentQueryParams, Query, description = "查询参数"),
+    ),
+    tag = "Compliance-V51",
+    operation_id = "list_risk_assessments_handler",
+)]
 
 async fn list_risk_assessments_handler(
     State(state): State<AppState>,
@@ -1296,10 +1342,12 @@ async fn list_risk_assessments_handler(
 
 #[utoipa::path(
     get,
-    path = "/compliance-v51/risk-assessments/summary",
-    tag = "Compliance-V51",
+    path = "/finance-v51/risk_summary",
+    tag = "ComplianceV51",
     operation_id = "get_risk_summary_handler",
-    responses((status = 200, description = "OK")),
+    responses(
+        (status = 200, description = "操作成功"),
+    ),
 )]
 async fn get_risk_summary_handler(
     State(state): State<AppState>,
@@ -1314,10 +1362,12 @@ async fn get_risk_summary_handler(
 
 #[utoipa::path(
     post,
-    path = "/compliance-v51/reports/generate",
-    tag = "Compliance-V51",
+    path = "/finance-v51/compliance_report",
+    tag = "ComplianceV51",
     operation_id = "generate_compliance_report_handler",
-    responses((status = 200, description = "OK")),
+    responses(
+        (status = 200, description = "操作成功"),
+    ),
 )]
 async fn generate_compliance_report_handler(
     State(state): State<AppState>,
@@ -1334,10 +1384,12 @@ async fn generate_compliance_report_handler(
 
 #[utoipa::path(
     get,
-    path = "/compliance-v51/reports/{id}",
-    tag = "Compliance-V51",
+    path = "/finance-v51/compliance_report/{id}",
+    tag = "ComplianceV51",
     operation_id = "get_compliance_report_handler",
-    responses((status = 200, description = "OK")),
+    responses(
+        (status = 200, description = "操作成功"),
+    ),
 )]
 async fn get_compliance_report_handler(
     State(state): State<AppState>,
@@ -1350,6 +1402,22 @@ async fn get_compliance_report_handler(
         Err(e) => Json(ApiResponse::error(500, &e.to_string())),
     }
 }
+#[utoipa::path(
+    get,
+    path = "/compliance-v51/reports",
+    responses(
+        (status = 200, description = "成功"),
+        (status = 400, description = "请求参数错误"),
+        (status = 401, description = "未授权"),
+        (status = 404, description = "资源不存在"),
+        (status = 500, description = "服务内部错误"),
+    ),
+    params(
+        ("query" = ComplianceReportQueryParams, Query, description = "查询参数"),
+    ),
+    tag = "Compliance-V51",
+    operation_id = "list_compliance_reports_handler",
+)]
 
 async fn list_compliance_reports_handler(
     State(state): State<AppState>,
@@ -1364,11 +1432,13 @@ async fn list_compliance_reports_handler(
 }
 
 #[utoipa::path(
-    get,
-    path = "/compliance-v51/reports/{id}/export",
-    tag = "Compliance-V51",
+    post,
+    path = "/finance-v51/compliance_report",
+    tag = "ComplianceV51",
     operation_id = "export_compliance_report_handler",
-    responses((status = 200, description = "OK")),
+    responses(
+        (status = 200, description = "操作成功"),
+    ),
 )]
 async fn export_compliance_report_handler(
     State(state): State<AppState>,

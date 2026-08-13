@@ -88,13 +88,11 @@ pub async fn list_entries(
 
 #[utoipa::path(
     get,
-    path = "/voucher-templates/{templateId}/entries/{entryId}",
-    tag = "Voucher Template",
-    params(("templateId" = Uuid, Path, description = "模板ID"), ("entryId" = Uuid, Path, description = "条目ID")),
+    path = "/finance/entry/{id}",
+    tag = "VoucherTemplateEntries",
+    operation_id = "get_entry",
     responses(
-        (status = 200, description = "获取模板分录详情成功", body = ApiResponse<VoucherTemplateLine>),
-        (status = 404, description = "模板分录不存在"),
-        (status = 500, description = "服务器内部错误"),
+        (status = 200, description = "操作成功"),
     ),
 )]
 pub async fn get_entry(
@@ -120,14 +118,11 @@ pub async fn get_entry(
 
 #[utoipa::path(
     post,
-    path = "/voucher-templates/{templateId}/entries",
-    tag = "Voucher Template",
-    params(("templateId" = Uuid, Path, description = "模板ID")),
-    request_body = AddTemplateEntryRequest,
+    path = "/finance/entry",
+    tag = "VoucherTemplateEntries",
+    operation_id = "create_entry",
     responses(
-        (status = 200, description = "新增模板分录成功", body = ApiResponse<VoucherTemplateLine>),
-        (status = 404, description = "凭证模板不存在"),
-        (status = 500, description = "服务器内部错误"),
+        (status = 200, description = "操作成功"),
     ),
 )]
 pub async fn create_entry(
@@ -253,13 +248,11 @@ pub async fn update_entry(
 
 #[utoipa::path(
     delete,
-    path = "/voucher-templates/{templateId}/entries/{entryId}",
-    tag = "Voucher Template",
-    params(("templateId" = Uuid, Path, description = "模板ID"), ("entryId" = Uuid, Path, description = "条目ID")),
+    path = "/finance/entry/{id}",
+    tag = "VoucherTemplateEntries",
+    operation_id = "delete_entry",
     responses(
-        (status = 200, description = "删除模板分录成功", body = ApiResponse<serde_json::Value>),
-        (status = 404, description = "模板分录不存在"),
-        (status = 500, description = "服务器内部错误"),
+        (status = 200, description = "操作成功"),
     ),
 )]
 pub async fn delete_entry(
