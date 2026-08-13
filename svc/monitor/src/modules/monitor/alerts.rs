@@ -271,6 +271,42 @@ pub struct AlertQueryParams {
     pub service_name: Option<String>,
 }
 
+// ==================== 纯函数（无副作用，便于单元测试） ====================
+
+/// 生成告警去重键：metric_name + 排序后的 labels。
+pub fn alert_dedup_key(
+    metric_name: &str,
+    labels: &std::collections::HashMap<String, String>,
+) -> String {
+    let mut pairs: Vec<String> = labels.iter().map(|(k, v)| format!("{}={}", k, v)).collect();
+    pairs.sort();
+    format!("{}|{}", metric_name, pairs.join(","))
+}
+
+/// 判断告警是否处于冷却期。
+/// - last_fired_at: 上次触发时间（unix 秒），0 表示从未触发
+/// - cooldown_seconds: 冷却时长（秒）
+/// - now: 当前时间（unix 秒）
+/// 返回 true 表示仍在冷却中（不应重复触发）。
+pub fn is_alert_in_cooldown(last_fired_at: i64, cooldown_seconds: i64, now: i64) -> bool {
+    if last_fired_at == 0 || cooldown_seconds <= 0 {
+        return false;
+    }
+    now - last_fired_at < cooldown_seconds
+}
+
+/// 返回告警严重级别的数值排序（数值越大越严重）。
+/// critical=4, error=3, warning=2, info=1, 未知=0
+pub fn severity_rank(severity: &str) -> i32 {
+    match severity {
+        "critical" => 4,
+        "error" => 3,
+        "warning" => 2,
+        "info" => 1,
+        _ => 0,
+    }
+}
+
 pub fn create_routes() -> Router<AppState> {
     Router::new()
         .route("/alerts", get(list_alerts))
@@ -1573,4 +1609,146 @@ pub async fn update_advanced_rule(
     Json(req): Json<serde_json::Value>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     Json(ApiResponse::success(req, "高级规则配置已更新"))
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::collections::HashMap;
+
+    // ---- alert_dedup_key ----
+
+    #[test]
+    fn test_alert_dedup_key_empty_labels() {
+        let labels = HashMap::new();
+        assert_eq!(alert_dedup_key("cpu_usage", &labels), "cpu_usage|");
+    }
+
+    #[test]
+    fn test_alert_dedup_key_single_label() {
+        let mut labels = HashMap::new();
+        labels.insert("host".to_string(), "server1".to_string());
+        assert_eq!(
+            alert_dedup_key("cpu_usage", &labels),
+            "cpu_usage|host=server1"
+        );
+    }
+
+    #[test]
+    fn test_alert_dedup_key_multiple_labels_sorted() {
+        let mut labels = HashMap::new();
+        labels.insert("host".to_string(), "server1".to_string());
+        labels.insert("env".to_string(), "prod".to_string());
+        // sorted: env, host
+        assert_eq!(
+            alert_dedup_key("cpu_usage", &labels),
+            "cpu_usage|env=prod,host=server1"
+        );
+    }
+
+    #[test]
+    fn test_alert_dedup_key_same_labels_same_key() {
+        let mut labels1 = HashMap::new();
+        labels1.insert("a".to_string(), "1".to_string());
+        labels1.insert("b".to_string(), "2".to_string());
+        let mut labels2 = HashMap::new();
+        labels2.insert("b".to_string(), "2".to_string());
+        labels2.insert("a".to_string(), "1".to_string());
+        assert_eq!(
+            alert_dedup_key("metric", &labels1),
+            alert_dedup_key("metric", &labels2)
+        );
+    }
+
+    #[test]
+    fn test_alert_dedup_key_different_metric_different_key() {
+        let labels = HashMap::new();
+        assert_ne!(
+            alert_dedup_key("cpu", &labels),
+            alert_dedup_key("memory", &labels)
+        );
+    }
+
+    #[test]
+    fn test_alert_dedup_key_empty_metric_name() {
+        let labels = HashMap::new();
+        assert_eq!(alert_dedup_key("", &labels), "|");
+    }
+
+    // ---- is_alert_in_cooldown ----
+
+    #[test]
+    fn test_is_alert_in_cooldown_within_cooldown() {
+        // fired 30s ago, cooldown 60s, now => still in cooldown
+        assert!(is_alert_in_cooldown(1000, 60, 1030));
+    }
+
+    #[test]
+    fn test_is_alert_in_cooldown_expired() {
+        // fired 60s ago, cooldown 60s, now => not in cooldown
+        assert!(!is_alert_in_cooldown(1000, 60, 1060));
+    }
+
+    #[test]
+    fn test_is_alert_in_cooldown_never_fired() {
+        assert!(!is_alert_in_cooldown(0, 60, 1000));
+    }
+
+    #[test]
+    fn test_is_alert_in_cooldown_zero_cooldown() {
+        assert!(!is_alert_in_cooldown(1000, 0, 1001));
+    }
+
+    #[test]
+    fn test_is_alert_in_cooldown_negative_cooldown() {
+        assert!(!is_alert_in_cooldown(1000, -10, 1001));
+    }
+
+    #[test]
+    fn test_is_alert_in_cooldown_just_expired() {
+        // fired 59s ago, cooldown 60s => still in cooldown (59 < 60)
+        assert!(is_alert_in_cooldown(1000, 60, 1059));
+    }
+
+    #[test]
+    fn test_is_alert_in_cooldown_boundary() {
+        // fired exactly cooldown_seconds ago => not in cooldown
+        assert!(!is_alert_in_cooldown(1000, 60, 1060));
+    }
+
+    // ---- severity_rank ----
+
+    #[test]
+    fn test_severity_rank_critical() {
+        assert_eq!(severity_rank("critical"), 4);
+    }
+
+    #[test]
+    fn test_severity_rank_error() {
+        assert_eq!(severity_rank("error"), 3);
+    }
+
+    #[test]
+    fn test_severity_rank_warning() {
+        assert_eq!(severity_rank("warning"), 2);
+    }
+
+    #[test]
+    fn test_severity_rank_info() {
+        assert_eq!(severity_rank("info"), 1);
+    }
+
+    #[test]
+    fn test_severity_rank_unknown() {
+        assert_eq!(severity_rank("unknown"), 0);
+        assert_eq!(severity_rank(""), 0);
+    }
+
+    #[test]
+    fn test_severity_rank_ordering() {
+        assert!(severity_rank("critical") > severity_rank("error"));
+        assert!(severity_rank("error") > severity_rank("warning"));
+        assert!(severity_rank("warning") > severity_rank("info"));
+        assert!(severity_rank("info") > severity_rank("unknown"));
+    }
 }

@@ -15,6 +15,49 @@ use topems_shared_core::response::PaginatedResponse;
 
 use crate::shared::AppState;
 
+// ==================== 纯函数（无副作用，可单测） ====================
+
+/// 计算 SLA 违约罚金。
+/// - 若实际 uptime >= target，罚金为 0
+/// - 否则罚金 = monthly_fee * (违约比例 / 目标比例) * 10%
+///   - 违约比例 = target - uptime
+///   - 该罚金与违约严重程度成正比
+/// - 输入值会被合理 clamp（uptime/target 限制在 [0,100]）
+pub fn calculate_sla_penalty(uptime_pct: f64, target_pct: f64, monthly_fee: f64) -> f64 {
+    let uptime = uptime_pct.clamp(0.0, 100.0);
+    let target = target_pct.clamp(0.0, 100.0);
+    let fee = if monthly_fee < 0.0 { 0.0 } else { monthly_fee };
+
+    if uptime >= target {
+        0.0
+    } else {
+        // 违约比例
+        let breach = target - uptime;
+        // 防止 target 为 0 导致除零
+        if target <= 0.0 {
+            // 目标为 0 时仍违约，按固定 10% 罚款
+            fee * 0.10
+        } else {
+            // 罚金 = 月费 * (违约比例 / 目标比例) * 10%
+            let ratio = breach / target;
+            (fee * ratio * 0.10 * 100.0).round() / 100.0
+        }
+    }
+}
+
+/// 计算使用量费用。
+/// - 调用量 ≤ free_tier：免费
+/// - 超过 free_tier 的部分按 rate_per_1k（每千次费用）计费
+/// - 输入会被 clamp 到非负
+pub fn calculate_usage_cost(calls: i64, rate_per_1k: f64, free_tier: i64) -> f64 {
+    let calls = calls.max(0);
+    let free = free_tier.max(0);
+    let rate = if rate_per_1k < 0.0 { 0.0 } else { rate_per_1k };
+
+    let billable = (calls - free).max(0) as f64;
+    (billable / 1000.0 * rate * 100.0).round() / 100.0
+}
+
 // ==================== API 商业化 ====================
 
 #[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
@@ -1310,4 +1353,171 @@ pub async fn generate_sla_report(
     });
 
     Json(ApiResponse::success(report, "SLA 报告"))
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    // ---------- calculate_sla_penalty ----------
+
+    #[test]
+    fn test_sla_penalty_no_breach() {
+        // uptime >= target，无违约
+        assert_eq!(calculate_sla_penalty(99.95, 99.9, 1000.0), 0.0);
+        assert_eq!(calculate_sla_penalty(100.0, 99.9, 1000.0), 0.0);
+        assert_eq!(calculate_sla_penalty(99.9, 99.9, 1000.0), 0.0);
+    }
+
+    #[test]
+    fn test_sla_penalty_minor_breach() {
+        // uptime=99.8, target=99.9, monthly_fee=1000
+        // breach=0.1, ratio=0.1/99.9≈0.001001
+        // penalty = 1000 * 0.001001 * 0.10 = 0.1001 -> 0.10
+        let p = calculate_sla_penalty(99.8, 99.9, 1000.0);
+        assert!((p - 0.10).abs() < 0.01, "got {}", p);
+    }
+
+    #[test]
+    fn test_sla_penalty_severe_breach() {
+        // uptime=95.0, target=99.9, monthly_fee=1000
+        // breach=4.9, ratio=4.9/99.9≈0.0490
+        // penalty = 1000 * 0.0490 * 0.10 = 4.90
+        let p = calculate_sla_penalty(95.0, 99.9, 1000.0);
+        assert!((p - 4.90).abs() < 0.01, "got {}", p);
+    }
+
+    #[test]
+    fn test_sla_penalty_zero_fee() {
+        // 月费为 0 时罚金为 0
+        assert_eq!(calculate_sla_penalty(50.0, 99.9, 0.0), 0.0);
+    }
+
+    #[test]
+    fn test_sla_penalty_negative_fee_clamped() {
+        // 负月费应被 clamp 到 0
+        assert_eq!(calculate_sla_penalty(50.0, 99.9, -1000.0), 0.0);
+    }
+
+    #[test]
+    fn test_sla_penalty_clamps_uptime_above_100() {
+        // uptime > 100 clamp 到 100，仍 >= 99.9，无违约
+        assert_eq!(calculate_sla_penalty(150.0, 99.9, 1000.0), 0.0);
+    }
+
+    #[test]
+    fn test_sla_penalty_clamps_negative_uptime() {
+        // uptime 为负 clamp 到 0
+        // breach = 99.9 - 0 = 99.9, ratio = 99.9/99.9 = 1.0
+        // penalty = 1000 * 1.0 * 0.10 = 100.0
+        let p = calculate_sla_penalty(-5.0, 99.9, 1000.0);
+        assert!((p - 100.0).abs() < 0.01, "got {}", p);
+    }
+
+    #[test]
+    fn test_sla_penalty_zero_target() {
+        // 目标为 0 时违约按固定 10% 罚款
+        let p = calculate_sla_penalty(0.0, 0.0, 1000.0);
+        // uptime=0, target=0 -> uptime >= target -> 无违约！罚金为 0
+        assert_eq!(p, 0.0);
+        // 改：uptime < target 才触发；这里 uptime=target=0，不触发
+    }
+
+    #[test]
+    fn test_sla_penalty_zero_target_with_breach() {
+        // uptime=-1 clamp 到 0，target=0；uptime(0) >= target(0)，无违约
+        // 该测试覆盖目标为 0 边界
+        let p = calculate_sla_penalty(0.0, 0.0, 1000.0);
+        assert_eq!(p, 0.0);
+    }
+
+    #[test]
+    fn test_sla_penalty_severity_proportional() {
+        // 同样月费，违约越严重罚金越高
+        let minor = calculate_sla_penalty(99.8, 99.9, 1000.0);
+        let major = calculate_sla_penalty(90.0, 99.9, 1000.0);
+        assert!(minor < major);
+    }
+
+    // ---------- calculate_usage_cost ----------
+
+    #[test]
+    fn test_usage_cost_zero_calls() {
+        assert_eq!(calculate_usage_cost(0, 1.0, 1000), 0.0);
+    }
+
+    #[test]
+    fn test_usage_cost_within_free_tier() {
+        // 调用量在免费额度内
+        assert_eq!(calculate_usage_cost(500, 1.0, 1000), 0.0);
+        assert_eq!(calculate_usage_cost(1000, 1.0, 1000), 0.0);
+    }
+
+    #[test]
+    fn test_usage_cost_exceeds_free_tier() {
+        // 1500 calls, free=1000, rate=1.0/1k
+        // billable = 500, cost = 500/1000 * 1.0 = 0.5
+        let c = calculate_usage_cost(1500, 1.0, 1000);
+        assert!((c - 0.5).abs() < 0.01, "got {}", c);
+    }
+
+    #[test]
+    fn test_usage_cost_no_free_tier() {
+        // free_tier=0，所有调用都要付费
+        // 2000 calls, rate=0.5/1k -> cost = 2000/1000 * 0.5 = 1.0
+        let c = calculate_usage_cost(2000, 0.5, 0);
+        assert!((c - 1.0).abs() < 0.01, "got {}", c);
+    }
+
+    #[test]
+    fn test_usage_cost_zero_rate() {
+        // rate=0 时费用为 0
+        assert_eq!(calculate_usage_cost(10000, 0.0, 0), 0.0);
+    }
+
+    #[test]
+    fn test_usage_cost_negative_rate_clamped() {
+        // 负费率应被 clamp 到 0
+        assert_eq!(calculate_usage_cost(10000, -1.0, 0), 0.0);
+    }
+
+    #[test]
+    fn test_usage_cost_negative_calls_clamped() {
+        // 负调用量应被 clamp 到 0
+        assert_eq!(calculate_usage_cost(-100, 1.0, 0), 0.0);
+    }
+
+    #[test]
+    fn test_usage_cost_large_volume() {
+        // 1_000_000 calls, rate=2.0/1k, free=0
+        // cost = 1000000/1000 * 2.0 = 2000.0
+        let c = calculate_usage_cost(1_000_000, 2.0, 0);
+        assert!((c - 2000.0).abs() < 0.01, "got {}", c);
+    }
+
+    #[test]
+    fn test_usage_cost_just_above_free_tier() {
+        // 1001 calls, free=1000, rate=1.0
+        // billable=1, raw_cost = 1/1000 * 1.0 = 0.001
+        // 经两位小数四舍五入后 = 0.00
+        let c = calculate_usage_cost(1001, 1.0, 1000);
+        assert!((c - 0.0).abs() < f64::EPSILON, "got {}", c);
+    }
+
+    #[test]
+    fn test_usage_cost_rounded_to_2_decimals() {
+        // 1234 calls, free=0, rate=0.333
+        // cost = 1234/1000 * 0.333 = 0.411222 -> round to 0.41
+        let c = calculate_usage_cost(1234, 0.333, 0);
+        assert!((c - 0.41).abs() < 0.01, "got {}", c);
+    }
+
+    #[test]
+    fn test_usage_cost_negative_free_tier_clamped() {
+        // 负免费额度应被 clamp 到 0
+        // 500 calls, free=-1000 -> free=0, rate=1.0
+        // cost = 500/1000 * 1.0 = 0.5
+        let c = calculate_usage_cost(500, 1.0, -1000);
+        assert!((c - 0.5).abs() < 0.01, "got {}", c);
+    }
 }

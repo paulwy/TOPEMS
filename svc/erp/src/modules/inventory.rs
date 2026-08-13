@@ -7,6 +7,10 @@ use uuid::Uuid;
 
 use super::ApiState;
 use crate::models::material::{CreateInventoryRequest, Inventory, UpdateInventoryRequest};
+use crate::modules::inventory_calc::{
+    build_search_pattern, calculate_total_amount, default_inventory_status, default_unit_price,
+    has_inventory_filters, material_info_fallback, normalize_pagination,
+};
 use crate::shared::permission::{check_permission, ModulePermission};
 use topems_shared::auth::Claims;
 use topems_shared::ApiResponse;
@@ -41,14 +45,15 @@ pub async fn list_inventory(
         return e;
     }
 
-    let page = params.page.unwrap_or(1).max(1);
-    let page_size = params.page_size.unwrap_or(20).min(100);
-    let offset = (page - 1) * page_size;
+    let (page, page_size, offset) = normalize_pagination(params.page, params.page_size);
 
-    let search_pattern = params.search.as_deref().map(|s| format!("%{}%", s));
+    let search_pattern = build_search_pattern(params.search.as_deref());
     let status_filter = params.status.clone();
 
-    let inventory_result = if search_pattern.is_some() || status_filter.is_some() {
+    let inventory_result = if has_inventory_filters(
+        params.search.as_deref(),
+        status_filter.as_deref(),
+    ) {
         let search = search_pattern.unwrap_or_default();
         let status = status_filter.clone();
 
@@ -167,13 +172,11 @@ pub async fn create_inventory(
     .fetch_optional(&state.db)
     .await;
 
-    let (material_code, material_name, unit) = match material_result {
-        Ok(Some((c, n, u))) => (c, n, u),
-        _ => ("".to_string(), "".to_string(), "".to_string()),
-    };
+    let (material_code, material_name, unit) =
+        material_info_fallback(material_result.ok().flatten());
 
-    let unit_price = body.unit_price.unwrap_or(0.0);
-    let total_amount = unit_price * body.quantity;
+    let unit_price = default_unit_price(body.unit_price);
+    let total_amount = calculate_total_amount(body.unit_price, body.quantity);
 
     let result = sqlx::query_as::<_, Inventory>(
         "INSERT INTO inventory (material_id, material_code, material_name, warehouse_id, warehouse_name, location_code, quantity, available_quantity, reserved_quantity, unit, unit_price, total_amount, batch_no, expire_date, status) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15) RETURNING id, material_id, material_code, material_name, warehouse_id, warehouse_name, location_code, quantity, available_quantity, reserved_quantity, unit, unit_price, total_amount, batch_no, expire_date, status, created_at, updated_at",
@@ -192,7 +195,7 @@ pub async fn create_inventory(
     .bind(total_amount)
     .bind(body.batch_no)
     .bind(body.expire_date)
-    .bind(body.status.unwrap_or_else(|| "active".to_string()))
+    .bind(default_inventory_status(body.status))
     .fetch_optional(&state.db)
     .await;
 

@@ -392,4 +392,259 @@ mod tests {
         // 2026-01-04 周日（元旦调休补班）→ 工作日
         assert!(is_workday(NaiveDate::from_ymd_opt(2026, 1, 4).unwrap()));
     }
+
+    // ===== build_date_set 辅助函数测试 =====
+
+    #[test]
+    fn test_build_date_set_single_range() {
+        // 1月1日 - 1月3日 → 3个日期
+        let ranges = &[(2025, 1, 1, 2025, 1, 3)];
+        let set = build_date_set(ranges);
+        assert_eq!(set.len(), 3);
+        assert!(set.contains(&NaiveDate::from_ymd_opt(2025, 1, 1).unwrap()));
+        assert!(set.contains(&NaiveDate::from_ymd_opt(2025, 1, 2).unwrap()));
+        assert!(set.contains(&NaiveDate::from_ymd_opt(2025, 1, 3).unwrap()));
+    }
+
+    #[test]
+    fn test_build_date_set_cross_month() {
+        // 1月31日 - 2月2日 → 跨月，3个日期
+        let ranges = &[(2025, 1, 31, 2025, 2, 2)];
+        let set = build_date_set(ranges);
+        assert_eq!(set.len(), 3);
+        assert!(set.contains(&NaiveDate::from_ymd_opt(2025, 1, 31).unwrap()));
+        assert!(set.contains(&NaiveDate::from_ymd_opt(2025, 2, 1).unwrap()));
+        assert!(set.contains(&NaiveDate::from_ymd_opt(2025, 2, 2).unwrap()));
+    }
+
+    #[test]
+    fn test_build_date_set_single_day() {
+        // 起始=结束 → 1个日期
+        let ranges = &[(2025, 3, 15, 2025, 3, 15)];
+        let set = build_date_set(ranges);
+        assert_eq!(set.len(), 1);
+        assert!(set.contains(&NaiveDate::from_ymd_opt(2025, 3, 15).unwrap()));
+    }
+
+    #[test]
+    fn test_build_date_set_multiple_ranges() {
+        // 2 个不重叠区间
+        let ranges = &[(2025, 1, 1, 2025, 1, 1), (2025, 5, 1, 2025, 5, 2)];
+        let set = build_date_set(ranges);
+        assert_eq!(set.len(), 3);
+        assert!(set.contains(&NaiveDate::from_ymd_opt(2025, 1, 1).unwrap()));
+        assert!(set.contains(&NaiveDate::from_ymd_opt(2025, 5, 1).unwrap()));
+        assert!(set.contains(&NaiveDate::from_ymd_opt(2025, 5, 2).unwrap()));
+    }
+
+    #[test]
+    fn test_build_date_set_invalid_start_skipped() {
+        // 起始日期无效（2月30日）→ 该区间被跳过
+        let ranges = &[(2025, 2, 30, 2025, 3, 2)];
+        let set = build_date_set(ranges);
+        assert_eq!(set.len(), 0);
+    }
+
+    #[test]
+    fn test_build_date_set_invalid_end_skipped() {
+        // 结束日期无效（4月31日）→ 该区间被跳过
+        let ranges = &[(2025, 4, 1, 2025, 4, 31)];
+        let set = build_date_set(ranges);
+        assert_eq!(set.len(), 0);
+    }
+
+    #[test]
+    fn test_build_date_set_empty_ranges() {
+        let set = build_date_set(&[]);
+        assert_eq!(set.len(), 0);
+    }
+
+    // ===== build_date_set_single 辅助函数测试 =====
+
+    #[test]
+    fn test_build_date_set_single_basic() {
+        let dates = &[(2025, 1, 26), (2025, 2, 8), (2025, 4, 27)];
+        let set = build_date_set_single(dates);
+        assert_eq!(set.len(), 3);
+        assert!(set.contains(&NaiveDate::from_ymd_opt(2025, 1, 26).unwrap()));
+        assert!(set.contains(&NaiveDate::from_ymd_opt(2025, 2, 8).unwrap()));
+        assert!(set.contains(&NaiveDate::from_ymd_opt(2025, 4, 27).unwrap()));
+    }
+
+    #[test]
+    fn test_build_date_set_single_invalid_filtered() {
+        // 包含 2 个有效日期 + 1 个无效日期（2月30日）→ 过滤后剩 2 个
+        let dates = &[(2025, 1, 1), (2025, 2, 30), (2025, 12, 31)];
+        let set = build_date_set_single(dates);
+        assert_eq!(set.len(), 2);
+        assert!(set.contains(&NaiveDate::from_ymd_opt(2025, 1, 1).unwrap()));
+        assert!(set.contains(&NaiveDate::from_ymd_opt(2025, 12, 31).unwrap()));
+    }
+
+    #[test]
+    fn test_build_date_set_single_empty() {
+        let set = build_date_set_single(&[]);
+        assert_eq!(set.len(), 0);
+    }
+
+    // ===== is_holiday / is_makeup_workday 更多边界 =====
+
+    #[test]
+    fn test_2025_qingming_boundary() {
+        // 清明：4月4-6
+        assert!(is_holiday(NaiveDate::from_ymd_opt(2025, 4, 4).unwrap()));
+        assert!(is_holiday(NaiveDate::from_ymd_opt(2025, 4, 6).unwrap()));
+        // 前后一天非假日
+        assert!(!is_holiday(NaiveDate::from_ymd_opt(2025, 4, 3).unwrap()));
+        assert!(!is_holiday(NaiveDate::from_ymd_opt(2025, 4, 7).unwrap()));
+    }
+
+    #[test]
+    fn test_2025_labour_boundary() {
+        // 劳动节：5月1-5
+        assert!(is_holiday(NaiveDate::from_ymd_opt(2025, 5, 1).unwrap()));
+        assert!(is_holiday(NaiveDate::from_ymd_opt(2025, 5, 5).unwrap()));
+        assert!(!is_holiday(NaiveDate::from_ymd_opt(2025, 4, 30).unwrap()));
+        assert!(!is_holiday(NaiveDate::from_ymd_opt(2025, 5, 6).unwrap()));
+        // 4月27日为劳动节调休补班
+        assert!(is_makeup_workday(
+            NaiveDate::from_ymd_opt(2025, 4, 27).unwrap()
+        ));
+    }
+
+    #[test]
+    fn test_2025_duanwu_boundary() {
+        // 端午：5月31 - 6月2
+        assert!(is_holiday(NaiveDate::from_ymd_opt(2025, 5, 31).unwrap()));
+        assert!(is_holiday(NaiveDate::from_ymd_opt(2025, 6, 2).unwrap()));
+        assert!(!is_holiday(NaiveDate::from_ymd_opt(2025, 5, 30).unwrap()));
+        assert!(!is_holiday(NaiveDate::from_ymd_opt(2025, 6, 3).unwrap()));
+    }
+
+    #[test]
+    fn test_2025_national_day_makeup() {
+        // 国庆调休补班日：9月28日(周日)、10月11日(周六)
+        assert!(is_makeup_workday(
+            NaiveDate::from_ymd_opt(2025, 9, 28).unwrap()
+        ));
+        assert!(is_makeup_workday(
+            NaiveDate::from_ymd_opt(2025, 10, 11).unwrap()
+        ));
+        // 国庆期间：10月1-8
+        assert!(is_holiday(NaiveDate::from_ymd_opt(2025, 10, 8).unwrap()));
+        assert!(!is_holiday(NaiveDate::from_ymd_opt(2025, 10, 9).unwrap()));
+    }
+
+    #[test]
+    fn test_2026_qingming_labour_duanwu() {
+        // 2026 清明 4月4-6
+        assert!(is_holiday(NaiveDate::from_ymd_opt(2026, 4, 4).unwrap()));
+        assert!(!is_holiday(NaiveDate::from_ymd_opt(2026, 4, 7).unwrap()));
+        // 2026 劳动节 5月1-5 + 5月9日(周六)调休
+        assert!(is_holiday(NaiveDate::from_ymd_opt(2026, 5, 5).unwrap()));
+        assert!(!is_holiday(NaiveDate::from_ymd_opt(2026, 5, 6).unwrap()));
+        assert!(is_makeup_workday(
+            NaiveDate::from_ymd_opt(2026, 5, 9).unwrap()
+        ));
+        // 2026 端午 6月19-21
+        assert!(is_holiday(NaiveDate::from_ymd_opt(2026, 6, 19).unwrap()));
+        assert!(!is_holiday(NaiveDate::from_ymd_opt(2026, 6, 22).unwrap()));
+    }
+
+    #[test]
+    fn test_2026_mid_autumn_national() {
+        // 2026 中秋 9月25-27
+        assert!(is_holiday(NaiveDate::from_ymd_opt(2026, 9, 25).unwrap()));
+        assert!(is_holiday(NaiveDate::from_ymd_opt(2026, 9, 27).unwrap()));
+        assert!(!is_holiday(NaiveDate::from_ymd_opt(2026, 9, 28).unwrap()));
+        // 2026 国庆 10月1-7
+        assert!(is_holiday(NaiveDate::from_ymd_opt(2026, 10, 1).unwrap()));
+        assert!(is_holiday(NaiveDate::from_ymd_opt(2026, 10, 7).unwrap()));
+        assert!(!is_holiday(NaiveDate::from_ymd_opt(2026, 10, 8).unwrap()));
+    }
+
+    #[test]
+    fn test_2026_spring_festival_makeup() {
+        // 2026 春节调休补班：2月14日(周六)、2月28日(周六)
+        assert!(is_makeup_workday(
+            NaiveDate::from_ymd_opt(2026, 2, 14).unwrap()
+        ));
+        assert!(is_makeup_workday(
+            NaiveDate::from_ymd_opt(2026, 2, 28).unwrap()
+        ));
+        // 2026 春节 2月15-23
+        assert!(is_holiday(NaiveDate::from_ymd_opt(2026, 2, 15).unwrap()));
+        assert!(!is_holiday(NaiveDate::from_ymd_opt(2026, 2, 14).unwrap()));
+        assert!(!is_holiday(NaiveDate::from_ymd_opt(2026, 2, 24).unwrap()));
+    }
+
+    // ===== is_workday 真值表 4 组合 =====
+
+    #[test]
+    fn test_is_workday_truth_table_all_cases() {
+        // Case 1: 周间工作日 + 非法定假日 = 工作日
+        // 2025-03-04 周二
+        let d = NaiveDate::from_ymd_opt(2025, 3, 4).unwrap();
+        assert!(!matches!(d.weekday(), Weekday::Sat | Weekday::Sun));
+        assert!(!is_holiday(d));
+        assert!(is_workday(d));
+
+        // Case 2: 周间工作日 + 法定假日（周一元旦2025不在，但2026元旦后1月2日周五非假日…
+        // 用 2025-01-01 周三（元旦）
+        let d = NaiveDate::from_ymd_opt(2025, 1, 1).unwrap();
+        assert!(!matches!(d.weekday(), Weekday::Sat | Weekday::Sun));
+        assert!(is_holiday(d));
+        assert!(!is_workday(d));
+
+        // Case 3: 周末 + 非调休补班 = 非工作日
+        // 2025-03-08 周六
+        let d = NaiveDate::from_ymd_opt(2025, 3, 8).unwrap();
+        assert!(matches!(d.weekday(), Weekday::Sat | Weekday::Sun));
+        assert!(!is_makeup_workday(d));
+        assert!(!is_workday(d));
+
+        // Case 4: 周末 + 调休补班 = 工作日
+        // 2025-01-26 周日
+        let d = NaiveDate::from_ymd_opt(2025, 1, 26).unwrap();
+        assert!(matches!(d.weekday(), Weekday::Sat | Weekday::Sun));
+        assert!(is_makeup_workday(d));
+        assert!(is_workday(d));
+    }
+
+    // ===== 区间前后边界一致性 =====
+
+    #[test]
+    fn test_holiday_ranges_no_leak() {
+        // 验证 2025 春节前一天（1月27日）非假日
+        assert!(!is_holiday(NaiveDate::from_ymd_opt(2025, 1, 27).unwrap()));
+        // 春节最后一天 2月4日 是假日，2月5日非假日
+        assert!(is_holiday(NaiveDate::from_ymd_opt(2025, 2, 4).unwrap()));
+        assert!(!is_holiday(NaiveDate::from_ymd_opt(2025, 2, 5).unwrap()));
+
+        // 2025 中秋+国庆：10月8日是假日，10月9日非假日
+        assert!(is_holiday(NaiveDate::from_ymd_opt(2025, 10, 8).unwrap()));
+        assert!(!is_holiday(NaiveDate::from_ymd_opt(2025, 10, 9).unwrap()));
+
+        // 2026 元旦：1月3日是假日，1月4日非假日（但1月4日是调休补班日）
+        assert!(is_holiday(NaiveDate::from_ymd_opt(2026, 1, 3).unwrap()));
+        assert!(!is_holiday(NaiveDate::from_ymd_opt(2026, 1, 4).unwrap()));
+        // 但 1月4日是补班日，所以是工作日
+        assert!(is_makeup_workday(
+            NaiveDate::from_ymd_opt(2026, 1, 4).unwrap()
+        ));
+        assert!(is_workday(NaiveDate::from_ymd_opt(2026, 1, 4).unwrap()));
+    }
+
+    // ===== 非 2025/2026 年份（不在静态数据中）的默认行为 =====
+
+    #[test]
+    fn test_year_outside_static_data_behaves_normally() {
+        // 2024 不在静态数据中，节假日集合不包含任何 2024 日期
+        // 2024-01-01 周一（元旦），但静态层未收录 → is_holiday 返回 false
+        assert!(!is_holiday(NaiveDate::from_ymd_opt(2024, 1, 1).unwrap()));
+        // 但普通工作日判断为工作日
+        assert!(is_workday(NaiveDate::from_ymd_opt(2024, 1, 2).unwrap())); // 周二
+                                                                           // 2024-03-09 周六（普通周末）非工作日
+        assert!(!is_workday(NaiveDate::from_ymd_opt(2024, 3, 9).unwrap()));
+    }
 }

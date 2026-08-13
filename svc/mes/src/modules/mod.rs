@@ -5,6 +5,7 @@ pub mod dashboard_ws;
 pub mod energy_management;
 pub mod equipment;
 pub mod equipment_oee;
+pub mod equipment_oee_calc;
 pub mod material_bom;
 pub mod material_requirement;
 pub mod mes_compat;
@@ -24,6 +25,7 @@ pub mod quality_traceability;
 pub mod team;
 pub mod wip;
 pub mod work_order;
+pub mod work_order_calc;
 pub mod work_report;
 pub mod work_station;
 

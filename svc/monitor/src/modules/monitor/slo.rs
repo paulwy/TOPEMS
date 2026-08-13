@@ -148,6 +148,65 @@ fn compute_status(compliance: f64, burn_rate: f64) -> String {
     }
 }
 
+// ==================== 纯函数（无副作用，便于单元测试） ====================
+
+/// 根据 SLO 目标与请求总数/错误数计算错误预算。
+/// 返回 (budget_remaining, budget_consumed_pct)。
+/// - slo_target: SLO 目标百分比，如 99.9 表示 99.9%
+/// - total_requests: 窗口内总请求数
+/// - error_count: 窗口内错误请求数
+pub fn calculate_error_budget(
+    slo_target: f64,
+    total_requests: u64,
+    error_count: u64,
+) -> (f64, f64) {
+    if total_requests == 0 {
+        return (0.0, 0.0);
+    }
+    let allowed_error_rate = (100.0 - slo_target).max(0.0) / 100.0;
+    let budget_total = total_requests as f64 * allowed_error_rate;
+    let consumed = error_count as f64;
+    let remaining = (budget_total - consumed).max(0.0);
+    let consumed_pct = if budget_total > 0.0 {
+        (consumed / budget_total) * 100.0
+    } else {
+        0.0
+    };
+    (remaining, consumed_pct)
+}
+
+/// 计算错误预算燃烧率。
+/// burn_rate = current_error_rate / allowed_error_rate
+/// - current_error_rate: 当前错误率（百分比，如 0.5 表示 0.5%）
+/// - slo_target: SLO 目标百分比，如 99.9
+pub fn calculate_burn_rate(current_error_rate: f64, slo_target: f64) -> f64 {
+    let allowed = 100.0 - slo_target;
+    if allowed <= 0.0 {
+        return 0.0;
+    }
+    current_error_rate / allowed
+}
+
+/// 根据合规率与燃烧率判定 SLO 状态。
+pub fn slo_status_from_compliance(compliance: f64, burn_rate: f64) -> &'static str {
+    if compliance >= 99.0 && burn_rate < 1.0 {
+        "healthy"
+    } else if compliance >= 95.0 && burn_rate < 3.0 {
+        "warning"
+    } else {
+        "critical"
+    }
+}
+
+/// 计算错误预算剩余百分比。
+pub fn budget_remaining_percent(remaining: f64, total: f64) -> f64 {
+    if total <= 0.0 {
+        0.0
+    } else {
+        (remaining / total) * 100.0
+    }
+}
+
 fn seed_slos(tenant_id: Uuid) -> Vec<Slo> {
     let now = Utc::now();
     vec![
@@ -773,4 +832,168 @@ pub fn create_routes() -> Router<AppState> {
             "/slos/{id}",
             get(get_slo).put(update_slo).delete(delete_slo),
         )
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    // ---- calculate_error_budget ----
+
+    #[test]
+    fn test_calculate_error_budget_normal() {
+        // SLO 99.9%, 10000 请求, 允许错误 = 10000 * 0.001 = 10
+        // 实际错误 5 => remaining=5, consumed_pct=50%
+        let (remaining, pct) = calculate_error_budget(99.9, 10000, 5);
+        assert!((remaining - 5.0).abs() < 0.001);
+        assert!((pct - 50.0).abs() < 0.001);
+    }
+
+    #[test]
+    fn test_calculate_error_budget_zero_requests() {
+        let (remaining, pct) = calculate_error_budget(99.9, 0, 0);
+        assert_eq!(remaining, 0.0);
+        assert_eq!(pct, 0.0);
+    }
+
+    #[test]
+    fn test_calculate_error_budget_no_errors() {
+        let (remaining, pct) = calculate_error_budget(99.9, 10000, 0);
+        assert!((remaining - 10.0).abs() < 0.001);
+        assert!((pct - 0.0).abs() < 0.001);
+    }
+
+    #[test]
+    fn test_calculate_error_budget_budget_exhausted() {
+        // 10 errors exactly consumes all budget
+        let (remaining, pct) = calculate_error_budget(99.9, 10000, 10);
+        assert!((remaining - 0.0).abs() < 0.001);
+        assert!((pct - 100.0).abs() < 0.001);
+    }
+
+    #[test]
+    fn test_calculate_error_budget_over_consumed() {
+        // 20 errors > 10 budget => remaining clamped to 0, pct=200%
+        let (remaining, pct) = calculate_error_budget(99.9, 10000, 20);
+        assert_eq!(remaining, 0.0);
+        assert!((pct - 200.0).abs() < 0.001);
+    }
+
+    #[test]
+    fn test_calculate_error_budget_100_percent_slo() {
+        // SLO 100% => allowed_error_rate = 0 => budget_total = 0
+        let (remaining, pct) = calculate_error_budget(100.0, 1000, 1);
+        assert_eq!(remaining, 0.0);
+        assert_eq!(pct, 0.0);
+    }
+
+    #[test]
+    fn test_calculate_error_budget_low_target() {
+        // SLO 90%, 1000 请求, 允许错误 = 100
+        let (remaining, pct) = calculate_error_budget(90.0, 1000, 25);
+        assert!((remaining - 75.0).abs() < 0.001);
+        assert!((pct - 25.0).abs() < 0.001);
+    }
+
+    // ---- calculate_burn_rate ----
+
+    #[test]
+    fn test_calculate_burn_rate_normal() {
+        // error_rate=0.5%, target=99.9% => allowed=0.1% => burn=5.0
+        let burn = calculate_burn_rate(0.5, 99.9);
+        assert!((burn - 5.0).abs() < 0.001);
+    }
+
+    #[test]
+    fn test_calculate_burn_rate_zero_error() {
+        let burn = calculate_burn_rate(0.0, 99.9);
+        assert_eq!(burn, 0.0);
+    }
+
+    #[test]
+    fn test_calculate_burn_rate_within_budget() {
+        // error_rate=0.05%, target=99.9% => allowed=0.1% => burn=0.5
+        let burn = calculate_burn_rate(0.05, 99.9);
+        assert!((burn - 0.5).abs() < 0.001);
+    }
+
+    #[test]
+    fn test_calculate_burn_rate_100_percent_slo() {
+        // target=100% => allowed=0 => return 0
+        let burn = calculate_burn_rate(1.0, 100.0);
+        assert_eq!(burn, 0.0);
+    }
+
+    #[test]
+    fn test_calculate_burn_rate_high_error() {
+        // error_rate=5%, target=99% => allowed=1% => burn=5.0
+        let burn = calculate_burn_rate(5.0, 99.0);
+        assert!((burn - 5.0).abs() < 0.001);
+    }
+
+    // ---- slo_status_from_compliance ----
+
+    #[test]
+    fn test_slo_status_healthy() {
+        assert_eq!(slo_status_from_compliance(99.5, 0.5), "healthy");
+        assert_eq!(slo_status_from_compliance(99.0, 0.99), "healthy");
+    }
+
+    #[test]
+    fn test_slo_status_warning() {
+        assert_eq!(slo_status_from_compliance(97.0, 2.0), "warning");
+        assert_eq!(slo_status_from_compliance(95.0, 2.99), "warning");
+    }
+
+    #[test]
+    fn test_slo_status_critical_low_compliance() {
+        assert_eq!(slo_status_from_compliance(90.0, 0.5), "critical");
+    }
+
+    #[test]
+    fn test_slo_status_critical_high_burn() {
+        // compliance >= 99 but burn >= 1.0 => not healthy
+        assert_eq!(slo_status_from_compliance(99.5, 1.5), "warning");
+        // compliance < 95 and burn >= 3.0 => critical
+        assert_eq!(slo_status_from_compliance(94.0, 3.0), "critical");
+    }
+
+    #[test]
+    fn test_slo_status_boundary_healthy_warning() {
+        // compliance exactly 99.0, burn exactly 1.0 => not healthy (burn not < 1.0)
+        assert_eq!(slo_status_from_compliance(99.0, 1.0), "warning");
+    }
+
+    #[test]
+    fn test_slo_status_boundary_warning_critical() {
+        // compliance exactly 95.0, burn exactly 3.0 => not warning (burn not < 3.0)
+        assert_eq!(slo_status_from_compliance(95.0, 3.0), "critical");
+    }
+
+    // ---- budget_remaining_percent ----
+
+    #[test]
+    fn test_budget_remaining_percent_normal() {
+        assert!((budget_remaining_percent(30.0, 100.0) - 30.0).abs() < 0.001);
+    }
+
+    #[test]
+    fn test_budget_remaining_percent_zero_total() {
+        assert_eq!(budget_remaining_percent(10.0, 0.0), 0.0);
+    }
+
+    #[test]
+    fn test_budget_remaining_percent_full() {
+        assert!((budget_remaining_percent(100.0, 100.0) - 100.0).abs() < 0.001);
+    }
+
+    #[test]
+    fn test_budget_remaining_percent_empty() {
+        assert!((budget_remaining_percent(0.0, 100.0) - 0.0).abs() < 0.001);
+    }
+
+    #[test]
+    fn test_budget_remaining_percent_negative_total() {
+        assert_eq!(budget_remaining_percent(10.0, -5.0), 0.0);
+    }
 }

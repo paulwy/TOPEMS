@@ -6,11 +6,312 @@ use axum::{
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::{FromRow, Row};
+use std::collections::HashMap;
 use uuid::Uuid;
 
 use crate::shared::AppState;
 use topems_shared_auth::auth::Claims;
 use topems_shared_core::response::ApiResponse;
+
+// =============================================================================
+// Pure functions for version diff / text diff computation
+// =============================================================================
+
+/// Diff 操作类型：新增 / 删除 / 未变
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum DiffOp {
+    Insert,
+    Delete,
+    Equal,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct DiffLine {
+    pub op: DiffOp,
+    pub text: String,
+    /// old_line_index (None for Insert)
+    pub old_idx: Option<usize>,
+    /// new_line_index (None for Delete)
+    pub new_idx: Option<usize>,
+}
+
+/// Line-based diff：返回 old vs new 的行级别差异
+/// 使用 LCS + 双指针构造结果。返回的顺序为原始顺序（先 old 删除再 equal 最后 insert 交错）
+pub fn line_diff(old: &[&str], new: &[&str]) -> Vec<DiffLine> {
+    let m = old.len();
+    let n = new.len();
+    // LCS DP table of lengths
+    let mut dp: Vec<Vec<usize>> = vec![vec![0; n + 1]; m + 1];
+    for i in (0..m).rev() {
+        for j in (0..n).rev() {
+            dp[i][j] = if old[i] == new[j] {
+                dp[i + 1][j + 1] + 1
+            } else {
+                dp[i + 1][j].max(dp[i][j + 1])
+            };
+        }
+    }
+    // Walk the table
+    let mut result: Vec<DiffLine> = Vec::new();
+    let mut i = 0_usize;
+    let mut j = 0_usize;
+    while i < m || j < n {
+        if i < m && j < n && old[i] == new[j] {
+            result.push(DiffLine {
+                op: DiffOp::Equal,
+                text: old[i].to_string(),
+                old_idx: Some(i),
+                new_idx: Some(j),
+            });
+            i += 1;
+            j += 1;
+        } else if i < m && (j == n || dp[i + 1][j] >= dp[i][j + 1]) {
+            result.push(DiffLine {
+                op: DiffOp::Delete,
+                text: old[i].to_string(),
+                old_idx: Some(i),
+                new_idx: None,
+            });
+            i += 1;
+        } else {
+            result.push(DiffLine {
+                op: DiffOp::Insert,
+                text: new[j].to_string(),
+                old_idx: None,
+                new_idx: Some(j),
+            });
+            j += 1;
+        }
+    }
+    result
+}
+
+/// Diff 统计：统计 insert / delete / equal 行数
+pub fn diff_stats(diff: &[DiffLine]) -> HashMap<&'static str, usize> {
+    let mut m: HashMap<&'static str, usize> = HashMap::new();
+    m.insert("insert", 0);
+    m.insert("delete", 0);
+    m.insert("equal", 0);
+    for d in diff {
+        match d.op {
+            DiffOp::Insert => *m.get_mut("insert").unwrap() += 1,
+            DiffOp::Delete => *m.get_mut("delete").unwrap() += 1,
+            DiffOp::Equal => *m.get_mut("equal").unwrap() += 1,
+        }
+    }
+    m
+}
+
+/// 文件大小 human-readable 格式
+pub fn humanize_bytes(bytes: i64) -> String {
+    if bytes < 0 {
+        return "0 B".to_string();
+    }
+    let units = ["B", "KB", "MB", "GB", "TB", "PB"];
+    let mut v = bytes as f64;
+    let mut ui = 0_usize;
+    while v >= 1024.0 && ui < units.len() - 1 {
+        v /= 1024.0;
+        ui += 1;
+    }
+    if ui == 0 {
+        format!("{} {}", bytes, units[ui])
+    } else {
+        format!("{:.2} {}", v, units[ui])
+    }
+}
+
+/// 版本标签是否为合规（允许 数字.数字.数字 与 semver 类似，允许可选 v 前缀和 -rc.0 后缀）
+pub fn is_valid_doc_version(tag: &str) -> bool {
+    let t = tag.strip_prefix('v').unwrap_or(tag);
+    let (main, _pre) = match t.split_once('-') {
+        Some((m, p)) => (m, Some(p)),
+        None => (t, None),
+    };
+    let parts: Vec<&str> = main.split('.').collect();
+    if parts.is_empty() || parts.len() > 3 {
+        return false;
+    }
+    for p in parts {
+        if p.is_empty() {
+            return false;
+        }
+        for c in p.chars() {
+            if !c.is_ascii_digit() {
+                return false;
+            }
+        }
+    }
+    true
+}
+
+/// 文档两版本属性差异摘要：按字段 key 对比，输出 changed_fields 列表
+pub fn version_field_diff(a: &[(&str, &str)], b: &[(&str, &str)]) -> Vec<String> {
+    let ma: HashMap<&str, &str> = a.iter().copied().collect();
+    let mb: HashMap<&str, &str> = b.iter().copied().collect();
+    let mut out = Vec::new();
+    let keys_a: std::collections::HashSet<&str> = ma.keys().copied().collect();
+    let keys_b: std::collections::HashSet<&str> = mb.keys().copied().collect();
+    let all: std::collections::HashSet<&str> = keys_a.union(&keys_b).copied().collect();
+    let mut sorted: Vec<&str> = all.into_iter().collect();
+    sorted.sort_unstable();
+    for k in sorted {
+        match (ma.get(k), mb.get(k)) {
+            (Some(x), Some(y)) if x != y => out.push(format!("{}: {} → {}", k, x, y)),
+            (Some(_), None) => out.push(format!("{}: removed", k)),
+            (None, Some(v)) => out.push(format!("{}: added ({})", k, v)),
+            _ => {}
+        }
+    }
+    out
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    // ============ line_diff ============
+
+    #[test]
+    fn test_line_diff_both_empty() {
+        assert!(line_diff(&[], &[]).is_empty());
+    }
+
+    #[test]
+    fn test_line_diff_equal_files() {
+        let r = line_diff(&["A", "B", "C"], &["A", "B", "C"]);
+        assert_eq!(r.len(), 3);
+        assert!(r.iter().all(|x| x.op == DiffOp::Equal));
+    }
+
+    #[test]
+    fn test_line_diff_insertions_only() {
+        let r = line_diff(&["A", "C"], &["A", "B", "C"]);
+        assert_eq!(r.len(), 3);
+        assert_eq!(r[0].op, DiffOp::Equal);
+        assert_eq!(r[0].text, "A");
+        assert_eq!(r[1].op, DiffOp::Insert);
+        assert_eq!(r[1].text, "B");
+        assert_eq!(r[1].old_idx, None);
+        assert_eq!(r[1].new_idx, Some(1));
+        assert_eq!(r[2].op, DiffOp::Equal);
+    }
+
+    #[test]
+    fn test_line_diff_deletions_only() {
+        let r = line_diff(&["A", "B", "C"], &["A", "C"]);
+        assert_eq!(r.len(), 3);
+        assert_eq!(r[1].op, DiffOp::Delete);
+        assert_eq!(r[1].text, "B");
+        assert_eq!(r[1].new_idx, None);
+    }
+
+    #[test]
+    fn test_line_diff_replace() {
+        // ["A","B","C"] → ["A","X","C"]
+        let r = line_diff(&["A", "B", "C"], &["A", "X", "C"]);
+        // LCS: A,C. So B is deleted then X is inserted (order depends on tie-break)
+        let stats = diff_stats(&r);
+        assert_eq!(*stats.get("equal").unwrap(), 2);
+        assert_eq!(*stats.get("delete").unwrap(), 1);
+        assert_eq!(*stats.get("insert").unwrap(), 1);
+    }
+
+    #[test]
+    fn test_line_diff_old_empty() {
+        let r = line_diff(&[], &["X", "Y"]);
+        assert_eq!(r.len(), 2);
+        assert!(r.iter().all(|x| x.op == DiffOp::Insert));
+    }
+
+    #[test]
+    fn test_line_diff_new_empty() {
+        let r = line_diff(&["X", "Y"], &[]);
+        assert_eq!(r.len(), 2);
+        assert!(r.iter().all(|x| x.op == DiffOp::Delete));
+    }
+
+    // ============ diff_stats ============
+
+    #[test]
+    fn test_diff_stats_counts() {
+        let r = line_diff(&["A", "B", "C"], &["A", "X"]);
+        let s = diff_stats(&r);
+        // equal: A(1), delete: B,C(2), insert: X(1) OR some other valid path
+        assert_eq!(
+            s.get("equal").unwrap() + s.get("delete").unwrap() + s.get("insert").unwrap(),
+            r.len()
+        );
+        assert!(*s.get("equal").unwrap() >= 1);
+    }
+
+    // ============ humanize_bytes ============
+
+    #[test]
+    fn test_humanize_negative() {
+        assert_eq!(humanize_bytes(-1), "0 B");
+    }
+
+    #[test]
+    fn test_humanize_bytes_b() {
+        assert_eq!(humanize_bytes(0), "0 B");
+        assert_eq!(humanize_bytes(1023), "1023 B");
+    }
+
+    #[test]
+    fn test_humanize_kb_mb() {
+        assert_eq!(humanize_bytes(1024), "1.00 KB");
+        assert_eq!(humanize_bytes(1024 * 1500), "1.46 MB");
+    }
+
+    #[test]
+    fn test_humanize_gb_tb_boundary() {
+        let gb = 1024_i64.pow(3);
+        assert_eq!(humanize_bytes(gb), "1.00 GB");
+        let tb = 1024_i64.pow(4);
+        assert_eq!(humanize_bytes(tb), "1.00 TB");
+    }
+
+    // ============ is_valid_doc_version ============
+
+    #[test]
+    fn test_valid_doc_version_semver() {
+        assert!(is_valid_doc_version("1.0.0"));
+        assert!(is_valid_doc_version("v1.2.3"));
+        assert!(is_valid_doc_version("2.1"));
+        assert!(is_valid_doc_version("5"));
+        assert!(is_valid_doc_version("1.0.0-rc.1"));
+    }
+
+    #[test]
+    fn test_invalid_doc_version() {
+        assert!(!is_valid_doc_version(""));
+        assert!(!is_valid_doc_version("."));
+        assert!(!is_valid_doc_version("1..2"));
+        assert!(!is_valid_doc_version("1.a.2"));
+        assert!(!is_valid_doc_version("1.2.3.4"));
+    }
+
+    // ============ version_field_diff ============
+
+    #[test]
+    fn test_field_diff_equal() {
+        let a = [("title", "X"), ("author", "Y")];
+        let b = [("title", "X"), ("author", "Y")];
+        assert!(version_field_diff(&a, &b).is_empty());
+    }
+
+    #[test]
+    fn test_field_diff_all_cases() {
+        let a = [("title", "V1"), ("owner", "A"), ("reviewer", "B")];
+        let b = [("title", "V2"), ("owner", "A"), ("approver", "C")];
+        let out = version_field_diff(&a, &b);
+        // approver added, reviewer removed, title changed
+        assert!(out.iter().any(|x| x.starts_with("title: V1 → V2")));
+        assert!(out.iter().any(|x| x.contains("reviewer: removed")));
+        assert!(out.iter().any(|x| x.starts_with("approver: added (C)")));
+    }
+}
 
 fn get_tenant_id(claims: &Claims, headers: &axum::http::HeaderMap) -> Uuid {
     claims

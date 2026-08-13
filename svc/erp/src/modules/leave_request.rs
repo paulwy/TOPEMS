@@ -151,12 +151,13 @@ async fn ensure_table(state: &ApiState) {
             tenant_id       UUID NOT NULL DEFAULT '00000000-0000-0000-0000-000000000000'::uuid,
             created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW(),
             updated_at      TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-                deleted_at TIMESTAMP
+            deleted_at TIMESTAMP
         )
         "#,
     )
     .execute(&state.db)
     .await
+    .map(|_| ())
     .unwrap_or_else(|e| tracing::warn!("创建 leave_requests 表失败（可能已存在）: {}", e));
 }
 
@@ -1133,5 +1134,253 @@ mod tests {
         let (ok, remaining) = check_annual_leave_balance(15.0, 10.0, 1.0);
         assert!(!ok);
         assert!((remaining - 0.0).abs() < f64::EPSILON);
+    }
+
+    // ===== calculate_leave_days 补充边界 =====
+
+    #[test]
+    fn test_cross_month_workdays_only() {
+        // 2025-03-31(周一) → 2025-04-02(周三)，避开春节/清明
+        // 工作日：3/31 周一 + 4/1 周二 + 4/2 周三 = 3 天
+        let s = NaiveDate::from_ymd_opt(2025, 3, 31).unwrap();
+        let e = NaiveDate::from_ymd_opt(2025, 4, 2).unwrap();
+        assert_eq!(calculate_leave_days(s, e, false, false), 3.0);
+    }
+
+    #[test]
+    fn test_cross_month_with_half_day_end_on_weekend() {
+        // 结束日是周末（非工作日）且 end_half_day=true → 不扣减
+        // 2025-03-27(周四) → 2025-03-29(周六)，end_half=true
+        // 工作日：3/27 周四 + 3/28 周五 = 2.0；3/29 周六（非工作日，不扣 0.5）
+        // 总 = 2.0
+        let s = NaiveDate::from_ymd_opt(2025, 3, 27).unwrap();
+        let e = NaiveDate::from_ymd_opt(2025, 3, 29).unwrap();
+        assert_eq!(calculate_leave_days(s, e, false, true), 2.0);
+    }
+
+    #[test]
+    fn test_cross_month_start_half_on_workday_end_half_on_weekend() {
+        // start_half=true(周四,工作日) → 扣 0.5；end_half=true(周六,周末) → 不扣
+        // 2025-03-27 周四 + 3/28 周五 = 2.0，扣 start 0.5 → 1.5
+        let s = NaiveDate::from_ymd_opt(2025, 3, 27).unwrap();
+        let e = NaiveDate::from_ymd_opt(2025, 3, 29).unwrap();
+        assert_eq!(calculate_leave_days(s, e, true, true), 1.5);
+    }
+
+    #[test]
+    fn test_2026_spring_festival_long_holiday_with_makeup_boundaries() {
+        // 2026 春节：2/15-2/23 为法定假日；调休补班日 2/14(周六) 和 2/28(周六)
+        // 请假如 2/13(周五) → 2/27(周五)
+        // 2/13 周五(工作日)；2/14 周六(调休补班)；2/15-2/23 假日；2/24 周二、2/25 周三、2/26 周四、2/27 周五(工作日)
+        // 总计：2/13 + 2/14 + 2/24 + 2/25 + 2/26 + 2/27 = 6 天
+        let s = NaiveDate::from_ymd_opt(2026, 2, 13).unwrap();
+        let e = NaiveDate::from_ymd_opt(2026, 2, 27).unwrap();
+        assert_eq!(calculate_leave_days(s, e, false, false), 6.0);
+    }
+
+    #[test]
+    fn test_2026_spring_festival_makeup_half_day_adjust() {
+        // 请假区间 2/14(周六补班，半天 start_half) → 2/14(周六补班)
+        // same_day + start_half + workday = 0.5
+        let d = NaiveDate::from_ymd_opt(2026, 2, 14).unwrap();
+        assert_eq!(calculate_leave_days(d, d, true, false), 0.5);
+    }
+
+    #[test]
+    fn test_multi_month_cross_range_no_panic() {
+        // 跨多月 2025-03-01(周六) → 2025-05-31(周六)
+        // 这个测试主要验证 succ_opt 循环不会在 NaiveDate 推进时 panic
+        // 也间接验证 total.max(0.0) 不会得到负数
+        let s = NaiveDate::from_ymd_opt(2025, 3, 1).unwrap();
+        let e = NaiveDate::from_ymd_opt(2025, 5, 31).unwrap();
+        let result = calculate_leave_days(s, e, false, false);
+        // 粗略估算：2025 清明节(4/4-4/6)、劳动节(5/1-5/5)、调休 4/27
+        // 3 月共 22 工作日、4 月约 20 工作日、5 月约 19 工作日 → 粗略 > 0
+        assert!(result > 50.0, "3 个月应有 > 50 个工作日，实际 {}", result);
+        // 不应为负
+        assert!(result >= 0.0);
+    }
+
+    #[test]
+    fn test_same_day_weekend_half_day_returns_zero() {
+        // 同一天为周末且两个 half 标记为 true：因为 is_workday 为假，不会设置 0.5 → 0
+        let d = NaiveDate::from_ymd_opt(2024, 1, 6).unwrap(); // Saturday
+        let result = calculate_leave_days(d, d, true, true);
+        assert_eq!(result, 0.0);
+    }
+
+    #[test]
+    fn test_half_day_adjust_never_goes_negative() {
+        // 极端：两个半天标记为真，但只有 0 个工作日时，max(0.0) 应将结果钳为 0
+        // 周末（周六到周日）+ start_half + end_half
+        let s = NaiveDate::from_ymd_opt(2024, 1, 6).unwrap(); // Saturday
+        let e = NaiveDate::from_ymd_opt(2024, 1, 7).unwrap(); // Sunday
+        let result = calculate_leave_days(s, e, true, true);
+        assert_eq!(result, 0.0);
+    }
+
+    #[test]
+    fn test_start_equals_end_normal_workday_no_half_marks() {
+        // 已在 test_same_day_full_day 覆盖；额外加周三验证
+        let d = NaiveDate::from_ymd_opt(2024, 1, 3).unwrap(); // Wednesday
+        assert_eq!(calculate_leave_days(d, d, false, false), 1.0);
+    }
+
+    #[test]
+    fn test_two_week_with_makeup_and_holiday_mixed() {
+        // 2025-04-28(周一) → 2025-05-09(周五)
+        // 4/28 周一、4/29 周二、4/30 周三；5/1-5/5 劳动节；5/9 周五 → 前后有 5/6,7,8 三天(周二三四是工作日？哦 5月1日周四 那：
+        // 5/1 Thu(假日) 5/2 Fri(假日) 5/3 Sat 5/4 Sun 5/5 Mon(假日)
+        // 然后 5/6 Tue(正常工作日?) 5/7 Wed 5/8 Thu 5/9 Fri
+        // 调休日 4/27(周日为调休)不在区间。所以 4/28,29,30(3个) + 5/6,7,8,9(4个) = 7 个工作日
+        let s = NaiveDate::from_ymd_opt(2025, 4, 28).unwrap();
+        let e = NaiveDate::from_ymd_opt(2025, 5, 9).unwrap();
+        assert_eq!(calculate_leave_days(s, e, false, false), 7.0);
+    }
+
+    // ===== check_annual_leave_balance 补充边界 =====
+
+    #[test]
+    fn test_balance_request_zero_always_sufficient() {
+        // 申请 0 天，只要剩余 >= 0 就够
+        let (ok, remaining) = check_annual_leave_balance(9.0, 10.0, 0.0);
+        assert!(ok);
+        assert!((remaining - 1.0).abs() < f64::EPSILON);
+    }
+
+    #[test]
+    fn test_balance_request_matches_remaining_exactly() {
+        // 剩余 0.5，申请 0.5 → 刚好够（浮点相等）
+        let (ok, remaining) = check_annual_leave_balance(9.5, 10.0, 0.5);
+        assert!(ok);
+        assert!((remaining - 0.5).abs() < f64::EPSILON);
+    }
+
+    #[test]
+    fn test_balance_all_negative_values_clamped_to_zero() {
+        // 三个参数全为负 → used=0, quota=0, request=0, remaining=0 → 充足(0>=0)
+        let (ok, remaining) = check_annual_leave_balance(-1.0, -5.0, -99.0);
+        assert!(ok);
+        assert!((remaining - 0.0).abs() < f64::EPSILON);
+    }
+
+    // ===== 盲区补充：跨年请假 + 国庆假期 + 半天扣减极端组合 =====
+
+    #[test]
+    fn test_cross_year_from_dec_2025_to_jan_2026_regular_workdays() {
+        // 2025-12-29(周一) → 2026-01-05(周一)
+        // 2026元旦: 1/1-1/3 为法定假日；1/4 周日为调休补班日
+        // 工作日: 12/29 Mon, 12/30 Tue, 12/31 Wed → 3 天；1/4 Sun(调休补班), 1/5 Mon → 2 天
+        // 共 5 天
+        let s = NaiveDate::from_ymd_opt(2025, 12, 29).unwrap();
+        let e = NaiveDate::from_ymd_opt(2026, 1, 5).unwrap();
+        assert_eq!(calculate_leave_days(s, e, false, false), 5.0);
+    }
+
+    #[test]
+    fn test_cross_year_both_half_day_mixed_workdays_and_holiday() {
+        // 2025-12-31(周三) → 2026-01-02(周五)
+        // 区间: 12/31 Wed(工作) + 1/1 Thu(元旦假) + 1/2 Fri(元旦假，见 HOLIDAY_RANGES 1/1-1/3)
+        // 工作日 = 1 天（仅 12/31）；start_half=true 扣 0.5；end_half=true 在 1/2(假日) 不扣 → 0.5
+        let s = NaiveDate::from_ymd_opt(2025, 12, 31).unwrap();
+        let e = NaiveDate::from_ymd_opt(2026, 1, 2).unwrap();
+        assert_eq!(calculate_leave_days(s, e, true, true), 0.5);
+    }
+
+    #[test]
+    fn test_cross_year_weekend_half_day_nop() {
+        // 2025-12-27(周六) → 2026-01-03(周六)，start_half=true, end_half=true
+        // 12/27 Sat 周末、12/28 Sun 周末、12/29 Mon 工作、12/30 Tue 工作、12/31 Wed 工作
+        // 1/1-1/3 元旦假；1/4 不在区间
+        // 工作日 = 3 天；12/27(周末) start_half 不扣；1/3(假日) end_half 不扣 → 3.0
+        let s = NaiveDate::from_ymd_opt(2025, 12, 27).unwrap();
+        let e = NaiveDate::from_ymd_opt(2026, 1, 3).unwrap();
+        assert_eq!(calculate_leave_days(s, e, true, true), 3.0);
+    }
+
+    #[test]
+    fn test_cross_year_same_day_jan1_holiday_is_zero() {
+        // 2026-01-01 元旦法定假日：即使全天申请也为 0 天
+        let d = NaiveDate::from_ymd_opt(2026, 1, 1).unwrap();
+        assert_eq!(calculate_leave_days(d, d, false, false), 0.0);
+    }
+
+    #[test]
+    fn test_cross_year_same_day_dec31_workday_half_is_0_5() {
+        // 2025-12-31 周三（工作日）same day + start_half=true → 0.5
+        let d = NaiveDate::from_ymd_opt(2025, 12, 31).unwrap();
+        assert_eq!(calculate_leave_days(d, d, true, false), 0.5);
+    }
+
+    // ===== 盲区补充：国庆长假 2026（10/1-10/7）+ 调休补班边界 =====
+
+    #[test]
+    fn test_2026_national_day_week_all_zero() {
+        // 2026 国庆：10/1 周四 → 10/7 周三（7天）
+        let s = NaiveDate::from_ymd_opt(2026, 10, 1).unwrap();
+        let e = NaiveDate::from_ymd_opt(2026, 10, 7).unwrap();
+        assert_eq!(calculate_leave_days(s, e, false, false), 0.0);
+    }
+
+    #[test]
+    fn test_2026_national_day_with_pre_weekend_workdays() {
+        // 2026-09-28(周一) → 2026-10-10(周六)
+        // 9/28-9/30 (Mon-Wed) + 10/8(Thu) + 10/9(Fri) = 5 个工作日
+        let s = NaiveDate::from_ymd_opt(2026, 9, 28).unwrap();
+        let e = NaiveDate::from_ymd_opt(2026, 10, 10).unwrap();
+        assert_eq!(calculate_leave_days(s, e, false, false), 5.0);
+    }
+
+    // ===== 盲区补充：请假天数为 0 时的极端情况 =====
+
+    #[test]
+    fn test_balance_request_zero_all_zeros() {
+        let (ok, r) = check_annual_leave_balance(0.0, 0.0, 0.0);
+        assert!(ok);
+        assert_eq!(r, 0.0);
+    }
+
+    #[test]
+    fn test_balance_request_zero_with_no_quota_sufficient() {
+        // 申请 0 天、已用 100 天、额度 10 天 → 剩余 0 天，申请 0 天判定充足
+        let (ok, r) = check_annual_leave_balance(100.0, 10.0, 0.0);
+        assert!(ok);
+        assert_eq!(r, 0.0);
+    }
+
+    #[test]
+    fn test_balance_request_tiny_float_smaller_than_remaining() {
+        // 浮点：剩余 0.0001，申请 0.00009 → 充足
+        let (ok, r) = check_annual_leave_balance(10.0 - 0.0001, 10.0, 0.00009);
+        assert!(ok);
+        assert!((r - 0.0001).abs() < 1e-12);
+    }
+
+    #[test]
+    fn test_balance_request_tiny_float_exceeds_remaining() {
+        // 剩余 0.0001，申请 0.00011 → 不足
+        let (ok, r) = check_annual_leave_balance(10.0 - 0.0001, 10.0, 0.00011);
+        assert!(!ok);
+        assert!((r - 0.0001).abs() < 1e-12);
+    }
+
+    // ===== 盲区补充：start_after_end + half_day 组合仍返回 0 =====
+
+    #[test]
+    fn test_start_after_end_with_half_flags_stays_zero() {
+        // 起始 > 结束（短路返回 0），不受 half_flag 影响
+        let s = NaiveDate::from_ymd_opt(2025, 5, 10).unwrap();
+        let e = NaiveDate::from_ymd_opt(2025, 5, 1).unwrap();
+        assert_eq!(calculate_leave_days(s, e, true, true), 0.0);
+    }
+
+    #[test]
+    fn test_request_zero_days_check_balance_vs_leave_agree_on_zero() {
+        // 相同"0 天请求"场景下，两个纯函数都安全返回 0 / true
+        // 2025-6-1 是周日（非工作日）→ 同日请假为 0
+        let d = NaiveDate::from_ymd_opt(2025, 6, 1).unwrap();
+        assert_eq!(calculate_leave_days(d, d, false, false), 0.0);
+        let (ok, _) = check_annual_leave_balance(0.0, 0.0, 0.0);
+        assert!(ok);
     }
 }

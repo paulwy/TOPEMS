@@ -6,6 +6,7 @@ pub mod audit_log;
 pub mod consolidation;
 pub mod dict;
 pub mod finance;
+pub mod leave_request;
 pub mod material;
 pub mod meeting_room;
 pub mod migration;
@@ -20,6 +21,10 @@ pub use audit_log::AuditLog;
 pub use dict::{
     CreateDictItemRequest, CreateDictTypeRequest, DictItem, DictType, UpdateDictItemRequest,
     UpdateDictTypeRequest,
+};
+pub use leave_request::{
+    ApproveLeaveRequestRequest, CreateLeaveRequestRequest, LeaveRequest, RejectLeaveRequestRequest,
+    UpdateLeaveRequestRequest,
 };
 pub use meeting_room::{
     CreateMeetingBookingRequest, CreateMeetingRoomRequest, MeetingBooking, MeetingRoom,

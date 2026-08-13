@@ -65,6 +65,63 @@ pub struct UpdateStatusRequest {
     pub status: String,
 }
 
+/// 将任务优先级字符串转换为可排序的整数，数值越小优先级越高。
+/// unknown 优先级最低（数值最大）。
+pub fn priority_to_int(priority: &str) -> i32 {
+    match priority {
+        "urgent" => 0,
+        "high" => 1,
+        "normal" => 2,
+        "low" => 3,
+        _ => i32::MAX,
+    }
+}
+
+/// 校验任务状态字符串是否合法。
+pub fn is_valid_task_status(status: &str) -> bool {
+    matches!(
+        status,
+        "pending" | "in_progress" | "completed" | "cancelled" | "on_hold"
+    )
+}
+
+/// 校验任务优先级字符串是否合法。
+pub fn is_valid_task_priority(priority: &str) -> bool {
+    matches!(priority, "urgent" | "high" | "normal" | "low")
+}
+
+/// 校验任务状态转换是否合法。
+pub fn is_valid_task_transition(from: &str, to: &str) -> bool {
+    if from == to {
+        return true;
+    }
+    match from {
+        "pending" => matches!(to, "in_progress" | "cancelled" | "on_hold"),
+        "in_progress" => matches!(to, "completed" | "cancelled" | "on_hold" | "pending"),
+        "on_hold" => matches!(to, "in_progress" | "cancelled" | "pending"),
+        "completed" => matches!(to, "in_progress"),
+        "cancelled" => matches!(to, "pending"),
+        _ => false,
+    }
+}
+
+/// 按优先级对任务进行稳定排序（urgent > high > normal > low > unknown）。
+/// 返回新的 Vec，输入顺序在相同优先级下保持不变。
+pub fn sort_tasks_by_priority(mut tasks: Vec<(String, i32)>) -> Vec<(String, i32)> {
+    tasks.sort_by_key(|(_, p)| *p);
+    tasks
+}
+
+/// 根据优先级字符串和当前任务列表，构造 (title, priority_int) 元组并按优先级排序。
+pub fn sort_task_titles_by_priority_str(titles: &[(String, String)]) -> Vec<(String, i32)> {
+    let mut entries: Vec<(String, i32)> = titles
+        .iter()
+        .map(|(t, p)| (t.clone(), priority_to_int(p)))
+        .collect();
+    entries.sort_by_key(|(_, p)| *p);
+    entries
+}
+
 #[utoipa::path(
     get,
     path = "/mobile-tasks",
@@ -472,5 +529,189 @@ pub async fn delete_task(
                 axum::Json(ApiResponse::error(500, "删除失败")),
             )
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    // ---- priority_to_int ----
+
+    #[test]
+    fn test_priority_to_int_known() {
+        assert_eq!(priority_to_int("urgent"), 0);
+        assert_eq!(priority_to_int("high"), 1);
+        assert_eq!(priority_to_int("normal"), 2);
+        assert_eq!(priority_to_int("low"), 3);
+    }
+
+    #[test]
+    fn test_priority_to_int_unknown() {
+        assert_eq!(priority_to_int(""), i32::MAX);
+        assert_eq!(priority_to_int("URGENT"), i32::MAX);
+        assert_eq!(priority_to_int("medium"), i32::MAX);
+    }
+
+    #[test]
+    fn test_priority_to_int_ordering() {
+        assert!(priority_to_int("urgent") < priority_to_int("high"));
+        assert!(priority_to_int("high") < priority_to_int("normal"));
+        assert!(priority_to_int("normal") < priority_to_int("low"));
+    }
+
+    // ---- is_valid_task_status ----
+
+    #[test]
+    fn test_is_valid_task_status_valid() {
+        assert!(is_valid_task_status("pending"));
+        assert!(is_valid_task_status("in_progress"));
+        assert!(is_valid_task_status("completed"));
+        assert!(is_valid_task_status("cancelled"));
+        assert!(is_valid_task_status("on_hold"));
+    }
+
+    #[test]
+    fn test_is_valid_task_status_invalid() {
+        assert!(!is_valid_task_status(""));
+        assert!(!is_valid_task_status("done"));
+        assert!(!is_valid_task_status("PENDING"));
+        assert!(!is_valid_task_status("archived"));
+    }
+
+    // ---- is_valid_task_priority ----
+
+    #[test]
+    fn test_is_valid_task_priority_valid() {
+        assert!(is_valid_task_priority("urgent"));
+        assert!(is_valid_task_priority("high"));
+        assert!(is_valid_task_priority("normal"));
+        assert!(is_valid_task_priority("low"));
+    }
+
+    #[test]
+    fn test_is_valid_task_priority_invalid() {
+        assert!(!is_valid_task_priority(""));
+        assert!(!is_valid_task_priority("medium"));
+        assert!(!is_valid_task_priority("URGENT"));
+    }
+
+    // ---- is_valid_task_transition ----
+
+    #[test]
+    fn test_is_valid_task_transition_same_status() {
+        assert!(is_valid_task_transition("pending", "pending"));
+        assert!(is_valid_task_transition("completed", "completed"));
+    }
+
+    #[test]
+    fn test_is_valid_task_transition_pending_to_in_progress() {
+        assert!(is_valid_task_transition("pending", "in_progress"));
+    }
+
+    #[test]
+    fn test_is_valid_task_transition_in_progress_to_completed() {
+        assert!(is_valid_task_transition("in_progress", "completed"));
+    }
+
+    #[test]
+    fn test_is_valid_task_transition_invalid_pending_to_completed() {
+        // 不允许从 pending 直接跳到 completed
+        assert!(!is_valid_task_transition("pending", "completed"));
+    }
+
+    #[test]
+    fn test_is_valid_task_transition_completed_to_pending_invalid() {
+        assert!(!is_valid_task_transition("completed", "pending"));
+    }
+
+    #[test]
+    fn test_is_valid_task_transition_unknown_status() {
+        assert!(!is_valid_task_transition("unknown", "pending"));
+        assert!(!is_valid_task_transition("pending", "unknown"));
+    }
+
+    #[test]
+    fn test_is_valid_task_transition_cancelled_reopen() {
+        assert!(is_valid_task_transition("cancelled", "pending"));
+        assert!(!is_valid_task_transition("cancelled", "completed"));
+    }
+
+    #[test]
+    fn test_is_valid_task_transition_on_hold_resume() {
+        assert!(is_valid_task_transition("on_hold", "in_progress"));
+        assert!(is_valid_task_transition("in_progress", "on_hold"));
+    }
+
+    // ---- sort_tasks_by_priority ----
+
+    #[test]
+    fn test_sort_tasks_by_priority_empty() {
+        assert!(sort_tasks_by_priority(vec![]).is_empty());
+    }
+
+    #[test]
+    fn test_sort_tasks_by_priority_single() {
+        let result = sort_tasks_by_priority(vec![("A".to_string(), 2)]);
+        assert_eq!(result, vec![("A".to_string(), 2)]);
+    }
+
+    #[test]
+    fn test_sort_tasks_by_priority_multiple() {
+        let input = vec![
+            ("low_task".to_string(), 3),
+            ("urgent_task".to_string(), 0),
+            ("normal_task".to_string(), 2),
+            ("high_task".to_string(), 1),
+        ];
+        let result = sort_tasks_by_priority(input);
+        assert_eq!(result[0].0, "urgent_task");
+        assert_eq!(result[1].0, "high_task");
+        assert_eq!(result[2].0, "normal_task");
+        assert_eq!(result[3].0, "low_task");
+    }
+
+    #[test]
+    fn test_sort_tasks_by_priority_stable_equal_priorities() {
+        let input = vec![
+            ("first".to_string(), 2),
+            ("second".to_string(), 2),
+            ("third".to_string(), 2),
+        ];
+        let result = sort_tasks_by_priority(input);
+        assert_eq!(result[0].0, "first");
+        assert_eq!(result[1].0, "second");
+        assert_eq!(result[2].0, "third");
+    }
+
+    #[test]
+    fn test_sort_tasks_by_priority_already_sorted() {
+        let input = vec![("urgent".to_string(), 0), ("high".to_string(), 1)];
+        let result = sort_tasks_by_priority(input);
+        assert_eq!(result[0].0, "urgent");
+        assert_eq!(result[1].0, "high");
+    }
+
+    // ---- sort_task_titles_by_priority_str ----
+
+    #[test]
+    fn test_sort_task_titles_by_priority_str_mixed() {
+        let input = vec![
+            ("low_task".to_string(), "low".to_string()),
+            ("urgent_task".to_string(), "urgent".to_string()),
+            ("unknown_task".to_string(), "weird".to_string()),
+        ];
+        let result = sort_task_titles_by_priority_str(&input);
+        assert_eq!(result[0].0, "urgent_task");
+        assert_eq!(result[0].1, 0);
+        assert_eq!(result[1].0, "low_task");
+        assert_eq!(result[2].0, "unknown_task");
+        assert_eq!(result[2].1, i32::MAX);
+    }
+
+    #[test]
+    fn test_sort_task_titles_by_priority_str_empty() {
+        let result = sort_task_titles_by_priority_str(&[]);
+        assert!(result.is_empty());
     }
 }

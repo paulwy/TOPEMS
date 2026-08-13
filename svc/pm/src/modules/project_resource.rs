@@ -12,6 +12,19 @@ use crate::models::project_resource::{
     CreateResourceRequest, ProjectResource, UpdateResourceRequest,
 };
 
+// ==================== Pure functions ====================
+
+/// Calculates resource utilization as a percentage.
+///
+/// Formula: `actual_hours / allocated_hours * 100`.
+/// Returns `0.0` when `allocated_hours` is zero to avoid division by zero.
+pub fn resource_utilization(allocated_hours: f64, actual_hours: f64) -> f64 {
+    if allocated_hours == 0.0 {
+        return 0.0;
+    }
+    (actual_hours / allocated_hours) * 100.0
+}
+
 pub fn create_routes(pool: PgPool) -> Router {
     Router::new()
         .route(
@@ -253,5 +266,45 @@ async fn remove_resource(
             tracing::error!("删除项目资源失败: {}", e);
             Json(ApiResponse::error(500, "删除项目资源失败"))
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_utilization_zero_allocated() {
+        assert_eq!(resource_utilization(0.0, 50.0), 0.0);
+    }
+
+    #[test]
+    fn test_utilization_half() {
+        assert!((resource_utilization(100.0, 50.0) - 50.0).abs() < 1e-9);
+    }
+
+    #[test]
+    fn test_utilization_full() {
+        assert!((resource_utilization(100.0, 100.0) - 100.0).abs() < 1e-9);
+    }
+
+    #[test]
+    fn test_utilization_over_allocated() {
+        assert!((resource_utilization(100.0, 150.0) - 150.0).abs() < 1e-9);
+    }
+
+    #[test]
+    fn test_utilization_no_actual_hours() {
+        assert_eq!(resource_utilization(100.0, 0.0), 0.0);
+    }
+
+    #[test]
+    fn test_utilization_both_zero() {
+        assert_eq!(resource_utilization(0.0, 0.0), 0.0);
+    }
+
+    #[test]
+    fn test_utilization_large_values() {
+        assert!((resource_utilization(2000.0, 500.0) - 25.0).abs() < 1e-9);
     }
 }

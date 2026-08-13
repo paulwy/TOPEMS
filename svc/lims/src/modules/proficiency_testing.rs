@@ -1013,42 +1013,20 @@ pub async fn evaluate_result(
 
     let result_val = test_result.unwrap_or(0.0);
 
-    let z_score = req
-        .standard_deviation
-        .filter(|&sd| sd != 0.0)
-        .map(|sd| (result_val - req.assigned_value) / sd);
-
-    let en_score = match (req.measurement_uncertainty, req.reference_uncertainty) {
-        (Some(u_lab), Some(u_ref)) => {
-            let denom = (u_lab.powi(2) + u_ref.powi(2)).sqrt();
-            if denom != 0.0 {
-                Some((result_val - req.assigned_value).abs() / denom)
-            } else {
-                None
-            }
-        }
-        _ => None,
-    };
+    let z_score = compute_z_score(result_val, req.assigned_value, req.standard_deviation);
+    let en_score = compute_en_score(
+        result_val,
+        req.assigned_value,
+        req.measurement_uncertainty,
+        req.reference_uncertainty,
+    );
 
     let eval_method = req
         .evaluation_method
         .clone()
         .unwrap_or_else(|| "z_score".to_string());
 
-    let evaluation_result = if eval_method == "z_score" {
-        match z_score {
-            Some(z) if z.abs() <= 2.0 => Some("satisfactory".to_string()),
-            Some(z) if z.abs() <= 3.0 => Some("questionable".to_string()),
-            Some(_) => Some("unsatisfactory".to_string()),
-            None => None,
-        }
-    } else {
-        match en_score {
-            Some(en) if en <= 1.0 => Some("satisfactory".to_string()),
-            Some(_) => Some("unsatisfactory".to_string()),
-            None => None,
-        }
-    };
+    let evaluation_result = evaluate_pt_result(z_score, en_score, &eval_method);
 
     let evaluated_at = chrono::Utc::now().to_rfc3339();
 
@@ -1396,5 +1374,204 @@ pub async fn list_plan_corrective_actions(
             tracing::error!("Failed to fetch PT corrective actions: {}", e);
             Json(ApiResponse::error(500, "获取整改记录列表失败"))
         }
+    }
+}
+
+// ============================================================================
+// 能力验证纯函数：计算 & 判定（可单元测试）
+// ============================================================================
+
+/// Z 比分数：z = (x - X) / s
+/// 当 s = 0 或 None 时返回 None（无法比较）
+pub fn compute_z_score(result: f64, assigned: f64, std_dev: Option<f64>) -> Option<f64> {
+    std_dev
+        .filter(|&sd| sd != 0.0)
+        .map(|sd| (result - assigned) / sd)
+}
+
+/// E_n 评分（一致性评分）：|x_lab - X_ref| / √(u_lab² + u_ref²)
+/// 当双侧不确定度缺失或分母为 0 返回 None
+pub fn compute_en_score(
+    result: f64,
+    assigned: f64,
+    u_lab: Option<f64>,
+    u_ref: Option<f64>,
+) -> Option<f64> {
+    match (u_lab, u_ref) {
+        (Some(ul), Some(ur)) => {
+            let denom = (ul.powi(2) + ur.powi(2)).sqrt();
+            if denom != 0.0 {
+                Some((result - assigned).abs() / denom)
+            } else {
+                None
+            }
+        }
+        _ => None,
+    }
+}
+
+/// 判定能力验证结果
+/// - z_score 法：|z| ≤ 2 → satisfactory；2 < |z| ≤ 3 → questionable；|z| > 3 → unsatisfactory
+/// - en_score 法（任何非 "z_score" 的 method 都当 en 法）：E_n ≤ 1 → satisfactory；其它 → unsatisfactory
+/// 当需要的指标缺失时返回 None
+pub fn evaluate_pt_result(
+    z_score: Option<f64>,
+    en_score: Option<f64>,
+    evaluation_method: &str,
+) -> Option<String> {
+    if evaluation_method == "z_score" {
+        match z_score {
+            Some(z) if z.abs() <= 2.0 => Some("satisfactory".to_string()),
+            Some(z) if z.abs() <= 3.0 => Some("questionable".to_string()),
+            Some(_) => Some("unsatisfactory".to_string()),
+            None => None,
+        }
+    } else {
+        match en_score {
+            Some(en) if en <= 1.0 => Some("satisfactory".to_string()),
+            Some(_) => Some("unsatisfactory".to_string()),
+            None => None,
+        }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn approx_eq(a: f64, b: f64, eps: f64) -> bool {
+        (a - b).abs() < eps
+    }
+
+    // ===== compute_z_score =====
+    #[test]
+    fn test_z_score_within_range() {
+        // result=101, assigned=100, sd=5 → z = 0.2
+        let z = compute_z_score(101.0, 100.0, Some(5.0)).unwrap();
+        assert!(approx_eq(z, 0.2, 1e-9));
+    }
+
+    #[test]
+    fn test_z_score_negative() {
+        let z = compute_z_score(92.0, 100.0, Some(5.0)).unwrap();
+        assert!(approx_eq(z, -1.6, 1e-9));
+    }
+
+    #[test]
+    fn test_z_score_sd_zero_is_none() {
+        assert_eq!(compute_z_score(10.0, 10.0, Some(0.0)), None);
+    }
+
+    #[test]
+    fn test_z_score_sd_missing_is_none() {
+        assert_eq!(compute_z_score(10.0, 10.0, None), None);
+    }
+
+    // ===== compute_en_score =====
+    #[test]
+    fn test_en_score_satisfactory() {
+        // |101-100| / √(4+9) = 1/√13 ≈ 0.277
+        let en = compute_en_score(101.0, 100.0, Some(2.0), Some(3.0)).unwrap();
+        assert!(approx_eq(en, 0.277_350_098, 1e-6));
+    }
+
+    #[test]
+    fn test_en_score_unsatisfactory() {
+        // |107-100| / √(4+9) = 7/√13 ≈ 1.941
+        let en = compute_en_score(107.0, 100.0, Some(2.0), Some(3.0)).unwrap();
+        assert!(en > 1.0);
+    }
+
+    #[test]
+    fn test_en_score_zero_denominator_none() {
+        assert_eq!(compute_en_score(100.0, 100.0, Some(0.0), Some(0.0)), None);
+    }
+
+    #[test]
+    fn test_en_score_missing_inputs_none() {
+        assert_eq!(compute_en_score(100.0, 100.0, Some(1.0), None), None);
+        assert_eq!(compute_en_score(100.0, 100.0, None, Some(1.0)), None);
+        assert_eq!(compute_en_score(100.0, 100.0, None, None), None);
+    }
+
+    // ===== evaluate_pt_result =====
+    #[test]
+    fn test_z_eval_satisfactory() {
+        assert_eq!(
+            evaluate_pt_result(Some(1.5), None, "z_score").as_deref(),
+            Some("satisfactory")
+        );
+        assert_eq!(
+            evaluate_pt_result(Some(-2.0), None, "z_score").as_deref(),
+            Some("satisfactory")
+        );
+    }
+
+    #[test]
+    fn test_z_eval_questionable() {
+        assert_eq!(
+            evaluate_pt_result(Some(2.5), None, "z_score").as_deref(),
+            Some("questionable")
+        );
+        assert_eq!(
+            evaluate_pt_result(Some(-3.0), None, "z_score").as_deref(),
+            Some("questionable")
+        );
+    }
+
+    #[test]
+    fn test_z_eval_unsatisfactory() {
+        assert_eq!(
+            evaluate_pt_result(Some(3.5), None, "z_score").as_deref(),
+            Some("unsatisfactory")
+        );
+    }
+
+    #[test]
+    fn test_z_eval_missing_score_none() {
+        assert_eq!(evaluate_pt_result(None, None, "z_score"), None);
+    }
+
+    #[test]
+    fn test_en_eval_satisfactory() {
+        assert_eq!(
+            evaluate_pt_result(None, Some(0.8), "en_score").as_deref(),
+            Some("satisfactory")
+        );
+        assert_eq!(
+            evaluate_pt_result(None, Some(1.0), "en").as_deref(),
+            Some("satisfactory")
+        );
+    }
+
+    #[test]
+    fn test_en_eval_unsatisfactory() {
+        assert_eq!(
+            evaluate_pt_result(None, Some(1.2), "en_score").as_deref(),
+            Some("unsatisfactory")
+        );
+    }
+
+    #[test]
+    fn test_en_eval_missing_none() {
+        assert_eq!(evaluate_pt_result(None, None, "en_score"), None);
+    }
+
+    #[test]
+    fn test_full_evaluation_workflow() {
+        // 综合：result 偏离 assigned 2.1，sd=1.0 → z = -2.1 (questionable)
+        // en = 2.1 / sqrt(0.3²+0.5²) = 2.1 / √0.34 ≈ 3.6，E_n > 1 → unsatisfactory
+        let result = 97.9;
+        let assigned = 100.0;
+        let sd = Some(1.0);
+        let ul = Some(0.3);
+        let ur = Some(0.5);
+        let z = compute_z_score(result, assigned, sd);
+        let en = compute_en_score(result, assigned, ul, ur);
+        let z_eval = evaluate_pt_result(z, en, "z_score");
+        let en_eval = evaluate_pt_result(z, en, "en_score");
+        assert_eq!(z_eval.as_deref(), Some("questionable"));
+        assert_eq!(en_eval.as_deref(), Some("unsatisfactory"));
+        assert!(en.unwrap() > 1.0);
     }
 }

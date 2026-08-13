@@ -18,6 +18,233 @@ use crate::shared::permission::{check_permission, ModulePermission};
 use topems_shared_auth::auth::Claims;
 use topems_shared_core::response::{api_error, ApiResponse};
 
+// =============================================================================
+// Pure functions for price comparison / supplier quote scoring
+// =============================================================================
+
+/// 综合评分：价格 (40%) + 质量 (30%) + 交付 (20%) + 服务 (10%)
+/// 输入为 0-100 的各维度分（None 按 0 计）
+pub fn calculate_comparison_total_score(
+    price_score: Option<f64>,
+    quality_score: Option<f64>,
+    delivery_score: Option<f64>,
+    service_score: Option<f64>,
+) -> f64 {
+    let p = price_score.unwrap_or(0.0).clamp(0.0, 100.0);
+    let q = quality_score.unwrap_or(0.0).clamp(0.0, 100.0);
+    let d = delivery_score.unwrap_or(0.0).clamp(0.0, 100.0);
+    let s = service_score.unwrap_or(0.0).clamp(0.0, 100.0);
+    (p * 40.0 + q * 30.0 + d * 20.0 + s * 10.0) / 100.0
+}
+
+/// 基于单价的价格评分：最低报价得 100，其他按 price_min / price_this × 100 递减
+/// 所有价格 ≤ 0 返回 0；输入长度为 0 返回空 vec
+pub fn score_quotes_by_price(unit_prices: &[f64]) -> Vec<f64> {
+    let valid: Vec<f64> = unit_prices.iter().map(|p| p.max(0.0)).collect();
+    let min_price = valid
+        .iter()
+        .filter(|&&p| p > 0.0)
+        .copied()
+        .fold(f64::INFINITY, f64::min);
+    if !min_price.is_finite() {
+        return vec![0.0; unit_prices.len()];
+    }
+    valid
+        .iter()
+        .map(|&p| {
+            if p <= 0.0 {
+                0.0
+            } else {
+                (min_price / p * 100.0).min(100.0)
+            }
+        })
+        .collect()
+}
+
+/// 基于提前期的交付评分（天越少分越高）
+/// 最短交付得 100；交付时间是最短的 2 倍得 50；超 5 倍按 0 分截断
+pub fn score_quotes_by_lead_time(lead_times_days: &[i32]) -> Vec<f64> {
+    if lead_times_days.is_empty() {
+        return vec![];
+    }
+    let best = lead_times_days
+        .iter()
+        .copied()
+        .filter(|&d| d > 0)
+        .min()
+        .unwrap_or(1);
+    let best = best.max(1) as f64;
+    lead_times_days
+        .iter()
+        .map(|&d| {
+            if d <= 0 {
+                0.0
+            } else {
+                let ratio = best / d as f64;
+                (ratio * 100.0).max(0.0).min(100.0)
+            }
+        })
+        .collect()
+}
+
+/// 报价单项总价校验：total = unit × qty（允许 0.01 误差）
+pub fn validate_quote_total(unit_price: f64, quantity: f64, total_price: f64) -> bool {
+    if unit_price < 0.0 || quantity < 0.0 || total_price < 0.0 {
+        return false;
+    }
+    let expected = unit_price * quantity;
+    let tolerance: f64 = 0.01_f64.max(expected.abs() * 0.001_f64);
+    (expected - total_price).abs() <= tolerance
+}
+
+/// 报价有效期检查：valid_until <= today 则过期
+pub fn is_quote_valid(valid_until: Option<DateTime<Utc>>, today: DateTime<Utc>) -> bool {
+    match valid_until {
+        None => true, // 未设期限 = 长期有效
+        Some(until) => until >= today,
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use chrono::Duration;
+
+    #[test]
+    fn test_comparison_total_score_full() {
+        assert_eq!(
+            calculate_comparison_total_score(Some(100.0), Some(100.0), Some(100.0), Some(100.0)),
+            100.0
+        );
+        assert_eq!(
+            calculate_comparison_total_score(Some(0.0), Some(0.0), Some(0.0), Some(0.0)),
+            0.0
+        );
+    }
+
+    #[test]
+    fn test_comparison_total_score_weighted() {
+        // Only price 100 → 40
+        assert_eq!(
+            calculate_comparison_total_score(Some(100.0), None, None, None),
+            40.0
+        );
+        // Only quality 100 → 30
+        assert_eq!(
+            calculate_comparison_total_score(None, Some(100.0), None, None),
+            30.0
+        );
+        // Only delivery 100 → 20
+        assert_eq!(
+            calculate_comparison_total_score(None, None, Some(100.0), None),
+            20.0
+        );
+        // Only service 100 → 10
+        assert_eq!(
+            calculate_comparison_total_score(None, None, None, Some(100.0)),
+            10.0
+        );
+    }
+
+    #[test]
+    fn test_comparison_total_score_clamps() {
+        // Scores > 100 or < 0 should clamp
+        let r = calculate_comparison_total_score(Some(200.0), Some(-50.0), None, None);
+        // 200→100×0.4=40, -50→0 → total 40
+        assert!((r - 40.0).abs() < 1e-9);
+    }
+
+    #[test]
+    fn test_score_quotes_by_price_empty() {
+        let r = score_quotes_by_price(&[]);
+        assert!(r.is_empty());
+    }
+
+    #[test]
+    fn test_score_quotes_by_price_same() {
+        let r = score_quotes_by_price(&[50.0, 50.0, 50.0]);
+        assert_eq!(r, vec![100.0, 100.0, 100.0]);
+    }
+
+    #[test]
+    fn test_score_quotes_by_price_varied() {
+        // min = 100, so:
+        // 100 → 100, 150 → 100/150*100 = 66.66, 200 → 50
+        let r = score_quotes_by_price(&[150.0, 100.0, 200.0]);
+        assert!((r[0] - 66.666).abs() < 0.1);
+        assert_eq!(r[1], 100.0);
+        assert_eq!(r[2], 50.0);
+    }
+
+    #[test]
+    fn test_score_quotes_by_price_zero_or_negative() {
+        let r = score_quotes_by_price(&[0.0, -5.0, 100.0]);
+        assert_eq!(r[0], 0.0);
+        assert_eq!(r[1], 0.0);
+        assert_eq!(r[2], 100.0);
+    }
+
+    #[test]
+    fn test_score_quotes_by_price_all_invalid() {
+        let r = score_quotes_by_price(&[0.0, 0.0]);
+        assert_eq!(r, vec![0.0, 0.0]);
+    }
+
+    #[test]
+    fn test_score_lead_time_empty() {
+        let r = score_quotes_by_lead_time(&[]);
+        assert!(r.is_empty());
+    }
+
+    #[test]
+    fn test_score_lead_time_basic() {
+        // best = 3 days
+        // 3→100, 6→50, 15→20
+        let r = score_quotes_by_lead_time(&[6, 15, 3]);
+        assert!((r[0] - 50.0).abs() < 1e-9);
+        assert!((r[1] - 20.0).abs() < 1e-9);
+        assert_eq!(r[2], 100.0);
+    }
+
+    #[test]
+    fn test_score_lead_time_invalid_days() {
+        let r = score_quotes_by_lead_time(&[-1, 0, 5]);
+        assert_eq!(r[0], 0.0);
+        assert_eq!(r[1], 0.0);
+        assert_eq!(r[2], 100.0);
+    }
+
+    #[test]
+    fn test_validate_quote_total_ok() {
+        assert!(validate_quote_total(12.5, 8.0, 100.0)); // exactly 100
+        assert!(validate_quote_total(0.0, 100.0, 0.0));
+        assert!(validate_quote_total(10.0, 0.0, 0.0));
+        // small tolerance: 10 × 3 = 30, total = 30.001 (within 0.001×30 tolerance)
+        assert!(validate_quote_total(10.0, 3.0, 30.001));
+    }
+
+    #[test]
+    fn test_validate_quote_total_fail() {
+        assert!(!validate_quote_total(10.0, 3.0, 25.0));
+        assert!(!validate_quote_total(-5.0, 3.0, 15.0));
+        assert!(!validate_quote_total(10.0, -2.0, 20.0));
+        assert!(!validate_quote_total(10.0, 3.0, -30.0));
+    }
+
+    #[test]
+    fn test_is_quote_valid() {
+        let now = Utc::now();
+        // No expiration → always valid
+        assert!(is_quote_valid(None, now));
+        // Expires in future → valid
+        assert!(is_quote_valid(Some(now + Duration::days(30)), now));
+        // Expires exactly now → valid
+        assert!(is_quote_valid(Some(now), now));
+        // Expired
+        assert!(!is_quote_valid(Some(now - Duration::days(1)), now));
+    }
+}
+
 #[derive(Debug, Deserialize)]
 pub struct InquiryPaginationParams {
     pub page: Option<i64>,

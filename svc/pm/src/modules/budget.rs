@@ -14,6 +14,53 @@ use crate::models::budget::{
     UpdateBudgetRequest,
 };
 
+// ==================== Pure functions ====================
+
+/// Calculates budget variance. A **positive** result means **over budget**
+/// (actual spending exceeded the planned amount).
+pub fn calculate_budget_variance(planned: f64, actual: f64) -> f64 {
+    actual - planned
+}
+
+/// Calculates budget utilization as a percentage (`spent / total * 100`).
+///
+/// Returns `0.0` when `total` is zero to avoid division by zero.
+pub fn budget_utilization_pct(spent: f64, total: f64) -> f64 {
+    if total == 0.0 {
+        return 0.0;
+    }
+    (spent / total) * 100.0
+}
+
+/// Calculates Earned Value (EV): `planned_pct / 100 * budget`.
+///
+/// `planned_pct` is a completion percentage in the range `[0, 100]`.
+pub fn calculate_earned_value(planned_pct: f64, budget: f64) -> f64 {
+    (planned_pct / 100.0) * budget
+}
+
+/// Calculates Cost Performance Index (CPI = EV / AC).
+///
+/// A value > 1.0 means under budget; < 1.0 means over budget.
+/// Returns `0.0` when `ac` is zero or negative.
+pub fn calculate_cpi(ev: f64, ac: f64) -> f64 {
+    if ac <= 0.0 {
+        return 0.0;
+    }
+    ev / ac
+}
+
+/// Calculates Schedule Performance Index (SPI = EV / PV).
+///
+/// A value > 1.0 means ahead of schedule; < 1.0 means behind schedule.
+/// Returns `0.0` when `pv` is zero or negative.
+pub fn calculate_spi(ev: f64, pv: f64) -> f64 {
+    if pv <= 0.0 {
+        return 0.0;
+    }
+    ev / pv
+}
+
 pub fn create_routes(pool: PgPool) -> Router {
     Router::new()
         .route(
@@ -333,5 +380,146 @@ async fn delete_budget_item(
                 "删除预算项失败",
             ))
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    // ---- calculate_budget_variance ----
+
+    #[test]
+    fn test_variance_over_budget() {
+        assert!(calculate_budget_variance(100.0, 150.0) > 0.0);
+        assert_eq!(calculate_budget_variance(100.0, 150.0), 50.0);
+    }
+
+    #[test]
+    fn test_variance_under_budget() {
+        assert!(calculate_budget_variance(100.0, 80.0) < 0.0);
+        assert_eq!(calculate_budget_variance(100.0, 80.0), -20.0);
+    }
+
+    #[test]
+    fn test_variance_on_budget() {
+        assert_eq!(calculate_budget_variance(100.0, 100.0), 0.0);
+    }
+
+    #[test]
+    fn test_variance_zero_planned() {
+        assert_eq!(calculate_budget_variance(0.0, 50.0), 50.0);
+    }
+
+    #[test]
+    fn test_variance_both_zero() {
+        assert_eq!(calculate_budget_variance(0.0, 0.0), 0.0);
+    }
+
+    // ---- budget_utilization_pct ----
+
+    #[test]
+    fn test_utilization_zero_total() {
+        assert_eq!(budget_utilization_pct(50.0, 0.0), 0.0);
+    }
+
+    #[test]
+    fn test_utilization_half() {
+        assert_eq!(budget_utilization_pct(50.0, 100.0), 50.0);
+    }
+
+    #[test]
+    fn test_utilization_full() {
+        assert_eq!(budget_utilization_pct(100.0, 100.0), 100.0);
+    }
+
+    #[test]
+    fn test_utilization_over_100() {
+        assert_eq!(budget_utilization_pct(150.0, 100.0), 150.0);
+    }
+
+    #[test]
+    fn test_utilization_zero_spent() {
+        assert_eq!(budget_utilization_pct(0.0, 100.0), 0.0);
+    }
+
+    // ---- calculate_earned_value ----
+
+    #[test]
+    fn test_ev_half_complete() {
+        assert_eq!(calculate_earned_value(50.0, 1000.0), 500.0);
+    }
+
+    #[test]
+    fn test_ev_zero_pct() {
+        assert_eq!(calculate_earned_value(0.0, 1000.0), 0.0);
+    }
+
+    #[test]
+    fn test_ev_full_complete() {
+        assert_eq!(calculate_earned_value(100.0, 1000.0), 1000.0);
+    }
+
+    #[test]
+    fn test_ev_zero_budget() {
+        assert_eq!(calculate_earned_value(50.0, 0.0), 0.0);
+    }
+
+    // ---- calculate_cpi ----
+
+    #[test]
+    fn test_cpi_under_budget() {
+        // EV=500, AC=400 -> CPI=1.25 (>1 under budget)
+        assert!((calculate_cpi(500.0, 400.0) - 1.25).abs() < 1e-9);
+    }
+
+    #[test]
+    fn test_cpi_over_budget() {
+        // EV=400, AC=500 -> CPI=0.8 (<1 over budget)
+        assert!((calculate_cpi(400.0, 500.0) - 0.8).abs() < 1e-9);
+    }
+
+    #[test]
+    fn test_cpi_on_budget() {
+        assert!((calculate_cpi(500.0, 500.0) - 1.0).abs() < 1e-9);
+    }
+
+    #[test]
+    fn test_cpi_zero_ac() {
+        assert_eq!(calculate_cpi(500.0, 0.0), 0.0);
+    }
+
+    #[test]
+    fn test_cpi_negative_ac() {
+        assert_eq!(calculate_cpi(500.0, -10.0), 0.0);
+    }
+
+    // ---- calculate_spi ----
+
+    #[test]
+    fn test_spi_ahead_of_schedule() {
+        // EV=600, PV=500 -> SPI=1.2 (>1 ahead)
+        assert!((calculate_spi(600.0, 500.0) - 1.2).abs() < 1e-9);
+    }
+
+    #[test]
+    fn test_spi_behind_schedule() {
+        // EV=400, PV=500 -> SPI=0.8 (<1 behind)
+        assert!((calculate_spi(400.0, 500.0) - 0.8).abs() < 1e-9);
+    }
+
+    #[test]
+    fn test_spi_on_schedule() {
+        assert!((calculate_spi(500.0, 500.0) - 1.0).abs() < 1e-9);
+    }
+
+    #[test]
+    fn test_spi_zero_pv() {
+        assert_eq!(calculate_spi(500.0, 0.0), 0.0);
+    }
+
+    #[test]
+    fn test_spi_negative_pv() {
+        assert_eq!(calculate_spi(500.0, -10.0), 0.0);
     }
 }

@@ -967,3 +967,146 @@ pub async fn trace_sample_by_barcode(
         "样品追溯查询成功",
     ))
 }
+
+// ============================================================================
+// 条码纯函数：生成策略 / 校验 / 分类
+// ============================================================================
+
+/// 根据可选的自定义值、条码类型、时间戳(yyyymmddhhmmss)、随机后缀(6字符大写)
+/// 生成条码值。
+/// 生成规则：
+///   - 有 custom → custom
+///   - 否则 `BC<timestamp><suffix_upper6>`
+pub fn generate_barcode_value(custom: Option<&str>, timestamp_str: &str, suffix6: &str) -> String {
+    if let Some(c) = custom.filter(|s| !s.is_empty()) {
+        return c.to_string();
+    }
+    let suffix = suffix6.chars().take(6).collect::<String>().to_uppercase();
+    format!("BC{}{}", timestamp_str, suffix)
+}
+
+/// 条码分类：auto (BC + yyyymmdd timestamp)、custom、rfid(EPC 前缀或长 hex)、qrcode(QR:)
+pub fn classify_barcode(barcode: &str) -> &'static str {
+    let b = barcode.trim();
+    if b.is_empty() {
+        return "unknown";
+    }
+    if b.starts_with("urn:epc") || b.starts_with("EPC:") {
+        return "rfid";
+    }
+    if b.starts_with("QR:") || b.starts_with("qr:") {
+        return "qrcode";
+    }
+    // RFID EPC hex 一般 24 或 32 位十六进制
+    if (b.len() == 24 || b.len() == 32) && b.chars().all(|c| c.is_ascii_hexdigit()) {
+        return "rfid";
+    }
+    if b.starts_with("BC") && b.len() >= 14
+    /* BC + yyyymmddhhmmss (14 位) */
+    {
+        return "auto";
+    }
+    "custom"
+}
+
+/// 校验条码值是否可接受（非空 + 不超过 64 字符 + 无控制字符）
+pub fn validate_barcode(barcode: &str) -> Result<(), &'static str> {
+    let b = barcode.trim();
+    if b.is_empty() {
+        return Err("条码不能为空");
+    }
+    if b.len() > 64 {
+        return Err("条码长度不能超过 64 字符");
+    }
+    if b.chars().any(|c| c.is_control()) {
+        return Err("条码包含非法控制字符");
+    }
+    Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    // ===== generate_barcode_value =====
+    #[test]
+    fn test_generate_auto_barcode_format() {
+        let v = generate_barcode_value(None, "20260813101530", "abcdef");
+        assert_eq!(v, "BC20260813101530ABCDEF");
+    }
+
+    #[test]
+    fn test_generate_custom_overrides_auto() {
+        let v = generate_barcode_value(Some("LAB-S-12345"), "ignored", "xxxxxx");
+        assert_eq!(v, "LAB-S-12345");
+    }
+
+    #[test]
+    fn test_generate_empty_custom_falls_back_to_auto() {
+        let v = generate_barcode_value(Some(""), "20260101000000", "12ab56");
+        assert_eq!(v, "BC2026010100000012AB56");
+    }
+
+    #[test]
+    fn test_generate_suffix_truncated_to_6() {
+        let v = generate_barcode_value(None, "20260813120000", "123456789");
+        assert_eq!(v, "BC20260813120000123456");
+    }
+
+    // ===== classify_barcode =====
+    #[test]
+    fn test_classify_auto() {
+        assert_eq!(classify_barcode("BC20260813101530ABCDEF"), "auto");
+    }
+
+    #[test]
+    fn test_classify_rfid_urn() {
+        assert_eq!(classify_barcode("urn:epc:id:sgtin:000000"), "rfid");
+    }
+
+    #[test]
+    fn test_classify_rfid_hex_24() {
+        assert_eq!(classify_barcode("303929D18128EC1000000001"), "rfid");
+    }
+
+    #[test]
+    fn test_classify_qr() {
+        assert_eq!(classify_barcode("QR:SAMPLE123"), "qrcode");
+    }
+
+    #[test]
+    fn test_classify_custom() {
+        assert_eq!(classify_barcode("LAB-CUSTOM-001"), "custom");
+    }
+
+    #[test]
+    fn test_classify_empty_unknown() {
+        assert_eq!(classify_barcode(""), "unknown");
+        assert_eq!(classify_barcode("   "), "unknown");
+    }
+
+    // ===== validate_barcode =====
+    #[test]
+    fn test_validate_ok() {
+        assert!(validate_barcode("BC12345678").is_ok());
+        assert!(validate_barcode("  ABC  ").is_ok()); // 空格允许，trim 后判断
+    }
+
+    #[test]
+    fn test_validate_empty_err() {
+        assert_eq!(validate_barcode(""), Err("条码不能为空"));
+        assert_eq!(validate_barcode("  "), Err("条码不能为空"));
+    }
+
+    #[test]
+    fn test_validate_too_long_err() {
+        let s = "A".repeat(65);
+        assert_eq!(validate_barcode(&s), Err("条码长度不能超过 64 字符"));
+    }
+
+    #[test]
+    fn test_validate_control_char_err() {
+        assert_eq!(validate_barcode("AB\u{0000}C"), Err("条码包含非法控制字符"));
+        assert_eq!(validate_barcode("BC\n123"), Err("条码包含非法控制字符"));
+    }
+}

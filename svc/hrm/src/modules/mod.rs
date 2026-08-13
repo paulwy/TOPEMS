@@ -19,6 +19,7 @@ pub mod employee;
 pub mod health;
 pub mod hrm_compat;
 pub mod hrm_plugin;
+pub mod individual_tax_calc;
 pub mod leave;
 pub mod openapi;
 pub mod payroll;
@@ -29,6 +30,7 @@ pub mod recruitment;
 pub mod reports;
 pub mod salary_adjustment;
 pub mod setup;
+pub mod social_insurance_calc;
 pub mod training;
 
 #[derive(Clone)]

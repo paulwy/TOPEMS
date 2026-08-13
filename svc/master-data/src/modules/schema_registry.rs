@@ -29,6 +29,85 @@ use uuid::Uuid;
 
 use crate::shared::AppState;
 
+// ============ 纯函数（无副作用，可单测） ============
+
+/// 校验给定字符串值是否符合期望的字段类型。
+/// 支持的类型：
+/// - `text` / `string`: 任何非空字符串均通过（空字符串视为不合法）
+/// - `number` / `float`: 可解析为 f64
+/// - `integer` / `int` / `long`: 可解析为 i64
+/// - `boolean` / `bool`: "true"/"false"（大小写不敏感）
+/// - `date` / `datetime`: 符合 ISO 8601 / YYYY-MM-DD 等常见日期格式
+/// 其它类型默认返回 false（保守拒绝）。
+pub fn validate_field_type(value: &str, expected_type: &str) -> bool {
+    let et = expected_type.trim().to_lowercase();
+    match et.as_str() {
+        "text" | "string" | "textarea" | "select" => !value.is_empty(),
+        "number" | "float" | "decimal" => value.trim().parse::<f64>().is_ok(),
+        "integer" | "int" | "long" => value.trim().parse::<i64>().is_ok(),
+        "boolean" | "bool" | "switch" => {
+            let v = value.trim().to_lowercase();
+            v == "true" || v == "false"
+        }
+        "date" => is_valid_date(value),
+        "datetime" => is_valid_datetime(value),
+        _ => false,
+    }
+}
+
+/// 简单日期校验：YYYY-MM-DD（要求严格 4-2-2 位数字）
+fn is_valid_date(value: &str) -> bool {
+    let parts: Vec<&str> = value.trim().split('-').collect();
+    if parts.len() != 3 {
+        return false;
+    }
+    // 严格校验位数：年 4 位、月 2 位、日 2 位
+    if parts[0].len() != 4 || parts[1].len() != 2 || parts[2].len() != 2 {
+        return false;
+    }
+    let year = parts[0].parse::<u32>();
+    let month = parts[1].parse::<u32>();
+    let day = parts[2].parse::<u32>();
+    match (year, month, day) {
+        (Ok(y), Ok(m), Ok(d)) => {
+            (1..=9999).contains(&y) && (1..=12).contains(&m) && (1..=31).contains(&d)
+        }
+        _ => false,
+    }
+}
+
+/// 简单日期时间校验：YYYY-MM-DD[ T]HH:MM[:SS]
+fn is_valid_datetime(value: &str) -> bool {
+    let trimmed = value.trim();
+    // 用空格或 T 分隔日期和时间部分
+    let sep_idx = trimmed
+        .find(|c: char| c == ' ' || c == 'T')
+        .unwrap_or(trimmed.len());
+    let (date_part, time_part) = trimmed.split_at(sep_idx);
+    if !is_valid_date(date_part) {
+        return false;
+    }
+    let time_str = time_part.trim_start_matches(['T', ' ']);
+    if time_str.is_empty() {
+        return true; // 仅日期部分也接受
+    }
+    let parts: Vec<&str> = time_str.split(':').collect();
+    if parts.len() < 2 || parts.len() > 3 {
+        return false;
+    }
+    let h = parts[0].parse::<u32>();
+    let m = parts[1].parse::<u32>();
+    let s = if parts.len() == 3 {
+        parts[2].parse::<u32>()
+    } else {
+        Ok(0)
+    };
+    matches!(
+        (h, m, s),
+        (Ok(h), Ok(m), Ok(s)) if h < 24 && m < 60 && s < 60
+    )
+}
+
 // ============ 数据模型 ============
 
 #[derive(Debug, Clone, Serialize, Deserialize, FromRow, ToSchema)]
@@ -673,4 +752,167 @@ async fn create_dynamic_table(
 
     sqlx::query(&sql).execute(pool).await?;
     Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    // ---------- validate_field_type: text/string ----------
+
+    #[test]
+    fn test_validate_text_non_empty() {
+        assert!(validate_field_type("hello", "text"));
+        assert!(validate_field_type("hello", "string"));
+        assert!(validate_field_type("任意内容", "textarea"));
+    }
+
+    #[test]
+    fn test_validate_text_empty_fails() {
+        assert!(!validate_field_type("", "text"));
+        assert!(!validate_field_type("", "string"));
+        assert!(!validate_field_type("", "textarea"));
+    }
+
+    #[test]
+    fn test_validate_text_with_whitespace() {
+        // 含空格但非空的字符串应通过
+        assert!(validate_field_type("  ", "text"));
+        assert!(validate_field_type("a b", "string"));
+    }
+
+    // ---------- validate_field_type: number/float ----------
+
+    #[test]
+    fn test_validate_number_valid() {
+        assert!(validate_field_type("3.14", "number"));
+        assert!(validate_field_type("3.14", "float"));
+        assert!(validate_field_type("-100.5", "number"));
+        assert!(validate_field_type("0", "float"));
+        assert!(validate_field_type("1e10", "number"));
+    }
+
+    #[test]
+    fn test_validate_number_invalid() {
+        assert!(!validate_field_type("abc", "number"));
+        assert!(!validate_field_type("", "float"));
+        assert!(!validate_field_type("12.34.56", "number"));
+    }
+
+    // ---------- validate_field_type: integer/int ----------
+
+    #[test]
+    fn test_validate_integer_valid() {
+        assert!(validate_field_type("42", "integer"));
+        assert!(validate_field_type("42", "int"));
+        assert!(validate_field_type("42", "long"));
+        assert!(validate_field_type("-100", "integer"));
+        assert!(validate_field_type("0", "int"));
+    }
+
+    #[test]
+    fn test_validate_integer_rejects_float() {
+        // 整数类型不应接受小数
+        assert!(!validate_field_type("3.14", "integer"));
+        assert!(!validate_field_type("3.14", "int"));
+    }
+
+    #[test]
+    fn test_validate_integer_invalid() {
+        assert!(!validate_field_type("abc", "integer"));
+        assert!(!validate_field_type("", "int"));
+        assert!(!validate_field_type("12abc", "long"));
+    }
+
+    // ---------- validate_field_type: boolean/bool ----------
+
+    #[test]
+    fn test_validate_boolean_valid() {
+        assert!(validate_field_type("true", "boolean"));
+        assert!(validate_field_type("false", "boolean"));
+        assert!(validate_field_type("TRUE", "bool"));
+        assert!(validate_field_type("FALSE", "bool"));
+        assert!(validate_field_type("True", "switch"));
+    }
+
+    #[test]
+    fn test_validate_boolean_invalid() {
+        assert!(!validate_field_type("yes", "boolean"));
+        assert!(!validate_field_type("1", "bool"));
+        assert!(!validate_field_type("0", "bool"));
+        assert!(!validate_field_type("", "switch"));
+    }
+
+    // ---------- validate_field_type: date ----------
+
+    #[test]
+    fn test_validate_date_valid() {
+        assert!(validate_field_type("2024-01-01", "date"));
+        assert!(validate_field_type("2024-12-31", "date"));
+        assert!(validate_field_type("1999-06-15", "date"));
+    }
+
+    #[test]
+    fn test_validate_date_invalid() {
+        assert!(!validate_field_type("2024-13-01", "date")); // 月>12
+        assert!(!validate_field_type("2024-00-01", "date")); // 月=0
+        assert!(!validate_field_type("2024-01-32", "date")); // 日>31
+        assert!(!validate_field_type("2024-1-1", "date")); // 不足位
+        assert!(!validate_field_type("not-a-date", "date"));
+        assert!(!validate_field_type("", "date"));
+    }
+
+    // ---------- validate_field_type: datetime ----------
+
+    #[test]
+    fn test_validate_datetime_valid() {
+        assert!(validate_field_type("2024-01-01T12:00:00", "datetime"));
+        assert!(validate_field_type("2024-01-01 12:00:00", "datetime"));
+        assert!(validate_field_type("2024-01-01 12:00", "datetime"));
+        assert!(validate_field_type("2024-01-01", "datetime")); // 仅日期也接受
+    }
+
+    #[test]
+    fn test_validate_datetime_invalid() {
+        assert!(!validate_field_type("2024-01-01T25:00:00", "datetime")); // 时>23
+        assert!(!validate_field_type("2024-01-01T12:60:00", "datetime")); // 分>59
+        assert!(!validate_field_type("2024-01-01T12:00:99", "datetime")); // 秒>59
+        assert!(!validate_field_type("2024-13-01T12:00:00", "datetime")); // 日期无效
+    }
+
+    // ---------- validate_field_type: 未知类型 ----------
+
+    #[test]
+    fn test_validate_unknown_type_returns_false() {
+        // 未知类型默认返回 false
+        assert!(!validate_field_type("hello", "unknown_type"));
+        assert!(!validate_field_type("hello", ""));
+        assert!(!validate_field_type("hello", "binary"));
+    }
+
+    #[test]
+    fn test_validate_type_is_case_insensitive() {
+        // 类型名称大小写不敏感
+        assert!(validate_field_type("42", "INTEGER"));
+        assert!(validate_field_type("42", "Integer"));
+        assert!(validate_field_type("3.14", "NUMBER"));
+        assert!(validate_field_type("true", "Boolean"));
+    }
+
+    // ---------- is_valid_date / is_valid_datetime（内部函数） ----------
+
+    #[test]
+    fn test_is_valid_date_boundary() {
+        assert!(is_valid_date("0001-01-01"));
+        assert!(is_valid_date("9999-12-31"));
+        assert!(!is_valid_date("0000-01-01")); // 年=0
+        assert!(!is_valid_date("2024-01-00")); // 日=0
+    }
+
+    #[test]
+    fn test_is_valid_datetime_time_only_with_t_separator() {
+        assert!(is_valid_datetime("2024-01-01T00:00:00"));
+        assert!(is_valid_datetime("2024-01-01T23:59:59"));
+        assert!(!is_valid_datetime("2024-01-01T24:00:00"));
+    }
 }

@@ -8,6 +8,45 @@ use super::super::models::*;
 use crate::{AppState, CoreResponse};
 use topems_shared_auth::auth::Claims;
 
+// ============================================================================
+// Pure helper functions (no DB / async) — extracted for unit testing
+// ============================================================================
+
+/// Sort plugins by popularity: descending downloads, then descending rating,
+/// then ascending name for stable ordering of ties.
+/// Tuple shape: (name, downloads, rating).
+pub fn sort_plugins_by_popularity(mut plugins: Vec<(String, u32, f64)>) -> Vec<(String, u32, f64)> {
+    plugins.sort_by(|a, b| {
+        // downloads desc
+        b.1.cmp(&a.1)
+            // rating desc
+            .then_with(|| b.2.partial_cmp(&a.2).unwrap_or(std::cmp::Ordering::Equal))
+            // name asc (stable tie-break)
+            .then_with(|| a.0.cmp(&b.0))
+    });
+    plugins
+}
+
+/// Compute the total pages for a paginated plugin list.
+pub fn calculate_total_pages(total: i64, page_size: u32) -> u32 {
+    if page_size == 0 {
+        return 0;
+    }
+    let ps = page_size as i64;
+    if total <= 0 {
+        return 0;
+    }
+    ((total as f64) / (ps as f64)).ceil() as u32
+}
+
+/// Clamp page number to the valid range [1, ..] and compute the SQL OFFSET.
+pub fn paginate(page: Option<u32>, page_size: Option<u32>) -> (u32, u32, u32) {
+    let page = page.unwrap_or(1).max(1);
+    let page_size = page_size.unwrap_or(20).clamp(1, 100);
+    let offset = (page - 1) * page_size;
+    (page, page_size, offset)
+}
+
 /// Get marketplace summary
 #[utoipa::path(
     get,
@@ -296,5 +335,124 @@ pub async fn create_review(
                 e
             )))
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    // ---- sort_plugins_by_popularity ----
+
+    #[test]
+    fn sort_by_popularity_downloads_desc() {
+        let plugins = vec![
+            ("a".to_string(), 10u32, 4.0f64),
+            ("b".to_string(), 100u32, 3.0f64),
+            ("c".to_string(), 50u32, 5.0f64),
+        ];
+        let sorted = sort_plugins_by_popularity(plugins);
+        assert_eq!(sorted[0].0, "b");
+        assert_eq!(sorted[1].0, "c");
+        assert_eq!(sorted[2].0, "a");
+    }
+
+    #[test]
+    fn sort_by_popularity_rating_tiebreak() {
+        // Same downloads -> higher rating first
+        let plugins = vec![
+            ("a".to_string(), 10u32, 3.5f64),
+            ("b".to_string(), 10u32, 4.9f64),
+        ];
+        let sorted = sort_plugins_by_popularity(plugins);
+        assert_eq!(sorted[0].0, "b");
+        assert_eq!(sorted[1].0, "a");
+    }
+
+    #[test]
+    fn sort_by_popularity_name_tiebreak() {
+        // Same downloads and rating -> name asc
+        let plugins = vec![
+            ("zeta".to_string(), 5u32, 4.0f64),
+            ("alpha".to_string(), 5u32, 4.0f64),
+        ];
+        let sorted = sort_plugins_by_popularity(plugins);
+        assert_eq!(sorted[0].0, "alpha");
+        assert_eq!(sorted[1].0, "zeta");
+    }
+
+    #[test]
+    fn sort_by_popularity_empty() {
+        assert!(sort_plugins_by_popularity(vec![]).is_empty());
+    }
+
+    #[test]
+    fn sort_by_popularity_single() {
+        let plugins = vec![("only".to_string(), 1u32, 1.0f64)];
+        let sorted = sort_plugins_by_popularity(plugins);
+        assert_eq!(sorted.len(), 1);
+        assert_eq!(sorted[0].0, "only");
+    }
+
+    #[test]
+    fn sort_by_popularity_zero_downloads() {
+        let plugins = vec![
+            ("a".to_string(), 0u32, 5.0f64),
+            ("b".to_string(), 0u32, 1.0f64),
+        ];
+        let sorted = sort_plugins_by_popularity(plugins);
+        assert_eq!(sorted[0].0, "a"); // higher rating first
+    }
+
+    // ---- calculate_total_pages ----
+
+    #[test]
+    fn total_pages_exact_division() {
+        assert_eq!(calculate_total_pages(100, 20), 5);
+    }
+
+    #[test]
+    fn total_pages_with_remainder() {
+        assert_eq!(calculate_total_pages(101, 20), 6);
+    }
+
+    #[test]
+    fn total_pages_zero_total() {
+        assert_eq!(calculate_total_pages(0, 20), 0);
+    }
+
+    #[test]
+    fn total_pages_zero_page_size() {
+        assert_eq!(calculate_total_pages(100, 0), 0);
+    }
+
+    // ---- paginate ----
+
+    #[test]
+    fn paginate_defaults() {
+        let (page, size, offset) = paginate(None, None);
+        assert_eq!(page, 1);
+        assert_eq!(size, 20);
+        assert_eq!(offset, 0);
+    }
+
+    #[test]
+    fn paginate_second_page() {
+        let (page, size, offset) = paginate(Some(2), Some(10));
+        assert_eq!(page, 2);
+        assert_eq!(size, 10);
+        assert_eq!(offset, 10);
+    }
+
+    #[test]
+    fn paginate_clamps_page_size() {
+        let (_, size, _) = paginate(Some(1), Some(500));
+        assert_eq!(size, 100);
+    }
+
+    #[test]
+    fn paginate_zero_page_becomes_one() {
+        let (page, _, _) = paginate(Some(0), Some(10));
+        assert_eq!(page, 1);
     }
 }

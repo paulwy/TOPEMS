@@ -535,6 +535,64 @@ pub async fn delete_fixed_asset(
     response
 }
 
+// ============ 折旧计算纯函数 ============
+
+/// 单次月度折旧计算结果
+#[derive(Debug, Clone, PartialEq)]
+pub struct DepreciationCalculation {
+    /// 本月应计提折旧额（直线法：原值 / 使用月数）
+    pub monthly_depreciation: f64,
+    /// 本次折旧后的累计折旧额（如足额则钳制为 = 原值）
+    pub new_accumulated_depreciation: f64,
+    /// 本次折旧后的净值（原值 - 累计折旧；足额时钳为 0）
+    pub new_net_value: f64,
+    /// 是否足额折旧完毕（累计折旧 ≥ 原值）
+    pub is_fully_depreciated: bool,
+}
+
+/// 直线法月度折旧额计算
+///
+/// # 返回
+/// - `Some(monthly)`：`original_value > 0` 且 `useful_life_months > 0` 时返回月度折旧额
+/// - `None`：输入无效（值非正或使用寿命非正）
+pub fn calculate_monthly_depreciation(original_value: f64, useful_life_months: i32) -> Option<f64> {
+    if original_value <= 0.0 || useful_life_months <= 0 {
+        return None;
+    }
+    Some(original_value / useful_life_months as f64)
+}
+
+/// 单次计提前一步纯计算
+///
+/// # 规则（直线法）
+/// 1. 若 `useful_life_months <= 0` 或 `original_value <= 0`，返回 `None`
+/// 2. 本月折旧 = `original_value / useful_life_months`
+/// 3. 新累计折旧 = 原累计 + 本月折旧
+/// 4. 若新累计 ≥ 原值：标记「已足额」，钳制累计=原值、净值=0
+/// 5. 否则：新净值 = 原值 - 新累计
+pub fn compute_depreciation_step(
+    original_value: f64,
+    accumulated_depreciation: f64,
+    useful_life_months: i32,
+) -> Option<DepreciationCalculation> {
+    let monthly = calculate_monthly_depreciation(original_value, useful_life_months)?;
+    let new_accumulated = accumulated_depreciation + monthly;
+
+    let (final_accumulated, final_net, fully) = if new_accumulated >= original_value {
+        // 足额折旧：钳制累计=原值、净值=0，不再继续计提
+        (original_value, 0.0, true)
+    } else {
+        (new_accumulated, original_value - new_accumulated, false)
+    };
+
+    Some(DepreciationCalculation {
+        monthly_depreciation: monthly,
+        new_accumulated_depreciation: final_accumulated,
+        new_net_value: final_net,
+        is_fully_depreciated: fully,
+    })
+}
+
 #[derive(Debug, Deserialize, Serialize)]
 pub struct DepreciateRequest {
     pub period: String,
@@ -588,48 +646,47 @@ pub async fn depreciate_assets(
     match assets {
         Ok(assets) => {
             for asset in assets {
-                if asset.useful_life_months <= 0 {
-                    errors.push(format!("资产{}使用寿命无效", asset.asset_code));
-                    continue;
-                }
+                let calc = match compute_depreciation_step(
+                    asset.original_value,
+                    asset.accumulated_depreciation,
+                    asset.useful_life_months,
+                ) {
+                    Some(c) => c,
+                    None => {
+                        errors.push(format!("资产{}使用寿命或原值无效", asset.asset_code));
+                        continue;
+                    }
+                };
 
-                let monthly_depreciation = asset.original_value / asset.useful_life_months as f64;
-                let new_accumulated_depreciation =
-                    asset.accumulated_depreciation + monthly_depreciation;
-                let new_net_value = asset.original_value - new_accumulated_depreciation;
-
-                if new_accumulated_depreciation >= asset.original_value {
-                    let result = sqlx::query(
+                let query_result = if calc.is_fully_depreciated {
+                    // 足额折旧：累计=原值、净值=0，状态切换为 'depreciated'
+                    sqlx::query(
                         "UPDATE fixed_assets SET accumulated_depreciation = $2, net_value = $3, status = 'depreciated', depreciation_period = $4, updated_at = $5 WHERE id = $1",
                     )
                     .bind(asset.id)
-                    .bind(asset.original_value)
-                    .bind(0.0)
+                    .bind(calc.new_accumulated_depreciation)
+                    .bind(calc.new_net_value)
                     .bind(&req.period)
                     .bind(now)
                     .execute(&state.db)
-                    .await;
-
-                    match result {
-                        Ok(_) => depreciated_count += 1,
-                        Err(e) => errors.push(format!("资产{}折旧失败: {}", asset.asset_code, e)),
-                    }
+                    .await
                 } else {
-                    let result = sqlx::query(
+                    // 正常计提：更新累计、净值、期间
+                    sqlx::query(
                         "UPDATE fixed_assets SET accumulated_depreciation = $2, net_value = $3, depreciation_period = $4, updated_at = $5 WHERE id = $1",
                     )
                     .bind(asset.id)
-                    .bind(new_accumulated_depreciation)
-                    .bind(new_net_value)
+                    .bind(calc.new_accumulated_depreciation)
+                    .bind(calc.new_net_value)
                     .bind(&req.period)
                     .bind(now)
                     .execute(&state.db)
-                    .await;
+                    .await
+                };
 
-                    match result {
-                        Ok(_) => depreciated_count += 1,
-                        Err(e) => errors.push(format!("资产{}折旧失败: {}", asset.asset_code, e)),
-                    }
+                match query_result {
+                    Ok(_) => depreciated_count += 1,
+                    Err(e) => errors.push(format!("资产{}折旧失败: {}", asset.asset_code, e)),
                 }
             }
         }
@@ -673,4 +730,194 @@ pub async fn depreciate_assets(
     .await;
 
     Json(ApiResponse::success(result, "固定资产折旧完成"))
+}
+
+// ============ 单元测试 ============
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn approx_eq(a: f64, b: f64, eps: f64) -> bool {
+        (a - b).abs() < eps
+    }
+
+    // ===== calculate_monthly_depreciation 基础 =====
+
+    #[test]
+    fn test_monthly_basic_straight_line() {
+        // 原值 12000，寿命 12 个月 → 每月 1000
+        let m = calculate_monthly_depreciation(12000.0, 12).unwrap();
+        assert!(approx_eq(m, 1000.0, 1e-9), "m={}", m);
+    }
+
+    #[test]
+    fn test_monthly_float_value() {
+        // 原值 100000，寿命 36 个月 → ≈ 2777.777...
+        let m = calculate_monthly_depreciation(100000.0, 36).unwrap();
+        assert!(approx_eq(m, 2777.777_777_777_777_7, 1e-6), "m={}", m);
+    }
+
+    #[test]
+    fn test_monthly_invalid_original_value_zero() {
+        assert_eq!(calculate_monthly_depreciation(0.0, 12), None);
+    }
+
+    #[test]
+    fn test_monthly_invalid_original_value_negative() {
+        assert_eq!(calculate_monthly_depreciation(-5000.0, 12), None);
+    }
+
+    #[test]
+    fn test_monthly_invalid_life_zero() {
+        assert_eq!(calculate_monthly_depreciation(1000.0, 0), None);
+    }
+
+    #[test]
+    fn test_monthly_invalid_life_negative() {
+        assert_eq!(calculate_monthly_depreciation(1000.0, -3), None);
+    }
+
+    #[test]
+    fn test_monthly_one_month_life() {
+        // 1 个月寿命：当月折旧 = 全额
+        let m = calculate_monthly_depreciation(5000.0, 1).unwrap();
+        assert!(approx_eq(m, 5000.0, 1e-9));
+    }
+
+    // ===== compute_depreciation_step 正常路径 =====
+
+    #[test]
+    fn test_step_first_month_normal() {
+        // 原值 12000，寿命 12 个月，累计 0 → first month
+        let calc = compute_depreciation_step(12000.0, 0.0, 12).unwrap();
+        assert!(approx_eq(calc.monthly_depreciation, 1000.0, 1e-9));
+        assert!(approx_eq(calc.new_accumulated_depreciation, 1000.0, 1e-9));
+        assert!(approx_eq(calc.new_net_value, 11000.0, 1e-9));
+        assert!(!calc.is_fully_depreciated);
+    }
+
+    #[test]
+    fn test_step_mid_cycle_normal() {
+        // 原值 12000，寿命 12，累计 5000 → 第 6 个月：累计 6000，净值 6000
+        let calc = compute_depreciation_step(12000.0, 5000.0, 12).unwrap();
+        assert!(approx_eq(calc.new_accumulated_depreciation, 6000.0, 1e-9));
+        assert!(approx_eq(calc.new_net_value, 6000.0, 1e-9));
+        assert!(!calc.is_fully_depreciated);
+    }
+
+    #[test]
+    fn test_step_penultimate_month_before_full() {
+        // 累计 11000（已提 11 个月）+ 本月 1000 → 累计 = 12000，足额
+        let calc = compute_depreciation_step(12000.0, 11000.0, 12).unwrap();
+        assert!(approx_eq(calc.new_accumulated_depreciation, 12000.0, 1e-9));
+        assert!(approx_eq(calc.new_net_value, 0.0, 1e-9));
+        assert!(calc.is_fully_depreciated);
+    }
+
+    #[test]
+    fn test_step_clamps_on_exact_fully_depreciated() {
+        // 累计刚好还差 monthly 就满额：足额分支
+        // 原值 2400，寿命 24 → monthly = 100
+        // 累计 = 2300，本次后 = 2400，足额
+        let calc = compute_depreciation_step(2400.0, 2300.0, 24).unwrap();
+        assert!(approx_eq(calc.new_accumulated_depreciation, 2400.0, 1e-9));
+        assert!(approx_eq(calc.new_net_value, 0.0, 1e-9));
+        assert!(calc.is_fully_depreciated);
+    }
+
+    #[test]
+    fn test_step_overflow_beyond_original_is_clamped() {
+        // 累计折旧 + 本月折旧 超过原值（浮点精度/边界），仍应钳制到原值
+        // 原值 1000，寿命 3 → monthly ≈ 333.3333
+        // 假设已累计 900（超过 2 个月 666.66，可能是之前的会计修正）
+        // 新累计 = 900 + 333.333 = 1233.333，应钳制为 1000 / 净值 0
+        let calc = compute_depreciation_step(1000.0, 900.0, 3).unwrap();
+        assert!(calc.is_fully_depreciated);
+        assert!(approx_eq(calc.new_accumulated_depreciation, 1000.0, 1e-9));
+        assert!(approx_eq(calc.new_net_value, 0.0, 1e-9));
+    }
+
+    #[test]
+    fn test_step_invalid_life_zero_returns_none() {
+        assert_eq!(compute_depreciation_step(1000.0, 0.0, 0), None);
+    }
+
+    #[test]
+    fn test_step_invalid_original_value_returns_none() {
+        assert_eq!(compute_depreciation_step(-100.0, 0.0, 12), None);
+    }
+
+    #[test]
+    fn test_step_one_month_life_immediately_full() {
+        // 原值 5000，寿命 1 个月 → first month = 足额
+        let calc = compute_depreciation_step(5000.0, 0.0, 1).unwrap();
+        assert!(calc.is_fully_depreciated);
+        assert!(approx_eq(calc.new_accumulated_depreciation, 5000.0, 1e-9));
+        assert!(approx_eq(calc.new_net_value, 0.0, 1e-9));
+    }
+
+    #[test]
+    fn test_step_already_fully_depreciated_still_reports_full() {
+        // 累计已等于原值（资产已足额，但 handler 又被调用）
+        // 此时 accumulated=12000，加 monthly 1000=13000>12000 → 足额分支
+        let calc = compute_depreciation_step(12000.0, 12000.0, 12).unwrap();
+        assert!(calc.is_fully_depreciated);
+        assert!(approx_eq(calc.new_accumulated_depreciation, 12000.0, 1e-9));
+        assert!(approx_eq(calc.new_net_value, 0.0, 1e-9));
+    }
+
+    #[test]
+    fn test_step_cumulative_correctness_over_6_months() {
+        // 模拟连续 6 个月计提，验证累计折旧与净值递减的单调性
+        let original = 24000.0;
+        let life = 24; // 每月 1000
+        let mut acc = 0.0;
+        for month in 1..=6 {
+            let calc = compute_depreciation_step(original, acc, life).unwrap();
+            assert!(!calc.is_fully_depreciated, "month {}", month);
+            assert!(approx_eq(calc.monthly_depreciation, 1000.0, 1e-9));
+            assert!(approx_eq(
+                calc.new_accumulated_depreciation,
+                1000.0 * month as f64,
+                1e-9
+            ));
+            assert!(
+                approx_eq(calc.new_net_value, original - 1000.0 * month as f64, 1e-9),
+                "month {} net wrong: {}",
+                month,
+                calc.new_net_value
+            );
+            acc = calc.new_accumulated_depreciation;
+        }
+    }
+
+    #[test]
+    fn test_step_net_value_never_negative() {
+        // 在足额边界附近反复测试，确保 new_net_value >= 0
+        for i in (900..=1100).step_by(1) {
+            let acc = i as f64;
+            let calc = compute_depreciation_step(1000.0, acc, 10).unwrap();
+            assert!(
+                calc.new_net_value >= -1e-9,
+                "net_value({} acc={}) = {} 不应为负",
+                i,
+                acc,
+                calc.new_net_value
+            );
+        }
+    }
+
+    #[test]
+    fn test_depreciation_calculation_struct_derive_debug_clone_partialeq() {
+        let a = DepreciationCalculation {
+            monthly_depreciation: 100.0,
+            new_accumulated_depreciation: 200.0,
+            new_net_value: 800.0,
+            is_fully_depreciated: false,
+        };
+        let b = a.clone();
+        assert_eq!(a, b);
+        let _s = format!("{:?}", a);
+    }
 }

@@ -869,3 +869,127 @@ pub async fn reject_hazard(
         "隐患审批已驳回",
     ))
 }
+
+pub fn weighted_hazard_score(subscores: &[(f64, f64)]) -> f64 {
+    let total_weight: f64 = subscores.iter().map(|(_, w)| w).sum();
+    if total_weight <= 0.0 {
+        return 0.0;
+    }
+    let weighted_sum: f64 = subscores.iter().map(|(s, w)| s * w).sum();
+    weighted_sum / total_weight
+}
+
+pub fn hazard_classify(score: f64) -> &'static str {
+    if score >= 80.0 {
+        "达标"
+    } else if score >= 60.0 {
+        "限期整改"
+    } else {
+        "停产"
+    }
+}
+
+pub fn hazard_quadrant(probability: u8, severity: u8) -> &'static str {
+    let p = probability.min(5).max(1);
+    let s = severity.min(5).max(1);
+    let p_high = p >= 4;
+    let s_high = s >= 4;
+    match (p_high, s_high) {
+        (true, true) => "Ⅰ类-重大隐患",
+        (false, true) => "Ⅱ类-高后果隐患",
+        (true, false) => "Ⅲ类-高频隐患",
+        (false, false) => "Ⅳ类-一般隐患",
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_weighted_empty() {
+        let scores: Vec<(f64, f64)> = vec![];
+        assert_eq!(weighted_hazard_score(&scores), 0.0);
+    }
+
+    #[test]
+    fn test_weighted_zero_weight() {
+        let scores = vec![(80.0, 0.0), (90.0, 0.0)];
+        assert_eq!(weighted_hazard_score(&scores), 0.0);
+    }
+
+    #[test]
+    fn test_weighted_single() {
+        let scores = vec![(85.0, 1.0)];
+        assert!((weighted_hazard_score(&scores) - 85.0).abs() < 1e-9);
+    }
+
+    #[test]
+    fn test_weighted_normal() {
+        let scores = vec![(90.0, 0.3), (80.0, 0.4), (70.0, 0.3)];
+        let result = weighted_hazard_score(&scores);
+        assert!((result - 80.0).abs() < 1e-9);
+    }
+
+    #[test]
+    fn test_weighted_un_normalized() {
+        let scores = vec![(90.0, 3.0), (80.0, 4.0), (70.0, 3.0)];
+        let result = weighted_hazard_score(&scores);
+        assert!((result - 80.0).abs() < 1e-9);
+    }
+
+    #[test]
+    fn test_classify_pass() {
+        assert_eq!(hazard_classify(100.0), "达标");
+        assert_eq!(hazard_classify(80.0), "达标");
+        assert_eq!(hazard_classify(90.0), "达标");
+    }
+
+    #[test]
+    fn test_classify_rectify() {
+        assert_eq!(hazard_classify(79.9), "限期整改");
+        assert_eq!(hazard_classify(70.0), "限期整改");
+        assert_eq!(hazard_classify(60.0), "限期整改");
+    }
+
+    #[test]
+    fn test_classify_shutdown() {
+        assert_eq!(hazard_classify(59.9), "停产");
+        assert_eq!(hazard_classify(0.0), "停产");
+        assert_eq!(hazard_classify(30.0), "停产");
+    }
+
+    #[test]
+    fn test_quadrant_type1() {
+        assert_eq!(hazard_quadrant(4, 4), "Ⅰ类-重大隐患");
+        assert_eq!(hazard_quadrant(5, 5), "Ⅰ类-重大隐患");
+        assert_eq!(hazard_quadrant(5, 4), "Ⅰ类-重大隐患");
+    }
+
+    #[test]
+    fn test_quadrant_type2() {
+        assert_eq!(hazard_quadrant(1, 4), "Ⅱ类-高后果隐患");
+        assert_eq!(hazard_quadrant(3, 5), "Ⅱ类-高后果隐患");
+        assert_eq!(hazard_quadrant(2, 4), "Ⅱ类-高后果隐患");
+    }
+
+    #[test]
+    fn test_quadrant_type3() {
+        assert_eq!(hazard_quadrant(4, 1), "Ⅲ类-高频隐患");
+        assert_eq!(hazard_quadrant(5, 3), "Ⅲ类-高频隐患");
+        assert_eq!(hazard_quadrant(4, 2), "Ⅲ类-高频隐患");
+    }
+
+    #[test]
+    fn test_quadrant_type4() {
+        assert_eq!(hazard_quadrant(1, 1), "Ⅳ类-一般隐患");
+        assert_eq!(hazard_quadrant(3, 3), "Ⅳ类-一般隐患");
+        assert_eq!(hazard_quadrant(2, 2), "Ⅳ类-一般隐患");
+    }
+
+    #[test]
+    fn test_quadrant_clamping() {
+        assert_eq!(hazard_quadrant(0, 0), "Ⅳ类-一般隐患");
+        assert_eq!(hazard_quadrant(10, 10), "Ⅰ类-重大隐患");
+    }
+}

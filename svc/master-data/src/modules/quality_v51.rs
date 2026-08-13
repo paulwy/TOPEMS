@@ -19,6 +19,47 @@ use utoipa::ToSchema;
 
 use crate::shared::AppState;
 
+// ==================== 纯函数（无副作用，可单测） ====================
+
+/// 根据完整性、准确性、一致性、及时性四维分数加权计算数据质量综合分数（0-100）。
+/// 权重：完整性 35%、准确性 30%、一致性 20%、及时性 15%。输入值会被 clamp 到 [0,100]。
+pub fn calculate_quality_score(
+    completeness: f64,
+    accuracy: f64,
+    consistency: f64,
+    timeliness: f64,
+) -> f64 {
+    fn clamp(v: f64) -> f64 {
+        v.clamp(0.0, 100.0)
+    }
+    let c = clamp(completeness);
+    let a = clamp(accuracy);
+    let co = clamp(consistency);
+    let t = clamp(timeliness);
+    let score = c * 0.35 + a * 0.30 + co * 0.20 + t * 0.15;
+    (score * 100.0).round() / 100.0
+}
+
+/// 根据综合分数返回质量等级（A/B/C/D/F）。
+/// - [90, 100] -> A
+/// - [80, 90)  -> B
+/// - [70, 80)  -> C
+/// - [60, 70)  -> D
+/// - < 60      -> F
+pub fn quality_grade_from_score(score: f64) -> &'static str {
+    if score >= 90.0 {
+        "A"
+    } else if score >= 80.0 {
+        "B"
+    } else if score >= 70.0 {
+        "C"
+    } else if score >= 60.0 {
+        "D"
+    } else {
+        "F"
+    }
+}
+
 // ==================== 质量闭环 ====================
 
 #[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize, ToSchema)]
@@ -1405,4 +1446,140 @@ pub async fn predict_quality_trend(
     }
 
     Json(ApiResponse::success(trend, "质量趋势预测"))
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    // ---------- calculate_quality_score ----------
+
+    #[test]
+    fn test_quality_score_all_zero() {
+        let s = calculate_quality_score(0.0, 0.0, 0.0, 0.0);
+        assert!((s - 0.0).abs() < f64::EPSILON);
+    }
+
+    #[test]
+    fn test_quality_score_all_perfect() {
+        let s = calculate_quality_score(100.0, 100.0, 100.0, 100.0);
+        assert!((s - 100.0).abs() < f64::EPSILON);
+    }
+
+    #[test]
+    fn test_quality_score_weighted_correctly() {
+        // 0.35*80 + 0.30*90 + 0.20*70 + 0.15*60 = 28 + 27 + 14 + 9 = 78.0
+        let s = calculate_quality_score(80.0, 90.0, 70.0, 60.0);
+        assert!((s - 78.0).abs() < 0.01);
+    }
+
+    #[test]
+    fn test_quality_score_clamps_negative_input() {
+        // 负值应被 clamp 到 0
+        let s = calculate_quality_score(-10.0, -20.0, -30.0, -40.0);
+        assert!((s - 0.0).abs() < f64::EPSILON);
+    }
+
+    #[test]
+    fn test_quality_score_clamps_overflow_input() {
+        // 超过 100 的值应被 clamp 到 100
+        let s = calculate_quality_score(150.0, 200.0, 300.0, 400.0);
+        assert!((s - 100.0).abs() < f64::EPSILON);
+    }
+
+    #[test]
+    fn test_quality_score_boundary_mix() {
+        // 0.35*100 + 0.30*0 + 0.20*100 + 0.15*0 = 35 + 0 + 20 + 0 = 55.0
+        let s = calculate_quality_score(100.0, 0.0, 100.0, 0.0);
+        assert!((s - 55.0).abs() < 0.01);
+    }
+
+    #[test]
+    fn test_quality_score_is_rounded_to_2_decimals() {
+        // 0.35*33 + 0.30*33 + 0.20*33 + 0.15*33 = 33.0 (恰好整数)
+        // 改用会产生小数的输入：1/3 * 各权重之和 = 33.0
+        // 使用更明确的非整数值：0.35*10 + 0.30*20 + 0.20*30 + 0.15*40 = 3.5+6+6+6 = 21.5
+        let s = calculate_quality_score(10.0, 20.0, 30.0, 40.0);
+        assert!((s - 21.5).abs() < 0.01);
+        // 验证最多两位小数
+        let scaled = (s * 100.0).round();
+        assert!((scaled / 100.0 - s).abs() < f64::EPSILON);
+    }
+
+    // ---------- quality_grade_from_score ----------
+
+    #[test]
+    fn test_grade_a_boundary_low() {
+        assert_eq!(quality_grade_from_score(90.0), "A");
+    }
+
+    #[test]
+    fn test_grade_a_boundary_high() {
+        assert_eq!(quality_grade_from_score(100.0), "A");
+    }
+
+    #[test]
+    fn test_grade_b_boundary() {
+        assert_eq!(quality_grade_from_score(80.0), "B");
+        assert_eq!(quality_grade_from_score(89.99), "B");
+    }
+
+    #[test]
+    fn test_grade_c_boundary() {
+        assert_eq!(quality_grade_from_score(70.0), "C");
+        assert_eq!(quality_grade_from_score(79.99), "C");
+    }
+
+    #[test]
+    fn test_grade_d_boundary() {
+        assert_eq!(quality_grade_from_score(60.0), "D");
+        assert_eq!(quality_grade_from_score(69.99), "D");
+    }
+
+    #[test]
+    fn test_grade_f_boundary() {
+        assert_eq!(quality_grade_from_score(0.0), "F");
+        assert_eq!(quality_grade_from_score(59.99), "F");
+    }
+
+    #[test]
+    fn test_grade_negative_score() {
+        assert_eq!(quality_grade_from_score(-5.0), "F");
+    }
+
+    #[test]
+    fn test_grade_above_hundred() {
+        // 超出 100 仍判为 A
+        assert_eq!(quality_grade_from_score(150.0), "A");
+    }
+
+    // ---------- 集成：score -> grade ----------
+
+    #[test]
+    fn test_score_to_grade_mapping() {
+        let cases = [
+            (100.0, "A"),
+            (95.0, "A"),
+            (90.0, "A"),
+            (85.0, "B"),
+            (75.0, "C"),
+            (65.0, "D"),
+            (50.0, "F"),
+        ];
+        for (score, expected) in cases.iter() {
+            assert_eq!(quality_grade_from_score(*score), *expected);
+        }
+    }
+
+    #[test]
+    fn test_calculate_then_grade_perfect() {
+        let s = calculate_quality_score(100.0, 100.0, 100.0, 100.0);
+        assert_eq!(quality_grade_from_score(s), "A");
+    }
+
+    #[test]
+    fn test_calculate_then_grade_fail() {
+        let s = calculate_quality_score(10.0, 10.0, 10.0, 10.0);
+        assert_eq!(quality_grade_from_score(s), "F");
+    }
 }

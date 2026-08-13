@@ -10,6 +10,35 @@ use uuid::Uuid;
 
 use crate::models::project_benefit::{CreateBenefitRequest, ProjectBenefit};
 
+// ==================== Pure functions ====================
+
+/// Calculates Return on Investment (ROI) as a percentage.
+///
+/// Formula: `(benefit - cost) / cost * 100`.
+/// Returns `0.0` when `cost` is zero to avoid division by zero.
+pub fn calculate_roi(benefit: f64, cost: f64) -> f64 {
+    if cost == 0.0 {
+        return 0.0;
+    }
+    (benefit - cost) / cost * 100.0
+}
+
+/// Calculates the payback period in months.
+///
+/// Formula: `initial_cost / monthly_savings`.
+/// Returns `0.0` when `initial_cost` is zero or negative.
+/// Returns `f64::INFINITY` when `monthly_savings` is zero or negative
+/// (the investment never pays for itself).
+pub fn calculate_payback_period(initial_cost: f64, monthly_savings: f64) -> f64 {
+    if initial_cost <= 0.0 {
+        return 0.0;
+    }
+    if monthly_savings <= 0.0 {
+        return f64::INFINITY;
+    }
+    initial_cost / monthly_savings
+}
+
 pub fn create_routes(pool: PgPool) -> Router {
     Router::new()
         .route(
@@ -270,5 +299,86 @@ async fn calculate_benefits(
             tracing::error!("计算项目效益分析失败: {}", e);
             Json(ApiResponse::error(500, "计算项目效益分析失败"))
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    // ---- calculate_roi ----
+
+    #[test]
+    fn test_roi_positive_return() {
+        // benefit=150, cost=100 -> ROI = 50%
+        assert!((calculate_roi(150.0, 100.0) - 50.0).abs() < 1e-9);
+    }
+
+    #[test]
+    fn test_roi_negative_return() {
+        // benefit=80, cost=100 -> ROI = -20%
+        assert!((calculate_roi(80.0, 100.0) - (-20.0)).abs() < 1e-9);
+    }
+
+    #[test]
+    fn test_roi_break_even() {
+        assert!((calculate_roi(100.0, 100.0) - 0.0).abs() < 1e-9);
+    }
+
+    #[test]
+    fn test_roi_zero_cost() {
+        assert_eq!(calculate_roi(100.0, 0.0), 0.0);
+    }
+
+    #[test]
+    fn test_roi_double_return() {
+        // benefit=200, cost=100 -> ROI = 100%
+        assert!((calculate_roi(200.0, 100.0) - 100.0).abs() < 1e-9);
+    }
+
+    #[test]
+    fn test_roi_zero_benefit() {
+        // benefit=0, cost=100 -> ROI = -100%
+        assert!((calculate_roi(0.0, 100.0) - (-100.0)).abs() < 1e-9);
+    }
+
+    // ---- calculate_payback_period ----
+
+    #[test]
+    fn test_payback_simple() {
+        // 12000 cost, 1000/month -> 12 months
+        assert!((calculate_payback_period(12000.0, 1000.0) - 12.0).abs() < 1e-9);
+    }
+
+    #[test]
+    fn test_payback_exact_one_month() {
+        assert!((calculate_payback_period(1000.0, 1000.0) - 1.0).abs() < 1e-9);
+    }
+
+    #[test]
+    fn test_payback_zero_cost() {
+        assert_eq!(calculate_payback_period(0.0, 1000.0), 0.0);
+    }
+
+    #[test]
+    fn test_payback_negative_cost() {
+        assert_eq!(calculate_payback_period(-500.0, 1000.0), 0.0);
+    }
+
+    #[test]
+    fn test_payback_zero_savings_is_infinity() {
+        assert!(calculate_payback_period(10000.0, 0.0).is_infinite());
+    }
+
+    #[test]
+    fn test_payback_negative_savings_is_infinity() {
+        assert!(calculate_payback_period(10000.0, -100.0).is_infinite());
+    }
+
+    #[test]
+    fn test_payback_fractional_months() {
+        // 10000 cost, 3000/month -> 3.333... months
+        let result = calculate_payback_period(10000.0, 3000.0);
+        assert!((result - 3.333_333_333_333_3335).abs() < 1e-9);
     }
 }

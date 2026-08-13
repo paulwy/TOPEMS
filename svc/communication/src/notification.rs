@@ -13,6 +13,81 @@ use crate::models::{
     NotificationQuery, SendNotificationRequest, UpdateTemplateRequest,
 };
 
+/// 通知优先级枚举
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum NotificationPriority {
+    Low,
+    Normal,
+    High,
+    Urgent,
+}
+
+/// 根据级别字符串分类通知优先级（大小写不敏感、自动去除首尾空白）
+pub fn classify_notification_priority(level: &str) -> NotificationPriority {
+    match level.trim().to_lowercase().as_str() {
+        "urgent" | "critical" | "emergency" => NotificationPriority::Urgent,
+        "high" | "important" => NotificationPriority::High,
+        "low" | "minor" => NotificationPriority::Low,
+        _ => NotificationPriority::Normal,
+    }
+}
+
+/// 根据通知类型和用户偏好选择投递渠道
+pub fn select_channels(notification_type: &str, user_preferences: &[&str]) -> Vec<String> {
+    let ntype = notification_type.trim().to_lowercase();
+    let all = vec!["push".to_string(), "im".to_string(), "email".to_string()];
+
+    if matches!(ntype.as_str(), "urgent" | "critical" | "emergency") {
+        return all;
+    }
+
+    let mut channels: Vec<String> = Vec::new();
+    for pref in user_preferences {
+        let p = pref.trim().to_lowercase();
+        if p.is_empty() {
+            continue;
+        }
+        let to_add: Vec<String> = if p == "all" {
+            all.clone()
+        } else if matches!(p.as_str(), "push" | "im" | "email") {
+            vec![p]
+        } else {
+            vec![]
+        };
+        for c in to_add {
+            if !channels.contains(&c) {
+                channels.push(c);
+            }
+        }
+    }
+
+    if channels.is_empty() {
+        channels.push("push".to_string());
+    }
+
+    channels
+}
+
+/// 规范化通知类型：去首尾空白并转小写，空值默认 info
+pub fn normalize_notification_type(ntype: &str) -> String {
+    let trimmed = ntype.trim().to_lowercase();
+    if trimmed.is_empty() {
+        "info".to_string()
+    } else {
+        trimmed
+    }
+}
+
+/// 按 UTF-8 字符边界截断通知标题，超出时追加省略号
+pub fn truncate_notification_title(title: &str, max_len: usize) -> String {
+    if title.chars().count() <= max_len {
+        return title.to_string();
+    }
+    let mut result: String = title.chars().take(max_len).collect();
+    result.push('…');
+    result
+}
+
 /// 发送通知（管理员或系统使用）
 #[utoipa::path(
     post,
@@ -1786,4 +1861,171 @@ async fn send_notification_email(pool: &PgPool, req: &SendNotificationRequest) -
     }
 
     Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_classify_priority_urgent() {
+        assert_eq!(
+            classify_notification_priority("urgent"),
+            NotificationPriority::Urgent
+        );
+        assert_eq!(
+            classify_notification_priority("CRITICAL"),
+            NotificationPriority::Urgent
+        );
+        assert_eq!(
+            classify_notification_priority("Emergency"),
+            NotificationPriority::Urgent
+        );
+    }
+
+    #[test]
+    fn test_classify_priority_high() {
+        assert_eq!(
+            classify_notification_priority("high"),
+            NotificationPriority::High
+        );
+        assert_eq!(
+            classify_notification_priority("Important"),
+            NotificationPriority::High
+        );
+    }
+
+    #[test]
+    fn test_classify_priority_low() {
+        assert_eq!(
+            classify_notification_priority("low"),
+            NotificationPriority::Low
+        );
+        assert_eq!(
+            classify_notification_priority(" minor "),
+            NotificationPriority::Low
+        );
+    }
+
+    #[test]
+    fn test_classify_priority_normal_default() {
+        assert_eq!(
+            classify_notification_priority("normal"),
+            NotificationPriority::Normal
+        );
+        assert_eq!(
+            classify_notification_priority("info"),
+            NotificationPriority::Normal
+        );
+        assert_eq!(
+            classify_notification_priority(""),
+            NotificationPriority::Normal
+        );
+        assert_eq!(
+            classify_notification_priority("unknown"),
+            NotificationPriority::Normal
+        );
+    }
+
+    #[test]
+    fn test_classify_priority_case_insensitive_and_trimmed() {
+        assert_eq!(
+            classify_notification_priority("  HIGH  "),
+            NotificationPriority::High
+        );
+        assert_eq!(
+            classify_notification_priority("Urgent"),
+            NotificationPriority::Urgent
+        );
+    }
+
+    #[test]
+    fn test_select_channels_urgent_forces_all() {
+        let channels = select_channels("urgent", &["email"]);
+        assert!(channels.contains(&"push".to_string()));
+        assert!(channels.contains(&"im".to_string()));
+        assert!(channels.contains(&"email".to_string()));
+        assert_eq!(channels.len(), 3);
+    }
+
+    #[test]
+    fn test_select_channels_respects_preferences() {
+        let channels = select_channels("info", &["email", "im"]);
+        assert_eq!(channels, vec!["email".to_string(), "im".to_string()]);
+    }
+
+    #[test]
+    fn test_select_channels_all_preference() {
+        let channels = select_channels("info", &["all"]);
+        assert_eq!(channels.len(), 3);
+    }
+
+    #[test]
+    fn test_select_channels_empty_prefs_defaults_push() {
+        let channels = select_channels("info", &[]);
+        assert_eq!(channels, vec!["push".to_string()]);
+    }
+
+    #[test]
+    fn test_select_channels_dedupes() {
+        let channels = select_channels("info", &["email", "email", "im"]);
+        assert_eq!(channels, vec!["email".to_string(), "im".to_string()]);
+    }
+
+    #[test]
+    fn test_select_channels_ignores_unknown_pref() {
+        let channels = select_channels("info", &["carrier_pigeon"]);
+        assert_eq!(channels, vec!["push".to_string()]);
+    }
+
+    #[test]
+    fn test_normalize_notification_type_default() {
+        assert_eq!(normalize_notification_type(""), "info");
+        assert_eq!(normalize_notification_type("   "), "info");
+    }
+
+    #[test]
+    fn test_normalize_notification_type_lowercase() {
+        assert_eq!(normalize_notification_type("URGENT"), "urgent");
+        assert_eq!(normalize_notification_type("Info"), "info");
+    }
+
+    #[test]
+    fn test_normalize_notification_type_trimmed() {
+        assert_eq!(normalize_notification_type("  warning  "), "warning");
+    }
+
+    #[test]
+    fn test_normalize_notification_type_passthrough() {
+        assert_eq!(normalize_notification_type("alert"), "alert");
+    }
+
+    #[test]
+    fn test_truncate_title_no_truncation() {
+        assert_eq!(truncate_notification_title("hello", 10), "hello");
+        assert_eq!(truncate_notification_title("hello", 5), "hello");
+    }
+
+    #[test]
+    fn test_truncate_title_truncates_with_ellipsis() {
+        let result = truncate_notification_title("hello world", 5);
+        assert_eq!(result, "hello…");
+    }
+
+    #[test]
+    fn test_truncate_title_utf8_boundaries() {
+        let result = truncate_notification_title("你好世界朋友", 4);
+        assert_eq!(result, "你好世界…");
+    }
+
+    #[test]
+    fn test_truncate_title_empty() {
+        assert_eq!(truncate_notification_title("", 5), "");
+    }
+
+    #[test]
+    fn test_truncate_title_zero_max_len() {
+        let result = truncate_notification_title("hello", 0);
+        assert_eq!(result, "…");
+    }
 }

@@ -13,6 +13,34 @@ use crate::models::risk::{
     CreateRiskEventRequest, CreateRiskRequest, ProjectRisk, RiskEvent, UpdateRiskRequest,
 };
 
+// ==================== Pure functions ====================
+
+/// Calculates a risk score as `probability * impact`.
+///
+/// Both inputs are on a 1–5 scale. Values outside that range are clamped
+/// to `[1, 5]`, so the resulting score is always in `[1, 25]`.
+pub fn calculate_risk_score(probability: u8, impact: u8) -> u32 {
+    let p = probability.clamp(1, 5) as u32;
+    let i = impact.clamp(1, 5) as u32;
+    p * i
+}
+
+/// Maps a risk score (1–25) to a qualitative risk level.
+///
+/// - 1–5   → `"low"`
+/// - 6–12  → `"medium"`
+/// - 13–19 → `"high"`
+/// - 20–25 → `"critical"`
+pub fn risk_level_from_score(score: u32) -> &'static str {
+    match score {
+        1..=5 => "low",
+        6..=12 => "medium",
+        13..=19 => "high",
+        20..=25 => "critical",
+        _ => "low",
+    }
+}
+
 pub fn create_routes(pool: PgPool) -> Router {
     Router::new()
         .route(
@@ -241,4 +269,103 @@ fn parse_date_opt(date_str: &Option<String>) -> Option<chrono::DateTime<chrono::
         .as_ref()
         .and_then(|s| chrono::DateTime::parse_from_rfc3339(s).ok())
         .map(|d| d.with_timezone(&chrono::Utc))
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    // ---- calculate_risk_score ----
+
+    #[test]
+    fn test_min_risk_score() {
+        assert_eq!(calculate_risk_score(1, 1), 1);
+    }
+
+    #[test]
+    fn test_max_risk_score() {
+        assert_eq!(calculate_risk_score(5, 5), 25);
+    }
+
+    #[test]
+    fn test_mid_risk_score() {
+        assert_eq!(calculate_risk_score(3, 4), 12);
+        assert_eq!(calculate_risk_score(4, 3), 12);
+    }
+
+    #[test]
+    fn test_clamps_below_one() {
+        assert_eq!(calculate_risk_score(0, 0), 1);
+        assert_eq!(calculate_risk_score(0, 5), 5);
+    }
+
+    #[test]
+    fn test_clamps_above_five() {
+        assert_eq!(calculate_risk_score(6, 6), 25);
+        assert_eq!(calculate_risk_score(255, 1), 5);
+    }
+
+    #[test]
+    fn test_score_always_in_range() {
+        for p in 0..=10 {
+            for i in 0..=10 {
+                let s = calculate_risk_score(p, i);
+                assert!((1..=25).contains(&s));
+            }
+        }
+    }
+
+    // ---- risk_level_from_score ----
+
+    #[test]
+    fn test_level_low() {
+        assert_eq!(risk_level_from_score(1), "low");
+        assert_eq!(risk_level_from_score(5), "low");
+    }
+
+    #[test]
+    fn test_level_medium() {
+        assert_eq!(risk_level_from_score(6), "medium");
+        assert_eq!(risk_level_from_score(12), "medium");
+    }
+
+    #[test]
+    fn test_level_high() {
+        assert_eq!(risk_level_from_score(13), "high");
+        assert_eq!(risk_level_from_score(19), "high");
+    }
+
+    #[test]
+    fn test_level_critical() {
+        assert_eq!(risk_level_from_score(20), "critical");
+        assert_eq!(risk_level_from_score(25), "critical");
+    }
+
+    #[test]
+    fn test_level_boundary_values() {
+        // Boundaries between levels
+        assert_eq!(risk_level_from_score(5), "low");
+        assert_eq!(risk_level_from_score(6), "medium");
+        assert_eq!(risk_level_from_score(12), "medium");
+        assert_eq!(risk_level_from_score(13), "high");
+        assert_eq!(risk_level_from_score(19), "high");
+        assert_eq!(risk_level_from_score(20), "critical");
+    }
+
+    #[test]
+    fn test_level_out_of_range_defaults_low() {
+        assert_eq!(risk_level_from_score(0), "low");
+        assert_eq!(risk_level_from_score(100), "low");
+    }
+
+    #[test]
+    fn test_score_and_level_integration() {
+        assert_eq!(risk_level_from_score(calculate_risk_score(1, 2)), "low");
+        assert_eq!(risk_level_from_score(calculate_risk_score(3, 3)), "medium");
+        assert_eq!(risk_level_from_score(calculate_risk_score(4, 4)), "high");
+        assert_eq!(
+            risk_level_from_score(calculate_risk_score(5, 5)),
+            "critical"
+        );
+    }
 }

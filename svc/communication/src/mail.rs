@@ -25,6 +25,106 @@ use crate::models::{
     UpdateEmailTemplateRequest,
 };
 
+/// 简化版邮箱地址校验：local@domain，无空格，含 @，域名含点且不以点开头/结尾
+pub fn validate_email(addr: &str) -> bool {
+    let addr = addr.trim();
+    if addr.is_empty() || addr.contains(' ') {
+        return false;
+    }
+    let parts: Vec<&str> = addr.splitn(2, '@').collect();
+    if parts.len() != 2 {
+        return false;
+    }
+    let local = parts[0];
+    let domain = parts[1];
+    if local.is_empty() || domain.is_empty() {
+        return false;
+    }
+    if !domain.contains('.') {
+        return false;
+    }
+    if domain.starts_with('.') || domain.ends_with('.') {
+        return false;
+    }
+    true
+}
+
+/// 提取邮箱 @ 之前的部分作为名称；无 @ 时返回去除首尾空白后的原文
+pub fn extract_email_name(addr: &str) -> String {
+    let addr = addr.trim();
+    match addr.split_once('@') {
+        Some((name, _)) => name.to_string(),
+        None => addr.to_string(),
+    }
+}
+
+/// 渲染简单模板：将 {{key}} 替换为对应值，缺失的占位符保持原样
+pub fn render_template(template: &str, vars: &std::collections::HashMap<String, String>) -> String {
+    let mut result = template.to_string();
+    for (key, value) in vars {
+        let placeholder = format!("{{{{{}}}}}", key);
+        result = result.replace(&placeholder, value);
+    }
+    result
+}
+
+/// 收件人去重（大小写不敏感），保留首次出现的顺序，跳过空白项
+pub fn deduplicate_recipients(emails: &[String]) -> Vec<String> {
+    let mut seen = std::collections::HashSet::new();
+    let mut result = Vec::new();
+    for email in emails {
+        let normalized = email.trim().to_lowercase();
+        if !normalized.is_empty() && seen.insert(normalized) {
+            result.push(email.clone());
+        }
+    }
+    result
+}
+
+/// 校验附件大小是否在允许范围内（size_bytes 与 max_mb 均须为正/非负）
+pub fn validate_attachment_size(size_bytes: i64, max_mb: i64) -> bool {
+    if size_bytes < 0 || max_mb <= 0 {
+        return false;
+    }
+    match max_mb.checked_mul(1024 * 1024) {
+        Some(limit) => size_bytes <= limit,
+        None => false,
+    }
+}
+
+/// 编码邮件主题：纯 ASCII 直接返回，否则按 RFC 2047 包裹为 UTF-8 Base64 编码字
+pub fn encode_mail_subject(subject: &str) -> String {
+    if subject.is_ascii() {
+        return subject.to_string();
+    }
+    format!("=?UTF-8?B?{}?=", base64_encode(subject.as_bytes()))
+}
+
+/// 简易 Base64 编码（无外部依赖）
+pub fn base64_encode(input: &[u8]) -> String {
+    const TABLE: &[u8; 64] = b"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+    let mut out = String::new();
+    for chunk in input.chunks(3) {
+        let b0 = chunk[0];
+        let b1 = if chunk.len() > 1 { chunk[1] } else { 0 };
+        let b2 = if chunk.len() > 2 { chunk[2] } else { 0 };
+        let triple = ((b0 as u32) << 16) | ((b1 as u32) << 8) | (b2 as u32);
+        out.push(TABLE[((triple >> 18) & 0x3F) as usize] as char);
+        out.push(TABLE[((triple >> 12) & 0x3F) as usize] as char);
+        if chunk.len() > 1 {
+            out.push(TABLE[((triple >> 6) & 0x3F) as usize] as char);
+        } else {
+            out.push('=');
+        }
+        if chunk.len() > 2 {
+            out.push(TABLE[(triple & 0x3F) as usize] as char);
+        } else {
+            out.push('=');
+        }
+    }
+    out
+}
+
 #[derive(Debug, Clone)]
 pub struct QueuedEmail {
     pub id: String,
@@ -1335,4 +1435,242 @@ pub fn get_queue_stats() -> serde_json::Value {
         "failed": failed,
         "total": EMAIL_QUEUE.len()
     })
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::collections::HashMap;
+
+    #[test]
+    fn test_validate_email_valid() {
+        assert!(validate_email("user@example.com"));
+        assert!(validate_email("a.b@c.d.io"));
+    }
+
+    #[test]
+    fn test_validate_email_missing_at() {
+        assert!(!validate_email("userexample.com"));
+    }
+
+    #[test]
+    fn test_validate_email_empty() {
+        assert!(!validate_email(""));
+        assert!(!validate_email("   "));
+    }
+
+    #[test]
+    fn test_validate_email_has_space() {
+        assert!(!validate_email("user @example.com"));
+    }
+
+    #[test]
+    fn test_validate_email_no_dot_in_domain() {
+        assert!(!validate_email("user@localhost"));
+    }
+
+    #[test]
+    fn test_validate_email_empty_local_or_domain() {
+        assert!(!validate_email("@example.com"));
+        assert!(!validate_email("user@"));
+    }
+
+    #[test]
+    fn test_validate_email_domain_dot_edges() {
+        assert!(!validate_email("user@.com"));
+        assert!(!validate_email("user@example.com."));
+    }
+
+    #[test]
+    fn test_extract_email_name_normal() {
+        assert_eq!(extract_email_name("user@example.com"), "user");
+    }
+
+    #[test]
+    fn test_extract_email_name_no_at() {
+        assert_eq!(extract_email_name("plainstring"), "plainstring");
+    }
+
+    #[test]
+    fn test_extract_email_name_empty() {
+        assert_eq!(extract_email_name(""), "");
+    }
+
+    #[test]
+    fn test_extract_email_name_trimmed() {
+        assert_eq!(extract_email_name("  user@example.com  "), "user");
+    }
+
+    #[test]
+    fn test_extract_email_name_multiple_at() {
+        assert_eq!(extract_email_name("a@b@example.com"), "a");
+    }
+
+    #[test]
+    fn test_render_template_basic() {
+        let mut vars = HashMap::new();
+        vars.insert("name".to_string(), "Alice".to_string());
+        assert_eq!(render_template("Hello {{name}}!", &vars), "Hello Alice!");
+    }
+
+    #[test]
+    fn test_render_template_multiple_vars() {
+        let mut vars = HashMap::new();
+        vars.insert("first".to_string(), "A".to_string());
+        vars.insert("second".to_string(), "B".to_string());
+        assert_eq!(render_template("{{first}}-{{second}}", &vars), "A-B");
+    }
+
+    #[test]
+    fn test_render_template_missing_var_left_as_is() {
+        let vars = HashMap::new();
+        assert_eq!(render_template("Hello {{name}}", &vars), "Hello {{name}}");
+    }
+
+    #[test]
+    fn test_render_template_no_placeholders() {
+        let vars = HashMap::new();
+        assert_eq!(render_template("plain text", &vars), "plain text");
+    }
+
+    #[test]
+    fn test_render_template_empty_template() {
+        let vars = HashMap::new();
+        assert_eq!(render_template("", &vars), "");
+    }
+
+    #[test]
+    fn test_deduplicate_recipients_basic() {
+        let input = vec![
+            "a@x.com".to_string(),
+            "b@x.com".to_string(),
+            "a@x.com".to_string(),
+        ];
+        assert_eq!(
+            deduplicate_recipients(&input),
+            vec!["a@x.com".to_string(), "b@x.com".to_string()]
+        );
+    }
+
+    #[test]
+    fn test_deduplicate_recipients_case_insensitive() {
+        let input = vec!["A@X.com".to_string(), "a@x.com".to_string()];
+        assert_eq!(deduplicate_recipients(&input), vec!["A@X.com".to_string()]);
+    }
+
+    #[test]
+    fn test_deduplicate_recipients_empty() {
+        assert!(deduplicate_recipients(&[]).is_empty());
+    }
+
+    #[test]
+    fn test_deduplicate_recipients_skips_empty_strings() {
+        let input = vec!["".to_string(), "  ".to_string(), "a@x.com".to_string()];
+        assert_eq!(deduplicate_recipients(&input), vec!["a@x.com".to_string()]);
+    }
+
+    #[test]
+    fn test_deduplicate_recipients_preserves_order() {
+        let input = vec![
+            "b@x.com".to_string(),
+            "a@x.com".to_string(),
+            "b@x.com".to_string(),
+            "c@x.com".to_string(),
+        ];
+        assert_eq!(
+            deduplicate_recipients(&input),
+            vec![
+                "b@x.com".to_string(),
+                "a@x.com".to_string(),
+                "c@x.com".to_string()
+            ]
+        );
+    }
+
+    #[test]
+    fn test_validate_attachment_size_valid() {
+        assert!(validate_attachment_size(0, 10));
+        assert!(validate_attachment_size(10 * 1024 * 1024, 10));
+    }
+
+    #[test]
+    fn test_validate_attachment_size_too_large() {
+        assert!(!validate_attachment_size(10 * 1024 * 1024 + 1, 10));
+    }
+
+    #[test]
+    fn test_validate_attachment_size_negative_size() {
+        assert!(!validate_attachment_size(-1, 10));
+    }
+
+    #[test]
+    fn test_validate_attachment_size_zero_max() {
+        assert!(!validate_attachment_size(1, 0));
+    }
+
+    #[test]
+    fn test_validate_attachment_size_negative_max() {
+        assert!(!validate_attachment_size(100, -5));
+    }
+
+    #[test]
+    fn test_validate_attachment_size_exact_boundary() {
+        assert!(validate_attachment_size(5 * 1024 * 1024, 5));
+    }
+
+    #[test]
+    fn test_encode_mail_subject_ascii() {
+        assert_eq!(encode_mail_subject("Hello World"), "Hello World");
+    }
+
+    #[test]
+    fn test_encode_mail_subject_non_ascii() {
+        let encoded = encode_mail_subject("你好");
+        assert!(encoded.starts_with("=?UTF-8?B?"));
+        assert!(encoded.ends_with("?="));
+    }
+
+    #[test]
+    fn test_encode_mail_subject_empty() {
+        assert_eq!(encode_mail_subject(""), "");
+    }
+
+    #[test]
+    fn test_encode_mail_subject_mixed() {
+        let encoded = encode_mail_subject("Hello 世界");
+        assert!(encoded.starts_with("=?UTF-8?B?"));
+        assert!(encoded.ends_with("?="));
+    }
+
+    #[test]
+    fn test_encode_mail_subject_roundtrip_ascii_section() {
+        let encoded = encode_mail_subject("plain ascii 123");
+        assert_eq!(encoded, "plain ascii 123");
+    }
+
+    #[test]
+    fn test_base64_encode_empty() {
+        assert_eq!(base64_encode(b""), "");
+    }
+
+    #[test]
+    fn test_base64_encode_known_values() {
+        assert_eq!(base64_encode(b"Hello"), "SGVsbG8=");
+        assert_eq!(base64_encode(b"Hi"), "SGk=");
+        assert_eq!(base64_encode(b"abc"), "YWJj");
+    }
+
+    #[test]
+    fn test_base64_encode_padding() {
+        assert_eq!(base64_encode(b"f"), "Zg==");
+        assert_eq!(base64_encode(b"fo"), "Zm8=");
+    }
+
+    #[test]
+    fn test_base64_encode_consistent_with_subject() {
+        let subject = "测试";
+        let encoded = encode_mail_subject(subject);
+        let expected_inner = base64_encode(subject.as_bytes());
+        assert_eq!(encoded, format!("=?UTF-8?B?{}?=", expected_inner));
+    }
 }

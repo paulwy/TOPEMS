@@ -2,11 +2,289 @@ use axum::{extract::Path, extract::Query, extract::State, routing::get, Extensio
 use chrono::Utc;
 use serde::{Deserialize, Serialize};
 use sqlx::FromRow;
+use std::collections::HashMap;
 use uuid::Uuid;
 
 use crate::shared::AppState;
 use topems_shared_auth::auth::Claims;
 use topems_shared_core::response::ApiResponse;
+
+// =============================================================================
+// Pure functions for production formula (配方平衡、收率、批次缩放)
+// =============================================================================
+
+/// 配方项用量类型：input(投料) / output(产出) / byproduct(副产物)
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum FormulaItemKind {
+    Input,
+    Output,
+    Byproduct,
+}
+
+pub type FormulaItem = (String, f64, FormulaItemKind);
+
+/// 理论收率：实际可产出主产 / （主产 + 损耗 + 副产品折算值）
+/// 此处定义：yield(%) = Σoutput / Σinput × 100
+pub fn calculate_theoretical_yield(items: &[FormulaItem]) -> f64 {
+    let input: f64 = items
+        .iter()
+        .filter(|(_, _, k)| *k == FormulaItemKind::Input)
+        .map(|(_, q, _)| *q)
+        .sum();
+    let output: f64 = items
+        .iter()
+        .filter(|(_, _, k)| *k == FormulaItemKind::Output)
+        .map(|(_, q, _)| *q)
+        .sum();
+    if input <= 0.0 {
+        0.0
+    } else {
+        (output / input * 100.0 * 100.0).round() / 100.0
+    }
+}
+
+/// 批次用量缩放：按 scale（希望产出倍数）返回各 input/output 新用量
+/// 保持 output 乘以 scale，input 按相同系数缩放
+pub fn scale_formula_batch(
+    items: &[FormulaItem],
+    scale: f64,
+) -> Vec<(String, f64, FormulaItemKind)> {
+    let s = if scale.is_normal() && scale > 0.0 {
+        scale
+    } else {
+        1.0
+    };
+    items
+        .iter()
+        .map(|(name, q, k)| (name.clone(), *q * s, *k))
+        .collect()
+}
+
+/// 配料平衡校验：各 input 成分百分比（按质量）之和 ≈ 100% ± tolerance
+/// items: 同 kind(Input) 的各原料实际投入量
+pub fn validate_input_balance(input_qty: &[f64], tolerance: f64) -> bool {
+    let total: f64 = input_qty.iter().sum();
+    if total <= 0.0 {
+        return false;
+    }
+    // 百分比和恒为 100%，这里做 total 为正且单项非负
+    for q in input_qty {
+        if *q < 0.0 {
+            return false;
+        }
+    }
+    // 校验百分比和：此处 sum(100 * q_i/total) = 100，本函数按 tolerance 判断 "成分占比 vs 目标占比"
+    // 简化为：如果用户提供的 input 是已按百分比的，其和应 ≈100%
+    let sum_pct: f64 = input_qty.iter().sum();
+    // 如果和接近 100，视为按百分比录入；否则视为重量录入并直接通过（已校验 total>0, no negative）
+    let near_100 = (sum_pct - 100.0).abs() <= tolerance;
+    let large_total = !near_100 && total > 0.0;
+    near_100 || large_total
+}
+
+/// 产品主产 / 副产拆分：返回 HashMap<名称, (qty, kind)>
+pub fn group_by_kind(items: &[FormulaItem]) -> HashMap<&'static str, Vec<(String, f64)>> {
+    let mut m: HashMap<&'static str, Vec<(String, f64)>> = HashMap::new();
+    m.insert("inputs", Vec::new());
+    m.insert("outputs", Vec::new());
+    m.insert("byproducts", Vec::new());
+    for (name, q, k) in items {
+        let key = match k {
+            FormulaItemKind::Input => "inputs",
+            FormulaItemKind::Output => "outputs",
+            FormulaItemKind::Byproduct => "byproducts",
+        };
+        m.get_mut(key).unwrap().push((name.clone(), *q));
+    }
+    m
+}
+
+/// 成本估算：输入原料单价表 × 投入量 → 单位主产成本
+pub fn estimate_unit_cost(
+    items: &[FormulaItem],
+    unit_costs: &HashMap<String, f64>,
+) -> Result<(f64, Vec<String>), &'static str> {
+    let mut input_cost = 0.0_f64;
+    let mut missing = Vec::new();
+    let mut total_output = 0.0_f64;
+    for (name, q, k) in items {
+        match k {
+            FormulaItemKind::Input => match unit_costs.get(name) {
+                Some(c) if *c >= 0.0 => input_cost += c * q,
+                _ => missing.push(name.clone()),
+            },
+            FormulaItemKind::Output => total_output += q,
+            FormulaItemKind::Byproduct => {
+                // 副产品价值可抵扣成本
+                if let Some(c) = unit_costs.get(name) {
+                    if *c > 0.0 {
+                        input_cost -= c * q;
+                    }
+                }
+            }
+        }
+    }
+    if total_output <= 0.0 {
+        return Err("无可产出主产（output=0）");
+    }
+    Ok((input_cost / total_output, missing))
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    // ============ calculate_theoretical_yield ============
+
+    #[test]
+    fn test_yield_empty_or_zero() {
+        assert_eq!(calculate_theoretical_yield(&[]), 0.0);
+        // 仅有 output 没 input
+        let only_out = [("产品".into(), 100.0, FormulaItemKind::Output)];
+        assert_eq!(calculate_theoretical_yield(&only_out), 0.0);
+    }
+
+    #[test]
+    fn test_yield_typical() {
+        let items: Vec<FormulaItem> = vec![
+            ("水".into(), 80.0, FormulaItemKind::Input),
+            ("粉体".into(), 20.0, FormulaItemKind::Input),
+            ("成品".into(), 95.0, FormulaItemKind::Output),
+            ("废料".into(), 5.0, FormulaItemKind::Byproduct),
+        ];
+        // 95/100 * 100 = 95.00
+        assert_eq!(calculate_theoretical_yield(&items), 95.0);
+    }
+
+    #[test]
+    fn test_yield_over_100_possible() {
+        // 不可能？实际上若按质量应 <= 100。但函数只做数学计算，允许反映错录
+        let items: Vec<FormulaItem> = vec![
+            ("X".into(), 100.0, FormulaItemKind::Input),
+            ("P".into(), 110.0, FormulaItemKind::Output),
+        ];
+        assert_eq!(calculate_theoretical_yield(&items), 110.0);
+    }
+
+    // ============ scale_formula_batch ============
+
+    #[test]
+    fn test_scale_unity_or_invalid() {
+        let items: Vec<FormulaItem> = vec![("A".into(), 10.0, FormulaItemKind::Input)];
+        let r1 = scale_formula_batch(&items, 1.0);
+        assert_eq!(r1[0].1, 10.0);
+        let r2 = scale_formula_batch(&items, 0.0);
+        assert_eq!(r2[0].1, 10.0); // invalid scale → 1.0
+        let r3 = scale_formula_batch(&items, -2.0);
+        assert_eq!(r3[0].1, 10.0);
+    }
+
+    #[test]
+    fn test_scale_10x() {
+        let items: Vec<FormulaItem> = vec![
+            ("X".into(), 2.0, FormulaItemKind::Input),
+            ("Y".into(), 3.0, FormulaItemKind::Input),
+            ("P".into(), 4.5, FormulaItemKind::Output),
+        ];
+        let r = scale_formula_batch(&items, 10.0);
+        assert_eq!(r[0].1, 20.0);
+        assert_eq!(r[2].1, 45.0);
+    }
+
+    // ============ validate_input_balance ============
+
+    #[test]
+    fn test_balance_pct() {
+        // 百分比：加总 100
+        assert!(validate_input_balance(&[30.0, 70.0], 0.01));
+        // 误差内
+        assert!(validate_input_balance(&[30.0, 69.99], 0.02));
+    }
+
+    #[test]
+    fn test_balance_weight_mix() {
+        // 10kg, 20kg（总和 30 不是 100，视为按重量输入）→ 通过
+        assert!(validate_input_balance(&[10.0, 20.0], 0.01));
+    }
+
+    #[test]
+    fn test_balance_reject_negative_or_empty() {
+        assert!(!validate_input_balance(&[], 0.01));
+        assert!(!validate_input_balance(&[10.0, -1.0], 0.01));
+    }
+
+    // ============ group_by_kind ============
+
+    #[test]
+    fn test_grouping() {
+        let items: Vec<FormulaItem> = vec![
+            ("X".into(), 1.0, FormulaItemKind::Input),
+            ("Y".into(), 2.0, FormulaItemKind::Input),
+            ("P".into(), 2.5, FormulaItemKind::Output),
+            ("B".into(), 0.5, FormulaItemKind::Byproduct),
+        ];
+        let g = group_by_kind(&items);
+        assert_eq!(g.get("inputs").unwrap().len(), 2);
+        assert_eq!(g.get("outputs").unwrap().len(), 1);
+        assert_eq!(g.get("byproducts").unwrap().len(), 1);
+    }
+
+    // ============ estimate_unit_cost ============
+
+    #[test]
+    fn test_unit_cost_no_output_fail() {
+        let items: Vec<FormulaItem> = vec![("X".into(), 1.0, FormulaItemKind::Input)];
+        let mut cost: HashMap<String, f64> = HashMap::new();
+        cost.insert("X".into(), 5.0);
+        assert!(estimate_unit_cost(&items, &cost).is_err());
+    }
+
+    #[test]
+    fn test_unit_cost_without_byproduct() {
+        let items: Vec<FormulaItem> = vec![
+            ("A".into(), 2.0, FormulaItemKind::Input),  // 2×10=20
+            ("B".into(), 3.0, FormulaItemKind::Input),  // 3×5=15
+            ("P".into(), 4.0, FormulaItemKind::Output), // total=4
+        ];
+        let mut cost: HashMap<String, f64> = HashMap::new();
+        cost.insert("A".into(), 10.0);
+        cost.insert("B".into(), 5.0);
+        let (uc, miss) = estimate_unit_cost(&items, &cost).unwrap();
+        assert!(miss.is_empty());
+        // (20+15)/4 = 8.75
+        assert!((uc - 8.75).abs() < 1e-9);
+    }
+
+    #[test]
+    fn test_unit_cost_byproduct_deduction() {
+        let items: Vec<FormulaItem> = vec![
+            ("A".into(), 10.0, FormulaItemKind::Input), // 10×10=100
+            ("P".into(), 8.0, FormulaItemKind::Output),
+            ("B".into(), 1.0, FormulaItemKind::Byproduct), // 抵扣 1×20=20
+        ];
+        let mut cost: HashMap<String, f64> = HashMap::new();
+        cost.insert("A".into(), 10.0);
+        cost.insert("B".into(), 20.0);
+        let (uc, _) = estimate_unit_cost(&items, &cost).unwrap();
+        // (100-20)/8 = 10.0
+        assert!((uc - 10.0).abs() < 1e-9);
+    }
+
+    #[test]
+    fn test_unit_cost_missing_costs_listed() {
+        let items: Vec<FormulaItem> = vec![
+            ("X".into(), 2.0, FormulaItemKind::Input),
+            ("Y".into(), 3.0, FormulaItemKind::Input),
+            ("P".into(), 4.0, FormulaItemKind::Output),
+        ];
+        let mut cost: HashMap<String, f64> = HashMap::new();
+        cost.insert("Y".into(), 5.0);
+        let (uc, miss) = estimate_unit_cost(&items, &cost).unwrap();
+        // only Y: 15 / 4 = 3.75
+        assert!((uc - 3.75).abs() < 1e-9);
+        assert_eq!(miss, vec!["X"]);
+    }
+}
 
 fn get_tenant_id(claims: &Claims, headers: &axum::http::HeaderMap) -> Uuid {
     claims

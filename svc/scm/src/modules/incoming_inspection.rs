@@ -16,6 +16,156 @@ use topems_shared_auth::auth::Claims;
 use topems_shared_core::response::PaginationParams;
 use topems_shared_core::response::{api_error, ApiResponse};
 
+// =============================================================================
+// Pure functions for incoming inspection quality sampling & judgment
+// =============================================================================
+
+/// AQL 抽样方案：按 GB/T 2828.1 Level II 简化版
+/// 根据批量 lot_size 查样本量 code letter → 样本大小
+pub fn aql_sample_size(lot_size: u64) -> u64 {
+    match lot_size {
+        0 => 0,
+        1..=8 => 2,
+        9..=15 => 3,
+        16..=25 => 5,
+        26..=50 => 8,
+        51..=90 => 13,
+        91..=150 => 20,
+        151..=280 => 32,
+        281..=500 => 50,
+        501..=1200 => 80,
+        1201..=3200 => 125,
+        3201..=10000 => 200,
+        10001..=35000 => 315,
+        35001..=150000 => 500,
+        150001..=500000 => 800,
+        _ => 1250,
+    }
+}
+
+/// AQL 判定（简化 AQL 1.0 常用水平）：给定样本量和不合格数 → pass/fail
+/// 接收数 (Ac) 按 sample_size 上限近似；reject = Ac + 1
+pub fn aql_judge(sample_size: u64, defect_count: u64) -> &'static str {
+    if sample_size == 0 {
+        return "no_sample";
+    }
+    if defect_count > sample_size {
+        return "invalid"; // 缺陷数不能超过样本数
+    }
+    // Ac 阈值按样本规模阶梯
+    let accept = match sample_size {
+        0..=8 => 0,
+        9..=13 => 0,
+        14..=20 => 0,
+        21..=32 => 1,
+        33..=50 => 1,
+        51..=80 => 2,
+        81..=125 => 3,
+        126..=200 => 5,
+        201..=315 => 7,
+        316..=500 => 10,
+        501..=800 => 14,
+        _ => 21,
+    };
+    if defect_count <= accept {
+        "pass"
+    } else {
+        "fail"
+    }
+}
+
+/// 批次合格率：passed / total * 100，total=0 返回 0
+pub fn batch_pass_rate(total_items: u64, passed_items: u64) -> f64 {
+    if total_items == 0 || passed_items > total_items {
+        return 0.0;
+    }
+    passed_items as f64 / total_items as f64 * 100.0
+}
+
+/// 采购物资的验收等级 (based on pass rate %)
+pub fn acceptance_grade(pass_rate: f64) -> &'static str {
+    match pass_rate {
+        r if r >= 99.0 => "excellent",
+        r if r >= 95.0 => "good",
+        r if r >= 90.0 => "qualified",
+        r if r >= 80.0 => "conditional",
+        _ => "rejected",
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_aql_sample_size() {
+        assert_eq!(aql_sample_size(0), 0);
+        assert_eq!(aql_sample_size(5), 2);
+        assert_eq!(aql_sample_size(10), 3);
+        assert_eq!(aql_sample_size(20), 5);
+        assert_eq!(aql_sample_size(40), 8);
+        assert_eq!(aql_sample_size(80), 13);
+        assert_eq!(aql_sample_size(120), 20);
+        assert_eq!(aql_sample_size(200), 32);
+        assert_eq!(aql_sample_size(400), 50);
+        assert_eq!(aql_sample_size(800), 80);
+        assert_eq!(aql_sample_size(2000), 125);
+        assert_eq!(aql_sample_size(5000), 200);
+        assert_eq!(aql_sample_size(20000), 315);
+        assert_eq!(aql_sample_size(100_000), 500);
+        assert_eq!(aql_sample_size(300_000), 800);
+        assert_eq!(aql_sample_size(1_000_000), 1250);
+    }
+
+    #[test]
+    fn test_aql_judge_pass() {
+        // small sample 20 with 0 defect → pass
+        assert_eq!(aql_judge(20, 0), "pass");
+        // sample 50: Ac=1, 1 defect pass
+        assert_eq!(aql_judge(50, 1), "pass");
+        // sample 80: Ac=2, 2 defect pass
+        assert_eq!(aql_judge(80, 2), "pass");
+    }
+
+    #[test]
+    fn test_aql_judge_fail() {
+        // sample 20: Ac=0, 1 defect fail
+        assert_eq!(aql_judge(20, 1), "fail");
+        // sample 50: Ac=1, 2 defect fail
+        assert_eq!(aql_judge(50, 2), "fail");
+    }
+
+    #[test]
+    fn test_aql_judge_edge_cases() {
+        assert_eq!(aql_judge(0, 0), "no_sample");
+        assert_eq!(aql_judge(10, 20), "invalid");
+    }
+
+    #[test]
+    fn test_batch_pass_rate() {
+        assert_eq!(batch_pass_rate(100, 95), 95.0);
+        assert_eq!(batch_pass_rate(0, 0), 0.0);
+        assert_eq!(batch_pass_rate(100, 100), 100.0);
+        assert_eq!(batch_pass_rate(100, 0), 0.0);
+        // passed > total → 0
+        assert_eq!(batch_pass_rate(100, 150), 0.0);
+    }
+
+    #[test]
+    fn test_acceptance_grade() {
+        assert_eq!(acceptance_grade(100.0), "excellent");
+        assert_eq!(acceptance_grade(99.0), "excellent");
+        assert_eq!(acceptance_grade(97.0), "good");
+        assert_eq!(acceptance_grade(95.0), "good");
+        assert_eq!(acceptance_grade(92.0), "qualified");
+        assert_eq!(acceptance_grade(90.0), "qualified");
+        assert_eq!(acceptance_grade(85.0), "conditional");
+        assert_eq!(acceptance_grade(80.0), "conditional");
+        assert_eq!(acceptance_grade(79.9), "rejected");
+        assert_eq!(acceptance_grade(0.0), "rejected");
+    }
+}
+
 pub fn create_routes() -> Router<ApiState> {
     Router::new()
         .route("/incoming-notices", get(list_notices).post(create_notice))

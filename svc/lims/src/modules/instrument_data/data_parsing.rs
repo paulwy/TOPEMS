@@ -112,7 +112,7 @@ pub async fn test_parse_data(
     Json(ApiResponse::success(result, "解析测试完成"))
 }
 
-fn parse_data(protocol: &str, raw_data: &serde_json::Value) -> ParseResult {
+pub fn parse_data(protocol: &str, raw_data: &serde_json::Value) -> ParseResult {
     match protocol.to_lowercase().as_str() {
         "json" => parse_json_data(raw_data),
         "hl7" => parse_hl7_data(raw_data),
@@ -157,28 +157,29 @@ fn parse_hl7_data(raw_data: &serde_json::Value) -> ParseResult {
                 if seg_type == "OBX" {
                     let test_item = seg
                         .get("fields")
-                        .and_then(|f| f.get(3))
+                        .and_then(|f| f.get(2))
                         .and_then(|v| v.as_str())
                         .unwrap_or("")
                         .to_string();
                     let result = seg
                         .get("fields")
-                        .and_then(|f| f.get(5))
+                        .and_then(|f| f.get(4))
                         .and_then(|v| v.as_str())
                         .map(|s| s.to_string());
                     let unit = seg
                         .get("fields")
-                        .and_then(|f| f.get(6))
+                        .and_then(|f| f.get(5))
                         .and_then(|v| v.as_str())
                         .map(|s| s.to_string());
                     let abnormal_flag = seg
                         .get("fields")
-                        .and_then(|f| f.get(8))
+                        .and_then(|f| f.get(7))
                         .and_then(|v| v.as_str())
+                        .filter(|s| !s.is_empty())
                         .map(|s| s.to_string());
                     let reference_range = seg
                         .get("fields")
-                        .and_then(|f| f.get(7))
+                        .and_then(|f| f.get(6))
                         .and_then(|v| v.as_str())
                         .map(|s| s.to_string());
 
@@ -234,29 +235,30 @@ fn parse_astm_data(raw_data: &serde_json::Value) -> ParseResult {
                 if rec_type == "R" {
                     let test_item = rec
                         .get("fields")
-                        .and_then(|f| f.get(2))
+                        .and_then(|f| f.get(1))
                         .and_then(|v| v.as_str())
                         .unwrap_or("")
                         .to_string();
                     let result = rec
                         .get("fields")
-                        .and_then(|f| f.get(3))
+                        .and_then(|f| f.get(2))
                         .and_then(|v| v.as_str())
                         .map(|s| s.to_string());
                     let unit = rec
                         .get("fields")
-                        .and_then(|f| f.get(4))
+                        .and_then(|f| f.get(3))
                         .and_then(|v| v.as_str())
                         .map(|s| s.to_string());
                     let reference_range = rec
                         .get("fields")
-                        .and_then(|f| f.get(5))
+                        .and_then(|f| f.get(4))
                         .and_then(|v| v.as_str())
                         .map(|s| s.to_string());
                     let abnormal_flag = rec
                         .get("fields")
-                        .and_then(|f| f.get(6))
+                        .and_then(|f| f.get(5))
                         .and_then(|v| v.as_str())
+                        .filter(|s| !s.is_empty())
                         .map(|s| s.to_string());
 
                     let numeric_result = result.as_deref().and_then(|s| s.parse::<f64>().ok());
@@ -303,7 +305,7 @@ fn parse_astm_data(raw_data: &serde_json::Value) -> ParseResult {
     }
 }
 
-fn extract_test_items_from_json(raw_data: &serde_json::Value) -> Vec<TestItemResult> {
+pub fn extract_test_items_from_json(raw_data: &serde_json::Value) -> Vec<TestItemResult> {
     let mut items = Vec::new();
 
     if let Some(test_items) = raw_data.get("test_items").and_then(|t| t.as_array()) {
@@ -376,7 +378,7 @@ fn extract_test_items_from_json(raw_data: &serde_json::Value) -> Vec<TestItemRes
     items
 }
 
-fn calculate_quality_score(test_items: &[TestItemResult]) -> f64 {
+pub fn calculate_quality_score(test_items: &[TestItemResult]) -> f64 {
     if test_items.is_empty() {
         return 0.0;
     }
@@ -394,4 +396,209 @@ fn calculate_quality_score(test_items: &[TestItemResult]) -> f64 {
     score = score * (0.5 + 0.5 * completeness);
 
     (score * 100.0).round() / 100.0
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use serde_json::json;
+
+    #[test]
+    fn test_quality_score_empty() {
+        assert!((calculate_quality_score(&[]) - 0.0).abs() < 1e-9);
+    }
+
+    #[test]
+    fn test_quality_score_all_have_result() {
+        let items = vec![
+            TestItemResult {
+                test_item: "A".into(),
+                test_item_name: None,
+                result: Some("1.0".into()),
+                numeric_result: Some(1.0),
+                unit: None,
+                reference_range: None,
+                status: None,
+                abnormal_flag: None,
+            },
+            TestItemResult {
+                test_item: "B".into(),
+                test_item_name: None,
+                result: Some("2.5".into()),
+                numeric_result: Some(2.5),
+                unit: None,
+                reference_range: None,
+                status: None,
+                abnormal_flag: None,
+            },
+        ];
+        // completeness = 1.0 → score = 100 * (0.5 + 0.5*1) = 100
+        assert!((calculate_quality_score(&items) - 100.0).abs() < 1e-9);
+    }
+
+    #[test]
+    fn test_quality_score_half_have_result() {
+        let items = vec![
+            TestItemResult {
+                test_item: "A".into(),
+                test_item_name: None,
+                result: Some("ok".into()),
+                numeric_result: None,
+                unit: None,
+                reference_range: None,
+                status: None,
+                abnormal_flag: None,
+            },
+            TestItemResult {
+                test_item: "B".into(),
+                test_item_name: None,
+                result: None,
+                numeric_result: None,
+                unit: None,
+                reference_range: None,
+                status: None,
+                abnormal_flag: None,
+            },
+        ];
+        // completeness 0.5 → 100 * (0.5 + 0.25) = 75
+        assert!((calculate_quality_score(&items) - 75.0).abs() < 1e-9);
+    }
+
+    #[test]
+    fn test_extract_from_json_array() {
+        let raw = json!({
+            "test_items": [
+                {
+                    "test_item": "GLU",
+                    "result": "5.6",
+                    "numeric_result": 5.6,
+                    "unit": "mmol/L",
+                    "reference_range": "3.9-6.1"
+                },
+                {
+                    "code": "BUN",
+                    "value": 4.2,
+                    "range": "2.9-8.2",
+                    "abnormal_flag": "H"
+                }
+            ]
+        });
+        let items = extract_test_items_from_json(&raw);
+        assert_eq!(items.len(), 2);
+        assert_eq!(items[0].test_item, "GLU");
+        assert_eq!(items[0].status.as_deref(), Some("normal"));
+        assert_eq!(items[0].unit.as_deref(), Some("mmol/L"));
+        assert_eq!(items[1].test_item, "BUN");
+        assert!((items[1].numeric_result.unwrap() - 4.2).abs() < 1e-9);
+        assert_eq!(items[1].abnormal_flag.as_deref(), Some("H"));
+        assert_eq!(items[1].status.as_deref(), Some("abnormal"));
+    }
+
+    #[test]
+    fn test_extract_from_json_results_object() {
+        let raw = json!({
+            "results": {
+                "pH": 7.4,
+                "pCO2": 40.0,
+                "pO2": 95.0
+            }
+        });
+        let items = extract_test_items_from_json(&raw);
+        assert_eq!(items.len(), 3);
+        let codes: std::collections::BTreeSet<String> =
+            items.iter().map(|i| i.test_item.clone()).collect();
+        assert!(codes.contains("pH"));
+        assert!(codes.contains("pCO2"));
+        assert!(codes.contains("pO2"));
+        for i in &items {
+            assert_eq!(i.status.as_deref(), Some("normal"));
+            assert!(i.numeric_result.is_some());
+        }
+    }
+
+    #[test]
+    fn test_extract_empty_json() {
+        let raw = json!({});
+        let items = extract_test_items_from_json(&raw);
+        assert!(items.is_empty());
+    }
+
+    #[test]
+    fn test_parse_data_unknown_protocol() {
+        let r = parse_data("xml", &json!({}));
+        assert!(!r.success);
+        assert!(r.error_msg.unwrap().contains("不支持的协议"));
+    }
+
+    #[test]
+    fn test_parse_data_json_success() {
+        let raw = json!({
+            "test_items": [
+                {"test_item": "WBC", "result": "6.5", "numeric_result": 6.5, "unit": "10^9/L"}
+            ]
+        });
+        let r = parse_data("JSON", &raw);
+        assert!(r.success);
+        assert_eq!(r.test_items.unwrap().len(), 1);
+        let qs = r.quality_score.unwrap();
+        assert!((qs - 100.0).abs() < 1e-9);
+    }
+
+    #[test]
+    fn test_parse_hl7_with_obx_segments() {
+        let raw = json!({
+            "segments": [
+                {"type": "MSH", "fields": ["MSH", "|", "^~\\&"]},
+                {
+                    "type": "OBX",
+                    // fields[2] 观察项目 ID, [4] 结果值, [5] 单位, [6] 范围, [7] 异常标志
+                    "fields": ["1", "NM", "GLU", "", "5.6", "mmol/L", "3.9-6.1", ""]
+                },
+                {
+                    "type": "OBX",
+                    "fields": ["2", "NM", "BUN", "", "9.1", "mmol/L", "2.9-8.2", "H"]
+                }
+            ]
+        });
+        let r = parse_data("hl7", &raw);
+        assert!(r.success);
+        let items = r.test_items.unwrap();
+        assert_eq!(items.len(), 2);
+        assert_eq!(items[0].test_item, "GLU");
+        assert_eq!(items[0].status.as_deref(), Some("normal"));
+        assert_eq!(items[1].abnormal_flag.as_deref(), Some("H"));
+        assert_eq!(items[1].status.as_deref(), Some("abnormal"));
+        assert!((items[0].numeric_result.unwrap() - 5.6).abs() < 1e-9);
+    }
+
+    #[test]
+    fn test_parse_astm_with_r_records() {
+        let raw = json!({
+            "records": [
+                {"type": "H", "fields": ["H", "header"]},
+                {"type": "R", "fields": ["1", "NA", "142", "mmol/L", "135-145", "N"]},
+                {"type": "R", "fields": ["2", "K", "3.8", "mmol/L", "3.5-5.1"]},
+                {"type": "L", "fields": ["L", "1"]},
+            ]
+        });
+        let r = parse_data("ASTM", &raw);
+        assert!(r.success);
+        let items = r.test_items.unwrap();
+        assert_eq!(items.len(), 2);
+        assert_eq!(items[0].test_item, "NA");
+        assert_eq!(items[0].result.as_deref(), Some("142"));
+        assert_eq!(items[0].reference_range.as_deref(), Some("135-145"));
+        assert_eq!(items[1].status.as_deref(), Some("normal"));
+    }
+
+    #[test]
+    fn test_parse_hl7_fallback_to_json_if_no_segments() {
+        // No segments key → should use extract_test_items_from_json fallback
+        let raw = json!({"results": {"A": 1.0}});
+        let r = parse_data("hl7", &raw);
+        assert!(r.success);
+        let items = r.test_items.unwrap();
+        assert_eq!(items.len(), 1);
+        assert_eq!(items[0].test_item, "A");
+    }
 }

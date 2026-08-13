@@ -12,6 +12,28 @@ use crate::models::project_milestone::{
     CreateMilestoneRequest, ProjectMilestone, UpdateMilestoneRequest,
 };
 
+// ==================== Pure functions ====================
+
+/// Determines milestone status from planned/actual timestamps (Unix seconds).
+///
+/// - `actual_date` present      → `"completed"`
+/// - `now` past `planned_date` → `"overdue"`
+/// - within 7 days of due date → `"in_progress"`
+/// - otherwise                  → `"upcoming"`
+pub fn milestone_status(planned_date: i64, actual_date: Option<i64>, now: i64) -> &'static str {
+    if actual_date.is_some() {
+        return "completed";
+    }
+    if now > planned_date {
+        return "overdue";
+    }
+    let seven_days_secs: i64 = 7 * 24 * 60 * 60;
+    if planned_date - now <= seven_days_secs {
+        return "in_progress";
+    }
+    "upcoming"
+}
+
 pub fn create_routes(pool: PgPool) -> Router {
     Router::new()
         .route(
@@ -244,5 +266,70 @@ async fn delete_milestone(
             tracing::error!("删除项目里程碑失败: {}", e);
             Json(ApiResponse::error(500, "删除项目里程碑失败"))
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    const DAY: i64 = 24 * 60 * 60;
+
+    #[test]
+    fn test_completed_with_actual_date() {
+        assert_eq!(milestone_status(1000, Some(900), 2000), "completed");
+        // completed even if actual date is after planned (late completion)
+        assert_eq!(milestone_status(1000, Some(1500), 2000), "completed");
+    }
+
+    #[test]
+    fn test_overdue_no_actual_past_planned() {
+        assert_eq!(milestone_status(1000, None, 1001), "overdue");
+        assert_eq!(milestone_status(1000, None, 2000), "overdue");
+    }
+
+    #[test]
+    fn test_in_progress_within_seven_days() {
+        // exactly 7 days before -> in_progress
+        assert_eq!(milestone_status(1000 + 7 * DAY, None, 1000), "in_progress");
+        // 1 day before -> in_progress
+        assert_eq!(milestone_status(1000 + DAY, None, 1000), "in_progress");
+        // same timestamp (now == planned, not past) -> in_progress
+        assert_eq!(milestone_status(1000, None, 1000), "in_progress");
+    }
+
+    #[test]
+    fn test_upcoming_more_than_seven_days() {
+        // 8 days before -> upcoming
+        assert_eq!(milestone_status(1000 + 8 * DAY, None, 1000), "upcoming");
+        // 30 days before -> upcoming
+        assert_eq!(milestone_status(1000 + 30 * DAY, None, 1000), "upcoming");
+    }
+
+    #[test]
+    fn test_actual_date_takes_precedence_over_overdue() {
+        // Even though now > planned, actual_date means completed
+        assert_eq!(milestone_status(1000, Some(2000), 5000), "completed");
+    }
+
+    #[test]
+    fn test_boundary_exactly_seven_days() {
+        // planned_date - now == 7 days exactly -> in_progress (<=)
+        assert_eq!(milestone_status(7 * DAY, None, 0), "in_progress");
+    }
+
+    #[test]
+    fn test_boundary_just_over_seven_days() {
+        // planned_date - now == 7 days + 1 sec -> upcoming
+        assert_eq!(milestone_status(7 * DAY + 1, None, 0), "upcoming");
+    }
+
+    #[test]
+    fn test_all_statuses_covered() {
+        let now = 1_000_000;
+        assert_eq!(milestone_status(now, Some(now), now), "completed");
+        assert_eq!(milestone_status(now - 1, None, now), "overdue");
+        assert_eq!(milestone_status(now + 3 * DAY, None, now), "in_progress");
+        assert_eq!(milestone_status(now + 30 * DAY, None, now), "upcoming");
     }
 }

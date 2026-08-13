@@ -27,6 +27,7 @@ pub mod opportunity;
 pub mod rfm;
 // pub mod sales_forecast;
 // pub mod sales_funnel;
+pub mod sales_funnel_logic;
 pub mod scoring_logic;
 // pub mod tag;
 

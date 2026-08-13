@@ -308,22 +308,14 @@ impl ServiceBootstrap {
         let database_url =
             env::var("DATABASE_URL").unwrap_or_else(|_| self.config.database.url.clone());
 
-        // 解析服务名：topems-xxx 前缀去掉后转 UPPER_SNAKE_CASE
-        // e.g. "topems-unified-core" -> "UNIFIED_CORE"，匹配 *_DB_MAX_CONNECTIONS 后缀
-        let svc_tag = self
-            .config
-            .service_name
-            .strip_prefix("topems-")
-            .unwrap_or(self.config.service_name)
-            .to_uppercase()
-            .replace('-', "_");
-        let per_service_key = format!("{}_DB_MAX_CONNECTIONS", svc_tag);
+        let svc_tag = derive_service_tag(self.config.service_name);
+        let per_service_key = format_db_max_connections_key(&svc_tag);
 
-        let max_connections = env::var(&per_service_key)
-            .or_else(|_| env::var("DB_MAX_CONNECTIONS"))
-            .unwrap_or_else(|_| self.config.database.max_connections.to_string())
-            .parse::<u32>()
-            .unwrap_or(self.config.database.max_connections);
+        let max_connections = parse_max_connections(
+            env::var(&per_service_key).ok(),
+            env::var("DB_MAX_CONNECTIONS").ok(),
+            self.config.database.max_connections,
+        );
 
         let search_path = env::var("SEARCH_PATH").unwrap_or_else(|_| "rs, erp, public".to_string());
 
@@ -797,6 +789,74 @@ pub struct ServiceMetricsResponse {
     pub database_pool_idle: usize,
 }
 
+// ==================== 纯函数：服务标签与 DB 连接辅助 ====================
+
+/// 从服务名推导 `SVC_TAG`，去掉 `topems-` 前缀后转 UPPER_SNAKE_CASE。
+///
+/// e.g. `"topems-unified-core"` → `"UNIFIED_CORE"`，`"plain-service"` → `"PLAIN_SERVICE"`
+pub fn derive_service_tag(service_name: &str) -> String {
+    service_name
+        .strip_prefix("topems-")
+        .unwrap_or(service_name)
+        .to_uppercase()
+        .replace('-', "_")
+}
+
+/// 按服务标签拼接每个服务专属的 DB 最大连接数环境变量名。
+pub fn format_db_max_connections_key(svc_tag: &str) -> String {
+    format!("{}_DB_MAX_CONNECTIONS", svc_tag)
+}
+
+/// 按优先级链解析 DB 最大连接数：per-service → DB_MAX_CONNECTIONS → default。
+/// 非法数字字符串会回退到 default。
+pub fn parse_max_connections(
+    per_service_value: Option<String>,
+    global_value: Option<String>,
+    default: u32,
+) -> u32 {
+    per_service_value
+        .or(global_value)
+        .and_then(|s| s.parse::<u32>().ok())
+        .unwrap_or(default)
+}
+
+// ==================== 纯函数：健康状态汇总 ====================
+
+/// 基于依赖项的健康状态向量汇总出整体健康状态：
+/// 全部 Healthy → Healthy，任一 Unhealthy → Unhealthy，否则 Degraded。
+pub fn rollup_health_status(statuses: &[HealthStatus]) -> HealthStatus {
+    if statuses.is_empty() {
+        return HealthStatus::Healthy;
+    }
+    let all_healthy = statuses.iter().all(|s| *s == HealthStatus::Healthy);
+    let any_unhealthy = statuses.iter().any(|s| *s == HealthStatus::Unhealthy);
+    if all_healthy {
+        HealthStatus::Healthy
+    } else if any_unhealthy {
+        HealthStatus::Unhealthy
+    } else {
+        HealthStatus::Degraded
+    }
+}
+
+/// 将 HealthStatus 映射为英文小写状态字符串（对外 API 友好）。
+pub fn health_status_str(status: &HealthStatus) -> &'static str {
+    match status {
+        HealthStatus::Healthy => "healthy",
+        HealthStatus::Degraded => "degraded",
+        HealthStatus::Unhealthy => "unhealthy",
+    }
+}
+
+/// 整体健康状态对应的中文描述信息。
+pub fn overall_health_message(status: &HealthStatus) -> &'static str {
+    match status {
+        HealthStatus::Healthy => "所有服务运行正常",
+        HealthStatus::Degraded => "部分服务存在问题",
+        HealthStatus::Unhealthy => "存在关键服务故障",
+    }
+}
+
 /// 从 ServiceContext 创建 AppState（用于标准健康检查路由）
 pub fn create_health_state(ctx: &ServiceContext, config: &ServiceConfig) -> AppState {
     AppState::new(
@@ -829,23 +889,9 @@ pub async fn standard_health_check(
     let database_health = check_database_health(&state.db).await;
     let iam_health = check_iam_health().await;
 
-    let overall_status = if database_health.status == HealthStatus::Healthy
-        && iam_health.status == HealthStatus::Healthy
-    {
-        HealthStatus::Healthy
-    } else if database_health.status == HealthStatus::Unhealthy
-        || iam_health.status == HealthStatus::Unhealthy
-    {
-        HealthStatus::Unhealthy
-    } else {
-        HealthStatus::Degraded
-    };
-
-    let status_str = match overall_status {
-        HealthStatus::Healthy => "healthy".to_string(),
-        HealthStatus::Degraded => "degraded".to_string(),
-        HealthStatus::Unhealthy => "unhealthy".to_string(),
-    };
+    let overall_status =
+        rollup_health_status(&[database_health.status, iam_health.status]);
+    let status_str = health_status_str(&overall_status).to_string();
 
     axum::Json(ApiResponse::success(status_str, "健康检查"))
 }
@@ -859,26 +905,11 @@ pub async fn standard_health_check_detailed(
         check_iam_health().await,
     ];
 
-    let all_healthy = dependencies
-        .iter()
-        .all(|d| d.status == HealthStatus::Healthy);
-    let any_unhealthy = dependencies
-        .iter()
-        .any(|d| d.status == HealthStatus::Unhealthy);
+    let overall_status = rollup_health_status(
+        &dependencies.iter().map(|d| d.status.clone()).collect::<Vec<_>>(),
+    );
 
-    let overall_status = if all_healthy {
-        HealthStatus::Healthy
-    } else if any_unhealthy {
-        HealthStatus::Unhealthy
-    } else {
-        HealthStatus::Degraded
-    };
-
-    let message = match overall_status {
-        HealthStatus::Healthy => "所有服务运行正常",
-        HealthStatus::Degraded => "部分服务存在问题",
-        HealthStatus::Unhealthy => "存在关键服务故障",
-    };
+    let message = overall_health_message(&overall_status);
 
     let health = ServiceHealth::healthy_with_message(state.config.service_name, message)
         .with_uptime(&state.metrics.get_uptime())
@@ -908,6 +939,10 @@ pub async fn standard_get_metrics(
 #[cfg(test)]
 mod tests {
     use super::*;
+    use topems_shared_core::health::HealthStatus;
+    use std::sync::Mutex;
+
+    static ENV_LOCK: Mutex<()> = Mutex::new(());
 
     #[test]
     fn test_bootstrap_config_default() {
@@ -926,5 +961,180 @@ mod tests {
         };
         assert_eq!(config.service_name, "test-service");
         assert_eq!(config.default_port, 9000);
+    }
+
+    #[test]
+    fn test_derive_service_tag_with_prefix() {
+        assert_eq!(derive_service_tag("topems-unified-core"), "UNIFIED_CORE");
+        assert_eq!(derive_service_tag("topems-hrm"), "HRM");
+    }
+
+    #[test]
+    fn test_derive_service_tag_without_prefix() {
+        assert_eq!(derive_service_tag("plain-service"), "PLAIN_SERVICE");
+        assert_eq!(derive_service_tag("crm"), "CRM");
+    }
+
+    #[test]
+    fn test_format_db_max_connections_key() {
+        assert_eq!(
+            format_db_max_connections_key("UNIFIED_CORE"),
+            "UNIFIED_CORE_DB_MAX_CONNECTIONS"
+        );
+        assert_eq!(format_db_max_connections_key("HRM"), "HRM_DB_MAX_CONNECTIONS");
+    }
+
+    #[test]
+    fn test_parse_max_connections_per_service_wins() {
+        assert_eq!(
+            parse_max_connections(Some("32".into()), Some("20".into()), 10),
+            32
+        );
+    }
+
+    #[test]
+    fn test_parse_max_connections_global_fallback() {
+        assert_eq!(
+            parse_max_connections(None, Some("20".into()), 10),
+            20
+        );
+    }
+
+    #[test]
+    fn test_parse_max_connections_default_when_missing() {
+        assert_eq!(parse_max_connections(None, None, 10), 10);
+    }
+
+    #[test]
+    fn test_parse_max_connections_invalid_string_fallback() {
+        assert_eq!(
+            parse_max_connections(Some("abc".into()), Some("-1".into()), 10),
+            10
+        );
+    }
+
+    #[test]
+    fn test_rollup_all_healthy() {
+        assert_eq!(
+            rollup_health_status(&[HealthStatus::Healthy, HealthStatus::Healthy]),
+            HealthStatus::Healthy
+        );
+    }
+
+    #[test]
+    fn test_rollup_any_unhealthy_wins() {
+        assert_eq!(
+            rollup_health_status(&[HealthStatus::Healthy, HealthStatus::Unhealthy]),
+            HealthStatus::Unhealthy
+        );
+        assert_eq!(
+            rollup_health_status(&[HealthStatus::Degraded, HealthStatus::Unhealthy]),
+            HealthStatus::Unhealthy
+        );
+    }
+
+    #[test]
+    fn test_rollup_degraded_mixture() {
+        assert_eq!(
+            rollup_health_status(&[HealthStatus::Healthy, HealthStatus::Degraded]),
+            HealthStatus::Degraded
+        );
+        assert_eq!(
+            rollup_health_status(&[HealthStatus::Degraded, HealthStatus::Degraded]),
+            HealthStatus::Degraded
+        );
+    }
+
+    #[test]
+    fn test_rollup_empty_is_healthy() {
+        assert_eq!(rollup_health_status(&[]), HealthStatus::Healthy);
+    }
+
+    #[test]
+    fn test_health_status_str() {
+        assert_eq!(health_status_str(&HealthStatus::Healthy), "healthy");
+        assert_eq!(health_status_str(&HealthStatus::Degraded), "degraded");
+        assert_eq!(health_status_str(&HealthStatus::Unhealthy), "unhealthy");
+    }
+
+    #[test]
+    fn test_overall_health_message() {
+        assert_eq!(overall_health_message(&HealthStatus::Healthy), "所有服务运行正常");
+        assert_eq!(overall_health_message(&HealthStatus::Degraded), "部分服务存在问题");
+        assert_eq!(overall_health_message(&HealthStatus::Unhealthy), "存在关键服务故障");
+    }
+
+    #[test]
+    fn test_service_config_default() {
+        let cfg = ServiceConfig::default();
+        assert_eq!(cfg.name, "unknown");
+        assert_eq!(cfg.port, 8000);
+        assert_eq!(cfg.port_env_var, None);
+        assert_eq!(cfg.max_db_connections, 20);
+    }
+
+    #[test]
+    fn test_resolve_port_default_fallback() {
+        let _lock = ENV_LOCK.lock().unwrap();
+        std::env::remove_var("SERVER_PORT");
+        std::env::remove_var("PORT");
+        std::env::remove_var("ERP_PORT");
+        let cfg = ServiceConfig {
+            name: "topems-erp",
+            port: 8010,
+            port_env_var: Some("ERP_PORT"),
+            ..Default::default()
+        };
+        assert_eq!(resolve_port(&cfg), 8010);
+    }
+
+    #[test]
+    fn test_resolve_port_custom_env_var() {
+        let _lock = ENV_LOCK.lock().unwrap();
+        std::env::remove_var("SERVER_PORT");
+        std::env::remove_var("PORT");
+        std::env::set_var("ERP_PORT", "19000");
+        let cfg = ServiceConfig {
+            name: "topems-erp",
+            port: 8010,
+            port_env_var: Some("ERP_PORT"),
+            ..Default::default()
+        };
+        assert_eq!(resolve_port(&cfg), 19000);
+        std::env::remove_var("ERP_PORT");
+    }
+
+    #[test]
+    fn test_resolve_port_server_port_fallback() {
+        let _lock = ENV_LOCK.lock().unwrap();
+        std::env::remove_var("ERP_PORT");
+        std::env::remove_var("PORT");
+        std::env::set_var("SERVER_PORT", "28000");
+        let cfg = ServiceConfig {
+            name: "topems-erp",
+            port: 8010,
+            port_env_var: Some("ERP_PORT"),
+            ..Default::default()
+        };
+        assert_eq!(resolve_port(&cfg), 28000);
+        std::env::remove_var("SERVER_PORT");
+    }
+
+    #[test]
+    fn test_resolve_port_invalid_env_ignored() {
+        let _lock = ENV_LOCK.lock().unwrap();
+        std::env::remove_var("SERVER_PORT");
+        std::env::remove_var("PORT");
+        std::env::set_var("ERP_PORT", "not-a-number");
+        std::env::set_var("PORT", "also-invalid");
+        let cfg = ServiceConfig {
+            name: "topems-erp",
+            port: 8010,
+            port_env_var: Some("ERP_PORT"),
+            ..Default::default()
+        };
+        assert_eq!(resolve_port(&cfg), 8010);
+        std::env::remove_var("ERP_PORT");
+        std::env::remove_var("PORT");
     }
 }

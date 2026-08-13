@@ -13,6 +13,11 @@ use uuid::Uuid;
 
 use super::ApiState;
 use crate::modules::audit::log_audit_event;
+use crate::modules::payroll_calc::{
+    build_payroll_voucher_entries, estimate_total_payroll, format_voucher_period,
+    generate_voucher_number, mock_employee_salary_components, net_salary_from_deductions,
+    split_deductions_into_social_security, validate_pay_period, PayrollVoucherSummary,
+};
 use topems_shared_core::response::{api_error, ApiResponse};
 
 #[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow)]
@@ -188,8 +193,8 @@ async fn create_payroll_run(
     headers: HeaderMap,
     Json(req): Json<CreatePayrollRunRequest>,
 ) -> Json<ApiResponse<PayrollRun>> {
-    if req.pay_period.is_empty() {
-        return Json(api_error(400, "薪资周期不能为空"));
+    if !validate_pay_period(&req.pay_period) {
+        return Json(api_error(400, "薪资周期为空或格式不正确（应为 YYYY-MM）"));
     }
 
     let id = Uuid::new_v4();
@@ -364,7 +369,7 @@ async fn calculate_payroll_run(
             .await;
 
     let emp_count = result.unwrap_or(0);
-    let total_amount = BigDecimal::from(emp_count) * BigDecimal::from(5000);
+    let total_amount = estimate_total_payroll(emp_count, 5000);
 
     let result = sqlx::query_as::<_, PayrollRun>(
         r#"
@@ -405,10 +410,11 @@ async fn create_payroll_items(
     for i in 1..=emp_count {
         let item_id = Uuid::new_v4();
         let emp_id = Uuid::new_v4();
-        let gross_amount = BigDecimal::from(5000) + (BigDecimal::from(i) * BigDecimal::from(100));
-        let taxes = &gross_amount * BigDecimal::from_str("0.1").unwrap_or_default();
-        let deductions = &gross_amount * BigDecimal::from_str("0.05").unwrap_or_default();
-        let net_amount = &gross_amount - &taxes - &deductions;
+        let amounts = mock_employee_salary_components(i);
+        let gross_amount = amounts.gross;
+        let taxes = amounts.taxes;
+        let deductions = amounts.deductions;
+        let net_amount = amounts.net;
 
         let _ = sqlx::query(
             r#"
@@ -745,21 +751,18 @@ async fn generate_payroll_voucher(
 
     // 计算社保和公积金（从扣款中分离，这里简化为扣款的80%为社保公积金）
     let social_security_ratio = BigDecimal::from_str("0.8").unwrap_or_default();
-    let total_social_security = &total_deductions * &social_security_ratio;
-    let total_housing_fund = &total_deductions - &total_social_security;
-    let net_salary = &total_gross - &total_deductions;
+    let split = split_deductions_into_social_security(&total_deductions, &social_security_ratio);
+    let total_social_security = split.social_security;
+    let total_housing_fund = split.housing_fund;
+    let net_salary = net_salary_from_deductions(&total_gross, &total_deductions);
 
     let voucher_date = req.voucher_date.unwrap_or_else(Utc::now);
     let period = req
         .period
-        .unwrap_or_else(|| voucher_date.format("%Y-%m").to_string());
+        .unwrap_or_else(|| format_voucher_period(voucher_date));
 
-    // 生成凭证号
-    let voucher_number = format!(
-        "VD{}{:04}",
-        voucher_date.format("%Y%m%d"),
-        rand::random::<u16>() % 10000
-    );
+    // 生成凭证号（由 rand 注入 sequence）
+    let voucher_number = generate_voucher_number(voucher_date, rand::random::<u16>() % 10000);
 
     // 在ERP数据库中创建凭证
     let voucher_id = Uuid::new_v4();
@@ -790,43 +793,16 @@ async fn generate_payroll_voucher(
 
     match voucher_result {
         Ok(_) => {
-            // 创建凭证分录
-            let entries = vec![
-                // 借：工资
-                (
-                    1,
-                    "660101",
-                    "工资",
-                    total_gross.clone(),
-                    BigDecimal::from(0),
-                ),
-                // 贷：银行存款
-                (
-                    2,
-                    "100201",
-                    "银行存款-基本户",
-                    BigDecimal::from(0),
-                    net_salary.clone(),
-                ),
-                // 贷：应交税费-个人所得税
-                (
-                    3,
-                    "222101",
-                    "应交税费-个人所得税",
-                    BigDecimal::from(0),
-                    total_tax.clone(),
-                ),
-                // 贷：其他应付款-社保
-                (
-                    4,
-                    "224101",
-                    "其他应付款-社保",
-                    BigDecimal::from(0),
-                    total_social_security.clone(),
-                ),
-            ];
+            // 创建凭证分录（由纯函数构建，保证借贷平衡）
+            let summary = PayrollVoucherSummary {
+                total_gross: &total_gross,
+                total_tax: &total_tax,
+                total_social_security: &total_social_security,
+                net_salary: &net_salary,
+            };
+            let entries = build_payroll_voucher_entries(&summary);
 
-            for (line, subject_code, subject_name, debit, credit) in entries {
+            for entry in entries {
                 let item_id = Uuid::new_v4();
                 let _ = sqlx::query(
                     r#"
@@ -836,12 +812,12 @@ async fn generate_payroll_voucher(
                 )
                 .bind(item_id)
                 .bind(voucher_id)
-                .bind(line as i32)
-                .bind(subject_code)
-                .bind(subject_name)
+                .bind(entry.line as i32)
+                .bind(entry.subject_code)
+                .bind(entry.subject_name)
                 .bind(format!("发放{}月工资", payroll_run.pay_period))
-                .bind(debit)
-                .bind(credit)
+                .bind(entry.debit)
+                .bind(entry.credit)
                 .bind(department_id)
                 .bind(now)
                 .bind(now)

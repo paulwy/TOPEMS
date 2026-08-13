@@ -13,6 +13,199 @@ use topems_shared_auth::auth::Claims;
 use topems_shared_core::response::PaginationParams;
 use topems_shared_core::response::{api_error, ApiResponse};
 
+// =============================================================================
+// Pure functions for inventory turnover analysis
+// =============================================================================
+
+/// 平均库存 = (期初 + 期末) / 2
+pub fn calculate_average_inventory(beginning: f64, ending: f64) -> f64 {
+    (beginning + ending) / 2.0
+}
+
+/// 库存周转率 = COGS / 平均库存；分母为 0 或负返回 0
+pub fn calculate_turnover_rate(cost_of_goods_sold: f64, average_inventory: f64) -> f64 {
+    if average_inventory <= 0.0 {
+        return 0.0;
+    }
+    cost_of_goods_sold / average_inventory
+}
+
+/// 周转天数 = period_days / 周转率；周转率 0 返回 period_days（未周转=全期持有）
+pub fn calculate_turnover_days(turnover_rate: f64, period_days: u32) -> f64 {
+    if period_days == 0 {
+        return 0.0;
+    }
+    if turnover_rate <= 0.0 {
+        return period_days as f64;
+    }
+    period_days as f64 / turnover_rate
+}
+
+/// 库存健康分级：按周转率
+pub fn classify_turnover_health(turnover_rate: f64) -> &'static str {
+    match turnover_rate {
+        r if r >= 6.0 => "excellent",
+        r if r >= 4.0 => "good",
+        r if r >= 2.0 => "normal",
+        r if r >= 1.0 => "slow",
+        _ => "stagnant",
+    }
+}
+
+/// ABC 分类：按单项价值占总价值的百分比累计
+/// A: top ~80% cumulative value, B: next ~15%, C: remaining ~5%
+/// Input: list of (item_id, value). 输出 HashMap<item_id, class>
+pub fn classify_abc_items<T: Clone + Eq + std::hash::Hash>(
+    items: &[(T, f64)],
+) -> std::collections::HashMap<T, &'static str> {
+    let mut sorted: Vec<(usize, f64)> = items
+        .iter()
+        .enumerate()
+        .map(|(i, (_, v))| (i, v.max(0.0)))
+        .collect();
+    sorted.sort_by(|a, b| b.1.partial_cmp(&a.1).unwrap_or(std::cmp::Ordering::Equal));
+    let total: f64 = sorted.iter().map(|(_, v)| v).sum();
+    let mut result = std::collections::HashMap::new();
+    if total <= 0.0 {
+        for (idx, _) in items.iter().enumerate() {
+            result.insert(items[idx].0.clone(), "C");
+        }
+        return result;
+    }
+    let mut cumulative = 0.0f64;
+    for (orig_idx, val) in &sorted {
+        let start_ratio = cumulative / total;
+        cumulative += val;
+        // 使用 start_ratio（这个项加入前的累计占比）确定该项属于哪一档：
+        // 它即使把累计推过 80%/95%，只要它的起点在 A 档或 B 档内就应该分那档
+        let class = if start_ratio < 0.80 {
+            "A"
+        } else if start_ratio < 0.95 {
+            "B"
+        } else {
+            "C"
+        };
+        result.insert(items[*orig_idx].0.clone(), class);
+    }
+    result
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_average_inventory_basic() {
+        assert_eq!(calculate_average_inventory(100.0, 200.0), 150.0);
+        assert_eq!(calculate_average_inventory(0.0, 0.0), 0.0);
+        assert_eq!(calculate_average_inventory(50.0, 50.0), 50.0);
+    }
+
+    #[test]
+    fn test_turnover_rate_basic() {
+        // cogs 12000 / avg 2000 = 6.0
+        assert!((calculate_turnover_rate(12000.0, 2000.0) - 6.0).abs() < 1e-9);
+    }
+
+    #[test]
+    fn test_turnover_rate_zero_inventory() {
+        assert_eq!(calculate_turnover_rate(1000.0, 0.0), 0.0);
+        assert_eq!(calculate_turnover_rate(1000.0, -50.0), 0.0);
+    }
+
+    #[test]
+    fn test_turnover_rate_zero_cogs() {
+        assert_eq!(calculate_turnover_rate(0.0, 1000.0), 0.0);
+    }
+
+    #[test]
+    fn test_turnover_days_basic() {
+        // period 365 days / rate 6.0 ≈ 60.833
+        let r = calculate_turnover_days(6.0, 365);
+        assert!((r - 60.8333).abs() < 0.01);
+    }
+
+    #[test]
+    fn test_turnover_days_zero_rate_is_full_period() {
+        assert_eq!(calculate_turnover_days(0.0, 365), 365.0);
+        assert_eq!(calculate_turnover_days(-1.0, 90), 90.0);
+    }
+
+    #[test]
+    fn test_turnover_days_zero_period() {
+        assert_eq!(calculate_turnover_days(5.0, 0), 0.0);
+    }
+
+    #[test]
+    fn test_classify_turnover_health() {
+        assert_eq!(classify_turnover_health(10.0), "excellent");
+        assert_eq!(classify_turnover_health(6.0), "excellent");
+        assert_eq!(classify_turnover_health(5.0), "good");
+        assert_eq!(classify_turnover_health(4.0), "good");
+        assert_eq!(classify_turnover_health(3.0), "normal");
+        assert_eq!(classify_turnover_health(2.0), "normal");
+        assert_eq!(classify_turnover_health(1.5), "slow");
+        assert_eq!(classify_turnover_health(1.0), "slow");
+        assert_eq!(classify_turnover_health(0.5), "stagnant");
+        assert_eq!(classify_turnover_health(0.0), "stagnant");
+    }
+
+    #[test]
+    fn test_classify_abc_empty() {
+        let items: Vec<(String, f64)> = vec![];
+        let r = classify_abc_items(&items);
+        assert!(r.is_empty());
+    }
+
+    #[test]
+    fn test_classify_abc_single() {
+        let items = vec![("a", 100.0)];
+        let r = classify_abc_items(&items);
+        assert_eq!(r.get("a").copied(), Some("A"));
+    }
+
+    #[test]
+    fn test_classify_abc_many() {
+        // 8 items: cumulative start ratios:
+        // i1 (500): start 0 → A (500/1000)
+        // i2 (200): start 0.50 → A (累计 0.70)
+        // i3 (100): start 0.70 → A (累计 0.80 → 刚好在 A 边界)
+        // i4 (80):  start 0.80 → B (累计 0.88)
+        // i5 (50):  start 0.88 → B (累计 0.93)
+        // i6 (30):  start 0.93 → B (累计 0.96 → 起点仍 < 0.95)
+        // i7 (30):  start 0.96 → C (累计 0.99)
+        // i8 (10):  start 0.99 → C (累计 1.00)
+        let items = vec![
+            ("i1", 500.0),
+            ("i2", 200.0),
+            ("i3", 100.0),
+            ("i4", 80.0),
+            ("i5", 50.0),
+            ("i6", 30.0),
+            ("i7", 30.0),
+            ("i8", 10.0),
+        ];
+        let r = classify_abc_items(&items);
+        assert_eq!(r.get("i1").copied(), Some("A"));
+        assert_eq!(r.get("i2").copied(), Some("A"));
+        assert_eq!(r.get("i3").copied(), Some("A"));
+        assert_eq!(r.get("i4").copied(), Some("B"));
+        assert_eq!(r.get("i5").copied(), Some("B"));
+        assert_eq!(r.get("i6").copied(), Some("B"));
+        assert_eq!(r.get("i7").copied(), Some("C"));
+        assert_eq!(r.get("i8").copied(), Some("C"));
+    }
+
+    #[test]
+    fn test_classify_abc_all_zero_value_are_c() {
+        let items = vec![("a", 0.0), ("b", 0.0), ("c", -5.0)];
+        let r = classify_abc_items(&items);
+        assert_eq!(r.get("a").copied(), Some("C"));
+        assert_eq!(r.get("b").copied(), Some("C"));
+        assert_eq!(r.get("c").copied(), Some("C"));
+    }
+}
+
 pub fn create_routes() -> Router<ApiState> {
     Router::new()
         .route("/inventory-turnover", get(calculate_turnover))

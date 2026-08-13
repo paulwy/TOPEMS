@@ -38,6 +38,57 @@ impl Default for PaginatedQuery {
     }
 }
 
+impl PaginatedQuery {
+    /// 归一化分页查询参数：
+    /// - `page`: 最小 1
+    /// - `page_size`: 限制在 [min_size, max_size]（默认 1..=100）
+    /// - `sort_dir`: 仅接受 asc / desc（大小写不敏感），其他值回退为 "desc"
+    /// - `sort_by`: 仅保留 whitelist 内的值（如果提供了白名单），防止 SQL 注入
+    pub fn normalize(
+        &self,
+        min_size: i64,
+        max_size: i64,
+        sort_whitelist: Option<&[&str]>,
+    ) -> Self {
+        let page = self.page.max(1);
+        let page_size = self.page_size.clamp(min_size, max_size);
+        let sort_dir = normalize_sort_dir(self.sort_dir.as_deref());
+        let sort_by = match (self.sort_by.clone(), sort_whitelist) {
+            (Some(col), Some(wl)) if wl.iter().any(|w| *w == col) => Some(col),
+            (Some(col), None) => Some(col),
+            _ => None,
+        };
+        Self {
+            page,
+            page_size,
+            sort_by,
+            sort_dir: Some(sort_dir),
+            filters: self.filters.clone(),
+        }
+    }
+
+    /// 计算 SQL OFFSET
+    pub fn offset(&self) -> i64 {
+        (self.page.max(1) - 1) * self.page_size.max(1)
+    }
+}
+
+/// 规范化 sort_dir：仅保留 asc/desc（大小写不敏感），其余统一回退 desc
+pub fn normalize_sort_dir(dir: Option<&str>) -> String {
+    match dir.map(|d| d.to_ascii_lowercase()).as_deref() {
+        Some("asc") => "asc".to_string(),
+        Some("desc") => "desc".to_string(),
+        _ => "desc".to_string(),
+    }
+}
+
+/// 计算总页数（纯函数，便于直接复用）
+pub fn total_pages(total: i64, page_size: i64) -> i64 {
+    let page_size = page_size.max(1);
+    let total = total.max(0);
+    (total + page_size - 1) / page_size
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct PaginatedResult<T> {
     pub items: Vec<T>,
@@ -184,6 +235,22 @@ mod tests {
     }
 
     #[test]
+    fn test_paginated_result_clamps_invalid_inputs() {
+        // page=0 / page_size=1000 都应该被钳制
+        let r = PaginatedResult::new(vec![1,2,3], 999, 0, 10000);
+        assert_eq!(r.page, 1);
+        assert_eq!(r.page_size, 100);
+        assert_eq!(r.total_pages, 10);
+    }
+
+    #[test]
+    fn test_paginated_result_empty() {
+        let r: PaginatedResult<i32> = PaginatedResult::empty();
+        assert_eq!(r.total_pages, 0);
+        assert!(r.items.is_empty());
+    }
+
+    #[test]
     fn test_query_builder() {
         let query = QueryBuilder::new("users")
             .columns(&["id", "name", "email"])
@@ -203,6 +270,29 @@ mod tests {
     }
 
     #[test]
+    fn test_query_builder_minimal() {
+        // 无 where / order / limit / offset 的最小查询
+        let sql = QueryBuilder::new("t").build();
+        assert_eq!(sql, "SELECT * FROM t");
+    }
+
+    #[test]
+    fn test_query_builder_multiple_wheres_joined_by_and() {
+        let sql = QueryBuilder::new("t")
+            .where_clause("a = 1")
+            .where_clause("b = 2")
+            .where_clause("c = 3")
+            .build();
+        assert!(sql.contains("WHERE a = 1 AND b = 2 AND c = 3"));
+    }
+
+    #[test]
+    fn test_query_builder_defaults_to_star_column() {
+        let sql = QueryBuilder::new("orders").build();
+        assert_eq!(sql, "SELECT * FROM orders");
+    }
+
+    #[test]
     fn test_paginated_result_map() {
         let items = vec![1, 2, 3];
         let result = PaginatedResult::new(items, 10, 1, 5);
@@ -210,5 +300,116 @@ mod tests {
 
         assert_eq!(mapped.items, vec!["1", "2", "3"]);
         assert_eq!(mapped.total, 10);
+    }
+
+    #[test]
+    fn test_normalize_clamps_page_and_page_size() {
+        let q = PaginatedQuery {
+            page: 0,
+            page_size: 9999,
+            ..Default::default()
+        };
+        let n = q.normalize(1, 100, None);
+        assert_eq!(n.page, 1);
+        assert_eq!(n.page_size, 100);
+    }
+
+    #[test]
+    fn test_normalize_page_size_uses_provided_bounds() {
+        let q = PaginatedQuery {
+            page_size: 1,
+            ..Default::default()
+        };
+        let n = q.normalize(10, 200, None);
+        assert_eq!(n.page_size, 10);
+
+        let q2 = PaginatedQuery {
+            page_size: 9999,
+            ..Default::default()
+        };
+        let n2 = q2.normalize(10, 200, None);
+        assert_eq!(n2.page_size, 200);
+    }
+
+    #[test]
+    fn test_normalize_sort_dir_case_insensitive_and_fallback() {
+        assert_eq!(normalize_sort_dir(Some("ASC")), "asc");
+        assert_eq!(normalize_sort_dir(Some("DeSc")), "desc");
+        assert_eq!(normalize_sort_dir(Some("desc")), "desc");
+        assert_eq!(normalize_sort_dir(Some("invalid injection")), "desc");
+        assert_eq!(normalize_sort_dir(None), "desc");
+        assert_eq!(normalize_sort_dir(Some("")), "desc");
+    }
+
+    #[test]
+    fn test_normalize_sort_by_whitelist_enforced() {
+        let q = PaginatedQuery {
+            sort_by: Some("evil_column;drop users".to_string()),
+            ..Default::default()
+        };
+        let n = q.normalize(1, 100, Some(&["id", "created_at"]));
+        assert!(n.sort_by.is_none());
+
+        let q_ok = PaginatedQuery {
+            sort_by: Some("created_at".to_string()),
+            ..Default::default()
+        };
+        let n_ok = q_ok.normalize(1, 100, Some(&["id", "created_at"]));
+        assert_eq!(n_ok.sort_by.as_deref(), Some("created_at"));
+    }
+
+    #[test]
+    fn test_normalize_sort_by_no_whitelist_passthrough() {
+        let q = PaginatedQuery {
+            sort_by: Some("whatever".to_string()),
+            ..Default::default()
+        };
+        let n = q.normalize(1, 100, None);
+        assert_eq!(n.sort_by.as_deref(), Some("whatever"));
+    }
+
+    #[test]
+    fn test_offset_computation() {
+        let q = PaginatedQuery { page: 1, page_size: 10, ..Default::default() };
+        assert_eq!(q.offset(), 0);
+        let q = PaginatedQuery { page: 2, page_size: 10, ..Default::default() };
+        assert_eq!(q.offset(), 10);
+        let q = PaginatedQuery { page: 3, page_size: 20, ..Default::default() };
+        assert_eq!(q.offset(), 40);
+    }
+
+    #[test]
+    fn test_offset_handles_negative_page() {
+        let q = PaginatedQuery { page: -999, page_size: -5, ..Default::default() };
+        // 负数被 max(1) 视为 page=1, page_size=1
+        assert_eq!(q.offset(), 0);
+    }
+
+    #[test]
+    fn test_total_pages_edge_cases() {
+        assert_eq!(total_pages(0, 10), 0);
+        assert_eq!(total_pages(1, 10), 1);
+        assert_eq!(total_pages(10, 10), 1);
+        assert_eq!(total_pages(11, 10), 2);
+        assert_eq!(total_pages(99, 10), 10);
+        assert_eq!(total_pages(100, 10), 10);
+        assert_eq!(total_pages(101, 10), 11);
+    }
+
+    #[test]
+    fn test_total_pages_handles_zero_or_negative_sizes() {
+        // 0 或负数 page_size 应该被视为 1
+        assert_eq!(total_pages(10, 0), 10);
+        assert_eq!(total_pages(10, -3), 10);
+        assert_eq!(total_pages(-5, 10), 0); // 负数 total 视为 0
+    }
+
+    #[test]
+    fn test_paginated_query_default_values() {
+        let d = PaginatedQuery::default();
+        assert_eq!(d.page, 1);
+        assert_eq!(d.page_size, 20);
+        assert!(d.sort_by.is_none());
+        assert_eq!(d.sort_dir.as_deref(), Some("desc"));
     }
 }

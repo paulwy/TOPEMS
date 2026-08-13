@@ -404,16 +404,11 @@ impl NotificationServiceClient {
         &self,
         query: &NotificationListQuery,
     ) -> Result<NotificationListResponse> {
-        let mut url = format!("{}/api/core/notification/notifications?", self.base_url);
-        if let Some(page) = query.page {
-            url.push_str(&format!("page={}&", page));
-        }
-        if let Some(page_size) = query.page_size {
-            url.push_str(&format!("page_size={}&", page_size));
-        }
-        if let Some(ref ntype) = query.notification_type {
-            url.push_str(&format!("notification_type={}&", ntype));
-        }
+        let query_suffix = build_list_query_string(query);
+        let url = format!(
+            "{}/api/core/notification/notifications?{}",
+            self.base_url, query_suffix
+        );
 
         let response = self
             .client
@@ -644,5 +639,148 @@ impl NotificationServiceState {
         Self {
             client: Arc::new(NotificationServiceClient::new(config)),
         }
+    }
+}
+
+// ==================== 纯函数：Query String 构建 ====================
+
+/// 将 `NotificationListQuery` 序列化为 URL 查询参数（按 page/page_size/notification_type 的
+/// 固定顺序，以获得可预测的输出，便于测试与调试）。
+pub fn build_list_query_string(query: &NotificationListQuery) -> String {
+    let mut parts: Vec<String> = Vec::with_capacity(3);
+    if let Some(page) = query.page {
+        parts.push(format!("page={}", page));
+    }
+    if let Some(page_size) = query.page_size {
+        parts.push(format!("page_size={}", page_size));
+    }
+    if let Some(ref ntype) = query.notification_type {
+        parts.push(format!("notification_type={}", ntype));
+    }
+    parts.join("&")
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_notification_type_from_valid() {
+        assert_eq!(NotificationType::from("info"), NotificationType::Info);
+        assert_eq!(NotificationType::from("success"), NotificationType::Success);
+        assert_eq!(NotificationType::from("warning"), NotificationType::Warning);
+        assert_eq!(NotificationType::from("error"), NotificationType::Error);
+        assert_eq!(NotificationType::from("system"), NotificationType::System);
+        assert_eq!(NotificationType::from("workflow"), NotificationType::Workflow);
+        assert_eq!(NotificationType::from("reminder"), NotificationType::Reminder);
+        assert_eq!(NotificationType::from("alert"), NotificationType::Alert);
+        assert_eq!(NotificationType::from("message"), NotificationType::Message);
+    }
+
+    #[test]
+    fn test_notification_type_from_case_insensitive() {
+        assert_eq!(NotificationType::from("INFO"), NotificationType::Info);
+        assert_eq!(NotificationType::from("Info"), NotificationType::Info);
+        assert_eq!(NotificationType::from("ERROR"), NotificationType::Error);
+    }
+
+    #[test]
+    fn test_notification_type_from_unknown_defaults_to_info() {
+        assert_eq!(NotificationType::from(""), NotificationType::Info);
+        assert_eq!(NotificationType::from("unknown"), NotificationType::Info);
+        assert_eq!(NotificationType::from("FOOBAR"), NotificationType::Info);
+    }
+
+    #[test]
+    fn test_notification_type_display_roundtrip() {
+        let variants = [
+            (NotificationType::Info, "info"),
+            (NotificationType::Success, "success"),
+            (NotificationType::Warning, "warning"),
+            (NotificationType::Error, "error"),
+            (NotificationType::System, "system"),
+            (NotificationType::Workflow, "workflow"),
+            (NotificationType::Reminder, "reminder"),
+            (NotificationType::Alert, "alert"),
+            (NotificationType::Message, "message"),
+        ];
+        for (v, s) in variants.iter() {
+            assert_eq!(format!("{}", v), *s);
+            assert_eq!(NotificationType::from(*s), *v);
+        }
+    }
+
+    #[test]
+    fn test_notification_type_default() {
+        assert_eq!(NotificationType::default(), NotificationType::Info);
+    }
+
+    #[test]
+    fn test_notification_list_query_default() {
+        let q = NotificationListQuery::default();
+        assert_eq!(q.page, Some(1));
+        assert_eq!(q.page_size, Some(20));
+        assert!(q.notification_type.is_none());
+    }
+
+    #[test]
+    fn test_build_list_query_string_default() {
+        let q = NotificationListQuery::default();
+        assert_eq!(build_list_query_string(&q), "page=1&page_size=20");
+    }
+
+    #[test]
+    fn test_build_list_query_string_all_fields() {
+        let q = NotificationListQuery {
+            page: Some(3),
+            page_size: Some(50),
+            notification_type: Some(NotificationType::Success),
+        };
+        assert_eq!(
+            build_list_query_string(&q),
+            "page=3&page_size=50&notification_type=success"
+        );
+    }
+
+    #[test]
+    fn test_build_list_query_string_partial_no_type() {
+        let q = NotificationListQuery {
+            page: Some(5),
+            page_size: None,
+            notification_type: None,
+        };
+        assert_eq!(build_list_query_string(&q), "page=5");
+    }
+
+    #[test]
+    fn test_build_list_query_string_empty_all_none() {
+        let q = NotificationListQuery {
+            page: None,
+            page_size: None,
+            notification_type: None,
+        };
+        assert_eq!(build_list_query_string(&q), "");
+    }
+
+    #[test]
+    fn test_template_status_roundtrip_via_serde() {
+        use serde_json::{from_value, json, to_value};
+
+        let active: TemplateStatus = from_value(json!("active")).unwrap();
+        assert_eq!(active, TemplateStatus::Active);
+        let inactive: TemplateStatus = from_value(json!("inactive")).unwrap();
+        assert_eq!(inactive, TemplateStatus::Inactive);
+        let deprecated: TemplateStatus = from_value(json!("deprecated")).unwrap();
+        assert_eq!(deprecated, TemplateStatus::Deprecated);
+
+        assert_eq!(to_value(TemplateStatus::Active).unwrap(), json!("active"));
+        assert_eq!(
+            to_value(TemplateStatus::Inactive).unwrap(),
+            json!("inactive")
+        );
+        assert_eq!(
+            to_value(TemplateStatus::Deprecated).unwrap(),
+            json!("deprecated")
+        );
     }
 }

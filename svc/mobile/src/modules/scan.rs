@@ -96,6 +96,78 @@ impl ScanRecord {
     }
 }
 
+/// 校验扫描结果是否符合预期格式。
+/// - expected_format = "url" 要求以 http:// 或 https:// 开头
+/// - expected_format = "email" 要求以 mailto: 开头
+/// - expected_format = "phone" 要求以 tel: 开头
+/// - expected_format = "numeric" 要求全部为 ASCII 数字
+/// - expected_format = "text" 任意非空字符串
+pub fn validate_scan_result(code: &str, expected_format: &str) -> Result<(), String> {
+    if code.is_empty() {
+        return Err("扫描内容不能为空".to_string());
+    }
+    match expected_format {
+        "url" => {
+            if code.starts_with("http://") || code.starts_with("https://") {
+                Ok(())
+            } else {
+                Err("URL 必须以 http:// 或 https:// 开头".to_string())
+            }
+        }
+        "email" => {
+            if code.starts_with("mailto:") {
+                Ok(())
+            } else {
+                Err("邮箱必须以 mailto: 开头".to_string())
+            }
+        }
+        "phone" => {
+            if code.starts_with("tel:") {
+                Ok(())
+            } else {
+                Err("电话必须以 tel: 开头".to_string())
+            }
+        }
+        "numeric" => {
+            if code.chars().all(|c| c.is_ascii_digit()) {
+                Ok(())
+            } else {
+                Err("内容必须全部为数字".to_string())
+            }
+        }
+        "text" => Ok(()),
+        other => Err(format!("不支持的预期格式: {}", other)),
+    }
+}
+
+/// 根据 QR 码内容推断数据类型。
+pub fn detect_scan_type(qr_data: &str) -> &'static str {
+    if qr_data.starts_with("http://") || qr_data.starts_with("https://") {
+        "url"
+    } else if qr_data.starts_with("mailto:") {
+        "email"
+    } else if qr_data.starts_with("tel:") {
+        "phone"
+    } else if qr_data.starts_with("WIFI:") {
+        "wifi"
+    } else if qr_data.starts_with("BEGIN:VCARD") {
+        "vcard"
+    } else if qr_data.chars().all(|c| c.is_ascii_digit()) && !qr_data.is_empty() {
+        "numeric"
+    } else {
+        "text"
+    }
+}
+
+/// 提取 QR 码中的 URL；若不是 URL 则返回 None。
+pub fn extract_url_from_qr(qr_data: &str) -> Option<&str> {
+    if qr_data.starts_with("http://") || qr_data.starts_with("https://") {
+        Some(qr_data)
+    } else {
+        None
+    }
+}
+
 #[utoipa::path(
     post,
     path = "/scan/barcode",
@@ -314,5 +386,147 @@ async fn save_scan_record(
         .await
     {
         tracing::error!("保存扫描记录失败: {}", e);
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    // ---- validate_scan_result ----
+
+    #[test]
+    fn test_validate_scan_result_empty() {
+        assert!(validate_scan_result("", "text").is_err());
+        assert!(validate_scan_result("", "url").is_err());
+    }
+
+    #[test]
+    fn test_validate_scan_result_url_valid() {
+        assert!(validate_scan_result("https://example.com", "url").is_ok());
+        assert!(validate_scan_result("http://example.com", "url").is_ok());
+    }
+
+    #[test]
+    fn test_validate_scan_result_url_invalid() {
+        assert!(validate_scan_result("ftp://example.com", "url").is_err());
+        assert!(validate_scan_result("example.com", "url").is_err());
+    }
+
+    #[test]
+    fn test_validate_scan_result_email_valid() {
+        assert!(validate_scan_result("mailto:test@example.com", "email").is_ok());
+    }
+
+    #[test]
+    fn test_validate_scan_result_email_invalid() {
+        assert!(validate_scan_result("test@example.com", "email").is_err());
+    }
+
+    #[test]
+    fn test_validate_scan_result_phone_valid() {
+        assert!(validate_scan_result("tel:+8610000000", "phone").is_ok());
+    }
+
+    #[test]
+    fn test_validate_scan_result_phone_invalid() {
+        assert!(validate_scan_result("+8610000000", "phone").is_err());
+    }
+
+    #[test]
+    fn test_validate_scan_result_numeric_valid() {
+        assert!(validate_scan_result("1234567890", "numeric").is_ok());
+    }
+
+    #[test]
+    fn test_validate_scan_result_numeric_invalid() {
+        assert!(validate_scan_result("123abc", "numeric").is_err());
+        assert!(validate_scan_result("", "numeric").is_err());
+    }
+
+    #[test]
+    fn test_validate_scan_result_text_any_non_empty() {
+        assert!(validate_scan_result("任意文本", "text").is_ok());
+        assert!(validate_scan_result("123", "text").is_ok());
+    }
+
+    #[test]
+    fn test_validate_scan_result_unsupported_format() {
+        assert!(validate_scan_result("data", "weird").is_err());
+    }
+
+    // ---- detect_scan_type ----
+
+    #[test]
+    fn test_detect_scan_type_https_url() {
+        assert_eq!(detect_scan_type("https://example.com"), "url");
+    }
+
+    #[test]
+    fn test_detect_scan_type_http_url() {
+        assert_eq!(detect_scan_type("http://example.com"), "url");
+    }
+
+    #[test]
+    fn test_detect_scan_type_email() {
+        assert_eq!(detect_scan_type("mailto:test@example.com"), "email");
+    }
+
+    #[test]
+    fn test_detect_scan_type_phone() {
+        assert_eq!(detect_scan_type("tel:+8610000000"), "phone");
+    }
+
+    #[test]
+    fn test_detect_scan_type_wifi() {
+        assert_eq!(
+            detect_scan_type("WIFI:S:MyNetwork;T:WPA;P:password;;"),
+            "wifi"
+        );
+    }
+
+    #[test]
+    fn test_detect_scan_type_vcard() {
+        assert_eq!(detect_scan_type("BEGIN:VCARD\nFN:Test\nEND:VCARD"), "vcard");
+    }
+
+    #[test]
+    fn test_detect_scan_type_numeric() {
+        assert_eq!(detect_scan_type("1234567890"), "numeric");
+    }
+
+    #[test]
+    fn test_detect_scan_type_text_default() {
+        assert_eq!(detect_scan_type("hello world"), "text");
+    }
+
+    #[test]
+    fn test_detect_scan_type_empty_is_text() {
+        assert_eq!(detect_scan_type(""), "text");
+    }
+
+    // ---- extract_url_from_qr ----
+
+    #[test]
+    fn test_extract_url_from_qr_https() {
+        assert_eq!(
+            extract_url_from_qr("https://example.com"),
+            Some("https://example.com")
+        );
+    }
+
+    #[test]
+    fn test_extract_url_from_qr_http() {
+        assert_eq!(
+            extract_url_from_qr("http://example.com"),
+            Some("http://example.com")
+        );
+    }
+
+    #[test]
+    fn test_extract_url_from_qr_non_url() {
+        assert_eq!(extract_url_from_qr("mailto:test@example.com"), None);
+        assert_eq!(extract_url_from_qr("hello"), None);
+        assert_eq!(extract_url_from_qr(""), None);
     }
 }

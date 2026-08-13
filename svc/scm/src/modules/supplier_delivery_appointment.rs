@@ -4,7 +4,7 @@ use axum::{
     routing::{get, post},
     Json, Router,
 };
-use chrono::{NaiveDate, Utc};
+use chrono::{DateTime, Datelike, Duration, NaiveDate, Timelike, Utc};
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
@@ -19,6 +19,273 @@ use crate::shared::permission::{check_permission, ModulePermission};
 use topems_shared_auth::auth::Claims;
 use topems_shared_core::response::PaginationParams;
 use topems_shared_core::response::{api_error, ApiResponse};
+
+// =============================================================================
+// Pure functions for delivery appointment scheduling & scoring
+// =============================================================================
+
+/// 交付约定状态的下一合法状态转换：
+/// draft → (submit) → pending_approval → (approve) → scheduled → (arrive_confirm) → in_progress → (complete) → completed
+/// 任何状态都可取消 → cancelled
+pub fn next_appointment_status(current: &str, action: &str) -> Option<&'static str> {
+    match (current, action) {
+        ("draft", "submit") => Some("pending_approval"),
+        ("pending_approval", "approve") => Some("scheduled"),
+        ("pending_approval", "reject") => Some("rejected"),
+        ("scheduled", "arrive_confirm") => Some("in_progress"),
+        ("in_progress", "complete") => Some("completed"),
+        (_, "cancel") if current != "completed" && current != "cancelled" => Some("cancelled"),
+        _ => None,
+    }
+}
+
+/// 预约准时度评分：如果 confirmed_arrival - scheduled > 阈值，扣分
+/// Returns (on_time_status: &'static str, score_deduction: f64)
+pub fn evaluate_punctuality(
+    scheduled: DateTime<Utc>,
+    confirmed_arrival: DateTime<Utc>,
+    tolerance_minutes: i64,
+) -> (&'static str, f64) {
+    let diff_minutes = (confirmed_arrival - scheduled).num_minutes();
+    let tol = tolerance_minutes.max(0);
+    if diff_minutes <= 0 {
+        // early or exactly on-time
+        ("early_or_on_time", 0.0)
+    } else if diff_minutes <= tol {
+        ("within_tolerance", 0.0)
+    } else if diff_minutes <= tol + 30 {
+        ("slightly_late", 5.0)
+    } else if diff_minutes <= tol + 120 {
+        ("late", 15.0)
+    } else {
+        ("severely_late", 30.0)
+    }
+}
+
+/// 可预约时段检查（工作时间：工作日 8:00 - 18:00）
+/// 使用时间的 `time` 和 `weekday` 组件判断
+pub fn is_within_working_window(
+    appointment: chrono::NaiveDateTime,
+    work_start_hour: u32,
+    work_end_hour: u32,
+) -> bool {
+    let weekday = appointment.weekday().num_days_from_monday(); // Mon=0..Sun=6
+    if weekday >= 5 {
+        return false; // weekend
+    }
+    let hour = appointment.time().hour();
+    hour >= work_start_hour && hour < work_end_hour
+}
+
+/// 根据订单量和卸货能力估算卸货时长（分钟）
+/// 每件 2 分钟 + 30 分钟基础准备，超过卡车容量分段加价
+pub fn estimate_unloading_minutes(total_quantity: f64, minutes_per_unit: f64) -> i64 {
+    if total_quantity <= 0.0 || minutes_per_unit <= 0.0 {
+        return 0;
+    }
+    let setup = 30.0;
+    let variable = total_quantity * minutes_per_unit;
+    (setup + variable).ceil() as i64
+}
+
+/// 计算约定是否满足提前期（买方下 PO → 最早可预约的到货日之间的 lead_time）
+/// `earliest_allowed = po_date + lead_time_days`；appointment_date >= earliest_allowed
+pub fn satisfies_lead_time(
+    appointment_date: NaiveDate,
+    po_date: NaiveDate,
+    lead_time_days: i64,
+) -> bool {
+    appointment_date >= po_date + Duration::days(lead_time_days.max(0))
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use chrono::NaiveDateTime;
+
+    #[test]
+    fn test_next_status_happy_path() {
+        assert_eq!(
+            next_appointment_status("draft", "submit"),
+            Some("pending_approval")
+        );
+        assert_eq!(
+            next_appointment_status("pending_approval", "approve"),
+            Some("scheduled")
+        );
+        assert_eq!(
+            next_appointment_status("scheduled", "arrive_confirm"),
+            Some("in_progress")
+        );
+        assert_eq!(
+            next_appointment_status("in_progress", "complete"),
+            Some("completed")
+        );
+    }
+
+    #[test]
+    fn test_next_status_reject() {
+        assert_eq!(
+            next_appointment_status("pending_approval", "reject"),
+            Some("rejected")
+        );
+    }
+
+    #[test]
+    fn test_next_status_cancel_before_completion() {
+        assert_eq!(
+            next_appointment_status("draft", "cancel"),
+            Some("cancelled")
+        );
+        assert_eq!(
+            next_appointment_status("scheduled", "cancel"),
+            Some("cancelled")
+        );
+        assert_eq!(next_appointment_status("completed", "cancel"), None);
+        assert_eq!(next_appointment_status("cancelled", "cancel"), None);
+    }
+
+    #[test]
+    fn test_next_status_invalid_transition() {
+        assert_eq!(next_appointment_status("draft", "approve"), None);
+        assert_eq!(next_appointment_status("scheduled", "complete"), None);
+    }
+
+    fn dt(offset_min: i64) -> DateTime<Utc> {
+        let base = Utc::now();
+        base + Duration::minutes(offset_min)
+    }
+
+    #[test]
+    fn test_punctuality_on_time_and_early() {
+        let scheduled = dt(0);
+        assert_eq!(
+            evaluate_punctuality(scheduled, dt(-5), 10),
+            ("early_or_on_time", 0.0)
+        );
+        assert_eq!(
+            evaluate_punctuality(scheduled, dt(0), 10),
+            ("early_or_on_time", 0.0)
+        );
+    }
+
+    #[test]
+    fn test_punctuality_within_tolerance() {
+        let scheduled = dt(0);
+        assert_eq!(
+            evaluate_punctuality(scheduled, dt(5), 10),
+            ("within_tolerance", 0.0)
+        );
+    }
+
+    #[test]
+    fn test_punctuality_slighly_late() {
+        // tolerance = 10, diff = 10+5 = 15 min → slightly_late
+        let scheduled = dt(0);
+        assert_eq!(
+            evaluate_punctuality(scheduled, dt(15), 10),
+            ("slightly_late", 5.0)
+        );
+    }
+
+    #[test]
+    fn test_punctuality_late() {
+        let scheduled = dt(0);
+        // diff = 10+40 = 50 → late (within 130)
+        assert_eq!(evaluate_punctuality(scheduled, dt(50), 10), ("late", 15.0));
+    }
+
+    #[test]
+    fn test_punctuality_severely_late() {
+        let scheduled = dt(0);
+        // diff = 10+200 = 210 → severely late
+        assert_eq!(
+            evaluate_punctuality(scheduled, dt(210), 10),
+            ("severely_late", 30.0)
+        );
+    }
+
+    #[test]
+    fn test_working_window_mon_fri_9to17() {
+        // Monday 2026-08-10 at 10:00
+        let ok = NaiveDate::from_ymd_opt(2026, 8, 10)
+            .unwrap()
+            .and_hms_opt(10, 0, 0)
+            .unwrap();
+        assert!(is_within_working_window(ok, 8, 18));
+
+        // Friday 2026-08-14 at 17:00
+        let ok2 = NaiveDate::from_ymd_opt(2026, 8, 14)
+            .unwrap()
+            .and_hms_opt(17, 0, 0)
+            .unwrap();
+        assert!(is_within_working_window(ok2, 8, 18));
+
+        // Saturday
+        let sat = NaiveDate::from_ymd_opt(2026, 8, 15)
+            .unwrap()
+            .and_hms_opt(10, 0, 0)
+            .unwrap();
+        assert!(!is_within_working_window(sat, 8, 18));
+
+        // Sunday
+        let sun = NaiveDate::from_ymd_opt(2026, 8, 16)
+            .unwrap()
+            .and_hms_opt(10, 0, 0)
+            .unwrap();
+        assert!(!is_within_working_window(sun, 8, 18));
+
+        // Before 08:00
+        let early = NaiveDate::from_ymd_opt(2026, 8, 10)
+            .unwrap()
+            .and_hms_opt(7, 59, 0)
+            .unwrap();
+        assert!(!is_within_working_window(early, 8, 18));
+
+        // After 18:00
+        let late = NaiveDate::from_ymd_opt(2026, 8, 10)
+            .unwrap()
+            .and_hms_opt(18, 0, 0)
+            .unwrap();
+        assert!(!is_within_working_window(late, 8, 18));
+    }
+
+    #[test]
+    fn test_estimate_unloading() {
+        assert_eq!(estimate_unloading_minutes(0.0, 2.0), 0);
+        assert_eq!(estimate_unloading_minutes(100.0, 0.0), 0);
+        assert_eq!(estimate_unloading_minutes(-5.0, 2.0), 0);
+        // q=50, 2/unit: 30 + 50*2 = 130
+        assert_eq!(estimate_unloading_minutes(50.0, 2.0), 130);
+        // fractional → ceil: 30 + 10.5 = 40.5 → 41
+        assert_eq!(estimate_unloading_minutes(3.5, 3.0), 41);
+    }
+
+    #[test]
+    fn test_satisfies_lead_time() {
+        let po = NaiveDate::from_ymd_opt(2026, 9, 1).unwrap();
+        // lead 7 days: earliest = 2026-09-08
+        assert!(satisfies_lead_time(
+            NaiveDate::from_ymd_opt(2026, 9, 8).unwrap(),
+            po,
+            7
+        ));
+        assert!(satisfies_lead_time(
+            NaiveDate::from_ymd_opt(2026, 9, 15).unwrap(),
+            po,
+            7
+        ));
+        assert!(!satisfies_lead_time(
+            NaiveDate::from_ymd_opt(2026, 9, 7).unwrap(),
+            po,
+            7
+        ));
+        // zero lead time → same day OK
+        assert!(satisfies_lead_time(po, po, 0));
+        // negative lead_time clamped to 0
+        assert!(satisfies_lead_time(po, po, -5));
+    }
+}
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SupplierDeliveryAppointmentQueryParams {

@@ -113,6 +113,77 @@ pub struct PerformanceQueryParams {
     pub period: Option<String>,
 }
 
+// ==================== 纯函数（无副作用，便于单元测试） ====================
+
+/// 指标聚合类型。
+#[derive(Debug, Clone, PartialEq)]
+pub enum AggregationType {
+    Average,
+    Sum,
+    Min,
+    Max,
+    Count,
+}
+
+/// 按指定聚合类型对一组数值进行聚合，空切片返回 0.0。
+pub fn aggregate_metrics(values: &[f64], aggregation_type: &AggregationType) -> f64 {
+    if values.is_empty() {
+        return 0.0;
+    }
+    match aggregation_type {
+        AggregationType::Average => {
+            let sum: f64 = values.iter().sum();
+            sum / values.len() as f64
+        }
+        AggregationType::Sum => values.iter().sum(),
+        AggregationType::Min => values.iter().cloned().fold(f64::INFINITY, f64::min),
+        AggregationType::Max => values.iter().cloned().fold(f64::NEG_INFINITY, f64::max),
+        AggregationType::Count => values.len() as f64,
+    }
+}
+
+/// 计算百分位数（线性插值法）。
+/// - p: 百分比，范围 0.0 ~ 100.0
+/// - 空切片返回 0.0
+pub fn percentile(values: &[f64], p: f64) -> f64 {
+    if values.is_empty() {
+        return 0.0;
+    }
+    let mut sorted: Vec<f64> = values.to_vec();
+    sorted.sort_by(|a, b| a.partial_cmp(b).unwrap_or(std::cmp::Ordering::Equal));
+    let n = sorted.len();
+    if n == 1 {
+        return sorted[0];
+    }
+    let rank = (p / 100.0) * (n - 1) as f64;
+    let lower = rank.floor() as usize;
+    let upper = rank.ceil() as usize;
+    if lower == upper {
+        return sorted[lower];
+    }
+    let fraction = rank - lower as f64;
+    sorted[lower] * (1.0 - fraction) + sorted[upper] * fraction
+}
+
+/// 计算错误率（百分比）：error_count / total_requests * 100
+/// 总请求为 0 时返回 0.0。
+pub fn calculate_error_rate(total_requests: u64, error_count: u64) -> f64 {
+    if total_requests == 0 {
+        return 0.0;
+    }
+    (error_count as f64 / total_requests as f64) * 100.0
+}
+
+/// 计算可用性（百分比）：(total - errors) / total * 100
+/// 总请求为 0 时返回 100.0（视为完全可用）。
+pub fn calculate_availability(total_requests: u64, error_count: u64) -> f64 {
+    if total_requests == 0 {
+        return 100.0;
+    }
+    let success = total_requests.saturating_sub(error_count);
+    (success as f64 / total_requests as f64) * 100.0
+}
+
 pub fn create_routes() -> Router<AppState> {
     Router::new()
         .route("/metrics/system", get(get_system_metrics))
@@ -643,4 +714,175 @@ pub async fn export_performance_data(
     };
 
     Json(ApiResponse::success(export_data, "性能数据导出成功"))
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    // ---- aggregate_metrics ----
+
+    #[test]
+    fn test_aggregate_metrics_average() {
+        let vals = vec![10.0, 20.0, 30.0, 40.0];
+        assert!((aggregate_metrics(&vals, &AggregationType::Average) - 25.0).abs() < 0.001);
+    }
+
+    #[test]
+    fn test_aggregate_metrics_sum() {
+        let vals = vec![10.0, 20.0, 30.0];
+        assert!((aggregate_metrics(&vals, &AggregationType::Sum) - 60.0).abs() < 0.001);
+    }
+
+    #[test]
+    fn test_aggregate_metrics_min() {
+        let vals = vec![30.0, 10.0, 20.0];
+        assert!((aggregate_metrics(&vals, &AggregationType::Min) - 10.0).abs() < 0.001);
+    }
+
+    #[test]
+    fn test_aggregate_metrics_max() {
+        let vals = vec![30.0, 10.0, 20.0];
+        assert!((aggregate_metrics(&vals, &AggregationType::Max) - 30.0).abs() < 0.001);
+    }
+
+    #[test]
+    fn test_aggregate_metrics_count() {
+        let vals = vec![1.0, 2.0, 3.0, 4.0, 5.0];
+        assert!((aggregate_metrics(&vals, &AggregationType::Count) - 5.0).abs() < 0.001);
+    }
+
+    #[test]
+    fn test_aggregate_metrics_empty() {
+        let vals: Vec<f64> = vec![];
+        assert_eq!(aggregate_metrics(&vals, &AggregationType::Average), 0.0);
+        assert_eq!(aggregate_metrics(&vals, &AggregationType::Sum), 0.0);
+        assert_eq!(aggregate_metrics(&vals, &AggregationType::Count), 0.0);
+    }
+
+    #[test]
+    fn test_aggregate_metrics_single() {
+        let vals = vec![42.0];
+        assert!((aggregate_metrics(&vals, &AggregationType::Average) - 42.0).abs() < 0.001);
+        assert!((aggregate_metrics(&vals, &AggregationType::Min) - 42.0).abs() < 0.001);
+        assert!((aggregate_metrics(&vals, &AggregationType::Max) - 42.0).abs() < 0.001);
+    }
+
+    #[test]
+    fn test_aggregate_metrics_negative() {
+        let vals = vec![-5.0, -10.0, -3.0];
+        assert!((aggregate_metrics(&vals, &AggregationType::Min) - (-10.0)).abs() < 0.001);
+        assert!((aggregate_metrics(&vals, &AggregationType::Max) - (-3.0)).abs() < 0.001);
+        assert!((aggregate_metrics(&vals, &AggregationType::Sum) - (-18.0)).abs() < 0.001);
+    }
+
+    // ---- percentile ----
+
+    #[test]
+    fn test_percentile_p50() {
+        let vals = vec![1.0, 2.0, 3.0, 4.0, 5.0];
+        assert!((percentile(&vals, 50.0) - 3.0).abs() < 0.001);
+    }
+
+    #[test]
+    fn test_percentile_p0() {
+        let vals = vec![10.0, 20.0, 30.0];
+        assert!((percentile(&vals, 0.0) - 10.0).abs() < 0.001);
+    }
+
+    #[test]
+    fn test_percentile_p100() {
+        let vals = vec![10.0, 20.0, 30.0];
+        assert!((percentile(&vals, 100.0) - 30.0).abs() < 0.001);
+    }
+
+    #[test]
+    fn test_percentile_p95() {
+        // 100 values 0..99, p95 should be ~94.05
+        let vals: Vec<f64> = (0..100).map(|i| i as f64).collect();
+        let p95 = percentile(&vals, 95.0);
+        assert!(p95 >= 94.0 && p95 <= 95.0);
+    }
+
+    #[test]
+    fn test_percentile_p99() {
+        let vals: Vec<f64> = (0..100).map(|i| i as f64).collect();
+        let p99 = percentile(&vals, 99.0);
+        assert!(p99 >= 98.0 && p99 <= 99.0);
+    }
+
+    #[test]
+    fn test_percentile_empty() {
+        let vals: Vec<f64> = vec![];
+        assert_eq!(percentile(&vals, 50.0), 0.0);
+    }
+
+    #[test]
+    fn test_percentile_single() {
+        let vals = vec![42.0];
+        assert_eq!(percentile(&vals, 50.0), 42.0);
+        assert_eq!(percentile(&vals, 99.0), 42.0);
+    }
+
+    #[test]
+    fn test_percentile_unsorted_input() {
+        let vals = vec![30.0, 10.0, 20.0];
+        assert!((percentile(&vals, 50.0) - 20.0).abs() < 0.001);
+    }
+
+    // ---- calculate_error_rate ----
+
+    #[test]
+    fn test_calculate_error_rate_normal() {
+        assert!((calculate_error_rate(1000, 10) - 1.0).abs() < 0.001);
+    }
+
+    #[test]
+    fn test_calculate_error_rate_zero_requests() {
+        assert_eq!(calculate_error_rate(0, 0), 0.0);
+    }
+
+    #[test]
+    fn test_calculate_error_rate_no_errors() {
+        assert_eq!(calculate_error_rate(1000, 0), 0.0);
+    }
+
+    #[test]
+    fn test_calculate_error_rate_all_errors() {
+        assert!((calculate_error_rate(100, 100) - 100.0).abs() < 0.001);
+    }
+
+    #[test]
+    fn test_calculate_error_rate_more_errors_than_requests() {
+        // errors > requests (edge case): still computes ratio
+        assert!((calculate_error_rate(50, 100) - 200.0).abs() < 0.001);
+    }
+
+    // ---- calculate_availability ----
+
+    #[test]
+    fn test_calculate_availability_normal() {
+        assert!((calculate_availability(1000, 10) - 99.0).abs() < 0.001);
+    }
+
+    #[test]
+    fn test_calculate_availability_zero_requests() {
+        assert_eq!(calculate_availability(0, 0), 100.0);
+    }
+
+    #[test]
+    fn test_calculate_availability_no_errors() {
+        assert!((calculate_availability(1000, 0) - 100.0).abs() < 0.001);
+    }
+
+    #[test]
+    fn test_calculate_availability_all_errors() {
+        assert!((calculate_availability(100, 100) - 0.0).abs() < 0.001);
+    }
+
+    #[test]
+    fn test_calculate_availability_more_errors_than_requests() {
+        // saturating_sub prevents underflow
+        assert_eq!(calculate_availability(50, 100), 0.0);
+    }
 }

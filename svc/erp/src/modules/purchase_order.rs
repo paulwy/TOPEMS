@@ -10,6 +10,9 @@ use super::ApiState;
 use crate::models::material::{
     CreatePurchaseOrderRequest, PurchaseOrder, UpdatePurchaseOrderRequest,
 };
+use crate::modules::material_calc::{
+    calculate_purchase_order_amounts, default_purchase_order_status,
+};
 use crate::shared::permission::{check_permission, ModulePermission};
 use topems_shared::auth::Claims;
 use topems_shared::ApiResponse;
@@ -183,14 +186,11 @@ pub async fn create_purchase_order(
         Uuid::new_v4().to_string().split('-').next().unwrap_or("0")
     );
 
-    let total_amount = req
-        .items
-        .iter()
-        .map(|i| i.quantity * i.unit_price)
-        .sum::<f64>();
-    let tax_amount = total_amount * req.tax_rate.unwrap_or(0.13);
-    let discount_amount = total_amount * req.discount_rate.unwrap_or(0.0);
-    let payable_amount = total_amount + tax_amount - discount_amount;
+    let amounts = calculate_purchase_order_amounts(&req.items, req.tax_rate, req.discount_rate);
+    let total_amount = amounts.total_amount;
+    let tax_amount = amounts.tax_amount;
+    let discount_amount = amounts.discount_amount;
+    let payable_amount = amounts.payable_amount;
 
     let result = sqlx::query_as::<_, PurchaseOrder>(
         r#"INSERT INTO purchase_orders (order_no, supplier_id, supplier_name, order_date, delivery_date, 
@@ -208,7 +208,7 @@ pub async fn create_purchase_order(
     .bind(tax_amount)
     .bind(discount_amount)
     .bind(payable_amount)
-    .bind("pending")
+    .bind(default_purchase_order_status())
     .bind(req.remark)
     .fetch_one(&state.db)
     .await;

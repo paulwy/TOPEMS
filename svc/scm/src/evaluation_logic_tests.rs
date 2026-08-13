@@ -43,17 +43,21 @@ mod tests {
 
     #[test]
     fn test_calculate_overall_score_partial_scores() {
+        // None 按 0 计：加权和按 30/25/25/20 直接计算 (未评分=0分惩罚)
+        // Q80×30 + D90×25 + S(0)×25 + P70×20 = 2400 + 2250 + 0 + 1400 = 6050 / 100 = 60.5
         assert_eq!(
             calculate_overall_score(Some(80.0), Some(90.0), None, Some(70.0)),
-            82.5
+            60.5
         );
+        // Q70×30 + D(0)×25 + S80×25 + P90×20 = 2100 + 0 + 2000 + 1800 = 5900 / 100 = 59
         assert_eq!(
             calculate_overall_score(Some(70.0), None, Some(80.0), Some(90.0)),
-            69.0
+            59.0
         );
+        // Q(0)×30 + D60×25 + S70×25 + P80×20 = 0 + 1500 + 1750 + 1600 = 4850 / 100 = 48.5
         assert_eq!(
             calculate_overall_score(None, Some(60.0), Some(70.0), Some(80.0)),
-            55.0
+            48.5
         );
     }
 

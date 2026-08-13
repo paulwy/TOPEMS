@@ -908,3 +908,254 @@ pub async fn create_material_category(
     tracing::debug!("Creating material category: {:?}", req);
     Json(ApiResponse::success(req, "危险品分类创建成功"))
 }
+
+pub fn ghs_hazard_class(health: Option<u8>, flamm: Option<u8>, phys: Option<u8>) -> &'static str {
+    let h = health.unwrap_or(0).min(4);
+    let f = flamm.unwrap_or(0).min(4);
+    let p = phys.unwrap_or(0).min(4);
+    let max = h.max(f).max(p);
+    match max {
+        0 => "Level 0",
+        1 => "Level 1",
+        2 => "Level 2",
+        3 => "Level 3",
+        4 => "Level 4",
+        _ => "Level 0",
+    }
+}
+
+pub fn flash_point_class(celsius: f64) -> &'static str {
+    if celsius < 23.0 {
+        "极易燃"
+    } else if celsius < 60.0 {
+        "易燃"
+    } else if celsius <= 93.0 {
+        "可燃"
+    } else {
+        "不燃"
+    }
+}
+
+pub fn validate_cas(cas: &str) -> bool {
+    let parts: Vec<&str> = cas.split('-').collect();
+    if parts.len() != 3 {
+        return false;
+    }
+    let (p1, p2, p3) = (parts[0], parts[1], parts[2]);
+    if p1.is_empty() || p2.is_empty() || p3.is_empty() {
+        return false;
+    }
+    if p1.len() < 2 || p1.len() > 7 {
+        return false;
+    }
+    if p2.len() != 2 {
+        return false;
+    }
+    if p3.len() != 1 {
+        return false;
+    }
+    let digits: Vec<u32> = format!("{}{}", p1, p2)
+        .chars()
+        .filter_map(|c| c.to_digit(10))
+        .collect();
+    if digits.len() != p1.len() + 2 {
+        return false;
+    }
+    let check_digit = p3.chars().next().and_then(|c| c.to_digit(10));
+    if check_digit.is_none() {
+        return false;
+    }
+    let check_digit = check_digit.unwrap();
+    let sum: u32 = digits
+        .iter()
+        .rev()
+        .enumerate()
+        .map(|(i, d)| d * (i as u32 + 1))
+        .sum();
+    sum % 10 == check_digit
+}
+
+pub fn toxicity_class(ld50_mg_kg: Option<f64>) -> &'static str {
+    match ld50_mg_kg {
+        None => "未知",
+        Some(ld) if ld <= 5.0 => "剧毒",
+        Some(ld) if ld <= 50.0 => "高毒",
+        Some(ld) if ld <= 500.0 => "中等毒",
+        Some(ld) if ld <= 5000.0 => "低毒",
+        Some(ld) if ld <= 15000.0 => "微毒",
+        Some(_) => "实际无毒",
+    }
+}
+
+pub fn storage_compatibility(classes: &[&str]) -> bool {
+    let has_acid = classes.iter().any(|c| c.contains("酸") || *c == "acid");
+    let has_alkali = classes.iter().any(|c| c.contains("碱") || *c == "alkali");
+    let has_oxidizer = classes
+        .iter()
+        .any(|c| c.contains("氧化") || *c == "oxidizer");
+    let has_reducer = classes
+        .iter()
+        .any(|c| c.contains("还原") || *c == "reducer");
+    let has_flammable = classes
+        .iter()
+        .any(|c| c.contains("易燃") || *c == "flammable");
+    if has_acid && has_alkali {
+        return false;
+    }
+    if has_oxidizer && has_reducer {
+        return false;
+    }
+    if has_oxidizer && has_flammable {
+        return false;
+    }
+    true
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_ghs_hazard_class_all_none() {
+        assert_eq!(ghs_hazard_class(None, None, None), "Level 0");
+    }
+
+    #[test]
+    fn test_ghs_hazard_class_level_1() {
+        assert_eq!(ghs_hazard_class(Some(1), None, None), "Level 1");
+        assert_eq!(ghs_hazard_class(None, Some(1), None), "Level 1");
+        assert_eq!(ghs_hazard_class(None, None, Some(1)), "Level 1");
+    }
+
+    #[test]
+    fn test_ghs_hazard_class_level_2() {
+        assert_eq!(ghs_hazard_class(Some(2), Some(1), None), "Level 2");
+        assert_eq!(ghs_hazard_class(Some(1), Some(2), None), "Level 2");
+    }
+
+    #[test]
+    fn test_ghs_hazard_class_level_3() {
+        assert_eq!(ghs_hazard_class(Some(3), Some(2), Some(1)), "Level 3");
+    }
+
+    #[test]
+    fn test_ghs_hazard_class_level_4() {
+        assert_eq!(ghs_hazard_class(Some(4), None, None), "Level 4");
+        assert_eq!(ghs_hazard_class(Some(10), None, None), "Level 4");
+    }
+
+    #[test]
+    fn test_flash_point_extremely() {
+        assert_eq!(flash_point_class(0.0), "极易燃");
+        assert_eq!(flash_point_class(-10.0), "极易燃");
+        assert_eq!(flash_point_class(22.9), "极易燃");
+    }
+
+    #[test]
+    fn test_flash_point_flammable() {
+        assert_eq!(flash_point_class(23.0), "易燃");
+        assert_eq!(flash_point_class(40.0), "易燃");
+        assert_eq!(flash_point_class(59.9), "易燃");
+    }
+
+    #[test]
+    fn test_flash_point_combustible() {
+        assert_eq!(flash_point_class(60.0), "可燃");
+        assert_eq!(flash_point_class(80.0), "可燃");
+        assert_eq!(flash_point_class(93.0), "可燃");
+    }
+
+    #[test]
+    fn test_flash_point_non_combustible() {
+        assert_eq!(flash_point_class(93.1), "不燃");
+        assert_eq!(flash_point_class(200.0), "不燃");
+    }
+
+    #[test]
+    fn test_validate_cas_valid() {
+        assert!(validate_cas("7664-93-9"));
+        assert!(validate_cas("50-00-0"));
+        assert!(validate_cas("64-17-5"));
+    }
+
+    #[test]
+    fn test_validate_cas_invalid_format() {
+        assert!(!validate_cas("12345"));
+        assert!(!validate_cas("123-45"));
+        assert!(!validate_cas("-93-9"));
+        assert!(!validate_cas("7664--93-9"));
+    }
+
+    #[test]
+    fn test_validate_cas_invalid_checksum() {
+        assert!(!validate_cas("7664-93-8"));
+        assert!(!validate_cas("7664-93-0"));
+    }
+
+    #[test]
+    fn test_toxicity_class_unknown() {
+        assert_eq!(toxicity_class(None), "未知");
+    }
+
+    #[test]
+    fn test_toxicity_class_extreme() {
+        assert_eq!(toxicity_class(Some(0.0)), "剧毒");
+        assert_eq!(toxicity_class(Some(5.0)), "剧毒");
+    }
+
+    #[test]
+    fn test_toxicity_class_high() {
+        assert_eq!(toxicity_class(Some(5.1)), "高毒");
+        assert_eq!(toxicity_class(Some(50.0)), "高毒");
+    }
+
+    #[test]
+    fn test_toxicity_class_medium() {
+        assert_eq!(toxicity_class(Some(50.1)), "中等毒");
+        assert_eq!(toxicity_class(Some(500.0)), "中等毒");
+    }
+
+    #[test]
+    fn test_toxicity_class_low() {
+        assert_eq!(toxicity_class(Some(500.1)), "低毒");
+        assert_eq!(toxicity_class(Some(5000.0)), "低毒");
+    }
+
+    #[test]
+    fn test_toxicity_class_slight() {
+        assert_eq!(toxicity_class(Some(5000.1)), "微毒");
+        assert_eq!(toxicity_class(Some(15000.0)), "微毒");
+    }
+
+    #[test]
+    fn test_toxicity_class_practical_non_toxic() {
+        assert_eq!(toxicity_class(Some(15000.1)), "实际无毒");
+        assert_eq!(toxicity_class(Some(100000.0)), "实际无毒");
+    }
+
+    #[test]
+    fn test_storage_compatible_ok() {
+        assert!(storage_compatibility(&["易燃"]));
+        assert!(storage_compatibility(&["酸"]));
+        assert!(storage_compatibility(&["易燃", "还原"]));
+        assert!(storage_compatibility(&["酸", "氧化"]));
+    }
+
+    #[test]
+    fn test_storage_incompatible_acid_alkali() {
+        assert!(!storage_compatibility(&["酸", "碱"]));
+        assert!(!storage_compatibility(&["acid", "alkali"]));
+    }
+
+    #[test]
+    fn test_storage_incompatible_oxidizer_reducer() {
+        assert!(!storage_compatibility(&["氧化", "还原"]));
+        assert!(!storage_compatibility(&["oxidizer", "reducer"]));
+    }
+
+    #[test]
+    fn test_storage_incompatible_oxidizer_flammable() {
+        assert!(!storage_compatibility(&["氧化", "易燃"]));
+        assert!(!storage_compatibility(&["oxidizer", "flammable"]));
+    }
+}
