@@ -163,3 +163,75 @@ impl TracedRequestExt for reqwest::RequestBuilder {
         self
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_inject_trace_context_no_op_without_otel_init() {
+        let mut headers = HeaderMap::new();
+        inject_trace_context(&mut headers);
+        assert!(
+            headers.is_empty(),
+            "OTEL 未初始化时 propagator 应是 no-op，不写入任何 header"
+        );
+    }
+
+    #[test]
+    fn test_inject_trace_context_does_not_panic_with_existing_headers() {
+        let mut headers = HeaderMap::new();
+        headers.insert(
+            HeaderName::from_static("x-existing"),
+            HeaderValue::from_static("keep-me"),
+        );
+        inject_trace_context(&mut headers);
+        assert_eq!(
+            headers
+                .get(HeaderName::from_static("x-existing"))
+                .unwrap()
+                .to_str()
+                .unwrap(),
+            "keep-me"
+        );
+    }
+
+    #[test]
+    fn test_inject_trace_into_reqwest_no_op_without_otel_init() {
+        let mut req = reqwest::Request::new(
+            reqwest::Method::GET,
+            reqwest::Url::parse("http://example.com/api").unwrap(),
+        );
+        inject_trace_into_reqwest(&mut req);
+        let headers = req.headers();
+        assert!(
+            !headers.contains_key(HeaderName::from_static("x-trace-id")),
+            "无活跃 trace 时不应注入 x-trace-id"
+        );
+        assert!(
+            !headers.contains_key(HeaderName::from_static("x-request-id")),
+            "无活跃 request 时不应注入 x-request-id"
+        );
+    }
+
+    #[test]
+    fn test_inject_trace_into_reqwest_preserves_existing_headers() {
+        let mut req = reqwest::Request::new(
+            reqwest::Method::POST,
+            reqwest::Url::parse("http://example.com/submit").unwrap(),
+        );
+        req.headers_mut().insert(
+            HeaderName::from_static("content-type"),
+            HeaderValue::from_static("application/json"),
+        );
+        inject_trace_into_reqwest(&mut req);
+        assert_eq!(
+            req.headers()
+                .get(HeaderName::from_static("content-type"))
+                .unwrap()
+                .to_str()
+                .unwrap(),
+            "application/json"
+        );
+    }
+}
