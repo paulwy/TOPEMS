@@ -5,6 +5,7 @@ import { AppHeader } from '@/components/layout';
 import { AppSidebar } from '@/components/layout/AppSidebar';
 import { useUIStore } from '@/store';
 import { getDeviceInfo } from '@/utils/mobileDetector';
+import { sizeTokens } from '@/theme/design-tokens';
 
 interface TabletLayoutProps {
   children: React.ReactNode;
@@ -18,8 +19,10 @@ export const TabletLayout: React.FC<TabletLayoutProps> = ({ children }) => {
   // 横屏/竖屏检测：横屏时内容区支持双栏布局
   const isLandscape = useMediaQuery('(orientation: landscape)');
 
-  // 侧边栏宽度：折叠 64px（仅图标），展开 240px
-  const sidebarWidth = sidebarCollapsed ? 64 : 240;
+  // 侧边栏宽度：引用设计令牌，折叠 64px，展开 220px
+  const sidebarWidth = sidebarCollapsed
+    ? sizeTokens.sidebarWidthCollapsed
+    : sizeTokens.sidebarWidth;
 
   // 监听设备变化：切换为 Mobile 时跳转回 dashboard
   useEffect(() => {

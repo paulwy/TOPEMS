@@ -29,6 +29,7 @@ import {
   TableContainer,
   TableHead,
   TableRow,
+  Card,
 } from '@mui/material';
 import {
   X as XIcon,
@@ -59,7 +60,6 @@ import {
   BarChart3,
   Sliders,
 } from 'lucide-react';
-import { V51Card } from '../../design-system/components';
 import {
   aiFirstPlatform,
   type AIPlatformStatus,
@@ -374,7 +374,7 @@ const DashboardTab: React.FC<{
         sx={{ mt: 1 }}
       >
         <Grid size={{ xs: 12, md: 6 }}>
-          <V51Card>
+          <Card variant='outlined' sx={{ p: 2 }}>
             <Typography
               variant='subtitle2'
               sx={{ fontWeight: 600, mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}
@@ -418,11 +418,11 @@ const DashboardTab: React.FC<{
                 </Table>
               </TableContainer>
             )}
-          </V51Card>
+          </Card>
         </Grid>
 
         <Grid size={{ xs: 12, md: 6 }}>
-          <V51Card>
+          <Card variant='outlined' sx={{ p: 2 }}>
             <Typography
               variant='subtitle2'
               sx={{ fontWeight: 600, mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}
@@ -462,7 +462,7 @@ const DashboardTab: React.FC<{
                 </Box>
               ))}
             </Stack>
-          </V51Card>
+          </Card>
         </Grid>
       </Grid>
     </Box>
@@ -477,7 +477,7 @@ const MetricCard: React.FC<{
   color: string;
   progress: number;
 }> = ({ title, value, subtitle, icon, color, progress }) => (
-  <V51Card>
+  <Card variant='outlined' sx={{ p: 2 }}>
     <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
       <Box
         sx={{
@@ -519,7 +519,7 @@ const MetricCard: React.FC<{
     >
       {subtitle}
     </Typography>
-  </V51Card>
+  </Card>
 );
 
 const CapabilitiesTab: React.FC = () => {
@@ -613,7 +613,7 @@ const CapabilitiesTab: React.FC = () => {
             size={{ xs: 12, md: 6, lg: 4 }}
             key={cap.id}
           >
-            <V51Card>
+            <Card variant='outlined' sx={{ p: 2 }}>
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
                 <Box
                   sx={{
@@ -687,7 +687,7 @@ const CapabilitiesTab: React.FC = () => {
                   更新: {new Date(cap.updatedAt).toLocaleTimeString()}
                 </Typography>
               </Box>
-            </V51Card>
+            </Card>
           </Grid>
         ))}
       </Grid>
@@ -797,7 +797,7 @@ const RouterTab: React.FC = () => {
         spacing={3}
       >
         <Grid size={{ xs: 12, md: 6 }}>
-          <V51Card>
+          <Card variant='outlined' sx={{ p: 2 }}>
             <Typography
               variant='subtitle2'
               sx={{ fontWeight: 600, mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}
@@ -899,11 +899,11 @@ const RouterTab: React.FC = () => {
                 ))}
               </>
             )}
-          </V51Card>
+          </Card>
         </Grid>
 
         <Grid size={{ xs: 12, md: 6 }}>
-          <V51Card>
+          <Card variant='outlined' sx={{ p: 2 }}>
             <Typography
               variant='subtitle2'
               sx={{ fontWeight: 600, mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}
@@ -988,7 +988,7 @@ const RouterTab: React.FC = () => {
                 </TableBody>
               </Table>
             </TableContainer>
-          </V51Card>
+          </Card>
         </Grid>
       </Grid>
     </Box>
@@ -1156,7 +1156,7 @@ const AdaptiveUITab: React.FC<{
         spacing={3}
       >
         <Grid size={{ xs: 12, md: 4 }}>
-          <V51Card>
+          <Card variant='outlined' sx={{ p: 2 }}>
             <Typography
               variant='subtitle2'
               sx={{ fontWeight: 600, mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}
@@ -1318,11 +1318,11 @@ const AdaptiveUITab: React.FC<{
                 优化建议
               </Button>
             </Stack>
-          </V51Card>
+          </Card>
         </Grid>
 
         <Grid size={{ xs: 12, md: 4 }}>
-          <V51Card>
+          <Card variant='outlined' sx={{ p: 2 }}>
             <Typography
               variant='subtitle2'
               sx={{ fontWeight: 600, mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}
@@ -1453,11 +1453,11 @@ const AdaptiveUITab: React.FC<{
             ) : (
               <Alert severity='info'>点击"适配布局"生成自适应预览</Alert>
             )}
-          </V51Card>
+          </Card>
         </Grid>
 
         <Grid size={{ xs: 12, md: 4 }}>
-          <V51Card>
+          <Card variant='outlined' sx={{ p: 2 }}>
             <Typography
               variant='subtitle2'
               sx={{ fontWeight: 600, mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}
@@ -1562,7 +1562,7 @@ const AdaptiveUITab: React.FC<{
                 每次适配平均耗时
               </Typography>
             </Box>
-          </V51Card>
+          </Card>
         </Grid>
       </Grid>
     </Box>
@@ -1617,7 +1617,7 @@ const SettingsTab: React.FC = () => {
         spacing={3}
       >
         <Grid size={{ xs: 12, md: 6 }}>
-          <V51Card>
+          <Card variant='outlined' sx={{ p: 2 }}>
             <Typography
               variant='subtitle2'
               sx={{ fontWeight: 600, mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}
@@ -1748,11 +1748,11 @@ const SettingsTab: React.FC = () => {
                 }}
               />
             </Box>
-          </V51Card>
+          </Card>
         </Grid>
 
         <Grid size={{ xs: 12, md: 6 }}>
-          <V51Card>
+          <Card variant='outlined' sx={{ p: 2 }}>
             <Typography
               variant='subtitle2'
               sx={{ fontWeight: 600, mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}
@@ -1883,7 +1883,7 @@ const SettingsTab: React.FC = () => {
                 </Box>
               ))}
             </Stack>
-          </V51Card>
+          </Card>
         </Grid>
       </Grid>
     </Box>

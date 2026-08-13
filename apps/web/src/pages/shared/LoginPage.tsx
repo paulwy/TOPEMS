@@ -70,12 +70,11 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
       });
     },
     onSuccess: (response) => {
-      
       queryClient.invalidateQueries({
-          queryKey: QUERY_KEYS.AD_HOC.SHARED_ATTACHMENTS_BASE,
-          exact: false,
-          refetchType: 'active',
-        });
+        queryKey: QUERY_KEYS.AD_HOC.SHARED_ATTACHMENTS_BASE,
+        exact: false,
+        refetchType: 'active',
+      });
       apiLogger.info('登录响应:', response);
       if (response.success) {
         addNotification({

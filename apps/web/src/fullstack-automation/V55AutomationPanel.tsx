@@ -30,6 +30,11 @@ import {
   Badge,
   Divider,
   Alert,
+  Card,
+  CardHeader,
+  CardContent,
+  Tabs,
+  Tab,
 } from '@mui/material';
 import {
   X as XIcon,
@@ -56,7 +61,6 @@ import {
   Layers,
   FileText,
 } from 'lucide-react';
-import { V51Card, V51Tabs, V51Button, V51Badge } from '../design-system/components';
 import {
   ciPipeline,
   type Pipeline,
@@ -267,69 +271,74 @@ export const V55AutomationPanel: React.FC<{ onClose: () => void }> = ({ onClose 
         <V55PanelHeader onClose={onClose} />
 
         <Box sx={{ flex: 1, overflow: 'auto', bgcolor: 'grey.50' }}>
-          <V51Tabs
-            activeTab={activeTab}
-            onChange={(tab) => setActiveTab(tab as TabId)}
+          <Tabs
+            value={activeTab}
+            onChange={(_, tab) => setActiveTab(tab as TabId)}
             variant='fullWidth'
-            tabs={[
-              {
-                id: 'pipelines',
-                label: 'CI/CD 流水线',
-                icon: <GitBranch size={16} />,
-                content: (
-                  <PipelinesTab
-                    pipelines={pipelines}
-                    runs={runs}
-                    selectedPipeline={selectedPipeline}
-                    setSelectedPipeline={setSelectedPipeline}
-                    onRunPipeline={handleRunPipeline}
-                    onCancelRun={handleCancelRun}
-                    onCreatePipeline={() => setShowCreatePipeline(true)}
-                    stats={pipelineStats}
-                  />
-                ),
-              },
-              {
-                id: 'deployments',
-                label: '智能部署',
-                icon: <Rocket size={16} />,
-                content: (
-                  <DeploymentsTab
-                    deployments={deployments}
-                    onDeploy={() => setShowDeployDialog(true)}
-                    onRollback={handleRollback}
-                    stats={deploymentStats}
-                  />
-                ),
-              },
-              {
-                id: 'rollbacks',
-                label: '自动回滚',
-                icon: <RotateCcw size={16} />,
-                content: (
-                  <RollbacksTab
-                    events={rollbackEvents}
-                    autoEnabled={autoRollbackEnabled}
-                    onToggleAuto={handleSetAutoRollback}
-                    onConfigure={configureDefaultConditions}
-                  />
-                ),
-              },
-              {
-                id: 'health',
-                label: '健康监控',
-                icon: <Activity size={16} />,
-                content: (
-                  <HealthTab
-                    metrics={metrics}
-                    onSimulateMetric={handleSimulateMetric}
-                    healthStatus={healthStatus}
-                    deployments={deployments}
-                  />
-                ),
-              },
-            ]}
-          />
+          >
+            <Tab
+              value='pipelines'
+              label='CI/CD 流水线'
+              icon={<GitBranch size={16} />}
+              iconPosition='start'
+            />
+            <Tab
+              value='deployments'
+              label='智能部署'
+              icon={<Rocket size={16} />}
+              iconPosition='start'
+            />
+            <Tab
+              value='rollbacks'
+              label='自动回滚'
+              icon={<RotateCcw size={16} />}
+              iconPosition='start'
+            />
+            <Tab
+              value='health'
+              label='健康监控'
+              icon={<Activity size={16} />}
+              iconPosition='start'
+            />
+          </Tabs>
+          <Box sx={{ flex: 1, overflow: 'auto' }}>
+            {activeTab === 'pipelines' && (
+              <PipelinesTab
+                pipelines={pipelines}
+                runs={runs}
+                selectedPipeline={selectedPipeline}
+                setSelectedPipeline={setSelectedPipeline}
+                onRunPipeline={handleRunPipeline}
+                onCancelRun={handleCancelRun}
+                onCreatePipeline={() => setShowCreatePipeline(true)}
+                stats={pipelineStats}
+              />
+            )}
+            {activeTab === 'deployments' && (
+              <DeploymentsTab
+                deployments={deployments}
+                onDeploy={() => setShowDeployDialog(true)}
+                onRollback={handleRollback}
+                stats={deploymentStats}
+              />
+            )}
+            {activeTab === 'rollbacks' && (
+              <RollbacksTab
+                events={rollbackEvents}
+                autoEnabled={autoRollbackEnabled}
+                onToggleAuto={handleSetAutoRollback}
+                onConfigure={configureDefaultConditions}
+              />
+            )}
+            {activeTab === 'health' && (
+              <HealthTab
+                metrics={metrics}
+                onSimulateMetric={handleSimulateMetric}
+                healthStatus={healthStatus}
+                deployments={deployments}
+              />
+            )}
+          </Box>
         </Box>
       </Box>
 
@@ -373,10 +382,10 @@ const V55PanelHeader: React.FC<{ onClose: () => void }> = ({ onClose }) => (
       >
         V55.0 全栈自动化平台
       </Typography>
-      <V51Badge
+      <Chip
         label={V55_BADGE}
-        variant='warning'
-        size='sm'
+        color='warning'
+        size='small'
       />
       <Typography
         variant='caption'
@@ -454,215 +463,308 @@ const PipelinesTab: React.FC<{
       </Grid>
     </Grid>
 
-    <V51Card
-      title='CI/CD 流水线'
-      subtitle={`${pipelines.length} 个流水线`}
-      headerAction={
-        <V51Button
-          variant='primary'
-          size='sm'
-          startIcon={<Plus size={14} />}
-          onClick={onCreatePipeline}
-        >
-          新建流水线
-        </V51Button>
-      }
-    >
-      <TableContainer>
-        <Table size='small'>
-          <TableHead>
-            <TableRow>
-              <TableCell sx={{ fontWeight: 600 }}>ID</TableCell>
-              <TableCell sx={{ fontWeight: 600 }}>名称</TableCell>
-              <TableCell sx={{ fontWeight: 600 }}>环境</TableCell>
-              <TableCell sx={{ fontWeight: 600 }}>状态</TableCell>
-              <TableCell sx={{ fontWeight: 600 }}>阶段</TableCell>
-              <TableCell sx={{ fontWeight: 600 }}>创建时间</TableCell>
-              <TableCell sx={{ fontWeight: 600 }}>操作</TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {pipelines.length === 0 ? (
-              <TableRow>
-                <TableCell
-                  colSpan={7}
-                  align='center'
-                  sx={{ py: 4 }}
-                >
-                  <Typography
-                    variant='body2'
-                    color='text.secondary'
-                  >
-                    暂无流水线，点击右上角创建
-                  </Typography>
-                </TableCell>
-              </TableRow>
-            ) : (
-              pipelines.map((p) => (
-                <TableRow
-                  key={p.id}
-                  hover
-                  onClick={() => setSelectedPipeline(p)}
-                  sx={{ cursor: 'pointer' }}
-                  selected={selectedPipeline?.id === p.id}
-                >
-                  <TableCell>
-                    <Typography
-                      variant='caption'
-                      sx={{ fontFamily: 'monospace' }}
-                    >
-                      {p.id}
-                    </Typography>
-                  </TableCell>
-                  <TableCell>{p.name}</TableCell>
-                  <TableCell>
-                    <V51Badge
-                      label={p.environment}
-                      variant={
-                        p.environment === 'prod'
-                          ? 'error'
-                          : p.environment === 'staging'
-                            ? 'warning'
-                            : 'info'
-                      }
-                      size='sm'
-                    />
-                  </TableCell>
-                  <TableCell>
-                    <StatusChip status={p.status} />
-                  </TableCell>
-                  <TableCell>{p.stages.length}</TableCell>
-                  <TableCell>
-                    <Typography variant='caption'>
-                      {new Date(p.created_at).toLocaleString()}
-                    </Typography>
-                  </TableCell>
-                  <TableCell onClick={(e) => e.stopPropagation()}>
-                    <Stack
-                      direction='row'
-                      spacing={1}
-                    >
-                      <Tooltip title='运行'>
-                        <IconButton
-                          size='small'
-                          onClick={() => onRunPipeline(p.id)}
-                        >
-                          <Play
-                            size={16}
-                            color='#10b981'
-                          />
-                        </IconButton>
-                      </Tooltip>
-                    </Stack>
-                  </TableCell>
-                </TableRow>
-              ))
-            )}
-          </TableBody>
-        </Table>
-      </TableContainer>
-    </V51Card>
-
-    {selectedPipeline && (
-      <V51Card
-        title={`流水线详情: ${selectedPipeline.name}`}
-        subtitle={selectedPipeline.description || selectedPipeline.id}
-        sx={{ mt: 2 }}
-      >
-        <Typography
-          variant='subtitle2'
-          sx={{ mb: 1, fontWeight: 600 }}
-        >
-          阶段配置
-        </Typography>
-        <Stack
-          direction='row'
-          spacing={1}
-          sx={{ mb: 2, flexWrap: 'wrap', gap: 1 }}
-        >
-          {selectedPipeline.stages.map((stage) => (
-            <Chip
-              key={stage.name}
-              label={`${stage.name} (${stage.type})`}
-              size='small'
-              color={
-                stage.status === 'completed'
-                  ? 'success'
-                  : stage.status === 'running'
-                    ? 'primary'
-                    : 'default'
-              }
-              variant={stage.status === 'idle' ? 'outlined' : 'filled'}
-            />
-          ))}
-        </Stack>
-
-        <Divider sx={{ my: 2 }} />
-
-        <Typography
-          variant='subtitle2'
-          sx={{ mb: 1, fontWeight: 600 }}
-        >
-          运行历史
-        </Typography>
+    <Card variant='outlined'>
+      <CardHeader
+        title='CI/CD 流水线'
+        subheader={`${pipelines.length} 个流水线`}
+        action={
+          <Button
+            variant='contained'
+            size='small'
+            startIcon={<Plus size={14} />}
+            onClick={onCreatePipeline}
+          >
+            新建流水线
+          </Button>
+        }
+      />
+      <CardContent>
         <TableContainer>
           <Table size='small'>
             <TableHead>
               <TableRow>
-                <TableCell sx={{ fontWeight: 600 }}>运行ID</TableCell>
+                <TableCell sx={{ fontWeight: 600 }}>ID</TableCell>
+                <TableCell sx={{ fontWeight: 600 }}>名称</TableCell>
+                <TableCell sx={{ fontWeight: 600 }}>环境</TableCell>
                 <TableCell sx={{ fontWeight: 600 }}>状态</TableCell>
-                <TableCell sx={{ fontWeight: 600 }}>开始时间</TableCell>
-                <TableCell sx={{ fontWeight: 600 }}>耗时</TableCell>
+                <TableCell sx={{ fontWeight: 600 }}>阶段</TableCell>
+                <TableCell sx={{ fontWeight: 600 }}>创建时间</TableCell>
                 <TableCell sx={{ fontWeight: 600 }}>操作</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
-              {runs
-                .filter((r) => r.pipeline_id === selectedPipeline.id)
-                .slice(0, 10)
-                .map((run) => (
-                  <TableRow key={run.id}>
+              {pipelines.length === 0 ? (
+                <TableRow>
+                  <TableCell
+                    colSpan={7}
+                    align='center'
+                    sx={{ py: 4 }}
+                  >
+                    <Typography
+                      variant='body2'
+                      color='text.secondary'
+                    >
+                      暂无流水线，点击右上角创建
+                    </Typography>
+                  </TableCell>
+                </TableRow>
+              ) : (
+                pipelines.map((p) => (
+                  <TableRow
+                    key={p.id}
+                    hover
+                    onClick={() => setSelectedPipeline(p)}
+                    sx={{ cursor: 'pointer' }}
+                    selected={selectedPipeline?.id === p.id}
+                  >
                     <TableCell>
                       <Typography
                         variant='caption'
                         sx={{ fontFamily: 'monospace' }}
                       >
-                        {run.id}
+                        {p.id}
                       </Typography>
+                    </TableCell>
+                    <TableCell>{p.name}</TableCell>
+                    <TableCell>
+                      <Chip
+                        label={p.environment}
+                        color={
+                          p.environment === 'prod'
+                            ? 'error'
+                            : p.environment === 'staging'
+                              ? 'warning'
+                              : 'info'
+                        }
+                        size='small'
+                      />
+                    </TableCell>
+                    <TableCell>
+                      <StatusChip status={p.status} />
+                    </TableCell>
+                    <TableCell>{p.stages.length}</TableCell>
+                    <TableCell>
+                      <Typography variant='caption'>
+                        {new Date(p.created_at).toLocaleString()}
+                      </Typography>
+                    </TableCell>
+                    <TableCell onClick={(e) => e.stopPropagation()}>
+                      <Stack
+                        direction='row'
+                        spacing={1}
+                      >
+                        <Tooltip title='运行'>
+                          <IconButton
+                            size='small'
+                            onClick={() => onRunPipeline(p.id)}
+                          >
+                            <Play
+                              size={16}
+                              color='#10b981'
+                            />
+                          </IconButton>
+                        </Tooltip>
+                      </Stack>
+                    </TableCell>
+                  </TableRow>
+                ))
+              )}
+            </TableBody>
+          </Table>
+        </TableContainer>
+      </CardContent>
+    </Card>
+
+    {selectedPipeline && (
+      <Card
+        variant='outlined'
+        sx={{ mt: 2 }}
+      >
+        <CardHeader
+          title={`流水线详情: ${selectedPipeline.name}`}
+          subheader={selectedPipeline.description || selectedPipeline.id}
+        />
+        <CardContent>
+          <Typography
+            variant='subtitle2'
+            sx={{ mb: 1, fontWeight: 600 }}
+          >
+            阶段配置
+          </Typography>
+          <Stack
+            direction='row'
+            spacing={1}
+            sx={{ mb: 2, flexWrap: 'wrap', gap: 1 }}
+          >
+            {selectedPipeline.stages.map((stage) => (
+              <Chip
+                key={stage.name}
+                label={`${stage.name} (${stage.type})`}
+                size='small'
+                color={
+                  stage.status === 'completed'
+                    ? 'success'
+                    : stage.status === 'running'
+                      ? 'primary'
+                      : 'default'
+                }
+                variant={stage.status === 'idle' ? 'outlined' : 'filled'}
+              />
+            ))}
+          </Stack>
+
+          <Divider sx={{ my: 2 }} />
+
+          <Typography
+            variant='subtitle2'
+            sx={{ mb: 1, fontWeight: 600 }}
+          >
+            运行历史
+          </Typography>
+          <TableContainer>
+            <Table size='small'>
+              <TableHead>
+                <TableRow>
+                  <TableCell sx={{ fontWeight: 600 }}>运行ID</TableCell>
+                  <TableCell sx={{ fontWeight: 600 }}>状态</TableCell>
+                  <TableCell sx={{ fontWeight: 600 }}>开始时间</TableCell>
+                  <TableCell sx={{ fontWeight: 600 }}>耗时</TableCell>
+                  <TableCell sx={{ fontWeight: 600 }}>操作</TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {runs
+                  .filter((r) => r.pipeline_id === selectedPipeline.id)
+                  .slice(0, 10)
+                  .map((run) => (
+                    <TableRow key={run.id}>
+                      <TableCell>
+                        <Typography
+                          variant='caption'
+                          sx={{ fontFamily: 'monospace' }}
+                        >
+                          {run.id}
+                        </Typography>
+                      </TableCell>
+                      <TableCell>
+                        <StatusChip status={run.status} />
+                      </TableCell>
+                      <TableCell>
+                        <Typography variant='caption'>
+                          {new Date(run.started_at).toLocaleString()}
+                        </Typography>
+                      </TableCell>
+                      <TableCell>
+                        <Typography variant='caption'>
+                          {run.ended_at
+                            ? `${Math.round((new Date(run.ended_at).getTime() - new Date(run.started_at).getTime()) / 1000)}s`
+                            : '—'}
+                        </Typography>
+                      </TableCell>
+                      <TableCell>
+                        {run.status === 'running' && (
+                          <Tooltip title='取消'>
+                            <IconButton
+                              size='small'
+                              onClick={() => onCancelRun(run.id)}
+                            >
+                              <Square
+                                size={16}
+                                color='#ef4444'
+                              />
+                            </IconButton>
+                          </Tooltip>
+                        )}
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                {runs.filter((r) => r.pipeline_id === selectedPipeline.id).length === 0 && (
+                  <TableRow>
+                    <TableCell
+                      colSpan={5}
+                      align='center'
+                    >
+                      <Typography
+                        variant='body2'
+                        color='text.secondary'
+                      >
+                        暂无运行记录
+                      </Typography>
+                    </TableCell>
+                  </TableRow>
+                )}
+              </TableBody>
+            </Table>
+          </TableContainer>
+        </CardContent>
+      </Card>
+    )}
+
+    <Card
+      variant='outlined'
+      sx={{ mt: 2 }}
+    >
+      <CardHeader
+        title='最近运行'
+        subheader='所有流水线的最近运行记录'
+      />
+      <CardContent>
+        <TableContainer>
+          <Table size='small'>
+            <TableHead>
+              <TableRow>
+                <TableCell sx={{ fontWeight: 600 }}>流水线</TableCell>
+                <TableCell sx={{ fontWeight: 600 }}>环境</TableCell>
+                <TableCell sx={{ fontWeight: 600 }}>状态</TableCell>
+                <TableCell sx={{ fontWeight: 600 }}>阶段进度</TableCell>
+                <TableCell sx={{ fontWeight: 600 }}>开始时间</TableCell>
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {runs.slice(0, 15).map((run) => {
+                const completedCount = run.stages_run.filter(
+                  (s) => s.status === 'completed'
+                ).length;
+                const totalCount = run.stages_run.length;
+                const progress = totalCount > 0 ? (completedCount / totalCount) * 100 : 0;
+                return (
+                  <TableRow key={run.id}>
+                    <TableCell>{run.pipeline_name}</TableCell>
+                    <TableCell>
+                      <Chip
+                        label={run.environment}
+                        size='small'
+                      />
                     </TableCell>
                     <TableCell>
                       <StatusChip status={run.status} />
+                    </TableCell>
+                    <TableCell sx={{ minWidth: 150 }}>
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                        <LinearProgress
+                          variant='determinate'
+                          value={progress}
+                          sx={{ flex: 1, height: 6, borderRadius: 3 }}
+                          color={
+                            run.status === 'failed'
+                              ? 'error'
+                              : run.status === 'completed'
+                                ? 'success'
+                                : 'primary'
+                          }
+                        />
+                        <Typography variant='caption'>{Math.round(progress)}%</Typography>
+                      </Box>
                     </TableCell>
                     <TableCell>
                       <Typography variant='caption'>
                         {new Date(run.started_at).toLocaleString()}
                       </Typography>
                     </TableCell>
-                    <TableCell>
-                      <Typography variant='caption'>
-                        {run.ended_at
-                          ? `${Math.round((new Date(run.ended_at).getTime() - new Date(run.started_at).getTime()) / 1000)}s`
-                          : '—'}
-                      </Typography>
-                    </TableCell>
-                    <TableCell>
-                      {run.status === 'running' && (
-                        <Tooltip title='取消'>
-                          <IconButton
-                            size='small'
-                            onClick={() => onCancelRun(run.id)}
-                          >
-                            <Square
-                              size={16}
-                              color='#ef4444'
-                            />
-                          </IconButton>
-                        </Tooltip>
-                      )}
-                    </TableCell>
                   </TableRow>
-                ))}
-              {runs.filter((r) => r.pipeline_id === selectedPipeline.id).length === 0 && (
+                );
+              })}
+              {runs.length === 0 && (
                 <TableRow>
                   <TableCell
                     colSpan={5}
@@ -680,86 +782,8 @@ const PipelinesTab: React.FC<{
             </TableBody>
           </Table>
         </TableContainer>
-      </V51Card>
-    )}
-
-    <V51Card
-      title='最近运行'
-      subtitle='所有流水线的最近运行记录'
-      sx={{ mt: 2 }}
-    >
-      <TableContainer>
-        <Table size='small'>
-          <TableHead>
-            <TableRow>
-              <TableCell sx={{ fontWeight: 600 }}>流水线</TableCell>
-              <TableCell sx={{ fontWeight: 600 }}>环境</TableCell>
-              <TableCell sx={{ fontWeight: 600 }}>状态</TableCell>
-              <TableCell sx={{ fontWeight: 600 }}>阶段进度</TableCell>
-              <TableCell sx={{ fontWeight: 600 }}>开始时间</TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {runs.slice(0, 15).map((run) => {
-              const completedCount = run.stages_run.filter((s) => s.status === 'completed').length;
-              const totalCount = run.stages_run.length;
-              const progress = totalCount > 0 ? (completedCount / totalCount) * 100 : 0;
-              return (
-                <TableRow key={run.id}>
-                  <TableCell>{run.pipeline_name}</TableCell>
-                  <TableCell>
-                    <V51Badge
-                      label={run.environment}
-                      size='sm'
-                    />
-                  </TableCell>
-                  <TableCell>
-                    <StatusChip status={run.status} />
-                  </TableCell>
-                  <TableCell sx={{ minWidth: 150 }}>
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                      <LinearProgress
-                        variant='determinate'
-                        value={progress}
-                        sx={{ flex: 1, height: 6, borderRadius: 3 }}
-                        color={
-                          run.status === 'failed'
-                            ? 'error'
-                            : run.status === 'completed'
-                              ? 'success'
-                              : 'primary'
-                        }
-                      />
-                      <Typography variant='caption'>{Math.round(progress)}%</Typography>
-                    </Box>
-                  </TableCell>
-                  <TableCell>
-                    <Typography variant='caption'>
-                      {new Date(run.started_at).toLocaleString()}
-                    </Typography>
-                  </TableCell>
-                </TableRow>
-              );
-            })}
-            {runs.length === 0 && (
-              <TableRow>
-                <TableCell
-                  colSpan={5}
-                  align='center'
-                >
-                  <Typography
-                    variant='body2'
-                    color='text.secondary'
-                  >
-                    暂无运行记录
-                  </Typography>
-                </TableCell>
-              </TableRow>
-            )}
-          </TableBody>
-        </Table>
-      </TableContainer>
-    </V51Card>
+      </CardContent>
+    </Card>
   </Box>
 );
 
@@ -801,201 +825,207 @@ const DeploymentsTab: React.FC<{
       </Grid>
     </Grid>
 
-    <V51Card
-      title='部署控制台'
-      subtitle='智能部署管理'
-      headerAction={
-        <V51Button
-          variant='primary'
-          size='sm'
-          startIcon={<Rocket size={14} />}
-          onClick={onDeploy}
-        >
-          新建部署
-        </V51Button>
-      }
-    >
-      <TableContainer>
-        <Table size='small'>
-          <TableHead>
-            <TableRow>
-              <TableCell sx={{ fontWeight: 600 }}>服务</TableCell>
-              <TableCell sx={{ fontWeight: 600 }}>版本</TableCell>
-              <TableCell sx={{ fontWeight: 600 }}>策略</TableCell>
-              <TableCell sx={{ fontWeight: 600 }}>环境</TableCell>
-              <TableCell sx={{ fontWeight: 600 }}>状态</TableCell>
-              <TableCell sx={{ fontWeight: 600 }}>流量分配</TableCell>
-              <TableCell sx={{ fontWeight: 600 }}>回滚次数</TableCell>
-              <TableCell sx={{ fontWeight: 600 }}>操作</TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {deployments.length === 0 ? (
+    <Card variant='outlined'>
+      <CardHeader
+        title='部署控制台'
+        subheader='智能部署管理'
+        action={
+          <Button
+            variant='contained'
+            size='small'
+            startIcon={<Rocket size={14} />}
+            onClick={onDeploy}
+          >
+            新建部署
+          </Button>
+        }
+      />
+      <CardContent>
+        <TableContainer>
+          <Table size='small'>
+            <TableHead>
               <TableRow>
-                <TableCell
-                  colSpan={8}
-                  align='center'
-                  sx={{ py: 4 }}
-                >
-                  <Typography
-                    variant='body2'
-                    color='text.secondary'
-                  >
-                    暂无部署记录
-                  </Typography>
-                </TableCell>
+                <TableCell sx={{ fontWeight: 600 }}>服务</TableCell>
+                <TableCell sx={{ fontWeight: 600 }}>版本</TableCell>
+                <TableCell sx={{ fontWeight: 600 }}>策略</TableCell>
+                <TableCell sx={{ fontWeight: 600 }}>环境</TableCell>
+                <TableCell sx={{ fontWeight: 600 }}>状态</TableCell>
+                <TableCell sx={{ fontWeight: 600 }}>流量分配</TableCell>
+                <TableCell sx={{ fontWeight: 600 }}>回滚次数</TableCell>
+                <TableCell sx={{ fontWeight: 600 }}>操作</TableCell>
               </TableRow>
-            ) : (
-              deployments.map((d) => (
-                <TableRow key={d.id}>
-                  <TableCell>{d.name}</TableCell>
-                  <TableCell>
+            </TableHead>
+            <TableBody>
+              {deployments.length === 0 ? (
+                <TableRow>
+                  <TableCell
+                    colSpan={8}
+                    align='center'
+                    sx={{ py: 4 }}
+                  >
                     <Typography
-                      variant='caption'
-                      sx={{ fontFamily: 'monospace' }}
+                      variant='body2'
+                      color='text.secondary'
                     >
-                      {d.version}
+                      暂无部署记录
                     </Typography>
                   </TableCell>
-                  <TableCell>
-                    <V51Badge
-                      label={d.strategy}
-                      variant='info'
-                      size='sm'
-                      icon={<GitBranch size={12} />}
-                    />
-                  </TableCell>
-                  <TableCell>
-                    <V51Badge
-                      label={d.environment}
-                      size='sm'
-                    />
-                  </TableCell>
-                  <TableCell>
-                    <DeploymentStatusChip status={d.status} />
-                  </TableCell>
-                  <TableCell>
-                    <Stack
-                      direction='column'
-                      spacing={0.5}
-                    >
-                      {d.units.slice(0, 3).map((u) => (
-                        <Box
-                          key={u.name}
-                          sx={{ display: 'flex', alignItems: 'center', gap: 1 }}
-                        >
-                          <Typography
-                            variant='caption'
-                            sx={{ width: 80, overflow: 'hidden', textOverflow: 'ellipsis' }}
-                          >
-                            {u.name}
-                          </Typography>
-                          <LinearProgress
-                            variant='determinate'
-                            value={u.traffic_percentage}
-                            sx={{ width: 60, height: 4, borderRadius: 2 }}
-                            color={
-                              u.health_status === 'healthy'
-                                ? 'success'
-                                : u.health_status === 'unhealthy'
-                                  ? 'error'
-                                  : 'primary'
-                            }
-                          />
-                          <Typography variant='caption'>{u.traffic_percentage}%</Typography>
-                        </Box>
-                      ))}
-                    </Stack>
-                  </TableCell>
-                  <TableCell>
-                    {d.rollback_count > 0 ? (
-                      <V51Badge
-                        label={`${d.rollback_count}次`}
-                        variant='warning'
-                        size='sm'
-                      />
-                    ) : (
+                </TableRow>
+              ) : (
+                deployments.map((d) => (
+                  <TableRow key={d.id}>
+                    <TableCell>{d.name}</TableCell>
+                    <TableCell>
                       <Typography
                         variant='caption'
-                        color='text.secondary'
+                        sx={{ fontFamily: 'monospace' }}
                       >
-                        0
+                        {d.version}
                       </Typography>
-                    )}
-                  </TableCell>
-                  <TableCell>
-                    <Stack
-                      direction='row'
-                      spacing={1}
-                    >
-                      {(d.status === 'deploying' || d.status === 'verifying') && (
-                        <Tooltip title='回滚'>
-                          <IconButton
-                            size='small'
-                            onClick={() => onRollback(d.id)}
+                    </TableCell>
+                    <TableCell>
+                      <Chip
+                        label={d.strategy}
+                        color='info'
+                        size='small'
+                        icon={<GitBranch size={12} />}
+                      />
+                    </TableCell>
+                    <TableCell>
+                      <Chip
+                        label={d.environment}
+                        size='small'
+                      />
+                    </TableCell>
+                    <TableCell>
+                      <DeploymentStatusChip status={d.status} />
+                    </TableCell>
+                    <TableCell>
+                      <Stack
+                        direction='column'
+                        spacing={0.5}
+                      >
+                        {d.units.slice(0, 3).map((u) => (
+                          <Box
+                            key={u.name}
+                            sx={{ display: 'flex', alignItems: 'center', gap: 1 }}
                           >
-                            <RotateCcw
-                              size={16}
-                              color='#ef4444'
+                            <Typography
+                              variant='caption'
+                              sx={{ width: 80, overflow: 'hidden', textOverflow: 'ellipsis' }}
+                            >
+                              {u.name}
+                            </Typography>
+                            <LinearProgress
+                              variant='determinate'
+                              value={u.traffic_percentage}
+                              sx={{ width: 60, height: 4, borderRadius: 2 }}
+                              color={
+                                u.health_status === 'healthy'
+                                  ? 'success'
+                                  : u.health_status === 'unhealthy'
+                                    ? 'error'
+                                    : 'primary'
+                              }
                             />
-                          </IconButton>
-                        </Tooltip>
+                            <Typography variant='caption'>{u.traffic_percentage}%</Typography>
+                          </Box>
+                        ))}
+                      </Stack>
+                    </TableCell>
+                    <TableCell>
+                      {d.rollback_count > 0 ? (
+                        <Chip
+                          label={`${d.rollback_count}次`}
+                          color='warning'
+                          size='small'
+                        />
+                      ) : (
+                        <Typography
+                          variant='caption'
+                          color='text.secondary'
+                        >
+                          0
+                        </Typography>
                       )}
-                      {d.status === 'completed' &&
-                        d.units.some((u) => u.status === 'deploying') && (
-                          <Tooltip title='提升候选'>
-                            <IconButton size='small'>
-                              <TrendingUp
+                    </TableCell>
+                    <TableCell>
+                      <Stack
+                        direction='row'
+                        spacing={1}
+                      >
+                        {(d.status === 'deploying' || d.status === 'verifying') && (
+                          <Tooltip title='回滚'>
+                            <IconButton
+                              size='small'
+                              onClick={() => onRollback(d.id)}
+                            >
+                              <RotateCcw
                                 size={16}
-                                color='#10b981'
+                                color='#ef4444'
                               />
                             </IconButton>
                           </Tooltip>
                         )}
-                    </Stack>
-                  </TableCell>
-                </TableRow>
-              ))
-            )}
-          </TableBody>
-        </Table>
-      </TableContainer>
-    </V51Card>
+                        {d.status === 'completed' &&
+                          d.units.some((u) => u.status === 'deploying') && (
+                            <Tooltip title='提升候选'>
+                              <IconButton size='small'>
+                                <TrendingUp
+                                  size={16}
+                                  color='#10b981'
+                                />
+                              </IconButton>
+                            </Tooltip>
+                          )}
+                      </Stack>
+                    </TableCell>
+                  </TableRow>
+                ))
+              )}
+            </TableBody>
+          </Table>
+        </TableContainer>
+      </CardContent>
+    </Card>
 
-    <V51Card
-      title='部署策略说明'
+    <Card
+      variant='outlined'
       sx={{ mt: 2 }}
     >
-      <Grid
-        container
-        spacing={2}
-      >
-        <Grid size={{ xs: 12, md: 4 }}>
-          <PolicyCard
-            icon={<GitBranch size={24} />}
-            color='#6366f1'
-            title='蓝绿部署'
-            description='通过同时维护两套环境实现零停机切换，适用于生产环境重大变更'
-          />
+      <CardHeader title='部署策略说明' />
+      <CardContent>
+        <Grid
+          container
+          spacing={2}
+        >
+          <Grid size={{ xs: 12, md: 4 }}>
+            <PolicyCard
+              icon={<GitBranch size={24} />}
+              color='#6366f1'
+              title='蓝绿部署'
+              description='通过同时维护两套环境实现零停机切换，适用于生产环境重大变更'
+            />
+          </Grid>
+          <Grid size={{ xs: 12, md: 4 }}>
+            <PolicyCard
+              icon={<Activity size={24} />}
+              color='#0ea5e9'
+              title='金丝雀发布'
+              description='逐步将流量切换到新版本，小范围验证后全量发布，降低风险'
+            />
+          </Grid>
+          <Grid size={{ xs: 12, md: 4 }}>
+            <PolicyCard
+              icon={<RefreshCw size={24} />}
+              color='#10b981'
+              title='滚动更新'
+              description='逐个替换实例，保证服务持续可用，适用于开发/测试环境'
+            />
+          </Grid>
         </Grid>
-        <Grid size={{ xs: 12, md: 4 }}>
-          <PolicyCard
-            icon={<Activity size={24} />}
-            color='#0ea5e9'
-            title='金丝雀发布'
-            description='逐步将流量切换到新版本，小范围验证后全量发布，降低风险'
-          />
-        </Grid>
-        <Grid size={{ xs: 12, md: 4 }}>
-          <PolicyCard
-            icon={<RefreshCw size={24} />}
-            color='#10b981'
-            title='滚动更新'
-            description='逐个替换实例，保证服务持续可用，适用于开发/测试环境'
-          />
-        </Grid>
-      </Grid>
-    </V51Card>
+      </CardContent>
+    </Card>
   </Box>
 );
 
@@ -1052,207 +1082,213 @@ const RollbacksTab: React.FC<{
         </Grid>
       </Grid>
 
-      <V51Card
-        title='自动回滚配置'
-        headerAction={
-          <Stack
-            direction='row'
-            spacing={1}
-            sx={{ alignItems: 'center' }}
-          >
-            <FormControlLabel
-              control={
-                <Switch
-                  checked={autoEnabled}
-                  onChange={(e) => onToggleAuto(e.target.checked)}
-                  size='small'
-                />
-              }
-              label={<Typography variant='body2'>自动回滚</Typography>}
-            />
-            <V51Button
-              variant='outline'
-              size='sm'
-              startIcon={<Settings size={14} />}
-              onClick={onConfigure}
+      <Card variant='outlined'>
+        <CardHeader
+          title='自动回滚配置'
+          action={
+            <Stack
+              direction='row'
+              spacing={1}
+              sx={{ alignItems: 'center' }}
             >
-              重置条件
-            </V51Button>
-          </Stack>
-        }
-      >
-        <Typography
-          variant='subtitle2'
-          sx={{ mb: 2, fontWeight: 600 }}
-        >
-          触发条件
-        </Typography>
-        <TableContainer>
-          <Table size='small'>
-            <TableHead>
-              <TableRow>
-                <TableCell sx={{ fontWeight: 600 }}>指标</TableCell>
-                <TableCell sx={{ fontWeight: 600 }}>比较方式</TableCell>
-                <TableCell sx={{ fontWeight: 600 }}>阈值</TableCell>
-                <TableCell sx={{ fontWeight: 600 }}>持续时间(分钟)</TableCell>
-                <TableCell sx={{ fontWeight: 600 }}>状态</TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {conditions.length === 0 ? (
+              <FormControlLabel
+                control={
+                  <Switch
+                    checked={autoEnabled}
+                    onChange={(e) => onToggleAuto(e.target.checked)}
+                    size='small'
+                  />
+                }
+                label={<Typography variant='body2'>自动回滚</Typography>}
+              />
+              <Button
+                variant='outlined'
+                size='small'
+                startIcon={<Settings size={14} />}
+                onClick={onConfigure}
+              >
+                重置条件
+              </Button>
+            </Stack>
+          }
+        />
+        <CardContent>
+          <Typography
+            variant='subtitle2'
+            sx={{ mb: 2, fontWeight: 600 }}
+          >
+            触发条件
+          </Typography>
+          <TableContainer>
+            <Table size='small'>
+              <TableHead>
                 <TableRow>
-                  <TableCell
-                    colSpan={5}
-                    align='center'
-                  >
-                    <Typography
-                      variant='body2'
-                      color='text.secondary'
-                    >
-                      暂无配置条件
-                    </Typography>
-                  </TableCell>
+                  <TableCell sx={{ fontWeight: 600 }}>指标</TableCell>
+                  <TableCell sx={{ fontWeight: 600 }}>比较方式</TableCell>
+                  <TableCell sx={{ fontWeight: 600 }}>阈值</TableCell>
+                  <TableCell sx={{ fontWeight: 600 }}>持续时间(分钟)</TableCell>
+                  <TableCell sx={{ fontWeight: 600 }}>状态</TableCell>
                 </TableRow>
-              ) : (
-                conditions.map((c, idx) => (
-                  <TableRow key={idx}>
-                    <TableCell>
-                      <Chip
-                        label={c.metric}
-                        size='small'
-                        variant='outlined'
-                      />
-                    </TableCell>
-                    <TableCell>
-                      <Typography variant='caption'>
-                        {c.comparison === 'gt' ? '大于' : c.comparison === 'lt' ? '小于' : '等于'}
-                      </Typography>
-                    </TableCell>
-                    <TableCell>
+              </TableHead>
+              <TableBody>
+                {conditions.length === 0 ? (
+                  <TableRow>
+                    <TableCell
+                      colSpan={5}
+                      align='center'
+                    >
                       <Typography
-                        variant='caption'
-                        sx={{ fontFamily: 'monospace' }}
+                        variant='body2'
+                        color='text.secondary'
                       >
-                        {c.threshold}
+                        暂无配置条件
                       </Typography>
-                    </TableCell>
-                    <TableCell>{c.duration_window}</TableCell>
-                    <TableCell>
-                      <V51Badge
-                        label={c.enabled ? '启用' : '禁用'}
-                        variant={c.enabled ? 'success' : 'neutral'}
-                        size='sm'
-                      />
                     </TableCell>
                   </TableRow>
-                ))
-              )}
-            </TableBody>
-          </Table>
-        </TableContainer>
-      </V51Card>
-
-      <V51Card
-        title='回滚事件历史'
-        sx={{ mt: 2 }}
-      >
-        <TableContainer>
-          <Table size='small'>
-            <TableHead>
-              <TableRow>
-                <TableCell sx={{ fontWeight: 600 }}>事件ID</TableCell>
-                <TableCell sx={{ fontWeight: 600 }}>部署ID</TableCell>
-                <TableCell sx={{ fontWeight: 600 }}>触发原因</TableCell>
-                <TableCell sx={{ fontWeight: 600 }}>状态</TableCell>
-                <TableCell sx={{ fontWeight: 600 }}>耗时</TableCell>
-                <TableCell sx={{ fontWeight: 600 }}>时间</TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {events.length === 0 ? (
-                <TableRow>
-                  <TableCell
-                    colSpan={6}
-                    align='center'
-                  >
-                    <Typography
-                      variant='body2'
-                      color='text.secondary'
-                    >
-                      暂无回滚事件
-                    </Typography>
-                  </TableCell>
-                </TableRow>
-              ) : (
-                events.map((e) => (
-                  <TableRow key={e.id}>
-                    <TableCell>
-                      <Typography
-                        variant='caption'
-                        sx={{ fontFamily: 'monospace' }}
-                      >
-                        {e.id}
-                      </Typography>
-                    </TableCell>
-                    <TableCell>
-                      <Typography
-                        variant='caption'
-                        sx={{ fontFamily: 'monospace' }}
-                      >
-                        {e.deployment_id}
-                      </Typography>
-                    </TableCell>
-                    <TableCell>
-                      <Stack
-                        direction='column'
-                        spacing={0}
-                      >
-                        <V51Badge
-                          label={e.trigger.type}
-                          variant={e.trigger.type === 'manual' ? 'info' : 'warning'}
-                          size='sm'
+                ) : (
+                  conditions.map((c, idx) => (
+                    <TableRow key={idx}>
+                      <TableCell>
+                        <Chip
+                          label={c.metric}
+                          size='small'
+                          variant='outlined'
                         />
+                      </TableCell>
+                      <TableCell>
+                        <Typography variant='caption'>
+                          {c.comparison === 'gt' ? '大于' : c.comparison === 'lt' ? '小于' : '等于'}
+                        </Typography>
+                      </TableCell>
+                      <TableCell>
                         <Typography
                           variant='caption'
-                          color='text.secondary'
-                          sx={{ mt: 0.5 }}
+                          sx={{ fontFamily: 'monospace' }}
                         >
-                          {e.trigger.message}
+                          {c.threshold}
                         </Typography>
-                      </Stack>
-                    </TableCell>
-                    <TableCell>
-                      <V51Badge
-                        label={e.status}
-                        variant={
-                          e.status === 'completed'
-                            ? 'success'
-                            : e.status === 'failed'
-                              ? 'error'
-                              : 'warning'
-                        }
-                        size='sm'
-                      />
-                    </TableCell>
-                    <TableCell>
-                      <Typography variant='caption'>
-                        {e.rollback_duration_ms
-                          ? `${Math.round(e.rollback_duration_ms / 1000)}s`
-                          : '—'}
-                      </Typography>
-                    </TableCell>
-                    <TableCell>
-                      <Typography variant='caption'>
-                        {new Date(e.initiated_at).toLocaleString()}
+                      </TableCell>
+                      <TableCell>{c.duration_window}</TableCell>
+                      <TableCell>
+                        <Chip
+                          label={c.enabled ? '启用' : '禁用'}
+                          color={c.enabled ? 'success' : 'default'}
+                          size='small'
+                        />
+                      </TableCell>
+                    </TableRow>
+                  ))
+                )}
+              </TableBody>
+            </Table>
+          </TableContainer>
+        </CardContent>
+      </Card>
+
+      <Card
+        variant='outlined'
+        sx={{ mt: 2 }}
+      >
+        <CardHeader title='回滚事件历史' />
+        <CardContent>
+          <TableContainer>
+            <Table size='small'>
+              <TableHead>
+                <TableRow>
+                  <TableCell sx={{ fontWeight: 600 }}>事件ID</TableCell>
+                  <TableCell sx={{ fontWeight: 600 }}>部署ID</TableCell>
+                  <TableCell sx={{ fontWeight: 600 }}>触发原因</TableCell>
+                  <TableCell sx={{ fontWeight: 600 }}>状态</TableCell>
+                  <TableCell sx={{ fontWeight: 600 }}>耗时</TableCell>
+                  <TableCell sx={{ fontWeight: 600 }}>时间</TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {events.length === 0 ? (
+                  <TableRow>
+                    <TableCell
+                      colSpan={6}
+                      align='center'
+                    >
+                      <Typography
+                        variant='body2'
+                        color='text.secondary'
+                      >
+                        暂无回滚事件
                       </Typography>
                     </TableCell>
                   </TableRow>
-                ))
-              )}
-            </TableBody>
-          </Table>
-        </TableContainer>
-      </V51Card>
+                ) : (
+                  events.map((e) => (
+                    <TableRow key={e.id}>
+                      <TableCell>
+                        <Typography
+                          variant='caption'
+                          sx={{ fontFamily: 'monospace' }}
+                        >
+                          {e.id}
+                        </Typography>
+                      </TableCell>
+                      <TableCell>
+                        <Typography
+                          variant='caption'
+                          sx={{ fontFamily: 'monospace' }}
+                        >
+                          {e.deployment_id}
+                        </Typography>
+                      </TableCell>
+                      <TableCell>
+                        <Stack
+                          direction='column'
+                          spacing={0}
+                        >
+                          <Chip
+                            label={e.trigger.type}
+                            color={e.trigger.type === 'manual' ? 'info' : 'warning'}
+                            size='small'
+                          />
+                          <Typography
+                            variant='caption'
+                            color='text.secondary'
+                            sx={{ mt: 0.5 }}
+                          >
+                            {e.trigger.message}
+                          </Typography>
+                        </Stack>
+                      </TableCell>
+                      <TableCell>
+                        <Chip
+                          label={e.status}
+                          color={
+                            e.status === 'completed'
+                              ? 'success'
+                              : e.status === 'failed'
+                                ? 'error'
+                                : 'warning'
+                          }
+                          size='small'
+                        />
+                      </TableCell>
+                      <TableCell>
+                        <Typography variant='caption'>
+                          {e.rollback_duration_ms
+                            ? `${Math.round(e.rollback_duration_ms / 1000)}s`
+                            : '—'}
+                        </Typography>
+                      </TableCell>
+                      <TableCell>
+                        <Typography variant='caption'>
+                          {new Date(e.initiated_at).toLocaleString()}
+                        </Typography>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                )}
+              </TableBody>
+            </Table>
+          </TableContainer>
+        </CardContent>
+      </Card>
     </Box>
   );
 };
@@ -1321,240 +1357,251 @@ const HealthTab: React.FC<{
 
   return (
     <Box sx={{ p: 3 }}>
-      <V51Card
-        title='实时指标监控'
-        subtitle='模拟和监控关键指标'
-      >
-        <Grid
-          container
-          spacing={2}
-        >
-          {metricConfigs.map((config) => {
-            const value = simulatedValues[config.key] ?? 0;
-            const isCritical = value >= config.thresholds.critical;
-            const isWarning = value >= config.thresholds.warning && !isCritical;
-            return (
-              <Grid
-                size={{ xs: 12, md: 6, lg: 4 }}
-                key={config.key}
-              >
-                <Paper
-                  sx={{
-                    p: 2,
-                    borderRadius: 2,
-                    border: `2px solid ${isCritical ? '#ef4444' : isWarning ? '#f59e0b' : 'transparent'}`,
-                    bgcolor: isCritical
-                      ? 'rgba(239, 68, 68, 0.05)'
-                      : isWarning
-                        ? 'rgba(245, 158, 11, 0.05)'
-                        : 'transparent',
-                  }}
+      <Card variant='outlined'>
+        <CardHeader
+          title='实时指标监控'
+          subheader='模拟和监控关键指标'
+        />
+        <CardContent>
+          <Grid
+            container
+            spacing={2}
+          >
+            {metricConfigs.map((config) => {
+              const value = simulatedValues[config.key] ?? 0;
+              const isCritical = value >= config.thresholds.critical;
+              const isWarning = value >= config.thresholds.warning && !isCritical;
+              return (
+                <Grid
+                  size={{ xs: 12, md: 6, lg: 4 }}
+                  key={config.key}
                 >
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
-                    <Box sx={{ color: config.color }}>{config.icon}</Box>
-                    <Typography
-                      variant='subtitle2'
-                      sx={{ fontWeight: 600 }}
-                    >
-                      {config.label}
-                    </Typography>
-                    {isCritical && (
-                      <V51Badge
-                        label='危险'
-                        variant='error'
-                        size='sm'
-                      />
-                    )}
-                    {isWarning && (
-                      <V51Badge
-                        label='警告'
-                        variant='warning'
-                        size='sm'
-                      />
-                    )}
-                  </Box>
-                  <Box sx={{ display: 'flex', alignItems: 'baseline', gap: 1, mb: 1 }}>
-                    <Typography
-                      variant='h4'
-                      sx={{ fontWeight: 700, color: isCritical ? '#ef4444' : 'text.primary' }}
-                    >
-                      {value.toFixed(config.key === 'error_rate' ? 2 : 0)}
-                    </Typography>
-                    <Typography
-                      variant='body2'
-                      color='text.secondary'
-                    >
-                      {config.unit}
-                    </Typography>
-                  </Box>
-                  <LinearProgress
-                    variant='determinate'
-                    value={Math.min((value / config.thresholds.critical) * 100, 100)}
-                    sx={{ height: 8, borderRadius: 4 }}
-                    color={isCritical ? 'error' : isWarning ? 'warning' : 'success'}
-                  />
-                  <Box sx={{ display: 'flex', gap: 0.5, mt: 1 }}>
-                    <TextField
-                      type='number'
-                      size='small'
-                      value={value}
-                      onChange={(e) => {
-                        const newVal = parseFloat(e.target.value) || 0;
-                        setSimulatedValues((prev) => ({ ...prev, [config.key]: newVal }));
-                        onSimulateMetric(config.key, newVal);
-                      }}
-                      sx={{ width: 100 }}
-                    />
-                    <Button
-                      size='small'
-                      variant='outlined'
-                      onClick={() => {
-                        const newVal = Math.max(0, value - config.thresholds.critical * 0.1);
-                        setSimulatedValues((prev) => ({ ...prev, [config.key]: newVal }));
-                        onSimulateMetric(config.key, newVal);
-                      }}
-                    >
-                      ↓
-                    </Button>
-                    <Button
-                      size='small'
-                      variant='outlined'
-                      onClick={() => {
-                        const newVal = value + config.thresholds.critical * 0.1;
-                        setSimulatedValues((prev) => ({ ...prev, [config.key]: newVal }));
-                        onSimulateMetric(config.key, newVal);
-                      }}
-                    >
-                      ↑
-                    </Button>
-                  </Box>
-                </Paper>
-              </Grid>
-            );
-          })}
-        </Grid>
-      </V51Card>
-
-      <V51Card
-        title='服务健康状态'
-        subtitle='部署实例的健康检查结果'
-        sx={{ mt: 2 }}
-      >
-        <TableContainer>
-          <Table size='small'>
-            <TableHead>
-              <TableRow>
-                <TableCell sx={{ fontWeight: 600 }}>部署</TableCell>
-                <TableCell sx={{ fontWeight: 600 }}>健康状态</TableCell>
-                <TableCell sx={{ fontWeight: 600 }}>最近检查</TableCell>
-                <TableCell sx={{ fontWeight: 600 }}>实例详情</TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {deployments.length === 0 ? (
-                <TableRow>
-                  <TableCell
-                    colSpan={4}
-                    align='center'
+                  <Paper
+                    sx={{
+                      p: 2,
+                      borderRadius: 2,
+                      border: `2px solid ${isCritical ? '#ef4444' : isWarning ? '#f59e0b' : 'transparent'}`,
+                      bgcolor: isCritical
+                        ? 'rgba(239, 68, 68, 0.05)'
+                        : isWarning
+                          ? 'rgba(245, 158, 11, 0.05)'
+                          : 'transparent',
+                    }}
                   >
-                    <Typography
-                      variant='body2'
-                      color='text.secondary'
-                    >
-                      暂无部署
-                    </Typography>
-                  </TableCell>
-                </TableRow>
-              ) : (
-                deployments.slice(0, 10).map((d) => {
-                  const hs = healthStatus[d.id];
-                  const overall = hs?.status || 'unknown';
-                  return (
-                    <TableRow key={d.id}>
-                      <TableCell>
-                        <Typography variant='body2'>
-                          {d.name} v{d.version}
-                        </Typography>
-                        <Typography
-                          variant='caption'
-                          color='text.secondary'
-                        >
-                          {d.environment} · {d.strategy}
-                        </Typography>
-                      </TableCell>
-                      <TableCell>
-                        <HealthStatusChip status={overall} />
-                      </TableCell>
-                      <TableCell>
-                        <Typography variant='caption'>
-                          {hs?.last_check ? new Date(hs.last_check).toLocaleString() : '—'}
-                        </Typography>
-                      </TableCell>
-                      <TableCell>
-                        <Stack
-                          direction='column'
-                          spacing={0.5}
-                        >
-                          {d.units.slice(0, 3).map((u) => (
-                            <Box
-                              key={u.name}
-                              sx={{ display: 'flex', alignItems: 'center', gap: 1 }}
-                            >
-                              <HealthStatusDot status={u.health_status} />
-                              <Typography variant='caption'>{u.name}</Typography>
-                              <Typography
-                                variant='caption'
-                                color='text.secondary'
-                              >
-                                · {u.status}
-                              </Typography>
-                            </Box>
-                          ))}
-                        </Stack>
-                      </TableCell>
-                    </TableRow>
-                  );
-                })
-              )}
-            </TableBody>
-          </Table>
-        </TableContainer>
-      </V51Card>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
+                      <Box sx={{ color: config.color }}>{config.icon}</Box>
+                      <Typography
+                        variant='subtitle2'
+                        sx={{ fontWeight: 600 }}
+                      >
+                        {config.label}
+                      </Typography>
+                      {isCritical && (
+                        <Chip
+                          label='危险'
+                          color='error'
+                          size='small'
+                        />
+                      )}
+                      {isWarning && (
+                        <Chip
+                          label='警告'
+                          color='warning'
+                          size='small'
+                        />
+                      )}
+                    </Box>
+                    <Box sx={{ display: 'flex', alignItems: 'baseline', gap: 1, mb: 1 }}>
+                      <Typography
+                        variant='h4'
+                        sx={{ fontWeight: 700, color: isCritical ? '#ef4444' : 'text.primary' }}
+                      >
+                        {value.toFixed(config.key === 'error_rate' ? 2 : 0)}
+                      </Typography>
+                      <Typography
+                        variant='body2'
+                        color='text.secondary'
+                      >
+                        {config.unit}
+                      </Typography>
+                    </Box>
+                    <LinearProgress
+                      variant='determinate'
+                      value={Math.min((value / config.thresholds.critical) * 100, 100)}
+                      sx={{ height: 8, borderRadius: 4 }}
+                      color={isCritical ? 'error' : isWarning ? 'warning' : 'success'}
+                    />
+                    <Box sx={{ display: 'flex', gap: 0.5, mt: 1 }}>
+                      <TextField
+                        type='number'
+                        size='small'
+                        value={value}
+                        onChange={(e) => {
+                          const newVal = parseFloat(e.target.value) || 0;
+                          setSimulatedValues((prev) => ({ ...prev, [config.key]: newVal }));
+                          onSimulateMetric(config.key, newVal);
+                        }}
+                        sx={{ width: 100 }}
+                      />
+                      <Button
+                        size='small'
+                        variant='outlined'
+                        onClick={() => {
+                          const newVal = Math.max(0, value - config.thresholds.critical * 0.1);
+                          setSimulatedValues((prev) => ({ ...prev, [config.key]: newVal }));
+                          onSimulateMetric(config.key, newVal);
+                        }}
+                      >
+                        ↓
+                      </Button>
+                      <Button
+                        size='small'
+                        variant='outlined'
+                        onClick={() => {
+                          const newVal = value + config.thresholds.critical * 0.1;
+                          setSimulatedValues((prev) => ({ ...prev, [config.key]: newVal }));
+                          onSimulateMetric(config.key, newVal);
+                        }}
+                      >
+                        ↑
+                      </Button>
+                    </Box>
+                  </Paper>
+                </Grid>
+              );
+            })}
+          </Grid>
+        </CardContent>
+      </Card>
 
-      <V51Card
-        title='健康监控说明'
+      <Card
+        variant='outlined'
         sx={{ mt: 2 }}
       >
-        <Grid
-          container
-          spacing={2}
-        >
-          <Grid size={{ xs: 12, md: 4 }}>
-            <Alert
-              severity='success'
-              variant='outlined'
-            >
-              <strong>健康：</strong>所有指标在正常范围内
-            </Alert>
+        <CardHeader
+          title='服务健康状态'
+          subheader='部署实例的健康检查结果'
+        />
+        <CardContent>
+          <TableContainer>
+            <Table size='small'>
+              <TableHead>
+                <TableRow>
+                  <TableCell sx={{ fontWeight: 600 }}>部署</TableCell>
+                  <TableCell sx={{ fontWeight: 600 }}>健康状态</TableCell>
+                  <TableCell sx={{ fontWeight: 600 }}>最近检查</TableCell>
+                  <TableCell sx={{ fontWeight: 600 }}>实例详情</TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {deployments.length === 0 ? (
+                  <TableRow>
+                    <TableCell
+                      colSpan={4}
+                      align='center'
+                    >
+                      <Typography
+                        variant='body2'
+                        color='text.secondary'
+                      >
+                        暂无部署
+                      </Typography>
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  deployments.slice(0, 10).map((d) => {
+                    const hs = healthStatus[d.id];
+                    const overall = hs?.status || 'unknown';
+                    return (
+                      <TableRow key={d.id}>
+                        <TableCell>
+                          <Typography variant='body2'>
+                            {d.name} v{d.version}
+                          </Typography>
+                          <Typography
+                            variant='caption'
+                            color='text.secondary'
+                          >
+                            {d.environment} · {d.strategy}
+                          </Typography>
+                        </TableCell>
+                        <TableCell>
+                          <HealthStatusChip status={overall} />
+                        </TableCell>
+                        <TableCell>
+                          <Typography variant='caption'>
+                            {hs?.last_check ? new Date(hs.last_check).toLocaleString() : '—'}
+                          </Typography>
+                        </TableCell>
+                        <TableCell>
+                          <Stack
+                            direction='column'
+                            spacing={0.5}
+                          >
+                            {d.units.slice(0, 3).map((u) => (
+                              <Box
+                                key={u.name}
+                                sx={{ display: 'flex', alignItems: 'center', gap: 1 }}
+                              >
+                                <HealthStatusDot status={u.health_status} />
+                                <Typography variant='caption'>{u.name}</Typography>
+                                <Typography
+                                  variant='caption'
+                                  color='text.secondary'
+                                >
+                                  · {u.status}
+                                </Typography>
+                              </Box>
+                            ))}
+                          </Stack>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })
+                )}
+              </TableBody>
+            </Table>
+          </TableContainer>
+        </CardContent>
+      </Card>
+
+      <Card
+        variant='outlined'
+        sx={{ mt: 2 }}
+      >
+        <CardHeader title='健康监控说明' />
+        <CardContent>
+          <Grid
+            container
+            spacing={2}
+          >
+            <Grid size={{ xs: 12, md: 4 }}>
+              <Alert
+                severity='success'
+                variant='outlined'
+              >
+                <strong>健康：</strong>所有指标在正常范围内
+              </Alert>
+            </Grid>
+            <Grid size={{ xs: 12, md: 4 }}>
+              <Alert
+                severity='warning'
+                variant='outlined'
+              >
+                <strong>警告：</strong>部分指标接近阈值，需关注
+              </Alert>
+            </Grid>
+            <Grid size={{ xs: 12, md: 4 }}>
+              <Alert
+                severity='error'
+                variant='outlined'
+              >
+                <strong>危险：</strong>指标超过临界值，将触发自动回滚
+              </Alert>
+            </Grid>
           </Grid>
-          <Grid size={{ xs: 12, md: 4 }}>
-            <Alert
-              severity='warning'
-              variant='outlined'
-            >
-              <strong>警告：</strong>部分指标接近阈值，需关注
-            </Alert>
-          </Grid>
-          <Grid size={{ xs: 12, md: 4 }}>
-            <Alert
-              severity='error'
-              variant='outlined'
-            >
-              <strong>危险：</strong>指标超过临界值，将触发自动回滚
-            </Alert>
-          </Grid>
-        </Grid>
-      </V51Card>
+        </CardContent>
+      </Card>
     </Box>
   );
 };
@@ -1670,14 +1717,14 @@ const CreatePipelineDialog: React.FC<{
               >
                 阶段配置
               </Typography>
-              <V51Button
-                variant='outline'
-                size='sm'
+              <Button
+                variant='outlined'
+                size='small'
                 startIcon={<Plus size={14} />}
                 onClick={addStage}
               >
                 添加阶段
-              </V51Button>
+              </Button>
             </Box>
             <Stack spacing={1}>
               {stageConfigs.map((stage, idx) => (
@@ -1793,19 +1840,19 @@ const CreatePipelineDialog: React.FC<{
         </Stack>
       </DialogContent>
       <DialogActions>
-        <V51Button
-          variant='outline'
+        <Button
+          variant='outlined'
           onClick={onClose}
         >
           取消
-        </V51Button>
-        <V51Button
-          variant='primary'
+        </Button>
+        <Button
+          variant='contained'
           onClick={handleCreate}
           disabled={!canCreate}
         >
           创建
-        </V51Button>
+        </Button>
       </DialogActions>
     </Dialog>
   );
@@ -1889,20 +1936,20 @@ const DeployDialog: React.FC<{
         </Stack>
       </DialogContent>
       <DialogActions>
-        <V51Button
-          variant='outline'
+        <Button
+          variant='outlined'
           onClick={onClose}
         >
           取消
-        </V51Button>
-        <V51Button
-          variant='primary'
+        </Button>
+        <Button
+          variant='contained'
           startIcon={<Rocket size={14} />}
           onClick={handleDeploy}
           disabled={!canDeploy}
         >
           开始部署
-        </V51Button>
+        </Button>
       </DialogActions>
     </Dialog>
   );
@@ -1986,20 +2033,20 @@ const PolicyCard: React.FC<{
 );
 
 const StatusChip: React.FC<{ status: string }> = ({ status }) => {
-  const colorMap: Record<string, 'success' | 'error' | 'warning' | 'info' | 'neutral'> = {
-    idle: 'neutral',
+  const colorMap: Record<string, 'success' | 'error' | 'warning' | 'info' | 'default'> = {
+    idle: 'default',
     running: 'info',
     completed: 'success',
     failed: 'error',
     cancelled: 'warning',
     paused: 'warning',
-    pending: 'neutral',
+    pending: 'default',
   };
   return (
-    <V51Badge
+    <Chip
       label={status}
-      variant={colorMap[status] || 'neutral'}
-      size='sm'
+      color={colorMap[status] || 'default'}
+      size='small'
     />
   );
 };
@@ -2014,10 +2061,10 @@ const DeploymentStatusChip: React.FC<{ status: string }> = ({ status }) => {
     failed: 'error',
   };
   return (
-    <V51Badge
+    <Chip
       label={status}
-      variant={colorMap[status] || 'default'}
-      size='sm'
+      color={colorMap[status] || 'default'}
+      size='small'
     />
   );
 };
@@ -2030,10 +2077,10 @@ const HealthStatusChip: React.FC<{ status: HealthCheckStatus }> = ({ status }) =
     unknown: 'info',
   };
   return (
-    <V51Badge
+    <Chip
       label={status}
-      variant={colorMap[status] || 'info'}
-      size='sm'
+      color={colorMap[status] || 'info'}
+      size='small'
     />
   );
 };

@@ -32,6 +32,7 @@ import {
   MenuItem,
   OutlinedInput,
   Grid,
+  Card,
 } from '@mui/material';
 import {
   X as XIcon,
@@ -54,7 +55,6 @@ import {
   Link as LinkIcon,
   GitBranch,
 } from 'lucide-react';
-import { V51Card } from '../../design-system/components';
 import {
   codeNavigator,
   type SearchResult,
@@ -803,7 +803,7 @@ const NavigatorTab: React.FC<{
     </Stack>
 
     <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 3 }}>
-      <V51Card>
+      <Card variant='outlined' sx={{ p: 2 }}>
         <Typography
           variant='subtitle2'
           sx={{ fontWeight: 600, mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}
@@ -868,9 +868,9 @@ const NavigatorTab: React.FC<{
             ))}
           </List>
         )}
-      </V51Card>
+      </Card>
 
-      <V51Card>
+      <Card variant='outlined' sx={{ p: 2 }}>
         <Typography
           variant='subtitle2'
           sx={{ fontWeight: 600, mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}
@@ -979,11 +979,11 @@ const NavigatorTab: React.FC<{
         ) : (
           <Alert severity='info'>搜索符号后，此处将显示符号详情和引用关系。</Alert>
         )}
-      </V51Card>
+      </Card>
     </Box>
 
     {selectedFile && (
-      <V51Card>
+      <Card variant='outlined' sx={{ p: 2 }}>
         <Typography
           variant='subtitle2'
           sx={{ fontWeight: 600, mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}
@@ -1128,7 +1128,7 @@ const NavigatorTab: React.FC<{
             />
           ))}
         </Box>
-      </V51Card>
+      </Card>
     )}
   </Box>
 );
@@ -1207,7 +1207,7 @@ const GeneratorTab: React.FC<{
 
       {activeSubTab === 'jsdoc' && (
         <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 3 }}>
-          <V51Card>
+          <Card variant='outlined' sx={{ p: 2 }}>
             <Typography
               variant='subtitle2'
               sx={{ fontWeight: 600, mb: 2 }}
@@ -1264,9 +1264,9 @@ const GeneratorTab: React.FC<{
                 生成文档
               </Button>
             </Stack>
-          </V51Card>
+          </Card>
 
-          <V51Card>
+          <Card variant='outlined' sx={{ p: 2 }}>
             <Typography
               variant='subtitle2'
               sx={{ fontWeight: 600, mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}
@@ -1319,13 +1319,13 @@ const GeneratorTab: React.FC<{
                 </Box>
               </>
             )}
-          </V51Card>
+          </Card>
         </Box>
       )}
 
       {activeSubTab === 'changelog' && (
         <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 3 }}>
-          <V51Card>
+          <Card variant='outlined' sx={{ p: 2 }}>
             <Typography
               variant='subtitle2'
               sx={{ fontWeight: 600, mb: 2 }}
@@ -1400,9 +1400,9 @@ const GeneratorTab: React.FC<{
                 生成 Changelog
               </Button>
             </Stack>
-          </V51Card>
+          </Card>
 
-          <V51Card>
+          <Card variant='outlined' sx={{ p: 2 }}>
             <Typography
               variant='subtitle2'
               sx={{ fontWeight: 600, mb: 2 }}
@@ -1431,12 +1431,12 @@ const GeneratorTab: React.FC<{
             ) : (
               <Alert severity='info'>点击"生成 Changelog"查看结果</Alert>
             )}
-          </V51Card>
+          </Card>
         </Box>
       )}
 
       {activeSubTab === 'readme' && (
-        <V51Card>
+        <Card variant='outlined' sx={{ p: 2 }}>
           <Typography
             variant='subtitle2'
             sx={{ fontWeight: 600, mb: 2 }}
@@ -1487,7 +1487,7 @@ const GeneratorTab: React.FC<{
           ) : (
             <Alert severity='info'>点击按钮生成 README 模板</Alert>
           )}
-        </V51Card>
+        </Card>
       )}
     </Box>
   );
@@ -1871,7 +1871,7 @@ const ActivityTab: React.FC<{
         最近活动
       </Typography>
 
-      <V51Card>
+      <Card variant='outlined' sx={{ p: 2 }}>
         {activity.length === 0 ? (
           <Alert severity='info'>暂无活动记录</Alert>
         ) : (
@@ -1929,7 +1929,7 @@ const ActivityTab: React.FC<{
             ))}
           </List>
         )}
-      </V51Card>
+      </Card>
 
       <Grid
         container
@@ -1937,7 +1937,7 @@ const ActivityTab: React.FC<{
         sx={{ mt: 2 }}
       >
         <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-          <V51Card>
+          <Card variant='outlined' sx={{ p: 2 }}>
             <Typography
               variant='caption'
               color='text.secondary'
@@ -1950,10 +1950,10 @@ const ActivityTab: React.FC<{
             >
               {activity.filter((a) => a.type === 'search').length}
             </Typography>
-          </V51Card>
+          </Card>
         </Grid>
         <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-          <V51Card>
+          <Card variant='outlined' sx={{ p: 2 }}>
             <Typography
               variant='caption'
               color='text.secondary'
@@ -1966,10 +1966,10 @@ const ActivityTab: React.FC<{
             >
               {activity.filter((a) => a.type === 'doc').length}
             </Typography>
-          </V51Card>
+          </Card>
         </Grid>
         <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-          <V51Card>
+          <Card variant='outlined' sx={{ p: 2 }}>
             <Typography
               variant='caption'
               color='text.secondary'
@@ -1982,10 +1982,10 @@ const ActivityTab: React.FC<{
             >
               {activity.filter((a) => a.type === 'qa').length}
             </Typography>
-          </V51Card>
+          </Card>
         </Grid>
         <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-          <V51Card>
+          <Card variant='outlined' sx={{ p: 2 }}>
             <Typography
               variant='caption'
               color='text.secondary'
@@ -1998,7 +1998,7 @@ const ActivityTab: React.FC<{
             >
               {activity.filter((a) => a.type === 'index').length}
             </Typography>
-          </V51Card>
+          </Card>
         </Grid>
       </Grid>
     </Box>

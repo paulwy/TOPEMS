@@ -21,6 +21,9 @@ import {
   Tooltip,
   Badge,
   LinearProgress,
+  Tabs,
+  Tab,
+  Card,
 } from '@mui/material';
 import {
   X as XIcon,
@@ -38,7 +41,6 @@ import {
   FileCode,
   Search,
 } from 'lucide-react';
-import { V51Tabs, V51Card } from '../../design-system/components';
 import {
   intelligentCodeCompletion,
   type CompletionContext,
@@ -172,17 +174,16 @@ const V53AIPanel: React.FC<{ onClose: () => void }> = ({ onClose }) => {
       >
         <V53PanelHeader onClose={onClose} />
         <Box sx={{ px: 2, py: 1.5, borderBottom: 1, borderColor: 'divider' }}>
-          <V51Tabs
-            tabs={[
-              { id: 'completion', label: '代码补全', icon: <Code2 size={16} />, content: null },
-              { id: 'test', label: '测试生成', icon: <TestTube2 size={16} />, content: null },
-              { id: 'ui', label: '组件推荐', icon: <LayoutGrid size={16} />, content: null },
-              { id: 'chat', label: 'AI 对话', icon: <MessageCircle size={16} />, content: null },
-            ]}
-            activeTab={activeTab}
-            onChange={(id) => setActiveTab(id as TabId)}
+          <Tabs
+            value={activeTab}
+            onChange={(_, id) => setActiveTab(id as TabId)}
             variant='fullWidth'
-          />
+          >
+            <Tab value='completion' label='代码补全' icon={<Code2 size={16} />} iconPosition='start' />
+            <Tab value='test' label='测试生成' icon={<TestTube2 size={16} />} iconPosition='start' />
+            <Tab value='ui' label='组件推荐' icon={<LayoutGrid size={16} />} iconPosition='start' />
+            <Tab value='chat' label='AI 对话' icon={<MessageCircle size={16} />} iconPosition='start' />
+          </Tabs>
         </Box>
         <Box sx={{ flex: 1, overflow: 'auto', bgcolor: 'grey.50' }}>
           {activeTab === 'completion' && <CodeCompletionTab />}
@@ -397,7 +398,7 @@ const CodeCompletionTab: React.FC = () => {
       </Stack>
 
       <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 3 }}>
-        <V51Card>
+        <Card variant='outlined' sx={{ p: 2 }}>
           <Typography
             variant='subtitle2'
             sx={{ fontWeight: 600, mb: 1.5, display: 'flex', alignItems: 'center', gap: 1 }}
@@ -454,9 +455,9 @@ const CodeCompletionTab: React.FC = () => {
               },
             }}
           />
-        </V51Card>
+        </Card>
 
-        <V51Card>
+        <Card variant='outlined' sx={{ p: 2 }}>
           <Typography
             variant='subtitle2'
             sx={{ fontWeight: 600, mb: 1.5, display: 'flex', alignItems: 'center', gap: 1 }}
@@ -563,7 +564,7 @@ const CodeCompletionTab: React.FC = () => {
               ))}
             </List>
           )}
-        </V51Card>
+        </Card>
       </Box>
     </Box>
   );
@@ -669,7 +670,7 @@ const TestGeneratorTab: React.FC = () => {
       </Stack>
 
       <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 3 }}>
-        <V51Card>
+        <Card variant='outlined' sx={{ p: 2 }}>
           <Typography
             variant='subtitle2'
             sx={{ fontWeight: 600, mb: 1.5 }}
@@ -767,9 +768,9 @@ const TestGeneratorTab: React.FC = () => {
               </Box>
             </Box>
           )}
-        </V51Card>
+        </Card>
 
-        <V51Card>
+        <Card variant='outlined' sx={{ p: 2 }}>
           <Box
             sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1.5 }}
           >
@@ -825,7 +826,7 @@ const TestGeneratorTab: React.FC = () => {
               </List>
             </Box>
           )}
-        </V51Card>
+        </Card>
       </Box>
     </Box>
   );
@@ -980,7 +981,7 @@ const UIRecommenderTab: React.FC = () => {
       </Stack>
 
       <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 3 }}>
-        <V51Card>
+        <Card variant='outlined' sx={{ p: 2 }}>
           <Typography
             variant='subtitle2'
             sx={{ fontWeight: 600, mb: 1.5 }}
@@ -1108,9 +1109,9 @@ const UIRecommenderTab: React.FC = () => {
                 )}
               </Paper>
             ))}
-        </V51Card>
+        </Card>
 
-        <V51Card>
+        <Card variant='outlined' sx={{ p: 2 }}>
           <Typography
             variant='subtitle2'
             sx={{ fontWeight: 600, mb: 1.5 }}
@@ -1189,7 +1190,7 @@ const UIRecommenderTab: React.FC = () => {
               </ListItem>
             ))}
           </List>
-        </V51Card>
+        </Card>
       </Box>
     </Box>
   );

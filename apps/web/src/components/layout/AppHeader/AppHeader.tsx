@@ -8,8 +8,6 @@ import { HeaderUserMenu } from './HeaderUserMenu';
 import { HeaderBreadcrumbs } from './HeaderBreadcrumbs';
 
 export interface AppHeaderProps {
-  tabletDrawerOpen?: boolean;
-  onTabletDrawerOpen?: () => void;
   mobileMenuOpen?: boolean;
   onMobileMenuOpen?: () => void;
   onMobileMenuClose?: () => void;

@@ -18,6 +18,8 @@ import {
   Alert,
   CircularProgress,
   Grid,
+  Card,
+  CardHeader,
   CardContent,
   Table,
   TableBody,
@@ -68,7 +70,6 @@ import {
   Palette,
   Layers,
 } from 'lucide-react';
-import { V51Card } from '../design-system/components';
 import {
   unifiedDevPlatform,
   type DevProject,
@@ -388,273 +389,285 @@ const DashboardTab: React.FC<{
         </Grid>
 
         <Grid size={{ xs: 12, md: 8 }}>
-          <V51Card
-            title='项目状态'
-            icon={<Rocket size={18} />}
-          >
-            <TableContainer>
-              <Table size='small'>
-                <TableHead>
-                  <TableRow>
-                    <TableCell>项目名</TableCell>
-                    <TableCell>技术栈</TableCell>
-                    <TableCell>状态</TableCell>
-                    <TableCell align='right'>健康度</TableCell>
-                  </TableRow>
-                </TableHead>
-                <TableBody>
-                  {projects.length === 0 ? (
+          <Card variant='outlined'>
+            <CardHeader
+              title='项目状态'
+              avatar={<Rocket size={18} />}
+            />
+            <CardContent>
+              <TableContainer>
+                <Table size='small'>
+                  <TableHead>
                     <TableRow>
-                      <TableCell
-                        colSpan={4}
-                        align='center'
-                        sx={{ py: 4, color: 'text.secondary' }}
-                      >
-                        暂无项目，前往"开发平台"创建第一个项目
-                      </TableCell>
+                      <TableCell>项目名</TableCell>
+                      <TableCell>技术栈</TableCell>
+                      <TableCell>状态</TableCell>
+                      <TableCell align='right'>健康度</TableCell>
                     </TableRow>
-                  ) : (
-                    projects.slice(0, 5).map((project) => (
-                      <TableRow
-                        key={project.id}
-                        hover
-                      >
-                        <TableCell>
-                          <Typography
-                            variant='body2'
-                            sx={{ fontWeight: 500 }}
-                          >
-                            {project.name}
-                          </Typography>
-                        </TableCell>
-                        <TableCell>
-                          <Stack
-                            direction='row'
-                            spacing={0.5}
-                          >
-                            <Chip
-                              label={FRAMEWORK_LABELS[project.stack.framework]}
-                              size='small'
-                              variant='outlined'
-                            />
-                            <Chip
-                              label={UI_LABELS[project.stack.ui] || project.stack.ui}
-                              size='small'
-                              variant='outlined'
-                            />
-                          </Stack>
-                        </TableCell>
-                        <TableCell>
-                          <Chip
-                            label={project.status}
-                            size='small'
-                            sx={{ bgcolor: STATUS_COLORS[project.status], color: 'common.white' }}
-                          />
-                        </TableCell>
-                        <TableCell align='right'>
-                          <Box
-                            sx={{
-                              display: 'flex',
-                              alignItems: 'center',
-                              gap: 1,
-                              justifyContent: 'flex-end',
-                            }}
-                          >
-                            <LinearProgress
-                              variant='determinate'
-                              value={project.health.score}
-                              sx={{ width: 60, height: 6, borderRadius: 3 }}
-                              color={
-                                project.health.score >= 80
-                                  ? 'success'
-                                  : project.health.score >= 60
-                                    ? 'warning'
-                                    : 'error'
-                              }
-                            />
-                            <Typography
-                              variant='caption'
-                              sx={{ fontWeight: 600 }}
-                            >
-                              {project.health.score}
-                            </Typography>
-                          </Box>
+                  </TableHead>
+                  <TableBody>
+                    {projects.length === 0 ? (
+                      <TableRow>
+                        <TableCell
+                          colSpan={4}
+                          align='center'
+                          sx={{ py: 4, color: 'text.secondary' }}
+                        >
+                          暂无项目，前往"开发平台"创建第一个项目
                         </TableCell>
                       </TableRow>
-                    ))
-                  )}
-                </TableBody>
-              </Table>
-            </TableContainer>
-          </V51Card>
+                    ) : (
+                      projects.slice(0, 5).map((project) => (
+                        <TableRow
+                          key={project.id}
+                          hover
+                        >
+                          <TableCell>
+                            <Typography
+                              variant='body2'
+                              sx={{ fontWeight: 500 }}
+                            >
+                              {project.name}
+                            </Typography>
+                          </TableCell>
+                          <TableCell>
+                            <Stack
+                              direction='row'
+                              spacing={0.5}
+                            >
+                              <Chip
+                                label={FRAMEWORK_LABELS[project.stack.framework]}
+                                size='small'
+                                variant='outlined'
+                              />
+                              <Chip
+                                label={UI_LABELS[project.stack.ui] || project.stack.ui}
+                                size='small'
+                                variant='outlined'
+                              />
+                            </Stack>
+                          </TableCell>
+                          <TableCell>
+                            <Chip
+                              label={project.status}
+                              size='small'
+                              sx={{ bgcolor: STATUS_COLORS[project.status], color: 'common.white' }}
+                            />
+                          </TableCell>
+                          <TableCell align='right'>
+                            <Box
+                              sx={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: 1,
+                                justifyContent: 'flex-end',
+                              }}
+                            >
+                              <LinearProgress
+                                variant='determinate'
+                                value={project.health.score}
+                                sx={{ width: 60, height: 6, borderRadius: 3 }}
+                                color={
+                                  project.health.score >= 80
+                                    ? 'success'
+                                    : project.health.score >= 60
+                                      ? 'warning'
+                                      : 'error'
+                                }
+                              />
+                              <Typography
+                                variant='caption'
+                                sx={{ fontWeight: 600 }}
+                              >
+                                {project.health.score}
+                              </Typography>
+                            </Box>
+                          </TableCell>
+                        </TableRow>
+                      ))
+                    )}
+                  </TableBody>
+                </Table>
+              </TableContainer>
+            </CardContent>
+          </Card>
         </Grid>
 
         <Grid size={{ xs: 12, md: 4 }}>
-          <V51Card
-            title='插件安装状态'
-            icon={<Blocks size={18} />}
-          >
-            <Stack spacing={1.5}>
-              <InfoRow
-                icon={
-                  <Package
-                    size={16}
-                    color='#6366f1'
-                  />
-                }
-                label='已安装插件'
-                value={`${installedPlugins.length} 个`}
-              />
-              <InfoRow
-                icon={
-                  <Download
-                    size={16}
-                    color='#14b8a6'
-                  />
-                }
-                label='可更新插件'
-                value={`${installedPlugins.filter((p) => p.updateAvailable).length} 个`}
-              />
-              <InfoRow
-                icon={
-                  <Star
-                    size={16}
-                    color='#f59e0b'
-                  />
-                }
-                label='精选推荐'
-                value={`${marketStats.featuredPlugins} 个`}
-              />
-              <InfoRow
-                icon={
-                  <Shield
-                    size={16}
-                    color='#22c55e'
-                  />
-                }
-                label='认证插件'
-                value={`${marketStats.verifiedPlugins} 个`}
-              />
-            </Stack>
-          </V51Card>
-        </Grid>
-
-        <Grid size={{ xs: 12, md: 6 }}>
-          <V51Card
-            title='最近流水线运行'
-            icon={<Workflow size={18} />}
-          >
-            <Stack spacing={1}>
-              {recentRuns.length === 0 ? (
-                <Typography
-                  variant='body2'
-                  color='text.secondary'
-                  sx={{ py: 2, textAlign: 'center' }}
-                >
-                  暂无流水线记录
-                </Typography>
-              ) : (
-                recentRuns.map((run) => (
-                  <Paper
-                    key={run.id}
-                    variant='outlined'
-                    sx={{ p: 1.5, display: 'flex', alignItems: 'center', gap: 1.5 }}
-                  >
-                    {run.status === 'success' ? (
-                      <CheckCircle2
-                        size={18}
-                        color='#22c55e'
-                      />
-                    ) : run.status === 'failed' ? (
-                      <XCircle
-                        size={18}
-                        color='#ef4444'
-                      />
-                    ) : (
-                      <Loader2
-                        size={18}
-                        color='#3b82f6'
-                        className='animate-spin'
-                      />
-                    )}
-                    <Box sx={{ flex: 1 }}>
-                      <Typography
-                        variant='body2'
-                        sx={{ fontWeight: 500 }}
-                      >
-                        {run.pipelineId}
-                      </Typography>
-                      <Typography
-                        variant='caption'
-                        color='text.secondary'
-                      >
-                        {run.status} · {run.stages.length} stages
-                      </Typography>
-                    </Box>
-                    {run.totalDurationMs && (
-                      <Typography
-                        variant='caption'
-                        color='text.secondary'
-                      >
-                        {(run.totalDurationMs / 1000).toFixed(1)}s
-                      </Typography>
-                    )}
-                  </Paper>
-                ))
-              )}
-            </Stack>
-          </V51Card>
-        </Grid>
-
-        <Grid size={{ xs: 12, md: 6 }}>
-          <V51Card
-            title='低代码页面'
-            icon={<Layout size={18} />}
-          >
-            <Stack spacing={1}>
-              {pages.length === 0 ? (
-                <Typography
-                  variant='body2'
-                  color='text.secondary'
-                  sx={{ py: 2, textAlign: 'center' }}
-                >
-                  暂无低代码页面
-                </Typography>
-              ) : (
-                pages.map((page) => (
-                  <Paper
-                    key={page.id}
-                    variant='outlined'
-                    sx={{ p: 1.5, display: 'flex', alignItems: 'center', gap: 1.5 }}
-                  >
-                    <BoxIcon
-                      size={18}
-                      color='#8b5cf6'
+          <Card variant='outlined'>
+            <CardHeader
+              title='插件安装状态'
+              avatar={<Blocks size={18} />}
+            />
+            <CardContent>
+              <Stack spacing={1.5}>
+                <InfoRow
+                  icon={
+                    <Package
+                      size={16}
+                      color='#6366f1'
                     />
-                    <Box sx={{ flex: 1 }}>
-                      <Typography
-                        variant='body2'
-                        sx={{ fontWeight: 500 }}
-                      >
-                        {page.name}
-                      </Typography>
-                      <Typography
-                        variant='caption'
-                        color='text.secondary'
-                      >
-                        {page.status} · {page.components.length} 组件
-                      </Typography>
-                    </Box>
-                    <Chip
-                      label={page.version}
-                      size='small'
+                  }
+                  label='已安装插件'
+                  value={`${installedPlugins.length} 个`}
+                />
+                <InfoRow
+                  icon={
+                    <Download
+                      size={16}
+                      color='#14b8a6'
+                    />
+                  }
+                  label='可更新插件'
+                  value={`${installedPlugins.filter((p) => p.updateAvailable).length} 个`}
+                />
+                <InfoRow
+                  icon={
+                    <Star
+                      size={16}
+                      color='#f59e0b'
+                    />
+                  }
+                  label='精选推荐'
+                  value={`${marketStats.featuredPlugins} 个`}
+                />
+                <InfoRow
+                  icon={
+                    <Shield
+                      size={16}
+                      color='#22c55e'
+                    />
+                  }
+                  label='认证插件'
+                  value={`${marketStats.verifiedPlugins} 个`}
+                />
+              </Stack>
+            </CardContent>
+          </Card>
+        </Grid>
+
+        <Grid size={{ xs: 12, md: 6 }}>
+          <Card variant='outlined'>
+            <CardHeader
+              title='最近流水线运行'
+              avatar={<Workflow size={18} />}
+            />
+            <CardContent>
+              <Stack spacing={1}>
+                {recentRuns.length === 0 ? (
+                  <Typography
+                    variant='body2'
+                    color='text.secondary'
+                    sx={{ py: 2, textAlign: 'center' }}
+                  >
+                    暂无流水线记录
+                  </Typography>
+                ) : (
+                  recentRuns.map((run) => (
+                    <Paper
+                      key={run.id}
                       variant='outlined'
-                    />
-                  </Paper>
-                ))
-              )}
-            </Stack>
-          </V51Card>
+                      sx={{ p: 1.5, display: 'flex', alignItems: 'center', gap: 1.5 }}
+                    >
+                      {run.status === 'success' ? (
+                        <CheckCircle2
+                          size={18}
+                          color='#22c55e'
+                        />
+                      ) : run.status === 'failed' ? (
+                        <XCircle
+                          size={18}
+                          color='#ef4444'
+                        />
+                      ) : (
+                        <Loader2
+                          size={18}
+                          color='#3b82f6'
+                          className='animate-spin'
+                        />
+                      )}
+                      <Box sx={{ flex: 1 }}>
+                        <Typography
+                          variant='body2'
+                          sx={{ fontWeight: 500 }}
+                        >
+                          {run.pipelineId}
+                        </Typography>
+                        <Typography
+                          variant='caption'
+                          color='text.secondary'
+                        >
+                          {run.status} · {run.stages.length} stages
+                        </Typography>
+                      </Box>
+                      {run.totalDurationMs && (
+                        <Typography
+                          variant='caption'
+                          color='text.secondary'
+                        >
+                          {(run.totalDurationMs / 1000).toFixed(1)}s
+                        </Typography>
+                      )}
+                    </Paper>
+                  ))
+                )}
+              </Stack>
+            </CardContent>
+          </Card>
+        </Grid>
+
+        <Grid size={{ xs: 12, md: 6 }}>
+          <Card variant='outlined'>
+            <CardHeader
+              title='低代码页面'
+              avatar={<Layout size={18} />}
+            />
+            <CardContent>
+              <Stack spacing={1}>
+                {pages.length === 0 ? (
+                  <Typography
+                    variant='body2'
+                    color='text.secondary'
+                    sx={{ py: 2, textAlign: 'center' }}
+                  >
+                    暂无低代码页面
+                  </Typography>
+                ) : (
+                  pages.map((page) => (
+                    <Paper
+                      key={page.id}
+                      variant='outlined'
+                      sx={{ p: 1.5, display: 'flex', alignItems: 'center', gap: 1.5 }}
+                    >
+                      <BoxIcon
+                        size={18}
+                        color='#8b5cf6'
+                      />
+                      <Box sx={{ flex: 1 }}>
+                        <Typography
+                          variant='body2'
+                          sx={{ fontWeight: 500 }}
+                        >
+                          {page.name}
+                        </Typography>
+                        <Typography
+                          variant='caption'
+                          color='text.secondary'
+                        >
+                          {page.status} · {page.components.length} 组件
+                        </Typography>
+                      </Box>
+                      <Chip
+                        label={page.version}
+                        size='small'
+                        variant='outlined'
+                      />
+                    </Paper>
+                  ))
+                )}
+              </Stack>
+            </CardContent>
+          </Card>
         </Grid>
       </Grid>
     </Box>
@@ -667,38 +680,40 @@ const StatCard: React.FC<{
   icon: React.ReactNode;
   color: string;
 }> = ({ title, value, icon, color }) => (
-  <V51Card>
-    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-      <Box
-        sx={{
-          width: 44,
-          height: 44,
-          borderRadius: 2,
-          bgcolor: `${color}15`,
-          color,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-        }}
-      >
-        {icon}
-      </Box>
-      <Box>
-        <Typography
-          variant='body2'
-          color='text.secondary'
+  <Card variant='outlined'>
+    <CardContent>
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+        <Box
+          sx={{
+            width: 44,
+            height: 44,
+            borderRadius: 2,
+            bgcolor: `${color}15`,
+            color,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}
         >
-          {title}
-        </Typography>
-        <Typography
-          variant='h5'
-          sx={{ fontWeight: 700 }}
-        >
-          {value}
-        </Typography>
+          {icon}
+        </Box>
+        <Box>
+          <Typography
+            variant='body2'
+            color='text.secondary'
+          >
+            {title}
+          </Typography>
+          <Typography
+            variant='h5'
+            sx={{ fontWeight: 700 }}
+          >
+            {value}
+          </Typography>
+        </Box>
       </Box>
-    </Box>
-  </V51Card>
+    </CardContent>
+  </Card>
 );
 
 const InfoRow: React.FC<{ icon: React.ReactNode; label: string; value: string }> = ({
@@ -810,87 +825,90 @@ const PlatformTab: React.FC<{ projects: DevProject[] }> = ({ projects }) => {
               size={{ xs: 12, md: 6, lg: 4 }}
               key={project.id}
             >
-              <V51Card
-                title={project.name}
-                icon={<Code2 size={18} />}
-                action={
-                  <Tooltip title='查看详情'>
-                    <IconButton
-                      size='small'
-                      onClick={() => setSelectedProject(project)}
-                    >
-                      <ChevronRight size={18} />
-                    </IconButton>
-                  </Tooltip>
-                }
-              >
-                <Stack spacing={1.5}>
-                  <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
-                    <Chip
-                      label={FRAMEWORK_LABELS[project.stack.framework]}
-                      size='small'
-                      color='primary'
-                      variant='outlined'
-                    />
-                    <Chip
-                      label={UI_LABELS[project.stack.ui] || project.stack.ui}
-                      size='small'
-                      variant='outlined'
-                    />
-                    <Chip
-                      label={project.stack.buildTool}
-                      size='small'
-                      variant='outlined'
-                    />
-                  </Box>
+              <Card variant='outlined'>
+                <CardHeader
+                  title={project.name}
+                  avatar={<Code2 size={18} />}
+                  action={
+                    <Tooltip title='查看详情'>
+                      <IconButton
+                        size='small'
+                        onClick={() => setSelectedProject(project)}
+                      >
+                        <ChevronRight size={18} />
+                      </IconButton>
+                    </Tooltip>
+                  }
+                />
+                <CardContent>
+                  <Stack spacing={1.5}>
+                    <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                      <Chip
+                        label={FRAMEWORK_LABELS[project.stack.framework]}
+                        size='small'
+                        color='primary'
+                        variant='outlined'
+                      />
+                      <Chip
+                        label={UI_LABELS[project.stack.ui] || project.stack.ui}
+                        size='small'
+                        variant='outlined'
+                      />
+                      <Chip
+                        label={project.stack.buildTool}
+                        size='small'
+                        variant='outlined'
+                      />
+                    </Box>
 
-                  <Typography
-                    variant='body2'
-                    color='text.secondary'
-                    noWrap
-                  >
-                    {project.description}
-                  </Typography>
-
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                    <Chip
-                      label={project.status}
-                      size='small'
-                      sx={{
-                        bgcolor: STATUS_COLORS[project.status] || '#9e9e9e',
-                        color: 'common.white',
-                        height: 22,
-                      }}
-                    />
                     <Typography
-                      variant='caption'
+                      variant='body2'
                       color='text.secondary'
+                      noWrap
                     >
-                      健康度: {project.health.score}
+                      {project.description}
                     </Typography>
-                  </Box>
 
-                  <Box sx={{ display: 'flex', gap: 1 }}>
-                    <Button
-                      size='small'
-                      variant='outlined'
-                      startIcon={<Play size={14} />}
-                      onClick={() => handleRunPipeline(project.id, 'build-only')}
-                    >
-                      构建
-                    </Button>
-                    <Button
-                      size='small'
-                      variant='outlined'
-                      color='secondary'
-                      startIcon={<Rocket size={14} />}
-                      onClick={() => handleRunPipeline(project.id, 'build-deploy')}
-                    >
-                      部署
-                    </Button>
-                  </Box>
-                </Stack>
-              </V51Card>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                      <Chip
+                        label={project.status}
+                        size='small'
+                        sx={{
+                          bgcolor: STATUS_COLORS[project.status] || '#9e9e9e',
+                          color: 'common.white',
+                          height: 22,
+                        }}
+                      />
+                      <Typography
+                        variant='caption'
+                        color='text.secondary'
+                      >
+                        健康度: {project.health.score}
+                      </Typography>
+                    </Box>
+
+                    <Box sx={{ display: 'flex', gap: 1 }}>
+                      <Button
+                        size='small'
+                        variant='outlined'
+                        startIcon={<Play size={14} />}
+                        onClick={() => handleRunPipeline(project.id, 'build-only')}
+                      >
+                        构建
+                      </Button>
+                      <Button
+                        size='small'
+                        variant='outlined'
+                        color='secondary'
+                        startIcon={<Rocket size={14} />}
+                        onClick={() => handleRunPipeline(project.id, 'build-deploy')}
+                      >
+                        部署
+                      </Button>
+                    </Box>
+                  </Stack>
+                </CardContent>
+              </Card>
             </Grid>
           ))
         )}
@@ -1173,228 +1191,243 @@ const BuilderTab: React.FC<{ pages: CanvasPage[] }> = ({ pages }) => {
         spacing={3}
       >
         <Grid size={{ xs: 12, md: 3 }}>
-          <V51Card
-            title='页面列表'
-            icon={<Layout size={18} />}
-          >
-            <Stack spacing={1}>
-              <Box sx={{ display: 'flex', gap: 1 }}>
-                <TextField
-                  size='small'
-                  placeholder='新建页面...'
-                  value={newPageName}
-                  onChange={(e) => setNewPageName(e.target.value)}
-                  sx={{ flex: 1 }}
-                  onKeyDown={(e) => e.key === 'Enter' && handleCreatePage()}
-                />
-                <Button
-                  size='small'
-                  variant='contained'
-                  onClick={handleCreatePage}
+          <Card variant='outlined'>
+            <CardHeader
+              title='页面列表'
+              avatar={<Layout size={18} />}
+            />
+            <CardContent>
+              <Stack spacing={1}>
+                <Box sx={{ display: 'flex', gap: 1 }}>
+                  <TextField
+                    size='small'
+                    placeholder='新建页面...'
+                    value={newPageName}
+                    onChange={(e) => setNewPageName(e.target.value)}
+                    sx={{ flex: 1 }}
+                    onKeyDown={(e) => e.key === 'Enter' && handleCreatePage()}
+                  />
+                  <Button
+                    size='small'
+                    variant='contained'
+                    onClick={handleCreatePage}
+                  >
+                    <Plus size={16} />
+                  </Button>
+                </Box>
+                <Divider />
+                <List
+                  dense
+                  sx={{ maxHeight: 300, overflow: 'auto' }}
                 >
-                  <Plus size={16} />
-                </Button>
-              </Box>
-              <Divider />
-              <List
-                dense
-                sx={{ maxHeight: 300, overflow: 'auto' }}
-              >
-                {pages.map((page) => (
-                  <ListItem
-                    key={page.id}
-                    onClick={() => setSelectedPage(page)}
-                    sx={{
-                      cursor: 'pointer',
-                      backgroundColor: selectedPage?.id === page.id ? 'action.selected' : undefined,
-                      borderRadius: 1,
-                      '&.Mui-selected': { bgcolor: 'primary.light' },
-                    }}
-                  >
-                    <ListItemText
-                      primary={page.name}
-                      secondary={`${page.components.length} 组件 · ${page.status}`}
-                    />
-                  </ListItem>
-                ))}
-                {pages.length === 0 && (
-                  <Typography
-                    variant='body2'
-                    color='text.secondary'
-                    sx={{ p: 2, textAlign: 'center' }}
-                  >
-                    暂无页面
-                  </Typography>
-                )}
-              </List>
-            </Stack>
-          </V51Card>
+                  {pages.map((page) => (
+                    <ListItem
+                      key={page.id}
+                      onClick={() => setSelectedPage(page)}
+                      sx={{
+                        cursor: 'pointer',
+                        backgroundColor:
+                          selectedPage?.id === page.id ? 'action.selected' : undefined,
+                        borderRadius: 1,
+                        '&.Mui-selected': { bgcolor: 'primary.light' },
+                      }}
+                    >
+                      <ListItemText
+                        primary={page.name}
+                        secondary={`${page.components.length} 组件 · ${page.status}`}
+                      />
+                    </ListItem>
+                  ))}
+                  {pages.length === 0 && (
+                    <Typography
+                      variant='body2'
+                      color='text.secondary'
+                      sx={{ p: 2, textAlign: 'center' }}
+                    >
+                      暂无页面
+                    </Typography>
+                  )}
+                </List>
+              </Stack>
+            </CardContent>
+          </Card>
         </Grid>
 
         <Grid size={{ xs: 12, md: 6 }}>
-          <V51Card
-            title={selectedPage ? selectedPage.name : '画布'}
-            icon={<BoxIcon size={18} />}
-            action={
-              selectedPage && (
-                <Button
-                  size='small'
-                  variant='contained'
-                  onClick={handlePublish}
-                >
-                  <Upload
-                    size={14}
-                    style={{ marginRight: 4 }}
-                  />{' '}
-                  发布
-                </Button>
-              )
-            }
-          >
-            {selectedPage ? (
-              <Box sx={{ minHeight: 400, bgcolor: 'grey.100', borderRadius: 1, p: 2 }}>
-                {selectedPage.components.length === 0 ? (
-                  <Box
-                    sx={{
-                      display: 'flex',
-                      flexDirection: 'column',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      minHeight: 300,
-                      color: 'text.secondary',
-                    }}
+          <Card variant='outlined'>
+            <CardHeader
+              title={selectedPage ? selectedPage.name : '画布'}
+              avatar={<BoxIcon size={18} />}
+              action={
+                selectedPage && (
+                  <Button
+                    size='small'
+                    variant='contained'
+                    onClick={handlePublish}
                   >
-                    <MousePointerClick size={32} />
-                    <Typography
-                      variant='body2'
-                      sx={{ mt: 1 }}
+                    <Upload
+                      size={14}
+                      style={{ marginRight: 4 }}
+                    />{' '}
+                    发布
+                  </Button>
+                )
+              }
+            />
+            <CardContent>
+              {selectedPage ? (
+                <Box sx={{ minHeight: 400, bgcolor: 'grey.100', borderRadius: 1, p: 2 }}>
+                  {selectedPage.components.length === 0 ? (
+                    <Box
+                      sx={{
+                        display: 'flex',
+                        flexDirection: 'column',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        minHeight: 300,
+                        color: 'text.secondary',
+                      }}
                     >
-                      从左侧拖拽或点击组件添加到画布
-                    </Typography>
-                  </Box>
-                ) : (
-                  <Stack spacing={1}>
-                    {selectedPage.components.map((comp) => (
-                      <Paper
-                        key={comp.id}
-                        sx={{
-                          p: 1.5,
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: 1,
-                          border: '1px dashed',
-                          borderColor: 'primary.main',
-                        }}
+                      <MousePointerClick size={32} />
+                      <Typography
+                        variant='body2'
+                        sx={{ mt: 1 }}
                       >
-                        <BoxIcon
-                          size={16}
-                          color='#6366f1'
-                        />
-                        <Box sx={{ flex: 1 }}>
-                          <Typography
-                            variant='body2'
-                            sx={{ fontWeight: 500 }}
-                          >
-                            {comp.name}
-                          </Typography>
-                          <Typography
-                            variant='caption'
-                            color='text.secondary'
-                          >
-                            {comp.type} · ({comp.position.x}, {comp.position.y})
-                          </Typography>
-                        </Box>
-                        <Chip
-                          label={`${comp.position.width}x${comp.position.height}`}
-                          size='small'
-                          variant='outlined'
-                        />
-                      </Paper>
-                    ))}
-                  </Stack>
-                )}
-              </Box>
-            ) : (
-              <Box
-                sx={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  minHeight: 300,
-                }}
-              >
-                <Typography
-                  variant='body2'
-                  color='text.secondary'
+                        从左侧拖拽或点击组件添加到画布
+                      </Typography>
+                    </Box>
+                  ) : (
+                    <Stack spacing={1}>
+                      {selectedPage.components.map((comp) => (
+                        <Paper
+                          key={comp.id}
+                          sx={{
+                            p: 1.5,
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: 1,
+                            border: '1px dashed',
+                            borderColor: 'primary.main',
+                          }}
+                        >
+                          <BoxIcon
+                            size={16}
+                            color='#6366f1'
+                          />
+                          <Box sx={{ flex: 1 }}>
+                            <Typography
+                              variant='body2'
+                              sx={{ fontWeight: 500 }}
+                            >
+                              {comp.name}
+                            </Typography>
+                            <Typography
+                              variant='caption'
+                              color='text.secondary'
+                            >
+                              {comp.type} · ({comp.position.x}, {comp.position.y})
+                            </Typography>
+                          </Box>
+                          <Chip
+                            label={`${comp.position.width}x${comp.position.height}`}
+                            size='small'
+                            variant='outlined'
+                          />
+                        </Paper>
+                      ))}
+                    </Stack>
+                  )}
+                </Box>
+              ) : (
+                <Box
+                  sx={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    minHeight: 300,
+                  }}
                 >
-                  选择或创建一个页面开始搭建
-                </Typography>
-              </Box>
-            )}
-          </V51Card>
+                  <Typography
+                    variant='body2'
+                    color='text.secondary'
+                  >
+                    选择或创建一个页面开始搭建
+                  </Typography>
+                </Box>
+              )}
+            </CardContent>
+          </Card>
         </Grid>
 
         <Grid size={{ xs: 12, md: 3 }}>
-          <V51Card
-            title='组件库'
-            icon={<Layers size={18} />}
-          >
-            <Stack spacing={1}>
-              {componentTypes.map((ct) => (
-                <Button
-                  key={ct.type}
-                  variant='outlined'
-                  size='small'
-                  startIcon={ct.icon}
-                  onClick={() => handleAddComponent(ct.type)}
-                  sx={{ justifyContent: 'flex-start' }}
-                  fullWidth
-                >
-                  {ct.label}
-                </Button>
-              ))}
-            </Stack>
-          </V51Card>
+          <Card variant='outlined'>
+            <CardHeader
+              title='组件库'
+              avatar={<Layers size={18} />}
+            />
+            <CardContent>
+              <Stack spacing={1}>
+                {componentTypes.map((ct) => (
+                  <Button
+                    key={ct.type}
+                    variant='outlined'
+                    size='small'
+                    startIcon={ct.icon}
+                    onClick={() => handleAddComponent(ct.type)}
+                    sx={{ justifyContent: 'flex-start' }}
+                    fullWidth
+                  >
+                    {ct.label}
+                  </Button>
+                ))}
+              </Stack>
+            </CardContent>
+          </Card>
 
           {selectedPage && (
-            <V51Card
-              title='页面属性'
-              icon={<Settings size={18} />}
+            <Card
+              variant='outlined'
               sx={{ mt: 2 }}
             >
-              <Stack spacing={1.5}>
-                <InfoRow
-                  icon={
-                    <Database
-                      size={16}
-                      color='#6366f1'
-                    />
-                  }
-                  label='数据源'
-                  value={`${selectedPage.dataSources.length} 个`}
-                />
-                <InfoRow
-                  icon={
-                    <Palette
-                      size={16}
-                      color='#ec4899'
-                    />
-                  }
-                  label='主题模式'
-                  value={selectedPage.theme.mode}
-                />
-                <InfoRow
-                  icon={
-                    <GitBranch
-                      size={16}
-                      color='#14b8a6'
-                    />
-                  }
-                  label='版本'
-                  value={selectedPage.version}
-                />
-              </Stack>
-            </V51Card>
+              <CardHeader
+                title='页面属性'
+                avatar={<Settings size={18} />}
+              />
+              <CardContent>
+                <Stack spacing={1.5}>
+                  <InfoRow
+                    icon={
+                      <Database
+                        size={16}
+                        color='#6366f1'
+                      />
+                    }
+                    label='数据源'
+                    value={`${selectedPage.dataSources.length} 个`}
+                  />
+                  <InfoRow
+                    icon={
+                      <Palette
+                        size={16}
+                        color='#ec4899'
+                      />
+                    }
+                    label='主题模式'
+                    value={selectedPage.theme.mode}
+                  />
+                  <InfoRow
+                    icon={
+                      <GitBranch
+                        size={16}
+                        color='#14b8a6'
+                      />
+                    }
+                    label='版本'
+                    value={selectedPage.version}
+                  />
+                </Stack>
+              </CardContent>
+            </Card>
           )}
         </Grid>
       </Grid>
@@ -1456,181 +1489,187 @@ const MarketplaceTab: React.FC<{ installedPlugins: InstalledPlugin[] }> = ({
         spacing={3}
       >
         <Grid size={{ xs: 12, md: 8 }}>
-          <V51Card
-            title={`插件市场 (${searchResults.total})`}
-            icon={<Blocks size={18} />}
-          >
-            <Grid
-              container
-              spacing={2}
-            >
-              {searchResults.items.map((plugin) => {
-                const installed = installedPlugins.find((p) => p.manifest.id === plugin.id);
-                return (
-                  <Grid
-                    size={{ xs: 12, sm: 6, md: 4 }}
-                    key={plugin.id}
-                  >
-                    <Paper
-                      variant='outlined'
-                      sx={{
-                        p: 2,
-                        height: '100%',
-                        cursor: 'pointer',
-                        transition: 'all 0.2s',
-                        '&:hover': { boxShadow: 2, transform: 'translateY(-2px)' },
-                      }}
-                      onClick={() => handleCheckCompat(plugin)}
+          <Card variant='outlined'>
+            <CardHeader
+              title={`插件市场 (${searchResults.total})`}
+              avatar={<Blocks size={18} />}
+            />
+            <CardContent>
+              <Grid
+                container
+                spacing={2}
+              >
+                {searchResults.items.map((plugin) => {
+                  const installed = installedPlugins.find((p) => p.manifest.id === plugin.id);
+                  return (
+                    <Grid
+                      size={{ xs: 12, sm: 6, md: 4 }}
+                      key={plugin.id}
                     >
-                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
-                        <Box
-                          sx={{
-                            width: 36,
-                            height: 36,
-                            borderRadius: 1,
-                            bgcolor: 'primary.light',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                          }}
+                      <Paper
+                        variant='outlined'
+                        sx={{
+                          p: 2,
+                          height: '100%',
+                          cursor: 'pointer',
+                          transition: 'all 0.2s',
+                          '&:hover': { boxShadow: 2, transform: 'translateY(-2px)' },
+                        }}
+                        onClick={() => handleCheckCompat(plugin)}
+                      >
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
+                          <Box
+                            sx={{
+                              width: 36,
+                              height: 36,
+                              borderRadius: 1,
+                              bgcolor: 'primary.light',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                            }}
+                          >
+                            <Blocks
+                              size={18}
+                              color='#6366f1'
+                            />
+                          </Box>
+                          <Box sx={{ flex: 1 }}>
+                            <Typography
+                              variant='body2'
+                              sx={{ fontWeight: 600 }}
+                            >
+                              {plugin.name}
+                            </Typography>
+                            <Typography
+                              variant='caption'
+                              color='text.secondary'
+                            >
+                              v{plugin.version}
+                            </Typography>
+                          </Box>
+                          {installed && (
+                            <CheckCircle2
+                              size={18}
+                              color='#22c55e'
+                            />
+                          )}
+                        </Box>
+                        <Typography
+                          variant='caption'
+                          color='text.secondary'
+                          sx={{ display: 'block', mb: 1, height: 32, overflow: 'hidden' }}
                         >
-                          <Blocks
-                            size={18}
-                            color='#6366f1'
+                          {plugin.description}
+                        </Typography>
+                        <Stack
+                          direction='row'
+                          spacing={0.5}
+                          sx={{ mb: 1 }}
+                        >
+                          <Chip
+                            label={plugin.category}
+                            size='small'
+                            variant='outlined'
                           />
+                          {plugin.isVerified && (
+                            <Chip
+                              label='认证'
+                              size='small'
+                              color='success'
+                              variant='outlined'
+                            />
+                          )}
+                        </Stack>
+                        <Box sx={{ display: 'flex', gap: 0.5 }}>
+                          {installed ? (
+                            <Button
+                              size='small'
+                              variant='outlined'
+                              color='error'
+                              fullWidth
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleUninstall(plugin.id);
+                              }}
+                            >
+                              卸载
+                            </Button>
+                          ) : (
+                            <Button
+                              size='small'
+                              variant='contained'
+                              fullWidth
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleInstall(plugin.id);
+                              }}
+                            >
+                              安装
+                            </Button>
+                          )}
                         </Box>
-                        <Box sx={{ flex: 1 }}>
-                          <Typography
-                            variant='body2'
-                            sx={{ fontWeight: 600 }}
-                          >
-                            {plugin.name}
-                          </Typography>
-                          <Typography
-                            variant='caption'
-                            color='text.secondary'
-                          >
-                            v{plugin.version}
-                          </Typography>
-                        </Box>
-                        {installed && (
-                          <CheckCircle2
-                            size={18}
-                            color='#22c55e'
-                          />
-                        )}
+                      </Paper>
+                    </Grid>
+                  );
+                })}
+              </Grid>
+            </CardContent>
+          </Card>
+        </Grid>
+
+        <Grid size={{ xs: 12, md: 4 }}>
+          <Card variant='outlined'>
+            <CardHeader
+              title='已安装'
+              avatar={<Package size={18} />}
+            />
+            <CardContent>
+              <Stack spacing={1}>
+                {installedPlugins.length === 0 ? (
+                  <Typography
+                    variant='body2'
+                    color='text.secondary'
+                    sx={{ py: 2, textAlign: 'center' }}
+                  >
+                    暂无已安装插件
+                  </Typography>
+                ) : (
+                  installedPlugins.map((p) => (
+                    <Paper
+                      key={p.manifest.id}
+                      variant='outlined'
+                      sx={{ p: 1.5 }}
+                    >
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                        <Blocks
+                          size={16}
+                          color='#6366f1'
+                        />
+                        <Typography
+                          variant='body2'
+                          sx={{ fontWeight: 500, flex: 1 }}
+                        >
+                          {p.manifest.name}
+                        </Typography>
+                        <Chip
+                          label={p.enabled ? '启用' : '禁用'}
+                          size='small'
+                          color={p.enabled ? 'success' : 'default'}
+                        />
                       </Box>
                       <Typography
                         variant='caption'
                         color='text.secondary'
-                        sx={{ display: 'block', mb: 1, height: 32, overflow: 'hidden' }}
                       >
-                        {plugin.description}
+                        v{p.installedVersion} · {p.manifest.category}
                       </Typography>
-                      <Stack
-                        direction='row'
-                        spacing={0.5}
-                        sx={{ mb: 1 }}
-                      >
-                        <Chip
-                          label={plugin.category}
-                          size='small'
-                          variant='outlined'
-                        />
-                        {plugin.isVerified && (
-                          <Chip
-                            label='认证'
-                            size='small'
-                            color='success'
-                            variant='outlined'
-                          />
-                        )}
-                      </Stack>
-                      <Box sx={{ display: 'flex', gap: 0.5 }}>
-                        {installed ? (
-                          <Button
-                            size='small'
-                            variant='outlined'
-                            color='error'
-                            fullWidth
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleUninstall(plugin.id);
-                            }}
-                          >
-                            卸载
-                          </Button>
-                        ) : (
-                          <Button
-                            size='small'
-                            variant='contained'
-                            fullWidth
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleInstall(plugin.id);
-                            }}
-                          >
-                            安装
-                          </Button>
-                        )}
-                      </Box>
                     </Paper>
-                  </Grid>
-                );
-              })}
-            </Grid>
-          </V51Card>
-        </Grid>
-
-        <Grid size={{ xs: 12, md: 4 }}>
-          <V51Card
-            title='已安装'
-            icon={<Package size={18} />}
-          >
-            <Stack spacing={1}>
-              {installedPlugins.length === 0 ? (
-                <Typography
-                  variant='body2'
-                  color='text.secondary'
-                  sx={{ py: 2, textAlign: 'center' }}
-                >
-                  暂无已安装插件
-                </Typography>
-              ) : (
-                installedPlugins.map((p) => (
-                  <Paper
-                    key={p.manifest.id}
-                    variant='outlined'
-                    sx={{ p: 1.5 }}
-                  >
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                      <Blocks
-                        size={16}
-                        color='#6366f1'
-                      />
-                      <Typography
-                        variant='body2'
-                        sx={{ fontWeight: 500, flex: 1 }}
-                      >
-                        {p.manifest.name}
-                      </Typography>
-                      <Chip
-                        label={p.enabled ? '启用' : '禁用'}
-                        size='small'
-                        color={p.enabled ? 'success' : 'default'}
-                      />
-                    </Box>
-                    <Typography
-                      variant='caption'
-                      color='text.secondary'
-                    >
-                      v{p.installedVersion} · {p.manifest.category}
-                    </Typography>
-                  </Paper>
-                ))
-              )}
-            </Stack>
-          </V51Card>
+                  ))
+                )}
+              </Stack>
+            </CardContent>
+          </Card>
         </Grid>
       </Grid>
 
@@ -1768,156 +1807,162 @@ const PipelinesTab: React.FC<{
         spacing={3}
       >
         <Grid size={{ xs: 12, md: 8 }}>
-          <V51Card
-            title='运行记录'
-            icon={<Workflow size={18} />}
-          >
-            <TableContainer>
-              <Table size='small'>
-                <TableHead>
-                  <TableRow>
-                    <TableCell>流水线</TableCell>
-                    <TableCell>状态</TableCell>
-                    <TableCell>阶段</TableCell>
-                    <TableCell>耗时</TableCell>
-                    <TableCell align='right'>操作</TableCell>
-                  </TableRow>
-                </TableHead>
-                <TableBody>
-                  {pipelineRuns.length === 0 ? (
+          <Card variant='outlined'>
+            <CardHeader
+              title='运行记录'
+              avatar={<Workflow size={18} />}
+            />
+            <CardContent>
+              <TableContainer>
+                <Table size='small'>
+                  <TableHead>
                     <TableRow>
-                      <TableCell
-                        colSpan={5}
-                        align='center'
-                        sx={{ py: 4, color: 'text.secondary' }}
-                      >
-                        暂无流水线记录
-                      </TableCell>
+                      <TableCell>流水线</TableCell>
+                      <TableCell>状态</TableCell>
+                      <TableCell>阶段</TableCell>
+                      <TableCell>耗时</TableCell>
+                      <TableCell align='right'>操作</TableCell>
                     </TableRow>
-                  ) : (
-                    pipelineRuns.map((run) => (
-                      <TableRow
-                        key={run.id}
-                        hover
-                      >
-                        <TableCell>
-                          <Typography
-                            variant='body2'
-                            sx={{ fontWeight: 500 }}
-                          >
-                            {run.pipelineId}
-                          </Typography>
-                          <Typography
-                            variant='caption'
-                            color='text.secondary'
-                          >
-                            {new Date(run.startedAt).toLocaleTimeString()}
-                          </Typography>
-                        </TableCell>
-                        <TableCell>
-                          <Chip
-                            label={run.status}
-                            size='small'
-                            sx={{
-                              bgcolor: STATUS_COLORS[run.status],
-                              color: 'common.white',
-                              height: 22,
-                            }}
-                          />
-                        </TableCell>
-                        <TableCell>
-                          <Box sx={{ display: 'flex', gap: 0.5 }}>
-                            {run.stages.map((stage, i) => (
-                              <Tooltip
-                                key={i}
-                                title={`${stage.name}: ${stage.status}`}
-                              >
-                                <Box
-                                  sx={{
-                                    width: 10,
-                                    height: 10,
-                                    borderRadius: '50%',
-                                    bgcolor: STATUS_COLORS[stage.status] || '#9e9e9e',
-                                  }}
-                                />
-                              </Tooltip>
-                            ))}
-                          </Box>
-                        </TableCell>
-                        <TableCell>
-                          {run.totalDurationMs ? (
-                            <Typography variant='caption'>
-                              {(run.totalDurationMs / 1000).toFixed(1)}s
-                            </Typography>
-                          ) : (
-                            <CircularProgress size={14} />
-                          )}
-                        </TableCell>
-                        <TableCell align='right'>
-                          <IconButton
-                            size='small'
-                            onClick={() => setSelectedRun(run)}
-                          >
-                            <ChevronRight size={18} />
-                          </IconButton>
+                  </TableHead>
+                  <TableBody>
+                    {pipelineRuns.length === 0 ? (
+                      <TableRow>
+                        <TableCell
+                          colSpan={5}
+                          align='center'
+                          sx={{ py: 4, color: 'text.secondary' }}
+                        >
+                          暂无流水线记录
                         </TableCell>
                       </TableRow>
-                    ))
-                  )}
-                </TableBody>
-              </Table>
-            </TableContainer>
-          </V51Card>
+                    ) : (
+                      pipelineRuns.map((run) => (
+                        <TableRow
+                          key={run.id}
+                          hover
+                        >
+                          <TableCell>
+                            <Typography
+                              variant='body2'
+                              sx={{ fontWeight: 500 }}
+                            >
+                              {run.pipelineId}
+                            </Typography>
+                            <Typography
+                              variant='caption'
+                              color='text.secondary'
+                            >
+                              {new Date(run.startedAt).toLocaleTimeString()}
+                            </Typography>
+                          </TableCell>
+                          <TableCell>
+                            <Chip
+                              label={run.status}
+                              size='small'
+                              sx={{
+                                bgcolor: STATUS_COLORS[run.status],
+                                color: 'common.white',
+                                height: 22,
+                              }}
+                            />
+                          </TableCell>
+                          <TableCell>
+                            <Box sx={{ display: 'flex', gap: 0.5 }}>
+                              {run.stages.map((stage, i) => (
+                                <Tooltip
+                                  key={i}
+                                  title={`${stage.name}: ${stage.status}`}
+                                >
+                                  <Box
+                                    sx={{
+                                      width: 10,
+                                      height: 10,
+                                      borderRadius: '50%',
+                                      bgcolor: STATUS_COLORS[stage.status] || '#9e9e9e',
+                                    }}
+                                  />
+                                </Tooltip>
+                              ))}
+                            </Box>
+                          </TableCell>
+                          <TableCell>
+                            {run.totalDurationMs ? (
+                              <Typography variant='caption'>
+                                {(run.totalDurationMs / 1000).toFixed(1)}s
+                              </Typography>
+                            ) : (
+                              <CircularProgress size={14} />
+                            )}
+                          </TableCell>
+                          <TableCell align='right'>
+                            <IconButton
+                              size='small'
+                              onClick={() => setSelectedRun(run)}
+                            >
+                              <ChevronRight size={18} />
+                            </IconButton>
+                          </TableCell>
+                        </TableRow>
+                      ))
+                    )}
+                  </TableBody>
+                </Table>
+              </TableContainer>
+            </CardContent>
+          </Card>
         </Grid>
 
         <Grid size={{ xs: 12, md: 4 }}>
-          <V51Card
-            title='快速操作'
-            icon={<Play size={18} />}
-          >
-            <Stack spacing={1.5}>
-              {projects.map((project) => (
-                <Paper
-                  key={project.id}
-                  variant='outlined'
-                  sx={{ p: 1.5 }}
-                >
+          <Card variant='outlined'>
+            <CardHeader
+              title='快速操作'
+              avatar={<Play size={18} />}
+            />
+            <CardContent>
+              <Stack spacing={1.5}>
+                {projects.map((project) => (
+                  <Paper
+                    key={project.id}
+                    variant='outlined'
+                    sx={{ p: 1.5 }}
+                  >
+                    <Typography
+                      variant='body2'
+                      sx={{ fontWeight: 500 }}
+                      gutterBottom
+                    >
+                      {project.name}
+                    </Typography>
+                    <Box sx={{ display: 'flex', gap: 0.5 }}>
+                      <Button
+                        size='small'
+                        variant='outlined'
+                        onClick={() => unifiedDevPlatform.runPipeline(project.id, 'build-only')}
+                      >
+                        仅构建
+                      </Button>
+                      <Button
+                        size='small'
+                        variant='contained'
+                        onClick={() => unifiedDevPlatform.runPipeline(project.id, 'build-deploy')}
+                      >
+                        构建部署
+                      </Button>
+                    </Box>
+                  </Paper>
+                ))}
+                {projects.length === 0 && (
                   <Typography
                     variant='body2'
-                    sx={{ fontWeight: 500 }}
-                    gutterBottom
+                    color='text.secondary'
+                    sx={{ textAlign: 'center' }}
                   >
-                    {project.name}
+                    暂无项目
                   </Typography>
-                  <Box sx={{ display: 'flex', gap: 0.5 }}>
-                    <Button
-                      size='small'
-                      variant='outlined'
-                      onClick={() => unifiedDevPlatform.runPipeline(project.id, 'build-only')}
-                    >
-                      仅构建
-                    </Button>
-                    <Button
-                      size='small'
-                      variant='contained'
-                      onClick={() => unifiedDevPlatform.runPipeline(project.id, 'build-deploy')}
-                    >
-                      构建部署
-                    </Button>
-                  </Box>
-                </Paper>
-              ))}
-              {projects.length === 0 && (
-                <Typography
-                  variant='body2'
-                  color='text.secondary'
-                  sx={{ textAlign: 'center' }}
-                >
-                  暂无项目
-                </Typography>
-              )}
-            </Stack>
-          </V51Card>
+                )}
+              </Stack>
+            </CardContent>
+          </Card>
         </Grid>
       </Grid>
 
@@ -2141,53 +2186,56 @@ const ActivityTab: React.FC<{
       >
         活动日志
       </Typography>
-      <V51Card
-        title='最近活动'
-        icon={<Activity size={18} />}
-      >
-        <Box sx={{ maxHeight: 500, overflow: 'auto' }}>
-          {activities.length === 0 ? (
-            <Typography
-              variant='body2'
-              color='text.secondary'
-              sx={{ py: 4, textAlign: 'center' }}
-            >
-              暂无活动记录
-            </Typography>
-          ) : (
-            <Stack spacing={1}>
-              {activities.slice(0, 50).map((activity) => (
-                <Paper
-                  key={activity.id}
-                  variant='outlined'
-                  sx={{ p: 1.5 }}
-                >
-                  <Box sx={{ display: 'flex', gap: 1.5 }}>
-                    <Box
-                      sx={{
-                        width: 8,
-                        height: 8,
-                        borderRadius: '50%',
-                        bgcolor: activity.color,
-                        mt: 0.5,
-                      }}
-                    />
-                    <Box sx={{ flex: 1 }}>
-                      <Typography variant='body2'>{activity.message}</Typography>
-                      <Typography
-                        variant='caption'
-                        color='text.secondary'
-                      >
-                        {activity.time}
-                      </Typography>
+      <Card variant='outlined'>
+        <CardHeader
+          title='最近活动'
+          avatar={<Activity size={18} />}
+        />
+        <CardContent>
+          <Box sx={{ maxHeight: 500, overflow: 'auto' }}>
+            {activities.length === 0 ? (
+              <Typography
+                variant='body2'
+                color='text.secondary'
+                sx={{ py: 4, textAlign: 'center' }}
+              >
+                暂无活动记录
+              </Typography>
+            ) : (
+              <Stack spacing={1}>
+                {activities.slice(0, 50).map((activity) => (
+                  <Paper
+                    key={activity.id}
+                    variant='outlined'
+                    sx={{ p: 1.5 }}
+                  >
+                    <Box sx={{ display: 'flex', gap: 1.5 }}>
+                      <Box
+                        sx={{
+                          width: 8,
+                          height: 8,
+                          borderRadius: '50%',
+                          bgcolor: activity.color,
+                          mt: 0.5,
+                        }}
+                      />
+                      <Box sx={{ flex: 1 }}>
+                        <Typography variant='body2'>{activity.message}</Typography>
+                        <Typography
+                          variant='caption'
+                          color='text.secondary'
+                        >
+                          {activity.time}
+                        </Typography>
+                      </Box>
                     </Box>
-                  </Box>
-                </Paper>
-              ))}
-            </Stack>
-          )}
-        </Box>
-      </V51Card>
+                  </Paper>
+                ))}
+              </Stack>
+            )}
+          </Box>
+        </CardContent>
+      </Card>
     </Box>
   );
 };

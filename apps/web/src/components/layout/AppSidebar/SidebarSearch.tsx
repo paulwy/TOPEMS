@@ -13,7 +13,6 @@ import {
 import { useNavigate } from 'react-router-dom';
 import { Search, X, Star } from 'lucide-react';
 import { renderIcon } from '@/lib/iconMapping';
-import type { NavItem } from '@/lib/navigation/types';
 import { getNavigablePath, getAllNavItems } from './shared';
 
 export interface SidebarSearchProps {

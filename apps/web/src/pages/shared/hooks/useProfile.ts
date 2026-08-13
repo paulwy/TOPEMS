@@ -207,10 +207,11 @@ export const useProfile = () => {
       return res.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AUTH.USER ,
-  exact: false,
-  refetchType: 'active',
-});
+      queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.AUTH.USER,
+        exact: false,
+        refetchType: 'active',
+      });
       addNotification({
         title: t('shared.profile.success'),
         message: t('shared.profile.profile_updated'),
@@ -234,12 +235,11 @@ export const useProfile = () => {
       return res;
     },
     onSuccess: () => {
-      
       queryClient.invalidateQueries({
-          queryKey: QUERY_KEYS.AD_HOC.SHARED_ATTACHMENTS_BASE,
-          exact: false,
-          refetchType: 'active',
-        });
+        queryKey: QUERY_KEYS.AD_HOC.SHARED_ATTACHMENTS_BASE,
+        exact: false,
+        refetchType: 'active',
+      });
       addNotification({
         title: t('shared.profile.success'),
         message: t('shared.profile.pwd_changed_relogin'),
@@ -269,10 +269,11 @@ export const useProfile = () => {
       return res.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AUTH.USER ,
-  exact: false,
-  refetchType: 'active',
-});
+      queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.AUTH.USER,
+        exact: false,
+        refetchType: 'active',
+      });
       addNotification({
         title: t('shared.profile.success'),
         message: t('shared.profile.avatar_updated'),
@@ -295,14 +296,15 @@ export const useProfile = () => {
     onError: (err: unknown) => {
       apiLogger.error(t('shared.profile.save_prefs_failed_log'), err);
     },
-  
-      onSuccess: () => {
-        queryClient.invalidateQueries({
-          queryKey: QUERY_KEYS.AD_HOC.SHARED_ATTACHMENTS_BASE,
-          exact: false,
-          refetchType: 'active',
-        });
-      },});
+
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.AD_HOC.SHARED_ATTACHMENTS_BASE,
+        exact: false,
+        refetchType: 'active',
+      });
+    },
+  });
 
   const handleAvatarUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];

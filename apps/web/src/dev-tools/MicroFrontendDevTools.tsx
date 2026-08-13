@@ -15,8 +15,6 @@ import {
   moduleRegistry,
   moduleMarket,
 } from '@/microfrontend';
-// V51.0 Design System
-import { V51DesignSystemPanel } from '@/design-system';
 // V53.0 AI Enhancement
 import { V53AIPanel } from '@/ai/enhancement';
 // V53.0 微前端平台终局
@@ -62,7 +60,6 @@ const MicroFrontendDevTools: React.FC = () => {
   const [showSecurity, setShowSecurity] = React.useState(false);
   const [showRuntime, setShowRuntime] = React.useState(false);
   const [showV47Panel, setShowV47Panel] = React.useState(false);
-  const [showDesignSystem, setShowDesignSystem] = React.useState(false);
   const [showDevEx, setShowDevEx] = React.useState(false);
   const [showV53AI, setShowV53AI] = React.useState(false);
   const [showV53Platform, setShowV53Platform] = React.useState(false);
@@ -381,37 +378,6 @@ const MicroFrontendDevTools: React.FC = () => {
                 sx={{ fontSize: 10, opacity: 0.8 }}
               >
                 {t('devtools.panels.v47Integration.sublabel')}
-              </Typography>
-            </Box>
-          </Button>
-        </Tooltip>
-        <Tooltip title={t('devtools.panels.v51Design.tooltip')}>
-          <Button
-            variant='contained'
-            size='small'
-            onClick={() => setShowDesignSystem(true)}
-            sx={{
-              bgcolor: 'teal.600',
-              borderRadius: 2,
-              textTransform: 'none',
-              boxShadow: '0 4px 12px rgba(13, 148, 136, 0.4)',
-              '&:hover': { bgcolor: 'teal.700' },
-              minWidth: 'auto',
-              px: 2,
-            }}
-          >
-            <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-              <Typography
-                variant='caption'
-                sx={{ fontWeight: 600, lineHeight: 1.2 }}
-              >
-                {t('devtools.panels.v51Design.label')}
-              </Typography>
-              <Typography
-                variant='caption'
-                sx={{ fontSize: 10, opacity: 0.8 }}
-              >
-                {t('devtools.panels.v51Design.sublabel')}
               </Typography>
             </Box>
           </Button>
@@ -1303,7 +1269,6 @@ const MicroFrontendDevTools: React.FC = () => {
       )}
 
       {showV47Panel && <V47IntegrationPanel onClose={() => setShowV47Panel(false)} />}
-      {showDesignSystem && <V51DesignSystemPanel onClose={() => setShowDesignSystem(false)} />}
       {showDevEx && <V51DevExPanel onClose={() => setShowDevEx(false)} />}
       {showV53AI && <V53AIPanel onClose={() => setShowV53AI(false)} />}
       {showV53Platform && <V53PlatformConsole onClose={() => setShowV53Platform(false)} />}

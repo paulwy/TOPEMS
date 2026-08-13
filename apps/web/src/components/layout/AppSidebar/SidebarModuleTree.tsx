@@ -1,18 +1,10 @@
 import React, { useRef, useState, useMemo } from 'react';
-import {
-  Box,
-  Typography,
-  Tooltip,
-  Chip,
-  Badge as MuiBadge,
-  Popover,
-  useTheme,
-} from '@mui/material';
+import { Box, Typography, Tooltip, Chip, Badge as MuiBadge, Popover } from '@mui/material';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Home } from 'lucide-react';
 import { renderIcon } from '@/lib/iconMapping';
 import { navigationRegistryV2 } from '@/lib/navigation';
-import type { NavItem, NavGroup, ModuleCardConfig } from '@/lib/navigation/types';
+import type { NavItem, NavGroup } from '@/lib/navigation/types';
 import { NAV_GROUPS, SUITE_GROUPS } from '@/lib/navigation/types';
 import { DASHBOARD_PATHS } from '@/routes/dashboard';
 import { navItemSx, getNavigablePath } from './shared';
@@ -39,7 +31,6 @@ export const SidebarModuleTree: React.FC<SidebarModuleTreeProps> = ({
   serviceStatuses,
   checkPermission,
 }) => {
-  const theme = useTheme();
   const navigate = useNavigate();
   const location = useLocation();
 

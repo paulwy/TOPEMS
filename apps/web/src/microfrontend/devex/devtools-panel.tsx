@@ -14,6 +14,11 @@ import {
   Button,
   Grid,
   Stack,
+  Tabs,
+  Tab,
+  Card,
+  CardHeader,
+  CardContent,
 } from '@mui/material';
 import {
   X as XIcon,
@@ -31,7 +36,6 @@ import {
   Bug,
   FileCode,
 } from 'lucide-react';
-import { V51Tabs, V51Card, V51Badge } from '../../design-system';
 import {
   smartDebugger,
   type ComponentTreeNode,
@@ -93,10 +97,10 @@ export const V51DevExPanel: React.FC<{ onClose: () => void }> = ({ onClose }) =>
             >
               V51.0 DevEx — 微前端开发体验
             </Typography>
-            <V51Badge
+            <Chip
               label='DevTools'
-              variant='warning'
-              size='sm'
+              color='warning'
+              size='small'
             />
           </Box>
           <IconButton
@@ -109,49 +113,56 @@ export const V51DevExPanel: React.FC<{ onClose: () => void }> = ({ onClose }) =>
         </Box>
 
         <Box sx={{ flex: 1, overflow: 'auto' }}>
-          <V51Tabs
-            activeTab={activeTab}
-            onChange={setActiveTab}
+          <Tabs
+            value={activeTab}
+            onChange={(_, id) => setActiveTab(id)}
             variant='fullWidth'
-            tabs={[
-              {
-                id: 'modules',
-                label: '模块检查',
-                icon: <Layers size={16} />,
-                content: <ModuleInspectorTab />,
-              },
-              {
-                id: 'components',
-                label: '组件树',
-                icon: <FileCode size={16} />,
-                content: <ComponentTreeTab />,
-              },
-              {
-                id: 'performance',
-                label: '性能监控',
-                icon: <Activity size={16} />,
-                content: <PerformanceMonitorTab />,
-              },
-              {
-                id: 'network',
-                label: '网络检查',
-                icon: <Network size={16} />,
-                content: <NetworkInspectorTab />,
-              },
-              {
-                id: 'state',
-                label: '状态浏览',
-                icon: <Database size={16} />,
-                content: <StateExplorerTab />,
-              },
-              {
-                id: 'sessions',
-                label: '调试会话',
-                icon: <Bug size={16} />,
-                content: <DebugSessionsTab />,
-              },
-            ]}
-          />
+          >
+            <Tab
+              value='modules'
+              label='模块检查'
+              icon={<Layers size={16} />}
+              iconPosition='start'
+            />
+            <Tab
+              value='components'
+              label='组件树'
+              icon={<FileCode size={16} />}
+              iconPosition='start'
+            />
+            <Tab
+              value='performance'
+              label='性能监控'
+              icon={<Activity size={16} />}
+              iconPosition='start'
+            />
+            <Tab
+              value='network'
+              label='网络检查'
+              icon={<Network size={16} />}
+              iconPosition='start'
+            />
+            <Tab
+              value='state'
+              label='状态浏览'
+              icon={<Database size={16} />}
+              iconPosition='start'
+            />
+            <Tab
+              value='sessions'
+              label='调试会话'
+              icon={<Bug size={16} />}
+              iconPosition='start'
+            />
+          </Tabs>
+          <Box sx={{ flex: 1, overflow: 'auto' }}>
+            {activeTab === 'modules' && <ModuleInspectorTab />}
+            {activeTab === 'components' && <ComponentTreeTab />}
+            {activeTab === 'performance' && <PerformanceMonitorTab />}
+            {activeTab === 'network' && <NetworkInspectorTab />}
+            {activeTab === 'state' && <StateExplorerTab />}
+            {activeTab === 'sessions' && <DebugSessionsTab />}
+          </Box>
         </Box>
       </Box>
     </Box>
@@ -193,125 +204,131 @@ const ModuleInspectorTab: React.FC = () => {
         spacing={2}
       >
         <Grid size={{ xs: 12, md: 8 }}>
-          <V51Card
-            title='模块列表'
-            subtitle='点击查看详情'
-          >
-            <TableContainer>
-              <Table size='small'>
-                <TableHead>
-                  <TableRow>
-                    <TableCell sx={{ fontWeight: 600 }}>ID</TableCell>
-                    <TableCell sx={{ fontWeight: 600 }}>名称</TableCell>
-                    <TableCell sx={{ fontWeight: 600 }}>版本</TableCell>
-                    <TableCell sx={{ fontWeight: 600 }}>状态</TableCell>
-                    <TableCell sx={{ fontWeight: 600 }}>依赖</TableCell>
-                  </TableRow>
-                </TableHead>
-                <TableBody>
-                  {modules.length === 0 ? (
+          <Card variant='outlined'>
+            <CardHeader
+              title='模块列表'
+              subheader='点击查看详情'
+            />
+            <CardContent>
+              <TableContainer>
+                <Table size='small'>
+                  <TableHead>
                     <TableRow>
-                      <TableCell
-                        colSpan={5}
-                        align='center'
-                        sx={{ py: 4 }}
-                      >
-                        <Typography
-                          variant='body2'
-                          color='text.secondary'
-                        >
-                          暂无已加载模块
-                        </Typography>
-                      </TableCell>
+                      <TableCell sx={{ fontWeight: 600 }}>ID</TableCell>
+                      <TableCell sx={{ fontWeight: 600 }}>名称</TableCell>
+                      <TableCell sx={{ fontWeight: 600 }}>版本</TableCell>
+                      <TableCell sx={{ fontWeight: 600 }}>状态</TableCell>
+                      <TableCell sx={{ fontWeight: 600 }}>依赖</TableCell>
                     </TableRow>
-                  ) : (
-                    modules.map((mod) => (
-                      <TableRow
-                        key={mod.id}
-                        hover
-                        onClick={() => setSelectedModule(mod.id)}
-                        sx={{ cursor: 'pointer' }}
-                        selected={selectedModule === mod.id}
-                      >
-                        <TableCell>
+                  </TableHead>
+                  <TableBody>
+                    {modules.length === 0 ? (
+                      <TableRow>
+                        <TableCell
+                          colSpan={5}
+                          align='center'
+                          sx={{ py: 4 }}
+                        >
                           <Typography
-                            variant='caption'
-                            sx={{ fontFamily: 'monospace' }}
+                            variant='body2'
+                            color='text.secondary'
                           >
-                            {mod.id}
+                            暂无已加载模块
                           </Typography>
                         </TableCell>
-                        <TableCell>{mod.name}</TableCell>
-                        <TableCell>
-                          <Chip
-                            label={mod.version}
-                            size='small'
-                            variant='outlined'
-                          />
-                        </TableCell>
-                        <TableCell>
-                          <Chip
-                            label={mod.status}
-                            size='small'
-                            color={
-                              mod.status === 'active'
-                                ? 'success'
-                                : mod.status === 'error'
-                                  ? 'error'
-                                  : 'default'
-                            }
-                          />
-                        </TableCell>
-                        <TableCell>{mod.dependencies.length}</TableCell>
                       </TableRow>
-                    ))
-                  )}
-                </TableBody>
-              </Table>
-            </TableContainer>
-          </V51Card>
+                    ) : (
+                      modules.map((mod) => (
+                        <TableRow
+                          key={mod.id}
+                          hover
+                          onClick={() => setSelectedModule(mod.id)}
+                          sx={{ cursor: 'pointer' }}
+                          selected={selectedModule === mod.id}
+                        >
+                          <TableCell>
+                            <Typography
+                              variant='caption'
+                              sx={{ fontFamily: 'monospace' }}
+                            >
+                              {mod.id}
+                            </Typography>
+                          </TableCell>
+                          <TableCell>{mod.name}</TableCell>
+                          <TableCell>
+                            <Chip
+                              label={mod.version}
+                              size='small'
+                              variant='outlined'
+                            />
+                          </TableCell>
+                          <TableCell>
+                            <Chip
+                              label={mod.status}
+                              size='small'
+                              color={
+                                mod.status === 'active'
+                                  ? 'success'
+                                  : mod.status === 'error'
+                                    ? 'error'
+                                    : 'default'
+                              }
+                            />
+                          </TableCell>
+                          <TableCell>{mod.dependencies.length}</TableCell>
+                        </TableRow>
+                      ))
+                    )}
+                  </TableBody>
+                </Table>
+              </TableContainer>
+            </CardContent>
+          </Card>
         </Grid>
 
         <Grid size={{ xs: 12, md: 4 }}>
-          <V51Card
-            title='依赖图'
-            subtitle={`${graph.nodes.length} 节点 / ${graph.edges.length} 边`}
-          >
-            {selectedModule ? (
-              <Box>
-                <Typography
-                  variant='subtitle2'
-                  sx={{ mb: 1 }}
-                >
-                  模块: {selectedModule}
-                </Typography>
-                <Typography
-                  variant='caption'
-                  color='text.secondary'
-                  sx={{ mb: 1, display: 'block' }}
-                >
-                  依赖项:
-                </Typography>
-                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
-                  {smartDebugger.getModuleDependencies(selectedModule).map((dep) => (
-                    <Chip
-                      key={dep}
-                      label={dep}
-                      size='small'
-                      variant='outlined'
-                    />
-                  ))}
+          <Card variant='outlined'>
+            <CardHeader
+              title='依赖图'
+              subheader={`${graph.nodes.length} 节点 / ${graph.edges.length} 边`}
+            />
+            <CardContent>
+              {selectedModule ? (
+                <Box>
+                  <Typography
+                    variant='subtitle2'
+                    sx={{ mb: 1 }}
+                  >
+                    模块: {selectedModule}
+                  </Typography>
+                  <Typography
+                    variant='caption'
+                    color='text.secondary'
+                    sx={{ mb: 1, display: 'block' }}
+                  >
+                    依赖项:
+                  </Typography>
+                  <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
+                    {smartDebugger.getModuleDependencies(selectedModule).map((dep) => (
+                      <Chip
+                        key={dep}
+                        label={dep}
+                        size='small'
+                        variant='outlined'
+                      />
+                    ))}
+                  </Box>
                 </Box>
-              </Box>
-            ) : (
-              <Typography
-                variant='body2'
-                color='text.secondary'
-              >
-                选择左侧模块查看依赖关系
-              </Typography>
-            )}
-          </V51Card>
+              ) : (
+                <Typography
+                  variant='body2'
+                  color='text.secondary'
+                >
+                  选择左侧模块查看依赖关系
+                </Typography>
+              )}
+            </CardContent>
+          </Card>
         </Grid>
       </Grid>
     </Box>
@@ -377,12 +394,12 @@ const ComponentTreeTab: React.FC = () => {
           ) : (
             <Box sx={{ width: 20 }} />
           )}
-          <V51Badge
+          <Chip
             label={node.type}
-            variant={
-              node.type === 'class' ? 'primary' : node.type === 'memo' ? 'secondary' : 'neutral'
+            color={
+              node.type === 'class' ? 'primary' : node.type === 'memo' ? 'secondary' : 'default'
             }
-            size='sm'
+            size='small'
           />
           <Typography
             variant='body2'
@@ -428,65 +445,71 @@ const ComponentTreeTab: React.FC = () => {
         spacing={2}
       >
         <Grid size={{ xs: 12, md: 8 }}>
-          <V51Card
-            title='组件层级'
-            subtitle='点击节点查看详情'
-          >
-            <Box sx={{ maxHeight: 500, overflow: 'auto' }}>
-              {tree.length === 0 ? (
+          <Card variant='outlined'>
+            <CardHeader
+              title='组件层级'
+              subheader='点击节点查看详情'
+            />
+            <CardContent>
+              <Box sx={{ maxHeight: 500, overflow: 'auto' }}>
+                {tree.length === 0 ? (
+                  <Typography
+                    variant='body2'
+                    color='text.secondary'
+                  >
+                    未检测到 React 组件
+                  </Typography>
+                ) : (
+                  tree.map((node) => renderNode(node, 0))
+                )}
+              </Box>
+            </CardContent>
+          </Card>
+        </Grid>
+
+        <Grid size={{ xs: 12, md: 4 }}>
+          <Card variant='outlined'>
+            <CardHeader title='组件详情' />
+            <CardContent>
+              {selected ? (
+                <Box>
+                  <Typography
+                    variant='subtitle2'
+                    sx={{ fontWeight: 600, mb: 1 }}
+                  >
+                    {selected.name}
+                  </Typography>
+                  <Typography
+                    variant='caption'
+                    color='text.secondary'
+                  >
+                    Props:
+                  </Typography>
+                  <Paper sx={{ p: 1, mb: 1, maxHeight: 150, overflow: 'auto' }}>
+                    <Typography
+                      variant='caption'
+                      sx={{ fontFamily: 'monospace' }}
+                    >
+                      {JSON.stringify(selected.props, null, 2)}
+                    </Typography>
+                  </Paper>
+                  <Typography
+                    variant='caption'
+                    color='text.secondary'
+                  >
+                    Hooks: {selected.hooks.join(', ') || 'none'}
+                  </Typography>
+                </Box>
+              ) : (
                 <Typography
                   variant='body2'
                   color='text.secondary'
                 >
-                  未检测到 React 组件
+                  选择组件查看详情
                 </Typography>
-              ) : (
-                tree.map((node) => renderNode(node, 0))
               )}
-            </Box>
-          </V51Card>
-        </Grid>
-
-        <Grid size={{ xs: 12, md: 4 }}>
-          <V51Card title='组件详情'>
-            {selected ? (
-              <Box>
-                <Typography
-                  variant='subtitle2'
-                  sx={{ fontWeight: 600, mb: 1 }}
-                >
-                  {selected.name}
-                </Typography>
-                <Typography
-                  variant='caption'
-                  color='text.secondary'
-                >
-                  Props:
-                </Typography>
-                <Paper sx={{ p: 1, mb: 1, maxHeight: 150, overflow: 'auto' }}>
-                  <Typography
-                    variant='caption'
-                    sx={{ fontFamily: 'monospace' }}
-                  >
-                    {JSON.stringify(selected.props, null, 2)}
-                  </Typography>
-                </Paper>
-                <Typography
-                  variant='caption'
-                  color='text.secondary'
-                >
-                  Hooks: {selected.hooks.join(', ') || 'none'}
-                </Typography>
-              </Box>
-            ) : (
-              <Typography
-                variant='body2'
-                color='text.secondary'
-              >
-                选择组件查看详情
-              </Typography>
-            )}
-          </V51Card>
+            </CardContent>
+          </Card>
         </Grid>
       </Grid>
     </Box>
@@ -663,68 +686,74 @@ const PerformanceMonitorTab: React.FC = () => {
             </Grid>
           </Grid>
 
-          <V51Card
-            title='Core Web Vitals'
-            subtitle='核心性能指标'
-          >
-            <Grid
-              container
-              spacing={2}
-            >
-              {vitals.map((vital) => (
-                <Grid
-                  size={{ xs: 6, md: 4 }}
-                  key={vital.name}
-                >
-                  <Paper sx={{ p: 2, borderRadius: 2 }}>
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
-                      <Typography variant='h6'>{getVitalIcon(vital.name)}</Typography>
+          <Card variant='outlined'>
+            <CardHeader
+              title='Core Web Vitals'
+              subheader='核心性能指标'
+            />
+            <CardContent>
+              <Grid
+                container
+                spacing={2}
+              >
+                {vitals.map((vital) => (
+                  <Grid
+                    size={{ xs: 6, md: 4 }}
+                    key={vital.name}
+                  >
+                    <Paper sx={{ p: 2, borderRadius: 2 }}>
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
+                        <Typography variant='h6'>{getVitalIcon(vital.name)}</Typography>
+                        <Typography
+                          variant='subtitle2'
+                          sx={{ fontWeight: 600 }}
+                        >
+                          {vital.name}
+                        </Typography>
+                        <Chip
+                          label={vital.rating}
+                          color={
+                            vital.rating === 'good'
+                              ? 'success'
+                              : vital.rating === 'needs-improvement'
+                                ? 'warning'
+                                : 'error'
+                          }
+                          size='small'
+                        />
+                      </Box>
                       <Typography
-                        variant='subtitle2'
-                        sx={{ fontWeight: 600 }}
+                        variant='body2'
+                        sx={{ fontFamily: 'monospace' }}
                       >
-                        {vital.name}
+                        {vital.value.toFixed(2)} {vital.name === 'CLS' ? '' : 'ms'}
                       </Typography>
-                      <V51Badge
-                        label={vital.rating}
-                        variant={
-                          vital.rating === 'good'
-                            ? 'success'
-                            : vital.rating === 'needs-improvement'
-                              ? 'warning'
-                              : 'error'
-                        }
-                        size='sm'
-                      />
-                    </Box>
-                    <Typography
-                      variant='body2'
-                      sx={{ fontFamily: 'monospace' }}
-                    >
-                      {vital.value.toFixed(2)} {vital.name === 'CLS' ? '' : 'ms'}
-                    </Typography>
-                  </Paper>
-                </Grid>
-              ))}
-            </Grid>
-          </V51Card>
+                    </Paper>
+                  </Grid>
+                ))}
+              </Grid>
+            </CardContent>
+          </Card>
 
           {report.recommendations.length > 0 && (
-            <V51Card
-              title='优化建议'
+            <Card
+              variant='outlined'
               sx={{ mt: 2 }}
             >
-              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-                {report.recommendations.map((rec, idx) => (
-                  <Paper
-                    key={idx}
-                    sx={{ p: 1.5, borderRadius: 1, bgcolor: 'grey.50' }}
-                  >
-                    <Typography variant='body2'>{rec}</Typography>
-                  </Paper>
-                ))}
-              </Box>
-            </V51Card>
+              <CardHeader title='优化建议' />
+              <CardContent>
+                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+                  {report.recommendations.map((rec, idx) => (
+                    <Paper
+                      key={idx}
+                      sx={{ p: 1.5, borderRadius: 1, bgcolor: 'grey.50' }}
+                    >
+                      <Typography variant='body2'>{rec}</Typography>
+                    </Paper>
+                  ))}
+                </Box>
+              </CardContent>
+            </Card>
           )}
         </>
       )}
@@ -831,179 +860,187 @@ const NetworkInspectorTab: React.FC = () => {
         spacing={2}
       >
         <Grid size={{ xs: 12, md: 8 }}>
-          <V51Card title='请求列表'>
-            <Box sx={{ mb: 2 }}>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                <Search
-                  size={16}
-                  color='text.secondary'
-                />
-                <input
-                  placeholder='过滤请求 URL...'
-                  value={filter}
-                  onChange={(e) => setFilter(e.target.value)}
-                  style={{
-                    border: 'none',
-                    outline: 'none',
-                    flex: 1,
-                    padding: '4px 0',
-                    fontSize: 14,
-                  }}
-                />
+          <Card variant='outlined'>
+            <CardHeader title='请求列表' />
+            <CardContent>
+              <Box sx={{ mb: 2 }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                  <Search
+                    size={16}
+                    color='text.secondary'
+                  />
+                  <input
+                    placeholder='过滤请求 URL...'
+                    value={filter}
+                    onChange={(e) => setFilter(e.target.value)}
+                    style={{
+                      border: 'none',
+                      outline: 'none',
+                      flex: 1,
+                      padding: '4px 0',
+                      fontSize: 14,
+                    }}
+                  />
+                </Box>
               </Box>
-            </Box>
-            <TableContainer sx={{ maxHeight: 450 }}>
-              <Table
-                size='small'
-                stickyHeader
-              >
-                <TableHead>
-                  <TableRow>
-                    <TableCell sx={{ fontWeight: 600 }}>方法</TableCell>
-                    <TableCell sx={{ fontWeight: 600 }}>URL</TableCell>
-                    <TableCell sx={{ fontWeight: 600 }}>状态</TableCell>
-                    <TableCell sx={{ fontWeight: 600 }}>耗时</TableCell>
-                    <TableCell sx={{ fontWeight: 600 }}>大小</TableCell>
-                  </TableRow>
-                </TableHead>
-                <TableBody>
-                  {filtered.length === 0 ? (
+              <TableContainer sx={{ maxHeight: 450 }}>
+                <Table
+                  size='small'
+                  stickyHeader
+                >
+                  <TableHead>
                     <TableRow>
-                      <TableCell
-                        colSpan={5}
-                        align='center'
-                      >
-                        <Typography
-                          variant='body2'
-                          color='text.secondary'
-                        >
-                          {isIntercepting ? '等待请求...' : '尚未开始拦截'}
-                        </Typography>
-                      </TableCell>
+                      <TableCell sx={{ fontWeight: 600 }}>方法</TableCell>
+                      <TableCell sx={{ fontWeight: 600 }}>URL</TableCell>
+                      <TableCell sx={{ fontWeight: 600 }}>状态</TableCell>
+                      <TableCell sx={{ fontWeight: 600 }}>耗时</TableCell>
+                      <TableCell sx={{ fontWeight: 600 }}>大小</TableCell>
                     </TableRow>
-                  ) : (
-                    filtered.map((req) => (
-                      <TableRow
-                        key={req.id}
-                        hover
-                        selected={selected?.id === req.id}
-                        onClick={() => setSelected(req)}
-                        sx={{ cursor: 'pointer' }}
-                      >
-                        <TableCell>
-                          <Chip
-                            label={req.method}
-                            size='small'
-                            color={
-                              req.method === 'GET'
-                                ? 'success'
-                                : req.method === 'POST'
-                                  ? 'primary'
-                                  : 'default'
-                            }
-                          />
-                        </TableCell>
+                  </TableHead>
+                  <TableBody>
+                    {filtered.length === 0 ? (
+                      <TableRow>
                         <TableCell
-                          sx={{
-                            maxWidth: 300,
-                            overflow: 'hidden',
-                            textOverflow: 'ellipsis',
-                            whiteSpace: 'nowrap',
-                            fontFamily: 'monospace',
-                            fontSize: 12,
-                          }}
+                          colSpan={5}
+                          align='center'
                         >
-                          {req.url}
-                        </TableCell>
-                        <TableCell>
-                          {req.status ? (
-                            <Chip
-                              label={req.status}
-                              size='small'
-                              color={
-                                req.status < 300
-                                  ? 'success'
-                                  : req.status < 400
-                                    ? 'warning'
-                                    : 'error'
-                              }
-                            />
-                          ) : (
-                            <Chip
-                              label='...'
-                              size='small'
-                            />
-                          )}
-                        </TableCell>
-                        <TableCell>{req.duration ? `${req.duration.toFixed(0)}ms` : '-'}</TableCell>
-                        <TableCell>
-                          {req.responseSize ? `${(req.responseSize / 1024).toFixed(1)}KB` : '-'}
+                          <Typography
+                            variant='body2'
+                            color='text.secondary'
+                          >
+                            {isIntercepting ? '等待请求...' : '尚未开始拦截'}
+                          </Typography>
                         </TableCell>
                       </TableRow>
-                    ))
-                  )}
-                </TableBody>
-              </Table>
-            </TableContainer>
-          </V51Card>
+                    ) : (
+                      filtered.map((req) => (
+                        <TableRow
+                          key={req.id}
+                          hover
+                          selected={selected?.id === req.id}
+                          onClick={() => setSelected(req)}
+                          sx={{ cursor: 'pointer' }}
+                        >
+                          <TableCell>
+                            <Chip
+                              label={req.method}
+                              size='small'
+                              color={
+                                req.method === 'GET'
+                                  ? 'success'
+                                  : req.method === 'POST'
+                                    ? 'primary'
+                                    : 'default'
+                              }
+                            />
+                          </TableCell>
+                          <TableCell
+                            sx={{
+                              maxWidth: 300,
+                              overflow: 'hidden',
+                              textOverflow: 'ellipsis',
+                              whiteSpace: 'nowrap',
+                              fontFamily: 'monospace',
+                              fontSize: 12,
+                            }}
+                          >
+                            {req.url}
+                          </TableCell>
+                          <TableCell>
+                            {req.status ? (
+                              <Chip
+                                label={req.status}
+                                size='small'
+                                color={
+                                  req.status < 300
+                                    ? 'success'
+                                    : req.status < 400
+                                      ? 'warning'
+                                      : 'error'
+                                }
+                              />
+                            ) : (
+                              <Chip
+                                label='...'
+                                size='small'
+                              />
+                            )}
+                          </TableCell>
+                          <TableCell>
+                            {req.duration ? `${req.duration.toFixed(0)}ms` : '-'}
+                          </TableCell>
+                          <TableCell>
+                            {req.responseSize ? `${(req.responseSize / 1024).toFixed(1)}KB` : '-'}
+                          </TableCell>
+                        </TableRow>
+                      ))
+                    )}
+                  </TableBody>
+                </Table>
+              </TableContainer>
+            </CardContent>
+          </Card>
         </Grid>
 
         <Grid size={{ xs: 12, md: 4 }}>
-          <V51Card title='请求详情'>
-            {selected ? (
-              <Box>
-                <Typography
-                  variant='subtitle2'
-                  sx={{ fontFamily: 'monospace', fontSize: 12, mb: 1, wordBreak: 'break-all' }}
-                >
-                  {selected.url}
-                </Typography>
-                <Divider sx={{ my: 1 }} />
-                <Typography
-                  variant='caption'
-                  color='text.secondary'
-                >
-                  Headers:
-                </Typography>
-                <Paper sx={{ p: 1, maxHeight: 200, overflow: 'auto' }}>
+          <Card variant='outlined'>
+            <CardHeader title='请求详情' />
+            <CardContent>
+              {selected ? (
+                <Box>
+                  <Typography
+                    variant='subtitle2'
+                    sx={{ fontFamily: 'monospace', fontSize: 12, mb: 1, wordBreak: 'break-all' }}
+                  >
+                    {selected.url}
+                  </Typography>
+                  <Divider sx={{ my: 1 }} />
                   <Typography
                     variant='caption'
-                    sx={{ fontFamily: 'monospace' }}
+                    color='text.secondary'
                   >
-                    {JSON.stringify(selected.headers, null, 2) || '{}'}
+                    Headers:
                   </Typography>
-                </Paper>
-                {selected.body ? (
-                  <>
+                  <Paper sx={{ p: 1, maxHeight: 200, overflow: 'auto' }}>
                     <Typography
                       variant='caption'
-                      color='text.secondary'
-                      sx={{ mt: 1, display: 'block' }}
+                      sx={{ fontFamily: 'monospace' }}
                     >
-                      Body:
+                      {JSON.stringify(selected.headers, null, 2) || '{}'}
                     </Typography>
-                    <Paper sx={{ p: 1, maxHeight: 100, overflow: 'auto' }}>
+                  </Paper>
+                  {selected.body ? (
+                    <>
                       <Typography
                         variant='caption'
-                        sx={{ fontFamily: 'monospace' }}
+                        color='text.secondary'
+                        sx={{ mt: 1, display: 'block' }}
                       >
-                        {typeof selected.body === 'string'
-                          ? selected.body
-                          : JSON.stringify(selected.body)}
+                        Body:
                       </Typography>
-                    </Paper>
-                  </>
-                ) : null}
-              </Box>
-            ) : (
-              <Typography
-                variant='body2'
-                color='text.secondary'
-              >
-                选择请求查看详情
-              </Typography>
-            )}
-          </V51Card>
+                      <Paper sx={{ p: 1, maxHeight: 100, overflow: 'auto' }}>
+                        <Typography
+                          variant='caption'
+                          sx={{ fontFamily: 'monospace' }}
+                        >
+                          {typeof selected.body === 'string'
+                            ? selected.body
+                            : JSON.stringify(selected.body)}
+                        </Typography>
+                      </Paper>
+                    </>
+                  ) : null}
+                </Box>
+              ) : (
+                <Typography
+                  variant='body2'
+                  color='text.secondary'
+                >
+                  选择请求查看详情
+                </Typography>
+              )}
+            </CardContent>
+          </Card>
         </Grid>
       </Grid>
     </Box>
@@ -1058,105 +1095,113 @@ const StateExplorerTab: React.FC = () => {
         spacing={2}
       >
         <Grid size={{ xs: 12, md: 6 }}>
-          <V51Card title='状态存储列表'>
-            <TableContainer>
-              <Table size='small'>
-                <TableHead>
-                  <TableRow>
-                    <TableCell sx={{ fontWeight: 600 }}>名称</TableCell>
-                    <TableCell sx={{ fontWeight: 600 }}>类型</TableCell>
-                    <TableCell sx={{ fontWeight: 600 }}>订阅数</TableCell>
-                  </TableRow>
-                </TableHead>
-                <TableBody>
-                  {stores.length === 0 ? (
+          <Card variant='outlined'>
+            <CardHeader title='状态存储列表' />
+            <CardContent>
+              <TableContainer>
+                <Table size='small'>
+                  <TableHead>
                     <TableRow>
-                      <TableCell
-                        colSpan={3}
-                        align='center'
-                      >
-                        <Typography
-                          variant='body2'
-                          color='text.secondary'
-                        >
-                          未检测到状态存储
-                        </Typography>
-                      </TableCell>
+                      <TableCell sx={{ fontWeight: 600 }}>名称</TableCell>
+                      <TableCell sx={{ fontWeight: 600 }}>类型</TableCell>
+                      <TableCell sx={{ fontWeight: 600 }}>订阅数</TableCell>
                     </TableRow>
-                  ) : (
-                    stores.map((store) => (
-                      <TableRow
-                        key={store.name}
-                        hover
-                        selected={selected?.name === store.name}
-                        onClick={() => setSelected(store)}
-                        sx={{ cursor: 'pointer' }}
-                      >
-                        <TableCell>{store.name}</TableCell>
-                        <TableCell>
-                          <Chip
-                            label={store.type}
-                            size='small'
-                            variant='outlined'
-                          />
+                  </TableHead>
+                  <TableBody>
+                    {stores.length === 0 ? (
+                      <TableRow>
+                        <TableCell
+                          colSpan={3}
+                          align='center'
+                        >
+                          <Typography
+                            variant='body2'
+                            color='text.secondary'
+                          >
+                            未检测到状态存储
+                          </Typography>
                         </TableCell>
-                        <TableCell>{store.subscriberCount}</TableCell>
                       </TableRow>
-                    ))
-                  )}
-                </TableBody>
-              </Table>
-            </TableContainer>
-          </V51Card>
+                    ) : (
+                      stores.map((store) => (
+                        <TableRow
+                          key={store.name}
+                          hover
+                          selected={selected?.name === store.name}
+                          onClick={() => setSelected(store)}
+                          sx={{ cursor: 'pointer' }}
+                        >
+                          <TableCell>{store.name}</TableCell>
+                          <TableCell>
+                            <Chip
+                              label={store.type}
+                              size='small'
+                              variant='outlined'
+                            />
+                          </TableCell>
+                          <TableCell>{store.subscriberCount}</TableCell>
+                        </TableRow>
+                      ))
+                    )}
+                  </TableBody>
+                </Table>
+              </TableContainer>
+            </CardContent>
+          </Card>
         </Grid>
 
         <Grid size={{ xs: 12, md: 6 }}>
-          <V51Card
-            title='状态详情'
-            headerAction={
-              selected ? (
-                <IconButton
-                  size='small'
-                  onClick={exportState}
-                  title='复制到剪贴板'
-                >
-                  <Download size={16} />
-                </IconButton>
-              ) : null
-            }
-          >
-            {selected ? (
-              <Box>
-                <Typography
-                  variant='subtitle2'
-                  sx={{ mb: 1 }}
-                >
-                  {selected.name}
-                </Typography>
-                <Typography
-                  variant='caption'
-                  color='text.secondary'
-                >
-                  Selectors: {selected.selectors.length} | Actions: {selected.actions.length}
-                </Typography>
-                <Paper sx={{ p: 1.5, mt: 1, maxHeight: 400, overflow: 'auto', bgcolor: 'grey.50' }}>
+          <Card variant='outlined'>
+            <CardHeader
+              title='状态详情'
+              action={
+                selected ? (
+                  <IconButton
+                    size='small'
+                    onClick={exportState}
+                    title='复制到剪贴板'
+                  >
+                    <Download size={16} />
+                  </IconButton>
+                ) : null
+              }
+            />
+            <CardContent>
+              {selected ? (
+                <Box>
+                  <Typography
+                    variant='subtitle2'
+                    sx={{ mb: 1 }}
+                  >
+                    {selected.name}
+                  </Typography>
                   <Typography
                     variant='caption'
-                    sx={{ fontFamily: 'monospace' }}
+                    color='text.secondary'
                   >
-                    {JSON.stringify(selected.state, null, 2)}
+                    Selectors: {selected.selectors.length} | Actions: {selected.actions.length}
                   </Typography>
-                </Paper>
-              </Box>
-            ) : (
-              <Typography
-                variant='body2'
-                color='text.secondary'
-              >
-                选择状态存储查看详情
-              </Typography>
-            )}
-          </V51Card>
+                  <Paper
+                    sx={{ p: 1.5, mt: 1, maxHeight: 400, overflow: 'auto', bgcolor: 'grey.50' }}
+                  >
+                    <Typography
+                      variant='caption'
+                      sx={{ fontFamily: 'monospace' }}
+                    >
+                      {JSON.stringify(selected.state, null, 2)}
+                    </Typography>
+                  </Paper>
+                </Box>
+              ) : (
+                <Typography
+                  variant='body2'
+                  color='text.secondary'
+                >
+                  选择状态存储查看详情
+                </Typography>
+              )}
+            </CardContent>
+          </Card>
         </Grid>
       </Grid>
     </Box>
@@ -1233,10 +1278,10 @@ const DebugSessionsTab: React.FC = () => {
         >
           <Bug size={20} /> 调试会话 ({sessions.length})
           {isRecording && (
-            <V51Badge
+            <Chip
               label='录制中'
-              variant='error'
-              size='sm'
+              color='error'
+              size='small'
             />
           )}
         </Typography>
@@ -1307,168 +1352,174 @@ const DebugSessionsTab: React.FC = () => {
         spacing={2}
       >
         <Grid size={{ xs: 12, md: 6 }}>
-          <V51Card title='会话列表'>
-            <TableContainer>
-              <Table size='small'>
-                <TableHead>
-                  <TableRow>
-                    <TableCell sx={{ fontWeight: 600 }}>名称</TableCell>
-                    <TableCell sx={{ fontWeight: 600 }}>步骤</TableCell>
-                    <TableCell sx={{ fontWeight: 600 }}>时长</TableCell>
-                    <TableCell sx={{ fontWeight: 600 }}>操作</TableCell>
-                  </TableRow>
-                </TableHead>
-                <TableBody>
-                  {sessions.length === 0 ? (
+          <Card variant='outlined'>
+            <CardHeader title='会话列表' />
+            <CardContent>
+              <TableContainer>
+                <Table size='small'>
+                  <TableHead>
                     <TableRow>
-                      <TableCell
-                        colSpan={4}
-                        align='center'
-                      >
-                        <Typography
-                          variant='body2'
-                          color='text.secondary'
-                        >
-                          暂无会话记录
-                        </Typography>
-                      </TableCell>
+                      <TableCell sx={{ fontWeight: 600 }}>名称</TableCell>
+                      <TableCell sx={{ fontWeight: 600 }}>步骤</TableCell>
+                      <TableCell sx={{ fontWeight: 600 }}>时长</TableCell>
+                      <TableCell sx={{ fontWeight: 600 }}>操作</TableCell>
                     </TableRow>
-                  ) : (
-                    sessions.map((session) => (
-                      <TableRow
-                        key={session.id}
-                        hover
-                        selected={selected?.id === session.id}
-                        onClick={() => setSelected(session)}
-                        sx={{ cursor: 'pointer' }}
-                      >
-                        <TableCell>{session.name}</TableCell>
-                        <TableCell>{session.steps.length}</TableCell>
-                        <TableCell>{(session.duration / 1000).toFixed(1)}s</TableCell>
-                        <TableCell>
-                          <Stack
-                            direction='row'
-                            spacing={0.5}
+                  </TableHead>
+                  <TableBody>
+                    {sessions.length === 0 ? (
+                      <TableRow>
+                        <TableCell
+                          colSpan={4}
+                          align='center'
+                        >
+                          <Typography
+                            variant='body2'
+                            color='text.secondary'
                           >
-                            <IconButton
-                              size='small'
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                replay(session.id);
-                              }}
-                              title='回放'
-                            >
-                              <Play size={14} />
-                            </IconButton>
-                            <IconButton
-                              size='small'
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                exportSession(session.id);
-                              }}
-                              title='导出'
-                            >
-                              <Download size={14} />
-                            </IconButton>
-                            <IconButton
-                              size='small'
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                deleteSession(session.id);
-                              }}
-                              title='删除'
-                            >
-                              <Trash2 size={14} />
-                            </IconButton>
-                          </Stack>
+                            暂无会话记录
+                          </Typography>
                         </TableCell>
                       </TableRow>
-                    ))
-                  )}
-                </TableBody>
-              </Table>
-            </TableContainer>
-          </V51Card>
+                    ) : (
+                      sessions.map((session) => (
+                        <TableRow
+                          key={session.id}
+                          hover
+                          selected={selected?.id === session.id}
+                          onClick={() => setSelected(session)}
+                          sx={{ cursor: 'pointer' }}
+                        >
+                          <TableCell>{session.name}</TableCell>
+                          <TableCell>{session.steps.length}</TableCell>
+                          <TableCell>{(session.duration / 1000).toFixed(1)}s</TableCell>
+                          <TableCell>
+                            <Stack
+                              direction='row'
+                              spacing={0.5}
+                            >
+                              <IconButton
+                                size='small'
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  replay(session.id);
+                                }}
+                                title='回放'
+                              >
+                                <Play size={14} />
+                              </IconButton>
+                              <IconButton
+                                size='small'
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  exportSession(session.id);
+                                }}
+                                title='导出'
+                              >
+                                <Download size={14} />
+                              </IconButton>
+                              <IconButton
+                                size='small'
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  deleteSession(session.id);
+                                }}
+                                title='删除'
+                              >
+                                <Trash2 size={14} />
+                              </IconButton>
+                            </Stack>
+                          </TableCell>
+                        </TableRow>
+                      ))
+                    )}
+                  </TableBody>
+                </Table>
+              </TableContainer>
+            </CardContent>
+          </Card>
         </Grid>
 
         <Grid size={{ xs: 12, md: 6 }}>
-          <V51Card title='会话详情'>
-            {selected ? (
-              <Box>
-                <Typography
-                  variant='subtitle2'
-                  sx={{ fontWeight: 600, mb: 1 }}
-                >
-                  {selected.name}
-                </Typography>
-                <Typography
-                  variant='caption'
-                  color='text.secondary'
-                  sx={{ mb: 1, display: 'block' }}
-                >
-                  创建: {new Date(selected.createdAt).toLocaleString()}
-                </Typography>
-                <Typography
-                  variant='caption'
-                  color='text.secondary'
-                  sx={{ mb: 1, display: 'block' }}
-                >
-                  URL: {selected.metadata.url}
-                </Typography>
-                <Typography
-                  variant='caption'
-                  color='text.secondary'
-                  sx={{ mb: 1, display: 'block' }}
-                >
-                  步骤数: {selected.steps.length}
-                </Typography>
-                <Paper sx={{ p: 1, maxHeight: 350, overflow: 'auto', bgcolor: 'grey.50' }}>
-                  {selected.steps.map((step, idx) => (
-                    <Box
-                      key={step.id}
-                      sx={{
-                        py: 0.5,
-                        borderBottom: idx < selected.steps.length - 1 ? '1px solid' : 'none',
-                        borderColor: 'divider',
-                      }}
-                    >
-                      <Typography
-                        variant='caption'
-                        sx={{ fontFamily: 'monospace', color: 'text.secondary' }}
+          <Card variant='outlined'>
+            <CardHeader title='会话详情' />
+            <CardContent>
+              {selected ? (
+                <Box>
+                  <Typography
+                    variant='subtitle2'
+                    sx={{ fontWeight: 600, mb: 1 }}
+                  >
+                    {selected.name}
+                  </Typography>
+                  <Typography
+                    variant='caption'
+                    color='text.secondary'
+                    sx={{ mb: 1, display: 'block' }}
+                  >
+                    创建: {new Date(selected.createdAt).toLocaleString()}
+                  </Typography>
+                  <Typography
+                    variant='caption'
+                    color='text.secondary'
+                    sx={{ mb: 1, display: 'block' }}
+                  >
+                    URL: {selected.metadata.url}
+                  </Typography>
+                  <Typography
+                    variant='caption'
+                    color='text.secondary'
+                    sx={{ mb: 1, display: 'block' }}
+                  >
+                    步骤数: {selected.steps.length}
+                  </Typography>
+                  <Paper sx={{ p: 1, maxHeight: 350, overflow: 'auto', bgcolor: 'grey.50' }}>
+                    {selected.steps.map((step, idx) => (
+                      <Box
+                        key={step.id}
+                        sx={{
+                          py: 0.5,
+                          borderBottom: idx < selected.steps.length - 1 ? '1px solid' : 'none',
+                          borderColor: 'divider',
+                        }}
                       >
-                        [{new Date(step.timestamp).toLocaleTimeString()}]
-                      </Typography>
-                      <Chip
-                        label={step.type}
-                        size='small'
-                        color={
-                          step.type === 'error'
-                            ? 'error'
-                            : step.type === 'network'
-                              ? 'primary'
-                              : 'default'
-                        }
-                        sx={{ ml: 1, fontSize: 10 }}
-                      />
-                      <Typography
-                        variant='caption'
-                        sx={{ fontFamily: 'monospace' }}
-                      >
-                        {JSON.stringify(step.data).substring(0, 80)}
-                      </Typography>
-                    </Box>
-                  ))}
-                </Paper>
-              </Box>
-            ) : (
-              <Typography
-                variant='body2'
-                color='text.secondary'
-              >
-                选择会话查看详情
-              </Typography>
-            )}
-          </V51Card>
+                        <Typography
+                          variant='caption'
+                          sx={{ fontFamily: 'monospace', color: 'text.secondary' }}
+                        >
+                          [{new Date(step.timestamp).toLocaleTimeString()}]
+                        </Typography>
+                        <Chip
+                          label={step.type}
+                          size='small'
+                          color={
+                            step.type === 'error'
+                              ? 'error'
+                              : step.type === 'network'
+                                ? 'primary'
+                                : 'default'
+                          }
+                          sx={{ ml: 1, fontSize: 10 }}
+                        />
+                        <Typography
+                          variant='caption'
+                          sx={{ fontFamily: 'monospace' }}
+                        >
+                          {JSON.stringify(step.data).substring(0, 80)}
+                        </Typography>
+                      </Box>
+                    ))}
+                  </Paper>
+                </Box>
+              ) : (
+                <Typography
+                  variant='body2'
+                  color='text.secondary'
+                >
+                  选择会话查看详情
+                </Typography>
+              )}
+            </CardContent>
+          </Card>
         </Grid>
       </Grid>
     </Box>

@@ -31,6 +31,7 @@ import {
   DialogTitle,
   DialogContent,
   DialogActions,
+  Card,
 } from '@mui/material';
 import {
   X as XIcon,
@@ -59,7 +60,6 @@ import {
   Sparkles,
   Zap,
 } from 'lucide-react';
-import { V51Card } from '../../design-system/components';
 import {
   complianceAutomator,
   type ComplianceCheck,
@@ -585,7 +585,7 @@ const ComplianceTab: React.FC<{
       </Box>
 
       <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 3, mb: 3 }}>
-        <V51Card>
+        <Card variant='outlined' sx={{ p: 2 }}>
           <Typography
             variant='subtitle2'
             sx={{ fontWeight: 600, mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}
@@ -624,10 +624,10 @@ const ComplianceTab: React.FC<{
               );
             })}
           </Stack>
-        </V51Card>
+        </Card>
 
         {report && (
-          <V51Card>
+          <Card variant='outlined' sx={{ p: 2 }}>
             <Typography
               variant='subtitle2'
               sx={{ fontWeight: 600, mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}
@@ -660,7 +660,7 @@ const ComplianceTab: React.FC<{
                 </ListItem>
               ))}
             </List>
-          </V51Card>
+          </Card>
         )}
       </Box>
 
@@ -694,7 +694,7 @@ const ComplianceTab: React.FC<{
         ))}
       </Stack>
 
-      <V51Card>
+      <Card variant='outlined' sx={{ p: 2 }}>
         <TableContainer>
           <Table size='small'>
             <TableHead>
@@ -753,7 +753,7 @@ const ComplianceTab: React.FC<{
             仅显示前 20 条，共 {filtered.length} 条记录
           </Typography>
         )}
-      </V51Card>
+      </Card>
     </Box>
   );
 };
@@ -877,7 +877,7 @@ const RiskTab: React.FC<{
       )}
 
       <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 3, mb: 3 }}>
-        <V51Card>
+        <Card variant='outlined' sx={{ p: 2 }}>
           <Typography
             variant='subtitle2'
             sx={{ fontWeight: 600, mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}
@@ -959,9 +959,9 @@ const RiskTab: React.FC<{
               );
             })}
           </Stack>
-        </V51Card>
+        </Card>
 
-        <V51Card>
+        <Card variant='outlined' sx={{ p: 2 }}>
           <Typography
             variant='subtitle2'
             sx={{ fontWeight: 600, mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}
@@ -1017,7 +1017,7 @@ const RiskTab: React.FC<{
               </Box>
             </Stack>
           )}
-        </V51Card>
+        </Card>
       </Box>
 
       <Stack
@@ -1071,7 +1071,7 @@ const RiskTab: React.FC<{
       {filteredAlerts.length === 0 ? (
         <Alert severity='info'>暂无匹配的预警</Alert>
       ) : (
-        <V51Card>
+        <Card variant='outlined' sx={{ p: 2 }}>
           <TableContainer>
             <Table size='small'>
               <TableHead>
@@ -1170,7 +1170,7 @@ const RiskTab: React.FC<{
               </TableBody>
             </Table>
           </TableContainer>
-        </V51Card>
+        </Card>
       )}
     </Box>
   );
@@ -1233,7 +1233,7 @@ const PolicyTab: React.FC<{
       </Stack>
 
       <Box sx={{ display: 'grid', gridTemplateColumns: '320px 1fr', gap: 3 }}>
-        <V51Card>
+        <Card variant='outlined' sx={{ p: 2 }}>
           <Typography
             variant='subtitle2'
             sx={{ fontWeight: 600, mb: 2 }}
@@ -1306,9 +1306,9 @@ const PolicyTab: React.FC<{
               ))}
             </List>
           )}
-        </V51Card>
+        </Card>
 
-        <V51Card>
+        <Card variant='outlined' sx={{ p: 2 }}>
           {selectedPolicy ? (
             <>
               <Typography
@@ -1478,7 +1478,7 @@ const PolicyTab: React.FC<{
           ) : (
             <Alert severity='info'>请从左侧选择一个策略查看详情</Alert>
           )}
-        </V51Card>
+        </Card>
       </Box>
     </Box>
   );
@@ -1569,7 +1569,7 @@ const AuditTab: React.FC<{
       {filtered.length === 0 ? (
         <Alert severity='info'>暂无审计记录</Alert>
       ) : (
-        <V51Card>
+        <Card variant='outlined' sx={{ p: 2 }}>
           <TableContainer>
             <Table size='small'>
               <TableHead>
@@ -1601,7 +1601,7 @@ const AuditTab: React.FC<{
               仅显示最近 30 条，共 {filtered.length} 条记录
             </Typography>
           )}
-        </V51Card>
+        </Card>
       )}
     </Box>
   );
@@ -1744,7 +1744,7 @@ const ScoreCard: React.FC<{
   icon: React.ReactNode;
   subtitle: string;
 }> = ({ title, score, color, icon, subtitle }) => (
-  <V51Card>
+  <Card variant='outlined' sx={{ p: 2 }}>
     <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
       <Box sx={{ color, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
         {icon}
@@ -1775,5 +1775,5 @@ const ScoreCard: React.FC<{
       value={score}
       sx={{ height: 4, borderRadius: 2, mt: 1, bgcolor: 'grey.200' }}
     />
-  </V51Card>
+  </Card>
 );

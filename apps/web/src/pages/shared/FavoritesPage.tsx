@@ -33,7 +33,7 @@ import { Star, Trash2, Search, Clock, FileText, Users, Package, Plus } from 'luc
 import { PageContainer } from '@/components/common';
 import { favoriteApi, searchApi, type Favorite, type SearchResult } from '@/api/shared';
 import { useNotificationStore } from '@/store';
-import {QUERY_KEYS, CACHE_DURATIONS} from '@/lib/reactQuery';
+import { QUERY_KEYS, CACHE_DURATIONS } from '@/lib/reactQuery';
 import { apiLogger } from '@/utils/logger';
 import { sanitizeHtml } from '@/lib/security';
 import { useNavigate } from 'react-router-dom';
@@ -57,7 +57,7 @@ const FavoritesPage: React.FC = () => {
   const [suggestions, setSuggestions] = useState<string[]>([]);
 
   // 获取收藏列表
-  const { data: favoritesData, isPending: favoritesLoading} = useQuery({
+  const { data: favoritesData, isPending: favoritesLoading } = useQuery({
     queryKey: QUERY_KEYS.SEARCH.FAVORITES,
     queryFn: async () => {
       const response = await favoriteApi.list();
@@ -66,11 +66,12 @@ const FavoritesPage: React.FC = () => {
       }
       return [];
     },
-  
-      staleTime: CACHE_DURATIONS.MEDIUM,});
+
+    staleTime: CACHE_DURATIONS.MEDIUM,
+  });
 
   // 获取最近搜索
-  const { data: recentSearchesData, isPending: searchesLoading} = useQuery({
+  const { data: recentSearchesData, isPending: searchesLoading } = useQuery({
     queryKey: QUERY_KEYS.SEARCH.HISTORY,
     queryFn: async () => {
       const response = await searchApi.getRecentSearches();
@@ -79,11 +80,12 @@ const FavoritesPage: React.FC = () => {
       }
       return [];
     },
-  
-      staleTime: CACHE_DURATIONS.MEDIUM,});
+
+    staleTime: CACHE_DURATIONS.MEDIUM,
+  });
 
   // 搜索结果
-  const { data: searchResults, isPending: searching} = useQuery({
+  const { data: searchResults, isPending: searching } = useQuery({
     queryKey: [QUERY_KEYS.SEARCH.GLOBAL, searchQuery],
     queryFn: async () => {
       if (!searchQuery.trim()) return [];
@@ -94,18 +96,20 @@ const FavoritesPage: React.FC = () => {
       return [];
     },
     enabled: searchQuery.trim().length > 1,
-  
-      staleTime: CACHE_DURATIONS.MEDIUM,});
+
+    staleTime: CACHE_DURATIONS.MEDIUM,
+  });
 
   // 删除收藏
   const removeMutation = useMutation({
     mutationFn: (id: string) => favoriteApi.remove(id),
     onSuccess: () => {
       addNotification({ type: 'success', title: '已移除', message: '收藏已删除' });
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.SEARCH.FAVORITES ,
-  exact: false,
-  refetchType: 'active',
-});
+      queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.SEARCH.FAVORITES,
+        exact: false,
+        refetchType: 'active',
+      });
     },
     onError: (error: unknown) => {
       apiLogger.error('删除收藏失败:', error);
@@ -118,10 +122,11 @@ const FavoritesPage: React.FC = () => {
     mutationFn: () => searchApi.clearRecentSearches(),
     onSuccess: () => {
       addNotification({ type: 'success', title: '已清除', message: '搜索历史已清空' });
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.SEARCH.HISTORY ,
-  exact: false,
-  refetchType: 'active',
-});
+      queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.SEARCH.HISTORY,
+        exact: false,
+        refetchType: 'active',
+      });
     },
   });
 
@@ -135,10 +140,11 @@ const FavoritesPage: React.FC = () => {
       }),
     onSuccess: () => {
       addNotification({ type: 'success', title: '已收藏', message: '收藏添加成功' });
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.SEARCH.FAVORITES ,
-  exact: false,
-  refetchType: 'active',
-});
+      queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.SEARCH.FAVORITES,
+        exact: false,
+        refetchType: 'active',
+      });
       setAddDialogOpen(false);
       setNewFavId('');
       setNewFavName('');
