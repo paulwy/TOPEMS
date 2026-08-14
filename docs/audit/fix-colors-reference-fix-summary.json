@@ -1,0 +1,11 @@
+{
+  "generated_at": "2026-08-14T02:34:11.379Z",
+  "mode": "apply",
+  "processed_files": 227,
+  "changed_files": 104,
+  "total_fixes": 719,
+  "by_kind": {
+    "mui_sx": 0,
+    "runtime_expr": 719
+  }
+}
