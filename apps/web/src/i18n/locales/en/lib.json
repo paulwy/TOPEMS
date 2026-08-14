@@ -1,0 +1,12 @@
+{
+  "lib.micro_frontend_loader.k0": "重新加载",
+  "lib.module_loader.k0": "加载模块中...",
+  "lib.module_loader.k1": "模块加载失败",
+  "lib.module_loader.k2": "模块加载失败",
+  "lib.module_loader.k3": "模块健康状态异常",
+  "lib.module_loading_progress.k0": "预计剩余",
+  "lib.plugin_loader.k0": "加载模块中...",
+  "lib.plugin_loader.k1": "模块加载失败",
+  "lib.plugin_loader.k2": ">正在加载插件: {loadingPlugins.join(",
+  "lib.plugin_loader.k3": "插件加载错误"
+}
