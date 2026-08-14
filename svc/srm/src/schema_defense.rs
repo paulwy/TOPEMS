@@ -271,3 +271,211 @@ pub async fn run_schema_migration_and_verify(pool: &PgPool) -> Result<(), sqlx::
     run_schema_defense(pool, SERVICE_SCHEMA, TABLE_DEFS, SERVICE_TAG).await?;
     Ok(())
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_service_schema_is_srm() {
+        assert_eq!(SERVICE_SCHEMA, "srm");
+    }
+
+    #[test]
+    fn test_service_tag_is_srm() {
+        assert_eq!(SERVICE_TAG, "srm");
+    }
+
+    #[test]
+    fn test_table_defs_has_13_tables() {
+        assert_eq!(TABLE_DEFS.len(), 13, "SRM should define 13 tables");
+    }
+
+    #[test]
+    fn test_suppliers_table_exists() {
+        let names: Vec<&str> = TABLE_DEFS.iter().map(|(n, _)| *n).collect();
+        assert!(names.contains(&"suppliers"));
+    }
+
+    #[test]
+    fn test_supplier_categories_table_exists() {
+        let names: Vec<&str> = TABLE_DEFS.iter().map(|(n, _)| *n).collect();
+        assert!(names.contains(&"supplier_categories"));
+    }
+
+    #[test]
+    fn test_supplier_evaluations_table_exists() {
+        let names: Vec<&str> = TABLE_DEFS.iter().map(|(n, _)| *n).collect();
+        assert!(names.contains(&"supplier_evaluations"));
+    }
+
+    #[test]
+    fn test_supplier_contracts_table_exists() {
+        let names: Vec<&str> = TABLE_DEFS.iter().map(|(n, _)| *n).collect();
+        assert!(names.contains(&"supplier_contracts"));
+    }
+
+    #[test]
+    fn test_contract_terms_table_exists() {
+        let names: Vec<&str> = TABLE_DEFS.iter().map(|(n, _)| *n).collect();
+        assert!(names.contains(&"contract_terms"));
+    }
+
+    #[test]
+    fn test_supplier_products_table_exists() {
+        let names: Vec<&str> = TABLE_DEFS.iter().map(|(n, _)| *n).collect();
+        assert!(names.contains(&"supplier_products"));
+    }
+
+    #[test]
+    fn test_purchase_orders_table_exists() {
+        let names: Vec<&str> = TABLE_DEFS.iter().map(|(n, _)| *n).collect();
+        assert!(names.contains(&"purchase_orders"));
+    }
+
+    #[test]
+    fn test_audit_logs_table_exists() {
+        let names: Vec<&str> = TABLE_DEFS.iter().map(|(n, _)| *n).collect();
+        assert!(names.contains(&"audit_logs"));
+    }
+
+    #[test]
+    fn test_tenders_table_exists() {
+        let names: Vec<&str> = TABLE_DEFS.iter().map(|(n, _)| *n).collect();
+        assert!(names.contains(&"tenders"));
+    }
+
+    #[test]
+    fn test_tender_bids_table_exists() {
+        let names: Vec<&str> = TABLE_DEFS.iter().map(|(n, _)| *n).collect();
+        assert!(names.contains(&"tender_bids"));
+    }
+
+    #[test]
+    fn test_tender_awards_table_exists() {
+        let names: Vec<&str> = TABLE_DEFS.iter().map(|(n, _)| *n).collect();
+        assert!(names.contains(&"tender_awards"));
+    }
+
+    #[test]
+    fn test_bid_requests_table_exists() {
+        let names: Vec<&str> = TABLE_DEFS.iter().map(|(n, _)| *n).collect();
+        assert!(names.contains(&"bid_requests"));
+    }
+
+    #[test]
+    fn test_bids_table_exists() {
+        let names: Vec<&str> = TABLE_DEFS.iter().map(|(n, _)| *n).collect();
+        assert!(names.contains(&"bids"));
+    }
+
+    #[test]
+    fn test_suppliers_has_tenant_id_column() {
+        let (_, cols) = TABLE_DEFS
+            .iter()
+            .find(|(n, _)| *n == "suppliers")
+            .expect("suppliers table should exist");
+        let col_names: Vec<&str> = cols.iter().map(|(c, _)| *c).collect();
+        assert!(col_names.contains(&"tenant_id"));
+    }
+
+    #[test]
+    fn test_suppliers_has_required_columns() {
+        let (_, cols) = TABLE_DEFS
+            .iter()
+            .find(|(n, _)| *n == "suppliers")
+            .expect("suppliers table should exist");
+        let col_names: Vec<&str> = cols.iter().map(|(c, _)| *c).collect();
+        for required in &["supplier_no", "name", "category", "status", "risk_level"] {
+            assert!(
+                col_names.contains(required),
+                "suppliers table should have column: {}",
+                required
+            );
+        }
+    }
+
+    #[test]
+    fn test_all_tables_have_at_least_one_column() {
+        for (name, cols) in TABLE_DEFS {
+            assert!(
+                !cols.is_empty(),
+                "table {} should have at least one column definition",
+                name
+            );
+        }
+    }
+
+    #[test]
+    fn test_column_definitions_have_type_info() {
+        for (tbl, cols) in TABLE_DEFS {
+            for (col_name, col_type) in *cols {
+                assert!(
+                    !col_type.is_empty(),
+                    "column {}.{} should have a non-empty type definition",
+                    tbl,
+                    col_name
+                );
+            }
+        }
+    }
+
+    #[test]
+    fn test_tender_bids_has_score_columns() {
+        let (_, cols) = TABLE_DEFS
+            .iter()
+            .find(|(n, _)| *n == "tender_bids")
+            .expect("tender_bids table should exist");
+        let col_names: Vec<&str> = cols.iter().map(|(c, _)| *c).collect();
+        assert!(col_names.contains(&"technical_score"));
+        assert!(col_names.contains(&"commercial_score"));
+        assert!(col_names.contains(&"total_score"));
+    }
+
+    #[test]
+    fn test_supplier_evaluations_has_score_columns() {
+        let (_, cols) = TABLE_DEFS
+            .iter()
+            .find(|(n, _)| *n == "supplier_evaluations")
+            .expect("supplier_evaluations table should exist");
+        let col_names: Vec<&str> = cols.iter().map(|(c, _)| *c).collect();
+        for required in &[
+            "overall_score",
+            "quality_score",
+            "delivery_score",
+            "service_score",
+            "price_score",
+        ] {
+            assert!(col_names.contains(required));
+        }
+    }
+
+    #[test]
+    fn test_table_names_are_non_empty() {
+        for (name, _) in TABLE_DEFS {
+            assert!(!name.is_empty(), "table name should not be empty");
+        }
+    }
+
+    #[test]
+    fn test_column_names_are_non_empty() {
+        for (tbl, cols) in TABLE_DEFS {
+            for (col, _) in *cols {
+                assert!(
+                    !col.is_empty(),
+                    "column name in {} should not be empty",
+                    tbl
+                );
+            }
+        }
+    }
+
+    #[test]
+    fn test_no_duplicate_table_names() {
+        let mut names: Vec<&str> = TABLE_DEFS.iter().map(|(n, _)| *n).collect();
+        names.sort();
+        let len_before = names.len();
+        names.dedup();
+        assert_eq!(names.len(), len_before, "duplicate table names found");
+    }
+}
