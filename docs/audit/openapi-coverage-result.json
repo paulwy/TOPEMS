@@ -1,0 +1,319 @@
+{
+  "generated_at": "2026-08-14T02:10:47.198Z",
+  "threshold_pct": 95,
+  "overall_pass": false,
+  "services": [
+    {
+      "service": "erp",
+      "openapi_file": "svc/erp/src/modules/openapi.rs",
+      "annotated_count": 397,
+      "registered_count": 208,
+      "coverage_pct": 52,
+      "pass": false,
+      "unregistered_count": 189,
+      "unregistered_sample": [
+        {
+          "operation_id": "fetch_entries_by_type",
+          "file": "svc/erp/src/modules/addressbook.rs"
+        },
+        {
+          "operation_id": "log_audit_event",
+          "file": "svc/erp/src/modules/audit.rs"
+        },
+        {
+          "operation_id": "export_elimination_worksheet",
+          "file": "svc/erp/src/modules/consolidation/elimination_rules.rs"
+        },
+        {
+          "operation_id": "export_report",
+          "file": "svc/erp/src/modules/consolidation/reports.rs"
+        },
+        {
+          "operation_id": "submit_report",
+          "file": "svc/erp/src/modules/consolidation/reports.rs"
+        },
+        {
+          "operation_id": "preview_add_column",
+          "file": "svc/erp/src/modules/db_structure.rs"
+        },
+        {
+          "operation_id": "execute_add_column",
+          "file": "svc/erp/src/modules/db_structure.rs"
+        },
+        {
+          "operation_id": "execute_modify_column",
+          "file": "svc/erp/src/modules/db_structure.rs"
+        },
+        {
+          "operation_id": "execute_drop_column",
+          "file": "svc/erp/src/modules/db_structure.rs"
+        },
+        {
+          "operation_id": "list_dict_types",
+          "file": "svc/erp/src/modules/dict.rs"
+        }
+      ],
+      "annotation_sample": [
+        {
+          "operation_id": "fetch_entries_by_type",
+          "path": "/erp/addressbook/fetch-entries-by-type",
+          "tag": "Addressbook"
+        },
+        {
+          "operation_id": null,
+          "path": "/erp/addressbook",
+          "tag": "ERP/addressbook"
+        },
+        {
+          "operation_id": null,
+          "path": "/erp/addressbook/{id}",
+          "tag": "ERP/addressbook"
+        },
+        {
+          "operation_id": null,
+          "path": "/erp/addressbook/search",
+          "tag": "ERP/addressbook"
+        },
+        {
+          "operation_id": null,
+          "path": "/erp/addressbook/departments/tree",
+          "tag": "ERP/addressbook"
+        }
+      ]
+    },
+    {
+      "service": "finance",
+      "openapi_file": "svc/finance/src/openapi.rs",
+      "annotated_count": 494,
+      "registered_count": 433,
+      "coverage_pct": 88,
+      "pass": false,
+      "unregistered_count": 40,
+      "unregistered_sample": [
+        {
+          "operation_id": "get_account",
+          "file": "svc/finance/src/modules/mod.rs"
+        },
+        {
+          "operation_id": "get_account_by_code",
+          "file": "svc/finance/src/modules/mod.rs"
+        },
+        {
+          "operation_id": "list_accounts",
+          "file": "svc/finance/src/modules/mod.rs"
+        },
+        {
+          "operation_id": "create_voucher",
+          "file": "svc/finance/src/modules/mod.rs"
+        },
+        {
+          "operation_id": "get_voucher",
+          "file": "svc/finance/src/modules/mod.rs"
+        },
+        {
+          "operation_id": "submit_voucher",
+          "file": "svc/finance/src/modules/mod.rs"
+        },
+        {
+          "operation_id": "approve_voucher",
+          "file": "svc/finance/src/modules/mod.rs"
+        },
+        {
+          "operation_id": "post_voucher",
+          "file": "svc/finance/src/modules/mod.rs"
+        },
+        {
+          "operation_id": "delete_voucher",
+          "file": "svc/finance/src/modules/mod.rs"
+        },
+        {
+          "operation_id": "unpost_voucher",
+          "file": "svc/finance/src/modules/mod.rs"
+        }
+      ],
+      "annotation_sample": [
+        {
+          "operation_id": "create_audit_rule_handler",
+          "path": "/audit-v52/rules",
+          "tag": "Audit-V52"
+        },
+        {
+          "operation_id": "list_audit_rules_handler",
+          "path": "/finance-v52/audit_rules",
+          "tag": "AuditV52"
+        },
+        {
+          "operation_id": "update_audit_rule_handler",
+          "path": "/finance-v52/audit_rule/{id}",
+          "tag": "AuditV52"
+        },
+        {
+          "operation_id": "delete_audit_rule_handler",
+          "path": "/finance-v52/audit_rule/{id}",
+          "tag": "AuditV52"
+        },
+        {
+          "operation_id": "get_audit_findings_handler",
+          "path": "/finance-v52/audit_findings",
+          "tag": "AuditV52"
+        }
+      ]
+    },
+    {
+      "service": "wms",
+      "openapi_file": "svc/wms/src/modules/openapi.rs",
+      "annotated_count": 204,
+      "registered_count": 112,
+      "coverage_pct": 55,
+      "pass": false,
+      "unregistered_count": 44,
+      "unregistered_sample": [
+        {
+          "operation_id": "get_expiring_soon",
+          "file": "svc/wms/src/modules/batch.rs"
+        },
+        {
+          "operation_id": "get_expired",
+          "file": "svc/wms/src/modules/batch.rs"
+        },
+        {
+          "operation_id": "adjust_quantity",
+          "file": "svc/wms/src/modules/batch.rs"
+        },
+        {
+          "operation_id": "transfer_location",
+          "file": "svc/wms/src/modules/batch.rs"
+        },
+        {
+          "operation_id": "outbound_to_shipping",
+          "file": "svc/wms/src/modules/data_sync.rs"
+        },
+        {
+          "operation_id": "create_shipping_from_outbound",
+          "file": "svc/wms/src/modules/data_sync.rs"
+        },
+        {
+          "operation_id": "create_inbound_from_scm",
+          "file": "svc/wms/src/modules/data_sync.rs"
+        },
+        {
+          "operation_id": "get_sync_logs",
+          "file": "svc/wms/src/modules/data_sync.rs"
+        },
+        {
+          "operation_id": "get_alert_summary",
+          "file": "svc/wms/src/modules/inventory_alert.rs"
+        },
+        {
+          "operation_id": "get_alerts_by_warehouse",
+          "file": "svc/wms/src/modules/inventory_alert.rs"
+        }
+      ],
+      "annotation_sample": [
+        {
+          "operation_id": null,
+          "path": "/api/wms/audit-logs",
+          "tag": "wms"
+        },
+        {
+          "operation_id": null,
+          "path": "/api/wms/audit-logs/{id}",
+          "tag": "wms"
+        },
+        {
+          "operation_id": null,
+          "path": "/api/wms/batches",
+          "tag": "wms"
+        },
+        {
+          "operation_id": null,
+          "path": "/api/wms/batches",
+          "tag": "wms"
+        },
+        {
+          "operation_id": null,
+          "path": "/api/wms/batches/{id}",
+          "tag": "wms"
+        }
+      ]
+    },
+    {
+      "service": "analytics",
+      "openapi_file": "svc/analytics/src/openapi.rs",
+      "annotated_count": 240,
+      "registered_count": 103,
+      "coverage_pct": 43,
+      "pass": false,
+      "unregistered_count": 80,
+      "unregistered_sample": [
+        {
+          "operation_id": "home",
+          "file": "svc/analytics/src/main.rs"
+        },
+        {
+          "operation_id": "health",
+          "file": "svc/analytics/src/main.rs"
+        },
+        {
+          "operation_id": "detailed_health",
+          "file": "svc/analytics/src/main.rs"
+        },
+        {
+          "operation_id": "compat_home",
+          "file": "svc/analytics/src/modules/analytics_compat.rs"
+        },
+        {
+          "operation_id": "compat_detailed_health",
+          "file": "svc/analytics/src/modules/analytics_compat.rs"
+        },
+        {
+          "operation_id": "import_dashboard",
+          "file": "svc/analytics/src/modules/bi/dashboard/crud.rs"
+        },
+        {
+          "operation_id": "export_dashboard",
+          "file": "svc/analytics/src/modules/bi/dashboard/export.rs"
+        },
+        {
+          "operation_id": "export_dashboard_pdf",
+          "file": "svc/analytics/src/modules/bi/dashboard/export.rs"
+        },
+        {
+          "operation_id": "export_dashboard_excel",
+          "file": "svc/analytics/src/modules/bi/dashboard/export.rs"
+        },
+        {
+          "operation_id": "query_dashboard_realtime_data",
+          "file": "svc/analytics/src/modules/bi/dashboard/realtime.rs"
+        }
+      ],
+      "annotation_sample": [
+        {
+          "operation_id": "home",
+          "path": "/",
+          "tag": "Health"
+        },
+        {
+          "operation_id": "health",
+          "path": "/health",
+          "tag": "Health"
+        },
+        {
+          "operation_id": "detailed_health",
+          "path": "/api/health/detailed",
+          "tag": "Health"
+        },
+        {
+          "operation_id": null,
+          "path": "/api/bi/dashboards/{dashboardId}/links",
+          "tag": "BI-Compat"
+        },
+        {
+          "operation_id": null,
+          "path": "/api/bi/permissions/data",
+          "tag": "BI-Compat"
+        }
+      ]
+    }
+  ]
+}
