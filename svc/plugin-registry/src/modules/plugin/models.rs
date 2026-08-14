@@ -1032,3 +1032,77 @@ pub struct PluginBackup {
     pub created_at: DateTime<Utc>,
     pub expires_at: Option<DateTime<Utc>>,
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use serde::{Deserialize, Serialize};
+    fn roundtrip<T: Serialize + for<'de> Deserialize<'de>>(item: &T) {
+        let json = serde_json::to_string(item).unwrap();
+        let v1: serde_json::Value = serde_json::from_str(&json).unwrap();
+        let back: T = serde_json::from_str(&json).unwrap();
+        let json2 = serde_json::to_string(&back).unwrap();
+        let v2: serde_json::Value = serde_json::from_str(&json2).unwrap();
+        assert_eq!(v1, v2);
+    }
+    fn now() -> DateTime<Utc> { Utc::now() }
+    fn uuid() -> uuid::Uuid { uuid::Uuid::new_v4() }
+
+    #[test] fn rt_plugin() { roundtrip(&Plugin { id: uuid(), code: "x".into(), name: "x".into(), description: None, version: "x".into(), plugin_type: "x".into(), is_installed: false, installed_at: None, is_active: false, activated_at: None, is_free: true, price_cents: None, remote_url: None, checksum: None, entry_point: None, dependencies: None, install_count: None, rating: None, rating_count: None, is_published: false, is_featured: None, is_recommended: None, author_name: None, author_url: None, homepage_url: None, screenshots: None, tags: None, category: None, created_at: now(), updated_at: now(), published_at: None }); }
+    #[test] fn rt_plugin_version() { roundtrip(&PluginVersion { id: uuid(), plugin_id: uuid(), version: "x".into(), release_notes: None, is_stable: None, is_latest: None, download_url: None, checksum: None, file_size: None, min_app_version: None, created_at: now() }); }
+    #[test] fn rt_plugin_review() { roundtrip(&PluginReview { id: uuid(), plugin_id: uuid(), user_id: uuid(), user_name: None, user_avatar: None, rating: 5, title: None, content: None, is_verified_purchase: None, is_featured: None, helpful_count: None, replies: None, created_at: now(), updated_at: now() }); }
+    #[test] fn rt_review_reply() { roundtrip(&ReviewReply { id: uuid(), review_id: uuid(), user_id: uuid(), user_name: None, content: "x".into(), created_at: now() }); }
+    #[test] fn rt_review_request() { roundtrip(&ReviewRequest { rating: 5, title: None, content: None }); }
+    #[test] fn rt_review_filter_params() { roundtrip(&ReviewFilterParams { sort_by: None, sort_order: None, min_rating: None, max_rating: None, verified_only: None, featured_only: None, from_date: None, to_date: None, search: None }); }
+    #[test] fn rt_review_sort_field() { roundtrip(&ReviewSortField::Rating); }
+    #[test] fn rt_review_sort_config() { roundtrip(&ReviewSortConfig { field: ReviewSortField::CreatedAt, descending: true }); }
+    #[test] fn rt_plugin_statistics() { roundtrip(&PluginStatistics { plugin_id: uuid(), plugin_code: "x".into(), total_downloads: 0, monthly_downloads: 0, weekly_downloads: 0, daily_downloads: 0, total_reviews: 0, average_rating: 0.0, rating_distribution: None, active_installs: None, trending_score: None }); }
+    #[test] fn rt_download_record() { roundtrip(&DownloadRecord { id: uuid(), plugin_id: uuid(), user_id: None, version: "x".into(), download_date: now(), ip_address: None, user_agent: None }); }
+    #[test] fn rt_review_statistics() { roundtrip(&ReviewStatistics { plugin_id: uuid(), total_reviews: 0, average_rating: 0.0, rating_5_count: 0, rating_4_count: 0, rating_3_count: 0, rating_2_count: 0, rating_1_count: 0 }); }
+    #[test] fn rt_tenant_plugin() { roundtrip(&TenantPlugin { id: uuid(), tenant_id: uuid(), plugin_id: uuid(), installed_version: None, is_active: false, license_type: None, license_expires_at: None, purchase_order_id: None, activated_at: None, last_used_at: None, usage_count: None, created_at: now(), updated_at: now() }); }
+    #[test] fn rt_plugin_category() { roundtrip(&PluginCategory { id: uuid(), name: "x".into(), code: "x".into(), description: None, icon: None, sort_order: None, plugin_count: None, is_active: None, created_at: now() }); }
+    #[test] fn rt_install_plugin_request() { roundtrip(&InstallPluginRequest { plugin_code: "x".into(), license_type: "subscription".into() }); }
+    #[test] fn rt_upload_plugin_request() { roundtrip(&UploadPluginRequest { code: "x".into(), name: "x".into(), description: None, version: "x".into(), plugin_type: None, is_free: None, price_cents: None, remote_url: None, entry_point: None, dependencies: None, author_name: None, author_url: None, homepage_url: None, screenshots: None, tags: None, category: None }); }
+    #[test] fn rt_upload_version_request() { roundtrip(&UploadVersionRequest { version: "x".into(), release_notes: None, is_stable: None, is_latest: None, download_url: None, checksum: None, file_size: None, min_app_version: None }); }
+    #[test] fn rt_update_plugin_request() { roundtrip(&UpdatePluginRequest { name: None, description: None, is_free: None, price_cents: None, remote_url: None, entry_point: None, screenshots: None, tags: None, category: None }); }
+    #[test] fn rt_create_review_request() { roundtrip(&CreateReviewRequest { rating: 5, title: None, content: "x".into() }); }
+    #[test] fn rt_plugin_filters() { roundtrip(&PluginFilters { category: None, search: None, is_free: None, sort_by: None, page: None, page_size: None }); }
+    #[test] fn rt_plugin_list_response() { roundtrip(&PluginListResponse { plugins: vec![], total: 0, page: 1, page_size: 10, total_pages: 0 }); }
+    #[test] fn rt_plugin_with_status() { roundtrip(&PluginWithStatus::default()); }
+    #[test] fn rt_tenant_plugin_with_details() { roundtrip(&TenantPluginWithDetails { id: uuid(), tenant_id: uuid(), plugin_id: uuid(), installed_version: None, is_active: false, license_type: None, license_expires_at: None, purchase_order_id: None, activated_at: None, last_used_at: None, usage_count: None, created_at: now(), updated_at: now(), plugin_code: "x".into(), plugin_name: "x".into(), plugin_description: None, plugin_version: "x".into(), plugin_category: None, is_free: true, price_cents: None, install_count: None, rating: None, rating_count: None }); }
+    #[test] fn rt_marketplace_summary() { roundtrip(&MarketplaceSummary { total_plugins: 0, categories: vec![], featured_plugins: vec![], new_plugins: vec![], top_rated: vec![] }); }
+    #[test] fn rt_plugin_instance() { roundtrip(&PluginInstance { id: uuid(), plugin_id: uuid(), runtime_url: None, runtime_status: "x".into(), base_path: None, last_heartbeat: None, created_at: now() }); }
+    #[test] fn rt_plugin_permission() { roundtrip(&PluginPermission { id: uuid(), plugin_code: "x".into(), permission_code: "x".into(), permission_name: None, resource_type: None, action: None, created_at: now() }); }
+    #[test] fn rt_register_plugin_request() { roundtrip(&RegisterPluginRequest { code: "x".into(), name: "x".into(), description: None, version: "x".into(), runtime_url: "x".into(), base_path: None, permissions: vec![], dependencies: vec![], navigation_config: None, category: None }); }
+    #[test] fn rt_permission_def() { roundtrip(&PermissionDef { code: "x".into(), name: "x".into(), resource_type: "x".into(), action: "x".into() }); }
+    #[test] fn rt_plugin_heartbeat_request() { roundtrip(&PluginHeartbeatRequest { status: "x".into(), version: None }); }
+    #[test] fn rt_plugin_with_runtime_status() { roundtrip(&PluginWithRuntimeStatus { id: uuid(), code: "x".into(), name: "x".into(), description: None, version: "x".into(), plugin_type: "x".into(), is_published: false, category: None, runtime_status: None, runtime_url: None, base_path: None, last_heartbeat: None }); }
+    #[test] fn rt_tenant_plugin_with_runtime_status() { roundtrip(&TenantPluginWithRuntimeStatus { id: uuid(), tenant_id: uuid(), plugin_id: uuid(), installed_version: None, is_active: false, license_type: None, license_expires_at: None, activated_at: None, last_used_at: None, usage_count: None, created_at: now(), updated_at: now(), plugin_code: "x".into(), plugin_name: "x".into(), plugin_description: None, plugin_version: "x".into(), plugin_category: None, runtime_status: None, runtime_url: None, last_heartbeat: None }); }
+    #[test] fn rt_version_compare_request() { roundtrip(&VersionCompareRequest { from_version: "1.0".into(), to_version: "2.0".into() }); }
+    #[test] fn rt_version_compare_result() { roundtrip(&VersionCompareResult { from_version: "1.0".into(), to_version: "2.0".into(), changes: vec![] }); }
+    #[test] fn rt_version_change() { roundtrip(&VersionChange { change_type: "feature".into(), description: "x".into(), affected_components: None }); }
+    #[test] fn rt_upgrade_check_result() { roundtrip(&UpgradeCheckResult { current_version: "1.0".into(), latest_version: "2.0".into(), has_update: true, is_minor: false, is_major: true, release_notes: None, update_available_at: None }); }
+    #[test] fn rt_rollback_request() { roundtrip(&RollbackRequest { target_version: "1.0".into(), backup: None }); }
+    #[test] fn rt_rollback_result() { roundtrip(&RollbackResult { previous_version: "2.0".into(), target_version: "1.0".into(), success: true, backup_created: None, message: "x".into() }); }
+    #[test] fn rt_upgrade_status() { roundtrip(&UpgradeStatus::Pending); }
+    #[test] fn rt_upgrade_task() { roundtrip(&UpgradeTask { id: uuid(), plugin_id: uuid(), plugin_code: "x".into(), from_version: "1.0".into(), to_version: "2.0".into(), status: UpgradeStatus::Completed, progress: 100, message: None, error_message: None, download_url: None, file_path: None, backup_path: None, started_at: now(), completed_at: None }); }
+    #[test] fn rt_upgrade_request() { roundtrip(&UpgradeRequest { target_version: "2.0".into(), backup: None, force_install: None }); }
+    #[test] fn rt_upgrade_result() { roundtrip(&UpgradeResult { task_id: uuid(), from_version: "1.0".into(), to_version: "2.0".into(), success: true, message: "x".into(), backup_created: None, rollback_available: false }); }
+    #[test] fn rt_verification_result() { roundtrip(&VerificationResult { success: true, checks: vec![], message: "x".into() }); }
+    #[test] fn rt_verification_check() { roundtrip(&VerificationCheck { name: "x".into(), passed: true, message: "x".into() }); }
+    #[test] fn rt_upgrade_strategy() { roundtrip(&UpgradeStrategy::Immediate); }
+    #[test] fn rt_upgrade_schedule() { roundtrip(&UpgradeSchedule { id: uuid(), plugin_code: "x".into(), strategy: UpgradeStrategy::Manual, enabled: true, cron_expression: None, window_start: None, window_end: None, allowed_upgrade_types: vec![], auto_rollback: false, rollback_window_minutes: None, created_at: now(), updated_at: now() }); }
+    #[test] fn rt_upgrade_queue_item() { roundtrip(&UpgradeQueueItem { id: uuid(), plugin_code: "x".into(), target_version: "2.0".into(), priority: 0, status: UpgradeQueueStatus::Pending, scheduled_at: None, started_at: None, completed_at: None, error_message: None, created_at: now() }); }
+    #[test] fn rt_upgrade_queue_status() { roundtrip(&UpgradeQueueStatus::Pending); }
+    #[test] fn rt_batch_upgrade_request() { roundtrip(&BatchUpgradeRequest { plugins: vec![], strategy: UpgradeStrategy::Immediate, backup: None, force_install: None }); }
+    #[test] fn rt_plugin_upgrade_item() { roundtrip(&PluginUpgradeItem { plugin_code: "x".into(), target_version: None }); }
+    #[test] fn rt_batch_upgrade_result() { roundtrip(&BatchUpgradeResult { total: 0, successful: 0, failed: 0, skipped: 0, results: vec![] }); }
+    #[test] fn rt_plugin_upgrade_result() { roundtrip(&PluginUpgradeResult { plugin_code: "x".into(), success: true, task_id: None, message: "x".into() }); }
+    #[test] fn rt_upgrade_schedule_request() { roundtrip(&UpgradeScheduleRequest { strategy: UpgradeStrategy::Manual, enabled: None, cron_expression: None, window_start: None, window_end: None, allowed_upgrade_types: None, auto_rollback: None, rollback_window_minutes: None }); }
+    #[test] fn rt_upgrade_history() { roundtrip(&UpgradeHistory { id: uuid(), plugin_code: "x".into(), from_version: "1.0".into(), to_version: "2.0".into(), strategy: UpgradeStrategy::Immediate, status: "completed".into(), started_at: now(), completed_at: None, duration_seconds: None, error_message: None, rollback_from: None }); }
+    #[test] fn rt_uninstall_tier() { roundtrip(&UninstallTier::Disable); }
+    #[test] fn rt_uninstall_request() { roundtrip(&UninstallRequest { uninstall_tier: UninstallTier::Delete, backup: None, confirmed: None, reason: None }); }
+    #[test] fn rt_uninstall_result() { roundtrip(&UninstallResult { success: true, tier: UninstallTier::Delete, message: "x".into(), backup_created: None, data_retention_days: None, backup_url: None }); }
+    #[test] fn rt_uninstall_status() { roundtrip(&UninstallStatus { plugin_code: "x".into(), tier: UninstallTier::Uninstall, status: "completed".into(), progress_percent: None, started_at: None, completed_at: None, error_message: None }); }
+    #[test] fn rt_plugin_backup() { roundtrip(&PluginBackup { id: uuid(), plugin_code: "x".into(), version: "x".into(), backup_type: "full".into(), file_path: "x".into(), file_size: 0, created_at: now(), expires_at: None }); }
+}

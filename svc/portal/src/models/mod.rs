@@ -240,3 +240,36 @@ pub struct PinnedApp {
     pub url: String,
     pub order: u32,
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use serde::{Deserialize, Serialize};
+    fn roundtrip<T: Serialize + for<'de> Deserialize<'de>>(item: &T) {
+        let json = serde_json::to_string(item).unwrap();
+        let v1: serde_json::Value = serde_json::from_str(&json).unwrap();
+        let back: T = serde_json::from_str(&json).unwrap();
+        let json2 = serde_json::to_string(&back).unwrap();
+        let v2: serde_json::Value = serde_json::from_str(&json2).unwrap();
+        assert_eq!(v1, v2);
+    }
+
+    #[test] fn roundtrip_service_dto() { roundtrip(&ServiceDto { id: "x".into(), name: "x".into(), description: "x".into(), url: "x".into(), icon: "x".into(), status: "x".into(), category: "x".into() }); }
+    #[test] fn roundtrip_todo() { roundtrip(&Todo { id: "x".into(), title: "x".into(), service: "x".into(), service_name: "x".into(), due_date: "x".into(), priority: "x".into(), completed: true, todo_type: "x".into(), link_url: None }); }
+    #[test] fn roundtrip_new_todo() { roundtrip(&NewTodo { title: "x".into(), service: "x".into(), due_date: "x".into(), priority: "x".into() }); }
+    #[test] fn roundtrip_user_info() { roundtrip(&UserInfo { id: "x".into(), name: "x".into(), email: "x".into(), avatar: "x".into(), department: "x".into(), role: "x".into(), last_login: "x".into() }); }
+    #[test] fn roundtrip_monitoring_service() { roundtrip(&MonitoringService { service_name: "x".into(), status: "x".into(), response_time_ms: 0, last_check: "x".into(), message: None }); }
+    #[test] fn roundtrip_monitoring_metrics() { roundtrip(&MonitoringMetrics::default()); }
+    #[test] fn roundtrip_alert() { roundtrip(&Alert { id: "x".into(), rule_name: "x".into(), severity: "x".into(), message: "x".into(), triggered_at: chrono::Utc::now(), acknowledged: true }); }
+    #[test] fn roundtrip_log_entry() { roundtrip(&LogEntry { timestamp: chrono::Utc::now(), level: "x".into(), service: "x".into(), message: "x".into() }); }
+    #[test] fn roundtrip_notification() { roundtrip(&Notification { id: "x".into(), title: "x".into(), content: "x".into(), service: "x".into(), service_name: "x".into(), notification_type: "x".into(), read: true, created_at: chrono::Utc::now(), link_url: None }); }
+    #[test] fn roundtrip_dashboard_stats() { roundtrip(&DashboardStats { total_users: 0, active_users: 0, total_services: 0, healthy_services: 0, pending_tasks: 0, pending_approvals: 0, new_notifications: 0, production_orders: 0, wip_count: 0, system_uptime: 0 }); }
+    #[test] fn roundtrip_quick_access() { roundtrip(&QuickAccess { id: "x".into(), name: "x".into(), icon: "x".into(), url: "x".into(), service: "x".into(), category: "x".into() }); }
+    #[test] fn roundtrip_announcement() { roundtrip(&Announcement { id: "x".into(), title: "x".into(), content: "x".into(), announcement_type: "x".into(), priority: "x".into(), is_pinned: true, is_active: true, created_at: chrono::Utc::now(), expires_at: chrono::Utc::now(), author: "x".into() }); }
+    #[test] fn roundtrip_new_announcement() { roundtrip(&NewAnnouncement { title: "x".into(), content: "x".into(), announcement_type: "x".into(), priority: "x".into(), expires_at: "x".into() }); }
+    #[test] fn roundtrip_user_settings() { roundtrip(&UserSettings { id: "x".into(), user_id: "x".into(), theme: "x".into(), language: "x".into(), timezone: "x".into(), notification_enabled: true, notification_sound: true, auto_refresh: true, refresh_interval: 0, default_dashboard: "x".into() }); }
+    #[test] fn roundtrip_update_user_settings() { roundtrip(&UpdateUserSettings { theme: None, language: None, timezone: None, notification_enabled: None, notification_sound: None, auto_refresh: None, refresh_interval: None }); }
+    #[test] fn roundtrip_quick_action() { roundtrip(&QuickAction { id: "x".into(), name: "x".into(), description: "x".into(), icon: "x".into(), action_type: "x".into(), target_url: "x".into(), service: "x".into(), is_favorite: true, usage_count: 0 }); }
+    #[test] fn roundtrip_navigation_menu() { roundtrip(&NavigationMenu { id: "x".into(), name: "x".into(), icon: "x".into(), url: "x".into(), service: "x".into(), parent_id: None, order: 0, is_visible: true, badge_count: None }); }
+    #[test] fn roundtrip_pinned_app() { roundtrip(&PinnedApp { id: "x".into(), app_id: "x".into(), app_name: "x".into(), icon: "x".into(), url: "x".into(), order: 0 }); }
+}
