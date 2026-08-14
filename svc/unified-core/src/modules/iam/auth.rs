@@ -80,7 +80,7 @@ struct UserRow {
     created_at: Option<chrono::DateTime<chrono::Utc>>,
 }
 
-#[derive(Debug, Clone, Serialize, ToSchema)]
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
 #[schema(as = LoginResponseData)]
 struct LoginResponseData {
     access_token: String,
@@ -90,7 +90,7 @@ struct LoginResponseData {
     user: UserInfo,
 }
 
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 struct UserInfo {
     id: String,
     username: String,
@@ -1174,5 +1174,117 @@ fn verify_password(password: &str, password_hash: &str) -> bool {
             tracing::error!("Password verification error: hash may be corrupted - {}", e);
             false
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_hash_token_deterministic() {
+        let token1 = "test-jwt-token-12345";
+        let hash1 = hash_token(token1);
+        let hash2 = hash_token(token1);
+        assert_eq!(hash1, hash2);
+        assert_eq!(hash1.len(), 64);
+    }
+
+    #[test]
+    fn test_hash_token_different_inputs() {
+        let hash_a = hash_token("token-a");
+        let hash_b = hash_token("token-b");
+        assert_ne!(hash_a, hash_b);
+        assert_eq!(hash_a.len(), 64);
+        assert!(hash_a.chars().all(|c| c.is_ascii_hexdigit()));
+    }
+
+    #[test]
+    fn test_hash_token_empty_string() {
+        let hash = hash_token("");
+        assert_eq!(hash.len(), 64);
+        assert_ne!(hash, hash_token("non-empty"));
+    }
+
+    #[test]
+    fn test_hash_token_is_hex() {
+        let inputs = ["", "short", "a-long-token-with-special-chars-!@#$%"];
+        for input in inputs {
+            let hash = hash_token(input);
+            assert!(
+                hash.chars().all(|c| c.is_ascii_hexdigit()),
+                "Hash should be hex string for input: {}",
+                input
+            );
+        }
+    }
+
+    #[test]
+    fn test_verify_password_with_bcrypt() {
+        let password = "TestPass123!";
+        let hash = bcrypt::hash(password, bcrypt::DEFAULT_COST).unwrap();
+        assert!(verify_password(password, &hash));
+        assert!(!verify_password("WrongPassword1!", &hash));
+    }
+
+    #[test]
+    fn test_verify_password_invalid_hash() {
+        let result = verify_password("any-password", "not-a-valid-bcrypt-hash");
+        assert!(!result);
+    }
+
+    #[test]
+    fn test_login_request_serde() {
+        let json = serde_json::json!({
+            "username": "admin",
+            "password": "Secret123"
+        });
+        let req: LoginRequest = serde_json::from_value(json).unwrap();
+        assert_eq!(req.username, "admin");
+        assert_eq!(req.password, "Secret123");
+        let cloned = req.clone();
+        assert_eq!(cloned.username, "admin");
+    }
+
+    #[test]
+    fn test_register_request_serde() {
+        let json = serde_json::json!({
+            "username": "test_user",
+            "email": "test@example.com",
+            "password": "Pass12345",
+            "full_name": "Test User"
+        });
+        let req: RegisterRequest = serde_json::from_value(json).unwrap();
+        assert_eq!(req.username, "test_user");
+        assert_eq!(req.email, "test@example.com");
+        assert_eq!(req.full_name, Some("Test User".to_string()));
+        let cloned = req.clone();
+        assert_eq!(cloned.username, "test_user");
+    }
+
+    #[test]
+    fn test_login_response_data_serde() {
+        let lrd = LoginResponseData {
+            access_token: "eyJhbGciOiJ...".to_string(),
+            refresh_token: "refresh-token-abc".to_string(),
+            token_type: "Bearer".to_string(),
+            expires_in: 3600,
+            user: UserInfo {
+                id: "uuid-1".to_string(),
+                username: "alice".to_string(),
+                email: "alice@example.com".to_string(),
+                full_name: Some("Alice".to_string()),
+                is_active: true,
+                is_superuser: false,
+                created_at: Some("2024-01-01".to_string()),
+                roles: vec!["user".to_string()],
+                permissions: vec!["iam:read".to_string()],
+            },
+        };
+        let json = serde_json::to_string(&lrd).unwrap();
+        let de: LoginResponseData = serde_json::from_str(&json).unwrap();
+        assert_eq!(de.token_type, "Bearer");
+        assert_eq!(de.expires_in, 3600);
+        assert_eq!(de.user.username, "alice");
     }
 }

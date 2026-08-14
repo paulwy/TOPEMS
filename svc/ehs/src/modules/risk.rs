@@ -49,7 +49,7 @@ pub struct RiskQuery {
     pub risk_level: Option<String>,
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct Risk {
     pub id: String,
     pub risk_no: String,
@@ -66,7 +66,7 @@ pub struct Risk {
     pub tenant_id: Uuid,
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct RiskControlMeasure {
     pub id: String,
     pub risk_id: String,
@@ -585,5 +585,95 @@ mod tests {
     fn test_residual_risk_clamping() {
         assert_eq!(residual_risk(10, -0.5), 10);
         assert_eq!(residual_risk(10, 2.0), 0);
+    }
+
+    #[test]
+    fn test_risk_struct_serde_roundtrip() {
+        use serde_json;
+        let tenant_id = Uuid::new_v4();
+        let risk = Risk {
+            id: "risk-001".to_string(),
+            risk_no: "RSK-2024-001".to_string(),
+            title: "Test Risk".to_string(),
+            description: Some("Test description".to_string()),
+            risk_type: Some("safety".to_string()),
+            hazard_factor: Some("坠落".to_string()),
+            likelihood: Some(3),
+            severity: Some(4),
+            risk_level: Some("high".to_string()),
+            control_measures: Some("防护栏".to_string()),
+            status: "identified".to_string(),
+            tenant_id,
+        };
+        let json = serde_json::to_string(&risk).unwrap();
+        let deserialized: Risk = serde_json::from_str(&json).unwrap();
+        assert_eq!(deserialized.id, risk.id);
+        assert_eq!(deserialized.risk_no, risk.risk_no);
+        assert_eq!(deserialized.title, risk.title);
+        assert_eq!(deserialized.tenant_id, risk.tenant_id);
+    }
+
+    #[test]
+    fn test_risk_struct_clone() {
+        let tenant_id = Uuid::new_v4();
+        let risk = Risk {
+            id: "1".to_string(),
+            risk_no: "RSK-001".to_string(),
+            title: "Risk".to_string(),
+            description: None,
+            risk_type: None,
+            hazard_factor: None,
+            likelihood: None,
+            severity: None,
+            risk_level: None,
+            control_measures: None,
+            status: "open".to_string(),
+            tenant_id,
+        };
+        let cloned = risk.clone();
+        assert_eq!(cloned.id, risk.id);
+        assert_eq!(cloned.tenant_id, risk.tenant_id);
+    }
+
+    #[test]
+    fn test_risk_control_measure_serde() {
+        use serde_json;
+        let tenant_id = Uuid::new_v4();
+        let measure = RiskControlMeasure {
+            id: "m-001".to_string(),
+            risk_id: "r-001".to_string(),
+            title: "安装防护栏".to_string(),
+            description: Some("在平台边缘安装1.2m高防护栏".to_string()),
+            measure_type: Some("engineering".to_string()),
+            status: "active".to_string(),
+            created_at: "2024-01-01T00:00:00Z".to_string(),
+            tenant_id,
+        };
+        let json = serde_json::to_string(&measure).unwrap();
+        let de: RiskControlMeasure = serde_json::from_str(&json).unwrap();
+        assert_eq!(de.id, measure.id);
+        assert_eq!(de.risk_id, measure.risk_id);
+        assert_eq!(de.title, measure.title);
+    }
+
+    #[test]
+    fn test_risk_query_defaults() {
+        let q: RiskQuery = serde_json::from_str("{}").unwrap();
+        assert!(q.page.is_none());
+        assert!(q.page_size.is_none());
+        assert!(q.status.is_none());
+        assert!(q.risk_level.is_none());
+    }
+
+    #[test]
+    fn test_risk_query_with_values() {
+        let q: RiskQuery = serde_json::from_str(
+            r#"{"page":1,"page_size":20,"status":"open","risk_level":"high"}"#,
+        )
+        .unwrap();
+        assert_eq!(q.page, Some(1));
+        assert_eq!(q.page_size, Some(20));
+        assert_eq!(q.status.as_deref(), Some("open"));
+        assert_eq!(q.risk_level.as_deref(), Some("high"));
     }
 }
