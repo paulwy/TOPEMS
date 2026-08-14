@@ -411,7 +411,10 @@ mod tests {
         assert_eq!(config.model, "text-embedding-3-small");
         assert_eq!(config.dimension, 1536);
         assert_eq!(config.api_key_env.as_deref(), Some("OPENAI_API_KEY"));
-        assert_eq!(config.endpoint.as_deref(), Some("http://localhost:8080/embed"));
+        assert_eq!(
+            config.endpoint.as_deref(),
+            Some("http://localhost:8080/embed")
+        );
         assert!(config.ollama_url.is_none());
     }
 
@@ -448,11 +451,7 @@ mod tests {
     #[tokio::test]
     async fn test_mock_embedding_batch() {
         let service = MockEmbedding::new(8);
-        let texts = vec![
-            "hello".to_string(),
-            "world".to_string(),
-            "foo".to_string(),
-        ];
+        let texts = vec!["hello".to_string(), "world".to_string(), "foo".to_string()];
         let results = service.embed_batch(&texts).await.unwrap();
         assert_eq!(results.len(), 3);
         for r in &results {

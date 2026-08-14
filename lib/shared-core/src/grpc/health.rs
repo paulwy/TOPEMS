@@ -444,8 +444,7 @@ mod tests {
             false
         }
         async fn probe(&self) -> GrpcHealthStatus {
-            self.count
-                .fetch_add(1, std::sync::atomic::Ordering::SeqCst);
+            self.count.fetch_add(1, std::sync::atomic::Ordering::SeqCst);
             GrpcHealthStatus::Serving
         }
     }
@@ -586,7 +585,10 @@ mod tests {
 
     #[tokio::test]
     async fn test_grpc_health_server_check_sets_service_name() {
-        let state = Arc::new(GrpcHealthState::new("internal-name", Duration::from_secs(60)));
+        let state = Arc::new(GrpcHealthState::new(
+            "internal-name",
+            Duration::from_secs(60),
+        ));
         let server = GrpcHealthServer::new(state);
         let response = server.check("external-name").await;
         // The server overrides the service name with the one passed to check()
@@ -606,16 +608,10 @@ mod tests {
             .await;
         // First check — probe is invoked once and cached
         let _ = state.check().await;
-        assert_eq!(
-            count.load(std::sync::atomic::Ordering::SeqCst),
-            1
-        );
+        assert_eq!(count.load(std::sync::atomic::Ordering::SeqCst), 1);
         // Second check within TTL — cache hit, no new probe invocation
         let _ = state.check().await;
-        assert_eq!(
-            count.load(std::sync::atomic::Ordering::SeqCst),
-            1
-        );
+        assert_eq!(count.load(std::sync::atomic::Ordering::SeqCst), 1);
     }
 
     #[tokio::test]

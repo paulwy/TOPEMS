@@ -301,4 +301,3 @@ mod tests {
         assert_eq!(p.message, "server error");
     }
 }
-

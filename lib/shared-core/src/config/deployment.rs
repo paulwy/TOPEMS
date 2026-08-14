@@ -1,5 +1,5 @@
 //! 部署配置模块
-//! 
+//!
 //! 提供系统部署模式的配置管理，支持 SaaS 和 On-Premise 两种部署模式。
 
 use serde::{Deserialize, Serialize};
@@ -104,9 +104,7 @@ impl DeploymentConfig {
         let default_tenant_id = env::var("DEFAULT_TENANT_ID")
             .ok()
             .and_then(|v| Uuid::parse_str(&v).ok())
-            .unwrap_or_else(|| {
-                Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap()
-            });
+            .unwrap_or_else(|| Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap());
 
         let features = FeatureFlags {
             quota_enabled: env::var("QUOTA_ENABLED")
@@ -153,7 +151,7 @@ impl DeploymentConfig {
     }
 
     /// 检查租户访问权限
-    /// 
+    ///
     /// On-Premise 模式下跳过租户检查
     pub fn check_tenant_access(
         &self,
@@ -172,7 +170,7 @@ impl DeploymentConfig {
     }
 
     /// 检查配额
-    /// 
+    ///
     /// On-Premise 模式下跳过配额检查
     pub fn should_check_quota(&self) -> bool {
         self.features.quota_enabled && self.multi_tenant_enabled

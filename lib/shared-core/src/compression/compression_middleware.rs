@@ -483,7 +483,9 @@ mod tests {
             .expect("deflate compression failed");
         let mut decoder = DeflateDecoder::new(&compressed[..]);
         let mut restored = Vec::new();
-        decoder.read_to_end(&mut restored).expect("deflate decompress");
+        decoder
+            .read_to_end(&mut restored)
+            .expect("deflate decompress");
         assert_eq!(restored, original);
     }
 
@@ -497,7 +499,9 @@ mod tests {
             .expect("brotli compression failed");
         let mut decoder = brotli::Decompressor::new(&compressed[..], 4096);
         let mut restored = Vec::new();
-        decoder.read_to_end(&mut restored).expect("brotli decompress");
+        decoder
+            .read_to_end(&mut restored)
+            .expect("brotli decompress");
         assert_eq!(restored, original);
     }
 
@@ -644,10 +648,7 @@ mod tests {
                 get(|| async {
                     (
                         StatusCode::OK,
-                        [
-                            ("content-type", "text/plain"),
-                            ("content-encoding", "gzip"),
-                        ],
+                        [("content-type", "text/plain"), ("content-encoding", "gzip")],
                         "x".repeat(2000),
                     )
                 }),

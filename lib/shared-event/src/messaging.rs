@@ -281,8 +281,8 @@ mod tests {
 
     #[test]
     fn test_message_clone_preserves_fields() {
-        let message = Message::new("clone-topic", serde_json::json!({"x": 1}))
-            .with_header("k", "v");
+        let message =
+            Message::new("clone-topic", serde_json::json!({"x": 1})).with_header("k", "v");
         let cloned = message.clone();
         assert_eq!(cloned.id, message.id);
         assert_eq!(cloned.topic, message.topic);
@@ -357,9 +357,8 @@ mod tests {
     #[tokio::test]
     async fn test_in_memory_broker_publish_with_headers() {
         let broker = InMemoryMessageBroker::new();
-        let received_headers = std::sync::Arc::new(std::sync::Mutex::new(
-            std::collections::HashMap::new(),
-        ));
+        let received_headers =
+            std::sync::Arc::new(std::sync::Mutex::new(std::collections::HashMap::new()));
         let handler = {
             let received_headers = received_headers.clone();
             Box::new(move |msg: Message| {

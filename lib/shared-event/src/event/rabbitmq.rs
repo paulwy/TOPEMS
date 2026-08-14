@@ -558,8 +558,7 @@ mod tests {
             invalidated_at: chrono::Utc::now(),
         };
         let json = serde_json::to_string(&payload).expect("serialize");
-        let back: CacheInvalidatedPayload =
-            serde_json::from_str(&json).expect("deserialize");
+        let back: CacheInvalidatedPayload = serde_json::from_str(&json).expect("deserialize");
         assert_eq!(back.source_service, "test-service");
         assert_eq!(back.source_instance, "host:1:test-service");
         assert_eq!(back.cache_key_pattern, "tenant123:erp:dict:*");
@@ -579,8 +578,7 @@ mod tests {
             invalidated_at: chrono::Utc::now(),
         };
         let json = serde_json::to_string(&payload).expect("serialize");
-        let back: CacheInvalidatedPayload =
-            serde_json::from_str(&json).expect("deserialize");
+        let back: CacheInvalidatedPayload = serde_json::from_str(&json).expect("deserialize");
         assert_eq!(back.source_service, "svc");
         assert_eq!(back.invalidation_level, "all");
         assert!(back.reason.is_none());
@@ -833,17 +831,27 @@ mod tests {
                 EventType::PermissionMetadataChanged,
                 "event.PermissionMetadataChanged",
             ),
-            (EventType::WmsInventoryLowStock, "event.WmsInventoryLowStock"),
+            (
+                EventType::WmsInventoryLowStock,
+                "event.WmsInventoryLowStock",
+            ),
             (
                 EventType::SrmSupplierStatusChanged,
                 "event.SrmSupplierStatusChanged",
             ),
             (EventType::AiImageAnalyzed, "event.AiImageAnalyzed"),
-            (EventType::GisGeofenceTriggered, "event.GisGeofenceTriggered"),
+            (
+                EventType::GisGeofenceTriggered,
+                "event.GisGeofenceTriggered",
+            ),
         ];
         for (et, expected) in cases {
             let routing_key = format!("event.{}", et);
-            assert_eq!(routing_key, expected, "事件类型 {:?} 的 routing_key 不匹配", et);
+            assert_eq!(
+                routing_key, expected,
+                "事件类型 {:?} 的 routing_key 不匹配",
+                et
+            );
         }
     }
 
@@ -874,7 +882,10 @@ mod tests {
             name: String,
         }
 
-        let payload = TestPayload { id: 42, name: "test".to_string() };
+        let payload = TestPayload {
+            id: 42,
+            name: "test".to_string(),
+        };
         let event_type = EventType::HrmEmployeeCreated;
         let service_name = "test-service";
 
@@ -888,8 +899,7 @@ mod tests {
         assert_eq!(back.event_id, event.event_id);
 
         // 验证 payload 字段保留
-        let payload_back: TestPayload =
-            serde_json::from_value(back.payload).expect("from_value");
+        let payload_back: TestPayload = serde_json::from_value(back.payload).expect("from_value");
         assert_eq!(payload_back.id, 42);
         assert_eq!(payload_back.name, "test");
     }
@@ -1315,7 +1325,11 @@ mod tests {
             let event = Event::new(EventType::HealthCheck, "test", serde_json::json!({}));
             ids.insert(event.event_id);
         }
-        assert_eq!(ids.len(), 100, "100 次 Event::new 应生成 100 个不同的 event_id");
+        assert_eq!(
+            ids.len(),
+            100,
+            "100 次 Event::new 应生成 100 个不同的 event_id"
+        );
     }
 
     // === delivery_mode 语义验证 ===

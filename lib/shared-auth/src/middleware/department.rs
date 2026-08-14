@@ -153,20 +153,14 @@ mod tests {
     }
 
     fn build_req(claims: Option<Claims>) -> Request<Body> {
-        let mut req = Request::builder()
-            .uri("/x")
-            .body(Body::empty())
-            .unwrap();
+        let mut req = Request::builder().uri("/x").body(Body::empty()).unwrap();
         if let Some(c) = claims {
             req.extensions_mut().insert(c);
         }
         req
     }
 
-    async fn send_require_department(
-        dept_id: Uuid,
-        claims: Option<Claims>,
-    ) -> StatusCode {
+    async fn send_require_department(dept_id: Uuid, claims: Option<Claims>) -> StatusCode {
         let app = Router::new()
             .route("/protected", get(|| async { "ok" }))
             .layer(axum::middleware::from_fn(require_department(dept_id)));
@@ -200,10 +194,7 @@ mod tests {
         let req = build_req(Some(make_claims(Some(DEPT_ID), false)));
         let ctx = DepartmentContext::from_request(&req).expect("some");
         assert!(ctx.department_id.is_some());
-        assert_eq!(
-            ctx.department_id.unwrap().to_string(),
-            DEPT_ID
-        );
+        assert_eq!(ctx.department_id.unwrap().to_string(), DEPT_ID);
     }
 
     #[test]
@@ -226,24 +217,21 @@ mod tests {
     // ===== require_department =====
     #[tokio::test]
     async fn test_require_department_unauthorized_without_claims() {
-        let status =
-            send_require_department(Uuid::parse_str(DEPT_ID).unwrap(), None).await;
+        let status = send_require_department(Uuid::parse_str(DEPT_ID).unwrap(), None).await;
         assert_eq!(status, StatusCode::UNAUTHORIZED);
     }
 
     #[tokio::test]
     async fn test_require_department_ok_for_superuser() {
         let claims = make_claims(None, true);
-        let status =
-            send_require_department(Uuid::parse_str(DEPT_ID).unwrap(), Some(claims)).await;
+        let status = send_require_department(Uuid::parse_str(DEPT_ID).unwrap(), Some(claims)).await;
         assert_eq!(status, StatusCode::OK);
     }
 
     #[tokio::test]
     async fn test_require_department_ok_when_matches() {
         let claims = make_claims(Some(DEPT_ID), false);
-        let status =
-            send_require_department(Uuid::parse_str(DEPT_ID).unwrap(), Some(claims)).await;
+        let status = send_require_department(Uuid::parse_str(DEPT_ID).unwrap(), Some(claims)).await;
         assert_eq!(status, StatusCode::OK);
     }
 
@@ -258,8 +246,7 @@ mod tests {
     #[tokio::test]
     async fn test_require_department_forbidden_when_no_department() {
         let claims = make_claims(None, false);
-        let status =
-            send_require_department(Uuid::parse_str(DEPT_ID).unwrap(), Some(claims)).await;
+        let status = send_require_department(Uuid::parse_str(DEPT_ID).unwrap(), Some(claims)).await;
         assert_eq!(status, StatusCode::FORBIDDEN);
     }
 }

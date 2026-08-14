@@ -471,11 +471,9 @@ mod tests {
 
     #[tokio::test]
     async fn test_try_new_with_unreachable_redis_falls_back() {
-        let result = AsyncL2Cache::<u32>::try_new(
-            L2CacheConfig::default(),
-            Some("redis://127.0.0.1:1"),
-        )
-        .await;
+        let result =
+            AsyncL2Cache::<u32>::try_new(L2CacheConfig::default(), Some("redis://127.0.0.1:1"))
+                .await;
         match result {
             Ok(_) => panic!("unreachable Redis should cause fallback to L1"),
             Err((cache, warn)) => {

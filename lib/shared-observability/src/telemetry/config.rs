@@ -111,7 +111,9 @@ mod tests {
 
     #[test]
     fn test_exporter_from_env_otlp() {
-        let _env_lock = crate::telemetry::test_support::OTEL_ENV_LOCK.lock().unwrap();
+        let _env_lock = crate::telemetry::test_support::OTEL_ENV_LOCK
+            .lock()
+            .unwrap();
         std::env::set_var("OTEL_EXPORTER", "otlp");
         let exporter = TelemetryExporter::from_env();
         assert_eq!(exporter, TelemetryExporter::Otlp);
@@ -120,7 +122,9 @@ mod tests {
 
     #[test]
     fn test_exporter_from_env_stdout_case_insensitive() {
-        let _env_lock = crate::telemetry::test_support::OTEL_ENV_LOCK.lock().unwrap();
+        let _env_lock = crate::telemetry::test_support::OTEL_ENV_LOCK
+            .lock()
+            .unwrap();
         std::env::set_var("OTEL_EXPORTER", "STDOUT");
         let exporter = TelemetryExporter::from_env();
         assert_eq!(exporter, TelemetryExporter::Stdout);
@@ -129,7 +133,9 @@ mod tests {
 
     #[test]
     fn test_exporter_from_env_unknown_falls_back_to_otlp() {
-        let _env_lock = crate::telemetry::test_support::OTEL_ENV_LOCK.lock().unwrap();
+        let _env_lock = crate::telemetry::test_support::OTEL_ENV_LOCK
+            .lock()
+            .unwrap();
         std::env::set_var("OTEL_EXPORTER", "unknown-value");
         let exporter = TelemetryExporter::from_env();
         assert_eq!(exporter, TelemetryExporter::Otlp);
@@ -138,7 +144,9 @@ mod tests {
 
     #[test]
     fn test_exporter_from_env_missing_defaults_to_otlp() {
-        let _env_lock = crate::telemetry::test_support::OTEL_ENV_LOCK.lock().unwrap();
+        let _env_lock = crate::telemetry::test_support::OTEL_ENV_LOCK
+            .lock()
+            .unwrap();
         std::env::remove_var("OTEL_EXPORTER");
         let exporter = TelemetryExporter::from_env();
         assert_eq!(exporter, TelemetryExporter::Otlp);
@@ -197,7 +205,9 @@ mod tests {
 
     #[test]
     fn test_from_env_reads_all_vars() {
-        let _env_lock = crate::telemetry::test_support::OTEL_ENV_LOCK.lock().unwrap();
+        let _env_lock = crate::telemetry::test_support::OTEL_ENV_LOCK
+            .lock()
+            .unwrap();
         std::env::set_var("OTEL_EXPORTER", "stdout");
         std::env::set_var("OTEL_EXPORTER_OTLP_ENDPOINT", "http://custom:4317");
         std::env::set_var("OTEL_TRACES_SAMPLER_ARG", "0.25");
@@ -221,7 +231,9 @@ mod tests {
 
     #[test]
     fn test_from_env_falls_back_when_missing() {
-        let _env_lock = crate::telemetry::test_support::OTEL_ENV_LOCK.lock().unwrap();
+        let _env_lock = crate::telemetry::test_support::OTEL_ENV_LOCK
+            .lock()
+            .unwrap();
         std::env::remove_var("OTEL_EXPORTER");
         std::env::remove_var("OTEL_EXPORTER_OTLP_ENDPOINT");
         std::env::remove_var("OTEL_TRACES_SAMPLER_ARG");
@@ -239,7 +251,9 @@ mod tests {
 
     #[test]
     fn test_from_env_invalid_sampling_rate_falls_back() {
-        let _env_lock = crate::telemetry::test_support::OTEL_ENV_LOCK.lock().unwrap();
+        let _env_lock = crate::telemetry::test_support::OTEL_ENV_LOCK
+            .lock()
+            .unwrap();
         std::env::set_var("OTEL_TRACES_SAMPLER_ARG", "not-a-number");
         let cfg = TelemetryConfig::from_env("s");
         assert_eq!(cfg.sampling_rate, 1.0);
@@ -248,7 +262,9 @@ mod tests {
 
     #[test]
     fn test_from_env_metrics_enabled_truthy_variants() {
-        let _env_lock = crate::telemetry::test_support::OTEL_ENV_LOCK.lock().unwrap();
+        let _env_lock = crate::telemetry::test_support::OTEL_ENV_LOCK
+            .lock()
+            .unwrap();
         for val in ["true", "TRUE", "True", "1"] {
             std::env::set_var("OTEL_METRICS_ENABLED", val);
             let cfg = TelemetryConfig::from_env("s");
@@ -262,7 +278,9 @@ mod tests {
 
     #[test]
     fn test_from_env_metrics_enabled_falsy() {
-        let _env_lock = crate::telemetry::test_support::OTEL_ENV_LOCK.lock().unwrap();
+        let _env_lock = crate::telemetry::test_support::OTEL_ENV_LOCK
+            .lock()
+            .unwrap();
         for val in ["false", "0", "no", ""] {
             std::env::set_var("OTEL_METRICS_ENABLED", val);
             let cfg = TelemetryConfig::from_env("s");
@@ -279,5 +297,4 @@ mod tests {
         let debug = format!("{cfg:?}");
         assert!(debug.contains("clone-test"));
     }
-
 }

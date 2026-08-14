@@ -234,15 +234,23 @@ mod tests {
     fn test_get_current_trace_context_no_active_span() {
         // Without an active OTel span, trace context should be (None, None).
         let (trace_id, span_id) = get_current_trace_context();
-        assert!(trace_id.is_none(), "trace_id should be None without active span");
-        assert!(span_id.is_none(), "span_id should be None without active span");
+        assert!(
+            trace_id.is_none(),
+            "trace_id should be None without active span"
+        );
+        assert!(
+            span_id.is_none(),
+            "span_id should be None without active span"
+        );
     }
 
     #[test]
     fn test_telemetry_guard_disabled_drop_is_no_op() {
         // A disabled guard (otel_enabled=false) should drop without panicking
         // and without touching the global TRACER_PROVIDER mutex.
-        let guard = TelemetryGuard { otel_enabled: false };
+        let guard = TelemetryGuard {
+            otel_enabled: false,
+        };
         drop(guard);
     }
 
@@ -256,7 +264,9 @@ mod tests {
 
     #[test]
     fn test_telemetry_guard_pub_field_accessible() {
-        let guard = TelemetryGuard { otel_enabled: false };
+        let guard = TelemetryGuard {
+            otel_enabled: false,
+        };
         assert!(!guard.otel_enabled);
     }
 

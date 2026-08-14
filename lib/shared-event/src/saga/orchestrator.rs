@@ -496,10 +496,7 @@ mod tests {
     #[tokio::test]
     async fn test_execute_saga_first_step_fails_no_compensation_needed() {
         let orch = make_orchestrator();
-        let steps = vec![
-            fail_step("step_a", "immediate failure"),
-            ok_step("step_b"),
-        ];
+        let steps = vec![fail_step("step_a", "immediate failure"), ok_step("step_b")];
 
         let result = orch
             .execute_saga("early_fail", serde_json::json!({}), steps)
@@ -567,7 +564,9 @@ mod tests {
         orch.store.save_saga(&saga).await.unwrap();
 
         // Now compensate
-        orch.compensate_saga(saga_id).await.expect("compensation should succeed");
+        orch.compensate_saga(saga_id)
+            .await
+            .expect("compensation should succeed");
 
         let loaded = orch.store.load_saga(saga_id).await.unwrap();
         assert_eq!(loaded.status, SagaStatus::Compensated);
@@ -582,9 +581,11 @@ mod tests {
     async fn test_compensate_saga_skips_non_completed_steps() {
         let orch = make_orchestrator();
         let mut saga = SagaInstance::new("skip_comp", serde_json::json!({}));
-        saga.steps.push(crate::saga::step::SagaStep::new("completed", 0));
+        saga.steps
+            .push(crate::saga::step::SagaStep::new("completed", 0));
         saga.steps[0].status = StepStatus::Completed;
-        saga.steps.push(crate::saga::step::SagaStep::new("pending", 1));
+        saga.steps
+            .push(crate::saga::step::SagaStep::new("pending", 1));
         saga.steps[1].status = StepStatus::Pending;
         let saga_id = saga.id;
         orch.store.save_saga(&saga).await.unwrap();

@@ -287,7 +287,10 @@ mod tests {
         assert_eq!(cloned.events_by_type, metrics.events_by_type);
         assert_eq!(cloned.errors_by_type, metrics.errors_by_type);
         assert_eq!(cloned.processing_times, metrics.processing_times);
-        assert_eq!(cloned.avg_processing_time_ms, metrics.avg_processing_time_ms);
+        assert_eq!(
+            cloned.avg_processing_time_ms,
+            metrics.avg_processing_time_ms
+        );
     }
 
     #[test]
@@ -319,7 +322,10 @@ mod tests {
     async fn test_event_monitor_get_metrics_initial_state() {
         // get_metrics 只读内存状态，不依赖 Redis
         let monitor = EventMonitor::new().expect("lazy construction succeeds");
-        let metrics = monitor.get_metrics().await.expect("get_metrics should succeed");
+        let metrics = monitor
+            .get_metrics()
+            .await
+            .expect("get_metrics should succeed");
         assert_eq!(metrics.total_events, 0);
         assert!(metrics.events_by_type.is_empty());
         assert!(metrics.errors_by_type.is_empty());
@@ -344,7 +350,10 @@ mod tests {
         let monitor = EventMonitor::new().expect("lazy construction succeeds");
         let event = make_event();
         let result = monitor.record_published(&event).await;
-        assert!(result.is_err(), "Redis 不可达时 record_published 应返回 Err");
+        assert!(
+            result.is_err(),
+            "Redis 不可达时 record_published 应返回 Err"
+        );
         // 但内存中的 metrics 已更新（record_published 先更新内存再连 Redis）
         let metrics = monitor.get_metrics().await.expect("get_metrics");
         assert_eq!(metrics.total_events, 1);
@@ -360,7 +369,10 @@ mod tests {
         let monitor = EventMonitor::new().expect("lazy construction succeeds");
         let event = make_event();
         let result = monitor.record_processed(&event, 50).await;
-        assert!(result.is_err(), "Redis 不可达时 record_processed 应返回 Err");
+        assert!(
+            result.is_err(),
+            "Redis 不可达时 record_processed 应返回 Err"
+        );
         // 内存中的 processing_times 已更新
         let metrics = monitor.get_metrics().await.expect("get_metrics");
         assert_eq!(metrics.processing_times, vec![50]);
@@ -390,7 +402,10 @@ mod tests {
         }
         let monitor = EventMonitor::new().expect("lazy construction succeeds");
         let result = monitor.get_metrics_from_redis().await;
-        assert!(result.is_err(), "Redis 不可达时 get_metrics_from_redis 应返回 Err");
+        assert!(
+            result.is_err(),
+            "Redis 不可达时 get_metrics_from_redis 应返回 Err"
+        );
     }
 
     #[tokio::test]

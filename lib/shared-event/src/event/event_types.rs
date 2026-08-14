@@ -1322,7 +1322,6 @@ pub struct CacheInvalidatedPayload {
     pub invalidated_at: DateTime<Utc>,
 }
 
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -1382,7 +1381,11 @@ mod tests {
         assert_eq!(p.email, "alice@topems.com");
 
         // 类型不匹配 -> Err
-        let bad = Event::new(EventType::HrmEmployeeCreated, "hrm", serde_json::json!({"name":"x"}));
+        let bad = Event::new(
+            EventType::HrmEmployeeCreated,
+            "hrm",
+            serde_json::json!({"name":"x"}),
+        );
         let res: Result<HrmEmployeeCreatedPayload, _> = bad.parse_payload();
         assert!(res.is_err());
         assert!(res.unwrap_err().contains("解析事件 payload 失败"));
@@ -1396,8 +1399,9 @@ mod tests {
             EventType::WmsInventoryItemShipped,
             "wms",
             serde_json::json!({"item": "widget"}),
-        ).with_trace_id(Some("trace-xyz".into()))
-         .with_saga_context(sid, stp);
+        )
+        .with_trace_id(Some("trace-xyz".into()))
+        .with_saga_context(sid, stp);
 
         let json = serde_json::to_string(&e).unwrap();
         let back: Event = serde_json::from_str(&json).unwrap();
@@ -1406,7 +1410,11 @@ mod tests {
         assert_eq!(back.saga_id, Some(sid));
 
         // 没有 saga 的事件不应出现 saga_* 字段
-        let plain = Event::new(EventType::QmsInspectionCompleted, "qms", serde_json::json!({}));
+        let plain = Event::new(
+            EventType::QmsInspectionCompleted,
+            "qms",
+            serde_json::json!({}),
+        );
         let plain_json = serde_json::to_string(&plain).unwrap();
         assert!(!plain_json.contains("saga_id"));
         assert!(!plain_json.contains("saga_step_id"));
@@ -1414,7 +1422,10 @@ mod tests {
 
     #[test]
     fn event_type_display_and_ordering() {
-        assert_eq!(EventType::HrmEmployeeCreated.to_string(), "HrmEmployeeCreated");
+        assert_eq!(
+            EventType::HrmEmployeeCreated.to_string(),
+            "HrmEmployeeCreated"
+        );
         assert_eq!(EventType::StockInbound.to_string(), "StockInbound");
         assert_eq!(EventType::CacheInvalidated.to_string(), "CacheInvalidated");
         assert!(EventType::HrmEmployeeCreated < EventType::HrmEmployeeUpdated);

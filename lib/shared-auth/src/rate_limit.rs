@@ -132,10 +132,8 @@ mod tests {
     #[test]
     fn test_client_ip_x_real_ip_fallback() {
         let mut req = Request::get("/").body(axum::body::Body::empty()).unwrap();
-        req.headers_mut().insert(
-            "X-Real-IP",
-            HeaderValue::from_static("10.0.0.42"),
-        );
+        req.headers_mut()
+            .insert("X-Real-IP", HeaderValue::from_static("10.0.0.42"));
         let ip = get_client_ip(&req);
         assert_eq!(ip, "10.0.0.42");
     }
@@ -144,14 +142,10 @@ mod tests {
     #[test]
     fn test_client_ip_xff_takes_precedence_over_x_real_ip() {
         let mut req = Request::get("/").body(axum::body::Body::empty()).unwrap();
-        req.headers_mut().insert(
-            "X-Forwarded-For",
-            HeaderValue::from_static("1.2.3.4"),
-        );
-        req.headers_mut().insert(
-            "X-Real-IP",
-            HeaderValue::from_static("5.6.7.8"),
-        );
+        req.headers_mut()
+            .insert("X-Forwarded-For", HeaderValue::from_static("1.2.3.4"));
+        req.headers_mut()
+            .insert("X-Real-IP", HeaderValue::from_static("5.6.7.8"));
         let ip = get_client_ip(&req);
         assert_eq!(ip, "1.2.3.4");
     }
@@ -211,19 +205,22 @@ mod tests {
         };
         let mw = std::sync::Arc::new(RateLimitMiddleware::new(config));
 
-        let app = Router::new()
-            .route("/test", get(|| async { "ok" }))
-            .layer(axum::middleware::from_fn({
-                let mw = mw.clone();
-                move |req, next| {
+        let app =
+            Router::new()
+                .route("/test", get(|| async { "ok" }))
+                .layer(axum::middleware::from_fn({
                     let mw = mw.clone();
-                    async move { RateLimitMiddleware::middleware(mw, req, next).await }
-                }
-            }));
+                    move |req, next| {
+                        let mw = mw.clone();
+                        async move { RateLimitMiddleware::middleware(mw, req, next).await }
+                    }
+                }));
 
         // 禁用时应始终放行，即使多次请求
         for _ in 0..10 {
-            let req = Request::get("/test").body(axum::body::Body::empty()).unwrap();
+            let req = Request::get("/test")
+                .body(axum::body::Body::empty())
+                .unwrap();
             let resp = app.clone().oneshot(req).await.expect("infallible");
             assert_eq!(resp.status(), axum::http::StatusCode::OK);
         }
@@ -242,23 +239,24 @@ mod tests {
         };
         let mw = std::sync::Arc::new(RateLimitMiddleware::new(config));
 
-        let app = Router::new()
-            .route("/test", get(|| async { "ok" }))
-            .layer(axum::middleware::from_fn({
-                let mw = mw.clone();
-                move |req, next| {
+        let app =
+            Router::new()
+                .route("/test", get(|| async { "ok" }))
+                .layer(axum::middleware::from_fn({
                     let mw = mw.clone();
-                    async move { RateLimitMiddleware::middleware(mw, req, next).await }
-                }
-            }));
+                    move |req, next| {
+                        let mw = mw.clone();
+                        async move { RateLimitMiddleware::middleware(mw, req, next).await }
+                    }
+                }));
 
         // 同一 IP 发送 3 次请求应全部通过
         for i in 0..3 {
-            let mut req = Request::get("/test").body(axum::body::Body::empty()).unwrap();
-            req.headers_mut().insert(
-                "X-Forwarded-For",
-                HeaderValue::from_static("1.1.1.1"),
-            );
+            let mut req = Request::get("/test")
+                .body(axum::body::Body::empty())
+                .unwrap();
+            req.headers_mut()
+                .insert("X-Forwarded-For", HeaderValue::from_static("1.1.1.1"));
             let resp = app.clone().oneshot(req).await.expect("infallible");
             assert_eq!(
                 resp.status(),
@@ -282,33 +280,34 @@ mod tests {
         };
         let mw = std::sync::Arc::new(RateLimitMiddleware::new(config));
 
-        let app = Router::new()
-            .route("/test", get(|| async { "ok" }))
-            .layer(axum::middleware::from_fn({
-                let mw = mw.clone();
-                move |req, next| {
+        let app =
+            Router::new()
+                .route("/test", get(|| async { "ok" }))
+                .layer(axum::middleware::from_fn({
                     let mw = mw.clone();
-                    async move { RateLimitMiddleware::middleware(mw, req, next).await }
-                }
-            }));
+                    move |req, next| {
+                        let mw = mw.clone();
+                        async move { RateLimitMiddleware::middleware(mw, req, next).await }
+                    }
+                }));
 
         // 前 2 次通过
         for _ in 0..2 {
-            let mut req = Request::get("/test").body(axum::body::Body::empty()).unwrap();
-            req.headers_mut().insert(
-                "X-Forwarded-For",
-                HeaderValue::from_static("2.2.2.2"),
-            );
+            let mut req = Request::get("/test")
+                .body(axum::body::Body::empty())
+                .unwrap();
+            req.headers_mut()
+                .insert("X-Forwarded-For", HeaderValue::from_static("2.2.2.2"));
             let resp = app.clone().oneshot(req).await.expect("infallible");
             assert_eq!(resp.status(), axum::http::StatusCode::OK);
         }
 
         // 第 3 次应被限流
-        let mut req = Request::get("/test").body(axum::body::Body::empty()).unwrap();
-        req.headers_mut().insert(
-            "X-Forwarded-For",
-            HeaderValue::from_static("2.2.2.2"),
-        );
+        let mut req = Request::get("/test")
+            .body(axum::body::Body::empty())
+            .unwrap();
+        req.headers_mut()
+            .insert("X-Forwarded-For", HeaderValue::from_static("2.2.2.2"));
         let resp = app.clone().oneshot(req).await.expect("infallible");
         assert_eq!(resp.status(), axum::http::StatusCode::TOO_MANY_REQUESTS);
     }
@@ -326,31 +325,34 @@ mod tests {
         };
         let mw = std::sync::Arc::new(RateLimitMiddleware::new(config));
 
-        let app = Router::new()
-            .route("/test", get(|| async { "ok" }))
-            .layer(axum::middleware::from_fn({
-                let mw = mw.clone();
-                move |req, next| {
+        let app =
+            Router::new()
+                .route("/test", get(|| async { "ok" }))
+                .layer(axum::middleware::from_fn({
                     let mw = mw.clone();
-                    async move { RateLimitMiddleware::middleware(mw, req, next).await }
-                }
-            }));
+                    move |req, next| {
+                        let mw = mw.clone();
+                        async move { RateLimitMiddleware::middleware(mw, req, next).await }
+                    }
+                }));
 
         // IP A 用尽配额
-        let mut req_a = Request::get("/test").body(axum::body::Body::empty()).unwrap();
-        req_a.headers_mut().insert(
-            "X-Forwarded-For",
-            HeaderValue::from_static("3.3.3.3"),
-        );
+        let mut req_a = Request::get("/test")
+            .body(axum::body::Body::empty())
+            .unwrap();
+        req_a
+            .headers_mut()
+            .insert("X-Forwarded-For", HeaderValue::from_static("3.3.3.3"));
         let resp = app.clone().oneshot(req_a).await.expect("infallible");
         assert_eq!(resp.status(), axum::http::StatusCode::OK);
 
         // IP B 仍有配额
-        let mut req_b = Request::get("/test").body(axum::body::Body::empty()).unwrap();
-        req_b.headers_mut().insert(
-            "X-Forwarded-For",
-            HeaderValue::from_static("4.4.4.4"),
-        );
+        let mut req_b = Request::get("/test")
+            .body(axum::body::Body::empty())
+            .unwrap();
+        req_b
+            .headers_mut()
+            .insert("X-Forwarded-For", HeaderValue::from_static("4.4.4.4"));
         let resp = app.clone().oneshot(req_b).await.expect("infallible");
         assert_eq!(resp.status(), axum::http::StatusCode::OK);
     }

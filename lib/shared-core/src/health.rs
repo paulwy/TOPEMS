@@ -1325,10 +1325,7 @@ mod tests {
         let metrics = Arc::new(SystemMetrics::new());
         // 构建一个简单 router 应用中间件
         let app = axum::Router::new()
-            .route(
-                "/test",
-                get(|| async { "ok" }),
-            )
+            .route("/test", get(|| async { "ok" }))
             .layer(axum::middleware::from_fn_with_state(
                 metrics.clone(),
                 metrics_middleware,
@@ -1389,4 +1386,3 @@ mod tests {
         assert!(!uptime.contains("m") || uptime.contains("m"));
     }
 }
-

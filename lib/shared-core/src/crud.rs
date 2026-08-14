@@ -220,8 +220,15 @@ mod tests {
             search: None,
             status: None,
         };
-        let result: Result<PaginatedResponse<TestRow>, sqlx::Error> =
-            list_search(&pool, "users", &["name", "email"], "", &params, "created_at").await;
+        let result: Result<PaginatedResponse<TestRow>, sqlx::Error> = list_search(
+            &pool,
+            "users",
+            &["name", "email"],
+            "",
+            &params,
+            "created_at",
+        )
+        .await;
         assert!(result.is_err());
     }
 
@@ -274,4 +281,3 @@ mod tests {
         assert!(result.is_err());
     }
 }
-

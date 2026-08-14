@@ -118,16 +118,14 @@ mod tests {
     #[test]
     fn test_lazy_lock_http_request_duration_accessible() {
         LazyLock::force(&HTTP_REQUEST_DURATION);
-        let metric = HTTP_REQUEST_DURATION
-            .with_label_values(&["GET", "/test", "200"]);
+        let metric = HTTP_REQUEST_DURATION.with_label_values(&["GET", "/test", "200"]);
         metric.observe(0.042);
     }
 
     #[test]
     fn test_lazy_lock_http_requests_total_accessible() {
         LazyLock::force(&HTTP_REQUESTS_TOTAL);
-        let metric = HTTP_REQUESTS_TOTAL
-            .with_label_values(&["POST", "/api", "201"]);
+        let metric = HTTP_REQUESTS_TOTAL.with_label_values(&["POST", "/api", "201"]);
         metric.inc();
     }
 
@@ -145,24 +143,26 @@ mod tests {
     #[test]
     fn test_lazy_lock_business_operation_duration_accessible() {
         LazyLock::force(&BUSINESS_OPERATION_DURATION);
-        let metric = BUSINESS_OPERATION_DURATION
-            .with_label_values(&["user_service", "create_user", "success"]);
+        let metric = BUSINESS_OPERATION_DURATION.with_label_values(&[
+            "user_service",
+            "create_user",
+            "success",
+        ]);
         metric.observe(0.123);
     }
 
     #[test]
     fn test_lazy_lock_business_operations_total_accessible() {
         LazyLock::force(&BUSINESS_OPERATIONS_TOTAL);
-        let metric = BUSINESS_OPERATIONS_TOTAL
-            .with_label_values(&["user_service", "delete_user", "error"]);
+        let metric =
+            BUSINESS_OPERATIONS_TOTAL.with_label_values(&["user_service", "delete_user", "error"]);
         metric.inc();
     }
 
     #[test]
     fn test_lazy_lock_db_query_duration_accessible() {
         LazyLock::force(&DB_QUERY_DURATION);
-        let metric = DB_QUERY_DURATION
-            .with_label_values(&["user_service", "select", "users"]);
+        let metric = DB_QUERY_DURATION.with_label_values(&["user_service", "select", "users"]);
         metric.observe(0.007);
     }
 

@@ -361,7 +361,10 @@ mod tests {
         let client = PermissionCenterClient::new("svc");
         // 不可达地址（端口 1 通常被拒绝/超时）
         let result = client.fetch_from_iam("http://127.0.0.1:1").await;
-        assert!(result.is_ok(), "should fall back to builtin on fetch failure");
+        assert!(
+            result.is_ok(),
+            "should fall back to builtin on fetch failure"
+        );
         let stats = client.cache().stats();
         assert!(stats.total_permissions > 0, "fallback should load builtin");
     }

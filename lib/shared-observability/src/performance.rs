@@ -1218,11 +1218,8 @@ mod top_level_tests {
     fn test_database_query_timer_finish_records_once() {
         let cm = Arc::new(ComprehensiveMetrics::new(Duration::from_millis(50)));
         {
-            let timer = DatabaseQueryTimer::new(
-                cm.clone(),
-                "SELECT".to_string(),
-                "orders".to_string(),
-            );
+            let timer =
+                DatabaseQueryTimer::new(cm.clone(), "SELECT".to_string(), "orders".to_string());
             timer.finish(Some(10), true);
         }
         let db_stats = cm.get_db_stats();
@@ -1234,11 +1231,8 @@ mod top_level_tests {
     #[test]
     fn test_cache_operation_recorder_hit_and_miss() {
         let cm = Arc::new(ComprehensiveMetrics::new(Duration::from_millis(50)));
-        let recorder = CacheOperationRecorder::new(
-            cm.clone(),
-            "user:1".to_string(),
-            "redis".to_string(),
-        );
+        let recorder =
+            CacheOperationRecorder::new(cm.clone(), "user:1".to_string(), "redis".to_string());
         recorder.record_hit();
         recorder.record_hit();
         recorder.record_miss();

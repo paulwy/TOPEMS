@@ -970,7 +970,10 @@ mod tests {
         assert!(!sig.is_empty());
         assert_eq!(sig.len(), 64, "HMAC-SHA256 -> 32 bytes hex = 64");
 
-        assert!(verify_message_signature(msg, &sig, secret), "valid sig should pass");
+        assert!(
+            verify_message_signature(msg, &sig, secret),
+            "valid sig should pass"
+        );
         assert!(
             !verify_message_signature("tampered", &sig, secret),
             "tampered message should fail"

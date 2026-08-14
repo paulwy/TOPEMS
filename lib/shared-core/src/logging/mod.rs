@@ -661,9 +661,7 @@ mod tests {
     #[tokio::test]
     async fn test_log_aggregator_clear() {
         let aggregator = LogAggregator::new(100);
-        aggregator
-            .add_log(LogEntry::new("INFO", "m", "s"))
-            .await;
+        aggregator.add_log(LogEntry::new("INFO", "m", "s")).await;
         assert_eq!(aggregator.query(&LogQuery::default()).await.len(), 1);
         aggregator.clear().await;
         assert_eq!(aggregator.query(&LogQuery::default()).await.len(), 0);

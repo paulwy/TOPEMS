@@ -619,7 +619,11 @@ mod tests {
 
     #[test]
     fn test_dead_letter_list_serde_roundtrip_with_items() {
-        let items = vec![make_dead_letter(0), make_dead_letter(1), make_dead_letter(2)];
+        let items = vec![
+            make_dead_letter(0),
+            make_dead_letter(1),
+            make_dead_letter(2),
+        ];
         let list = DeadLetterList {
             total: 42,
             page: 1,
@@ -755,8 +759,7 @@ mod tests {
         // page_size=0 的校验在 Redis 连接之前，无需 Redis 即可测试错误路径
         let queue = DeadLetterQueue::new().expect("lazy construction succeeds");
         let rt = tokio::runtime::Runtime::new().expect("runtime");
-        let result = rt
-            .block_on(queue.list_dead_letters(None, 0, 0));
+        let result = rt.block_on(queue.list_dead_letters(None, 0, 0));
         assert!(result.is_err());
         match result.unwrap_err() {
             EventError::ConfigError(msg) => assert!(msg.contains("page_size")),

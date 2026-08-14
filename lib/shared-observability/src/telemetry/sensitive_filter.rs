@@ -17,13 +17,25 @@ impl SensitiveFilterLayer {
     pub fn new() -> Self {
         let mut keys = HashSet::new();
         for key in [
-            "password", "passwd", "token", "jwt", "refresh_token", "access_token",
-            "secret", "api_key", "apikey", "session_id", "session",
-            "private_key", "privatekey",
+            "password",
+            "passwd",
+            "token",
+            "jwt",
+            "refresh_token",
+            "access_token",
+            "secret",
+            "api_key",
+            "apikey",
+            "session_id",
+            "session",
+            "private_key",
+            "privatekey",
         ] {
             keys.insert(key.to_string());
         }
-        Self { sensitive_keys: keys }
+        Self {
+            sensitive_keys: keys,
+        }
     }
 
     /// 添加自定义敏感字段名

@@ -1148,8 +1148,13 @@ mod tests {
         assert_eq!(cfg.auth.session_timeout_minutes, 240);
         assert_eq!(cfg.server.host, "localhost");
         assert_eq!(cfg.server.port, 8000);
-        assert_eq!(cfg.server.cors_origins,
-            vec!["http://localhost:5173".to_string(), "http://localhost:3000".to_string()]);
+        assert_eq!(
+            cfg.server.cors_origins,
+            vec![
+                "http://localhost:5173".to_string(),
+                "http://localhost:3000".to_string()
+            ]
+        );
         assert_eq!(cfg.server.cors_methods.len(), 6);
         assert!(cfg.server.cors_credentials);
         assert!(!cfg.server.rate_limit_enabled);
@@ -1249,8 +1254,10 @@ mod tests {
         assert_eq!(cfg.auth.jwt_expiry_hours, 1);
         assert_eq!(cfg.auth.jwt_refresh_expiry_days, 1);
         assert_eq!(cfg.auth.session_timeout_minutes, 30);
-        assert_eq!(cfg.server.cors_origins,
-            vec!["http://localhost:3000".to_string()]);
+        assert_eq!(
+            cfg.server.cors_origins,
+            vec!["http://localhost:3000".to_string()]
+        );
         assert_eq!(cfg.server.rate_limit_requests, 10000);
         assert_eq!(cfg.redis.db, 1);
         assert_eq!(cfg.storage.upload_dir, "./test_uploads");
@@ -1674,7 +1681,10 @@ mod tests {
         assert_eq!(back.database.name, cfg.database.name);
         assert_eq!(back.database.pool_max_size, cfg.database.pool_max_size);
         assert_eq!(back.auth.jwt_expiry_hours, cfg.auth.jwt_expiry_hours);
-        assert_eq!(back.server.rate_limit_requests, cfg.server.rate_limit_requests);
+        assert_eq!(
+            back.server.rate_limit_requests,
+            cfg.server.rate_limit_requests
+        );
         assert_eq!(back.storage.upload_dir, cfg.storage.upload_dir);
         assert_eq!(back.logging.level, cfg.logging.level);
     }
@@ -1788,8 +1798,14 @@ mod tests {
     #[test]
     fn default_functions_extended_coverage() {
         // 数据库相关
-        assert_eq!(default_database_url(), "postgres://topems:topems_dev@localhost:5432/topems_dev");
-        assert_eq!(default_test_database_url(), "postgres://topems_test:topems_test_secret@localhost:5432/topems_test");
+        assert_eq!(
+            default_database_url(),
+            "postgres://topems:topems_dev@localhost:5432/topems_dev"
+        );
+        assert_eq!(
+            default_test_database_url(),
+            "postgres://topems_test:topems_test_secret@localhost:5432/topems_test"
+        );
         assert_eq!(default_db_name(), "topems_dev");
         assert_eq!(default_test_db_name(), "topems_test");
         assert_eq!(default_db_user(), "topems");
@@ -1803,17 +1819,35 @@ mod tests {
         assert_eq!(default_test_connect_timeout(), 5);
         assert_eq!(default_test_idle_timeout(), 60);
         // JWT
-        assert_eq!(default_jwt_secret(), "dev-jwt-secret-key-not-for-production-use");
-        assert_eq!(default_test_jwt_secret(), "test-jwt-secret-key-for-testing-only-32chars");
+        assert_eq!(
+            default_jwt_secret(),
+            "dev-jwt-secret-key-not-for-production-use"
+        );
+        assert_eq!(
+            default_test_jwt_secret(),
+            "test-jwt-secret-key-for-testing-only-32chars"
+        );
         assert_eq!(default_jwt_expiry_hours(), 24);
         assert_eq!(default_test_jwt_expiry_hours(), 1);
-        assert_eq!(default_jwt_refresh_secret(), "dev-refresh-secret-key-not-for-production");
-        assert_eq!(default_test_jwt_refresh_secret(), "test-refresh-secret-for-testing-only");
+        assert_eq!(
+            default_jwt_refresh_secret(),
+            "dev-refresh-secret-key-not-for-production"
+        );
+        assert_eq!(
+            default_test_jwt_refresh_secret(),
+            "test-refresh-secret-for-testing-only"
+        );
         assert_eq!(default_jwt_refresh_expiry_days(), 7);
         assert_eq!(default_test_jwt_refresh_expiry_days(), 1);
         // session
-        assert_eq!(default_session_secret(), "dev-session-secret-not-for-production");
-        assert_eq!(default_test_session_secret(), "test-session-secret-for-testing-only");
+        assert_eq!(
+            default_session_secret(),
+            "dev-session-secret-not-for-production"
+        );
+        assert_eq!(
+            default_test_session_secret(),
+            "test-session-secret-for-testing-only"
+        );
         assert_eq!(default_session_timeout_minutes(), 240);
         assert_eq!(default_test_session_timeout_minutes(), 30);
     }
@@ -1823,7 +1857,10 @@ mod tests {
         // server
         assert_eq!(default_server_host(), "localhost");
         assert_eq!(default_test_server_port(), 8000);
-        assert_eq!(default_cors_origins(), "http://localhost:5173,http://localhost:3000");
+        assert_eq!(
+            default_cors_origins(),
+            "http://localhost:5173,http://localhost:3000"
+        );
         assert_eq!(default_test_cors_origins(), "http://localhost:3000");
         assert_eq!(default_cors_methods(), "GET,POST,PUT,DELETE,PATCH,OPTIONS");
         assert!(default_cors_credentials());
@@ -2007,7 +2044,10 @@ mod tests {
         let cfg = Config::load().await.expect("load ok");
         let auth = cfg.get_auth().await;
         assert_eq!(auth.jwt_secret, "dev-jwt-secret-key-not-for-production-use");
-        assert_eq!(auth.jwt_refresh_secret, "dev-refresh-secret-key-not-for-production");
+        assert_eq!(
+            auth.jwt_refresh_secret,
+            "dev-refresh-secret-key-not-for-production"
+        );
         assert_eq!(auth.session_secret, "dev-session-secret-not-for-production");
         assert_eq!(auth.jwt_expiry_hours, 24);
         assert_eq!(auth.jwt_refresh_expiry_days, 7);
@@ -2163,8 +2203,14 @@ mod tests {
         env.cors_origins = "https://a.com,https://b.com,https://c.com".to_string();
         let cfg: AppConfig = env.into();
         assert_eq!(cfg.server.cors_origins.len(), 3);
-        assert!(cfg.server.cors_origins.contains(&"https://b.com".to_string()));
-        assert!(cfg.server.cors_origins.contains(&"https://c.com".to_string()));
+        assert!(cfg
+            .server
+            .cors_origins
+            .contains(&"https://b.com".to_string()));
+        assert!(cfg
+            .server
+            .cors_origins
+            .contains(&"https://c.com".to_string()));
     }
 
     #[test]
@@ -2337,9 +2383,18 @@ mod tests {
     // ---------- default_* 剩余覆盖 ----------
     #[test]
     fn default_functions_remaining_coverage() {
-        assert_eq!(default_test_jwt_secret(), "test-jwt-secret-key-for-testing-only-32chars");
-        assert_eq!(default_test_jwt_refresh_secret(), "test-refresh-secret-for-testing-only");
-        assert_eq!(default_test_session_secret(), "test-session-secret-for-testing-only");
+        assert_eq!(
+            default_test_jwt_secret(),
+            "test-jwt-secret-key-for-testing-only-32chars"
+        );
+        assert_eq!(
+            default_test_jwt_refresh_secret(),
+            "test-refresh-secret-for-testing-only"
+        );
+        assert_eq!(
+            default_test_session_secret(),
+            "test-session-secret-for-testing-only"
+        );
         assert_eq!(default_test_server_port(), 8000);
         assert_eq!(default_test_cors_origins(), "http://localhost:3000");
         assert_eq!(default_log_file_path(), "./logs/app.log");
