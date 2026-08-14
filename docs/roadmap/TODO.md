@@ -3148,10 +3148,14 @@ QMS 全量 cargo test：85 passed（V198 基线无回归）
 >
 > **V219 已封版**：✅ i18n 硬编码清零 P2-Final（10 中模块 · P2 累计 3554 处替换 · P2 剩余 2 处 API 属性名 · TSC 0 error）
 >
-> **V220 候选（按 ROI 估算，均未启动）**：
-> - **i18n 硬编码清零 P3**：继续处理剩余 ~10700 处 · 优先 mes/monitor/mobile/admin 模块
+> **V220 已完成**：✅ 方向 C 续 · Design Token 最终收敛（616→169 偏差 · -72.6% · TSC 0 error）
+>
+> **V221 已封版**：✅ i18n 硬编码清零 P3（31627→18856 行 · -40.4% · 24 模块 · ~13700 处替换 · TSC 0 error）
+>
+> **V222 候选（按 ROI 估算，均未启动）**：
+> - **i18n 硬编码清零 P4**：继续处理剩余 18856 行 · 优先 components/templates(1069) · ai(2358) · microfrontend(1770)
 > - **权限矩阵自动化验证**：后端路由 → 前端导航 → 权限标识 三向自动验证 CI 门禁
-> - **方向 C 续 · Design Token 最终收敛**：616→0 偏差 · 全量 token 化
+> - **Design Token 169 处收尾**：主要为图表/地图/调试工具专用色值，属合理例外
 
 ## 🎯 V213 — 覆盖率冲刺 P2→P3 全量推进（26 commits · ~2930 新增 tests · ✅ 已封版）
 
@@ -3829,4 +3833,234 @@ QMS 全量 cargo test：85 passed（V198 基线无回归）
 | `scripts/i18n/fix-final-manual.cjs` | 29 种复杂模式匹配（对象键、JSX 混合文本、日志消息等） |
 | `scripts/i18n/fix-last-mile.cjs` | 20 种模式（t() 回退移除、data 字面量、InputLabel、MenuItem 等） |
 | `scripts/i18n/fix-edge-final.cjs` | 31 种模式（Record 值、error fallback、template literal、bracket notation 等） |
+
+## 🎯 V220 — Design Token 最终收敛（616→169 · -72.6% · TSC 0 error · ✅ 已封版）
+
+> **承接**：V215 完成 2067→616 偏差收敛后，V220 继续推进 Design Token 最终收敛。
+> **基线** (2026-08-15)：616 处偏差（rgb-color 288 · hardcoded-color 253 · box-shadow 64 · fixed-px-spacing 7）
+> **目标**：将 616 处偏差降至最低 · 全量 token 化可转换项
+> **最终结果**：616→169 偏差 · -447 处 · -72.6% · TSC 0 error
+> **日期**：2026-08-15
+
+### ✅ 验证结果
+
+| # | 验证项 | 命令 | 结果 |
+|---|--------|------|------|
+| 1 | TSC 编译检查 | `npx tsc --noEmit` | ✅ 0 error |
+| 2 | 偏差扫描 | `node scripts/check-design-tokens.mjs` | ✅ 169 处（hardcoded-color 83 · rgb-color 76 · box-shadow 8 · fixed-px-spacing 2） |
+| 3 | 替换总数 | 3 轮脚本累计 | ✅ 742 处替换 |
+
+### 偏差收敛轨迹
+
+| 阶段 | 偏差数 | 减少量 | 减少率 | 主要处理内容 |
+|------|--------|--------|--------|------------|
+| V215 基线 | 616 | — | — | rgb-color 288 · hardcoded-color 253 · box-shadow 64 · px-spacing 7 |
+| Pass 1 | 506 | -110 | -17.9% | rgba/hex 颜色 · box-shadow · px-spacing 批量替换 |
+| 修复破碎 | 506 | 0 | 0% | 修复多值 CSS 字符串中的部分替换（264 处） |
+| Pass 2 | 235 | -271 | -53.6% | var() 回退值中的颜色 · 新增缺失色值映射 |
+| 修复路径 | 235 | 0 | 0% | designTokens.glass.* → designTokens.colors.cyber.* 修正 |
+| Pass 3 | 169 | -66 | -28.1% | 补充缺失 hex/rgba · CSS 文件 · 多行模板字面量 |
+| **最终** | **169** | **-447** | **-72.6%** | 剩余为图表/地图/调试工具专用色值（合理例外） |
+
+### 剩余 169 处偏差分类
+
+| 类别 | 数量 | 说明 |
+|------|------|------|
+| 图表专用色 | ~60 | chartTheme.ts 中的数据可视化色盘（#FFD700、#FF00FF 等），无对应 token |
+| 地图/GIS 专用色 | ~40 | 热力图渐变、3D 地图图层色值，数据驱动 |
+| 调试工具色 | ~25 | MicroFrontendDevTools 调试 UI 专用色 |
+| 动态表达式 | ~15 | `rgba(255, 165, 0, ${0.3 * point.intensity})` 等动态计算值 |
+| 品牌色 | ~10 | Vue 绿 #42b883、React 蓝 #61dafb 等第三方品牌色 |
+| CSS 文件 | ~10 | index.css 中的 CSS 变量定义 |
+| 其他 | ~9 | 无法自动映射的特殊色值 |
+
+### 新增脚本清单
+
+| 脚本 | 用途 |
+|------|------|
+| `scripts/audit/fix-token-convergence.mjs` | Pass 1：rgba/hex 颜色 · box-shadow · px-spacing 综合替换（478 处） |
+| `scripts/audit/fix-broken-spacing.mjs` | 修复多值 CSS 字符串中的部分替换（264 处） |
+| `scripts/audit/fix-token-pass2.mjs` | Pass 2：var() 回退值中的颜色 · 新增缺失色值映射（238 处） |
+| `scripts/audit/fix-token-pass3.mjs` | Pass 3：补充缺失 hex/rgba · CSS 文件 · 多行模板字面量（53+ 处） |
+
+### 技术要点
+
+- **CSS var() 回退值处理**：`'var(--xxx, #hex)'` → `` `var(--xxx, ${designTokens.colors.xxx})` ``
+- **多值 CSS 字符串**：`'4px 8px'` → `` `${designTokens.spacing.xs} 8px` ``（模板字面量插值）
+- **数字属性访问**：`designTokens.colors.primary.400` → `designTokens.colors.primary['400']`（bracket notation）
+- **glass 路径修正**：`designTokens.glass.*` → `designTokens.colors.cyber.glass/metal/grid.*`
+- **自动导入**：检测 `designTokens.` 使用并自动添加 `import { designTokens } from '@topems/tokens'`
+
+## 🎯 V221 — i18n 硬编码清零 P3（31627→18856 · -40.4% · TSC 0 error · ✅ 已封版）
+
+> **承接**：V219 完成 P2-Final 后（P2 累计 3554 处替换），V221 继续推进 P3 批次，优先处理 mes/monitor/mobile/admin 模块及 20 个 schema/page 模块。
+> **基线** (2026-08-15)：31,627 行硬编码中文（pages 10,199 · schemas 8,231 · components 4,496 · ai 2,358 · microfrontend 1,770 · modules 1,504）
+> **目标**：批量处理剩余硬编码中文 · 优先高密度模块
+> **最终结果**：31,627→18,856 行 · -12,771 行 · -40.4% · TSC 0 error
+> **日期**：2026-08-15
+
+### ✅ 验证结果
+
+| # | 验证项 | 命令 | 结果 |
+|---|--------|------|------|
+| 1 | TSC 编译检查 | `npx tsc --noEmit` | ✅ 0 error |
+| 2 | 硬编码扫描 | `node scripts/i18n/scan-hardcoded.cjs` | ✅ 18,856 行（-12,771 · -40.4%） |
+| 3 | 替换总数 | 4 批次累计 | ✅ ~13,700 处替换 |
+
+### P3 批次进度
+
+| 批次 | 模块 | pages 替换 | schemas 替换 | 合计 |
+|------|------|-----------|-------------|------|
+| P3-A | mes | 606 | 666 | 1,272 |
+| P3-B | monitor, mobile, admin | 1,579 | 95 | 1,674 |
+| P3-C | ehs, qms, finance, scm, wms, rd, pdm, lims, hrm, srm (schemas) | — | 6,117 | 6,117 |
+| P3-D | workflow, lims, erp, qms, bi, pm, rd, tms, aps, notification (pages) | 4,254 | — | 4,254 |
+| **合计** | **24 模块** | **6,439** | **6,878** | **~13,319** |
+
+### 剩余 18,856 行分布
+
+| 模块 | 行数 | 说明 |
+|------|------|------|
+| components | 4,496 | 模板组件、通用组件、AI 组件 |
+| pages | 4,094 | 各模块页面（含未处理的边角用例） |
+| ai | 2,358 | AI 面板、UX 推荐 |
+| microfrontend | 1,770 | 微前端面板、运行时、可观测性 |
+| modules | 1,504 | 共享模块 |
+| schemas | 1,565 | 剩余 schema 边角用例 |
+| 其他 | 3,269 | utils/hooks/config/api/lib 等 |
+
+### 新增脚本清单
+
+| 脚本 | 用途 |
+|------|------|
+| `scripts/i18n/scan-hardcoded.cjs` | 全量扫描硬编码中文分布（按模块/子模块统计） |
+| `scripts/i18n/batch-schema-i18n.cjs` | Schema .ts 文件批量替换（i18n.t() + 自动导入） |
+| `scripts/i18n/fix-misplaced-hooks-p3.cjs` | 修复误放置的 useTranslation hook（mes 模块专用） |
+| `scripts/i18n/fix-p3-cleanup.cjs` | 通用清理：移除误放置 hook + t()→i18n.t() 转换 + 导入修复 |
+| `scripts/i18n/fix-mid-import-p3.cjs` | 修复多行 import 块中间插入的 i18n 导入 |
+| `scripts/i18n/fix-t-deps-p3.cjs` | 修复依赖数组中的 t 变量引用 |
+| `scripts/i18n/fix-imports-p3.cjs` | 修复 mes 模块导入语句 |
+
+### 技术要点
+
+- **Schema 批量替换**：`batch-schema-i18n.cjs` 处理 .ts 文件中的对象字面量中文属性值（title/label/description），使用 `i18n.t()` 替代 `t()`
+- **Hook 误放置检测**：脚本检测 `const { t } = useTranslation()` 是否在对象字面量、类型声明或函数参数中，自动移除并改用 `i18n.t()`
+- **箭头函数参数保护**：清理脚本需跳过箭头函数参数 `(t) =>` 中的 `t`，避免误转为 `(i18n.t)`
+- **多行 import 块检测**：`import i18n` 不得插入到 `import { ... }` 多行块中间，需检测前驱行是否为未闭合的 `{`
+
+---
+
+## V222 — i18n P4 硬编码清零（2026-08-15）
+
+### 目标
+
+处理剩余 18,856 行硬编码中文，优先 components/templates(1069)、ai(2358)、microfrontend(1770) 等高密度模块。
+
+### 成果
+
+- **起始硬编码行数**：18,856 行（V222 开始时）
+- **当前剩余行数**：5,738 行
+- **减少量**：-13,118 行（-69.7%）
+- **TSC 验证**：0 errors
+- **修改文件数**：1,283 个
+
+### 处理批次与替换量
+
+| 批次 | 目录 | 类型 | 替换量 |
+|------|------|------|--------|
+| P4-A | components/templates | .tsx + .ts | 637 |
+| P4-B | ai (enhancement/agent/review/governance) | .tsx + .ts | 1,842 |
+| P4-C | microfrontend (lowcode/marketplace/runtime/security) | .tsx + .ts | 1,407 |
+| P4-D | modules/schemas/config/utils/hooks/api/lib | .ts | 3,213 |
+| P4-D | components/bff/templates/gis/common | .tsx + .ts | 273 |
+| P4-E | pages (wms/report/shared/srm/doc) | .tsx | 1,454 |
+| P4-E | fullstack-automation | .tsx | 127 |
+| P4-Enh | 增强 .ts/.tsx (模板字面量等) | enhanced | 1,362 |
+| P4-Revert | 回退165个错误文件 + 基础脚本重处理 | .tsx + .ts | 4,197 |
+| TSC Fix | 91个文件缺失 i18n 导入 + 类型位置修复 | 手动 | 91+ |
+
+### 新增脚本清单
+
+| 脚本 | 用途 |
+|------|------|
+| `scripts/i18n/batch-i18n-general.cjs` | 通用 .tsx 批量替换（JSX 文本/属性/字符串字面量） |
+| `scripts/i18n/batch-ts-general.cjs` | 通用 .ts 批量替换（字符串字面量 + 自动导入） |
+| `scripts/i18n/batch-i18n-enhanced.cjs` | 增强脚本（模板字面量/插值/JSX 属性/对象键） |
+| `scripts/i18n/fix-jsx-attr-braces.cjs` | 修复 JSX 属性缺失 `{}` 包裹 |
+| `scripts/i18n/fix-missing-i18n-import.cjs` | 批量添加缺失的 `import i18n` |
+
+### 剩余分布（5,738 行）
+
+| 模块 | 行数 | 说明 |
+|------|------|------|
+| pages | 2,161 | 多行 JSX、模板字面量、对象键等复杂模式 |
+| components | 1,769 | 多行 JSX、对象属性键、模板字面量 |
+| ai | 682 | 模板字面量、JSX 属性非中文前缀 |
+| microfrontend | 343 | 多行 JSX、对象键 |
+| config | 117 | 帮助映射、权限配置 |
+| utils | 104 | 工具函数 |
+| schemas | 94 | Schema 边角用例 |
+| hooks | 60 | 自定义 hooks |
+| 其他 | 508 | intelligent-ops/dev-platform/lib 等 |
+
+### 技术要点
+
+- **正则表达式 bug 修复**：`batch-ts-general.cjs` 的 `CJK_RE` 正则缺少闭合 `/`，导致脚本无法运行
+- **JSX 属性 `{}` 包裹**：字符串字面量替换会剥离 JSX 属性的引号（`label='中文'` → `label=i18n.t('key')`），需检测 `attr=` 前缀并使用 `={i18n.t('key')}` 模式
+- **类型位置 `i18n.t()` 无效**：`i18n.t()` 是运行时函数调用，不能用于 TypeScript 类型联合（`type Foo = 'a' | i18n.t('key')` 无效），需还原为中文字符串字面量
+- **缺失导入批量修复**：91 个文件使用 `i18n.t()` 但未导入 `i18n`，脚本自动检测并添加 `import i18n from '@/i18n'`
+- **重复标识符修复**：`fix-missing-i18n-import.cjs` 误向已有 `import i18n from '../i18n'` 的文件添加 `import i18n from '@/i18n'`，导致 TS2300 重复标识符
+- **多行 import 块插入**：`sed` 方式插入导入语句可能破坏多行 `import { ... }` 块语法
+- **回退+重处理策略**：增强脚本引入 1816 个 TSC 错误后，回退 165 个错误文件到 HEAD，仅用基础脚本重处理，确保 0 错误
+
+## V223: i18n 复杂模式清零 + TSC 修复（2026-08-15）
+
+### 成果
+
+| 指标 | V222 结束 | V223 结束 | 变化 |
+|------|----------|----------|------|
+| 硬编码中文行数 | 5,738 | 1,803 | -3,935 (-68.6%) |
+| TSC 错误数 | 0 | 0 | 保持 0 |
+| 处理文件数 | - | 1,283+ | - |
+
+### V223 脚本开发
+
+- **batch-i18n-v223.cjs**：处理 9 种复杂模式（对象属性键、日志调用、独立 JSX 文本、条件表达式、throw new Error 等），累计替换 4,209 处
+- **fix-v223-errors.cjs**：修复 V223 脚本导致的 TSC 错误（.ts 文件 `{i18n.t()}` 包裹去除、JSX 属性语法修复）
+- **fix-v223-from-diff.cjs**：基于 git diff 匹配损坏行与原始行，应用正确的 i18n 替换
+- **fix-v223-corruptions.cjs**：批量回退数据文件中的错误 i18n.t() 调用
+
+### TSC 修复详情（326 → 0）
+
+| 修复类型 | 文件数 | 修复方式 |
+|---------|--------|---------|
+| 模板字面量损坏 | 5 | 恢复 `${condition ?}` 语法（v54/v55/v53/v57/v56 面板） |
+| 嵌套 i18n.t() | 4 | 从 git diff 恢复原始 JSX 文本 |
+| 字符串损坏 | 2 | 恢复 `'number'` 等字符串字面量 |
+| 数据文件回退 | 4 | 从 git 恢复（ui-recommender.ts, apiPath.ts, 3 BI 页面） |
+| 重复 import i18n | 3 | 删除 V223 脚本误添加的重复导入 |
+| 接口计算属性 | 1 | 恢复中文属性名为字面量（api/report/index.ts） |
+| 类型联合 i18n.t() | 2 | 恢复中文字符串字面量（EHSBadges.tsx, ExternalErpAdapters.ts） |
+| 其他语法修复 | 7 | 模板字面量 `$i18n.t()` → `${i18n.t()}`，引号修复等 |
+
+### 剩余分布（1,803 行）
+
+| 模块 | 行数 | 说明 |
+|------|------|------|
+| components | 584 | 模板组件、通用组件中的多行 JSX |
+| pages | 584 | AI 页面、管理页面等 |
+| utils | 225 | ai/ui-recommender（169行数据文件）、apiPath 等 |
+| config | 117 | ai-templates.ts（112行 AI 提示词模板） |
+| ai | 81 | AI 面板剩余 |
+| microfrontend | 78 | 微前端模块 |
+| hooks | 57 | 自定义 hooks |
+| 其他 | 77 | lib/api/services/theme 等 |
+
+### 技术要点
+
+- **数据文件不应 i18n**：ui-recommender.ts（组件元数据）、apiPath.ts（服务映射）、BI 页面（mock 数据）中的中文是数据结构的一部分，不应替换为 i18n.t()
+- **模板字面量损坏模式**：V223 脚本将 `中文${condition ?` 替换为 `${i18n.t('key')} `，丢失了 `${condition ?` 部分，导致 ternary 表达式断裂
+- **嵌套 i18n.t() 损坏**：脚本对已有 `i18n.t()` 的行二次处理，产生 `i18n.t(i18n.t('key')...` 嵌套调用
+- **翻译键值错误**：V223 脚本生成的翻译条目包含代码片段而非纯中文文本（如 `">操作人：{e.who ?? "`），561 条翻译条目需后续清理
+- **AI 提示词模板**：config/ai-templates.ts 中的 promptTemplate 是发送给 LLM 的功能提示词，不是用户界面文本，不应 i18n
 
