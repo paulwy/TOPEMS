@@ -22,9 +22,7 @@ pub struct UpdateFeatureFlagRequest {
     ),
     security(("BearerAuth" = []))
 )]
-async fn list_feature_flags(
-    State(state): State<AppState>,
-) -> Json<ApiResponse<Vec<FeatureFlag>>> {
+async fn list_feature_flags(State(state): State<AppState>) -> Json<ApiResponse<Vec<FeatureFlag>>> {
     let flags = state.feature_flag_service.list_all();
     Json(api_success(flags))
 }
@@ -127,7 +125,10 @@ pub fn feature_flag_routes(state: &AppState) -> Router<AppState> {
 
     let write = Router::new()
         .route("/system/feature-flags/{key}", put(update_feature_flag))
-        .route("/system/feature-flags/{key}/refresh", post(refresh_feature_flag))
+        .route(
+            "/system/feature-flags/{key}/refresh",
+            post(refresh_feature_flag),
+        )
         .layer(axum::middleware::from_fn_with_state(
             state.clone(),
             require_permission("system:write"),

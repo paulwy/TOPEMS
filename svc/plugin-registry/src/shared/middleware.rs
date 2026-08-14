@@ -40,8 +40,7 @@ pub fn extract_claims(req: &Request<Body>) -> Option<Claims> {
     req.extensions().get::<Claims>().cloned()
 }
 
-pub fn require_auth(
-) -> impl Fn(
+pub fn require_auth() -> impl Fn(
     Request<Body>,
     Next,
 ) -> std::pin::Pin<Box<dyn std::future::Future<Output = Response> + Send>>

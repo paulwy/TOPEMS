@@ -26,8 +26,8 @@ use topems_shared_auth::auth::{AuthState, Claims};
 use topems_shared_bootstrap::{bootstrap_service, resolve_port, run, Application, ServiceConfig};
 use topems_shared_core::api_version::{create_api_info_router, register_routes_with_legacy_alias};
 use topems_shared_core::cors::create_cors_layer;
-use topems_shared_core::response::ApiResponse;
 use topems_shared_core::logging::request_context_middleware;
+use topems_shared_core::response::ApiResponse;
 use topems_shared_observability::telemetry::telemetry_middleware;
 
 mod db;

@@ -9,8 +9,8 @@
 use crate::permission::{PermissionMetadata, PermissionMetadataCache};
 use std::sync::Arc;
 use topems_shared_core::error::TopemsError;
-use topems_shared_observability::telemetry::TracedRequestExt;
 use topems_shared_event::event::{EventType, PermissionMetadataChangedPayload, RabbitMqSubscriber};
+use topems_shared_observability::telemetry::TracedRequestExt;
 use tracing::{error, info, warn};
 
 /// V21.0: 统一权限中心客户端

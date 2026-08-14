@@ -1396,8 +1396,11 @@ mod tests {
 
     #[test]
     fn test_calculate_confidence_normal() {
-        let ci =
-            CashFlowForecaster::calculate_confidence(Decimal::from(100), Decimal::from(50), Decimal::from(80));
+        let ci = CashFlowForecaster::calculate_confidence(
+            Decimal::from(100),
+            Decimal::from(50),
+            Decimal::from(80),
+        );
         assert_eq!(ci.confidence_percentage, Decimal::from(80));
         let net = Decimal::from(50);
         let deviation = net * Decimal::from(20) / Decimal::from(100);
@@ -1407,8 +1410,11 @@ mod tests {
 
     #[test]
     fn test_calculate_confidence_negative_net() {
-        let ci =
-            CashFlowForecaster::calculate_confidence(Decimal::from(50), Decimal::from(120), Decimal::from(90));
+        let ci = CashFlowForecaster::calculate_confidence(
+            Decimal::from(50),
+            Decimal::from(120),
+            Decimal::from(90),
+        );
         assert_eq!(ci.confidence_percentage, Decimal::from(90));
         let net = Decimal::from(-70);
         let deviation = net * Decimal::from(10) / Decimal::from(100);
@@ -1509,7 +1515,11 @@ mod tests {
 
     #[test]
     fn test_forecast_cash_flow_base_scenario() {
-        let f = CashFlowForecaster::forecast_cash_flow("2026Q3", ForecastPeriod::Monthly, ForecastScenario::Base);
+        let f = CashFlowForecaster::forecast_cash_flow(
+            "2026Q3",
+            ForecastPeriod::Monthly,
+            ForecastScenario::Base,
+        );
         assert_eq!(f.period_type, ForecastPeriod::Monthly);
         assert_eq!(f.scenario, ForecastScenario::Base);
         assert_eq!(f.predicted_inflow, Decimal::from(1_680_000));
@@ -1534,10 +1544,16 @@ mod tests {
 
     #[test]
     fn test_forecast_cash_flow_period_duration() {
-        let daily =
-            CashFlowForecaster::forecast_cash_flow("", ForecastPeriod::Daily, ForecastScenario::Base);
-        let quarterly =
-            CashFlowForecaster::forecast_cash_flow("", ForecastPeriod::Quarterly, ForecastScenario::Base);
+        let daily = CashFlowForecaster::forecast_cash_flow(
+            "",
+            ForecastPeriod::Daily,
+            ForecastScenario::Base,
+        );
+        let quarterly = CashFlowForecaster::forecast_cash_flow(
+            "",
+            ForecastPeriod::Quarterly,
+            ForecastScenario::Base,
+        );
         assert!(
             (quarterly.end_date - quarterly.start_date).num_days()
                 > (daily.end_date - daily.start_date).num_days()
@@ -1610,7 +1626,8 @@ mod tests {
 
     #[test]
     fn test_generate_recommendations_known_metric_emergency() {
-        let actions = SmartAlertSystem::generate_recommendations("cash_balance", &AlertSeverity::Emergency);
+        let actions =
+            SmartAlertSystem::generate_recommendations("cash_balance", &AlertSeverity::Emergency);
         assert!(actions.len() >= 3);
         let last = actions.last().unwrap();
         assert!(last.contains("管理层"));
@@ -1619,8 +1636,10 @@ mod tests {
 
     #[test]
     fn test_generate_recommendations_known_metric_warning_no_emergency() {
-        let actions =
-            SmartAlertSystem::generate_recommendations("receivable_overdue_rate", &AlertSeverity::Warning);
+        let actions = SmartAlertSystem::generate_recommendations(
+            "receivable_overdue_rate",
+            &AlertSeverity::Warning,
+        );
         assert!(actions.len() >= 2);
         for a in &actions {
             assert!(!a.contains("管理层"), "Warning 不应附加应急预案");

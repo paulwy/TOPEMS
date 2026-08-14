@@ -33,11 +33,11 @@ use topems_shared_auth::security::{
     FieldEncryptionService, KeyManager, SecurityHeadersConfig, SecurityHeadersLayer,
 };
 use topems_shared_bootstrap::{bootstrap_service, resolve_port, run, Application, ServiceConfig};
+use topems_shared_core::logging::request_context_middleware;
 use topems_shared_core::{
     compression::{CompressionConfig, CompressionMiddleware},
     health::{SimpleHealthConfig, SystemMetrics},
 };
-use topems_shared_core::logging::request_context_middleware;
 use topems_shared_observability::telemetry::TelemetryExt;
 use utoipa::{Modify, OpenApi};
 
@@ -441,9 +441,7 @@ async fn main() -> anyhow::Result<()> {
         input_validation_config,
         metrics,
         encryption,
-        feature_flag_service: std::sync::Arc::new(
-            topems_shared_core::FeatureFlagService::new(),
-        ),
+        feature_flag_service: std::sync::Arc::new(topems_shared_core::FeatureFlagService::new()),
     };
 
     // Spawn background task to cleanup timeout WebSocket connections

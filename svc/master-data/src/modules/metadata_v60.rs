@@ -404,11 +404,7 @@ impl EnhancedLineage {
 
             let edge = LineageEdgeV60 {
                 id: uuid::Uuid::new_v4().to_string(),
-                source_id: nodes
-                    .last()
-                    .unwrap()
-                    .id
-                    .clone(),
+                source_id: nodes.last().unwrap().id.clone(),
                 target_id: node.id.clone(),
                 transformation_type: TransformationType::Transform,
                 transformation_details: serde_json::json!({"step": level}),
