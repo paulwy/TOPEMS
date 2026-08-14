@@ -54,7 +54,7 @@ export const DashboardPage: React.FC = () => {
         value: statistics.factory_maps.toString(),
         icon: iconMap.Layers,
         change: 0,
-        changeLabel: 'vs 上周期',
+        changeLabel: i18n.t('gis.dashboard_page.m1'),
         color: 'primary',
       },
       {
@@ -63,7 +63,7 @@ export const DashboardPage: React.FC = () => {
         value: statistics.device_points.toLocaleString(),
         icon: iconMap.MapPin,
         change: 0,
-        changeLabel: 'vs 上周期',
+        changeLabel: i18n.t('gis.dashboard_page.m1'),
         color: 'info',
       },
       {
@@ -72,7 +72,7 @@ export const DashboardPage: React.FC = () => {
         value: statistics.storage_locations.toLocaleString(),
         icon: iconMap.Activity,
         change: 0,
-        changeLabel: 'vs 上周期',
+        changeLabel: i18n.t('gis.dashboard_page.m1'),
         color: 'success',
       },
       {
@@ -81,7 +81,7 @@ export const DashboardPage: React.FC = () => {
         value: statistics.active_devices.toString(),
         icon: iconMap.Globe,
         change: 0,
-        changeLabel: 'vs 上周期',
+        changeLabel: i18n.t('gis.dashboard_page.m1'),
         color: 'warning',
       },
     ];

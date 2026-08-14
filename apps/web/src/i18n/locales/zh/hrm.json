@@ -1475,5 +1475,11 @@
   "hrm.setting_attendance_rule_page.r1": "考勤规则相关配置参数（页面建设中…）",
   "hrm.setting_payroll_template_page.r1": "薪资模板相关配置参数（页面建设中…）",
   "hrm.setting_recruitment_flow_page.r1": "招聘流程相关配置参数（页面建设中…）",
-  "hrm.setting_training_plan_page.r1": "培训计划相关配置参数（页面建设中…）"
+  "hrm.setting_training_plan_page.r1": "培训计划相关配置参数（页面建设中…）",
+  "hrm.employee_finance_tab.m1": "加载失败: {{v1}}",
+  "hrm.hrm_attendance_page.m1": "加载中...",
+  "hrm.hrm_contract_detail_page.m1": "{{v1}} 个月",
+  "hrm.employee_finance_tab.l1": "个人社保扣款(估算)",
+  "hrm.employee_finance_tab.l2": "个人公积金扣款(估算)",
+  "hrm.hrm_payroll_page.e3": "专项附加扣除 (元)"
 }

@@ -92,7 +92,7 @@ export const LowCodeHomePage: React.FC = () => {
             severity='warning'
             sx={{ mb: 2 }}
           >
-            {error}（后端 lowcode 服务未就绪时显示占位统计）
+            {t('lowcode.low_code_home_page.l1', { v1: error })}
           </Alert>
         )}
         <Grid

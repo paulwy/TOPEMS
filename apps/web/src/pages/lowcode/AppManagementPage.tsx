@@ -91,7 +91,7 @@ export const AppManagementPage: React.FC = () => {
       <PageContainer title={t('lowcode.app_management_page.k4')}>
         <Box sx={{ p: 3 }}>
           <Typography color='text.secondary'>
-            请在 URL 上携带 ?app_id=xxx 以管理具体应用。
+            {t('lowcode.app_management_page.e1')}
           </Typography>
         </Box>
       </PageContainer>
@@ -115,7 +115,7 @@ export const AppManagementPage: React.FC = () => {
           variant='h5'
           sx={{ mb: 2 }}
         >
-          应用管理 {app ? `· ${app.code}` : ''}
+          {t('lowcode.app_management_page.k4')} {app ? `· ${app.code}` : ''}
         </Typography>
         {error && (
           <Typography
@@ -193,7 +193,7 @@ export const AppManagementPage: React.FC = () => {
                 color='text.secondary'
                 sx={{ alignSelf: 'center' }}
               >
-                当前状态：{app.status} · v{app.version}
+                {t('lowcode.app_management_page.e1', { v1: app.status, v2: app.version })}
               </Typography>
             </Stack>
           </Stack>

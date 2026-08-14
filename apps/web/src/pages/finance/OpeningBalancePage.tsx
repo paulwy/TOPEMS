@@ -387,7 +387,7 @@ export default function OpeningBalancePage() {
                       variant='body2'
                       color='text.secondary'
                     >
-                      加载中...
+                      {t('finance.opening_balance_page.m1')}
                     </Typography>
                   </TableCell>
                 </TableRow>

@@ -9,6 +9,7 @@ import { QUERY_KEYS } from '@/lib/reactQuery';
 import { PageContainer } from '@/components/common';
 import { designTokens } from '@/theme/tokens';
 import { useTranslation } from 'react-i18next';
+import i18n from '@/i18n';
 
 const ct = designTokens.colors;
 
@@ -185,7 +186,7 @@ export default function PdmBomPage() {
                 {t('pdm.pdm_bom_page.e1')}
               </Typography>
               <Typography sx={{ fontWeight: 'bold', fontSize: '1.5rem' }}>
-                {stats.total} 项
+                {t('pdm.pdm_bom_page.m1', { v1: stats.total })}
               </Typography>
             </Box>
             <Box
@@ -224,7 +225,7 @@ export default function PdmBomPage() {
       <CrudPage
         schema={bomItemSchema}
         apiAdapter={apiAdapter}
-        breadcrumbs={[{ label: 'PDM' }, { label: 'BOM 管理' }]}
+        breadcrumbs={[{ label: 'PDM' }, { label: i18n.t('pdm.pdm_bom_page.m2') }]}
         headerContent={headerContent}
         extraQueryParams={{ product_id: selectedProduct }}
       />

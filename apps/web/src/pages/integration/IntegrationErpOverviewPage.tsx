@@ -361,7 +361,7 @@ export const IntegrationErpOverviewPage: React.FC = () => {
                     variant='caption'
                     color='text.secondary'
                   >
-                    {task.records} 条记录
+                    {t('integration.integration_erp_overview_page.m1', { v1: task.records })}
                   </Typography>
                 )}
                 {task.progress !== undefined && (
@@ -389,11 +389,11 @@ export const IntegrationErpOverviewPage: React.FC = () => {
 
   return (
     <PageContainer
-      title='ERP 集成概览'
+      title={t('integration.integration_erp_overview_page.m2')}
       subtitle={t('integration.integration_erp_overview_page.erp_41')}
     >
       <DashboardTemplate
-        title='ERP 集成概览'
+        title={t('integration.integration_erp_overview_page.m2')}
         stats={stats}
         quickActions={quickActions}
         recentItems={recentItems}
@@ -447,7 +447,7 @@ export const IntegrationErpOverviewPage: React.FC = () => {
                 variant='subtitle2'
                 sx={{ fontWeight: 600, mb: 2 }}
               >
-                ERP 连接状态
+                {t('integration.integration_erp_overview_page.e1')}
               </Typography>
               <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
                 <Box

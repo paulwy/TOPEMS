@@ -110,7 +110,7 @@ export default function ProductPage() {
           >
             {t('pdm.product_page.e1')}
           </Typography>
-          <Typography sx={{ fontWeight: 'bold', fontSize: '1.5rem' }}>{stats.total} 个</Typography>
+          <Typography sx={{ fontWeight: 'bold', fontSize: '1.5rem' }}>{t('pdm.product_page.m1', { v1: stats.total })}</Typography>
         </Box>
         <Box
           sx={{
@@ -128,7 +128,7 @@ export default function ProductPage() {
             {t('pdm.product_page.e2')}
           </Typography>
           <Typography sx={{ fontWeight: 'bold', fontSize: '1.5rem', color: 'success.main' }}>
-            {stats.active} 个
+            {t('pdm.product_page.m1', { v1: stats.active })}
           </Typography>
         </Box>
         <Box
@@ -147,7 +147,7 @@ export default function ProductPage() {
             {t('pdm.product_page.e3')}
           </Typography>
           <Typography sx={{ fontWeight: 'bold', fontSize: '1.5rem', color: 'warning.main' }}>
-            {stats.draft} 个
+            {t('pdm.product_page.m1', { v1: stats.draft })}
           </Typography>
         </Box>
       </Box>

@@ -204,7 +204,7 @@ export const DataModelListPage: React.FC = () => {
                 onChange={(e) => setCreateForm({ ...createForm, model_name: e.target.value })}
                 fullWidth
                 required
-                helperText='snake_case，如 leave_request'
+                helperText={t('lowcode.data_model_list_page.m1')}
               />
               <TextField
                 label={t('lowcode.data_model_list_page.k18')}

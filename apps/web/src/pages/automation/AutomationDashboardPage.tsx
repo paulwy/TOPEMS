@@ -128,7 +128,7 @@ export const AutomationDashboardPage: React.FC = () => {
             severity='warning'
             sx={{ mb: 2 }}
           >
-            {error}（后端 automation 服务未就绪时显示占位统计）
+            {t('automation.automation_dashboard_page.l1', { v1: error })}
           </Alert>
         )}
 
@@ -155,7 +155,7 @@ export const AutomationDashboardPage: React.FC = () => {
           </Grid>
           <Grid size={{ xs: 12, sm: 6, md: 4, lg: 3 }}>
             <StatCard
-              label='24h 运行次数'
+              label={t('automation.automation_dashboard_page.m1')}
               value={stats?.runs_last_24h ?? 0}
               icon={<Activity size={22} />}
               color='info.main'
@@ -163,7 +163,7 @@ export const AutomationDashboardPage: React.FC = () => {
           </Grid>
           <Grid size={{ xs: 12, sm: 6, md: 4, lg: 3 }}>
             <StatCard
-              label='24h 成功率'
+              label={t('automation.automation_dashboard_page.m2')}
               value={`${stats?.success_rate_24h ?? 0}%`}
               icon={<TrendingUp size={22} />}
               color={Number(stats?.success_rate_24h ?? 0) >= 90 ? 'success.main' : 'warning.main'}
@@ -171,7 +171,7 @@ export const AutomationDashboardPage: React.FC = () => {
           </Grid>
           <Grid size={{ xs: 12, sm: 6, md: 4, lg: 3 }}>
             <StatCard
-              label='24h 成功'
+              label={t('automation.automation_dashboard_page.m3')}
               value={stats?.success_last_24h ?? 0}
               icon={<CheckCircle2 size={22} />}
               color='success.main'
@@ -179,7 +179,7 @@ export const AutomationDashboardPage: React.FC = () => {
           </Grid>
           <Grid size={{ xs: 12, sm: 6, md: 4, lg: 3 }}>
             <StatCard
-              label='24h 失败'
+              label={t('automation.automation_dashboard_page.m4')}
               value={stats?.failed_last_24h ?? 0}
               icon={<XCircle size={22} />}
               color='error.main'

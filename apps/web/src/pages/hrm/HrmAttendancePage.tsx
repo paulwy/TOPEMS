@@ -422,7 +422,7 @@ const StatisticsContent: React.FC<{ selectedDate: string }> = ({ selectedDate })
   if (isPending) {
     return (
       <Box sx={{ p: 3, textAlign: 'center' }}>
-        <Typography color='text.secondary'>加载中...</Typography>
+        <Typography color='text.secondary'>{t('hrm.hrm_attendance_page.m1')}</Typography>
       </Box>
     );
   }

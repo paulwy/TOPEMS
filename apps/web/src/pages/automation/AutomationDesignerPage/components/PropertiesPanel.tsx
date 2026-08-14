@@ -60,7 +60,7 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
             >
               {t('automation.automation_designer_page_components_properties_panel.e1')}
             </Typography>
-            <Tooltip title='复制节点 (Ctrl/Cmd+D)'>
+            <Tooltip title={t('automation.automation_designer_page_components_properties_panel.m1')}>
               <IconButton
                 size='small'
                 onClick={() => onDuplicateNode(selectedNode.id)}
@@ -121,7 +121,7 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
             spacing={1}
           >
             <TextField
-              label='X 坐标'
+              label={t('automation.automation_designer_page_components_properties_panel.m2')}
               type='number'
               value={Math.round(selectedNode.position.x)}
               onChange={(e) =>
@@ -135,7 +135,7 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
               fullWidth
             />
             <TextField
-              label='Y 坐标'
+              label={t('automation.automation_designer_page_components_properties_panel.m3')}
               type='number'
               value={Math.round(selectedNode.position.y)}
               onChange={(e) =>

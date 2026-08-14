@@ -134,7 +134,7 @@ export default function MaterialPage() {
           >
             {t('pdm.material_page.e1')}
           </Typography>
-          <Typography sx={{ fontWeight: 'bold', fontSize: '1.5rem' }}>{stats.total} 种</Typography>
+          <Typography sx={{ fontWeight: 'bold', fontSize: '1.5rem' }}>{t('pdm.material_page.m1', { v1: stats.total })}</Typography>
         </Box>
         <Box
           sx={{
@@ -152,7 +152,7 @@ export default function MaterialPage() {
             {t('pdm.material_page.e2')}
           </Typography>
           <Typography sx={{ fontWeight: 'bold', fontSize: '1.5rem', color: 'primary.main' }}>
-            {stats.totalInventory} 件
+            {t('pdm.material_page.m2', { v1: stats.totalInventory })}
           </Typography>
         </Box>
         <Box

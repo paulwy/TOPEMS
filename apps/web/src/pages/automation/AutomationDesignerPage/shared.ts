@@ -12,18 +12,19 @@ import {
   XCircle as XCircleIcon,
 } from 'lucide-react';
 import type { AutomationDesignerNode, AutomationNodeType } from '@/api/automation';
+import i18n from '@/i18n';
 
 export const NODE_TYPE_LABEL: Record<AutomationNodeType, string> = {
-  trigger: '触发器',
-  workflow_action: '工作流动作',
-  integration_action: '集成动作',
-  api_action: 'API 动作',
-  lowcode_action: '低代码动作',
-  notification_action: '通知动作',
-  condition: '条件分支',
-  delay: '延时',
-  success_hook: '成功钩子',
-  error_hook: '失败钩子',
+  trigger: i18n.t('automation.automation_designer_page_shared.e1'),
+  workflow_action: i18n.t('automation.automation_designer_page_shared.e2'),
+  integration_action: i18n.t('automation.automation_designer_page_shared.e3'),
+  api_action: i18n.t('automation.automation_designer_page_shared.e4'),
+  lowcode_action: i18n.t('automation.automation_designer_page_shared.e5'),
+  notification_action: i18n.t('automation.automation_designer_page_shared.e6'),
+  condition: i18n.t('automation.automation_designer_page_shared.e7'),
+  delay: i18n.t('automation.automation_designer_page_shared.e8'),
+  success_hook: i18n.t('automation.automation_designer_page_shared.e9'),
+  error_hook: i18n.t('automation.automation_designer_page_shared.e10'),
 };
 
 export const NODE_TYPE_COLOR: Record<

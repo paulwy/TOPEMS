@@ -12,6 +12,7 @@ import { extractErrorMessage } from '@/utils/errors';
 
 import { QUERY_KEYS } from '@/lib/reactQuery';
 import { useTranslation } from 'react-i18next';
+import i18n from '@/i18n';
 
 const IntegrationMesErpPage: React.FC = () => {
   const { t } = useTranslation('integration');
@@ -38,7 +39,7 @@ const IntegrationMesErpPage: React.FC = () => {
       });
     },
     onError: (err: unknown) => {
-      apiLogger.error('MES-ERP 同步失败:', err);
+      apiLogger.error(i18n.t('integration.integration_mes_erp_page.m1'), err);
       addNotification({
         title: t('integration.integration_mes_erp_page.k3'),
         message: extractErrorMessage(err, t('integration.integration_mes_erp_page.k4')),
@@ -86,7 +87,7 @@ const IntegrationMesErpPage: React.FC = () => {
 
   return (
     <PageContainer
-      title='MES ↔ ERP 同步'
+      title={t('integration.integration_mes_erp_page.m2')}
       subtitle={t('integration.integration_mes_erp_page.k11')}
     >
       <CrudPage

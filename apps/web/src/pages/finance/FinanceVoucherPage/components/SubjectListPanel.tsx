@@ -94,7 +94,7 @@ const SubjectListPanel: React.FC<SubjectListPanelProps> = ({ subjects, subjectSt
                 color: 'text.secondary',
               }}
             >
-              <Typography variant='body2'>层级: {subject.level}</Typography>
+              <Typography variant='body2'>{t('finance.finance_voucher_page_components_subject_list_panel.m1', { v1: subject.level })}</Typography>
               <Box
                 sx={{
                   width: 4,
@@ -119,7 +119,7 @@ const SubjectListPanel: React.FC<SubjectListPanelProps> = ({ subjects, subjectSt
                     component='span'
                     sx={{ fontWeight: 500 }}
                   >
-                    上级科目:
+                    {t('finance.finance_voucher_page_components_subject_list_panel.e1')}:
                   </Typography>{' '}
                   {subject.parent_code}
                 </Typography>

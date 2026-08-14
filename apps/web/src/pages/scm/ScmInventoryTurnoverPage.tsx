@@ -47,7 +47,7 @@ const HeaderActions: React.FC = () => {
         onClick={() =>
           addNotification({
             title: t('scm.scm_inventory_turnover_page.k3'),
-            message: '库存周转报表导出中...',
+            message: i18n.t('scm.scm_inventory_turnover_page.m1'),
             type: 'info',
           })
         }
@@ -61,7 +61,7 @@ const HeaderActions: React.FC = () => {
         onClick={() =>
           addNotification({
             title: t('scm.scm_inventory_turnover_page.k4'),
-            message: '正在加载周转趋势分析...',
+            message: i18n.t('scm.scm_inventory_turnover_page.m2'),
             type: 'info',
           })
         }

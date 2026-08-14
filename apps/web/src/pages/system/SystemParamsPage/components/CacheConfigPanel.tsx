@@ -330,7 +330,7 @@ const CacheConfigPanel: React.FC<CacheConfigPanelProps> = ({
                   variant='body2'
                   sx={{ fontWeight: 600, width: '100%', mb: 2 }}
                 >
-                  Redis 连接配置
+                  {t('system.system_params_page_components_cache_config_panel.e1')}
                 </Typography>
                 <Grid
                   xs={12}
@@ -338,7 +338,7 @@ const CacheConfigPanel: React.FC<CacheConfigPanelProps> = ({
                 >
                   <TextField
                     fullWidth
-                    label='Redis 主机'
+                    label={t('system.system_params_page_components_cache_config_panel.m1')}
                     value={cacheConfig.redis_host}
                     onChange={(e) =>
                       setCacheConfig((prev) => ({
@@ -355,7 +355,7 @@ const CacheConfigPanel: React.FC<CacheConfigPanelProps> = ({
                 >
                   <TextField
                     fullWidth
-                    label='Redis 端口'
+                    label={t('system.system_params_page_components_cache_config_panel.m2')}
                     type='number'
                     value={cacheConfig.redis_port}
                     onChange={(e) =>
@@ -373,7 +373,7 @@ const CacheConfigPanel: React.FC<CacheConfigPanelProps> = ({
                 >
                   <TextField
                     fullWidth
-                    label='Redis 数据库'
+                    label={t('system.system_params_page_components_cache_config_panel.m3')}
                     type='number'
                     value={cacheConfig.redis_db}
                     onChange={(e) =>
@@ -451,7 +451,7 @@ const CacheConfigPanel: React.FC<CacheConfigPanelProps> = ({
           onClick={onSave}
           disabled={isSaving}
         >
-          {isSaving ? '保存中...' : t('system.cache_config_panel.k11')}
+          {isSaving ? t('system.system_params_page_components_cache_config_panel.m4') : t('system.cache_config_panel.k11')}
         </Button>
       </Box>
     </Box>

@@ -64,7 +64,7 @@ const SupplierAdmissionPage: React.FC = () => {
       });
     },
     onError: (err: unknown) => {
-      apiLogger.error('提交失败:', err);
+      apiLogger.error(i18n.t('scm.supplier_admission_page.m1'), err);
       addNotification({
         type: 'error',
         title: t('scm.supplier_admission_page.k2'),
@@ -89,7 +89,7 @@ const SupplierAdmissionPage: React.FC = () => {
       });
     },
     onError: (err: unknown) => {
-      apiLogger.error('操作失败:', err);
+      apiLogger.error(i18n.t('scm.supplier_admission_page.m2'), err);
       addNotification({
         type: 'error',
         title: t('scm.supplier_admission_page.k6'),
@@ -114,7 +114,7 @@ const SupplierAdmissionPage: React.FC = () => {
       });
     },
     onError: (err: unknown) => {
-      apiLogger.error('操作失败:', err);
+      apiLogger.error(i18n.t('scm.supplier_admission_page.m2'), err);
       addNotification({
         type: 'error',
         title: t('scm.supplier_admission_page.k10'),
@@ -139,7 +139,7 @@ const SupplierAdmissionPage: React.FC = () => {
       });
     },
     onError: (err: unknown) => {
-      apiLogger.error('准入失败:', err);
+      apiLogger.error(i18n.t('scm.supplier_admission_page.m4'), err);
       addNotification({
         type: 'error',
         title: t('scm.supplier_admission_page.k14'),

@@ -28,13 +28,13 @@ const apiAdapter: CrudApiAdapter<MrpSuggestion> = {
     return { data: [], total: 0 };
   },
   create: async () => {
-    throw new Error('MRP建议不支持创建');
+    throw new Error(i18n.t('scm.mrp_suggestion_page.m1'));
   },
   update: async () => {
-    throw new Error('MRP建议不支持编辑');
+    throw new Error(i18n.t('scm.mrp_suggestion_page.m2'));
   },
   delete: async () => {
-    throw new Error('MRP建议不支持删除');
+    throw new Error(i18n.t('scm.mrp_suggestion_page.m3'));
   },
 };
 
@@ -259,7 +259,7 @@ const MrpSuggestionPage: React.FC = () => {
         schema={schema}
         apiAdapter={apiAdapter}
         customRowActions={customRowActions as unknown as RowAction<Record<string, unknown>>[]}
-        breadcrumbs={[{ label: 'SCM' }, { label: 'MRP建议' }]}
+        breadcrumbs={[{ label: 'SCM' }, { label: i18n.t('scm.mrp_suggestion_page.m4') }]}
         extraQueryParams={planId ? { plan_id: planId } : undefined}
         tabs={tabs}
       />

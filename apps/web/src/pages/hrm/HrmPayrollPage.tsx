@@ -454,7 +454,7 @@ const HrmPayrollPage: React.FC = () => {
             variant='body2'
             sx={{ mb: 1, fontWeight: 500, color: 'grey.700' }}
           >
-            税前月收入 (元)
+            {t('hrm.hrm_payroll_page.e1')}
           </Typography>
           <InputBase
             type='number'
@@ -474,7 +474,7 @@ const HrmPayrollPage: React.FC = () => {
             variant='body2'
             sx={{ mb: 1, fontWeight: 500, color: 'grey.700' }}
           >
-            社保公积金 (元)
+            {t('hrm.hrm_payroll_page.e2')}
           </Typography>
           <InputBase
             type='number'
@@ -494,7 +494,7 @@ const HrmPayrollPage: React.FC = () => {
             variant='body2'
             sx={{ mb: 1, fontWeight: 500, color: 'grey.700' }}
           >
-            专项附加扣除 (元)
+            {t('hrm.hrm_payroll_page.e3')}
           </Typography>
           <InputBase
             type='number'
