@@ -46,7 +46,7 @@ import ConfirmDialogs from './components/ConfirmDialogs';
 
 import { QUERY_KEYS } from '@/lib/reactQuery';
 
-const ct = designTokens.colors;
+const ct= designTokens.colors;
 
 // ============ 科目 Tab 面板（嵌套 CrudPage） ============
 

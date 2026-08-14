@@ -12,6 +12,7 @@ import {
   ReferenceLine,
 } from 'recharts';
 import { useWmsMock, type WmsMockShape } from '@/api/wms/_mock';
+import { designTokens, semanticTokens } from '@topems/tokens';
 
 export default function WmsAgeParetoPage() {
   const { data } = useWmsMock<WmsMockShape>();
@@ -84,14 +85,14 @@ export default function WmsAgeParetoPage() {
             <ReferenceLine
               yAxisId='right'
               y={80}
-              stroke='#ef4444'
+              stroke={designTokens.colors.error.main}
               strokeDasharray='4 4'
               label='80% 线'
             />
             <ReferenceLine
               yAxisId='right'
               y={20}
-              stroke='#6366f1'
+              stroke={designTokens.colors.secondary.dark}
               strokeDasharray='2 2'
               label='20% SKU'
             />
@@ -99,7 +100,7 @@ export default function WmsAgeParetoPage() {
               yAxisId='left'
               dataKey='amount'
               name='SKU 金额'
-              fill='#3b82f6'
+              fill={designTokens.colors.primary.main}
               radius={[4, 4, 0, 0]}
             />
             <Line
@@ -107,7 +108,7 @@ export default function WmsAgeParetoPage() {
               type='monotone'
               dataKey='cumulative'
               name='累计占比 %'
-              stroke='#10b981'
+              stroke={designTokens.colors.success.dark}
               strokeWidth={2.5}
               dot={{ r: 3 }}
             />

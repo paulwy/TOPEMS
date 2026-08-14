@@ -12,7 +12,7 @@ import { LazyChart } from '@/components/charts';
 
 import { QUERY_KEYS } from '@/lib/reactQuery';
 
-const ct = designTokens.colors;
+const ct= designTokens.colors;
 
 const ScmOverviewPage: React.FC = () => {
   const navigate = useNavigate();

@@ -26,6 +26,7 @@ import type { BreadcrumbItem, PageAction } from './PageHeader';
 import { PageHeader } from './PageHeader';
 import { EmptyState, ErrorEmptyState } from '@topems/shared-components';
 import { logger } from '@/utils/logger';
+import { designTokens, semanticTokens } from '@topems/tokens';
 
 // ============ 类型定义 ============
 
@@ -524,7 +525,7 @@ export function MasterDetailPageTemplate<T>({
                             ? 'rgba(255,255,255,0.8)'
                             : `${action.color || 'primary'}.main`,
                           '&:hover': {
-                            color: isSelected ? '#fff' : `${action.color || 'primary'}.dark`,
+                            color: isSelected ? designTokens.colors.background.paper : `${action.color || 'primary'}.dark`,
                           },
                         }}
                         aria-label='前进'

@@ -7,7 +7,7 @@ import { designTokens } from '@/theme/tokens';
 import { alpha } from '@mui/material/styles';
 import { sizeTokens } from '@/theme';
 
-const ct = designTokens.colors;
+const ct= designTokens.colors;
 
 interface ScannerViewProps {
   scanning: boolean;

@@ -20,7 +20,7 @@ import type { MaterialBom, MaterialBomItem } from '@/api/mes';
 import { Package } from 'lucide-react';
 import { designTokens } from '@/theme/tokens';
 
-const ct = designTokens.colors;
+const ct= designTokens.colors;
 
 const apiAdapter = createCrudPageAdapter(mesApi.boms, {
   itemsField: 'boms',

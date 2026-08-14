@@ -44,6 +44,7 @@ import {
   type DependencyStats,
   type ConflictSeverity,
 } from './dependency-governor';
+import { designTokens, semanticTokens } from '@topems/tokens';
 
 interface DependencyGovernanceProps {
   onClose?: () => void;
@@ -82,7 +83,7 @@ const StatCard: React.FC<{
                 display: 'flex',
                 alignItems: 'center',
                 gap: 0.5,
-                color: trendUp ? '#2e7d32' : '#d32f2f',
+                color: trendUp ? designTokens.colors.success.dark : designTokens.colors.error.dark,
               }}
             >
               {trendUp ? (
@@ -139,7 +140,7 @@ const DependencyGraphVisualization: React.FC<{ graph: DependencyGraph }> = ({ gr
   }, [graph]);
 
   const getNodeColor = (level: number) => {
-    const colors = ['#1976d2', '#388e3c', '#f57c00', '#c2185b', '#7b1fa2'];
+    const colors = [designTokens.colors.primary.dark, '#388e3c', '#f57c00', '#c2185b', '#7b1fa2'];
     return colors[level % colors.length];
   };
 
@@ -187,7 +188,7 @@ const DependencyGraphVisualization: React.FC<{ graph: DependencyGraph }> = ({ gr
                 y1={fromPos.y + 20}
                 x2={toPos.x - 5}
                 y2={toPos.y + 20}
-                stroke={isHighlighted ? '#1976d2' : '#90caf9'}
+                stroke={isHighlighted ? designTokens.colors.primary.dark : '#90caf9'}
                 strokeWidth={isHighlighted ? 2 : 1.5}
                 markerEnd='url(#arrowhead)'
                 opacity={hoveredNode ? (isHighlighted ? 1 : 0.3) : 1}
@@ -276,9 +277,9 @@ const DependencyGraphVisualization: React.FC<{ graph: DependencyGraph }> = ({ gr
 const ConflictItem: React.FC<{ conflict: DependencyConflict }> = ({ conflict }) => {
   const severityColors: Record<ConflictSeverity, string> = {
     low: '#94a3b8',
-    medium: '#f59e0b',
-    high: '#ef4444',
-    critical: '#dc2626',
+    medium: designTokens.colors.warning.main,
+    high: designTokens.colors.error.main,
+    critical: designTokens.colors.error.dark,
   };
 
   const severityLabels: Record<ConflictSeverity, string> = {
@@ -583,7 +584,7 @@ const DependencyGovernance: React.FC<DependencyGovernanceProps> = ({ onClose }) 
               label='模块总数'
               value={stats.total_modules}
               icon={<PackageIcon size={20} />}
-              color='#1976d2'
+              color={designTokens.colors.primary.dark}
             />
           </Grid>
           <Grid size={{ xs: 6, sm: 3 }}>
@@ -599,7 +600,7 @@ const DependencyGovernance: React.FC<DependencyGovernanceProps> = ({ onClose }) 
               label='循环依赖'
               value={stats.cycles_count}
               icon={<AlertTriangleIcon size={20} />}
-              color={stats.cycles_count > 0 ? '#f59e0b' : '#10b981'}
+              color={stats.cycles_count > 0 ? designTokens.colors.warning.main : designTokens.colors.success.dark}
             />
           </Grid>
           <Grid size={{ xs: 6, sm: 3 }}>
@@ -607,7 +608,7 @@ const DependencyGovernance: React.FC<DependencyGovernanceProps> = ({ onClose }) 
               label='许可证合规率'
               value={`${stats.license_compliance_rate}%`}
               icon={<ShieldIcon size={20} />}
-              color={stats.license_compliance_rate >= 90 ? '#10b981' : '#f59e0b'}
+              color={stats.license_compliance_rate >= 90 ? designTokens.colors.success.dark : designTokens.colors.warning.main}
             />
           </Grid>
         </Grid>
@@ -783,7 +784,7 @@ const LicenseCompliancePanel: React.FC = () => {
               p: 2,
               borderRadius: 2,
               bgcolor: licenseCheck.compliant ? '#10b98115' : '#ef444415',
-              color: licenseCheck.compliant ? '#10b981' : '#ef4444',
+              color: licenseCheck.compliant ? designTokens.colors.success.dark : designTokens.colors.error.main,
             }}
           >
             <ShieldIcon size={32} />
@@ -833,7 +834,7 @@ const LicenseCompliancePanel: React.FC = () => {
               >
                 <PackageIcon
                   size={20}
-                  style={{ color: hasIssue ? '#f59e0b' : '#10b981' }}
+                  style={{ color: hasIssue ? designTokens.colors.warning.main : designTokens.colors.success.dark }}
                 />
               </Avatar>
               <Box sx={{ flex: 1 }}>

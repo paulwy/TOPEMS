@@ -1,3 +1,4 @@
+import { designTokens, semanticTokens } from '@topems/tokens';
 /**
  * V53.0 微前端平台终局 — 低代码搭建引擎
  *
@@ -244,7 +245,7 @@ const DEFAULT_THEME: ThemeConfig = {
   id: 'default-light',
   name: '默认浅色主题',
   colors: {
-    primary: '#1976d2',
+    primary: designTokens.colors.primary.dark,
     secondary: '#9c27b0',
     accent: '#ff9800',
     background: 'primary.contrastText',

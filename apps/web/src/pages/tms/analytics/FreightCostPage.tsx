@@ -1,3 +1,4 @@
+import { designTokens, semanticTokens } from '@topems/tokens';
 /**
  * 运费成本分析页
  *
@@ -21,12 +22,12 @@ import {
 } from 'recharts';
 
 const COST_COLORS: Record<string, string> = {
-  fuel: '#3b82f6',
-  toll: '#f59e0b',
-  labor: '#10b981',
-  depreciation: '#8b5cf6',
-  insurance: '#ef4444',
-  other: '#6b7280',
+  fuel: designTokens.colors.primary.main,
+  toll: designTokens.colors.warning.main,
+  labor: designTokens.colors.success.dark,
+  depreciation: designTokens.colors.secondary.main,
+  insurance: designTokens.colors.error.main,
+  other: 'colors.grey.500',
 };
 
 const COST_LABELS: Record<string, string> = {
@@ -137,7 +138,7 @@ export default function FreightCostPage() {
               <YAxis fontSize={11} />
               <Tooltip formatter={(value: unknown) => `¥${Number(value).toLocaleString()}`} />
               <Legend />
-              <Bar dataKey='amount' name='成本' fill='#6366f1' barSize={28}>
+              <Bar dataKey='amount' name='成本' fill={designTokens.colors.secondary.dark} barSize={28}>
                 {costData.map((entry) => (
                   <Cell key={entry.type} fill={COST_COLORS[entry.type] ?? '#9ca3af'} />
                 ))}

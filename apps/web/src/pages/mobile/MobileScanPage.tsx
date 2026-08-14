@@ -38,7 +38,7 @@ import { designTokens } from '@/theme/tokens';
 import { MOBILE_PATHS } from '@/modules/mobile/config';
 import { PageContainer } from '@/components/common';
 
-const ct = designTokens.colors;
+const ct= designTokens.colors;
 
 interface ScanHistoryItem {
   id: string;

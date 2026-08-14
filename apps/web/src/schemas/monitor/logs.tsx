@@ -11,7 +11,7 @@ import { Clock, AlertCircle, AlertTriangle, Info, Bug, Server } from 'lucide-rea
 import type { EntitySchema, SchemaField } from '@/schema';
 import { designTokens } from '@/theme/tokens';
 
-const ct = designTokens.colors;
+const ct= designTokens.colors;
 
 type LogLevel = 'error' | 'warn' | 'info' | 'debug';
 type LogType = 'access' | 'error' | 'application' | 'slow_query';

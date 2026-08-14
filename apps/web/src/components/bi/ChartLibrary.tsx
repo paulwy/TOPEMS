@@ -18,6 +18,7 @@ import {
   ResponsiveContainer,
   Cell,
 } from '../charts/_vendors/recharts-cartesian';
+import { designTokens, semanticTokens } from '@topems/tokens';
 
 const PolarCasesLazy = lazy(() => import('./ChartLibrary.polar').then(m => ({ default: m.PolarCases })));
 
@@ -56,7 +57,7 @@ const defaultColors = [
   'secondary.main',
   '#a855f7',
   '#d946ef',
-  '#ec4899',
+  designTokens.colors.pink.main,
   '#f43f5e',
   '#f97316',
   'warning.main',

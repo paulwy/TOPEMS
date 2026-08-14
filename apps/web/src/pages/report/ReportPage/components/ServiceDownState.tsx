@@ -5,7 +5,7 @@ import { useNavigate } from 'react-router-dom';
 import { designTokens } from '@/theme/tokens';
 import { DASHBOARD_PATHS } from '@/routes/dashboard';
 
-const ct = designTokens.colors;
+const ct= designTokens.colors;
 
 const ServiceDownState: React.FC = () => {
   const navigate = useNavigate();

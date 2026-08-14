@@ -11,7 +11,7 @@ import {QUERY_KEYS, CACHE_DURATIONS} from '@/lib/reactQuery';
 import { Gauge, Activity, TrendingUp, CheckCircle2 } from 'lucide-react';
 import { designTokens } from '@/theme/tokens';
 
-const ct = designTokens.colors;
+const ct= designTokens.colors;
 
 const apiAdapter = createCrudPageAdapter(mesApi.equipmentOee, {
   itemsField: 'records',

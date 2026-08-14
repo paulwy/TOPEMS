@@ -9,7 +9,7 @@ import type { MaterialRequirement } from '@/api/mes';
 import { Calculator } from 'lucide-react';
 import { designTokens } from '@/theme/tokens';
 
-const ct = designTokens.colors;
+const ct= designTokens.colors;
 
 const apiAdapter = createCrudPageAdapter(mesApi.materialRequirements, {
   itemsField: 'requirements',

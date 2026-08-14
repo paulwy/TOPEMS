@@ -19,6 +19,7 @@
 
 import apiClient from '../client';
 import type { ApiResponse, PaginatedResponse } from '../client';
+import { designTokens, semanticTokens } from '@topems/tokens';
 
 export interface ContactTag {
   id: string;
@@ -60,15 +61,15 @@ export interface TagColor {
 }
 
 export const PRESET_TAG_COLORS: TagColor[] = [
-  { name: '红色', hex: '#EF4444' },
+  { name: '红色', hex: designTokens.colors.error.main },
   { name: '橙色', hex: '#F97316' },
   { name: '黄色', hex: '#EAB308' },
   { name: '绿色', hex: '#22C55E' },
   { name: '青色', hex: '#06B6D4' },
-  { name: '蓝色', hex: '#3B82F6' },
-  { name: '紫色', hex: '#8B5CF6' },
-  { name: '粉色', hex: '#EC4899' },
-  { name: '灰色', hex: '#6B7280' },
+  { name: '蓝色', hex: designTokens.colors.primary.main },
+  { name: '紫色', hex: designTokens.colors.secondary.main },
+  { name: '粉色', hex: designTokens.colors.pink.main },
+  { name: '灰色', hex: 'colors.grey.500' },
   { name: '黑色', hex: '#1F2937' },
 ];
 

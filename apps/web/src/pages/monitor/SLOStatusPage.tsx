@@ -55,6 +55,7 @@ import { extractErrorMessage } from '@/utils/errors';
 import { MONITOR_PATHS } from '@/modules/monitor/config';
 
 import { CACHE_DURATIONS, QUERY_KEYS } from '@/lib/reactQuery';
+import { designTokens, semanticTokens } from '@topems/tokens';
 
 const SLO_TYPE_LABELS: Record<string, string> = {
   all: '全部类型',
@@ -113,7 +114,7 @@ const BudgetBar: React.FC<{ consumed: number; total: number }> = ({ consumed, to
 
 const MiniLineChart: React.FC<{ data: number[]; color?: string; height?: number }> = ({
   data,
-  color = '#1976d2',
+  color = designTokens.colors.primary.dark,
   height = 120,
 }) => {
   if (!data || data.length === 0) return <Box sx={{ width: '100%', height }} />;

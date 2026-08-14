@@ -22,7 +22,7 @@ import { companySchema } from '@/schemas/hrm';
 
 import { QUERY_KEYS } from '@/lib/reactQuery';
 
-const ct = designTokens.colors;
+const ct= designTokens.colors;
 
 const HrmCompanyPage: React.FC = () => {
   const { addNotification } = useNotificationStore();

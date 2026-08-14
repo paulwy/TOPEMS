@@ -29,7 +29,7 @@ import { useNotificationStore } from '@/store';
 import { apiLogger } from '@/utils/logger';
 import { useTranslation } from 'react-i18next';
 
-const ct = designTokens.colors;
+const ct= designTokens.colors;
 
 // 用于统计计算的字段（原页面使用的字段集合）
 interface HazardousMaterialItem {

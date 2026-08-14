@@ -8,7 +8,7 @@ import { Shield, Database, CheckCircle2, Users } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { designTokens } from '@/theme/tokens';
 
-const ct = designTokens.colors;
+const ct= designTokens.colors;
 
 export interface BiPermissionStatsCardsProps {
   rowPermissionsCount: number;

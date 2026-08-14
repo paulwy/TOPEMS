@@ -58,17 +58,18 @@ import {
   type ExplainabilityReport,
   type ExplainabilityMethod,
 } from './explainability';
+import { designTokens, semanticTokens } from '@topems/tokens';
 
 type PanelTab = 'bias' | 'fairness' | 'explainability' | 'audit';
 
 const SAMPLE_MODEL_ID = 'v60-ethics-demo-model';
 
 const SEVERITY_COLORS: Record<BiasSeverity, string> = {
-  critical: '#dc2626',
+  critical: designTokens.colors.error.dark,
   high: '#ea580c',
-  medium: '#d97706',
+  medium: designTokens.colors.warning.dark,
   low: '#2563eb',
-  info: '#6b7280',
+  info: 'colors.grey.500',
 };
 
 const BIAS_TYPE_LABELS: Record<BiasType, string> = {
@@ -389,7 +390,7 @@ const BiasTab: React.FC<{
           >
             <AlertTriangle
               size={18}
-              color='#f59e0b'
+              color={designTokens.colors.warning.main}
             />
             <Typography
               variant='subtitle2'
@@ -532,7 +533,7 @@ const BiasTab: React.FC<{
               >
                 <BarChart3
                   size={18}
-                  color='#059669'
+                  color={designTokens.colors.success.dark}
                 />
                 <Typography
                   variant='subtitle2'
@@ -614,7 +615,7 @@ const BiasTab: React.FC<{
             >
               <FileText
                 size={18}
-                color='#0891b2'
+                color='colors.cyan.600'
               />
               <Typography
                 variant='subtitle2'
@@ -710,7 +711,7 @@ const FairnessTab: React.FC<{
           >
             <Scale
               size={18}
-              color='#059669'
+              color={designTokens.colors.success.dark}
             />
             <Typography
               variant='subtitle2'
@@ -742,10 +743,10 @@ const FairnessTab: React.FC<{
                 value={audit.summary.avg_score}
                 color={
                   audit.status === 'passed'
-                    ? '#10b981'
+                    ? designTokens.colors.success.dark
                     : audit.status === 'warning'
-                      ? '#f59e0b'
-                      : '#ef4444'
+                      ? designTokens.colors.warning.main
+                      : designTokens.colors.error.main
                 }
                 icon={<Gauge size={24} />}
               />
@@ -754,7 +755,7 @@ const FairnessTab: React.FC<{
               <ScoreCard
                 label='通过率'
                 value={`${audit.summary.passed}/${audit.summary.total_checks}`}
-                color={audit.status === 'passed' ? '#10b981' : '#ef4444'}
+                color={audit.status === 'passed' ? designTokens.colors.success.dark : designTokens.colors.error.main}
                 icon={<CheckCircle size={24} />}
               />
             </Grid>
@@ -762,7 +763,7 @@ const FairnessTab: React.FC<{
               <ScoreCard
                 label='行业排名'
                 value={benchmark.ranking}
-                color={benchmark.yourScore >= benchmark.industryAverage ? '#10b981' : '#f59e0b'}
+                color={benchmark.yourScore >= benchmark.industryAverage ? designTokens.colors.success.dark : designTokens.colors.warning.main}
                 icon={<TrendingUp size={24} />}
               />
             </Grid>
@@ -806,12 +807,12 @@ const FairnessTab: React.FC<{
                       {result.passed ? (
                         <CheckCircle
                           size={16}
-                          color='#10b981'
+                          color={designTokens.colors.success.dark}
                         />
                       ) : (
                         <XCircle
                           size={16}
-                          color='#ef4444'
+                          color={designTokens.colors.error.main}
                         />
                       )}
                       <Typography
@@ -876,7 +877,7 @@ const FairnessTab: React.FC<{
             >
               <BarChart3
                 size={18}
-                color='#8b5cf6'
+                color={designTokens.colors.secondary.main}
               />
               <Typography
                 variant='subtitle2'
@@ -932,7 +933,7 @@ const FairnessTab: React.FC<{
             >
               <Target
                 size={18}
-                color='#f59e0b'
+                color={designTokens.colors.warning.main}
               />
               <Typography
                 variant='subtitle2'
@@ -998,7 +999,7 @@ const FairnessTab: React.FC<{
               >
                 <Brain
                   size={18}
-                  color='#0891b2'
+                  color='colors.cyan.600'
                 />
                 <Typography
                   variant='subtitle2'
@@ -1101,7 +1102,7 @@ const ExplainabilityTab: React.FC<{
             >
               <Eye
                 size={18}
-                color='#8b5cf6'
+                color={designTokens.colors.secondary.main}
               />
               <Typography
                 variant='subtitle2'
@@ -1271,7 +1272,7 @@ const ExplainabilityTab: React.FC<{
               >
                 <BarChart3
                   size={18}
-                  color='#8b5cf6'
+                  color={designTokens.colors.secondary.main}
                 />
                 <Typography
                   variant='subtitle2'
@@ -1425,7 +1426,7 @@ const ExplainabilityTab: React.FC<{
               >
                 <Lock
                   size={18}
-                  color='#0891b2'
+                  color='colors.cyan.600'
                 />
                 <Typography
                   variant='subtitle2'
@@ -1500,7 +1501,7 @@ const ExplainabilityTab: React.FC<{
               >
                 <AlertTriangle
                   size={16}
-                  color='#f59e0b'
+                  color={designTokens.colors.warning.main}
                 />
                 <Typography
                   variant='subtitle2'
@@ -1579,7 +1580,7 @@ const AuditTab: React.FC<{
             >
               <History
                 size={18}
-                color='#6366f1'
+                color={designTokens.colors.secondary.dark}
               />
               <Typography
                 variant='subtitle2'

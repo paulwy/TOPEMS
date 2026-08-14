@@ -12,6 +12,7 @@ import {
   Legend,
 } from 'recharts';
 import { useWmsMock, type WmsMockShape } from '@/api/wms/_mock';
+import { designTokens, semanticTokens } from '@topems/tokens';
 
 export default function WmsInventoryTurnoverPage() {
   const { data } = useWmsMock<WmsMockShape>();
@@ -74,7 +75,7 @@ export default function WmsInventoryTurnoverPage() {
               type='monotone'
               dataKey='turnoverRate'
               name='周转率'
-              stroke='#10b981'
+              stroke={designTokens.colors.success.dark}
               strokeWidth={2}
               dot={{ r: 2 }}
             />
@@ -100,7 +101,7 @@ export default function WmsInventoryTurnoverPage() {
             <Bar
               dataKey='days'
               name='周转天数'
-              fill='#3b82f6'
+              fill={designTokens.colors.primary.main}
               radius={[4, 4, 0, 0]}
             />
           </BarChart>

@@ -26,7 +26,7 @@ import {
   ToggleSwitch,
 } from '@/schemas/monitor';
 
-const ct = designTokens.colors;
+const ct= designTokens.colors;
 
 interface NotificationChannel {
   id: string;

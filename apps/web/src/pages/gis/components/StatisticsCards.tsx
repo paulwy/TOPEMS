@@ -4,7 +4,7 @@ import { MapPin, ArrowRight, Warehouse, Camera, Map, Building2 } from 'lucide-re
 import { useTranslation } from 'react-i18next';
 import { designTokens } from '@/theme/tokens';
 
-const ct = designTokens.colors;
+const ct= designTokens.colors;
 
 interface StatisticsCardsProps {
   statistics?: {

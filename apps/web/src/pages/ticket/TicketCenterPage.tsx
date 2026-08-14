@@ -39,7 +39,7 @@ import { ticketSchema } from '@/schemas/ticket';
 
 import { QUERY_KEYS } from '@/lib/reactQuery';
 
-const ct = designTokens.colors;
+const ct= designTokens.colors;
 
 const STATUS_COLORS: Record<string, 'error' | 'warning' | 'info' | 'success' | 'default'> = {
   open: 'error',

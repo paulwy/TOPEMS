@@ -19,7 +19,7 @@ export interface TouchRipple {
 
 export function useTouchFeedback(options: TouchFeedbackOptions = {}) {
   const {
-    rippleColor = 'rgba(0, 0, 0, 0.1)',
+    rippleColor = 'colors.cyber.glass.bgLight',
     minTouchTarget = 44,
     enableLongPress = false,
     longPressDelay = 500,

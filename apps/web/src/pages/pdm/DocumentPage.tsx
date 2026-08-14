@@ -46,7 +46,7 @@ import { useNotificationStore } from '@/store';
 
 import { QUERY_KEYS } from '@/lib/reactQuery';
 
-const ct = designTokens.colors;
+const ct= designTokens.colors;
 
 const baseAdapter = createCrudPageAdapter<Document, CreateDocumentRequest>({
   list: documentApi.list,

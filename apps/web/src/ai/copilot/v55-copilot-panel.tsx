@@ -64,6 +64,7 @@ import {
 import { docGenerator, type ChangelogEntry } from './doc-generator';
 import { sanitizeHtml } from '@/lib/security';
 import { knowledgeQA, type QAEntry, type QAResult, type KnowledgeDocument } from './knowledge-qa';
+import { designTokens, semanticTokens } from '@topems/tokens';
 
 type TabId = 'navigator' | 'generator' | 'qa' | 'activity';
 
@@ -679,7 +680,7 @@ const V55PanelHeader: React.FC<{ onClose: () => void; indexed: boolean }> = ({
         color='secondary'
         sx={{
           '& .MuiBadge-badge': {
-            bgcolor: indexed ? '#10b981' : '#f59e0b',
+            bgcolor: indexed ? designTokens.colors.success.dark : designTokens.colors.warning.main,
             color: 'text.primary',
             fontWeight: 700,
             fontSize: 10,
@@ -1718,7 +1719,7 @@ const QATab: React.FC<{
                 maxWidth: '80%',
                 p: 2,
                 borderRadius: 2,
-                bgcolor: msg.role === 'user' ? '#8b5cf6' : 'white',
+                bgcolor: msg.role === 'user' ? designTokens.colors.secondary.main : 'white',
                 color: msg.role === 'user' ? 'white' : 'inherit',
                 border: msg.role === 'assistant' ? '1px solid #e2e8f0' : 'none',
               }}
@@ -1826,19 +1827,19 @@ const ActivityTab: React.FC<{
   const getTypeColor = (type: string): string => {
     switch (type) {
       case 'search':
-        return '#8b5cf6';
+        return designTokens.colors.secondary.main;
       case 'doc':
-        return '#059669';
+        return designTokens.colors.success.dark;
       case 'qa':
-        return '#3b82f6';
+        return designTokens.colors.primary.main;
       case 'index':
-        return '#f59e0b';
+        return designTokens.colors.warning.main;
       case 'changelog':
-        return '#ec4899';
+        return designTokens.colors.pink.main;
       case 'readme':
-        return '#0d9488';
+        return 'colors.teal.600';
       default:
-        return '#6b7280';
+        return 'colors.grey.500';
     }
   };
 

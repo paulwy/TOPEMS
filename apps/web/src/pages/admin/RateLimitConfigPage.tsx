@@ -48,7 +48,7 @@ import { apiLogger } from '@/utils/logger';
 
 import { QUERY_KEYS } from '@/lib/reactQuery';
 
-const ct = designTokens.colors;
+const ct= designTokens.colors;
 
 interface RateLimitRule {
   requests: number;

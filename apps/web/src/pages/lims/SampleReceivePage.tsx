@@ -11,7 +11,7 @@ import { designTokens } from '@/theme/tokens';
 import { LIMS_PATHS } from '@/modules/lims/config';
 import { getStatusColor } from '@/utils/status';
 
-const ct = designTokens.colors;
+const ct= designTokens.colors;
 
 const workflowSteps = ['待登记', '待接收', '已接收', '待确认', '已确认'];
 

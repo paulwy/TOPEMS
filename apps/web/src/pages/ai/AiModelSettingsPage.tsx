@@ -50,7 +50,7 @@ import { useNotificationStore } from '@/store';
 import { designTokens } from '@/theme/tokens';
 import { LazyChart } from '@/components/charts';
 
-const ct = designTokens.colors;
+const ct= designTokens.colors;
 
 type SettingsTab = 'models' | 'config' | 'usage' | 'api';
 

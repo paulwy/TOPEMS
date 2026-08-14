@@ -10,7 +10,7 @@ import { PageContainer } from '@/components/common';
 import { designTokens } from '@/theme/tokens';
 import { useTranslation } from 'react-i18next';
 
-const ct = designTokens.colors;
+const ct= designTokens.colors;
 
 const apiAdapter = createCrudPageAdapter<HealthRecord, CreateHealthRecordRequest>({
   list: ehsApi.listHealthRecords,

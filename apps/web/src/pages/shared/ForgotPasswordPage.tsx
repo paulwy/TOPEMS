@@ -25,7 +25,7 @@ import { AUTH_PATHS } from '@/routes/auth';
 
 import { queryClient, QUERY_KEYS } from '@/lib/reactQuery';
 
-const ct = designTokens.colors;
+const ct= designTokens.colors;
 
 const requestResetSchema = z.object({
   email: z.string().email({ message: '请输入有效的邮箱地址' }),

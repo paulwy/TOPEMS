@@ -32,7 +32,7 @@ import { PageContainer, Grid } from '@/components/common';
 import { useNotificationStore } from '@/store';
 import { designTokens } from '@/theme/tokens';
 
-const ct = designTokens.colors;
+const ct= designTokens.colors;
 
 const sampleDocuments = [
   {

@@ -76,6 +76,7 @@ import {
   type RepairPlaybook,
   type RepairType,
 } from './intelligent-repair';
+import { designTokens, semanticTokens } from '@topems/tokens';
 
 type TabId = 'scaling' | 'rca' | 'repair' | 'timeline';
 
@@ -87,31 +88,31 @@ const METRIC_ICONS: Record<ScalingMetric, React.ReactNode> = {
 };
 
 const SEVERITY_COLORS: Record<IncidentSeverity, string> = {
-  Critical: '#ef4444',
+  Critical: designTokens.colors.error.main,
   High: '#f97316',
-  Medium: '#f59e0b',
-  Low: '#3b82f6',
-  Info: '#6b7280',
+  Medium: designTokens.colors.warning.main,
+  Low: designTokens.colors.primary.main,
+  Info: 'colors.grey.500',
 };
 
 const REPAIR_TYPE_COLORS: Record<RepairType, string> = {
-  Restart: '#3b82f6',
-  ScaleUp: '#10b981',
-  ConfigUpdate: '#f59e0b',
-  Patched: '#8b5cf6',
+  Restart: designTokens.colors.primary.main,
+  ScaleUp: designTokens.colors.success.dark,
+  ConfigUpdate: designTokens.colors.warning.main,
+  Patched: designTokens.colors.secondary.main,
 };
 
 const REPAIR_STATUS_COLORS: Record<string, string> = {
-  Pending: '#f59e0b',
-  Approved: '#3b82f6',
-  Executing: '#8b5cf6',
-  Completed: '#10b981',
-  Failed: '#ef4444',
-  RolledBack: '#6b7280',
+  Pending: designTokens.colors.warning.main,
+  Approved: designTokens.colors.primary.main,
+  Executing: designTokens.colors.secondary.main,
+  Completed: designTokens.colors.success.dark,
+  Failed: designTokens.colors.error.main,
+  RolledBack: 'colors.grey.500',
   Draft: '#9ca3af',
-  Active: '#10b981',
-  Paused: '#f59e0b',
-  Archived: '#6b7280',
+  Active: designTokens.colors.success.dark,
+  Paused: designTokens.colors.warning.main,
+  Archived: 'colors.grey.500',
 };
 
 const V56OpsPanel: React.FC<{ onClose: () => void }> = ({ onClose }) => {
@@ -641,7 +642,7 @@ const ScalingTab: React.FC<{
                       borderRadius: 2,
                       bgcolor: percent > 90 ? '#fecaca' : percent > 70 ? '#fed7aa' : '#d1fae5',
                       '& .MuiLinearProgress-bar': {
-                        bgcolor: percent > 90 ? '#dc2626' : percent > 70 ? '#f97316' : '#10b981',
+                        bgcolor: percent > 90 ? designTokens.colors.error.dark : percent > 70 ? '#f97316' : designTokens.colors.success.dark,
                       },
                     }}
                   />
@@ -805,15 +806,15 @@ const RCATab: React.FC<{
 
   const getStatusChip = (status: Incident['status']) => {
     const colors: Record<string, string> = {
-      Open: '#ef4444',
-      Investigating: '#f59e0b',
-      Resolved: '#10b981',
-      Closed: '#6b7280',
+      Open: designTokens.colors.error.main,
+      Investigating: designTokens.colors.warning.main,
+      Resolved: designTokens.colors.success.dark,
+      Closed: 'colors.grey.500',
     };
     const bgColors: Record<string, string> = {
       Open: '#fef2f2',
       Investigating: '#fffbeb',
-      Resolved: '#ecfdf5',
+      Resolved: 'colors.success.50',
       Closed: '#f3f4f6',
     };
     return (
@@ -1161,9 +1162,9 @@ const RepairTab: React.FC<{
                 mb: 1.5,
                 p: 2,
                 border: '1px solid',
-                borderColor: playbook.status === 'Active' ? '#10b981' : 'divider',
+                borderColor: playbook.status === 'Active' ? designTokens.colors.success.dark : 'divider',
                 borderRadius: 1,
-                bgcolor: playbook.status === 'Active' ? '#ecfdf5' : 'white',
+                bgcolor: playbook.status === 'Active' ? 'colors.success.50' : 'white',
               }}
             >
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
@@ -1366,7 +1367,7 @@ const TimelineTab: React.FC<{
         time: s.executed_at,
         category: '扩缩容',
         title: `${s.direction} → ${s.instances} 实例`,
-        color: s.direction === 'ScaleUp' ? '#10b981' : '#3b82f6',
+        color: s.direction === 'ScaleUp' ? designTokens.colors.success.dark : designTokens.colors.primary.main,
         details: s.reason,
       });
     });
@@ -1386,8 +1387,8 @@ const TimelineTab: React.FC<{
 
   const categoryColors: Record<string, string> = {
     事件: '#f97316',
-    扩缩容: '#10b981',
-    修复: '#8b5cf6',
+    扩缩容: designTokens.colors.success.dark,
+    修复: designTokens.colors.secondary.main,
   };
 
   return (

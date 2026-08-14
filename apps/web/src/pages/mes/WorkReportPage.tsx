@@ -13,7 +13,7 @@ import { PageContainer } from '@/components/common';
 
 import { QUERY_KEYS } from '@/lib/reactQuery';
 
-const ct = designTokens.colors;
+const ct= designTokens.colors;
 
 const apiAdapter = createCrudPageAdapter(mesApi.workReports, {
   itemsField: 'reports',

@@ -15,6 +15,7 @@ import {
   ZAxis,
 } from 'recharts';
 import type { MtbfData } from '@/api/mes/types';
+import { designTokens, semanticTokens } from '@topems/tokens';
 
 function useMtbfMock(): MtbfData {
   return useMemo(() => {
@@ -83,12 +84,12 @@ export default function MesEquipmentMtbfPage() {
             <YAxis unit="h" />
             <Tooltip />
             <Legend />
-            <Line type="monotone" dataKey="mtbf" name="MTBF" stroke="#6366f1" strokeWidth={2} />
+            <Line type="monotone" dataKey="mtbf" name="MTBF" stroke={designTokens.colors.secondary.dark} strokeWidth={2} />
             <Line
               type="monotone"
               dataKey="target"
               name="目标"
-              stroke="#ef4444"
+              stroke={designTokens.colors.error.main}
               strokeDasharray="4 4"
               dot={false}
             />
@@ -106,7 +107,7 @@ export default function MesEquipmentMtbfPage() {
               <YAxis unit="h" />
               <Tooltip />
               <Legend />
-              <Bar dataKey="mttr_hours" name="MTTR (小时)" fill="#f59e0b" radius={[4, 4, 0, 0]} />
+              <Bar dataKey="mttr_hours" name="MTTR (小时)" fill={designTokens.colors.warning.main} radius={[4, 4, 0, 0]} />
             </BarChart>
           </ResponsiveContainer>
         </div>
@@ -120,7 +121,7 @@ export default function MesEquipmentMtbfPage() {
               <YAxis dataKey="oee" name="OEE" type="number" domain={[0, 100]} unit="%" />
               <ZAxis range={[60, 160]} />
               <Tooltip cursor={{ strokeDasharray: '3 3' }} />
-              <Scatter data={data.scatter} fill="#10b981" />
+              <Scatter data={data.scatter} fill={designTokens.colors.success.dark} />
             </ScatterChart>
           </ResponsiveContainer>
         </div>

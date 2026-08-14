@@ -1,3 +1,4 @@
+import { designTokens, semanticTokens } from '@topems/tokens';
 /**
  * 产能利用率分析页
  *
@@ -100,7 +101,7 @@ export default function CapacityUtilizationPage() {
             <Legend />
             <ReferenceLine
               y={85}
-              stroke='#10b981'
+              stroke={designTokens.colors.success.dark}
               strokeDasharray='4 4'
               label='目标 85%'
             />
@@ -108,7 +109,7 @@ export default function CapacityUtilizationPage() {
               type='monotone'
               dataKey='wcA'
               name='工作中心A'
-              stroke='#6366f1'
+              stroke={designTokens.colors.secondary.dark}
               strokeWidth={2}
               dot={{ r: 3 }}
             />
@@ -116,7 +117,7 @@ export default function CapacityUtilizationPage() {
               type='monotone'
               dataKey='wcB'
               name='工作中心B'
-              stroke='#f59e0b'
+              stroke={designTokens.colors.warning.main}
               strokeWidth={2}
               dot={{ r: 3 }}
             />
@@ -124,7 +125,7 @@ export default function CapacityUtilizationPage() {
               type='monotone'
               dataKey='wcC'
               name='工作中心C'
-              stroke='#10b981'
+              stroke={designTokens.colors.success.dark}
               strokeWidth={2}
               dot={{ r: 3 }}
             />

@@ -66,6 +66,7 @@ import type {
   KnowledgeAskResponse,
 } from '@/api/ai';
 import { BIChartColors } from '@/components/charts/chartTheme';
+import { designTokens, semanticTokens } from '@topems/tokens';
 
 type TabValue = 'report' | 'flow' | 'knowledge';
 
@@ -75,7 +76,7 @@ const TAB_CONFIG: { value: TabValue; label: string; icon: React.ReactNode }[] = 
   { value: 'knowledge', label: 'assistant.tab.knowledge', icon: <BookOpen size={18} /> },
 ];
 
-const DEFAULT_PIE_COLORS = [...BIChartColors.series, '#06B6D4', '#EC4899'];
+const DEFAULT_PIE_COLORS = [...BIChartColors.series, '#06B6D4', designTokens.colors.pink.main];
 
 const getSeverityColor = (severity: string) => {
   switch (severity) {

@@ -30,6 +30,7 @@ import type { ColumnDef } from '@/components/templates/list/types';
 import { recommendationSchema } from '@/schemas/crm';
 import { crmApi, useCrmMock, type RecommendationData, type Period } from '@/api/crm';
 import type { RecommendationResult, RecommendationRequest } from '@/api/crm';
+import { designTokens, semanticTokens } from '@topems/tokens';
 
 // ============ 辅助函数 ============
 
@@ -334,7 +335,7 @@ const CRMRecommendationPage: React.FC = () => {
       label: t('crm.recommendation.col_followup') || '跟进建议',
       sublabel: t('crm.recommendation.col_followup_sub') || '主动沟通减少流失',
       icon: <MessageSquare size={20} color='white' />,
-      gradient: ['#d97706', '#b45309'],
+      gradient: [designTokens.colors.warning.dark, '#b45309'],
       data: mockRec.followup,
     },
   ];

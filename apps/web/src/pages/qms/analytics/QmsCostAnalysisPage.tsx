@@ -24,12 +24,13 @@ import {
   Legend,
 } from 'recharts';
 import { useQmsMock, type QmsMockShape } from '@/api/qms/_mock';
+import { designTokens, semanticTokens } from '@topems/tokens';
 
 const COST_TYPE_COLORS: Record<string, string> = {
-  prevention: '#10b981',
-  appraisal: '#3b82f6',
-  internal_failure: '#f59e0b',
-  external_failure: '#ef4444',
+  prevention: designTokens.colors.success.dark,
+  appraisal: designTokens.colors.primary.main,
+  internal_failure: designTokens.colors.warning.main,
+  external_failure: designTokens.colors.error.main,
 };
 
 const COST_TYPE_LABELS: Record<string, string> = {
@@ -179,7 +180,7 @@ export default function QmsCostAnalysisPage() {
               <Bar
                 dataKey='amount'
                 name='成本'
-                fill='#6366f1'
+                fill={designTokens.colors.secondary.dark}
                 barSize={28}
               />
             </BarChart>

@@ -52,12 +52,14 @@ import {
 } from './code-reviewer';
 import { securityScanner, type ScanResult, type SecurityCategory } from './security-scanner';
 import { performanceAuditor, type AuditResult, type AuditMetrics } from './performance-auditor';
+import { designTokens, semanticTokens } from '@topems/tokens';
 
 type TabId = 'code' | 'security' | 'performance' | 'overview';
 
 const SAMPLE_CODE = `
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import { designTokens, semanticTokens } from '@topems/tokens';
 
 export function Dashboard({ userId }) {
   const [data, setData] = useState([]);
@@ -113,9 +115,9 @@ const TYPE_LABELS: Record<IssueType, string> = {
 };
 
 const SEVERITY_COLORS: Record<IssueSeverity, string> = {
-  error: '#ef4444',
-  warning: '#f59e0b',
-  info: '#3b82f6',
+  error: designTokens.colors.error.main,
+  warning: designTokens.colors.warning.main,
+  info: designTokens.colors.primary.main,
 };
 
 const CATEGORY_LABELS: Record<SecurityCategory, string> = {
@@ -361,9 +363,9 @@ const OverviewTab: React.FC<{
   onReRun: () => void;
 }> = ({ reviewResult, scanResult, auditResult, history, onReRun }) => {
   const getScoreColor = (score: number) => {
-    if (score >= 80) return '#10b981';
-    if (score >= 60) return '#f59e0b';
-    return '#ef4444';
+    if (score >= 80) return designTokens.colors.success.dark;
+    if (score >= 60) return designTokens.colors.warning.main;
+    return designTokens.colors.error.main;
   };
 
   return (
@@ -504,7 +506,7 @@ const OverviewTab: React.FC<{
                   size='small'
                   sx={{
                     bgcolor: count > 0 ? '#fef2f2' : '#f3f4f6',
-                    color: count > 0 ? '#991b1b' : '#6b7280',
+                    color: count > 0 ? '#991b1b' : 'colors.grey.500',
                     fontWeight: 600,
                     fontSize: 11,
                   }}
@@ -642,22 +644,22 @@ const MetricsList: React.FC<{ metrics: AuditMetrics }> = ({ metrics }) => {
     {
       label: 'FCP (首次内容绘制)',
       value: `${metrics.fcp}ms`,
-      color: metrics.fcp < 1800 ? '#10b981' : '#f59e0b',
+      color: metrics.fcp < 1800 ? designTokens.colors.success.dark : designTokens.colors.warning.main,
     },
     {
       label: 'LCP (最大内容绘制)',
       value: `${metrics.lcp}ms`,
-      color: metrics.lcp < 2500 ? '#10b981' : '#f59e0b',
+      color: metrics.lcp < 2500 ? designTokens.colors.success.dark : designTokens.colors.warning.main,
     },
     {
       label: 'TTI (可交互时间)',
       value: `${metrics.tti}ms`,
-      color: metrics.tti < 3500 ? '#10b981' : '#f59e0b',
+      color: metrics.tti < 3500 ? designTokens.colors.success.dark : designTokens.colors.warning.main,
     },
     {
       label: 'CLS (累计布局偏移)',
       value: metrics.cls.toFixed(2),
-      color: metrics.cls < 0.1 ? '#10b981' : '#f59e0b',
+      color: metrics.cls < 0.1 ? designTokens.colors.success.dark : designTokens.colors.warning.main,
     },
   ];
 
@@ -834,15 +836,15 @@ const SecurityTab: React.FC<{ result: ScanResult }> = ({ result }) => {
   const getSeverityColor = (severity: string) => {
     switch (severity) {
       case 'critical':
-        return '#dc2626';
+        return designTokens.colors.error.dark;
       case 'high':
         return '#ea580c';
       case 'medium':
-        return '#d97706';
+        return designTokens.colors.warning.dark;
       case 'low':
         return '#2563eb';
       default:
-        return '#6b7280';
+        return 'colors.grey.500';
     }
   };
 
@@ -946,9 +948,9 @@ const SecurityTab: React.FC<{ result: ScanResult }> = ({ result }) => {
 
 const PerformanceTab: React.FC<{ result: AuditResult }> = ({ result }) => {
   const getLighthouseColor = (score: number) => {
-    if (score >= 90) return '#10b981';
-    if (score >= 50) return '#f59e0b';
-    return '#ef4444';
+    if (score >= 90) return designTokens.colors.success.dark;
+    if (score >= 50) return designTokens.colors.warning.main;
+    return designTokens.colors.error.main;
   };
 
   return (

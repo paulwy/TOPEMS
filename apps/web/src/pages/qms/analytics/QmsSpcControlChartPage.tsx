@@ -19,6 +19,7 @@ import {
   ReferenceLine,
 } from 'recharts';
 import { useQmsMock, type QmsMockShape } from '@/api/qms/_mock';
+import { designTokens, semanticTokens } from '@topems/tokens';
 
 export default function QmsSpcControlChartPage() {
   const { data } = useQmsMock<QmsMockShape>();
@@ -119,19 +120,19 @@ export default function QmsSpcControlChartPage() {
             <Legend />
             <ReferenceLine
               y={ucl}
-              stroke='#ef4444'
+              stroke={designTokens.colors.error.main}
               strokeDasharray='4 4'
               label={{ value: `UCL=${ucl}`, position: 'right', fontSize: 11 }}
             />
             <ReferenceLine
               y={cl}
-              stroke='#10b981'
+              stroke={designTokens.colors.success.dark}
               strokeDasharray='2 2'
               label={{ value: `CL=${cl}`, position: 'right', fontSize: 11 }}
             />
             <ReferenceLine
               y={lcl}
-              stroke='#f59e0b'
+              stroke={designTokens.colors.warning.main}
               strokeDasharray='4 4'
               label={{ value: `LCL=${lcl}`, position: 'right', fontSize: 11 }}
             />
@@ -139,7 +140,7 @@ export default function QmsSpcControlChartPage() {
               type='monotone'
               dataKey='mean'
               name='样本均值'
-              stroke='#6366f1'
+              stroke={designTokens.colors.secondary.dark}
               strokeWidth={2}
               dot={(props: { cx?: number; cy?: number; payload?: { isOOC?: boolean } }) => {
                 const { cx, cy, payload } = props;
@@ -150,7 +151,7 @@ export default function QmsSpcControlChartPage() {
                     cx={cx}
                     cy={cy}
                     r={4}
-                    fill={payload?.isOOC ? '#ef4444' : '#6366f1'}
+                    fill={payload?.isOOC ? designTokens.colors.error.main : designTokens.colors.secondary.dark}
                     stroke={payload?.isOOC ? '#b91c1c' : '#4338ca'}
                     strokeWidth={1}
                   />
@@ -180,7 +181,7 @@ export default function QmsSpcControlChartPage() {
               type='monotone'
               dataKey='range'
               name='样本极差'
-              stroke='#8b5cf6'
+              stroke={designTokens.colors.secondary.main}
               strokeWidth={2}
               dot={{ r: 3 }}
             />

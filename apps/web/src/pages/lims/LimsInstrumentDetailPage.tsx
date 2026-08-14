@@ -26,7 +26,7 @@ import dayjs from 'dayjs';
 import { designTokens } from '@/theme/tokens';
 import { LIMS_PATHS } from '@/modules/lims/config';
 
-const ct = designTokens.colors;
+const ct= designTokens.colors;
 
 interface LimsListResponse<T> {
   items?: T[];

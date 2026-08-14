@@ -39,7 +39,7 @@ type AssetRow = Asset & {
   description?: string;
 };
 
-const ct = designTokens.colors;
+const ct= designTokens.colors;
 
 const baseAdapter = createCrudPageAdapter<Asset>({
   list: assetApi.list,

@@ -35,7 +35,7 @@ import {
 } from 'lucide-react';
 import { designTokens } from '@/theme/tokens';
 
-const ct = designTokens.colors;
+const ct= designTokens.colors;
 
 const ProductionKanbanPage: React.FC = () => {
   const { t } = useTranslation();

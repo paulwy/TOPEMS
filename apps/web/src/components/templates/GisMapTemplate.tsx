@@ -47,6 +47,7 @@ import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
 import type { LatLngExpression } from 'leaflet';
 import { logger } from '@/utils/logger';
+import { designTokens, semanticTokens } from '@topems/tokens';
 
 L.Icon.Default.mergeOptions({
   iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon-2x.png',
@@ -268,8 +269,8 @@ function LayerPanel({
               onClick={() => onBaseLayerChange(layer.id)}
               sx={{
                 backgroundColor: isSelected ? 'primary.main' : 'transparent',
-                color: isSelected ? '#fff' : 'inherit',
-                '&:hover': { backgroundColor: isSelected ? 'primary.main' : 'rgba(0,0,0,0.08)' },
+                color: isSelected ? designTokens.colors.background.paper : 'inherit',
+                '&:hover': { backgroundColor: isSelected ? 'primary.main' : designTokens.colors.cyber.glass.bgLight },
               }}
             >
               <ListItemText primary={layer.name} />
@@ -649,7 +650,7 @@ export function GisMapTemplate({
 
   const getMarkerIcon = (type: string = 'custom') => {
     const colors: Record<string, string> = {
-      device: '#1976d2',
+      device: designTokens.colors.primary.dark,
       storage: '#4caf50',
       warning: '#f44336',
       custom: '#ff9800',
@@ -730,7 +731,7 @@ export function GisMapTemplate({
         {isLayerVisible('tracks') && trackPoints.length > 0 && (
           <Polyline
             positions={trackPoints.slice(0, currentTrackIndex + 1).map((p) => p.position)}
-            color='#1976d2'
+            color={designTokens.colors.primary.dark}
             weight={4}
             opacity={0.8}
           />

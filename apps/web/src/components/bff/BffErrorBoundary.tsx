@@ -48,6 +48,7 @@ import {
 import { logger } from '@/utils/logger';
 import type { FallbackLevel } from '@/utils/bff/fallback-strategy';
 import { fallbackManager } from '@/utils/bff/fallback-strategy';
+import { designTokens, semanticTokens } from '@topems/tokens';
 
 const boundaryLogger = logger.child({ prefix: 'BFF-ErrorBoundary' });
 
@@ -349,7 +350,7 @@ export const DefaultBffErrorFallback: React.FC<BffErrorBoundaryFallbackProps> = 
           <Box
             sx={{
               fontSize: 22,
-              color: color === 'error' ? '#d32f2f' : color === 'warning' ? '#ed6c02' : '#0288d1',
+              color: color === 'error' ? designTokens.colors.error.dark : color === 'warning' ? '#ed6c02' : '#0288d1',
             }}
           >
             {React.createElement(Icon)}
@@ -592,7 +593,7 @@ export class BffErrorBoundary extends Component<BffErrorBoundaryProps, BffErrorB
           >
             <Lock
               size={24}
-              color='#d32f2f'
+              color={designTokens.colors.error.dark}
             />
             <Typography
               variant='body2'

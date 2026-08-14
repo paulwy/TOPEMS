@@ -1,3 +1,4 @@
+import { designTokens, semanticTokens } from '@topems/tokens';
 /**
  * 运单趋势分析页
  *
@@ -80,9 +81,9 @@ export default function ShipmentTrendPage() {
             <YAxis fontSize={11} />
             <Tooltip />
             <Legend />
-            <Bar dataKey='total' name='运单总量' fill='#3b82f6' barSize={20} />
-            <Bar dataKey='delivered' name='已送达' fill='#10b981' barSize={20} />
-            <Bar dataKey='cancelled' name='已取消' fill='#ef4444' barSize={20} />
+            <Bar dataKey='total' name='运单总量' fill={designTokens.colors.primary.main} barSize={20} />
+            <Bar dataKey='delivered' name='已送达' fill={designTokens.colors.success.dark} barSize={20} />
+            <Bar dataKey='cancelled' name='已取消' fill={designTokens.colors.error.main} barSize={20} />
           </BarChart>
         </ResponsiveContainer>
       </div>
@@ -96,8 +97,8 @@ export default function ShipmentTrendPage() {
             <YAxis fontSize={11} />
             <Tooltip />
             <Legend />
-            <Line type='monotone' dataKey='delivered' name='已送达' stroke='#10b981' strokeWidth={2} dot={{ r: 3 }} />
-            <Line type='monotone' dataKey='cancelled' name='已取消' stroke='#ef4444' strokeWidth={2} dot={{ r: 3 }} />
+            <Line type='monotone' dataKey='delivered' name='已送达' stroke={designTokens.colors.success.dark} strokeWidth={2} dot={{ r: 3 }} />
+            <Line type='monotone' dataKey='cancelled' name='已取消' stroke={designTokens.colors.error.main} strokeWidth={2} dot={{ r: 3 }} />
           </LineChart>
         </ResponsiveContainer>
       </div>

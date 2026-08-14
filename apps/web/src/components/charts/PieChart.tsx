@@ -2,6 +2,7 @@ import React from 'react';
 import { useTheme } from '@mui/material/styles';
 import { useChartTheme } from './chartTheme';
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from './_vendors/recharts-polar';
+import { designTokens, semanticTokens } from '@topems/tokens';
 
 interface PieChartProps {
   data: { name: string; value: number; color?: string }[];
@@ -15,7 +16,7 @@ const DEFAULT_COLORS = [
   'error.main', // Red (error)
   'secondary.main', // Violet
   '#06B6D4', // Cyan
-  '#EC4899', // Pink
+  designTokens.colors.pink.main, // Pink
   '#84CC16', // Lime
 ];
 

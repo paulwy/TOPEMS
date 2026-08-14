@@ -48,6 +48,7 @@ import { extractErrorMessage } from '@/utils/errors';
 import { MONITOR_PATHS } from '@/modules/monitor/config';
 
 import { CACHE_DURATIONS, QUERY_KEYS } from '@/lib/reactQuery';
+import { designTokens, semanticTokens } from '@topems/tokens';
 
 const CATEGORY_LABELS: Record<string, string> = {
   all: '全部类别',
@@ -75,7 +76,7 @@ const MiniLineChart: React.FC<{
   color?: string;
   height?: number;
   targetValue?: number;
-}> = ({ data, color = '#1976d2', height = 160, targetValue }) => {
+}> = ({ data, color = designTokens.colors.primary.dark, height = 160, targetValue }) => {
   if (!data || data.length === 0) return <Box sx={{ width: '100%', height }} />;
   const values = targetValue !== undefined ? [...data, targetValue] : data;
   const max = Math.max(...values);

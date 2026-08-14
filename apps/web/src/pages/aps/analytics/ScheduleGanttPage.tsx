@@ -1,3 +1,4 @@
+import { designTokens, semanticTokens } from '@topems/tokens';
 /**
  * 排程甘特图分析页
  *
@@ -30,11 +31,11 @@ const mockSchedules = [
 ];
 
 const STATUS_COLORS: Record<string, string> = {
-  completed: '#10b981',
-  running: '#3b82f6',
-  released: '#f59e0b',
+  completed: designTokens.colors.success.dark,
+  running: designTokens.colors.primary.main,
+  released: designTokens.colors.warning.main,
   pending: '#9ca3af',
-  cancelled: '#ef4444',
+  cancelled: designTokens.colors.error.main,
 };
 
 export default function ScheduleGanttPage() {

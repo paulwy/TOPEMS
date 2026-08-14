@@ -1,3 +1,4 @@
+import { designTokens, semanticTokens } from '@topems/tokens';
 /**
  * OEE 综合设备效率仪表盘
  *
@@ -58,10 +59,10 @@ export default function OeeDashboardPage() {
   }, [oeeData]);
 
   const radialData = [
-    { name: '可用率', value: avgAvailability, fill: '#6366f1' },
-    { name: '性能率', value: avgPerformance, fill: '#f59e0b' },
-    { name: '质量率', value: avgQuality, fill: '#10b981' },
-    { name: 'OEE', value: avgOee, fill: '#ef4444' },
+    { name: '可用率', value: avgAvailability, fill: designTokens.colors.secondary.dark },
+    { name: '性能率', value: avgPerformance, fill: designTokens.colors.warning.main },
+    { name: '质量率', value: avgQuality, fill: designTokens.colors.success.dark },
+    { name: 'OEE', value: avgOee, fill: designTokens.colors.error.main },
   ];
 
   return (
@@ -147,22 +148,22 @@ export default function OeeDashboardPage() {
               <Bar
                 dataKey='availability'
                 name='可用率'
-                fill='#6366f1'
+                fill={designTokens.colors.secondary.dark}
               />
               <Bar
                 dataKey='performance'
                 name='性能率'
-                fill='#f59e0b'
+                fill={designTokens.colors.warning.main}
               />
               <Bar
                 dataKey='quality'
                 name='质量率'
-                fill='#10b981'
+                fill={designTokens.colors.success.dark}
               />
               <Bar
                 dataKey='oee'
                 name='OEE'
-                fill='#ef4444'
+                fill={designTokens.colors.error.main}
               />
             </BarChart>
           </ResponsiveContainer>

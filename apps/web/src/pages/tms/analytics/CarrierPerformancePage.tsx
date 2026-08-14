@@ -1,3 +1,4 @@
+import { designTokens, semanticTokens } from '@topems/tokens';
 /**
  * 承运商绩效分析页
  *
@@ -79,9 +80,9 @@ export default function CarrierPerformancePage() {
             <YAxis fontSize={11} />
             <Tooltip />
             <Legend />
-            <Bar dataKey='totalShipments' name='总运单' fill='#3b82f6' barSize={20} />
-            <Bar dataKey='onTime' name='准时送达' fill='#10b981' barSize={20} />
-            <Bar dataKey='damaged' name='破损' fill='#ef4444' barSize={20} />
+            <Bar dataKey='totalShipments' name='总运单' fill={designTokens.colors.primary.main} barSize={20} />
+            <Bar dataKey='onTime' name='准时送达' fill={designTokens.colors.success.dark} barSize={20} />
+            <Bar dataKey='damaged' name='破损' fill={designTokens.colors.error.main} barSize={20} />
           </BarChart>
         </ResponsiveContainer>
       </div>
@@ -95,8 +96,8 @@ export default function CarrierPerformancePage() {
             <YAxis unit='%' fontSize={11} />
             <Tooltip formatter={(value: unknown) => `${value}%`} />
             <Legend />
-            <Bar dataKey='onTimeRate' name='准时率' fill='#10b981' barSize={20} />
-            <Bar dataKey='damageRate' name='破损率' fill='#f59e0b' barSize={20} />
+            <Bar dataKey='onTimeRate' name='准时率' fill={designTokens.colors.success.dark} barSize={20} />
+            <Bar dataKey='damageRate' name='破损率' fill={designTokens.colors.warning.main} barSize={20} />
           </BarChart>
         </ResponsiveContainer>
       </div>

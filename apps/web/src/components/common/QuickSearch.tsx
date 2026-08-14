@@ -568,9 +568,9 @@ const QuickSearch: React.FC<QuickSearchProps> = ({
                   borderTop: '1px solid',
                   borderColor: 'divider',
                   cursor: 'pointer',
-                  bgcolor: alpha('#000', 0.04),
+                  bgcolor: alpha('colors.grey.950', 0.04),
                   '&:hover': {
-                    bgcolor: alpha('#000', 0.08),
+                    bgcolor: alpha('colors.grey.950', 0.08),
                   },
                 }}
                 onClick={handleSearch}

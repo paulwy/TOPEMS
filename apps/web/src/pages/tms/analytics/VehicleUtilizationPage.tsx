@@ -1,3 +1,4 @@
+import { designTokens, semanticTokens } from '@topems/tokens';
 /**
  * 车辆利用率分析页
  *
@@ -77,8 +78,8 @@ export default function VehicleUtilizationPage() {
             <YAxis domain={[0, 100]} unit='%' fontSize={11} />
             <Tooltip formatter={(value: unknown) => `${value}%`} />
             <Legend />
-            <ReferenceLine y={80} stroke='#10b981' strokeDasharray='4 4' label='目标 80%' />
-            <Bar dataKey='utilization' name='利用率' fill='#3b82f6' barSize={28} />
+            <ReferenceLine y={80} stroke={designTokens.colors.success.dark} strokeDasharray='4 4' label='目标 80%' />
+            <Bar dataKey='utilization' name='利用率' fill={designTokens.colors.primary.main} barSize={28} />
           </BarChart>
         </ResponsiveContainer>
       </div>
@@ -92,7 +93,7 @@ export default function VehicleUtilizationPage() {
             <YAxis fontSize={11} />
             <Tooltip />
             <Legend />
-            <Bar dataKey='trips' name='运输趟次' fill='#6366f1' barSize={28} />
+            <Bar dataKey='trips' name='运输趟次' fill={designTokens.colors.secondary.dark} barSize={28} />
           </BarChart>
         </ResponsiveContainer>
       </div>

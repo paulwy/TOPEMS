@@ -17,6 +17,7 @@ import {
   Line,
 } from 'recharts';
 import type { OeeDashboardData } from '@/api/mes/types';
+import { designTokens, semanticTokens } from '@topems/tokens';
 
 function useOeeMock(): OeeDashboardData {
   return useMemo(() => {
@@ -80,7 +81,7 @@ export default function MesOeeDashboardPage() {
               startAngle={90}
               endAngle={-270}
             >
-              <RadialBar background dataKey="value" fill="#6366f1" />
+              <RadialBar background dataKey="value" fill={designTokens.colors.secondary.dark} />
             </RadialBarChart>
           </ResponsiveContainer>
           <p className="text-center text-3xl font-bold">{data.overall_oee.toFixed(1)}%</p>
@@ -92,7 +93,7 @@ export default function MesOeeDashboardPage() {
             <RadarChart data={radarData}>
               <PolarGrid />
               <PolarAngleAxis dataKey="metric" />
-              <Radar dataKey="value" stroke="#10b981" fill="#10b981" fillOpacity={0.5} />
+              <Radar dataKey="value" stroke={designTokens.colors.success.dark} fill={designTokens.colors.success.dark} fillOpacity={0.5} />
             </RadarChart>
           </ResponsiveContainer>
         </div>
@@ -104,7 +105,7 @@ export default function MesOeeDashboardPage() {
               <XAxis dataKey="timestamp" interval={3} fontSize={10} />
               <YAxis domain={[0, 100]} />
               <Tooltip />
-              <Line dataKey="oee" stroke="#f59e0b" strokeWidth={2} dot={false} />
+              <Line dataKey="oee" stroke={designTokens.colors.warning.main} strokeWidth={2} dot={false} />
             </LineChart>
           </ResponsiveContainer>
         </div>
@@ -118,7 +119,7 @@ export default function MesOeeDashboardPage() {
             <XAxis dataKey="oee" name="OEE" domain={[0, 100]} type="number" />
             <YAxis dataKey="equipment_name" name="设备" type="category" />
             <Tooltip cursor={{ strokeDasharray: '3 3' }} />
-            <Scatter data={data.by_equipment} fill="#6366f1" />
+            <Scatter data={data.by_equipment} fill={designTokens.colors.secondary.dark} />
           </ScatterChart>
         </ResponsiveContainer>
       </div>

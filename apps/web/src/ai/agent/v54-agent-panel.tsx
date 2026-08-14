@@ -83,6 +83,7 @@ import {
   type Intent,
   type Sentiment,
 } from './context-engine';
+import { designTokens, semanticTokens } from '@topems/tokens';
 
 type TabId = 'conversation' | 'tasks' | 'workflow' | 'context' | 'memory';
 
@@ -119,9 +120,9 @@ const INTENT_LABELS: Record<Intent, string> = {
 };
 
 const SENTIMENT_COLORS: Record<Sentiment, string> = {
-  positive: '#10b981',
-  negative: '#ef4444',
-  neutral: '#6b7280',
+  positive: designTokens.colors.success.dark,
+  negative: designTokens.colors.error.main,
+  neutral: 'colors.grey.500',
 };
 
 const V54AgentPanel: React.FC<{ onClose: () => void }> = ({ onClose }) => {
@@ -508,7 +509,7 @@ const ConversationTab: React.FC<{
                 maxWidth: '80%',
                 p: 2,
                 borderRadius: 2,
-                bgcolor: msg.role === 'user' ? '#10b981' : 'white',
+                bgcolor: msg.role === 'user' ? designTokens.colors.success.dark : 'white',
                 color: msg.role === 'user' ? 'white' : 'inherit',
                 border: msg.role === 'assistant' ? '1px solid #e2e8f0' : 'none',
               }}
@@ -618,15 +619,15 @@ const TasksTab: React.FC<{
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'completed':
-        return '#10b981';
+        return designTokens.colors.success.dark;
       case 'running':
-        return '#3b82f6';
+        return designTokens.colors.primary.main;
       case 'failed':
-        return '#ef4444';
+        return designTokens.colors.error.main;
       case 'pending':
-        return '#6b7280';
+        return 'colors.grey.500';
       default:
-        return '#6b7280';
+        return 'colors.grey.500';
     }
   };
 
@@ -734,9 +735,9 @@ const TasksTab: React.FC<{
                   sx={{
                     mb: 1,
                     border: '1px solid',
-                    borderColor: expandedTask === task.id ? '#10b981' : 'divider',
+                    borderColor: expandedTask === task.id ? designTokens.colors.success.dark : 'divider',
                     borderRadius: 1,
-                    bgcolor: expandedTask === task.id ? '#ecfdf5' : 'white',
+                    bgcolor: expandedTask === task.id ? 'colors.success.50' : 'white',
                     transition: 'all 0.2s',
                   }}
                 >
@@ -891,7 +892,7 @@ const StepItem: React.FC<{ step: TaskStep; index: number }> = ({ step, index }) 
         p: 1,
         bgcolor:
           step.status === 'completed'
-            ? '#ecfdf5'
+            ? 'colors.success.50'
             : step.status === 'failed'
               ? '#fef2f2'
               : '#f9fafb',
@@ -1016,17 +1017,17 @@ const WorkflowTab: React.FC<{
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'completed':
-        return '#10b981';
+        return designTokens.colors.success.dark;
       case 'running':
-        return '#3b82f6';
+        return designTokens.colors.primary.main;
       case 'failed':
-        return '#ef4444';
+        return designTokens.colors.error.main;
       case 'paused':
-        return '#f59e0b';
+        return designTokens.colors.warning.main;
       case 'cancelled':
-        return '#6b7280';
+        return 'colors.grey.500';
       default:
-        return '#6b7280';
+        return 'colors.grey.500';
     }
   };
 
@@ -1109,9 +1110,9 @@ const WorkflowTab: React.FC<{
                   sx={{
                     mb: 1,
                     border: '1px solid',
-                    borderColor: selectedWorkflow?.id === wf.id ? '#059669' : 'divider',
+                    borderColor: selectedWorkflow?.id === wf.id ? designTokens.colors.success.dark : 'divider',
                     borderRadius: 1,
-                    bgcolor: selectedWorkflow?.id === wf.id ? '#ecfdf5' : 'white',
+                    bgcolor: selectedWorkflow?.id === wf.id ? 'colors.success.50' : 'white',
                     cursor: 'pointer',
                   }}
                   onClick={() => setSelectedWorkflow(wf)}
@@ -1274,15 +1275,15 @@ const WorkflowDetail: React.FC<{
   const getStepStatusColor = (status?: string) => {
     switch (status) {
       case 'completed':
-        return '#10b981';
+        return designTokens.colors.success.dark;
       case 'running':
-        return '#3b82f6';
+        return designTokens.colors.primary.main;
       case 'failed':
-        return '#ef4444';
+        return designTokens.colors.error.main;
       case 'skipped':
         return '#9ca3af';
       default:
-        return '#6b7280';
+        return 'colors.grey.500';
     }
   };
 
@@ -1428,15 +1429,15 @@ const ContextTab: React.FC<{
 }> = ({ context, onSummarize }) => {
   const intentColor = (() => {
     const colors: Record<Intent, string> = {
-      query: '#3b82f6',
-      command: '#10b981',
-      exploration: '#8b5cf6',
-      confirmation: '#f59e0b',
-      correction: '#ef4444',
-      social: '#ec4899',
-      unclear: '#6b7280',
+      query: designTokens.colors.primary.main,
+      command: designTokens.colors.success.dark,
+      exploration: designTokens.colors.secondary.main,
+      confirmation: designTokens.colors.warning.main,
+      correction: designTokens.colors.error.main,
+      social: designTokens.colors.pink.main,
+      unclear: 'colors.grey.500',
     };
-    return colors[context.intent] ?? '#6b7280';
+    return colors[context.intent] ?? 'colors.grey.500';
   })();
 
   return (
@@ -1677,12 +1678,12 @@ const ContextTab: React.FC<{
 
 const EntityItem: React.FC<{ entity: Entity }> = ({ entity }) => {
   const typeColors: Record<string, string> = {
-    person: '#3b82f6',
-    organization: '#8b5cf6',
-    location: '#10b981',
-    date: '#f59e0b',
-    number: '#ef4444',
-    product: '#ec4899',
+    person: designTokens.colors.primary.main,
+    organization: designTokens.colors.secondary.main,
+    location: designTokens.colors.success.dark,
+    date: designTokens.colors.warning.main,
+    number: designTokens.colors.error.main,
+    product: designTokens.colors.pink.main,
     action: '#06b6d4',
   };
 
@@ -1698,8 +1699,8 @@ const EntityItem: React.FC<{ entity: Entity }> = ({ entity }) => {
           sx={{
             fontSize: 10,
             height: 18,
-            bgcolor: `${typeColors[entity.type] ?? '#6b7280'}20`,
-            color: typeColors[entity.type] ?? '#6b7280',
+            bgcolor: `${typeColors[entity.type] ?? 'colors.grey.500'}20`,
+            color: typeColors[entity.type] ?? 'colors.grey.500',
           }}
         />
         <Typography
@@ -1958,9 +1959,9 @@ const MemoryTab: React.FC<{
 
 const MemoryItem: React.FC<{ memory: MemoryEntry }> = ({ memory }) => {
   const typeColors: Record<string, string> = {
-    user_query: '#3b82f6',
-    action_result: '#10b981',
-    system_event: '#6b7280',
+    user_query: designTokens.colors.primary.main,
+    action_result: designTokens.colors.success.dark,
+    system_event: 'colors.grey.500',
   };
 
   const copyToClipboard = (text: string) => {
@@ -1979,8 +1980,8 @@ const MemoryItem: React.FC<{ memory: MemoryEntry }> = ({ memory }) => {
           sx={{
             fontSize: 10,
             height: 18,
-            bgcolor: `${typeColors[memory.type] ?? '#6b7280'}20`,
-            color: typeColors[memory.type] ?? '#6b7280',
+            bgcolor: `${typeColors[memory.type] ?? 'colors.grey.500'}20`,
+            color: typeColors[memory.type] ?? 'colors.grey.500',
             fontWeight: 600,
           }}
         />

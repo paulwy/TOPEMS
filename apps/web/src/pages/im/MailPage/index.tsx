@@ -16,7 +16,7 @@ import EditTemplateDialog from './components/EditTemplateDialog';
 import TemplatePreviewDialog from './components/TemplatePreviewDialog';
 import ConfirmDialogs from './components/ConfirmDialogs';
 
-const ct = designTokens.colors;
+const ct= designTokens.colors;
 
 const MailPage: React.FC = () => {
   const navigate = useNavigate();

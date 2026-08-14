@@ -5,7 +5,7 @@ import LayerToggle from './LayerToggle';
 import type { VisibleLayers } from '../types';
 import { designTokens } from '@/theme/tokens';
 
-const ct = designTokens.colors;
+const ct= designTokens.colors;
 
 interface LayerPanelProps {
   showLayerPanel: boolean;

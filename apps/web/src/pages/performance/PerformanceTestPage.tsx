@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { logger } from '@/utils/logger';
+import { designTokens, semanticTokens } from '@topems/tokens';
 
 interface LayoutShift {
   value: number;
@@ -283,7 +284,7 @@ const PerformanceTestPage: React.FC = () => {
     {
       label: '加载时间',
       value: loadTime ? `${loadTime.toFixed(2)}ms` : '测量中...',
-      color: loadTime && loadTime < 100 ? '#16a34a' : '#d97706',
+      color: loadTime && loadTime < 100 ? '#16a34a' : designTokens.colors.warning.dark,
       bgColor: loadTime && loadTime < 100 ? '#dcfce7' : '#fef3c7',
       description: '页面首屏加载耗时',
     },
@@ -291,7 +292,7 @@ const PerformanceTestPage: React.FC = () => {
       label: '最大内容绘制',
       value: lcpTime ? `${lcpTime.toFixed(2)}ms` : '测量中...',
       color:
-        lcpTime && lcpTime < 2500 ? '#16a34a' : lcpTime && lcpTime < 4000 ? '#d97706' : '#dc2626',
+        lcpTime && lcpTime < 2500 ? '#16a34a' : lcpTime && lcpTime < 4000 ? designTokens.colors.warning.dark : designTokens.colors.error.dark,
       bgColor:
         lcpTime && lcpTime < 2500 ? '#dcfce7' : lcpTime && lcpTime < 4000 ? '#fef3c7' : '#fee2e2',
       description: 'Largest Contentful Paint (LCP)',
@@ -300,7 +301,7 @@ const PerformanceTestPage: React.FC = () => {
       label: '可交互时间',
       value: ttiTime ? `${ttiTime.toFixed(2)}ms` : '测量中...',
       color:
-        ttiTime && ttiTime < 3800 ? '#16a34a' : ttiTime && ttiTime < 7300 ? '#d97706' : '#dc2626',
+        ttiTime && ttiTime < 3800 ? '#16a34a' : ttiTime && ttiTime < 7300 ? designTokens.colors.warning.dark : designTokens.colors.error.dark,
       bgColor:
         ttiTime && ttiTime < 3800 ? '#dcfce7' : ttiTime && ttiTime < 7300 ? '#fef3c7' : '#fee2e2',
       description: 'Time to Interactive (TTI)',
@@ -309,7 +310,7 @@ const PerformanceTestPage: React.FC = () => {
       label: '首次输入延迟',
       value: fidTime ? `${fidTime.toFixed(2)}ms` : '等待输入...',
       color:
-        fidTime && fidTime < 100 ? '#16a34a' : fidTime && fidTime < 300 ? '#d97706' : '#dc2626',
+        fidTime && fidTime < 100 ? '#16a34a' : fidTime && fidTime < 300 ? designTokens.colors.warning.dark : designTokens.colors.error.dark,
       bgColor:
         fidTime && fidTime < 100 ? '#dcfce7' : fidTime && fidTime < 300 ? '#fef3c7' : '#fee2e2',
       description: 'First Input Delay (FID)',
@@ -321,8 +322,8 @@ const PerformanceTestPage: React.FC = () => {
         clsScore !== null && clsScore < 0.1
           ? '#16a34a'
           : clsScore !== null && clsScore < 0.25
-            ? '#d97706'
-            : '#dc2626',
+            ? designTokens.colors.warning.dark
+            : designTokens.colors.error.dark,
       bgColor:
         clsScore !== null && clsScore < 0.1
           ? '#dcfce7'
@@ -334,21 +335,21 @@ const PerformanceTestPage: React.FC = () => {
     {
       label: '首屏绘制',
       value: firstPaint ? `${firstPaint.toFixed(2)}ms` : '测量中...',
-      color: firstPaint && firstPaint < 1000 ? '#16a34a' : '#d97706',
+      color: firstPaint && firstPaint < 1000 ? '#16a34a' : designTokens.colors.warning.dark,
       bgColor: firstPaint && firstPaint < 1000 ? '#dcfce7' : '#fef3c7',
       description: 'First Paint (FP)',
     },
     {
       label: '内容绘制',
       value: firstContentfulPaint ? `${firstContentfulPaint.toFixed(2)}ms` : '测量中...',
-      color: firstContentfulPaint && firstContentfulPaint < 1500 ? '#16a34a' : '#d97706',
+      color: firstContentfulPaint && firstContentfulPaint < 1500 ? '#16a34a' : designTokens.colors.warning.dark,
       bgColor: firstContentfulPaint && firstContentfulPaint < 1500 ? '#dcfce7' : '#fef3c7',
       description: 'First Contentful Paint (FCP)',
     },
     {
       label: '导航耗时',
       value: navigationTime ? `${navigationTime.toFixed(2)}ms` : '测量中...',
-      color: navigationTime && navigationTime < 2000 ? '#16a34a' : '#d97706',
+      color: navigationTime && navigationTime < 2000 ? '#16a34a' : designTokens.colors.warning.dark,
       bgColor: navigationTime && navigationTime < 2000 ? '#dcfce7' : '#fef3c7',
       description: '从导航开始到页面完全加载',
     },
@@ -362,14 +363,14 @@ const PerformanceTestPage: React.FC = () => {
     {
       label: '平均渲染',
       value: avgRenderTime ? `${avgRenderTime.toFixed(2)}ms` : 'N/A',
-      color: avgRenderTime && avgRenderTime < 16 ? '#16a34a' : '#d97706',
+      color: avgRenderTime && avgRenderTime < 16 ? '#16a34a' : designTokens.colors.warning.dark,
       bgColor: avgRenderTime && avgRenderTime < 16 ? '#dcfce7' : '#fef3c7',
       description: '两次渲染间隔平均时间',
     },
     {
       label: 'DOM加载',
       value: domContentLoaded ? `${domContentLoaded.toFixed(2)}ms` : '测量中...',
-      color: domContentLoaded && domContentLoaded < 1000 ? '#16a34a' : '#d97706',
+      color: domContentLoaded && domContentLoaded < 1000 ? '#16a34a' : designTokens.colors.warning.dark,
       bgColor: domContentLoaded && domContentLoaded < 1000 ? '#dcfce7' : '#fef3c7',
       description: 'DOM Content Loaded',
     },

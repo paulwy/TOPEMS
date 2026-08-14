@@ -32,7 +32,7 @@ import { getModuleFromReportType } from './utils';
 
 import { QUERY_KEYS } from '@/lib/reactQuery';
 
-const ct = designTokens.colors;
+const ct= designTokens.colors;
 
 const ReportPage: React.FC = () => {
   const queryClient = useQueryClient();

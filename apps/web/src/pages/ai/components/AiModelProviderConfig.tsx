@@ -22,7 +22,7 @@ import { Edit3, AlertCircle } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { designTokens } from '@/theme/tokens';
 
-const ct = designTokens.colors;
+const ct= designTokens.colors;
 
 export const AiModelProviderConfig: React.FC = () => {
   const { t } = useTranslation();

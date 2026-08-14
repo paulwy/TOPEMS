@@ -55,7 +55,7 @@ import { designTokens } from '@/theme/tokens';
 import {QUERY_KEYS, CACHE_DURATIONS} from '@/lib/reactQuery';
 import { monitorApi, type SystemMetrics, type DatabaseMetrics } from '@/api/monitor';
 
-const ct = designTokens.colors;
+const ct= designTokens.colors;
 
 type TimeRange = '1h' | '6h' | '24h' | '7d' | '30d';
 

@@ -3,6 +3,7 @@ import { TrendingUp, TrendingDown, Minus, Activity } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { Box, Typography } from '@mui/material';
 import { useCountUp, countUpEasings } from '@/hooks/useCountUp';
+import { designTokens, semanticTokens } from '@topems/tokens';
 
 interface SparklineProps {
   data: number[];
@@ -149,7 +150,7 @@ const colorMap: Record<string, { bg: string; gradient: string }> = {
     bg: 'warning.main',
     gradient: 'linear-gradient(135deg, #F59E0B, #D97706)',
   },
-  red: { bg: '#EF4444', gradient: 'linear-gradient(135deg, #EF4444, #DC2626)' },
+  red: { bg: designTokens.colors.error.main, gradient: 'linear-gradient(135deg, #EF4444, #DC2626)' },
   cyan: {
     bg: '#06B6D4',
     gradient: 'linear-gradient(135deg, #06B6D4, #0891B2)',

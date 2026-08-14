@@ -63,7 +63,7 @@ import ProfileInfoPanel from './ProfilePage/components/ProfileInfoPanel';
 import ProfileSecurityPanel from './ProfilePage/components/ProfileSecurityPanel';
 import ProfileApprovalPanel from './ProfilePage/components/ProfileApprovalPanel';
 
-const ct = designTokens.colors;
+const ct= designTokens.colors;
 
 interface ActivityItem {
   id: string;

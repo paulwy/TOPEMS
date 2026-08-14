@@ -12,6 +12,7 @@ import { useQmsMock, type QmsMockShape } from '@/api/qms/_mock';
 import { StatusBadge } from '@/components/qms/StatusBadge';
 import { FSMActionButtons } from '@/components/qms/FSMActionButtons';
 import { QMS_PATHS } from '@/modules/qms/config';
+import { designTokens, semanticTokens } from '@topems/tokens';
 
 const TABS = [
   { id: 'phases', label: '阶段进度' },
@@ -178,8 +179,8 @@ export default function QmsApqpProjectDetailPage() {
                 />
                 <Radar
                   dataKey='progress'
-                  stroke='#6366f1'
-                  fill='#6366f1'
+                  stroke={designTokens.colors.secondary.dark}
+                  fill={designTokens.colors.secondary.dark}
                   fillOpacity={0.5}
                 />
               </RadarChart>

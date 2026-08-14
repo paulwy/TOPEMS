@@ -16,7 +16,7 @@ import type { EmployeeListParams } from './types';
 
 import { QUERY_KEYS } from '@/lib/reactQuery';
 
-const ct = designTokens.colors;
+const ct= designTokens.colors;
 
 const HrmEmployeePage: React.FC = () => {
   const queryClient = useQueryClient();

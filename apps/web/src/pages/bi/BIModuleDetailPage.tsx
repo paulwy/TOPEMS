@@ -60,7 +60,7 @@ import { useTranslation } from 'react-i18next';
 
 import { QUERY_KEYS } from '@/lib/reactQuery';
 
-const ct = designTokens.colors;
+const ct= designTokens.colors;
 
 const moduleConfig: Record<string, { name: string; icon: string; color: string }> = {
   rs: { name: '研发管理', icon: '🔬', color: 'primary.main' },

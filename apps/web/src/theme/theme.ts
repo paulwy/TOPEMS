@@ -468,9 +468,9 @@ export const createCustomTheme = (): Theme => {
                 backgroundColor: designTokens.colors.primary[50],
               },
               ...theme.applyStyles('dark', {
-                backgroundColor: 'rgba(59, 130, 246, 0.15)',
+                backgroundColor: 'background.selectedDark',
                 '&:hover': {
-                  backgroundColor: 'rgba(59, 130, 246, 0.15)',
+                  backgroundColor: 'background.selectedDark',
                 },
               }),
             },
@@ -535,7 +535,7 @@ export const createCustomTheme = (): Theme => {
             },
             ...theme.applyStyles('dark', {
               '&.MuiAlert-standard': {
-                backgroundColor: 'rgba(59, 130, 246, 0.15)',
+                backgroundColor: 'background.selectedDark',
                 color: designTokens.colors.info[300],
               },
             }),
@@ -684,7 +684,7 @@ export const createCustomTheme = (): Theme => {
       MuiBackdrop: {
         styleOverrides: {
           root: ({ theme }) => ({
-            backgroundColor: 'rgba(0, 0, 0, 0.5)',
+            backgroundColor: designTokens.colors.cyber.glass.divider,
             backdropFilter: 'blur(4px)',
             WebkitBackdropFilter: 'blur(4px)',
             ...theme.applyStyles('dark', {

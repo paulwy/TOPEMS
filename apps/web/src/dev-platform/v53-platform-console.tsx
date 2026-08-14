@@ -89,6 +89,7 @@ import {
   type SearchResult,
   type CompatibilityCheck,
 } from './plugin-marketplace';
+import { designTokens, semanticTokens } from '@topems/tokens';
 
 type ConsoleTabId = 'dashboard' | 'platform' | 'builder' | 'marketplace' | 'pipelines' | 'activity';
 
@@ -360,7 +361,7 @@ const DashboardTab: React.FC<{
             title='项目总数'
             value={platformStats.totalProjects}
             icon={<Package size={24} />}
-            color='#6366f1'
+            color={designTokens.colors.secondary.dark}
           />
         </Grid>
         <Grid size={{ xs: 12, sm: 6, md: 3 }}>
@@ -368,7 +369,7 @@ const DashboardTab: React.FC<{
             title='运行中流水线'
             value={platformStats.totalPipelines}
             icon={<Workflow size={24} />}
-            color='#ec4899'
+            color={designTokens.colors.pink.main}
           />
         </Grid>
         <Grid size={{ xs: 12, sm: 6, md: 3 }}>
@@ -505,7 +506,7 @@ const DashboardTab: React.FC<{
                   icon={
                     <Package
                       size={16}
-                      color='#6366f1'
+                      color={designTokens.colors.secondary.dark}
                     />
                   }
                   label='已安装插件'
@@ -525,7 +526,7 @@ const DashboardTab: React.FC<{
                   icon={
                     <Star
                       size={16}
-                      color='#f59e0b'
+                      color={designTokens.colors.warning.main}
                     />
                   }
                   label='精选推荐'
@@ -577,12 +578,12 @@ const DashboardTab: React.FC<{
                       ) : run.status === 'failed' ? (
                         <XCircle
                           size={18}
-                          color='#ef4444'
+                          color={designTokens.colors.error.main}
                         />
                       ) : (
                         <Loader2
                           size={18}
-                          color='#3b82f6'
+                          color={designTokens.colors.primary.main}
                           className='animate-spin'
                         />
                       )}
@@ -641,7 +642,7 @@ const DashboardTab: React.FC<{
                     >
                       <BoxIcon
                         size={18}
-                        color='#8b5cf6'
+                        color={designTokens.colors.secondary.main}
                       />
                       <Box sx={{ flex: 1 }}>
                         <Typography
@@ -1312,7 +1313,7 @@ const BuilderTab: React.FC<{ pages: CanvasPage[] }> = ({ pages }) => {
                         >
                           <BoxIcon
                             size={16}
-                            color='#6366f1'
+                            color={designTokens.colors.secondary.dark}
                           />
                           <Box sx={{ flex: 1 }}>
                             <Typography
@@ -1399,7 +1400,7 @@ const BuilderTab: React.FC<{ pages: CanvasPage[] }> = ({ pages }) => {
                     icon={
                       <Database
                         size={16}
-                        color='#6366f1'
+                        color={designTokens.colors.secondary.dark}
                       />
                     }
                     label='数据源'
@@ -1409,7 +1410,7 @@ const BuilderTab: React.FC<{ pages: CanvasPage[] }> = ({ pages }) => {
                     icon={
                       <Palette
                         size={16}
-                        color='#ec4899'
+                        color={designTokens.colors.pink.main}
                       />
                     }
                     label='主题模式'
@@ -1531,7 +1532,7 @@ const MarketplaceTab: React.FC<{ installedPlugins: InstalledPlugin[] }> = ({
                           >
                             <Blocks
                               size={18}
-                              color='#6366f1'
+                              color={designTokens.colors.secondary.dark}
                             />
                           </Box>
                           <Box sx={{ flex: 1 }}>
@@ -1644,7 +1645,7 @@ const MarketplaceTab: React.FC<{ installedPlugins: InstalledPlugin[] }> = ({
                       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                         <Blocks
                           size={16}
-                          color='#6366f1'
+                          color={designTokens.colors.secondary.dark}
                         />
                         <Typography
                           variant='body2'
@@ -2103,7 +2104,7 @@ const StageTimeline: React.FC<{ stage: PipelineStage; index: number }> = ({ stag
         {stage.status === 'failed' && (
           <XCircle
             size={14}
-            color='#ef4444'
+            color={designTokens.colors.error.main}
           />
         )}
       </Box>

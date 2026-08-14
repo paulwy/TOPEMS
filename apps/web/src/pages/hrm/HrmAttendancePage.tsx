@@ -27,6 +27,7 @@ import { apiLogger } from '@/utils/logger';
 
 
 import { QUERY_KEYS } from '@/lib/reactQuery';
+import { designTokens, semanticTokens } from '@topems/tokens';
 
 const attendanceAdapter = createCrudPageAdapter(attendanceApi);
 const leaveAdapter = createCrudPageAdapter(leaveApi);
@@ -256,7 +257,7 @@ const StatisticsChips: React.FC<{ selectedDate: string }> = ({ selectedDate }) =
       >
         <CheckCircle
           size={16}
-          color='#2e7d32'
+          color={designTokens.colors.success.dark}
         />
         <Typography
           variant='body2'
@@ -300,7 +301,7 @@ const StatisticsChips: React.FC<{ selectedDate: string }> = ({ selectedDate }) =
       >
         <XCircle
           size={16}
-          color='#d32f2f'
+          color={designTokens.colors.error.dark}
         />
         <Typography
           variant='body2'

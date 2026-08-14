@@ -26,7 +26,7 @@ import {
   InventoryReportValueByWarehouseTable,
 } from './components/InventoryReportTable';
 
-const ct = designTokens.colors;
+const ct= designTokens.colors;
 
 const InventoryReportPage: React.FC = () => {
   const { t } = useTranslation();

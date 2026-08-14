@@ -22,7 +22,7 @@ import { designTokens } from '@/theme/tokens';
 
 import { useTranslation } from 'react-i18next';
 
-const ct = designTokens.colors;
+const ct= designTokens.colors;
 
 const HrmContractDetailPage: React.FC = () => {
   const { t } = useTranslation();

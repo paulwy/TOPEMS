@@ -3,6 +3,7 @@
 
 import { useTheme } from '@mui/material/styles';
 import { useThemeStore } from '@/store';
+import { designTokens, semanticTokens } from '@topems/tokens';
 
 // ── Chart type enum for future MUI X Charts migration ──────────────────────
 
@@ -20,13 +21,13 @@ export enum ChartType {
 
 export const BIChartColors = {
   series: [
-    '#3b82f6', // Blue (primary.main)
+    designTokens.colors.primary.main, // Blue (primary.main)
     '#22c55e', // Emerald (success.main)
-    '#f59e0b', // Amber (warning.main)
-    '#ef4444', // Red (error.main)
-    '#8B5CF6', // Violet
+    designTokens.colors.warning.main, // Amber (warning.main)
+    designTokens.colors.error.main, // Red (error.main)
+    designTokens.colors.secondary.main, // Violet
     '#06B6D4', // Cyan
-    '#EC4899', // Pink
+    designTokens.colors.pink.main, // Pink
     '#84CC16', // Lime
   ],
   dark: {
@@ -63,7 +64,7 @@ export const BIChartColors = {
     border: 'rgba(0, 255, 255, 0.30)',
   },
   neutral: {
-    grid: '#E2E8F0',
+    grid: designTokens.colors.border.default,
     gridDark: '#334155',
     text: '#64748B',
     textDark: '#94A3B8',
@@ -72,24 +73,24 @@ export const BIChartColors = {
   },
   // Primary palette (kept for backward-compatible reference)
   primary: {
-    blue: '#3b82f6',
+    blue: designTokens.colors.primary.main,
     cyan: '#06B6D4',
-    indigo: '#6366F1',
+    indigo: designTokens.colors.secondary.dark,
   },
   // Semantic colors
   semantic: {
     success: '#22c55e',
-    warning: '#f59e0b',
-    error: '#ef4444',
+    warning: designTokens.colors.warning.main,
+    error: designTokens.colors.error.main,
     info: '#0EA5E9',
   },
   // Gradient definitions
   gradients: {
-    blue: ['#3b82f6', '#06B6D4'],
+    blue: [designTokens.colors.primary.main, '#06B6D4'],
     emerald: ['#22c55e', '#14B8A6'],
-    violet: ['#8B5CF6', '#A855F7'],
+    violet: [designTokens.colors.secondary.main, '#A855F7'],
     rose: ['#F43F5E', '#FB7185'],
-    amber: ['#f59e0b', '#FBBF24'],
+    amber: [designTokens.colors.warning.main, '#FBBF24'],
   },
 } as const;
 
@@ -166,7 +167,7 @@ export const useChartTheme = (): ChartThemeColors => {
     gridColor: isDark ? BIChartColors.neutral.gridDark : BIChartColors.neutral.grid,
     textColor: isDark ? BIChartColors.neutral.textDark : BIChartColors.neutral.text,
     tooltipBg: isDark ? BIChartColors.neutral.backgroundDark : BIChartColors.neutral.background,
-    borderColor: isDark ? '#475569' : '#E2E8F0',
+    borderColor: isDark ? '#475569' : designTokens.colors.border.default,
     primary: theme.palette.primary.main,
     secondary: theme.palette.secondary.main,
     success: theme.palette.success.main,

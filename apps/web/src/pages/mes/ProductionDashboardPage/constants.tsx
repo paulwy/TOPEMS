@@ -11,7 +11,7 @@ import {
 import { designTokens } from '@/theme/tokens';
 import type { RealtimeAlarm } from './types';
 
-export const ct = designTokens.colors;
+export const ct= designTokens.colors;
 
 export const REFRESH_INTERVAL_MS = 10_000;
 export const TREND_HOURS = 12;

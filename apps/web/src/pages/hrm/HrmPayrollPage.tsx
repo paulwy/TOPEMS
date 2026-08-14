@@ -28,7 +28,7 @@ import { payrollSchema, salaryAdjustmentSchema } from '@/schemas/hrm';
 
 import { QUERY_KEYS } from '@/lib/reactQuery';
 
-const ct = designTokens.colors;
+const ct= designTokens.colors;
 
 const HrmPayrollPage: React.FC = () => {
   const { t } = useTranslation();

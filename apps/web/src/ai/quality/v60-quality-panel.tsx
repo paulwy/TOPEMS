@@ -70,6 +70,7 @@ import {
   type FunnelAnalysis,
   type UserSegment,
 } from './ux-monitor';
+import { designTokens, semanticTokens } from '@topems/tokens';
 
 type PanelTab = 'tests' | 'performance' | 'ux' | 'overview';
 
@@ -81,11 +82,11 @@ const METRIC_LABELS: Record<UXMetricType, string> = {
 };
 
 const QUALITY_COLORS = {
-  success: '#10b981',
-  warning: '#f59e0b',
-  error: '#ef4444',
-  info: '#3b82f6',
-  primary: '#6366f1',
+  success: designTokens.colors.success.dark,
+  warning: designTokens.colors.warning.main,
+  error: designTokens.colors.error.main,
+  info: designTokens.colors.primary.main,
+  primary: designTokens.colors.secondary.dark,
   gradient: 'linear-gradient(135deg, #6366f1, #8b5cf6, #ec4899)',
 };
 

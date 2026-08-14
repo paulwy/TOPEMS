@@ -3,7 +3,7 @@ import { PageContainer } from '@/components/common';
 import { MapPin } from 'lucide-react';
 import { designTokens } from '@/theme/tokens';
 
-const ct = designTokens.colors;
+const ct= designTokens.colors;
 
 const QualityTraceabilityPage: React.FC = () => {
   return (

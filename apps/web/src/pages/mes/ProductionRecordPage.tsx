@@ -8,7 +8,7 @@ import { Activity } from 'lucide-react';
 import { designTokens } from '@/theme/tokens';
 import { PageContainer } from '@/components/common';
 
-const ct = designTokens.colors;
+const ct= designTokens.colors;
 
 const apiAdapter = createCrudPageAdapter(mesApi.records, {
   itemsField: 'records',

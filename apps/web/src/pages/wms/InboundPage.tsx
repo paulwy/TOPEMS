@@ -12,7 +12,7 @@ import { useNotificationStore } from '@/store';
 
 import { QUERY_KEYS } from '@/lib/reactQuery';
 
-const ct = designTokens.colors;
+const ct= designTokens.colors;
 
 const InboundStats: React.FC = () => {
   const { data: orders = [] } = useQuery({

@@ -1,3 +1,4 @@
+import { designTokens, semanticTokens } from '@topems/tokens';
 /**
  * V45.0 Track F: 微前端终极形态 — 统一设计系统
  *
@@ -133,28 +134,28 @@ export const PRESET_TOKENS: DesignToken[] = [
   // ---- 颜色（语义） ----
   {
     name: 'success',
-    value: '#10b981',
+    value: designTokens.colors.success.dark,
     type: TokenType.COLOR,
     category: 'color',
     description: '成功色',
   },
   {
     name: 'warning',
-    value: '#f59e0b',
+    value: designTokens.colors.warning.main,
     type: TokenType.COLOR,
     category: 'color',
     description: '警告色',
   },
   {
     name: 'error',
-    value: '#ef4444',
+    value: designTokens.colors.error.main,
     type: TokenType.COLOR,
     category: 'color',
     description: '错误色',
   },
   {
     name: 'info',
-    value: '#3b82f6',
+    value: designTokens.colors.primary.main,
     type: TokenType.COLOR,
     category: 'color',
     description: '信息色',
@@ -198,7 +199,7 @@ export const PRESET_TOKENS: DesignToken[] = [
   },
   {
     name: 'gray-500',
-    value: '#6b7280',
+    value: 'colors.grey.500',
     type: TokenType.COLOR,
     category: 'color',
     description: '灰阶 500',
@@ -235,7 +236,7 @@ export const PRESET_TOKENS: DesignToken[] = [
   // ---- 颜色（背景/文字） ----
   {
     name: 'bg-primary',
-    value: '#ffffff',
+    value: designTokens.colors.background.paper,
     type: TokenType.COLOR,
     category: 'color',
     description: '主背景色',
@@ -263,7 +264,7 @@ export const PRESET_TOKENS: DesignToken[] = [
   },
   {
     name: 'text-secondary',
-    value: '#6b7280',
+    value: 'colors.grey.500',
     type: TokenType.COLOR,
     category: 'color',
     description: '次文字色',
@@ -277,7 +278,7 @@ export const PRESET_TOKENS: DesignToken[] = [
   },
   {
     name: 'text-inverse',
-    value: '#ffffff',
+    value: designTokens.colors.background.paper,
     type: TokenType.COLOR,
     category: 'color',
     description: '反色文字',
@@ -602,7 +603,7 @@ export const LIGHT_THEME: ThemeConfig = {
   background: 'primary.contrastText',
   text_colors: {
     primary: '#111827',
-    secondary: '#6b7280',
+    secondary: 'colors.grey.500',
     disabled: '#9ca3af',
   },
   component_overrides: {},

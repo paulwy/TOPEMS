@@ -11,7 +11,7 @@ import { QUERY_KEYS } from '@/lib/reactQuery';
 import { pdmApi, type ProductConfig } from '@/api/pdm';
 import { productConfigSchema } from '@/schemas/pdm/productConfig';
 
-const ct = designTokens.colors;
+const ct= designTokens.colors;
 
 interface FlatProductConfig {
   id: string;

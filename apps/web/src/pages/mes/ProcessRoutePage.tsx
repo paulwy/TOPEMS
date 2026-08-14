@@ -16,7 +16,7 @@ import type {
 } from '@/api/mes/process';
 import { designTokens } from '@/theme/tokens';
 
-const ct = designTokens.colors;
+const ct= designTokens.colors;
 
 const processRouteAdapter: CrudApiAdapter<ProcessRoute> = {
   list: async (params) => {

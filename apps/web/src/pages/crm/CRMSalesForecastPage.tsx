@@ -18,7 +18,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 
 import {QUERY_KEYS, CACHE_DURATIONS} from '@/lib/reactQuery';
 
-const ct = designTokens.colors;
+const ct= designTokens.colors;
 
 const CRMSalesForecastPage: React.FC = () => {
   const { t } = useTranslation();

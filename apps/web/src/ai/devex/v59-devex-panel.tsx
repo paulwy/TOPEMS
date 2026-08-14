@@ -57,6 +57,7 @@ import {
   type RefactoringType,
   type ImpactEstimate,
 } from './code-refactor';
+import { designTokens, semanticTokens } from '@topems/tokens';
 
 export const V59DevExPanel: React.FC<{ onClose: () => void }> = ({ onClose }) => {
   const [activeTab, setActiveTab] = React.useState('debug');
@@ -142,8 +143,8 @@ export const V59DevExPanel: React.FC<{ onClose: () => void }> = ({ onClose }) =>
                 sx={{
                   borderRadius: 0,
                   borderBottom: activeTab === tab.id ? 2 : 0,
-                  borderColor: activeTab === tab.id ? '#8b5cf6' : 'transparent',
-                  color: activeTab === tab.id ? '#8b5cf6' : 'text.secondary',
+                  borderColor: activeTab === tab.id ? designTokens.colors.secondary.main : 'transparent',
+                  color: activeTab === tab.id ? designTokens.colors.secondary.main : 'text.secondary',
                   fontWeight: activeTab === tab.id ? 600 : 400,
                 }}
                 startIcon={tab.icon}
@@ -924,7 +925,7 @@ const PerformanceLiveGraph: React.FC = () => {
                 {trend.length > 1 && (
                   <polyline
                     fill='none'
-                    stroke='#8b5cf6'
+                    stroke={designTokens.colors.secondary.main}
                     strokeWidth='2'
                     points={trend
                       .map((p, i) => {
@@ -944,7 +945,7 @@ const PerformanceLiveGraph: React.FC = () => {
                       cx={`${x}%`}
                       cy={`${y}%`}
                       r='3'
-                      fill='#8b5cf6'
+                      fill={designTokens.colors.secondary.main}
                     />
                   );
                 })}

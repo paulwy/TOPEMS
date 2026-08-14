@@ -17,8 +17,9 @@ import {
   ZAxis,
 } from 'recharts';
 import type { QualityParetoData } from '@/api/mes/types';
+import { designTokens, semanticTokens } from '@topems/tokens';
 
-const DISPOSITION_COLORS = ['#6366f1', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6'];
+const DISPOSITION_COLORS = [designTokens.colors.secondary.dark, designTokens.colors.success.dark, designTokens.colors.warning.main, designTokens.colors.error.main, designTokens.colors.secondary.main];
 
 function useQualityParetoMock(): QualityParetoData {
   return useMemo(() => {
@@ -93,13 +94,13 @@ export default function MesQualityParetoPage() {
             <YAxis yAxisId="right" orientation="right" domain={[0, 100]} unit="%" />
             <Tooltip />
             <Legend />
-            <Bar yAxisId="left" dataKey="count" name="缺陷数" fill="#6366f1" barSize={32} />
+            <Bar yAxisId="left" dataKey="count" name="缺陷数" fill={designTokens.colors.secondary.dark} barSize={32} />
             <Line
               yAxisId="right"
               type="monotone"
               dataKey="cumulative_pct"
               name="累积占比"
-              stroke="#ef4444"
+              stroke={designTokens.colors.error.main}
               strokeWidth={2}
               dot={{ r: 3 }}
             />
@@ -117,7 +118,7 @@ export default function MesQualityParetoPage() {
               <YAxis dataKey="process" name="工序" type="category" fontSize={10} />
               <ZAxis dataKey="count" range={[40, 360]} name="次数" />
               <Tooltip cursor={{ strokeDasharray: '3 3' }} />
-              <Scatter data={data.heatmap} fill="#f59e0b" />
+              <Scatter data={data.heatmap} fill={designTokens.colors.warning.main} />
             </ScatterChart>
           </ResponsiveContainer>
         </div>

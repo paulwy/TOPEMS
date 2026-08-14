@@ -20,6 +20,7 @@ import {
   RadialBar,
 } from 'recharts';
 import { useQmsMock, type QmsMockShape } from '@/api/qms/_mock';
+import { designTokens, semanticTokens } from '@topems/tokens';
 
 export default function QmsAuditCompliancePage() {
   const { data } = useQmsMock<QmsMockShape>();
@@ -113,9 +114,9 @@ export default function QmsAuditCompliancePage() {
   }, [plans]);
 
   const radialData = [
-    { name: '计划完成率', value: overall.planCompletionRate, fill: '#6366f1' },
-    { name: '任务完成率', value: overall.taskCompletionRate, fill: '#10b981' },
-    { name: '发现项关闭率', value: overall.findingCloseRate, fill: '#f59e0b' },
+    { name: '计划完成率', value: overall.planCompletionRate, fill: designTokens.colors.secondary.dark },
+    { name: '任务完成率', value: overall.taskCompletionRate, fill: designTokens.colors.success.dark },
+    { name: '发现项关闭率', value: overall.findingCloseRate, fill: designTokens.colors.warning.main },
   ];
 
   return (
@@ -207,13 +208,13 @@ export default function QmsAuditCompliancePage() {
               <Bar
                 dataKey='completionRate'
                 name='任务完成率'
-                fill='#10b981'
+                fill={designTokens.colors.success.dark}
                 barSize={20}
               />
               <Bar
                 dataKey='findingCloseRate'
                 name='发现项关闭率'
-                fill='#f59e0b'
+                fill={designTokens.colors.warning.main}
                 barSize={20}
               />
             </BarChart>
@@ -246,7 +247,7 @@ export default function QmsAuditCompliancePage() {
             <Bar
               dataKey='complianceRate'
               name='合规率'
-              fill='#6366f1'
+              fill={designTokens.colors.secondary.dark}
               barSize={32}
             />
           </BarChart>

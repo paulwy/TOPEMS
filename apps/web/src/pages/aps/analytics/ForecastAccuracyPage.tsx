@@ -1,3 +1,4 @@
+import { designTokens, semanticTokens } from '@topems/tokens';
 /**
  * 预测准确率分析页
  *
@@ -108,7 +109,7 @@ export default function ForecastAccuracyPage() {
             <ReferenceLine
               yAxisId='right'
               y={95}
-              stroke='#10b981'
+              stroke={designTokens.colors.success.dark}
               strokeDasharray='4 4'
               label='目标 95%'
             />
@@ -117,7 +118,7 @@ export default function ForecastAccuracyPage() {
               type='monotone'
               dataKey='forecast'
               name='预测量'
-              stroke='#6366f1'
+              stroke={designTokens.colors.secondary.dark}
               strokeWidth={2}
               dot={{ r: 3 }}
             />
@@ -126,7 +127,7 @@ export default function ForecastAccuracyPage() {
               type='monotone'
               dataKey='actual'
               name='实际量'
-              stroke='#f59e0b'
+              stroke={designTokens.colors.warning.main}
               strokeWidth={2}
               dot={{ r: 3 }}
             />
@@ -135,7 +136,7 @@ export default function ForecastAccuracyPage() {
               type='monotone'
               dataKey='accuracy'
               name='准确率'
-              stroke='#10b981'
+              stroke={designTokens.colors.success.dark}
               strokeWidth={2}
               dot={{ r: 3 }}
             />

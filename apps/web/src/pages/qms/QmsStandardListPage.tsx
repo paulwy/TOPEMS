@@ -12,7 +12,7 @@ import type { QualityStandard } from '@/api/qms';
 import { designTokens } from '@/theme/tokens';
 import { QMS_PATHS } from '@/modules/qms/config';
 
-const ct = designTokens.colors;
+const ct= designTokens.colors;
 
 const standardAdapter = {
   list: async (params?: { page?: number; pageSize?: number; search?: string; status?: string }) => {

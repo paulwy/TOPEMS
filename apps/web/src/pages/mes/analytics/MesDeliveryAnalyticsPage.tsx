@@ -15,8 +15,9 @@ import {
   Legend,
 } from 'recharts';
 import type { DeliveryAnalyticsData } from '@/api/mes/types';
+import { designTokens, semanticTokens } from '@topems/tokens';
 
-const DONUT_COLORS = ['#10b981', '#f59e0b', '#ef4444', '#6366f1'];
+const DONUT_COLORS = [designTokens.colors.success.dark, designTokens.colors.warning.main, designTokens.colors.error.main, designTokens.colors.secondary.dark];
 
 function useDeliveryMock(): DeliveryAnalyticsData {
   return useMemo(() => {
@@ -118,8 +119,8 @@ export default function MesDeliveryAnalyticsPage() {
             <AreaChart data={boxApprox}>
               <defs>
                 <linearGradient id="deliveryArea" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#6366f1" stopOpacity={0.8} />
-                  <stop offset="95%" stopColor="#6366f1" stopOpacity={0.1} />
+                  <stop offset="5%" stopColor={designTokens.colors.secondary.dark} stopOpacity={0.8} />
+                  <stop offset="95%" stopColor={designTokens.colors.secondary.dark} stopOpacity={0.1} />
                 </linearGradient>
               </defs>
               <CartesianGrid strokeDasharray="3 3" />
@@ -129,14 +130,14 @@ export default function MesDeliveryAnalyticsPage() {
               <Area
                 type="monotone"
                 dataKey="max"
-                stroke="#6366f1"
+                stroke={designTokens.colors.secondary.dark}
                 fill="url(#deliveryArea)"
                 strokeWidth={2}
               />
               <Area
                 type="monotone"
                 dataKey="median"
-                stroke="#10b981"
+                stroke={designTokens.colors.success.dark}
                 fill="transparent"
                 strokeWidth={2}
               />
@@ -155,9 +156,9 @@ export default function MesDeliveryAnalyticsPage() {
               <Legend />
               <Bar dataKey="min" stackId="box" fill="#bbf7d0" name="最小" />
               <Bar dataKey="q1" stackId="box" fill="#86efac" name="Q1" />
-              <Bar dataKey="median" stackId="box" fill="#10b981" name="中位" />
+              <Bar dataKey="median" stackId="box" fill={designTokens.colors.success.dark} name="中位" />
               <Bar dataKey="q3" stackId="box" fill="#34d399" name="Q3" />
-              <Bar dataKey="max" stackId="box" fill="#059669" name="最大" />
+              <Bar dataKey="max" stackId="box" fill={designTokens.colors.success.dark} name="最大" />
             </BarChart>
           </ResponsiveContainer>
         </div>

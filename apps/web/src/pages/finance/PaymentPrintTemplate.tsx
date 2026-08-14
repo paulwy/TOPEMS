@@ -16,6 +16,7 @@ import { PageContainer } from '@/components/common';
 
 import { useTranslation } from 'react-i18next';
 import i18n from '@/i18n';
+import { designTokens, semanticTokens } from '@topems/tokens';
 
 interface PaymentPrintTemplateProps {
   payment: Payment;
@@ -71,7 +72,7 @@ export const PaymentPrintTemplate: React.FC<PaymentPrintTemplateProps> = ({ paym
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
               <FileText
                 size={16}
-                color='#1976d2'
+                color={designTokens.colors.primary.dark}
               />
               <Typography
                 variant='body2'
@@ -91,7 +92,7 @@ export const PaymentPrintTemplate: React.FC<PaymentPrintTemplateProps> = ({ paym
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
               <Calendar
                 size={16}
-                color='#1976d2'
+                color={designTokens.colors.primary.dark}
               />
               <Typography
                 variant='body2'
@@ -108,7 +109,7 @@ export const PaymentPrintTemplate: React.FC<PaymentPrintTemplateProps> = ({ paym
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
               <Building2
                 size={16}
-                color='#1976d2'
+                color={designTokens.colors.primary.dark}
               />
               <Typography
                 variant='body2'
@@ -128,7 +129,7 @@ export const PaymentPrintTemplate: React.FC<PaymentPrintTemplateProps> = ({ paym
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
               <User
                 size={16}
-                color='#1976d2'
+                color={designTokens.colors.primary.dark}
               />
               <Typography
                 variant='body2'
@@ -143,7 +144,7 @@ export const PaymentPrintTemplate: React.FC<PaymentPrintTemplateProps> = ({ paym
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
               <Banknote
                 size={16}
-                color='#1976d2'
+                color={designTokens.colors.primary.dark}
               />
               <Typography
                 variant='body2'
@@ -185,7 +186,7 @@ export const PaymentPrintTemplate: React.FC<PaymentPrintTemplateProps> = ({ paym
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
               <Calendar
                 size={16}
-                color='#1976d2'
+                color={designTokens.colors.primary.dark}
               />
               <Typography
                 variant='body2'

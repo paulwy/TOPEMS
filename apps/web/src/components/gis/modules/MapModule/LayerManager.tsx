@@ -2,6 +2,7 @@
 import React from 'react';
 import { Layers, ChevronDown, ChevronUp, MapPin, Navigation, Info, Pencil } from 'lucide-react';
 import { Box, Typography, Paper, Button } from '@mui/material';
+import { designTokens, semanticTokens } from '@topems/tokens';
 
 interface LayerToggleProps {
   label: string;
@@ -124,7 +125,7 @@ const LayerManager: React.FC<LayerManagerProps> = ({
             icon={<Navigation size={16} />}
             checked={visibleLayers.pipelines}
             onChange={() => onToggleLayer('pipelines')}
-            color='#6366F1'
+            color={designTokens.colors.secondary.dark}
           />
           <LayerToggle
             label='仓储位置'

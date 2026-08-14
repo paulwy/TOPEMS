@@ -14,7 +14,7 @@ import { financeSchema } from '@/schemas/srm';
 
 import { QUERY_KEYS } from '@/lib/reactQuery';
 
-const ct = designTokens.colors;
+const ct= designTokens.colors;
 
 interface FinanceRecord {
   id: string;

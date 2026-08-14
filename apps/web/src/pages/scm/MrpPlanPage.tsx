@@ -32,7 +32,7 @@ import { designTokens } from '@/theme/tokens';
 
 import { queryClient, QUERY_KEYS } from '@/lib/reactQuery';
 
-const ct = designTokens.colors;
+const ct= designTokens.colors;
 
 const apiAdapter = createCrudPageAdapter<MrpPlan, CreateMrpPlanRequest, UpdateMrpPlanRequest>(
   scmApi.mrpPlans

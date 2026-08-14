@@ -16,6 +16,7 @@ import {
 } from '@mui/material';
 import { Search, RefreshCw } from 'lucide-react';
 import type { FilterConfig, FilterValue } from '@topems/shared-components';
+import { designTokens, semanticTokens } from '@topems/tokens';
 
 interface ListSearchBarProps {
   searchable?: boolean;
@@ -234,7 +235,7 @@ export const ListSearchBar: React.FC<ListSearchBarProps> = ({
               cursor: 'pointer',
               fontSize: '12px',
               fontWeight: isActive ? 600 : 500,
-              color: isActive ? '#1976d2' : '#333',
+              color: isActive ? designTokens.colors.primary.dark : '#333',
               transition: 'all 0.2s',
             }}
           >

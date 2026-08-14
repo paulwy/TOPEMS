@@ -31,7 +31,7 @@ import { designTokens } from '@/theme/tokens';
 
 import { QUERY_KEYS, queryClient } from '@/lib/reactQuery';
 
-const ct = designTokens.colors;
+const ct= designTokens.colors;
 
 const StockTakePage: React.FC = () => {
   const { t } = useTranslation();

@@ -22,7 +22,7 @@ import type { Wip, WipStatistics } from '@/api/mes';
 import {QUERY_KEYS, CACHE_DURATIONS} from '@/lib/reactQuery';
 import { designTokens } from '@/theme/tokens';
 
-const ct = designTokens.colors;
+const ct= designTokens.colors;
 
 const apiAdapter = createCrudPageAdapter(wipApi, { itemsField: 'wips' });
 

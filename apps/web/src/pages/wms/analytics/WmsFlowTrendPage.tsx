@@ -10,6 +10,7 @@ import {
   Legend,
 } from 'recharts';
 import { useWmsMock, type WmsMockShape } from '@/api/wms/_mock';
+import { designTokens, semanticTokens } from '@topems/tokens';
 
 export default function WmsFlowTrendPage() {
   const { data } = useWmsMock<WmsMockShape>();
@@ -91,12 +92,12 @@ export default function WmsFlowTrendPage() {
               >
                 <stop
                   offset='5%'
-                  stopColor='#10b981'
+                  stopColor={designTokens.colors.success.dark}
                   stopOpacity={0.6}
                 />
                 <stop
                   offset='95%'
-                  stopColor='#10b981'
+                  stopColor={designTokens.colors.success.dark}
                   stopOpacity={0.05}
                 />
               </linearGradient>
@@ -109,12 +110,12 @@ export default function WmsFlowTrendPage() {
               >
                 <stop
                   offset='5%'
-                  stopColor='#3b82f6'
+                  stopColor={designTokens.colors.primary.main}
                   stopOpacity={0.6}
                 />
                 <stop
                   offset='95%'
-                  stopColor='#3b82f6'
+                  stopColor={designTokens.colors.primary.main}
                   stopOpacity={0.05}
                 />
               </linearGradient>
@@ -127,12 +128,12 @@ export default function WmsFlowTrendPage() {
               >
                 <stop
                   offset='5%'
-                  stopColor='#f59e0b'
+                  stopColor={designTokens.colors.warning.main}
                   stopOpacity={0.5}
                 />
                 <stop
                   offset='95%'
-                  stopColor='#f59e0b'
+                  stopColor={designTokens.colors.warning.main}
                   stopOpacity={0.05}
                 />
               </linearGradient>
@@ -152,7 +153,7 @@ export default function WmsFlowTrendPage() {
               type='monotone'
               dataKey='inboundQty'
               name='入库量'
-              stroke='#10b981'
+              stroke={designTokens.colors.success.dark}
               fill='url(#inbGrad)'
               strokeWidth={2}
             />
@@ -160,7 +161,7 @@ export default function WmsFlowTrendPage() {
               type='monotone'
               dataKey='outboundQty'
               name='出库量'
-              stroke='#3b82f6'
+              stroke={designTokens.colors.primary.main}
               fill='url(#outGrad)'
               strokeWidth={2}
             />
@@ -168,7 +169,7 @@ export default function WmsFlowTrendPage() {
               type='monotone'
               dataKey='net'
               name='净流量'
-              stroke='#f59e0b'
+              stroke={designTokens.colors.warning.main}
               fill='url(#netGrad)'
               strokeWidth={2}
             />

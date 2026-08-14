@@ -22,6 +22,7 @@ import {
 import { assistantApi } from '../../api/ai/assistant';
 import { useNotificationStore } from '@/store/notificationStore';
 import { logger } from '@/utils/logger';
+import { designTokens, semanticTokens } from '@topems/tokens';
 
 export interface AIReportAssistantProps {
   initialQuery?: string;
@@ -185,7 +186,7 @@ export const AIReportAssistant: React.FC<AIReportAssistantProps> = ({ initialQue
       (sum: number, item: Record<string, unknown>) => sum + (item.value as number),
       0
     );
-    const colors = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899'];
+    const colors = [designTokens.colors.primary.main, designTokens.colors.success.dark, designTokens.colors.warning.main, designTokens.colors.error.main, designTokens.colors.secondary.main, designTokens.colors.pink.main];
     let cumulativeAngle = 0;
 
     return (

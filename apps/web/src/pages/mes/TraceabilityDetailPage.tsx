@@ -21,7 +21,7 @@ import type { TraceChain, QualityRecord } from '@/api/mes';
 import { designTokens } from '@/theme/tokens';
 import { MES_PATHS } from '@/modules/mes/config';
 
-const ct = designTokens.colors;
+const ct= designTokens.colors;
 
 const TraceabilityDetailPage: React.FC = () => {
   const { t } = useTranslation();

@@ -16,6 +16,7 @@ import { Activity, RefreshCw, Lightbulb } from 'lucide-react';
 import { assistantApi } from '../../api/ai/assistant';
 import { useNotificationStore } from '@/store/notificationStore';
 import { logger } from '@/utils/logger';
+import { designTokens, semanticTokens } from '@topems/tokens';
 
 export interface AIAnomalyAssistantProps {
   initialMetric?: string;
@@ -120,7 +121,7 @@ export const AIAnomalyAssistant: React.FC<AIAnomalyAssistantProps> = ({ initialM
                 <Box
                   sx={{
                     width: '100%',
-                    bgcolor: isAnomaly ? '#ef4444' : '#3b82f6',
+                    bgcolor: isAnomaly ? designTokens.colors.error.main : designTokens.colors.primary.main,
                     borderRadius: '4px 4px 0 0',
                     height: `${Math.max(height, 10)}%`,
                     minHeight: 8,

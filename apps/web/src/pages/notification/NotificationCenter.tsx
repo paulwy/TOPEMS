@@ -21,7 +21,7 @@ import { useNotificationStore } from '@/store';
 
 import { QUERY_KEYS } from '@/lib/reactQuery';
 
-const ct = designTokens.colors;
+const ct= designTokens.colors;
 
 type NotificationFilterType = 'all' | NotificationTypeEnum;
 
@@ -343,7 +343,7 @@ const NotificationCenter: React.FC = () => {
                 borderRadius: '20px',
                 border: 'none',
                 backgroundColor: activeFilter === filter ? ct.primary.main : 'rgba(0,0,0,0.04)',
-                color: activeFilter === filter ? '#fff' : 'inherit',
+                color: activeFilter === filter ? designTokens.colors.background.paper : 'inherit',
                 fontSize: '13px',
                 cursor: 'pointer',
                 whiteSpace: 'nowrap',

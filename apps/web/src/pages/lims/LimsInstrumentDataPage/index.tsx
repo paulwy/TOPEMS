@@ -35,7 +35,7 @@ import TaskFormDialog from './components/TaskFormDialog';
 import RuleFormDialog from './components/RuleFormDialog';
 import ParseTestDialog from './components/ParseTestDialog';
 
-const ct = designTokens.colors;
+const ct= designTokens.colors;
 
 const LimsInstrumentDataPage: React.FC = () => {
   const queryClient = useQueryClient();

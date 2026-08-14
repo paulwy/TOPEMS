@@ -13,7 +13,7 @@ import { NOTIFICATION_PATHS } from '@/modules/notification/config';
 
 import {QUERY_KEYS, CACHE_DURATIONS} from '@/lib/reactQuery';
 
-const ct = designTokens.colors;
+const ct= designTokens.colors;
 
 const NotificationDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();

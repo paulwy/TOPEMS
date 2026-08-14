@@ -15,7 +15,7 @@ import {
 import { designTokens } from '@/theme/tokens';
 import { IM_PATHS } from '@/modules/im/config';
 
-const ct = designTokens.colors;
+const ct= designTokens.colors;
 
 interface ActivityItem {
   id: string;

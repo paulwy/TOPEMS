@@ -17,7 +17,7 @@ import {
 import { designTokens } from '@/theme/tokens';
 import type { InventoryStatistics } from '@/api/wms';
 
-const ct = designTokens.colors;
+const ct= designTokens.colors;
 
 export interface InventoryReportSummaryProps {
   statistics: InventoryStatistics | undefined;

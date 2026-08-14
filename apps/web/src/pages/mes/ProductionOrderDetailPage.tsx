@@ -22,7 +22,7 @@ import { getChipStatusColor } from '@/utils/status';
 
 import { useTranslation } from 'react-i18next';
 
-const ct = designTokens.colors;
+const ct= designTokens.colors;
 
 const ProductionOrderDetailPage: React.FC = () => {
   const { t } = useTranslation();

@@ -30,7 +30,7 @@ import type { Equipment, MaintenanceEquipmentRequest } from '@/api/mes';
 
 import { QUERY_KEYS } from '@/lib/reactQuery';
 
-const ct = designTokens.colors;
+const ct= designTokens.colors;
 const apiAdapter = createCrudPageAdapter(mesApi.equipment);
 
 export default function EquipmentManagementPage() {

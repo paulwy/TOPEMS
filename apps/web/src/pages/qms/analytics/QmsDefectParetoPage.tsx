@@ -20,6 +20,7 @@ import {
   ReferenceLine,
 } from 'recharts';
 import { useQmsMock, type QmsMockShape } from '@/api/qms/_mock';
+import { designTokens, semanticTokens } from '@topems/tokens';
 
 export default function QmsDefectParetoPage() {
   const { data } = useQmsMock<QmsMockShape>();
@@ -107,7 +108,7 @@ export default function QmsDefectParetoPage() {
             <ReferenceLine
               yAxisId='right'
               y={80}
-              stroke='#ef4444'
+              stroke={designTokens.colors.error.main}
               strokeDasharray='4 4'
               label='80% 基准'
             />
@@ -115,7 +116,7 @@ export default function QmsDefectParetoPage() {
               yAxisId='left'
               dataKey='count'
               name='缺陷数'
-              fill='#6366f1'
+              fill={designTokens.colors.secondary.dark}
               barSize={36}
             />
             <Line
@@ -123,7 +124,7 @@ export default function QmsDefectParetoPage() {
               type='monotone'
               dataKey='cumulativePct'
               name='累积占比'
-              stroke='#ef4444'
+              stroke={designTokens.colors.error.main}
               strokeWidth={2}
               dot={{ r: 3 }}
             />

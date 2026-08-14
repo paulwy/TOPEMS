@@ -12,7 +12,7 @@ import type { Account } from '@/types/finance';
 
 import { QUERY_KEYS } from '@/lib/reactQuery';
 
-const ct = designTokens.colors;
+const ct= designTokens.colors;
 
 const ledgerApiAdapter: CrudApiAdapter = {
   list: async (params) => {

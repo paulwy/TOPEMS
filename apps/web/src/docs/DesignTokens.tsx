@@ -40,7 +40,7 @@ export function ColorSwatch({ color, label, darkText = false }: ColorSwatchProps
       />
       <Typography
         variant='caption'
-        sx={{ fontWeight: 500, color: darkText ? '#fff' : 'text.primary' }}
+        sx={{ fontWeight: 500, color: darkText ? designTokens.colors.background.paper : 'text.primary' }}
       >
         {label}
       </Typography>

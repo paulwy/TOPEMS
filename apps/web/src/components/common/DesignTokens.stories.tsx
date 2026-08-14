@@ -75,7 +75,7 @@ const ColorFamilyGrid = ({
   title: string;
   tokenKey: keyof typeof designTokens.colors;
 }) => {
-  const colorData = designTokens.colors[tokenKey] as Record<string, string>;
+  const colorData={designTokens.colors}[tokenKey] as Record<string, string>;
   const shades = ['50', '100', '200', '300', '400', '500', '600', '700', '800', '900'];
   const semanticKeys = ['main', 'light', 'dark', 'contrastText'].filter(
     (k) => colorData[k] !== undefined
@@ -199,7 +199,7 @@ const ColorsComponent = () => (
       功能色
     </Typography>
     {(['text', 'border', 'background', 'action', 'surface'] as const).map((groupKey) => {
-      const data = designTokens.colors[groupKey] as Record<string, string>;
+      const data={designTokens.colors}[groupKey] as Record<string, string>;
       const entries = Object.entries(data).filter(([, v]) => typeof v === 'string');
       return (
         <Box
@@ -288,7 +288,7 @@ const TypographyComponent = () => {
         标题层级
       </Typography>
       {headingVariants.map((variant) => {
-        const token = designTokens.typography[variant];
+        const token={designTokens.typography}[variant];
         return (
           <Paper
             key={variant}
@@ -351,7 +351,7 @@ const TypographyComponent = () => {
         正文样式
       </Typography>
       {bodyVariants.map((variant) => {
-        const token = designTokens.typography[variant];
+        const token={designTokens.typography}[variant];
         const samples: Record<string, string> = {
           body1: '默认正文 — 用于页面主要内容的文本展示。',
           body2: '次要正文 — 用于表格、列表项和辅助说明。',

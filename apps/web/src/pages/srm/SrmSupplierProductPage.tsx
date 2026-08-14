@@ -6,7 +6,7 @@ import { Box, Card, CardContent, Typography } from '@mui/material';
 import { Package } from 'lucide-react';
 import { designTokens } from '@/theme/tokens';
 
-const ct = designTokens.colors;
+const ct= designTokens.colors;
 
 interface SupplierProduct {
   id: string;

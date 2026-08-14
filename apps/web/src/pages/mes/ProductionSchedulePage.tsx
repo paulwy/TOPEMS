@@ -25,7 +25,7 @@ import { Calendar, GanttChart, RefreshCw } from 'lucide-react';
 import { apiLogger } from '@/utils/logger';
 import { designTokens } from '@/theme/tokens';
 
-const ct = designTokens.colors;
+const ct= designTokens.colors;
 
 const apiAdapter = createCrudPageAdapter(mesApi.schedules, {
   itemsField: 'schedules',

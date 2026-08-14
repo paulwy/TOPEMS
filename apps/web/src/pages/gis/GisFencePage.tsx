@@ -51,7 +51,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 
 import { CACHE_DURATIONS, QUERY_KEYS } from '@/lib/reactQuery';
 
-const ct = designTokens.colors;
+const ct= designTokens.colors;
 
 interface FenceData {
   id: string;

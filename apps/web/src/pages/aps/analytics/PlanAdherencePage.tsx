@@ -1,3 +1,4 @@
+import { designTokens, semanticTokens } from '@topems/tokens';
 /**
  * 计划达成率分析页
  *
@@ -110,7 +111,7 @@ export default function PlanAdherencePage() {
             <ReferenceLine
               yAxisId='right'
               y={100}
-              stroke='#10b981'
+              stroke={designTokens.colors.success.dark}
               strokeDasharray='4 4'
               label='目标 100%'
             />
@@ -118,14 +119,14 @@ export default function PlanAdherencePage() {
               yAxisId='left'
               dataKey='plan'
               name='计划产量'
-              fill='#6366f1'
+              fill={designTokens.colors.secondary.dark}
               barSize={20}
             />
             <Bar
               yAxisId='left'
               dataKey='actual'
               name='实际产量'
-              fill='#f59e0b'
+              fill={designTokens.colors.warning.main}
               barSize={20}
             />
             <Line
@@ -133,7 +134,7 @@ export default function PlanAdherencePage() {
               type='monotone'
               dataKey='adherenceRate'
               name='达成率'
-              stroke='#10b981'
+              stroke={designTokens.colors.success.dark}
               strokeWidth={2}
               dot={{ r: 3 }}
             />

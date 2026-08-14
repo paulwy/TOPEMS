@@ -1,3 +1,4 @@
+import { designTokens, semanticTokens } from '@topems/tokens';
 /**
  * V47.0 前端 AI 增强 — UI 组件推荐器
  *
@@ -1003,7 +1004,7 @@ export class UIRecommender {
       const theme = designInfo.theme as Record<string, unknown>;
       if (Array.isArray(theme.colors)) return theme.colors.map(String);
     }
-    return ['#1976d2', '#ffffff', '#f5f5f5'];
+    return [designTokens.colors.primary.dark, designTokens.colors.background.paper, '#f5f5f5'];
   }
 
   private extractTypography(designInfo: Record<string, unknown>): {

@@ -14,7 +14,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { QUERY_KEYS, queryClient } from '@/lib/reactQuery';
 import { useNotificationStore } from '@/store';
 
-const ct = designTokens.colors;
+const ct= designTokens.colors;
 
 const ReturnDetailPage: React.FC = () => {
   const { t } = useTranslation();

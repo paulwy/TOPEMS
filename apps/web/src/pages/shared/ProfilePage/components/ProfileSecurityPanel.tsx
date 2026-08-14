@@ -33,7 +33,7 @@ interface ProfileSecurityPanelProps {
   navigate: (path: string) => void;
 }
 
-const ct = designTokens.colors;
+const ct= designTokens.colors;
 
 const ProfileSecurityPanel: React.FC<ProfileSecurityPanelProps> = ({
   user,
