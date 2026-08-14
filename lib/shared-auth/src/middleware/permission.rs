@@ -254,8 +254,12 @@ mod tests {
 
     fn build_app<F>(mw: F) -> Router
     where
-        F: Fn(Request<Body>, Next) -> std::pin::Pin<Box<dyn std::future::Future<Output = axum::response::Response> + Send>>
-            + Clone
+        F: Fn(
+                Request<Body>,
+                Next,
+            ) -> std::pin::Pin<
+                Box<dyn std::future::Future<Output = axum::response::Response> + Send>,
+            > + Clone
             + Send
             + Sync
             + 'static,
@@ -267,8 +271,12 @@ mod tests {
 
     async fn send<F>(mw: F, claims: Option<Claims>) -> StatusCode
     where
-        F: Fn(Request<Body>, Next) -> std::pin::Pin<Box<dyn std::future::Future<Output = axum::response::Response> + Send>>
-            + Clone
+        F: Fn(
+                Request<Body>,
+                Next,
+            ) -> std::pin::Pin<
+                Box<dyn std::future::Future<Output = axum::response::Response> + Send>,
+            > + Clone
             + Send
             + Sync
             + 'static,
@@ -285,10 +293,7 @@ mod tests {
     }
 
     fn build_req(claims: Option<Claims>) -> Request<Body> {
-        let mut req = Request::builder()
-            .uri("/x")
-            .body(Body::empty())
-            .unwrap();
+        let mut req = Request::builder().uri("/x").body(Body::empty()).unwrap();
         if let Some(c) = claims {
             req.extensions_mut().insert(c);
         }

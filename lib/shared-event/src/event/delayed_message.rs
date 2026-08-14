@@ -408,8 +408,14 @@ mod tests {
         // publish_delayed_event 使用 format!("event.delayed.{}", event_type) 作为 routing_key
         for (et, expected) in [
             (EventType::HealthCheck, "event.delayed.HealthCheck"),
-            (EventType::CacheInvalidated, "event.delayed.CacheInvalidated"),
-            (EventType::PmProjectCreated, "event.delayed.PmProjectCreated"),
+            (
+                EventType::CacheInvalidated,
+                "event.delayed.CacheInvalidated",
+            ),
+            (
+                EventType::PmProjectCreated,
+                "event.delayed.PmProjectCreated",
+            ),
         ] {
             let routing_key = format!("event.delayed.{}", et);
             assert_eq!(routing_key, expected);
@@ -420,8 +426,16 @@ mod tests {
     fn test_routing_key_format_for_targeted_delayed_event() {
         // publish_delayed_event_with_target 使用 format!("event.delayed.{}.{}", target, event_type)
         let cases = [
-            (EventType::HealthCheck, "svc-a", "event.delayed.svc-a.HealthCheck"),
-            (EventType::CacheInvalidated, "erp", "event.delayed.erp.CacheInvalidated"),
+            (
+                EventType::HealthCheck,
+                "svc-a",
+                "event.delayed.svc-a.HealthCheck",
+            ),
+            (
+                EventType::CacheInvalidated,
+                "erp",
+                "event.delayed.erp.CacheInvalidated",
+            ),
         ];
         for (et, target, expected) in cases {
             let routing_key = format!("event.delayed.{}.{}", target, et);

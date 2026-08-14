@@ -432,10 +432,7 @@ mod tests {
     #[test]
     fn test_validate_file_too_large() {
         let mut tmp = std::env::temp_dir();
-        tmp.push(format!(
-            "topems_test_large_{}",
-            uuid::Uuid::new_v4()
-        ));
+        tmp.push(format!("topems_test_large_{}", uuid::Uuid::new_v4()));
         let cfg = StorageConfig {
             provider: "local".to_string(),
             local_path: tmp.to_str().expect("path").to_string(),
@@ -447,7 +444,10 @@ mod tests {
         let storage = LocalStorage::new(&cfg).expect("create");
         let big_content = vec![0u8; 100];
         let result = storage.validate_file(&big_content, "text/plain");
-        assert!(result.is_err(), "expected validation error for too-large file");
+        assert!(
+            result.is_err(),
+            "expected validation error for too-large file"
+        );
         let _ = std::fs::remove_dir_all(&tmp);
     }
 

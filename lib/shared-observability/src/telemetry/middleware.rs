@@ -320,9 +320,7 @@ mod tests {
     #[test]
     fn test_traced_request_ext_for_request_builder_with_trace_no_panic() {
         let client = reqwest::Client::builder().build().unwrap();
-        let builder = client
-            .get("http://example.com/api/v2")
-            .with_trace();
+        let builder = client.get("http://example.com/api/v2").with_trace();
         // with_trace returns a RequestBuilder; building the request should succeed
         // and not panic even though OTel is not initialized.
         let req = builder.build().expect("build request");

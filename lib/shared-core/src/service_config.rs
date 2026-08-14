@@ -531,7 +531,9 @@ mod tests {
         let reg = ServiceConfigRegistry::new();
         let all = reg.get_all();
         for svc in &all {
-            let fetched = reg.get(&svc.code).expect("get_all 中的每个服务都应可被 get 查到");
+            let fetched = reg
+                .get(&svc.code)
+                .expect("get_all 中的每个服务都应可被 get 查到");
             assert_eq!(fetched.code, svc.code);
         }
     }
@@ -544,7 +546,10 @@ mod tests {
             core_group.iter().any(|s| s.code == "unified-core"),
             "Core 组应包含 unified-core"
         );
-        assert!(core_group.len() >= 7, "Core 组应有 1 个 standalone + 6 个虚拟服务");
+        assert!(
+            core_group.len() >= 7,
+            "Core 组应有 1 个 standalone + 6 个虚拟服务"
+        );
     }
 
     #[test]
@@ -569,9 +574,7 @@ mod tests {
     #[test]
     fn get_startup_order_returns_ok_and_is_topo_sorted() {
         let reg = ServiceConfigRegistry::new();
-        let order = reg
-            .get_startup_order()
-            .expect("默认配置不应有循环依赖");
+        let order = reg.get_startup_order().expect("默认配置不应有循环依赖");
         assert_eq!(order.len(), 29);
         let pos: HashMap<&str, usize> = order
             .iter()
@@ -642,9 +645,7 @@ mod tests {
     #[test]
     fn get_service_url_local_env_default() {
         let reg = ServiceConfigRegistry::new();
-        let url = reg
-            .get_service_url("unified-core")
-            .expect("应返回 URL");
+        let url = reg.get_service_url("unified-core").expect("应返回 URL");
         assert_eq!(url, "http://localhost:8000");
     }
 

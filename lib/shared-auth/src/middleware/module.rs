@@ -158,8 +158,12 @@ mod tests {
 
     async fn send<F>(mw: F, claims: Option<Claims>) -> StatusCode
     where
-        F: Fn(Request<Body>, Next) -> std::pin::Pin<Box<dyn std::future::Future<Output = axum::response::Response> + Send>>
-            + Clone
+        F: Fn(
+                Request<Body>,
+                Next,
+            ) -> std::pin::Pin<
+                Box<dyn std::future::Future<Output = axum::response::Response> + Send>,
+            > + Clone
             + Send
             + Sync
             + 'static,

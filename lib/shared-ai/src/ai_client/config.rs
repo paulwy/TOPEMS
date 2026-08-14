@@ -254,7 +254,11 @@ mod tests {
         ] {
             let json = serde_json::to_string(&provider).unwrap();
             let deserialized: AIProviderType = serde_json::from_str(&json).unwrap();
-            assert_eq!(deserialized, provider, "roundtrip failed for {:?}", provider);
+            assert_eq!(
+                deserialized, provider,
+                "roundtrip failed for {:?}",
+                provider
+            );
         }
     }
 
@@ -432,7 +436,10 @@ mod tests {
         let json = serde_json::to_string(&config).unwrap();
         let deserialized: AIClientConfig = serde_json::from_str(&json).unwrap();
         assert_eq!(deserialized.chat_model.model_name, "qwen2.5:7b-instruct");
-        assert_eq!(deserialized.embedding_model.model_name, "text-embedding-3-small");
+        assert_eq!(
+            deserialized.embedding_model.model_name,
+            "text-embedding-3-small"
+        );
         assert_eq!(deserialized.embedding_model.dimension, Some(1536));
         assert!(!deserialized.enable_streaming);
         assert_eq!(deserialized.default_temperature, 0.5);

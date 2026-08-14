@@ -237,7 +237,8 @@ pub fn generate_plugin_install_token(
     };
 
     let encoding_key = if is_pem {
-        EncodingKey::from_rsa_pem(secret.as_bytes()).map_err(|e| format!("Invalid RSA key: {}", e))?
+        EncodingKey::from_rsa_pem(secret.as_bytes())
+            .map_err(|e| format!("Invalid RSA key: {}", e))?
     } else {
         EncodingKey::from_secret(secret.as_ref())
     };
@@ -246,14 +247,22 @@ pub fn generate_plugin_install_token(
 }
 
 /// 校验插件安装 JWT 令牌
-pub fn verify_plugin_install_token(secret: &str, token: &str) -> Result<PluginInstallClaims, String> {
+pub fn verify_plugin_install_token(
+    secret: &str,
+    token: &str,
+) -> Result<PluginInstallClaims, String> {
     use jsonwebtoken::{decode, Algorithm, DecodingKey, Validation};
 
     let is_pem = secret.contains("-----BEGIN");
-    let algorithm = if is_pem { Algorithm::RS256 } else { Algorithm::HS256 };
+    let algorithm = if is_pem {
+        Algorithm::RS256
+    } else {
+        Algorithm::HS256
+    };
 
     let decoding_key = if is_pem {
-        DecodingKey::from_rsa_pem(secret.as_bytes()).map_err(|e| format!("Invalid RSA key: {}", e))?
+        DecodingKey::from_rsa_pem(secret.as_bytes())
+            .map_err(|e| format!("Invalid RSA key: {}", e))?
     } else {
         DecodingKey::from_secret(secret.as_ref())
     };
@@ -291,8 +300,7 @@ pub struct PermissionDef {
 
 /// 从环境变量读取 `RUNTIME_URL`，带默认端口
 pub fn get_runtime_url(default_port: &str) -> String {
-    std::env::var("RUNTIME_URL")
-        .unwrap_or_else(|_| format!("http://localhost:{}", default_port))
+    std::env::var("RUNTIME_URL").unwrap_or_else(|_| format!("http://localhost:{}", default_port))
 }
 
 /// 从环境变量读取统一核心 URL
@@ -308,9 +316,7 @@ pub async fn auto_register_to_core<F>(core_url: Option<&str>, log_label: &str, i
 where
     F: FnOnce(String) -> PluginInfo,
 {
-    let core_url = core_url
-        .map(|s| s.to_string())
-        .unwrap_or_else(get_core_url);
+    let core_url = core_url.map(|s| s.to_string()).unwrap_or_else(get_core_url);
 
     let runtime_url =
         std::env::var("RUNTIME_URL").unwrap_or_else(|_| "http://localhost:8000".to_string());
@@ -377,7 +383,10 @@ where
     }
     let mut trace_headers = HeaderMap::new();
     global::get_text_map_propagator(|propagator| {
-        propagator.inject_context(&opentelemetry::Context::current(), &mut HeaderMapInjector(&mut trace_headers));
+        propagator.inject_context(
+            &opentelemetry::Context::current(),
+            &mut HeaderMapInjector(&mut trace_headers),
+        );
     });
     for (k, v) in trace_headers.iter() {
         request = request.header(k.clone(), v);
@@ -829,8 +838,7 @@ version: "1.0"
     #[test]
     fn generate_plugin_install_token_without_plugin_code() {
         let secret = "another-secure-secret-key-for-testing-32-chars";
-        let token =
-            generate_plugin_install_token(secret, None, 60).expect("生成 token");
+        let token = generate_plugin_install_token(secret, None, 60).expect("生成 token");
         let claims = verify_plugin_install_token(secret, &token).expect("验证 token");
         assert!(claims.plugin_code.is_none());
     }
@@ -939,10 +947,8 @@ version: "1.0"
         std::env::remove_var("PLUGIN_REGISTRATION_JWT");
         std::env::remove_var("PLUGIN_REGISTRATION_SECRET");
         std::env::remove_var("PLUGIN_REGISTRATION_TOKEN");
-        auto_register_to_core(
-            Some("http://127.0.0.1:1"),
-            "TestPlugin",
-            |runtime_url| PluginInfo {
+        auto_register_to_core(Some("http://127.0.0.1:1"), "TestPlugin", |runtime_url| {
+            PluginInfo {
                 code: "test-plugin".to_string(),
                 name: "Test Plugin".to_string(),
                 version: "1.0.0".to_string(),
@@ -953,8 +959,8 @@ version: "1.0"
                 dependencies: vec![],
                 navigation_config: None,
                 category: Some("test".to_string()),
-            },
-        )
+            }
+        })
         .await;
         // 如果函数没有 panic，测试通过
     }
@@ -989,4 +995,3 @@ version: "1.0"
         std::env::remove_var("CORE_URL");
     }
 }
-

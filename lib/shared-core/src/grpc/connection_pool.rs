@@ -380,13 +380,22 @@ mod tests {
 
     #[test]
     fn test_load_balancing_strategy_variants_equality() {
-        assert_eq!(LoadBalancingStrategy::RoundRobin, LoadBalancingStrategy::RoundRobin);
+        assert_eq!(
+            LoadBalancingStrategy::RoundRobin,
+            LoadBalancingStrategy::RoundRobin
+        );
         assert_ne!(
             LoadBalancingStrategy::RoundRobin,
             LoadBalancingStrategy::Random
         );
-        assert_ne!(LoadBalancingStrategy::Random, LoadBalancingStrategy::Priority);
-        assert_ne!(LoadBalancingStrategy::Priority, LoadBalancingStrategy::LeastUsed);
+        assert_ne!(
+            LoadBalancingStrategy::Random,
+            LoadBalancingStrategy::Priority
+        );
+        assert_ne!(
+            LoadBalancingStrategy::Priority,
+            LoadBalancingStrategy::LeastUsed
+        );
     }
 
     #[test]
@@ -494,7 +503,8 @@ mod tests {
     async fn test_mark_unhealthy_nonexistent_group_is_noop() {
         let pool = GrpcChannelPool::new(GrpcPoolConfig::default());
         // Should not panic and should complete successfully
-        pool.mark_unhealthy("nonexistent-group", "http://x:1234").await;
+        pool.mark_unhealthy("nonexistent-group", "http://x:1234")
+            .await;
         let stats = pool.stats().await;
         assert_eq!(stats.total_endpoints, 0);
     }
@@ -502,7 +512,8 @@ mod tests {
     #[tokio::test]
     async fn test_remove_endpoint_nonexistent_group_is_noop() {
         let pool = GrpcChannelPool::new(GrpcPoolConfig::default());
-        pool.remove_endpoint("nonexistent-group", "http://x:1234").await;
+        pool.remove_endpoint("nonexistent-group", "http://x:1234")
+            .await;
         // saturating_sub keeps the count at 0
         let stats = pool.stats().await;
         assert_eq!(stats.total_endpoints, 0);
@@ -517,8 +528,8 @@ mod tests {
 
     #[tokio::test]
     async fn test_pooled_channel_clone_preserves_endpoint_url() {
-        let endpoint = Endpoint::from_shared("http://localhost:1234".to_string())
-            .expect("parse endpoint");
+        let endpoint =
+            Endpoint::from_shared("http://localhost:1234".to_string()).expect("parse endpoint");
         let channel = endpoint.connect_lazy();
         let pc = PooledChannel {
             channel,
@@ -530,8 +541,8 @@ mod tests {
 
     #[tokio::test]
     async fn test_pooled_channel_debug_format() {
-        let endpoint = Endpoint::from_shared("http://localhost:1234".to_string())
-            .expect("parse endpoint");
+        let endpoint =
+            Endpoint::from_shared("http://localhost:1234".to_string()).expect("parse endpoint");
         let channel = endpoint.connect_lazy();
         let pc = PooledChannel {
             channel,

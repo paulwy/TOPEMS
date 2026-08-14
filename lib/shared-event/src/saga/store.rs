@@ -331,7 +331,8 @@ mod tests {
     async fn test_update_step_status_running_sets_started_at() {
         let store = InMemorySagaStore::new();
         let mut saga = make_saga(SagaStatus::Running);
-        saga.steps.push(crate::saga::step::SagaStep::new("step_0", 0));
+        saga.steps
+            .push(crate::saga::step::SagaStep::new("step_0", 0));
         let saga_id = saga.id;
         store.save_saga(&saga).await.unwrap();
 
@@ -349,7 +350,8 @@ mod tests {
     async fn test_update_step_status_completed_sets_completed_at() {
         let store = InMemorySagaStore::new();
         let mut saga = make_saga(SagaStatus::Running);
-        saga.steps.push(crate::saga::step::SagaStep::new("step_1", 0));
+        saga.steps
+            .push(crate::saga::step::SagaStep::new("step_1", 0));
         let saga_id = saga.id;
         store.save_saga(&saga).await.unwrap();
 
@@ -367,7 +369,8 @@ mod tests {
     async fn test_update_step_status_failed_records_error() {
         let store = InMemorySagaStore::new();
         let mut saga = make_saga(SagaStatus::Running);
-        saga.steps.push(crate::saga::step::SagaStep::new("step_err", 0));
+        saga.steps
+            .push(crate::saga::step::SagaStep::new("step_err", 0));
         let saga_id = saga.id;
         store.save_saga(&saga).await.unwrap();
 
@@ -383,10 +386,7 @@ mod tests {
 
         let loaded = store.load_saga(saga_id).await.unwrap();
         assert_eq!(loaded.steps[0].status, StepStatus::Failed);
-        assert_eq!(
-            loaded.steps[0].error.as_deref(),
-            Some("database timeout")
-        );
+        assert_eq!(loaded.steps[0].error.as_deref(), Some("database timeout"));
     }
 
     #[tokio::test]
@@ -401,9 +401,18 @@ mod tests {
     #[tokio::test]
     async fn test_list_pending_sagas() {
         let store = InMemorySagaStore::new();
-        store.save_saga(&make_saga(SagaStatus::Pending)).await.unwrap();
-        store.save_saga(&make_saga(SagaStatus::Completed)).await.unwrap();
-        store.save_saga(&make_saga(SagaStatus::Pending)).await.unwrap();
+        store
+            .save_saga(&make_saga(SagaStatus::Pending))
+            .await
+            .unwrap();
+        store
+            .save_saga(&make_saga(SagaStatus::Completed))
+            .await
+            .unwrap();
+        store
+            .save_saga(&make_saga(SagaStatus::Pending))
+            .await
+            .unwrap();
 
         let pending = store.list_pending_sagas().await.unwrap();
         assert_eq!(pending.len(), 2);
@@ -413,10 +422,22 @@ mod tests {
     #[tokio::test]
     async fn test_list_failed_sagas() {
         let store = InMemorySagaStore::new();
-        store.save_saga(&make_saga(SagaStatus::Failed)).await.unwrap();
-        store.save_saga(&make_saga(SagaStatus::Completed)).await.unwrap();
-        store.save_saga(&make_saga(SagaStatus::Failed)).await.unwrap();
-        store.save_saga(&make_saga(SagaStatus::Aborted)).await.unwrap();
+        store
+            .save_saga(&make_saga(SagaStatus::Failed))
+            .await
+            .unwrap();
+        store
+            .save_saga(&make_saga(SagaStatus::Completed))
+            .await
+            .unwrap();
+        store
+            .save_saga(&make_saga(SagaStatus::Failed))
+            .await
+            .unwrap();
+        store
+            .save_saga(&make_saga(SagaStatus::Aborted))
+            .await
+            .unwrap();
 
         let failed = store.list_failed_sagas().await.unwrap();
         assert_eq!(failed.len(), 2);
@@ -490,7 +511,8 @@ mod tests {
     async fn test_update_step_status_skipped_sets_completed_at() {
         let store = InMemorySagaStore::new();
         let mut saga = make_saga(SagaStatus::Running);
-        saga.steps.push(crate::saga::step::SagaStep::new("skip_step", 0));
+        saga.steps
+            .push(crate::saga::step::SagaStep::new("skip_step", 0));
         let saga_id = saga.id;
         store.save_saga(&saga).await.unwrap();
 
@@ -508,7 +530,8 @@ mod tests {
     async fn test_update_step_status_compensated_sets_completed_at() {
         let store = InMemorySagaStore::new();
         let mut saga = make_saga(SagaStatus::Compensating);
-        saga.steps.push(crate::saga::step::SagaStep::new("comp_step", 0));
+        saga.steps
+            .push(crate::saga::step::SagaStep::new("comp_step", 0));
         let saga_id = saga.id;
         store.save_saga(&saga).await.unwrap();
 

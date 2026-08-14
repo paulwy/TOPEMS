@@ -1185,11 +1185,7 @@ mod tests {
             10
         );
         assert_eq!(
-            parse_max_connections(
-                Some(format!("{}0", u32::MAX).into()),
-                None,
-                10
-            ),
+            parse_max_connections(Some(format!("{}0", u32::MAX).into()), None, 10),
             10
         );
     }

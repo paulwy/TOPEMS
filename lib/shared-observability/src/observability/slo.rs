@@ -426,8 +426,7 @@ mod tests {
     fn test_slo_definition_serde_roundtrip() {
         let original = make_definition("slo-serde", 99.9, 99.5);
         let json = serde_json::to_string(&original).expect("serialize SLODefinition");
-        let back: SLODefinition =
-            serde_json::from_str(&json).expect("deserialize SLODefinition");
+        let back: SLODefinition = serde_json::from_str(&json).expect("deserialize SLODefinition");
         let json_again = serde_json::to_string(&back).expect("serialize SLODefinition again");
         assert_eq!(json, json_again, "SLODefinition serde roundtrip mismatch");
     }
@@ -436,8 +435,7 @@ mod tests {
     fn test_slo_measurement_serde_roundtrip() {
         let original = make_measurement("slo-meas", 99.95);
         let json = serde_json::to_string(&original).expect("serialize SLOMeasurement");
-        let back: SLOMeasurement =
-            serde_json::from_str(&json).expect("deserialize SLOMeasurement");
+        let back: SLOMeasurement = serde_json::from_str(&json).expect("deserialize SLOMeasurement");
         let json_again = serde_json::to_string(&back).expect("serialize SLOMeasurement again");
         assert_eq!(json, json_again, "SLOMeasurement serde roundtrip mismatch");
     }

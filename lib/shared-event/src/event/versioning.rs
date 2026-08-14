@@ -373,8 +373,10 @@ mod tests {
     #[test]
     fn test_register_duplicate_version_is_allowed() {
         let reg = EventVersionRegistry::new();
-        reg.register(make_entry("evt.x", EventVersion::v1())).unwrap();
-        reg.register(make_entry("evt.x", EventVersion::v1())).unwrap(); // 允许覆盖
+        reg.register(make_entry("evt.x", EventVersion::v1()))
+            .unwrap();
+        reg.register(make_entry("evt.x", EventVersion::v1()))
+            .unwrap(); // 允许覆盖
         assert_eq!(reg.get_versions("evt.x").len(), 1);
     }
 
@@ -383,7 +385,9 @@ mod tests {
         let reg = EventVersionRegistry::new();
         assert!(reg.get_versions("no.such.event").is_empty());
         assert!(reg.get_latest_version("no.such.event").is_none());
-        assert!(reg.get_version("no.such.event", &EventVersion::v1()).is_none());
+        assert!(reg
+            .get_version("no.such.event", &EventVersion::v1())
+            .is_none());
         assert!(!reg.check_compatibility("no.such.event", &EventVersion::v1()));
     }
 
@@ -391,8 +395,10 @@ mod tests {
     fn test_get_latest_version_picks_highest() {
         let reg = EventVersionRegistry::new();
         reg.register(make_entry("evt", EventVersion::v1())).unwrap();
-        reg.register(make_entry("evt", EventVersion::new(2, 5))).unwrap();
-        reg.register(make_entry("evt", EventVersion::new(2, 1))).unwrap();
+        reg.register(make_entry("evt", EventVersion::new(2, 5)))
+            .unwrap();
+        reg.register(make_entry("evt", EventVersion::new(2, 1)))
+            .unwrap();
 
         let latest = reg.get_latest_version("evt").unwrap();
         assert_eq!(latest.version, EventVersion::new(2, 5));

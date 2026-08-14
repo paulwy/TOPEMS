@@ -233,7 +233,14 @@ mod tests {
 
     #[test]
     fn test_module_layer_all_core_modules() {
-        for m in &["error", "validation", "response", "config", "security", "tenant"] {
+        for m in &[
+            "error",
+            "validation",
+            "response",
+            "config",
+            "security",
+            "tenant",
+        ] {
             assert_eq!(module_layer(m), Some(Layer::Core));
         }
     }

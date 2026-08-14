@@ -533,7 +533,10 @@ mod tests {
         assert_eq!(deserialized.choices[0].index, 0);
         assert_eq!(deserialized.choices[0].message.role, "assistant");
         assert_eq!(deserialized.choices[0].message.content, "Hi there");
-        assert_eq!(deserialized.choices[0].finish_reason.as_deref(), Some("stop"));
+        assert_eq!(
+            deserialized.choices[0].finish_reason.as_deref(),
+            Some("stop")
+        );
         let usage = deserialized.usage.unwrap();
         assert_eq!(usage.prompt_tokens, 10);
         assert_eq!(usage.completion_tokens, 5);
@@ -655,8 +658,14 @@ mod tests {
         assert_eq!(deserialized.object, "chat.completion.chunk");
         assert_eq!(deserialized.created, 1700000001);
         assert_eq!(deserialized.choices.len(), 1);
-        assert_eq!(deserialized.choices[0].delta.role.as_deref(), Some("assistant"));
-        assert_eq!(deserialized.choices[0].delta.content.as_deref(), Some("Hello"));
+        assert_eq!(
+            deserialized.choices[0].delta.role.as_deref(),
+            Some("assistant")
+        );
+        assert_eq!(
+            deserialized.choices[0].delta.content.as_deref(),
+            Some("Hello")
+        );
         assert!(deserialized.choices[0].finish_reason.is_none());
     }
 

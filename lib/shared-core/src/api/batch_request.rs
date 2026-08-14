@@ -451,7 +451,10 @@ mod tests {
             de.headers.as_ref().unwrap().get("X-Test"),
             Some(&"v".to_string())
         );
-        assert_eq!(de.body.as_ref().unwrap().get("k"), Some(&serde_json::json!(42)));
+        assert_eq!(
+            de.body.as_ref().unwrap().get("k"),
+            Some(&serde_json::json!(42))
+        );
         assert_eq!(de.priority.as_deref(), Some("High"));
         assert_eq!(de.service_group.as_deref(), Some("svc"));
     }

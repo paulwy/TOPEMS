@@ -479,7 +479,11 @@ mod tests {
         use crate::service_port::GROUP1_MODULES;
         let cfg = default_group1_config();
         assert_eq!(cfg.modules.len(), GROUP1_MODULES.len());
-        assert_eq!(cfg.modules.len(), 5, "GROUP1_MODULES 权威清单应为 5 项（monitor 已拆出为独立服务）");
+        assert_eq!(
+            cfg.modules.len(),
+            5,
+            "GROUP1_MODULES 权威清单应为 5 项（monitor 已拆出为独立服务）"
+        );
     }
 
     #[test]
@@ -572,8 +576,7 @@ mod tests {
     #[test]
     fn test_analyze_group2_path_core_legacy() {
         let cfg = RouteCompatConfig::new("hrm", "/api/core/hrm", &[]);
-        let (is_legacy, rewrite) =
-            analyze_group2_path("/api/core/hrm/employees", &cfg);
+        let (is_legacy, rewrite) = analyze_group2_path("/api/core/hrm/employees", &cfg);
         assert!(is_legacy);
         assert_eq!(rewrite, Some("/api/core/hrm/employees".to_string()));
     }
@@ -581,26 +584,17 @@ mod tests {
     #[test]
     fn test_analyze_group2_path_v1_legacy() {
         let cfg = RouteCompatConfig::new("hrm", "/api/core/hrm", &[]);
-        let (is_legacy, rewrite) =
-            analyze_group2_path("/api/hrm/v1/employees", &cfg);
+        let (is_legacy, rewrite) = analyze_group2_path("/api/hrm/v1/employees", &cfg);
         assert!(is_legacy);
         assert_eq!(rewrite, Some("/api/core/hrm/employees".to_string()));
     }
 
     #[test]
     fn test_analyze_group2_path_shortcut() {
-        let cfg = RouteCompatConfig::new(
-            "hrm",
-            "/api/core/hrm",
-            &[("employees", "employees")],
-        );
-        let (is_legacy, rewrite) =
-            analyze_group2_path("/api/v1/employees/123", &cfg);
+        let cfg = RouteCompatConfig::new("hrm", "/api/core/hrm", &[("employees", "employees")]);
+        let (is_legacy, rewrite) = analyze_group2_path("/api/v1/employees/123", &cfg);
         assert!(is_legacy);
-        assert_eq!(
-            rewrite,
-            Some("/api/core/hrm/employees/123".to_string())
-        );
+        assert_eq!(rewrite, Some("/api/core/hrm/employees/123".to_string()));
     }
 
     #[test]
@@ -617,8 +611,7 @@ mod tests {
             modules: &["iam"],
             shortcuts: &[],
         };
-        let (is_legacy, rewrite) =
-            analyze_group1_path("/api/core/iam/users", &cfg);
+        let (is_legacy, rewrite) = analyze_group1_path("/api/core/iam/users", &cfg);
         assert!(!is_legacy);
         assert_eq!(rewrite, None);
     }
@@ -629,8 +622,7 @@ mod tests {
             modules: &["iam"],
             shortcuts: &[],
         };
-        let (is_legacy, rewrite) =
-            analyze_group1_path("/api/core/iam/v1/users", &cfg);
+        let (is_legacy, rewrite) = analyze_group1_path("/api/core/iam/v1/users", &cfg);
         assert!(is_legacy);
         assert_eq!(rewrite, Some("/api/core/iam/users".to_string()));
     }
@@ -641,13 +633,9 @@ mod tests {
             modules: &["iam"],
             shortcuts: &[("auth", "iam", "auth")],
         };
-        let (is_legacy, rewrite) =
-            analyze_group1_path("/api/v1/auth/login", &cfg);
+        let (is_legacy, rewrite) = analyze_group1_path("/api/v1/auth/login", &cfg);
         assert!(is_legacy);
-        assert_eq!(
-            rewrite,
-            Some("/api/core/iam/auth/login".to_string())
-        );
+        assert_eq!(rewrite, Some("/api/core/iam/auth/login".to_string()));
     }
 
     #[test]
@@ -719,19 +707,11 @@ mod tests {
             .route("/", get(|| async { "ok" }))
             .layer(axum::middleware::from_fn(deprecation_middleware));
         let resp = app
-            .oneshot(
-                Request::builder()
-                    .uri("/")
-                    .body(Body::empty())
-                    .unwrap(),
-            )
+            .oneshot(Request::builder().uri("/").body(Body::empty()).unwrap())
             .await
             .unwrap();
         assert_eq!(resp.status(), axum::http::StatusCode::OK);
-        assert_eq!(
-            resp.headers().get("Deprecation").unwrap(),
-            "true"
-        );
+        assert_eq!(resp.headers().get("Deprecation").unwrap(), "true");
         assert!(resp
             .headers()
             .get("Warning")

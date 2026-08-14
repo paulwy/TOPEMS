@@ -39,41 +39,33 @@ pub fn init_metrics(service_name: &str, exporter: TelemetryExporter) -> MetricsG
             ),
             KeyValue::new(semconv::TELEMETRY_SDK_NAME, "opentelemetry"),
             KeyValue::new(semconv::TELEMETRY_SDK_LANGUAGE, "rust"),
-            KeyValue::new(
-                semconv::TELEMETRY_SDK_VERSION,
-                env!("CARGO_PKG_VERSION"),
-            ),
+            KeyValue::new(semconv::TELEMETRY_SDK_VERSION, env!("CARGO_PKG_VERSION")),
         ])
         .build();
 
     let provider = match exporter {
-        TelemetryExporter::Otlp => {
-            match opentelemetry_otlp::MetricExporter::builder().build() {
-                Ok(exporter) => {
-                    let reader = PeriodicReader::builder(exporter)
-                        .with_interval(std::time::Duration::from_secs(10))
-                        .build();
+        TelemetryExporter::Otlp => match opentelemetry_otlp::MetricExporter::builder().build() {
+            Ok(exporter) => {
+                let reader = PeriodicReader::builder(exporter)
+                    .with_interval(std::time::Duration::from_secs(10))
+                    .build();
 
-                    SdkMeterProvider::builder()
-                        .with_resource(resource)
-                        .with_reader(reader)
-                        .build()
-                }
-                Err(e) => {
-                    warn!(
-                        "OTLP metrics exporter 创建失败，回退到 stdout: {}",
-                        e
-                    );
-                    let stdout_reader =
-                        PeriodicReader::builder(opentelemetry_stdout::MetricExporter::default())
-                            .build();
-                    SdkMeterProvider::builder()
-                        .with_resource(resource)
-                        .with_reader(stdout_reader)
-                        .build()
-                }
+                SdkMeterProvider::builder()
+                    .with_resource(resource)
+                    .with_reader(reader)
+                    .build()
             }
-        }
+            Err(e) => {
+                warn!("OTLP metrics exporter 创建失败，回退到 stdout: {}", e);
+                let stdout_reader =
+                    PeriodicReader::builder(opentelemetry_stdout::MetricExporter::default())
+                        .build();
+                SdkMeterProvider::builder()
+                    .with_resource(resource)
+                    .with_reader(stdout_reader)
+                    .build()
+            }
+        },
         TelemetryExporter::Stdout => {
             let reader =
                 PeriodicReader::builder(opentelemetry_stdout::MetricExporter::default()).build();
@@ -96,7 +88,10 @@ pub fn init_metrics(service_name: &str, exporter: TelemetryExporter) -> MetricsG
     }
     *provider_guard = Some(provider);
 
-    info!("✅ OpenTelemetry Metrics 初始化完成 (exporter: {:?})", exporter);
+    info!(
+        "✅ OpenTelemetry Metrics 初始化完成 (exporter: {:?})",
+        exporter
+    );
 
     MetricsGuard { enabled: true }
 }
@@ -215,7 +210,9 @@ pub fn register_u64_observable_gauge<F>(
     F: Fn(&dyn opentelemetry::metrics::AsyncInstrument<u64>) + Send + Sync + 'static,
 {
     let meter = meter(module_path!());
-    let mut builder = meter.u64_observable_gauge(name).with_description(description);
+    let mut builder = meter
+        .u64_observable_gauge(name)
+        .with_description(description);
     if let Some(u) = unit {
         builder = builder.with_unit(u);
     }
@@ -231,7 +228,9 @@ mod tests {
 
     #[test]
     fn test_metrics_disabled_by_default() {
-        let _env_lock = crate::telemetry::test_support::OTEL_ENV_LOCK.lock().unwrap();
+        let _env_lock = crate::telemetry::test_support::OTEL_ENV_LOCK
+            .lock()
+            .unwrap();
         std::env::remove_var("OTEL_METRICS_ENABLED");
         let guard = init_metrics("test-service", TelemetryExporter::Stdout);
         assert!(!guard.enabled);
@@ -239,7 +238,9 @@ mod tests {
 
     #[test]
     fn test_meter_returns_noop_when_disabled() {
-        let _env_lock = crate::telemetry::test_support::OTEL_ENV_LOCK.lock().unwrap();
+        let _env_lock = crate::telemetry::test_support::OTEL_ENV_LOCK
+            .lock()
+            .unwrap();
         std::env::remove_var("OTEL_METRICS_ENABLED");
         let _guard = init_metrics("test-service", TelemetryExporter::Stdout);
         let meter = meter("test");
@@ -300,7 +301,9 @@ mod tests {
 
     #[test]
     fn test_metrics_guard_disabled_drop_is_no_op() {
-        let _env_lock = crate::telemetry::test_support::OTEL_ENV_LOCK.lock().unwrap();
+        let _env_lock = crate::telemetry::test_support::OTEL_ENV_LOCK
+            .lock()
+            .unwrap();
         std::env::remove_var("OTEL_METRICS_ENABLED");
         let guard = init_metrics("test-service-disabled", TelemetryExporter::Stdout);
         assert!(!guard.enabled);

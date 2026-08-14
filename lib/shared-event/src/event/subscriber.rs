@@ -663,7 +663,10 @@ mod tests {
         assert_eq!("material".parse(), Ok(MasterDataDomain::Material));
         assert_eq!("organization".parse(), Ok(MasterDataDomain::Organization));
         assert_eq!("employee".parse(), Ok(MasterDataDomain::Employee));
-        assert_eq!("account_subject".parse(), Ok(MasterDataDomain::AccountSubject));
+        assert_eq!(
+            "account_subject".parse(),
+            Ok(MasterDataDomain::AccountSubject)
+        );
 
         // 短前缀
         assert_eq!("cust".parse(), Ok(MasterDataDomain::Customer));
@@ -726,7 +729,9 @@ mod tests {
         assert!(v.get("changed_fields").is_none() || v["changed_fields"].is_array());
 
         // 设置 changed_fields 后应出现
-        let event2 = event.clone().with_changed_fields(vec!["salary".to_string()]);
+        let event2 = event
+            .clone()
+            .with_changed_fields(vec!["salary".to_string()]);
         let v2 = serde_json::to_value(&event2).unwrap();
         assert_eq!(v2["changed_fields"][0], "salary");
     }
@@ -813,15 +818,11 @@ mod tests {
         }
         let sub = EventSubscriber::new("test-service")
             .expect("lazy construction succeeds")
-            .subscribe(
-                vec![EventType::HealthCheck],
-                |_event: Event| Box::pin(async {}),
-            );
+            .subscribe(vec![EventType::HealthCheck], |_event: Event| {
+                Box::pin(async {})
+            });
         let result = sub.start_listening().await;
-        assert!(
-            result.is_err(),
-            "Redis 不可达时 start_listening 应返回 Err"
-        );
+        assert!(result.is_err(), "Redis 不可达时 start_listening 应返回 Err");
     }
 
     #[tokio::test]

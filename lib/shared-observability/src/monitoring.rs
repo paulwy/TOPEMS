@@ -1437,7 +1437,10 @@ mod tests {
             assert_eq!(original, back);
         }
         // serde rename_all = "lowercase"
-        assert_eq!(serde_json::to_string(&ServiceStatus::Healthy).unwrap(), "\"healthy\"");
+        assert_eq!(
+            serde_json::to_string(&ServiceStatus::Healthy).unwrap(),
+            "\"healthy\""
+        );
         assert_eq!(
             serde_json::to_string(&ServiceStatus::Unhealthy).unwrap(),
             "\"unhealthy\""
@@ -1647,12 +1650,27 @@ mod tests {
             created_at: now,
             updated_at: now,
         };
-        state.create_alert(&mk_rule("p0", AlertSeverity::P0), "p0".to_string()).await;
-        state.create_alert(&mk_rule("p1a", AlertSeverity::P1), "p1a".to_string()).await;
-        state.create_alert(&mk_rule("p1b", AlertSeverity::P1), "p1b".to_string()).await;
-        assert_eq!(state.get_alerts_by_severity(AlertSeverity::P0).await.len(), 1);
-        assert_eq!(state.get_alerts_by_severity(AlertSeverity::P1).await.len(), 2);
-        assert_eq!(state.get_alerts_by_severity(AlertSeverity::P2).await.len(), 0);
+        state
+            .create_alert(&mk_rule("p0", AlertSeverity::P0), "p0".to_string())
+            .await;
+        state
+            .create_alert(&mk_rule("p1a", AlertSeverity::P1), "p1a".to_string())
+            .await;
+        state
+            .create_alert(&mk_rule("p1b", AlertSeverity::P1), "p1b".to_string())
+            .await;
+        assert_eq!(
+            state.get_alerts_by_severity(AlertSeverity::P0).await.len(),
+            1
+        );
+        assert_eq!(
+            state.get_alerts_by_severity(AlertSeverity::P1).await.len(),
+            2
+        );
+        assert_eq!(
+            state.get_alerts_by_severity(AlertSeverity::P2).await.len(),
+            0
+        );
     }
 
     #[tokio::test]
@@ -1722,7 +1740,9 @@ mod tests {
             message: None,
             details: HashMap::new(),
         };
-        state.update_service_health("svc-a".to_string(), health).await;
+        state
+            .update_service_health("svc-a".to_string(), health)
+            .await;
         let services = state.get_all_services_health().await;
         assert_eq!(services.len(), 1);
         assert_eq!(services[0].service_name, "svc-a");
@@ -1812,11 +1832,7 @@ mod tests {
             service_name: None,
             instance: None,
             triggered_at,
-            resolved_at: if resolved {
-                Some(triggered_at)
-            } else {
-                None
-            },
+            resolved_at: if resolved { Some(triggered_at) } else { None },
             acknowledged: false,
             acknowledged_at: None,
             acknowledged_by: None,
@@ -1855,8 +1871,7 @@ mod tests {
             duration_seconds: Some(300),
         };
         let json = serde_json::to_string(&original).expect("serialize AlertCondition");
-        let back: AlertCondition =
-            serde_json::from_str(&json).expect("deserialize AlertCondition");
+        let back: AlertCondition = serde_json::from_str(&json).expect("deserialize AlertCondition");
         let json_again = serde_json::to_string(&back).expect("serialize AlertCondition again");
         assert_eq!(json, json_again);
         assert_eq!(back.threshold, 75.5);
@@ -1969,7 +1984,10 @@ mod tests {
     #[tokio::test]
     async fn test_hourly_alert_count_serde_roundtrip() {
         let now = Utc::now();
-        let original = HourlyAlertCount { hour: now, count: 5 };
+        let original = HourlyAlertCount {
+            hour: now,
+            count: 5,
+        };
         let json = serde_json::to_string(&original).unwrap();
         let back: HourlyAlertCount = serde_json::from_str(&json).unwrap();
         let json_again = serde_json::to_string(&back).unwrap();
@@ -2131,8 +2149,14 @@ mod tests {
     async fn test_evaluate_alert_rule_silenced_by_severity() {
         let state = MonitoringState::new();
         let now = Utc::now();
-        let rule =
-            make_test_rule("sil-sev", AlertSeverity::P2, AlertCategory::Other, 10.0, true, 0);
+        let rule = make_test_rule(
+            "sil-sev",
+            AlertSeverity::P2,
+            AlertCategory::Other,
+            10.0,
+            true,
+            0,
+        );
         let silence = SilenceRule {
             id: "sil-1".to_string(),
             name: "silence p2".to_string(),
@@ -2151,7 +2175,10 @@ mod tests {
         };
         state.add_silence_rule(silence).await;
         let result = state.evaluate_alert_rule(&rule, 50.0).await;
-        assert!(result.is_none(), "P2 rule should be silenced by severity matcher");
+        assert!(
+            result.is_none(),
+            "P2 rule should be silenced by severity matcher"
+        );
     }
 
     #[tokio::test]
@@ -2190,8 +2217,14 @@ mod tests {
     async fn test_evaluate_alert_rule_silenced_by_regex() {
         let state = MonitoringState::new();
         let now = Utc::now();
-        let rule =
-            make_test_rule("sil-re", AlertSeverity::P2, AlertCategory::Other, 10.0, true, 0);
+        let rule = make_test_rule(
+            "sil-re",
+            AlertSeverity::P2,
+            AlertCategory::Other,
+            10.0,
+            true,
+            0,
+        );
         let silence = SilenceRule {
             id: "sil-re".to_string(),
             name: "regex silence".to_string(),
@@ -2220,8 +2253,14 @@ mod tests {
         let state = MonitoringState::new();
         let now = Utc::now();
         // P0 rule: regex "P[23]" should NOT silence P0
-        let rule =
-            make_test_rule("sil-re-p0", AlertSeverity::P0, AlertCategory::Other, 10.0, true, 0);
+        let rule = make_test_rule(
+            "sil-re-p0",
+            AlertSeverity::P0,
+            AlertCategory::Other,
+            10.0,
+            true,
+            0,
+        );
         let silence = SilenceRule {
             id: "sil-re-p0".to_string(),
             name: "regex p23".to_string(),
@@ -2240,10 +2279,7 @@ mod tests {
         };
         state.add_silence_rule(silence).await;
         assert!(
-            state
-                .evaluate_alert_rule(&rule, 50.0)
-                .await
-                .is_some(),
+            state.evaluate_alert_rule(&rule, 50.0).await.is_some(),
             "P0 not silenced by P[23] regex"
         );
     }
@@ -2252,8 +2288,14 @@ mod tests {
     async fn test_silence_disabled_does_not_silence() {
         let state = MonitoringState::new();
         let now = Utc::now();
-        let rule =
-            make_test_rule("sil-dis", AlertSeverity::P2, AlertCategory::Other, 10.0, true, 0);
+        let rule = make_test_rule(
+            "sil-dis",
+            AlertSeverity::P2,
+            AlertCategory::Other,
+            10.0,
+            true,
+            0,
+        );
         let silence = SilenceRule {
             id: "sil-dis".to_string(),
             name: "disabled".to_string(),
@@ -2278,8 +2320,14 @@ mod tests {
     async fn test_silence_out_of_window_does_not_silence() {
         let state = MonitoringState::new();
         let now = Utc::now();
-        let rule =
-            make_test_rule("sil-out", AlertSeverity::P2, AlertCategory::Other, 10.0, true, 0);
+        let rule = make_test_rule(
+            "sil-out",
+            AlertSeverity::P2,
+            AlertCategory::Other,
+            10.0,
+            true,
+            0,
+        );
         // Window entirely in the future → now < starts_at → skipped
         let silence = SilenceRule {
             id: "sil-out".to_string(),
@@ -2306,8 +2354,14 @@ mod tests {
         let state = MonitoringState::new();
         let now = Utc::now();
         // make_test_rule sets team = Some("test-team")
-        let rule =
-            make_test_rule("sil-team", AlertSeverity::P2, AlertCategory::Other, 10.0, true, 0);
+        let rule = make_test_rule(
+            "sil-team",
+            AlertSeverity::P2,
+            AlertCategory::Other,
+            10.0,
+            true,
+            0,
+        );
         let silence = SilenceRule {
             id: "sil-team".to_string(),
             name: "team silence".to_string(),
@@ -2334,8 +2388,14 @@ mod tests {
         // leaving matches=true → silences any rule within window.
         let state = MonitoringState::new();
         let now = Utc::now();
-        let rule =
-            make_test_rule("sil-unk", AlertSeverity::P2, AlertCategory::Other, 10.0, true, 0);
+        let rule = make_test_rule(
+            "sil-unk",
+            AlertSeverity::P2,
+            AlertCategory::Other,
+            10.0,
+            true,
+            0,
+        );
         let silence = SilenceRule {
             id: "sil-unk".to_string(),
             name: "unknown matcher".to_string(),
@@ -2373,8 +2433,14 @@ mod tests {
         );
         state.alerts.write().await.push(p0_alert);
 
-        let rule =
-            make_test_rule("sup-p2", AlertSeverity::P2, AlertCategory::System, 10.0, true, 0);
+        let rule = make_test_rule(
+            "sup-p2",
+            AlertSeverity::P2,
+            AlertCategory::System,
+            10.0,
+            true,
+            0,
+        );
         let result = state.evaluate_alert_rule(&rule, 50.0).await;
         assert!(
             result.is_none(),
@@ -2422,8 +2488,14 @@ mod tests {
         );
         state.alerts.write().await.push(p0_alert);
 
-        let rule =
-            make_test_rule("sup-aged", AlertSeverity::P2, AlertCategory::System, 10.0, true, 0);
+        let rule = make_test_rule(
+            "sup-aged",
+            AlertSeverity::P2,
+            AlertCategory::System,
+            10.0,
+            true,
+            0,
+        );
         let result = state.evaluate_alert_rule(&rule, 50.0).await;
         assert!(
             result.is_some(),
@@ -2474,8 +2546,14 @@ mod tests {
         );
         state.alerts.write().await.push(p1_alert);
 
-        let rule =
-            make_test_rule("sup-p0", AlertSeverity::P0, AlertCategory::System, 10.0, true, 0);
+        let rule = make_test_rule(
+            "sup-p0",
+            AlertSeverity::P0,
+            AlertCategory::System,
+            10.0,
+            true,
+            0,
+        );
         let result = state.evaluate_alert_rule(&rule, 50.0).await;
         assert!(
             result.is_some(),
@@ -2488,7 +2566,14 @@ mod tests {
     #[tokio::test]
     async fn test_create_alert_generates_unique_ids() {
         let state = MonitoringState::new();
-        let rule = make_test_rule("ca-1", AlertSeverity::P2, AlertCategory::Service, 0.0, true, 0);
+        let rule = make_test_rule(
+            "ca-1",
+            AlertSeverity::P2,
+            AlertCategory::Service,
+            0.0,
+            true,
+            0,
+        );
         let a1 = state.create_alert(&rule, "m1".to_string()).await;
         let a2 = state.create_alert(&rule, "m2".to_string()).await;
         assert_ne!(a1.id, a2.id);
@@ -2516,7 +2601,14 @@ mod tests {
     #[tokio::test]
     async fn test_acknowledge_alert_sets_all_fields() {
         let state = MonitoringState::new();
-        let rule = make_test_rule("ack-1", AlertSeverity::P1, AlertCategory::Service, 0.0, true, 0);
+        let rule = make_test_rule(
+            "ack-1",
+            AlertSeverity::P1,
+            AlertCategory::Service,
+            0.0,
+            true,
+            0,
+        );
         let alert = state.create_alert(&rule, "msg".to_string()).await;
         assert!(state.acknowledge_alert(&alert.id, "oncall").await);
         let active = state.get_active_alerts().await;
@@ -2530,7 +2622,14 @@ mod tests {
     #[tokio::test]
     async fn test_resolve_alert_sets_resolved_at() {
         let state = MonitoringState::new();
-        let rule = make_test_rule("res-1", AlertSeverity::P1, AlertCategory::Service, 0.0, true, 0);
+        let rule = make_test_rule(
+            "res-1",
+            AlertSeverity::P1,
+            AlertCategory::Service,
+            0.0,
+            true,
+            0,
+        );
         let alert = state.create_alert(&rule, "msg".to_string()).await;
         assert!(state.resolve_alert(&alert.id).await);
         assert_eq!(state.get_active_alerts().await.len(), 0);
@@ -2539,7 +2638,14 @@ mod tests {
     #[tokio::test]
     async fn test_alerts_capped_at_1000() {
         let state = MonitoringState::new();
-        let rule = make_test_rule("cap-1", AlertSeverity::P3, AlertCategory::Other, 0.0, true, 0);
+        let rule = make_test_rule(
+            "cap-1",
+            AlertSeverity::P3,
+            AlertCategory::Other,
+            0.0,
+            true,
+            0,
+        );
         for _ in 0..1005 {
             state.create_alert(&rule, "m".to_string()).await;
         }
@@ -2550,7 +2656,14 @@ mod tests {
     #[tokio::test]
     async fn test_get_active_alerts_excludes_resolved() {
         let state = MonitoringState::new();
-        let rule = make_test_rule("act-1", AlertSeverity::P2, AlertCategory::Service, 0.0, true, 0);
+        let rule = make_test_rule(
+            "act-1",
+            AlertSeverity::P2,
+            AlertCategory::Service,
+            0.0,
+            true,
+            0,
+        );
         let a1 = state.create_alert(&rule, "m1".to_string()).await;
         state.create_alert(&rule, "m2".to_string()).await;
         state.resolve_alert(&a1.id).await;
@@ -2561,7 +2674,14 @@ mod tests {
     #[tokio::test]
     async fn test_get_alerts_by_severity_excludes_resolved() {
         let state = MonitoringState::new();
-        let rule = make_test_rule("sev-1", AlertSeverity::P1, AlertCategory::Service, 0.0, true, 0);
+        let rule = make_test_rule(
+            "sev-1",
+            AlertSeverity::P1,
+            AlertCategory::Service,
+            0.0,
+            true,
+            0,
+        );
         let a1 = state.create_alert(&rule, "m1".to_string()).await;
         state.create_alert(&rule, "m2".to_string()).await;
         state.resolve_alert(&a1.id).await;
@@ -2592,7 +2712,14 @@ mod tests {
     #[tokio::test]
     async fn test_statistics_resolved_and_active_counts() -> Result<(), MonitoringError> {
         let state = MonitoringState::new();
-        let rule = make_test_rule("stat-1", AlertSeverity::P2, AlertCategory::Service, 0.0, true, 0);
+        let rule = make_test_rule(
+            "stat-1",
+            AlertSeverity::P2,
+            AlertCategory::Service,
+            0.0,
+            true,
+            0,
+        );
         let a1 = state.create_alert(&rule, "m1".to_string()).await;
         let a2 = state.create_alert(&rule, "m2".to_string()).await;
         state.create_alert(&rule, "m3".to_string()).await;
@@ -2608,7 +2735,14 @@ mod tests {
     #[tokio::test]
     async fn test_statistics_acknowledged_count() -> Result<(), MonitoringError> {
         let state = MonitoringState::new();
-        let rule = make_test_rule("stat-ack", AlertSeverity::P2, AlertCategory::Service, 0.0, true, 0);
+        let rule = make_test_rule(
+            "stat-ack",
+            AlertSeverity::P2,
+            AlertCategory::Service,
+            0.0,
+            true,
+            0,
+        );
         let a1 = state.create_alert(&rule, "m1".to_string()).await;
         state.create_alert(&rule, "m2".to_string()).await;
         state.acknowledge_alert(&a1.id, "ops").await;
@@ -2854,9 +2988,15 @@ mod tests {
     #[tokio::test]
     async fn test_alert_severity_from_str_all_aliases() {
         assert_eq!(AlertSeverity::from_str("CRITICAL"), Some(AlertSeverity::P0));
-        assert_eq!(AlertSeverity::from_str("EMERGENCY"), Some(AlertSeverity::P0));
+        assert_eq!(
+            AlertSeverity::from_str("EMERGENCY"),
+            Some(AlertSeverity::P0)
+        );
         assert_eq!(AlertSeverity::from_str("HIGH"), Some(AlertSeverity::P1));
-        assert_eq!(AlertSeverity::from_str("IMPORTANT"), Some(AlertSeverity::P1));
+        assert_eq!(
+            AlertSeverity::from_str("IMPORTANT"),
+            Some(AlertSeverity::P1)
+        );
         assert_eq!(AlertSeverity::from_str("WARNING"), Some(AlertSeverity::P2));
         assert_eq!(AlertSeverity::from_str("MEDIUM"), Some(AlertSeverity::P2));
         assert_eq!(AlertSeverity::from_str("INFO"), Some(AlertSeverity::P3));
@@ -2942,7 +3082,10 @@ mod tests {
     async fn test_new_has_empty_silence_rules() {
         let state = MonitoringState::new();
         let silences = state.silence_rules.read().await;
-        assert!(silences.is_empty(), "new() should start with no silence rules");
+        assert!(
+            silences.is_empty(),
+            "new() should start with no silence rules"
+        );
     }
 
     #[tokio::test]
@@ -2959,8 +3102,14 @@ mod tests {
     async fn test_add_alert_rule_appends() {
         let state = MonitoringState::new();
         let initial = state.alert_rules.read().await.len();
-        let rule =
-            make_test_rule("add-1", AlertSeverity::P3, AlertCategory::Other, 5.0, true, 10);
+        let rule = make_test_rule(
+            "add-1",
+            AlertSeverity::P3,
+            AlertCategory::Other,
+            5.0,
+            true,
+            10,
+        );
         state.add_alert_rule(rule).await;
         assert_eq!(state.alert_rules.read().await.len(), initial + 1);
     }

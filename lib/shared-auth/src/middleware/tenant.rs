@@ -164,10 +164,7 @@ mod tests {
     }
 
     fn build_req(claims: Option<Claims>) -> Request<Body> {
-        let mut req = Request::builder()
-            .uri("/x")
-            .body(Body::empty())
-            .unwrap();
+        let mut req = Request::builder().uri("/x").body(Body::empty()).unwrap();
         if let Some(c) = claims {
             req.extensions_mut().insert(c);
         }

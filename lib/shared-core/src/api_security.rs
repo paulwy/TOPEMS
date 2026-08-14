@@ -504,10 +504,7 @@ mod tests {
 
     #[test]
     fn test_signature_verification_enum_equality() {
-        assert_eq!(
-            SignatureVerification::Valid,
-            SignatureVerification::Valid
-        );
+        assert_eq!(SignatureVerification::Valid, SignatureVerification::Valid);
         assert_eq!(
             SignatureVerification::MissingHeader("x".into()),
             SignatureVerification::MissingHeader("x".into())
@@ -530,7 +527,10 @@ mod tests {
     fn test_signature_verification_invalid_timestamp_format() {
         let config = RequestSignatureConfig::new("secret");
         let mut headers = HeaderMap::new();
-        headers.insert("x-timestamp", HeaderValue::from_str("not-a-number").unwrap());
+        headers.insert(
+            "x-timestamp",
+            HeaderValue::from_str("not-a-number").unwrap(),
+        );
         let result = verify_request_signature("GET", "/x", b"", &headers, &config);
         assert_eq!(result, SignatureVerification::InvalidTimestamp);
     }
@@ -718,15 +718,12 @@ mod tests {
             StatusCode::BAD_REQUEST
         );
         assert_eq!(
-            signature_error_response(SignatureVerification::MissingHeader("x".into()))
-                .status(),
+            signature_error_response(SignatureVerification::MissingHeader("x".into())).status(),
             StatusCode::BAD_REQUEST
         );
         assert_eq!(
-            signature_error_response(SignatureVerification::TimestampExpired {
-                skew_secs: 999
-            })
-            .status(),
+            signature_error_response(SignatureVerification::TimestampExpired { skew_secs: 999 })
+                .status(),
             StatusCode::REQUEST_TIMEOUT
         );
     }
@@ -745,12 +742,7 @@ mod tests {
             .route("/", get(handler))
             .layer(axum::middleware::from_fn(etag_middleware));
         let resp = app
-            .oneshot(
-                Request::builder()
-                    .uri("/")
-                    .body(Body::empty())
-                    .unwrap(),
-            )
+            .oneshot(Request::builder().uri("/").body(Body::empty()).unwrap())
             .await
             .unwrap();
         assert_eq!(resp.status(), StatusCode::OK);
@@ -770,12 +762,7 @@ mod tests {
             .layer(axum::middleware::from_fn(etag_middleware));
         let resp = app
             .clone()
-            .oneshot(
-                Request::builder()
-                    .uri("/")
-                    .body(Body::empty())
-                    .unwrap(),
-            )
+            .oneshot(Request::builder().uri("/").body(Body::empty()).unwrap())
             .await
             .unwrap();
         let etag = resp
@@ -812,12 +799,7 @@ mod tests {
             .route("/", get(handler))
             .layer(axum::middleware::from_fn(etag_middleware));
         let resp = app
-            .oneshot(
-                Request::builder()
-                    .uri("/")
-                    .body(Body::empty())
-                    .unwrap(),
-            )
+            .oneshot(Request::builder().uri("/").body(Body::empty()).unwrap())
             .await
             .unwrap();
         assert_eq!(resp.status(), StatusCode::NOT_FOUND);

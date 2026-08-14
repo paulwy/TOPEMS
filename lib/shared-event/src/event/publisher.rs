@@ -623,8 +623,14 @@ mod tests {
         // publish_event 使用 format!("topems:events:{}", event_type) 作为频道名
         for (et, expected) in [
             (EventType::HealthCheck, "topems:events:HealthCheck"),
-            (EventType::CacheInvalidated, "topems:events:CacheInvalidated"),
-            (EventType::PmProjectCreated, "topems:events:PmProjectCreated"),
+            (
+                EventType::CacheInvalidated,
+                "topems:events:CacheInvalidated",
+            ),
+            (
+                EventType::PmProjectCreated,
+                "topems:events:PmProjectCreated",
+            ),
         ] {
             let channel = format!("topems:events:{}", et);
             assert_eq!(channel, expected);
@@ -641,8 +647,7 @@ mod tests {
         assert_eq!(event.source, "svc");
 
         // 也验证 None 的情况
-        let event2 = Event::new(EventType::HealthCheck, "svc", json!({}))
-            .with_trace_id(None);
+        let event2 = Event::new(EventType::HealthCheck, "svc", json!({})).with_trace_id(None);
         assert!(event2.trace_id.is_none());
     }
 
@@ -675,7 +680,10 @@ mod tests {
         let result = publisher
             .publish_pm_project_created(Uuid::new_v4(), "项目", Uuid::new_v4())
             .await;
-        assert!(result.is_err(), "Redis 不可达时 publish_pm_project_created 应返回 Err");
+        assert!(
+            result.is_err(),
+            "Redis 不可达时 publish_pm_project_created 应返回 Err"
+        );
     }
 
     #[tokio::test]
@@ -691,7 +699,10 @@ mod tests {
         let result = publisher
             .publish_hrm_employee_created(Uuid::new_v4(), "张三", "z@x.c", None)
             .await;
-        assert!(result.is_err(), "Redis 不可达时 publish_hrm_employee_created 应返回 Err");
+        assert!(
+            result.is_err(),
+            "Redis 不可达时 publish_hrm_employee_created 应返回 Err"
+        );
     }
 
     #[tokio::test]
@@ -717,6 +728,9 @@ mod tests {
                 None,
             )
             .await;
-        assert!(result.is_err(), "Redis 不可达时 publish_pm_task_updated 应返回 Err");
+        assert!(
+            result.is_err(),
+            "Redis 不可达时 publish_pm_task_updated 应返回 Err"
+        );
     }
 }
