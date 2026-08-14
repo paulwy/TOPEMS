@@ -23,6 +23,7 @@ import {
 } from 'recharts';
 import { useQmsMock, type QmsMockShape } from '@/api/qms/_mock';
 import { designTokens, semanticTokens } from '@topems/tokens';
+import { useTranslation } from 'react-i18next';
 
 const HIGH_RISK_COLOR= designTokens.colors.error.main;
 const MEDIUM_RISK_COLOR= designTokens.colors.warning.main;
@@ -36,6 +37,7 @@ function riskLevel(rpn: number): 'high' | 'medium' | 'low' {
 
 export default function QmsFmeaRiskMatrixPage() {
   const { data } = useQmsMock<QmsMockShape>();
+  const { t } = useTranslation('qms');
 
   const items = data.fmeaItems ?? [];
 
@@ -85,7 +87,7 @@ export default function QmsFmeaRiskMatrixPage() {
 
       <div className='grid grid-cols-1 gap-4 md:grid-cols-5'>
         <div className='rounded-lg border p-4'>
-          <p className='text-sm text-gray-600'>风险项总数</p>
+          <p className='text-sm text-gray-600'>{t('qms.qms_fmea_risk_matrix_page.k0')}</p>
           <p className='mt-1 text-2xl font-bold text-blue-600'>{stats.total}</p>
         </div>
         <div className='rounded-lg border p-4'>
@@ -93,15 +95,15 @@ export default function QmsFmeaRiskMatrixPage() {
           <p className='mt-1 text-2xl font-bold text-red-600'>{stats.high}</p>
         </div>
         <div className='rounded-lg border p-4'>
-          <p className='text-sm text-gray-600'>中风险（100-199）</p>
+          <p className='text-sm text-gray-600'>{t('qms.qms_fmea_risk_matrix_page.100199_1')}</p>
           <p className='mt-1 text-2xl font-bold text-orange-600'>{stats.medium}</p>
         </div>
         <div className='rounded-lg border p-4'>
-          <p className='text-sm text-gray-600'>平均 RPN</p>
+          <p className='text-sm text-gray-600'>{t('qms.qms_fmea_risk_matrix_page.rpn_2')}</p>
           <p className='mt-1 text-2xl font-bold text-purple-600'>{stats.avgRpn}</p>
         </div>
         <div className='rounded-lg border p-4'>
-          <p className='text-sm text-gray-600'>最大 RPN</p>
+          <p className='text-sm text-gray-600'>{t('qms.qms_fmea_risk_matrix_page.rpn_3')}</p>
           <p className='mt-1 text-2xl font-bold text-red-700'>{stats.maxRpn}</p>
         </div>
       </div>
@@ -117,18 +119,18 @@ export default function QmsFmeaRiskMatrixPage() {
             <XAxis
               type='number'
               dataKey='occurrence'
-              name='发生度'
+              name={t('qms.qms_fmea_risk_matrix_page.k4')}
               domain={[0, 11]}
               fontSize={11}
-              label={{ value: '发生度 (O)', position: 'bottom', fontSize: 12 }}
+              label={{ value: t('qms.qms_fmea_risk_matrix_page.o_5'), position: 'bottom', fontSize: 12 }}
             />
             <YAxis
               type='number'
               dataKey='severity'
-              name='严重度'
+              name={t('qms.qms_fmea_risk_matrix_page.k6')}
               domain={[0, 11]}
               fontSize={11}
-              label={{ value: '严重度 (S)', angle: -90, position: 'insideLeft', fontSize: 12 }}
+              label={{ value: t('qms.qms_fmea_risk_matrix_page.s_7'), angle: -90, position: 'insideLeft', fontSize: 12 }}
             />
             <ZAxis
               type='number'
@@ -168,17 +170,17 @@ export default function QmsFmeaRiskMatrixPage() {
               fillOpacity={0.08}
             />
             <Scatter
-              name='高风险'
+              name={t('qms.qms_fmea_risk_matrix_page.k8')}
               data={scatterData.high}
               fill={HIGH_RISK_COLOR}
             />
             <Scatter
-              name='中风险'
+              name={t('qms.qms_fmea_risk_matrix_page.k9')}
               data={scatterData.medium}
               fill={MEDIUM_RISK_COLOR}
             />
             <Scatter
-              name='低风险'
+              name={t('qms.qms_fmea_risk_matrix_page.k10')}
               data={scatterData.low}
               fill={LOW_RISK_COLOR}
             />
@@ -187,15 +189,15 @@ export default function QmsFmeaRiskMatrixPage() {
       </div>
 
       <div className='rounded-lg border p-4'>
-        <h3 className='mb-2 font-semibold'>高风险项 Top 10（按 RPN 降序）</h3>
+        <h3 className='mb-2 font-semibold'>{t('qms.qms_fmea_risk_matrix_page.k11')}</h3>
         <table className='w-full text-sm'>
           <thead>
             <tr className='border-b text-left text-gray-600'>
-              <th className='py-2 pr-4'>编号</th>
-              <th className='py-2 pr-4'>失效模式</th>
-              <th className='py-2 pr-4'>严重度</th>
-              <th className='py-2 pr-4'>发生度</th>
-              <th className='py-2 pr-4'>探测度</th>
+              <th className='py-2 pr-4'>{t('qms.qms_fmea_risk_matrix_page.k12')}</th>
+              <th className='py-2 pr-4'>{t('qms.qms_fmea_risk_matrix_page.k13')}</th>
+              <th className='py-2 pr-4'>{t('qms.qms_fmea_risk_matrix_page.k14')}</th>
+              <th className='py-2 pr-4'>{t('qms.qms_fmea_risk_matrix_page.k15')}</th>
+              <th className='py-2 pr-4'>{t('qms.qms_fmea_risk_matrix_page.k16')}</th>
               <th className='py-2 pr-4'>RPN</th>
             </tr>
           </thead>

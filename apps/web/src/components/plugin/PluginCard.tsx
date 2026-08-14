@@ -8,6 +8,7 @@ import {
   Loader2,
   Star,
 } from 'lucide-react';
+import i18n from '@/i18n';
 import { Card, CardContent, Typography, Button, Chip, Box } from '@mui/material';
 import type { Plugin } from '@/api/plugin';
 import { usePluginStore } from '@/store/pluginStore';
@@ -38,22 +39,22 @@ export const PluginCard: React.FC<PluginCardProps> = ({
       const success = await installPlugin(plugin.code);
       if (success) {
         addNotification({
-          title: '安装成功',
-          message: `${plugin.name} 插件已安装`,
+          title: i18n.t('components.plugin_card.k0'),
+          message: `${plugin.name} ${i18n.t('components.plugin_card.k0')}`,
           type: 'success',
         });
       } else {
         addNotification({
-          title: '安装失败',
-          message: '无法安装插件，请稍后重试',
+          title: i18n.t('components.plugin_card.k1'),
+          message: i18n.t('components.plugin_card.k2'),
           type: 'error',
         });
       }
     } catch (error: unknown) {
       const err = error as { message?: string };
       addNotification({
-        title: '安装失败',
-        message: err.message || '无法安装插件',
+        title: i18n.t('components.plugin_card.k3'),
+        message: err.message || i18n.t('components.plugin_card.k4'),
         type: 'error',
       });
     } finally {
@@ -113,7 +114,7 @@ export const PluginCard: React.FC<PluginCardProps> = ({
                 {plugin.is_featured && (
                   <Chip
                     icon={<Star sx={{ width: 12, height: 12 }} />}
-                    label='精选'
+                    label={i18n.t('components.plugin_card.k5')}
                     size='small'
                     color='warning'
                   />
@@ -124,7 +125,7 @@ export const PluginCard: React.FC<PluginCardProps> = ({
                 color='textSecondary'
                 sx={{ mb: 2 }}
               >
-                {plugin.description || '暂无描述'}
+                {plugin.description || i18n.t('components.plugin_card.k6')}
               </Typography>
               <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
                 {plugin.tags?.slice(0, 5).map((tag) => (
@@ -160,7 +161,7 @@ export const PluginCard: React.FC<PluginCardProps> = ({
                   onClick={onViewDetails}
                   startIcon={<ExternalLink sx={{ width: 16, height: 16 }} />}
                 >
-                  详情
+                  {i18n.t('components.plugin_card.k1')}
                 </Button>
                 {installed ? (
                   <Button
@@ -169,7 +170,7 @@ export const PluginCard: React.FC<PluginCardProps> = ({
                     disabled
                     startIcon={<CheckCircle sx={{ width: 16, height: 16 }} />}
                   >
-                    已安装
+                    {i18n.t('components.plugin_card.k2')}
                   </Button>
                 ) : (
                   <Button
@@ -187,7 +188,7 @@ export const PluginCard: React.FC<PluginCardProps> = ({
                       )
                     }
                   >
-                    {isInstalling ? '安装中...' : plugin.is_free ? '免费安装' : '购买'}
+                    {isInstalling ? i18n.t('components.plugin_card.k3') : plugin.is_free ? i18n.t('components.plugin_card.k8') : i18n.t('components.plugin_card.k7')}
                   </Button>
                 )}
               </Box>
@@ -258,7 +259,7 @@ export const PluginCard: React.FC<PluginCardProps> = ({
           <Box sx={{ mb: 2 }}>
             <Chip
               icon={<Star sx={{ width: 12, height: 12 }} />}
-              label='精选推荐'
+              label={i18n.t('components.plugin_card.k9')}
               size='small'
               color='warning'
             />
@@ -270,7 +271,7 @@ export const PluginCard: React.FC<PluginCardProps> = ({
           color='textSecondary'
           sx={{ mb: 3, flexGrow: 1 }}
         >
-          {plugin.description || '暂无描述'}
+          {plugin.description || i18n.t('components.plugin_card.k10')}
         </Typography>
 
         <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, mb: 3 }}>
@@ -309,7 +310,7 @@ export const PluginCard: React.FC<PluginCardProps> = ({
             onClick={onViewDetails}
             startIcon={<ExternalLink sx={{ width: 16, height: 16 }} />}
           >
-            详情
+            {i18n.t('components.plugin_card.k4')}
           </Button>
           {installed ? (
             <Button
@@ -319,7 +320,7 @@ export const PluginCard: React.FC<PluginCardProps> = ({
               disabled
               startIcon={<CheckCircle sx={{ width: 16, height: 16 }} />}
             >
-              已安装
+              {i18n.t('components.plugin_card.k5')}
             </Button>
           ) : (
             <Button
@@ -336,7 +337,7 @@ export const PluginCard: React.FC<PluginCardProps> = ({
                 )
               }
             >
-              {isInstalling ? '安装中...' : plugin.is_free ? '免费安装' : '购买'}
+              {isInstalling ? i18n.t('components.plugin_card.k6') : plugin.is_free ? i18n.t('components.plugin_card.k12') : i18n.t('components.plugin_card.k11')}
             </Button>
           )}
         </Box>

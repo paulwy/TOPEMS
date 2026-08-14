@@ -7,6 +7,7 @@ import {
   Box,
   Button,
 } from '@mui/material';
+import i18n from '@/i18n';
 import React, { useState } from 'react';
 
 import type { ProjectTemplate } from './ProjectTemplateCard';
@@ -77,13 +78,13 @@ const ProjectTemplateModal: React.FC<ProjectTemplateModalProps> = ({
       fullWidth
     >
       <DialogContent sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-        <DialogTitle>使用模板创建项目</DialogTitle>
+        <DialogTitle>{i18n.t('components.project_template_modal.k0')}</DialogTitle>
         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
           <Typography
             variant='body2'
             color='text.secondary'
           >
-            模板名称
+            {i18n.t('components.project_template_modal.k0')}
           </Typography>
           <TextField
             value={template.name}
@@ -97,12 +98,12 @@ const ProjectTemplateModal: React.FC<ProjectTemplateModalProps> = ({
             color='text.secondary'
             sx={{ mt: 1 }}
           >
-            项目名称 *
+            {i18n.t('components.project_template_modal.k1')}
           </Typography>
           <TextField
             value={formData.name}
             onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-            placeholder='输入项目名称'
+            placeholder={i18n.t('components.project_template_modal.k1')}
             size='small'
             sx={{ mt: 0.5 }}
           />
@@ -111,12 +112,12 @@ const ProjectTemplateModal: React.FC<ProjectTemplateModalProps> = ({
             variant='body2'
             color='text.secondary'
           >
-            项目编号 *
+            {i18n.t('components.project_template_modal.k2')}
           </Typography>
           <TextField
             value={formData.code}
             onChange={(e) => setFormData({ ...formData, code: e.target.value })}
-            placeholder='输入项目编号'
+            placeholder={i18n.t('components.project_template_modal.k2')}
             size='small'
             sx={{ mt: 0.5 }}
           />
@@ -125,12 +126,12 @@ const ProjectTemplateModal: React.FC<ProjectTemplateModalProps> = ({
             variant='body2'
             color='text.secondary'
           >
-            项目描述
+            {i18n.t('components.project_template_modal.k3')}
           </Typography>
           <TextField
             value={formData.description}
             onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-            placeholder='输入项目描述'
+            placeholder={i18n.t('components.project_template_modal.k3')}
             size='small'
             sx={{ mt: 0.5 }}
           />
@@ -141,7 +142,7 @@ const ProjectTemplateModal: React.FC<ProjectTemplateModalProps> = ({
                 variant='body2'
                 color='text.secondary'
               >
-                开始日期
+                {i18n.t('components.project_template_modal.k4')}
               </Typography>
               <TextField
                 type='date'
@@ -156,13 +157,13 @@ const ProjectTemplateModal: React.FC<ProjectTemplateModalProps> = ({
                 variant='body2'
                 color='text.secondary'
               >
-                预算
+                {i18n.t('components.project_template_modal.k5')}
               </Typography>
               <TextField
                 type='number'
                 value={formData.budget}
                 onChange={(e) => setFormData({ ...formData, budget: e.target.value })}
-                placeholder='输入预算'
+                placeholder={i18n.t('components.project_template_modal.k4')}
                 size='small'
                 sx={{ mt: 0.5 }}
               />
@@ -191,7 +192,7 @@ const ProjectTemplateModal: React.FC<ProjectTemplateModalProps> = ({
                 variant='body2'
                 color='text.secondary'
               >
-                预设阶段
+                {i18n.t('components.project_template_modal.k6')}
               </Typography>
             </Box>
             <Box sx={{ width: '1px', height: 48, bgcolor: 'grey.300' }} />
@@ -206,7 +207,7 @@ const ProjectTemplateModal: React.FC<ProjectTemplateModalProps> = ({
                 variant='body2'
                 color='text.secondary'
               >
-                预估周期
+                {i18n.t('components.project_template_modal.k7')}
               </Typography>
             </Box>
           </Box>
@@ -217,14 +218,14 @@ const ProjectTemplateModal: React.FC<ProjectTemplateModalProps> = ({
               fullWidth
               onClick={() => onOpenChange(false)}
             >
-              取消
+              {i18n.t('components.project_template_modal.k8')}
             </Button>
             <Button
               variant='contained'
               fullWidth
               onClick={handleSubmit}
             >
-              创建项目
+              {i18n.t('components.project_template_modal.k9')}
             </Button>
           </Box>
         </Box>

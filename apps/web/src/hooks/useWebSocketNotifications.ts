@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react';
 import { webSocketService, type WebSocketMessage } from './useWebSocket';
 import { useNotificationStore } from '@/store/notificationStore';
+import i18n from '@/i18n';
 
 export interface WsNotificationConfig {
   /** 订阅的频道 */
@@ -84,7 +85,7 @@ export function useWebSocketNotificationChannel(
     channel,
     enabled,
     getTitle: (msg) => msg.payload?.title as string | undefined,
-    getMessage: (msg) => (msg.payload?.message as string) || '收到新通知',
+    getMessage: (msg) => (msg.payload?.message as string) || i18n.t('shared.use_web_socket_notifications.k0'),
     getType: (msg) => {
       const payloadType = msg.payload?.type as string | undefined;
       if (payloadType === 'success' || payloadType === 'error' || payloadType === 'warning') {
@@ -108,8 +109,8 @@ export function useWebSocketAlertChannel(enabled: boolean = true): void {
   useWebSocketNotifications({
     channel: 'alerts',
     enabled,
-    getTitle: (msg) => (msg.payload?.title as string) || '系统告警',
-    getMessage: (msg) => (msg.payload?.message as string) || '收到新的系统告警',
+    getTitle: (msg) => (msg.payload?.title as string) || i18n.t('shared.use_web_socket_notifications.k1'),
+    getMessage: (msg) => (msg.payload?.message as string) || i18n.t('shared.use_web_socket_notifications.k2'),
     getType: (msg) => {
       const severity = msg.payload?.severity as string | undefined;
       if (severity === 'critical' || severity === 'high') return 'error';

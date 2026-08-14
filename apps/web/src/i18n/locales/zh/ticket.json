@@ -58,5 +58,6 @@
   },
   "ticket.dashboard_page.k0": "工单中心概览",
   "ticket.dashboard_page.k1": "工单中心数据概览",
-  "ticket.dashboard_page.k2": "快捷操作"
+  "ticket.dashboard_page.k2": "快捷操作",
+  "ticket.ticket_center_page.k0": "TicketCenterPage 页面开发中"
 }

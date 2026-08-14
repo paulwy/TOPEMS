@@ -1,3 +1,4 @@
+import i18n from '@/i18n';
 export type FeedbackType = 'bug' | 'feature' | 'improvement' | 'question' | 'other';
 
 export type FeedbackStatus = 'pending' | 'processing' | 'resolved' | 'closed';
@@ -44,16 +45,16 @@ export interface FeedbackQueryParams {
 }
 
 export const FEEDBACK_TYPE_LABELS: Record<FeedbackType, string> = {
-  bug: 'Bug反馈',
-  feature: '功能建议',
-  improvement: '改进优化',
-  question: '使用问题',
-  other: '其他',
+  bug: i18n.t('shared.types.bug_0'),
+  feature: i18n.t('shared.types.k0'),
+  improvement: i18n.t('shared.types.k1'),
+  question: i18n.t('shared.types.k2'),
+  other: i18n.t('shared.types.k3'),
 };
 
 export const FEEDBACK_STATUS_LABELS: Record<FeedbackStatus, string> = {
-  pending: '待处理',
-  processing: '处理中',
-  resolved: '已解决',
-  closed: '已关闭',
+  pending: i18n.t('shared.types.k4'),
+  processing: i18n.t('shared.types.k5'),
+  resolved: i18n.t('shared.types.k6'),
+  closed: i18n.t('shared.types.k7'),
 };

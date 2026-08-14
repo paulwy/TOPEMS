@@ -13,6 +13,7 @@ import {
   MenuItem,
   Chip,
 } from '@mui/material';
+import i18n from '@/i18n';
 import { Play, CheckCircle2, Eye, Trash2, Package, Edit } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -328,14 +329,14 @@ const StockTakePage: React.FC = () => {
         if (res.success && res.data) {
           return { ...res.data, warehouse_name: getWarehouseName(res.data.warehouse_id) } as unknown as Record<string, unknown>;
         }
-        throw new Error(res.message || '创建失败');
+        throw new Error(res.message || i18n.t('pages.stock_take_page.k0'));
       },
       update: async (id, data) => {
         const response = await wmsApi.stockTakes.update(
           id,
           data as unknown as Parameters<typeof wmsApi.stockTakes.update>[1]
         );
-        if (!response.success) throw new Error('更新盘点单失败');
+        if (!response.success) throw new Error(i18n.t('pages.stock_take_page.k1'));
         return response.data as unknown as Record<string, unknown>;
       },
       delete: async (id) => {
@@ -398,7 +399,7 @@ const StockTakePage: React.FC = () => {
                   variant='caption'
                   color='text.secondary'
                 >
-                  仓库
+                  {i18n.t('pages.stock_take_page.k0')}
                 </Typography>
                 <Typography
                   variant='body1'
@@ -412,7 +413,7 @@ const StockTakePage: React.FC = () => {
                   variant='caption'
                   color='text.secondary'
                 >
-                  状态
+                  {i18n.t('pages.stock_take_page.k1')}
                 </Typography>
                 <Box sx={{ mt: 0.5 }}>{getStatusBadge(selectedStockTake.status)}</Box>
               </Box>
@@ -421,7 +422,7 @@ const StockTakePage: React.FC = () => {
                   variant='caption'
                   color='text.secondary'
                 >
-                  准确率
+                  {i18n.t('pages.stock_take_page.k2')}
                 </Typography>
                 <Typography
                   variant='body1'
@@ -437,7 +438,7 @@ const StockTakePage: React.FC = () => {
                   variant='caption'
                   color='text.secondary'
                 >
-                  差异数量
+                  {i18n.t('pages.stock_take_page.k3')}
                 </Typography>
                 <Typography
                   variant='body1'
@@ -465,7 +466,7 @@ const StockTakePage: React.FC = () => {
                   mb: 2,
                 }}
               >
-                <Typography variant='h6'>盘点明细</Typography>
+                <Typography variant='h6'>{i18n.t('pages.stock_take_page.k2')}</Typography>
                 {selectedStockTake.status === 'in_progress' && (
                   <Button
                     variant='outlined'
@@ -473,7 +474,7 @@ const StockTakePage: React.FC = () => {
                     startIcon={<Edit size={16} />}
                     onClick={handleOpenCountDialog}
                   >
-                    录入盘点数量
+                    {i18n.t('pages.stock_take_page.k4')}
                   </Button>
                 )}
               </Box>
@@ -494,55 +495,55 @@ const StockTakePage: React.FC = () => {
                       variant='caption'
                       sx={{ fontWeight: 600 }}
                     >
-                      物料编码
+                      {i18n.t('pages.stock_take_page.k5')}
                     </Typography>
                     <Typography
                       variant='caption'
                       sx={{ fontWeight: 600 }}
                     >
-                      物料名称
+                      {i18n.t('pages.stock_take_page.k6')}
                     </Typography>
                     <Typography
                       variant='caption'
                       sx={{ fontWeight: 600 }}
                     >
-                      规格
+                      {i18n.t('pages.stock_take_page.k7')}
                     </Typography>
                     <Typography
                       variant='caption'
                       sx={{ fontWeight: 600 }}
                     >
-                      批次
+                      {i18n.t('pages.stock_take_page.k8')}
                     </Typography>
                     <Typography
                       variant='caption'
                       sx={{ fontWeight: 600 }}
                     >
-                      系统数量
+                      {i18n.t('pages.stock_take_page.k9')}
                     </Typography>
                     <Typography
                       variant='caption'
                       sx={{ fontWeight: 600 }}
                     >
-                      盘点数量
+                      {i18n.t('pages.stock_take_page.k10')}
                     </Typography>
                     <Typography
                       variant='caption'
                       sx={{ fontWeight: 600 }}
                     >
-                      差异
+                      {i18n.t('pages.stock_take_page.k11')}
                     </Typography>
                     <Typography
                       variant='caption'
                       sx={{ fontWeight: 600 }}
                     >
-                      差异类型
+                      {i18n.t('pages.stock_take_page.k12')}
                     </Typography>
                     <Typography
                       variant='caption'
                       sx={{ fontWeight: 600 }}
                     >
-                      差异原因
+                      {i18n.t('pages.stock_take_page.k13')}
                     </Typography>
                   </Box>
                   {stockTakeItems.length === 0 ? (
@@ -551,7 +552,7 @@ const StockTakePage: React.FC = () => {
                         variant='body2'
                         color='text.secondary'
                       >
-                        暂无盘点明细
+                        {i18n.t('pages.stock_take_page.k14')}
                       </Typography>
                     </Box>
                   ) : (
@@ -610,7 +611,7 @@ const StockTakePage: React.FC = () => {
               onClick={handleCompleteStockTake}
               disabled={completeStockTakeMutation.isPending}
             >
-              完成盘点
+              {i18n.t('pages.stock_take_page.k15')}
             </Button>
           )}
           {selectedStockTake.status === 'completed' && !selectedStockTake.stock_adjusted && (
@@ -621,7 +622,7 @@ const StockTakePage: React.FC = () => {
               onClick={handleAdjustStockTake}
               disabled={adjustStockTakeMutation.isPending}
             >
-              调整库存
+              {i18n.t('pages.stock_take_page.k16')}
             </Button>
           )}
           {selectedStockTake.status === 'completed' && selectedStockTake.stock_adjusted && (
@@ -634,7 +635,7 @@ const StockTakePage: React.FC = () => {
             variant='outlined'
             onClick={() => setShowDetailDialog(false)}
           >
-            关闭
+            {i18n.t('pages.stock_take_page.k17')}
           </Button>
         </DialogActions>
       </Dialog>
@@ -651,7 +652,7 @@ const StockTakePage: React.FC = () => {
         maxWidth='lg'
         fullWidth
       >
-        <DialogTitle>录入盘点数量</DialogTitle>
+        <DialogTitle>{i18n.t('pages.stock_take_page.k3')}</DialogTitle>
         <DialogContent sx={{ maxHeight: '80vh', overflow: 'auto' }}>
           <Box sx={{ minWidth: 600 }}>
             <Box
@@ -669,37 +670,37 @@ const StockTakePage: React.FC = () => {
                 variant='caption'
                 sx={{ fontWeight: 600 }}
               >
-                物料编码
+                {i18n.t('pages.stock_take_page.k18')}
               </Typography>
               <Typography
                 variant='caption'
                 sx={{ fontWeight: 600 }}
               >
-                物料名称
+                {i18n.t('pages.stock_take_page.k19')}
               </Typography>
               <Typography
                 variant='caption'
                 sx={{ fontWeight: 600 }}
               >
-                规格
+                {i18n.t('pages.stock_take_page.k20')}
               </Typography>
               <Typography
                 variant='caption'
                 sx={{ fontWeight: 600 }}
               >
-                系统数量
+                {i18n.t('pages.stock_take_page.k21')}
               </Typography>
               <Typography
                 variant='caption'
                 sx={{ fontWeight: 600 }}
               >
-                盘点数量
+                {i18n.t('pages.stock_take_page.k22')}
               </Typography>
               <Typography
                 variant='caption'
                 sx={{ fontWeight: 600 }}
               >
-                差异原因
+                {i18n.t('pages.stock_take_page.k23')}
               </Typography>
             </Box>
             {stockTakeItems.map((item) => (
@@ -742,11 +743,11 @@ const StockTakePage: React.FC = () => {
                     }}
                     displayEmpty
                   >
-                    <MenuItem value=''>无</MenuItem>
-                    <MenuItem value='damaged'>损坏</MenuItem>
-                    <MenuItem value='lost'>丢失</MenuItem>
-                    <MenuItem value='miscount'>计数错误</MenuItem>
-                    <MenuItem value='other'>其他</MenuItem>
+                    <MenuItem value=''>{i18n.t('pages.stock_take_page.k24')}</MenuItem>
+                    <MenuItem value='damaged'>{i18n.t('pages.stock_take_page.k4')}</MenuItem>
+                    <MenuItem value='lost'>{i18n.t('pages.stock_take_page.k5')}</MenuItem>
+                    <MenuItem value='miscount'>{i18n.t('pages.stock_take_page.k6')}</MenuItem>
+                    <MenuItem value='other'>{i18n.t('pages.stock_take_page.k7')}</MenuItem>
                   </Select>
                 </FormControl>
               </Box>
@@ -758,14 +759,14 @@ const StockTakePage: React.FC = () => {
             variant='outlined'
             onClick={() => setShowCountDialog(false)}
           >
-            取消
+            {i18n.t('pages.stock_take_page.k25')}
           </Button>
           <Button
             variant='contained'
             onClick={handleCountItems}
             disabled={countItemsMutation.isPending}
           >
-            确认盘点
+            {i18n.t('pages.stock_take_page.k26')}
           </Button>
         </DialogActions>
       </Dialog>

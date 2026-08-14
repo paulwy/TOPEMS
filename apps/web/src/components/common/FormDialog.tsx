@@ -26,6 +26,7 @@
  */
 import React from 'react';
 import { Dialog, type DialogSize } from './Dialog';
+import i18n from '@/i18n';
 
 // ============ 类型定义 ============
 
@@ -70,8 +71,8 @@ export const FormDialog = React.memo(function FormDialog({
   children,
   loading = false,
   maxWidth = 'sm',
-  confirmText = '保存',
-  cancelText = '取消',
+  confirmText = i18n.t('shared.form_dialog.k0'),
+  cancelText = i18n.t('shared.form_dialog.k1'),
   disableSubmit = false,
   closeOnBackdropClick = false,
   showDivider = true,

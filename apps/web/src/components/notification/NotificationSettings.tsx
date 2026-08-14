@@ -2,6 +2,8 @@ import React from 'react';
 import { Volume2, VolumeX, Monitor, Smartphone } from 'lucide-react';
 import type { NotificationSettingsData } from '../../hooks/useNotificationSettings';
 import useNotificationSettings from '../../hooks/useNotificationSettings';
+import { designTokens } from '@topems/tokens';
+import i18n from '@/i18n';
 
 const NotificationSettings: React.FC = () => {
   const { settings, toggleSetting, toggleNotificationType, toggleQuietHours, updateQuietHours } =
@@ -23,7 +25,7 @@ const NotificationSettings: React.FC = () => {
           marginBottom: 16,
         }}
       >
-        通知设置
+        {i18n.t('components.notification_settings.k0')}
       </h4>
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
@@ -37,7 +39,7 @@ const NotificationSettings: React.FC = () => {
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
             <Monitor style={{ width: 16, height: 16, color: 'text.secondary' }} />
             <span style={{ fontSize: 14, color: 'var(--mui-palette-text-secondary)' }}>
-              桌面通知
+              {i18n.t('components.notification_settings.k1')}
             </span>
           </div>
           <button
@@ -83,7 +85,7 @@ const NotificationSettings: React.FC = () => {
               <VolumeX style={{ width: 16, height: 16, color: 'text.secondary' }} />
             )}
             <span style={{ fontSize: 14, color: 'var(--mui-palette-text-secondary)' }}>
-              声音提示
+              {i18n.t('components.notification_settings.k2')}
             </span>
           </div>
           <button
@@ -125,7 +127,7 @@ const NotificationSettings: React.FC = () => {
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
             <Smartphone style={{ width: 16, height: 16, color: 'text.secondary' }} />
             <span style={{ fontSize: 14, color: 'var(--mui-palette-text-secondary)' }}>
-              移动推送
+              {i18n.t('components.notification_settings.k3')}
             </span>
           </div>
           <button
@@ -166,7 +168,7 @@ const NotificationSettings: React.FC = () => {
               marginBottom: 12,
             }}
           >
-            通知类型
+            {i18n.t('components.notification_settings.k4')}
           </h5>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
             {(
@@ -181,11 +183,11 @@ const NotificationSettings: React.FC = () => {
                 }}
               >
                 <span style={{ fontSize: 14, color: 'text.secondary' }}>
-                  {type === 'system' && '系统通知'}
-                  {type === 'workflow' && '审批通知'}
-                  {type === 'reminder' && '提醒通知'}
-                  {type === 'alert' && '告警通知'}
-                  {type === 'message' && '消息通知'}
+                  {type === 'system' && i18n.t('shared.notification_settings.k0')}
+                  {type === 'workflow' && i18n.t('shared.notification_settings.k1')}
+                  {type === 'reminder' && i18n.t('shared.notification_settings.k2')}
+                  {type === 'alert' && i18n.t('shared.notification_settings.k3')}
+                  {type === 'message' && i18n.t('shared.notification_settings.k4')}
                 </span>
                 <button
                   onClick={() => toggleNotificationType(type)}
@@ -231,7 +233,7 @@ const NotificationSettings: React.FC = () => {
             <span
               style={{ fontSize: 12, fontWeight: 500, color: 'var(--mui-palette-text-secondary)' }}
             >
-              免打扰时段
+              {i18n.t('components.notification_settings.k5')}
             </span>
             <button
               onClick={toggleQuietHours}
@@ -270,21 +272,21 @@ const NotificationSettings: React.FC = () => {
                 onChange={(e) => updateQuietHours('start', e.target.value)}
                 style={{
                   flex: 1,
-                  padding: '4px 8px',
+                  padding: `${designTokens.spacing.xs} 8px`,
                   fontSize: 12,
                   border: '1px solid grey.300',
                   borderRadius: 4,
                   outline: 'none',
                 }}
               />
-              <span style={{ fontSize: 12, color: 'text.secondary' }}>至</span>
+              <span style={{ fontSize: 12, color: 'text.secondary' }}>{i18n.t('components.notification_settings.k6')}</span>
               <input
                 type='time'
                 value={settings.quietHours.end}
                 onChange={(e) => updateQuietHours('end', e.target.value)}
                 style={{
                   flex: 1,
-                  padding: '4px 8px',
+                  padding: `${designTokens.spacing.xs} 8px`,
                   fontSize: 12,
                   border: '1px solid grey.300',
                   borderRadius: 4,

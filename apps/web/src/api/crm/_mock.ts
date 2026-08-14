@@ -1,3 +1,4 @@
+import i18n from '@/i18n';
 export type Period = 'MTD' | 'QTD' | 'YTD' | 'ROLLING_12M';
 
 export interface CrmKpis {
@@ -260,14 +261,14 @@ function buildRfmBuckets(rnd: () => number): RfmBuckets {
 
 function buildSegmentationPoints(rnd: () => number): SegmentPoint[] {
   const names = [
-    '战略客户群',
-    '高价值活跃',
-    '高价值休眠',
-    '潜力客户',
-    '普通活跃',
-    '待激活',
-    '流失预警',
-    '低价值',
+    i18n.t('shared._mock.k0'),
+    i18n.t('shared._mock.k1'),
+    i18n.t('shared._mock.k2'),
+    i18n.t('shared._mock.k3'),
+    i18n.t('shared._mock.k4'),
+    i18n.t('shared._mock.k5'),
+    i18n.t('shared._mock.k6'),
+    i18n.t('shared._mock.k7'),
   ];
   return names.map((name, i) => {
     const quadrant = i % 4;
@@ -298,16 +299,16 @@ function buildSegmentationPoints(rnd: () => number): SegmentPoint[] {
 
 function buildBillingAnalytics(rnd: () => number): BillingAnalyticsData {
   const customerNames = [
-    '华东重型机械',
-    '华南精密电子',
-    '华北钢铁集团',
-    '西部能源科技',
-    '中部汽车零部件',
-    '长三角物流装备',
-    '珠三角智能设备',
-    '环渤海新材料',
-    '东北重工装备',
-    '西南化工集团',
+    i18n.t('shared._mock.k8'),
+    i18n.t('shared._mock.k9'),
+    i18n.t('shared._mock.k10'),
+    i18n.t('shared._mock.k11'),
+    i18n.t('shared._mock.k12'),
+    i18n.t('shared._mock.k13'),
+    i18n.t('shared._mock.k14'),
+    i18n.t('shared._mock.k15'),
+    i18n.t('shared._mock.k16'),
+    i18n.t('shared._mock.k17'),
   ];
   const statuses: Array<'paid' | 'pending' | 'overdue'> = ['paid', 'pending', 'overdue'];
   const top10: BillingTopItem[] = customerNames.map((cn, i) => ({
@@ -324,10 +325,10 @@ function buildBillingAnalytics(rnd: () => number): BillingAnalyticsData {
   ];
 
   const agingBuckets: AgingBucket[] = [
-    { bucket: '0-30天', count: Math.floor(25 + rnd() * 15), amount: Math.floor(1_800_000 + rnd() * 800_000) },
-    { bucket: '31-60天', count: Math.floor(12 + rnd() * 10), amount: Math.floor(900_000 + rnd() * 500_000) },
-    { bucket: '61-90天', count: Math.floor(6 + rnd() * 8), amount: Math.floor(450_000 + rnd() * 350_000) },
-    { bucket: '90天以上', count: Math.floor(4 + rnd() * 6), amount: Math.floor(300_000 + rnd() * 300_000) },
+    { bucket: i18n.t('shared._mock.030_0'), count: Math.floor(25 + rnd() * 15), amount: Math.floor(1_800_000 + rnd() * 800_000) },
+    { bucket: i18n.t('shared._mock.3160_1'), count: Math.floor(12 + rnd() * 10), amount: Math.floor(900_000 + rnd() * 500_000) },
+    { bucket: i18n.t('shared._mock.6190_2'), count: Math.floor(6 + rnd() * 8), amount: Math.floor(450_000 + rnd() * 350_000) },
+    { bucket: i18n.t('shared._mock.90_3'), count: Math.floor(4 + rnd() * 6), amount: Math.floor(300_000 + rnd() * 300_000) },
   ];
 
   const totalAmount = statusPie.reduce((s, x) => s + x.amount, 0);
@@ -358,36 +359,36 @@ function buildBillingAnalytics(rnd: () => number): BillingAnalyticsData {
 
 function buildRecommendations(rnd: () => number): RecommendationData {
   const customers = [
-    '华东重型机械',
-    '华南精密电子',
-    '华北钢铁集团',
-    '西部能源科技',
-    '中部汽车零部件',
-    '长三角物流装备',
+    i18n.t('shared._mock.k18'),
+    i18n.t('shared._mock.k19'),
+    i18n.t('shared._mock.k20'),
+    i18n.t('shared._mock.k21'),
+    i18n.t('shared._mock.k22'),
+    i18n.t('shared._mock.k23'),
   ];
   const crossSellProducts = [
-    '智能传感器套装',
-    '预测性维护服务包',
-    '远程监控模块',
-    '数据分析平台升级',
-    '备件三年质保包',
-    '工业物联网网关',
+    i18n.t('shared._mock.k24'),
+    i18n.t('shared._mock.k25'),
+    i18n.t('shared._mock.k26'),
+    i18n.t('shared._mock.k27'),
+    i18n.t('shared._mock.k28'),
+    i18n.t('shared._mock.k29'),
   ];
   const upsellProducts = [
-    '产线自动化升级方案',
-    '企业版数据中台',
-    '全厂能源管理系统',
-    '高级 AI 质量检测模块',
-    'MES 系统扩展许可',
-    'SAP 集成连接器',
+    i18n.t('shared._mock.k30'),
+    i18n.t('shared._mock.k31'),
+    i18n.t('shared._mock.k32'),
+    i18n.t('shared._mock.ai_33'),
+    i18n.t('shared._mock.mes_4'),
+    i18n.t('shared._mock.sap_5'),
   ];
   const followupTopics = [
-    'Q3 续约跟进',
-    '已购设备满意度回访',
-    '升级方案报价确认',
-    '试用到期客户转化',
-    '新功能发布告知',
-    '年度计划协商',
+    i18n.t('shared._mock.q3_6'),
+    i18n.t('shared._mock.k34'),
+    i18n.t('shared._mock.k35'),
+    i18n.t('shared._mock.k36'),
+    i18n.t('shared._mock.k37'),
+    i18n.t('shared._mock.k38'),
   ];
 
   const makeItem = (i: number, type: 'cross-sell' | 'upsell' | 'followup', pool: string[]): RecommendationItem => ({
@@ -397,10 +398,10 @@ function buildRecommendations(rnd: () => number): RecommendationData {
     title: pool[i % pool.length],
     reason:
       type === 'cross-sell'
-        ? '与已购产品高度关联，过去90天同类型客户转化率32%'
+        ? i18n.t('shared._mock.k39')
         : type === 'upsell'
-          ? '现有使用量接近阈值，升级可降低21%综合成本'
-          : '最近30天活跃度下降，建议主动沟通减少流失风险',
+          ? i18n.t('shared._mock.k40')
+          : i18n.t('shared._mock.k41'),
     confidence: 0.55 + rnd() * 0.4,
     expectedValue: Math.floor(50_000 + rnd() * 450_000),
   });

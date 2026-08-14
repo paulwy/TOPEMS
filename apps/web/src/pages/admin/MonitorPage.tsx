@@ -8,6 +8,7 @@ import {
   LinearProgress,
   useTheme,
 } from '@mui/material';
+import i18n from '@/i18n';
 import React, { useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { monitorApi, type SystemMetrics, type ServiceHealth, type Alert } from '@/api/monitor';
@@ -25,14 +26,11 @@ import {
 } from 'lucide-react';
 import { PageContainer } from '@/components';
 import { getStatusColor } from '@/utils/status';
-
-
 import { QUERY_KEYS } from '@/lib/reactQuery';
-
+import { designTokens } from '@topems/tokens';
 const MonitorPage: React.FC = () => {
   const theme = useTheme();
   const { addNotification } = useNotificationStore();
-
   const systemMetricsQuery = useQuery<SystemMetrics | null>({
     queryKey: QUERY_KEYS.AD_HOC.ADMIN_MONITOR_SYSTEM_METRICS_BASE,
     queryFn: async () => {
@@ -42,7 +40,6 @@ const MonitorPage: React.FC = () => {
     refetchInterval: 30000,
     staleTime: 5 * 60 * 1000,
   });
-
   const serviceHealthQuery = useQuery<ServiceHealth[]>({
     queryKey: QUERY_KEYS.AD_HOC.ADMIN_MONITOR_SERVICE_HEALTH_BASE,
     queryFn: async () => {
@@ -52,7 +49,6 @@ const MonitorPage: React.FC = () => {
     refetchInterval: 30000,
     staleTime: 5 * 60 * 1000,
   });
-
   const alertsQuery = useQuery<Alert[]>({
     queryKey: QUERY_KEYS.AD_HOC.ADMIN_MONITOR_ALERTS_BASE,
     queryFn: async () => {
@@ -62,48 +58,42 @@ const MonitorPage: React.FC = () => {
     refetchInterval: 30000,
     staleTime: 5 * 60 * 1000,
   });
-
   const loading =
     systemMetricsQuery.isLoading || serviceHealthQuery.isLoading || alertsQuery.isLoading;
   const systemMetrics = systemMetricsQuery.data ?? null;
   const serviceHealth = serviceHealthQuery.data ?? [];
   const alerts = alertsQuery.data ?? [];
-
   useEffect(() => {
     if (systemMetricsQuery.isError) {
-      apiLogger.error('加载系统指标失败:', systemMetricsQuery.error);
+      apiLogger.error(i18n.t('pages.monitor_page.k0'), systemMetricsQuery.error);
       addNotification({
         type: 'error',
-        title: '加载失败',
-        message: '无法加载系统指标',
+        title: i18n.t('admin.monitor_page.k0'),
+        message: i18n.t('admin.monitor_page.k1'),
       });
     }
   }, [systemMetricsQuery.isError, systemMetricsQuery.error, addNotification]);
-
   useEffect(() => {
     if (serviceHealthQuery.isError) {
-      apiLogger.error('加载服务健康失败:', serviceHealthQuery.error);
+      apiLogger.error(i18n.t('pages.monitor_page.k1'), serviceHealthQuery.error);
       addNotification({
         type: 'error',
-        title: '加载失败',
-        message: '无法加载服务健康数据',
+        title: i18n.t('admin.monitor_page.k2'),
+        message: i18n.t('admin.monitor_page.k3'),
       });
     }
   }, [serviceHealthQuery.isError, serviceHealthQuery.error, addNotification]);
-
   useEffect(() => {
     if (alertsQuery.isError) {
-      apiLogger.error('加载告警列表失败:', alertsQuery.error);
+      apiLogger.error(i18n.t('pages.monitor_page.k2'), alertsQuery.error);
       addNotification({
         type: 'error',
-        title: '加载失败',
-        message: '无法加载告警列表',
+        title: i18n.t('admin.monitor_page.k4'),
+        message: i18n.t('admin.monitor_page.k5'),
       });
     }
   }, [alertsQuery.isError, alertsQuery.error, addNotification]);
-
   const getMonitorStatusColor = (status: string) => getStatusColor(status, { category: 'monitor' });
-
   const getSeverityColor = (severity: string) => {
     switch (severity) {
       case 'critical':
@@ -116,26 +106,22 @@ const MonitorPage: React.FC = () => {
         return 'grey.500';
     }
   };
-
   const formatUptime = (seconds: number) => {
     const days = Math.floor(seconds / 86400);
     const hours = Math.floor((seconds % 86400) / 3600);
     const minutes = Math.floor((seconds % 3600) / 60);
-    return `${days}天 ${hours}小时 ${minutes}分钟`;
+    return `${days}${i18n.t('pages.monitor_page.k3')}${hours}${i18n.t('pages.monitor_page.k4')}${minutes}${i18n.t('pages.monitor_page.k5')}`;
   };
-
   const formatBytes = (bytes: number) => {
     if (bytes < 1024) return `${bytes} B`;
     if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(2)} KB/s`;
     return `${(bytes / (1024 * 1024)).toFixed(2)} MB/s`;
   };
-
   if (loading) return <LoadingSpinner />;
-
   return (
     <PageContainer
-      title='系统监控'
-      subtitle='实时监控系统运行状态和服务健康度'
+      title={i18n.t('admin.monitor_page.k6')}
+      subtitle={i18n.t('admin.monitor_page.k7')}
       headerProps={{
         pageIcon: <Activity sx={{ width: 24, height: 24 }} />,
         pageColor: 'success.main',
@@ -166,7 +152,7 @@ const MonitorPage: React.FC = () => {
                   variant='body2'
                   sx={{ color: 'text.secondary' }}
                 >
-                  CPU 使用率
+                  {i18n.t('pages.monitor_page.cpu_0')}
                 </Typography>
               </Box>
             </CardHeader>
@@ -192,7 +178,6 @@ const MonitorPage: React.FC = () => {
               />
             </CardContent>
           </Card>
-
           <Card>
             <CardHeader>
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
@@ -201,7 +186,7 @@ const MonitorPage: React.FC = () => {
                   variant='body2'
                   sx={{ color: 'text.secondary' }}
                 >
-                  内存使用率
+                  {i18n.t('pages.monitor_page.k1')}
                 </Typography>
               </Box>
             </CardHeader>
@@ -227,7 +212,6 @@ const MonitorPage: React.FC = () => {
               />
             </CardContent>
           </Card>
-
           <Card>
             <CardHeader>
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
@@ -236,7 +220,7 @@ const MonitorPage: React.FC = () => {
                   variant='body2'
                   sx={{ color: 'text.secondary' }}
                 >
-                  磁盘使用率
+                  {i18n.t('pages.monitor_page.k2')}
                 </Typography>
               </Box>
             </CardHeader>
@@ -262,7 +246,6 @@ const MonitorPage: React.FC = () => {
               />
             </CardContent>
           </Card>
-
           <Card>
             <CardHeader>
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
@@ -271,7 +254,7 @@ const MonitorPage: React.FC = () => {
                   variant='body2'
                   sx={{ color: 'text.secondary' }}
                 >
-                  系统运行时间
+                  {i18n.t('pages.monitor_page.k3')}
                 </Typography>
               </Box>
             </CardHeader>
@@ -285,7 +268,6 @@ const MonitorPage: React.FC = () => {
             </CardContent>
           </Card>
         </Box>
-
         <Card>
           <CardHeader>
             <Typography
@@ -298,7 +280,7 @@ const MonitorPage: React.FC = () => {
               }}
             >
               <Server sx={{ width: 20, height: 20 }} />
-              服务健康状态
+              {i18n.t('pages.monitor_page.k4')}
             </Typography>
           </CardHeader>
           <CardContent>
@@ -308,57 +290,57 @@ const MonitorPage: React.FC = () => {
                   <tr>
                     <th
                       style={{
-                        padding: '12px 16px',
+                        padding: `${designTokens.spacing.md} 16px`,
                         textAlign: 'left',
                         fontWeight: 500,
                       }}
                     >
-                      服务名称
+                      {i18n.t('pages.monitor_page.k5')}
                     </th>
                     <th
                       style={{
-                        padding: '12px 16px',
+                        padding: `${designTokens.spacing.md} 16px`,
                         textAlign: 'center',
                         fontWeight: 500,
                       }}
                     >
-                      状态
+                      {i18n.t('pages.monitor_page.k6')}
                     </th>
                     <th
                       style={{
-                        padding: '12px 16px',
+                        padding: `${designTokens.spacing.md} 16px`,
                         textAlign: 'right',
                         fontWeight: 500,
                       }}
                     >
-                      延迟 (ms)
+                      {i18n.t('pages.monitor_page.ms_7')}
                     </th>
                     <th
                       style={{
-                        padding: '12px 16px',
+                        padding: `${designTokens.spacing.md} 16px`,
                         textAlign: 'right',
                         fontWeight: 500,
                       }}
                     >
-                      错误率
+                      {i18n.t('pages.monitor_page.k8')}
                     </th>
                     <th
                       style={{
-                        padding: '12px 16px',
+                        padding: `${designTokens.spacing.md} 16px`,
                         textAlign: 'right',
                         fontWeight: 500,
                       }}
                     >
-                      可用性
+                      {i18n.t('pages.monitor_page.k9')}
                     </th>
                     <th
                       style={{
-                        padding: '12px 16px',
+                        padding: `${designTokens.spacing.md} 16px`,
                         textAlign: 'left',
                         fontWeight: 500,
                       }}
                     >
-                      最后检查
+                      {i18n.t('pages.monitor_page.k10')}
                     </th>
                   </tr>
                 </thead>
@@ -369,16 +351,16 @@ const MonitorPage: React.FC = () => {
                         key={service.service_name}
                         style={{ borderBottom: '1px solid' }}
                       >
-                        <td style={{ padding: '12px 16px' }}>{service.service_name}</td>
-                        <td style={{ padding: '12px 16px', textAlign: 'center' }}>
+                        <td style={{ padding: `${designTokens.spacing.md} 16px` }}>{service.service_name}</td>
+                        <td style={{ padding: `${designTokens.spacing.md} 16px`, textAlign: 'center' }}>
                           <Chip
                             size='small'
                             label={
                               service.status === 'healthy'
-                                ? '健康'
+                                ? i18n.t('admin.monitor_page.k8')
                                 : service.status === 'degraded'
-                                  ? '降级'
-                                  : '异常'
+                                  ? i18n.t('admin.monitor_page.k9')
+                                  : i18n.t('admin.monitor_page.k10')
                             }
                             icon={
                               service.status === 'healthy' ? (
@@ -392,16 +374,16 @@ const MonitorPage: React.FC = () => {
                             }}
                           />
                         </td>
-                        <td style={{ padding: '12px 16px', textAlign: 'right' }}>
+                        <td style={{ padding: `${designTokens.spacing.md} 16px`, textAlign: 'right' }}>
                           {service.latency}
                         </td>
-                        <td style={{ padding: '12px 16px', textAlign: 'right' }}>
+                        <td style={{ padding: `${designTokens.spacing.md} 16px`, textAlign: 'right' }}>
                           {service.error_rate?.toFixed(2) ?? '0.00'}%
                         </td>
-                        <td style={{ padding: '12px 16px', textAlign: 'right' }}>
+                        <td style={{ padding: `${designTokens.spacing.md} 16px`, textAlign: 'right' }}>
                           {service.uptime_percentage?.toFixed(1) ?? '0.0'}%
                         </td>
-                        <td style={{ padding: '12px 16px' }}>
+                        <td style={{ padding: `${designTokens.spacing.md} 16px` }}>
                           {service.last_checked
                             ? new Date(service.last_checked).toLocaleString()
                             : '-'}
@@ -413,12 +395,12 @@ const MonitorPage: React.FC = () => {
                       <td
                         colSpan={6}
                         style={{
-                          padding: '32px 16px',
+                          padding: `${designTokens.spacing.xl} 16px`,
                           textAlign: 'center',
                           color: theme.palette.text.disabled,
                         }}
                       >
-                        暂无服务健康数据
+                        {i18n.t('pages.monitor_page.k11')}
                       </td>
                     </tr>
                   )}
@@ -427,7 +409,6 @@ const MonitorPage: React.FC = () => {
             </Box>
           </CardContent>
         </Card>
-
         <Card>
           <CardHeader>
             <Typography
@@ -440,13 +421,13 @@ const MonitorPage: React.FC = () => {
               }}
             >
               <AlertTriangle sx={{ width: 20, height: 20 }} />
-              告警列表
+              {i18n.t('pages.monitor_page.k12')}
             </Typography>
             <Typography
               variant='body2'
               sx={{ color: 'grey.500' }}
             >
-              最近20条告警记录
+              {i18n.t('pages.monitor_page.20_13')}
             </Typography>
           </CardHeader>
           <CardContent>
@@ -456,57 +437,57 @@ const MonitorPage: React.FC = () => {
                   <tr>
                     <th
                       style={{
-                        padding: '12px 16px',
+                        padding: `${designTokens.spacing.md} 16px`,
                         textAlign: 'left',
                         fontWeight: 500,
                       }}
                     >
-                      标题
+                      {i18n.t('pages.monitor_page.k14')}
                     </th>
                     <th
                       style={{
-                        padding: '12px 16px',
+                        padding: `${designTokens.spacing.md} 16px`,
                         textAlign: 'center',
                         fontWeight: 500,
                       }}
                     >
-                      级别
+                      {i18n.t('pages.monitor_page.k15')}
                     </th>
                     <th
                       style={{
-                        padding: '12px 16px',
+                        padding: `${designTokens.spacing.md} 16px`,
                         textAlign: 'left',
                         fontWeight: 500,
                       }}
                     >
-                      服务
+                      {i18n.t('pages.monitor_page.k16')}
                     </th>
                     <th
                       style={{
-                        padding: '12px 16px',
+                        padding: `${designTokens.spacing.md} 16px`,
                         textAlign: 'left',
                         fontWeight: 500,
                       }}
                     >
-                      消息
+                      {i18n.t('pages.monitor_page.k17')}
                     </th>
                     <th
                       style={{
-                        padding: '12px 16px',
+                        padding: `${designTokens.spacing.md} 16px`,
                         textAlign: 'center',
                         fontWeight: 500,
                       }}
                     >
-                      状态
+                      {i18n.t('pages.monitor_page.k18')}
                     </th>
                     <th
                       style={{
-                        padding: '12px 16px',
+                        padding: `${designTokens.spacing.md} 16px`,
                         textAlign: 'left',
                         fontWeight: 500,
                       }}
                     >
-                      创建时间
+                      {i18n.t('pages.monitor_page.k19')}
                     </th>
                   </tr>
                 </thead>
@@ -517,16 +498,16 @@ const MonitorPage: React.FC = () => {
                         key={alert.id}
                         style={{ borderBottom: '1px solid' }}
                       >
-                        <td style={{ padding: '12px 16px' }}>{alert.title}</td>
-                        <td style={{ padding: '12px 16px', textAlign: 'center' }}>
+                        <td style={{ padding: `${designTokens.spacing.md} 16px` }}>{alert.title}</td>
+                        <td style={{ padding: `${designTokens.spacing.md} 16px`, textAlign: 'center' }}>
                           <Chip
                             size='small'
                             label={
                               alert.severity === 'critical'
-                                ? '严重'
+                                ? i18n.t('admin.monitor_page.k11')
                                 : alert.severity === 'warning'
-                                  ? '警告'
-                                  : '信息'
+                                  ? i18n.t('admin.monitor_page.k12')
+                                  : i18n.t('admin.monitor_page.k13')
                             }
                             sx={{
                               bgcolor: `${getSeverityColor(alert.severity)}20`,
@@ -534,10 +515,10 @@ const MonitorPage: React.FC = () => {
                             }}
                           />
                         </td>
-                        <td style={{ padding: '12px 16px' }}>{alert.service_name}</td>
+                        <td style={{ padding: `${designTokens.spacing.md} 16px` }}>{alert.service_name}</td>
                         <td
                           style={{
-                            padding: '12px 16px',
+                            padding: `${designTokens.spacing.md} 16px`,
                             maxWidth: 300,
                             overflow: 'hidden',
                             textOverflow: 'ellipsis',
@@ -546,22 +527,22 @@ const MonitorPage: React.FC = () => {
                         >
                           {alert.message}
                         </td>
-                        <td style={{ padding: '12px 16px', textAlign: 'center' }}>
+                        <td style={{ padding: `${designTokens.spacing.md} 16px`, textAlign: 'center' }}>
                           <Chip
                             size='small'
                             label={
                               alert.status === 'active'
-                                ? '活跃'
+                                ? i18n.t('admin.monitor_page.k14')
                                 : alert.status === 'resolved'
-                                  ? '已解决'
-                                  : '已确认'
+                                  ? i18n.t('admin.monitor_page.k15')
+                                  : i18n.t('admin.monitor_page.k16')
                             }
                             sx={{
                               bgcolor: alert.status === 'active' ? 'error.light' : 'success.light',
                             }}
                           />
                         </td>
-                        <td style={{ padding: '12px 16px' }}>
+                        <td style={{ padding: `${designTokens.spacing.md} 16px` }}>
                           {new Date(alert.created_at).toLocaleString()}
                         </td>
                       </tr>
@@ -571,12 +552,12 @@ const MonitorPage: React.FC = () => {
                       <td
                         colSpan={6}
                         style={{
-                          padding: '32px 16px',
+                          padding: `${designTokens.spacing.xl} 16px`,
                           textAlign: 'center',
                           color: theme.palette.text.disabled,
                         }}
                       >
-                        暂无告警记录
+                        {i18n.t('pages.monitor_page.k20')}
                       </td>
                     </tr>
                   )}
@@ -589,5 +570,4 @@ const MonitorPage: React.FC = () => {
     </PageContainer>
   );
 };
-
 export default MonitorPage;

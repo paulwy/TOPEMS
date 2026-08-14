@@ -27,6 +27,7 @@
  */
 
 import { useEffect, useRef, useState } from 'react';
+import i18n from '@/i18n';
 
 /** 订阅连接状态 */
 export type SubscriptionStatus = 'connecting' | 'connected' | 'disconnected' | 'reconnecting';
@@ -122,7 +123,7 @@ export function useBffSubscription<T>(
       try {
         ws = new WebSocket(wsUrl, ['graphql-transport-ws']);
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'WebSocket 创建失败');
+        setError(err instanceof Error ? err.message : i18n.t('shared.use_bff_subscription.websocket_0'));
         updateStatus('disconnected');
         scheduleReconnect();
         return;
@@ -160,7 +161,7 @@ export function useBffSubscription<T>(
               onMessageRef.current(dataValue);
             }
           } else if (msg.type === 'error') {
-            const errMsg = msg.payload?.message ?? '订阅错误';
+            const errMsg = msg.payload?.message ?? i18n.t('shared.use_bff_subscription.k0');
             setError(typeof errMsg === 'string' ? errMsg : JSON.stringify(errMsg));
           }
         } catch {

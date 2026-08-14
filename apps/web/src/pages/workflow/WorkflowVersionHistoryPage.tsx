@@ -15,6 +15,7 @@ import {
   Button,
   useTheme,
 } from '@mui/material';
+import i18n from '@/i18n';
 import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import {
@@ -93,13 +94,13 @@ const FlowVersionHistoryPage: React.FC = () => {
 
   useEffect(() => {
     if (workflowQuery.isError || versionsQuery.isError) {
-      apiLogger.error('加载数据失败:', {
+      apiLogger.error(i18n.t('pages.workflow_version_history_page.k0'), {
         workflowError: workflowQuery.error,
         versionsError: versionsQuery.error,
       });
       addNotification({
-        title: '错误',
-        message: '加载数据失败',
+        title: i18n.t('pages.workflow_version_history_page.k0'),
+        message: i18n.t('pages.workflow_version_history_page.k1'),
         type: 'error',
       });
     }
@@ -126,7 +127,7 @@ const FlowVersionHistoryPage: React.FC = () => {
     mutationFn: async (data: { version: string; change_description: string }) => {
       const wfResponse = await workflowApi.getWorkflow(id!);
       if (!wfResponse.success || !wfResponse.data) {
-        throw new Error('获取工作流失败');
+        throw new Error(i18n.t('pages.workflow_version_history_page.k2'));
       }
       const workflowData = wfResponse.data as unknown as Workflow;
       return workflowApi.createVersion(id!, {
@@ -145,18 +146,18 @@ const FlowVersionHistoryPage: React.FC = () => {
         });
       invalidateVersionQueries();
       addNotification({
-        title: '成功',
-        message: '版本创建成功',
+        title: i18n.t('pages.workflow_version_history_page.k3'),
+        message: i18n.t('pages.workflow_version_history_page.k4'),
         type: 'success',
       });
       setShowCreateModal(false);
       setCreateForm({ version: '', change_description: '' });
     },
     onError: (err: unknown) => {
-      apiLogger.error('创建版本失败:', err);
+      apiLogger.error(i18n.t('pages.workflow_version_history_page.k1'), err);
       addNotification({
-        title: '错误',
-        message: '创建版本失败',
+        title: i18n.t('pages.workflow_version_history_page.k5'),
+        message: i18n.t('pages.workflow_version_history_page.k6'),
         type: 'error',
       });
     },
@@ -173,16 +174,16 @@ const FlowVersionHistoryPage: React.FC = () => {
         });
       invalidateVersionQueries();
       addNotification({
-        title: '成功',
-        message: '版本激活成功',
+        title: i18n.t('pages.workflow_version_history_page.k7'),
+        message: i18n.t('pages.workflow_version_history_page.k8'),
         type: 'success',
       });
     },
     onError: (err: unknown) => {
-      apiLogger.error('激活版本失败:', err);
+      apiLogger.error(i18n.t('pages.workflow_version_history_page.k2'), err);
       addNotification({
-        title: '错误',
-        message: '激活版本失败',
+        title: i18n.t('pages.workflow_version_history_page.k9'),
+        message: i18n.t('pages.workflow_version_history_page.k10'),
         type: 'error',
       });
     },
@@ -204,8 +205,8 @@ const FlowVersionHistoryPage: React.FC = () => {
         });
       invalidateVersionQueries();
       addNotification({
-        title: '成功',
-        message: '回滚成功',
+        title: i18n.t('pages.workflow_version_history_page.k11'),
+        message: i18n.t('pages.workflow_version_history_page.k12'),
         type: 'success',
       });
       setShowRollbackModal(false);
@@ -213,8 +214,8 @@ const FlowVersionHistoryPage: React.FC = () => {
       setRollbackForm({ reason: '' });
     },
     onError: (err: unknown) => {
-      apiLogger.error('回滚失败:', err);
-      addNotification({ title: '错误', message: '回滚失败', type: 'error' });
+      apiLogger.error(i18n.t('pages.workflow_version_history_page.k3'), err);
+      addNotification({ title: i18n.t('pages.workflow_version_history_page.k14'), message: i18n.t('pages.workflow_version_history_page.k13'), type: 'error' });
     },
   });
 
@@ -229,16 +230,16 @@ const FlowVersionHistoryPage: React.FC = () => {
         });
       invalidateVersionQueries();
       addNotification({
-        title: '成功',
-        message: '版本删除成功',
+        title: i18n.t('pages.workflow_version_history_page.k15'),
+        message: i18n.t('pages.workflow_version_history_page.k16'),
         type: 'success',
       });
     },
     onError: (err: unknown) => {
-      apiLogger.error('删除版本失败:', err);
+      apiLogger.error(i18n.t('pages.workflow_version_history_page.k4'), err);
       addNotification({
-        title: '错误',
-        message: '删除版本失败',
+        title: i18n.t('pages.workflow_version_history_page.k17'),
+        message: i18n.t('pages.workflow_version_history_page.k18'),
         type: 'error',
       });
     },
@@ -252,7 +253,7 @@ const FlowVersionHistoryPage: React.FC = () => {
 
   const handleCreateVersion = () => {
     if (!id || !createForm.version.trim()) {
-      addNotification({ title: '提示', message: '请输入版本号', type: 'info' });
+      addNotification({ title: i18n.t('pages.workflow_version_history_page.k20'), message: i18n.t('pages.workflow_version_history_page.k19'), type: 'info' });
       return;
     }
 
@@ -278,14 +279,14 @@ const FlowVersionHistoryPage: React.FC = () => {
   const handleDeleteVersion = (version: WorkflowVersion) => {
     if (!id || version.isactive) {
       addNotification({
-        title: '提示',
-        message: '无法删除当前激活的版本',
+        title: i18n.t('pages.workflow_version_history_page.k21'),
+        message: i18n.t('pages.workflow_version_history_page.k22'),
         type: 'info',
       });
       return;
     }
 
-    if (!confirm('确定要删除这个版本吗？')) return;
+    if (!confirm(i18n.t('pages.workflow_version_history_page.k23'))) return;
 
     deleteVersionMutation.mutate(version.id);
   };
@@ -297,7 +298,7 @@ const FlowVersionHistoryPage: React.FC = () => {
   const headerActions = useMemo(
     () => [
       {
-        label: '创建版本',
+        label: i18n.t('pages.workflow_version_history_page.k24'),
         icon: <Plus size={18} />,
         onClick: () => setShowCreateModal(true),
         variant: 'contained' as const,
@@ -309,7 +310,7 @@ const FlowVersionHistoryPage: React.FC = () => {
 
   return (
     <PageContainer
-      title='版本历史'
+      title={i18n.t('pages.workflow_version_history_page.k25')}
       subtitle={workflow?.name}
       loading={loading}
       headerProps={{
@@ -328,7 +329,7 @@ const FlowVersionHistoryPage: React.FC = () => {
             variant='h6'
             sx={{ fontWeight: 600, mb: 2 }}
           >
-            版本列表
+            {i18n.t('pages.workflow_version_history_page.k5')}
           </Typography>
 
           {versions.length === 0 ? (
@@ -342,13 +343,13 @@ const FlowVersionHistoryPage: React.FC = () => {
                   marginBottom: 16,
                 }}
               />
-              <Typography sx={{ color: 'grey.500' }}>暂无版本历史</Typography>
+              <Typography sx={{ color: 'grey.500' }}>{i18n.t('pages.workflow_version_history_page.k26')}</Typography>
               <Button
                 onClick={() => setShowCreateModal(true)}
                 variant='contained'
                 sx={{ mt: 2, bgcolor: 'secondary.main' }}
               >
-                创建第一个版本
+                {i18n.t('pages.workflow_version_history_page.k6')}
               </Button>
             </Box>
           ) : (
@@ -413,7 +414,7 @@ const FlowVersionHistoryPage: React.FC = () => {
                           </Typography>
                           {version.isactive && (
                             <Chip
-                              label='当前版本'
+                              label={i18n.t('pages.workflow_version_history_page.k27')}
                               size='small'
                               sx={{ bgcolor: 'secondary.main', color: 'common.white' }}
                             />
@@ -442,7 +443,7 @@ const FlowVersionHistoryPage: React.FC = () => {
                               variant='caption'
                               color='text.secondary'
                             >
-                              {version.created_by || '系统'}
+                              {version.created_by || i18n.t('pages.workflow_version_history_page.k28')}
                             </Typography>
                           </Stack>
                           <Stack
@@ -467,7 +468,7 @@ const FlowVersionHistoryPage: React.FC = () => {
                     >
                       {!version.isactive && (
                         <>
-                          <Tooltip title='回滚到此版本'>
+                          <Tooltip title={i18n.t('pages.workflow_version_history_page.k29')}>
                             <IconButton
                               size='small'
                               onClick={() => {
@@ -475,17 +476,17 @@ const FlowVersionHistoryPage: React.FC = () => {
                                 setShowRollbackModal(true);
                               }}
                               sx={{ color: 'warning.main' }}
-                              aria-label='重置'
+                              aria-label={i18n.t('pages.workflow_version_history_page.k30')}
                             >
                               <RotateCcw size={20} />
                             </IconButton>
                           </Tooltip>
-                          <Tooltip title='删除版本'>
+                          <Tooltip title={i18n.t('pages.workflow_version_history_page.k31')}>
                             <IconButton
                               size='small'
                               onClick={() => handleDeleteVersion(version)}
                               sx={{ color: 'error.main' }}
-                              aria-label='删除'
+                              aria-label={i18n.t('pages.workflow_version_history_page.k32')}
                             >
                               <Trash2 size={20} />
                             </IconButton>
@@ -499,7 +500,7 @@ const FlowVersionHistoryPage: React.FC = () => {
                         variant={version.isactive ? 'outlined' : 'contained'}
                         sx={version.isactive ? {} : { bgcolor: 'secondary.main' }}
                       >
-                        {version.isactive ? '已激活' : '激活'}
+                        {version.isactive ? i18n.t('pages.workflow_version_history_page.k34') : i18n.t('pages.workflow_version_history_page.k33')}
                       </Button>
                     </Stack>
                   </Stack>
@@ -515,26 +516,26 @@ const FlowVersionHistoryPage: React.FC = () => {
         open={showCreateModal}
         onClose={() => setShowCreateModal(false)}
       >
-        <DialogTitle>创建新版本</DialogTitle>
+        <DialogTitle>{i18n.t('pages.workflow_version_history_page.k35')}</DialogTitle>
         <DialogContent>
           <Typography
             variant='body2'
             sx={{ mb: 2, color: 'text.secondary' }}
           >
-            创建一个新的工作流版本
+            {i18n.t('pages.workflow_version_history_page.k7')}
           </Typography>
           <Stack spacing={2}>
             <TextField
               size='small'
-              label='版本号 *'
+              label={i18n.t('pages.workflow_version_history_page.k8')}
               value={createForm.version}
               onChange={(e) => setCreateForm({ ...createForm, version: e.target.value })}
-              placeholder='例如: 1.0.1'
+              placeholder={i18n.t('pages.workflow_version_history_page.101_9')}
               fullWidth
             />
             <TextField
               size='small'
-              label='变更说明'
+              label={i18n.t('pages.workflow_version_history_page.k36')}
               value={createForm.change_description}
               onChange={(e) =>
                 setCreateForm({
@@ -542,7 +543,7 @@ const FlowVersionHistoryPage: React.FC = () => {
                   change_description: e.target.value,
                 })
               }
-              placeholder='描述本次变更内容'
+              placeholder={i18n.t('pages.workflow_version_history_page.k37')}
               multiline
               rows={4}
               fullWidth
@@ -554,7 +555,7 @@ const FlowVersionHistoryPage: React.FC = () => {
             variant='outlined'
             onClick={() => setShowCreateModal(false)}
           >
-            取消
+            {i18n.t('pages.workflow_version_history_page.k10')}
           </Button>
           <Button
             variant='contained'
@@ -570,7 +571,7 @@ const FlowVersionHistoryPage: React.FC = () => {
               ) : undefined
             }
           >
-            创建
+            {i18n.t('pages.workflow_version_history_page.k11')}
           </Button>
         </DialogActions>
       </Dialog>
@@ -594,16 +595,16 @@ const FlowVersionHistoryPage: React.FC = () => {
                 variant='body2'
                 color='text.secondary'
               >
-                当前工作流将被更新为该版本的内容。
+                {i18n.t('pages.workflow_version_history_page.k12')}
               </Typography>
             </>
           )}
           <TextField
             size='small'
-            label='回滚原因'
+            label={i18n.t('pages.workflow_version_history_page.k38')}
             value={rollbackForm.reason}
             onChange={(e) => setRollbackForm({ ...rollbackForm, reason: e.target.value })}
-            placeholder='可选：输入回滚原因'
+            placeholder={i18n.t('pages.workflow_version_history_page.k39')}
             multiline
             rows={3}
             fullWidth
@@ -619,7 +620,7 @@ const FlowVersionHistoryPage: React.FC = () => {
               setRollbackForm({ reason: '' });
             }}
           >
-            取消
+            {i18n.t('pages.workflow_version_history_page.k13')}
           </Button>
           <Button
             variant='contained'
@@ -635,7 +636,7 @@ const FlowVersionHistoryPage: React.FC = () => {
               ) : undefined
             }
           >
-            确认回滚
+            {i18n.t('pages.workflow_version_history_page.k14')}
           </Button>
         </DialogActions>
       </Dialog>

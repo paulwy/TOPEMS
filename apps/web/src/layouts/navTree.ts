@@ -3,6 +3,7 @@ import { navigationRegistryV2 } from '@/lib/navigation';
 import type { ModuleCardConfig, NavItem } from '@/lib/navigation/types';
 import { DASHBOARD_PATHS } from '@/routes/dashboard';
 import { L1_BUSINESS_DOMAINS, L2_TO_L1_MAP, L2_MODULE_ORDER } from './constants';
+import i18n from '@/i18n';
 
 export interface L1NavNode {
   key: string;
@@ -38,28 +39,28 @@ const SPECIAL_L1_MODULES: Record<
 > = {
   workbench_dashboard: {
     key: 'workbench_dashboard',
-    title: '工作台首页',
+    title: i18n.t('shared.nav_tree.k0'),
     path: DASHBOARD_PATHS.dashboard,
     icon: 'Home',
     order: 1,
   },
   workbench_mobile: {
     key: 'mobile',
-    title: '移动端',
+    title: i18n.t('shared.nav_tree.k1'),
     path: '/mobile/home',
     icon: 'Smartphone',
     order: 2,
   },
   profile_center: {
     key: 'profile_center',
-    title: '个人资料',
+    title: i18n.t('shared.nav_tree.k2'),
     path: DASHBOARD_PATHS.profile,
     icon: 'User',
     order: 1,
   },
   profile_favorites: {
     key: 'profile_favorites',
-    title: '我的收藏',
+    title: i18n.t('shared.nav_tree.k3'),
     path: DASHBOARD_PATHS.favorites,
     icon: 'Bookmark',
     order: 2,

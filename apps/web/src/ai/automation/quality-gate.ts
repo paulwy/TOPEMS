@@ -1,3 +1,4 @@
+import i18n from '@/i18n';
 export type GateType = 'coverage' | 'bundle' | 'size' | 'performance' | 'security';
 export type GateAction = 'block' | 'warn' | 'info';
 export type GateStatus = 'passed' | 'failed' | 'warned' | 'skipped';
@@ -50,8 +51,8 @@ const DEFAULT_CRITERIA: GateCriteria[] = [
   {
     id: generateId(),
     type: 'coverage',
-    name: '行覆盖率',
-    description: '代码行覆盖率不得低于阈值',
+    name: i18n.t('ai.quality-gate.k0'),
+    description: i18n.t('ai.quality-gate.k1'),
     threshold: 80,
     comparison: 'gte',
     action: 'block',
@@ -61,8 +62,8 @@ const DEFAULT_CRITERIA: GateCriteria[] = [
   {
     id: generateId(),
     type: 'coverage',
-    name: '分支覆盖率',
-    description: '分支覆盖率不得低于阈值',
+    name: i18n.t('ai.quality-gate.k2'),
+    description: i18n.t('ai.quality-gate.k3'),
     threshold: 70,
     comparison: 'gte',
     action: 'warn',
@@ -72,8 +73,8 @@ const DEFAULT_CRITERIA: GateCriteria[] = [
   {
     id: generateId(),
     type: 'bundle',
-    name: '主包体积',
-    description: '主代码包（gzip 后）不得超过阈值',
+    name: i18n.t('ai.quality-gate.k4'),
+    description: i18n.t('ai.quality-gate.gzip_5'),
     threshold: 300,
     comparison: 'lte',
     action: 'block',
@@ -83,8 +84,8 @@ const DEFAULT_CRITERIA: GateCriteria[] = [
   {
     id: generateId(),
     type: 'size',
-    name: '首屏资源',
-    description: '首屏加载资源总量不得超过阈值',
+    name: i18n.t('ai.quality-gate.k6'),
+    description: i18n.t('ai.quality-gate.k7'),
     threshold: 500,
     comparison: 'lte',
     action: 'warn',
@@ -94,8 +95,8 @@ const DEFAULT_CRITERIA: GateCriteria[] = [
   {
     id: generateId(),
     type: 'performance',
-    name: '首屏加载时间',
-    description: '首次内容绘制 (FCP) 不得超过阈值',
+    name: i18n.t('ai.quality-gate.k8'),
+    description: i18n.t('ai.quality-gate.fcp_9'),
     threshold: 3,
     comparison: 'lte',
     action: 'block',
@@ -105,8 +106,8 @@ const DEFAULT_CRITERIA: GateCriteria[] = [
   {
     id: generateId(),
     type: 'performance',
-    name: '最大内容绘制',
-    description: '最大内容绘制 (LCP) 不得超过阈值',
+    name: i18n.t('ai.quality-gate.k10'),
+    description: i18n.t('ai.quality-gate.lcp_11'),
     threshold: 4,
     comparison: 'lte',
     action: 'warn',
@@ -116,8 +117,8 @@ const DEFAULT_CRITERIA: GateCriteria[] = [
   {
     id: generateId(),
     type: 'security',
-    name: '安全漏洞',
-    description: '严重安全漏洞数量必须为 0',
+    name: i18n.t('ai.quality-gate.k12'),
+    description: i18n.t('ai.quality-gate.0_13'),
     threshold: 0,
     comparison: 'eq',
     action: 'block',
@@ -127,8 +128,8 @@ const DEFAULT_CRITERIA: GateCriteria[] = [
   {
     id: generateId(),
     type: 'security',
-    name: '依赖过期',
-    description: '过期依赖数量不得超过阈值',
+    name: i18n.t('ai.quality-gate.k14'),
+    description: i18n.t('ai.quality-gate.k15'),
     threshold: 5,
     comparison: 'lte',
     action: 'warn',
@@ -203,8 +204,8 @@ class QualityGateImpl {
         action: criteria.action,
         status,
         message: passed
-          ? `${criteria.name} 通过 (${actual.toFixed(2)} ${criteria.comparison} ${criteria.threshold})`
-          : `${criteria.name} 未通过 (${actual.toFixed(2)} ${criteria.comparison} ${criteria.threshold})`,
+          ? `${criteria.name}${i18n.t('ai.quality-gate.k0')}${actual.toFixed(2)} ${criteria.comparison} ${criteria.threshold})`
+          : `${criteria.name}${i18n.t('ai.quality-gate.k1')}${actual.toFixed(2)} ${criteria.comparison} ${criteria.threshold})`,
         measured_at: now,
         duration_ms: duration,
       };

@@ -14,6 +14,7 @@ import {
   useTheme,
   useMediaQuery,
 } from '@mui/material';
+import i18n from '@/i18n';
 import {
   Plus,
   MoreHorizontal,
@@ -262,13 +263,13 @@ export const KanbanPageTemplate: React.FC<KanbanPageTemplateProps> = ({
   const getPriorityLabel = (priority?: string) => {
     switch (priority) {
       case 'urgent':
-        return '紧急';
+        return i18n.t('components.kanban_page_template.k0');
       case 'high':
-        return '高';
+        return i18n.t('components.kanban_page_template.k1');
       case 'medium':
-        return '中';
+        return i18n.t('components.kanban_page_template.k2');
       case 'low':
-        return '低';
+        return i18n.t('components.kanban_page_template.k3');
       default:
         return '';
     }
@@ -291,7 +292,7 @@ export const KanbanPageTemplate: React.FC<KanbanPageTemplateProps> = ({
             variant='caption'
             color='text.secondary'
           >
-            总任务
+            {i18n.t('components.kanban_page_template.k0')}
           </Typography>
           <Typography
             variant='h5'
@@ -305,7 +306,7 @@ export const KanbanPageTemplate: React.FC<KanbanPageTemplateProps> = ({
             variant='caption'
             color='text.secondary'
           >
-            列数
+            {i18n.t('components.kanban_page_template.k1')}
           </Typography>
           <Typography
             variant='h5'
@@ -319,7 +320,7 @@ export const KanbanPageTemplate: React.FC<KanbanPageTemplateProps> = ({
             variant='caption'
             color='error'
           >
-            逾期任务
+            {i18n.t('components.kanban_page_template.k2')}
           </Typography>
           <Typography
             variant='h5'
@@ -333,7 +334,7 @@ export const KanbanPageTemplate: React.FC<KanbanPageTemplateProps> = ({
             variant='caption'
             color='success'
           >
-            已完成
+            {i18n.t('components.kanban_page_template.k3')}
           </Typography>
           <Typography
             variant='h5'
@@ -376,7 +377,7 @@ export const KanbanPageTemplate: React.FC<KanbanPageTemplateProps> = ({
               type='text'
               value={searchInput}
               onChange={handleSearch}
-              placeholder='搜索任务...'
+              placeholder={i18n.t('components.kanban_page_template.k4')}
               style={
                 {
                   width: '100%',
@@ -393,20 +394,20 @@ export const KanbanPageTemplate: React.FC<KanbanPageTemplateProps> = ({
         )}
 
         {showFilter && (
-          <Tooltip title='筛选'>
+          <Tooltip title={i18n.t('components.kanban_page_template.k4')}>
             <IconButton
               size='small'
-              aria-label='筛选'
+              aria-label={i18n.t('components.kanban_page_template.k5')}
             >
               <Filter style={{ width: 18, height: 18 }} />
             </IconButton>
           </Tooltip>
         )}
 
-        <Tooltip title='刷新'>
+        <Tooltip title={i18n.t('components.kanban_page_template.k6')}>
           <IconButton
             size='small'
-            aria-label='刷新'
+            aria-label={i18n.t('components.kanban_page_template.k7')}
           >
             <RefreshCw style={{ width: 18, height: 18 }} />
           </IconButton>
@@ -461,7 +462,7 @@ export const KanbanPageTemplate: React.FC<KanbanPageTemplateProps> = ({
           </Box>
           <IconButton
             size='small'
-            aria-label='更多'
+            aria-label={i18n.t('components.kanban_page_template.k8')}
           >
             <MoreHorizontal style={{ width: 16, height: 16 }} />
           </IconButton>
@@ -506,7 +507,7 @@ export const KanbanPageTemplate: React.FC<KanbanPageTemplateProps> = ({
                 variant='caption'
                 color='text.secondary'
               >
-                子任务
+                {i18n.t('components.kanban_page_template.k5')}
               </Typography>
               <Typography variant='caption'>
                 {card.subtasks.completed}/{card.subtasks.total}
@@ -543,7 +544,7 @@ export const KanbanPageTemplate: React.FC<KanbanPageTemplateProps> = ({
                 <IconButton
                   size='small'
                   sx={{ p: 0 }}
-                  aria-label='编辑'
+                  aria-label={i18n.t('components.kanban_page_template.k9')}
                 >
                   <Edit style={{ width: 14, height: 14 }} />
                 </IconButton>
@@ -557,7 +558,7 @@ export const KanbanPageTemplate: React.FC<KanbanPageTemplateProps> = ({
                 <IconButton
                   size='small'
                   sx={{ p: 0 }}
-                  aria-label='归档'
+                  aria-label={i18n.t('components.kanban_page_template.k10')}
                 >
                   <Archive style={{ width: 14, height: 14 }} />
                 </IconButton>
@@ -664,22 +665,22 @@ export const KanbanPageTemplate: React.FC<KanbanPageTemplateProps> = ({
             </Box>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
               {column.onAddCard && (
-                <Tooltip title='添加任务'>
+                <Tooltip title={i18n.t('components.kanban_page_template.k11')}>
                   <IconButton
                     size='small'
                     onClick={column.onAddCard}
-                    aria-label='新增'
+                    aria-label={i18n.t('components.kanban_page_template.k12')}
                   >
                     <Plus style={{ width: 16, height: 16 }} />
                   </IconButton>
                 </Tooltip>
               )}
               {column.collapsible && (
-                <Tooltip title={isCollapsed ? '展开' : '折叠'}>
+                <Tooltip title={isCollapsed ? i18n.t('components.kanban_page_template.k14') : i18n.t('components.kanban_page_template.k13')}>
                   <IconButton
                     size='small'
                     onClick={() => toggleColumn(column.id)}
-                    aria-label='配置列'
+                    aria-label={i18n.t('components.kanban_page_template.k15')}
                   >
                     <Columns3
                       style={{
@@ -711,7 +712,7 @@ export const KanbanPageTemplate: React.FC<KanbanPageTemplateProps> = ({
                   variant='caption'
                   color='text.secondary'
                 >
-                  已折叠
+                  {i18n.t('components.kanban_page_template.k6')}
                 </Typography>
               </Box>
             ) : column.cards.length === 0 ? (
@@ -720,7 +721,7 @@ export const KanbanPageTemplate: React.FC<KanbanPageTemplateProps> = ({
                   variant='caption'
                   color='text.secondary'
                 >
-                  暂无任务
+                  {i18n.t('components.kanban_page_template.k7')}
                 </Typography>
               </Box>
             ) : (
@@ -737,7 +738,7 @@ export const KanbanPageTemplate: React.FC<KanbanPageTemplateProps> = ({
                 onClick={column.onAddCard}
                 startIcon={<Plus style={{ width: 14, height: 14 }} />}
               >
-                添加任务
+                {i18n.t('components.kanban_page_template.k8')}
               </Button>
             </Box>
           )}
@@ -800,7 +801,7 @@ export const KanbanPageTemplate: React.FC<KanbanPageTemplateProps> = ({
                 variant='caption'
                 sx={{ color: 'text.secondary' }}
               >
-                添加新列
+                {i18n.t('components.kanban_page_template.k9')}
               </Typography>
             </Paper>
           </Box>

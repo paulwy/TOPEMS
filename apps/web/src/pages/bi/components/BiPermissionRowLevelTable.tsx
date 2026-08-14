@@ -20,10 +20,9 @@ import {
   IconButton,
   CircularProgress,
 } from '@mui/material';
+import i18n from '@/i18n';
 import { CheckCircle2, Edit2, Trash2, Shield } from 'lucide-react';
-import { useTranslation } from 'react-i18next';
 import type { RowLevelPermission } from '@/api/bi';
-
 export interface BiPermissionRowLevelTableProps {
   permissions: RowLevelPermission[];
   loading: boolean;
@@ -32,7 +31,6 @@ export interface BiPermissionRowLevelTableProps {
   onEdit: (item: RowLevelPermission) => void;
   onDelete: (id: string) => void;
 }
-
 const BiPermissionRowLevelTable: React.FC<BiPermissionRowLevelTableProps> = ({
   permissions,
   loading,
@@ -41,8 +39,6 @@ const BiPermissionRowLevelTable: React.FC<BiPermissionRowLevelTableProps> = ({
   onEdit,
   onDelete,
 }) => {
-  const { t } = useTranslation();
-
   if (loading) {
     return (
       <Box sx={{ display: 'flex', justifyContent: 'center', py: 8 }}>
@@ -50,7 +46,6 @@ const BiPermissionRowLevelTable: React.FC<BiPermissionRowLevelTableProps> = ({
       </Box>
     );
   }
-
   if (permissions.length === 0) {
     return (
       <Box
@@ -64,24 +59,23 @@ const BiPermissionRowLevelTable: React.FC<BiPermissionRowLevelTableProps> = ({
         }}
       >
         <Shield sx={{ width: 64, height: 64, mb: 3, opacity: 0.5 }} />
-        <Typography variant='h6'>{t('bi.bi_permission_page.text_33c90a')}</Typography>
-        <Typography variant='body2'>{t('bi.bi_permission_page.text_02f836')}</Typography>
+        <Typography variant='h6'>{i18n.t('bi.bi_permission_page.text_33c90a')}</Typography>
+        <Typography variant='body2'>{i18n.t('bi.bi_permission_page.text_02f836')}</Typography>
       </Box>
     );
   }
-
   return (
     <TableContainer>
       <Table>
         <TableHead>
           <TableRow>
-            <TableCell sx={{ fontWeight: 600 }}>{t('bi.bi_permission_page.text_870802')}</TableCell>
-            <TableCell sx={{ fontWeight: 600 }}>{t('bi.bi_permission_page.text_e92734')}</TableCell>
-            <TableCell sx={{ fontWeight: 600 }}>{t('bi.bi_permission_page.text_3ca9ce')}</TableCell>
-            <TableCell sx={{ fontWeight: 600 }}>{t('bi.bi_permission_page.text_97d956')}</TableCell>
-            <TableCell sx={{ fontWeight: 600 }}>{t('bi.bi_permission_page.text_ee8ecb')}</TableCell>
-            <TableCell sx={{ fontWeight: 600 }}>{t('bi.bi_permission_page.text_3fea7c')}</TableCell>
-            <TableCell sx={{ fontWeight: 600 }}>{t('bi.bi_permission_page.text_2b6bc0')}</TableCell>
+            <TableCell sx={{ fontWeight: 600 }}>{i18n.t('bi.bi_permission_page.text_870802')}</TableCell>
+            <TableCell sx={{ fontWeight: 600 }}>{i18n.t('bi.bi_permission_page.text_e92734')}</TableCell>
+            <TableCell sx={{ fontWeight: 600 }}>{i18n.t('bi.bi_permission_page.text_3ca9ce')}</TableCell>
+            <TableCell sx={{ fontWeight: 600 }}>{i18n.t('bi.bi_permission_page.text_97d956')}</TableCell>
+            <TableCell sx={{ fontWeight: 600 }}>{i18n.t('bi.bi_permission_page.text_ee8ecb')}</TableCell>
+            <TableCell sx={{ fontWeight: 600 }}>{i18n.t('bi.bi_permission_page.text_3fea7c')}</TableCell>
+            <TableCell sx={{ fontWeight: 600 }}>{i18n.t('bi.bi_permission_page.text_2b6bc0')}</TableCell>
           </TableRow>
         </TableHead>
         <TableBody>
@@ -180,37 +174,37 @@ const BiPermissionRowLevelTable: React.FC<BiPermissionRowLevelTableProps> = ({
                   }
                   label={
                     perm.isEnabled
-                      ? ` + ${t('bi.bi_permission_page.active')} + `
-                      : t('bi.bi_permission_page.inactive')
+                      ? ` + ${i18n.t('bi.bi_permission_page.active')} + `
+                      : i18n.t('bi.bi_permission_page.inactive')
                   }
                   sx={{ m: 0 }}
                 />
               </TableCell>
               <TableCell>
-                <Tooltip title={t('bi.bi_permission_page.test')}>
+                <Tooltip title={i18n.t('bi.bi_permission_page.test')}>
                   <IconButton
                     size='small'
                     onClick={() => onTest(perm)}
-                    aria-label={t('bi.bi_permission_page.test')}
+                    aria-label={i18n.t('bi.bi_permission_page.test')}
                   >
                     <CheckCircle2 size={16} />
                   </IconButton>
                 </Tooltip>
-                <Tooltip title={t('bi.bi_permission_page.edit')}>
+                <Tooltip title={i18n.t('bi.bi_permission_page.edit')}>
                   <IconButton
                     size='small'
                     onClick={() => onEdit(perm)}
-                    aria-label={t('bi.bi_permission_page.edit_1')}
+                    aria-label={i18n.t('bi.bi_permission_page.edit_1')}
                   >
                     <Edit2 size={16} />
                   </IconButton>
                 </Tooltip>
-                <Tooltip title={t('bi.bi_permission_page.delete')}>
+                <Tooltip title={i18n.t('bi.bi_permission_page.delete')}>
                   <IconButton
                     size='small'
                     color='error'
                     onClick={() => onDelete(perm.id)}
-                    aria-label={t('bi.bi_permission_page.delete_1')}
+                    aria-label={i18n.t('bi.bi_permission_page.delete_1')}
                   >
                     <Trash2 size={16} />
                   </IconButton>
@@ -223,5 +217,4 @@ const BiPermissionRowLevelTable: React.FC<BiPermissionRowLevelTableProps> = ({
     </TableContainer>
   );
 };
-
 export default BiPermissionRowLevelTable;

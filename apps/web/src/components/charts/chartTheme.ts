@@ -28,7 +28,7 @@ export const BIChartColors = {
     designTokens.colors.secondary.main, // Violet
     'colors.cyan.500', // Cyan
     designTokens.colors.pink.main, // Pink
-    '#84CC16', // Lime
+    designTokens.colors.neon.lime[500], // Lime
   ],
   dark: {
     series: [
@@ -39,9 +39,9 @@ export const BIChartColors = {
       'colors.secondary.light', // Violet
       'colors.cyan.400', // Cyan
       'colors.pink.400', // Pink
-      '#a3e635', // Lime
+      designTokens.colors.neon.lime[400], // Lime
     ],
-    grid: '#334155',
+    grid: designTokens.colors.grey[700],
     text: designTokens.colors.grey['400'],
     background: 'common.white',
     border: 'colors.grey.600',
@@ -65,7 +65,7 @@ export const BIChartColors = {
   },
   neutral: {
     grid: designTokens.colors.border.default,
-    gridDark: '#334155',
+    gridDark: designTokens.colors.grey[700],
     text: 'colors.grey.500',
     textDark: designTokens.colors.grey['400'],
     background: 'common.white',
@@ -89,7 +89,7 @@ export const BIChartColors = {
     blue: [designTokens.colors.primary.main, 'colors.cyan.500'],
     emerald: ['colors.success.main', 'colors.teal.500'],
     violet: [designTokens.colors.secondary.main, 'colors.purple.500'],
-    rose: ['#F43F5E', '#FB7185'],
+    rose: [designTokens.colors.error[500], '#FB7185'],
     amber: [designTokens.colors.warning.main, 'colors.warning.400'],
   },
 } as const;

@@ -1,10 +1,11 @@
 import React from 'react';
+import i18n from '@/i18n';
 
 const MonitorMetricsPage: React.FC = () => {
   return React.createElement(
     'div',
     { className: 'page-placeholder' },
-    'MonitorMetricsPage 页面开发中'
+    i18n.t('monitor.monitor_metrics_page.k0')
   );
 };
 

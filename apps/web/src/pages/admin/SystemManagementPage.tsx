@@ -7,76 +7,72 @@ import { Box, Typography } from '@mui/material';
 import { PageContainer } from '@/components/common';
 import { designTokens } from '@/theme/tokens';
 import { DASHBOARD_PATHS } from '@/routes/dashboard';
-
+import i18n from '@/i18n';
 const ct= designTokens.colors;
-
 interface SystemManagementPageProps {
   onNavigate?: (page: string) => void;
 }
-
 const SystemManagementPage: React.FC<SystemManagementPageProps> = ({ onNavigate: _onNavigate }) => {
   const navigate = useNavigate();
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
-
   const systemFeatures = [
     {
       id: 'users',
-      title: '用户管理',
-      description: '管理系统用户账户',
+      title: i18n.t('admin.system_management_page.k0'),
+      description: i18n.t('admin.system_management_page.k1'),
       icon: Users,
       path: '/iam/users',
       color: 'bg-blue-500',
     },
     {
       id: 'roles',
-      title: '角色管理',
-      description: '管理用户角色和权限组',
+      title: i18n.t('admin.system_management_page.k2'),
+      description: i18n.t('admin.system_management_page.k3'),
       icon: Shield,
       path: '/iam/roles',
       color: 'bg-purple-500',
     },
     {
       id: 'permissions',
-      title: '权限管理',
-      description: '配置系统权限',
+      title: i18n.t('admin.system_management_page.k4'),
+      description: i18n.t('admin.system_management_page.k5'),
       icon: Key,
       path: '/iam/permissions',
       color: 'bg-green-500',
     },
     {
       id: 'dictionaries',
-      title: '字典管理',
-      description: '管理系统字典和业务字典',
+      title: i18n.t('admin.system_management_page.k6'),
+      description: i18n.t('admin.system_management_page.k7'),
       icon: Book,
       path: '/iam/dictionaries',
       color: 'bg-amber-500',
     },
     {
       id: 'database',
-      title: '数据库结构',
-      description: '管理数据库表结构和字段',
+      title: i18n.t('admin.system_management_page.k8'),
+      description: i18n.t('admin.system_management_page.k9'),
       icon: Database,
       path: '/iam/database',
       color: 'bg-emerald-500',
     },
     {
       id: 'audit',
-      title: '审计日志',
-      description: '查看系统操作审计记录',
+      title: i18n.t('admin.system_management_page.k10'),
+      description: i18n.t('admin.system_management_page.k11'),
       icon: FileText,
       path: '/iam/audit',
       color: 'bg-slate-500',
     },
     {
       id: 'config',
-      title: '系统配置',
-      description: '系统参数和运行时配置',
+      title: i18n.t('admin.system_management_page.k12'),
+      description: i18n.t('admin.system_management_page.k13'),
       icon: Settings,
       path: '/iam/debug',
       color: 'bg-indigo-500',
     },
   ];
-
   return (
     <PageContainer
       padding={false}
@@ -90,10 +86,9 @@ const SystemManagementPage: React.FC<SystemManagementPageProps> = ({ onNavigate:
         }}
       >
         <MobileHeader
-          title='系统管理'
+          title={i18n.t('admin.system_management_page.k14')}
           onMenuClick={() => setMobileNavOpen(true)}
         />
-
         <Box sx={{ '& > .MuiIconButton-root': { display: 'none' } }}>
           <MobileNav
             open={mobileNavOpen}
@@ -101,7 +96,6 @@ const SystemManagementPage: React.FC<SystemManagementPageProps> = ({ onNavigate:
             onOpen={() => setMobileNavOpen(true)}
           />
         </Box>
-
         <Box
           sx={{
             bgcolor: 'background.paper',
@@ -151,20 +145,19 @@ const SystemManagementPage: React.FC<SystemManagementPageProps> = ({ onNavigate:
                     variant='h6'
                     sx={{ fontWeight: 700, color: 'grey.900' }}
                   >
-                    系统管理
+                    {i18n.t('pages.system_management_page.k0')}
                   </Typography>
                   <Typography
                     variant='caption'
                     sx={{ color: 'grey.500' }}
                   >
-                    用户、角色、权限和系统配置
+                    {i18n.t('pages.system_management_page.k1')}
                   </Typography>
                 </Box>
               </Box>
             </Box>
           </Box>
         </Box>
-
         <Box
           sx={{ maxWidth: 1200, mx: 'auto', px: 3, py: 4 }}
           className='desktop-only'
@@ -242,7 +235,7 @@ const SystemManagementPage: React.FC<SystemManagementPageProps> = ({ onNavigate:
                         fontWeight: 500,
                       }}
                     >
-                      进入管理 →
+                      {i18n.t('pages.system_management_page.k2')}
                     </Box>
                   </Box>
                 </Box>
@@ -254,5 +247,4 @@ const SystemManagementPage: React.FC<SystemManagementPageProps> = ({ onNavigate:
     </PageContainer>
   );
 };
-
 export default SystemManagementPage;

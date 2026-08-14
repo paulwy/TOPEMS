@@ -15,6 +15,7 @@ import {
   Code,
   Filter,
 } from 'lucide-react';
+import i18n from '@/i18n';
 import {
   Box,
   Typography,
@@ -70,10 +71,10 @@ const getTypeIcon = (type: ChatSession['type']) => {
 
 const getTypeLabel = (type: ChatSession['type']) => {
   const labels = {
-    qa: '问答',
-    summary: '摘要',
-    code: '代码',
-    general: '对话',
+    qa: i18n.t('components.chat_history.k0'),
+    summary: i18n.t('components.chat_history.k1'),
+    code: i18n.t('components.chat_history.k2'),
+    general: i18n.t('components.chat_history.k3'),
   };
   return labels[type];
 };
@@ -95,10 +96,10 @@ const formatTime = (date: Date) => {
   const hours = Math.floor(diff / 3600000);
   const days = Math.floor(diff / 86400000);
 
-  if (minutes < 1) return '刚刚';
-  if (minutes < 60) return `${minutes}分钟前`;
-  if (hours < 24) return `${hours}小时前`;
-  if (days < 7) return `${days}天前`;
+  if (minutes < 1) return i18n.t('components.chat_history.k4');
+  if (minutes < 60) return `${minutes}${i18n.t('components.chat_history.k0')}`;
+  if (hours < 24) return `${hours}${i18n.t('components.chat_history.k1')}`;
+  if (days < 7) return `${days}${i18n.t('components.chat_history.k2')}`;
   return date.toLocaleDateString();
 };
 
@@ -164,7 +165,7 @@ export const ChatHistory: React.FC<ChatHistoryProps> = ({
             startIcon={<MessageSquare size={16} />}
             onClick={onNewSession}
           >
-            新建对话
+            {i18n.t('components.chat_history.k3')}
           </Button>
         </Box>
 
@@ -175,14 +176,14 @@ export const ChatHistory: React.FC<ChatHistoryProps> = ({
             color='text.secondary'
             sx={{ mb: 1, display: 'block' }}
           >
-            功能模式
+            {i18n.t('components.chat_history.k4')}
           </Typography>
           <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
             {[
-              { id: 'qa' as const, label: '智能问答', icon: <Lightbulb size={14} /> },
-              { id: 'summary' as const, label: '文档摘要', icon: <FileText size={14} /> },
-              { id: 'code' as const, label: '代码生成', icon: <Code size={14} /> },
-              { id: 'general' as const, label: '通用对话', icon: <MessageSquare size={14} /> },
+              { id: 'qa' as const, label: i18n.t('components.chat_history.k5'), icon: <Lightbulb size={14} /> },
+              { id: 'summary' as const, label: i18n.t('components.chat_history.k6'), icon: <FileText size={14} /> },
+              { id: 'code' as const, label: i18n.t('components.chat_history.k7'), icon: <Code size={14} /> },
+              { id: 'general' as const, label: i18n.t('components.chat_history.k8'), icon: <MessageSquare size={14} /> },
             ].map((tab) => (
               <Chip
                 key={tab.id}
@@ -202,7 +203,7 @@ export const ChatHistory: React.FC<ChatHistoryProps> = ({
         <Box sx={{ p: 1.5, borderBottom: 1, borderColor: 'divider' }}>
           <TextField
             size='small'
-            placeholder='搜索对话...'
+            placeholder={i18n.t('components.chat_history.k5')}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             sx={{ mb: 1, width: '100%' }}
@@ -219,11 +220,11 @@ export const ChatHistory: React.FC<ChatHistoryProps> = ({
           <Box sx={{ display: 'flex', gap: 0.5 }}>
             {(
               [
-                { id: 'all' as const, label: '全部' },
-                { id: 'qa' as const, label: '问答' },
-                { id: 'summary' as const, label: '摘要' },
-                { id: 'code' as const, label: '代码' },
-                { id: 'general' as const, label: '对话' },
+                { id: 'all' as const, label: i18n.t('components.chat_history.k9') },
+                { id: 'qa' as const, label: i18n.t('components.chat_history.k10') },
+                { id: 'summary' as const, label: i18n.t('components.chat_history.k11') },
+                { id: 'code' as const, label: i18n.t('components.chat_history.k12') },
+                { id: 'general' as const, label: i18n.t('components.chat_history.k13') },
               ] as const
             ).map((type) => (
               <Chip
@@ -310,7 +311,7 @@ export const ChatHistory: React.FC<ChatHistoryProps> = ({
                       handleDeleteClick(session.id);
                     }}
                     sx={{ p: 0.5, opacity: 0.6, '&:hover': { opacity: 1 } }}
-                    aria-label='删除'
+                    aria-label={i18n.t('components.chat_history.k14')}
                   >
                     <Trash2 size={14} />
                   </IconButton>
@@ -327,7 +328,7 @@ export const ChatHistory: React.FC<ChatHistoryProps> = ({
                 variant='body2'
                 color='text.secondary'
               >
-                {searchQuery ? '没有找到匹配的对话' : '暂无对话记录'}
+                {searchQuery ? i18n.t('components.chat_history.k16') : i18n.t('components.chat_history.k15')}
               </Typography>
             </Box>
           )}
@@ -349,22 +350,22 @@ export const ChatHistory: React.FC<ChatHistoryProps> = ({
         open={deleteDialogOpen}
         onClose={() => setDeleteDialogOpen(false)}
       >
-        <DialogTitle>删除对话</DialogTitle>
+        <DialogTitle>{i18n.t('components.chat_history.k17')}</DialogTitle>
         <DialogContent>
           <Typography
             variant='body2'
             sx={{ mt: 1 }}
           >
-            确定要删除这条对话记录吗？此操作不可恢复。
+            {i18n.t('components.chat_history.k6')}
           </Typography>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setDeleteDialogOpen(false)}>取消</Button>
+          <Button onClick={() => setDeleteDialogOpen(false)}>{i18n.t('components.chat_history.k18')}</Button>
           <Button
             onClick={handleConfirmDelete}
             color='error'
           >
-            删除
+            {i18n.t('components.chat_history.k7')}
           </Button>
         </DialogActions>
       </Dialog>

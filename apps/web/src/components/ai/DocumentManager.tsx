@@ -14,6 +14,7 @@ import {
   Tooltip,
   Button,
 } from '@mui/material';
+import i18n from '@/i18n';
 import { useState, useEffect, useRef } from 'react';
 import {
   Upload,
@@ -72,10 +73,10 @@ export const DocumentManager: React.FC<DocumentManagerProps> = ({ className }) =
         setDocuments(response.data.items);
       }
     } catch (err: unknown) {
-      logger.error('加载文档失败:', err);
+      logger.error(i18n.t('components.document_manager.k0'), err);
       addNotification({
-        title: '加载失败',
-        message: '加载文档列表失败',
+        title: i18n.t('components.document_manager.k0'),
+        message: i18n.t('components.document_manager.k1'),
         type: 'error',
       });
     } finally {
@@ -93,7 +94,7 @@ export const DocumentManager: React.FC<DocumentManagerProps> = ({ className }) =
       };
       setStats(mockStats);
     } catch (err: unknown) {
-      logger.error('加载统计失败:', err);
+      logger.error(i18n.t('components.document_manager.k1'), err);
     }
   };
 
@@ -111,8 +112,8 @@ export const DocumentManager: React.FC<DocumentManagerProps> = ({ className }) =
 
       if (response.success) {
         addNotification({
-          title: '上传成功',
-          message: `文档 "${file.name}" 已成功上传`,
+          title: i18n.t('components.document_manager.k2'),
+          message: `${i18n.t('components.document_manager.k2')}${file.name}${i18n.t('components.document_manager.k3')}`,
           type: 'success',
         });
         loadDocuments();
@@ -122,10 +123,10 @@ export const DocumentManager: React.FC<DocumentManagerProps> = ({ className }) =
         throw new Error(response.message);
       }
     } catch (err: unknown) {
-      logger.error('上传文档失败:', err);
+      logger.error(i18n.t('components.document_manager.k4'), err);
       addNotification({
-        title: '上传失败',
-        message: '上传文档时出错',
+        title: i18n.t('components.document_manager.k3'),
+        message: i18n.t('components.document_manager.k4'),
         type: 'error',
       });
     } finally {
@@ -137,15 +138,15 @@ export const DocumentManager: React.FC<DocumentManagerProps> = ({ className }) =
   };
 
   const handleDelete = async (doc: Document) => {
-    if (!confirm(`确定要删除文档 "${doc.title}" 吗？`)) return;
+    if (!confirm(`${i18n.t('components.document_manager.k5')}${doc.title}${i18n.t('components.document_manager.k6')}`)) return;
 
     try {
       const response = await aiApi.deleteDocument(doc.id);
 
       if (response.success) {
         addNotification({
-          title: '删除成功',
-          message: `文档已删除`,
+          title: i18n.t('components.document_manager.k5'),
+          message: i18n.t('components.document_manager.k7'),
           type: 'success',
         });
         loadDocuments();
@@ -154,10 +155,10 @@ export const DocumentManager: React.FC<DocumentManagerProps> = ({ className }) =
         throw new Error(response.message);
       }
     } catch (err: unknown) {
-      logger.error('删除文档失败:', err);
+      logger.error(i18n.t('components.document_manager.k8'), err);
       addNotification({
-        title: '删除失败',
-        message: '删除文档时出错',
+        title: i18n.t('components.document_manager.k6'),
+        message: i18n.t('components.document_manager.k7'),
         type: 'error',
       });
     }
@@ -183,10 +184,10 @@ export const DocumentManager: React.FC<DocumentManagerProps> = ({ className }) =
         setSearchResults(results);
       }
     } catch (err: unknown) {
-      logger.error('搜索失败:', err);
+      logger.error(i18n.t('components.document_manager.k9'), err);
       addNotification({
-        title: '搜索失败',
-        message: '搜索时出错',
+        title: i18n.t('components.document_manager.k8'),
+        message: i18n.t('components.document_manager.k9'),
         type: 'error',
       });
     } finally {
@@ -219,15 +220,15 @@ export const DocumentManager: React.FC<DocumentManagerProps> = ({ className }) =
   const getStatusText = (status: string) => {
     switch (status) {
       case 'processed':
-        return '已处理';
+        return i18n.t('components.document_manager.k10');
       case 'pending':
-        return '待处理';
+        return i18n.t('components.document_manager.k11');
       case 'partial':
-        return '部分处理';
+        return i18n.t('components.document_manager.k12');
       case 'empty':
-        return '内容为空';
+        return i18n.t('components.document_manager.k13');
       default:
-        return '处理失败';
+        return i18n.t('components.document_manager.k14');
     }
   };
 
@@ -283,14 +284,14 @@ export const DocumentManager: React.FC<DocumentManagerProps> = ({ className }) =
             variant='h5'
             sx={{ fontWeight: 600 }}
           >
-            文档管理
+            {i18n.t('components.document_manager.k10')}
           </Typography>
           <Typography
             variant='body2'
             color='text.secondary'
             sx={{ mt: 0.5 }}
           >
-            管理知识库文档，支持向量搜索
+            {i18n.t('components.document_manager.k11')}
           </Typography>
         </Box>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
@@ -298,11 +299,11 @@ export const DocumentManager: React.FC<DocumentManagerProps> = ({ className }) =
             onClick={loadDocuments}
             disabled={loading}
           >
-            刷新
+            {i18n.t('components.document_manager.k12')}
           </Button>
           <Button onClick={() => setUploadDialogOpen(true)}>
             <Upload style={{ width: 16, height: 16, marginRight: 8 }} />
-            上传文档
+            {i18n.t('components.document_manager.k13')}
           </Button>
         </Box>
       </Box>
@@ -321,7 +322,7 @@ export const DocumentManager: React.FC<DocumentManagerProps> = ({ className }) =
                 variant='body2'
                 color='text.secondary'
               >
-                文档总数
+                {i18n.t('components.document_manager.k14')}
               </Typography>
               <Typography
                 variant='h5'
@@ -337,7 +338,7 @@ export const DocumentManager: React.FC<DocumentManagerProps> = ({ className }) =
                 variant='body2'
                 color='text.secondary'
               >
-                分块数
+                {i18n.t('components.document_manager.k15')}
               </Typography>
               <Typography
                 variant='h5'
@@ -353,7 +354,7 @@ export const DocumentManager: React.FC<DocumentManagerProps> = ({ className }) =
                 variant='body2'
                 color='text.secondary'
               >
-                向量数
+                {i18n.t('components.document_manager.k16')}
               </Typography>
               <Typography
                 variant='h5'
@@ -369,7 +370,7 @@ export const DocumentManager: React.FC<DocumentManagerProps> = ({ className }) =
                 variant='body2'
                 color='text.secondary'
               >
-                向量维度
+                {i18n.t('components.document_manager.k17')}
               </Typography>
               <Typography
                 variant='h5'
@@ -386,8 +387,8 @@ export const DocumentManager: React.FC<DocumentManagerProps> = ({ className }) =
         value={tabValue}
         onChange={(_, v) => setTabValue(v)}
       >
-        <Tab label='文档列表' />
-        <Tab label='向量搜索' />
+        <Tab label={i18n.t('components.document_manager.k15')} />
+        <Tab label={i18n.t('components.document_manager.k16')} />
       </Tabs>
 
       {tabValue === 0 && (
@@ -481,7 +482,7 @@ export const DocumentManager: React.FC<DocumentManagerProps> = ({ className }) =
                               variant='caption'
                               sx={{ color: 'error.main', mt: 0.5 }}
                             >
-                              错误: {doc.error_message}
+                              [i18n.t('components.document_manager.k18')]: {doc.error_message}
                             </Typography>
                           )}
                           <Typography
@@ -489,11 +490,11 @@ export const DocumentManager: React.FC<DocumentManagerProps> = ({ className }) =
                             color='text.secondary'
                             sx={{ mt: 1, display: 'block' }}
                           >
-                            上传于: {formatDate(doc.created_at)}
+                            [i18n.t('components.document_manager.k19')]: {formatDate(doc.created_at)}
                           </Typography>
                         </Box>
                       </Box>
-                      <Tooltip title='删除文档'>
+                      <Tooltip title={i18n.t('components.document_manager.k17')}>
                         <IconButton
                           onClick={() => handleDelete(doc)}
                           sx={{
@@ -502,7 +503,7 @@ export const DocumentManager: React.FC<DocumentManagerProps> = ({ className }) =
                               backgroundColor: 'action.hover',
                             },
                           }}
-                          aria-label='删除'
+                          aria-label={i18n.t('components.document_manager.k18')}
                         >
                           <Trash2 style={{ width: 18, height: 18 }} />
                         </IconButton>
@@ -527,18 +528,18 @@ export const DocumentManager: React.FC<DocumentManagerProps> = ({ className }) =
                       variant='h6'
                       sx={{ mb: 1 }}
                     >
-                      暂无文档
+                      {i18n.t('components.document_manager.k20')}
                     </Typography>
                     <Typography
                       variant='body2'
                       color='text.secondary'
                       sx={{ mb: 2 }}
                     >
-                      上传文档开始构建您的知识库
+                      {i18n.t('components.document_manager.k21')}
                     </Typography>
                     <Button onClick={() => fileInputRef.current?.click()}>
                       <Plus style={{ width: 16, height: 16, marginRight: 8 }} />
-                      上传文档
+                      {i18n.t('components.document_manager.k22')}
                     </Button>
                   </CardContent>
                 </Card>
@@ -555,7 +556,7 @@ export const DocumentManager: React.FC<DocumentManagerProps> = ({ className }) =
               <TextField
                 fullWidth
                 size='small'
-                placeholder='输入搜索内容...'
+                placeholder={i18n.t('components.document_manager.k23')}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
@@ -606,12 +607,12 @@ export const DocumentManager: React.FC<DocumentManagerProps> = ({ className }) =
                             variant='body2'
                             sx={{ fontWeight: 500 }}
                           >
-                            {result.document_title || '相关文档'}
+                            {result.document_title || i18n.t('components.document_manager.k19')}
                           </Typography>
                           <Chip
                             size='small'
                             variant='outlined'
-                            label={`相似度: ${(result.similarity * 100).toFixed(1)}%`}
+                            label={`${i18n.t('components.document_manager.k24')} ${(result.similarity * 100).toFixed(1)}%`}
                             sx={{ mt: 0.5, fontSize: 12 }}
                           />
                         </Box>
@@ -642,7 +643,7 @@ export const DocumentManager: React.FC<DocumentManagerProps> = ({ className }) =
                   variant='body1'
                   color='text.secondary'
                 >
-                  未找到相关内容
+                  {i18n.t('components.document_manager.k25')}
                 </Typography>
               </Box>
             )}
@@ -661,7 +662,7 @@ export const DocumentManager: React.FC<DocumentManagerProps> = ({ className }) =
                   variant='body1'
                   color='text.secondary'
                 >
-                  输入搜索内容开始向量搜索
+                  {i18n.t('components.document_manager.k26')}
                 </Typography>
               </Box>
             )}
@@ -675,14 +676,14 @@ export const DocumentManager: React.FC<DocumentManagerProps> = ({ className }) =
         maxWidth='sm'
         fullWidth
       >
-        <DialogTitle>上传文档</DialogTitle>
+        <DialogTitle>{i18n.t('components.document_manager.k20')}</DialogTitle>
         <DialogContent>
           <Typography
             variant='body2'
             color='text.secondary'
             sx={{ mb: 2 }}
           >
-            支持上传文本文件、Markdown、PDF 等格式
+            {i18n.t('components.document_manager.k27')}
           </Typography>
           <Box
             sx={{
@@ -724,14 +725,14 @@ export const DocumentManager: React.FC<DocumentManagerProps> = ({ className }) =
                   variant='body2'
                   sx={{ color: 'text.secondary' }}
                 >
-                  {uploading ? '上传中...' : '点击选择文件或拖放'}
+                  {uploading ? i18n.t('components.document_manager.k28') : i18n.t('components.document_manager.k21')}
                 </Typography>
                 <Typography
                   variant='caption'
                   color='text.secondary'
                   sx={{ mt: 1 }}
                 >
-                  支持 .txt, .md, .pdf, .json, .csv
+                  {i18n.t('components.document_manager.k29')}
                 </Typography>
               </Box>
             </label>

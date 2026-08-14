@@ -1,11 +1,12 @@
 import React from 'react';
 import { Box, Chip } from '@mui/material';
 import type { EntitySchema } from '@/schema';
+import i18n from '@/i18n';
 
 export const mrpMaterialSummarySchema: EntitySchema = {
   entity: 'mrpMaterialSummary',
-  title: '物料汇总',
-  description: 'MRP物料需求汇总，按物料维度统计总需求、总供给、净需求等',
+  title: i18n.t('scm.mrp_suggestion.k0'),
+  description: i18n.t('shared.mrp_suggestion.k0'),
 
   api: {
     module: 'scm',
@@ -15,7 +16,7 @@ export const mrpMaterialSummarySchema: EntitySchema = {
   fields: [
     {
       name: 'product_code',
-      label: '物料编码',
+      label: i18n.t('scm.mrp_suggestion.k1'),
       type: 'text',
       sortable: true,
       listWidth: 140,
@@ -24,13 +25,13 @@ export const mrpMaterialSummarySchema: EntitySchema = {
     },
     {
       name: 'product_name',
-      label: '物料名称',
+      label: i18n.t('scm.mrp_suggestion.k2'),
       type: 'text',
       listWidth: 160,
     },
     {
       name: 'specification',
-      label: '规格',
+      label: i18n.t('scm.mrp_suggestion.k3'),
       type: 'text',
       listWidth: 120,
       renderCell: (row: Record<string, unknown>) =>
@@ -38,28 +39,28 @@ export const mrpMaterialSummarySchema: EntitySchema = {
     },
     {
       name: 'unit',
-      label: '单位',
+      label: i18n.t('scm.mrp_suggestion.k4'),
       type: 'text',
       listWidth: 80,
       renderCell: (row: Record<string, unknown>) => (row.unit ? String(row.unit) : '-'),
     },
     {
       name: 'total_demand',
-      label: '总需求',
+      label: i18n.t('scm.mrp_suggestion.k5'),
       type: 'number',
       align: 'right',
       listWidth: 100,
     },
     {
       name: 'total_supply',
-      label: '总供给',
+      label: i18n.t('scm.mrp_suggestion.k6'),
       type: 'number',
       align: 'right',
       listWidth: 100,
     },
     {
       name: 'net_demand',
-      label: '净需求',
+      label: i18n.t('scm.mrp_suggestion.k7'),
       type: 'number',
       align: 'right',
       listWidth: 100,
@@ -71,7 +72,7 @@ export const mrpMaterialSummarySchema: EntitySchema = {
     },
     {
       name: 'safety_stock',
-      label: '安全库存',
+      label: i18n.t('scm.mrp_suggestion.k8'),
       type: 'number',
       align: 'right',
       listWidth: 100,
@@ -80,7 +81,7 @@ export const mrpMaterialSummarySchema: EntitySchema = {
     },
     {
       name: 'category',
-      label: '分类',
+      label: i18n.t('scm.mrp_suggestion.k9'),
       type: 'text',
       listWidth: 100,
       renderCell: (row: Record<string, unknown>) => (row.category ? String(row.category) : '-'),
@@ -104,13 +105,13 @@ export const mrpMaterialSummarySchema: EntitySchema = {
     filters: [
       {
         id: 'category',
-        label: '分类',
+        label: i18n.t('scm.mrp_suggestion.k10'),
         type: 'select',
         options: [
-          { label: '全部分类', value: 'all' },
-          { label: 'A类', value: 'A' },
-          { label: 'B类', value: 'B' },
-          { label: 'C类', value: 'C' },
+          { label: i18n.t('scm.mrp_suggestion.k11'), value: 'all' },
+          { label: i18n.t('shared.mrp_suggestion.a_1'), value: 'A' },
+          { label: i18n.t('shared.mrp_suggestion.b_2'), value: 'B' },
+          { label: i18n.t('shared.mrp_suggestion.c_3'), value: 'C' },
         ],
       },
     ],
@@ -119,32 +120,32 @@ export const mrpMaterialSummarySchema: EntitySchema = {
   actions: ['detail'],
 
   formColCount: 2,
-  detailTitle: '物料汇总详情',
+  detailTitle: i18n.t('scm.mrp_suggestion.k12'),
 };
 
 const suggestionTypeConfig: Record<
   string,
   { label: string; color: 'default' | 'primary' | 'success' | 'warning' | 'error' }
 > = {
-  purchase: { label: '采购建议', color: 'primary' },
-  production: { label: '生产建议', color: 'success' },
-  transfer: { label: '调拨建议', color: 'warning' },
+  purchase: { label: i18n.t('scm.mrp_suggestion.k13'), color: 'primary' },
+  production: { label: i18n.t('scm.mrp_suggestion.k14'), color: 'success' },
+  transfer: { label: i18n.t('scm.mrp_suggestion.k15'), color: 'warning' },
 };
 
 const statusColorConfig: Record<
   string,
   { label: string; color: 'default' | 'primary' | 'success' | 'warning' | 'error' | 'info' }
 > = {
-  pending: { label: '待确认', color: 'warning' },
-  confirmed: { label: '已确认', color: 'success' },
-  rejected: { label: '已拒绝', color: 'error' },
-  completed: { label: '已完成', color: 'info' },
+  pending: { label: i18n.t('scm.mrp_suggestion.k16'), color: 'warning' },
+  confirmed: { label: i18n.t('scm.mrp_suggestion.k17'), color: 'success' },
+  rejected: { label: i18n.t('scm.mrp_suggestion.k18'), color: 'error' },
+  completed: { label: i18n.t('scm.mrp_suggestion.k19'), color: 'info' },
 };
 
 export const mrpSuggestionSchema: EntitySchema = {
   entity: 'mrpSuggestion',
-  title: 'MRP建议',
-  description: 'MRP运算建议列表，包括采购建议、生产建议，支持批量确认和生成订单',
+  title: i18n.t('shared.mrp_suggestion.mrp_4'),
+  description: i18n.t('shared.mrp_suggestion.k5'),
 
   api: {
     module: 'scm',
@@ -154,34 +155,34 @@ export const mrpSuggestionSchema: EntitySchema = {
   fields: [
     {
       name: 'product_code',
-      label: '物料编码',
+      label: i18n.t('scm.mrp_suggestion.k20'),
       type: 'text',
       sortable: true,
       listWidth: 140,
     },
     {
       name: 'product_name',
-      label: '物料名称',
+      label: i18n.t('scm.mrp_suggestion.k21'),
       type: 'text',
       listWidth: 160,
     },
     {
       name: 'specification',
-      label: '规格',
+      label: i18n.t('scm.mrp_suggestion.k22'),
       type: 'text',
       listWidth: 120,
     },
     {
       name: 'suggestion_type',
-      label: '建议类型',
+      label: i18n.t('scm.mrp_suggestion.k23'),
       type: 'select',
       hideInForm: true,
       options: {
         type: 'static',
         options: [
-          { value: 'purchase', label: '采购建议' },
-          { value: 'production', label: '生产建议' },
-          { value: 'transfer', label: '调拨建议' },
+          { value: 'purchase', label: i18n.t('scm.mrp_suggestion.k24') },
+          { value: 'production', label: i18n.t('scm.mrp_suggestion.k25') },
+          { value: 'transfer', label: i18n.t('scm.mrp_suggestion.k26') },
         ],
       },
       listWidth: 110,
@@ -198,7 +199,7 @@ export const mrpSuggestionSchema: EntitySchema = {
     },
     {
       name: 'required_quantity',
-      label: '需求数量',
+      label: i18n.t('scm.mrp_suggestion.k27'),
       type: 'number',
       hideInForm: true,
       align: 'right',
@@ -211,7 +212,7 @@ export const mrpSuggestionSchema: EntitySchema = {
     },
     {
       name: 'available_quantity',
-      label: '可用数量',
+      label: i18n.t('scm.mrp_suggestion.k28'),
       type: 'number',
       hideInForm: true,
       align: 'right',
@@ -219,7 +220,7 @@ export const mrpSuggestionSchema: EntitySchema = {
     },
     {
       name: 'suggested_quantity',
-      label: '建议数量',
+      label: i18n.t('scm.mrp_suggestion.k29'),
       type: 'number',
       hideInForm: true,
       align: 'right',
@@ -232,7 +233,7 @@ export const mrpSuggestionSchema: EntitySchema = {
     },
     {
       name: 'due_date',
-      label: '需求日期',
+      label: i18n.t('scm.mrp_suggestion.k30'),
       type: 'date',
       hideInForm: true,
       sortable: true,
@@ -244,7 +245,7 @@ export const mrpSuggestionSchema: EntitySchema = {
     },
     {
       name: 'supplier_name',
-      label: '供应商',
+      label: i18n.t('scm.mrp_suggestion.k31'),
       type: 'text',
       hideInForm: true,
       listWidth: 140,
@@ -252,16 +253,16 @@ export const mrpSuggestionSchema: EntitySchema = {
     },
     {
       name: 'status',
-      label: '状态',
+      label: i18n.t('scm.mrp_suggestion.k32'),
       type: 'select',
       hideInForm: true,
       options: {
         type: 'static',
         options: [
-          { value: 'pending', label: '待确认' },
-          { value: 'confirmed', label: '已确认' },
-          { value: 'rejected', label: '已拒绝' },
-          { value: 'completed', label: '已完成' },
+          { value: 'pending', label: i18n.t('scm.mrp_suggestion.k33') },
+          { value: 'confirmed', label: i18n.t('scm.mrp_suggestion.k34') },
+          { value: 'rejected', label: i18n.t('scm.mrp_suggestion.k35') },
+          { value: 'completed', label: i18n.t('scm.mrp_suggestion.k36') },
         ],
       },
       listWidth: 100,
@@ -304,34 +305,34 @@ export const mrpSuggestionSchema: EntitySchema = {
         completed: 'info',
       },
       labelMap: {
-        pending: '待确认',
-        confirmed: '已确认',
-        rejected: '已拒绝',
-        completed: '已完成',
+        pending: i18n.t('scm.mrp_suggestion.k37'),
+        confirmed: i18n.t('scm.mrp_suggestion.k38'),
+        rejected: i18n.t('scm.mrp_suggestion.k39'),
+        completed: i18n.t('scm.mrp_suggestion.k40'),
       },
     },
     filters: [
       {
         id: 'suggestion_type',
-        label: '建议类型',
+        label: i18n.t('scm.mrp_suggestion.k41'),
         type: 'select',
         options: [
-          { label: '全部类型', value: 'all' },
-          { label: '采购建议', value: 'purchase' },
-          { label: '生产建议', value: 'production' },
-          { label: '调拨建议', value: 'transfer' },
+          { label: i18n.t('scm.mrp_suggestion.k42'), value: 'all' },
+          { label: i18n.t('scm.mrp_suggestion.k43'), value: 'purchase' },
+          { label: i18n.t('scm.mrp_suggestion.k44'), value: 'production' },
+          { label: i18n.t('scm.mrp_suggestion.k45'), value: 'transfer' },
         ],
       },
       {
         id: 'status',
-        label: '状态',
+        label: i18n.t('scm.mrp_suggestion.k46'),
         type: 'select',
         options: [
-          { label: '全部状态', value: 'all' },
-          { label: '待确认', value: 'pending' },
-          { label: '已确认', value: 'confirmed' },
-          { label: '已拒绝', value: 'rejected' },
-          { label: '已完成', value: 'completed' },
+          { label: i18n.t('scm.mrp_suggestion.k47'), value: 'all' },
+          { label: i18n.t('scm.mrp_suggestion.k48'), value: 'pending' },
+          { label: i18n.t('scm.mrp_suggestion.k49'), value: 'confirmed' },
+          { label: i18n.t('scm.mrp_suggestion.k50'), value: 'rejected' },
+          { label: i18n.t('scm.mrp_suggestion.k51'), value: 'completed' },
         ],
       },
     ],
@@ -340,5 +341,5 @@ export const mrpSuggestionSchema: EntitySchema = {
   actions: ['detail'],
 
   formColCount: 2,
-  detailTitle: 'MRP建议详情',
+  detailTitle: i18n.t('shared.mrp_suggestion.mrp_6'),
 };

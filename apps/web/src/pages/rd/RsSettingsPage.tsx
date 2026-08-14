@@ -15,25 +15,22 @@ import {
   ListItemText,
   Button,
 } from '@mui/material';
+import i18n from '@/i18n';
 import { GitBranch, Layers, Code2, Plug, Plus, ArrowRight } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
-
 import { CrudPage } from '@/components/templates/CrudPage';
 import type { CrudApiAdapter } from '@/components/templates/CrudPage';
 import { settingSchema } from '@/schemas/rd';
 import type { EntitySchema } from '@/schema';
 import { PageContainer } from '@/components/common';
 import { rdApi } from '@/api/rd';
-
 import {QUERY_KEYS, CACHE_DURATIONS} from '@/lib/reactQuery';
-
 interface SettingItem extends Record<string, unknown> {
   id: string;
   name: string;
   description: string;
   enabled: boolean;
 }
-
 // 默认数据
 const defaultData: Record<string, SettingItem[]> = {
   repo: [
@@ -57,55 +54,49 @@ const defaultData: Record<string, SettingItem[]> = {
     },
   ],
   cicd: [
-    { id: '1', name: '前端构建流水线', description: '触发方式: push', enabled: true },
-    { id: '2', name: '后端构建流水线', description: '触发方式: push', enabled: true },
-    { id: '3', name: '移动端构建流水线', description: '触发方式: tag', enabled: true },
-    { id: '4', name: '定时回归测试', description: '触发方式: schedule', enabled: false },
+    { id: '1', name: i18n.t('rd.rs_settings_page.k0'), description: i18n.t('pages.rs_settings_page.push_0'), enabled: true },
+    { id: '2', name: i18n.t('rd.rs_settings_page.k1'), description: i18n.t('pages.rs_settings_page.push_1'), enabled: true },
+    { id: '3', name: i18n.t('rd.rs_settings_page.k2'), description: i18n.t('pages.rs_settings_page.tag_2'), enabled: true },
+    { id: '4', name: i18n.t('rd.rs_settings_page.k3'), description: i18n.t('pages.rs_settings_page.schedule_3'), enabled: false },
   ],
   quality: [
-    { id: '1', name: '代码覆盖率门槛', description: '单元测试覆盖率不低于80%', enabled: true },
-    { id: '2', name: '禁止提交敏感信息', description: '检测密码、密钥等敏感信息', enabled: true },
-    { id: '3', name: '代码风格检查', description: '使用ESLint进行代码风格检查', enabled: true },
-    { id: '4', name: '安全漏洞扫描', description: '检测已知安全漏洞', enabled: false },
+    { id: '1', name: i18n.t('rd.rs_settings_page.k5'), description: i18n.t('rd.rs_settings_page.80_4'), enabled: true },
+    { id: '2', name: i18n.t('rd.rs_settings_page.k7'), description: i18n.t('rd.rs_settings_page.k6'), enabled: true },
+    { id: '3', name: i18n.t('rd.rs_settings_page.k9'), description: i18n.t('rd.rs_settings_page.eslint_8'), enabled: true },
+    { id: '4', name: i18n.t('rd.rs_settings_page.k11'), description: i18n.t('rd.rs_settings_page.k10'), enabled: false },
   ],
   integration: [
-    { id: '1', name: 'GitLab', description: '类型: code', enabled: true },
-    { id: '2', name: 'Jenkins', description: '类型: ci', enabled: true },
-    { id: '3', name: 'SonarQube', description: '类型: quality', enabled: true },
-    { id: '4', name: 'Jira', description: '类型: project', enabled: false },
-    { id: '5', name: 'Slack', description: '类型: notification', enabled: false },
+    { id: '1', name: 'GitLab', description: i18n.t('pages.rs_settings_page.code_4'), enabled: true },
+    { id: '2', name: 'Jenkins', description: i18n.t('pages.rs_settings_page.ci_5'), enabled: true },
+    { id: '3', name: 'SonarQube', description: i18n.t('pages.rs_settings_page.quality_6'), enabled: true },
+    { id: '4', name: 'Jira', description: i18n.t('pages.rs_settings_page.project_7'), enabled: false },
+    { id: '5', name: 'Slack', description: i18n.t('pages.rs_settings_page.notification_8'), enabled: false },
   ],
 };
-
 const RsSettingsPage: React.FC = () => {
   const [activeTab, setActiveTab] = useState<string>('repo');
   const [localData, setLocalData] = useState<Record<string, SettingItem[]>>(defaultData);
-
   const statisticsQuery = useQuery({
     queryKey: QUERY_KEYS.RD.STATISTICS,
     queryFn: async () => {
       const response = await rdApi.getStatistics();
       if (!response.success || !response.data) {
-        throw new Error(response.message || '加载统计数据失败');
+        throw new Error(response.message || i18n.t('rd.rs_settings_page.k12'));
       }
       return response.data;
     },
   
       staleTime: CACHE_DURATIONS.MEDIUM,});
-
   const statistics = statisticsQuery.data || null;
   const loading = statisticsQuery.isLoading;
-
   const tabs = [
-    { id: 'repo', label: '仓库管理', icon: <GitBranch size={18} /> },
-    { id: 'cicd', label: 'CI/CD配置', icon: <Layers size={18} /> },
-    { id: 'quality', label: '代码规范', icon: <Code2 size={18} /> },
-    { id: 'integration', label: '集成设置', icon: <Plug size={18} /> },
+    { id: 'repo', label: i18n.t('rd.rs_settings_page.k13'), icon: <GitBranch size={18} /> },
+    { id: 'cicd', label: i18n.t('pages.rs_settings_page.cicd_9'), icon: <Layers size={18} /> },
+    { id: 'quality', label: i18n.t('rd.rs_settings_page.k14'), icon: <Code2 size={18} /> },
+    { id: 'integration', label: i18n.t('rd.rs_settings_page.k15'), icon: <Plug size={18} /> },
   ];
-
   // 当前Tab的数据
   const currentData = localData[activeTab] || [];
-
   // 创建本地数据的API适配器（支持所有Tab）
   const localApiAdapter: CrudApiAdapter<SettingItem> = {
     list: async () => ({ data: currentData, total: currentData.length }),
@@ -141,23 +132,21 @@ const RsSettingsPage: React.FC = () => {
       }));
     },
   };
-
   // 获取当前Tab的标题
   const getTabTitle = () => {
     switch (activeTab) {
       case 'repo':
-        return '仓库列表';
+        return i18n.t('rd.rs_settings_page.k16');
       case 'cicd':
-        return '流水线配置';
+        return i18n.t('rd.rs_settings_page.k17');
       case 'quality':
-        return '质量规则';
+        return i18n.t('rd.rs_settings_page.k18');
       case 'integration':
-        return '第三方集成';
+        return i18n.t('rd.rs_settings_page.k19');
       default:
         return '';
     }
   };
-
   return (
     <PageContainer>
       <Box sx={{ maxWidth: 1200, mx: 'auto' }}>
@@ -168,7 +157,7 @@ const RsSettingsPage: React.FC = () => {
             color='text.secondary'
             sx={{ mb: 2 }}
           >
-            系统统计
+            {i18n.t('pages.rs_settings_page.k0')}
           </Typography>
           <Stack
             direction='row'
@@ -180,7 +169,7 @@ const RsSettingsPage: React.FC = () => {
                   variant='caption'
                   color='text.secondary'
                 >
-                  项目总数
+                  {i18n.t('pages.rs_settings_page.k1')}
                 </Typography>
                 <Typography
                   variant='h4'
@@ -196,7 +185,7 @@ const RsSettingsPage: React.FC = () => {
                   variant='caption'
                   color='text.secondary'
                 >
-                  试验总数
+                  {i18n.t('pages.rs_settings_page.k2')}
                 </Typography>
                 <Typography
                   variant='h4'
@@ -212,7 +201,7 @@ const RsSettingsPage: React.FC = () => {
                   variant='caption'
                   color='text.secondary'
                 >
-                  配方总数
+                  {i18n.t('pages.rs_settings_page.k3')}
                 </Typography>
                 <Typography
                   variant='h4'
@@ -228,7 +217,7 @@ const RsSettingsPage: React.FC = () => {
                   variant='caption'
                   color='text.secondary'
                 >
-                  任务总数
+                  {i18n.t('pages.rs_settings_page.k4')}
                 </Typography>
                 <Typography
                   variant='h4'
@@ -240,7 +229,6 @@ const RsSettingsPage: React.FC = () => {
             </Card>
           </Stack>
         </Box>
-
         <Box sx={{ display: 'flex', gap: 3 }}>
           {/* 左侧Tab导航 */}
           <Paper sx={{ width: 240, p: 2 }}>
@@ -269,7 +257,6 @@ const RsSettingsPage: React.FC = () => {
               ))}
             </List>
           </Paper>
-
           {/* 右侧内容区 - 使用CrudPage */}
           <Box sx={{ flex: 1 }}>
             <CrudPage<SettingItem>
@@ -292,13 +279,12 @@ const RsSettingsPage: React.FC = () => {
                       startIcon={<Plus size={18} />}
                       onClick={() => {}}
                     >
-                      添加
+                      {i18n.t('pages.rs_settings_page.k5')}
                     </Button>
                   )}
                 </Box>
               }
             />
-
             {/* 各Tab特有的额外内容 */}
             {activeTab === 'cicd' && (
               <Paper sx={{ p: 3, mt: 2 }}>
@@ -306,7 +292,7 @@ const RsSettingsPage: React.FC = () => {
                   variant='subtitle1'
                   sx={{ fontWeight: 'bold' }}
                 >
-                  CI/CD 全局设置
+                  {i18n.t('pages.rs_settings_page.cicd_6')}
                 </Typography>
                 <Stack
                   spacing={2}
@@ -314,14 +300,14 @@ const RsSettingsPage: React.FC = () => {
                 >
                   <FormControlLabel
                     control={<Switch defaultChecked />}
-                    label='代码提交后自动触发构建'
+                    label={i18n.t('rd.rs_settings_page.k20')}
                   />
                   <FormControlLabel
                     control={<Switch defaultChecked />}
-                    label='构建失败时发送通知'
+                    label={i18n.t('rd.rs_settings_page.k21')}
                   />
                   <TextField
-                    label='构建超时时间(分钟)'
+                    label={i18n.t('rd.rs_settings_page.k22')}
                     type='number'
                     size='small'
                     defaultValue={30}
@@ -330,28 +316,27 @@ const RsSettingsPage: React.FC = () => {
                 </Stack>
               </Paper>
             )}
-
             {activeTab === 'quality' && (
               <Paper sx={{ p: 3, mt: 2 }}>
                 <Typography
                   variant='subtitle1'
                   sx={{ fontWeight: 'bold' }}
                 >
-                  代码规范配置
+                  {i18n.t('pages.rs_settings_page.k7')}
                 </Typography>
                 <Stack
                   spacing={2}
                   sx={{ mt: 2 }}
                 >
                   <TextField
-                    label='最小代码覆盖率'
+                    label={i18n.t('rd.rs_settings_page.k23')}
                     type='number'
                     size='small'
                     defaultValue={80}
                     sx={{ width: 200 }}
                   />
                   <TextField
-                    label='最大代码行数限制'
+                    label={i18n.t('rd.rs_settings_page.k24')}
                     type='number'
                     size='small'
                     defaultValue={500}
@@ -360,21 +345,20 @@ const RsSettingsPage: React.FC = () => {
                 </Stack>
               </Paper>
             )}
-
             {activeTab === 'integration' && (
               <Paper sx={{ p: 3, mt: 2 }}>
                 <Typography
                   variant='subtitle1'
                   sx={{ fontWeight: 'bold' }}
                 >
-                  连接管理
+                  {i18n.t('pages.rs_settings_page.k8')}
                 </Typography>
                 <Typography
                   variant='body2'
                   color='text.secondary'
                   sx={{ mt: 1 }}
                 >
-                  选择要集成的第三方服务并配置连接参数。
+                  {i18n.t('pages.rs_settings_page.k9')}
                 </Typography>
               </Paper>
             )}
@@ -384,5 +368,4 @@ const RsSettingsPage: React.FC = () => {
     </PageContainer>
   );
 };
-
 export default RsSettingsPage;

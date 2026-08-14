@@ -4,9 +4,7 @@ import { ChevronRight, Plus, RefreshCw, Upload } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { DASHBOARD_PATHS } from '@/routes/dashboard';
 import type { TabType } from '../types';
-
-import { useTranslation } from 'react-i18next';
-
+import i18n from '@/i18n';
 interface PageHeaderProps {
   activeTab: TabType;
   loading: boolean;
@@ -14,7 +12,6 @@ interface PageHeaderProps {
   onCreate: () => void;
   onImport: () => void;
 }
-
 export const PageHeader: React.FC<PageHeaderProps> = ({
   activeTab,
   loading,
@@ -22,9 +19,7 @@ export const PageHeader: React.FC<PageHeaderProps> = ({
   onCreate,
   onImport,
 }) => {
-  const { t } = useTranslation();
   const navigate = useNavigate();
-
   return (
     <Stack
       direction='row'
@@ -43,7 +38,7 @@ export const PageHeader: React.FC<PageHeaderProps> = ({
       >
         <IconButton
           onClick={() => navigate(DASHBOARD_PATHS.dashboard)}
-          aria-label={t('bi.gis_page_components__page_header.back')}
+          aria-label={i18n.t('bi.gis_page_components__page_header.back')}
         >
           <ChevronRight style={{ transform: 'rotate(180deg)' }} />
         </IconButton>
@@ -52,10 +47,10 @@ export const PageHeader: React.FC<PageHeaderProps> = ({
             variant='h4'
             sx={{ fontWeight: 700 }}
           >
-            厂区空间数字化
+            {i18n.t('pages.page_header.k0')}
           </Typography>
           <Typography color='text.secondary'>
-            管理设备点位、管线、仓储位置、现场取证、厂区地图和业务位置
+            {i18n.t('pages.page_header.k1')}
           </Typography>
         </Box>
       </Stack>
@@ -70,7 +65,7 @@ export const PageHeader: React.FC<PageHeaderProps> = ({
           startIcon={<Upload size={16} />}
           onClick={onImport}
         >
-          导入
+          {i18n.t('pages.page_header.k2')}
         </Button>
         {activeTab !== 'map' && (
           <Button
@@ -82,13 +77,13 @@ export const PageHeader: React.FC<PageHeaderProps> = ({
             startIcon={<Plus size={16} />}
             onClick={onCreate}
           >
-            新建
+            {i18n.t('pages.page_header.k3')}
           </Button>
         )}
         <IconButton
           onClick={onRefresh}
           sx={{ border: 1, borderColor: 'divider' }}
-          aria-label='刷新'
+          aria-label={i18n.t('bi.page_header.k0')}
         >
           <RefreshCw
             size={20}

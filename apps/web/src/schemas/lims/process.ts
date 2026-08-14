@@ -1,10 +1,11 @@
 import type React from 'react';
 import type { EntitySchema } from '@/schema';
+import i18n from '@/i18n';
 
 export const processSchema: EntitySchema = {
   entity: 'limsProcess',
-  title: '检验流程',
-  description: '管理实验室检验流程，包括流程名称、描述、步骤和状态',
+  title: i18n.t('lims.process.k0'),
+  description: i18n.t('lims.process.k1'),
 
   api: {
     module: 'lims',
@@ -14,7 +15,7 @@ export const processSchema: EntitySchema = {
   fields: [
     {
       name: 'name',
-      label: '流程名称',
+      label: i18n.t('lims.process.k2'),
       type: 'text',
       required: true,
       sortable: true,
@@ -22,13 +23,13 @@ export const processSchema: EntitySchema = {
     },
     {
       name: 'description',
-      label: '描述',
+      label: i18n.t('lims.process.k3'),
       type: 'textarea',
       listWidth: 250,
     },
     {
       name: 'steps',
-      label: '步骤数',
+      label: i18n.t('lims.process.k4'),
       type: 'number',
       sortable: true,
       listWidth: 100,
@@ -40,22 +41,22 @@ export const processSchema: EntitySchema = {
     },
     {
       name: 'status',
-      label: '状态',
+      label: i18n.t('lims.process.k5'),
       type: 'select',
       defaultValue: 'draft',
       options: {
         type: 'static',
         options: [
-          { value: 'active', label: '启用' },
-          { value: 'inactive', label: '禁用' },
-          { value: 'draft', label: '草稿' },
+          { value: 'active', label: i18n.t('lims.process.k6') },
+          { value: 'inactive', label: i18n.t('lims.process.k7') },
+          { value: 'draft', label: i18n.t('lims.process.k8') },
         ],
       },
       listWidth: 100,
     },
     {
       name: 'created_at',
-      label: '创建时间',
+      label: i18n.t('lims.process.k9'),
       type: 'datetime',
       sortable: true,
       listWidth: 130,
@@ -75,21 +76,21 @@ export const processSchema: EntitySchema = {
         draft: 'default',
       },
       labelMap: {
-        active: '启用',
-        inactive: '禁用',
-        draft: '草稿',
+        active: i18n.t('lims.process.k10'),
+        inactive: i18n.t('lims.process.k11'),
+        draft: i18n.t('lims.process.k12'),
       },
     },
     filters: [
       {
         id: 'status',
-        label: '状态',
+        label: i18n.t('lims.process.k13'),
         type: 'select',
         options: [
-          { label: '全部状态', value: '' },
-          { label: '启用', value: 'active' },
-          { label: '禁用', value: 'inactive' },
-          { label: '草稿', value: 'draft' },
+          { label: i18n.t('lims.process.k14'), value: '' },
+          { label: i18n.t('lims.process.k15'), value: 'active' },
+          { label: i18n.t('lims.process.k16'), value: 'inactive' },
+          { label: i18n.t('lims.process.k17'), value: 'draft' },
         ],
       },
     ],
@@ -99,13 +100,13 @@ export const processSchema: EntitySchema = {
 
   formSections: [
     {
-      title: '基本信息',
+      title: i18n.t('lims.process.k18'),
       fields: ['name', 'description', 'status'],
     },
   ],
 
   formColCount: 2,
-  createTitle: '新建检验流程',
-  editTitle: '编辑检验流程',
-  detailTitle: '检验流程详情',
+  createTitle: i18n.t('lims.process.k19'),
+  editTitle: i18n.t('lims.process.k20'),
+  detailTitle: i18n.t('lims.process.k21'),
 };

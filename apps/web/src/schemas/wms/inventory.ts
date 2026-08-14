@@ -2,11 +2,12 @@ import type { EntitySchema } from '@/schema';
 
 
 import { QUERY_KEYS } from '@/lib/reactQuery';
+import i18n from '@/i18n';
 
 export const inventorySchema: EntitySchema = {
   entity: 'wms_inventory',
-  title: '库存管理',
-  description: '管理仓库库存物品信息',
+  title: i18n.t('wms.inventory.k0'),
+  description: i18n.t('wms.inventory.k1'),
 
   api: {
     module: 'wms',
@@ -16,7 +17,7 @@ export const inventorySchema: EntitySchema = {
   fields: [
     {
       name: 'sku',
-      label: '物料编码',
+      label: i18n.t('wms.inventory.k2'),
       type: 'text',
       required: true,
       sortable: true,
@@ -25,7 +26,7 @@ export const inventorySchema: EntitySchema = {
     },
     {
       name: 'name',
-      label: '物料名称',
+      label: i18n.t('wms.inventory.k3'),
       type: 'text',
       required: true,
       sortable: true,
@@ -34,13 +35,13 @@ export const inventorySchema: EntitySchema = {
     },
     {
       name: 'specification',
-      label: '规格',
+      label: i18n.t('wms.inventory.k4'),
       type: 'text',
       listWidth: 120,
     },
     {
       name: 'unit',
-      label: '单位',
+      label: i18n.t('wms.inventory.k5'),
       type: 'text',
       required: true,
       listWidth: 80,
@@ -48,7 +49,7 @@ export const inventorySchema: EntitySchema = {
     },
     {
       name: 'quantity',
-      label: '数量',
+      label: i18n.t('wms.inventory.k6'),
       type: 'number',
       required: true,
       sortable: true,
@@ -56,13 +57,13 @@ export const inventorySchema: EntitySchema = {
     },
     {
       name: 'available_quantity',
-      label: '可用数量',
+      label: i18n.t('wms.inventory.k7'),
       type: 'number',
       listWidth: 100,
     },
     {
       name: 'warehouse_id',
-      label: '仓库',
+      label: i18n.t('wms.inventory.k8'),
       type: 'select',
       required: true,
       listWidth: 120,
@@ -73,15 +74,15 @@ export const inventorySchema: EntitySchema = {
     },
     {
       name: 'status',
-      label: '状态',
+      label: i18n.t('wms.inventory.k9'),
       type: 'select',
       defaultValue: 'qualified',
       options: {
         type: 'static',
         options: [
-          { value: 'qualified', label: '合格' },
-          { value: 'unqualified', label: '不合格' },
-          { value: 'pending', label: '待检' },
+          { value: 'qualified', label: i18n.t('wms.inventory.k10') },
+          { value: 'unqualified', label: i18n.t('wms.inventory.k11') },
+          { value: 'pending', label: i18n.t('wms.inventory.k12') },
         ],
       },
       listWidth: 100,
@@ -89,32 +90,32 @@ export const inventorySchema: EntitySchema = {
     },
     {
       name: 'batch_number',
-      label: '批次号',
+      label: i18n.t('wms.inventory.k13'),
       type: 'text',
       listWidth: 120,
       validation: [{ type: 'maxLength', value: 100 }],
     },
     {
       name: 'min_quantity',
-      label: '最低库存',
+      label: i18n.t('wms.inventory.k14'),
       type: 'number',
       listWidth: 100,
     },
     {
       name: 'max_quantity',
-      label: '最高库存',
+      label: i18n.t('wms.inventory.k15'),
       type: 'number',
       listWidth: 100,
     },
     {
       name: 'expiry_date',
-      label: '有效期',
+      label: i18n.t('wms.inventory.k16'),
       type: 'date',
       listWidth: 120,
     },
     {
       name: 'created_at',
-      label: '创建时间',
+      label: i18n.t('wms.inventory.k17'),
       type: 'datetime',
       readonly: true,
       hideInForm: true,
@@ -123,7 +124,7 @@ export const inventorySchema: EntitySchema = {
     },
     {
       name: 'updated_at',
-      label: '更新时间',
+      label: i18n.t('wms.inventory.k18'),
       type: 'datetime',
       readonly: true,
       hideInForm: true,
@@ -154,28 +155,28 @@ export const inventorySchema: EntitySchema = {
         pending: 'warning',
       },
       labelMap: {
-        qualified: '合格',
-        unqualified: '不合格',
-        pending: '待检',
+        qualified: i18n.t('wms.inventory.k19'),
+        unqualified: i18n.t('wms.inventory.k20'),
+        pending: i18n.t('wms.inventory.k21'),
       },
     },
     filters: [
       {
         id: 'status',
-        label: '状态',
+        label: i18n.t('wms.inventory.k22'),
         type: 'select',
         options: [
-          { label: '全部状态', value: 'all' },
-          { label: '合格', value: 'qualified' },
-          { label: '不合格', value: 'unqualified' },
-          { label: '待检', value: 'pending' },
+          { label: i18n.t('wms.inventory.k23'), value: 'all' },
+          { label: i18n.t('wms.inventory.k24'), value: 'qualified' },
+          { label: i18n.t('wms.inventory.k25'), value: 'unqualified' },
+          { label: i18n.t('wms.inventory.k26'), value: 'pending' },
         ],
       },
       {
         id: 'warehouse_id',
-        label: '仓库',
+        label: i18n.t('wms.inventory.k27'),
         type: 'select',
-        options: [{ label: '全部仓库', value: 'all' }],
+        options: [{ label: i18n.t('wms.inventory.k28'), value: 'all' }],
       },
     ],
   },
@@ -184,23 +185,23 @@ export const inventorySchema: EntitySchema = {
 
   formSections: [
     {
-      title: '基本信息',
+      title: i18n.t('wms.inventory.k29'),
       fields: ['sku', 'name', 'specification', 'unit'],
     },
     {
-      title: '库存信息',
+      title: i18n.t('wms.inventory.k30'),
       fields: ['warehouse_id', 'quantity', 'min_quantity', 'max_quantity', 'status'],
     },
     {
-      title: '其他信息',
+      title: i18n.t('wms.inventory.k31'),
       fields: ['batch_number', 'expiry_date'],
     },
   ],
 
   formColCount: 2,
-  createTitle: '新增库存',
-  editTitle: '编辑库存',
-  detailTitle: '库存详情',
+  createTitle: i18n.t('wms.inventory.k32'),
+  editTitle: i18n.t('wms.inventory.k33'),
+  detailTitle: i18n.t('wms.inventory.k34'),
 
   dynamicOptions: [
     {

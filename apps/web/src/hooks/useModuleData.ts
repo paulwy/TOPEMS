@@ -5,6 +5,7 @@
  */
 import { useState, useEffect, useCallback } from 'react';
 import { usePlugins } from '@/context/PluginContext';
+import i18n from '@/i18n';
 
 export interface UseModuleDataOptions<T> {
   /** 目标模块 code */
@@ -55,7 +56,7 @@ export function useModuleData<T>({
       setData(result);
     } catch (err: unknown) {
       const errAny = err as { response?: { data?: { message?: string } }; message?: string };
-      const message = errAny?.response?.data?.message || errAny?.message || '获取关联数据失败';
+      const message = errAny?.response?.data?.message || errAny?.message || i18n.t('shared.use_module_data.k0');
       setError(message);
     } finally {
       setLoading(false);

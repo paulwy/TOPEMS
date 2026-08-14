@@ -1,5 +1,4 @@
 import React from 'react';
-import { useTranslation } from 'react-i18next';
 import { Eye } from 'lucide-react';
 import { StatusBadge } from '@/components/common';
 import {
@@ -18,12 +17,10 @@ import {
   DialogContent,
   DialogActions,
 } from '@mui/material';
+import i18n from '@/i18n';
 import type { VoucherManagementReturn } from '../hooks/useVoucherManagement';
-
 export type VoucherDetailTabsProps = VoucherManagementReturn;
-
 const VoucherDetailTabs: React.FC<VoucherDetailTabsProps> = (vm) => {
-  const { t } = useTranslation();
   const {
     showDetailModal,
     setShowDetailModal,
@@ -32,7 +29,6 @@ const VoucherDetailTabs: React.FC<VoucherDetailTabsProps> = (vm) => {
     formatCurrency,
     getStatusBadgeConfig,
   } = vm;
-
   const renderStatusBadge = (status: string) => {
     const config = getStatusBadgeConfig(status);
     return (
@@ -43,7 +39,6 @@ const VoucherDetailTabs: React.FC<VoucherDetailTabsProps> = (vm) => {
       />
     );
   };
-
   return (
     <Dialog
       open={showDetailModal}
@@ -54,7 +49,7 @@ const VoucherDetailTabs: React.FC<VoucherDetailTabsProps> = (vm) => {
       <DialogTitle>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
           <Eye size={20} />
-          {t('erp.voucher_mgmt.label.voucher_detail')}
+          {i18n.t('erp.voucher_mgmt.label.voucher_detail')}
         </Box>
       </DialogTitle>
       <DialogContent dividers>
@@ -72,7 +67,7 @@ const VoucherDetailTabs: React.FC<VoucherDetailTabsProps> = (vm) => {
                   variant='body2'
                   sx={{ color: 'text.secondary' }}
                 >
-                  {t('erp.voucher_mgmt.label.voucher_number')}
+                  {i18n.t('erp.voucher_mgmt.label.voucher_number')}
                 </Typography>
                 <Typography
                   variant='h6'
@@ -86,7 +81,7 @@ const VoucherDetailTabs: React.FC<VoucherDetailTabsProps> = (vm) => {
                   variant='body2'
                   sx={{ color: 'text.secondary' }}
                 >
-                  {t('erp.voucher_mgmt.label.voucher_date')}
+                  {i18n.t('erp.voucher_mgmt.label.voucher_date')}
                 </Typography>
                 <Typography
                   variant='h6'
@@ -100,7 +95,7 @@ const VoucherDetailTabs: React.FC<VoucherDetailTabsProps> = (vm) => {
                   variant='body2'
                   sx={{ color: 'text.secondary' }}
                 >
-                  {t('erp.voucher_mgmt.label.status')}
+                  {i18n.t('erp.voucher_mgmt.label.status')}
                 </Typography>
                 <Box sx={{ mt: 0.5 }}>{renderStatusBadge(currentVoucher.status)}</Box>
               </Box>
@@ -110,7 +105,7 @@ const VoucherDetailTabs: React.FC<VoucherDetailTabsProps> = (vm) => {
                 variant='body2'
                 sx={{ color: 'text.secondary', mb: 0.5 }}
               >
-                {t('erp.voucher_mgmt.label.summary')}
+                {i18n.t('erp.voucher_mgmt.label.summary')}
               </Typography>
               <Typography>{currentVoucher.summary || '-'}</Typography>
             </Box>
@@ -126,7 +121,7 @@ const VoucherDetailTabs: React.FC<VoucherDetailTabsProps> = (vm) => {
                   variant='body2'
                   sx={{ color: 'text.secondary' }}
                 >
-                  {t('erp.voucher_mgmt.label.maker')}
+                  {i18n.t('erp.voucher_mgmt.label.maker')}
                 </Typography>
                 <Typography sx={{ fontWeight: 500 }}>{currentVoucher.maker_name || '-'}</Typography>
               </Box>
@@ -135,7 +130,7 @@ const VoucherDetailTabs: React.FC<VoucherDetailTabsProps> = (vm) => {
                   variant='body2'
                   sx={{ color: 'text.secondary' }}
                 >
-                  {t('erp.voucher_mgmt.label.checker')}
+                  {i18n.t('erp.voucher_mgmt.label.checker')}
                 </Typography>
                 <Typography sx={{ fontWeight: 500 }}>
                   {currentVoucher.checker_name || '-'}
@@ -146,18 +141,17 @@ const VoucherDetailTabs: React.FC<VoucherDetailTabsProps> = (vm) => {
                   variant='body2'
                   sx={{ color: 'text.secondary' }}
                 >
-                  {t('erp.voucher_mgmt.label.period')}
+                  {i18n.t('erp.voucher_mgmt.label.period')}
                 </Typography>
                 <Typography sx={{ fontWeight: 500 }}>{currentVoucher.period}</Typography>
               </Box>
             </Box>
-
             <Box sx={{ borderTop: 1, borderColor: 'divider', pt: 2 }}>
               <Typography
                 variant='subtitle1'
                 sx={{ fontWeight: 600, mb: 2 }}
               >
-                {t('erp.voucher_mgmt.label.voucher_items')}
+                {i18n.t('erp.voucher_mgmt.label.voucher_items')}
               </Typography>
               <TableContainer
                 component={Paper}
@@ -167,28 +161,28 @@ const VoucherDetailTabs: React.FC<VoucherDetailTabsProps> = (vm) => {
                   <TableHead>
                     <TableRow sx={{ bgcolor: 'grey.50' }}>
                       <TableCell sx={{ width: 60, fontWeight: 'bold' }}>
-                        {t('erp.voucher_mgmt.label.line_number')}
+                        {i18n.t('erp.voucher_mgmt.label.line_number')}
                       </TableCell>
                       <TableCell sx={{ fontWeight: 'bold' }}>
-                        {t('erp.voucher_mgmt.label.subject_code')}
+                        {i18n.t('erp.voucher_mgmt.label.subject_code')}
                       </TableCell>
                       <TableCell sx={{ fontWeight: 'bold' }}>
-                        {t('erp.voucher_mgmt.label.subject_name')}
+                        {i18n.t('erp.voucher_mgmt.label.subject_name')}
                       </TableCell>
                       <TableCell sx={{ fontWeight: 'bold' }}>
-                        {t('erp.voucher_mgmt.label.summary')}
+                        {i18n.t('erp.voucher_mgmt.label.summary')}
                       </TableCell>
                       <TableCell
                         align='right'
                         sx={{ fontWeight: 'bold' }}
                       >
-                        {t('erp.voucher_mgmt.label.debit')}
+                        {i18n.t('erp.voucher_mgmt.label.debit')}
                       </TableCell>
                       <TableCell
                         align='right'
                         sx={{ fontWeight: 'bold' }}
                       >
-                        {t('erp.voucher_mgmt.label.credit')}
+                        {i18n.t('erp.voucher_mgmt.label.credit')}
                       </TableCell>
                     </TableRow>
                   </TableHead>
@@ -232,7 +226,7 @@ const VoucherDetailTabs: React.FC<VoucherDetailTabsProps> = (vm) => {
                     variant='body2'
                     sx={{ color: 'text.secondary' }}
                   >
-                    {t('erp.voucher_mgmt.label.debit_total')}
+                    {i18n.t('erp.voucher_mgmt.label.debit_total')}
                   </Typography>
                   <Typography
                     variant='h6'
@@ -246,7 +240,7 @@ const VoucherDetailTabs: React.FC<VoucherDetailTabsProps> = (vm) => {
                     variant='body2'
                     sx={{ color: 'text.secondary' }}
                   >
-                    {t('erp.voucher_mgmt.label.credit_total')}
+                    {i18n.t('erp.voucher_mgmt.label.credit_total')}
                   </Typography>
                   <Typography
                     variant='h6'
@@ -262,11 +256,10 @@ const VoucherDetailTabs: React.FC<VoucherDetailTabsProps> = (vm) => {
       </DialogContent>
       <DialogActions sx={{ px: 3, py: 2 }}>
         <Button onClick={() => setShowDetailModal(false)}>
-          {t('erp.voucher_mgmt.label.close')}
+          {i18n.t('erp.voucher_mgmt.label.close')}
         </Button>
       </DialogActions>
     </Dialog>
   );
 };
-
 export default VoucherDetailTabs;

@@ -1,3 +1,4 @@
+import i18n from '@/i18n';
 /**
  * V50.0 微前端 AI 运维 - 根因分析模块
  * 提供智能故障诊断、因果关系分析、事件关联能力
@@ -101,7 +102,7 @@ export class RootCauseAnalyzer {
   analyze(context: AnalysisContext): Promise<RootCauseResult> {
     return new Promise((resolve, reject) => {
       const timeout = setTimeout(() => {
-        reject(new Error('分析超时'));
+        reject(new Error(i18n.t('microfrontend.root-cause-analyzer.k0')));
       }, this.config.analysisTimeout);
 
       try {
@@ -269,7 +270,7 @@ export class RootCauseAnalyzer {
         type: 'metric',
         contribution: 0,
         confidence: 0,
-        description: `指标异常: ${metric}`,
+        description: `${i18n.t('microfrontend.root-cause-analyzer.k0')}${metric}`,
         evidence: [],
         relatedFactors: [],
       });
@@ -284,7 +285,7 @@ export class RootCauseAnalyzer {
           type: 'configuration',
           contribution: 0,
           confidence: 0,
-          description: `配置变更: ${event}`,
+          description: `${i18n.t('microfrontend.root-cause-analyzer.k1')}${event}`,
           evidence: [],
           relatedFactors: [],
         });
@@ -363,7 +364,7 @@ export class RootCauseAnalyzer {
 
     // 从知识库获取证据
     if (this.knowledgeBase.has(factor.name)) {
-      evidence.push(`知识库匹配: ${factor.name}`);
+      evidence.push(`${i18n.t('microfrontend.root-cause-analyzer.k2')}${factor.name}`);
     }
 
     return evidence;
@@ -420,7 +421,7 @@ export class RootCauseAnalyzer {
       timeline.push({
         timestamp: context.startTime + Math.random() * 2000,
         type: 'symptom',
-        description: `观察到 ${metric} 异常`,
+        description: `${i18n.t('microfrontend.root-cause-analyzer.k3')}${metric}${i18n.t('microfrontend.root-cause-analyzer.k4')}`,
         source: metric,
         impact: 'low',
       });
@@ -435,28 +436,28 @@ export class RootCauseAnalyzer {
     // 基于主要原因生成建议
     switch (primary.type) {
       case 'metric':
-        recommendations.push(`检查并优化 ${primary.name} 指标`);
+        recommendations.push(`${i18n.t('microfrontend.root-cause-analyzer.k5')}${primary.name}${i18n.t('microfrontend.root-cause-analyzer.k6')}`);
         break;
       case 'resource':
-        recommendations.push(`增加或调整 ${primary.name} 资源配额`);
+        recommendations.push(`${i18n.t('microfrontend.root-cause-analyzer.k7')}${primary.name}${i18n.t('microfrontend.root-cause-analyzer.k8')}`);
         break;
       case 'dependency':
-        recommendations.push(`检查 ${primary.name} 依赖服务的健康状态`);
+        recommendations.push(`${i18n.t('microfrontend.root-cause-analyzer.k9')}${primary.name}${i18n.t('microfrontend.root-cause-analyzer.k10')}`);
         break;
       case 'configuration':
-        recommendations.push(`回滚或修复 ${primary.name} 配置变更`);
+        recommendations.push(`${i18n.t('microfrontend.root-cause-analyzer.k11')}${primary.name}${i18n.t('microfrontend.root-cause-analyzer.k12')}`);
         break;
       case 'event':
-        recommendations.push(`调查并处理 ${primary.name} 事件`);
+        recommendations.push(`${i18n.t('microfrontend.root-cause-analyzer.k13')}${primary.name}${i18n.t('microfrontend.root-cause-analyzer.k14')}`);
         break;
     }
 
     // 基于次要原因补充建议
     secondary.slice(0, this.config.maxRecommendations - 1).forEach((factor) => {
       if (factor.type === 'dependency') {
-        recommendations.push(`监控 ${factor.name} 依赖项的性能`);
+        recommendations.push(`${i18n.t('microfrontend.root-cause-analyzer.k15')}${factor.name}${i18n.t('microfrontend.root-cause-analyzer.k16')}`);
       } else if (factor.type === 'resource') {
-        recommendations.push(`优化 ${factor.name} 资源使用`);
+        recommendations.push(`${i18n.t('microfrontend.root-cause-analyzer.k17')}${factor.name}${i18n.t('microfrontend.root-cause-analyzer.k18')}`);
       }
     });
 
@@ -492,11 +493,11 @@ export class RootCauseAnalyzer {
   private createDefaultCause(): CausalFactor {
     return {
       id: 'cause-unknown',
-      name: '未知原因',
+      name: i18n.t('microfrontend.root-cause-analyzer.k1'),
       type: 'event',
       contribution: 0.1,
       confidence: 0.1,
-      description: '无法确定具体原因',
+      description: i18n.t('microfrontend.root-cause-analyzer.k2'),
       evidence: [],
       relatedFactors: [],
     };
@@ -506,7 +507,7 @@ export class RootCauseAnalyzer {
     // 添加一些默认的相关性规则
     this.addCorrelationRule({
       id: 'cpu-memory-correlation',
-      name: 'CPU-内存相关性',
+      name: i18n.t('microfrontend.root-cause-analyzer.cpu_19'),
       conditions: [
         {
           metric1: 'cpu_usage',
@@ -518,14 +519,14 @@ export class RootCauseAnalyzer {
       ],
       result: {
         probability: 0.8,
-        causalRelation: '内存泄漏可能导致 CPU 使用率升高',
+        causalRelation: i18n.t('microfrontend.root-cause-analyzer.cpu_3'),
       },
       enabled: true,
     });
 
     this.addCorrelationRule({
       id: 'latency-error-correlation',
-      name: '延迟-错误相关性',
+      name: i18n.t('microfrontend.root-cause-analyzer.k4'),
       conditions: [
         {
           metric1: 'response_time',
@@ -537,7 +538,7 @@ export class RootCauseAnalyzer {
       ],
       result: {
         probability: 0.75,
-        causalRelation: '高延迟可能导致错误率上升',
+        causalRelation: i18n.t('microfrontend.root-cause-analyzer.k5'),
       },
       enabled: true,
     });

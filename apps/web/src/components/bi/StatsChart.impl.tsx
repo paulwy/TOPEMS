@@ -1,6 +1,7 @@
 import React, { Suspense, lazy } from 'react';
 import type { ChartData } from '../charts/AreaChart';
 import { designTokens, semanticTokens } from '@topems/tokens';
+import i18n from '@/i18n';
 
 export interface StatsChartProps {
   type: 'bar' | 'pie' | 'line';
@@ -47,7 +48,7 @@ const EmptyFallback: React.FC<{ title?: string }> = ({ title }) => (
         color: 'grey.400',
       }}
     >
-      <p>暂无数据</p>
+      <p>{i18n.t('shared.stats_chart.impl.k0')}</p>
     </div>
   </div>
 );

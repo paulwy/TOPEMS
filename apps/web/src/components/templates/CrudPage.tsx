@@ -33,6 +33,7 @@ import {
   Tabs,
   Tab,
 } from '@mui/material';
+import i18n from '@/i18n';
 import { Eye, Pencil, Trash2, Plus, Upload, Download, List, GitBranch } from 'lucide-react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
@@ -287,14 +288,14 @@ function CrudPage<T extends Record<string, unknown> = Record<string, unknown>>({
     const result: RowAction<T>[] = [];
     if (actions.includes('detail')) {
       result.push({
-        label: t('common.view', '查看'),
+        label: t('common.view', i18n.t('components.crud_page.k0')),
         icon: <Eye size={16} />,
         onClick: (row: T) => setDetailTarget(row),
       });
     }
     if (actions.includes('edit')) {
       result.push({
-        label: t('common.edit', '编辑'),
+        label: t('common.edit', i18n.t('components.crud_page.k1')),
         icon: <Pencil size={16} />,
         onClick: (row: T) => {
           setWizardValues({});
@@ -304,7 +305,7 @@ function CrudPage<T extends Record<string, unknown> = Record<string, unknown>>({
     }
     if (actions.includes('delete')) {
       result.push({
-        label: t('common.delete', '删除'),
+        label: t('common.delete', i18n.t('components.crud_page.k2')),
         icon: <Trash2 size={16} />,
         color: 'error',
         onClick: (row: T) => setDeleteTarget(row),
@@ -324,8 +325,8 @@ function CrudPage<T extends Record<string, unknown> = Record<string, unknown>>({
       if (selectedIds.length === 0) {
         addNotification({
           type: 'info',
-          title: t('common.tip', '提示'),
-          message: t('common.select_first', '请先选择要操作的记录'),
+          title: t('common.tip', i18n.t('components.crud_page.k3')),
+          message: t('common.select_first', i18n.t('components.crud_page.k4')),
         });
         return;
       }
@@ -337,10 +338,10 @@ function CrudPage<T extends Record<string, unknown> = Record<string, unknown>>({
 
       if (action.confirm) {
         setConfirmConfig({
-          title: t('common.confirm_action', '确认操作'),
+          title: t('common.confirm_action', i18n.t('components.crud_page.k5')),
           message:
             action.confirmMessage ||
-            `${t('common.confirm_message', '确定要执行此操作吗？')}(${selectedIds.length}${t('common.items', '条')})`,
+            `${t('common.confirm_message', i18n.t('components.crud_page.k7'))}(${selectedIds.length}${t('common.items', i18n.t('components.crud_page.k6'))})`,
           onConfirm: execute,
         });
       } else {
@@ -369,7 +370,7 @@ function CrudPage<T extends Record<string, unknown> = Record<string, unknown>>({
         await importConfig.onImport(file);
         addNotification({
           type: 'success',
-          title: t('common.import_success', '导入成功'),
+          title: t('common.import_success', i18n.t('components.crud_page.k8')),
           message: '',
         });
         queryClient.invalidateQueries({ queryKey: [schema.entity] ,
@@ -379,7 +380,7 @@ function CrudPage<T extends Record<string, unknown> = Record<string, unknown>>({
       } catch (error) {
         addNotification({
           type: 'error',
-          title: t('common.import_failed', '导入失败'),
+          title: t('common.import_failed', i18n.t('components.crud_page.k9')),
           message: error instanceof Error ? error.message : '',
         });
       }
@@ -398,13 +399,13 @@ function CrudPage<T extends Record<string, unknown> = Record<string, unknown>>({
       await exportConfig.onExport();
       addNotification({
         type: 'success',
-        title: t('common.export_success', '导出成功'),
+        title: t('common.export_success', i18n.t('components.crud_page.k10')),
         message: '',
       });
     } catch (error) {
       addNotification({
         type: 'error',
-        title: t('common.export_failed', '导出失败'),
+        title: t('common.export_failed', i18n.t('components.crud_page.k11')),
         message: error instanceof Error ? error.message : '',
       });
     }
@@ -442,7 +443,7 @@ function CrudPage<T extends Record<string, unknown> = Record<string, unknown>>({
 });
       addNotification({
         type: 'success',
-        title: t('common.create_success', '创建成功'),
+        title: t('common.create_success', i18n.t('components.crud_page.k12')),
         message: '',
       });
       setCreateOpen(false);
@@ -450,7 +451,7 @@ function CrudPage<T extends Record<string, unknown> = Record<string, unknown>>({
     onError: (error: unknown) => {
       addNotification({
         type: 'error',
-        title: t('common.create_failed', '创建失败'),
+        title: t('common.create_failed', i18n.t('components.crud_page.k13')),
         message: error instanceof Error ? error.message : '',
       });
     },
@@ -465,7 +466,7 @@ function CrudPage<T extends Record<string, unknown> = Record<string, unknown>>({
 });
       addNotification({
         type: 'success',
-        title: t('common.update_success', '更新成功'),
+        title: t('common.update_success', i18n.t('components.crud_page.k14')),
         message: '',
       });
       setEditTarget(null);
@@ -473,7 +474,7 @@ function CrudPage<T extends Record<string, unknown> = Record<string, unknown>>({
     onError: (error: unknown) => {
       addNotification({
         type: 'error',
-        title: t('common.update_failed', '更新失败'),
+        title: t('common.update_failed', i18n.t('components.crud_page.k15')),
         message: error instanceof Error ? error.message : '',
       });
     },
@@ -488,7 +489,7 @@ function CrudPage<T extends Record<string, unknown> = Record<string, unknown>>({
 });
       addNotification({
         type: 'success',
-        title: t('common.delete_success', '删除成功'),
+        title: t('common.delete_success', i18n.t('components.crud_page.k16')),
         message: '',
       });
       setDeleteTarget(null);
@@ -496,7 +497,7 @@ function CrudPage<T extends Record<string, unknown> = Record<string, unknown>>({
     onError: (error: unknown) => {
       addNotification({
         type: 'error',
-        title: t('common.delete_failed', '删除失败'),
+        title: t('common.delete_failed', i18n.t('components.crud_page.k17')),
         message: error instanceof Error ? error.message : '',
       });
     },
@@ -578,7 +579,7 @@ function CrudPage<T extends Record<string, unknown> = Record<string, unknown>>({
 });
       addNotification({
         type: 'success',
-        title: t('common.create_success', '创建成功'),
+        title: t('common.create_success', i18n.t('components.crud_page.k18')),
         message: '',
       });
     },
@@ -598,7 +599,7 @@ function CrudPage<T extends Record<string, unknown> = Record<string, unknown>>({
 });
       addNotification({
         type: 'success',
-        title: t('common.update_success', '更新成功'),
+        title: t('common.update_success', i18n.t('components.crud_page.k19')),
         message: '',
       });
     },
@@ -618,7 +619,7 @@ function CrudPage<T extends Record<string, unknown> = Record<string, unknown>>({
 });
       addNotification({
         type: 'success',
-        title: t('common.delete_success', '删除成功'),
+        title: t('common.delete_success', i18n.t('components.crud_page.k20')),
         message: '',
       });
     },
@@ -717,7 +718,7 @@ function CrudPage<T extends Record<string, unknown> = Record<string, unknown>>({
         }}
       >
         <Chip
-          label={`${t('common.selected', '已选')} ${selectedIds.length} ${t('common.items', '条')}`}
+          label={`${t('common.selected', i18n.t('components.crud_page.k22'))} ${selectedIds.length} ${t('common.items', i18n.t('components.crud_page.k21'))}`}
           size='small'
           color='primary'
         />
@@ -812,7 +813,7 @@ function CrudPage<T extends Record<string, unknown> = Record<string, unknown>>({
                   onClick={() => setViewMode('list')}
                   sx={{ borderRadius: 0 }}
                 >
-                  列表
+                  {i18n.t('components.crud_page.k0')}
                 </Button>
                 <Button
                   size='small'
@@ -821,7 +822,7 @@ function CrudPage<T extends Record<string, unknown> = Record<string, unknown>>({
                   onClick={() => setViewMode('tree')}
                   sx={{ borderRadius: 0 }}
                 >
-                  树形
+                  {i18n.t('components.crud_page.k1')}
                 </Button>
               </Box>
             )}
@@ -848,7 +849,7 @@ function CrudPage<T extends Record<string, unknown> = Record<string, unknown>>({
                 data={rows}
                 loading={isPending}
                 searchable
-                searchPlaceholder={t('common.search', '搜索')}
+                searchPlaceholder={t('common.search', i18n.t('components.crud_page.k23'))}
                 searchValue={search}
                 onSearch={handleSearch}
                 pagination={
@@ -874,7 +875,7 @@ function CrudPage<T extends Record<string, unknown> = Record<string, unknown>>({
                   [
                     showCreate
                       ? {
-                          label: schema.createTitle || `新建${schema.title}`,
+                          label: schema.createTitle || `${i18n.t('components.crud_page.k24')}${schema.title}`,
                           icon: <Plus size={16} />,
                           onClick: () => {
                             setWizardValues({});
@@ -886,7 +887,7 @@ function CrudPage<T extends Record<string, unknown> = Record<string, unknown>>({
                       : null,
                     importConfig?.enabled
                       ? {
-                          label: t('common.import', '导入'),
+                          label: t('common.import', i18n.t('components.crud_page.k25')),
                           icon: <Upload size={16} />,
                           onClick: () => fileInputRef.current?.click(),
                           variant: 'outlined' as const,
@@ -894,7 +895,7 @@ function CrudPage<T extends Record<string, unknown> = Record<string, unknown>>({
                       : null,
                     exportConfig?.enabled
                       ? {
-                          label: t('common.export', '导出'),
+                          label: t('common.export', i18n.t('components.crud_page.k26')),
                           icon: <Download size={16} />,
                           onClick: handleExport,
                           variant: 'outlined' as const,
@@ -936,7 +937,7 @@ function CrudPage<T extends Record<string, unknown> = Record<string, unknown>>({
           maxWidth={hasWizard ? 'lg' : 'md'}
           fullWidth
         >
-          <DialogTitle>{schema.createTitle || `新建${schema.title}`}</DialogTitle>
+          <DialogTitle>{schema.createTitle || `${i18n.t('components.crud_page.k27')}${schema.title}`}</DialogTitle>
           <DialogContent>
             {hasWizard && extensions.wizard ? (
               <WizardBuilder
@@ -963,8 +964,8 @@ function CrudPage<T extends Record<string, unknown> = Record<string, unknown>>({
                   mode='create'
                   colCount={schema.formColCount || 2}
                   formSections={schema.formSections}
-                  submitLabel={t('common.create', '创建')}
-                  resetLabel={t('common.cancel', '取消')}
+                  submitLabel={t('common.create', i18n.t('components.crud_page.k28'))}
+                  resetLabel={t('common.cancel', i18n.t('components.crud_page.k29'))}
                   showReset
                   onSubmitSuccess={() => setCreateOpen(false)}
                   onReset={() => setCreateOpen(false)}
@@ -1006,7 +1007,7 @@ function CrudPage<T extends Record<string, unknown> = Record<string, unknown>>({
           maxWidth={hasWizard ? 'lg' : 'md'}
           fullWidth
         >
-          <DialogTitle>{schema.editTitle || `编辑${schema.title}`}</DialogTitle>
+          <DialogTitle>{schema.editTitle || `${i18n.t('components.crud_page.k30')}${schema.title}`}</DialogTitle>
           <DialogContent>
             {hasWizard && extensions.wizard ? (
               <WizardBuilder
@@ -1035,8 +1036,8 @@ function CrudPage<T extends Record<string, unknown> = Record<string, unknown>>({
                   colCount={schema.formColCount || 2}
                   formSections={schema.formSections}
                   initialValues={editTarget as Record<string, unknown>}
-                  submitLabel={t('common.save', '保存')}
-                  resetLabel={t('common.cancel', '取消')}
+                  submitLabel={t('common.save', i18n.t('components.crud_page.k31'))}
+                  resetLabel={t('common.cancel', i18n.t('components.crud_page.k32'))}
                   showReset
                   onSubmitSuccess={() => setEditTarget(null)}
                   onReset={() => setEditTarget(null)}
@@ -1079,7 +1080,7 @@ function CrudPage<T extends Record<string, unknown> = Record<string, unknown>>({
           maxWidth={detailMaxWidth}
           fullWidth
         >
-          <DialogTitle>{schema.detailTitle || `${schema.title}详情`}</DialogTitle>
+          <DialogTitle>{schema.detailTitle || `${schema.title}${i18n.t('components.crud_page.k33')}`}</DialogTitle>
           <DialogContent>
             {detailContentProp ? (
               detailContentProp(detailTarget)
@@ -1092,7 +1093,7 @@ function CrudPage<T extends Record<string, unknown> = Record<string, unknown>>({
                 colCount={schema.formColCount || 2}
                 initialValues={detailTarget as unknown as Record<string, unknown>}
                 showReset
-                resetLabel={t('common.close', '关闭')}
+                resetLabel={t('common.close', i18n.t('components.crud_page.k34'))}
                 onReset={() => setDetailTarget(null)}
                 onSubmit={async () => {
                   /* view 模式不提交 */
@@ -1111,12 +1112,12 @@ function CrudPage<T extends Record<string, unknown> = Record<string, unknown>>({
           maxWidth='xs'
           fullWidth
         >
-          <DialogTitle>{t('common.confirm_delete', '确认删除')}</DialogTitle>
+          <DialogTitle>{t('common.confirm_delete', i18n.t('components.crud_page.k35'))}</DialogTitle>
           <DialogContent>
-            <Box sx={{ py: 1 }}>{t('common.confirm_delete_message', '确定要删除这条记录吗？')}</Box>
+            <Box sx={{ py: 1 }}>{t('common.confirm_delete_message', i18n.t('components.crud_page.k36'))}</Box>
           </DialogContent>
           <DialogActions>
-            <Button onClick={() => setDeleteTarget(null)}>{t('common.cancel', '取消')}</Button>
+            <Button onClick={() => setDeleteTarget(null)}>{t('common.cancel', i18n.t('components.crud_page.k37'))}</Button>
             <Button
               color='error'
               variant='contained'
@@ -1124,8 +1125,8 @@ function CrudPage<T extends Record<string, unknown> = Record<string, unknown>>({
               disabled={deleteMutation.isPending}
             >
               {deleteMutation.isPending
-                ? t('common.deleting', '删除中...')
-                : t('common.delete', '删除')}
+                ? t('common.deleting', i18n.t('components.crud_page.k38'))
+                : t('common.delete', i18n.t('components.crud_page.k39'))}
             </Button>
           </DialogActions>
         </Dialog>
@@ -1144,7 +1145,7 @@ function CrudPage<T extends Record<string, unknown> = Record<string, unknown>>({
             <Box sx={{ py: 1 }}>{confirmConfig.message}</Box>
           </DialogContent>
           <DialogActions>
-            <Button onClick={() => setConfirmConfig(null)}>{t('common.cancel', '取消')}</Button>
+            <Button onClick={() => setConfirmConfig(null)}>{t('common.cancel', i18n.t('components.crud_page.k40'))}</Button>
             <Button
               color='error'
               variant='contained'
@@ -1153,7 +1154,7 @@ function CrudPage<T extends Record<string, unknown> = Record<string, unknown>>({
                 setConfirmConfig(null);
               }}
             >
-              {t('common.confirm', '确认')}
+              {t('common.confirm', i18n.t('components.crud_page.k41'))}
             </Button>
           </DialogActions>
         </Dialog>

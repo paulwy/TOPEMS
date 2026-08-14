@@ -11,6 +11,7 @@ import {
   Tooltip,
   Legend,
 } from 'recharts';
+import i18n from '@/i18n';
 import { useWmsMock, type WmsMockShape } from '@/api/wms/_mock';
 import { designTokens, semanticTokens } from '@topems/tokens';
 
@@ -31,30 +32,30 @@ export default function WmsInventoryTurnoverPage() {
   return (
     <div className='space-y-4 p-4'>
       <div className='flex items-center justify-between'>
-        <h1 className='text-2xl font-bold'>库存周转率分析</h1>
+        <h1 className='text-2xl font-bold'>{i18n.t('pages.wms_inventory_turnover_page.k0')}</h1>
       </div>
 
       <div className='grid grid-cols-1 gap-4 md:grid-cols-4'>
         <div className='rounded-lg border p-4'>
-          <p className='text-sm text-gray-600'>平均周转率</p>
+          <p className='text-sm text-gray-600'>{i18n.t('pages.wms_inventory_turnover_page.k1')}</p>
           <p className='mt-1 text-3xl font-bold text-green-600'>{summary.avgRate}</p>
         </div>
         <div className='rounded-lg border p-4'>
-          <p className='text-sm text-gray-600'>平均周转天数</p>
+          <p className='text-sm text-gray-600'>{i18n.t('pages.wms_inventory_turnover_page.k2')}</p>
           <p className='mt-1 text-3xl font-bold text-blue-600'>{summary.avgDays} 天</p>
         </div>
         <div className='rounded-lg border p-4'>
-          <p className='text-sm text-gray-600'>覆盖仓库数</p>
+          <p className='text-sm text-gray-600'>{i18n.t('pages.wms_inventory_turnover_page.k3')}</p>
           <p className='mt-1 text-3xl font-bold text-purple-600'>{summary.warehouses}</p>
         </div>
         <div className='rounded-lg border p-4'>
-          <p className='text-sm text-gray-600'>统计数据点</p>
+          <p className='text-sm text-gray-600'>{i18n.t('pages.wms_inventory_turnover_page.k4')}</p>
           <p className='mt-1 text-3xl font-bold text-orange-600'>{summary.records}</p>
         </div>
       </div>
 
       <div className='rounded-lg border p-4'>
-        <h3 className='mb-2 font-semibold'>月度周转率</h3>
+        <h3 className='mb-2 font-semibold'>{i18n.t('pages.wms_inventory_turnover_page.k5')}</h3>
         <ResponsiveContainer
           width='100%'
           height={360}
@@ -74,7 +75,7 @@ export default function WmsInventoryTurnoverPage() {
             <Line
               type='monotone'
               dataKey='turnoverRate'
-              name='周转率'
+              name={i18n.t('pages.wms_inventory_turnover_page.k6')}
               stroke={designTokens.colors.success.dark}
               strokeWidth={2}
               dot={{ r: 2 }}
@@ -84,7 +85,7 @@ export default function WmsInventoryTurnoverPage() {
       </div>
 
       <div className='rounded-lg border p-4'>
-        <h3 className='mb-2 font-semibold'>平均周转天数</h3>
+        <h3 className='mb-2 font-semibold'>{i18n.t('pages.wms_inventory_turnover_page.k7')}</h3>
         <ResponsiveContainer
           width='100%'
           height={300}
@@ -100,7 +101,7 @@ export default function WmsInventoryTurnoverPage() {
             <Legend />
             <Bar
               dataKey='days'
-              name='周转天数'
+              name={i18n.t('pages.wms_inventory_turnover_page.k8')}
               fill={designTokens.colors.primary.main}
               radius={[4, 4, 0, 0]}
             />

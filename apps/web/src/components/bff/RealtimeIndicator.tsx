@@ -24,6 +24,7 @@ import { AlertTriangle } from 'lucide-react';
 import { useBffData } from './BffDataProvider';
 import { useBffPerformance } from '@/hooks/bff/useBffPerformance';
 import type { SubscriptionStatus } from '@/hooks/bff/useBffSubscription';
+import i18n from '@/i18n';
 
 /** 连接状态对应的颜色 */
 const STATUS_COLOR: Record<SubscriptionStatus, 'success' | 'warning' | 'error' | 'default'> = {
@@ -35,10 +36,10 @@ const STATUS_COLOR: Record<SubscriptionStatus, 'success' | 'warning' | 'error' |
 
 /** 连接状态对应的中文标签 */
 const STATUS_LABEL: Record<SubscriptionStatus, string> = {
-  connected: '已连接',
-  connecting: '连接中',
-  reconnecting: '重连中',
-  disconnected: '已断开',
+  connected: i18n.t('components.realtime_indicator.k0'),
+  connecting: i18n.t('components.realtime_indicator.k1'),
+  reconnecting: i18n.t('components.realtime_indicator.k2'),
+  disconnected: i18n.t('components.realtime_indicator.k3'),
 };
 
 /** RealtimeIndicator Props */
@@ -67,12 +68,12 @@ export const RealtimeIndicator: React.FC<RealtimeIndicatorProps> = ({
   const slowQueryCount = slowQueries.length;
 
   const statusColor = STATUS_COLOR[wsStatus] ?? 'default';
-  const statusLabel = STATUS_LABEL[wsStatus] ?? '未知';
+  const statusLabel = STATUS_LABEL[wsStatus] ?? i18n.t('components.realtime_indicator.k4');
 
   if (compact) {
     return (
       <Tooltip
-        title={`BFF: ${statusLabel} | 订阅: ${activeSubscriptions} | 版本: v${cacheVersion} | 慢查询: ${slowQueryCount}`}
+        title={`BFF: ${statusLabel} ${i18n.t('components.realtime_indicator.k0')} ${activeSubscriptions} ${i18n.t('components.realtime_indicator.v_1')}${cacheVersion} ${i18n.t('components.realtime_indicator.k2')} ${slowQueryCount}`}
         arrow
       >
         <Box
@@ -129,7 +130,7 @@ export const RealtimeIndicator: React.FC<RealtimeIndicatorProps> = ({
       }}
     >
       <Tooltip
-        title={`WebSocket 连接状态：${statusLabel}（${wsConnections} 个连接）`}
+        title={`${i18n.t('components.realtime_indicator.websocket_3')}${statusLabel}（${wsConnections} ${i18n.t('components.realtime_indicator.k4')}`}
         arrow
       >
         <Chip
@@ -143,13 +144,13 @@ export const RealtimeIndicator: React.FC<RealtimeIndicatorProps> = ({
 
       {showSubscriptions && (
         <Tooltip
-          title='当前活跃的 GraphQL Subscription 数量'
+          title={i18n.t('components.realtime_indicator.k5')}
           arrow
         >
           <Chip
             size='small'
             variant='outlined'
-            label={`订阅 ${activeSubscriptions}`}
+            label={`${i18n.t('components.realtime_indicator.k5')} ${activeSubscriptions}`}
             sx={{ color: 'text.secondary' }}
           />
         </Tooltip>
@@ -157,7 +158,7 @@ export const RealtimeIndicator: React.FC<RealtimeIndicatorProps> = ({
 
       {showSlowQueries && (
         <Tooltip
-          title={`慢查询数量（阈值: ${slowQueryThreshold}ms）`}
+          title={`${i18n.t('components.realtime_indicator.k6')} ${slowQueryThreshold}ms）`}
           arrow
         >
           <Chip
@@ -165,7 +166,7 @@ export const RealtimeIndicator: React.FC<RealtimeIndicatorProps> = ({
             color={slowQueryCount > 0 ? 'error' : 'default'}
             variant={slowQueryCount > 0 ? 'filled' : 'outlined'}
             icon={<AlertTriangle size={14} />}
-            label={`慢查询 ${slowQueryCount}`}
+            label={`${i18n.t('components.realtime_indicator.k7')} ${slowQueryCount}`}
             sx={{ fontWeight: 500 }}
           />
         </Tooltip>
@@ -173,7 +174,7 @@ export const RealtimeIndicator: React.FC<RealtimeIndicatorProps> = ({
 
       {showCacheVersion && (
         <Tooltip
-          title='BFF CDN 缓存版本号（变化时自动刷新数据）'
+          title={i18n.t('components.realtime_indicator.k8')}
           arrow
         >
           <Typography

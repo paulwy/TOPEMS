@@ -5,24 +5,19 @@
 import React from 'react';
 import { Box, Card, CardContent, Typography, Grid } from '@mui/material';
 import { Shield, Database, CheckCircle2, Users } from 'lucide-react';
-import { useTranslation } from 'react-i18next';
 import { designTokens } from '@/theme/tokens';
-
+import i18n from '@/i18n';
 const ct= designTokens.colors;
-
 export interface BiPermissionStatsCardsProps {
   rowPermissionsCount: number;
   dataPermissionsCount: number;
   enabledRowPermissionsCount: number;
 }
-
 const BiPermissionStatsCards: React.FC<BiPermissionStatsCardsProps> = ({
   rowPermissionsCount,
   dataPermissionsCount,
   enabledRowPermissionsCount,
 }) => {
-  const { t } = useTranslation();
-
   return (
     <Grid
       container
@@ -60,7 +55,7 @@ const BiPermissionStatsCards: React.FC<BiPermissionStatsCardsProps> = ({
                   variant='body2'
                   color='text.secondary'
                 >
-                  {t('bi.bi_permission_page.text_ae1917')}
+                  {i18n.t('bi.bi_permission_page.text_ae1917')}
                 </Typography>
               </Box>
             </Box>
@@ -98,7 +93,7 @@ const BiPermissionStatsCards: React.FC<BiPermissionStatsCardsProps> = ({
                   variant='body2'
                   color='text.secondary'
                 >
-                  {t('bi.bi_permission_page.text_9f56c8')}
+                  {i18n.t('bi.bi_permission_page.text_9f56c8')}
                 </Typography>
               </Box>
             </Box>
@@ -136,7 +131,7 @@ const BiPermissionStatsCards: React.FC<BiPermissionStatsCardsProps> = ({
                   variant='body2'
                   color='text.secondary'
                 >
-                  {t('bi.bi_permission_page.text_2f54ee')}
+                  {i18n.t('bi.bi_permission_page.text_2f54ee')}
                 </Typography>
               </Box>
             </Box>
@@ -174,7 +169,7 @@ const BiPermissionStatsCards: React.FC<BiPermissionStatsCardsProps> = ({
                   variant='body2'
                   color='text.secondary'
                 >
-                  {t('bi.bi_permission_page.text_c23dd1')}
+                  {i18n.t('bi.bi_permission_page.text_c23dd1')}
                 </Typography>
               </Box>
             </Box>
@@ -184,5 +179,4 @@ const BiPermissionStatsCards: React.FC<BiPermissionStatsCardsProps> = ({
     </Grid>
   );
 };
-
 export default BiPermissionStatsCards;

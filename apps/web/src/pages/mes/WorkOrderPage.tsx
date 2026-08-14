@@ -10,6 +10,8 @@ import { Play, Pause, CheckCircle, XCircle } from 'lucide-react';
 
 
 import { QUERY_KEYS } from '@/lib/reactQuery';
+import { useTranslation } from 'react-i18next';
+import i18n from '@/i18n';
 
 const apiAdapter = createCrudPageAdapter(mesApi.workOrders, {
   itemsField: 'work_orders',
@@ -17,6 +19,7 @@ const apiAdapter = createCrudPageAdapter(mesApi.workOrders, {
 
 export default function WorkOrderPage() {
   const { addNotification } = useNotificationStore();
+  const { t } = useTranslation('mes');
   const queryClient = useQueryClient();
 
   const handleStatusChange = useCallback(
@@ -40,13 +43,13 @@ export default function WorkOrderPage() {
             response = await mesApi.workOrders.resume(id);
             break;
           default:
-            throw new Error(`未知操作: ${action}`);
+            throw new Error(`${i18n.t('pages.work_order_page.k0')}${action}`);
         }
         if (response.success) {
           addNotification({
             type: 'success',
-            title: '状态更新成功',
-            message: `工单状态已更新为"${response.data?.status ?? ''}"`,
+            title: t('mes.work_order_page.k0'),
+            message: `${i18n.t('pages.work_order_page.k1')}${response.data?.status ?? ''}"`,
           });
           queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.MES_WORK_ORDER_BASE ,
   exact: false,
@@ -55,15 +58,15 @@ export default function WorkOrderPage() {
         } else {
           addNotification({
             type: 'error',
-            title: '操作失败',
-            message: response.message || '未知错误',
+            title: t('mes.work_order_page.k1'),
+            message: response.message || t('mes.work_order_page.k2'),
           });
         }
       } catch (err) {
         addNotification({
           type: 'error',
-          title: '操作失败',
-          message: err instanceof Error ? err.message : '未知错误',
+          title: t('mes.work_order_page.k3'),
+          message: err instanceof Error ? err.message : t('mes.work_order_page.k4'),
         });
       }
     },
@@ -72,31 +75,31 @@ export default function WorkOrderPage() {
 
   const customRowActions = [
     {
-      label: '开工',
+      label: t('mes.work_order_page.k5'),
       icon: <Play size={16} />,
       color: 'success' as const,
       onClick: (row: Record<string, unknown>) => handleStatusChange(String(row.id), 'start'),
     },
     {
-      label: '暂停',
+      label: t('mes.work_order_page.k6'),
       icon: <Pause size={16} />,
       color: 'warning' as const,
       onClick: (row: Record<string, unknown>) => handleStatusChange(String(row.id), 'pause'),
     },
     {
-      label: '完工',
+      label: t('mes.work_order_page.k7'),
       icon: <CheckCircle size={16} />,
       color: 'success' as const,
       onClick: (row: Record<string, unknown>) => handleStatusChange(String(row.id), 'complete'),
     },
     {
-      label: '取消',
+      label: t('mes.work_order_page.k8'),
       icon: <XCircle size={16} />,
       color: 'error' as const,
       onClick: (row: Record<string, unknown>) => handleStatusChange(String(row.id), 'cancel'),
     },
     {
-      label: '恢复',
+      label: t('mes.work_order_page.k9'),
       icon: <Play size={16} />,
       color: 'success' as const,
       onClick: (row: Record<string, unknown>) => handleStatusChange(String(row.id), 'resume'),
@@ -107,7 +110,7 @@ export default function WorkOrderPage() {
     <CrudPage
       schema={workOrderSchema}
       apiAdapter={apiAdapter as CrudApiAdapter}
-      breadcrumbs={[{ label: 'MES' }, { label: '工单管理' }]}
+      breadcrumbs={[{ label: 'MES' }, { label: t('mes.work_order_page.k10') }]}
       customRowActions={customRowActions}
       headerContent={(rows) => {
         const total = rows.length;
@@ -130,7 +133,7 @@ export default function WorkOrderPage() {
                 variant='body2'
                 sx={{ color: 'text.secondary' }}
               >
-                总工单数
+                {i18n.t('pages.work_order_page.k0')}
               </Typography>
               <Typography
                 variant='h5'
@@ -144,7 +147,7 @@ export default function WorkOrderPage() {
                 variant='body2'
                 sx={{ color: 'text.secondary' }}
               >
-                待开工
+                {i18n.t('pages.work_order_page.k1')}
               </Typography>
               <Typography
                 variant='h5'
@@ -158,7 +161,7 @@ export default function WorkOrderPage() {
                 variant='body2'
                 sx={{ color: 'text.secondary' }}
               >
-                进行中
+                {i18n.t('pages.work_order_page.k2')}
               </Typography>
               <Typography
                 variant='h5'
@@ -172,7 +175,7 @@ export default function WorkOrderPage() {
                 variant='body2'
                 sx={{ color: 'text.secondary' }}
               >
-                已完成
+                {i18n.t('pages.work_order_page.k3')}
               </Typography>
               <Typography
                 variant='h5'
@@ -186,7 +189,7 @@ export default function WorkOrderPage() {
                 variant='body2'
                 sx={{ color: 'text.secondary' }}
               >
-                总数量
+                {i18n.t('pages.work_order_page.k4')}
               </Typography>
               <Typography
                 variant='h5'

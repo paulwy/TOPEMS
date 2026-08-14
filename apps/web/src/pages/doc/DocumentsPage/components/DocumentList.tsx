@@ -10,12 +10,14 @@ import {
   Chip,
   useTheme,
 } from '@mui/material';
+import i18n from '@/i18n';
 import { Folder, FileText, Star, History, Trash2, Upload, Eye, Download } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import StatCard from './StatCard';
 import FileCard from './FileCard';
 import type { FileItem, DisplayItem, ViewMode } from '../types';
 import { DOC_PATHS } from '@/modules/doc/config';
+import { designTokens } from '@topems/tokens';
 
 interface DocumentListProps {
   folders: { id: string; name: string; updated_at: string }[];
@@ -82,25 +84,25 @@ const DocumentList: React.FC<DocumentListProps> = ({
       >
         <StatCard
           icon={Folder}
-          title='文件夹'
+          title={i18n.t('pages.document_list.k0')}
           value={String(folders.length)}
           color='blue'
         />
         <StatCard
           icon={FileText}
-          title='文件'
+          title={i18n.t('pages.document_list.k1')}
           value={String(files.length)}
           color='purple'
         />
         <StatCard
           icon={Star}
-          title='星标'
+          title={i18n.t('pages.document_list.k2')}
           value={String(starredCount)}
           color='yellow'
         />
         <StatCard
           icon={History}
-          title='最近更新'
+          title={i18n.t('pages.document_list.k3')}
           value={String(files.length)}
           color='green'
         />
@@ -135,7 +137,7 @@ const DocumentList: React.FC<DocumentListProps> = ({
                 size='small'
                 onClick={onClearSelection}
               >
-                取消选择
+                {i18n.t('pages.document_list.k0')}
               </Button>
             </Box>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
@@ -146,7 +148,7 @@ const DocumentList: React.FC<DocumentListProps> = ({
                 onClick={onBatchDelete}
               >
                 <Trash2 sx={{ width: 16, height: 16, mr: 1 }} />
-                批量删除
+                {i18n.t('pages.document_list.k1')}
               </Button>
             </Box>
           </CardContent>
@@ -184,13 +186,13 @@ const DocumentList: React.FC<DocumentListProps> = ({
           variant='h6'
           sx={{ mb: 1, color: isDragging ? 'primary.main' : 'grey.700' }}
         >
-          {isDragging ? '释放以上传文件' : '拖拽文件到这里上传'}
+          {isDragging ? i18n.t('pages.document_list.k5') : i18n.t('pages.document_list.k4')}
         </Typography>
         <Typography
           variant='body2'
           sx={{ color: 'grey.500' }}
         >
-          支持 PDF、Word、Excel、图片等格式
+          {i18n.t('pages.document_list.k2')}
         </Typography>
       </Box>
 
@@ -201,11 +203,11 @@ const DocumentList: React.FC<DocumentListProps> = ({
         >
           <Tab
             value='grid'
-            label='网格视图'
+            label={i18n.t('pages.document_list.k6')}
           />
           <Tab
             value='list'
-            label='列表视图'
+            label={i18n.t('pages.document_list.k7')}
           />
         </Tabs>
       </Box>
@@ -334,7 +336,7 @@ const DocumentList: React.FC<DocumentListProps> = ({
                   <tr>
                     <th
                       style={{
-                        padding: '12px 24px',
+                        padding: `${designTokens.spacing.md} 24px`,
                         textAlign: 'left',
                         fontSize: '0.75rem',
                         fontWeight: 500,
@@ -343,11 +345,11 @@ const DocumentList: React.FC<DocumentListProps> = ({
                         letterSpacing: '0.05em',
                       }}
                     >
-                      名称
+                      {i18n.t('pages.document_list.k3')}
                     </th>
                     <th
                       style={{
-                        padding: '12px 24px',
+                        padding: `${designTokens.spacing.md} 24px`,
                         textAlign: 'left',
                         fontSize: '0.75rem',
                         fontWeight: 500,
@@ -356,11 +358,11 @@ const DocumentList: React.FC<DocumentListProps> = ({
                         letterSpacing: '0.05em',
                       }}
                     >
-                      大小
+                      {i18n.t('pages.document_list.k4')}
                     </th>
                     <th
                       style={{
-                        padding: '12px 24px',
+                        padding: `${designTokens.spacing.md} 24px`,
                         textAlign: 'left',
                         fontSize: '0.75rem',
                         fontWeight: 500,
@@ -369,11 +371,11 @@ const DocumentList: React.FC<DocumentListProps> = ({
                         letterSpacing: '0.05em',
                       }}
                     >
-                      更新时间
+                      {i18n.t('pages.document_list.k5')}
                     </th>
                     <th
                       style={{
-                        padding: '12px 24px',
+                        padding: `${designTokens.spacing.md} 24px`,
                         textAlign: 'left',
                         fontSize: '0.75rem',
                         fontWeight: 500,
@@ -382,7 +384,7 @@ const DocumentList: React.FC<DocumentListProps> = ({
                         letterSpacing: '0.05em',
                       }}
                     >
-                      操作
+                      {i18n.t('pages.document_list.k6')}
                     </th>
                   </tr>
                 </Box>
@@ -403,7 +405,7 @@ const DocumentList: React.FC<DocumentListProps> = ({
                       >
                         <td
                           style={{
-                            padding: '16px 24px',
+                            padding: `${designTokens.spacing.md} 24px`,
                             whiteSpace: 'nowrap',
                           }}
                         >
@@ -431,7 +433,7 @@ const DocumentList: React.FC<DocumentListProps> = ({
                         </td>
                         <td
                           style={{
-                            padding: '16px 24px',
+                            padding: `${designTokens.spacing.md} 24px`,
                             whiteSpace: 'nowrap',
                             fontSize: '0.875rem',
                             color: theme.palette.grey[500],
@@ -441,7 +443,7 @@ const DocumentList: React.FC<DocumentListProps> = ({
                         </td>
                         <td
                           style={{
-                            padding: '16px 24px',
+                            padding: `${designTokens.spacing.md} 24px`,
                             whiteSpace: 'nowrap',
                             fontSize: '0.875rem',
                             color: theme.palette.grey[500],
@@ -451,7 +453,7 @@ const DocumentList: React.FC<DocumentListProps> = ({
                         </td>
                         <td
                           style={{
-                            padding: '16px 24px',
+                            padding: `${designTokens.spacing.md} 24px`,
                             whiteSpace: 'nowrap',
                             fontSize: '0.875rem',
                             fontWeight: 500,
@@ -485,7 +487,7 @@ const DocumentList: React.FC<DocumentListProps> = ({
                       >
                         <td
                           style={{
-                            padding: '16px 24px',
+                            padding: `${designTokens.spacing.md} 24px`,
                             whiteSpace: 'nowrap',
                           }}
                         >
@@ -523,7 +525,7 @@ const DocumentList: React.FC<DocumentListProps> = ({
                         </td>
                         <td
                           style={{
-                            padding: '16px 24px',
+                            padding: `${designTokens.spacing.md} 24px`,
                             whiteSpace: 'nowrap',
                             fontSize: '0.875rem',
                             color: theme.palette.grey[500],
@@ -533,7 +535,7 @@ const DocumentList: React.FC<DocumentListProps> = ({
                         </td>
                         <td
                           style={{
-                            padding: '16px 24px',
+                            padding: `${designTokens.spacing.md} 24px`,
                             whiteSpace: 'nowrap',
                             fontSize: '0.875rem',
                             color: theme.palette.grey[500],
@@ -543,7 +545,7 @@ const DocumentList: React.FC<DocumentListProps> = ({
                         </td>
                         <td
                           style={{
-                            padding: '16px 24px',
+                            padding: `${designTokens.spacing.md} 24px`,
                             whiteSpace: 'nowrap',
                             fontSize: '0.875rem',
                             fontWeight: 500,

@@ -29,6 +29,7 @@ import {
   Tabs,
   Tab,
 } from '@mui/material';
+import i18n from '@/i18n';
 import {
   X as XIcon,
   Play,
@@ -124,10 +125,10 @@ export const V57AutomationPanel: React.FC<{ onClose: () => void }> = ({ onClose 
             onChange={(_, tab) => setActiveTab(tab as TabId)}
             variant='fullWidth'
           >
-            <Tab value='tests' label='智能测试' icon={<TestTube size={16} />} iconPosition='start' />
-            <Tab value='ci' label='CI 流水线' icon={<GitBranch size={16} />} iconPosition='start' />
-            <Tab value='quality' label='质量门禁' icon={<Shield size={16} />} iconPosition='start' />
-            <Tab value='trends' label='趋势分析' icon={<TrendingUp size={16} />} iconPosition='start' />
+            <Tab value='tests' label={i18n.t('ai.v57-automation-panel.k0')} icon={<TestTube size={16} />} iconPosition='start' />
+            <Tab value='ci' label={i18n.t('ai.v57-automation-panel.ci_0')} icon={<GitBranch size={16} />} iconPosition='start' />
+            <Tab value='quality' label={i18n.t('ai.v57-automation-panel.k1')} icon={<Shield size={16} />} iconPosition='start' />
+            <Tab value='trends' label={i18n.t('ai.v57-automation-panel.k2')} icon={<TrendingUp size={16} />} iconPosition='start' />
           </Tabs>
           <Box sx={{ flex: 1, overflow: 'auto' }}>
             {activeTab === 'tests' && <TestsTab />}
@@ -158,7 +159,7 @@ const V57PanelHeader: React.FC<{ onClose: () => void }> = ({ onClose }) => (
         variant='h6'
         sx={{ fontWeight: 600 }}
       >
-        V57.0 AI 前端自动化
+        {i18n.t('ai.v57-automation-panel.v570ai_1')}
       </Typography>
       <Chip
         label={V57_BADGE}
@@ -169,7 +170,7 @@ const V57PanelHeader: React.FC<{ onClose: () => void }> = ({ onClose }) => (
         variant='caption'
         sx={{ opacity: 0.8 }}
       >
-        智能测试 · CI/CD · 质量门禁 · 趋势分析
+        {i18n.t('ai.v57-automation-panel.k2')}
       </Typography>
     </Box>
     <IconButton
@@ -253,7 +254,7 @@ const TestsTab: React.FC = () => {
         <Grid size={{ xs: 6, md: 3 }}>
           <StatCard
             icon={<TestTube size={20} />}
-            label='测试场景'
+            label={i18n.t('ai.v57-automation-panel.k3')}
             value={stats.total}
             color={designTokens.colors.success.dark}
           />
@@ -261,7 +262,7 @@ const TestsTab: React.FC = () => {
         <Grid size={{ xs: 6, md: 3 }}>
           <StatCard
             icon={<CheckCircle2 size={20} />}
-            label='通过率'
+            label={i18n.t('ai.v57-automation-panel.k4')}
             value={`${passRate.toFixed(1)}%`}
             color={designTokens.colors.success.dark}
           />
@@ -269,7 +270,7 @@ const TestsTab: React.FC = () => {
         <Grid size={{ xs: 6, md: 3 }}>
           <StatCard
             icon={<XCircle size={20} />}
-            label='失败数'
+            label={i18n.t('ai.v57-automation-panel.k5')}
             value={failedCount}
             color={designTokens.colors.error.main}
           />
@@ -277,7 +278,7 @@ const TestsTab: React.FC = () => {
         <Grid size={{ xs: 6, md: 3 }}>
           <StatCard
             icon={<Activity size={20} />}
-            label='行覆盖率'
+            label={i18n.t('ai.v57-automation-panel.k6')}
             value={coverage ? `${coverage.line_coverage.toFixed(1)}%` : '—'}
             color={`${designTokens.colors.info.main}`}
           />
@@ -286,8 +287,8 @@ const TestsTab: React.FC = () => {
 
       <Card variant='outlined'>
         <CardHeader
-          title='测试场景列表'
-          subheader={`${filteredScenarios.length} 个场景 (${stats.byType.unit} 单元, ${stats.byType.integration} 集成, ${stats.byType.e2e} E2E)`}
+          title={i18n.t('ai.v57-automation-panel.k7')}
+          subheader={`${filteredScenarios.length} ${i18n.t('ai.v57-automation-panel.k3')}${stats.byType.unit} ${i18n.t('ai.v57-automation-panel.k4')} ${stats.byType.integration} ${i18n.t('ai.v57-automation-panel.k5')} ${stats.byType.e2e} E2E)`}
           action={
             <Stack
               direction='row'
@@ -297,15 +298,15 @@ const TestsTab: React.FC = () => {
                 size='small'
                 sx={{ minWidth: 100 }}
               >
-                <InputLabel>类型</InputLabel>
+                <InputLabel>{i18n.t('ai.v57-automation-panel.k8')}</InputLabel>
                 <Select
                   value={filterType}
-                  label='类型'
+                  label={i18n.t('ai.v57-automation-panel.k9')}
                   onChange={(e) => setFilterType(e.target.value as TestType | 'all')}
                 >
-                  <MenuItem value='all'>全部</MenuItem>
-                  <MenuItem value='unit'>单元测试</MenuItem>
-                  <MenuItem value='integration'>集成测试</MenuItem>
+                  <MenuItem value='all'>{i18n.t('ai.v57-automation-panel.k10')}</MenuItem>
+                  <MenuItem value='unit'>{i18n.t('ai.v57-automation-panel.k11')}</MenuItem>
+                  <MenuItem value='integration'>{i18n.t('ai.v57-automation-panel.k12')}</MenuItem>
                   <MenuItem value='e2e'>E2E 测试</MenuItem>
                 </Select>
               </FormControl>
@@ -315,7 +316,7 @@ const TestsTab: React.FC = () => {
                 startIcon={<Plus size={14} />}
                 onClick={() => setShowGenerate(true)}
               >
-                AI 生成
+                {i18n.t('ai.v57-automation-panel.ai_6')}
               </Button>
               <Button
                 variant='contained'
@@ -323,7 +324,7 @@ const TestsTab: React.FC = () => {
                 startIcon={<Play size={14} />}
                 onClick={handleRunAll}
               >
-                运行全部
+                {i18n.t('ai.v57-automation-panel.k7')}
               </Button>
             </Stack>
           }
@@ -333,13 +334,13 @@ const TestsTab: React.FC = () => {
           <Table size='small'>
             <TableHead>
               <TableRow>
-                <TableCell sx={{ fontWeight: 600 }}>名称</TableCell>
-                <TableCell sx={{ fontWeight: 600 }}>类型</TableCell>
-                <TableCell sx={{ fontWeight: 600 }}>优先级</TableCell>
-                <TableCell sx={{ fontWeight: 600 }}>状态</TableCell>
-                <TableCell sx={{ fontWeight: 600 }}>步骤</TableCell>
-                <TableCell sx={{ fontWeight: 600 }}>模块</TableCell>
-                <TableCell sx={{ fontWeight: 600 }}>操作</TableCell>
+                <TableCell sx={{ fontWeight: 600 }}>{i18n.t('ai.v57-automation-panel.k13')}</TableCell>
+                <TableCell sx={{ fontWeight: 600 }}>{i18n.t('ai.v57-automation-panel.k14')}</TableCell>
+                <TableCell sx={{ fontWeight: 600 }}>{i18n.t('ai.v57-automation-panel.k15')}</TableCell>
+                <TableCell sx={{ fontWeight: 600 }}>{i18n.t('ai.v57-automation-panel.k16')}</TableCell>
+                <TableCell sx={{ fontWeight: 600 }}>{i18n.t('ai.v57-automation-panel.k17')}</TableCell>
+                <TableCell sx={{ fontWeight: 600 }}>{i18n.t('ai.v57-automation-panel.k18')}</TableCell>
+                <TableCell sx={{ fontWeight: 600 }}>{i18n.t('ai.v57-automation-panel.k19')}</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
@@ -354,7 +355,7 @@ const TestsTab: React.FC = () => {
                       variant='body2'
                       color='text.secondary'
                     >
-                      暂无测试场景
+                      {i18n.t('ai.v57-automation-panel.k8')}
                     </Typography>
                   </TableCell>
                 </TableRow>
@@ -389,7 +390,7 @@ const TestsTab: React.FC = () => {
                       <Typography variant='caption'>{s.module || '—'}</Typography>
                     </TableCell>
                     <TableCell onClick={(e) => e.stopPropagation()}>
-                      <Tooltip title='运行'>
+                      <Tooltip title={i18n.t('ai.v57-automation-panel.k20')}>
                         <IconButton
                           size='small'
                           onClick={() => handleRunScenario(s.id)}
@@ -413,7 +414,7 @@ const TestsTab: React.FC = () => {
       {selectedScenario && (
         <Card variant='outlined' sx={{ mt: 2 }}>
           <CardHeader
-            title={`场景详情: ${selectedScenario.name}`}
+            title={`${i18n.t('ai.v57-automation-panel.k9')} ${selectedScenario.name}`}
             subheader={selectedScenario.expected_result}
           />
           <CardContent>
@@ -421,7 +422,7 @@ const TestsTab: React.FC = () => {
             variant='subtitle2'
             sx={{ mb: 1, fontWeight: 600 }}
           >
-            执行步骤
+            {i18n.t('ai.v57-automation-panel.k10')}
           </Typography>
           <Stack
             spacing={1}
@@ -486,7 +487,7 @@ const TestsTab: React.FC = () => {
                 variant='subtitle2'
                 sx={{ mb: 1, fontWeight: 600, color: 'error.500' }}
               >
-                失败分析
+                {i18n.t('ai.v57-automation-panel.k11')}
               </Typography>
               <Alert
                 severity='error'
@@ -532,7 +533,7 @@ const TestsTab: React.FC = () => {
 
       {coverage && (
         <Card variant='outlined' sx={{ mt: 2 }}>
-          <CardHeader title='覆盖率报告' />
+          <CardHeader title={i18n.t('ai.v57-automation-panel.k21')} />
           <CardContent>
           <Grid
             container
@@ -540,21 +541,21 @@ const TestsTab: React.FC = () => {
           >
             <Grid size={{ xs: 12, md: 4 }}>
               <CoverageGauge
-                label='行覆盖率'
+                label={i18n.t('ai.v57-automation-panel.k22')}
                 value={coverage.line_coverage}
                 color={designTokens.colors.success.dark}
               />
             </Grid>
             <Grid size={{ xs: 12, md: 4 }}>
               <CoverageGauge
-                label='分支覆盖率'
+                label={i18n.t('ai.v57-automation-panel.k23')}
                 value={coverage.branch_coverage}
                 color={`${designTokens.colors.info.main}`}
               />
             </Grid>
             <Grid size={{ xs: 12, md: 4 }}>
               <CoverageGauge
-                label='函数覆盖率'
+                label={i18n.t('ai.v57-automation-panel.k24')}
                 value={coverage.function_coverage}
                 color={designTokens.colors.secondary.main}
               />
@@ -625,7 +626,7 @@ const CITab: React.FC = () => {
         <Grid size={{ xs: 6, md: 3 }}>
           <StatCard
             icon={<GitBranch size={20} />}
-            label='流水线'
+            label={i18n.t('ai.v57-automation-panel.k25')}
             value={configs.length}
             color={designTokens.colors.secondary.dark}
           />
@@ -633,7 +634,7 @@ const CITab: React.FC = () => {
         <Grid size={{ xs: 6, md: 3 }}>
           <StatCard
             icon={<Activity size={20} />}
-            label='运行中'
+            label={i18n.t('ai.v57-automation-panel.k26')}
             value={stats.running}
             color={`${designTokens.colors.info.main}`}
           />
@@ -641,7 +642,7 @@ const CITab: React.FC = () => {
         <Grid size={{ xs: 6, md: 3 }}>
           <StatCard
             icon={<CheckCircle2 size={20} />}
-            label='成功'
+            label={i18n.t('ai.v57-automation-panel.k27')}
             value={stats.success}
             color={designTokens.colors.success.dark}
           />
@@ -649,7 +650,7 @@ const CITab: React.FC = () => {
         <Grid size={{ xs: 6, md: 3 }}>
           <StatCard
             icon={<XCircle size={20} />}
-            label='失败'
+            label={i18n.t('ai.v57-automation-panel.k28')}
             value={stats.failed}
             color={designTokens.colors.error.main}
           />
@@ -658,8 +659,8 @@ const CITab: React.FC = () => {
 
       <Card variant='outlined'>
         <CardHeader
-          title='CI 流水线配置'
-          subheader={`${configs.length} 个流水线`}
+          title={i18n.t('ai.v57-automation-panel.ci_12')}
+          subheader={`${configs.length} ${i18n.t('ai.v57-automation-panel.k13')}`}
           action={
             <Button
               variant='contained'
@@ -667,7 +668,7 @@ const CITab: React.FC = () => {
               startIcon={<Plus size={14} />}
               onClick={() => setShowConfigDialog(true)}
             >
-              新建流水线
+              {i18n.t('ai.v57-automation-panel.k14')}
             </Button>
           }
         />
@@ -676,13 +677,13 @@ const CITab: React.FC = () => {
           <Table size='small'>
             <TableHead>
               <TableRow>
-                <TableCell sx={{ fontWeight: 600 }}>名称</TableCell>
+                <TableCell sx={{ fontWeight: 600 }}>{i18n.t('ai.v57-automation-panel.k29')}</TableCell>
                 <TableCell sx={{ fontWeight: 600 }}>Provider</TableCell>
-                <TableCell sx={{ fontWeight: 600 }}>触发</TableCell>
-                <TableCell sx={{ fontWeight: 600 }}>分支</TableCell>
-                <TableCell sx={{ fontWeight: 600 }}>阶段</TableCell>
-                <TableCell sx={{ fontWeight: 600 }}>环境</TableCell>
-                <TableCell sx={{ fontWeight: 600 }}>操作</TableCell>
+                <TableCell sx={{ fontWeight: 600 }}>{i18n.t('ai.v57-automation-panel.k30')}</TableCell>
+                <TableCell sx={{ fontWeight: 600 }}>{i18n.t('ai.v57-automation-panel.k31')}</TableCell>
+                <TableCell sx={{ fontWeight: 600 }}>{i18n.t('ai.v57-automation-panel.k32')}</TableCell>
+                <TableCell sx={{ fontWeight: 600 }}>{i18n.t('ai.v57-automation-panel.k33')}</TableCell>
+                <TableCell sx={{ fontWeight: 600 }}>{i18n.t('ai.v57-automation-panel.k34')}</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
@@ -697,7 +698,7 @@ const CITab: React.FC = () => {
                       variant='body2'
                       color='text.secondary'
                     >
-                      暂无流水线配置
+                      {i18n.t('ai.v57-automation-panel.k15')}
                     </Typography>
                   </TableCell>
                 </TableRow>
@@ -745,7 +746,7 @@ const CITab: React.FC = () => {
                       />
                     </TableCell>
                     <TableCell onClick={(e) => e.stopPropagation()}>
-                      <Tooltip title='触发运行'>
+                      <Tooltip title={i18n.t('ai.v57-automation-panel.k35')}>
                         <IconButton
                           size='small'
                           onClick={() => handleTrigger(c.pipeline)}
@@ -768,21 +769,21 @@ const CITab: React.FC = () => {
 
       <Card variant='outlined' sx={{ mt: 2 }}>
         <CardHeader
-          title='最近运行记录'
-          subheader={`${runs.length} 条记录`}
+          title={i18n.t('ai.v57-automation-panel.k36')}
+          subheader={`${runs.length} ${i18n.t('ai.v57-automation-panel.k16')}`}
         />
         <CardContent>
         <TableContainer>
           <Table size='small'>
             <TableHead>
               <TableRow>
-                <TableCell sx={{ fontWeight: 600 }}>运行 ID</TableCell>
-                <TableCell sx={{ fontWeight: 600 }}>流水线</TableCell>
-                <TableCell sx={{ fontWeight: 600 }}>状态</TableCell>
-                <TableCell sx={{ fontWeight: 600 }}>阶段进度</TableCell>
-                <TableCell sx={{ fontWeight: 600 }}>耗时</TableCell>
-                <TableCell sx={{ fontWeight: 600 }}>产物</TableCell>
-                <TableCell sx={{ fontWeight: 600 }}>操作</TableCell>
+                <TableCell sx={{ fontWeight: 600 }}>{i18n.t('ai.v57-automation-panel.id_37')}</TableCell>
+                <TableCell sx={{ fontWeight: 600 }}>{i18n.t('ai.v57-automation-panel.k38')}</TableCell>
+                <TableCell sx={{ fontWeight: 600 }}>{i18n.t('ai.v57-automation-panel.k39')}</TableCell>
+                <TableCell sx={{ fontWeight: 600 }}>{i18n.t('ai.v57-automation-panel.k40')}</TableCell>
+                <TableCell sx={{ fontWeight: 600 }}>{i18n.t('ai.v57-automation-panel.k41')}</TableCell>
+                <TableCell sx={{ fontWeight: 600 }}>{i18n.t('ai.v57-automation-panel.k42')}</TableCell>
+                <TableCell sx={{ fontWeight: 600 }}>{i18n.t('ai.v57-automation-panel.k43')}</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
@@ -797,7 +798,7 @@ const CITab: React.FC = () => {
                       variant='body2'
                       color='text.secondary'
                     >
-                      暂无运行记录，点击上方"触发"按钮启动流水线
+                      {i18n.t('ai.v57-automation-panel.i18n_17')}.t('ai.v57-automation-panel.k44')按钮启动流水线
                     </Typography>
                   </TableCell>
                 </TableRow>
@@ -849,7 +850,7 @@ const CITab: React.FC = () => {
                       <TableCell>{r.artifacts.length}</TableCell>
                       <TableCell onClick={(e) => e.stopPropagation()}>
                         {r.status === 'running' && (
-                          <Tooltip title='取消'>
+                          <Tooltip title={i18n.t('ai.v57-automation-panel.k45')}>
                             <IconButton
                               size='small'
                               onClick={() => handleCancel(r.run_id)}
@@ -930,7 +931,7 @@ const QualityTab: React.FC = () => {
         <Grid size={{ xs: 6, md: 3 }}>
           <StatCard
             icon={<Shield size={20} />}
-            label='总规则'
+            label={i18n.t('ai.v57-automation-panel.k46')}
             value={totalCriteria}
             color={designTokens.colors.secondary.dark}
           />
@@ -938,7 +939,7 @@ const QualityTab: React.FC = () => {
         <Grid size={{ xs: 6, md: 3 }}>
           <StatCard
             icon={<CheckCircle2 size={20} />}
-            label='通过'
+            label={i18n.t('ai.v57-automation-panel.k47')}
             value={passedCount}
             color={designTokens.colors.success.dark}
           />
@@ -946,7 +947,7 @@ const QualityTab: React.FC = () => {
         <Grid size={{ xs: 6, md: 3 }}>
           <StatCard
             icon={<AlertTriangle size={20} />}
-            label='警告'
+            label={i18n.t('ai.v57-automation-panel.k48')}
             value={warnedCount}
             color={designTokens.colors.warning.main}
           />
@@ -954,7 +955,7 @@ const QualityTab: React.FC = () => {
         <Grid size={{ xs: 6, md: 3 }}>
           <StatCard
             icon={<XCircle size={20} />}
-            label='阻塞'
+            label={i18n.t('ai.v57-automation-panel.k49')}
             value={failedCount}
             color={designTokens.colors.error.main}
           />
@@ -963,8 +964,8 @@ const QualityTab: React.FC = () => {
 
       <Card variant='outlined'>
         <CardHeader
-          title='质量门禁规则'
-          subheader={`${criteria.filter((c) => c.enabled).length}/${totalCriteria} 已启用`}
+          title={i18n.t('ai.v57-automation-panel.k50')}
+          subheader={`${criteria.filter((c) => c.enabled).length}/${totalCriteria} ${i18n.t('ai.v57-automation-panel.k19')}`}
           action={
             <Button
               variant='contained'
@@ -972,7 +973,7 @@ const QualityTab: React.FC = () => {
               startIcon={<Gauge size={14} />}
               onClick={handleEvaluate}
             >
-              执行门禁
+              {i18n.t('ai.v57-automation-panel.k20')}
             </Button>
           }
         />
@@ -981,13 +982,13 @@ const QualityTab: React.FC = () => {
           <Table size='small'>
             <TableHead>
               <TableRow>
-                <TableCell sx={{ fontWeight: 600 }}>规则名称</TableCell>
-                <TableCell sx={{ fontWeight: 600 }}>类型</TableCell>
-                <TableCell sx={{ fontWeight: 600 }}>指标</TableCell>
-                <TableCell sx={{ fontWeight: 600 }}>阈值</TableCell>
-                <TableCell sx={{ fontWeight: 600 }}>动作</TableCell>
-                <TableCell sx={{ fontWeight: 600 }}>状态</TableCell>
-                <TableCell sx={{ fontWeight: 600 }}>操作</TableCell>
+                <TableCell sx={{ fontWeight: 600 }}>{i18n.t('ai.v57-automation-panel.k51')}</TableCell>
+                <TableCell sx={{ fontWeight: 600 }}>{i18n.t('ai.v57-automation-panel.k52')}</TableCell>
+                <TableCell sx={{ fontWeight: 600 }}>{i18n.t('ai.v57-automation-panel.k53')}</TableCell>
+                <TableCell sx={{ fontWeight: 600 }}>{i18n.t('ai.v57-automation-panel.k54')}</TableCell>
+                <TableCell sx={{ fontWeight: 600 }}>{i18n.t('ai.v57-automation-panel.k55')}</TableCell>
+                <TableCell sx={{ fontWeight: 600 }}>{i18n.t('ai.v57-automation-panel.k56')}</TableCell>
+                <TableCell sx={{ fontWeight: 600 }}>{i18n.t('ai.v57-automation-panel.k57')}</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
@@ -1002,7 +1003,7 @@ const QualityTab: React.FC = () => {
                       variant='body2'
                       color='text.secondary'
                     >
-                      暂无门禁规则
+                      {i18n.t('ai.v57-automation-panel.k21')}
                     </Typography>
                   </TableCell>
                 </TableRow>
@@ -1045,7 +1046,7 @@ const QualityTab: React.FC = () => {
                             variant='caption'
                             color='text.secondary'
                           >
-                            未测量
+                            {i18n.t('ai.v57-automation-panel.k22')}
                           </Typography>
                         )}
                       </TableCell>
@@ -1054,7 +1055,7 @@ const QualityTab: React.FC = () => {
                           direction='row'
                           spacing={0.5}
                         >
-                          <Tooltip title='详情'>
+                          <Tooltip title={i18n.t('ai.v57-automation-panel.k58')}>
                             <IconButton
                               size='small'
                               onClick={() => setSelectedCriteria(c)}
@@ -1065,7 +1066,7 @@ const QualityTab: React.FC = () => {
                               />
                             </IconButton>
                           </Tooltip>
-                          <Tooltip title='覆盖'>
+                          <Tooltip title={i18n.t('ai.v57-automation-panel.k59')}>
                             <IconButton
                               size='small'
                               onClick={() => handleOverride(c)}
@@ -1089,17 +1090,17 @@ const QualityTab: React.FC = () => {
       </Card>
 
       <Card variant='outlined' sx={{ mt: 2 }}>
-        <CardHeader title='最近门禁结果' />
+        <CardHeader title={i18n.t('ai.v57-automation-panel.k60')} />
         <CardContent>
         <TableContainer>
           <Table size='small'>
             <TableHead>
               <TableRow>
-                <TableCell sx={{ fontWeight: 600 }}>规则</TableCell>
-                <TableCell sx={{ fontWeight: 600 }}>实际值</TableCell>
-                <TableCell sx={{ fontWeight: 600 }}>阈值</TableCell>
-                <TableCell sx={{ fontWeight: 600 }}>状态</TableCell>
-                <TableCell sx={{ fontWeight: 600 }}>时间</TableCell>
+                <TableCell sx={{ fontWeight: 600 }}>{i18n.t('ai.v57-automation-panel.k61')}</TableCell>
+                <TableCell sx={{ fontWeight: 600 }}>{i18n.t('ai.v57-automation-panel.k62')}</TableCell>
+                <TableCell sx={{ fontWeight: 600 }}>{i18n.t('ai.v57-automation-panel.k63')}</TableCell>
+                <TableCell sx={{ fontWeight: 600 }}>{i18n.t('ai.v57-automation-panel.k64')}</TableCell>
+                <TableCell sx={{ fontWeight: 600 }}>{i18n.t('ai.v57-automation-panel.k65')}</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
@@ -1114,7 +1115,7 @@ const QualityTab: React.FC = () => {
                       variant='body2'
                       color='text.secondary'
                     >
-                      暂无门禁结果，点击"执行门禁"开始评估
+                      {i18n.t('ai.v57-automation-panel.i18n_23')}.t('ai.v57-automation-panel.k66')开始评估
                     </Typography>
                   </TableCell>
                 </TableRow>
@@ -1206,7 +1207,7 @@ const TrendsTab: React.FC = () => {
         <Grid size={{ xs: 6, md: 3 }}>
           <StatCard
             icon={<TestTube size={20} />}
-            label='测试通过'
+            label={i18n.t('ai.v57-automation-panel.k67')}
             value={`${testStats.by_status.passed}/${testStats.total}`}
             color={designTokens.colors.success.dark}
           />
@@ -1214,7 +1215,7 @@ const TrendsTab: React.FC = () => {
         <Grid size={{ xs: 6, md: 3 }}>
           <StatCard
             icon={<GitBranch size={20} />}
-            label='CI 成功率'
+            label={i18n.t('ai.v57-automation-panel.ci_25')}
             value={`${ciStats.success_rate.toFixed(1)}%`}
             color={designTokens.colors.success.dark}
           />
@@ -1222,7 +1223,7 @@ const TrendsTab: React.FC = () => {
         <Grid size={{ xs: 6, md: 3 }}>
           <StatCard
             icon={<Gauge size={20} />}
-            label='CI 平均耗时'
+            label={i18n.t('ai.v57-automation-panel.ci_26')}
             value={`${Math.round(ciStats.avg_duration_ms / 100) / 10}s`}
             color={`${designTokens.colors.info.main}`}
           />
@@ -1230,7 +1231,7 @@ const TrendsTab: React.FC = () => {
         <Grid size={{ xs: 6, md: 3 }}>
           <StatCard
             icon={<Shield size={20} />}
-            label='门禁通过率'
+            label={i18n.t('ai.v57-automation-panel.k68')}
             value={`${gateSummary.total_criteria > 0 ? ((gateSummary.status_counts.passed / gateSummary.total_criteria) * 100).toFixed(0) : 0}%`}
             color={designTokens.colors.secondary.main}
           />
@@ -1239,8 +1240,8 @@ const TrendsTab: React.FC = () => {
 
       <Card variant='outlined'>
         <CardHeader
-          title='质量门禁趋势'
-          subheader={selectedCriteria ? `指标: ${selectedCriteria.name}` : '选择一个门禁规则查看趋势'}
+          title={i18n.t('ai.v57-automation-panel.k69')}
+          subheader={selectedCriteria ? `${i18n.t('ai.v57-automation-panel.k27')} ${selectedCriteria.name}` : i18n.t('ai.v57-automation-panel.k70')}
         />
         <CardContent>
         <Grid
@@ -1252,7 +1253,7 @@ const TrendsTab: React.FC = () => {
               variant='subtitle2'
               sx={{ mb: 1, fontWeight: 600 }}
             >
-              门禁规则
+              {i18n.t('ai.v57-automation-panel.k28')}
             </Typography>
             <Stack spacing={1}>
               {criteria.map((c) => (
@@ -1274,7 +1275,7 @@ const TrendsTab: React.FC = () => {
                       variant='caption'
                       color='text.secondary'
                     >
-                      阈值: {c.threshold}
+                      [i18n.t('ai.v57-automation-panel.k29')]: {c.threshold}
                     </Typography>
                   </Box>
                 </Button>
@@ -1302,7 +1303,7 @@ const TrendsTab: React.FC = () => {
                   variant='body2'
                   color='text.secondary'
                 >
-                  选择左侧门禁规则查看历史趋势
+                  {i18n.t('ai.v57-automation-panel.k30')}
                 </Typography>
               </Box>
             )}
@@ -1312,7 +1313,7 @@ const TrendsTab: React.FC = () => {
       </Card>
 
       <Card variant='outlined' sx={{ mt: 2 }}>
-        <CardHeader title='AI 智能建议' />
+        <CardHeader title={i18n.t('ai.v57-automation-panel.ai_31')} />
         <CardContent>
         <Stack spacing={2}>
           <Alert
@@ -1409,7 +1410,7 @@ const TrendChart: React.FC<{ data: TrendPoint[]; criteria: GateCriteria | null }
           fontSize={10}
           fill={designTokens.colors.error.main}
         >
-          阈值: {data[0]?.threshold}
+          [i18n.t('ai.v57-automation-panel.k32')]: {data[0]?.threshold}
         </text>
 
         <path
@@ -1454,7 +1455,7 @@ const TrendChart: React.FC<{ data: TrendPoint[]; criteria: GateCriteria | null }
 const RunDetailCard: React.FC<{ run: CIResult }> = ({ run }) => (
   <Card variant='outlined' sx={{ mt: 2 }}>
     <CardHeader
-      title={`运行详情: ${run.run_id.slice(-12)}`}
+      title={`${i18n.t('ai.v57-automation-panel.k33')} ${run.run_id.slice(-12)}`}
       subheader={`${run.pipeline} · ${run.status}`}
     />
     <CardContent>
@@ -1467,10 +1468,10 @@ const RunDetailCard: React.FC<{ run: CIResult }> = ({ run }) => (
           variant='subtitle2'
           sx={{ mb: 1, fontWeight: 600 }}
         >
-          运行阶段
+          {i18n.t('ai.v57-automation-panel.k34')}
         </Typography>
         <Typography variant='body2'>
-          进度: {run.stages_completed}/{run.total_stages}
+          [i18n.t('ai.v57-automation-panel.k35')]: {run.stages_completed}/{run.total_stages}
         </Typography>
         <LinearProgress
           variant='determinate'
@@ -1485,7 +1486,7 @@ const RunDetailCard: React.FC<{ run: CIResult }> = ({ run }) => (
           color='text.secondary'
           sx={{ mt: 0.5 }}
         >
-          耗时: {run.duration_ms > 0 ? `${Math.round(run.duration_ms / 100) / 10}s` : '—'}
+          [i18n.t('ai.v57-automation-panel.k36')]: {run.duration_ms > 0 ? `${Math.round(run.duration_ms / 100) / 10}s` : '—'}
         </Typography>
       </Grid>
       <Grid size={{ xs: 12, md: 6 }}>
@@ -1504,7 +1505,7 @@ const RunDetailCard: React.FC<{ run: CIResult }> = ({ run }) => (
               variant='caption'
               color='text.secondary'
             >
-              暂无产物
+              {i18n.t('ai.v57-automation-panel.k37')}
             </Typography>
           ) : (
             run.artifacts.map((a, i) => (
@@ -1534,7 +1535,7 @@ const RunDetailCard: React.FC<{ run: CIResult }> = ({ run }) => (
           variant='subtitle2'
           sx={{ mb: 1, fontWeight: 600 }}
         >
-          构建日志
+          {i18n.t('ai.v57-automation-panel.k38')}
         </Typography>
         <Box
           sx={{
@@ -1595,11 +1596,11 @@ const GenerateTestDialog: React.FC<{
           variant='h6'
           sx={{ fontWeight: 600, mb: 2 }}
         >
-          AI 生成测试场景
+          {i18n.t('ai.v57-automation-panel.ai_39')}
         </Typography>
         <Stack spacing={2}>
           <TextField
-            label='生成数量 (1-20)'
+            label={i18n.t('ai.v57-automation-panel.120_71')}
             type='number'
             value={count}
             onChange={(e) => {
@@ -1609,11 +1610,11 @@ const GenerateTestDialog: React.FC<{
             fullWidth
           />
           <TextField
-            label='模块'
+            label={i18n.t('ai.v57-automation-panel.k72')}
             value={module}
             onChange={(e) => setModule(e.target.value)}
             fullWidth
-            placeholder='如：auth, common, api'
+            placeholder={i18n.t('ai.v57-automation-panel.k40')}
           />
         </Stack>
         <Box sx={{ display: 'flex', gap: 1, justifyContent: 'flex-end', mt: 3 }}>
@@ -1621,13 +1622,13 @@ const GenerateTestDialog: React.FC<{
             variant='outlined'
             onClick={onClose}
           >
-            取消
+            {i18n.t('ai.v57-automation-panel.k41')}
           </Button>
           <Button
             variant='contained'
             onClick={() => onGenerate(count, module)}
           >
-            生成
+            {i18n.t('ai.v57-automation-panel.k42')}
           </Button>
         </Box>
       </Box>
@@ -1672,15 +1673,15 @@ const ConfigPipelineDialog: React.FC<{
           variant='h6'
           sx={{ fontWeight: 600, mb: 2 }}
         >
-          新建 CI 流水线
+          {i18n.t('ai.v57-automation-panel.ci_43')}
         </Typography>
         <Stack spacing={2}>
           <TextField
-            label='流水线名称'
+            label={i18n.t('ai.v57-automation-panel.k73')}
             value={pipeline}
             onChange={(e) => setPipeline(e.target.value)}
             fullWidth
-            placeholder='如：TOPEMS Frontend CI'
+            placeholder={i18n.t('ai.v57-automation-panel.topemsfrontendci_74')}
           />
           <FormControl fullWidth>
             <InputLabel>CI Provider</InputLabel>
@@ -1700,7 +1701,7 @@ const ConfigPipelineDialog: React.FC<{
             variant='outlined'
             onClick={onClose}
           >
-            取消
+            {i18n.t('ai.v57-automation-panel.k44')}
           </Button>
           <Button
             variant='contained'
@@ -1730,7 +1731,7 @@ const ConfigPipelineDialog: React.FC<{
               })
             }
           >
-            创建
+            {i18n.t('ai.v57-automation-panel.k45')}
           </Button>
         </Box>
       </Box>
@@ -1776,27 +1777,27 @@ const OverrideDialog: React.FC<{
           variant='h6'
           sx={{ fontWeight: 600, mb: 2 }}
         >
-          覆盖门禁规则
+          {i18n.t('ai.v57-automation-panel.k46')}
         </Typography>
         <Typography
           variant='body2'
           color='text.secondary'
           sx={{ mb: 2 }}
         >
-          规则: <strong>{criteria.name}</strong> ({criteria.type})
+          [i18n.t('ai.v57-automation-panel.k47')]: <strong>{criteria.name}</strong> ({criteria.type})
         </Typography>
         <Stack spacing={2}>
           <TextField
-            label='覆盖原因'
+            label={i18n.t('ai.v57-automation-panel.k75')}
             value={reason}
             onChange={(e) => setReason(e.target.value)}
             fullWidth
             multiline
             rows={3}
-            placeholder='请输入覆盖原因'
+            placeholder={i18n.t('ai.v57-automation-panel.k76')}
           />
           <TextField
-            label='审批人'
+            label={i18n.t('ai.v57-automation-panel.k77')}
             value={by}
             onChange={(e) => setBy(e.target.value)}
             fullWidth
@@ -1807,14 +1808,14 @@ const OverrideDialog: React.FC<{
             variant='outlined'
             onClick={onClose}
           >
-            取消
+            {i18n.t('ai.v57-automation-panel.k48')}
           </Button>
           <Button
             variant='contained'
             disabled={!reason.trim()}
             onClick={() => onOverride(reason.trim(), by)}
           >
-            确认覆盖
+            {i18n.t('ai.v57-automation-panel.k49')}
           </Button>
         </Box>
       </Box>
@@ -1849,8 +1850,8 @@ const StatCard: React.FC<{
 
 const TestTypeBadge: React.FC<{ type: TestType }> = ({ type }) => {
   const labels: Record<TestType, string> = {
-    unit: '单元',
-    integration: '集成',
+    unit: i18n.t('ai.v57-automation-panel.k78'),
+    integration: i18n.t('ai.v57-automation-panel.k79'),
     e2e: 'E2E',
   };
   return (
@@ -1883,11 +1884,11 @@ const TestStatusChip: React.FC<{ status: TestStatus }> = ({ status }) => {
     TestStatus,
     { label: string; color: 'success' | 'error' | 'warning' | 'default' }
   > = {
-    pending: { label: '等待', color: 'default' },
-    running: { label: '运行中', color: 'warning' },
-    passed: { label: '通过', color: 'success' },
-    failed: { label: '失败', color: 'error' },
-    skipped: { label: '跳过', color: 'default' },
+    pending: { label: i18n.t('ai.v57-automation-panel.k80'), color: 'default' },
+    running: { label: i18n.t('ai.v57-automation-panel.k81'), color: 'warning' },
+    passed: { label: i18n.t('ai.v57-automation-panel.k82'), color: 'success' },
+    failed: { label: i18n.t('ai.v57-automation-panel.k83'), color: 'error' },
+    skipped: { label: i18n.t('ai.v57-automation-panel.k84'), color: 'default' },
   };
   const config = configs[status];
   return (
@@ -1904,12 +1905,12 @@ const CIStatusChip: React.FC<{ status: CIStatus }> = ({ status }) => {
     CIStatus,
     { label: string; color: 'success' | 'error' | 'warning' | 'default' }
   > = {
-    idle: { label: '空闲', color: 'default' },
-    running: { label: '运行中', color: 'warning' },
-    success: { label: '成功', color: 'success' },
-    failed: { label: '失败', color: 'error' },
-    cancelled: { label: '已取消', color: 'default' },
-    pending: { label: '等待', color: 'default' },
+    idle: { label: i18n.t('ai.v57-automation-panel.k85'), color: 'default' },
+    running: { label: i18n.t('ai.v57-automation-panel.k86'), color: 'warning' },
+    success: { label: i18n.t('ai.v57-automation-panel.k87'), color: 'success' },
+    failed: { label: i18n.t('ai.v57-automation-panel.k88'), color: 'error' },
+    cancelled: { label: i18n.t('ai.v57-automation-panel.k89'), color: 'default' },
+    pending: { label: i18n.t('ai.v57-automation-panel.k90'), color: 'default' },
   };
   const config = configs[status];
   return (
@@ -1938,11 +1939,11 @@ const ProviderBadge: React.FC<{ provider: CIProvider }> = ({ provider }) => {
 
 const GateTypeBadge: React.FC<{ type: GateType }> = ({ type }) => {
   const labels: Record<GateType, { label: string; icon: React.ReactNode }> = {
-    coverage: { label: '覆盖率', icon: <TestTube size={12} /> },
-    bundle: { label: '打包', icon: <Package size={12} /> },
-    size: { label: '体积', icon: <HardDrive size={12} /> },
-    performance: { label: '性能', icon: <Gauge size={12} /> },
-    security: { label: '安全', icon: <Shield size={12} /> },
+    coverage: { label: i18n.t('ai.v57-automation-panel.k91'), icon: <TestTube size={12} /> },
+    bundle: { label: i18n.t('ai.v57-automation-panel.k92'), icon: <Package size={12} /> },
+    size: { label: i18n.t('ai.v57-automation-panel.k93'), icon: <HardDrive size={12} /> },
+    performance: { label: i18n.t('ai.v57-automation-panel.k94'), icon: <Gauge size={12} /> },
+    security: { label: i18n.t('ai.v57-automation-panel.k95'), icon: <Shield size={12} /> },
   };
   const config = labels[type];
   return (
@@ -1991,9 +1992,9 @@ const GateTypeIcon: React.FC<{ type: GateType }> = ({ type }) => {
 
 const GateActionBadge: React.FC<{ action: GateAction }> = ({ action }) => {
   const configs: Record<GateAction, { label: string; color: 'error' | 'warning' | 'info' }> = {
-    block: { label: '阻塞', color: 'error' },
-    warn: { label: '警告', color: 'warning' },
-    info: { label: '提示', color: 'info' },
+    block: { label: i18n.t('ai.v57-automation-panel.k96'), color: 'error' },
+    warn: { label: i18n.t('ai.v57-automation-panel.k97'), color: 'warning' },
+    info: { label: i18n.t('ai.v57-automation-panel.k98'), color: 'info' },
   };
   const config = configs[action];
   return (
@@ -2010,10 +2011,10 @@ const GateStatusChip: React.FC<{ status: GateStatus }> = ({ status }) => {
     GateStatus,
     { label: string; color: 'success' | 'error' | 'warning' | 'default' }
   > = {
-    passed: { label: '通过', color: 'success' },
-    failed: { label: '阻塞', color: 'error' },
-    warned: { label: '警告', color: 'warning' },
-    skipped: { label: '跳过', color: 'default' },
+    passed: { label: i18n.t('ai.v57-automation-panel.k99'), color: 'success' },
+    failed: { label: i18n.t('ai.v57-automation-panel.k100'), color: 'error' },
+    warned: { label: i18n.t('ai.v57-automation-panel.k101'), color: 'warning' },
+    skipped: { label: i18n.t('ai.v57-automation-panel.k102'), color: 'default' },
   };
   const config = configs[status];
   return (

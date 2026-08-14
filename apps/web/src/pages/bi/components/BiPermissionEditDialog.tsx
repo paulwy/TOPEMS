@@ -20,12 +20,10 @@ import {
   Grid,
   Alert,
 } from '@mui/material';
+import i18n from '@/i18n';
 import { CheckCircle2, AlertTriangle } from 'lucide-react';
-import { useTranslation } from 'react-i18next';
 import type { RowLevelPermission } from '@/api/bi';
-
 export type TestResult = { success: boolean; message: string } | null;
-
 export interface BiPermissionEditDialogProps {
   open: boolean;
   editingItem: RowLevelPermission | null;
@@ -36,7 +34,6 @@ export interface BiPermissionEditDialogProps {
   onSave: () => void;
   onTest: (item: RowLevelPermission) => void;
 }
-
 const BiPermissionEditDialog: React.FC<BiPermissionEditDialogProps> = ({
   open,
   editingItem,
@@ -47,8 +44,6 @@ const BiPermissionEditDialog: React.FC<BiPermissionEditDialogProps> = ({
   onSave,
   onTest,
 }) => {
-  const { t } = useTranslation();
-
   return (
     <Dialog
       open={open}
@@ -57,7 +52,7 @@ const BiPermissionEditDialog: React.FC<BiPermissionEditDialogProps> = ({
       fullWidth
     >
       <DialogTitle>
-        {editingItem ? t('bi.bi_permission_page.edit_3') : t('bi.bi_permission_page.text_f36bf2')}
+        {editingItem ? i18n.t('bi.bi_permission_page.edit_3') : i18n.t('bi.bi_permission_page.text_f36bf2')}
       </DialogTitle>
       <DialogContent sx={{ mt: 2 }}>
         <Grid
@@ -66,7 +61,7 @@ const BiPermissionEditDialog: React.FC<BiPermissionEditDialogProps> = ({
         >
           <Grid size={{ xs: 12 }}>
             <TextField
-              label={t('bi.bi_permission_page.name')}
+              label={i18n.t('bi.bi_permission_page.name')}
               fullWidth
               value={formData.name}
               onChange={(e) => setFormData({ ...formData, name: e.target.value })}
@@ -74,7 +69,7 @@ const BiPermissionEditDialog: React.FC<BiPermissionEditDialogProps> = ({
           </Grid>
           <Grid size={{ xs: 12 }}>
             <TextField
-              label={t('bi.bi_permission_page.description')}
+              label={i18n.t('bi.bi_permission_page.description')}
               multiline
               rows={2}
               fullWidth
@@ -84,22 +79,22 @@ const BiPermissionEditDialog: React.FC<BiPermissionEditDialogProps> = ({
           </Grid>
           <Grid size={{ xs: 12, sm: 6 }}>
             <FormControl fullWidth>
-              <InputLabel>{t('bi.bi_permission_page.text_c11322')}</InputLabel>
+              <InputLabel>{i18n.t('bi.bi_permission_page.text_c11322')}</InputLabel>
               <Select
                 value={formData.data_source_id}
-                label={t('bi.bi_permission_page.text_c11322')}
+                label={i18n.t('bi.bi_permission_page.text_c11322')}
                 onChange={(e) => setFormData({ ...formData, data_source_id: e.target.value })}
               >
-                <MenuItem value='ds-001'>{t('bi.bi_permission_page.text_f13875')}</MenuItem>
-                <MenuItem value='ds-002'>{t('bi.bi_permission_page.text_b18f1c')}</MenuItem>
-                <MenuItem value='ds-003'>{t('bi.bi_permission_page.text_30512b')}</MenuItem>
-                <MenuItem value='ds-004'>{t('bi.bi_permission_page.text_7c8ebb')}</MenuItem>
+                <MenuItem value='ds-001'>{i18n.t('bi.bi_permission_page.text_f13875')}</MenuItem>
+                <MenuItem value='ds-002'>{i18n.t('bi.bi_permission_page.text_b18f1c')}</MenuItem>
+                <MenuItem value='ds-003'>{i18n.t('bi.bi_permission_page.text_30512b')}</MenuItem>
+                <MenuItem value='ds-004'>{i18n.t('bi.bi_permission_page.text_7c8ebb')}</MenuItem>
               </Select>
             </FormControl>
           </Grid>
           <Grid size={{ xs: 12, sm: 6 }}>
             <TextField
-              label={t('bi.bi_permission_page.text_099652')}
+              label={i18n.t('bi.bi_permission_page.text_099652')}
               fullWidth
               value={formData.table_name}
               onChange={(e) => setFormData({ ...formData, table_name: e.target.value })}
@@ -107,7 +102,7 @@ const BiPermissionEditDialog: React.FC<BiPermissionEditDialogProps> = ({
           </Grid>
           <Grid size={{ xs: 12 }}>
             <TextField
-              label={t('bi.bi_permission_page.text_924fa0')}
+              label={i18n.t('bi.bi_permission_page.text_924fa0')}
               multiline
               rows={4}
               fullWidth
@@ -119,12 +114,12 @@ const BiPermissionEditDialog: React.FC<BiPermissionEditDialogProps> = ({
                   fontSize: 14,
                 },
               }}
-              helperText={t('bi.bi_permission_page.text_848c70')}
+              helperText={i18n.t('bi.bi_permission_page.text_848c70')}
             />
           </Grid>
           <Grid size={{ xs: 12, sm: 6 }}>
             <TextField
-              label={t('bi.bi_permission_page.text_5885b5')}
+              label={i18n.t('bi.bi_permission_page.text_5885b5')}
               fullWidth
               value={(formData.roles || []).join(', ')}
               onChange={(e) =>
@@ -140,7 +135,7 @@ const BiPermissionEditDialog: React.FC<BiPermissionEditDialogProps> = ({
           </Grid>
           <Grid size={{ xs: 12, sm: 6 }}>
             <TextField
-              label={t('bi.bi_permission_page.text_d0959e')}
+              label={i18n.t('bi.bi_permission_page.text_d0959e')}
               fullWidth
               value={(formData.users || []).join(', ')}
               onChange={(e) =>
@@ -157,13 +152,13 @@ const BiPermissionEditDialog: React.FC<BiPermissionEditDialogProps> = ({
           <Grid size={{ xs: 12, sm: 6 }}>
             <TextField
               type='number'
-              label={t('bi.bi_permission_page.text_ee8ecb')}
+              label={i18n.t('bi.bi_permission_page.text_ee8ecb')}
               fullWidth
               value={formData.priority}
               onChange={(e) =>
                 setFormData({ ...formData, priority: parseInt(e.target.value) || 1 })
               }
-              helperText={t('bi.bi_permission_page.text_3446e5')}
+              helperText={i18n.t('bi.bi_permission_page.text_3446e5')}
             />
           </Grid>
           <Grid size={{ xs: 12, sm: 6 }}>
@@ -174,12 +169,11 @@ const BiPermissionEditDialog: React.FC<BiPermissionEditDialogProps> = ({
                   onChange={(e) => setFormData({ ...formData, isEnabled: e.target.checked })}
                 />
               }
-              label={t('bi.bi_permission_page.active_1')}
+              label={i18n.t('bi.bi_permission_page.active_1')}
               sx={{ mt: 2 }}
             />
           </Grid>
         </Grid>
-
         {testResult && (
           <Box sx={{ mt: 3 }}>
             <Alert
@@ -192,13 +186,13 @@ const BiPermissionEditDialog: React.FC<BiPermissionEditDialogProps> = ({
         )}
       </DialogContent>
       <DialogActions>
-        <Button onClick={onClose}>{t('bi.bi_permission_page.text_625fb2')}</Button>
+        <Button onClick={onClose}>{i18n.t('bi.bi_permission_page.text_625fb2')}</Button>
         {editingItem && (
           <Button
             variant='outlined'
             onClick={() => onTest(editingItem)}
           >
-            {t('bi.bi_permission_page.text_3455fc')}
+            {i18n.t('bi.bi_permission_page.text_3455fc')}
           </Button>
         )}
         <Button
@@ -206,11 +200,10 @@ const BiPermissionEditDialog: React.FC<BiPermissionEditDialogProps> = ({
           onClick={onSave}
           disabled={!formData.name || !formData.condition}
         >
-          {t('bi.bi_permission_page.text_be5fbb')}
+          {i18n.t('bi.bi_permission_page.text_be5fbb')}
         </Button>
       </DialogActions>
     </Dialog>
   );
 };
-
 export default BiPermissionEditDialog;

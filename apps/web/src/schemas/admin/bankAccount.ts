@@ -10,10 +10,10 @@ import i18n from '@/i18n';
 import { designTokens } from '@topems/tokens';
 
 const ACCOUNT_TYPE_LABELS: Record<string, string> = {
-  checking: '基本户',
-  savings: '一般户',
-  dedicated: '专用户',
-  foreign: '外币户',
+  checking: i18n.t('admin.bank_account.k0'),
+  savings: i18n.t('admin.bank_account.k1'),
+  dedicated: i18n.t('admin.bank_account.k2'),
+  foreign: i18n.t('admin.bank_account.k3'),
 };
 
 const ACCOUNT_TYPE_COLORS: Record<
@@ -27,9 +27,9 @@ const ACCOUNT_TYPE_COLORS: Record<
 };
 
 const STATUS_LABELS: Record<string, string> = {
-  active: '正常',
-  frozen: '冻结',
-  closed: '销户',
+  active: i18n.t('admin.bank_account.k4'),
+  frozen: i18n.t('admin.bank_account.k5'),
+  closed: i18n.t('admin.bank_account.k6'),
 };
 
 const STATUS_COLORS: Record<string, 'success' | 'error' | 'default'> = {
@@ -39,12 +39,12 @@ const STATUS_COLORS: Record<string, 'success' | 'error' | 'default'> = {
 };
 
 const CURRENCY_LABELS: Record<string, string> = {
-  CNY: '人民币',
-  USD: '美元',
-  EUR: '欧元',
-  GBP: '英镑',
-  JPY: '日元',
-  HKD: '港币',
+  CNY: i18n.t('admin.bank_account.k7'),
+  USD: i18n.t('admin.bank_account.k8'),
+  EUR: i18n.t('admin.bank_account.k9'),
+  GBP: i18n.t('admin.bank_account.k10'),
+  JPY: i18n.t('admin.bank_account.k11'),
+  HKD: i18n.t('admin.bank_account.k12'),
 };
 
 const formatBalance = (amount: number | undefined) => {
@@ -139,22 +139,22 @@ export const bankAccountSchema: EntitySchema = {
           primary: `var(--color-primary-main, ${designTokens.colors.primary.dark})`,
           success: `var(--color-success-main, ${designTokens.colors.success.dark})`,
           secondary: 'var(--color-secondary-main, #9c27b0)',
-          warning: 'var(--color-warning-main, #ed6c02)',
-          default: 'var(--color-text-secondary, rgba(0,0,0,0.6))',
+          warning: `var(--color-warning-main, ${designTokens.colors.warning[500]}`,
+          default: `var(--color-text-secondary, ${designTokens.colors.cyber.metal.bottomShadow}`,
         };
         const bgColorMap: Record<string, string> = {
           primary: `var(--color-primary-lighter, ${designTokens.colors.primary['50']})`,
           success: `var(--color-success-lighter, ${designTokens.colors.success['50']})`,
           secondary: 'var(--color-secondary-lighter, #f3e5f5)',
-          warning: 'var(--color-warning-lighter, #fff3e0)',
-          default: 'var(--color-action-hover, rgba(0,0,0,0.04))',
+          warning: `var(--color-warning-lighter, ${designTokens.colors.warning[50]}`,
+          default: `var(--color-action-hover, ${designTokens.colors.action.hover}`,
         };
         return React.createElement(
           'span',
           {
             style: {
               display: 'inline-block',
-              padding: '2px 8px',
+              padding: `${designTokens.spacing.xs} 8px`,
               borderRadius: 12,
               fontSize: 12,
               fontWeight: 500,
@@ -235,12 +235,12 @@ export const bankAccountSchema: EntitySchema = {
         const colorMap: Record<string, string> = {
           success: `var(--color-success-main, ${designTokens.colors.success.dark})`,
           error: `var(--color-error-main, ${designTokens.colors.error['800']})`,
-          default: 'var(--color-text-secondary, rgba(0,0,0,0.6))',
+          default: `var(--color-text-secondary, ${designTokens.colors.cyber.metal.bottomShadow}`,
         };
         const bgColorMap: Record<string, string> = {
           success: `var(--color-success-lighter, ${designTokens.colors.success['50']})`,
-          error: 'var(--color-error-lighter, #ffebee)',
-          default: 'var(--color-action-hover, rgba(0,0,0,0.04))',
+          error: `var(--color-error-lighter, ${designTokens.colors.error[50]}`,
+          default: `var(--color-action-hover, ${designTokens.colors.action.hover}`,
         };
         return React.createElement(
           'span',
@@ -249,7 +249,7 @@ export const bankAccountSchema: EntitySchema = {
               display: 'inline-flex',
               alignItems: 'center',
               gap: 4,
-              padding: '2px 8px',
+              padding: `${designTokens.spacing.xs} 8px`,
               borderRadius: 12,
               fontSize: 12,
               fontWeight: 500,
@@ -273,7 +273,7 @@ export const bankAccountSchema: EntitySchema = {
         if (!isPrimary) {
           return React.createElement(
             'span',
-            { style: { color: 'var(--color-text-disabled, rgba(0,0,0,0.38))' } },
+            { style: { color: `var(--color-text-disabled, ${designTokens.colors.text.disabled}` } },
             '-'
           );
         }
@@ -282,15 +282,15 @@ export const bankAccountSchema: EntitySchema = {
           {
             style: {
               display: 'inline-block',
-              padding: '2px 8px',
+              padding: `${designTokens.spacing.xs} 8px`,
               borderRadius: 12,
               fontSize: 12,
               fontWeight: 500,
-              backgroundColor: 'var(--color-warning-lighter, #fff3e0)',
-              color: 'var(--color-warning-main, #ed6c02)',
+              backgroundColor: `var(--color-warning-lighter, ${designTokens.colors.warning[50]}`,
+              color: `var(--color-warning-main, ${designTokens.colors.warning[500]}`,
             },
           },
-          '主账户'
+          i18n.t('admin.bank_account.k13')
         );
       },
     },

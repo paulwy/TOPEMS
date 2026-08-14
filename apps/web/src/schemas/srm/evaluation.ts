@@ -1,9 +1,10 @@
 import type { EntitySchema } from '@/schema';
+import i18n from '@/i18n';
 
 export const evaluationSchema: EntitySchema = {
   entity: 'srm_evaluation',
-  title: '供应商评估',
-  description: '管理供应商评估记录，跟踪评估进度，分析评分数据',
+  title: i18n.t('srm.evaluation.k0'),
+  description: i18n.t('srm.evaluation.k1'),
 
   api: {
     module: 'srm',
@@ -13,7 +14,7 @@ export const evaluationSchema: EntitySchema = {
   fields: [
     {
       name: 'evaluation_no',
-      label: '评估编号',
+      label: i18n.t('srm.evaluation.k2'),
       type: 'text',
       readonly: true,
       sortable: true,
@@ -22,73 +23,73 @@ export const evaluationSchema: EntitySchema = {
     },
     {
       name: 'supplier_id',
-      label: '供应商',
+      label: i18n.t('srm.evaluation.k3'),
       type: 'select',
       required: true,
       listWidth: 180,
     },
     {
       name: 'evaluation_date',
-      label: '评估日期',
+      label: i18n.t('srm.evaluation.k4'),
       type: 'date',
       sortable: true,
       listWidth: 120,
     },
     {
       name: 'overall_score',
-      label: '综合评分',
+      label: i18n.t('srm.evaluation.k5'),
       type: 'number',
       sortable: true,
       listWidth: 120,
     },
     {
       name: 'quality_score',
-      label: '质量评分',
+      label: i18n.t('srm.evaluation.k6'),
       type: 'number',
       sortable: true,
       listWidth: 100,
     },
     {
       name: 'delivery_score',
-      label: '交付评分',
+      label: i18n.t('srm.evaluation.k7'),
       type: 'number',
       sortable: true,
       listWidth: 100,
     },
     {
       name: 'service_score',
-      label: '服务评分',
+      label: i18n.t('srm.evaluation.k8'),
       type: 'number',
       sortable: true,
       listWidth: 100,
     },
     {
       name: 'price_score',
-      label: '价格评分',
+      label: i18n.t('srm.evaluation.k9'),
       type: 'number',
       sortable: true,
       listWidth: 100,
     },
     {
       name: 'evaluator',
-      label: '评估人',
+      label: i18n.t('srm.evaluation.k10'),
       type: 'text',
       listWidth: 100,
       validation: [{ type: 'maxLength', value: 100 }],
     },
     {
       name: 'status',
-      label: '状态',
+      label: i18n.t('srm.evaluation.k11'),
       type: 'select',
       required: true,
       defaultValue: 'in_progress',
       options: {
         type: 'static',
         options: [
-          { value: 'in_progress', label: '进行中' },
-          { value: 'pending', label: '待审核' },
-          { value: 'completed', label: '已完成' },
-          { value: 'rejected', label: '已驳回' },
+          { value: 'in_progress', label: i18n.t('srm.evaluation.k12') },
+          { value: 'pending', label: i18n.t('srm.evaluation.k13') },
+          { value: 'completed', label: i18n.t('srm.evaluation.k14') },
+          { value: 'rejected', label: i18n.t('srm.evaluation.k15') },
         ],
       },
       listWidth: 100,
@@ -96,7 +97,7 @@ export const evaluationSchema: EntitySchema = {
     },
     {
       name: 'created_at',
-      label: '创建时间',
+      label: i18n.t('srm.evaluation.k16'),
       type: 'datetime',
       readonly: true,
       hideInForm: true,
@@ -129,23 +130,23 @@ export const evaluationSchema: EntitySchema = {
         rejected: 'error',
       },
       labelMap: {
-        in_progress: '进行中',
-        pending: '待审核',
-        completed: '已完成',
-        rejected: '已驳回',
+        in_progress: i18n.t('srm.evaluation.k17'),
+        pending: i18n.t('srm.evaluation.k18'),
+        completed: i18n.t('srm.evaluation.k19'),
+        rejected: i18n.t('srm.evaluation.k20'),
       },
     },
     filters: [
       {
         id: 'status',
-        label: '状态',
+        label: i18n.t('srm.evaluation.k21'),
         type: 'select',
         options: [
-          { label: '全部状态', value: 'all' },
-          { label: '进行中', value: 'in_progress' },
-          { label: '待审核', value: 'pending' },
-          { label: '已完成', value: 'completed' },
-          { label: '已驳回', value: 'rejected' },
+          { label: i18n.t('srm.evaluation.k22'), value: 'all' },
+          { label: i18n.t('srm.evaluation.k23'), value: 'in_progress' },
+          { label: i18n.t('srm.evaluation.k24'), value: 'pending' },
+          { label: i18n.t('srm.evaluation.k25'), value: 'completed' },
+          { label: i18n.t('srm.evaluation.k26'), value: 'rejected' },
         ],
       },
     ],
@@ -155,17 +156,17 @@ export const evaluationSchema: EntitySchema = {
 
   formSections: [
     {
-      title: '基本信息',
+      title: i18n.t('srm.evaluation.k27'),
       fields: ['evaluation_no', 'supplier_id', 'evaluation_date', 'evaluator', 'status'],
     },
     {
-      title: '评分详情',
+      title: i18n.t('srm.evaluation.k28'),
       fields: ['quality_score', 'delivery_score', 'service_score', 'price_score'],
     },
   ],
 
   formColCount: 2,
-  createTitle: '新增供应商评估',
-  editTitle: '编辑供应商评估',
-  detailTitle: '供应商评估详情',
+  createTitle: i18n.t('srm.evaluation.k29'),
+  editTitle: i18n.t('srm.evaluation.k30'),
+  detailTitle: i18n.t('srm.evaluation.k31'),
 };

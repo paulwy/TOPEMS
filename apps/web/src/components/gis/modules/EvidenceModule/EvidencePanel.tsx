@@ -13,6 +13,7 @@ import {
   Button,
   useTheme,
 } from '@mui/material';
+import i18n from '@/i18n';
 import type { EvidenceRecord, EvidenceType } from './types';
 import PhotoCapture from './PhotoCapture';
 import AudioCapture from './AudioCapture';
@@ -46,7 +47,7 @@ const EvidencePanel: React.FC<EvidencePanelProps> = ({
     (file: File, thumbnail?: string) => {
       const record: EvidenceRecord = {
         id: `evidence-${Date.now()}`,
-        title: `照片_${new Date().toLocaleString()}`,
+        title: `${i18n.t('components.evidence_panel.__0')}${new Date().toLocaleString()}`,
         evidence_type: 'photo',
         position,
         file_url: URL.createObjectURL(file),
@@ -66,7 +67,7 @@ const EvidencePanel: React.FC<EvidencePanelProps> = ({
     (file: File, duration: number) => {
       const record: EvidenceRecord = {
         id: `evidence-${Date.now()}`,
-        title: `录音_${new Date().toLocaleString()}`,
+        title: `${i18n.t('components.evidence_panel.__1')}${new Date().toLocaleString()}`,
         evidence_type: 'audio',
         position,
         file_url: URL.createObjectURL(file),
@@ -86,7 +87,7 @@ const EvidencePanel: React.FC<EvidencePanelProps> = ({
     (file: File, thumbnail?: string, duration?: number) => {
       const record: EvidenceRecord = {
         id: `evidence-${Date.now()}`,
-        title: `录像_${new Date().toLocaleString()}`,
+        title: `${i18n.t('components.evidence_panel.__2')}${new Date().toLocaleString()}`,
         evidence_type: 'video',
         position,
         file_url: URL.createObjectURL(file),
@@ -183,12 +184,12 @@ const EvidencePanel: React.FC<EvidencePanelProps> = ({
         }}
       >
         <Typography sx={{ fontSize: '1.125rem', fontWeight: 600, color: 'text.primary' }}>
-          取证记录
+          {i18n.t('components.evidence_panel.k3')}
         </Typography>
         <IconButton
           onClick={onClose}
           sx={{ borderRadius: 4, '&:hover': { bgcolor: 'grey.100' } }}
-          aria-label='关闭'
+          aria-label={i18n.t('components.evidence_panel.k0')}
         >
           <X
             size={20}
@@ -207,7 +208,7 @@ const EvidencePanel: React.FC<EvidencePanelProps> = ({
         }}
       >
         <Typography sx={{ fontSize: '0.875rem', color: 'text.secondary', mb: 12 }}>
-          采集取证
+          {i18n.t('components.evidence_panel.k4')}
         </Typography>
         <Box sx={{ display: 'flex', gap: 12 }}>
           <Button
@@ -234,7 +235,7 @@ const EvidencePanel: React.FC<EvidencePanelProps> = ({
               />
             </Box>
             <Typography sx={{ fontSize: '0.875rem', fontWeight: 500, color: 'grey.700' }}>
-              拍照
+              {i18n.t('components.evidence_panel.k5')}
             </Typography>
           </Button>
           <Button
@@ -261,7 +262,7 @@ const EvidencePanel: React.FC<EvidencePanelProps> = ({
               />
             </Box>
             <Typography sx={{ fontSize: '0.875rem', fontWeight: 500, color: 'grey.700' }}>
-              录音
+              {i18n.t('components.evidence_panel.k6')}
             </Typography>
           </Button>
           <Button
@@ -288,7 +289,7 @@ const EvidencePanel: React.FC<EvidencePanelProps> = ({
               />
             </Box>
             <Typography sx={{ fontSize: '0.875rem', fontWeight: 500, color: 'grey.700' }}>
-              录像
+              {i18n.t('components.evidence_panel.k7')}
             </Typography>
           </Button>
         </Box>
@@ -309,7 +310,7 @@ const EvidencePanel: React.FC<EvidencePanelProps> = ({
             <Search size={16} />
           </Box>
           <TextField
-            placeholder='搜索取证记录...'
+            placeholder={i18n.t('components.evidence_panel.k8')}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             size='small'
@@ -331,12 +332,12 @@ const EvidencePanel: React.FC<EvidencePanelProps> = ({
               key={type}
               label={
                 type === 'all'
-                  ? '全部'
+                  ? i18n.t('components.evidence_panel.k1')
                   : type === 'photo'
-                    ? '照片'
+                    ? i18n.t('components.evidence_panel.k2')
                     : type === 'audio'
-                      ? '录音'
-                      : '录像'
+                      ? i18n.t('components.evidence_panel.k3')
+                      : i18n.t('components.evidence_panel.k4')
               }
               onClick={() => setFilterType(type)}
               sx={{
@@ -380,7 +381,7 @@ const EvidencePanel: React.FC<EvidencePanelProps> = ({
               boxShadow: viewMode === 'grid' ? 1 : 0,
               '&:hover': { bgcolor: viewMode === 'grid' ? 'background.paper' : 'action.hover' },
             }}
-            aria-label='网格'
+            aria-label={i18n.t('components.evidence_panel.k5')}
           >
             <Grid
               size={16}
@@ -395,7 +396,7 @@ const EvidencePanel: React.FC<EvidencePanelProps> = ({
               boxShadow: viewMode === 'list' ? 1 : 0,
               '&:hover': { bgcolor: viewMode === 'list' ? 'background.paper' : 'action.hover' },
             }}
-            aria-label='列表'
+            aria-label={i18n.t('components.evidence_panel.k6')}
           >
             <List
               size={16}
@@ -422,7 +423,7 @@ const EvidencePanel: React.FC<EvidencePanelProps> = ({
               size={48}
               sx={{ color: 'action.disabled', mb: 1.5 }}
             />
-            <Typography sx={{ fontSize: '0.875rem' }}>暂无取证记录</Typography>
+            <Typography sx={{ fontSize: '0.875rem' }}>{i18n.t('components.evidence_panel.k7')}</Typography>
           </Box>
         ) : viewMode === 'grid' ? (
           <MuiGrid
@@ -497,10 +498,10 @@ const EvidencePanel: React.FC<EvidencePanelProps> = ({
                     </Typography>
                     <Typography sx={{ fontSize: '0.75rem', color: 'text.secondary' }}>
                       {record.evidence_type === 'photo'
-                        ? '照片'
+                        ? i18n.t('components.evidence_panel.k8')
                         : record.evidence_type === 'audio'
-                          ? '录音'
-                          : '录像'}
+                          ? i18n.t('components.evidence_panel.k9')
+                          : i18n.t('components.evidence_panel.k10')}
                       {record.duration && ` · ${formatDuration(record.duration)}`}
                     </Typography>
                   </Box>

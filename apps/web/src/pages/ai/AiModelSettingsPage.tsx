@@ -101,7 +101,7 @@ const mockModels: AIModel[] = [
     name: 'Claude 3 Opus',
     provider: 'Anthropic',
     type: 'chat',
-    description: 'Anthropic最强大的模型，擅长写作和分析',
+    description: i18n.t('pages.ai_model_settings_page.k0'),
     status: 'active',
     max_tokens: 200000,
     capabilities: [i18n.t('ai.ai_model_settings_page.k12'), i18n.t('ai.ai_model_settings_page.k11'), i18n.t('ai.ai_model_settings_page.k10'), i18n.t('ai.ai_model_settings_page.k9')],
@@ -110,7 +110,7 @@ const mockModels: AIModel[] = [
   },
   {
     id: 'ernie-4.0',
-    name: '文心一言 4.0',
+    name: i18n.t('pages.ai_model_settings_page.40_1'),
     provider: i18n.t('ai.ai_model_settings_page.k13'),
     type: 'chat',
     description: i18n.t('ai.ai_model_settings_page.k14'),

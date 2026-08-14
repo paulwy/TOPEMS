@@ -349,11 +349,11 @@ const ReturnDetailPage: React.FC = () => {
       <Box sx={{ overflow: 'auto' }}>
         <table style={{ width: '100%', borderCollapse: 'collapse' }}>
           <thead>
-            <tr style={{ borderBottom: '1px solid #eee' }}>
+            <tr style={{ borderBottom: `1px solid ${designTokens.colors.grey[200]}` }}>
               <th
                 style={{
                   textAlign: 'left',
-                  padding: '8px 12px',
+                  padding: `${designTokens.spacing.sm} 12px`,
                   fontSize: 12,
                   color: 'surface.400',
                 }}
@@ -363,7 +363,7 @@ const ReturnDetailPage: React.FC = () => {
               <th
                 style={{
                   textAlign: 'right',
-                  padding: '8px 12px',
+                  padding: `${designTokens.spacing.sm} 12px`,
                   fontSize: 12,
                   color: 'surface.400',
                 }}
@@ -373,7 +373,7 @@ const ReturnDetailPage: React.FC = () => {
               <th
                 style={{
                   textAlign: 'right',
-                  padding: '8px 12px',
+                  padding: `${designTokens.spacing.sm} 12px`,
                   fontSize: 12,
                   color: 'surface.400',
                 }}
@@ -383,7 +383,7 @@ const ReturnDetailPage: React.FC = () => {
               <th
                 style={{
                   textAlign: 'right',
-                  padding: '8px 12px',
+                  padding: `${designTokens.spacing.sm} 12px`,
                   fontSize: 12,
                   color: 'surface.400',
                 }}
@@ -396,20 +396,20 @@ const ReturnDetailPage: React.FC = () => {
             {items.map((item) => (
               <tr
                 key={item.id}
-                style={{ borderBottom: '1px solid #eee' }}
+                style={{ borderBottom: `1px solid ${designTokens.colors.grey[200]}` }}
               >
-                <td style={{ padding: '8px 12px', fontFamily: 'monospace', fontSize: '0.85rem' }}>
+                <td style={{ padding: `${designTokens.spacing.sm} 12px`, fontFamily: 'monospace', fontSize: '0.85rem' }}>
                   {item.product_id}
                 </td>
-                <td style={{ padding: '8px 12px', textAlign: 'right', fontFamily: 'monospace' }}>
+                <td style={{ padding: `${designTokens.spacing.sm} 12px`, textAlign: 'right', fontFamily: 'monospace' }}>
                   {item.quantity}
                 </td>
-                <td style={{ padding: '8px 12px', textAlign: 'right', fontFamily: 'monospace' }}>
+                <td style={{ padding: `${designTokens.spacing.sm} 12px`, textAlign: 'right', fontFamily: 'monospace' }}>
                   {formatCurrency(item.unit_price)}
                 </td>
                 <td
                   style={{
-                    padding: '8px 12px',
+                    padding: `${designTokens.spacing.sm} 12px`,
                     textAlign: 'right',
                     fontFamily: 'monospace',
                     color: ct.primary.main,

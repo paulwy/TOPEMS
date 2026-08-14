@@ -12,11 +12,11 @@ const budgetStatusColorMap: Record<string, 'success' | 'default' | 'error' | 'wa
 };
 
 const budgetStatusLabelMap: Record<string, string> = {
-  active: '进行中',
-  completed: '已完成',
-  exceeded: '超支',
-  pending: '待审批',
-  cancelled: '已取消',
+  active: i18n.t('shared.budget.k0'),
+  completed: i18n.t('shared.budget.k1'),
+  exceeded: i18n.t('shared.budget.k2'),
+  pending: i18n.t('shared.budget.k3'),
+  cancelled: i18n.t('shared.budget.k4'),
 };
 
 function renderBudgetStatusCell(row: Record<string, unknown>) {
@@ -214,7 +214,7 @@ export const expenseSchema: EntitySchema = {
       readonlyOnEdit: true,
       sortable: true,
       listWidth: 140,
-      placeholder: '请输入费用编号',
+      placeholder: i18n.t('shared.budget.k5'),
       validation: [{ type: 'maxLength', value: 100 }],
     },
     {
@@ -224,7 +224,7 @@ export const expenseSchema: EntitySchema = {
       required: true,
       sortable: true,
       listWidth: 120,
-      placeholder: '请输入费用类型',
+      placeholder: i18n.t('shared.budget.k6'),
       validation: [{ type: 'maxLength', value: 100 }],
     },
     {
@@ -233,7 +233,7 @@ export const expenseSchema: EntitySchema = {
       type: 'text',
       listWidth: 100,
       showInList: false,
-      placeholder: '请输入申请人',
+      placeholder: i18n.t('shared.budget.k7'),
       validation: [{ type: 'maxLength', value: 255 }],
     },
     {
@@ -242,7 +242,7 @@ export const expenseSchema: EntitySchema = {
       type: 'text',
       listWidth: 120,
       showInList: false,
-      placeholder: '请输入所属部门',
+      placeholder: i18n.t('shared.budget.k8'),
     },
     {
       name: 'amount',
@@ -317,7 +317,7 @@ export const expenseSchema: EntitySchema = {
       label: i18n.t('schema:erp.expense.label'),
       type: 'textarea',
       showInList: false,
-      placeholder: '请输入备注',
+      placeholder: i18n.t('shared.budget.k9'),
     },
     {
       name: 'created_at',

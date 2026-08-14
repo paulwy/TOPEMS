@@ -5,6 +5,7 @@ import { Sparkles, Check } from 'lucide-react';
 import { AIGenerateModal } from './AIGenerateModal';
 import { useAIHelper } from '../../hooks/useAIHelper';
 import type { CompleteRequest, CompletionItem, CompleteResponse } from '@/types/ai';
+import i18n from '@/i18n';
 
 export interface AIDataCompleterProps {
   isOpen: boolean;
@@ -26,9 +27,9 @@ const sourceTextColorMap: Record<string, string> = {
 };
 
 const sourceLabelMap: Record<string, string> = {
-  inference: '智能推断',
-  history: '历史数据',
-  knowledge: '知识库',
+  inference: i18n.t('components.ai_data_completer.k0'),
+  history: i18n.t('components.ai_data_completer.k1'),
+  knowledge: i18n.t('components.ai_data_completer.k2'),
 };
 
 export function AIDataCompleter({
@@ -103,11 +104,11 @@ export function AIDataCompleter({
     <AIGenerateModal
       isOpen={isOpen}
       onClose={onClose}
-      title='AI 智能补全'
-      description='AI 根据已有信息推断并补全相关字段'
+      title={i18n.t('components.ai_data_completer.ai_0')}
+      description={i18n.t('components.ai_data_completer.k1')}
       isLoading={isLoading}
       onConfirm={hasCompletions && selectedFields.size > 0 ? handleApply : undefined}
-      confirmText='应用所选'
+      confirmText={i18n.t('components.ai_data_completer.k3')}
     >
       <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
         <Box
@@ -121,7 +122,7 @@ export function AIDataCompleter({
             variant='body2'
             sx={{ fontWeight: 500 }}
           >
-            推荐补全的字段
+            {i18n.t('components.ai_data_completer.k2')}
           </Typography>
           {hasCompletions && (
             <Box sx={{ display: 'flex', gap: 1 }}>
@@ -130,14 +131,14 @@ export function AIDataCompleter({
                 size='small'
                 onClick={selectAll}
               >
-                全选
+                {i18n.t('components.ai_data_completer.k3')}
               </Button>
               <Button
                 variant='outlined'
                 size='small'
                 onClick={selectNone}
               >
-                取消
+                {i18n.t('components.ai_data_completer.k4')}
               </Button>
             </Box>
           )}
@@ -289,7 +290,7 @@ export function AIDataCompleter({
               size={40}
               style={{ opacity: 0.5, margin: '0 auto 12px' }}
             />
-            <Typography variant='body2'>正在分析数据...</Typography>
+            <Typography variant='body2'>{i18n.t('components.ai_data_completer.k5')}</Typography>
           </Box>
         )}
       </Box>

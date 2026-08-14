@@ -1,3 +1,4 @@
+import i18n from '@/i18n';
 /**
  * V53.0 微前端平台终局 — 插件市场
  *
@@ -191,12 +192,12 @@ export type MarketplaceChangeListener = (stats: PluginMarketStats) => void;
 const PRESET_PLUGINS: PluginManifest[] = [
   {
     id: 'advanced-table',
-    name: '高级表格',
+    name: i18n.t('pages.plugin-marketplace.k0'),
     version: '2.1.0',
-    description: '功能强大的数据表格插件，支持虚拟滚动、列固定、分组、聚合等',
+    description: i18n.t('pages.plugin-marketplace.k1'),
     author: 'TOPEMS Team',
     category: 'ui',
-    tags: ['表格', '数据', '虚拟滚动', '列固定'],
+    tags: [i18n.t('pages.plugin-marketplace.k5'), i18n.t('pages.plugin-marketplace.k4'), i18n.t('pages.plugin-marketplace.k3'), i18n.t('pages.plugin-marketplace.k2')],
     keywords: ['table', 'grid', 'datatable'],
     permissions: ['storage', 'clipboard'],
     dependencies: [],
@@ -204,7 +205,7 @@ const PRESET_PLUGINS: PluginManifest[] = [
     repository: 'https://github.com/topems/plugin-advanced-table',
     license: 'MIT',
     icon: 'table',
-    readme: '# 高级表格\n\n功能强大的数据表格插件...',
+    readme: i18n.t('pages.plugin-marketplace.k6'),
     sizeKb: 256,
     engines: { framework: ['react', 'vue'], platform: ['web'] },
     compatibilities: [
@@ -218,12 +219,12 @@ const PRESET_PLUGINS: PluginManifest[] = [
   },
   {
     id: 'echarts-chart',
-    name: 'ECharts 图表',
+    name: i18n.t('pages.plugin-marketplace.echarts_7'),
     version: '5.4.0',
-    description: '基于 Apache ECharts 的丰富图表库，支持 30+ 种图表类型',
+    description: i18n.t('pages.plugin-marketplace.k8'),
     author: 'TOPEMS Team',
     category: 'ui',
-    tags: ['图表', '可视化', 'ECharts'],
+    tags: [i18n.t('pages.plugin-marketplace.k10'), i18n.t('pages.plugin-marketplace.k9'), 'ECharts'],
     keywords: ['chart', 'echarts', 'visualization'],
     permissions: [],
     dependencies: [{ id: 'echarts', name: 'echarts', versionRange: '>=5.4.0', required: true }],
@@ -231,7 +232,7 @@ const PRESET_PLUGINS: PluginManifest[] = [
     repository: 'https://github.com/topems/plugin-echarts',
     license: 'Apache-2.0',
     icon: 'bar-chart-3',
-    readme: '# ECharts 图表\n\n基于 ECharts 的图表插件...',
+    readme: i18n.t('pages.plugin-marketplace.k11'),
     sizeKb: 2048,
     engines: { framework: ['react', 'vue', 'svelte'], platform: ['web'] },
     compatibilities: [],
@@ -242,12 +243,12 @@ const PRESET_PLUGINS: PluginManifest[] = [
   },
   {
     id: 'form-validator',
-    name: '表单校验引擎',
+    name: i18n.t('pages.plugin-marketplace.k12'),
     version: '1.8.2',
-    description: '声明式表单校验，支持同步/异步校验、条件校验、自定义规则',
+    description: i18n.t('pages.plugin-marketplace.k13'),
     author: 'TOPEMS Team',
     category: 'data',
-    tags: ['表单', '校验', '验证'],
+    tags: [i18n.t('pages.plugin-marketplace.k16'), i18n.t('pages.plugin-marketplace.k15'), i18n.t('pages.plugin-marketplace.k14')],
     keywords: ['form', 'validation', 'schema'],
     permissions: [],
     dependencies: [],
@@ -255,7 +256,7 @@ const PRESET_PLUGINS: PluginManifest[] = [
     repository: 'https://github.com/topems/plugin-form-validator',
     license: 'MIT',
     icon: 'check-circle',
-    readme: '# 表单校验引擎\n\n声明式表单校验插件...',
+    readme: i18n.t('pages.plugin-marketplace.k17'),
     sizeKb: 48,
     engines: { framework: ['react', 'vue', 'svelte', 'solid'], platform: ['web'] },
     compatibilities: [],
@@ -266,12 +267,12 @@ const PRESET_PLUGINS: PluginManifest[] = [
   },
   {
     id: 'dark-mode',
-    name: '深色主题',
+    name: i18n.t('pages.plugin-marketplace.k18'),
     version: '1.2.0',
-    description: '一键切换深色/浅色主题，支持跟随系统 + 自定义配色',
+    description: i18n.t('pages.plugin-marketplace.k19'),
     author: 'TOPEMS Team',
     category: 'theme',
-    tags: ['主题', '深色模式', '配色'],
+    tags: [i18n.t('pages.plugin-marketplace.k22'), i18n.t('pages.plugin-marketplace.k21'), i18n.t('pages.plugin-marketplace.k20')],
     keywords: ['theme', 'dark-mode', 'appearance'],
     permissions: ['storage'],
     dependencies: [],
@@ -279,7 +280,7 @@ const PRESET_PLUGINS: PluginManifest[] = [
     repository: 'https://github.com/topems/plugin-dark-mode',
     license: 'MIT',
     icon: 'moon',
-    readme: '# 深色主题\n\n深色模式切换插件...',
+    readme: i18n.t('pages.plugin-marketplace.k23'),
     sizeKb: 32,
     engines: { framework: ['react', 'vue', 'svelte'], platform: ['web'] },
     compatibilities: [],
@@ -290,12 +291,12 @@ const PRESET_PLUGINS: PluginManifest[] = [
   },
   {
     id: 'api-mock',
-    name: 'API Mock 服务',
+    name: i18n.t('pages.plugin-marketplace.apimock_24'),
     version: '3.0.0',
-    description: '本地 API Mock 服务，支持 REST/GraphQL、动态数据、延迟模拟',
+    description: i18n.t('pages.plugin-marketplace.k25'),
     author: 'TOPEMS Team',
     category: 'devtool',
-    tags: ['API', 'Mock', '开发工具'],
+    tags: ['API', 'Mock', i18n.t('pages.plugin-marketplace.k26')],
     keywords: ['mock', 'api', 'development'],
     permissions: ['network', 'storage'],
     dependencies: [],
@@ -303,7 +304,7 @@ const PRESET_PLUGINS: PluginManifest[] = [
     repository: 'https://github.com/topems/plugin-api-mock',
     license: 'MIT',
     icon: 'server',
-    readme: '# API Mock\n\nAPI Mock 服务插件...',
+    readme: i18n.t('pages.plugin-marketplace.k27'),
     sizeKb: 128,
     engines: { framework: [], platform: ['web', 'node'] },
     compatibilities: [],
@@ -314,12 +315,12 @@ const PRESET_PLUGINS: PluginManifest[] = [
   },
   {
     id: 'ai-assistant',
-    name: 'AI 助手',
+    name: i18n.t('pages.plugin-marketplace.ai_28'),
     version: '1.0.0',
-    description: '集成 AI 助手，提供智能代码补全、自然语言搜索、自动生成等功能',
+    description: i18n.t('pages.plugin-marketplace.k29'),
     author: 'TOPEMS Team',
     category: 'ai',
-    tags: ['AI', '助手', '智能'],
+    tags: ['AI', i18n.t('pages.plugin-marketplace.k31'), i18n.t('pages.plugin-marketplace.k30')],
     keywords: ['ai', 'assistant', 'llm'],
     permissions: ['network', 'storage'],
     dependencies: [],
@@ -327,7 +328,7 @@ const PRESET_PLUGINS: PluginManifest[] = [
     repository: 'https://github.com/topems/plugin-ai-assistant',
     license: 'Commercial',
     icon: 'sparkles',
-    readme: '# AI 助手\n\nAI 助手插件...',
+    readme: i18n.t('pages.plugin-marketplace.k32'),
     sizeKb: 512,
     engines: { framework: ['react', 'vue'], platform: ['web'] },
     compatibilities: [],
@@ -343,7 +344,7 @@ const DEFAULT_RATINGS: PluginRating[] = [
     pluginId: 'advanced-table',
     userId: 'user_001',
     rating: 5,
-    review: '非常好用的表格组件，虚拟滚动性能出色！',
+    review: i18n.t('pages.plugin-marketplace.k33'),
     createdAt: Date.now() - 7 * 24 * 60 * 60 * 1000,
     updatedAt: Date.now() - 7 * 24 * 60 * 60 * 1000,
     helpful: 24,
@@ -354,7 +355,7 @@ const DEFAULT_RATINGS: PluginRating[] = [
     pluginId: 'advanced-table',
     userId: 'user_002',
     rating: 4,
-    review: '功能丰富，但学习曲线稍陡峭。',
+    review: i18n.t('pages.plugin-marketplace.k34'),
     createdAt: Date.now() - 14 * 24 * 60 * 60 * 1000,
     updatedAt: Date.now() - 14 * 24 * 60 * 60 * 1000,
     helpful: 8,
@@ -365,7 +366,7 @@ const DEFAULT_RATINGS: PluginRating[] = [
     pluginId: 'echarts-chart',
     userId: 'user_003',
     rating: 5,
-    review: 'ECharts 集成做得很好，图表类型丰富。',
+    review: i18n.t('pages.plugin-marketplace.k35'),
     createdAt: Date.now() - 3 * 24 * 60 * 60 * 1000,
     updatedAt: Date.now() - 3 * 24 * 60 * 60 * 1000,
     helpful: 15,
@@ -707,11 +708,11 @@ export class PluginMarketplace {
       !manifest.engines.platform || manifest.engines.platform.includes(platform);
 
     if (!frameworkSupported) {
-      conflicts.push(`Plugin "${manifest.name}" 不支持 ${framework} 框架`);
+      conflicts.push(`Plugin "${manifest.name}${i18n.t('pages.plugin-marketplace.k36')}${framework}${i18n.t('pages.plugin-marketplace.k37')}`);
     }
 
     if (!platformSupported) {
-      conflicts.push(`Plugin "${manifest.name}" 不支持 ${platform} 平台`);
+      conflicts.push(`Plugin "${manifest.name}${i18n.t('pages.plugin-marketplace.k38')}${platform}${i18n.t('pages.plugin-marketplace.k39')}`);
     }
 
     manifest.dependencies.forEach((dep) => {
@@ -729,7 +730,7 @@ export class PluginMarketplace {
         const satisfies = this.satisfiesVersion(installed.installedVersion, dep.versionRange);
         if (!satisfies) {
           conflicts.push(
-            `Peer dependency "${dep.name}" 版本不满足: 需要 ${dep.versionRange}, 已安装 ${installed.installedVersion}`
+            `Peer dependency "${dep.name}${i18n.t('pages.plugin-marketplace.k40')}${dep.versionRange}${i18n.t('pages.plugin-marketplace.k41')}${installed.installedVersion}`
           );
         } else {
           resolvedDependencies.push(`${dep.name}@${installed.installedVersion}`);
@@ -737,7 +738,7 @@ export class PluginMarketplace {
       } else if (dep.required) {
         missingDependencies.push(dep.name);
       } else {
-        warnings.push(`可选依赖 "${dep.name}" 未安装`);
+        warnings.push(`${i18n.t('pages.plugin-marketplace.k42')}${dep.name}${i18n.t('pages.plugin-marketplace.k43')}`);
       }
     });
 

@@ -7,6 +7,7 @@ import CrudPage, { type CrudApiAdapter } from '@/components/templates/CrudPage';
 import { warehouseSchema } from '@/schemas/wms/warehouse';
 import { wmsApi } from '@/api/wms';
 import { WMS_PATHS } from '@/modules/wms/config';
+import i18n from '@/i18n';
 
 const warehouseApiAdapter: CrudApiAdapter = {
   list: async (params) => {
@@ -17,7 +18,7 @@ const warehouseApiAdapter: CrudApiAdapter = {
       status: params?.status as string | undefined,
     } as Parameters<typeof wmsApi.warehouses.list>[0]);
     if (!response.success) {
-      throw new Error('加载仓库列表失败');
+      throw new Error(i18n.t('pages.warehouse_management_page.k0'));
     }
     return {
       data: (response.data?.items || []) as unknown as Record<string, unknown>[],
@@ -30,7 +31,7 @@ const warehouseApiAdapter: CrudApiAdapter = {
       data as unknown as Parameters<typeof wmsApi.warehouses.create>[0]
     );
     if (!response.success) {
-      throw new Error('创建仓库失败');
+      throw new Error(i18n.t('pages.warehouse_management_page.k1'));
     }
     return response.data as unknown as Record<string, unknown>;
   },
@@ -41,7 +42,7 @@ const warehouseApiAdapter: CrudApiAdapter = {
       data as unknown as Parameters<typeof wmsApi.warehouses.update>[1]
     );
     if (!response.success) {
-      throw new Error('更新仓库失败');
+      throw new Error(i18n.t('pages.warehouse_management_page.k2'));
     }
     return response.data as unknown as Record<string, unknown>;
   },
@@ -49,7 +50,7 @@ const warehouseApiAdapter: CrudApiAdapter = {
   delete: async (id) => {
     const response = await wmsApi.warehouses.delete(id);
     if (!response.success) {
-      throw new Error('删除仓库失败');
+      throw new Error(i18n.t('pages.warehouse_management_page.k3'));
     }
   },
 };
@@ -60,9 +61,9 @@ const WarehouseManagementPage: React.FC = () => {
       schema={warehouseSchema}
       apiAdapter={warehouseApiAdapter}
       breadcrumbs={[
-        { label: '首页', href: '/dashboard' },
-        { label: '仓储管理', href: WMS_PATHS.root },
-        { label: '仓库管理' },
+        { label: i18n.t('pages.warehouse_management_page.k4'), href: '/dashboard' },
+        { label: i18n.t('pages.warehouse_management_page.k5'), href: WMS_PATHS.root },
+        { label: i18n.t('pages.warehouse_management_page.k6') },
       ]}
     />
   );

@@ -29,7 +29,7 @@ const SEGMENT_COLORS: Record<RfmSegment, string> = {
   at_risk: ct.warning.main,
   cannot_lost: ct.error.main,
   hibernating: 'colors.grey.500',
-  lost: '#616161',
+  lost: designTokens.colors.grey[600],
 };
 
 const CrmRfmPage: React.FC = () => {

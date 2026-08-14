@@ -1,17 +1,13 @@
 import React from 'react';
 import { Box, Typography, Button } from '@mui/material';
 import { Book, Plus } from 'lucide-react';
-import { useTranslation } from 'react-i18next';
 import { BackButton } from '@/components/common';
 import { DASHBOARD_PATHS } from '@/routes/dashboard';
-
+import i18n from '@/i18n';
 interface DictionaryHeaderProps {
   onCreateClick: () => void;
 }
-
 const DictionaryHeader: React.FC<DictionaryHeaderProps> = ({ onCreateClick }) => {
-  const { t } = useTranslation();
-
   return (
     <Box
       sx={{
@@ -43,14 +39,14 @@ const DictionaryHeader: React.FC<DictionaryHeaderProps> = ({ onCreateClick }) =>
                   size={28}
                   style={{ marginRight: 12 }}
                 />
-                {t('admin.dictionary_management_page.text_e1e56b')}
+                {i18n.t('admin.dictionary_management_page.text_e1e56b')}
               </Typography>
               <Typography
                 variant='body2'
                 color='text.secondary'
                 sx={{ mt: 0.5 }}
               >
-                {t('admin.dictionary_management_page.text_4e16c7')}
+                {i18n.t('admin.dictionary_management_page.text_4e16c7')}
               </Typography>
             </Box>
           </Box>
@@ -59,12 +55,11 @@ const DictionaryHeader: React.FC<DictionaryHeaderProps> = ({ onCreateClick }) =>
             startIcon={<Plus size={20} />}
             onClick={onCreateClick}
           >
-            {t('admin.dictionary_management_page.text_2c293b')}
+            {i18n.t('admin.dictionary_management_page.text_2c293b')}
           </Button>
         </Box>
       </Box>
     </Box>
   );
 };
-
 export default DictionaryHeader;

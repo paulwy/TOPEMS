@@ -14,6 +14,7 @@ import {
   LineChart,
   ShieldCheck,
 } from 'lucide-react';
+import i18n from '@/i18n';
 import { useNavigate } from 'react-router-dom';
 import {
   DashboardTemplate,
@@ -28,9 +29,7 @@ import type { QualityOverview } from '@/api/qms';
 import { designTokens } from '@/theme/tokens';
 import {QUERY_KEYS, CACHE_DURATIONS} from '@/lib/reactQuery';
 import { QMS_PATHS } from '@/modules/qms/config';
-
 const ct= designTokens.colors;
-
 const QmsDashboardPage: React.FC = () => {
   const navigate = useNavigate();
   const {
@@ -45,68 +44,66 @@ const QmsDashboardPage: React.FC = () => {
         qmsApi.getStatistics(),
       ]);
       if (!overviewRes.success) {
-        throw new Error(overviewRes.message || '加载质量概览失败');
+        throw new Error(overviewRes.message || i18n.t('qms.qms_dashboard_page.k0'));
       }
       return overviewRes.data ?? null;
     },
   
       staleTime: CACHE_DURATIONS.MEDIUM,});
-
   const stats: StatCard[] = [
     {
       id: 'total-inspections',
-      title: '检验总数',
+      title: i18n.t('qms.qms_dashboard_page.k1'),
       value: overview?.totalInspections ?? 0,
       icon: <ClipboardCheck style={{ width: 24, height: 24 }} />,
       color: 'primary',
       change: overview?.totalInspections ? 5 : undefined,
-      changeLabel: '较上月',
+      changeLabel: i18n.t('qms.qms_dashboard_page.k2'),
     },
     {
       id: 'pass-rate',
-      title: '合格率',
+      title: i18n.t('qms.qms_dashboard_page.k3'),
       value: overview?.passRate != null ? `${overview.passRate.toFixed(1)}%` : '0%',
       icon: <CheckCircle style={{ width: 24, height: 24 }} />,
       color: 'success',
       change: overview?.passRate && overview.passRate >= 95 ? 1.2 : -0.3,
-      changeLabel: '较上月',
+      changeLabel: i18n.t('qms.qms_dashboard_page.k4'),
     },
     {
       id: 'defect-count',
-      title: '不合格品数',
+      title: i18n.t('qms.qms_dashboard_page.k5'),
       value: overview?.totalIssues ?? 0,
       icon: <XCircle style={{ width: 24, height: 24 }} />,
       color: 'error',
       change: overview?.totalIssues ? -2 : undefined,
-      changeLabel: '较上月',
+      changeLabel: i18n.t('qms.qms_dashboard_page.k6'),
     },
     {
       id: 'eightd-count',
-      title: '8D报告数',
+      title: i18n.t('pages.qms_dashboard_page.8d_0'),
       value: overview?.eightdCount ?? 0,
       icon: <FileText style={{ width: 24, height: 24 }} />,
       color: 'warning',
     },
     {
       id: 'spc-count',
-      title: 'SPC图表数',
+      title: i18n.t('pages.qms_dashboard_page.spc_1'),
       value: overview?.spcChartCount ?? 0,
       icon: <BarChart3 style={{ width: 24, height: 24 }} />,
       color: 'info',
     },
     {
       id: 'audit-count',
-      title: '审核计划数',
+      title: i18n.t('qms.qms_dashboard_page.k7'),
       value: overview?.auditPlanCount ?? 0,
       icon: <ClipboardList style={{ width: 24, height: 24 }} />,
       color: 'secondary',
     },
   ];
-
   const charts: ChartCard[] = [
     {
       id: 'inspection-trend',
-      title: '各月检验趋势',
+      title: i18n.t('qms.qms_dashboard_page.k8'),
       type: 'bar',
       height: 350,
       chart: (
@@ -144,14 +141,14 @@ const QmsDashboardPage: React.FC = () => {
               ))}
             </Box>
           ) : (
-            <Typography color='text.secondary'>暂无趋势数据</Typography>
+            <Typography color='text.secondary'>{i18n.t('qms.qms_dashboard_page.k9')}</Typography>
           )}
         </Box>
       ),
     },
     {
       id: 'defect-distribution',
-      title: '不合格类型分布',
+      title: i18n.t('qms.qms_dashboard_page.k10'),
       type: 'pie',
       height: 350,
       chart: (
@@ -209,14 +206,14 @@ const QmsDashboardPage: React.FC = () => {
               })}
             </Box>
           ) : (
-            <Typography color='text.secondary'>暂无分布数据</Typography>
+            <Typography color='text.secondary'>{i18n.t('qms.qms_dashboard_page.k11')}</Typography>
           )}
         </Box>
       ),
     },
     {
       id: 'spc-overview',
-      title: 'SPC控制图概览',
+      title: i18n.t('pages.qms_dashboard_page.spc_2'),
       type: 'line',
       height: 350,
       chart: (
@@ -315,99 +312,96 @@ const QmsDashboardPage: React.FC = () => {
               </svg>
             </Box>
           ) : (
-            <Typography color='text.secondary'>暂无SPC数据</Typography>
+            <Typography color='text.secondary'>{i18n.t('qms.qms_dashboard_page.spc_12')}</Typography>
           )}
         </Box>
       ),
     },
   ];
-
   const quickActions: QuickAction[] = [
     {
       id: 'new-inspection',
-      label: '新建检验',
+      label: i18n.t('qms.qms_dashboard_page.k13'),
       icon: <Plus style={{ width: 20, height: 20 }} />,
       onClick: () => navigate(QMS_PATHS.inspection),
       color: ct.secondary[400],
     },
     {
       id: 'quality-standards',
-      label: '质量标准',
+      label: i18n.t('qms.qms_dashboard_page.k14'),
       icon: <BookOpen style={{ width: 20, height: 20 }} />,
       onClick: () => navigate(QMS_PATHS.standards),
       color: 'success.main',
     },
     {
       id: 'nonconformance',
-      label: '不合格品报告',
+      label: i18n.t('qms.qms_dashboard_page.k15'),
       icon: <AlertTriangle style={{ width: 20, height: 20 }} />,
       onClick: () => navigate(QMS_PATHS.nonconformance),
       color: 'error.main',
     },
     {
       id: 'spc-analysis',
-      label: 'SPC分析',
+      label: i18n.t('pages.qms_dashboard_page.spc_3'),
       icon: <LineChart style={{ width: 20, height: 20 }} />,
       onClick: () => navigate(QMS_PATHS.spc),
       color: 'warning.main',
     },
     {
       id: 'audit-management',
-      label: '审核管理',
+      label: i18n.t('qms.qms_dashboard_page.k16'),
       icon: <ShieldCheck style={{ width: 20, height: 20 }} />,
       onClick: () => navigate(QMS_PATHS.auditManagement),
       color: 'secondary.main',
     },
   ];
-
   const recentItems: RecentItem[] = [
     {
       id: 'recent-inspection',
-      title: '最近检验任务',
-      description: `${overview?.totalInspections ?? 0} 项检验进行中`,
+      title: i18n.t('qms.qms_dashboard_page.k17'),
+      description: `${overview?.totalInspections ?? 0}${i18n.t('pages.qms_dashboard_page.k4')}`,
       icon: <ClipboardCheck style={{ width: 16, height: 16 }} />,
       status: 'info',
-      time: '今天',
+      time: i18n.t('qms.qms_dashboard_page.k18'),
       onClick: () => navigate(QMS_PATHS.inspection),
     },
     {
       id: 'recent-nonconformance',
-      title: '最近不合格',
-      description: `${overview?.totalIssues ?? 0} 项不合格记录`,
+      title: i18n.t('qms.qms_dashboard_page.k19'),
+      description: `${overview?.totalIssues ?? 0}${i18n.t('pages.qms_dashboard_page.k5')}`,
       icon: <XCircle style={{ width: 16, height: 16 }} />,
       status: 'warning',
-      time: '今天',
+      time: i18n.t('qms.qms_dashboard_page.k20'),
       onClick: () => navigate(QMS_PATHS.nonconformance),
     },
     {
       id: 'recent-8d',
-      title: '最近8D',
-      description: `${overview?.eightdCount ?? 0} 份8D报告`,
+      title: i18n.t('qms.qms_dashboard_page.8d_21'),
+      description: `${overview?.eightdCount ?? 0}${i18n.t('pages.qms_dashboard_page.8d_6')}`,
       icon: <FileText style={{ width: 16, height: 16 }} />,
       status: 'default',
-      time: '本周',
+      time: i18n.t('qms.qms_dashboard_page.k22'),
       onClick: () => navigate(QMS_PATHS.eightd),
     },
     {
       id: 'recent-audit',
-      title: '最近审核',
-      description: `${overview?.auditPlanCount ?? 0} 项审核计划`,
+      title: i18n.t('qms.qms_dashboard_page.k23'),
+      description: `${overview?.auditPlanCount ?? 0}${i18n.t('pages.qms_dashboard_page.k7')}`,
       icon: <ClipboardList style={{ width: 16, height: 16 }} />,
       status: 'info',
-      time: '本周',
+      time: i18n.t('qms.qms_dashboard_page.k24'),
       onClick: () => navigate(QMS_PATHS.auditManagement),
     },
     {
       id: 'recent-apqp',
-      title: '最近APQP',
-      description: `${overview?.fmeaCount ?? 0} 项APQP项目`,
+      title: i18n.t('qms.qms_dashboard_page.apqp_25'),
+      description: `${overview?.fmeaCount ?? 0}${i18n.t('pages.qms_dashboard_page.apqp_8')}`,
       icon: <BarChart3 style={{ width: 16, height: 16 }} />,
       status: 'default',
-      time: '本月',
+      time: i18n.t('qms.qms_dashboard_page.k26'),
       onClick: () => navigate(QMS_PATHS.apqp),
     },
   ];
-
   return (
     <PageContainer>
       <DashboardTemplate
@@ -415,14 +409,13 @@ const QmsDashboardPage: React.FC = () => {
         stats={stats}
         charts={charts}
         quickActions={quickActions}
-        quickActionsTitle='快捷操作'
+        quickActionsTitle={i18n.t('qms.qms_dashboard_page.k27')}
         recentItems={recentItems}
-        recentTitle='最近事项'
+        recentTitle={i18n.t('qms.qms_dashboard_page.k28')}
         loading={loading}
         onRefresh={loadDashboardData}
       />
     </PageContainer>
   );
 };
-
 export default QmsDashboardPage;

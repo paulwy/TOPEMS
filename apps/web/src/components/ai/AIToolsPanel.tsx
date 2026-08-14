@@ -13,6 +13,7 @@ import {
   Tooltip,
   Button,
 } from '@mui/material';
+import i18n from '@/i18n';
 import { FileJson, Calendar, Calculator, Shield, Copy, Check, ArrowRightLeft } from 'lucide-react';
 
 const JsonFormatter: React.FC = () => {
@@ -62,7 +63,7 @@ const JsonFormatter: React.FC = () => {
         variant='subtitle2'
         sx={{ mb: 1.5, fontWeight: 600 }}
       >
-        JSON 数据格式化工具
+        {i18n.t('components.ai_tools_panel.json_0')}
       </Typography>
 
       <Box sx={{ display: 'flex', gap: 1, mb: 1.5 }}>
@@ -71,21 +72,21 @@ const JsonFormatter: React.FC = () => {
           variant='outlined'
           onClick={handleFormat}
         >
-          格式化
+          {i18n.t('components.ai_tools_panel.k1')}
         </Button>
         <Button
           size='small'
           variant='outlined'
           onClick={handleMinify}
         >
-          压缩
+          {i18n.t('components.ai_tools_panel.k2')}
         </Button>
         <Button
           size='small'
           variant='outlined'
           onClick={handleClear}
         >
-          清空
+          {i18n.t('components.ai_tools_panel.k3')}
         </Button>
       </Box>
 
@@ -93,7 +94,7 @@ const JsonFormatter: React.FC = () => {
         multiline
         rows={4}
         fullWidth
-        placeholder='输入 JSON 数据...'
+        placeholder={i18n.t('components.ai_tools_panel.json_4')}
         value={input}
         onChange={(e) => setInput(e.target.value)}
         sx={{ mb: 1.5 }}
@@ -121,12 +122,12 @@ const JsonFormatter: React.FC = () => {
             sx={{ mb: 1 }}
           />
           <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
-            <Tooltip title={copied ? '已复制' : '复制结果'}>
+            <Tooltip title={copied ? i18n.t('components.ai_tools_panel.k1') : i18n.t('components.ai_tools_panel.k0')}>
               <IconButton
                 size='small'
                 onClick={handleCopy}
                 color={copied ? 'success' : 'primary'}
-                aria-label='确认'
+                aria-label={i18n.t('components.ai_tools_panel.k2')}
               >
                 {copied ? (
                   <Check style={{ width: 16, height: 16 }} />
@@ -204,14 +205,14 @@ const DateCalculator: React.FC = () => {
         variant='subtitle2'
         sx={{ mb: 1.5, fontWeight: 600 }}
       >
-        日期计算器
+        {i18n.t('components.ai_tools_panel.k5')}
       </Typography>
 
       <Box sx={{ display: 'flex', gap: 1, mb: 1.5 }}>
         <TextField
           type='date'
           size='small'
-          label='开始日期'
+          label={i18n.t('components.ai_tools_panel.k3')}
           value={startDate}
           onChange={(e) => setStartDate(e.target.value)}
           sx={{ flex: 1 }}
@@ -219,7 +220,7 @@ const DateCalculator: React.FC = () => {
         <TextField
           type='date'
           size='small'
-          label='结束日期'
+          label={i18n.t('components.ai_tools_panel.k4')}
           value={endDate}
           onChange={(e) => setEndDate(e.target.value)}
           sx={{ flex: 1 }}
@@ -232,35 +233,35 @@ const DateCalculator: React.FC = () => {
           variant='outlined'
           onClick={calculate}
         >
-          计算
+          {i18n.t('components.ai_tools_panel.k6')}
         </Button>
         <Button
           size='small'
           variant='outlined'
           onClick={() => addDays(7)}
         >
-          +7天
+          {i18n.t('components.ai_tools_panel.7_7')}
         </Button>
         <Button
           size='small'
           variant='outlined'
           onClick={() => addDays(30)}
         >
-          +30天
+          {i18n.t('components.ai_tools_panel.30_8')}
         </Button>
         <Button
           size='small'
           variant='outlined'
           onClick={setToToday}
         >
-          今天
+          {i18n.t('components.ai_tools_panel.k9')}
         </Button>
         <Button
           size='small'
           variant='outlined'
           onClick={clear}
         >
-          清空
+          {i18n.t('components.ai_tools_panel.k10')}
         </Button>
       </Box>
 
@@ -268,17 +269,17 @@ const DateCalculator: React.FC = () => {
         <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
           <Chip
             icon={<Calendar style={{ width: 14, height: 14 }} />}
-            label={`总天数: ${result.days}`}
+            label={`${i18n.t('components.ai_tools_panel.k11')} ${result.days}`}
             size='small'
           />
           <Chip
             icon={<Calculator style={{ width: 14, height: 14 }} />}
-            label={`工作日: ${result.workdays}`}
+            label={`${i18n.t('components.ai_tools_panel.k12')} ${result.workdays}`}
             size='small'
             color='primary'
           />
           <Chip
-            label={`周末: ${result.weekends}`}
+            label={`${i18n.t('components.ai_tools_panel.k13')} ${result.weekends}`}
             size='small'
             variant='outlined'
           />
@@ -290,44 +291,44 @@ const DateCalculator: React.FC = () => {
 
 const unitCategories = {
   weight: {
-    name: '重量',
+    name: i18n.t('components.ai_tools_panel.k5'),
     units: [
-      { label: '千克 (kg)', factor: 1 },
-      { label: '克 (g)', factor: 1000 },
-      { label: '毫克 (mg)', factor: 1000000 },
-      { label: '吨 (t)', factor: 0.001 },
-      { label: '磅 (lb)', factor: 2.20462 },
-      { label: '盎司 (oz)', factor: 35.274 },
+      { label: i18n.t('components.ai_tools_panel.kg_6'), factor: 1 },
+      { label: i18n.t('components.ai_tools_panel.g_7'), factor: 1000 },
+      { label: i18n.t('components.ai_tools_panel.mg_8'), factor: 1000000 },
+      { label: i18n.t('components.ai_tools_panel.t_9'), factor: 0.001 },
+      { label: i18n.t('components.ai_tools_panel.lb_10'), factor: 2.20462 },
+      { label: i18n.t('components.ai_tools_panel.oz_11'), factor: 35.274 },
     ],
   },
   volume: {
-    name: '体积',
+    name: i18n.t('components.ai_tools_panel.k12'),
     units: [
-      { label: '升 (L)', factor: 1 },
-      { label: '毫升 (mL)', factor: 1000 },
-      { label: '立方米 (m³)', factor: 0.001 },
-      { label: '立方厘米 (cm³)', factor: 1000 },
-      { label: '加仑 (gal)', factor: 0.264172 },
-      { label: '夸脱 (qt)', factor: 1.05669 },
+      { label: i18n.t('components.ai_tools_panel.l_13'), factor: 1 },
+      { label: i18n.t('components.ai_tools_panel.ml_14'), factor: 1000 },
+      { label: i18n.t('components.ai_tools_panel.m_14'), factor: 0.001 },
+      { label: i18n.t('components.ai_tools_panel.cm_15'), factor: 1000 },
+      { label: i18n.t('components.ai_tools_panel.gal_15'), factor: 0.264172 },
+      { label: i18n.t('components.ai_tools_panel.qt_16'), factor: 1.05669 },
     ],
   },
   length: {
-    name: '长度',
+    name: i18n.t('components.ai_tools_panel.k17'),
     units: [
-      { label: '米 (m)', factor: 1 },
-      { label: '厘米 (cm)', factor: 100 },
-      { label: '毫米 (mm)', factor: 1000 },
-      { label: '千米 (km)', factor: 0.001 },
-      { label: '英寸 (in)', factor: 39.3701 },
-      { label: '英尺 (ft)', factor: 3.28084 },
+      { label: i18n.t('components.ai_tools_panel.m_18'), factor: 1 },
+      { label: i18n.t('components.ai_tools_panel.cm_19'), factor: 100 },
+      { label: i18n.t('components.ai_tools_panel.mm_20'), factor: 1000 },
+      { label: i18n.t('components.ai_tools_panel.km_21'), factor: 0.001 },
+      { label: i18n.t('components.ai_tools_panel.in_22'), factor: 39.3701 },
+      { label: i18n.t('components.ai_tools_panel.ft_23'), factor: 3.28084 },
     ],
   },
   temperature: {
-    name: '温度',
+    name: i18n.t('components.ai_tools_panel.k24'),
     units: [
-      { label: '摄氏度 (°C)', factor: 1, isSpecial: true },
-      { label: '华氏度 (°F)', factor: 1, isSpecial: true },
-      { label: '开尔文 (K)', factor: 1, isSpecial: true },
+      { label: i18n.t('components.ai_tools_panel.c_16'), factor: 1, isSpecial: true },
+      { label: i18n.t('components.ai_tools_panel.f_17'), factor: 1, isSpecial: true },
+      { label: i18n.t('components.ai_tools_panel.k_25'), factor: 1, isSpecial: true },
     ],
   },
 };
@@ -397,7 +398,7 @@ const UnitConverter: React.FC = () => {
         variant='subtitle2'
         sx={{ mb: 1.5, fontWeight: 600 }}
       >
-        单位换算器
+        {i18n.t('components.ai_tools_panel.k18')}
       </Typography>
 
       <FormControl
@@ -405,11 +406,11 @@ const UnitConverter: React.FC = () => {
         size='small'
         sx={{ mb: 1.5 }}
       >
-        <InputLabel>类别</InputLabel>
+        <InputLabel>{i18n.t('components.ai_tools_panel.k26')}</InputLabel>
         <TextField
           select
           value={category}
-          label='类别'
+          label={i18n.t('components.ai_tools_panel.k27')}
           onChange={(e) => {
             setCategory(e.target.value as CategoryKey);
             setFromUnit(0);
@@ -432,7 +433,7 @@ const UnitConverter: React.FC = () => {
         <TextField
           type='number'
           size='small'
-          placeholder='输入数值'
+          placeholder={i18n.t('components.ai_tools_panel.k28')}
           value={fromValue}
           onChange={(e) => setFromValue(e.target.value)}
           sx={{ flex: 1 }}
@@ -456,11 +457,11 @@ const UnitConverter: React.FC = () => {
       </Box>
 
       <Box sx={{ display: 'flex', justifyContent: 'center', mb: 1.5 }}>
-        <Tooltip title='交换单位'>
+        <Tooltip title={i18n.t('components.ai_tools_panel.k29')}>
           <IconButton
             size='small'
             onClick={handleSwap}
-            aria-label='交换'
+            aria-label={i18n.t('components.ai_tools_panel.k30')}
           >
             <ArrowRightLeft style={{ width: 18, height: 18 }} />
           </IconButton>
@@ -470,7 +471,7 @@ const UnitConverter: React.FC = () => {
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1.5 }}>
         <TextField
           size='small'
-          placeholder='结果'
+          placeholder={i18n.t('components.ai_tools_panel.k31')}
           value={result}
           disabled
           sx={{ flex: 1 }}
@@ -491,12 +492,12 @@ const UnitConverter: React.FC = () => {
             </option>
           ))}
         </TextField>
-        <Tooltip title={copied ? '已复制' : '复制结果'}>
+        <Tooltip title={copied ? i18n.t('components.ai_tools_panel.k33') : i18n.t('components.ai_tools_panel.k32')}>
           <IconButton
             size='small'
             onClick={handleCopy}
             color={copied ? 'success' : 'primary'}
-            aria-label='确认'
+            aria-label={i18n.t('components.ai_tools_panel.k34')}
           >
             {copied ? (
               <Check style={{ width: 14, height: 14 }} />
@@ -513,38 +514,38 @@ const UnitConverter: React.FC = () => {
 const maskTypes = [
   {
     id: 'phone',
-    label: '手机号',
+    label: i18n.t('components.ai_tools_panel.k35'),
     pattern: /(\d{3})\d{4}(\d{4})/,
     replacement: '$1****$2',
     example: '13800138000 → 138****8000',
   },
   {
     id: 'id',
-    label: '身份证',
+    label: i18n.t('components.ai_tools_panel.k36'),
     pattern: /(\d{6})\d{8}(\d{4})/,
     replacement: '$1********$2',
     example: '110101199001011234 → 110101********1234',
   },
   {
     id: 'email',
-    label: '邮箱',
+    label: i18n.t('components.ai_tools_panel.k37'),
     pattern: /(\w{1,3})\w+(@\w+\.\w+)/,
     replacement: '$1***$2',
     example: 'test@example.com → tes***@example.com',
   },
   {
     id: 'bank',
-    label: '银行卡',
+    label: i18n.t('components.ai_tools_panel.k38'),
     pattern: /(\d{4})\d+(\d{4})/,
     replacement: '$1****$2',
     example: '6222021234567890123 → 6222****0123',
   },
   {
     id: 'name',
-    label: '姓名',
+    label: i18n.t('components.ai_tools_panel.k39'),
     pattern: /([\u4E00-\u9FA5]{1})[\u4E00-\u9FA5]+/,
     replacement: '$1**',
-    example: '张三 → 张**',
+    example: i18n.t('components.ai_tools_panel.k19'),
   },
 ];
 
@@ -585,7 +586,7 @@ const DataMasker: React.FC = () => {
         variant='subtitle2'
         sx={{ mb: 1.5, fontWeight: 600 }}
       >
-        数据脱敏工具
+        {i18n.t('components.ai_tools_panel.k20')}
       </Typography>
 
       <FormControl
@@ -593,11 +594,11 @@ const DataMasker: React.FC = () => {
         size='small'
         sx={{ mb: 1 }}
       >
-        <InputLabel>脱敏类型</InputLabel>
+        <InputLabel>{i18n.t('components.ai_tools_panel.k40')}</InputLabel>
         <TextField
           select
           value={selectedType}
-          label='脱敏类型'
+          label={i18n.t('components.ai_tools_panel.k41')}
           onChange={(e) => setSelectedType(e.target.value)}
         >
           {maskTypes.map((m) => (
@@ -617,7 +618,7 @@ const DataMasker: React.FC = () => {
           color='text.secondary'
           sx={{ mb: 1.5, display: 'block' }}
         >
-          示例: {currentMask.example}
+          [i18n.t('components.ai_tools_panel.k21')]: {currentMask.example}
         </Typography>
       )}
 
@@ -625,7 +626,7 @@ const DataMasker: React.FC = () => {
         multiline
         rows={3}
         fullWidth
-        placeholder='输入需要脱敏的数据，每行一条...'
+        placeholder={i18n.t('components.ai_tools_panel.k22')}
         value={input}
         onChange={(e) => setInput(e.target.value)}
         sx={{ mb: 1.5 }}
@@ -638,22 +639,22 @@ const DataMasker: React.FC = () => {
           variant='outlined'
           onClick={handleMask}
         >
-          脱敏
+          {i18n.t('components.ai_tools_panel.k23')}
         </Button>
         <Button
           size='small'
           variant='outlined'
           onClick={handleClear}
         >
-          清空
+          {i18n.t('components.ai_tools_panel.k24')}
         </Button>
         {output && (
-          <Tooltip title={copied ? '已复制' : '复制结果'}>
+          <Tooltip title={copied ? i18n.t('components.ai_tools_panel.k43') : i18n.t('components.ai_tools_panel.k42')}>
             <IconButton
               size='small'
               onClick={handleCopy}
               color={copied ? 'success' : 'primary'}
-              aria-label='确认'
+              aria-label={i18n.t('components.ai_tools_panel.k44')}
             >
               {copied ? (
                 <Check style={{ width: 14, height: 14 }} />
@@ -694,17 +695,17 @@ export const AIToolsPanel: React.FC<AIToolsPanelProps> = ({ defaultTool, onClose
     },
     {
       id: 'date',
-      label: '日期',
+      label: i18n.t('components.ai_tools_panel.k45'),
       icon: <Calendar style={{ width: 16, height: 16 }} />,
     },
     {
       id: 'unit',
-      label: '单位',
+      label: i18n.t('components.ai_tools_panel.k46'),
       icon: <ArrowRightLeft style={{ width: 16, height: 16 }} />,
     },
     {
       id: 'mask',
-      label: '脱敏',
+      label: i18n.t('components.ai_tools_panel.k47'),
       icon: <Shield style={{ width: 16, height: 16 }} />,
     },
   ];

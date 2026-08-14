@@ -1,15 +1,16 @@
 import React, { useState } from 'react';
 import { Box, Menu, Paper, TextField, Typography, Button } from '@mui/material';
 import { Calendar, ChevronDown } from 'lucide-react';
+import i18n from '@/i18n';
 
 // 预设日期范围
 const PRESETS = [
-  { id: 'today', label: '今天' },
-  { id: 'yesterday', label: '昨天' },
-  { id: 'week', label: '最近7天' },
-  { id: 'month', label: '最近30天' },
-  { id: 'quarter', label: '最近90天' },
-  { id: 'year', label: '最近一年' },
+  { id: 'today', label: i18n.t('shared.date_range_picker.k0') },
+  { id: 'yesterday', label: i18n.t('shared.date_range_picker.k1') },
+  { id: 'week', label: i18n.t('shared.date_range_picker.7_2') },
+  { id: 'month', label: i18n.t('shared.date_range_picker.30_3') },
+  { id: 'quarter', label: i18n.t('shared.date_range_picker.90_4') },
+  { id: 'year', label: i18n.t('shared.date_range_picker.k5') },
 ] as const;
 
 // 获取预设日期范围
@@ -128,7 +129,7 @@ export const DateRangePicker: React.FC<DateRangePickerProps> = ({
                 color='text.secondary'
                 sx={{ mb: 1, display: 'block' }}
               >
-                快速选择
+                {i18n.t('components.date_range_picker.k0')}
               </Typography>
               <Box
                 sx={{
@@ -158,7 +159,7 @@ export const DateRangePicker: React.FC<DateRangePickerProps> = ({
               color='text.secondary'
               sx={{ mb: 1, display: 'block' }}
             >
-              自定义范围
+              {i18n.t('components.date_range_picker.k1')}
             </Typography>
             <Box
               sx={{
@@ -180,7 +181,7 @@ export const DateRangePicker: React.FC<DateRangePickerProps> = ({
                 variant='body2'
                 color='text.secondary'
               >
-                至
+                {i18n.t('components.date_range_picker.k2')}
               </Typography>
               <TextField
                 type='date'
@@ -198,7 +199,7 @@ export const DateRangePicker: React.FC<DateRangePickerProps> = ({
               size='small'
               disabled={!customStart || !customEnd}
             >
-              应用
+              {i18n.t('components.date_range_picker.k3')}
             </Button>
           </Box>
         </Paper>

@@ -17,6 +17,7 @@ import {
   parseQueryName,
   queryHash,
 } from '@/utils/graphql-performance';
+import i18n from '@/i18n';
 import { onBffPerformance } from '@/api/bff';
 import { logger } from '@/utils/logger';
 
@@ -124,13 +125,13 @@ function ensureAutoRegistered(): void {
 
       if (duration >= globalState.slowQueryThreshold) {
         perfLogger.warn(
-          `慢查询检测: ${operationName} - ${duration.toFixed(0)}ms (阈值: ${globalState.slowQueryThreshold}ms)`
+          `${i18n.t('shared.use_bff_performance.k0')}${operationName} - ${duration.toFixed(0)}${i18n.t('shared.use_bff_performance.ms_1')}${globalState.slowQueryThreshold}ms)`
         );
         globalState.slowQueryCallbacks.forEach((cb) => {
           try {
             cb(record, globalState.slowQueryThreshold);
           } catch (e) {
-            perfLogger.error('慢查询回调执行失败:', e);
+            perfLogger.error(i18n.t('shared.use_bff_performance.k2'), e);
           }
         });
       }
@@ -213,13 +214,13 @@ export function useBffPerformance(): UseBffPerformanceResult {
 
       if (duration >= globalState.slowQueryThreshold) {
         perfLogger.warn(
-          `慢查询检测: ${operationName} - ${duration.toFixed(0)}ms (阈值: ${globalState.slowQueryThreshold}ms)`
+          `${i18n.t('shared.use_bff_performance.k3')}${operationName} - ${duration.toFixed(0)}${i18n.t('shared.use_bff_performance.ms_4')}${globalState.slowQueryThreshold}ms)`
         );
         globalState.slowQueryCallbacks.forEach((cb) => {
           try {
             cb(record, globalState.slowQueryThreshold);
           } catch (e) {
-            perfLogger.error('慢查询回调执行失败:', e);
+            perfLogger.error(i18n.t('shared.use_bff_performance.k5'), e);
           }
         });
       }

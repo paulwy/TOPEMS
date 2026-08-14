@@ -11,6 +11,7 @@ import {
   Button,
   Stack,
 } from '@mui/material';
+import i18n from '@/i18n';
 import { CheckCircle, XCircle, Loader2, ArrowRightLeft } from 'lucide-react';
 import type { Approval } from '@/api/workflow';
 
@@ -60,7 +61,7 @@ export const buildActions = (
 
   return [
     {
-      label: '通过',
+      label: i18n.t('pages.approval_actions.k0'),
       icon: <CheckCircle size={18} />,
       onClick: () => {
         setApprovalAction('approve');
@@ -71,7 +72,7 @@ export const buildActions = (
       color: 'success',
     },
     {
-      label: '拒绝',
+      label: i18n.t('pages.approval_actions.k1'),
       icon: <XCircle size={18} />,
       onClick: () => {
         setApprovalAction('reject');
@@ -82,7 +83,7 @@ export const buildActions = (
       color: 'error',
     },
     {
-      label: '转办',
+      label: i18n.t('pages.approval_actions.k2'),
       icon: <ArrowRightLeft size={18} />,
       onClick: () => {
         setDelegateTarget('');
@@ -93,7 +94,7 @@ export const buildActions = (
       color: 'primary',
     },
     {
-      label: '委派',
+      label: i18n.t('pages.approval_actions.k3'),
       icon: <ArrowRightLeft size={18} />,
       onClick: () => {
         setDelegateTarget('');
@@ -130,13 +131,13 @@ const ApprovalActions: React.FC<ApprovalActionsProps> = ({
         open={showApprovalModal}
         onClose={() => setShowApprovalModal(false)}
       >
-        <DialogTitle>{approvalAction === 'approve' ? '通过审批' : '拒绝审批'}</DialogTitle>
+        <DialogTitle>{approvalAction === 'approve' ? i18n.t('pages.approval_actions.k5') : i18n.t('pages.approval_actions.k4')}</DialogTitle>
         <DialogContent>
           <Typography
             variant='body2'
             sx={{ mb: 2 }}
           >
-            {approvalAction === 'approve' ? '确认通过该审批任务' : '确认拒绝该审批任务'}
+            {approvalAction === 'approve' ? i18n.t('pages.approval_actions.k7') : i18n.t('pages.approval_actions.k6')}
           </Typography>
           {approval && (
             <>
@@ -144,27 +145,27 @@ const ApprovalActions: React.FC<ApprovalActionsProps> = ({
                 variant='body2'
                 sx={{ color: 'grey.600', mb: 1 }}
               >
-                任务: {approval.task_name}
+                [i18n.t('pages.approval_actions.k0')]: {approval.task_name}
               </Typography>
               {approval.node_id && (
                 <Typography
                   variant='body2'
                   sx={{ color: 'grey.600', mb: 1 }}
                 >
-                  节点: {approval.node_id}
+                  [i18n.t('pages.approval_actions.k1')]: {approval.node_id}
                 </Typography>
               )}
             </>
           )}
           <Box sx={{ mt: 2 }}>
-            <FormLabel>{approvalAction === 'reject' ? '拒绝原因 *' : '备注'}</FormLabel>
+            <FormLabel>{approvalAction === 'reject' ? i18n.t('pages.approval_actions.k2') : i18n.t('pages.approval_actions.k8')}</FormLabel>
             <TextField
               fullWidth
               multiline
               rows={4}
               value={comment}
               onChange={(e) => setComment(e.target.value)}
-              placeholder={approvalAction === 'reject' ? '请输入拒绝原因' : '可选备注'}
+              placeholder={approvalAction === 'reject' ? i18n.t('pages.approval_actions.k10') : i18n.t('pages.approval_actions.k9')}
               sx={{ mt: 1 }}
             />
           </Box>
@@ -174,7 +175,7 @@ const ApprovalActions: React.FC<ApprovalActionsProps> = ({
             color='inherit'
             onClick={() => setShowApprovalModal(false)}
           >
-            取消
+            {i18n.t('pages.approval_actions.k3')}
           </Button>
           <Button
             variant='contained'
@@ -190,7 +191,7 @@ const ApprovalActions: React.FC<ApprovalActionsProps> = ({
               ) : undefined
             }
           >
-            {approvalAction === 'approve' ? '确认通过' : '确认拒绝'}
+            {approvalAction === 'approve' ? i18n.t('pages.approval_actions.k12') : i18n.t('pages.approval_actions.k11')}
           </Button>
         </DialogActions>
       </Dialog>
@@ -201,20 +202,20 @@ const ApprovalActions: React.FC<ApprovalActionsProps> = ({
         maxWidth='sm'
         fullWidth
       >
-        <DialogTitle>转办审批任务</DialogTitle>
+        <DialogTitle>{i18n.t('pages.approval_actions.k13')}</DialogTitle>
         <DialogContent>
           <Typography
             variant='body2'
             sx={{ mb: 2 }}
           >
-            将该审批任务转办给其他人员处理
+            {i18n.t('pages.approval_actions.k4')}
           </Typography>
           {approval && (
             <Typography
               variant='body2'
               sx={{ color: 'grey.600', mb: 1 }}
             >
-              当前任务: {approval.task_name}
+              [i18n.t('pages.approval_actions.k5')]: {approval.task_name}
             </Typography>
           )}
           <Stack
@@ -223,18 +224,18 @@ const ApprovalActions: React.FC<ApprovalActionsProps> = ({
           >
             <TextField
               size='small'
-              label='转办目标人员 *'
+              label={i18n.t('pages.approval_actions.k6')}
               value={delegateTarget}
               onChange={(e) => setDelegateTarget(e.target.value)}
-              placeholder='请输入目标人员姓名或ID'
+              placeholder={i18n.t('pages.approval_actions.id_14')}
               fullWidth
             />
             <TextField
               size='small'
-              label='转办原因'
+              label={i18n.t('pages.approval_actions.k15')}
               value={delegateReason}
               onChange={(e) => setDelegateReason(e.target.value)}
-              placeholder='请输入转办原因'
+              placeholder={i18n.t('pages.approval_actions.k16')}
               multiline
               rows={3}
               fullWidth
@@ -246,7 +247,7 @@ const ApprovalActions: React.FC<ApprovalActionsProps> = ({
             color='inherit'
             onClick={() => setShowDelegateModal(false)}
           >
-            取消
+            {i18n.t('pages.approval_actions.k7')}
           </Button>
           <Button
             variant='contained'
@@ -263,7 +264,7 @@ const ApprovalActions: React.FC<ApprovalActionsProps> = ({
               )
             }
           >
-            确认转办
+            {i18n.t('pages.approval_actions.k8')}
           </Button>
         </DialogActions>
       </Dialog>

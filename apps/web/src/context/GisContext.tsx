@@ -23,6 +23,7 @@ import type {
 } from '../api/gis';
 import { gisApi } from '../api/gis';
 import { logger } from '@/utils/logger';
+import i18n from '@/i18n';
 
 type GisState = {
   devicePoints: DevicePoint[];
@@ -247,17 +248,17 @@ const GisContext = createContext<GisContextType | undefined>(undefined);
 const getErrorMessage = (error: unknown): string => {
   if (error instanceof Error) {
     if (error.message.includes('Network Error') || error.message.includes('Failed to fetch')) {
-      return '网络连接失败，请检查网络设置';
+      return i18n.t('context.gis_context.k0');
     }
     if (error.message.includes('timeout')) {
-      return '请求超时，请稍后重试';
+      return i18n.t('context.gis_context.k1');
     }
     return error.message;
   }
   if (typeof error === 'string') {
     return error;
   }
-  return '未知错误，请稍后重试';
+  return i18n.t('context.gis_context.k2');
 };
 
 const saveCache = (state: GisState) => {
@@ -437,7 +438,7 @@ export const GisProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       } catch (err: unknown) {
         const errorMessage = getErrorMessage(err);
         setError(errorMessage);
-        logger.error('加载GIS数据失败:', err);
+        logger.error(i18n.t('context.gis_context.gis_3'), err);
       } finally {
         setLoading(false);
       }
@@ -453,10 +454,10 @@ export const GisProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           dispatch({ type: 'ADD_DEVICE_POINT', payload: res.data });
           await loadAllData();
         } else {
-          throw new Error(res.message || '创建失败');
+          throw new Error(res.message || i18n.t('context.gis_context.k4'));
         }
       } catch (err: unknown) {
-        setError(`创建设备点位失败: ${getErrorMessage(err)}`);
+        setError(`${i18n.t('context.gis_context.k5')} ${getErrorMessage(err)}`);
         throw err;
       }
     },
@@ -471,10 +472,10 @@ export const GisProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           dispatch({ type: 'UPDATE_DEVICE_POINT', payload: res.data });
           await loadAllData();
         } else {
-          throw new Error(res.message || '更新失败');
+          throw new Error(res.message || i18n.t('context.gis_context.k6'));
         }
       } catch (err: unknown) {
-        setError(`更新设备点位失败: ${getErrorMessage(err)}`);
+        setError(`${i18n.t('context.gis_context.k7')} ${getErrorMessage(err)}`);
         throw err;
       }
     },
@@ -489,10 +490,10 @@ export const GisProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           dispatch({ type: 'DELETE_DEVICE_POINT', payload: id });
           await loadAllData();
         } else {
-          throw new Error(res.message || '删除失败');
+          throw new Error(res.message || i18n.t('context.gis_context.k8'));
         }
       } catch (err: unknown) {
-        setError(`删除设备点位失败: ${getErrorMessage(err)}`);
+        setError(`${i18n.t('context.gis_context.k9')} ${getErrorMessage(err)}`);
         throw err;
       }
     },
@@ -507,10 +508,10 @@ export const GisProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           dispatch({ type: 'ADD_PIPELINE', payload: res.data });
           await loadAllData();
         } else {
-          throw new Error(res.message || '创建失败');
+          throw new Error(res.message || i18n.t('context.gis_context.k10'));
         }
       } catch (err: unknown) {
-        setError(`创建管线失败: ${getErrorMessage(err)}`);
+        setError(`${i18n.t('context.gis_context.k11')} ${getErrorMessage(err)}`);
         throw err;
       }
     },
@@ -525,10 +526,10 @@ export const GisProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           dispatch({ type: 'UPDATE_PIPELINE', payload: res.data });
           await loadAllData();
         } else {
-          throw new Error(res.message || '更新失败');
+          throw new Error(res.message || i18n.t('context.gis_context.k12'));
         }
       } catch (err: unknown) {
-        setError(`更新管线失败: ${getErrorMessage(err)}`);
+        setError(`${i18n.t('context.gis_context.k13')} ${getErrorMessage(err)}`);
         throw err;
       }
     },
@@ -543,10 +544,10 @@ export const GisProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           dispatch({ type: 'DELETE_PIPELINE', payload: id });
           await loadAllData();
         } else {
-          throw new Error(res.message || '删除失败');
+          throw new Error(res.message || i18n.t('context.gis_context.k14'));
         }
       } catch (err: unknown) {
-        setError(`删除管线失败: ${getErrorMessage(err)}`);
+        setError(`${i18n.t('context.gis_context.k15')} ${getErrorMessage(err)}`);
         throw err;
       }
     },
@@ -561,10 +562,10 @@ export const GisProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           dispatch({ type: 'ADD_STORAGE_LOCATION', payload: res.data });
           await loadAllData();
         } else {
-          throw new Error(res.message || '创建失败');
+          throw new Error(res.message || i18n.t('context.gis_context.k16'));
         }
       } catch (err: unknown) {
-        setError(`创建仓储位置失败: ${getErrorMessage(err)}`);
+        setError(`${i18n.t('context.gis_context.k17')} ${getErrorMessage(err)}`);
         throw err;
       }
     },
@@ -579,10 +580,10 @@ export const GisProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           dispatch({ type: 'UPDATE_STORAGE_LOCATION', payload: res.data });
           await loadAllData();
         } else {
-          throw new Error(res.message || '更新失败');
+          throw new Error(res.message || i18n.t('context.gis_context.k18'));
         }
       } catch (err: unknown) {
-        setError(`更新仓储位置失败: ${getErrorMessage(err)}`);
+        setError(`${i18n.t('context.gis_context.k19')} ${getErrorMessage(err)}`);
         throw err;
       }
     },
@@ -597,10 +598,10 @@ export const GisProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           dispatch({ type: 'DELETE_STORAGE_LOCATION', payload: id });
           await loadAllData();
         } else {
-          throw new Error(res.message || '删除失败');
+          throw new Error(res.message || i18n.t('context.gis_context.k20'));
         }
       } catch (err: unknown) {
-        setError(`删除仓储位置失败: ${getErrorMessage(err)}`);
+        setError(`${i18n.t('context.gis_context.k21')} ${getErrorMessage(err)}`);
         throw err;
       }
     },
@@ -615,10 +616,10 @@ export const GisProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           dispatch({ type: 'ADD_EVIDENCE_RECORD', payload: res.data });
           await loadAllData();
         } else {
-          throw new Error(res.message || '创建失败');
+          throw new Error(res.message || i18n.t('context.gis_context.k22'));
         }
       } catch (err: unknown) {
-        setError(`创建现场取证失败: ${getErrorMessage(err)}`);
+        setError(`${i18n.t('context.gis_context.k23')} ${getErrorMessage(err)}`);
         throw err;
       }
     },
@@ -633,10 +634,10 @@ export const GisProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           dispatch({ type: 'DELETE_EVIDENCE_RECORD', payload: id });
           await loadAllData();
         } else {
-          throw new Error(res.message || '删除失败');
+          throw new Error(res.message || i18n.t('context.gis_context.k24'));
         }
       } catch (err: unknown) {
-        setError(`删除现场取证失败: ${getErrorMessage(err)}`);
+        setError(`${i18n.t('context.gis_context.k25')} ${getErrorMessage(err)}`);
         throw err;
       }
     },
@@ -651,10 +652,10 @@ export const GisProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           dispatch({ type: 'ADD_FACTORY_MAP', payload: res.data });
           await loadAllData();
         } else {
-          throw new Error(res.message || '创建失败');
+          throw new Error(res.message || i18n.t('context.gis_context.k26'));
         }
       } catch (err: unknown) {
-        setError(`创建厂区地图失败: ${getErrorMessage(err)}`);
+        setError(`${i18n.t('context.gis_context.k27')} ${getErrorMessage(err)}`);
         throw err;
       }
     },
@@ -669,10 +670,10 @@ export const GisProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           dispatch({ type: 'UPDATE_FACTORY_MAP', payload: res.data });
           await loadAllData();
         } else {
-          throw new Error(res.message || '更新失败');
+          throw new Error(res.message || i18n.t('context.gis_context.k28'));
         }
       } catch (err: unknown) {
-        setError(`更新厂区地图失败: ${getErrorMessage(err)}`);
+        setError(`${i18n.t('context.gis_context.k29')} ${getErrorMessage(err)}`);
         throw err;
       }
     },
@@ -687,10 +688,10 @@ export const GisProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           dispatch({ type: 'DELETE_FACTORY_MAP', payload: id });
           await loadAllData();
         } else {
-          throw new Error(res.message || '删除失败');
+          throw new Error(res.message || i18n.t('context.gis_context.k30'));
         }
       } catch (err: unknown) {
-        setError(`删除厂区地图失败: ${getErrorMessage(err)}`);
+        setError(`${i18n.t('context.gis_context.k31')} ${getErrorMessage(err)}`);
         throw err;
       }
     },
@@ -705,10 +706,10 @@ export const GisProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           dispatch({ type: 'ADD_BUSINESS_LOCATION', payload: res.data });
           await loadAllData();
         } else {
-          throw new Error(res.message || '创建失败');
+          throw new Error(res.message || i18n.t('context.gis_context.k32'));
         }
       } catch (err: unknown) {
-        setError(`创建业务位置失败: ${getErrorMessage(err)}`);
+        setError(`${i18n.t('context.gis_context.k33')} ${getErrorMessage(err)}`);
         throw err;
       }
     },
@@ -723,10 +724,10 @@ export const GisProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           dispatch({ type: 'UPDATE_BUSINESS_LOCATION', payload: res.data });
           await loadAllData();
         } else {
-          throw new Error(res.message || '更新失败');
+          throw new Error(res.message || i18n.t('context.gis_context.k34'));
         }
       } catch (err: unknown) {
-        setError(`更新业务位置失败: ${getErrorMessage(err)}`);
+        setError(`${i18n.t('context.gis_context.k35')} ${getErrorMessage(err)}`);
         throw err;
       }
     },
@@ -741,10 +742,10 @@ export const GisProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           dispatch({ type: 'DELETE_BUSINESS_LOCATION', payload: id });
           await loadAllData();
         } else {
-          throw new Error(res.message || '删除失败');
+          throw new Error(res.message || i18n.t('context.gis_context.k36'));
         }
       } catch (err: unknown) {
-        setError(`删除业务位置失败: ${getErrorMessage(err)}`);
+        setError(`${i18n.t('context.gis_context.k37')} ${getErrorMessage(err)}`);
         throw err;
       }
     },

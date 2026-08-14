@@ -1,21 +1,17 @@
 import React from 'react';
-import { useTranslation } from 'react-i18next';
 import { Box, Card, CardContent, CardHeader, Typography } from '@mui/material';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from 'recharts';
 import type { ChartDatum } from '../hooks/usePmReport';
-
+import i18n from '@/i18n';
 export interface PmReportRiskPieChartProps {
   data: ChartDatum[];
   outerRadius?: number;
 }
-
 const PmReportRiskPieChart: React.FC<PmReportRiskPieChartProps> = ({ data, outerRadius = 60 }) => {
-  const { t } = useTranslation();
-
   return (
     <Card>
       <CardHeader
-        title={<Typography variant='h6'>{t('pm.pm_report_page.text_99ce9e')}</Typography>}
+        title={<Typography variant='h6'>{i18n.t('pm.pm_report_page.text_99ce9e')}</Typography>}
       />
       <CardContent>
         <Box sx={{ height: 256 }}>
@@ -44,8 +40,8 @@ const PmReportRiskPieChart: React.FC<PmReportRiskPieChartProps> = ({ data, outer
               </Pie>
               <Tooltip
                 formatter={(value: unknown) => [
-                  t('pm.pm_report_page.text_57cd04', { value }),
-                  t('pm.pm_report_page.text_bfaab7'),
+                  i18n.t('pm.pm_report_page.text_57cd04', { value }),
+                  i18n.t('pm.pm_report_page.text_bfaab7'),
                 ]}
               />
               <Legend />
@@ -56,5 +52,4 @@ const PmReportRiskPieChart: React.FC<PmReportRiskPieChartProps> = ({ data, outer
     </Card>
   );
 };
-
 export default PmReportRiskPieChart;

@@ -1,10 +1,11 @@
 import React from 'react';
+import i18n from '@/i18n';
 
 const NotificationDashboardPage: React.FC = () => {
   return React.createElement(
     'div',
     { className: 'page-placeholder' },
-    'NotificationDashboardPage 页面开发中'
+    i18n.t('notification.notification_dashboard_page.k0')
   );
 };
 

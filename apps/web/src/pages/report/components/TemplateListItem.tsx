@@ -3,6 +3,7 @@ import { Box, Typography, IconButton, Chip } from '@mui/material';
 import { FileText, Edit, Trash2, Copy, Eye, ToggleLeft, ToggleRight } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import type { Template, TemplateCategory } from '@/api/template';
+import i18n from '@/i18n';
 
 interface TemplateListItemProps {
   template: Template;
@@ -88,7 +89,7 @@ const TemplateListItem: React.FC<TemplateListItemProps> = ({
           sx={{
             color: template.isactive ? 'success.main' : 'grey.400',
           }}
-          aria-label='切换'
+          aria-label={i18n.t('pages.template_list_item.k0')}
         >
           {template.isactive ? (
             <ToggleRight sx={{ width: 20, height: 20 }} />
@@ -99,28 +100,28 @@ const TemplateListItem: React.FC<TemplateListItemProps> = ({
         <IconButton
           onClick={() => onPreview(template)}
           sx={{ color: 'primary.main' }}
-          aria-label='查看'
+          aria-label={i18n.t('pages.template_list_item.k1')}
         >
           <Eye sx={{ width: 16, height: 16 }} />
         </IconButton>
         <IconButton
           onClick={() => onDuplicate(template.id)}
           sx={{ color: 'success.main' }}
-          aria-label='复制'
+          aria-label={i18n.t('pages.template_list_item.k2')}
         >
           <Copy sx={{ width: 16, height: 16 }} />
         </IconButton>
         <IconButton
           onClick={() => onEdit(template)}
           sx={{ color: 'primary.main' }}
-          aria-label='编辑'
+          aria-label={i18n.t('pages.template_list_item.k3')}
         >
           <Edit sx={{ width: 16, height: 16 }} />
         </IconButton>
         <IconButton
           onClick={() => onDelete(template.id)}
           sx={{ color: 'error.main' }}
-          aria-label='删除'
+          aria-label={i18n.t('pages.template_list_item.k4')}
         >
           <Trash2 sx={{ width: 16, height: 16 }} />
         </IconButton>

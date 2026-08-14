@@ -5,6 +5,7 @@ import { supplierProductSchema } from '@/schemas/srm';
 import { Box, Card, CardContent, Typography } from '@mui/material';
 import { Package } from 'lucide-react';
 import { designTokens } from '@/theme/tokens';
+import i18n from '@/i18n';
 
 const ct= designTokens.colors;
 
@@ -25,11 +26,11 @@ const mockProducts: SupplierProduct[] = [
   {
     id: '1',
     product_code: 'SP-001',
-    name: '不锈钢板材 304',
-    supplier: '宝钢集团',
-    category: '原材料',
+    name: i18n.t('pages.srm_supplier_product_page.304_0'),
+    supplier: i18n.t('pages.srm_supplier_product_page.k1'),
+    category: i18n.t('pages.srm_supplier_product_page.k2'),
     price: 12500,
-    unit: '吨',
+    unit: i18n.t('pages.srm_supplier_product_page.k3'),
     status: 'active',
     created_at: '2025-01-15',
     updated_at: '2025-06-01',
@@ -37,11 +38,11 @@ const mockProducts: SupplierProduct[] = [
   {
     id: '2',
     product_code: 'SP-002',
-    name: '铝合金型材 6061',
-    supplier: '中铝集团',
-    category: '原材料',
+    name: i18n.t('pages.srm_supplier_product_page.6061_4'),
+    supplier: i18n.t('pages.srm_supplier_product_page.k5'),
+    category: i18n.t('pages.srm_supplier_product_page.k6'),
     price: 18500,
-    unit: '吨',
+    unit: i18n.t('pages.srm_supplier_product_page.k7'),
     status: 'active',
     created_at: '2025-01-20',
     updated_at: '2025-06-01',
@@ -49,11 +50,11 @@ const mockProducts: SupplierProduct[] = [
   {
     id: '3',
     product_code: 'SP-003',
-    name: '密封圈 NBR',
-    supplier: '三力密封',
-    category: '零部件',
+    name: i18n.t('pages.srm_supplier_product_page.nbr_8'),
+    supplier: i18n.t('pages.srm_supplier_product_page.k9'),
+    category: i18n.t('pages.srm_supplier_product_page.k10'),
     price: 2.5,
-    unit: '个',
+    unit: i18n.t('pages.srm_supplier_product_page.k11'),
     status: 'active',
     created_at: '2025-02-01',
     updated_at: '2025-05-28',
@@ -61,11 +62,11 @@ const mockProducts: SupplierProduct[] = [
   {
     id: '4',
     product_code: 'SP-004',
-    name: '电机 Y2-7.5kW',
-    supplier: '西门子电气',
-    category: '设备配件',
+    name: i18n.t('pages.srm_supplier_product_page.y275kw_0'),
+    supplier: i18n.t('pages.srm_supplier_product_page.k12'),
+    category: i18n.t('pages.srm_supplier_product_page.k13'),
     price: 3500,
-    unit: '台',
+    unit: i18n.t('pages.srm_supplier_product_page.k14'),
     status: 'active',
     created_at: '2025-02-15',
     updated_at: '2025-06-01',
@@ -73,11 +74,11 @@ const mockProducts: SupplierProduct[] = [
   {
     id: '5',
     product_code: 'SP-005',
-    name: '液压油 HM46',
-    supplier: '长城润滑油',
-    category: '化工原料',
+    name: i18n.t('pages.srm_supplier_product_page.hm46_15'),
+    supplier: i18n.t('pages.srm_supplier_product_page.k16'),
+    category: i18n.t('pages.srm_supplier_product_page.k17'),
     price: 28,
-    unit: '升',
+    unit: i18n.t('pages.srm_supplier_product_page.k18'),
     status: 'active',
     created_at: '2025-03-01',
     updated_at: '2025-05-30',
@@ -85,11 +86,11 @@ const mockProducts: SupplierProduct[] = [
   {
     id: '6',
     product_code: 'SP-006',
-    name: '传感器 PT100',
-    supplier: '霍尼韦尔',
-    category: '电子元器件',
+    name: i18n.t('pages.srm_supplier_product_page.pt100_19'),
+    supplier: i18n.t('pages.srm_supplier_product_page.k20'),
+    category: i18n.t('pages.srm_supplier_product_page.k21'),
     price: 85,
-    unit: '只',
+    unit: i18n.t('pages.srm_supplier_product_page.k22'),
     status: 'pending',
     created_at: '2025-03-10',
     updated_at: '2025-06-01',
@@ -97,11 +98,11 @@ const mockProducts: SupplierProduct[] = [
   {
     id: '7',
     product_code: 'SP-007',
-    name: '瓦楞纸箱定制',
-    supplier: '合兴包装',
-    category: '包装材料',
+    name: i18n.t('pages.srm_supplier_product_page.k23'),
+    supplier: i18n.t('pages.srm_supplier_product_page.k24'),
+    category: i18n.t('pages.srm_supplier_product_page.k25'),
     price: 3.8,
-    unit: '个',
+    unit: i18n.t('pages.srm_supplier_product_page.k26'),
     status: 'active',
     created_at: '2025-04-01',
     updated_at: '2025-05-25',
@@ -109,11 +110,11 @@ const mockProducts: SupplierProduct[] = [
   {
     id: '8',
     product_code: 'SP-008',
-    name: '轴承 SKF6205',
-    supplier: '瑞典SKF',
-    category: '零部件',
+    name: i18n.t('pages.srm_supplier_product_page.skf6205_27'),
+    supplier: i18n.t('pages.srm_supplier_product_page.skf_28'),
+    category: i18n.t('pages.srm_supplier_product_page.k29'),
     price: 68,
-    unit: '只',
+    unit: i18n.t('pages.srm_supplier_product_page.k30'),
     status: 'inactive',
     created_at: '2025-04-15',
     updated_at: '2025-05-20',
@@ -150,7 +151,7 @@ const supplierProductApiAdapter: CrudApiAdapter = {
       supplier: (data.supplier as string) || '',
       category: (data.category as string) || '',
       price: (data.price as number) || 0,
-      unit: (data.unit as string) || '个',
+      unit: (data.unit as string) || i18n.t('pages.srm_supplier_product_page.k31'),
       status: (data.status as string) || 'active',
       created_at: new Date().toISOString().split('T')[0],
       updated_at: new Date().toISOString().split('T')[0],
@@ -160,7 +161,7 @@ const supplierProductApiAdapter: CrudApiAdapter = {
   },
   update: async (id, data) => {
     const idx = productStore.findIndex((p) => p.id === id);
-    if (idx === -1) throw new Error('产品不存在');
+    if (idx === -1) throw new Error(i18n.t('pages.srm_supplier_product_page.k32'));
     const updated = {
       ...productStore[idx],
       ...data,
@@ -186,11 +187,11 @@ const SupplierProductStats: React.FC<{ rows: SupplierProduct[] }> = ({ rows }) =
   );
 
   const statCards = [
-    { label: '产品总数', value: stats.total, color: ct.purple[500], bgColor: 'secondary.light' },
-    { label: '在售', value: stats.active, color: 'success.dark', bgColor: 'success.lighter' },
-    { label: '待审核', value: stats.pending, color: 'warning.dark', bgColor: 'warning.lighter' },
+    { label: i18n.t('pages.srm_supplier_product_page.k33'), value: stats.total, color: ct.purple[500], bgColor: 'secondary.light' },
+    { label: i18n.t('pages.srm_supplier_product_page.k34'), value: stats.active, color: 'success.dark', bgColor: 'success.lighter' },
+    { label: i18n.t('pages.srm_supplier_product_page.k35'), value: stats.pending, color: 'warning.dark', bgColor: 'warning.lighter' },
     {
-      label: '总价值',
+      label: i18n.t('pages.srm_supplier_product_page.k36'),
       value: `¥${stats.totalValue.toLocaleString()}`,
       color: 'primary.dark',
       bgColor: 'primary.lighter',
@@ -250,7 +251,7 @@ const SrmSupplierProductPage: React.FC = () => {
     <CrudPage
       schema={supplierProductSchema}
       apiAdapter={supplierProductApiAdapter}
-      breadcrumbs={[{ label: 'SRM' }, { label: '供应商产品' }]}
+      breadcrumbs={[{ label: 'SRM' }, { label: i18n.t('pages.srm_supplier_product_page.k37') }]}
       headerContent={(rows) => <SupplierProductStats rows={rows as SupplierProduct[]} />}
     />
   );

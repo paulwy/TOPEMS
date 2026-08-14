@@ -1,5 +1,6 @@
 import React from 'react';
 import { Box as MuiBox, Typography } from '@mui/material';
+import { designTokens } from '@topems/tokens';
 
 const LayerToggle: React.FC<{
   label: string;
@@ -14,7 +15,7 @@ const LayerToggle: React.FC<{
       alignItems: 'center',
       gap: 1,
       cursor: 'pointer',
-      padding: '4px 8px',
+      padding: `${designTokens.spacing.xs} 8px`,
       borderRadius: 1,
       '&:hover': {
         backgroundColor: 'grey.50',

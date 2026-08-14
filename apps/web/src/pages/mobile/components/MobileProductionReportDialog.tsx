@@ -14,12 +14,11 @@ import {
   DialogActions,
   Button,
 } from '@mui/material';
-import { useTranslation } from 'react-i18next';
+import i18n from '@/i18n';
 import { CheckSquare } from 'lucide-react';
 import { MobileButton } from '@/components/mobile';
 import type { ProductionOrder } from '@/api/mobile';
 import type { ReportForm } from '../hooks/useMobileProduction';
-
 interface MobileProductionReportDialogProps {
   open: boolean;
   onClose: () => void;
@@ -28,7 +27,6 @@ interface MobileProductionReportDialogProps {
   onReportFormChange: (form: ReportForm) => void;
   onSubmit: () => void;
 }
-
 export const MobileProductionReportDialog: React.FC<MobileProductionReportDialogProps> = ({
   open,
   onClose,
@@ -37,8 +35,6 @@ export const MobileProductionReportDialog: React.FC<MobileProductionReportDialog
   onReportFormChange,
   onSubmit,
 }) => {
-  const { t } = useTranslation();
-
   return (
     <Dialog
       open={open}
@@ -46,7 +42,7 @@ export const MobileProductionReportDialog: React.FC<MobileProductionReportDialog
       fullWidth
       maxWidth='sm'
     >
-      <DialogTitle>{t('mobile.production.dialog.report_title')}</DialogTitle>
+      <DialogTitle>{i18n.t('mobile.production.dialog.report_title')}</DialogTitle>
       <DialogContent>
         <Box sx={{ pt: 1, display: 'flex', flexDirection: 'column', gap: 2 }}>
           {selectedOrder && (
@@ -63,7 +59,7 @@ export const MobileProductionReportDialog: React.FC<MobileProductionReportDialog
                 color='text.secondary'
                 sx={{ display: 'block', mb: 0.5 }}
               >
-                {t('mobile.production.label.current_order')}
+                {i18n.t('mobile.production.label.current_order')}
               </Typography>
               <Typography
                 variant='body2'
@@ -82,7 +78,7 @@ export const MobileProductionReportDialog: React.FC<MobileProductionReportDialog
           <TextField
             fullWidth
             type='number'
-            label={t('mobile.production.label.report_quantity')}
+            label={i18n.t('mobile.production.label.report_quantity')}
             value={reportForm.quantity}
             onChange={(e) =>
               onReportFormChange({
@@ -95,7 +91,7 @@ export const MobileProductionReportDialog: React.FC<MobileProductionReportDialog
           <TextField
             fullWidth
             type='number'
-            label={t('mobile.production.label.good_quantity')}
+            label={i18n.t('mobile.production.label.good_quantity')}
             value={reportForm.good_quantity}
             onChange={(e) =>
               onReportFormChange({
@@ -108,7 +104,7 @@ export const MobileProductionReportDialog: React.FC<MobileProductionReportDialog
           <TextField
             fullWidth
             type='number'
-            label={t('mobile.production.label.bad_quantity')}
+            label={i18n.t('mobile.production.label.bad_quantity')}
             value={reportForm.bad_quantity}
             onChange={(e) =>
               onReportFormChange({
@@ -121,13 +117,13 @@ export const MobileProductionReportDialog: React.FC<MobileProductionReportDialog
         </Box>
       </DialogContent>
       <DialogActions sx={{ px: 3, pb: 2 }}>
-        <Button onClick={onClose}>{t('mobile.production.action.cancel')}</Button>
+        <Button onClick={onClose}>{i18n.t('mobile.production.action.cancel')}</Button>
         <MobileButton
           variant='contained'
           onClick={onSubmit}
           startIcon={<CheckSquare style={{ width: 18, height: 18 }} />}
         >
-          {t('mobile.production.action.submit_report')}
+          {i18n.t('mobile.production.action.submit_report')}
         </MobileButton>
       </DialogActions>
     </Dialog>

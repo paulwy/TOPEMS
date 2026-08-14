@@ -8,10 +8,8 @@ import { rdApi } from '@/api/rd';
 import type { Bug, CreateBugRequest, UpdateBugRequest } from '@/api/rd';
 import { useNotificationStore } from '@/store';
 import { logger } from '@/utils/logger';
-
-
 import { QUERY_KEYS } from '@/lib/reactQuery';
-
+import i18n from '@/i18n';
 const bugApiAdapter: CrudApiAdapter<Bug> = {
   list: async (params) => {
     const queryParams: Record<string, unknown> = {
@@ -23,17 +21,15 @@ const bugApiAdapter: CrudApiAdapter<Bug> = {
     if (params?.priority) queryParams.priority = params.priority;
     if (params?.status) queryParams.status = params.status;
     if (params?.assignee) queryParams.assignee = params.assignee;
-
     const response = await rdApi.listBugs(queryParams);
     if (!response.success || !response.data) {
-      throw new Error(response.message || '加载缺陷列表失败');
+      throw new Error(response.message || i18n.t('rd.rs_bug_page.k0'));
     }
     return {
       data: response.data.bugs || [],
       total: response.data.total || 0,
     };
   },
-
   create: async (data) => {
     const createData: CreateBugRequest = {
       bug_title: String(data.bug_title ?? ''),
@@ -43,11 +39,10 @@ const bugApiAdapter: CrudApiAdapter<Bug> = {
     };
     const response = await rdApi.createBug(createData);
     if (!response.success || !response.data) {
-      throw new Error(response.message || '创建缺陷失败');
+      throw new Error(response.message || i18n.t('rd.rs_bug_page.k1'));
     }
     return response.data;
   },
-
   update: async (id, data) => {
     const updateData: UpdateBugRequest = {
       bug_title: data.bug_title as string | undefined,
@@ -59,28 +54,25 @@ const bugApiAdapter: CrudApiAdapter<Bug> = {
     };
     const response = await rdApi.updateBug(id, updateData);
     if (!response.success || !response.data) {
-      throw new Error(response.message || '更新缺陷失败');
+      throw new Error(response.message || i18n.t('rd.rs_bug_page.k2'));
     }
     return response.data;
   },
-
   delete: async (id) => {
     const response = await rdApi.deleteBug(id);
     if (!response.success) {
-      throw new Error(response.message || '删除缺陷失败');
+      throw new Error(response.message || i18n.t('rd.rs_bug_page.k3'));
     }
   },
 };
-
 const RsBugPage: React.FC = () => {
   const queryClient = useQueryClient();
   const { addNotification } = useNotificationStore();
-
   const closeBugMutation = useMutation({
     mutationFn: async ({ id, data }: { id: string; data: UpdateBugRequest }) => {
       const response = await rdApi.updateBug(id, data);
       if (!response.success) {
-        throw new Error(response.message || '关闭缺陷失败');
+        throw new Error(response.message || i18n.t('rd.rs_bug_page.k4'));
       }
       return response;
     },
@@ -91,46 +83,42 @@ const RsBugPage: React.FC = () => {
 });
       addNotification({
         type: 'success',
-        title: '操作成功',
-        message: '缺陷已关闭',
+        title: i18n.t('rd.rs_bug_page.k5'),
+        message: i18n.t('rd.rs_bug_page.k6'),
       });
     },
     onError: (error: unknown) => {
-      logger.error('关闭缺陷失败:', error);
+      logger.error(i18n.t('pages.rs_bug_page.k0'), error);
       addNotification({
         type: 'error',
-        title: '操作失败',
-        message: error instanceof Error ? error.message : '关闭缺陷失败',
+        title: i18n.t('rd.rs_bug_page.k7'),
+        message: error instanceof Error ? error.message : i18n.t('rd.rs_bug_page.k8'),
       });
     },
   });
-
   const handleCloseBug = (row: Record<string, unknown>) => {
     closeBugMutation.mutate({
       id: String(row.id),
       data: { status: 'closed' },
     });
   };
-
   const customRowActions: RowAction[] = [
     {
       key: 'close',
-      label: '关闭',
+      label: i18n.t('rd.rs_bug_page.k9'),
       icon: <CheckCircle size={16} />,
       color: 'success',
       onClick: handleCloseBug,
       show: (row) => String(row.status ?? '') !== 'closed',
     },
   ];
-
   return (
     <CrudPage
       schema={bugSchema}
       apiAdapter={bugApiAdapter}
       customRowActions={customRowActions}
-      breadcrumbs={[{ label: '研发管理', href: '/rd' }, { label: '缺陷管理' }]}
+      breadcrumbs={[{ label: i18n.t('rd.rs_bug_page.k11'), href: '/rd' }, { label: i18n.t('rd.rs_bug_page.k10') }]}
     />
   );
 };
-
 export default RsBugPage;

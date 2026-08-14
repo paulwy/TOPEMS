@@ -1,10 +1,11 @@
 import React from 'react';
+import i18n from '@/i18n';
 
 const ConsolidationScopePage: React.FC = () => {
   return React.createElement(
     'div',
     { className: 'page-placeholder' },
-    'ConsolidationScopePage 页面开发中'
+    i18n.t('finance.consolidation_scope_page.k0')
   );
 };
 

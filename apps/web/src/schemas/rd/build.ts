@@ -2,6 +2,7 @@ import React from 'react';
 import { Box, Chip, Typography } from '@mui/material';
 import { GitBranch, CheckCircle, XCircle, Clock } from 'lucide-react';
 import type { EntitySchema } from '@/schema';
+import i18n from '@/i18n';
 
 const STATUS_COLOR_MAP: Record<string, 'default' | 'success' | 'error' | 'warning'> = {
   success: 'success',
@@ -11,22 +12,22 @@ const STATUS_COLOR_MAP: Record<string, 'default' | 'success' | 'error' | 'warnin
 };
 
 const STATUS_LABEL_MAP: Record<string, string> = {
-  success: '成功',
-  failed: '失败',
-  running: '进行中',
-  pending: '待构建',
+  success: i18n.t('rd.build.k0'),
+  failed: i18n.t('rd.build.k1'),
+  running: i18n.t('rd.build.k2'),
+  pending: i18n.t('rd.build.k3'),
 };
 
 const BUILD_TYPE_LABEL_MAP: Record<string, string> = {
-  manual: '手动',
-  auto: '自动',
-  scheduled: '定时',
+  manual: i18n.t('rd.build.k4'),
+  auto: i18n.t('rd.build.k5'),
+  scheduled: i18n.t('rd.build.k6'),
 };
 
 export const buildSchema: EntitySchema = {
   entity: 'rd_build',
-  title: '构建管理',
-  description: '管理代码构建和构建流水线',
+  title: i18n.t('rd.build.k7'),
+  description: i18n.t('rd.build.k8'),
 
   api: {
     module: 'rd',
@@ -36,7 +37,7 @@ export const buildSchema: EntitySchema = {
   fields: [
     {
       name: 'build_no',
-      label: '构建编号',
+      label: i18n.t('rd.build.k9'),
       type: 'text',
       readonlyOnEdit: true,
       sortable: true,
@@ -60,7 +61,7 @@ export const buildSchema: EntitySchema = {
     },
     {
       name: 'project_id',
-      label: '项目ID',
+      label: i18n.t('rd.build.id_10'),
       type: 'text',
       required: true,
       showInList: false,
@@ -68,14 +69,14 @@ export const buildSchema: EntitySchema = {
     },
     {
       name: 'project_name',
-      label: '项目',
+      label: i18n.t('rd.build.k11'),
       type: 'text',
       listWidth: 150,
       hideInForm: true,
     },
     {
       name: 'branch',
-      label: '分支',
+      label: i18n.t('rd.build.k12'),
       type: 'text',
       required: true,
       listWidth: 120,
@@ -91,7 +92,7 @@ export const buildSchema: EntitySchema = {
     },
     {
       name: 'commit_hash',
-      label: '提交',
+      label: i18n.t('rd.build.k13'),
       type: 'text',
       required: true,
       listWidth: 130,
@@ -107,16 +108,16 @@ export const buildSchema: EntitySchema = {
     },
     {
       name: 'build_type',
-      label: '类型',
+      label: i18n.t('rd.build.k14'),
       type: 'select',
       defaultValue: 'manual',
       listWidth: 100,
       options: {
         type: 'static',
         options: [
-          { value: 'manual', label: '手动' },
-          { value: 'auto', label: '自动' },
-          { value: 'scheduled', label: '定时' },
+          { value: 'manual', label: i18n.t('rd.build.k15') },
+          { value: 'auto', label: i18n.t('rd.build.k16') },
+          { value: 'scheduled', label: i18n.t('rd.build.k17') },
         ],
       },
       renderCell: (row: Record<string, unknown>) => {
@@ -131,7 +132,7 @@ export const buildSchema: EntitySchema = {
     },
     {
       name: 'status',
-      label: '状态',
+      label: i18n.t('rd.build.k18'),
       type: 'select',
       defaultValue: 'pending',
       listWidth: 130,
@@ -139,10 +140,10 @@ export const buildSchema: EntitySchema = {
       options: {
         type: 'static',
         options: [
-          { value: 'success', label: '成功' },
-          { value: 'failed', label: '失败' },
-          { value: 'running', label: '进行中' },
-          { value: 'pending', label: '待构建' },
+          { value: 'success', label: i18n.t('rd.build.k19') },
+          { value: 'failed', label: i18n.t('rd.build.k20') },
+          { value: 'running', label: i18n.t('rd.build.k21') },
+          { value: 'pending', label: i18n.t('rd.build.k22') },
         ],
       },
       renderCell: (row: Record<string, unknown>) => {
@@ -171,7 +172,7 @@ export const buildSchema: EntitySchema = {
     },
     {
       name: 'duration',
-      label: '耗时',
+      label: i18n.t('rd.build.k23'),
       type: 'text',
       listWidth: 100,
       hideInForm: true,
@@ -182,7 +183,7 @@ export const buildSchema: EntitySchema = {
     },
     {
       name: 'created_at',
-      label: '创建时间',
+      label: i18n.t('rd.build.k24'),
       type: 'datetime',
       readonly: true,
       sortable: true,
@@ -191,7 +192,7 @@ export const buildSchema: EntitySchema = {
     },
     {
       name: 'logs',
-      label: '构建日志',
+      label: i18n.t('rd.build.k25'),
       type: 'textarea',
       showInList: false,
       hideInForm: true,
@@ -213,14 +214,14 @@ export const buildSchema: EntitySchema = {
     filters: [
       {
         id: 'status',
-        label: '状态',
+        label: i18n.t('rd.build.k26'),
         type: 'select',
         options: [
-          { label: '全部状态', value: 'all' },
-          { label: '成功', value: 'success' },
-          { label: '失败', value: 'failed' },
-          { label: '进行中', value: 'running' },
-          { label: '待构建', value: 'pending' },
+          { label: i18n.t('rd.build.k27'), value: 'all' },
+          { label: i18n.t('rd.build.k28'), value: 'success' },
+          { label: i18n.t('rd.build.k29'), value: 'failed' },
+          { label: i18n.t('rd.build.k30'), value: 'running' },
+          { label: i18n.t('rd.build.k31'), value: 'pending' },
         ],
         defaultValue: 'all',
       },
@@ -234,15 +235,15 @@ export const buildSchema: EntitySchema = {
 
   formSections: [
     {
-      title: '构建信息',
+      title: i18n.t('rd.build.k32'),
       fields: ['project_id', 'branch', 'commit_hash', 'build_type'],
     },
   ],
 
   formColCount: 2,
-  createTitle: '手动构建',
-  editTitle: '编辑构建',
-  detailTitle: '构建详情',
+  createTitle: i18n.t('rd.build.k33'),
+  editTitle: i18n.t('rd.build.k34'),
+  detailTitle: i18n.t('rd.build.k35'),
 
   actions: ['create', 'detail'],
 
@@ -284,17 +285,17 @@ export const buildSchema: EntitySchema = {
         React.createElement(
           Typography,
           { variant: 'subtitle2', color: 'text.secondary' },
-          `提交: ${row.commit_hash ?? '-'}`
+          `${i18n.t('shared.build.k0')}${row.commit_hash ?? '-'}`
         ),
         React.createElement(
           Typography,
           { variant: 'subtitle2', color: 'text.secondary', sx: { mt: 1 } },
-          `耗时: ${row.duration ?? '-'}`
+          `${i18n.t('shared.build.k1')}${row.duration ?? '-'}`
         ),
         React.createElement(
           Typography,
           { variant: 'subtitle2', color: 'text.secondary', sx: { mt: 1 } },
-          `创建时间: ${row.created_at ?? '-'}`
+          `${i18n.t('shared.build.k2')}${row.created_at ?? '-'}`
         )
       ),
       row.logs
@@ -304,7 +305,7 @@ export const buildSchema: EntitySchema = {
             React.createElement(
               Typography,
               { variant: 'subtitle2', color: 'text.secondary' },
-              '构建日志'
+              i18n.t('rd.build.k36')
             ),
             React.createElement(
               Box,

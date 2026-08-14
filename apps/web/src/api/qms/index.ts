@@ -16,6 +16,7 @@ import { correctiveActionApi } from './correctiveAction';
 import { auditApi } from './audit';
 import { apqpApi } from './apqp';
 import type { QmsStatistics, ApprovalRequest, ApprovalResponse, ApprovalEntityType } from './types';
+import i18n from '@/i18n';
 
 export * from './types';
 export * from './adapters';
@@ -222,39 +223,39 @@ export const qmsApi = {
 
       const statistics: QmsStatistics = {
         total_standards: standards.length,
-        active_standards: standards.filter((s) => s.status === 'active' || s.status === '启用')
+        active_standards: standards.filter((s) => s.status === 'active' || s.status === i18n.t('shared.index.k0'))
           .length,
-        inactive_standards: standards.filter((s) => s.status === 'inactive' || s.status === '禁用')
+        inactive_standards: standards.filter((s) => s.status === 'inactive' || s.status === i18n.t('shared.index.k1'))
           .length,
 
         total_inspections: checks.length,
-        pending_inspections: checks.filter((c) => c.status === 'pending' || c.status === '待处理')
+        pending_inspections: checks.filter((c) => c.status === 'pending' || c.status === i18n.t('shared.index.k2'))
           .length,
         in_progress_inspections: checks.filter(
-          (c) => c.status === 'in_progress' || c.status === '进行中'
+          (c) => c.status === 'in_progress' || c.status === i18n.t('shared.index.k3')
         ).length,
         completed_inspections: checks.filter(
-          (c) => c.status === 'completed' || c.status === '已完成'
+          (c) => c.status === 'completed' || c.status === i18n.t('shared.index.k4')
         ).length,
 
         total_issues: issues.length,
         open_issues: issues.filter(
-          (i) => i.status === 'open' || i.status === '待处理' || i.status === '处理中'
+          (i) => i.status === 'open' || i.status === i18n.t('shared.index.k6') || i.status === i18n.t('shared.index.k5')
         ).length,
         resolved_issues: issues.filter(
-          (i) => i.status === 'closed' || i.status === 'resolved' || i.status === '已关闭'
+          (i) => i.status === 'closed' || i.status === 'resolved' || i.status === i18n.t('shared.index.k7')
         ).length,
-        critical_issues: issues.filter((i) => i.severity === 'critical' || i.severity === '严重')
+        critical_issues: issues.filter((i) => i.severity === 'critical' || i.severity === i18n.t('shared.index.k8'))
           .length,
 
         total_actions: improvements.length,
-        pending_actions: improvements.filter((a) => a.status === 'pending' || a.status === '提议')
+        pending_actions: improvements.filter((a) => a.status === 'pending' || a.status === i18n.t('shared.index.k9'))
           .length,
         in_progress_actions: improvements.filter(
-          (a) => a.status === 'in_progress' || a.status === '实施中'
+          (a) => a.status === 'in_progress' || a.status === i18n.t('shared.index.k10')
         ).length,
         completed_actions: improvements.filter(
-          (a) => a.status === 'completed' || a.status === '已完成'
+          (a) => a.status === 'completed' || a.status === i18n.t('shared.index.k11')
         ).length,
       };
 

@@ -18,6 +18,7 @@ import {
   Tab,
   Typography,
 } from '@mui/material';
+import i18n from '@/i18n';
 import {
   TrendingUp,
   TrendingDown,
@@ -31,53 +32,45 @@ import { productionCostApi, type WorkOrderCostResult } from '../../api/mes/produ
 import { useQuery } from '@tanstack/react-query';
 import { useNotificationStore } from '@/store/notificationStore';
 import { PageContainer } from '@/components/common';
-
 import { CACHE_DURATIONS, QUERY_KEYS } from '@/lib/reactQuery';
-
 const ProductionCostPage: React.FC = () => {
   const [activeTab, setActiveTab] = useState(0);
   const [periodType, setPeriodType] = useState<'month' | 'quarter' | 'year'>('month');
   const [workOrderId, setWorkOrderId] = useState('');
   const addNotification = useNotificationStore((state) => state.addNotification);
-
   const periodCostReport = useQuery({
     queryKey: [...QUERY_KEYS.AD_HOC.PERIODCOSTREPORT_BASE, periodType],
     queryFn: () => productionCostApi.getPeriodCostReport({ period_type: periodType }),
   
       staleTime: CACHE_DURATIONS.MEDIUM,});
-
   const costTrend = useQuery({
     queryKey: QUERY_KEYS.AD_HOC.COSTTREND_BASE,
     queryFn: () => productionCostApi.getCostTrend({ period_type: 'month' }),
   
       staleTime: CACHE_DURATIONS.MEDIUM,});
-
   const costForecast = useQuery({
     queryKey: QUERY_KEYS.AD_HOC.COSTFORECAST_BASE,
     queryFn: () => productionCostApi.getCostForecast({ months: 3 }),
   
       staleTime: CACHE_DURATIONS.MEDIUM,});
-
   const [workOrderCost, setWorkOrderCost] = useState<WorkOrderCostResult | null>(null);
   const [loadingWorkOrder, setLoadingWorkOrder] = useState(false);
-
   const handleQueryWorkOrderCost = async () => {
     if (!workOrderId.trim()) {
-      addNotification({ title: '警告', message: '请输入工单ID', type: 'warning' });
+      addNotification({ title: i18n.t('mes.production_cost_page.k1'), message: i18n.t('mes.production_cost_page.id_0'), type: 'warning' });
       return;
     }
     setLoadingWorkOrder(true);
     try {
       const data = await productionCostApi.calculateWorkOrderCost(workOrderId.trim());
       setWorkOrderCost(data.data);
-      addNotification({ title: '成功', message: '工单成本计算成功', type: 'success' });
+      addNotification({ title: i18n.t('mes.production_cost_page.k3'), message: i18n.t('mes.production_cost_page.k2'), type: 'success' });
     } catch {
-      addNotification({ title: '错误', message: '工单成本计算失败', type: 'error' });
+      addNotification({ title: i18n.t('mes.production_cost_page.k5'), message: i18n.t('mes.production_cost_page.k4'), type: 'error' });
     } finally {
       setLoadingWorkOrder(false);
     }
   };
-
   const getTrendIcon = (direction: 'up' | 'down' | 'stable') => {
     switch (direction) {
       case 'up':
@@ -103,7 +96,6 @@ const ProductionCostPage: React.FC = () => {
         );
     }
   };
-
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat('zh-CN', {
       style: 'currency',
@@ -111,44 +103,40 @@ const ProductionCostPage: React.FC = () => {
       minimumFractionDigits: 2,
     }).format(value);
   };
-
   const reportData = periodCostReport.data?.data;
   const trendData = costTrend.data?.data;
   const forecastData = costForecast.data?.data;
-
   return (
-    <PageContainer title='生产成本'>
+    <PageContainer title={i18n.t('mes.production_cost_page.k6')}>
       <Box sx={{ p: 3 }}>
         <Typography
           variant='h4'
           sx={{ mb: 4 }}
         >
-          生产成本核算
+          {i18n.t('pages.production_cost_page.k0')}
         </Typography>
-
         <Tabs
           value={activeTab}
           onChange={(_, newValue) => setActiveTab(newValue)}
           sx={{ mb: 4 }}
         >
           <Tab
-            label='成本汇总'
+            label={i18n.t('mes.production_cost_page.k7')}
             icon={<BarChart3 size={20} />}
           />
           <Tab
-            label='趋势分析'
+            label={i18n.t('mes.production_cost_page.k8')}
             icon={<TrendingUp size={20} />}
           />
           <Tab
-            label='成本预测'
+            label={i18n.t('mes.production_cost_page.k9')}
             icon={<PieChart size={20} />}
           />
           <Tab
-            label='工单查询'
+            label={i18n.t('mes.production_cost_page.k10')}
             icon={<DollarSign size={20} />}
           />
         </Tabs>
-
         {activeTab === 0 && reportData && (
           <Grid sx={{ display: 'grid', gridTemplateColumns: 'repeat(12, 1fr)', gap: 3 }}>
             <Grid sx={{ gridColumn: 'span 3' }}>
@@ -160,23 +148,22 @@ const ProductionCostPage: React.FC = () => {
                     variant='body2'
                     color='textSecondary'
                   >
-                    周期总成本
+                    {i18n.t('pages.production_cost_page.k1')}
                   </Typography>
                 </CardContent>
               </Card>
             </Grid>
-
             <Card sx={{ mt: 3 }}>
-              <CardHeader title='按产品成本分布' />
+              <CardHeader title={i18n.t('mes.production_cost_page.k11')} />
               <CardContent>
                 <Table>
                   <TableHead>
                     <TableRow>
-                      <TableCell>产品编码</TableCell>
-                      <TableCell>产品名称</TableCell>
-                      <TableCell>总成本</TableCell>
-                      <TableCell>单位成本</TableCell>
-                      <TableCell>占比</TableCell>
+                      <TableCell>{i18n.t('mes.production_cost_page.k12')}</TableCell>
+                      <TableCell>{i18n.t('mes.production_cost_page.k13')}</TableCell>
+                      <TableCell>{i18n.t('mes.production_cost_page.k14')}</TableCell>
+                      <TableCell>{i18n.t('mes.production_cost_page.k15')}</TableCell>
+                      <TableCell>{i18n.t('mes.production_cost_page.k16')}</TableCell>
                     </TableRow>
                   </TableHead>
                   <TableBody>
@@ -198,16 +185,15 @@ const ProductionCostPage: React.FC = () => {
                 </Table>
               </CardContent>
             </Card>
-
             <Card sx={{ mt: 3 }}>
-              <CardHeader title='按车间成本分布' />
+              <CardHeader title={i18n.t('mes.production_cost_page.k17')} />
               <CardContent>
                 <Table>
                   <TableHead>
                     <TableRow>
-                      <TableCell>车间名称</TableCell>
-                      <TableCell>总成本</TableCell>
-                      <TableCell>占比</TableCell>
+                      <TableCell>{i18n.t('mes.production_cost_page.k18')}</TableCell>
+                      <TableCell>{i18n.t('mes.production_cost_page.k19')}</TableCell>
+                      <TableCell>{i18n.t('mes.production_cost_page.k20')}</TableCell>
                     </TableRow>
                   </TableHead>
                   <TableBody>
@@ -229,15 +215,14 @@ const ProductionCostPage: React.FC = () => {
             </Card>
           </Grid>
         )}
-
         {activeTab === 1 && trendData && (
           <Card>
-            <CardHeader title='成本趋势分析' />
+            <CardHeader title={i18n.t('mes.production_cost_page.k21')} />
             <CardContent>
               <Grid sx={{ display: 'flex', gap: 2, mb: 4 }}>
                 <Grid>
                   <Chip
-                    label={`总体趋势: ${trendData.overall_trend === 'up' ? '上升' : trendData.overall_trend === 'down' ? '下降' : '稳定'}`}
+                    label={`${i18n.t('pages.production_cost_page.k0')}${trendData.overall_trend === 'up' ? i18n.t('mes.production_cost_page.k24') : trendData.overall_trend === 'down' ? i18n.t('mes.production_cost_page.k23') : i18n.t('mes.production_cost_page.k22')}`}
                     icon={getTrendIcon(trendData.overall_trend)}
                     color={
                       trendData.overall_trend === 'up'
@@ -250,22 +235,21 @@ const ProductionCostPage: React.FC = () => {
                 </Grid>
                 <Grid>
                   <Chip
-                    label={`平均变化率: ${trendData.avg_change_rate}%`}
+                    label={`${i18n.t('pages.production_cost_page.k1')}${trendData.avg_change_rate}%`}
                     size='small'
                   />
                 </Grid>
               </Grid>
-
               <Table>
                 <TableHead>
                   <TableRow>
-                    <TableCell>周期</TableCell>
-                    <TableCell>总成本</TableCell>
-                    <TableCell>材料成本</TableCell>
-                    <TableCell>人工成本</TableCell>
-                    <TableCell>制造费用</TableCell>
-                    <TableCell>趋势</TableCell>
-                    <TableCell>变化率</TableCell>
+                    <TableCell>{i18n.t('mes.production_cost_page.k25')}</TableCell>
+                    <TableCell>{i18n.t('mes.production_cost_page.k26')}</TableCell>
+                    <TableCell>{i18n.t('mes.production_cost_page.k27')}</TableCell>
+                    <TableCell>{i18n.t('mes.production_cost_page.k28')}</TableCell>
+                    <TableCell>{i18n.t('mes.production_cost_page.k29')}</TableCell>
+                    <TableCell>{i18n.t('mes.production_cost_page.k30')}</TableCell>
+                    <TableCell>{i18n.t('mes.production_cost_page.k31')}</TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
@@ -297,10 +281,9 @@ const ProductionCostPage: React.FC = () => {
             </CardContent>
           </Card>
         )}
-
         {activeTab === 2 && forecastData && (
           <Card>
-            <CardHeader title='成本预测' />
+            <CardHeader title={i18n.t('mes.production_cost_page.k32')} />
             <CardContent>
               <Grid sx={{ display: 'grid', gridTemplateColumns: 'repeat(12, 1fr)', gap: 3 }}>
                 <Grid sx={{ gridColumn: 'span 3' }}>
@@ -314,12 +297,11 @@ const ProductionCostPage: React.FC = () => {
                         variant='body2'
                         color='textSecondary'
                       >
-                        预测总成本
+                        {i18n.t('pages.production_cost_page.k2')}
                       </Typography>
                     </CardContent>
                   </Card>
                 </Grid>
-
                 <Grid sx={{ gridColumn: 'span 3' }}>
                   <Card>
                     <CardContent>
@@ -327,7 +309,7 @@ const ProductionCostPage: React.FC = () => {
                         variant='body2'
                         color='textSecondary'
                       >
-                        材料成本
+                        {i18n.t('pages.production_cost_page.k3')}
                       </Typography>
                       <Typography variant='h5'>
                         {formatCurrency(forecastData.forecast_material)}
@@ -335,7 +317,6 @@ const ProductionCostPage: React.FC = () => {
                     </CardContent>
                   </Card>
                 </Grid>
-
                 <Grid sx={{ gridColumn: 'span 3' }}>
                   <Card>
                     <CardContent>
@@ -343,7 +324,7 @@ const ProductionCostPage: React.FC = () => {
                         variant='body2'
                         color='textSecondary'
                       >
-                        人工成本
+                        {i18n.t('pages.production_cost_page.k4')}
                       </Typography>
                       <Typography variant='h5'>
                         {formatCurrency(forecastData.forecast_labor)}
@@ -351,7 +332,6 @@ const ProductionCostPage: React.FC = () => {
                     </CardContent>
                   </Card>
                 </Grid>
-
                 <Grid sx={{ gridColumn: 'span 3' }}>
                   <Card>
                     <CardContent>
@@ -359,7 +339,7 @@ const ProductionCostPage: React.FC = () => {
                         variant='body2'
                         color='textSecondary'
                       >
-                        制造费用
+                        {i18n.t('pages.production_cost_page.k5')}
                       </Typography>
                       <Typography variant='h5'>
                         {formatCurrency(forecastData.forecast_overhead)}
@@ -368,32 +348,30 @@ const ProductionCostPage: React.FC = () => {
                   </Card>
                 </Grid>
               </Grid>
-
               <Box sx={{ mt: 4 }}>
                 <Typography variant='subtitle1'>
-                  预测周期: {forecastData.forecast_period}
+                  [i18n.t('pages.production_cost_page.k6')]: {forecastData.forecast_period}
                 </Typography>
                 <Typography variant='subtitle1'>
-                  置信区间: {formatCurrency(forecastData.confidence_interval[0])} -{' '}
+                  [i18n.t('pages.production_cost_page.k7')]: {formatCurrency(forecastData.confidence_interval[0])} -{' '}
                   {formatCurrency(forecastData.confidence_interval[1])}
                 </Typography>
                 <Typography variant='subtitle1'>趋势因子: {forecastData.trend_factor}</Typography>
                 <Typography variant='subtitle1'>
-                  季节性因子: {forecastData.seasonality_factor}
+                  [i18n.t('pages.production_cost_page.k8')]: {forecastData.seasonality_factor}
                 </Typography>
               </Box>
             </CardContent>
           </Card>
         )}
-
         {activeTab === 3 && (
           <Card>
-            <CardHeader title='工单成本查询' />
+            <CardHeader title={i18n.t('mes.production_cost_page.k33')} />
             <CardContent>
               <Grid sx={{ display: 'grid', gridTemplateColumns: 'repeat(12, 1fr)', gap: 2, mb: 4 }}>
                 <Grid sx={{ gridColumn: 'span 6' }}>
                   <Input
-                    placeholder='输入工单ID'
+                    placeholder={i18n.t('mes.production_cost_page.id_34')}
                     value={workOrderId}
                     onChange={(e) => setWorkOrderId(e.target.value)}
                     fullWidth
@@ -405,11 +383,10 @@ const ProductionCostPage: React.FC = () => {
                     onClick={handleQueryWorkOrderCost}
                     disabled={loadingWorkOrder}
                   >
-                    查询
+                    {i18n.t('pages.production_cost_page.k9')}
                   </Button>
                 </Grid>
               </Grid>
-
               {workOrderCost && (
                 <>
                   <Grid
@@ -422,7 +399,7 @@ const ProductionCostPage: React.FC = () => {
                             variant='body2'
                             color='textSecondary'
                           >
-                            工单编号
+                            {i18n.t('pages.production_cost_page.k10')}
                           </Typography>
                           <Typography variant='h6'>{workOrderCost.work_order_no}</Typography>
                         </CardContent>
@@ -435,7 +412,7 @@ const ProductionCostPage: React.FC = () => {
                             variant='body2'
                             color='textSecondary'
                           >
-                            生产订单
+                            {i18n.t('pages.production_cost_page.k11')}
                           </Typography>
                           <Typography variant='h6'>{workOrderCost.production_order_no}</Typography>
                         </CardContent>
@@ -448,7 +425,7 @@ const ProductionCostPage: React.FC = () => {
                             variant='body2'
                             color='textSecondary'
                           >
-                            产量
+                            {i18n.t('pages.production_cost_page.k12')}
                           </Typography>
                           <Typography variant='h6'>{workOrderCost.produced_qty}</Typography>
                         </CardContent>
@@ -461,7 +438,7 @@ const ProductionCostPage: React.FC = () => {
                             variant='body2'
                             color='textSecondary'
                           >
-                            单位成本
+                            {i18n.t('pages.production_cost_page.k13')}
                           </Typography>
                           <Typography variant='h6'>
                             {formatCurrency(workOrderCost.unit_cost)}
@@ -470,21 +447,20 @@ const ProductionCostPage: React.FC = () => {
                       </Card>
                     </Grid>
                   </Grid>
-
                   <Card sx={{ mt: 3 }}>
-                    <CardHeader title='成本汇总' />
+                    <CardHeader title={i18n.t('mes.production_cost_page.k35')} />
                     <CardContent>
                       <Table>
                         <TableHead>
                           <TableRow>
-                            <TableCell>成本类别</TableCell>
-                            <TableCell>金额</TableCell>
-                            <TableCell>占比</TableCell>
+                            <TableCell>{i18n.t('mes.production_cost_page.k36')}</TableCell>
+                            <TableCell>{i18n.t('mes.production_cost_page.k37')}</TableCell>
+                            <TableCell>{i18n.t('mes.production_cost_page.k38')}</TableCell>
                           </TableRow>
                         </TableHead>
                         <TableBody>
                           <TableRow>
-                            <TableCell>材料成本</TableCell>
+                            <TableCell>{i18n.t('mes.production_cost_page.k39')}</TableCell>
                             <TableCell>{formatCurrency(workOrderCost.material_cost)}</TableCell>
                             <TableCell>
                               {(
@@ -495,7 +471,7 @@ const ProductionCostPage: React.FC = () => {
                             </TableCell>
                           </TableRow>
                           <TableRow>
-                            <TableCell>人工成本</TableCell>
+                            <TableCell>{i18n.t('mes.production_cost_page.k40')}</TableCell>
                             <TableCell>{formatCurrency(workOrderCost.labor_cost)}</TableCell>
                             <TableCell>
                               {(
@@ -506,7 +482,7 @@ const ProductionCostPage: React.FC = () => {
                             </TableCell>
                           </TableRow>
                           <TableRow>
-                            <TableCell>制造费用</TableCell>
+                            <TableCell>{i18n.t('mes.production_cost_page.k41')}</TableCell>
                             <TableCell>{formatCurrency(workOrderCost.overhead_cost)}</TableCell>
                             <TableCell>
                               {(
@@ -518,7 +494,7 @@ const ProductionCostPage: React.FC = () => {
                           </TableRow>
                           <TableRow>
                             <TableCell>
-                              <strong>总成本</strong>
+                              <strong>{i18n.t('mes.production_cost_page.k42')}</strong>
                             </TableCell>
                             <TableCell>
                               <strong>{formatCurrency(workOrderCost.total_cost)}</strong>
@@ -531,17 +507,16 @@ const ProductionCostPage: React.FC = () => {
                       </Table>
                     </CardContent>
                   </Card>
-
                   {workOrderCost.cost_breakdown && workOrderCost.cost_breakdown.length > 0 && (
                     <Card sx={{ mt: 3 }}>
-                      <CardHeader title='成本明细' />
+                      <CardHeader title={i18n.t('mes.production_cost_page.k43')} />
                       <CardContent>
                         <Table>
                           <TableHead>
                             <TableRow>
-                              <TableCell>类别</TableCell>
-                              <TableCell>金额</TableCell>
-                              <TableCell>占比</TableCell>
+                              <TableCell>{i18n.t('mes.production_cost_page.k44')}</TableCell>
+                              <TableCell>{i18n.t('mes.production_cost_page.k45')}</TableCell>
+                              <TableCell>{i18n.t('mes.production_cost_page.k46')}</TableCell>
                             </TableRow>
                           </TableHead>
                           <TableBody>
@@ -562,7 +537,6 @@ const ProductionCostPage: React.FC = () => {
             </CardContent>
           </Card>
         )}
-
         {activeTab === 0 && (
           <Card sx={{ mt: 3 }}>
             <CardContent>
@@ -577,9 +551,9 @@ const ProductionCostPage: React.FC = () => {
                     onChange={(e) => setPeriodType(e.target.value as 'month' | 'quarter' | 'year')}
                     sx={{ minWidth: 120 }}
                   >
-                    <option value='month'>本月</option>
-                    <option value='quarter'>本季度</option>
-                    <option value='year'>本年</option>
+                    <option value='month'>{i18n.t('mes.production_cost_page.k47')}</option>
+                    <option value='quarter'>{i18n.t('mes.production_cost_page.k48')}</option>
+                    <option value='year'>{i18n.t('mes.production_cost_page.k49')}</option>
                   </Select>
                 </Grid>
               </Grid>
@@ -590,5 +564,4 @@ const ProductionCostPage: React.FC = () => {
     </PageContainer>
   );
 };
-
 export default ProductionCostPage;

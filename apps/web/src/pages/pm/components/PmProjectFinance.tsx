@@ -4,21 +4,16 @@
  */
 import React from 'react';
 import { DollarSign, FileText, TrendingUp } from 'lucide-react';
-import { useTranslation } from 'react-i18next';
 import { Box, Typography, Card, CardContent, CardHeader } from '@mui/material';
 import type { Project } from '@/api/pm';
 import { ActionButton, StatusBadge } from '@/components/common';
-
+import i18n from '@/i18n';
 export interface PmProjectFinanceProps {
   project: Project | null;
   formatCurrency: (amount?: number) => string;
 }
-
 const PmProjectFinance: React.FC<PmProjectFinanceProps> = ({ project, formatCurrency }) => {
-  const { t } = useTranslation();
-
   if (!project) return null;
-
   return (
     <Box
       sx={{
@@ -35,7 +30,7 @@ const PmProjectFinance: React.FC<PmProjectFinanceProps> = ({ project, formatCurr
               variant='h6'
               sx={{ fontSize: '1.125rem' }}
             >
-              {t('pm.projectdetail.budget_execution')}
+              {i18n.t('pm.projectdetail.budget_execution')}
             </Typography>
           }
         />
@@ -51,7 +46,7 @@ const PmProjectFinance: React.FC<PmProjectFinanceProps> = ({ project, formatCurr
             }}
           >
             <Typography sx={{ color: 'grey.500' }}>
-              {t('pm.projectdetail.project_budget')}
+              {i18n.t('pm.projectdetail.project_budget')}
             </Typography>
             <Typography sx={{ fontWeight: 500, color: 'grey.900' }}>
               {formatCurrency(project.budget)}
@@ -67,7 +62,7 @@ const PmProjectFinance: React.FC<PmProjectFinanceProps> = ({ project, formatCurr
               borderColor: 'grey.100',
             }}
           >
-            <Typography sx={{ color: 'grey.500' }}>{t('pm.projectdetail.actual_cost')}</Typography>
+            <Typography sx={{ color: 'grey.500' }}>{i18n.t('pm.projectdetail.actual_cost')}</Typography>
             <Typography sx={{ fontWeight: 500, color: 'warning.dark' }}>
               {formatCurrency(project.actual_cost)}
             </Typography>
@@ -83,7 +78,7 @@ const PmProjectFinance: React.FC<PmProjectFinanceProps> = ({ project, formatCurr
             }}
           >
             <Typography sx={{ color: 'grey.500' }}>
-              {t('pm.projectdetail.committed_cost')}
+              {i18n.t('pm.projectdetail.committed_cost')}
             </Typography>
             <Typography sx={{ fontWeight: 500, color: 'primary.dark' }}>
               {formatCurrency(project.committed_cost)}
@@ -100,7 +95,7 @@ const PmProjectFinance: React.FC<PmProjectFinanceProps> = ({ project, formatCurr
             }}
           >
             <Typography sx={{ color: 'grey.500' }}>
-              {t('pm.projectdetail.remaining_budget')}
+              {i18n.t('pm.projectdetail.remaining_budget')}
             </Typography>
             <Typography sx={{ fontWeight: 500, color: 'success.dark' }}>
               {formatCurrency(project.remaining_budget)}
@@ -117,7 +112,7 @@ const PmProjectFinance: React.FC<PmProjectFinanceProps> = ({ project, formatCurr
             }}
           >
             <Typography sx={{ color: 'grey.500' }}>
-              {t('pm.projectdetail.cost_variance')}
+              {i18n.t('pm.projectdetail.cost_variance')}
             </Typography>
             <Typography
               sx={{
@@ -137,7 +132,7 @@ const PmProjectFinance: React.FC<PmProjectFinanceProps> = ({ project, formatCurr
             }}
           >
             <Typography sx={{ color: 'grey.500' }}>
-              {t('pm.projectdetail.budget_utilization_rate')}
+              {i18n.t('pm.projectdetail.budget_utilization_rate')}
             </Typography>
             <Typography sx={{ fontWeight: 500, color: 'grey.900' }}>
               {project.budget_utilization_rate?.toFixed(1) || '0'}%
@@ -145,7 +140,6 @@ const PmProjectFinance: React.FC<PmProjectFinanceProps> = ({ project, formatCurr
           </Box>
         </CardContent>
       </Card>
-
       <Card>
         <CardHeader
           sx={{ pb: 2 }}
@@ -154,7 +148,7 @@ const PmProjectFinance: React.FC<PmProjectFinanceProps> = ({ project, formatCurr
               variant='h6'
               sx={{ fontSize: '1.125rem' }}
             >
-              {t('pm.projectdetail.revenue_and_profit')}
+              {i18n.t('pm.projectdetail.revenue_and_profit')}
             </Typography>
           }
         />
@@ -170,7 +164,7 @@ const PmProjectFinance: React.FC<PmProjectFinanceProps> = ({ project, formatCurr
             }}
           >
             <Typography sx={{ color: 'grey.500' }}>
-              {t('pm.projectdetail.recognized_revenue')}
+              {i18n.t('pm.projectdetail.recognized_revenue')}
             </Typography>
             <Typography sx={{ fontWeight: 500, color: 'grey.900' }}>
               {formatCurrency(project.revenue_recognized)}
@@ -187,7 +181,7 @@ const PmProjectFinance: React.FC<PmProjectFinanceProps> = ({ project, formatCurr
             }}
           >
             <Typography sx={{ color: 'grey.500' }}>
-              {t('pm.projectdetail.accounts_receivable')}
+              {i18n.t('pm.projectdetail.accounts_receivable')}
             </Typography>
             <Typography sx={{ fontWeight: 500, color: 'warning.dark' }}>
               {formatCurrency(project.accounts_receivable)}
@@ -204,7 +198,7 @@ const PmProjectFinance: React.FC<PmProjectFinanceProps> = ({ project, formatCurr
             }}
           >
             <Typography sx={{ color: 'grey.500' }}>
-              {t('pm.projectdetail.invoiced_amount')}
+              {i18n.t('pm.projectdetail.invoiced_amount')}
             </Typography>
             <Typography sx={{ fontWeight: 500, color: 'primary.dark' }}>
               {formatCurrency(
@@ -222,7 +216,7 @@ const PmProjectFinance: React.FC<PmProjectFinanceProps> = ({ project, formatCurr
               borderColor: 'grey.100',
             }}
           >
-            <Typography sx={{ color: 'grey.500' }}>{t('pm.projectdetail.gross_profit')}</Typography>
+            <Typography sx={{ color: 'grey.500' }}>{i18n.t('pm.projectdetail.gross_profit')}</Typography>
             <Typography sx={{ fontWeight: 500, color: 'success.dark' }}>
               {formatCurrency(project.gross_profit)}
             </Typography>
@@ -235,14 +229,13 @@ const PmProjectFinance: React.FC<PmProjectFinanceProps> = ({ project, formatCurr
               py: 1,
             }}
           >
-            <Typography sx={{ color: 'grey.500' }}>{t('pm.projectdetail.gross_margin')}</Typography>
+            <Typography sx={{ color: 'grey.500' }}>{i18n.t('pm.projectdetail.gross_margin')}</Typography>
             <Typography sx={{ fontWeight: 500, color: 'grey.900' }}>
               {project.gross_margin?.toFixed(1) || '0'}%
             </Typography>
           </Box>
         </CardContent>
       </Card>
-
       <Card sx={{ lg: { gridColumn: 'span 2' } }}>
         <CardHeader
           sx={{
@@ -257,12 +250,12 @@ const PmProjectFinance: React.FC<PmProjectFinanceProps> = ({ project, formatCurr
               variant='h6'
               sx={{ fontSize: '1.125rem' }}
             >
-              {t('pm.projectdetail.cost_composition')}
+              {i18n.t('pm.projectdetail.cost_composition')}
             </Typography>
           }
           action={
             <ActionButton
-              label={t('pm.projectdetail.view_detail')}
+              label={i18n.t('pm.projectdetail.view_detail')}
               variant='secondary'
               size='small'
             />
@@ -281,7 +274,7 @@ const PmProjectFinance: React.FC<PmProjectFinanceProps> = ({ project, formatCurr
                 variant='body2'
                 sx={{ color: 'grey.500', mb: 0.5 }}
               >
-                {t('pm.projectdetail.labor_cost')}
+                {i18n.t('pm.projectdetail.labor_cost')}
               </Typography>
               <Typography
                 variant='h6'
@@ -295,7 +288,7 @@ const PmProjectFinance: React.FC<PmProjectFinanceProps> = ({ project, formatCurr
                 variant='body2'
                 sx={{ color: 'grey.500', mb: 0.5 }}
               >
-                {t('pm.projectdetail.material_cost')}
+                {i18n.t('pm.projectdetail.material_cost')}
               </Typography>
               <Typography
                 variant='h6'
@@ -309,7 +302,7 @@ const PmProjectFinance: React.FC<PmProjectFinanceProps> = ({ project, formatCurr
                 variant='body2'
                 sx={{ color: 'grey.500', mb: 0.5 }}
               >
-                {t('pm.projectdetail.expense')}
+                {i18n.t('pm.projectdetail.expense')}
               </Typography>
               <Typography
                 variant='h6'
@@ -323,7 +316,7 @@ const PmProjectFinance: React.FC<PmProjectFinanceProps> = ({ project, formatCurr
                 variant='body2'
                 sx={{ color: 'grey.500', mb: 0.5 }}
               >
-                {t('pm.projectdetail.subcontract_cost')}
+                {i18n.t('pm.projectdetail.subcontract_cost')}
               </Typography>
               <Typography
                 variant='h6'
@@ -337,7 +330,7 @@ const PmProjectFinance: React.FC<PmProjectFinanceProps> = ({ project, formatCurr
                 variant='body2'
                 sx={{ color: 'grey.500', mb: 0.5 }}
               >
-                {t('pm.projectdetail.other_cost')}
+                {i18n.t('pm.projectdetail.other_cost')}
               </Typography>
               <Typography
                 variant='h6'
@@ -349,7 +342,6 @@ const PmProjectFinance: React.FC<PmProjectFinanceProps> = ({ project, formatCurr
           </Box>
         </CardContent>
       </Card>
-
       <Card>
         <CardHeader
           sx={{ pb: 2 }}
@@ -358,7 +350,7 @@ const PmProjectFinance: React.FC<PmProjectFinanceProps> = ({ project, formatCurr
               variant='h6'
               sx={{ fontSize: '1.125rem' }}
             >
-              {t('pm.projectdetail.cost_center_info')}
+              {i18n.t('pm.projectdetail.cost_center_info')}
             </Typography>
           }
         />
@@ -374,7 +366,7 @@ const PmProjectFinance: React.FC<PmProjectFinanceProps> = ({ project, formatCurr
             }}
           >
             <Typography sx={{ color: 'grey.500' }}>
-              {t('pm.projectdetail.cost_center_id')}
+              {i18n.t('pm.projectdetail.cost_center_id')}
             </Typography>
             <Typography sx={{ fontWeight: 500, color: 'grey.900' }}>
               {project.cost_center_id || '-'}
@@ -391,7 +383,7 @@ const PmProjectFinance: React.FC<PmProjectFinanceProps> = ({ project, formatCurr
             }}
           >
             <Typography sx={{ color: 'grey.500' }}>
-              {t('pm.projectdetail.cost_center_name')}
+              {i18n.t('pm.projectdetail.cost_center_name')}
             </Typography>
             <Typography sx={{ fontWeight: 500, color: 'grey.900' }}>
               {project.cost_center_name || '-'}
@@ -406,7 +398,7 @@ const PmProjectFinance: React.FC<PmProjectFinanceProps> = ({ project, formatCurr
             }}
           >
             <Typography sx={{ color: 'grey.500' }}>
-              {t('pm.projectdetail.execution_status')}
+              {i18n.t('pm.projectdetail.execution_status')}
             </Typography>
             <StatusBadge
               status={
@@ -418,10 +410,10 @@ const PmProjectFinance: React.FC<PmProjectFinanceProps> = ({ project, formatCurr
               }
               label={
                 project.budget_utilization_rate && project.budget_utilization_rate > 100
-                  ? t('pm.projectdetail.over_budget')
+                  ? i18n.t('pm.projectdetail.over_budget')
                   : project.budget_utilization_rate && project.budget_utilization_rate > 80
-                    ? t('pm.projectdetail.warning')
-                    : t('pm.projectdetail.normal')
+                    ? i18n.t('pm.projectdetail.warning')
+                    : i18n.t('pm.projectdetail.normal')
               }
               color={
                 project.budget_utilization_rate && project.budget_utilization_rate > 100
@@ -434,7 +426,6 @@ const PmProjectFinance: React.FC<PmProjectFinanceProps> = ({ project, formatCurr
           </Box>
         </CardContent>
       </Card>
-
       <Card>
         <CardHeader
           sx={{ pb: 2 }}
@@ -443,31 +434,31 @@ const PmProjectFinance: React.FC<PmProjectFinanceProps> = ({ project, formatCurr
               variant='h6'
               sx={{ fontSize: '1.125rem' }}
             >
-              {t('pm.projectdetail.quick_actions')}
+              {i18n.t('pm.projectdetail.quick_actions')}
             </Typography>
           }
         />
         <CardContent sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
           <ActionButton
-            label={t('pm.projectdetail.view_cost_detail')}
+            label={i18n.t('pm.projectdetail.view_cost_detail')}
             icon={<DollarSign size={16} />}
             variant='secondary'
             sx={{ justifyContent: 'flex-start' }}
           />
           <ActionButton
-            label={t('pm.projectdetail.view_project_invoice')}
+            label={i18n.t('pm.projectdetail.view_project_invoice')}
             icon={<FileText size={16} />}
             variant='secondary'
             sx={{ justifyContent: 'flex-start' }}
           />
           <ActionButton
-            label={t('pm.projectdetail.budget_execution_analysis')}
+            label={i18n.t('pm.projectdetail.budget_execution_analysis')}
             icon={<TrendingUp size={16} />}
             variant='secondary'
             sx={{ justifyContent: 'flex-start' }}
           />
           <ActionButton
-            label={t('pm.projectdetail.generate_project_voucher')}
+            label={i18n.t('pm.projectdetail.generate_project_voucher')}
             icon={<FileText size={16} />}
             variant='secondary'
             sx={{ justifyContent: 'flex-start' }}
@@ -477,5 +468,4 @@ const PmProjectFinance: React.FC<PmProjectFinanceProps> = ({ project, formatCurr
     </Box>
   );
 };
-
 export default PmProjectFinance;

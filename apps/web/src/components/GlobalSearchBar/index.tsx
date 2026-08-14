@@ -6,6 +6,7 @@ import { useGlobalSearch } from '@/hooks/useGlobalSearch';
 import { SEARCH_SHORTCUTS, getShortcutKeyLabel } from '@/hooks/shortcuts';
 import { SearchInput } from './SearchInput';
 import { SearchResultList } from './SearchResultList';
+import i18n from '@/i18n';
 
 interface GlobalSearchBarProps {
   variant?: 'full' | 'icon';
@@ -60,7 +61,7 @@ export const GlobalSearchBar: React.FC<GlobalSearchBarProps> = ({ variant = 'ful
   if (variant === 'icon') {
     return (
       <>
-        <Tooltip title={`搜索 (${openShortcutLabel})`}>
+        <Tooltip title={`${i18n.t('components.index.k0')}${openShortcutLabel})`}>
           <IconButton
             onClick={() => {
               setOpen(true);
@@ -68,7 +69,7 @@ export const GlobalSearchBar: React.FC<GlobalSearchBarProps> = ({ variant = 'ful
             }}
             size='small'
             ref={iconButtonRef}
-            aria-label='搜索'
+            aria-label={i18n.t('components.index.k0')}
           >
             <Search size={18} />
           </IconButton>

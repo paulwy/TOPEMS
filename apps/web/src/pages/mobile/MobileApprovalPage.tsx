@@ -16,6 +16,7 @@ import {
   InputAdornment,
   IconButton,
 } from '@mui/material';
+import i18n from '@/i18n';
 import {
   Home,
   ListTodo,
@@ -44,10 +45,7 @@ import { apiLogger } from '@/utils/logger';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { MOBILE_PATHS } from '@/modules/mobile/config';
 import { PageContainer } from '@/components/common';
-
-
 import { QUERY_KEYS } from '@/lib/reactQuery';
-
 interface ApprovalItem {
   id: string;
   title: string;
@@ -65,7 +63,6 @@ interface ApprovalItem {
     time?: string;
   }[];
 }
-
 interface ApiApproval {
   id?: string;
   task_id?: string;
@@ -89,40 +86,39 @@ interface ApiApproval {
     time?: string;
   }>;
 }
-
 const mapApiApprovalToApprovalItem = (apiApproval: ApiApproval): ApprovalItem => {
   const typeMap: Record<string, ApprovalItem['type']> = {
     purchase: 'purchase',
-    采购: 'purchase',
+    [i18n.t('pages.mobile_approval_page.k0')]: 'purchase',
     leave: 'leave',
-    请假: 'leave',
+    [i18n.t('pages.mobile_approval_page.k1')]: 'leave',
     expense: 'expense',
-    报销: 'expense',
+    [i18n.t('pages.mobile_approval_page.k2')]: 'expense',
     contract: 'contract',
-    合同: 'contract',
+    [i18n.t('pages.mobile_approval_page.k3')]: 'contract',
   };
   const priorityMap: Record<string, ApprovalItem['priority']> = {
     high: 'high',
-    高: 'high',
+    [i18n.t('pages.mobile_approval_page.k4')]: 'high',
     medium: 'medium',
-    中: 'medium',
+    [i18n.t('pages.mobile_approval_page.k5')]: 'medium',
     low: 'low',
-    低: 'low',
+    [i18n.t('pages.mobile_approval_page.k6')]: 'low',
   };
   const statusMap: Record<string, ApprovalItem['status']> = {
     pending: 'pending',
-    待审批: 'pending',
+    [i18n.t('pages.mobile_approval_page.k7')]: 'pending',
     approved: 'approved',
-    已通过: 'approved',
+    [i18n.t('pages.mobile_approval_page.k8')]: 'approved',
     rejected: 'rejected',
-    已驳回: 'rejected',
+    [i18n.t('pages.mobile_approval_page.k9')]: 'rejected',
   };
   return {
     id: apiApproval.id || String(apiApproval.task_id || apiApproval.id),
-    title: apiApproval.title || apiApproval.task_name || `审批 ${apiApproval.id}`,
+    title: apiApproval.title || apiApproval.task_name || `${i18n.t('pages.mobile_approval_page.k0')}${apiApproval.id}`,
     type: apiApproval.type ? typeMap[apiApproval.type] : 'other',
     applicant:
-      apiApproval.applicant_name || apiApproval.assignee_name || apiApproval.applicant || '未知',
+      apiApproval.applicant_name || apiApproval.assignee_name || apiApproval.applicant || i18n.t('mobile.mobile_approval_page.k0'),
     department: apiApproval.department || apiApproval.department_name || '',
     submitTime: apiApproval.created_at
       ? new Date(apiApproval.created_at).toLocaleString('zh-CN')
@@ -132,12 +128,11 @@ const mapApiApprovalToApprovalItem = (apiApproval: ApiApproval): ApprovalItem =>
     status: apiApproval.status ? statusMap[apiApproval.status] : 'pending',
     description: apiApproval.description || apiApproval.remarks || '',
     steps: apiApproval.steps || [
-      { name: '提交申请', status: 'completed' },
-      { name: '审批中', status: 'current' },
+      { name: i18n.t('mobile.mobile_approval_page.k1'), status: 'completed' },
+      { name: i18n.t('mobile.mobile_approval_page.k2'), status: 'current' },
     ],
   };
 };
-
 const MobileApprovalPage: React.FC = () => {
   const theme = useTheme();
   const navigate = useNavigate();
@@ -147,11 +142,8 @@ const MobileApprovalPage: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedApproval, setSelectedApproval] = useState<ApprovalItem | null>(null);
   const [approvalComment, setApprovalComment] = useState('');
-
-  const tabs = ['待审批', '已审批', '我发起的'];
-
+  const tabs = [i18n.t('mobile.mobile_approval_page.k5'), i18n.t('mobile.mobile_approval_page.k4'), i18n.t('mobile.mobile_approval_page.k3')];
   const queryClient = useQueryClient();
-
   const approvalsQuery = useQuery<ApprovalItem[]>({
     queryKey: [...QUERY_KEYS.AD_HOC.MOBILE_APPROVALS_BASE, activeTab, searchQuery, user?.id],
     queryFn: async () => {
@@ -159,7 +151,6 @@ const MobileApprovalPage: React.FC = () => {
       if (searchQuery) {
         params.search = searchQuery;
       }
-
       if (activeTab === 0) {
         params.status = 'pending';
         params.assignee_id = user?.id;
@@ -169,7 +160,6 @@ const MobileApprovalPage: React.FC = () => {
       } else if (activeTab === 2) {
         params.initiator_id = user?.id;
       }
-
       const response = await approvalTaskApi.listApprovalTasks(params);
       if (response.success && response.data) {
         const data = response.data as unknown as Record<string, unknown>;
@@ -184,21 +174,17 @@ const MobileApprovalPage: React.FC = () => {
   });
   const approvals = approvalsQuery.data ?? [];
   const loading = approvalsQuery.isLoading;
-
   useEffect(() => {
     if (approvalsQuery.isError) {
-      apiLogger.error('加载审批列表失败:', approvalsQuery.error);
+      apiLogger.error(i18n.t('pages.mobile_approval_page.k1'), approvalsQuery.error);
     }
   }, [approvalsQuery.isError, approvalsQuery.error]);
-
   const handleRefresh = useCallback(async () => {
     await approvalsQuery.refetch();
   }, [approvalsQuery]);
-
   const handleTabChange = (_event: React.SyntheticEvent, newValue: number) => {
     setActiveTab(newValue);
   };
-
   const getTypeIcon = (type: ApprovalItem['type']) => {
     switch (type) {
       case 'purchase':
@@ -213,7 +199,6 @@ const MobileApprovalPage: React.FC = () => {
         return <FileText style={{ width: 20, height: 20 }} />;
     }
   };
-
   const getTypeColor = (type: ApprovalItem['type']) => {
     switch (type) {
       case 'purchase':
@@ -228,7 +213,6 @@ const MobileApprovalPage: React.FC = () => {
         return 'default';
     }
   };
-
   const getPriorityColor = (priority: ApprovalItem['priority']) => {
     switch (priority) {
       case 'high':
@@ -239,18 +223,16 @@ const MobileApprovalPage: React.FC = () => {
         return 'success';
     }
   };
-
   const getPriorityLabel = (priority: ApprovalItem['priority']) => {
     switch (priority) {
       case 'high':
-        return '紧急';
+        return i18n.t('mobile.mobile_approval_page.k6');
       case 'medium':
-        return '普通';
+        return i18n.t('mobile.mobile_approval_page.k7');
       case 'low':
-        return '低';
+        return i18n.t('mobile.mobile_approval_page.k8');
     }
   };
-
   const handleBottomTabChange = (tabId: string) => {
     switch (tabId) {
       case 'home':
@@ -269,7 +251,6 @@ const MobileApprovalPage: React.FC = () => {
         break;
     }
   };
-
   const approveMutation = useMutation({
     mutationFn: (approval: ApprovalItem) =>
       approvalTaskApi.approveTask(approval.id, { comment: approvalComment }),
@@ -281,25 +262,23 @@ const MobileApprovalPage: React.FC = () => {
       setSelectedApproval(null);
       setApprovalComment('');
       addNotification({
-        title: '审批通过',
-        message: `${approval.title} 已通过`,
+        title: i18n.t('mobile.mobile_approval_page.k9'),
+        message: `${approval.title}${i18n.t('pages.mobile_approval_page.k2')}`,
         type: 'success',
       });
     },
     onError: (err: unknown) => {
-      apiLogger.error('审批通过失败:', err);
+      apiLogger.error(i18n.t('pages.mobile_approval_page.k3'), err);
       addNotification({
-        title: '操作失败',
-        message: '审批通过操作失败，请重试',
+        title: i18n.t('mobile.mobile_approval_page.k10'),
+        message: i18n.t('mobile.mobile_approval_page.k11'),
         type: 'error',
       });
     },
   });
-
   const handleApprove = (approval: ApprovalItem) => {
     approveMutation.mutate(approval);
   };
-
   const rejectMutation = useMutation({
     mutationFn: (approval: ApprovalItem) =>
       approvalTaskApi.rejectTask(approval.id, { comment: approvalComment }),
@@ -311,44 +290,40 @@ const MobileApprovalPage: React.FC = () => {
       setSelectedApproval(null);
       setApprovalComment('');
       addNotification({
-        title: '已驳回',
-        message: `${approval.title} 已驳回`,
+        title: i18n.t('mobile.mobile_approval_page.k12'),
+        message: `${approval.title}${i18n.t('pages.mobile_approval_page.k4')}`,
         type: 'warning',
       });
     },
     onError: (err: unknown) => {
-      apiLogger.error('审批驳回失败:', err);
+      apiLogger.error(i18n.t('pages.mobile_approval_page.k5'), err);
       addNotification({
-        title: '操作失败',
-        message: '审批驳回操作失败，请重试',
+        title: i18n.t('mobile.mobile_approval_page.k13'),
+        message: i18n.t('mobile.mobile_approval_page.k14'),
         type: 'error',
       });
     },
   });
-
   const handleReject = (approval: ApprovalItem) => {
     rejectMutation.mutate(approval);
   };
-
   const processing = approveMutation.isPending || rejectMutation.isPending;
-
   const rightSwipeActions: SwipeActionItem[] = [
     {
       id: 'approve',
       icon: <Check style={{ width: 20, height: 20 }} />,
-      label: '通过',
+      label: i18n.t('mobile.mobile_approval_page.k15'),
       color: theme.palette.success.main,
       onClick: () => {},
     },
     {
       id: 'reject',
       icon: <X style={{ width: 20, height: 20 }} />,
-      label: '驳回',
+      label: i18n.t('mobile.mobile_approval_page.k16'),
       color: theme.palette.error.main,
       onClick: () => {},
     },
   ];
-
   const filteredApprovals = approvals.filter((approval) => {
     if (!searchQuery) return true;
     return (
@@ -357,24 +332,22 @@ const MobileApprovalPage: React.FC = () => {
       approval.applicant.includes(searchQuery)
     );
   });
-
   const bottomTabs = [
-    { id: 'home', label: '首页', icon: <Home style={{ width: 22, height: 22 }} /> },
-    { id: 'tasks', label: '任务', icon: <ListTodo style={{ width: 22, height: 22 }} /> },
-    { id: 'scan', label: '扫码', icon: <ScanLine style={{ width: 22, height: 22 }} /> },
+    { id: 'home', label: i18n.t('mobile.mobile_approval_page.k17'), icon: <Home style={{ width: 22, height: 22 }} /> },
+    { id: 'tasks', label: i18n.t('mobile.mobile_approval_page.k18'), icon: <ListTodo style={{ width: 22, height: 22 }} /> },
+    { id: 'scan', label: i18n.t('mobile.mobile_approval_page.k19'), icon: <ScanLine style={{ width: 22, height: 22 }} /> },
     {
       id: 'approval',
-      label: '审批',
+      label: i18n.t('mobile.mobile_approval_page.k20'),
       icon: <CheckSquare style={{ width: 22, height: 22 }} />,
       badge: 3,
     },
-    { id: 'profile', label: '我的', icon: <User style={{ width: 22, height: 22 }} /> },
+    { id: 'profile', label: i18n.t('mobile.mobile_approval_page.k21'), icon: <User style={{ width: 22, height: 22 }} /> },
   ];
-
   if (selectedApproval) {
     return (
       <MobileLayout
-        title='审批详情'
+        title={i18n.t('mobile.mobile_approval_page.k22')}
         showBack
         onBackClick={() => setSelectedApproval(null)}
         showTabBar={false}
@@ -438,7 +411,6 @@ const MobileApprovalPage: React.FC = () => {
                   </Box>
                 </Box>
               </Box>
-
               {selectedApproval.amount && (
                 <Box
                   sx={{
@@ -454,7 +426,7 @@ const MobileApprovalPage: React.FC = () => {
                     variant='body2'
                     color='text.secondary'
                   >
-                    申请金额
+                    {i18n.t('pages.mobile_approval_page.k10')}
                   </Typography>
                   <Typography
                     variant='h5'
@@ -465,7 +437,6 @@ const MobileApprovalPage: React.FC = () => {
                 </Box>
               )}
             </Paper>
-
             <Paper
               elevation={0}
               sx={{
@@ -480,7 +451,7 @@ const MobileApprovalPage: React.FC = () => {
                 variant='subtitle2'
                 sx={{ fontWeight: 600, mb: 2 }}
               >
-                申请人信息
+                {i18n.t('pages.mobile_approval_page.k11')}
               </Typography>
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
                 <Avatar sx={{ width: 44, height: 44 }}>
@@ -513,7 +484,6 @@ const MobileApprovalPage: React.FC = () => {
                 </Box>
               </Box>
             </Paper>
-
             <Paper
               elevation={0}
               sx={{
@@ -528,7 +498,7 @@ const MobileApprovalPage: React.FC = () => {
                 variant='subtitle2'
                 sx={{ fontWeight: 600, mb: 2 }}
               >
-                审批说明
+                {i18n.t('pages.mobile_approval_page.k12')}
               </Typography>
               <Typography
                 variant='body2'
@@ -537,7 +507,6 @@ const MobileApprovalPage: React.FC = () => {
                 {selectedApproval.description}
               </Typography>
             </Paper>
-
             <Paper
               elevation={0}
               sx={{
@@ -552,7 +521,7 @@ const MobileApprovalPage: React.FC = () => {
                 variant='subtitle2'
                 sx={{ fontWeight: 600, mb: 2 }}
               >
-                审批流程
+                {i18n.t('pages.mobile_approval_page.k13')}
               </Typography>
               <Box sx={{ position: 'relative', pl: 2 }}>
                 {selectedApproval.steps.map((step, index) => (
@@ -629,7 +598,7 @@ const MobileApprovalPage: React.FC = () => {
                       )}
                       {step.status === 'current' && (
                         <Chip
-                          label='待审批'
+                          label={i18n.t('mobile.mobile_approval_page.k23')}
                           size='small'
                           color='primary'
                           sx={{ mt: 0.5, height: 20, fontSize: '0.7rem' }}
@@ -640,7 +609,6 @@ const MobileApprovalPage: React.FC = () => {
                 ))}
               </Box>
             </Paper>
-
             <Paper
               elevation={0}
               sx={{
@@ -655,13 +623,13 @@ const MobileApprovalPage: React.FC = () => {
                 variant='subtitle2'
                 sx={{ fontWeight: 600, mb: 2 }}
               >
-                审批意见
+                {i18n.t('pages.mobile_approval_page.k14')}
               </Typography>
               <TextField
                 fullWidth
                 multiline
                 rows={3}
-                placeholder='请输入审批意见（选填）'
+                placeholder={i18n.t('mobile.mobile_approval_page.k24')}
                 value={approvalComment}
                 onChange={(e) => setApprovalComment(e.target.value)}
                 sx={{
@@ -671,7 +639,6 @@ const MobileApprovalPage: React.FC = () => {
                 }}
               />
             </Paper>
-
             <Box sx={{ display: 'flex', gap: 2 }}>
               <MobileButton
                 fullWidth
@@ -681,7 +648,7 @@ const MobileApprovalPage: React.FC = () => {
                 onClick={() => handleReject(selectedApproval)}
                 disabled={processing}
               >
-                {processing ? '处理中...' : '驳回'}
+                {processing ? i18n.t('pages.mobile_approval_page.k6') : i18n.t('mobile.mobile_approval_page.k25')}
               </MobileButton>
               <MobileButton
                 fullWidth
@@ -691,7 +658,7 @@ const MobileApprovalPage: React.FC = () => {
                 onClick={() => handleApprove(selectedApproval)}
                 disabled={processing}
               >
-                {processing ? '处理中...' : '通过'}
+                {processing ? i18n.t('pages.mobile_approval_page.k7') : i18n.t('mobile.mobile_approval_page.k26')}
               </MobileButton>
             </Box>
           </Box>
@@ -699,10 +666,9 @@ const MobileApprovalPage: React.FC = () => {
       </MobileLayout>
     );
   }
-
   return (
     <MobileLayout
-      title='审批中心'
+      title={i18n.t('mobile.mobile_approval_page.k27')}
       showBack={false}
       showMenu={false}
       showNotifications
@@ -715,7 +681,7 @@ const MobileApprovalPage: React.FC = () => {
         <IconButton
           size='large'
           sx={{ minWidth: 44, minHeight: 44 }}
-          aria-label='筛选'
+          aria-label={i18n.t('mobile.mobile_approval_page.k28')}
         >
           <Filter style={{ width: 20, height: 20 }} />
         </IconButton>
@@ -731,7 +697,7 @@ const MobileApprovalPage: React.FC = () => {
           <TextField
             fullWidth
             size='small'
-            placeholder='搜索审批编号、标题或申请人'
+            placeholder={i18n.t('mobile.mobile_approval_page.k29')}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             sx={{
@@ -752,7 +718,6 @@ const MobileApprovalPage: React.FC = () => {
             }}
           />
         </Box>
-
         <Tabs
           value={activeTab}
           onChange={handleTabChange}
@@ -787,7 +752,6 @@ const MobileApprovalPage: React.FC = () => {
             />
           ))}
         </Tabs>
-
         <PullToRefresh onRefresh={handleRefresh}>
           {loading ? (
             <MobileSkeleton
@@ -825,21 +789,20 @@ const MobileApprovalPage: React.FC = () => {
                 variant='subtitle1'
                 sx={{ mb: 1, fontWeight: 500 }}
               >
-                暂无待审批
+                {i18n.t('pages.mobile_approval_page.k15')}
               </Typography>
               <Typography
                 variant='body2'
                 color='text.secondary'
                 sx={{ textAlign: 'center' }}
               >
-                {searchQuery ? '没有找到匹配的审批' : '当前没有待您审批的事项'}
+                {searchQuery ? i18n.t('mobile.mobile_approval_page.k31') : i18n.t('mobile.mobile_approval_page.k30')}
               </Typography>
             </Box>
           ) : (
             <List disablePadding>
               {filteredApprovals.map((approval, index) => {
                 const typeColor = getTypeColor(approval.type);
-
                 return (
                   <React.Fragment key={approval.id}>
                     <SwipeAction rightActions={rightSwipeActions}>
@@ -972,5 +935,4 @@ const MobileApprovalPage: React.FC = () => {
     </MobileLayout>
   );
 };
-
 export default MobileApprovalPage;

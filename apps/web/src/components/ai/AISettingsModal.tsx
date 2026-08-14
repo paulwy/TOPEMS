@@ -12,6 +12,7 @@ import {
   AlertCircle,
   CheckCircle,
 } from 'lucide-react';
+import i18n from '@/i18n';
 import { logger } from '@/utils/logger';
 
 interface AISettingsModalProps {
@@ -37,7 +38,7 @@ const AISettingsModal: React.FC<AISettingsModalProps> = ({ isOpen, onClose }) =>
     model: 'qwen2.5:7b-instruct',
     temperature: 0.7,
     maxTokens: 2000,
-    systemPrompt: '你是一个专业的企业知识库助手，擅长回答关于公司产品、服务和流程的问题。',
+    systemPrompt: i18n.t('components.ai_settings_modal.k0'),
     responseLength: 'medium',
     enableKnowledgeBase: true,
     similarityThreshold: 0.7,
@@ -60,7 +61,7 @@ const AISettingsModal: React.FC<AISettingsModalProps> = ({ isOpen, onClose }) =>
         setConfig(JSON.parse(savedConfig));
       }
     } catch (err: unknown) {
-      logger.error('加载AI设置失败:', err);
+      logger.error(i18n.t('components.ai_settings_modal.ai_0'), err);
     }
   };
 
@@ -70,8 +71,8 @@ const AISettingsModal: React.FC<AISettingsModalProps> = ({ isOpen, onClose }) =>
       setSaved(true);
       setTimeout(() => setSaved(false), 3000);
     } catch (err: unknown) {
-      logger.error('保存AI设置失败:', err);
-      setErrors({ save: '保存设置失败' });
+      logger.error(i18n.t('components.ai_settings_modal.ai_1'), err);
+      setErrors({ save: i18n.t('components.ai_settings_modal.k1') });
     }
   };
 
@@ -80,7 +81,7 @@ const AISettingsModal: React.FC<AISettingsModalProps> = ({ isOpen, onClose }) =>
       model: 'qwen2.5:7b-instruct',
       temperature: 0.7,
       maxTokens: 2000,
-      systemPrompt: '你是一个专业的企业知识库助手，擅长回答关于公司产品、服务和流程的问题。',
+      systemPrompt: i18n.t('components.ai_settings_modal.k2'),
       responseLength: 'medium',
       enableKnowledgeBase: true,
       similarityThreshold: 0.7,
@@ -94,19 +95,19 @@ const AISettingsModal: React.FC<AISettingsModalProps> = ({ isOpen, onClose }) =>
     const newErrors: Record<string, string> = {};
 
     if (config.temperature < 0 || config.temperature > 2) {
-      newErrors.temperature = '温度值应在 0-2 之间';
+      newErrors.temperature = i18n.t('components.ai_settings_modal.02_3');
     }
 
     if (config.maxTokens < 100 || config.maxTokens > 8000) {
-      newErrors.maxTokens = '最大令牌数应在 100-8000 之间';
+      newErrors.maxTokens = i18n.t('components.ai_settings_modal.1008000_4');
     }
 
     if (!config.systemPrompt.trim()) {
-      newErrors.systemPrompt = '系统提示词不能为空';
+      newErrors.systemPrompt = i18n.t('components.ai_settings_modal.k5');
     }
 
     if (config.similarityThreshold < 0 || config.similarityThreshold > 1) {
-      newErrors.similarityThreshold = '相似度阈值应在 0-1 之间';
+      newErrors.similarityThreshold = i18n.t('components.ai_settings_modal.01_6');
     }
 
     setErrors(newErrors);
@@ -179,7 +180,7 @@ const AISettingsModal: React.FC<AISettingsModalProps> = ({ isOpen, onClose }) =>
             </button>
           </div>
           <p style={{ color: 'secondary.200', fontSize: '14px', marginTop: 2 }}>
-            配置 AI 助手的行为和参数
+            {i18n.t('components.ai_settings_modal.ai_2')}
           </p>
         </div>
 
@@ -213,7 +214,7 @@ const AISettingsModal: React.FC<AISettingsModalProps> = ({ isOpen, onClose }) =>
                   color: 'secondary.dark',
                 }}
               />
-              模型配置
+              {i18n.t('components.ai_settings_modal.k3')}
             </h3>
 
             <div
@@ -234,7 +235,7 @@ const AISettingsModal: React.FC<AISettingsModalProps> = ({ isOpen, onClose }) =>
                     marginBottom: 2,
                   }}
                 >
-                  AI 模型
+                  {i18n.t('components.ai_settings_modal.ai_4')}
                 </label>
                 <select
                   id='ai-model'
@@ -262,7 +263,7 @@ const AISettingsModal: React.FC<AISettingsModalProps> = ({ isOpen, onClose }) =>
                     marginTop: 1,
                   }}
                 >
-                  选择用于生成回答的AI模型
+                  {i18n.t('components.ai_settings_modal.ai_5')}
                 </p>
               </div>
 
@@ -277,7 +278,7 @@ const AISettingsModal: React.FC<AISettingsModalProps> = ({ isOpen, onClose }) =>
                     marginBottom: 2,
                   }}
                 >
-                  响应长度
+                  {i18n.t('components.ai_settings_modal.k6')}
                 </label>
                 <select
                   id='ai-response-length'
@@ -297,9 +298,9 @@ const AISettingsModal: React.FC<AISettingsModalProps> = ({ isOpen, onClose }) =>
                     outline: 'none',
                   }}
                 >
-                  <option value='short'>简短</option>
-                  <option value='medium'>中等</option>
-                  <option value='long'>详细</option>
+                  <option value='short'>{i18n.t('components.ai_settings_modal.k7')}</option>
+                  <option value='medium'>{i18n.t('components.ai_settings_modal.k8')}</option>
+                  <option value='long'>{i18n.t('components.ai_settings_modal.k9')}</option>
                 </select>
                 <p
                   style={{
@@ -308,7 +309,7 @@ const AISettingsModal: React.FC<AISettingsModalProps> = ({ isOpen, onClose }) =>
                     marginTop: 1,
                   }}
                 >
-                  控制回答的详细程度
+                  {i18n.t('components.ai_settings_modal.k7')}
                 </p>
               </div>
             </div>
@@ -333,7 +334,7 @@ const AISettingsModal: React.FC<AISettingsModalProps> = ({ isOpen, onClose }) =>
                   color: 'primary.dark',
                 }}
               />
-              生成参数
+              {i18n.t('components.ai_settings_modal.k8')}
             </h3>
 
             <div
@@ -465,7 +466,7 @@ const AISettingsModal: React.FC<AISettingsModalProps> = ({ isOpen, onClose }) =>
                     marginTop: 1,
                   }}
                 >
-                  控制单次回答的最大长度
+                  {i18n.t('components.ai_settings_modal.k9')}
                 </p>
               </div>
             </div>
@@ -513,7 +514,7 @@ const AISettingsModal: React.FC<AISettingsModalProps> = ({ isOpen, onClose }) =>
                   outline: 'none',
                   resize: 'vertical',
                 }}
-                placeholder='定义AI助手的角色和行为...'
+                placeholder={i18n.t('components.ai_settings_modal.ai_10')}
               />
               {errors.systemPrompt && (
                 <p
@@ -532,7 +533,7 @@ const AISettingsModal: React.FC<AISettingsModalProps> = ({ isOpen, onClose }) =>
               <p
                 style={{ fontSize: '12px', color: theme.palette.text.secondary, marginTop: 1 }}
               >
-                定义AI助手的基本角色、知识范围和回答风格
+                {i18n.t('components.ai_settings_modal.k11')}
               </p>
             </div>
           </div>
@@ -556,7 +557,7 @@ const AISettingsModal: React.FC<AISettingsModalProps> = ({ isOpen, onClose }) =>
                   color: 'warning.600',
                 }}
               />
-              知识库配置
+              {i18n.t('components.ai_settings_modal.k12')}
             </h3>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
@@ -572,10 +573,10 @@ const AISettingsModal: React.FC<AISettingsModalProps> = ({ isOpen, onClose }) =>
               >
                 <div style={{ flex: 1 }}>
                   <div style={{ fontWeight: 500, color: theme.palette.text.primary }}>
-                    启用知识库
+                    {i18n.t('components.ai_settings_modal.k13')}
                   </div>
                   <div style={{ fontSize: '14px', color: theme.palette.text.secondary }}>
-                    基于企业知识库生成回答
+                    {i18n.t('components.ai_settings_modal.k14')}
                   </div>
                 </div>
                 <label
@@ -588,7 +589,7 @@ const AISettingsModal: React.FC<AISettingsModalProps> = ({ isOpen, onClose }) =>
                 >
                   <input
                     type='checkbox'
-                    aria-label='启用知识库'
+                    aria-label={i18n.t('components.ai_settings_modal.k10')}
                     checked={config.enableKnowledgeBase}
                     onChange={(e) =>
                       setConfig((prev) => ({
@@ -705,7 +706,7 @@ const AISettingsModal: React.FC<AISettingsModalProps> = ({ isOpen, onClose }) =>
                         marginTop: 1,
                       }}
                     >
-                      控制知识匹配的严格程度
+                      {i18n.t('components.ai_settings_modal.k15')}
                     </p>
                   </div>
 
@@ -720,7 +721,7 @@ const AISettingsModal: React.FC<AISettingsModalProps> = ({ isOpen, onClose }) =>
                         marginBottom: 2,
                       }}
                     >
-                      最大上下文消息数
+                      {i18n.t('components.ai_settings_modal.k16')}
                     </label>
                     <input
                       id='ai-max-context'
@@ -750,7 +751,7 @@ const AISettingsModal: React.FC<AISettingsModalProps> = ({ isOpen, onClose }) =>
                         marginTop: 1,
                       }}
                     >
-                      用于理解对话历史的最多消息数
+                      {i18n.t('components.ai_settings_modal.k17')}
                     </p>
                   </div>
                 </div>
@@ -782,7 +783,7 @@ const AISettingsModal: React.FC<AISettingsModalProps> = ({ isOpen, onClose }) =>
               }}
             >
               <CheckCircle sx={{ width: 16, height: 16, marginRight: 1 }} />
-              设置已成功保存
+              {i18n.t('components.ai_settings_modal.k18')}
             </div>
           )}
           {errors.save && (
@@ -824,7 +825,7 @@ const AISettingsModal: React.FC<AISettingsModalProps> = ({ isOpen, onClose }) =>
               }}
             >
               <RotateCcw sx={{ width: 16, height: 16, marginRight: 1 }} />
-              恢复默认
+              {i18n.t('components.ai_settings_modal.k19')}
             </button>
             <div style={{ display: 'flex', gap: 3 }}>
               <button
@@ -839,7 +840,7 @@ const AISettingsModal: React.FC<AISettingsModalProps> = ({ isOpen, onClose }) =>
                   transition: 'background-color 0.2s',
                 }}
               >
-                取消
+                {i18n.t('components.ai_settings_modal.k20')}
               </button>
               <button
                 onClick={handleSave}
@@ -856,7 +857,7 @@ const AISettingsModal: React.FC<AISettingsModalProps> = ({ isOpen, onClose }) =>
                 }}
               >
                 <Save sx={{ width: 16, height: 16, marginRight: 1 }} />
-                保存设置
+                {i18n.t('components.ai_settings_modal.k21')}
               </button>
             </div>
           </div>

@@ -1,4 +1,5 @@
 import dayjs from 'dayjs';
+import i18n from '@/i18n';
 import i18next from 'i18next';
 
 // i18n key 翻译函数
@@ -13,9 +14,9 @@ export const parseFileExtension = (filename: string): string => {
 
 export const getImportModeLabel = (mode: string): string => {
   const labels: Record<string, string> = {
-    create: '仅创建（跳过已存在）',
-    update: '仅更新',
-    create_update: '创建或更新',
+    create: i18n.t('shared.import_export.k0'),
+    update: i18n.t('shared.import_export.k1'),
+    create_update: i18n.t('shared.import_export.k2'),
   };
   return labels[mode] || mode;
 };
@@ -65,7 +66,7 @@ export const exportToExcel = async <T>(
         return '';
       }
       if (typeof value === 'boolean') {
-        return value ? i18next.t('common.yes', '是') : i18next.t('common.no', '否');
+        return value ? i18next.t('common.yes', i18n.t('shared.import_export.k1')) : i18next.t('common.no', i18n.t('shared.import_export.k0'));
       }
       if (value instanceof Date || (typeof value === 'string' && dayjs(value).isValid())) {
         return dayjs(value).format('YYYY-MM-DD HH:mm:ss');
@@ -125,7 +126,7 @@ export const importFromExcel = async <T>(
           } catch (error: unknown) {
             errors.push({
               row: index + 2,
-              message: error instanceof Error ? error.message : '导入失败',
+              message: error instanceof Error ? error.message : i18n.t('shared.import_export.k3'),
             });
           }
         });
@@ -142,7 +143,7 @@ export const importFromExcel = async <T>(
           errors: [
             {
               row: 0,
-              message: error instanceof Error ? error.message : '读取文件失败',
+              message: error instanceof Error ? error.message : i18n.t('shared.import_export.k4'),
             },
           ],
         });
@@ -153,7 +154,7 @@ export const importFromExcel = async <T>(
       resolve({
         success: false,
         data: [],
-        errors: [{ row: 0, message: '读取文件失败' }],
+        errors: [{ row: 0, message: i18n.t('shared.import_export.k5') }],
       });
     };
 
@@ -179,7 +180,7 @@ export const exportToCSV = <T>(
         } else if (value === null || value === undefined) {
           result = '';
         } else if (typeof value === 'boolean') {
-          result = value ? '是' : '否';
+          result = value ? i18n.t('shared.import_export.k7') : i18n.t('shared.import_export.k6');
         } else if (value instanceof Date || (typeof value === 'string' && dayjs(value).isValid())) {
           result = dayjs(value).format('YYYY-MM-DD HH:mm:ss');
         } else {

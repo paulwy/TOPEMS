@@ -2,6 +2,7 @@ import React, { useState, useMemo } from 'react';
 import { useTheme } from '@mui/material';
 import { Search, Filter, RefreshCw, Download, ChevronDown, ChevronUp } from 'lucide-react';
 import { designTokens, semanticTokens } from '@topems/tokens';
+import i18n from '@/i18n';
 
 export interface PivotData {
   [key: string]: string | number | boolean;
@@ -27,11 +28,11 @@ const _aggregators = {
 };
 
 const aggregatorLabels: Record<string, string> = {
-  sum: '求和',
-  count: '计数',
-  avg: '平均值',
-  min: '最小值',
-  max: '最大值',
+  sum: i18n.t('components.pivot_table.k0'),
+  count: i18n.t('components.pivot_table.k1'),
+  avg: i18n.t('components.pivot_table.k2'),
+  min: i18n.t('components.pivot_table.k3'),
+  max: i18n.t('components.pivot_table.k4'),
 };
 
 export const PivotTable: React.FC<PivotConfig> = ({
@@ -215,7 +216,7 @@ export const PivotTable: React.FC<PivotConfig> = ({
               y2='16'
             />
           </svg>
-          <p style={{ marginTop: 2 }}>暂无数据</p>
+          <p style={{ marginTop: 2 }}>{i18n.t('components.pivot_table.k5')}</p>
         </div>
       </div>
     );
@@ -263,7 +264,7 @@ export const PivotTable: React.FC<PivotConfig> = ({
             />
             <input
               type='text'
-              placeholder='搜索...'
+              placeholder={i18n.t('components.pivot_table.k0')}
               value={filterText}
               onChange={(e) => setFilterText(e.target.value)}
               style={{
@@ -298,7 +299,7 @@ export const PivotTable: React.FC<PivotConfig> = ({
             }}
           >
             <Filter style={{ width: 16, height: 16 }} />
-            <span style={{ fontSize: 12 }}>筛选</span>
+            <span style={{ fontSize: 12 }}>{i18n.t('components.pivot_table.k6')}</span>
           </button>
           <select
             value={activeAggregator}
@@ -339,7 +340,7 @@ export const PivotTable: React.FC<PivotConfig> = ({
                 color: theme.palette.grey[600],
                 cursor: 'pointer',
               }}
-              title='刷新'
+              title={i18n.t('components.pivot_table.k7')}
             >
               <RefreshCw style={{ width: 16, height: 16 }} />
             </button>
@@ -355,7 +356,7 @@ export const PivotTable: React.FC<PivotConfig> = ({
                 color: theme.palette.grey[600],
                 cursor: 'pointer',
               }}
-              title='导出'
+              title={i18n.t('components.pivot_table.k8')}
             >
               <Download style={{ width: 16, height: 16 }} />
             </button>
@@ -381,7 +382,7 @@ export const PivotTable: React.FC<PivotConfig> = ({
               marginBottom: 8,
             }}
           >
-            筛选条件
+            {i18n.t('components.pivot_table.k1')}
           </div>
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 12 }}>
             {rows.map((row) => (
@@ -403,7 +404,7 @@ export const PivotTable: React.FC<PivotConfig> = ({
                     fontSize: 12,
                   }}
                 >
-                  <option value=''>全部</option>
+                  <option value=''>{i18n.t('components.pivot_table.k9')}</option>
                   {[...new Set(data.map((d) => d[row]))].map((val) => (
                     <option
                       key={String(val)}
@@ -434,7 +435,7 @@ export const PivotTable: React.FC<PivotConfig> = ({
                     fontSize: 12,
                   }}
                 >
-                  <option value=''>全部</option>
+                  <option value=''>{i18n.t('components.pivot_table.k10')}</option>
                   {[...new Set(data.map((d) => d[col]))].map((val) => (
                     <option
                       key={String(val)}
@@ -502,7 +503,7 @@ export const PivotTable: React.FC<PivotConfig> = ({
                   borderBottom: '2px solid border.default',
                 }}
               >
-                总计
+                {i18n.t('components.pivot_table.k2')}
               </th>
             </tr>
           </thead>
@@ -594,7 +595,7 @@ export const PivotTable: React.FC<PivotConfig> = ({
                   borderRight: '1px solid border.default',
                 }}
               >
-                总计
+                {i18n.t('components.pivot_table.k3')}
               </td>
               {pivotResult.cols.map((col) => (
                 <td
@@ -644,8 +645,8 @@ export const PivotTable: React.FC<PivotConfig> = ({
           textAlign: 'right',
         }}
       >
-        聚合方式: {aggregatorLabels[activeAggregator]} | 总计:{' '}
-        {typeof grandTotal === 'number' ? grandTotal.toLocaleString() : grandTotal} | 数据行数:{' '}
+        {i18n.t('components.pivot_table.k4')}: {aggregatorLabels[activeAggregator]} | {i18n.t('components.pivot_table.k5')}:{' '}
+        {typeof grandTotal === 'number' ? grandTotal.toLocaleString() : grandTotal} | {i18n.t('components.pivot_table.k6')}:{' '}
         {filteredData.length}
       </div>
     </div>

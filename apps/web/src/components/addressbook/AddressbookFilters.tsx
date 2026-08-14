@@ -1,4 +1,6 @@
 import React from 'react';
+import { designTokens } from '@topems/tokens';
+import i18n from '@/i18n';
 
 interface AddressbookFiltersProps {
   statusFilter: string;
@@ -10,9 +12,9 @@ export const AddressbookFilters: React.FC<AddressbookFiltersProps> = ({
   onStatusChange,
 }) => {
   const statuses = [
-    { value: '', label: '全部状态' },
-    { value: 'active', label: '在职' },
-    { value: 'inactive', label: '离职' },
+    { value: '', label: i18n.t('shared.addressbook_filters.k0') },
+    { value: 'active', label: i18n.t('shared.addressbook_filters.k1') },
+    { value: 'inactive', label: i18n.t('shared.addressbook_filters.k2') },
   ];
 
   return (
@@ -20,7 +22,7 @@ export const AddressbookFilters: React.FC<AddressbookFiltersProps> = ({
       style={{
         backgroundColor: 'common.white',
         borderBottom: '1px solid border.default',
-        padding: '12px 16px',
+        padding: `${designTokens.spacing.md} 16px`,
       }}
     >
       <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
@@ -30,15 +32,15 @@ export const AddressbookFilters: React.FC<AddressbookFiltersProps> = ({
             value={statusFilter}
             onChange={(e) => onStatusChange(e.target.value)}
             style={{
-              padding: '4px 12px',
+              padding: `${designTokens.spacing.xs} 12px`,
               fontSize: 14,
-              border: '1px solid #cbd5e1',
+              border: `1px solid ${designTokens.colors.grey[300]}`,
               borderRadius: 6,
               outline: 'none',
             }}
             onFocus={(e) => {
               e.target.style.borderColor = 'primary.main';
-              e.target.style.boxShadow = '0 0 0 2px rgba(59, 130, 246, 0.2)';
+              e.target.style.boxShadow = `0 0 0 2px ${designTokens.colors.cyber.grid.lineHeavy}`;
             }}
             onBlur={(e) => {
               e.target.style.borderColor = 'grey.400';

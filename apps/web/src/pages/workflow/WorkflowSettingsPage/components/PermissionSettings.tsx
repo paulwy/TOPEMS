@@ -1,13 +1,12 @@
 import { Box, Typography, Switch, TextField, Stack, Divider } from '@mui/material';
 import React from 'react';
 import type { PermissionSettings as PermissionSettingsType } from '../types';
-
+import i18n from '@/i18n';
 interface PermissionSettingsProps {
   settings: PermissionSettingsType;
   onChange: (settings: PermissionSettingsType) => void;
   markUnsaved: () => void;
 }
-
 export const PermissionSettings: React.FC<PermissionSettingsProps> = ({
   settings,
   onChange,
@@ -20,14 +19,14 @@ export const PermissionSettings: React.FC<PermissionSettingsProps> = ({
           variant='h6'
           sx={{ fontWeight: 600, mb: 1 }}
         >
-          流程权限
+          {i18n.t('pages.permission_settings.k0')}
         </Typography>
         <Typography
           variant='body2'
           color='text.secondary'
           sx={{ mb: 3 }}
         >
-          配置工作流权限控制方式
+          {i18n.t('pages.permission_settings.k1')}
         </Typography>
         <Stack spacing={2}>
           <Box
@@ -45,13 +44,13 @@ export const PermissionSettings: React.FC<PermissionSettingsProps> = ({
                 variant='body2'
                 sx={{ fontWeight: 500 }}
               >
-                基于角色的权限
+                {i18n.t('pages.permission_settings.k2')}
               </Typography>
               <Typography
                 variant='caption'
                 color='text.secondary'
               >
-                使用系统角色控制流程访问
+                {i18n.t('pages.permission_settings.k3')}
               </Typography>
             </Box>
             <Switch
@@ -80,13 +79,13 @@ export const PermissionSettings: React.FC<PermissionSettingsProps> = ({
                 variant='body2'
                 sx={{ fontWeight: 500 }}
               >
-                基于部门的权限
+                {i18n.t('pages.permission_settings.k4')}
               </Typography>
               <Typography
                 variant='caption'
                 color='text.secondary'
               >
-                使用组织架构控制流程访问
+                {i18n.t('pages.permission_settings.k5')}
               </Typography>
             </Box>
             <Switch
@@ -115,13 +114,13 @@ export const PermissionSettings: React.FC<PermissionSettingsProps> = ({
                 variant='body2'
                 sx={{ fontWeight: 500 }}
               >
-                管理员编辑所有流程
+                {i18n.t('pages.permission_settings.k6')}
               </Typography>
               <Typography
                 variant='caption'
                 color='text.secondary'
               >
-                管理员可编辑所有流程定义
+                {i18n.t('pages.permission_settings.k7')}
               </Typography>
             </Box>
             <Switch
@@ -137,15 +136,13 @@ export const PermissionSettings: React.FC<PermissionSettingsProps> = ({
           </Box>
         </Stack>
       </Box>
-
       <Divider />
-
       <Box>
         <Typography
           variant='h6'
           sx={{ fontWeight: 600, mb: 2 }}
         >
-          审批规则
+          {i18n.t('pages.permission_settings.k8')}
         </Typography>
         <Stack spacing={2}>
           <Box
@@ -163,13 +160,13 @@ export const PermissionSettings: React.FC<PermissionSettingsProps> = ({
                 variant='body2'
                 sx={{ fontWeight: 500 }}
               >
-                允许自己审批
+                {i18n.t('pages.permission_settings.k9')}
               </Typography>
               <Typography
                 variant='caption'
                 color='text.secondary'
               >
-                发起人可以审批自己发起的流程
+                {i18n.t('pages.permission_settings.k10')}
               </Typography>
             </Box>
             <Switch
@@ -198,13 +195,13 @@ export const PermissionSettings: React.FC<PermissionSettingsProps> = ({
                 variant='body2'
                 sx={{ fontWeight: 500 }}
               >
-                查看所有流程实例
+                {i18n.t('pages.permission_settings.k11')}
               </Typography>
               <Typography
                 variant='caption'
                 color='text.secondary'
               >
-                管理员可查看所有流程实例
+                {i18n.t('pages.permission_settings.k12')}
               </Typography>
             </Box>
             <Switch
@@ -228,7 +225,7 @@ export const PermissionSettings: React.FC<PermissionSettingsProps> = ({
               borderRadius: 1,
             }}
           >
-            <Typography variant='body2'>允许导出数据</Typography>
+            <Typography variant='body2'>{i18n.t('workflow.permission_settings.k0')}</Typography>
             <Switch
               checked={settings.allowExportData}
               onChange={(e) => {
@@ -242,19 +239,17 @@ export const PermissionSettings: React.FC<PermissionSettingsProps> = ({
           </Box>
         </Stack>
       </Box>
-
       <Divider />
-
       <Box>
         <Typography
           variant='h6'
           sx={{ fontWeight: 600, mb: 2 }}
         >
-          管理员配置
+          {i18n.t('pages.permission_settings.k13')}
         </Typography>
         <TextField
           fullWidth
-          label='工作流管理员角色'
+          label={i18n.t('workflow.permission_settings.k1')}
           value={settings.workflowAdminRole}
           onChange={(e) => {
             onChange({
@@ -264,7 +259,7 @@ export const PermissionSettings: React.FC<PermissionSettingsProps> = ({
             markUnsaved();
           }}
           size='small'
-          helperText='拥有此角色的用户为工作流管理员'
+          helperText={i18n.t('workflow.permission_settings.k2')}
         />
       </Box>
     </Stack>

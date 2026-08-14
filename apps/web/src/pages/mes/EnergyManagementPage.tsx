@@ -18,6 +18,7 @@ import {
   Alert,
   AlertTitle,
 } from '@mui/material';
+import i18n from '@/i18n';
 import {
   BatteryCharging,
   Activity,
@@ -32,57 +33,48 @@ import { energyManagementApi } from '../../api/mes/energyManagement';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useNotificationStore } from '@/store/notificationStore';
 import { PageContainer } from '@/components/common';
-
 import { CACHE_DURATIONS, QUERY_KEYS } from '@/lib/reactQuery';
 import { designTokens, semanticTokens } from '@topems/tokens';
-
 const EnergyManagementPage: React.FC = () => {
   const [activeTab, setActiveTab] = useState(0);
   const queryClient = useQueryClient();
   const addNotification = useNotificationStore((state) => state.addNotification);
-
   const realTimeConsumption = useQuery({
     queryKey: QUERY_KEYS.AD_HOC.REALTIMECONSUMPTION_BASE,
     queryFn: () => energyManagementApi.getRealTimeConsumption(),
     refetchInterval: 10000,
   
       staleTime: CACHE_DURATIONS.MEDIUM,});
-
   const energyReport = useQuery({
     queryKey: QUERY_KEYS.AD_HOC.ENERGYREPORT_BASE,
     queryFn: () => energyManagementApi.getEnergyReport(),
   
       staleTime: CACHE_DURATIONS.MEDIUM,});
-
   const energyForecast = useQuery({
     queryKey: QUERY_KEYS.AD_HOC.ENERGYFORECAST_BASE,
     queryFn: () => energyManagementApi.getEnergyForecast({ months: 3 }),
   
       staleTime: CACHE_DURATIONS.MEDIUM,});
-
   const energyAlerts = useQuery({
     queryKey: QUERY_KEYS.AD_HOC.ENERGYALERTS_BASE,
     queryFn: () => energyManagementApi.getEnergyAlerts(),
   
       staleTime: CACHE_DURATIONS.MEDIUM,});
-
   const handleRefresh = () => {
     queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.REALTIMECONSUMPTION_BASE ,
   exact: false,
   refetchType: 'active',
 });
-    addNotification({ title: '成功', message: '数据已刷新', type: 'success' });
+    addNotification({ title: i18n.t('mes.energy_management_page.k1'), message: i18n.t('mes.energy_management_page.k0'), type: 'success' });
   };
-
   const handleExport = async () => {
     try {
       await energyManagementApi.exportEnergyReport();
-      addNotification({ title: '成功', message: '报告导出成功', type: 'success' });
+      addNotification({ title: i18n.t('mes.energy_management_page.k3'), message: i18n.t('mes.energy_management_page.k2'), type: 'success' });
     } catch {
-      addNotification({ title: '错误', message: '报告导出失败', type: 'error' });
+      addNotification({ title: i18n.t('mes.energy_management_page.k5'), message: i18n.t('mes.energy_management_page.k4'), type: 'error' });
     }
   };
-
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'normal':
@@ -95,7 +87,6 @@ const EnergyManagementPage: React.FC = () => {
         return 'default';
     }
   };
-
   const getStatusIcon = (status: string) => {
     switch (status) {
       case 'normal':
@@ -123,7 +114,6 @@ const EnergyManagementPage: React.FC = () => {
         return null;
     }
   };
-
   const getSeverityColor = (severity: string) => {
     switch (severity) {
       case 'critical':
@@ -136,11 +126,9 @@ const EnergyManagementPage: React.FC = () => {
         return 'success';
     }
   };
-
   const formatNumber = (value: number) => {
     return new Intl.NumberFormat('zh-CN', { minimumFractionDigits: 2 }).format(value);
   };
-
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat('zh-CN', {
       style: 'currency',
@@ -148,55 +136,51 @@ const EnergyManagementPage: React.FC = () => {
       minimumFractionDigits: 2,
     }).format(value);
   };
-
   const realTimeData = realTimeConsumption.data?.data || [];
   const reportData = energyReport.data?.data;
   const forecastData = energyForecast.data?.data;
   const alertsData = energyAlerts.data?.data;
-
   return (
-    <PageContainer title='能源管理'>
+    <PageContainer title={i18n.t('mes.energy_management_page.k6')}>
       <Box sx={{ p: 3 }}>
         <Typography
           variant='h4'
           sx={{ mb: 4 }}
         >
-          能耗管理
+          {i18n.t('pages.energy_management_page.k0')}
         </Typography>
-
         <Tabs
           value={activeTab}
           onChange={(_, newValue) => setActiveTab(newValue)}
           sx={{ mb: 4 }}
         >
           <Tab
-            label='实时监控'
+            label={i18n.t('mes.energy_management_page.k7')}
             icon={<Activity size={20} />}
           />
           <Tab
-            label='能耗报表'
+            label={i18n.t('mes.energy_management_page.k8')}
             icon={<BarChart3 size={20} />}
           />
           <Tab
-            label='能耗预测'
+            label={i18n.t('mes.energy_management_page.k9')}
             icon={<BatteryCharging size={20} />}
           />
           <Tab
-            label='告警管理'
+            label={i18n.t('mes.energy_management_page.k10')}
             icon={<AlertTriangle size={20} />}
           />
         </Tabs>
-
         {activeTab === 0 && (
           <Card>
             <CardHeader
-              title='实时能耗监控'
+              title={i18n.t('mes.energy_management_page.k11')}
               action={
                 <Button
                   onClick={handleRefresh}
                   startIcon={<RefreshCw size={20} />}
                 >
-                  刷新
+                  {i18n.t('pages.energy_management_page.k1')}
                 </Button>
               }
             />
@@ -245,10 +229,10 @@ const EnergyManagementPage: React.FC = () => {
                         <Chip
                           label={
                             item.status === 'normal'
-                              ? '正常'
+                              ? i18n.t('mes.energy_management_page.k12')
                               : item.status === 'warning'
-                                ? '警告'
-                                : '异常'
+                                ? i18n.t('mes.energy_management_page.k13')
+                                : i18n.t('mes.energy_management_page.k14')
                           }
                           color={getStatusColor(item.status)}
                           size='small'
@@ -261,17 +245,16 @@ const EnergyManagementPage: React.FC = () => {
             </CardContent>
           </Card>
         )}
-
         {activeTab === 1 && reportData && (
           <Card>
             <CardHeader
-              title='能耗报表'
+              title={i18n.t('mes.energy_management_page.k15')}
               action={
                 <Button
                   onClick={handleExport}
                   startIcon={<Download size={20} />}
                 >
-                  导出报表
+                  {i18n.t('pages.energy_management_page.k2')}
                 </Button>
               }
             />
@@ -290,7 +273,7 @@ const EnergyManagementPage: React.FC = () => {
                         variant='body2'
                         color='textSecondary'
                       >
-                        总能耗
+                        {i18n.t('pages.energy_management_page.k3')}
                       </Typography>
                     </CardContent>
                   </Card>
@@ -303,7 +286,7 @@ const EnergyManagementPage: React.FC = () => {
                         variant='body2'
                         color='textSecondary'
                       >
-                        能耗费用
+                        {i18n.t('pages.energy_management_page.k4')}
                       </Typography>
                     </CardContent>
                   </Card>
@@ -318,24 +301,23 @@ const EnergyManagementPage: React.FC = () => {
                         variant='body2'
                         color='textSecondary'
                       >
-                        单位电价
+                        {i18n.t('pages.energy_management_page.k5')}
                       </Typography>
                     </CardContent>
                   </Card>
                 </Grid>
               </Grid>
-
               <Card sx={{ mt: 3 }}>
-                <CardHeader title='设备能耗排行' />
+                <CardHeader title={i18n.t('mes.energy_management_page.k16')} />
                 <CardContent>
                   <Table>
                     <TableHead>
                       <TableRow>
-                        <TableCell>设备编码</TableCell>
-                        <TableCell>设备名称</TableCell>
-                        <TableCell>总能耗 (kWh)</TableCell>
-                        <TableCell>日均能耗 (kWh)</TableCell>
-                        <TableCell>占比</TableCell>
+                        <TableCell>{i18n.t('mes.energy_management_page.k17')}</TableCell>
+                        <TableCell>{i18n.t('mes.energy_management_page.k18')}</TableCell>
+                        <TableCell>{i18n.t('mes.energy_management_page.kwh_19')}</TableCell>
+                        <TableCell>{i18n.t('mes.energy_management_page.kwh_20')}</TableCell>
+                        <TableCell>{i18n.t('mes.energy_management_page.k21')}</TableCell>
                       </TableRow>
                     </TableHead>
                     <TableBody>
@@ -357,16 +339,15 @@ const EnergyManagementPage: React.FC = () => {
                   </Table>
                 </CardContent>
               </Card>
-
               <Card sx={{ mt: 3 }}>
-                <CardHeader title='车间能耗分布' />
+                <CardHeader title={i18n.t('mes.energy_management_page.k22')} />
                 <CardContent>
                   <Table>
                     <TableHead>
                       <TableRow>
-                        <TableCell>车间名称</TableCell>
-                        <TableCell>总能耗 (kWh)</TableCell>
-                        <TableCell>占比</TableCell>
+                        <TableCell>{i18n.t('mes.energy_management_page.k23')}</TableCell>
+                        <TableCell>{i18n.t('mes.energy_management_page.kwh_24')}</TableCell>
+                        <TableCell>{i18n.t('mes.energy_management_page.k25')}</TableCell>
                       </TableRow>
                     </TableHead>
                     <TableBody>
@@ -386,16 +367,15 @@ const EnergyManagementPage: React.FC = () => {
                   </Table>
                 </CardContent>
               </Card>
-
               <Card sx={{ mt: 3 }}>
-                <CardHeader title='能耗趋势' />
+                <CardHeader title={i18n.t('mes.energy_management_page.k26')} />
                 <CardContent>
                   <Table>
                     <TableHead>
                       <TableRow>
-                        <TableCell>周期</TableCell>
-                        <TableCell>能耗 (kWh)</TableCell>
-                        <TableCell>变化率</TableCell>
+                        <TableCell>{i18n.t('mes.energy_management_page.k27')}</TableCell>
+                        <TableCell>{i18n.t('mes.energy_management_page.kwh_28')}</TableCell>
+                        <TableCell>{i18n.t('mes.energy_management_page.k29')}</TableCell>
                       </TableRow>
                     </TableHead>
                     <TableBody>
@@ -425,10 +405,9 @@ const EnergyManagementPage: React.FC = () => {
             </CardContent>
           </Card>
         )}
-
         {activeTab === 2 && forecastData && (
           <Card>
-            <CardHeader title='能耗预测' />
+            <CardHeader title={i18n.t('mes.energy_management_page.k30')} />
             <CardContent>
               <Grid sx={{ display: 'grid', gridTemplateColumns: 'repeat(12, 1fr)', gap: 3 }}>
                 <Grid sx={{ gridColumn: 'span 4' }}>
@@ -444,7 +423,7 @@ const EnergyManagementPage: React.FC = () => {
                         variant='body2'
                         color='textSecondary'
                       >
-                        预测能耗
+                        {i18n.t('pages.energy_management_page.k6')}
                       </Typography>
                     </CardContent>
                   </Card>
@@ -459,7 +438,7 @@ const EnergyManagementPage: React.FC = () => {
                         variant='body2'
                         color='textSecondary'
                       >
-                        预测费用
+                        {i18n.t('pages.energy_management_page.k7')}
                       </Typography>
                     </CardContent>
                   </Card>
@@ -467,7 +446,7 @@ const EnergyManagementPage: React.FC = () => {
                 <Grid sx={{ gridColumn: 'span 4' }}>
                   <Card>
                     <CardContent sx={{ textAlign: 'center' }}>
-                      <Typography variant='h6'>置信区间</Typography>
+                      <Typography variant='h6'>{i18n.t('mes.energy_management_page.k31')}</Typography>
                       <Typography variant='h5'>
                         {formatNumber(forecastData.confidence_interval[0])} -{' '}
                         {formatNumber(forecastData.confidence_interval[1])} kWh
@@ -476,42 +455,39 @@ const EnergyManagementPage: React.FC = () => {
                   </Card>
                 </Grid>
               </Grid>
-
               <Box sx={{ mt: 4 }}>
                 <Typography variant='subtitle1'>
-                  预测周期: {forecastData.forecast_period}
+                  [i18n.t('pages.energy_management_page.k8')]: {forecastData.forecast_period}
                 </Typography>
                 <Typography variant='subtitle1'>趋势因子: {forecastData.trend_factor}</Typography>
                 <Typography variant='subtitle1'>
-                  季节性因子: {forecastData.seasonality_factor}
+                  [i18n.t('pages.energy_management_page.k9')]: {forecastData.seasonality_factor}
                 </Typography>
               </Box>
             </CardContent>
           </Card>
         )}
-
         {activeTab === 3 && alertsData && (
           <Card>
-            <CardHeader title='能耗告警' />
+            <CardHeader title={i18n.t('mes.energy_management_page.k32')} />
             <CardContent>
               <Grid sx={{ display: 'flex', gap: 2, mb: 4 }}>
                 <Grid>
-                  <Chip label={`总计: ${alertsData.total_count}`} />
+                  <Chip label={`${i18n.t('pages.energy_management_page.k0')}${alertsData.total_count}`} />
                 </Grid>
                 <Grid>
                   <Chip
-                    label={`严重: ${alertsData.critical_count}`}
+                    label={`${i18n.t('pages.energy_management_page.k1')}${alertsData.critical_count}`}
                     color='error'
                   />
                 </Grid>
                 <Grid>
                   <Chip
-                    label={`警告: ${alertsData.warning_count}`}
+                    label={`${i18n.t('pages.energy_management_page.k2')}${alertsData.warning_count}`}
                     color='warning'
                   />
                 </Grid>
               </Grid>
-
               {alertsData.alerts.map((alert) => (
                 <Alert
                   key={alert.id}
@@ -523,13 +499,13 @@ const EnergyManagementPage: React.FC = () => {
                     <span>{alert.message}</span>
                     <span>
                       <Chip
-                        label={alert.status === 'active' ? '活跃' : '已解决'}
+                        label={alert.status === 'active' ? i18n.t('mes.energy_management_page.k34') : i18n.t('mes.energy_management_page.k33')}
                         size='small'
                       />
                     </span>
                   </Box>
                   <Box sx={{ mt: 1, fontSize: '0.875rem' }}>
-                    阈值: {alert.threshold_value} | 当前值: {alert.actualValue} | {alert.timestamp}
+                    [i18n.t('pages.energy_management_page.k10')]: {alert.threshold_value} | {i18n.t('pages.energy_management_page.k11')}{alert.actualValue} | {alert.timestamp}
                   </Box>
                 </Alert>
               ))}
@@ -540,5 +516,4 @@ const EnergyManagementPage: React.FC = () => {
     </PageContainer>
   );
 };
-
 export default EnergyManagementPage;

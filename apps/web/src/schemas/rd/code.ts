@@ -5,6 +5,7 @@ import type { EntitySchema } from '@/schema';
 
 
 import { QUERY_KEYS } from '@/lib/reactQuery';
+import i18n from '@/i18n';
 
 const LANGUAGE_OPTIONS: { value: string; label: string }[] = [
   { value: 'JavaScript', label: 'JavaScript' },
@@ -18,8 +19,8 @@ const LANGUAGE_OPTIONS: { value: string; label: string }[] = [
 
 export const codeSchema: EntitySchema = {
   entity: 'rd_code_repo',
-  title: '代码库',
-  description: '管理代码仓库和版本控制',
+  title: i18n.t('rd.code.k0'),
+  description: i18n.t('rd.code.k1'),
 
   api: {
     module: 'rd',
@@ -29,7 +30,7 @@ export const codeSchema: EntitySchema = {
   fields: [
     {
       name: 'repo_name',
-      label: '仓库名称',
+      label: i18n.t('rd.code.k2'),
       type: 'text',
       sortable: true,
       listWidth: 200,
@@ -47,14 +48,14 @@ export const codeSchema: EntitySchema = {
     },
     {
       name: 'project_name',
-      label: '关联项目',
+      label: i18n.t('rd.code.k3'),
       type: 'text',
       listWidth: 160,
       hideInForm: true,
     },
     {
       name: 'language',
-      label: '语言',
+      label: i18n.t('rd.code.k4'),
       type: 'select',
       defaultValue: 'JavaScript',
       options: { type: 'static', options: LANGUAGE_OPTIONS },
@@ -68,7 +69,7 @@ export const codeSchema: EntitySchema = {
     },
     {
       name: 'branch_count',
-      label: '分支数',
+      label: i18n.t('rd.code.k5'),
       type: 'number',
       listWidth: 100,
       hideInForm: true,
@@ -82,7 +83,7 @@ export const codeSchema: EntitySchema = {
     },
     {
       name: 'commit_count',
-      label: '提交数',
+      label: i18n.t('rd.code.k6'),
       type: 'number',
       listWidth: 100,
       hideInForm: true,
@@ -96,14 +97,14 @@ export const codeSchema: EntitySchema = {
     },
     {
       name: 'last_commit',
-      label: '最后提交',
+      label: i18n.t('rd.code.k7'),
       type: 'datetime',
       listWidth: 160,
       hideInForm: true,
     },
     {
       name: 'repo_url',
-      label: '仓库链接',
+      label: i18n.t('rd.code.k8'),
       type: 'text',
       listWidth: 120,
       renderCell: (row: Record<string, unknown>) => {
@@ -119,13 +120,13 @@ export const codeSchema: EntitySchema = {
             size: 'small',
             startIcon: React.createElement(ExternalLink, { size: 14 }),
           } as React.ComponentProps<typeof Button> & { component: React.ElementType; href: string },
-          '访问'
+          i18n.t('rd.code.k9')
         );
       },
     },
     {
       name: 'project_id',
-      label: '关联项目',
+      label: i18n.t('rd.code.k10'),
       type: 'select',
       required: true,
       showInList: false,
@@ -148,9 +149,9 @@ export const codeSchema: EntitySchema = {
     filters: [
       {
         id: 'language',
-        label: '语言',
+        label: i18n.t('rd.code.k11'),
         type: 'select',
-        options: [{ label: '全部', value: 'all' }, ...LANGUAGE_OPTIONS],
+        options: [{ label: i18n.t('rd.code.k12'), value: 'all' }, ...LANGUAGE_OPTIONS],
         defaultValue: 'all',
       },
     ],
@@ -158,15 +159,15 @@ export const codeSchema: EntitySchema = {
 
   formSections: [
     {
-      title: '基本信息',
+      title: i18n.t('rd.code.k13'),
       fields: ['project_id', 'repo_name', 'repo_url', 'language'],
     },
   ],
 
   formColCount: 2,
-  createTitle: '添加代码仓库',
-  editTitle: '编辑代码仓库',
-  detailTitle: '仓库详情',
+  createTitle: i18n.t('rd.code.k14'),
+  editTitle: i18n.t('rd.code.k15'),
+  detailTitle: i18n.t('rd.code.k16'),
 
   actions: ['create', 'detail'],
 

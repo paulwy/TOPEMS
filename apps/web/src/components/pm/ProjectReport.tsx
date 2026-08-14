@@ -7,6 +7,7 @@ import {
   AlertTriangle,
   CheckCircle,
 } from 'lucide-react';
+import i18n from '@/i18n';
 import {
   Button,
   Card,
@@ -47,21 +48,21 @@ interface ProjectReportProps {
 
 const ProjectReport: React.FC<ProjectReportProps> = ({ stats, benefits }) => {
   const projectStatusData = [
-    { name: '草稿', value: stats.draft_projects, fill: 'grey.500' },
-    { name: '待审批', value: stats.pending_projects, fill: 'warning.main' },
-    { name: '进行中', value: stats.active_projects, fill: 'primary.main' },
-    { name: '已完成', value: stats.completed_projects, fill: 'success.main' },
-    { name: '已取消', value: stats.cancelled_projects, fill: 'error.main' },
+    { name: i18n.t('components.project_report.k0'), value: stats.draft_projects, fill: 'grey.500' },
+    { name: i18n.t('components.project_report.k1'), value: stats.pending_projects, fill: 'warning.main' },
+    { name: i18n.t('components.project_report.k2'), value: stats.active_projects, fill: 'primary.main' },
+    { name: i18n.t('components.project_report.k3'), value: stats.completed_projects, fill: 'success.main' },
+    { name: i18n.t('components.project_report.k4'), value: stats.cancelled_projects, fill: 'error.main' },
   ].filter((d) => (d.value ?? 0) > 0);
 
   const riskData = [
-    { name: '高风险', value: stats.high_risk_projects ?? 0, fill: 'error.main' },
-    { name: '中风险', value: stats.medium_risk_projects ?? 0, fill: 'warning.main' },
-    { name: '低风险', value: stats.low_risk_projects ?? 0, fill: 'success.main' },
+    { name: i18n.t('components.project_report.k5'), value: stats.high_risk_projects ?? 0, fill: 'error.main' },
+    { name: i18n.t('components.project_report.k6'), value: stats.medium_risk_projects ?? 0, fill: 'warning.main' },
+    { name: i18n.t('components.project_report.k7'), value: stats.low_risk_projects ?? 0, fill: 'success.main' },
   ].filter((d) => (d.value ?? 0) > 0);
 
   const trendData = benefits.slice(0, 6).map((b, index) => ({
-    month: `第${index + 1}期`,
+    month: `${i18n.t('components.project_report.k0')}${index + 1}${i18n.t('components.project_report.k1')}`,
     cpi: b.cpi,
     spi: b.spi,
   }));
@@ -102,13 +103,13 @@ const ProjectReport: React.FC<ProjectReportProps> = ({ stats, benefits }) => {
             variant='h5'
             sx={{ fontWeight: 'bold', color: 'grey.900' }}
           >
-            项目报表
+            {i18n.t('components.project_report.k2')}
           </Typography>
           <Typography
             variant='body2'
             sx={{ color: 'grey.500', mt: 1 }}
           >
-            生成时间: {new Date().toLocaleString('zh-CN')}
+            [i18n.t('components.project_report.k3')]: {new Date().toLocaleString('zh-CN')}
           </Typography>
         </Box>
         <Button
@@ -120,7 +121,7 @@ const ProjectReport: React.FC<ProjectReportProps> = ({ stats, benefits }) => {
             />
           }
         >
-          导出报表
+          {i18n.t('components.project_report.k4')}
         </Button>
       </Box>
 
@@ -145,7 +146,7 @@ const ProjectReport: React.FC<ProjectReportProps> = ({ stats, benefits }) => {
                   variant='body2'
                   sx={{ color: 'grey.500' }}
                 >
-                  项目总数
+                  {i18n.t('components.project_report.k5')}
                 </Typography>
                 <Typography
                   variant='h5'
@@ -172,7 +173,7 @@ const ProjectReport: React.FC<ProjectReportProps> = ({ stats, benefits }) => {
                   variant='body2'
                   sx={{ color: 'grey.500' }}
                 >
-                  已完成
+                  {i18n.t('components.project_report.k6')}
                 </Typography>
                 <Typography
                   variant='h5'
@@ -199,7 +200,7 @@ const ProjectReport: React.FC<ProjectReportProps> = ({ stats, benefits }) => {
                   variant='body2'
                   sx={{ color: 'grey.500' }}
                 >
-                  预算使用
+                  {i18n.t('components.project_report.k7')}
                 </Typography>
                 <Typography
                   variant='h5'
@@ -226,7 +227,7 @@ const ProjectReport: React.FC<ProjectReportProps> = ({ stats, benefits }) => {
                   variant='body2'
                   sx={{ color: 'grey.500' }}
                 >
-                  高风险
+                  {i18n.t('components.project_report.k8')}
                 </Typography>
                 <Typography
                   variant='h5'
@@ -249,7 +250,7 @@ const ProjectReport: React.FC<ProjectReportProps> = ({ stats, benefits }) => {
       >
         <Card>
           <CardHeader>
-            <Typography variant='h6'>项目状态分布</Typography>
+            <Typography variant='h6'>{i18n.t('components.project_report.k8')}</Typography>
           </CardHeader>
           <CardContent>
             <Box sx={{ height: 256 }}>
@@ -276,7 +277,7 @@ const ProjectReport: React.FC<ProjectReportProps> = ({ stats, benefits }) => {
                       />
                     ))}
                   </Pie>
-                  <Tooltip formatter={(value) => [`${value} 个`, '数量']} />
+                  <Tooltip formatter={(value) => [`${value} ${i18n.t('components.project_report.k9')}`, i18n.t('components.project_report.k9')]} />
                   <Legend />
                 </PieChart>
               </ResponsiveContainer>
@@ -286,7 +287,7 @@ const ProjectReport: React.FC<ProjectReportProps> = ({ stats, benefits }) => {
 
         <Card>
           <CardHeader>
-            <Typography variant='h6'>风险分布</Typography>
+            <Typography variant='h6'>{i18n.t('components.project_report.k10')}</Typography>
           </CardHeader>
           <CardContent>
             <Box sx={{ height: 256 }}>
@@ -313,7 +314,7 @@ const ProjectReport: React.FC<ProjectReportProps> = ({ stats, benefits }) => {
                       />
                     ))}
                   </Pie>
-                  <Tooltip formatter={(value: unknown) => [`${value} 个项目`, '数量']} />
+                  <Tooltip formatter={(value: unknown) => [`${value} ${i18n.t('components.project_report.k10')}`, i18n.t('components.project_report.k11')]} />
                   <Legend />
                 </PieChart>
               </ResponsiveContainer>
@@ -333,7 +334,7 @@ const ProjectReport: React.FC<ProjectReportProps> = ({ stats, benefits }) => {
               height='100%'
             >
               <LineChart
-                data={trendData.length > 0 ? trendData : [{ month: '暂无数据', cpi: 1, spi: 1 }]}
+                data={trendData.length > 0 ? trendData : [{ month: i18n.t('components.project_report.k12'), cpi: 1, spi: 1 }]}
               >
                 <CartesianGrid strokeDasharray='3 3' />
                 <XAxis dataKey='month' />
@@ -362,7 +363,7 @@ const ProjectReport: React.FC<ProjectReportProps> = ({ stats, benefits }) => {
 
       <Card>
         <CardHeader>
-          <Typography variant='h6'>预算执行情况</Typography>
+          <Typography variant='h6'>{i18n.t('components.project_report.k13')}</Typography>
         </CardHeader>
         <CardContent sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
           <Box
@@ -376,7 +377,7 @@ const ProjectReport: React.FC<ProjectReportProps> = ({ stats, benefits }) => {
               variant='body2'
               sx={{ color: 'grey.600' }}
             >
-              预算利用率
+              {i18n.t('components.project_report.k11')}
             </Typography>
             <Typography
               variant='body2'
@@ -410,7 +411,7 @@ const ProjectReport: React.FC<ProjectReportProps> = ({ stats, benefits }) => {
                 variant='body2'
                 sx={{ color: 'blue.600' }}
               >
-                总预算
+                {i18n.t('components.project_report.k12')}
               </Typography>
               <Typography
                 variant='h6'
@@ -431,7 +432,7 @@ const ProjectReport: React.FC<ProjectReportProps> = ({ stats, benefits }) => {
                 variant='body2'
                 sx={{ color: 'green.600' }}
               >
-                已使用
+                {i18n.t('components.project_report.k13')}
               </Typography>
               <Typography
                 variant='h6'
@@ -452,7 +453,7 @@ const ProjectReport: React.FC<ProjectReportProps> = ({ stats, benefits }) => {
                 variant='body2'
                 sx={{ color: 'grey.600' }}
               >
-                剩余
+                {i18n.t('components.project_report.k14')}
               </Typography>
               <Typography
                 variant='h6'
@@ -467,7 +468,7 @@ const ProjectReport: React.FC<ProjectReportProps> = ({ stats, benefits }) => {
 
       <Card>
         <CardHeader>
-          <Typography variant='h6'>项目进度统计</Typography>
+          <Typography variant='h6'>{i18n.t('components.project_report.k14')}</Typography>
         </CardHeader>
         <CardContent>
           <Box sx={{ height: 256 }}>
@@ -477,8 +478,8 @@ const ProjectReport: React.FC<ProjectReportProps> = ({ stats, benefits }) => {
             >
               <BarChart
                 data={[
-                  { name: '准时', value: stats.on_time_projects ?? 0 },
-                  { name: '延迟', value: stats.delayed_projects ?? 0 },
+                  { name: i18n.t('components.project_report.k15'), value: stats.on_time_projects ?? 0 },
+                  { name: i18n.t('components.project_report.k16'), value: stats.delayed_projects ?? 0 },
                 ].filter((d) => (d.value ?? 0) > 0)}
               >
                 <CartesianGrid strokeDasharray='3 3' />
@@ -487,7 +488,7 @@ const ProjectReport: React.FC<ProjectReportProps> = ({ stats, benefits }) => {
                 <Tooltip />
                 <Bar
                   dataKey='value'
-                  name='项目数'
+                  name={i18n.t('components.project_report.k17')}
                 >
                   <Cell fill='success.main' />
                   <Cell fill='error.main' />
@@ -500,7 +501,7 @@ const ProjectReport: React.FC<ProjectReportProps> = ({ stats, benefits }) => {
 
       <Card>
         <CardHeader>
-          <Typography variant='h6'>效益指标汇总</Typography>
+          <Typography variant='h6'>{i18n.t('components.project_report.k18')}</Typography>
         </CardHeader>
         <CardContent>
           {benefits.length > 0 ? (
@@ -508,7 +509,7 @@ const ProjectReport: React.FC<ProjectReportProps> = ({ stats, benefits }) => {
               <Table size='small'>
                 <TableHead>
                   <TableRow>
-                    <TableCell sx={{ fontWeight: 'medium', color: 'grey.600' }}>期间</TableCell>
+                    <TableCell sx={{ fontWeight: 'medium', color: 'grey.600' }}>{i18n.t('components.project_report.k19')}</TableCell>
                     <TableCell
                       align='right'
                       sx={{ fontWeight: 'medium', color: 'grey.600' }}
@@ -607,7 +608,7 @@ const ProjectReport: React.FC<ProjectReportProps> = ({ stats, benefits }) => {
                   color: 'grey.300',
                 }}
               />
-              <Typography>暂无效益数据</Typography>
+              <Typography>{i18n.t('components.project_report.k20')}</Typography>
             </Box>
           )}
         </CardContent>

@@ -84,7 +84,7 @@ const mockSessions: ChatSession[] = [
   },
   {
     id: '3',
-    title: 'React表单组件',
+    title: i18n.t('pages.ai_chat_page.react_0'),
     messages: [],
     timestamp: new Date(Date.now() - 3600000),
     type: 'code',
@@ -110,7 +110,7 @@ const mockMessages: Message[] = [
     id: '2',
     role: 'assistant',
     content:
-      '根据您提供的系统架构，我有以下优化建议：\n\n**1. 性能优化**\n- 建议引入 CDN 加速静态资源\n- 考虑使用 Redis 缓存热点数据\n- 数据库读写分离\n\n**2. 可扩展性**\n- 微服务架构拆分\n- 引入消息队列解耦\n- 配置中心统一管理\n\n**3. 安全性**\n- 加强 API 鉴权机制\n- 敏感数据加密存储\n- 引入 WAF 防护\n\n需要我详细展开某个方面的建议吗？',
+      i18n.t('pages.ai_chat_page.k1'),
     timestamp: new Date(Date.now() - 280000),
     type: 'qa',
   },
@@ -125,7 +125,7 @@ const mockMessages: Message[] = [
     id: '4',
     role: 'assistant',
     content:
-      '微服务架构拆分建议：\n\n**核心服务拆分**\n1. **用户服务** - 用户注册、登录、权限\n2. **订单服务** - 订单创建、查询、管理\n3. **支付服务** - 支付、退款、对账\n4. **库存服务** - 库存查询、扣减、预警\n\n**技术选型**\n- 服务通信：gRPC / REST\n- 服务治理：Spring Cloud / Kubernetes\n- 服务发现：Consul / Nacos\n\n**实施步骤**\n1. 领域建模，明确边界\n2. 逐步拆分，先易后难\n3. 数据同步，保证一致性\n4. 全量切换，灰度发布',
+      i18n.t('pages.ai_chat_page.k2'),
     timestamp: new Date(Date.now() - 30000),
     type: 'qa',
   },

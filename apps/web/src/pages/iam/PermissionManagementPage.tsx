@@ -72,7 +72,7 @@ const headerContent = (
         variant='subtitle2'
         color='blue.900'
       >
-        关于权限管理
+        {i18n.t('pages.permission_management_page.k0')}
       </Typography>
     </Stack>
     <Typography
@@ -80,8 +80,8 @@ const headerContent = (
       color='blue.700'
       sx={{ mt: 1 }}
     >
-      权限是系统级配置，通常由开发人员在后端代码中预先定义。
-      您可以在这里查看所有可用权限，并通过角色管理页面将权限分配给不同的角色。
+      {i18n.t('pages.permission_management_page.k1')}
+      {i18n.t('pages.permission_management_page.k2')}
     </Typography>
   </Box>
 );

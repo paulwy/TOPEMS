@@ -4,7 +4,6 @@
  * @module pages/workflow
  * @path /workflow/dashboard
  */
-
 import React, { useMemo, useEffect } from 'react';
 import {
   PlaySquare,
@@ -15,9 +14,9 @@ import {
   BarChart3,
   Zap,
 } from 'lucide-react';
+import i18n from '@/i18n';
 import { Box, Typography } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
-
 import { PageContainer } from '@/components/common';
 import { WORKFLOW_PATHS } from '@/modules/workflow/config';
 import { DashboardTemplate, type StatCard, type QuickAction } from '@/components/templates';
@@ -25,13 +24,9 @@ import { useQuery } from '@tanstack/react-query';
 import type { StatisticsResponse } from '@/api/workflow';
 import { workflowApi } from '@/api/workflow';
 import { apiLogger } from '@/utils/logger';
-
-
 import { QUERY_KEYS } from '@/lib/reactQuery';
-
 export const WorkflowDashboardPage: React.FC = () => {
   const navigate = useNavigate();
-
   const dashboardQuery = useQuery<StatisticsResponse | null>({
     queryKey: QUERY_KEYS.AD_HOC.WORKFLOW_DASHBOARD_BASE,
     queryFn: async () => {
@@ -43,69 +38,65 @@ export const WorkflowDashboardPage: React.FC = () => {
     },
     staleTime: 5 * 60 * 1000,
   });
-
   const loading = dashboardQuery.isLoading;
-
   useEffect(() => {
     if (dashboardQuery.isError) {
       apiLogger.error('Failed to load workflow dashboard:', dashboardQuery.error);
     }
   }, [dashboardQuery.isError, dashboardQuery.error]);
-
   const stats: StatCard[] = useMemo(
     () => [
       {
         id: 'running',
-        title: '运行中流程',
+        title: i18n.t('workflow.workflow_dashboard_page.k0'),
         value: '24',
         icon: <PlaySquare size={20} />,
         change: 5,
-        changeLabel: '较昨日',
+        changeLabel: i18n.t('workflow.workflow_dashboard_page.k1'),
         color: 'primary',
       },
       {
         id: 'pending',
-        title: '待我审批',
+        title: i18n.t('workflow.workflow_dashboard_page.k2'),
         value: '8',
         icon: <CheckSquare size={20} />,
         change: -2,
-        changeLabel: '较昨日',
+        changeLabel: i18n.t('workflow.workflow_dashboard_page.k3'),
         color: 'warning',
       },
       {
         id: 'completed',
-        title: '本月完成',
+        title: i18n.t('workflow.workflow_dashboard_page.k4'),
         value: '156',
         icon: <Clock size={20} />,
         change: 18,
-        changeLabel: '环比增长',
+        changeLabel: i18n.t('workflow.workflow_dashboard_page.k5'),
         color: 'success',
       },
       {
         id: 'overdue',
-        title: '超时预警',
+        title: i18n.t('workflow.workflow_dashboard_page.k6'),
         value: '3',
         icon: <AlertTriangle size={20} />,
         change: 1,
-        changeLabel: '较昨日',
+        changeLabel: i18n.t('workflow.workflow_dashboard_page.k7'),
         color: 'error',
       },
     ],
     []
   );
-
   const charts = useMemo(
     () => [
       {
         id: 'trend',
-        title: '流程趋势',
+        title: i18n.t('workflow.workflow_dashboard_page.k8'),
         chart: <BarChart3 size={18} />,
         type: 'line' as const,
         span: 2,
       },
       {
         id: 'distribution',
-        title: '流程分布',
+        title: i18n.t('workflow.workflow_dashboard_page.k9'),
         chart: <PieChart size={18} />,
         type: 'pie' as const,
         span: 1,
@@ -113,33 +104,32 @@ export const WorkflowDashboardPage: React.FC = () => {
     ],
     []
   );
-
   const quickActions: QuickAction[] = useMemo(
     () => [
       {
         id: 'new-instance',
-        label: '发起流程',
+        label: i18n.t('workflow.workflow_dashboard_page.k10'),
         icon: <PlaySquare size={20} />,
         color: 'primary',
         onClick: () => navigate(WORKFLOW_PATHS.instances),
       },
       {
         id: 'approval',
-        label: '我的审批',
+        label: i18n.t('workflow.workflow_dashboard_page.k11'),
         icon: <CheckSquare size={20} />,
         color: 'success',
         onClick: () => navigate(WORKFLOW_PATHS.approvals),
       },
       {
         id: 'designer',
-        label: '流程设计',
+        label: i18n.t('workflow.workflow_dashboard_page.k12'),
         icon: <FileCode size={20} />,
         color: 'info',
         onClick: () => navigate(WORKFLOW_PATHS.designer),
       },
       {
         id: 'monitor',
-        label: '监控中心',
+        label: i18n.t('workflow.workflow_dashboard_page.k13'),
         icon: <Zap size={20} />,
         color: 'warning',
         onClick: () => navigate(WORKFLOW_PATHS.monitor),
@@ -147,45 +137,44 @@ export const WorkflowDashboardPage: React.FC = () => {
     ],
     [navigate]
   );
-
   const recentItems = useMemo(
     () => [
       {
         id: '1',
-        title: '采购订单审批 - PO20240115',
-        subtitle: '提交人：张三 · 2小时前',
+        title: i18n.t('workflow.workflow_dashboard_page.po20240115_14'),
+        subtitle: i18n.t('workflow.workflow_dashboard_page.2_15'),
         status: 'info' as const,
         statusColor: 'primary',
         onClick: () => navigate(WORKFLOW_PATHS.instanceDetail.replace(':id', '1')),
       },
       {
         id: '2',
-        title: '请假申请 - 年假5天',
-        subtitle: '提交人：李四 · 4小时前',
+        title: i18n.t('workflow.workflow_dashboard_page.5_16'),
+        subtitle: i18n.t('workflow.workflow_dashboard_page.4_17'),
         status: 'success' as const,
         statusColor: 'success',
         onClick: () => navigate(WORKFLOW_PATHS.instanceDetail.replace(':id', '2')),
       },
       {
         id: '3',
-        title: '费用报销 - 差旅费2380元',
-        subtitle: '提交人：王五 · 昨天',
+        title: i18n.t('workflow.workflow_dashboard_page.2380_18'),
+        subtitle: i18n.t('workflow.workflow_dashboard_page.k19'),
         status: 'warning' as const,
         statusColor: 'warning',
         onClick: () => navigate(WORKFLOW_PATHS.approvalDetail.replace(':id', '3')),
       },
       {
         id: '4',
-        title: '合同审批 - 供应商合作协议',
-        subtitle: '提交人：赵六 · 昨天',
+        title: i18n.t('workflow.workflow_dashboard_page.k20'),
+        subtitle: i18n.t('workflow.workflow_dashboard_page.k21'),
         status: 'error' as const,
         statusColor: 'error',
         onClick: () => navigate(WORKFLOW_PATHS.instanceDetail.replace(':id', '4')),
       },
       {
         id: '5',
-        title: '用章申请 - 项目合同章',
-        subtitle: '提交人：钱七 · 2天前',
+        title: i18n.t('workflow.workflow_dashboard_page.k22'),
+        subtitle: i18n.t('workflow.workflow_dashboard_page.2_23'),
         status: 'success' as const,
         statusColor: 'success',
         onClick: () => navigate(WORKFLOW_PATHS.instanceDetail.replace(':id', '5')),
@@ -193,7 +182,6 @@ export const WorkflowDashboardPage: React.FC = () => {
     ],
     [navigate]
   );
-
   return (
     <PageContainer
       headerProps={{
@@ -208,7 +196,7 @@ export const WorkflowDashboardPage: React.FC = () => {
         charts={charts}
         quickActions={quickActions}
         recentItems={recentItems}
-        recentTitle='最近流程'
+        recentTitle={i18n.t('workflow.workflow_dashboard_page.k24')}
         onRefresh={() => {
           dashboardQuery.refetch();
         }}
@@ -216,7 +204,5 @@ export const WorkflowDashboardPage: React.FC = () => {
     </PageContainer>
   );
 };
-
 const PieChart = (props: { size?: number }) => <BarChart3 {...props} />;
-
 export default WorkflowDashboardPage;

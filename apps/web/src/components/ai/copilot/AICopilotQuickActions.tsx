@@ -2,6 +2,7 @@ import React from 'react';
 import { Box, Chip, Typography } from '@mui/material';
 import { BarChart3, Calendar, FileText, HelpCircle, Search, Zap } from 'lucide-react';
 import type { QuickCommand } from '@/lib/ai/recommendations';
+import i18n from '@/i18n';
 
 interface AICopilotQuickActionsProps {
   commands: QuickCommand[];
@@ -9,11 +10,11 @@ interface AICopilotQuickActionsProps {
 }
 
 const commandIcons: Record<string, React.ReactNode> = {
-  '/审批': <FileText style={{ width: 16, height: 16 }} />,
-  '/考勤': <Calendar style={{ width: 16, height: 16 }} />,
-  '/客户': <Search style={{ width: 16, height: 16 }} />,
-  '/报表': <BarChart3 style={{ width: 16, height: 16 }} />,
-  '/帮助': <HelpCircle style={{ width: 16, height: 16 }} />,
+  [i18n.t('components.ai_copilot_quick_actions.k0')]: <FileText style={{ width: 16, height: 16 }} />,
+  [i18n.t('components.ai_copilot_quick_actions.k1')]: <Calendar style={{ width: 16, height: 16 }} />,
+  [i18n.t('components.ai_copilot_quick_actions.k2')]: <Search style={{ width: 16, height: 16 }} />,
+  [i18n.t('components.ai_copilot_quick_actions.k3')]: <BarChart3 style={{ width: 16, height: 16 }} />,
+  [i18n.t('components.ai_copilot_quick_actions.k4')]: <HelpCircle style={{ width: 16, height: 16 }} />,
 };
 
 export const AICopilotQuickActions: React.FC<AICopilotQuickActionsProps> = ({

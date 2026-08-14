@@ -1,5 +1,6 @@
 import React from 'react';
 import { Box, Tooltip, type SxProps, type Theme } from '@mui/material';
+import i18n from '@/i18n';
 
 export type CyberStatusType = 'online' | 'offline' | 'warning' | 'error' | 'idle';
 
@@ -16,27 +17,27 @@ const statusConfig: Record<CyberStatusType, { color: string; glow: string; label
   online: {
     color: 'success.500',
     glow: 'rgba(0, 255, 136, 0.60)',
-    label: '在线',
+    label: i18n.t('components.cyber_status_indicator.k0'),
   },
   offline: {
     color: 'error.500',
     glow: 'rgba(255, 68, 68, 0.60)',
-    label: '离线',
+    label: i18n.t('components.cyber_status_indicator.k1'),
   },
   warning: {
     color: 'yellow.400',
     glow: 'rgba(255, 215, 0, 0.60)',
-    label: '警告',
+    label: i18n.t('components.cyber_status_indicator.k2'),
   },
   error: {
     color: 'purple.600',
     glow: 'rgba(255, 0, 255, 0.60)',
-    label: '错误',
+    label: i18n.t('components.cyber_status_indicator.k3'),
   },
   idle: {
     color: 'text.muted',
     glow: 'rgba(136, 146, 176, 0.40)',
-    label: '空闲',
+    label: i18n.t('components.cyber_status_indicator.k4'),
   },
 };
 

@@ -10,6 +10,7 @@ import {
   FormControl,
   InputLabel,
 } from '@mui/material';
+import i18n from '@/i18n';
 import React from 'react';
 import type { IntegrationSettings as IntegrationSettingsType } from '../types';
 
@@ -31,14 +32,14 @@ export const IntegrationSettings: React.FC<IntegrationSettingsProps> = ({
           variant='h6'
           sx={{ fontWeight: 600, mb: 1 }}
         >
-          回调配置
+          {i18n.t('pages.integration_settings.k0')}
         </Typography>
         <Typography
           variant='body2'
           color='text.secondary'
           sx={{ mb: 3 }}
         >
-          配置系统回调和 Webhook
+          {i18n.t('pages.integration_settings.webhook_1')}
         </Typography>
         <Stack spacing={2}>
           <Box
@@ -56,13 +57,13 @@ export const IntegrationSettings: React.FC<IntegrationSettingsProps> = ({
                 variant='body2'
                 sx={{ fontWeight: 500 }}
               >
-                启用回调
+                {i18n.t('pages.integration_settings.k2')}
               </Typography>
               <Typography
                 variant='caption'
                 color='text.secondary'
               >
-                流程状态变更时回调外部系统
+                {i18n.t('pages.integration_settings.k3')}
               </Typography>
             </Box>
             <Switch
@@ -78,7 +79,7 @@ export const IntegrationSettings: React.FC<IntegrationSettingsProps> = ({
           </Box>
           <TextField
             fullWidth
-            label='回调地址'
+            label={i18n.t('pages.integration_settings.k0')}
             value={settings.callbackUrl}
             onChange={(e) => {
               onChange({
@@ -93,7 +94,7 @@ export const IntegrationSettings: React.FC<IntegrationSettingsProps> = ({
           />
           <TextField
             fullWidth
-            label='回调 Token'
+            label={i18n.t('pages.integration_settings.token_1')}
             value={settings.callbackToken}
             onChange={(e) => {
               onChange({
@@ -104,7 +105,7 @@ export const IntegrationSettings: React.FC<IntegrationSettingsProps> = ({
             }}
             size='small'
             type='password'
-            placeholder='用于签名验证的 Token'
+            placeholder={i18n.t('pages.integration_settings.token_2')}
             disabled={!settings.enableCallback}
           />
         </Stack>
@@ -135,13 +136,13 @@ export const IntegrationSettings: React.FC<IntegrationSettingsProps> = ({
                 variant='body2'
                 sx={{ fontWeight: 500 }}
               >
-                启用 Webhook
+                {i18n.t('pages.integration_settings.webhook_4')}
               </Typography>
               <Typography
                 variant='caption'
                 color='text.secondary'
               >
-                接收外部系统触发的流程
+                {i18n.t('pages.integration_settings.k5')}
               </Typography>
             </Box>
             <Switch
@@ -157,7 +158,7 @@ export const IntegrationSettings: React.FC<IntegrationSettingsProps> = ({
           </Box>
           <TextField
             fullWidth
-            label='Webhook 地址'
+            label={i18n.t('pages.integration_settings.webhook_6')}
             value={settings.webhookUrl}
             onChange={(e) => {
               onChange({
@@ -167,9 +168,9 @@ export const IntegrationSettings: React.FC<IntegrationSettingsProps> = ({
               markUnsaved();
             }}
             size='small'
-            placeholder='系统生成的 Webhook 接收地址'
+            placeholder={i18n.t('pages.integration_settings.webhook_3')}
             disabled={!settings.enableWebhook}
-            helperText='外部系统可通过此地址触发工作流'
+            helperText={i18n.t('pages.integration_settings.k4')}
           />
         </Stack>
       </Box>
@@ -181,7 +182,7 @@ export const IntegrationSettings: React.FC<IntegrationSettingsProps> = ({
           variant='h6'
           sx={{ fontWeight: 600, mb: 2 }}
         >
-          外部系统
+          {i18n.t('pages.integration_settings.k7')}
         </Typography>
         <Stack spacing={2}>
           <Box
@@ -198,7 +199,7 @@ export const IntegrationSettings: React.FC<IntegrationSettingsProps> = ({
               variant='body2'
               sx={{ fontWeight: 500 }}
             >
-              ERP 系统同步
+              {i18n.t('pages.integration_settings.erp_8')}
             </Typography>
             <Switch
               checked={settings.enableErpSync}
@@ -219,7 +220,7 @@ export const IntegrationSettings: React.FC<IntegrationSettingsProps> = ({
             <InputLabel>ERP 系统类型</InputLabel>
             <Select
               value={settings.erpSystem}
-              label='ERP 系统类型'
+              label={i18n.t('pages.integration_settings.erp_9')}
               onChange={(e) => {
                 onChange({
                   ...settings,
@@ -228,12 +229,12 @@ export const IntegrationSettings: React.FC<IntegrationSettingsProps> = ({
                 markUnsaved();
               }}
             >
-              <MenuItem value='none'>无</MenuItem>
+              <MenuItem value='none'>{i18n.t('pages.integration_settings.k10')}</MenuItem>
               <MenuItem value='sap'>SAP</MenuItem>
               <MenuItem value='oracle'>Oracle EBS</MenuItem>
-              <MenuItem value='ufida'>用友</MenuItem>
-              <MenuItem value='kingdee'>金蝶</MenuItem>
-              <MenuItem value='custom'>自定义</MenuItem>
+              <MenuItem value='ufida'>{i18n.t('pages.integration_settings.k5')}</MenuItem>
+              <MenuItem value='kingdee'>{i18n.t('pages.integration_settings.k6')}</MenuItem>
+              <MenuItem value='custom'>{i18n.t('pages.integration_settings.k7')}</MenuItem>
             </Select>
           </FormControl>
         </Stack>
@@ -246,7 +247,7 @@ export const IntegrationSettings: React.FC<IntegrationSettingsProps> = ({
           variant='h6'
           sx={{ fontWeight: 600, mb: 2 }}
         >
-          API 访问
+          {i18n.t('pages.integration_settings.api_11')}
         </Typography>
         <Stack spacing={2}>
           <Box
@@ -264,13 +265,13 @@ export const IntegrationSettings: React.FC<IntegrationSettingsProps> = ({
                 variant='body2'
                 sx={{ fontWeight: 500 }}
               >
-                启用 API 访问
+                {i18n.t('pages.integration_settings.api_12')}
               </Typography>
               <Typography
                 variant='caption'
                 color='text.secondary'
               >
-                允许通过 API 操作工作流
+                {i18n.t('pages.integration_settings.api_13')}
               </Typography>
             </Box>
             <Switch
@@ -287,7 +288,7 @@ export const IntegrationSettings: React.FC<IntegrationSettingsProps> = ({
           <TextField
             fullWidth
             type='number'
-            label='API 调用频率限制（次/分钟）'
+            label={i18n.t('pages.integration_settings.k14')}
             value={settings.apiRateLimit}
             onChange={(e) => {
               onChange({
@@ -298,7 +299,7 @@ export const IntegrationSettings: React.FC<IntegrationSettingsProps> = ({
             }}
             size='small'
             disabled={!settings.enableApiAccess}
-            helperText='0 表示不限制'
+            helperText={i18n.t('pages.integration_settings.0_15')}
           />
         </Stack>
       </Box>

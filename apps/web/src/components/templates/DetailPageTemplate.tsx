@@ -11,6 +11,7 @@ import {
   useTheme,
   useMediaQuery,
 } from '@mui/material';
+import i18n from '@/i18n';
 import { Edit, Delete, Share2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useBackNavigation } from '@/hooks';
@@ -157,7 +158,7 @@ export const DetailPageTemplate: React.FC<DetailPageTemplateProps> = ({
   const defaultActions: PageAction[] = [];
   if (onEdit) {
     defaultActions.push({
-      label: '编辑',
+      label: i18n.t('templates.detail_page_template.k0'),
       icon: <Edit style={{ width: 18, height: 18 }} />,
       onClick: onEdit,
       variant: 'outlined',
@@ -165,7 +166,7 @@ export const DetailPageTemplate: React.FC<DetailPageTemplateProps> = ({
   }
   if (onShare) {
     defaultActions.push({
-      label: '分享',
+      label: i18n.t('templates.detail_page_template.k1'),
       icon: <Share2 style={{ width: 18, height: 18 }} />,
       onClick: onShare,
       variant: 'text',
@@ -173,7 +174,7 @@ export const DetailPageTemplate: React.FC<DetailPageTemplateProps> = ({
   }
   if (onDelete) {
     defaultActions.push({
-      label: '删除',
+      label: i18n.t('templates.detail_page_template.k2'),
       icon: <Delete style={{ width: 18, height: 18 }} />,
       onClick: onDelete,
       variant: 'text',

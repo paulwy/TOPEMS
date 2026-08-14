@@ -1,5 +1,6 @@
 import { useAuth } from './useAuth';
 import { useCallback, useMemo } from 'react';
+import i18n from '@/i18n';
 
 export type Role = 'admin' | 'manager' | 'user' | 'guest';
 
@@ -37,11 +38,11 @@ export const useRole = () => {
   }, [hasRole]);
 
   const getRoleName = useCallback((): string => {
-    if (user?.is_superuser || hasRole('admin')) return '管理员';
-    if (hasRole('manager')) return '部门经理';
-    if (hasRole('user')) return '普通员工';
-    if (hasRole('guest')) return '访客';
-    return '未知角色';
+    if (user?.is_superuser || hasRole('admin')) return i18n.t('shared.use_role.k0');
+    if (hasRole('manager')) return i18n.t('shared.use_role.k1');
+    if (hasRole('user')) return i18n.t('shared.use_role.k2');
+    if (hasRole('guest')) return i18n.t('shared.use_role.k3');
+    return i18n.t('shared.use_role.k4');
   }, [user?.is_superuser, hasRole]);
 
   const getRoleLevel = useCallback((): number => {
@@ -53,11 +54,11 @@ export const useRole = () => {
   }, [user?.is_superuser, hasRole]);
 
   const currentRole = useMemo(() => {
-    if (user?.is_superuser || hasRole('admin')) return '管理员';
-    if (hasRole('manager')) return '部门经理';
-    if (hasRole('user')) return '普通员工';
-    if (hasRole('guest')) return '访客';
-    return '未知角色';
+    if (user?.is_superuser || hasRole('admin')) return i18n.t('shared.use_role.k5');
+    if (hasRole('manager')) return i18n.t('shared.use_role.k6');
+    if (hasRole('user')) return i18n.t('shared.use_role.k7');
+    if (hasRole('guest')) return i18n.t('shared.use_role.k8');
+    return i18n.t('shared.use_role.k9');
   }, [user?.is_superuser, hasRole]);
 
   const roleLevel = useMemo(() => {

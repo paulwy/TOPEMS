@@ -14,6 +14,7 @@ import {
   Info,
   Eye,
 } from 'lucide-react';
+import i18n from '@/i18n';
 import { PageContainer, StatusBadge } from '@/components/common';
 import {
   Box,
@@ -95,10 +96,10 @@ const AuditLogPage: React.FC = () => {
 
   useEffect(() => {
     if (logsQuery.isError) {
-      apiLogger.error('加载审计日志失败:', logsQuery.error);
+      apiLogger.error(i18n.t('pages.audit_log_page.k0'), logsQuery.error);
       addNotification({
-        title: '错误',
-        message: extractErrorMessage(logsQuery.error, '加载审计日志失败'),
+        title: i18n.t('pages.audit_log_page.k0'),
+        message: extractErrorMessage(logsQuery.error, i18n.t('pages.audit_log_page.k1')),
         type: 'error',
       });
     }
@@ -144,9 +145,9 @@ const AuditLogPage: React.FC = () => {
       string,
       { color: 'success' | 'error' | 'warning' | 'default'; label: string; icon: React.ReactNode }
     > = {
-      success: { color: 'success', label: '成功', icon: <CheckCircle size={14} /> },
-      failed: { color: 'error', label: '失败', icon: <XCircle size={14} /> },
-      warning: { color: 'warning', label: '警告', icon: <AlertCircle size={14} /> },
+      success: { color: 'success', label: i18n.t('pages.audit_log_page.k2'), icon: <CheckCircle size={14} /> },
+      failed: { color: 'error', label: i18n.t('pages.audit_log_page.k3'), icon: <XCircle size={14} /> },
+      warning: { color: 'warning', label: i18n.t('pages.audit_log_page.k4'), icon: <AlertCircle size={14} /> },
     };
     const config = badges[status] || { color: 'default', label: status, icon: <Info size={14} /> };
     return (
@@ -164,14 +165,14 @@ const AuditLogPage: React.FC = () => {
       string,
       'primary' | 'warning' | 'error' | 'info' | 'success' | 'secondary' | 'default'
     > = {
-      创建: 'primary',
-      修改: 'warning',
-      删除: 'error',
-      查询: 'info',
-      登录: 'success',
-      审核: 'secondary',
-      导出: 'default',
-      备份: 'warning',
+      [i18n.t('pages.audit_log_page.k1')]: 'primary',
+      [i18n.t('pages.audit_log_page.k2')]: 'warning',
+      [i18n.t('pages.audit_log_page.k3')]: 'error',
+      [i18n.t('pages.audit_log_page.k4')]: 'info',
+      [i18n.t('pages.audit_log_page.k5')]: 'success',
+      [i18n.t('pages.audit_log_page.k6')]: 'secondary',
+      [i18n.t('pages.audit_log_page.k7')]: 'default',
+      [i18n.t('pages.audit_log_page.k8')]: 'warning',
     };
     return (
       <Chip
@@ -190,8 +191,8 @@ const AuditLogPage: React.FC = () => {
 
   const handleExport = () => {
     addNotification({
-      title: '导出成功',
-      message: '审计日志已导出',
+      title: i18n.t('pages.audit_log_page.k5'),
+      message: i18n.t('pages.audit_log_page.k6'),
       type: 'success',
     });
   };
@@ -208,8 +209,8 @@ const AuditLogPage: React.FC = () => {
 
   return (
     <PageContainer
-      title='审计日志'
-      subtitle='操作日志列表、按用户/时间/模块筛选'
+      title={i18n.t('pages.audit_log_page.k7')}
+      subtitle={i18n.t('pages.audit_log_page.k8')}
       maxWidth='xl'
       headerProps={{
         backButton: {
@@ -217,13 +218,13 @@ const AuditLogPage: React.FC = () => {
         },
         actions: [
           {
-            label: '导出日志',
+            label: i18n.t('pages.audit_log_page.k9'),
             icon: <Download size={16} />,
             onClick: handleExport,
             variant: 'outlined',
           },
           {
-            label: '刷新',
+            label: i18n.t('pages.audit_log_page.k10'),
             icon: <RefreshCw size={16} />,
             onClick: () => logsQuery.refetch(),
             variant: 'outlined',
@@ -241,28 +242,28 @@ const AuditLogPage: React.FC = () => {
       >
         {[
           {
-            label: '总操作数',
+            label: i18n.t('pages.audit_log_page.k11'),
             value: stats.total,
             icon: <FileText size={20} />,
             color: 'primary',
             bg: 'primary.100',
           },
           {
-            label: '成功',
+            label: i18n.t('pages.audit_log_page.k12'),
             value: stats.success,
             icon: <CheckCircle size={20} />,
             color: 'success',
             bg: 'success.100',
           },
           {
-            label: '失败',
+            label: i18n.t('pages.audit_log_page.k13'),
             value: stats.failed,
             icon: <XCircle size={20} />,
             color: 'error',
             bg: 'error.100',
           },
           {
-            label: '警告',
+            label: i18n.t('pages.audit_log_page.k14'),
             value: stats.warning,
             icon: <AlertCircle size={20} />,
             color: 'warning',
@@ -330,7 +331,7 @@ const AuditLogPage: React.FC = () => {
         >
           <TextField
             size='small'
-            placeholder='搜索操作人、内容或IP...'
+            placeholder={i18n.t('pages.audit_log_page.ip_9')}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             slotProps={{
@@ -351,16 +352,16 @@ const AuditLogPage: React.FC = () => {
             size='small'
             sx={{ minWidth: 130 }}
           >
-            <InputLabel>操作人</InputLabel>
+            <InputLabel>{i18n.t('pages.audit_log_page.k15')}</InputLabel>
             <Select
               value={operatorFilter}
-              label='操作人'
+              label={i18n.t('pages.audit_log_page.k16')}
               onChange={(e) => {
                 setOperatorFilter(e.target.value);
                 setPage(0);
               }}
             >
-              <MenuItem value=''>全部</MenuItem>
+              <MenuItem value=''>{i18n.t('pages.audit_log_page.k17')}</MenuItem>
               {operators.map((op) => (
                 <MenuItem
                   key={op}
@@ -375,16 +376,16 @@ const AuditLogPage: React.FC = () => {
             size='small'
             sx={{ minWidth: 140 }}
           >
-            <InputLabel>模块</InputLabel>
+            <InputLabel>{i18n.t('pages.audit_log_page.k18')}</InputLabel>
             <Select
               value={moduleFilter}
-              label='模块'
+              label={i18n.t('pages.audit_log_page.k19')}
               onChange={(e) => {
                 setModuleFilter(e.target.value);
                 setPage(0);
               }}
             >
-              <MenuItem value=''>全部模块</MenuItem>
+              <MenuItem value=''>{i18n.t('pages.audit_log_page.k20')}</MenuItem>
               {modules.map((m) => (
                 <MenuItem
                   key={m}
@@ -399,16 +400,16 @@ const AuditLogPage: React.FC = () => {
             size='small'
             sx={{ minWidth: 120 }}
           >
-            <InputLabel>操作类型</InputLabel>
+            <InputLabel>{i18n.t('pages.audit_log_page.k21')}</InputLabel>
             <Select
               value={typeFilter}
-              label='操作类型'
+              label={i18n.t('pages.audit_log_page.k22')}
               onChange={(e) => {
                 setTypeFilter(e.target.value);
                 setPage(0);
               }}
             >
-              <MenuItem value=''>全部类型</MenuItem>
+              <MenuItem value=''>{i18n.t('pages.audit_log_page.k23')}</MenuItem>
               {operationTypes.map((t) => (
                 <MenuItem
                   key={t}
@@ -423,25 +424,25 @@ const AuditLogPage: React.FC = () => {
             size='small'
             sx={{ minWidth: 120 }}
           >
-            <InputLabel>状态</InputLabel>
+            <InputLabel>{i18n.t('pages.audit_log_page.k24')}</InputLabel>
             <Select
               value={statusFilter}
-              label='状态'
+              label={i18n.t('pages.audit_log_page.k25')}
               onChange={(e) => {
                 setStatusFilter(e.target.value);
                 setPage(0);
               }}
             >
-              <MenuItem value=''>全部状态</MenuItem>
-              <MenuItem value='success'>成功</MenuItem>
-              <MenuItem value='failed'>失败</MenuItem>
-              <MenuItem value='warning'>警告</MenuItem>
+              <MenuItem value=''>{i18n.t('pages.audit_log_page.k26')}</MenuItem>
+              <MenuItem value='success'>{i18n.t('pages.audit_log_page.k27')}</MenuItem>
+              <MenuItem value='failed'>{i18n.t('pages.audit_log_page.k28')}</MenuItem>
+              <MenuItem value='warning'>{i18n.t('pages.audit_log_page.k29')}</MenuItem>
             </Select>
           </FormControl>
           <Box sx={{ flexGrow: 1 }} />
           <TextField
             size='small'
-            label='开始日期'
+            label={i18n.t('pages.audit_log_page.k30')}
             type='date'
             value={dateRange.start}
             onChange={(e) => setDateRange((prev) => ({ ...prev, start: e.target.value }))}
@@ -449,7 +450,7 @@ const AuditLogPage: React.FC = () => {
           />
           <TextField
             size='small'
-            label='结束日期'
+            label={i18n.t('pages.audit_log_page.k31')}
             type='date'
             value={dateRange.end}
             onChange={(e) => setDateRange((prev) => ({ ...prev, end: e.target.value }))}
@@ -467,14 +468,14 @@ const AuditLogPage: React.FC = () => {
               <Table>
                 <TableHead>
                   <TableRow sx={{ bgcolor: 'grey.50' }}>
-                    <TableCell sx={{ fontWeight: 'bold', width: 80 }}>操作</TableCell>
-                    <TableCell sx={{ fontWeight: 'bold' }}>操作人</TableCell>
-                    <TableCell sx={{ fontWeight: 'bold' }}>模块</TableCell>
-                    <TableCell sx={{ fontWeight: 'bold' }}>操作类型</TableCell>
-                    <TableCell sx={{ fontWeight: 'bold' }}>操作内容</TableCell>
+                    <TableCell sx={{ fontWeight: 'bold', width: 80 }}>{i18n.t('pages.audit_log_page.k32')}</TableCell>
+                    <TableCell sx={{ fontWeight: 'bold' }}>{i18n.t('pages.audit_log_page.k33')}</TableCell>
+                    <TableCell sx={{ fontWeight: 'bold' }}>{i18n.t('pages.audit_log_page.k34')}</TableCell>
+                    <TableCell sx={{ fontWeight: 'bold' }}>{i18n.t('pages.audit_log_page.k35')}</TableCell>
+                    <TableCell sx={{ fontWeight: 'bold' }}>{i18n.t('pages.audit_log_page.k36')}</TableCell>
                     <TableCell sx={{ fontWeight: 'bold' }}>IP地址</TableCell>
-                    <TableCell sx={{ fontWeight: 'bold' }}>状态</TableCell>
-                    <TableCell sx={{ fontWeight: 'bold' }}>操作时间</TableCell>
+                    <TableCell sx={{ fontWeight: 'bold' }}>{i18n.t('pages.audit_log_page.k37')}</TableCell>
+                    <TableCell sx={{ fontWeight: 'bold' }}>{i18n.t('pages.audit_log_page.k38')}</TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
@@ -491,7 +492,7 @@ const AuditLogPage: React.FC = () => {
                           variant='body1'
                           sx={{ color: 'text.secondary' }}
                         >
-                          暂无审计日志
+                          {i18n.t('pages.audit_log_page.k10')}
                         </Typography>
                       </TableCell>
                     </TableRow>
@@ -502,11 +503,11 @@ const AuditLogPage: React.FC = () => {
                         hover
                       >
                         <TableCell>
-                          <Tooltip title='查看详情'>
+                          <Tooltip title={i18n.t('pages.audit_log_page.k39')}>
                             <IconButton
                               size='small'
                               onClick={() => handleViewDetail(log)}
-                              aria-label='查看'
+                              aria-label={i18n.t('pages.audit_log_page.k40')}
                             >
                               <Eye size={16} />
                             </IconButton>
@@ -590,7 +591,7 @@ const AuditLogPage: React.FC = () => {
                 setPage(0);
               }}
               rowsPerPageOptions={[10, 25, 50, 100]}
-              labelRowsPerPage='每页行数'
+              labelRowsPerPage={i18n.t('pages.audit_log_page.k41')}
             />
           </>
         )}
@@ -605,7 +606,7 @@ const AuditLogPage: React.FC = () => {
         <DialogTitle>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
             <Eye size={20} />
-            日志详情
+            {i18n.t('pages.audit_log_page.k11')}
           </Box>
         </DialogTitle>
         <DialogContent dividers>
@@ -623,7 +624,7 @@ const AuditLogPage: React.FC = () => {
                     variant='body2'
                     sx={{ color: 'text.secondary', mb: 0.5 }}
                   >
-                    操作人
+                    {i18n.t('pages.audit_log_page.k12')}
                   </Typography>
                   <Typography sx={{ fontWeight: 500 }}>{currentLog.user_name || '-'}</Typography>
                 </Box>
@@ -632,7 +633,7 @@ const AuditLogPage: React.FC = () => {
                     variant='body2'
                     sx={{ color: 'text.secondary', mb: 0.5 }}
                   >
-                    状态
+                    {i18n.t('pages.audit_log_page.k13')}
                   </Typography>
                   <Box sx={{ mt: 0.5 }}>{getStatusBadge(currentLog.status)}</Box>
                 </Box>
@@ -649,7 +650,7 @@ const AuditLogPage: React.FC = () => {
                     variant='body2'
                     sx={{ color: 'text.secondary', mb: 0.5 }}
                   >
-                    操作模块
+                    {i18n.t('pages.audit_log_page.k14')}
                   </Typography>
                   <Typography sx={{ fontWeight: 500 }}>{currentLog.entity_type}</Typography>
                 </Box>
@@ -658,7 +659,7 @@ const AuditLogPage: React.FC = () => {
                     variant='body2'
                     sx={{ color: 'text.secondary', mb: 0.5 }}
                   >
-                    操作类型
+                    {i18n.t('pages.audit_log_page.k15')}
                   </Typography>
                   <Box sx={{ mt: 0.5 }}>{getTypeChip(currentLog.action)}</Box>
                 </Box>
@@ -668,7 +669,7 @@ const AuditLogPage: React.FC = () => {
                   variant='body2'
                   sx={{ color: 'text.secondary', mb: 0.5 }}
                 >
-                  操作内容
+                  {i18n.t('pages.audit_log_page.k16')}
                 </Typography>
                 <Typography>
                   {currentLog.action} {currentLog.entity_type}
@@ -686,7 +687,7 @@ const AuditLogPage: React.FC = () => {
                     variant='body2'
                     sx={{ color: 'text.secondary', mb: 0.5 }}
                   >
-                    IP地址
+                    {i18n.t('pages.audit_log_page.ip_17')}
                   </Typography>
                   <Typography sx={{ fontFamily: 'monospace' }}>
                     {currentLog.ip_address || '-'}
@@ -697,7 +698,7 @@ const AuditLogPage: React.FC = () => {
                     variant='body2'
                     sx={{ color: 'text.secondary', mb: 0.5 }}
                   >
-                    操作时间
+                    {i18n.t('pages.audit_log_page.k18')}
                   </Typography>
                   <Typography>{currentLog.created_at.replace('T', ' ')}</Typography>
                 </Box>
@@ -707,7 +708,7 @@ const AuditLogPage: React.FC = () => {
                   variant='body2'
                   sx={{ color: 'text.secondary', mb: 0.5 }}
                 >
-                  浏览器/系统
+                  {i18n.t('pages.audit_log_page.k19')}
                 </Typography>
                 <Typography>{currentLog.user_agent || '-'}</Typography>
               </Box>
@@ -715,7 +716,7 @@ const AuditLogPage: React.FC = () => {
           )}
         </DialogContent>
         <DialogActions sx={{ px: 3, py: 2 }}>
-          <Button onClick={() => setShowDetailModal(false)}>关闭</Button>
+          <Button onClick={() => setShowDetailModal(false)}>{i18n.t('pages.audit_log_page.k42')}</Button>
         </DialogActions>
       </Dialog>
     </PageContainer>

@@ -2,14 +2,15 @@ import React from 'react';
 import { Chip, Box, Typography, Avatar, Stack } from '@mui/material';
 import { GitBranch, FileText, Clock, User } from 'lucide-react';
 import type { EntitySchema } from '@/schema';
+import i18n from '@/i18n';
 
 type ApprovalStatus = 'pending' | 'approved' | 'rejected' | 'claimed';
 type ApprovalPriority = 'high' | 'medium' | 'low';
 
 const PRIORITY_LABELS: Record<ApprovalPriority, string> = {
-  high: '高',
-  medium: '中',
-  low: '低',
+  high: i18n.t('shared.approval.k0'),
+  medium: i18n.t('shared.approval.k1'),
+  low: i18n.t('shared.approval.k2'),
 };
 
 const PRIORITY_COLORS: Record<ApprovalPriority, 'error' | 'warning' | 'default'> = {
@@ -19,10 +20,10 @@ const PRIORITY_COLORS: Record<ApprovalPriority, 'error' | 'warning' | 'default'>
 };
 
 const STATUS_LABELS: Record<ApprovalStatus, string> = {
-  pending: '待审批',
-  approved: '已通过',
-  rejected: '已驳回',
-  claimed: '已认领',
+  pending: i18n.t('shared.approval.k3'),
+  approved: i18n.t('shared.approval.k4'),
+  rejected: i18n.t('shared.approval.k5'),
+  claimed: i18n.t('shared.approval.k6'),
 };
 
 const STATUS_COLORS: Record<ApprovalStatus, 'warning' | 'success' | 'error' | 'info'> = {
@@ -33,10 +34,10 @@ const STATUS_COLORS: Record<ApprovalStatus, 'warning' | 'success' | 'error' | 'i
 };
 
 const WORKFLOW_TYPE_COLORS: Record<string, string> = {
-  采购管理: 'primary.main',
-  人事管理: 'success.main',
-  财务管理: 'warning.main',
-  法务管理: 'secondary.main',
+  [i18n.t('schemas.approval.k0')]: 'primary.main',
+  [i18n.t('schemas.approval.k1')]: 'success.main',
+  [i18n.t('schemas.approval.k2')]: 'warning.main',
+  [i18n.t('schemas.approval.k3')]: 'secondary.main',
   IT管理: 'cyan.500',
 };
 
@@ -52,8 +53,8 @@ const priorityOptions = Object.entries(PRIORITY_LABELS).map(([value, label]) => 
 
 export const workflowApprovalSchema: EntitySchema = {
   entity: 'workflow-approval',
-  title: '审批任务',
-  description: '管理工作流审批任务',
+  title: i18n.t('shared.approval.k7'),
+  description: i18n.t('shared.approval.k8'),
 
   api: {
     module: 'workflow',
@@ -63,7 +64,7 @@ export const workflowApprovalSchema: EntitySchema = {
   fields: [
     {
       name: 'title',
-      label: '流程标题',
+      label: i18n.t('shared.approval.k9'),
       type: 'text',
       readonly: true,
       listMinWidth: 280,
@@ -109,7 +110,7 @@ export const workflowApprovalSchema: EntitySchema = {
     },
     {
       name: 'workflowType',
-      label: '流程类型',
+      label: i18n.t('shared.approval.k10'),
       type: 'text',
       readonly: true,
       listWidth: 120,
@@ -129,7 +130,7 @@ export const workflowApprovalSchema: EntitySchema = {
     },
     {
       name: 'initiator',
-      label: '发起人',
+      label: i18n.t('shared.approval.k11'),
       type: 'text',
       readonly: true,
       listWidth: 120,
@@ -150,7 +151,7 @@ export const workflowApprovalSchema: EntitySchema = {
     },
     {
       name: 'receivedAt',
-      label: '接收时间',
+      label: i18n.t('shared.approval.k12'),
       type: 'datetime',
       readonly: true,
       listWidth: 180,
@@ -171,7 +172,7 @@ export const workflowApprovalSchema: EntitySchema = {
     },
     {
       name: 'priority',
-      label: '优先级',
+      label: i18n.t('shared.approval.k13'),
       type: 'select',
       readonly: true,
       listWidth: 100,
@@ -191,7 +192,7 @@ export const workflowApprovalSchema: EntitySchema = {
     },
     {
       name: 'status',
-      label: '状态',
+      label: i18n.t('shared.approval.k14'),
       type: 'select',
       readonly: true,
       listWidth: 110,
@@ -218,15 +219,15 @@ export const workflowApprovalSchema: EntitySchema = {
     filters: [
       {
         id: 'status',
-        label: '状态',
+        label: i18n.t('shared.approval.k15'),
         type: 'select',
-        options: [{ label: '全部状态', value: 'all' }, ...statusOptions],
+        options: [{ label: i18n.t('shared.approval.k16'), value: 'all' }, ...statusOptions],
       },
       {
         id: 'priority',
-        label: '优先级',
+        label: i18n.t('shared.approval.k17'),
         type: 'select',
-        options: [{ label: '全部优先级', value: 'all' }, ...priorityOptions],
+        options: [{ label: i18n.t('shared.approval.k18'), value: 'all' }, ...priorityOptions],
       },
     ],
     statusBadge: {

@@ -19,6 +19,7 @@ import {
   type WsConnectionStatus,
   type UseWebSocketOptions,
 } from './useWebSocket';
+import i18n from '@/i18n';
 
 // 统一从 ./useWebSocket 再导出类型与服务，保持原有 import 路径向后兼容
 export type {
@@ -151,7 +152,7 @@ export function useUnifiedWebSocket(
       const getTitle =
         snackbarOptions?.getTitle || ((msg) => msg.payload?.title as string | undefined);
       const getMessage =
-        snackbarOptions?.getMessage || ((msg) => (msg.payload?.message as string) || '收到新通知');
+        snackbarOptions?.getMessage || ((msg) => (msg.payload?.message as string) || i18n.t('shared.use_unified_web_socket.k0'));
       const getType =
         snackbarOptions?.getType ||
         ((msg) => {
@@ -346,7 +347,7 @@ export function useWebSocketNotifications(config: WsNotificationConfig): void {
       const title = getTitle?.(message);
       const msg = getMessage
         ? getMessage(message)
-        : (message.payload?.message as string) || '收到新消息';
+        : (message.payload?.message as string) || i18n.t('shared.use_unified_web_socket.k1');
       const type = getType?.(message) || 'info';
 
       addRef.current({
@@ -371,7 +372,7 @@ export function useWebSocketNotificationChannel(
     channel,
     enabled,
     getTitle: (msg) => msg.payload?.title as string | undefined,
-    getMessage: (msg) => (msg.payload?.message as string) || '收到新通知',
+    getMessage: (msg) => (msg.payload?.message as string) || i18n.t('shared.use_unified_web_socket.k2'),
     getType: (msg) => {
       const payloadType = msg.payload?.type as string | undefined;
       if (payloadType === 'success' || payloadType === 'error' || payloadType === 'warning') {
@@ -387,8 +388,8 @@ export function useWebSocketAlertChannel(enabled: boolean = true): void {
   useWebSocketNotifications({
     channel: 'alerts',
     enabled,
-    getTitle: (msg) => (msg.payload?.title as string) || '系统告警',
-    getMessage: (msg) => (msg.payload?.message as string) || '收到新的系统告警',
+    getTitle: (msg) => (msg.payload?.title as string) || i18n.t('shared.use_unified_web_socket.k3'),
+    getMessage: (msg) => (msg.payload?.message as string) || i18n.t('shared.use_unified_web_socket.k4'),
     getType: (msg) => {
       const severity = msg.payload?.severity as string | undefined;
       if (severity === 'critical' || severity === 'high') return 'error';

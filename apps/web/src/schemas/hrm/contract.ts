@@ -4,6 +4,7 @@ import type { Employee } from '@/api/hrm/types';
 
 
 import { QUERY_KEYS } from '@/lib/reactQuery';
+import i18n from '@/i18n';
 
 async function loadEmployeeOptions(): Promise<{ value: string; label: string }[]> {
   try {
@@ -20,8 +21,8 @@ async function loadEmployeeOptions(): Promise<{ value: string; label: string }[]
 
 export const contractSchema: EntitySchema = {
   entity: 'hrm_contract',
-  title: '合同管理',
-  description: '管理员工合同信息，包括合同创建、到期提醒和续签流程',
+  title: i18n.t('hrm.contract.k0'),
+  description: i18n.t('hrm.contract.k1'),
 
   api: {
     module: 'hrm',
@@ -31,7 +32,7 @@ export const contractSchema: EntitySchema = {
   fields: [
     {
       name: 'contractNo',
-      label: '合同编号',
+      label: i18n.t('hrm.contract.k2'),
       type: 'text',
       readonlyOnEdit: true,
       sortable: true,
@@ -40,24 +41,24 @@ export const contractSchema: EntitySchema = {
     },
     {
       name: 'employee_id',
-      label: '员工',
+      label: i18n.t('hrm.contract.k3'),
       type: 'select',
       required: true,
       listWidth: 120,
     },
     {
       name: 'contract_type',
-      label: '合同类型',
+      label: i18n.t('hrm.contract.k4'),
       type: 'select',
       required: true,
       options: {
         type: 'static',
         options: [
-          { value: 'labor', label: '劳动合同' },
-          { value: 'probation', label: '试用期合同' },
-          { value: 'part-time', label: '兼职合同' },
-          { value: 'project', label: '项目合同' },
-          { value: 'consulting', label: '咨询合同' },
+          { value: 'labor', label: i18n.t('hrm.contract.k5') },
+          { value: 'probation', label: i18n.t('hrm.contract.k6') },
+          { value: 'part-time', label: i18n.t('hrm.contract.k7') },
+          { value: 'project', label: i18n.t('hrm.contract.k8') },
+          { value: 'consulting', label: i18n.t('hrm.contract.k9') },
         ],
       },
       listWidth: 100,
@@ -65,35 +66,35 @@ export const contractSchema: EntitySchema = {
     },
     {
       name: 'party_a_name',
-      label: '甲方名称',
+      label: i18n.t('hrm.contract.k10'),
       type: 'text',
       listWidth: 140,
       validation: [{ type: 'maxLength', value: 255 }],
     },
     {
       name: 'party_a_contact',
-      label: '甲方联系方式',
+      label: i18n.t('hrm.contract.k11'),
       type: 'text',
       listWidth: 140,
       validation: [{ type: 'maxLength', value: 255 }],
     },
     {
       name: 'party_b_name',
-      label: '乙方名称',
+      label: i18n.t('hrm.contract.k12'),
       type: 'text',
       listWidth: 140,
       validation: [{ type: 'maxLength', value: 255 }],
     },
     {
       name: 'party_b_contact',
-      label: '乙方联系方式',
+      label: i18n.t('hrm.contract.k13'),
       type: 'text',
       listWidth: 140,
       validation: [{ type: 'maxLength', value: 255 }],
     },
     {
       name: 'start_date',
-      label: '开始日期',
+      label: i18n.t('hrm.contract.k14'),
       type: 'date',
       required: true,
       sortable: true,
@@ -101,41 +102,41 @@ export const contractSchema: EntitySchema = {
     },
     {
       name: 'end_date',
-      label: '结束日期',
+      label: i18n.t('hrm.contract.k15'),
       type: 'date',
       sortable: true,
       listWidth: 120,
     },
     {
       name: 'salary',
-      label: '薪资',
+      label: i18n.t('hrm.contract.k16'),
       type: 'number',
       listWidth: 100,
     },
     {
       name: 'probation_period_days',
-      label: '试用期(天)',
+      label: i18n.t('hrm.contract.k17'),
       type: 'number',
       listWidth: 100,
     },
     {
       name: 'reminder_days',
-      label: '到期提醒(天)',
+      label: i18n.t('hrm.contract.k18'),
       type: 'number',
       listWidth: 100,
     },
     {
       name: 'status',
-      label: '状态',
+      label: i18n.t('hrm.contract.k19'),
       type: 'select',
       defaultValue: 'active',
       options: {
         type: 'static',
         options: [
-          { value: 'active', label: '生效中' },
-          { value: 'expired', label: '已到期' },
-          { value: 'terminated', label: '已终止' },
-          { value: 'pending', label: '待审批' },
+          { value: 'active', label: i18n.t('hrm.contract.k20') },
+          { value: 'expired', label: i18n.t('hrm.contract.k21') },
+          { value: 'terminated', label: i18n.t('hrm.contract.k22') },
+          { value: 'pending', label: i18n.t('hrm.contract.k23') },
         ],
       },
       listWidth: 100,
@@ -143,19 +144,19 @@ export const contractSchema: EntitySchema = {
     },
     {
       name: 'contract_file_path',
-      label: '合同附件',
+      label: i18n.t('hrm.contract.k24'),
       type: 'text',
       showInList: false,
     },
     {
       name: 'notes',
-      label: '备注',
+      label: i18n.t('hrm.contract.k25'),
       type: 'textarea',
       showInList: false,
     },
     {
       name: 'created_at',
-      label: '创建时间',
+      label: i18n.t('hrm.contract.k26'),
       type: 'datetime',
       readonly: true,
       hideInForm: true,
@@ -164,7 +165,7 @@ export const contractSchema: EntitySchema = {
     },
     {
       name: 'updated_at',
-      label: '更新时间',
+      label: i18n.t('hrm.contract.k27'),
       type: 'datetime',
       readonly: true,
       hideInForm: true,
@@ -195,23 +196,23 @@ export const contractSchema: EntitySchema = {
         pending: 'warning',
       },
       labelMap: {
-        active: '生效中',
-        expired: '已到期',
-        terminated: '已终止',
-        pending: '待审批',
+        active: i18n.t('hrm.contract.k28'),
+        expired: i18n.t('hrm.contract.k29'),
+        terminated: i18n.t('hrm.contract.k30'),
+        pending: i18n.t('hrm.contract.k31'),
       },
     },
     filters: [
       {
         id: 'status',
-        label: '状态',
+        label: i18n.t('hrm.contract.k32'),
         type: 'select',
         options: [
-          { label: '全部状态', value: 'all' },
-          { label: '生效中', value: 'active' },
-          { label: '已到期', value: 'expired' },
-          { label: '已终止', value: 'terminated' },
-          { label: '待审批', value: 'pending' },
+          { label: i18n.t('hrm.contract.k33'), value: 'all' },
+          { label: i18n.t('hrm.contract.k34'), value: 'active' },
+          { label: i18n.t('hrm.contract.k35'), value: 'expired' },
+          { label: i18n.t('hrm.contract.k36'), value: 'terminated' },
+          { label: i18n.t('hrm.contract.k37'), value: 'pending' },
         ],
       },
     ],
@@ -229,29 +230,29 @@ export const contractSchema: EntitySchema = {
 
   formSections: [
     {
-      title: '基本信息',
+      title: i18n.t('hrm.contract.k38'),
       fields: ['contractNo', 'employee_id', 'contract_type', 'status'],
     },
     {
-      title: '甲方信息',
+      title: i18n.t('hrm.contract.k39'),
       fields: ['party_a_name', 'party_a_contact'],
     },
     {
-      title: '乙方信息',
+      title: i18n.t('hrm.contract.k40'),
       fields: ['party_b_name', 'party_b_contact'],
     },
     {
-      title: '合同期限与薪资',
+      title: i18n.t('hrm.contract.k41'),
       fields: ['start_date', 'end_date', 'salary', 'probation_period_days', 'reminder_days'],
     },
     {
-      title: '其他信息',
+      title: i18n.t('hrm.contract.k42'),
       fields: ['contract_file_path', 'notes'],
     },
   ],
 
   formColCount: 2,
-  createTitle: '新增合同',
-  editTitle: '编辑合同',
-  detailTitle: '合同详情',
+  createTitle: i18n.t('hrm.contract.k43'),
+  editTitle: i18n.t('hrm.contract.k44'),
+  detailTitle: i18n.t('hrm.contract.k45'),
 };

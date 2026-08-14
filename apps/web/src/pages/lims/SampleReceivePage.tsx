@@ -1,7 +1,6 @@
 import React, { useMemo } from 'react';
 import { Box, Typography, Card, CardContent, Stepper, Step, StepLabel, Chip } from '@mui/material';
 import { TestTube, Package, CheckCircle, Clock } from 'lucide-react';
-
 import CrudPage, { type CrudApiAdapter } from '@/components/templates/CrudPage';
 import type { RowAction } from '@/components/templates/list/types';
 import { PageContainer } from '@/components/common';
@@ -10,27 +9,23 @@ import { limsApi, type Sample } from '@/api/lims';
 import { designTokens } from '@/theme/tokens';
 import { LIMS_PATHS } from '@/modules/lims/config';
 import { getStatusColor } from '@/utils/status';
-
+import i18n from '@/i18n';
 const ct= designTokens.colors;
-
-const workflowSteps = ['待登记', '待接收', '已接收', '待确认', '已确认'];
-
+const workflowSteps = [i18n.t('lims.sample_receive_page.k4'), i18n.t('lims.sample_receive_page.k3'), i18n.t('lims.sample_receive_page.k2'), i18n.t('lims.sample_receive_page.k1'), i18n.t('lims.sample_receive_page.k0')];
 const getStageStep = (status: string): number => {
   const stageMap: Record<string, number> = {
-    待登记: 0,
-    待接收: 1,
-    已接收: 2,
-    待确认: 3,
-    已确认: 4,
-    检测中: 4,
-    已完成: 5,
+    [i18n.t('pages.sample_receive_page.k0')]: 0,
+    [i18n.t('pages.sample_receive_page.k1')]: 1,
+    [i18n.t('pages.sample_receive_page.k2')]: 2,
+    [i18n.t('pages.sample_receive_page.k3')]: 3,
+    [i18n.t('pages.sample_receive_page.k4')]: 4,
+    [i18n.t('pages.sample_receive_page.k5')]: 4,
+    [i18n.t('pages.sample_receive_page.k6')]: 5,
   };
   return stageMap[status] ?? 0;
 };
-
 const getSampleStatusColor = (status: string): string =>
   getStatusColor(status, { category: 'lims', fallback: 'grey.100' }) as string;
-
 const SampleReceivePage: React.FC = () => {
   const sampleApiAdapter: CrudApiAdapter<Sample> = useMemo(
     () => ({
@@ -42,7 +37,7 @@ const SampleReceivePage: React.FC = () => {
           status: params?.status && params.status !== 'all' ? (params.status as string) : undefined,
         });
         if (!response.success || !response.data) {
-          throw new Error('加载样品列表失败');
+          throw new Error(i18n.t('lims.sample_receive_page.k5'));
         }
         const data = response.data as { items?: Sample[]; total?: number } | Sample[];
         if (Array.isArray(data)) {
@@ -53,87 +48,80 @@ const SampleReceivePage: React.FC = () => {
           total: data.total || data.items?.length || 0,
         };
       },
-
       create: async (data) => {
         const response = await limsApi.createSample(
           data as unknown as Parameters<typeof limsApi.createSample>[0]
         );
         if (!response.success) {
-          throw new Error(response.message || '登记失败');
+          throw new Error(response.message || i18n.t('lims.sample_receive_page.k6'));
         }
         return response.data as unknown as Sample;
       },
-
       update: async (id, data) => {
         const response = await limsApi.updateSample(
           id,
           data as unknown as Parameters<typeof limsApi.updateSample>[1]
         );
         if (!response.success) {
-          throw new Error(response.message || '更新失败');
+          throw new Error(response.message || i18n.t('lims.sample_receive_page.k7'));
         }
         return response.data as unknown as Sample;
       },
-
       delete: async (id) => {
         const response = await limsApi.deleteSample(id);
         if (!response.success) {
-          throw new Error(response.message || '删除失败');
+          throw new Error(response.message || i18n.t('lims.sample_receive_page.k8'));
         }
       },
     }),
     []
   );
-
   const transitionSampleStage = async (id: string, targetStage: string) => {
     const response = await limsApi.transitionSampleStage(id, {
       sample_id: id,
       target_stage: targetStage,
-      operator: '系统用户',
-      remarks: `样品状态变更为${targetStage}`,
+      operator: i18n.t('lims.sample_receive_page.k9'),
+      remarks: `${i18n.t('pages.sample_receive_page.k0')}${targetStage}`,
     });
     if (!response.success) {
-      throw new Error(response.message || '状态变更失败');
+      throw new Error(response.message || i18n.t('lims.sample_receive_page.k10'));
     }
   };
-
   const customRowActions: RowAction[] = useMemo(
     () => [
       {
         key: 'receive',
-        label: '接收',
+        label: i18n.t('lims.sample_receive_page.k11'),
         icon: <Package size={14} />,
         color: 'warning',
         show: (row: Record<string, unknown>) =>
-          row.status === '待接收' || row.status === 'received',
+          row.status === i18n.t('lims.sample_receive_page.k12') || row.status === 'received',
         onClick: async (row: Record<string, unknown>) => {
-          await transitionSampleStage(String(row.id), '已接收');
+          await transitionSampleStage(String(row.id), i18n.t('lims.sample_receive_page.k13'));
         },
       },
       {
         key: 'confirm',
-        label: '确认',
+        label: i18n.t('lims.sample_receive_page.k14'),
         icon: <CheckCircle size={14} />,
         color: 'success',
         show: (row: Record<string, unknown>) =>
-          row.status === '已接收' || row.status === 'confirmed',
+          row.status === i18n.t('lims.sample_receive_page.k15') || row.status === 'confirmed',
         onClick: async (row: Record<string, unknown>) => {
-          await transitionSampleStage(String(row.id), '已确认');
+          await transitionSampleStage(String(row.id), i18n.t('lims.sample_receive_page.k16'));
         },
       },
     ],
     []
   );
-
   const statsContent = (rows: Record<string, unknown>[]) => {
     const samples = rows as unknown as Sample[];
     const stats = {
       total: samples.length,
-      pending: samples.filter((s) => ['待登记', '待接收'].includes(s.status)).length,
-      received: samples.filter((s) => ['已接收', '待确认'].includes(s.status)).length,
-      confirmed: samples.filter((s) => ['已确认', '检测中', '已完成'].includes(s.status)).length,
+      pending: samples.filter((s) => [i18n.t('lims.sample_receive_page.k18'), i18n.t('lims.sample_receive_page.k17')].includes(s.status)).length,
+      received: samples.filter((s) => [i18n.t('lims.sample_receive_page.k20'), i18n.t('lims.sample_receive_page.k19')].includes(s.status)).length,
+      confirmed: samples.filter((s) => [i18n.t('lims.sample_receive_page.k23'), i18n.t('lims.sample_receive_page.k22'), i18n.t('lims.sample_receive_page.k21')].includes(s.status)).length,
     };
-
     return (
       <Box
         sx={{
@@ -168,7 +156,7 @@ const SampleReceivePage: React.FC = () => {
                   color='text.secondary'
                   sx={{ fontSize: '0.875rem' }}
                 >
-                  样品总数
+                  {i18n.t('pages.sample_receive_page.k7')}
                 </Typography>
                 <Typography
                   variant='h5'
@@ -202,7 +190,7 @@ const SampleReceivePage: React.FC = () => {
                   color='text.secondary'
                   sx={{ fontSize: '0.875rem' }}
                 >
-                  待处理
+                  {i18n.t('pages.sample_receive_page.k8')}
                 </Typography>
                 <Typography
                   variant='h5'
@@ -236,7 +224,7 @@ const SampleReceivePage: React.FC = () => {
                   color='text.secondary'
                   sx={{ fontSize: '0.875rem' }}
                 >
-                  已确认
+                  {i18n.t('pages.sample_receive_page.k9')}
                 </Typography>
                 <Typography
                   variant='h5'
@@ -251,11 +239,9 @@ const SampleReceivePage: React.FC = () => {
       </Box>
     );
   };
-
   const detailContent = (row: Record<string, unknown>) => {
     const sample = row as unknown as Sample;
     const activeStep = getStageStep(sample.status);
-
     return (
       <Box>
         <Box sx={{ mb: 3 }}>
@@ -263,7 +249,7 @@ const SampleReceivePage: React.FC = () => {
             variant='subtitle2'
             sx={{ mb: 2, fontWeight: 600 }}
           >
-            工作流程
+            {i18n.t('pages.sample_receive_page.k10')}
           </Typography>
           <Stepper
             activeStep={activeStep}
@@ -276,7 +262,6 @@ const SampleReceivePage: React.FC = () => {
             ))}
           </Stepper>
         </Box>
-
         <Box
           sx={{
             display: 'grid',
@@ -290,7 +275,7 @@ const SampleReceivePage: React.FC = () => {
               component='span'
               sx={{ color: 'text.secondary', fontSize: '0.875rem' }}
             >
-              样品编号
+              {i18n.t('pages.sample_receive_page.k11')}
             </Box>
             <Box sx={{ fontWeight: 500 }}>{sample.sample_no || sample.id}</Box>
           </Box>
@@ -299,7 +284,7 @@ const SampleReceivePage: React.FC = () => {
               component='span'
               sx={{ color: 'text.secondary', fontSize: '0.875rem' }}
             >
-              样品名称
+              {i18n.t('pages.sample_receive_page.k12')}
             </Box>
             <Box sx={{ fontWeight: 500 }}>{sample.name}</Box>
           </Box>
@@ -308,7 +293,7 @@ const SampleReceivePage: React.FC = () => {
               component='span'
               sx={{ color: 'text.secondary', fontSize: '0.875rem' }}
             >
-              检测项目
+              {i18n.t('pages.sample_receive_page.k13')}
             </Box>
             <Box>{sample.description || '-'}</Box>
           </Box>
@@ -317,7 +302,7 @@ const SampleReceivePage: React.FC = () => {
               component='span'
               sx={{ color: 'text.secondary', fontSize: '0.875rem' }}
             >
-              状态
+              {i18n.t('pages.sample_receive_page.k14')}
             </Box>
             <Box sx={{ mt: 0.5 }}>
               <Chip
@@ -335,7 +320,7 @@ const SampleReceivePage: React.FC = () => {
               component='span'
               sx={{ color: 'text.secondary', fontSize: '0.875rem' }}
             >
-              接收日期
+              {i18n.t('pages.sample_receive_page.k15')}
             </Box>
             <Box>
               {sample.received_date
@@ -348,7 +333,7 @@ const SampleReceivePage: React.FC = () => {
               component='span'
               sx={{ color: 'text.secondary', fontSize: '0.875rem' }}
             >
-              样品类型
+              {i18n.t('pages.sample_receive_page.k16')}
             </Box>
             <Box>{sample.sample_type || '-'}</Box>
           </Box>
@@ -357,7 +342,7 @@ const SampleReceivePage: React.FC = () => {
               component='span'
               sx={{ color: 'text.secondary', fontSize: '0.875rem' }}
             >
-              来源
+              {i18n.t('pages.sample_receive_page.k17')}
             </Box>
             <Box>{sample.source || '-'}</Box>
           </Box>
@@ -366,7 +351,7 @@ const SampleReceivePage: React.FC = () => {
               component='span'
               sx={{ color: 'text.secondary', fontSize: '0.875rem' }}
             >
-              数量
+              {i18n.t('pages.sample_receive_page.k18')}
             </Box>
             <Box>
               {sample.quantity !== undefined ? `${sample.quantity} ${sample.unit || ''}` : '-'}
@@ -377,7 +362,7 @@ const SampleReceivePage: React.FC = () => {
               component='span'
               sx={{ color: 'text.secondary', fontSize: '0.875rem' }}
             >
-              存放位置
+              {i18n.t('pages.sample_receive_page.k19')}
             </Box>
             <Box>{sample.location || '-'}</Box>
           </Box>
@@ -386,7 +371,7 @@ const SampleReceivePage: React.FC = () => {
               component='span'
               sx={{ color: 'text.secondary', fontSize: '0.875rem' }}
             >
-              负责人
+              {i18n.t('pages.sample_receive_page.k20')}
             </Box>
             <Box>{sample.responsible_person || '-'}</Box>
           </Box>
@@ -394,10 +379,9 @@ const SampleReceivePage: React.FC = () => {
       </Box>
     );
   };
-
   return (
     <PageContainer
-      title='样本接收'
+      title={i18n.t('lims.sample_receive_page.k24')}
       subtitle='Sample Receive Management'
       headerProps={{
         pageIcon: <TestTube style={{ width: 20, height: 20 }} />,
@@ -412,14 +396,13 @@ const SampleReceivePage: React.FC = () => {
         detailContent={detailContent}
         detailMaxWidth='md'
         breadcrumbs={[
-          { label: '首页', href: '/dashboard' },
+          { label: i18n.t('lims.sample_receive_page.k25'), href: '/dashboard' },
           { label: 'LIMS', href: LIMS_PATHS.root },
-          { label: '样本接收' },
+          { label: i18n.t('lims.sample_receive_page.k26') },
         ]}
         idField='id'
       />
     </PageContainer>
   );
 };
-
 export default SampleReceivePage;

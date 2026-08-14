@@ -18,6 +18,7 @@ import {
   type PrefetchStrategy,
   type RouteVisit,
 } from '@/utils/smart-prefetch';
+import i18n from '@/i18n';
 import { bffGraphQL } from '@/api/bff';
 import { parseQueryName } from '@/utils/graphql-performance';
 import { logger } from '@/utils/logger';
@@ -95,7 +96,7 @@ export function useSmartPrefetch(
       try {
         const cached = queryClient.getQueryData(key);
         if (cached) {
-          prefetchHookLogger.debug(`预加载缓存命中: ${operationName}`);
+          prefetchHookLogger.debug(`${i18n.t('shared.use_smart_prefetch.k0')}${operationName}`);
           return;
         }
 
@@ -109,10 +110,10 @@ export function useSmartPrefetch(
           });
         }
 
-        prefetchHookLogger.info(`预加载完成: ${operationName}`);
+        prefetchHookLogger.info(`${i18n.t('shared.use_smart_prefetch.k1')}${operationName}`);
       } catch (error) {
         prefetchHookLogger.warn(
-          `预加载失败: ${operationName} - ${error instanceof Error ? error.message : String(error)}`
+          `${i18n.t('shared.use_smart_prefetch.k2')}${operationName} - ${error instanceof Error ? error.message : String(error)}`
         );
       }
     },
@@ -161,7 +162,7 @@ export function useSmartPrefetch(
       const routeQueries = engine.getRouteQueries(route);
       if (routeQueries.length === 0) return;
 
-      prefetchHookLogger.info(`手动预加载路由: ${route} (${routeQueries.length}个查询)`);
+      prefetchHookLogger.info(`${i18n.t('shared.use_smart_prefetch.k3')}${route} (${routeQueries.length}${i18n.t('shared.use_smart_prefetch.k4')}`);
 
       for (const { query, variables } of routeQueries) {
         const queryKeys = routeQueryKeys.get(route) || [];
@@ -204,7 +205,7 @@ export function useSmartPrefetch(
 
   const togglePrefetch = useCallback((enabled: boolean) => {
     setIsEnabled(enabled);
-    prefetchHookLogger.info(`预加载已${enabled ? '启用' : '禁用'}`);
+    prefetchHookLogger.info(`${i18n.t('shared.use_smart_prefetch.k5')}${enabled ? i18n.t('shared.use_smart_prefetch.k1') : i18n.t('shared.use_smart_prefetch.k0')}`);
   }, []);
 
   const clearHistory = useCallback(() => {

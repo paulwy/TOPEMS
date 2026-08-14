@@ -9,6 +9,7 @@ import type {
   SummarizeRequest,
   SummarizeResponse,
 } from '@/types/ai';
+import i18n from '@/i18n';
 import type { AIGenerateRequest } from '../api/ai';
 
 interface UseAIHelperOptions<T = unknown> {
@@ -100,7 +101,7 @@ export function useAIHelper<T = unknown>(options: UseAIHelperOptions<T>): UseAIH
             return data;
           }
 
-          throw new Error(response.message || '请求失败');
+          throw new Error(response.message || i18n.t('shared.use_ai_helper.k0'));
         } catch (err: unknown) {
           lastError = err instanceof Error ? err : new Error(String(err));
           setRetryCount(attempt + 1);

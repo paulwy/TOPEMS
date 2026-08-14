@@ -1,6 +1,7 @@
 import React from 'react';
 import { Chip, Typography } from '@mui/material';
 import type { EntitySchema } from '@/schema';
+import i18n from '@/i18n';
 
 const STATUS_COLOR_MAP: Record<
   string,
@@ -15,12 +16,12 @@ const STATUS_COLOR_MAP: Record<
 };
 
 const STATUS_LABEL_MAP: Record<string, string> = {
-  open: '待处理',
-  in_progress: '处理中',
-  pending: '等待中',
-  resolved: '已解决',
-  closed: '已关闭',
-  cancelled: '已取消',
+  open: i18n.t('shared.ticket.k0'),
+  in_progress: i18n.t('shared.ticket.k1'),
+  pending: i18n.t('shared.ticket.k2'),
+  resolved: i18n.t('shared.ticket.k3'),
+  closed: i18n.t('shared.ticket.k4'),
+  cancelled: i18n.t('shared.ticket.k5'),
 };
 
 const SEVERITY_COLOR_MAP: Record<
@@ -34,62 +35,62 @@ const SEVERITY_COLOR_MAP: Record<
 };
 
 const SEVERITY_LABEL_MAP: Record<string, string> = {
-  critical: '严重',
-  high: '高',
-  medium: '中',
-  low: '低',
+  critical: i18n.t('shared.ticket.k6'),
+  high: i18n.t('shared.ticket.k7'),
+  medium: i18n.t('shared.ticket.k8'),
+  low: i18n.t('shared.ticket.k9'),
 };
 
 const TICKET_TYPE_OPTIONS: { value: string; label: string }[] = [
-  { value: 'reconciliation_diff', label: '对账差异' },
-  { value: 'approval_timeout', label: '审批超时' },
-  { value: 'system_alert', label: '系统告警' },
-  { value: 'data_issue', label: '数据问题' },
-  { value: 'integration_error', label: '集成异常' },
-  { value: 'user_request', label: '用户请求' },
-  { value: 'other', label: '其他' },
+  { value: 'reconciliation_diff', label: i18n.t('shared.ticket.k10') },
+  { value: 'approval_timeout', label: i18n.t('shared.ticket.k11') },
+  { value: 'system_alert', label: i18n.t('shared.ticket.k12') },
+  { value: 'data_issue', label: i18n.t('shared.ticket.k13') },
+  { value: 'integration_error', label: i18n.t('shared.ticket.k14') },
+  { value: 'user_request', label: i18n.t('shared.ticket.k15') },
+  { value: 'other', label: i18n.t('shared.ticket.k16') },
 ];
 
 const SEVERITY_OPTIONS: { value: string; label: string }[] = [
-  { value: 'critical', label: '严重' },
-  { value: 'high', label: '高' },
-  { value: 'medium', label: '中' },
-  { value: 'low', label: '低' },
+  { value: 'critical', label: i18n.t('shared.ticket.k17') },
+  { value: 'high', label: i18n.t('shared.ticket.k18') },
+  { value: 'medium', label: i18n.t('shared.ticket.k19') },
+  { value: 'low', label: i18n.t('shared.ticket.k20') },
 ];
 
 const STATUS_OPTIONS: { value: string; label: string }[] = [
-  { value: 'open', label: '待处理' },
-  { value: 'in_progress', label: '处理中' },
-  { value: 'pending', label: '等待中' },
-  { value: 'resolved', label: '已解决' },
-  { value: 'closed', label: '已关闭' },
-  { value: 'cancelled', label: '已取消' },
+  { value: 'open', label: i18n.t('shared.ticket.k21') },
+  { value: 'in_progress', label: i18n.t('shared.ticket.k22') },
+  { value: 'pending', label: i18n.t('shared.ticket.k23') },
+  { value: 'resolved', label: i18n.t('shared.ticket.k24') },
+  { value: 'closed', label: i18n.t('shared.ticket.k25') },
+  { value: 'cancelled', label: i18n.t('shared.ticket.k26') },
 ];
 
 const SOURCE_SERVICE_OPTIONS: { value: string; label: string }[] = [
-  { value: 'finance', label: '财务' },
+  { value: 'finance', label: i18n.t('shared.ticket.k27') },
   { value: 'erp', label: 'ERP' },
   { value: 'hrm', label: 'HR' },
   { value: 'mes', label: 'MES' },
-  { value: 'monitor', label: '监控' },
-  { value: 'workflow', label: '流程' },
-  { value: 'other', label: '其他' },
+  { value: 'monitor', label: i18n.t('shared.ticket.k28') },
+  { value: 'workflow', label: i18n.t('shared.ticket.k29') },
+  { value: 'other', label: i18n.t('shared.ticket.k30') },
 ];
 
 function formatDuration(minutes?: number): string {
   if (minutes === undefined || minutes === null) return '-';
   if (minutes < 0)
-    return `已超时 ${Math.abs(Math.floor(minutes / 60))}小时${Math.abs(minutes % 60)}分`;
+    return `${i18n.t('shared.ticket.k0')}${Math.abs(Math.floor(minutes / 60))}${i18n.t('shared.ticket.k1')}${Math.abs(minutes % 60)}${i18n.t('shared.ticket.k2')}`;
   const hours = Math.floor(minutes / 60);
   const mins = minutes % 60;
-  if (hours > 0) return `${hours}小时${mins}分`;
-  return `${mins}分钟`;
+  if (hours > 0) return `${hours}${i18n.t('shared.ticket.k3')}${mins}${i18n.t('shared.ticket.k4')}`;
+  return `${mins}${i18n.t('shared.ticket.k5')}`;
 }
 
 export const ticketSchema: EntitySchema = {
   entity: 'ticket',
-  title: '工单中心',
-  description: '统一管理对账差异、审批超时、系统告警等工单',
+  title: i18n.t('shared.ticket.k31'),
+  description: i18n.t('shared.ticket.k32'),
 
   api: {
     module: 'ticket',
@@ -99,7 +100,7 @@ export const ticketSchema: EntitySchema = {
   fields: [
     {
       name: 'ticket_no',
-      label: '工单号',
+      label: i18n.t('shared.ticket.k33'),
       type: 'text',
       required: true,
       readonlyOnEdit: true,
@@ -108,7 +109,7 @@ export const ticketSchema: EntitySchema = {
     },
     {
       name: 'title',
-      label: '标题',
+      label: i18n.t('shared.ticket.k34'),
       type: 'text',
       required: true,
       sortable: true,
@@ -116,13 +117,13 @@ export const ticketSchema: EntitySchema = {
     },
     {
       name: 'description',
-      label: '描述',
+      label: i18n.t('shared.ticket.k35'),
       type: 'textarea',
       showInList: false,
     },
     {
       name: 'ticket_type',
-      label: '类型',
+      label: i18n.t('shared.ticket.k36'),
       type: 'select',
       required: true,
       defaultValue: 'user_request',
@@ -140,7 +141,7 @@ export const ticketSchema: EntitySchema = {
     },
     {
       name: 'severity',
-      label: '级别',
+      label: i18n.t('shared.ticket.k37'),
       type: 'select',
       defaultValue: 'medium',
       options: { type: 'static', options: SEVERITY_OPTIONS },
@@ -159,7 +160,7 @@ export const ticketSchema: EntitySchema = {
     },
     {
       name: 'status',
-      label: '状态',
+      label: i18n.t('shared.ticket.k38'),
       type: 'select',
       defaultValue: 'open',
       options: { type: 'static', options: STATUS_OPTIONS },
@@ -167,7 +168,7 @@ export const ticketSchema: EntitySchema = {
     },
     {
       name: 'source_service',
-      label: '来源服务',
+      label: i18n.t('shared.ticket.k39'),
       type: 'select',
       required: true,
       defaultValue: 'erp',
@@ -207,7 +208,7 @@ export const ticketSchema: EntitySchema = {
     },
     {
       name: 'created_at',
-      label: '创建时间',
+      label: i18n.t('shared.ticket.k40'),
       type: 'datetime',
       readonly: true,
       sortable: true,
@@ -216,7 +217,7 @@ export const ticketSchema: EntitySchema = {
     },
     {
       name: 'updated_at',
-      label: '更新时间',
+      label: i18n.t('shared.ticket.k41'),
       type: 'datetime',
       readonly: true,
       hideInForm: true,
@@ -245,23 +246,23 @@ export const ticketSchema: EntitySchema = {
     filters: [
       {
         id: 'status',
-        label: '状态',
+        label: i18n.t('shared.ticket.k42'),
         type: 'select',
-        options: [{ label: '全部状态', value: 'all' }, ...STATUS_OPTIONS],
+        options: [{ label: i18n.t('shared.ticket.k43'), value: 'all' }, ...STATUS_OPTIONS],
         defaultValue: 'all',
       },
       {
         id: 'ticket_type',
-        label: '类型',
+        label: i18n.t('shared.ticket.k44'),
         type: 'select',
-        options: [{ label: '全部类型', value: 'all' }, ...TICKET_TYPE_OPTIONS],
+        options: [{ label: i18n.t('shared.ticket.k45'), value: 'all' }, ...TICKET_TYPE_OPTIONS],
         defaultValue: 'all',
       },
       {
         id: 'severity',
-        label: '级别',
+        label: i18n.t('shared.ticket.k46'),
         type: 'select',
-        options: [{ label: '全部级别', value: 'all' }, ...SEVERITY_OPTIONS],
+        options: [{ label: i18n.t('shared.ticket.k47'), value: 'all' }, ...SEVERITY_OPTIONS],
         defaultValue: 'all',
       },
     ],
@@ -269,23 +270,23 @@ export const ticketSchema: EntitySchema = {
 
   formSections: [
     {
-      title: '基本信息',
+      title: i18n.t('shared.ticket.k48'),
       fields: ['ticket_no', 'title', 'description'],
     },
     {
-      title: '分类与级别',
+      title: i18n.t('shared.ticket.k49'),
       fields: ['ticket_type', 'severity', 'status', 'source_service'],
     },
     {
-      title: 'SLA 信息',
+      title: i18n.t('shared.ticket.sla_6'),
       fields: ['sla_due_at'],
     },
   ],
 
   formColCount: 2,
-  createTitle: '新建工单',
-  editTitle: '编辑工单',
-  detailTitle: '工单详情',
+  createTitle: i18n.t('shared.ticket.k50'),
+  editTitle: i18n.t('shared.ticket.k51'),
+  detailTitle: i18n.t('shared.ticket.k52'),
 
   actions: ['create', 'edit', 'detail'],
 };

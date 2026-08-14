@@ -7,12 +7,10 @@
  * @module pages/monitor
  * @path /monitor/notifications
  */
-
 import React, { useMemo, useRef, useCallback, useState } from 'react';
 import { Box, Typography, Paper, Alert } from '@mui/material';
 import { Bell, TestTube, Power } from 'lucide-react';
 import { LoadingSpinner } from '@topems/shared-components';
-
 import CrudPage, { type CrudApiAdapter } from '@/components/templates/CrudPage';
 import type { ColumnDef, RowAction } from '@/components/templates/list/types';
 import { PageContainer } from '@/components/common';
@@ -25,9 +23,8 @@ import {
   getChannelTypeInfo,
   ToggleSwitch,
 } from '@/schemas/monitor';
-
+import i18n from '@/i18n';
 const ct= designTokens.colors;
-
 interface NotificationChannel {
   id: string;
   name: string;
@@ -40,15 +37,14 @@ interface NotificationChannel {
   created_at?: string;
   updated_at?: string;
 }
-
 const MOCK_CHANNELS: NotificationChannel[] = [
   {
     id: 'CH001',
-    name: '运维组邮件通知',
+    name: i18n.t('monitor.monitor_notification_page.k0'),
     type: 'email',
     config: { email_address: 'ops@company.com', smtp_host: 'smtp.company.com' },
     enabled: true,
-    description: '运维团队邮件告警通知',
+    description: i18n.t('monitor.monitor_notification_page.k1'),
     last_test_at: '2025-06-20T10:00:00Z',
     last_test_status: 'success',
     created_at: '2025-05-01T08:00:00Z',
@@ -56,11 +52,11 @@ const MOCK_CHANNELS: NotificationChannel[] = [
   },
   {
     id: 'CH002',
-    name: '钉钉告警机器人',
+    name: i18n.t('monitor.monitor_notification_page.k2'),
     type: 'dingtalk',
     config: { webhook: 'https://oapi.dingtalk.com/robot/send?access_token=xxx' },
     enabled: true,
-    description: '钉钉群告警通知机器人',
+    description: i18n.t('monitor.monitor_notification_page.k3'),
     last_test_at: '2025-06-19T14:30:00Z',
     last_test_status: 'success',
     created_at: '2025-05-15T09:00:00Z',
@@ -68,11 +64,11 @@ const MOCK_CHANNELS: NotificationChannel[] = [
   },
   {
     id: 'CH003',
-    name: '企业微信通知',
+    name: i18n.t('monitor.monitor_notification_page.k4'),
     type: 'wechat',
     config: { webhook: 'https://qyapi.weixin.qq.com/cgi-bin/webhook/send?key=xxx' },
     enabled: true,
-    description: '企业微信告警通知',
+    description: i18n.t('monitor.monitor_notification_page.k5'),
     last_test_at: '2025-06-18T16:00:00Z',
     last_test_status: 'success',
     created_at: '2025-05-20T11:00:00Z',
@@ -80,11 +76,11 @@ const MOCK_CHANNELS: NotificationChannel[] = [
   },
   {
     id: 'CH004',
-    name: '紧急短信通知',
+    name: i18n.t('monitor.monitor_notification_page.k6'),
     type: 'sms',
     config: { provider: 'aliyun', sign_name: 'TOPEMS' },
     enabled: false,
-    description: '仅严重告警时发送短信',
+    description: i18n.t('monitor.monitor_notification_page.k7'),
     last_test_at: '2025-06-15T08:00:00Z',
     last_test_status: 'failed',
     created_at: '2025-06-01T10:00:00Z',
@@ -92,18 +88,17 @@ const MOCK_CHANNELS: NotificationChannel[] = [
   },
   {
     id: 'CH005',
-    name: '自定义 Webhook',
+    name: i18n.t('monitor.monitor_notification_page.webhook_8'),
     type: 'webhook',
     config: { url: 'https://hooks.example.com/monitor', method: 'POST' },
     enabled: true,
-    description: '自定义系统告警 Webhook 回调',
+    description: i18n.t('monitor.monitor_notification_page.webhook_9'),
     last_test_at: '2025-06-21T09:00:00Z',
     last_test_status: 'success',
     created_at: '2025-06-10T13:00:00Z',
     updated_at: '2025-06-21T09:00:00Z',
   },
 ];
-
 const buildConfigMap = (
   data: Partial<NotificationChannel> & Record<string, unknown>
 ): Record<string, string> => {
@@ -140,7 +135,6 @@ const buildConfigMap = (
   };
   return configMap[type] || {};
 };
-
 const MonitorNotificationPage: React.FC = () => {
   const { error: notifyError, success: notifySuccess } = useNotification();
   const channelsRef = useRef<NotificationChannel[]>(MOCK_CHANNELS);
@@ -150,7 +144,6 @@ const MonitorNotificationPage: React.FC = () => {
     success: boolean;
     message: string;
   } | null>(null);
-
   const handleToggleEnabled = useCallback(
     (channel: NotificationChannel) => {
       channelsRef.current = channelsRef.current.map((ch) =>
@@ -158,19 +151,16 @@ const MonitorNotificationPage: React.FC = () => {
           ? { ...ch, enabled: !ch.enabled, updated_at: new Date().toISOString() }
           : ch
       );
-      notifySuccess(channel.enabled ? '渠道已停用' : '渠道已启用');
+      notifySuccess(channel.enabled ? i18n.t('monitor.monitor_notification_page.k11') : i18n.t('monitor.monitor_notification_page.k10'));
     },
     [notifySuccess]
   );
-
   const handleTest = useCallback(
     async (channel: NotificationChannel) => {
       setTestLoading(channel.id);
       setTestResult(null);
-
       try {
         await new Promise((resolve) => setTimeout(resolve, 2000));
-
         const success = channel.last_test_status !== 'failed';
         channelsRef.current = channelsRef.current.map((ch) =>
           ch.id === channel.id
@@ -185,29 +175,28 @@ const MonitorNotificationPage: React.FC = () => {
           channelId: channel.id,
           success,
           message: success
-            ? `测试通知已通过 ${CHANNEL_TYPE_OPTIONS.find((t) => t.value === channel.type)?.label} 渠道发送成功`
-            : `测试通知发送失败，请检查 ${channel.name} 的配置`,
+            ? `${i18n.t('pages.monitor_notification_page.k0')}${CHANNEL_TYPE_OPTIONS.find((t) => t.value === channel.type)?.label}${i18n.t('pages.monitor_notification_page.k1')}`
+            : `${i18n.t('pages.monitor_notification_page.k2')}${channel.name}${i18n.t('pages.monitor_notification_page.k3')}`,
         });
         if (success) {
-          notifySuccess('测试通知发送成功');
+          notifySuccess(i18n.t('monitor.monitor_notification_page.k12'));
         } else {
-          notifyError('测试通知发送失败');
+          notifyError(i18n.t('monitor.monitor_notification_page.k13'));
         }
       } catch (err: unknown) {
-        apiLogger.error('测试通知失败:', err);
+        apiLogger.error(i18n.t('pages.monitor_notification_page.k4'), err);
         setTestResult({
           channelId: channel.id,
           success: false,
-          message: '测试通知发送异常，请稍后重试',
+          message: i18n.t('monitor.monitor_notification_page.k14'),
         });
-        notifyError('测试通知发送异常');
+        notifyError(i18n.t('monitor.monitor_notification_page.k15'));
       } finally {
         setTestLoading(null);
       }
     },
     [notifySuccess, notifyError]
   );
-
   const apiAdapter = useMemo<CrudApiAdapter<NotificationChannel>>(
     () => ({
       list: async (params) => {
@@ -239,12 +228,12 @@ const MonitorNotificationPage: React.FC = () => {
           updated_at: new Date().toISOString(),
         };
         channelsRef.current = [...channelsRef.current, newChannel];
-        notifySuccess('通知渠道已创建');
+        notifySuccess(i18n.t('monitor.monitor_notification_page.k16'));
         return newChannel;
       },
       update: async (id, data) => {
         const existing = channelsRef.current.find((c) => c.id === id);
-        if (!existing) throw new Error('渠道不存在');
+        if (!existing) throw new Error(i18n.t('monitor.monitor_notification_page.k17'));
         const updated: NotificationChannel = {
           ...existing,
           name: (data.name as string) ?? existing.name,
@@ -255,22 +244,21 @@ const MonitorNotificationPage: React.FC = () => {
           updated_at: new Date().toISOString(),
         };
         channelsRef.current = channelsRef.current.map((c) => (c.id === id ? updated : c));
-        notifySuccess('通知渠道已更新');
+        notifySuccess(i18n.t('monitor.monitor_notification_page.k18'));
         return updated;
       },
       delete: async (id) => {
         channelsRef.current = channelsRef.current.filter((c) => c.id !== id);
-        notifySuccess('通知渠道已删除');
+        notifySuccess(i18n.t('monitor.monitor_notification_page.k19'));
       },
     }),
     [notifySuccess, notifyError]
   );
-
   const customColumns = useMemo<ColumnDef[]>(
     () => [
       {
         id: 'name',
-        label: '渠道名称',
+        label: i18n.t('monitor.monitor_notification_page.k20'),
         minWidth: 240,
         render: (row) => {
           const channel = row as unknown as NotificationChannel;
@@ -313,7 +301,7 @@ const MonitorNotificationPage: React.FC = () => {
       },
       {
         id: 'type',
-        label: '渠道类型',
+        label: i18n.t('monitor.monitor_notification_page.k21'),
         width: 140,
         render: (row) => {
           const channel = row as unknown as NotificationChannel;
@@ -341,7 +329,7 @@ const MonitorNotificationPage: React.FC = () => {
       },
       {
         id: 'enabled',
-        label: '状态',
+        label: i18n.t('monitor.monitor_notification_page.k22'),
         width: 200,
         render: (row) => {
           const channel = row as unknown as NotificationChannel;
@@ -358,7 +346,7 @@ const MonitorNotificationPage: React.FC = () => {
                   variant='body2'
                   color={channel.enabled ? 'success.main' : 'text.disabled'}
                 >
-                  {channel.enabled ? '已启用' : '已停用'}
+                  {channel.enabled ? i18n.t('monitor.monitor_notification_page.k24') : i18n.t('monitor.monitor_notification_page.k23')}
                 </Typography>
               </Box>
               {channel.last_test_at && (
@@ -382,7 +370,7 @@ const MonitorNotificationPage: React.FC = () => {
                     variant='caption'
                     color='text.secondary'
                   >
-                    上次测试: {new Date(channel.last_test_at).toLocaleString('zh-CN')}
+                    [i18n.t('pages.monitor_notification_page.k0')]: {new Date(channel.last_test_at).toLocaleString('zh-CN')}
                   </Typography>
                 </Box>
               )}
@@ -393,11 +381,10 @@ const MonitorNotificationPage: React.FC = () => {
     ],
     [handleToggleEnabled]
   );
-
   const customRowActions = useMemo<RowAction[]>(
     () => [
       {
-        label: '启用/停用',
+        label: i18n.t('monitor.monitor_notification_page.k25'),
         icon: <Power size={16} />,
         onClick: (row: Record<string, unknown>) => {
           const channel = row as unknown as NotificationChannel;
@@ -405,7 +392,7 @@ const MonitorNotificationPage: React.FC = () => {
         },
       },
       {
-        label: '发送测试通知',
+        label: i18n.t('monitor.monitor_notification_page.k26'),
         icon: testLoading ? <LoadingSpinner size='sm' /> : <TestTube size={16} />,
         onClick: (row: Record<string, unknown>) => {
           const channel = row as unknown as NotificationChannel;
@@ -415,7 +402,6 @@ const MonitorNotificationPage: React.FC = () => {
     ],
     [handleToggleEnabled, handleTest, testLoading]
   );
-
   const headerContent = useCallback(
     (rows: Record<string, unknown>[]) => {
       const channels = rows as unknown as NotificationChannel[];
@@ -435,7 +421,7 @@ const MonitorNotificationPage: React.FC = () => {
               variant='subtitle2'
               sx={{ mb: 1.5, fontWeight: 600 }}
             >
-              支持的通知渠道类型
+              {i18n.t('pages.monitor_notification_page.k1')}
             </Typography>
             <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
               {CHANNEL_TYPE_OPTIONS.map((type) => {
@@ -483,11 +469,10 @@ const MonitorNotificationPage: React.FC = () => {
     },
     [testResult]
   );
-
   return (
     <PageContainer
-      title='通知渠道配置'
-      subtitle='管理系统告警的通知发送渠道'
+      title={i18n.t('monitor.monitor_notification_page.k27')}
+      subtitle={i18n.t('monitor.monitor_notification_page.k28')}
       headerProps={{
         pageIcon: <Bell size={20} />,
         pageGradient: `linear-gradient(135deg, ${ct.primary.dark} 0%, ${ct.primary[800]} 100%)`,
@@ -499,10 +484,9 @@ const MonitorNotificationPage: React.FC = () => {
         customColumns={customColumns}
         customRowActions={customRowActions}
         headerContent={headerContent}
-        breadcrumbs={[{ label: '监控' }, { label: '通知渠道' }]}
+        breadcrumbs={[{ label: i18n.t('monitor.monitor_notification_page.k30') }, { label: i18n.t('monitor.monitor_notification_page.k29') }]}
       />
     </PageContainer>
   );
 };
-
 export default MonitorNotificationPage;

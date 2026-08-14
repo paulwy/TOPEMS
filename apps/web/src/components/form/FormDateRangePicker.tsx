@@ -6,6 +6,7 @@ import {
   type DateRange,
   type DateRangePickerLocale,
 } from '@topems/shared-components';
+import i18n from '@/i18n';
 
 interface FormDateRangePickerProps<T extends FieldValues> {
   name: Path<T>;
@@ -38,14 +39,14 @@ export function FormDateRangePicker<T extends FieldValues>({
       name={name}
       control={control}
       rules={{
-        required: required ? '此项为必填项' : false,
+        required: required ? i18n.t('components.form_date_range_picker.k0') : false,
         validate: (value: DateRange | undefined) => {
           if (!required) return true;
           if (!value?.startDate || !value?.endDate) {
-            return '请选择完整的日期范围';
+            return i18n.t('components.form_date_range_picker.k1');
           }
           if (value.startDate > value.endDate) {
-            return '开始日期不能晚于结束日期';
+            return i18n.t('components.form_date_range_picker.k2');
           }
           return true;
         },

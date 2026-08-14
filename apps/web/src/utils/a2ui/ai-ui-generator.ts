@@ -1,3 +1,4 @@
+import i18n from '@/i18n';
 /**
  * V50.0 前端 A2UI — AI UI Generator
  *
@@ -155,12 +156,12 @@ export class AIUIGenerator {
       const prompt = this.buildPrompt(request, mode);
       const parsed = (await callOllama(prompt)) as RawUIGenerationPayload;
       if (!parsed || typeof parsed !== 'object') {
-        console.warn('[a2ui] ollama 返回非对象 payload，降级为占位结构');
+        console.warn(i18n.t('shared.ai-ui-generator.k0'));
         return fallback;
       }
       return this.coerceResult(parsed, request, mode);
     } catch (err) {
-      console.warn('[a2ui] ollama 调用失败，降级为占位结构:', err);
+      console.warn(i18n.t('shared.ai-ui-generator.k1'), err);
       return fallback;
     }
   }
@@ -178,7 +179,7 @@ export class AIUIGenerator {
       layout: LayoutStrategy.FLEXBOX,
       level: ComponentLevel.MOLECULE,
       accessibility: { score: 100, issues: [] },
-      suggestions: ['占位生成结果，待接入真实 AI 生成 API'],
+      suggestions: [i18n.t('shared.ai-ui-generator.k0')],
     };
   }
 
@@ -299,7 +300,7 @@ export class AIUIGenerator {
         return filtered;
       }
     }
-    return [`基于提示 "${request.prompt.slice(0, 40)}" 的 AI 生成结果`];
+    return [`${i18n.t('shared.ai-ui-generator.k2')}${request.prompt.slice(0, 40)}${i18n.t('shared.ai-ui-generator.ai_3')}`];
   }
 }
 

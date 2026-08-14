@@ -1,5 +1,6 @@
 import React from 'react';
 import { Box, Typography, Chip } from '@mui/material';
+import i18n from '@/i18n';
 
 interface HotSearchesProps {
   onSelect: (text: string) => void;
@@ -7,12 +8,12 @@ interface HotSearchesProps {
 
 export const HotSearches: React.FC<HotSearchesProps> = ({ onSelect }) => {
   const hotSearches = [
-    { rank: 1, text: '采购审批流程', hot: true },
-    { rank: 2, text: '员工信息查询' },
-    { rank: 3, text: '销售报表' },
-    { rank: 4, text: '库存盘点' },
-    { rank: 5, text: '财务对账' },
-    { rank: 6, text: '客户跟进记录' },
+    { rank: 1, text: i18n.t('components.hot_searches.k0'), hot: true },
+    { rank: 2, text: i18n.t('components.hot_searches.k1') },
+    { rank: 3, text: i18n.t('components.hot_searches.k2') },
+    { rank: 4, text: i18n.t('components.hot_searches.k3') },
+    { rank: 5, text: i18n.t('components.hot_searches.k4') },
+    { rank: 6, text: i18n.t('components.hot_searches.k5') },
   ];
 
   const getRankColor = (rank: number) => {
@@ -29,7 +30,7 @@ export const HotSearches: React.FC<HotSearchesProps> = ({ onSelect }) => {
         color='text.secondary'
         sx={{ mb: 1, display: 'block' }}
       >
-        🔥 热门搜索
+        {i18n.t('components.hot_searches.k0')}
       </Typography>
       <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, rowGap: 0.5 }}>
         {hotSearches.map((item) => (

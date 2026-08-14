@@ -9,6 +9,7 @@ import {
   useMediaQuery,
   Skeleton,
 } from '@mui/material';
+import i18n from '@/i18n';
 import type { SxProps, Theme } from '@mui/material/styles';
 import { Copy, Check } from 'lucide-react';
 
@@ -115,7 +116,7 @@ export const DescriptionList: React.FC<DescriptionListProps> = ({
                       size='small'
                       onClick={() => handleCopy(item.value as string, index)}
                       sx={{ ml: 0.5 }}
-                      aria-label='确认'
+                      aria-label={i18n.t('shared.description_list.k0')}
                     >
                       {copiedIndex === index ? (
                         <Check
@@ -194,7 +195,7 @@ export const DescriptionList: React.FC<DescriptionListProps> = ({
                         size='small'
                         onClick={() => handleCopy(item.value as string, index)}
                         sx={{ ml: 0.5 }}
-                        aria-label='确认'
+                        aria-label={i18n.t('shared.description_list.k1')}
                       >
                         {copiedIndex === index ? (
                           <Check

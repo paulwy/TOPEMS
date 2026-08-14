@@ -407,7 +407,7 @@ export const PaymentPrintTemplate: React.FC<PaymentPrintTemplateProps> = ({ paym
               </Typography>
               <Box
                 sx={{
-                  height: '40px',
+                  height: designTokens.spacing['2xl'],
                   borderBottom: `1px solid ${designTokens.colors.grey['300']}`,
                   mt: 1,
                 }}
@@ -422,7 +422,7 @@ export const PaymentPrintTemplate: React.FC<PaymentPrintTemplateProps> = ({ paym
               </Typography>
               <Box
                 sx={{
-                  height: '40px',
+                  height: designTokens.spacing['2xl'],
                   borderBottom: `1px solid ${designTokens.colors.grey['300']}`,
                   mt: 1,
                 }}
@@ -437,7 +437,7 @@ export const PaymentPrintTemplate: React.FC<PaymentPrintTemplateProps> = ({ paym
               </Typography>
               <Box
                 sx={{
-                  height: '40px',
+                  height: designTokens.spacing['2xl'],
                   borderBottom: `1px solid ${designTokens.colors.grey['300']}`,
                   mt: 1,
                 }}

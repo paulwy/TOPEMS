@@ -1,9 +1,10 @@
 import type { EntitySchema } from '@/schema';
+import i18n from '@/i18n';
 
 export const regulationSchema: EntitySchema = {
   entity: 'ehs_regulation',
-  title: '环境法规',
-  description: '管理环境法规信息，包括类别、类型、发布机关、状态等',
+  title: i18n.t('ehs.compliance.k0'),
+  description: i18n.t('ehs.compliance.k1'),
 
   api: {
     module: 'ehs',
@@ -18,14 +19,14 @@ export const regulationSchema: EntitySchema = {
   fields: [
     {
       name: 'regulation_no',
-      label: '法规编号',
+      label: i18n.t('ehs.compliance.k2'),
       type: 'text',
       readonlyOnEdit: true,
       listWidth: 140,
     },
     {
       name: 'title',
-      label: '法规名称',
+      label: i18n.t('ehs.compliance.k3'),
       type: 'text',
       required: true,
       sortable: true,
@@ -34,17 +35,17 @@ export const regulationSchema: EntitySchema = {
     },
     {
       name: 'category',
-      label: '类别',
+      label: i18n.t('ehs.compliance.k4'),
       type: 'select',
       required: true,
       defaultValue: 'environmental',
       options: {
         type: 'static',
         options: [
-          { value: 'environmental', label: '环境法规' },
-          { value: 'safety', label: '安全法规' },
-          { value: 'health', label: '职业健康' },
-          { value: 'chemical', label: '化学品' },
+          { value: 'environmental', label: i18n.t('ehs.compliance.k5') },
+          { value: 'safety', label: i18n.t('ehs.compliance.k6') },
+          { value: 'health', label: i18n.t('ehs.compliance.k7') },
+          { value: 'chemical', label: i18n.t('ehs.compliance.k8') },
         ],
       },
       listWidth: 120,
@@ -52,18 +53,18 @@ export const regulationSchema: EntitySchema = {
     },
     {
       name: 'regulation_type',
-      label: '法规类型',
+      label: i18n.t('ehs.compliance.k9'),
       type: 'select',
       required: true,
       defaultValue: 'law',
       options: {
         type: 'static',
         options: [
-          { value: 'law', label: '法律' },
-          { value: 'regulation', label: '法规' },
-          { value: 'standard', label: '标准' },
-          { value: 'policy', label: '政策' },
-          { value: 'notice', label: '通知' },
+          { value: 'law', label: i18n.t('ehs.compliance.k10') },
+          { value: 'regulation', label: i18n.t('ehs.compliance.k11') },
+          { value: 'standard', label: i18n.t('ehs.compliance.k12') },
+          { value: 'policy', label: i18n.t('ehs.compliance.k13') },
+          { value: 'notice', label: i18n.t('ehs.compliance.k14') },
         ],
       },
       listWidth: 100,
@@ -71,7 +72,7 @@ export const regulationSchema: EntitySchema = {
     },
     {
       name: 'issuing_authority',
-      label: '发布机关',
+      label: i18n.t('ehs.compliance.k15'),
       type: 'text',
       listWidth: 140,
       renderCell: (row: Record<string, unknown>) =>
@@ -80,37 +81,37 @@ export const regulationSchema: EntitySchema = {
     },
     {
       name: 'issue_date',
-      label: '发布日期',
+      label: i18n.t('ehs.compliance.k16'),
       type: 'date',
       listWidth: 120,
       renderCell: (row: Record<string, unknown>) => (row.issue_date ? String(row.issue_date) : '-'),
     },
     {
       name: 'effective_date',
-      label: '生效日期',
+      label: i18n.t('ehs.compliance.k17'),
       type: 'date',
       listWidth: 120,
       showInList: false,
     },
     {
       name: 'content',
-      label: '内容',
+      label: i18n.t('ehs.compliance.k18'),
       type: 'textarea',
       showInList: false,
     },
     {
       name: 'status',
-      label: '状态',
+      label: i18n.t('ehs.compliance.k19'),
       type: 'select',
       defaultValue: 'draft',
       options: {
         type: 'static',
         options: [
-          { value: 'draft', label: '草稿' },
-          { value: 'published', label: '已发布' },
-          { value: 'effective', label: '已生效' },
-          { value: 'expired', label: '已过期' },
-          { value: 'archived', label: '已归档' },
+          { value: 'draft', label: i18n.t('ehs.compliance.k20') },
+          { value: 'published', label: i18n.t('ehs.compliance.k21') },
+          { value: 'effective', label: i18n.t('ehs.compliance.k22') },
+          { value: 'expired', label: i18n.t('ehs.compliance.k23') },
+          { value: 'archived', label: i18n.t('ehs.compliance.k24') },
         ],
       },
       listWidth: 100,
@@ -139,37 +140,37 @@ export const regulationSchema: EntitySchema = {
         archived: 'default',
       },
       labelMap: {
-        draft: '草稿',
-        published: '已发布',
-        effective: '已生效',
-        expired: '已过期',
-        archived: '已归档',
+        draft: i18n.t('ehs.compliance.k25'),
+        published: i18n.t('ehs.compliance.k26'),
+        effective: i18n.t('ehs.compliance.k27'),
+        expired: i18n.t('ehs.compliance.k28'),
+        archived: i18n.t('ehs.compliance.k29'),
       },
     },
     filters: [
       {
         id: 'status',
-        label: '状态',
+        label: i18n.t('ehs.compliance.k30'),
         type: 'select',
         options: [
-          { label: '全部', value: 'all' },
-          { label: '草稿', value: 'draft' },
-          { label: '已发布', value: 'published' },
-          { label: '已生效', value: 'effective' },
-          { label: '已过期', value: 'expired' },
-          { label: '已归档', value: 'archived' },
+          { label: i18n.t('ehs.compliance.k31'), value: 'all' },
+          { label: i18n.t('ehs.compliance.k32'), value: 'draft' },
+          { label: i18n.t('ehs.compliance.k33'), value: 'published' },
+          { label: i18n.t('ehs.compliance.k34'), value: 'effective' },
+          { label: i18n.t('ehs.compliance.k35'), value: 'expired' },
+          { label: i18n.t('ehs.compliance.k36'), value: 'archived' },
         ],
       },
       {
         id: 'category',
-        label: '类别',
+        label: i18n.t('ehs.compliance.k37'),
         type: 'select',
         options: [
-          { label: '全部', value: 'all' },
-          { label: '环境法规', value: 'environmental' },
-          { label: '安全法规', value: 'safety' },
-          { label: '职业健康', value: 'health' },
-          { label: '化学品', value: 'chemical' },
+          { label: i18n.t('ehs.compliance.k38'), value: 'all' },
+          { label: i18n.t('ehs.compliance.k39'), value: 'environmental' },
+          { label: i18n.t('ehs.compliance.k40'), value: 'safety' },
+          { label: i18n.t('ehs.compliance.k41'), value: 'health' },
+          { label: i18n.t('ehs.compliance.k42'), value: 'chemical' },
         ],
       },
     ],
@@ -179,29 +180,29 @@ export const regulationSchema: EntitySchema = {
 
   formSections: [
     {
-      title: '基本信息',
+      title: i18n.t('ehs.compliance.k43'),
       fields: ['regulation_no', 'title', 'category', 'regulation_type'],
     },
     {
-      title: '发布信息',
+      title: i18n.t('ehs.compliance.k44'),
       fields: ['issuing_authority', 'issue_date', 'effective_date'],
     },
     {
-      title: '内容与状态',
+      title: i18n.t('ehs.compliance.k45'),
       fields: ['content', 'status'],
     },
   ],
 
   formColCount: 2,
-  createTitle: '新建法规',
-  editTitle: '编辑法规',
-  detailTitle: '法规详情',
+  createTitle: i18n.t('ehs.compliance.k46'),
+  editTitle: i18n.t('ehs.compliance.k47'),
+  detailTitle: i18n.t('ehs.compliance.k48'),
 };
 
 export const assessmentSchema: EntitySchema = {
   entity: 'ehs_assessment',
-  title: '合规评估',
-  description: '管理合规评估记录，包括评估类型、评估人、结果等',
+  title: i18n.t('ehs.compliance.k49'),
+  description: i18n.t('ehs.compliance.k50'),
 
   api: {
     module: 'ehs',
@@ -216,14 +217,14 @@ export const assessmentSchema: EntitySchema = {
   fields: [
     {
       name: 'assessment_no',
-      label: '评估编号',
+      label: i18n.t('ehs.compliance.k51'),
       type: 'text',
       readonlyOnEdit: true,
       listWidth: 140,
     },
     {
       name: 'title',
-      label: '评估名称',
+      label: i18n.t('ehs.compliance.k52'),
       type: 'text',
       required: true,
       sortable: true,
@@ -232,20 +233,20 @@ export const assessmentSchema: EntitySchema = {
     },
     {
       name: 'assessment_type',
-      label: '评估类型',
+      label: i18n.t('ehs.compliance.k53'),
       type: 'text',
       listWidth: 120,
     },
     {
       name: 'assessor',
-      label: '评估人',
+      label: i18n.t('ehs.compliance.k54'),
       type: 'text',
       listWidth: 120,
       renderCell: (row: Record<string, unknown>) => (row.assessor ? String(row.assessor) : '-'),
     },
     {
       name: 'assessment_date',
-      label: '评估日期',
+      label: i18n.t('ehs.compliance.k55'),
       type: 'date',
       listWidth: 120,
       renderCell: (row: Record<string, unknown>) =>
@@ -253,31 +254,31 @@ export const assessmentSchema: EntitySchema = {
     },
     {
       name: 'result',
-      label: '评估结果',
+      label: i18n.t('ehs.compliance.k56'),
       type: 'select',
       defaultValue: 'compliant',
       options: {
         type: 'static',
         options: [
-          { value: 'compliant', label: '合规' },
-          { value: 'partially_compliant', label: '部分合规' },
-          { value: 'non_compliant', label: '不合规' },
+          { value: 'compliant', label: i18n.t('ehs.compliance.k57') },
+          { value: 'partially_compliant', label: i18n.t('ehs.compliance.k58') },
+          { value: 'non_compliant', label: i18n.t('ehs.compliance.k59') },
         ],
       },
       listWidth: 110,
     },
     {
       name: 'status',
-      label: '状态',
+      label: i18n.t('ehs.compliance.k60'),
       type: 'select',
       defaultValue: 'draft',
       options: {
         type: 'static',
         options: [
-          { value: 'draft', label: '草稿' },
-          { value: 'in_progress', label: '进行中' },
-          { value: 'completed', label: '已完成' },
-          { value: 'approved', label: '已批准' },
+          { value: 'draft', label: i18n.t('ehs.compliance.k61') },
+          { value: 'in_progress', label: i18n.t('ehs.compliance.k62') },
+          { value: 'completed', label: i18n.t('ehs.compliance.k63') },
+          { value: 'approved', label: i18n.t('ehs.compliance.k64') },
         ],
       },
       listWidth: 100,
@@ -306,34 +307,34 @@ export const assessmentSchema: EntitySchema = {
         approved: 'primary',
       },
       labelMap: {
-        draft: '草稿',
-        in_progress: '进行中',
-        completed: '已完成',
-        approved: '已批准',
+        draft: i18n.t('ehs.compliance.k65'),
+        in_progress: i18n.t('ehs.compliance.k66'),
+        completed: i18n.t('ehs.compliance.k67'),
+        approved: i18n.t('ehs.compliance.k68'),
       },
     },
     filters: [
       {
         id: 'status',
-        label: '状态',
+        label: i18n.t('ehs.compliance.k69'),
         type: 'select',
         options: [
-          { label: '全部', value: 'all' },
-          { label: '草稿', value: 'draft' },
-          { label: '进行中', value: 'in_progress' },
-          { label: '已完成', value: 'completed' },
-          { label: '已批准', value: 'approved' },
+          { label: i18n.t('ehs.compliance.k70'), value: 'all' },
+          { label: i18n.t('ehs.compliance.k71'), value: 'draft' },
+          { label: i18n.t('ehs.compliance.k72'), value: 'in_progress' },
+          { label: i18n.t('ehs.compliance.k73'), value: 'completed' },
+          { label: i18n.t('ehs.compliance.k74'), value: 'approved' },
         ],
       },
       {
         id: 'result',
-        label: '结果',
+        label: i18n.t('ehs.compliance.k75'),
         type: 'select',
         options: [
-          { label: '全部', value: 'all' },
-          { label: '合规', value: 'compliant' },
-          { label: '部分合规', value: 'partially_compliant' },
-          { label: '不合规', value: 'non_compliant' },
+          { label: i18n.t('ehs.compliance.k76'), value: 'all' },
+          { label: i18n.t('ehs.compliance.k77'), value: 'compliant' },
+          { label: i18n.t('ehs.compliance.k78'), value: 'partially_compliant' },
+          { label: i18n.t('ehs.compliance.k79'), value: 'non_compliant' },
         ],
       },
     ],
@@ -343,27 +344,27 @@ export const assessmentSchema: EntitySchema = {
 
   formSections: [
     {
-      title: '基本信息',
+      title: i18n.t('ehs.compliance.k80'),
       fields: ['assessment_no', 'title', 'assessment_type'],
     },
     {
-      title: '评估信息',
+      title: i18n.t('ehs.compliance.k81'),
       fields: ['assessor', 'assessment_date', 'result'],
     },
     {
-      title: '状态',
+      title: i18n.t('ehs.compliance.k82'),
       fields: ['status'],
     },
   ],
 
   formColCount: 2,
-  detailTitle: '评估详情',
+  detailTitle: i18n.t('ehs.compliance.k83'),
 };
 
 export const permitSchema: EntitySchema = {
   entity: 'ehs_permit',
-  title: '排污许可证',
-  description: '管理排污许可证信息，包括许可证类型、持有人、有效期等',
+  title: i18n.t('ehs.compliance.k84'),
+  description: i18n.t('ehs.compliance.k85'),
 
   api: {
     module: 'ehs',
@@ -378,7 +379,7 @@ export const permitSchema: EntitySchema = {
   fields: [
     {
       name: 'permit_no',
-      label: '许可证编号',
+      label: i18n.t('ehs.compliance.k86'),
       type: 'text',
       readonlyOnEdit: true,
       listWidth: 140,
@@ -386,7 +387,7 @@ export const permitSchema: EntitySchema = {
     },
     {
       name: 'title',
-      label: '许可证名称',
+      label: i18n.t('ehs.compliance.k87'),
       type: 'text',
       required: true,
       sortable: true,
@@ -394,20 +395,20 @@ export const permitSchema: EntitySchema = {
     },
     {
       name: 'permit_type',
-      label: '许可证类型',
+      label: i18n.t('ehs.compliance.k88'),
       type: 'text',
       listWidth: 120,
       validation: [{ type: 'maxLength', value: 64 }],
     },
     {
       name: 'permit_category',
-      label: '许可证类别',
+      label: i18n.t('ehs.compliance.k89'),
       type: 'text',
       listWidth: 120,
     },
     {
       name: 'holder',
-      label: '持有人',
+      label: i18n.t('ehs.compliance.k90'),
       type: 'text',
       listWidth: 120,
       renderCell: (row: Record<string, unknown>) => (row.holder ? String(row.holder) : '-'),
@@ -415,7 +416,7 @@ export const permitSchema: EntitySchema = {
     },
     {
       name: 'expiry_date',
-      label: '有效期至',
+      label: i18n.t('ehs.compliance.k91'),
       type: 'date',
       listWidth: 120,
       renderCell: (row: Record<string, unknown>) =>
@@ -423,16 +424,16 @@ export const permitSchema: EntitySchema = {
     },
     {
       name: 'status',
-      label: '状态',
+      label: i18n.t('ehs.compliance.k92'),
       type: 'select',
       defaultValue: 'valid',
       options: {
         type: 'static',
         options: [
-          { value: 'valid', label: '有效' },
-          { value: 'expired', label: '已过期' },
-          { value: 'revoked', label: '已吊销' },
-          { value: 'pending_renewal', label: '待续期' },
+          { value: 'valid', label: i18n.t('ehs.compliance.k93') },
+          { value: 'expired', label: i18n.t('ehs.compliance.k94') },
+          { value: 'revoked', label: i18n.t('ehs.compliance.k95') },
+          { value: 'pending_renewal', label: i18n.t('ehs.compliance.k96') },
         ],
       },
       listWidth: 100,
@@ -461,23 +462,23 @@ export const permitSchema: EntitySchema = {
         pending_renewal: 'warning',
       },
       labelMap: {
-        valid: '有效',
-        expired: '已过期',
-        revoked: '已吊销',
-        pending_renewal: '待续期',
+        valid: i18n.t('ehs.compliance.k97'),
+        expired: i18n.t('ehs.compliance.k98'),
+        revoked: i18n.t('ehs.compliance.k99'),
+        pending_renewal: i18n.t('ehs.compliance.k100'),
       },
     },
     filters: [
       {
         id: 'status',
-        label: '状态',
+        label: i18n.t('ehs.compliance.k101'),
         type: 'select',
         options: [
-          { label: '全部', value: 'all' },
-          { label: '有效', value: 'valid' },
-          { label: '已过期', value: 'expired' },
-          { label: '已吊销', value: 'revoked' },
-          { label: '待续期', value: 'pending_renewal' },
+          { label: i18n.t('ehs.compliance.k102'), value: 'all' },
+          { label: i18n.t('ehs.compliance.k103'), value: 'valid' },
+          { label: i18n.t('ehs.compliance.k104'), value: 'expired' },
+          { label: i18n.t('ehs.compliance.k105'), value: 'revoked' },
+          { label: i18n.t('ehs.compliance.k106'), value: 'pending_renewal' },
         ],
       },
     ],
@@ -487,19 +488,19 @@ export const permitSchema: EntitySchema = {
 
   formSections: [
     {
-      title: '基本信息',
+      title: i18n.t('ehs.compliance.k107'),
       fields: ['permit_no', 'title', 'permit_type', 'permit_category'],
     },
     {
-      title: '持有人信息',
+      title: i18n.t('ehs.compliance.k108'),
       fields: ['holder', 'expiry_date'],
     },
     {
-      title: '状态',
+      title: i18n.t('ehs.compliance.k109'),
       fields: ['status'],
     },
   ],
 
   formColCount: 2,
-  detailTitle: '许可证详情',
+  detailTitle: i18n.t('ehs.compliance.k110'),
 };

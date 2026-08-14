@@ -3,22 +3,23 @@ import { Chip, Box, Typography } from '@mui/material';
 import { User } from 'lucide-react';
 import type { EntitySchema, SchemaField } from '@/schema';
 import { designTokens, semanticTokens } from '@topems/tokens';
+import i18n from '@/i18n';
 
 const ct = {
   primary: { dark: 'colors.primary.dark', light: 'colors.primary.50' },
-  grey: { 400: designTokens.colors.grey['400'], 600: designTokens.colors.grey['600'], 800: '#424242' },
+  grey: { 400: designTokens.colors.grey['400'], 600: designTokens.colors.grey['600'], 800: designTokens.colors.grey[800] },
 };
 
 const formatAction = (action: string): string => {
   const map: Record<string, string> = {
-    batch_create: '批量创建',
-    batch_delete: '批量删除',
-    export: '导出',
-    import: '导入',
-    create: '创建',
-    update: '更新',
-    delete: '删除',
-    read: '读取',
+    batch_create: i18n.t('shared.audit_log.k0'),
+    batch_delete: i18n.t('shared.audit_log.k1'),
+    export: i18n.t('shared.audit_log.k2'),
+    import: i18n.t('shared.audit_log.k3'),
+    create: i18n.t('shared.audit_log.k4'),
+    update: i18n.t('shared.audit_log.k5'),
+    delete: i18n.t('shared.audit_log.k6'),
+    read: i18n.t('shared.audit_log.k7'),
   };
   return map[action] || action;
 };
@@ -31,9 +32,9 @@ const getStatusChip = (status: string | null | undefined): React.ReactNode => {
       label: string;
     }
   > = {
-    success: { color: 'success', label: '成功' },
-    partial: { color: 'warning', label: '部分成功' },
-    error: { color: 'error', label: '失败' },
+    success: { color: 'success', label: i18n.t('shared.audit_log.k8') },
+    partial: { color: 'warning', label: i18n.t('shared.audit_log.k9') },
+    error: { color: 'error', label: i18n.t('shared.audit_log.k10') },
   };
   const config = configs[status ?? ''] || {
     color: 'default' as const,
@@ -51,7 +52,7 @@ const getStatusChip = (status: string | null | undefined): React.ReactNode => {
 const auditLogFields: SchemaField[] = [
   {
     name: 'created_at',
-    label: '时间',
+    label: i18n.t('shared.audit_log.k11'),
     type: 'datetime',
     sortable: true,
     listWidth: 180,
@@ -66,7 +67,7 @@ const auditLogFields: SchemaField[] = [
   },
   {
     name: 'user_name',
-    label: '用户',
+    label: i18n.t('shared.audit_log.k12'),
     type: 'text',
     listWidth: 160,
     renderCell: (row: Record<string, unknown>) => {
@@ -101,7 +102,7 @@ const auditLogFields: SchemaField[] = [
   },
   {
     name: 'action',
-    label: '操作',
+    label: i18n.t('shared.audit_log.k13'),
     type: 'text',
     listWidth: 110,
     renderCell: (row: Record<string, unknown>) => (
@@ -110,7 +111,7 @@ const auditLogFields: SchemaField[] = [
   },
   {
     name: 'entity_type',
-    label: '实体类型',
+    label: i18n.t('shared.audit_log.k14'),
     type: 'text',
     listWidth: 120,
     renderCell: (row: Record<string, unknown>) => (
@@ -124,7 +125,7 @@ const auditLogFields: SchemaField[] = [
   },
   {
     name: 'ip_address',
-    label: 'IP地址',
+    label: i18n.t('shared.audit_log.ip_15'),
     type: 'text',
     listWidth: 130,
     renderCell: (row: Record<string, unknown>) => (
@@ -138,7 +139,7 @@ const auditLogFields: SchemaField[] = [
   },
   {
     name: 'status',
-    label: '状态',
+    label: i18n.t('shared.audit_log.k16'),
     type: 'text',
     listWidth: 100,
     renderCell: (row: Record<string, unknown>) => {
@@ -150,35 +151,35 @@ const auditLogFields: SchemaField[] = [
   },
   {
     name: 'error_message',
-    label: '错误信息',
+    label: i18n.t('shared.audit_log.k17'),
     type: 'textarea',
     showInList: false,
     showInDetail: true,
   },
   {
     name: 'request_details',
-    label: '请求详情',
+    label: i18n.t('shared.audit_log.k18'),
     type: 'textarea',
     showInList: false,
     showInDetail: true,
   },
   {
     name: 'response_details',
-    label: '响应详情',
+    label: i18n.t('shared.audit_log.k19'),
     type: 'textarea',
     showInList: false,
     showInDetail: true,
   },
   {
     name: 'user_id',
-    label: '用户ID',
+    label: i18n.t('shared.audit_log.id_20'),
     type: 'text',
     showInList: false,
     showInDetail: true,
   },
   {
     name: 'entity_id',
-    label: '实体ID',
+    label: i18n.t('shared.audit_log.id_21'),
     type: 'text',
     showInList: false,
     showInDetail: true,
@@ -192,14 +193,14 @@ const auditLogFields: SchemaField[] = [
   },
   {
     name: 'tenant_id',
-    label: '租户ID',
+    label: i18n.t('shared.audit_log.id_22'),
     type: 'text',
     showInList: false,
     showInDetail: true,
   },
   {
     name: 'source',
-    label: '来源',
+    label: i18n.t('shared.audit_log.k23'),
     type: 'text',
     showInList: false,
     showInDetail: true,
@@ -208,8 +209,8 @@ const auditLogFields: SchemaField[] = [
 
 export const auditLogSchema: EntitySchema = {
   entity: 'admin_audit_log',
-  title: '审计日志',
-  description: '查看系统审计日志，追踪用户操作和系统行为',
+  title: i18n.t('shared.audit_log.k24'),
+  description: i18n.t('shared.audit_log.k25'),
 
   api: {
     module: 'admin',
@@ -224,29 +225,29 @@ export const auditLogSchema: EntitySchema = {
     filters: [
       {
         id: 'status',
-        label: '状态',
+        label: i18n.t('shared.audit_log.k26'),
         type: 'select',
         options: [
-          { label: '全部状态', value: 'all' },
-          { label: '成功', value: 'success' },
-          { label: '部分成功', value: 'partial' },
-          { label: '失败', value: 'error' },
+          { label: i18n.t('shared.audit_log.k27'), value: 'all' },
+          { label: i18n.t('shared.audit_log.k28'), value: 'success' },
+          { label: i18n.t('shared.audit_log.k29'), value: 'partial' },
+          { label: i18n.t('shared.audit_log.k30'), value: 'error' },
         ],
       },
       {
         id: 'action',
-        label: '操作',
+        label: i18n.t('shared.audit_log.k31'),
         type: 'select',
         options: [
-          { label: '全部操作', value: 'all' },
-          { label: '创建', value: 'create' },
-          { label: '更新', value: 'update' },
-          { label: '删除', value: 'delete' },
-          { label: '读取', value: 'read' },
-          { label: '导出', value: 'export' },
-          { label: '导入', value: 'import' },
-          { label: '批量创建', value: 'batch_create' },
-          { label: '批量删除', value: 'batch_delete' },
+          { label: i18n.t('shared.audit_log.k32'), value: 'all' },
+          { label: i18n.t('shared.audit_log.k33'), value: 'create' },
+          { label: i18n.t('shared.audit_log.k34'), value: 'update' },
+          { label: i18n.t('shared.audit_log.k35'), value: 'delete' },
+          { label: i18n.t('shared.audit_log.k36'), value: 'read' },
+          { label: i18n.t('shared.audit_log.k37'), value: 'export' },
+          { label: i18n.t('shared.audit_log.k38'), value: 'import' },
+          { label: i18n.t('shared.audit_log.k39'), value: 'batch_create' },
+          { label: i18n.t('shared.audit_log.k40'), value: 'batch_delete' },
         ],
       },
     ],
@@ -258,9 +259,9 @@ export const auditLogSchema: EntitySchema = {
         error: 'error',
       },
       labelMap: {
-        success: '成功',
-        partial: '部分成功',
-        error: '失败',
+        success: i18n.t('shared.audit_log.k41'),
+        partial: i18n.t('shared.audit_log.k42'),
+        error: i18n.t('shared.audit_log.k43'),
       },
     },
   },
@@ -268,5 +269,5 @@ export const auditLogSchema: EntitySchema = {
   actions: ['detail'],
 
   formColCount: 2,
-  detailTitle: '审计日志详情',
+  detailTitle: i18n.t('shared.audit_log.k44'),
 };

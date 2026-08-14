@@ -4,16 +4,17 @@
 
 import React from 'react';
 import type { EntitySchema } from '@/schema';
+import i18n from '@/i18n';
 
 const statusColorMap: Record<
   string,
   'default' | 'primary' | 'success' | 'warning' | 'error' | 'info'
 > = {
-  待分配: 'warning',
-  已分配: 'info',
-  进行中: 'primary',
-  已完成: 'success',
-  已终止: 'error',
+  [i18n.t('schemas.inspection_task.k0')]: 'warning',
+  [i18n.t('schemas.inspection_task.k1')]: 'info',
+  [i18n.t('schemas.inspection_task.k2')]: 'primary',
+  [i18n.t('schemas.inspection_task.k3')]: 'success',
+  [i18n.t('schemas.inspection_task.k4')]: 'error',
   pending: 'warning',
   assigned: 'info',
   in_progress: 'primary',
@@ -22,22 +23,22 @@ const statusColorMap: Record<
 };
 
 const statusLabelMap: Record<string, string> = {
-  待分配: '待分配',
-  已分配: '已分配',
-  进行中: '进行中',
-  已完成: '已完成',
-  已终止: '已终止',
-  pending: '待分配',
-  assigned: '已分配',
-  in_progress: '进行中',
-  completed: '已完成',
-  cancelled: '已终止',
+  [i18n.t('schemas.inspection_task.k5')]: i18n.t('lims.inspection_task.k0'),
+  [i18n.t('schemas.inspection_task.k6')]: i18n.t('lims.inspection_task.k1'),
+  [i18n.t('schemas.inspection_task.k7')]: i18n.t('lims.inspection_task.k2'),
+  [i18n.t('schemas.inspection_task.k8')]: i18n.t('lims.inspection_task.k3'),
+  [i18n.t('schemas.inspection_task.k9')]: i18n.t('lims.inspection_task.k4'),
+  pending: i18n.t('lims.inspection_task.k5'),
+  assigned: i18n.t('lims.inspection_task.k6'),
+  in_progress: i18n.t('lims.inspection_task.k7'),
+  completed: i18n.t('lims.inspection_task.k8'),
+  cancelled: i18n.t('lims.inspection_task.k9'),
 };
 
 export const inspectionTaskSchema: EntitySchema = {
   entity: 'limsInspectionTask',
-  title: '检验任务',
-  description: '管理检验任务分配、执行与记录',
+  title: i18n.t('lims.inspection_task.k10'),
+  description: i18n.t('lims.inspection_task.k11'),
 
   api: {
     module: 'lims',
@@ -47,7 +48,7 @@ export const inspectionTaskSchema: EntitySchema = {
   fields: [
     {
       name: 'task_no',
-      label: '任务编号',
+      label: i18n.t('lims.inspection_task.k12'),
       type: 'text',
       sortable: true,
       listWidth: 140,
@@ -56,42 +57,42 @@ export const inspectionTaskSchema: EntitySchema = {
     },
     {
       name: 'sample_id',
-      label: '样品',
+      label: i18n.t('lims.inspection_task.k13'),
       type: 'text',
       required: true,
       listWidth: 140,
     },
     {
       name: 'process_id',
-      label: '检验流程',
+      label: i18n.t('lims.inspection_task.k14'),
       type: 'text',
       required: true,
       listWidth: 140,
     },
     {
       name: 'current_step',
-      label: '当前步骤',
+      label: i18n.t('lims.inspection_task.k15'),
       type: 'number',
       listWidth: 100,
       renderCell: (row: Record<string, unknown>) => {
         const step = row.current_step;
         if (step === undefined || step === null) return '-';
-        return `第 ${step} 步`;
+        return `${i18n.t('shared.inspection_task.k0')}${step}${i18n.t('shared.inspection_task.k1')}`;
       },
     },
     {
       name: 'status',
-      label: '状态',
+      label: i18n.t('lims.inspection_task.k16'),
       type: 'select',
-      defaultValue: '待分配',
+      defaultValue: i18n.t('lims.inspection_task.k17'),
       options: {
         type: 'static',
         options: [
-          { value: '待分配', label: '待分配' },
-          { value: '已分配', label: '已分配' },
-          { value: '进行中', label: '进行中' },
-          { value: '已完成', label: '已完成' },
-          { value: '已终止', label: '已终止' },
+          { value: i18n.t('lims.inspection_task.k18'), label: i18n.t('lims.inspection_task.k19') },
+          { value: i18n.t('lims.inspection_task.k20'), label: i18n.t('lims.inspection_task.k21') },
+          { value: i18n.t('lims.inspection_task.k22'), label: i18n.t('lims.inspection_task.k23') },
+          { value: i18n.t('lims.inspection_task.k24'), label: i18n.t('lims.inspection_task.k25') },
+          { value: i18n.t('lims.inspection_task.k26'), label: i18n.t('lims.inspection_task.k27') },
         ],
       },
       listWidth: 100,
@@ -99,13 +100,13 @@ export const inspectionTaskSchema: EntitySchema = {
     },
     {
       name: 'inspector',
-      label: '检验员',
+      label: i18n.t('lims.inspection_task.k28'),
       type: 'text',
       listWidth: 100,
     },
     {
       name: 'started_at',
-      label: '开始时间',
+      label: i18n.t('lims.inspection_task.k29'),
       type: 'date',
       listWidth: 150,
       renderCell: (row: Record<string, unknown>) => {
@@ -116,13 +117,13 @@ export const inspectionTaskSchema: EntitySchema = {
     },
     {
       name: 'completed_at',
-      label: '完成时间',
+      label: i18n.t('lims.inspection_task.k30'),
       type: 'date',
       showInList: false,
     },
     {
       name: 'created_at',
-      label: '创建时间',
+      label: i18n.t('lims.inspection_task.k31'),
       type: 'date',
       showInList: false,
     },
@@ -148,15 +149,15 @@ export const inspectionTaskSchema: EntitySchema = {
     filters: [
       {
         id: 'status',
-        label: '状态',
+        label: i18n.t('lims.inspection_task.k32'),
         type: 'select',
         options: [
-          { label: '全部状态', value: 'all' },
-          { label: '待分配', value: '待分配' },
-          { label: '已分配', value: '已分配' },
-          { label: '进行中', value: '进行中' },
-          { label: '已完成', value: '已完成' },
-          { label: '已终止', value: '已终止' },
+          { label: i18n.t('lims.inspection_task.k33'), value: 'all' },
+          { label: i18n.t('lims.inspection_task.k34'), value: i18n.t('lims.inspection_task.k35') },
+          { label: i18n.t('lims.inspection_task.k36'), value: i18n.t('lims.inspection_task.k37') },
+          { label: i18n.t('lims.inspection_task.k38'), value: i18n.t('lims.inspection_task.k39') },
+          { label: i18n.t('lims.inspection_task.k40'), value: i18n.t('lims.inspection_task.k41') },
+          { label: i18n.t('lims.inspection_task.k42'), value: i18n.t('lims.inspection_task.k43') },
         ],
       },
     ],
@@ -166,17 +167,17 @@ export const inspectionTaskSchema: EntitySchema = {
 
   formSections: [
     {
-      title: '基本信息',
+      title: i18n.t('lims.inspection_task.k44'),
       fields: ['sample_id', 'process_id'],
     },
     {
-      title: '分配信息',
+      title: i18n.t('lims.inspection_task.k45'),
       fields: ['inspector'],
     },
   ],
 
   formColCount: 2,
-  createTitle: '新建检验任务',
-  editTitle: '编辑检验任务',
-  detailTitle: '检验任务详情',
+  createTitle: i18n.t('lims.inspection_task.k46'),
+  editTitle: i18n.t('lims.inspection_task.k47'),
+  detailTitle: i18n.t('lims.inspection_task.k48'),
 };

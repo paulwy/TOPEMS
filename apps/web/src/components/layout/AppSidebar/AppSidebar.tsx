@@ -16,6 +16,7 @@ import { SidebarFavorites } from './SidebarFavorites';
 import { SidebarModuleTree } from './SidebarModuleTree';
 import { SidebarUserPanel } from './SidebarUserPanel';
 import { isPlatformPath, getModuleFromPath } from './shared';
+import i18n from '@/i18n';
 
 export interface AppSidebarProps {
   collapsed: boolean;
@@ -167,7 +168,7 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
   return (
     <Paper
       role='navigation'
-      aria-label='主导航'
+      aria-label={i18n.t('shared.app_sidebar.k0')}
       elevation={0}
       sx={{
         width: collapsed ? sizeTokens.sidebarWidthCollapsed : sizeTokens.sidebarWidth,

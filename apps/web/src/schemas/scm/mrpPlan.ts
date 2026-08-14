@@ -1,21 +1,22 @@
 import React from 'react';
 import { Chip } from '@mui/material';
 import type { EntitySchema } from '@/schema';
+import i18n from '@/i18n';
 
 const statusColorConfig: Record<
   string,
   { label: string; color: 'default' | 'primary' | 'success' | 'warning' | 'error' }
 > = {
-  draft: { label: '草稿', color: 'default' },
-  calculated: { label: '已运算', color: 'success' },
-  processing: { label: '处理中', color: 'warning' },
-  cancelled: { label: '已取消', color: 'error' },
+  draft: { label: i18n.t('scm.mrp_plan.k0'), color: 'default' },
+  calculated: { label: i18n.t('scm.mrp_plan.k1'), color: 'success' },
+  processing: { label: i18n.t('scm.mrp_plan.k2'), color: 'warning' },
+  cancelled: { label: i18n.t('scm.mrp_plan.k3'), color: 'error' },
 };
 
 export const mrpPlanSchema: EntitySchema = {
   entity: 'mrpPlan',
-  title: 'MRP计划',
-  description: 'MRP物料需求计划管理，包括计划创建、MRP运算、结果查看',
+  title: i18n.t('shared.mrp_plan.mrp_0'),
+  description: i18n.t('shared.mrp_plan.k1'),
 
   api: {
     module: 'scm',
@@ -25,7 +26,7 @@ export const mrpPlanSchema: EntitySchema = {
   fields: [
     {
       name: 'plan_code',
-      label: '计划编号',
+      label: i18n.t('scm.mrp_plan.k4'),
       type: 'text',
       readonlyOnEdit: true,
       sortable: true,
@@ -33,7 +34,7 @@ export const mrpPlanSchema: EntitySchema = {
     },
     {
       name: 'plan_name',
-      label: '计划名称',
+      label: i18n.t('scm.mrp_plan.k5'),
       type: 'text',
       required: true,
       sortable: true,
@@ -41,7 +42,7 @@ export const mrpPlanSchema: EntitySchema = {
     },
     {
       name: 'start_date',
-      label: '开始日期',
+      label: i18n.t('scm.mrp_plan.k6'),
       type: 'date',
       required: true,
       sortable: true,
@@ -49,7 +50,7 @@ export const mrpPlanSchema: EntitySchema = {
     },
     {
       name: 'end_date',
-      label: '结束日期',
+      label: i18n.t('scm.mrp_plan.k7'),
       type: 'date',
       required: true,
       sortable: true,
@@ -57,17 +58,17 @@ export const mrpPlanSchema: EntitySchema = {
     },
     {
       name: 'status',
-      label: '状态',
+      label: i18n.t('scm.mrp_plan.k8'),
       type: 'select',
       hideInForm: true,
       defaultValue: 'draft',
       options: {
         type: 'static',
         options: [
-          { value: 'draft', label: '草稿' },
-          { value: 'calculated', label: '已运算' },
-          { value: 'processing', label: '处理中' },
-          { value: 'cancelled', label: '已取消' },
+          { value: 'draft', label: i18n.t('scm.mrp_plan.k9') },
+          { value: 'calculated', label: i18n.t('scm.mrp_plan.k10') },
+          { value: 'processing', label: i18n.t('scm.mrp_plan.k11') },
+          { value: 'cancelled', label: i18n.t('scm.mrp_plan.k12') },
         ],
       },
       listWidth: 100,
@@ -84,7 +85,7 @@ export const mrpPlanSchema: EntitySchema = {
     },
     {
       name: 'calculated_at',
-      label: '运算时间',
+      label: i18n.t('scm.mrp_plan.k13'),
       type: 'text',
       hideInForm: true,
       sortable: true,
@@ -96,7 +97,7 @@ export const mrpPlanSchema: EntitySchema = {
     },
     {
       name: 'description',
-      label: '描述',
+      label: i18n.t('scm.mrp_plan.k14'),
       type: 'textarea',
       showInList: false,
       colSpan: 2,
@@ -124,23 +125,23 @@ export const mrpPlanSchema: EntitySchema = {
         cancelled: 'error',
       },
       labelMap: {
-        draft: '草稿',
-        calculated: '已运算',
-        processing: '处理中',
-        cancelled: '已取消',
+        draft: i18n.t('scm.mrp_plan.k15'),
+        calculated: i18n.t('scm.mrp_plan.k16'),
+        processing: i18n.t('scm.mrp_plan.k17'),
+        cancelled: i18n.t('scm.mrp_plan.k18'),
       },
     },
     filters: [
       {
         id: 'status',
-        label: '状态',
+        label: i18n.t('scm.mrp_plan.k19'),
         type: 'select',
         options: [
-          { label: '全部状态', value: 'all' },
-          { label: '草稿', value: 'draft' },
-          { label: '已运算', value: 'calculated' },
-          { label: '处理中', value: 'processing' },
-          { label: '已取消', value: 'cancelled' },
+          { label: i18n.t('scm.mrp_plan.k20'), value: 'all' },
+          { label: i18n.t('scm.mrp_plan.k21'), value: 'draft' },
+          { label: i18n.t('scm.mrp_plan.k22'), value: 'calculated' },
+          { label: i18n.t('scm.mrp_plan.k23'), value: 'processing' },
+          { label: i18n.t('scm.mrp_plan.k24'), value: 'cancelled' },
         ],
       },
     ],
@@ -150,17 +151,17 @@ export const mrpPlanSchema: EntitySchema = {
 
   formSections: [
     {
-      title: '基本信息',
+      title: i18n.t('scm.mrp_plan.k25'),
       fields: ['plan_name', 'plan_code', 'start_date', 'end_date'],
     },
     {
-      title: '其他',
+      title: i18n.t('scm.mrp_plan.k26'),
       fields: ['description'],
     },
   ],
 
   formColCount: 2,
-  createTitle: '新建MRP计划',
-  editTitle: '编辑MRP计划',
-  detailTitle: 'MRP计划详情',
+  createTitle: i18n.t('scm.mrp_plan.mrp_27'),
+  editTitle: i18n.t('scm.mrp_plan.mrp_28'),
+  detailTitle: i18n.t('shared.mrp_plan.mrp_2'),
 };

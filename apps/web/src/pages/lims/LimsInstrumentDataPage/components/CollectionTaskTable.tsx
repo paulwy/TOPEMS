@@ -17,10 +17,10 @@ import {
   Tooltip,
   TablePagination,
 } from '@mui/material';
+import i18n from '@/i18n';
 import type { CollectionTask } from '@/api/lims';
 import { getStatusColor, getStatusLabel } from '../utils';
 import type { ChipColor } from '../utils';
-
 interface CollectionTaskTableProps {
   loading: boolean;
   tasks: CollectionTask[];
@@ -33,7 +33,6 @@ interface CollectionTaskTableProps {
   onEdit: (task: CollectionTask) => void;
   onDelete: (id: string) => void;
 }
-
 const CollectionTaskTable: React.FC<CollectionTaskTableProps> = ({
   loading,
   tasks,
@@ -52,14 +51,14 @@ const CollectionTaskTable: React.FC<CollectionTaskTableProps> = ({
         <Table size='small'>
           <TableHead>
             <TableRow>
-              <TableCell>任务编号</TableCell>
-              <TableCell>任务名称</TableCell>
-              <TableCell>仪器</TableCell>
-              <TableCell>协议</TableCell>
-              <TableCell>采集方式</TableCell>
-              <TableCell>状态</TableCell>
-              <TableCell>上次运行</TableCell>
-              <TableCell>操作</TableCell>
+              <TableCell>{i18n.t('lims.collection_task_table.k0')}</TableCell>
+              <TableCell>{i18n.t('lims.collection_task_table.k1')}</TableCell>
+              <TableCell>{i18n.t('lims.collection_task_table.k2')}</TableCell>
+              <TableCell>{i18n.t('lims.collection_task_table.k3')}</TableCell>
+              <TableCell>{i18n.t('lims.collection_task_table.k4')}</TableCell>
+              <TableCell>{i18n.t('lims.collection_task_table.k5')}</TableCell>
+              <TableCell>{i18n.t('lims.collection_task_table.k6')}</TableCell>
+              <TableCell>{i18n.t('lims.collection_task_table.k7')}</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
@@ -84,7 +83,7 @@ const CollectionTaskTable: React.FC<CollectionTaskTableProps> = ({
                       color='text.secondary'
                       sx={{ mt: 1 }}
                     >
-                      暂无采集任务
+                      {i18n.t('pages.collection_task_table.k0')}
                     </Typography>
                   </Box>
                 </TableCell>
@@ -119,29 +118,29 @@ const CollectionTaskTable: React.FC<CollectionTaskTableProps> = ({
                       direction='row'
                       spacing={1}
                     >
-                      <Tooltip title='立即采集'>
+                      <Tooltip title={i18n.t('lims.collection_task_table.k8')}>
                         <IconButton
                           size='small'
                           onClick={() => onTrigger(task.id)}
-                          aria-label='执行'
+                          aria-label={i18n.t('lims.collection_task_table.k9')}
                         >
                           <Play size={16} />
                         </IconButton>
                       </Tooltip>
-                      <Tooltip title='编辑'>
+                      <Tooltip title={i18n.t('lims.collection_task_table.k10')}>
                         <IconButton
                           size='small'
                           onClick={() => onEdit(task)}
-                          aria-label='编辑'
+                          aria-label={i18n.t('lims.collection_task_table.k11')}
                         >
                           <Edit size={16} />
                         </IconButton>
                       </Tooltip>
-                      <Tooltip title='删除'>
+                      <Tooltip title={i18n.t('lims.collection_task_table.k12')}>
                         <IconButton
                           size='small'
                           onClick={() => onDelete(task.id)}
-                          aria-label='删除'
+                          aria-label={i18n.t('lims.collection_task_table.k13')}
                         >
                           <Trash2 size={16} />
                         </IconButton>
@@ -168,5 +167,4 @@ const CollectionTaskTable: React.FC<CollectionTaskTableProps> = ({
     </Paper>
   );
 };
-
 export default CollectionTaskTable;

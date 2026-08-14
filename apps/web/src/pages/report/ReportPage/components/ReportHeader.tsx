@@ -3,6 +3,7 @@ import { Box, Typography, Button } from '@mui/material';
 import { X, FileText, Plus } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { DASHBOARD_PATHS } from '@/routes/dashboard';
+import i18n from '@/i18n';
 
 interface ReportHeaderProps {
   onShowBuilder: () => void;
@@ -63,7 +64,7 @@ const ReportHeader: React.FC<ReportHeaderProps> = ({ onShowBuilder }) => {
                   variant='h6'
                   sx={{ fontWeight: 700, color: 'grey.900' }}
                 >
-                  报表中心
+                  {i18n.t('pages.report_header.k0')}
                 </Typography>
                 <Typography
                   variant='caption'
@@ -81,7 +82,7 @@ const ReportHeader: React.FC<ReportHeaderProps> = ({ onShowBuilder }) => {
               startIcon={<Plus sx={{ width: 16, height: 16 }} />}
               sx={{ borderRadius: 3, textTransform: 'none' }}
             >
-              生成报表
+              {i18n.t('pages.report_header.k1')}
             </Button>
           </Box>
         </Box>

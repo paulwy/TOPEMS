@@ -13,6 +13,7 @@ import type { CrudApiAdapter } from '@/components/templates/CrudPage';
 import { financeSchema } from '@/schemas/srm';
 
 import { QUERY_KEYS } from '@/lib/reactQuery';
+import i18n from '@/i18n';
 
 const ct= designTokens.colors;
 
@@ -52,13 +53,13 @@ const financeAdapter: CrudApiAdapter<FinanceRecord> = {
           amount: item.total_amount || 0,
           status:
             item.status === 'active'
-              ? '有效'
+              ? i18n.t('pages.srm_finance_page.k0')
               : item.status === 'expired'
-                ? '已过期'
+                ? i18n.t('pages.srm_finance_page.k1')
                 : item.status === 'draft'
-                  ? '草稿'
+                  ? i18n.t('pages.srm_finance_page.k2')
                   : item.status === 'terminated'
-                    ? '已终止'
+                    ? i18n.t('pages.srm_finance_page.k3')
                     : item.status,
           date: item.sign_date || item.start_date || item.created_at,
           description: item.remarks || '',
@@ -78,15 +79,15 @@ const financeAdapter: CrudApiAdapter<FinanceRecord> = {
           amount: item.total_amount || 0,
           status:
             item.status === 'pending'
-              ? '待处理'
+              ? i18n.t('pages.srm_finance_page.k4')
               : item.status === 'processing'
-                ? '处理中'
+                ? i18n.t('pages.srm_finance_page.k5')
                 : item.status === 'delivered'
-                  ? '已交付'
+                  ? i18n.t('pages.srm_finance_page.k6')
                   : item.status === 'completed'
-                    ? '已完成'
+                    ? i18n.t('pages.srm_finance_page.k7')
                     : item.status === 'cancelled'
-                      ? '已取消'
+                      ? i18n.t('pages.srm_finance_page.k8')
                       : item.status,
           date: item.order_date || item.created_at,
           description: item.remarks || '',
@@ -155,10 +156,10 @@ const SrmFinancePage: React.FC = () => {
       orders: records.filter((r) => r.type === 'order').length,
       contracts: records.filter((r) => r.type === 'contract').length,
       pendingAmount: records
-        .filter((r) => r.status === '待处理' || r.status === '处理中' || r.status === '有效')
+        .filter((r) => r.status === i18n.t('pages.srm_finance_page.k11') || r.status === i18n.t('pages.srm_finance_page.k10') || r.status === i18n.t('pages.srm_finance_page.k9'))
         .reduce((sum, r) => sum + r.amount, 0),
       completedAmount: records
-        .filter((r) => r.status === '已完成' || r.status === '已交付')
+        .filter((r) => r.status === i18n.t('pages.srm_finance_page.k13') || r.status === i18n.t('pages.srm_finance_page.k12'))
         .reduce((sum, r) => sum + r.amount, 0),
     };
   }, [records]);
@@ -171,61 +172,61 @@ const SrmFinancePage: React.FC = () => {
       >
         <Grid size={{ xs: 12, sm: 6, md: 2 }}>
           <MetricCard
-            title='单据总数'
+            title={i18n.t('pages.srm_finance_page.k14')}
             value={stats.totalRecords}
             icon={<Receipt style={{ width: 24, height: 24 }} />}
             gradient={['success.main', 'success.dark']}
-            subtitle={`${stats.orders}个订单, ${stats.contracts}份合同`}
+            subtitle={`${stats.orders}${i18n.t('pages.srm_finance_page.k0')}${stats.contracts}${i18n.t('pages.srm_finance_page.k1')}`}
             trend='neutral'
           />
         </Grid>
         <Grid size={{ xs: 12, sm: 6, md: 2 }}>
           <MetricCard
-            title='订单数量'
+            title={i18n.t('pages.srm_finance_page.k15')}
             value={stats.orders}
             icon={<CreditCard style={{ width: 24, height: 24 }} />}
             gradient={['primary.main', ct.primary.dark]}
-            subtitle='已记录订单'
+            subtitle={i18n.t('pages.srm_finance_page.k16')}
             trend='neutral'
           />
         </Grid>
         <Grid size={{ xs: 12, sm: 6, md: 2 }}>
           <MetricCard
-            title='合同数量'
+            title={i18n.t('pages.srm_finance_page.k17')}
             value={stats.contracts}
             icon={<Receipt style={{ width: 24, height: 24 }} />}
             gradient={[ct.teal.main, ct.teal.dark]}
-            subtitle='已记录合同'
+            subtitle={i18n.t('pages.srm_finance_page.k18')}
             trend='neutral'
           />
         </Grid>
         <Grid size={{ xs: 12, sm: 6, md: 2 }}>
           <MetricCard
-            title='总金额'
+            title={i18n.t('pages.srm_finance_page.k19')}
             value={`¥${stats.totalAmount.toLocaleString()}`}
             icon={<DollarSign style={{ width: 24, height: 24 }} />}
             gradient={[ct.secondary.main, ct.secondary.dark]}
-            subtitle='所有单据合计'
+            subtitle={i18n.t('pages.srm_finance_page.k20')}
             trend='neutral'
           />
         </Grid>
         <Grid size={{ xs: 12, sm: 6, md: 2 }}>
           <MetricCard
-            title='待结算'
+            title={i18n.t('pages.srm_finance_page.k21')}
             value={`¥${stats.pendingAmount.toLocaleString()}`}
             icon={<TrendingUp style={{ width: 24, height: 24 }} />}
             gradient={['warning.main', ct.warning.dark]}
-            subtitle='待处理/处理中/有效'
+            subtitle={i18n.t('pages.srm_finance_page.k22')}
             trend='neutral'
           />
         </Grid>
         <Grid size={{ xs: 12, sm: 6, md: 2 }}>
           <MetricCard
-            title='已完成'
+            title={i18n.t('pages.srm_finance_page.k23')}
             value={`¥${stats.completedAmount.toLocaleString()}`}
             icon={<DollarSign style={{ width: 24, height: 24 }} />}
             gradient={['success.main', 'success.dark']}
-            subtitle='已完成/已交付'
+            subtitle={i18n.t('pages.srm_finance_page.k24')}
             trend='neutral'
           />
         </Grid>
@@ -238,7 +239,7 @@ const SrmFinancePage: React.FC = () => {
       <CrudPage
         schema={financeSchema}
         apiAdapter={financeAdapter}
-        breadcrumbs={[{ label: 'SRM' }, { label: '财务管理' }]}
+        breadcrumbs={[{ label: 'SRM' }, { label: i18n.t('pages.srm_finance_page.k25') }]}
         headerContent={headerContent}
       />
     </PageContainer>

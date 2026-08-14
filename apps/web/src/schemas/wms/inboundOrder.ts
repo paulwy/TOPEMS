@@ -6,11 +6,12 @@
  */
 
 import type { EntitySchema } from '@/schema';
+import i18n from '@/i18n';
 
 export const inboundOrderSchema: EntitySchema = {
   entity: 'inbound_order',
-  title: '入库订单',
-  description: '管理采购入库、退货入库、调拨入库等入库订单',
+  title: i18n.t('wms.inbound_order.k0'),
+  description: i18n.t('wms.inbound_order.k1'),
 
   api: {
     module: 'wms',
@@ -20,7 +21,7 @@ export const inboundOrderSchema: EntitySchema = {
   fields: [
     {
       name: 'order_number',
-      label: '订单编号',
+      label: i18n.t('wms.inbound_order.k2'),
       type: 'text',
       required: true,
       readonlyOnEdit: true,
@@ -30,24 +31,24 @@ export const inboundOrderSchema: EntitySchema = {
     },
     {
       name: 'order_type',
-      label: '订单类型',
+      label: i18n.t('wms.inbound_order.k3'),
       type: 'select',
       defaultValue: 'purchase_in',
       options: {
         type: 'static',
         options: [
-          { value: 'purchase_in', label: '采购入库' },
-          { value: 'return_in', label: '退货入库' },
-          { value: 'transfer_in', label: '调拨入库' },
-          { value: 'other_in', label: '其他入库' },
+          { value: 'purchase_in', label: i18n.t('wms.inbound_order.k4') },
+          { value: 'return_in', label: i18n.t('wms.inbound_order.k5') },
+          { value: 'transfer_in', label: i18n.t('wms.inbound_order.k6') },
+          { value: 'other_in', label: i18n.t('wms.inbound_order.k7') },
         ],
       },
       renderCell: (row: Record<string, unknown>) => {
         const map: Record<string, string> = {
-          purchase_in: '采购入库',
-          return_in: '退货入库',
-          transfer_in: '调拨入库',
-          other_in: '其他入库',
+          purchase_in: i18n.t('wms.inbound_order.k8'),
+          return_in: i18n.t('wms.inbound_order.k9'),
+          transfer_in: i18n.t('wms.inbound_order.k10'),
+          other_in: i18n.t('wms.inbound_order.k11'),
         };
         return map[row.order_type as string] || String(row.order_type || '-');
       },
@@ -55,49 +56,49 @@ export const inboundOrderSchema: EntitySchema = {
     },
     {
       name: 'warehouse_id',
-      label: '仓库',
+      label: i18n.t('wms.inbound_order.k12'),
       type: 'text',
     },
     {
       name: 'supplier_id',
-      label: '供应商ID',
+      label: i18n.t('wms.inbound_order.id_13'),
       type: 'text',
       showInList: false,
       showInDetail: false,
     },
     {
       name: 'supplier_name',
-      label: '供应商',
+      label: i18n.t('wms.inbound_order.k14'),
       type: 'text',
       validation: [{ type: 'maxLength', value: 255 }],
     },
     {
       name: 'expected_date',
-      label: '预计到货日期',
+      label: i18n.t('wms.inbound_order.k15'),
       type: 'date',
       renderCell: (row: Record<string, unknown>) =>
         row.expected_date ? new Date(row.expected_date as string).toLocaleDateString('zh-CN') : '-',
     },
     {
       name: 'total_amount',
-      label: '总金额',
+      label: i18n.t('wms.inbound_order.k16'),
       type: 'number',
       showInDetail: true,
       readonly: true,
     },
     {
       name: 'status',
-      label: '状态',
+      label: i18n.t('wms.inbound_order.k17'),
       type: 'select',
       readonly: true,
       options: {
         type: 'static',
         options: [
-          { value: 'pending', label: '待确认' },
-          { value: 'confirmed', label: '已确认' },
-          { value: 'receiving', label: '收货中' },
-          { value: 'completed', label: '已完成' },
-          { value: 'cancelled', label: '已取消' },
+          { value: 'pending', label: i18n.t('wms.inbound_order.k18') },
+          { value: 'confirmed', label: i18n.t('wms.inbound_order.k19') },
+          { value: 'receiving', label: i18n.t('wms.inbound_order.k20') },
+          { value: 'completed', label: i18n.t('wms.inbound_order.k21') },
+          { value: 'cancelled', label: i18n.t('wms.inbound_order.k22') },
         ],
       },
       validation: [{ type: 'maxLength', value: 20 }],
@@ -126,18 +127,18 @@ export const inboundOrderSchema: EntitySchema = {
         cancelled: 'error',
       },
       labelMap: {
-        pending: '待确认',
-        confirmed: '已确认',
-        receiving: '收货中',
-        completed: '已完成',
-        cancelled: '已取消',
+        pending: i18n.t('wms.inbound_order.k23'),
+        confirmed: i18n.t('wms.inbound_order.k24'),
+        receiving: i18n.t('wms.inbound_order.k25'),
+        completed: i18n.t('wms.inbound_order.k26'),
+        cancelled: i18n.t('wms.inbound_order.k27'),
       },
     },
   },
 
   actions: ['create', 'edit', 'detail', 'delete'],
   formColCount: 2,
-  createTitle: '新增入库订单',
-  editTitle: '编辑入库订单',
-  detailTitle: '入库订单详情',
+  createTitle: i18n.t('wms.inbound_order.k28'),
+  editTitle: i18n.t('wms.inbound_order.k29'),
+  detailTitle: i18n.t('wms.inbound_order.k30'),
 };

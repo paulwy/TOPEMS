@@ -1,3 +1,4 @@
+import i18n from '@/i18n';
 // V58.0 平台 AI 演进 - A/B 测试
 
 export type ExperimentStatus = 'Draft' | 'Running' | 'Paused' | 'Completed';
@@ -215,8 +216,8 @@ class ABTestManagerImpl {
     if (this.experiments.size > 0) return;
 
     const exp1 = this.createExperiment(
-      'V58 NLU 模型 A/B 测试',
-      '对比 V2.0.0 与 V1.1.0 在意图识别准确率上的表现',
+      i18n.t('ai.ab-testing.v58nluab_0'),
+      i18n.t('ai.ab-testing.k1'),
       [
         {
           name: 'control (v1.1.0)',
@@ -236,8 +237,8 @@ class ABTestManagerImpl {
     this.startExperiment(exp1.id);
 
     const exp2 = this.createExperiment(
-      'Copilot 响应延迟测试',
-      '测试新模型版本对用户响应延迟的影响',
+      i18n.t('ai.ab-testing.copilot_2'),
+      i18n.t('ai.ab-testing.k0'),
       [
         { name: 'control (v1.0.0)', modelVersion: 'v1.0.0', weight: 33, metrics: { latency: 80 } },
         {
@@ -257,8 +258,8 @@ class ABTestManagerImpl {
     );
 
     const exp3 = this.createExperiment(
-      '运维异常检测准确率',
-      '验证新模型在生产环境中的异常检测能力',
+      i18n.t('ai.ab-testing.k1'),
+      i18n.t('ai.ab-testing.k2'),
       [
         { name: 'control', modelVersion: 'v1.0.0', weight: 50, metrics: { precision: 0.88 } },
         { name: 'challenger', modelVersion: 'v1.0.1', weight: 50, metrics: { precision: 0.91 } },

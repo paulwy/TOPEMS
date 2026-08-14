@@ -9,6 +9,7 @@ import {
   Box,
   Button,
 } from '@mui/material';
+import i18n from '@/i18n';
 import { useState, useEffect } from 'react';
 import { Sparkles, RefreshCw, Copy, Check } from 'lucide-react';
 
@@ -90,11 +91,11 @@ export function AIDocumentGenerator({
     <AIGenerateModal
       isOpen={isOpen}
       onClose={onClose}
-      title='AI 文档生成'
-      description='选择模板，填写信息，让 AI 帮您生成专业文档'
+      title={i18n.t('components.ai_document_generator.ai_0')}
+      description={i18n.t('components.ai_document_generator.k0')}
       isLoading={isLoading}
       onConfirm={hasResult ? handleApply : undefined}
-      confirmText='应用'
+      confirmText={i18n.t('components.ai_document_generator.k1')}
       extraActions={
         hasResult ? (
           <Button
@@ -105,14 +106,14 @@ export function AIDocumentGenerator({
               copied ? <Check style={{ fontSize: 16 }} /> : <Copy style={{ fontSize: 16 }} />
             }
           >
-            {copied ? '已复制' : '复制'}
+            {copied ? i18n.t('components.ai_document_generator.k3') : i18n.t('components.ai_document_generator.k2')}
           </Button>
         ) : null
       }
     >
       <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-          <InputLabel shrink>选择文档模板</InputLabel>
+          <InputLabel shrink>{i18n.t('components.ai_document_generator.k4')}</InputLabel>
           <Select
             value={selectedTemplateId || ''}
             onChange={(e) => {
@@ -126,7 +127,7 @@ export function AIDocumentGenerator({
               value=''
               disabled
             >
-              请选择模板
+              {i18n.t('components.ai_document_generator.k1')}
             </MenuItem>
             {templates.map((template) => (
               <MenuItem
@@ -177,7 +178,7 @@ export function AIDocumentGenerator({
                     <TextField
                       value={formData[field.name] || ''}
                       onChange={(e) => handleFieldChange(field.name, e.target.value)}
-                      placeholder={`请输入${field.label}`}
+                      placeholder={`${i18n.t('components.ai_document_generator.k2')}${field.label}`}
                       multiline
                       rows={3}
                       size='small'
@@ -197,7 +198,7 @@ export function AIDocumentGenerator({
                           value=''
                           disabled
                         >
-                          {`请选择${field.label}`}
+                          {`${i18n.t('components.ai_document_generator.k3')}${field.label}`}
                         </MenuItem>
                         {field.options?.map((option: { label: string; value: string }) => (
                           <MenuItem
@@ -214,7 +215,7 @@ export function AIDocumentGenerator({
                       type={field.type}
                       value={formData[field.name] || ''}
                       onChange={(e) => handleFieldChange(field.name, e.target.value)}
-                      placeholder={`请输入${field.label}`}
+                      placeholder={`${i18n.t('components.ai_document_generator.k4')}${field.label}`}
                       size='small'
                       fullWidth
                     />
@@ -230,7 +231,7 @@ export function AIDocumentGenerator({
               fullWidth
               startIcon={<Sparkles style={{ fontSize: 16 }} />}
             >
-              {isLoading ? '正在生成...' : '生成文档'}
+              {isLoading ? i18n.t('components.ai_document_generator.k5') : i18n.t('components.ai_document_generator.k5')}
             </Button>
 
             {hasResult && (
@@ -245,7 +246,7 @@ export function AIDocumentGenerator({
                     }}
                   >
                     <InputLabel sx={{ color: 'purple.700', fontWeight: 500, mb: 0 }}>
-                      生成的文档
+                      {i18n.t('components.ai_document_generator.k6')}
                     </InputLabel>
                     <Button
                       variant='outlined'
@@ -253,7 +254,7 @@ export function AIDocumentGenerator({
                       onClick={handleGenerate}
                       startIcon={<RefreshCw style={{ fontSize: 16 }} />}
                     >
-                      重新生成
+                      {i18n.t('components.ai_document_generator.k7')}
                     </Button>
                   </Box>
                   <Box

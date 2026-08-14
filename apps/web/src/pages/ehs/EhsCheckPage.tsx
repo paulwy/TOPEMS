@@ -13,6 +13,7 @@ import type {
   CreateInspectionPlanRequest,
   CreateInspectionRecordRequest,
 } from '@/api/ehs';
+import i18n from '@/i18n';
 import { QUERY_KEYS } from '@/lib/reactQuery';
 import { PageContainer } from '@/components/common';
 import { designTokens } from '@/theme/tokens';
@@ -103,7 +104,7 @@ const EhsCheckPage: React.FC = () => {
                   variant='body2'
                   sx={{ color: 'slate.600', fontSize: '0.875rem' }}
                 >
-                  {t('ehs.ehs_check_page.plan') || '计划总数'}
+                  {t('ehs.ehs_check_page.plan') || i18n.t('pages.ehs_check_page.k0')}
                 </Typography>
                 <Typography
                   variant='h5'
@@ -136,7 +137,7 @@ const EhsCheckPage: React.FC = () => {
                   variant='body2'
                   sx={{ color: 'slate.600', fontSize: '0.875rem' }}
                 >
-                  {t('ehs.ehs_check_page.active') || '启用中'}
+                  {t('ehs.ehs_check_page.active') || i18n.t('pages.ehs_check_page.k1')}
                 </Typography>
                 <Typography
                   variant='h5'
@@ -169,7 +170,7 @@ const EhsCheckPage: React.FC = () => {
                   variant='body2'
                   sx={{ color: 'slate.600', fontSize: '0.875rem' }}
                 >
-                  {t('ehs.ehs_check_page.in_progress') || '进行中'}
+                  {t('ehs.ehs_check_page.in_progress') || i18n.t('pages.ehs_check_page.k2')}
                 </Typography>
                 <Typography
                   variant='h5'
@@ -201,12 +202,12 @@ const EhsCheckPage: React.FC = () => {
         tabs={[
           {
             id: 'plans',
-            label: t('ehs.ehs_check_page.plan_1') || '检查计划',
+            label: t('ehs.ehs_check_page.plan_1') || i18n.t('pages.ehs_check_page.k3'),
             content: null as unknown as React.ReactNode,
           },
           {
             id: 'records',
-            label: t('ehs.ehs_check_page.text_9b9efd') || '检查记录',
+            label: t('ehs.ehs_check_page.text_9b9efd') || i18n.t('pages.ehs_check_page.k4'),
             content: <RecordList />,
           },
         ]}

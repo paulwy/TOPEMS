@@ -21,6 +21,7 @@ import {
   User,
   Loader2,
 } from 'lucide-react';
+import i18n from '@/i18n';
 import {
   Box,
   Typography,
@@ -116,7 +117,7 @@ const DocumentCenterPage: React.FC = () => {
           ...file,
           is_favorite: false,
           tags: [],
-          category: file.folder_id ? '分类文档' : '未分类',
+          category: file.folder_id ? i18n.t('pages.document_center_page.k1') : i18n.t('pages.document_center_page.k0'),
         }));
         return { documents: docs, total: data.total ?? 0 };
       }
@@ -158,7 +159,7 @@ const DocumentCenterPage: React.FC = () => {
   const deleteMutation = useMutation({
     mutationFn: async (docId: string) => {
       const res = await docApi.delete(docId);
-      if (!res.success) throw new Error(res.message || '删除失败');
+      if (!res.success) throw new Error(res.message || i18n.t('pages.document_center_page.k2'));
       return res;
     },
     onSuccess: () => {
@@ -166,11 +167,11 @@ const DocumentCenterPage: React.FC = () => {
   exact: false,
   refetchType: 'active',
 });
-      addNotification({ title: '删除成功', message: '文件已删除', type: 'success' });
+      addNotification({ title: i18n.t('pages.document_center_page.k4'), message: i18n.t('pages.document_center_page.k3'), type: 'success' });
     },
     onError: (err: unknown) => {
-      logger.error('删除失败:', err);
-      addNotification({ title: '删除失败', message: '文件删除失败', type: 'error' });
+      logger.error(i18n.t('pages.document_center_page.k0'), err);
+      addNotification({ title: i18n.t('pages.document_center_page.k6'), message: i18n.t('pages.document_center_page.k5'), type: 'error' });
     },
   });
 
@@ -186,23 +187,23 @@ const DocumentCenterPage: React.FC = () => {
   refetchType: 'active',
 });
       addNotification({
-        title: '上传成功',
-        message: `成功上传 ${files.length} 个文件`,
+        title: i18n.t('pages.document_center_page.k7'),
+        message: `${i18n.t('pages.document_center_page.k1')}${files.length}${i18n.t('pages.document_center_page.k2')}`,
         type: 'success',
       });
       setShowUploadModal(false);
       setUploadFiles([]);
     },
     onError: (err: unknown) => {
-      logger.error('上传失败:', err);
-      addNotification({ title: '上传失败', message: '文件上传失败', type: 'error' });
+      logger.error(i18n.t('pages.document_center_page.k3'), err);
+      addNotification({ title: i18n.t('pages.document_center_page.k9'), message: i18n.t('pages.document_center_page.k8'), type: 'error' });
     },
   });
 
   const restoreVersionMutation = useMutation({
     mutationFn: async ({ fileId, version }: { fileId: string; version: number }) => {
       const res = await docApi.restoreVersion(fileId, version);
-      if (!res.success) throw new Error(res.message || '恢复版本失败');
+      if (!res.success) throw new Error(res.message || i18n.t('pages.document_center_page.k10'));
       return res;
     },
     onSuccess: (_data, variables) => {
@@ -214,11 +215,11 @@ const DocumentCenterPage: React.FC = () => {
   exact: false,
   refetchType: 'active',
 });
-      addNotification({ title: '恢复成功', message: '已恢复到版本', type: 'success' });
+      addNotification({ title: i18n.t('pages.document_center_page.k12'), message: i18n.t('pages.document_center_page.k11'), type: 'success' });
     },
     onError: (err: unknown) => {
-      logger.error('恢复版本失败:', err);
-      addNotification({ title: '恢复失败', message: '恢复版本失败', type: 'error' });
+      logger.error(i18n.t('pages.document_center_page.k4'), err);
+      addNotification({ title: i18n.t('pages.document_center_page.k14'), message: i18n.t('pages.document_center_page.k13'), type: 'error' });
     },
   });
 
@@ -226,8 +227,8 @@ const DocumentCenterPage: React.FC = () => {
 
   useEffect(() => {
     if (documentsQuery.isError) {
-      logger.error('加载文档数据失败:', documentsQuery.error);
-      addNotification({ title: '加载失败', message: '加载文档数据失败', type: 'error' });
+      logger.error(i18n.t('pages.document_center_page.k5'), documentsQuery.error);
+      addNotification({ title: i18n.t('pages.document_center_page.k16'), message: i18n.t('pages.document_center_page.k15'), type: 'error' });
     }
   }, [documentsQuery.isError, documentsQuery.error, addNotification]);
 
@@ -282,16 +283,16 @@ const DocumentCenterPage: React.FC = () => {
       }
     );
     addNotification({
-      title: '操作成功',
-      message: '收藏状态已更新',
+      title: i18n.t('pages.document_center_page.k17'),
+      message: i18n.t('pages.document_center_page.k18'),
       type: 'success',
     });
   };
 
   const handlePreview = (doc: DocumentWithFavorite) => {
     addNotification({
-      title: '提示',
-      message: `正在预览: ${doc.name}`,
+      title: i18n.t('pages.document_center_page.k19'),
+      message: `${i18n.t('pages.document_center_page.k6')}${doc.name}`,
       type: 'info',
     });
   };
@@ -308,22 +309,22 @@ const DocumentCenterPage: React.FC = () => {
       document.body.removeChild(a);
       window.URL.revokeObjectURL(url);
       addNotification({
-        title: '下载成功',
-        message: `正在下载: ${doc.name}`,
+        title: i18n.t('pages.document_center_page.k20'),
+        message: `${i18n.t('pages.document_center_page.k7')}${doc.name}`,
         type: 'success',
       });
     } catch (err: unknown) {
-      logger.error('下载失败:', err);
+      logger.error(i18n.t('pages.document_center_page.k8'), err);
       addNotification({
-        title: '下载失败',
-        message: '文件下载失败',
+        title: i18n.t('pages.document_center_page.k21'),
+        message: i18n.t('pages.document_center_page.k22'),
         type: 'error',
       });
     }
   };
 
   const handleDelete = (docId: string) => {
-    if (!confirm('确定要删除这个文件吗？')) return;
+    if (!confirm(i18n.t('pages.document_center_page.k23'))) return;
     deleteMutation.mutate(docId);
   };
 
@@ -337,8 +338,8 @@ const DocumentCenterPage: React.FC = () => {
   const handleUpload = () => {
     if (uploadFiles.length === 0) {
       addNotification({
-        title: '提示',
-        message: '请选择要上传的文件',
+        title: i18n.t('pages.document_center_page.k24'),
+        message: i18n.t('pages.document_center_page.k25'),
         type: 'warning',
       });
       return;
@@ -358,13 +359,13 @@ const DocumentCenterPage: React.FC = () => {
   const filters = [
     {
       id: 'category',
-      label: '分类',
+      label: i18n.t('pages.document_center_page.k26'),
       type: 'select' as const,
       options: [
-        { label: '全部分类', value: '' },
-        { label: '项目文档', value: '项目文档' },
-        { label: '技术文档', value: '技术文档' },
-        { label: '规章制度', value: '规章制度' },
+        { label: i18n.t('pages.document_center_page.k27'), value: '' },
+        { label: i18n.t('pages.document_center_page.k28'), value: i18n.t('pages.document_center_page.k29') },
+        { label: i18n.t('pages.document_center_page.k30'), value: i18n.t('pages.document_center_page.k31') },
+        { label: i18n.t('pages.document_center_page.k32'), value: i18n.t('pages.document_center_page.k33') },
       ],
     },
   ];
@@ -375,19 +376,19 @@ const DocumentCenterPage: React.FC = () => {
     meta: [
       {
         field: 'size',
-        label: '大小',
+        label: i18n.t('pages.document_center_page.k34'),
         icon: <File size={14} />,
         format: (value: unknown) => formatFileSize(value as number),
       },
       {
         field: 'updated_at',
-        label: '更新时间',
+        label: i18n.t('pages.document_center_page.k35'),
         icon: <Clock size={14} />,
         format: (value: unknown) => (value as string).split('T')[0] || '-',
       },
       {
         field: 'created_by',
-        label: '创建者',
+        label: i18n.t('pages.document_center_page.k36'),
         format: (value: unknown) => (value as string) || '-',
       },
     ],
@@ -395,7 +396,7 @@ const DocumentCenterPage: React.FC = () => {
       {
         field: 'is_favorite',
         options: {
-          true: { label: '已收藏', color: 'warning' },
+          true: { label: i18n.t('pages.document_center_page.k37'), color: 'warning' },
         },
       },
     ],
@@ -405,21 +406,21 @@ const DocumentCenterPage: React.FC = () => {
 
   const cardActions: CardAction[] = [
     {
-      label: '预览',
+      label: i18n.t('pages.document_center_page.k38'),
       icon: <Eye size={16} />,
       onClick: (item: unknown) => handlePreview(item as DocumentWithFavorite),
       color: 'primary',
       variant: 'text',
     },
     {
-      label: '下载',
+      label: i18n.t('pages.document_center_page.k39'),
       icon: <Download size={16} />,
       onClick: (item: unknown) => handleDownload(item as DocumentWithFavorite),
       color: 'success',
       variant: 'text',
     },
     {
-      label: '收藏',
+      label: i18n.t('pages.document_center_page.k40'),
       icon: (item: unknown) => (
         <Star
           size={16}
@@ -431,14 +432,14 @@ const DocumentCenterPage: React.FC = () => {
       variant: 'text',
     },
     {
-      label: '版本历史',
+      label: i18n.t('pages.document_center_page.k41'),
       icon: <History size={16} />,
       onClick: (item: unknown) => handleOpenVersionHistory(item as DocumentWithFavorite),
       color: 'primary',
       variant: 'text',
     },
     {
-      label: '删除',
+      label: i18n.t('pages.document_center_page.k42'),
       icon: <Trash2 size={16} />,
       onClick: (item: unknown) => handleDelete((item as DocumentWithFavorite).id),
       color: 'error',
@@ -448,8 +449,8 @@ const DocumentCenterPage: React.FC = () => {
 
   return (
     <PageContainer
-      title='文档中心'
-      subtitle='统一管理企业文档，支持分类、标签和全文搜索'
+      title={i18n.t('pages.document_center_page.k43')}
+      subtitle={i18n.t('pages.document_center_page.k44')}
     >
       {/* 面包屑导航 */}
       <Box
@@ -465,7 +466,7 @@ const DocumentCenterPage: React.FC = () => {
                 '&:hover': { color: 'primary.dark' },
               }}
             >
-              全部文档
+              {i18n.t('pages.document_center_page.k0')}
             </Box>
             {currentPath.map((path, idx) => (
               <React.Fragment key={idx}>
@@ -497,7 +498,7 @@ const DocumentCenterPage: React.FC = () => {
             variant='h6'
             sx={{ fontWeight: 600, color: 'grey.900', mb: 2 }}
           >
-            文件夹
+            {i18n.t('pages.document_center_page.k1')}
           </Typography>
           <Box
             sx={{
@@ -553,7 +554,7 @@ const DocumentCenterPage: React.FC = () => {
         search={{
           value: searchQuery,
           onChange: setSearchQuery,
-          placeholder: '搜索文件名、标签...',
+          placeholder: i18n.t('pages.document_center_page.k9'),
         }}
         filters={filters}
         filterValues={filterValues}
@@ -561,7 +562,7 @@ const DocumentCenterPage: React.FC = () => {
         onFilterReset={handleFilterReset}
         onSearch={handleSearch}
         addButton={{
-          text: '上传文件',
+          text: i18n.t('pages.document_center_page.k45'),
           icon: <Upload size={18} />,
           onClick: () => setShowUploadModal(true),
         }}
@@ -586,7 +587,7 @@ const DocumentCenterPage: React.FC = () => {
         onClose={() => setShowUploadModal(false)}
         maxWidth='md'
       >
-        <DialogTitle>上传文件</DialogTitle>
+        <DialogTitle>{i18n.t('pages.document_center_page.k46')}</DialogTitle>
         <DialogContent>
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
             <Box
@@ -614,14 +615,14 @@ const DocumentCenterPage: React.FC = () => {
                   component='span'
                   sx={{ color: 'primary.main', cursor: 'pointer' }}
                 >
-                  点击选择
+                  {i18n.t('pages.document_center_page.k2')}
                 </Box>
               </Typography>
               <Typography
                 variant='caption'
                 sx={{ color: 'grey.500' }}
               >
-                支持 .pdf, .docx, .xlsx, .txt 等格式，单个文件不超过 100MB
+                {i18n.t('pages.document_center_page.k3')}
               </Typography>
             </Box>
 
@@ -636,7 +637,7 @@ const DocumentCenterPage: React.FC = () => {
               variant='outlined'
               onClick={() => document.getElementById('file-upload')?.click()}
             >
-              选择文件
+              {i18n.t('pages.document_center_page.k4')}
             </Button>
 
             {uploadFiles.length > 0 && (
@@ -666,7 +667,7 @@ const DocumentCenterPage: React.FC = () => {
                       size='small'
                       onClick={() => setUploadFiles(uploadFiles.filter((_, i) => i !== idx))}
                     >
-                      删除
+                      {i18n.t('pages.document_center_page.k5')}
                     </Button>
                   </Box>
                 ))}
@@ -675,12 +676,12 @@ const DocumentCenterPage: React.FC = () => {
           </Box>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setShowUploadModal(false)}>取消</Button>
+          <Button onClick={() => setShowUploadModal(false)}>{i18n.t('pages.document_center_page.k47')}</Button>
           <Button
             onClick={handleUpload}
             disabled={uploading || uploadFiles.length === 0}
           >
-            {uploading ? '上传中...' : '开始上传'}
+            {uploading ? i18n.t('pages.document_center_page.k10') : i18n.t('pages.document_center_page.k48')}
           </Button>
         </DialogActions>
       </Dialog>
@@ -722,12 +723,12 @@ const DocumentCenterPage: React.FC = () => {
                   marginBottom: 8,
                 }}
               />
-              <Typography sx={{ color: 'grey.500' }}>暂无版本历史记录</Typography>
+              <Typography sx={{ color: 'grey.500' }}>{i18n.t('pages.document_center_page.k49')}</Typography>
               <Typography
                 variant='caption'
                 sx={{ color: 'grey.400', display: 'block', mt: 0.5 }}
               >
-                每次更新文件后系统将自动记录版本
+                {i18n.t('pages.document_center_page.k6')}
               </Typography>
             </Box>
           ) : (
@@ -763,7 +764,7 @@ const DocumentCenterPage: React.FC = () => {
                       </Typography>
                       {index === 0 && (
                         <Chip
-                          label='当前版本'
+                          label={i18n.t('pages.document_center_page.k50')}
                           size='small'
                           color='primary'
                           sx={{ height: 20, fontSize: '0.7rem' }}
@@ -775,25 +776,25 @@ const DocumentCenterPage: React.FC = () => {
                       spacing={0.5}
                     >
                       {index !== 0 && versionDoc && (
-                        <Tooltip title='恢复到此版本'>
+                        <Tooltip title={i18n.t('pages.document_center_page.k51')}>
                           <IconButton
                             size='small'
                             onClick={() => handleRestoreVersion(versionDoc, ver)}
                             sx={{ color: 'warning.main' }}
-                            aria-label='重置'
+                            aria-label={i18n.t('pages.document_center_page.k52')}
                           >
                             <RotateCcw size={16} />
                           </IconButton>
                         </Tooltip>
                       )}
                       {ver.download_url && (
-                        <Tooltip title='下载此版本'>
+                        <Tooltip title={i18n.t('pages.document_center_page.k53')}>
                           <IconButton
                             size='small'
                             onClick={() => {
                               if (versionDoc) handleDownload(versionDoc);
                             }}
-                            aria-label='下载'
+                            aria-label={i18n.t('pages.document_center_page.k54')}
                           >
                             <Download size={16} />
                           </IconButton>
@@ -828,7 +829,7 @@ const DocumentCenterPage: React.FC = () => {
                         variant='caption'
                         sx={{ color: 'grey.500' }}
                       >
-                        {ver.created_by || '系统'}
+                        {ver.created_by || i18n.t('pages.document_center_page.k55')}
                       </Typography>
                     </Stack>
                     <Stack
@@ -860,7 +861,7 @@ const DocumentCenterPage: React.FC = () => {
           )}
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setShowVersionHistory(false)}>关闭</Button>
+          <Button onClick={() => setShowVersionHistory(false)}>{i18n.t('pages.document_center_page.k56')}</Button>
         </DialogActions>
       </Dialog>
     </PageContainer>

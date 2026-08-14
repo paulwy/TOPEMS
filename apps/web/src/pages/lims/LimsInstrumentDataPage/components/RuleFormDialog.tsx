@@ -15,13 +15,12 @@ import {
   TextareaAutosize,
   Button,
 } from '@mui/material';
+import i18n from '@/i18n';
 import { Grid } from '@/components';
 import type { CreateParseRuleRequest } from '@/api/lims';
 import { formatJson, parseJsonInput } from '../utils';
 import { designTokens } from '@/theme/tokens';
-
 const ct= designTokens.colors;
-
 interface RuleFormDialogProps {
   open: boolean;
   isEditing: boolean;
@@ -31,7 +30,6 @@ interface RuleFormDialogProps {
   onFormDataChange: (data: CreateParseRuleRequest) => void;
   onSave: () => void;
 }
-
 const RuleFormDialog: React.FC<RuleFormDialogProps> = ({
   open,
   isEditing,
@@ -48,7 +46,7 @@ const RuleFormDialog: React.FC<RuleFormDialogProps> = ({
       maxWidth='md'
       fullWidth
     >
-      <DialogTitle>{isEditing ? '编辑解析规则' : '新建解析规则'}</DialogTitle>
+      <DialogTitle>{isEditing ? i18n.t('lims.rule_form_dialog.k1') : i18n.t('lims.rule_form_dialog.k0')}</DialogTitle>
       <DialogContent dividers>
         <Stack
           spacing={2}
@@ -63,7 +61,7 @@ const RuleFormDialog: React.FC<RuleFormDialogProps> = ({
               xs={6}
             >
               <TextField
-                label='规则名称'
+                label={i18n.t('lims.rule_form_dialog.k2')}
                 fullWidth
                 value={formData.rule_name}
                 onChange={(e) => onFormDataChange({ ...formData, rule_name: e.target.value })}
@@ -74,10 +72,10 @@ const RuleFormDialog: React.FC<RuleFormDialogProps> = ({
               xs={6}
             >
               <FormControl fullWidth>
-                <InputLabel>协议类型</InputLabel>
+                <InputLabel>{i18n.t('lims.rule_form_dialog.k3')}</InputLabel>
                 <Select
                   value={formData.protocol}
-                  label='协议类型'
+                  label={i18n.t('lims.rule_form_dialog.k4')}
                   onChange={(e) => onFormDataChange({ ...formData, protocol: e.target.value })}
                 >
                   <MenuItem value='JSON'>JSON</MenuItem>
@@ -91,7 +89,7 @@ const RuleFormDialog: React.FC<RuleFormDialogProps> = ({
               xs={6}
             >
               <TextField
-                label='仪器类型'
+                label={i18n.t('lims.rule_form_dialog.k5')}
                 fullWidth
                 value={formData.instrument_type}
                 onChange={(e) => onFormDataChange({ ...formData, instrument_type: e.target.value })}
@@ -102,7 +100,7 @@ const RuleFormDialog: React.FC<RuleFormDialogProps> = ({
               xs={12}
             >
               <TextField
-                label='描述'
+                label={i18n.t('lims.rule_form_dialog.k6')}
                 fullWidth
                 multiline
                 rows={2}
@@ -111,14 +109,13 @@ const RuleFormDialog: React.FC<RuleFormDialogProps> = ({
               />
             </Grid>
           </Grid>
-
           <Box>
             <Typography
               variant='subtitle2'
               color='text.secondary'
               sx={{ mb: 1 }}
             >
-              解析配置 (JSON)
+              {i18n.t('pages.rule_form_dialog.json_0')}
             </Typography>
             <TextareaAutosize
               minRows={6}
@@ -139,14 +136,13 @@ const RuleFormDialog: React.FC<RuleFormDialogProps> = ({
               }
             />
           </Box>
-
           <Box>
             <Typography
               variant='subtitle2'
               color='text.secondary'
               sx={{ mb: 1 }}
             >
-              质量校验规则 (JSON)
+              {i18n.t('pages.rule_form_dialog.json_1')}
             </Typography>
             <TextareaAutosize
               minRows={6}
@@ -170,17 +166,16 @@ const RuleFormDialog: React.FC<RuleFormDialogProps> = ({
         </Stack>
       </DialogContent>
       <DialogActions>
-        <Button onClick={onClose}>取消</Button>
+        <Button onClick={onClose}>{i18n.t('lims.rule_form_dialog.k7')}</Button>
         <Button
           variant='contained'
           onClick={onSave}
           disabled={submitting}
         >
-          {submitting ? '保存中...' : '保存'}
+          {submitting ? i18n.t('pages.rule_form_dialog.k0') : i18n.t('lims.rule_form_dialog.k8')}
         </Button>
       </DialogActions>
     </Dialog>
   );
 };
-
 export default RuleFormDialog;

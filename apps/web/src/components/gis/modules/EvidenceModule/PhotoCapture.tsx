@@ -3,6 +3,8 @@ import React, { useRef, useState, useCallback, useEffect } from 'react';
 import { Camera, SwitchCamera, Sun, X } from 'lucide-react';
 import { Box, IconButton, Typography, Button } from '@mui/material';
 import { logger } from '@/utils/logger';
+import { designTokens } from '@topems/tokens';
+import i18n from '@/i18n';
 
 interface PhotoCaptureProps {
   onCapture: (file: File, thumbnail?: string) => void;
@@ -43,7 +45,7 @@ const PhotoCapture: React.FC<PhotoCaptureProps> = ({
         }
         setError(null);
       } catch (err: unknown) {
-        setError('无法访问摄像头，请确保已授予摄像头权限');
+        setError(i18n.t('gis.photo_capture.k0'));
         logger.error('Camera error:', err);
       }
     };
@@ -103,7 +105,7 @@ const PhotoCapture: React.FC<PhotoCaptureProps> = ({
       (blob) => {
         if (blob) {
           if (blob.size > maxFileSize) {
-            setError(`文件大小超过限制 (${maxFileSize / 1024 / 1024}MB)`);
+            setError(`${i18n.t('components.photo_capture.k0')}${maxFileSize / 1024 / 1024}MB)`);
             setIsCapturing(false);
             return;
           }
@@ -178,7 +180,7 @@ const PhotoCapture: React.FC<PhotoCaptureProps> = ({
                   '&:hover': { bgcolor: 'text.secondary' },
                 }}
               >
-                关闭
+                {i18n.t('components.photo_capture.k0')}
               </Button>
             </Box>
           </Box>
@@ -203,7 +205,7 @@ const PhotoCapture: React.FC<PhotoCaptureProps> = ({
               color: 'common.white',
               '&:hover': { bgcolor: 'action.active' },
             }}
-            aria-label='关闭'
+            aria-label={i18n.t('gis.photo_capture.k1')}
           >
             <X size={24} />
           </IconButton>
@@ -214,9 +216,9 @@ const PhotoCapture: React.FC<PhotoCaptureProps> = ({
                 borderRadius: 'full',
                 bgcolor: flashOn ? 'warning.main' : 'colors.cyber.glass.divider',
                 color: 'common.white',
-                '&:hover': { bgcolor: flashOn ? 'warning.main' : 'rgba(0,0,0,0.7)' },
+                '&:hover': { bgcolor: flashOn ? 'warning.main' : designTokens.colors.cyber.metal.bottomShadow },
               }}
-              aria-label='切换主题'
+              aria-label={i18n.t('gis.photo_capture.k2')}
             >
               <Sun size={24} />
             </IconButton>
@@ -228,7 +230,7 @@ const PhotoCapture: React.FC<PhotoCaptureProps> = ({
                 color: 'common.white',
                 '&:hover': { bgcolor: 'action.active' },
               }}
-              aria-label='切换相机'
+              aria-label={i18n.t('gis.photo_capture.k3')}
             >
               <SwitchCamera size={24} />
             </IconButton>
@@ -257,7 +259,7 @@ const PhotoCapture: React.FC<PhotoCaptureProps> = ({
             '&:active': { transform: 'scale(0.95)' },
             '&.Mui-disabled': { bgcolor: 'text.secondary', color: 'text.disabled' },
           }}
-          aria-label='拍照'
+          aria-label={i18n.t('gis.photo_capture.k4')}
         >
           <Camera size={32} />
         </IconButton>

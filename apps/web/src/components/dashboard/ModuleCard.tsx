@@ -8,6 +8,7 @@ import {
   type SxProps,
   type Theme,
 } from '@mui/material';
+import i18n from '@/i18n';
 import { ArrowRight } from 'lucide-react';
 import { ModuleStatusBadge, type ModuleStatusValue } from '@topems/shared-components';
 
@@ -50,10 +51,10 @@ const STATUS_CONFIG: Record<
   ModuleCardStatus,
   { color: 'success' | 'info' | 'warning' | 'default'; label: string }
 > = {
-  active: { color: 'success', label: '运行中' },
-  beta: { color: 'info', label: '测试版' },
-  coming: { color: 'warning', label: '即将上线' },
-  maintenance: { color: 'default', label: '维护中' },
+  active: { color: 'success', label: i18n.t('shared.module_card.k0') },
+  beta: { color: 'info', label: i18n.t('shared.module_card.k1') },
+  coming: { color: 'warning', label: i18n.t('shared.module_card.k2') },
+  maintenance: { color: 'default', label: i18n.t('shared.module_card.k3') },
 };
 
 const CARD_STYLE: SxProps<Theme> = {
@@ -135,7 +136,7 @@ const QuotaProgress: React.FC<{ quota: ModuleCardQuota }> = ({ quota }) => {
           variant='caption'
           color='text.secondary'
         >
-          {quota.label || '配额使用'}
+          {quota.label || i18n.t('shared.module_card.k4')}
         </Typography>
         <Typography
           variant='caption'
@@ -271,7 +272,7 @@ export const ModuleCard: React.FC<ModuleCardProps> = ({ item, onClick, size = 'm
           }}
           sx={{ fontSize: 12, py: 0.5, minHeight: 30 }}
         >
-          进入
+          {i18n.t('components.module_card.k0')}
         </Button>
       </Box>
     </Box>
@@ -359,7 +360,7 @@ export const ModuleCardV2: React.FC<ModuleCardV2Props> = ({ data, onClick }) => 
           }}
           sx={{ fontSize: 12, py: 0.5, minHeight: 30 }}
         >
-          进入
+          {i18n.t('components.module_card.k1')}
         </Button>
       </Box>
     </Box>

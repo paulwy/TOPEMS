@@ -7,21 +7,17 @@ import {
   DialogActions,
   Button,
 } from '@mui/material';
-import { useTranslation } from 'react-i18next';
-
+import i18n from '@/i18n';
 interface DictionaryExportModalProps {
   open: boolean;
   onClose: () => void;
   onExport: () => void;
 }
-
 const DictionaryExportModal: React.FC<DictionaryExportModalProps> = ({
   open,
   onClose,
   onExport,
 }) => {
-  const { t } = useTranslation();
-
   return (
     <Dialog
       open={open}
@@ -29,13 +25,13 @@ const DictionaryExportModal: React.FC<DictionaryExportModalProps> = ({
       maxWidth='sm'
       fullWidth
     >
-      <DialogTitle> {t('admin.dictionary_management.export_dictionary_items')} </DialogTitle>
+      <DialogTitle> {i18n.t('admin.dictionary_management.export_dictionary_items')} </DialogTitle>
       <DialogContent>
         <Typography
           variant='body2'
           color='text.secondary'
         >
-          {t('admin.dictionary_management_page.text_bbe5e7')}
+          {i18n.t('admin.dictionary_management_page.text_bbe5e7')}
         </Typography>
       </DialogContent>
       <DialogActions>
@@ -43,17 +39,16 @@ const DictionaryExportModal: React.FC<DictionaryExportModalProps> = ({
           variant='outlined'
           onClick={onClose}
         >
-          {t('admin.dictionary_management_page.text_625fb2')}
+          {i18n.t('admin.dictionary_management_page.text_625fb2')}
         </Button>
         <Button
           variant='contained'
           onClick={onExport}
         >
-          {t('admin.dictionary_management_page.text_3ca522')}
+          {i18n.t('admin.dictionary_management_page.text_3ca522')}
         </Button>
       </DialogActions>
     </Dialog>
   );
 };
-
 export default DictionaryExportModal;

@@ -2,14 +2,15 @@ import React from 'react';
 import { Chip, Box, Typography } from '@mui/material';
 import { FileText } from 'lucide-react';
 import type { EntitySchema } from '@/schema';
+import i18n from '@/i18n';
 
 type ExceptionType = 'timeout' | 'error' | 'stuck';
 type ExceptionStatus = 'pending' | 'processing' | 'resolved';
 
 const EXCEPTION_TYPE_LABELS: Record<ExceptionType, string> = {
-  timeout: '超时',
-  error: '错误',
-  stuck: '卡顿',
+  timeout: i18n.t('shared.monitor.k0'),
+  error: i18n.t('shared.monitor.k1'),
+  stuck: i18n.t('shared.monitor.k2'),
 };
 
 const EXCEPTION_TYPE_COLORS: Record<ExceptionType, 'warning' | 'error' | 'info'> = {
@@ -19,9 +20,9 @@ const EXCEPTION_TYPE_COLORS: Record<ExceptionType, 'warning' | 'error' | 'info'>
 };
 
 const STATUS_LABELS: Record<ExceptionStatus, string> = {
-  pending: '待处理',
-  processing: '处理中',
-  resolved: '已解决',
+  pending: i18n.t('shared.monitor.k3'),
+  processing: i18n.t('shared.monitor.k4'),
+  resolved: i18n.t('shared.monitor.k5'),
 };
 
 const STATUS_COLORS: Record<ExceptionStatus, 'warning' | 'info' | 'success'> = {
@@ -42,8 +43,8 @@ const statusOptions = Object.entries(STATUS_LABELS).map(([value, label]) => ({
 
 export const workflowMonitorSchema: EntitySchema = {
   entity: 'workflow-monitor',
-  title: '流程异常监控',
-  description: '监控工作流异常实例，支持重试和忽略操作',
+  title: i18n.t('shared.monitor.k6'),
+  description: i18n.t('shared.monitor.k7'),
 
   api: {
     module: 'workflow',
@@ -53,7 +54,7 @@ export const workflowMonitorSchema: EntitySchema = {
   fields: [
     {
       name: 'instanceId',
-      label: '实例ID',
+      label: i18n.t('shared.monitor.id_8'),
       type: 'text',
       readonly: true,
       listMinWidth: 200,
@@ -103,13 +104,13 @@ export const workflowMonitorSchema: EntitySchema = {
     },
     {
       name: 'workflowName',
-      label: '流程名称',
+      label: i18n.t('shared.monitor.k9'),
       type: 'text',
       readonly: true,
     },
     {
       name: 'currentNode',
-      label: '当前节点',
+      label: i18n.t('shared.monitor.k10'),
       type: 'text',
       readonly: true,
       renderCell: (row: Record<string, unknown>) =>
@@ -121,7 +122,7 @@ export const workflowMonitorSchema: EntitySchema = {
     },
     {
       name: 'exceptionType',
-      label: '异常类型',
+      label: i18n.t('shared.monitor.k11'),
       type: 'select',
       readonly: true,
       options: {
@@ -140,7 +141,7 @@ export const workflowMonitorSchema: EntitySchema = {
     },
     {
       name: 'exceptionDescription',
-      label: '异常描述',
+      label: i18n.t('shared.monitor.k12'),
       type: 'text',
       readonly: true,
       listMinWidth: 280,
@@ -162,7 +163,7 @@ export const workflowMonitorSchema: EntitySchema = {
     },
     {
       name: 'occurredAt',
-      label: '发生时间',
+      label: i18n.t('shared.monitor.k13'),
       type: 'datetime',
       readonly: true,
       renderCell: (row: Record<string, unknown>) =>
@@ -174,7 +175,7 @@ export const workflowMonitorSchema: EntitySchema = {
     },
     {
       name: 'status',
-      label: '状态',
+      label: i18n.t('shared.monitor.k14'),
       type: 'select',
       readonly: true,
       options: {
@@ -199,15 +200,15 @@ export const workflowMonitorSchema: EntitySchema = {
     filters: [
       {
         id: 'exceptionType',
-        label: '异常类型',
+        label: i18n.t('shared.monitor.k15'),
         type: 'select',
-        options: [{ label: '全部类型', value: 'all' }, ...exceptionTypeOptions],
+        options: [{ label: i18n.t('shared.monitor.k16'), value: 'all' }, ...exceptionTypeOptions],
       },
       {
         id: 'status',
-        label: '状态',
+        label: i18n.t('shared.monitor.k17'),
         type: 'select',
-        options: [{ label: '全部状态', value: 'all' }, ...statusOptions],
+        options: [{ label: i18n.t('shared.monitor.k18'), value: 'all' }, ...statusOptions],
       },
     ],
     statusBadge: {

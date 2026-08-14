@@ -10,6 +10,7 @@ import {
   DialogTitle,
   Button,
 } from '@mui/material';
+import i18n from '@/i18n';
 import { Clock, LogOut, Zap, AlertTriangle } from 'lucide-react';
 import { NotificationBell } from '../notification';
 import { ModeToggle } from '../theme/ModeToggle';
@@ -111,7 +112,7 @@ export const DashboardHeader: React.FC<DashboardHeaderProps> = ({ onLogout }) =>
                     display: { xs: 'none', md: 'inline' },
                   }}
                 >
-                  化工新材料数字化平台
+                  {i18n.t('components.dashboard_header.k0')}
                 </Typography>
               </Box>
             </Box>
@@ -170,7 +171,7 @@ export const DashboardHeader: React.FC<DashboardHeaderProps> = ({ onLogout }) =>
                   color: 'common.white',
                   fontSize: '0.875rem',
                   fontWeight: 600,
-                  boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
+                  boxShadow: `0 2px 8px ${designTokens.colors.action.selected}`,
                 }}
               >
                 {user?.username?.charAt(0).toUpperCase() || 'U'}
@@ -214,8 +215,8 @@ export const DashboardHeader: React.FC<DashboardHeaderProps> = ({ onLogout }) =>
                   color: 'error.main',
                 },
               }}
-              aria-label='退出登录'
-              title='退出登录'
+              aria-label={i18n.t('shared.dashboard_header.k0')}
+              title={i18n.t('shared.dashboard_header.k1')}
             >
               <LogOut style={{ width: 20, height: 20 }} />
             </IconButton>
@@ -265,7 +266,7 @@ export const DashboardHeader: React.FC<DashboardHeaderProps> = ({ onLogout }) =>
             variant='h6'
             sx={{ fontWeight: 600 }}
           >
-            确认退出登录？
+            {i18n.t('components.dashboard_header.k1')}
           </Typography>
         </DialogTitle>
         <DialogContent>
@@ -273,7 +274,7 @@ export const DashboardHeader: React.FC<DashboardHeaderProps> = ({ onLogout }) =>
             id='dashboard-logout-dialog-description'
             sx={{ color: 'text.secondary', pl: 9 }}
           >
-            退出后需要重新登录才能继续使用系统。您确定要退出吗？
+            {i18n.t('components.dashboard_header.k2')}
           </DialogContentText>
         </DialogContent>
         <DialogActions sx={{ px: 3, pb: 2.5, justifyContent: 'flex-end', gap: 1 }}>
@@ -287,7 +288,7 @@ export const DashboardHeader: React.FC<DashboardHeaderProps> = ({ onLogout }) =>
               px: 2.5,
             }}
           >
-            取消
+            {i18n.t('components.dashboard_header.k3')}
           </Button>
           <Button
             onClick={handleLogoutConfirm}
@@ -301,11 +302,11 @@ export const DashboardHeader: React.FC<DashboardHeaderProps> = ({ onLogout }) =>
               px: 3,
               boxShadow: '0 4px 12px rgba(239, 68, 68, 0.3)',
               '&:hover': {
-                boxShadow: '0 6px 16px rgba(239, 68, 68, 0.4)',
+                boxShadow: `0 6px 16px ${designTokens.colors.error[400]}`,
               },
             }}
           >
-            确认退出
+            {i18n.t('components.dashboard_header.k4')}
           </Button>
         </DialogActions>
       </Dialog>

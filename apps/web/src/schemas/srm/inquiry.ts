@@ -1,32 +1,33 @@
 import React from 'react';
 import type { EntitySchema } from '@/schema';
+import i18n from '@/i18n';
 
 const statusConfig: Record<
   string,
   { label: string; color: 'default' | 'primary' | 'success' | 'warning' | 'error' }
 > = {
-  draft: { label: '草稿', color: 'default' },
-  published: { label: '已发布', color: 'primary' },
-  in_progress: { label: '报价中', color: 'warning' },
-  closed: { label: '已关闭', color: 'default' },
-  awarded: { label: '已授标', color: 'success' },
-  cancelled: { label: '已取消', color: 'error' },
+  draft: { label: i18n.t('srm.inquiry.k0'), color: 'default' },
+  published: { label: i18n.t('srm.inquiry.k1'), color: 'primary' },
+  in_progress: { label: i18n.t('srm.inquiry.k2'), color: 'warning' },
+  closed: { label: i18n.t('srm.inquiry.k3'), color: 'default' },
+  awarded: { label: i18n.t('srm.inquiry.k4'), color: 'success' },
+  cancelled: { label: i18n.t('srm.inquiry.k5'), color: 'error' },
 };
 
 const urgencyConfig: Record<
   string,
   { label: string; color: 'default' | 'primary' | 'success' | 'warning' | 'error' }
 > = {
-  low: { label: '低', color: 'default' },
-  normal: { label: '普通', color: 'primary' },
-  high: { label: '紧急', color: 'warning' },
-  urgent: { label: '特急', color: 'error' },
+  low: { label: i18n.t('srm.inquiry.k6'), color: 'default' },
+  normal: { label: i18n.t('srm.inquiry.k7'), color: 'primary' },
+  high: { label: i18n.t('srm.inquiry.k8'), color: 'warning' },
+  urgent: { label: i18n.t('srm.inquiry.k9'), color: 'error' },
 };
 
 export const inquirySchema: EntitySchema = {
   entity: 'srm_inquiry',
-  title: '询报价管理',
-  description: '管理采购询价与供应商报价流程',
+  title: i18n.t('srm.inquiry.k10'),
+  description: i18n.t('srm.inquiry.k11'),
 
   api: {
     module: 'srm',
@@ -36,7 +37,7 @@ export const inquirySchema: EntitySchema = {
   fields: [
     {
       name: 'inquiry_no',
-      label: '询价单号',
+      label: i18n.t('srm.inquiry.k12'),
       type: 'text',
       required: true,
       readonlyOnEdit: true,
@@ -46,7 +47,7 @@ export const inquirySchema: EntitySchema = {
     },
     {
       name: 'title',
-      label: '标题',
+      label: i18n.t('srm.inquiry.k13'),
       type: 'text',
       required: true,
       sortable: true,
@@ -55,54 +56,54 @@ export const inquirySchema: EntitySchema = {
     },
     {
       name: 'category',
-      label: '询价类别',
+      label: i18n.t('srm.inquiry.k14'),
       type: 'select',
       required: true,
       defaultValue: 'raw_material',
       options: {
         type: 'static',
         options: [
-          { value: 'raw_material', label: '原材料' },
-          { value: 'component', label: '零部件' },
-          { value: 'equipment', label: '设备' },
-          { value: 'service', label: '服务' },
-          { value: 'packaging', label: '包装材料' },
-          { value: 'other', label: '其他' },
+          { value: 'raw_material', label: i18n.t('srm.inquiry.k15') },
+          { value: 'component', label: i18n.t('srm.inquiry.k16') },
+          { value: 'equipment', label: i18n.t('srm.inquiry.k17') },
+          { value: 'service', label: i18n.t('srm.inquiry.k18') },
+          { value: 'packaging', label: i18n.t('srm.inquiry.k19') },
+          { value: 'other', label: i18n.t('srm.inquiry.k20') },
         ],
       },
       listWidth: 100,
     },
     {
       name: 'urgency',
-      label: '紧急程度',
+      label: i18n.t('srm.inquiry.k21'),
       type: 'select',
       required: true,
       defaultValue: 'normal',
       options: {
         type: 'static',
         options: [
-          { value: 'low', label: '低' },
-          { value: 'normal', label: '普通' },
-          { value: 'high', label: '紧急' },
-          { value: 'urgent', label: '特急' },
+          { value: 'low', label: i18n.t('srm.inquiry.k22') },
+          { value: 'normal', label: i18n.t('srm.inquiry.k23') },
+          { value: 'high', label: i18n.t('srm.inquiry.k24') },
+          { value: 'urgent', label: i18n.t('srm.inquiry.k25') },
         ],
       },
       listWidth: 90,
     },
     {
       name: 'status',
-      label: '状态',
+      label: i18n.t('srm.inquiry.k26'),
       type: 'select',
       defaultValue: 'draft',
       options: {
         type: 'static',
         options: [
-          { value: 'draft', label: '草稿' },
-          { value: 'published', label: '已发布' },
-          { value: 'in_progress', label: '报价中' },
-          { value: 'closed', label: '已关闭' },
-          { value: 'awarded', label: '已授标' },
-          { value: 'cancelled', label: '已取消' },
+          { value: 'draft', label: i18n.t('srm.inquiry.k27') },
+          { value: 'published', label: i18n.t('srm.inquiry.k28') },
+          { value: 'in_progress', label: i18n.t('srm.inquiry.k29') },
+          { value: 'closed', label: i18n.t('srm.inquiry.k30') },
+          { value: 'awarded', label: i18n.t('srm.inquiry.k31') },
+          { value: 'cancelled', label: i18n.t('srm.inquiry.k32') },
         ],
       },
       listWidth: 100,
@@ -110,7 +111,7 @@ export const inquirySchema: EntitySchema = {
     },
     {
       name: 'quotation_count',
-      label: '报价数',
+      label: i18n.t('srm.inquiry.k33'),
       type: 'number',
       readonly: true,
       hideInForm: true,
@@ -118,7 +119,7 @@ export const inquirySchema: EntitySchema = {
     },
     {
       name: 'creator',
-      label: '创建人',
+      label: i18n.t('srm.inquiry.k34'),
       type: 'text',
       readonly: true,
       hideInForm: true,
@@ -126,20 +127,20 @@ export const inquirySchema: EntitySchema = {
     },
     {
       name: 'deadline',
-      label: '截止日期',
+      label: i18n.t('srm.inquiry.k35'),
       type: 'date',
       sortable: true,
       listWidth: 120,
     },
     {
       name: 'description',
-      label: '描述',
+      label: i18n.t('srm.inquiry.k36'),
       type: 'textarea',
       showInList: false,
     },
     {
       name: 'remarks',
-      label: '备注',
+      label: i18n.t('srm.inquiry.k37'),
       type: 'text',
       showInList: false,
     },
@@ -166,34 +167,34 @@ export const inquirySchema: EntitySchema = {
     filters: [
       {
         id: 'status',
-        label: '状态',
+        label: i18n.t('srm.inquiry.k38'),
         type: 'select',
         options: [
-          { label: '全部状态', value: 'all' },
+          { label: i18n.t('srm.inquiry.k39'), value: 'all' },
           ...Object.entries(statusConfig).map(([k, v]) => ({ label: v.label, value: k })),
         ],
       },
       {
         id: 'urgency',
-        label: '紧急程度',
+        label: i18n.t('srm.inquiry.k40'),
         type: 'select',
         options: [
-          { label: '全部', value: 'all' },
+          { label: i18n.t('srm.inquiry.k41'), value: 'all' },
           ...Object.entries(urgencyConfig).map(([k, v]) => ({ label: v.label, value: k })),
         ],
       },
       {
         id: 'category',
-        label: '询价类别',
+        label: i18n.t('srm.inquiry.k42'),
         type: 'select',
         options: [
-          { label: '全部', value: 'all' },
-          { label: '原材料', value: 'raw_material' },
-          { label: '零部件', value: 'component' },
-          { label: '设备', value: 'equipment' },
-          { label: '服务', value: 'service' },
-          { label: '包装材料', value: 'packaging' },
-          { label: '其他', value: 'other' },
+          { label: i18n.t('srm.inquiry.k43'), value: 'all' },
+          { label: i18n.t('srm.inquiry.k44'), value: 'raw_material' },
+          { label: i18n.t('srm.inquiry.k45'), value: 'component' },
+          { label: i18n.t('srm.inquiry.k46'), value: 'equipment' },
+          { label: i18n.t('srm.inquiry.k47'), value: 'service' },
+          { label: i18n.t('srm.inquiry.k48'), value: 'packaging' },
+          { label: i18n.t('srm.inquiry.k49'), value: 'other' },
         ],
       },
     ],
@@ -203,21 +204,21 @@ export const inquirySchema: EntitySchema = {
 
   formSections: [
     {
-      title: '基本信息',
+      title: i18n.t('srm.inquiry.k50'),
       fields: ['inquiry_no', 'title', 'category', 'urgency'],
     },
     {
-      title: '日期与状态',
+      title: i18n.t('srm.inquiry.k51'),
       fields: ['deadline', 'status'],
     },
     {
-      title: '描述与备注',
+      title: i18n.t('srm.inquiry.k52'),
       fields: ['description', 'remarks'],
     },
   ],
 
   formColCount: 2,
-  createTitle: '新增询价单',
-  editTitle: '编辑询价单',
-  detailTitle: '询价单详情',
+  createTitle: i18n.t('srm.inquiry.k53'),
+  editTitle: i18n.t('srm.inquiry.k54'),
+  detailTitle: i18n.t('srm.inquiry.k55'),
 };

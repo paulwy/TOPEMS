@@ -20,6 +20,7 @@ import { masterDataApi, type MasterDataRef } from '@/api/bff';
 
 
 import { QUERY_KEYS } from '@/lib/reactQuery';
+import i18n from '@/i18n';
 
 export interface MasterDataSelectorProps {
   /** 主数据域：material / customer / supplier / account_subject 等 */
@@ -49,8 +50,8 @@ export const MasterDataSelector: React.FC<MasterDataSelectorProps> = ({
   domain,
   value,
   onChange,
-  label = '选择主数据',
-  placeholder = '搜索编码或名称...',
+  label = i18n.t('shared.master_data_selector.k0'),
+  placeholder = i18n.t('components.master_data_selector.k0'),
   disabled = false,
   required = false,
   error = false,
@@ -71,12 +72,12 @@ export const MasterDataSelector: React.FC<MasterDataSelectorProps> = ({
   const selected = options.find((o) => o.master_data_id === value) ?? null;
 
   const domainLabel: Record<string, string> = {
-    material: '物料',
-    customer: '客户',
-    supplier: '供应商',
-    account_subject: '会计科目',
-    product: '产品',
-    employee: '员工',
+    material: i18n.t('shared.master_data_selector.k1'),
+    customer: i18n.t('shared.master_data_selector.k2'),
+    supplier: i18n.t('shared.master_data_selector.k3'),
+    account_subject: i18n.t('shared.master_data_selector.k4'),
+    product: i18n.t('shared.master_data_selector.k5'),
+    employee: i18n.t('shared.master_data_selector.k6'),
   };
 
   return (
@@ -164,7 +165,7 @@ export const MasterDataSelector: React.FC<MasterDataSelectorProps> = ({
           }}
         />
       )}
-      noOptionsText={isPending ? '加载中...' : '无匹配主数据'}
+      noOptionsText={isPending ? i18n.t('components.master_data_selector.k1') : i18n.t('shared.master_data_selector.k7')}
     />
   );
 };

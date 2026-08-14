@@ -22,6 +22,7 @@ import {
   Tooltip,
   Button,
 } from '@mui/material';
+import i18n from '@/i18n';
 import {
   Search,
   RefreshCw,
@@ -190,14 +191,14 @@ export const TreePageTemplate: React.FC<TreePageTemplateProps> = ({
   data,
   treeConfig,
   loading = false,
-  searchPlaceholder = '搜索...',
+  searchPlaceholder = i18n.t('components.tree_page_template.k0'),
   filterOptions,
   filterValue,
   onFilterChange,
   onSearch,
   onReset,
   onAdd,
-  addButtonText = '新增',
+  addButtonText = i18n.t('templates.tree_page_template.k0'),
   addButtonIcon,
   rowActions = [],
   onSelect,
@@ -366,7 +367,7 @@ export const TreePageTemplate: React.FC<TreePageTemplateProps> = ({
                   e.stopPropagation();
                   if (!node.disabled) toggleExpand(node.id);
                 }}
-                aria-label='展开'
+                aria-label={i18n.t('templates.tree_page_template.k1')}
               >
                 {isExpanded ? (
                   <ChevronDown sx={{ width: 16, height: 16 }} />
@@ -581,11 +582,11 @@ export const TreePageTemplate: React.FC<TreePageTemplateProps> = ({
         {/* 操作按钮 */}
         <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
           {showRefresh && (
-            <Tooltip title='刷新'>
+            <Tooltip title={i18n.t('templates.tree_page_template.k2')}>
               <IconButton
                 onClick={onRefresh}
                 disabled={loading}
-                aria-label='刷新'
+                aria-label={i18n.t('templates.tree_page_template.k3')}
               >
                 <RefreshCw
                   sx={{
@@ -697,14 +698,14 @@ export const TreePageTemplate: React.FC<TreePageTemplateProps> = ({
                     size='small'
                     onClick={handleSearch}
                   >
-                    搜索
+                    {i18n.t('components.tree_page_template.k0')}
                   </Button>
                   <Button
                     variant='outlined'
                     size='small'
                     onClick={handleReset}
                   >
-                    重置
+                    {i18n.t('components.tree_page_template.k1')}
                   </Button>
                 </Box>
               )}
@@ -733,7 +734,7 @@ export const TreePageTemplate: React.FC<TreePageTemplateProps> = ({
               ) : filteredData.length === 0 ? (
                 <EmptyState
                   emoji={emptyState?.emoji || '📂'}
-                  title={emptyState?.title || '暂无数据'}
+                  title={emptyState?.title || i18n.t('templates.tree_page_template.k4')}
                   description={emptyState?.description}
                   actionLabel={emptyState?.actionLabel}
                   onAction={emptyState?.onAction}
@@ -826,8 +827,8 @@ export const TreePageTemplate: React.FC<TreePageTemplateProps> = ({
               >
                 <EmptyState
                   emoji='👈'
-                  title='选择项目查看详情'
-                  description='从左侧列表中选择一个项目，查看详细信息'
+                  title={i18n.t('templates.tree_page_template.k5')}
+                  description={i18n.t('templates.tree_page_template.k6')}
                 />
               </Box>
             )}

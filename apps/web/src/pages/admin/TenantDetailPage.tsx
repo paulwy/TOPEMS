@@ -25,6 +25,7 @@ import {
   ListItemText,
   ListItemSecondaryAction,
 } from '@mui/material';
+import i18n from '@/i18n';
 import {
   Building2,
   Users,
@@ -70,31 +71,31 @@ const statusColors: Record<string, 'success' | 'warning' | 'error' | 'default'> 
 };
 
 const statusLabels: Record<string, string> = {
-  active: '已激活',
-  trial: '试用中',
-  suspended: '已停用',
-  deleted: '已删除',
+  active: i18n.t('pages.tenant_detail_page.k0'),
+  trial: i18n.t('pages.tenant_detail_page.k1'),
+  suspended: i18n.t('pages.tenant_detail_page.k2'),
+  deleted: i18n.t('pages.tenant_detail_page.k3'),
 };
 
 const planLabels: Record<string, string> = {
-  free: '免费版',
-  basic: '基础版',
-  professional: '专业版',
-  enterprise: '企业版',
+  free: i18n.t('pages.tenant_detail_page.k4'),
+  basic: i18n.t('pages.tenant_detail_page.k5'),
+  professional: i18n.t('pages.tenant_detail_page.k6'),
+  enterprise: i18n.t('pages.tenant_detail_page.k7'),
 };
 
 const roleLabels: Record<TenantRole, string> = {
-  owner: '所有者',
-  superadmin: '超级管理员',
-  admin: '管理员',
-  member: '成员',
-  guest: '访客',
+  owner: i18n.t('pages.tenant_detail_page.k8'),
+  superadmin: i18n.t('pages.tenant_detail_page.k9'),
+  admin: i18n.t('pages.tenant_detail_page.k10'),
+  member: i18n.t('pages.tenant_detail_page.k11'),
+  guest: i18n.t('pages.tenant_detail_page.k12'),
 };
 
 const userStatusLabels: Record<UserStatus, string> = {
-  active: '活跃',
-  invited: '已邀请',
-  suspended: '已停用',
+  active: i18n.t('pages.tenant_detail_page.k13'),
+  invited: i18n.t('pages.tenant_detail_page.k14'),
+  suspended: i18n.t('pages.tenant_detail_page.k15'),
 };
 
 const userStatusColors: Record<UserStatus, 'success' | 'warning' | 'error' | 'default'> = {
@@ -261,8 +262,8 @@ const TenantDetailPage: React.FC = () => {
   const handleRemoveMember = useCallback(
     (user: TenantUser) => {
       openConfirmDialog({
-        title: '确认移除成员',
-        message: `确定要移除成员"${user.email}"吗？`,
+        title: i18n.t('pages.tenant_detail_page.k16'),
+        message: `${i18n.t('pages.tenant_detail_page.k0')}${user.email}${i18n.t('pages.tenant_detail_page.k1')}`,
         danger: true,
         onConfirm: () => {
           if (!tenantId) return;
@@ -282,15 +283,15 @@ const TenantDetailPage: React.FC = () => {
     if (!stats || !tenant) return null;
 
     const statCards = [
-      { label: '总用户数', value: stats.total_users, icon: Users, color: 'primary' },
-      { label: '活跃用户', value: stats.active_users, icon: Activity, color: 'success' },
+      { label: i18n.t('pages.tenant_detail_page.k17'), value: stats.total_users, icon: Users, color: 'primary' },
+      { label: i18n.t('pages.tenant_detail_page.k18'), value: stats.active_users, icon: Activity, color: 'success' },
       {
-        label: '存储使用',
+        label: i18n.t('pages.tenant_detail_page.k19'),
         value: `${stats.storage_used_gb}/${tenant.settings.max_storage_gb}GB`,
         icon: HardDrive,
         color: 'warning',
       },
-      { label: '近30天登录', value: stats.last_30d_logins, icon: BarChart3, color: 'secondary' },
+      { label: i18n.t('pages.tenant_detail_page.30_20'), value: stats.last_30d_logins, icon: BarChart3, color: 'secondary' },
     ];
 
     return (
@@ -342,7 +343,7 @@ const TenantDetailPage: React.FC = () => {
               variant='h6'
               sx={{ fontWeight: 600, mb: 2 }}
             >
-              套餐配额
+              {i18n.t('pages.tenant_detail_page.k2')}
             </Typography>
             <List disablePadding>
               <ListItem sx={{ px: 0 }}>
@@ -352,8 +353,8 @@ const TenantDetailPage: React.FC = () => {
                   </Avatar>
                 </ListItemAvatar>
                 <ListItemText
-                  primary='用户配额'
-                  secondary={`当前 ${stats.total_users} / 上限 ${tenant.settings.max_users}`}
+                  primary={i18n.t('pages.tenant_detail_page.k21')}
+                  secondary={`${i18n.t('pages.tenant_detail_page.k3')} ${stats.total_users} ${i18n.t('pages.tenant_detail_page.k4')} ${tenant.settings.max_users}`}
                 />
                 <ListItemSecondaryAction>
                   <Typography
@@ -372,8 +373,8 @@ const TenantDetailPage: React.FC = () => {
                   </Avatar>
                 </ListItemAvatar>
                 <ListItemText
-                  primary='存储空间'
-                  secondary={`已用 ${stats.storage_used_gb}GB / 上限 ${tenant.settings.max_storage_gb}GB`}
+                  primary={i18n.t('pages.tenant_detail_page.k22')}
+                  secondary={`${i18n.t('pages.tenant_detail_page.k5')} ${stats.storage_used_gb}${i18n.t('pages.tenant_detail_page.gb_6')} ${tenant.settings.max_storage_gb}GB`}
                 />
                 <ListItemSecondaryAction>
                   <Typography
@@ -392,8 +393,8 @@ const TenantDetailPage: React.FC = () => {
                   </Avatar>
                 </ListItemAvatar>
                 <ListItemText
-                  primary='API 请求'
-                  secondary={`今日 ${stats.api_requests_today.toLocaleString()} / 上限 ${tenant.settings.max_api_requests_per_day.toLocaleString()}`}
+                  primary={i18n.t('pages.tenant_detail_page.api_7')}
+                  secondary={`${i18n.t('pages.tenant_detail_page.k8')} ${stats.api_requests_today.toLocaleString()} ${i18n.t('pages.tenant_detail_page.k9')} ${tenant.settings.max_api_requests_per_day.toLocaleString()}`}
                 />
                 <ListItemSecondaryAction>
                   <Typography
@@ -438,13 +439,13 @@ const TenantDetailPage: React.FC = () => {
           <Box
             sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}
           >
-            <Typography variant='h6'>成员管理</Typography>
+            <Typography variant='h6'>{i18n.t('pages.tenant_detail_page.k23')}</Typography>
             <Button
               variant='contained'
               startIcon={<UserPlus size={18} />}
               onClick={() => setShowInviteDialog(true)}
             >
-              邀请成员
+              {i18n.t('pages.tenant_detail_page.k10')}
             </Button>
           </Box>
         }
@@ -466,13 +467,13 @@ const TenantDetailPage: React.FC = () => {
                 variant='h6'
                 sx={{ fontWeight: 600 }}
               >
-                品牌设置
+                {i18n.t('pages.tenant_detail_page.k11')}
               </Typography>
             </Box>
             <List disablePadding>
               <ListItem sx={{ px: 0 }}>
                 <ListItemText
-                  primary='主色调'
+                  primary={i18n.t('pages.tenant_detail_page.k24')}
                   secondary={tenant.settings.branding.primary_color}
                 />
                 <Box
@@ -488,7 +489,7 @@ const TenantDetailPage: React.FC = () => {
               <ListItem sx={{ px: 0 }}>
                 <ListItemText
                   secondary={tenant.settings.branding.secondary_color}
-                  primary='辅助色'
+                  primary={i18n.t('pages.tenant_detail_page.k25')}
                 />
                 <Box
                   sx={{
@@ -502,8 +503,8 @@ const TenantDetailPage: React.FC = () => {
               <Divider component='li' />
               <ListItem sx={{ px: 0 }}>
                 <ListItemText
-                  primary='自定义域名'
-                  secondary={tenant.settings.branding.custom_domain || '未设置'}
+                  primary={i18n.t('pages.tenant_detail_page.k26')}
+                  secondary={tenant.settings.branding.custom_domain || i18n.t('pages.tenant_detail_page.k27')}
                 />
               </ListItem>
             </List>
@@ -517,12 +518,12 @@ const TenantDetailPage: React.FC = () => {
                 variant='h6'
                 sx={{ fontWeight: 600 }}
               >
-                安全设置
+                {i18n.t('pages.tenant_detail_page.k12')}
               </Typography>
             </Box>
             <List disablePadding>
               <ListItem sx={{ px: 0 }}>
-                <ListItemText primary='SSO 单点登录' />
+                <ListItemText primary={i18n.t('pages.tenant_detail_page.sso_13')} />
                 <Switch
                   checked={tenant.settings.security.sso_enabled}
                   disabled
@@ -530,7 +531,7 @@ const TenantDetailPage: React.FC = () => {
               </ListItem>
               <Divider component='li' />
               <ListItem sx={{ px: 0 }}>
-                <ListItemText primary='强制双因素认证' />
+                <ListItemText primary={i18n.t('pages.tenant_detail_page.k28')} />
                 <Switch
                   checked={tenant.settings.security.two_factor_required}
                   disabled
@@ -538,7 +539,7 @@ const TenantDetailPage: React.FC = () => {
               </ListItem>
               <Divider component='li' />
               <ListItem sx={{ px: 0 }}>
-                <ListItemText primary='IP 白名单' />
+                <ListItemText primary={i18n.t('pages.tenant_detail_page.ip_14')} />
                 <Switch
                   checked={tenant.settings.security.ip_whitelist_enabled}
                   disabled
@@ -547,8 +548,8 @@ const TenantDetailPage: React.FC = () => {
               <Divider component='li' />
               <ListItem sx={{ px: 0 }}>
                 <ListItemText
-                  primary='会话超时时间'
-                  secondary={`${tenant.settings.security.session_timeout_minutes} 分钟`}
+                  primary={i18n.t('pages.tenant_detail_page.k29')}
+                  secondary={`${tenant.settings.security.session_timeout_minutes} ${i18n.t('pages.tenant_detail_page.k15')}`}
                 />
               </ListItem>
             </List>
@@ -563,7 +564,7 @@ const TenantDetailPage: React.FC = () => {
                   variant='h6'
                   sx={{ fontWeight: 600 }}
                 >
-                  功能开关
+                  {i18n.t('pages.tenant_detail_page.k16')}
                 </Typography>
               </Box>
               <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 2 }}>
@@ -621,7 +622,7 @@ const TenantDetailPage: React.FC = () => {
                 variant='h6'
                 sx={{ fontWeight: 600 }}
               >
-                当前订阅
+                {i18n.t('pages.tenant_detail_page.k17')}
               </Typography>
             </Box>
             <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 2 }}>
@@ -630,7 +631,7 @@ const TenantDetailPage: React.FC = () => {
                   variant='body2'
                   color='text.secondary'
                 >
-                  套餐
+                  {i18n.t('pages.tenant_detail_page.k18')}
                 </Typography>
                 <Typography
                   variant='h6'
@@ -644,7 +645,7 @@ const TenantDetailPage: React.FC = () => {
                   variant='body2'
                   color='text.secondary'
                 >
-                  下次计费
+                  {i18n.t('pages.tenant_detail_page.k19')}
                 </Typography>
                 <Typography
                   variant='h6'
@@ -658,10 +659,10 @@ const TenantDetailPage: React.FC = () => {
                   variant='body2'
                   color='text.secondary'
                 >
-                  状态
+                  {i18n.t('pages.tenant_detail_page.k20')}
                 </Typography>
                 <Chip
-                  label='正常'
+                  label={i18n.t('pages.tenant_detail_page.k30')}
                   color='success'
                   size='small'
                 />
@@ -679,7 +680,7 @@ const TenantDetailPage: React.FC = () => {
             delete: async () => {},
           }}
           breadcrumbs={[]}
-          headerContent={<Typography variant='h6'>账单历史</Typography>}
+          headerContent={<Typography variant='h6'>{i18n.t('pages.tenant_detail_page.k31')}</Typography>}
         />
       </Box>
     );
@@ -717,25 +718,25 @@ const TenantDetailPage: React.FC = () => {
     () => [
       {
         id: 'overview',
-        label: '概览',
+        label: i18n.t('pages.tenant_detail_page.k32'),
         icon: <BarChart3 size={18} />,
         content: overviewContent,
       },
       {
         id: 'members',
-        label: '成员',
+        label: i18n.t('pages.tenant_detail_page.k33'),
         icon: <Users size={18} />,
         content: membersContent,
       },
       {
         id: 'settings',
-        label: '配置',
+        label: i18n.t('pages.tenant_detail_page.k34'),
         icon: <Settings size={18} />,
         content: settingsContent,
       },
       {
         id: 'billing',
-        label: '计费',
+        label: i18n.t('pages.tenant_detail_page.k35'),
         icon: <CreditCard size={18} />,
         content: billingContent,
       },
@@ -760,7 +761,7 @@ const TenantDetailPage: React.FC = () => {
       <DetailPageTemplate
         title={tenant.name}
         subtitle={tenant.slug}
-        detailItemName={tenant?.name || tenant?.slug || '租户详情'}
+        detailItemName={tenant?.name || tenant?.slug || i18n.t('pages.tenant_detail_page.k36')}
         loading={loading}
         backHref={ADMIN_PATHS.tenant}
         infoCard={infoCard}
@@ -778,40 +779,40 @@ const TenantDetailPage: React.FC = () => {
         maxWidth='sm'
         fullWidth
       >
-        <DialogTitle>邀请成员</DialogTitle>
+        <DialogTitle>{i18n.t('pages.tenant_detail_page.k37')}</DialogTitle>
         <DialogContent>
           <Box sx={{ pt: 2, display: 'flex', flexDirection: 'column', gap: 2 }}>
             <TextField
-              label='邮箱地址'
+              label={i18n.t('pages.tenant_detail_page.k38')}
               value={inviteForm.email}
               onChange={(e) => setInviteForm({ ...inviteForm, email: e.target.value })}
               fullWidth
               type='email'
             />
             <FormControl fullWidth>
-              <InputLabel>角色</InputLabel>
+              <InputLabel>{i18n.t('pages.tenant_detail_page.k39')}</InputLabel>
               <Select
                 value={inviteForm.role}
-                label='角色'
+                label={i18n.t('pages.tenant_detail_page.k40')}
                 onChange={(e) =>
                   setInviteForm({ ...inviteForm, role: e.target.value as TenantRole })
                 }
               >
-                <MenuItem value='owner'>所有者</MenuItem>
-                <MenuItem value='admin'>管理员</MenuItem>
-                <MenuItem value='member'>成员</MenuItem>
-                <MenuItem value='guest'>访客</MenuItem>
+                <MenuItem value='owner'>{i18n.t('pages.tenant_detail_page.k41')}</MenuItem>
+                <MenuItem value='admin'>{i18n.t('pages.tenant_detail_page.k42')}</MenuItem>
+                <MenuItem value='member'>{i18n.t('pages.tenant_detail_page.k43')}</MenuItem>
+                <MenuItem value='guest'>{i18n.t('pages.tenant_detail_page.k44')}</MenuItem>
               </Select>
             </FormControl>
           </Box>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setShowInviteDialog(false)}>取消</Button>
+          <Button onClick={() => setShowInviteDialog(false)}>{i18n.t('pages.tenant_detail_page.k45')}</Button>
           <Button
             variant='contained'
             onClick={handleInviteMember}
           >
-            发送邀请
+            {i18n.t('pages.tenant_detail_page.k21')}
           </Button>
         </DialogActions>
       </Dialog>

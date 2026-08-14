@@ -1,21 +1,17 @@
 import React from 'react';
 import { Box, Typography, Button } from '@mui/material';
 import { UserPlus } from 'lucide-react';
-import { useTranslation } from 'react-i18next';
 import CrudPage, { type CrudApiAdapter } from '@/components/templates/CrudPage';
 import { tenantUserSchema } from '@/schemas/admin';
 import { tenantApi } from '@/api/tenant';
 import type { TenantUser, TenantRole } from '@/api/tenant/types';
-
+import i18n from '@/i18n';
 interface TenantMembersTabProps {
   users: TenantUser[];
   tenantId?: string;
   onInviteClick: () => void;
 }
-
 const TenantMembersTab: React.FC<TenantMembersTabProps> = ({ users, tenantId, onInviteClick }) => {
-  const { t } = useTranslation();
-
   return (
     <CrudPage
       schema={tenantUserSchema}
@@ -39,18 +35,17 @@ const TenantMembersTab: React.FC<TenantMembersTabProps> = ({ users, tenantId, on
       breadcrumbs={[]}
       headerContent={
         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-          <Typography variant='h6'> {t('admin.tenant_detail.member_management')} </Typography>
+          <Typography variant='h6'> {i18n.t('admin.tenant_detail.member_management')} </Typography>
           <Button
             variant='contained'
             startIcon={<UserPlus size={18} />}
             onClick={onInviteClick}
           >
-            {t('admin.tenant_detail_page.text_e39cf1')}
+            {i18n.t('admin.tenant_detail_page.text_e39cf1')}
           </Button>
         </Box>
       }
     />
   );
 };
-
 export default TenantMembersTab;

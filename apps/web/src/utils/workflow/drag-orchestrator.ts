@@ -22,6 +22,7 @@
  */
 
 import { NodeType, type WorkflowNode, type NodePosition } from './workflow-editor';
+import i18n from '@/i18n';
 
 // ==================== 枚举 ====================
 
@@ -273,14 +274,14 @@ export class DragOrchestrator {
   }
 
   private explainSuggestion(sourceType: string, targetType: string): string {
-    if (sourceType === NodeType.START) return '开始节点通常连接第一个执行节点';
-    if (targetType === NodeType.END) return '流程末端建议连接结束节点';
-    if (sourceType === NodeType.DECISION) return '决策节点连接后续分支';
+    if (sourceType === NodeType.START) return i18n.t('shared.drag-orchestrator.k0');
+    if (targetType === NodeType.END) return i18n.t('shared.drag-orchestrator.k1');
+    if (sourceType === NodeType.DECISION) return i18n.t('shared.drag-orchestrator.k2');
     if (sourceType === NodeType.HTTPREQUEST && targetType === NodeType.TRANSFORM)
-      return 'HTTP 请求结果通常需要转换处理';
+      return i18n.t('shared.drag-orchestrator.http_0');
     if (sourceType === NodeType.DATABASEQUERY && targetType === NodeType.AGGREGATE)
-      return '数据库查询结果适合聚合统计';
-    return '节点类型兼容，建议连接';
+      return i18n.t('shared.drag-orchestrator.k3');
+    return i18n.t('shared.drag-orchestrator.k4');
   }
 
   autoArrange(nodes: WorkflowNode[]): WorkflowNode[] {

@@ -9,6 +9,7 @@ import { accountApi } from '@/api/finance';
 import { useNotification } from './useNotification';
 
 import { CACHE_DURATIONS, QUERY_KEYS } from '@/lib/reactQuery';
+import i18n from '@/i18n';
 
 // ============================================
 // 一、科目管理Hook
@@ -111,10 +112,10 @@ export const useCreateAccount = () => {
   exact: false,
   refetchType: 'active',
 });
-      success('科目创建成功');
+      success(i18n.t('shared.use_finance.k0'));
     },
     onError: (error) => {
-      notifyError(extractErrorMessage(error, '科目创建失败'));
+      notifyError(extractErrorMessage(error, i18n.t('shared.use_finance.k1')));
     },
   });
 };
@@ -138,10 +139,10 @@ export const useUpdateAccount = () => {
   exact: false,
   refetchType: 'active',
 });
-      success('科目更新成功');
+      success(i18n.t('shared.use_finance.k2'));
     },
     onError: (error) => {
-      notifyError(extractErrorMessage(error, '科目更新失败'));
+      notifyError(extractErrorMessage(error, i18n.t('shared.use_finance.k3')));
     },
   });
 };
@@ -164,10 +165,10 @@ export const useDeleteAccount = () => {
   exact: false,
   refetchType: 'active',
 });
-      success('科目删除成功');
+      success(i18n.t('shared.use_finance.k4'));
     },
     onError: (error) => {
-      notifyError(extractErrorMessage(error, '科目删除失败'));
+      notifyError(extractErrorMessage(error, i18n.t('shared.use_finance.k5')));
     },
   });
 };
@@ -201,10 +202,10 @@ export const useSetOpeningBalance = () => {
   exact: false,
   refetchType: 'active',
 });
-      success('期初余额设置成功');
+      success(i18n.t('shared.use_finance.k6'));
     },
     onError: (error) => {
-      notifyError(extractErrorMessage(error, '期初余额设置失败'));
+      notifyError(extractErrorMessage(error, i18n.t('shared.use_finance.k7')));
     },
   });
 };
@@ -228,10 +229,10 @@ export const useCarryForwardOpeningBalance = () => {
   exact: false,
   refetchType: 'active',
 });
-      success('期初余额结转成功');
+      success(i18n.t('shared.use_finance.k8'));
     },
     onError: (error) => {
-      notifyError(extractErrorMessage(error, '期初余额结转失败'));
+      notifyError(extractErrorMessage(error, i18n.t('shared.use_finance.k9')));
     },
   });
 };

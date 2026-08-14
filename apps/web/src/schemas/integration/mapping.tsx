@@ -8,15 +8,16 @@
 import React from 'react';
 import { Box, Chip, Typography } from '@mui/material';
 import type { EntitySchema, SchemaField } from '@/schema';
+import i18n from '@/i18n';
 
 export type MappingType = 'field' | 'transform' | 'filter' | 'validate';
 export type MappingStatus = 'active' | 'inactive' | 'draft';
 
 export const MAPPING_TYPE_LABELS: Record<MappingType, string> = {
-  field: '字段映射',
-  transform: '数据转换',
-  filter: '数据过滤',
-  validate: '数据验证',
+  field: i18n.t('shared.mapping.k0'),
+  transform: i18n.t('shared.mapping.k1'),
+  filter: i18n.t('shared.mapping.k2'),
+  validate: i18n.t('shared.mapping.k3'),
 };
 
 export const MAPPING_TYPE_COLORS: Record<
@@ -30,9 +31,9 @@ export const MAPPING_TYPE_COLORS: Record<
 };
 
 export const MAPPING_STATUS_LABELS: Record<MappingStatus, string> = {
-  active: '启用',
-  inactive: '停用',
-  draft: '草稿',
+  active: i18n.t('shared.mapping.k4'),
+  inactive: i18n.t('shared.mapping.k5'),
+  draft: i18n.t('shared.mapping.k6'),
 };
 
 export const MAPPING_STATUS_COLORS: Record<MappingStatus, 'success' | 'default' | 'warning'> = {
@@ -44,7 +45,7 @@ export const MAPPING_STATUS_COLORS: Record<MappingStatus, 'success' | 'default' 
 const mappingFields: SchemaField[] = [
   {
     name: 'name',
-    label: '映射名称',
+    label: i18n.t('shared.mapping.k7'),
     type: 'text',
     required: true,
     sortable: true,
@@ -68,13 +69,13 @@ const mappingFields: SchemaField[] = [
   },
   {
     name: 'description',
-    label: '描述',
+    label: i18n.t('shared.mapping.k8'),
     type: 'textarea',
     showInList: false,
   },
   {
     name: 'type',
-    label: '类型',
+    label: i18n.t('shared.mapping.k9'),
     type: 'select',
     required: true,
     listWidth: 110,
@@ -98,7 +99,7 @@ const mappingFields: SchemaField[] = [
   },
   {
     name: 'source',
-    label: '源表',
+    label: i18n.t('shared.mapping.k10'),
     type: 'text',
     listWidth: 140,
     renderCell: (row: Record<string, unknown>) => (
@@ -112,7 +113,7 @@ const mappingFields: SchemaField[] = [
   },
   {
     name: 'target',
-    label: '目标表',
+    label: i18n.t('shared.mapping.k11'),
     type: 'text',
     listWidth: 140,
     renderCell: (row: Record<string, unknown>) => (
@@ -126,7 +127,7 @@ const mappingFields: SchemaField[] = [
   },
   {
     name: 'fieldCount',
-    label: '字段数',
+    label: i18n.t('shared.mapping.k12'),
     type: 'number',
     align: 'center',
     listWidth: 90,
@@ -141,7 +142,7 @@ const mappingFields: SchemaField[] = [
   },
   {
     name: 'status',
-    label: '状态',
+    label: i18n.t('shared.mapping.k13'),
     type: 'select',
     listWidth: 100,
     options: {
@@ -165,7 +166,7 @@ const mappingFields: SchemaField[] = [
   },
   {
     name: 'lastSyncTime',
-    label: '最后同步',
+    label: i18n.t('shared.mapping.k14'),
     type: 'datetime',
     listWidth: 160,
     renderCell: (row: Record<string, unknown>) => (
@@ -181,8 +182,8 @@ const mappingFields: SchemaField[] = [
 
 export const integrationMappingSchema: EntitySchema = {
   entity: 'integration_mapping',
-  title: '数据映射',
-  description: '管理数据映射规则和转换逻辑',
+  title: i18n.t('shared.mapping.k15'),
+  description: i18n.t('shared.mapping.k16'),
 
   api: {
     module: 'integration',
@@ -198,10 +199,10 @@ export const integrationMappingSchema: EntitySchema = {
     filters: [
       {
         id: 'type',
-        label: '类型',
+        label: i18n.t('shared.mapping.k17'),
         type: 'select',
         options: [
-          { label: '全部', value: 'all' },
+          { label: i18n.t('shared.mapping.k18'), value: 'all' },
           ...Object.entries(MAPPING_TYPE_LABELS).map(([value, label]) => ({
             label,
             value,
@@ -210,10 +211,10 @@ export const integrationMappingSchema: EntitySchema = {
       },
       {
         id: 'status',
-        label: '状态',
+        label: i18n.t('shared.mapping.k19'),
         type: 'select',
         options: [
-          { label: '全部', value: 'all' },
+          { label: i18n.t('shared.mapping.k20'), value: 'all' },
           ...Object.entries(MAPPING_STATUS_LABELS).map(([value, label]) => ({
             label,
             value,
@@ -227,21 +228,21 @@ export const integrationMappingSchema: EntitySchema = {
 
   formSections: [
     {
-      title: '基本信息',
+      title: i18n.t('shared.mapping.k21'),
       fields: ['name', 'description', 'type', 'status'],
     },
     {
-      title: '映射配置',
+      title: i18n.t('shared.mapping.k22'),
       fields: ['source', 'target', 'fieldCount'],
     },
     {
-      title: '同步信息',
+      title: i18n.t('shared.mapping.k23'),
       fields: ['lastSyncTime'],
     },
   ],
 
   formColCount: 2,
-  createTitle: '新建映射规则',
-  editTitle: '编辑映射规则',
-  detailTitle: '映射规则详情',
+  createTitle: i18n.t('shared.mapping.k24'),
+  editTitle: i18n.t('shared.mapping.k25'),
+  detailTitle: i18n.t('shared.mapping.k26'),
 };

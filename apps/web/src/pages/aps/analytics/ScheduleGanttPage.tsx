@@ -1,4 +1,5 @@
 import { designTokens, semanticTokens } from '@topems/tokens';
+import i18n from '@/i18n';
 /**
  * 排程甘特图分析页
  *
@@ -19,17 +20,15 @@ import {
   Tooltip,
   Legend,
 } from 'recharts';
-
 const mockSchedules = [
-  { name: 'SCH-001 工单A', start: 1, duration: 5, status: 'completed' },
-  { name: 'SCH-002 工单B', start: 3, duration: 4, status: 'completed' },
-  { name: 'SCH-003 工单C', start: 6, duration: 6, status: 'running' },
-  { name: 'SCH-004 工单D', start: 8, duration: 3, status: 'released' },
-  { name: 'SCH-005 工单E', start: 10, duration: 5, status: 'pending' },
-  { name: 'SCH-006 工单F', start: 12, duration: 4, status: 'pending' },
-  { name: 'SCH-007 工单G', start: 14, duration: 7, status: 'pending' },
+  { name: i18n.t('pages.schedule_gantt_page.sch001a_0'), start: 1, duration: 5, status: 'completed' },
+  { name: i18n.t('pages.schedule_gantt_page.sch002b_1'), start: 3, duration: 4, status: 'completed' },
+  { name: i18n.t('pages.schedule_gantt_page.sch003c_2'), start: 6, duration: 6, status: 'running' },
+  { name: i18n.t('pages.schedule_gantt_page.sch004d_3'), start: 8, duration: 3, status: 'released' },
+  { name: i18n.t('pages.schedule_gantt_page.sch005e_4'), start: 10, duration: 5, status: 'pending' },
+  { name: i18n.t('pages.schedule_gantt_page.sch006f_5'), start: 12, duration: 4, status: 'pending' },
+  { name: i18n.t('pages.schedule_gantt_page.sch007g_6'), start: 14, duration: 7, status: 'pending' },
 ];
-
 const STATUS_COLORS: Record<string, string> = {
   completed: designTokens.colors.success.dark,
   running: designTokens.colors.primary.main,
@@ -37,7 +36,6 @@ const STATUS_COLORS: Record<string, string> = {
   pending: 'colors.grey.400',
   cancelled: designTokens.colors.error.main,
 };
-
 export default function ScheduleGanttPage() {
   const data = useMemo(() => {
     return mockSchedules.map((s) => ({
@@ -47,11 +45,9 @@ export default function ScheduleGanttPage() {
       offset: s.start,
     }));
   }, []);
-
   const totalDuration = useMemo(() => {
     return Math.max(...data.map((d) => d.end));
   }, [data]);
-
   const completedCount = useMemo(
     () => data.filter((d) => d.status === 'completed').length,
     [data],
@@ -60,34 +56,31 @@ export default function ScheduleGanttPage() {
     () => data.filter((d) => d.status === 'running').length,
     [data],
   );
-
   return (
     <div className='space-y-4 p-4'>
       <div className='flex items-center justify-between'>
-        <h1 className='text-2xl font-bold'>排程甘特图</h1>
-        <span className='text-sm text-gray-500'>排程执行时间线视图</span>
+        <h1 className='text-2xl font-bold'>{i18n.t('aps.schedule_gantt_page.k0')}</h1>
+        <span className='text-sm text-gray-500'>{i18n.t('aps.schedule_gantt_page.k1')}</span>
       </div>
       <p className='text-sm text-gray-600'>
-        以甘特图形式展示各排程任务的计划起止时间与执行状态，直观呈现资源占用与排程冲突。
+        {i18n.t('pages.schedule_gantt_page.k0')}
       </p>
-
       <div className='grid grid-cols-1 gap-4 md:grid-cols-3'>
         <div className='rounded-lg border p-4'>
-          <p className='text-sm text-gray-600'>排程总数</p>
+          <p className='text-sm text-gray-600'>{i18n.t('aps.schedule_gantt_page.k2')}</p>
           <p className='mt-1 text-3xl font-bold text-blue-600'>{data.length}</p>
         </div>
         <div className='rounded-lg border p-4'>
-          <p className='text-sm text-gray-600'>已完成</p>
+          <p className='text-sm text-gray-600'>{i18n.t('aps.schedule_gantt_page.k3')}</p>
           <p className='mt-1 text-3xl font-bold text-green-600'>{completedCount}</p>
         </div>
         <div className='rounded-lg border p-4'>
-          <p className='text-sm text-gray-600'>进行中</p>
+          <p className='text-sm text-gray-600'>{i18n.t('aps.schedule_gantt_page.k4')}</p>
           <p className='mt-1 text-3xl font-bold text-blue-600'>{runningCount}</p>
         </div>
       </div>
-
       <div className='rounded-lg border p-4'>
-        <h3 className='mb-2 font-semibold'>排程甘特图（天数）</h3>
+        <h3 className='mb-2 font-semibold'>{i18n.t('aps.schedule_gantt_page.k5')}</h3>
         <ResponsiveContainer
           width='100%'
           height={360}
@@ -102,7 +95,7 @@ export default function ScheduleGanttPage() {
               type='number'
               domain={[0, totalDuration + 2]}
               fontSize={11}
-              label={{ value: '天数', position: 'insideBottom', offset: -5 }}
+              label={{ value: i18n.t('aps.schedule_gantt_page.k6'), position: 'insideBottom', offset: -5 }}
             />
             <YAxis
               type='category'
@@ -112,14 +105,14 @@ export default function ScheduleGanttPage() {
             />
             <Tooltip
               formatter={(value, name) => {
-                if (name === '工期') return [`${value} 天`, name];
+                if (name === i18n.t('aps.schedule_gantt_page.k7')) return [`${value}${i18n.t('pages.schedule_gantt_page.k7')}`, name];
                 return [value, name];
               }}
             />
             <Legend />
             <Bar
               dataKey='duration'
-              name='工期'
+              name={i18n.t('aps.schedule_gantt_page.k8')}
               stackId='gantt'
               barSize={24}
             >
@@ -133,7 +126,6 @@ export default function ScheduleGanttPage() {
             </Bar>
           </BarChart>
         </ResponsiveContainer>
-
         <div className='mt-4 flex flex-wrap gap-4'>
           {Object.entries(STATUS_COLORS).map(([status, color]) => (
             <div

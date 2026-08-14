@@ -1,6 +1,7 @@
 import React, { useState, useCallback } from 'react';
 import { IconButton, InputAdornment, TextField } from '@mui/material';
 import { Search, Send } from 'lucide-react';
+import i18n from '@/i18n';
 
 interface AICopilotSearchBoxProps {
   onSubmit: (query: string) => void;
@@ -20,7 +21,7 @@ export const AICopilotSearchBox: React.FC<AICopilotSearchBoxProps> = ({ onSubmit
     <TextField
       fullWidth
       size='small'
-      placeholder='搜索或向 AI 提问...'
+      placeholder={i18n.t('components.ai_copilot_search_box.ai_0')}
       value={query}
       onChange={(event) => setQuery(event.target.value)}
       onKeyDown={(event) => {
@@ -41,7 +42,7 @@ export const AICopilotSearchBox: React.FC<AICopilotSearchBoxProps> = ({ onSubmit
               <IconButton
                 size='small'
                 onClick={submit}
-                aria-label='发送'
+                aria-label={i18n.t('components.ai_copilot_search_box.k0')}
               >
                 <Send style={{ width: 16, height: 16 }} />
               </IconButton>

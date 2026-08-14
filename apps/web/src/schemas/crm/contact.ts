@@ -2,6 +2,7 @@ import { z } from 'zod';
 import type { EntitySchema } from '@/schema';
 import { commonAuditSchema } from './_shared';
 import { approvalStatus } from './customer';
+import i18n from '@/i18n';
 
 export const contactStatus = z.enum(['active', 'inactive']);
 
@@ -30,8 +31,8 @@ export type UpdateContactRequest = z.infer<typeof updateContactSchema>;
 
 export const contactSchema: EntitySchema<Contact> = {
   entity: 'crm_contact',
-  title: '联系人管理',
-  description: '管理联系人信息，包括姓名、联系方式、职位等',
+  title: i18n.t('shared.contact.k0'),
+  description: i18n.t('shared.contact.k1'),
   softDelete: true,
   actions: ['create', 'edit', 'detail', 'delete'],
 
@@ -43,7 +44,7 @@ export const contactSchema: EntitySchema<Contact> = {
   fields: [
     {
       name: 'firstName',
-      label: '名',
+      label: i18n.t('shared.contact.k2'),
       type: 'text',
       required: true,
       listWidth: 80,
@@ -51,49 +52,49 @@ export const contactSchema: EntitySchema<Contact> = {
     },
     {
       name: 'lastName',
-      label: '姓',
+      label: i18n.t('shared.contact.k3'),
       type: 'text',
       listWidth: 80,
       validation: [{ type: 'maxLength', value: 100 }],
     },
     {
       name: 'email',
-      label: '邮箱',
+      label: i18n.t('shared.contact.k4'),
       type: 'text',
       listWidth: 160,
       validation: [{ type: 'maxLength', value: 100 }],
     },
     {
       name: 'phone',
-      label: '电话',
+      label: i18n.t('shared.contact.k5'),
       type: 'text',
       listWidth: 120,
       validation: [{ type: 'maxLength', value: 50 }],
     },
     {
       name: 'position',
-      label: '职位',
+      label: i18n.t('shared.contact.k6'),
       type: 'text',
       listWidth: 120,
       validation: [{ type: 'maxLength', value: 100 }],
     },
     {
       name: 'customerId',
-      label: '客户ID',
+      label: i18n.t('shared.contact.id_7'),
       type: 'text',
       showInList: false,
       showInDetail: false,
     },
     {
       name: 'status',
-      label: '状态',
+      label: i18n.t('shared.contact.k8'),
       type: 'select',
       defaultValue: 'active',
       options: {
         type: 'static',
         options: [
-          { value: 'active', label: '活跃' },
-          { value: 'inactive', label: '非活跃' },
+          { value: 'active', label: i18n.t('shared.contact.k9') },
+          { value: 'inactive', label: i18n.t('shared.contact.k10') },
         ],
       },
       listWidth: 100,
@@ -101,30 +102,30 @@ export const contactSchema: EntitySchema<Contact> = {
     },
     {
       name: 'approvalStatus',
-      label: '审批状态',
+      label: i18n.t('shared.contact.k11'),
       type: 'select',
       defaultValue: 'none',
       readonly: true,
       options: {
         type: 'static',
         options: [
-          { value: 'none', label: '未发起' },
-          { value: 'pending', label: '审批中' },
-          { value: 'approved', label: '已通过' },
-          { value: 'rejected', label: '已驳回' },
+          { value: 'none', label: i18n.t('shared.contact.k12') },
+          { value: 'pending', label: i18n.t('shared.contact.k13') },
+          { value: 'approved', label: i18n.t('shared.contact.k14') },
+          { value: 'rejected', label: i18n.t('shared.contact.k15') },
         ],
       },
       listWidth: 100,
     },
     {
       name: 'notes',
-      label: '备注',
+      label: i18n.t('shared.contact.k16'),
       type: 'textarea',
       showInList: false,
     },
     {
       name: 'createdAt',
-      label: '创建时间',
+      label: i18n.t('shared.contact.k17'),
       type: 'datetime',
       readonly: true,
       listWidth: 160,
@@ -142,19 +143,19 @@ export const contactSchema: EntitySchema<Contact> = {
         inactive: 'default',
       },
       labelMap: {
-        active: '活跃',
-        inactive: '非活跃',
+        active: i18n.t('shared.contact.k18'),
+        inactive: i18n.t('shared.contact.k19'),
       },
     },
     filters: [
       {
         id: 'status',
-        label: '状态',
+        label: i18n.t('shared.contact.k20'),
         type: 'select',
         options: [
-          { label: '全部', value: 'all' },
-          { label: '活跃', value: 'active' },
-          { label: '非活跃', value: 'inactive' },
+          { label: i18n.t('shared.contact.k21'), value: 'all' },
+          { label: i18n.t('shared.contact.k22'), value: 'active' },
+          { label: i18n.t('shared.contact.k23'), value: 'inactive' },
         ],
       },
     ],
@@ -162,17 +163,17 @@ export const contactSchema: EntitySchema<Contact> = {
 
   formSections: [
     {
-      title: '基本信息',
+      title: i18n.t('shared.contact.k24'),
       fields: ['firstName', 'lastName', 'email', 'phone', 'position', 'customerId'],
     },
     {
-      title: '其他',
+      title: i18n.t('shared.contact.k25'),
       fields: ['status', 'notes'],
     },
   ],
 
   formColCount: 2,
-  createTitle: '新增联系人',
-  editTitle: '编辑联系人',
-  detailTitle: '联系人详情',
+  createTitle: i18n.t('shared.contact.k26'),
+  editTitle: i18n.t('shared.contact.k27'),
+  detailTitle: i18n.t('shared.contact.k28'),
 };

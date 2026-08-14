@@ -2,11 +2,12 @@ import type { EntitySchema } from '@/schema';
 
 
 import { QUERY_KEYS } from '@/lib/reactQuery';
+import i18n from '@/i18n';
 
 export const leaveSchema: EntitySchema = {
   entity: 'hrm_leave',
-  title: '请假管理',
-  description: '管理员工请假申请，包括请假类型、时间、状态等',
+  title: i18n.t('hrm.leave.k0'),
+  description: i18n.t('hrm.leave.k1'),
 
   api: {
     module: 'hrm',
@@ -16,7 +17,7 @@ export const leaveSchema: EntitySchema = {
   fields: [
     {
       name: 'employee_id',
-      label: '员工',
+      label: i18n.t('hrm.leave.k2'),
       type: 'select',
       required: true,
       listWidth: 140,
@@ -24,26 +25,26 @@ export const leaveSchema: EntitySchema = {
     },
     {
       name: 'employee_name',
-      label: '员工姓名',
+      label: i18n.t('hrm.leave.k3'),
       type: 'text',
       listWidth: 140,
       showInForm: false,
     },
     {
       name: 'leave_type',
-      label: '请假类型',
+      label: i18n.t('hrm.leave.k4'),
       type: 'select',
       required: true,
       defaultValue: 'annual',
       options: {
         type: 'static',
         options: [
-          { value: 'annual', label: '年假' },
-          { value: 'sick', label: '病假' },
-          { value: 'personal', label: '事假' },
-          { value: 'maternity', label: '产假' },
-          { value: 'paternity', label: '陪产假' },
-          { value: 'other', label: '其他' },
+          { value: 'annual', label: i18n.t('hrm.leave.k5') },
+          { value: 'sick', label: i18n.t('hrm.leave.k6') },
+          { value: 'personal', label: i18n.t('hrm.leave.k7') },
+          { value: 'maternity', label: i18n.t('hrm.leave.k8') },
+          { value: 'paternity', label: i18n.t('hrm.leave.k9') },
+          { value: 'other', label: i18n.t('hrm.leave.k10') },
         ],
       },
       listWidth: 100,
@@ -51,37 +52,37 @@ export const leaveSchema: EntitySchema = {
     },
     {
       name: 'start_date',
-      label: '开始日期',
+      label: i18n.t('hrm.leave.k11'),
       type: 'date',
       required: true,
       listWidth: 120,
     },
     {
       name: 'end_date',
-      label: '结束日期',
+      label: i18n.t('hrm.leave.k12'),
       type: 'date',
       required: true,
       listWidth: 120,
     },
     {
       name: 'days',
-      label: '天数',
+      label: i18n.t('hrm.leave.k13'),
       type: 'number',
       defaultValue: 0,
       listWidth: 80,
     },
     {
       name: 'status',
-      label: '状态',
+      label: i18n.t('hrm.leave.k14'),
       type: 'select',
       defaultValue: 'pending',
       options: {
         type: 'static',
         options: [
-          { value: 'pending', label: '待审批' },
-          { value: 'approved', label: '已批准' },
-          { value: 'rejected', label: '已驳回' },
-          { value: 'cancelled', label: '已取消' },
+          { value: 'pending', label: i18n.t('hrm.leave.k15') },
+          { value: 'approved', label: i18n.t('hrm.leave.k16') },
+          { value: 'rejected', label: i18n.t('hrm.leave.k17') },
+          { value: 'cancelled', label: i18n.t('hrm.leave.k18') },
         ],
       },
       listWidth: 100,
@@ -90,35 +91,35 @@ export const leaveSchema: EntitySchema = {
     },
     {
       name: 'reason',
-      label: '请假原因',
+      label: i18n.t('hrm.leave.k19'),
       type: 'textarea',
       showInList: false,
       colSpan: 2,
     },
     {
       name: 'approver_id',
-      label: '审批人',
+      label: i18n.t('hrm.leave.k20'),
       type: 'text',
       listWidth: 100,
       showInForm: false,
     },
     {
       name: 'rejection_reason',
-      label: '审批意见',
+      label: i18n.t('hrm.leave.k21'),
       type: 'text',
       showInList: false,
       showInForm: false,
     },
     {
       name: 'created_at',
-      label: '创建时间',
+      label: i18n.t('hrm.leave.k22'),
       type: 'date',
       listWidth: 120,
       showInForm: false,
     },
     {
       name: 'updated_at',
-      label: '更新时间',
+      label: i18n.t('hrm.leave.k23'),
       type: 'date',
       showInList: false,
       showInForm: false,
@@ -137,37 +138,37 @@ export const leaveSchema: EntitySchema = {
         cancelled: 'default',
       },
       labelMap: {
-        pending: '待审批',
-        approved: '已批准',
-        rejected: '已驳回',
-        cancelled: '已取消',
+        pending: i18n.t('hrm.leave.k24'),
+        approved: i18n.t('hrm.leave.k25'),
+        rejected: i18n.t('hrm.leave.k26'),
+        cancelled: i18n.t('hrm.leave.k27'),
       },
     },
     filters: [
       {
         id: 'leave_type',
-        label: '请假类型',
+        label: i18n.t('hrm.leave.k28'),
         type: 'select',
         options: [
-          { label: '全部类型', value: 'all' },
-          { value: 'annual', label: '年假' },
-          { value: 'sick', label: '病假' },
-          { value: 'personal', label: '事假' },
-          { value: 'maternity', label: '产假' },
-          { value: 'paternity', label: '陪产假' },
-          { value: 'other', label: '其他' },
+          { label: i18n.t('hrm.leave.k29'), value: 'all' },
+          { value: 'annual', label: i18n.t('hrm.leave.k30') },
+          { value: 'sick', label: i18n.t('hrm.leave.k31') },
+          { value: 'personal', label: i18n.t('hrm.leave.k32') },
+          { value: 'maternity', label: i18n.t('hrm.leave.k33') },
+          { value: 'paternity', label: i18n.t('hrm.leave.k34') },
+          { value: 'other', label: i18n.t('hrm.leave.k35') },
         ],
       },
       {
         id: 'status',
-        label: '状态',
+        label: i18n.t('hrm.leave.k36'),
         type: 'select',
         options: [
-          { label: '全部状态', value: 'all' },
-          { value: 'pending', label: '待审批' },
-          { value: 'approved', label: '已批准' },
-          { value: 'rejected', label: '已驳回' },
-          { value: 'cancelled', label: '已取消' },
+          { label: i18n.t('hrm.leave.k37'), value: 'all' },
+          { value: 'pending', label: i18n.t('hrm.leave.k38') },
+          { value: 'approved', label: i18n.t('hrm.leave.k39') },
+          { value: 'rejected', label: i18n.t('hrm.leave.k40') },
+          { value: 'cancelled', label: i18n.t('hrm.leave.k41') },
         ],
       },
     ],
@@ -175,23 +176,23 @@ export const leaveSchema: EntitySchema = {
 
   formSections: [
     {
-      title: '员工信息',
+      title: i18n.t('hrm.leave.k42'),
       fields: ['employee_id'],
     },
     {
-      title: '请假信息',
+      title: i18n.t('hrm.leave.k43'),
       fields: ['leave_type', 'start_date', 'end_date', 'days'],
     },
     {
-      title: '备注',
+      title: i18n.t('hrm.leave.k44'),
       fields: ['reason'],
     },
   ],
 
   formColCount: 2,
-  createTitle: '新增请假申请',
-  editTitle: '编辑请假申请',
-  detailTitle: '请假详情',
+  createTitle: i18n.t('hrm.leave.k45'),
+  editTitle: i18n.t('hrm.leave.k46'),
+  detailTitle: i18n.t('hrm.leave.k47'),
 
   dynamicOptions: [
     {

@@ -1,5 +1,6 @@
 import React from 'react';
 import { Card, CardContent, Box, Typography } from '@mui/material';
+import i18n from '@/i18n';
 
 interface UploadDialogProps {
   uploading: boolean;
@@ -31,7 +32,7 @@ const UploadDialog: React.FC<UploadDialogProps> = ({ uploading, uploadProgress }
               variant='body2'
               sx={{ fontWeight: 500, color: 'primary.900' }}
             >
-              文件上传中...
+              {i18n.t('pages.upload_dialog.k0')}
             </Typography>
             <Typography
               variant='body2'

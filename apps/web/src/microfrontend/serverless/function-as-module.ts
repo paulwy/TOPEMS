@@ -1,3 +1,4 @@
+import i18n from '@/i18n';
 /**
  * V48.0 Track Serverless: 无服务器架构 — 函数即模块引擎
  *
@@ -219,10 +220,10 @@ class FunctionAsModuleImpl {
   async invoke<TOutput = any>(id: string, options?: InvokeOptions): Promise<InvokeResult<TOutput>> {
     const def = this.functions.get(id);
     if (!def) {
-      throw new Error(`[Faas] 函数 ${id} 未注册`);
+      throw new Error(`${i18n.t('microfrontend.function-as-module.faas_0')}${id}${i18n.t('microfrontend.function-as-module.k1')}`);
     }
     if (def.status !== 'active') {
-      throw new Error(`[Faas] 函数 ${id} 状态为 ${def.status}，不可调用`);
+      throw new Error(`${i18n.t('microfrontend.function-as-module.faas_2')}${id}${i18n.t('microfrontend.function-as-module.k3')}${def.status}${i18n.t('microfrontend.function-as-module.k4')}`);
     }
 
     const traceId = options?.traceId || this.generateTraceId();
@@ -292,7 +293,7 @@ class FunctionAsModuleImpl {
     } catch (err) {
       const execTime = Date.now() - startTime;
       const status: ExecStatus =
-        err instanceof Error && err.message.includes('超时') ? 'timeout' : 'error';
+        err instanceof Error && err.message.includes(i18n.t('microfrontend.function-as-module.k0')) ? 'timeout' : 'error';
       const result: InvokeResult<TOutput> = {
         data: null as any,
         status,
@@ -324,7 +325,7 @@ class FunctionAsModuleImpl {
   ): Promise<Map<string, InvokeResult>> {
     const def = this.functions.get(id);
     if (!def) {
-      throw new Error(`[Faas] 函数 ${id} 未注册`);
+      throw new Error(`${i18n.t('microfrontend.function-as-module.faas_5')}${id}${i18n.t('microfrontend.function-as-module.k6')}`);
     }
 
     const executionOrder = this.topologicalSort(id);
@@ -487,7 +488,7 @@ class FunctionAsModuleImpl {
   ): Promise<any> {
     return new Promise((resolve, reject) => {
       const timer = setTimeout(() => {
-        reject(new Error(`[Faas] 函数 ${def.id} 执行超时（${timeoutMs}ms）`));
+        reject(new Error(`${i18n.t('microfrontend.function-as-module.faas_7')}${def.id}${i18n.t('microfrontend.function-as-module.k8')}${timeoutMs}ms）`));
       }, timeoutMs);
 
       Promise.resolve(def.handler(context))
@@ -505,7 +506,7 @@ class FunctionAsModuleImpl {
   private validateDependencies(deps: string[]): void {
     for (const dep of deps) {
       if (!this.functions.has(dep)) {
-        throw new Error(`[Faas] 依赖函数 ${dep} 未注册`);
+        throw new Error(`${i18n.t('microfrontend.function-as-module.faas_9')}${dep}${i18n.t('microfrontend.function-as-module.k10')}`);
       }
     }
   }
@@ -517,7 +518,7 @@ class FunctionAsModuleImpl {
 
     const visit = (nodeId: string): void => {
       if (stack.has(nodeId)) {
-        throw new Error(`[Faas] 检测到循环依赖：${nodeId}`);
+        throw new Error(`${i18n.t('microfrontend.function-as-module.faas_11')}${nodeId}`);
       }
       if (visited.has(nodeId)) return;
 

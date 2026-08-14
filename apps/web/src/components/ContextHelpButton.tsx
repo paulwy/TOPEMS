@@ -17,6 +17,7 @@ import {
   Chip,
   Stack,
 } from '@mui/material';
+import i18n from '@/i18n';
 import {
   HelpCircle,
   X,
@@ -80,7 +81,7 @@ export const ContextHelpButton: React.FC<ContextHelpButtonProps> = ({
 
   return (
     <>
-      <Tooltip title={t('help.context_help', '上下文帮助')}>
+      <Tooltip title={t('help.context_help', i18n.t('components.context_help_button.k0'))}>
         <Fab
           color='primary'
           size='medium'
@@ -144,7 +145,7 @@ export const ContextHelpButton: React.FC<ContextHelpButtonProps> = ({
                 variant='h6'
                 sx={{ fontWeight: 600 }}
               >
-                {helpInfo?.title || t('help.help_center', '帮助中心')}
+                {helpInfo?.title || t('help.help_center', i18n.t('components.context_help_button.k1'))}
               </Typography>
               {helpInfo?.description && (
                 <Typography
@@ -190,10 +191,10 @@ export const ContextHelpButton: React.FC<ContextHelpButtonProps> = ({
                     variant='body1'
                     sx={{ fontWeight: 500 }}
                   >
-                    {t('help.view_guide', '查看操作指南')}
+                    {t('help.view_guide', i18n.t('components.context_help_button.k2'))}
                   </Typography>
                 }
-                secondary={t('help.view_guide_desc', '完整的用户手册和操作教程')}
+                secondary={t('help.view_guide_desc', i18n.t('components.context_help_button.k3'))}
               />
               <ChevronRight
                 size={18}
@@ -223,10 +224,10 @@ export const ContextHelpButton: React.FC<ContextHelpButtonProps> = ({
                     variant='body1'
                     sx={{ fontWeight: 500 }}
                   >
-                    {t('help.view_faq', '浏览常见问题')}
+                    {t('help.view_faq', i18n.t('components.context_help_button.k4'))}
                   </Typography>
                 }
-                secondary={t('help.view_faq_desc', '高频问题解答，快速找到答案')}
+                secondary={t('help.view_faq_desc', i18n.t('components.context_help_button.k5'))}
               />
               <ChevronRight
                 size={18}
@@ -256,10 +257,10 @@ export const ContextHelpButton: React.FC<ContextHelpButtonProps> = ({
                     variant='body1'
                     sx={{ fontWeight: 500 }}
                   >
-                    {t('help.contact_support', '联系技术支持')}
+                    {t('help.contact_support', i18n.t('components.context_help_button.k6'))}
                   </Typography>
                 }
-                secondary={t('help.contact_support_desc', '工作时间 9:00-18:00，工作日')}
+                secondary={t('help.contact_support_desc', i18n.t('components.context_help_button.9001800_7'))}
               />
               <ChevronRight
                 size={18}
@@ -278,13 +279,13 @@ export const ContextHelpButton: React.FC<ContextHelpButtonProps> = ({
             sx={{ width: '100%', justifyContent: 'center' }}
           >
             <Chip
-              label={t('help.shortcut', '快捷键: ?')}
+              label={t('help.shortcut', i18n.t('components.context_help_button.k8'))}
               size='small'
               variant='outlined'
               sx={{ bgcolor: 'background.paper' }}
             />
             <Chip
-              label={t('help.all_docs', '全部文档')}
+              label={t('help.all_docs', i18n.t('components.context_help_button.k9'))}
               size='small'
               variant='outlined'
               onClick={() => {

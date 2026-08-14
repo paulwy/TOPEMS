@@ -1,3 +1,4 @@
+import i18n from '@/i18n';
 export type RolloutType = 'canary' | 'blue-green' | 'rolling';
 
 export type RolloutStatus = 'pending' | 'running' | 'paused' | 'completed' | 'cancelled' | 'failed';
@@ -114,7 +115,7 @@ export class RolloutManager {
   createRollout(moduleId: string, version: string, strategy: RolloutStrategy): Rollout {
     const existingActive = this.getActiveRollout(moduleId);
     if (existingActive) {
-      throw new Error(`模块 ${moduleId} 已有进行中的发布: ${existingActive.id}`);
+      throw new Error(`${i18n.t('microfrontend.rollout-manager.k0')}${moduleId}${i18n.t('microfrontend.rollout-manager.k1')}${existingActive.id}`);
     }
 
     const rollout: Rollout = {

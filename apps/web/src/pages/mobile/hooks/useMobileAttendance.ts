@@ -4,29 +4,23 @@
  */
 import { useState, useCallback } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import { useNotificationStore } from '@/store';
 import { mobileApi, type AttendanceStats, type LeaveApplication } from '@/api/mobile';
 import { apiLogger } from '@/utils/logger';
 import { MOBILE_PATHS } from '@/modules/mobile/config';
-
-
 import { QUERY_KEYS } from '@/lib/reactQuery';
-
+import i18n from '@/i18n';
 export interface LeaveForm {
   leave_type: LeaveApplication['leave_type'];
   start_date: string;
   end_date: string;
   reason: string;
 }
-
 export const useMobileAttendance = () => {
-  const { t } = useTranslation();
   const navigate = useNavigate();
   const { addNotification } = useNotificationStore();
   const queryClient = useQueryClient();
-
   const [activeTab, setActiveTab] = useState(0);
   const [leaveDialogOpen, setLeaveDialogOpen] = useState(false);
   const [leaveForm, setLeaveForm] = useState<LeaveForm>({
@@ -35,13 +29,11 @@ export const useMobileAttendance = () => {
     end_date: '',
     reason: '',
   });
-
   const tabs = [
-    t('mobile.attendance.action.clock'),
-    t('mobile.attendance.section.records'),
-    t('mobile.attendance.section.leave'),
+    i18n.t('mobile.attendance.action.clock'),
+    i18n.t('mobile.attendance.section.records'),
+    i18n.t('mobile.attendance.section.leave'),
   ];
-
   const statsQuery = useQuery({
     queryKey: QUERY_KEYS.AD_HOC.MOBILE_ATTENDANCE_STATS_BASE,
     queryFn: async () => {
@@ -51,7 +43,6 @@ export const useMobileAttendance = () => {
     staleTime: 5 * 60 * 1000,
     retry: 2,
   });
-
   const recordsQuery = useQuery({
     queryKey: QUERY_KEYS.AD_HOC.MOBILE_ATTENDANCE_RECORDS_BASE,
     queryFn: async () => {
@@ -61,7 +52,6 @@ export const useMobileAttendance = () => {
     staleTime: 5 * 60 * 1000,
     retry: 2,
   });
-
   const leavesQuery = useQuery({
     queryKey: QUERY_KEYS.AD_HOC.MOBILE_LEAVE_APPLICATIONS_BASE,
     queryFn: async () => {
@@ -71,12 +61,10 @@ export const useMobileAttendance = () => {
     staleTime: 5 * 60 * 1000,
     retry: 2,
   });
-
   const loading = statsQuery.isLoading || recordsQuery.isLoading || leavesQuery.isLoading;
   const attendanceStats = statsQuery.data ?? null;
   const records = recordsQuery.data || [];
   const leaves = leavesQuery.data || [];
-
   const checkInMutation = useMutation({
     mutationFn: async () => {
       const result = await mobileApi.checkIn({ lat: 0, lng: 0 });
@@ -105,8 +93,8 @@ export const useMobileAttendance = () => {
         };
       });
       addNotification({
-        title: t('mobile.attendance.message.clock_success'),
-        message: t('mobile.attendance.message.clock_in_success'),
+        title: i18n.t('mobile.attendance.message.clock_success'),
+        message: i18n.t('mobile.attendance.message.clock_in_success'),
         type: 'success',
       });
     },
@@ -114,10 +102,10 @@ export const useMobileAttendance = () => {
       if (context?.previousStats) {
         queryClient.setQueryData(['mobile-attendance-stats'], context.previousStats);
       }
-      apiLogger.error(t('mobile.attendance.message.clock_failed'), err);
+      apiLogger.error(i18n.t('mobile.attendance.message.clock_failed'), err);
       addNotification({
-        title: t('mobile.attendance.message.clock_failed'),
-        message: t('mobile.attendance.message.clock_retry'),
+        title: i18n.t('mobile.attendance.message.clock_failed'),
+        message: i18n.t('mobile.attendance.message.clock_retry'),
         type: 'error',
       });
     },
@@ -132,7 +120,6 @@ export const useMobileAttendance = () => {
 });
     },
   });
-
   const checkOutMutation = useMutation({
     mutationFn: async () => {
       const result = await mobileApi.checkOut({ lat: 0, lng: 0 });
@@ -161,8 +148,8 @@ export const useMobileAttendance = () => {
         };
       });
       addNotification({
-        title: t('mobile.attendance.message.clock_success'),
-        message: t('mobile.attendance.message.clock_out_success'),
+        title: i18n.t('mobile.attendance.message.clock_success'),
+        message: i18n.t('mobile.attendance.message.clock_out_success'),
         type: 'success',
       });
     },
@@ -170,10 +157,10 @@ export const useMobileAttendance = () => {
       if (context?.previousStats) {
         queryClient.setQueryData(['mobile-attendance-stats'], context.previousStats);
       }
-      apiLogger.error(t('mobile.attendance.message.clock_failed'), err);
+      apiLogger.error(i18n.t('mobile.attendance.message.clock_failed'), err);
       addNotification({
-        title: t('mobile.attendance.message.clock_failed'),
-        message: t('mobile.attendance.message.clock_retry'),
+        title: i18n.t('mobile.attendance.message.clock_failed'),
+        message: i18n.t('mobile.attendance.message.clock_retry'),
         type: 'error',
       });
     },
@@ -188,12 +175,11 @@ export const useMobileAttendance = () => {
 });
     },
   });
-
   const applyLeaveMutation = useMutation({
     mutationFn: async (data: LeaveForm) => {
       const res = await mobileApi.applyLeave(data);
       if (!res.success) {
-        throw new Error(t('mobile.attendance.message.submit_failed'));
+        throw new Error(i18n.t('mobile.attendance.message.submit_failed'));
       }
       return res.data;
     },
@@ -206,8 +192,8 @@ export const useMobileAttendance = () => {
         reason: '',
       });
       addNotification({
-        title: t('mobile.attendance.message.submit_success'),
-        message: t('mobile.attendance.message.leave_submitted'),
+        title: i18n.t('mobile.attendance.message.submit_success'),
+        message: i18n.t('mobile.attendance.message.leave_submitted'),
         type: 'success',
       });
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.MOBILE_LEAVE_APPLICATIONS_BASE ,
@@ -216,45 +202,39 @@ export const useMobileAttendance = () => {
 });
     },
     onError: (err) => {
-      apiLogger.error(t('mobile.attendance.message.leave_submit_failed'), err);
+      apiLogger.error(i18n.t('mobile.attendance.message.leave_submit_failed'), err);
       addNotification({
-        title: t('mobile.attendance.message.submit_failed'),
-        message: t('mobile.attendance.message.submit_retry'),
+        title: i18n.t('mobile.attendance.message.submit_failed'),
+        message: i18n.t('mobile.attendance.message.submit_retry'),
         type: 'error',
       });
     },
   });
-
   const handleRefresh = useCallback(async () => {
     await Promise.all([statsQuery.refetch(), recordsQuery.refetch(), leavesQuery.refetch()]);
   }, [statsQuery, recordsQuery, leavesQuery]);
-
   const handleTabChange = useCallback((_event: React.SyntheticEvent, newValue: number) => {
     setActiveTab(newValue);
   }, []);
-
   const handleCheckIn = useCallback(() => {
     if (attendanceStats?.today_status !== 'not_checked_in') return;
     checkInMutation.mutate();
   }, [attendanceStats?.today_status, checkInMutation]);
-
   const handleCheckOut = useCallback(() => {
     if (attendanceStats?.today_status !== 'checked_in') return;
     checkOutMutation.mutate();
   }, [attendanceStats?.today_status, checkOutMutation]);
-
   const handleSubmitLeave = useCallback(() => {
     if (!leaveForm.start_date || !leaveForm.end_date || !leaveForm.reason) {
       addNotification({
-        title: t('mobile.attendance.message.fill_complete'),
-        message: t('mobile.attendance.message.fill_leave_info'),
+        title: i18n.t('mobile.attendance.message.fill_complete'),
+        message: i18n.t('mobile.attendance.message.fill_leave_info'),
         type: 'warning',
       });
       return;
     }
     applyLeaveMutation.mutate(leaveForm);
-  }, [leaveForm, applyLeaveMutation, addNotification, t]);
-
+  }, [leaveForm, applyLeaveMutation, addNotification, i18n.t]);
   const handleBottomTabChange = useCallback(
     (tabId: string) => {
       switch (tabId) {
@@ -277,10 +257,8 @@ export const useMobileAttendance = () => {
     },
     [navigate]
   );
-
   const checkingIn = checkInMutation.isPending || checkOutMutation.isPending;
   const todayStatus = attendanceStats?.today_status;
-
   return {
     activeTab,
     setActiveTab,

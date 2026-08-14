@@ -16,25 +16,21 @@ import {
   Tooltip,
   IconButton,
 } from '@mui/material';
+import i18n from '@/i18n';
 import { Edit2, Trash2, Database } from 'lucide-react';
-import { useTranslation } from 'react-i18next';
 import type { DataPermissionRule } from '@/api/bi';
-
 export interface BiPermissionDataTableProps {
   permissions: DataPermissionRule[];
   getResourceTypeLabel: (type: string) => string;
   getPermissionTypeLabel: (type: string) => string;
   getPermissionTypeColor: (type: string) => 'primary' | 'success' | 'warning' | 'error';
 }
-
 const BiPermissionDataTable: React.FC<BiPermissionDataTableProps> = ({
   permissions,
   getResourceTypeLabel,
   getPermissionTypeLabel,
   getPermissionTypeColor,
 }) => {
-  const { t } = useTranslation();
-
   if (permissions.length === 0) {
     return (
       <Box
@@ -48,23 +44,22 @@ const BiPermissionDataTable: React.FC<BiPermissionDataTableProps> = ({
         }}
       >
         <Database sx={{ width: 64, height: 64, mb: 3, opacity: 0.5 }} />
-        <Typography variant='h6'>{t('bi.bi_permission_page.text_10510a')}</Typography>
+        <Typography variant='h6'>{i18n.t('bi.bi_permission_page.text_10510a')}</Typography>
       </Box>
     );
   }
-
   return (
     <TableContainer>
       <Table>
         <TableHead>
           <TableRow>
-            <TableCell sx={{ fontWeight: 600 }}>{t('bi.bi_permission_page.text_870802')}</TableCell>
-            <TableCell sx={{ fontWeight: 600 }}>{t('bi.bi_permission_page.text_14871a')}</TableCell>
-            <TableCell sx={{ fontWeight: 600 }}>{t('bi.bi_permission_page.text_1463e1')}</TableCell>
-            <TableCell sx={{ fontWeight: 600 }}>{t('bi.bi_permission_page.text_464f3d')}</TableCell>
-            <TableCell sx={{ fontWeight: 600 }}>{t('bi.bi_permission_page.text_1fd02a')}</TableCell>
-            <TableCell sx={{ fontWeight: 600 }}>{t('bi.bi_permission_page.text_eca37c')}</TableCell>
-            <TableCell sx={{ fontWeight: 600 }}>{t('bi.bi_permission_page.text_2b6bc0')}</TableCell>
+            <TableCell sx={{ fontWeight: 600 }}>{i18n.t('bi.bi_permission_page.text_870802')}</TableCell>
+            <TableCell sx={{ fontWeight: 600 }}>{i18n.t('bi.bi_permission_page.text_14871a')}</TableCell>
+            <TableCell sx={{ fontWeight: 600 }}>{i18n.t('bi.bi_permission_page.text_1463e1')}</TableCell>
+            <TableCell sx={{ fontWeight: 600 }}>{i18n.t('bi.bi_permission_page.text_464f3d')}</TableCell>
+            <TableCell sx={{ fontWeight: 600 }}>{i18n.t('bi.bi_permission_page.text_1fd02a')}</TableCell>
+            <TableCell sx={{ fontWeight: 600 }}>{i18n.t('bi.bi_permission_page.text_eca37c')}</TableCell>
+            <TableCell sx={{ fontWeight: 600 }}>{i18n.t('bi.bi_permission_page.text_2b6bc0')}</TableCell>
           </TableRow>
         </TableHead>
         <TableBody>
@@ -126,7 +121,7 @@ const BiPermissionDataTable: React.FC<BiPermissionDataTableProps> = ({
               </TableCell>
               <TableCell>
                 {perm.user_ids.length > 0 ? (
-                  t('bi.bi_permission_page.text_54dd4b', { count: perm.user_ids.length })
+                  i18n.t('bi.bi_permission_page.text_54dd4b', { count: perm.user_ids.length })
                 ) : (
                   <Typography
                     variant='caption'
@@ -138,19 +133,19 @@ const BiPermissionDataTable: React.FC<BiPermissionDataTableProps> = ({
               </TableCell>
               <TableCell>{new Date(perm.created_at).toLocaleDateString()}</TableCell>
               <TableCell>
-                <Tooltip title={t('bi.bi_permission_page.edit')}>
+                <Tooltip title={i18n.t('bi.bi_permission_page.edit')}>
                   <IconButton
                     size='small'
-                    aria-label={t('bi.bi_permission_page.edit_2')}
+                    aria-label={i18n.t('bi.bi_permission_page.edit_2')}
                   >
                     <Edit2 size={16} />
                   </IconButton>
                 </Tooltip>
-                <Tooltip title={t('bi.bi_permission_page.delete')}>
+                <Tooltip title={i18n.t('bi.bi_permission_page.delete')}>
                   <IconButton
                     size='small'
                     color='error'
-                    aria-label={t('bi.bi_permission_page.delete_2')}
+                    aria-label={i18n.t('bi.bi_permission_page.delete_2')}
                   >
                     <Trash2 size={16} />
                   </IconButton>
@@ -163,5 +158,4 @@ const BiPermissionDataTable: React.FC<BiPermissionDataTableProps> = ({
     </TableContainer>
   );
 };
-
 export default BiPermissionDataTable;

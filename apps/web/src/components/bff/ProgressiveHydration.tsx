@@ -30,6 +30,7 @@
 
 import React, { useEffect, useState, useRef, useCallback, type ReactNode } from 'react';
 import { logger } from '@/utils/logger';
+import i18n from '@/i18n';
 
 const hydrationLogger = logger.child({ prefix: 'ProgressiveHydration' });
 
@@ -83,7 +84,7 @@ function notifyHydrationListeners(): void {
     try {
       listener();
     } catch (e) {
-      hydrationLogger.error('水合统计监听器执行失败:', e);
+      hydrationLogger.error(i18n.t('components.progressive_hydration.k0'), e);
     }
   });
 }
@@ -242,7 +243,7 @@ export const ProgressiveHydration: React.FC<ProgressiveHydrationProps> = ({
         hydratedAt: Date.now(),
       });
       onHydrated?.(componentId.current, duration);
-      hydrationLogger.debug(`组件 [${componentId.current}] 水合完成 (${duration.toFixed(1)}ms)`);
+      hydrationLogger.debug(`${i18n.t('components.progressive_hydration.k1')}${componentId.current}${i18n.t('components.progressive_hydration.k2')}${duration.toFixed(1)}ms)`);
     });
   }, [status, priority, when, onHydrated]);
 
@@ -275,7 +276,7 @@ export const ProgressiveHydration: React.FC<ProgressiveHydrationProps> = ({
 
     // 交互优先：任何用户交互立即触发水合
     const interactionHandler = (): void => {
-      hydrationLogger.debug(`组件 [${componentId.current}] 由交互触发水合`);
+      hydrationLogger.debug(`${i18n.t('components.progressive_hydration.k3')}${componentId.current}${i18n.t('components.progressive_hydration.k4')}`);
       hydrate();
       cleanupInteraction();
     };
@@ -304,7 +305,7 @@ export const ProgressiveHydration: React.FC<ProgressiveHydrationProps> = ({
       // 超时保底：即使浏览器一直不空闲，也强制水合
       timeoutHandle = window.setTimeout(() => {
         if (status === 'pending') {
-          hydrationLogger.debug(`组件 [${componentId.current}] 空闲超时，强制水合`);
+          hydrationLogger.debug(`${i18n.t('components.progressive_hydration.k5')}${componentId.current}${i18n.t('components.progressive_hydration.k6')}`);
           hydrate();
         }
       }, idleTimeout);

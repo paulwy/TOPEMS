@@ -1,5 +1,6 @@
 import React, { useMemo } from 'react';
 import { Box, Typography } from '@mui/material';
+import i18n from '@/i18n';
 
 // 货币符号映射
 const _CURRENCY_SYMBOLS: Record<string, string> = {
@@ -45,11 +46,11 @@ export interface AmountDisplayProps {
 
 // 货币配置
 const CURRENCY_CONFIG: Record<string, { symbol: string; name: string; code: string }> = {
-  CNY: { symbol: '¥', name: '人民币', code: 'CNY' },
-  USD: { symbol: '$', name: '美元', code: 'USD' },
-  EUR: { symbol: '€', name: '欧元', code: 'EUR' },
-  GBP: { symbol: '£', name: '英镑', code: 'GBP' },
-  JPY: { symbol: '¥', name: '日元', code: 'JPY' },
+  CNY: { symbol: '¥', name: i18n.t('shared.amount_display.k0'), code: 'CNY' },
+  USD: { symbol: '$', name: i18n.t('shared.amount_display.k1'), code: 'USD' },
+  EUR: { symbol: '€', name: i18n.t('shared.amount_display.k2'), code: 'EUR' },
+  GBP: { symbol: '£', name: i18n.t('shared.amount_display.k3'), code: 'GBP' },
+  JPY: { symbol: '¥', name: i18n.t('shared.amount_display.k4'), code: 'JPY' },
 };
 
 // 数字格式化

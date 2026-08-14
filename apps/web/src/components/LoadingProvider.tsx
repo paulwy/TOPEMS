@@ -9,6 +9,7 @@ import React, {
   useRef,
   memo,
 } from 'react';
+import i18n from '@/i18n';
 import {
   Box,
   LinearProgress,
@@ -370,7 +371,7 @@ const FullscreenLoader: React.FC<{
             color='warning.main'
             sx={{ mt: 1 }}
           >
-            加载时间过长，请稍候...
+            {i18n.t('components.loading_provider.k0')}
           </Typography>
         )}
       </Paper>
@@ -519,7 +520,7 @@ const defaultOptions: LoadingOptions = {
   progress: 0,
   progressType: 'none',
   timeout: 0,
-  timeoutMessage: '加载时间过长，请稍候...',
+  timeoutMessage: i18n.t('components.loading_provider.k0'),
   skeleton: {
     rows: 5,
     avatar: true,
@@ -530,7 +531,7 @@ const defaultOptions: LoadingOptions = {
 
 export const LoadingProvider: React.FC<LoadingProviderProps> = memo(({ children }) => {
   const [isLoading, setIsLoading] = useState(false);
-  const [message, setMessage] = useState('加载中...');
+  const [message, setMessage] = useState(i18n.t('components.loading_provider.k1'));
   const [options, setOptions] = useState<ExtendedLoadingOptions>(defaultOptions);
   const [progress, setProgress] = useState(0);
   const [progressType, setProgressType] = useState<ProgressType>('none');
@@ -550,7 +551,7 @@ export const LoadingProvider: React.FC<LoadingProviderProps> = memo(({ children 
     };
   }, []);
 
-  const startLoading = useCallback((msg: string = '加载中...', opts: LoadingOptions = {}) => {
+  const startLoading = useCallback((msg: string = i18n.t('components.loading_provider.k2'), opts: LoadingOptions = {}) => {
     // Clear any existing timeouts
     if (timeoutRef.current) clearTimeout(timeoutRef.current);
     if (timeoutWarningRef.current) clearTimeout(timeoutWarningRef.current);
@@ -558,7 +559,7 @@ export const LoadingProvider: React.FC<LoadingProviderProps> = memo(({ children 
     const mergedOptions: ExtendedLoadingOptions = { ...defaultOptions, ...opts };
 
     setIsLoading(true);
-    setMessage(msg || mergedOptions.customMessage || '加载中...');
+    setMessage(msg || mergedOptions.customMessage || i18n.t('components.loading_provider.k3'));
     setProgress(mergedOptions.progress || 0);
     setProgressType(mergedOptions.progressType || 'none');
     setMode(mergedOptions.mode || 'fullscreen');

@@ -3,6 +3,7 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Play, Pause, Square, SkipBack, SkipForward } from 'lucide-react';
 import { Box, Typography, Paper, IconButton, Grid, Button, useTheme } from '@mui/material';
 import type { TrackRecord, TrackStatistics } from './types';
+import i18n from '@/i18n';
 
 interface TrackPlayerProps {
   track: TrackRecord | null;
@@ -89,7 +90,7 @@ const TrackPlayer: React.FC<TrackPlayerProps> = ({
         }}
       >
         <Typography sx={{ color: 'text.secondary', fontSize: '0.875rem' }}>
-          请选择设备轨迹
+          {i18n.t('components.track_player.k0')}
         </Typography>
       </Box>
     );
@@ -150,8 +151,8 @@ const TrackPlayer: React.FC<TrackPlayerProps> = ({
           <IconButton
             onClick={() => setCurrentIndex(0)}
             sx={{ p: 2, '&:hover': { bgcolor: 'grey.100' } }}
-            aria-label='跳到开始'
-            title='跳到开始'
+            aria-label={i18n.t('gis.track_player.k0')}
+            title={i18n.t('gis.track_player.k1')}
           >
             <SkipBack
               size={20}
@@ -166,16 +167,16 @@ const TrackPlayer: React.FC<TrackPlayerProps> = ({
               color: 'common.white',
               '&:hover': { bgcolor: 'primary.dark' },
             }}
-            aria-label={isPlaying ? '暂停' : '播放'}
-            title={isPlaying ? '暂停' : '播放'}
+            aria-label={isPlaying ? i18n.t('gis.track_player.k3') : i18n.t('gis.track_player.k2')}
+            title={isPlaying ? i18n.t('gis.track_player.k5') : i18n.t('gis.track_player.k4')}
           >
             {isPlaying ? <Pause size={20} /> : <Play size={20} />}
           </IconButton>
           <IconButton
             onClick={onStop}
             sx={{ p: 2, '&:hover': { bgcolor: 'grey.100' } }}
-            aria-label='停止'
-            title='停止'
+            aria-label={i18n.t('gis.track_player.k6')}
+            title={i18n.t('gis.track_player.k7')}
           >
             <Square
               size={20}
@@ -185,8 +186,8 @@ const TrackPlayer: React.FC<TrackPlayerProps> = ({
           <IconButton
             onClick={() => setCurrentIndex(track.points.length - 1)}
             sx={{ p: 2, '&:hover': { bgcolor: 'grey.100' } }}
-            aria-label='跳到结尾'
-            title='跳到结尾'
+            aria-label={i18n.t('gis.track_player.k8')}
+            title={i18n.t('gis.track_player.k9')}
           >
             <SkipForward
               size={20}
@@ -201,7 +202,7 @@ const TrackPlayer: React.FC<TrackPlayerProps> = ({
             variant='body2'
             sx={{ color: 'text.secondary' }}
           >
-            速度:
+            [i18n.t('components.track_player.k1')]:
           </Typography>
           {speedOptions.map((speed) => (
             <Button
@@ -238,12 +239,12 @@ const TrackPlayer: React.FC<TrackPlayerProps> = ({
                 variant='caption'
                 sx={{ color: 'text.secondary' }}
               >
-                总距离
+                {i18n.t('components.track_player.k2')}
               </Typography>
               <Typography sx={{ fontWeight: 500, color: 'text.primary' }}>
                 {statistics.total_distance < 1000
-                  ? `${statistics.total_distance.toFixed(0)} 米`
-                  : `${(statistics.total_distance / 1000).toFixed(2)} 公里`}
+                  ? `${statistics.total_distance.toFixed(0)}${i18n.t('components.track_player.k0')}`
+                  : `${(statistics.total_distance / 1000).toFixed(2)}${i18n.t('components.track_player.k1')}`}
               </Typography>
             </Grid>
             <Grid size={4}>
@@ -251,7 +252,7 @@ const TrackPlayer: React.FC<TrackPlayerProps> = ({
                 variant='caption'
                 sx={{ color: 'text.secondary' }}
               >
-                平均速度
+                {i18n.t('components.track_player.k3')}
               </Typography>
               <Typography sx={{ fontWeight: 500, color: 'text.primary' }}>
                 {statistics.avg_speed.toFixed(1)} km/h
@@ -262,7 +263,7 @@ const TrackPlayer: React.FC<TrackPlayerProps> = ({
                 variant='caption'
                 sx={{ color: 'text.secondary' }}
               >
-                最大速度
+                {i18n.t('components.track_player.k4')}
               </Typography>
               <Typography sx={{ fontWeight: 500, color: 'text.primary' }}>
                 {statistics.max_speed.toFixed(1)} km/h
@@ -279,7 +280,7 @@ const TrackPlayer: React.FC<TrackPlayerProps> = ({
             variant='caption'
             sx={{ color: 'text.secondary' }}
           >
-            当前位置
+            {i18n.t('components.track_player.k5')}
           </Typography>
           <Typography
             sx={{

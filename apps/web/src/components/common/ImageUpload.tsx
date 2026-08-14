@@ -15,6 +15,7 @@ import {
   TextField,
   Button,
 } from '@mui/material';
+import i18n from '@/i18n';
 import { styled } from '@mui/material/styles';
 import { Image, X, Upload, Crop, Trash2, ZoomIn, ZoomOut, RotateCw, Check } from 'lucide-react';
 import { logger } from '@/utils/logger';
@@ -175,12 +176,12 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
         if (validFiles.length >= remainingSlots) return;
 
         if (!file.type.startsWith('image/')) {
-          logger.warn(`文件 ${file.name} 不是图片类型`);
+          logger.warn(`${i18n.t('components.image_upload.k0')}${file.name}${i18n.t('components.image_upload.k1')}`);
           return;
         }
 
         if (file.size > maxSize * 1024 * 1024) {
-          logger.warn(`文件 ${file.name} 超过大小限制 ${maxSize}MB`);
+          logger.warn(`${i18n.t('components.image_upload.k2')}${file.name}${i18n.t('components.image_upload.k3')}${maxSize}MB`);
           return;
         }
 
@@ -294,7 +295,7 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
         variant='body1'
         sx={{ mt: 1 }}
       >
-        {dragging ? '松开以上传' : '拖拽图片或点击上传'}
+        {dragging ? i18n.t('shared.image_upload.k1') : i18n.t('shared.image_upload.k0')}
       </Typography>
       <Typography
         variant='body2'
@@ -374,7 +375,7 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
                 e.stopPropagation();
                 setPreviewImage(image.preview);
               }}
-              aria-label='图片'
+              aria-label={i18n.t('shared.image_upload.k2')}
             >
               <Image size={16} />
             </IconButton>
@@ -385,7 +386,7 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
                   e.stopPropagation();
                   handleCrop(image);
                 }}
-                aria-label='裁剪'
+                aria-label={i18n.t('shared.image_upload.k3')}
               >
                 <Crop size={16} />
               </IconButton>
@@ -396,7 +397,7 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
                 e.stopPropagation();
                 handleDelete(image.id);
               }}
-              aria-label='删除'
+              aria-label={i18n.t('shared.image_upload.k4')}
             >
               <Trash2 size={16} />
             </IconButton>
@@ -426,11 +427,11 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
       >
         <DialogTitle>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-            图片预览
+            {i18n.t('components.image_upload.k0')}
             <IconButton
               onClick={() => setPreviewImage(null)}
               sx={{ ml: 'auto' }}
-              aria-label='关闭'
+              aria-label={i18n.t('shared.image_upload.k5')}
             >
               <X size={20} />
             </IconButton>
@@ -456,11 +457,11 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
       >
         <DialogTitle>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-            图片裁剪
+            {i18n.t('components.image_upload.k1')}
             <IconButton
               onClick={() => setCropImage(null)}
               sx={{ ml: 'auto' }}
-              aria-label='关闭'
+              aria-label={i18n.t('shared.image_upload.k6')}
             >
               <X size={20} />
             </IconButton>
@@ -496,7 +497,7 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
               variant='body2'
               gutterBottom
             >
-              缩放
+              {i18n.t('components.image_upload.k2')}
             </Typography>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
               <ZoomOut size={20} />
@@ -514,12 +515,12 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
               gutterBottom
               sx={{ mt: 1 }}
             >
-              旋转
+              {i18n.t('components.image_upload.k3')}
             </Typography>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
               <IconButton
                 onClick={() => setCropRotation((r) => r - 90)}
-                aria-label='旋转'
+                aria-label={i18n.t('shared.image_upload.k7')}
               >
                 <RotateCw
                   size={20}
@@ -539,7 +540,7 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
               />
               <IconButton
                 onClick={() => setCropRotation((r) => r + 90)}
-                aria-label='旋转'
+                aria-label={i18n.t('shared.image_upload.k8')}
               >
                 <RotateCw size={20} />
               </IconButton>
@@ -547,13 +548,13 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
           </Box>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setCropImage(null)}>取消</Button>
+          <Button onClick={() => setCropImage(null)}>{i18n.t('shared.image_upload.k9')}</Button>
           <Button
             onClick={handleCropConfirm}
             variant='contained'
             startIcon={<Check size={16} />}
           >
-            确认裁剪
+            {i18n.t('components.image_upload.k4')}
           </Button>
         </DialogActions>
       </Dialog>

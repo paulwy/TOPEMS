@@ -28,7 +28,7 @@ export const CustomTooltip: React.FC<CustomTooltipProps> = ({
   const bgColor = isDark ? 'rgba(30, 41, 59, 0.95)' : 'rgba(255, 255, 255, 0.95)';
   const borderColor = isDark ? 'colors.grey.600' : designTokens.colors.border.default;
   const labelColor = isDark ? designTokens.colors.grey['400'] : 'colors.grey.500';
-  const labelBorder = isDark ? '#334155' : designTokens.colors.border.default;
+  const labelBorder = isDark ? designTokens.colors.grey[700] : designTokens.colors.border.default;
   const nameColor = isDark ? designTokens.colors.grey['300'] : 'colors.grey.600';
   const valueColor = isDark ? 'colors.grey.100' : 'colors.grey.800';
 

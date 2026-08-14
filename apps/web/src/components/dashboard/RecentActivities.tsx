@@ -9,6 +9,8 @@ import {
   CheckCircle2,
   AlertCircle,
 } from 'lucide-react';
+import i18n from '@/i18n';
+import { designTokens } from '@topems/tokens';
 
 export interface ActivityItem {
   id: string;
@@ -23,29 +25,29 @@ interface RecentActivitiesProps {
 }
 
 const typeColors: Record<string, { bg: string; text: string; bar: string; iconBg: string }> = {
-  系统: { bg: 'primary.light', text: 'primary.dark', bar: 'primary.main', iconBg: 'primary.100' },
-  文档: {
+  [i18n.t('components.recent_activities.k0')]: { bg: 'primary.light', text: 'primary.dark', bar: 'primary.main', iconBg: 'primary.100' },
+  [i18n.t('components.recent_activities.k1')]: {
     bg: 'secondary.light',
     text: 'secondary.dark',
     bar: 'secondary.main',
     iconBg: 'secondary.light',
   },
-  工作流: {
+  [i18n.t('components.recent_activities.k2')]: {
     bg: 'success.light',
     text: 'success.dark',
     bar: 'success.dark',
     iconBg: 'success.lighter',
   },
-  培训: { bg: 'warning.lighter', text: '#ca8a04', bar: 'warning.main', iconBg: 'warning.100' },
-  默认: { bg: 'grey.50', text: 'grey.600', bar: 'grey.400', iconBg: 'grey.100' },
+  [i18n.t('components.recent_activities.k3')]: { bg: 'warning.lighter', text: designTokens.colors.warning[600], bar: 'warning.main', iconBg: 'warning.100' },
+  [i18n.t('components.recent_activities.k4')]: { bg: 'grey.50', text: 'grey.600', bar: 'grey.400', iconBg: 'grey.100' },
 };
 
 const generateMockActivities = (): ActivityItem[] => [
   {
     id: '1',
-    title: '审批请求: 采购订单 #PO-2024-001 需要审批',
-    type: '工作流',
-    time: '2分钟前',
+    title: i18n.t('components.recent_activities.k0'),
+    type: i18n.t('shared.recent_activities.k0'),
+    time: i18n.t('components.recent_activities.2_1'),
     icon: (
       <AlertCircle
         size={20}
@@ -55,9 +57,9 @@ const generateMockActivities = (): ActivityItem[] => [
   },
   {
     id: '2',
-    title: '文档更新: 产品规格书 v2.0 已发布',
-    type: '文档',
-    time: '15分钟前',
+    title: i18n.t('components.recent_activities.v20_2'),
+    type: i18n.t('shared.recent_activities.k1'),
+    time: i18n.t('components.recent_activities.15_3'),
     icon: (
       <FileText
         size={20}
@@ -67,9 +69,9 @@ const generateMockActivities = (): ActivityItem[] => [
   },
   {
     id: '3',
-    title: '系统通知: 数据库备份已完成',
-    type: '系统',
-    time: '1小时前',
+    title: i18n.t('components.recent_activities.k4'),
+    type: i18n.t('shared.recent_activities.k2'),
+    time: i18n.t('components.recent_activities.1_5'),
     icon: (
       <CheckCircle2
         size={20}
@@ -79,9 +81,9 @@ const generateMockActivities = (): ActivityItem[] => [
   },
   {
     id: '4',
-    title: '培训提醒: 新员工入职培训明天开始',
-    type: '培训',
-    time: '2小时前',
+    title: i18n.t('components.recent_activities.k6'),
+    type: i18n.t('shared.recent_activities.k3'),
+    time: i18n.t('components.recent_activities.2_7'),
     icon: (
       <Users
         size={20}
@@ -91,9 +93,9 @@ const generateMockActivities = (): ActivityItem[] => [
   },
   {
     id: '5',
-    title: '告警: CRM服务响应时间超过阈值',
-    type: '系统',
-    time: '3小时前',
+    title: i18n.t('components.recent_activities.crm_8'),
+    type: i18n.t('shared.recent_activities.k4'),
+    time: i18n.t('components.recent_activities.3_9'),
     icon: (
       <AlertTriangle
         size={20}
@@ -103,9 +105,9 @@ const generateMockActivities = (): ActivityItem[] => [
   },
   {
     id: '6',
-    title: '审批请求: 请假申请 #LV-2024-015 需要审批',
-    type: '工作流',
-    time: '5小时前',
+    title: i18n.t('components.recent_activities.k10'),
+    type: i18n.t('shared.recent_activities.k5'),
+    time: i18n.t('components.recent_activities.5_11'),
     icon: (
       <Clock
         size={20}
@@ -132,7 +134,7 @@ export const RecentActivities: React.FC<RecentActivitiesProps> = ({
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
       {currentActivities.map((activity, index) => {
-        const colors = typeColors[activity.type] || typeColors['默认'];
+        const colors = typeColors[activity.type] || typeColors[i18n.t('shared.recent_activities.k6')];
         const progressWidth = `${((currentActivities.length - index) / currentActivities.length) * 100}%`;
 
         return (
@@ -165,7 +167,7 @@ export const RecentActivities: React.FC<RecentActivitiesProps> = ({
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  boxShadow: '0 1px 3px rgba(0,0,0,0.08)',
+                  boxShadow: `0 1px 3px ${designTokens.colors.action.selected}`,
                 }}
               >
                 {activity.icon}

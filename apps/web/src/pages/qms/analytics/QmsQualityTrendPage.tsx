@@ -20,9 +20,11 @@ import {
 } from 'recharts';
 import { useQmsMock, type QmsMockShape } from '@/api/qms/_mock';
 import { designTokens, semanticTokens } from '@topems/tokens';
+import { useTranslation } from 'react-i18next';
 
 export default function QmsQualityTrendPage() {
   const { data } = useQmsMock<QmsMockShape>();
+  const { t } = useTranslation('qms');
   const [range, setRange] = useState<'6m' | '12m'>('12m');
 
   const trend = useMemo(() => {
@@ -40,35 +42,35 @@ export default function QmsQualityTrendPage() {
   return (
     <div className='space-y-4 p-4'>
       <div className='flex items-center justify-between'>
-        <h1 className='text-2xl font-bold'>质量趋势分析</h1>
+        <h1 className='text-2xl font-bold'>{t('qms.qms_quality_trend_page.k0')}</h1>
         <select
           value={range}
           onChange={(e) => setRange(e.target.value as '6m' | '12m')}
           className='border rounded px-3 py-1.5 text-sm'
-          aria-label='时间范围'
+          aria-label={t('qms.qms_quality_trend_page.k1')}
         >
-          <option value='6m'>近 6 个月</option>
-          <option value='12m'>近 12 个月</option>
+          <option value='6m'>{t('qms.qms_quality_trend_page.6_2')}</option>
+          <option value='12m'>{t('qms.qms_quality_trend_page.12_3')}</option>
         </select>
       </div>
 
       <div className='grid grid-cols-1 gap-4 md:grid-cols-3'>
         <div className='rounded-lg border p-4'>
-          <p className='text-sm text-gray-600'>平均合格率</p>
+          <p className='text-sm text-gray-600'>{t('qms.qms_quality_trend_page.k4')}</p>
           <p className='mt-1 text-3xl font-bold text-green-600'>{avgPassRate}%</p>
         </div>
         <div className='rounded-lg border p-4'>
-          <p className='text-sm text-gray-600'>累计缺陷数</p>
+          <p className='text-sm text-gray-600'>{t('qms.qms_quality_trend_page.k5')}</p>
           <p className='mt-1 text-3xl font-bold text-red-600'>{totalDefects}</p>
         </div>
         <div className='rounded-lg border p-4'>
-          <p className='text-sm text-gray-600'>统计周期</p>
+          <p className='text-sm text-gray-600'>{t('qms.qms_quality_trend_page.k6')}</p>
           <p className='mt-1 text-3xl font-bold text-blue-600'>{trend.length} 月</p>
         </div>
       </div>
 
       <div className='rounded-lg border p-4'>
-        <h3 className='mb-2 font-semibold'>合格率与缺陷数趋势（双 Y 轴）</h3>
+        <h3 className='mb-2 font-semibold'>{t('qms.qms_quality_trend_page.y_7')}</h3>
         <ResponsiveContainer
           width='100%'
           height={340}
@@ -87,13 +89,13 @@ export default function QmsQualityTrendPage() {
               domain={[70, 100]}
               unit='%'
               fontSize={11}
-              label={{ value: '合格率', angle: -90, position: 'insideLeft' }}
+              label={{ value: t('qms.qms_quality_trend_page.k8'), angle: -90, position: 'insideLeft' }}
             />
             <YAxis
               yAxisId='right'
               orientation='right'
               fontSize={11}
-              label={{ value: '缺陷数', angle: 90, position: 'insideRight' }}
+              label={{ value: t('qms.qms_quality_trend_page.k9'), angle: 90, position: 'insideRight' }}
             />
             <Tooltip />
             <Legend />
@@ -102,13 +104,13 @@ export default function QmsQualityTrendPage() {
               y={95}
               stroke={designTokens.colors.success.dark}
               strokeDasharray='4 4'
-              label='目标 95%'
+              label={t('qms.qms_quality_trend_page.95_10')}
             />
             <Line
               yAxisId='left'
               type='monotone'
               dataKey='passRate'
-              name='合格率'
+              name={t('qms.qms_quality_trend_page.k11')}
               stroke={designTokens.colors.success.dark}
               strokeWidth={2}
               dot={{ r: 3 }}
@@ -117,7 +119,7 @@ export default function QmsQualityTrendPage() {
               yAxisId='right'
               type='monotone'
               dataKey='defectCount'
-              name='缺陷数'
+              name={t('qms.qms_quality_trend_page.k12')}
               stroke={designTokens.colors.error.main}
               strokeWidth={2}
               dot={{ r: 3 }}
@@ -126,7 +128,7 @@ export default function QmsQualityTrendPage() {
               yAxisId='right'
               type='monotone'
               dataKey='issueCount'
-              name='问题数'
+              name={t('qms.qms_quality_trend_page.k13')}
               stroke={designTokens.colors.warning.main}
               strokeWidth={2}
               dot={{ r: 3 }}
@@ -136,7 +138,7 @@ export default function QmsQualityTrendPage() {
       </div>
 
       <div className='rounded-lg border p-4'>
-        <h3 className='mb-2 font-semibold'>检验量趋势</h3>
+        <h3 className='mb-2 font-semibold'>{t('qms.qms_quality_trend_page.k14')}</h3>
         <ResponsiveContainer
           width='100%'
           height={240}
@@ -153,7 +155,7 @@ export default function QmsQualityTrendPage() {
             <Line
               type='monotone'
               dataKey='inspectionCount'
-              name='检验批次'
+              name={t('qms.qms_quality_trend_page.k15')}
               stroke={designTokens.colors.secondary.dark}
               strokeWidth={2}
               dot={{ r: 3 }}

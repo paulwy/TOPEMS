@@ -15,6 +15,7 @@ import useBffCrud from './useBffCrud';
 import type { UseBffCrudOptions, UseBffCrudResult } from './useBffCrud';
 import { useNotificationStore } from '@/store';
 import { extractErrorMessage } from '@/utils/errors';
+import i18n from '@/i18n';
 
 // ============ 通用类型 ============
 
@@ -222,8 +223,8 @@ export function useBffListPage<
         await action.action(selectedIds, selectedItems);
         setSelectedIds([]);
       } catch (err) {
-        const message = extractErrorMessage(err, '批量操作失败');
-        addNotification({ title: '错误', message, type: 'error' });
+        const message = extractErrorMessage(err, i18n.t('shared.use_bff_page.k0'));
+        addNotification({ title: i18n.t('shared.use_bff_page.k1'), message, type: 'error' });
       }
     },
     [batchActions, selectedIds, selectedItems, addNotification]
@@ -404,8 +405,8 @@ export function useBffDetailPage<T extends { id?: string }>(
         setRelatedData((prev) => ({ ...prev, [key]: result }));
         return result;
       } catch (err) {
-        const message = extractErrorMessage(err, '加载关联数据失败');
-        addNotification({ title: '错误', message, type: 'error' });
+        const message = extractErrorMessage(err, i18n.t('shared.use_bff_page.k2'));
+        addNotification({ title: i18n.t('shared.use_bff_page.k3'), message, type: 'error' });
         return null;
       } finally {
         setRelatedLoading((prev) => ({ ...prev, [key]: false }));
@@ -590,7 +591,7 @@ export function useBffFormPage<T extends { id?: string }>(
       if (!validation) return null;
 
       if (validation.required && (value === undefined || value === null || value === '')) {
-        return `${field.label}不能为空`;
+        return `${field.label}${i18n.t('shared.use_bff_page.k0')}`;
       }
 
       if (
@@ -598,7 +599,7 @@ export function useBffFormPage<T extends { id?: string }>(
         typeof value === 'string' &&
         value.length < validation.minLength
       ) {
-        return `${field.label}最少${validation.minLength}个字符`;
+        return `${field.label}${i18n.t('shared.use_bff_page.k1')}${validation.minLength}${i18n.t('shared.use_bff_page.k2')}`;
       }
 
       if (
@@ -606,21 +607,21 @@ export function useBffFormPage<T extends { id?: string }>(
         typeof value === 'string' &&
         value.length > validation.maxLength
       ) {
-        return `${field.label}最多${validation.maxLength}个字符`;
+        return `${field.label}${i18n.t('shared.use_bff_page.k3')}${validation.maxLength}${i18n.t('shared.use_bff_page.k4')}`;
       }
 
       if (validation.min !== undefined && typeof value === 'number' && value < validation.min) {
-        return `${field.label}不能小于${validation.min}`;
+        return `${field.label}${i18n.t('shared.use_bff_page.k5')}${validation.min}`;
       }
 
       if (validation.max !== undefined && typeof value === 'number' && value > validation.max) {
-        return `${field.label}不能大于${validation.max}`;
+        return `${field.label}${i18n.t('shared.use_bff_page.k6')}${validation.max}`;
       }
 
       if (validation.pattern && typeof value === 'string') {
         const regex = new RegExp(validation.pattern);
         if (!regex.test(value)) {
-          return `${field.label}格式不正确`;
+          return `${field.label}${i18n.t('shared.use_bff_page.k7')}`;
         }
       }
 

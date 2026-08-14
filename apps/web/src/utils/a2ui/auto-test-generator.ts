@@ -1,3 +1,4 @@
+import i18n from '@/i18n';
 /**
  * V50.0 前端 A2UI — Auto Test Generator
  *
@@ -157,12 +158,12 @@ export class AutoTestGenerator {
       const prompt = this.buildPrompt(request, strategy);
       const parsed = (await callOllama(prompt)) as RawTestSuitePayload;
       if (!parsed || typeof parsed !== 'object') {
-        console.warn('[a2ui] ollama 返回非对象 payload，降级为占位结构');
+        console.warn(i18n.t('shared.auto-test-generator.k0'));
         return fallback;
       }
       return this.coerceResult(parsed, request, strategy);
     } catch (err) {
-      console.warn('[a2ui] ollama 调用失败，降级为占位结构:', err);
+      console.warn(i18n.t('shared.auto-test-generator.k1'), err);
       return fallback;
     }
   }

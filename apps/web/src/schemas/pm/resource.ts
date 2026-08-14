@@ -1,4 +1,5 @@
 import type { EntitySchema } from '@/schema';
+import i18n from '@/i18n';
 
 const STATUS_COLOR_MAP: Record<string, 'default' | 'primary' | 'success' | 'warning' | 'error'> = {
   available: 'success',
@@ -8,32 +9,32 @@ const STATUS_COLOR_MAP: Record<string, 'default' | 'primary' | 'success' | 'warn
 };
 
 const STATUS_LABEL_MAP: Record<string, string> = {
-  available: '可用',
-  in_use: '使用中',
-  maintenance: '维护中',
-  retired: '已退役',
+  available: i18n.t('shared.resource.k0'),
+  in_use: i18n.t('shared.resource.k1'),
+  maintenance: i18n.t('shared.resource.k2'),
+  retired: i18n.t('shared.resource.k3'),
 };
 
 const RESOURCE_TYPE_OPTIONS: { value: string; label: string }[] = [
-  { value: 'server', label: '服务器' },
-  { value: 'database', label: '数据库' },
-  { value: 'workstation', label: '工作站' },
-  { value: 'hardware', label: '硬件' },
-  { value: 'software', label: '软件' },
-  { value: 'network', label: '网络设备' },
+  { value: 'server', label: i18n.t('shared.resource.k4') },
+  { value: 'database', label: i18n.t('shared.resource.k5') },
+  { value: 'workstation', label: i18n.t('shared.resource.k6') },
+  { value: 'hardware', label: i18n.t('shared.resource.k7') },
+  { value: 'software', label: i18n.t('shared.resource.k8') },
+  { value: 'network', label: i18n.t('shared.resource.k9') },
 ];
 
 const STATUS_OPTIONS: { value: string; label: string }[] = [
-  { value: 'available', label: '可用' },
-  { value: 'in_use', label: '使用中' },
-  { value: 'maintenance', label: '维护中' },
-  { value: 'retired', label: '已退役' },
+  { value: 'available', label: i18n.t('shared.resource.k10') },
+  { value: 'in_use', label: i18n.t('shared.resource.k11') },
+  { value: 'maintenance', label: i18n.t('shared.resource.k12') },
+  { value: 'retired', label: i18n.t('shared.resource.k13') },
 ];
 
 export const resourceSchema: EntitySchema = {
   entity: 'pm_resource',
-  title: '资源管理',
-  description: '管理项目资源的分配与使用情况',
+  title: i18n.t('shared.resource.k14'),
+  description: i18n.t('shared.resource.k15'),
 
   api: {
     module: 'pm',
@@ -43,7 +44,7 @@ export const resourceSchema: EntitySchema = {
   fields: [
     {
       name: 'resource_id',
-      label: '资源标识',
+      label: i18n.t('shared.resource.k16'),
       type: 'text',
       required: true,
       readonlyOnEdit: true,
@@ -52,7 +53,7 @@ export const resourceSchema: EntitySchema = {
     },
     {
       name: 'resource_type',
-      label: '资源类型',
+      label: i18n.t('shared.resource.k17'),
       type: 'select',
       required: true,
       defaultValue: 'server',
@@ -62,19 +63,19 @@ export const resourceSchema: EntitySchema = {
     },
     {
       name: 'resource_service',
-      label: '服务名称',
+      label: i18n.t('shared.resource.k18'),
       type: 'text',
       listWidth: 150,
     },
     {
       name: 'role',
-      label: '角色',
+      label: i18n.t('shared.resource.k19'),
       type: 'text',
       listWidth: 100,
     },
     {
       name: 'allocation_percent',
-      label: '分配比例',
+      label: i18n.t('shared.resource.k20'),
       type: 'number',
       defaultValue: 100,
       listWidth: 120,
@@ -86,7 +87,7 @@ export const resourceSchema: EntitySchema = {
     },
     {
       name: 'status',
-      label: '状态',
+      label: i18n.t('shared.resource.k21'),
       type: 'select',
       defaultValue: 'available',
       options: { type: 'static', options: STATUS_OPTIONS },
@@ -95,33 +96,33 @@ export const resourceSchema: EntitySchema = {
     },
     {
       name: 'start_date',
-      label: '分配开始',
+      label: i18n.t('shared.resource.k22'),
       type: 'date',
       listWidth: 120,
     },
     {
       name: 'end_date',
-      label: '分配结束',
+      label: i18n.t('shared.resource.k23'),
       type: 'date',
       listWidth: 120,
     },
     {
       name: 'actual_hours',
-      label: '实际工时',
+      label: i18n.t('shared.resource.k24'),
       type: 'number',
       listWidth: 100,
       hideInForm: true,
     },
     {
       name: 'actual_cost',
-      label: '实际成本',
+      label: i18n.t('shared.resource.k25'),
       type: 'number',
       listWidth: 100,
       hideInForm: true,
     },
     {
       name: 'created_at',
-      label: '创建时间',
+      label: i18n.t('shared.resource.k26'),
       type: 'datetime',
       readonly: true,
       sortable: true,
@@ -130,7 +131,7 @@ export const resourceSchema: EntitySchema = {
     },
     {
       name: 'updated_at',
-      label: '更新时间',
+      label: i18n.t('shared.resource.k27'),
       type: 'datetime',
       readonly: true,
       hideInForm: true,
@@ -160,16 +161,16 @@ export const resourceSchema: EntitySchema = {
     filters: [
       {
         id: 'resource_type',
-        label: '资源类型',
+        label: i18n.t('shared.resource.k28'),
         type: 'select',
-        options: [{ label: '全部类型', value: 'all' }, ...RESOURCE_TYPE_OPTIONS],
+        options: [{ label: i18n.t('shared.resource.k29'), value: 'all' }, ...RESOURCE_TYPE_OPTIONS],
         defaultValue: 'all',
       },
       {
         id: 'status',
-        label: '状态',
+        label: i18n.t('shared.resource.k30'),
         type: 'select',
-        options: [{ label: '全部状态', value: 'all' }, ...STATUS_OPTIONS],
+        options: [{ label: i18n.t('shared.resource.k31'), value: 'all' }, ...STATUS_OPTIONS],
         defaultValue: 'all',
       },
     ],
@@ -177,19 +178,19 @@ export const resourceSchema: EntitySchema = {
 
   formSections: [
     {
-      title: '基本信息',
+      title: i18n.t('shared.resource.k32'),
       fields: ['resource_id', 'resource_type', 'resource_service', 'role'],
     },
     {
-      title: '分配信息',
+      title: i18n.t('shared.resource.k33'),
       fields: ['allocation_percent', 'status', 'start_date', 'end_date'],
     },
   ],
 
   formColCount: 2,
-  createTitle: '新增资源',
-  editTitle: '编辑资源',
-  detailTitle: '资源详情',
+  createTitle: i18n.t('shared.resource.k34'),
+  editTitle: i18n.t('shared.resource.k35'),
+  detailTitle: i18n.t('shared.resource.k36'),
 
   actions: ['create', 'edit', 'detail', 'delete'],
 };

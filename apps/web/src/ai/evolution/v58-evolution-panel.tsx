@@ -33,6 +33,7 @@ import {
   DialogActions,
   Card,
 } from '@mui/material';
+import i18n from '@/i18n';
 import {
   X as XIcon,
   Cpu,
@@ -164,7 +165,7 @@ const V58EvolutionPanel: React.FC<{ onClose: () => void }> = ({ onClose }) => {
           boxShadow: designTokens.darkShadows['3xl'],
           display: 'flex',
           flexDirection: 'column',
-          border: '1px solid rgba(139, 92, 246, 0.2)',
+          border: `1px solid ${designTokens.colors.secondary[300]}`,
         }}
         onClick={(e) => e.stopPropagation()}
       >
@@ -179,25 +180,25 @@ const V58EvolutionPanel: React.FC<{ onClose: () => void }> = ({ onClose }) => {
             <Tab
               icon={<Cpu size={16} />}
               iconPosition='start'
-              label={`模型版本 (${models.length})`}
+              label={`${i18n.t('ai.v58-evolution-panel.k0')}${models.length})`}
               value='models'
             />
             <Tab
               icon={<GitBranch size={16} />}
               iconPosition='start'
-              label={`A/B 测试 (${experiments.length})`}
+              label={`${i18n.t('ai.v58-evolution-panel.ab_1')}${experiments.length})`}
               value='experiments'
             />
             <Tab
               icon={<Shield size={16} />}
               iconPosition='start'
-              label='安全加固'
+              label={i18n.t('ai.v58-evolution-panel.k0')}
               value='security'
             />
             <Tab
               icon={<AlertTriangle size={16} />}
               iconPosition='start'
-              label={`威胁模型 (${threats.length})`}
+              label={`${i18n.t('ai.v58-evolution-panel.k2')}${threats.length})`}
               value='threats'
             />
           </Tabs>
@@ -257,18 +258,18 @@ const V58EvolutionPanel: React.FC<{ onClose: () => void }> = ({ onClose }) => {
             maxWidth='sm'
             fullWidth
           >
-            <DialogTitle>注册新模型</DialogTitle>
+            <DialogTitle>{i18n.t('ai.v58-evolution-panel.k1')}</DialogTitle>
             <DialogContent>
               <Box sx={{ mt: 2, display: 'flex', flexDirection: 'column', gap: 2 }}>
                 <TextField
-                  label='模型名称'
+                  label={i18n.t('ai.v58-evolution-panel.k2')}
                   value={newModel.name}
                   onChange={(e) => setNewModel({ ...newModel, name: e.target.value })}
                   fullWidth
                   size='small'
                 />
                 <TextField
-                  label='模型类型'
+                  label={i18n.t('ai.v58-evolution-panel.k3')}
                   value={newModel.type}
                   onChange={(e) => setNewModel({ ...newModel, type: e.target.value })}
                   fullWidth
@@ -276,7 +277,7 @@ const V58EvolutionPanel: React.FC<{ onClose: () => void }> = ({ onClose }) => {
                   placeholder='nlu / copilot / ops / ...'
                 />
                 <TextField
-                  label='描述'
+                  label={i18n.t('ai.v58-evolution-panel.k4')}
                   value={newModel.description}
                   onChange={(e) => setNewModel({ ...newModel, description: e.target.value })}
                   fullWidth
@@ -285,7 +286,7 @@ const V58EvolutionPanel: React.FC<{ onClose: () => void }> = ({ onClose }) => {
                   rows={2}
                 />
                 <TextField
-                  label='负责人'
+                  label={i18n.t('ai.v58-evolution-panel.k5')}
                   value={newModel.owner}
                   onChange={(e) => setNewModel({ ...newModel, owner: e.target.value })}
                   fullWidth
@@ -294,7 +295,7 @@ const V58EvolutionPanel: React.FC<{ onClose: () => void }> = ({ onClose }) => {
               </Box>
             </DialogContent>
             <DialogActions>
-              <Button onClick={() => setShowCreateModel(false)}>取消</Button>
+              <Button onClick={() => setShowCreateModel(false)}>{i18n.t('ai.v58-evolution-panel.k6')}</Button>
               <Button
                 onClick={() => {
                   if (!newModel.name.trim()) return;
@@ -311,7 +312,7 @@ const V58EvolutionPanel: React.FC<{ onClose: () => void }> = ({ onClose }) => {
                 sx={{ bgcolor: 'secondary.500' }}
                 disabled={!newModel.name.trim()}
               >
-                注册模型
+                {i18n.t('ai.v58-evolution-panel.k0')}
               </Button>
             </DialogActions>
           </Dialog>
@@ -328,14 +329,14 @@ const V58EvolutionPanel: React.FC<{ onClose: () => void }> = ({ onClose }) => {
             <DialogContent>
               <Box sx={{ mt: 2, display: 'flex', flexDirection: 'column', gap: 2 }}>
                 <TextField
-                  label='实验名称'
+                  label={i18n.t('ai.v58-evolution-panel.k7')}
                   value={newExp.name}
                   onChange={(e) => setNewExp({ ...newExp, name: e.target.value })}
                   fullWidth
                   size='small'
                 />
                 <TextField
-                  label='实验描述'
+                  label={i18n.t('ai.v58-evolution-panel.k8')}
                   value={newExp.description}
                   onChange={(e) => setNewExp({ ...newExp, description: e.target.value })}
                   fullWidth
@@ -344,10 +345,10 @@ const V58EvolutionPanel: React.FC<{ onClose: () => void }> = ({ onClose }) => {
                   rows={2}
                 />
                 <FormControl size='small'>
-                  <InputLabel>流量分配 (%)</InputLabel>
+                  <InputLabel>{i18n.t('ai.v58-evolution-panel.k9')}</InputLabel>
                   <Select
                     value={newExp.trafficSplit}
-                    label='流量分配 (%)'
+                    label={i18n.t('ai.v58-evolution-panel.k10')}
                     onChange={(e) =>
                       setNewExp({ ...newExp, trafficSplit: e.target.value as number })
                     }
@@ -361,7 +362,7 @@ const V58EvolutionPanel: React.FC<{ onClose: () => void }> = ({ onClose }) => {
               </Box>
             </DialogContent>
             <DialogActions>
-              <Button onClick={() => setShowCreateExp(false)}>取消</Button>
+              <Button onClick={() => setShowCreateExp(false)}>{i18n.t('ai.v58-evolution-panel.k11')}</Button>
               <Button
                 onClick={() => {
                   if (!newExp.name.trim()) return;
@@ -369,8 +370,8 @@ const V58EvolutionPanel: React.FC<{ onClose: () => void }> = ({ onClose }) => {
                     newExp.name,
                     newExp.description,
                     [
-                      { name: '对照组', modelVersion: 'v1.0.0', weight: 50, metrics: {} },
-                      { name: '实验组', modelVersion: 'v2.0.0', weight: 50, metrics: {} },
+                      { name: i18n.t('ai.v58-evolution-panel.k12'), modelVersion: 'v1.0.0', weight: 50, metrics: {} },
+                      { name: i18n.t('ai.v58-evolution-panel.k13'), modelVersion: 'v2.0.0', weight: 50, metrics: {} },
                     ],
                     newExp.trafficSplit
                   );
@@ -381,7 +382,7 @@ const V58EvolutionPanel: React.FC<{ onClose: () => void }> = ({ onClose }) => {
                 sx={{ bgcolor: 'teal.500' }}
                 disabled={!newExp.name.trim()}
               >
-                创建实验
+                {i18n.t('ai.v58-evolution-panel.k1')}
               </Button>
             </DialogActions>
           </Dialog>
@@ -421,13 +422,13 @@ const V58PanelHeader: React.FC<{ onClose: () => void }> = ({ onClose }) => (
           variant='h6'
           sx={{ fontWeight: 700, fontSize: 18 }}
         >
-          V58.0 AI 演进面板
+          {i18n.t('ai.v58-evolution-panel.v580ai_2')}
         </Typography>
         <Typography
           variant='caption'
           sx={{ opacity: 0.85, fontSize: 12 }}
         >
-          模型版本 · A/B 测试 · 安全加固 · 威胁建模
+          {i18n.t('ai.v58-evolution-panel.k3')}
         </Typography>
       </Box>
     </Box>
@@ -533,7 +534,7 @@ const ModelsTab: React.FC<{
           sx={{ fontWeight: 600, display: 'flex', alignItems: 'center', gap: 1 }}
         >
           <Cpu size={20} />
-          模型版本管理
+          {i18n.t('ai.v58-evolution-panel.k4')}
         </Typography>
         <Button
           variant='contained'
@@ -542,7 +543,7 @@ const ModelsTab: React.FC<{
           size='small'
           sx={{ bgcolor: 'secondary.500' }}
         >
-          注册模型
+          {i18n.t('ai.v58-evolution-panel.k5')}
         </Button>
       </Stack>
 
@@ -554,7 +555,7 @@ const ModelsTab: React.FC<{
           >
             模型列表 ({models.length})
           </Typography>
-          {models.length === 0 && <Alert severity='info'>暂无模型</Alert>}
+          {models.length === 0 && <Alert severity='info'>{i18n.t('ai.v58-evolution-panel.k14')}</Alert>}
           {models.length > 0 && (
             <List sx={{ maxHeight: 500, overflow: 'auto' }}>
               {models.map((model) => {
@@ -621,7 +622,7 @@ const ModelsTab: React.FC<{
                   />
                   {activeVersion && (
                     <Chip
-                      label={`当前: ${activeVersion.version}`}
+                      label={`${i18n.t('ai.v58-evolution-panel.k3')}${activeVersion.version}`}
                       size='small'
                       sx={{ bgcolor: 'success.100', color: 'teal.900', fontWeight: 600 }}
                     />
@@ -638,7 +639,7 @@ const ModelsTab: React.FC<{
                   variant='caption'
                   color='text.secondary'
                 >
-                  负责人: {selectedModel.owner}
+                  [i18n.t('ai.v58-evolution-panel.k6')]: {selectedModel.owner}
                 </Typography>
               </Card>
 
@@ -653,18 +654,18 @@ const ModelsTab: React.FC<{
                     sx={{ fontWeight: 600, display: 'flex', alignItems: 'center', gap: 1 }}
                   >
                     <Activity size={16} />
-                    版本时间线
+                    {i18n.t('ai.v58-evolution-panel.k7')}
                   </Typography>
                   <Typography
                     variant='caption'
                     color='text.secondary'
                   >
-                    选择 2 个版本进行对比
+                    {i18n.t('ai.v58-evolution-panel.2_8')}
                   </Typography>
                 </Stack>
 
                 {selectedModel.versions.length === 0 && (
-                  <Alert severity='info'>暂无版本，发布第一个版本</Alert>
+                  <Alert severity='info'>{i18n.t('ai.v58-evolution-panel.k15')}</Alert>
                 )}
                 {selectedModel.versions.length > 0 && (
                   <TableContainer>
@@ -672,11 +673,11 @@ const ModelsTab: React.FC<{
                       <TableHead>
                         <TableRow>
                           <TableCell sx={{ fontWeight: 600, width: 40 }}></TableCell>
-                          <TableCell sx={{ fontWeight: 600 }}>版本</TableCell>
-                          <TableCell sx={{ fontWeight: 600 }}>状态</TableCell>
-                          <TableCell sx={{ fontWeight: 600 }}>指标</TableCell>
-                          <TableCell sx={{ fontWeight: 600 }}>创建时间</TableCell>
-                          <TableCell sx={{ fontWeight: 600 }}>操作</TableCell>
+                          <TableCell sx={{ fontWeight: 600 }}>{i18n.t('ai.v58-evolution-panel.k16')}</TableCell>
+                          <TableCell sx={{ fontWeight: 600 }}>{i18n.t('ai.v58-evolution-panel.k17')}</TableCell>
+                          <TableCell sx={{ fontWeight: 600 }}>{i18n.t('ai.v58-evolution-panel.k18')}</TableCell>
+                          <TableCell sx={{ fontWeight: 600 }}>{i18n.t('ai.v58-evolution-panel.k19')}</TableCell>
+                          <TableCell sx={{ fontWeight: 600 }}>{i18n.t('ai.v58-evolution-panel.k20')}</TableCell>
                         </TableRow>
                       </TableHead>
                       <TableBody>
@@ -728,7 +729,7 @@ const ModelsTab: React.FC<{
                                     onClick={() => onActivate(selectedModel.id, v.id)}
                                     sx={{ fontSize: 10, minWidth: 'auto', px: 1 }}
                                   >
-                                    激活
+                                    {i18n.t('ai.v58-evolution-panel.k9')}
                                   </Button>
                                 )}
                                 {v.status === 'Active' && (
@@ -737,7 +738,7 @@ const ModelsTab: React.FC<{
                                     onClick={() => onDeprecate(selectedModel.id, v.id)}
                                     sx={{ fontSize: 10, minWidth: 'auto', px: 1 }}
                                   >
-                                    废弃
+                                    {i18n.t('ai.v58-evolution-panel.k10')}
                                   </Button>
                                 )}
                                 <Button
@@ -745,7 +746,7 @@ const ModelsTab: React.FC<{
                                   onClick={() => onArchive(selectedModel.id, v.id)}
                                   sx={{ fontSize: 10, minWidth: 'auto', px: 1 }}
                                 >
-                                  归档
+                                  {i18n.t('ai.v58-evolution-panel.k11')}
                                 </Button>
                               </Stack>
                             </TableCell>
@@ -779,7 +780,7 @@ const ModelsTab: React.FC<{
                           }}
                         >
                           <BarChart3 size={16} />
-                          版本对比结果
+                          {i18n.t('ai.v58-evolution-panel.k12')}
                         </Typography>
                         <Box
                           sx={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 2 }}
@@ -789,7 +790,7 @@ const ModelsTab: React.FC<{
                               variant='caption'
                               sx={{ fontWeight: 600 }}
                             >
-                              新增指标
+                              {i18n.t('ai.v58-evolution-panel.k13')}
                             </Typography>
                             <Box sx={{ display: 'flex', gap: 0.5, flexWrap: 'wrap', mt: 0.5 }}>
                               {result.added.length > 0 ? (
@@ -806,7 +807,7 @@ const ModelsTab: React.FC<{
                                   variant='caption'
                                   color='text.secondary'
                                 >
-                                  无
+                                  {i18n.t('ai.v58-evolution-panel.k14')}
                                 </Typography>
                               )}
                             </Box>
@@ -816,7 +817,7 @@ const ModelsTab: React.FC<{
                               variant='caption'
                               sx={{ fontWeight: 600 }}
                             >
-                              移除指标
+                              {i18n.t('ai.v58-evolution-panel.k15')}
                             </Typography>
                             <Box sx={{ display: 'flex', gap: 0.5, flexWrap: 'wrap', mt: 0.5 }}>
                               {result.removed.length > 0 ? (
@@ -833,7 +834,7 @@ const ModelsTab: React.FC<{
                                   variant='caption'
                                   color='text.secondary'
                                 >
-                                  无
+                                  {i18n.t('ai.v58-evolution-panel.k16')}
                                 </Typography>
                               )}
                             </Box>
@@ -843,7 +844,7 @@ const ModelsTab: React.FC<{
                               variant='caption'
                               sx={{ fontWeight: 600 }}
                             >
-                              变化指标
+                              {i18n.t('ai.v58-evolution-panel.k17')}
                             </Typography>
                             <Box sx={{ display: 'flex', gap: 0.5, flexWrap: 'wrap', mt: 0.5 }}>
                               {result.changed.length > 0 ? (
@@ -864,7 +865,7 @@ const ModelsTab: React.FC<{
                                   variant='caption'
                                   color='text.secondary'
                                 >
-                                  无
+                                  {i18n.t('ai.v58-evolution-panel.k18')}
                                 </Typography>
                               )}
                             </Box>
@@ -881,7 +882,7 @@ const ModelsTab: React.FC<{
                   sx={{ fontWeight: 600, mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}
                 >
                   <Plus size={16} />
-                  发布新版本
+                  {i18n.t('ai.v58-evolution-panel.k19')}
                 </Typography>
                 <Stack
                   direction='row'
@@ -889,7 +890,7 @@ const ModelsTab: React.FC<{
                   sx={{ mb: 2 }}
                 >
                   <TextField
-                    label='版本号'
+                    label={i18n.t('ai.v58-evolution-panel.k21')}
                     value={newVersion}
                     onChange={(e) => setNewVersion(e.target.value)}
                     size='small'
@@ -903,7 +904,7 @@ const ModelsTab: React.FC<{
                   sx={{ mb: 2 }}
                 >
                   <TextField
-                    label='指标名'
+                    label={i18n.t('ai.v58-evolution-panel.k22')}
                     value={newMetricKey}
                     onChange={(e) => setNewMetricKey(e.target.value)}
                     size='small'
@@ -911,7 +912,7 @@ const ModelsTab: React.FC<{
                     sx={{ flex: 1 }}
                   />
                   <TextField
-                    label='指标值'
+                    label={i18n.t('ai.v58-evolution-panel.k23')}
                     value={newMetricVal}
                     onChange={(e) => setNewMetricVal(e.target.value)}
                     size='small'
@@ -923,7 +924,7 @@ const ModelsTab: React.FC<{
                     size='small'
                     onClick={handleAddMetric}
                   >
-                    添加
+                    {i18n.t('ai.v58-evolution-panel.k20')}
                   </Button>
                 </Stack>
                 {Object.keys(metrics).length > 0 && (
@@ -949,13 +950,13 @@ const ModelsTab: React.FC<{
                   sx={{ bgcolor: 'secondary.500' }}
                   size='small'
                 >
-                  发布版本
+                  {i18n.t('ai.v58-evolution-panel.k21')}
                 </Button>
               </Card>
             </>
           ) : (
             <Card variant='outlined' sx={{ p: 2 }}>
-              <Alert severity='info'>请选择一个模型查看详情</Alert>
+              <Alert severity='info'>{i18n.t('ai.v58-evolution-panel.k24')}</Alert>
             </Card>
           )}
         </Box>
@@ -1002,7 +1003,7 @@ const ExperimentsTab: React.FC<{
           sx={{ fontWeight: 600, display: 'flex', alignItems: 'center', gap: 1 }}
         >
           <GitBranch size={20} />
-          A/B 测试管理
+          {i18n.t('ai.v58-evolution-panel.ab_22')}
         </Typography>
         <Button
           variant='contained'
@@ -1011,7 +1012,7 @@ const ExperimentsTab: React.FC<{
           size='small'
           sx={{ bgcolor: 'teal.500' }}
         >
-          创建实验
+          {i18n.t('ai.v58-evolution-panel.k23')}
         </Button>
       </Stack>
 
@@ -1023,7 +1024,7 @@ const ExperimentsTab: React.FC<{
           >
             实验列表 ({experiments.length})
           </Typography>
-          {experiments.length === 0 && <Alert severity='info'>暂无实验</Alert>}
+          {experiments.length === 0 && <Alert severity='info'>{i18n.t('ai.v58-evolution-panel.k25')}</Alert>}
           {experiments.length > 0 && (
             <List sx={{ maxHeight: 500, overflow: 'auto' }}>
               {experiments.map((exp) => (
@@ -1090,7 +1091,7 @@ const ExperimentsTab: React.FC<{
                       onClick={() => onStart(selectedExp.id)}
                       sx={{ bgcolor: 'teal.500' }}
                     >
-                      启动实验
+                      {i18n.t('ai.v58-evolution-panel.k24')}
                     </Button>
                   )}
                   {selectedExp.status === 'Running' && (
@@ -1101,7 +1102,7 @@ const ExperimentsTab: React.FC<{
                       onClick={() => onStop(selectedExp.id)}
                       sx={{ bgcolor: 'error.500' }}
                     >
-                      停止实验
+                      {i18n.t('ai.v58-evolution-panel.k25')}
                     </Button>
                   )}
                 </Stack>
@@ -1114,17 +1115,17 @@ const ExperimentsTab: React.FC<{
                 </Typography>
                 <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
                   <Chip
-                    label={`流量: ${selectedExp.traffic_split}%`}
+                    label={`${i18n.t('ai.v58-evolution-panel.k4')}${selectedExp.traffic_split}%`}
                     size='small'
                     variant='outlined'
                   />
                   <Chip
-                    label={`变体: ${selectedExp.variants.length}`}
+                    label={`${i18n.t('ai.v58-evolution-panel.k5')}${selectedExp.variants.length}`}
                     size='small'
                     variant='outlined'
                   />
                   <Chip
-                    label={`开始: ${new Date(selectedExp.startDate).toLocaleDateString()}`}
+                    label={`${i18n.t('ai.v58-evolution-panel.k6')}${new Date(selectedExp.startDate).toLocaleDateString()}`}
                     size='small'
                     variant='outlined'
                   />
@@ -1137,19 +1138,19 @@ const ExperimentsTab: React.FC<{
                   sx={{ fontWeight: 600, mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}
                 >
                   <BarChart3 size={16} />
-                  变体性能
+                  {i18n.t('ai.v58-evolution-panel.k26')}
                 </Typography>
                 {results.length > 0 ? (
                   <TableContainer>
                     <Table size='small'>
                       <TableHead>
                         <TableRow>
-                          <TableCell sx={{ fontWeight: 600 }}>变体</TableCell>
-                          <TableCell sx={{ fontWeight: 600 }}>模型版本</TableCell>
-                          <TableCell sx={{ fontWeight: 600, align: 'right' }}>访客</TableCell>
-                          <TableCell sx={{ fontWeight: 600, align: 'right' }}>转化</TableCell>
-                          <TableCell sx={{ fontWeight: 600, align: 'right' }}>转化率</TableCell>
-                          <TableCell sx={{ fontWeight: 600 }}>表现</TableCell>
+                          <TableCell sx={{ fontWeight: 600 }}>{i18n.t('ai.v58-evolution-panel.k26')}</TableCell>
+                          <TableCell sx={{ fontWeight: 600 }}>{i18n.t('ai.v58-evolution-panel.k27')}</TableCell>
+                          <TableCell sx={{ fontWeight: 600, align: 'right' }}>{i18n.t('ai.v58-evolution-panel.k28')}</TableCell>
+                          <TableCell sx={{ fontWeight: 600, align: 'right' }}>{i18n.t('ai.v58-evolution-panel.k29')}</TableCell>
+                          <TableCell sx={{ fontWeight: 600, align: 'right' }}>{i18n.t('ai.v58-evolution-panel.k30')}</TableCell>
+                          <TableCell sx={{ fontWeight: 600 }}>{i18n.t('ai.v58-evolution-panel.k31')}</TableCell>
                         </TableRow>
                       </TableHead>
                       <TableBody>
@@ -1207,7 +1208,7 @@ const ExperimentsTab: React.FC<{
                     </Table>
                   </TableContainer>
                 ) : (
-                  <Alert severity='info'>暂无数据，请启动实验</Alert>
+                  <Alert severity='info'>{i18n.t('ai.v58-evolution-panel.k32')}</Alert>
                 )}
               </Card>
 
@@ -1218,7 +1219,7 @@ const ExperimentsTab: React.FC<{
                     sx={{ fontWeight: 600, mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}
                   >
                     <Target size={16} />
-                    统计显著性分析
+                    {i18n.t('ai.v58-evolution-panel.k27')}
                   </Typography>
                   <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 2 }}>
                     <Box sx={{ textAlign: 'center' }}>
@@ -1226,7 +1227,7 @@ const ExperimentsTab: React.FC<{
                         variant='caption'
                         color='text.secondary'
                       >
-                        显著
+                        {i18n.t('ai.v58-evolution-panel.k28')}
                       </Typography>
                       <Box sx={{ mt: 0.5 }}>
                         {significance.isSignificant ? (
@@ -1247,7 +1248,7 @@ const ExperimentsTab: React.FC<{
                         variant='caption'
                         color='text.secondary'
                       >
-                        置信度
+                        {i18n.t('ai.v58-evolution-panel.k29')}
                       </Typography>
                       <Typography
                         variant='h6'
@@ -1261,7 +1262,7 @@ const ExperimentsTab: React.FC<{
                         variant='caption'
                         color='text.secondary'
                       >
-                        P 值
+                        {i18n.t('ai.v58-evolution-panel.p_30')}
                       </Typography>
                       <Typography
                         variant='h6'
@@ -1275,7 +1276,7 @@ const ExperimentsTab: React.FC<{
                         variant='caption'
                         color='text.secondary'
                       >
-                        相对提升
+                        {i18n.t('ai.v58-evolution-panel.k31')}
                       </Typography>
                       <Typography
                         variant='h6'
@@ -1308,7 +1309,7 @@ const ExperimentsTab: React.FC<{
             </>
           ) : (
             <Card variant='outlined' sx={{ p: 2 }}>
-              <Alert severity='info'>请选择一个实验查看详情</Alert>
+              <Alert severity='info'>{i18n.t('ai.v58-evolution-panel.k33')}</Alert>
             </Card>
           )}
         </Box>
@@ -1346,7 +1347,7 @@ const SecurityTab: React.FC<{
           sx={{ fontWeight: 600, display: 'flex', alignItems: 'center', gap: 1 }}
         >
           <ShieldCheck size={20} />
-          安全加固报告
+          {i18n.t('ai.v58-evolution-panel.k32')}
         </Typography>
         <Stack
           direction='row'
@@ -1358,7 +1359,7 @@ const SecurityTab: React.FC<{
             onClick={onRunScan}
             size='small'
           >
-            重新扫描
+            {i18n.t('ai.v58-evolution-panel.k33')}
           </Button>
           <Button
             variant='contained'
@@ -1367,7 +1368,7 @@ const SecurityTab: React.FC<{
             size='small'
             sx={{ bgcolor: 'error.500' }}
           >
-            应用加固
+            {i18n.t('ai.v58-evolution-panel.k34')}
           </Button>
         </Stack>
       </Stack>
@@ -1391,7 +1392,7 @@ const SecurityTab: React.FC<{
               variant='caption'
               color='text.secondary'
             >
-              安全评分
+              {i18n.t('ai.v58-evolution-panel.k35')}
             </Typography>
           </Box>
         </Card>
@@ -1411,7 +1412,7 @@ const SecurityTab: React.FC<{
               variant='caption'
               color='text.secondary'
             >
-              通过
+              {i18n.t('ai.v58-evolution-panel.k36')}
             </Typography>
           </Box>
         </Card>
@@ -1431,7 +1432,7 @@ const SecurityTab: React.FC<{
               variant='caption'
               color='text.secondary'
             >
-              警告
+              {i18n.t('ai.v58-evolution-panel.k37')}
             </Typography>
           </Box>
         </Card>
@@ -1451,7 +1452,7 @@ const SecurityTab: React.FC<{
               variant='caption'
               color='text.secondary'
             >
-              失败
+              {i18n.t('ai.v58-evolution-panel.k38')}
             </Typography>
           </Box>
         </Card>
@@ -1463,17 +1464,17 @@ const SecurityTab: React.FC<{
           sx={{ fontWeight: 600, mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}
         >
           <FileText size={16} />
-          安全检查详情
+          {i18n.t('ai.v58-evolution-panel.k39')}
         </Typography>
         <TableContainer>
           <Table size='small'>
             <TableHead>
               <TableRow>
-                <TableCell sx={{ fontWeight: 600 }}>类型</TableCell>
-                <TableCell sx={{ fontWeight: 600 }}>检查项</TableCell>
-                <TableCell sx={{ fontWeight: 600 }}>严重度</TableCell>
-                <TableCell sx={{ fontWeight: 600 }}>状态</TableCell>
-                <TableCell sx={{ fontWeight: 600 }}>建议</TableCell>
+                <TableCell sx={{ fontWeight: 600 }}>{i18n.t('ai.v58-evolution-panel.k34')}</TableCell>
+                <TableCell sx={{ fontWeight: 600 }}>{i18n.t('ai.v58-evolution-panel.k35')}</TableCell>
+                <TableCell sx={{ fontWeight: 600 }}>{i18n.t('ai.v58-evolution-panel.k36')}</TableCell>
+                <TableCell sx={{ fontWeight: 600 }}>{i18n.t('ai.v58-evolution-panel.k37')}</TableCell>
+                <TableCell sx={{ fontWeight: 600 }}>{i18n.t('ai.v58-evolution-panel.k38')}</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
@@ -1504,21 +1505,21 @@ const SecurityTab: React.FC<{
                   <TableCell>
                     {check.status === 'Passed' && (
                       <Chip
-                        label='通过'
+                        label={i18n.t('ai.v58-evolution-panel.k39')}
                         size='small'
                         sx={{ bgcolor: 'success.100', color: 'teal.900', fontSize: 10 }}
                       />
                     )}
                     {check.status === 'Failed' && (
                       <Chip
-                        label='失败'
+                        label={i18n.t('ai.v58-evolution-panel.k40')}
                         size='small'
                         sx={{ bgcolor: 'error.50', color: 'error.800', fontSize: 10 }}
                       />
                     )}
                     {check.status === 'Warning' && (
                       <Chip
-                        label='警告'
+                        label={i18n.t('ai.v58-evolution-panel.k41')}
                         size='small'
                         sx={{ bgcolor: 'warning.100', color: 'warning.800', fontSize: 10 }}
                       />
@@ -1603,14 +1604,14 @@ const ThreatsTab: React.FC<{
           sx={{ fontWeight: 600, display: 'flex', alignItems: 'center', gap: 1 }}
         >
           <AlertTriangle size={20} />
-          威胁模型
+          {i18n.t('ai.v58-evolution-panel.k40')}
         </Typography>
         <Typography
           variant='caption'
           color='text.secondary'
         >
           共 {stats.total} 项威胁 · {stats.critical} 严重 · {stats.high} 高危 · {stats.mitigated}{' '}
-          已缓解
+          {i18n.t('ai.v58-evolution-panel.k41')}
         </Typography>
       </Stack>
 
@@ -1632,7 +1633,7 @@ const ThreatsTab: React.FC<{
                 variant='caption'
                 color='text.secondary'
               >
-                严重威胁
+                {i18n.t('ai.v58-evolution-panel.k42')}
               </Typography>
             </Box>
           </Box>
@@ -1654,7 +1655,7 @@ const ThreatsTab: React.FC<{
                 variant='caption'
                 color='text.secondary'
               >
-                高危威胁
+                {i18n.t('ai.v58-evolution-panel.k43')}
               </Typography>
             </Box>
           </Box>
@@ -1676,7 +1677,7 @@ const ThreatsTab: React.FC<{
                 variant='caption'
                 color='text.secondary'
               >
-                待处理
+                {i18n.t('ai.v58-evolution-panel.k44')}
               </Typography>
             </Box>
           </Box>
@@ -1698,7 +1699,7 @@ const ThreatsTab: React.FC<{
                 variant='caption'
                 color='text.secondary'
               >
-                已缓解
+                {i18n.t('ai.v58-evolution-panel.k45')}
               </Typography>
             </Box>
           </Box>
@@ -1711,9 +1712,9 @@ const ThreatsTab: React.FC<{
           sx={{ fontWeight: 600, mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}
         >
           <Eye size={16} />
-          威胁详情
+          {i18n.t('ai.v58-evolution-panel.k46')}
         </Typography>
-        {threats.length === 0 && <Alert severity='info'>暂无威胁</Alert>}
+        {threats.length === 0 && <Alert severity='info'>{i18n.t('ai.v58-evolution-panel.k42')}</Alert>}
         {threats.length > 0 && (
           <Box>
             {threats.map((threat) => (
@@ -1761,7 +1762,7 @@ const ThreatsTab: React.FC<{
                           variant='caption'
                           color='text.secondary'
                         >
-                          严重度
+                          {i18n.t('ai.v58-evolution-panel.k47')}
                         </Typography>
                         <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
                           {getSeverityIcon(threat.severity)}
@@ -1778,7 +1779,7 @@ const ThreatsTab: React.FC<{
                           variant='caption'
                           color='text.secondary'
                         >
-                          可能性
+                          {i18n.t('ai.v58-evolution-panel.k48')}
                         </Typography>
                         <Typography
                           variant='body2'
@@ -1792,7 +1793,7 @@ const ThreatsTab: React.FC<{
                           variant='caption'
                           color='text.secondary'
                         >
-                          影响
+                          {i18n.t('ai.v58-evolution-panel.k49')}
                         </Typography>
                         <Typography
                           variant='body2'
@@ -1806,7 +1807,7 @@ const ThreatsTab: React.FC<{
                           variant='caption'
                           color='text.secondary'
                         >
-                          状态
+                          {i18n.t('ai.v58-evolution-panel.k50')}
                         </Typography>
                         {getStatusChip(threat.status)}
                       </Box>
@@ -1817,7 +1818,7 @@ const ThreatsTab: React.FC<{
                         color='text.secondary'
                         sx={{ display: 'block', mb: 0.5 }}
                       >
-                        缓解措施
+                        {i18n.t('ai.v58-evolution-panel.k51')}
                       </Typography>
                       <Typography variant='body2'>{threat.mitigation}</Typography>
                     </Box>
@@ -1835,7 +1836,7 @@ const ThreatsTab: React.FC<{
                             setEditStatus(threat.status);
                           }}
                         >
-                          更新状态
+                          {i18n.t('ai.v58-evolution-panel.k52')}
                         </Button>
                       ) : (
                         <>
@@ -1843,10 +1844,10 @@ const ThreatsTab: React.FC<{
                             size='small'
                             sx={{ minWidth: 120 }}
                           >
-                            <InputLabel>新状态</InputLabel>
+                            <InputLabel>{i18n.t('ai.v58-evolution-panel.k43')}</InputLabel>
                             <Select
                               value={editStatus}
-                              label='新状态'
+                              label={i18n.t('ai.v58-evolution-panel.k44')}
                               onChange={(e) =>
                                 setEditStatus(
                                   e.target.value as 'Identified' | 'Mitigated' | 'Resolved'
@@ -1867,13 +1868,13 @@ const ThreatsTab: React.FC<{
                             }}
                             sx={{ bgcolor: 'teal.500' }}
                           >
-                            保存
+                            {i18n.t('ai.v58-evolution-panel.k53')}
                           </Button>
                           <Button
                             size='small'
                             onClick={() => setEditingId(null)}
                           >
-                            取消
+                            {i18n.t('ai.v58-evolution-panel.k54')}
                           </Button>
                         </>
                       )}

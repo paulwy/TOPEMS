@@ -1,20 +1,21 @@
 import React from 'react';
 import { Box, Chip, Typography } from '@mui/material';
 import type { EntitySchema, SchemaField } from '@/schema';
+import i18n from '@/i18n';
 
 export const MES_ERP_STATUS_CONFIG: Record<
   string,
   { label: string; color: 'success' | 'warning' | 'error' | 'default' }
 > = {
-  synced: { label: '已同步', color: 'success' },
-  pending: { label: '待同步', color: 'warning' },
-  failed: { label: '失败', color: 'error' },
+  synced: { label: i18n.t('shared.mes_erp.k0'), color: 'success' },
+  pending: { label: i18n.t('shared.mes_erp.k1'), color: 'warning' },
+  failed: { label: i18n.t('shared.mes_erp.k2'), color: 'error' },
 };
 
 const mesErpFields: SchemaField[] = [
   {
     name: 'order_number',
-    label: '订单号',
+    label: i18n.t('shared.mes_erp.k3'),
     type: 'text',
     required: true,
     sortable: true,
@@ -38,18 +39,18 @@ const mesErpFields: SchemaField[] = [
   },
   {
     name: 'mes_order_id',
-    label: 'MES 订单 ID',
+    label: i18n.t('shared.mes_erp.mesid_4'),
     type: 'text',
     required: true,
     showInList: false,
-    placeholder: '输入 MES 订单 UUID',
+    placeholder: i18n.t('shared.mes_erp.mesuuid_5'),
   },
   {
     name: 'product_name',
-    label: '产品名称',
+    label: i18n.t('shared.mes_erp.k6'),
     type: 'text',
     listWidth: 140,
-    placeholder: '输入产品名称（可选）',
+    placeholder: i18n.t('shared.mes_erp.k7'),
     renderCell: (row: Record<string, unknown>) => (
       <Typography
         variant='body2'
@@ -61,18 +62,18 @@ const mesErpFields: SchemaField[] = [
   },
   {
     name: 'quantity',
-    label: '数量',
+    label: i18n.t('shared.mes_erp.k8'),
     type: 'number',
     sortable: true,
     listWidth: 100,
-    placeholder: '输入数量（可选）',
+    placeholder: i18n.t('shared.mes_erp.k9'),
     renderCell: (row: Record<string, unknown>) => (
       <Typography variant='body2'>{String(row.quantity ?? '-')}</Typography>
     ),
   },
   {
     name: 'sync_status',
-    label: '状态',
+    label: i18n.t('shared.mes_erp.k10'),
     type: 'select',
     sortable: true,
     listWidth: 100,
@@ -96,7 +97,7 @@ const mesErpFields: SchemaField[] = [
   },
   {
     name: 'last_synced_at',
-    label: '最后同步',
+    label: i18n.t('shared.mes_erp.k11'),
     type: 'datetime',
     sortable: true,
     listWidth: 160,
@@ -107,13 +108,13 @@ const mesErpFields: SchemaField[] = [
       >
         {row.last_synced_at
           ? new Date(String(row.last_synced_at)).toLocaleString('zh-CN')
-          : '从未同步'}
+          : i18n.t('shared.mes_erp.k12')}
       </Typography>
     ),
   },
   {
     name: 'created_at',
-    label: '创建时间',
+    label: i18n.t('shared.mes_erp.k13'),
     type: 'datetime',
     sortable: true,
     listWidth: 160,
@@ -131,8 +132,8 @@ const mesErpFields: SchemaField[] = [
 
 export const mesErpSyncSchema: EntitySchema = {
   entity: 'integration_mes_erp_sync',
-  title: 'MES-ERP 同步',
-  description: '管理 MES 生产订单与 ERP 销售订单的同步',
+  title: i18n.t('shared.mes_erp.meserp_14'),
+  description: i18n.t('shared.mes_erp.k15'),
 
   api: {
     module: 'integration',
@@ -150,12 +151,12 @@ export const mesErpSyncSchema: EntitySchema = {
 
   formSections: [
     {
-      title: '基本信息',
+      title: i18n.t('shared.mes_erp.k16'),
       fields: ['mes_order_id', 'order_number', 'product_name', 'quantity'],
     },
   ],
 
   formColCount: 1,
-  createTitle: '创建 MES-ERP 同步',
-  detailTitle: '同步详情',
+  createTitle: i18n.t('shared.mes_erp.meserp_17'),
+  detailTitle: i18n.t('shared.mes_erp.k18'),
 };

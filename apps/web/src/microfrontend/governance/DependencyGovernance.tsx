@@ -20,6 +20,7 @@ import {
   AccordionSummary,
   AccordionDetails,
 } from '@mui/material';
+import i18n from '@/i18n';
 import {
   GitBranch as GitBranchIcon,
   AlertTriangle as AlertTriangleIcon,
@@ -140,7 +141,7 @@ const DependencyGraphVisualization: React.FC<{ graph: DependencyGraph }> = ({ gr
   }, [graph]);
 
   const getNodeColor = (level: number) => {
-    const colors = [designTokens.colors.primary.dark, '#388e3c', 'colors.orange.700', '#c2185b', designTokens.colors.purple['700']];
+    const colors = [designTokens.colors.primary.dark, designTokens.colors.success[600], 'colors.orange.700', '#c2185b', designTokens.colors.purple['700']];
     return colors[level % colors.length];
   };
 
@@ -150,7 +151,7 @@ const DependencyGraphVisualization: React.FC<{ graph: DependencyGraph }> = ({ gr
         variant='subtitle2'
         sx={{ mb: 2, fontWeight: 600 }}
       >
-        依赖关系图
+        {i18n.t('microfrontend.dependency_governance.k0')}
       </Typography>
       <Box sx={{ width: '100%', overflow: 'auto' }}>
         <svg
@@ -169,7 +170,7 @@ const DependencyGraphVisualization: React.FC<{ graph: DependencyGraph }> = ({ gr
             >
               <polygon
                 points='0 0, 10 3.5, 0 7'
-                fill='#90caf9'
+                fill={designTokens.colors.primary[200]}
               />
             </marker>
           </defs>
@@ -188,7 +189,7 @@ const DependencyGraphVisualization: React.FC<{ graph: DependencyGraph }> = ({ gr
                 y1={fromPos.y + 20}
                 x2={toPos.x - 5}
                 y2={toPos.y + 20}
-                stroke={isHighlighted ? designTokens.colors.primary.dark : '#90caf9'}
+                stroke={isHighlighted ? designTokens.colors.primary.dark : designTokens.colors.primary[200]}
                 strokeWidth={isHighlighted ? 2 : 1.5}
                 markerEnd='url(#arrowhead)'
                 opacity={hoveredNode ? (isHighlighted ? 1 : 0.3) : 1}
@@ -248,7 +249,7 @@ const DependencyGraphVisualization: React.FC<{ graph: DependencyGraph }> = ({ gr
             variant='caption'
             color='text.secondary'
           >
-            顶层模块 (Level 0)
+            {i18n.t('microfrontend.dependency_governance.level0_1')}
           </Typography>
         </Box>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
@@ -257,7 +258,7 @@ const DependencyGraphVisualization: React.FC<{ graph: DependencyGraph }> = ({ gr
             variant='caption'
             color='text.secondary'
           >
-            直接依赖 (Level 1)
+            {i18n.t('microfrontend.dependency_governance.level1_2')}
           </Typography>
         </Box>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
@@ -266,7 +267,7 @@ const DependencyGraphVisualization: React.FC<{ graph: DependencyGraph }> = ({ gr
             variant='caption'
             color='text.secondary'
           >
-            传递依赖 (Level 2+)
+            {i18n.t('microfrontend.dependency_governance.level2_3')}
           </Typography>
         </Box>
       </Box>
@@ -283,10 +284,10 @@ const ConflictItem: React.FC<{ conflict: DependencyConflict }> = ({ conflict }) 
   };
 
   const severityLabels: Record<ConflictSeverity, string> = {
-    low: '低',
-    medium: '中',
-    high: '高',
-    critical: '严重',
+    low: i18n.t('microfrontend.dependency_governance.k0'),
+    medium: i18n.t('microfrontend.dependency_governance.k1'),
+    high: i18n.t('microfrontend.dependency_governance.k2'),
+    critical: i18n.t('microfrontend.dependency_governance.k3'),
   };
 
   return (
@@ -327,14 +328,14 @@ const ConflictItem: React.FC<{ conflict: DependencyConflict }> = ({ conflict }) 
               size='small'
               variant='outlined'
             >
-              查看详情
+              {i18n.t('microfrontend.dependency_governance.k4')}
             </Button>
             <Button
               size='small'
               variant='contained'
               color='primary'
             >
-              尝试解决
+              {i18n.t('microfrontend.dependency_governance.k5')}
             </Button>
           </Box>
         </Box>
@@ -355,13 +356,13 @@ const CyclePathDisplay: React.FC<{ cycles: string[][] }> = ({ cycles }) => {
           variant='h6'
           sx={{ fontWeight: 600, mb: 1 }}
         >
-          无循环依赖
+          {i18n.t('microfrontend.dependency_governance.k6')}
         </Typography>
         <Typography
           variant='body2'
           color='text.secondary'
         >
-          依赖关系结构清晰，没有检测到循环依赖
+          {i18n.t('microfrontend.dependency_governance.k7')}
         </Typography>
       </Paper>
     );
@@ -447,7 +448,7 @@ const UpgradeSuggestionItem: React.FC<{ suggestion: VersionUpgradeSuggestion }> 
               variant='caption'
               sx={{ fontWeight: 600, color: 'teal.500' }}
             >
-              升级收益:
+              [i18n.t('microfrontend.dependency_governance.k8')]:
             </Typography>
             <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5, mt: 0.5 }}>
               {suggestion.benefits.map((b, i) => (
@@ -469,7 +470,7 @@ const UpgradeSuggestionItem: React.FC<{ suggestion: VersionUpgradeSuggestion }> 
               variant='caption'
               sx={{ fontWeight: 600, color: 'warning.500' }}
             >
-              破坏性变更:
+              [i18n.t('microfrontend.dependency_governance.k9')]:
             </Typography>
             <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5, mt: 0.5 }}>
               {suggestion.breaking_changes.map((b, i) => (
@@ -491,7 +492,7 @@ const UpgradeSuggestionItem: React.FC<{ suggestion: VersionUpgradeSuggestion }> 
           color='success'
           startIcon={<ArrowUpIcon size={16} />}
         >
-          立即升级
+          {i18n.t('microfrontend.dependency_governance.k10')}
         </Button>
       </Box>
     </Box>
@@ -560,7 +561,7 @@ const DependencyGovernance: React.FC<DependencyGovernanceProps> = ({ onClose }) 
           variant='h6'
           sx={{ fontWeight: 700 }}
         >
-          依赖治理
+          {i18n.t('microfrontend.dependency_governance.k11')}
         </Typography>
         <Box sx={{ flex: 1 }} />
         <Button
@@ -569,7 +570,7 @@ const DependencyGovernance: React.FC<DependencyGovernanceProps> = ({ onClose }) 
           onClick={refreshData}
           disabled={refreshing}
         >
-          刷新
+          {i18n.t('microfrontend.dependency_governance.k12')}
         </Button>
       </Box>
 
@@ -581,7 +582,7 @@ const DependencyGovernance: React.FC<DependencyGovernanceProps> = ({ onClose }) 
         >
           <Grid size={{ xs: 6, sm: 3 }}>
             <StatCard
-              label='模块总数'
+              label={i18n.t('microfrontend.dependency_governance.k4')}
               value={stats.total_modules}
               icon={<PackageIcon size={20} />}
               color={designTokens.colors.primary.dark}
@@ -589,15 +590,15 @@ const DependencyGovernance: React.FC<DependencyGovernanceProps> = ({ onClose }) 
           </Grid>
           <Grid size={{ xs: 6, sm: 3 }}>
             <StatCard
-              label='依赖关系'
+              label={i18n.t('microfrontend.dependency_governance.k5')}
               value={stats.total_dependencies}
               icon={<LinkIcon size={20} />}
-              color='#388e3c'
+              color={designTokens.colors.success['600']}
             />
           </Grid>
           <Grid size={{ xs: 6, sm: 3 }}>
             <StatCard
-              label='循环依赖'
+              label={i18n.t('microfrontend.dependency_governance.k6')}
               value={stats.cycles_count}
               icon={<AlertTriangleIcon size={20} />}
               color={stats.cycles_count > 0 ? designTokens.colors.warning.main : designTokens.colors.success.dark}
@@ -605,7 +606,7 @@ const DependencyGovernance: React.FC<DependencyGovernanceProps> = ({ onClose }) 
           </Grid>
           <Grid size={{ xs: 6, sm: 3 }}>
             <StatCard
-              label='许可证合规率'
+              label={i18n.t('microfrontend.dependency_governance.k7')}
               value={`${stats.license_compliance_rate}%`}
               icon={<ShieldIcon size={20} />}
               color={stats.license_compliance_rate >= 90 ? designTokens.colors.success.dark : designTokens.colors.warning.main}
@@ -620,27 +621,27 @@ const DependencyGovernance: React.FC<DependencyGovernanceProps> = ({ onClose }) 
           onChange={(_, v) => setActiveTab(v)}
         >
           <Tab
-            label='依赖图'
+            label={i18n.t('microfrontend.dependency_governance.k8')}
             icon={<LayersIcon size={16} />}
             iconPosition='start'
           />
           <Tab
-            label={`冲突 (${conflicts.length})`}
+            label={`${i18n.t('microfrontend.dependency_governance.k0')}${conflicts.length})`}
             icon={<AlertTriangleIcon size={16} />}
             iconPosition='start'
           />
           <Tab
-            label={`循环 (${cycles.length})`}
+            label={`${i18n.t('microfrontend.dependency_governance.k1')}${cycles.length})`}
             icon={<AlertCircleIcon size={16} />}
             iconPosition='start'
           />
           <Tab
-            label={`升级建议 (${upgrades.length})`}
+            label={`${i18n.t('microfrontend.dependency_governance.k2')}${upgrades.length})`}
             icon={<TrendingUpIcon size={16} />}
             iconPosition='start'
           />
           <Tab
-            label='许可证'
+            label={i18n.t('microfrontend.dependency_governance.k9')}
             icon={<ShieldIcon size={16} />}
             iconPosition='start'
           />
@@ -664,33 +665,33 @@ const DependencyGovernance: React.FC<DependencyGovernanceProps> = ({ onClose }) 
                   variant='subtitle2'
                   sx={{ mb: 2, fontWeight: 600 }}
                 >
-                  依赖统计
+                  {i18n.t('microfrontend.dependency_governance.k13')}
                 </Typography>
                 <List dense>
                   <ListItem>
                     <ListItemText
-                      primary='直接依赖'
+                      primary={i18n.t('microfrontend.dependency_governance.k10')}
                       secondary={stats.direct_dependencies}
                     />
                   </ListItem>
                   <Divider component='li' />
                   <ListItem>
                     <ListItemText
-                      primary='传递依赖'
+                      primary={i18n.t('microfrontend.dependency_governance.k11')}
                       secondary={stats.transitive_dependencies}
                     />
                   </ListItem>
                   <Divider component='li' />
                   <ListItem>
                     <ListItemText
-                      primary='平均依赖深度'
+                      primary={i18n.t('microfrontend.dependency_governance.k12')}
                       secondary={stats.avg_dependency_depth}
                     />
                   </ListItem>
                   <Divider component='li' />
                   <ListItem>
                     <ListItemText
-                      primary='版本冲突数'
+                      primary={i18n.t('microfrontend.dependency_governance.k13')}
                       secondary={stats.conflicts_count}
                     />
                   </ListItem>
@@ -712,13 +713,13 @@ const DependencyGovernance: React.FC<DependencyGovernanceProps> = ({ onClose }) 
                   variant='h6'
                   sx={{ fontWeight: 600, mb: 1 }}
                 >
-                  无版本冲突
+                  {i18n.t('microfrontend.dependency_governance.k14')}
                 </Typography>
                 <Typography
                   variant='body2'
                   color='text.secondary'
                 >
-                  所有依赖版本均兼容，没有检测到冲突
+                  {i18n.t('microfrontend.dependency_governance.k15')}
                 </Typography>
               </Paper>
             ) : (
@@ -746,13 +747,13 @@ const DependencyGovernance: React.FC<DependencyGovernanceProps> = ({ onClose }) 
                   variant='h6'
                   sx={{ fontWeight: 600, mb: 1 }}
                 >
-                  已是最新版本
+                  {i18n.t('microfrontend.dependency_governance.k16')}
                 </Typography>
                 <Typography
                   variant='body2'
                   color='text.secondary'
                 >
-                  所有已安装模块均为最新版本
+                  {i18n.t('microfrontend.dependency_governance.k17')}
                 </Typography>
               </Paper>
             ) : (
@@ -794,7 +795,7 @@ const LicenseCompliancePanel: React.FC = () => {
               variant='h6'
               sx={{ fontWeight: 700 }}
             >
-              {licenseCheck.compliant ? '许可证合规' : '存在许可证问题'}
+              {licenseCheck.compliant ? i18n.t('microfrontend.dependency_governance.k15') : i18n.t('microfrontend.dependency_governance.k14')}
             </Typography>
             <Typography
               variant='body2'
@@ -818,7 +819,7 @@ const LicenseCompliancePanel: React.FC = () => {
         variant='subtitle2'
         sx={{ mb: 1, fontWeight: 600 }}
       >
-        许可证列表
+        {i18n.t('microfrontend.dependency_governance.k18')}
       </Typography>
       <List>
         {licenseCheck.licenses.map((license) => {
@@ -856,7 +857,7 @@ const LicenseCompliancePanel: React.FC = () => {
                       variant='caption'
                       color='text.secondary'
                     >
-                      需要署名
+                      {i18n.t('microfrontend.dependency_governance.k19')}
                     </Typography>
                   )}
                 </Box>

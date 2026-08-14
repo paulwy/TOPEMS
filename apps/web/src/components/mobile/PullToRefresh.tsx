@@ -1,6 +1,7 @@
 import React, { useState, useRef, useCallback } from 'react';
 import { Box, CircularProgress, Typography, useTheme } from '@mui/material';
 import { RefreshCw } from 'lucide-react';
+import i18n from '@/i18n';
 
 export interface PullToRefreshProps {
   children: React.ReactNode;
@@ -136,7 +137,7 @@ export const PullToRefresh: React.FC<PullToRefreshProps> = ({
                 fontSize: '0.75rem',
               }}
             >
-              {isRefreshing ? '刷新中...' : canRefresh ? '释放刷新' : '下拉刷新'}
+              {isRefreshing ? i18n.t('components.pull_to_refresh.k0') : canRefresh ? i18n.t('shared.pull_to_refresh.k1') : i18n.t('shared.pull_to_refresh.k0')}
             </Typography>
           </Box>
         )}

@@ -1,9 +1,10 @@
 import type { EntitySchema } from '@/schema';
+import i18n from '@/i18n';
 
 export const healthManagementSchema: EntitySchema = {
   entity: 'ehsHealthRecord',
-  title: '健康档案',
-  description: '管理员工职业健康档案信息，包括员工基本信息、健康状况、过敏史、既往病史等',
+  title: i18n.t('ehs.health_management.k0'),
+  description: i18n.t('ehs.health_management.k1'),
 
   api: {
     module: 'ehs',
@@ -13,7 +14,7 @@ export const healthManagementSchema: EntitySchema = {
   fields: [
     {
       name: 'record_no',
-      label: '档案编号',
+      label: i18n.t('ehs.health_management.k2'),
       type: 'text',
       readonlyOnEdit: true,
       listWidth: 140,
@@ -27,7 +28,7 @@ export const healthManagementSchema: EntitySchema = {
     },
     {
       name: 'employee_id',
-      label: '工号',
+      label: i18n.t('ehs.health_management.k3'),
       type: 'text',
       required: true,
       listWidth: 120,
@@ -36,7 +37,7 @@ export const healthManagementSchema: EntitySchema = {
     },
     {
       name: 'employee_name',
-      label: '员工姓名',
+      label: i18n.t('ehs.health_management.k4'),
       type: 'text',
       required: true,
       sortable: true,
@@ -45,13 +46,13 @@ export const healthManagementSchema: EntitySchema = {
     },
     {
       name: 'gender',
-      label: '性别',
+      label: i18n.t('ehs.health_management.k5'),
       type: 'select',
       options: {
         type: 'static',
         options: [
-          { value: 'male', label: '男' },
-          { value: 'female', label: '女' },
+          { value: 'male', label: i18n.t('ehs.health_management.k6') },
+          { value: 'female', label: i18n.t('ehs.health_management.k7') },
         ],
       },
       listWidth: 80,
@@ -59,7 +60,7 @@ export const healthManagementSchema: EntitySchema = {
     },
     {
       name: 'birthday',
-      label: '出生日期',
+      label: i18n.t('ehs.health_management.k8'),
       type: 'date',
       listWidth: 120,
       showInList: false,
@@ -70,7 +71,7 @@ export const healthManagementSchema: EntitySchema = {
     },
     {
       name: 'department',
-      label: '部门',
+      label: i18n.t('ehs.health_management.k9'),
       type: 'text',
       listWidth: 140,
       renderCell: (row: Record<string, unknown>) => {
@@ -81,7 +82,7 @@ export const healthManagementSchema: EntitySchema = {
     },
     {
       name: 'position',
-      label: '岗位',
+      label: i18n.t('ehs.health_management.k10'),
       type: 'text',
       listWidth: 120,
       renderCell: (row: Record<string, unknown>) => {
@@ -92,7 +93,7 @@ export const healthManagementSchema: EntitySchema = {
     },
     {
       name: 'workplace',
-      label: '工作场所',
+      label: i18n.t('ehs.health_management.k11'),
       type: 'text',
       listWidth: 140,
       renderCell: (row: Record<string, unknown>) => {
@@ -102,7 +103,7 @@ export const healthManagementSchema: EntitySchema = {
     },
     {
       name: 'blood_type',
-      label: '血型',
+      label: i18n.t('ehs.health_management.k12'),
       type: 'text',
       listWidth: 80,
       showInList: false,
@@ -113,7 +114,7 @@ export const healthManagementSchema: EntitySchema = {
     },
     {
       name: 'contact_info',
-      label: '联系方式',
+      label: i18n.t('ehs.health_management.k13'),
       type: 'text',
       listWidth: 140,
       showInList: false,
@@ -124,19 +125,19 @@ export const healthManagementSchema: EntitySchema = {
     },
     {
       name: 'allergy_history',
-      label: '过敏史',
+      label: i18n.t('ehs.health_management.k14'),
       type: 'textarea',
       showInList: false,
     },
     {
       name: 'medical_history',
-      label: '既往病史',
+      label: i18n.t('ehs.health_management.k15'),
       type: 'textarea',
       showInList: false,
     },
     {
       name: 'hazard_factors',
-      label: '危害因素',
+      label: i18n.t('ehs.health_management.k16'),
       type: 'text',
       showInList: false,
       hideInForm: true,
@@ -148,15 +149,15 @@ export const healthManagementSchema: EntitySchema = {
     },
     {
       name: 'status',
-      label: '状态',
+      label: i18n.t('ehs.health_management.k17'),
       type: 'select',
       defaultValue: 'active',
       options: {
         type: 'static',
         options: [
-          { value: 'active', label: '正常' },
-          { value: 'inactive', label: '无效' },
-          { value: 'suspended', label: '暂停' },
+          { value: 'active', label: i18n.t('ehs.health_management.k18') },
+          { value: 'inactive', label: i18n.t('ehs.health_management.k19') },
+          { value: 'suspended', label: i18n.t('ehs.health_management.k20') },
         ],
       },
       listWidth: 100,
@@ -175,21 +176,21 @@ export const healthManagementSchema: EntitySchema = {
         suspended: 'warning',
       },
       labelMap: {
-        active: '正常',
-        inactive: '无效',
-        suspended: '暂停',
+        active: i18n.t('ehs.health_management.k21'),
+        inactive: i18n.t('ehs.health_management.k22'),
+        suspended: i18n.t('ehs.health_management.k23'),
       },
     },
     filters: [
       {
         id: 'status',
-        label: '状态',
+        label: i18n.t('ehs.health_management.k24'),
         type: 'select',
         options: [
-          { label: '全部', value: 'all' },
-          { label: '正常', value: 'active' },
-          { label: '无效', value: 'inactive' },
-          { label: '暂停', value: 'suspended' },
+          { label: i18n.t('ehs.health_management.k25'), value: 'all' },
+          { label: i18n.t('ehs.health_management.k26'), value: 'active' },
+          { label: i18n.t('ehs.health_management.k27'), value: 'inactive' },
+          { label: i18n.t('ehs.health_management.k28'), value: 'suspended' },
         ],
       },
     ],
@@ -199,25 +200,25 @@ export const healthManagementSchema: EntitySchema = {
 
   formSections: [
     {
-      title: '员工基本信息',
+      title: i18n.t('ehs.health_management.k29'),
       fields: ['employee_id', 'employee_name', 'gender', 'birthday'],
     },
     {
-      title: '岗位信息',
+      title: i18n.t('ehs.health_management.k30'),
       fields: ['department', 'position', 'workplace'],
     },
     {
-      title: '健康信息',
+      title: i18n.t('ehs.health_management.k31'),
       fields: ['blood_type', 'contact_info', 'allergy_history', 'medical_history'],
     },
     {
-      title: '状态',
+      title: i18n.t('ehs.health_management.k32'),
       fields: ['status'],
     },
   ],
 
   formColCount: 2,
-  createTitle: '新增健康档案',
-  editTitle: '编辑健康档案',
-  detailTitle: '健康档案详情',
+  createTitle: i18n.t('ehs.health_management.k33'),
+  editTitle: i18n.t('ehs.health_management.k34'),
+  detailTitle: i18n.t('ehs.health_management.k35'),
 };

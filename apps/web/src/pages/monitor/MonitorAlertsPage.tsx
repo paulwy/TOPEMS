@@ -7,7 +7,6 @@
  * @module pages/monitor
  * @path /monitor/alerts
  */
-
 import React, { useMemo, useState, useCallback } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import {
@@ -21,6 +20,7 @@ import {
   IconButton,
   Tooltip,
 } from '@mui/material';
+import i18n from '@/i18n';
 import {
   AlertTriangle,
   AlertCircle,
@@ -31,7 +31,6 @@ import {
   Ban,
   Download,
 } from 'lucide-react';
-
 import CrudPage, { type CrudApiAdapter } from '@/components/templates/CrudPage';
 import type { RowAction } from '@/components/templates/list/types';
 import { PageContainer } from '@/components/common';
@@ -40,15 +39,11 @@ import { extractErrorMessage } from '@/utils/errors';
 import { MONITOR_PATHS } from '@/modules/monitor/config';
 import { monitorApi, type Alert, type AlertQueryParams } from '@/api/monitor';
 import { alertSchema, SEVERITY_LABELS, STATUS_LABELS } from '@/schemas/monitor';
-
 import { queryClient, QUERY_KEYS } from '@/lib/reactQuery';
-
 type AlertSeverity = 'critical' | 'warning' | 'info';
 type AlertStatus = 'active' | 'acknowledged' | 'resolved';
 type TabType = 'all' | 'critical' | 'warning' | 'info' | 'resolved';
-
 const CRUD_QUERY_KEY = ['monitor_alert'];
-
 const renderStatsCards = (rows: Record<string, unknown>[]): React.ReactNode => {
   const alerts = rows as unknown as Alert[];
   const activeCount = alerts.filter((a) => a.status === 'active').length;
@@ -62,38 +57,36 @@ const renderStatsCards = (rows: Record<string, unknown>[]): React.ReactNode => {
     const today = new Date().toDateString();
     return new Date(a.created_at).toDateString() === today;
   }).length;
-
   const stats = [
     {
       id: 'active',
-      title: '活动告警',
+      title: i18n.t('monitor.monitor_alerts_page.k0'),
       value: activeCount,
       icon: <Bell size={20} />,
       color: 'error' as const,
     },
     {
       id: 'critical',
-      title: '严重告警',
+      title: i18n.t('monitor.monitor_alerts_page.k1'),
       value: criticalCount,
       icon: <AlertCircle size={20} />,
       color: 'error' as const,
     },
     {
       id: 'warning',
-      title: '警告告警',
+      title: i18n.t('monitor.monitor_alerts_page.k2'),
       value: warningCount,
       icon: <AlertTriangle size={20} />,
       color: 'warning' as const,
     },
     {
       id: 'today',
-      title: '今日告警',
+      title: i18n.t('monitor.monitor_alerts_page.k3'),
       value: todayCount,
       icon: <Clock size={20} />,
       color: 'primary' as const,
     },
   ];
-
   return (
     <Box
       sx={{
@@ -152,20 +145,16 @@ const renderStatsCards = (rows: Record<string, unknown>[]): React.ReactNode => {
     </Box>
   );
 };
-
 export const MonitorAlertsPage: React.FC = () => {
   const addNotification = useNotificationStore((state) => state.addNotification);
   const queryClient = useQueryClient();
-
   const [activeTab, setActiveTab] = useState<TabType>('all');
-
   const invalidateAlerts = useCallback(() => {
     void queryClient.invalidateQueries({ queryKey: CRUD_QUERY_KEY ,
   exact: false,
   refetchType: 'active',
 });
   }, [queryClient]);
-
   const acknowledgeMutation = useMutation({
     mutationFn: (id: string) => monitorApi.acknowledgeAlert(id),
     onSuccess: () => {
@@ -176,14 +165,13 @@ export const MonitorAlertsPage: React.FC = () => {
           refetchType: 'active',
         });
       invalidateAlerts();
-      addNotification({ title: '确认成功', message: '告警已确认', type: 'success' });
+      addNotification({ title: i18n.t('monitor.monitor_alerts_page.k5'), message: i18n.t('monitor.monitor_alerts_page.k4'), type: 'success' });
     },
     onError: (err: unknown) => {
-      const message = extractErrorMessage(err, '确认操作失败');
-      addNotification({ title: '操作失败', message, type: 'error' });
+      const message = extractErrorMessage(err, i18n.t('monitor.monitor_alerts_page.k6'));
+      addNotification({ title: i18n.t('monitor.monitor_alerts_page.k7'), message, type: 'error' });
     },
   });
-
   const resolveMutation = useMutation({
     mutationFn: (id: string) => monitorApi.resolveAlert(id),
     onSuccess: () => {
@@ -194,14 +182,13 @@ export const MonitorAlertsPage: React.FC = () => {
           refetchType: 'active',
         });
       invalidateAlerts();
-      addNotification({ title: '已解决', message: '告警已标记为已解决', type: 'success' });
+      addNotification({ title: i18n.t('monitor.monitor_alerts_page.k9'), message: i18n.t('monitor.monitor_alerts_page.k8'), type: 'success' });
     },
     onError: (err: unknown) => {
-      const message = extractErrorMessage(err, '解决操作失败');
-      addNotification({ title: '操作失败', message, type: 'error' });
+      const message = extractErrorMessage(err, i18n.t('monitor.monitor_alerts_page.k10'));
+      addNotification({ title: i18n.t('monitor.monitor_alerts_page.k11'), message, type: 'error' });
     },
   });
-
   const handleAcknowledge = useCallback(
     (row: Record<string, unknown>) => {
       const alert = row as unknown as Alert;
@@ -209,7 +196,6 @@ export const MonitorAlertsPage: React.FC = () => {
     },
     [acknowledgeMutation]
   );
-
   const handleResolve = useCallback(
     (row: Record<string, unknown>) => {
       const alert = row as unknown as Alert;
@@ -217,70 +203,65 @@ export const MonitorAlertsPage: React.FC = () => {
     },
     [resolveMutation]
   );
-
   const handleSuppress = useCallback(
     (row: Record<string, unknown>) => {
       const alert = row as unknown as Alert;
       addNotification({
-        title: '屏蔽告警',
-        message: `已屏蔽「${alert.title}」告警`,
+        title: i18n.t('monitor.monitor_alerts_page.k12'),
+        message: `${i18n.t('pages.monitor_alerts_page.k0')}${alert.title}${i18n.t('pages.monitor_alerts_page.k1')}`,
         type: 'warning',
       });
     },
     [addNotification]
   );
-
   const handleBatchAcknowledge = useCallback(
     async (selectedIds: string[]) => {
       try {
         await Promise.all(selectedIds.map((id) => monitorApi.acknowledgeAlert(id)));
         invalidateAlerts();
         addNotification({
-          title: '批量确认成功',
-          message: `已确认 ${selectedIds.length} 条告警`,
+          title: i18n.t('monitor.monitor_alerts_page.k13'),
+          message: `${i18n.t('pages.monitor_alerts_page.k2')}${selectedIds.length}${i18n.t('pages.monitor_alerts_page.k3')}`,
           type: 'success',
         });
       } catch (err: unknown) {
-        const message = extractErrorMessage(err, '批量确认失败');
-        addNotification({ title: '操作失败', message, type: 'error' });
+        const message = extractErrorMessage(err, i18n.t('monitor.monitor_alerts_page.k14'));
+        addNotification({ title: i18n.t('monitor.monitor_alerts_page.k15'), message, type: 'error' });
       }
     },
     [invalidateAlerts, addNotification]
   );
-
   const handleBatchResolve = useCallback(
     async (selectedIds: string[]) => {
       try {
         await Promise.all(selectedIds.map((id) => monitorApi.resolveAlert(id)));
         invalidateAlerts();
         addNotification({
-          title: '批量解决成功',
-          message: `已解决 ${selectedIds.length} 条告警`,
+          title: i18n.t('monitor.monitor_alerts_page.k16'),
+          message: `${i18n.t('pages.monitor_alerts_page.k4')}${selectedIds.length}${i18n.t('pages.monitor_alerts_page.k5')}`,
           type: 'success',
         });
       } catch (err: unknown) {
-        const message = extractErrorMessage(err, '批量解决失败');
-        addNotification({ title: '操作失败', message, type: 'error' });
+        const message = extractErrorMessage(err, i18n.t('monitor.monitor_alerts_page.k17'));
+        addNotification({ title: i18n.t('monitor.monitor_alerts_page.k18'), message, type: 'error' });
       }
     },
     [invalidateAlerts, addNotification]
   );
-
   const handleExport = useCallback(async () => {
     try {
       const response = await monitorApi.listAlerts({ pagesize: 1000 });
       const alerts = response.data?.items ?? [];
       const exportData = alerts.map((alert) => ({
-        告警名称: alert.title,
-        严重级别: SEVERITY_LABELS[alert.severity as AlertSeverity] || alert.severity,
-        所属服务: alert.service_name,
-        告警描述: alert.message,
-        触发时间: alert.created_at,
-        状态: STATUS_LABELS[alert.status as AlertStatus] || alert.status,
-        确认人: alert.acknowledged_at ? '已确认' : '-',
-        解决时间: alert.resolved_at || '-',
+        [i18n.t('pages.monitor_alerts_page.k0')]: alert.title,
+        [i18n.t('pages.monitor_alerts_page.k1')]: SEVERITY_LABELS[alert.severity as AlertSeverity] || alert.severity,
+        [i18n.t('pages.monitor_alerts_page.k2')]: alert.service_name,
+        [i18n.t('pages.monitor_alerts_page.k3')]: alert.message,
+        [i18n.t('pages.monitor_alerts_page.k4')]: alert.created_at,
+        [i18n.t('pages.monitor_alerts_page.k5')]: STATUS_LABELS[alert.status as AlertStatus] || alert.status,
+        [i18n.t('pages.monitor_alerts_page.k6')]: alert.acknowledged_at ? i18n.t('monitor.monitor_alerts_page.k19') : '-',
+        [i18n.t('pages.monitor_alerts_page.k7')]: alert.resolved_at || '-',
       }));
-
       const blob = new Blob([JSON.stringify(exportData, null, 2)], {
         type: 'application/json',
       });
@@ -292,18 +273,16 @@ export const MonitorAlertsPage: React.FC = () => {
       a.click();
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
-
       addNotification({
-        title: '导出成功',
-        message: '告警数据导出成功',
+        title: i18n.t('monitor.monitor_alerts_page.k20'),
+        message: i18n.t('monitor.monitor_alerts_page.k21'),
         type: 'success',
       });
     } catch (err: unknown) {
-      const message = extractErrorMessage(err, '导出失败');
-      addNotification({ title: '导出失败', message, type: 'error' });
+      const message = extractErrorMessage(err, i18n.t('monitor.monitor_alerts_page.k22'));
+      addNotification({ title: i18n.t('monitor.monitor_alerts_page.k23'), message, type: 'error' });
     }
   }, [addNotification]);
-
   const apiAdapter = useMemo<CrudApiAdapter<Alert>>(
     () => ({
       list: async (params) => {
@@ -320,11 +299,9 @@ export const MonitorAlertsPage: React.FC = () => {
         if (params?.service_name && params.service_name !== 'all') {
           queryParams.service_name = params.service_name as string;
         }
-
         const response = await monitorApi.listAlerts(queryParams);
         let items = response.data?.items ?? [];
         const total = response.data?.total ?? 0;
-
         const tab = params?.activeTab as TabType | undefined;
         if (tab && tab !== 'all') {
           if (tab === 'resolved') {
@@ -333,26 +310,24 @@ export const MonitorAlertsPage: React.FC = () => {
             items = items.filter((a) => a.severity === tab);
           }
         }
-
         return { data: items, total: tab && tab !== 'all' ? items.length : total };
       },
       create: async () => {
-        throw new Error('告警为系统生成数据，不可手动创建');
+        throw new Error(i18n.t('monitor.monitor_alerts_page.k24'));
       },
       update: async () => {
-        throw new Error('告警请通过确认/解决操作更新');
+        throw new Error(i18n.t('monitor.monitor_alerts_page.k25'));
       },
       delete: async () => {
-        throw new Error('告警不可删除');
+        throw new Error(i18n.t('monitor.monitor_alerts_page.k26'));
       },
     }),
     []
   );
-
   const customRowActions = useMemo<RowAction[]>(
     () => [
       {
-        label: '确认',
+        label: i18n.t('monitor.monitor_alerts_page.k27'),
         icon: <CheckSquare size={16} />,
         color: 'primary',
         onClick: (row: Record<string, unknown>) => {
@@ -367,7 +342,7 @@ export const MonitorAlertsPage: React.FC = () => {
         },
       },
       {
-        label: '解决',
+        label: i18n.t('monitor.monitor_alerts_page.k28'),
         icon: <CheckCircle size={16} />,
         color: 'success',
         onClick: (row: Record<string, unknown>) => {
@@ -382,14 +357,13 @@ export const MonitorAlertsPage: React.FC = () => {
         },
       },
       {
-        label: '屏蔽',
+        label: i18n.t('monitor.monitor_alerts_page.k29'),
         icon: <Ban size={16} />,
         onClick: handleSuppress,
       },
     ],
     [handleAcknowledge, handleResolve, handleSuppress]
   );
-
   const dynamicSchema = useMemo(
     () => ({
       ...alertSchema,
@@ -405,7 +379,6 @@ export const MonitorAlertsPage: React.FC = () => {
     }),
     [handleBatchAcknowledge, handleBatchResolve]
   );
-
   const headerContent = useCallback(
     (rows: Record<string, unknown>[], _total: number) => {
       return (
@@ -423,23 +396,23 @@ export const MonitorAlertsPage: React.FC = () => {
               }}
             >
               <Tab
-                label='全部告警'
+                label={i18n.t('monitor.monitor_alerts_page.k30')}
                 value='all'
               />
               <Tab
-                label='严重告警'
+                label={i18n.t('monitor.monitor_alerts_page.k31')}
                 value='critical'
               />
               <Tab
-                label='警告'
+                label={i18n.t('monitor.monitor_alerts_page.k32')}
                 value='warning'
               />
               <Tab
-                label='通知'
+                label={i18n.t('monitor.monitor_alerts_page.k33')}
                 value='info'
               />
               <Tab
-                label='已处理'
+                label={i18n.t('monitor.monitor_alerts_page.k34')}
                 value='resolved'
               />
             </Tabs>
@@ -450,7 +423,6 @@ export const MonitorAlertsPage: React.FC = () => {
     },
     [activeTab]
   );
-
   return (
     <PageContainer
       headerProps={{
@@ -460,11 +432,11 @@ export const MonitorAlertsPage: React.FC = () => {
         },
         children: (
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-            <Tooltip title='导出告警数据'>
+            <Tooltip title={i18n.t('monitor.monitor_alerts_page.k35')}>
               <IconButton
                 size='small'
                 onClick={handleExport}
-                aria-label='下载'
+                aria-label={i18n.t('monitor.monitor_alerts_page.k36')}
               >
                 <Download size={18} />
               </IconButton>
@@ -479,10 +451,9 @@ export const MonitorAlertsPage: React.FC = () => {
         extraQueryParams={{ activeTab }}
         customRowActions={customRowActions}
         headerContent={headerContent}
-        breadcrumbs={[{ label: '监控' }, { label: '告警' }]}
+        breadcrumbs={[{ label: i18n.t('monitor.monitor_alerts_page.k38') }, { label: i18n.t('monitor.monitor_alerts_page.k37') }]}
       />
     </PageContainer>
   );
 };
-
 export default MonitorAlertsPage;

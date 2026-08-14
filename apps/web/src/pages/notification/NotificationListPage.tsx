@@ -2,7 +2,6 @@ import React, { useMemo, useState, useCallback } from 'react';
 import { Bell, Check, Star, Eye, EyeOff, Calendar, Mail } from 'lucide-react';
 import { Box, Typography } from '@mui/material';
 import { useMutation, useQueryClient, useQuery } from '@tanstack/react-query';
-
 import { notificationSchema } from '@/schemas/notification';
 import {
   getNotifications,
@@ -14,22 +13,19 @@ import {
   type Notification,
   type NotificationTypeEnum,
 } from '@/api/notification';
+import i18n from '@/i18n';
 import { NOTIFICATION_PATHS } from '@/modules/notification/config';
 import { useNotificationStore } from '@/store';
 import { extractErrorMessage } from '@/utils/errors';
 import { PageContainer } from '@/components/common';
 import CrudPage, { type CrudApiAdapter, type CrudTab } from '@/components/templates/CrudPage';
-
 import { CACHE_DURATIONS, QUERY_KEYS } from '@/lib/reactQuery';
-
 type NotificationTab = 'all' | 'unread' | 'read' | 'important';
-
 export const NotificationListPage: React.FC = () => {
   const addNotification = useNotificationStore((state) => state.addNotification);
   const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = useState<NotificationTab>('all');
   const [importantFilter, setImportantFilter] = useState<string>('all');
-
   const { data: allNotifications = [] } = useQuery<Notification[]>({
     queryKey: QUERY_KEYS.AD_HOC.NOTIFICATIONS_ALL_BASE,
     queryFn: async () => {
@@ -41,7 +37,6 @@ export const NotificationListPage: React.FC = () => {
     },
   
       staleTime: CACHE_DURATIONS.SHORT,});
-
   const stats = useMemo(() => {
     const notifications = allNotifications as Notification[];
     const unreadCount = notifications.filter((n) => !n.is_read).length;
@@ -53,39 +48,37 @@ export const NotificationListPage: React.FC = () => {
     const readCount = notifications.filter((n) => n.is_read).length;
     const readRate =
       notifications.length > 0 ? Math.round((readCount / notifications.length) * 100) : 0;
-
     return [
       {
         id: 'unread',
-        title: '未读数',
+        title: i18n.t('notification.notification_list_page.k0'),
         value: unreadCount,
         icon: <Bell size={20} />,
         color: 'primary' as const,
       },
       {
         id: 'today',
-        title: '今日通知',
+        title: i18n.t('notification.notification_list_page.k1'),
         value: todayCount,
         icon: <Calendar size={20} />,
         color: 'success' as const,
       },
       {
         id: 'week',
-        title: '本周通知',
+        title: i18n.t('notification.notification_list_page.k2'),
         value: weekCount,
         icon: <Mail size={20} />,
         color: 'warning' as const,
       },
       {
         id: 'readRate',
-        title: '已读率',
+        title: i18n.t('notification.notification_list_page.k3'),
         value: `${readRate}%`,
         icon: <Check size={20} />,
         color: 'info' as const,
       },
     ];
   }, [allNotifications]);
-
   const markAsReadMutation = useMutation({
     mutationFn: (id: string) => markAsRead(id),
     onSuccess: () => {
@@ -99,7 +92,6 @@ export const NotificationListPage: React.FC = () => {
 });
     },
   });
-
   const deleteMutation = useMutation({
     mutationFn: (id: string) => deleteNotification(id),
     onSuccess: () => {
@@ -113,7 +105,6 @@ export const NotificationListPage: React.FC = () => {
 });
     },
   });
-
   const markAllAsReadMutation = useMutation({
     mutationFn: () => markAllAsRead(),
     onSuccess: () => {
@@ -127,7 +118,6 @@ export const NotificationListPage: React.FC = () => {
 });
     },
   });
-
   const bulkMarkReadMutation = useMutation({
     mutationFn: (ids: string[]) => bulkMarkAsRead(ids),
     onSuccess: () => {
@@ -141,7 +131,6 @@ export const NotificationListPage: React.FC = () => {
 });
     },
   });
-
   const bulkDeleteMutation = useMutation({
     mutationFn: (ids: string[]) => bulkDeleteNotifications(ids),
     onSuccess: () => {
@@ -155,26 +144,21 @@ export const NotificationListPage: React.FC = () => {
 });
     },
   });
-
   const createApiAdapter = (tab: NotificationTab): CrudApiAdapter => ({
     list: async (params) => {
       const page = params?.page || 1;
       const pageSize = params?.pageSize || 10;
       const typeFilter = params?.notification_type as string | undefined;
       const search = params?.search as string | undefined;
-
       const response = await getNotifications(
         1,
         100,
         typeFilter && typeFilter !== 'all' ? (typeFilter as NotificationTypeEnum) : undefined
       );
-
       let notifications: Notification[] = [];
       let total = 0;
-
       if (response.success && response.data?.notifications) {
         notifications = response.data.notifications;
-
         switch (tab) {
           case 'unread':
             notifications = notifications.filter((n) => !n.is_read);
@@ -186,25 +170,21 @@ export const NotificationListPage: React.FC = () => {
             notifications = notifications.filter((n) => (n as Notification & { important?: boolean }).important);
             break;
         }
-
         if (search) {
           const query = search.toLowerCase();
           notifications = notifications.filter(
             (n) => n.title.toLowerCase().includes(query) || n.content?.toLowerCase().includes(query)
           );
         }
-
         if (importantFilter !== 'all') {
           notifications = notifications.filter((n) =>
             importantFilter === 'important' ? (n as Notification & { important?: boolean }).important : !(n as Notification & { important?: boolean }).important
           );
         }
-
         total = notifications.length;
         const start = (page - 1) * pageSize;
         notifications = notifications.slice(start, start + pageSize);
       }
-
       return { data: notifications as unknown as Record<string, unknown>[], total };
     },
     create: async () => ({}) as unknown as Record<string, unknown>,
@@ -213,66 +193,61 @@ export const NotificationListPage: React.FC = () => {
       await deleteMutation.mutateAsync(id);
     },
   });
-
   const handleMarkAsRead = useCallback(
     async (row: Record<string, unknown>) => {
       try {
         await markAsReadMutation.mutateAsync(row.id as string);
         addNotification({
-          title: '操作成功',
-          message: '通知已标记为已读',
+          title: i18n.t('notification.notification_list_page.k4'),
+          message: i18n.t('notification.notification_list_page.k5'),
           type: 'success',
         });
       } catch (err) {
         addNotification({
-          title: '操作失败',
-          message: extractErrorMessage(err, '标记已读失败'),
+          title: i18n.t('notification.notification_list_page.k6'),
+          message: extractErrorMessage(err, i18n.t('notification.notification_list_page.k7')),
           type: 'error',
         });
       }
     },
     [addNotification, markAsReadMutation]
   );
-
   const handleMarkAsUnread = useCallback(
     (_row: Record<string, unknown>) => {
       addNotification({
-        title: '提示',
-        message: '标记为未读功能开发中',
+        title: i18n.t('notification.notification_list_page.k8'),
+        message: i18n.t('notification.notification_list_page.k9'),
         type: 'info',
       });
     },
     [addNotification]
   );
-
   const handleToggleImportant = useCallback(
     (_row: Record<string, unknown>) => {
       addNotification({
-        title: '提示',
-        message: '重要标记功能开发中',
+        title: i18n.t('notification.notification_list_page.k10'),
+        message: i18n.t('notification.notification_list_page.k11'),
         type: 'info',
       });
     },
     [addNotification]
   );
-
   const handleMarkAllAsRead = useCallback(async () => {
     try {
       await markAllAsReadMutation.mutateAsync();
       addNotification({
-        title: '操作成功',
-        message: '已将全部通知标记为已读',
+        title: i18n.t('notification.notification_list_page.k12'),
+        message: i18n.t('notification.notification_list_page.k13'),
         type: 'success',
       });
     } catch (err) {
       addNotification({
-        title: '操作失败',
-        message: extractErrorMessage(err, '标记已读失败'),
+        title: i18n.t('notification.notification_list_page.k14'),
+        message: extractErrorMessage(err, i18n.t('notification.notification_list_page.k15')),
         type: 'error',
       });
     }
   }, [addNotification, markAllAsReadMutation]);
-
   const handleFilterImportant = useCallback(() => {
     if (importantFilter === 'important') {
       setImportantFilter('all');
@@ -280,47 +255,44 @@ export const NotificationListPage: React.FC = () => {
       setImportantFilter('important');
     }
   }, [importantFilter]);
-
   const handleBulkMarkRead = useCallback(
     async (selectedIds: string[]) => {
       try {
         await bulkMarkReadMutation.mutateAsync(selectedIds);
         addNotification({
-          title: '操作成功',
-          message: `已将 ${selectedIds.length} 条通知标记为已读`,
+          title: i18n.t('notification.notification_list_page.k16'),
+          message: `${i18n.t('pages.notification_list_page.k0')}${selectedIds.length}${i18n.t('pages.notification_list_page.k1')}`,
           type: 'success',
         });
       } catch (err) {
         addNotification({
-          title: '操作失败',
-          message: extractErrorMessage(err, '批量标记已读失败'),
+          title: i18n.t('notification.notification_list_page.k17'),
+          message: extractErrorMessage(err, i18n.t('notification.notification_list_page.k18')),
           type: 'error',
         });
       }
     },
     [addNotification, bulkMarkReadMutation]
   );
-
   const handleBulkDelete = useCallback(
     async (selectedIds: string[]) => {
       try {
         await bulkDeleteMutation.mutateAsync(selectedIds);
         addNotification({
-          title: '删除成功',
-          message: `已删除 ${selectedIds.length} 条通知`,
+          title: i18n.t('notification.notification_list_page.k19'),
+          message: `${i18n.t('pages.notification_list_page.k2')}${selectedIds.length}${i18n.t('pages.notification_list_page.k3')}`,
           type: 'success',
         });
       } catch (err) {
         addNotification({
-          title: '删除失败',
-          message: extractErrorMessage(err, '批量删除失败'),
+          title: i18n.t('notification.notification_list_page.k20'),
+          message: extractErrorMessage(err, i18n.t('notification.notification_list_page.k21')),
           type: 'error',
         });
       }
     },
     [addNotification, bulkDeleteMutation]
   );
-
   const headerContent = useMemo(
     () => (
       <Box sx={{ px: { xs: 2, sm: 3 }, py: 3, borderBottom: 1, borderColor: 'divider' }}>
@@ -379,40 +351,38 @@ export const NotificationListPage: React.FC = () => {
     ),
     [stats]
   );
-
   const customRowActions = [
     {
-      label: '标记已读',
+      label: i18n.t('notification.notification_list_page.k22'),
       icon: <Eye size={16} />,
       onClick: handleMarkAsRead,
     },
     {
-      label: '标记未读',
+      label: i18n.t('notification.notification_list_page.k23'),
       icon: <EyeOff size={16} />,
       onClick: handleMarkAsUnread,
     },
     {
-      label: '重要',
+      label: i18n.t('notification.notification_list_page.k24'),
       icon: <Star size={16} />,
       onClick: handleToggleImportant,
     },
   ];
-
   const schemaWithActions = {
     ...notificationSchema,
     batchActions: [
       {
         key: 'markRead',
-        label: '标记已读',
+        label: i18n.t('notification.notification_list_page.k25'),
         icon: <Check size={16} />,
         color: 'primary' as const,
         onClick: handleBulkMarkRead,
         confirm: true,
-        confirmMessage: '确定要将选中的通知标记为已读吗？',
+        confirmMessage: i18n.t('notification.notification_list_page.k26'),
       },
       {
         key: 'bulkDelete',
-        label: '批量删除',
+        label: i18n.t('notification.notification_list_page.k27'),
         icon: <Check size={16} />,
         color: 'error' as const,
         onClick: handleBulkDelete,
@@ -420,11 +390,10 @@ export const NotificationListPage: React.FC = () => {
       },
     ],
   };
-
   const tabs: CrudTab[] = [
     {
       id: 'all',
-      label: '全部通知',
+      label: i18n.t('notification.notification_list_page.k28'),
       content: (
         <CrudPage
           schema={schemaWithActions}
@@ -437,7 +406,7 @@ export const NotificationListPage: React.FC = () => {
     },
     {
       id: 'unread',
-      label: '未读通知',
+      label: i18n.t('notification.notification_list_page.k29'),
       content: (
         <CrudPage
           schema={schemaWithActions}
@@ -450,7 +419,7 @@ export const NotificationListPage: React.FC = () => {
     },
     {
       id: 'read',
-      label: '已读通知',
+      label: i18n.t('notification.notification_list_page.k30'),
       content: (
         <CrudPage
           schema={schemaWithActions}
@@ -463,7 +432,7 @@ export const NotificationListPage: React.FC = () => {
     },
     {
       id: 'important',
-      label: '重要通知',
+      label: i18n.t('notification.notification_list_page.k31'),
       content: (
         <CrudPage
           schema={schemaWithActions}
@@ -475,7 +444,6 @@ export const NotificationListPage: React.FC = () => {
       ),
     },
   ];
-
   return (
     <PageContainer
       headerProps={{
@@ -496,5 +464,4 @@ export const NotificationListPage: React.FC = () => {
     </PageContainer>
   );
 };
-
 export default NotificationListPage;

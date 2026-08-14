@@ -8,13 +8,14 @@ import { useTranslation } from 'react-i18next';
 import { useCrmDashboardSchema } from '@/schemas/crm';
 import { useCrmMock, type DashboardData, type Period } from '@/api/crm';
 import { Box, Chip, MenuItem, Select, type SelectChangeEvent } from '@mui/material';
+import i18n from '@/i18n';
 
 const MockBadge: React.FC<{ enabled: boolean }> = ({ enabled }) => {
   const { t } = useTranslation();
   if (!enabled) return null;
   return (
     <Chip
-      label={t('crm.common.mock_demo_badge') || 'Mock 演示'}
+      label={t('crm.common.mock_demo_badge') || i18n.t('pages.crm_dashboard_page.mock_0')}
       color='warning'
       size='small'
       variant='outlined'
@@ -35,10 +36,10 @@ const PeriodSelector: React.FC<{
       onChange={(e: SelectChangeEvent<Period>) => onChange(e.target.value as Period)}
       sx={{ minWidth: 140 }}
     >
-      <MenuItem value='MTD'>{t('crm.period.mtd') || '本月'}</MenuItem>
-      <MenuItem value='QTD'>{t('crm.period.qtd') || '本季度'}</MenuItem>
-      <MenuItem value='YTD'>{t('crm.period.ytd') || '本年'}</MenuItem>
-      <MenuItem value='ROLLING_12M'>{t('crm.period.r12') || '近12月'}</MenuItem>
+      <MenuItem value='MTD'>{t('crm.period.mtd') || i18n.t('pages.crm_dashboard_page.k1')}</MenuItem>
+      <MenuItem value='QTD'>{t('crm.period.qtd') || i18n.t('pages.crm_dashboard_page.k2')}</MenuItem>
+      <MenuItem value='YTD'>{t('crm.period.ytd') || i18n.t('pages.crm_dashboard_page.k3')}</MenuItem>
+      <MenuItem value='ROLLING_12M'>{t('crm.period.r12') || i18n.t('pages.crm_dashboard_page.12_4')}</MenuItem>
     </Select>
   );
 };
@@ -89,7 +90,7 @@ const CrmDashboardPage: React.FC = () => {
     if (mockEnabled || kpis) {
       return [
         {
-          title: t('crm.dashboard.kpi_customers') || '客户总数',
+          title: t('crm.dashboard.kpi_customers') || i18n.t('pages.crm_dashboard_page.k5'),
           value: kpis?.customers ?? 120,
           icon: <Users size={24} />,
           color: 'primary',
@@ -97,7 +98,7 @@ const CrmDashboardPage: React.FC = () => {
           loading,
         },
         {
-          title: t('crm.dashboard.kpi_open_opps') || '在途商机',
+          title: t('crm.dashboard.kpi_open_opps') || i18n.t('pages.crm_dashboard_page.k6'),
           value: kpis?.openOpps ?? 40,
           icon: <Target size={24} />,
           color: 'info',
@@ -105,7 +106,7 @@ const CrmDashboardPage: React.FC = () => {
           loading,
         },
         {
-          title: t('crm.dashboard.kpi_win_rate') || '赢单率',
+          title: t('crm.dashboard.kpi_win_rate') || i18n.t('pages.crm_dashboard_page.k7'),
           value: `${((kpis?.winRate ?? 0.42) * 100).toFixed(0)}%`,
           icon: <TrendingUp size={24} />,
           color: 'success',
@@ -113,7 +114,7 @@ const CrmDashboardPage: React.FC = () => {
           loading,
         },
         {
-          title: t('crm.dashboard.kpi_new_signed') || '本月新签',
+          title: t('crm.dashboard.kpi_new_signed') || i18n.t('pages.crm_dashboard_page.k8'),
           value: `¥${(kpis?.newSignedMtd ?? 2_380_000).toLocaleString()}`,
           icon: <DollarSign size={24} />,
           color: 'warning',
@@ -121,7 +122,7 @@ const CrmDashboardPage: React.FC = () => {
           loading,
         },
         {
-          title: t('crm.dashboard.kpi_active_contacts') || '活跃联系人',
+          title: t('crm.dashboard.kpi_active_contacts') || i18n.t('pages.crm_dashboard_page.k9'),
           value: kpis?.activeContacts ?? 60,
           icon: <Users size={24} />,
           color: 'secondary',
@@ -129,7 +130,7 @@ const CrmDashboardPage: React.FC = () => {
           loading,
         },
         {
-          title: t('crm.dashboard.kpi_pending_returns') || '待处理退货',
+          title: t('crm.dashboard.kpi_pending_returns') || i18n.t('pages.crm_dashboard_page.k10'),
           value: kpis?.pendingReturns ?? 18,
           icon: <Package size={24} />,
           color: 'error',
@@ -163,7 +164,7 @@ const CrmDashboardPage: React.FC = () => {
       return [
         {
           id: 'funnel-bar',
-          title: t('crm.dashboard.chart_funnel') || '销售漏斗',
+          title: t('crm.dashboard.chart_funnel') || i18n.t('pages.crm_dashboard_page.k11'),
           type: 'bar' as const,
           data:
             dashboardData?.funnel?.map((f) => ({
@@ -178,7 +179,7 @@ const CrmDashboardPage: React.FC = () => {
         },
         {
           id: 'forecast-line',
-          title: t('crm.dashboard.chart_forecast') || '销售预测',
+          title: t('crm.dashboard.chart_forecast') || i18n.t('pages.crm_dashboard_page.k12'),
           type: 'line' as const,
           data:
             dashboardData?.forecastSeries?.actual?.map((a, i) => ({
@@ -194,7 +195,7 @@ const CrmDashboardPage: React.FC = () => {
         },
         {
           id: 'scoring-donut',
-          title: t('crm.dashboard.chart_scoring') || '客户评分分布',
+          title: t('crm.dashboard.chart_scoring') || i18n.t('pages.crm_dashboard_page.k13'),
           type: 'pie' as const,
           data: dashboardData?.buckets
             ? ([

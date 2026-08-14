@@ -10,6 +10,7 @@
  */
 
 import type { TmsFsmType } from './StatusBadge';
+import i18n from '@/i18n';
 
 interface FSMTransition {
   /** 目标状态 */
@@ -24,66 +25,66 @@ interface FSMTransition {
 const FSM_TRANSITIONS: Record<TmsFsmType, Record<string, FSMTransition[]>> = {
   vehicle: {
     active: [
-      { targetStatus: 'maintenance', label: '提交检修' },
-      { targetStatus: 'retired', label: '直接退役' },
+      { targetStatus: 'maintenance', label: i18n.t('components.fsm_action_buttons.k0') },
+      { targetStatus: 'retired', label: i18n.t('components.fsm_action_buttons.k1') },
     ],
     maintenance: [
-      { targetStatus: 'active', label: '恢复运行' },
-      { targetStatus: 'inactive', label: '转为停用' },
+      { targetStatus: 'active', label: i18n.t('components.fsm_action_buttons.k2') },
+      { targetStatus: 'inactive', label: i18n.t('components.fsm_action_buttons.k3') },
     ],
     inactive: [
-      { targetStatus: 'active', label: '恢复运行' },
-      { targetStatus: 'retired', label: '退役', requiresApproval: true },
+      { targetStatus: 'active', label: i18n.t('components.fsm_action_buttons.k4') },
+      { targetStatus: 'retired', label: i18n.t('components.fsm_action_buttons.k5'), requiresApproval: true },
     ],
   },
   driver: {
     active: [
-      { targetStatus: 'on_leave', label: '请假' },
-      { targetStatus: 'suspended', label: '暂停' },
+      { targetStatus: 'on_leave', label: i18n.t('components.fsm_action_buttons.k6') },
+      { targetStatus: 'suspended', label: i18n.t('components.fsm_action_buttons.k7') },
     ],
     on_leave: [
-      { targetStatus: 'active', label: '恢复上岗' },
-      { targetStatus: 'inactive', label: '转为停用' },
+      { targetStatus: 'active', label: i18n.t('components.fsm_action_buttons.k8') },
+      { targetStatus: 'inactive', label: i18n.t('components.fsm_action_buttons.k9') },
     ],
     suspended: [
-      { targetStatus: 'active', label: '恢复上岗' },
-      { targetStatus: 'inactive', label: '停用', requiresApproval: true },
+      { targetStatus: 'active', label: i18n.t('components.fsm_action_buttons.k10') },
+      { targetStatus: 'inactive', label: i18n.t('components.fsm_action_buttons.k11'), requiresApproval: true },
     ],
   },
   carrier: {
     pending_review: [
-      { targetStatus: 'active', label: '审核通过', requiresApproval: true },
-      { targetStatus: 'rejected', label: '拒绝' },
+      { targetStatus: 'active', label: i18n.t('components.fsm_action_buttons.k12'), requiresApproval: true },
+      { targetStatus: 'rejected', label: i18n.t('components.fsm_action_buttons.k13') },
     ],
-    active: [{ targetStatus: 'suspended', label: '暂停' }],
+    active: [{ targetStatus: 'suspended', label: i18n.t('components.fsm_action_buttons.k14') }],
     suspended: [
-      { targetStatus: 'active', label: '恢复' },
-      { targetStatus: 'blacklisted', label: '拉黑' },
+      { targetStatus: 'active', label: i18n.t('components.fsm_action_buttons.k15') },
+      { targetStatus: 'blacklisted', label: i18n.t('components.fsm_action_buttons.k16') },
     ],
   },
   route: {
     planning: [
-      { targetStatus: 'active', label: '启用', requiresApproval: true },
-      { targetStatus: 'cancelled', label: '取消' },
+      { targetStatus: 'active', label: i18n.t('components.fsm_action_buttons.k17'), requiresApproval: true },
+      { targetStatus: 'cancelled', label: i18n.t('components.fsm_action_buttons.k18') },
     ],
-    active: [{ targetStatus: 'closed', label: '关闭' }],
+    active: [{ targetStatus: 'closed', label: i18n.t('components.fsm_action_buttons.k19') }],
     closed: [
-      { targetStatus: 'active', label: '重新启用' },
-      { targetStatus: 'deprecated', label: '废弃' },
+      { targetStatus: 'active', label: i18n.t('components.fsm_action_buttons.k20') },
+      { targetStatus: 'deprecated', label: i18n.t('components.fsm_action_buttons.k21') },
     ],
   },
   shipment: {
     draft: [
-      { targetStatus: 'pending', label: '提交审批' },
-      { targetStatus: 'cancelled', label: '取消' },
+      { targetStatus: 'pending', label: i18n.t('components.fsm_action_buttons.k22') },
+      { targetStatus: 'cancelled', label: i18n.t('components.fsm_action_buttons.k23') },
     ],
     pending: [
-      { targetStatus: 'in_transit', label: '审批发车', requiresApproval: true },
-      { targetStatus: 'cancelled', label: '取消' },
+      { targetStatus: 'in_transit', label: i18n.t('components.fsm_action_buttons.k24'), requiresApproval: true },
+      { targetStatus: 'cancelled', label: i18n.t('components.fsm_action_buttons.k25') },
     ],
     in_transit: [
-      { targetStatus: 'delivered', label: '确认送达' },
-      { targetStatus: 'cancelled', label: '取消' },
+      { targetStatus: 'delivered', label: i18n.t('components.fsm_action_buttons.k26') },
+      { targetStatus: 'cancelled', label: i18n.t('components.fsm_action_buttons.k27') },
     ],
   },
 };
@@ -126,7 +127,7 @@ export function FSMActionButtons({
             }
           >
             {t.label}
-            {requiresApproval && ' (审批)'}
+            {requiresApproval && i18n.t('components.fsm_action_buttons.k28')}
           </button>
         );
       })}

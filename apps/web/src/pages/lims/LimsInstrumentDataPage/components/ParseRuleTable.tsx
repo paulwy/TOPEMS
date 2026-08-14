@@ -17,10 +17,10 @@ import {
   Tooltip,
   TablePagination,
 } from '@mui/material';
+import i18n from '@/i18n';
 import type { ParseRule } from '@/api/lims';
 import { getStatusColor, getStatusLabel } from '../utils';
 import type { ChipColor } from '../utils';
-
 interface ParseRuleTableProps {
   loading: boolean;
   rules: ParseRule[];
@@ -32,7 +32,6 @@ interface ParseRuleTableProps {
   onEdit: (rule: ParseRule) => void;
   onDelete: (id: string) => void;
 }
-
 const ParseRuleTable: React.FC<ParseRuleTableProps> = ({
   loading,
   rules,
@@ -50,14 +49,14 @@ const ParseRuleTable: React.FC<ParseRuleTableProps> = ({
         <Table size='small'>
           <TableHead>
             <TableRow>
-              <TableCell>规则编号</TableCell>
-              <TableCell>规则名称</TableCell>
-              <TableCell>协议</TableCell>
-              <TableCell>仪器类型</TableCell>
-              <TableCell>版本</TableCell>
-              <TableCell>状态</TableCell>
-              <TableCell>创建时间</TableCell>
-              <TableCell>操作</TableCell>
+              <TableCell>{i18n.t('lims.parse_rule_table.k0')}</TableCell>
+              <TableCell>{i18n.t('lims.parse_rule_table.k1')}</TableCell>
+              <TableCell>{i18n.t('lims.parse_rule_table.k2')}</TableCell>
+              <TableCell>{i18n.t('lims.parse_rule_table.k3')}</TableCell>
+              <TableCell>{i18n.t('lims.parse_rule_table.k4')}</TableCell>
+              <TableCell>{i18n.t('lims.parse_rule_table.k5')}</TableCell>
+              <TableCell>{i18n.t('lims.parse_rule_table.k6')}</TableCell>
+              <TableCell>{i18n.t('lims.parse_rule_table.k7')}</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
@@ -82,7 +81,7 @@ const ParseRuleTable: React.FC<ParseRuleTableProps> = ({
                       color='text.secondary'
                       sx={{ mt: 1 }}
                     >
-                      暂无解析规则
+                      {i18n.t('pages.parse_rule_table.k0')}
                     </Typography>
                   </Box>
                 </TableCell>
@@ -117,20 +116,20 @@ const ParseRuleTable: React.FC<ParseRuleTableProps> = ({
                       direction='row'
                       spacing={1}
                     >
-                      <Tooltip title='编辑'>
+                      <Tooltip title={i18n.t('lims.parse_rule_table.k8')}>
                         <IconButton
                           size='small'
                           onClick={() => onEdit(rule)}
-                          aria-label='编辑'
+                          aria-label={i18n.t('lims.parse_rule_table.k9')}
                         >
                           <Edit size={16} />
                         </IconButton>
                       </Tooltip>
-                      <Tooltip title='删除'>
+                      <Tooltip title={i18n.t('lims.parse_rule_table.k10')}>
                         <IconButton
                           size='small'
                           onClick={() => onDelete(rule.id)}
-                          aria-label='删除'
+                          aria-label={i18n.t('lims.parse_rule_table.k11')}
                         >
                           <Trash2 size={16} />
                         </IconButton>
@@ -157,5 +156,4 @@ const ParseRuleTable: React.FC<ParseRuleTableProps> = ({
     </Paper>
   );
 };
-
 export default ParseRuleTable;

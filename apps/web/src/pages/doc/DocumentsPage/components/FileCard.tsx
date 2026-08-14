@@ -2,6 +2,7 @@ import React from 'react';
 import { Card, CardContent, Box, Typography, Button, Tooltip, Chip } from '@mui/material';
 import { FileText, Star, MoreVertical, Download, Eye, Share2, CheckCircle } from 'lucide-react';
 import type { FileItem } from '../types';
+import i18n from '@/i18n';
 
 interface FileCardProps {
   file: FileItem;
@@ -85,7 +86,7 @@ const FileCard: React.FC<FileCardProps> = ({
             sx={{ display: 'flex', alignItems: 'center', gap: 1, opacity: 0 }}
             className='hidden-actions'
           >
-            <Tooltip title='星标'>
+            <Tooltip title={i18n.t('pages.file_card.k0')}>
               <span>
                 <Button
                   variant='text'
@@ -106,7 +107,7 @@ const FileCard: React.FC<FileCardProps> = ({
                 </Button>
               </span>
             </Tooltip>
-            <Tooltip title='更多操作'>
+            <Tooltip title={i18n.t('pages.file_card.k1')}>
               <span>
                 <Button
                   variant='text'
@@ -178,7 +179,7 @@ const FileCard: React.FC<FileCardProps> = ({
           }}
         >
           <Eye sx={{ width: 16, height: 16, mr: 1 }} />
-          预览
+          {i18n.t('pages.file_card.k0')}
         </Button>
         <Button
           variant='text'
@@ -189,14 +190,14 @@ const FileCard: React.FC<FileCardProps> = ({
           }}
         >
           <Download sx={{ width: 16, height: 16, mr: 1 }} />
-          下载
+          {i18n.t('pages.file_card.k1')}
         </Button>
         <Button
           variant='text'
           size='small'
         >
           <Share2 sx={{ width: 16, height: 16, mr: 1 }} />
-          分享
+          {i18n.t('pages.file_card.k2')}
         </Button>
       </Box>
     </Card>

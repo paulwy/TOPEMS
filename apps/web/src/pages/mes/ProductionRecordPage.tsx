@@ -7,13 +7,11 @@ import { mesApi } from '@/api/mes';
 import { Activity } from 'lucide-react';
 import { designTokens } from '@/theme/tokens';
 import { PageContainer } from '@/components/common';
-
+import i18n from '@/i18n';
 const ct= designTokens.colors;
-
 const apiAdapter = createCrudPageAdapter(mesApi.records, {
   itemsField: 'records',
 });
-
 const ProductionRecordPage: React.FC = () => {
   return (
     <PageContainer
@@ -27,12 +25,11 @@ const ProductionRecordPage: React.FC = () => {
       <CrudPage
         schema={productionRecordSchema}
         apiAdapter={apiAdapter as CrudApiAdapter}
-        breadcrumbs={[{ label: 'MES' }, { label: '生产记录' }]}
+        breadcrumbs={[{ label: 'MES' }, { label: i18n.t('mes.production_record_page.k0') }]}
         headerContent={(rows) => {
           const total = rows.length;
           const completed = rows.filter((r) => r.status === 'completed').length;
           const inProgress = rows.filter((r) => r.status === 'in_progress').length;
-
           return (
             <Box
               sx={{
@@ -47,7 +44,7 @@ const ProductionRecordPage: React.FC = () => {
                   variant='body2'
                   sx={{ color: 'text.secondary' }}
                 >
-                  记录总数
+                  {i18n.t('pages.production_record_page.k0')}
                 </Typography>
                 <Typography
                   variant='h5'
@@ -61,7 +58,7 @@ const ProductionRecordPage: React.FC = () => {
                   variant='body2'
                   sx={{ color: 'text.secondary' }}
                 >
-                  已完成
+                  {i18n.t('pages.production_record_page.k1')}
                 </Typography>
                 <Typography
                   variant='h5'
@@ -75,7 +72,7 @@ const ProductionRecordPage: React.FC = () => {
                   variant='body2'
                   sx={{ color: 'text.secondary' }}
                 >
-                  进行中
+                  {i18n.t('pages.production_record_page.k2')}
                 </Typography>
                 <Typography
                   variant='h5'
@@ -91,5 +88,4 @@ const ProductionRecordPage: React.FC = () => {
     </PageContainer>
   );
 };
-
 export default ProductionRecordPage;

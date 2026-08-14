@@ -1,3 +1,4 @@
+import i18n from '@/i18n';
 /**
  * V50.0 微前端 AI 运维 - 自动修复模块
  * 提供智能故障自愈、自动化修复、工作流编排能力
@@ -181,23 +182,23 @@ export class AutoRemediation {
   ): Promise<RemediationExecution> {
     return new Promise((resolve, reject) => {
       if (!this.config.enabled) {
-        reject(new Error('自动修复功能已禁用'));
+        reject(new Error(i18n.t('microfrontend.auto-remediation.k0')));
         return;
       }
 
       if (this.activeExecutions.size >= this.config.maxConcurrentExecutions) {
-        reject(new Error('已达到最大并发执行数限制'));
+        reject(new Error(i18n.t('microfrontend.auto-remediation.k1')));
         return;
       }
 
       const workflow = this.workflows.get(workflowId);
       if (!workflow) {
-        reject(new Error(`工作流 ${workflowId} 不存在`));
+        reject(new Error(`${i18n.t('microfrontend.auto-remediation.k0')}${workflowId}${i18n.t('microfrontend.auto-remediation.k1')}`));
         return;
       }
 
       if (workflow.status !== 'active') {
-        reject(new Error(`工作流 ${workflowId} 未激活`));
+        reject(new Error(`${i18n.t('microfrontend.auto-remediation.k2')}${workflowId}${i18n.t('microfrontend.auto-remediation.k3')}`));
         return;
       }
 
@@ -206,7 +207,7 @@ export class AutoRemediation {
       if (lastExecution && trigger.cooldown > 0) {
         const timeSinceLastExecution = Date.now() - lastExecution.startTime;
         if (timeSinceLastExecution < trigger.cooldown) {
-          reject(new Error('工作流处于冷却期'));
+          reject(new Error(i18n.t('microfrontend.auto-remediation.k2')));
           return;
         }
       }
@@ -218,7 +219,7 @@ export class AutoRemediation {
             if (approved) {
               this.performExecution(workflow, trigger, context).then(resolve).catch(reject);
             } else {
-              reject(new Error('审批未通过'));
+              reject(new Error(i18n.t('microfrontend.auto-remediation.k3')));
             }
           })
           .catch(reject);
@@ -235,7 +236,7 @@ export class AutoRemediation {
 
     execution.status = 'failed';
     execution.endTime = Date.now();
-    execution.summary = '执行已被取消';
+    execution.summary = i18n.t('microfrontend.auto-remediation.k4');
 
     this.activeExecutions.delete(executionId);
     this.notifyListeners(execution);
@@ -395,7 +396,7 @@ export class AutoRemediation {
         const passed = await this.evaluateCondition(condition, context);
         if (!passed) {
           execution.status = 'failed';
-          execution.summary = '前置条件检查失败';
+          execution.summary = i18n.t('microfrontend.auto-remediation.k5');
           execution.endTime = Date.now();
           this.activeExecutions.delete(executionId);
           this.notifyListeners(execution);
@@ -446,7 +447,7 @@ export class AutoRemediation {
         const passed = await this.evaluateCondition(condition, context);
         if (!passed && condition.onFailure === 'abort') {
           execution.status = 'partial';
-          execution.summary = '后置条件检查失败，部分操作成功';
+          execution.summary = i18n.t('microfrontend.auto-remediation.k6');
           execution.endTime = Date.now();
           this.activeExecutions.delete(executionId);
           this.notifyListeners(execution);
@@ -458,11 +459,11 @@ export class AutoRemediation {
       workflow.executionHistory.unshift(execution);
 
       execution.status = 'success';
-      execution.summary = '工作流执行成功';
+      execution.summary = i18n.t('microfrontend.auto-remediation.k7');
       execution.endTime = Date.now();
     } catch (error) {
       execution.status = 'failed';
-      execution.summary = `执行失败: ${error instanceof Error ? error.message : String(error)}`;
+      execution.summary = `${i18n.t('microfrontend.auto-remediation.k4')}${error instanceof Error ? error.message : String(error)}`;
       execution.endTime = Date.now();
     }
 
@@ -481,7 +482,7 @@ export class AutoRemediation {
 
     return new Promise((resolve, reject) => {
       const timer = setTimeout(() => {
-        reject(new Error('动作执行超时'));
+        reject(new Error(i18n.t('microfrontend.auto-remediation.k8')));
       }, timeout);
 
       // 模拟不同类型的动作
@@ -491,35 +492,35 @@ export class AutoRemediation {
 
           switch (action.type) {
             case 'restart':
-              action.result = `成功重启 ${action.parameters.target || '服务'}`;
+              action.result = `${i18n.t('microfrontend.auto-remediation.k5')}${action.parameters.target || i18n.t('microfrontend.auto-remediation.k9')}`;
               resolve();
               break;
             case 'scale':
-              action.result = `成功扩展到 ${action.parameters.replicas || 2} 个实例`;
+              action.result = `${i18n.t('microfrontend.auto-remediation.k6')}${action.parameters.replicas || 2}${i18n.t('microfrontend.auto-remediation.k7')}`;
               resolve();
               break;
             case 'rollback':
-              action.result = `成功回滚到版本 ${action.parameters.version || '上一个版本'}`;
+              action.result = `${i18n.t('microfrontend.auto-remediation.k8')}${action.parameters.version || i18n.t('microfrontend.auto-remediation.k10')}`;
               resolve();
               break;
             case 'config':
-              action.result = `成功更新配置: ${action.parameters.key || '未知配置'}`;
+              action.result = `${i18n.t('microfrontend.auto-remediation.k9')}${action.parameters.key || i18n.t('microfrontend.auto-remediation.k11')}`;
               resolve();
               break;
             case 'script':
-              action.result = `脚本执行完成: ${action.parameters.script || '默认脚本'}`;
+              action.result = `${i18n.t('microfrontend.auto-remediation.k10')}${action.parameters.script || i18n.t('microfrontend.auto-remediation.k12')}`;
               resolve();
               break;
             case 'notification':
-              action.result = `通知已发送给 ${action.parameters.recipients || '相关人员'}`;
+              action.result = `${i18n.t('microfrontend.auto-remediation.k11')}${action.parameters.recipients || i18n.t('microfrontend.auto-remediation.k13')}`;
               resolve();
               break;
             case 'custom':
-              action.result = `自定义动作执行完成`;
+              action.result = i18n.t('microfrontend.auto-remediation.k0');
               resolve();
               break;
             default:
-              reject(new Error(`未知的动作类型: ${action.type}`));
+              reject(new Error(`${i18n.t('microfrontend.auto-remediation.k12')}${action.type}`));
           }
         },
         Math.random() * 1000 + 500
@@ -559,7 +560,7 @@ export class AutoRemediation {
       }, this.config.approvalTimeout);
 
       // 在实际应用中，这里应该发送审批请求到审批系统
-      console.info(`[AutoRemediation] 需要审批工作流: ${workflow.name} (${executionId})`);
+      console.info(`${i18n.t('microfrontend.auto-remediation.k13')}${workflow.name} (${executionId})`);
     });
   }
 

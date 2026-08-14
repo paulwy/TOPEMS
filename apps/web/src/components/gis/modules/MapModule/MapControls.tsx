@@ -2,6 +2,7 @@
 import React from 'react';
 import { ZoomIn, ZoomOut, Maximize2 } from 'lucide-react';
 import { Box, IconButton } from '@mui/material';
+import i18n from '@/i18n';
 
 interface MapControlsProps {
   zoom: number;
@@ -38,8 +39,8 @@ const MapControls: React.FC<MapControlsProps> = ({
           boxShadow: 2,
           '&:hover': { bgcolor: 'action.hover' },
         }}
-        aria-label='放大'
-        title='放大'
+        aria-label={i18n.t('gis.map_controls.k0')}
+        title={i18n.t('gis.map_controls.k1')}
       >
         <ZoomIn
           size={20}
@@ -55,8 +56,8 @@ const MapControls: React.FC<MapControlsProps> = ({
           boxShadow: 2,
           '&:hover': { bgcolor: 'action.hover' },
         }}
-        aria-label='缩小'
-        title='缩小'
+        aria-label={i18n.t('gis.map_controls.k2')}
+        title={i18n.t('gis.map_controls.k3')}
       >
         <ZoomOut
           size={20}
@@ -73,8 +74,8 @@ const MapControls: React.FC<MapControlsProps> = ({
             boxShadow: 2,
             '&:hover': { bgcolor: 'action.hover' },
           }}
-          aria-label='缩放到所有标记'
-          title='缩放到所有标记'
+          aria-label={i18n.t('gis.map_controls.k4')}
+          title={i18n.t('gis.map_controls.k5')}
         >
           <Maximize2
             size={20}

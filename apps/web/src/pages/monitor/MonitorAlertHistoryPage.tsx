@@ -7,7 +7,6 @@
  * @module pages/monitor
  * @path /monitor/alert-history
  */
-
 import React, { useMemo, useState, useCallback } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import {
@@ -20,8 +19,8 @@ import {
   IconButton,
   Tooltip,
 } from '@mui/material';
+import i18n from '@/i18n';
 import { AlertTriangle, CheckCircle, Clock, Bell, Check, Download } from 'lucide-react';
-
 import CrudPage, { type CrudApiAdapter } from '@/components/templates/CrudPage';
 import type { RowAction } from '@/components/templates/list/types';
 import { PageContainer } from '@/components/common';
@@ -30,20 +29,16 @@ import { apiLogger } from '@/utils/logger';
 import { MONITOR_PATHS } from '@/modules/monitor/config';
 import { monitorApi, type Alert, type AlertQueryParams } from '@/api/monitor';
 import { alertHistorySchema } from '@/schemas/monitor';
-
 import { queryClient, QUERY_KEYS } from '@/lib/reactQuery';
-
 const CRUD_QUERY_KEY = ['monitor_alert_history'];
-
 const METRIC_FILTER_OPTIONS = [
   { label: 'CPU', value: 'cpu' },
-  { label: '内存', value: 'memory' },
-  { label: '磁盘', value: 'disk' },
-  { label: '网络', value: 'network' },
+  { label: i18n.t('monitor.monitor_alert_history_page.k0'), value: 'memory' },
+  { label: i18n.t('monitor.monitor_alert_history_page.k1'), value: 'disk' },
+  { label: i18n.t('monitor.monitor_alert_history_page.k2'), value: 'network' },
   { label: 'API', value: 'api' },
-  { label: '数据库', value: 'database' },
+  { label: i18n.t('monitor.monitor_alert_history_page.k3'), value: 'database' },
 ];
-
 const renderStatsCards = (rows: Record<string, unknown>[], total: number): React.ReactNode => {
   const alerts = rows as unknown as Alert[];
   const totalCount = total || alerts.length;
@@ -61,52 +56,50 @@ const renderStatsCards = (rows: Record<string, unknown>[], total: number): React
         }, 0) / resolvedAlerts.length
       )}分钟`
     : '-';
-
   const stats = [
     {
       id: 'total-alerts',
-      title: '总告警数',
+      title: i18n.t('monitor.monitor_alert_history_page.k4'),
       value: totalCount,
       icon: <Bell size={20} />,
       color: 'primary' as const,
     },
     {
       id: 'critical-alerts',
-      title: '严重告警',
+      title: i18n.t('monitor.monitor_alert_history_page.k5'),
       value: criticalCount,
       icon: <AlertTriangle size={20} />,
       color: 'error' as const,
     },
     {
       id: 'warning-alerts',
-      title: '警告告警',
+      title: i18n.t('monitor.monitor_alert_history_page.k6'),
       value: warningCount,
       icon: <AlertTriangle size={20} />,
       color: 'warning' as const,
     },
     {
       id: 'active-alerts',
-      title: '未处理',
+      title: i18n.t('monitor.monitor_alert_history_page.k7'),
       value: activeCount,
       icon: <Clock size={20} />,
       color: 'error' as const,
     },
     {
       id: 'resolved-alerts',
-      title: '已解决',
+      title: i18n.t('monitor.monitor_alert_history_page.k8'),
       value: resolvedCount,
       icon: <CheckCircle size={20} />,
       color: 'success' as const,
     },
     {
       id: 'avg-resolution',
-      title: '平均解决时间',
+      title: i18n.t('monitor.monitor_alert_history_page.k9'),
       value: avgResolutionTime,
       icon: <Clock size={20} />,
       color: 'secondary' as const,
     },
   ];
-
   return (
     <Box
       sx={{
@@ -165,19 +158,16 @@ const renderStatsCards = (rows: Record<string, unknown>[], total: number): React
     </Box>
   );
 };
-
 const MonitorAlertHistoryPage: React.FC = () => {
   const { error: notifyError, success: notifySuccess } = useNotification();
   const queryClient = useQueryClient();
   const [metricFilter, setMetricFilter] = useState<string>('all');
-
   const invalidateAlerts = useCallback(() => {
     void queryClient.invalidateQueries({ queryKey: CRUD_QUERY_KEY ,
   exact: false,
   refetchType: 'active',
 });
   }, [queryClient]);
-
   const acknowledgeMutation = useMutation({
     mutationFn: async (id: string) => monitorApi.acknowledgeAlert(id),
     onSuccess: () => {
@@ -187,15 +177,14 @@ const MonitorAlertHistoryPage: React.FC = () => {
           exact: false,
           refetchType: 'active',
         });
-      notifySuccess('告警已确认');
+      notifySuccess(i18n.t('monitor.monitor_alert_history_page.k10'));
       invalidateAlerts();
     },
     onError: (err: unknown) => {
-      apiLogger.error('确认告警失败:', err);
-      notifyError('确认告警失败');
+      apiLogger.error(i18n.t('pages.monitor_alert_history_page.k0'), err);
+      notifyError(i18n.t('monitor.monitor_alert_history_page.k11'));
     },
   });
-
   const resolveMutation = useMutation({
     mutationFn: async (id: string) => monitorApi.resolveAlert(id),
     onSuccess: () => {
@@ -205,15 +194,14 @@ const MonitorAlertHistoryPage: React.FC = () => {
           exact: false,
           refetchType: 'active',
         });
-      notifySuccess('告警已解决');
+      notifySuccess(i18n.t('monitor.monitor_alert_history_page.k12'));
       invalidateAlerts();
     },
     onError: (err: unknown) => {
-      apiLogger.error('解决告警失败:', err);
-      notifyError('解决告警失败');
+      apiLogger.error(i18n.t('pages.monitor_alert_history_page.k1'), err);
+      notifyError(i18n.t('monitor.monitor_alert_history_page.k13'));
     },
   });
-
   const handleAcknowledge = useCallback(
     (row: Record<string, unknown>) => {
       const alert = row as unknown as Alert;
@@ -221,7 +209,6 @@ const MonitorAlertHistoryPage: React.FC = () => {
     },
     [acknowledgeMutation]
   );
-
   const handleResolve = useCallback(
     (row: Record<string, unknown>) => {
       const alert = row as unknown as Alert;
@@ -229,13 +216,11 @@ const MonitorAlertHistoryPage: React.FC = () => {
     },
     [resolveMutation]
   );
-
   const handleExport = useCallback(async () => {
     try {
       const response = await monitorApi.listAlerts({ pagesize: 1000 });
       const alerts = response.data?.items ?? [];
-
-      const headers = ['告警标题', '级别', '状态', '来源服务', '类型', '触发时间', '解决时间'];
+      const headers = [i18n.t('monitor.monitor_alert_history_page.k20'), i18n.t('monitor.monitor_alert_history_page.k19'), i18n.t('monitor.monitor_alert_history_page.k18'), i18n.t('monitor.monitor_alert_history_page.k17'), i18n.t('monitor.monitor_alert_history_page.k16'), i18n.t('monitor.monitor_alert_history_page.k15'), i18n.t('monitor.monitor_alert_history_page.k14')];
       const rows = alerts.map((a) => [
         a.title,
         a.severity,
@@ -250,16 +235,15 @@ const MonitorAlertHistoryPage: React.FC = () => {
       const url = URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
-      link.download = `告警历史_${new Date().toISOString().slice(0, 10)}.csv`;
+      link.download = `${i18n.t('pages.monitor_alert_history_page.__2')}${new Date().toISOString().slice(0, 10)}.csv`;
       link.click();
       URL.revokeObjectURL(url);
-      notifySuccess('导出成功');
+      notifySuccess(i18n.t('monitor.monitor_alert_history_page.k21'));
     } catch (err: unknown) {
-      apiLogger.error('导出失败:', err);
-      notifyError('导出失败');
+      apiLogger.error(i18n.t('pages.monitor_alert_history_page.k3'), err);
+      notifyError(i18n.t('monitor.monitor_alert_history_page.k22'));
     }
   }, [notifySuccess, notifyError]);
-
   const apiAdapter = useMemo<CrudApiAdapter<Alert>>(
     () => ({
       list: async (params) => {
@@ -270,35 +254,31 @@ const MonitorAlertHistoryPage: React.FC = () => {
         if (params?.status && params.status !== 'all') {
           queryParams.status = params.status as string;
         }
-
         const response = await monitorApi.listAlerts(queryParams);
         let items = response.data?.items ?? [];
         const total = response.data?.total ?? 0;
-
         const metric = params?.metricFilter as string | undefined;
         if (metric && metric !== 'all') {
           items = items.filter((a) => a.alert_type.toLowerCase().includes(metric));
         }
-
         return { data: items, total };
       },
       create: async () => {
-        throw new Error('告警历史为只读数据，不可创建');
+        throw new Error(i18n.t('monitor.monitor_alert_history_page.k23'));
       },
       update: async () => {
-        throw new Error('告警请通过确认/解决操作更新');
+        throw new Error(i18n.t('monitor.monitor_alert_history_page.k24'));
       },
       delete: async () => {
-        throw new Error('告警历史不可删除');
+        throw new Error(i18n.t('monitor.monitor_alert_history_page.k25'));
       },
     }),
     []
   );
-
   const customRowActions = useMemo<RowAction[]>(
     () => [
       {
-        label: '确认',
+        label: i18n.t('monitor.monitor_alert_history_page.k26'),
         icon: <Check size={16} />,
         color: 'warning',
         onClick: (row: Record<string, unknown>) => {
@@ -313,7 +293,7 @@ const MonitorAlertHistoryPage: React.FC = () => {
         },
       },
       {
-        label: '解决',
+        label: i18n.t('monitor.monitor_alert_history_page.k27'),
         icon: <CheckCircle size={16} />,
         color: 'success',
         onClick: (row: Record<string, unknown>) => {
@@ -330,7 +310,6 @@ const MonitorAlertHistoryPage: React.FC = () => {
     ],
     [handleAcknowledge, handleResolve]
   );
-
   const headerContent = useCallback(
     (rows: Record<string, unknown>[], total: number) => {
       return (
@@ -355,11 +334,10 @@ const MonitorAlertHistoryPage: React.FC = () => {
     },
     [metricFilter]
   );
-
   return (
     <PageContainer
-      title='告警历史'
-      subtitle='查看和处理所有告警记录'
+      title={i18n.t('monitor.monitor_alert_history_page.k28')}
+      subtitle={i18n.t('monitor.monitor_alert_history_page.k29')}
       headerProps={{
         pageIcon: <Clock size={20} />,
         backButton: {
@@ -367,11 +345,11 @@ const MonitorAlertHistoryPage: React.FC = () => {
         },
         children: (
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-            <Tooltip title='导出告警历史'>
+            <Tooltip title={i18n.t('monitor.monitor_alert_history_page.k30')}>
               <IconButton
                 size='small'
                 onClick={handleExport}
-                aria-label='下载'
+                aria-label={i18n.t('monitor.monitor_alert_history_page.k31')}
               >
                 <Download size={18} />
               </IconButton>
@@ -386,10 +364,9 @@ const MonitorAlertHistoryPage: React.FC = () => {
         extraQueryParams={{ metricFilter }}
         customRowActions={customRowActions}
         headerContent={headerContent}
-        breadcrumbs={[{ label: '监控' }, { label: '告警历史' }]}
+        breadcrumbs={[{ label: i18n.t('monitor.monitor_alert_history_page.k33') }, { label: i18n.t('monitor.monitor_alert_history_page.k32') }]}
       />
     </PageContainer>
   );
 };
-
 export default MonitorAlertHistoryPage;

@@ -10,6 +10,7 @@ import {
   Box,
   Button,
 } from '@mui/material';
+import i18n from '@/i18n';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useForm, Controller } from 'react-hook-form';
@@ -26,10 +27,10 @@ import { isDevelopment } from '../../config/runtime';
 const loginFormSchema = z.object({
   username: z
     .string()
-    .min(1, { message: '用户名不能为空' })
-    .max(20, { message: '用户名不能超过20个字符' })
-    .regex(/^[a-zA-Z0-9]+$/, { message: '用户名只能包含字母和数字' }),
-  password: z.string().min(6, { message: '密码至少需要6个字符' }),
+    .min(1, { message: i18n.t('components.login_form_v2.k0') })
+    .max(20, { message: i18n.t('components.login_form_v2.20_1') })
+    .regex(/^[a-zA-Z0-9]+$/, { message: i18n.t('components.login_form_v2.k2') }),
+  password: z.string().min(6, { message: i18n.t('components.login_form_v2.6_3') }),
   rememberMe: z.boolean().default(false).optional(),
 });
 
@@ -66,8 +67,8 @@ export function LoginFormV2({ onLogin, className }: LoginFormV2Props) {
       if (isRegister) {
         // 注册功能由管理员管理
         addNotification({
-          title: '提示',
-          message: '注册功能已关闭，请联系管理员获取账号',
+          title: i18n.t('components.login_form_v2.k4'),
+          message: i18n.t('components.login_form_v2.k5'),
           type: 'info',
         });
         return;
@@ -79,22 +80,22 @@ export function LoginFormV2({ onLogin, className }: LoginFormV2Props) {
       } else {
         // 这里可以添加默认的登录逻辑
         // 示例：简单的登录成功模拟
-        logger.info('登录表单提交:', values);
+        logger.info(i18n.t('components.login_form_v2.k0'), values);
 
         // 模拟登录成功
         addNotification({
-          title: '成功',
-          message: '登录成功',
+          title: i18n.t('components.login_form_v2.k6'),
+          message: i18n.t('components.login_form_v2.k7'),
           type: 'success',
         });
         navigate(DASHBOARD_PATHS.dashboard);
       }
     } catch (error: unknown) {
-      logger.error('登录错误:', error);
+      logger.error(i18n.t('components.login_form_v2.k1'), error);
       const err = error as { message?: string };
       addNotification({
-        title: '错误',
-        message: err.message || '登录失败',
+        title: i18n.t('components.login_form_v2.k8'),
+        message: err.message || i18n.t('components.login_form_v2.k9'),
         type: 'error',
       });
     } finally {
@@ -129,10 +130,10 @@ export function LoginFormV2({ onLogin, className }: LoginFormV2Props) {
                 TOPEMS
               </Box>
               <Box sx={{ fontSize: '0.875rem', color: 'text.secondary', mb: 2 }}>
-                企业数字化平台
+                {i18n.t('components.login_form_v2.k2')}
               </Box>
               <Box sx={{ fontSize: '1.5rem', fontWeight: 600, pt: 2 }}>
-                {isRegister ? '用户注册' : '用户登录'}
+                {isRegister ? i18n.t('components.login_form_v2.k11') : i18n.t('components.login_form_v2.k10')}
               </Box>
             </Box>
           }
@@ -149,13 +150,13 @@ export function LoginFormV2({ onLogin, className }: LoginFormV2Props) {
               control={form.control}
               render={({ field, fieldState }) => (
                 <FormControl error={!!fieldState.error}>
-                  <FormLabel>用户名</FormLabel>
+                  <FormLabel>{i18n.t('components.login_form_v2.k12')}</FormLabel>
                   <TextField
                     {...field}
-                    placeholder='请输入用户名'
+                    placeholder={i18n.t('components.login_form_v2.k13')}
                     size='small'
                     error={!!fieldState.error}
-                    helperText={fieldState.error?.message || '字母或数字组合，最多20位'}
+                    helperText={fieldState.error?.message || i18n.t('components.login_form_v2.20_14')}
                   />
                 </FormControl>
               )}
@@ -168,11 +169,11 @@ export function LoginFormV2({ onLogin, className }: LoginFormV2Props) {
                 control={form.control}
                 render={({ field, fieldState }) => (
                   <FormControl error={!!fieldState.error}>
-                    <FormLabel>邮箱</FormLabel>
+                    <FormLabel>{i18n.t('components.login_form_v2.k15')}</FormLabel>
                     <TextField
                       {...field}
                       type='email'
-                      placeholder='请输入邮箱'
+                      placeholder={i18n.t('components.login_form_v2.k16')}
                       size='small'
                       error={!!fieldState.error}
                       helperText={fieldState.error?.message}
@@ -188,12 +189,12 @@ export function LoginFormV2({ onLogin, className }: LoginFormV2Props) {
               control={form.control}
               render={({ field, fieldState }) => (
                 <FormControl error={!!fieldState.error}>
-                  <FormLabel>密码</FormLabel>
+                  <FormLabel>{i18n.t('components.login_form_v2.k17')}</FormLabel>
                   <Box sx={{ position: 'relative' }}>
                     <TextField
                       {...field}
                       type={showPassword ? 'text' : 'password'}
-                      placeholder='请输入密码'
+                      placeholder={i18n.t('components.login_form_v2.k18')}
                       size='small'
                       error={!!fieldState.error}
                       helperText={fieldState.error?.message}
@@ -239,8 +240,8 @@ export function LoginFormV2({ onLogin, className }: LoginFormV2Props) {
                       size='small'
                     />
                     <Box>
-                      <FormLabel sx={{ fontSize: '0.875rem', cursor: 'pointer' }}>记住我</FormLabel>
-                      <FormHelperText sx={{ m: 0 }}>在本设备上保持登录状态</FormHelperText>
+                      <FormLabel sx={{ fontSize: '0.875rem', cursor: 'pointer' }}>{i18n.t('components.login_form_v2.k19')}</FormLabel>
+                      <FormHelperText sx={{ m: 0 }}>{i18n.t('components.login_form_v2.k20')}</FormHelperText>
                     </Box>
                   </Box>
                 )}
@@ -254,7 +255,7 @@ export function LoginFormV2({ onLogin, className }: LoginFormV2Props) {
               disabled={loading}
               sx={{ width: '100%' }}
             >
-              {loading ? '处理中...' : isRegister ? '注册' : '登录'}
+              {loading ? i18n.t('components.login_form_v2.k3') : isRegister ? i18n.t('components.login_form_v2.k22') : i18n.t('components.login_form_v2.k21')}
             </Button>
           </Box>
         </CardContent>
@@ -282,7 +283,7 @@ export function LoginFormV2({ onLogin, className }: LoginFormV2Props) {
                 '&:hover': { textDecoration: 'underline' },
               }}
             >
-              {isRegister ? '已有账号？立即登录' : '没有账号？立即注册'}
+              {isRegister ? i18n.t('components.login_form_v2.k24') : i18n.t('components.login_form_v2.k23')}
             </Box>
           </Box>
 
@@ -303,7 +304,7 @@ export function LoginFormV2({ onLogin, className }: LoginFormV2Props) {
                   textAlign: 'center',
                 }}
               >
-                演示账号: admin / admin123 (管理员) | user / user123 (普通员工)
+                [i18n.t('components.login_form_v2.k4')]: admin / admin123 (管理员) | user / user123 (普通员工)
               </Box>
             </Box>
           )}

@@ -2,11 +2,12 @@ import type { EntitySchema } from '@/schema';
 
 
 import { QUERY_KEYS } from '@/lib/reactQuery';
+import i18n from '@/i18n';
 
 export const replenishmentSchema: EntitySchema = {
   entity: 'wms_replenishment_order',
-  title: '补货单',
-  description: '管理补货订单，包括创建、确认、完成等全生命周期',
+  title: i18n.t('wms.replenishment.k0'),
+  description: i18n.t('wms.replenishment.k1'),
 
   api: {
     module: 'wms',
@@ -16,7 +17,7 @@ export const replenishmentSchema: EntitySchema = {
   fields: [
     {
       name: 'order_number',
-      label: '补货单号',
+      label: i18n.t('wms.replenishment.k2'),
       type: 'text',
       required: true,
       readonlyOnEdit: true,
@@ -26,7 +27,7 @@ export const replenishmentSchema: EntitySchema = {
     },
     {
       name: 'warehouse_id',
-      label: '仓库',
+      label: i18n.t('wms.replenishment.k3'),
       type: 'select',
       required: true,
       listWidth: 120,
@@ -37,21 +38,21 @@ export const replenishmentSchema: EntitySchema = {
     },
     {
       name: 'supplier_id',
-      label: '供应商ID',
+      label: i18n.t('wms.replenishment.id_4'),
       type: 'text',
       listWidth: 140,
       showInList: true,
     },
     {
       name: 'supplier_name',
-      label: '供应商名称',
+      label: i18n.t('wms.replenishment.k5'),
       type: 'text',
       listWidth: 140,
       hideInForm: true,
     },
     {
       name: 'total_quantity',
-      label: '总数量',
+      label: i18n.t('wms.replenishment.k6'),
       type: 'number',
       sortable: true,
       listWidth: 100,
@@ -59,7 +60,7 @@ export const replenishmentSchema: EntitySchema = {
     },
     {
       name: 'total_amount',
-      label: '总金额',
+      label: i18n.t('wms.replenishment.k7'),
       type: 'number',
       sortable: true,
       listWidth: 100,
@@ -67,23 +68,23 @@ export const replenishmentSchema: EntitySchema = {
     },
     {
       name: 'priority',
-      label: '优先级',
+      label: i18n.t('wms.replenishment.k8'),
       type: 'select',
       defaultValue: 'normal',
       listWidth: 100,
       options: {
         type: 'static',
         options: [
-          { value: 'urgent', label: '紧急' },
-          { value: 'high', label: '高' },
-          { value: 'normal', label: '普通' },
-          { value: 'low', label: '低' },
+          { value: 'urgent', label: i18n.t('wms.replenishment.k9') },
+          { value: 'high', label: i18n.t('wms.replenishment.k10') },
+          { value: 'normal', label: i18n.t('wms.replenishment.k11') },
+          { value: 'low', label: i18n.t('wms.replenishment.k12') },
         ],
       },
     },
     {
       name: 'status',
-      label: '状态',
+      label: i18n.t('wms.replenishment.k13'),
       type: 'select',
       defaultValue: 'draft',
       listWidth: 100,
@@ -91,31 +92,31 @@ export const replenishmentSchema: EntitySchema = {
       options: {
         type: 'static',
         options: [
-          { value: 'draft', label: '草稿' },
-          { value: 'pending', label: '待确认' },
-          { value: 'confirmed', label: '已确认' },
-          { value: 'in_progress', label: '进行中' },
-          { value: 'completed', label: '已完成' },
-          { value: 'cancelled', label: '已取消' },
+          { value: 'draft', label: i18n.t('wms.replenishment.k14') },
+          { value: 'pending', label: i18n.t('wms.replenishment.k15') },
+          { value: 'confirmed', label: i18n.t('wms.replenishment.k16') },
+          { value: 'in_progress', label: i18n.t('wms.replenishment.k17') },
+          { value: 'completed', label: i18n.t('wms.replenishment.k18') },
+          { value: 'cancelled', label: i18n.t('wms.replenishment.k19') },
         ],
       },
       validation: [{ type: 'maxLength', value: 50 }],
     },
     {
       name: 'expected_date',
-      label: '预计日期',
+      label: i18n.t('wms.replenishment.k20'),
       type: 'date',
       listWidth: 120,
     },
     {
       name: 'remarks',
-      label: '备注',
+      label: i18n.t('wms.replenishment.k21'),
       type: 'textarea',
       listWidth: 200,
     },
     {
       name: 'created_at',
-      label: '创建时间',
+      label: i18n.t('wms.replenishment.k22'),
       type: 'datetime',
       readonly: true,
       hideInForm: true,
@@ -124,7 +125,7 @@ export const replenishmentSchema: EntitySchema = {
     },
     {
       name: 'updated_at',
-      label: '更新时间',
+      label: i18n.t('wms.replenishment.k23'),
       type: 'datetime',
       readonly: true,
       hideInForm: true,
@@ -157,34 +158,34 @@ export const replenishmentSchema: EntitySchema = {
         cancelled: 'error',
       },
       labelMap: {
-        draft: '草稿',
-        pending: '待确认',
-        confirmed: '已确认',
-        in_progress: '进行中',
-        completed: '已完成',
-        cancelled: '已取消',
+        draft: i18n.t('wms.replenishment.k24'),
+        pending: i18n.t('wms.replenishment.k25'),
+        confirmed: i18n.t('wms.replenishment.k26'),
+        in_progress: i18n.t('wms.replenishment.k27'),
+        completed: i18n.t('wms.replenishment.k28'),
+        cancelled: i18n.t('wms.replenishment.k29'),
       },
     },
     filters: [
       {
         id: 'status',
-        label: '状态',
+        label: i18n.t('wms.replenishment.k30'),
         type: 'select',
         options: [
-          { label: '全部状态', value: 'all' },
-          { label: '草稿', value: 'draft' },
-          { label: '待确认', value: 'pending' },
-          { label: '已确认', value: 'confirmed' },
-          { label: '进行中', value: 'in_progress' },
-          { label: '已完成', value: 'completed' },
-          { label: '已取消', value: 'cancelled' },
+          { label: i18n.t('wms.replenishment.k31'), value: 'all' },
+          { label: i18n.t('wms.replenishment.k32'), value: 'draft' },
+          { label: i18n.t('wms.replenishment.k33'), value: 'pending' },
+          { label: i18n.t('wms.replenishment.k34'), value: 'confirmed' },
+          { label: i18n.t('wms.replenishment.k35'), value: 'in_progress' },
+          { label: i18n.t('wms.replenishment.k36'), value: 'completed' },
+          { label: i18n.t('wms.replenishment.k37'), value: 'cancelled' },
         ],
       },
       {
         id: 'warehouse_id',
-        label: '仓库',
+        label: i18n.t('wms.replenishment.k38'),
         type: 'select',
-        options: [{ label: '全部仓库', value: 'all' }],
+        options: [{ label: i18n.t('wms.replenishment.k39'), value: 'all' }],
       },
     ],
   },
@@ -193,23 +194,23 @@ export const replenishmentSchema: EntitySchema = {
 
   formSections: [
     {
-      title: '基本信息',
+      title: i18n.t('wms.replenishment.k40'),
       fields: ['order_number', 'warehouse_id', 'supplier_id', 'supplier_name'],
     },
     {
-      title: '补货信息',
+      title: i18n.t('wms.replenishment.k41'),
       fields: ['total_quantity', 'total_amount', 'priority', 'expected_date'],
     },
     {
-      title: '其他',
+      title: i18n.t('wms.replenishment.k42'),
       fields: ['remarks'],
     },
   ],
 
   formColCount: 3,
-  createTitle: '创建补货单',
-  editTitle: '编辑补货单',
-  detailTitle: '补货单详情',
+  createTitle: i18n.t('wms.replenishment.k43'),
+  editTitle: i18n.t('wms.replenishment.k44'),
+  detailTitle: i18n.t('wms.replenishment.k45'),
 
   dynamicOptions: [
     {

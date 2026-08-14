@@ -3,7 +3,6 @@
  * Database structure management - add field dialog component
  */
 import React from 'react';
-import { useTranslation } from 'react-i18next';
 import {
   Dialog,
   DialogTitle,
@@ -23,9 +22,9 @@ import {
   Alert,
   Box,
 } from '@mui/material';
+import i18n from '@/i18n';
 import { Eye, AlertTriangle, CheckCircle, FileCode } from 'lucide-react';
 import type { DbColumnDefinition, SqlPreview } from '@/api/system';
-
 interface DatabaseStructureRelationsProps {
   showAddColumnModal: boolean;
   onCloseAddColumn: () => void;
@@ -37,7 +36,6 @@ interface DatabaseStructureRelationsProps {
   sqlPreview: SqlPreview | null;
   onExecute: () => void;
 }
-
 export const DatabaseStructureRelations: React.FC<DatabaseStructureRelationsProps> = ({
   showAddColumnModal,
   onCloseAddColumn,
@@ -49,8 +47,6 @@ export const DatabaseStructureRelations: React.FC<DatabaseStructureRelationsProp
   sqlPreview,
   onExecute,
 }) => {
-  const { t } = useTranslation();
-
   return (
     <>
       {/* Add Field Dialog */}
@@ -60,29 +56,29 @@ export const DatabaseStructureRelations: React.FC<DatabaseStructureRelationsProp
         maxWidth='sm'
         fullWidth
       >
-        <DialogTitle sx={{ pb: 1 }}>{t('admin.database_structure.add_new_field')}</DialogTitle>
+        <DialogTitle sx={{ pb: 1 }}>{i18n.t('admin.database_structure.add_new_field')}</DialogTitle>
         <DialogContent>
           <Stack
             spacing={2.5}
             sx={{ pt: 1 }}
           >
             <TextField
-              label={t('admin.database_structure.field_name')}
+              label={i18n.t('admin.database_structure.field_name')}
               required
               fullWidth
               size='small'
               value={newColumn.column_name}
               onChange={(e) => onNewColumnChange({ ...newColumn, column_name: e.target.value })}
-              placeholder={t('admin.database_structure_page.attr_30266b')}
+              placeholder={i18n.t('admin.database_structure_page.attr_30266b')}
             />
             <FormControl
               fullWidth
               size='small'
             >
-              <InputLabel>{t('admin.database_structure.data_type')}</InputLabel>
+              <InputLabel>{i18n.t('admin.database_structure.data_type')}</InputLabel>
               <Select
                 value={newColumn.data_type}
-                label={t('admin.database_structure.data_type')}
+                label={i18n.t('admin.database_structure.data_type')}
                 onChange={(e) => onNewColumnChange({ ...newColumn, data_type: e.target.value })}
               >
                 <MenuItem value='VARCHAR'>VARCHAR</MenuItem>
@@ -100,7 +96,7 @@ export const DatabaseStructureRelations: React.FC<DatabaseStructureRelationsProp
             </FormControl>
             {newColumn.data_type === 'VARCHAR' && (
               <TextField
-                label={t('admin.database_structure.max_length')}
+                label={i18n.t('admin.database_structure.max_length')}
                 type='number'
                 fullWidth
                 size='small'
@@ -125,15 +121,15 @@ export const DatabaseStructureRelations: React.FC<DatabaseStructureRelationsProp
                   }
                 />
               }
-              label={t('admin.database_structure_page.attr_43a86d')}
+              label={i18n.t('admin.database_structure_page.attr_43a86d')}
             />
             <TextField
-              label={t('admin.database_structure.default_value')}
+              label={i18n.t('admin.database_structure.default_value')}
               fullWidth
               size='small'
               value={newColumn.default_value || ''}
               onChange={(e) => onNewColumnChange({ ...newColumn, default_value: e.target.value })}
-              placeholder={t('admin.database_structure_page.attr_92220f')}
+              placeholder={i18n.t('admin.database_structure_page.attr_92220f')}
             />
           </Stack>
         </DialogContent>
@@ -147,7 +143,7 @@ export const DatabaseStructureRelations: React.FC<DatabaseStructureRelationsProp
               '&:hover': { bgcolor: 'border.default' },
             }}
           >
-            {t('admin.database_structure_page.text_625fb2')}
+            {i18n.t('admin.database_structure_page.text_625fb2')}
           </Button>
           <Button
             variant='contained'
@@ -158,11 +154,10 @@ export const DatabaseStructureRelations: React.FC<DatabaseStructureRelationsProp
               '&:hover': { bgcolor: 'primary.dark' },
             }}
           >
-            {t('admin.database_structure_page.text_81041c')}
+            {i18n.t('admin.database_structure_page.text_81041c')}
           </Button>
         </DialogActions>
       </Dialog>
-
       {/* SQL Preview Dialog */}
       <Dialog
         open={showPreviewModal}
@@ -181,7 +176,7 @@ export const DatabaseStructureRelations: React.FC<DatabaseStructureRelationsProp
               variant='h6'
               sx={{ fontWeight: 600 }}
             >
-              {t('admin.database_structure_page.text_64816d')}
+              {i18n.t('admin.database_structure_page.text_64816d')}
             </Typography>
           </Stack>
         </DialogTitle>
@@ -195,7 +190,6 @@ export const DatabaseStructureRelations: React.FC<DatabaseStructureRelationsProp
               {sqlPreview.warning}
             </Alert>
           )}
-
           <Paper
             elevation={0}
             sx={{
@@ -233,12 +227,11 @@ export const DatabaseStructureRelations: React.FC<DatabaseStructureRelationsProp
               </Box>
             </Stack>
           </Paper>
-
           <Alert
             severity='info'
             sx={{ mb: 1 }}
           >
-            {t('admin.database_structure_page.text_02d1f2')}
+            {i18n.t('admin.database_structure_page.text_02d1f2')}
           </Alert>
         </DialogContent>
         <DialogActions sx={{ px: 3, pb: 2 }}>
@@ -251,7 +244,7 @@ export const DatabaseStructureRelations: React.FC<DatabaseStructureRelationsProp
               '&:hover': { bgcolor: 'border.default' },
             }}
           >
-            {t('admin.database_structure_page.text_625fb2')}
+            {i18n.t('admin.database_structure_page.text_625fb2')}
           </Button>
           <Button
             variant='contained'
@@ -264,7 +257,7 @@ export const DatabaseStructureRelations: React.FC<DatabaseStructureRelationsProp
               '&:hover': { bgcolor: 'error.darker' },
             }}
           >
-            {t('admin.database_structure_page.text_d575bf')}
+            {i18n.t('admin.database_structure_page.text_d575bf')}
           </Button>
         </DialogActions>
       </Dialog>

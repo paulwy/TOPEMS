@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Flag, MessageSquare, Tag, Plus, X, Edit3, Check } from 'lucide-react';
 import { TextField, Chip, Paper, Button, useTheme } from '@mui/material';
 import { designTokens, semanticTokens } from '@topems/tokens';
+import i18n from '@/i18n';
 
 export interface Annotation {
   id: string;
@@ -22,19 +23,19 @@ interface ChartAnnotationsProps {
 const annotationTypes = [
   {
     id: 'flag',
-    label: '标记',
+    label: i18n.t('components.chart_annotations.k0'),
     icon: Flag,
     colors: ['error.main', 'warning.main', 'success.main'],
   },
   {
     id: 'note',
-    label: '注释',
+    label: i18n.t('components.chart_annotations.k1'),
     icon: MessageSquare,
     colors: ['primary.main', 'secondary.main', 'colors.cyan.500'],
   },
   {
     id: 'tag',
-    label: '标签',
+    label: i18n.t('components.chart_annotations.k2'),
     icon: Tag,
     colors: [designTokens.colors.pink.main, 'colors.teal.500', '#84CC16'],
   },
@@ -105,7 +106,7 @@ export function ChartAnnotations({
           borderRadius: 1,
           boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
         }}
-        title='添加标注'
+        title={i18n.t('components.chart_annotations.k3')}
       >
         <Plus sx={{ width: 16, height: 16, color: 'text.secondary' }} />
       </Button>
@@ -130,12 +131,12 @@ export function ChartAnnotations({
               marginBottom: 8,
             }}
           >
-            添加标注
+            {i18n.t('components.chart_annotations.k0')}
           </div>
 
           <div style={{ marginBottom: 8 }}>
             <div style={{ fontSize: 12, color: theme.palette.text.disabled, marginBottom: 4 }}>
-              类型
+              {i18n.t('components.chart_annotations.k1')}
             </div>
             <div style={{ display: 'flex', gap: 4 }}>
               {annotationTypes.map((type) => {
@@ -175,7 +176,7 @@ export function ChartAnnotations({
 
           <div style={{ marginBottom: 8 }}>
             <div style={{ fontSize: 12, color: theme.palette.text.disabled, marginBottom: 4 }}>
-              颜色
+              {i18n.t('components.chart_annotations.k2')}
             </div>
             <div style={{ display: 'flex', gap: 4 }}>
               {annotationTypes
@@ -203,7 +204,7 @@ export function ChartAnnotations({
           <TextField
             value={content}
             onChange={(e) => setContent(e.target.value)}
-            placeholder='输入标注内容...'
+            placeholder={i18n.t('components.chart_annotations.k3')}
             size='small'
             fullWidth
             sx={{ marginBottom: 8 }}
@@ -217,14 +218,14 @@ export function ChartAnnotations({
               fullWidth
               onClick={() => setShowAddMenu(false)}
             >
-              取消
+              {i18n.t('components.chart_annotations.k4')}
             </Button>
             <Button
               size='small'
               fullWidth
               onClick={handleAddAnnotation}
             >
-              添加
+              {i18n.t('components.chart_annotations.k5')}
             </Button>
           </div>
         </Paper>
@@ -263,7 +264,7 @@ export function ChartAnnotations({
                   variant='text'
                   size='small'
                   onClick={handleSaveEdit}
-                  aria-label='保存'
+                  aria-label={i18n.t('components.chart_annotations.k4')}
                 >
                   <Check sx={{ width: 12, height: 12 }} />
                 </Button>
@@ -352,7 +353,7 @@ export function ChartAnnotations({
         >
           <Chip
             size='small'
-            label={`${annotations.length} 个标注`}
+            label={`${annotations.length} ${i18n.t('components.chart_annotations.k6')}`}
             variant='outlined'
           />
         </div>

@@ -1,9 +1,10 @@
 import type { EntitySchema } from '@/schema';
+import i18n from '@/i18n';
 
 export const bomSchema: EntitySchema = {
   entity: 'pdm_bom',
-  title: 'BOM 管理',
-  description: '管理物料清单（BOM），包括产品结构、版本、状态等',
+  title: i18n.t('shared.bom.bom_0'),
+  description: i18n.t('pdm.bom.k0'),
 
   api: {
     module: 'pdm',
@@ -13,7 +14,7 @@ export const bomSchema: EntitySchema = {
   fields: [
     {
       name: 'bom_no',
-      label: 'BOM 编号',
+      label: i18n.t('shared.bom.bom_1'),
       type: 'text',
       required: true,
       readonlyOnEdit: true,
@@ -23,7 +24,7 @@ export const bomSchema: EntitySchema = {
     },
     {
       name: 'name',
-      label: 'BOM 名称',
+      label: i18n.t('shared.bom.bom_2'),
       type: 'text',
       required: true,
       sortable: true,
@@ -31,27 +32,27 @@ export const bomSchema: EntitySchema = {
     },
     {
       name: 'product_id',
-      label: '产品ID',
+      label: i18n.t('pdm.bom.id_1'),
       type: 'text',
       showInList: false,
     },
     {
       name: 'product_name',
-      label: '产品',
+      label: i18n.t('pdm.bom.k2'),
       type: 'text',
       listWidth: 140,
       validation: [{ type: 'maxLength', value: 256 }],
     },
     {
       name: 'product_code',
-      label: '产品编码',
+      label: i18n.t('pdm.bom.k3'),
       type: 'text',
       listWidth: 120,
       validation: [{ type: 'maxLength', value: 64 }],
     },
     {
       name: 'version',
-      label: '版本',
+      label: i18n.t('pdm.bom.k4'),
       type: 'text',
       defaultValue: '1.0',
       listWidth: 80,
@@ -59,16 +60,16 @@ export const bomSchema: EntitySchema = {
     },
     {
       name: 'status',
-      label: '状态',
+      label: i18n.t('pdm.bom.k5'),
       type: 'select',
       defaultValue: 'draft',
       options: {
         type: 'static',
         options: [
-          { value: 'draft', label: '草稿' },
-          { value: 'active', label: '激活' },
-          { value: 'archived', label: '归档' },
-          { value: 'superseded', label: '替代' },
+          { value: 'draft', label: i18n.t('pdm.bom.k6') },
+          { value: 'active', label: i18n.t('pdm.bom.k7') },
+          { value: 'archived', label: i18n.t('pdm.bom.k8') },
+          { value: 'superseded', label: i18n.t('pdm.bom.k9') },
         ],
       },
       listWidth: 100,
@@ -76,25 +77,25 @@ export const bomSchema: EntitySchema = {
     },
     {
       name: 'effective_date',
-      label: '生效日期',
+      label: i18n.t('pdm.bom.k10'),
       type: 'date',
       listWidth: 120,
     },
     {
       name: 'expiry_date',
-      label: '失效日期',
+      label: i18n.t('pdm.bom.k11'),
       type: 'date',
       showInList: false,
     },
     {
       name: 'description',
-      label: '描述',
+      label: i18n.t('pdm.bom.k12'),
       type: 'textarea',
       showInList: false,
     },
     {
       name: 'created_at',
-      label: '创建时间',
+      label: i18n.t('pdm.bom.k13'),
       type: 'date',
       listWidth: 160,
     },
@@ -121,23 +122,23 @@ export const bomSchema: EntitySchema = {
         superseded: 'warning',
       },
       labelMap: {
-        draft: '草稿',
-        active: '激活',
-        archived: '归档',
-        superseded: '替代',
+        draft: i18n.t('pdm.bom.k14'),
+        active: i18n.t('pdm.bom.k15'),
+        archived: i18n.t('pdm.bom.k16'),
+        superseded: i18n.t('pdm.bom.k17'),
       },
     },
     filters: [
       {
         id: 'status',
-        label: '状态',
+        label: i18n.t('pdm.bom.k18'),
         type: 'select',
         options: [
-          { label: '全部状态', value: 'all' },
-          { label: '草稿', value: 'draft' },
-          { label: '激活', value: 'active' },
-          { label: '归档', value: 'archived' },
-          { label: '替代', value: 'superseded' },
+          { label: i18n.t('pdm.bom.k19'), value: 'all' },
+          { label: i18n.t('pdm.bom.k20'), value: 'draft' },
+          { label: i18n.t('pdm.bom.k21'), value: 'active' },
+          { label: i18n.t('pdm.bom.k22'), value: 'archived' },
+          { label: i18n.t('pdm.bom.k23'), value: 'superseded' },
         ],
       },
     ],
@@ -147,25 +148,25 @@ export const bomSchema: EntitySchema = {
 
   formSections: [
     {
-      title: '基本信息',
+      title: i18n.t('pdm.bom.k24'),
       fields: ['bom_no', 'name', 'product_id', 'version'],
     },
     {
-      title: '产品信息',
+      title: i18n.t('pdm.bom.k25'),
       fields: ['product_code', 'product_name'],
     },
     {
-      title: '状态与日期',
+      title: i18n.t('pdm.bom.k26'),
       fields: ['status', 'effective_date', 'expiry_date'],
     },
     {
-      title: '描述',
+      title: i18n.t('pdm.bom.k27'),
       fields: ['description'],
     },
   ],
 
   formColCount: 2,
-  createTitle: '添加 BOM',
-  editTitle: '编辑 BOM',
-  detailTitle: 'BOM 详情',
+  createTitle: i18n.t('pdm.bom.bom_28'),
+  editTitle: i18n.t('pdm.bom.bom_29'),
+  detailTitle: i18n.t('shared.bom.bom_3'),
 };

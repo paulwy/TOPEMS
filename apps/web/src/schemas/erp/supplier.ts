@@ -54,12 +54,12 @@ export const supplierSchema: EntitySchema = {
         type: 'static',
         options: [
           {
-            value: '原材料供应商',
+            value: i18n.t('shared.supplier.k0'),
             label: i18n.t('schema:erp.supplier.category.option.原材料供应商'),
           },
-          { value: '配件供应商', label: i18n.t('schema:erp.supplier.category.option.配件供应商') },
-          { value: '设备供应商', label: i18n.t('schema:erp.supplier.category.option.设备供应商') },
-          { value: '服务供应商', label: i18n.t('schema:erp.supplier.category.option.服务供应商') },
+          { value: i18n.t('shared.supplier.k0'), label: i18n.t('schema:erp.supplier.category.option.配件供应商') },
+          { value: i18n.t('shared.supplier.k1'), label: i18n.t('schema:erp.supplier.category.option.设备供应商') },
+          { value: i18n.t('shared.supplier.k2'), label: i18n.t('schema:erp.supplier.category.option.服务供应商') },
         ],
       },
       listWidth: 120,
@@ -129,7 +129,7 @@ export const supplierSchema: EntitySchema = {
       name: 'country',
       label: i18n.t('schema:erp.supplier.country.label'),
       type: 'text',
-      defaultValue: '中国',
+      defaultValue: i18n.t('shared.supplier.k1'),
       showInList: false,
     },
     {
@@ -228,19 +228,19 @@ export const supplierSchema: EntitySchema = {
           { label: i18n.t('schema:erp.supplier.filter.category.option.all'), value: 'all' },
           {
             label: i18n.t('schema:erp.supplier.filter.category.option.原材料供应商'),
-            value: '原材料供应商',
+            value: i18n.t('shared.supplier.k2'),
           },
           {
             label: i18n.t('schema:erp.supplier.filter.category.option.配件供应商'),
-            value: '配件供应商',
+            value: i18n.t('shared.supplier.k3'),
           },
           {
             label: i18n.t('schema:erp.supplier.filter.category.option.设备供应商'),
-            value: '设备供应商',
+            value: i18n.t('shared.supplier.k4'),
           },
           {
             label: i18n.t('schema:erp.supplier.filter.category.option.服务供应商'),
-            value: '服务供应商',
+            value: i18n.t('shared.supplier.k5'),
           },
         ],
       },

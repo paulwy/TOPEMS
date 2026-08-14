@@ -2,6 +2,7 @@ import React from 'react';
 import { X, BellOff, Bell, Pin, PinOff, Trash2, Users } from 'lucide-react';
 import type { ChatRoom } from '../../api/im';
 import { designTokens, semanticTokens } from '@topems/tokens';
+import i18n from '@/i18n';
 
 interface ChatSettingsModalProps {
   isOpen: boolean;
@@ -54,11 +55,11 @@ export const ChatSettingsModal: React.FC<ChatSettingsModalProps> = ({
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
-            padding: '12px 16px',
+            padding: `${designTokens.spacing.md} 16px`,
             borderBottom: '1px solid grey.200',
           }}
         >
-          <h3 style={{ fontWeight: 600, color: 'text.primary' }}>聊天设置</h3>
+          <h3 style={{ fontWeight: 600, color: 'text.primary' }}>{i18n.t('im.chat_settings_modal.k0')}</h3>
           <button
             onClick={onClose}
             style={{
@@ -99,10 +100,10 @@ export const ChatSettingsModal: React.FC<ChatSettingsModalProps> = ({
             </div>
             <div>
               <div style={{ fontWeight: 500, color: 'text.primary' }}>
-                {chatRoom.name || '未命名会话'}
+                {chatRoom.name || i18n.t('im.chat_settings_modal.k1')}
               </div>
               <div style={{ fontSize: 14, color: 'text.secondary' }}>
-                {chatRoom.room_type === 'direct' ? '私聊' : '群聊'} ·{' '}
+                {chatRoom.room_type === 'direct' ? i18n.t('im.chat_settings_modal.k3') : i18n.t('im.chat_settings_modal.k2')} ·{' '}
                 {chatRoom.members?.length || 0} 人
               </div>
             </div>
@@ -135,9 +136,9 @@ export const ChatSettingsModal: React.FC<ChatSettingsModalProps> = ({
                         color: 'text.primary',
                       }}
                     >
-                      取消免打扰
+                      {i18n.t('components.chat_settings_modal.k0')}
                     </div>
-                    <div style={{ fontSize: 12, color: 'text.secondary' }}>接收新消息通知</div>
+                    <div style={{ fontSize: 12, color: 'text.secondary' }}>{i18n.t('im.chat_settings_modal.k4')}</div>
                   </div>
                 </>
               ) : (
@@ -151,9 +152,9 @@ export const ChatSettingsModal: React.FC<ChatSettingsModalProps> = ({
                         color: 'text.primary',
                       }}
                     >
-                      消息免打扰
+                      {i18n.t('components.chat_settings_modal.k1')}
                     </div>
-                    <div style={{ fontSize: 12, color: 'text.secondary' }}>不再接收新消息通知</div>
+                    <div style={{ fontSize: 12, color: 'text.secondary' }}>{i18n.t('im.chat_settings_modal.k5')}</div>
                   </div>
                 </>
               )}
@@ -185,9 +186,9 @@ export const ChatSettingsModal: React.FC<ChatSettingsModalProps> = ({
                         color: 'text.primary',
                       }}
                     >
-                      取消置顶
+                      {i18n.t('components.chat_settings_modal.k2')}
                     </div>
-                    <div style={{ fontSize: 12, color: 'text.secondary' }}>从置顶列表移除</div>
+                    <div style={{ fontSize: 12, color: 'text.secondary' }}>{i18n.t('im.chat_settings_modal.k6')}</div>
                   </div>
                 </>
               ) : (
@@ -201,10 +202,10 @@ export const ChatSettingsModal: React.FC<ChatSettingsModalProps> = ({
                         color: 'text.primary',
                       }}
                     >
-                      置顶会话
+                      {i18n.t('components.chat_settings_modal.k3')}
                     </div>
                     <div style={{ fontSize: 12, color: 'text.secondary' }}>
-                      将此会话固定在列表顶部
+                      {i18n.t('components.chat_settings_modal.k4')}
                     </div>
                   </div>
                 </>
@@ -228,8 +229,8 @@ export const ChatSettingsModal: React.FC<ChatSettingsModalProps> = ({
             >
               <Trash2 style={{ width: 20, height: 20, color: 'error.main' }} />
               <div style={{ flex: 1, textAlign: 'left' }}>
-                <div style={{ fontSize: 14, fontWeight: 500, color: 'error.dark' }}>删除会话</div>
-                <div style={{ fontSize: 12, color: 'error.light' }}>删除后无法恢复</div>
+                <div style={{ fontSize: 14, fontWeight: 500, color: 'error.dark' }}>{i18n.t('im.chat_settings_modal.k7')}</div>
+                <div style={{ fontSize: 12, color: 'error.light' }}>{i18n.t('im.chat_settings_modal.k8')}</div>
               </div>
             </button>
           </div>

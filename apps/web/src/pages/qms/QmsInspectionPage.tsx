@@ -18,6 +18,7 @@ import {
   Button as MuiButton,
   Button,
 } from '@mui/material';
+import i18n from '@/i18n';
 import {
   Plus,
   CheckCircle,
@@ -57,7 +58,7 @@ const apiAdapter: CrudApiAdapter<QualityCheck> = {
   list: async () => {
     const response = await qmsApi.listChecks();
     if (response.success === false) {
-      throw new Error(response.message || '加载检验数据失败');
+      throw new Error(response.message || i18n.t('pages.qms_inspection_page.k0'));
     }
     const items = response.data ?? [];
     return { data: items, total: items.length };
@@ -65,21 +66,21 @@ const apiAdapter: CrudApiAdapter<QualityCheck> = {
   create: async (data) => {
     const response = await qmsApi.createCheck(data as CreateQualityCheckRequest);
     if (response.success === false) {
-      throw new Error(response.message || '创建质检单失败');
+      throw new Error(response.message || i18n.t('pages.qms_inspection_page.k1'));
     }
     return response.data ?? ({} as QualityCheck);
   },
   update: async (id, data) => {
     const response = await qmsApi.updateCheck(id, data as CreateQualityCheckRequest);
     if (response.success === false) {
-      throw new Error(response.message || '更新质检单失败');
+      throw new Error(response.message || i18n.t('pages.qms_inspection_page.k2'));
     }
     return response.data ?? ({} as QualityCheck);
   },
   delete: async (id) => {
     const response = await qmsApi.deleteCheck(id);
     if (response.success === false) {
-      throw new Error(response.message || '删除质检单失败');
+      throw new Error(response.message || i18n.t('pages.qms_inspection_page.k3'));
     }
   },
 };
@@ -110,12 +111,12 @@ const QmsInspectionPage: React.FC = () => {
     mutationFn: async (params: { id: string; data: AssignInspectionRequestBackend }) => {
       const response = await qmsApi.assignCheck(params.id, params.data);
       if (!response.success) {
-        throw new Error(response.message || '分配失败');
+        throw new Error(response.message || i18n.t('pages.qms_inspection_page.k4'));
       }
       return response;
     },
     onSuccess: () => {
-      addNotification({ title: '成功', message: '检验分配成功', type: 'success' });
+      addNotification({ title: i18n.t('pages.qms_inspection_page.k6'), message: i18n.t('pages.qms_inspection_page.k5'), type: 'success' });
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.QMS.INSPECTIONS ,
   exact: false,
   refetchType: 'active',
@@ -124,8 +125,8 @@ const QmsInspectionPage: React.FC = () => {
     },
     onError: (err: unknown) => {
       addNotification({
-        title: '错误',
-        message: err instanceof Error ? err.message : '分配时发生错误',
+        title: i18n.t('pages.qms_inspection_page.k7'),
+        message: err instanceof Error ? err.message : i18n.t('pages.qms_inspection_page.k8'),
         type: 'error',
       });
     },
@@ -135,12 +136,12 @@ const QmsInspectionPage: React.FC = () => {
     mutationFn: async (params: { id: string; data: SubmitInspectionResultRequestBackend }) => {
       const response = await qmsApi.submitCheckResult(params.id, params.data);
       if (!response.success) {
-        throw new Error(response.message || '提交失败');
+        throw new Error(response.message || i18n.t('pages.qms_inspection_page.k9'));
       }
       return response;
     },
     onSuccess: () => {
-      addNotification({ title: '成功', message: '检验结果提交成功', type: 'success' });
+      addNotification({ title: i18n.t('pages.qms_inspection_page.k11'), message: i18n.t('pages.qms_inspection_page.k10'), type: 'success' });
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.QMS.INSPECTIONS ,
   exact: false,
   refetchType: 'active',
@@ -149,8 +150,8 @@ const QmsInspectionPage: React.FC = () => {
     },
     onError: (err: unknown) => {
       addNotification({
-        title: '错误',
-        message: err instanceof Error ? err.message : '提交结果时发生错误',
+        title: i18n.t('pages.qms_inspection_page.k12'),
+        message: err instanceof Error ? err.message : i18n.t('pages.qms_inspection_page.k13'),
         type: 'error',
       });
     },
@@ -167,18 +168,18 @@ const QmsInspectionPage: React.FC = () => {
           ? await qmsApi.reworkCheck(params.id, params.data)
           : await qmsApi.auditCheck(params.id, params.data);
       if (!response.success) {
-        throw new Error(response.message || '操作失败');
+        throw new Error(response.message || i18n.t('pages.qms_inspection_page.k14'));
       }
       return response;
     },
     onSuccess: () => {
       const actionText =
         auditData.action === 'approve'
-          ? '审核通过'
+          ? i18n.t('pages.qms_inspection_page.k15')
           : auditData.action === 'reject'
-            ? '审核驳回'
-            : '返工';
-      addNotification({ title: '成功', message: `${actionText}成功`, type: 'success' });
+            ? i18n.t('pages.qms_inspection_page.k16')
+            : i18n.t('pages.qms_inspection_page.k17');
+      addNotification({ title: i18n.t('pages.qms_inspection_page.k18'), message: `${actionText}${i18n.t('pages.qms_inspection_page.k0')}`, type: 'success' });
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.QMS.INSPECTIONS ,
   exact: false,
   refetchType: 'active',
@@ -187,8 +188,8 @@ const QmsInspectionPage: React.FC = () => {
     },
     onError: (err: unknown) => {
       addNotification({
-        title: '错误',
-        message: err instanceof Error ? err.message : '操作时发生错误',
+        title: i18n.t('pages.qms_inspection_page.k19'),
+        message: err instanceof Error ? err.message : i18n.t('pages.qms_inspection_page.k20'),
         type: 'error',
       });
     },
@@ -298,35 +299,35 @@ const QmsInspectionPage: React.FC = () => {
 
   const customRowActions: RowAction[] = [
     {
-      label: '分配',
+      label: i18n.t('pages.qms_inspection_page.k21'),
       icon: <User style={{ width: 16, height: 16 }} />,
       color: 'primary',
       show: (row) => row.status === 'pending',
       onClick: (row) => handleAssign(row),
     },
     {
-      label: '提交结果',
+      label: i18n.t('pages.qms_inspection_page.k22'),
       icon: <Send style={{ width: 16, height: 16 }} />,
       color: 'primary',
       show: (row) => row.status === 'in_progress',
       onClick: (row) => handleSubmit(row),
     },
     {
-      label: '审核通过',
+      label: i18n.t('pages.qms_inspection_page.k23'),
       icon: <CheckCircle style={{ width: 16, height: 16 }} />,
       color: 'success',
       show: (row) => row.status === 'pending_audit',
       onClick: (row) => handleAudit(row, 'approve'),
     },
     {
-      label: '审核驳回',
+      label: i18n.t('pages.qms_inspection_page.k24'),
       icon: <XCircle style={{ width: 16, height: 16 }} />,
       color: 'error',
       show: (row) => row.status === 'pending_audit',
       onClick: (row) => handleAudit(row, 'reject'),
     },
     {
-      label: '返工',
+      label: i18n.t('pages.qms_inspection_page.k25'),
       icon: <RotateCcw style={{ width: 16, height: 16 }} />,
       color: 'warning',
       show: (row) => row.status === 'rejected',
@@ -374,7 +375,7 @@ const QmsInspectionPage: React.FC = () => {
                   variant='body2'
                   sx={{ color: 'slate.600', fontSize: '0.875rem' }}
                 >
-                  检验总数
+                  {i18n.t('pages.qms_inspection_page.k1')}
                 </Typography>
                 <Typography
                   variant='h5'
@@ -407,7 +408,7 @@ const QmsInspectionPage: React.FC = () => {
                   variant='body2'
                   sx={{ color: 'slate.600', fontSize: '0.875rem' }}
                 >
-                  待分配
+                  {i18n.t('pages.qms_inspection_page.k2')}
                 </Typography>
                 <Typography
                   variant='h5'
@@ -440,7 +441,7 @@ const QmsInspectionPage: React.FC = () => {
                   variant='body2'
                   sx={{ color: 'slate.600', fontSize: '0.875rem' }}
                 >
-                  进行中
+                  {i18n.t('pages.qms_inspection_page.k3')}
                 </Typography>
                 <Typography
                   variant='h5'
@@ -473,7 +474,7 @@ const QmsInspectionPage: React.FC = () => {
                   variant='body2'
                   sx={{ color: 'slate.600', fontSize: '0.875rem' }}
                 >
-                  待审核
+                  {i18n.t('pages.qms_inspection_page.k4')}
                 </Typography>
                 <Typography
                   variant='h5'
@@ -506,7 +507,7 @@ const QmsInspectionPage: React.FC = () => {
                   variant='body2'
                   sx={{ color: 'slate.600', fontSize: '0.875rem' }}
                 >
-                  已完成
+                  {i18n.t('pages.qms_inspection_page.k5')}
                 </Typography>
                 <Typography
                   variant='h5'
@@ -539,7 +540,7 @@ const QmsInspectionPage: React.FC = () => {
                   variant='body2'
                   sx={{ color: 'slate.600', fontSize: '0.875rem' }}
                 >
-                  已驳回
+                  {i18n.t('pages.qms_inspection_page.k6')}
                 </Typography>
                 <Typography
                   variant='h5'
@@ -562,7 +563,7 @@ const QmsInspectionPage: React.FC = () => {
         apiAdapter={apiAdapter}
         customRowActions={customRowActions}
         headerContent={headerContent}
-        breadcrumbs={[{ label: 'QMS' }, { label: '质量检验' }]}
+        breadcrumbs={[{ label: 'QMS' }, { label: i18n.t('pages.qms_inspection_page.k26') }]}
       />
 
       <Dialog
@@ -571,22 +572,22 @@ const QmsInspectionPage: React.FC = () => {
         maxWidth='sm'
         fullWidth
       >
-        <DialogTitle>分配检验人员</DialogTitle>
+        <DialogTitle>{i18n.t('pages.qms_inspection_page.k27')}</DialogTitle>
         <DialogContent>
           <Box sx={{ pt: 1, display: 'flex', flexDirection: 'column', gap: 2 }}>
             <TextField
               fullWidth
-              label='被分配人员 *'
+              label={i18n.t('pages.qms_inspection_page.k7')}
               value={assignData.assignee}
               onChange={(e) => setAssignData({ ...assignData, assignee: e.target.value })}
-              placeholder='请输入人员姓名'
+              placeholder={i18n.t('pages.qms_inspection_page.k28')}
             />
             <TextField
               fullWidth
-              label='操作人 *'
+              label={i18n.t('pages.qms_inspection_page.k8')}
               value={assignData.operator}
               onChange={(e) => setAssignData({ ...assignData, operator: e.target.value })}
-              placeholder='请输入操作人姓名'
+              placeholder={i18n.t('pages.qms_inspection_page.k29')}
             />
           </Box>
         </DialogContent>
@@ -596,7 +597,7 @@ const QmsInspectionPage: React.FC = () => {
             onClick={() => setShowAssignModal(false)}
             disabled={submitting}
           >
-            取消
+            {i18n.t('pages.qms_inspection_page.k9')}
           </Button>
           <Button
             variant='contained'
@@ -604,7 +605,7 @@ const QmsInspectionPage: React.FC = () => {
             sx={{ bgcolor: 'primary.main' }}
             disabled={submitting}
           >
-            {submitting ? '分配中...' : '确认分配'}
+            {submitting ? i18n.t('pages.qms_inspection_page.k10') : i18n.t('pages.qms_inspection_page.k30')}
           </Button>
         </DialogActions>
       </Dialog>
@@ -615,13 +616,13 @@ const QmsInspectionPage: React.FC = () => {
         maxWidth='md'
         fullWidth
       >
-        <DialogTitle>提交检验结果</DialogTitle>
+        <DialogTitle>{i18n.t('pages.qms_inspection_page.k31')}</DialogTitle>
         <DialogContent>
           <Box sx={{ pt: 1, display: 'flex', flexDirection: 'column', gap: 2 }}>
             <TextField
               fullWidth
               type='number'
-              label='合格数量 *'
+              label={i18n.t('pages.qms_inspection_page.k11')}
               value={submitData.qualified_quantity}
               onChange={(e) =>
                 setSubmitData({
@@ -629,12 +630,12 @@ const QmsInspectionPage: React.FC = () => {
                   qualified_quantity: parseInt(e.target.value) || 0,
                 })
               }
-              placeholder='请输入合格数量'
+              placeholder={i18n.t('pages.qms_inspection_page.k32')}
             />
             <TextField
               fullWidth
               type='number'
-              label='不合格数量 *'
+              label={i18n.t('pages.qms_inspection_page.k12')}
               value={submitData.unqualified_quantity}
               onChange={(e) =>
                 setSubmitData({
@@ -642,23 +643,23 @@ const QmsInspectionPage: React.FC = () => {
                   unqualified_quantity: parseInt(e.target.value) || 0,
                 })
               }
-              placeholder='请输入不合格数量'
+              placeholder={i18n.t('pages.qms_inspection_page.k33')}
             />
             <TextField
               fullWidth
-              label='检验员 *'
+              label={i18n.t('pages.qms_inspection_page.k13')}
               value={submitData.inspector}
               onChange={(e) => setSubmitData({ ...submitData, inspector: e.target.value })}
-              placeholder='请输入检验员姓名'
+              placeholder={i18n.t('pages.qms_inspection_page.k34')}
             />
             <TextField
               fullWidth
               multiline
               rows={3}
-              label='备注'
+              label={i18n.t('pages.qms_inspection_page.k35')}
               value={submitData.memo}
               onChange={(e) => setSubmitData({ ...submitData, memo: e.target.value })}
-              placeholder='请输入备注信息'
+              placeholder={i18n.t('pages.qms_inspection_page.k36')}
             />
             <Divider />
             <Box
@@ -672,7 +673,7 @@ const QmsInspectionPage: React.FC = () => {
                 variant='subtitle1'
                 sx={{ fontWeight: 600 }}
               >
-                检验项目明细
+                {i18n.t('pages.qms_inspection_page.k14')}
               </Typography>
               <Button
                 variant='outlined'
@@ -680,7 +681,7 @@ const QmsInspectionPage: React.FC = () => {
                 onClick={addResultItem}
                 startIcon={<Plus style={{ width: 14, height: 14 }} />}
               >
-                添加项目
+                {i18n.t('pages.qms_inspection_page.k15')}
               </Button>
             </Box>
             {submitData.results.map((item, index) => (
@@ -698,31 +699,31 @@ const QmsInspectionPage: React.FC = () => {
                 <Box sx={{ display: 'flex', gap: 1.5 }}>
                   <TextField
                     sx={{ flex: 1 }}
-                    label='检验项目'
+                    label={i18n.t('pages.qms_inspection_page.k37')}
                     value={item.item_name}
                     onChange={(e) => updateResultItem(index, 'item_name', e.target.value)}
                   />
                   <TextField
                     sx={{ flex: 1 }}
-                    label='标准值'
+                    label={i18n.t('pages.qms_inspection_page.k38')}
                     value={item.standard_value || ''}
                     onChange={(e) => updateResultItem(index, 'standard_value', e.target.value)}
                   />
                   <TextField
                     sx={{ flex: 1 }}
-                    label='实测值'
+                    label={i18n.t('pages.qms_inspection_page.k39')}
                     value={item.measured_value || ''}
                     onChange={(e) => updateResultItem(index, 'measured_value', e.target.value)}
                   />
                   <FormControl sx={{ minWidth: 100 }}>
-                    <InputLabel>判定</InputLabel>
+                    <InputLabel>{i18n.t('pages.qms_inspection_page.k40')}</InputLabel>
                     <Select
                       value={String(item.is_qualified)}
-                      label='判定'
+                      label={i18n.t('pages.qms_inspection_page.k41')}
                       onChange={(e) => updateResultItem(index, 'is_qualified', e.target.value)}
                     >
-                      <MenuItem value='true'>合格</MenuItem>
-                      <MenuItem value='false'>不合格</MenuItem>
+                      <MenuItem value='true'>{i18n.t('pages.qms_inspection_page.k42')}</MenuItem>
+                      <MenuItem value='false'>{i18n.t('pages.qms_inspection_page.k43')}</MenuItem>
                     </Select>
                   </FormControl>
                   <MuiButton
@@ -730,12 +731,12 @@ const QmsInspectionPage: React.FC = () => {
                     color='error'
                     size='small'
                   >
-                    删除
+                    {i18n.t('pages.qms_inspection_page.k16')}
                   </MuiButton>
                 </Box>
                 <TextField
                   fullWidth
-                  label='备注'
+                  label={i18n.t('pages.qms_inspection_page.k44')}
                   value={item.remark || ''}
                   onChange={(e) => updateResultItem(index, 'remark', e.target.value)}
                 />
@@ -749,7 +750,7 @@ const QmsInspectionPage: React.FC = () => {
             onClick={() => setShowSubmitModal(false)}
             disabled={submitting}
           >
-            取消
+            {i18n.t('pages.qms_inspection_page.k17')}
           </Button>
           <Button
             variant='contained'
@@ -757,7 +758,7 @@ const QmsInspectionPage: React.FC = () => {
             sx={{ bgcolor: 'primary.main' }}
             disabled={submitting}
           >
-            {submitting ? '提交中...' : '提交结果'}
+            {submitting ? i18n.t('pages.qms_inspection_page.k18') : i18n.t('pages.qms_inspection_page.k45')}
           </Button>
         </DialogActions>
       </Dialog>
@@ -770,28 +771,28 @@ const QmsInspectionPage: React.FC = () => {
       >
         <DialogTitle>
           {auditData.action === 'rework'
-            ? '返工申请'
+            ? i18n.t('pages.qms_inspection_page.k46')
             : auditData.action === 'approve'
-              ? '审核通过'
-              : '审核驳回'}
+              ? i18n.t('pages.qms_inspection_page.k47')
+              : i18n.t('pages.qms_inspection_page.k48')}
         </DialogTitle>
         <DialogContent>
           <Box sx={{ pt: 1, display: 'flex', flexDirection: 'column', gap: 2 }}>
             <TextField
               fullWidth
-              label='审核人 *'
+              label={i18n.t('pages.qms_inspection_page.k19')}
               value={auditData.operator}
               onChange={(e) => setAuditData({ ...auditData, operator: e.target.value })}
-              placeholder='请输入审核人姓名'
+              placeholder={i18n.t('pages.qms_inspection_page.k49')}
             />
             <TextField
               fullWidth
               multiline
               rows={3}
-              label='审核意见'
+              label={i18n.t('pages.qms_inspection_page.k50')}
               value={auditData.comment}
               onChange={(e) => setAuditData({ ...auditData, comment: e.target.value })}
-              placeholder='请输入审核意见'
+              placeholder={i18n.t('pages.qms_inspection_page.k51')}
             />
           </Box>
         </DialogContent>
@@ -801,7 +802,7 @@ const QmsInspectionPage: React.FC = () => {
             onClick={() => setShowAuditModal(false)}
             disabled={submitting}
           >
-            取消
+            {i18n.t('pages.qms_inspection_page.k20')}
           </Button>
           <Button
             variant='contained'
@@ -817,12 +818,12 @@ const QmsInspectionPage: React.FC = () => {
             }}
           >
             {submitting
-              ? '处理中...'
+              ? i18n.t('pages.qms_inspection_page.k21')
               : auditData.action === 'rework'
-                ? '确认返工'
+                ? i18n.t('pages.qms_inspection_page.k52')
                 : auditData.action === 'approve'
-                  ? '审核通过'
-                  : '审核驳回'}
+                  ? i18n.t('pages.qms_inspection_page.k53')
+                  : i18n.t('pages.qms_inspection_page.k54')}
           </Button>
         </DialogActions>
       </Dialog>

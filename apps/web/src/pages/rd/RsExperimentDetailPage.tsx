@@ -24,6 +24,7 @@ import {
   Tabs,
   Tab,
 } from '@mui/material';
+import i18n from '@/i18n';
 import { LoadingSpinner } from '@topems/shared-components';
 import { PageContainer } from '@/components/common';
 import { DetailPageTemplate, type TabConfig } from '@/components/templates';
@@ -62,19 +63,19 @@ const RsExperimentDetailPage: React.FC = () => {
   const [activeTab, setActiveTab] = useState(0);
   const [showAddRecordDialog, setShowAddRecordDialog] = useState(false);
   const [recordForm, setRecordForm] = useState<CreateExperimentRecordRequest>({
-    record_type: '实验记录',
+    record_type: i18n.t('pages.rs_experiment_detail_page.k0'),
     content: '',
     recorded_by: '',
   });
 
-  const recordTypes = ['实验记录', '数据记录', '观察记录', '问题记录', '其他'];
+  const recordTypes = [i18n.t('pages.rs_experiment_detail_page.k5'), i18n.t('pages.rs_experiment_detail_page.k4'), i18n.t('pages.rs_experiment_detail_page.k3'), i18n.t('pages.rs_experiment_detail_page.k2'), i18n.t('pages.rs_experiment_detail_page.k1')];
 
   const experimentQuery = useQuery({
     queryKey: QUERY_KEYS.RD.EXPERIMENT(id || ''),
     queryFn: async () => {
       const response = await rdApi.getExperiment(id || '');
       if (!response.success || !response.data) {
-        throw new Error(response.message || '加载试验详情失败');
+        throw new Error(response.message || i18n.t('pages.rs_experiment_detail_page.k6'));
       }
       return response.data as ExperimentWithProject;
     },
@@ -87,7 +88,7 @@ const RsExperimentDetailPage: React.FC = () => {
     queryFn: async () => {
       const response = await rdApi.getExperimentRecords(id || '');
       if (!response.success || !response.data) {
-        throw new Error(response.message || '加载实验记录失败');
+        throw new Error(response.message || i18n.t('pages.rs_experiment_detail_page.k7'));
       }
       return response.data;
     },
@@ -99,7 +100,7 @@ const RsExperimentDetailPage: React.FC = () => {
     mutationFn: async () => {
       const response = await rdApi.advancePhase(id || '');
       if (!response.success || !response.data) {
-        throw new Error(response.message || '阶段推进失败');
+        throw new Error(response.message || i18n.t('pages.rs_experiment_detail_page.k8'));
       }
       return response.data;
     },
@@ -107,14 +108,14 @@ const RsExperimentDetailPage: React.FC = () => {
       queryClient.setQueryData(QUERY_KEYS.RD.EXPERIMENT(id || ''), data);
       addNotification({
         type: 'success',
-        message: '阶段推进成功',
+        message: i18n.t('pages.rs_experiment_detail_page.k9'),
       });
     },
     onError: (error: unknown) => {
-      apiLogger.error('阶段推进失败:', error);
+      apiLogger.error(i18n.t('pages.rs_experiment_detail_page.k0'), error);
       addNotification({
         type: 'error',
-        message: error instanceof Error ? error.message : '阶段推进失败',
+        message: error instanceof Error ? error.message : i18n.t('pages.rs_experiment_detail_page.k10'),
       });
     },
   });
@@ -123,7 +124,7 @@ const RsExperimentDetailPage: React.FC = () => {
     mutationFn: async (data: CreateExperimentRecordRequest) => {
       const response = await rdApi.createExperimentRecord(id || '', data);
       if (!response.success) {
-        throw new Error(response.message || '添加记录失败');
+        throw new Error(response.message || i18n.t('pages.rs_experiment_detail_page.k11'));
       }
       return response;
     },
@@ -134,20 +135,20 @@ const RsExperimentDetailPage: React.FC = () => {
 });
       addNotification({
         type: 'success',
-        message: '添加记录成功',
+        message: i18n.t('pages.rs_experiment_detail_page.k12'),
       });
       setShowAddRecordDialog(false);
       setRecordForm({
-        record_type: '实验记录',
+        record_type: i18n.t('pages.rs_experiment_detail_page.k13'),
         content: '',
         recorded_by: '',
       });
     },
     onError: (error: unknown) => {
-      apiLogger.error('添加记录失败:', error);
+      apiLogger.error(i18n.t('pages.rs_experiment_detail_page.k1'), error);
       addNotification({
         type: 'error',
-        message: error instanceof Error ? error.message : '添加记录失败',
+        message: error instanceof Error ? error.message : i18n.t('pages.rs_experiment_detail_page.k14'),
       });
     },
   });
@@ -168,11 +169,11 @@ const RsExperimentDetailPage: React.FC = () => {
 
   const getPhaseColor = (phase: string): 'info' | 'warning' | 'error' | 'default' => {
     switch (phase) {
-      case '小试':
+      case i18n.t('pages.rs_experiment_detail_page.k15'):
         return 'info';
-      case '中试':
+      case i18n.t('pages.rs_experiment_detail_page.k16'):
         return 'warning';
-      case '放大':
+      case i18n.t('pages.rs_experiment_detail_page.k17'):
         return 'error';
       default:
         return 'default';
@@ -183,11 +184,11 @@ const RsExperimentDetailPage: React.FC = () => {
     status: string
   ): 'primary' | 'success' | 'warning' | 'error' | 'default' => {
     switch (status) {
-      case '进行中':
+      case i18n.t('pages.rs_experiment_detail_page.k18'):
         return 'primary';
-      case '已完成':
+      case i18n.t('pages.rs_experiment_detail_page.k19'):
         return 'success';
-      case '暂停':
+      case i18n.t('pages.rs_experiment_detail_page.k20'):
         return 'warning';
       default:
         return 'default';
@@ -224,7 +225,7 @@ const RsExperimentDetailPage: React.FC = () => {
           variant='h4'
           sx={{ fontWeight: 'bold' }}
         >
-          试验不存在或已删除
+          {i18n.t('pages.rs_experiment_detail_page.k2')}
         </Typography>
       </Container>
     );
@@ -265,8 +266,8 @@ const RsExperimentDetailPage: React.FC = () => {
               color='text.secondary'
               sx={{ mt: 1 }}
             >
-              编码: {experiment.code} | 项目: {experiment.project_name || experiment.project_id} |
-              实验员: {experiment.experimenter}
+              [i18n.t('pages.rs_experiment_detail_page.k3')]: {experiment.code} | {i18n.t('pages.rs_experiment_detail_page.k4')}{experiment.project_name || experiment.project_id} |
+              [i18n.t('pages.rs_experiment_detail_page.k5')]: {experiment.experimenter}
             </Typography>
           </div>
           <Stack
@@ -278,7 +279,7 @@ const RsExperimentDetailPage: React.FC = () => {
               startIcon={<EditIcon />}
               onClick={() => navigate(`${RD_PATHS.experiment}/${id}/edit`)}
             >
-              编辑
+              {i18n.t('pages.rs_experiment_detail_page.k6')}
             </Button>
             <Button
               variant='contained'
@@ -286,7 +287,7 @@ const RsExperimentDetailPage: React.FC = () => {
               onClick={handleAdvancePhase}
               disabled={advancePhaseLoading}
             >
-              {advancePhaseLoading ? <LoadingSpinner size='sm' /> : '推进阶段'}
+              {advancePhaseLoading ? <LoadingSpinner size='sm' /> : i18n.t('pages.rs_experiment_detail_page.k21')}
             </Button>
           </Stack>
         </Stack>
@@ -305,7 +306,7 @@ const RsExperimentDetailPage: React.FC = () => {
                 variant='h6'
                 gutterBottom
               >
-                试验目标
+                {i18n.t('pages.rs_experiment_detail_page.k7')}
               </Typography>
               <Typography
                 variant='body2'
@@ -318,7 +319,7 @@ const RsExperimentDetailPage: React.FC = () => {
                 variant='h6'
                 gutterBottom
               >
-                实验方法
+                {i18n.t('pages.rs_experiment_detail_page.k8')}
               </Typography>
               <Typography
                 variant='body2'
@@ -336,15 +337,15 @@ const RsExperimentDetailPage: React.FC = () => {
                 </Grid>
                 <Grid size={{ xs: 6 }}>
                   <Typography variant='body2'>
-                    完成日期: {experiment.completed_at || '进行中'}
+                    [i18n.t('pages.rs_experiment_detail_page.k9')]: {experiment.completed_at || i18n.t('pages.rs_experiment_detail_page.k22')}
                   </Typography>
                 </Grid>
                 <Grid size={{ xs: 6 }}>
-                  <Typography variant='body2'>批次号: {experiment.batch_number || '-'}</Typography>
+                  <Typography variant='body2'>{i18n.t('components.report_builder.k21')}: {experiment.batch_number || '-'}</Typography>
                 </Grid>
                 <Grid size={{ xs: 6 }}>
                   <Typography variant='body2'>
-                    试验规模: {experiment.scale} {experiment.scale_unit}
+                    [i18n.t('pages.rs_experiment_detail_page.k11')]: {experiment.scale} {experiment.scale_unit}
                   </Typography>
                 </Grid>
               </Grid>
@@ -359,13 +360,13 @@ const RsExperimentDetailPage: React.FC = () => {
                 variant='h6'
                 gutterBottom
               >
-                试验结论
+                {i18n.t('pages.rs_experiment_detail_page.k12')}
               </Typography>
               <Typography
                 variant='body2'
                 color='text.secondary'
               >
-                {experiment.conclusions || '暂无结论'}
+                {experiment.conclusions || i18n.t('pages.rs_experiment_detail_page.k23')}
               </Typography>
             </CardContent>
           </Card>
@@ -379,17 +380,17 @@ const RsExperimentDetailPage: React.FC = () => {
           onChange={(_: React.SyntheticEvent, v: number) => setActiveTab(v)}
         >
           <Tab
-            label='实验记录'
+            label={i18n.t('pages.rs_experiment_detail_page.k24')}
             icon={<ScienceIcon />}
             iconPosition='start'
           />
           <Tab
-            label='数据结果'
+            label={i18n.t('pages.rs_experiment_detail_page.k25')}
             icon={<DescriptionIcon />}
             iconPosition='start'
           />
           <Tab
-            label='批次追溯'
+            label={i18n.t('pages.rs_experiment_detail_page.k26')}
             icon={<CheckCircleIcon />}
             iconPosition='start'
           />
@@ -406,7 +407,7 @@ const RsExperimentDetailPage: React.FC = () => {
                 startIcon={<PlusIcon />}
                 onClick={() => setShowAddRecordDialog(true)}
               >
-                添加记录
+                {i18n.t('pages.rs_experiment_detail_page.k13')}
               </Button>
             </Stack>
           )}
@@ -420,7 +421,7 @@ const RsExperimentDetailPage: React.FC = () => {
                   color='text.secondary'
                   sx={{ py: 4, textAlign: 'center', width: '100%' }}
                 >
-                  暂无实验记录
+                  {i18n.t('pages.rs_experiment_detail_page.k14')}
                 </Typography>
               ) : (
                 records.map((record) => (
@@ -454,7 +455,7 @@ const RsExperimentDetailPage: React.FC = () => {
                               variant='caption'
                               color='text.secondary'
                             >
-                              记录人: {record.recorded_by} | 时间: {record.recorded_at}
+                              [i18n.t('pages.rs_experiment_detail_page.k15')]: {record.recorded_by} | {i18n.t('pages.rs_experiment_detail_page.k16')}{record.recorded_at}
                             </Typography>
                           </div>
                         </Stack>
@@ -474,7 +475,7 @@ const RsExperimentDetailPage: React.FC = () => {
                   variant='h6'
                   gutterBottom
                 >
-                  试验结果数据
+                  {i18n.t('pages.rs_experiment_detail_page.k17')}
                 </Typography>
                 {experiment.results && typeof experiment.results === 'object' ? (
                   <pre style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-all' }}>
@@ -485,7 +486,7 @@ const RsExperimentDetailPage: React.FC = () => {
                     variant='body2'
                     color='text.secondary'
                   >
-                    暂无结果数据
+                    {i18n.t('pages.rs_experiment_detail_page.k18')}
                   </Typography>
                 )}
               </CardContent>
@@ -500,7 +501,7 @@ const RsExperimentDetailPage: React.FC = () => {
                   variant='h6'
                   gutterBottom
                 >
-                  批次追溯信息
+                  {i18n.t('pages.rs_experiment_detail_page.k19')}
                 </Typography>
                 {experiment.batch_number ? (
                   <Typography variant='body2'>批次号: {experiment.batch_number}</Typography>
@@ -509,7 +510,7 @@ const RsExperimentDetailPage: React.FC = () => {
                     variant='body2'
                     color='text.secondary'
                   >
-                    暂无批次信息
+                    {i18n.t('pages.rs_experiment_detail_page.k20')}
                   </Typography>
                 )}
               </CardContent>
@@ -523,17 +524,17 @@ const RsExperimentDetailPage: React.FC = () => {
         open={showAddRecordDialog}
         onClose={() => setShowAddRecordDialog(false)}
       >
-        <DialogTitle>添加实验记录</DialogTitle>
+        <DialogTitle>{i18n.t('pages.rs_experiment_detail_page.k27')}</DialogTitle>
         <DialogContent>
           <Stack
             spacing={2}
             sx={{ mt: 2 }}
           >
             <FormControl fullWidth>
-              <InputLabel>记录类型</InputLabel>
+              <InputLabel>{i18n.t('pages.rs_experiment_detail_page.k28')}</InputLabel>
               <Select
                 value={recordForm.record_type}
-                label='记录类型'
+                label={i18n.t('pages.rs_experiment_detail_page.k29')}
                 onChange={(e) =>
                   setRecordForm((prev) => ({ ...prev, record_type: e.target.value }))
                 }
@@ -550,30 +551,30 @@ const RsExperimentDetailPage: React.FC = () => {
             </FormControl>
             <TextField
               fullWidth
-              label='记录内容'
+              label={i18n.t('pages.rs_experiment_detail_page.k30')}
               multiline
               rows={4}
               value={recordForm.content}
               onChange={(e) => setRecordForm((prev) => ({ ...prev, content: e.target.value }))}
-              placeholder='请输入记录内容'
+              placeholder={i18n.t('pages.rs_experiment_detail_page.k31')}
             />
             <TextField
               fullWidth
-              label='记录人'
+              label={i18n.t('pages.rs_experiment_detail_page.k32')}
               value={recordForm.recorded_by}
               onChange={(e) => setRecordForm((prev) => ({ ...prev, recorded_by: e.target.value }))}
-              placeholder='请输入记录人姓名'
+              placeholder={i18n.t('pages.rs_experiment_detail_page.k33')}
             />
           </Stack>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setShowAddRecordDialog(false)}>取消</Button>
+          <Button onClick={() => setShowAddRecordDialog(false)}>{i18n.t('pages.rs_experiment_detail_page.k34')}</Button>
           <Button
             variant='contained'
             onClick={handleAddRecord}
             disabled={addRecordLoading}
           >
-            {addRecordLoading ? <LoadingSpinner size='sm' /> : '添加'}
+            {addRecordLoading ? <LoadingSpinner size='sm' /> : i18n.t('pages.rs_experiment_detail_page.k35')}
           </Button>
         </DialogActions>
       </Dialog>

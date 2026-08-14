@@ -24,6 +24,7 @@ import {
   Badge,
   TextField,
 } from '@mui/material';
+import i18n from '@/i18n';
 import {
   X as XIcon,
   Play,
@@ -75,10 +76,10 @@ import { designTokens, semanticTokens } from '@topems/tokens';
 type PanelTab = 'tests' | 'performance' | 'ux' | 'overview';
 
 const METRIC_LABELS: Record<UXMetricType, string> = {
-  CLS: '累积布局偏移',
-  LCP: '最大内容渲染',
-  INP: '交互到响应',
-  FCP: '首次内容渲染',
+  CLS: i18n.t('ai.v60-quality-panel.k0'),
+  LCP: i18n.t('ai.v60-quality-panel.k1'),
+  INP: i18n.t('ai.v60-quality-panel.k2'),
+  FCP: i18n.t('ai.v60-quality-panel.k3'),
 };
 
 const QUALITY_COLORS = {
@@ -205,7 +206,7 @@ export const V60QualityPanel: React.FC<{ onClose: () => void }> = ({ onClose }) 
     for (const m of current) {
       metrics[m.name] = m.value;
     }
-    continuousPerformance.setBaseline(metrics, `v${Date.now()}`, '新基线');
+    continuousPerformance.setBaseline(metrics, `v${Date.now()}`, i18n.t('ai.v60-quality-panel.k4'));
     loadPerformanceData();
   }, [loadPerformanceData]);
 
@@ -293,13 +294,13 @@ export const V60QualityPanel: React.FC<{ onClose: () => void }> = ({ onClose }) 
               variant='h6'
               sx={{ fontWeight: 600 }}
             >
-              V60.0 AI Quality — 智能测试 · 持续性能 · UX 监控
+              {i18n.t('ai.v60-quality-panel.k0')}
             </Typography>
           </Box>
           <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
             <Chip
               size='small'
-              label={`质量评分: ${qualityScore}`}
+              label={`${i18n.t('ai.v60-quality-panel.k1')} ${qualityScore}`}
               sx={{
                 bgcolor: 'action.disabledBackground',
                 color: 'common.white',
@@ -326,25 +327,25 @@ export const V60QualityPanel: React.FC<{ onClose: () => void }> = ({ onClose }) 
             <Tab
               icon={<Gauge size={16} />}
               iconPosition='start'
-              label='质量总览'
+              label={i18n.t('ai.v60-quality-panel.k5')}
               value='overview'
             />
             <Tab
               icon={<Play size={16} />}
               iconPosition='start'
-              label='测试运行'
+              label={i18n.t('ai.v60-quality-panel.k6')}
               value='tests'
             />
             <Tab
               icon={<SpeedIcon size={16} />}
               iconPosition='start'
-              label='性能回归'
+              label={i18n.t('ai.v60-quality-panel.k7')}
               value='performance'
             />
             <Tab
               icon={<Eye size={16} />}
               iconPosition='start'
-              label='UX 监控'
+              label={i18n.t('ai.v60-quality-panel.ux_2')}
               value='ux'
             />
           </Tabs>
@@ -432,7 +433,7 @@ const OverviewTab: React.FC<{
               variant='subtitle2'
               sx={{ fontWeight: 600 }}
             >
-              质量评分
+              {i18n.t('ai.v60-quality-panel.k3')}
             </Typography>
           </Stack>
           <Box sx={{ textAlign: 'center', py: 2 }}>
@@ -454,7 +455,7 @@ const OverviewTab: React.FC<{
               variant='caption'
               sx={{ color: 'text.secondary' }}
             >
-              综合评分 (0-100)
+              {i18n.t('ai.v60-quality-panel.0100_4')}
             </Typography>
           </Box>
           {coverage && (
@@ -464,20 +465,20 @@ const OverviewTab: React.FC<{
             >
               <Grid size={4}>
                 <StatItem
-                  label='测试总数'
+                  label={i18n.t('ai.v60-quality-panel.k8')}
                   value={coverage.total_test_cases}
                 />
               </Grid>
               <Grid size={4}>
                 <StatItem
-                  label='通过'
+                  label={i18n.t('ai.v60-quality-panel.k9')}
                   value={coverage.passed}
                   color={QUALITY_COLORS.success}
                 />
               </Grid>
               <Grid size={4}>
                 <StatItem
-                  label='失败'
+                  label={i18n.t('ai.v60-quality-panel.k10')}
                   value={coverage.failed}
                   color={QUALITY_COLORS.error}
                 />
@@ -504,7 +505,7 @@ const OverviewTab: React.FC<{
               variant='subtitle2'
               sx={{ fontWeight: 600 }}
             >
-              测试覆盖率
+              {i18n.t('ai.v60-quality-panel.k5')}
             </Typography>
           </Stack>
           {coverage && (
@@ -527,7 +528,7 @@ const OverviewTab: React.FC<{
                 variant='caption'
                 sx={{ color: 'text.secondary', mb: 0.5, display: 'block' }}
               >
-                按类型分布
+                {i18n.t('ai.v60-quality-panel.k6')}
               </Typography>
               <Grid
                 container
@@ -577,7 +578,7 @@ const OverviewTab: React.FC<{
               variant='subtitle2'
               sx={{ fontWeight: 600 }}
             >
-              性能告警
+              {i18n.t('ai.v60-quality-panel.k7')}
             </Typography>
           </Stack>
           <Box sx={{ textAlign: 'center', py: 1 }}>
@@ -591,7 +592,7 @@ const OverviewTab: React.FC<{
               variant='caption'
               sx={{ color: 'text.secondary' }}
             >
-              活跃性能回归
+              {i18n.t('ai.v60-quality-panel.k8')}
             </Typography>
           </Box>
           {regressions.length > 0 && (
@@ -636,7 +637,7 @@ const OverviewTab: React.FC<{
               variant='subtitle2'
               sx={{ fontWeight: 600 }}
             >
-              测试趋势 (最近 7 天)
+              {i18n.t('ai.v60-quality-panel.7_9')}
             </Typography>
           </Stack>
           <Box sx={{ display: 'flex', gap: 0.5, alignItems: 'flex-end', height: 100, py: 1 }}>
@@ -674,13 +675,13 @@ const OverviewTab: React.FC<{
           >
             <Chip
               size='small'
-              label='通过'
+              label={i18n.t('ai.v60-quality-panel.k11')}
               color='success'
               variant='outlined'
             />
             <Chip
               size='small'
-              label='失败'
+              label={i18n.t('ai.v60-quality-panel.k12')}
               color='warning'
               variant='outlined'
             />
@@ -705,7 +706,7 @@ const OverviewTab: React.FC<{
               variant='subtitle2'
               sx={{ fontWeight: 600 }}
             >
-              UX 核心指标
+              {i18n.t('ai.v60-quality-panel.ux_10')}
             </Typography>
           </Stack>
           {uxDashboard && (
@@ -832,7 +833,7 @@ const TestsTab: React.FC<{
                   variant='subtitle2'
                   sx={{ fontWeight: 600 }}
                 >
-                  测试用例管理
+                  {i18n.t('ai.v60-quality-panel.k11')}
                 </Typography>
               </Stack>
               <Box sx={{ flex: 1 }} />
@@ -840,16 +841,16 @@ const TestsTab: React.FC<{
                 size='small'
                 sx={{ minWidth: 120 }}
               >
-                <InputLabel>筛选</InputLabel>
+                <InputLabel>{i18n.t('ai.v60-quality-panel.k13')}</InputLabel>
                 <Select
                   value={filter}
-                  label='筛选'
+                  label={i18n.t('ai.v60-quality-panel.k14')}
                   onChange={(e) => setFilter(e.target.value)}
                 >
-                  <MenuItem value='all'>全部</MenuItem>
-                  <MenuItem value='Unit'>单元测试</MenuItem>
-                  <MenuItem value='Integration'>集成测试</MenuItem>
-                  <MenuItem value='E2E'>端到端</MenuItem>
+                  <MenuItem value='all'>{i18n.t('ai.v60-quality-panel.k15')}</MenuItem>
+                  <MenuItem value='Unit'>{i18n.t('ai.v60-quality-panel.k16')}</MenuItem>
+                  <MenuItem value='Integration'>{i18n.t('ai.v60-quality-panel.k17')}</MenuItem>
+                  <MenuItem value='E2E'>{i18n.t('ai.v60-quality-panel.k18')}</MenuItem>
                 </Select>
               </FormControl>
               <Button
@@ -858,7 +859,7 @@ const TestsTab: React.FC<{
                 startIcon={<Sparkles size={14} />}
                 onClick={onGenerate}
               >
-                AI 生成
+                {i18n.t('ai.v60-quality-panel.ai_12')}
               </Button>
               <Button
                 size='small'
@@ -868,7 +869,7 @@ const TestsTab: React.FC<{
                 onClick={onRunAll}
                 disabled={isRunning}
               >
-                {isRunning ? '运行中...' : '全部运行'}
+                {isRunning ? i18n.t('ai.v60-quality-panel.k13') : i18n.t('ai.v60-quality-panel.k19')}
               </Button>
               <Button
                 size='small'
@@ -876,7 +877,7 @@ const TestsTab: React.FC<{
                 startIcon={<RefreshCw size={14} />}
                 onClick={onRegenerate}
               >
-                重新生成失败
+                {i18n.t('ai.v60-quality-panel.k14')}
               </Button>
             </Stack>
 
@@ -897,27 +898,27 @@ const TestsTab: React.FC<{
               >
                 <Grid size={3}>
                   <StatItem
-                    label='总数'
+                    label={i18n.t('ai.v60-quality-panel.k20')}
                     value={coverage.total_test_cases}
                   />
                 </Grid>
                 <Grid size={3}>
                   <StatItem
-                    label='通过'
+                    label={i18n.t('ai.v60-quality-panel.k21')}
                     value={coverage.passed}
                     color={QUALITY_COLORS.success}
                   />
                 </Grid>
                 <Grid size={3}>
                   <StatItem
-                    label='失败'
+                    label={i18n.t('ai.v60-quality-panel.k22')}
                     value={coverage.failed}
                     color={QUALITY_COLORS.error}
                   />
                 </Grid>
                 <Grid size={3}>
                   <StatItem
-                    label='覆盖率'
+                    label={i18n.t('ai.v60-quality-panel.k23')}
                     value={`${(coverage.overall * 100).toFixed(1)}%`}
                     color={QUALITY_COLORS.info}
                   />
@@ -1004,7 +1005,7 @@ const TestsTab: React.FC<{
                         variant='caption'
                         sx={{ color: 'text.secondary', ml: 1 }}
                       >
-                        覆盖率: {(tc.coverage * 100).toFixed(1)}%
+                        [i18n.t('ai.v60-quality-panel.k15')]: {(tc.coverage * 100).toFixed(1)}%
                       </Typography>
                     </Stack>
                   </Box>
@@ -1031,7 +1032,7 @@ const TestsTab: React.FC<{
                 variant='subtitle2'
                 sx={{ fontWeight: 600 }}
               >
-                AI 智能建议
+                {i18n.t('ai.v60-quality-panel.ai_16')}
               </Typography>
             </Stack>
             {suggestions.length === 0 ? (
@@ -1039,7 +1040,7 @@ const TestsTab: React.FC<{
                 severity='info'
                 variant='outlined'
               >
-                暂无建议
+                {i18n.t('ai.v60-quality-panel.k17')}
               </Alert>
             ) : (
               <List dense>
@@ -1101,7 +1102,7 @@ const TestsTab: React.FC<{
                 variant='subtitle2'
                 sx={{ fontWeight: 600 }}
               >
-                最近测试运行
+                {i18n.t('ai.v60-quality-panel.k18')}
               </Typography>
             </Stack>
             {testRuns.length === 0 ? (
@@ -1109,7 +1110,7 @@ const TestsTab: React.FC<{
                 severity='info'
                 variant='outlined'
               >
-                暂无测试运行记录
+                {i18n.t('ai.v60-quality-panel.k19')}
               </Alert>
             ) : (
               <List dense>
@@ -1133,14 +1134,14 @@ const TestsTab: React.FC<{
                           </Typography>
                           <Chip
                             size='small'
-                            label={`通过 ${run.results.filter((r) => r.passed).length}`}
+                            label={`${i18n.t('ai.v60-quality-panel.k20')} ${run.results.filter((r) => r.passed).length}`}
                             color='success'
                             variant='outlined'
                             sx={{ height: 18, fontSize: 10 }}
                           />
                           <Chip
                             size='small'
-                            label={`耗时 ${(run.total_duration_ms / 1000).toFixed(1)}s`}
+                            label={`${i18n.t('ai.v60-quality-panel.k21')} ${(run.total_duration_ms / 1000).toFixed(1)}s`}
                             variant='outlined'
                             sx={{ height: 18, fontSize: 10 }}
                           />
@@ -1192,7 +1193,7 @@ const PerformanceTab: React.FC<{
                 variant='subtitle2'
                 sx={{ fontWeight: 600 }}
               >
-                性能监控
+                {i18n.t('ai.v60-quality-panel.k22')}
               </Typography>
             </Stack>
             <Box sx={{ flex: 1 }} />
@@ -1202,7 +1203,7 @@ const PerformanceTab: React.FC<{
               startIcon={<Zap size={14} />}
               onClick={onMeasure}
             >
-              测量 + 检测
+              {i18n.t('ai.v60-quality-panel.k23')}
             </Button>
             <Button
               size='small'
@@ -1210,7 +1211,7 @@ const PerformanceTab: React.FC<{
               startIcon={<Target size={14} />}
               onClick={onSetBaseline}
             >
-              设为基线
+              {i18n.t('ai.v60-quality-panel.k24')}
             </Button>
           </Stack>
 
@@ -1279,7 +1280,7 @@ const PerformanceTab: React.FC<{
               variant='subtitle2'
               sx={{ fontWeight: 600 }}
             >
-              性能回归检测
+              {i18n.t('ai.v60-quality-panel.k25')}
             </Typography>
             {regressions.length > 0 && (
               <Badge
@@ -1289,7 +1290,7 @@ const PerformanceTab: React.FC<{
               >
                 <Chip
                   size='small'
-                  label='回归'
+                  label={i18n.t('ai.v60-quality-panel.k24')}
                   variant='outlined'
                 />
               </Badge>
@@ -1301,7 +1302,7 @@ const PerformanceTab: React.FC<{
               severity='success'
               variant='outlined'
             >
-              无性能回归，系统表现良好
+              {i18n.t('ai.v60-quality-panel.k26')}
             </Alert>
           ) : (
             <List dense>
@@ -1346,7 +1347,7 @@ const PerformanceTab: React.FC<{
                       variant='caption'
                       sx={{ color: 'text.secondary' }}
                     >
-                      基线: {r.baseline.toFixed(2)} → 当前: {r.current.toFixed(2)}
+                      [i18n.t('ai.v60-quality-panel.k27')]: {r.baseline.toFixed(2)} → {i18n.t('ai.v60-quality-panel.k28')}{r.current.toFixed(2)}
                     </Typography>
                   </Box>
                 </ListItem>
@@ -1373,7 +1374,7 @@ const PerformanceTab: React.FC<{
               variant='subtitle2'
               sx={{ fontWeight: 600 }}
             >
-              性能基线
+              {i18n.t('ai.v60-quality-panel.k29')}
             </Typography>
           </Stack>
 
@@ -1382,7 +1383,7 @@ const PerformanceTab: React.FC<{
               severity='info'
               variant='outlined'
             >
-              暂无性能基线
+              {i18n.t('ai.v60-quality-panel.k30')}
             </Alert>
           ) : (
             <List dense>
@@ -1403,7 +1404,7 @@ const PerformanceTab: React.FC<{
                           {b.name || b.version}
                         </Typography>
                       }
-                      secondary={`${Object.keys(b.metrics).length} 指标 · ${new Date(b.createdAt).toLocaleString()}`}
+                      secondary={`${Object.keys(b.metrics).length} ${i18n.t('ai.v60-quality-panel.k31')} ${new Date(b.createdAt).toLocaleString()}`}
                     />
                   </ListItem>
                 ))}
@@ -1416,14 +1417,14 @@ const PerformanceTab: React.FC<{
             variant='caption'
             sx={{ color: 'text.secondary', mb: 1, display: 'block' }}
           >
-            性能告警
+            {i18n.t('ai.v60-quality-panel.k32')}
           </Typography>
           {alerts.length === 0 ? (
             <Typography
               variant='body2'
               sx={{ color: 'text.secondary' }}
             >
-              无活跃告警
+              {i18n.t('ai.v60-quality-panel.k33')}
             </Typography>
           ) : (
             <List dense>
@@ -1485,7 +1486,7 @@ const UXTab: React.FC<{
                 variant='subtitle2'
                 sx={{ fontWeight: 600 }}
               >
-                真实用户体验监控 (RUM)
+                {i18n.t('ai.v60-quality-panel.rum_34')}
               </Typography>
             </Stack>
             <Box sx={{ flex: 1 }} />
@@ -1495,7 +1496,7 @@ const UXTab: React.FC<{
               startIcon={<Activity size={14} />}
               onClick={onRecord}
             >
-              模拟指标数据
+              {i18n.t('ai.v60-quality-panel.k35')}
             </Button>
           </Stack>
 
@@ -1592,12 +1593,12 @@ const UXTab: React.FC<{
               variant='subtitle2'
               sx={{ fontWeight: 600 }}
             >
-              UX 告警
+              {i18n.t('ai.v60-quality-panel.ux_36')}
             </Typography>
             {alerts.length > 0 && (
               <Chip
                 size='small'
-                label={`${alerts.length} 活跃`}
+                label={`${alerts.length} ${i18n.t('ai.v60-quality-panel.k37')}`}
                 color='error'
                 sx={{ ml: 'auto' }}
               />
@@ -1609,7 +1610,7 @@ const UXTab: React.FC<{
               severity='success'
               variant='outlined'
             >
-              无活跃 UX 告警
+              {i18n.t('ai.v60-quality-panel.ux_38')}
             </Alert>
           ) : (
             <List dense>
@@ -1652,7 +1653,7 @@ const UXTab: React.FC<{
                       variant='caption'
                       sx={{ color: 'text.secondary' }}
                     >
-                      当前: {a.currentValue.toFixed(2)} · 阈值: {a.threshold}
+                      [i18n.t('ai.v60-quality-panel.k39')]: {a.currentValue.toFixed(2)} · {i18n.t('ai.v60-quality-panel.k40')}{a.threshold}
                     </Typography>
                   </Box>
                 </ListItem>
@@ -1679,7 +1680,7 @@ const UXTab: React.FC<{
               variant='subtitle2'
               sx={{ fontWeight: 600 }}
             >
-              用户转化漏斗
+              {i18n.t('ai.v60-quality-panel.k41')}
             </Typography>
           </Stack>
 
@@ -1733,7 +1734,7 @@ const UXTab: React.FC<{
                 variant='caption'
                 sx={{ color: 'text.secondary', mb: 0.5, display: 'block' }}
               >
-                流失分析
+                {i18n.t('ai.v60-quality-panel.k42')}
               </Typography>
               <Stack
                 direction='row'
@@ -1773,7 +1774,7 @@ const UXTab: React.FC<{
               variant='subtitle2'
               sx={{ fontWeight: 600 }}
             >
-              最近指标记录
+              {i18n.t('ai.v60-quality-panel.k43')}
             </Typography>
           </Stack>
 

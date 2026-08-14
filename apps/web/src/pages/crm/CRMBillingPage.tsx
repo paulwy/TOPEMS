@@ -9,6 +9,7 @@ import {
   Chip,
   LinearProgress,
 } from '@mui/material';
+import i18n from '@/i18n';
 import { useTranslation } from 'react-i18next';
 import { useQuery } from '@tanstack/react-query';
 import { PageContainer } from '@/components/common';
@@ -122,7 +123,7 @@ const CRMBillingPage: React.FC = () => {
       headerActions={
         mockEnabled ? (
           <Chip
-            label={t('crm.common.mock_demo_badge') || 'Mock 演示'}
+            label={t('crm.common.mock_demo_badge') || i18n.t('pages.crm_billing_page.mock_0')}
             color='warning'
             size='small'
             variant='outlined'
@@ -207,7 +208,7 @@ const CRMBillingPage: React.FC = () => {
                 >
                   <Paper variant='outlined' sx={{ p: 3 }}>
                     <Typography variant='subtitle2' sx={{ fontWeight: 600, mb: 2 }}>
-                      {t('crm.billing.section_status_pie') || '账单状态分布'}
+                      {t('crm.billing.section_status_pie') || i18n.t('pages.crm_billing_page.k1')}
                     </Typography>
                     <Stack spacing={2}>
                       {statusPie.map((s) => {
@@ -237,7 +238,7 @@ const CRMBillingPage: React.FC = () => {
                               }}
                             />
                             <Typography variant='caption' color='text.secondary' sx={{ mt: 0.5, display: 'block' }}>
-                              {s.count} {t('crm.billing.unit_invoice') || '笔'}
+                              {s.count} {t('crm.billing.unit_invoice') || i18n.t('pages.crm_billing_page.k2')}
                             </Typography>
                           </Box>
                         );
@@ -247,7 +248,7 @@ const CRMBillingPage: React.FC = () => {
 
                   <Paper variant='outlined' sx={{ p: 3 }}>
                     <Typography variant='subtitle2' sx={{ fontWeight: 600, mb: 2 }}>
-                      {t('crm.billing.section_aging') || '账龄分析'}
+                      {t('crm.billing.section_aging') || i18n.t('pages.crm_billing_page.k3')}
                     </Typography>
                     <Stack spacing={2}>
                       {agingBuckets.map((b) => (
@@ -273,7 +274,7 @@ const CRMBillingPage: React.FC = () => {
 
                 <Paper variant='outlined' sx={{ p: 3 }}>
                   <Typography variant='subtitle2' sx={{ fontWeight: 600, mb: 2 }}>
-                    {t('crm.billing.section_top10') || 'TOP10 客户应收'}
+                    {t('crm.billing.section_top10') || i18n.t('pages.crm_billing_page.top10_4')}
                   </Typography>
                   <Stack spacing={1.5}>
                     {top10.map((item, idx) => {

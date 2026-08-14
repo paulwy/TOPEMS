@@ -8,6 +8,7 @@ import {
   ChevronDown,
   ChevronUp,
 } from 'lucide-react';
+import i18n from '@/i18n';
 import { logger } from '@/utils/logger';
 import { designTokens, semanticTokens } from '@topems/tokens';
 
@@ -56,9 +57,9 @@ const _getTypeLabel = (type: BundleEntry['type']): string => {
   const labels: Record<BundleEntry['type'], string> = {
     js: 'JavaScript',
     css: 'CSS',
-    img: '图片',
-    font: '字体',
-    other: '其他',
+    img: i18n.t('components.bundle_size_monitor.k0'),
+    font: i18n.t('components.bundle_size_monitor.k1'),
+    other: i18n.t('components.bundle_size_monitor.k2'),
   };
   return labels[type];
 };
@@ -203,7 +204,7 @@ export const BundleSizeMonitor: React.FC<BundleSizeMonitorProps> = ({
                 className='w-5 h-5'
                 style={{ color: 'secondary.500' }}
               />
-              <h3 className='font-semibold text-gray-900'>包体积监控</h3>
+              <h3 className='font-semibold text-gray-900'>{i18n.t('components.bundle_size_monitor.k3')}</h3>
             </div>
             <button
               onClick={() => setIsVisible(false)}
@@ -232,7 +233,7 @@ export const BundleSizeMonitor: React.FC<BundleSizeMonitorProps> = ({
                 justifyContent: 'center',
                 marginBottom: 4,
                 padding: 4,
-                background: 'linear-gradient(to bottom right, #e0e7ff, #f0fdf4)',
+                background: `linear-gradient(to bottom right, ${designTokens.colors.secondary[50]}, #f0fdf4)`,
                 borderRadius: 'lg',
               }}
             >
@@ -246,13 +247,13 @@ export const BundleSizeMonitor: React.FC<BundleSizeMonitorProps> = ({
                       getScoreColor() === 'text-green-500'
                         ? 'colors.success.dark'
                         : getScoreColor() === 'text-yellow-500'
-                          ? '#ca8a04'
+                          ? designTokens.colors.warning[600]
                           : 'error.700',
                   }}
                 >
                   {getScore()}
                 </div>
-                <div className='text-sm text-gray-600 mt-1'>包体积评分</div>
+                <div className='text-sm text-gray-600 mt-1'>{i18n.t('components.bundle_size_monitor.k4')}</div>
               </div>
             </div>
 
@@ -285,14 +286,14 @@ export const BundleSizeMonitor: React.FC<BundleSizeMonitorProps> = ({
               <div className='p-3 bg-gray-50 rounded-lg'>
                 <div className='flex items-center gap-2 mb-1'>
                   <HardDrive className='w-4 h-4 text-blue-500' />
-                  <span className='text-xs text-gray-600'>总大小</span>
+                  <span className='text-xs text-gray-600'>{i18n.t('components.bundle_size_monitor.k5')}</span>
                 </div>
                 <div className='font-semibold text-gray-900'>{formatSize(stats.totalSize)}</div>
               </div>
               <div className='p-3 bg-gray-50 rounded-lg'>
                 <div className='flex items-center gap-2 mb-1'>
                   <BarChart3 className='w-4 h-4 text-purple-500' />
-                  <span className='text-xs text-gray-600'>资源数量</span>
+                  <span className='text-xs text-gray-600'>{i18n.t('components.bundle_size_monitor.k6')}</span>
                 </div>
                 <div className='font-semibold text-gray-900'>{stats.entryCount}</div>
               </div>
@@ -312,7 +313,7 @@ export const BundleSizeMonitor: React.FC<BundleSizeMonitorProps> = ({
                 padding: 0,
               }}
             >
-              <span className='font-medium'>资源详情</span>
+              <span className='font-medium'>{i18n.t('components.bundle_size_monitor.k7')}</span>
               {isExpanded ? <ChevronUp className='w-4 h-4' /> : <ChevronDown className='w-4 h-4' />}
             </button>
 
@@ -368,13 +369,13 @@ export const BundleSizeMonitor: React.FC<BundleSizeMonitorProps> = ({
                 borderTop: '1px solid grey.100',
               }}
             >
-              <div className='text-xs text-gray-500 mb-2'>按类型分布</div>
+              <div className='text-xs text-gray-500 mb-2'>{i18n.t('components.bundle_size_monitor.k8')}</div>
               <div className='flex gap-1'>
                 {stats.jsSize > 0 && (
                   <div
                     className='flex-1 bg-blue-500 rounded-full'
                     style={{
-                      height: '8px',
+                      height: designTokens.spacing.sm,
                       borderRadius: 'full',
                       width: `${(stats.jsSize / stats.totalSize) * 100}%`,
                     }}
@@ -385,7 +386,7 @@ export const BundleSizeMonitor: React.FC<BundleSizeMonitorProps> = ({
                   <div
                     className='flex-1 bg-purple-500 rounded-full'
                     style={{
-                      height: '8px',
+                      height: designTokens.spacing.sm,
                       borderRadius: 'full',
                       width: `${(stats.cssSize / stats.totalSize) * 100}%`,
                     }}
@@ -396,7 +397,7 @@ export const BundleSizeMonitor: React.FC<BundleSizeMonitorProps> = ({
                   <div
                     className='flex-1 bg-green-500 rounded-full'
                     style={{
-                      height: '8px',
+                      height: designTokens.spacing.sm,
                       borderRadius: 'full',
                       width: `${(stats.imgSize / stats.totalSize) * 100}%`,
                     }}
@@ -407,7 +408,7 @@ export const BundleSizeMonitor: React.FC<BundleSizeMonitorProps> = ({
                   <div
                     className='flex-1 bg-orange-500 rounded-full'
                     style={{
-                      height: '8px',
+                      height: designTokens.spacing.sm,
                       borderRadius: 'full',
                       width: `${(stats.fontSize / stats.totalSize) * 100}%`,
                     }}
@@ -466,7 +467,7 @@ export const BundleSizeMonitor: React.FC<BundleSizeMonitorProps> = ({
           border: 'none',
           cursor: 'pointer',
         }}
-        title={hasWarning ? `包体积过大: ${formatSize(stats.totalSize)}` : '打开包体积监控'}
+        title={hasWarning ? `${i18n.t('components.bundle_size_monitor.k10')}${formatSize(stats.totalSize)}` : i18n.t('components.bundle_size_monitor.k9')}
       >
         {hasWarning ? (
           <AlertTriangle className='w-6 h-6 animate-pulse' />

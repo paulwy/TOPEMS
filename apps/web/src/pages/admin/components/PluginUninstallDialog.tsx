@@ -9,9 +9,8 @@ import {
   Stack,
   Typography,
 } from '@mui/material';
-import { useTranslation } from 'react-i18next';
+import i18n from '@/i18n';
 import type { UninstallTarget } from '../hooks/usePluginManagement';
-
 interface PluginUninstallDialogProps {
   target: UninstallTarget | null;
   onTierChange: (tier: UninstallTarget['tier']) => void;
@@ -20,7 +19,6 @@ interface PluginUninstallDialogProps {
   isPending: boolean;
   getMessage: (pluginCode: string, tier: UninstallTarget['tier']) => string;
 }
-
 const PluginUninstallDialog: React.FC<PluginUninstallDialogProps> = ({
   target,
   onTierChange,
@@ -29,8 +27,6 @@ const PluginUninstallDialog: React.FC<PluginUninstallDialogProps> = ({
   isPending,
   getMessage,
 }) => {
-  const { t } = useTranslation();
-
   return (
     <Dialog
       open={!!target}
@@ -38,8 +34,8 @@ const PluginUninstallDialog: React.FC<PluginUninstallDialogProps> = ({
     >
       <DialogTitle>
         {target?.tier === 'delete'
-          ? ` + ${t('admin.plugin_management.permanently_delete_plugin')}`
-          : t('admin.plugin_management.uninstall_plugin')}
+          ? ` + ${i18n.t('admin.plugin_management.permanently_delete_plugin')}`
+          : i18n.t('admin.plugin_management.uninstall_plugin')}
       </DialogTitle>
       <DialogContent>
         {target && (
@@ -50,7 +46,7 @@ const PluginUninstallDialog: React.FC<PluginUninstallDialogProps> = ({
                 variant='body2'
                 sx={{ fontWeight: 500, mb: 1 }}
               >
-                {t('admin.plugin_management_page.text_28766c')}
+                {i18n.t('admin.plugin_management_page.text_28766c')}
               </Typography>
               <Stack
                 direction='row'
@@ -61,14 +57,14 @@ const PluginUninstallDialog: React.FC<PluginUninstallDialogProps> = ({
                   size='small'
                   onClick={() => onTierChange('disable')}
                 >
-                  {t('admin.plugin_management_page.text_710ad0')}
+                  {i18n.t('admin.plugin_management_page.text_710ad0')}
                 </Button>
                 <Button
                   variant={target.tier === 'uninstall' ? 'contained' : 'outlined'}
                   size='small'
                   onClick={() => onTierChange('uninstall')}
                 >
-                  {t('admin.plugin_management_page.text_81824c')}
+                  {i18n.t('admin.plugin_management_page.text_81824c')}
                 </Button>
                 <Button
                   variant={target.tier === 'delete' ? 'contained' : 'outlined'}
@@ -76,7 +72,7 @@ const PluginUninstallDialog: React.FC<PluginUninstallDialogProps> = ({
                   color='error'
                   onClick={() => onTierChange('delete')}
                 >
-                  {t('admin.plugin_management_page.text_732796')}
+                  {i18n.t('admin.plugin_management_page.text_732796')}
                 </Button>
               </Stack>
             </Box>
@@ -84,15 +80,15 @@ const PluginUninstallDialog: React.FC<PluginUninstallDialogProps> = ({
               variant='caption'
               color='textSecondary'
             >
-              {target.tier === 'disable' && t('admin.plugin_management_page.text_de1a1b')}
-              {target.tier === 'uninstall' && t('admin.plugin_management_page.text_028310')}
-              {target.tier === 'delete' && t('admin.plugin_management_page.text_7b8249')}
+              {target.tier === 'disable' && i18n.t('admin.plugin_management_page.text_de1a1b')}
+              {target.tier === 'uninstall' && i18n.t('admin.plugin_management_page.text_028310')}
+              {target.tier === 'delete' && i18n.t('admin.plugin_management_page.text_7b8249')}
             </Typography>
           </>
         )}
       </DialogContent>
       <DialogActions>
-        <Button onClick={onClose}>{t('admin.plugin_management.cancel')}</Button>
+        <Button onClick={onClose}>{i18n.t('admin.plugin_management.cancel')}</Button>
         <Button
           onClick={onConfirm}
           variant='contained'
@@ -100,14 +96,13 @@ const PluginUninstallDialog: React.FC<PluginUninstallDialogProps> = ({
           disabled={isPending}
         >
           {isPending
-            ? t('admin.plugin_management_page.text_2fb90b')
+            ? i18n.t('admin.plugin_management_page.text_2fb90b')
             : target?.tier === 'delete'
-              ? t('admin.plugin_management.confirm_delete')
-              : t('admin.plugin_management.confirm')}
+              ? i18n.t('admin.plugin_management.confirm_delete')
+              : i18n.t('admin.plugin_management.confirm')}
         </Button>
       </DialogActions>
     </Dialog>
   );
 };
-
 export default PluginUninstallDialog;

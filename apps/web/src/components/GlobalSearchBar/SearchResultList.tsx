@@ -11,6 +11,7 @@ import {
   alpha,
   LinearProgress,
 } from '@mui/material';
+import i18n from '@/i18n';
 import type { Theme } from '@mui/material/styles';
 import {
   SearchCode,
@@ -197,7 +198,7 @@ export const SearchResultList: React.FC<SearchResultListProps> = ({
               color='text.secondary'
               sx={{ mb: 1, display: 'block' }}
             >
-              💡 搜索建议
+              {i18n.t('components.search_result_list.k0')}
             </Typography>
             <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
               {suggestions.map((s: string) => (
@@ -256,7 +257,7 @@ export const SearchResultList: React.FC<SearchResultListProps> = ({
                   >
                     {totalGroups}
                   </Box>{' '}
-                  个分类
+                  {i18n.t('components.search_result_list.k1')}
                 </>
               )}
             </Typography>
@@ -265,7 +266,7 @@ export const SearchResultList: React.FC<SearchResultListProps> = ({
               color='text.disabled'
               sx={{ fontSize: 10 }}
             >
-              ↑↓ 导航 · Enter 选择
+              {i18n.t('components.search_result_list.k2')}
             </Typography>
           </Box>
         </>
@@ -273,7 +274,7 @@ export const SearchResultList: React.FC<SearchResultListProps> = ({
       {totalResults > 0 && (
         <Box
           role='listbox'
-          aria-label='搜索结果'
+          aria-label={i18n.t('components.search_result_list.k0')}
         >
           {groupedResults.map((group, groupIndex) => (
             <React.Fragment key={group.module}>

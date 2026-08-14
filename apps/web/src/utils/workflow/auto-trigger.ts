@@ -23,6 +23,7 @@
  */
 
 import { NodeType, type Workflow } from './workflow-editor';
+import i18n from '@/i18n';
 
 // ==================== 枚举 ====================
 
@@ -305,7 +306,7 @@ export class AutoTriggerEngine {
         fired_at: now,
         result: TriggerFireResult.SKIPPED,
         payload,
-        error: !trigger ? '触发器不存在' : '触发器已禁用',
+        error: !trigger ? i18n.t('shared.auto-trigger.k1') : i18n.t('shared.auto-trigger.k0'),
       };
       this.histories.push(history);
       return { ...history };
@@ -377,13 +378,13 @@ export class AutoTriggerEngine {
     if (nodeTypes.includes(NodeType.HTTPREQUEST) || nodeTypes.includes(NodeType.DATABASEQUERY)) {
       suggestions.push({
         trigger_type: TriggerType.WEBHOOK,
-        name: `${workflow.name} Webhook 触发器`,
+        name: `${workflow.name}${i18n.t('shared.auto-trigger.webhook_0')}`,
         confidence: 0.85,
         config: {
           webhook_id: `wh-${workflow.workflow_id}`,
           rate_limit: 100,
         } as Partial<WebhookConfig>,
-        reason: '工作流包含 HTTP/数据库查询节点，适合通过 Webhook 触发',
+        reason: i18n.t('shared.auto-trigger.k2'),
       });
     }
 
@@ -391,13 +392,13 @@ export class AutoTriggerEngine {
     if (nodeTypes.includes(NodeType.DELAY) || nodeTypes.includes(NodeType.LOOP)) {
       suggestions.push({
         trigger_type: TriggerType.SCHEDULE,
-        name: `${workflow.name} 定时触发器`,
+        name: `${workflow.name}${i18n.t('shared.auto-trigger.k1')}`,
         confidence: 0.75,
         config: {
           cron_expression: '0 9 * * *',
           timezone: 'Asia/Shanghai',
         } as Partial<ScheduleConfig>,
-        reason: '工作流包含延时/循环节点，适合配置定时触发',
+        reason: i18n.t('shared.auto-trigger.k3'),
       });
     }
 
@@ -405,13 +406,13 @@ export class AutoTriggerEngine {
     if (nodeTypes.includes(NodeType.NOTIFY)) {
       suggestions.push({
         trigger_type: TriggerType.EVENT,
-        name: `${workflow.name} 事件触发器`,
+        name: `${workflow.name}${i18n.t('shared.auto-trigger.k2')}`,
         confidence: 0.7,
         config: {
           event_type: 'alert',
           source: 'system',
         } as Partial<EventConfig>,
-        reason: '工作流包含通知节点，适合由事件驱动',
+        reason: i18n.t('shared.auto-trigger.k4'),
       });
     }
 
@@ -419,13 +420,13 @@ export class AutoTriggerEngine {
     if (nodeTypes.includes(NodeType.AGGREGATE) || nodeTypes.includes(NodeType.AI)) {
       suggestions.push({
         trigger_type: TriggerType.DATACHANGE,
-        name: `${workflow.name} 数据变更触发器`,
+        name: `${workflow.name}${i18n.t('shared.auto-trigger.k3')}`,
         confidence: 0.8,
         config: {
           entity: 'metrics',
           operation: 'update',
         } as Partial<DataChangeConfig>,
-        reason: '工作流包含聚合/AI 节点，适合在数据变更时触发',
+        reason: i18n.t('shared.auto-trigger.k5'),
       });
     }
 
@@ -433,10 +434,10 @@ export class AutoTriggerEngine {
     if (suggestions.length === 0) {
       suggestions.push({
         trigger_type: TriggerType.MANUAL,
-        name: `${workflow.name} 手动触发器`,
+        name: `${workflow.name}${i18n.t('shared.auto-trigger.k4')}`,
         confidence: 0.5,
         config: {},
-        reason: '暂无明确触发特征，建议手动触发',
+        reason: i18n.t('shared.auto-trigger.k6'),
       });
     }
 
@@ -462,7 +463,7 @@ export class AutoTriggerEngine {
       current_value: currentValue,
       deviation: Number(deviation.toFixed(2)),
       suggested_threshold: Number(suggestedThreshold.toFixed(2)),
-      trigger_name: `${metricName} 异常阈值触发器`,
+      trigger_name: `${metricName}${i18n.t('shared.auto-trigger.k5')}`,
     };
   }
 

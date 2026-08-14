@@ -1,10 +1,11 @@
 import React from 'react';
 import type { EntitySchema } from '@/schema';
+import i18n from '@/i18n';
 
 export const evaluationSchema: EntitySchema = {
   entity: 'evaluation',
-  title: '供应商评估',
-  description: '供应商绩效评估，包括质量、交付、服务、价格等多维度评分',
+  title: i18n.t('scm.evaluation.k0'),
+  description: i18n.t('scm.evaluation.k1'),
 
   api: {
     module: 'scm',
@@ -14,7 +15,7 @@ export const evaluationSchema: EntitySchema = {
   fields: [
     {
       name: 'evaluation_no',
-      label: '评估编号',
+      label: i18n.t('scm.evaluation.k2'),
       type: 'text',
       required: true,
       readonlyOnEdit: true,
@@ -24,14 +25,14 @@ export const evaluationSchema: EntitySchema = {
     },
     {
       name: 'supplier_id',
-      label: '供应商',
+      label: i18n.t('scm.evaluation.k3'),
       type: 'text',
       required: true,
       listWidth: 160,
     },
     {
       name: 'evaluation_date',
-      label: '评估日期',
+      label: i18n.t('scm.evaluation.k4'),
       type: 'date',
       required: true,
       sortable: true,
@@ -39,14 +40,14 @@ export const evaluationSchema: EntitySchema = {
     },
     {
       name: 'evaluator',
-      label: '评估人',
+      label: i18n.t('scm.evaluation.k5'),
       type: 'text',
       listWidth: 100,
       validation: [{ type: 'maxLength', value: 100 }],
     },
     {
       name: 'quality_score',
-      label: '质量评分',
+      label: i18n.t('scm.evaluation.k6'),
       type: 'number',
       defaultValue: 0,
       sortable: true,
@@ -58,7 +59,7 @@ export const evaluationSchema: EntitySchema = {
     },
     {
       name: 'delivery_score',
-      label: '交付评分',
+      label: i18n.t('scm.evaluation.k7'),
       type: 'number',
       defaultValue: 0,
       sortable: true,
@@ -70,7 +71,7 @@ export const evaluationSchema: EntitySchema = {
     },
     {
       name: 'service_score',
-      label: '服务评分',
+      label: i18n.t('scm.evaluation.k8'),
       type: 'number',
       defaultValue: 0,
       sortable: true,
@@ -82,7 +83,7 @@ export const evaluationSchema: EntitySchema = {
     },
     {
       name: 'price_score',
-      label: '价格评分',
+      label: i18n.t('scm.evaluation.k9'),
       type: 'number',
       defaultValue: 0,
       sortable: true,
@@ -94,7 +95,7 @@ export const evaluationSchema: EntitySchema = {
     },
     {
       name: 'overall_score',
-      label: '综合评分',
+      label: i18n.t('scm.evaluation.k10'),
       type: 'number',
       defaultValue: 0,
       sortable: true,
@@ -107,16 +108,16 @@ export const evaluationSchema: EntitySchema = {
     },
     {
       name: 'status',
-      label: '状态',
+      label: i18n.t('scm.evaluation.k11'),
       type: 'select',
       defaultValue: 'draft',
       options: {
         type: 'static',
         options: [
-          { value: 'draft', label: '草稿' },
-          { value: 'submitted', label: '已提交' },
-          { value: 'approved', label: '已批准' },
-          { value: 'completed', label: '已完成' },
+          { value: 'draft', label: i18n.t('scm.evaluation.k12') },
+          { value: 'submitted', label: i18n.t('scm.evaluation.k13') },
+          { value: 'approved', label: i18n.t('scm.evaluation.k14') },
+          { value: 'completed', label: i18n.t('scm.evaluation.k15') },
         ],
       },
       listWidth: 100,
@@ -124,7 +125,7 @@ export const evaluationSchema: EntitySchema = {
     },
     {
       name: 'comments',
-      label: '评语',
+      label: i18n.t('scm.evaluation.k16'),
       type: 'textarea',
       showInList: false,
     },
@@ -154,28 +155,28 @@ export const evaluationSchema: EntitySchema = {
         completed: 'success',
       },
       labelMap: {
-        draft: '草稿',
-        submitted: '已提交',
-        approved: '已批准',
-        completed: '已完成',
+        draft: i18n.t('scm.evaluation.k17'),
+        submitted: i18n.t('scm.evaluation.k18'),
+        approved: i18n.t('scm.evaluation.k19'),
+        completed: i18n.t('scm.evaluation.k20'),
       },
     },
     filters: [
       {
         id: 'status',
-        label: '状态',
+        label: i18n.t('scm.evaluation.k21'),
         type: 'select',
         options: [
-          { label: '全部状态', value: 'all' },
-          { label: '草稿', value: 'draft' },
-          { label: '已提交', value: 'submitted' },
-          { label: '已批准', value: 'approved' },
-          { label: '已完成', value: 'completed' },
+          { label: i18n.t('scm.evaluation.k22'), value: 'all' },
+          { label: i18n.t('scm.evaluation.k23'), value: 'draft' },
+          { label: i18n.t('scm.evaluation.k24'), value: 'submitted' },
+          { label: i18n.t('scm.evaluation.k25'), value: 'approved' },
+          { label: i18n.t('scm.evaluation.k26'), value: 'completed' },
         ],
       },
       {
         id: 'supplier_id',
-        label: '供应商',
+        label: i18n.t('scm.evaluation.k27'),
         type: 'select',
         options: [],
       },
@@ -186,21 +187,21 @@ export const evaluationSchema: EntitySchema = {
 
   formSections: [
     {
-      title: '基本信息',
+      title: i18n.t('scm.evaluation.k28'),
       fields: ['evaluation_no', 'supplier_id', 'evaluation_date', 'evaluator', 'status'],
     },
     {
-      title: '评分详情',
+      title: i18n.t('scm.evaluation.k29'),
       fields: ['quality_score', 'delivery_score', 'service_score', 'price_score', 'overall_score'],
     },
     {
-      title: '评语',
+      title: i18n.t('scm.evaluation.k30'),
       fields: ['comments'],
     },
   ],
 
   formColCount: 2,
-  createTitle: '新增评估记录',
-  editTitle: '编辑评估记录',
-  detailTitle: '评估详情',
+  createTitle: i18n.t('scm.evaluation.k31'),
+  editTitle: i18n.t('scm.evaluation.k32'),
+  detailTitle: i18n.t('scm.evaluation.k33'),
 };

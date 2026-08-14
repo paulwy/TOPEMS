@@ -2,11 +2,12 @@ import React from 'react';
 import { Chip, Typography } from '@mui/material';
 import type { EntitySchema } from '@/schema';
 import { designTokens, semanticTokens } from '@topems/tokens';
+import i18n from '@/i18n';
 
 export const inventoryTurnoverSchema: EntitySchema = {
   entity: 'inventoryTurnover',
-  title: '库存周转分析',
-  description: '库存周转率与库存天数分析，支持按分类筛选',
+  title: i18n.t('scm.inventory_turnover.k0'),
+  description: i18n.t('scm.inventory_turnover.k1'),
 
   api: {
     module: 'scm',
@@ -16,7 +17,7 @@ export const inventoryTurnoverSchema: EntitySchema = {
   fields: [
     {
       name: 'product_code',
-      label: '物料编码',
+      label: i18n.t('scm.inventory_turnover.k2'),
       type: 'text',
       sortable: true,
       listWidth: 140,
@@ -27,13 +28,13 @@ export const inventoryTurnoverSchema: EntitySchema = {
     },
     {
       name: 'product_name',
-      label: '物料名称',
+      label: i18n.t('scm.inventory_turnover.k3'),
       type: 'text',
       listWidth: 160,
     },
     {
       name: 'category',
-      label: '分类',
+      label: i18n.t('scm.inventory_turnover.k4'),
       type: 'text',
       listWidth: 120,
       renderCell: (row: Record<string, unknown>) => {
@@ -48,7 +49,7 @@ export const inventoryTurnoverSchema: EntitySchema = {
     },
     {
       name: 'turnover_rate',
-      label: '周转率',
+      label: i18n.t('scm.inventory_turnover.k5'),
       type: 'number',
       align: 'right',
       sortable: true,
@@ -64,13 +65,13 @@ export const inventoryTurnoverSchema: EntitySchema = {
         return React.createElement(
           Typography,
           { variant: 'body2', style },
-          `${val.toFixed(2)}${isLow ? ' (低)' : ''}`
+          `${val.toFixed(2)}${isLow ? i18n.t('shared.inventory_turnover.k0') : ''}`
         );
       },
     },
     {
       name: 'turnover_days',
-      label: '库存天数',
+      label: i18n.t('scm.inventory_turnover.k6'),
       type: 'number',
       align: 'right',
       sortable: true,
@@ -82,12 +83,12 @@ export const inventoryTurnoverSchema: EntitySchema = {
         const style: React.CSSProperties = {
           color: isHigh ? designTokens.colors.error.dark : undefined,
         };
-        return React.createElement(Typography, { variant: 'body2', style }, `${val}天`);
+        return React.createElement(Typography, { variant: 'body2', style }, `${val}${i18n.t('shared.inventory_turnover.k1')}`);
       },
     },
     {
       name: 'average_inventory',
-      label: '平均库存',
+      label: i18n.t('scm.inventory_turnover.k7'),
       type: 'number',
       align: 'right',
       listWidth: 120,
@@ -98,7 +99,7 @@ export const inventoryTurnoverSchema: EntitySchema = {
     },
     {
       name: 'cost_of_goods_sold',
-      label: '成本',
+      label: i18n.t('scm.inventory_turnover.k8'),
       type: 'number',
       align: 'right',
       listWidth: 140,
@@ -114,7 +115,7 @@ export const inventoryTurnoverSchema: EntitySchema = {
     },
     {
       name: 'abc_category',
-      label: 'ABC分类',
+      label: i18n.t('shared.inventory_turnover.abc_2'),
       type: 'text',
       listWidth: 100,
       renderCell: (row: Record<string, unknown>) => {
@@ -134,14 +135,14 @@ export const inventoryTurnoverSchema: EntitySchema = {
     },
     {
       name: 'period',
-      label: '统计周期',
+      label: i18n.t('scm.inventory_turnover.k9'),
       type: 'text',
       listWidth: 120,
       showInForm: false,
     },
     {
       name: 'sales_quantity',
-      label: '销售数量',
+      label: i18n.t('scm.inventory_turnover.k10'),
       type: 'number',
       align: 'right',
       listWidth: 110,
@@ -149,33 +150,33 @@ export const inventoryTurnoverSchema: EntitySchema = {
     },
     {
       name: 'beginning_inventory',
-      label: '期初库存',
+      label: i18n.t('scm.inventory_turnover.k11'),
       type: 'number',
       align: 'right',
       showInList: false,
     },
     {
       name: 'ending_inventory',
-      label: '期末库存',
+      label: i18n.t('scm.inventory_turnover.k12'),
       type: 'number',
       align: 'right',
       showInList: false,
     },
     {
       name: 'specification',
-      label: '规格',
+      label: i18n.t('scm.inventory_turnover.k13'),
       type: 'text',
       showInList: false,
     },
     {
       name: 'unit',
-      label: '单位',
+      label: i18n.t('scm.inventory_turnover.k14'),
       type: 'text',
       showInList: false,
     },
     {
       name: 'calculated_at',
-      label: '计算时间',
+      label: i18n.t('scm.inventory_turnover.k15'),
       type: 'datetime',
       listWidth: 160,
       showInForm: false,
@@ -198,14 +199,14 @@ export const inventoryTurnoverSchema: EntitySchema = {
     filters: [
       {
         id: 'category',
-        label: '分类',
+        label: i18n.t('scm.inventory_turnover.k16'),
         type: 'select',
         options: [
-          { label: '全部', value: 'all' },
-          { label: '原材料', value: '原材料' },
-          { label: '零部件', value: '零部件' },
-          { label: '成品', value: '成品' },
-          { label: '包装材料', value: '包装材料' },
+          { label: i18n.t('scm.inventory_turnover.k17'), value: 'all' },
+          { label: i18n.t('scm.inventory_turnover.k18'), value: i18n.t('scm.inventory_turnover.k19') },
+          { label: i18n.t('scm.inventory_turnover.k20'), value: i18n.t('scm.inventory_turnover.k21') },
+          { label: i18n.t('scm.inventory_turnover.k22'), value: i18n.t('scm.inventory_turnover.k23') },
+          { label: i18n.t('scm.inventory_turnover.k24'), value: i18n.t('scm.inventory_turnover.k25') },
         ],
       },
     ],
@@ -215,15 +216,15 @@ export const inventoryTurnoverSchema: EntitySchema = {
 
   formSections: [
     {
-      title: '基本信息',
+      title: i18n.t('scm.inventory_turnover.k26'),
       fields: ['product_code', 'product_name', 'category', 'specification', 'unit', 'period'],
     },
     {
-      title: '周转指标',
+      title: i18n.t('scm.inventory_turnover.k27'),
       fields: ['turnover_rate', 'turnover_days', 'abc_category'],
     },
     {
-      title: '库存与成本',
+      title: i18n.t('scm.inventory_turnover.k28'),
       fields: [
         'average_inventory',
         'beginning_inventory',
@@ -235,5 +236,5 @@ export const inventoryTurnoverSchema: EntitySchema = {
   ],
 
   formColCount: 2,
-  detailTitle: '库存周转详情',
+  detailTitle: i18n.t('scm.inventory_turnover.k29'),
 };

@@ -1,5 +1,6 @@
 import type { DashboardSchema, StatCardSchema, ChartSchema } from '@/schema';
 import type { WmsDashboardStats } from '@/api/wms/dashboard';
+import i18n from '@/i18n';
 
 declare global {
   interface Window {
@@ -12,54 +13,54 @@ export function useWmsDashboardSchema(): DashboardSchema {
   const statCards: StatCardSchema[] = [
     {
       id: 'total-inventory',
-      title: '库存总数',
+      title: i18n.t('wms.dashboard_schema.k0'),
       value: () => {
         const stats = window.__wmsStats;
         return (stats?.total_inventory as number)?.toLocaleString() ?? '-';
       },
       icon: 'Package',
       color: 'primary',
-      trend: { value: 0, label: '上月' },
+      trend: { value: 0, label: i18n.t('wms.dashboard_schema.k1') },
     },
     {
       id: 'pending-inbound',
-      title: '待入库',
+      title: i18n.t('wms.dashboard_schema.k2'),
       value: () => {
         const stats = window.__wmsStats;
         return (stats?.pending_inbound as number)?.toLocaleString() ?? '-';
       },
       icon: 'Clock',
       color: 'info',
-      trend: { value: 0, label: '上月' },
+      trend: { value: 0, label: i18n.t('wms.dashboard_schema.k3') },
     },
     {
       id: 'pending-outbound',
-      title: '待出库',
+      title: i18n.t('wms.dashboard_schema.k4'),
       value: () => {
         const stats = window.__wmsStats;
         return (stats?.pending_outbound as number)?.toLocaleString() ?? '-';
       },
       icon: 'Activity',
       color: 'warning',
-      trend: { value: 0, label: '上月' },
+      trend: { value: 0, label: i18n.t('wms.dashboard_schema.k5') },
     },
     {
       id: 'location-utilization',
-      title: '库位利用率',
+      title: i18n.t('wms.dashboard_schema.k6'),
       value: () => {
         const stats = window.__wmsStats;
         return stats ? `${stats?.location_utilization ?? 0}%` : '-';
       },
       icon: 'Warehouse',
       color: 'success',
-      trend: { value: 0, label: '上月' },
+      trend: { value: 0, label: i18n.t('wms.dashboard_schema.k7') },
     },
   ];
 
   const charts: ChartSchema[] = [
     {
       id: 'inbound-trend',
-      title: '入库趋势',
+      title: i18n.t('wms.dashboard_schema.k8'),
       type: 'bar',
       data: () => {
         const stats = window.__wmsStats;
@@ -71,7 +72,7 @@ export function useWmsDashboardSchema(): DashboardSchema {
     },
     {
       id: 'inventory-category',
-      title: '库存分类分布',
+      title: i18n.t('wms.dashboard_schema.k9'),
       type: 'pie',
       data: () => {
         const stats = window.__wmsStats;
@@ -84,7 +85,7 @@ export function useWmsDashboardSchema(): DashboardSchema {
     },
     {
       id: 'outbound-trend',
-      title: '出库趋势',
+      title: i18n.t('wms.dashboard_schema.k10'),
       type: 'line',
       data: () => {
         const stats = window.__wmsStats;
@@ -97,7 +98,7 @@ export function useWmsDashboardSchema(): DashboardSchema {
   ];
 
   return {
-    title: 'WMS 仪表盘',
+    title: i18n.t('shared.dashboard_schema.wms_0'),
     loader: async () => {
       const api = await import('@/api/wms/dashboard');
       const response = await api.wmsDashboardApi.getOverview();

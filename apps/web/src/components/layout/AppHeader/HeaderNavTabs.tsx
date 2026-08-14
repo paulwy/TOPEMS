@@ -2,6 +2,7 @@ import React from 'react';
 import { Box, Button } from '@mui/material';
 import { Home, Grid3X3, BarChart3 } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
+import i18n from '@/i18n';
 
 export interface HeaderNavTabsProps {
   showCentralNav?: boolean;
@@ -12,10 +13,10 @@ export const HeaderNavTabs: React.FC<HeaderNavTabsProps> = ({ showCentralNav = t
   const location = useLocation();
 
   const centralNavItems = [
-    { label: '首页', path: '/', icon: <Home style={{ width: 16, height: 16 }} /> },
-    { label: '模块概览', path: '/modules', icon: <Grid3X3 style={{ width: 16, height: 16 }} /> },
+    { label: i18n.t('shared.header_nav_tabs.k0'), path: '/', icon: <Home style={{ width: 16, height: 16 }} /> },
+    { label: i18n.t('shared.header_nav_tabs.k1'), path: '/modules', icon: <Grid3X3 style={{ width: 16, height: 16 }} /> },
     {
-      label: '数据仪表盘',
+      label: i18n.t('shared.header_nav_tabs.k2'),
       path: '/dashboard',
       icon: <BarChart3 style={{ width: 16, height: 16 }} />,
     },

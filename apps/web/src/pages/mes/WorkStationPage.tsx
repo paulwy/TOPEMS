@@ -4,7 +4,7 @@ import { createCrudPageAdapter } from '@/schema/crudPageAdapter';
 import { workstationSchema } from '@/schemas/mes';
 import { mesApi } from '@/api/mes';
 import type { WorkStation, CreateWorkStationRequest } from '@/api/mes/types';
-
+import i18n from '@/i18n';
 const apiAdapter = createCrudPageAdapter<WorkStation>(
   {
     list: mesApi.workstations.list,
@@ -14,14 +14,12 @@ const apiAdapter = createCrudPageAdapter<WorkStation>(
   },
   { itemsField: 'workstations' }
 );
-
 export default function WorkStationPage() {
   const renderStats = (rows: WorkStation[]) => {
     const total = rows.length;
     const active = rows.filter((w) => w.status === 'active').length;
     const idle = rows.filter((w) => w.status === 'idle').length;
     const maintenance = rows.filter((w) => w.status === 'maintenance').length;
-
     return (
       <Box
         sx={{
@@ -36,7 +34,7 @@ export default function WorkStationPage() {
             variant='body2'
             sx={{ color: 'text.secondary' }}
           >
-            工作站总数
+            {i18n.t('pages.work_station_page.k0')}
           </Typography>
           <Typography
             variant='h5'
@@ -50,7 +48,7 @@ export default function WorkStationPage() {
             variant='body2'
             sx={{ color: 'text.secondary' }}
           >
-            运行中
+            {i18n.t('pages.work_station_page.k1')}
           </Typography>
           <Typography
             variant='h5'
@@ -64,7 +62,7 @@ export default function WorkStationPage() {
             variant='body2'
             sx={{ color: 'text.secondary' }}
           >
-            空闲
+            {i18n.t('pages.work_station_page.k2')}
           </Typography>
           <Typography
             variant='h5'
@@ -78,7 +76,7 @@ export default function WorkStationPage() {
             variant='body2'
             sx={{ color: 'text.secondary' }}
           >
-            维护中
+            {i18n.t('pages.work_station_page.k3')}
           </Typography>
           <Typography
             variant='h5'
@@ -90,12 +88,11 @@ export default function WorkStationPage() {
       </Box>
     );
   };
-
   return (
     <CrudPage
       schema={workstationSchema}
       apiAdapter={apiAdapter}
-      breadcrumbs={[{ label: 'MES' }, { label: '工作站管理' }]}
+      breadcrumbs={[{ label: 'MES' }, { label: i18n.t('mes.work_station_page.k0') }]}
       headerContent={(rows) => renderStats(rows as WorkStation[])}
     />
   );

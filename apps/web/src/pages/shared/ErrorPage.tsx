@@ -2,6 +2,7 @@ import React from 'react';
 import { AlertCircle } from 'lucide-react';
 import { Box, Typography } from '@mui/material';
 import { BackButton } from '@topems/shared-components';
+import i18n from '@/i18n';
 
 const ErrorPage: React.FC = () => {
   return (
@@ -47,18 +48,18 @@ const ErrorPage: React.FC = () => {
           variant='h5'
           sx={{ fontWeight: 700, color: 'grey.900', mb: 1 }}
         >
-          页面加载失败
+          {i18n.t('pages.error_page.k0')}
         </Typography>
         <Typography
           variant='body1'
           sx={{ color: 'grey.600', mb: 3 }}
         >
-          抱歉，页面加载时出现错误，请返回重试
+          {i18n.t('pages.error_page.k1')}
         </Typography>
         <BackButton
           fallback='/dashboard'
           variant='text'
-          label='返回上一页'
+          label={i18n.t('pages.error_page.k0')}
         />
       </Box>
     </Box>

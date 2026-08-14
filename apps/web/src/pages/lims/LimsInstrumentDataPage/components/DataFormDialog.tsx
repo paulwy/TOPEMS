@@ -15,12 +15,11 @@ import {
   TextareaAutosize,
   Button,
 } from '@mui/material';
+import i18n from '@/i18n';
 import type { CreateInstrumentDataRequest } from '@/api/lims';
 import { formatJson, parseJsonInput } from '../utils';
 import { designTokens } from '@/theme/tokens';
-
 const ct= designTokens.colors;
-
 interface DataFormDialogProps {
   open: boolean;
   isEditing: boolean;
@@ -30,7 +29,6 @@ interface DataFormDialogProps {
   onFormDataChange: (data: CreateInstrumentDataRequest) => void;
   onSave: () => void;
 }
-
 const DataFormDialog: React.FC<DataFormDialogProps> = ({
   open,
   isEditing,
@@ -47,23 +45,23 @@ const DataFormDialog: React.FC<DataFormDialogProps> = ({
       maxWidth='sm'
       fullWidth
     >
-      <DialogTitle>{isEditing ? '编辑数据' : '新增数据'}</DialogTitle>
+      <DialogTitle>{isEditing ? i18n.t('lims.data_form_dialog.k1') : i18n.t('lims.data_form_dialog.k0')}</DialogTitle>
       <DialogContent dividers>
         <Stack
           spacing={2}
           sx={{ mt: 1 }}
         >
           <TextField
-            label='批次号'
+            label={i18n.t('lims.data_form_dialog.k2')}
             fullWidth
             value={formData.batch_no}
             onChange={(e) => onFormDataChange({ ...formData, batch_no: e.target.value })}
           />
           <FormControl fullWidth>
-            <InputLabel>协议类型</InputLabel>
+            <InputLabel>{i18n.t('lims.data_form_dialog.k3')}</InputLabel>
             <Select
               value={formData.protocol}
-              label='协议类型'
+              label={i18n.t('lims.data_form_dialog.k4')}
               onChange={(e) => onFormDataChange({ ...formData, protocol: e.target.value })}
             >
               <MenuItem value='JSON'>JSON</MenuItem>
@@ -77,7 +75,7 @@ const DataFormDialog: React.FC<DataFormDialogProps> = ({
               color='text.secondary'
               sx={{ mb: 1 }}
             >
-              原始数据 (JSON)
+              {i18n.t('pages.data_form_dialog.json_0')}
             </Typography>
             <TextareaAutosize
               minRows={8}
@@ -98,17 +96,16 @@ const DataFormDialog: React.FC<DataFormDialogProps> = ({
         </Stack>
       </DialogContent>
       <DialogActions>
-        <Button onClick={onClose}>取消</Button>
+        <Button onClick={onClose}>{i18n.t('lims.data_form_dialog.k5')}</Button>
         <Button
           variant='contained'
           onClick={onSave}
           disabled={submitting}
         >
-          {submitting ? '保存中...' : '保存'}
+          {submitting ? i18n.t('pages.data_form_dialog.k0') : i18n.t('lims.data_form_dialog.k6')}
         </Button>
       </DialogActions>
     </Dialog>
   );
 };
-
 export default DataFormDialog;

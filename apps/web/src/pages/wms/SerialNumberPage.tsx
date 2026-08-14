@@ -10,6 +10,7 @@ import type { SchemaExtensions } from '@/schema/schemaExtensions';
 import { wmsApi } from '@/api/wms';
 import { useNotificationStore } from '@/store';
 import { apiLogger } from '@/utils/logger';
+import i18n from '@/i18n';
 
 const apiAdapter = createCrudPageAdapter(wmsApi.serialNumbers);
 
@@ -17,10 +18,10 @@ const qualityStatusConfig: Record<
   string,
   { label: string; color: 'default' | 'primary' | 'success' | 'warning' | 'error' }
 > = {
-  qualified: { label: '合格', color: 'success' },
-  unqualified: { label: '不合格', color: 'error' },
-  pending: { label: '待检', color: 'warning' },
-  inspecting: { label: '检验中', color: 'primary' },
+  qualified: { label: i18n.t('pages.serial_number_page.k0'), color: 'success' },
+  unqualified: { label: i18n.t('pages.serial_number_page.k1'), color: 'error' },
+  pending: { label: i18n.t('pages.serial_number_page.k2'), color: 'warning' },
+  inspecting: { label: i18n.t('pages.serial_number_page.k3'), color: 'primary' },
 };
 
 function isWarrantyExpiringSoon(row: Record<string, unknown>): boolean {
@@ -35,7 +36,7 @@ function isWarrantyExpiringSoon(row: Record<string, unknown>): boolean {
 const customColumns: ColumnDef[] = [
   {
     id: 'serial_no',
-    label: '序列号',
+    label: i18n.t('pages.serial_number_page.k4'),
     width: 160,
     render: (row: Record<string, unknown>) => (
       <Box sx={{ fontWeight: 500, fontFamily: 'monospace' }}>
@@ -43,7 +44,7 @@ const customColumns: ColumnDef[] = [
         {isWarrantyExpiringSoon(row) && (
           <Chip
             size='small'
-            label='即将到期'
+            label={i18n.t('pages.serial_number_page.k5')}
             color='warning'
             sx={{ ml: 1, fontSize: '0.625rem', height: 16 }}
           />
@@ -53,7 +54,7 @@ const customColumns: ColumnDef[] = [
   },
   {
     id: 'material_info',
-    label: '物料信息',
+    label: i18n.t('pages.serial_number_page.k6'),
     width: 160,
     render: (row: Record<string, unknown>) => (
       <Box>
@@ -64,7 +65,7 @@ const customColumns: ColumnDef[] = [
   },
   {
     id: 'quality_status',
-    label: '质检状态',
+    label: i18n.t('pages.serial_number_page.k7'),
     width: 100,
     render: (row: Record<string, unknown>) => {
       const config =
@@ -81,7 +82,7 @@ const customColumns: ColumnDef[] = [
   },
   {
     id: 'warranty',
-    label: '质保期',
+    label: i18n.t('pages.serial_number_page.k8'),
     width: 140,
     render: (row: Record<string, unknown>) => (
       <Box sx={{ fontSize: '0.8rem' }}>
@@ -104,7 +105,7 @@ export default function SerialNumberPage() {
   const customRowActions: RowAction[] = [
     {
       key: 'trace',
-      label: '追溯',
+      label: i18n.t('pages.serial_number_page.k9'),
       icon: <History size={14} />,
       onClick: async (row: Record<string, unknown>) => {
         try {
@@ -112,29 +113,29 @@ export default function SerialNumberPage() {
           if (response.success) {
             addNotification({
               type: 'info',
-              title: '追溯信息',
-              message: `序列号 ${row.serial_no} 共有 ${response.data?.length || 0} 条追溯记录`,
+              title: i18n.t('pages.serial_number_page.k10'),
+              message: `${i18n.t('pages.serial_number_page.k0')}${row.serial_no}${i18n.t('pages.serial_number_page.k1')}${response.data?.length || 0}${i18n.t('pages.serial_number_page.k2')}`,
             });
           }
         } catch (error: unknown) {
-          apiLogger.error('追溯查询失败', error);
+          apiLogger.error(i18n.t('pages.serial_number_page.k11'), error);
           addNotification({
             type: 'error',
-            title: '追溯失败',
-            message: '无法获取追溯记录',
+            title: i18n.t('pages.serial_number_page.k12'),
+            message: i18n.t('pages.serial_number_page.k13'),
           });
         }
       },
     },
     {
       key: 'transfer',
-      label: '移库',
+      label: i18n.t('pages.serial_number_page.k14'),
       icon: <ArrowRightLeft size={14} />,
       onClick: () => {
         addNotification({
           type: 'info',
-          title: '提示',
-          message: '移库功能开发中',
+          title: i18n.t('pages.serial_number_page.k15'),
+          message: i18n.t('pages.serial_number_page.k16'),
         });
       },
     },
@@ -146,7 +147,7 @@ export default function SerialNumberPage() {
       apiAdapter={apiAdapter}
       customColumns={customColumns}
       customRowActions={customRowActions}
-      breadcrumbs={[{ label: 'WMS' }, { label: '序列号管理' }]}
+      breadcrumbs={[{ label: 'WMS' }, { label: i18n.t('pages.serial_number_page.k17') }]}
     />
   );
 }

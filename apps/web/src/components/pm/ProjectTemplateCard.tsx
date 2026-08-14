@@ -2,6 +2,7 @@ import { Card, CardContent, CardHeader, Typography, Chip, Button } from '@mui/ma
 import React from 'react';
 
 import { Clock, Tag, ArrowRight } from 'lucide-react';
+import i18n from '@/i18n';
 
 export interface ProjectTemplate {
   id: string;
@@ -135,7 +136,7 @@ const ProjectTemplateCard: React.FC<ProjectTemplateCardProps> = ({ template, onS
           }}
           onClick={() => onSelect(template)}
         >
-          使用模板
+          {i18n.t('components.project_template_card.k0')}
           <ArrowRight size={16} />
         </Button>
       </CardContent>

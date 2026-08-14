@@ -1,9 +1,10 @@
 import type { EntitySchema } from '@/schema';
+import i18n from '@/i18n';
 
 export const bomItemSchema: EntitySchema = {
   entity: 'pdm_bom_item',
-  title: 'BOM 物料',
-  description: '管理 BOM 物料清单，包括物料编号、名称、数量、单价等',
+  title: i18n.t('shared.bom_item.bom_0'),
+  description: i18n.t('pdm.bom_item.k0'),
 
   api: {
     module: 'pdm',
@@ -13,14 +14,14 @@ export const bomItemSchema: EntitySchema = {
   fields: [
     {
       name: 'level',
-      label: '层级',
+      label: i18n.t('pdm.bom_item.k1'),
       type: 'number',
       defaultValue: 1,
       listWidth: 80,
     },
     {
       name: 'part_number',
-      label: '物料编号',
+      label: i18n.t('pdm.bom_item.k2'),
       type: 'text',
       required: true,
       sortable: true,
@@ -28,7 +29,7 @@ export const bomItemSchema: EntitySchema = {
     },
     {
       name: 'part_name',
-      label: '物料名称',
+      label: i18n.t('pdm.bom_item.k3'),
       type: 'text',
       required: true,
       sortable: true,
@@ -36,7 +37,7 @@ export const bomItemSchema: EntitySchema = {
     },
     {
       name: 'quantity',
-      label: '数量',
+      label: i18n.t('pdm.bom_item.k4'),
       type: 'number',
       defaultValue: 0,
       listWidth: 80,
@@ -44,16 +45,16 @@ export const bomItemSchema: EntitySchema = {
     },
     {
       name: 'unit',
-      label: '单位',
+      label: i18n.t('pdm.bom_item.k5'),
       type: 'select',
       defaultValue: 'kg',
       options: {
         type: 'static',
         options: [
           { value: 'kg', label: 'kg' },
-          { value: '个', label: '个' },
-          { value: '米', label: '米' },
-          { value: '升', label: '升' },
+          { value: i18n.t('pdm.bom_item.k6'), label: i18n.t('pdm.bom_item.k7') },
+          { value: i18n.t('pdm.bom_item.k8'), label: i18n.t('pdm.bom_item.k9') },
+          { value: i18n.t('pdm.bom_item.k10'), label: i18n.t('pdm.bom_item.k11') },
         ],
       },
       listWidth: 80,
@@ -62,7 +63,7 @@ export const bomItemSchema: EntitySchema = {
     },
     {
       name: 'unit_price',
-      label: '单价',
+      label: i18n.t('pdm.bom_item.k12'),
       type: 'number',
       defaultValue: 0,
       listWidth: 100,
@@ -70,7 +71,7 @@ export const bomItemSchema: EntitySchema = {
     },
     {
       name: 'total_price',
-      label: '总价',
+      label: i18n.t('pdm.bom_item.k13'),
       type: 'number',
       readonly: true,
       listWidth: 100,
@@ -79,38 +80,38 @@ export const bomItemSchema: EntitySchema = {
     },
     {
       name: 'item_no',
-      label: '项次号',
+      label: i18n.t('pdm.bom_item.k14'),
       type: 'text',
       showInList: false,
     },
     {
       name: 'bom_version_id',
-      label: 'BOM 版本 ID',
+      label: i18n.t('shared.bom_item.bomid_1'),
       type: 'text',
       showInList: false,
     },
     {
       name: 'product_id',
-      label: '产品 ID',
+      label: i18n.t('pdm.bom_item.id_15'),
       type: 'text',
       showInList: false,
     },
     {
       name: 'is_alternative',
-      label: '是否替代件',
+      label: i18n.t('pdm.bom_item.k16'),
       type: 'switch',
       defaultValue: false,
       showInList: false,
     },
     {
       name: 'remarks',
-      label: '备注',
+      label: i18n.t('pdm.bom_item.k17'),
       type: 'textarea',
       showInList: false,
     },
     {
       name: 'created_at',
-      label: '创建时间',
+      label: i18n.t('pdm.bom_item.k18'),
       type: 'datetime',
       readonly: true,
       sortable: true,
@@ -119,7 +120,7 @@ export const bomItemSchema: EntitySchema = {
     },
     {
       name: 'updated_at',
-      label: '更新时间',
+      label: i18n.t('pdm.bom_item.k19'),
       type: 'datetime',
       readonly: true,
       hideInForm: true,
@@ -134,7 +135,7 @@ export const bomItemSchema: EntitySchema = {
     filters: [
       {
         id: 'product',
-        label: '选择产品',
+        label: i18n.t('pdm.bom_item.k20'),
         type: 'select',
         options: [],
       },
@@ -145,25 +146,25 @@ export const bomItemSchema: EntitySchema = {
 
   formSections: [
     {
-      title: '基本信息',
+      title: i18n.t('pdm.bom_item.k21'),
       fields: ['part_number', 'part_name', 'level', 'item_no'],
     },
     {
-      title: '数量与价格',
+      title: i18n.t('pdm.bom_item.k22'),
       fields: ['quantity', 'unit', 'unit_price', 'is_alternative'],
     },
     {
-      title: '关联信息',
+      title: i18n.t('pdm.bom_item.k23'),
       fields: ['bom_version_id', 'product_id'],
     },
     {
-      title: '备注',
+      title: i18n.t('pdm.bom_item.k24'),
       fields: ['remarks'],
     },
   ],
 
   formColCount: 2,
-  createTitle: '添加物料',
-  editTitle: '编辑物料',
-  detailTitle: '物料详情',
+  createTitle: i18n.t('pdm.bom_item.k25'),
+  editTitle: i18n.t('pdm.bom_item.k26'),
+  detailTitle: i18n.t('pdm.bom_item.k27'),
 };

@@ -11,53 +11,47 @@ import { useQmsMock, type QmsMockShape } from '@/api/qms/_mock';
 import { StatusBadge } from '@/components/qms/StatusBadge';
 import { FSMActionButtons } from '@/components/qms/FSMActionButtons';
 import { QMS_PATHS } from '@/modules/qms/config';
-
+import i18n from '@/i18n';
 const STEPS = [
-  { id: 'd1', label: 'D1 建立团队', field: 'd1Content', done: 'd1TeamEstablished' },
-  { id: 'd2', label: 'D2 问题描述', field: 'd2Content', done: 'd2ProblemDescribed' },
-  { id: 'd3', label: 'D3 临时措施', field: 'd3Content', done: 'd3ContainmentImplemented' },
-  { id: 'd4', label: 'D4 根因分析', field: 'd4Content', done: 'd4RootCauseIdentified' },
-  { id: 'd5', label: 'D5 永久措施', field: 'd5Content', done: 'd5PermanentActionSelected' },
-  { id: 'd6', label: 'D6 措施验证', field: 'd6Content', done: 'd6ActionVerified' },
-  { id: 'd7', label: 'D7 预防措施', field: 'd7Content', done: 'd7PreventiveImplemented' },
-  { id: 'd8', label: 'D8 团队认可', field: 'd8Content', done: 'd8TeamRecognized' },
+  { id: 'd1', label: i18n.t('pages.qms_eight_d_detail_page.d1_0'), field: 'd1Content', done: 'd1TeamEstablished' },
+  { id: 'd2', label: i18n.t('pages.qms_eight_d_detail_page.d2_1'), field: 'd2Content', done: 'd2ProblemDescribed' },
+  { id: 'd3', label: i18n.t('pages.qms_eight_d_detail_page.d3_2'), field: 'd3Content', done: 'd3ContainmentImplemented' },
+  { id: 'd4', label: i18n.t('pages.qms_eight_d_detail_page.d4_3'), field: 'd4Content', done: 'd4RootCauseIdentified' },
+  { id: 'd5', label: i18n.t('pages.qms_eight_d_detail_page.d5_4'), field: 'd5Content', done: 'd5PermanentActionSelected' },
+  { id: 'd6', label: i18n.t('pages.qms_eight_d_detail_page.d6_5'), field: 'd6Content', done: 'd6ActionVerified' },
+  { id: 'd7', label: i18n.t('pages.qms_eight_d_detail_page.d7_6'), field: 'd7Content', done: 'd7PreventiveImplemented' },
+  { id: 'd8', label: i18n.t('pages.qms_eight_d_detail_page.d8_7'), field: 'd8Content', done: 'd8TeamRecognized' },
 ] as const;
-
 const SEVERITY_LABELS: Record<string, string> = {
-  critical: '严重',
-  major: '重大',
-  minor: '一般',
+  critical: i18n.t('qms.qms_eight_d_detail_page.k0'),
+  major: i18n.t('qms.qms_eight_d_detail_page.k1'),
+  minor: i18n.t('qms.qms_eight_d_detail_page.k2'),
 };
-
 export default function QmsEightDDetailPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { data } = useQmsMock<QmsMockShape>();
-
   const report = useMemo(() => {
     const list = data.eightDReports ?? [];
     return list.find((r) => r.id === id) ?? list[0];
   }, [data.eightDReports, id]);
-
   if (!report) {
     return (
       <div className='p-4'>
-        <p className='text-gray-600'>未找到 8D 报告数据。</p>
+        <p className='text-gray-600'>{i18n.t('qms.qms_eight_d_detail_page.8d_3')}</p>
         <button
           onClick={() => navigate(QMS_PATHS.eightd)}
           className='mt-2 text-blue-600 underline'
         >
-          返回 8D 报告列表
+          {i18n.t('pages.qms_eight_d_detail_page.8d_0')}
         </button>
       </div>
     );
   }
-
   const handleAction = (targetStatus: string, requiresApproval: boolean) => {
     void targetStatus;
     void requiresApproval;
   };
-
   return (
     <div className='space-y-4 p-4'>
       <div className='flex items-center justify-between'>
@@ -66,7 +60,7 @@ export default function QmsEightDDetailPage() {
             onClick={() => navigate(QMS_PATHS.eightd)}
             className='mb-2 text-sm text-blue-600 hover:underline'
           >
-            ← 返回 8D 报告列表
+            {i18n.t('pages.qms_eight_d_detail_page.8d_1')}
           </button>
           <h1 className='text-2xl font-bold'>{report.reportNo}</h1>
           <p className='mt-1 text-sm text-gray-500'>{report.title}</p>
@@ -76,56 +70,52 @@ export default function QmsEightDDetailPage() {
           status={report.status}
         />
       </div>
-
       <div className='rounded-lg border p-4'>
-        <p className='mb-3 text-sm font-semibold text-gray-700'>状态机操作</p>
+        <p className='mb-3 text-sm font-semibold text-gray-700'>{i18n.t('qms.qms_eight_d_detail_page.k4')}</p>
         <FSMActionButtons
           fsm='eight_d'
           currentStatus={report.status}
           onAction={handleAction}
         />
       </div>
-
       <div className='grid grid-cols-1 gap-4 md:grid-cols-4'>
         <Field
-          label='当前阶段'
+          label={i18n.t('qms.qms_eight_d_detail_page.k5')}
           value={`D${report.currentStage}`}
         />
         <Field
-          label='严重度'
+          label={i18n.t('qms.qms_eight_d_detail_page.k6')}
           value={SEVERITY_LABELS[report.severity] ?? report.severity}
         />
         <Field
-          label='团队负责人'
+          label={i18n.t('qms.qms_eight_d_detail_page.k7')}
           value={report.teamLeader ?? '-'}
         />
         <Field
-          label='客户'
+          label={i18n.t('qms.qms_eight_d_detail_page.k8')}
           value={report.customer ?? '-'}
         />
         <Field
-          label='产品'
+          label={i18n.t('qms.qms_eight_d_detail_page.k9')}
           value={report.productName ?? '-'}
         />
         <Field
-          label='来源'
+          label={i18n.t('qms.qms_eight_d_detail_page.k10')}
           value={report.source ?? '-'}
         />
         <Field
-          label='截止日期'
+          label={i18n.t('qms.qms_eight_d_detail_page.k11')}
           value={report.dueDate ? new Date(report.dueDate).toLocaleDateString('zh-CN') : '-'}
         />
         <Field
-          label='关闭时间'
+          label={i18n.t('qms.qms_eight_d_detail_page.k12')}
           value={report.closedAt ? new Date(report.closedAt).toLocaleString('zh-CN') : '-'}
         />
       </div>
-
       <div className='rounded-lg border p-4'>
-        <p className='text-xs text-gray-500'>问题描述</p>
+        <p className='text-xs text-gray-500'>{i18n.t('qms.qms_eight_d_detail_page.k13')}</p>
         <p className='mt-1 text-sm leading-relaxed'>{report.problemDescription}</p>
       </div>
-
       <div className='rounded-lg border p-4'>
         <h3 className='mb-4 font-semibold'>8D 步骤时间线</h3>
         <ol className='relative space-y-4 border-l-2 border-blue-200 pl-6'>
@@ -159,7 +149,7 @@ export default function QmsEightDDetailPage() {
                             : 'bg-gray-100 text-gray-500'
                       }`}
                     >
-                      {isDone ? '已完成' : isCurrent ? '进行中' : '待处理'}
+                      {isDone ? i18n.t('qms.qms_eight_d_detail_page.k16') : isCurrent ? i18n.t('qms.qms_eight_d_detail_page.k15') : i18n.t('qms.qms_eight_d_detail_page.k14')}
                     </span>
                   </div>
                   {content && <p className='mt-2 text-sm text-gray-700'>{content}</p>}
@@ -169,20 +159,19 @@ export default function QmsEightDDetailPage() {
           })}
         </ol>
       </div>
-
       <div className='rounded-lg border p-4'>
-        <h3 className='mb-3 font-semibold'>审计日志</h3>
+        <h3 className='mb-3 font-semibold'>{i18n.t('qms.qms_eight_d_detail_page.k17')}</h3>
         <ul className='space-y-2 text-sm'>
           <li className='flex gap-3'>
             <span className='text-gray-500'>
               [{report.createdAt ? new Date(report.createdAt).toLocaleString('zh-CN') : '-'}]
             </span>
-            <span>启动 8D 报告，阶段 D1</span>
+            <span>{i18n.t('qms.qms_eight_d_detail_page.8dd1_18')}</span>
           </li>
           {report.currentStage >= 4 && (
             <li className='flex gap-3'>
               <span className='text-gray-500'>[根因分析完成]</span>
-              <span>完成 D4 根因分析</span>
+              <span>{i18n.t('qms.qms_eight_d_detail_page.d4_19')}</span>
             </li>
           )}
           {report.closedAt && (
@@ -198,7 +187,6 @@ export default function QmsEightDDetailPage() {
     </div>
   );
 }
-
 function Field({ label, value }: { label: string; value: string }) {
   return (
     <div className='rounded-lg border p-3'>

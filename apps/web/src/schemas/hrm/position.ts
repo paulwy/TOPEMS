@@ -3,6 +3,7 @@ import { departmentApi, type Department } from '@/api/hrm';
 
 
 import { QUERY_KEYS } from '@/lib/reactQuery';
+import i18n from '@/i18n';
 
 async function loadDepartmentOptions(): Promise<{ value: string; label: string }[]> {
   try {
@@ -19,8 +20,8 @@ async function loadDepartmentOptions(): Promise<{ value: string; label: string }
 
 export const positionSchema: EntitySchema = {
   entity: 'hrm_position',
-  title: '岗位管理',
-  description: '管理企业岗位信息，包括岗位名称、编码、部门、级别、薪资范围、状态等',
+  title: i18n.t('hrm.position.k0'),
+  description: i18n.t('hrm.position.k1'),
 
   api: {
     module: 'hrm',
@@ -30,7 +31,7 @@ export const positionSchema: EntitySchema = {
   fields: [
     {
       name: 'name',
-      label: '岗位名称',
+      label: i18n.t('hrm.position.k2'),
       type: 'text',
       required: true,
       sortable: true,
@@ -39,7 +40,7 @@ export const positionSchema: EntitySchema = {
     },
     {
       name: 'code',
-      label: '岗位编码',
+      label: i18n.t('hrm.position.k3'),
       type: 'text',
       readonlyOnEdit: true,
       listWidth: 120,
@@ -47,45 +48,45 @@ export const positionSchema: EntitySchema = {
     },
     {
       name: 'department_id',
-      label: '所属部门',
+      label: i18n.t('hrm.position.k4'),
       type: 'select',
       listWidth: 140,
     },
     {
       name: 'level',
-      label: '岗位级别',
+      label: i18n.t('hrm.position.k5'),
       type: 'text',
       listWidth: 100,
     },
     {
       name: 'min_salary',
-      label: '最低薪资',
+      label: i18n.t('hrm.position.k6'),
       type: 'number',
       listWidth: 100,
     },
     {
       name: 'max_salary',
-      label: '最高薪资',
+      label: i18n.t('hrm.position.k7'),
       type: 'number',
       listWidth: 100,
     },
     {
       name: 'employee_count',
-      label: '在岗人数',
+      label: i18n.t('hrm.position.k8'),
       type: 'number',
       listWidth: 100,
     },
     {
       name: 'status',
-      label: '状态',
+      label: i18n.t('hrm.position.k9'),
       type: 'select',
       required: true,
       defaultValue: 'active',
       options: {
         type: 'static',
         options: [
-          { value: 'active', label: '启用' },
-          { value: 'inactive', label: '停用' },
+          { value: 'active', label: i18n.t('hrm.position.k10') },
+          { value: 'inactive', label: i18n.t('hrm.position.k11') },
         ],
       },
       listWidth: 100,
@@ -93,19 +94,19 @@ export const positionSchema: EntitySchema = {
     },
     {
       name: 'description',
-      label: '岗位描述',
+      label: i18n.t('hrm.position.k12'),
       type: 'textarea',
       showInList: false,
     },
     {
       name: 'requirements',
-      label: '任职要求',
+      label: i18n.t('hrm.position.k13'),
       type: 'textarea',
       showInList: false,
     },
     {
       name: 'created_at',
-      label: '创建时间',
+      label: i18n.t('hrm.position.k14'),
       type: 'datetime',
       readonly: true,
       hideInForm: true,
@@ -114,7 +115,7 @@ export const positionSchema: EntitySchema = {
     },
     {
       name: 'updated_at',
-      label: '更新时间',
+      label: i18n.t('hrm.position.k15'),
       type: 'datetime',
       readonly: true,
       hideInForm: true,
@@ -144,26 +145,26 @@ export const positionSchema: EntitySchema = {
         inactive: 'default',
       },
       labelMap: {
-        active: '启用',
-        inactive: '停用',
+        active: i18n.t('hrm.position.k16'),
+        inactive: i18n.t('hrm.position.k17'),
       },
     },
     filters: [
       {
         id: 'department_id',
-        label: '所属部门',
+        label: i18n.t('hrm.position.k18'),
         type: 'select',
         paramName: 'department_id',
-        options: [{ label: '全部部门', value: 'all' }],
+        options: [{ label: i18n.t('hrm.position.k19'), value: 'all' }],
       },
       {
         id: 'status',
-        label: '状态',
+        label: i18n.t('hrm.position.k20'),
         type: 'select',
         options: [
-          { label: '全部状态', value: 'all' },
-          { label: '启用', value: 'active' },
-          { label: '停用', value: 'inactive' },
+          { label: i18n.t('hrm.position.k21'), value: 'all' },
+          { label: i18n.t('hrm.position.k22'), value: 'active' },
+          { label: i18n.t('hrm.position.k23'), value: 'inactive' },
         ],
       },
     ],
@@ -181,21 +182,21 @@ export const positionSchema: EntitySchema = {
 
   formSections: [
     {
-      title: '基本信息',
+      title: i18n.t('hrm.position.k24'),
       fields: ['name', 'code', 'department_id', 'level', 'status'],
     },
     {
-      title: '薪资范围',
+      title: i18n.t('hrm.position.k25'),
       fields: ['min_salary', 'max_salary'],
     },
     {
-      title: '详细描述',
+      title: i18n.t('hrm.position.k26'),
       fields: ['description', 'requirements'],
     },
   ],
 
   formColCount: 2,
-  createTitle: '新增岗位',
-  editTitle: '编辑岗位',
-  detailTitle: '岗位详情',
+  createTitle: i18n.t('hrm.position.k27'),
+  editTitle: i18n.t('hrm.position.k28'),
+  detailTitle: i18n.t('hrm.position.k29'),
 };

@@ -1,5 +1,6 @@
 import type { DashboardSchema, StatCardSchema, ChartSchema } from '@/schema';
 import type { EhsDashboardStats } from '@/api/ehs/dashboard';
+import i18n from '@/i18n';
 
 declare global {
   interface Window {
@@ -12,54 +13,54 @@ export function useEhsDashboardSchema(): DashboardSchema {
   const statCards: StatCardSchema[] = [
     {
       id: 'accident-total',
-      title: '事故总数',
+      title: i18n.t('ehs.dashboard_schema.k0'),
       value: () => {
         const stats = window.__ehsStats;
         return (stats?.total_accidents as number)?.toLocaleString() ?? '-';
       },
       icon: 'AlertCircle',
       color: 'error',
-      trend: { value: 0, label: '上月' },
+      trend: { value: 0, label: i18n.t('ehs.dashboard_schema.k1') },
     },
     {
       id: 'pending-hazards',
-      title: '待处理隐患',
+      title: i18n.t('ehs.dashboard_schema.k2'),
       value: () => {
         const stats = window.__ehsStats;
         return (stats?.pending_hazards as number)?.toLocaleString() ?? '-';
       },
       icon: 'ClipboardList',
       color: 'warning',
-      trend: { value: 0, label: '上月' },
+      trend: { value: 0, label: i18n.t('ehs.dashboard_schema.k3') },
     },
     {
       id: 'training-rate',
-      title: '安全培训完成率',
+      title: i18n.t('ehs.dashboard_schema.k4'),
       value: () => {
         const stats = window.__ehsStats;
         return stats ? `${stats?.training_rate ?? 0}%` : '-';
       },
       icon: 'CheckCircle',
       color: 'success',
-      trend: { value: 0, label: '上月' },
+      trend: { value: 0, label: i18n.t('ehs.dashboard_schema.k5') },
     },
     {
       id: 'drill-count',
-      title: '应急演练次数',
+      title: i18n.t('ehs.dashboard_schema.k6'),
       value: () => {
         const stats = window.__ehsStats;
         return (stats?.drill_count as number)?.toLocaleString() ?? '-';
       },
       icon: 'Activity',
       color: 'primary',
-      trend: { value: 0, label: '上月' },
+      trend: { value: 0, label: i18n.t('ehs.dashboard_schema.k7') },
     },
   ];
 
   const charts: ChartSchema[] = [
     {
       id: 'accident-trend',
-      title: '事故趋势',
+      title: i18n.t('ehs.dashboard_schema.k8'),
       type: 'bar',
       data: () => {
         const stats = window.__ehsStats;
@@ -71,7 +72,7 @@ export function useEhsDashboardSchema(): DashboardSchema {
     },
     {
       id: 'hazard-type-distribution',
-      title: '隐患类型分布',
+      title: i18n.t('ehs.dashboard_schema.k9'),
       type: 'pie',
       data: () => {
         const stats = window.__ehsStats;
@@ -84,7 +85,7 @@ export function useEhsDashboardSchema(): DashboardSchema {
     },
     {
       id: 'training-completion-rate',
-      title: '培训完成率',
+      title: i18n.t('ehs.dashboard_schema.k10'),
       type: 'line',
       data: () => {
         const stats = window.__ehsStats;
@@ -97,7 +98,7 @@ export function useEhsDashboardSchema(): DashboardSchema {
   ];
 
   return {
-    title: 'EHS 仪表盘',
+    title: i18n.t('shared.dashboard_schema.ehs_0'),
     loader: async () => {
       const api = await import('@/api/ehs/dashboard');
       const response = await api.ehsDashboardApi.getOverview();

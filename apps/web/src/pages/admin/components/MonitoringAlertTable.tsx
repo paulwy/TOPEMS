@@ -5,13 +5,12 @@ import React, { useMemo } from 'react';
 import { Box, Typography, Chip } from '@mui/material';
 import type { ChipProps } from '@mui/material';
 import { Clock, AlertCircle, AlertTriangle, Bell } from 'lucide-react';
-import { useTranslation } from 'react-i18next';
 import ListPageTemplate, {
   type ColumnDef,
   type RowAction,
 } from '@/components/templates/ListPageTemplate';
+import i18n from '@/i18n';
 import type { Alert } from '@/api/admin/monitoring';
-
 export interface MonitoringAlertTableProps {
   alerts: Alert[];
   loading: boolean;
@@ -25,9 +24,7 @@ export interface MonitoringAlertTableProps {
   filterContent: React.ReactNode;
   headerContent: React.ReactNode;
 }
-
 const PER_PAGE = 20;
-
 const InfoIcon: React.FC<{ className?: string }> = ({ className }) => (
   <div className={className}>
     <svg
@@ -61,7 +58,6 @@ const InfoIcon: React.FC<{ className?: string }> = ({ className }) => (
     </svg>
   </div>
 );
-
 export const MonitoringAlertTable: React.FC<MonitoringAlertTableProps> = ({
   alerts,
   loading,
@@ -75,8 +71,6 @@ export const MonitoringAlertTable: React.FC<MonitoringAlertTableProps> = ({
   filterContent,
   headerContent,
 }) => {
-  const { t } = useTranslation();
-
   const getLevelIcon = (level: string) => {
     switch (level) {
       case 'critical':
@@ -89,17 +83,15 @@ export const MonitoringAlertTable: React.FC<MonitoringAlertTableProps> = ({
         return <Bell className='w-5 h-5 text-gray-600' />;
     }
   };
-
   const getLevelLabel = (level: string) => {
     const labels: Record<string, string> = {
-      critical: t('admin.monitoring_alert.critical'),
-      warning: t('admin.monitoring_alert.warning'),
-      info: t('admin.monitoring_alert.info'),
-      error: t('admin.monitoring_alert.error'),
+      critical: i18n.t('admin.monitoring_alert.critical'),
+      warning: i18n.t('admin.monitoring_alert.warning'),
+      info: i18n.t('admin.monitoring_alert.info'),
+      error: i18n.t('admin.monitoring_alert.error'),
     };
     return labels[level] || level;
   };
-
   const getLevelColor = (level: string) => {
     switch (level) {
       case 'critical':
@@ -113,18 +105,16 @@ export const MonitoringAlertTable: React.FC<MonitoringAlertTableProps> = ({
         return 'default';
     }
   };
-
   const getStatusLabel = (status: string) => {
     const labels: Record<string, string> = {
-      pending: t('admin.monitoring_alert.pending'),
-      acknowledged: t('admin.monitoring_alert.acknowledged'),
-      resolved: t('admin.monitoring_alert.resolved'),
-      escalated: t('admin.monitoring_alert.escalated'),
-      dismissed: t('admin.monitoring_alert.dismissed'),
+      pending: i18n.t('admin.monitoring_alert.pending'),
+      acknowledged: i18n.t('admin.monitoring_alert.acknowledged'),
+      resolved: i18n.t('admin.monitoring_alert.resolved'),
+      escalated: i18n.t('admin.monitoring_alert.escalated'),
+      dismissed: i18n.t('admin.monitoring_alert.dismissed'),
     };
     return labels[status] || status;
   };
-
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'pending':
@@ -141,12 +131,11 @@ export const MonitoringAlertTable: React.FC<MonitoringAlertTableProps> = ({
         return 'default';
     }
   };
-
   const alertColumns: ColumnDef<Alert>[] = useMemo(
     () => [
       {
         id: 'level',
-        label: t('admin.monitoring_alert.level'),
+        label: i18n.t('admin.monitoring_alert.level'),
         render: (row) => (
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
             {getLevelIcon(row.level)}
@@ -160,12 +149,12 @@ export const MonitoringAlertTable: React.FC<MonitoringAlertTableProps> = ({
       },
       {
         id: 'title',
-        label: t('admin.monitoring_alert.title'),
+        label: i18n.t('admin.monitoring_alert.title'),
         render: (row) => <Typography sx={{ fontWeight: 'medium' }}>{row.title}</Typography>,
       },
       {
         id: 'message',
-        label: t('admin.monitoring_alert.content'),
+        label: i18n.t('admin.monitoring_alert.content'),
         render: (row) => (
           <Typography
             variant='body2'
@@ -183,7 +172,7 @@ export const MonitoringAlertTable: React.FC<MonitoringAlertTableProps> = ({
       },
       {
         id: 'source',
-        label: t('admin.monitoring_alert.source'),
+        label: i18n.t('admin.monitoring_alert.source'),
         render: (row) => (
           <Chip
             label={row.source}
@@ -193,7 +182,7 @@ export const MonitoringAlertTable: React.FC<MonitoringAlertTableProps> = ({
       },
       {
         id: 'created_at',
-        label: t('admin.monitoring_alert.time'),
+        label: i18n.t('admin.monitoring_alert.time'),
         render: (row) => (
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
             <Clock className='w-4 h-4' />
@@ -205,7 +194,7 @@ export const MonitoringAlertTable: React.FC<MonitoringAlertTableProps> = ({
       },
       {
         id: 'status',
-        label: t('admin.monitoring_alert.status'),
+        label: i18n.t('admin.monitoring_alert.status'),
         render: (row) => (
           <Chip
             label={getStatusLabel(row.status)}
@@ -215,34 +204,32 @@ export const MonitoringAlertTable: React.FC<MonitoringAlertTableProps> = ({
         ),
       },
     ],
-    [t]
+    [i18n.t]
   );
-
   const alertRowActions: RowAction<Alert>[] = useMemo(
     () => [
       {
         key: 'acknowledge',
-        label: t('admin.monitoring_alert_page.text_e83a25'),
+        label: i18n.t('admin.monitoring_alert_page.text_e83a25'),
         onClick: (row) => onAcknowledge(row.id),
         show: (row) => row.status === 'pending',
       },
       {
         key: 'resolve',
-        label: t('admin.monitoring_alert_page.text_4b8621'),
+        label: i18n.t('admin.monitoring_alert_page.text_4b8621'),
         onClick: (row) => onResolve(row.id),
         show: (row) => row.status === 'acknowledged',
       },
       {
         key: 'escalate',
-        label: t('admin.monitoring_alert_page.text_e643c7'),
+        label: i18n.t('admin.monitoring_alert_page.text_e643c7'),
         color: 'error',
         onClick: (row) => onEscalate(row.id),
         show: (row) => row.status !== 'escalated' && row.status !== 'resolved',
       },
     ],
-    [t, onAcknowledge, onResolve, onEscalate]
+    [i18n.t, onAcknowledge, onResolve, onEscalate]
   );
-
   return (
     <ListPageTemplate<Alert>
       title={undefined}
@@ -261,12 +248,11 @@ export const MonitoringAlertTable: React.FC<MonitoringAlertTableProps> = ({
       }}
       headerContent={headerContent}
       filterContent={filterContent}
-      emptyMessage={t('admin.monitoring_alert_page.text_b2397d')}
+      emptyMessage={i18n.t('admin.monitoring_alert_page.text_b2397d')}
       onRefresh={onRefresh}
       showRowNumber={false}
       exportable={false}
     />
   );
 };
-
 export default MonitoringAlertTable;

@@ -4,12 +4,11 @@
  */
 import React from 'react';
 import { Box, Typography, List, Divider, useTheme } from '@mui/material';
-import { useTranslation } from 'react-i18next';
 import { CheckSquare } from 'lucide-react';
 import { PullToRefresh, MobileSkeleton } from '@/components/mobile';
 import type { ApprovalItem } from '../hooks/useMobileApproval';
 import { ApprovalCard } from './ApprovalCard';
-
+import i18n from '@/i18n';
 interface ApprovalListProps {
   loading: boolean;
   filteredApprovals: ApprovalItem[];
@@ -19,7 +18,6 @@ interface ApprovalListProps {
   onApprove?: (approval: ApprovalItem) => void;
   onReject?: (approval: ApprovalItem) => void;
 }
-
 export const ApprovalList: React.FC<ApprovalListProps> = ({
   loading,
   filteredApprovals,
@@ -29,9 +27,7 @@ export const ApprovalList: React.FC<ApprovalListProps> = ({
   onApprove,
   onReject,
 }) => {
-  const { t } = useTranslation();
   const theme = useTheme();
-
   return (
     <PullToRefresh onRefresh={onRefresh}>
       {loading ? (
@@ -68,7 +64,7 @@ export const ApprovalList: React.FC<ApprovalListProps> = ({
             variant='subtitle1'
             sx={{ mb: 1, fontWeight: 500 }}
           >
-            {t('mobile.approval.status.empty')}
+            {i18n.t('mobile.approval.status.empty')}
           </Typography>
           <Typography
             variant='body2'
@@ -76,8 +72,8 @@ export const ApprovalList: React.FC<ApprovalListProps> = ({
             sx={{ textAlign: 'center' }}
           >
             {searchQuery
-              ? ` + ${t('mobile.approval.status.no_match')} + `
-              : t('mobile.approval.status.empty_desc')}
+              ? ` + ${i18n.t('mobile.approval.status.no_match')} + `
+              : i18n.t('mobile.approval.status.empty_desc')}
           </Typography>
         </Box>
       ) : (

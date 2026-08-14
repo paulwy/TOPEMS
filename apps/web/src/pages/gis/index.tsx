@@ -131,7 +131,7 @@ const GisContent: React.FC = () => {
                 <>
                   <th
                     style={{
-                      padding: '12px 16px',
+                      padding: `${designTokens.spacing.md} 16px`,
                       textAlign: 'left',
                       fontWeight: 500,
                       color: 'grey.700',
@@ -141,7 +141,7 @@ const GisContent: React.FC = () => {
                   </th>
                   <th
                     style={{
-                      padding: '12px 16px',
+                      padding: `${designTokens.spacing.md} 16px`,
                       textAlign: 'left',
                       fontWeight: 500,
                       color: 'grey.700',
@@ -151,7 +151,7 @@ const GisContent: React.FC = () => {
                   </th>
                   <th
                     style={{
-                      padding: '12px 16px',
+                      padding: `${designTokens.spacing.md} 16px`,
                       textAlign: 'left',
                       fontWeight: 500,
                       color: 'grey.700',
@@ -161,7 +161,7 @@ const GisContent: React.FC = () => {
                   </th>
                   <th
                     style={{
-                      padding: '12px 16px',
+                      padding: `${designTokens.spacing.md} 16px`,
                       textAlign: 'left',
                       fontWeight: 500,
                       color: 'grey.700',
@@ -175,7 +175,7 @@ const GisContent: React.FC = () => {
                 <>
                   <th
                     style={{
-                      padding: '12px 16px',
+                      padding: `${designTokens.spacing.md} 16px`,
                       textAlign: 'left',
                       fontWeight: 500,
                       color: 'grey.700',
@@ -185,7 +185,7 @@ const GisContent: React.FC = () => {
                   </th>
                   <th
                     style={{
-                      padding: '12px 16px',
+                      padding: `${designTokens.spacing.md} 16px`,
                       textAlign: 'left',
                       fontWeight: 500,
                       color: 'grey.700',
@@ -195,7 +195,7 @@ const GisContent: React.FC = () => {
                   </th>
                   <th
                     style={{
-                      padding: '12px 16px',
+                      padding: `${designTokens.spacing.md} 16px`,
                       textAlign: 'left',
                       fontWeight: 500,
                       color: 'grey.700',
@@ -205,7 +205,7 @@ const GisContent: React.FC = () => {
                   </th>
                   <th
                     style={{
-                      padding: '12px 16px',
+                      padding: `${designTokens.spacing.md} 16px`,
                       textAlign: 'left',
                       fontWeight: 500,
                       color: 'grey.700',
@@ -215,7 +215,7 @@ const GisContent: React.FC = () => {
                   </th>
                   <th
                     style={{
-                      padding: '12px 16px',
+                      padding: `${designTokens.spacing.md} 16px`,
                       textAlign: 'left',
                       fontWeight: 500,
                       color: 'grey.700',
@@ -229,7 +229,7 @@ const GisContent: React.FC = () => {
                 <>
                   <th
                     style={{
-                      padding: '12px 16px',
+                      padding: `${designTokens.spacing.md} 16px`,
                       textAlign: 'left',
                       fontWeight: 500,
                       color: 'grey.700',
@@ -239,7 +239,7 @@ const GisContent: React.FC = () => {
                   </th>
                   <th
                     style={{
-                      padding: '12px 16px',
+                      padding: `${designTokens.spacing.md} 16px`,
                       textAlign: 'left',
                       fontWeight: 500,
                       color: 'grey.700',
@@ -249,7 +249,7 @@ const GisContent: React.FC = () => {
                   </th>
                   <th
                     style={{
-                      padding: '12px 16px',
+                      padding: `${designTokens.spacing.md} 16px`,
                       textAlign: 'left',
                       fontWeight: 500,
                       color: 'grey.700',
@@ -259,7 +259,7 @@ const GisContent: React.FC = () => {
                   </th>
                   <th
                     style={{
-                      padding: '12px 16px',
+                      padding: `${designTokens.spacing.md} 16px`,
                       textAlign: 'left',
                       fontWeight: 500,
                       color: 'grey.700',
@@ -273,7 +273,7 @@ const GisContent: React.FC = () => {
                 <>
                   <th
                     style={{
-                      padding: '12px 16px',
+                      padding: `${designTokens.spacing.md} 16px`,
                       textAlign: 'left',
                       fontWeight: 500,
                       color: 'grey.700',
@@ -283,7 +283,7 @@ const GisContent: React.FC = () => {
                   </th>
                   <th
                     style={{
-                      padding: '12px 16px',
+                      padding: `${designTokens.spacing.md} 16px`,
                       textAlign: 'left',
                       fontWeight: 500,
                       color: 'grey.700',
@@ -293,7 +293,7 @@ const GisContent: React.FC = () => {
                   </th>
                   <th
                     style={{
-                      padding: '12px 16px',
+                      padding: `${designTokens.spacing.md} 16px`,
                       textAlign: 'left',
                       fontWeight: 500,
                       color: 'grey.700',
@@ -303,7 +303,7 @@ const GisContent: React.FC = () => {
                   </th>
                   <th
                     style={{
-                      padding: '12px 16px',
+                      padding: `${designTokens.spacing.md} 16px`,
                       textAlign: 'left',
                       fontWeight: 500,
                       color: 'grey.700',
@@ -317,7 +317,7 @@ const GisContent: React.FC = () => {
                 <>
                   <th
                     style={{
-                      padding: '12px 16px',
+                      padding: `${designTokens.spacing.md} 16px`,
                       textAlign: 'left',
                       fontWeight: 500,
                       color: 'grey.700',
@@ -327,7 +327,7 @@ const GisContent: React.FC = () => {
                   </th>
                   <th
                     style={{
-                      padding: '12px 16px',
+                      padding: `${designTokens.spacing.md} 16px`,
                       textAlign: 'left',
                       fontWeight: 500,
                       color: 'grey.700',
@@ -337,7 +337,7 @@ const GisContent: React.FC = () => {
                   </th>
                   <th
                     style={{
-                      padding: '12px 16px',
+                      padding: `${designTokens.spacing.md} 16px`,
                       textAlign: 'left',
                       fontWeight: 500,
                       color: 'grey.700',
@@ -347,7 +347,7 @@ const GisContent: React.FC = () => {
                   </th>
                   <th
                     style={{
-                      padding: '12px 16px',
+                      padding: `${designTokens.spacing.md} 16px`,
                       textAlign: 'left',
                       fontWeight: 500,
                       color: 'grey.700',
@@ -361,7 +361,7 @@ const GisContent: React.FC = () => {
                 <>
                   <th
                     style={{
-                      padding: '12px 16px',
+                      padding: `${designTokens.spacing.md} 16px`,
                       textAlign: 'left',
                       fontWeight: 500,
                       color: 'grey.700',
@@ -371,7 +371,7 @@ const GisContent: React.FC = () => {
                   </th>
                   <th
                     style={{
-                      padding: '12px 16px',
+                      padding: `${designTokens.spacing.md} 16px`,
                       textAlign: 'left',
                       fontWeight: 500,
                       color: 'grey.700',
@@ -381,7 +381,7 @@ const GisContent: React.FC = () => {
                   </th>
                   <th
                     style={{
-                      padding: '12px 16px',
+                      padding: `${designTokens.spacing.md} 16px`,
                       textAlign: 'left',
                       fontWeight: 500,
                       color: 'grey.700',
@@ -391,7 +391,7 @@ const GisContent: React.FC = () => {
                   </th>
                   <th
                     style={{
-                      padding: '12px 16px',
+                      padding: `${designTokens.spacing.md} 16px`,
                       textAlign: 'left',
                       fontWeight: 500,
                       color: 'grey.700',
@@ -401,7 +401,7 @@ const GisContent: React.FC = () => {
                   </th>
                   <th
                     style={{
-                      padding: '12px 16px',
+                      padding: `${designTokens.spacing.md} 16px`,
                       textAlign: 'left',
                       fontWeight: 500,
                       color: 'grey.700',
@@ -420,18 +420,18 @@ const GisContent: React.FC = () => {
                   key={item.id}
                   style={{ borderTop: '1px solid grey.200' }}
                 >
-                  <td style={{ padding: '12px 16px' }}>{item.name}</td>
-                  <td style={{ padding: '12px 16px' }}>{item.device_type}</td>
+                  <td style={{ padding: `${designTokens.spacing.md} 16px` }}>{item.name}</td>
+                  <td style={{ padding: `${designTokens.spacing.md} 16px` }}>{item.device_type}</td>
                   <td
                     style={{
-                      padding: '12px 16px',
+                      padding: `${designTokens.spacing.md} 16px`,
                       fontFamily: 'monospace',
                       fontSize: '0.75rem',
                     }}
                   >
                     {item.latitude?.toFixed(4)}, {item.longitude?.toFixed(4)}
                   </td>
-                  <td style={{ padding: '12px 16px' }}>{<StatusChip status={item.status} />}</td>
+                  <td style={{ padding: `${designTokens.spacing.md} 16px` }}>{<StatusChip status={item.status} />}</td>
                 </tr>
               ))}
             {type === 'pipelines' &&
@@ -440,11 +440,11 @@ const GisContent: React.FC = () => {
                   key={item.id}
                   style={{ borderTop: '1px solid grey.200' }}
                 >
-                  <td style={{ padding: '12px 16px' }}>{item.name}</td>
-                  <td style={{ padding: '12px 16px' }}>{item.pipeline_type}</td>
+                  <td style={{ padding: `${designTokens.spacing.md} 16px` }}>{item.name}</td>
+                  <td style={{ padding: `${designTokens.spacing.md} 16px` }}>{item.pipeline_type}</td>
                   <td
                     style={{
-                      padding: '12px 16px',
+                      padding: `${designTokens.spacing.md} 16px`,
                       fontFamily: 'monospace',
                       fontSize: '0.75rem',
                     }}
@@ -455,7 +455,7 @@ const GisContent: React.FC = () => {
                   </td>
                   <td
                     style={{
-                      padding: '12px 16px',
+                      padding: `${designTokens.spacing.md} 16px`,
                       fontFamily: 'monospace',
                       fontSize: '0.75rem',
                     }}
@@ -464,7 +464,7 @@ const GisContent: React.FC = () => {
                       ? `${item.end_point[0].toFixed(4)}, ${item.end_point[1].toFixed(4)}`
                       : ''}
                   </td>
-                  <td style={{ padding: '12px 16px' }}>{<StatusChip status={item.status} />}</td>
+                  <td style={{ padding: `${designTokens.spacing.md} 16px` }}>{<StatusChip status={item.status} />}</td>
                 </tr>
               ))}
             {type === 'storageLocations' &&
@@ -473,12 +473,12 @@ const GisContent: React.FC = () => {
                   key={item.id}
                   style={{ borderTop: '1px solid grey.200' }}
                 >
-                  <td style={{ padding: '12px 16px' }}>{item.name}</td>
-                  <td style={{ padding: '12px 16px' }}>{item.location_type}</td>
-                  <td style={{ padding: '12px 16px' }}>{item.capacity}</td>
+                  <td style={{ padding: `${designTokens.spacing.md} 16px` }}>{item.name}</td>
+                  <td style={{ padding: `${designTokens.spacing.md} 16px` }}>{item.location_type}</td>
+                  <td style={{ padding: `${designTokens.spacing.md} 16px` }}>{item.capacity}</td>
                   <td
                     style={{
-                      padding: '12px 16px',
+                      padding: `${designTokens.spacing.md} 16px`,
                       fontFamily: 'monospace',
                       fontSize: '0.75rem',
                     }}
@@ -493,10 +493,10 @@ const GisContent: React.FC = () => {
                   key={item.id}
                   style={{ borderTop: '1px solid grey.200' }}
                 >
-                  <td style={{ padding: '12px 16px' }}>{item.title}</td>
-                  <td style={{ padding: '12px 16px' }}>{item.evidence_type}</td>
-                  <td style={{ padding: '12px 16px' }}>{item.recorded_by}</td>
-                  <td style={{ padding: '12px 16px' }}>
+                  <td style={{ padding: `${designTokens.spacing.md} 16px` }}>{item.title}</td>
+                  <td style={{ padding: `${designTokens.spacing.md} 16px` }}>{item.evidence_type}</td>
+                  <td style={{ padding: `${designTokens.spacing.md} 16px` }}>{item.recorded_by}</td>
+                  <td style={{ padding: `${designTokens.spacing.md} 16px` }}>
                     {item.recorded_at ? new Date(item.recorded_at).toLocaleString() : ''}
                   </td>
                 </tr>
@@ -507,10 +507,10 @@ const GisContent: React.FC = () => {
                   key={item.id}
                   style={{ borderTop: '1px solid grey.200' }}
                 >
-                  <td style={{ padding: '12px 16px' }}>{item.name}</td>
-                  <td style={{ padding: '12px 16px' }}>{item.code}</td>
-                  <td style={{ padding: '12px 16px' }}>{item.map_type}</td>
-                  <td style={{ padding: '12px 16px' }}>
+                  <td style={{ padding: `${designTokens.spacing.md} 16px` }}>{item.name}</td>
+                  <td style={{ padding: `${designTokens.spacing.md} 16px` }}>{item.code}</td>
+                  <td style={{ padding: `${designTokens.spacing.md} 16px` }}>{item.map_type}</td>
+                  <td style={{ padding: `${designTokens.spacing.md} 16px` }}>
                     {item.created_at ? new Date(item.created_at).toLocaleDateString() : ''}
                   </td>
                 </tr>
@@ -521,11 +521,11 @@ const GisContent: React.FC = () => {
                   key={item.id}
                   style={{ borderTop: '1px solid grey.200' }}
                 >
-                  <td style={{ padding: '12px 16px' }}>{item.business_name}</td>
-                  <td style={{ padding: '12px 16px' }}>{item.business_type}</td>
-                  <td style={{ padding: '12px 16px' }}>{item.address}</td>
-                  <td style={{ padding: '12px 16px' }}>{item.contact_person}</td>
-                  <td style={{ padding: '12px 16px' }}>{<StatusChip status={item.status} />}</td>
+                  <td style={{ padding: `${designTokens.spacing.md} 16px` }}>{item.business_name}</td>
+                  <td style={{ padding: `${designTokens.spacing.md} 16px` }}>{item.business_type}</td>
+                  <td style={{ padding: `${designTokens.spacing.md} 16px` }}>{item.address}</td>
+                  <td style={{ padding: `${designTokens.spacing.md} 16px` }}>{item.contact_person}</td>
+                  <td style={{ padding: `${designTokens.spacing.md} 16px` }}>{<StatusChip status={item.status} />}</td>
                 </tr>
               ))}
           </tbody>

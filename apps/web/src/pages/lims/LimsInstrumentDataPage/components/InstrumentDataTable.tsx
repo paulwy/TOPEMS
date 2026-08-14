@@ -17,10 +17,10 @@ import {
   Tooltip,
   TablePagination,
 } from '@mui/material';
+import i18n from '@/i18n';
 import type { InstrumentData } from '@/api/lims';
 import { getStatusColor, getStatusLabel } from '../utils';
 import type { ChipColor } from '../utils';
-
 interface InstrumentDataTableProps {
   loading: boolean;
   dataList: InstrumentData[];
@@ -33,7 +33,6 @@ interface InstrumentDataTableProps {
   onParse: (id: string) => void;
   onDelete: (id: string) => void;
 }
-
 const InstrumentDataTable: React.FC<InstrumentDataTableProps> = ({
   loading,
   dataList,
@@ -52,14 +51,14 @@ const InstrumentDataTable: React.FC<InstrumentDataTableProps> = ({
         <Table size='small'>
           <TableHead>
             <TableRow>
-              <TableCell>数据编号</TableCell>
-              <TableCell>仪器</TableCell>
-              <TableCell>批次号</TableCell>
-              <TableCell>协议</TableCell>
-              <TableCell>状态</TableCell>
-              <TableCell>质量分</TableCell>
-              <TableCell>采集时间</TableCell>
-              <TableCell>操作</TableCell>
+              <TableCell>{i18n.t('lims.instrument_data_table.k0')}</TableCell>
+              <TableCell>{i18n.t('lims.instrument_data_table.k1')}</TableCell>
+              <TableCell>{i18n.t('lims.instrument_data_table.k2')}</TableCell>
+              <TableCell>{i18n.t('lims.instrument_data_table.k3')}</TableCell>
+              <TableCell>{i18n.t('lims.instrument_data_table.k4')}</TableCell>
+              <TableCell>{i18n.t('lims.instrument_data_table.k5')}</TableCell>
+              <TableCell>{i18n.t('lims.instrument_data_table.k6')}</TableCell>
+              <TableCell>{i18n.t('lims.instrument_data_table.k7')}</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
@@ -84,7 +83,7 @@ const InstrumentDataTable: React.FC<InstrumentDataTableProps> = ({
                       color='text.secondary'
                       sx={{ mt: 1 }}
                     >
-                      暂无数据
+                      {i18n.t('pages.instrument_data_table.k0')}
                     </Typography>
                   </Box>
                 </TableCell>
@@ -123,31 +122,31 @@ const InstrumentDataTable: React.FC<InstrumentDataTableProps> = ({
                       direction='row'
                       spacing={1}
                     >
-                      <Tooltip title='查看详情'>
+                      <Tooltip title={i18n.t('lims.instrument_data_table.k8')}>
                         <IconButton
                           size='small'
                           onClick={() => onViewDetail(item)}
-                          aria-label='查看'
+                          aria-label={i18n.t('lims.instrument_data_table.k9')}
                         >
                           <Eye size={16} />
                         </IconButton>
                       </Tooltip>
                       {item.status === 'pending' || item.status === 'failed' ? (
-                        <Tooltip title='重新解析'>
+                        <Tooltip title={i18n.t('lims.instrument_data_table.k10')}>
                           <IconButton
                             size='small'
                             onClick={() => onParse(item.id)}
-                            aria-label='刷新'
+                            aria-label={i18n.t('lims.instrument_data_table.k11')}
                           >
                             <RefreshCw size={16} />
                           </IconButton>
                         </Tooltip>
                       ) : null}
-                      <Tooltip title='删除'>
+                      <Tooltip title={i18n.t('lims.instrument_data_table.k12')}>
                         <IconButton
                           size='small'
                           onClick={() => onDelete(item.id)}
-                          aria-label='删除'
+                          aria-label={i18n.t('lims.instrument_data_table.k13')}
                         >
                           <Trash2 size={16} />
                         </IconButton>
@@ -174,5 +173,4 @@ const InstrumentDataTable: React.FC<InstrumentDataTableProps> = ({
     </Paper>
   );
 };
-
 export default InstrumentDataTable;

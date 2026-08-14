@@ -1002,7 +1002,7 @@ export function useCrudForm<T extends { id?: string | number }>({
       if (!crud) return false;
       const rowId = getRowId ? getRowId(record) : (record as Record<string, unknown>).id;
       if (!rowId) return false;
-      if (!confirm(`确定要删除这条记录吗？此操作不可恢复。`)) return false;
+      if (!confirm(i18n.t('components.hooks.k0'))) return false;
       try {
         await crudResult.delete(String(rowId));
         return true;
@@ -1527,7 +1527,7 @@ export function useCrudBatchActions<T>({
             .filter(Boolean);
           if (ids.length === 0) return;
           if (
-            confirm(`确定删除选中的 ${ids.length}${t('components.components.hooks.key_8e61d9')}`)
+            confirm(`${i18n.t('components.hooks.k0')}${ids.length}${t('components.components.hooks.key_8e61d9')}`)
           ) {
             crudResult.bulkDelete(ids as string[]);
           }

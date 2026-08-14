@@ -1,3 +1,4 @@
+import i18n from '@/i18n';
 export type ModuleStatus = 'active' | 'disabled' | 'deprecated' | 'error';
 
 export type ModuleType = 'app' | 'component' | 'library' | 'utility';
@@ -90,38 +91,38 @@ export class ModuleRegistry {
     const errors: string[] = [];
 
     if (!moduleConfig.id) {
-      errors.push('模块 ID 不能为空');
+      errors.push(i18n.t('microfrontend.module-registry.id_0'));
     } else if (!/^[a-zA-Z][a-zA-Z0-9_-]*$/.test(moduleConfig.id)) {
-      errors.push('模块 ID 格式不合法，必须以字母开头，只能包含字母、数字、下划线和连字符');
+      errors.push(i18n.t('microfrontend.module-registry.k1'));
     }
 
     if (!moduleConfig.name) {
-      errors.push('模块名称不能为空');
+      errors.push(i18n.t('microfrontend.module-registry.k2'));
     }
 
     if (!moduleConfig.version) {
-      errors.push('模块版本不能为空');
+      errors.push(i18n.t('microfrontend.module-registry.k3'));
     }
 
     if (!moduleConfig.entryUrl) {
-      errors.push('模块入口 URL 不能为空');
+      errors.push(i18n.t('microfrontend.module-registry.url_4'));
     } else if (
       !/^https?:\/\//.test(moduleConfig.entryUrl) &&
       !moduleConfig.entryUrl.startsWith('/')
     ) {
-      errors.push('模块入口 URL 格式不合法');
+      errors.push(i18n.t('microfrontend.module-registry.url_5'));
     }
 
     if (!moduleConfig.type) {
-      errors.push('模块类型不能为空');
+      errors.push(i18n.t('microfrontend.module-registry.k6'));
     } else if (!['app', 'component', 'library', 'utility'].includes(moduleConfig.type)) {
-      errors.push('模块类型不合法，必须是 app、component、library 或 utility');
+      errors.push(i18n.t('microfrontend.module-registry.k7'));
     }
 
     if (!moduleConfig.status) {
-      errors.push('模块状态不能为空');
+      errors.push(i18n.t('microfrontend.module-registry.k8'));
     } else if (!['active', 'disabled', 'deprecated', 'error'].includes(moduleConfig.status)) {
-      errors.push('模块状态不合法，必须是 active、disabled、deprecated 或 error');
+      errors.push(i18n.t('microfrontend.module-registry.k9'));
     }
 
     return {
@@ -139,12 +140,12 @@ export class ModuleRegistry {
   ): ModuleRegistration {
     const existing = this.modules.get(moduleConfig.id);
     if (existing) {
-      throw new Error(`模块 ${moduleConfig.id} 已存在，请使用 updateModuleMetadata 更新`);
+      throw new Error(`${i18n.t('microfrontend.module-registry.k0')}${moduleConfig.id}${i18n.t('microfrontend.module-registry.k1')}`);
     }
 
     const validation = this.validateModule(moduleConfig);
     if (!validation.valid) {
-      throw new Error(`模块配置验证失败: ${validation.errors.join(', ')}`);
+      throw new Error(`${i18n.t('microfrontend.module-registry.k2')}${validation.errors.join(', ')}`);
     }
 
     const now = Date.now();
@@ -294,7 +295,7 @@ export class ModuleRegistry {
   topologicalSort(): string[] {
     const { hasCircular } = this.checkCircularDependencies();
     if (hasCircular) {
-      throw new Error('存在循环依赖，无法进行拓扑排序');
+      throw new Error(i18n.t('microfrontend.module-registry.k10'));
     }
 
     const inDegree = new Map<string, number>();

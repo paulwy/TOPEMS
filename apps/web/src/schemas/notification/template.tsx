@@ -2,17 +2,18 @@ import React from 'react';
 import type { EntitySchema } from '@/schema';
 import { FileText } from 'lucide-react';
 import { Chip, Box, Typography } from '@mui/material';
+import i18n from '@/i18n';
 
 const TYPE_LABELS: Record<string, string> = {
-  system: '系统通知',
-  workflow: '工作流',
-  reminder: '提醒',
-  message: '消息通知',
-  info: '信息',
-  success: '成功',
-  warning: '警告',
-  error: '错误',
-  alert: '告警',
+  system: i18n.t('shared.template.k0'),
+  workflow: i18n.t('shared.template.k1'),
+  reminder: i18n.t('shared.template.k2'),
+  message: i18n.t('shared.template.k3'),
+  info: i18n.t('shared.template.k4'),
+  success: i18n.t('shared.template.k5'),
+  warning: i18n.t('shared.template.k6'),
+  error: i18n.t('shared.template.k7'),
+  alert: i18n.t('shared.template.k8'),
 };
 
 const TYPE_COLORS: Record<
@@ -31,10 +32,10 @@ const TYPE_COLORS: Record<
 };
 
 const STATUS_LABELS: Record<string, string> = {
-  active: '启用',
-  inactive: '禁用',
-  draft: '草稿',
-  deprecated: '已废弃',
+  active: i18n.t('shared.template.k9'),
+  inactive: i18n.t('shared.template.k10'),
+  draft: i18n.t('shared.template.k11'),
+  deprecated: i18n.t('shared.template.k12'),
 };
 
 const STATUS_COLORS: Record<string, 'success' | 'default' | 'warning' | 'error'> = {
@@ -46,8 +47,8 @@ const STATUS_COLORS: Record<string, 'success' | 'default' | 'warning' | 'error'>
 
 export const notificationTemplateSchema: EntitySchema = {
   entity: 'notification_template',
-  title: '通知模板管理',
-  description: '管理系统通知模板配置',
+  title: i18n.t('shared.template.k13'),
+  description: i18n.t('shared.template.k14'),
 
   api: {
     module: 'notification',
@@ -57,7 +58,7 @@ export const notificationTemplateSchema: EntitySchema = {
   fields: [
     {
       name: 'name',
-      label: '模板名称',
+      label: i18n.t('shared.template.k15'),
       type: 'text',
       required: true,
       sortable: true,
@@ -114,22 +115,22 @@ export const notificationTemplateSchema: EntitySchema = {
     },
     {
       name: 'notification_type',
-      label: '类型',
+      label: i18n.t('shared.template.k16'),
       type: 'select',
       required: true,
       listWidth: 120,
       options: {
         type: 'static',
         options: [
-          { value: 'system', label: '系统通知' },
-          { value: 'workflow', label: '工作流' },
-          { value: 'reminder', label: '提醒' },
-          { value: 'message', label: '消息通知' },
-          { value: 'info', label: '信息' },
-          { value: 'success', label: '成功' },
-          { value: 'warning', label: '警告' },
-          { value: 'error', label: '错误' },
-          { value: 'alert', label: '告警' },
+          { value: 'system', label: i18n.t('shared.template.k17') },
+          { value: 'workflow', label: i18n.t('shared.template.k18') },
+          { value: 'reminder', label: i18n.t('shared.template.k19') },
+          { value: 'message', label: i18n.t('shared.template.k20') },
+          { value: 'info', label: i18n.t('shared.template.k21') },
+          { value: 'success', label: i18n.t('shared.template.k22') },
+          { value: 'warning', label: i18n.t('shared.template.k23') },
+          { value: 'error', label: i18n.t('shared.template.k24') },
+          { value: 'alert', label: i18n.t('shared.template.k25') },
         ],
       },
       renderCell: (row: Record<string, unknown>) => {
@@ -150,17 +151,17 @@ export const notificationTemplateSchema: EntitySchema = {
     },
     {
       name: 'status',
-      label: '状态',
+      label: i18n.t('shared.template.k26'),
       type: 'select',
       required: true,
       listWidth: 100,
       options: {
         type: 'static',
         options: [
-          { value: 'active', label: '启用' },
-          { value: 'inactive', label: '禁用' },
-          { value: 'draft', label: '草稿' },
-          { value: 'deprecated', label: '已废弃' },
+          { value: 'active', label: i18n.t('shared.template.k27') },
+          { value: 'inactive', label: i18n.t('shared.template.k28') },
+          { value: 'draft', label: i18n.t('shared.template.k29') },
+          { value: 'deprecated', label: i18n.t('shared.template.k30') },
         ],
       },
       renderCell: (row: Record<string, unknown>) => {
@@ -181,7 +182,7 @@ export const notificationTemplateSchema: EntitySchema = {
     },
     {
       name: 'updated_at',
-      label: '更新时间',
+      label: i18n.t('shared.template.k31'),
       type: 'datetime',
       listWidth: 160,
       hideInForm: true,
@@ -196,34 +197,34 @@ export const notificationTemplateSchema: EntitySchema = {
     },
     {
       name: 'description',
-      label: '描述',
+      label: i18n.t('shared.template.k32'),
       type: 'textarea',
       showInList: false,
       rows: 2,
     },
     {
       name: 'title_template',
-      label: '标题模板',
+      label: i18n.t('shared.template.k33'),
       type: 'text',
       showInList: false,
       validation: [{ type: 'maxLength', value: 256 }],
     },
     {
       name: 'content_template',
-      label: '内容模板',
+      label: i18n.t('shared.template.k34'),
       type: 'textarea',
       showInList: false,
       rows: 6,
     },
     {
       name: 'variables',
-      label: '变量列表',
+      label: i18n.t('shared.template.k35'),
       type: 'text',
       showInList: false,
     },
     {
       name: 'default_priority',
-      label: '默认优先级',
+      label: i18n.t('shared.template.k36'),
       type: 'number',
       showInList: false,
     },
@@ -236,24 +237,24 @@ export const notificationTemplateSchema: EntitySchema = {
     filters: [
       {
         id: 'notification_type',
-        label: '类型',
+        label: i18n.t('shared.template.k37'),
         type: 'select',
         options: [
-          { value: '', label: '全部类型' },
-          { value: 'system', label: '系统通知' },
-          { value: 'workflow', label: '工作流' },
-          { value: 'reminder', label: '提醒' },
-          { value: 'message', label: '消息通知' },
+          { value: '', label: i18n.t('shared.template.k38') },
+          { value: 'system', label: i18n.t('shared.template.k39') },
+          { value: 'workflow', label: i18n.t('shared.template.k40') },
+          { value: 'reminder', label: i18n.t('shared.template.k41') },
+          { value: 'message', label: i18n.t('shared.template.k42') },
         ],
       },
       {
         id: 'status',
-        label: '状态',
+        label: i18n.t('shared.template.k43'),
         type: 'select',
         options: [
-          { value: '', label: '全部状态' },
-          { value: 'active', label: '启用' },
-          { value: 'inactive', label: '禁用' },
+          { value: '', label: i18n.t('shared.template.k44') },
+          { value: 'active', label: i18n.t('shared.template.k45') },
+          { value: 'inactive', label: i18n.t('shared.template.k46') },
         ],
       },
     ],
@@ -262,7 +263,7 @@ export const notificationTemplateSchema: EntitySchema = {
   actions: ['create', 'edit', 'delete', 'detail'],
 
   formColCount: 2,
-  createTitle: '新建模板',
-  editTitle: '编辑模板',
-  detailTitle: '模板详情',
+  createTitle: i18n.t('shared.template.k47'),
+  editTitle: i18n.t('shared.template.k48'),
+  detailTitle: i18n.t('shared.template.k49'),
 };

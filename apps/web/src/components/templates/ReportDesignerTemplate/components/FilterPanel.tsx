@@ -12,6 +12,7 @@ import {
   TextField,
   Button,
 } from '@mui/material';
+import i18n from '@/i18n';
 import { Filter, ChevronDown, ChevronUp, Plus, Trash2 } from 'lucide-react';
 import type { FilterCondition, DataSourceField, FilterOperator } from '../types';
 import { FILTER_OPERATORS } from '../types';
@@ -52,7 +53,7 @@ export const FilterPanel: React.FC<FilterPanelProps> = ({
             variant='subtitle1'
             sx={{ fontWeight: 600 }}
           >
-            筛选条件
+            {i18n.t('components.filter_panel.k0')}
           </Typography>
           {filters.length > 0 && (
             <Chip
@@ -64,7 +65,7 @@ export const FilterPanel: React.FC<FilterPanelProps> = ({
         </Box>
         <IconButton
           size='small'
-          aria-label='展开'
+          aria-label={i18n.t('templates.filter_panel.k0')}
         >
           {showFilterPanel ? (
             <ChevronUp sx={{ width: 18, height: 18 }} />
@@ -82,11 +83,11 @@ export const FilterPanel: React.FC<FilterPanelProps> = ({
               sx={{ display: 'flex', gap: 2, flexWrap: 'wrap', alignItems: 'center' }}
             >
               <FormControl sx={{ minWidth: 150 }}>
-                <InputLabel size='small'>字段</InputLabel>
+                <InputLabel size='small'>{i18n.t('templates.filter_panel.k1')}</InputLabel>
                 <Select
                   size='small'
                   value={filter.fieldId}
-                  label='字段'
+                  label={i18n.t('templates.filter_panel.k2')}
                   onChange={(e) => {
                     const field = availableFields.find((f) => f.id === e.target.value);
                     handleUpdateFilter(filter.id, {
@@ -106,11 +107,11 @@ export const FilterPanel: React.FC<FilterPanelProps> = ({
                 </Select>
               </FormControl>
               <FormControl sx={{ minWidth: 120 }}>
-                <InputLabel size='small'>操作符</InputLabel>
+                <InputLabel size='small'>{i18n.t('templates.filter_panel.k3')}</InputLabel>
                 <Select
                   size='small'
                   value={filter.operator}
-                  label='操作符'
+                  label={i18n.t('templates.filter_panel.k4')}
                   onChange={(e) =>
                     handleUpdateFilter(filter.id, { operator: e.target.value as FilterOperator })
                   }
@@ -127,7 +128,7 @@ export const FilterPanel: React.FC<FilterPanelProps> = ({
               </FormControl>
               <TextField
                 size='small'
-                placeholder='值'
+                placeholder={i18n.t('templates.filter_panel.k5')}
                 value={filter.value || ''}
                 onChange={(e) => handleUpdateFilter(filter.id, { value: e.target.value })}
                 sx={{ minWidth: 150 }}
@@ -135,7 +136,7 @@ export const FilterPanel: React.FC<FilterPanelProps> = ({
               {filter.operator === 'between' && (
                 <TextField
                   size='small'
-                  placeholder='至'
+                  placeholder={i18n.t('templates.filter_panel.k6')}
                   value={filter.value2 || ''}
                   onChange={(e) => handleUpdateFilter(filter.id, { value2: e.target.value })}
                   sx={{ minWidth: 100 }}
@@ -144,7 +145,7 @@ export const FilterPanel: React.FC<FilterPanelProps> = ({
               <IconButton
                 size='small'
                 onClick={() => handleRemoveFilter(filter.id)}
-                aria-label='删除'
+                aria-label={i18n.t('templates.filter_panel.k7')}
               >
                 <Trash2 sx={{ width: 16, height: 16, color: 'error.main' }} />
               </IconButton>
@@ -156,7 +157,7 @@ export const FilterPanel: React.FC<FilterPanelProps> = ({
             onClick={handleAddFilter}
             disabled={availableFields.length === 0}
           >
-            添加筛选条件
+            {i18n.t('components.filter_panel.k1')}
           </Button>
         </Box>
       )}

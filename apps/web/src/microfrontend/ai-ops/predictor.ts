@@ -1,3 +1,4 @@
+import i18n from '@/i18n';
 export interface PredictionResult {
   metricName: string;
   moduleId?: string;
@@ -401,7 +402,7 @@ export class MetricPredictor {
           deviation,
           deviationPercent,
           confidence: prediction.confidence,
-          description: `预测到 ${metricName} 将在 ${new Date(prediction.timestamps[i]).toLocaleString()} 异常: ${predictedValue.toFixed(2)}, 偏离 ${deviationPercent.toFixed(1)}%`,
+          description: `${i18n.t('microfrontend.predictor.k0')}${metricName}${i18n.t('microfrontend.predictor.k1')}${new Date(prediction.timestamps[i]).toLocaleString()}${i18n.t('microfrontend.predictor.k2')}${predictedValue.toFixed(2)}${i18n.t('microfrontend.predictor.k3')}${deviationPercent.toFixed(1)}%`,
           acknowledged: false,
         };
 

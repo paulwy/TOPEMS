@@ -5,13 +5,9 @@ import { apiLogger } from '@/utils/logger';
 import { databaseApi, type TableInfo, type TableDetail } from '@/api/erp/database';
 import { extractErrorMessage } from '@/utils/errors';
 import i18n from '@/i18n';
-
-
 import { QUERY_KEYS } from '@/lib/reactQuery';
-
 // Module-level t for use outside React components (shadowed by useTranslation inside components)
 const t = i18n.t;
-
 export interface BackupRecord {
   id: string;
   backup_name: string;
@@ -22,7 +18,6 @@ export interface BackupRecord {
   created_by: string;
   remark?: string;
 }
-
 const mockBackups: BackupRecord[] = [
   {
     id: '1',
@@ -32,7 +27,7 @@ const mockBackups: BackupRecord[] = [
     status: 'success',
     created_at: '2024-06-15 02:00:00',
     created_by: 'system',
-    remark: t('erp.database.mock.backup_daily_full'),
+    remark: i18n.t('erp.database.mock.backup_daily_full'),
   },
   {
     id: '2',
@@ -42,7 +37,7 @@ const mockBackups: BackupRecord[] = [
     status: 'success',
     created_at: '2024-06-14 20:00:00',
     created_by: 'system',
-    remark: t('erp.database.mock.backup_incremental'),
+    remark: i18n.t('erp.database.mock.backup_incremental'),
   },
   {
     id: '3',
@@ -52,7 +47,7 @@ const mockBackups: BackupRecord[] = [
     status: 'success',
     created_at: '2024-06-13 20:00:00',
     created_by: 'system',
-    remark: t('erp.database.mock.backup_incremental'),
+    remark: i18n.t('erp.database.mock.backup_incremental'),
   },
   {
     id: '4',
@@ -62,7 +57,7 @@ const mockBackups: BackupRecord[] = [
     status: 'success',
     created_at: '2024-06-01 02:00:00',
     created_by: 'system',
-    remark: t('erp.database.mock.backup_monthly_full'),
+    remark: i18n.t('erp.database.mock.backup_monthly_full'),
   },
   {
     id: '5',
@@ -71,14 +66,12 @@ const mockBackups: BackupRecord[] = [
     filesize: '128.5 MB',
     status: 'failed',
     created_at: '2024-05-20 14:30:00',
-    created_by: t('erp.database.mock.admin'),
-    remark: t('erp.database.mock.manual_backup_failed'),
+    created_by: i18n.t('erp.database.mock.admin'),
+    remark: i18n.t('erp.database.mock.manual_backup_failed'),
   },
 ];
-
 export function useDatabaseManagement() {
   const addNotification = useNotificationStore((state) => state.addNotification);
-
   // State
   const [activeTab, setActiveTab] = useState('tables');
   const [searchQuery, setSearchQuery] = useState('');
@@ -95,7 +88,6 @@ export function useDatabaseManagement() {
   const [deleteBackupDialogOpen, setDeleteBackupDialogOpen] = useState(false);
   const [deletingBackupId, setDeletingBackupId] = useState<string | null>(null);
   const [restoreBackupId, setRestoreBackupId] = useState<string | null>(null);
-
   // Queries
   const tablesQuery = useQuery<TableInfo[]>({
     queryKey: [...QUERY_KEYS.AD_HOC.ERP_DATABASE_TABLES_BASE, searchQuery],
@@ -109,7 +101,6 @@ export function useDatabaseManagement() {
   });
   const tables = tablesQuery.data ?? [];
   const loading = tablesQuery.isLoading;
-
   const tableDetailQuery = useQuery<TableDetail | null>({
     queryKey: [...QUERY_KEYS.AD_HOC.ERP_DATABASE_TABLE_DETAIL_BASE, currentTable?.table_name],
     queryFn: async () => {
@@ -122,36 +113,33 @@ export function useDatabaseManagement() {
   });
   const tableColumns = tableDetailQuery.data?.columns ?? [];
   const tableRowCount = tableDetailQuery.data?.row_count ?? null;
-
   // Error handling
   useMemo(() => {
     if (tablesQuery.isError) {
       apiLogger.error('Load tables failed:', tablesQuery.error);
       addNotification({
-        title: t('erp.database.message.error'),
+        title: i18n.t('erp.database.message.error'),
         message: extractErrorMessage(
           tablesQuery.error,
-          t('erp.database.message.load_tables_failed')
+          i18n.t('erp.database.message.load_tables_failed')
         ),
         type: 'error',
       });
     }
   }, [tablesQuery.isError, tablesQuery.error, addNotification]);
-
   useMemo(() => {
     if (tableDetailQuery.isError) {
       apiLogger.error('Get table structure failed:', tableDetailQuery.error);
       addNotification({
-        title: t('erp.database.message.error'),
+        title: i18n.t('erp.database.message.error'),
         message: extractErrorMessage(
           tableDetailQuery.error,
-          t('erp.database.message.load_table_structure_failed')
+          i18n.t('erp.database.message.load_table_structure_failed')
         ),
         type: 'error',
       });
     }
   }, [tableDetailQuery.isError, tableDetailQuery.error, addNotification]);
-
   // Computed values
   const filteredTables = useMemo(() => {
     return tables.filter((table) => {
@@ -160,37 +148,30 @@ export function useDatabaseManagement() {
       return matchesSearch;
     });
   }, [tables, searchQuery]);
-
   const stats = useMemo(() => {
     return {
       tableCount: tables.length,
       backupCount: backups.filter((b) => b.status === 'success').length,
     };
   }, [tables, backups]);
-
   // Handlers
   const handleViewStructure = useCallback((table: TableInfo) => {
     setCurrentTable(table);
     setShowStructureModal(true);
   }, []);
-
   const handleBackup = useCallback(() => {
     setShowBackupModal(true);
   }, []);
-
   const startBackup = useCallback(async () => {
     setBackingUp(true);
     setBackupProgress(0);
     setShowBackupModal(false);
-
     for (let i = 0; i <= 100; i += 10) {
       await new Promise((resolve) => setTimeout(resolve, 300));
       setBackupProgress(i);
     }
-
     setBackingUp(false);
     setBackupProgress(0);
-
     const newBackup: BackupRecord = {
       id: Date.now().toString(),
       backup_name: `backup_manual_${new Date().toISOString().slice(0, 10).replace(/-/g, '')}`,
@@ -198,59 +179,53 @@ export function useDatabaseManagement() {
       filesize: `${(Math.random() * 50 + 100).toFixed(1)} MB`,
       status: 'success',
       created_at: new Date().toISOString().replace('T', ' ').slice(0, 19),
-      created_by: t('erp.database.mock.current_user'),
-      remark: t('erp.database.mock.manual_backup'),
+      created_by: i18n.t('erp.database.mock.current_user'),
+      remark: i18n.t('erp.database.mock.manual_backup'),
     };
     setBackups((prev) => [newBackup, ...prev]);
-
     addNotification({
-      title: t('erp.database.message.backup_success'),
-      message: t('erp.database.message.backup_completed'),
+      title: i18n.t('erp.database.message.backup_success'),
+      message: i18n.t('erp.database.message.backup_completed'),
       type: 'success',
     });
-  }, [t, addNotification]);
-
+  }, [i18n.t, addNotification]);
   const handleRestore = useCallback((backupId: string) => {
     setRestoreBackupId(backupId);
     setShowRestoreModal(true);
   }, []);
-
   const confirmRestore = useCallback(async () => {
     setShowRestoreModal(false);
     addNotification({
-      title: t('erp.database.message.restoring'),
-      message: t('erp.database.message.restore_started'),
+      title: i18n.t('erp.database.message.restoring'),
+      message: i18n.t('erp.database.message.restore_started'),
       type: 'info',
     });
     setRestoreBackupId(null);
-  }, [t, addNotification]);
-
+  }, [i18n.t, addNotification]);
   const handleDeleteBackup = useCallback((id: string) => {
     setDeletingBackupId(id);
     setDeleteBackupDialogOpen(true);
   }, []);
-
   const confirmDeleteBackup = useCallback(async () => {
     if (!deletingBackupId) return;
     try {
       setBackups((prev) => prev.filter((b) => b.id !== deletingBackupId));
       addNotification({
-        title: t('erp.database.message.success'),
-        message: t('erp.database.message.backup_deleted'),
+        title: i18n.t('erp.database.message.success'),
+        message: i18n.t('erp.database.message.backup_deleted'),
         type: 'success',
       });
     } catch (err: unknown) {
       addNotification({
-        title: t('erp.database.message.error'),
-        message: t('erp.database.message.operation_failed'),
+        title: i18n.t('erp.database.message.error'),
+        message: i18n.t('erp.database.message.operation_failed'),
         type: 'error',
       });
     } finally {
       setDeleteBackupDialogOpen(false);
       setDeletingBackupId(null);
     }
-  }, [deletingBackupId, t, addNotification]);
-
+  }, [deletingBackupId, i18n.t, addNotification]);
   return {
     // State
     activeTab,
@@ -283,7 +258,6 @@ export function useDatabaseManagement() {
     setDeletingBackupId,
     restoreBackupId,
     setRestoreBackupId,
-
     // Query data
     tables,
     loading,
@@ -291,10 +265,8 @@ export function useDatabaseManagement() {
     tableRowCount,
     filteredTables,
     tablesQuery,
-
     // Computed
     stats,
-
     // Handlers
     handleViewStructure,
     handleBackup,

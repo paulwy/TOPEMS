@@ -23,6 +23,7 @@ import {
   FormControl,
   InputLabel,
 } from '@mui/material';
+import i18n from '@/i18n';
 import {
   Activity as ActivityIcon,
   Zap as ZapIcon,
@@ -219,7 +220,7 @@ const ObservabilityDashboard: React.FC<DashboardProps> = ({ onClose, refreshInte
       >
         <Grid size={{ xs: 12, sm: 6, md: 3 }}>
           <StatCard
-            label='模块总数'
+            label={i18n.t('microfrontend.observability_dashboard.k0')}
             value={totalModules}
             icon={<LayersIcon size={24} />}
             color={designTokens.colors.primary.dark}
@@ -227,7 +228,7 @@ const ObservabilityDashboard: React.FC<DashboardProps> = ({ onClose, refreshInte
         </Grid>
         <Grid size={{ xs: 12, sm: 6, md: 3 }}>
           <StatCard
-            label='活跃模块'
+            label={i18n.t('microfrontend.observability_dashboard.k1')}
             value={activeModules}
             icon={<CheckCircleIcon size={24} />}
             color={designTokens.colors.success.dark}
@@ -235,7 +236,7 @@ const ObservabilityDashboard: React.FC<DashboardProps> = ({ onClose, refreshInte
         </Grid>
         <Grid size={{ xs: 12, sm: 6, md: 3 }}>
           <StatCard
-            label='错误模块'
+            label={i18n.t('microfrontend.observability_dashboard.k2')}
             value={errorModules}
             icon={<XCircleIcon size={24} />}
             color={designTokens.colors.error.dark}
@@ -243,7 +244,7 @@ const ObservabilityDashboard: React.FC<DashboardProps> = ({ onClose, refreshInte
         </Grid>
         <Grid size={{ xs: 12, sm: 6, md: 3 }}>
           <StatCard
-            label='平均加载时间'
+            label={i18n.t('microfrontend.observability_dashboard.k3')}
             value={formatDuration(avgLoadTime)}
             icon={<ClockIcon size={24} />}
             color='colors.orange.700'
@@ -257,7 +258,7 @@ const ObservabilityDashboard: React.FC<DashboardProps> = ({ onClose, refreshInte
       >
         <Grid size={{ xs: 12, sm: 6, md: 4 }}>
           <StatCard
-            label='加载成功率'
+            label={i18n.t('microfrontend.observability_dashboard.k4')}
             value={`${successRate.toFixed(1)}%`}
             icon={<ZapIcon size={24} />}
             color={designTokens.colors.purple['700']}
@@ -265,7 +266,7 @@ const ObservabilityDashboard: React.FC<DashboardProps> = ({ onClose, refreshInte
         </Grid>
         <Grid size={{ xs: 12, sm: 6, md: 4 }}>
           <StatCard
-            label='今日错误数'
+            label={i18n.t('microfrontend.observability_dashboard.k5')}
             value={totalErrors}
             icon={<AlertIcon size={24} />}
             color='colors.error.800'
@@ -273,7 +274,7 @@ const ObservabilityDashboard: React.FC<DashboardProps> = ({ onClose, refreshInte
         </Grid>
         <Grid size={{ xs: 12, sm: 6, md: 4 }}>
           <StatCard
-            label='今日访问量'
+            label={i18n.t('microfrontend.observability_dashboard.k6')}
             value={totalVisits}
             icon={<EyeIcon size={24} />}
             color={designTokens.colors.teal['700']}
@@ -292,10 +293,10 @@ const ObservabilityDashboard: React.FC<DashboardProps> = ({ onClose, refreshInte
                 variant='h6'
                 sx={{ fontWeight: 600, mb: 2 }}
               >
-                加载时间排名 (Top 5)
+                {i18n.t('microfrontend.observability_dashboard.top5_0')}
               </Typography>
               {sortedPerformance.length === 0 ? (
-                <Typography color='text.secondary'>暂无数据</Typography>
+                <Typography color='text.secondary'>{i18n.t('microfrontend.observability_dashboard.k7')}</Typography>
               ) : (
                 <BarChartSimple
                   data={sortedPerformance.slice(0, 5).map((m) => ({
@@ -315,10 +316,10 @@ const ObservabilityDashboard: React.FC<DashboardProps> = ({ onClose, refreshInte
                 variant='h6'
                 sx={{ fontWeight: 600, mb: 2 }}
               >
-                模块访问排名 (Top 5)
+                {i18n.t('microfrontend.observability_dashboard.top5_1')}
               </Typography>
               {sortedBehavior.length === 0 ? (
-                <Typography color='text.secondary'>暂无数据</Typography>
+                <Typography color='text.secondary'>{i18n.t('microfrontend.observability_dashboard.k8')}</Typography>
               ) : (
                 <BarChartSimple
                   data={sortedBehavior.slice(0, 5).map((s) => ({
@@ -345,7 +346,7 @@ const ObservabilityDashboard: React.FC<DashboardProps> = ({ onClose, refreshInte
                 variant='body1'
                 sx={{ fontWeight: 600, color: 'warning.dark' }}
               >
-                慢加载模块警告
+                {i18n.t('microfrontend.observability_dashboard.k2')}
               </Typography>
             </Box>
             <Typography
@@ -379,7 +380,7 @@ const ObservabilityDashboard: React.FC<DashboardProps> = ({ onClose, refreshInte
             variant='h6'
             sx={{ fontWeight: 600, mb: 2 }}
           >
-            模块加载性能排名
+            {i18n.t('microfrontend.observability_dashboard.k3')}
           </Typography>
           <TableContainer
             component={Paper}
@@ -388,13 +389,13 @@ const ObservabilityDashboard: React.FC<DashboardProps> = ({ onClose, refreshInte
             <Table size='small'>
               <TableHead>
                 <TableRow sx={{ bgcolor: 'action.hover' }}>
-                  <TableCell sx={{ fontWeight: 600 }}>排名</TableCell>
-                  <TableCell sx={{ fontWeight: 600 }}>模块</TableCell>
-                  <TableCell sx={{ fontWeight: 600 }}>总加载时间</TableCell>
-                  <TableCell sx={{ fontWeight: 600 }}>白屏时间</TableCell>
+                  <TableCell sx={{ fontWeight: 600 }}>{i18n.t('microfrontend.observability_dashboard.k9')}</TableCell>
+                  <TableCell sx={{ fontWeight: 600 }}>{i18n.t('microfrontend.observability_dashboard.k10')}</TableCell>
+                  <TableCell sx={{ fontWeight: 600 }}>{i18n.t('microfrontend.observability_dashboard.k11')}</TableCell>
+                  <TableCell sx={{ fontWeight: 600 }}>{i18n.t('microfrontend.observability_dashboard.k12')}</TableCell>
                   <TableCell sx={{ fontWeight: 600 }}>FCP</TableCell>
                   <TableCell sx={{ fontWeight: 600 }}>TTI</TableCell>
-                  <TableCell sx={{ fontWeight: 600 }}>状态</TableCell>
+                  <TableCell sx={{ fontWeight: 600 }}>{i18n.t('microfrontend.observability_dashboard.k13')}</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
@@ -430,7 +431,7 @@ const ObservabilityDashboard: React.FC<DashboardProps> = ({ onClose, refreshInte
                       {m.success ? (
                         <Chip
                           icon={<CheckCircleIcon size={14} />}
-                          label='成功'
+                          label={i18n.t('microfrontend.observability_dashboard.k14')}
                           size='small'
                           color='success'
                           variant='outlined'
@@ -438,7 +439,7 @@ const ObservabilityDashboard: React.FC<DashboardProps> = ({ onClose, refreshInte
                       ) : (
                         <Chip
                           icon={<XCircleIcon size={14} />}
-                          label='失败'
+                          label={i18n.t('microfrontend.observability_dashboard.k15')}
                           size='small'
                           color='error'
                           variant='outlined'
@@ -457,7 +458,7 @@ const ObservabilityDashboard: React.FC<DashboardProps> = ({ onClose, refreshInte
                         color='text.secondary'
                         sx={{ py: 3 }}
                       >
-                        暂无性能数据
+                        {i18n.t('microfrontend.observability_dashboard.k4')}
                       </Typography>
                     </TableCell>
                   </TableRow>
@@ -474,10 +475,10 @@ const ObservabilityDashboard: React.FC<DashboardProps> = ({ onClose, refreshInte
             variant='h6'
             sx={{ fontWeight: 600, mb: 2 }}
           >
-            加载时间趋势
+            {i18n.t('microfrontend.observability_dashboard.k5')}
           </Typography>
           {sortedPerformance.length === 0 ? (
-            <Typography color='text.secondary'>暂无数据</Typography>
+            <Typography color='text.secondary'>{i18n.t('microfrontend.observability_dashboard.k16')}</Typography>
           ) : (
             <BarChartSimple
               data={sortedPerformance.slice(0, 10).map((m) => ({
@@ -497,7 +498,7 @@ const ObservabilityDashboard: React.FC<DashboardProps> = ({ onClose, refreshInte
             variant='h6'
             sx={{ fontWeight: 600, mb: 2 }}
           >
-            资源加载分解
+            {i18n.t('microfrontend.observability_dashboard.k6')}
           </Typography>
           <Grid
             container
@@ -521,7 +522,7 @@ const ObservabilityDashboard: React.FC<DashboardProps> = ({ onClose, refreshInte
                   <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
                     <Box>
                       <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 0.5 }}>
-                        <Typography variant='caption'>远程入口</Typography>
+                        <Typography variant='caption'>{i18n.t('microfrontend.observability_dashboard.k17')}</Typography>
                         <Typography variant='caption'>
                           {formatDuration(m.remoteEntryLoadTime)}
                         </Typography>
@@ -546,7 +547,7 @@ const ObservabilityDashboard: React.FC<DashboardProps> = ({ onClose, refreshInte
                     </Box>
                     <Box>
                       <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 0.5 }}>
-                        <Typography variant='caption'>首屏渲染</Typography>
+                        <Typography variant='caption'>{i18n.t('microfrontend.observability_dashboard.k18')}</Typography>
                         <Typography variant='caption'>
                           {formatDuration(m.firstScreenRenderTime)}
                         </Typography>
@@ -576,7 +577,7 @@ const ObservabilityDashboard: React.FC<DashboardProps> = ({ onClose, refreshInte
       >
         <Grid size={{ xs: 12, sm: 6, md: 3 }}>
           <StatCard
-            label='总错误数'
+            label={i18n.t('microfrontend.observability_dashboard.k19')}
             value={totalErrors}
             icon={<AlertIcon size={24} />}
             color={designTokens.colors.error.dark}
@@ -584,7 +585,7 @@ const ObservabilityDashboard: React.FC<DashboardProps> = ({ onClose, refreshInte
         </Grid>
         <Grid size={{ xs: 12, sm: 6, md: 3 }}>
           <StatCard
-            label='错误类型'
+            label={i18n.t('microfrontend.observability_dashboard.k20')}
             value={errorStats?.totalErrorTypes || 0}
             icon={<XCircleIcon size={24} />}
             color='colors.error.800'
@@ -592,15 +593,15 @@ const ObservabilityDashboard: React.FC<DashboardProps> = ({ onClose, refreshInte
         </Grid>
         <Grid size={{ xs: 12, sm: 6, md: 3 }}>
           <StatCard
-            label='影响模块'
+            label={i18n.t('microfrontend.observability_dashboard.k21')}
             value={Object.keys(errorStats?.errorsByModule || {}).length}
             icon={<LayersIcon size={24} />}
-            color='#ef6c00'
+            color={designTokens.colors.warning[700]}
           />
         </Grid>
         <Grid size={{ xs: 12, sm: 6, md: 3 }}>
           <StatCard
-            label='错误率'
+            label={i18n.t('microfrontend.observability_dashboard.k22')}
             value={totalVisits > 0 ? `${((totalErrors / totalVisits) * 100).toFixed(2)}%` : '0%'}
             icon={<TrendingUpIcon size={24} />}
             color='#ad1457'
@@ -614,7 +615,7 @@ const ObservabilityDashboard: React.FC<DashboardProps> = ({ onClose, refreshInte
             variant='h6'
             sx={{ fontWeight: 600, mb: 2 }}
           >
-            各模块错误数
+            {i18n.t('microfrontend.observability_dashboard.k7')}
           </Typography>
           {errorStats && Object.keys(errorStats.errorsByModule).length > 0 ? (
             <BarChartSimple
@@ -628,7 +629,7 @@ const ObservabilityDashboard: React.FC<DashboardProps> = ({ onClose, refreshInte
                 }))}
             />
           ) : (
-            <Typography color='text.secondary'>暂无错误数据</Typography>
+            <Typography color='text.secondary'>{i18n.t('microfrontend.observability_dashboard.k23')}</Typography>
           )}
         </CardContent>
       </Card>
@@ -639,7 +640,7 @@ const ObservabilityDashboard: React.FC<DashboardProps> = ({ onClose, refreshInte
             variant='h6'
             sx={{ fontWeight: 600, mb: 2 }}
           >
-            错误列表
+            {i18n.t('microfrontend.observability_dashboard.k8')}
           </Typography>
           <TableContainer
             component={Paper}
@@ -648,11 +649,11 @@ const ObservabilityDashboard: React.FC<DashboardProps> = ({ onClose, refreshInte
             <Table size='small'>
               <TableHead>
                 <TableRow sx={{ bgcolor: 'action.hover' }}>
-                  <TableCell sx={{ fontWeight: 600 }}>模块</TableCell>
-                  <TableCell sx={{ fontWeight: 600 }}>错误信息</TableCell>
-                  <TableCell sx={{ fontWeight: 600 }}>类型</TableCell>
-                  <TableCell sx={{ fontWeight: 600 }}>次数</TableCell>
-                  <TableCell sx={{ fontWeight: 600 }}>最近发生</TableCell>
+                  <TableCell sx={{ fontWeight: 600 }}>{i18n.t('microfrontend.observability_dashboard.k24')}</TableCell>
+                  <TableCell sx={{ fontWeight: 600 }}>{i18n.t('microfrontend.observability_dashboard.k25')}</TableCell>
+                  <TableCell sx={{ fontWeight: 600 }}>{i18n.t('microfrontend.observability_dashboard.k26')}</TableCell>
+                  <TableCell sx={{ fontWeight: 600 }}>{i18n.t('microfrontend.observability_dashboard.k27')}</TableCell>
+                  <TableCell sx={{ fontWeight: 600 }}>{i18n.t('microfrontend.observability_dashboard.k28')}</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
@@ -696,7 +697,7 @@ const ObservabilityDashboard: React.FC<DashboardProps> = ({ onClose, refreshInte
                         color='text.secondary'
                         sx={{ py: 3 }}
                       >
-                        暂无错误
+                        {i18n.t('microfrontend.observability_dashboard.k9')}
                       </Typography>
                     </TableCell>
                   </TableRow>
@@ -717,7 +718,7 @@ const ObservabilityDashboard: React.FC<DashboardProps> = ({ onClose, refreshInte
       >
         <Grid size={{ xs: 12, sm: 6, md: 4 }}>
           <StatCard
-            label='总访问量'
+            label={i18n.t('microfrontend.observability_dashboard.k29')}
             value={totalVisits}
             icon={<EyeIcon size={24} />}
             color={designTokens.colors.teal['700']}
@@ -725,7 +726,7 @@ const ObservabilityDashboard: React.FC<DashboardProps> = ({ onClose, refreshInte
         </Grid>
         <Grid size={{ xs: 12, sm: 6, md: 4 }}>
           <StatCard
-            label='访问模块数'
+            label={i18n.t('microfrontend.observability_dashboard.k30')}
             value={behaviorStats.length}
             icon={<LayersIcon size={24} />}
             color={designTokens.colors.primary.dark}
@@ -733,7 +734,7 @@ const ObservabilityDashboard: React.FC<DashboardProps> = ({ onClose, refreshInte
         </Grid>
         <Grid size={{ xs: 12, sm: 6, md: 4 }}>
           <StatCard
-            label='平均停留时长'
+            label={i18n.t('microfrontend.observability_dashboard.k31')}
             value={formatDuration(
               behaviorStats.length > 0
                 ? behaviorStats.reduce((s, m) => s + m.averageDuration, 0) / behaviorStats.length
@@ -751,7 +752,7 @@ const ObservabilityDashboard: React.FC<DashboardProps> = ({ onClose, refreshInte
             variant='h6'
             sx={{ fontWeight: 600, mb: 2 }}
           >
-            模块访问排名
+            {i18n.t('microfrontend.observability_dashboard.k10')}
           </Typography>
           <TableContainer
             component={Paper}
@@ -760,11 +761,11 @@ const ObservabilityDashboard: React.FC<DashboardProps> = ({ onClose, refreshInte
             <Table size='small'>
               <TableHead>
                 <TableRow sx={{ bgcolor: 'action.hover' }}>
-                  <TableCell sx={{ fontWeight: 600 }}>排名</TableCell>
-                  <TableCell sx={{ fontWeight: 600 }}>模块</TableCell>
-                  <TableCell sx={{ fontWeight: 600 }}>访问次数</TableCell>
-                  <TableCell sx={{ fontWeight: 600 }}>平均停留</TableCell>
-                  <TableCell sx={{ fontWeight: 600 }}>操作次数</TableCell>
+                  <TableCell sx={{ fontWeight: 600 }}>{i18n.t('microfrontend.observability_dashboard.k32')}</TableCell>
+                  <TableCell sx={{ fontWeight: 600 }}>{i18n.t('microfrontend.observability_dashboard.k33')}</TableCell>
+                  <TableCell sx={{ fontWeight: 600 }}>{i18n.t('microfrontend.observability_dashboard.k34')}</TableCell>
+                  <TableCell sx={{ fontWeight: 600 }}>{i18n.t('microfrontend.observability_dashboard.k35')}</TableCell>
+                  <TableCell sx={{ fontWeight: 600 }}>{i18n.t('microfrontend.observability_dashboard.k36')}</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
@@ -799,7 +800,7 @@ const ObservabilityDashboard: React.FC<DashboardProps> = ({ onClose, refreshInte
                         color='text.secondary'
                         sx={{ py: 3 }}
                       >
-                        暂无行为数据
+                        {i18n.t('microfrontend.observability_dashboard.k11')}
                       </Typography>
                     </TableCell>
                   </TableRow>
@@ -816,12 +817,12 @@ const ObservabilityDashboard: React.FC<DashboardProps> = ({ onClose, refreshInte
             variant='h6'
             sx={{ fontWeight: 600, mb: 2 }}
           >
-            热门访问路径
+            {i18n.t('microfrontend.observability_dashboard.k12')}
           </Typography>
           {(() => {
             const paths = (userBehaviorAnalytics as any).getPopularPaths?.() || [];
             if (paths.length === 0) {
-              return <Typography color='text.secondary'>暂无路径数据</Typography>;
+              return <Typography color='text.secondary'>{i18n.t('microfrontend.observability_dashboard.k37')}</Typography>;
             }
             return (
               <TableContainer
@@ -831,9 +832,9 @@ const ObservabilityDashboard: React.FC<DashboardProps> = ({ onClose, refreshInte
                 <Table size='small'>
                   <TableHead>
                     <TableRow sx={{ bgcolor: 'action.hover' }}>
-                      <TableCell sx={{ fontWeight: 600 }}>排名</TableCell>
-                      <TableCell sx={{ fontWeight: 600 }}>路径</TableCell>
-                      <TableCell sx={{ fontWeight: 600 }}>访问次数</TableCell>
+                      <TableCell sx={{ fontWeight: 600 }}>{i18n.t('microfrontend.observability_dashboard.k38')}</TableCell>
+                      <TableCell sx={{ fontWeight: 600 }}>{i18n.t('microfrontend.observability_dashboard.k39')}</TableCell>
+                      <TableCell sx={{ fontWeight: 600 }}>{i18n.t('microfrontend.observability_dashboard.k40')}</TableCell>
                     </TableRow>
                   </TableHead>
                   <TableBody>
@@ -877,17 +878,17 @@ const ObservabilityDashboard: React.FC<DashboardProps> = ({ onClose, refreshInte
               variant='h6'
               sx={{ fontWeight: 600 }}
             >
-              模块详情
+              {i18n.t('microfrontend.observability_dashboard.k13')}
             </Typography>
             <FormControl
               size='small'
               sx={{ minWidth: 200 }}
             >
-              <InputLabel>选择模块</InputLabel>
+              <InputLabel>{i18n.t('microfrontend.observability_dashboard.k41')}</InputLabel>
               <Select
                 value={selectedModule || ''}
                 onChange={(e) => setSelectedModule(e.target.value || null)}
-                label='选择模块'
+                label={i18n.t('microfrontend.observability_dashboard.k42')}
               >
                 {sortedPerformance.map((m) => (
                   <MenuItem
@@ -908,7 +909,7 @@ const ObservabilityDashboard: React.FC<DashboardProps> = ({ onClose, refreshInte
               const reg = registeredModules.find((m) => m.id === selectedModule.split('/')[0]);
 
               if (!perf) {
-                return <Typography color='text.secondary'>未找到该模块数据</Typography>;
+                return <Typography color='text.secondary'>{i18n.t('microfrontend.observability_dashboard.k43')}</Typography>;
               }
 
               return (
@@ -921,7 +922,7 @@ const ObservabilityDashboard: React.FC<DashboardProps> = ({ onClose, refreshInte
                       variant='subtitle1'
                       sx={{ fontWeight: 600, mb: 1 }}
                     >
-                      性能指标
+                      {i18n.t('microfrontend.observability_dashboard.k14')}
                     </Typography>
                     <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
                       <Paper
@@ -929,7 +930,7 @@ const ObservabilityDashboard: React.FC<DashboardProps> = ({ onClose, refreshInte
                         sx={{ p: 2 }}
                       >
                         <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 0.5 }}>
-                          <Typography variant='body2'>总加载时间</Typography>
+                          <Typography variant='body2'>{i18n.t('microfrontend.observability_dashboard.k44')}</Typography>
                           <Typography
                             variant='body2'
                             sx={{ fontWeight: 600 }}
@@ -948,7 +949,7 @@ const ObservabilityDashboard: React.FC<DashboardProps> = ({ onClose, refreshInte
                         sx={{ p: 2 }}
                       >
                         <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 0.5 }}>
-                          <Typography variant='body2'>白屏时间</Typography>
+                          <Typography variant='body2'>{i18n.t('microfrontend.observability_dashboard.k45')}</Typography>
                           <Typography
                             variant='body2'
                             sx={{ fontWeight: 600 }}
@@ -1010,7 +1011,7 @@ const ObservabilityDashboard: React.FC<DashboardProps> = ({ onClose, refreshInte
                       variant='subtitle1'
                       sx={{ fontWeight: 600, mb: 1 }}
                     >
-                      行为指标
+                      {i18n.t('microfrontend.observability_dashboard.k15')}
                     </Typography>
                     <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
                       <Paper
@@ -1018,7 +1019,7 @@ const ObservabilityDashboard: React.FC<DashboardProps> = ({ onClose, refreshInte
                         sx={{ p: 2 }}
                       >
                         <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                          <Typography variant='body2'>访问次数</Typography>
+                          <Typography variant='body2'>{i18n.t('microfrontend.observability_dashboard.k46')}</Typography>
                           <Typography
                             variant='body2'
                             sx={{ fontWeight: 600 }}
@@ -1032,7 +1033,7 @@ const ObservabilityDashboard: React.FC<DashboardProps> = ({ onClose, refreshInte
                         sx={{ p: 2 }}
                       >
                         <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                          <Typography variant='body2'>平均停留时长</Typography>
+                          <Typography variant='body2'>{i18n.t('microfrontend.observability_dashboard.k47')}</Typography>
                           <Typography
                             variant='body2'
                             sx={{ fontWeight: 600 }}
@@ -1046,7 +1047,7 @@ const ObservabilityDashboard: React.FC<DashboardProps> = ({ onClose, refreshInte
                         sx={{ p: 2 }}
                       >
                         <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                          <Typography variant='body2'>操作次数</Typography>
+                          <Typography variant='body2'>{i18n.t('microfrontend.observability_dashboard.k48')}</Typography>
                           <Typography
                             variant='body2'
                             sx={{ fontWeight: 600 }}
@@ -1060,9 +1061,9 @@ const ObservabilityDashboard: React.FC<DashboardProps> = ({ onClose, refreshInte
                         sx={{ p: 2 }}
                       >
                         <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                          <Typography variant='body2'>注册状态</Typography>
+                          <Typography variant='body2'>{i18n.t('microfrontend.observability_dashboard.k49')}</Typography>
                           <Chip
-                            label={reg?.status || '未注册'}
+                            label={reg?.status || i18n.t('microfrontend.observability_dashboard.k50')}
                             size='small'
                             color={
                               reg?.status === 'active'
@@ -1092,10 +1093,10 @@ const ObservabilityDashboard: React.FC<DashboardProps> = ({ onClose, refreshInte
                         <Table size='small'>
                           <TableHead>
                             <TableRow sx={{ bgcolor: 'action.hover' }}>
-                              <TableCell sx={{ fontWeight: 600 }}>资源名称</TableCell>
-                              <TableCell sx={{ fontWeight: 600 }}>类型</TableCell>
-                              <TableCell sx={{ fontWeight: 600 }}>耗时</TableCell>
-                              <TableCell sx={{ fontWeight: 600 }}>大小</TableCell>
+                              <TableCell sx={{ fontWeight: 600 }}>{i18n.t('microfrontend.observability_dashboard.k51')}</TableCell>
+                              <TableCell sx={{ fontWeight: 600 }}>{i18n.t('microfrontend.observability_dashboard.k52')}</TableCell>
+                              <TableCell sx={{ fontWeight: 600 }}>{i18n.t('microfrontend.observability_dashboard.k53')}</TableCell>
+                              <TableCell sx={{ fontWeight: 600 }}>{i18n.t('microfrontend.observability_dashboard.k54')}</TableCell>
                             </TableRow>
                           </TableHead>
                           <TableBody>
@@ -1134,7 +1135,7 @@ const ObservabilityDashboard: React.FC<DashboardProps> = ({ onClose, refreshInte
               );
             })()
           ) : (
-            <Typography color='text.secondary'>请选择一个模块查看详情</Typography>
+            <Typography color='text.secondary'>{i18n.t('microfrontend.observability_dashboard.k55')}</Typography>
           )}
         </CardContent>
       </Card>
@@ -1172,7 +1173,7 @@ const ObservabilityDashboard: React.FC<DashboardProps> = ({ onClose, refreshInte
             variant='h6'
             sx={{ fontWeight: 700 }}
           >
-            微前端可观测性仪表盘
+            {i18n.t('microfrontend.observability_dashboard.k16')}
           </Typography>
         </Box>
         <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
@@ -1183,7 +1184,7 @@ const ObservabilityDashboard: React.FC<DashboardProps> = ({ onClose, refreshInte
             sx={{ color: 'common.white', borderColor: 'action.disabledBackground' }}
             variant={autoRefresh ? 'contained' : 'outlined'}
           >
-            {autoRefresh ? '自动刷新' : '已暂停'}
+            {autoRefresh ? i18n.t('microfrontend.observability_dashboard.k57') : i18n.t('microfrontend.observability_dashboard.k56')}
           </Button>
           <Button
             size='small'
@@ -1192,7 +1193,7 @@ const ObservabilityDashboard: React.FC<DashboardProps> = ({ onClose, refreshInte
             sx={{ color: 'common.white', borderColor: 'action.disabledBackground' }}
             variant='outlined'
           >
-            刷新
+            {i18n.t('microfrontend.observability_dashboard.k17')}
           </Button>
           <Button
             size='small'
@@ -1201,7 +1202,7 @@ const ObservabilityDashboard: React.FC<DashboardProps> = ({ onClose, refreshInte
             sx={{ color: 'common.white', borderColor: 'action.disabledBackground' }}
             variant='outlined'
           >
-            导出
+            {i18n.t('microfrontend.observability_dashboard.k18')}
           </Button>
           {onClose && (
             <IconButton
@@ -1220,31 +1221,31 @@ const ObservabilityDashboard: React.FC<DashboardProps> = ({ onClose, refreshInte
         sx={{ bgcolor: 'background.paper', borderBottom: 1, borderColor: 'divider', px: 2 }}
       >
         <Tab
-          label='概览'
+          label={i18n.t('microfrontend.observability_dashboard.k58')}
           value='overview'
           icon={<ActivityIcon size={16} />}
           iconPosition='start'
         />
         <Tab
-          label='性能'
+          label={i18n.t('microfrontend.observability_dashboard.k59')}
           value='performance'
           icon={<ZapIcon size={16} />}
           iconPosition='start'
         />
         <Tab
-          label='错误'
+          label={i18n.t('microfrontend.observability_dashboard.k60')}
           value='errors'
           icon={<AlertIcon size={16} />}
           iconPosition='start'
         />
         <Tab
-          label='行为'
+          label={i18n.t('microfrontend.observability_dashboard.k61')}
           value='behavior'
           icon={<EyeIcon size={16} />}
           iconPosition='start'
         />
         <Tab
-          label='模块详情'
+          label={i18n.t('microfrontend.observability_dashboard.k62')}
           value='modules'
           icon={<LayersIcon size={16} />}
           iconPosition='start'

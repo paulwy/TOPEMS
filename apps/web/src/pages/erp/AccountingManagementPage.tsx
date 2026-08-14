@@ -8,12 +8,10 @@
  * - Tab 1: 会计科目（accountingSubjectSchema 驱动）
  * - Tab 2: 期初余额（openingBalanceSchema 驱动 + 结转按钮）
  */
-
 import React, { useMemo } from 'react';
 import { Box, Tabs, Tab, Button } from '@mui/material';
 import { FileSpreadsheet, RefreshCw } from 'lucide-react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-
 import CrudPage, { type CrudApiAdapter } from '@/components/templates/CrudPage';
 import { PageContainer } from '@/components/common';
 import { useNotificationStore } from '@/store';
@@ -24,16 +22,14 @@ import {
   type AccountingSubject,
   type OpeningBalance,
 } from '@/api/erp';
+import i18n from '@/i18n';
 import { accountingSubjectSchema, openingBalanceSchema } from '@/schemas/finance';
 import { designTokens } from '@/theme/tokens';
-
 const ct= designTokens.colors;
-
 const AccountingManagementPage: React.FC = () => {
   const [activeTab, setActiveTab] = React.useState(0);
   const addNotification = useNotificationStore((state) => state.addNotification);
   const queryClient = useQueryClient();
-
   // ── 会计科目 API 适配器 ──
   const subjectAdapter: CrudApiAdapter<AccountingSubject> = useMemo(
     () => ({
@@ -54,22 +50,21 @@ const AccountingManagementPage: React.FC = () => {
       },
       create: async (data) => {
         const res = await accountingSubjectApi.create(data);
-        if (!res.success) throw new Error(res.message || '创建失败');
+        if (!res.success) throw new Error(res.message || i18n.t('erp.accounting_management_page.k0'));
         return res.data as AccountingSubject;
       },
       update: async (id, data) => {
         const res = await accountingSubjectApi.update(id, data);
-        if (!res.success) throw new Error(res.message || '更新失败');
+        if (!res.success) throw new Error(res.message || i18n.t('erp.accounting_management_page.k1'));
         return res.data as AccountingSubject;
       },
       delete: async (id) => {
         const res = await accountingSubjectApi.delete(id);
-        if (!res.success) throw new Error(res.message || '删除失败');
+        if (!res.success) throw new Error(res.message || i18n.t('erp.accounting_management_page.k2'));
       },
     }),
     []
   );
-
   // ── 期初余额 API 适配器 ──
   const balanceAdapter: CrudApiAdapter<OpeningBalance> = useMemo(
     () => ({
@@ -97,7 +92,7 @@ const AccountingManagementPage: React.FC = () => {
           debit_balance: Number(data.debit_balance ?? 0),
           credit_balance: Number(data.credit_balance ?? 0),
         });
-        if (!res.success) throw new Error(res.message || '创建失败');
+        if (!res.success) throw new Error(res.message || i18n.t('erp.accounting_management_page.k3'));
         return res.data as OpeningBalance;
       },
       update: async (id, data) => {
@@ -109,17 +104,16 @@ const AccountingManagementPage: React.FC = () => {
           debit_balance: Number(data.debit_balance ?? 0),
           credit_balance: Number(data.credit_balance ?? 0),
         });
-        if (!res.success) throw new Error(res.message || '更新失败');
+        if (!res.success) throw new Error(res.message || i18n.t('erp.accounting_management_page.k4'));
         return res.data as OpeningBalance;
       },
       delete: async (id) => {
         const res = await openingBalanceApi.delete(id);
-        if (!res.success) throw new Error(res.message || '删除失败');
+        if (!res.success) throw new Error(res.message || i18n.t('erp.accounting_management_page.k5'));
       },
     }),
     []
   );
-
   // ── 结转期初余额 ──
   const carryForwardMutation = useMutation({
     mutationFn: () => {
@@ -129,8 +123,8 @@ const AccountingManagementPage: React.FC = () => {
     onSuccess: () => {
       addNotification({
         type: 'success',
-        title: '结转成功',
-        message: '期初余额已结转',
+        title: i18n.t('erp.accounting_management_page.k6'),
+        message: i18n.t('erp.accounting_management_page.k7'),
       });
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.ERP.OPENING_BALANCES ,
   exact: false,
@@ -140,12 +134,11 @@ const AccountingManagementPage: React.FC = () => {
     onError: () => {
       addNotification({
         type: 'error',
-        title: '结转失败',
-        message: '无法结转期初余额',
+        title: i18n.t('erp.accounting_management_page.k8'),
+        message: i18n.t('erp.accounting_management_page.k9'),
       });
     },
   });
-
   // ── 期初余额 Tab 的头部操作（结转按钮） ──
   const balanceHeaderContent = useMemo(
     () => (
@@ -158,13 +151,12 @@ const AccountingManagementPage: React.FC = () => {
           onClick={() => carryForwardMutation.mutate()}
           disabled={carryForwardMutation.isPending}
         >
-          {carryForwardMutation.isPending ? '结转中...' : '结转期初余额'}
+          {carryForwardMutation.isPending ? i18n.t('pages.accounting_management_page.k0') : i18n.t('erp.accounting_management_page.k10')}
         </Button>
       </Box>
     ),
     [carryForwardMutation]
   );
-
   return (
     <PageContainer
       autoTitle
@@ -180,33 +172,31 @@ const AccountingManagementPage: React.FC = () => {
         sx={{ mb: 2, borderBottom: 1, borderColor: 'divider' }}
       >
         <Tab
-          label='会计科目'
+          label={i18n.t('erp.accounting_management_page.k11')}
           icon={<FileSpreadsheet size={16} />}
           iconPosition='start'
         />
         <Tab
-          label='期初余额'
+          label={i18n.t('erp.accounting_management_page.k12')}
           icon={<RefreshCw size={16} />}
           iconPosition='start'
         />
       </Tabs>
-
       {activeTab === 0 ? (
         <CrudPage
           schema={accountingSubjectSchema}
           apiAdapter={subjectAdapter}
-          breadcrumbs={[{ label: 'ERP' }, { label: '会计科目' }]}
+          breadcrumbs={[{ label: 'ERP' }, { label: i18n.t('erp.accounting_management_page.k13') }]}
         />
       ) : (
         <CrudPage
           schema={openingBalanceSchema}
           apiAdapter={balanceAdapter}
-          breadcrumbs={[{ label: 'ERP' }, { label: '期初余额' }]}
+          breadcrumbs={[{ label: 'ERP' }, { label: i18n.t('erp.accounting_management_page.k14') }]}
           headerContent={balanceHeaderContent}
         />
       )}
     </PageContainer>
   );
 };
-
 export default AccountingManagementPage;

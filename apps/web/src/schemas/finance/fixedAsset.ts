@@ -1,9 +1,10 @@
 import type { EntitySchema } from '@/schema';
+import i18n from '@/i18n';
 
 export const fixedAssetSchema: EntitySchema = {
   entity: 'finance_fixed_asset',
-  title: '固定资产',
-  description: '管理企业固定资产，包括购置、折旧、处置等全生命周期',
+  title: i18n.t('finance.fixed_asset.k0'),
+  description: i18n.t('finance.fixed_asset.k1'),
 
   api: {
     module: 'erp',
@@ -13,7 +14,7 @@ export const fixedAssetSchema: EntitySchema = {
   fields: [
     {
       name: 'asset_code',
-      label: '资产编码',
+      label: i18n.t('finance.fixed_asset.k2'),
       type: 'text',
       required: true,
       readonlyOnEdit: true,
@@ -23,7 +24,7 @@ export const fixedAssetSchema: EntitySchema = {
     },
     {
       name: 'asset_name',
-      label: '资产名称',
+      label: i18n.t('finance.fixed_asset.k3'),
       type: 'text',
       required: true,
       sortable: true,
@@ -32,32 +33,32 @@ export const fixedAssetSchema: EntitySchema = {
     },
     {
       name: 'asset_category',
-      label: '资产分类',
+      label: i18n.t('finance.fixed_asset.k4'),
       type: 'select',
       listWidth: 100,
       options: {
         type: 'static',
         options: [
-          { value: 'office_equipment', label: '办公设备' },
-          { value: 'computer', label: '电脑设备' },
-          { value: 'server', label: '服务器' },
-          { value: 'network', label: '网络设备' },
-          { value: 'furniture', label: '办公家具' },
-          { value: 'vehicle', label: '运输工具' },
+          { value: 'office_equipment', label: i18n.t('finance.fixed_asset.k5') },
+          { value: 'computer', label: i18n.t('finance.fixed_asset.k6') },
+          { value: 'server', label: i18n.t('finance.fixed_asset.k7') },
+          { value: 'network', label: i18n.t('finance.fixed_asset.k8') },
+          { value: 'furniture', label: i18n.t('finance.fixed_asset.k9') },
+          { value: 'vehicle', label: i18n.t('finance.fixed_asset.k10') },
         ],
       },
       validation: [{ type: 'maxLength', value: 100 }],
     },
     {
       name: 'purchase_date',
-      label: '购入日期',
+      label: i18n.t('finance.fixed_asset.k11'),
       type: 'date',
       required: true,
       listWidth: 120,
     },
     {
       name: 'original_value',
-      label: '原值',
+      label: i18n.t('finance.fixed_asset.k12'),
       type: 'number',
       required: true,
       sortable: true,
@@ -68,7 +69,7 @@ export const fixedAssetSchema: EntitySchema = {
     },
     {
       name: 'salvage_value',
-      label: '残值',
+      label: i18n.t('finance.fixed_asset.k13'),
       type: 'number',
       listWidth: 100,
       align: 'right',
@@ -77,7 +78,7 @@ export const fixedAssetSchema: EntitySchema = {
     },
     {
       name: 'accumulated_depreciation',
-      label: '累计折旧',
+      label: i18n.t('finance.fixed_asset.k14'),
       type: 'number',
       sortable: true,
       listWidth: 120,
@@ -88,7 +89,7 @@ export const fixedAssetSchema: EntitySchema = {
     },
     {
       name: 'net_value',
-      label: '净值',
+      label: i18n.t('finance.fixed_asset.k15'),
       type: 'number',
       sortable: true,
       listWidth: 120,
@@ -99,31 +100,31 @@ export const fixedAssetSchema: EntitySchema = {
     },
     {
       name: 'depreciation_method',
-      label: '折旧方法',
+      label: i18n.t('finance.fixed_asset.k16'),
       type: 'select',
       defaultValue: 'straight_line',
       listWidth: 100,
       options: {
         type: 'static',
         options: [
-          { value: 'straight_line', label: '直线法' },
-          { value: 'declining_balance', label: '双倍余额递减法' },
-          { value: 'sum_of_years', label: '年数总和法' },
+          { value: 'straight_line', label: i18n.t('finance.fixed_asset.k17') },
+          { value: 'declining_balance', label: i18n.t('finance.fixed_asset.k18') },
+          { value: 'sum_of_years', label: i18n.t('finance.fixed_asset.k19') },
         ],
       },
       validation: [{ type: 'maxLength', value: 50 }],
     },
     {
       name: 'expected_life',
-      label: '使用年限',
+      label: i18n.t('finance.fixed_asset.k20'),
       type: 'number',
       listWidth: 80,
       align: 'center',
-      renderCell: (value: number) => `${value}年`,
+      renderCell: (value: number) => `${value}${i18n.t('shared.fixed_asset.k0')}`,
     },
     {
       name: 'monthly_depreciation',
-      label: '月折旧额',
+      label: i18n.t('finance.fixed_asset.k21'),
       type: 'number',
       listWidth: 120,
       align: 'right',
@@ -133,14 +134,14 @@ export const fixedAssetSchema: EntitySchema = {
     },
     {
       name: 'location',
-      label: '存放位置',
+      label: i18n.t('finance.fixed_asset.k22'),
       type: 'text',
       listWidth: 150,
       validation: [{ type: 'maxLength', value: 200 }],
     },
     {
       name: 'department_id',
-      label: '使用部门',
+      label: i18n.t('finance.fixed_asset.k23'),
       type: 'select',
       listWidth: 120,
       options: {
@@ -150,7 +151,7 @@ export const fixedAssetSchema: EntitySchema = {
     },
     {
       name: 'status',
-      label: '状态',
+      label: i18n.t('finance.fixed_asset.k24'),
       type: 'select',
       defaultValue: 'active',
       listWidth: 100,
@@ -158,10 +159,10 @@ export const fixedAssetSchema: EntitySchema = {
       options: {
         type: 'static',
         options: [
-          { value: 'active', label: '使用中' },
-          { value: 'idle', label: '闲置' },
-          { value: 'depreciated', label: '已提足折旧' },
-          { value: 'retired', label: '已报废' },
+          { value: 'active', label: i18n.t('finance.fixed_asset.k25') },
+          { value: 'idle', label: i18n.t('finance.fixed_asset.k26') },
+          { value: 'depreciated', label: i18n.t('finance.fixed_asset.k27') },
+          { value: 'retired', label: i18n.t('finance.fixed_asset.k28') },
         ],
       },
       validation: [{ type: 'maxLength', value: 20 }],
@@ -192,37 +193,37 @@ export const fixedAssetSchema: EntitySchema = {
         retired: 'error',
       },
       labelMap: {
-        active: '使用中',
-        idle: '闲置',
-        depreciated: '已提足折旧',
-        retired: '已报废',
+        active: i18n.t('finance.fixed_asset.k29'),
+        idle: i18n.t('finance.fixed_asset.k30'),
+        depreciated: i18n.t('finance.fixed_asset.k31'),
+        retired: i18n.t('finance.fixed_asset.k32'),
       },
     },
     filters: [
       {
         id: 'status',
-        label: '状态',
+        label: i18n.t('finance.fixed_asset.k33'),
         type: 'select',
         options: [
-          { label: '全部状态', value: 'all' },
-          { label: '使用中', value: 'active' },
-          { label: '闲置', value: 'idle' },
-          { label: '已提足折旧', value: 'depreciated' },
-          { label: '已报废', value: 'retired' },
+          { label: i18n.t('finance.fixed_asset.k34'), value: 'all' },
+          { label: i18n.t('finance.fixed_asset.k35'), value: 'active' },
+          { label: i18n.t('finance.fixed_asset.k36'), value: 'idle' },
+          { label: i18n.t('finance.fixed_asset.k37'), value: 'depreciated' },
+          { label: i18n.t('finance.fixed_asset.k38'), value: 'retired' },
         ],
       },
       {
         id: 'asset_category',
-        label: '资产分类',
+        label: i18n.t('finance.fixed_asset.k39'),
         type: 'select',
         options: [
-          { label: '全部分类', value: 'all' },
-          { label: '办公设备', value: 'office_equipment' },
-          { label: '电脑设备', value: 'computer' },
-          { label: '服务器', value: 'server' },
-          { label: '网络设备', value: 'network' },
-          { label: '办公家具', value: 'furniture' },
-          { label: '运输工具', value: 'vehicle' },
+          { label: i18n.t('finance.fixed_asset.k40'), value: 'all' },
+          { label: i18n.t('finance.fixed_asset.k41'), value: 'office_equipment' },
+          { label: i18n.t('finance.fixed_asset.k42'), value: 'computer' },
+          { label: i18n.t('finance.fixed_asset.k43'), value: 'server' },
+          { label: i18n.t('finance.fixed_asset.k44'), value: 'network' },
+          { label: i18n.t('finance.fixed_asset.k45'), value: 'furniture' },
+          { label: i18n.t('finance.fixed_asset.k46'), value: 'vehicle' },
         ],
       },
     ],
@@ -232,7 +233,7 @@ export const fixedAssetSchema: EntitySchema = {
 
   formSections: [
     {
-      title: '基本信息',
+      title: i18n.t('finance.fixed_asset.k47'),
       fields: [
         'asset_code',
         'asset_name',
@@ -243,23 +244,23 @@ export const fixedAssetSchema: EntitySchema = {
       ],
     },
     {
-      title: '价值信息',
+      title: i18n.t('finance.fixed_asset.k48'),
       fields: ['original_value', 'salvage_value', 'depreciation_method', 'expected_life'],
     },
   ],
 
   formColCount: 2,
-  createTitle: '新增固定资产',
-  editTitle: '编辑固定资产',
-  detailTitle: '固定资产详情',
+  createTitle: i18n.t('finance.fixed_asset.k49'),
+  editTitle: i18n.t('finance.fixed_asset.k50'),
+  detailTitle: i18n.t('finance.fixed_asset.k51'),
 
   batchActions: [
     {
       key: 'depreciate',
-      label: '计提折旧',
+      label: i18n.t('finance.fixed_asset.k52'),
       icon: 'Calculator',
       color: 'primary',
-      description: '对选中的资产进行折旧计算',
+      description: i18n.t('finance.fixed_asset.k53'),
       onClick: () => {},
     },
   ],

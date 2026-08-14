@@ -23,6 +23,7 @@ import {
   TableCell,
   TableBody,
 } from '@mui/material';
+import i18n from '@/i18n';
 import { Grid } from '@/components';
 import type { ParseDataRequest, ParseResult } from '@/api/lims';
 import { formatJson, parseJsonInput } from '../utils';
@@ -56,7 +57,7 @@ const ParseTestDialog: React.FC<ParseTestDialogProps> = ({
       maxWidth='lg'
       fullWidth
     >
-      <DialogTitle>解析测试</DialogTitle>
+      <DialogTitle>{i18n.t('pages.parse_test_dialog.k0')}</DialogTitle>
       <DialogContent dividers>
         <Grid
           container
@@ -69,10 +70,10 @@ const ParseTestDialog: React.FC<ParseTestDialogProps> = ({
           >
             <Stack spacing={2}>
               <FormControl fullWidth>
-                <InputLabel>协议类型</InputLabel>
+                <InputLabel>{i18n.t('pages.parse_test_dialog.k1')}</InputLabel>
                 <Select
                   value={parseTestData.protocol}
-                  label='协议类型'
+                  label={i18n.t('pages.parse_test_dialog.k2')}
                   onChange={(e) =>
                     onParseTestDataChange({ ...parseTestData, protocol: e.target.value })
                   }
@@ -88,7 +89,7 @@ const ParseTestDialog: React.FC<ParseTestDialogProps> = ({
                   color='text.secondary'
                   sx={{ mb: 1 }}
                 >
-                  输入数据 (JSON)
+                  {i18n.t('pages.parse_test_dialog.json_0')}
                 </Typography>
                 <TextareaAutosize
                   minRows={20}
@@ -115,7 +116,7 @@ const ParseTestDialog: React.FC<ParseTestDialogProps> = ({
                 onClick={onTestParse}
                 disabled={submitting}
               >
-                {submitting ? '解析中...' : '开始解析'}
+                {submitting ? i18n.t('pages.parse_test_dialog.k1') : i18n.t('pages.parse_test_dialog.k3')}
               </Button>
             </Stack>
           </Grid>
@@ -128,7 +129,7 @@ const ParseTestDialog: React.FC<ParseTestDialogProps> = ({
                 variant='subtitle2'
                 color='text.secondary'
               >
-                解析结果
+                {i18n.t('pages.parse_test_dialog.k2')}
               </Typography>
               <Paper
                 variant='outlined'
@@ -153,11 +154,11 @@ const ParseTestDialog: React.FC<ParseTestDialogProps> = ({
                         />
                       )}
                       <Typography sx={{ fontWeight: 'bold' }}>
-                        {parseTestResult.success ? '解析成功' : '解析失败'}
+                        {parseTestResult.success ? i18n.t('pages.parse_test_dialog.k5') : i18n.t('pages.parse_test_dialog.k4')}
                       </Typography>
                       {parseTestResult.quality_score !== undefined && (
                         <Chip
-                          label={`质量分: ${parseTestResult.quality_score}%`}
+                          label={`${i18n.t('pages.parse_test_dialog.k3')} ${parseTestResult.quality_score}%`}
                           size='small'
                           color='primary'
                         />
@@ -174,7 +175,7 @@ const ParseTestDialog: React.FC<ParseTestDialogProps> = ({
                           variant='subtitle2'
                           sx={{ mb: 1 }}
                         >
-                          解析数据
+                          {i18n.t('pages.parse_test_dialog.k4')}
                         </Typography>
                         <Paper
                           variant='outlined'
@@ -205,10 +206,10 @@ const ParseTestDialog: React.FC<ParseTestDialogProps> = ({
                           <Table size='small'>
                             <TableHead>
                               <TableRow>
-                                <TableCell>项目</TableCell>
-                                <TableCell>结果</TableCell>
-                                <TableCell>单位</TableCell>
-                                <TableCell>状态</TableCell>
+                                <TableCell>{i18n.t('pages.parse_test_dialog.k6')}</TableCell>
+                                <TableCell>{i18n.t('pages.parse_test_dialog.k7')}</TableCell>
+                                <TableCell>{i18n.t('pages.parse_test_dialog.k8')}</TableCell>
+                                <TableCell>{i18n.t('pages.parse_test_dialog.k9')}</TableCell>
                               </TableRow>
                             </TableHead>
                             <TableBody>
@@ -241,7 +242,7 @@ const ParseTestDialog: React.FC<ParseTestDialogProps> = ({
                       height: 300,
                     }}
                   >
-                    <Typography color='text.secondary'>点击"开始解析"查看结果</Typography>
+                    <Typography color='text.secondary'>点击"{i18n.t('parsetestdialog.开始解析')}"{i18n.t('ai.v55-copilot-panel.k47')}</Typography>
                   </Box>
                 )}
               </Paper>
@@ -250,7 +251,7 @@ const ParseTestDialog: React.FC<ParseTestDialogProps> = ({
         </Grid>
       </DialogContent>
       <DialogActions>
-        <Button onClick={onClose}>关闭</Button>
+        <Button onClick={onClose}>{i18n.t('pages.parse_test_dialog.k11')}</Button>
       </DialogActions>
     </Dialog>
   );

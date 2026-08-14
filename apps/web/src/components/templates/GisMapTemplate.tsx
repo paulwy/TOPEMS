@@ -17,6 +17,7 @@ import {
   Typography,
   Divider,
 } from '@mui/material';
+import i18n from '@/i18n';
 import {
   Search,
   Layers,
@@ -125,7 +126,7 @@ const baseLayers: MapLayer[] = [
   },
   {
     id: 'satellite',
-    name: '卫星地图',
+    name: i18n.t('components.gis_map_template.k0'),
     type: 'tile',
     visible: false,
     url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
@@ -133,7 +134,7 @@ const baseLayers: MapLayer[] = [
   },
   {
     id: 'dark',
-    name: '深色模式',
+    name: i18n.t('components.gis_map_template.k1'),
     type: 'tile',
     visible: false,
     url: 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png',
@@ -142,10 +143,10 @@ const baseLayers: MapLayer[] = [
 ];
 
 const defaultOverlayLayers: MapLayer[] = [
-  { id: 'markers', name: '标记点', type: 'overlay', visible: true },
-  { id: 'clusters', name: '标记簇', type: 'overlay', visible: true },
-  { id: 'fences', name: '围栏', type: 'overlay', visible: true },
-  { id: 'tracks', name: '轨迹', type: 'overlay', visible: true },
+  { id: 'markers', name: i18n.t('components.gis_map_template.k2'), type: 'overlay', visible: true },
+  { id: 'clusters', name: i18n.t('components.gis_map_template.k3'), type: 'overlay', visible: true },
+  { id: 'fences', name: i18n.t('components.gis_map_template.k4'), type: 'overlay', visible: true },
+  { id: 'tracks', name: i18n.t('components.gis_map_template.k5'), type: 'overlay', visible: true },
 ];
 
 interface MapControlProps {
@@ -175,39 +176,39 @@ function MapControl({
         zIndex: 1000,
       }}
     >
-      <Tooltip title='放大'>
+      <Tooltip title={i18n.t('components.gis_map_template.k6')}>
         <IconButton
           onClick={onZoomIn}
           sx={{ bgcolor: 'background.paper', boxShadow: 1 }}
-          aria-label='放大'
+          aria-label={i18n.t('components.gis_map_template.k7')}
         >
           <ZoomIn size={20} />
         </IconButton>
       </Tooltip>
-      <Tooltip title='缩小'>
+      <Tooltip title={i18n.t('components.gis_map_template.k8')}>
         <IconButton
           onClick={onZoomOut}
           sx={{ bgcolor: 'background.paper', boxShadow: 1 }}
-          aria-label='缩小'
+          aria-label={i18n.t('components.gis_map_template.k9')}
         >
           <ZoomOut size={20} />
         </IconButton>
       </Tooltip>
       <Divider sx={{ my: 1, width: '100%' }} />
-      <Tooltip title='定位'>
+      <Tooltip title={i18n.t('components.gis_map_template.k10')}>
         <IconButton
           onClick={onLocate}
           sx={{ bgcolor: 'background.paper', boxShadow: 1 }}
-          aria-label='定位'
+          aria-label={i18n.t('components.gis_map_template.k11')}
         >
           <Locate size={20} />
         </IconButton>
       </Tooltip>
-      <Tooltip title={isFullscreen ? '退出全屏' : '全屏'}>
+      <Tooltip title={isFullscreen ? i18n.t('components.gis_map_template.k13') : i18n.t('components.gis_map_template.k12')}>
         <IconButton
           onClick={onFullscreen}
           sx={{ bgcolor: 'background.paper', boxShadow: 1 }}
-          aria-label='最小化'
+          aria-label={i18n.t('components.gis_map_template.k14')}
         >
           {isFullscreen ? <Minimize2 size={20} /> : <Maximize2 size={20} />}
         </IconButton>
@@ -247,14 +248,14 @@ function LayerPanel({
           variant='h6'
           sx={{ fontWeight: 600 }}
         >
-          图层管理
+          {i18n.t('components.gis_map_template.k0')}
         </Typography>
       </Box>
       <Typography
         variant='subtitle2'
         sx={{ fontWeight: 500, mb: 2 }}
       >
-        底图
+        {i18n.t('components.gis_map_template.k1')}
       </Typography>
       <List
         dense
@@ -289,7 +290,7 @@ function LayerPanel({
         variant='subtitle2'
         sx={{ fontWeight: 500, mb: 2 }}
       >
-        叠加层
+        {i18n.t('components.gis_map_template.k2')}
       </Typography>
       <List dense>
         {overlayLayers.map((layer) => (
@@ -339,7 +340,7 @@ function SearchPanel({ open, onClose, onSearch }: SearchPanelProps) {
       <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
         <TextField
           autoFocus
-          placeholder='搜索地点、设备或围栏...'
+          placeholder={i18n.t('components.gis_map_template.k3')}
           value={searchValue}
           onChange={(e) => setSearchValue(e.target.value)}
           onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
@@ -358,7 +359,7 @@ function SearchPanel({ open, onClose, onSearch }: SearchPanelProps) {
           variant='contained'
           onClick={handleSearch}
         >
-          搜索
+          {i18n.t('components.gis_map_template.k4')}
         </Button>
       </Box>
     </Drawer>
@@ -392,41 +393,41 @@ function DrawControl({ onDraw, onClear, drawMode }: DrawControlProps) {
         variant='caption'
         sx={{ textAlign: 'center', fontWeight: 500, mb: 1 }}
       >
-        围栏绘制
+        {i18n.t('components.gis_map_template.k5')}
       </Typography>
-      <Tooltip title='圆形围栏'>
+      <Tooltip title={i18n.t('components.gis_map_template.k15')}>
         <IconButton
           onClick={() => onDraw('circle')}
           sx={{ color: drawMode === 'circle' ? 'primary.main' : 'text.primary' }}
-          aria-label='状态'
+          aria-label={i18n.t('components.gis_map_template.k16')}
         >
           <Circle size={20} />
         </IconButton>
       </Tooltip>
-      <Tooltip title='矩形围栏'>
+      <Tooltip title={i18n.t('components.gis_map_template.k17')}>
         <IconButton
           onClick={() => onDraw('rectangle')}
           sx={{ color: drawMode === 'rectangle' ? 'primary.main' : 'text.primary' }}
-          aria-label='选择'
+          aria-label={i18n.t('components.gis_map_template.k18')}
         >
           <Square size={20} />
         </IconButton>
       </Tooltip>
-      <Tooltip title='多边形围栏'>
+      <Tooltip title={i18n.t('components.gis_map_template.k19')}>
         <IconButton
           onClick={() => onDraw('polygon')}
           sx={{ color: drawMode === 'polygon' ? 'primary.main' : 'text.primary' }}
-          aria-label='编辑'
+          aria-label={i18n.t('components.gis_map_template.k20')}
         >
           <PenTool size={20} />
         </IconButton>
       </Tooltip>
       <Divider sx={{ my: 1, width: '100%' }} />
-      <Tooltip title='清除绘制'>
+      <Tooltip title={i18n.t('components.gis_map_template.k21')}>
         <IconButton
           onClick={onClear}
           color='error'
-          aria-label='删除'
+          aria-label={i18n.t('components.gis_map_template.k22')}
         >
           <Trash2 size={20} />
         </IconButton>
@@ -469,12 +470,12 @@ function TrackPlayback({
             variant='subtitle2'
             sx={{ fontWeight: 500 }}
           >
-            轨迹回放
+            {i18n.t('components.gis_map_template.k6')}
           </Typography>
           <Box sx={{ display: 'flex', gap: 1 }}>
             <IconButton
               onClick={onReset}
-              aria-label='重置'
+              aria-label={i18n.t('components.gis_map_template.k23')}
             >
               <RotateCcw size={20} />
             </IconButton>
@@ -482,7 +483,7 @@ function TrackPlayback({
               <IconButton
                 onClick={onPause}
                 color='primary'
-                aria-label='暂停'
+                aria-label={i18n.t('components.gis_map_template.k24')}
               >
                 <Pause size={24} />
               </IconButton>
@@ -490,7 +491,7 @@ function TrackPlayback({
               <IconButton
                 onClick={onPlay}
                 color='primary'
-                aria-label='执行'
+                aria-label={i18n.t('components.gis_map_template.k25')}
               >
                 <Play size={24} />
               </IconButton>
@@ -502,7 +503,7 @@ function TrackPlayback({
             variant='body2'
             sx={{ width: 80 }}
           >
-            播放速度
+            {i18n.t('components.gis_map_template.k7')}
           </Typography>
           <Slider
             value={playbackSpeed}
@@ -597,7 +598,7 @@ export function GisMapTemplate({
       navigator.geolocation.getCurrentPosition(
         (position) =>
           mapRef.current?.setView([position.coords.latitude, position.coords.longitude], 15),
-        (error) => logger.error('定位失败:', error)
+        (error) => logger.error(i18n.t('components.gis_map_template.k8'), error)
       );
     }
   }, []);
@@ -764,33 +765,33 @@ export function GisMapTemplate({
         }}
       >
         {searchable && (
-          <Tooltip title='搜索'>
+          <Tooltip title={i18n.t('components.gis_map_template.k26')}>
             <IconButton
               onClick={() => setShowSearch(true)}
               sx={{ bgcolor: 'background.paper', boxShadow: 1 }}
-              aria-label='搜索'
+              aria-label={i18n.t('components.gis_map_template.k27')}
             >
               <Search size={20} />
             </IconButton>
           </Tooltip>
         )}
         {showLayerPanel && (
-          <Tooltip title='图层'>
+          <Tooltip title={i18n.t('components.gis_map_template.k28')}>
             <IconButton
               onClick={() => setShowLayers(true)}
               sx={{ bgcolor: 'background.paper', boxShadow: 1 }}
-              aria-label='图层'
+              aria-label={i18n.t('components.gis_map_template.k29')}
             >
               <Layers size={20} />
             </IconButton>
           </Tooltip>
         )}
         {trackPoints.length > 0 && (
-          <Tooltip title='轨迹回放'>
+          <Tooltip title={i18n.t('components.gis_map_template.k30')}>
             <IconButton
               onClick={() => setShowTrackPlayback(true)}
               sx={{ bgcolor: 'background.paper', boxShadow: 1 }}
-              aria-label='导航'
+              aria-label={i18n.t('components.gis_map_template.k31')}
             >
               <Navigation size={20} />
             </IconButton>

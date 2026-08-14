@@ -32,6 +32,7 @@ import {
   Alert,
   Chip,
 } from '@mui/material';
+import i18n from '@/i18n';
 import { ArrowLeft, Save, X, RotateCcw, Info } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import {
@@ -153,33 +154,33 @@ function FormFieldRenderer({
       control={control as UseFormReturn['control']}
       defaultValue={field.defaultValue ?? ''}
       rules={{
-        required: field.validation?.required ? `${field.label}不能为空` : false,
+        required: field.validation?.required ? `${field.label}${i18n.t('components.bff_form_page.k0')}` : false,
         minLength: field.validation?.minLength
           ? {
               value: field.validation.minLength,
-              message: `${field.label}最少${field.validation.minLength}个字符`,
+              message: `${field.label}${i18n.t('components.bff_form_page.k1')}${field.validation.minLength}${i18n.t('components.bff_form_page.k2')}`,
             }
           : undefined,
         maxLength: field.validation?.maxLength
           ? {
               value: field.validation.maxLength,
-              message: `${field.label}最多${field.validation.maxLength}个字符`,
+              message: `${field.label}${i18n.t('components.bff_form_page.k3')}${field.validation.maxLength}${i18n.t('components.bff_form_page.k4')}`,
             }
           : undefined,
         min: field.validation?.min
           ? {
               value: field.validation.min,
-              message: `${field.label}不能小于${field.validation.min}`,
+              message: `${field.label}${i18n.t('components.bff_form_page.k5')}${field.validation.min}`,
             }
           : undefined,
         max: field.validation?.max
           ? {
               value: field.validation.max,
-              message: `${field.label}不能大于${field.validation.max}`,
+              message: `${field.label}${i18n.t('components.bff_form_page.k6')}${field.validation.max}`,
             }
           : undefined,
         pattern: field.validation?.pattern
-          ? { value: field.validation.pattern, message: `${field.label}格式不正确` }
+          ? { value: field.validation.pattern, message: `${field.label}${i18n.t('components.bff_form_page.k7')}` }
           : undefined,
         validate: field.validation?.custom
           ? (value: unknown, allValues: Record<string, unknown>) => {
@@ -478,9 +479,9 @@ function BffFormPageInner<T extends FieldValues = FieldValues>(props: BffFormPag
     (mode === 'edit' && crud.mutations.updateMutation.isPending);
 
   const displayTitle =
-    title ?? (mode === 'create' ? `新建${entityName ?? '记录'}` : `编辑${entityName ?? '记录'}`);
+    title ?? (mode === 'create' ? `${i18n.t('components.bff_form_page.k9')}${entityName ?? i18n.t('components.bff_form_page.k0')}` : `${i18n.t('components.bff_form_page.k8')}${entityName ?? i18n.t('components.bff_form_page.k1')}`);
 
-  const displaySubmitText = submitText ?? (mode === 'create' ? '创建' : '保存');
+  const displaySubmitText = submitText ?? (mode === 'create' ? i18n.t('components.bff_form_page.k3') : i18n.t('components.bff_form_page.k2'));
 
   const renderFields = (fieldList: BffFormField[]) => (
     <Box
@@ -535,7 +536,7 @@ function BffFormPageInner<T extends FieldValues = FieldValues>(props: BffFormPag
           <IconButton
             onClick={handleBack}
             size='small'
-            aria-label='返回'
+            aria-label={i18n.t('components.bff_form_page.k4')}
           >
             <ArrowLeft size={20} />
           </IconButton>
@@ -556,7 +557,7 @@ function BffFormPageInner<T extends FieldValues = FieldValues>(props: BffFormPag
             )}
           </Box>
           <Chip
-            label={mode === 'create' ? '新建' : '编辑'}
+            label={mode === 'create' ? i18n.t('components.bff_form_page.k6') : i18n.t('components.bff_form_page.k5')}
             size='small'
             color={mode === 'create' ? 'primary' : 'default'}
             variant='outlined'
@@ -657,7 +658,7 @@ function BffFormPageInner<T extends FieldValues = FieldValues>(props: BffFormPag
                 variant='caption'
                 color='text.secondary'
               >
-                有未保存的更改
+                {i18n.t('components.bff_form_page.k0')}
               </Typography>
             )}
           </Box>
@@ -668,7 +669,7 @@ function BffFormPageInner<T extends FieldValues = FieldValues>(props: BffFormPag
             onClick={handleReset}
             disabled={isSubmitting}
           >
-            重置
+            {i18n.t('components.bff_form_page.k1')}
           </Button>
           <Button
             variant='outlined'
@@ -676,7 +677,7 @@ function BffFormPageInner<T extends FieldValues = FieldValues>(props: BffFormPag
             onClick={handleBack}
             disabled={isSubmitting}
           >
-            取消
+            {i18n.t('components.bff_form_page.k2')}
           </Button>
           <Button
             type='submit'

@@ -17,6 +17,7 @@ import {
   Zap,
   Calendar,
 } from 'lucide-react';
+import i18n from '@/i18n';
 import { Stack, Menu, MenuItem, Button } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import {
@@ -55,11 +56,11 @@ const ct= designTokens.colors;
 type TimeRange = 'today' | 'week' | 'month' | 'quarter' | 'year';
 
 const timeRangeOptions: { value: TimeRange; label: string }[] = [
-  { value: 'today', label: '今日' },
-  { value: 'week', label: '本周' },
-  { value: 'month', label: '本月' },
-  { value: 'quarter', label: '本季度' },
-  { value: 'year', label: '本年' },
+  { value: 'today', label: i18n.t('pages.workflow_statistics_page.k0') },
+  { value: 'week', label: i18n.t('pages.workflow_statistics_page.k1') },
+  { value: 'month', label: i18n.t('pages.workflow_statistics_page.k2') },
+  { value: 'quarter', label: i18n.t('pages.workflow_statistics_page.k3') },
+  { value: 'year', label: i18n.t('pages.workflow_statistics_page.k4') },
 ];
 
 const generateTrendData = (range: TimeRange) => {
@@ -72,54 +73,54 @@ const generateTrendData = (range: TimeRange) => {
   };
   const labels: Record<TimeRange, (i: number) => string> = {
     today: (i) => `${i}:00`,
-    week: (i) => ['周一', '周二', '周三', '周四', '周五', '周六', '周日'][i] || '',
-    month: (i) => `${i + 1}日`,
-    quarter: (i) => `第${i + 1}周`,
-    year: (i) => `${i + 1}月`,
+    week: (i) => [i18n.t('pages.workflow_statistics_page.k11'), i18n.t('pages.workflow_statistics_page.k10'), i18n.t('pages.workflow_statistics_page.k9'), i18n.t('pages.workflow_statistics_page.k8'), i18n.t('pages.workflow_statistics_page.k7'), i18n.t('pages.workflow_statistics_page.k6'), i18n.t('pages.workflow_statistics_page.k5')][i] || '',
+    month: (i) => `${i + 1}${i18n.t('pages.workflow_statistics_page.k0')}`,
+    quarter: (i) => `${i18n.t('pages.workflow_statistics_page.k1')}${i + 1}${i18n.t('pages.workflow_statistics_page.k2')}`,
+    year: (i) => `${i + 1}${i18n.t('pages.workflow_statistics_page.k3')}`,
   };
   const count = counts[range];
   return Array.from({ length: count }, (_, i) => ({
     name: labels[range](i),
-    发起数: Math.floor(Math.random() * 50) + 20,
-    完成数: Math.floor(Math.random() * 40) + 15,
+    [i18n.t('pages.workflow_statistics_page.k4')]: Math.floor(Math.random() * 50) + 20,
+    [i18n.t('pages.workflow_statistics_page.k5')]: Math.floor(Math.random() * 40) + 15,
   }));
 };
 
 const distributionData = [
-  { name: '采购审批', value: 35 },
-  { name: '请假申请', value: 25 },
-  { name: '费用报销', value: 20 },
-  { name: '合同审批', value: 12 },
-  { name: '用章申请', value: 8 },
+  { name: i18n.t('pages.workflow_statistics_page.k12'), value: 35 },
+  { name: i18n.t('pages.workflow_statistics_page.k13'), value: 25 },
+  { name: i18n.t('pages.workflow_statistics_page.k14'), value: 20 },
+  { name: i18n.t('pages.workflow_statistics_page.k15'), value: 12 },
+  { name: i18n.t('pages.workflow_statistics_page.k16'), value: 8 },
 ];
 
 const efficiencyData = [
-  { name: '采购审批', 平均耗时: 48 },
-  { name: '请假申请', 平均耗时: 12 },
-  { name: '费用报销', 平均耗时: 36 },
-  { name: '合同审批', 平均耗时: 72 },
-  { name: '用章申请', 平均耗时: 24 },
+  { name: i18n.t('pages.workflow_statistics_page.k17'), [i18n.t('pages.workflow_statistics_page.k6')]: 48 },
+  { name: i18n.t('pages.workflow_statistics_page.k18'), [i18n.t('pages.workflow_statistics_page.k7')]: 12 },
+  { name: i18n.t('pages.workflow_statistics_page.k19'), [i18n.t('pages.workflow_statistics_page.k8')]: 36 },
+  { name: i18n.t('pages.workflow_statistics_page.k20'), [i18n.t('pages.workflow_statistics_page.k9')]: 72 },
+  { name: i18n.t('pages.workflow_statistics_page.k21'), [i18n.t('pages.workflow_statistics_page.k10')]: 24 },
 ];
 
 const bottleneckData = [
-  { name: '发起申请', 平均停留: 0.5 },
-  { name: '部门经理审批', 平均停留: 2.5 },
-  { name: '财务审核', 平均停留: 4.0 },
-  { name: '总经理审批', 平均停留: 6.0 },
-  { name: '归档', 平均停留: 1.0 },
+  { name: i18n.t('pages.workflow_statistics_page.k22'), [i18n.t('pages.workflow_statistics_page.k11')]: 0.5 },
+  { name: i18n.t('pages.workflow_statistics_page.k23'), [i18n.t('pages.workflow_statistics_page.k12')]: 2.5 },
+  { name: i18n.t('pages.workflow_statistics_page.k24'), [i18n.t('pages.workflow_statistics_page.k13')]: 4.0 },
+  { name: i18n.t('pages.workflow_statistics_page.k25'), [i18n.t('pages.workflow_statistics_page.k14')]: 6.0 },
+  { name: i18n.t('pages.workflow_statistics_page.k26'), [i18n.t('pages.workflow_statistics_page.k15')]: 1.0 },
 ];
 
 const topWorkflows = [
-  { id: '1', name: '请假申请', count: 128, avgTime: '12小时', passRate: '95%' },
-  { id: '2', name: '费用报销', count: 96, avgTime: '36小时', passRate: '88%' },
-  { id: '3', name: '采购审批', count: 85, avgTime: '48小时', passRate: '82%' },
-  { id: '4', name: '用章申请', count: 64, avgTime: '24小时', passRate: '92%' },
-  { id: '5', name: '合同审批', count: 52, avgTime: '72小时', passRate: '78%' },
-  { id: '6', name: '出差申请', count: 45, avgTime: '18小时', passRate: '90%' },
-  { id: '7', name: '入职审批', count: 38, avgTime: '60小时', passRate: '96%' },
-  { id: '8', name: '离职审批', count: 32, avgTime: '48小时', passRate: '94%' },
-  { id: '9', name: '调岗申请', count: 28, avgTime: '54小时', passRate: '85%' },
-  { id: '10', name: '转正申请', count: 25, avgTime: '36小时', passRate: '91%' },
+  { id: '1', name: i18n.t('pages.workflow_statistics_page.k27'), count: 128, avgTime: i18n.t('pages.workflow_statistics_page.12_16'), passRate: '95%' },
+  { id: '2', name: i18n.t('pages.workflow_statistics_page.k28'), count: 96, avgTime: i18n.t('pages.workflow_statistics_page.36_17'), passRate: '88%' },
+  { id: '3', name: i18n.t('pages.workflow_statistics_page.k29'), count: 85, avgTime: i18n.t('pages.workflow_statistics_page.48_18'), passRate: '82%' },
+  { id: '4', name: i18n.t('pages.workflow_statistics_page.k30'), count: 64, avgTime: i18n.t('pages.workflow_statistics_page.24_19'), passRate: '92%' },
+  { id: '5', name: i18n.t('pages.workflow_statistics_page.k31'), count: 52, avgTime: i18n.t('pages.workflow_statistics_page.72_20'), passRate: '78%' },
+  { id: '6', name: i18n.t('pages.workflow_statistics_page.k32'), count: 45, avgTime: i18n.t('pages.workflow_statistics_page.18_21'), passRate: '90%' },
+  { id: '7', name: i18n.t('pages.workflow_statistics_page.k33'), count: 38, avgTime: i18n.t('pages.workflow_statistics_page.60_22'), passRate: '96%' },
+  { id: '8', name: i18n.t('pages.workflow_statistics_page.k34'), count: 32, avgTime: i18n.t('pages.workflow_statistics_page.48_23'), passRate: '94%' },
+  { id: '9', name: i18n.t('pages.workflow_statistics_page.k35'), count: 28, avgTime: i18n.t('pages.workflow_statistics_page.54_24'), passRate: '85%' },
+  { id: '10', name: i18n.t('pages.workflow_statistics_page.k36'), count: 25, avgTime: i18n.t('pages.workflow_statistics_page.36_25'), passRate: '91%' },
 ];
 
 export const WorkflowStatisticsPage: React.FC = () => {
@@ -145,7 +146,7 @@ export const WorkflowStatisticsPage: React.FC = () => {
   useEffect(() => {
     if (statisticsQuery.isError) {
       apiLogger.error('Failed to load workflow statistics:', statisticsQuery.error);
-      addNotification({ title: '错误', message: '加载统计数据失败', type: 'error' });
+      addNotification({ title: i18n.t('pages.workflow_statistics_page.k38'), message: i18n.t('pages.workflow_statistics_page.k37'), type: 'error' });
     }
   }, [statisticsQuery.isError, statisticsQuery.error, addNotification]);
 
@@ -163,12 +164,12 @@ export const WorkflowStatisticsPage: React.FC = () => {
   };
 
   const currentTimeRangeLabel =
-    timeRangeOptions.find((o) => o.value === timeRange)?.label || '本月';
+    timeRangeOptions.find((o) => o.value === timeRange)?.label || i18n.t('pages.workflow_statistics_page.k39');
 
   const handleRefresh = () => {
     statisticsQuery.refetch();
     addNotification({
-      message: '统计数据已刷新',
+      message: i18n.t('pages.workflow_statistics_page.k40'),
       type: 'success',
       duration: 3000,
     });
@@ -180,68 +181,68 @@ export const WorkflowStatisticsPage: React.FC = () => {
     () => [
       {
         id: 'total',
-        title: '总发起数',
+        title: i18n.t('pages.workflow_statistics_page.k41'),
         value: '1,256',
         icon: <FileText size={20} />,
         change: 12,
-        changeLabel: '环比增长',
+        changeLabel: i18n.t('pages.workflow_statistics_page.k42'),
         color: 'primary',
         trend: [20, 25, 22, 30, 28, 35, 32],
       },
       {
         id: 'completed',
-        title: '已完成数',
+        title: i18n.t('pages.workflow_statistics_page.k43'),
         value: '1,089',
         icon: <CheckCircle size={20} />,
         change: 8,
-        changeLabel: '环比增长',
+        changeLabel: i18n.t('pages.workflow_statistics_page.k44'),
         color: 'success',
         trend: [18, 22, 20, 26, 24, 30, 28],
       },
       {
         id: 'in-progress',
-        title: '进行中',
+        title: i18n.t('pages.workflow_statistics_page.k45'),
         value: '167',
         icon: <Clock size={20} />,
         change: -3,
-        changeLabel: '环比变化',
+        changeLabel: i18n.t('pages.workflow_statistics_page.k46'),
         color: 'warning',
         trend: [25, 22, 24, 20, 22, 18, 20],
       },
       {
         id: 'avg-duration',
-        title: '平均时长',
+        title: i18n.t('pages.workflow_statistics_page.k47'),
         value: '32.5',
-        unit: '小时',
+        unit: i18n.t('pages.workflow_statistics_page.k48'),
         icon: <Timer size={20} />,
         change: -5.2,
-        changeLabel: '环比变化',
+        changeLabel: i18n.t('pages.workflow_statistics_page.k49'),
         color: 'info',
         trend: [40, 38, 36, 35, 34, 33, 32],
       },
       {
         id: 'pass-rate',
-        title: '通过率',
+        title: i18n.t('pages.workflow_statistics_page.k50'),
         value: '86.7',
         unit: '%',
         icon: <ThumbsUp size={20} />,
         change: 2.3,
-        changeLabel: '环比提升',
+        changeLabel: i18n.t('pages.workflow_statistics_page.k51'),
         color: 'success',
         progress: 86.7,
-        progressLabel: '通过率',
+        progressLabel: i18n.t('pages.workflow_statistics_page.k52'),
       },
       {
         id: 'reject-rate',
-        title: '驳回率',
+        title: i18n.t('pages.workflow_statistics_page.k53'),
         value: '13.3',
         unit: '%',
         icon: <ThumbsDown size={20} />,
         change: -1.8,
-        changeLabel: '环比下降',
+        changeLabel: i18n.t('pages.workflow_statistics_page.k54'),
         color: 'error',
         progress: 13.3,
-        progressLabel: '驳回率',
+        progressLabel: i18n.t('pages.workflow_statistics_page.k55'),
       },
     ],
     []
@@ -269,14 +270,14 @@ export const WorkflowStatisticsPage: React.FC = () => {
             width={100}
           />
           <Tooltip
-            formatter={(value) => [`${value} 小时`, '平均停留时间'] as [string, string]}
+            formatter={(value) => [`${value} ${i18n.t('pages.workflow_statistics_page.k26')}`, i18n.t('pages.workflow_statistics_page.k56')] as [string, string]}
             contentStyle={{
               borderRadius: 8,
               padding: 12,
             }}
           />
           <Bar
-            dataKey='平均停留'
+            dataKey={i18n.t('pages.workflow_statistics_page.k57')}
             radius={[0, 4, 4, 0]}
           >
             {bottleneckData.map((_, index) => (
@@ -302,15 +303,15 @@ export const WorkflowStatisticsPage: React.FC = () => {
     () => [
       {
         id: 'trend',
-        title: '流程趋势图',
-        subtitle: '近30天流程发起与完成趋势',
+        title: i18n.t('pages.workflow_statistics_page.k58'),
+        subtitle: i18n.t('pages.workflow_statistics_page.30_59'),
         chart: (
           <LazyChart type='line'
             data={trendData}
             xKey='name'
             yKeys={[
-              { key: '发起数', name: '发起数', color: 'primary.main' },
-              { key: '完成数', name: '完成数', color: 'success.main' },
+              { key: i18n.t('pages.workflow_statistics_page.k60'), name: i18n.t('pages.workflow_statistics_page.k61'), color: 'primary.main' },
+              { key: i18n.t('pages.workflow_statistics_page.k62'), name: i18n.t('pages.workflow_statistics_page.k63'), color: 'success.main' },
             ]}
             height={280}
           />
@@ -321,8 +322,8 @@ export const WorkflowStatisticsPage: React.FC = () => {
       },
       {
         id: 'distribution',
-        title: '流程分布图',
-        subtitle: '按流程类型分布占比',
+        title: i18n.t('pages.workflow_statistics_page.k64'),
+        subtitle: i18n.t('pages.workflow_statistics_page.k65'),
         chart: <LazyChart type='pie' data={distributionData} />,
         height: 360,
         type: 'pie',
@@ -330,8 +331,8 @@ export const WorkflowStatisticsPage: React.FC = () => {
       },
       {
         id: 'efficiency',
-        title: '效率分析图',
-        subtitle: '各流程类型平均耗时（小时）',
+        title: i18n.t('pages.workflow_statistics_page.k66'),
+        subtitle: i18n.t('pages.workflow_statistics_page.k67'),
         chart: (
           <ResponsiveContainer
             width='100%'
@@ -342,14 +343,14 @@ export const WorkflowStatisticsPage: React.FC = () => {
               <XAxis dataKey='name' />
               <YAxis unit='h' />
               <Tooltip
-                formatter={(value) => [`${value} 小时`, '平均耗时'] as [string, string]}
+                formatter={(value) => [`${value} ${i18n.t('pages.workflow_statistics_page.k27')}`, i18n.t('pages.workflow_statistics_page.k68')] as [string, string]}
                 contentStyle={{
                   borderRadius: 8,
                   padding: 12,
                 }}
               />
               <Bar
-                dataKey='平均耗时'
+                dataKey={i18n.t('pages.workflow_statistics_page.k69')}
                 fill='secondary.main'
                 radius={[4, 4, 0, 0]}
               />
@@ -362,8 +363,8 @@ export const WorkflowStatisticsPage: React.FC = () => {
       },
       {
         id: 'bottleneck',
-        title: '节点瓶颈分析',
-        subtitle: '各节点平均停留时间（小时）',
+        title: i18n.t('pages.workflow_statistics_page.k70'),
+        subtitle: i18n.t('pages.workflow_statistics_page.k71'),
         chart: BottleneckChart,
         height: 360,
         type: 'bar',
@@ -378,12 +379,12 @@ export const WorkflowStatisticsPage: React.FC = () => {
       topWorkflows.map((item, index) => ({
         id: item.id,
         title: item.name,
-        description: `发起 ${item.count} 次 · 平均耗时 ${item.avgTime}`,
+        description: `${i18n.t('pages.workflow_statistics_page.k28')} ${item.count} ${i18n.t('pages.workflow_statistics_page.k29')} ${item.avgTime}`,
         icon: <Zap size={18} />,
         status: index < 3 ? 'success' : index < 6 ? 'info' : 'default',
         tags: [
           { label: `#${index + 1}`, color: index < 3 ? 'warning.main' : undefined },
-          { label: `通过率 ${item.passRate}` },
+          { label: `${i18n.t('pages.workflow_statistics_page.k30')} ${item.passRate}` },
         ],
         onClick: () => navigate(WORKFLOW_PATHS.definitions),
       })),
@@ -425,8 +426,8 @@ export const WorkflowStatisticsPage: React.FC = () => {
 
   return (
     <PageContainer
-      title='流程统计分析'
-      subtitle='全方位流程数据洞察与效率分析'
+      title={i18n.t('pages.workflow_statistics_page.k72')}
+      subtitle={i18n.t('pages.workflow_statistics_page.k73')}
       headerProps={{
         pageIcon: <BarChart3 size={20} />,
         pageGradient: `linear-gradient(135deg, ${ct.secondary[400]} 0%, ${ct.secondary.main} 100%)`,
@@ -446,7 +447,7 @@ export const WorkflowStatisticsPage: React.FC = () => {
         stats={stats}
         charts={charts}
         recentItems={topItems}
-        recentTitle='Top 10 高频流程'
+        recentTitle={i18n.t('pages.workflow_statistics_page.top10_31')}
         onRefresh={handleRefresh}
       />
     </PageContainer>

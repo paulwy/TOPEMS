@@ -8,6 +8,7 @@ import { LOADER_TIMEOUT } from '@topems/shared-constants';
 import type { ModuleStatus } from '@/store/moduleLoadingStore';
 import { useModuleLoadingStore } from '@/store/moduleLoadingStore';
 import { ModuleLoadingProgress } from './ModuleLoadingProgress';
+import i18n from '@/i18n';
 
 const DEFAULT_TIMEOUT = LOADER_TIMEOUT.MODULE;
 
@@ -78,7 +79,7 @@ export const ModuleLoadingFallback: React.FC<{
         variant='body2'
         color='text.secondary'
       >
-        加载模块中...
+        {i18n.t('lib.module_loader.k0')}
       </Typography>
     </Box>
   );
@@ -104,7 +105,7 @@ export const ModuleErrorFallback: React.FC<{ error?: Error }> = ({ error }) => (
       variant='h6'
       color='error'
     >
-      模块加载失败
+      {i18n.t('lib.module_loader.k1')}
     </Typography>
     {error && (
       <Typography
@@ -208,20 +209,20 @@ export const ModuleLoader: React.FC<ModuleLoaderProps> = ({
           variant='h6'
           color='error'
         >
-          模块加载失败
+          {i18n.t('lib.module_loader.k2')}
         </Typography>
         <Typography
           variant='body2'
           color='text.secondary'
         >
-          {isTimedOut ? `加载超时（${timeout / 1000}秒）` : error?.message}
+          {isTimedOut ? `${i18n.t('shared.module_loader.k0')}${timeout / 1000}${i18n.t('shared.module_loader.k1')}` : error?.message}
         </Typography>
         {healthStatus === 'unhealthy' && (
           <Typography
             variant='caption'
             color='warning.main'
           >
-            模块健康状态异常
+            {i18n.t('lib.module_loader.k3')}
           </Typography>
         )}
       </Box>

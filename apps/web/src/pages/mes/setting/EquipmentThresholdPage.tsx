@@ -2,18 +2,19 @@ import React from 'react';
 import { Settings } from 'lucide-react';
 import { PageContainer } from '@/components/common';
 import { SettingsPageTemplate } from '@/components/templates';
+import i18n from '@/i18n';
 
 export const EquipmentThresholdPage: React.FC = () => {
   return (
     <PageContainer
-      title='设备阈值配置'
-      subtitle='制造执行 · 系统设置'
+      title={i18n.t('pages.equipment_threshold_page.k0')}
+      subtitle={i18n.t('pages.equipment_threshold_page.k1')}
       padding={false}
       maxWidth={false}
     >
       <SettingsPageTemplate
-        title='设备阈值配置'
-        description='设备阈值配置相关配置参数（页面建设中…）'
+        title={i18n.t('pages.equipment_threshold_page.k2')}
+        description={i18n.t('pages.equipment_threshold_page.k0')}
         icon={<Settings size={24} />}
         sections={[]}
         actions={[]}

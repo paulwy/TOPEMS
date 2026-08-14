@@ -4,6 +4,7 @@ import { useMap } from 'react-leaflet';
 import { Box, Typography, Paper } from '@mui/material';
 import 'leaflet/dist/leaflet.css';
 import type { DevicePoint, StorageLocation } from '../../api/gis';
+import i18n from '@/i18n';
 
 interface HeatmapLayerProps {
   devicePoints: DevicePoint[];
@@ -68,11 +69,11 @@ const HeatmapLayer: React.FC<HeatmapLayerProps> = ({
       let value = 1;
       if (intensityMode === 'status') {
         const status = p.status.toLowerCase();
-        if (status.includes('active') || status.includes('启用')) {
+        if (status.includes('active') || status.includes(i18n.t('gis.heatmap_layer.k0'))) {
           value = 0.3;
-        } else if (status.includes('pending') || status.includes('待处理')) {
+        } else if (status.includes('pending') || status.includes(i18n.t('gis.heatmap_layer.k1'))) {
           value = 0.7;
-        } else if (status.includes('inactive') || status.includes('禁用')) {
+        } else if (status.includes('inactive') || status.includes(i18n.t('gis.heatmap_layer.k2'))) {
           value = 1;
         }
       }
@@ -210,7 +211,7 @@ export const HeatmapLegend: React.FC<{ mode: 'density' | 'status' }> = ({ mode }
         variant='caption'
         sx={{ fontWeight: 500, color: 'text.secondary', mb: 2 }}
       >
-        {mode === 'density' ? '密度图例' : '状态图例'}
+        {mode === 'density' ? i18n.t('gis.heatmap_layer.k4') : i18n.t('gis.heatmap_layer.k3')}
       </Typography>
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
         <Box
@@ -228,13 +229,13 @@ export const HeatmapLegend: React.FC<{ mode: 'density' | 'status' }> = ({ mode }
           variant='caption'
           sx={{ color: 'text.secondary' }}
         >
-          低
+          {i18n.t('components.heatmap_layer.k0')}
         </Typography>
         <Typography
           variant='caption'
           sx={{ color: 'text.secondary' }}
         >
-          高
+          {i18n.t('components.heatmap_layer.k1')}
         </Typography>
       </Box>
       {mode === 'status' && (
@@ -252,7 +253,7 @@ export const HeatmapLegend: React.FC<{ mode: 'density' | 'status' }> = ({ mode }
               variant='caption'
               sx={{ color: 'text.secondary' }}
             >
-              正常运行
+              {i18n.t('components.heatmap_layer.k2')}
             </Typography>
           </Box>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 1 }}>
@@ -268,7 +269,7 @@ export const HeatmapLegend: React.FC<{ mode: 'density' | 'status' }> = ({ mode }
               variant='caption'
               sx={{ color: 'text.secondary' }}
             >
-              待处理
+              {i18n.t('components.heatmap_layer.k3')}
             </Typography>
           </Box>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
@@ -284,7 +285,7 @@ export const HeatmapLegend: React.FC<{ mode: 'density' | 'status' }> = ({ mode }
               variant='caption'
               sx={{ color: 'text.secondary' }}
             >
-              异常/禁用
+              {i18n.t('components.heatmap_layer.k4')}
             </Typography>
           </Box>
         </Box>

@@ -1,4 +1,5 @@
 import { designTokens, semanticTokens } from '@topems/tokens';
+import i18n from '@/i18n';
 /**
  * OEE 综合设备效率仪表盘
  *
@@ -23,7 +24,6 @@ import {
   Legend,
   PolarAngleAxis,
 } from 'recharts';
-
 const mockData = [
   { workCenter: 'WC-A', availability: 88, performance: 92, quality: 96 },
   { workCenter: 'WC-B', availability: 82, performance: 85, quality: 94 },
@@ -32,7 +32,6 @@ const mockData = [
   { workCenter: 'WC-E', availability: 85, performance: 90, quality: 95 },
   { workCenter: 'WC-F', availability: 92, performance: 94, quality: 99 },
 ];
-
 export default function OeeDashboardPage() {
   const oeeData = useMemo(() => {
     return mockData.map((d) => ({
@@ -40,31 +39,25 @@ export default function OeeDashboardPage() {
       oee: Number(((d.availability * d.performance * d.quality) / 10000).toFixed(1)),
     }));
   }, []);
-
   const avgOee = useMemo(() => {
     const sum = oeeData.reduce((s, d) => s + d.oee, 0);
     return Number((sum / oeeData.length).toFixed(1));
   }, [oeeData]);
-
   const avgAvailability = useMemo(() => {
     return Number((oeeData.reduce((s, d) => s + d.availability, 0) / oeeData.length).toFixed(1));
   }, [oeeData]);
-
   const avgPerformance = useMemo(() => {
     return Number((oeeData.reduce((s, d) => s + d.performance, 0) / oeeData.length).toFixed(1));
   }, [oeeData]);
-
   const avgQuality = useMemo(() => {
     return Number((oeeData.reduce((s, d) => s + d.quality, 0) / oeeData.length).toFixed(1));
   }, [oeeData]);
-
   const radialData = [
-    { name: '可用率', value: avgAvailability, fill: designTokens.colors.secondary.dark },
-    { name: '性能率', value: avgPerformance, fill: designTokens.colors.warning.main },
-    { name: '质量率', value: avgQuality, fill: designTokens.colors.success.dark },
+    { name: i18n.t('aps.oee_dashboard_page.k0'), value: avgAvailability, fill: designTokens.colors.secondary.dark },
+    { name: i18n.t('aps.oee_dashboard_page.k1'), value: avgPerformance, fill: designTokens.colors.warning.main },
+    { name: i18n.t('aps.oee_dashboard_page.k2'), value: avgQuality, fill: designTokens.colors.success.dark },
     { name: 'OEE', value: avgOee, fill: designTokens.colors.error.main },
   ];
-
   return (
     <div className='space-y-4 p-4'>
       <div className='flex items-center justify-between'>
@@ -72,28 +65,26 @@ export default function OeeDashboardPage() {
         <span className='text-sm text-gray-500'>Overall Equipment Effectiveness</span>
       </div>
       <p className='text-sm text-gray-600'>
-        OEE = 可用率 × 性能率 × 质量率，综合衡量设备效率。展示各工作中心 OEE 指标及三大构成要素。
+        {i18n.t('pages.oee_dashboard_page.k0')}
       </p>
-
       <div className='grid grid-cols-1 gap-4 md:grid-cols-4'>
         <div className='rounded-lg border p-4'>
-          <p className='text-sm text-gray-600'>平均 OEE</p>
+          <p className='text-sm text-gray-600'>{i18n.t('aps.oee_dashboard_page.oee_3')}</p>
           <p className='mt-1 text-3xl font-bold text-red-600'>{avgOee}%</p>
         </div>
         <div className='rounded-lg border p-4'>
-          <p className='text-sm text-gray-600'>平均可用率</p>
+          <p className='text-sm text-gray-600'>{i18n.t('aps.oee_dashboard_page.k4')}</p>
           <p className='mt-1 text-3xl font-bold text-blue-600'>{avgAvailability}%</p>
         </div>
         <div className='rounded-lg border p-4'>
-          <p className='text-sm text-gray-600'>平均性能率</p>
+          <p className='text-sm text-gray-600'>{i18n.t('aps.oee_dashboard_page.k5')}</p>
           <p className='mt-1 text-3xl font-bold text-orange-600'>{avgPerformance}%</p>
         </div>
         <div className='rounded-lg border p-4'>
-          <p className='text-sm text-gray-600'>平均质量率</p>
+          <p className='text-sm text-gray-600'>{i18n.t('aps.oee_dashboard_page.k6')}</p>
           <p className='mt-1 text-3xl font-bold text-green-600'>{avgQuality}%</p>
         </div>
       </div>
-
       <div className='grid grid-cols-1 gap-4 lg:grid-cols-2'>
         <div className='rounded-lg border p-4'>
           <h3 className='mb-2 font-semibold'>OEE 构成（径向图）</h3>
@@ -122,9 +113,8 @@ export default function OeeDashboardPage() {
             </RadialBarChart>
           </ResponsiveContainer>
         </div>
-
         <div className='rounded-lg border p-4'>
-          <h3 className='mb-2 font-semibold'>各工作中心 OEE 对比</h3>
+          <h3 className='mb-2 font-semibold'>{i18n.t('aps.oee_dashboard_page.oee_7')}</h3>
           <ResponsiveContainer
             width='100%'
             height={300}
@@ -147,17 +137,17 @@ export default function OeeDashboardPage() {
               <Legend />
               <Bar
                 dataKey='availability'
-                name='可用率'
+                name={i18n.t('aps.oee_dashboard_page.k8')}
                 fill={designTokens.colors.secondary.dark}
               />
               <Bar
                 dataKey='performance'
-                name='性能率'
+                name={i18n.t('aps.oee_dashboard_page.k9')}
                 fill={designTokens.colors.warning.main}
               />
               <Bar
                 dataKey='quality'
-                name='质量率'
+                name={i18n.t('aps.oee_dashboard_page.k10')}
                 fill={designTokens.colors.success.dark}
               />
               <Bar
@@ -169,16 +159,15 @@ export default function OeeDashboardPage() {
           </ResponsiveContainer>
         </div>
       </div>
-
       <div className='rounded-lg border p-4'>
         <h3 className='mb-2 font-semibold'>OEE 明细表</h3>
         <table className='w-full text-sm'>
           <thead>
             <tr className='border-b text-left text-gray-600'>
-              <th className='py-2 pr-4'>工作中心</th>
-              <th className='py-2 pr-4'>可用率</th>
-              <th className='py-2 pr-4'>性能率</th>
-              <th className='py-2 pr-4'>质量率</th>
+              <th className='py-2 pr-4'>{i18n.t('aps.oee_dashboard_page.k11')}</th>
+              <th className='py-2 pr-4'>{i18n.t('aps.oee_dashboard_page.k12')}</th>
+              <th className='py-2 pr-4'>{i18n.t('aps.oee_dashboard_page.k13')}</th>
+              <th className='py-2 pr-4'>{i18n.t('aps.oee_dashboard_page.k14')}</th>
               <th className='py-2'>OEE</th>
             </tr>
           </thead>

@@ -138,7 +138,7 @@ const EhsOccupationalDiseasePage: React.FC = () => {
                 variant='body2'
                 sx={{ color: 'slate.600', fontSize: '0.875rem' }}
               >
-                案例总数
+                {i18n.t('pages.ehs_occupational_disease_page.k0')}
               </Typography>
               <Typography
                 variant='h5'
@@ -171,7 +171,7 @@ const EhsOccupationalDiseasePage: React.FC = () => {
                 variant='body2'
                 sx={{ color: 'slate.600', fontSize: '0.875rem' }}
               >
-                本月新增
+                {i18n.t('pages.ehs_occupational_disease_page.k1')}
               </Typography>
               <Typography
                 variant='h5'
@@ -204,7 +204,7 @@ const EhsOccupationalDiseasePage: React.FC = () => {
                 variant='body2'
                 sx={{ color: 'slate.600', fontSize: '0.875rem' }}
               >
-                疑似
+                {i18n.t('pages.ehs_occupational_disease_page.k2')}
               </Typography>
               <Typography
                 variant='h5'
@@ -237,7 +237,7 @@ const EhsOccupationalDiseasePage: React.FC = () => {
                 variant='body2'
                 sx={{ color: 'slate.600', fontSize: '0.875rem' }}
               >
-                确诊
+                {i18n.t('pages.ehs_occupational_disease_page.k3')}
               </Typography>
               <Typography
                 variant='h5'
@@ -279,7 +279,7 @@ const EhsOccupationalDiseasePage: React.FC = () => {
             component='span'
             sx={{ color: 'text.secondary', fontSize: '0.875rem' }}
           >
-            案例编号
+            {i18n.t('pages.ehs_occupational_disease_page.k4')}
           </Box>
           <Box sx={{ fontWeight: 500, fontFamily: 'monospace' }}>{caseRow.case_no || '-'}</Box>
         </Box>
@@ -288,7 +288,7 @@ const EhsOccupationalDiseasePage: React.FC = () => {
             component='span'
             sx={{ color: 'text.secondary', fontSize: '0.875rem' }}
           >
-            员工姓名
+            {i18n.t('pages.ehs_occupational_disease_page.k5')}
           </Box>
           <Box sx={{ fontWeight: 500 }}>{caseRow.employee_name}</Box>
         </Box>
@@ -297,7 +297,7 @@ const EhsOccupationalDiseasePage: React.FC = () => {
             component='span'
             sx={{ color: 'text.secondary', fontSize: '0.875rem' }}
           >
-            员工编号
+            {i18n.t('pages.ehs_occupational_disease_page.k6')}
           </Box>
           <Box>{caseRow.employee_id || '-'}</Box>
         </Box>
@@ -306,7 +306,7 @@ const EhsOccupationalDiseasePage: React.FC = () => {
             component='span'
             sx={{ color: 'text.secondary', fontSize: '0.875rem' }}
           >
-            部门
+            {i18n.t('pages.ehs_occupational_disease_page.k7')}
           </Box>
           <Box>{caseRow.department || '-'}</Box>
         </Box>
@@ -315,7 +315,7 @@ const EhsOccupationalDiseasePage: React.FC = () => {
             component='span'
             sx={{ color: 'text.secondary', fontSize: '0.875rem' }}
           >
-            危害因素
+            {i18n.t('pages.ehs_occupational_disease_page.k8')}
           </Box>
           <Box>{caseRow.hazard_factor || '-'}</Box>
         </Box>
@@ -324,7 +324,7 @@ const EhsOccupationalDiseasePage: React.FC = () => {
             component='span'
             sx={{ color: 'text.secondary', fontSize: '0.875rem' }}
           >
-            诊断日期
+            {i18n.t('pages.ehs_occupational_disease_page.k9')}
           </Box>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
             <CalendarCheck style={{ width: 16, height: 16 }} />
@@ -338,7 +338,7 @@ const EhsOccupationalDiseasePage: React.FC = () => {
             component='span'
             sx={{ color: 'text.secondary', fontSize: '0.875rem' }}
           >
-            职业病名称
+            {i18n.t('pages.ehs_occupational_disease_page.k10')}
           </Box>
           <Box>{caseRow.disease_name || '-'}</Box>
         </Box>
@@ -347,7 +347,7 @@ const EhsOccupationalDiseasePage: React.FC = () => {
             component='span'
             sx={{ color: 'text.secondary', fontSize: '0.875rem' }}
           >
-            疾病类型
+            {i18n.t('pages.ehs_occupational_disease_page.k11')}
           </Box>
           <Box>{caseRow.disease_type || '-'}</Box>
         </Box>
@@ -356,7 +356,7 @@ const EhsOccupationalDiseasePage: React.FC = () => {
             component='span'
             sx={{ color: 'text.secondary', fontSize: '0.875rem' }}
           >
-            诊断医院
+            {i18n.t('pages.ehs_occupational_disease_page.k12')}
           </Box>
           <Box>{caseRow.diagnosis_hospital || '-'}</Box>
         </Box>
@@ -365,7 +365,7 @@ const EhsOccupationalDiseasePage: React.FC = () => {
             component='span'
             sx={{ color: 'text.secondary', fontSize: '0.875rem' }}
           >
-            严重程度
+            {i18n.t('pages.ehs_occupational_disease_page.k13')}
           </Box>
           <Box sx={{ mt: 0.5 }}>
             <Chip
@@ -384,7 +384,7 @@ const EhsOccupationalDiseasePage: React.FC = () => {
             component='span'
             sx={{ color: 'text.secondary', fontSize: '0.875rem' }}
           >
-            状态
+            {i18n.t('pages.ehs_occupational_disease_page.k14')}
           </Box>
           <Box sx={{ mt: 0.5 }}>
             <Chip
@@ -403,7 +403,7 @@ const EhsOccupationalDiseasePage: React.FC = () => {
             component='span'
             sx={{ color: 'text.secondary', fontSize: '0.875rem' }}
           >
-            治疗方案
+            {i18n.t('pages.ehs_occupational_disease_page.k15')}
           </Box>
           <Box>{caseRow.treatment || '-'}</Box>
         </Box>

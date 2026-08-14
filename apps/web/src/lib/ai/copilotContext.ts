@@ -1,3 +1,4 @@
+import i18n from '@/i18n';
 export type AICopilotSource =
   | 'fab'
   | 'shortcut'
@@ -40,33 +41,33 @@ export interface AICopilotContextInput {
 export const AI_COPILOT_CONTEXT_KEY = 'ai-copilot-context';
 
 const moduleLabelMap: Record<string, string> = {
-  dashboard: '首页',
-  ai: 'AI助手',
-  admin: '系统管理',
-  asset: '资产',
-  bi: '数据分析',
-  crm: '客户',
-  doc: '文档',
+  dashboard: i18n.t('shared.copilot_context.k0'),
+  ai: i18n.t('shared.copilot_context.ai_0'),
+  admin: i18n.t('shared.copilot_context.k1'),
+  asset: i18n.t('shared.copilot_context.k2'),
+  bi: i18n.t('shared.copilot_context.k3'),
+  crm: i18n.t('shared.copilot_context.k4'),
+  doc: i18n.t('shared.copilot_context.k5'),
   erp: 'ERP',
-  finance: '财务',
+  finance: i18n.t('shared.copilot_context.k6'),
   gis: 'GIS',
-  hrm: '人事',
-  im: '协同',
-  lims: '实验室',
-  lowcode: '低代码',
-  mes: '生产',
-  mobile: '移动端',
-  monitor: '监控',
-  oa: '办公',
-  pdm: '研发',
-  plugin: '插件',
-  pm: '项目',
-  rd: '研发',
-  scm: '供应链',
-  srm: '供应商',
-  ticket: '工单',
-  wms: '仓储',
-  workflow: '流程',
+  hrm: i18n.t('shared.copilot_context.k7'),
+  im: i18n.t('shared.copilot_context.k8'),
+  lims: i18n.t('shared.copilot_context.k9'),
+  lowcode: i18n.t('shared.copilot_context.k10'),
+  mes: i18n.t('shared.copilot_context.k11'),
+  mobile: i18n.t('shared.copilot_context.k12'),
+  monitor: i18n.t('shared.copilot_context.k13'),
+  oa: i18n.t('shared.copilot_context.k14'),
+  pdm: i18n.t('shared.copilot_context.k15'),
+  plugin: i18n.t('shared.copilot_context.k16'),
+  pm: i18n.t('shared.copilot_context.k17'),
+  rd: i18n.t('shared.copilot_context.k18'),
+  scm: i18n.t('shared.copilot_context.k19'),
+  srm: i18n.t('shared.copilot_context.k20'),
+  ticket: i18n.t('shared.copilot_context.k21'),
+  wms: i18n.t('shared.copilot_context.k22'),
+  workflow: i18n.t('shared.copilot_context.k23'),
 };
 
 export function getModuleFromPath(pathname: string): string {

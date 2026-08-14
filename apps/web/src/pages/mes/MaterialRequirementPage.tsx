@@ -8,13 +8,11 @@ import { mesApi } from '@/api/mes';
 import type { MaterialRequirement } from '@/api/mes';
 import { Calculator } from 'lucide-react';
 import { designTokens } from '@/theme/tokens';
-
+import i18n from '@/i18n';
 const ct= designTokens.colors;
-
 const apiAdapter = createCrudPageAdapter(mesApi.materialRequirements, {
   itemsField: 'requirements',
 });
-
 const MaterialRequirementPage: React.FC = () => {
   const renderDetailContent = (row: Record<string, unknown>) => {
     const req = row as unknown as MaterialRequirement;
@@ -28,7 +26,7 @@ const MaterialRequirementPage: React.FC = () => {
           }}
         >
           <Box>
-            <InputLabel sx={{ color: 'text.secondary', fontSize: 12 }}>需求单号</InputLabel>
+            <InputLabel sx={{ color: 'text.secondary', fontSize: 12 }}>{i18n.t('mes.material_requirement_page.k0')}</InputLabel>
             <Box
               component='span'
               sx={{ fontWeight: 500 }}
@@ -37,43 +35,43 @@ const MaterialRequirementPage: React.FC = () => {
             </Box>
           </Box>
           <Box>
-            <InputLabel sx={{ color: 'text.secondary', fontSize: 12 }}>生产订单</InputLabel>
+            <InputLabel sx={{ color: 'text.secondary', fontSize: 12 }}>{i18n.t('mes.material_requirement_page.k1')}</InputLabel>
             <Box component='span'>{req.order_number || '-'}</Box>
           </Box>
           <Box>
-            <InputLabel sx={{ color: 'text.secondary', fontSize: 12 }}>产品编码</InputLabel>
+            <InputLabel sx={{ color: 'text.secondary', fontSize: 12 }}>{i18n.t('mes.material_requirement_page.k2')}</InputLabel>
             <Box component='span'>{req.product_code}</Box>
           </Box>
           <Box>
-            <InputLabel sx={{ color: 'text.secondary', fontSize: 12 }}>产品名称</InputLabel>
+            <InputLabel sx={{ color: 'text.secondary', fontSize: 12 }}>{i18n.t('mes.material_requirement_page.k3')}</InputLabel>
             <Box component='span'>{req.product_name}</Box>
           </Box>
           <Box>
-            <InputLabel sx={{ color: 'text.secondary', fontSize: 12 }}>物料编码</InputLabel>
+            <InputLabel sx={{ color: 'text.secondary', fontSize: 12 }}>{i18n.t('mes.material_requirement_page.k4')}</InputLabel>
             <Box component='span'>{req.material_code}</Box>
           </Box>
           <Box>
-            <InputLabel sx={{ color: 'text.secondary', fontSize: 12 }}>物料名称</InputLabel>
+            <InputLabel sx={{ color: 'text.secondary', fontSize: 12 }}>{i18n.t('mes.material_requirement_page.k5')}</InputLabel>
             <Box component='span'>{req.material_name}</Box>
           </Box>
           <Box>
-            <InputLabel sx={{ color: 'text.secondary', fontSize: 12 }}>规格型号</InputLabel>
+            <InputLabel sx={{ color: 'text.secondary', fontSize: 12 }}>{i18n.t('mes.material_requirement_page.k6')}</InputLabel>
             <Box component='span'>{req.specification || '-'}</Box>
           </Box>
           <Box>
-            <InputLabel sx={{ color: 'text.secondary', fontSize: 12 }}>单位</InputLabel>
+            <InputLabel sx={{ color: 'text.secondary', fontSize: 12 }}>{i18n.t('mes.material_requirement_page.k7')}</InputLabel>
             <Box component='span'>{req.unit || '-'}</Box>
           </Box>
           <Box>
-            <InputLabel sx={{ color: 'text.secondary', fontSize: 12 }}>需求数量</InputLabel>
+            <InputLabel sx={{ color: 'text.secondary', fontSize: 12 }}>{i18n.t('mes.material_requirement_page.k8')}</InputLabel>
             <Box component='span'>{req.required_quantity}</Box>
           </Box>
           <Box>
-            <InputLabel sx={{ color: 'text.secondary', fontSize: 12 }}>可用数量</InputLabel>
+            <InputLabel sx={{ color: 'text.secondary', fontSize: 12 }}>{i18n.t('mes.material_requirement_page.k9')}</InputLabel>
             <Box component='span'>{req.available_quantity || 0}</Box>
           </Box>
           <Box>
-            <InputLabel sx={{ color: 'text.secondary', fontSize: 12 }}>缺口数量</InputLabel>
+            <InputLabel sx={{ color: 'text.secondary', fontSize: 12 }}>{i18n.t('mes.material_requirement_page.k10')}</InputLabel>
             <Box
               component='span'
               sx={{
@@ -85,40 +83,39 @@ const MaterialRequirementPage: React.FC = () => {
             </Box>
           </Box>
           <Box>
-            <InputLabel sx={{ color: 'text.secondary', fontSize: 12 }}>需求日期</InputLabel>
+            <InputLabel sx={{ color: 'text.secondary', fontSize: 12 }}>{i18n.t('mes.material_requirement_page.k11')}</InputLabel>
             <Box component='span'>
               {req.required_date ? new Date(req.required_date).toLocaleDateString('zh-CN') : '-'}
             </Box>
           </Box>
           <Box>
-            <InputLabel sx={{ color: 'text.secondary', fontSize: 12 }}>优先级</InputLabel>
+            <InputLabel sx={{ color: 'text.secondary', fontSize: 12 }}>{i18n.t('mes.material_requirement_page.k12')}</InputLabel>
             <Box component='span'>{req.priority || '-'}</Box>
           </Box>
           <Box>
-            <InputLabel sx={{ color: 'text.secondary', fontSize: 12 }}>状态</InputLabel>
+            <InputLabel sx={{ color: 'text.secondary', fontSize: 12 }}>{i18n.t('mes.material_requirement_page.k13')}</InputLabel>
             <Box component='span'>{req.status}</Box>
           </Box>
           <Box>
-            <InputLabel sx={{ color: 'text.secondary', fontSize: 12 }}>来源类型</InputLabel>
+            <InputLabel sx={{ color: 'text.secondary', fontSize: 12 }}>{i18n.t('mes.material_requirement_page.k14')}</InputLabel>
             <Box component='span'>{req.source_type || '-'}</Box>
           </Box>
           <Box sx={{ gridColumn: '1 / -1' }}>
-            <InputLabel sx={{ color: 'text.secondary', fontSize: 12 }}>备注</InputLabel>
+            <InputLabel sx={{ color: 'text.secondary', fontSize: 12 }}>{i18n.t('mes.material_requirement_page.k15')}</InputLabel>
             <Box component='span'>{req.remark || '-'}</Box>
           </Box>
           <Box>
-            <InputLabel sx={{ color: 'text.secondary', fontSize: 12 }}>创建时间</InputLabel>
+            <InputLabel sx={{ color: 'text.secondary', fontSize: 12 }}>{i18n.t('mes.material_requirement_page.k16')}</InputLabel>
             <Box component='span'>{new Date(req.created_at).toLocaleString('zh-CN')}</Box>
           </Box>
           <Box>
-            <InputLabel sx={{ color: 'text.secondary', fontSize: 12 }}>更新时间</InputLabel>
+            <InputLabel sx={{ color: 'text.secondary', fontSize: 12 }}>{i18n.t('mes.material_requirement_page.k17')}</InputLabel>
             <Box component='span'>{new Date(req.updated_at).toLocaleString('zh-CN')}</Box>
           </Box>
         </Box>
       </Box>
     );
   };
-
   const headerContent = (rows: Record<string, unknown>[]) => {
     const requirements = rows as unknown as MaterialRequirement[];
     const total = requirements.length;
@@ -126,7 +123,6 @@ const MaterialRequirementPage: React.FC = () => {
     const confirmed = requirements.filter((r) => r.status === 'confirmed').length;
     const released = requirements.filter((r) => r.status === 'released').length;
     const totalRequired = requirements.reduce((sum, r) => sum + r.required_quantity, 0);
-
     return (
       <Box
         sx={{
@@ -141,7 +137,7 @@ const MaterialRequirementPage: React.FC = () => {
             variant='body2'
             sx={{ color: 'text.secondary' }}
           >
-            总需求数
+            {i18n.t('pages.material_requirement_page.k0')}
           </Typography>
           <Typography
             variant='h5'
@@ -155,7 +151,7 @@ const MaterialRequirementPage: React.FC = () => {
             variant='body2'
             sx={{ color: 'text.secondary' }}
           >
-            草稿
+            {i18n.t('pages.material_requirement_page.k1')}
           </Typography>
           <Typography
             variant='h5'
@@ -169,7 +165,7 @@ const MaterialRequirementPage: React.FC = () => {
             variant='body2'
             sx={{ color: 'text.secondary' }}
           >
-            已确认
+            {i18n.t('pages.material_requirement_page.k2')}
           </Typography>
           <Typography
             variant='h5'
@@ -183,7 +179,7 @@ const MaterialRequirementPage: React.FC = () => {
             variant='body2'
             sx={{ color: 'text.secondary' }}
           >
-            已下达
+            {i18n.t('pages.material_requirement_page.k3')}
           </Typography>
           <Typography
             variant='h5'
@@ -197,7 +193,7 @@ const MaterialRequirementPage: React.FC = () => {
             variant='body2'
             sx={{ color: 'text.secondary' }}
           >
-            需求总数
+            {i18n.t('pages.material_requirement_page.k4')}
           </Typography>
           <Typography
             variant='h5'
@@ -209,7 +205,6 @@ const MaterialRequirementPage: React.FC = () => {
       </Box>
     );
   };
-
   return (
     <PageContainer
       autoTitle
@@ -222,7 +217,7 @@ const MaterialRequirementPage: React.FC = () => {
       <CrudPage
         schema={materialRequirementSchema}
         apiAdapter={apiAdapter as CrudApiAdapter}
-        breadcrumbs={[{ label: 'MES' }, { label: '物料需求' }]}
+        breadcrumbs={[{ label: 'MES' }, { label: i18n.t('mes.material_requirement_page.k18') }]}
         detailMaxWidth='md'
         detailContent={renderDetailContent}
         headerContent={headerContent}
@@ -230,5 +225,4 @@ const MaterialRequirementPage: React.FC = () => {
     </PageContainer>
   );
 };
-
 export default MaterialRequirementPage;

@@ -3,6 +3,7 @@ import { Bell, Filter, ChevronDown, ChevronUp } from 'lucide-react';
 import { Card, CardContent, CardHeader, Typography, Badge, Button, useTheme } from '@mui/material';
 import type { AlertLevel } from './AlertCard';
 import { AlertCard } from './AlertCard';
+import i18n from '@/i18n';
 
 export interface AlertItem {
   id: string;
@@ -19,11 +20,11 @@ interface AlertPanelProps {
 }
 
 const filterOptions = [
-  { value: 'all', label: '全部' },
-  { value: 'error', label: '错误' },
-  { value: 'warning', label: '警告' },
-  { value: 'success', label: '成功' },
-  { value: 'info', label: '信息' },
+  { value: 'all', label: i18n.t('shared.alert_panel.k0') },
+  { value: 'error', label: i18n.t('shared.alert_panel.k1') },
+  { value: 'warning', label: i18n.t('shared.alert_panel.k2') },
+  { value: 'success', label: i18n.t('shared.alert_panel.k3') },
+  { value: 'info', label: i18n.t('shared.alert_panel.k4') },
 ];
 
 export const AlertPanel = ({ alerts, onAlertClick }: AlertPanelProps) => {
@@ -77,13 +78,13 @@ export const AlertPanel = ({ alerts, onAlertClick }: AlertPanelProps) => {
               variant='h6'
               sx={{ fontWeight: 'semibold' }}
             >
-              数据预警
+              {i18n.t('components.alert_panel.k0')}
             </Typography>
             <Typography
               variant='body2'
               color='text.secondary'
             >
-              实时监控异常指标
+              {i18n.t('components.alert_panel.k1')}
             </Typography>
           </div>
         </div>
@@ -147,7 +148,7 @@ export const AlertPanel = ({ alerts, onAlertClick }: AlertPanelProps) => {
                     opacity: 0.5,
                   }}
                 />
-                <Typography variant='body1'>暂无预警信息</Typography>
+                <Typography variant='body1'>{i18n.t('shared.alert_panel.k5')}</Typography>
               </div>
             ) : (
               filteredAlerts.map((alert) => (

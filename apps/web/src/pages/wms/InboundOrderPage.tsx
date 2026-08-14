@@ -11,6 +11,7 @@ import type {
   InboundOrder,
   CreateInboundOrderRequest,
 } from '@/api/wms';
+import i18n from '@/i18n';
 import { WMS_PATHS } from '@/modules/wms/config';
 import CrudPage from '@/components/templates/CrudPage';
 import type { CrudApiAdapter } from '@/components/templates/CrudPage';
@@ -57,9 +58,9 @@ const InboundOrderPage: React.FC = () => {
       schema={inboundOrderSchema}
       apiAdapter={inboundOrderApiAdapter}
       breadcrumbs={[
-        { label: '首页', href: '/dashboard' },
-        { label: '仓储管理', href: WMS_PATHS.root },
-        { label: '入库订单' },
+        { label: i18n.t('pages.inbound_order_page.k0'), href: '/dashboard' },
+        { label: i18n.t('pages.inbound_order_page.k1'), href: WMS_PATHS.root },
+        { label: i18n.t('pages.inbound_order_page.k2') },
       ]}
     />
   );

@@ -19,6 +19,7 @@ import {
   Button,
   useTheme,
 } from '@mui/material';
+import i18n from '@/i18n';
 
 import { DataTable } from '@/components/common/DataTable';
 import type { ColumnDef } from '@tanstack/react-table';
@@ -91,7 +92,7 @@ const LimsTaskDetailPage: React.FC = () => {
           : recordData.records || recordData.items || [];
         records = recordArray.map((r: RawRecord) => ({
           ...r,
-          step_name: r.step_name || r.step_id || `步骤 ${r.step_index}`,
+          step_name: r.step_name || r.step_id || `${i18n.t('pages.lims_task_detail_page.k0')} ${r.step_index}`,
         })) as TaskRecord[];
       }
 
@@ -124,7 +125,7 @@ const LimsTaskDetailPage: React.FC = () => {
     mutationFn: async ({ id, data }: { id: string; data: CreateInspectionRecordRequest }) => {
       const response = await limsApi.completeStep(id, data);
       if (!response.success) {
-        throw new Error(response.message || '操作失败，请稍后重试');
+        throw new Error(response.message || i18n.t('pages.lims_task_detail_page.k0'));
       }
       return response;
     },
@@ -146,7 +147,7 @@ const LimsTaskDetailPage: React.FC = () => {
       setShowRecordModal(false);
     },
     onError: (error: unknown) => {
-      logger.error('完成步骤失败:', error);
+      logger.error(i18n.t('pages.lims_task_detail_page.k1'), error);
     },
   });
 
@@ -154,24 +155,24 @@ const LimsTaskDetailPage: React.FC = () => {
     if (!task) return;
     if (!recordForm.step_name.trim()) {
       addNotification({
-        title: '错误',
-        message: '请输入检验步骤名称',
+        title: i18n.t('pages.lims_task_detail_page.k1'),
+        message: i18n.t('pages.lims_task_detail_page.k2'),
         type: 'error',
       });
       return;
     }
     if (!recordForm.result.trim()) {
       addNotification({
-        title: '错误',
-        message: '请输入检验结果',
+        title: i18n.t('pages.lims_task_detail_page.k3'),
+        message: i18n.t('pages.lims_task_detail_page.k4'),
         type: 'error',
       });
       return;
     }
     if (!recordForm.inspector.trim()) {
       addNotification({
-        title: '错误',
-        message: '请输入检验员姓名',
+        title: i18n.t('pages.lims_task_detail_page.k5'),
+        message: i18n.t('pages.lims_task_detail_page.k6'),
         type: 'error',
       });
       return;
@@ -190,13 +191,13 @@ const LimsTaskDetailPage: React.FC = () => {
   };
 
   const recordColumns: ColumnDef<TaskRecord>[] = [
-    { accessorKey: 'step_name', header: '检验步骤' },
-    { accessorKey: 'inspector', header: '检验员' },
-    { accessorKey: 'result', header: '检验结果' },
-    { accessorKey: 'conclusion', header: '结论' },
+    { accessorKey: 'step_name', header: i18n.t('pages.lims_task_detail_page.k7') },
+    { accessorKey: 'inspector', header: i18n.t('pages.lims_task_detail_page.k8') },
+    { accessorKey: 'result', header: i18n.t('pages.lims_task_detail_page.k9') },
+    { accessorKey: 'conclusion', header: i18n.t('pages.lims_task_detail_page.k10') },
     {
       accessorKey: 'created_at',
-      header: '检验时间',
+      header: i18n.t('pages.lims_task_detail_page.k11'),
       cell: ({ row }) => (
         <span>
           {row.original.created_at
@@ -224,7 +225,7 @@ const LimsTaskDetailPage: React.FC = () => {
               component={CheckCircle}
               sx={{ fontSize: 20, color: 'success.dark' }}
             />
-            检验进度
+            {i18n.t('pages.lims_task_detail_page.k2')}
           </Typography>
         </CardHeader>
         <CardContent>
@@ -236,7 +237,7 @@ const LimsTaskDetailPage: React.FC = () => {
                 fontSize: '0.875rem',
               }}
             >
-              <span style={{ color: ct.grey[600] }}>完成进度</span>
+              <span style={{ color: ct.grey[600] }}>{i18n.t('pages.lims_task_detail_page.k12')}</span>
               <span style={{ fontWeight: 500, color: theme.palette.grey[900] }}>
                 {completedSteps} / {totalSteps} 步骤
               </span>
@@ -331,7 +332,7 @@ const LimsTaskDetailPage: React.FC = () => {
   const sections: SectionConfig[] = [
     {
       id: 'records',
-      title: '检验记录列表',
+      title: i18n.t('pages.lims_task_detail_page.k13'),
       content: (
         <Box>
           {records.length > 0 ? (
@@ -356,7 +357,7 @@ const LimsTaskDetailPage: React.FC = () => {
                   opacity: 0.5,
                 }}
               />
-              <Typography>暂无检验记录</Typography>
+              <Typography>{i18n.t('pages.lims_task_detail_page.k14')}</Typography>
             </Box>
           )}
         </Box>
@@ -387,7 +388,7 @@ const LimsTaskDetailPage: React.FC = () => {
               margin: '0 auto 16px auto',
             }}
           ></div>
-          <p style={{ color: ct.grey[600] }}>加载中...</p>
+          <p style={{ color: ct.grey[600] }}>{i18n.t('pages.lims_task_detail_page.k3')}</p>
         </div>
       </div>
     );
@@ -413,12 +414,12 @@ const LimsTaskDetailPage: React.FC = () => {
               margin: '0 auto 16px auto',
             }}
           />
-          <p style={{ color: ct.grey[600] }}>检验任务不存在或已被删除</p>
+          <p style={{ color: ct.grey[600] }}>{i18n.t('pages.lims_task_detail_page.k15')}</p>
           <Button
             onClick={() => navigate(LIMS_PATHS.root)}
             sx={{ mt: 2 }}
           >
-            返回列表
+            {i18n.t('pages.lims_task_detail_page.k4')}
           </Button>
         </div>
       </div>
@@ -427,14 +428,14 @@ const LimsTaskDetailPage: React.FC = () => {
 
   const getStatusBadge = (status: string) => {
     const statusMap: Record<string, { bg: string; color: string; label: string }> = {
-      pending: { bg: 'warning.100', color: ct.yellow[600], label: '待测试' },
-      待测试: { bg: 'warning.100', color: ct.yellow[600], label: '待测试' },
-      in_progress: { bg: 'primary.100', color: 'primary.dark', label: '进行中' },
-      进行中: { bg: 'primary.100', color: 'primary.dark', label: '进行中' },
-      completed: { bg: 'success.lighter', color: 'success.dark', label: '已完成' },
-      已完成: { bg: 'success.lighter', color: 'success.dark', label: '已完成' },
-      cancelled: { bg: 'error.lighter', color: 'error.dark', label: '已终止' },
-      已终止: { bg: 'error.lighter', color: 'error.dark', label: '已终止' },
+      pending: { bg: 'warning.100', color: ct.yellow[600], label: i18n.t('pages.lims_task_detail_page.k16') },
+      [i18n.t('pages.lims_task_detail_page.k5')]: { bg: 'warning.100', color: ct.yellow[600], label: i18n.t('pages.lims_task_detail_page.k17') },
+      in_progress: { bg: 'primary.100', color: 'primary.dark', label: i18n.t('pages.lims_task_detail_page.k18') },
+      [i18n.t('pages.lims_task_detail_page.k6')]: { bg: 'primary.100', color: 'primary.dark', label: i18n.t('pages.lims_task_detail_page.k19') },
+      completed: { bg: 'success.lighter', color: 'success.dark', label: i18n.t('pages.lims_task_detail_page.k20') },
+      [i18n.t('pages.lims_task_detail_page.k7')]: { bg: 'success.lighter', color: 'success.dark', label: i18n.t('pages.lims_task_detail_page.k21') },
+      cancelled: { bg: 'error.lighter', color: 'error.dark', label: i18n.t('pages.lims_task_detail_page.k22') },
+      [i18n.t('pages.lims_task_detail_page.k8')]: { bg: 'error.lighter', color: 'error.dark', label: i18n.t('pages.lims_task_detail_page.k23') },
     };
     const item = statusMap[status] || {
       bg: 'grey.100',
@@ -450,32 +451,32 @@ const LimsTaskDetailPage: React.FC = () => {
     );
   };
 
-  const isTaskCompleted = task.status === 'completed' || task.status === '已完成';
+  const isTaskCompleted = task.status === 'completed' || task.status === i18n.t('pages.lims_task_detail_page.k24');
 
   return (
     <PageContainer
-      title='检验任务详情'
+      title={i18n.t('pages.lims_task_detail_page.k25')}
       subtitle='Inspection Task Detail'
     >
       <DetailPageTemplate
         title=''
         subtitle=''
-        detailItemName={task?.task_no || task?.sample_name || task?.id || '任务详情'}
+        detailItemName={task?.task_no || task?.sample_name || task?.id || i18n.t('pages.lims_task_detail_page.k26')}
         breadcrumbs={[
-          { label: '首页', href: '/dashboard' },
+          { label: i18n.t('pages.lims_task_detail_page.k27'), href: '/dashboard' },
           { label: 'LIMS', href: LIMS_PATHS.root },
-          { label: '任务详情' },
+          { label: i18n.t('pages.lims_task_detail_page.k28') },
         ]}
         backHref={LIMS_PATHS.root}
         loading={loading}
         infoCard={{
           avatar: <ClipboardCheck sx={{ fontSize: 40, color: 'secondary.dark' }} />,
           title: task.task_no || task.id,
-          subtitle: task.sample_name || '未关联样品',
+          subtitle: task.sample_name || i18n.t('pages.lims_task_detail_page.k29'),
           tags: [task.status],
           stats: [
-            { label: '当前步骤', value: `${completedSteps}/${totalSteps}` },
-            { label: '完成率', value: `${Math.round(progressPercent)}%` },
+            { label: i18n.t('pages.lims_task_detail_page.k30'), value: `${completedSteps}/${totalSteps}` },
+            { label: i18n.t('pages.lims_task_detail_page.k31'), value: `${Math.round(progressPercent)}%` },
           ],
         }}
         sidebar={sidebarContent}
@@ -485,13 +486,13 @@ const LimsTaskDetailPage: React.FC = () => {
             ? []
             : [
                 {
-                  label: '添加记录',
+                  label: i18n.t('pages.lims_task_detail_page.k32'),
                   icon: <Plus style={{ width: 18, height: 18 }} />,
                   onClick: () => setShowRecordModal(true),
                   variant: 'outlined',
                 },
                 {
-                  label: '完成任务',
+                  label: i18n.t('pages.lims_task_detail_page.k33'),
                   icon: <Play style={{ width: 18, height: 18 }} />,
                   onClick: () => setShowCompleteModal(true),
                   variant: 'contained',
@@ -506,11 +507,11 @@ const LimsTaskDetailPage: React.FC = () => {
           maxWidth='sm'
           fullWidth
         >
-          <DialogTitle>添加检验记录</DialogTitle>
+          <DialogTitle>{i18n.t('pages.lims_task_detail_page.k34')}</DialogTitle>
           <DialogContent>
             <Box sx={{ mt: 1, display: 'flex', flexDirection: 'column', gap: 2 }}>
               <TextField
-                label='检验步骤 *'
+                label={i18n.t('pages.lims_task_detail_page.k9')}
                 value={recordForm.step_name}
                 onChange={(e) =>
                   setRecordForm((prev) => ({
@@ -520,10 +521,10 @@ const LimsTaskDetailPage: React.FC = () => {
                 }
                 fullWidth
                 size='small'
-                placeholder='请输入检验步骤名称'
+                placeholder={i18n.t('pages.lims_task_detail_page.k35')}
               />
               <TextField
-                label='检验员 *'
+                label={i18n.t('pages.lims_task_detail_page.k10')}
                 value={recordForm.inspector}
                 onChange={(e) =>
                   setRecordForm((prev) => ({
@@ -533,20 +534,20 @@ const LimsTaskDetailPage: React.FC = () => {
                 }
                 fullWidth
                 size='small'
-                placeholder='请输入检验员姓名'
+                placeholder={i18n.t('pages.lims_task_detail_page.k36')}
               />
               <TextField
-                label='检验结果 *'
+                label={i18n.t('pages.lims_task_detail_page.k11')}
                 value={recordForm.result}
                 onChange={(e) => setRecordForm((prev) => ({ ...prev, result: e.target.value }))}
                 fullWidth
                 multiline
                 rows={4}
-                placeholder='请详细描述检验结果...'
+                placeholder={i18n.t('pages.lims_task_detail_page.k12')}
               />
               <TextField
                 select
-                label='结论'
+                label={i18n.t('pages.lims_task_detail_page.k37')}
                 value={recordForm.conclusion}
                 onChange={(e) =>
                   setRecordForm((prev) => ({
@@ -557,10 +558,10 @@ const LimsTaskDetailPage: React.FC = () => {
                 fullWidth
                 size='small'
               >
-                <MenuItem value=''>请选择结论</MenuItem>
-                <MenuItem value='合格'>合格</MenuItem>
-                <MenuItem value='不合格'>不合格</MenuItem>
-                <MenuItem value='待定'>待定</MenuItem>
+                <MenuItem value=''>{i18n.t('pages.lims_task_detail_page.k38')}</MenuItem>
+                <MenuItem value={i18n.t('pages.lims_task_detail_page.k39')}>{i18n.t('pages.lims_task_detail_page.k40')}</MenuItem>
+                <MenuItem value={i18n.t('pages.lims_task_detail_page.k41')}>{i18n.t('pages.lims_task_detail_page.k42')}</MenuItem>
+                <MenuItem value={i18n.t('pages.lims_task_detail_page.k43')}>{i18n.t('pages.lims_task_detail_page.k44')}</MenuItem>
               </TextField>
             </Box>
           </DialogContent>
@@ -569,13 +570,13 @@ const LimsTaskDetailPage: React.FC = () => {
               variant='outlined'
               onClick={() => setShowRecordModal(false)}
             >
-              取消
+              {i18n.t('pages.lims_task_detail_page.k13')}
             </Button>
             <Button
               variant='contained'
               onClick={handleCompleteStep}
             >
-              保存记录
+              {i18n.t('pages.lims_task_detail_page.k14')}
             </Button>
           </DialogActions>
         </Dialog>
@@ -586,11 +587,11 @@ const LimsTaskDetailPage: React.FC = () => {
           maxWidth='sm'
           fullWidth
         >
-          <DialogTitle>完成检验任务</DialogTitle>
+          <DialogTitle>{i18n.t('pages.lims_task_detail_page.k45')}</DialogTitle>
           <DialogContent>
             <Box sx={{ py: 2 }}>
               <Typography sx={{ color: 'text.secondary' }}>
-                确定要完成此检验任务吗？这将标记所有未完成的步骤为已完成状态。
+                {i18n.t('pages.lims_task_detail_page.k15')}
               </Typography>
               <Box
                 sx={{
@@ -614,7 +615,7 @@ const LimsTaskDetailPage: React.FC = () => {
               variant='outlined'
               onClick={() => setShowCompleteModal(false)}
             >
-              取消
+              {i18n.t('pages.lims_task_detail_page.k16')}
             </Button>
             <Button
               variant='contained'
@@ -624,7 +625,7 @@ const LimsTaskDetailPage: React.FC = () => {
                 '&:hover': { backgroundColor: 'success.700' },
               }}
             >
-              确认完成
+              {i18n.t('pages.lims_task_detail_page.k17')}
             </Button>
           </DialogActions>
         </Dialog>

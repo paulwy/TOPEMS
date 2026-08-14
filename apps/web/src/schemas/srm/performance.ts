@@ -1,9 +1,10 @@
 import type { EntitySchema } from '@/schema';
+import i18n from '@/i18n';
 
 export const performanceSchema: EntitySchema = {
   entity: 'srm_performance',
-  title: '供应商绩效',
-  description: '分析供应商绩效数据，评估供应商表现，优化供应链',
+  title: i18n.t('srm.performance.k0'),
+  description: i18n.t('srm.performance.k1'),
 
   api: {
     module: 'srm',
@@ -13,7 +14,7 @@ export const performanceSchema: EntitySchema = {
   fields: [
     {
       name: 'supplier_id',
-      label: '供应商ID',
+      label: i18n.t('srm.performance.id_2'),
       type: 'text',
       readonly: true,
       hideInForm: true,
@@ -21,7 +22,7 @@ export const performanceSchema: EntitySchema = {
     },
     {
       name: 'supplier_name',
-      label: '供应商名称',
+      label: i18n.t('srm.performance.k3'),
       type: 'text',
       readonly: true,
       sortable: true,
@@ -29,7 +30,7 @@ export const performanceSchema: EntitySchema = {
     },
     {
       name: 'total_orders',
-      label: '订单数量',
+      label: i18n.t('srm.performance.k4'),
       type: 'number',
       readonly: true,
       sortable: true,
@@ -37,7 +38,7 @@ export const performanceSchema: EntitySchema = {
     },
     {
       name: 'total_amount',
-      label: '订单金额',
+      label: i18n.t('srm.performance.k5'),
       type: 'number',
       readonly: true,
       sortable: true,
@@ -45,7 +46,7 @@ export const performanceSchema: EntitySchema = {
     },
     {
       name: 'avg_overall_score',
-      label: '综合评分',
+      label: i18n.t('srm.performance.k6'),
       type: 'number',
       readonly: true,
       sortable: true,
@@ -53,7 +54,7 @@ export const performanceSchema: EntitySchema = {
     },
     {
       name: 'avg_quality_score',
-      label: '质量评分',
+      label: i18n.t('srm.performance.k7'),
       type: 'number',
       readonly: true,
       sortable: true,
@@ -61,7 +62,7 @@ export const performanceSchema: EntitySchema = {
     },
     {
       name: 'avg_delivery_score',
-      label: '交付评分',
+      label: i18n.t('srm.performance.k8'),
       type: 'number',
       readonly: true,
       sortable: true,
@@ -69,7 +70,7 @@ export const performanceSchema: EntitySchema = {
     },
     {
       name: 'on_time_delivery_rate',
-      label: '准时交付率',
+      label: i18n.t('srm.performance.k9'),
       type: 'number',
       readonly: true,
       sortable: true,
@@ -77,7 +78,7 @@ export const performanceSchema: EntitySchema = {
     },
     {
       name: 'defect_rate',
-      label: '缺陷率',
+      label: i18n.t('srm.performance.k10'),
       type: 'number',
       readonly: true,
       sortable: true,
@@ -85,7 +86,7 @@ export const performanceSchema: EntitySchema = {
     },
     {
       name: 'evaluation_count',
-      label: '评估次数',
+      label: i18n.t('srm.performance.k11'),
       type: 'number',
       readonly: true,
       sortable: true,
@@ -112,5 +113,5 @@ export const performanceSchema: EntitySchema = {
   actions: ['detail'],
 
   formColCount: 2,
-  detailTitle: '供应商绩效详情',
+  detailTitle: i18n.t('srm.performance.k12'),
 };

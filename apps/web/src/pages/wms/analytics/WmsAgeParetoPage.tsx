@@ -11,6 +11,7 @@ import {
   Legend,
   ReferenceLine,
 } from 'recharts';
+import i18n from '@/i18n';
 import { useWmsMock, type WmsMockShape } from '@/api/wms/_mock';
 import { designTokens, semanticTokens } from '@topems/tokens';
 
@@ -34,11 +35,11 @@ export default function WmsAgeParetoPage() {
 
       <div className='grid grid-cols-1 gap-4 md:grid-cols-3'>
         <div className='rounded-lg border p-4'>
-          <p className='text-sm text-gray-600'>累计库存金额</p>
+          <p className='text-sm text-gray-600'>{i18n.t('pages.wms_age_pareto_page.k0')}</p>
           <p className='mt-1 text-3xl font-bold text-green-600'>¥{totalAmount.toLocaleString()}</p>
         </div>
         <div className='rounded-lg border p-4'>
-          <p className='text-sm text-gray-600'>覆盖 80% 金额的 SKU 数</p>
+          <p className='text-sm text-gray-600'>{i18n.t('pages.wms_age_pareto_page.80sku_1')}</p>
           <p className='mt-1 text-3xl font-bold text-blue-600'>{top80}</p>
         </div>
         <div className='rounded-lg border p-4'>
@@ -49,7 +50,7 @@ export default function WmsAgeParetoPage() {
 
       <div className='rounded-lg border p-4'>
         <h3 className='mb-2 font-semibold'>
-          SKU 库龄金额分布（Bar）+ 累计占比（Line）+ 80% 参考线
+          {i18n.t('pages.wms_age_pareto_page.k0')}
         </h3>
         <ResponsiveContainer
           width='100%'
@@ -70,7 +71,7 @@ export default function WmsAgeParetoPage() {
             <YAxis
               yAxisId='left'
               fontSize={11}
-              label={{ value: '库存金额', angle: -90, position: 'insideLeft' }}
+              label={{ value: i18n.t('pages.wms_age_pareto_page.k2'), angle: -90, position: 'insideLeft' }}
             />
             <YAxis
               yAxisId='right'
@@ -78,7 +79,7 @@ export default function WmsAgeParetoPage() {
               domain={[0, 100]}
               unit='%'
               fontSize={11}
-              label={{ value: '累计占比', angle: 90, position: 'insideRight' }}
+              label={{ value: i18n.t('pages.wms_age_pareto_page.k3'), angle: 90, position: 'insideRight' }}
             />
             <Tooltip />
             <Legend />
@@ -87,7 +88,7 @@ export default function WmsAgeParetoPage() {
               y={80}
               stroke={designTokens.colors.error.main}
               strokeDasharray='4 4'
-              label='80% 线'
+              label={i18n.t('pages.wms_age_pareto_page.80_1')}
             />
             <ReferenceLine
               yAxisId='right'
@@ -99,7 +100,7 @@ export default function WmsAgeParetoPage() {
             <Bar
               yAxisId='left'
               dataKey='amount'
-              name='SKU 金额'
+              name={i18n.t('pages.wms_age_pareto_page.sku_2')}
               fill={designTokens.colors.primary.main}
               radius={[4, 4, 0, 0]}
             />
@@ -107,7 +108,7 @@ export default function WmsAgeParetoPage() {
               yAxisId='right'
               type='monotone'
               dataKey='cumulative'
-              name='累计占比 %'
+              name={i18n.t('pages.wms_age_pareto_page.k4')}
               stroke={designTokens.colors.success.dark}
               strokeWidth={2.5}
               dot={{ r: 3 }}

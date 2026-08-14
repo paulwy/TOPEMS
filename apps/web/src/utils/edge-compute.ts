@@ -1,3 +1,4 @@
+import i18n from '@/i18n';
 export type EdgeCacheStrategy =
   'cache-first' | 'network-first' | 'stale-while-revalidate' | 'cache-only';
 
@@ -292,7 +293,7 @@ const defaultEdgeEndpoints: Array<Omit<EdgeEndpoint, 'lastCheck' | 'failCount' |
   [
     {
       id: 'edge-cn-east',
-      name: '华东边缘节点',
+      name: i18n.t('shared.edge-compute.k0'),
       region: 'cn-east',
       url: 'https://edge-cn-east.example.com',
       weight: 100,
@@ -301,7 +302,7 @@ const defaultEdgeEndpoints: Array<Omit<EdgeEndpoint, 'lastCheck' | 'failCount' |
     },
     {
       id: 'edge-cn-north',
-      name: '华北边缘节点',
+      name: i18n.t('shared.edge-compute.k1'),
       region: 'cn-north',
       url: 'https://edge-cn-north.example.com',
       weight: 90,
@@ -310,7 +311,7 @@ const defaultEdgeEndpoints: Array<Omit<EdgeEndpoint, 'lastCheck' | 'failCount' |
     },
     {
       id: 'edge-cn-south',
-      name: '华南边缘节点',
+      name: i18n.t('shared.edge-compute.k2'),
       region: 'cn-south',
       url: 'https://edge-cn-south.example.com',
       weight: 95,
@@ -319,7 +320,7 @@ const defaultEdgeEndpoints: Array<Omit<EdgeEndpoint, 'lastCheck' | 'failCount' |
     },
     {
       id: 'edge-cn-west',
-      name: '华西边缘节点',
+      name: i18n.t('shared.edge-compute.k3'),
       region: 'cn-west',
       url: 'https://edge-cn-west.example.com',
       weight: 80,
@@ -328,7 +329,7 @@ const defaultEdgeEndpoints: Array<Omit<EdgeEndpoint, 'lastCheck' | 'failCount' |
     },
     {
       id: 'edge-ap-sg',
-      name: '新加坡边缘节点',
+      name: i18n.t('shared.edge-compute.k4'),
       region: 'ap-sg',
       url: 'https://edge-ap-sg.example.com',
       weight: 70,

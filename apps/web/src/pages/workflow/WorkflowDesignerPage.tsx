@@ -10,6 +10,7 @@ import {
   Typography,
   Button,
 } from '@mui/material';
+import i18n from '@/i18n';
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import type { NodeData, EdgeData } from '@/components/workflow/WorkflowDesigner';
@@ -22,15 +23,11 @@ import { Save } from 'lucide-react';
 import { PageContainer } from '@/components/common';
 import { WORKFLOW_PATHS } from '@/modules/workflow/config';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-
-
 import { QUERY_KEYS } from '@/lib/reactQuery';
-
 const WorkflowDesignerPage: React.FC = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const workflowId = searchParams.get('id');
-
   const { addNotification } = useNotificationStore();
   const queryClient = useQueryClient();
   const [showSaveDialog, setShowSaveDialog] = useState(false);
@@ -41,7 +38,6 @@ const WorkflowDesignerPage: React.FC = () => {
   });
   const [nodes, setNodes] = useState<NodeData[]>([]);
   const [edges, setEdges] = useState<EdgeData[]>([]);
-
   const workflowQuery = useQuery<Workflow | null>({
     queryKey: [...QUERY_KEYS.AD_HOC.WORKFLOW_DESIGNER_BASE, workflowId],
     queryFn: async () => {
@@ -55,20 +51,17 @@ const WorkflowDesignerPage: React.FC = () => {
     enabled: !!workflowId,
     staleTime: 5 * 60 * 1000,
   });
-
   const loading = workflowQuery.isLoading;
-
   useEffect(() => {
     if (workflowQuery.isError) {
-      apiLogger.error('加载工作流失败:', workflowQuery.error);
+      apiLogger.error(i18n.t('pages.workflow_designer_page.k0'), workflowQuery.error);
       addNotification({
-        title: '加载失败',
-        message: '加载工作流失败',
+        title: i18n.t('workflow.workflow_designer_page.k0'),
+        message: i18n.t('workflow.workflow_designer_page.k1'),
         type: 'error',
       });
     }
   }, [workflowQuery.isError, workflowQuery.error, addNotification]);
-
   useEffect(() => {
     if (workflowQuery.data) {
       const wf = workflowQuery.data;
@@ -101,13 +94,11 @@ const WorkflowDesignerPage: React.FC = () => {
       }
     }
   }, [workflowQuery.data]);
-
   const handleSave = (newNodes: NodeData[], newEdges: EdgeData[]) => {
     setNodes(newNodes);
     setEdges(newEdges);
     setShowSaveDialog(true);
   };
-
   const convertToWorkflowDefinition = () => {
     // Convert nodes and edges to workflow definition format
     const approvalNodes = nodes
@@ -124,10 +115,8 @@ const WorkflowDesignerPage: React.FC = () => {
         notification_users: undefined,
         nextnodes: edges.filter((e) => e.source === node.id).map((e) => e.target),
       }));
-
     const startNode = nodes.find((n) => n.type === 'start');
     const endNodes = nodes.filter((n) => n.type === 'end').map((n) => n.id);
-
     return {
       version: '1.0',
       nodes: approvalNodes,
@@ -136,7 +125,6 @@ const WorkflowDesignerPage: React.FC = () => {
       timeout_action: 'reject',
     };
   };
-
   const updateWorkflowMutation = useMutation({
     mutationFn: (params: { id: string; data: UpdateWorkflowRequest }) =>
       workflowApi.updateWorkflow(params.id, params.data),
@@ -146,22 +134,21 @@ const WorkflowDesignerPage: React.FC = () => {
   refetchType: 'active',
 });
       addNotification({
-        title: '保存成功',
-        message: '工作流已更新',
+        title: i18n.t('workflow.workflow_designer_page.k2'),
+        message: i18n.t('workflow.workflow_designer_page.k3'),
         type: 'success',
       });
       setShowSaveDialog(false);
     },
     onError: (err: unknown) => {
-      apiLogger.error('保存工作流失败:', err);
+      apiLogger.error(i18n.t('pages.workflow_designer_page.k1'), err);
       addNotification({
-        title: '保存失败',
-        message: '保存工作流失败',
+        title: i18n.t('workflow.workflow_designer_page.k4'),
+        message: i18n.t('workflow.workflow_designer_page.k5'),
         type: 'error',
       });
     },
   });
-
   const createWorkflowMutation = useMutation({
     mutationFn: (data: CreateWorkflowRequest) => workflowApi.createWorkflow(data),
     onSuccess: () => {
@@ -170,8 +157,8 @@ const WorkflowDesignerPage: React.FC = () => {
   refetchType: 'active',
 });
       addNotification({
-        title: '保存成功',
-        message: '工作流已创建',
+        title: i18n.t('workflow.workflow_designer_page.k6'),
+        message: i18n.t('workflow.workflow_designer_page.k7'),
         type: 'success',
       });
       setShowSaveDialog(false);
@@ -179,29 +166,25 @@ const WorkflowDesignerPage: React.FC = () => {
       navigate(WORKFLOW_PATHS.definitions);
     },
     onError: (err: unknown) => {
-      apiLogger.error('保存工作流失败:', err);
+      apiLogger.error(i18n.t('pages.workflow_designer_page.k2'), err);
       addNotification({
-        title: '保存失败',
-        message: '保存工作流失败',
+        title: i18n.t('workflow.workflow_designer_page.k8'),
+        message: i18n.t('workflow.workflow_designer_page.k9'),
         type: 'error',
       });
     },
   });
-
   const saving = updateWorkflowMutation.isPending || createWorkflowMutation.isPending;
-
   const handleSaveWorkflow = () => {
     if (!formData.name.trim()) {
       addNotification({
-        title: '提示',
-        message: '请输入工作流名称',
+        title: i18n.t('workflow.workflow_designer_page.k10'),
+        message: i18n.t('workflow.workflow_designer_page.k11'),
         type: 'info',
       });
       return;
     }
-
     const definition = convertToWorkflowDefinition();
-
     if (workflow) {
       // Update existing workflow
       const updateData: UpdateWorkflowRequest = {
@@ -221,7 +204,6 @@ const WorkflowDesignerPage: React.FC = () => {
       createWorkflowMutation.mutate(createData);
     }
   };
-
   if (loading) {
     return (
       <Box
@@ -236,11 +218,10 @@ const WorkflowDesignerPage: React.FC = () => {
       </Box>
     );
   }
-
   return (
     <PageContainer
-      title={workflow ? `编辑: ${workflow.name}` : '新建工作流'}
-      subtitle='设计工作流审批流程'
+      title={workflow ? `${i18n.t('pages.workflow_designer_page.k3')}${workflow.name}` : i18n.t('workflow.workflow_designer_page.k12')}
+      subtitle={i18n.t('workflow.workflow_designer_page.k13')}
       headerProps={{
         showDivider: true,
       }}
@@ -257,20 +238,19 @@ const WorkflowDesignerPage: React.FC = () => {
           onSave={handleSave}
         />
       </Box>
-
       {/* Save Dialog */}
       <Dialog
         open={showSaveDialog}
         onClose={() => setShowSaveDialog(false)}
       >
         <DialogContent sx={{ maxWidth: 400 }}>
-          <DialogTitle>保存工作流</DialogTitle>
+          <DialogTitle>{i18n.t('workflow.workflow_designer_page.k14')}</DialogTitle>
           <Typography
             variant='body2'
             color='text.secondary'
             sx={{ mb: 2 }}
           >
-            请输入工作流名称和描述
+            {i18n.t('pages.workflow_designer_page.k0')}
           </Typography>
           <Stack spacing={2}>
             <Box>
@@ -278,7 +258,7 @@ const WorkflowDesignerPage: React.FC = () => {
                 variant='body2'
                 sx={{ mb: 0.5, fontWeight: 500 }}
               >
-                工作流名称 *
+                {i18n.t('pages.workflow_designer_page.k1')}
               </Typography>
               <TextField
                 fullWidth
@@ -287,7 +267,7 @@ const WorkflowDesignerPage: React.FC = () => {
                 onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                   setFormData({ ...formData, name: e.target.value })
                 }
-                placeholder='请输入工作流名称'
+                placeholder={i18n.t('workflow.workflow_designer_page.k15')}
               />
             </Box>
             <Box>
@@ -295,7 +275,7 @@ const WorkflowDesignerPage: React.FC = () => {
                 variant='body2'
                 sx={{ mb: 0.5, fontWeight: 500 }}
               >
-                描述
+                {i18n.t('pages.workflow_designer_page.k2')}
               </Typography>
               <TextField
                 fullWidth
@@ -306,7 +286,7 @@ const WorkflowDesignerPage: React.FC = () => {
                 onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                   setFormData({ ...formData, description: e.target.value })
                 }
-                placeholder='请输入工作流描述'
+                placeholder={i18n.t('workflow.workflow_designer_page.k16')}
               />
             </Box>
           </Stack>
@@ -315,7 +295,7 @@ const WorkflowDesignerPage: React.FC = () => {
               variant='outlined'
               onClick={() => setShowSaveDialog(false)}
             >
-              取消
+              {i18n.t('pages.workflow_designer_page.k3')}
             </Button>
             <Button
               onClick={handleSaveWorkflow}
@@ -323,7 +303,7 @@ const WorkflowDesignerPage: React.FC = () => {
               variant='contained'
               startIcon={saving ? undefined : <Save size={16} />}
             >
-              {saving ? '保存中...' : '保存'}
+              {saving ? i18n.t('pages.workflow_designer_page.k4') : i18n.t('workflow.workflow_designer_page.k17')}
             </Button>
           </DialogActions>
         </DialogContent>
@@ -331,5 +311,4 @@ const WorkflowDesignerPage: React.FC = () => {
     </PageContainer>
   );
 };
-
 export default WorkflowDesignerPage;

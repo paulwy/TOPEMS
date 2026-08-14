@@ -1,3 +1,4 @@
+import i18n from '@/i18n';
 export type SecurityCategory = 'XSS' | 'Injection' | 'CSRF' | 'Auth' | 'Encryption' | 'Exposure';
 export type SecuritySeverity = 'critical' | 'high' | 'medium' | 'low';
 
@@ -35,8 +36,8 @@ const OWASP_RULES: ScanRule[] = [
     category: 'XSS',
     severity: 'critical',
     pattern: /innerHTML\s*=/g,
-    description: '直接使用 innerHTML 可能导致存储型 XSS 攻击',
-    remediation: '使用 textContent 或对输入进行严格消毒',
+    description: i18n.t('ai.security-scanner.k0'),
+    remediation: i18n.t('ai.security-scanner.k1'),
     owaspId: 'A03:2021 - Injection',
   },
   {
@@ -44,8 +45,8 @@ const OWASP_RULES: ScanRule[] = [
     category: 'XSS',
     severity: 'high',
     pattern: /dangerouslySetInnerHTML/g,
-    description: 'React dangerouslySetInnerHTML 可能导致 XSS',
-    remediation: '使用 DOMPurify 等库进行 HTML 消毒',
+    description: i18n.t('ai.security-scanner.k0'),
+    remediation: i18n.t('ai.security-scanner.k2'),
     owaspId: 'A03:2021 - Injection',
   },
   {
@@ -53,8 +54,8 @@ const OWASP_RULES: ScanRule[] = [
     category: 'XSS',
     severity: 'high',
     pattern: /document\.write\s*\(/g,
-    description: 'document.write 容易受到 XSS 攻击',
-    remediation: '避免使用 document.write，使用 DOM 操作 API',
+    description: i18n.t('ai.security-scanner.k1'),
+    remediation: i18n.t('ai.security-scanner.k2'),
     owaspId: 'A03:2021 - Injection',
   },
   {
@@ -62,8 +63,8 @@ const OWASP_RULES: ScanRule[] = [
     category: 'Injection',
     severity: 'critical',
     pattern: /\beval\s*\(/g,
-    description: '使用 eval() 可能导致代码注入',
-    remediation: '避免使用 eval()，使用 Function 构造器或其他安全替代方案',
+    description: i18n.t('ai.security-scanner.eval_3'),
+    remediation: i18n.t('ai.security-scanner.k4'),
     owaspId: 'A03:2021 - Injection',
   },
   {
@@ -71,8 +72,8 @@ const OWASP_RULES: ScanRule[] = [
     category: 'Injection',
     severity: 'high',
     pattern: /new\s+Function\s*\(/g,
-    description: '使用 new Function() 存在代码注入风险',
-    remediation: '避免动态执行代码',
+    description: i18n.t('ai.security-scanner.k5'),
+    remediation: i18n.t('ai.security-scanner.k6'),
     owaspId: 'A03:2021 - Injection',
   },
   {
@@ -80,8 +81,8 @@ const OWASP_RULES: ScanRule[] = [
     category: 'Injection',
     severity: 'high',
     pattern: /exec\s*\(\s*['"`]/g,
-    description: '命令执行可能导致远程代码执行',
-    remediation: '使用参数化查询，避免拼接命令字符串',
+    description: i18n.t('ai.security-scanner.k7'),
+    remediation: i18n.t('ai.security-scanner.k8'),
     owaspId: 'A03:2021 - Injection',
   },
   {
@@ -89,8 +90,8 @@ const OWASP_RULES: ScanRule[] = [
     category: 'CSRF',
     severity: 'medium',
     pattern: /fetch\s*\([^)]*\)/g,
-    description: '跨站请求可能缺少 CSRF 保护',
-    remediation: '使用 CSRF Token 机制，验证 Origin/Referer 头',
+    description: i18n.t('ai.security-scanner.csrf_9'),
+    remediation: i18n.t('ai.security-scanner.k10'),
     owaspId: 'A01:2021 - Broken Access Control',
   },
   {
@@ -98,8 +99,8 @@ const OWASP_RULES: ScanRule[] = [
     category: 'Auth',
     severity: 'high',
     pattern: /localStorage\.setItem\s*\(\s*['"][^'"]*token[^'"]*['"]/gi,
-    description: '将 token 存储在 localStorage 容易受到 XSS 窃取',
-    remediation: '使用 HttpOnly Cookie 存储敏感凭证',
+    description: i18n.t('ai.security-scanner.k11'),
+    remediation: i18n.t('ai.security-scanner.k12'),
     owaspId: 'A07:2021 - Identification and Authentication Failures',
   },
   {
@@ -107,8 +108,8 @@ const OWASP_RULES: ScanRule[] = [
     category: 'Auth',
     severity: 'medium',
     pattern: /localStorage\.setItem\s*\(\s*['"][^'"]*password[^'"]*['"]/gi,
-    description: '密码不应存储在浏览器本地',
-    remediation: '不应在客户端存储密码，使用安全的认证机制',
+    description: i18n.t('ai.security-scanner.k13'),
+    remediation: i18n.t('ai.security-scanner.k14'),
     owaspId: 'A07:2021 - Identification and Authentication Failures',
   },
   {
@@ -116,8 +117,8 @@ const OWASP_RULES: ScanRule[] = [
     category: 'Auth',
     severity: 'high',
     pattern: /sessionStorage\.setItem\s*\(\s*['"][^'"]*token[^'"]*['"]/gi,
-    description: 'Token 存储在 sessionStorage 存在安全风险',
-    remediation: '使用 HttpOnly 和 Secure Cookie',
+    description: i18n.t('ai.security-scanner.k3'),
+    remediation: i18n.t('ai.security-scanner.k15'),
     owaspId: 'A07:2021 - Identification and Authentication Failures',
   },
   {
@@ -125,8 +126,8 @@ const OWASP_RULES: ScanRule[] = [
     category: 'Encryption',
     severity: 'high',
     pattern: /\bmd5\b|\bsha1\b/gi,
-    description: '使用弱哈希算法（MD5/SHA1）',
-    remediation: '使用 SHA-256 或更强的哈希算法',
+    description: i18n.t('ai.security-scanner.md5sha1_16'),
+    remediation: i18n.t('ai.security-scanner.sha256_17'),
     owaspId: 'A02:2021 - Cryptographic Failures',
   },
   {
@@ -134,8 +135,8 @@ const OWASP_RULES: ScanRule[] = [
     category: 'Encryption',
     severity: 'high',
     pattern: /crypto\.createHash\s*\(\s*['"](md5|sha1)['"]/gi,
-    description: '使用弱哈希算法创建哈希',
-    remediation: '使用 sha256 或 sha512',
+    description: i18n.t('ai.security-scanner.k18'),
+    remediation: i18n.t('ai.security-scanner.sha256sha512_19'),
     owaspId: 'A02:2021 - Cryptographic Failures',
   },
   {
@@ -143,8 +144,8 @@ const OWASP_RULES: ScanRule[] = [
     category: 'Exposure',
     severity: 'critical',
     pattern: /api[_-]?key\s*[:=]\s*['"][a-zA-Z0-9]{20,}['"]/gi,
-    description: '可能在源代码中暴露 API 密钥',
-    remediation: '使用环境变量或密钥管理服务',
+    description: i18n.t('ai.security-scanner.api_20'),
+    remediation: i18n.t('ai.security-scanner.k21'),
     owaspId: 'A02:2021 - Cryptographic Failures',
   },
   {
@@ -152,8 +153,8 @@ const OWASP_RULES: ScanRule[] = [
     category: 'Exposure',
     severity: 'high',
     pattern: /secret\s*[:=]\s*['"][a-zA-Z0-9]{16,}['"]/gi,
-    description: '可能在源代码中暴露密钥/秘密',
-    remediation: '使用环境变量或密钥管理系统',
+    description: i18n.t('ai.security-scanner.k22'),
+    remediation: i18n.t('ai.security-scanner.k23'),
     owaspId: 'A02:2021 - Cryptographic Failures',
   },
   {
@@ -161,8 +162,8 @@ const OWASP_RULES: ScanRule[] = [
     category: 'Exposure',
     severity: 'medium',
     pattern: /console\.(log|error|warn)\([^)]*(?:password|secret|token|key)/gi,
-    description: '日志中可能泄露敏感信息',
-    remediation: '移除敏感信息的日志输出',
+    description: i18n.t('ai.security-scanner.k24'),
+    remediation: i18n.t('ai.security-scanner.k25'),
     owaspId: 'A04:2021 - Insecure Design',
   },
   {
@@ -170,8 +171,8 @@ const OWASP_RULES: ScanRule[] = [
     category: 'Exposure',
     severity: 'medium',
     pattern: /http:\/\/(?!localhost|127\.0\.0\.1)/gi,
-    description: '使用 HTTP 而非 HTTPS 传输数据',
-    remediation: '始终使用 HTTPS 进行安全通信',
+    description: i18n.t('ai.security-scanner.k26'),
+    remediation: i18n.t('ai.security-scanner.https_27'),
     owaspId: 'A02:2021 - Cryptographic Failures',
   },
   {
@@ -179,8 +180,8 @@ const OWASP_RULES: ScanRule[] = [
     category: 'Injection',
     severity: 'medium',
     pattern: /\.innerHTML\s*=|\.outerHTML\s*=/g,
-    description: '直接操作 HTML 内容可能导致 XSS',
-    remediation: '使用 textContent 或框架的安全渲染方法',
+    description: i18n.t('ai.security-scanner.htmlxss_28'),
+    remediation: i18n.t('ai.security-scanner.k29'),
     owaspId: 'A03:2021 - Injection',
   },
   {
@@ -188,8 +189,8 @@ const OWASP_RULES: ScanRule[] = [
     category: 'Auth',
     severity: 'medium',
     pattern: /httpOnly\s*:\s*false|httpOnly\s*=\s*false/gi,
-    description: 'Cookie 设置为非 HttpOnly，容易受到 XSS 窃取',
-    remediation: '启用 HttpOnly、Secure 和 SameSite 属性',
+    description: i18n.t('ai.security-scanner.k4'),
+    remediation: i18n.t('ai.security-scanner.k30'),
     owaspId: 'A07:2021 - Identification and Authentication Failures',
   },
 ];
@@ -236,23 +237,23 @@ export class SecurityScanner {
     > = {
       lodash: {
         severity: 'medium',
-        description: '检查 lodash 版本是否存在已知漏洞',
-        remediation: '升级到最新版本或使用 lodash-es',
+        description: i18n.t('ai.security-scanner.lodash_31'),
+        remediation: i18n.t('ai.security-scanner.lodashes_32'),
       },
       axios: {
         severity: 'low',
-        description: '检查 axios 版本安全性',
-        remediation: '保持 axios 更新到最新版本',
+        description: i18n.t('ai.security-scanner.axios_33'),
+        remediation: i18n.t('ai.security-scanner.axios_34'),
       },
       express: {
         severity: 'medium',
-        description: '检查 express 版本是否存在已知漏洞',
-        remediation: '升级到 express 4.x 最新版',
+        description: i18n.t('ai.security-scanner.k35'),
+        remediation: i18n.t('ai.security-scanner.express4x_5'),
       },
       jquery: {
         severity: 'high',
-        description: '使用 jQuery 可能存在 XSS 漏洞',
-        remediation: '考虑移除 jQuery 依赖',
+        description: i18n.t('ai.security-scanner.k36'),
+        remediation: i18n.t('ai.security-scanner.jquery_37'),
       },
     };
 
@@ -265,7 +266,7 @@ export class SecurityScanner {
           severity: vuln.severity,
           file: `package.json`,
           line: 0,
-          description: `依赖 ${name}@${version}: ${vuln.description}`,
+          description: `${i18n.t('ai.security-scanner.k6')}${name}@${version}: ${vuln.description}`,
           remediation: vuln.remediation,
         });
       }
@@ -285,8 +286,8 @@ export class SecurityScanner {
         severity: 'medium',
         file: 'config',
         line: 0,
-        description: '生产环境中启用了 debug 模式',
-        remediation: '在生产环境中禁用 debug 模式',
+        description: i18n.t('ai.security-scanner.debug_38'),
+        remediation: i18n.t('ai.security-scanner.debug_39'),
       });
     }
 
@@ -297,8 +298,8 @@ export class SecurityScanner {
         severity: 'medium',
         file: 'config',
         line: 0,
-        description: 'CORS 配置为允许所有来源',
-        remediation: '限制 CORS 为特定的可信域名',
+        description: i18n.t('ai.security-scanner.cors_7'),
+        remediation: i18n.t('ai.security-scanner.cors_40'),
       });
     }
 

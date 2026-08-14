@@ -17,6 +17,7 @@ import {
   useTheme,
   useMediaQuery,
 } from '@mui/material';
+import i18n from '@/i18n';
 import { ExportButton } from '@/components/export';
 import { logger } from '@/utils/logger';
 import {
@@ -54,30 +55,22 @@ import {
 import { BIChartColors } from '@/components/charts/chartTheme';
 import { designTokens } from '@/theme/tokens';
 import { BI_PATHS } from '@/modules/bi/config';
-
-import { useTranslation } from 'react-i18next';
-
-
 import { QUERY_KEYS } from '@/lib/reactQuery';
-
 const ct= designTokens.colors;
-
 const moduleConfig: Record<string, { name: string; icon: string; color: string }> = {
-  rs: { name: '研发管理', icon: '🔬', color: 'primary.main' },
-  lims: { name: '实验室管理', icon: '🧪', color: 'success.main' },
-  qms: { name: '质量管理', icon: '✅', color: 'warning.main' },
-  ehs: { name: '安全环保', icon: '🛡️', color: 'error.main' },
-  srm: { name: '供应链管理', icon: '📦', color: 'secondary.main' },
-  pdm: { name: '生产数据', icon: '🏭', color: ct.cyan.main },
+  rs: { name: i18n.t('bi.bi_module_detail_page.k0'), icon: '🔬', color: 'primary.main' },
+  lims: { name: i18n.t('bi.bi_module_detail_page.k1'), icon: '🧪', color: 'success.main' },
+  qms: { name: i18n.t('bi.bi_module_detail_page.k2'), icon: '✅', color: 'warning.main' },
+  ehs: { name: i18n.t('bi.bi_module_detail_page.k3'), icon: '🛡️', color: 'error.main' },
+  srm: { name: i18n.t('bi.bi_module_detail_page.k4'), icon: '📦', color: 'secondary.main' },
+  pdm: { name: i18n.t('bi.bi_module_detail_page.k5'), icon: '🏭', color: ct.cyan.main },
 };
-
 interface ModuleData {
   summary: Record<string, number | string>;
   timeline: Array<{ month: string; count: number }>;
   distribution: Array<{ name: string; value: number }>;
   detailTable: Array<Record<string, string | number>>;
 }
-
 const getFallbackData = (moduleId: string): ModuleData => {
   const fallbackData: Record<string, ModuleData> = {
     rs: {
@@ -88,17 +81,17 @@ const getFallbackData = (moduleId: string): ModuleData => {
         avg_duration: 45.5,
       },
       timeline: [
-        { month: '1月', count: 25 },
-        { month: '2月', count: 30 },
-        { month: '3月', count: 28 },
-        { month: '4月', count: 35 },
-        { month: '5月', count: 42 },
-        { month: '6月', count: 38 },
+        { month: i18n.t('pages.bi_module_detail_page.1_0'), count: 25 },
+        { month: i18n.t('pages.bi_module_detail_page.2_1'), count: 30 },
+        { month: i18n.t('pages.bi_module_detail_page.3_2'), count: 28 },
+        { month: i18n.t('pages.bi_module_detail_page.4_3'), count: 35 },
+        { month: i18n.t('pages.bi_module_detail_page.5_4'), count: 42 },
+        { month: i18n.t('pages.bi_module_detail_page.6_5'), count: 38 },
       ],
       distribution: [
-        { name: '研发', value: 60 },
-        { name: '改进', value: 30 },
-        { name: '创新', value: 10 },
+        { name: i18n.t('bi.bi_module_detail_page.k6'), value: 60 },
+        { name: i18n.t('bi.bi_module_detail_page.k7'), value: 30 },
+        { name: i18n.t('bi.bi_module_detail_page.k8'), value: 10 },
       ],
       detailTable: [],
     },
@@ -110,18 +103,18 @@ const getFallbackData = (moduleId: string): ModuleData => {
         avg_turnaround: 48,
       },
       timeline: [
-        { month: '1月', count: 420 },
-        { month: '2月', count: 380 },
-        { month: '3月', count: 450 },
-        { month: '4月', count: 520 },
-        { month: '5月', count: 480 },
-        { month: '6月', count: 550 },
+        { month: i18n.t('pages.bi_module_detail_page.1_6'), count: 420 },
+        { month: i18n.t('pages.bi_module_detail_page.2_7'), count: 380 },
+        { month: i18n.t('pages.bi_module_detail_page.3_8'), count: 450 },
+        { month: i18n.t('pages.bi_module_detail_page.4_9'), count: 520 },
+        { month: i18n.t('pages.bi_module_detail_page.5_10'), count: 480 },
+        { month: i18n.t('pages.bi_module_detail_page.6_11'), count: 550 },
       ],
       distribution: [
-        { name: '化学检验', value: 40 },
-        { name: '物理检验', value: 30 },
-        { name: '微生物检验', value: 20 },
-        { name: '其他', value: 10 },
+        { name: i18n.t('bi.bi_module_detail_page.k9'), value: 40 },
+        { name: i18n.t('bi.bi_module_detail_page.k10'), value: 30 },
+        { name: i18n.t('bi.bi_module_detail_page.k11'), value: 20 },
+        { name: i18n.t('bi.bi_module_detail_page.k12'), value: 10 },
       ],
       detailTable: [],
     },
@@ -133,16 +126,16 @@ const getFallbackData = (moduleId: string): ModuleData => {
         pass_rate: 97.8,
       },
       timeline: [
-        { month: '1月', count: 520 },
-        { month: '2月', count: 480 },
-        { month: '3月', count: 550 },
-        { month: '4月', count: 620 },
-        { month: '5月', count: 580 },
-        { month: '6月', count: 650 },
+        { month: i18n.t('pages.bi_module_detail_page.1_12'), count: 520 },
+        { month: i18n.t('pages.bi_module_detail_page.2_13'), count: 480 },
+        { month: i18n.t('pages.bi_module_detail_page.3_14'), count: 550 },
+        { month: i18n.t('pages.bi_module_detail_page.4_15'), count: 620 },
+        { month: i18n.t('pages.bi_module_detail_page.5_16'), count: 580 },
+        { month: i18n.t('pages.bi_module_detail_page.6_17'), count: 650 },
       ],
       distribution: [
-        { name: '合格', value: 97.8 },
-        { name: '不合格', value: 2.2 },
+        { name: i18n.t('bi.bi_module_detail_page.k13'), value: 97.8 },
+        { name: i18n.t('bi.bi_module_detail_page.k14'), value: 2.2 },
       ],
       detailTable: [],
     },
@@ -154,17 +147,17 @@ const getFallbackData = (moduleId: string): ModuleData => {
         resolved: 110,
       },
       timeline: [
-        { month: '1月', count: 15 },
-        { month: '2月', count: 12 },
-        { month: '3月', count: 18 },
-        { month: '4月', count: 8 },
-        { month: '5月', count: 10 },
-        { month: '6月', count: 15 },
+        { month: i18n.t('pages.bi_module_detail_page.1_18'), count: 15 },
+        { month: i18n.t('pages.bi_module_detail_page.2_19'), count: 12 },
+        { month: i18n.t('pages.bi_module_detail_page.3_20'), count: 18 },
+        { month: i18n.t('pages.bi_module_detail_page.4_21'), count: 8 },
+        { month: i18n.t('pages.bi_module_detail_page.5_22'), count: 10 },
+        { month: i18n.t('pages.bi_module_detail_page.6_23'), count: 15 },
       ],
       distribution: [
-        { name: '高风险', value: 15 },
-        { name: '中风险', value: 45 },
-        { name: '低风险', value: 65 },
+        { name: i18n.t('bi.bi_module_detail_page.k15'), value: 15 },
+        { name: i18n.t('bi.bi_module_detail_page.k16'), value: 45 },
+        { name: i18n.t('bi.bi_module_detail_page.k17'), value: 65 },
       ],
       detailTable: [],
     },
@@ -176,17 +169,17 @@ const getFallbackData = (moduleId: string): ModuleData => {
         pending_orders: 35,
       },
       timeline: [
-        { month: '1月', count: 220 },
-        { month: '2月', count: 235 },
-        { month: '3月', count: 240 },
-        { month: '4月', count: 245 },
-        { month: '5月', count: 250 },
-        { month: '6月', count: 280 },
+        { month: i18n.t('pages.bi_module_detail_page.1_24'), count: 220 },
+        { month: i18n.t('pages.bi_module_detail_page.2_25'), count: 235 },
+        { month: i18n.t('pages.bi_module_detail_page.3_26'), count: 240 },
+        { month: i18n.t('pages.bi_module_detail_page.4_27'), count: 245 },
+        { month: i18n.t('pages.bi_module_detail_page.5_28'), count: 250 },
+        { month: i18n.t('pages.bi_module_detail_page.6_29'), count: 280 },
       ],
       distribution: [
-        { name: '合格', value: 220 },
-        { name: '待审核', value: 45 },
-        { name: '不合格', value: 15 },
+        { name: i18n.t('bi.bi_module_detail_page.k18'), value: 220 },
+        { name: i18n.t('bi.bi_module_detail_page.k19'), value: 45 },
+        { name: i18n.t('bi.bi_module_detail_page.k20'), value: 15 },
       ],
       detailTable: [],
     },
@@ -198,24 +191,23 @@ const getFallbackData = (moduleId: string): ModuleData => {
         efficiency: 92.5,
       },
       timeline: [
-        { month: '1月', count: 1850 },
-        { month: '2月', count: 2100 },
-        { month: '3月', count: 1980 },
-        { month: '4月', count: 2350 },
-        { month: '5月', count: 2200 },
-        { month: '6月', count: 2420 },
+        { month: i18n.t('pages.bi_module_detail_page.1_30'), count: 1850 },
+        { month: i18n.t('pages.bi_module_detail_page.2_31'), count: 2100 },
+        { month: i18n.t('pages.bi_module_detail_page.3_32'), count: 1980 },
+        { month: i18n.t('pages.bi_module_detail_page.4_33'), count: 2350 },
+        { month: i18n.t('pages.bi_module_detail_page.5_34'), count: 2200 },
+        { month: i18n.t('pages.bi_module_detail_page.6_35'), count: 2420 },
       ],
       distribution: [
-        { name: '已完成', value: 415 },
-        { name: '进行中', value: 28 },
-        { name: '已取消', value: 7 },
+        { name: i18n.t('bi.bi_module_detail_page.k21'), value: 415 },
+        { name: i18n.t('bi.bi_module_detail_page.k22'), value: 28 },
+        { name: i18n.t('bi.bi_module_detail_page.k23'), value: 7 },
       ],
       detailTable: [],
     },
   };
   return fallbackData[moduleId] || fallbackData.rs;
 };
-
 const moduleApiMap: Record<
   string,
   {
@@ -249,63 +241,54 @@ const moduleApiMap: Record<
     timeline: fetchPdmProductionTrend,
   },
 };
-
 const summaryLabels: Record<string, string> = {
-  total_projects: '项目总数',
-  active_projects: '进行中',
-  completed_projects: '已完成',
-  avg_duration: '平均周期(天)',
-  total_samples: '样品总数',
-  completed_tests: '完成检验',
-  pending_tests: '待检验',
-  avg_turnaround: '平均周期(小时)',
-  total_inspections: '检验总数',
-  passed: '合格数',
-  failed: '不合格数',
-  pass_rate: '合格率(%)',
-  total_risks: '风险总数',
-  high_risks: '高风险',
-  incidents: '安全事件',
-  resolved: '已解决',
-  total_suppliers: '供应商总数',
-  qualified: '合格供应商',
-  avg_rating: '平均评分',
-  pending_orders: '待处理订单',
-  total_batches: '批次总数',
-  completed: '已完成',
-  in_progress: '进行中',
-  efficiency: '效率(%)',
+  total_projects: i18n.t('bi.bi_module_detail_page.k24'),
+  active_projects: i18n.t('bi.bi_module_detail_page.k25'),
+  completed_projects: i18n.t('bi.bi_module_detail_page.k26'),
+  avg_duration: i18n.t('bi.bi_module_detail_page.k27'),
+  total_samples: i18n.t('bi.bi_module_detail_page.k28'),
+  completed_tests: i18n.t('bi.bi_module_detail_page.k29'),
+  pending_tests: i18n.t('bi.bi_module_detail_page.k30'),
+  avg_turnaround: i18n.t('bi.bi_module_detail_page.k31'),
+  total_inspections: i18n.t('bi.bi_module_detail_page.k32'),
+  passed: i18n.t('bi.bi_module_detail_page.k33'),
+  failed: i18n.t('bi.bi_module_detail_page.k34'),
+  pass_rate: i18n.t('bi.bi_module_detail_page.k35'),
+  total_risks: i18n.t('bi.bi_module_detail_page.k36'),
+  high_risks: i18n.t('bi.bi_module_detail_page.k37'),
+  incidents: i18n.t('bi.bi_module_detail_page.k38'),
+  resolved: i18n.t('bi.bi_module_detail_page.k39'),
+  total_suppliers: i18n.t('bi.bi_module_detail_page.k40'),
+  qualified: i18n.t('bi.bi_module_detail_page.k41'),
+  avg_rating: i18n.t('bi.bi_module_detail_page.k42'),
+  pending_orders: i18n.t('bi.bi_module_detail_page.k43'),
+  total_batches: i18n.t('bi.bi_module_detail_page.k44'),
+  completed: i18n.t('bi.bi_module_detail_page.k45'),
+  in_progress: i18n.t('bi.bi_module_detail_page.k46'),
+  efficiency: i18n.t('bi.bi_module_detail_page.k47'),
 };
-
 const BIModuleDetailPage = () => {
-  const { t } = useTranslation();
   const { moduleId } = useParams<{ moduleId: string }>();
   const [error, setError] = useState<string | null>(null);
-
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
-
   const config = moduleConfig[moduleId || 'rs'] || {
-    name: t('bi.bi_module_detail_page.text_912fa5'),
+    name: i18n.t('bi.bi_module_detail_page.text_912fa5'),
     icon: '📊',
     color: 'grey.500',
   };
-
   const moduleDataQuery = useQuery<ModuleData>({
     queryKey: [...QUERY_KEYS.AD_HOC.BI_MODULE_DETAIL_BASE, moduleId || 'rs'],
     queryFn: async () => {
       const modId = moduleId || 'rs';
       const fallback = getFallbackData(modId);
-
       const apiConfig = moduleApiMap[modId];
       if (!apiConfig) {
         return fallback;
       }
-
       let summaryData: Record<string, number | string> | null = null;
       let timelineData: Array<{ month: string; count: number }> = fallback.timeline;
       let distributionData: Array<{ name: string; value: number }> = fallback.distribution;
-
       try {
         const summaryRes = await apiConfig.summary();
         if (summaryRes.success && summaryRes.data) {
@@ -314,7 +297,6 @@ const BIModuleDetailPage = () => {
       } catch (e) {
         logger.error(`Failed to load ${modId} summary:`, e);
       }
-
       if (apiConfig.timeline) {
         try {
           const timelineRes = await apiConfig.timeline();
@@ -326,7 +308,7 @@ const BIModuleDetailPage = () => {
                   item: { month?: string; date?: string; count?: number; value?: number },
                   index: number
                 ) => ({
-                  month: item.month || item.date || `${index + 1}月`,
+                  month: item.month || item.date || `${index + 1}${i18n.t('pages.bi_module_detail_page.k36')}`,
                   count: item.count || item.value || 0,
                 })
               );
@@ -336,19 +318,17 @@ const BIModuleDetailPage = () => {
           logger.error(`Failed to load ${modId} timeline:`, e);
         }
       }
-
       const summary = summaryData || fallback.summary;
-
       if (modId === 'rs' && summaryData?.project_type_distribution) {
         distributionData = Object.entries(summaryData.project_type_distribution).map(
           ([key, value]) => ({
             name:
               key === 'research'
-                ? t('bi.bi_module_detail_page.text_fc7393')
+                ? i18n.t('bi.bi_module_detail_page.text_fc7393')
                 : key === 'development'
-                  ? t('bi.bi_module_detail_page.text_3ff3c3')
+                  ? i18n.t('bi.bi_module_detail_page.text_3ff3c3')
                   : key === 'improvement'
-                    ? t('bi.bi_module_detail_page.text_50b419')
+                    ? i18n.t('bi.bi_module_detail_page.text_50b419')
                     : key,
             value: value as number,
           })
@@ -358,12 +338,12 @@ const BIModuleDetailPage = () => {
           ([key, value]) => ({
             name:
               key === 'chemical'
-                ? t('bi.bi_module_detail_page.inspection')
+                ? i18n.t('bi.bi_module_detail_page.inspection')
                 : key === 'physical'
-                  ? t('bi.bi_module_detail_page.inspection_1')
+                  ? i18n.t('bi.bi_module_detail_page.inspection_1')
                   : key === 'microbiological'
-                    ? t('bi.bi_module_detail_page.inspection_2')
-                    : t('bi.bi_module_detail_page.other'),
+                    ? i18n.t('bi.bi_module_detail_page.inspection_2')
+                    : i18n.t('bi.bi_module_detail_page.other'),
             value: value as number,
           })
         );
@@ -371,22 +351,22 @@ const BIModuleDetailPage = () => {
         distributionData = Object.entries(summaryData.defect_types).map(([key, value]) => ({
           name:
             key === 'material'
-              ? t('bi.bi_module_detail_page.text_ebc9d9')
+              ? i18n.t('bi.bi_module_detail_page.text_ebc9d9')
               : key === 'process'
-                ? t('bi.bi_module_detail_page.process_route')
+                ? i18n.t('bi.bi_module_detail_page.process_route')
                 : key === 'equipment'
-                  ? t('bi.bi_module_detail_page.equipment')
-                  : t('bi.bi_module_detail_page.other'),
+                  ? i18n.t('bi.bi_module_detail_page.equipment')
+                  : i18n.t('bi.bi_module_detail_page.other'),
           value: value as number,
         }));
       } else if (modId === 'ehs' && summaryData?.risk_distribution) {
         distributionData = Object.entries(summaryData.risk_distribution).map(([key, value]) => ({
           name:
             key === 'high'
-              ? t('bi.bi_module_detail_page.text_4433e7')
+              ? i18n.t('bi.bi_module_detail_page.text_4433e7')
               : key === 'medium'
-                ? t('bi.bi_module_detail_page.text_8a8992')
-                : t('bi.bi_module_detail_page.text_b56976'),
+                ? i18n.t('bi.bi_module_detail_page.text_8a8992')
+                : i18n.t('bi.bi_module_detail_page.text_b56976'),
           value: value as number,
         }));
       } else if (modId === 'pdm' && summaryData?.product_line_usage) {
@@ -395,7 +375,6 @@ const BIModuleDetailPage = () => {
           value: value as number,
         }));
       }
-
       return {
         summary,
         timeline: timelineData,
@@ -405,25 +384,20 @@ const BIModuleDetailPage = () => {
     },
     staleTime: 5 * 60 * 1000,
   });
-
   const moduleData = moduleDataQuery.data ?? null;
   const loading = moduleDataQuery.isLoading;
-
   useEffect(() => {
     if (moduleDataQuery.isError) {
       logger.error('Failed to load module data:', moduleDataQuery.error);
-      setError(t('bi.bi_module_detail_page.fail'));
+      setError(i18n.t('bi.bi_module_detail_page.fail'));
     } else {
       setError(null);
     }
   }, [moduleDataQuery.isError, moduleDataQuery.error]);
-
   const handleRefresh = useCallback(() => {
     moduleDataQuery.refetch();
   }, [moduleDataQuery]);
-
   const exportData = moduleData?.detailTable || [];
-
   const statsCards: StatCard[] = moduleData?.summary
     ? Object.entries(moduleData.summary)
         .slice(0, 4)
@@ -447,15 +421,13 @@ const BIModuleDetailPage = () => {
           color: config.color as StatCard['color'],
         }))
     : [];
-
   const timelineChartData = moduleData?.timeline || [];
   const distributionChartData = moduleData?.distribution || [];
-
   const chartCards: ChartCardType[] = [
     {
       id: 'timeline-chart',
-      title: t('bi.bi_module_detail_page.text_a819e1'),
-      subtitle: t('bi.bi_module_detail_page.text_8268d9'),
+      title: i18n.t('bi.bi_module_detail_page.text_a819e1'),
+      subtitle: i18n.t('bi.bi_module_detail_page.text_8268d9'),
       chart: (
         <ResponsiveContainer
           width='100%'
@@ -491,8 +463,8 @@ const BIModuleDetailPage = () => {
     },
     {
       id: 'distribution-chart',
-      title: t('bi.bi_module_detail_page.text_772b34'),
-      subtitle: t('bi.bi_module_detail_page.text_c9454d'),
+      title: i18n.t('bi.bi_module_detail_page.text_772b34'),
+      subtitle: i18n.t('bi.bi_module_detail_page.text_c9454d'),
       chart: (
         <ResponsiveContainer
           width='100%'
@@ -534,12 +506,11 @@ const BIModuleDetailPage = () => {
       onRefresh: handleRefresh,
     },
   ];
-
   if (loading) {
     return (
       <PageContainer
-        title={t('bi.bi_module_detail_page.detail')}
-        subtitle={t('bi.bi_module_detail_page.text_b5cd64')}
+        title={i18n.t('bi.bi_module_detail_page.detail')}
+        subtitle={i18n.t('bi.bi_module_detail_page.text_b5cd64')}
         padding={false}
         maxWidth={false}
       >
@@ -547,7 +518,7 @@ const BIModuleDetailPage = () => {
           title=''
           subtitle=''
           breadcrumbs={[
-            { label: t('bi.bi_module_detail_page.home'), href: '/dashboard' },
+            { label: i18n.t('bi.bi_module_detail_page.home'), href: '/dashboard' },
             { label: 'BI', href: BI_PATHS.analytics },
             { label: config.name },
           ]}
@@ -556,11 +527,10 @@ const BIModuleDetailPage = () => {
       </PageContainer>
     );
   }
-
   return (
     <PageContainer
-      title={`${config.name} - 模块详情`}
-      subtitle={t('bi.bi_module_detail_page.text_b5cd64')}
+      title={`${config.name}${i18n.t('pages.bi_module_detail_page.k37')}`}
+      subtitle={i18n.t('bi.bi_module_detail_page.text_b5cd64')}
       padding={false}
       maxWidth={false}
     >
@@ -568,7 +538,7 @@ const BIModuleDetailPage = () => {
         title=''
         subtitle=''
         breadcrumbs={[
-          { label: t('bi.bi_module_detail_page.home'), href: '/dashboard' },
+          { label: i18n.t('bi.bi_module_detail_page.home'), href: '/dashboard' },
           { label: 'BI', href: BI_PATHS.analytics },
           { label: config.name },
         ]}
@@ -618,11 +588,10 @@ const BIModuleDetailPage = () => {
             {error}
           </Alert>
         )}
-
         <Card>
           <CardHeader
-            title={t('bi.bi_module_detail_page.text_615db0')}
-            subheader={t('bi.bi_module_detail_page.text_e6af8d')}
+            title={i18n.t('bi.bi_module_detail_page.text_615db0')}
+            subheader={i18n.t('bi.bi_module_detail_page.text_e6af8d')}
             avatar={<TableIcon size={20} />}
           />
           <CardContent>
@@ -632,55 +601,55 @@ const BIModuleDetailPage = () => {
                   <TableRow>
                     {moduleId === 'rs' && (
                       <>
-                        <TableCell sx={{ fontWeight: 600 }}>项目编号</TableCell>
-                        <TableCell sx={{ fontWeight: 600 }}>项目名称</TableCell>
-                        <TableCell sx={{ fontWeight: 600 }}>状态</TableCell>
-                        <TableCell sx={{ fontWeight: 600 }}>进度</TableCell>
-                        <TableCell sx={{ fontWeight: 600 }}>负责人</TableCell>
+                        <TableCell sx={{ fontWeight: 600 }}>{i18n.t('bi.bi_module_detail_page.k48')}</TableCell>
+                        <TableCell sx={{ fontWeight: 600 }}>{i18n.t('bi.bi_module_detail_page.k49')}</TableCell>
+                        <TableCell sx={{ fontWeight: 600 }}>{i18n.t('bi.bi_module_detail_page.k50')}</TableCell>
+                        <TableCell sx={{ fontWeight: 600 }}>{i18n.t('bi.bi_module_detail_page.k51')}</TableCell>
+                        <TableCell sx={{ fontWeight: 600 }}>{i18n.t('bi.bi_module_detail_page.k52')}</TableCell>
                       </>
                     )}
                     {moduleId === 'lims' && (
                       <>
-                        <TableCell sx={{ fontWeight: 600 }}>样品编号</TableCell>
-                        <TableCell sx={{ fontWeight: 600 }}>样品名称</TableCell>
-                        <TableCell sx={{ fontWeight: 600 }}>检验类型</TableCell>
-                        <TableCell sx={{ fontWeight: 600 }}>状态</TableCell>
-                        <TableCell sx={{ fontWeight: 600 }}>结果</TableCell>
+                        <TableCell sx={{ fontWeight: 600 }}>{i18n.t('bi.bi_module_detail_page.k53')}</TableCell>
+                        <TableCell sx={{ fontWeight: 600 }}>{i18n.t('bi.bi_module_detail_page.k54')}</TableCell>
+                        <TableCell sx={{ fontWeight: 600 }}>{i18n.t('bi.bi_module_detail_page.k55')}</TableCell>
+                        <TableCell sx={{ fontWeight: 600 }}>{i18n.t('bi.bi_module_detail_page.k56')}</TableCell>
+                        <TableCell sx={{ fontWeight: 600 }}>{i18n.t('bi.bi_module_detail_page.k57')}</TableCell>
                       </>
                     )}
                     {moduleId === 'qms' && (
                       <>
-                        <TableCell sx={{ fontWeight: 600 }}>检验单号</TableCell>
-                        <TableCell sx={{ fontWeight: 600 }}>检验项目</TableCell>
-                        <TableCell sx={{ fontWeight: 600 }}>批次</TableCell>
-                        <TableCell sx={{ fontWeight: 600 }}>状态</TableCell>
-                        <TableCell sx={{ fontWeight: 600 }}>质量等级</TableCell>
+                        <TableCell sx={{ fontWeight: 600 }}>{i18n.t('bi.bi_module_detail_page.k58')}</TableCell>
+                        <TableCell sx={{ fontWeight: 600 }}>{i18n.t('bi.bi_module_detail_page.k59')}</TableCell>
+                        <TableCell sx={{ fontWeight: 600 }}>{i18n.t('bi.bi_module_detail_page.k60')}</TableCell>
+                        <TableCell sx={{ fontWeight: 600 }}>{i18n.t('bi.bi_module_detail_page.k61')}</TableCell>
+                        <TableCell sx={{ fontWeight: 600 }}>{i18n.t('bi.bi_module_detail_page.k62')}</TableCell>
                       </>
                     )}
                     {moduleId === 'ehs' && (
                       <>
-                        <TableCell sx={{ fontWeight: 600 }}>风险编号</TableCell>
-                        <TableCell sx={{ fontWeight: 600 }}>风险描述</TableCell>
-                        <TableCell sx={{ fontWeight: 600 }}>风险等级</TableCell>
-                        <TableCell sx={{ fontWeight: 600 }}>处理状态</TableCell>
-                        <TableCell sx={{ fontWeight: 600 }}>日期</TableCell>
+                        <TableCell sx={{ fontWeight: 600 }}>{i18n.t('bi.bi_module_detail_page.k63')}</TableCell>
+                        <TableCell sx={{ fontWeight: 600 }}>{i18n.t('bi.bi_module_detail_page.k64')}</TableCell>
+                        <TableCell sx={{ fontWeight: 600 }}>{i18n.t('bi.bi_module_detail_page.k65')}</TableCell>
+                        <TableCell sx={{ fontWeight: 600 }}>{i18n.t('bi.bi_module_detail_page.k66')}</TableCell>
+                        <TableCell sx={{ fontWeight: 600 }}>{i18n.t('bi.bi_module_detail_page.k67')}</TableCell>
                       </>
                     )}
                     {moduleId === 'srm' && (
                       <>
-                        <TableCell sx={{ fontWeight: 600 }}>供应商编号</TableCell>
-                        <TableCell sx={{ fontWeight: 600 }}>供应商名称</TableCell>
-                        <TableCell sx={{ fontWeight: 600 }}>类型</TableCell>
-                        <TableCell sx={{ fontWeight: 600 }}>评分</TableCell>
-                        <TableCell sx={{ fontWeight: 600 }}>状态</TableCell>
+                        <TableCell sx={{ fontWeight: 600 }}>{i18n.t('bi.bi_module_detail_page.k68')}</TableCell>
+                        <TableCell sx={{ fontWeight: 600 }}>{i18n.t('bi.bi_module_detail_page.k69')}</TableCell>
+                        <TableCell sx={{ fontWeight: 600 }}>{i18n.t('bi.bi_module_detail_page.k70')}</TableCell>
+                        <TableCell sx={{ fontWeight: 600 }}>{i18n.t('bi.bi_module_detail_page.k71')}</TableCell>
+                        <TableCell sx={{ fontWeight: 600 }}>{i18n.t('bi.bi_module_detail_page.k72')}</TableCell>
                       </>
                     )}
                     {moduleId === 'pdm' && (
                       <>
-                        <TableCell sx={{ fontWeight: 600 }}>批次编号</TableCell>
-                        <TableCell sx={{ fontWeight: 600 }}>产品</TableCell>
-                        <TableCell sx={{ fontWeight: 600 }}>状态</TableCell>
-                        <TableCell sx={{ fontWeight: 600 }}>产量</TableCell>
+                        <TableCell sx={{ fontWeight: 600 }}>{i18n.t('bi.bi_module_detail_page.k73')}</TableCell>
+                        <TableCell sx={{ fontWeight: 600 }}>{i18n.t('bi.bi_module_detail_page.k74')}</TableCell>
+                        <TableCell sx={{ fontWeight: 600 }}>{i18n.t('bi.bi_module_detail_page.k75')}</TableCell>
+                        <TableCell sx={{ fontWeight: 600 }}>{i18n.t('bi.bi_module_detail_page.k76')}</TableCell>
                       </>
                     )}
                   </TableRow>
@@ -710,5 +679,4 @@ const BIModuleDetailPage = () => {
     </PageContainer>
   );
 };
-
 export default BIModuleDetailPage;

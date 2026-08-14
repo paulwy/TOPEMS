@@ -1,11 +1,12 @@
 import React from 'react';
 import type { EntitySchema } from '@/schema';
 import { designTokens } from '@topems/tokens';
+import i18n from '@/i18n';
 
 export const assetSchema: EntitySchema = {
   entity: 'finance_asset',
-  title: '资产管理',
-  description: '管理企业固定资产，计提折旧和处理报废',
+  title: i18n.t('finance.asset.k0'),
+  description: i18n.t('finance.asset.k1'),
 
   api: {
     module: 'finance',
@@ -15,7 +16,7 @@ export const assetSchema: EntitySchema = {
   fields: [
     {
       name: 'code',
-      label: '科目编码',
+      label: i18n.t('finance.asset.k2'),
       type: 'text',
       required: true,
       readonlyOnEdit: true,
@@ -31,7 +32,7 @@ export const assetSchema: EntitySchema = {
     },
     {
       name: 'name',
-      label: '科目名称',
+      label: i18n.t('finance.asset.k3'),
       type: 'text',
       required: true,
       sortable: true,
@@ -42,13 +43,13 @@ export const assetSchema: EntitySchema = {
     },
     {
       name: 'category',
-      label: '科目类别',
+      label: i18n.t('finance.asset.k4'),
       type: 'select',
       required: true,
       defaultValue: 'asset',
       options: {
         type: 'static',
-        options: [{ value: 'asset', label: '资产类' }],
+        options: [{ value: 'asset', label: i18n.t('finance.asset.k5') }],
       },
       listWidth: 120,
       renderCell: (row: Record<string, unknown>) =>
@@ -57,7 +58,7 @@ export const assetSchema: EntitySchema = {
           {
             style: {
               display: 'inline-block',
-              padding: '2px 8px',
+              padding: `${designTokens.spacing.xs} 8px`,
               borderRadius: 12,
               fontSize: 12,
               fontWeight: 500,
@@ -65,26 +66,26 @@ export const assetSchema: EntitySchema = {
               color: `var(--color-primary-main, ${designTokens.colors.primary.dark})`,
             },
           },
-          row.category === 'asset' ? '资产类' : String(row.category || '')
+          row.category === 'asset' ? i18n.t('finance.asset.k6') : String(row.category || '')
         ),
     },
     {
       name: 'balance_direction',
-      label: '余额方向',
+      label: i18n.t('finance.asset.k7'),
       type: 'select',
       required: true,
       defaultValue: 'debit',
       options: {
         type: 'static',
         options: [
-          { value: 'debit', label: '借方' },
-          { value: 'credit', label: '贷方' },
+          { value: 'debit', label: i18n.t('finance.asset.k8') },
+          { value: 'credit', label: i18n.t('finance.asset.k9') },
         ],
       },
       listWidth: 100,
       renderCell: (row: Record<string, unknown>) => {
         const direction = String(row.balance_direction || '');
-        const label = direction === 'debit' ? '借方' : direction === 'credit' ? '贷方' : direction;
+        const label = direction === 'debit' ? i18n.t('finance.asset.k11') : direction === 'credit' ? i18n.t('finance.asset.k10') : direction;
         const color =
           direction === 'debit'
             ? `var(--color-primary-main, ${designTokens.colors.primary.dark})`
@@ -103,30 +104,30 @@ export const assetSchema: EntitySchema = {
     },
     {
       name: 'level',
-      label: '层级',
+      label: i18n.t('finance.asset.k12'),
       type: 'select',
       required: true,
       defaultValue: 1,
       options: {
         type: 'static',
         options: [
-          { value: 1, label: '1级' },
-          { value: 2, label: '2级' },
-          { value: 3, label: '3级' },
-          { value: 4, label: '4级' },
+          { value: 1, label: i18n.t('shared.asset.1_0') },
+          { value: 2, label: i18n.t('shared.asset.2_1') },
+          { value: 3, label: i18n.t('shared.asset.3_2') },
+          { value: 4, label: i18n.t('shared.asset.4_3') },
         ],
       },
       listWidth: 100,
       renderCell: (row: Record<string, unknown>) =>
         React.createElement(
           'span',
-          { style: { color: 'var(--color-warning-main, #ed6c02)', fontFamily: 'monospace' } },
+          { style: { color: `var(--color-warning-main, ${designTokens.colors.warning[500]}`, fontFamily: 'monospace' } },
           String(row.level ?? '')
         ),
     },
     {
       name: 'haschildren',
-      label: '有子科目',
+      label: i18n.t('finance.asset.k13'),
       type: 'switch',
       defaultValue: false,
       listWidth: 110,
@@ -140,31 +141,31 @@ export const assetSchema: EntitySchema = {
               fontWeight: 700,
               color: hasChildren
                 ? `var(--color-success-main, ${designTokens.colors.success.dark})`
-                : 'var(--color-text-secondary, rgba(0,0,0,0.6))',
+                : `var(--color-text-secondary, ${designTokens.colors.cyber.metal.bottomShadow}`,
             },
           },
-          hasChildren ? '是' : '否'
+          hasChildren ? i18n.t('finance.asset.k15') : i18n.t('finance.asset.k14')
         );
       },
     },
     {
       name: 'status',
-      label: '状态',
+      label: i18n.t('finance.asset.k16'),
       type: 'select',
       required: true,
       defaultValue: 'active',
       options: {
         type: 'static',
         options: [
-          { value: 'active', label: '启用' },
-          { value: 'disabled', label: '停用' },
+          { value: 'active', label: i18n.t('finance.asset.k17') },
+          { value: 'disabled', label: i18n.t('finance.asset.k18') },
         ],
       },
       listWidth: 100,
     },
     {
       name: 'description',
-      label: '备注',
+      label: i18n.t('finance.asset.k19'),
       type: 'textarea',
       showInList: false,
     },
@@ -181,26 +182,26 @@ export const assetSchema: EntitySchema = {
         disabled: 'error',
       },
       labelMap: {
-        active: '启用',
-        disabled: '停用',
+        active: i18n.t('finance.asset.k20'),
+        disabled: i18n.t('finance.asset.k21'),
       },
     },
     filters: [
       {
         id: 'category',
-        label: '科目类别',
+        label: i18n.t('finance.asset.k22'),
         type: 'select',
-        options: [{ label: '资产类', value: 'asset' }],
+        options: [{ label: i18n.t('finance.asset.k23'), value: 'asset' }],
         defaultValue: 'asset',
       },
       {
         id: 'status',
-        label: '状态',
+        label: i18n.t('finance.asset.k24'),
         type: 'select',
         options: [
-          { label: '全部状态', value: 'all' },
-          { label: '启用', value: 'active' },
-          { label: '停用', value: 'disabled' },
+          { label: i18n.t('finance.asset.k25'), value: 'all' },
+          { label: i18n.t('finance.asset.k26'), value: 'active' },
+          { label: i18n.t('finance.asset.k27'), value: 'disabled' },
         ],
         defaultValue: 'all',
       },
@@ -211,17 +212,17 @@ export const assetSchema: EntitySchema = {
 
   formSections: [
     {
-      title: '基本信息',
+      title: i18n.t('finance.asset.k28'),
       fields: ['code', 'name', 'category', 'balance_direction', 'level', 'status'],
     },
     {
-      title: '备注',
+      title: i18n.t('finance.asset.k29'),
       fields: ['description'],
     },
   ],
 
   formColCount: 2,
-  createTitle: '新增资产科目',
-  editTitle: '编辑资产科目',
-  detailTitle: '资产科目详情',
+  createTitle: i18n.t('finance.asset.k30'),
+  editTitle: i18n.t('finance.asset.k31'),
+  detailTitle: i18n.t('finance.asset.k32'),
 };

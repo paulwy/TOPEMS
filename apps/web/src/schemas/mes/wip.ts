@@ -1,9 +1,10 @@
 import type { EntitySchema } from '@/schema';
+import i18n from '@/i18n';
 
 export const wipSchema: EntitySchema = {
   entity: 'mes_wip',
-  title: '在制品管理',
-  description: '管理生产过程中的在制品信息',
+  title: i18n.t('mes.wip.k0'),
+  description: i18n.t('mes.wip.k1'),
 
   api: {
     module: 'mes',
@@ -13,7 +14,7 @@ export const wipSchema: EntitySchema = {
   fields: [
     {
       name: 'order_id',
-      label: '生产订单ID',
+      label: i18n.t('mes.wip.id_2'),
       type: 'text',
       required: true,
       readonlyOnEdit: true,
@@ -22,35 +23,35 @@ export const wipSchema: EntitySchema = {
     },
     {
       name: 'order_number',
-      label: '生产订单',
+      label: i18n.t('mes.wip.k3'),
       type: 'text',
       readonly: true,
       listWidth: 140,
     },
     {
       name: 'product_name',
-      label: '产品名称',
+      label: i18n.t('mes.wip.k4'),
       type: 'text',
       showInList: false,
       validation: [{ type: 'maxLength', value: 256 }],
     },
     {
       name: 'process_name',
-      label: '工序',
+      label: i18n.t('mes.wip.k5'),
       type: 'text',
       readonly: true,
       listWidth: 120,
     },
     {
       name: 'work_station_name',
-      label: '工位',
+      label: i18n.t('mes.wip.k6'),
       type: 'text',
       readonly: true,
       listWidth: 120,
     },
     {
       name: 'quantity',
-      label: '数量',
+      label: i18n.t('mes.wip.k7'),
       type: 'number',
       required: true,
       align: 'right',
@@ -58,50 +59,50 @@ export const wipSchema: EntitySchema = {
     },
     {
       name: 'completed_quantity',
-      label: '已完成数量',
+      label: i18n.t('mes.wip.k8'),
       type: 'number',
       align: 'right',
       showInList: false,
     },
     {
       name: 'wip_quantity',
-      label: '在制数量',
+      label: i18n.t('mes.wip.k9'),
       type: 'number',
       align: 'right',
       showInList: false,
     },
     {
       name: 'unit',
-      label: '单位',
+      label: i18n.t('mes.wip.k10'),
       type: 'text',
       showInList: false,
     },
     {
       name: 'batch_no',
-      label: '批次号',
+      label: i18n.t('mes.wip.k11'),
       type: 'text',
       listWidth: 120,
       validation: [{ type: 'maxLength', value: 64 }],
     },
     {
       name: 'operator',
-      label: '操作员',
+      label: i18n.t('mes.wip.k12'),
       type: 'text',
       listWidth: 100,
       validation: [{ type: 'maxLength', value: 128 }],
     },
     {
       name: 'status',
-      label: '状态',
+      label: i18n.t('mes.wip.k13'),
       type: 'select',
       defaultValue: 'pending',
       options: {
         type: 'static',
         options: [
-          { value: 'pending', label: '待处理' },
-          { value: 'in_progress', label: '在产' },
-          { value: 'completed', label: '已完成' },
-          { value: 'transferred', label: '已转移' },
+          { value: 'pending', label: i18n.t('mes.wip.k14') },
+          { value: 'in_progress', label: i18n.t('mes.wip.k15') },
+          { value: 'completed', label: i18n.t('mes.wip.k16') },
+          { value: 'transferred', label: i18n.t('mes.wip.k17') },
         ],
       },
       listWidth: 100,
@@ -109,19 +110,19 @@ export const wipSchema: EntitySchema = {
     },
     {
       name: 'inbound_time',
-      label: '开始时间',
+      label: i18n.t('mes.wip.k18'),
       type: 'datetime',
       showInList: false,
     },
     {
       name: 'outbound_time',
-      label: '结束时间',
+      label: i18n.t('mes.wip.k19'),
       type: 'datetime',
       showInList: false,
     },
     {
       name: 'created_at',
-      label: '创建时间',
+      label: i18n.t('mes.wip.k20'),
       type: 'datetime',
       readonly: true,
       listWidth: 160,
@@ -130,7 +131,7 @@ export const wipSchema: EntitySchema = {
     },
     {
       name: 'remarks',
-      label: '备注',
+      label: i18n.t('mes.wip.k21'),
       type: 'textarea',
       showInList: false,
     },
@@ -158,23 +159,23 @@ export const wipSchema: EntitySchema = {
         transferred: 'primary',
       },
       labelMap: {
-        in_progress: '在产',
-        completed: '已完成',
-        pending: '待处理',
-        transferred: '已转移',
+        in_progress: i18n.t('mes.wip.k22'),
+        completed: i18n.t('mes.wip.k23'),
+        pending: i18n.t('mes.wip.k24'),
+        transferred: i18n.t('mes.wip.k25'),
       },
     },
     filters: [
       {
         id: 'status',
-        label: '状态',
+        label: i18n.t('mes.wip.k26'),
         type: 'select',
         options: [
-          { label: '全部状态', value: 'all' },
-          { label: '待处理', value: 'pending' },
-          { label: '在产', value: 'in_progress' },
-          { label: '已转移', value: 'transferred' },
-          { label: '已完成', value: 'completed' },
+          { label: i18n.t('mes.wip.k27'), value: 'all' },
+          { label: i18n.t('mes.wip.k28'), value: 'pending' },
+          { label: i18n.t('mes.wip.k29'), value: 'in_progress' },
+          { label: i18n.t('mes.wip.k30'), value: 'transferred' },
+          { label: i18n.t('mes.wip.k31'), value: 'completed' },
         ],
       },
     ],
@@ -184,7 +185,7 @@ export const wipSchema: EntitySchema = {
 
   formSections: [
     {
-      title: '基本信息',
+      title: i18n.t('mes.wip.k32'),
       fields: [
         'order_id',
         'product_name',
@@ -196,7 +197,7 @@ export const wipSchema: EntitySchema = {
       ],
     },
     {
-      title: '生产信息',
+      title: i18n.t('mes.wip.k33'),
       fields: [
         'process_name',
         'work_station_name',
@@ -207,13 +208,13 @@ export const wipSchema: EntitySchema = {
       ],
     },
     {
-      title: '其他',
+      title: i18n.t('mes.wip.k34'),
       fields: ['order_number', 'created_at', 'remarks'],
     },
   ],
 
   formColCount: 2,
-  createTitle: '新建在制品',
-  editTitle: '编辑在制品',
-  detailTitle: '在制品详情',
+  createTitle: i18n.t('mes.wip.k35'),
+  editTitle: i18n.t('mes.wip.k36'),
+  detailTitle: i18n.t('mes.wip.k37'),
 };

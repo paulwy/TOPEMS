@@ -14,6 +14,7 @@ import {
   Building2,
   ShoppingCart,
 } from 'lucide-react';
+import i18n from '@/i18n';
 import { DashboardTemplate } from '@/components/templates';
 import type { StatCard, ChartCard, QuickAction } from '@/components/templates';
 import { PageContainer } from '@/components/common';
@@ -21,10 +22,7 @@ import { erpApi } from '@/api/erp';
 import type { ErpDashboardStats } from '@/api/erp';
 import { ERP_PATHS } from '@/modules/erp/config';
 import { LazyChart } from '@/components/charts';
-
-
 import { QUERY_KEYS } from '@/lib/reactQuery';
-
 const iconMap: Record<string, React.ReactNode> = {
   TrendingUp: <TrendingUp size={24} />,
   FileText: <FileText size={24} />,
@@ -35,17 +33,14 @@ const iconMap: Record<string, React.ReactNode> = {
   Target: <Target size={24} />,
   Banknote: <Banknote size={24} />,
 };
-
 const getGreeting = (): string => {
   const hour = new Date().getHours();
-  if (hour < 12) return '上午好';
-  if (hour < 18) return '下午好';
-  return '晚上好';
+  if (hour < 12) return i18n.t('erp.dashboard_page.k0');
+  if (hour < 18) return i18n.t('erp.dashboard_page.k1');
+  return i18n.t('erp.dashboard_page.k2');
 };
-
 export const DashboardPage: React.FC = () => {
   const navigate = useNavigate();
-
   const { data: statsData, isPending: loading} = useQuery<ErpDashboardStats | null>({
     queryKey: QUERY_KEYS.AD_HOC.ERP_DASHBOARD_BASE,
     queryFn: async () => {
@@ -57,107 +52,105 @@ export const DashboardPage: React.FC = () => {
     },
     staleTime: 5 * 60 * 1000,
   });
-
   const stats: StatCard[] = useMemo(() => {
     if (!statsData) return [];
     return [
       {
         id: 'total-assets',
-        title: '总资产',
+        title: i18n.t('erp.dashboard_page.k3'),
         value: statsData.total_assets.toLocaleString(),
         icon: iconMap.Landmark,
         change: 8.5,
-        changeLabel: '% vs 上月',
+        changeLabel: i18n.t('pages.dashboard_page.vs_0'),
         color: 'success',
       },
       {
         id: 'active-assets',
-        title: '在用资产',
+        title: i18n.t('erp.dashboard_page.k4'),
         value: statsData.active_assets.toLocaleString(),
         icon: iconMap.Wallet,
         change: 2.3,
-        changeLabel: '% vs 上月',
+        changeLabel: i18n.t('pages.dashboard_page.vs_1'),
         color: 'info',
       },
       {
         id: 'inventory-total',
-        title: '库存总量',
+        title: i18n.t('erp.dashboard_page.k5'),
         value: statsData.total_inventory.toLocaleString(),
         icon: iconMap.Package,
         change: -3.2,
-        changeLabel: '% vs 上月',
+        changeLabel: i18n.t('pages.dashboard_page.vs_2'),
         color: 'warning',
       },
       {
         id: 'pending-orders',
-        title: '待处理订单',
+        title: i18n.t('erp.dashboard_page.k6'),
         value: statsData.pending_orders.toLocaleString(),
         icon: iconMap.FileText,
         change: 12.8,
-        changeLabel: 'vs 上周',
+        changeLabel: i18n.t('pages.dashboard_page.vs_3'),
         color: 'primary',
       },
       {
         id: 'total-customers',
-        title: '客户总数',
+        title: i18n.t('erp.dashboard_page.k7'),
         value: statsData.total_customers.toLocaleString(),
         icon: iconMap.TrendingUp,
         change: 5.6,
-        changeLabel: '% vs 上月',
+        changeLabel: i18n.t('pages.dashboard_page.vs_4'),
         color: 'success',
       },
       {
         id: 'total-suppliers',
-        title: '供应商总数',
+        title: i18n.t('erp.dashboard_page.k8'),
         value: statsData.total_suppliers.toLocaleString(),
         icon: iconMap.CreditCard,
         change: 3.1,
-        changeLabel: '% vs 上月',
+        changeLabel: i18n.t('pages.dashboard_page.vs_5'),
         color: 'info',
       },
       {
         id: 'total-vouchers',
-        title: '凭证总数',
+        title: i18n.t('erp.dashboard_page.k9'),
         value: statsData.total_vouchers.toLocaleString(),
         icon: iconMap.Banknote,
         change: 15.2,
-        changeLabel: '% vs 上月',
+        changeLabel: i18n.t('pages.dashboard_page.vs_6'),
         color: 'primary',
       },
       {
         id: 'pending-vouchers',
-        title: '待审批凭证',
+        title: i18n.t('erp.dashboard_page.k10'),
         value: statsData.pending_vouchers.toLocaleString(),
         icon: iconMap.Target,
         change: -8.7,
-        changeLabel: '% vs 上周',
+        changeLabel: i18n.t('pages.dashboard_page.vs_7'),
         color: 'warning',
       },
     ];
   }, [statsData]);
-
   const charts: ChartCard[] = useMemo(() => {
     if (!statsData) return [];
     const barData = [
-      { name: '总订单', value: statsData.total_orders },
-      { name: '待处理', value: statsData.pending_orders },
-      { name: '供应商', value: statsData.total_suppliers },
-      { name: '客户', value: statsData.total_customers },
-      { name: '资产', value: statsData.total_assets },
-      { name: '凭证', value: statsData.total_vouchers },
+      { name: i18n.t('erp.dashboard_page.k11'), value: statsData.total_orders },
+      { name: i18n.t('erp.dashboard_page.k12'), value: statsData.pending_orders },
+      { name: i18n.t('erp.dashboard_page.k13'), value: statsData.total_suppliers },
+      { name: i18n.t('erp.dashboard_page.k14'), value: statsData.total_customers },
+      { name: i18n.t('erp.dashboard_page.k15'), value: statsData.total_assets },
+      { name: i18n.t('erp.dashboard_page.k16'), value: statsData.total_vouchers },
     ];
     const lineData = [
-      { name: '资产', value: statsData.total_assets },
-      { name: '在用', value: statsData.active_assets },
-      { name: '库存', value: statsData.total_inventory },
-      { name: '低库存', value: statsData.low_stock_items },
-      { name: '待审批', value: statsData.pending_vouchers },
-      { name: '供应商', value: statsData.active_suppliers },
+      { name: i18n.t('erp.dashboard_page.k17'), value: statsData.total_assets },
+      { name: i18n.t('erp.dashboard_page.k18'), value: statsData.active_assets },
+      { name: i18n.t('erp.dashboard_page.k19'), value: statsData.total_inventory },
+      { name: i18n.t('erp.dashboard_page.k20'), value: statsData.low_stock_items },
+      { name: i18n.t('erp.dashboard_page.k21'), value: statsData.pending_vouchers },
+      { name: i18n.t('erp.dashboard_page.k22'), value: statsData.active_suppliers },
     ];
     return [
       {
         id: 'data-overview',
-        title: '数据概览',
+        title: i18n.t('erp.dashboard_page.k23'),
         chart: (
           <LazyChart type='bar'
             data={barData}
@@ -169,7 +162,7 @@ export const DashboardPage: React.FC = () => {
       },
       {
         id: 'trend-analysis',
-        title: '趋势分析',
+        title: i18n.t('erp.dashboard_page.k24'),
         chart: (
           <LazyChart type='line'
             data={lineData}
@@ -181,56 +174,54 @@ export const DashboardPage: React.FC = () => {
       },
     ];
   }, [statsData]);
-
   const quickActions: QuickAction[] = [
     {
       id: 'create-voucher',
-      label: '新增凭证',
+      label: i18n.t('erp.dashboard_page.k25'),
       icon: <FileText size={18} />,
       color: 'primary',
       onClick: () => navigate(ERP_PATHS.voucherManagement),
     },
     {
       id: 'create-budget',
-      label: '新增预算',
+      label: i18n.t('erp.dashboard_page.k26'),
       icon: <Target size={18} />,
       color: 'success',
       onClick: () => navigate(ERP_PATHS.budgetManagement),
     },
     {
       id: 'create-purchase',
-      label: '采购订单',
+      label: i18n.t('erp.dashboard_page.k27'),
       icon: <ShoppingCart size={18} />,
       color: 'info',
       onClick: () => navigate(ERP_PATHS.purchaseOrder),
     },
     {
       id: 'create-asset',
-      label: '资产管理',
+      label: i18n.t('erp.dashboard_page.k28'),
       icon: <Landmark size={18} />,
       color: 'warning',
       onClick: () => navigate(ERP_PATHS.assetManagement),
     },
     {
       id: 'customer-management',
-      label: '客户管理',
+      label: i18n.t('erp.dashboard_page.k29'),
       icon: <Users size={18} />,
       color: 'primary',
       onClick: () => navigate(ERP_PATHS.customerManagement),
     },
     {
       id: 'supplier-management',
-      label: '供应商管理',
+      label: i18n.t('erp.dashboard_page.k30'),
       icon: <Building2 size={18} />,
       color: 'info',
       onClick: () => navigate(ERP_PATHS.supplierManagement),
     },
   ];
-
   return (
     <PageContainer
-      title='企业资源管理'
-      subtitle={`${getGreeting()}，财务管理与库存概览`}
+      title={i18n.t('erp.dashboard_page.k31')}
+      subtitle={`${getGreeting()}${i18n.t('pages.dashboard_page.k8')}`}
       padding={false}
       maxWidth={false}
     >
@@ -240,11 +231,10 @@ export const DashboardPage: React.FC = () => {
         stats={stats}
         charts={charts}
         quickActions={quickActions}
-        quickActionsTitle='快捷操作'
+        quickActionsTitle={i18n.t('erp.dashboard_page.k32')}
         loading={loading}
       />
     </PageContainer>
   );
 };
-
 export default DashboardPage;

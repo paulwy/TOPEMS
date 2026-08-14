@@ -5,6 +5,7 @@ import { useNotificationWebSocket } from '../../hooks/useNotificationWebSocket';
 import { useNotificationState } from '../../hooks/useNotificationState';
 import { useAuth } from '../../hooks/useAuth';
 import type { Notification } from '../../api/notification';
+import i18n from '@/i18n';
 
 interface NotificationBellProps {
   onNotificationClick?: () => void;
@@ -70,7 +71,7 @@ const NotificationBell: React.FC<NotificationBellProps> = ({ onNotificationClick
       <button
         onClick={handleBellClick}
         className='relative p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-all duration-200'
-        aria-label='通知'
+        aria-label={i18n.t('shared.notification_bell.k0')}
       >
         <Bell className='w-6 h-6' />
         {unreadCount > 0 && (
@@ -84,7 +85,7 @@ const NotificationBell: React.FC<NotificationBellProps> = ({ onNotificationClick
         {isConnected && (
           <span
             className='absolute bottom-1 right-1 w-2 h-2 bg-green-500 rounded-full'
-            title='已连接'
+            title={i18n.t('shared.notification_bell.k1')}
           />
         )}
       </button>
@@ -95,7 +96,7 @@ const NotificationBell: React.FC<NotificationBellProps> = ({ onNotificationClick
             className='fixed inset-0 z-40'
             role='button'
             tabIndex={0}
-            aria-label='关闭通知面板'
+            aria-label={i18n.t('shared.notification_bell.k2')}
             onClick={handleClose}
             onKeyDown={(e) => {
               if (e.key === 'Enter' || e.key === ' ') {

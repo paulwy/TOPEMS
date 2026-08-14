@@ -1,3 +1,4 @@
+import i18n from '@/i18n';
 /**
  * V48.0 零代码平台 — 自动化文档生成
  *
@@ -220,35 +221,35 @@ export class AutoDocGenerator {
 
     sections.push({
       type: DocSectionType.OVERVIEW,
-      title: '概述',
+      title: i18n.t('shared.auto-doc-generator.k0'),
       order: 0,
       content: this.buildOverviewSection(config, tmpl),
     });
 
     sections.push({
       type: DocSectionType.ENDPOINTS,
-      title: 'API 端点',
+      title: i18n.t('shared.auto-doc-generator.api_0'),
       order: 1,
       content: this.buildEndpointsSection(config, tmpl),
     });
 
     sections.push({
       type: DocSectionType.SCHEMA,
-      title: '数据模型',
+      title: i18n.t('shared.auto-doc-generator.k1'),
       order: 2,
       content: this.buildSchemaSection(config, tmpl),
     });
 
     sections.push({
       type: DocSectionType.EXAMPLES,
-      title: '示例',
+      title: i18n.t('shared.auto-doc-generator.k2'),
       order: 3,
       content: this.buildExamplesSection(config, tmpl),
     });
 
     sections.push({
       type: DocSectionType.ERRORS,
-      title: '错误码',
+      title: i18n.t('shared.auto-doc-generator.k3'),
       order: 4,
       content: this.buildErrorsSection(tmpl),
     });
@@ -290,21 +291,21 @@ export class AutoDocGenerator {
 
     sections.push({
       type: DocSectionType.OVERVIEW,
-      title: '概述',
+      title: i18n.t('shared.auto-doc-generator.k4'),
       order: 0,
       content: tmpl.paragraph(config.description ?? ''),
     });
 
     sections.push({
       type: DocSectionType.FLOWS,
-      title: '数据流',
+      title: i18n.t('shared.auto-doc-generator.k5'),
       order: 1,
       content: this.buildFlowSection(config, tmpl),
     });
 
     sections.push({
       type: DocSectionType.EXAMPLES,
-      title: '执行示例',
+      title: i18n.t('shared.auto-doc-generator.k6'),
       order: 2,
       content: this.buildFlowExamplesSection(config, tmpl),
     });
@@ -356,9 +357,9 @@ export class AutoDocGenerator {
 
     const metadata: DocMetadata = {
       id,
-      title: '组件文档',
+      title: i18n.t('shared.auto-doc-generator.k7'),
       version: '1.0.0',
-      description: `${componentIds.length} 个组件`,
+      description: `${componentIds.length}${i18n.t('shared.auto-doc-generator.k1')}`,
       createdAt: now,
       updatedAt: now,
       tags: ['component', format],
@@ -429,11 +430,11 @@ export class AutoDocGenerator {
     if (config.description) {
       parts.push(tmpl.paragraph(config.description));
     }
-    parts.push(tmpl.paragraph(`版本: ${tmpl.bold(config.version)}`));
+    parts.push(tmpl.paragraph(`${i18n.t('shared.auto-doc-generator.k2')}${tmpl.bold(config.version)}`));
     if (config.basePath) {
-      parts.push(tmpl.paragraph(`基础路径: ${tmpl.inlineCode(config.basePath)}`));
+      parts.push(tmpl.paragraph(`${i18n.t('shared.auto-doc-generator.k3')}${tmpl.inlineCode(config.basePath)}`));
     }
-    parts.push(tmpl.paragraph(`端点数: ${config.endpoints.length}`));
+    parts.push(tmpl.paragraph(`${i18n.t('shared.auto-doc-generator.k4')}${config.endpoints.length}`));
     return parts.join('\n\n');
   }
 
@@ -445,9 +446,9 @@ export class AutoDocGenerator {
       String(idx + 1),
       tmpl.inlineCode(id),
       'N/A',
-      '就绪',
+      i18n.t('shared.auto-doc-generator.k8'),
     ]);
-    return tmpl.table(['#', '端点', '方法', '状态'], rows);
+    return tmpl.table(['#', i18n.t('shared.auto-doc-generator.k11'), i18n.t('shared.auto-doc-generator.k10'), i18n.t('shared.auto-doc-generator.k9')], rows);
   }
 
   private buildSchemaSection(
@@ -455,12 +456,12 @@ export class AutoDocGenerator {
     tmpl: (typeof DOC_TEMPLATES)[DocFormat.MARKDOWN]
   ): string {
     const rows = [
-      ['id', 'string', '是', '唯一标识符'],
-      ['name', 'string', '是', '名称'],
-      ['createdAt', 'datetime', '是', '创建时间'],
-      ['updatedAt', 'datetime', '否', '更新时间'],
+      ['id', 'string', i18n.t('shared.auto-doc-generator.k13'), i18n.t('shared.auto-doc-generator.k12')],
+      ['name', 'string', i18n.t('shared.auto-doc-generator.k15'), i18n.t('shared.auto-doc-generator.k14')],
+      ['createdAt', 'datetime', i18n.t('shared.auto-doc-generator.k17'), i18n.t('shared.auto-doc-generator.k16')],
+      ['updatedAt', 'datetime', i18n.t('shared.auto-doc-generator.k19'), i18n.t('shared.auto-doc-generator.k18')],
     ];
-    return tmpl.table(['字段', '类型', '必填', '说明'], rows);
+    return tmpl.table([i18n.t('shared.auto-doc-generator.k23'), i18n.t('shared.auto-doc-generator.k22'), i18n.t('shared.auto-doc-generator.k21'), i18n.t('shared.auto-doc-generator.k20')], rows);
   }
 
   private buildExamplesSection(
@@ -470,11 +471,11 @@ export class AutoDocGenerator {
     const parts: string[] = [];
     for (const endpointId of config.endpoints) {
       parts.push(tmpl.h3(endpointId));
-      parts.push(tmpl.paragraph('请求示例:'));
-      parts.push(tmpl.code(JSON.stringify({ id: 'example-1', name: '示例' }, null, 2)));
-      parts.push(tmpl.paragraph('响应示例:'));
+      parts.push(tmpl.paragraph(i18n.t('shared.auto-doc-generator.k5')));
+      parts.push(tmpl.code(JSON.stringify({ id: 'example-1', name: i18n.t('shared.auto-doc-generator.k24') }, null, 2)));
+      parts.push(tmpl.paragraph(i18n.t('shared.auto-doc-generator.k6')));
       parts.push(
-        tmpl.code(JSON.stringify({ code: 0, data: { id: 'example-1', name: '示例' } }, null, 2))
+        tmpl.code(JSON.stringify({ code: 0, data: { id: 'example-1', name: i18n.t('shared.auto-doc-generator.k25') } }, null, 2))
       );
     }
     return parts.join('\n\n');
@@ -482,14 +483,14 @@ export class AutoDocGenerator {
 
   private buildErrorsSection(tmpl: (typeof DOC_TEMPLATES)[DocFormat.MARKDOWN]): string {
     const rows = [
-      ['200', '成功'],
-      ['400', '请求参数错误'],
-      ['401', '未授权'],
-      ['403', '禁止访问'],
-      ['404', '资源不存在'],
-      ['500', '服务器内部错误'],
+      ['200', i18n.t('shared.auto-doc-generator.k26')],
+      ['400', i18n.t('shared.auto-doc-generator.k27')],
+      ['401', i18n.t('shared.auto-doc-generator.k28')],
+      ['403', i18n.t('shared.auto-doc-generator.k29')],
+      ['404', i18n.t('shared.auto-doc-generator.k30')],
+      ['500', i18n.t('shared.auto-doc-generator.k31')],
     ];
-    return tmpl.table(['HTTP 状态码', '说明'], rows);
+    return tmpl.table([i18n.t('shared.auto-doc-generator.http_7'), i18n.t('shared.auto-doc-generator.k32')], rows);
   }
 
   private buildFlowSection(
@@ -499,7 +500,7 @@ export class AutoDocGenerator {
     const parts: string[] = [];
     for (const flowId of config.flows) {
       parts.push(tmpl.h3(flowId));
-      parts.push(tmpl.paragraph(`流程 ${tmpl.inlineCode(flowId)} 包含数据流节点配置。`));
+      parts.push(tmpl.paragraph(`${i18n.t('shared.auto-doc-generator.k8')}${tmpl.inlineCode(flowId)}${i18n.t('shared.auto-doc-generator.k9')}`));
     }
     return parts.join('\n\n');
   }
@@ -510,7 +511,7 @@ export class AutoDocGenerator {
   ): string {
     const parts: string[] = [];
     for (const flowId of config.flows) {
-      parts.push(tmpl.h3(`${flowId} 示例`));
+      parts.push(tmpl.h3(`${flowId}${i18n.t('shared.auto-doc-generator.k10')}`));
       parts.push(tmpl.code(JSON.stringify({ flowId, status: 'success', nodes: [] }, null, 2)));
     }
     return parts.join('\n\n');
@@ -529,19 +530,19 @@ export class AutoDocGenerator {
       const propRows = comp.props.map((p) => [
         tmpl.inlineCode(p.name),
         tmpl.inlineCode(p.type),
-        p.required ? '是' : '否',
+        p.required ? i18n.t('shared.auto-doc-generator.k34') : i18n.t('shared.auto-doc-generator.k33'),
         p.description ?? '-',
         p.defaultValue ?? '-',
       ]);
-      parts.push(tmpl.table(['名称', '类型', '必填', '说明', '默认值'], propRows));
+      parts.push(tmpl.table([i18n.t('shared.auto-doc-generator.k39'), i18n.t('shared.auto-doc-generator.k38'), i18n.t('shared.auto-doc-generator.k37'), i18n.t('shared.auto-doc-generator.k36'), i18n.t('shared.auto-doc-generator.k35')], propRows));
     }
     if (comp.events.length > 0) {
-      parts.push(tmpl.h3('事件'));
+      parts.push(tmpl.h3(i18n.t('shared.auto-doc-generator.k40')));
       const eventRows = comp.events.map((e) => [tmpl.inlineCode(e.name), e.description ?? '-']);
-      parts.push(tmpl.table(['名称', '说明'], eventRows));
+      parts.push(tmpl.table([i18n.t('shared.auto-doc-generator.k42'), i18n.t('shared.auto-doc-generator.k41')], eventRows));
     }
     if (comp.example) {
-      parts.push(tmpl.h3('示例'));
+      parts.push(tmpl.h3(i18n.t('shared.auto-doc-generator.k43')));
       parts.push(tmpl.code(comp.example, 'tsx'));
     }
     return parts.join('\n\n');
@@ -556,7 +557,7 @@ export class AutoDocGenerator {
     parts.push(tmpl.h1(metadata.title));
     parts.push(
       tmpl.paragraph(
-        `${tmpl.bold('版本')}: ${metadata.version} | ${tmpl.bold('更新时间')}: ${new Date(metadata.updatedAt).toISOString()}`
+        `${tmpl.bold(i18n.t('shared.auto-doc-generator.k45'))}: ${metadata.version} | ${tmpl.bold(i18n.t('shared.auto-doc-generator.k44'))}: ${new Date(metadata.updatedAt).toISOString()}`
       )
     );
     parts.push('');
@@ -575,9 +576,9 @@ export class AutoDocGenerator {
           summary: endpointId,
           operationId: endpointId,
           responses: {
-            '200': { description: '成功' },
-            '400': { description: '请求错误' },
-            '500': { description: '服务器错误' },
+            '200': { description: i18n.t('shared.auto-doc-generator.k46') },
+            '400': { description: i18n.t('shared.auto-doc-generator.k47') },
+            '500': { description: i18n.t('shared.auto-doc-generator.k48') },
           },
         },
       };

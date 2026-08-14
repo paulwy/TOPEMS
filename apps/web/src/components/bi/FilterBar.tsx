@@ -12,6 +12,7 @@ import {
   Typography,
   Paper,
 } from '@mui/material';
+import i18n from '@/i18n';
 import { Filter, RefreshCw, ChevronDown } from 'lucide-react';
 import type { FilterConfig } from '@/api/bi';
 
@@ -63,7 +64,7 @@ export const FilterBar: React.FC<FilterBarProps> = ({
               onChange={(e) => handleFilterChange(filter.id, e.target.value)}
             >
               <MenuItem value=''>
-                <em>全部</em>
+                <em>{i18n.t('shared.filter_bar.k0')}</em>
               </MenuItem>
               {filter.options?.map((opt) => (
                 <MenuItem
@@ -129,11 +130,11 @@ export const FilterBar: React.FC<FilterBarProps> = ({
             variant='subtitle2'
             sx={{ fontWeight: 600 }}
           >
-            筛选条件
+            {i18n.t('components.filter_bar.k0')}
           </Typography>
           {activeFilters.length > 0 && (
             <Chip
-              label={`${activeFilters.length} 个已选`}
+              label={`${activeFilters.length}${i18n.t('components.filter_bar.k0')}`}
               size='small'
               color='primary'
               variant='outlined'
@@ -146,7 +147,7 @@ export const FilterBar: React.FC<FilterBarProps> = ({
             startIcon={<RefreshCw size={16} />}
             onClick={handleReset}
           >
-            重置
+            {i18n.t('components.filter_bar.k1')}
           </Button>
           {onApply && (
             <Button
@@ -154,13 +155,13 @@ export const FilterBar: React.FC<FilterBarProps> = ({
               variant='contained'
               onClick={onApply}
             >
-              应用筛选
+              {i18n.t('components.filter_bar.k2')}
             </Button>
           )}
           <IconButton
             size='small'
             onClick={() => setExpanded(!expanded)}
-            aria-label='展开'
+            aria-label={i18n.t('shared.filter_bar.k1')}
           >
             <ChevronDown
               size={18}

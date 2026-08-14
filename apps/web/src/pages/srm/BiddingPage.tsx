@@ -1,4 +1,5 @@
 import React, { useState, useCallback } from 'react';
+import i18n from '@/i18n';
 
 interface BiddingSupplier {
   id: string;
@@ -63,11 +64,11 @@ const BiddingPage: React.FC = () => {
           exact: false,
           refetchType: 'active',
         });
-      addNotification({ type: 'success', title: '发布成功', message: '招标项目已发布' });
+      addNotification({ type: 'success', title: i18n.t('pages.bidding_page.k1'), message: i18n.t('pages.bidding_page.k0') });
       invalidateBiddings();
     },
     onError: () => {
-      addNotification({ type: 'error', title: '发布失败', message: '发布招标项目失败' });
+      addNotification({ type: 'error', title: i18n.t('pages.bidding_page.k3'), message: i18n.t('pages.bidding_page.k2') });
     },
   });
 
@@ -80,11 +81,11 @@ const BiddingPage: React.FC = () => {
           exact: false,
           refetchType: 'active',
         });
-      addNotification({ type: 'success', title: '开标成功', message: '招标项目已开标' });
+      addNotification({ type: 'success', title: i18n.t('pages.bidding_page.k5'), message: i18n.t('pages.bidding_page.k4') });
       invalidateBiddings();
     },
     onError: () => {
-      addNotification({ type: 'error', title: '开标失败', message: '开标操作失败' });
+      addNotification({ type: 'error', title: i18n.t('pages.bidding_page.k7'), message: i18n.t('pages.bidding_page.k6') });
     },
   });
 
@@ -98,12 +99,12 @@ const BiddingPage: React.FC = () => {
           exact: false,
           refetchType: 'active',
         });
-      addNotification({ type: 'success', title: '定标成功', message: '已完成定标' });
+      addNotification({ type: 'success', title: i18n.t('pages.bidding_page.k9'), message: i18n.t('pages.bidding_page.k8') });
       invalidateBiddings();
       setShowSupplierDialog(false);
     },
     onError: () => {
-      addNotification({ type: 'error', title: '定标失败', message: '定标操作失败' });
+      addNotification({ type: 'error', title: i18n.t('pages.bidding_page.k11'), message: i18n.t('pages.bidding_page.k10') });
     },
   });
 
@@ -124,7 +125,7 @@ const BiddingPage: React.FC = () => {
 
   const handlePublish = useCallback(
     (bidding: Bidding) => {
-      if (window.confirm(`确定要发布招标项目 "${bidding.bidding_no}" 吗？`)) {
+      if (window.confirm(`${i18n.t('pages.bidding_page.k0')}${bidding.bidding_no}${i18n.t('pages.bidding_page.k1')}`)) {
         publishMutation.mutate(bidding.id);
       }
     },
@@ -133,7 +134,7 @@ const BiddingPage: React.FC = () => {
 
   const handleOpenBidding = useCallback(
     (bidding: Bidding) => {
-      if (window.confirm(`确定要对招标项目 "${bidding.bidding_no}" 进行开标吗？`)) {
+      if (window.confirm(`${i18n.t('pages.bidding_page.k2')}${bidding.bidding_no}${i18n.t('pages.bidding_page.k3')}`)) {
         openBiddingMutation.mutate(bidding.id);
       }
     },
@@ -144,7 +145,7 @@ const BiddingPage: React.FC = () => {
     (supplierId: string, supplierName: string) => {
       if (
         viewingBidding &&
-        window.confirm(`确定将招标项目 "${viewingBidding.bidding_no}" 授予 ${supplierName} 吗？`)
+        window.confirm(`${i18n.t('pages.bidding_page.k4')}${viewingBidding.bidding_no}${i18n.t('pages.bidding_page.k5')}${supplierName}${i18n.t('pages.bidding_page.k6')}`)
       ) {
         awardMutation.mutate({ biddingId: viewingBidding.id, supplierId });
       }
@@ -154,19 +155,19 @@ const BiddingPage: React.FC = () => {
 
   const customRowActions: RowAction[] = [
     {
-      label: '发布',
+      label: i18n.t('pages.bidding_page.k12'),
       icon: <Send size={14} />,
       show: (row) => row.status === 'draft',
       onClick: (row) => handlePublish(row as unknown as Bidding),
     },
     {
-      label: '投标人',
+      label: i18n.t('pages.bidding_page.k13'),
       icon: <Users size={14} />,
       show: (row) => (row.supplier_count as number) > 0,
       onClick: (row) => handleViewSuppliers(row as unknown as Bidding),
     },
     {
-      label: '开标',
+      label: i18n.t('pages.bidding_page.k14'),
       icon: <Gavel size={14} />,
       show: (row) => row.status === 'bidding',
       onClick: (row) => handleOpenBidding(row as unknown as Bidding),
@@ -182,11 +183,11 @@ const BiddingPage: React.FC = () => {
     return (
       <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap', mb: 2 }}>
         {[
-          { label: '招标项目总数', value: total, color: 'primary' },
-          { label: '草稿', value: draft, color: 'default' },
-          { label: '已发布', value: published, color: 'info' },
-          { label: '投标中', value: bidding, color: 'warning' },
-          { label: '预算总额', value: `¥${totalBudget.toLocaleString()}`, color: 'success' },
+          { label: i18n.t('pages.bidding_page.k15'), value: total, color: 'primary' },
+          { label: i18n.t('pages.bidding_page.k16'), value: draft, color: 'default' },
+          { label: i18n.t('pages.bidding_page.k17'), value: published, color: 'info' },
+          { label: i18n.t('pages.bidding_page.k18'), value: bidding, color: 'warning' },
+          { label: i18n.t('pages.bidding_page.k19'), value: `¥${totalBudget.toLocaleString()}`, color: 'success' },
         ].map((stat) => (
           <Box
             key={stat.label}
@@ -212,31 +213,31 @@ const BiddingPage: React.FC = () => {
     <Box>
       <Box sx={{ mb: 2 }}>
         <Chip
-          label={`状态: ${bidding.status}`}
+          label={`${i18n.t('pages.bidding_page.k7')}${bidding.status}`}
           size='small'
           sx={{ mr: 1 }}
         />
         <Chip
-          label={`投标数: ${bidding.supplier_count || 0}`}
+          label={`${i18n.t('pages.bidding_page.k8')}${bidding.supplier_count || 0}`}
           size='small'
           color='primary'
         />
       </Box>
       <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 2, mb: 2 }}>
         <Box>
-          <Box sx={{ fontSize: 12, color: 'text.secondary' }}>预算金额</Box>
+          <Box sx={{ fontSize: 12, color: 'text.secondary' }}>{i18n.t('pages.bidding_page.k20')}</Box>
           <Box sx={{ fontWeight: 600 }}>
             {bidding.budget_amount ? `¥${bidding.budget_amount.toLocaleString()}` : '-'}
           </Box>
         </Box>
         <Box>
-          <Box sx={{ fontSize: 12, color: 'text.secondary' }}>中标供应商</Box>
+          <Box sx={{ fontSize: 12, color: 'text.secondary' }}>{i18n.t('pages.bidding_page.k21')}</Box>
           <Box sx={{ fontWeight: 600 }}>{bidding.winner_supplier_name || '-'}</Box>
         </Box>
       </Box>
       {bidding.description && (
         <Box sx={{ mt: 2 }}>
-          <Box sx={{ fontSize: 12, color: 'text.secondary', mb: 0.5 }}>项目描述</Box>
+          <Box sx={{ fontSize: 12, color: 'text.secondary', mb: 0.5 }}>{i18n.t('pages.bidding_page.k22')}</Box>
           <Box sx={{ fontSize: 14 }}>{bidding.description}</Box>
         </Box>
       )}
@@ -251,7 +252,7 @@ const BiddingPage: React.FC = () => {
         customRowActions={customRowActions}
         headerContent={headerContent}
         detailContent={(row) => detailContent(row as unknown as Bidding)}
-        breadcrumbs={[{ label: 'SRM' }, { label: '招投标管理' }]}
+        breadcrumbs={[{ label: 'SRM' }, { label: i18n.t('pages.bidding_page.k23') }]}
       />
 
       <Dialog
@@ -265,15 +266,15 @@ const BiddingPage: React.FC = () => {
           <Table size='small'>
             <TableHead>
               <TableRow>
-                <TableCell>供应商名称</TableCell>
-                <TableCell align='right'>投标金额</TableCell>
-                <TableCell>交货期</TableCell>
-                <TableCell>联系人</TableCell>
-                <TableCell>联系电话</TableCell>
-                <TableCell>状态</TableCell>
+                <TableCell>{i18n.t('pages.bidding_page.k24')}</TableCell>
+                <TableCell align='right'>{i18n.t('pages.bidding_page.k25')}</TableCell>
+                <TableCell>{i18n.t('pages.bidding_page.k26')}</TableCell>
+                <TableCell>{i18n.t('pages.bidding_page.k27')}</TableCell>
+                <TableCell>{i18n.t('pages.bidding_page.k28')}</TableCell>
+                <TableCell>{i18n.t('pages.bidding_page.k29')}</TableCell>
                 {(viewingBidding?.status === 'evaluating' ||
                   viewingBidding?.status === 'opened') && (
-                  <TableCell align='center'>操作</TableCell>
+                  <TableCell align='center'>{i18n.t('pages.bidding_page.k30')}</TableCell>
                 )}
               </TableRow>
             </TableHead>
@@ -289,7 +290,7 @@ const BiddingPage: React.FC = () => {
                     align='center'
                     sx={{ py: 4, color: 'text.secondary' }}
                   >
-                    暂无投标人
+                    {i18n.t('pages.bidding_page.k0')}
                   </TableCell>
                 </TableRow>
               ) : (
@@ -305,7 +306,7 @@ const BiddingPage: React.FC = () => {
                     <TableCell>
                       <Chip
                         size='small'
-                        label={supplier.status === 'submitted' ? '已投标' : supplier.status}
+                        label={supplier.status === 'submitted' ? i18n.t('pages.bidding_page.k31') : supplier.status}
                         color='primary'
                         variant='outlined'
                       />
@@ -319,7 +320,7 @@ const BiddingPage: React.FC = () => {
                           onClick={() => handleAward(supplier.id, supplier.supplier_name)}
                           startIcon={<Check size={12} />}
                         >
-                          定标
+                          {i18n.t('pages.bidding_page.k1')}
                         </Button>
                       </TableCell>
                     )}
@@ -334,7 +335,7 @@ const BiddingPage: React.FC = () => {
             variant='outlined'
             onClick={() => setShowSupplierDialog(false)}
           >
-            关闭
+            {i18n.t('pages.bidding_page.k2')}
           </Button>
         </DialogActions>
       </Dialog>

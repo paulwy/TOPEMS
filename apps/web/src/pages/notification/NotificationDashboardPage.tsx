@@ -17,10 +17,10 @@ import {
   Info,
   MessageSquare,
 } from 'lucide-react';
+import i18n from '@/i18n';
 import { Box, Typography } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import { NOTIFICATION_PATHS } from '@/modules/notification/config';
-
 import { PageContainer } from '@/components/common';
 import {
   DashboardTemplate,
@@ -31,12 +31,8 @@ import {
 } from '@/components/templates';
 import { useNotificationStore } from '@/store';
 import { designTokens } from '@/theme/tokens';
-
-
 import { QUERY_KEYS } from '@/lib/reactQuery';
-
 const ct= designTokens.colors;
-
 export const NotificationDashboardPage: React.FC = () => {
   const navigate = useNavigate();
   const addNotification = useNotificationStore((state) => state.addNotification);
@@ -46,74 +42,72 @@ export const NotificationDashboardPage: React.FC = () => {
     staleTime: 5 * 60 * 1000,
   });
   const loading = dashboardQuery.isFetching;
-
   const stats: StatCard[] = useMemo(
     () => [
       {
         id: 'unread',
-        title: '未读消息',
+        title: i18n.t('notification.notification_dashboard_page.k0'),
         value: '23',
         icon: <Bell size={20} />,
         change: 5,
-        changeLabel: '较昨日',
+        changeLabel: i18n.t('notification.notification_dashboard_page.k1'),
         color: 'error',
       },
       {
         id: 'today',
-        title: '今日通知',
+        title: i18n.t('notification.notification_dashboard_page.k2'),
         value: '42',
         icon: <Inbox size={20} />,
         change: 8,
-        changeLabel: '较昨日',
+        changeLabel: i18n.t('notification.notification_dashboard_page.k3'),
         color: 'primary',
       },
       {
         id: 'week',
-        title: '本周通知',
+        title: i18n.t('notification.notification_dashboard_page.k4'),
         value: '256',
         icon: <Calendar size={20} />,
         change: 12,
-        changeLabel: '环比增长',
+        changeLabel: i18n.t('notification.notification_dashboard_page.k5'),
         color: 'info',
       },
       {
         id: 'read-rate',
-        title: '已读率',
+        title: i18n.t('notification.notification_dashboard_page.k6'),
         value: '87.5',
         unit: '%',
         icon: <CheckCheck size={20} />,
         change: 3.2,
-        changeLabel: '较上周',
+        changeLabel: i18n.t('notification.notification_dashboard_page.k7'),
         color: 'success',
       },
       {
         id: 'channels',
-        title: '通知渠道数',
+        title: i18n.t('notification.notification_dashboard_page.k8'),
         value: '4',
         icon: <Layers size={20} />,
         change: 0,
-        changeLabel: '渠道类型',
+        changeLabel: i18n.t('notification.notification_dashboard_page.k9'),
         color: 'warning',
       },
       {
         id: 'templates',
-        title: '模板数量',
+        title: i18n.t('notification.notification_dashboard_page.k10'),
         value: '18',
         icon: <FileText size={20} />,
         change: 2,
-        changeLabel: '较上月',
+        changeLabel: i18n.t('notification.notification_dashboard_page.k11'),
         color: 'secondary',
       },
     ],
     []
   );
-
   const charts: ChartCard[] = useMemo(
     () => [
       {
         id: 'trend',
-        title: '通知趋势',
-        subtitle: '近7天发送与已读趋势',
+        title: i18n.t('notification.notification_dashboard_page.k12'),
+        subtitle: i18n.t('notification.notification_dashboard_page.7_13'),
         icon: <TrendingUp size={18} />,
         type: 'line',
         chart: (
@@ -134,8 +128,8 @@ export const NotificationDashboardPage: React.FC = () => {
       },
       {
         id: 'type-distribution',
-        title: '类型分布',
-        subtitle: '系统/审批/任务/消息',
+        title: i18n.t('notification.notification_dashboard_page.k14'),
+        subtitle: i18n.t('notification.notification_dashboard_page.k15'),
         icon: <PieChart size={18} />,
         type: 'pie',
         chart: (
@@ -156,8 +150,8 @@ export const NotificationDashboardPage: React.FC = () => {
       },
       {
         id: 'channel-distribution',
-        title: '渠道分布',
-        subtitle: '邮件/短信/站内信/推送',
+        title: i18n.t('notification.notification_dashboard_page.k16'),
+        subtitle: i18n.t('notification.notification_dashboard_page.k17'),
         icon: <BarChart3 size={18} />,
         type: 'bar',
         chart: (
@@ -179,18 +173,17 @@ export const NotificationDashboardPage: React.FC = () => {
     ],
     []
   );
-
   const quickActions: QuickAction[] = useMemo(
     () => [
       {
         id: 'view-unread',
-        label: '查看未读',
+        label: i18n.t('notification.notification_dashboard_page.k18'),
         icon: <Eye size={20} />,
         color: 'primary.light',
         onClick: () => {
           navigate(`${NOTIFICATION_PATHS.list}?filter=unread`);
           addNotification({
-            message: '正在跳转到未读消息列表',
+            message: i18n.t('notification.notification_dashboard_page.k19'),
             type: 'info',
             duration: 2000,
           });
@@ -198,12 +191,12 @@ export const NotificationDashboardPage: React.FC = () => {
       },
       {
         id: 'mark-all-read',
-        label: '全部已读',
+        label: i18n.t('notification.notification_dashboard_page.k20'),
         icon: <CheckCheck size={20} />,
         color: 'success.light',
         onClick: () => {
           addNotification({
-            message: '所有消息已标记为已读',
+            message: i18n.t('notification.notification_dashboard_page.k21'),
             type: 'success',
             duration: 2000,
           });
@@ -211,14 +204,14 @@ export const NotificationDashboardPage: React.FC = () => {
       },
       {
         id: 'notification-settings',
-        label: '通知设置',
+        label: i18n.t('notification.notification_dashboard_page.k22'),
         icon: <Settings size={20} />,
         color: 'info.light',
         onClick: () => navigate(NOTIFICATION_PATHS.settings),
       },
       {
         id: 'template-management',
-        label: '模板管理',
+        label: i18n.t('notification.notification_dashboard_page.k23'),
         icon: <FileText size={20} />,
         color: 'warning.light',
         onClick: () => navigate(NOTIFICATION_PATHS.templates),
@@ -226,50 +219,49 @@ export const NotificationDashboardPage: React.FC = () => {
     ],
     [navigate, addNotification]
   );
-
   const recentItems: RecentItem[] = useMemo(
     () => [
       {
         id: '1',
-        title: '系统升级通知',
-        description: '系统将于今晚22:00-24:00进行升级维护',
-        time: '10分钟前',
+        title: i18n.t('notification.notification_dashboard_page.k24'),
+        description: i18n.t('pages.notification_dashboard_page.k0'),
+        time: i18n.t('pages.notification_dashboard_page.10_1'),
         icon: <AlertCircle size={18} />,
         status: 'warning',
         onClick: () => navigate(NOTIFICATION_PATHS.detail.replace(':id', '1')),
       },
       {
         id: '2',
-        title: '采购订单审批通过',
-        description: 'PO-20240630-001 已通过审批',
-        time: '30分钟前',
+        title: i18n.t('notification.notification_dashboard_page.k25'),
+        description: i18n.t('pages.notification_dashboard_page.k2'),
+        time: i18n.t('pages.notification_dashboard_page.30_3'),
         icon: <CheckCircle size={18} />,
         status: 'success',
         onClick: () => navigate(NOTIFICATION_PATHS.detail.replace(':id', '2')),
       },
       {
         id: '3',
-        title: '新任务分配',
-        description: '您有一个新的待处理任务：项目周报',
-        time: '1小时前',
+        title: i18n.t('notification.notification_dashboard_page.k26'),
+        description: i18n.t('notification.notification_dashboard_page.k27'),
+        time: i18n.t('pages.notification_dashboard_page.1_4'),
         icon: <MessageSquare size={18} />,
         status: 'info',
         onClick: () => navigate(NOTIFICATION_PATHS.detail.replace(':id', '3')),
       },
       {
         id: '4',
-        title: '密码安全提醒',
-        description: '您的密码即将过期，请及时更新',
-        time: '2小时前',
+        title: i18n.t('notification.notification_dashboard_page.k28'),
+        description: i18n.t('notification.notification_dashboard_page.k29'),
+        time: i18n.t('pages.notification_dashboard_page.2_5'),
         icon: <Info size={18} />,
         status: 'default',
         onClick: () => navigate(NOTIFICATION_PATHS.detail.replace(':id', '4')),
       },
       {
         id: '5',
-        title: '月度报告已生成',
-        description: '2024年6月运营报告已生成，请查看',
-        time: '昨天',
+        title: i18n.t('notification.notification_dashboard_page.k30'),
+        description: i18n.t('pages.notification_dashboard_page.20246_6'),
+        time: i18n.t('notification.notification_dashboard_page.k31'),
         icon: <FileText size={18} />,
         status: 'success',
         onClick: () => navigate(NOTIFICATION_PATHS.detail.replace(':id', '5')),
@@ -277,16 +269,14 @@ export const NotificationDashboardPage: React.FC = () => {
     ],
     [navigate]
   );
-
   const handleRefresh = () => {
     dashboardQuery.refetch();
     addNotification({
-      message: '仪表盘数据已刷新',
+      message: i18n.t('notification.notification_dashboard_page.k32'),
       type: 'success',
       duration: 2000,
     });
   };
-
   return (
     <PageContainer
       headerProps={{
@@ -301,19 +291,17 @@ export const NotificationDashboardPage: React.FC = () => {
         charts={charts}
         quickActions={quickActions}
         recentItems={recentItems}
-        recentTitle='最近通知'
+        recentTitle={i18n.t('notification.notification_dashboard_page.k33')}
         onRefresh={handleRefresh}
       />
     </PageContainer>
   );
 };
-
 const NotificationTrendChart: React.FC = () => {
-  const days = ['周一', '周二', '周三', '周四', '周五', '周六', '周日'];
+  const days = [i18n.t('notification.notification_dashboard_page.k40'), i18n.t('notification.notification_dashboard_page.k39'), i18n.t('notification.notification_dashboard_page.k38'), i18n.t('notification.notification_dashboard_page.k37'), i18n.t('notification.notification_dashboard_page.k36'), i18n.t('notification.notification_dashboard_page.k35'), i18n.t('notification.notification_dashboard_page.k34')];
   const sentData = [45, 52, 38, 65, 48, 28, 32];
   const readData = [38, 45, 32, 58, 42, 22, 28];
   const max = Math.max(...sentData, ...readData);
-
   const sentPoints = sentData
     .map((value, index) => {
       const x = (index / (days.length - 1)) * 100;
@@ -321,7 +309,6 @@ const NotificationTrendChart: React.FC = () => {
       return `${x},${y}`;
     })
     .join(' ');
-
   const readPoints = readData
     .map((value, index) => {
       const x = (index / (days.length - 1)) * 100;
@@ -329,7 +316,6 @@ const NotificationTrendChart: React.FC = () => {
       return `${x},${y}`;
     })
     .join(' ');
-
   return (
     <Box sx={{ width: '100%', height: '100%', p: 2 }}>
       <Box sx={{ display: 'flex', gap: 2, mb: 1, justifyContent: 'flex-end' }}>
@@ -339,7 +325,7 @@ const NotificationTrendChart: React.FC = () => {
             variant='caption'
             color='text.secondary'
           >
-            发送
+            {i18n.t('pages.notification_dashboard_page.k0')}
           </Typography>
         </Box>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
@@ -348,7 +334,7 @@ const NotificationTrendChart: React.FC = () => {
             variant='caption'
             color='text.secondary'
           >
-            已读
+            {i18n.t('pages.notification_dashboard_page.k1')}
           </Typography>
         </Box>
       </Box>
@@ -400,21 +386,17 @@ const NotificationTrendChart: React.FC = () => {
     </Box>
   );
 };
-
 const TypeDistributionChart: React.FC = () => {
   const data = [
-    { label: '系统', value: 35, color: 'primary.main' },
-    { label: '审批', value: 28, color: 'success.main' },
-    { label: '任务', value: 22, color: 'warning.main' },
-    { label: '消息', value: 15, color: 'secondary.main' },
+    { label: i18n.t('notification.notification_dashboard_page.k41'), value: 35, color: 'primary.main' },
+    { label: i18n.t('notification.notification_dashboard_page.k42'), value: 28, color: 'success.main' },
+    { label: i18n.t('notification.notification_dashboard_page.k43'), value: 22, color: 'warning.main' },
+    { label: i18n.t('notification.notification_dashboard_page.k44'), value: 15, color: 'secondary.main' },
   ];
-
   const total = data.reduce((sum, item) => sum + item.value, 0);
   let currentAngle = -90;
-
   const radius = 60;
   const center = 80;
-
   return (
     <Box sx={{ display: 'flex', alignItems: 'center', gap: 3, width: '100%', height: '100%' }}>
       <svg
@@ -427,19 +409,14 @@ const TypeDistributionChart: React.FC = () => {
           const startAngle = currentAngle;
           const endAngle = currentAngle + angle;
           currentAngle = endAngle;
-
           const startRad = (startAngle * Math.PI) / 180;
           const endRad = (endAngle * Math.PI) / 180;
-
           const x1 = center + radius * Math.cos(startRad);
           const y1 = center + radius * Math.sin(startRad);
           const x2 = center + radius * Math.cos(endRad);
           const y2 = center + radius * Math.sin(endRad);
-
           const largeArc = angle > 180 ? 1 : 0;
-
           const pathData = `M ${center} ${center} L ${x1} ${y1} A ${radius} ${radius} 0 ${largeArc} 1 ${x2} ${y2} Z`;
-
           return (
             <path
               key={index}
@@ -480,17 +457,14 @@ const TypeDistributionChart: React.FC = () => {
     </Box>
   );
 };
-
 const ChannelDistributionChart: React.FC = () => {
   const data = [
-    { label: '邮件', value: 120, color: 'primary.main' },
-    { label: '短信', value: 85, color: 'success.main' },
-    { label: '站内信', value: 180, color: 'warning.main' },
-    { label: '推送', value: 95, color: 'secondary.main' },
+    { label: i18n.t('notification.notification_dashboard_page.k45'), value: 120, color: 'primary.main' },
+    { label: i18n.t('notification.notification_dashboard_page.k46'), value: 85, color: 'success.main' },
+    { label: i18n.t('notification.notification_dashboard_page.k47'), value: 180, color: 'warning.main' },
+    { label: i18n.t('notification.notification_dashboard_page.k48'), value: 95, color: 'secondary.main' },
   ];
-
   const max = Math.max(...data.map((item) => item.value));
-
   return (
     <Box sx={{ width: '100%', height: '100%', p: 2 }}>
       <Box
@@ -538,5 +512,4 @@ const ChannelDistributionChart: React.FC = () => {
     </Box>
   );
 };
-
 export default NotificationDashboardPage;

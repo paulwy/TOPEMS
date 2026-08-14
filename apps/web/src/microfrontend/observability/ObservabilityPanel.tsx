@@ -11,6 +11,7 @@ import {
   Divider,
   Tooltip,
 } from '@mui/material';
+import i18n from '@/i18n';
 import {
   ChevronDown as ChevronDownIcon,
   X as XIcon,
@@ -101,7 +102,7 @@ const ObservabilityPanel: React.FC = () => {
       }}
     >
       {!isExpanded ? (
-        <Tooltip title='微前端可观测性面板'>
+        <Tooltip title={i18n.t('microfrontend.observability_panel.k0')}>
           <Button
             variant='contained'
             startIcon={<ActivityIcon size={18} />}
@@ -121,12 +122,12 @@ const ObservabilityPanel: React.FC = () => {
                 variant='body2'
                 sx={{ fontWeight: 600 }}
               >
-                可观测性
+                {i18n.t('microfrontend.observability_panel.k0')}
               </Typography>
               <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
                 {slowModules.length > 0 && (
                   <Chip
-                    label={`${slowModules.length} 慢模块`}
+                    label={`${slowModules.length}${i18n.t('microfrontend.observability_panel.k0')}`}
                     size='small'
                     color='warning'
                     sx={{ height: 20, '& .MuiChip-label': { px: 0.5, fontSize: 10 } }}
@@ -134,7 +135,7 @@ const ObservabilityPanel: React.FC = () => {
                 )}
                 {totalErrors > 0 && (
                   <Chip
-                    label={`${totalErrors} 错误`}
+                    label={`${totalErrors}${i18n.t('microfrontend.observability_panel.k1')}`}
                     size='small'
                     color='error'
                     sx={{ height: 20, '& .MuiChip-label': { px: 0.5, fontSize: 10 } }}
@@ -151,7 +152,7 @@ const ObservabilityPanel: React.FC = () => {
             maxHeight: '80vh',
             bgcolor: 'background.paper',
             borderRadius: 2,
-            boxShadow: '0 8px 32px rgba(0,0,0,0.2)',
+            boxShadow: `0 8px 32px ${designTokens.colors.cyber.glass.divider}`,
             overflow: 'hidden',
             display: 'flex',
             flexDirection: 'column',
@@ -173,11 +174,11 @@ const ObservabilityPanel: React.FC = () => {
                 variant='subtitle1'
                 sx={{ fontWeight: 600 }}
               >
-                微前端可观测性面板
+                {i18n.t('microfrontend.observability_panel.k1')}
               </Typography>
             </Box>
             <Box sx={{ display: 'flex', gap: 1 }}>
-              <Tooltip title='导出数据'>
+              <Tooltip title={i18n.t('microfrontend.observability_panel.k1')}>
                 <IconButton
                   size='small'
                   onClick={handleExport}
@@ -186,7 +187,7 @@ const ObservabilityPanel: React.FC = () => {
                   <DownloadIcon size={18} />
                 </IconButton>
               </Tooltip>
-              <Tooltip title='收起'>
+              <Tooltip title={i18n.t('microfrontend.observability_panel.k2')}>
                 <IconButton
                   size='small'
                   onClick={() => setIsExpanded(false)}
@@ -213,7 +214,7 @@ const ObservabilityPanel: React.FC = () => {
                     variant='body2'
                     sx={{ fontWeight: 600 }}
                   >
-                    模块加载性能排名
+                    {i18n.t('microfrontend.observability_panel.k2')}
                   </Typography>
                   <Chip
                     label={sortedPerformance.length}
@@ -228,7 +229,7 @@ const ObservabilityPanel: React.FC = () => {
                     variant='body2'
                     color='text.secondary'
                   >
-                    暂无数据
+                    {i18n.t('microfrontend.observability_panel.k3')}
                   </Typography>
                 ) : (
                   <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
@@ -296,7 +297,7 @@ const ObservabilityPanel: React.FC = () => {
                               size={10}
                               style={{ display: 'inline', marginRight: 2 }}
                             />
-                            白屏: {formatDurationShort(m.whiteScreenTime)}
+                            [i18n.t('microfrontend.observability_panel.k4')]: {formatDurationShort(m.whiteScreenTime)}
                           </span>
                           <span>FCP: {formatDurationShort(m.fcp)}</span>
                           <span>TTI: {formatDurationShort(m.tti)}</span>
@@ -322,7 +323,7 @@ const ObservabilityPanel: React.FC = () => {
                     variant='body2'
                     sx={{ fontWeight: 600 }}
                   >
-                    错误统计
+                    {i18n.t('microfrontend.observability_panel.k5')}
                   </Typography>
                   {totalErrors > 0 && (
                     <Chip
@@ -340,7 +341,7 @@ const ObservabilityPanel: React.FC = () => {
                     variant='body2'
                     color='text.secondary'
                   >
-                    暂无错误
+                    {i18n.t('microfrontend.observability_panel.k6')}
                   </Typography>
                 ) : (
                   <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
@@ -364,7 +365,7 @@ const ObservabilityPanel: React.FC = () => {
                           variant='caption'
                           color='text.secondary'
                         >
-                          总错误数
+                          {i18n.t('microfrontend.observability_panel.k7')}
                         </Typography>
                       </Box>
                       <Box sx={{ textAlign: 'center' }}>
@@ -378,7 +379,7 @@ const ObservabilityPanel: React.FC = () => {
                           variant='caption'
                           color='text.secondary'
                         >
-                          错误类型
+                          {i18n.t('microfrontend.observability_panel.k8')}
                         </Typography>
                       </Box>
                       <Box sx={{ textAlign: 'center' }}>
@@ -392,7 +393,7 @@ const ObservabilityPanel: React.FC = () => {
                           variant='caption'
                           color='text.secondary'
                         >
-                          影响模块
+                          {i18n.t('microfrontend.observability_panel.k9')}
                         </Typography>
                       </Box>
                     </Box>
@@ -401,7 +402,7 @@ const ObservabilityPanel: React.FC = () => {
                       variant='caption'
                       sx={{ fontWeight: 600, mt: 1 }}
                     >
-                      各模块错误数:
+                      [i18n.t('microfrontend.observability_panel.k10')]:
                     </Typography>
                     {Object.entries(errorStats.errorsByModule)
                       .sort(([, a], [, b]) => b - a)
@@ -444,7 +445,7 @@ const ObservabilityPanel: React.FC = () => {
                     variant='body2'
                     sx={{ fontWeight: 600 }}
                   >
-                    用户行为统计
+                    {i18n.t('microfrontend.observability_panel.k11')}
                   </Typography>
                   <Chip
                     label={totalVisits}
@@ -464,7 +465,7 @@ const ObservabilityPanel: React.FC = () => {
                     variant='body2'
                     color='text.secondary'
                   >
-                    暂无数据
+                    {i18n.t('microfrontend.observability_panel.k12')}
                   </Typography>
                 ) : (
                   <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
@@ -505,7 +506,7 @@ const ObservabilityPanel: React.FC = () => {
                           </Box>
                           <Box sx={{ display: 'flex', gap: 1 }}>
                             <Chip
-                              label={`${s.visitCount} 次`}
+                              label={`${s.visitCount}${i18n.t('microfrontend.observability_panel.k2')}`}
                               size='small'
                               sx={{ height: 20, fontSize: 10 }}
                             />
@@ -524,7 +525,7 @@ const ObservabilityPanel: React.FC = () => {
                               size={10}
                               style={{ display: 'inline', marginRight: 2 }}
                             />
-                            平均: {formatDurationShort(s.averageDuration)}
+                            [i18n.t('microfrontend.observability_panel.k13')]: {formatDurationShort(s.averageDuration)}
                           </span>
                           <span>{s.actionCount} 次操作</span>
                         </Box>
@@ -555,7 +556,7 @@ const ObservabilityPanel: React.FC = () => {
                     variant='body2'
                     sx={{ fontWeight: 600, color: 'warning.dark' }}
                   >
-                    慢加载模块警告
+                    {i18n.t('microfrontend.observability_panel.k14')}
                   </Typography>
                 </Box>
                 <Typography
@@ -593,13 +594,13 @@ const ObservabilityPanel: React.FC = () => {
               variant='caption'
               color='text.secondary'
             >
-              自动刷新 · 2秒
+              {i18n.t('microfrontend.observability_panel.2_15')}
             </Typography>
             <Button
               size='small'
               onClick={refreshData}
             >
-              刷新
+              {i18n.t('microfrontend.observability_panel.k16')}
             </Button>
           </Box>
         </Box>

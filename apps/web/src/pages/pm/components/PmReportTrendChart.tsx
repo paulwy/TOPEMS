@@ -1,5 +1,4 @@
 import React from 'react';
-import { useTranslation } from 'react-i18next';
 import { Box, Card, CardContent, CardHeader, Typography } from '@mui/material';
 import {
   LineChart,
@@ -11,22 +10,18 @@ import {
   Legend,
   ResponsiveContainer,
 } from 'recharts';
+import i18n from '@/i18n';
 import type { TrendDatum } from '../hooks/usePmReport';
-
 export interface PmReportTrendChartProps {
   data: TrendDatum[];
 }
-
 const PmReportTrendChart: React.FC<PmReportTrendChartProps> = ({ data }) => {
-  const { t } = useTranslation();
-
   const chartData =
-    data.length > 0 ? data : [{ month: t('pm.pm_report_page.month_21efd8'), cpi: 1, spi: 1 }];
-
+    data.length > 0 ? data : [{ month: i18n.t('pm.pm_report_page.month_21efd8'), cpi: 1, spi: 1 }];
   return (
     <Card sx={{ mb: 3 }}>
       <CardHeader
-        title={<Typography variant='h6'>{t('pm.pm_report_page.text_266064')}</Typography>}
+        title={<Typography variant='h6'>{i18n.t('pm.pm_report_page.text_266064')}</Typography>}
       />
       <CardContent>
         <Box sx={{ height: 256 }}>
@@ -61,5 +56,4 @@ const PmReportTrendChart: React.FC<PmReportTrendChartProps> = ({ data }) => {
     </Card>
   );
 };
-
 export default PmReportTrendChart;

@@ -32,6 +32,7 @@ import {
   LinearProgress,
   Tooltip,
 } from '@mui/material';
+import i18n from '@/i18n';
 import {
   Store as StoreIcon,
   Download as DownloadIcon,
@@ -216,7 +217,7 @@ const ModuleCard: React.FC<{
         {mod.installed && (
           <Chip
             icon={<CheckIcon size={14} />}
-            label='已安装'
+            label={i18n.t('microfrontend.module_marketplace.k0')}
             size='small'
             color='success'
             sx={{ alignSelf: 'flex-start' }}
@@ -292,7 +293,7 @@ const ModuleCard: React.FC<{
           }}
           fullWidth
         >
-          卸载
+          {i18n.t('microfrontend.module_marketplace.k0')}
         </Button>
       ) : (
         <Button
@@ -305,7 +306,7 @@ const ModuleCard: React.FC<{
           }}
           fullWidth
         >
-          安装
+          {i18n.t('microfrontend.module_marketplace.k1')}
         </Button>
       )}
     </CardActions>
@@ -392,9 +393,9 @@ const ModuleDetailDialog: React.FC<{
           onChange={(_, v) => setActiveTab(v)}
           sx={{ mb: 2 }}
         >
-          <Tab label='详情' />
-          <Tab label='依赖' />
-          <Tab label={`评价 (${reviews.length})`} />
+          <Tab label={i18n.t('microfrontend.module_marketplace.k1')} />
+          <Tab label={i18n.t('microfrontend.module_marketplace.k2')} />
+          <Tab label={`${i18n.t('microfrontend.module_marketplace.k2')}${reviews.length})`} />
         </Tabs>
 
         {activeTab === 0 && (
@@ -410,7 +411,7 @@ const ModuleDetailDialog: React.FC<{
               variant='subtitle2'
               sx={{ mb: 1, mt: 3, fontWeight: 600 }}
             >
-              主要功能
+              {i18n.t('microfrontend.module_marketplace.k3')}
             </Typography>
             <List dense>
               {mod.features.map((feature, idx) => (
@@ -437,7 +438,7 @@ const ModuleDetailDialog: React.FC<{
                   variant='caption'
                   color='text.secondary'
                 >
-                  版本
+                  {i18n.t('microfrontend.module_marketplace.k4')}
                 </Typography>
                 <Typography
                   variant='body2'
@@ -451,7 +452,7 @@ const ModuleDetailDialog: React.FC<{
                   variant='caption'
                   color='text.secondary'
                 >
-                  大小
+                  {i18n.t('microfrontend.module_marketplace.k5')}
                 </Typography>
                 <Typography
                   variant='body2'
@@ -465,7 +466,7 @@ const ModuleDetailDialog: React.FC<{
                   variant='caption'
                   color='text.secondary'
                 >
-                  许可证
+                  {i18n.t('microfrontend.module_marketplace.k6')}
                 </Typography>
                 <Typography
                   variant='body2'
@@ -479,7 +480,7 @@ const ModuleDetailDialog: React.FC<{
                   variant='caption'
                   color='text.secondary'
                 >
-                  更新时间
+                  {i18n.t('microfrontend.module_marketplace.k7')}
                 </Typography>
                 <Typography
                   variant='body2'
@@ -495,7 +496,7 @@ const ModuleDetailDialog: React.FC<{
                 variant='caption'
                 color='text.secondary'
               >
-                作者: {mod.author}
+                [i18n.t('microfrontend.module_marketplace.k8')]: {mod.author}
               </Typography>
             </Box>
           </Box>
@@ -508,7 +509,7 @@ const ModuleDetailDialog: React.FC<{
                 variant='body2'
                 color='text.secondary'
               >
-                该模块无外部依赖
+                {i18n.t('microfrontend.module_marketplace.k9')}
               </Typography>
             ) : (
               <List>
@@ -528,7 +529,7 @@ const ModuleDetailDialog: React.FC<{
                         </Typography>
                         {dep.is_optional && (
                           <Chip
-                            label='可选'
+                            label={i18n.t('microfrontend.module_marketplace.k3')}
                             size='small'
                             variant='outlined'
                             color='info'
@@ -539,7 +540,7 @@ const ModuleDetailDialog: React.FC<{
                         variant='caption'
                         color='text.secondary'
                       >
-                        需要版本: {dep.required_version}
+                        [i18n.t('microfrontend.module_marketplace.k10')]: {dep.required_version}
                       </Typography>
                     </Box>
                   </ListItem>
@@ -556,7 +557,7 @@ const ModuleDetailDialog: React.FC<{
                 variant='subtitle2'
                 sx={{ mb: 1 }}
               >
-                写评价
+                {i18n.t('microfrontend.module_marketplace.k11')}
               </Typography>
               <Rating
                 value={newRating}
@@ -566,7 +567,7 @@ const ModuleDetailDialog: React.FC<{
                 fullWidth
                 multiline
                 rows={2}
-                placeholder='分享你的使用体验...'
+                placeholder={i18n.t('microfrontend.module_marketplace.k12')}
                 value={newComment}
                 onChange={(e) => setNewComment(e.target.value)}
                 size='small'
@@ -577,7 +578,7 @@ const ModuleDetailDialog: React.FC<{
                 variant='contained'
                 sx={{ mt: 1 }}
               >
-                提交评价
+                {i18n.t('microfrontend.module_marketplace.k13')}
               </Button>
             </Box>
 
@@ -586,7 +587,7 @@ const ModuleDetailDialog: React.FC<{
                 variant='body2'
                 color='text.secondary'
               >
-                暂无评价
+                {i18n.t('microfrontend.module_marketplace.k14')}
               </Typography>
             ) : (
               reviews.map((review) => (
@@ -619,7 +620,7 @@ const ModuleDetailDialog: React.FC<{
                         </Typography>
                       </Box>
                     </Box>
-                    <Tooltip title='有帮助'>
+                    <Tooltip title={i18n.t('microfrontend.module_marketplace.k4')}>
                       <IconButton size='small'>
                         <ThumbsUpIcon size={14} />
                       </IconButton>
@@ -640,7 +641,7 @@ const ModuleDetailDialog: React.FC<{
       </DialogContent>
 
       <DialogActions sx={{ p: 2 }}>
-        <Button onClick={onClose}>关闭</Button>
+        <Button onClick={onClose}>{i18n.t('microfrontend.module_marketplace.k5')}</Button>
         {mod.installed ? (
           <Button
             color='error'
@@ -648,7 +649,7 @@ const ModuleDetailDialog: React.FC<{
             onClick={onUninstall}
             startIcon={<TrashIcon size={18} />}
           >
-            卸载模块
+            {i18n.t('microfrontend.module_marketplace.k15')}
           </Button>
         ) : (
           <Button
@@ -656,7 +657,7 @@ const ModuleDetailDialog: React.FC<{
             onClick={onInstall}
             startIcon={<DownloadIcon size={18} />}
           >
-            安装模块
+            {i18n.t('microfrontend.module_marketplace.k16')}
           </Button>
         )}
       </DialogActions>
@@ -719,14 +720,14 @@ const ModuleMarketplace: React.FC<ModuleMarketplaceProps> = ({ onClose }) => {
   const handleInstall = (moduleId: string) => {
     const success = moduleMarket.installModule(moduleId);
     if (success) {
-      setSnackbar({ open: true, message: '模块安装成功', type: 'success' });
+      setSnackbar({ open: true, message: i18n.t('microfrontend.module_marketplace.k6'), type: 'success' });
     }
   };
 
   const handleUninstall = (moduleId: string) => {
     const success = moduleMarket.uninstallModule(moduleId);
     if (success) {
-      setSnackbar({ open: true, message: '模块已卸载', type: 'success' });
+      setSnackbar({ open: true, message: i18n.t('microfrontend.module_marketplace.k7'), type: 'success' });
       if (selectedModule?.id === moduleId) {
         setSelectedModule(null);
         setDetailOpen(false);
@@ -778,11 +779,11 @@ const ModuleMarketplace: React.FC<ModuleMarketplaceProps> = ({ onClose }) => {
           variant='h6'
           sx={{ fontWeight: 700 }}
         >
-          模块市场
+          {i18n.t('microfrontend.module_marketplace.k17')}
         </Typography>
         <Box sx={{ flex: 1 }} />
         <Chip
-          label={`已安装 ${installedCount}/${totalCount}`}
+          label={`${i18n.t('microfrontend.module_marketplace.k18')} ${installedCount}/${totalCount}`}
           color='primary'
           variant='outlined'
         />
@@ -803,7 +804,7 @@ const ModuleMarketplace: React.FC<ModuleMarketplaceProps> = ({ onClose }) => {
             variant='subtitle2'
             sx={{ mb: 1, fontWeight: 600 }}
           >
-            分类
+            {i18n.t('microfrontend.module_marketplace.k19')}
           </Typography>
           <List
             dense
@@ -819,8 +820,8 @@ const ModuleMarketplace: React.FC<ModuleMarketplaceProps> = ({ onClose }) => {
                 style={{ marginRight: 12, opacity: 0.7 }}
               />
               <ListItemText
-                primary='全部'
-                secondary={`${totalCount} 个模块`}
+                primary={i18n.t('microfrontend.module_marketplace.k8')}
+                secondary={`${totalCount} ${i18n.t('microfrontend.module_marketplace.k20')}`}
               />
             </ListItemButton>
             {categories.map((cat) => (
@@ -855,7 +856,7 @@ const ModuleMarketplace: React.FC<ModuleMarketplaceProps> = ({ onClose }) => {
             variant='subtitle2'
             sx={{ mb: 1, fontWeight: 600 }}
           >
-            排序
+            {i18n.t('microfrontend.module_marketplace.k21')}
           </Typography>
           <FormControl
             fullWidth
@@ -865,10 +866,10 @@ const ModuleMarketplace: React.FC<ModuleMarketplaceProps> = ({ onClose }) => {
               value={sortType}
               onChange={(e) => setSortType(e.target.value as ModuleSortType)}
             >
-              <MenuItem value='popular'>最热门</MenuItem>
-              <MenuItem value='newest'>最新发布</MenuItem>
-              <MenuItem value='rating'>评分最高</MenuItem>
-              <MenuItem value='downloads'>下载最多</MenuItem>
+              <MenuItem value='popular'>{i18n.t('microfrontend.module_marketplace.k9')}</MenuItem>
+              <MenuItem value='newest'>{i18n.t('microfrontend.module_marketplace.k10')}</MenuItem>
+              <MenuItem value='rating'>{i18n.t('microfrontend.module_marketplace.k11')}</MenuItem>
+              <MenuItem value='downloads'>{i18n.t('microfrontend.module_marketplace.k12')}</MenuItem>
             </Select>
           </FormControl>
         </Box>
@@ -881,25 +882,25 @@ const ModuleMarketplace: React.FC<ModuleMarketplaceProps> = ({ onClose }) => {
             >
               <Tab
                 value='browse'
-                label='浏览'
+                label={i18n.t('microfrontend.module_marketplace.k13')}
                 icon={<StoreIcon size={16} />}
                 iconPosition='start'
               />
               <Tab
                 value='installed'
-                label='已安装'
+                label={i18n.t('microfrontend.module_marketplace.k14')}
                 icon={<CheckIcon size={16} />}
                 iconPosition='start'
               />
               <Tab
                 value='recommended'
-                label='推荐'
+                label={i18n.t('microfrontend.module_marketplace.k15')}
                 icon={<TrendingUpIcon size={16} />}
                 iconPosition='start'
               />
               <Tab
                 value='top'
-                label='评分榜'
+                label={i18n.t('microfrontend.module_marketplace.k16')}
                 icon={<StarIcon size={16} />}
                 iconPosition='start'
               />
@@ -910,7 +911,7 @@ const ModuleMarketplace: React.FC<ModuleMarketplaceProps> = ({ onClose }) => {
             <TextField
               fullWidth
               size='small'
-              placeholder='搜索模块名称、描述或标签...'
+              placeholder={i18n.t('microfrontend.module_marketplace.k22')}
               value={searchKeyword}
               onChange={(e) => setSearchKeyword(e.target.value)}
               slotProps={{
@@ -932,7 +933,7 @@ const ModuleMarketplace: React.FC<ModuleMarketplaceProps> = ({ onClose }) => {
                   size={48}
                   style={{ opacity: 0.3, marginBottom: 16 }}
                 />
-                <Typography color='text.secondary'>暂无匹配的模块</Typography>
+                <Typography color='text.secondary'>{i18n.t('microfrontend.module_marketplace.k17')}</Typography>
               </Box>
             ) : (
               <Grid

@@ -1,9 +1,10 @@
 import type { EntitySchema } from '@/schema';
+import i18n from '@/i18n';
 
 export const productionOrderSchema: EntitySchema = {
   entity: 'mes_production_order',
-  title: '生产订单',
-  description: '管理生产订单，包括订单号、产品、数量、计划时间、状态等',
+  title: i18n.t('mes.production_order.k0'),
+  description: i18n.t('mes.production_order.k1'),
 
   api: {
     module: 'mes',
@@ -13,7 +14,7 @@ export const productionOrderSchema: EntitySchema = {
   fields: [
     {
       name: 'order_number',
-      label: '订单号',
+      label: i18n.t('mes.production_order.k2'),
       type: 'text',
       required: true,
       sortable: true,
@@ -21,7 +22,7 @@ export const productionOrderSchema: EntitySchema = {
     },
     {
       name: 'product_name',
-      label: '产品名称',
+      label: i18n.t('mes.production_order.k3'),
       type: 'text',
       required: true,
       sortable: true,
@@ -30,14 +31,14 @@ export const productionOrderSchema: EntitySchema = {
     },
     {
       name: 'product_code',
-      label: '产品编码',
+      label: i18n.t('mes.production_order.k4'),
       type: 'text',
       listWidth: 120,
       validation: [{ type: 'maxLength', value: 64 }],
     },
     {
       name: 'quantity',
-      label: '数量',
+      label: i18n.t('mes.production_order.k5'),
       type: 'number',
       required: true,
       sortable: true,
@@ -45,13 +46,13 @@ export const productionOrderSchema: EntitySchema = {
     },
     {
       name: 'unit',
-      label: '单位',
+      label: i18n.t('mes.production_order.k6'),
       type: 'text',
       listWidth: 80,
     },
     {
       name: 'scheduled_start_date',
-      label: '计划开始',
+      label: i18n.t('mes.production_order.k7'),
       type: 'datetime',
       sortable: true,
       listWidth: 130,
@@ -60,7 +61,7 @@ export const productionOrderSchema: EntitySchema = {
     },
     {
       name: 'scheduled_end_date',
-      label: '计划结束',
+      label: i18n.t('mes.production_order.k8'),
       type: 'datetime',
       sortable: true,
       listWidth: 130,
@@ -69,47 +70,47 @@ export const productionOrderSchema: EntitySchema = {
     },
     {
       name: 'actualStartDate',
-      label: '实际开始',
+      label: i18n.t('mes.production_order.k9'),
       type: 'datetime',
       listWidth: 130,
       showInList: false,
     },
     {
       name: 'actualEndDate',
-      label: '实际结束',
+      label: i18n.t('mes.production_order.k10'),
       type: 'datetime',
       listWidth: 130,
       showInList: false,
     },
     {
       name: 'priority',
-      label: '优先级',
+      label: i18n.t('mes.production_order.k11'),
       type: 'select',
       options: {
         type: 'static',
         options: [
-          { value: 'low', label: '低' },
-          { value: 'normal', label: '普通' },
-          { value: 'high', label: '高' },
-          { value: 'urgent', label: '紧急' },
+          { value: 'low', label: i18n.t('mes.production_order.k12') },
+          { value: 'normal', label: i18n.t('mes.production_order.k13') },
+          { value: 'high', label: i18n.t('mes.production_order.k14') },
+          { value: 'urgent', label: i18n.t('mes.production_order.k15') },
         ],
       },
       listWidth: 90,
     },
     {
       name: 'status',
-      label: '状态',
+      label: i18n.t('mes.production_order.k16'),
       type: 'select',
       defaultValue: 'pending',
       options: {
         type: 'static',
         options: [
-          { value: 'pending', label: '待下达' },
-          { value: 'released', label: '已下达' },
-          { value: 'in_progress', label: '生产中' },
-          { value: 'completed', label: '已完成' },
-          { value: 'cancelled', label: '已取消' },
-          { value: 'paused', label: '已暂停' },
+          { value: 'pending', label: i18n.t('mes.production_order.k17') },
+          { value: 'released', label: i18n.t('mes.production_order.k18') },
+          { value: 'in_progress', label: i18n.t('mes.production_order.k19') },
+          { value: 'completed', label: i18n.t('mes.production_order.k20') },
+          { value: 'cancelled', label: i18n.t('mes.production_order.k21') },
+          { value: 'paused', label: i18n.t('mes.production_order.k22') },
         ],
       },
       listWidth: 100,
@@ -140,27 +141,27 @@ export const productionOrderSchema: EntitySchema = {
         paused: 'default',
       },
       labelMap: {
-        pending: '待下达',
-        released: '已下达',
-        in_progress: '生产中',
-        completed: '已完成',
-        cancelled: '已取消',
-        paused: '已暂停',
+        pending: i18n.t('mes.production_order.k23'),
+        released: i18n.t('mes.production_order.k24'),
+        in_progress: i18n.t('mes.production_order.k25'),
+        completed: i18n.t('mes.production_order.k26'),
+        cancelled: i18n.t('mes.production_order.k27'),
+        paused: i18n.t('mes.production_order.k28'),
       },
     },
     filters: [
       {
         id: 'status',
-        label: '状态',
+        label: i18n.t('mes.production_order.k29'),
         type: 'select',
         options: [
-          { label: '全部状态', value: 'all' },
-          { label: '待下达', value: 'pending' },
-          { label: '已下达', value: 'released' },
-          { label: '生产中', value: 'in_progress' },
-          { label: '已完成', value: 'completed' },
-          { label: '已取消', value: 'cancelled' },
-          { label: '已暂停', value: 'paused' },
+          { label: i18n.t('mes.production_order.k30'), value: 'all' },
+          { label: i18n.t('mes.production_order.k31'), value: 'pending' },
+          { label: i18n.t('mes.production_order.k32'), value: 'released' },
+          { label: i18n.t('mes.production_order.k33'), value: 'in_progress' },
+          { label: i18n.t('mes.production_order.k34'), value: 'completed' },
+          { label: i18n.t('mes.production_order.k35'), value: 'cancelled' },
+          { label: i18n.t('mes.production_order.k36'), value: 'paused' },
         ],
       },
     ],
@@ -170,21 +171,21 @@ export const productionOrderSchema: EntitySchema = {
 
   formSections: [
     {
-      title: '订单信息',
+      title: i18n.t('mes.production_order.k37'),
       fields: ['order_number', 'product_name', 'product_code'],
     },
     {
-      title: '数量与优先级',
+      title: i18n.t('mes.production_order.k38'),
       fields: ['quantity', 'unit', 'priority'],
     },
     {
-      title: '计划时间',
+      title: i18n.t('mes.production_order.k39'),
       fields: ['scheduled_start_date', 'scheduled_end_date'],
     },
   ],
 
   formColCount: 2,
-  createTitle: '新增生产订单',
-  editTitle: '编辑生产订单',
-  detailTitle: '生产订单详情',
+  createTitle: i18n.t('mes.production_order.k40'),
+  editTitle: i18n.t('mes.production_order.k41'),
+  detailTitle: i18n.t('mes.production_order.k42'),
 };

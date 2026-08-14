@@ -2,6 +2,8 @@ import React, { useState, useRef, useCallback, useEffect } from 'react';
 import { Box, IconButton, Typography, useTheme } from '@mui/material';
 import { Minimize, Maximize, X, Square } from 'lucide-react';
 import type { WindowState } from '@/hooks/useWindowManager';
+import { designTokens } from '@topems/tokens';
+import i18n from '@/i18n';
 
 interface DraggableWindowProps {
   window: WindowState;
@@ -144,7 +146,7 @@ export const DraggableWindow: React.FC<DraggableWindowProps> = ({
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
-          padding: '8px 12px',
+          padding: `${designTokens.spacing.sm} 12px`,
           backgroundColor:
             windowState.zIndex >= 200 ? theme.palette.primary.light : theme.palette.grey[100],
           borderBottom: `1px solid ${theme.palette.divider}`,
@@ -170,7 +172,7 @@ export const DraggableWindow: React.FC<DraggableWindowProps> = ({
                 height: 24,
                 '&:hover': { backgroundColor: theme.palette.grey[200] },
               }}
-              aria-label='最小化'
+              aria-label={i18n.t('shared.draggable_window.k0')}
             >
               <Minimize size={14} />
             </IconButton>
@@ -184,7 +186,7 @@ export const DraggableWindow: React.FC<DraggableWindowProps> = ({
                 height: 24,
                 '&:hover': { backgroundColor: theme.palette.grey[200] },
               }}
-              aria-label='选择'
+              aria-label={i18n.t('shared.draggable_window.k1')}
             >
               {windowState.isMaximized ? <Square size={14} /> : <Maximize size={14} />}
             </IconButton>
@@ -198,7 +200,7 @@ export const DraggableWindow: React.FC<DraggableWindowProps> = ({
                 height: 24,
                 '&:hover': { backgroundColor: theme.palette.error.light, color: 'common.white' },
               }}
-              aria-label='关闭'
+              aria-label={i18n.t('shared.draggable_window.k2')}
             >
               <X size={14} />
             </IconButton>

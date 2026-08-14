@@ -14,6 +14,7 @@ import {
   InputAdornment,
   IconButton,
 } from '@mui/material';
+import i18n from '@/i18n';
 import {
   Home,
   ListTodo,
@@ -46,19 +47,14 @@ import { apiLogger } from '@/utils/logger';
 import { useQuery } from '@tanstack/react-query';
 import { MOBILE_PATHS } from '@/modules/mobile/config';
 import { PageContainer } from '@/components/common';
-
-
 import { QUERY_KEYS } from '@/lib/reactQuery';
-
 const MobileInventoryPage: React.FC = () => {
   const theme = useTheme();
   const navigate = useNavigate();
   const { addNotification } = useNotificationStore();
   const [activeTab, setActiveTab] = useState(0);
   const [searchQuery, setSearchQuery] = useState('');
-
-  const tabs = ['库存', '盘点', '入库', '出库'];
-
+  const tabs = [i18n.t('mobile.mobile_inventory_page.k3'), i18n.t('mobile.mobile_inventory_page.k2'), i18n.t('mobile.mobile_inventory_page.k1'), i18n.t('mobile.mobile_inventory_page.k0')];
   const itemsQuery = useQuery<InventoryItem[]>({
     queryKey: QUERY_KEYS.AD_HOC.MOBILE_INVENTORY_ITEMS_BASE,
     queryFn: async () => {
@@ -66,10 +62,10 @@ const MobileInventoryPage: React.FC = () => {
         {
           id: '1',
           sku: 'MAT-001',
-          name: '电子元件 电阻10kΩ',
-          category: '电子元件',
+          name: i18n.t('pages.mobile_inventory_page.10k_0'),
+          category: i18n.t('mobile.mobile_inventory_page.k4'),
           quantity: 15000,
-          unit: '个',
+          unit: i18n.t('mobile.mobile_inventory_page.k5'),
           location: 'A1-03-05',
           batch_no: 'B20240601',
           status: 'normal',
@@ -78,10 +74,10 @@ const MobileInventoryPage: React.FC = () => {
         {
           id: '2',
           sku: 'MAT-002',
-          name: '电容 100μF',
-          category: '电子元件',
+          name: i18n.t('pages.mobile_inventory_page.100f_1'),
+          category: i18n.t('mobile.mobile_inventory_page.k6'),
           quantity: 8500,
-          unit: '个',
+          unit: i18n.t('mobile.mobile_inventory_page.k7'),
           location: 'A1-03-06',
           batch_no: 'B20240602',
           status: 'normal',
@@ -90,10 +86,10 @@ const MobileInventoryPage: React.FC = () => {
         {
           id: '3',
           sku: 'MAT-003',
-          name: 'PCB电路板',
-          category: '电路板',
+          name: i18n.t('pages.mobile_inventory_page.pcb_2'),
+          category: i18n.t('mobile.mobile_inventory_page.k8'),
           quantity: 500,
-          unit: '块',
+          unit: i18n.t('mobile.mobile_inventory_page.k9'),
           location: 'A2-01-02',
           batch_no: 'B20240528',
           status: 'low_stock',
@@ -102,10 +98,10 @@ const MobileInventoryPage: React.FC = () => {
         {
           id: '4',
           sku: 'MAT-004',
-          name: '塑料外壳',
-          category: '结构件',
+          name: i18n.t('mobile.mobile_inventory_page.k10'),
+          category: i18n.t('mobile.mobile_inventory_page.k11'),
           quantity: 0,
-          unit: '个',
+          unit: i18n.t('mobile.mobile_inventory_page.k12'),
           location: 'B1-02-03',
           batch_no: 'B20240520',
           status: 'out_of_stock',
@@ -114,10 +110,10 @@ const MobileInventoryPage: React.FC = () => {
         {
           id: '5',
           sku: 'FG-001',
-          name: '智能传感器模块',
-          category: '成品',
+          name: i18n.t('mobile.mobile_inventory_page.k13'),
+          category: i18n.t('mobile.mobile_inventory_page.k14'),
           quantity: 320,
-          unit: '台',
+          unit: i18n.t('mobile.mobile_inventory_page.k15'),
           location: 'C1-01-01',
           batch_no: 'FG20240625',
           expiry_date: '2025-06-25',
@@ -127,10 +123,10 @@ const MobileInventoryPage: React.FC = () => {
         {
           id: '6',
           sku: 'FG-002',
-          name: '数据采集器',
-          category: '成品',
+          name: i18n.t('mobile.mobile_inventory_page.k16'),
+          category: i18n.t('mobile.mobile_inventory_page.k17'),
           quantity: 150,
-          unit: '台',
+          unit: i18n.t('mobile.mobile_inventory_page.k18'),
           location: 'C1-02-01',
           batch_no: 'FG20240620',
           status: 'normal',
@@ -142,41 +138,40 @@ const MobileInventoryPage: React.FC = () => {
     staleTime: 5 * 60 * 1000,
   });
   const inventoryItems = itemsQuery.data ?? [];
-
   const stocktakeQuery = useQuery<StocktakeTask[]>({
     queryKey: QUERY_KEYS.AD_HOC.MOBILE_INVENTORY_STOCKTAKE_BASE,
     queryFn: async () => {
       const mockStocktakeTasks: StocktakeTask[] = [
         {
           id: '1',
-          title: 'A区月度盘点',
-          warehouse: 'A仓库',
+          title: i18n.t('pages.mobile_inventory_page.a_3'),
+          warehouse: i18n.t('pages.mobile_inventory_page.a_4'),
           status: 'in_progress',
           total_items: 120,
           counted_items: 85,
-          assignee: '张明',
+          assignee: i18n.t('mobile.mobile_inventory_page.k19'),
           due_date: '2024-06-30',
           created_at: '2024-06-25T09:00:00Z',
         },
         {
           id: '2',
-          title: '成品区季度盘点',
-          warehouse: 'C仓库',
+          title: i18n.t('mobile.mobile_inventory_page.k20'),
+          warehouse: i18n.t('pages.mobile_inventory_page.c_5'),
           status: 'pending',
           total_items: 45,
           counted_items: 0,
-          assignee: '李华',
+          assignee: i18n.t('mobile.mobile_inventory_page.k21'),
           due_date: '2024-07-05',
           created_at: '2024-06-28T08:00:00Z',
         },
         {
           id: '3',
-          title: 'B区上月复盘',
-          warehouse: 'B仓库',
+          title: i18n.t('pages.mobile_inventory_page.b_6'),
+          warehouse: i18n.t('pages.mobile_inventory_page.b_7'),
           status: 'completed',
           total_items: 80,
           counted_items: 80,
-          assignee: '王强',
+          assignee: i18n.t('mobile.mobile_inventory_page.k22'),
           due_date: '2024-06-20',
           created_at: '2024-06-15T09:00:00Z',
         },
@@ -186,7 +181,6 @@ const MobileInventoryPage: React.FC = () => {
     staleTime: 5 * 60 * 1000,
   });
   const stocktakeTasks = stocktakeQuery.data ?? [];
-
   const inboundQuery = useQuery<InboundOrder[]>({
     queryKey: QUERY_KEYS.AD_HOC.MOBILE_INVENTORY_INBOUND_BASE,
     queryFn: async () => {
@@ -194,7 +188,7 @@ const MobileInventoryPage: React.FC = () => {
         {
           id: '1',
           orderNo: 'IN-2024-06-0891',
-          supplier: '深圳电子科技有限公司',
+          supplier: i18n.t('mobile.mobile_inventory_page.k23'),
           type: 'purchase',
           status: 'in_progress',
           total_items: 5,
@@ -205,7 +199,7 @@ const MobileInventoryPage: React.FC = () => {
         {
           id: '2',
           orderNo: 'IN-2024-06-0892',
-          supplier: '东莞五金制品厂',
+          supplier: i18n.t('mobile.mobile_inventory_page.k24'),
           type: 'purchase',
           status: 'pending',
           total_items: 3,
@@ -216,7 +210,7 @@ const MobileInventoryPage: React.FC = () => {
         {
           id: '3',
           orderNo: 'IN-2024-06-0890',
-          supplier: '广州包装材料厂',
+          supplier: i18n.t('mobile.mobile_inventory_page.k25'),
           type: 'purchase',
           status: 'completed',
           total_items: 2,
@@ -230,7 +224,6 @@ const MobileInventoryPage: React.FC = () => {
     staleTime: 5 * 60 * 1000,
   });
   const inboundOrders = inboundQuery.data ?? [];
-
   const outboundQuery = useQuery<OutboundOrder[]>({
     queryKey: QUERY_KEYS.AD_HOC.MOBILE_INVENTORY_OUTBOUND_BASE,
     queryFn: async () => {
@@ -238,7 +231,7 @@ const MobileInventoryPage: React.FC = () => {
         {
           id: '1',
           orderNo: 'OUT-2024-06-0567',
-          customer: '北京智能科技有限公司',
+          customer: i18n.t('mobile.mobile_inventory_page.k26'),
           type: 'sales',
           status: 'in_progress',
           total_items: 3,
@@ -249,7 +242,7 @@ const MobileInventoryPage: React.FC = () => {
         {
           id: '2',
           orderNo: 'OUT-2024-06-0566',
-          customer: '上海自动化设备厂',
+          customer: i18n.t('mobile.mobile_inventory_page.k27'),
           type: 'sales',
           status: 'pending',
           total_items: 5,
@@ -260,7 +253,7 @@ const MobileInventoryPage: React.FC = () => {
         {
           id: '3',
           orderNo: 'OUT-2024-06-0565',
-          customer: '深圳电子科技有限公司',
+          customer: i18n.t('mobile.mobile_inventory_page.k28'),
           type: 'sales',
           status: 'completed',
           total_items: 2,
@@ -279,19 +272,18 @@ const MobileInventoryPage: React.FC = () => {
     stocktakeQuery.isLoading ||
     inboundQuery.isLoading ||
     outboundQuery.isLoading;
-
   useEffect(() => {
     if (itemsQuery.isError) {
-      apiLogger.error('加载库存物料失败:', itemsQuery.error);
+      apiLogger.error(i18n.t('pages.mobile_inventory_page.k8'), itemsQuery.error);
     }
     if (stocktakeQuery.isError) {
-      apiLogger.error('加载盘点任务失败:', stocktakeQuery.error);
+      apiLogger.error(i18n.t('pages.mobile_inventory_page.k9'), stocktakeQuery.error);
     }
     if (inboundQuery.isError) {
-      apiLogger.error('加载入库订单失败:', inboundQuery.error);
+      apiLogger.error(i18n.t('pages.mobile_inventory_page.k10'), inboundQuery.error);
     }
     if (outboundQuery.isError) {
-      apiLogger.error('加载出库订单失败:', outboundQuery.error);
+      apiLogger.error(i18n.t('pages.mobile_inventory_page.k11'), outboundQuery.error);
     }
   }, [
     itemsQuery.isError,
@@ -303,7 +295,6 @@ const MobileInventoryPage: React.FC = () => {
     outboundQuery.isError,
     outboundQuery.error,
   ]);
-
   const handleRefresh = useCallback(async () => {
     await Promise.all([
       itemsQuery.refetch(),
@@ -312,24 +303,21 @@ const MobileInventoryPage: React.FC = () => {
       outboundQuery.refetch(),
     ]);
   }, [itemsQuery, stocktakeQuery, inboundQuery, outboundQuery]);
-
   const handleTabChange = (_event: React.SyntheticEvent, newValue: number) => {
     setActiveTab(newValue);
   };
-
   const getStatusLabel = (status: string) => {
     const map: Record<string, string> = {
-      normal: '正常',
-      low_stock: '低库存',
-      out_of_stock: '缺货',
-      frozen: '冻结',
-      pending: '待处理',
-      in_progress: '进行中',
-      completed: '已完成',
+      normal: i18n.t('mobile.mobile_inventory_page.k29'),
+      low_stock: i18n.t('mobile.mobile_inventory_page.k30'),
+      out_of_stock: i18n.t('mobile.mobile_inventory_page.k31'),
+      frozen: i18n.t('mobile.mobile_inventory_page.k32'),
+      pending: i18n.t('mobile.mobile_inventory_page.k33'),
+      in_progress: i18n.t('mobile.mobile_inventory_page.k34'),
+      completed: i18n.t('mobile.mobile_inventory_page.k35'),
     };
     return map[status] || status;
   };
-
   const getStatusColor = (status: string) => {
     const map: Record<string, 'success' | 'warning' | 'error' | 'info' | 'primary' | 'default'> = {
       normal: 'success',
@@ -342,24 +330,21 @@ const MobileInventoryPage: React.FC = () => {
     };
     return map[status] || 'default';
   };
-
   const getTypeLabel = (type: string) => {
     const map: Record<string, string> = {
-      purchase: '采购',
-      return: '退货',
-      transfer: '调拨',
-      sales: '销售',
+      purchase: i18n.t('mobile.mobile_inventory_page.k36'),
+      return: i18n.t('mobile.mobile_inventory_page.k37'),
+      transfer: i18n.t('mobile.mobile_inventory_page.k38'),
+      sales: i18n.t('mobile.mobile_inventory_page.k39'),
     };
     return map[type] || type;
   };
-
   const filteredItems = inventoryItems.filter(
     (item) =>
       !searchQuery ||
       item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       item.sku.toLowerCase().includes(searchQuery.toLowerCase())
   );
-
   const handleBottomTabChange = (tabId: string) => {
     switch (tabId) {
       case 'home':
@@ -379,23 +364,21 @@ const MobileInventoryPage: React.FC = () => {
         break;
     }
   };
-
   const bottomTabs = [
-    { id: 'home', label: '工作台', icon: <Home style={{ width: 22, height: 22 }} /> },
-    { id: 'tasks', label: '任务', icon: <ListTodo style={{ width: 22, height: 22 }} /> },
-    { id: 'scan', label: '扫码', icon: <ScanLine style={{ width: 22, height: 22 }} /> },
+    { id: 'home', label: i18n.t('mobile.mobile_inventory_page.k40'), icon: <Home style={{ width: 22, height: 22 }} /> },
+    { id: 'tasks', label: i18n.t('mobile.mobile_inventory_page.k41'), icon: <ListTodo style={{ width: 22, height: 22 }} /> },
+    { id: 'scan', label: i18n.t('mobile.mobile_inventory_page.k42'), icon: <ScanLine style={{ width: 22, height: 22 }} /> },
     {
       id: 'approval',
-      label: '审批',
+      label: i18n.t('mobile.mobile_inventory_page.k43'),
       icon: <CheckSquare style={{ width: 22, height: 22 }} />,
       badge: 3,
     },
-    { id: 'profile', label: '我的', icon: <User style={{ width: 22, height: 22 }} /> },
+    { id: 'profile', label: i18n.t('mobile.mobile_inventory_page.k44'), icon: <User style={{ width: 22, height: 22 }} /> },
   ];
-
   return (
     <MobileLayout
-      title='移动库存'
+      title={i18n.t('mobile.mobile_inventory_page.k45')}
       showBack
       onBackClick={() => navigate(MOBILE_PATHS.workbench)}
       showNotifications
@@ -409,7 +392,7 @@ const MobileInventoryPage: React.FC = () => {
           size='large'
           sx={{ minWidth: 44, minHeight: 44 }}
           onClick={() => navigate(MOBILE_PATHS.scanPage)}
-          aria-label='扫码'
+          aria-label={i18n.t('mobile.mobile_inventory_page.k46')}
         >
           <Barcode style={{ width: 20, height: 20 }} />
         </IconButton>
@@ -439,13 +422,12 @@ const MobileInventoryPage: React.FC = () => {
             />
           ))}
         </Tabs>
-
         {activeTab === 0 && (
           <Box sx={{ px: 2, pt: 2 }}>
             <TextField
               fullWidth
               size='small'
-              placeholder='搜索物料名称、编码'
+              placeholder={i18n.t('mobile.mobile_inventory_page.k47')}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               sx={{
@@ -467,7 +449,6 @@ const MobileInventoryPage: React.FC = () => {
             />
           </Box>
         )}
-
         <PullToRefresh onRefresh={handleRefresh}>
           {loading ? (
             <MobileSkeleton
@@ -518,7 +499,7 @@ const MobileInventoryPage: React.FC = () => {
                               variant='caption'
                               color='text.secondary'
                             >
-                              库位: {item.location}
+                              [i18n.t('pages.mobile_inventory_page.k0')]: {item.location}
                             </Typography>
                           </Box>
                         }
@@ -542,8 +523,8 @@ const MobileInventoryPage: React.FC = () => {
                         }
                         onClick={() =>
                           addNotification({
-                            title: '物料详情',
-                            message: `查看 ${item.name} 详情`,
+                            title: i18n.t('mobile.mobile_inventory_page.k48'),
+                            message: `${i18n.t('pages.mobile_inventory_page.k12')}${item.name}${i18n.t('pages.mobile_inventory_page.k13')}`,
                             type: 'info',
                           })
                         }
@@ -552,7 +533,6 @@ const MobileInventoryPage: React.FC = () => {
                   ))}
                 </List>
               )}
-
               {activeTab === 1 && (
                 <List disablePadding>
                   {stocktakeTasks.map((task, index) => (
@@ -605,7 +585,7 @@ const MobileInventoryPage: React.FC = () => {
                               color='text.secondary'
                               sx={{ display: 'block', mb: 0.5 }}
                             >
-                              仓库
+                              {i18n.t('pages.mobile_inventory_page.k1')}
                             </Typography>
                             <Typography variant='body2'>{task.warehouse}</Typography>
                           </Box>
@@ -615,7 +595,7 @@ const MobileInventoryPage: React.FC = () => {
                               color='text.secondary'
                               sx={{ display: 'block', mb: 0.5 }}
                             >
-                              负责人
+                              {i18n.t('pages.mobile_inventory_page.k2')}
                             </Typography>
                             <Typography variant='body2'>{task.assignee}</Typography>
                           </Box>
@@ -632,7 +612,7 @@ const MobileInventoryPage: React.FC = () => {
                               variant='caption'
                               color='text.secondary'
                             >
-                              盘点进度
+                              {i18n.t('pages.mobile_inventory_page.k3')}
                             </Typography>
                             <Typography variant='caption'>
                               {task.counted_items}/{task.total_items}
@@ -669,7 +649,7 @@ const MobileInventoryPage: React.FC = () => {
                             variant='caption'
                             color='text.secondary'
                           >
-                            截止日期: {task.due_date}
+                            [i18n.t('pages.mobile_inventory_page.k4')]: {task.due_date}
                           </Typography>
                           {task.status !== 'completed' && (
                             <MobileButton
@@ -677,13 +657,13 @@ const MobileInventoryPage: React.FC = () => {
                               variant='outlined'
                               onClick={() =>
                                 addNotification({
-                                  title: '开始盘点',
-                                  message: `开始 ${task.title}`,
+                                  title: i18n.t('mobile.mobile_inventory_page.k49'),
+                                  message: `${i18n.t('pages.mobile_inventory_page.k14')}${task.title}`,
                                   type: 'info',
                                 })
                               }
                             >
-                              {task.status === 'pending' ? '开始' : '继续'}
+                              {task.status === 'pending' ? i18n.t('mobile.mobile_inventory_page.k51') : i18n.t('mobile.mobile_inventory_page.k50')}
                             </MobileButton>
                           )}
                         </Box>
@@ -693,7 +673,6 @@ const MobileInventoryPage: React.FC = () => {
                   ))}
                 </List>
               )}
-
               {activeTab === 2 && (
                 <List disablePadding>
                   {inboundOrders.map((order, index) => (
@@ -758,8 +737,8 @@ const MobileInventoryPage: React.FC = () => {
                         }
                         onClick={() =>
                           addNotification({
-                            title: '入库单详情',
-                            message: `查看 ${order.orderNo}`,
+                            title: i18n.t('mobile.mobile_inventory_page.k52'),
+                            message: `${i18n.t('pages.mobile_inventory_page.k15')}${order.orderNo}`,
                             type: 'info',
                           })
                         }
@@ -768,7 +747,6 @@ const MobileInventoryPage: React.FC = () => {
                   ))}
                 </List>
               )}
-
               {activeTab === 3 && (
                 <List disablePadding>
                   {outboundOrders.map((order, index) => (
@@ -833,8 +811,8 @@ const MobileInventoryPage: React.FC = () => {
                         }
                         onClick={() =>
                           addNotification({
-                            title: '出库单详情',
-                            message: `查看 ${order.orderNo}`,
+                            title: i18n.t('mobile.mobile_inventory_page.k53'),
+                            message: `${i18n.t('pages.mobile_inventory_page.k16')}${order.orderNo}`,
                             type: 'info',
                           })
                         }
@@ -850,5 +828,4 @@ const MobileInventoryPage: React.FC = () => {
     </MobileLayout>
   );
 };
-
 export default MobileInventoryPage;

@@ -1,47 +1,48 @@
 import type { EntitySchema } from '@/schema';
 import type { SchemaExtensions } from '@/schema/schemaExtensions';
 import { columnsFromFields } from '@/schema/schemaExtensions';
+import i18n from '@/i18n';
 
 const itemFields = [
   {
     name: 'line_no',
-    label: '行号',
+    label: i18n.t('scm.purchase_order.k0'),
     type: 'number' as const,
     listWidth: 80,
   },
   {
     name: 'material_code',
-    label: '物料编码',
+    label: i18n.t('scm.purchase_order.k1'),
     type: 'text' as const,
     listWidth: 140,
   },
   {
     name: 'material_name',
-    label: '物料名称',
+    label: i18n.t('scm.purchase_order.k2'),
     type: 'text' as const,
     listWidth: 160,
   },
   {
     name: 'qty',
-    label: '数量',
+    label: i18n.t('scm.purchase_order.k3'),
     type: 'number' as const,
     listWidth: 100,
   },
   {
     name: 'unit',
-    label: '单位',
+    label: i18n.t('scm.purchase_order.k4'),
     type: 'text' as const,
     listWidth: 80,
   },
   {
     name: 'price',
-    label: '单价',
+    label: i18n.t('scm.purchase_order.k5'),
     type: 'number' as const,
     listWidth: 100,
   },
   {
     name: 'amount',
-    label: '金额',
+    label: i18n.t('scm.purchase_order.k6'),
     type: 'number' as const,
     listWidth: 120,
   },
@@ -49,8 +50,8 @@ const itemFields = [
 
 export const purchaseOrderSchema: EntitySchema & SchemaExtensions = {
   entity: 'purchaseOrder',
-  title: '采购订单',
-  description: '管理采购订单，包括订单基本信息、物料明细、审批流程等',
+  title: i18n.t('scm.purchase_order.k7'),
+  description: i18n.t('scm.purchase_order.k8'),
 
   api: {
     module: 'scm',
@@ -60,7 +61,7 @@ export const purchaseOrderSchema: EntitySchema & SchemaExtensions = {
   fields: [
     {
       name: 'orderNo',
-      label: '订单号',
+      label: i18n.t('scm.purchase_order.k9'),
       type: 'text',
       required: true,
       readonlyOnEdit: true,
@@ -70,21 +71,21 @@ export const purchaseOrderSchema: EntitySchema & SchemaExtensions = {
     },
     {
       name: 'supplier_id',
-      label: '供应商',
+      label: i18n.t('scm.purchase_order.k10'),
       type: 'text',
       required: true,
       listWidth: 160,
     },
     {
       name: 'title',
-      label: '标题',
+      label: i18n.t('scm.purchase_order.k11'),
       type: 'text',
       required: true,
       listWidth: 180,
     },
     {
       name: 'total_amount',
-      label: '金额',
+      label: i18n.t('scm.purchase_order.k12'),
       type: 'number',
       defaultValue: 0,
       sortable: true,
@@ -92,18 +93,18 @@ export const purchaseOrderSchema: EntitySchema & SchemaExtensions = {
     },
     {
       name: 'status',
-      label: '状态',
+      label: i18n.t('scm.purchase_order.k13'),
       type: 'select',
       defaultValue: 'draft',
       options: {
         type: 'static',
         options: [
-          { value: 'draft', label: '草稿' },
-          { value: 'pending', label: '待审批' },
-          { value: 'approved', label: '已审批' },
-          { value: 'confirmed', label: '已确认' },
-          { value: 'completed', label: '已完成' },
-          { value: 'cancelled', label: '已取消' },
+          { value: 'draft', label: i18n.t('scm.purchase_order.k14') },
+          { value: 'pending', label: i18n.t('scm.purchase_order.k15') },
+          { value: 'approved', label: i18n.t('scm.purchase_order.k16') },
+          { value: 'confirmed', label: i18n.t('scm.purchase_order.k17') },
+          { value: 'completed', label: i18n.t('scm.purchase_order.k18') },
+          { value: 'cancelled', label: i18n.t('scm.purchase_order.k19') },
         ],
       },
       listWidth: 100,
@@ -111,7 +112,7 @@ export const purchaseOrderSchema: EntitySchema & SchemaExtensions = {
     },
     {
       name: 'order_date',
-      label: '下单日期',
+      label: i18n.t('scm.purchase_order.k20'),
       type: 'date',
       required: true,
       sortable: true,
@@ -119,7 +120,7 @@ export const purchaseOrderSchema: EntitySchema & SchemaExtensions = {
     },
     {
       name: 'expected_date',
-      label: '预计到货',
+      label: i18n.t('scm.purchase_order.k21'),
       type: 'date',
       sortable: true,
       listWidth: 120,
@@ -149,27 +150,27 @@ export const purchaseOrderSchema: EntitySchema & SchemaExtensions = {
         cancelled: 'error',
       },
       labelMap: {
-        draft: '草稿',
-        pending: '待审批',
-        approved: '已审批',
-        confirmed: '已确认',
-        completed: '已完成',
-        cancelled: '已取消',
+        draft: i18n.t('scm.purchase_order.k22'),
+        pending: i18n.t('scm.purchase_order.k23'),
+        approved: i18n.t('scm.purchase_order.k24'),
+        confirmed: i18n.t('scm.purchase_order.k25'),
+        completed: i18n.t('scm.purchase_order.k26'),
+        cancelled: i18n.t('scm.purchase_order.k27'),
       },
     },
     filters: [
       {
         id: 'status',
-        label: '状态',
+        label: i18n.t('scm.purchase_order.k28'),
         type: 'select',
         options: [
-          { label: '全部状态', value: 'all' },
-          { label: '草稿', value: 'draft' },
-          { label: '待审批', value: 'pending' },
-          { label: '已审批', value: 'approved' },
-          { label: '已确认', value: 'confirmed' },
-          { label: '已完成', value: 'completed' },
-          { label: '已取消', value: 'cancelled' },
+          { label: i18n.t('scm.purchase_order.k29'), value: 'all' },
+          { label: i18n.t('scm.purchase_order.k30'), value: 'draft' },
+          { label: i18n.t('scm.purchase_order.k31'), value: 'pending' },
+          { label: i18n.t('scm.purchase_order.k32'), value: 'approved' },
+          { label: i18n.t('scm.purchase_order.k33'), value: 'confirmed' },
+          { label: i18n.t('scm.purchase_order.k34'), value: 'completed' },
+          { label: i18n.t('scm.purchase_order.k35'), value: 'cancelled' },
         ],
       },
     ],
@@ -179,31 +180,31 @@ export const purchaseOrderSchema: EntitySchema & SchemaExtensions = {
 
   formSections: [
     {
-      title: '基本信息',
+      title: i18n.t('scm.purchase_order.k36'),
       fields: ['orderNo', 'supplier_id', 'title', 'status'],
     },
     {
-      title: '金额与日期',
+      title: i18n.t('scm.purchase_order.k37'),
       fields: ['total_amount', 'order_date', 'expected_date'],
     },
   ],
 
   formColCount: 2,
-  createTitle: '新增采购订单',
-  editTitle: '编辑采购订单',
-  detailTitle: '采购订单详情',
+  createTitle: i18n.t('scm.purchase_order.k38'),
+  editTitle: i18n.t('scm.purchase_order.k39'),
+  detailTitle: i18n.t('scm.purchase_order.k40'),
 
   nestedTables: [
     {
       field: 'items',
-      title: '物料明细',
+      title: i18n.t('scm.purchase_order.k41'),
       columns: columnsFromFields(itemFields),
       fields: itemFields,
       allowAdd: true,
       allowEdit: true,
       allowDelete: true,
       allowDuplicate: true,
-      addButtonText: '新增物料',
+      addButtonText: i18n.t('scm.purchase_order.k42'),
       rowKeyField: 'line_no',
       minRows: 1,
       formColCount: 2,
@@ -214,29 +215,29 @@ export const purchaseOrderSchema: EntitySchema & SchemaExtensions = {
     steps: [
       {
         key: 'basic',
-        title: '基本信息',
-        description: '填写订单基本信息',
+        title: i18n.t('scm.purchase_order.k43'),
+        description: i18n.t('scm.purchase_order.k44'),
         fields: ['orderNo', 'supplier_id', 'title', 'order_date', 'expected_date', 'status'],
       },
       {
         key: 'items',
-        title: '物料明细',
-        description: '添加订单物料明细',
+        title: i18n.t('scm.purchase_order.k45'),
+        description: i18n.t('scm.purchase_order.k46'),
         fields: ['items'],
       },
       {
         key: 'confirm',
-        title: '确认提交',
-        description: '确认订单信息并提交',
+        title: i18n.t('scm.purchase_order.k47'),
+        description: i18n.t('scm.purchase_order.k48'),
         fields: ['total_amount'],
         isFinalStep: true,
       },
     ],
-    title: '创建采购订单',
+    title: i18n.t('scm.purchase_order.k49'),
     showProgress: true,
     showSummaryOnComplete: true,
-    finishButtonText: '提交订单',
-    nextButtonText: '下一步',
-    prevButtonText: '上一步',
+    finishButtonText: i18n.t('scm.purchase_order.k50'),
+    nextButtonText: i18n.t('scm.purchase_order.k51'),
+    prevButtonText: i18n.t('scm.purchase_order.k52'),
   },
 };

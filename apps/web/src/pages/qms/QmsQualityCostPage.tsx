@@ -7,16 +7,14 @@ import { qualityCostSchema } from '@/schemas/qms';
 import { qualityCostApi } from '@/api/qms';
 import type { QualityCost } from '@/api/qms';
 import { designTokens } from '@/theme/tokens';
-
+import i18n from '@/i18n';
 const ct= designTokens.colors;
-
 const apiAdapter = createCrudPageAdapter<QualityCost>({
   list: qualityCostApi.listQualityCosts as unknown as CrudApi<QualityCost>['list'],
   create: qualityCostApi.createQualityCost as unknown as CrudApi<QualityCost>['create'],
   update: qualityCostApi.updateQualityCost as unknown as CrudApi<QualityCost>['update'],
   delete: qualityCostApi.deleteQualityCost as unknown as CrudApi<QualityCost>['delete'],
 });
-
 function QualityCostStatsCards({ rows }: { rows: QualityCost[] }) {
   const stats = {
     total: rows.reduce((sum, c) => sum + (c.amount || 0), 0),
@@ -33,7 +31,6 @@ function QualityCostStatsCards({ rows }: { rows: QualityCost[] }) {
       .filter((c) => c.costType === 'external_failure')
       .reduce((sum, c) => sum + (c.amount || 0), 0),
   };
-
   return (
     <Box
       sx={{
@@ -52,7 +49,7 @@ function QualityCostStatsCards({ rows }: { rows: QualityCost[] }) {
         <CardContent sx={{ p: 3 }}>
           <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
             <Box>
-              <Typography sx={{ color: 'info.light', fontSize: '0.875rem' }}>总质量成本</Typography>
+              <Typography sx={{ color: 'info.light', fontSize: '0.875rem' }}>{i18n.t('qms.qms_quality_cost_page.k0')}</Typography>
               <Typography
                 variant='h4'
                 sx={{ fontWeight: 700, mt: 0.5 }}
@@ -64,7 +61,6 @@ function QualityCostStatsCards({ rows }: { rows: QualityCost[] }) {
           </Box>
         </CardContent>
       </Card>
-
       <Card
         sx={{
           background: `linear-gradient(135deg, ${ct.success.main} 0%, ${ct.success.dark} 100%)`,
@@ -75,7 +71,7 @@ function QualityCostStatsCards({ rows }: { rows: QualityCost[] }) {
           <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
             <Box>
               <Typography sx={{ color: 'success.light', fontSize: '0.875rem' }}>
-                预防成本
+                {i18n.t('pages.qms_quality_cost_page.k0')}
               </Typography>
               <Typography
                 variant='h4'
@@ -88,7 +84,6 @@ function QualityCostStatsCards({ rows }: { rows: QualityCost[] }) {
           </Box>
         </CardContent>
       </Card>
-
       <Card
         sx={{
           background: `linear-gradient(135deg, ${ct.primary.main} 0%, ${ct.primary.dark} 100%)`,
@@ -99,7 +94,7 @@ function QualityCostStatsCards({ rows }: { rows: QualityCost[] }) {
           <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
             <Box>
               <Typography sx={{ color: 'primary.light', fontSize: '0.875rem' }}>
-                鉴定成本
+                {i18n.t('pages.qms_quality_cost_page.k1')}
               </Typography>
               <Typography
                 variant='h4'
@@ -112,7 +107,6 @@ function QualityCostStatsCards({ rows }: { rows: QualityCost[] }) {
           </Box>
         </CardContent>
       </Card>
-
       <Card
         sx={{
           background: `linear-gradient(135deg, ${ct.warning.main} 0%, ${ct.warning.dark} 100%)`,
@@ -123,7 +117,7 @@ function QualityCostStatsCards({ rows }: { rows: QualityCost[] }) {
           <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
             <Box>
               <Typography sx={{ color: 'warning.light', fontSize: '0.875rem' }}>
-                内部损失
+                {i18n.t('pages.qms_quality_cost_page.k2')}
               </Typography>
               <Typography
                 variant='h4'
@@ -136,7 +130,6 @@ function QualityCostStatsCards({ rows }: { rows: QualityCost[] }) {
           </Box>
         </CardContent>
       </Card>
-
       <Card
         sx={{
           background: `linear-gradient(135deg, ${ct.error.main} 0%, ${ct.error[600]} 100%)`,
@@ -146,7 +139,7 @@ function QualityCostStatsCards({ rows }: { rows: QualityCost[] }) {
         <CardContent sx={{ p: 3 }}>
           <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
             <Box>
-              <Typography sx={{ color: 'error.light', fontSize: '0.875rem' }}>外部损失</Typography>
+              <Typography sx={{ color: 'error.light', fontSize: '0.875rem' }}>{i18n.t('qms.qms_quality_cost_page.k1')}</Typography>
               <Typography
                 variant='h4'
                 sx={{ fontWeight: 700, mt: 0.5 }}
@@ -161,17 +154,15 @@ function QualityCostStatsCards({ rows }: { rows: QualityCost[] }) {
     </Box>
   );
 }
-
 const QmsQualityCostPage: React.FC = () => {
   return (
     <CrudPage
       schema={qualityCostSchema}
       apiAdapter={apiAdapter}
-      breadcrumbs={[{ label: 'QMS' }, { label: '质量成本分析' }]}
+      breadcrumbs={[{ label: 'QMS' }, { label: i18n.t('qms.qms_quality_cost_page.k2') }]}
       headerContent={(rows) => <QualityCostStatsCards rows={rows as QualityCost[]} />}
       detailMaxWidth='lg'
     />
   );
 };
-
 export default QmsQualityCostPage;

@@ -4,12 +4,9 @@
  */
 import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { useTranslation } from 'react-i18next';
 import { logger } from '@/utils/logger';
 import { QUERY_KEYS } from '@/lib/reactQuery';
-
 import {
-
   listRowLevelPermissions,
   createRowLevelPermission,
   updateRowLevelPermission,
@@ -19,21 +16,18 @@ import {
   type RowLevelPermission,
   type DataPermissionRule,
 } from '@/api/bi';
-
+import i18n from '@/i18n';
 export type BiPermissionTab = 'row-level' | 'data';
-
 export interface TestResult {
   success: boolean;
   message: string;
 }
-
 export interface UseBiPermissionResult {
   // tab + search
   activeTab: BiPermissionTab;
   setActiveTab: (tab: BiPermissionTab) => void;
   searchTerm: string;
   setSearchTerm: (v: string) => void;
-
   // data
   rowPermissions: RowLevelPermission[];
   dataPermissions: DataPermissionRule[];
@@ -41,7 +35,6 @@ export interface UseBiPermissionResult {
   filteredDataPermissions: DataPermissionRule[];
   loading: boolean;
   actionLoading: boolean;
-
   // dialog + form
   dialogOpen: boolean;
   setDialogOpen: (open: boolean) => void;
@@ -50,20 +43,17 @@ export interface UseBiPermissionResult {
   setFormData: (data: Partial<RowLevelPermission>) => void;
   testResult: TestResult | null;
   setTestResult: (r: TestResult | null) => void;
-
   // handlers
   handleOpenDialog: (item?: RowLevelPermission) => void;
   handleSave: () => void;
   handleDelete: (id: string) => void;
   handleToggle: (item: RowLevelPermission) => void;
   handleTest: (item: RowLevelPermission) => Promise<void>;
-
   // label helpers
   getResourceTypeLabel: (type: string) => string;
   getPermissionTypeLabel: (type: string) => string;
   getPermissionTypeColor: (type: string) => 'primary' | 'success' | 'warning' | 'error';
 }
-
 const DEFAULT_FORM: Partial<RowLevelPermission> = {
   name: '',
   description: '',
@@ -75,9 +65,7 @@ const DEFAULT_FORM: Partial<RowLevelPermission> = {
   isEnabled: true,
   priority: 1,
 };
-
 export const useBiPermission = (): UseBiPermissionResult => {
-  const { t } = useTranslation();
   const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = useState<BiPermissionTab>('row-level');
   const [searchTerm, setSearchTerm] = useState('');
@@ -85,7 +73,6 @@ export const useBiPermission = (): UseBiPermissionResult => {
   const [editingItem, setEditingItem] = useState<RowLevelPermission | null>(null);
   const [formData, setFormData] = useState<Partial<RowLevelPermission>>(DEFAULT_FORM);
   const [testResult, setTestResult] = useState<TestResult | null>(null);
-
   const rowPermissionsQuery = useQuery<RowLevelPermission[]>({
     queryKey: QUERY_KEYS.AD_HOC.BI_ROW_PERMISSIONS_BASE,
     queryFn: async () => {
@@ -97,7 +84,6 @@ export const useBiPermission = (): UseBiPermissionResult => {
     },
     staleTime: 5 * 60 * 1000,
   });
-
   const dataPermissionsQuery = useQuery<DataPermissionRule[]>({
     queryKey: QUERY_KEYS.AD_HOC.BI_DATA_PERMISSIONS_BASE,
     queryFn: async () => {
@@ -109,11 +95,9 @@ export const useBiPermission = (): UseBiPermissionResult => {
     },
     staleTime: 5 * 60 * 1000,
   });
-
   const rowPermissions = rowPermissionsQuery.data ?? [];
   const dataPermissions = dataPermissionsQuery.data ?? [];
   const loading = rowPermissionsQuery.isLoading;
-
   useEffect(() => {
     if (rowPermissionsQuery.isError) {
       logger.error('Failed to load row level permissions:', rowPermissionsQuery.error);
@@ -127,7 +111,6 @@ export const useBiPermission = (): UseBiPermissionResult => {
     dataPermissionsQuery.isError,
     dataPermissionsQuery.error,
   ]);
-
   const saveMutation = useMutation({
     mutationFn: async () => {
       if (editingItem) {
@@ -148,7 +131,6 @@ export const useBiPermission = (): UseBiPermissionResult => {
       setDialogOpen(false);
     },
   });
-
   const deleteMutation = useMutation({
     mutationFn: (id: string) => deleteRowLevelPermission(id),
     onSuccess: () => {
@@ -161,7 +143,6 @@ export const useBiPermission = (): UseBiPermissionResult => {
       logger.error('Failed to delete permission:', error);
     },
   });
-
   const toggleMutation = useMutation({
     mutationFn: (item: RowLevelPermission) =>
       updateRowLevelPermission(item.id, { isEnabled: !item.isEnabled }),
@@ -175,10 +156,8 @@ export const useBiPermission = (): UseBiPermissionResult => {
       logger.error('Failed to toggle permission:', error);
     },
   });
-
   const actionLoading =
     saveMutation.isPending || deleteMutation.isPending || toggleMutation.isPending;
-
   const handleOpenDialog = (item?: RowLevelPermission) => {
     if (item) {
       setEditingItem(item);
@@ -190,64 +169,55 @@ export const useBiPermission = (): UseBiPermissionResult => {
     setTestResult(null);
     setDialogOpen(true);
   };
-
   const handleSave = () => {
     saveMutation.mutate();
   };
-
   const handleDelete = (id: string) => {
-    if (!confirm(t('bi.bi_permission_page.confirm'))) return;
+    if (!confirm(i18n.t('bi.bi_permission_page.confirm'))) return;
     deleteMutation.mutate(id);
   };
-
   const handleToggle = (item: RowLevelPermission) => {
     toggleMutation.mutate(item);
   };
-
   const handleTest = async (item: RowLevelPermission) => {
     try {
       const res = await testRowLevelPermission(item.id);
       if (res.success) {
-        setTestResult({ success: true, message: t('bi.bi_permission_page.message_e7fc60') });
+        setTestResult({ success: true, message: i18n.t('bi.bi_permission_page.message_e7fc60') });
       } else {
-        setTestResult({ success: false, message: t('bi.bi_permission_page.message_c0ea04') });
+        setTestResult({ success: false, message: i18n.t('bi.bi_permission_page.message_c0ea04') });
       }
     } catch (error: unknown) {
       logger.error('Failed to test permission:', error);
-      setTestResult({ success: true, message: t('bi.bi_permission_page.message_dd26a1') });
+      setTestResult({ success: true, message: i18n.t('bi.bi_permission_page.message_dd26a1') });
     }
   };
-
   const filteredRowPermissions = rowPermissions.filter(
     (p) =>
       p.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       p.description?.toLowerCase().includes(searchTerm.toLowerCase())
   );
-
   const filteredDataPermissions = dataPermissions.filter((p) =>
     p.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
-
   const getResourceTypeLabel = (type: string) => {
     const labels: Record<string, string> = {
-      dashboard: t('bi.bi_permission_page.text_3fa8b3'),
-      dataset: t('bi.bi_permission_page.text_e20804'),
-      datasource: t('bi.bi_permission_page.text_c11322'),
-      report: t('bi.bi_permission_page.text_fc00f3'),
+      dashboard: i18n.t('bi.bi_permission_page.text_3fa8b3'),
+      dataset: i18n.t('bi.bi_permission_page.text_e20804'),
+      datasource: i18n.t('bi.bi_permission_page.text_c11322'),
+      report: i18n.t('bi.bi_permission_page.text_fc00f3'),
     };
     return labels[type] || type;
   };
-
   const getPermissionTypeLabel = (type: string) => {
     const labels: Record<string, string> = {
-      view: t('bi.bi_permission_page.view'),
-      edit: t('bi.bi_permission_page.edit'),
-      admin: t('bi.bi_permission_page.text_08b55f'),
-      export: t('bi.bi_permission_page.export'),
+      view: i18n.t('bi.bi_permission_page.view'),
+      edit: i18n.t('bi.bi_permission_page.edit'),
+      admin: i18n.t('bi.bi_permission_page.text_08b55f'),
+      export: i18n.t('bi.bi_permission_page.export'),
     };
     return labels[type] || type;
   };
-
   const getPermissionTypeColor = (type: string) => {
     const colors: Record<string, 'primary' | 'success' | 'warning' | 'error'> = {
       view: 'primary',
@@ -257,7 +227,6 @@ export const useBiPermission = (): UseBiPermissionResult => {
     };
     return colors[type] || 'primary';
   };
-
   return {
     activeTab,
     setActiveTab,

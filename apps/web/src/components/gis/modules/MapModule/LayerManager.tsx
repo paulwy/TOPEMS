@@ -3,6 +3,7 @@ import React from 'react';
 import { Layers, ChevronDown, ChevronUp, MapPin, Navigation, Info, Pencil } from 'lucide-react';
 import { Box, Typography, Paper, Button } from '@mui/material';
 import { designTokens, semanticTokens } from '@topems/tokens';
+import i18n from '@/i18n';
 
 interface LayerToggleProps {
   label: string;
@@ -96,7 +97,7 @@ const LayerManager: React.FC<LayerManagerProps> = ({
             variant='body2'
             sx={{ fontWeight: 500, color: 'grey.700' }}
           >
-            图层
+            {i18n.t('components.layer_manager.k0')}
           </Typography>
         </Box>
         {showPanel ? (
@@ -114,21 +115,21 @@ const LayerManager: React.FC<LayerManagerProps> = ({
       {showPanel && (
         <Box sx={{ px: 3, py: 3, borderTop: 1, borderColor: 'grey.200' }}>
           <LayerToggle
-            label='设备点位'
+            label={i18n.t('gis.layer_manager.k0')}
             icon={<MapPin size={16} />}
             checked={visibleLayers.devices}
             onChange={() => onToggleLayer('devices')}
             color='#00C897'
           />
           <LayerToggle
-            label='管线'
+            label={i18n.t('gis.layer_manager.k1')}
             icon={<Navigation size={16} />}
             checked={visibleLayers.pipelines}
             onChange={() => onToggleLayer('pipelines')}
             color={designTokens.colors.secondary.dark}
           />
           <LayerToggle
-            label='仓储位置'
+            label={i18n.t('gis.layer_manager.k2')}
             icon={<Info size={16} />}
             checked={visibleLayers.storage}
             onChange={() => onToggleLayer('storage')}
@@ -137,7 +138,7 @@ const LayerManager: React.FC<LayerManagerProps> = ({
           {drawFeaturesLength > 0 && (
             <Box sx={{ borderTop: 1, borderColor: 'grey.200', pt: 2, mt: 2 }}>
               <LayerToggle
-                label='绘制图形'
+                label={i18n.t('gis.layer_manager.k3')}
                 icon={<Pencil size={16} />}
                 checked={true}
                 onChange={() => {}}

@@ -14,6 +14,7 @@ import {
   SortDesc,
   BarChart3,
 } from 'lucide-react';
+import i18n from '@/i18n';
 import {
   Box,
   Typography,
@@ -57,17 +58,10 @@ import { DashboardTemplate as DashboardLayout } from '@/components/templates';
 import { PageContainer } from '@/components/common';
 import { logger } from '@/utils/logger';
 import { designTokens } from '@/theme/tokens';
-
-import { useTranslation } from 'react-i18next';
-
-
 import { QUERY_KEYS } from '@/lib/reactQuery';
-
 const ct= designTokens.colors;
-
 type ViewMode = 'list' | 'editor';
 type TabType = 'dashboards' | 'templates';
-
 interface CreateDialogState {
   open: boolean;
   useTemplate: boolean;
@@ -75,15 +69,12 @@ interface CreateDialogState {
   name: string;
   description: string;
 }
-
 interface DashboardSaveConfig {
   name: string;
   description: string;
   widgets: DashboardWidget[];
 }
-
 const BIDashboardPage = () => {
-  const { t } = useTranslation();
   const queryClient = useQueryClient();
   const [viewMode, setViewMode] = useState<ViewMode>('list');
   const [activeTab, setActiveTab] = useState<TabType>('dashboards');
@@ -98,7 +89,6 @@ const BIDashboardPage = () => {
   });
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const [contextDashboard, setContextDashboard] = useState<Dashboard | null>(null);
-
   const dashboardsQuery = useQuery<Dashboard[]>({
     queryKey: QUERY_KEYS.AD_HOC.BI_DASHBOARDS_BASE,
     queryFn: async () => {
@@ -110,7 +100,6 @@ const BIDashboardPage = () => {
     },
     staleTime: 5 * 60 * 1000,
   });
-
   const templatesQuery = useQuery<DashboardTemplate[]>({
     queryKey: QUERY_KEYS.AD_HOC.BI_DASHBOARD_TEMPLATES_BASE,
     queryFn: async () => {
@@ -122,11 +111,9 @@ const BIDashboardPage = () => {
     },
     staleTime: 5 * 60 * 1000,
   });
-
   const dashboards = dashboardsQuery.data ?? [];
   const templates = templatesQuery.data ?? [];
   const loading = dashboardsQuery.isLoading;
-
   useEffect(() => {
     if (dashboardsQuery.isError) {
       logger.error('Failed to load dashboards:', dashboardsQuery.error);
@@ -140,7 +127,6 @@ const BIDashboardPage = () => {
     templatesQuery.isError,
     templatesQuery.error,
   ]);
-
   const createMutation = useMutation({
     mutationFn: async ({
       data,
@@ -173,7 +159,6 @@ const BIDashboardPage = () => {
       logger.error('Failed to create dashboard:', error);
     },
   });
-
   const deleteMutation = useMutation({
     mutationFn: (id: string) => deleteDashboard(id),
     onSuccess: () => {
@@ -186,7 +171,6 @@ const BIDashboardPage = () => {
       logger.error('Failed to delete dashboard:', error);
     },
   });
-
   const cloneMutation = useMutation({
     mutationFn: (id: string) => cloneDashboard(id),
     onSuccess: () => {
@@ -199,7 +183,6 @@ const BIDashboardPage = () => {
       logger.error('Failed to clone dashboard:', error);
     },
   });
-
   const togglePublicMutation = useMutation({
     mutationFn: (dashboard: Dashboard) =>
       updateDashboard(dashboard.id, { is_public: !dashboard.is_public }),
@@ -213,7 +196,6 @@ const BIDashboardPage = () => {
       logger.error('Failed to update dashboard:', error);
     },
   });
-
   const saveMutation = useMutation({
     mutationFn: async ({
       config,
@@ -247,17 +229,15 @@ const BIDashboardPage = () => {
       logger.error('Failed to save dashboard:', error);
     },
   });
-
   const actionLoading =
     createMutation.isPending ||
     deleteMutation.isPending ||
     cloneMutation.isPending ||
     togglePublicMutation.isPending ||
     saveMutation.isPending;
-
   const handleCreateDashboard = () => {
     const data: Partial<Dashboard> = {
-      name: createDialog.name || t('bi.bi_dashboard_page.text_d5e229'),
+      name: createDialog.name || i18n.t('bi.bi_dashboard_page.text_d5e229'),
       description: createDialog.description,
       owner_id: 'current-user',
       is_public: false,
@@ -268,46 +248,37 @@ const BIDashboardPage = () => {
       templateId: createDialog.selectedTemplateId,
     });
   };
-
   const handleDeleteDashboard = (id: string) => {
-    if (!confirm(t('bi.bi_dashboard_page.confirm'))) return;
+    if (!confirm(i18n.t('bi.bi_dashboard_page.confirm'))) return;
     deleteMutation.mutate(id);
   };
-
   const handleCloneDashboard = (id: string) => {
     cloneMutation.mutate(id);
   };
-
   const handleTogglePublic = (dashboard: Dashboard) => {
     togglePublicMutation.mutate(dashboard);
   };
-
   const handleOpenEditor = (dashboard?: Dashboard) => {
     setSelectedDashboard(dashboard || null);
     setViewMode('editor');
   };
-
   const handleSaveDashboard = (config: DashboardConfig) => {
     saveMutation.mutate({ config, selectedDashboard });
   };
-
   const filteredDashboards = dashboards.filter(
     (d) =>
       d.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       d.description?.toLowerCase().includes(searchTerm.toLowerCase())
   );
-
   const handleContextMenu = (event: React.MouseEvent<HTMLElement>, dashboard: Dashboard) => {
     event.preventDefault();
     setAnchorEl(event.currentTarget);
     setContextDashboard(dashboard);
   };
-
   const handleCloseMenu = () => {
     setAnchorEl(null);
     setContextDashboard(null);
   };
-
   if (viewMode === 'editor') {
     return (
       <DashboardEditor
@@ -329,11 +300,10 @@ const BIDashboardPage = () => {
       />
     );
   }
-
   return (
     <PageContainer
-      title={t('bi.bi_dashboard_page.text_286397')}
-      subtitle={t('bi.bi_dashboard_page.create')}
+      title={i18n.t('bi.bi_dashboard_page.text_286397')}
+      subtitle={i18n.t('bi.bi_dashboard_page.create')}
       headerProps={{
         pageIcon: <BarChart3 style={{ width: 20, height: 20 }} />,
         pageGradient: `linear-gradient(135deg, ${ct.secondary[400]} 0%, ${ct.secondary[600]} 100%)`,
@@ -345,9 +315,9 @@ const BIDashboardPage = () => {
         title=''
         subtitle=''
         breadcrumbs={[
-          { label: t('bi.bi_dashboard_page.home'), href: '/dashboard' },
+          { label: i18n.t('bi.bi_dashboard_page.home'), href: '/dashboard' },
           { label: 'BI' },
-          { label: t('bi.bi_dashboard_page.text_286397') },
+          { label: i18n.t('bi.bi_dashboard_page.text_286397') },
         ]}
       >
         <Box sx={{ p: 3 }}>
@@ -367,13 +337,13 @@ const BIDashboardPage = () => {
               >
                 <Tab
                   value='dashboards'
-                  label={t('bi.bi_dashboard_page.text_3fa8b3')}
+                  label={i18n.t('bi.bi_dashboard_page.text_3fa8b3')}
                   icon={<LayoutDashboard size={18} />}
                   iconPosition='start'
                 />
                 <Tab
                   value='templates'
-                  label={t('bi.bi_dashboard_page.text_59cf15')}
+                  label={i18n.t('bi.bi_dashboard_page.text_59cf15')}
                   icon={<FolderOpen size={18} />}
                   iconPosition='start'
                 />
@@ -385,11 +355,10 @@ const BIDashboardPage = () => {
                 startIcon={<Plus />}
                 onClick={() => setCreateDialog({ ...createDialog, open: true })}
               >
-                创建仪表盘
+                {i18n.t('pages.bi_dashboard_page.k0')}
               </Button>
             )}
           </Box>
-
           {activeTab === 'templates' ? (
             <DashboardTemplateManager
               onDashboardCreated={() => {
@@ -412,7 +381,7 @@ const BIDashboardPage = () => {
               >
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
                   <TextField
-                    placeholder={t('bi.bi_dashboard_page.search')}
+                    placeholder={i18n.t('bi.bi_dashboard_page.search')}
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
                     size='small'
@@ -423,18 +392,17 @@ const BIDashboardPage = () => {
                     size='small'
                     startIcon={<Filter />}
                   >
-                    筛选
+                    {i18n.t('pages.bi_dashboard_page.k1')}
                   </Button>
                   <Button
                     variant='outlined'
                     size='small'
                     startIcon={<SortDesc />}
                   >
-                    排序
+                    {i18n.t('pages.bi_dashboard_page.k2')}
                   </Button>
                 </Box>
               </Box>
-
               {loading ? (
                 <Box
                   sx={{
@@ -464,15 +432,15 @@ const BIDashboardPage = () => {
                   }}
                 >
                   <Grid3X3 sx={{ width: 64, height: 64, mb: 3, opacity: 0.5 }} />
-                  <Typography variant='h6'>暂无仪表盘</Typography>
-                  <Typography variant='body2'>点击上方按钮创建您的第一个仪表盘</Typography>
+                  <Typography variant='h6'>{i18n.t('bi.bi_dashboard_page.k0')}</Typography>
+                  <Typography variant='body2'>{i18n.t('bi.bi_dashboard_page.k1')}</Typography>
                   <Button
                     variant='contained'
                     startIcon={<Plus />}
                     sx={{ mt: 3 }}
                     onClick={() => setCreateDialog({ ...createDialog, open: true })}
                   >
-                    创建仪表盘
+                    {i18n.t('pages.bi_dashboard_page.k3')}
                   </Button>
                 </Box>
               ) : (
@@ -500,7 +468,7 @@ const BIDashboardPage = () => {
                     >
                       {dashboard.is_public && (
                         <Chip
-                          label={t('bi.bi_dashboard_page.text_b6a098')}
+                          label={i18n.t('bi.bi_dashboard_page.text_b6a098')}
                           size='small'
                           color='primary'
                           sx={{ position: 'absolute', top: 8, right: 8 }}
@@ -565,38 +533,38 @@ const BIDashboardPage = () => {
                         )}
                         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                           <Chip
-                            label={t('bi.bi_dashboard_page.text_d09504')}
+                            label={i18n.t('bi.bi_dashboard_page.text_d09504')}
                             size='small'
                             variant='outlined'
                           />
                           <Chip
-                            label={t('bi.bi_dashboard_page.text_7e6875')}
+                            label={i18n.t('bi.bi_dashboard_page.text_7e6875')}
                             size='small'
                             variant='outlined'
                           />
                         </Box>
                       </CardContent>
                       <CardActions sx={{ justifyContent: 'flex-end', gap: 1 }}>
-                        <Tooltip title={t('bi.bi_dashboard_page.edit')}>
+                        <Tooltip title={i18n.t('bi.bi_dashboard_page.edit')}>
                           <IconButton
                             size='small'
                             onClick={(e) => {
                               e.stopPropagation();
                               handleOpenEditor(dashboard);
                             }}
-                            aria-label='编辑'
+                            aria-label={i18n.t('bi.bi_dashboard_page.k2')}
                           >
                             <Edit2 sx={{ width: 18, height: 18 }} />
                           </IconButton>
                         </Tooltip>
-                        <Tooltip title={t('bi.bi_dashboard_page.text_25fe25')}>
+                        <Tooltip title={i18n.t('bi.bi_dashboard_page.text_25fe25')}>
                           <IconButton
                             size='small'
                             onClick={(e) => {
                               e.stopPropagation();
                               handleCloneDashboard(dashboard.id);
                             }}
-                            aria-label='复制'
+                            aria-label={i18n.t('bi.bi_dashboard_page.k3')}
                           >
                             <Copy sx={{ width: 18, height: 18 }} />
                           </IconButton>
@@ -604,8 +572,8 @@ const BIDashboardPage = () => {
                         <Tooltip
                           title={
                             dashboard.is_public
-                              ? t('bi.bi_dashboard_page.text_a81fcd')
-                              : t('bi.bi_dashboard_page.text_8b4b56')
+                              ? i18n.t('bi.bi_dashboard_page.text_a81fcd')
+                              : i18n.t('bi.bi_dashboard_page.text_8b4b56')
                           }
                         >
                           <IconButton
@@ -614,7 +582,7 @@ const BIDashboardPage = () => {
                               e.stopPropagation();
                               handleTogglePublic(dashboard);
                             }}
-                            aria-label='查看'
+                            aria-label={i18n.t('bi.bi_dashboard_page.k4')}
                           >
                             {dashboard.is_public ? (
                               <Eye sx={{ width: 18, height: 18 }} />
@@ -623,7 +591,7 @@ const BIDashboardPage = () => {
                             )}
                           </IconButton>
                         </Tooltip>
-                        <Tooltip title={t('bi.bi_dashboard_page.delete')}>
+                        <Tooltip title={i18n.t('bi.bi_dashboard_page.delete')}>
                           <IconButton
                             size='small'
                             color='error'
@@ -631,7 +599,7 @@ const BIDashboardPage = () => {
                               e.stopPropagation();
                               handleDeleteDashboard(dashboard.id);
                             }}
-                            aria-label='删除'
+                            aria-label={i18n.t('bi.bi_dashboard_page.k5')}
                           >
                             <Trash2 sx={{ width: 18, height: 18 }} />
                           </IconButton>
@@ -641,24 +609,23 @@ const BIDashboardPage = () => {
                   ))}
                 </Box>
               )}
-
               <Dialog
                 open={createDialog.open}
                 onClose={() => setCreateDialog({ ...createDialog, open: false })}
                 maxWidth='sm'
                 fullWidth
               >
-                <DialogTitle>创建仪表盘</DialogTitle>
+                <DialogTitle>{i18n.t('bi.bi_dashboard_page.k6')}</DialogTitle>
                 <DialogContent sx={{ mt: 2 }}>
                   <TextField
-                    label={t('bi.bi_dashboard_page.name')}
+                    label={i18n.t('bi.bi_dashboard_page.name')}
                     fullWidth
                     value={createDialog.name}
                     onChange={(e) => setCreateDialog({ ...createDialog, name: e.target.value })}
                     sx={{ mb: 3 }}
                   />
                   <TextField
-                    label={t('bi.bi_dashboard_page.description')}
+                    label={i18n.t('bi.bi_dashboard_page.description')}
                     multiline
                     rows={2}
                     fullWidth
@@ -683,12 +650,12 @@ const BIDashboardPage = () => {
                         })
                       }
                     />
-                    <Typography variant='body1'>从模板创建</Typography>
+                    <Typography variant='body1'>{i18n.t('bi.bi_dashboard_page.k7')}</Typography>
                   </Box>
                   {createDialog.useTemplate && templates.length > 0 && (
                     <Box
                       sx={{
-                        border: '1px solid rgba(0,0,0,0.1)',
+                        border: `1px solid ${designTokens.colors.action.selected}`,
                         borderRadius: 1,
                         p: 2,
                       }}
@@ -697,7 +664,7 @@ const BIDashboardPage = () => {
                         variant='body2'
                         sx={{ mb: 2, fontWeight: 500 }}
                       >
-                        选择模板
+                        {i18n.t('pages.bi_dashboard_page.k4')}
                       </Typography>
                       <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
                         {templates.map((template) => (
@@ -758,7 +725,7 @@ const BIDashboardPage = () => {
                 </DialogContent>
                 <DialogActions>
                   <Button onClick={() => setCreateDialog({ ...createDialog, open: false })}>
-                    取消
+                    {i18n.t('pages.bi_dashboard_page.k5')}
                   </Button>
                   <Button
                     variant='contained'
@@ -768,11 +735,10 @@ const BIDashboardPage = () => {
                       (createDialog.useTemplate && !createDialog.selectedTemplateId)
                     }
                   >
-                    创建
+                    {i18n.t('pages.bi_dashboard_page.k6')}
                   </Button>
                 </DialogActions>
               </Dialog>
-
               <Menu
                 anchorEl={anchorEl}
                 open={Boolean(anchorEl)}
@@ -787,7 +753,7 @@ const BIDashboardPage = () => {
                       }}
                     >
                       <Edit2 sx={{ mr: 2 }} />
-                      编辑
+                      {i18n.t('pages.bi_dashboard_page.k7')}
                     </MenuItem>
                     <MenuItem
                       onClick={() => {
@@ -796,7 +762,7 @@ const BIDashboardPage = () => {
                       }}
                     >
                       <Copy sx={{ mr: 2 }} />
-                      克隆
+                      {i18n.t('pages.bi_dashboard_page.k8')}
                     </MenuItem>
                     <MenuItem
                       onClick={() => {
@@ -810,8 +776,8 @@ const BIDashboardPage = () => {
                         <Eye sx={{ mr: 2 }} />
                       )}
                       {contextDashboard.is_public
-                        ? t('bi.bi_dashboard_page.text_a81fcd')
-                        : t('bi.bi_dashboard_page.text_8b4b56')}
+                        ? i18n.t('bi.bi_dashboard_page.text_a81fcd')
+                        : i18n.t('bi.bi_dashboard_page.text_8b4b56')}
                     </MenuItem>
                     <Divider />
                     <MenuItem
@@ -822,7 +788,7 @@ const BIDashboardPage = () => {
                       sx={{ color: 'error.main' }}
                     >
                       <Trash2 sx={{ mr: 2 }} />
-                      删除
+                      {i18n.t('pages.bi_dashboard_page.k9')}
                     </MenuItem>
                   </>
                 )}
@@ -834,5 +800,4 @@ const BIDashboardPage = () => {
     </PageContainer>
   );
 };
-
 export default BIDashboardPage;

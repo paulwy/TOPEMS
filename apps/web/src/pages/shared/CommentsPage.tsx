@@ -23,6 +23,7 @@ import {
   Select,
   MenuItem,
 } from '@mui/material';
+import i18n from '@/i18n';
 import { MessageSquare, Edit2, Trash2, Send, Reply, User } from 'lucide-react';
 import { PageContainer } from '@/components/common';
 import { commentApi, type Comment } from '@/api/shared';
@@ -72,7 +73,7 @@ const CommentsPage: React.FC = () => {
         parentId: data.parentId,
       }),
     onSuccess: () => {
-      addNotification({ type: 'success', title: '已发表', message: '评论已发布' });
+      addNotification({ type: 'success', title: i18n.t('pages.comments_page.k1'), message: i18n.t('pages.comments_page.k0') });
       queryClient.invalidateQueries({
         queryKey: [...QUERY_KEYS.AD_HOC.SHARED_COMMENTS_BASE, entityType, entityId],
 
@@ -84,8 +85,8 @@ const CommentsPage: React.FC = () => {
       setReplyContent('');
     },
     onError: (error: unknown) => {
-      apiLogger.error('创建评论失败:', error);
-      addNotification({ type: 'error', title: '操作失败', message: '无法发布评论' });
+      apiLogger.error(i18n.t('pages.comments_page.k0'), error);
+      addNotification({ type: 'error', title: i18n.t('pages.comments_page.k3'), message: i18n.t('pages.comments_page.k2') });
     },
   });
 
@@ -94,7 +95,7 @@ const CommentsPage: React.FC = () => {
     mutationFn: ({ id, content }: { id: string; content: string }) =>
       commentApi.update(id, { content }),
     onSuccess: () => {
-      addNotification({ type: 'success', title: '已更新', message: '评论已更新' });
+      addNotification({ type: 'success', title: i18n.t('pages.comments_page.k5'), message: i18n.t('pages.comments_page.k4') });
       queryClient.invalidateQueries({
         queryKey: [...QUERY_KEYS.AD_HOC.SHARED_COMMENTS_BASE, entityType, entityId],
 
@@ -105,8 +106,8 @@ const CommentsPage: React.FC = () => {
       setEditingContent('');
     },
     onError: (error: unknown) => {
-      apiLogger.error('更新评论失败:', error);
-      addNotification({ type: 'error', title: '操作失败', message: '无法更新评论' });
+      apiLogger.error(i18n.t('pages.comments_page.k1'), error);
+      addNotification({ type: 'error', title: i18n.t('pages.comments_page.k7'), message: i18n.t('pages.comments_page.k6') });
     },
   });
 
@@ -114,7 +115,7 @@ const CommentsPage: React.FC = () => {
   const deleteMutation = useMutation({
     mutationFn: (id: string) => commentApi.delete(id),
     onSuccess: () => {
-      addNotification({ type: 'success', title: '已删除', message: '评论已删除' });
+      addNotification({ type: 'success', title: i18n.t('pages.comments_page.k9'), message: i18n.t('pages.comments_page.k8') });
       queryClient.invalidateQueries({
         queryKey: [...QUERY_KEYS.AD_HOC.SHARED_COMMENTS_BASE, entityType, entityId],
 
@@ -123,8 +124,8 @@ const CommentsPage: React.FC = () => {
       });
     },
     onError: (error: unknown) => {
-      apiLogger.error('删除评论失败:', error);
-      addNotification({ type: 'error', title: '操作失败', message: '无法删除评论' });
+      apiLogger.error(i18n.t('pages.comments_page.k2'), error);
+      addNotification({ type: 'error', title: i18n.t('pages.comments_page.k11'), message: i18n.t('pages.comments_page.k10') });
     },
   });
 
@@ -198,13 +199,13 @@ const CommentsPage: React.FC = () => {
                     variant='contained'
                     onClick={() => handleUpdate(comment.id)}
                   >
-                    保存
+                    {i18n.t('pages.comments_page.k3')}
                   </Button>
                   <Button
                     size='small'
                     onClick={() => setEditingId(null)}
                   >
-                    取消
+                    {i18n.t('pages.comments_page.k4')}
                   </Button>
                 </Stack>
               ) : (
@@ -226,7 +227,7 @@ const CommentsPage: React.FC = () => {
                     setReplyTo(replyTo === comment.id ? null : comment.id);
                     setReplyContent('');
                   }}
-                  aria-label='回复'
+                  aria-label={i18n.t('pages.comments_page.k12')}
                 >
                   <Reply size={14} />
                 </IconButton>
@@ -238,7 +239,7 @@ const CommentsPage: React.FC = () => {
                         setEditingId(comment.id);
                         setEditingContent(comment.content);
                       }}
-                      aria-label='编辑'
+                      aria-label={i18n.t('pages.comments_page.k13')}
                     >
                       <Edit2 size={14} />
                     </IconButton>
@@ -246,7 +247,7 @@ const CommentsPage: React.FC = () => {
                       size='small'
                       color='error'
                       onClick={() => deleteMutation.mutate(comment.id)}
-                      aria-label='删除'
+                      aria-label={i18n.t('pages.comments_page.k14')}
                     >
                       <Trash2 size={14} />
                     </IconButton>
@@ -262,7 +263,7 @@ const CommentsPage: React.FC = () => {
                   <TextField
                     fullWidth
                     size='small'
-                    placeholder={`回复 ${comment.author_name}...`}
+                    placeholder={`${i18n.t('pages.comments_page.k5')} ${comment.author_name}...`}
                     value={replyContent}
                     onChange={(e) => setReplyContent(e.target.value)}
                   />
@@ -271,7 +272,7 @@ const CommentsPage: React.FC = () => {
                     variant='contained'
                     onClick={() => handleReply(comment.id)}
                   >
-                    回复
+                    {i18n.t('pages.comments_page.k6')}
                   </Button>
                 </Stack>
               )}
@@ -286,7 +287,7 @@ const CommentsPage: React.FC = () => {
 
   return (
     <PageContainer
-      title='评论管理'
+      title={i18n.t('pages.comments_page.k15')}
       autoBreadcrumbs
       headerProps={{
         pageIcon: <MessageSquare style={{ width: 20, height: 20 }} />,
@@ -303,10 +304,10 @@ const CommentsPage: React.FC = () => {
               size='small'
               sx={{ minWidth: 140 }}
             >
-              <InputLabel>实体类型</InputLabel>
+              <InputLabel>{i18n.t('pages.comments_page.k16')}</InputLabel>
               <Select
                 value={entityType}
-                label='实体类型'
+                label={i18n.t('pages.comments_page.k17')}
                 onChange={(e) => setEntityType(e.target.value)}
               >
                 {ENTITY_TYPES.map((t) => (
@@ -321,7 +322,7 @@ const CommentsPage: React.FC = () => {
             </FormControl>
             <TextField
               size='small'
-              label='实体 ID'
+              label={i18n.t('pages.comments_page.id_18')}
               value={entityId}
               onChange={(e) => setEntityId(e.target.value)}
               sx={{ minWidth: 200 }}
@@ -336,13 +337,13 @@ const CommentsPage: React.FC = () => {
             variant='h6'
             sx={{ mb: 2 }}
           >
-            发表评论
+            {i18n.t('pages.comments_page.k7')}
           </Typography>
           <TextField
             fullWidth
             multiline
             rows={3}
-            placeholder='输入评论内容...'
+            placeholder={i18n.t('pages.comments_page.k8')}
             value={newComment}
             onChange={(e) => setNewComment(e.target.value)}
           />
@@ -353,7 +354,7 @@ const CommentsPage: React.FC = () => {
               onClick={handleSubmit}
               disabled={!newComment.trim() || createMutation.isPending}
             >
-              发表
+              {i18n.t('pages.comments_page.k9')}
             </Button>
           </Box>
         </CardContent>
@@ -365,14 +366,14 @@ const CommentsPage: React.FC = () => {
             variant='h6'
             sx={{ mb: 2 }}
           >
-            评论列表
+            {i18n.t('pages.comments_page.k10')}
           </Typography>
           {isPending ? (
             <Box sx={{ display: 'flex', justifyContent: 'center', p: 3 }}>
               <CircularProgress />
             </Box>
           ) : !comments || comments.length === 0 ? (
-            <Alert severity='info'>暂无评论</Alert>
+            <Alert severity='info'>{i18n.t('pages.comments_page.k19')}</Alert>
           ) : (
             <List>{comments.map((comment) => renderComment(comment))}</List>
           )}

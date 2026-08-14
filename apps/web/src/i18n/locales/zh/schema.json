@@ -2399,5 +2399,9 @@
         }
       }
     }
-  }
+  },
+  "schema.crud_page_adapter.k0": "加载列表失败",
+  "schema.crud_page_adapter.k1": "创建失败",
+  "schema.crud_page_adapter.k2": "更新失败",
+  "schema.crud_page_adapter.k3": "删除失败"
 }

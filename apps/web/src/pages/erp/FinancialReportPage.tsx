@@ -13,6 +13,7 @@ import {
   Wallet,
   Building2,
 } from 'lucide-react';
+import i18n from '@/i18n';
 import { PageContainer } from '@/components/common';
 import {
   Box,
@@ -44,17 +45,13 @@ import type {
 } from '@/api/erp/types';
 import { apiLogger } from '@/utils/logger';
 import { useNotificationStore } from '@/store';
-
 import { QUERY_KEYS } from '@/lib/reactQuery';
-
 const FinancialReportPage: React.FC = () => {
   const addNotification = useNotificationStore((state) => state.addNotification);
   const queryClient = useQueryClient();
-
   const [activeTab, setActiveTab] = useState('balance-sheet');
   const [periodType, setPeriodType] = useState('year');
   const [period, setPeriod] = useState('2024');
-
   const balanceSheetQuery = useQuery<BalanceSheet | null>({
     queryKey: QUERY_KEYS.ERP.FINANCIAL_REPORTS.BALANCE_SHEET(period),
     queryFn: async () => {
@@ -64,7 +61,6 @@ const FinancialReportPage: React.FC = () => {
     enabled: activeTab === 'balance-sheet',
     staleTime: 5 * 60 * 1000,
   });
-
   const incomeStatementQuery = useQuery<IncomeStatement | null>({
     queryKey: QUERY_KEYS.ERP.FINANCIAL_REPORTS.INCOME_STATEMENT(period),
     queryFn: async () => {
@@ -74,7 +70,6 @@ const FinancialReportPage: React.FC = () => {
     enabled: activeTab === 'income-statement',
     staleTime: 5 * 60 * 1000,
   });
-
   const cashFlowQuery = useQuery<CashFlowStatement | null>({
     queryKey: QUERY_KEYS.ERP.FINANCIAL_REPORTS.CASH_FLOW(period),
     queryFn: async () => {
@@ -84,108 +79,96 @@ const FinancialReportPage: React.FC = () => {
     enabled: activeTab === 'cash-flow',
     staleTime: 5 * 60 * 1000,
   });
-
   const balanceSheet = balanceSheetQuery.data ?? null;
   const incomeStatement = incomeStatementQuery.data ?? null;
   const cashFlowStatement = cashFlowQuery.data ?? null;
-
   const loading =
     (activeTab === 'balance-sheet' && balanceSheetQuery.isLoading) ||
     (activeTab === 'income-statement' && incomeStatementQuery.isLoading) ||
     (activeTab === 'cash-flow' && cashFlowQuery.isLoading);
-
   const error =
     (activeTab === 'balance-sheet' && balanceSheetQuery.isError) ||
     (activeTab === 'income-statement' && incomeStatementQuery.isError) ||
     (activeTab === 'cash-flow' && cashFlowQuery.isError)
-      ? '加载报表数据失败，请稍后重试'
+      ? i18n.t('erp.financial_report_page.k0')
       : null;
-
   useEffect(() => {
     if (balanceSheetQuery.isError) {
-      apiLogger.error('加载资产负债表失败:', balanceSheetQuery.error);
-      addNotification({ title: '错误', message: '加载报表数据失败', type: 'error' });
+      apiLogger.error(i18n.t('pages.financial_report_page.k0'), balanceSheetQuery.error);
+      addNotification({ title: i18n.t('erp.financial_report_page.k2'), message: i18n.t('erp.financial_report_page.k1'), type: 'error' });
     }
   }, [balanceSheetQuery.isError, balanceSheetQuery.error, addNotification]);
-
   useEffect(() => {
     if (incomeStatementQuery.isError) {
-      apiLogger.error('加载利润表失败:', incomeStatementQuery.error);
-      addNotification({ title: '错误', message: '加载报表数据失败', type: 'error' });
+      apiLogger.error(i18n.t('pages.financial_report_page.k1'), incomeStatementQuery.error);
+      addNotification({ title: i18n.t('erp.financial_report_page.k4'), message: i18n.t('erp.financial_report_page.k3'), type: 'error' });
     }
   }, [incomeStatementQuery.isError, incomeStatementQuery.error, addNotification]);
-
   useEffect(() => {
     if (cashFlowQuery.isError) {
-      apiLogger.error('加载现金流量表失败:', cashFlowQuery.error);
-      addNotification({ title: '错误', message: '加载报表数据失败', type: 'error' });
+      apiLogger.error(i18n.t('pages.financial_report_page.k2'), cashFlowQuery.error);
+      addNotification({ title: i18n.t('erp.financial_report_page.k6'), message: i18n.t('erp.financial_report_page.k5'), type: 'error' });
     }
   }, [cashFlowQuery.isError, cashFlowQuery.error, addNotification]);
-
   const handleRefresh = () => {
     queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.ERP_FINANCIAL_REPORTS_BASE ,
   exact: false,
   refetchType: 'active',
 });
   };
-
   const formatCurrency = (amount: number) =>
     `¥${amount.toLocaleString('zh-CN', { minimumFractionDigits: 2 })}`;
-
   const handleExport = () => {
     addNotification({
-      title: '导出成功',
-      message: '报表已导出为 Excel 格式',
+      title: i18n.t('erp.financial_report_page.k7'),
+      message: i18n.t('erp.financial_report_page.excel_8'),
       type: 'success',
     });
   };
-
   const periodOptions = useMemo(() => {
     if (periodType === 'year') {
       return [
-        { value: '2024', label: '2024年度' },
-        { value: '2023', label: '2023年度' },
-        { value: '2022', label: '2022年度' },
-        { value: '2021', label: '2021年度' },
+        { value: '2024', label: i18n.t('pages.financial_report_page.2024_3') },
+        { value: '2023', label: i18n.t('pages.financial_report_page.2023_4') },
+        { value: '2022', label: i18n.t('pages.financial_report_page.2022_5') },
+        { value: '2021', label: i18n.t('pages.financial_report_page.2021_6') },
       ];
     } else if (periodType === 'quarter') {
       return [
-        { value: '2024-Q1', label: '2024年第一季度' },
-        { value: '2024-Q2', label: '2024年第二季度' },
-        { value: '2024-Q3', label: '2024年第三季度' },
-        { value: '2024-Q4', label: '2024年第四季度' },
+        { value: '2024-Q1', label: i18n.t('pages.financial_report_page.2024_7') },
+        { value: '2024-Q2', label: i18n.t('pages.financial_report_page.2024_8') },
+        { value: '2024-Q3', label: i18n.t('pages.financial_report_page.2024_9') },
+        { value: '2024-Q4', label: i18n.t('pages.financial_report_page.2024_10') },
       ];
     } else {
       return [
-        { value: '2024-01', label: '2024年01月' },
-        { value: '2024-02', label: '2024年02月' },
-        { value: '2024-03', label: '2024年03月' },
-        { value: '2024-04', label: '2024年04月' },
-        { value: '2024-05', label: '2024年05月' },
-        { value: '2024-06', label: '2024年06月' },
+        { value: '2024-01', label: i18n.t('pages.financial_report_page.202401_11') },
+        { value: '2024-02', label: i18n.t('pages.financial_report_page.202402_12') },
+        { value: '2024-03', label: i18n.t('pages.financial_report_page.202403_13') },
+        { value: '2024-04', label: i18n.t('pages.financial_report_page.202404_14') },
+        { value: '2024-05', label: i18n.t('pages.financial_report_page.202405_15') },
+        { value: '2024-06', label: i18n.t('pages.financial_report_page.202406_16') },
       ];
     }
   }, [periodType]);
-
   const tabs = [
     {
-      label: '资产负债表',
+      label: i18n.t('erp.financial_report_page.k9'),
       value: 'balance-sheet',
       icon: <PieChart sx={{ width: 16, height: 16 }} />,
     },
     {
-      label: '利润表',
+      label: i18n.t('erp.financial_report_page.k10'),
       value: 'income-statement',
       icon: <TrendingUp sx={{ width: 16, height: 16 }} />,
     },
-    { label: '现金流量表', value: 'cash-flow', icon: <Activity sx={{ width: 16, height: 16 }} /> },
+    { label: i18n.t('erp.financial_report_page.k11'), value: 'cash-flow', icon: <Activity sx={{ width: 16, height: 16 }} /> },
     {
-      label: '所有者权益变动表',
+      label: i18n.t('erp.financial_report_page.k12'),
       value: 'equity-change',
       icon: <Building2 sx={{ width: 16, height: 16 }} />,
     },
   ];
-
   const renderSummaryCards = () => {
     if (activeTab === 'balance-sheet' && balanceSheet) {
       return (
@@ -200,7 +183,7 @@ const FinancialReportPage: React.FC = () => {
                   variant='body2'
                   sx={{ color: 'text.secondary' }}
                 >
-                  总资产
+                  {i18n.t('pages.financial_report_page.k0')}
                 </Typography>
                 <Typography
                   variant='h6'
@@ -221,7 +204,7 @@ const FinancialReportPage: React.FC = () => {
                   variant='body2'
                   sx={{ color: 'text.secondary' }}
                 >
-                  总负债
+                  {i18n.t('pages.financial_report_page.k1')}
                 </Typography>
                 <Typography
                   variant='h6'
@@ -242,7 +225,7 @@ const FinancialReportPage: React.FC = () => {
                   variant='body2'
                   sx={{ color: 'text.secondary' }}
                 >
-                  所有者权益
+                  {i18n.t('pages.financial_report_page.k2')}
                 </Typography>
                 <Typography
                   variant='h6'
@@ -256,7 +239,6 @@ const FinancialReportPage: React.FC = () => {
         </Box>
       );
     }
-
     if (activeTab === 'income-statement' && incomeStatement) {
       return (
         <Box sx={{ display: 'grid', gridTemplateColumns: { xs: 1, md: 4 }, gap: 2, mb: 3 }}>
@@ -270,7 +252,7 @@ const FinancialReportPage: React.FC = () => {
                   variant='body2'
                   sx={{ color: 'text.secondary' }}
                 >
-                  营业总收入
+                  {i18n.t('pages.financial_report_page.k3')}
                 </Typography>
                 <Typography
                   variant='h6'
@@ -291,7 +273,7 @@ const FinancialReportPage: React.FC = () => {
                   variant='body2'
                   sx={{ color: 'text.secondary' }}
                 >
-                  营业总成本
+                  {i18n.t('pages.financial_report_page.k4')}
                 </Typography>
                 <Typography
                   variant='h6'
@@ -312,7 +294,7 @@ const FinancialReportPage: React.FC = () => {
                   variant='body2'
                   sx={{ color: 'text.secondary' }}
                 >
-                  营业利润
+                  {i18n.t('pages.financial_report_page.k5')}
                 </Typography>
                 <Typography
                   variant='h6'
@@ -345,7 +327,7 @@ const FinancialReportPage: React.FC = () => {
                   variant='body2'
                   sx={{ color: 'text.secondary' }}
                 >
-                  净利润
+                  {i18n.t('pages.financial_report_page.k6')}
                 </Typography>
                 <Typography
                   variant='h6'
@@ -362,7 +344,6 @@ const FinancialReportPage: React.FC = () => {
         </Box>
       );
     }
-
     if (activeTab === 'cash-flow' && cashFlowStatement) {
       return (
         <Box sx={{ display: 'grid', gridTemplateColumns: { xs: 1, md: 4 }, gap: 2, mb: 3 }}>
@@ -376,7 +357,7 @@ const FinancialReportPage: React.FC = () => {
                   variant='body2'
                   sx={{ color: 'text.secondary' }}
                 >
-                  经营活动现金流
+                  {i18n.t('pages.financial_report_page.k7')}
                 </Typography>
                 <Typography
                   variant='h6'
@@ -399,7 +380,7 @@ const FinancialReportPage: React.FC = () => {
                   variant='body2'
                   sx={{ color: 'text.secondary' }}
                 >
-                  投资活动现金流
+                  {i18n.t('pages.financial_report_page.k8')}
                 </Typography>
                 <Typography
                   variant='h6'
@@ -422,7 +403,7 @@ const FinancialReportPage: React.FC = () => {
                   variant='body2'
                   sx={{ color: 'text.secondary' }}
                 >
-                  筹资活动现金流
+                  {i18n.t('pages.financial_report_page.k9')}
                 </Typography>
                 <Typography
                   variant='h6'
@@ -457,7 +438,7 @@ const FinancialReportPage: React.FC = () => {
                   variant='body2'
                   sx={{ color: 'text.secondary' }}
                 >
-                  现金净流量
+                  {i18n.t('pages.financial_report_page.k10')}
                 </Typography>
                 <Typography
                   variant='h6'
@@ -474,10 +455,8 @@ const FinancialReportPage: React.FC = () => {
         </Box>
       );
     }
-
     return null;
   };
-
   const renderReportTable = () => {
     if (loading) {
       return (
@@ -486,7 +465,6 @@ const FinancialReportPage: React.FC = () => {
         </Box>
       );
     }
-
     if (activeTab === 'balance-sheet' && balanceSheet) {
       return (
         <TableContainer
@@ -496,19 +474,19 @@ const FinancialReportPage: React.FC = () => {
           <Table>
             <TableHead>
               <TableRow sx={{ bgcolor: 'grey.50' }}>
-                <TableCell sx={{ fontWeight: 'bold', width: 120 }}>项目代码</TableCell>
-                <TableCell sx={{ fontWeight: 'bold' }}>项目</TableCell>
+                <TableCell sx={{ fontWeight: 'bold', width: 120 }}>{i18n.t('erp.financial_report_page.k13')}</TableCell>
+                <TableCell sx={{ fontWeight: 'bold' }}>{i18n.t('erp.financial_report_page.k14')}</TableCell>
                 <TableCell
                   align='right'
                   sx={{ fontWeight: 'bold', width: 180 }}
                 >
-                  金额
+                  {i18n.t('pages.financial_report_page.k11')}
                 </TableCell>
                 <TableCell
                   align='right'
                   sx={{ fontWeight: 'bold', width: 120 }}
                 >
-                  占比(%)
+                  {i18n.t('pages.financial_report_page.k12')}
                 </TableCell>
               </TableRow>
             </TableHead>
@@ -518,7 +496,7 @@ const FinancialReportPage: React.FC = () => {
                   colSpan={4}
                   sx={{ bgcolor: 'primary.50', fontWeight: 'bold' }}
                 >
-                  资产
+                  {i18n.t('pages.financial_report_page.k13')}
                 </TableCell>
               </TableRow>
               {balanceSheet.assets.map((item: BalanceItem) => (
@@ -537,7 +515,7 @@ const FinancialReportPage: React.FC = () => {
                   colSpan={4}
                   sx={{ bgcolor: 'warning.50', fontWeight: 'bold' }}
                 >
-                  负债
+                  {i18n.t('pages.financial_report_page.k14')}
                 </TableCell>
               </TableRow>
               {balanceSheet.liabilities.map((item: BalanceItem) => (
@@ -556,7 +534,7 @@ const FinancialReportPage: React.FC = () => {
                   colSpan={4}
                   sx={{ bgcolor: 'success.50', fontWeight: 'bold' }}
                 >
-                  所有者权益
+                  {i18n.t('pages.financial_report_page.k15')}
                 </TableCell>
               </TableRow>
               {balanceSheet.equity.map((item: BalanceItem) => (
@@ -575,7 +553,6 @@ const FinancialReportPage: React.FC = () => {
         </TableContainer>
       );
     }
-
     if (activeTab === 'income-statement' && incomeStatement) {
       return (
         <TableContainer
@@ -585,19 +562,19 @@ const FinancialReportPage: React.FC = () => {
           <Table>
             <TableHead>
               <TableRow sx={{ bgcolor: 'grey.50' }}>
-                <TableCell sx={{ fontWeight: 'bold', width: 120 }}>项目代码</TableCell>
-                <TableCell sx={{ fontWeight: 'bold' }}>项目</TableCell>
+                <TableCell sx={{ fontWeight: 'bold', width: 120 }}>{i18n.t('erp.financial_report_page.k15')}</TableCell>
+                <TableCell sx={{ fontWeight: 'bold' }}>{i18n.t('erp.financial_report_page.k16')}</TableCell>
                 <TableCell
                   align='right'
                   sx={{ fontWeight: 'bold', width: 180 }}
                 >
-                  金额
+                  {i18n.t('pages.financial_report_page.k16')}
                 </TableCell>
                 <TableCell
                   align='right'
                   sx={{ fontWeight: 'bold', width: 120 }}
                 >
-                  占比(%)
+                  {i18n.t('pages.financial_report_page.k17')}
                 </TableCell>
               </TableRow>
             </TableHead>
@@ -607,7 +584,7 @@ const FinancialReportPage: React.FC = () => {
                   colSpan={4}
                   sx={{ bgcolor: 'success.50', fontWeight: 'bold' }}
                 >
-                  营业收入
+                  {i18n.t('pages.financial_report_page.k18')}
                 </TableCell>
               </TableRow>
               {incomeStatement.revenues.map((item: IncomeItem) => (
@@ -631,7 +608,7 @@ const FinancialReportPage: React.FC = () => {
                   colSpan={4}
                   sx={{ bgcolor: 'error.50', fontWeight: 'bold' }}
                 >
-                  营业成本及费用
+                  {i18n.t('pages.financial_report_page.k19')}
                 </TableCell>
               </TableRow>
               {incomeStatement.expenses.map((item: IncomeItem) => (
@@ -655,7 +632,7 @@ const FinancialReportPage: React.FC = () => {
                   colSpan={2}
                   sx={{ fontWeight: 'bold' }}
                 >
-                  营业利润
+                  {i18n.t('pages.financial_report_page.k20')}
                 </TableCell>
                 <TableCell
                   align='right'
@@ -670,7 +647,7 @@ const FinancialReportPage: React.FC = () => {
                   colSpan={2}
                   sx={{ fontWeight: 'bold' }}
                 >
-                  利润总额
+                  {i18n.t('pages.financial_report_page.k21')}
                 </TableCell>
                 <TableCell
                   align='right'
@@ -685,7 +662,7 @@ const FinancialReportPage: React.FC = () => {
                   colSpan={2}
                   sx={{ fontWeight: 'bold' }}
                 >
-                  净利润
+                  {i18n.t('pages.financial_report_page.k22')}
                 </TableCell>
                 <TableCell
                   align='right'
@@ -703,7 +680,6 @@ const FinancialReportPage: React.FC = () => {
         </TableContainer>
       );
     }
-
     if (activeTab === 'cash-flow' && cashFlowStatement) {
       return (
         <TableContainer
@@ -713,13 +689,13 @@ const FinancialReportPage: React.FC = () => {
           <Table>
             <TableHead>
               <TableRow sx={{ bgcolor: 'grey.50' }}>
-                <TableCell sx={{ fontWeight: 'bold', width: 120 }}>项目代码</TableCell>
-                <TableCell sx={{ fontWeight: 'bold' }}>项目</TableCell>
+                <TableCell sx={{ fontWeight: 'bold', width: 120 }}>{i18n.t('erp.financial_report_page.k17')}</TableCell>
+                <TableCell sx={{ fontWeight: 'bold' }}>{i18n.t('erp.financial_report_page.k18')}</TableCell>
                 <TableCell
                   align='right'
                   sx={{ fontWeight: 'bold', width: 180 }}
                 >
-                  金额
+                  {i18n.t('pages.financial_report_page.k23')}
                 </TableCell>
               </TableRow>
             </TableHead>
@@ -729,7 +705,7 @@ const FinancialReportPage: React.FC = () => {
                   colSpan={3}
                   sx={{ bgcolor: 'success.50', fontWeight: 'bold' }}
                 >
-                  经营活动产生的现金流量
+                  {i18n.t('pages.financial_report_page.k24')}
                 </TableCell>
               </TableRow>
               {cashFlowStatement.operating_activities.map((item: CashFlowItem) => (
@@ -752,7 +728,7 @@ const FinancialReportPage: React.FC = () => {
                   colSpan={3}
                   sx={{ bgcolor: 'warning.50', fontWeight: 'bold' }}
                 >
-                  投资活动产生的现金流量
+                  {i18n.t('pages.financial_report_page.k25')}
                 </TableCell>
               </TableRow>
               {cashFlowStatement.investing_activities.map((item: CashFlowItem) => (
@@ -775,7 +751,7 @@ const FinancialReportPage: React.FC = () => {
                   colSpan={3}
                   sx={{ bgcolor: 'primary.50', fontWeight: 'bold' }}
                 >
-                  筹资活动产生的现金流量
+                  {i18n.t('pages.financial_report_page.k26')}
                 </TableCell>
               </TableRow>
               {cashFlowStatement.financing_activities.map((item: CashFlowItem) => (
@@ -798,7 +774,7 @@ const FinancialReportPage: React.FC = () => {
                   colSpan={2}
                   sx={{ fontWeight: 'bold' }}
                 >
-                  现金及现金等价物净增加额
+                  {i18n.t('pages.financial_report_page.k27')}
                 </TableCell>
                 <TableCell
                   align='right'
@@ -815,7 +791,6 @@ const FinancialReportPage: React.FC = () => {
         </TableContainer>
       );
     }
-
     if (activeTab === 'equity-change') {
       return (
         <Box sx={{ py: 8, textAlign: 'center' }}>
@@ -824,30 +799,28 @@ const FinancialReportPage: React.FC = () => {
             variant='body1'
             sx={{ color: 'text.secondary' }}
           >
-            所有者权益变动表数据加载中...
+            {i18n.t('pages.financial_report_page.k28')}
           </Typography>
         </Box>
       );
     }
-
     return null;
   };
-
   return (
     <PageContainer
-      title='财务报表中心'
-      subtitle='资产负债表、利润表、现金流量表、所有者权益变动表'
+      title={i18n.t('erp.financial_report_page.k19')}
+      subtitle={i18n.t('erp.financial_report_page.k20')}
       maxWidth='xl'
       headerProps={{
         actions: [
           {
-            label: '刷新',
+            label: i18n.t('erp.financial_report_page.k21'),
             icon: <RefreshCw size={16} />,
             onClick: handleRefresh,
             variant: 'outlined',
           },
           {
-            label: '导出报表',
+            label: i18n.t('erp.financial_report_page.k22'),
             icon: <Download size={16} />,
             onClick: handleExport,
             variant: 'contained',
@@ -863,7 +836,6 @@ const FinancialReportPage: React.FC = () => {
           {error}
         </Alert>
       )}
-
       <Box
         sx={{
           display: 'flex',
@@ -886,34 +858,33 @@ const FinancialReportPage: React.FC = () => {
             />
           ))}
         </Tabs>
-
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
           <FormControl
             size='small'
             sx={{ minWidth: 120 }}
           >
-            <InputLabel>期间类型</InputLabel>
+            <InputLabel>{i18n.t('erp.financial_report_page.k23')}</InputLabel>
             <Select
               value={periodType}
-              label='期间类型'
+              label={i18n.t('erp.financial_report_page.k24')}
               onChange={(e) => {
                 setPeriodType(e.target.value);
                 setPeriod(periodOptions[0]?.value || '');
               }}
             >
-              <MenuItem value='year'>年度</MenuItem>
-              <MenuItem value='quarter'>季度</MenuItem>
-              <MenuItem value='month'>月度</MenuItem>
+              <MenuItem value='year'>{i18n.t('erp.financial_report_page.k25')}</MenuItem>
+              <MenuItem value='quarter'>{i18n.t('erp.financial_report_page.k26')}</MenuItem>
+              <MenuItem value='month'>{i18n.t('erp.financial_report_page.k27')}</MenuItem>
             </Select>
           </FormControl>
           <FormControl
             size='small'
             sx={{ minWidth: 160 }}
           >
-            <InputLabel>选择期间</InputLabel>
+            <InputLabel>{i18n.t('erp.financial_report_page.k28')}</InputLabel>
             <Select
               value={period}
-              label='选择期间'
+              label={i18n.t('erp.financial_report_page.k29')}
               onChange={(e) => setPeriod(e.target.value)}
             >
               {periodOptions.map((opt) => (
@@ -928,12 +899,9 @@ const FinancialReportPage: React.FC = () => {
           </FormControl>
         </Box>
       </Box>
-
       {renderSummaryCards()}
-
       {renderReportTable()}
     </PageContainer>
   );
 };
-
 export default FinancialReportPage;

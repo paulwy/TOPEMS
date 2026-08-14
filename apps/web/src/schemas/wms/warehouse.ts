@@ -3,11 +3,12 @@
  */
 
 import type { EntitySchema } from '@/schema';
+import i18n from '@/i18n';
 
 export const warehouseSchema: EntitySchema = {
   entity: 'warehouse',
-  title: '仓库管理',
-  description: '管理仓库基础信息，包括名称、编码、地址、负责人、联系方式等',
+  title: i18n.t('wms.warehouse.k0'),
+  description: i18n.t('wms.warehouse.k1'),
 
   api: {
     module: 'wms',
@@ -17,7 +18,7 @@ export const warehouseSchema: EntitySchema = {
   fields: [
     {
       name: 'name',
-      label: '仓库名称',
+      label: i18n.t('wms.warehouse.k2'),
       type: 'text',
       required: true,
       sortable: true,
@@ -26,7 +27,7 @@ export const warehouseSchema: EntitySchema = {
     },
     {
       name: 'code',
-      label: '仓库编码',
+      label: i18n.t('wms.warehouse.k3'),
       type: 'text',
       readonlyOnEdit: true,
       sortable: true,
@@ -34,14 +35,14 @@ export const warehouseSchema: EntitySchema = {
     },
     {
       name: 'address',
-      label: '地址',
+      label: i18n.t('wms.warehouse.k4'),
       type: 'text',
       listWidth: 180,
       tableEditable: true,
     },
     {
       name: 'manager',
-      label: '负责人',
+      label: i18n.t('wms.warehouse.k5'),
       type: 'text',
       listWidth: 100,
       tableEditable: true,
@@ -49,22 +50,22 @@ export const warehouseSchema: EntitySchema = {
     },
     {
       name: 'phone',
-      label: '电话',
+      label: i18n.t('wms.warehouse.k6'),
       type: 'text',
       listWidth: 120,
       tableEditable: true,
     },
     {
       name: 'status',
-      label: '状态',
+      label: i18n.t('wms.warehouse.k7'),
       type: 'select',
       defaultValue: 'active',
       options: {
         type: 'static',
         options: [
-          { value: 'active', label: '启用' },
-          { value: 'inactive', label: '停用' },
-          { value: 'maintenance', label: '维护中' },
+          { value: 'active', label: i18n.t('wms.warehouse.k8') },
+          { value: 'inactive', label: i18n.t('wms.warehouse.k9') },
+          { value: 'maintenance', label: i18n.t('wms.warehouse.k10') },
         ],
       },
       listWidth: 100,
@@ -86,21 +87,21 @@ export const warehouseSchema: EntitySchema = {
         maintenance: 'warning',
       },
       labelMap: {
-        active: '启用',
-        inactive: '停用',
-        maintenance: '维护中',
+        active: i18n.t('wms.warehouse.k11'),
+        inactive: i18n.t('wms.warehouse.k12'),
+        maintenance: i18n.t('wms.warehouse.k13'),
       },
     },
     filters: [
       {
         id: 'status',
-        label: '状态',
+        label: i18n.t('wms.warehouse.k14'),
         type: 'select',
         options: [
-          { label: '全部状态', value: 'all' },
-          { label: '启用', value: 'active' },
-          { label: '停用', value: 'inactive' },
-          { label: '维护中', value: 'maintenance' },
+          { label: i18n.t('wms.warehouse.k15'), value: 'all' },
+          { label: i18n.t('wms.warehouse.k16'), value: 'active' },
+          { label: i18n.t('wms.warehouse.k17'), value: 'inactive' },
+          { label: i18n.t('wms.warehouse.k18'), value: 'maintenance' },
         ],
       },
     ],
@@ -110,21 +111,21 @@ export const warehouseSchema: EntitySchema = {
 
   formSections: [
     {
-      title: '基本信息',
+      title: i18n.t('wms.warehouse.k19'),
       fields: ['name', 'code'],
     },
     {
-      title: '联系信息',
+      title: i18n.t('wms.warehouse.k20'),
       fields: ['address', 'manager', 'phone'],
     },
     {
-      title: '状态',
+      title: i18n.t('wms.warehouse.k21'),
       fields: ['status'],
     },
   ],
 
   formColCount: 2,
-  createTitle: '新增仓库',
-  editTitle: '编辑仓库',
-  detailTitle: '仓库详情',
+  createTitle: i18n.t('wms.warehouse.k22'),
+  editTitle: i18n.t('wms.warehouse.k23'),
+  detailTitle: i18n.t('wms.warehouse.k24'),
 };

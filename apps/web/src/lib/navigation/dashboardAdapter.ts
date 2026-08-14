@@ -84,6 +84,7 @@ import {
   CircleHelp,
   Users2,
 } from 'lucide-react';
+import i18n from '@/i18n';
 
 const iconMap: Record<
   string,
@@ -217,7 +218,7 @@ export function convertModuleCardToModuleItem(moduleCard: ModuleCardConfig): Mod
   return {
     title: moduleCard.name,
     icon: Icon,
-    description: moduleCard.description || '点击进入',
+    description: moduleCard.description || i18n.t('shared.dashboard_adapter.k0'),
     path: moduleCard.path,
     color: moduleColorMap[moduleCard.code] || defaultColor,
     status: moduleCard.status || 'online',

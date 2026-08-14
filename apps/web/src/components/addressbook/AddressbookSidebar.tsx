@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { Users, Building, User, Folder, ChevronRight, ChevronDown } from 'lucide-react';
 import type { DepartmentNode } from '../../types/addressbook';
+import { designTokens } from '@topems/tokens';
+import i18n from '@/i18n';
 
 interface AddressbookSidebarProps {
   departments: DepartmentNode[];
@@ -44,7 +46,7 @@ export const AddressbookSidebar: React.FC<AddressbookSidebarProps> = ({
             display: 'flex',
             alignItems: 'center',
             gap: 8,
-            padding: '8px 12px',
+            padding: `${designTokens.spacing.sm} 12px`,
             paddingLeft: level * 16 + 12,
             fontSize: 14,
             cursor: 'pointer',
@@ -124,10 +126,10 @@ export const AddressbookSidebar: React.FC<AddressbookSidebarProps> = ({
     label: string;
     icon: React.ComponentType<{ sx?: object }>;
   }> = [
-    { id: 'all', label: '全部', icon: Users },
-    { id: 'EMPLOYEE', label: '员工', icon: User },
-    { id: 'DEPARTMENT', label: '部门', icon: Folder },
-    { id: 'COMPANY', label: '公司', icon: Building },
+    { id: 'all', label: i18n.t('shared.addressbook_sidebar.k0'), icon: Users },
+    { id: 'EMPLOYEE', label: i18n.t('shared.addressbook_sidebar.k1'), icon: User },
+    { id: 'DEPARTMENT', label: i18n.t('shared.addressbook_sidebar.k2'), icon: Folder },
+    { id: 'COMPANY', label: i18n.t('shared.addressbook_sidebar.k3'), icon: Building },
   ];
 
   return (
@@ -150,7 +152,7 @@ export const AddressbookSidebar: React.FC<AddressbookSidebarProps> = ({
             margin: 0,
           }}
         >
-          通讯录
+          {i18n.t('components.addressbook_sidebar.k0')}
         </h2>
       </div>
 
@@ -164,7 +166,7 @@ export const AddressbookSidebar: React.FC<AddressbookSidebarProps> = ({
             marginBottom: 12,
           }}
         >
-          分类
+          {i18n.t('components.addressbook_sidebar.k1')}
         </h3>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
           {typeFilters.map(({ id, label, icon: Icon }) => (
@@ -175,7 +177,7 @@ export const AddressbookSidebar: React.FC<AddressbookSidebarProps> = ({
                 display: 'flex',
                 alignItems: 'center',
                 gap: 8,
-                padding: '8px 12px',
+                padding: `${designTokens.spacing.sm} 12px`,
                 fontSize: 14,
                 borderRadius: 6,
                 border: 'none',
@@ -214,7 +216,7 @@ export const AddressbookSidebar: React.FC<AddressbookSidebarProps> = ({
             marginBottom: 12,
           }}
         >
-          组织架构
+          {i18n.t('components.addressbook_sidebar.k2')}
         </h3>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
           <button
@@ -223,7 +225,7 @@ export const AddressbookSidebar: React.FC<AddressbookSidebarProps> = ({
               display: 'flex',
               alignItems: 'center',
               gap: 8,
-              padding: '8px 12px',
+              padding: `${designTokens.spacing.sm} 12px`,
               fontSize: 14,
               borderRadius: 6,
               border: 'none',
@@ -246,7 +248,7 @@ export const AddressbookSidebar: React.FC<AddressbookSidebarProps> = ({
             }}
           >
             <Building sx={{ width: 16, height: 16 }} />
-            <span>全部部门</span>
+            <span>{i18n.t('shared.addressbook_sidebar.k4')}</span>
           </button>
           {departments.map((dept) => renderDepartmentNode(dept))}
         </div>

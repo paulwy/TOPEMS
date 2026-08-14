@@ -2,6 +2,7 @@ import React from 'react';
 import { Drawer as MuiDrawer, Box, IconButton, Typography, Divider } from '@mui/material';
 import type { SxProps, Theme } from '@mui/material/styles';
 import { X } from 'lucide-react';
+import i18n from '@/i18n';
 
 export type DrawerAnchor = 'left' | 'right' | 'top' | 'bottom';
 
@@ -97,7 +98,7 @@ export const Drawer: React.FC<DrawerProps> = ({
                 size='small'
                 onClick={handleClose}
                 sx={{ ml: 'auto' }}
-                aria-label='关闭'
+                aria-label={i18n.t('shared.drawer.k0')}
               >
                 <X size={20} />
               </IconButton>

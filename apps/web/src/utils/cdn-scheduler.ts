@@ -1,3 +1,4 @@
+import i18n from '@/i18n';
 export type ResourceType =
   'script' | 'style' | 'image' | 'font' | 'video' | 'audio' | 'json' | 'other';
 
@@ -321,7 +322,7 @@ const defaultCdnProviders: Array<Omit<CdnProvider, 'lastCheck' | 'successCount' 
   },
   {
     id: 'cdn-aliyun',
-    name: '阿里云CDN',
+    name: i18n.t('shared.cdn-scheduler.cdn_0'),
     baseUrl: 'https://cdn.example-aliyun.com',
     weight: 100,
     healthy: true,
@@ -330,7 +331,7 @@ const defaultCdnProviders: Array<Omit<CdnProvider, 'lastCheck' | 'successCount' 
   },
   {
     id: 'cdn-tencent',
-    name: '腾讯云CDN',
+    name: i18n.t('shared.cdn-scheduler.cdn_1'),
     baseUrl: 'https://cdn.example-tencent.com',
     weight: 98,
     healthy: true,

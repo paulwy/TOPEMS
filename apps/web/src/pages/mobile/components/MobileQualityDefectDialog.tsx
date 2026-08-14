@@ -15,12 +15,11 @@ import {
   MenuItem,
   Button,
 } from '@mui/material';
+import i18n from '@/i18n';
 import { Camera, AlertTriangle } from 'lucide-react';
-import { useTranslation } from 'react-i18next';
 import { MobileButton } from '@/components/mobile';
 import type { QualityTask, DefectRecord } from '@/api/mobile';
 import type { DefectForm } from '../hooks/useMobileQuality';
-
 interface MobileQualityDefectDialogProps {
   open: boolean;
   onClose: () => void;
@@ -30,7 +29,6 @@ interface MobileQualityDefectDialogProps {
   onSubmit: () => void;
   submitting: boolean;
 }
-
 export const MobileQualityDefectDialog: React.FC<MobileQualityDefectDialogProps> = ({
   open,
   onClose,
@@ -40,8 +38,6 @@ export const MobileQualityDefectDialog: React.FC<MobileQualityDefectDialogProps>
   onSubmit,
   submitting,
 }) => {
-  const { t } = useTranslation();
-
   return (
     <Dialog
       open={open}
@@ -49,7 +45,7 @@ export const MobileQualityDefectDialog: React.FC<MobileQualityDefectDialogProps>
       fullWidth
       maxWidth='sm'
     >
-      <DialogTitle>{t('mobile.quality.dialog.report_defect_title')}</DialogTitle>
+      <DialogTitle>{i18n.t('mobile.quality.dialog.report_defect_title')}</DialogTitle>
       <DialogContent>
         <Box sx={{ pt: 1, display: 'flex', flexDirection: 'column', gap: 2 }}>
           {selectedTask && (
@@ -66,7 +62,7 @@ export const MobileQualityDefectDialog: React.FC<MobileQualityDefectDialogProps>
                 color='text.secondary'
                 sx={{ display: 'block', mb: 0.5 }}
               >
-                {t('mobile.quality.label.current_task')}
+                {i18n.t('mobile.quality.label.current_task')}
               </Typography>
               <Typography
                 variant='body2'
@@ -78,21 +74,21 @@ export const MobileQualityDefectDialog: React.FC<MobileQualityDefectDialogProps>
                 variant='caption'
                 color='text.secondary'
               >
-                {selectedTask.task_no} · {t('mobile.quality.label.batch')} {selectedTask.batch_no}
+                {selectedTask.task_no} · {i18n.t('mobile.quality.label.batch')} {selectedTask.batch_no}
               </Typography>
             </Paper>
           )}
           <TextField
             fullWidth
-            label={t('mobile.quality.label.defect_type')}
+            label={i18n.t('mobile.quality.label.defect_type')}
             value={defectForm.defect_type}
             onChange={(e) => setDefectForm((prev) => ({ ...prev, defect_type: e.target.value }))}
-            placeholder={t('mobile.quality.placeholder.defect_type')}
+            placeholder={i18n.t('mobile.quality.placeholder.defect_type')}
           />
           <TextField
             select
             fullWidth
-            label={t('mobile.quality.label.severity')}
+            label={i18n.t('mobile.quality.label.severity')}
             value={defectForm.severity}
             onChange={(e) =>
               setDefectForm((prev) => ({
@@ -101,14 +97,14 @@ export const MobileQualityDefectDialog: React.FC<MobileQualityDefectDialogProps>
               }))
             }
           >
-            <MenuItem value='minor'>{t('mobile.quality.severity.minor')}</MenuItem>
-            <MenuItem value='major'>{t('mobile.quality.severity.major')}</MenuItem>
-            <MenuItem value='critical'>{t('mobile.quality.severity.critical')}</MenuItem>
+            <MenuItem value='minor'>{i18n.t('mobile.quality.severity.minor')}</MenuItem>
+            <MenuItem value='major'>{i18n.t('mobile.quality.severity.major')}</MenuItem>
+            <MenuItem value='critical'>{i18n.t('mobile.quality.severity.critical')}</MenuItem>
           </TextField>
           <TextField
             fullWidth
             type='number'
-            label={t('mobile.quality.label.defect_quantity')}
+            label={i18n.t('mobile.quality.label.defect_quantity')}
             value={defectForm.quantity}
             onChange={(e) =>
               setDefectForm((prev) => ({
@@ -122,10 +118,10 @@ export const MobileQualityDefectDialog: React.FC<MobileQualityDefectDialogProps>
             fullWidth
             multiline
             rows={3}
-            label={t('mobile.quality.label.defect_description')}
+            label={i18n.t('mobile.quality.label.defect_description')}
             value={defectForm.description}
             onChange={(e) => setDefectForm((prev) => ({ ...prev, description: e.target.value }))}
-            placeholder={t('mobile.quality.placeholder.defect_description')}
+            placeholder={i18n.t('mobile.quality.placeholder.defect_description')}
           />
           <Box sx={{ display: 'flex', gap: 1 }}>
             <Button
@@ -133,7 +129,7 @@ export const MobileQualityDefectDialog: React.FC<MobileQualityDefectDialogProps>
               startIcon={<Camera style={{ width: 18, height: 18 }} />}
               fullWidth
             >
-              {t('mobile.quality.action.photo_upload')}
+              {i18n.t('mobile.quality.action.photo_upload')}
             </Button>
           </Box>
         </Box>
@@ -143,7 +139,7 @@ export const MobileQualityDefectDialog: React.FC<MobileQualityDefectDialogProps>
           onClick={onClose}
           disabled={submitting}
         >
-          {t('mobile.quality.action.cancel')}
+          {i18n.t('mobile.quality.action.cancel')}
         </Button>
         <MobileButton
           variant='contained'
@@ -152,7 +148,7 @@ export const MobileQualityDefectDialog: React.FC<MobileQualityDefectDialogProps>
           startIcon={<AlertTriangle style={{ width: 18, height: 18 }} />}
           disabled={submitting}
         >
-          {t('mobile.quality.action.submit_report')}
+          {i18n.t('mobile.quality.action.submit_report')}
         </MobileButton>
       </DialogActions>
     </Dialog>

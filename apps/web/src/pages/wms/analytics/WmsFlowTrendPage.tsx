@@ -9,6 +9,7 @@ import {
   Tooltip,
   Legend,
 } from 'recharts';
+import i18n from '@/i18n';
 import { useWmsMock, type WmsMockShape } from '@/api/wms/_mock';
 import { designTokens, semanticTokens } from '@topems/tokens';
 
@@ -33,30 +34,30 @@ export default function WmsFlowTrendPage() {
   return (
     <div className='space-y-4 p-4'>
       <div className='flex items-center justify-between'>
-        <h1 className='text-2xl font-bold'>出入库流量趋势（最近 30 天）</h1>
+        <h1 className='text-2xl font-bold'>{i18n.t('pages.wms_flow_trend_page.30_0')}</h1>
         <select
           value={range}
           onChange={(e) => setRange(e.target.value as '7d' | '15d' | '30d')}
           className='border rounded px-3 py-1.5 text-sm'
-          aria-label='时间范围'
+          aria-label={i18n.t('pages.wms_flow_trend_page.k1')}
         >
-          <option value='7d'>近 7 天</option>
-          <option value='15d'>近 15 天</option>
-          <option value='30d'>近 30 天</option>
+          <option value='7d'>{i18n.t('pages.wms_flow_trend_page.7_2')}</option>
+          <option value='15d'>{i18n.t('pages.wms_flow_trend_page.15_3')}</option>
+          <option value='30d'>{i18n.t('pages.wms_flow_trend_page.30_4')}</option>
         </select>
       </div>
 
       <div className='grid grid-cols-1 gap-4 md:grid-cols-4'>
         <div className='rounded-lg border p-4'>
-          <p className='text-sm text-gray-600'>累计入库</p>
+          <p className='text-sm text-gray-600'>{i18n.t('pages.wms_flow_trend_page.k5')}</p>
           <p className='mt-1 text-3xl font-bold text-green-600'>{totals.inb.toLocaleString()}</p>
         </div>
         <div className='rounded-lg border p-4'>
-          <p className='text-sm text-gray-600'>累计出库</p>
+          <p className='text-sm text-gray-600'>{i18n.t('pages.wms_flow_trend_page.k6')}</p>
           <p className='mt-1 text-3xl font-bold text-blue-600'>{totals.out.toLocaleString()}</p>
         </div>
         <div className='rounded-lg border p-4'>
-          <p className='text-sm text-gray-600'>净出入库</p>
+          <p className='text-sm text-gray-600'>{i18n.t('pages.wms_flow_trend_page.k7')}</p>
           <p
             className={`mt-1 text-3xl font-bold ${
               totals.net >= 0 ? 'text-green-600' : 'text-red-600'
@@ -67,7 +68,7 @@ export default function WmsFlowTrendPage() {
           </p>
         </div>
         <div className='rounded-lg border p-4'>
-          <p className='text-sm text-gray-600'>统计天数</p>
+          <p className='text-sm text-gray-600'>{i18n.t('pages.wms_flow_trend_page.k8')}</p>
           <p className='mt-1 text-3xl font-bold text-purple-600'>{totals.days} 天</p>
         </div>
       </div>
@@ -145,14 +146,14 @@ export default function WmsFlowTrendPage() {
             />
             <YAxis
               fontSize={11}
-              label={{ value: '数量', angle: -90, position: 'insideLeft' }}
+              label={{ value: i18n.t('pages.wms_flow_trend_page.k9'), angle: -90, position: 'insideLeft' }}
             />
             <Tooltip />
             <Legend />
             <Area
               type='monotone'
               dataKey='inboundQty'
-              name='入库量'
+              name={i18n.t('pages.wms_flow_trend_page.k10')}
               stroke={designTokens.colors.success.dark}
               fill='url(#inbGrad)'
               strokeWidth={2}
@@ -160,7 +161,7 @@ export default function WmsFlowTrendPage() {
             <Area
               type='monotone'
               dataKey='outboundQty'
-              name='出库量'
+              name={i18n.t('pages.wms_flow_trend_page.k11')}
               stroke={designTokens.colors.primary.main}
               fill='url(#outGrad)'
               strokeWidth={2}
@@ -168,7 +169,7 @@ export default function WmsFlowTrendPage() {
             <Area
               type='monotone'
               dataKey='net'
-              name='净流量'
+              name={i18n.t('pages.wms_flow_trend_page.k12')}
               stroke={designTokens.colors.warning.main}
               fill='url(#netGrad)'
               strokeWidth={2}

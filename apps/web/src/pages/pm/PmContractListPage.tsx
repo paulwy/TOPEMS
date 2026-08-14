@@ -9,15 +9,13 @@ import { pmApi } from '@/api/pm';
 import type { Contract } from '@/api/pm';
 import { PM_PATHS } from '@/modules/pm/config';
 import { designTokens } from '@/theme/tokens';
-
+import i18n from '@/i18n';
 const ct= designTokens.colors;
-
 const CURRENCY_FORMATTER = new Intl.NumberFormat('zh-CN', {
   style: 'currency',
   currency: 'CNY',
   minimumFractionDigits: 0,
 });
-
 interface StatCardProps {
   label: string;
   value: React.ReactNode;
@@ -26,7 +24,6 @@ interface StatCardProps {
   icon: React.ReactNode;
   iconColor: string;
 }
-
 const StatCard: React.FC<StatCardProps> = ({
   label,
   value,
@@ -56,16 +53,13 @@ const StatCard: React.FC<StatCardProps> = ({
     </Box>
   </Box>
 );
-
 const contractApiAdapter: CrudApiAdapter = {
   list: async (params) => {
     const response = await pmApi.contracts.list();
     if (!response.success || !response.data) {
       return { data: [], total: 0 };
     }
-
     let items = (response.data as Contract[]) || [];
-
     if (params?.contract_type && params.contract_type !== 'all') {
       items = items.filter((c) => c.contract_type === params.contract_type);
     }
@@ -78,14 +72,12 @@ const contractApiAdapter: CrudApiAdapter = {
         (c) => c.contract_name.toLowerCase().includes(q) || c.contractNo.toLowerCase().includes(q)
       );
     }
-
     const total = items.length;
     const page = params?.page || 1;
     const pageSize = params?.pageSize || 10;
     const paged = items.slice((page - 1) * pageSize, page * pageSize);
     return { data: paged as unknown as Record<string, unknown>[], total };
   },
-
   create: async (data) => {
     const payload = data as Record<string, unknown>;
     // 后端 create 接口使用 contract_code 字段，列表数据使用 contractNo
@@ -95,38 +87,34 @@ const contractApiAdapter: CrudApiAdapter = {
       contract_code: (contractNo as string) || '',
     });
     if (!response.success) {
-      throw new Error(response.message || '创建合同失败');
+      throw new Error(response.message || i18n.t('pm.pm_contract_list_page.k0'));
     }
     return data as Record<string, unknown>;
   },
-
   update: async (id, data) => {
     const response = await pmApi.contracts.update(
       id,
       data as Parameters<typeof pmApi.contracts.update>[1]
     );
     if (!response.success) {
-      throw new Error(response.message || '更新合同失败');
+      throw new Error(response.message || i18n.t('pm.pm_contract_list_page.k1'));
     }
     return { ...(data as Record<string, unknown>), id };
   },
-
   delete: async (id) => {
     const response = await pmApi.contracts.delete(id);
     if (!response.success) {
-      throw new Error(response.message || '删除合同失败');
+      throw new Error(response.message || i18n.t('pm.pm_contract_list_page.k2'));
     }
   },
 };
-
 const PmContractListPage: React.FC = () => {
   const navigate = useNavigate();
-
   const customRowActions: RowAction[] = useMemo(
     () => [
       {
         key: 'view-detail',
-        label: '查看详情',
+        label: i18n.t('pm.pm_contract_list_page.k3'),
         icon: <FileText size={16} />,
         onClick: (row) => {
           const id = String(row.id);
@@ -138,12 +126,10 @@ const PmContractListPage: React.FC = () => {
     ],
     [navigate]
   );
-
   const headerContent = React.useCallback((rows: Record<string, unknown>[]) => {
     const activeCount = rows.filter((r) => r.status === 'active').length;
     const pendingCount = rows.filter((r) => r.status === 'pending').length;
     const totalAmount = rows.reduce((sum, r) => sum + ((r.amount as number) || 0), 0);
-
     return (
       <Box
         sx={{
@@ -154,7 +140,7 @@ const PmContractListPage: React.FC = () => {
         }}
       >
         <StatCard
-          label='合同总数'
+          label={i18n.t('pm.pm_contract_list_page.k4')}
           value={rows.length}
           valueColor='grey.900'
           bgColor='primary.100'
@@ -162,7 +148,7 @@ const PmContractListPage: React.FC = () => {
           iconColor='primary.dark'
         />
         <StatCard
-          label='执行中'
+          label={i18n.t('pm.pm_contract_list_page.k5')}
           value={activeCount}
           valueColor='success.dark'
           bgColor='success.light'
@@ -170,7 +156,7 @@ const PmContractListPage: React.FC = () => {
           iconColor='success.dark'
         />
         <StatCard
-          label='待审批'
+          label={i18n.t('pm.pm_contract_list_page.k6')}
           value={pendingCount}
           valueColor='warning.dark'
           bgColor='warning.light'
@@ -178,7 +164,7 @@ const PmContractListPage: React.FC = () => {
           iconColor={ct.yellow[600]}
         />
         <StatCard
-          label='合同总金额'
+          label={i18n.t('pm.pm_contract_list_page.k7')}
           value={CURRENCY_FORMATTER.format(totalAmount)}
           valueColor='secondary.dark'
           bgColor={ct.purple[200]}
@@ -188,20 +174,18 @@ const PmContractListPage: React.FC = () => {
       </Box>
     );
   }, []);
-
   return (
     <CrudPage
       schema={contractSchema}
       apiAdapter={contractApiAdapter}
       customRowActions={customRowActions}
       breadcrumbs={[
-        { label: '首页', href: '/dashboard' },
-        { label: '项目管理' },
-        { label: '合同管理' },
+        { label: i18n.t('pm.pm_contract_list_page.k8'), href: '/dashboard' },
+        { label: i18n.t('pm.pm_contract_list_page.k9') },
+        { label: i18n.t('pm.pm_contract_list_page.k10') },
       ]}
       headerContent={headerContent}
     />
   );
 };
-
 export default PmContractListPage;

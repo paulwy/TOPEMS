@@ -26,6 +26,7 @@ import {
   Tooltip,
   Alert,
 } from '@mui/material';
+import i18n from '@/i18n';
 import { PageContainer } from '@/components/common';
 import { ConfirmDialog } from '@topems/shared-components';
 import { useConfirmDialog } from '@/hooks';
@@ -53,9 +54,9 @@ import {
 } from '@/api/report';
 
 const SCHEDULE_TYPE_OPTIONS: { value: ScheduleType; label: string }[] = [
-  { value: 'cron', label: 'Cron表达式' },
-  { value: 'interval', label: '时间间隔' },
-  { value: 'one_time', label: '一次性' },
+  { value: 'cron', label: i18n.t('pages.report_schedule_page.cron_0') },
+  { value: 'interval', label: i18n.t('pages.report_schedule_page.k0') },
+  { value: 'one_time', label: i18n.t('pages.report_schedule_page.k1') },
 ];
 
 const SCHEDULE_STATUS_OPTIONS: {
@@ -63,10 +64,10 @@ const SCHEDULE_STATUS_OPTIONS: {
   label: string;
   color: string;
 }[] = [
-  { value: 'active', label: '运行中', color: 'success' },
-  { value: 'paused', label: '已暂停', color: 'warning' },
-  { value: 'completed', label: '已完成', color: 'info' },
-  { value: 'failed', label: '执行失败', color: 'error' },
+  { value: 'active', label: i18n.t('pages.report_schedule_page.k2'), color: 'success' },
+  { value: 'paused', label: i18n.t('pages.report_schedule_page.k3'), color: 'warning' },
+  { value: 'completed', label: i18n.t('pages.report_schedule_page.k4'), color: 'info' },
+  { value: 'failed', label: i18n.t('pages.report_schedule_page.k5'), color: 'error' },
 ];
 
 const ReportSchedulePage: React.FC = () => {
@@ -97,7 +98,7 @@ const ReportSchedulePage: React.FC = () => {
     queryFn: async () => {
       const response = await reportApi.listSchedules();
       if (!response.success) {
-        throw new Error(response.message || '获取定时任务列表失败');
+        throw new Error(response.message || i18n.t('pages.report_schedule_page.k6'));
       }
       return response.data || [];
     },
@@ -109,7 +110,7 @@ const ReportSchedulePage: React.FC = () => {
     queryFn: async () => {
       const response = await reportApi.listTemplates();
       if (!response.success) {
-        throw new Error(response.message || '获取报表模板失败');
+        throw new Error(response.message || i18n.t('pages.report_schedule_page.k7'));
       }
       return response.data || [];
     },
@@ -120,7 +121,7 @@ const ReportSchedulePage: React.FC = () => {
     mutationFn: async (data: CreateScheduleRequest) => {
       const response = await reportApi.createSchedule(data);
       if (!response.success) {
-        throw new Error(response.message || '创建定时任务失败');
+        throw new Error(response.message || i18n.t('pages.report_schedule_page.k8'));
       }
       return response.data;
     },
@@ -131,7 +132,7 @@ const ReportSchedulePage: React.FC = () => {
 });
     },
     onError: (err: unknown) => {
-      setError((err as Error).message || '创建定时任务失败');
+      setError((err as Error).message || i18n.t('pages.report_schedule_page.k9'));
     },
   });
 
@@ -139,7 +140,7 @@ const ReportSchedulePage: React.FC = () => {
     mutationFn: async ({ id, data }: { id: string; data: UpdateScheduleRequest }) => {
       const response = await reportApi.updateSchedule(id, data);
       if (!response.success) {
-        throw new Error(response.message || '更新定时任务失败');
+        throw new Error(response.message || i18n.t('pages.report_schedule_page.k10'));
       }
       return response.data;
     },
@@ -150,7 +151,7 @@ const ReportSchedulePage: React.FC = () => {
 });
     },
     onError: (err: unknown) => {
-      setError((err as Error).message || '更新定时任务失败');
+      setError((err as Error).message || i18n.t('pages.report_schedule_page.k11'));
     },
   });
 
@@ -158,7 +159,7 @@ const ReportSchedulePage: React.FC = () => {
     mutationFn: async (id: string) => {
       const response = await reportApi.deleteSchedule(id);
       if (!response.success) {
-        throw new Error(response.message || '删除定时任务失败');
+        throw new Error(response.message || i18n.t('pages.report_schedule_page.k12'));
       }
       return id;
     },
@@ -169,7 +170,7 @@ const ReportSchedulePage: React.FC = () => {
 });
     },
     onError: (err: unknown) => {
-      setError((err as Error).message || '删除定时任务失败');
+      setError((err as Error).message || i18n.t('pages.report_schedule_page.k13'));
     },
   });
 
@@ -177,7 +178,7 @@ const ReportSchedulePage: React.FC = () => {
     mutationFn: async (id: string) => {
       const response = await reportApi.executeSchedule(id);
       if (!response.success) {
-        throw new Error(response.message || '执行定时任务失败');
+        throw new Error(response.message || i18n.t('pages.report_schedule_page.k14'));
       }
       return id;
     },
@@ -188,7 +189,7 @@ const ReportSchedulePage: React.FC = () => {
 });
     },
     onError: (err: unknown) => {
-      setError((err as Error).message || '执行定时任务失败');
+      setError((err as Error).message || i18n.t('pages.report_schedule_page.k15'));
     },
   });
 
@@ -198,7 +199,7 @@ const ReportSchedulePage: React.FC = () => {
       if (!currentSchedule?.id) return [];
       const response = await reportApi.getExecutionHistory(currentSchedule.id);
       if (!response.success) {
-        throw new Error(response.message || '获取执行历史失败');
+        throw new Error(response.message || i18n.t('pages.report_schedule_page.k16'));
       }
       return response.data || [];
     },
@@ -296,8 +297,8 @@ const ReportSchedulePage: React.FC = () => {
 
   const handleDelete = (id: string) => {
     openConfirmDialog({
-      title: '确认删除',
-      message: '确定要删除这个定时任务吗？',
+      title: i18n.t('pages.report_schedule_page.k17'),
+      message: i18n.t('pages.report_schedule_page.k18'),
       danger: true,
       onConfirm: () => {
         deleteMutation.mutate(id);
@@ -337,12 +338,12 @@ const ReportSchedulePage: React.FC = () => {
 
   return (
     <PageContainer
-      title='定时任务管理'
-      subtitle='管理报表定时任务，支持 Cron 表达式、时间间隔和一次性任务'
+      title={i18n.t('pages.report_schedule_page.k19')}
+      subtitle={i18n.t('pages.report_schedule_page.k20')}
       headerProps={{
         actions: [
           {
-            label: '新建任务',
+            label: i18n.t('pages.report_schedule_page.k21'),
             icon: <PlusIcon />,
             onClick: handleOpenCreateDialog,
             variant: 'contained',
@@ -365,14 +366,14 @@ const ReportSchedulePage: React.FC = () => {
             <Table>
               <TableHead>
                 <TableRow>
-                  <TableCell>任务名称</TableCell>
-                  <TableCell>报表模板</TableCell>
-                  <TableCell>调度类型</TableCell>
-                  <TableCell>执行表达式</TableCell>
-                  <TableCell>状态</TableCell>
-                  <TableCell>执行次数</TableCell>
-                  <TableCell>上次执行</TableCell>
-                  <TableCell>操作</TableCell>
+                  <TableCell>{i18n.t('pages.report_schedule_page.k22')}</TableCell>
+                  <TableCell>{i18n.t('pages.report_schedule_page.k23')}</TableCell>
+                  <TableCell>{i18n.t('pages.report_schedule_page.k24')}</TableCell>
+                  <TableCell>{i18n.t('pages.report_schedule_page.k25')}</TableCell>
+                  <TableCell>{i18n.t('pages.report_schedule_page.k26')}</TableCell>
+                  <TableCell>{i18n.t('pages.report_schedule_page.k27')}</TableCell>
+                  <TableCell>{i18n.t('pages.report_schedule_page.k28')}</TableCell>
+                  <TableCell>{i18n.t('pages.report_schedule_page.k29')}</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
@@ -382,7 +383,7 @@ const ReportSchedulePage: React.FC = () => {
                       colSpan={8}
                       align='center'
                     >
-                      <Typography variant='body1'>加载中...</Typography>
+                      <Typography variant='body1'>{i18n.t('pages.report_schedule_page.k1')}</Typography>
                     </TableCell>
                   </TableRow>
                 ) : schedules.length === 0 ? (
@@ -391,7 +392,7 @@ const ReportSchedulePage: React.FC = () => {
                       colSpan={8}
                       align='center'
                     >
-                      <Typography variant='body1'>暂无定时任务</Typography>
+                      <Typography variant='body1'>{i18n.t('pages.report_schedule_page.k30')}</Typography>
                     </TableCell>
                   </TableRow>
                 ) : (
@@ -420,48 +421,48 @@ const ReportSchedulePage: React.FC = () => {
                             variant='body2'
                             color='text.secondary'
                           >
-                            从未执行
+                            {i18n.t('pages.report_schedule_page.k0')}
                           </Typography>
                         )}
                       </TableCell>
                       <TableCell>
                         <Box sx={{ display: 'flex', gap: 1 }}>
-                          <Tooltip title='执行'>
+                          <Tooltip title={i18n.t('pages.report_schedule_page.k31')}>
                             <IconButton
                               size='small'
                               color='primary'
                               onClick={() => handleExecute(schedule.id)}
-                              aria-label='执行'
+                              aria-label={i18n.t('pages.report_schedule_page.k32')}
                             >
                               <PlayIcon />
                             </IconButton>
                           </Tooltip>
-                          <Tooltip title='查看历史'>
+                          <Tooltip title={i18n.t('pages.report_schedule_page.k33')}>
                             <IconButton
                               size='small'
                               color='info'
                               onClick={() => handleViewHistory(schedule)}
-                              aria-label='历史'
+                              aria-label={i18n.t('pages.report_schedule_page.k34')}
                             >
                               <HistoryIcon />
                             </IconButton>
                           </Tooltip>
-                          <Tooltip title='编辑'>
+                          <Tooltip title={i18n.t('pages.report_schedule_page.k35')}>
                             <IconButton
                               size='small'
                               color='warning'
                               onClick={() => handleOpenEditDialog(schedule)}
-                              aria-label='编辑'
+                              aria-label={i18n.t('pages.report_schedule_page.k36')}
                             >
                               <EditIcon />
                             </IconButton>
                           </Tooltip>
-                          <Tooltip title='删除'>
+                          <Tooltip title={i18n.t('pages.report_schedule_page.k37')}>
                             <IconButton
                               size='small'
                               color='error'
                               onClick={() => handleDelete(schedule.id)}
-                              aria-label='删除'
+                              aria-label={i18n.t('pages.report_schedule_page.k38')}
                             >
                               <DeleteIcon />
                             </IconButton>
@@ -483,11 +484,11 @@ const ReportSchedulePage: React.FC = () => {
         maxWidth='md'
         fullWidth
       >
-        <DialogTitle>{editMode ? '编辑定时任务' : '新建定时任务'}</DialogTitle>
+        <DialogTitle>{editMode ? i18n.t('pages.report_schedule_page.k40') : i18n.t('pages.report_schedule_page.k39')}</DialogTitle>
         <DialogContent>
           <Box sx={{ mt: 2, display: 'flex', flexDirection: 'column', gap: 3 }}>
             <TextField
-              label='任务名称'
+              label={i18n.t('pages.report_schedule_page.k41')}
               value={formData.name as string}
               onChange={(e) => handleFormChange('name', e.target.value)}
               fullWidth
@@ -497,11 +498,11 @@ const ReportSchedulePage: React.FC = () => {
               fullWidth
               required
             >
-              <InputLabel>报表模板</InputLabel>
+              <InputLabel>{i18n.t('pages.report_schedule_page.k42')}</InputLabel>
               <Select
                 value={(formData as CreateScheduleRequest).template_id as string}
                 onChange={(e) => handleFormChange('template_id', e.target.value)}
-                label='报表模板'
+                label={i18n.t('pages.report_schedule_page.k43')}
               >
                 {templates.map((template) => (
                   <MenuItem
@@ -517,11 +518,11 @@ const ReportSchedulePage: React.FC = () => {
               fullWidth
               required
             >
-              <InputLabel>调度类型</InputLabel>
+              <InputLabel>{i18n.t('pages.report_schedule_page.k44')}</InputLabel>
               <Select
                 value={(formData as CreateScheduleRequest).schedule_type as ScheduleType}
                 onChange={(e) => handleFormChange('schedule_type', e.target.value)}
-                label='调度类型'
+                label={i18n.t('pages.report_schedule_page.k45')}
               >
                 {SCHEDULE_TYPE_OPTIONS.map((option) => (
                   <MenuItem
@@ -534,17 +535,17 @@ const ReportSchedulePage: React.FC = () => {
               </Select>
             </FormControl>
             <TextField
-              label='执行表达式'
+              label={i18n.t('pages.report_schedule_page.k46')}
               value={formData.schedule_expression as string}
               onChange={(e) => handleFormChange('schedule_expression', e.target.value)}
               fullWidth
               required
               helperText={
                 (formData as CreateScheduleRequest).schedule_type === 'cron'
-                  ? '例如: 0 0 8 * * * (每天早上8点)'
+                  ? i18n.t('pages.report_schedule_page.k2')
                   : (formData as CreateScheduleRequest).schedule_type === 'interval'
-                    ? '例如: 1 hour (每小时)'
-                    : '例如: 2024-01-15 08:00:00'
+                    ? i18n.t('pages.report_schedule_page.1hour_3')
+                    : i18n.t('pages.report_schedule_page.k4')
               }
             />
             <Box>
@@ -552,7 +553,7 @@ const ReportSchedulePage: React.FC = () => {
                 variant='subtitle1'
                 sx={{ mb: 2 }}
               >
-                接收人邮箱
+                {i18n.t('pages.report_schedule_page.k1')}
               </Typography>
               <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
                 {(formData.recipients as string[]).map((recipient, index) => (
@@ -561,7 +562,7 @@ const ReportSchedulePage: React.FC = () => {
                     sx={{ display: 'flex', gap: 1 }}
                   >
                     <TextField
-                      label={`接收人 ${index + 1}`}
+                      label={`${i18n.t('pages.report_schedule_page.k5')}${index + 1}`}
                       value={recipient}
                       onChange={(e) => handleRecipientChange(index, e.target.value)}
                       fullWidth
@@ -569,7 +570,7 @@ const ReportSchedulePage: React.FC = () => {
                     <IconButton
                       onClick={() => handleRemoveRecipient(index)}
                       color='error'
-                      aria-label='关闭'
+                      aria-label={i18n.t('pages.report_schedule_page.k47')}
                     >
                       <XIcon />
                     </IconButton>
@@ -581,19 +582,19 @@ const ReportSchedulePage: React.FC = () => {
                   onClick={handleAddRecipient}
                   sx={{ mt: 1 }}
                 >
-                  添加接收人
+                  {i18n.t('pages.report_schedule_page.k2')}
                 </Button>
               </Box>
             </Box>
           </Box>
         </DialogContent>
         <DialogActions>
-          <Button onClick={handleCloseDialog}>取消</Button>
+          <Button onClick={handleCloseDialog}>{i18n.t('pages.report_schedule_page.k48')}</Button>
           <Button
             onClick={handleSubmit}
             variant='contained'
           >
-            {editMode ? '保存' : '创建'}
+            {editMode ? i18n.t('pages.report_schedule_page.k50') : i18n.t('pages.report_schedule_page.k49')}
           </Button>
         </DialogActions>
       </Dialog>
@@ -604,17 +605,17 @@ const ReportSchedulePage: React.FC = () => {
         maxWidth='lg'
         fullWidth
       >
-        <DialogTitle>执行历史</DialogTitle>
+        <DialogTitle>{i18n.t('pages.report_schedule_page.k51')}</DialogTitle>
         <DialogContent>
           <TableContainer component={Paper}>
             <Table>
               <TableHead>
                 <TableRow>
-                  <TableCell>执行时间</TableCell>
-                  <TableCell>状态</TableCell>
-                  <TableCell>输出路径</TableCell>
-                  <TableCell>错误信息</TableCell>
-                  <TableCell>完成时间</TableCell>
+                  <TableCell>{i18n.t('pages.report_schedule_page.k52')}</TableCell>
+                  <TableCell>{i18n.t('pages.report_schedule_page.k53')}</TableCell>
+                  <TableCell>{i18n.t('pages.report_schedule_page.k54')}</TableCell>
+                  <TableCell>{i18n.t('pages.report_schedule_page.k55')}</TableCell>
+                  <TableCell>{i18n.t('pages.report_schedule_page.k56')}</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
@@ -624,7 +625,7 @@ const ReportSchedulePage: React.FC = () => {
                       colSpan={5}
                       align='center'
                     >
-                      <Typography variant='body1'>加载中...</Typography>
+                      <Typography variant='body1'>{i18n.t('pages.report_schedule_page.k6')}</Typography>
                     </TableCell>
                   </TableRow>
                 ) : (historyQuery.data || []).length === 0 ? (
@@ -633,7 +634,7 @@ const ReportSchedulePage: React.FC = () => {
                       colSpan={5}
                       align='center'
                     >
-                      <Typography variant='body1'>暂无执行记录</Typography>
+                      <Typography variant='body1'>{i18n.t('pages.report_schedule_page.k57')}</Typography>
                     </TableCell>
                   </TableRow>
                 ) : (
@@ -673,7 +674,7 @@ const ReportSchedulePage: React.FC = () => {
                             variant='body2'
                             color='text.secondary'
                           >
-                            执行中
+                            {i18n.t('pages.report_schedule_page.k3')}
                           </Typography>
                         )}
                       </TableCell>
@@ -685,7 +686,7 @@ const ReportSchedulePage: React.FC = () => {
           </TableContainer>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setHistoryDialogOpen(false)}>关闭</Button>
+          <Button onClick={() => setHistoryDialogOpen(false)}>{i18n.t('pages.report_schedule_page.k58')}</Button>
         </DialogActions>
       </Dialog>
 

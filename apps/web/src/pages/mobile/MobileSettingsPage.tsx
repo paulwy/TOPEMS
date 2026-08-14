@@ -6,12 +6,10 @@ import {
   type SettingSection,
   type SettingValueType,
 } from '@/components/templates';
+import i18n from '@/i18n';
 import { logger } from '@/utils/logger';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-
-
 import { QUERY_KEYS } from '@/lib/reactQuery';
-
 interface MobileSetting {
   key: string;
   label: string;
@@ -19,42 +17,39 @@ interface MobileSetting {
   description: string;
   type: 'switch' | 'text' | 'number';
 }
-
 const defaultMobileSettings: MobileSetting[] = [
   {
     key: 'force_update',
-    label: '强制更新',
+    label: i18n.t('mobile.mobile_settings_page.k0'),
     value: false,
-    description: '用户打开应用时强制更新到最新版本',
+    description: i18n.t('mobile.mobile_settings_page.k1'),
     type: 'switch',
   },
   {
     key: 'auto_update',
-    label: '自动更新',
+    label: i18n.t('mobile.mobile_settings_page.k2'),
     value: true,
-    description: '在后台自动下载更新包',
+    description: i18n.t('mobile.mobile_settings_page.k3'),
     type: 'switch',
   },
   {
     key: 'version_min',
-    label: '最低版本要求',
+    label: i18n.t('mobile.mobile_settings_page.k4'),
     value: '2.0.0',
-    description: '低于此版本的用户将无法使用',
+    description: i18n.t('mobile.mobile_settings_page.k5'),
     type: 'text',
   },
   {
     key: 'app_key',
-    label: '应用Key',
+    label: i18n.t('mobile.mobile_settings_page.key_6'),
     value: '',
-    description: '用于推送通知的应用标识',
+    description: i18n.t('mobile.mobile_settings_page.k7'),
     type: 'text',
   },
 ];
-
 const MobileSettingsPage: React.FC = () => {
   const addNotification = useNotificationStore((state) => state.addNotification);
   const queryClient = useQueryClient();
-
   const settingsQuery = useQuery<MobileSetting[]>({
     queryKey: QUERY_KEYS.AD_HOC.MOBILE_SETTINGS_BASE,
     queryFn: async () => {
@@ -68,14 +63,12 @@ const MobileSettingsPage: React.FC = () => {
   });
   const mobileSettings = settingsQuery.data ?? defaultMobileSettings;
   const loading = settingsQuery.isLoading;
-
   useEffect(() => {
     if (settingsQuery.isError) {
       logger.error('Error loading mobile settings:', settingsQuery.error);
-      addNotification({ title: '加载失败', message: '加载设置失败', type: 'error' });
+      addNotification({ title: i18n.t('mobile.mobile_settings_page.k9'), message: i18n.t('mobile.mobile_settings_page.k8'), type: 'error' });
     }
   }, [settingsQuery.isError, settingsQuery.error, addNotification]);
-
   const saveMutation = useMutation({
     mutationFn: async (settings: MobileSetting[]) => {
       localStorage.setItem('mobile_settings', JSON.stringify(settings));
@@ -86,15 +79,14 @@ const MobileSettingsPage: React.FC = () => {
   exact: false,
   refetchType: 'active',
 });
-      addNotification({ title: '成功', message: '移动应用设置保存成功', type: 'success' });
+      addNotification({ title: i18n.t('mobile.mobile_settings_page.k11'), message: i18n.t('mobile.mobile_settings_page.k10'), type: 'success' });
     },
     onError: (err: unknown) => {
       logger.error('Error saving mobile settings:', err);
-      addNotification({ title: '失败', message: '保存设置失败', type: 'error' });
+      addNotification({ title: i18n.t('mobile.mobile_settings_page.k13'), message: i18n.t('mobile.mobile_settings_page.k12'), type: 'error' });
     },
   });
   const saving = saveMutation.isPending;
-
   const handleSave = (data: Record<string, SettingValueType>) => {
     const updatedSettings = mobileSettings.map((s) => ({
       ...s,
@@ -102,7 +94,6 @@ const MobileSettingsPage: React.FC = () => {
     }));
     saveMutation.mutate(updatedSettings);
   };
-
   const resetMutation = useMutation({
     mutationFn: async () => {
       localStorage.setItem('mobile_settings', JSON.stringify(defaultMobileSettings));
@@ -113,85 +104,81 @@ const MobileSettingsPage: React.FC = () => {
   exact: false,
   refetchType: 'active',
 });
-      addNotification({ title: '已重置', message: '设置已恢复默认值', type: 'info' });
+      addNotification({ title: i18n.t('mobile.mobile_settings_page.k15'), message: i18n.t('mobile.mobile_settings_page.k14'), type: 'info' });
     },
     onError: (err: unknown) => {
       logger.error('Error resetting mobile settings:', err);
-      addNotification({ title: '失败', message: '重置设置失败', type: 'error' });
+      addNotification({ title: i18n.t('mobile.mobile_settings_page.k17'), message: i18n.t('mobile.mobile_settings_page.k16'), type: 'error' });
     },
   });
-
   const handleReset = () => {
     resetMutation.mutate();
   };
-
   const sections: SettingSection[] = [
     {
       id: 'app',
-      title: '应用设置',
+      title: i18n.t('mobile.mobile_settings_page.k18'),
       icon: <Smartphone style={{ width: 20, height: 20 }} />,
       color: 'primary',
       fields: [
         {
           id: 'force_update',
-          label: '强制更新',
+          label: i18n.t('mobile.mobile_settings_page.k19'),
           type: 'switch',
           value: mobileSettings.find((s) => s.key === 'force_update')?.value as boolean,
-          description: '用户打开应用时强制更新到最新版本',
+          description: i18n.t('mobile.mobile_settings_page.k20'),
         },
         {
           id: 'auto_update',
-          label: '自动更新',
+          label: i18n.t('mobile.mobile_settings_page.k21'),
           type: 'switch',
           value: mobileSettings.find((s) => s.key === 'auto_update')?.value as boolean,
-          description: '在后台自动下载更新包',
+          description: i18n.t('mobile.mobile_settings_page.k22'),
         },
         {
           id: 'version_min',
-          label: '最低版本要求',
+          label: i18n.t('mobile.mobile_settings_page.k23'),
           type: 'text',
           value: mobileSettings.find((s) => s.key === 'version_min')?.value as string,
-          description: '低于此版本的用户将无法使用',
+          description: i18n.t('mobile.mobile_settings_page.k24'),
         },
       ],
     },
     {
       id: 'security',
-      title: '安全设置',
+      title: i18n.t('mobile.mobile_settings_page.k25'),
       icon: <Shield style={{ width: 20, height: 20 }} />,
       color: 'success',
       fields: [
         {
           id: 'app_key',
-          label: '应用Key',
+          label: i18n.t('mobile.mobile_settings_page.key_26'),
           type: 'text',
           value: mobileSettings.find((s) => s.key === 'app_key')?.value as string,
-          description: '用于推送通知的应用标识',
+          description: i18n.t('mobile.mobile_settings_page.k27'),
         },
       ],
     },
     {
       id: 'other',
-      title: '其他设置',
+      title: i18n.t('mobile.mobile_settings_page.k28'),
       icon: <RefreshCw style={{ width: 20, height: 20 }} />,
       color: 'info',
       fields: [],
     },
   ];
-
   return (
     <SettingsPageTemplate
-      title='移动应用设置'
-      subtitle='配置移动客户端的各项参数'
+      title={i18n.t('mobile.mobile_settings_page.k29')}
+      subtitle={i18n.t('mobile.mobile_settings_page.k30')}
       sections={sections}
       loading={loading}
       saving={saving}
       onSave={handleSave}
       onReset={handleReset}
-      saveButtonText='保存设置'
-      resetButtonText='重置默认'
+      saveButtonText={i18n.t('mobile.mobile_settings_page.k31')}
+      resetButtonText={i18n.t('mobile.mobile_settings_page.k32')}
     />
   );
 };
-
 export default MobileSettingsPage;

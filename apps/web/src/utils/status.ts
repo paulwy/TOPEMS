@@ -1,4 +1,5 @@
 import type { ChipProps } from '@mui/material';
+import i18n from '@/i18n';
 
 export type StatusColor =
   | ChipProps['color']
@@ -41,13 +42,13 @@ export const STATUS_COLOR_MAP: Record<string, StatusColor> = {
 };
 
 export const LIMS_STATUS_COLOR_MAP: Record<string, StatusColor> = {
-  待登记: 'grey.100',
-  待接收: 'warning.light',
-  已接收: 'primary.light',
-  待确认: 'secondary.light',
-  已确认: 'success.lighter',
-  检测中: 'primary.light',
-  已完成: 'success.lighter',
+  [i18n.t('utils.status.k0')]: 'grey.100',
+  [i18n.t('utils.status.k1')]: 'warning.light',
+  [i18n.t('utils.status.k2')]: 'primary.light',
+  [i18n.t('utils.status.k3')]: 'secondary.light',
+  [i18n.t('utils.status.k4')]: 'success.lighter',
+  [i18n.t('utils.status.k5')]: 'primary.light',
+  [i18n.t('utils.status.k6')]: 'success.lighter',
 };
 
 export const getStatusColor = (

@@ -13,6 +13,7 @@ import { designTokens } from '@/theme/tokens';
 
 
 import { QUERY_KEYS } from '@/lib/reactQuery';
+import i18n from '@/i18n';
 
 const ct= designTokens.colors;
 
@@ -63,7 +64,7 @@ const contractApiAdapter: CrudApiAdapter = {
     const response = await srmApi.createContract(
       data as unknown as Parameters<typeof srmApi.createContract>[0]
     );
-    if (!response.success || !response.data) throw new Error('创建合同失败');
+    if (!response.success || !response.data) throw new Error(i18n.t('pages.srm_contract_page.k0'));
     return response.data as unknown as Record<string, unknown>;
   },
   update: async (id, data) => {
@@ -71,12 +72,12 @@ const contractApiAdapter: CrudApiAdapter = {
       id,
       data as unknown as Parameters<typeof srmApi.updateContract>[1]
     );
-    if (!response.success || !response.data) throw new Error('更新合同失败');
+    if (!response.success || !response.data) throw new Error(i18n.t('pages.srm_contract_page.k1'));
     return response.data as unknown as Record<string, unknown>;
   },
   delete: async (id) => {
     const response = await srmApi.deleteContract(id);
-    if (!response.success) throw new Error('删除合同失败');
+    if (!response.success) throw new Error(i18n.t('pages.srm_contract_page.k2'));
   },
 };
 
@@ -105,28 +106,28 @@ const ContractStats: React.FC = () => {
 
   const statCards = [
     {
-      label: '合同总数',
+      label: i18n.t('pages.srm_contract_page.k3'),
       value: stats.total,
       color: ct.purple[500],
       bgColor: 'secondary.light',
       icon: <FileText sx={{ width: 20, height: 20 }} />,
     },
     {
-      label: '执行中',
+      label: i18n.t('pages.srm_contract_page.k4'),
       value: stats.active,
       color: 'primary.dark',
       bgColor: 'primary.lighter',
       icon: <Clock sx={{ width: 20, height: 20 }} />,
     },
     {
-      label: '已完成',
+      label: i18n.t('pages.srm_contract_page.k5'),
       value: stats.completed,
       color: 'success.dark',
       bgColor: 'success.lighter',
       icon: <CheckCircle sx={{ width: 20, height: 20 }} />,
     },
     {
-      label: '合同总额',
+      label: i18n.t('pages.srm_contract_page.k6'),
       value: `¥${stats.totalAmount.toLocaleString()}`,
       color: 'warning.dark',
       bgColor: 'warning.lighter',
@@ -187,7 +188,7 @@ const SrmContractPage: React.FC = () => {
 
   const customRowActions: RowAction[] = [
     {
-      label: '查看详情',
+      label: i18n.t('pages.srm_contract_page.k7'),
       icon: <Eye size={16} />,
       onClick: (row: Record<string, unknown>) => {
         const id = row.id as string;
@@ -202,7 +203,7 @@ const SrmContractPage: React.FC = () => {
     <CrudPage
       schema={contractSchema}
       apiAdapter={contractApiAdapter}
-      breadcrumbs={[{ label: 'SRM' }, { label: '合同管理' }]}
+      breadcrumbs={[{ label: 'SRM' }, { label: i18n.t('pages.srm_contract_page.k8') }]}
       headerContent={<ContractStats />}
       customRowActions={customRowActions}
     />

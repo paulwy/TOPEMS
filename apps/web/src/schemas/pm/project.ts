@@ -1,6 +1,7 @@
 import React from 'react';
 import { Box, LinearProgress, Typography } from '@mui/material';
 import type { EntitySchema } from '@/schema';
+import i18n from '@/i18n';
 
 const STATUS_COLOR_MAP: Record<string, 'default' | 'primary' | 'success' | 'warning' | 'error'> = {
   draft: 'default',
@@ -12,29 +13,29 @@ const STATUS_COLOR_MAP: Record<string, 'default' | 'primary' | 'success' | 'warn
 };
 
 const STATUS_LABEL_MAP: Record<string, string> = {
-  draft: '草稿',
-  pending: '待审批',
-  approved: '已批准',
-  active: '进行中',
-  completed: '已完成',
-  cancelled: '已取消',
+  draft: i18n.t('shared.project.k0'),
+  pending: i18n.t('shared.project.k1'),
+  approved: i18n.t('shared.project.k2'),
+  active: i18n.t('shared.project.k3'),
+  completed: i18n.t('shared.project.k4'),
+  cancelled: i18n.t('shared.project.k5'),
 };
 
 const PROJECT_TYPE_OPTIONS: { value: string; label: string }[] = [
-  { value: 'research', label: '科研项目' },
-  { value: 'production', label: '生产项目' },
-  { value: 'construction', label: '施工项目' },
-  { value: 'design', label: '设计项目' },
-  { value: 'service', label: '服务项目' },
+  { value: 'research', label: i18n.t('shared.project.k6') },
+  { value: 'production', label: i18n.t('shared.project.k7') },
+  { value: 'construction', label: i18n.t('shared.project.k8') },
+  { value: 'design', label: i18n.t('shared.project.k9') },
+  { value: 'service', label: i18n.t('shared.project.k10') },
 ];
 
 const STATUS_OPTIONS: { value: string; label: string }[] = [
-  { value: 'draft', label: '草稿' },
-  { value: 'pending', label: '待审批' },
-  { value: 'approved', label: '已批准' },
-  { value: 'active', label: '进行中' },
-  { value: 'completed', label: '已完成' },
-  { value: 'cancelled', label: '已取消' },
+  { value: 'draft', label: i18n.t('shared.project.k11') },
+  { value: 'pending', label: i18n.t('shared.project.k12') },
+  { value: 'approved', label: i18n.t('shared.project.k13') },
+  { value: 'active', label: i18n.t('shared.project.k14') },
+  { value: 'completed', label: i18n.t('shared.project.k15') },
+  { value: 'cancelled', label: i18n.t('shared.project.k16') },
 ];
 
 const CURRENCY_FORMATTER = new Intl.NumberFormat('zh-CN', {
@@ -45,8 +46,8 @@ const CURRENCY_FORMATTER = new Intl.NumberFormat('zh-CN', {
 
 export const projectSchema: EntitySchema = {
   entity: 'pm_project',
-  title: '项目管理',
-  description: '管理所有类型的项目，跟踪进度和状态',
+  title: i18n.t('shared.project.k17'),
+  description: i18n.t('shared.project.k18'),
 
   api: {
     module: 'pm',
@@ -56,7 +57,7 @@ export const projectSchema: EntitySchema = {
   fields: [
     {
       name: 'name',
-      label: '项目名称',
+      label: i18n.t('shared.project.k19'),
       type: 'text',
       required: true,
       sortable: true,
@@ -65,7 +66,7 @@ export const projectSchema: EntitySchema = {
     },
     {
       name: 'code',
-      label: '项目编码',
+      label: i18n.t('shared.project.k20'),
       type: 'text',
       required: true,
       readonlyOnEdit: true,
@@ -74,7 +75,7 @@ export const projectSchema: EntitySchema = {
     },
     {
       name: 'project_type',
-      label: '类型',
+      label: i18n.t('shared.project.k21'),
       type: 'select',
       required: true,
       defaultValue: 'research',
@@ -84,7 +85,7 @@ export const projectSchema: EntitySchema = {
     },
     {
       name: 'status',
-      label: '状态',
+      label: i18n.t('shared.project.k22'),
       type: 'select',
       defaultValue: 'draft',
       options: { type: 'static', options: STATUS_OPTIONS },
@@ -93,7 +94,7 @@ export const projectSchema: EntitySchema = {
     },
     {
       name: 'progress',
-      label: '进度',
+      label: i18n.t('shared.project.k23'),
       type: 'number',
       defaultValue: 0,
       listWidth: 180,
@@ -121,7 +122,7 @@ export const projectSchema: EntitySchema = {
     },
     {
       name: 'budget',
-      label: '预算',
+      label: i18n.t('shared.project.k24'),
       type: 'number',
       listWidth: 120,
       renderCell: (row: Record<string, unknown>) => {
@@ -132,7 +133,7 @@ export const projectSchema: EntitySchema = {
     },
     {
       name: 'leader',
-      label: '负责人',
+      label: i18n.t('shared.project.k25'),
       type: 'text',
       listWidth: 100,
       showInList: false,
@@ -140,25 +141,25 @@ export const projectSchema: EntitySchema = {
     },
     {
       name: 'start_date',
-      label: '开始日期',
+      label: i18n.t('shared.project.k26'),
       type: 'date',
       listWidth: 150,
     },
     {
       name: 'end_date',
-      label: '结束日期',
+      label: i18n.t('shared.project.k27'),
       type: 'date',
       listWidth: 150,
     },
     {
       name: 'description',
-      label: '描述',
+      label: i18n.t('shared.project.k28'),
       type: 'textarea',
       showInList: false,
     },
     {
       name: 'created_at',
-      label: '创建时间',
+      label: i18n.t('shared.project.k29'),
       type: 'datetime',
       readonly: true,
       sortable: true,
@@ -167,7 +168,7 @@ export const projectSchema: EntitySchema = {
     },
     {
       name: 'updated_at',
-      label: '更新时间',
+      label: i18n.t('shared.project.k30'),
       type: 'datetime',
       readonly: true,
       hideInForm: true,
@@ -196,16 +197,16 @@ export const projectSchema: EntitySchema = {
     filters: [
       {
         id: 'project_type',
-        label: '类型',
+        label: i18n.t('shared.project.k31'),
         type: 'select',
-        options: [{ label: '全部类型', value: 'all' }, ...PROJECT_TYPE_OPTIONS],
+        options: [{ label: i18n.t('shared.project.k32'), value: 'all' }, ...PROJECT_TYPE_OPTIONS],
         defaultValue: 'all',
       },
       {
         id: 'status',
-        label: '状态',
+        label: i18n.t('shared.project.k33'),
         type: 'select',
-        options: [{ label: '全部状态', value: 'all' }, ...STATUS_OPTIONS],
+        options: [{ label: i18n.t('shared.project.k34'), value: 'all' }, ...STATUS_OPTIONS],
         defaultValue: 'all',
       },
     ],
@@ -213,23 +214,23 @@ export const projectSchema: EntitySchema = {
 
   formSections: [
     {
-      title: '基本信息',
+      title: i18n.t('shared.project.k35'),
       fields: ['name', 'code', 'project_type', 'status', 'leader'],
     },
     {
-      title: '计划与预算',
+      title: i18n.t('shared.project.k36'),
       fields: ['start_date', 'end_date', 'budget', 'progress'],
     },
     {
-      title: '描述',
+      title: i18n.t('shared.project.k37'),
       fields: ['description'],
     },
   ],
 
   formColCount: 2,
-  createTitle: '创建项目',
-  editTitle: '编辑项目',
-  detailTitle: '项目详情',
+  createTitle: i18n.t('shared.project.k38'),
+  editTitle: i18n.t('shared.project.k39'),
+  detailTitle: i18n.t('shared.project.k40'),
 
   actions: ['create', 'edit', 'detail', 'delete'],
 };

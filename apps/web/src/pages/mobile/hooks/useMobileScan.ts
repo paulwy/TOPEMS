@@ -1,9 +1,8 @@
 import { useState, useCallback, useEffect, useRef, useMemo } from 'react';
-import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import { useNotificationStore } from '@/store';
 import { MOBILE_PATHS } from '@/modules/mobile/config';
-
+import i18n from '@/i18n';
 export interface ScanHistoryItem {
   id: string;
   content: string;
@@ -16,12 +15,9 @@ export interface ScanHistoryItem {
     code: string;
   };
 }
-
 export const useMobileScan = () => {
-  const { t } = useTranslation();
   const navigate = useNavigate();
   const { addNotification } = useNotificationStore();
-
   const [activeTab, setActiveTab] = useState(0);
   const [flashOn, setFlashOn] = useState(false);
   const [scanning, setScanning] = useState(true);
@@ -30,16 +26,14 @@ export const useMobileScan = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const videoRef = useRef<HTMLVideoElement>(null);
   const [manualInput, setManualInput] = useState('');
-
   const tabs = useMemo(
     () => [
-      t('mobile.scan.title.title'),
-      t('mobile.scan.section.history'),
-      t('mobile.scan.section.manual'),
+      i18n.t('mobile.scan.title.title'),
+      i18n.t('mobile.scan.section.history'),
+      i18n.t('mobile.scan.section.manual'),
     ],
-    [t]
+    [i18n.t]
   );
-
   useEffect(() => {
     const history: ScanHistoryItem[] = [
       {
@@ -49,8 +43,8 @@ export const useMobileScan = () => {
         format: 'Code 128',
         time: '10:30',
         relatedData: {
-          type: t('mobile.scan.label.product'),
-          name: t('mobile.scan.name.smart_sensor'),
+          type: i18n.t('mobile.scan.label.product'),
+          name: i18n.t('mobile.scan.name.smart_sensor'),
           code: 'PROD-2024-001234',
         },
       },
@@ -61,7 +55,7 @@ export const useMobileScan = () => {
         format: 'QR Code',
         time: '09:45',
         relatedData: {
-          type: t('mobile.scan.label.location'),
+          type: i18n.t('mobile.scan.label.location'),
           name: 'A3-05-02',
           code: 'INV-A3-005678',
         },
@@ -71,10 +65,10 @@ export const useMobileScan = () => {
         content: 'PO-2024-06-0891',
         type: 'barcode',
         format: 'EAN-13',
-        time: t('mobile.scan.time.yesterday_1620'),
+        time: i18n.t('mobile.scan.time.yesterday_1620'),
         relatedData: {
-          type: t('mobile.scan.label.purchase_order'),
-          name: t('mobile.scan.name.electronic_purchase'),
+          type: i18n.t('mobile.scan.label.purchase_order'),
+          name: i18n.t('mobile.scan.name.electronic_purchase'),
           code: 'PO-2024-06-0891',
         },
       },
@@ -83,10 +77,10 @@ export const useMobileScan = () => {
         content: 'EMP-10086',
         type: 'qrcode',
         format: 'QR Code',
-        time: t('mobile.scan.time.yesterday_1415'),
+        time: i18n.t('mobile.scan.time.yesterday_1415'),
         relatedData: {
-          type: t('mobile.scan.label.employee_badge'),
-          name: t('mobile.scan.name.zhang_ming'),
+          type: i18n.t('mobile.scan.label.employee_badge'),
+          name: i18n.t('mobile.scan.name.zhang_ming'),
           code: 'EMP-10086',
         },
       },
@@ -95,56 +89,49 @@ export const useMobileScan = () => {
         content: 'EQ-2024-0042',
         type: 'barcode',
         format: 'Code 39',
-        time: t('mobile.scan.time.day_before_1000'),
+        time: i18n.t('mobile.scan.time.day_before_1000'),
         relatedData: {
-          type: t('mobile.scan.label.equipment'),
-          name: t('mobile.scan.name.cnc_center'),
+          type: i18n.t('mobile.scan.label.equipment'),
+          name: i18n.t('mobile.scan.name.cnc_center'),
           code: 'EQ-2024-0042',
         },
       },
     ];
     setScanHistory(history);
-  }, [t]);
-
+  }, [i18n.t]);
   const simulateScan = useCallback(() => {
     if (!scanning) return;
-
     const mockResults = [
       { content: 'PROD-2024-009999', format: 'Code 128', type: 'barcode' as const },
       { content: 'https://topems.com/item/12345', format: 'QR Code', type: 'qrcode' as const },
       { content: 'INV-B2-001234', format: 'QR Code', type: 'qrcode' as const },
     ];
-
     const randomResult = mockResults[Math.floor(Math.random() * mockResults.length)];
-
     setTimeout(() => {
       if (scanning) {
         setScanResult(randomResult.content);
         setScanning(false);
-
         const newHistoryItem: ScanHistoryItem = {
           id: Date.now().toString(),
           content: randomResult.content,
           type: randomResult.type,
           format: randomResult.format,
-          time: t('mobile.scan.time.just_now'),
+          time: i18n.t('mobile.scan.time.just_now'),
           relatedData: {
-            type: t('mobile.scan.label.material'),
-            name: t('mobile.scan.name.resistor_10k'),
+            type: i18n.t('mobile.scan.label.material'),
+            name: i18n.t('mobile.scan.name.resistor_10k'),
             code: randomResult.content,
           },
         };
-
         setScanHistory((prev) => [newHistoryItem, ...prev]);
         addNotification({
-          title: t('mobile.scan.message.scan_success'),
+          title: i18n.t('mobile.scan.message.scan_success'),
           message: randomResult.content,
           type: 'success',
         });
       }
     }, 2000);
-  }, [scanning, addNotification, t]);
-
+  }, [scanning, addNotification, i18n.t]);
   useEffect(() => {
     if (activeTab === 0 && scanning && !scanResult) {
       const timer = setTimeout(() => {
@@ -154,12 +141,10 @@ export const useMobileScan = () => {
     }
     return;
   }, [activeTab, scanning, scanResult, simulateScan]);
-
   const handleRescan = useCallback(() => {
     setScanResult(null);
     setScanning(true);
   }, []);
-
   const handleTabChange = useCallback((_event: React.SyntheticEvent, newValue: number) => {
     setActiveTab(newValue);
     if (newValue === 0) {
@@ -167,7 +152,6 @@ export const useMobileScan = () => {
       setScanning(true);
     }
   }, []);
-
   const handleBottomTabChange = useCallback(
     (tabId: string) => {
       switch (tabId) {
@@ -189,53 +173,47 @@ export const useMobileScan = () => {
     },
     [navigate]
   );
-
   const handleManualSubmit = useCallback(() => {
     if (!manualInput.trim()) return;
-
     setScanResult(manualInput);
     const newHistoryItem: ScanHistoryItem = {
       id: Date.now().toString(),
       content: manualInput,
       type: 'barcode',
-      format: t('mobile.scan.section.manual'),
-      time: t('mobile.scan.time.just_now'),
+      format: i18n.t('mobile.scan.section.manual'),
+      time: i18n.t('mobile.scan.time.just_now'),
     };
     setScanHistory((prev) => [newHistoryItem, ...prev]);
     setActiveTab(0);
     addNotification({
-      title: t('mobile.scan.message.input_success'),
+      title: i18n.t('mobile.scan.message.input_success'),
       message: manualInput,
       type: 'success',
     });
-  }, [manualInput, addNotification, t]);
-
+  }, [manualInput, addNotification, i18n.t]);
   const handleCopyResult = useCallback(() => {
     if (scanResult) {
       navigator.clipboard.writeText(scanResult);
       addNotification({
-        title: t('mobile.scan.message.copied'),
-        message: t('mobile.scan.message.copied_to_clipboard'),
+        title: i18n.t('mobile.scan.message.copied'),
+        message: i18n.t('mobile.scan.message.copied_to_clipboard'),
         type: 'info',
       });
     }
-  }, [scanResult, addNotification, t]);
-
+  }, [scanResult, addNotification, i18n.t]);
   const handleClearHistory = useCallback(() => {
     setScanHistory([]);
     addNotification({
-      title: t('mobile.scan.message.cleared'),
-      message: t('mobile.scan.message.history_cleared'),
+      title: i18n.t('mobile.scan.message.cleared'),
+      message: i18n.t('mobile.scan.message.history_cleared'),
       type: 'info',
     });
-  }, [addNotification, t]);
-
+  }, [addNotification, i18n.t]);
   const filteredHistory = useMemo(
     () =>
       scanHistory.filter((item) => item.content.toLowerCase().includes(searchQuery.toLowerCase())),
     [scanHistory, searchQuery]
   );
-
   return {
     activeTab,
     setActiveTab,

@@ -11,6 +11,7 @@ import type {
   UpdateTemplateRequest,
   CreateReportFromTemplateRequest,
 } from '@/api/report';
+import i18n from '@/i18n';
 import { reportApi } from '@/api/report';
 import ReportBuilder from '../ReportBuilder';
 import ReportViewer from '../ReportViewer';
@@ -132,18 +133,18 @@ const ReportPage: React.FC = () => {
   });
 
   const mockReportTypes: ReportTypeInfo[] = [
-    { type: 'rs_project_progress', name: '研发项目进度报表', module: 'RS' },
-    { type: 'rs_experiment_record', name: '试验记录报表', module: 'RS' },
-    { type: 'lims_inspection_stats', name: '实验室检验统计', module: 'LIMS' },
-    { type: 'lims_sample_summary', name: '样品汇总报表', module: 'LIMS' },
-    { type: 'qms_quality_analysis', name: '质量分析报表', module: 'QMS' },
-    { type: 'qms_defect_stats', name: '缺陷统计报表', module: 'QMS' },
-    { type: 'ehs_safety_check', name: '安全检查报表', module: 'EHS' },
-    { type: 'ehs_risk_assessment', name: '风险评估报表', module: 'EHS' },
-    { type: 'srm_supplier_eval', name: '供应商评估报表', module: 'SRM' },
-    { type: 'srm_purchase_stats', name: '采购统计报表', module: 'SRM' },
-    { type: 'pdm_production_stats', name: '生产统计报表', module: 'PDM' },
-    { type: 'pdm_process_summary', name: '工艺汇总报表', module: 'PDM' },
+    { type: 'rs_project_progress', name: i18n.t('pages.index.k0'), module: 'RS' },
+    { type: 'rs_experiment_record', name: i18n.t('pages.index.k1'), module: 'RS' },
+    { type: 'lims_inspection_stats', name: i18n.t('pages.index.k2'), module: 'LIMS' },
+    { type: 'lims_sample_summary', name: i18n.t('pages.index.k3'), module: 'LIMS' },
+    { type: 'qms_quality_analysis', name: i18n.t('pages.index.k4'), module: 'QMS' },
+    { type: 'qms_defect_stats', name: i18n.t('pages.index.k5'), module: 'QMS' },
+    { type: 'ehs_safety_check', name: i18n.t('pages.index.k6'), module: 'EHS' },
+    { type: 'ehs_risk_assessment', name: i18n.t('pages.index.k7'), module: 'EHS' },
+    { type: 'srm_supplier_eval', name: i18n.t('pages.index.k8'), module: 'SRM' },
+    { type: 'srm_purchase_stats', name: i18n.t('pages.index.k9'), module: 'SRM' },
+    { type: 'pdm_production_stats', name: i18n.t('pages.index.k10'), module: 'PDM' },
+    { type: 'pdm_process_summary', name: i18n.t('pages.index.k11'), module: 'PDM' },
   ];
 
   const mockReports: ReportData[] = [
@@ -152,34 +153,34 @@ const ReportPage: React.FC = () => {
       config: {
         report_type: 'rs_project_progress',
         format: 'excel',
-        title: '研发项目进度报表',
-        description: '展示所有研发项目的当前进度',
-        columns: ['项目名称', '负责人', '开始日期', '结束日期', '进度', '状态'],
+        title: i18n.t('pages.index.k12'),
+        description: i18n.t('pages.index.k13'),
+        columns: [i18n.t('pages.index.k19'), i18n.t('pages.index.k18'), i18n.t('pages.index.k17'), i18n.t('pages.index.k16'), i18n.t('pages.index.k15'), i18n.t('pages.index.k14')],
       },
       data: [
         {
-          项目名称: '新型催化剂研发',
-          负责人: '张工程师',
-          开始日期: '2026-01-01',
-          结束日期: '2026-12-31',
-          进度: '45%',
-          状态: '进行中',
+          [i18n.t('pages.index.k0')]: i18n.t('pages.index.k20'),
+          [i18n.t('pages.index.k1')]: i18n.t('pages.index.k21'),
+          [i18n.t('pages.index.k2')]: '2026-01-01',
+          [i18n.t('pages.index.k3')]: '2026-12-31',
+          [i18n.t('pages.index.k4')]: '45%',
+          [i18n.t('pages.index.k5')]: i18n.t('pages.index.k22'),
         },
         {
-          项目名称: '高分子材料改性研究',
-          负责人: '李工程师',
-          开始日期: '2026-03-01',
-          结束日期: '2026-09-30',
-          进度: '30%',
-          状态: '进行中',
+          [i18n.t('pages.index.k6')]: i18n.t('pages.index.k23'),
+          [i18n.t('pages.index.k7')]: i18n.t('pages.index.k24'),
+          [i18n.t('pages.index.k8')]: '2026-03-01',
+          [i18n.t('pages.index.k9')]: '2026-09-30',
+          [i18n.t('pages.index.k10')]: '30%',
+          [i18n.t('pages.index.k11')]: i18n.t('pages.index.k25'),
         },
         {
-          项目名称: '生物降解塑料开发',
-          负责人: '王工程师',
-          开始日期: '2026-02-15',
-          结束日期: '2026-11-30',
-          进度: '65%',
-          状态: '进行中',
+          [i18n.t('pages.index.k12')]: i18n.t('pages.index.k26'),
+          [i18n.t('pages.index.k13')]: i18n.t('pages.index.k27'),
+          [i18n.t('pages.index.k14')]: '2026-02-15',
+          [i18n.t('pages.index.k15')]: '2026-11-30',
+          [i18n.t('pages.index.k16')]: '65%',
+          [i18n.t('pages.index.k17')]: i18n.t('pages.index.k28'),
         },
       ],
       row_count: 3,
@@ -190,22 +191,22 @@ const ReportPage: React.FC = () => {
       config: {
         report_type: 'lims_inspection_stats',
         format: 'pdf',
-        title: '实验室检验统计报表',
-        description: '实验室检验数据统计分析',
-        columns: ['样品名称', '检验日期', '检验项目', '结论'],
+        title: i18n.t('pages.index.k29'),
+        description: i18n.t('pages.index.k30'),
+        columns: [i18n.t('pages.index.k34'), i18n.t('pages.index.k33'), i18n.t('pages.index.k32'), i18n.t('pages.index.k31')],
       },
       data: [
         {
-          样品名称: '原料A-001',
-          检验日期: '2026-05-20',
-          检验项目: '成分分析',
-          结论: '合格',
+          [i18n.t('pages.index.k18')]: i18n.t('pages.index.a001_35'),
+          [i18n.t('pages.index.k19')]: '2026-05-20',
+          [i18n.t('pages.index.k20')]: i18n.t('pages.index.k36'),
+          [i18n.t('pages.index.k21')]: i18n.t('pages.index.k37'),
         },
         {
-          样品名称: '原料B-002',
-          检验日期: '2026-05-21',
-          检验项目: '纯度检测',
-          结论: '合格',
+          [i18n.t('pages.index.k22')]: i18n.t('pages.index.b002_38'),
+          [i18n.t('pages.index.k23')]: '2026-05-21',
+          [i18n.t('pages.index.k24')]: i18n.t('pages.index.k39'),
+          [i18n.t('pages.index.k25')]: i18n.t('pages.index.k40'),
         },
       ],
       row_count: 2,
@@ -216,22 +217,22 @@ const ReportPage: React.FC = () => {
       config: {
         report_type: 'qms_quality_analysis',
         format: 'excel',
-        title: '质量分析报表',
-        description: '产品质量数据分析',
-        columns: ['产品编号', '批次', '合格率', '缺陷率'],
+        title: i18n.t('pages.index.k41'),
+        description: i18n.t('pages.index.k42'),
+        columns: [i18n.t('pages.index.k46'), i18n.t('pages.index.k45'), i18n.t('pages.index.k44'), i18n.t('pages.index.k43')],
       },
       data: [
         {
-          产品编号: 'P-001',
-          批次: '20260501',
-          合格率: '98.5%',
-          缺陷率: '1.5%',
+          [i18n.t('pages.index.k26')]: 'P-001',
+          [i18n.t('pages.index.k27')]: '20260501',
+          [i18n.t('pages.index.k28')]: '98.5%',
+          [i18n.t('pages.index.k29')]: '1.5%',
         },
         {
-          产品编号: 'P-002',
-          批次: '20260502',
-          合格率: '99.2%',
-          缺陷率: '0.8%',
+          [i18n.t('pages.index.k30')]: 'P-002',
+          [i18n.t('pages.index.k31')]: '20260502',
+          [i18n.t('pages.index.k32')]: '99.2%',
+          [i18n.t('pages.index.k33')]: '0.8%',
         },
       ],
       row_count: 2,
@@ -256,7 +257,7 @@ const ReportPage: React.FC = () => {
           return response.data;
         }
       } catch (err: unknown) {
-        apiLogger.error('加载模板失败:', err);
+        apiLogger.error(i18n.t('pages.index.k0'), err);
       }
       return [];
     },
@@ -270,7 +271,7 @@ const ReportPage: React.FC = () => {
 
   useEffect(() => {
     if (templatesQuery.isError) {
-      apiLogger.error('加载模板失败:', templatesQuery.error);
+      apiLogger.error(i18n.t('pages.index.k1'), templatesQuery.error);
     }
   }, [templatesQuery.isError, templatesQuery.error]);
 
@@ -283,23 +284,23 @@ const ReportPage: React.FC = () => {
     mutationFn: (id: string) => reportApi.deleteReport(id),
     onSuccess: (response) => {
       if (response.success) {
-        showNotification('success', '报表删除成功');
+        showNotification('success', i18n.t('pages.index.k47'));
         queryClient.invalidateQueries({ queryKey: QUERY_KEYS.REPORT.REPORTS ,
   exact: false,
   refetchType: 'active',
 });
       } else {
-        showNotification('error', response.message || '删除失败');
+        showNotification('error', response.message || i18n.t('pages.index.k48'));
       }
     },
     onError: (err: unknown) => {
-      showNotification('error', '删除报表失败');
-      apiLogger.error('删除报表失败:', err);
+      showNotification('error', i18n.t('pages.index.k49'));
+      apiLogger.error(i18n.t('pages.index.k2'), err);
     },
   });
 
   const handleDeleteReport = (id: string) => {
-    if (!confirm('确定要删除这个报表吗？')) return;
+    if (!confirm(i18n.t('pages.index.k50'))) return;
     deleteReportMutation.mutate(id);
   };
 
@@ -317,7 +318,7 @@ const ReportPage: React.FC = () => {
     mutationFn: (data: CreateTemplateRequest) => reportApi.createTemplate(data),
     onSuccess: (response) => {
       if (response.success) {
-        showNotification('success', '模板创建成功');
+        showNotification('success', i18n.t('pages.index.k51'));
         setShowCreateTemplateModal(false);
         queryClient.invalidateQueries({ queryKey: QUERY_KEYS.REPORT.TEMPLATES ,
   exact: false,
@@ -325,11 +326,11 @@ const ReportPage: React.FC = () => {
 });
         resetTemplateForm();
       } else {
-        showNotification('error', response.message || '创建失败');
+        showNotification('error', response.message || i18n.t('pages.index.k52'));
       }
     },
     onError: (err: unknown) => {
-      showNotification('error', (err as { message?: string }).message || '创建失败');
+      showNotification('error', (err as { message?: string }).message || i18n.t('pages.index.k53'));
     },
   });
 
@@ -338,7 +339,7 @@ const ReportPage: React.FC = () => {
       reportApi.updateTemplate(id, data),
     onSuccess: (response) => {
       if (response.success) {
-        showNotification('success', '模板更新成功');
+        showNotification('success', i18n.t('pages.index.k54'));
         setShowEditTemplateModal(false);
         setSelectedTemplate(null);
         queryClient.invalidateQueries({ queryKey: QUERY_KEYS.REPORT.TEMPLATES ,
@@ -347,11 +348,11 @@ const ReportPage: React.FC = () => {
 });
         resetTemplateForm();
       } else {
-        showNotification('error', response.message || '更新失败');
+        showNotification('error', response.message || i18n.t('pages.index.k55'));
       }
     },
     onError: (err: unknown) => {
-      showNotification('error', (err as { message?: string }).message || '更新失败');
+      showNotification('error', (err as { message?: string }).message || i18n.t('pages.index.k56'));
     },
   });
 
@@ -359,17 +360,17 @@ const ReportPage: React.FC = () => {
     mutationFn: (id: string) => reportApi.deleteTemplate(id),
     onSuccess: (response) => {
       if (response.success) {
-        showNotification('success', '模板删除成功');
+        showNotification('success', i18n.t('pages.index.k57'));
         queryClient.invalidateQueries({ queryKey: QUERY_KEYS.REPORT.TEMPLATES ,
   exact: false,
   refetchType: 'active',
 });
       } else {
-        showNotification('error', response.message || '删除失败');
+        showNotification('error', response.message || i18n.t('pages.index.k58'));
       }
     },
     onError: (err: unknown) => {
-      showNotification('error', (err as { message?: string }).message || '删除失败');
+      showNotification('error', (err as { message?: string }).message || i18n.t('pages.index.k59'));
     },
   });
 
@@ -383,18 +384,18 @@ const ReportPage: React.FC = () => {
     },
     onSuccess: (response) => {
       if (response.success) {
-        showNotification('success', '报表创建成功');
+        showNotification('success', i18n.t('pages.index.k60'));
         setShowCreateReportFromTemplateModal(false);
         queryClient.invalidateQueries({ queryKey: QUERY_KEYS.REPORT.REPORTS ,
   exact: false,
   refetchType: 'active',
 });
       } else {
-        showNotification('error', response.message || '创建失败');
+        showNotification('error', response.message || i18n.t('pages.index.k61'));
       }
     },
     onError: (err: unknown) => {
-      showNotification('error', (err as { message?: string }).message || '创建失败');
+      showNotification('error', (err as { message?: string }).message || i18n.t('pages.index.k62'));
     },
   });
 
@@ -415,7 +416,7 @@ const ReportPage: React.FC = () => {
   };
 
   const handleDeleteTemplate = (id: string) => {
-    if (!confirm('确定要删除这个模板吗？')) return;
+    if (!confirm(i18n.t('pages.index.k63'))) return;
     deleteTemplateMutation.mutate(id);
   };
 
@@ -593,7 +594,7 @@ const ReportPage: React.FC = () => {
   refetchType: 'active',
 });
             setShowBuilder(false);
-            showNotification('success', '报表生成成功');
+            showNotification('success', i18n.t('pages.index.k64'));
           }}
         />
       )}

@@ -3,6 +3,7 @@ import { createCrudPageAdapter, type CrudApi } from '@/schema/crudPageAdapter';
 import { spcSchema } from '@/schemas/qms';
 import { spcApi } from '@/api/qms';
 import type { SpcChart } from '@/api/qms';
+import i18n from '@/i18n';
 
 const apiAdapter = createCrudPageAdapter<SpcChart>({
   list: spcApi.listSpcCharts as unknown as CrudApi<SpcChart>['list'],
@@ -16,7 +17,7 @@ export default function QmsSpcPage() {
     <CrudPage
       schema={spcSchema}
       apiAdapter={apiAdapter}
-      breadcrumbs={[{ label: 'QMS' }, { label: 'SPC 统计过程控制' }]}
+      breadcrumbs={[{ label: 'QMS' }, { label: i18n.t('pages.qms_spc_page.spc_0') }]}
     />
   );
 }

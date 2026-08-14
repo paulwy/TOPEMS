@@ -1,6 +1,7 @@
 import React from 'react';
 import type { EntitySchema } from '@/schema';
 import { designTokens, semanticTokens } from '@topems/tokens';
+import i18n from '@/i18n';
 
 const formatCurrency = (amount: number | undefined, color?: string) => {
   const style: React.CSSProperties = { fontWeight: 'bold' };
@@ -14,8 +15,8 @@ const formatCurrency = (amount: number | undefined, color?: string) => {
 
 export const voucherSchema: EntitySchema = {
   entity: 'finance_voucher',
-  title: '财务凭证',
-  description: '管理财务凭证，支持凭证审核、反审核及用友凭证导入',
+  title: i18n.t('finance.voucher.k0'),
+  description: i18n.t('finance.voucher.k1'),
 
   api: {
     module: 'finance',
@@ -25,7 +26,7 @@ export const voucherSchema: EntitySchema = {
   fields: [
     {
       name: 'voucher_number',
-      label: '凭证编号',
+      label: i18n.t('finance.voucher.k2'),
       type: 'text',
       required: true,
       readonlyOnEdit: true,
@@ -34,7 +35,7 @@ export const voucherSchema: EntitySchema = {
     },
     {
       name: 'voucher_date',
-      label: '凭证日期',
+      label: i18n.t('finance.voucher.k3'),
       type: 'date',
       required: true,
       sortable: true,
@@ -42,7 +43,7 @@ export const voucherSchema: EntitySchema = {
     },
     {
       name: 'period',
-      label: '会计期间',
+      label: i18n.t('finance.voucher.k4'),
       type: 'text',
       required: true,
       listWidth: 100,
@@ -50,7 +51,7 @@ export const voucherSchema: EntitySchema = {
     },
     {
       name: 'attachment_count',
-      label: '附件数',
+      label: i18n.t('finance.voucher.k5'),
       type: 'number',
       defaultValue: 0,
       listWidth: 80,
@@ -58,20 +59,20 @@ export const voucherSchema: EntitySchema = {
     },
     {
       name: 'summary',
-      label: '摘要',
+      label: i18n.t('finance.voucher.k6'),
       type: 'textarea',
       listWidth: 180,
       showInList: false,
     },
     {
       name: 'maker_name',
-      label: '制单人',
+      label: i18n.t('finance.voucher.k7'),
       type: 'text',
       listWidth: 120,
     },
     {
       name: 'total_debit',
-      label: '借方合计',
+      label: i18n.t('finance.voucher.k8'),
       type: 'number',
       readonly: true,
       hideInForm: true,
@@ -82,7 +83,7 @@ export const voucherSchema: EntitySchema = {
     },
     {
       name: 'total_credit',
-      label: '贷方合计',
+      label: i18n.t('finance.voucher.k9'),
       type: 'number',
       readonly: true,
       hideInForm: true,
@@ -93,24 +94,24 @@ export const voucherSchema: EntitySchema = {
     },
     {
       name: 'status',
-      label: '状态',
+      label: i18n.t('finance.voucher.k10'),
       type: 'select',
       defaultValue: 'draft',
       options: {
         type: 'static',
         options: [
-          { value: 'draft', label: '草稿' },
-          { value: 'pending', label: '待审核' },
-          { value: 'approved', label: '已审核' },
-          { value: 'posted', label: '已过账' },
-          { value: 'imported', label: '已导入' },
+          { value: 'draft', label: i18n.t('finance.voucher.k11') },
+          { value: 'pending', label: i18n.t('finance.voucher.k12') },
+          { value: 'approved', label: i18n.t('finance.voucher.k13') },
+          { value: 'posted', label: i18n.t('finance.voucher.k14') },
+          { value: 'imported', label: i18n.t('finance.voucher.k15') },
         ],
       },
       listWidth: 100,
     },
     {
       name: 'created_at',
-      label: '创建时间',
+      label: i18n.t('finance.voucher.k16'),
       type: 'datetime',
       readonly: true,
       hideInForm: true,
@@ -143,33 +144,33 @@ export const voucherSchema: EntitySchema = {
         imported: 'info',
       },
       labelMap: {
-        draft: '草稿',
-        pending: '待审核',
-        approved: '已审核',
-        posted: '已过账',
-        imported: '已导入',
+        draft: i18n.t('finance.voucher.k17'),
+        pending: i18n.t('finance.voucher.k18'),
+        approved: i18n.t('finance.voucher.k19'),
+        posted: i18n.t('finance.voucher.k20'),
+        imported: i18n.t('finance.voucher.k21'),
       },
     },
     filters: [
       {
         id: 'status',
-        label: '状态',
+        label: i18n.t('finance.voucher.k22'),
         type: 'select',
         options: [
-          { label: '全部状态', value: 'all' },
-          { label: '草稿', value: 'draft' },
-          { label: '待审核', value: 'pending' },
-          { label: '已审核', value: 'approved' },
-          { label: '已过账', value: 'posted' },
-          { label: '已导入', value: 'imported' },
+          { label: i18n.t('finance.voucher.k23'), value: 'all' },
+          { label: i18n.t('finance.voucher.k24'), value: 'draft' },
+          { label: i18n.t('finance.voucher.k25'), value: 'pending' },
+          { label: i18n.t('finance.voucher.k26'), value: 'approved' },
+          { label: i18n.t('finance.voucher.k27'), value: 'posted' },
+          { label: i18n.t('finance.voucher.k28'), value: 'imported' },
         ],
       },
       {
         id: 'period',
-        label: '会计期间',
+        label: i18n.t('finance.voucher.k29'),
         type: 'select',
         options: [
-          { label: '全部期间', value: 'all' },
+          { label: i18n.t('finance.voucher.k30'), value: 'all' },
           { label: '2024-01', value: '2024-01' },
           { label: '2024-02', value: '2024-02' },
           { label: '2024-03', value: '2024-03' },
@@ -186,17 +187,17 @@ export const voucherSchema: EntitySchema = {
 
   formSections: [
     {
-      title: '基本信息',
+      title: i18n.t('finance.voucher.k31'),
       fields: ['voucher_number', 'voucher_date', 'period', 'attachment_count'],
     },
     {
-      title: '业务信息',
+      title: i18n.t('finance.voucher.k32'),
       fields: ['summary', 'maker_name', 'status'],
     },
   ],
 
   formColCount: 2,
-  createTitle: '新增凭证',
-  editTitle: '编辑凭证',
-  detailTitle: '凭证详情',
+  createTitle: i18n.t('finance.voucher.k33'),
+  editTitle: i18n.t('finance.voucher.k34'),
+  detailTitle: i18n.t('finance.voucher.k35'),
 };

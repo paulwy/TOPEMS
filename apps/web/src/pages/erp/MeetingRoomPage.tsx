@@ -2,7 +2,7 @@ import React from 'react';
 import CrudPage, { type CrudApiAdapter } from '@/components/templates/CrudPage';
 import { meetingRoomSchema } from '@/schemas/erp/meetingRoom';
 import { meetingRoomApi } from '@/api/erp';
-
+import i18n from '@/i18n';
 const meetingRoomApiAdapter: CrudApiAdapter = {
   list: async (params) => {
     const response = await meetingRoomApi.list({
@@ -12,7 +12,7 @@ const meetingRoomApiAdapter: CrudApiAdapter = {
       status: params?.status as string | undefined,
     });
     if (!response.success) {
-      throw new Error('加载会议室列表失败');
+      throw new Error(i18n.t('erp.meeting_room_page.k0'));
     }
     const data = response.data;
     return {
@@ -20,48 +20,43 @@ const meetingRoomApiAdapter: CrudApiAdapter = {
       total: data?.total || 0,
     };
   },
-
   create: async (data) => {
     const response = await meetingRoomApi.create(
       data as unknown as Parameters<typeof meetingRoomApi.create>[0]
     );
     if (!response.success) {
-      throw new Error('创建会议室失败');
+      throw new Error(i18n.t('erp.meeting_room_page.k1'));
     }
     return response.data as unknown as Record<string, unknown>;
   },
-
   update: async (id, data) => {
     const response = await meetingRoomApi.update(
       id,
       data as unknown as Parameters<typeof meetingRoomApi.update>[1]
     );
     if (!response.success) {
-      throw new Error('更新会议室失败');
+      throw new Error(i18n.t('erp.meeting_room_page.k2'));
     }
     return response.data as unknown as Record<string, unknown>;
   },
-
   delete: async (id) => {
     const response = await meetingRoomApi.delete(id);
     if (!response.success) {
-      throw new Error('删除会议室失败');
+      throw new Error(i18n.t('erp.meeting_room_page.k3'));
     }
   },
 };
-
 const MeetingRoomPage: React.FC = () => {
   return (
     <CrudPage
       schema={meetingRoomSchema}
       apiAdapter={meetingRoomApiAdapter}
       breadcrumbs={[
-        { label: '首页', href: '/dashboard' },
+        { label: i18n.t('erp.meeting_room_page.k4'), href: '/dashboard' },
         { label: 'ERP', href: '/erp' },
-        { label: '会议室管理' },
+        { label: i18n.t('erp.meeting_room_page.k5') },
       ]}
     />
   );
 };
-
 export default MeetingRoomPage;

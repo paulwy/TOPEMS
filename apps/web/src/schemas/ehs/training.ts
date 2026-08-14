@@ -1,9 +1,10 @@
 import type { EntitySchema } from '@/schema';
+import i18n from '@/i18n';
 
 export const trainingRecordSchema: EntitySchema = {
   entity: 'ehsTrainingRecord',
-  title: '培训记录',
-  description: '管理企业培训记录信息，包括培训类型、讲师、时间、时长、状态等',
+  title: i18n.t('ehs.training.k0'),
+  description: i18n.t('ehs.training.k1'),
 
   api: {
     module: 'ehs',
@@ -13,14 +14,14 @@ export const trainingRecordSchema: EntitySchema = {
   fields: [
     {
       name: 'record_no',
-      label: '记录编号',
+      label: i18n.t('ehs.training.k2'),
       type: 'text',
       readonlyOnEdit: true,
       listWidth: 140,
     },
     {
       name: 'title',
-      label: '培训名称',
+      label: i18n.t('ehs.training.k3'),
       type: 'text',
       required: true,
       sortable: true,
@@ -29,29 +30,29 @@ export const trainingRecordSchema: EntitySchema = {
     },
     {
       name: 'training_type',
-      label: '培训类型',
+      label: i18n.t('ehs.training.k4'),
       type: 'select',
       required: true,
       defaultValue: 'safety',
       options: {
         type: 'static',
         options: [
-          { value: 'safety', label: '安全培训' },
-          { value: 'professional', label: '专业培训' },
-          { value: 'skill', label: '技能培训' },
-          { value: 'awareness', label: '意识培训' },
-          { value: 'emergency', label: '应急培训' },
+          { value: 'safety', label: i18n.t('ehs.training.k5') },
+          { value: 'professional', label: i18n.t('ehs.training.k6') },
+          { value: 'skill', label: i18n.t('ehs.training.k7') },
+          { value: 'awareness', label: i18n.t('ehs.training.k8') },
+          { value: 'emergency', label: i18n.t('ehs.training.k9') },
         ],
       },
       listWidth: 120,
       renderCell: (row: Record<string, unknown>) => {
         const v = row.training_type as string;
         const map: Record<string, string> = {
-          safety: '安全培训',
-          professional: '专业培训',
-          skill: '技能培训',
-          awareness: '意识培训',
-          emergency: '应急培训',
+          safety: i18n.t('ehs.training.k10'),
+          professional: i18n.t('ehs.training.k11'),
+          skill: i18n.t('ehs.training.k12'),
+          awareness: i18n.t('ehs.training.k13'),
+          emergency: i18n.t('ehs.training.k14'),
         };
         return map[v] || v || '-';
       },
@@ -59,7 +60,7 @@ export const trainingRecordSchema: EntitySchema = {
     },
     {
       name: 'trainer',
-      label: '讲师',
+      label: i18n.t('ehs.training.k15'),
       type: 'text',
       listWidth: 120,
       renderCell: (row: Record<string, unknown>) => {
@@ -70,7 +71,7 @@ export const trainingRecordSchema: EntitySchema = {
     },
     {
       name: 'training_date',
-      label: '培训日期',
+      label: i18n.t('ehs.training.k16'),
       type: 'date',
       listWidth: 120,
       renderCell: (row: Record<string, unknown>) => {
@@ -80,7 +81,7 @@ export const trainingRecordSchema: EntitySchema = {
     },
     {
       name: 'duration_hours',
-      label: '时长(小时)',
+      label: i18n.t('ehs.training.k17'),
       type: 'number',
       listWidth: 100,
       renderCell: (row: Record<string, unknown>) => {
@@ -90,15 +91,15 @@ export const trainingRecordSchema: EntitySchema = {
     },
     {
       name: 'status',
-      label: '状态',
+      label: i18n.t('ehs.training.k18'),
       type: 'select',
       defaultValue: 'ongoing',
       options: {
         type: 'static',
         options: [
-          { value: 'ongoing', label: '进行中' },
-          { value: 'completed', label: '已完成' },
-          { value: 'failed', label: '未通过' },
+          { value: 'ongoing', label: i18n.t('ehs.training.k19') },
+          { value: 'completed', label: i18n.t('ehs.training.k20') },
+          { value: 'failed', label: i18n.t('ehs.training.k21') },
         ],
       },
       listWidth: 100,
@@ -106,20 +107,20 @@ export const trainingRecordSchema: EntitySchema = {
     },
     {
       name: 'content',
-      label: '培训内容',
+      label: i18n.t('ehs.training.k22'),
       type: 'textarea',
       showInList: false,
       colSpan: 2,
     },
     {
       name: 'result',
-      label: '培训结果',
+      label: i18n.t('ehs.training.k23'),
       type: 'text',
       showInList: false,
     },
     {
       name: 'pass_rate',
-      label: '通过率(%)',
+      label: i18n.t('ehs.training.k24'),
       type: 'number',
       showInList: false,
     },
@@ -145,34 +146,34 @@ export const trainingRecordSchema: EntitySchema = {
         failed: 'error',
       },
       labelMap: {
-        ongoing: '进行中',
-        completed: '已完成',
-        failed: '未通过',
+        ongoing: i18n.t('ehs.training.k25'),
+        completed: i18n.t('ehs.training.k26'),
+        failed: i18n.t('ehs.training.k27'),
       },
     },
     filters: [
       {
         id: 'training_type',
-        label: '培训类型',
+        label: i18n.t('ehs.training.k28'),
         type: 'select',
         options: [
-          { label: '全部', value: 'all' },
-          { label: '安全培训', value: 'safety' },
-          { label: '专业培训', value: 'professional' },
-          { label: '技能培训', value: 'skill' },
-          { label: '意识培训', value: 'awareness' },
-          { label: '应急培训', value: 'emergency' },
+          { label: i18n.t('ehs.training.k29'), value: 'all' },
+          { label: i18n.t('ehs.training.k30'), value: 'safety' },
+          { label: i18n.t('ehs.training.k31'), value: 'professional' },
+          { label: i18n.t('ehs.training.k32'), value: 'skill' },
+          { label: i18n.t('ehs.training.k33'), value: 'awareness' },
+          { label: i18n.t('ehs.training.k34'), value: 'emergency' },
         ],
       },
       {
         id: 'status',
-        label: '状态',
+        label: i18n.t('ehs.training.k35'),
         type: 'select',
         options: [
-          { label: '全部', value: 'all' },
-          { label: '进行中', value: 'ongoing' },
-          { label: '已完成', value: 'completed' },
-          { label: '未通过', value: 'failed' },
+          { label: i18n.t('ehs.training.k36'), value: 'all' },
+          { label: i18n.t('ehs.training.k37'), value: 'ongoing' },
+          { label: i18n.t('ehs.training.k38'), value: 'completed' },
+          { label: i18n.t('ehs.training.k39'), value: 'failed' },
         ],
       },
     ],
@@ -182,27 +183,27 @@ export const trainingRecordSchema: EntitySchema = {
 
   formSections: [
     {
-      title: '基本信息',
+      title: i18n.t('ehs.training.k40'),
       fields: ['record_no', 'title', 'training_type', 'status'],
     },
     {
-      title: '培训详情',
+      title: i18n.t('ehs.training.k41'),
       fields: ['trainer', 'training_date', 'duration_hours'],
     },
     {
-      title: '结果与内容',
+      title: i18n.t('ehs.training.k42'),
       fields: ['content', 'result', 'pass_rate'],
     },
   ],
 
   formColCount: 2,
-  detailTitle: '培训记录详情',
+  detailTitle: i18n.t('ehs.training.k43'),
 };
 
 export const trainingCertificateSchema: EntitySchema = {
   entity: 'ehsTrainingCertificate',
-  title: '培训证书',
-  description: '管理企业培训证书信息，包括证书类型、颁发日期、有效期、状态等',
+  title: i18n.t('ehs.training.k44'),
+  description: i18n.t('ehs.training.k45'),
 
   api: {
     module: 'ehs',
@@ -212,14 +213,14 @@ export const trainingCertificateSchema: EntitySchema = {
   fields: [
     {
       name: 'certificate_no',
-      label: '证书编号',
+      label: i18n.t('ehs.training.k46'),
       type: 'text',
       readonlyOnEdit: true,
       listWidth: 140,
     },
     {
       name: 'employee_name',
-      label: '员工姓名',
+      label: i18n.t('ehs.training.k47'),
       type: 'text',
       required: true,
       sortable: true,
@@ -227,42 +228,42 @@ export const trainingCertificateSchema: EntitySchema = {
     },
     {
       name: 'training_type',
-      label: '培训类型',
+      label: i18n.t('ehs.training.k48'),
       type: 'select',
       required: true,
       defaultValue: 'safety',
       options: {
         type: 'static',
         options: [
-          { value: 'safety', label: '安全培训' },
-          { value: 'professional', label: '专业培训' },
-          { value: 'skill', label: '技能培训' },
-          { value: 'awareness', label: '意识培训' },
-          { value: 'emergency', label: '应急培训' },
+          { value: 'safety', label: i18n.t('ehs.training.k49') },
+          { value: 'professional', label: i18n.t('ehs.training.k50') },
+          { value: 'skill', label: i18n.t('ehs.training.k51') },
+          { value: 'awareness', label: i18n.t('ehs.training.k52') },
+          { value: 'emergency', label: i18n.t('ehs.training.k53') },
         ],
       },
       listWidth: 120,
       renderCell: (row: Record<string, unknown>) => {
         const v = row.training_type as string;
         const map: Record<string, string> = {
-          safety: '安全培训',
-          professional: '专业培训',
-          skill: '技能培训',
-          awareness: '意识培训',
-          emergency: '应急培训',
+          safety: i18n.t('ehs.training.k54'),
+          professional: i18n.t('ehs.training.k55'),
+          skill: i18n.t('ehs.training.k56'),
+          awareness: i18n.t('ehs.training.k57'),
+          emergency: i18n.t('ehs.training.k58'),
         };
         return map[v] || v || '-';
       },
     },
     {
       name: 'certificate_type',
-      label: '证书类型',
+      label: i18n.t('ehs.training.k59'),
       type: 'text',
       listWidth: 120,
     },
     {
       name: 'issue_date',
-      label: '颁发日期',
+      label: i18n.t('ehs.training.k60'),
       type: 'date',
       listWidth: 120,
       renderCell: (row: Record<string, unknown>) => {
@@ -272,7 +273,7 @@ export const trainingCertificateSchema: EntitySchema = {
     },
     {
       name: 'expiry_date',
-      label: '有效期至',
+      label: i18n.t('ehs.training.k61'),
       type: 'date',
       listWidth: 120,
       renderCell: (row: Record<string, unknown>) => {
@@ -282,21 +283,21 @@ export const trainingCertificateSchema: EntitySchema = {
     },
     {
       name: 'issuing_authority',
-      label: '颁发机构',
+      label: i18n.t('ehs.training.k62'),
       type: 'text',
       showInList: false,
     },
     {
       name: 'status',
-      label: '状态',
+      label: i18n.t('ehs.training.k63'),
       type: 'select',
       defaultValue: 'valid',
       options: {
         type: 'static',
         options: [
-          { value: 'valid', label: '有效' },
-          { value: 'expired', label: '已过期' },
-          { value: 'revoked', label: '已吊销' },
+          { value: 'valid', label: i18n.t('ehs.training.k64') },
+          { value: 'expired', label: i18n.t('ehs.training.k65') },
+          { value: 'revoked', label: i18n.t('ehs.training.k66') },
         ],
       },
       listWidth: 100,
@@ -323,34 +324,34 @@ export const trainingCertificateSchema: EntitySchema = {
         revoked: 'error',
       },
       labelMap: {
-        valid: '有效',
-        expired: '已过期',
-        revoked: '已吊销',
+        valid: i18n.t('ehs.training.k67'),
+        expired: i18n.t('ehs.training.k68'),
+        revoked: i18n.t('ehs.training.k69'),
       },
     },
     filters: [
       {
         id: 'training_type',
-        label: '培训类型',
+        label: i18n.t('ehs.training.k70'),
         type: 'select',
         options: [
-          { label: '全部', value: 'all' },
-          { label: '安全培训', value: 'safety' },
-          { label: '专业培训', value: 'professional' },
-          { label: '技能培训', value: 'skill' },
-          { label: '意识培训', value: 'awareness' },
-          { label: '应急培训', value: 'emergency' },
+          { label: i18n.t('ehs.training.k71'), value: 'all' },
+          { label: i18n.t('ehs.training.k72'), value: 'safety' },
+          { label: i18n.t('ehs.training.k73'), value: 'professional' },
+          { label: i18n.t('ehs.training.k74'), value: 'skill' },
+          { label: i18n.t('ehs.training.k75'), value: 'awareness' },
+          { label: i18n.t('ehs.training.k76'), value: 'emergency' },
         ],
       },
       {
         id: 'status',
-        label: '状态',
+        label: i18n.t('ehs.training.k77'),
         type: 'select',
         options: [
-          { label: '全部', value: 'all' },
-          { label: '有效', value: 'valid' },
-          { label: '已过期', value: 'expired' },
-          { label: '已吊销', value: 'revoked' },
+          { label: i18n.t('ehs.training.k78'), value: 'all' },
+          { label: i18n.t('ehs.training.k79'), value: 'valid' },
+          { label: i18n.t('ehs.training.k80'), value: 'expired' },
+          { label: i18n.t('ehs.training.k81'), value: 'revoked' },
         ],
       },
     ],
@@ -360,23 +361,23 @@ export const trainingCertificateSchema: EntitySchema = {
 
   formSections: [
     {
-      title: '基本信息',
+      title: i18n.t('ehs.training.k82'),
       fields: ['certificate_no', 'employee_name', 'training_type', 'certificate_type'],
     },
     {
-      title: '颁发信息',
+      title: i18n.t('ehs.training.k83'),
       fields: ['issue_date', 'expiry_date', 'issuing_authority', 'status'],
     },
   ],
 
   formColCount: 2,
-  detailTitle: '培训证书详情',
+  detailTitle: i18n.t('ehs.training.k84'),
 };
 
 export const trainingPlanSchema: EntitySchema = {
   entity: 'ehsTrainingPlan',
-  title: '培训计划',
-  description: '管理企业培训计划信息，包括培训类型、类别、时间、讲师、状态等',
+  title: i18n.t('ehs.training.k85'),
+  description: i18n.t('ehs.training.k86'),
 
   api: {
     module: 'ehs',
@@ -386,7 +387,7 @@ export const trainingPlanSchema: EntitySchema = {
   fields: [
     {
       name: 'plan_no',
-      label: '计划编号',
+      label: i18n.t('ehs.training.k87'),
       type: 'text',
       readonlyOnEdit: true,
       listWidth: 140,
@@ -394,7 +395,7 @@ export const trainingPlanSchema: EntitySchema = {
     },
     {
       name: 'title',
-      label: '培训名称',
+      label: i18n.t('ehs.training.k88'),
       type: 'text',
       required: true,
       sortable: true,
@@ -403,18 +404,18 @@ export const trainingPlanSchema: EntitySchema = {
     },
     {
       name: 'training_type',
-      label: '培训类型',
+      label: i18n.t('ehs.training.k89'),
       type: 'select',
       required: true,
       defaultValue: 'safety',
       options: {
         type: 'static',
         options: [
-          { value: 'safety', label: '安全培训' },
-          { value: 'professional', label: '专业培训' },
-          { value: 'skill', label: '技能培训' },
-          { value: 'awareness', label: '意识培训' },
-          { value: 'emergency', label: '应急培训' },
+          { value: 'safety', label: i18n.t('ehs.training.k90') },
+          { value: 'professional', label: i18n.t('ehs.training.k91') },
+          { value: 'skill', label: i18n.t('ehs.training.k92') },
+          { value: 'awareness', label: i18n.t('ehs.training.k93') },
+          { value: 'emergency', label: i18n.t('ehs.training.k94') },
         ],
       },
       listWidth: 120,
@@ -422,24 +423,24 @@ export const trainingPlanSchema: EntitySchema = {
     },
     {
       name: 'category',
-      label: '类别',
+      label: i18n.t('ehs.training.k95'),
       type: 'select',
       required: true,
       defaultValue: 'mandatory',
       options: {
         type: 'static',
         options: [
-          { value: 'mandatory', label: '必修' },
-          { value: 'optional', label: '选修' },
-          { value: 'onboarding', label: '入职培训' },
-          { value: 'special', label: '专项培训' },
+          { value: 'mandatory', label: i18n.t('ehs.training.k96') },
+          { value: 'optional', label: i18n.t('ehs.training.k97') },
+          { value: 'onboarding', label: i18n.t('ehs.training.k98') },
+          { value: 'special', label: i18n.t('ehs.training.k99') },
         ],
       },
       listWidth: 100,
     },
     {
       name: 'trainer',
-      label: '讲师',
+      label: i18n.t('ehs.training.k100'),
       type: 'text',
       listWidth: 120,
       renderCell: (row: Record<string, unknown>) => {
@@ -450,7 +451,7 @@ export const trainingPlanSchema: EntitySchema = {
     },
     {
       name: 'location',
-      label: '地点',
+      label: i18n.t('ehs.training.k101'),
       type: 'text',
       listWidth: 140,
       renderCell: (row: Record<string, unknown>) => {
@@ -460,7 +461,7 @@ export const trainingPlanSchema: EntitySchema = {
     },
     {
       name: 'start_date',
-      label: '开始日期',
+      label: i18n.t('ehs.training.k102'),
       type: 'date',
       listWidth: 120,
       renderCell: (row: Record<string, unknown>) => {
@@ -470,7 +471,7 @@ export const trainingPlanSchema: EntitySchema = {
     },
     {
       name: 'end_date',
-      label: '结束日期',
+      label: i18n.t('ehs.training.k103'),
       type: 'date',
       listWidth: 120,
       renderCell: (row: Record<string, unknown>) => {
@@ -480,7 +481,7 @@ export const trainingPlanSchema: EntitySchema = {
     },
     {
       name: 'duration_hours',
-      label: '时长(小时)',
+      label: i18n.t('ehs.training.k104'),
       type: 'number',
       listWidth: 100,
       renderCell: (row: Record<string, unknown>) => {
@@ -490,7 +491,7 @@ export const trainingPlanSchema: EntitySchema = {
     },
     {
       name: 'max_participants',
-      label: '最大人数',
+      label: i18n.t('ehs.training.k105'),
       type: 'number',
       listWidth: 100,
       showInList: false,
@@ -501,17 +502,17 @@ export const trainingPlanSchema: EntitySchema = {
     },
     {
       name: 'status',
-      label: '状态',
+      label: i18n.t('ehs.training.k106'),
       type: 'select',
       defaultValue: 'draft',
       options: {
         type: 'static',
         options: [
-          { value: 'draft', label: '草稿' },
-          { value: 'published', label: '已发布' },
-          { value: 'ongoing', label: '进行中' },
-          { value: 'completed', label: '已完成' },
-          { value: 'cancelled', label: '已取消' },
+          { value: 'draft', label: i18n.t('ehs.training.k107') },
+          { value: 'published', label: i18n.t('ehs.training.k108') },
+          { value: 'ongoing', label: i18n.t('ehs.training.k109') },
+          { value: 'completed', label: i18n.t('ehs.training.k110') },
+          { value: 'cancelled', label: i18n.t('ehs.training.k111') },
         ],
       },
       listWidth: 100,
@@ -519,7 +520,7 @@ export const trainingPlanSchema: EntitySchema = {
     },
     {
       name: 'description',
-      label: '描述',
+      label: i18n.t('ehs.training.k112'),
       type: 'textarea',
       showInList: false,
     },
@@ -539,38 +540,38 @@ export const trainingPlanSchema: EntitySchema = {
         cancelled: 'error',
       },
       labelMap: {
-        draft: '草稿',
-        published: '已发布',
-        ongoing: '进行中',
-        completed: '已完成',
-        cancelled: '已取消',
+        draft: i18n.t('ehs.training.k113'),
+        published: i18n.t('ehs.training.k114'),
+        ongoing: i18n.t('ehs.training.k115'),
+        completed: i18n.t('ehs.training.k116'),
+        cancelled: i18n.t('ehs.training.k117'),
       },
     },
     filters: [
       {
         id: 'training_type',
-        label: '培训类型',
+        label: i18n.t('ehs.training.k118'),
         type: 'select',
         options: [
-          { label: '全部', value: 'all' },
-          { label: '安全培训', value: 'safety' },
-          { label: '专业培训', value: 'professional' },
-          { label: '技能培训', value: 'skill' },
-          { label: '意识培训', value: 'awareness' },
-          { label: '应急培训', value: 'emergency' },
+          { label: i18n.t('ehs.training.k119'), value: 'all' },
+          { label: i18n.t('ehs.training.k120'), value: 'safety' },
+          { label: i18n.t('ehs.training.k121'), value: 'professional' },
+          { label: i18n.t('ehs.training.k122'), value: 'skill' },
+          { label: i18n.t('ehs.training.k123'), value: 'awareness' },
+          { label: i18n.t('ehs.training.k124'), value: 'emergency' },
         ],
       },
       {
         id: 'status',
-        label: '状态',
+        label: i18n.t('ehs.training.k125'),
         type: 'select',
         options: [
-          { label: '全部', value: 'all' },
-          { label: '草稿', value: 'draft' },
-          { label: '已发布', value: 'published' },
-          { label: '进行中', value: 'ongoing' },
-          { label: '已完成', value: 'completed' },
-          { label: '已取消', value: 'cancelled' },
+          { label: i18n.t('ehs.training.k126'), value: 'all' },
+          { label: i18n.t('ehs.training.k127'), value: 'draft' },
+          { label: i18n.t('ehs.training.k128'), value: 'published' },
+          { label: i18n.t('ehs.training.k129'), value: 'ongoing' },
+          { label: i18n.t('ehs.training.k130'), value: 'completed' },
+          { label: i18n.t('ehs.training.k131'), value: 'cancelled' },
         ],
       },
     ],
@@ -580,25 +581,25 @@ export const trainingPlanSchema: EntitySchema = {
 
   formSections: [
     {
-      title: '基本信息',
+      title: i18n.t('ehs.training.k132'),
       fields: ['title', 'training_type', 'category'],
     },
     {
-      title: '培训详情',
+      title: i18n.t('ehs.training.k133'),
       fields: ['trainer', 'location', 'duration_hours', 'max_participants'],
     },
     {
-      title: '时间安排',
+      title: i18n.t('ehs.training.k134'),
       fields: ['start_date', 'end_date'],
     },
     {
-      title: '状态与描述',
+      title: i18n.t('ehs.training.k135'),
       fields: ['status', 'description'],
     },
   ],
 
   formColCount: 2,
-  createTitle: '新建培训计划',
-  editTitle: '编辑培训计划',
-  detailTitle: '培训计划详情',
+  createTitle: i18n.t('ehs.training.k136'),
+  editTitle: i18n.t('ehs.training.k137'),
+  detailTitle: i18n.t('ehs.training.k138'),
 };

@@ -1,3 +1,4 @@
+import i18n from '@/i18n';
 export type TaskStatus = 'pending' | 'running' | 'completed' | 'failed';
 
 export interface TaskStep {
@@ -118,29 +119,29 @@ export class AutonomousAgent {
   private registerDefaultTools(): void {
     this.toolRegistry.register({
       name: 'browser_navigate',
-      description: '导航到指定 URL',
+      description: i18n.t('ai.autonomous-agent.url_0'),
       execute: async (input) => {
         const url = (input as { url: string })?.url;
         if (url) {
           window.open(url, '_blank');
           return { success: true, url };
         }
-        throw new Error('缺少 URL 参数');
+        throw new Error(i18n.t('ai.autonomous-agent.url_1'));
       },
     });
 
     this.toolRegistry.register({
       name: 'file_read',
-      description: '读取文件内容（模拟）',
+      description: i18n.t('ai.autonomous-agent.k2'),
       execute: async (input) => {
         const path = (input as { path: string })?.path;
-        return { success: true, path, content: `[模拟文件内容: ${path}]` };
+        return { success: true, path, content: `${i18n.t('ai.autonomous-agent.k0')}${path}]` };
       },
     });
 
     this.toolRegistry.register({
       name: 'api_call',
-      description: '发起 API 请求',
+      description: i18n.t('ai.autonomous-agent.api_3'),
       execute: async (input, _context) => {
         const {
           endpoint,
@@ -160,17 +161,17 @@ export class AutonomousAgent {
           const result = await response.json().catch(() => ({}));
           return { success: response.ok, status: response.status, data: result };
         } catch (error) {
-          throw new Error(`API 调用失败: ${(error as Error).message}`);
+          throw new Error(`${i18n.t('ai.autonomous-agent.api_1')}${(error as Error).message}`);
         }
       },
     });
 
     this.toolRegistry.register({
       name: 'code_execute',
-      description: '执行 JavaScript 代码片段',
+      description: i18n.t('ai.autonomous-agent.javascript_4'),
       execute: async (input, context) => {
         const code = (input as { code: string })?.code;
-        if (!code) throw new Error('缺少代码参数');
+        if (!code) throw new Error(i18n.t('ai.autonomous-agent.k5'));
         try {
           const result = await new Function(`
             const context = arguments[0];
@@ -178,14 +179,14 @@ export class AutonomousAgent {
           `)(context);
           return { success: true, result };
         } catch (error) {
-          throw new Error(`代码执行失败: ${(error as Error).message}`);
+          throw new Error(`${i18n.t('ai.autonomous-agent.k2')}${(error as Error).message}`);
         }
       },
     });
 
     this.toolRegistry.register({
       name: 'data_transform',
-      description: '数据转换和处理',
+      description: i18n.t('ai.autonomous-agent.k6'),
       execute: async (input) => {
         const { data, operation } = input as {
           data: unknown;
@@ -207,7 +208,7 @@ export class AutonomousAgent {
 
     this.toolRegistry.register({
       name: 'notification_send',
-      description: '发送通知给用户',
+      description: i18n.t('ai.autonomous-agent.k7'),
       execute: async (input, context) => {
         const { message, channel = 'system' } = input as {
           message: string;
@@ -239,34 +240,34 @@ export class AutonomousAgent {
 
     const steps: Array<{ description: string; tool?: string }> = [];
 
-    if (lower.includes('navigate') || lower.includes('导航') || lower.includes('browse')) {
-      steps.push({ description: '导航到目标页面', tool: 'browser_navigate' });
+    if (lower.includes('navigate') || lower.includes(i18n.t('ai.autonomous-agent.k8')) || lower.includes('browse')) {
+      steps.push({ description: i18n.t('ai.autonomous-agent.k9'), tool: 'browser_navigate' });
     }
 
-    if (lower.includes('api') || lower.includes('请求') || lower.includes('call')) {
-      steps.push({ description: '调用 API 接口', tool: 'api_call' });
+    if (lower.includes('api') || lower.includes(i18n.t('ai.autonomous-agent.k10')) || lower.includes('call')) {
+      steps.push({ description: i18n.t('ai.autonomous-agent.api_11'), tool: 'api_call' });
     }
 
-    if (lower.includes('code') || lower.includes('代码') || lower.includes('execute')) {
-      steps.push({ description: '执行代码逻辑', tool: 'code_execute' });
+    if (lower.includes('code') || lower.includes(i18n.t('ai.autonomous-agent.k12')) || lower.includes('execute')) {
+      steps.push({ description: i18n.t('ai.autonomous-agent.k13'), tool: 'code_execute' });
     }
 
-    if (lower.includes('data') || lower.includes('数据') || lower.includes('transform')) {
-      steps.push({ description: '转换数据', tool: 'data_transform' });
+    if (lower.includes('data') || lower.includes(i18n.t('ai.autonomous-agent.k14')) || lower.includes('transform')) {
+      steps.push({ description: i18n.t('ai.autonomous-agent.k15'), tool: 'data_transform' });
     }
 
-    if (lower.includes('notify') || lower.includes('通知') || lower.includes('alert')) {
-      steps.push({ description: '发送通知', tool: 'notification_send' });
+    if (lower.includes('notify') || lower.includes(i18n.t('ai.autonomous-agent.k16')) || lower.includes('alert')) {
+      steps.push({ description: i18n.t('ai.autonomous-agent.k17'), tool: 'notification_send' });
     }
 
-    if (lower.includes('file') || lower.includes('文件') || lower.includes('read')) {
-      steps.push({ description: '读取文件', tool: 'file_read' });
+    if (lower.includes('file') || lower.includes(i18n.t('ai.autonomous-agent.k18')) || lower.includes('read')) {
+      steps.push({ description: i18n.t('ai.autonomous-agent.k19'), tool: 'file_read' });
     }
 
     if (steps.length === 0) {
-      steps.push({ description: `分析任务: ${description}` });
-      steps.push({ description: '执行主要逻辑', tool: tools[0]?.name });
-      steps.push({ description: '验证结果' });
+      steps.push({ description: `${i18n.t('ai.autonomous-agent.k3')}${description}` });
+      steps.push({ description: i18n.t('ai.autonomous-agent.k20'), tool: tools[0]?.name });
+      steps.push({ description: i18n.t('ai.autonomous-agent.k21') });
     }
 
     return steps;
@@ -305,7 +306,7 @@ export class AutonomousAgent {
     this.emit({
       type: 'task_started',
       taskId,
-      message: `任务已启动: ${description}`,
+      message: `${i18n.t('ai.autonomous-agent.k4')}${description}`,
       timestamp: Date.now(),
     });
 
@@ -319,7 +320,7 @@ export class AutonomousAgent {
           type: 'step_started',
           taskId,
           stepId: step.id,
-          message: `执行步骤 ${i + 1}/${task.steps.length}: ${step.description}`,
+          message: `${i18n.t('ai.autonomous-agent.k5')}${i + 1}/${task.steps.length}: ${step.description}`,
           timestamp: Date.now(),
           progress: (i / task.steps.length) * 100,
         });
@@ -328,7 +329,7 @@ export class AutonomousAgent {
           type: 'progress_update',
           taskId,
           stepId: step.id,
-          message: `进度: ${i}/${task.steps.length}`,
+          message: `${i18n.t('ai.autonomous-agent.k6')}${i}/${task.steps.length}`,
           timestamp: Date.now(),
           progress: (i / task.steps.length) * 100,
         });
@@ -345,7 +346,7 @@ export class AutonomousAgent {
             type: 'step_completed',
             taskId,
             stepId: step.id,
-            message: `步骤完成: ${step.description}`,
+            message: `${i18n.t('ai.autonomous-agent.k7')}${step.description}`,
             timestamp: Date.now(),
           });
         } else {
@@ -359,7 +360,7 @@ export class AutonomousAgent {
               type: 'step_failed',
               taskId,
               stepId: step.id,
-              message: `步骤失败，重试 ${task.retryCount}/${task.maxRetries}: ${step.error}`,
+              message: `${i18n.t('ai.autonomous-agent.k8')}${task.retryCount}/${task.maxRetries}: ${step.error}`,
               timestamp: Date.now(),
             });
             await this.delay(DEFAULT_STEP_DELAY * 2);
@@ -368,10 +369,10 @@ export class AutonomousAgent {
               type: 'step_failed',
               taskId,
               stepId: step.id,
-              message: `步骤失败，已达最大重试次数: ${step.error}`,
+              message: `${i18n.t('ai.autonomous-agent.k9')}${step.error}`,
               timestamp: Date.now(),
             });
-            throw new Error(`步骤失败: ${step.error}`);
+            throw new Error(`${i18n.t('ai.autonomous-agent.k10')}${step.error}`);
           }
         }
 
@@ -379,7 +380,7 @@ export class AutonomousAgent {
           type: 'progress_update',
           taskId,
           stepId: step.id,
-          message: `进度: ${i + 1}/${task.steps.length}`,
+          message: `${i18n.t('ai.autonomous-agent.k11')}${i + 1}/${task.steps.length}`,
           timestamp: Date.now(),
           progress: ((i + 1) / task.steps.length) * 100,
         });
@@ -392,7 +393,7 @@ export class AutonomousAgent {
       this.emit({
         type: 'task_completed',
         taskId,
-        message: `任务已完成: ${description}`,
+        message: `${i18n.t('ai.autonomous-agent.k12')}${description}`,
         timestamp: Date.now(),
         progress: 100,
       });
@@ -404,7 +405,7 @@ export class AutonomousAgent {
       this.emit({
         type: 'task_failed',
         taskId,
-        message: `任务失败: ${(error as Error).message}`,
+        message: `${i18n.t('ai.autonomous-agent.k13')}${(error as Error).message}`,
         timestamp: Date.now(),
       });
     }
@@ -457,7 +458,7 @@ export class AutonomousAgent {
       this.emit({
         type: 'task_cancelled',
         taskId,
-        message: `任务已取消: ${task.description}`,
+        message: `${i18n.t('ai.autonomous-agent.k14')}${task.description}`,
         timestamp: Date.now(),
       });
       return true;

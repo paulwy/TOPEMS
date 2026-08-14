@@ -1,6 +1,7 @@
 import React from 'react';
 import { Chip } from '@mui/material';
 import type { EntitySchema } from '@/schema';
+import i18n from '@/i18n';
 
 const getOEEColorHex = (value: number | undefined | null) => {
   if (value == null || isNaN(value)) return 'text.primary';
@@ -23,8 +24,8 @@ const formatPercent = (value: number | undefined | null) => {
 
 export const equipmentOeeSchema: EntitySchema = {
   entity: 'mes_equipment_oee',
-  title: '设备OEE',
-  description: '管理设备综合效率（OEE）记录，包括可用率、性能率、质量率等指标',
+  title: i18n.t('mes.equipment_oee.oee_0'),
+  description: i18n.t('mes.equipment_oee.k1'),
 
   api: {
     module: 'mes',
@@ -34,7 +35,7 @@ export const equipmentOeeSchema: EntitySchema = {
   fields: [
     {
       name: 'equipment_code',
-      label: '设备编号',
+      label: i18n.t('mes.equipment_oee.k2'),
       type: 'text',
       required: true,
       sortable: true,
@@ -42,7 +43,7 @@ export const equipmentOeeSchema: EntitySchema = {
     },
     {
       name: 'equipment_name',
-      label: '设备名称',
+      label: i18n.t('mes.equipment_oee.k3'),
       type: 'text',
       required: true,
       sortable: true,
@@ -50,7 +51,7 @@ export const equipmentOeeSchema: EntitySchema = {
     },
     {
       name: 'record_date',
-      label: '记录日期',
+      label: i18n.t('mes.equipment_oee.k4'),
       type: 'date',
       required: true,
       sortable: true,
@@ -58,14 +59,14 @@ export const equipmentOeeSchema: EntitySchema = {
     },
     {
       name: 'shift',
-      label: '班次',
+      label: i18n.t('mes.equipment_oee.k5'),
       type: 'text',
       listWidth: 80,
       validation: [{ type: 'maxLength', value: 32 }],
     },
     {
       name: 'availability',
-      label: '可用率',
+      label: i18n.t('mes.equipment_oee.k6'),
       type: 'number',
       readonly: true,
       listWidth: 100,
@@ -82,7 +83,7 @@ export const equipmentOeeSchema: EntitySchema = {
     },
     {
       name: 'performance',
-      label: '性能率',
+      label: i18n.t('mes.equipment_oee.k7'),
       type: 'number',
       readonly: true,
       listWidth: 100,
@@ -99,7 +100,7 @@ export const equipmentOeeSchema: EntitySchema = {
     },
     {
       name: 'quality',
-      label: '质量率',
+      label: i18n.t('mes.equipment_oee.k8'),
       type: 'number',
       readonly: true,
       listWidth: 100,
@@ -116,7 +117,7 @@ export const equipmentOeeSchema: EntitySchema = {
     },
     {
       name: 'oee',
-      label: '综合OEE',
+      label: i18n.t('mes.equipment_oee.oee_9'),
       type: 'number',
       readonly: true,
       listWidth: 100,
@@ -133,56 +134,56 @@ export const equipmentOeeSchema: EntitySchema = {
     },
     {
       name: 'planned_production_time',
-      label: '计划生产时间(分钟)',
+      label: i18n.t('mes.equipment_oee.k10'),
       type: 'number',
       showInList: false,
     },
     {
       name: 'run_time',
-      label: '运行时间(分钟)',
+      label: i18n.t('mes.equipment_oee.k11'),
       type: 'number',
       showInList: false,
     },
     {
       name: 'downtime',
-      label: '停机时间(分钟)',
+      label: i18n.t('mes.equipment_oee.k12'),
       type: 'number',
       showInList: false,
     },
     {
       name: 'ideal_cycle_time',
-      label: '理想周期时间(秒)',
+      label: i18n.t('mes.equipment_oee.k13'),
       type: 'number',
       showInList: false,
     },
     {
       name: 'total_count',
-      label: '总产量(件)',
+      label: i18n.t('mes.equipment_oee.k14'),
       type: 'number',
       showInList: false,
     },
     {
       name: 'good_count',
-      label: '合格数量(件)',
+      label: i18n.t('mes.equipment_oee.k15'),
       type: 'number',
       showInList: false,
     },
     {
       name: 'reject_count',
-      label: '不良数量(件)',
+      label: i18n.t('mes.equipment_oee.k16'),
       type: 'number',
       showInList: false,
     },
     {
       name: 'created_at',
-      label: '创建时间',
+      label: i18n.t('mes.equipment_oee.k17'),
       type: 'datetime',
       readonly: true,
       showInList: false,
     },
     {
       name: 'updated_at',
-      label: '更新时间',
+      label: i18n.t('mes.equipment_oee.k18'),
       type: 'datetime',
       readonly: true,
       showInList: false,
@@ -210,11 +211,11 @@ export const equipmentOeeSchema: EntitySchema = {
 
   formSections: [
     {
-      title: '基本信息',
+      title: i18n.t('mes.equipment_oee.k19'),
       fields: ['equipment_code', 'equipment_name', 'record_date', 'shift'],
     },
     {
-      title: '生产数据',
+      title: i18n.t('mes.equipment_oee.k20'),
       fields: [
         'planned_production_time',
         'run_time',
@@ -226,11 +227,11 @@ export const equipmentOeeSchema: EntitySchema = {
       ],
     },
     {
-      title: 'OEE指标',
+      title: i18n.t('shared.equipment_oee.oee_0'),
       fields: ['availability', 'performance', 'quality', 'oee'],
     },
   ],
 
   formColCount: 2,
-  detailTitle: 'OEE记录详情',
+  detailTitle: i18n.t('shared.equipment_oee.oee_1'),
 };

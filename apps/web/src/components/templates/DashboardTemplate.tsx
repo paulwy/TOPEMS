@@ -19,6 +19,7 @@ import {
   InputAdornment,
   useTheme,
 } from '@mui/material';
+import i18n from '@/i18n';
 import {
   TrendingUp as TrendingUpIcon,
   TrendingDown as TrendingDownIcon,
@@ -319,7 +320,7 @@ const PlaceholderChart: React.FC<{ config: ChartConfig; isMain?: boolean }> = ({
               fontSize: 14,
             }}
           >
-            {emptyText || '暂无数据'}
+            {emptyText || i18n.t('components.dashboard_template.k0')}
           </Box>
         </CardContent>
       </Card>
@@ -569,7 +570,7 @@ const DataTable: React.FC<{ table: DataTableConfig }> = ({ table }) => {
               size='small'
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              placeholder='搜索...'
+              placeholder={i18n.t('components.dashboard_template.k0')}
               slotProps={{
                 input: {
                   startAdornment: (
@@ -623,7 +624,7 @@ const DataTable: React.FC<{ table: DataTableConfig }> = ({ table }) => {
                   align='center'
                   sx={{ py: 4, color: 'text.disabled' }}
                 >
-                  暂无数据
+                  {i18n.t('components.dashboard_template.k1')}
                 </TableCell>
               </TableRow>
             ) : (
@@ -678,7 +679,7 @@ const legacyToConfig = (s: StatCard): StatCardConfig => ({
     s.change !== undefined
       ? { value: s.change, label: s.changeLabel }
       : s.trend && s.trend.length > 0
-        ? { value: s.trend[s.trend.length - 1] - s.trend[0], label: '趋势' }
+        ? { value: s.trend[s.trend.length - 1] - s.trend[0], label: i18n.t('components.dashboard_template.k1') }
         : undefined,
 });
 
@@ -707,9 +708,9 @@ export const DashboardTemplate: React.FC<DashboardTemplateProps> = ({
   loading,
   onRefresh,
   recentItems,
-  recentTitle = '最近事项',
+  recentTitle = i18n.t('components.dashboard_template.k2'),
   quickActions,
-  quickActionsTitle = '快捷操作',
+  quickActionsTitle = i18n.t('components.dashboard_template.k3'),
 }) => {
   const resolvedStatCards = useMemo<StatCardConfig[] | undefined>(() => {
     if (statCardsProp && statCardsProp.length > 0) return statCardsProp;
@@ -744,7 +745,7 @@ export const DashboardTemplate: React.FC<DashboardTemplateProps> = ({
     }
     if (onRefresh) {
       list.push({
-        label: '刷新',
+        label: i18n.t('components.dashboard_template.k4'),
         onClick: onRefresh,
         variant: 'outlined',
       });

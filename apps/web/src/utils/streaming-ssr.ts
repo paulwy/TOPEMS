@@ -34,6 +34,7 @@
  */
 
 import { logger } from '@/utils/logger';
+import i18n from '@/i18n';
 
 const ssrLogger = logger.child({ prefix: 'StreamingSSR' });
 
@@ -165,10 +166,10 @@ export function hydrateSSRData(): SSRDataCollection {
       return hydratedData;
     }
     hydratedData = collection;
-    ssrLogger.debug(`水合 SSR 数据: ${collection.entries.length} 条, 版本 ${collection.version}`);
+    ssrLogger.debug(`${i18n.t('shared.streaming-ssr.ssr_0')}${collection.entries.length}${i18n.t('shared.streaming-ssr.k1')}${collection.version}`);
     return hydratedData;
   } catch (e) {
-    ssrLogger.error('水合 SSR 数据失败:', e);
+    ssrLogger.error(i18n.t('shared.streaming-ssr.ssr_2'), e);
     hydratedData = buildSSRDataCollection([]);
     return hydratedData;
   }
@@ -205,7 +206,7 @@ export function parseStreamingChunks(html: string): SSRDataEntry[] {
         chunks.push(entry);
       }
     } catch (e) {
-      ssrLogger.warn('解析流式数据块失败:', e);
+      ssrLogger.warn(i18n.t('shared.streaming-ssr.k3'), e);
     }
   }
   return chunks;
@@ -380,7 +381,7 @@ export class StreamingSSRManager {
               onError: (error: unknown) => {
                 const err = error instanceof Error ? error : new Error(String(error));
                 onError?.(err);
-                ssrLogger.error('流式渲染错误:', err);
+                ssrLogger.error(i18n.t('shared.streaming-ssr.k4'), err);
               },
               progressiveChunking,
             });
@@ -435,7 +436,7 @@ export class StreamingSSRManager {
               onError: (error: unknown) => {
                 const err = error instanceof Error ? error : new Error(String(error));
                 onError?.(err);
-                ssrLogger.error('流式渲染错误:', err);
+                ssrLogger.error(i18n.t('shared.streaming-ssr.k5'), err);
               },
               progressiveChunking,
             });
@@ -463,18 +464,18 @@ export class StreamingSSRManager {
           }
 
           throw new Error(
-            '当前运行时不支持流式 SSR（renderToReadableStream / renderToPipeableStream 均不可用）'
+            i18n.t('shared.streaming-ssr.k0')
           );
         } catch (error) {
           const err = error instanceof Error ? error : new Error(String(error));
-          ssrLogger.error('流式渲染失败:', err);
+          ssrLogger.error(i18n.t('shared.streaming-ssr.k6'), err);
           onShellError?.(err);
           controller.error(err);
           this.doneReject?.(err);
         }
       },
       cancel: () => {
-        ssrLogger.debug('流式渲染被取消');
+        ssrLogger.debug(i18n.t('shared.streaming-ssr.k1'));
       },
     });
 

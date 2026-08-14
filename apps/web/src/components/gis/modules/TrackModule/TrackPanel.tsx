@@ -6,6 +6,7 @@ import type { DevicePoint } from '../../../../api/gis';
 import type { TrackRecord, TrackStatistics, TrackPoint } from './types';
 import TrackPlayer from './TrackPlayer';
 import { logger } from '@/utils/logger';
+import i18n from '@/i18n';
 
 interface TrackPanelProps {
   devicePoints: DevicePoint[];
@@ -150,11 +151,11 @@ const TrackPanel: React.FC<TrackPanelProps> = ({ devicePoints, onClose }) => {
           variant='subtitle1'
           sx={{ fontWeight: 600, color: 'text.primary' }}
         >
-          设备轨迹追踪
+          {i18n.t('components.track_panel.k0')}
         </Typography>
         <IconButton
           onClick={onClose}
-          aria-label='关闭'
+          aria-label={i18n.t('components.track_panel.k0')}
           sx={{ p: 1, '&:hover': { bgcolor: 'grey.100' } }}
         >
           <svg
@@ -199,7 +200,7 @@ const TrackPanel: React.FC<TrackPanelProps> = ({ devicePoints, onClose }) => {
                 }}
               />
               <TextField
-                placeholder='搜索设备...'
+                placeholder={i18n.t('components.track_panel.k1')}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 size='small'
@@ -266,7 +267,7 @@ const TrackPanel: React.FC<TrackPanelProps> = ({ devicePoints, onClose }) => {
                   fontSize: '0.875rem',
                 }}
               >
-                未找到设备
+                {i18n.t('components.track_panel.k2')}
               </Box>
             )}
           </Box>
@@ -291,7 +292,7 @@ const TrackPanel: React.FC<TrackPanelProps> = ({ devicePoints, onClose }) => {
               {/* Track Points List */}
               <Box sx={{ mt: 4 }}>
                 <Typography sx={{ fontWeight: 500, color: 'text.primary', mb: 2 }}>
-                  轨迹点列表
+                  {i18n.t('components.track_panel.k3')}
                 </Typography>
                 <Box
                   sx={{
@@ -329,7 +330,7 @@ const TrackPanel: React.FC<TrackPanelProps> = ({ devicePoints, onClose }) => {
                             fontWeight: 500,
                           }}
                         >
-                          时间
+                          {i18n.t('components.track_panel.k4')}
                         </th>
                         <th
                           style={{
@@ -339,7 +340,7 @@ const TrackPanel: React.FC<TrackPanelProps> = ({ devicePoints, onClose }) => {
                             fontWeight: 500,
                           }}
                         >
-                          坐标
+                          {i18n.t('components.track_panel.k5')}
                         </th>
                         <th
                           style={{
@@ -349,7 +350,7 @@ const TrackPanel: React.FC<TrackPanelProps> = ({ devicePoints, onClose }) => {
                             fontWeight: 500,
                           }}
                         >
-                          速度
+                          {i18n.t('components.track_panel.k6')}
                         </th>
                       </tr>
                     </thead>
@@ -424,7 +425,7 @@ const TrackPanel: React.FC<TrackPanelProps> = ({ devicePoints, onClose }) => {
                   sx={{ color: 'action.disabled', margin: '0 auto 12px' }}
                 />
                 <Typography sx={{ color: 'text.secondary', fontSize: '0.875rem' }}>
-                  从左侧列表选择设备以查看轨迹
+                  {i18n.t('components.track_panel.k7')}
                 </Typography>
               </Box>
             </Box>

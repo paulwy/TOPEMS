@@ -22,6 +22,7 @@ import {
 } from '@mui/material';
 import type { CanvasNode, PropertyPanelConfig } from './types';
 import { getComponentByType } from './types';
+import i18n from '@/i18n';
 
 interface PropertyPanelProps {
   node: CanvasNode | null;
@@ -48,9 +49,9 @@ export function PropertyPanel({ node, onUpdateProp, onUpdateLabel }: PropertyPan
           variant='body2'
           sx={{ color: 'text.secondary', textAlign: 'center' }}
         >
-          选中画布中的组件
+          {i18n.t('components.property_panel.k0')}
           <br />
-          以编辑其属性
+          {i18n.t('components.property_panel.k1')}
         </Typography>
       </Paper>
     );
@@ -197,7 +198,7 @@ export function PropertyPanel({ node, onUpdateProp, onUpdateLabel }: PropertyPan
         variant='subtitle2'
         sx={{ mb: 1, fontWeight: 600 }}
       >
-        属性面板
+        {i18n.t('components.property_panel.k2')}
       </Typography>
 
       <Box sx={{ mb: 2 }}>
@@ -205,7 +206,7 @@ export function PropertyPanel({ node, onUpdateProp, onUpdateLabel }: PropertyPan
           variant='caption'
           sx={{ color: 'text.secondary' }}
         >
-          组件类型
+          {i18n.t('components.property_panel.k3')}
         </Typography>
         <Typography
           variant='body2'
@@ -222,7 +223,7 @@ export function PropertyPanel({ node, onUpdateProp, onUpdateLabel }: PropertyPan
           severity='info'
           sx={{ mb: 2 }}
         >
-          该组件暂无可编辑的属性
+          {i18n.t('components.property_panel.k4')}
         </Alert>
       )}
 
@@ -242,7 +243,7 @@ export function PropertyPanel({ node, onUpdateProp, onUpdateLabel }: PropertyPan
             variant='caption'
             sx={{ color: 'text.secondary', mb: 1, display: 'block' }}
           >
-            高级属性
+            {i18n.t('components.property_panel.k5')}
           </Typography>
           {advancedProps.map((config) => (
             <Box

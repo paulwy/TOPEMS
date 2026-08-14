@@ -9,6 +9,7 @@ import {
   Box,
   Typography,
 } from '@mui/material';
+import i18n from '@/i18n';
 import { HelpCircle, X } from 'lucide-react';
 
 // ============ 类型定义 ============
@@ -33,10 +34,10 @@ export interface HelpButtonProps {
 // ============ HelpButton 组件 ============
 
 export const HelpButton: React.FC<HelpButtonProps> = ({
-  title = '帮助',
+  title = i18n.t('shared.help_button.k0'),
   content,
   size = 'medium',
-  tooltip = '查看帮助',
+  tooltip = i18n.t('shared.help_button.k1'),
   maxWidth = 'sm',
   disabled = false,
   icon,
@@ -67,7 +68,7 @@ export const HelpButton: React.FC<HelpButtonProps> = ({
                 color: 'primary.main',
               },
             }}
-            aria-label='帮助'
+            aria-label={i18n.t('shared.help_button.k2')}
           >
             {icon || <HelpCircle style={{ width: 20, height: 20 }} />}
           </IconButton>

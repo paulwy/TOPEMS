@@ -18,6 +18,7 @@ import {
   Chip,
   useTheme,
 } from '@mui/material';
+import i18n from '@/i18n';
 import {
   Book,
   Plus,
@@ -48,10 +49,10 @@ interface DictionaryManagementPageProps {
 }
 
 const categoryLabels: Record<string, string> = {
-  system: '系统字典',
-  business: '业务字典',
-  basic: '基础数据',
-  custom: '自定义字典',
+  system: i18n.t('pages.dictionary_management_page.k0'),
+  business: i18n.t('pages.dictionary_management_page.k1'),
+  basic: i18n.t('pages.dictionary_management_page.k2'),
+  custom: i18n.t('pages.dictionary_management_page.k3'),
 };
 
 const DictionaryManagementPage: React.FC<DictionaryManagementPageProps> = ({ onNavigate }) => {
@@ -99,7 +100,7 @@ const DictionaryManagementPage: React.FC<DictionaryManagementPageProps> = ({ onN
       if (res.success && res.data) {
         return res.data.items || [];
       }
-      throw new Error(res.message || '加载字典类型失败');
+      throw new Error(res.message || i18n.t('pages.dictionary_management_page.k4'));
     },
   
       staleTime: CACHE_DURATIONS.LONG,});
@@ -116,7 +117,7 @@ const DictionaryManagementPage: React.FC<DictionaryManagementPageProps> = ({ onN
   const createTypeMutation = useMutation({
     mutationFn: async (data: Partial<DictType>) => {
       const res = await dictTypeApi.create(data);
-      if (!res.success) throw new Error(res.message || '创建失败');
+      if (!res.success) throw new Error(res.message || i18n.t('pages.dictionary_management_page.k5'));
       return res.data;
     },
     onSuccess: () => {
@@ -124,15 +125,15 @@ const DictionaryManagementPage: React.FC<DictionaryManagementPageProps> = ({ onN
   exact: false,
   refetchType: 'active',
 });
-      addNotification({ title: '成功', message: '字典类型创建成功', type: 'success' });
+      addNotification({ title: i18n.t('pages.dictionary_management_page.k7'), message: i18n.t('pages.dictionary_management_page.k6'), type: 'success' });
       setShowTypeModal(false);
       setNewType({ code: '', name: '', category: 'business', description: '', status: 'active' });
     },
     onError: (err: unknown) => {
-      apiLogger.error('创建字典类型失败:', err);
+      apiLogger.error(i18n.t('pages.dictionary_management_page.k0'), err);
       addNotification({
-        title: '失败',
-        message: extractErrorMessage(err, '创建失败'),
+        title: i18n.t('pages.dictionary_management_page.k8'),
+        message: extractErrorMessage(err, i18n.t('pages.dictionary_management_page.k9')),
         type: 'error',
       });
     },
@@ -141,7 +142,7 @@ const DictionaryManagementPage: React.FC<DictionaryManagementPageProps> = ({ onN
   const updateTypeMutation = useMutation({
     mutationFn: async ({ id, data }: { id: string; data: Partial<DictType> }) => {
       const res = await dictTypeApi.update(id, data);
-      if (!res.success) throw new Error(res.message || '更新失败');
+      if (!res.success) throw new Error(res.message || i18n.t('pages.dictionary_management_page.k10'));
       return res.data;
     },
     onSuccess: () => {
@@ -149,15 +150,15 @@ const DictionaryManagementPage: React.FC<DictionaryManagementPageProps> = ({ onN
   exact: false,
   refetchType: 'active',
 });
-      addNotification({ title: '成功', message: '字典类型更新成功', type: 'success' });
+      addNotification({ title: i18n.t('pages.dictionary_management_page.k12'), message: i18n.t('pages.dictionary_management_page.k11'), type: 'success' });
       setShowTypeModal(false);
       setEditingType(null);
     },
     onError: (err: unknown) => {
-      apiLogger.error('更新字典类型失败:', err);
+      apiLogger.error(i18n.t('pages.dictionary_management_page.k1'), err);
       addNotification({
-        title: '失败',
-        message: extractErrorMessage(err, '更新失败'),
+        title: i18n.t('pages.dictionary_management_page.k13'),
+        message: extractErrorMessage(err, i18n.t('pages.dictionary_management_page.k14')),
         type: 'error',
       });
     },
@@ -166,7 +167,7 @@ const DictionaryManagementPage: React.FC<DictionaryManagementPageProps> = ({ onN
   const deleteTypeMutation = useMutation({
     mutationFn: async (id: string) => {
       const res = await dictTypeApi.delete(id);
-      if (!res.success) throw new Error(res.message || '删除失败');
+      if (!res.success) throw new Error(res.message || i18n.t('pages.dictionary_management_page.k15'));
       return id;
     },
     onSuccess: (id) => {
@@ -174,16 +175,16 @@ const DictionaryManagementPage: React.FC<DictionaryManagementPageProps> = ({ onN
   exact: false,
   refetchType: 'active',
 });
-      addNotification({ title: '成功', message: '字典类型删除成功', type: 'success' });
+      addNotification({ title: i18n.t('pages.dictionary_management_page.k17'), message: i18n.t('pages.dictionary_management_page.k16'), type: 'success' });
       if (selectedType?.id === id) {
         setSelectedType(null);
       }
     },
     onError: (err: unknown) => {
-      apiLogger.error('删除字典类型失败:', err);
+      apiLogger.error(i18n.t('pages.dictionary_management_page.k2'), err);
       addNotification({
-        title: '失败',
-        message: extractErrorMessage(err, '删除失败'),
+        title: i18n.t('pages.dictionary_management_page.k18'),
+        message: extractErrorMessage(err, i18n.t('pages.dictionary_management_page.k19')),
         type: 'error',
       });
     },
@@ -216,13 +217,13 @@ const DictionaryManagementPage: React.FC<DictionaryManagementPageProps> = ({ onN
   exact: false,
   refetchType: 'active',
 });
-      addNotification({ title: '成功', message: '状态切换成功', type: 'success' });
+      addNotification({ title: i18n.t('pages.dictionary_management_page.k21'), message: i18n.t('pages.dictionary_management_page.k20'), type: 'success' });
     },
     onError: (err: unknown) => {
-      apiLogger.error('切换字典项状态失败:', err);
+      apiLogger.error(i18n.t('pages.dictionary_management_page.k3'), err);
       addNotification({
-        title: '失败',
-        message: extractErrorMessage(err, '状态切换失败'),
+        title: i18n.t('pages.dictionary_management_page.k22'),
+        message: extractErrorMessage(err, i18n.t('pages.dictionary_management_page.k23')),
         type: 'error',
       });
     },
@@ -242,7 +243,7 @@ const DictionaryManagementPage: React.FC<DictionaryManagementPageProps> = ({ onN
   exact: false,
   refetchType: 'active',
 });
-    addNotification({ title: '成功', message: '字典项导出成功', type: 'success' });
+    addNotification({ title: i18n.t('pages.dictionary_management_page.k25'), message: i18n.t('pages.dictionary_management_page.k24'), type: 'success' });
     setShowExportModal(false);
   }, [selectedType, addNotification, queryClient]);
 
@@ -251,7 +252,7 @@ const DictionaryManagementPage: React.FC<DictionaryManagementPageProps> = ({ onN
     try {
       const text = await importFile.text();
       const items = JSON.parse(text);
-      if (!Array.isArray(items)) throw new Error('导入文件格式不正确');
+      if (!Array.isArray(items)) throw new Error(i18n.t('pages.dictionary_management_page.k26'));
 
       let successCount = 0;
       for (const item of items) {
@@ -267,11 +268,11 @@ const DictionaryManagementPage: React.FC<DictionaryManagementPageProps> = ({ onN
       }
 
       addNotification({
-        title: successCount === items.length ? '成功' : '部分成功',
+        title: successCount === items.length ? i18n.t('pages.dictionary_management_page.k28') : i18n.t('pages.dictionary_management_page.k27'),
         message:
           successCount === items.length
-            ? `成功导入 ${successCount} 个字典项`
-            : `成功导入 ${successCount} 条，失败 ${items.length - successCount} 条`,
+            ? `${i18n.t('pages.dictionary_management_page.k4')} ${successCount} ${i18n.t('pages.dictionary_management_page.k5')}`
+            : `${i18n.t('pages.dictionary_management_page.k6')} ${successCount} ${i18n.t('pages.dictionary_management_page.k7')} ${items.length - successCount} ${i18n.t('pages.dictionary_management_page.k8')}`,
         type: successCount === items.length ? 'success' : 'warning',
       });
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.DICT_ITEM_LIST_BASE ,
@@ -282,8 +283,8 @@ const DictionaryManagementPage: React.FC<DictionaryManagementPageProps> = ({ onN
       setImportFile(null);
     } catch (err: unknown) {
       addNotification({
-        title: '失败',
-        message: extractErrorMessage(err, '导入失败'),
+        title: i18n.t('pages.dictionary_management_page.k29'),
+        message: extractErrorMessage(err, i18n.t('pages.dictionary_management_page.k30')),
         type: 'error',
       });
     }
@@ -300,22 +301,22 @@ const DictionaryManagementPage: React.FC<DictionaryManagementPageProps> = ({ onN
             total: res.data.total || 0,
           };
         }
-        throw new Error(res.message || '加载字典项失败');
+        throw new Error(res.message || i18n.t('pages.dictionary_management_page.k31'));
       },
       create: async (data) => {
-        if (!selectedType) throw new Error('请先选择字典类型');
+        if (!selectedType) throw new Error(i18n.t('pages.dictionary_management_page.k32'));
         const res = await dictItemApi.create({ ...data, dict_type_id: selectedType.id });
-        if (!res.success) throw new Error(res.message || '创建失败');
+        if (!res.success) throw new Error(res.message || i18n.t('pages.dictionary_management_page.k33'));
         return res.data as unknown as Record<string, unknown>;
       },
       update: async (id, data) => {
         const res = await dictItemApi.update(id, data);
-        if (!res.success) throw new Error(res.message || '更新失败');
+        if (!res.success) throw new Error(res.message || i18n.t('pages.dictionary_management_page.k34'));
         return res.data as unknown as Record<string, unknown>;
       },
       delete: async (id) => {
         const res = await dictItemApi.delete(id);
-        if (!res.success) throw new Error(res.message || '删除失败');
+        if (!res.success) throw new Error(res.message || i18n.t('pages.dictionary_management_page.k35'));
       },
     }),
     [selectedType]
@@ -373,14 +374,14 @@ const DictionaryManagementPage: React.FC<DictionaryManagementPageProps> = ({ onN
                     size={28}
                     style={{ marginRight: 12, color: theme.palette.primary.dark }}
                   />
-                  字典管理
+                  {i18n.t('pages.dictionary_management_page.k9')}
                 </Typography>
                 <Typography
                   variant='body2'
                   color='text.secondary'
                   sx={{ mt: 0.5 }}
                 >
-                  管理系统字典、业务字典、基础数据字典
+                  {i18n.t('pages.dictionary_management_page.k10')}
                 </Typography>
               </Box>
             </Box>
@@ -399,7 +400,7 @@ const DictionaryManagementPage: React.FC<DictionaryManagementPageProps> = ({ onN
                 setShowTypeModal(true);
               }}
             >
-              新增字典类型
+              {i18n.t('pages.dictionary_management_page.k11')}
             </Button>
           </Box>
         </Box>
@@ -412,7 +413,7 @@ const DictionaryManagementPage: React.FC<DictionaryManagementPageProps> = ({ onN
               <Box sx={{ position: 'relative', mb: 2 }}>
                 <TextField
                   type='text'
-                  placeholder='搜索字典类型...'
+                  placeholder={i18n.t('pages.dictionary_management_page.k12')}
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   size='small'
@@ -521,7 +522,7 @@ const DictionaryManagementPage: React.FC<DictionaryManagementPageProps> = ({ onN
                                 />
                               </Box>
                               <Chip
-                                label={type.status === 'active' ? '启用' : '禁用'}
+                                label={type.status === 'active' ? i18n.t('pages.dictionary_management_page.k37') : i18n.t('pages.dictionary_management_page.k36')}
                                 size='small'
                                 variant='outlined'
                                 sx={{ mt: 1 }}
@@ -542,11 +543,11 @@ const DictionaryManagementPage: React.FC<DictionaryManagementPageProps> = ({ onN
               <CrudPage
                 schema={dictItemSchema}
                 apiAdapter={dictItemAdapter}
-                breadcrumbs={[{ label: '字典管理' }, { label: selectedType.name }]}
+                breadcrumbs={[{ label: i18n.t('pages.dictionary_management_page.k38') }, { label: selectedType.name }]}
                 extraQueryParams={{ dict_type_id: selectedType.id }}
                 customRowActions={[
                   {
-                    label: '切换状态',
+                    label: i18n.t('pages.dictionary_management_page.k39'),
                     icon: <Edit size={16} />,
                     onClick: (row) => handleToggleStatus(row),
                   },
@@ -557,7 +558,7 @@ const DictionaryManagementPage: React.FC<DictionaryManagementPageProps> = ({ onN
                       variant='body2'
                       color='text.secondary'
                     >
-                      编码: {selectedType.code} | 分类:{' '}
+                      [i18n.t('pages.dictionary_management_page.k13')]: {selectedType.code} | {i18n.t('pages.dictionary_management_page.k14')}{' '}
                       {categoryLabels[selectedType.category] || selectedType.category}
                     </Typography>
                     <Button
@@ -569,7 +570,7 @@ const DictionaryManagementPage: React.FC<DictionaryManagementPageProps> = ({ onN
                         setShowTypeModal(true);
                       }}
                     >
-                      编辑类型
+                      {i18n.t('pages.dictionary_management_page.k15')}
                     </Button>
                     <Button
                       variant='outlined'
@@ -578,14 +579,14 @@ const DictionaryManagementPage: React.FC<DictionaryManagementPageProps> = ({ onN
                       startIcon={<Trash2 size={16} />}
                       onClick={() => {
                         openConfirmDialog({
-                          title: '确认删除',
-                          message: '确定要删除这个字典类型吗？所有字典项也会被删除！',
+                          title: i18n.t('pages.dictionary_management_page.k40'),
+                          message: i18n.t('pages.dictionary_management_page.k41'),
                           onConfirm: () => handleDeleteType(selectedType.id),
                           danger: true,
                         });
                       }}
                     >
-                      删除类型
+                      {i18n.t('pages.dictionary_management_page.k16')}
                     </Button>
                     <Button
                       variant='outlined'
@@ -593,7 +594,7 @@ const DictionaryManagementPage: React.FC<DictionaryManagementPageProps> = ({ onN
                       startIcon={<Download size={16} />}
                       onClick={() => setShowExportModal(true)}
                     >
-                      导出
+                      {i18n.t('pages.dictionary_management_page.k17')}
                     </Button>
                     <Button
                       variant='outlined'
@@ -601,7 +602,7 @@ const DictionaryManagementPage: React.FC<DictionaryManagementPageProps> = ({ onN
                       startIcon={<Upload size={16} />}
                       onClick={() => setShowImportModal(true)}
                     >
-                      导入
+                      {i18n.t('pages.dictionary_management_page.k18')}
                     </Button>
                   </Box>
                 }
@@ -616,10 +617,10 @@ const DictionaryManagementPage: React.FC<DictionaryManagementPageProps> = ({ onN
                   variant='h6'
                   sx={{ mb: 1 }}
                 >
-                  请选择字典类型
+                  {i18n.t('pages.dictionary_management_page.k19')}
                 </Typography>
                 <Typography color='text.secondary'>
-                  从左侧列表选择一个字典类型查看和管理字典项
+                  {i18n.t('pages.dictionary_management_page.k20')}
                 </Typography>
               </Paper>
             )}
@@ -636,7 +637,7 @@ const DictionaryManagementPage: React.FC<DictionaryManagementPageProps> = ({ onN
         maxWidth='sm'
         fullWidth
       >
-        <DialogTitle>{editingType ? '编辑字典类型' : '新增字典类型'}</DialogTitle>
+        <DialogTitle>{editingType ? i18n.t('pages.dictionary_management_page.k43') : i18n.t('pages.dictionary_management_page.k42')}</DialogTitle>
         <Box
           component='form'
           onSubmit={editingType ? handleUpdateType : handleCreateType}
@@ -645,7 +646,7 @@ const DictionaryManagementPage: React.FC<DictionaryManagementPageProps> = ({ onN
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, pt: 1 }}>
               <TextField
                 fullWidth
-                label='编码 *'
+                label={i18n.t('pages.dictionary_management_page.k21')}
                 required
                 disabled={!!editingType}
                 value={editingType?.code || newType.code || ''}
@@ -656,12 +657,12 @@ const DictionaryManagementPage: React.FC<DictionaryManagementPageProps> = ({ onN
                     setNewType({ ...newType, code: e.target.value });
                   }
                 }}
-                placeholder='如: status_type'
+                placeholder={i18n.t('pages.dictionary_management_page.status_type_22')}
                 size='small'
               />
               <TextField
                 fullWidth
-                label='名称 *'
+                label={i18n.t('pages.dictionary_management_page.k23')}
                 required
                 value={editingType?.name || newType.name || ''}
                 onChange={(e) => {
@@ -671,17 +672,17 @@ const DictionaryManagementPage: React.FC<DictionaryManagementPageProps> = ({ onN
                     setNewType({ ...newType, name: e.target.value });
                   }
                 }}
-                placeholder='如: 状态类型'
+                placeholder={i18n.t('pages.dictionary_management_page.k24')}
                 size='small'
               />
               <FormControl
                 size='small'
                 fullWidth
               >
-                <InputLabel>分类</InputLabel>
+                <InputLabel>{i18n.t('pages.dictionary_management_page.k44')}</InputLabel>
                 <Select
                   value={editingType?.category || newType.category || 'business'}
-                  label='分类'
+                  label={i18n.t('pages.dictionary_management_page.k45')}
                   onChange={(e) => {
                     if (editingType) {
                       setEditingType({ ...editingType, category: e.target.value });
@@ -690,15 +691,15 @@ const DictionaryManagementPage: React.FC<DictionaryManagementPageProps> = ({ onN
                     }
                   }}
                 >
-                  <MenuItem value='system'>系统字典</MenuItem>
-                  <MenuItem value='business'>业务字典</MenuItem>
-                  <MenuItem value='basic'>基础数据</MenuItem>
-                  <MenuItem value='custom'>自定义字典</MenuItem>
+                  <MenuItem value='system'>{i18n.t('pages.dictionary_management_page.k46')}</MenuItem>
+                  <MenuItem value='business'>{i18n.t('pages.dictionary_management_page.k47')}</MenuItem>
+                  <MenuItem value='basic'>{i18n.t('pages.dictionary_management_page.k48')}</MenuItem>
+                  <MenuItem value='custom'>{i18n.t('pages.dictionary_management_page.k49')}</MenuItem>
                 </Select>
               </FormControl>
               <TextField
                 fullWidth
-                label='描述'
+                label={i18n.t('pages.dictionary_management_page.k50')}
                 value={editingType?.description || newType.description || ''}
                 onChange={(e) => {
                   if (editingType) {
@@ -718,13 +719,13 @@ const DictionaryManagementPage: React.FC<DictionaryManagementPageProps> = ({ onN
                   justifyContent: 'space-between',
                 }}
               >
-                <Typography variant='body2'>状态</Typography>
+                <Typography variant='body2'>{i18n.t('pages.dictionary_management_page.k51')}</Typography>
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                   <Typography
                     variant='body2'
                     color='text.secondary'
                   >
-                    {(editingType?.status || newType.status) === 'active' ? '启用' : '禁用'}
+                    {(editingType?.status || newType.status) === 'active' ? i18n.t('pages.dictionary_management_page.k53') : i18n.t('pages.dictionary_management_page.k52')}
                   </Typography>
                   <Switch
                     checked={(editingType?.status || newType.status) === 'active'}
@@ -749,13 +750,13 @@ const DictionaryManagementPage: React.FC<DictionaryManagementPageProps> = ({ onN
                 setEditingType(null);
               }}
             >
-              取消
+              {i18n.t('pages.dictionary_management_page.k25')}
             </Button>
             <Button
               type='submit'
               variant='contained'
             >
-              {editingType ? '保存' : '创建'}
+              {editingType ? i18n.t('pages.dictionary_management_page.k55') : i18n.t('pages.dictionary_management_page.k54')}
             </Button>
           </DialogActions>
         </Box>
@@ -767,13 +768,13 @@ const DictionaryManagementPage: React.FC<DictionaryManagementPageProps> = ({ onN
         maxWidth='sm'
         fullWidth
       >
-        <DialogTitle>导出字典项</DialogTitle>
+        <DialogTitle>{i18n.t('pages.dictionary_management_page.k56')}</DialogTitle>
         <DialogContent>
           <Typography
             variant='body2'
             color='text.secondary'
           >
-            将当前字典类型的所有字典项导出为 JSON 文件。
+            {i18n.t('pages.dictionary_management_page.k26')}
           </Typography>
         </DialogContent>
         <DialogActions>
@@ -781,13 +782,13 @@ const DictionaryManagementPage: React.FC<DictionaryManagementPageProps> = ({ onN
             variant='outlined'
             onClick={() => setShowExportModal(false)}
           >
-            取消
+            {i18n.t('pages.dictionary_management_page.k27')}
           </Button>
           <Button
             variant='contained'
             onClick={handleExport}
           >
-            确认导出
+            {i18n.t('pages.dictionary_management_page.k28')}
           </Button>
         </DialogActions>
       </Dialog>
@@ -798,14 +799,14 @@ const DictionaryManagementPage: React.FC<DictionaryManagementPageProps> = ({ onN
         maxWidth='sm'
         fullWidth
       >
-        <DialogTitle>导入字典项</DialogTitle>
+        <DialogTitle>{i18n.t('pages.dictionary_management_page.k57')}</DialogTitle>
         <DialogContent>
           <Box sx={{ pt: 1 }}>
             <Typography
               variant='body2'
               sx={{ mb: 1 }}
             >
-              选择 JSON 文件
+              {i18n.t('pages.dictionary_management_page.json_29')}
             </Typography>
             <input
               type='file'
@@ -823,14 +824,14 @@ const DictionaryManagementPage: React.FC<DictionaryManagementPageProps> = ({ onN
               setImportFile(null);
             }}
           >
-            取消
+            {i18n.t('pages.dictionary_management_page.k30')}
           </Button>
           <Button
             variant='contained'
             onClick={handleImport}
             disabled={!importFile}
           >
-            确认导入
+            {i18n.t('pages.dictionary_management_page.k31')}
           </Button>
         </DialogActions>
       </Dialog>

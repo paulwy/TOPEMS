@@ -1,5 +1,4 @@
 import React from 'react';
-import { useTranslation } from 'react-i18next';
 import {
   Dialog,
   DialogContent,
@@ -12,9 +11,9 @@ import {
   FormLabel,
   Button,
 } from '@mui/material';
+import i18n from '@/i18n';
 import { CheckCircle, XCircle, Loader2, ArrowRightLeft } from 'lucide-react';
 import type { Approval } from '@/api/workflow';
-
 interface WorkflowApprovalActionsProps {
   approval: Approval | null;
   showApprovalModal: boolean;
@@ -34,7 +33,6 @@ interface WorkflowApprovalActionsProps {
   processing: boolean;
   delegateLoading: boolean;
 }
-
 export const WorkflowApprovalActions: React.FC<WorkflowApprovalActionsProps> = ({
   approval,
   showApprovalModal,
@@ -53,8 +51,6 @@ export const WorkflowApprovalActions: React.FC<WorkflowApprovalActionsProps> = (
   processing,
   delegateLoading,
 }) => {
-  const { t } = useTranslation();
-
   return (
     <>
       <Dialog
@@ -63,8 +59,8 @@ export const WorkflowApprovalActions: React.FC<WorkflowApprovalActionsProps> = (
       >
         <DialogTitle>
           {approvalAction === 'approve'
-            ? ` + ${t('workflow.approval_detail.dialog.approve_action')} + `
-            : t('workflow.approval_detail.dialog.reject_action')}
+            ? ` + ${i18n.t('workflow.approval_detail.dialog.approve_action')} + `
+            : i18n.t('workflow.approval_detail.dialog.reject_action')}
         </DialogTitle>
         <DialogContent>
           <Typography
@@ -72,8 +68,8 @@ export const WorkflowApprovalActions: React.FC<WorkflowApprovalActionsProps> = (
             sx={{ mb: 2 }}
           >
             {approvalAction === 'approve'
-              ? ` + ${t('workflow.approval_detail.dialog.confirm_approve')} + `
-              : t('workflow.approval_detail.dialog.confirm_reject')}
+              ? ` + ${i18n.t('workflow.approval_detail.dialog.confirm_approve')} + `
+              : i18n.t('workflow.approval_detail.dialog.confirm_reject')}
           </Typography>
           {approval && (
             <>
@@ -81,14 +77,14 @@ export const WorkflowApprovalActions: React.FC<WorkflowApprovalActionsProps> = (
                 variant='body2'
                 sx={{ color: 'grey.600', mb: 1 }}
               >
-                {t('workflow.approval_detail.dialog.task_with_val', { name: approval.task_name })}
+                {i18n.t('workflow.approval_detail.dialog.task_with_val', { name: approval.task_name })}
               </Typography>
               {approval.node_id && (
                 <Typography
                   variant='body2'
                   sx={{ color: 'grey.600', mb: 1 }}
                 >
-                  {t('workflow.approval_detail.dialog.node_with_val', { name: approval.node_id })}
+                  {i18n.t('workflow.approval_detail.dialog.node_with_val', { name: approval.node_id })}
                 </Typography>
               )}
             </>
@@ -96,8 +92,8 @@ export const WorkflowApprovalActions: React.FC<WorkflowApprovalActionsProps> = (
           <Box sx={{ mt: 2 }}>
             <FormLabel>
               {approvalAction === 'reject'
-                ? ` + ${t('workflow.approval_detail.dialog.reject_reason_required')} + `
-                : t('workflow.approval_detail.dialog.remark')}
+                ? ` + ${i18n.t('workflow.approval_detail.dialog.reject_reason_required')} + `
+                : i18n.t('workflow.approval_detail.dialog.remark')}
             </FormLabel>
             <TextField
               fullWidth
@@ -107,8 +103,8 @@ export const WorkflowApprovalActions: React.FC<WorkflowApprovalActionsProps> = (
               onChange={(e) => setComment(e.target.value)}
               placeholder={
                 approvalAction === 'reject'
-                  ? ` + ${t('workflow.approval_detail.dialog.please_input_reject_reason')} + `
-                  : t('workflow.approval_detail.dialog.optional_remark')
+                  ? ` + ${i18n.t('workflow.approval_detail.dialog.please_input_reject_reason')} + `
+                  : i18n.t('workflow.approval_detail.dialog.optional_remark')
               }
               sx={{ mt: 1 }}
             />
@@ -119,7 +115,7 @@ export const WorkflowApprovalActions: React.FC<WorkflowApprovalActionsProps> = (
             color='inherit'
             onClick={() => setShowApprovalModal(false)}
           >
-            {t('common.cancel')}
+            {i18n.t('common.cancel')}
           </Button>
           <Button
             variant='contained'
@@ -136,32 +132,31 @@ export const WorkflowApprovalActions: React.FC<WorkflowApprovalActionsProps> = (
             }
           >
             {approvalAction === 'approve'
-              ? ` + ${t('workflow.approval_detail.dialog.confirm_approve_btn')} + `
-              : t('workflow.approval_detail.dialog.confirm_reject_btn')}
+              ? ` + ${i18n.t('workflow.approval_detail.dialog.confirm_approve_btn')} + `
+              : i18n.t('workflow.approval_detail.dialog.confirm_reject_btn')}
           </Button>
         </DialogActions>
       </Dialog>
-
       <Dialog
         open={showDelegateModal}
         onClose={() => setShowDelegateModal(false)}
         maxWidth='sm'
         fullWidth
       >
-        <DialogTitle>{t('workflow.approval_detail.dialog.delegate_task')}</DialogTitle>
+        <DialogTitle>{i18n.t('workflow.approval_detail.dialog.delegate_task')}</DialogTitle>
         <DialogContent>
           <Typography
             variant='body2'
             sx={{ mb: 2 }}
           >
-            {t('workflow.approval_detail.dialog.delegate_desc')}
+            {i18n.t('workflow.approval_detail.dialog.delegate_desc')}
           </Typography>
           {approval && (
             <Typography
               variant='body2'
               sx={{ color: 'grey.600', mb: 1 }}
             >
-              {t('workflow.approval_detail.dialog.current_task', { name: approval.task_name })}
+              {i18n.t('workflow.approval_detail.dialog.current_task', { name: approval.task_name })}
             </Typography>
           )}
           <Stack
@@ -170,18 +165,18 @@ export const WorkflowApprovalActions: React.FC<WorkflowApprovalActionsProps> = (
           >
             <TextField
               size='small'
-              label={t('workflow.approval_detail.dialog.delegate_target_required')}
+              label={i18n.t('workflow.approval_detail.dialog.delegate_target_required')}
               value={delegateTarget}
               onChange={(e) => setDelegateTarget(e.target.value)}
-              placeholder={t('workflow.approval_detail.dialog.delegate_target_placeholder')}
+              placeholder={i18n.t('workflow.approval_detail.dialog.delegate_target_placeholder')}
               fullWidth
             />
             <TextField
               size='small'
-              label={t('workflow.approval_detail.dialog.delegate_reason')}
+              label={i18n.t('workflow.approval_detail.dialog.delegate_reason')}
               value={delegateReason}
               onChange={(e) => setDelegateReason(e.target.value)}
-              placeholder={t('workflow.approval_detail.dialog.delegate_reason_placeholder')}
+              placeholder={i18n.t('workflow.approval_detail.dialog.delegate_reason_placeholder')}
               multiline
               rows={3}
               fullWidth
@@ -193,7 +188,7 @@ export const WorkflowApprovalActions: React.FC<WorkflowApprovalActionsProps> = (
             color='inherit'
             onClick={() => setShowDelegateModal(false)}
           >
-            {t('common.cancel')}
+            {i18n.t('common.cancel')}
           </Button>
           <Button
             variant='contained'
@@ -210,14 +205,13 @@ export const WorkflowApprovalActions: React.FC<WorkflowApprovalActionsProps> = (
               )
             }
           >
-            {t('workflow.approval_detail.dialog.confirm_delegate')}
+            {i18n.t('workflow.approval_detail.dialog.confirm_delegate')}
           </Button>
         </DialogActions>
       </Dialog>
     </>
   );
 };
-
 interface UseApprovalActionsReturn {
   actions: Array<{
     label: string;
@@ -227,7 +221,6 @@ interface UseApprovalActionsReturn {
     color: 'success' | 'error' | 'primary' | 'info';
   }>;
 }
-
 export const useApprovalActions = (
   approval: Approval | null,
   setApprovalAction: (action: 'approve' | 'reject') => void,
@@ -240,10 +233,9 @@ export const useApprovalActions = (
 ): UseApprovalActionsReturn => {
   const actions = React.useMemo(() => {
     if (!approval || approval.status !== 'pending') return [];
-
     return [
       {
-        label: t('workflow.approval_detail.label.approve'),
+        label: i18n.t('workflow.approval_detail.label.approve'),
         icon: <CheckCircle size={18} />,
         onClick: () => {
           setApprovalAction('approve');
@@ -254,7 +246,7 @@ export const useApprovalActions = (
         color: 'success' as const,
       },
       {
-        label: t('workflow.approval_detail.label.reject'),
+        label: i18n.t('workflow.approval_detail.label.reject'),
         icon: <XCircle size={18} />,
         onClick: () => {
           setApprovalAction('reject');
@@ -265,7 +257,7 @@ export const useApprovalActions = (
         color: 'error' as const,
       },
       {
-        label: t('workflow.approval_detail.label.delegate'),
+        label: i18n.t('workflow.approval_detail.label.delegate'),
         icon: <ArrowRightLeft size={18} />,
         onClick: () => {
           setDelegateTarget('');
@@ -276,7 +268,7 @@ export const useApprovalActions = (
         color: 'primary' as const,
       },
       {
-        label: t('workflow.approval_detail.label.assign'),
+        label: i18n.t('workflow.approval_detail.label.assign'),
         icon: <ArrowRightLeft size={18} />,
         onClick: () => {
           setDelegateTarget('');
@@ -289,7 +281,7 @@ export const useApprovalActions = (
     ];
   }, [
     approval,
-    t,
+    i18n.t,
     setApprovalAction,
     setComment,
     setShowApprovalModal,
@@ -297,6 +289,5 @@ export const useApprovalActions = (
     setDelegateReason,
     setShowDelegateModal,
   ]);
-
   return { actions };
 };

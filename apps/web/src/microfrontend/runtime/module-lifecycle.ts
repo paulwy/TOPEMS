@@ -1,3 +1,4 @@
+import i18n from '@/i18n';
 /**
  * V45.0 Track F: 微前端终极形态 — 统一生命周期管理
  *
@@ -165,7 +166,7 @@ export class ModuleLifecycle {
     options: { name?: string; hooks?: LifecycleHooks } = {}
   ): ModuleLifecycleRecord {
     if (this.records.has(id)) {
-      console.warn(`[Lifecycle] 模块 ${id} 已注册，将覆盖旧记录`);
+      console.warn(`${i18n.t('microfrontend.module-lifecycle.lifecycle_0')}${id}${i18n.t('microfrontend.module-lifecycle.k1')}`);
     }
     const now = Date.now();
     const record: ModuleLifecycleRecord = {
@@ -203,14 +204,14 @@ export class ModuleLifecycle {
   mount(id: string, container: HTMLElement, props: Record<string, unknown> = {}): boolean {
     const record = this.records.get(id);
     if (!record) {
-      console.error(`[Lifecycle] 模块 ${id} 未注册`);
+      console.error(`${i18n.t('microfrontend.module-lifecycle.lifecycle_2')}${id}${i18n.t('microfrontend.module-lifecycle.k3')}`);
       return false;
     }
 
     // 允许从 Loaded / Unmounted / Error 状态挂载
     const allowedStates = [LifecycleState.LOADED, LifecycleState.UNMOUNTED, LifecycleState.ERROR];
     if (!allowedStates.includes(record.state)) {
-      console.error(`[Lifecycle] 模块 ${id} 当前状态 ${record.state} 不允许挂载`);
+      console.error(`${i18n.t('microfrontend.module-lifecycle.lifecycle_4')}${id}${i18n.t('microfrontend.module-lifecycle.k5')}${record.state}${i18n.t('microfrontend.module-lifecycle.k6')}`);
       return false;
     }
 
@@ -251,7 +252,7 @@ export class ModuleLifecycle {
     if (!record) return false;
 
     if (record.state !== LifecycleState.MOUNTED) {
-      console.error(`[Lifecycle] 模块 ${id} 当前状态 ${record.state} 不允许更新（需 Mounted）`);
+      console.error(`${i18n.t('microfrontend.module-lifecycle.lifecycle_7')}${id}${i18n.t('microfrontend.module-lifecycle.k8')}${record.state}${i18n.t('microfrontend.module-lifecycle.mounted_9')}`);
       return false;
     }
 
@@ -287,7 +288,7 @@ export class ModuleLifecycle {
     if (!record) return false;
 
     if (record.state !== LifecycleState.MOUNTED && record.state !== LifecycleState.ERROR) {
-      console.error(`[Lifecycle] 模块 ${id} 当前状态 ${record.state} 不允许卸载`);
+      console.error(`${i18n.t('microfrontend.module-lifecycle.lifecycle_10')}${id}${i18n.t('microfrontend.module-lifecycle.k11')}${record.state}${i18n.t('microfrontend.module-lifecycle.k12')}`);
       return false;
     }
 
@@ -295,7 +296,7 @@ export class ModuleLifecycle {
     try {
       record.hooks?.beforeUnmount?.(record.container!);
     } catch (err) {
-      console.error(`[Lifecycle] beforeUnmount 钩子错误:`, err);
+      console.error(i18n.t('microfrontend.module-lifecycle.k0'), err);
     }
 
     this.emitEvent(id, LifecycleEventType.UNMOUNTSTART);
@@ -309,7 +310,7 @@ export class ModuleLifecycle {
     try {
       record.hooks?.unmounted?.(record.container!);
     } catch (err) {
-      console.error(`[Lifecycle] unmounted 钩子错误:`, err);
+      console.error(i18n.t('microfrontend.module-lifecycle.k1'), err);
     }
 
     record.container = undefined;
@@ -388,12 +389,12 @@ export class ModuleLifecycle {
   private validateTransition(id: string, targetState: LifecycleState): boolean {
     const record = this.records.get(id);
     if (!record) {
-      console.error(`[Lifecycle] 模块 ${id} 未注册`);
+      console.error(`${i18n.t('microfrontend.module-lifecycle.lifecycle_13')}${id}${i18n.t('microfrontend.module-lifecycle.k14')}`);
       return false;
     }
     const allowed = STATE_TRANSITIONS[record.state];
     if (!allowed || !allowed.includes(targetState)) {
-      console.error(`[Lifecycle] 模块 ${id} 非法状态转换: ${record.state} → ${targetState}`);
+      console.error(`${i18n.t('microfrontend.module-lifecycle.lifecycle_15')}${id}${i18n.t('microfrontend.module-lifecycle.k16')}${record.state} → ${targetState}`);
       return false;
     }
     return true;

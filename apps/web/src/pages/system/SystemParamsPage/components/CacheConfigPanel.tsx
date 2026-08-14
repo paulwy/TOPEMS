@@ -106,7 +106,7 @@ const CacheConfigPanel: React.FC<CacheConfigPanelProps> = ({
               onClick={onClearCache}
               disabled={isClearingCache || !cacheConfig.enabled}
             >
-              {isClearingCache ? '清除中...' : i18n.t('system.cache_config_panel.k0')}
+              {isClearingCache ? i18n.t('pages.cache_config_panel.k0') : i18n.t('system.cache_config_panel.k0')}
             </Button>
           }
         />

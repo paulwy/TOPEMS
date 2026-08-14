@@ -1,3 +1,4 @@
+import i18n from '@/i18n';
 export type RoutingStrategy = 'intent-based' | 'performance-based' | 'hybrid' | 'a/b-test';
 
 export interface RouteRecommendation {
@@ -237,13 +238,13 @@ class IntelligentRouterImpl {
   private intentBasedRecommendation(intent: string): RouteRecommendation {
     let bestPath = '/dashboard';
     let bestConfidence = 0.3;
-    let bestReason = '默认路由';
+    let bestReason = i18n.t('ai.intelligent-router.k0');
 
     for (const [key, paths] of Object.entries(INTENT_PATH_MAP)) {
       if (intent.includes(key)) {
         bestPath = paths[0];
         bestConfidence = 0.85;
-        bestReason = `匹配意图 "${key}"`;
+        bestReason = `${i18n.t('ai.intelligent-router.k0')}${key}"`;
         break;
       }
     }
@@ -251,7 +252,7 @@ class IntelligentRouterImpl {
     const learned = this.learnedPaths.get(bestPath);
     if (learned && learned.count > 5) {
       bestConfidence = Math.min(0.99, learned.avgConfidence * 0.7 + bestConfidence * 0.3);
-      bestReason += ` (基于 ${learned.count} 次历史行为)`;
+      bestReason += `${i18n.t('ai.intelligent-router.k1')}${learned.count}${i18n.t('ai.intelligent-router.k2')}`;
     }
 
     const alternatives = this.generateAlternatives(bestPath, intent);
@@ -283,7 +284,7 @@ class IntelligentRouterImpl {
     return {
       path: bestPath,
       confidence: 0.95,
-      reason: `基于性能最优策略 (延迟: ${perf?.avg_latency_ms ?? 0}ms)`,
+      reason: `${i18n.t('ai.intelligent-router.k3')}${perf?.avg_latency_ms ?? 0}ms)`,
       alternatives: this.generateAlternatives(bestPath, ''),
       predicted_latency_ms: perf?.avg_latency_ms ?? 200,
     };
@@ -296,13 +297,13 @@ class IntelligentRouterImpl {
     if (intentRec.confidence > 0.7) {
       return {
         ...intentRec,
-        reason: `混合策略 - ${intentRec.reason}`,
+        reason: `${i18n.t('ai.intelligent-router.k4')}${intentRec.reason}`,
       };
     }
 
     return {
       ...perfRec,
-      reason: `混合策略 - ${perfRec.reason} (意图置信度低，回退到性能优先)`,
+      reason: `${i18n.t('ai.intelligent-router.k5')}${perfRec.reason}${i18n.t('ai.intelligent-router.k6')}`,
     };
   }
 
@@ -344,7 +345,7 @@ class IntelligentRouterImpl {
     return {
       path,
       confidence: 0.6,
-      reason: `A/B 测试分配: ${selectedVariant}`,
+      reason: `${i18n.t('ai.intelligent-router.ab_7')}${selectedVariant}`,
       alternatives: this.generateAlternatives(path, ''),
       predicted_latency_ms: perf?.avg_latency_ms ?? 200,
       ab_test_variant: selectedVariant,
@@ -364,7 +365,7 @@ class IntelligentRouterImpl {
       result.push({
         path,
         confidence: Math.max(0.2, 0.5 - latency / 2000),
-        tradeoff: `延迟 ${latency}ms`,
+        tradeoff: `${i18n.t('ai.intelligent-router.k8')}${latency}ms`,
       });
     }
 

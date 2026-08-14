@@ -21,9 +21,9 @@ import type {
   ParseResult,
   ParseDataRequest,
 } from '@/api/lims';
+import i18n from '@/i18n';
 import { instrumentDataApi, collectionTaskApi, parseRuleApi } from '@/api/lims';
 import { designTokens } from '@/theme/tokens';
-
 import StatisticsCards from './components/StatisticsCards';
 import Toolbar from './components/Toolbar';
 import InstrumentDataTable from './components/InstrumentDataTable';
@@ -34,9 +34,7 @@ import DataFormDialog from './components/DataFormDialog';
 import TaskFormDialog from './components/TaskFormDialog';
 import RuleFormDialog from './components/RuleFormDialog';
 import ParseTestDialog from './components/ParseTestDialog';
-
 const ct= designTokens.colors;
-
 const LimsInstrumentDataPage: React.FC = () => {
   const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = useState(0);
@@ -45,20 +43,16 @@ const LimsInstrumentDataPage: React.FC = () => {
     message: string;
     severity: 'success' | 'error' | 'info' | 'warning';
   }>({ open: false, message: '', severity: 'info' });
-
   const [dataPage, setDataPage] = useState(0);
   const [dataRowsPerPage, setDataRowsPerPage] = useState(10);
   const [taskPage, setTaskPage] = useState(0);
   const [taskRowsPerPage, setTaskRowsPerPage] = useState(10);
   const [rulePage, setRulePage] = useState(0);
   const [ruleRowsPerPage, setRuleRowsPerPage] = useState(10);
-
   const [searchKeyword, setSearchKeyword] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
-
   const [showDataDetail, setShowDataDetail] = useState(false);
   const [selectedData, setSelectedData] = useState<InstrumentData | null>(null);
-
   const [showDataForm, setShowDataForm] = useState(false);
   const [isEditingData, setIsEditingData] = useState(false);
   const [dataFormData, setDataFormData] = useState<CreateInstrumentDataRequest>({
@@ -67,7 +61,6 @@ const LimsInstrumentDataPage: React.FC = () => {
     raw_data: {},
     batch_no: '',
   });
-
   const [showTaskForm, setShowTaskForm] = useState(false);
   const [isEditingTask, setIsEditingTask] = useState(false);
   const [taskFormData, setTaskFormData] = useState<CreateCollectionTaskRequest>({
@@ -79,7 +72,6 @@ const LimsInstrumentDataPage: React.FC = () => {
     interval_minutes: 30,
     parse_rule_id: '',
   });
-
   const [showRuleForm, setShowRuleForm] = useState(false);
   const [isEditingRule, setIsEditingRule] = useState(false);
   const [ruleFormData, setRuleFormData] = useState<CreateParseRuleRequest>({
@@ -90,7 +82,6 @@ const LimsInstrumentDataPage: React.FC = () => {
     quality_rules: {},
     description: '',
   });
-
   const [showParseTest, setShowParseTest] = useState(false);
   const [parseTestData, setParseTestData] = useState<ParseDataRequest>({
     protocol: 'JSON',
@@ -103,14 +94,12 @@ const LimsInstrumentDataPage: React.FC = () => {
     openConfirm: openConfirmDialog,
     closeConfirm: setConfirmDialogClosed,
   } = useConfirmDialog();
-
   const showNotification = (
     message: string,
     severity: 'success' | 'error' | 'info' | 'warning'
   ) => {
     setNotification({ open: true, message, severity });
   };
-
   const invalidateAll = () => {
     queryClient.invalidateQueries({ queryKey: QUERY_KEYS.LIMS.INSTRUMENT_DATA ,
   exact: false,
@@ -129,7 +118,6 @@ const LimsInstrumentDataPage: React.FC = () => {
   refetchType: 'active',
 });
   };
-
   const { data: statisticsData } = useQuery({
     queryKey: QUERY_KEYS.LIMS.STATISTICS,
     queryFn: async () => {
@@ -141,7 +129,6 @@ const LimsInstrumentDataPage: React.FC = () => {
     },
   
       staleTime: CACHE_DURATIONS.MEDIUM,});
-
   const statistics: InstrumentDataStatistics = statisticsData || {
     total_data_count: 0,
     today_count: 0,
@@ -152,7 +139,6 @@ const LimsInstrumentDataPage: React.FC = () => {
     running_tasks: 0,
     total_rules: 0,
   };
-
   const instrumentDataQuery = useQuery({
     queryKey: [
       ...QUERY_KEYS.LIMS.INSTRUMENT_DATA,
@@ -176,7 +162,6 @@ const LimsInstrumentDataPage: React.FC = () => {
     enabled: activeTab === 0,
   
       staleTime: CACHE_DURATIONS.MEDIUM,});
-
   const collectionTasksQuery = useQuery({
     queryKey: [
       ...QUERY_KEYS.LIMS.COLLECTION_TASKS,
@@ -200,7 +185,6 @@ const LimsInstrumentDataPage: React.FC = () => {
     enabled: activeTab === 1,
   
       staleTime: CACHE_DURATIONS.MEDIUM,});
-
   const parseRulesQuery = useQuery({
     queryKey: [
       ...QUERY_KEYS.LIMS.PARSE_RULES,
@@ -224,23 +208,20 @@ const LimsInstrumentDataPage: React.FC = () => {
     enabled: activeTab === 2,
   
       staleTime: CACHE_DURATIONS.MEDIUM,});
-
   const instrumentDataList: InstrumentData[] = instrumentDataQuery.data || [];
   const collectionTasks: CollectionTask[] = collectionTasksQuery.data || [];
   const parseRules: ParseRule[] = parseRulesQuery.data || [];
-
   const loading =
     activeTab === 0
       ? instrumentDataQuery.isLoading
       : activeTab === 1
         ? collectionTasksQuery.isLoading
         : parseRulesQuery.isLoading;
-
   const parseDataMutation = useMutation({
     mutationFn: async (id: string) => {
       const response = await instrumentDataApi.parseInstrumentData(id);
       if (!response.success) {
-        throw new Error('解析数据失败');
+        throw new Error(i18n.t('lims.index.k0'));
       }
       return response;
     },
@@ -254,15 +235,14 @@ const LimsInstrumentDataPage: React.FC = () => {
       invalidateAll();
     },
     onError: (error: unknown) => {
-      logger.error('解析数据失败', error);
+      logger.error(i18n.t('lims.index.k1'), error);
     },
   });
-
   const createDataMutation = useMutation({
     mutationFn: async (data: CreateInstrumentDataRequest) => {
       const response = await instrumentDataApi.createInstrumentData(data);
       if (!response.success) {
-        throw new Error('保存数据失败');
+        throw new Error(i18n.t('lims.index.k2'));
       }
       return response;
     },
@@ -277,15 +257,14 @@ const LimsInstrumentDataPage: React.FC = () => {
       setShowDataForm(false);
     },
     onError: (error: unknown) => {
-      logger.error('保存数据失败', error);
+      logger.error(i18n.t('lims.index.k3'), error);
     },
   });
-
   const updateDataMutation = useMutation({
     mutationFn: async ({ id, data }: { id: string; data: UpdateInstrumentDataRequest }) => {
       const response = await instrumentDataApi.updateInstrumentData(id, data);
       if (!response.success) {
-        throw new Error('更新失败');
+        throw new Error(i18n.t('lims.index.k4'));
       }
       return response;
     },
@@ -300,15 +279,14 @@ const LimsInstrumentDataPage: React.FC = () => {
       setShowDataForm(false);
     },
     onError: (error: unknown) => {
-      logger.error('更新数据失败', error);
+      logger.error(i18n.t('lims.index.k5'), error);
     },
   });
-
   const deleteDataMutation = useMutation({
     mutationFn: async (id: string) => {
       const response = await instrumentDataApi.deleteInstrumentData(id);
       if (!response.success) {
-        throw new Error('删除数据失败');
+        throw new Error(i18n.t('lims.index.k6'));
       }
       return response;
     },
@@ -322,15 +300,14 @@ const LimsInstrumentDataPage: React.FC = () => {
       invalidateAll();
     },
     onError: (error: unknown) => {
-      logger.error('删除数据失败', error);
+      logger.error(i18n.t('lims.index.k7'), error);
     },
   });
-
   const createTaskMutation = useMutation({
     mutationFn: async (data: CreateCollectionTaskRequest) => {
       const response = await collectionTaskApi.createCollectionTask(data);
       if (!response.success) {
-        throw new Error('保存任务失败');
+        throw new Error(i18n.t('lims.index.k8'));
       }
       return response;
     },
@@ -345,15 +322,14 @@ const LimsInstrumentDataPage: React.FC = () => {
       setShowTaskForm(false);
     },
     onError: (error: unknown) => {
-      logger.error('保存任务失败', error);
+      logger.error(i18n.t('lims.index.k9'), error);
     },
   });
-
   const updateTaskMutation = useMutation({
     mutationFn: async ({ id, data }: { id: string; data: UpdateCollectionTaskRequest }) => {
       const response = await collectionTaskApi.updateCollectionTask(id, data);
       if (!response.success) {
-        throw new Error('更新失败');
+        throw new Error(i18n.t('lims.index.k10'));
       }
       return response;
     },
@@ -368,15 +344,14 @@ const LimsInstrumentDataPage: React.FC = () => {
       setShowTaskForm(false);
     },
     onError: (error: unknown) => {
-      logger.error('更新任务失败', error);
+      logger.error(i18n.t('lims.index.k11'), error);
     },
   });
-
   const triggerTaskMutation = useMutation({
     mutationFn: async (id: string) => {
       const response = await collectionTaskApi.triggerCollection(id);
       if (!response.success) {
-        throw new Error('触发采集失败');
+        throw new Error(i18n.t('lims.index.k12'));
       }
       return response;
     },
@@ -390,15 +365,14 @@ const LimsInstrumentDataPage: React.FC = () => {
       invalidateAll();
     },
     onError: (error: unknown) => {
-      logger.error('触发采集失败', error);
+      logger.error(i18n.t('lims.index.k13'), error);
     },
   });
-
   const deleteTaskMutation = useMutation({
     mutationFn: async (id: string) => {
       const response = await collectionTaskApi.deleteCollectionTask(id);
       if (!response.success) {
-        throw new Error('删除任务失败');
+        throw new Error(i18n.t('lims.index.k14'));
       }
       return response;
     },
@@ -412,15 +386,14 @@ const LimsInstrumentDataPage: React.FC = () => {
       invalidateAll();
     },
     onError: (error: unknown) => {
-      logger.error('删除任务失败', error);
+      logger.error(i18n.t('lims.index.k15'), error);
     },
   });
-
   const createRuleMutation = useMutation({
     mutationFn: async (data: CreateParseRuleRequest) => {
       const response = await parseRuleApi.createParseRule(data);
       if (!response.success) {
-        throw new Error('保存规则失败');
+        throw new Error(i18n.t('lims.index.k16'));
       }
       return response;
     },
@@ -435,15 +408,14 @@ const LimsInstrumentDataPage: React.FC = () => {
       setShowRuleForm(false);
     },
     onError: (error: unknown) => {
-      logger.error('保存规则失败', error);
+      logger.error(i18n.t('lims.index.k17'), error);
     },
   });
-
   const updateRuleMutation = useMutation({
     mutationFn: async ({ id, data }: { id: string; data: UpdateParseRuleRequest }) => {
       const response = await parseRuleApi.updateParseRule(id, data);
       if (!response.success) {
-        throw new Error('更新失败');
+        throw new Error(i18n.t('lims.index.k18'));
       }
       return response;
     },
@@ -458,15 +430,14 @@ const LimsInstrumentDataPage: React.FC = () => {
       setShowRuleForm(false);
     },
     onError: (error: unknown) => {
-      logger.error('更新规则失败', error);
+      logger.error(i18n.t('lims.index.k19'), error);
     },
   });
-
   const deleteRuleMutation = useMutation({
     mutationFn: async (id: string) => {
       const response = await parseRuleApi.deleteParseRule(id);
       if (!response.success) {
-        throw new Error('删除规则失败');
+        throw new Error(i18n.t('lims.index.k20'));
       }
       return response;
     },
@@ -480,15 +451,14 @@ const LimsInstrumentDataPage: React.FC = () => {
       invalidateAll();
     },
     onError: (error: unknown) => {
-      logger.error('删除规则失败', error);
+      logger.error(i18n.t('lims.index.k21'), error);
     },
   });
-
   const testParseMutation = useMutation({
     mutationFn: async (data: ParseDataRequest) => {
       const response = await instrumentDataApi.testParseData(data);
       if (!response.success) {
-        throw new Error('解析测试失败');
+        throw new Error(i18n.t('lims.index.k22'));
       }
       return response;
     },
@@ -504,10 +474,9 @@ const LimsInstrumentDataPage: React.FC = () => {
       }
     },
     onError: (error: unknown) => {
-      logger.error('解析测试失败', error);
+      logger.error(i18n.t('lims.index.k23'), error);
     },
   });
-
   const submitting =
     parseDataMutation.isPending ||
     createDataMutation.isPending ||
@@ -521,22 +490,18 @@ const LimsInstrumentDataPage: React.FC = () => {
     updateRuleMutation.isPending ||
     deleteRuleMutation.isPending ||
     testParseMutation.isPending;
-
   const handleTabChange = (_event: React.SyntheticEvent, newValue: number) => {
     setActiveTab(newValue);
     setSearchKeyword('');
     setStatusFilter('');
   };
-
   const handleViewDataDetail = (data: InstrumentData) => {
     setSelectedData(data);
     setShowDataDetail(true);
   };
-
   const handleParseData = async (id: string) => {
     await parseDataMutation.mutateAsync(id);
   };
-
   const handleCreateData = () => {
     setIsEditingData(false);
     setDataFormData({
@@ -547,7 +512,6 @@ const LimsInstrumentDataPage: React.FC = () => {
     });
     setShowDataForm(true);
   };
-
   const handleEditData = (data: InstrumentData) => {
     setIsEditingData(true);
     setSelectedData(data);
@@ -559,7 +523,6 @@ const LimsInstrumentDataPage: React.FC = () => {
     });
     setShowDataForm(true);
   };
-
   const handleSaveData = async () => {
     if (isEditingData && selectedData) {
       const updateData: UpdateInstrumentDataRequest = {};
@@ -568,18 +531,16 @@ const LimsInstrumentDataPage: React.FC = () => {
       await createDataMutation.mutateAsync(dataFormData);
     }
   };
-
   const handleDeleteData = (id: string) => {
     openConfirmDialog({
-      title: '确认删除',
-      message: '确定要删除这条数据吗？',
+      title: i18n.t('lims.index.k24'),
+      message: i18n.t('lims.index.k25'),
       danger: true,
       onConfirm: () => {
         deleteDataMutation.mutate(id);
       },
     });
   };
-
   const handleCreateTask = () => {
     setIsEditingTask(false);
     setTaskFormData({
@@ -593,7 +554,6 @@ const LimsInstrumentDataPage: React.FC = () => {
     });
     setShowTaskForm(true);
   };
-
   const handleEditTask = (task: CollectionTask) => {
     setIsEditingTask(true);
     setSelectedData(task as unknown as InstrumentData);
@@ -608,7 +568,6 @@ const LimsInstrumentDataPage: React.FC = () => {
     });
     setShowTaskForm(true);
   };
-
   const handleSaveTask = async () => {
     if (isEditingTask) {
       const updateData: UpdateCollectionTaskRequest = {
@@ -624,22 +583,19 @@ const LimsInstrumentDataPage: React.FC = () => {
       await createTaskMutation.mutateAsync(taskFormData);
     }
   };
-
   const handleTriggerTask = async (id: string) => {
     await triggerTaskMutation.mutateAsync(id);
   };
-
   const handleDeleteTask = (id: string) => {
     openConfirmDialog({
-      title: '确认删除',
-      message: '确定要删除这个采集任务吗？',
+      title: i18n.t('lims.index.k26'),
+      message: i18n.t('lims.index.k27'),
       danger: true,
       onConfirm: () => {
         deleteTaskMutation.mutate(id);
       },
     });
   };
-
   const handleCreateRule = () => {
     setIsEditingRule(false);
     setRuleFormData({
@@ -652,7 +608,6 @@ const LimsInstrumentDataPage: React.FC = () => {
     });
     setShowRuleForm(true);
   };
-
   const handleEditRule = (rule: ParseRule) => {
     setIsEditingRule(true);
     setSelectedData(rule as unknown as InstrumentData);
@@ -666,7 +621,6 @@ const LimsInstrumentDataPage: React.FC = () => {
     });
     setShowRuleForm(true);
   };
-
   const handleSaveRule = async () => {
     if (isEditingRule) {
       const updateData: UpdateParseRuleRequest = {
@@ -682,22 +636,19 @@ const LimsInstrumentDataPage: React.FC = () => {
       await createRuleMutation.mutateAsync(ruleFormData);
     }
   };
-
   const handleDeleteRule = (id: string) => {
     openConfirmDialog({
-      title: '确认删除',
-      message: '确定要删除这条解析规则吗？',
+      title: i18n.t('lims.index.k28'),
+      message: i18n.t('lims.index.k29'),
       danger: true,
       onConfirm: () => {
         deleteRuleMutation.mutate(id);
       },
     });
   };
-
   const handleTestParse = async () => {
     await testParseMutation.mutateAsync(parseTestData);
   };
-
   return (
     <PageContainer
       maxWidth='xl'
@@ -707,7 +658,6 @@ const LimsInstrumentDataPage: React.FC = () => {
       }}
     >
       <StatisticsCards statistics={statistics} />
-
       <Paper sx={{ mb: 3 }}>
         <Tabs
           value={activeTab}
@@ -716,21 +666,20 @@ const LimsInstrumentDataPage: React.FC = () => {
           <Tab
             icon={<Database size={18} />}
             iconPosition='start'
-            label='数据记录'
+            label={i18n.t('lims.index.k30')}
           />
           <Tab
             icon={<Play size={18} />}
             iconPosition='start'
-            label='采集任务'
+            label={i18n.t('lims.index.k31')}
           />
           <Tab
             icon={<Settings size={18} />}
             iconPosition='start'
-            label='解析规则'
+            label={i18n.t('lims.index.k32')}
           />
         </Tabs>
       </Paper>
-
       <Toolbar
         activeTab={activeTab}
         searchKeyword={searchKeyword}
@@ -745,7 +694,6 @@ const LimsInstrumentDataPage: React.FC = () => {
         onCreateRule={handleCreateRule}
         onShowParseTest={() => setShowParseTest(true)}
       />
-
       {activeTab === 0 && (
         <InstrumentDataTable
           loading={loading}
@@ -763,7 +711,6 @@ const LimsInstrumentDataPage: React.FC = () => {
           onDelete={handleDeleteData}
         />
       )}
-
       {activeTab === 1 && (
         <CollectionTaskTable
           loading={loading}
@@ -781,7 +728,6 @@ const LimsInstrumentDataPage: React.FC = () => {
           onDelete={handleDeleteTask}
         />
       )}
-
       {activeTab === 2 && (
         <ParseRuleTable
           loading={loading}
@@ -798,14 +744,12 @@ const LimsInstrumentDataPage: React.FC = () => {
           onDelete={handleDeleteRule}
         />
       )}
-
       <DataDetailDialog
         open={showDataDetail}
         selectedData={selectedData}
         onClose={() => setShowDataDetail(false)}
         onParse={handleParseData}
       />
-
       <DataFormDialog
         open={showDataForm}
         isEditing={isEditingData}
@@ -815,7 +759,6 @@ const LimsInstrumentDataPage: React.FC = () => {
         onFormDataChange={setDataFormData}
         onSave={handleSaveData}
       />
-
       <TaskFormDialog
         open={showTaskForm}
         isEditing={isEditingTask}
@@ -825,7 +768,6 @@ const LimsInstrumentDataPage: React.FC = () => {
         onFormDataChange={setTaskFormData}
         onSave={handleSaveTask}
       />
-
       <RuleFormDialog
         open={showRuleForm}
         isEditing={isEditingRule}
@@ -835,7 +777,6 @@ const LimsInstrumentDataPage: React.FC = () => {
         onFormDataChange={setRuleFormData}
         onSave={handleSaveRule}
       />
-
       <ParseTestDialog
         open={showParseTest}
         parseTestData={parseTestData}
@@ -845,7 +786,6 @@ const LimsInstrumentDataPage: React.FC = () => {
         onParseTestDataChange={setParseTestData}
         onTestParse={handleTestParse}
       />
-
       <Snackbar
         open={notification.open}
         autoHideDuration={3000}
@@ -858,7 +798,6 @@ const LimsInstrumentDataPage: React.FC = () => {
           {notification.message}
         </Alert>
       </Snackbar>
-
       <ConfirmDialog
         isOpen={confirmDialogOpen}
         onClose={setConfirmDialogClosed}
@@ -873,5 +812,4 @@ const LimsInstrumentDataPage: React.FC = () => {
     </PageContainer>
   );
 };
-
 export default LimsInstrumentDataPage;

@@ -40,6 +40,7 @@ import React, {
   type ErrorInfo,
   type ReactNode,
 } from 'react';
+import i18n from '@/i18n';
 import {
   useSuspenseQuery,
   useSuspenseInfiniteQuery,
@@ -297,7 +298,7 @@ export interface BffLoadingFallbackProps {
  * ```
  */
 export const BffLoadingFallback: React.FC<BffLoadingFallbackProps> = ({
-  message = '加载中...',
+  message = i18n.t('hooks.use_bff_suspense.k0'),
   fullScreen = false,
   minHeight = 200,
 }) => {
@@ -367,7 +368,7 @@ export interface BffErrorFallbackProps {
 export const BffErrorFallback: React.FC<BffErrorFallbackProps> = ({
   error,
   onReset,
-  title = '数据加载失败',
+  title = i18n.t('hooks.use_bff_suspense.k0'),
   showDetails = true,
 }) => {
   return (
@@ -420,7 +421,7 @@ export const BffErrorFallback: React.FC<BffErrorFallbackProps> = ({
             startIcon={<RefreshCw size={16} />}
             onClick={onReset}
           >
-            重试
+            {i18n.t('hooks.use_bff_suspense.k1')}
           </Button>
         )}
       </Stack>
@@ -591,7 +592,7 @@ function notifySuspenseStatsListeners(): void {
     try {
       listener();
     } catch (e) {
-      suspenseLogger.error('Suspense 统计监听器执行失败:', e);
+      suspenseLogger.error(i18n.t('hooks.use_bff_suspense.k4'), e);
     }
   });
 }

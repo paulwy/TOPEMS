@@ -20,6 +20,7 @@ import {
   type ShardStrategy,
   type ShardExecuteResult,
 } from '@/utils/query-sharding';
+import i18n from '@/i18n';
 import { bffGraphQL } from '@/api/bff';
 import { logger } from '@/utils/logger';
 
@@ -78,7 +79,7 @@ export function useAutoSharding<T = unknown>(
 
   const shardCheck = useMemo(() => {
     if (!autoDetect || !enabled) {
-      return { shouldShard: false, reason: '未启用自动检测', estimatedRecords: 0, score: 0 };
+      return { shouldShard: false, reason: i18n.t('shared.use_auto_sharding.k0'), estimatedRecords: 0, score: 0 };
     }
     return shouldShard(query, baseVariables, { maxRecordsPerShard });
   }, [query, baseVariables, autoDetect, enabled, maxRecordsPerShard]);
@@ -114,7 +115,7 @@ export function useAutoSharding<T = unknown>(
 
   const handleProgress = useCallback((p: number, completed: number, total: number) => {
     setProgress(p);
-    autoShardLogger.debug(`分片进度: ${completed}/${total} (${p.toFixed(1)}%)`);
+    autoShardLogger.debug(`${i18n.t('shared.use_auto_sharding.k0')}${completed}/${total} (${p.toFixed(1)}%)`);
   }, []);
 
   const executeSharded = useCallback(
@@ -156,7 +157,7 @@ export function useAutoSharding<T = unknown>(
         setShardPlan(plan);
         setShardCount(plan.shards.length);
 
-        autoShardLogger.info(`执行分片查询: ${plan.shards.length}个分片, 策略: ${plan.strategy}`);
+        autoShardLogger.info(`${i18n.t('shared.use_auto_sharding.k1')}${plan.shards.length}${i18n.t('shared.use_auto_sharding.k2')}${plan.strategy}`);
 
         const executeFn = async (vars: Record<string, unknown>) => {
           return bffGraphQL<T>(targetQuery, vars);
@@ -170,7 +171,7 @@ export function useAutoSharding<T = unknown>(
 
         if (result.errors.length > 0 && result.data.length === 0) {
           throw new Error(
-            `所有分片执行失败: ${result.errors.map((e) => e.error.message).join(', ')}`
+            `${i18n.t('shared.use_auto_sharding.k3')}${result.errors.map((e) => e.error.message).join(', ')}`
           );
         }
 
@@ -178,7 +179,7 @@ export function useAutoSharding<T = unknown>(
         setData(merged);
 
         if (result.errors.length > 0) {
-          autoShardLogger.warn(`部分分片执行失败: ${result.errors.length}/${result.totalCount}`);
+          autoShardLogger.warn(`${i18n.t('shared.use_auto_sharding.k4')}${result.errors.length}/${result.totalCount}`);
         }
 
         return merged;
@@ -186,7 +187,7 @@ export function useAutoSharding<T = unknown>(
         const e = err instanceof Error ? err : new Error(String(err));
         setError(e);
         setIsError(true);
-        autoShardLogger.error(`分片查询失败: ${e.message}`);
+        autoShardLogger.error(`${i18n.t('shared.use_auto_sharding.k5')}${e.message}`);
         return null;
       } finally {
         setIsLoading(false);

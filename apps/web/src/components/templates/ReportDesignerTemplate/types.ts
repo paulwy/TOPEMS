@@ -1,3 +1,4 @@
+import i18n from '@/i18n';
 export type DataSourceType = 'database' | 'api' | 'excel';
 
 export type LayoutType = 'table' | 'chart' | 'card';
@@ -104,21 +105,21 @@ export interface ReportDesignerState {
 }
 
 export const FILTER_OPERATORS: { value: FilterOperator; label: string }[] = [
-  { value: 'equals', label: '等于' },
-  { value: 'not_equals', label: '不等于' },
-  { value: 'contains', label: '包含' },
-  { value: 'not_contains', label: '不包含' },
-  { value: 'greater_than', label: '大于' },
-  { value: 'less_than', label: '小于' },
-  { value: 'between', label: '介于' },
-  { value: 'in', label: '在...中' },
-  { value: 'is_null', label: '为空' },
+  { value: 'equals', label: i18n.t('components.types.k0') },
+  { value: 'not_equals', label: i18n.t('components.types.k1') },
+  { value: 'contains', label: i18n.t('components.types.k2') },
+  { value: 'not_contains', label: i18n.t('components.types.k3') },
+  { value: 'greater_than', label: i18n.t('components.types.k4') },
+  { value: 'less_than', label: i18n.t('components.types.k5') },
+  { value: 'between', label: i18n.t('components.types.k6') },
+  { value: 'in', label: i18n.t('components.types.k0') },
+  { value: 'is_null', label: i18n.t('components.types.k7') },
 ];
 
 export const AGGREGATE_OPTIONS: { value: GroupByConfig['aggregate']; label: string }[] = [
-  { value: 'count', label: '计数' },
-  { value: 'sum', label: '求和' },
-  { value: 'avg', label: '平均值' },
-  { value: 'min', label: '最小值' },
-  { value: 'max', label: '最大值' },
+  { value: 'count', label: i18n.t('components.types.k8') },
+  { value: 'sum', label: i18n.t('components.types.k9') },
+  { value: 'avg', label: i18n.t('components.types.k10') },
+  { value: 'min', label: i18n.t('components.types.k11') },
+  { value: 'max', label: i18n.t('components.types.k12') },
 ];

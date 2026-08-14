@@ -9,6 +9,7 @@ import {
   Tooltip,
   Legend,
 } from 'recharts';
+import i18n from '@/i18n';
 import { useWmsMock, type WmsMockShape } from '@/api/wms/_mock';
 import { designTokens, semanticTokens } from '@topems/tokens';
 
@@ -30,24 +31,24 @@ export default function WmsLocationUtilizationPage() {
   return (
     <div className='space-y-4 p-4'>
       <div className='flex items-center justify-between'>
-        <h1 className='text-2xl font-bold'>库位利用率分析</h1>
+        <h1 className='text-2xl font-bold'>{i18n.t('pages.wms_location_utilization_page.k0')}</h1>
       </div>
 
       <div className='grid grid-cols-1 gap-4 md:grid-cols-4'>
         <div className='rounded-lg border p-4'>
-          <p className='text-sm text-gray-600'>平均利用率</p>
+          <p className='text-sm text-gray-600'>{i18n.t('pages.wms_location_utilization_page.k1')}</p>
           <p className='mt-1 text-3xl font-bold text-green-600'>{avgUtil}%</p>
         </div>
         <div className='rounded-lg border p-4'>
-          <p className='text-sm text-gray-600'>平均空置率</p>
+          <p className='text-sm text-gray-600'>{i18n.t('pages.wms_location_utilization_page.k2')}</p>
           <p className='mt-1 text-3xl font-bold text-blue-600'>{100 - avgUtil - avgDead}%</p>
         </div>
         <div className='rounded-lg border p-4'>
-          <p className='text-sm text-gray-600'>平均呆滞占比</p>
+          <p className='text-sm text-gray-600'>{i18n.t('pages.wms_location_utilization_page.k3')}</p>
           <p className='mt-1 text-3xl font-bold text-red-600'>{avgDead}%</p>
         </div>
         <div className='rounded-lg border p-4'>
-          <p className='text-sm text-gray-600'>分析库区数</p>
+          <p className='text-sm text-gray-600'>{i18n.t('pages.wms_location_utilization_page.k4')}</p>
           <p className='mt-1 text-3xl font-bold text-purple-600'>{locationUtil.length}</p>
         </div>
       </div>
@@ -74,9 +75,9 @@ export default function WmsLocationUtilizationPage() {
             <Tooltip
               formatter={(v: unknown, n: unknown) => {
                 const labels: Record<string, string> = {
-                  utilization: '已用 %',
-                  vacancy: '空置 %',
-                  deadStock: '呆滞 %',
+                  utilization: i18n.t('pages.wms_location_utilization_page.k5'),
+                  vacancy: i18n.t('pages.wms_location_utilization_page.k6'),
+                  deadStock: i18n.t('pages.wms_location_utilization_page.k7'),
                 };
                 return [`${v}%`, labels[String(n)] ?? String(n)];
               }}
@@ -84,19 +85,19 @@ export default function WmsLocationUtilizationPage() {
             <Legend />
             <Bar
               dataKey='utilization'
-              name='已用'
+              name={i18n.t('pages.wms_location_utilization_page.k8')}
               stackId='a'
               fill={designTokens.colors.success.dark}
             />
             <Bar
               dataKey='vacancy'
-              name='空置'
+              name={i18n.t('pages.wms_location_utilization_page.k9')}
               stackId='a'
               fill={designTokens.colors.primary.main}
             />
             <Bar
               dataKey='deadStock'
-              name='呆滞'
+              name={i18n.t('pages.wms_location_utilization_page.k10')}
               stackId='a'
               fill={designTokens.colors.error.main}
               radius={[6, 6, 0, 0]}

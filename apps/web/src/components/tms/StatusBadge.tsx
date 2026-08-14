@@ -1,3 +1,4 @@
+import i18n from '@/i18n';
 /**
  * TMS 状态徽章组件
  *
@@ -69,23 +70,23 @@ const FSM_STATUS_COLORS: Record<TmsFsmType, Record<string, string>> = {
 
 // 状态中文标签映射
 const STATUS_LABELS: Record<string, string> = {
-  active: '运行中',
-  maintenance: '维护中',
-  inactive: '停用',
-  retired: '已退役',
-  on_leave: '休假中',
-  suspended: '已暂停',
-  pending_review: '待审核',
-  blacklisted: '已拉黑',
-  rejected: '已拒绝',
-  planning: '规划中',
-  closed: '已关闭',
-  deprecated: '已废弃',
-  cancelled: '已取消',
-  draft: '草稿',
-  pending: '待发车',
-  in_transit: '运输中',
-  delivered: '已送达',
+  active: i18n.t('components.status_badge.k0'),
+  maintenance: i18n.t('components.status_badge.k1'),
+  inactive: i18n.t('components.status_badge.k2'),
+  retired: i18n.t('components.status_badge.k3'),
+  on_leave: i18n.t('components.status_badge.k4'),
+  suspended: i18n.t('components.status_badge.k5'),
+  pending_review: i18n.t('components.status_badge.k6'),
+  blacklisted: i18n.t('components.status_badge.k7'),
+  rejected: i18n.t('components.status_badge.k8'),
+  planning: i18n.t('components.status_badge.k9'),
+  closed: i18n.t('components.status_badge.k10'),
+  deprecated: i18n.t('components.status_badge.k11'),
+  cancelled: i18n.t('components.status_badge.k12'),
+  draft: i18n.t('components.status_badge.k13'),
+  pending: i18n.t('components.status_badge.k14'),
+  in_transit: i18n.t('components.status_badge.k15'),
+  delivered: i18n.t('components.status_badge.k16'),
 };
 
 interface StatusBadgeProps {

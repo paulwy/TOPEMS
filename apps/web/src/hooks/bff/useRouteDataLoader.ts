@@ -43,6 +43,7 @@
 
 import React, { useEffect, useState, useCallback, useRef, type ComponentType } from 'react';
 import { logger } from '@/utils/logger';
+import i18n from '@/i18n';
 
 const loaderLogger = logger.child({ prefix: 'RouteLoader' });
 
@@ -326,14 +327,14 @@ export function useRouteDataLoader<T extends Record<string, RouteDataLoader>>(
             lastError = err instanceof Error ? err : new Error(String(err));
             attempt++;
             if (attempt > maxRetry) break;
-            loaderLogger.warn(`loader [${key}] 第 ${attempt} 次重试:`, lastError.message);
+            loaderLogger.warn(`loader [${key}${i18n.t('shared.use_route_data_loader.k0')}${attempt}${i18n.t('shared.use_route_data_loader.k1')}`, lastError.message);
           }
         }
 
         if (lastError) {
           errors[key] = lastError;
           statuses[key] = 'rejected';
-          loaderLogger.error(`loader [${key}] 加载失败:`, lastError);
+          loaderLogger.error(`loader [${key}${i18n.t('shared.use_route_data_loader.k2')}`, lastError);
         }
       })
     );
@@ -436,7 +437,7 @@ export function RouteDataBoundary({
     if (ErrorComp) {
       return React.createElement(ErrorComp, { error, retry });
     }
-    return React.createElement('div', null, `加载失败: ${error.message}`);
+    return React.createElement('div', null, `${i18n.t('shared.use_route_data_loader.k3')}${error.message}`);
   }
 
   return React.createElement(

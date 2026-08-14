@@ -1,11 +1,12 @@
 import React from 'react';
 import { Chip } from '@mui/material';
 import type { EntitySchema } from '@/schema';
+import i18n from '@/i18n';
 
 export const materialRequirementSchema: EntitySchema = {
   entity: 'mes_material_requirement',
-  title: '物料需求',
-  description: '管理物料需求计划，包括需求单号、产品、物料、数量、优先级和状态',
+  title: i18n.t('mes.material_requirement.k0'),
+  description: i18n.t('mes.material_requirement.k1'),
 
   api: {
     module: 'mes',
@@ -15,7 +16,7 @@ export const materialRequirementSchema: EntitySchema = {
   fields: [
     {
       name: 'mrp_no',
-      label: '需求单号',
+      label: i18n.t('mes.material_requirement.k2'),
       type: 'text',
       readonly: true,
       sortable: true,
@@ -24,7 +25,7 @@ export const materialRequirementSchema: EntitySchema = {
     },
     {
       name: 'order_number',
-      label: '生产订单',
+      label: i18n.t('mes.material_requirement.k3'),
       type: 'text',
       sortable: true,
       listWidth: 140,
@@ -32,7 +33,7 @@ export const materialRequirementSchema: EntitySchema = {
     },
     {
       name: 'product_code',
-      label: '产品编码',
+      label: i18n.t('mes.material_requirement.k4'),
       type: 'text',
       required: true,
       listWidth: 120,
@@ -40,7 +41,7 @@ export const materialRequirementSchema: EntitySchema = {
     },
     {
       name: 'product_name',
-      label: '产品名称',
+      label: i18n.t('mes.material_requirement.k5'),
       type: 'text',
       required: true,
       sortable: true,
@@ -49,7 +50,7 @@ export const materialRequirementSchema: EntitySchema = {
     },
     {
       name: 'material_code',
-      label: '物料编码',
+      label: i18n.t('mes.material_requirement.k6'),
       type: 'text',
       required: true,
       sortable: true,
@@ -58,7 +59,7 @@ export const materialRequirementSchema: EntitySchema = {
     },
     {
       name: 'material_name',
-      label: '物料名称',
+      label: i18n.t('mes.material_requirement.k7'),
       type: 'text',
       required: true,
       sortable: true,
@@ -67,7 +68,7 @@ export const materialRequirementSchema: EntitySchema = {
     },
     {
       name: 'specification',
-      label: '规格型号',
+      label: i18n.t('mes.material_requirement.k8'),
       type: 'text',
       sortable: true,
       listWidth: 100,
@@ -75,14 +76,14 @@ export const materialRequirementSchema: EntitySchema = {
     },
     {
       name: 'unit',
-      label: '单位',
+      label: i18n.t('mes.material_requirement.k9'),
       type: 'text',
       listWidth: 80,
       validation: [{ type: 'maxLength', value: 32 }],
     },
     {
       name: 'required_quantity',
-      label: '需求数量',
+      label: i18n.t('mes.material_requirement.k10'),
       type: 'number',
       required: true,
       sortable: true,
@@ -90,7 +91,7 @@ export const materialRequirementSchema: EntitySchema = {
     },
     {
       name: 'available_quantity',
-      label: '可用数量',
+      label: i18n.t('mes.material_requirement.k11'),
       type: 'number',
       readonly: true,
       sortable: true,
@@ -98,7 +99,7 @@ export const materialRequirementSchema: EntitySchema = {
     },
     {
       name: 'shortfall_quantity',
-      label: '缺口数量',
+      label: i18n.t('mes.material_requirement.k12'),
       type: 'number',
       readonly: true,
       sortable: true,
@@ -106,7 +107,7 @@ export const materialRequirementSchema: EntitySchema = {
     },
     {
       name: 'required_date',
-      label: '需求日期',
+      label: i18n.t('mes.material_requirement.k13'),
       type: 'date',
       required: true,
       sortable: true,
@@ -114,25 +115,25 @@ export const materialRequirementSchema: EntitySchema = {
     },
     {
       name: 'priority',
-      label: '优先级',
+      label: i18n.t('mes.material_requirement.k14'),
       type: 'select',
       defaultValue: 'normal',
       options: {
         type: 'static',
         options: [
-          { value: 'low', label: '低' },
-          { value: 'normal', label: '普通' },
-          { value: 'high', label: '高' },
-          { value: 'urgent', label: '紧急' },
+          { value: 'low', label: i18n.t('mes.material_requirement.k15') },
+          { value: 'normal', label: i18n.t('mes.material_requirement.k16') },
+          { value: 'high', label: i18n.t('mes.material_requirement.k17') },
+          { value: 'urgent', label: i18n.t('mes.material_requirement.k18') },
         ],
       },
       listWidth: 100,
       renderCell: (row: Record<string, unknown>) => {
         const priorityMap: Record<string, { label: string; bg: string; color: string }> = {
-          urgent: { label: '紧急', bg: 'error.lighter', color: 'error.dark' },
-          high: { label: '高', bg: 'warning.light', color: 'warning.700' },
-          normal: { label: '普通', bg: 'primary.100', color: 'primary.dark' },
-          low: { label: '低', bg: 'grey.100', color: 'text.secondary' },
+          urgent: { label: i18n.t('mes.material_requirement.k19'), bg: 'error.lighter', color: 'error.dark' },
+          high: { label: i18n.t('mes.material_requirement.k20'), bg: 'warning.light', color: 'warning.700' },
+          normal: { label: i18n.t('mes.material_requirement.k21'), bg: 'primary.100', color: 'primary.dark' },
+          low: { label: i18n.t('mes.material_requirement.k22'), bg: 'grey.100', color: 'text.secondary' },
         };
         const p = priorityMap[(row.priority as string) || 'normal'] || priorityMap.normal;
         return React.createElement(Chip, {
@@ -145,27 +146,27 @@ export const materialRequirementSchema: EntitySchema = {
     },
     {
       name: 'status',
-      label: '状态',
+      label: i18n.t('mes.material_requirement.k23'),
       type: 'select',
       defaultValue: 'draft',
       options: {
         type: 'static',
         options: [
-          { value: 'draft', label: '草稿' },
-          { value: 'confirmed', label: '已确认' },
-          { value: 'released', label: '已下达' },
-          { value: 'completed', label: '已完成' },
-          { value: 'cancelled', label: '已取消' },
+          { value: 'draft', label: i18n.t('mes.material_requirement.k24') },
+          { value: 'confirmed', label: i18n.t('mes.material_requirement.k25') },
+          { value: 'released', label: i18n.t('mes.material_requirement.k26') },
+          { value: 'completed', label: i18n.t('mes.material_requirement.k27') },
+          { value: 'cancelled', label: i18n.t('mes.material_requirement.k28') },
         ],
       },
       listWidth: 100,
       renderCell: (row: Record<string, unknown>) => {
         const statusMap: Record<string, { label: string; bg: string; color: string }> = {
-          draft: { label: '草稿', bg: 'grey.100', color: 'text.secondary' },
-          confirmed: { label: '已确认', bg: 'primary.100', color: 'primary.dark' },
-          released: { label: '已下达', bg: 'warning.light', color: 'warning.700' },
-          completed: { label: '已完成', bg: 'success.lighter', color: 'success.700' },
-          cancelled: { label: '已取消', bg: 'error.lighter', color: 'error.dark' },
+          draft: { label: i18n.t('mes.material_requirement.k29'), bg: 'grey.100', color: 'text.secondary' },
+          confirmed: { label: i18n.t('mes.material_requirement.k30'), bg: 'primary.100', color: 'primary.dark' },
+          released: { label: i18n.t('mes.material_requirement.k31'), bg: 'warning.light', color: 'warning.700' },
+          completed: { label: i18n.t('mes.material_requirement.k32'), bg: 'success.lighter', color: 'success.700' },
+          cancelled: { label: i18n.t('mes.material_requirement.k33'), bg: 'error.lighter', color: 'error.dark' },
         };
         const s = statusMap[(row.status as string) || 'draft'] || {
           label: row.status,
@@ -182,27 +183,27 @@ export const materialRequirementSchema: EntitySchema = {
     },
     {
       name: 'source_type',
-      label: '来源类型',
+      label: i18n.t('mes.material_requirement.k34'),
       type: 'text',
       showInList: false,
       validation: [{ type: 'maxLength', value: 32 }],
     },
     {
       name: 'remark',
-      label: '备注',
+      label: i18n.t('mes.material_requirement.k35'),
       type: 'textarea',
       showInList: false,
     },
     {
       name: 'created_at',
-      label: '创建时间',
+      label: i18n.t('mes.material_requirement.k36'),
       type: 'datetime',
       readonly: true,
       showInList: false,
     },
     {
       name: 'updated_at',
-      label: '更新时间',
+      label: i18n.t('mes.material_requirement.k37'),
       type: 'datetime',
       readonly: true,
       showInList: false,
@@ -230,15 +231,15 @@ export const materialRequirementSchema: EntitySchema = {
     filters: [
       {
         id: 'status',
-        label: '状态',
+        label: i18n.t('mes.material_requirement.k38'),
         type: 'select',
         options: [
-          { label: '全部状态', value: 'all' },
-          { label: '草稿', value: 'draft' },
-          { label: '已确认', value: 'confirmed' },
-          { label: '已下达', value: 'released' },
-          { label: '已完成', value: 'completed' },
-          { label: '已取消', value: 'cancelled' },
+          { label: i18n.t('mes.material_requirement.k39'), value: 'all' },
+          { label: i18n.t('mes.material_requirement.k40'), value: 'draft' },
+          { label: i18n.t('mes.material_requirement.k41'), value: 'confirmed' },
+          { label: i18n.t('mes.material_requirement.k42'), value: 'released' },
+          { label: i18n.t('mes.material_requirement.k43'), value: 'completed' },
+          { label: i18n.t('mes.material_requirement.k44'), value: 'cancelled' },
         ],
       },
     ],
@@ -248,7 +249,7 @@ export const materialRequirementSchema: EntitySchema = {
 
   formSections: [
     {
-      title: '基本信息',
+      title: i18n.t('mes.material_requirement.k45'),
       fields: [
         'product_code',
         'product_name',
@@ -259,17 +260,17 @@ export const materialRequirementSchema: EntitySchema = {
       ],
     },
     {
-      title: '需求信息',
+      title: i18n.t('mes.material_requirement.k46'),
       fields: ['required_quantity', 'required_date', 'priority', 'status'],
     },
     {
-      title: '其他',
+      title: i18n.t('mes.material_requirement.k47'),
       fields: ['source_type', 'remark'],
     },
   ],
 
   formColCount: 2,
-  createTitle: '新建物料需求',
-  editTitle: '编辑物料需求',
-  detailTitle: '物料需求详情',
+  createTitle: i18n.t('mes.material_requirement.k48'),
+  editTitle: i18n.t('mes.material_requirement.k49'),
+  detailTitle: i18n.t('mes.material_requirement.k50'),
 };

@@ -1,6 +1,7 @@
 import React from 'react';
 import { Chip } from '@mui/material';
 import type { EntitySchema } from '@/schema';
+import i18n from '@/i18n';
 
 const costTypeColorMap: Record<string, 'primary' | 'warning' | 'error' | 'secondary' | 'default'> =
   {
@@ -11,10 +12,10 @@ const costTypeColorMap: Record<string, 'primary' | 'warning' | 'error' | 'second
   };
 
 const costTypeLabelMap: Record<string, string> = {
-  prevention: '预防成本',
-  appraisal: '鉴定成本',
-  internal_failure: '内部损失',
-  external_failure: '外部损失',
+  prevention: i18n.t('qms.quality_cost.k0'),
+  appraisal: i18n.t('qms.quality_cost.k1'),
+  internal_failure: i18n.t('qms.quality_cost.k2'),
+  external_failure: i18n.t('qms.quality_cost.k3'),
 };
 
 const costStatusColorMap: Record<string, 'default' | 'primary' | 'error' | 'success'> = {
@@ -25,16 +26,16 @@ const costStatusColorMap: Record<string, 'default' | 'primary' | 'error' | 'succ
 };
 
 const costStatusLabelMap: Record<string, string> = {
-  pending: '待审核',
-  approved: '已审核',
-  rejected: '已驳回',
-  closed: '已关闭',
+  pending: i18n.t('qms.quality_cost.k4'),
+  approved: i18n.t('qms.quality_cost.k5'),
+  rejected: i18n.t('qms.quality_cost.k6'),
+  closed: i18n.t('qms.quality_cost.k7'),
 };
 
 export const qualityCostSchema: EntitySchema = {
   entity: 'quality_cost',
-  title: '质量成本',
-  description: 'Quality Cost Analysis — 质量成本核算与分析，跟踪预防、鉴定、内外部损失成本',
+  title: i18n.t('qms.quality_cost.k8'),
+  description: i18n.t('shared.quality_cost.k0'),
 
   api: {
     module: 'qms',
@@ -44,7 +45,7 @@ export const qualityCostSchema: EntitySchema = {
   fields: [
     {
       name: 'costNo',
-      label: '成本编号',
+      label: i18n.t('qms.quality_cost.k9'),
       type: 'text',
       readonlyOnEdit: true,
       sortable: true,
@@ -58,17 +59,17 @@ export const qualityCostSchema: EntitySchema = {
     },
     {
       name: 'costType',
-      label: '成本类型',
+      label: i18n.t('qms.quality_cost.k10'),
       type: 'select',
       required: true,
       defaultValue: 'prevention',
       options: {
         type: 'static',
         options: [
-          { value: 'prevention', label: '预防成本' },
-          { value: 'appraisal', label: '鉴定成本' },
-          { value: 'internal_failure', label: '内部损失' },
-          { value: 'external_failure', label: '外部损失' },
+          { value: 'prevention', label: i18n.t('qms.quality_cost.k11') },
+          { value: 'appraisal', label: i18n.t('qms.quality_cost.k12') },
+          { value: 'internal_failure', label: i18n.t('qms.quality_cost.k13') },
+          { value: 'external_failure', label: i18n.t('qms.quality_cost.k14') },
         ],
       },
       listWidth: 120,
@@ -87,14 +88,14 @@ export const qualityCostSchema: EntitySchema = {
     },
     {
       name: 'costCategory',
-      label: '成本类别',
+      label: i18n.t('qms.quality_cost.k15'),
       type: 'text',
       listWidth: 140,
-      placeholder: '如：培训费、检测费',
+      placeholder: i18n.t('qms.quality_cost.k16'),
     },
     {
       name: 'amount',
-      label: '金额',
+      label: i18n.t('qms.quality_cost.k17'),
       type: 'number',
       required: true,
       listWidth: 140,
@@ -106,59 +107,59 @@ export const qualityCostSchema: EntitySchema = {
     },
     {
       name: 'currency',
-      label: '币种',
+      label: i18n.t('qms.quality_cost.k18'),
       type: 'select',
       defaultValue: 'CNY',
       options: {
         type: 'static',
         options: [
-          { value: 'CNY', label: '人民币 (CNY)' },
-          { value: 'USD', label: '美元 (USD)' },
-          { value: 'EUR', label: '欧元 (EUR)' },
+          { value: 'CNY', label: i18n.t('qms.quality_cost.cny_19') },
+          { value: 'USD', label: i18n.t('qms.quality_cost.usd_20') },
+          { value: 'EUR', label: i18n.t('qms.quality_cost.eur_21') },
         ],
       },
       showInList: false,
     },
     {
       name: 'occurrenceDate',
-      label: '发生日期',
+      label: i18n.t('qms.quality_cost.k22'),
       type: 'date',
       required: true,
       listWidth: 120,
     },
     {
       name: 'department',
-      label: '部门',
+      label: i18n.t('qms.quality_cost.k23'),
       type: 'text',
       listWidth: 120,
-      placeholder: '请输入部门名称',
+      placeholder: i18n.t('qms.quality_cost.k24'),
     },
     {
       name: 'relatedOrderNo',
-      label: '关联订单号',
+      label: i18n.t('qms.quality_cost.k25'),
       type: 'text',
       showInList: false,
-      placeholder: '请输入关联订单号',
+      placeholder: i18n.t('qms.quality_cost.k26'),
     },
     {
       name: 'responsiblePerson',
-      label: '负责人',
+      label: i18n.t('qms.quality_cost.k27'),
       type: 'text',
       showInList: false,
-      placeholder: '请输入负责人姓名',
+      placeholder: i18n.t('qms.quality_cost.k28'),
     },
     {
       name: 'status',
-      label: '状态',
+      label: i18n.t('qms.quality_cost.k29'),
       type: 'select',
       defaultValue: 'pending',
       options: {
         type: 'static',
         options: [
-          { value: 'pending', label: '待审核' },
-          { value: 'approved', label: '已审核' },
-          { value: 'rejected', label: '已驳回' },
-          { value: 'closed', label: '已关闭' },
+          { value: 'pending', label: i18n.t('qms.quality_cost.k30') },
+          { value: 'approved', label: i18n.t('qms.quality_cost.k31') },
+          { value: 'rejected', label: i18n.t('qms.quality_cost.k32') },
+          { value: 'closed', label: i18n.t('qms.quality_cost.k33') },
         ],
       },
       listWidth: 110,
@@ -177,14 +178,14 @@ export const qualityCostSchema: EntitySchema = {
     },
     {
       name: 'description',
-      label: '描述',
+      label: i18n.t('qms.quality_cost.k34'),
       type: 'textarea',
       showInList: false,
-      placeholder: '请描述成本的具体情况...',
+      placeholder: i18n.t('shared.quality_cost.k1'),
     },
     {
       name: 'created_at',
-      label: '创建日期',
+      label: i18n.t('qms.quality_cost.k35'),
       type: 'date',
       readonly: true,
       showInList: false,
@@ -198,27 +199,27 @@ export const qualityCostSchema: EntitySchema = {
     filters: [
       {
         id: 'costType',
-        label: '成本类型',
+        label: i18n.t('qms.quality_cost.k36'),
         type: 'select',
         options: [
-          { label: '全部类型', value: 'all' },
-          { label: '预防成本', value: 'prevention' },
-          { label: '鉴定成本', value: 'appraisal' },
-          { label: '内部损失', value: 'internal_failure' },
-          { label: '外部损失', value: 'external_failure' },
+          { label: i18n.t('qms.quality_cost.k37'), value: 'all' },
+          { label: i18n.t('qms.quality_cost.k38'), value: 'prevention' },
+          { label: i18n.t('qms.quality_cost.k39'), value: 'appraisal' },
+          { label: i18n.t('qms.quality_cost.k40'), value: 'internal_failure' },
+          { label: i18n.t('qms.quality_cost.k41'), value: 'external_failure' },
         ],
         defaultValue: 'all',
       },
       {
         id: 'status',
-        label: '状态',
+        label: i18n.t('qms.quality_cost.k42'),
         type: 'select',
         options: [
-          { label: '全部状态', value: 'all' },
-          { label: '待审核', value: 'pending' },
-          { label: '已审核', value: 'approved' },
-          { label: '已驳回', value: 'rejected' },
-          { label: '已关闭', value: 'closed' },
+          { label: i18n.t('qms.quality_cost.k43'), value: 'all' },
+          { label: i18n.t('qms.quality_cost.k44'), value: 'pending' },
+          { label: i18n.t('qms.quality_cost.k45'), value: 'approved' },
+          { label: i18n.t('qms.quality_cost.k46'), value: 'rejected' },
+          { label: i18n.t('qms.quality_cost.k47'), value: 'closed' },
         ],
         defaultValue: 'all',
       },
@@ -232,23 +233,23 @@ export const qualityCostSchema: EntitySchema = {
 
   formSections: [
     {
-      title: '基本信息',
+      title: i18n.t('qms.quality_cost.k48'),
       fields: ['costNo', 'costType', 'costCategory', 'amount', 'currency'],
     },
     {
-      title: '归属与日期',
+      title: i18n.t('qms.quality_cost.k49'),
       fields: ['occurrenceDate', 'department', 'relatedOrderNo', 'responsiblePerson', 'status'],
     },
     {
-      title: '描述',
+      title: i18n.t('qms.quality_cost.k50'),
       fields: ['description'],
     },
   ],
 
   formColCount: 2,
-  createTitle: '添加质量成本记录',
-  editTitle: '编辑质量成本记录',
-  detailTitle: '质量成本详情',
+  createTitle: i18n.t('qms.quality_cost.k51'),
+  editTitle: i18n.t('qms.quality_cost.k52'),
+  detailTitle: i18n.t('qms.quality_cost.k53'),
 
   actions: ['create', 'edit', 'detail', 'delete'],
 };

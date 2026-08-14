@@ -1,5 +1,6 @@
 import apiClient from '../client';
 import type { ApiResponse, PaginatedResponse } from '../client';
+import i18n from '@/i18n';
 
 export type LocationType = 'point' | 'polygon' | 'circle' | 'route';
 export type MapProvider = 'amap' | 'baidu' | 'google' | 'osm' | 'gis';
@@ -742,7 +743,7 @@ export const imLocationApi = {
         total: results.length,
         providers_used: providersUsed,
       },
-      '搜索完成'
+      i18n.t('shared.location_message.k0')
     );
   },
 
@@ -764,7 +765,7 @@ export const imLocationApi = {
         return imLocationApi._createResponse(
           false,
           syncResult,
-          imResponse.message || '创建围栏失败',
+          imResponse.message || i18n.t('shared.location_message.k1'),
           400
         );
       }
@@ -772,7 +773,7 @@ export const imLocationApi = {
       return imLocationApi._createResponse(
         false,
         syncResult,
-        `创建围栏失败: ${err instanceof Error ? err.message : '未知错误'}`,
+        `${i18n.t('shared.location_message.k0')}${err instanceof Error ? err.message : i18n.t('shared.location_message.k2')}`,
         500
       );
     }
@@ -803,11 +804,11 @@ export const imLocationApi = {
           }
         } catch {
           syncResult.gis_sync_status = 'pending';
-          syncResult.gis_error = 'GIS 围栏服务尚未就绪，已保存为待同步状态';
+          syncResult.gis_error = i18n.t('shared.location_message.k1');
         }
       } catch (err) {
         syncResult.gis_sync_status = 'failed';
-        syncResult.gis_error = err instanceof Error ? err.message : '同步失败';
+        syncResult.gis_error = err instanceof Error ? err.message : i18n.t('shared.location_message.k3');
       }
     } else {
       syncResult.gis_sync_status = 'not_supported';
@@ -816,7 +817,7 @@ export const imLocationApi = {
     return imLocationApi._createResponse(
       true,
       syncResult,
-      syncResult.gis_sync_status === 'synced' ? '围栏创建并同步到 GIS' : '围栏已创建'
+      syncResult.gis_sync_status === 'synced' ? i18n.t('shared.location_message.gis_5') : i18n.t('shared.location_message.k4')
     );
   },
 
@@ -837,7 +838,7 @@ export const imLocationApi = {
         return imLocationApi._createResponse(
           false,
           syncResult,
-          imResponse.message || '更新围栏失败',
+          imResponse.message || i18n.t('shared.location_message.k6'),
           400
         );
       }
@@ -845,7 +846,7 @@ export const imLocationApi = {
       return imLocationApi._createResponse(
         false,
         syncResult,
-        `更新围栏失败: ${err instanceof Error ? err.message : '未知错误'}`,
+        `${i18n.t('shared.location_message.k2')}${err instanceof Error ? err.message : i18n.t('shared.location_message.k7')}`,
         500
       );
     }
@@ -871,15 +872,15 @@ export const imLocationApi = {
           }
         } catch {
           syncResult.gis_sync_status = 'pending';
-          syncResult.gis_error = 'GIS 围栏服务尚未就绪，已保存为待同步状态';
+          syncResult.gis_error = i18n.t('shared.location_message.k3');
         }
       } catch (err) {
         syncResult.gis_sync_status = 'failed';
-        syncResult.gis_error = err instanceof Error ? err.message : '同步失败';
+        syncResult.gis_error = err instanceof Error ? err.message : i18n.t('shared.location_message.k8');
       }
     }
 
-    return imLocationApi._createResponse(true, syncResult, '围栏已更新');
+    return imLocationApi._createResponse(true, syncResult, i18n.t('shared.location_message.k9'));
   },
 
   syncGeofenceToGis: async (geofenceId: string): Promise<ApiResponse<GeofenceSyncResult>> => {
@@ -891,7 +892,7 @@ export const imLocationApi = {
     try {
       const geofenceResponse = await apiClient.im.get(`/im/locations/geofences/${geofenceId}`);
       if (!geofenceResponse.success || !geofenceResponse.data) {
-        return imLocationApi._createResponse(false, syncResult, '围栏不存在', 404);
+        return imLocationApi._createResponse(false, syncResult, i18n.t('shared.location_message.k10'), 404);
       }
       syncResult.geofence = geofenceResponse.data;
 
@@ -930,13 +931,13 @@ export const imLocationApi = {
         }
       } catch {
         syncResult.gis_sync_status = 'pending';
-        syncResult.gis_error = 'GIS 围栏服务尚未就绪，已保存为待同步状态';
+        syncResult.gis_error = i18n.t('shared.location_message.k4');
       }
     } catch (err) {
       return imLocationApi._createResponse(
         false,
         syncResult,
-        `同步失败: ${err instanceof Error ? err.message : '未知错误'}`,
+        `${i18n.t('shared.location_message.k5')}${err instanceof Error ? err.message : i18n.t('shared.location_message.k11')}`,
         500
       );
     }
@@ -944,7 +945,7 @@ export const imLocationApi = {
     return imLocationApi._createResponse(
       true,
       syncResult,
-      syncResult.gis_sync_status === 'synced' ? '围栏已同步到 GIS' : '同步状态：待同步'
+      syncResult.gis_sync_status === 'synced' ? i18n.t('shared.location_message.gis_13') : i18n.t('shared.location_message.k12')
     );
   },
 
@@ -977,14 +978,14 @@ export const imLocationApi = {
             gis_location_id: item.id as string,
           })
         );
-        return imLocationApi._createResponse(true, items, '搜索完成');
+        return imLocationApi._createResponse(true, items, i18n.t('shared.location_message.k14'));
       }
-      return imLocationApi._createResponse(true, [], '无结果');
+      return imLocationApi._createResponse(true, [], i18n.t('shared.location_message.k15'));
     } catch (err) {
       return imLocationApi._createResponse(
         false,
         [] as PlaceOfInterest[],
-        `GIS 搜索失败: ${err instanceof Error ? err.message : '未知错误'}`,
+        `${i18n.t('shared.location_message.gis_6')}${err instanceof Error ? err.message : i18n.t('shared.location_message.k16')}`,
         500
       );
     }

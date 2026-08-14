@@ -1,3 +1,4 @@
+import i18n from '@/i18n';
 export type TestType = 'Unit' | 'Integration' | 'E2E';
 export type TestPriority = 'low' | 'medium' | 'high' | 'critical';
 export type TestStatus = 'pending' | 'running' | 'passed' | 'failed' | 'skipped';
@@ -82,54 +83,54 @@ function generateId(): string {
 const DEFAULT_TEST_CASES: TestCase[] = [
   {
     id: generateId(),
-    name: '用户登录 - 表单验证',
+    name: i18n.t('ai.smart-testing-v2.k0'),
     type: 'Unit',
     priority: 'critical',
     status: 'pending',
     coverage: 0,
     module: 'auth',
     tags: ['auth', 'login', 'form'],
-    description: '验证登录表单的必填字段校验逻辑',
+    description: i18n.t('ai.smart-testing-v2.k1'),
     steps: [
-      { name: '初始化表单', action: 'initForm()', expected: '表单为空' },
-      { name: '提交空表单', action: 'submit()', expected: '验证失败' },
-      { name: '填写用户名', action: 'fill("username", "admin")', expected: '用户名已填入' },
-      { name: '再次提交', action: 'submit()', expected: '密码验证失败' },
+      { name: i18n.t('ai.smart-testing-v2.k3'), action: 'initForm()', expected: i18n.t('ai.smart-testing-v2.k2') },
+      { name: i18n.t('ai.smart-testing-v2.k5'), action: 'submit()', expected: i18n.t('ai.smart-testing-v2.k4') },
+      { name: i18n.t('ai.smart-testing-v2.k7'), action: 'fill("username", "admin")', expected: i18n.t('ai.smart-testing-v2.k6') },
+      { name: i18n.t('ai.smart-testing-v2.k9'), action: 'submit()', expected: i18n.t('ai.smart-testing-v2.k8') },
     ],
     created_at: new Date().toISOString(),
   },
   {
     id: generateId(),
-    name: '数据列表 - 分页加载',
+    name: i18n.t('ai.smart-testing-v2.k10'),
     type: 'Integration',
     priority: 'high',
     status: 'pending',
     coverage: 0,
     module: 'common',
     tags: ['list', 'pagination', 'api'],
-    description: '验证分页 API 调用和数据加载',
+    description: i18n.t('ai.smart-testing-v2.api_11'),
     steps: [
-      { name: '加载第一页', action: 'fetchPage(1)', expected: '返回 20 条数据' },
-      { name: '加载第二页', action: 'fetchPage(2)', expected: '返回下一页数据' },
-      { name: '验证数据一致性', action: 'assertNoOverlap()', expected: '无重复数据' },
+      { name: i18n.t('ai.smart-testing-v2.k13'), action: 'fetchPage(1)', expected: i18n.t('ai.smart-testing-v2.20_12') },
+      { name: i18n.t('ai.smart-testing-v2.k15'), action: 'fetchPage(2)', expected: i18n.t('ai.smart-testing-v2.k14') },
+      { name: i18n.t('ai.smart-testing-v2.k17'), action: 'assertNoOverlap()', expected: i18n.t('ai.smart-testing-v2.k16') },
     ],
     created_at: new Date().toISOString(),
   },
   {
     id: generateId(),
-    name: '完整用户旅程 - 注册到下单',
+    name: i18n.t('ai.smart-testing-v2.k18'),
     type: 'E2E',
     priority: 'critical',
     status: 'pending',
     coverage: 0,
     module: 'ecommerce',
     tags: ['e2e', 'checkout', 'critical-path'],
-    description: '模拟用户从注册到完成订单的完整流程',
+    description: i18n.t('ai.smart-testing-v2.k19'),
     steps: [
-      { name: '用户注册', action: 'register()', expected: '注册成功' },
-      { name: '浏览商品', action: 'browseProducts()', expected: '商品列表显示' },
-      { name: '加入购物车', action: 'addToCart()', expected: '购物车更新' },
-      { name: '结算支付', action: 'checkout()', expected: '订单创建成功' },
+      { name: i18n.t('ai.smart-testing-v2.k21'), action: 'register()', expected: i18n.t('ai.smart-testing-v2.k20') },
+      { name: i18n.t('ai.smart-testing-v2.k23'), action: 'browseProducts()', expected: i18n.t('ai.smart-testing-v2.k22') },
+      { name: i18n.t('ai.smart-testing-v2.k25'), action: 'addToCart()', expected: i18n.t('ai.smart-testing-v2.k24') },
+      { name: i18n.t('ai.smart-testing-v2.k27'), action: 'checkout()', expected: i18n.t('ai.smart-testing-v2.k26') },
     ],
     created_at: new Date().toISOString(),
   },
@@ -205,19 +206,19 @@ class SmartTestV2Impl {
 
       const testCase: TestCase = {
         id,
-        name: `AI 生成测试 - ${module} #${i + 1}`,
+        name: `${i18n.t('ai.smart-testing-v2.ai_0')}${module} #${i + 1}`,
         type,
         priority,
         status: 'pending',
         coverage: 0,
         module,
         tags: ['ai-generated', type.toLowerCase()],
-        description: `自动生成的${type}测试用例`,
+        description: `${i18n.t('ai.smart-testing-v2.k1')}${type}${i18n.t('ai.smart-testing-v2.k2')}`,
         steps: [
-          { name: '环境准备', action: `setup_${module}()`, expected: '环境已初始化' },
-          { name: '执行测试', action: `execute_${type}_test()`, expected: '测试执行完成' },
-          { name: '验证断言', action: 'assert_results()', expected: '断言通过' },
-          { name: '清理环境', action: 'teardown()', expected: '环境已清理' },
+          { name: i18n.t('ai.smart-testing-v2.k29'), action: `setup_${module}()`, expected: i18n.t('ai.smart-testing-v2.k28') },
+          { name: i18n.t('ai.smart-testing-v2.k31'), action: `execute_${type}_test()`, expected: i18n.t('ai.smart-testing-v2.k30') },
+          { name: i18n.t('ai.smart-testing-v2.k33'), action: 'assert_results()', expected: i18n.t('ai.smart-testing-v2.k32') },
+          { name: i18n.t('ai.smart-testing-v2.k35'), action: 'teardown()', expected: i18n.t('ai.smart-testing-v2.k34') },
         ],
         created_at: new Date().toISOString(),
       };
@@ -391,8 +392,8 @@ class SmartTestV2Impl {
         id: generateId(),
         testCaseId: tc.id,
         type: 'coverage',
-        message: `测试用例 "${tc.name}" 覆盖率较低 (${(tc.coverage * 100).toFixed(1)}%)`,
-        suggestion: '考虑添加更多断言和边界条件测试',
+        message: `${i18n.t('ai.smart-testing-v2.k3')}${tc.name}${i18n.t('ai.smart-testing-v2.k4')}${(tc.coverage * 100).toFixed(1)}%)`,
+        suggestion: i18n.t('ai.smart-testing-v2.k36'),
         confidence: 0.85,
       });
     }
@@ -405,8 +406,8 @@ class SmartTestV2Impl {
           id: generateId(),
           testCaseId: failed.testCaseId,
           type: 'edge-case',
-          message: `测试用例 "${tc.name}" 执行失败`,
-          suggestion: '检查边界条件和异常处理路径',
+          message: `${i18n.t('ai.smart-testing-v2.k5')}${tc.name}${i18n.t('ai.smart-testing-v2.k6')}`,
+          suggestion: i18n.t('ai.smart-testing-v2.k37'),
           confidence: 0.9,
         });
       }
@@ -420,8 +421,8 @@ class SmartTestV2Impl {
           id: generateId(),
           testCaseId: slow.testCaseId,
           type: 'performance',
-          message: `测试用例 "${tc.name}" 执行耗时较长 (${slow.duration_ms}ms)`,
-          suggestion: '考虑优化测试执行速度或使用缓存',
+          message: `${i18n.t('ai.smart-testing-v2.k7')}${tc.name}${i18n.t('ai.smart-testing-v2.k8')}${slow.duration_ms}ms)`,
+          suggestion: i18n.t('ai.smart-testing-v2.k38'),
           confidence: 0.7,
         });
       }
@@ -432,8 +433,8 @@ class SmartTestV2Impl {
         id: generateId(),
         testCaseId: '',
         type: 'coverage',
-        message: '当前测试覆盖良好，建议继续关注高优先级模块',
-        suggestion: '为新功能及时添加测试用例',
+        message: i18n.t('ai.smart-testing-v2.k39'),
+        suggestion: i18n.t('ai.smart-testing-v2.k40'),
         confidence: 0.6,
       });
     }
@@ -451,7 +452,7 @@ class SmartTestV2Impl {
       const newCase: TestCase = {
         ...failed,
         id: newId,
-        name: `${failed.name} (重新生成)`,
+        name: `${failed.name}${i18n.t('ai.smart-testing-v2.k9')}`,
         status: 'pending',
         coverage: 0,
         created_at: new Date().toISOString(),

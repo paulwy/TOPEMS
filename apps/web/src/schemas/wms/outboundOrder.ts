@@ -3,11 +3,12 @@
  */
 
 import type { EntitySchema } from '@/schema';
+import i18n from '@/i18n';
 
 export const outboundOrderSchema: EntitySchema = {
   entity: 'outbound_order',
-  title: '出库订单',
-  description: '管理销售出库、调拨出库、退货出库等出库订单',
+  title: i18n.t('wms.outbound_order.k0'),
+  description: i18n.t('wms.outbound_order.k1'),
 
   api: {
     module: 'wms',
@@ -17,7 +18,7 @@ export const outboundOrderSchema: EntitySchema = {
   fields: [
     {
       name: 'order_number',
-      label: '订单编号',
+      label: i18n.t('wms.outbound_order.k2'),
       type: 'text',
       required: true,
       readonlyOnEdit: true,
@@ -27,24 +28,24 @@ export const outboundOrderSchema: EntitySchema = {
     },
     {
       name: 'warehouse_id',
-      label: '仓库',
+      label: i18n.t('wms.outbound_order.k3'),
       type: 'text',
     },
     {
       name: 'customer_id',
-      label: '客户ID',
+      label: i18n.t('wms.outbound_order.id_4'),
       type: 'text',
       showInList: false,
     },
     {
       name: 'customer_name',
-      label: '客户名称',
+      label: i18n.t('wms.outbound_order.k5'),
       type: 'text',
       validation: [{ type: 'maxLength', value: 255 }],
     },
     {
       name: 'order_date',
-      label: '订单日期',
+      label: i18n.t('wms.outbound_order.k6'),
       type: 'date',
       required: true,
       renderCell: (row: Record<string, unknown>) =>
@@ -52,7 +53,7 @@ export const outboundOrderSchema: EntitySchema = {
     },
     {
       name: 'expected_delivery',
-      label: '预计到货日期',
+      label: i18n.t('wms.outbound_order.k7'),
       type: 'date',
       renderCell: (row: Record<string, unknown>) =>
         row.expected_delivery
@@ -61,23 +62,23 @@ export const outboundOrderSchema: EntitySchema = {
     },
     {
       name: 'total_amount',
-      label: '总金额',
+      label: i18n.t('wms.outbound_order.k8'),
       type: 'number',
     },
     {
       name: 'status',
-      label: '状态',
+      label: i18n.t('wms.outbound_order.k9'),
       type: 'text',
       readonly: true,
       renderCell: (row: Record<string, unknown>) => {
         const statusMap: Record<string, string> = {
-          pending: '待处理',
-          confirmed: '已确认',
-          picking: '拣货中',
-          packing: '包装中',
-          shipped: '已发货',
-          completed: '已完成',
-          cancelled: '已取消',
+          pending: i18n.t('wms.outbound_order.k10'),
+          confirmed: i18n.t('wms.outbound_order.k11'),
+          picking: i18n.t('wms.outbound_order.k12'),
+          packing: i18n.t('wms.outbound_order.k13'),
+          shipped: i18n.t('wms.outbound_order.k14'),
+          completed: i18n.t('wms.outbound_order.k15'),
+          cancelled: i18n.t('wms.outbound_order.k16'),
         };
         return statusMap[row.status as string] || String(row.status || '-');
       },
@@ -85,7 +86,7 @@ export const outboundOrderSchema: EntitySchema = {
     },
     {
       name: 'remarks',
-      label: '备注',
+      label: i18n.t('wms.outbound_order.k17'),
       type: 'textarea',
       showInList: false,
     },
@@ -107,7 +108,7 @@ export const outboundOrderSchema: EntitySchema = {
 
   actions: ['create', 'edit', 'detail', 'delete'],
   formColCount: 2,
-  createTitle: '新增出库订单',
-  editTitle: '编辑出库订单',
-  detailTitle: '出库订单详情',
+  createTitle: i18n.t('wms.outbound_order.k18'),
+  editTitle: i18n.t('wms.outbound_order.k19'),
+  detailTitle: i18n.t('wms.outbound_order.k20'),
 };

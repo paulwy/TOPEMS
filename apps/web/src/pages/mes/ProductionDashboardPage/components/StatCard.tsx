@@ -1,6 +1,7 @@
 import React from 'react';
 import { Box, Chip, CircularProgress, Paper, Typography, Stack } from '@mui/material';
 import { ArrowUp, ArrowDown } from 'lucide-react';
+import i18n from '@/i18n';
 
 const StatCard: React.FC<{
   title: string;
@@ -104,7 +105,7 @@ const StatCard: React.FC<{
             variant='caption'
             sx={{ color: 'text.secondary' }}
           >
-            较上小时
+            {i18n.t('pages.stat_card.k0')}
           </Typography>
         </Stack>
       )}

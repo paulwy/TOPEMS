@@ -10,6 +10,7 @@ import {
   type SxProps,
   type Theme,
 } from '@mui/material';
+import i18n from '@/i18n';
 import { ChevronRight, MoreVertical } from 'lucide-react';
 
 export interface MobileColumn<T = Record<string, unknown>> {
@@ -42,7 +43,7 @@ export function MobileDataTable<T extends Record<string, unknown>>({
   subtitleKey,
   onRowClick,
   loading = false,
-  emptyMessage = '暂无数据',
+  emptyMessage = i18n.t('shared.mobile_data_table.k0'),
   badgeKey,
   actionsKey,
   onActionClick,
@@ -182,7 +183,7 @@ export function MobileDataTable<T extends Record<string, unknown>>({
                     onActionClick?.(row);
                   }}
                   sx={{ ml: 0.5, flexShrink: 0 }}
-                  aria-label='更多'
+                  aria-label={i18n.t('shared.mobile_data_table.k1')}
                 >
                   <MoreVertical size={18} />
                 </IconButton>

@@ -16,9 +16,9 @@ import {
   LineChart,
   Line,
 } from 'recharts';
+import i18n from '@/i18n';
 import type { OeeDashboardData } from '@/api/mes/types';
 import { designTokens, semanticTokens } from '@topems/tokens';
-
 function useOeeMock(): OeeDashboardData {
   return useMemo(() => {
     const base = 78.5;
@@ -29,9 +29,9 @@ function useOeeMock(): OeeDashboardData {
       quality_avg: 96.3,
       by_equipment: Array.from({ length: 12 }, (_, i) => ({
         equipment_id: `eq-${i + 1}`,
-        equipment_name: `设备 ${String.fromCharCode(65 + i)}`,
+        equipment_name: `${i18n.t('pages.mes_oee_dashboard_page.k0')}${String.fromCharCode(65 + i)}`,
         oee: 60 + Math.sin(i * 0.5) * 15 + ((i * 7) % 10),
-        shift: i % 2 === 0 ? '早班' : '晚班',
+        shift: i % 2 === 0 ? i18n.t('mes.mes_oee_dashboard_page.k1') : i18n.t('mes.mes_oee_dashboard_page.k0'),
       })),
       trend_24h: Array.from({ length: 24 }, (_, h) => ({
         timestamp: `${h}:00`,
@@ -40,20 +40,17 @@ function useOeeMock(): OeeDashboardData {
     };
   }, []);
 }
-
 export default function MesOeeDashboardPage() {
   const data = useOeeMock();
   const [workshop, setWorkshop] = useState('all');
-
   const radarData = useMemo(
     () => [
-      { metric: '可用性', value: data.availability_avg },
-      { metric: '性能', value: data.performance_avg },
-      { metric: '质量', value: data.quality_avg },
+      { metric: i18n.t('mes.mes_oee_dashboard_page.k2'), value: data.availability_avg },
+      { metric: i18n.t('mes.mes_oee_dashboard_page.k3'), value: data.performance_avg },
+      { metric: i18n.t('mes.mes_oee_dashboard_page.k4'), value: data.quality_avg },
     ],
     [data]
   );
-
   return (
     <div className="space-y-4 p-4">
       <div className="flex items-center justify-between">
@@ -62,17 +59,16 @@ export default function MesOeeDashboardPage() {
           value={workshop}
           onChange={(e) => setWorkshop(e.target.value)}
           className="border rounded px-3 py-1.5 text-sm"
-          aria-label="车间筛选"
+          aria-label={i18n.t('mes.mes_oee_dashboard_page.k5')}
         >
-          <option value="all">全部车间</option>
-          <option value="w1">一车间</option>
-          <option value="w2">二车间</option>
+          <option value="all">{i18n.t('mes.mes_oee_dashboard_page.k6')}</option>
+          <option value="w1">{i18n.t('mes.mes_oee_dashboard_page.k7')}</option>
+          <option value="w2">{i18n.t('mes.mes_oee_dashboard_page.k8')}</option>
         </select>
       </div>
-
       <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
         <div className="rounded-lg border p-4">
-          <h3 className="mb-2 font-semibold">综合 OEE</h3>
+          <h3 className="mb-2 font-semibold">{i18n.t('mes.mes_oee_dashboard_page.oee_9')}</h3>
           <ResponsiveContainer width="100%" height={200}>
             <RadialBarChart
               innerRadius="60%"
@@ -86,9 +82,8 @@ export default function MesOeeDashboardPage() {
           </ResponsiveContainer>
           <p className="text-center text-3xl font-bold">{data.overall_oee.toFixed(1)}%</p>
         </div>
-
         <div className="rounded-lg border p-4">
-          <h3 className="mb-2 font-semibold">三环雷达</h3>
+          <h3 className="mb-2 font-semibold">{i18n.t('mes.mes_oee_dashboard_page.k10')}</h3>
           <ResponsiveContainer width="100%" height={200}>
             <RadarChart data={radarData}>
               <PolarGrid />
@@ -97,7 +92,6 @@ export default function MesOeeDashboardPage() {
             </RadarChart>
           </ResponsiveContainer>
         </div>
-
         <div className="rounded-lg border p-4">
           <h3 className="mb-2 font-semibold">24h OEE 趋势</h3>
           <ResponsiveContainer width="100%" height={200}>
@@ -110,14 +104,13 @@ export default function MesOeeDashboardPage() {
           </ResponsiveContainer>
         </div>
       </div>
-
       <div className="rounded-lg border p-4">
-        <h3 className="mb-2 font-semibold">设备 OEE 热力图</h3>
+        <h3 className="mb-2 font-semibold">{i18n.t('mes.mes_oee_dashboard_page.oee_11')}</h3>
         <ResponsiveContainer width="100%" height={300}>
           <ScatterChart>
             <CartesianGrid />
             <XAxis dataKey="oee" name="OEE" domain={[0, 100]} type="number" />
-            <YAxis dataKey="equipment_name" name="设备" type="category" />
+            <YAxis dataKey="equipment_name" name={i18n.t('mes.mes_oee_dashboard_page.k12')} type="category" />
             <Tooltip cursor={{ strokeDasharray: '3 3' }} />
             <Scatter data={data.by_equipment} fill={designTokens.colors.secondary.dark} />
           </ScatterChart>

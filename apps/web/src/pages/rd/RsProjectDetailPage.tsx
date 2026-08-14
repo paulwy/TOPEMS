@@ -23,6 +23,7 @@ import {
   Stack,
   Button,
 } from '@mui/material';
+import i18n from '@/i18n';
 import {
   Timeline,
   TimelineItem,
@@ -45,148 +46,135 @@ import { DetailPageTemplate, type TabConfig } from '@/components/templates';
 import { rdApi } from '@/api/rd';
 import { PageContainer } from '@/components/common';
 import type { Project, GanttPhase, GanttMilestone, Experiment } from '@/api/rd';
-
 import {QUERY_KEYS, CACHE_DURATIONS} from '@/lib/reactQuery';
-
 const RsProjectDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-
   const projectQuery = useQuery({
     queryKey: QUERY_KEYS.RD.PROJECT(id || ''),
     queryFn: async () => {
       const response = await rdApi.getProject(id || '');
       if (!response.success || !response.data) {
-        throw new Error(response.message || '加载项目详情失败');
+        throw new Error(response.message || i18n.t('rd.rs_project_detail_page.k0'));
       }
       return response.data;
     },
     enabled: !!id,
   
       staleTime: CACHE_DURATIONS.MEDIUM,});
-
   const ganttQuery = useQuery({
     queryKey: QUERY_KEYS.RD.PROJECT_GANTT(id || ''),
     queryFn: async () => {
       const response = await rdApi.getProjectGantt(id || '');
       if (!response.success || !response.data) {
-        throw new Error(response.message || '加载甘特图失败');
+        throw new Error(response.message || i18n.t('rd.rs_project_detail_page.k1'));
       }
       return response.data;
     },
     enabled: !!id,
   
       staleTime: CACHE_DURATIONS.MEDIUM,});
-
   const experimentsQuery = useQuery({
     queryKey: [...QUERY_KEYS.RD.EXPERIMENTS, { projectId: id, pagesize: 100 }],
     queryFn: async () => {
       const response = await rdApi.listExperiments({ project_id: id, pagesize: 100 });
       if (!response.success || !response.data) {
-        throw new Error(response.message || '加载试验记录失败');
+        throw new Error(response.message || i18n.t('rd.rs_project_detail_page.k2'));
       }
       return response.data.experiments || [];
     },
     enabled: !!id,
   
       staleTime: CACHE_DURATIONS.MEDIUM,});
-
   const project = projectQuery.data || null;
   const phases = ganttQuery.data?.phases || [];
   const milestones = ganttQuery.data?.milestones || [];
   const experiments = experimentsQuery.data || [];
   const loading = projectQuery.isLoading || ganttQuery.isLoading || experimentsQuery.isLoading;
-
   React.useEffect(() => {
     if (projectQuery.error) {
-      logger.error('加载项目详情失败:', projectQuery.error);
+      logger.error(i18n.t('pages.rs_project_detail_page.k0'), projectQuery.error);
     }
   }, [projectQuery.error]);
-
   const getStatusColor = (
     status: string
   ): 'primary' | 'success' | 'warning' | 'error' | 'default' => {
     switch (status) {
-      case '已完成':
+      case i18n.t('rd.rs_project_detail_page.k3'):
       case 'completed':
         return 'success';
-      case '进行中':
+      case i18n.t('rd.rs_project_detail_page.k4'):
       case 'in_progress':
         return 'primary';
-      case '待开始':
+      case i18n.t('rd.rs_project_detail_page.k5'):
       case 'pending':
         return 'default';
-      case '暂停':
+      case i18n.t('rd.rs_project_detail_page.k6'):
       case 'paused':
         return 'warning';
-      case '取消':
+      case i18n.t('rd.rs_project_detail_page.k7'):
       case 'cancelled':
         return 'error';
       default:
         return 'default';
     }
   };
-
   const getStatusLabel = (status: string): string => {
     switch (status) {
       case 'in_progress':
-        return '进行中';
+        return i18n.t('rd.rs_project_detail_page.k8');
       case 'completed':
-        return '已完成';
+        return i18n.t('rd.rs_project_detail_page.k9');
       case 'paused':
-        return '暂停';
+        return i18n.t('rd.rs_project_detail_page.k10');
       case 'cancelled':
-        return '取消';
+        return i18n.t('rd.rs_project_detail_page.k11');
       case 'pending':
-        return '待开始';
+        return i18n.t('rd.rs_project_detail_page.k12');
       default:
         return status;
     }
   };
-
   const getPhaseColor = (phase: string): 'info' | 'warning' | 'error' | 'default' => {
     switch (phase) {
-      case '小试':
+      case i18n.t('rd.rs_project_detail_page.k13'):
         return 'info';
-      case '中试':
+      case i18n.t('rd.rs_project_detail_page.k14'):
         return 'warning';
-      case '放大':
+      case i18n.t('rd.rs_project_detail_page.k15'):
         return 'error';
       default:
         return 'default';
     }
   };
-
   const getRiskColor = (risk: string): 'success' | 'warning' | 'error' => {
     switch (risk) {
-      case '低':
+      case i18n.t('rd.rs_project_detail_page.k16'):
         return 'success';
-      case '中':
+      case i18n.t('rd.rs_project_detail_page.k17'):
         return 'warning';
-      case '高':
+      case i18n.t('rd.rs_project_detail_page.k18'):
         return 'error';
       default:
         return 'warning';
     }
   };
-
   const teamMembers = project?.team_members || [];
-
   const tabContents: TabConfig[] = [
     {
       id: 'phases',
-      label: '项目阶段',
+      label: i18n.t('rd.rs_project_detail_page.k19'),
       icon: <Clock size={16} />,
       content: (
         <TableContainer>
           <Table>
             <TableHead>
               <TableRow>
-                <TableCell>阶段名称</TableCell>
-                <TableCell>状态</TableCell>
-                <TableCell>进度</TableCell>
-                <TableCell>开始日期</TableCell>
-                <TableCell>结束日期</TableCell>
+                <TableCell>{i18n.t('rd.rs_project_detail_page.k20')}</TableCell>
+                <TableCell>{i18n.t('rd.rs_project_detail_page.k21')}</TableCell>
+                <TableCell>{i18n.t('rd.rs_project_detail_page.k22')}</TableCell>
+                <TableCell>{i18n.t('rd.rs_project_detail_page.k23')}</TableCell>
+                <TableCell>{i18n.t('rd.rs_project_detail_page.k24')}</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
@@ -230,7 +218,7 @@ const RsProjectDetailPage: React.FC = () => {
     },
     {
       id: 'milestones',
-      label: '里程碑',
+      label: i18n.t('rd.rs_project_detail_page.k25'),
       icon: <CheckCircleIcon size={16} />,
       content: (
         <Timeline position='alternate'>
@@ -257,7 +245,7 @@ const RsProjectDetailPage: React.FC = () => {
                     variant='body2'
                     color='text.secondary'
                   >
-                    目标日期: {milestone.date}
+                    [i18n.t('pages.rs_project_detail_page.k0')]: {milestone.date}
                   </Typography>
                   <Chip
                     label={getStatusLabel(milestone.status)}
@@ -274,18 +262,18 @@ const RsProjectDetailPage: React.FC = () => {
     },
     {
       id: 'experiments',
-      label: '试验记录',
+      label: i18n.t('rd.rs_project_detail_page.k26'),
       icon: <FlaskConical size={16} />,
       content: (
         <TableContainer>
           <Table>
             <TableHead>
               <TableRow>
-                <TableCell>试验名称</TableCell>
-                <TableCell>阶段</TableCell>
-                <TableCell>状态</TableCell>
-                <TableCell>实验员</TableCell>
-                <TableCell align='center'>操作</TableCell>
+                <TableCell>{i18n.t('rd.rs_project_detail_page.k27')}</TableCell>
+                <TableCell>{i18n.t('rd.rs_project_detail_page.k28')}</TableCell>
+                <TableCell>{i18n.t('rd.rs_project_detail_page.k29')}</TableCell>
+                <TableCell>{i18n.t('rd.rs_project_detail_page.k30')}</TableCell>
+                <TableCell align='center'>{i18n.t('rd.rs_project_detail_page.k31')}</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
@@ -316,7 +304,7 @@ const RsProjectDetailPage: React.FC = () => {
                         size='small'
                         variant='outlined'
                       >
-                        查看
+                        {i18n.t('pages.rs_project_detail_page.k1')}
                       </Button>
                     </Link>
                   </TableCell>
@@ -329,7 +317,7 @@ const RsProjectDetailPage: React.FC = () => {
     },
     {
       id: 'team',
-      label: '团队成员',
+      label: i18n.t('rd.rs_project_detail_page.k32'),
       icon: <PeopleIcon size={16} />,
       content: (
         <List>
@@ -339,10 +327,10 @@ const RsProjectDetailPage: React.FC = () => {
             </ListItemIcon>
             <ListItemText
               primary={project?.leader || '-'}
-              secondary='项目负责人'
+              secondary={i18n.t('rd.rs_project_detail_page.k33')}
             />
             <Chip
-              label='负责人'
+              label={i18n.t('rd.rs_project_detail_page.k34')}
               color='primary'
               size='small'
             />
@@ -354,10 +342,10 @@ const RsProjectDetailPage: React.FC = () => {
               </ListItemIcon>
               <ListItemText
                 primary={member.name || '-'}
-                secondary='团队成员'
+                secondary={i18n.t('rd.rs_project_detail_page.k35')}
               />
               <Chip
-                label='成员'
+                label={i18n.t('rd.rs_project_detail_page.k36')}
                 variant='outlined'
                 size='small'
               />
@@ -368,7 +356,7 @@ const RsProjectDetailPage: React.FC = () => {
     },
     {
       id: 'documents',
-      label: '文档资料',
+      label: i18n.t('rd.rs_project_detail_page.k37'),
       icon: <DescriptionIcon size={16} />,
       content: (
         <List>
@@ -377,7 +365,7 @@ const RsProjectDetailPage: React.FC = () => {
               <DescriptionIcon />
             </ListItemIcon>
             <ListItemText
-              primary='项目立项报告'
+              primary={i18n.t('rd.rs_project_detail_page.k38')}
               secondary={project?.created_at || '-'}
             />
           </ListItemButton>
@@ -385,51 +373,48 @@ const RsProjectDetailPage: React.FC = () => {
       ),
     },
   ];
-
   const infoCard = project
     ? {
         title: project.name,
-        subtitle: `编码: ${project.code} | 类型: ${project.project_type} | 负责人: ${project.leader}`,
+        subtitle: `${i18n.t('pages.rs_project_detail_page.k1')}${project.code}${i18n.t('pages.rs_project_detail_page.k2')}${project.project_type}${i18n.t('pages.rs_project_detail_page.k3')}${project.leader}`,
         tags: [
           getStatusLabel(project.status),
-          `风险: ${project.risklevel || '-'}`,
-          `预算: ${project.budget ? (project.budget / 10000).toFixed(1) : '-'}万元`,
+          `${i18n.t('pages.rs_project_detail_page.k4')}${project.risklevel || '-'}`,
+          `${i18n.t('pages.rs_project_detail_page.k5')}${project.budget ? (project.budget / 10000).toFixed(1) : '-'}${i18n.t('pages.rs_project_detail_page.k6')}`,
         ],
         stats: [
-          { label: '项目进度', value: `${project.progress}%` },
+          { label: i18n.t('rd.rs_project_detail_page.k39'), value: `${project.progress}%` },
           {
-            label: '已完成阶段',
+            label: i18n.t('rd.rs_project_detail_page.k40'),
             value: `${phases.filter((p) => p.status === 'completed').length}/${phases.length}`,
           },
           {
-            label: '里程碑',
+            label: i18n.t('rd.rs_project_detail_page.k41'),
             value: `${milestones.filter((m) => m.status === 'completed').length}/${milestones.length}`,
           },
         ],
       }
     : undefined;
-
   const actions = [
     {
-      label: '编辑',
+      label: i18n.t('rd.rs_project_detail_page.k42'),
       icon: <EditIcon size={18} />,
       onClick: () => navigate(`${RD_PATHS.project}/${id}/edit`),
       variant: 'outlined' as const,
     },
     {
-      label: '新建试验',
+      label: i18n.t('rd.rs_project_detail_page.k43'),
       icon: <FlaskConical size={18} />,
       onClick: () => {},
       variant: 'contained' as const,
     },
   ];
-
   return (
     <PageContainer
-      title={project?.name || '项目详情'}
+      title={project?.name || i18n.t('rd.rs_project_detail_page.k44')}
       subtitle={
         project
-          ? `编码: ${project.code} | 类型: ${project.project_type} | 负责人: ${project.leader}`
+          ? `${i18n.t('pages.rs_project_detail_page.k7')}${project.code}${i18n.t('pages.rs_project_detail_page.k8')}${project.project_type}${i18n.t('pages.rs_project_detail_page.k9')}${project.leader}`
           : ''
       }
     >
@@ -437,7 +422,7 @@ const RsProjectDetailPage: React.FC = () => {
         title=''
         subtitle=''
         backHref={RD_PATHS.project}
-        detailItemName={project?.name || project?.code || '项目详情'}
+        detailItemName={project?.name || project?.code || i18n.t('rd.rs_project_detail_page.k45')}
         infoCard={infoCard}
         tabs={tabContents}
         defaultTab='phases'
@@ -447,5 +432,4 @@ const RsProjectDetailPage: React.FC = () => {
     </PageContainer>
   );
 };
-
 export default RsProjectDetailPage;

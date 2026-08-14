@@ -2,7 +2,6 @@ import { Typography, Box, InputLabel, Chip, type ChipProps } from '@mui/material
 import React, { useState, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery, useMutation } from '@tanstack/react-query';
-import { useTranslation } from 'react-i18next';
 import {QUERY_KEYS, queryClient, CACHE_DURATIONS} from '@/lib/reactQuery';
 import { Wrench } from 'lucide-react';
 import { assetApi, type Asset } from '@/api/erp';
@@ -13,17 +12,13 @@ import { DetailPageTemplate, type TabConfig, type SectionConfig } from '@/compon
 import { ConfirmDialog } from '@topems/shared-components';
 import { PageContainer } from '@/components/common';
 import { MES_PATHS } from '@/modules/mes/config';
-
+import i18n from '@/i18n';
 const ct= designTokens.colors;
-
 const EquipmentDetailPage: React.FC = () => {
-  const { t } = useTranslation();
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { success, error } = useNotification();
-
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-
   const {
     data: equipment,
     isPending: loading,
@@ -37,17 +32,15 @@ const EquipmentDetailPage: React.FC = () => {
         return res.data;
       }
       throw new Error(
-        res.message || t('mes.equipment_detail_page.notifications.load_error.message')
+        res.message || i18n.t('mes.equipment_detail_page.notifications.load_error.message')
       );
     },
     enabled: !!id,
   
       staleTime: CACHE_DURATIONS.MEDIUM,});
-
   const errorMessage = queryError
-    ? t('mes.equipment_detail_page.notifications.load_error.message')
+    ? i18n.t('mes.equipment_detail_page.notifications.load_error.message')
     : undefined;
-
   const deleteMutation = useMutation({
     mutationFn: (equipmentId: string) => assetApi.delete(equipmentId),
     onSuccess: (res) => {
@@ -58,26 +51,24 @@ const EquipmentDetailPage: React.FC = () => {
           refetchType: 'active',
         });
       if (res.code === 200) {
-        success(t('mes.equipment_detail_page.notifications.delete_success.message'));
+        success(i18n.t('mes.equipment_detail_page.notifications.delete_success.message'));
         navigate(MES_PATHS.equipment);
       } else {
-        error(res.message || t('mes.equipment_detail_page.notifications.delete_error.message'));
+        error(res.message || i18n.t('mes.equipment_detail_page.notifications.delete_error.message'));
       }
     },
     onError: (err: unknown) => {
       apiLogger.error('Failed to delete equipment:', err);
-      error(t('mes.equipment_detail_page.notifications.delete_error.message'));
+      error(i18n.t('mes.equipment_detail_page.notifications.delete_error.message'));
     },
     onSettled: () => {
       setDeleteDialogOpen(false);
     },
   });
-
   const handleDelete = () => {
     if (!id) return;
     deleteMutation.mutate(id);
   };
-
   const getStatusColor = (status: string): ChipProps['color'] => {
     switch (status) {
       case 'idle':
@@ -92,27 +83,24 @@ const EquipmentDetailPage: React.FC = () => {
         return 'default';
     }
   };
-
   const getStatusLabel = (status: string) => {
     switch (status) {
       case 'idle':
-        return t('mes.equipment_detail_page.status_idle');
+        return i18n.t('mes.equipment_detail_page.status_idle');
       case 'in_use':
-        return t('mes.equipment_detail_page.status_in_use');
+        return i18n.t('mes.equipment_detail_page.status_in_use');
       case 'maintenance':
-        return t('mes.equipment_detail_page.status_maintenance');
+        return i18n.t('mes.equipment_detail_page.status_maintenance');
       case 'scrapped':
-        return t('mes.equipment_detail_page.status_scrapped');
+        return i18n.t('mes.equipment_detail_page.status_scrapped');
       default:
         return status;
     }
   };
-
   const formatDate = (date: string | undefined) => {
     if (!date) return '-';
     return new Date(date).toLocaleDateString('zh-CN');
   };
-
   const formatCurrency = (amount: number | undefined) => {
     if (!amount) return '-';
     return new Intl.NumberFormat('zh-CN', {
@@ -120,7 +108,6 @@ const EquipmentDetailPage: React.FC = () => {
       currency: 'CNY',
     }).format(amount);
   };
-
   const basicInfoContent = useMemo(() => {
     if (!equipment) return null;
     return (
@@ -133,7 +120,7 @@ const EquipmentDetailPage: React.FC = () => {
       >
         <Box>
           <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>
-            {t('mes.equipment_detail_page.field_equipment_number')}
+            {i18n.t('mes.equipment_detail_page.field_equipment_number')}
           </InputLabel>
           <Typography sx={{ fontWeight: 'medium', mt: 0.5 }}>
             {equipment.asset_number || '-'}
@@ -141,31 +128,31 @@ const EquipmentDetailPage: React.FC = () => {
         </Box>
         <Box>
           <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>
-            {t('mes.equipment_detail_page.field_equipment_name')}
+            {i18n.t('mes.equipment_detail_page.field_equipment_name')}
           </InputLabel>
           <Typography sx={{ fontWeight: 'medium', mt: 0.5 }}>{equipment.name || '-'}</Typography>
         </Box>
         <Box>
           <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>
-            {t('mes.equipment_detail_page.field_equipment_category')}
+            {i18n.t('mes.equipment_detail_page.field_equipment_category')}
           </InputLabel>
           <Typography sx={{ mt: 0.5 }}>{equipment.category || '-'}</Typography>
         </Box>
         <Box>
           <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>
-            {t('mes.equipment_detail_page.field_brand')}
+            {i18n.t('mes.equipment_detail_page.field_brand')}
           </InputLabel>
           <Typography sx={{ mt: 0.5 }}>{equipment.brand || '-'}</Typography>
         </Box>
         <Box>
           <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>
-            {t('mes.equipment_detail_page.field_model')}
+            {i18n.t('mes.equipment_detail_page.field_model')}
           </InputLabel>
           <Typography sx={{ mt: 0.5 }}>{equipment.model || '-'}</Typography>
         </Box>
         <Box>
           <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>
-            {t('mes.equipment_detail_page.field_status')}
+            {i18n.t('mes.equipment_detail_page.field_status')}
           </InputLabel>
           <Box sx={{ mt: 0.5 }}>
             <Chip
@@ -177,8 +164,7 @@ const EquipmentDetailPage: React.FC = () => {
         </Box>
       </Box>
     );
-  }, [equipment, t]);
-
+  }, [equipment, i18n.t]);
   const specsContent = useMemo(() => {
     if (!equipment) return null;
     return (
@@ -191,19 +177,19 @@ const EquipmentDetailPage: React.FC = () => {
       >
         <Box>
           <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>
-            {t('mes.equipment_detail_page.field_serial_no')}
+            {i18n.t('mes.equipment_detail_page.field_serial_no')}
           </InputLabel>
           <Typography sx={{ mt: 0.5 }}>{equipment.serial_number || '-'}</Typography>
         </Box>
         <Box>
           <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>
-            {t('mes.equipment_detail_page.field_manufacturer')}
+            {i18n.t('mes.equipment_detail_page.field_manufacturer')}
           </InputLabel>
           <Typography sx={{ mt: 0.5 }}>{equipment.manufacturer || '-'}</Typography>
         </Box>
         <Box>
           <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>
-            {t('mes.equipment_detail_page.field_rated_power')}
+            {i18n.t('mes.equipment_detail_page.field_rated_power')}
           </InputLabel>
           <Typography sx={{ mt: 0.5 }}>
             {equipment.rated_power ? `${equipment.rated_power} kW` : '-'}
@@ -211,7 +197,7 @@ const EquipmentDetailPage: React.FC = () => {
         </Box>
         <Box>
           <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>
-            {t('mes.equipment_detail_page.field_rated_voltage')}
+            {i18n.t('mes.equipment_detail_page.field_rated_voltage')}
           </InputLabel>
           <Typography sx={{ mt: 0.5 }}>
             {equipment.rated_voltage ? `${equipment.rated_voltage} V` : '-'}
@@ -219,20 +205,19 @@ const EquipmentDetailPage: React.FC = () => {
         </Box>
         <Box>
           <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>
-            {t('mes.equipment_detail_page.field_purchase_amount')}
+            {i18n.t('mes.equipment_detail_page.field_purchase_amount')}
           </InputLabel>
           <Typography sx={{ mt: 0.5 }}>{formatCurrency(equipment.purchase_amount)}</Typography>
         </Box>
         <Box>
           <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>
-            {t('mes.equipment_detail_page.field_location')}
+            {i18n.t('mes.equipment_detail_page.field_location')}
           </InputLabel>
           <Typography sx={{ mt: 0.5 }}>{equipment.location || '-'}</Typography>
         </Box>
       </Box>
     );
-  }, [equipment, t]);
-
+  }, [equipment, i18n.t]);
   const purchaseInfoContent = useMemo(() => {
     if (!equipment) return null;
     return (
@@ -245,31 +230,30 @@ const EquipmentDetailPage: React.FC = () => {
       >
         <Box>
           <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>
-            {t('mes.equipment_detail_page.field_purchase_date')}
+            {i18n.t('mes.equipment_detail_page.field_purchase_date')}
           </InputLabel>
           <Typography sx={{ mt: 0.5 }}>{formatDate(equipment.purchase_date)}</Typography>
         </Box>
         <Box>
           <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>
-            {t('mes.equipment_detail_page.field_purchase_amount')}
+            {i18n.t('mes.equipment_detail_page.field_purchase_amount')}
           </InputLabel>
           <Typography sx={{ mt: 0.5 }}>{formatCurrency(equipment.purchase_amount)}</Typography>
         </Box>
         <Box>
           <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>
-            {t('mes.equipment_detail_page.field_responsible_person')}
+            {i18n.t('mes.equipment_detail_page.field_responsible_person')}
           </InputLabel>
           <Typography sx={{ mt: 0.5 }}>{equipment.responsible_id || '-'}</Typography>
         </Box>
       </Box>
     );
-  }, [equipment, t]);
-
+  }, [equipment, i18n.t]);
   const footerSection = useMemo<SectionConfig>(() => {
     if (!equipment) return { id: 'footer', content: null };
     return {
       id: 'footer',
-      title: t('mes.equipment_detail_page.section_other_info'),
+      title: i18n.t('mes.equipment_detail_page.section_other_info'),
       content: (
         <Box
           sx={{
@@ -283,7 +267,7 @@ const EquipmentDetailPage: React.FC = () => {
               variant='body2'
               color='text.secondary'
             >
-              {t('mes.equipment_detail_page.field_created_at')}
+              {i18n.t('mes.equipment_detail_page.field_created_at')}
             </Typography>
             <Typography sx={{ fontWeight: 'medium', mt: 0.5 }}>
               {formatDate(equipment.created_at)}
@@ -294,7 +278,7 @@ const EquipmentDetailPage: React.FC = () => {
               variant='body2'
               color='text.secondary'
             >
-              {t('mes.equipment_detail_page.field_updated_at')}
+              {i18n.t('mes.equipment_detail_page.field_updated_at')}
             </Typography>
             <Typography sx={{ fontWeight: 'medium', mt: 0.5 }}>
               {formatDate(equipment.updated_at)}
@@ -305,7 +289,7 @@ const EquipmentDetailPage: React.FC = () => {
               variant='body2'
               color='text.secondary'
             >
-              {t('mes.equipment_detail_page.field_equipment_id')}
+              {i18n.t('mes.equipment_detail_page.field_equipment_id')}
             </Typography>
             <Typography
               sx={{ fontWeight: 'medium', mt: 0.5, fontFamily: 'monospace', fontSize: '0.875rem' }}
@@ -316,29 +300,27 @@ const EquipmentDetailPage: React.FC = () => {
         </Box>
       ),
     };
-  }, [equipment, t]);
-
+  }, [equipment, i18n.t]);
   const tabs = useMemo<TabConfig[]>(
     () => [
       {
         id: 'basic',
-        label: t('mes.equipment_detail_page.tab_basic'),
+        label: i18n.t('mes.equipment_detail_page.tab_basic'),
         content: basicInfoContent || <></>,
       },
       {
         id: 'specs',
-        label: t('mes.equipment_detail_page.tab_specs'),
+        label: i18n.t('mes.equipment_detail_page.tab_specs'),
         content: specsContent || <></>,
       },
       {
         id: 'purchase',
-        label: t('mes.equipment_detail_page.tab_purchase'),
+        label: i18n.t('mes.equipment_detail_page.tab_purchase'),
         content: purchaseInfoContent || <></>,
       },
     ],
-    [t, basicInfoContent, specsContent, purchaseInfoContent]
+    [i18n.t, basicInfoContent, specsContent, purchaseInfoContent]
   );
-
   const infoCard = useMemo(
     () => ({
       avatar: (
@@ -352,18 +334,17 @@ const EquipmentDetailPage: React.FC = () => {
       tags: [equipment?.category || ''],
       stats: [
         {
-          label: t('mes.equipment_detail_page.field_equipment_category'),
+          label: i18n.t('mes.equipment_detail_page.field_equipment_category'),
           value: equipment?.category || '-',
         },
         {
-          label: t('mes.equipment_detail_page.field_status'),
+          label: i18n.t('mes.equipment_detail_page.field_status'),
           value: getStatusLabel(equipment?.status || ''),
         },
       ],
     }),
-    [equipment, t]
+    [equipment, i18n.t]
   );
-
   return (
     <PageContainer
       autoTitle
@@ -376,7 +357,7 @@ const EquipmentDetailPage: React.FC = () => {
       <DetailPageTemplate
         title=''
         subtitle=''
-        detailItemName={equipment?.name || equipment?.asset_number || equipment?.id || '设备详情'}
+        detailItemName={equipment?.name || equipment?.asset_number || equipment?.id || i18n.t('mes.equipment_detail_page.k0')}
         backHref={MES_PATHS.equipment}
         loading={loading}
         error={errorMessage}
@@ -390,12 +371,11 @@ const EquipmentDetailPage: React.FC = () => {
         isOpen={deleteDialogOpen}
         onClose={() => setDeleteDialogOpen(false)}
         onConfirm={handleDelete}
-        title={t('mes.equipment_detail_page.dialog_delete_title')}
-        message={t('mes.equipment_detail_page.dialog_delete_message')}
+        title={i18n.t('mes.equipment_detail_page.dialog_delete_title')}
+        message={i18n.t('mes.equipment_detail_page.dialog_delete_message')}
         danger
       />
     </PageContainer>
   );
 };
-
 export default EquipmentDetailPage;

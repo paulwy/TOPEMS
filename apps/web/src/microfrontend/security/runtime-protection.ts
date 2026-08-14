@@ -1,3 +1,4 @@
+import i18n from '@/i18n';
 export enum ProtectionType {
   PROTOTYPEPOLLUTION = 'prototype_pollution',
   GLOBALTAMPERING = 'global_tampering',
@@ -163,10 +164,10 @@ export class RuntimeProtector {
               type: ProtectionType.PROTOTYPEPOLLUTION,
               severity: ProtectionSeverity.CRITICAL,
               target: `Object.prototype.${prop}`,
-              details: `检测到原型污染尝试，尝试设置 ${prop} 属性为 ${typeof value}`,
+              details: `${i18n.t('microfrontend.runtime-protection.k0')}${prop}${i18n.t('microfrontend.runtime-protection.k1')}${typeof value}`,
             });
             this.stats.blockedCount++;
-            throw new Error(`原型污染防护：禁止修改 Object.prototype.${prop}`);
+            throw new Error(`${i18n.t('microfrontend.runtime-protection.k2')}${prop}`);
           },
           get: () => {
             if (prop === '__proto__') {
@@ -198,14 +199,14 @@ export class RuntimeProtector {
             type: ProtectionType.GLOBALTAMPERING,
             severity: ProtectionSeverity.MEDIUM,
             target: `window.${propStr}`,
-            details: `检测到全局变量新增：${propStr}`,
+            details: `${i18n.t('microfrontend.runtime-protection.k3')}${propStr}`,
           });
         } else if (this.globalSnapshot[propStr] !== value) {
           this.addEvent({
             type: ProtectionType.GLOBALTAMPERING,
             severity: ProtectionSeverity.HIGH,
             target: `window.${propStr}`,
-            details: `检测到全局变量修改：${propStr}`,
+            details: `${i18n.t('microfrontend.runtime-protection.k4')}${propStr}`,
           });
         }
         return Reflect.set(target, prop, value);
@@ -216,7 +217,7 @@ export class RuntimeProtector {
           type: ProtectionType.GLOBALTAMPERING,
           severity: ProtectionSeverity.HIGH,
           target: `window.${propStr}`,
-          details: `检测到全局变量删除：${propStr}`,
+          details: `${i18n.t('microfrontend.runtime-protection.k5')}${propStr}`,
         });
         return Reflect.deleteProperty(target, prop);
       },
@@ -254,12 +255,12 @@ export class RuntimeProtector {
             type: ProtectionType.DANGEROUSAPI,
             severity,
             target,
-            details: `调用了危险 API: ${name}`,
+            details: `${i18n.t('microfrontend.runtime-protection.api_6')}${name}`,
           });
 
           if (name === 'eval' || name === 'Function') {
             protector.stats.blockedCount++;
-            throw new Error(`安全限制：${name} 已被禁用`);
+            throw new Error(`${i18n.t('microfrontend.runtime-protection.k7')}${name}${i18n.t('microfrontend.runtime-protection.k8')}`);
           }
 
           return (original as Function).apply(this, args);
@@ -288,7 +289,7 @@ export class RuntimeProtector {
               type: ProtectionType.DANGEROUSAPI,
               severity: ProtectionSeverity.HIGH,
               target: 'Element.innerHTML',
-              details: '使用 innerHTML 设置 HTML 内容',
+              details: i18n.t('microfrontend.runtime-protection.k0'),
             });
             return originalSet.call(this, value);
           },
@@ -382,7 +383,7 @@ export class RuntimeProtector {
         type: ProtectionType.ANOMALY,
         severity: ProtectionSeverity.MEDIUM,
         target: 'Sandbox.execution',
-        details: '在沙箱中执行代码',
+        details: i18n.t('microfrontend.runtime-protection.k1'),
       });
 
       return fn(...Object.values(sandboxGlobals), code);
@@ -391,7 +392,7 @@ export class RuntimeProtector {
         type: ProtectionType.DANGEROUSAPI,
         severity: ProtectionSeverity.HIGH,
         target: 'Sandbox.execution',
-        details: `沙箱执行出错: ${error instanceof Error ? error.message : String(error)}`,
+        details: `${i18n.t('microfrontend.runtime-protection.k9')}${error instanceof Error ? error.message : String(error)}`,
       });
       throw error;
     }
@@ -419,13 +420,13 @@ export class RuntimeProtector {
         const usagePercent = (mem.usedJSHeapSize / mem.jsHeapSizeLimit) * 100;
         if (usagePercent > 80) {
           detected = true;
-          details.push(`内存使用率过高: ${usagePercent.toFixed(1)}%`);
+          details.push(`${i18n.t('microfrontend.runtime-protection.k10')}${usagePercent.toFixed(1)}%`);
 
           this.addEvent({
             type: ProtectionType.MEMORYLEAK,
             severity: usagePercent > 90 ? ProtectionSeverity.CRITICAL : ProtectionSeverity.HIGH,
             target: 'memory.heap',
-            details: `内存使用率达 ${usagePercent.toFixed(1)}%，可能存在内存泄漏`,
+            details: `${i18n.t('microfrontend.runtime-protection.k11')}${usagePercent.toFixed(1)}${i18n.t('microfrontend.runtime-protection.k12')}`,
           });
         }
       }
@@ -437,7 +438,7 @@ export class RuntimeProtector {
       window.eventListeners.length > 1000
     ) {
       detected = true;
-      details.push(`事件监听器数量过多: ${window.eventListeners.length}`);
+      details.push(`${i18n.t('microfrontend.runtime-protection.k13')}${window.eventListeners.length}`);
     }
 
     return { detected, details };

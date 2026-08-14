@@ -15,6 +15,7 @@ import {
   TableHead,
   TableRow,
 } from '@mui/material';
+import i18n from '@/i18n';
 import { TrendingUp, Send, Check, XCircle } from 'lucide-react';
 import CrudPage, { type RowAction } from '@/components/templates/CrudPage';
 import { createCrudPageAdapter } from '@/schema/crudPageAdapter';
@@ -53,18 +54,18 @@ const InquiryQuotationPage: React.FC = () => {
           exact: false,
           refetchType: 'active',
         });
-      addNotification({ type: 'success', title: '发布成功', message: '询价单已发布' });
+      addNotification({ type: 'success', title: i18n.t('pages.inquiry_quotation_page.k1'), message: i18n.t('pages.inquiry_quotation_page.k0') });
       invalidateInquiries();
     },
     onError: () => {
-      addNotification({ type: 'error', title: '发布失败', message: '发布询价单失败' });
+      addNotification({ type: 'error', title: i18n.t('pages.inquiry_quotation_page.k3'), message: i18n.t('pages.inquiry_quotation_page.k2') });
     },
   });
 
   const awardMutation = useMutation({
     mutationFn: async (id: string) => srmApi.awardQuotation(id),
     onSuccess: () => {
-      addNotification({ type: 'success', title: '授标成功', message: '已完成授标' });
+      addNotification({ type: 'success', title: i18n.t('pages.inquiry_quotation_page.k5'), message: i18n.t('pages.inquiry_quotation_page.k4') });
       invalidateInquiries();
       if (viewingInquiry) {
         queryClient.invalidateQueries({
@@ -76,14 +77,14 @@ const InquiryQuotationPage: React.FC = () => {
       }
     },
     onError: () => {
-      addNotification({ type: 'error', title: '授标失败', message: '授标操作失败' });
+      addNotification({ type: 'error', title: i18n.t('pages.inquiry_quotation_page.k7'), message: i18n.t('pages.inquiry_quotation_page.k6') });
     },
   });
 
   const rejectMutation = useMutation({
     mutationFn: async (id: string) => srmApi.rejectQuotation(id),
     onSuccess: () => {
-      addNotification({ type: 'success', title: '已拒绝', message: '报价单已拒绝' });
+      addNotification({ type: 'success', title: i18n.t('pages.inquiry_quotation_page.k9'), message: i18n.t('pages.inquiry_quotation_page.k8') });
       if (viewingInquiry) {
         queryClient.invalidateQueries({
           queryKey: [...QUERY_KEYS.SRM.QUOTATIONS, viewingInquiry.id],
@@ -94,7 +95,7 @@ const InquiryQuotationPage: React.FC = () => {
       }
     },
     onError: () => {
-      addNotification({ type: 'error', title: '操作失败', message: '拒绝报价失败' });
+      addNotification({ type: 'error', title: i18n.t('pages.inquiry_quotation_page.k11'), message: i18n.t('pages.inquiry_quotation_page.k10') });
     },
   });
 
@@ -115,7 +116,7 @@ const InquiryQuotationPage: React.FC = () => {
 
   const handlePublish = useCallback(
     (inquiry: Inquiry) => {
-      if (window.confirm(`确定要发布询价单 "${inquiry.inquiry_no}" 吗？`)) {
+      if (window.confirm(`${i18n.t('pages.inquiry_quotation_page.k0')}${inquiry.inquiry_no}${i18n.t('pages.inquiry_quotation_page.k1')}`)) {
         publishMutation.mutate(inquiry.id);
       }
     },
@@ -126,7 +127,7 @@ const InquiryQuotationPage: React.FC = () => {
     (quotation: Quotation) => {
       if (
         window.confirm(
-          `确定要将报价单 "${quotation.quotation_no}" 授标给 ${quotation.supplier_name} 吗？`
+          `${i18n.t('pages.inquiry_quotation_page.k2')}${quotation.quotation_no}${i18n.t('pages.inquiry_quotation_page.k3')}${quotation.supplier_name}${i18n.t('pages.inquiry_quotation_page.k4')}`
         )
       ) {
         awardMutation.mutate(quotation.id);
@@ -144,13 +145,13 @@ const InquiryQuotationPage: React.FC = () => {
 
   const customRowActions: RowAction[] = [
     {
-      label: '发布',
+      label: i18n.t('pages.inquiry_quotation_page.k12'),
       icon: <Send size={14} />,
       show: (row) => row.status === 'draft',
       onClick: (row) => handlePublish(row as unknown as Inquiry),
     },
     {
-      label: '查看报价',
+      label: i18n.t('pages.inquiry_quotation_page.k13'),
       icon: <TrendingUp size={14} />,
       show: (row) =>
         (row.status === 'published' || row.status === 'in_progress') &&
@@ -168,11 +169,11 @@ const InquiryQuotationPage: React.FC = () => {
     return (
       <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap', mb: 2 }}>
         {[
-          { label: '询价单总数', value: total, color: 'primary' },
-          { label: '草稿', value: draft, color: 'default' },
-          { label: '已发布', value: published, color: 'info' },
-          { label: '报价中', value: inProgress, color: 'warning' },
-          { label: '总报价数', value: totalQuotations, color: 'success' },
+          { label: i18n.t('pages.inquiry_quotation_page.k14'), value: total, color: 'primary' },
+          { label: i18n.t('pages.inquiry_quotation_page.k15'), value: draft, color: 'default' },
+          { label: i18n.t('pages.inquiry_quotation_page.k16'), value: published, color: 'info' },
+          { label: i18n.t('pages.inquiry_quotation_page.k17'), value: inProgress, color: 'warning' },
+          { label: i18n.t('pages.inquiry_quotation_page.k18'), value: totalQuotations, color: 'success' },
         ].map((stat) => (
           <Box
             key={stat.label}
@@ -198,12 +199,12 @@ const InquiryQuotationPage: React.FC = () => {
     <Box>
       <Box sx={{ mb: 2 }}>
         <Chip
-          label={`状态: ${inquiry.status}`}
+          label={`${i18n.t('pages.inquiry_quotation_page.k5')}${inquiry.status}`}
           size='small'
           sx={{ mr: 1 }}
         />
         <Chip
-          label={`紧急程度: ${inquiry.urgency}`}
+          label={`${i18n.t('pages.inquiry_quotation_page.k6')}${inquiry.urgency}`}
           size='small'
           color={
             inquiry.urgency === 'urgent'
@@ -216,11 +217,11 @@ const InquiryQuotationPage: React.FC = () => {
       </Box>
       <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 2, mb: 2 }}>
         <Box>
-          <Box sx={{ fontSize: 12, color: 'text.secondary' }}>报价数</Box>
+          <Box sx={{ fontSize: 12, color: 'text.secondary' }}>{i18n.t('pages.inquiry_quotation_page.k19')}</Box>
           <Box sx={{ fontWeight: 600 }}>{inquiry.quotation_count || 0}</Box>
         </Box>
         <Box>
-          <Box sx={{ fontSize: 12, color: 'text.secondary' }}>截止日期</Box>
+          <Box sx={{ fontSize: 12, color: 'text.secondary' }}>{i18n.t('pages.inquiry_quotation_page.k20')}</Box>
           <Box sx={{ fontWeight: 600 }}>
             {inquiry.deadline ? new Date(inquiry.deadline).toLocaleDateString('zh-CN') : '-'}
           </Box>
@@ -228,7 +229,7 @@ const InquiryQuotationPage: React.FC = () => {
       </Box>
       {inquiry.description && (
         <Box sx={{ mt: 2 }}>
-          <Box sx={{ fontSize: 12, color: 'text.secondary', mb: 0.5 }}>描述</Box>
+          <Box sx={{ fontSize: 12, color: 'text.secondary', mb: 0.5 }}>{i18n.t('pages.inquiry_quotation_page.k21')}</Box>
           <Box sx={{ fontSize: 14 }}>{inquiry.description}</Box>
         </Box>
       )}
@@ -243,7 +244,7 @@ const InquiryQuotationPage: React.FC = () => {
         customRowActions={customRowActions}
         headerContent={headerContent}
         detailContent={(row) => detailContent(row as unknown as Inquiry)}
-        breadcrumbs={[{ label: 'SRM' }, { label: '询报价管理' }]}
+        breadcrumbs={[{ label: 'SRM' }, { label: i18n.t('pages.inquiry_quotation_page.k22') }]}
       />
 
       <Dialog
@@ -257,13 +258,13 @@ const InquiryQuotationPage: React.FC = () => {
           <Table size='small'>
             <TableHead>
               <TableRow>
-                <TableCell>报价单号</TableCell>
-                <TableCell>供应商</TableCell>
-                <TableCell>总金额</TableCell>
-                <TableCell>交货期</TableCell>
-                <TableCell>有效期至</TableCell>
-                <TableCell>状态</TableCell>
-                <TableCell align='center'>操作</TableCell>
+                <TableCell>{i18n.t('pages.inquiry_quotation_page.k23')}</TableCell>
+                <TableCell>{i18n.t('pages.inquiry_quotation_page.k24')}</TableCell>
+                <TableCell>{i18n.t('pages.inquiry_quotation_page.k25')}</TableCell>
+                <TableCell>{i18n.t('pages.inquiry_quotation_page.k26')}</TableCell>
+                <TableCell>{i18n.t('pages.inquiry_quotation_page.k27')}</TableCell>
+                <TableCell>{i18n.t('pages.inquiry_quotation_page.k28')}</TableCell>
+                <TableCell align='center'>{i18n.t('pages.inquiry_quotation_page.k29')}</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
@@ -274,7 +275,7 @@ const InquiryQuotationPage: React.FC = () => {
                     align='center'
                     sx={{ py: 4, color: 'text.secondary' }}
                   >
-                    暂无报价
+                    {i18n.t('pages.inquiry_quotation_page.k0')}
                   </TableCell>
                 </TableRow>
               ) : (
@@ -294,11 +295,11 @@ const InquiryQuotationPage: React.FC = () => {
                         size='small'
                         label={
                           quotation.status === 'submitted'
-                            ? '已提交'
+                            ? i18n.t('pages.inquiry_quotation_page.k30')
                             : quotation.status === 'awarded'
-                              ? '已授标'
+                              ? i18n.t('pages.inquiry_quotation_page.k31')
                               : quotation.status === 'rejected'
-                                ? '已拒绝'
+                                ? i18n.t('pages.inquiry_quotation_page.k32')
                                 : quotation.status
                         }
                         color={
@@ -319,8 +320,8 @@ const InquiryQuotationPage: React.FC = () => {
                               size='small'
                               color='success'
                               onClick={() => handleAwardQuotation(quotation)}
-                              aria-label='授标'
-                              title='授标'
+                              aria-label={i18n.t('pages.inquiry_quotation_page.k33')}
+                              title={i18n.t('pages.inquiry_quotation_page.k34')}
                             >
                               <Check size={16} />
                             </IconButton>
@@ -328,8 +329,8 @@ const InquiryQuotationPage: React.FC = () => {
                               size='small'
                               color='error'
                               onClick={() => handleRejectQuotation(quotation)}
-                              aria-label='拒绝'
-                              title='拒绝'
+                              aria-label={i18n.t('pages.inquiry_quotation_page.k35')}
+                              title={i18n.t('pages.inquiry_quotation_page.k36')}
                             >
                               <XCircle size={16} />
                             </IconButton>
@@ -348,7 +349,7 @@ const InquiryQuotationPage: React.FC = () => {
             variant='outlined'
             onClick={() => setShowQuotationDialog(false)}
           >
-            关闭
+            {i18n.t('pages.inquiry_quotation_page.k1')}
           </Button>
         </DialogActions>
       </Dialog>

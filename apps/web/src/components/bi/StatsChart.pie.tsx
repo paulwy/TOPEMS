@@ -19,9 +19,9 @@ const defaultColors = [
   'primary.light',
   'secondary.main',
   'colors.purple.500',
-  '#d946ef',
+  designTokens.colors.pink[500],
   designTokens.colors.pink.main,
-  '#f43f5e',
+  designTokens.colors.error[500],
 ];
 
 const CHART_WIDTH = 400;

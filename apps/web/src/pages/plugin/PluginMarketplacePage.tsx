@@ -18,6 +18,7 @@ import {
   RefreshCw,
   Loader2,
 } from 'lucide-react';
+import i18n from '@/i18n';
 import {
   Box,
   Card,
@@ -290,13 +291,13 @@ const PluginDetailModal: React.FC<{
 
   useEffect(() => {
     if (reviewsQuery.isError && reviewsQuery.error) {
-      logger.error('加载评论失败:', reviewsQuery.error);
+      logger.error(i18n.t('pages.plugin_marketplace_page.k0'), reviewsQuery.error);
     }
   }, [reviewsQuery.isError, reviewsQuery.error]);
 
   useEffect(() => {
     if (versionsQuery.isError && versionsQuery.error) {
-      logger.error('加载版本失败:', versionsQuery.error);
+      logger.error(i18n.t('pages.plugin_marketplace_page.k1'), versionsQuery.error);
     }
   }, [versionsQuery.isError, versionsQuery.error]);
 
@@ -321,7 +322,7 @@ const PluginDetailModal: React.FC<{
 });
     },
     onError: (error: unknown) => {
-      logger.error('提交评价失败:', error);
+      logger.error(i18n.t('pages.plugin_marketplace_page.k2'), error);
       const err = error as { message?: string };
       addNotification({
         title: t('plugin.message.review_failed_title'),
@@ -757,13 +758,13 @@ const PluginMarketplacePage: React.FC = () => {
 
   useEffect(() => {
     if (pluginsQuery.isError && pluginsQuery.error) {
-      logger.error('加载市场插件失败:', pluginsQuery.error);
+      logger.error(i18n.t('pages.plugin_marketplace_page.k3'), pluginsQuery.error);
     }
   }, [pluginsQuery.isError, pluginsQuery.error]);
 
   useEffect(() => {
     if (healthQuery.isError && healthQuery.error) {
-      logger.error('加载健康状态失败:', healthQuery.error);
+      logger.error(i18n.t('pages.plugin_marketplace_page.k4'), healthQuery.error);
     }
   }, [healthQuery.isError, healthQuery.error]);
 

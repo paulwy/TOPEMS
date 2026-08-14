@@ -290,8 +290,8 @@ export const MetricCard: React.FC<MetricCardProps> = ({
         overflow: 'hidden',
         transition: 'all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275)',
         boxShadow: isHovered
-          ? '0 20px 50px rgba(0, 0, 0, 0.15), 0 0 0 1px rgba(59, 130, 246, 0.1)'
-          : '0 1px 3px rgba(0, 0, 0, 0.05)',
+          ? `0 20px 50px ${designTokens.colors.action.selected}, 0 0 0 1px ${designTokens.colors.cyber.grid.line}`
+          : `0 1px 3px ${designTokens.colors.action.hover}`,
         transform: isHovered ? 'scale(1.03) translateY(-4px)' : 'scale(1) translateY(0)',
         opacity: isVisible ? 1 : 0,
         animation: isVisible ? 'fadeInUp 0.6s ease-out forwards' : 'none',
@@ -325,7 +325,7 @@ export const MetricCard: React.FC<MetricCardProps> = ({
         sx={{
           position: 'absolute',
           inset: 0,
-          background: 'linear-gradient(135deg, rgba(59, 130, 246, 0.03) 0%, transparent 50%)',
+          background: `linear-gradient(135deg, ${designTokens.colors.primary[50]} 0%, transparent 50%)`,
           opacity: isHovered ? 1 : 0,
           transition: 'opacity 0.3s',
         }}
@@ -416,8 +416,8 @@ export const MetricCard: React.FC<MetricCardProps> = ({
               alignItems: 'center',
               justifyContent: 'center',
               boxShadow: isHovered
-                ? '0 8px 25px rgba(0, 0, 0, 0.15)'
-                : '0 4px 15px rgba(0, 0, 0, 0.1)',
+                ? `0 8px 25px ${designTokens.colors.action.selected}`
+                : `0 4px 15px ${designTokens.colors.action.selected}`,
               transition: 'all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275)',
               transform: isHovered ? 'scale(1.15) rotate(5deg)' : 'scale(1) rotate(0deg)',
             }}
@@ -432,7 +432,7 @@ export const MetricCard: React.FC<MetricCardProps> = ({
                 justifyContent: 'center',
                 background: getIconGradient(),
                 transition: 'box-shadow 0.3s',
-                boxShadow: isHovered ? 'inset 0 2px 4px rgba(0, 0, 0, 0.2)' : 'none',
+                boxShadow: isHovered ? `inset 0 2px 4px ${designTokens.colors.cyber.glass.divider}` : 'none',
               }}
             >
               {renderIcon()}

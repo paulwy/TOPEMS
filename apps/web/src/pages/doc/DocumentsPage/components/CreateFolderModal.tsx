@@ -10,6 +10,7 @@ import {
   Typography,
   Button,
 } from '@mui/material';
+import i18n from '@/i18n';
 import { apiLogger } from '@/utils/logger';
 
 const CreateFolderModal: React.FC<{
@@ -37,7 +38,7 @@ const CreateFolderModal: React.FC<{
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!folderName.trim()) {
-      setError('文件夹名称不能为空');
+      setError(i18n.t('pages.create_folder_modal.k0'));
       return;
     }
 
@@ -54,12 +55,12 @@ const CreateFolderModal: React.FC<{
         onSuccess();
         onClose();
       } else {
-        setError(response.message || '创建失败，请重试');
+        setError(response.message || i18n.t('pages.create_folder_modal.k1'));
       }
     } catch (err: unknown) {
-      apiLogger.error('创建文件夹失败:', err);
+      apiLogger.error(i18n.t('pages.create_folder_modal.k0'), err);
       const error = err as { response?: { data?: { message?: string } }; message?: string };
-      const errorMessage = error.response?.data?.message || error.message || '创建失败，请重试';
+      const errorMessage = error.response?.data?.message || error.message || i18n.t('pages.create_folder_modal.k2');
       setError(errorMessage);
     } finally {
       setCreating(false);
@@ -72,21 +73,21 @@ const CreateFolderModal: React.FC<{
       onClose={onClose}
     >
       <DialogContent>
-        <DialogTitle>创建文件夹</DialogTitle>
+        <DialogTitle>{i18n.t('pages.create_folder_modal.k3')}</DialogTitle>
         <form onSubmit={handleSubmit}>
           <Box sx={{ mb: 4 }}>
             <Typography
               variant='body2'
               sx={{ mb: 1 }}
             >
-              文件夹名称
+              {i18n.t('pages.create_folder_modal.k0')}
             </Typography>
             <TextField
               id='folderName'
               type='text'
               value={folderName}
               onChange={(e) => setFolderName(e.target.value)}
-              placeholder='输入文件夹名称'
+              placeholder={i18n.t('pages.create_folder_modal.k4')}
               disabled={creating}
               autoFocus
               fullWidth
@@ -108,14 +109,14 @@ const CreateFolderModal: React.FC<{
               onClick={onClose}
               disabled={creating}
             >
-              取消
+              {i18n.t('pages.create_folder_modal.k1')}
             </Button>
             <Button
               type='submit'
               variant='contained'
               disabled={creating || !folderName.trim()}
             >
-              {creating ? '创建中...' : '创建'}
+              {creating ? i18n.t('pages.create_folder_modal.k1') : i18n.t('pages.create_folder_modal.k5')}
             </Button>
           </DialogActions>
         </form>

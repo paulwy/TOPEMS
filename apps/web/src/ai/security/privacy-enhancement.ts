@@ -1,3 +1,4 @@
+import i18n from '@/i18n';
 export type NoiseStrategy = 'gaussian' | 'laplace' | 'exponential' | 'none';
 
 export interface PrivacyConfig {
@@ -50,7 +51,7 @@ const DEFAULT_CONFIG: PrivacyConfig = {
   noise_strategy: 'gaussian',
   max_grad_norm: 1.0,
   l2_norm_clip: 1.0,
-  description: '默认差分隐私配置',
+  description: i18n.t('ai.privacy-enhancement.k0'),
   created_at: Date.now(),
   updated_at: Date.now(),
 };
@@ -60,19 +61,19 @@ const PRIVACY_TEMPLATES: Record<string, Partial<PrivacyConfig>> = {
     epsilon: 0.1,
     delta: 1e-6,
     noise_strategy: 'gaussian',
-    description: '严格隐私保护 - 高隐私低实用性',
+    description: i18n.t('ai.privacy-enhancement.k1'),
   },
   balanced: {
     epsilon: 1.0,
     delta: 1e-5,
     noise_strategy: 'gaussian',
-    description: '平衡模式 - 隐私与实用性平衡',
+    description: i18n.t('ai.privacy-enhancement.k2'),
   },
   relaxed: {
     epsilon: 10.0,
     delta: 1e-4,
     noise_strategy: 'laplace',
-    description: '宽松模式 - 高实用性低隐私',
+    description: i18n.t('ai.privacy-enhancement.k3'),
   },
 };
 
@@ -215,7 +216,7 @@ export class PrivacyEnhancer {
       return {
         risk_level: 'high',
         risk_score: 0.8,
-        factors: [{ factor: '配置未找到', contribution: 0.5 }],
+        factors: [{ factor: i18n.t('ai.privacy-enhancement.k4'), contribution: 0.5 }],
       };
     }
 
@@ -224,26 +225,26 @@ export class PrivacyEnhancer {
     let riskScore = 0;
 
     if (!config.differential_privacy_enabled) {
-      factors.push({ factor: '差分隐私未启用', contribution: 0.35 });
+      factors.push({ factor: i18n.t('ai.privacy-enhancement.k5'), contribution: 0.35 });
       riskScore += 0.35;
     } else {
-      factors.push({ factor: '差分隐私已启用', contribution: -0.2 });
+      factors.push({ factor: i18n.t('ai.privacy-enhancement.k6'), contribution: -0.2 });
       riskScore += -0.2;
     }
 
     if (config.epsilon > 5.0) {
-      factors.push({ factor: `Epsilon 值过大 (${config.epsilon})`, contribution: 0.25 });
+      factors.push({ factor: `${i18n.t('ai.privacy-enhancement.epsilon_0')}${config.epsilon})`, contribution: 0.25 });
       riskScore += 0.25;
     } else if (config.epsilon <= 1.0) {
-      factors.push({ factor: `Epsilon 值合适 (${config.epsilon})`, contribution: -0.15 });
+      factors.push({ factor: `${i18n.t('ai.privacy-enhancement.epsilon_1')}${config.epsilon})`, contribution: -0.15 });
       riskScore += -0.15;
     }
 
     if (config.noise_strategy === 'none') {
-      factors.push({ factor: '无噪声策略', contribution: 0.2 });
+      factors.push({ factor: i18n.t('ai.privacy-enhancement.k7'), contribution: 0.2 });
       riskScore += 0.2;
     } else {
-      factors.push({ factor: `噪声策略: ${config.noise_strategy}`, contribution: -0.1 });
+      factors.push({ factor: `${i18n.t('ai.privacy-enhancement.k2')}${config.noise_strategy}`, contribution: -0.1 });
       riskScore += -0.1;
     }
 
@@ -267,24 +268,24 @@ export class PrivacyEnhancer {
 
   getRecommendations(configId: string): string[] {
     const config = this.configs.get(configId);
-    if (!config) return ['配置未找到，无法生成建议'];
+    if (!config) return [i18n.t('ai.privacy-enhancement.k8')];
 
     const recs: string[] = [];
 
     if (!config.differential_privacy_enabled) {
-      recs.push('启用差分隐私机制以保护训练数据隐私');
+      recs.push(i18n.t('ai.privacy-enhancement.k9'));
     }
 
     if (config.epsilon > 1.0) {
-      recs.push('降低 epsilon 值以增强隐私保护（推荐范围: 0.1 - 1.0）');
+      recs.push(i18n.t('ai.privacy-enhancement.k3'));
     }
 
     if (config.noise_strategy === 'none') {
-      recs.push('采用高斯或拉普拉斯噪声策略以增加输出扰动');
+      recs.push(i18n.t('ai.privacy-enhancement.k10'));
     }
 
     if (recs.length === 0) {
-      recs.push('当前隐私配置合理，建议定期审查并进行隐私测试');
+      recs.push(i18n.t('ai.privacy-enhancement.k11'));
     }
 
     return recs;
@@ -361,20 +362,20 @@ export class PrivacyEnhancer {
     const recs: string[] = [];
 
     if (dpScore < 0.6) {
-      recs.push('增强差分隐私配置：降低 epsilon 值或启用更有效的噪声策略');
+      recs.push(i18n.t('ai.privacy-enhancement.k12'));
     }
     if (anonScore < 0.6) {
-      recs.push('实施更强的数据匿名化技术，如 k-匿名或差分隐私');
+      recs.push(i18n.t('ai.privacy-enhancement.k13'));
     }
     if (accessScore < 0.6) {
-      recs.push('加强数据访问控制，实施最小权限原则');
+      recs.push(i18n.t('ai.privacy-enhancement.k14'));
     }
     if (!config.differential_privacy_enabled) {
-      recs.push('强烈建议启用差分隐私机制');
+      recs.push(i18n.t('ai.privacy-enhancement.k15'));
     }
 
     if (recs.length === 0) {
-      recs.push('隐私保护状态良好，继续定期审查和更新隐私配置');
+      recs.push(i18n.t('ai.privacy-enhancement.k16'));
     }
 
     return recs;

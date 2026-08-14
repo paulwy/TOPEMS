@@ -1,4 +1,5 @@
 import { designTokens, semanticTokens } from '@topems/tokens';
+import i18n from '@/i18n';
 /**
  * 运费成本分析页
  *
@@ -20,7 +21,6 @@ import {
   Tooltip,
   Legend,
 } from 'recharts';
-
 const COST_COLORS: Record<string, string> = {
   fuel: designTokens.colors.primary.main,
   toll: designTokens.colors.warning.main,
@@ -29,16 +29,14 @@ const COST_COLORS: Record<string, string> = {
   insurance: designTokens.colors.error.main,
   other: 'colors.grey.500',
 };
-
 const COST_LABELS: Record<string, string> = {
-  fuel: '燃油费',
-  toll: '路桥费',
-  labor: '人工费',
-  depreciation: '车辆折旧',
-  insurance: '保险费',
-  other: '其他',
+  fuel: i18n.t('tms.freight_cost_page.k0'),
+  toll: i18n.t('tms.freight_cost_page.k1'),
+  labor: i18n.t('tms.freight_cost_page.k2'),
+  depreciation: i18n.t('tms.freight_cost_page.k3'),
+  insurance: i18n.t('tms.freight_cost_page.k4'),
+  other: i18n.t('tms.freight_cost_page.k5'),
 };
-
 const MOCK_COST_DATA = [
   { type: 'fuel', amount: 185000 },
   { type: 'toll', amount: 92000 },
@@ -47,7 +45,6 @@ const MOCK_COST_DATA = [
   { type: 'insurance', amount: 45000 },
   { type: 'other', amount: 34000 },
 ];
-
 const MOCK_MONTHLY = [
   { month: '2025-07', fuel: 30000, toll: 15000, labor: 26000, other: 25000 },
   { month: '2025-08', fuel: 32000, toll: 16000, labor: 26000, other: 26000 },
@@ -56,7 +53,6 @@ const MOCK_MONTHLY = [
   { month: '2025-11', fuel: 31500, toll: 15125, labor: 26000, other: 25000 },
   { month: '2025-12', fuel: 30000, toll: 15125, labor: 26000, other: 27000 },
 ];
-
 export default function FreightCostPage() {
   const costData = useMemo(
     () =>
@@ -66,9 +62,7 @@ export default function FreightCostPage() {
       })),
     []
   );
-
   const monthlyData = useMemo(() => MOCK_MONTHLY, []);
-
   const totalCost = costData.reduce((s, c) => s + c.amount, 0);
   const largestCost = [...costData].sort((a, b) => b.amount - a.amount)[0];
   const fuelRatio =
@@ -77,36 +71,33 @@ export default function FreightCostPage() {
           ((costData.find((c) => c.type === 'fuel')?.amount ?? 0) / totalCost) * 1000
         ) / 10
       : 0;
-
   return (
     <div className='space-y-4 p-4'>
       <div>
-        <h1 className='text-2xl font-bold'>运费成本分析</h1>
-        <p className='mt-1 text-sm text-gray-500'>展示运费成本结构占比及月度趋势</p>
+        <h1 className='text-2xl font-bold'>{i18n.t('tms.freight_cost_page.k6')}</h1>
+        <p className='mt-1 text-sm text-gray-500'>{i18n.t('tms.freight_cost_page.k7')}</p>
       </div>
-
       <div className='grid grid-cols-1 gap-4 md:grid-cols-4'>
         <div className='rounded-lg border p-4'>
-          <p className='text-sm text-gray-600'>总运费成本</p>
+          <p className='text-sm text-gray-600'>{i18n.t('tms.freight_cost_page.k8')}</p>
           <p className='mt-1 text-2xl font-bold text-blue-600'>¥{totalCost.toLocaleString()}</p>
         </div>
         <div className='rounded-lg border p-4'>
-          <p className='text-sm text-gray-600'>最大成本项</p>
+          <p className='text-sm text-gray-600'>{i18n.t('tms.freight_cost_page.k9')}</p>
           <p className='mt-1 text-2xl font-bold text-orange-600'>{largestCost?.label ?? '-'}</p>
         </div>
         <div className='rounded-lg border p-4'>
-          <p className='text-sm text-gray-600'>燃油费占比</p>
+          <p className='text-sm text-gray-600'>{i18n.t('tms.freight_cost_page.k10')}</p>
           <p className='mt-1 text-2xl font-bold text-red-600'>{fuelRatio}%</p>
         </div>
         <div className='rounded-lg border p-4'>
-          <p className='text-sm text-gray-600'>成本项数</p>
+          <p className='text-sm text-gray-600'>{i18n.t('tms.freight_cost_page.k11')}</p>
           <p className='mt-1 text-2xl font-bold text-green-600'>{costData.length}</p>
         </div>
       </div>
-
       <div className='grid grid-cols-1 gap-4 md:grid-cols-2'>
         <div className='rounded-lg border p-4'>
-          <h3 className='mb-2 font-semibold'>运费成本结构（饼图）</h3>
+          <h3 className='mb-2 font-semibold'>{i18n.t('tms.freight_cost_page.k12')}</h3>
           <ResponsiveContainer width='100%' height={300}>
             <PieChart>
               <Pie
@@ -128,9 +119,8 @@ export default function FreightCostPage() {
             </PieChart>
           </ResponsiveContainer>
         </div>
-
         <div className='rounded-lg border p-4'>
-          <h3 className='mb-2 font-semibold'>成本项对比（柱状图）</h3>
+          <h3 className='mb-2 font-semibold'>{i18n.t('tms.freight_cost_page.k13')}</h3>
           <ResponsiveContainer width='100%' height={300}>
             <BarChart data={costData} margin={{ top: 10, right: 20, left: 0, bottom: 10 }}>
               <CartesianGrid strokeDasharray='3 3' />
@@ -138,7 +128,7 @@ export default function FreightCostPage() {
               <YAxis fontSize={11} />
               <Tooltip formatter={(value: unknown) => `¥${Number(value).toLocaleString()}`} />
               <Legend />
-              <Bar dataKey='amount' name='成本' fill={designTokens.colors.secondary.dark} barSize={28}>
+              <Bar dataKey='amount' name={i18n.t('tms.freight_cost_page.k14')} fill={designTokens.colors.secondary.dark} barSize={28}>
                 {costData.map((entry) => (
                   <Cell key={entry.type} fill={COST_COLORS[entry.type] ?? 'colors.grey.400'} />
                 ))}
@@ -147,9 +137,8 @@ export default function FreightCostPage() {
           </ResponsiveContainer>
         </div>
       </div>
-
       <div className='rounded-lg border p-4'>
-        <h3 className='mb-2 font-semibold'>月度成本趋势（柱状图）</h3>
+        <h3 className='mb-2 font-semibold'>{i18n.t('tms.freight_cost_page.k15')}</h3>
         <ResponsiveContainer width='100%' height={280}>
           <BarChart data={monthlyData} margin={{ top: 10, right: 30, left: 0, bottom: 10 }}>
             <CartesianGrid strokeDasharray='3 3' />
@@ -157,10 +146,10 @@ export default function FreightCostPage() {
             <YAxis fontSize={11} />
             <Tooltip formatter={(value: unknown) => `¥${Number(value).toLocaleString()}`} />
             <Legend />
-            <Bar dataKey='fuel' name='燃油费' fill={COST_COLORS.fuel} stackId='a' />
-            <Bar dataKey='toll' name='路桥费' fill={COST_COLORS.toll} stackId='a' />
-            <Bar dataKey='labor' name='人工费' fill={COST_COLORS.labor} stackId='a' />
-            <Bar dataKey='other' name='其他' fill={COST_COLORS.other} stackId='a' />
+            <Bar dataKey='fuel' name={i18n.t('tms.freight_cost_page.k16')} fill={COST_COLORS.fuel} stackId='a' />
+            <Bar dataKey='toll' name={i18n.t('tms.freight_cost_page.k17')} fill={COST_COLORS.toll} stackId='a' />
+            <Bar dataKey='labor' name={i18n.t('tms.freight_cost_page.k18')} fill={COST_COLORS.labor} stackId='a' />
+            <Bar dataKey='other' name={i18n.t('tms.freight_cost_page.k19')} fill={COST_COLORS.other} stackId='a' />
           </BarChart>
         </ResponsiveContainer>
       </div>

@@ -2,6 +2,7 @@ import React from 'react';
 import { Controller, type Control, type FieldValues, type Path } from 'react-hook-form';
 import { FormControl, FormHelperText } from '@mui/material';
 import { Cascader, type CascaderOption, type CascaderLocale } from '@topems/shared-components';
+import i18n from '@/i18n';
 
 interface FormCascaderProps<T extends FieldValues> {
   name: Path<T>;
@@ -34,7 +35,7 @@ export function FormCascader<T extends FieldValues>({
       name={name}
       control={control}
       rules={{
-        required: required ? '此项为必填项' : false,
+        required: required ? i18n.t('components.form_cascader.k0') : false,
       }}
       render={({ field: { value, onChange }, fieldState: { error } }) => (
         <FormControl

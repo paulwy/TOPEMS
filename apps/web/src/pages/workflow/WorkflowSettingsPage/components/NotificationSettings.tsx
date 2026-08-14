@@ -9,15 +9,14 @@ import {
   FormControl,
   InputLabel,
 } from '@mui/material';
+import i18n from '@/i18n';
 import React from 'react';
 import type { NotificationSettings as NotificationSettingsType } from '../types';
-
 interface NotificationSettingsProps {
   settings: NotificationSettingsType;
   onChange: (settings: NotificationSettingsType) => void;
   markUnsaved: () => void;
 }
-
 export const NotificationSettings: React.FC<NotificationSettingsProps> = ({
   settings,
   onChange,
@@ -30,14 +29,14 @@ export const NotificationSettings: React.FC<NotificationSettingsProps> = ({
           variant='h6'
           sx={{ fontWeight: 600, mb: 1 }}
         >
-          通知渠道
+          {i18n.t('pages.notification_settings.k0')}
         </Typography>
         <Typography
           variant='body2'
           color='text.secondary'
           sx={{ mb: 3 }}
         >
-          配置工作流通知的发送渠道
+          {i18n.t('pages.notification_settings.k1')}
         </Typography>
         <Stack spacing={2}>
           <Box
@@ -55,13 +54,13 @@ export const NotificationSettings: React.FC<NotificationSettingsProps> = ({
                 variant='body2'
                 sx={{ fontWeight: 500 }}
               >
-                邮件通知
+                {i18n.t('pages.notification_settings.k2')}
               </Typography>
               <Typography
                 variant='caption'
                 color='text.secondary'
               >
-                通过邮件发送审批通知
+                {i18n.t('pages.notification_settings.k3')}
               </Typography>
             </Box>
             <Switch
@@ -90,13 +89,13 @@ export const NotificationSettings: React.FC<NotificationSettingsProps> = ({
                 variant='body2'
                 sx={{ fontWeight: 500 }}
               >
-                短信通知
+                {i18n.t('pages.notification_settings.k4')}
               </Typography>
               <Typography
                 variant='caption'
                 color='text.secondary'
               >
-                通过短信发送紧急通知
+                {i18n.t('pages.notification_settings.k5')}
               </Typography>
             </Box>
             <Switch
@@ -125,13 +124,13 @@ export const NotificationSettings: React.FC<NotificationSettingsProps> = ({
                 variant='body2'
                 sx={{ fontWeight: 500 }}
               >
-                站内推送
+                {i18n.t('pages.notification_settings.k6')}
               </Typography>
               <Typography
                 variant='caption'
                 color='text.secondary'
               >
-                在系统内推送实时消息
+                {i18n.t('pages.notification_settings.k7')}
               </Typography>
             </Box>
             <Switch
@@ -160,13 +159,13 @@ export const NotificationSettings: React.FC<NotificationSettingsProps> = ({
                 variant='body2'
                 sx={{ fontWeight: 500 }}
               >
-                企业微信
+                {i18n.t('pages.notification_settings.k8')}
               </Typography>
               <Typography
                 variant='caption'
                 color='text.secondary'
               >
-                通过企业微信发送通知
+                {i18n.t('pages.notification_settings.k9')}
               </Typography>
             </Box>
             <Switch
@@ -182,15 +181,13 @@ export const NotificationSettings: React.FC<NotificationSettingsProps> = ({
           </Box>
         </Stack>
       </Box>
-
       <Divider />
-
       <Box>
         <Typography
           variant='h6'
           sx={{ fontWeight: 600, mb: 2 }}
         >
-          通知场景
+          {i18n.t('pages.notification_settings.k10')}
         </Typography>
         <Stack spacing={2}>
           <Box
@@ -203,7 +200,7 @@ export const NotificationSettings: React.FC<NotificationSettingsProps> = ({
               borderRadius: 1,
             }}
           >
-            <Typography variant='body2'>审批待办通知</Typography>
+            <Typography variant='body2'>{i18n.t('workflow.notification_settings.k0')}</Typography>
             <Switch
               checked={settings.approvalNotify}
               onChange={(e) => {
@@ -225,7 +222,7 @@ export const NotificationSettings: React.FC<NotificationSettingsProps> = ({
               borderRadius: 1,
             }}
           >
-            <Typography variant='body2'>超时提醒</Typography>
+            <Typography variant='body2'>{i18n.t('workflow.notification_settings.k1')}</Typography>
             <Switch
               checked={settings.timeoutNotify}
               onChange={(e) => {
@@ -247,7 +244,7 @@ export const NotificationSettings: React.FC<NotificationSettingsProps> = ({
               borderRadius: 1,
             }}
           >
-            <Typography variant='body2'>流程完成通知</Typography>
+            <Typography variant='body2'>{i18n.t('workflow.notification_settings.k2')}</Typography>
             <Switch
               checked={settings.completeNotify}
               onChange={(e) => {
@@ -269,7 +266,7 @@ export const NotificationSettings: React.FC<NotificationSettingsProps> = ({
               borderRadius: 1,
             }}
           >
-            <Typography variant='body2'>驳回通知</Typography>
+            <Typography variant='body2'>{i18n.t('workflow.notification_settings.k3')}</Typography>
             <Switch
               checked={settings.rejectNotify}
               onChange={(e) => {
@@ -283,24 +280,22 @@ export const NotificationSettings: React.FC<NotificationSettingsProps> = ({
           </Box>
         </Stack>
       </Box>
-
       <Divider />
-
       <Box>
         <Typography
           variant='h6'
           sx={{ fontWeight: 600, mb: 2 }}
         >
-          消息模板
+          {i18n.t('pages.notification_settings.k11')}
         </Typography>
         <FormControl
           fullWidth
           size='small'
         >
-          <InputLabel>默认消息模板</InputLabel>
+          <InputLabel>{i18n.t('workflow.notification_settings.k4')}</InputLabel>
           <Select
             value={settings.defaultTemplate}
-            label='默认消息模板'
+            label={i18n.t('workflow.notification_settings.k5')}
             onChange={(e) => {
               onChange({
                 ...settings,
@@ -309,9 +304,9 @@ export const NotificationSettings: React.FC<NotificationSettingsProps> = ({
               markUnsaved();
             }}
           >
-            <MenuItem value='default'>默认模板</MenuItem>
-            <MenuItem value='concise'>简洁模板</MenuItem>
-            <MenuItem value='detailed'>详细模板</MenuItem>
+            <MenuItem value='default'>{i18n.t('workflow.notification_settings.k6')}</MenuItem>
+            <MenuItem value='concise'>{i18n.t('workflow.notification_settings.k7')}</MenuItem>
+            <MenuItem value='detailed'>{i18n.t('workflow.notification_settings.k8')}</MenuItem>
           </Select>
         </FormControl>
       </Box>

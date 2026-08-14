@@ -3,6 +3,7 @@ import { Box, Card, CardContent, Typography, IconButton } from '@mui/material';
 import { FileText, Edit, Trash2, Copy, Eye, ToggleLeft, ToggleRight } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import type { Template, TemplateCategory } from '@/api/template';
+import i18n from '@/i18n';
 
 interface TemplateCardProps {
   template: Template;
@@ -67,7 +68,7 @@ const TemplateCard: React.FC<TemplateCardProps> = ({
                 ? ` + ${t('report.template_management_page.enabled')} + `
                 : t('report.template_management_page.disabled')
             }
-            aria-label='切换'
+            aria-label={i18n.t('pages.template_card.k0')}
           >
             {template.isactive ? (
               <ToggleRight sx={{ width: 20, height: 20 }} />

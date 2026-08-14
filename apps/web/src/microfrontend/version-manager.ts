@@ -11,6 +11,7 @@
 
 import { REMOTE_MODULES, type RemoteModuleConfig } from './config';
 import { logger } from '@/utils/logger';
+import i18n from '@/i18n';
 
 // ==================== 类型定义 ====================
 
@@ -82,7 +83,7 @@ function writeStorage<T>(key: string, value: T): void {
   try {
     localStorage.setItem(key, JSON.stringify(value));
   } catch (err) {
-    logger.warn('[VersionManager] localStorage 写入失败', err);
+    logger.warn(i18n.t('microfrontend.version-manager.k0'), err);
   }
 }
 
@@ -181,7 +182,7 @@ class VersionManager {
     });
 
     this.persist();
-    logger.info('[VersionManager] 初始化完成，已加载', this.manifest.size, '个模块版本');
+    logger.info(i18n.t('microfrontend.version-manager.k1'), this.manifest.size, i18n.t('microfrontend.version-manager.k0'));
   }
 
   /**
@@ -256,7 +257,7 @@ class VersionManager {
       };
     } catch (err) {
       const errorMsg = err instanceof Error ? err.message : String(err);
-      logger.warn(`[VersionManager] 检查 ${moduleId} 版本失败:`, errorMsg);
+      logger.warn(`${i18n.t('microfrontend.version-manager.versionmanager_2')}${moduleId}${i18n.t('microfrontend.version-manager.k3')}`, errorMsg);
       return {
         moduleId,
         hasUpdate: false,
@@ -306,7 +307,7 @@ class VersionManager {
       return parseVersionFromResponse(response, content);
     } catch (err) {
       if (err instanceof DOMException && err.name === 'AbortError') {
-        throw new Error('版本检查超时');
+        throw new Error(i18n.t('microfrontend.version-manager.k1'));
       }
       throw err;
     } finally {
@@ -338,7 +339,7 @@ class VersionManager {
     };
 
     logger.info(
-      `[VersionManager] 检测到 ${config.name} 新版本: ${oldVersion} → ${newVersion} (策略: ${strategy})`
+      `${i18n.t('microfrontend.version-manager.versionmanager_4')}${config.name}${i18n.t('microfrontend.version-manager.k5')}${oldVersion} → ${newVersion}${i18n.t('microfrontend.version-manager.k6')}${strategy})`
     );
 
     // 更新版本记录
@@ -379,7 +380,7 @@ class VersionManager {
       link.as = 'script';
       link.crossOrigin = 'anonymous';
       document.head.appendChild(link);
-      logger.info(`[VersionManager] 静默预加载 ${moduleId} 新版本 entry`);
+      logger.info(`${i18n.t('microfrontend.version-manager.k7')}${moduleId}${i18n.t('microfrontend.version-manager.entry_8')}`);
     } catch {
       // 预加载失败不阻塞
     }
@@ -391,7 +392,7 @@ class VersionManager {
    * 对于关键模块（如 core），直接刷新整个页面以确保用户使用最新版本。
    */
   private forceReload(moduleId: string): void {
-    logger.warn(`[VersionManager] 关键模块 ${moduleId} 版本变更，强制刷新页面`);
+    logger.warn(`${i18n.t('microfrontend.version-manager.k9')}${moduleId}${i18n.t('microfrontend.version-manager.k10')}`);
     // 给当前请求一点时间完成，然后刷新
     setTimeout(() => {
       window.location.reload();
@@ -442,7 +443,7 @@ class VersionManager {
       try {
         cb(event);
       } catch (err) {
-        logger.error('[VersionManager] 版本更新回调执行失败', err);
+        logger.error(i18n.t('microfrontend.version-manager.k11'), err);
       }
     });
   }
@@ -503,11 +504,11 @@ class VersionManager {
   rollbackModule(moduleId: string): boolean {
     const info = this.manifest.get(moduleId);
     if (!info || !info.previous) {
-      logger.warn(`[VersionManager] ${moduleId} 无可回滚的上一版本`);
+      logger.warn(`[VersionManager] ${moduleId}${i18n.t('microfrontend.version-manager.k12')}`);
       return false;
     }
 
-    logger.info(`[VersionManager] 回滚 ${moduleId}: ${info.current} → ${info.previous}`);
+    logger.info(`${i18n.t('microfrontend.version-manager.versionmanager_13')}${moduleId}: ${info.current} → ${info.previous}`);
 
     // 交换 current 和 previous
     const rolledBackVersion = info.previous;
@@ -549,7 +550,7 @@ class VersionManager {
   async applyUpdate(moduleId: string): Promise<boolean> {
     const config = REMOTE_MODULES.find((m) => m.name === moduleId);
     if (!config) {
-      logger.warn(`[VersionManager] 未找到模块配置: ${moduleId}`);
+      logger.warn(`${i18n.t('microfrontend.version-manager.k14')}${moduleId}`);
       return false;
     }
 
@@ -559,7 +560,7 @@ class VersionManager {
       const currentVersion = this.getModuleVersion(moduleId);
 
       if (!isVersionDifferent(currentVersion, remoteVersion)) {
-        logger.info(`[VersionManager] ${moduleId} 已是最新版本`);
+        logger.info(`[VersionManager] ${moduleId}${i18n.t('microfrontend.version-manager.k15')}`);
         return true;
       }
 
@@ -595,7 +596,7 @@ class VersionManager {
 
       return true;
     } catch (err) {
-      logger.error(`[VersionManager] 应用 ${moduleId} 更新失败`, err);
+      logger.error(`${i18n.t('microfrontend.version-manager.versionmanager_16')}${moduleId}${i18n.t('microfrontend.version-manager.k17')}`, err);
       return false;
     }
   }
@@ -613,18 +614,18 @@ class VersionManager {
     // 首次延迟 30 秒检查，避免与首屏加载竞争
     setTimeout(() => {
       this.checkRemoteVersions().catch((err) => {
-        logger.warn('[VersionManager] 首次版本检查失败', err);
+        logger.warn(i18n.t('microfrontend.version-manager.k18'), err);
       });
     }, 30000);
 
     // 定时检查
     this.checkTimer = setInterval(() => {
       this.checkRemoteVersions().catch((err) => {
-        logger.warn('[VersionManager] 定时版本检查失败', err);
+        logger.warn(i18n.t('microfrontend.version-manager.k19'), err);
       });
     }, intervalMs);
 
-    logger.info(`[VersionManager] 启动定时版本检查，间隔 ${intervalMs / 1000}s`);
+    logger.info(`${i18n.t('microfrontend.version-manager.k20')}${intervalMs / 1000}s`);
   }
 
   /**
@@ -634,7 +635,7 @@ class VersionManager {
     if (this.checkTimer) {
       clearInterval(this.checkTimer);
       this.checkTimer = null;
-      logger.info('[VersionManager] 已停止定时版本检查');
+      logger.info(i18n.t('microfrontend.version-manager.k21'));
     }
   }
 

@@ -11,6 +11,7 @@ import {
   Paper,
   InputLabel,
 } from '@mui/material';
+import i18n from '@/i18n';
 import CrudPage, { type CrudApiAdapter } from '@/components/templates/CrudPage';
 import { createCrudPageAdapter, type CrudApi } from '@/schema/crudPageAdapter';
 import { materialReturnSchema } from '@/schemas/mes';
@@ -19,16 +20,13 @@ import type { MaterialReturn, MaterialReturnItem } from '@/api/mes';
 import { Undo2, FileText, Package } from 'lucide-react';
 import { designTokens } from '@/theme/tokens';
 import { PageContainer } from '@/components/common';
-
 const ct= designTokens.colors;
-
 const apiAdapter = createCrudPageAdapter(
   mesApi.materialReturns as unknown as CrudApi<MaterialReturn>,
   {
     itemsField: 'returns',
   }
 );
-
 const MaterialReturnPage: React.FC = () => {
   const renderDetailContent = (row: Record<string, unknown>) => {
     const ret = row as unknown as MaterialReturn;
@@ -42,7 +40,7 @@ const MaterialReturnPage: React.FC = () => {
           }}
         >
           <Box>
-            <InputLabel sx={{ color: 'text.secondary', fontSize: 12 }}>退库单号</InputLabel>
+            <InputLabel sx={{ color: 'text.secondary', fontSize: 12 }}>{i18n.t('mes.material_return_page.k0')}</InputLabel>
             <Box
               component='span'
               sx={{ fontWeight: 500 }}
@@ -51,29 +49,28 @@ const MaterialReturnPage: React.FC = () => {
             </Box>
           </Box>
           <Box>
-            <InputLabel sx={{ color: 'text.secondary', fontSize: 12 }}>工单号</InputLabel>
+            <InputLabel sx={{ color: 'text.secondary', fontSize: 12 }}>{i18n.t('mes.material_return_page.k1')}</InputLabel>
             <Box component='span'>{ret.order_number || '-'}</Box>
           </Box>
           <Box>
-            <InputLabel sx={{ color: 'text.secondary', fontSize: 12 }}>退库人</InputLabel>
+            <InputLabel sx={{ color: 'text.secondary', fontSize: 12 }}>{i18n.t('mes.material_return_page.k2')}</InputLabel>
             <Box component='span'>{ret.operator}</Box>
           </Box>
           <Box>
-            <InputLabel sx={{ color: 'text.secondary', fontSize: 12 }}>退库时间</InputLabel>
+            <InputLabel sx={{ color: 'text.secondary', fontSize: 12 }}>{i18n.t('mes.material_return_page.k3')}</InputLabel>
             <Box component='span'>
               {ret.return_time ? new Date(ret.return_time).toLocaleString('zh-CN') : '-'}
             </Box>
           </Box>
           <Box sx={{ gridColumn: '1 / -1' }}>
-            <InputLabel sx={{ color: 'text.secondary', fontSize: 12 }}>退库原因</InputLabel>
+            <InputLabel sx={{ color: 'text.secondary', fontSize: 12 }}>{i18n.t('mes.material_return_page.k4')}</InputLabel>
             <Box component='span'>{ret.reason || '-'}</Box>
           </Box>
           <Box>
-            <InputLabel sx={{ color: 'text.secondary', fontSize: 12 }}>创建时间</InputLabel>
+            <InputLabel sx={{ color: 'text.secondary', fontSize: 12 }}>{i18n.t('mes.material_return_page.k5')}</InputLabel>
             <Box component='span'>{new Date(ret.created_at).toLocaleString('zh-CN')}</Box>
           </Box>
         </Box>
-
         <Box>
           <Typography
             variant='subtitle2'
@@ -88,12 +85,12 @@ const MaterialReturnPage: React.FC = () => {
             <Table size='small'>
               <TableHead>
                 <TableRow>
-                  <TableCell>序号</TableCell>
-                  <TableCell>物料编码</TableCell>
-                  <TableCell>物料名称</TableCell>
-                  <TableCell>数量</TableCell>
-                  <TableCell>单位</TableCell>
-                  <TableCell>批次号</TableCell>
+                  <TableCell>{i18n.t('mes.material_return_page.k6')}</TableCell>
+                  <TableCell>{i18n.t('mes.material_return_page.k7')}</TableCell>
+                  <TableCell>{i18n.t('mes.material_return_page.k8')}</TableCell>
+                  <TableCell>{i18n.t('mes.material_return_page.k9')}</TableCell>
+                  <TableCell>{i18n.t('mes.material_return_page.k10')}</TableCell>
+                  <TableCell>{i18n.t('mes.material_return_page.k11')}</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
@@ -104,7 +101,7 @@ const MaterialReturnPage: React.FC = () => {
                       align='center'
                       sx={{ color: 'text.secondary', py: 3 }}
                     >
-                      暂无物料明细
+                      {i18n.t('pages.material_return_page.k0')}
                     </TableCell>
                   </TableRow>
                 ) : (
@@ -126,7 +123,6 @@ const MaterialReturnPage: React.FC = () => {
       </Box>
     );
   };
-
   return (
     <PageContainer
       autoTitle
@@ -139,7 +135,7 @@ const MaterialReturnPage: React.FC = () => {
       <CrudPage
         schema={materialReturnSchema}
         apiAdapter={apiAdapter as CrudApiAdapter}
-        breadcrumbs={[{ label: 'MES' }, { label: '物料退回' }]}
+        breadcrumbs={[{ label: 'MES' }, { label: i18n.t('mes.material_return_page.k12') }]}
         detailMaxWidth='lg'
         detailContent={renderDetailContent}
         headerContent={(rows) => {
@@ -147,7 +143,6 @@ const MaterialReturnPage: React.FC = () => {
           const approved = rows.filter((r) => r.status === 'approved').length;
           const returned = rows.filter((r) => r.status === 'returned').length;
           const total = rows.length;
-
           return (
             <Box
               sx={{
@@ -167,7 +162,7 @@ const MaterialReturnPage: React.FC = () => {
                     variant='body2'
                     sx={{ color: 'text.secondary' }}
                   >
-                    待审核
+                    {i18n.t('pages.material_return_page.k1')}
                   </Typography>
                 </Box>
                 <Typography
@@ -182,7 +177,7 @@ const MaterialReturnPage: React.FC = () => {
                   variant='body2'
                   sx={{ color: 'text.secondary', mb: 1 }}
                 >
-                  已审核
+                  {i18n.t('pages.material_return_page.k2')}
                 </Typography>
                 <Typography
                   variant='h5'
@@ -201,7 +196,7 @@ const MaterialReturnPage: React.FC = () => {
                     variant='body2'
                     sx={{ color: 'text.secondary' }}
                   >
-                    已退库
+                    {i18n.t('pages.material_return_page.k3')}
                   </Typography>
                 </Box>
                 <Typography
@@ -221,7 +216,7 @@ const MaterialReturnPage: React.FC = () => {
                     variant='body2'
                     sx={{ color: 'text.secondary' }}
                   >
-                    总数
+                    {i18n.t('pages.material_return_page.k4')}
                   </Typography>
                 </Box>
                 <Typography
@@ -238,5 +233,4 @@ const MaterialReturnPage: React.FC = () => {
     </PageContainer>
   );
 };
-
 export default MaterialReturnPage;

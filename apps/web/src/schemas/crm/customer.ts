@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import type { EntitySchema } from '@/schema';
 import { commonAuditSchema } from './_shared';
+import i18n from '@/i18n';
 
 export const customerRating = z.enum(['A', 'B', 'C', 'D']);
 export const customerType = z.enum(['enterprise', 'individual']);
@@ -32,15 +33,15 @@ export type UpdateCustomerRequest = z.infer<typeof updateCustomerSchema>;
 
 export const customerSchema: EntitySchema<Customer> = {
   entity: 'crm_customer',
-  title: '客户管理',
-  description: '管理客户基础信息、评级、审批状态和所有权',
+  title: i18n.t('shared.customer.k0'),
+  description: i18n.t('shared.customer.k1'),
   softDelete: true,
   actions: ['create', 'edit', 'detail', 'delete'],
 
   fields: [
     {
       name: 'name',
-      label: '客户名称',
+      label: i18n.t('shared.customer.k2'),
       type: 'text',
       required: true,
       sortable: true,
@@ -49,45 +50,45 @@ export const customerSchema: EntitySchema<Customer> = {
     },
     {
       name: 'customerType',
-      label: '客户类型',
+      label: i18n.t('shared.customer.k3'),
       type: 'select',
       required: true,
       defaultValue: 'enterprise',
       options: {
         type: 'static',
         options: [
-          { value: 'enterprise', label: '企业客户' },
-          { value: 'individual', label: '个人客户' },
+          { value: 'enterprise', label: i18n.t('shared.customer.k4') },
+          { value: 'individual', label: i18n.t('shared.customer.k5') },
         ],
       },
       listWidth: 100,
     },
     {
       name: 'industry',
-      label: '所属行业',
+      label: i18n.t('shared.customer.k6'),
       type: 'text',
       listWidth: 120,
       validation: [{ type: 'maxLength', value: 80 }],
     },
     {
       name: 'rating',
-      label: '客户评级',
+      label: i18n.t('shared.customer.k7'),
       type: 'select',
       defaultValue: 'C',
       options: {
         type: 'static',
         options: [
-          { value: 'A', label: 'A (重点)' },
-          { value: 'B', label: 'B (普通)' },
-          { value: 'C', label: 'C (潜在)' },
-          { value: 'D', label: 'D (低价值)' },
+          { value: 'A', label: i18n.t('shared.customer.a_0') },
+          { value: 'B', label: i18n.t('shared.customer.b_1') },
+          { value: 'C', label: i18n.t('shared.customer.c_2') },
+          { value: 'D', label: i18n.t('shared.customer.d_3') },
         ],
       },
       listWidth: 100,
     },
     {
       name: 'region',
-      label: '所在地区',
+      label: i18n.t('shared.customer.k8'),
       type: 'text',
       listWidth: 100,
       showInList: false,
@@ -95,45 +96,45 @@ export const customerSchema: EntitySchema<Customer> = {
     },
     {
       name: 'ownerId',
-      label: '负责人 ID',
+      label: i18n.t('shared.customer.id_9'),
       type: 'text',
       required: true,
       showInList: false,
     },
     {
       name: 'tags',
-      label: '标签',
+      label: i18n.t('shared.customer.k10'),
       type: 'text',
       defaultValue: [],
       showInList: false,
     },
     {
       name: 'approvalStatus',
-      label: '审批状态',
+      label: i18n.t('shared.customer.k11'),
       type: 'select',
       defaultValue: 'none',
       readonly: true,
       options: {
         type: 'static',
         options: [
-          { value: 'none', label: '未发起' },
-          { value: 'pending', label: '审批中' },
-          { value: 'approved', label: '已通过' },
-          { value: 'rejected', label: '已驳回' },
+          { value: 'none', label: i18n.t('shared.customer.k12') },
+          { value: 'pending', label: i18n.t('shared.customer.k13') },
+          { value: 'approved', label: i18n.t('shared.customer.k14') },
+          { value: 'rejected', label: i18n.t('shared.customer.k15') },
         ],
       },
       listWidth: 100,
     },
     {
       name: 'createdAt',
-      label: '创建时间',
+      label: i18n.t('shared.customer.k16'),
       type: 'datetime',
       readonly: true,
       listWidth: 160,
     },
     {
       name: 'updatedAt',
-      label: '更新时间',
+      label: i18n.t('shared.customer.k17'),
       type: 'datetime',
       readonly: true,
       showInList: false,

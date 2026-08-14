@@ -22,6 +22,7 @@ import {
   Select,
   MenuItem,
 } from '@mui/material';
+import i18n from '@/i18n';
 import {
   Paperclip,
   Upload,
@@ -87,7 +88,7 @@ const AttachmentsPage: React.FC = () => {
   const uploadMutation = useMutation({
     mutationFn: (file: File) => attachmentApi.upload(file, entityType, entityId),
     onSuccess: () => {
-      addNotification({ type: 'success', title: '已上传', message: '附件上传成功' });
+      addNotification({ type: 'success', title: i18n.t('pages.attachments_page.k1'), message: i18n.t('pages.attachments_page.k0') });
       queryClient.invalidateQueries({
         queryKey: [...QUERY_KEYS.AD_HOC.SHARED_ATTACHMENTS_BASE, entityType, entityId],
 
@@ -98,8 +99,8 @@ const AttachmentsPage: React.FC = () => {
       if (fileInputRef.current) fileInputRef.current.value = '';
     },
     onError: (error: unknown) => {
-      apiLogger.error('上传附件失败:', error);
-      addNotification({ type: 'error', title: '操作失败', message: '附件上传失败' });
+      apiLogger.error(i18n.t('pages.attachments_page.k0'), error);
+      addNotification({ type: 'error', title: i18n.t('pages.attachments_page.k3'), message: i18n.t('pages.attachments_page.k2') });
     },
   });
 
@@ -107,7 +108,7 @@ const AttachmentsPage: React.FC = () => {
   const deleteMutation = useMutation({
     mutationFn: (id: string) => attachmentApi.delete(id),
     onSuccess: () => {
-      addNotification({ type: 'success', title: '已删除', message: '附件已删除' });
+      addNotification({ type: 'success', title: i18n.t('pages.attachments_page.k5'), message: i18n.t('pages.attachments_page.k4') });
       queryClient.invalidateQueries({
         queryKey: [...QUERY_KEYS.AD_HOC.SHARED_ATTACHMENTS_BASE, entityType, entityId],
 
@@ -116,8 +117,8 @@ const AttachmentsPage: React.FC = () => {
       });
     },
     onError: (error: unknown) => {
-      apiLogger.error('删除附件失败:', error);
-      addNotification({ type: 'error', title: '操作失败', message: '无法删除附件' });
+      apiLogger.error(i18n.t('pages.attachments_page.k1'), error);
+      addNotification({ type: 'error', title: i18n.t('pages.attachments_page.k7'), message: i18n.t('pages.attachments_page.k6') });
     },
   });
 
@@ -135,8 +136,8 @@ const AttachmentsPage: React.FC = () => {
       window.URL.revokeObjectURL(url);
     },
     onError: (error: unknown) => {
-      apiLogger.error('下载附件失败:', error);
-      addNotification({ type: 'error', title: '操作失败', message: '附件下载失败' });
+      apiLogger.error(i18n.t('pages.attachments_page.k2'), error);
+      addNotification({ type: 'error', title: i18n.t('pages.attachments_page.k9'), message: i18n.t('pages.attachments_page.k8') });
     },
 
     onSuccess: () => {
@@ -155,12 +156,12 @@ const AttachmentsPage: React.FC = () => {
       if (response.success && response.data) {
         addNotification({
           type: 'info',
-          title: '附件详情',
+          title: i18n.t('pages.attachments_page.k10'),
           message: `${response.data.file_name} (${formatFileSize(response.data.file_size)})`,
         });
       }
     } catch (error) {
-      apiLogger.error('获取附件详情失败:', error);
+      apiLogger.error(i18n.t('pages.attachments_page.k3'), error);
     }
   };
 
@@ -170,8 +171,8 @@ const AttachmentsPage: React.FC = () => {
     if (file.size > 50 * 1024 * 1024) {
       addNotification({
         type: 'error',
-        title: '文件过大',
-        message: '附件大小不能超过 50MB',
+        title: i18n.t('pages.attachments_page.k11'),
+        message: i18n.t('pages.attachments_page.50mb_12'),
       });
       return;
     }
@@ -185,7 +186,7 @@ const AttachmentsPage: React.FC = () => {
 
   return (
     <PageContainer
-      title='附件管理'
+      title={i18n.t('pages.attachments_page.k13')}
       autoBreadcrumbs
       headerProps={{
         pageIcon: <Paperclip style={{ width: 20, height: 20 }} />,
@@ -202,10 +203,10 @@ const AttachmentsPage: React.FC = () => {
               size='small'
               sx={{ minWidth: 140 }}
             >
-              <InputLabel>实体类型</InputLabel>
+              <InputLabel>{i18n.t('pages.attachments_page.k14')}</InputLabel>
               <Select
                 value={entityType}
-                label='实体类型'
+                label={i18n.t('pages.attachments_page.k15')}
                 onChange={(e) => setEntityType(e.target.value)}
               >
                 {ENTITY_TYPES.map((t) => (
@@ -220,7 +221,7 @@ const AttachmentsPage: React.FC = () => {
             </FormControl>
             <TextField
               size='small'
-              label='实体 ID'
+              label={i18n.t('pages.attachments_page.id_16')}
               value={entityId}
               onChange={(e) => setEntityId(e.target.value)}
               sx={{ minWidth: 200 }}
@@ -235,7 +236,7 @@ const AttachmentsPage: React.FC = () => {
             variant='h6'
             sx={{ mb: 2 }}
           >
-            上传附件
+            {i18n.t('pages.attachments_page.k0')}
           </Typography>
           <Stack
             direction='row'
@@ -247,7 +248,7 @@ const AttachmentsPage: React.FC = () => {
               component='label'
               startIcon={<Upload size={16} />}
             >
-              选择文件
+              {i18n.t('pages.attachments_page.k1')}
               <input
                 ref={fileInputRef}
                 type='file'
@@ -269,7 +270,7 @@ const AttachmentsPage: React.FC = () => {
               onClick={handleUpload}
               disabled={!selectedFile || uploadMutation.isPending}
             >
-              上传
+              {i18n.t('pages.attachments_page.k2')}
             </Button>
             {uploadMutation.isPending && <CircularProgress size={20} />}
           </Stack>
@@ -282,14 +283,14 @@ const AttachmentsPage: React.FC = () => {
             variant='h6'
             sx={{ mb: 2 }}
           >
-            附件列表
+            {i18n.t('pages.attachments_page.k3')}
           </Typography>
           {isPending ? (
             <Box sx={{ display: 'flex', justifyContent: 'center', p: 3 }}>
               <CircularProgress />
             </Box>
           ) : !attachments || attachments.length === 0 ? (
-            <Alert severity='info'>暂无附件</Alert>
+            <Alert severity='info'>{i18n.t('pages.attachments_page.k17')}</Alert>
           ) : (
             <List>
               {attachments.map((attachment: Attachment, idx: number) => (
@@ -334,8 +335,8 @@ const AttachmentsPage: React.FC = () => {
                           e.stopPropagation();
                           downloadMutation.mutate(attachment);
                         }}
-                        aria-label='下载'
-                        title='下载'
+                        aria-label={i18n.t('pages.attachments_page.k18')}
+                        title={i18n.t('pages.attachments_page.k19')}
                       >
                         <Download size={16} />
                       </IconButton>
@@ -346,8 +347,8 @@ const AttachmentsPage: React.FC = () => {
                           e.stopPropagation();
                           deleteMutation.mutate(attachment.id);
                         }}
-                        aria-label='删除'
-                        title='删除'
+                        aria-label={i18n.t('pages.attachments_page.k20')}
+                        title={i18n.t('pages.attachments_page.k21')}
                       >
                         <Trash2 size={16} />
                       </IconButton>

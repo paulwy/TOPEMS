@@ -24,7 +24,7 @@ const getContrastColor = (hex: string): string => {
   const g = parseInt(hex.slice(3, 5), 16);
   const b = parseInt(hex.slice(5, 7), 16);
   const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
-  return luminance > 0.55 ? '#1e293b' : '#ffffff';
+  return luminance > 0.55 ? '#1e293b' : designTokens.colors.common.white;
 };
 
 const ColorSwatch = ({
@@ -232,7 +232,7 @@ const ColorsComponent = () => (
                     height: 20,
                     borderRadius: '4px',
                     backgroundColor: hex,
-                    border: hex === '#ffffff' || hex === '#f8fafc' ? '1px solid #e2e8f0' : 'none',
+                    border: hex === designTokens.colors.common.white || hex === '#f8fafc' ? '1px solid #e2e8f0' : 'none',
                   }}
                 />
                 <Box>
@@ -605,7 +605,7 @@ const ShadowsComponent = () => (
               height: 56,
               borderRadius: '12px',
               boxShadow: value,
-              backgroundColor: '#ffffff',
+              backgroundColor: designTokens.colors.common.white,
               border: '1px solid #f1f5f9',
             }}
           />
@@ -638,7 +638,7 @@ const ShadowsComponent = () => (
               borderRadius: '12px',
               boxShadow: value,
               backgroundColor: designTokens.colors.grey[800],
-              border: '1px solid #374151',
+              border: `1px solid ${designTokens.colors.grey[700]}`,
             }}
           />
           <Typography

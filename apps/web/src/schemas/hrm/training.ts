@@ -1,9 +1,10 @@
 import type { EntitySchema } from '@/schema';
+import i18n from '@/i18n';
 
 export const trainingSchema: EntitySchema = {
   entity: 'hrm_training',
-  title: '培训管理',
-  description: '管理培训计划，包括培训名称、讲师、时间、状态、预算等',
+  title: i18n.t('hrm.training.k0'),
+  description: i18n.t('hrm.training.k1'),
 
   api: {
     module: 'hrm',
@@ -13,7 +14,7 @@ export const trainingSchema: EntitySchema = {
   fields: [
     {
       name: 'name',
-      label: '培训名称',
+      label: i18n.t('hrm.training.k2'),
       type: 'text',
       required: true,
       sortable: true,
@@ -21,37 +22,37 @@ export const trainingSchema: EntitySchema = {
     },
     {
       name: 'code',
-      label: '培训编码',
+      label: i18n.t('hrm.training.k3'),
       type: 'text',
       readonlyOnEdit: true,
       listWidth: 120,
     },
     {
       name: 'start_date',
-      label: '开始日期',
+      label: i18n.t('hrm.training.k4'),
       type: 'date',
       required: true,
       listWidth: 120,
     },
     {
       name: 'end_date',
-      label: '结束日期',
+      label: i18n.t('hrm.training.k5'),
       type: 'date',
       required: true,
       listWidth: 120,
     },
     {
       name: 'status',
-      label: '状态',
+      label: i18n.t('hrm.training.k6'),
       type: 'select',
       defaultValue: 'planned',
       options: {
         type: 'static',
         options: [
-          { value: 'planned', label: '已规划' },
-          { value: 'in_progress', label: '进行中' },
-          { value: 'completed', label: '已完成' },
-          { value: 'cancelled', label: '已取消' },
+          { value: 'planned', label: i18n.t('hrm.training.k7') },
+          { value: 'in_progress', label: i18n.t('hrm.training.k8') },
+          { value: 'completed', label: i18n.t('hrm.training.k9') },
+          { value: 'cancelled', label: i18n.t('hrm.training.k10') },
         ],
       },
       listWidth: 100,
@@ -59,13 +60,13 @@ export const trainingSchema: EntitySchema = {
     },
     {
       name: 'budget',
-      label: '预算',
+      label: i18n.t('hrm.training.k11'),
       type: 'number',
       listWidth: 100,
     },
     {
       name: 'description',
-      label: '描述',
+      label: i18n.t('hrm.training.k12'),
       type: 'textarea',
       showInList: false,
     },
@@ -84,23 +85,23 @@ export const trainingSchema: EntitySchema = {
         cancelled: 'error',
       },
       labelMap: {
-        planned: '已规划',
-        in_progress: '进行中',
-        completed: '已完成',
-        cancelled: '已取消',
+        planned: i18n.t('hrm.training.k13'),
+        in_progress: i18n.t('hrm.training.k14'),
+        completed: i18n.t('hrm.training.k15'),
+        cancelled: i18n.t('hrm.training.k16'),
       },
     },
     filters: [
       {
         id: 'status',
-        label: '状态',
+        label: i18n.t('hrm.training.k17'),
         type: 'select',
         options: [
-          { label: '全部状态', value: 'all' },
-          { label: '已规划', value: 'planned' },
-          { label: '进行中', value: 'in_progress' },
-          { label: '已完成', value: 'completed' },
-          { label: '已取消', value: 'cancelled' },
+          { label: i18n.t('hrm.training.k18'), value: 'all' },
+          { label: i18n.t('hrm.training.k19'), value: 'planned' },
+          { label: i18n.t('hrm.training.k20'), value: 'in_progress' },
+          { label: i18n.t('hrm.training.k21'), value: 'completed' },
+          { label: i18n.t('hrm.training.k22'), value: 'cancelled' },
         ],
       },
     ],
@@ -110,21 +111,21 @@ export const trainingSchema: EntitySchema = {
 
   formSections: [
     {
-      title: '基本信息',
+      title: i18n.t('hrm.training.k23'),
       fields: ['name', 'code', 'description'],
     },
     {
-      title: '时间与预算',
+      title: i18n.t('hrm.training.k24'),
       fields: ['start_date', 'end_date', 'budget'],
     },
     {
-      title: '状态',
+      title: i18n.t('hrm.training.k25'),
       fields: ['status'],
     },
   ],
 
   formColCount: 2,
-  createTitle: '新增培训计划',
-  editTitle: '编辑培训计划',
-  detailTitle: '培训详情',
+  createTitle: i18n.t('hrm.training.k26'),
+  editTitle: i18n.t('hrm.training.k27'),
+  detailTitle: i18n.t('hrm.training.k28'),
 };

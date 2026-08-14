@@ -6,6 +6,7 @@ import { ArrowUpDown, MoreHorizontal } from 'lucide-react';
 import { DataTable } from '@/components/common/DataTable';
 import { workflowApi, type Workflow } from '@/api/workflow';
 import { logger } from '@/utils/logger';
+import i18n from '@/i18n';
 
 export function WorkflowTableExample() {
   const [loading, setLoading] = useState(true);
@@ -26,12 +27,12 @@ export function WorkflowTableExample() {
       if (response.success && response.data) {
         setData(response.data.items || []);
       } else {
-        setError(response.message || '加载工作流失败');
+        setError(response.message || i18n.t('components.workflow_table_example.k0'));
       }
     } catch (err: unknown) {
-      logger.error('加载工作流失败:', err);
+      logger.error(i18n.t('components.workflow_table_example.k0'), err);
       const error = err as { message?: string };
-      setError(`加载工作流失败: ${error.message || '未知错误'}`);
+      setError(`${i18n.t('components.workflow_table_example.k1')} ${error.message || i18n.t('components.workflow_table_example.k1')}`);
     } finally {
       setLoading(false);
     }
@@ -65,7 +66,7 @@ export function WorkflowTableExample() {
               onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
               sx={{ p: 0, height: 'auto', color: 'text.primary' }}
             >
-              工作流名称
+              {i18n.t('components.workflow_table_example.k2')}
               <ArrowUpDown style={{ width: 14, height: 14, marginLeft: 8 }} />
             </Button>
           );
@@ -74,19 +75,19 @@ export function WorkflowTableExample() {
       },
       {
         accessorKey: 'description',
-        header: () => <Box sx={{ textAlign: 'left' }}>描述</Box>,
+        header: () => <Box sx={{ textAlign: 'left' }}>{i18n.t('components.workflow_table_example.k2')}</Box>,
         cell: ({ row }) => <Box sx={{ textAlign: 'left' }}>{row.getValue('description')}</Box>,
       },
       {
         accessorKey: 'isactive',
-        header: () => <Box sx={{ textAlign: 'left' }}>状态</Box>,
+        header: () => <Box sx={{ textAlign: 'left' }}>{i18n.t('components.workflow_table_example.k3')}</Box>,
         cell: ({ row }) => {
           const isActive = row.getValue('isactive') as boolean;
           return (
             <Box sx={{ textAlign: 'left' }}>
               <Chip
                 size='small'
-                label={isActive ? '启用' : '禁用'}
+                label={isActive ? i18n.t('components.workflow_table_example.k5') : i18n.t('components.workflow_table_example.k4')}
                 sx={{
                   backgroundColor: isActive ? 'success.light' : 'grey.100',
                   color: isActive ? 'success.dark' : 'grey.600',
@@ -98,19 +99,19 @@ export function WorkflowTableExample() {
       },
       {
         accessorKey: 'created_by',
-        header: () => <Box sx={{ textAlign: 'left' }}>创建者</Box>,
+        header: () => <Box sx={{ textAlign: 'left' }}>{i18n.t('components.workflow_table_example.k6')}</Box>,
         cell: ({ row }) => (
           <Box sx={{ textAlign: 'left' }}>{row.getValue('created_by') || '-'}</Box>
         ),
       },
       {
         accessorKey: 'created_at',
-        header: () => <Box sx={{ textAlign: 'left' }}>创建时间</Box>,
+        header: () => <Box sx={{ textAlign: 'left' }}>{i18n.t('components.workflow_table_example.k7')}</Box>,
         cell: ({ row }) => <Box sx={{ textAlign: 'left' }}>{row.getValue('created_at')}</Box>,
       },
       {
         accessorKey: 'updated_at',
-        header: () => <Box sx={{ textAlign: 'left' }}>更新时间</Box>,
+        header: () => <Box sx={{ textAlign: 'left' }}>{i18n.t('components.workflow_table_example.k8')}</Box>,
         cell: ({ row }) => <Box sx={{ textAlign: 'left' }}>{row.getValue('updated_at')}</Box>,
       },
       {
@@ -146,42 +147,42 @@ export function WorkflowTableExample() {
                   disabled
                   sx={{ fontWeight: 600 }}
                 >
-                  操作
+                  {i18n.t('components.workflow_table_example.k3')}
                 </MenuItem>
                 <Divider />
                 <MenuItem
                   onClick={() => {
-                    logger.info('查看工作流:', workflow.id);
+                    logger.info(i18n.t('components.workflow_table_example.k4'), workflow.id);
                     handleMenuClose();
                   }}
                 >
-                  查看
+                  {i18n.t('components.workflow_table_example.k5')}
                 </MenuItem>
                 <MenuItem
                   onClick={() => {
-                    logger.info('编辑工作流:', workflow.id);
+                    logger.info(i18n.t('components.workflow_table_example.k6'), workflow.id);
                     handleMenuClose();
                   }}
                 >
-                  编辑
+                  {i18n.t('components.workflow_table_example.k7')}
                 </MenuItem>
                 <MenuItem
                   onClick={() => {
-                    logger.info('查看历史:', workflow.id);
+                    logger.info(i18n.t('components.workflow_table_example.k8'), workflow.id);
                     handleMenuClose();
                   }}
                 >
-                  版本历史
+                  {i18n.t('components.workflow_table_example.k9')}
                 </MenuItem>
                 <Divider />
                 <MenuItem
                   onClick={() => {
-                    logger.info('删除工作流:', workflow.id);
+                    logger.info(i18n.t('components.workflow_table_example.k10'), workflow.id);
                     handleMenuClose();
                   }}
                   sx={{ color: 'error.main' }}
                 >
-                  删除
+                  {i18n.t('components.workflow_table_example.k11')}
                 </MenuItem>
               </Menu>
             </Box>
@@ -199,7 +200,7 @@ export function WorkflowTableExample() {
           variant='h5'
           sx={{ fontWeight: 600, mb: 3 }}
         >
-          工作流列表
+          {i18n.t('components.workflow_table_example.k12')}
         </Typography>
         <Box
           sx={{
@@ -216,7 +217,7 @@ export function WorkflowTableExample() {
             onClick={loadWorkflows}
             sx={{ ml: 2 }}
           >
-            重试
+            {i18n.t('components.workflow_table_example.k13')}
           </Button>
         </Box>
       </Box>
@@ -229,7 +230,7 @@ export function WorkflowTableExample() {
         variant='h5'
         sx={{ fontWeight: 600, mb: 3 }}
       >
-        工作流列表
+        {i18n.t('components.workflow_table_example.k14')}
       </Typography>
 
       <DataTable
@@ -237,9 +238,9 @@ export function WorkflowTableExample() {
         data={data}
         loading={loading}
         searchKey='name'
-        searchPlaceholder='搜索工作流...'
+        searchPlaceholder={i18n.t('components.workflow_table_example.k15')}
         onRowClick={(workflow) => {
-          logger.info('点击工作流:', workflow);
+          logger.info(i18n.t('components.workflow_table_example.k16'), workflow);
         }}
       />
     </Box>

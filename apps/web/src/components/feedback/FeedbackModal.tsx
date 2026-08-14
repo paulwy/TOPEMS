@@ -9,6 +9,7 @@ import { feedbackApi } from '@/api/feedback';
 import type { CreateFeedbackRequest } from '@/api/feedback/types';
 
 import { queryClient, QUERY_KEYS } from '@/lib/reactQuery';
+import i18n from '@/i18n';
 
 export interface FeedbackModalProps {
   open: boolean;
@@ -27,12 +28,12 @@ const FeedbackModal: React.FC<FeedbackModalProps> = ({ open, onClose }) => {
           exact: false,
           refetchType: 'active',
         });
-      toast.success('反馈提交成功');
+      toast.success(i18n.t('components.feedback_modal.k0'));
       setIsSubmitting(false);
       onClose();
     },
     onError: () => {
-      toast.error('反馈提交失败，请重试');
+      toast.error(i18n.t('components.feedback_modal.k1'));
       setIsSubmitting(false);
     },
   });
@@ -46,7 +47,7 @@ const FeedbackModal: React.FC<FeedbackModalProps> = ({ open, onClose }) => {
     <Dialog
       open={open}
       onClose={onClose}
-      title='提交反馈'
+      title={i18n.t('components.feedback_modal.k2')}
       maxWidth='lg'
       fullWidth
       showCloseButton

@@ -4,16 +4,11 @@ import { FileText, Clock, BarChart3, CheckCircle } from 'lucide-react';
 import { DashboardTemplate } from '@/components/templates';
 import type { StatCardConfig, ChartConfig, ChartCard } from '@/components/templates/DashboardTemplate';
 import { PageContainer } from '@/components/common';
-import { useTranslation } from 'react-i18next';
 import { useLimsDashboardSchema } from '@/schemas/lims';
-
-
 import { QUERY_KEYS } from '@/lib/reactQuery';
-
+import i18n from '@/i18n';
 const LimsDashboardPage: React.FC = () => {
-  const { t } = useTranslation();
   const schema = useLimsDashboardSchema();
-
   const { isPending: loading} = useQuery({
     queryKey: QUERY_KEYS.AD_HOC.LIMS_DASHBOARD_BASE,
     queryFn: async () => {
@@ -22,7 +17,6 @@ const LimsDashboardPage: React.FC = () => {
     },
     staleTime: 5 * 60 * 1000,
   });
-
   const statCards = useMemo<StatCardConfig[]>(() => {
     return (
       schema.statCards?.map((sc) => {
@@ -34,7 +28,7 @@ const LimsDashboardPage: React.FC = () => {
           CheckCircle: <CheckCircle size={24} />,
         };
         return {
-          title: t(`lims.dashboard.${sc.id}`),
+          title: i18n.t(`lims.dashboard.${sc.id}`),
           value: value as string | number,
           icon: iconMap[sc.icon as string] ?? <FileText size={24} />,
           color: sc.color,
@@ -43,8 +37,7 @@ const LimsDashboardPage: React.FC = () => {
         } as StatCardConfig;
       }) ?? []
     );
-  }, [schema.statCards, loading, t]);
-
+  }, [schema.statCards, loading, i18n.t]);
   const charts = useMemo<ChartConfig[]>(() => {
     return (
       schema.charts?.map((ch) => {
@@ -53,7 +46,7 @@ const LimsDashboardPage: React.FC = () => {
             ? (ch.data as () => Array<Record<string, unknown>>)()
             : (ch.data as Array<Record<string, unknown>>);
         return {
-          title: t(`lims.dashboard.${ch.id}`),
+          title: i18n.t(`lims.dashboard.${ch.id}`),
           type: ch.type,
           data: (rawData ?? []) as Array<Record<string, unknown>>,
           xField: 'name',
@@ -63,11 +56,10 @@ const LimsDashboardPage: React.FC = () => {
         };
       }) ?? []
     );
-  }, [schema.charts, loading, t]);
-
+  }, [schema.charts, loading, i18n.t]);
   return (
     <PageContainer
-      title={t('lims.dashboard.title')}
+      title={i18n.t('lims.dashboard.title')}
       padding={false}
       maxWidth={false}
       autoTitle
@@ -82,5 +74,4 @@ const LimsDashboardPage: React.FC = () => {
     </PageContainer>
   );
 };
-
 export default LimsDashboardPage;

@@ -4,6 +4,7 @@ import { ArrowRight } from 'lucide-react';
 import { useWmsMock, type WmsMockShape } from '@/api/wms/_mock';
 import { WmsStatusBadge } from '@/components/wms';
 import type { InventoryMovementDto } from '@/types/wms';
+import i18n from '@/i18n';
 
 export default function WmsInventoryMovementDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -22,7 +23,7 @@ export default function WmsInventoryMovementDetailPage() {
     return ['SN-2024A001', 'SN-2024A002', 'SN-2024A003'];
   }, [move]);
 
-  if (!move) return <div className='p-8'>加载中...</div>;
+  if (!move) return <div className='p-8'>{i18n.t('pages.wms_inventory_movement_detail_page.k0')}</div>;
 
   const sourceLoc = move.source_location_code ?? 'A-01-01';
   const targetLoc = move.target_location_code ?? 'B-02-05';
@@ -36,7 +37,7 @@ export default function WmsInventoryMovementDetailPage() {
         <div>
           <h1 className='text-2xl font-bold'>库存移动详情 — {move.movement_number}</h1>
           <p className='text-sm text-gray-500'>
-            类型：{move.movement_type ?? '库位调整'} · 创建于 {move.created_at.slice(0, 10)}
+            {i18n.t('pages.wms_inventory_movement_detail_page.k1')}{move.movement_type ?? i18n.t('pages.wms_inventory_movement_detail_page.k0')} · 创建于 {move.created_at.slice(0, 10)}
           </p>
         </div>
         <WmsStatusBadge
@@ -48,7 +49,7 @@ export default function WmsInventoryMovementDetailPage() {
       <div className='rounded-lg border p-6'>
         <div className='flex flex-wrap items-center justify-around gap-4'>
           <div className='text-center p-4 rounded-lg bg-amber-50 border border-amber-200 min-w-[180px]'>
-            <p className='text-xs text-amber-700'>源库位</p>
+            <p className='text-xs text-amber-700'>{i18n.t('pages.wms_inventory_movement_detail_page.k1')}</p>
             <p className='text-lg font-bold text-amber-800 font-mono mt-1'>{sourceLoc}</p>
             <p className='text-xs text-gray-500 mt-1'>仓库：{warehouse}</p>
           </div>
@@ -61,7 +62,7 @@ export default function WmsInventoryMovementDetailPage() {
           </div>
 
           <div className='text-center p-4 rounded-lg bg-blue-50 border border-blue-200 min-w-[180px]'>
-            <p className='text-xs text-blue-700'>目标库位</p>
+            <p className='text-xs text-blue-700'>{i18n.t('pages.wms_inventory_movement_detail_page.k2')}</p>
             <p className='text-lg font-bold text-blue-800 font-mono mt-1'>{targetLoc}</p>
             <p className='text-xs text-gray-500 mt-1'>仓库：{warehouse}</p>
           </div>
@@ -75,24 +76,24 @@ export default function WmsInventoryMovementDetailPage() {
           <p className='text-sm text-gray-600'>{matName}</p>
         </div>
         <div className='rounded-lg border p-4'>
-          <p className='text-sm text-gray-600'>移动数量</p>
+          <p className='text-sm text-gray-600'>{i18n.t('pages.wms_inventory_movement_detail_page.k3')}</p>
           <p className='mt-1 text-2xl font-bold text-blue-600'>
             {move.quantity ?? move.total_quantity ?? 0}
           </p>
         </div>
         <div className='rounded-lg border p-4'>
-          <p className='text-sm text-gray-600'>批次号</p>
+          <p className='text-sm text-gray-600'>{i18n.t('pages.wms_inventory_movement_detail_page.k4')}</p>
           <p className='mt-1 font-mono font-semibold'>{move.batch_number ?? 'B202410-001'}</p>
         </div>
         <div className='rounded-lg border p-4'>
-          <p className='text-sm text-gray-600'>序列号数</p>
+          <p className='text-sm text-gray-600'>{i18n.t('pages.wms_inventory_movement_detail_page.k5')}</p>
           <p className='mt-1 text-2xl font-bold text-purple-600'>{serials.length}</p>
         </div>
       </div>
 
       <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
         <div className='rounded-lg border p-4'>
-          <h3 className='mb-2 font-semibold'>序列号清单</h3>
+          <h3 className='mb-2 font-semibold'>{i18n.t('pages.wms_inventory_movement_detail_page.k6')}</h3>
           <div className='flex flex-wrap gap-2'>
             {serials.map((sn, i) => (
               <span
@@ -106,24 +107,24 @@ export default function WmsInventoryMovementDetailPage() {
         </div>
 
         <div className='rounded-lg border p-4'>
-          <h3 className='mb-2 font-semibold'>审批日志</h3>
+          <h3 className='mb-2 font-semibold'>{i18n.t('pages.wms_inventory_movement_detail_page.k7')}</h3>
           <ol className='relative border-l border-gray-200 ml-3 space-y-3'>
             {[
               {
                 t: move.created_at,
-                title: '创建移动单',
+                title: i18n.t('pages.wms_inventory_movement_detail_page.k8'),
                 who: move.created_by ?? 'system',
                 color: 'bg-blue-500',
               },
               {
                 t: move.posted_at,
-                title: '单据过账',
+                title: i18n.t('pages.wms_inventory_movement_detail_page.k9'),
                 who: move.posted_by,
                 color: 'bg-amber-500',
               },
               {
                 t: move.approved_at,
-                title: '审批通过 · 完成',
+                title: i18n.t('pages.wms_inventory_movement_detail_page.k10'),
                 who: move.approved_by,
                 color: 'bg-green-500',
               },

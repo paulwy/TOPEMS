@@ -12,6 +12,7 @@ import {
   Chip,
   Button,
 } from '@mui/material';
+import i18n from '@/i18n';
 import React, { useState, useEffect } from 'react';
 
 import { Download, Play, RefreshCw, FileText, Settings, Sparkles, Search } from 'lucide-react';
@@ -22,12 +23,12 @@ import { logger } from '@/utils/logger';
 const mockTemplates: Template[] = [
   {
     id: '1',
-    name: '采购审批流程',
+    name: i18n.t('components.template_demo_page.k0'),
     code: 'purchase-approval',
     template_type: 'workflow',
     category_id: 'cat1',
     module: 'procurement',
-    description: '用于公司采购申请的标准化审批流程模板',
+    description: i18n.t('components.template_demo_page.k1'),
     content: `【{{workflow_name}}】
 
 ## 流程概述
@@ -56,56 +57,56 @@ const mockTemplates: Template[] = [
     variables: [
       {
         key: 'workflow_name',
-        label: '工作流名称',
+        label: i18n.t('components.template_demo_page.k2'),
         type: 'string',
         required: true,
       },
       {
         key: 'description',
-        label: '流程描述',
+        label: i18n.t('components.template_demo_page.k3'),
         type: 'string',
         required: false,
       },
       {
         key: 'step1_assignee',
-        label: '步骤1负责人',
+        label: i18n.t('components.template_demo_page.1_4'),
         type: 'user',
         required: true,
       },
-      { key: 'step1_task', label: '步骤1任务', type: 'string', required: true },
+      { key: 'step1_task', label: i18n.t('components.template_demo_page.1_5'), type: 'string', required: true },
       {
         key: 'step1_deadline',
-        label: '步骤1期限(天)',
+        label: i18n.t('components.template_demo_page.1_6'),
         type: 'number',
         required: true,
       },
       {
         key: 'step2_assignee',
-        label: '步骤2负责人',
+        label: i18n.t('components.template_demo_page.2_7'),
         type: 'user',
         required: true,
       },
-      { key: 'step2_task', label: '步骤2任务', type: 'string', required: true },
+      { key: 'step2_task', label: i18n.t('components.template_demo_page.2_8'), type: 'string', required: true },
       {
         key: 'step2_deadline',
-        label: '步骤2期限(天)',
+        label: i18n.t('components.template_demo_page.2_9'),
         type: 'number',
         required: true,
       },
       {
         key: 'step3_assignee',
-        label: '步骤3负责人',
+        label: i18n.t('components.template_demo_page.3_10'),
         type: 'user',
         required: true,
       },
-      { key: 'step3_task', label: '步骤3任务', type: 'string', required: true },
+      { key: 'step3_task', label: i18n.t('components.template_demo_page.3_11'), type: 'string', required: true },
       {
         key: 'step3_deadline',
-        label: '步骤3期限(天)',
+        label: i18n.t('components.template_demo_page.3_12'),
         type: 'number',
         required: true,
       },
-      { key: 'creator', label: '创建人', type: 'user', required: true },
+      { key: 'creator', label: i18n.t('components.template_demo_page.k13'), type: 'user', required: true },
     ],
     isactive: true,
     is_system: false,
@@ -120,12 +121,12 @@ const mockTemplates: Template[] = [
   },
   {
     id: '2',
-    name: '请假申请流程',
+    name: i18n.t('components.template_demo_page.k14'),
     code: 'leave-application',
     template_type: 'workflow',
     category_id: 'cat2',
     module: 'hr',
-    description: '员工请假申请的审批流程模板',
+    description: i18n.t('components.template_demo_page.k15'),
     content: `请假申请单
 
 申请人：{{applicant_name}}
@@ -150,49 +151,49 @@ const mockTemplates: Template[] = [
 
 申请时间：{{apply_time}}`,
     variables: [
-      { key: 'applicant_name', label: '申请人', type: 'user', required: true },
-      { key: 'department', label: '部门', type: 'string', required: true },
-      { key: 'position', label: '职位', type: 'string', required: true },
+      { key: 'applicant_name', label: i18n.t('components.template_demo_page.k16'), type: 'user', required: true },
+      { key: 'department', label: i18n.t('components.template_demo_page.k17'), type: 'string', required: true },
+      { key: 'position', label: i18n.t('components.template_demo_page.k18'), type: 'string', required: true },
       {
         key: 'leave_type',
-        label: '请假类型',
+        label: i18n.t('components.template_demo_page.k19'),
         type: 'select',
         required: true,
         options: [
-          { value: '年假', label: '年假' },
-          { value: '事假', label: '事假' },
-          { value: '病假', label: '病假' },
-          { value: '婚假', label: '婚假' },
-          { value: '产假', label: '产假' },
+          { value: i18n.t('components.template_demo_page.k20'), label: i18n.t('components.template_demo_page.k21') },
+          { value: i18n.t('components.template_demo_page.k22'), label: i18n.t('components.template_demo_page.k23') },
+          { value: i18n.t('components.template_demo_page.k24'), label: i18n.t('components.template_demo_page.k25') },
+          { value: i18n.t('components.template_demo_page.k26'), label: i18n.t('components.template_demo_page.k27') },
+          { value: i18n.t('components.template_demo_page.k28'), label: i18n.t('components.template_demo_page.k29') },
         ],
       },
-      { key: 'start_date', label: '开始日期', type: 'date', required: true },
-      { key: 'end_date', label: '结束日期', type: 'date', required: true },
-      { key: 'days', label: '天数', type: 'number', required: true },
+      { key: 'start_date', label: i18n.t('components.template_demo_page.k30'), type: 'date', required: true },
+      { key: 'end_date', label: i18n.t('components.template_demo_page.k31'), type: 'date', required: true },
+      { key: 'days', label: i18n.t('components.template_demo_page.k32'), type: 'number', required: true },
       {
         key: 'is_urgent',
-        label: '紧急申请',
+        label: i18n.t('components.template_demo_page.k33'),
         type: 'string',
         required: false,
         options: [
-          { value: 'true', label: '是' },
-          { value: 'false', label: '否' },
+          { value: 'true', label: i18n.t('components.template_demo_page.k34') },
+          { value: 'false', label: i18n.t('components.template_demo_page.k35') },
         ],
       },
-      { key: 'reason', label: '请假原因', type: 'string', required: false },
+      { key: 'reason', label: i18n.t('components.template_demo_page.k36'), type: 'string', required: false },
       {
         key: 'has_attachment',
-        label: '有附件',
+        label: i18n.t('components.template_demo_page.k37'),
         type: 'string',
         required: false,
         options: [
-          { value: 'true', label: '是' },
-          { value: 'false', label: '否' },
+          { value: 'true', label: i18n.t('components.template_demo_page.k38') },
+          { value: 'false', label: i18n.t('components.template_demo_page.k39') },
         ],
       },
-      { key: 'manager_name', label: '直属上级', type: 'user', required: true },
-      { key: 'hr_assignee', label: 'HR审核人', type: 'user', required: true },
-      { key: 'apply_time', label: '申请时间', type: 'date', required: true },
+      { key: 'manager_name', label: i18n.t('components.template_demo_page.k40'), type: 'user', required: true },
+      { key: 'hr_assignee', label: i18n.t('components.template_demo_page.hr_0'), type: 'user', required: true },
+      { key: 'apply_time', label: i18n.t('components.template_demo_page.k41'), type: 'date', required: true },
     ],
     isactive: true,
     is_system: false,
@@ -207,12 +208,12 @@ const mockTemplates: Template[] = [
   },
   {
     id: '3',
-    name: '报销申请流程',
+    name: i18n.t('components.template_demo_page.k42'),
     code: 'expense-reimbursement',
     template_type: 'workflow',
     category_id: 'cat3',
     module: 'finance',
-    description: '员工费用报销申请流程模板',
+    description: i18n.t('components.template_demo_page.k43'),
     content: `报销申请
 
 申请人：{{applicant_name}}
@@ -231,41 +232,41 @@ const mockTemplates: Template[] = [
 审批人：{{approver_name}}
 提交时间：{{submit_time}}`,
     variables: [
-      { key: 'applicant_name', label: '申请人', type: 'user', required: true },
-      { key: 'department', label: '部门', type: 'string', required: true },
+      { key: 'applicant_name', label: i18n.t('components.template_demo_page.k44'), type: 'user', required: true },
+      { key: 'department', label: i18n.t('components.template_demo_page.k45'), type: 'string', required: true },
       {
         key: 'expense_type',
-        label: '报销类型',
+        label: i18n.t('components.template_demo_page.k46'),
         type: 'select',
         required: true,
         options: [
-          { value: '差旅费', label: '差旅费' },
-          { value: '办公费', label: '办公费' },
-          { value: '招待费', label: '招待费' },
-          { value: '交通费', label: '交通费' },
-          { value: '其他', label: '其他' },
+          { value: i18n.t('components.template_demo_page.k47'), label: i18n.t('components.template_demo_page.k48') },
+          { value: i18n.t('components.template_demo_page.k49'), label: i18n.t('components.template_demo_page.k50') },
+          { value: i18n.t('components.template_demo_page.k51'), label: i18n.t('components.template_demo_page.k52') },
+          { value: i18n.t('components.template_demo_page.k53'), label: i18n.t('components.template_demo_page.k54') },
+          { value: i18n.t('components.template_demo_page.k55'), label: i18n.t('components.template_demo_page.k56') },
         ],
       },
-      { key: 'amount', label: '金额', type: 'number', required: true },
-      { key: 'details', label: '明细说明', type: 'string', required: true },
+      { key: 'amount', label: i18n.t('components.template_demo_page.k57'), type: 'number', required: true },
+      { key: 'details', label: i18n.t('components.template_demo_page.k58'), type: 'string', required: true },
       {
         key: 'is_over_budget',
-        label: '超出预算',
+        label: i18n.t('components.template_demo_page.k59'),
         type: 'string',
         required: false,
         options: [
-          { value: 'true', label: '是' },
-          { value: 'false', label: '否' },
+          { value: 'true', label: i18n.t('components.template_demo_page.k60') },
+          { value: 'false', label: i18n.t('components.template_demo_page.k61') },
         ],
       },
       {
         key: 'over_budget_reason',
-        label: '超预算原因',
+        label: i18n.t('components.template_demo_page.k62'),
         type: 'string',
         required: false,
       },
-      { key: 'approver_name', label: '审批人', type: 'user', required: true },
-      { key: 'submit_time', label: '提交时间', type: 'date', required: true },
+      { key: 'approver_name', label: i18n.t('components.template_demo_page.k63'), type: 'user', required: true },
+      { key: 'submit_time', label: i18n.t('components.template_demo_page.k64'), type: 'date', required: true },
     ],
     isactive: true,
     is_system: false,
@@ -283,7 +284,7 @@ const mockTemplates: Template[] = [
 const mockCategories: TemplateCategory[] = [
   {
     id: 'cat1',
-    name: '采购管理',
+    name: i18n.t('components.template_demo_page.k65'),
     code: 'procurement',
     category_type: 'workflow',
     template_count: 1,
@@ -291,7 +292,7 @@ const mockCategories: TemplateCategory[] = [
   },
   {
     id: 'cat2',
-    name: '人事管理',
+    name: i18n.t('components.template_demo_page.k66'),
     code: 'hr',
     category_type: 'workflow',
     template_count: 1,
@@ -299,7 +300,7 @@ const mockCategories: TemplateCategory[] = [
   },
   {
     id: 'cat3',
-    name: '财务管理',
+    name: i18n.t('components.template_demo_page.k67'),
     code: 'finance',
     category_type: 'workflow',
     template_count: 1,
@@ -395,13 +396,13 @@ const TemplateDemoPage: React.FC<TemplateDemoPageProps> = ({ onClose }) => {
     if (!selectedTemplate) return;
 
     setIsLoading(true);
-    logger.info('=== 开始模板渲染 ===');
-    logger.info('模板名称:', selectedTemplate.name);
-    logger.info('模板ID:', selectedTemplate.id);
-    logger.info('原始内容长度:', selectedTemplate.content.length);
-    logger.debug('原始内容:\n', selectedTemplate.content);
-    logger.debug('变量配置:', JSON.stringify(templateVariables, null, 2));
-    logger.debug('变量定义:', JSON.stringify(selectedTemplate.variables, null, 2));
+    logger.info(i18n.t('components.template_demo_page.k1'));
+    logger.info(i18n.t('components.template_demo_page.k2'), selectedTemplate.name);
+    logger.info(i18n.t('components.template_demo_page.id_3'), selectedTemplate.id);
+    logger.info(i18n.t('components.template_demo_page.k4'), selectedTemplate.content.length);
+    logger.debug(i18n.t('components.template_demo_page.n_5'), selectedTemplate.content);
+    logger.debug(i18n.t('components.template_demo_page.k6'), JSON.stringify(templateVariables, null, 2));
+    logger.debug(i18n.t('components.template_demo_page.k7'), JSON.stringify(selectedTemplate.variables, null, 2));
 
     await new Promise((resolve) => setTimeout(resolve, 300));
 
@@ -409,7 +410,7 @@ const TemplateDemoPage: React.FC<TemplateDemoPageProps> = ({ onClose }) => {
     let stepNumber = 1;
 
     // 步骤1: 替换变量
-    logger.info(`\n--- 步骤${stepNumber}: 替换变量 ---`);
+    logger.info(`${i18n.t('components.template_demo_page.n_8')}${stepNumber}${i18n.t('components.template_demo_page.k9')}`);
     Object.entries(templateVariables).forEach(([key, value]) => {
       const pattern = new RegExp(`{{${key}}}`, 'g');
       const matches = result.match(pattern);
@@ -418,106 +419,106 @@ const TemplateDemoPage: React.FC<TemplateDemoPageProps> = ({ onClose }) => {
       result = result.replace(pattern, String(value));
       const replacedCount = beforeReplace.split(pattern).length - 1;
 
-      logger.info(`变量 [${key}]:`);
-      logger.info(`  - 值: "${value}" (类型: ${typeof value})`);
-      logger.info(`  - 匹配次数: ${matchCount}`);
-      logger.info(`  - 替换次数: ${replacedCount}`);
-      logger.debug(`  - 正则模式: ${pattern}`);
+      logger.info(`${i18n.t('components.template_demo_page.k10')}${key}]:`);
+      logger.info(`  ${i18n.t('components.template_demo_page.k11')}${value}${i18n.t('components.template_demo_page.k12')} ${typeof value})`);
+      logger.info(`  ${i18n.t('components.template_demo_page.k13')} ${matchCount}`);
+      logger.info(`  ${i18n.t('components.template_demo_page.k14')} ${replacedCount}`);
+      logger.debug(`  ${i18n.t('components.template_demo_page.k15')} ${pattern}`);
 
       if (matchCount === 0) {
-        logger.warn(`  ⚠️ 警告: 模板中未找到变量 {{${key}}}`);
+        logger.warn(`  ${i18n.t('components.template_demo_page.k16')}${key}}}`);
       }
 
       // 检查是否还有未替换的变量
       const remainingPattern = new RegExp(`{{${key}}}`, 'g');
       if (remainingPattern.test(result)) {
-        logger.error(`  ❌ 错误: 变量 {{${key}}} 替换后仍存在`);
+        logger.error(`  ${i18n.t('components.template_demo_page.k17')}${key}${i18n.t('components.template_demo_page.k18')}`);
       }
     });
     stepNumber++;
 
     // 步骤2: 处理条件判断
-    logger.info(`\n--- 步骤${stepNumber}: 处理条件判断 ---`);
+    logger.info(`${i18n.t('components.template_demo_page.n_19')}${stepNumber}${i18n.t('components.template_demo_page.k20')}`);
     const conditionPattern = /\{\{#if (\w+)\}\}(.*?)\{\{\/if\}\}/gs;
     const conditionMatches = result.match(conditionPattern);
-    logger.info('找到的条件块数量:', conditionMatches ? conditionMatches.length : 0);
+    logger.info(i18n.t('components.template_demo_page.k21'), conditionMatches ? conditionMatches.length : 0);
 
     result = result.replace(conditionPattern, (_: string, condition: string, content: string) => {
       const value = templateVariables[condition];
       const conditionResult = value ? content.trim() : '';
-      logger.info(`条件块 {{#if ${condition}}}:`);
-      logger.info(`  - 条件变量: ${condition}`);
-      logger.info(`  - 变量值: "${value}" (类型: ${typeof value})`);
-      logger.debug(`  - 布尔转换: ${Boolean(value)}`);
-      logger.debug(`  - 内容长度: ${content.length}`);
-      logger.debug(`  - 处理结果: "${conditionResult}" (保留: ${Boolean(value)})`);
+      logger.info(`${i18n.t('components.template_demo_page.if_22')} ${condition}}}:`);
+      logger.info(`  ${i18n.t('components.template_demo_page.k23')} ${condition}`);
+      logger.info(`  ${i18n.t('components.template_demo_page.k24')}${value}${i18n.t('components.template_demo_page.k25')} ${typeof value})`);
+      logger.debug(`  ${i18n.t('components.template_demo_page.k26')} ${Boolean(value)}`);
+      logger.debug(`  ${i18n.t('components.template_demo_page.k27')} ${content.length}`);
+      logger.debug(`  ${i18n.t('components.template_demo_page.k28')}${conditionResult}${i18n.t('components.template_demo_page.k29')} ${Boolean(value)})`);
       return conditionResult;
     });
     stepNumber++;
 
     // 步骤3: 处理默认值
-    logger.info(`\n--- 步骤${stepNumber}: 处理默认值 ---`);
+    logger.info(`${i18n.t('components.template_demo_page.n_30')}${stepNumber}${i18n.t('components.template_demo_page.k31')}`);
     const defaultPattern = /\{\{(\w+)\s*\|\|\s*["']([^"']+)["']\}\}/g;
     const defaultMatches = result.match(defaultPattern);
-    logger.info('找到的默认值块数量:', defaultMatches ? defaultMatches.length : 0);
+    logger.info(i18n.t('components.template_demo_page.k32'), defaultMatches ? defaultMatches.length : 0);
 
     result = result.replace(defaultPattern, (_: string, key: string, defaultValue: string) => {
       const value = templateVariables[key];
       const finalValue = value && value !== '' ? String(value) : defaultValue;
-      logger.info(`默认值块 {${'${' + '{'}${key} || "${defaultValue}"${'}' + '}'}:`);
-      logger.info(`  - 变量: ${key}`);
-      logger.info(`  - 变量值: "${value}"`);
-      logger.info(`  - 默认值: "${defaultValue}"`);
-      logger.info(`  - 最终值: "${finalValue}"`);
-      logger.debug(`  - 使用默认值: ${!value || value === ''}`);
+      logger.info(`${i18n.t('components.template_demo_page.k33')}${'${' + '{'}${key} || "${defaultValue}"${'}' + '}'}:`);
+      logger.info(`  ${i18n.t('components.template_demo_page.k34')} ${key}`);
+      logger.info(`  ${i18n.t('components.template_demo_page.k35')}${value}"`);
+      logger.info(`  ${i18n.t('components.template_demo_page.k36')}${defaultValue}"`);
+      logger.info(`  ${i18n.t('components.template_demo_page.k37')}${finalValue}"`);
+      logger.debug(`  ${i18n.t('components.template_demo_page.k38')} ${!value || value === ''}`);
       return finalValue;
     });
     stepNumber++;
 
     // 步骤4: 替换动态变量
-    logger.info(`\n--- 步骤${stepNumber}: 替换动态变量 ---`);
+    logger.info(`${i18n.t('components.template_demo_page.n_39')}${stepNumber}${i18n.t('components.template_demo_page.k40')}`);
     const now = new Date();
     const todayValue = now.toISOString().split('T')[0];
     const nowValue = now.toISOString();
 
-    logger.info('动态变量:');
+    logger.info(i18n.t('components.template_demo_page.k41'));
     logger.info(`  - {{today}}: "${todayValue}"`);
     logger.info(`  - {{now}}: "${nowValue}"`);
 
     const todayPattern = /\{\{today\}\}/g;
     const todayMatches = result.match(todayPattern);
-    logger.info(`  - {{today}} 匹配次数: ${todayMatches ? todayMatches.length : 0}`);
+    logger.info(`  ${i18n.t('components.template_demo_page.k42')} ${todayMatches ? todayMatches.length : 0}`);
     result = result.replace(todayPattern, todayValue);
 
     const nowPattern = /\{\{now\}\}/g;
     const nowMatches = result.match(nowPattern);
-    logger.info(`  - {{now}} 匹配次数: ${nowMatches ? nowMatches.length : 0}`);
+    logger.info(`  ${i18n.t('components.template_demo_page.now_43')} ${nowMatches ? nowMatches.length : 0}`);
     result = result.replace(nowPattern, nowValue);
     stepNumber++;
 
     // 步骤5: 检查未处理的变量
-    logger.info(`\n--- 步骤${stepNumber}: 检查未处理的变量 ---`);
+    logger.info(`${i18n.t('components.template_demo_page.n_44')}${stepNumber}${i18n.t('components.template_demo_page.k45')}`);
     const remainingVarsPattern = /\{\{([^#/][^}]+)\}\}/g;
     const remainingVars = result.match(remainingVarsPattern);
     if (remainingVars && remainingVars.length > 0) {
-      logger.warn('⚠️ 发现未处理的变量:');
+      logger.warn(i18n.t('components.template_demo_page.k46'));
       remainingVars.forEach((varMatch) => {
         logger.warn(`  - ${varMatch}`);
       });
-      logger.warn('建议检查:');
-      logger.warn('  1. 变量名是否正确');
-      logger.warn('  2. 变量是否已配置值');
-      logger.warn('  3. 变量格式是否正确');
+      logger.warn(i18n.t('components.template_demo_page.k47'));
+      logger.warn(i18n.t('components.template_demo_page.1_48'));
+      logger.warn(i18n.t('components.template_demo_page.2_49'));
+      logger.warn(i18n.t('components.template_demo_page.3_50'));
     } else {
-      logger.info('✅ 所有变量已成功处理');
+      logger.info(i18n.t('components.template_demo_page.k51'));
     }
     stepNumber++;
 
     // 最终结果
-    logger.info('\n=== 渲染完成 ===');
-    logger.info('最终内容长度:', result.length);
-    logger.debug('最终内容:\n', result);
-    logger.info('渲染耗时:', '300ms (模拟延迟)');
+    logger.info(i18n.t('components.template_demo_page.n_52'));
+    logger.info(i18n.t('components.template_demo_page.k53'), result.length);
+    logger.debug(i18n.t('components.template_demo_page.n_54'), result);
+    logger.info(i18n.t('components.template_demo_page.k55'), i18n.t('components.template_demo_page.300ms_56'));
 
     setRenderedContent(result);
     setIsLoading(false);
@@ -528,7 +529,7 @@ const TemplateDemoPage: React.FC<TemplateDemoPageProps> = ({ onClose }) => {
   const handleApplyTemplate = () => {
     if (!selectedTemplate) return;
     alert(
-      `已将模板 "${selectedTemplate.name}" 应用到工作流！\n\n变量配置：\n${JSON.stringify(templateVariables, null, 2)}`
+      `${i18n.t('components.template_demo_page.k57')}${selectedTemplate.name}${i18n.t('components.template_demo_page.k58')}${JSON.stringify(templateVariables, null, 2)}`
     );
   };
 
@@ -578,13 +579,13 @@ const TemplateDemoPage: React.FC<TemplateDemoPageProps> = ({ onClose }) => {
                 variant='h6'
                 sx={{ fontWeight: 700, color: 'grey.800' }}
               >
-                工作流模板演示
+                {i18n.t('components.template_demo_page.k59')}
               </Typography>
               <Typography
                 variant='caption'
                 sx={{ color: 'grey.500' }}
               >
-                动态加载、配置和渲染工作流模板
+                {i18n.t('components.template_demo_page.k60')}
               </Typography>
             </Box>
           </Box>
@@ -601,10 +602,10 @@ const TemplateDemoPage: React.FC<TemplateDemoPageProps> = ({ onClose }) => {
             title={
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                 <Sparkles sx={{ color: 'warning.main', fontSize: 20 }} />
-                <Typography variant='h6'>模板功能演示</Typography>
+                <Typography variant='h6'>{i18n.t('components.template_demo_page.k68')}</Typography>
               </Box>
             }
-            subheader='本演示展示了如何在前端应用中动态加载模板列表、选择模板、配置变量并渲染最终内容'
+            subheader={i18n.t('components.template_demo_page.k69')}
           />
           <CardContent
             sx={{
@@ -644,13 +645,13 @@ const TemplateDemoPage: React.FC<TemplateDemoPageProps> = ({ onClose }) => {
                   variant='subtitle2'
                   sx={{ fontWeight: 500, color: 'grey.800' }}
                 >
-                  选择模板
+                  {i18n.t('components.template_demo_page.k61')}
                 </Typography>
                 <Typography
                   variant='body2'
                   sx={{ color: 'grey.500' }}
                 >
-                  从模板库中选择合适的工作流模板
+                  {i18n.t('components.template_demo_page.k62')}
                 </Typography>
               </Box>
             </Box>
@@ -685,13 +686,13 @@ const TemplateDemoPage: React.FC<TemplateDemoPageProps> = ({ onClose }) => {
                   variant='subtitle2'
                   sx={{ fontWeight: 500, color: 'grey.800' }}
                 >
-                  配置变量
+                  {i18n.t('components.template_demo_page.k63')}
                 </Typography>
                 <Typography
                   variant='body2'
                   sx={{ color: 'grey.500' }}
                 >
-                  根据业务需求填写模板变量值
+                  {i18n.t('components.template_demo_page.k64')}
                 </Typography>
               </Box>
             </Box>
@@ -726,13 +727,13 @@ const TemplateDemoPage: React.FC<TemplateDemoPageProps> = ({ onClose }) => {
                   variant='subtitle2'
                   sx={{ fontWeight: 500, color: 'grey.800' }}
                 >
-                  渲染应用
+                  {i18n.t('components.template_demo_page.k65')}
                 </Typography>
                 <Typography
                   variant='body2'
                   sx={{ color: 'grey.500' }}
                 >
-                  预览并应用模板到实际工作流
+                  {i18n.t('components.template_demo_page.k66')}
                 </Typography>
               </Box>
             </Box>
@@ -749,18 +750,18 @@ const TemplateDemoPage: React.FC<TemplateDemoPageProps> = ({ onClose }) => {
             <Tab
               icon={<FileText sx={{ fontSize: 18 }} />}
               iconPosition='start'
-              label='选择模板'
+              label={i18n.t('components.template_demo_page.k70')}
             />
             <Tab
               icon={<Settings sx={{ fontSize: 18 }} />}
               iconPosition='start'
-              label='配置变量'
+              label={i18n.t('components.template_demo_page.k71')}
               disabled={!selectedTemplate}
             />
             <Tab
               icon={<Play sx={{ fontSize: 18 }} />}
               iconPosition='start'
-              label='预览渲染'
+              label={i18n.t('components.template_demo_page.k72')}
               disabled={!selectedTemplate}
             />
           </Tabs>
@@ -786,7 +787,7 @@ const TemplateDemoPage: React.FC<TemplateDemoPageProps> = ({ onClose }) => {
                 variant='subtitle1'
                 sx={{ fontWeight: 600, color: 'grey.800' }}
               >
-                可用模板
+                {i18n.t('components.template_demo_page.k67')}
               </Typography>
               <Typography
                 variant='body2'
@@ -815,7 +816,7 @@ const TemplateDemoPage: React.FC<TemplateDemoPageProps> = ({ onClose }) => {
                 />
                 <TextField
                   size='small'
-                  placeholder='搜索模板...'
+                  placeholder={i18n.t('components.template_demo_page.k68')}
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   sx={{ pl: 5, width: { xs: '100%', sm: 200 } }}
@@ -829,7 +830,7 @@ const TemplateDemoPage: React.FC<TemplateDemoPageProps> = ({ onClose }) => {
                 sx={{ minWidth: 120 }}
                 slotProps={{ select: { native: true } }}
               >
-                <option value=''>全部分类</option>
+                <option value=''>{i18n.t('components.template_demo_page.k73')}</option>
                 {mockCategories.map((cat) => (
                   <option
                     key={cat.id}
@@ -862,7 +863,7 @@ const TemplateDemoPage: React.FC<TemplateDemoPageProps> = ({ onClose }) => {
                   },
                 }}
               />
-              <Typography sx={{ ml: 1, color: 'grey.500' }}>加载中...</Typography>
+              <Typography sx={{ ml: 1, color: 'grey.500' }}>{i18n.t('components.template_demo_page.k69')}</Typography>
             </Box>
           ) : (
             <Box
@@ -941,7 +942,7 @@ const TemplateDemoPage: React.FC<TemplateDemoPageProps> = ({ onClose }) => {
                         }}
                       />
                       <Chip
-                        label={`${template.use_count} 次使用`}
+                        label={`${template.use_count} ${i18n.t('components.template_demo_page.k70')}`}
                         size='small'
                         sx={{
                           bgcolor: 'success.light',
@@ -998,10 +999,10 @@ const TemplateDemoPage: React.FC<TemplateDemoPageProps> = ({ onClose }) => {
                   title={
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                       <Settings sx={{ fontSize: 18 }} />
-                      <Typography variant='h6'>变量配置</Typography>
+                      <Typography variant='h6'>{i18n.t('components.template_demo_page.k74')}</Typography>
                     </Box>
                   }
-                  subheader='请填写以下变量值'
+                  subheader={i18n.t('components.template_demo_page.k75')}
                 />
                 <CardContent sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
                   {selectedTemplate.variables?.map((varDef: TemplateVariable) => (
@@ -1028,7 +1029,7 @@ const TemplateDemoPage: React.FC<TemplateDemoPageProps> = ({ onClose }) => {
                           onChange={(e) => handleVariableChange(varDef.key, e.target.value)}
                           slotProps={{ select: { native: true } }}
                         >
-                          <option value=''>请选择</option>
+                          <option value=''>{i18n.t('components.template_demo_page.k76')}</option>
                           {varDef.options?.map((opt) => (
                             <option
                               key={opt.value}
@@ -1046,7 +1047,7 @@ const TemplateDemoPage: React.FC<TemplateDemoPageProps> = ({ onClose }) => {
                           onChange={(e) =>
                             handleVariableChange(varDef.key, parseInt(e.target.value) || 0)
                           }
-                          placeholder={`请输入${varDef.label}`}
+                          placeholder={`${i18n.t('components.template_demo_page.k71')}${varDef.label}`}
                         />
                       ) : varDef.type === 'date' ? (
                         <TextField
@@ -1061,7 +1062,7 @@ const TemplateDemoPage: React.FC<TemplateDemoPageProps> = ({ onClose }) => {
                           size='small'
                           value={templateVariables[varDef.key] || ''}
                           onChange={(e) => handleVariableChange(varDef.key, e.target.value)}
-                          placeholder={`请输入${varDef.label}`}
+                          placeholder={`${i18n.t('components.template_demo_page.k72')}${varDef.label}`}
                         />
                       )}
                     </FormControl>
@@ -1074,7 +1075,7 @@ const TemplateDemoPage: React.FC<TemplateDemoPageProps> = ({ onClose }) => {
                   onClick={() => setActiveTab(0)}
                   variant='outlined'
                 >
-                  返回选择
+                  {i18n.t('components.template_demo_page.k73')}
                 </Button>
                 <Button
                   onClick={handleRender}
@@ -1099,7 +1100,7 @@ const TemplateDemoPage: React.FC<TemplateDemoPageProps> = ({ onClose }) => {
                     )
                   }
                 >
-                  {isLoading ? '渲染中...' : '渲染模板'}
+                  {isLoading ? i18n.t('components.template_demo_page.k74') : i18n.t('components.template_demo_page.k77')}
                 </Button>
               </Box>
             </>
@@ -1125,7 +1126,7 @@ const TemplateDemoPage: React.FC<TemplateDemoPageProps> = ({ onClose }) => {
                     >
                       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                         <Play sx={{ fontSize: 18 }} />
-                        <Typography variant='h6'>渲染结果预览</Typography>
+                        <Typography variant='h6'>{i18n.t('components.template_demo_page.k78')}</Typography>
                       </Box>
                       <Box sx={{ display: 'flex', gap: 1 }}>
                         <Button
@@ -1133,7 +1134,7 @@ const TemplateDemoPage: React.FC<TemplateDemoPageProps> = ({ onClose }) => {
                           size='small'
                           startIcon={<Download sx={{ fontSize: 16 }} />}
                         >
-                          导出
+                          {i18n.t('components.template_demo_page.k75')}
                         </Button>
                       </Box>
                     </Box>
@@ -1152,13 +1153,13 @@ const TemplateDemoPage: React.FC<TemplateDemoPageProps> = ({ onClose }) => {
                       minHeight: 300,
                     }}
                   >
-                    {renderedContent || '点击上方「渲染模板」按钮查看结果'}
+                    {renderedContent || i18n.t('components.template_demo_page.k76')}
                   </Box>
                 </CardContent>
               </Card>
 
               <Card sx={{ mb: 2 }}>
-                <CardHeader title='变量配置摘要' />
+                <CardHeader title={i18n.t('components.template_demo_page.k79')} />
                 <CardContent>
                   <Box
                     sx={{
@@ -1193,7 +1194,7 @@ const TemplateDemoPage: React.FC<TemplateDemoPageProps> = ({ onClose }) => {
                           variant='body2'
                           sx={{ fontWeight: 500, color: 'grey.800' }}
                         >
-                          {typeof value === 'boolean' ? (value ? '是' : '否') : String(value)}
+                          {typeof value === 'boolean' ? (value ? i18n.t('components.template_demo_page.k81') : i18n.t('components.template_demo_page.k80')) : String(value)}
                         </Typography>
                       </Box>
                     ))}
@@ -1206,7 +1207,7 @@ const TemplateDemoPage: React.FC<TemplateDemoPageProps> = ({ onClose }) => {
                   onClick={() => setActiveTab(1)}
                   variant='outlined'
                 >
-                  返回配置
+                  {i18n.t('components.template_demo_page.k77')}
                 </Button>
                 <Button
                   onClick={handleApplyTemplate}
@@ -1215,7 +1216,7 @@ const TemplateDemoPage: React.FC<TemplateDemoPageProps> = ({ onClose }) => {
                   sx={{ flex: 1 }}
                   startIcon={<Play sx={{ fontSize: 18 }} />}
                 >
-                  应用到工作流
+                  {i18n.t('components.template_demo_page.k78')}
                 </Button>
               </Box>
             </>

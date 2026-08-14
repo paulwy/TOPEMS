@@ -12,6 +12,7 @@ import { ChevronRight, ChevronDown } from 'lucide-react';
 import { LazyIcon } from '@/components/icons/LazyIcon';
 import type { CanvasNode } from './types';
 import { getComponentByType } from './types';
+import i18n from '@/i18n';
 
 interface ComponentTreeProps {
   nodes: CanvasNode[];
@@ -38,7 +39,7 @@ export function ComponentTree({ nodes, selectedNodeId, onSelectNode }: Component
           variant='body2'
           sx={{ color: 'text.secondary' }}
         >
-          无组件
+          {i18n.t('components.component_tree.k0')}
         </Typography>
       </Paper>
     );
@@ -85,7 +86,7 @@ export function ComponentTree({ nodes, selectedNodeId, onSelectNode }: Component
         variant='subtitle2'
         sx={{ mb: 1, fontWeight: 600 }}
       >
-        组件结构
+        {i18n.t('components.component_tree.k1')}
       </Typography>
 
       <SimpleTreeView

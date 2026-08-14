@@ -1,5 +1,4 @@
 import React from 'react';
-import { useTranslation } from 'react-i18next';
 import { Box, Button, Card, CardContent, Typography } from '@mui/material';
 import { PM_PATHS } from '@/modules/pm/config';
 import PmReportStatusPieChart from './PmReportStatusPieChart';
@@ -10,7 +9,7 @@ import PmReportScheduleChart from './PmReportScheduleChart';
 import PmReportBenefitsTable from './PmReportBenefitsTable';
 import type { PmStatistics, ProjectBenefit } from '@/api/pm';
 import type { ChartDatum, TrendDatum } from '../hooks/usePmReport';
-
+import i18n from '@/i18n';
 export interface PmReportCustomToolbarProps {
   params: { projectId?: string };
   navigate: (path: string) => void;
@@ -21,7 +20,6 @@ export interface PmReportCustomToolbarProps {
   stats: PmStatistics;
   benefits: ProjectBenefit[];
 }
-
 const PmReportCustomToolbar: React.FC<PmReportCustomToolbarProps> = ({
   params,
   navigate,
@@ -32,8 +30,6 @@ const PmReportCustomToolbar: React.FC<PmReportCustomToolbarProps> = ({
   stats,
   benefits,
 }) => {
-  const { t } = useTranslation();
-
   return (
     <Box>
       {params.projectId && (
@@ -43,26 +39,23 @@ const PmReportCustomToolbar: React.FC<PmReportCustomToolbarProps> = ({
               variant='outlined'
               onClick={() => navigate(PM_PATHS.reports)}
             >
-              {t('pm.pm_report_page.text_2e5b6d')}
+              {i18n.t('pm.pm_report_page.text_2e5b6d')}
             </Button>
           </CardContent>
         </Card>
       )}
-
       <Typography
         variant='h6'
         sx={{ fontWeight: 600, mb: 2 }}
       >
-        {t('pm.pm_report_page.text_a734d9')}
+        {i18n.t('pm.pm_report_page.text_a734d9')}
       </Typography>
-
       <Box
         sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', lg: '2fr 1fr' }, gap: 3, mb: 3 }}
       >
         <PmReportStatusPieChart data={projectStatusData} />
         <PmReportRiskPieChart data={riskData} />
       </Box>
-
       <PmReportTrendChart data={trendData} />
       <PmReportBudgetCard
         stats={stats}
@@ -73,5 +66,4 @@ const PmReportCustomToolbar: React.FC<PmReportCustomToolbarProps> = ({
     </Box>
   );
 };
-
 export default PmReportCustomToolbar;

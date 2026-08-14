@@ -2,7 +2,6 @@ import React from 'react';
 import { Box, Typography, Chip, Stack } from '@mui/material';
 import { useQuery } from '@tanstack/react-query';
 import { GitBranch, BarChart3 } from 'lucide-react';
-
 import CrudPage from '@/components/templates/CrudPage';
 import { createCrudPageAdapter } from '@/schema/crudPageAdapter';
 import { PageContainer } from '@/components/common';
@@ -15,12 +14,10 @@ import {
   type ProcessFlowStep,
   type CapacityAnalysis,
 } from '@/api/mes/processFlow';
+import i18n from '@/i18n';
 import {QUERY_KEYS, CACHE_DURATIONS} from '@/lib/reactQuery';
 import { designTokens } from '@/theme/tokens';
-import { useTranslation } from 'react-i18next';
-
 const ct= designTokens.colors;
-
 const apiAdapter = createCrudPageAdapter<
   ProcessFlow,
   CreateProcessFlowRequest,
@@ -34,11 +31,8 @@ const apiAdapter = createCrudPageAdapter<
   },
   { itemsField: 'flows' }
 );
-
 function ProcessFlowDetailContent({ row }: { row: Record<string, unknown> }) {
-  const { t } = useTranslation();
   const flowId = String(row.id);
-
   const { data: stepsData } = useQuery({
     queryKey: [...QUERY_KEYS.MES.PROCESS_FLOWS, flowId, 'steps'],
     queryFn: async () => {
@@ -50,7 +44,6 @@ function ProcessFlowDetailContent({ row }: { row: Record<string, unknown> }) {
     },
   
       staleTime: CACHE_DURATIONS.MEDIUM,});
-
   const { data: capacityData } = useQuery({
     queryKey: [...QUERY_KEYS.MES.PROCESS_FLOWS, flowId, 'capacity'],
     queryFn: async () => {
@@ -62,17 +55,14 @@ function ProcessFlowDetailContent({ row }: { row: Record<string, unknown> }) {
     },
   
       staleTime: CACHE_DURATIONS.MEDIUM,});
-
   const steps = (stepsData as ProcessFlowStep[]) || [];
   const capacity = capacityData as CapacityAnalysis | null;
-
   const statusMap: Record<string, { label: string; bg: string; color: string }> = {
-    active: { label: '启用', bg: 'success.lighter', color: 'success.dark' },
-    inactive: { label: '停用', bg: 'grey.100', color: 'text.secondary' },
-    draft: { label: '草稿', bg: 'warning.light', color: 'warning.dark' },
+    active: { label: i18n.t('mes.process_flow_page.k0'), bg: 'success.lighter', color: 'success.dark' },
+    inactive: { label: i18n.t('mes.process_flow_page.k1'), bg: 'grey.100', color: 'text.secondary' },
+    draft: { label: i18n.t('mes.process_flow_page.k2'), bg: 'warning.light', color: 'warning.dark' },
   };
   const status = statusMap[String(row.status)] || statusMap.inactive;
-
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
       <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' }, gap: 2 }}>
@@ -81,7 +71,7 @@ function ProcessFlowDetailContent({ row }: { row: Record<string, unknown> }) {
             variant='caption'
             color='text.secondary'
           >
-            流程编号
+            {i18n.t('pages.process_flow_page.k0')}
           </Typography>
           <Typography
             variant='body2'
@@ -95,7 +85,7 @@ function ProcessFlowDetailContent({ row }: { row: Record<string, unknown> }) {
             variant='caption'
             color='text.secondary'
           >
-            流程名称
+            {i18n.t('pages.process_flow_page.k1')}
           </Typography>
           <Typography variant='body2'>{String(row.name || '-')}</Typography>
         </Box>
@@ -104,7 +94,7 @@ function ProcessFlowDetailContent({ row }: { row: Record<string, unknown> }) {
             variant='caption'
             color='text.secondary'
           >
-            生产线
+            {i18n.t('pages.process_flow_page.k2')}
           </Typography>
           <Typography variant='body2'>{String(row.production_line || '-')}</Typography>
         </Box>
@@ -113,10 +103,10 @@ function ProcessFlowDetailContent({ row }: { row: Record<string, unknown> }) {
             variant='caption'
             color='text.secondary'
           >
-            产能
+            {i18n.t('pages.process_flow_page.k3')}
           </Typography>
           <Typography variant='body2'>
-            {Number(row.capacity) || 0} {String(row.unit || '件/小时')}
+            {Number(row.capacity) || 0} {String(row.unit || i18n.t('mes.process_flow_page.k3'))}
           </Typography>
         </Box>
         <Box>
@@ -124,7 +114,7 @@ function ProcessFlowDetailContent({ row }: { row: Record<string, unknown> }) {
             variant='caption'
             color='text.secondary'
           >
-            状态
+            {i18n.t('pages.process_flow_page.k4')}
           </Typography>
           <Chip
             size='small'
@@ -137,7 +127,7 @@ function ProcessFlowDetailContent({ row }: { row: Record<string, unknown> }) {
             variant='caption'
             color='text.secondary'
           >
-            创建时间
+            {i18n.t('pages.process_flow_page.k5')}
           </Typography>
           <Typography variant='body2'>
             {row.created_at ? new Date(String(row.created_at)).toLocaleString('zh-CN') : '-'}
@@ -148,12 +138,11 @@ function ProcessFlowDetailContent({ row }: { row: Record<string, unknown> }) {
             variant='caption'
             color='text.secondary'
           >
-            描述
+            {i18n.t('pages.process_flow_page.k6')}
           </Typography>
           <Typography variant='body2'>{String(row.description || '-')}</Typography>
         </Box>
       </Box>
-
       {capacity && (
         <>
           <Typography
@@ -161,7 +150,7 @@ function ProcessFlowDetailContent({ row }: { row: Record<string, unknown> }) {
             sx={{ mt: 2, display: 'flex', alignItems: 'center', gap: 1 }}
           >
             <BarChart3 size={20} />
-            产能分析
+            {i18n.t('pages.process_flow_page.k7')}
           </Typography>
           <Box
             sx={{
@@ -176,7 +165,7 @@ function ProcessFlowDetailContent({ row }: { row: Record<string, unknown> }) {
                 variant='body2'
                 color='white'
               >
-                理论产能
+                {i18n.t('pages.process_flow_page.k8')}
               </Typography>
               <Typography
                 variant='h5'
@@ -190,7 +179,7 @@ function ProcessFlowDetailContent({ row }: { row: Record<string, unknown> }) {
                 variant='body2'
                 color='white'
               >
-                有效产能
+                {i18n.t('pages.process_flow_page.k9')}
               </Typography>
               <Typography
                 variant='h5'
@@ -204,7 +193,7 @@ function ProcessFlowDetailContent({ row }: { row: Record<string, unknown> }) {
                 variant='body2'
                 color='white'
               >
-                利用率
+                {i18n.t('pages.process_flow_page.k10')}
               </Typography>
               <Typography
                 variant='h5'
@@ -216,13 +205,12 @@ function ProcessFlowDetailContent({ row }: { row: Record<string, unknown> }) {
           </Box>
         </>
       )}
-
       <Typography
         variant='h6'
         sx={{ display: 'flex', alignItems: 'center', gap: 1 }}
       >
         <GitBranch size={20} />
-        工序列表
+        {i18n.t('pages.process_flow_page.k11')}
       </Typography>
       {steps.length > 0 ? (
         <Stack spacing={1}>
@@ -266,7 +254,7 @@ function ProcessFlowDetailContent({ row }: { row: Record<string, unknown> }) {
                 >
                   {step.process_code} | 标准工时: {step.standard_time || 0} 分钟
                   {step.quality_check_required
-                    ? ` | ${t('mes.process_flow_page.quality_inspection')}`
+                    ? ` | ${i18n.t('mes.process_flow_page.quality_inspection')}`
                     : ''}
                 </Typography>
               </Box>
@@ -281,12 +269,11 @@ function ProcessFlowDetailContent({ row }: { row: Record<string, unknown> }) {
           ))}
         </Stack>
       ) : (
-        <Typography color='text.secondary'>暂无工序数据</Typography>
+        <Typography color='text.secondary'>{i18n.t('mes.process_flow_page.k4')}</Typography>
       )}
     </Box>
   );
 }
-
 function ProcessFlowPage() {
   return (
     <PageContainer
@@ -316,7 +303,7 @@ function ProcessFlowPage() {
                 variant='body2'
                 sx={{ color: 'text.secondary' }}
               >
-                总流程数
+                {i18n.t('pages.process_flow_page.k12')}
               </Typography>
               <Typography
                 variant='h5'
@@ -330,7 +317,7 @@ function ProcessFlowPage() {
                 variant='body2'
                 sx={{ color: 'text.secondary' }}
               >
-                启用流程
+                {i18n.t('pages.process_flow_page.k13')}
               </Typography>
               <Typography
                 variant='h5'
@@ -344,7 +331,7 @@ function ProcessFlowPage() {
                 variant='body2'
                 sx={{ color: 'text.secondary' }}
               >
-                草稿流程
+                {i18n.t('pages.process_flow_page.k14')}
               </Typography>
               <Typography
                 variant='h5'
@@ -358,7 +345,7 @@ function ProcessFlowPage() {
                 variant='body2'
                 sx={{ color: 'text.secondary' }}
               >
-                停用流程
+                {i18n.t('pages.process_flow_page.k15')}
               </Typography>
               <Typography
                 variant='h5'
@@ -373,5 +360,4 @@ function ProcessFlowPage() {
     </PageContainer>
   );
 }
-
 export default ProcessFlowPage;

@@ -2,6 +2,8 @@ import React from 'react';
 import { Box, Typography, Button } from '@mui/material';
 import { FileText, Brain, GitBranch, Clock, Bell, User, ShoppingCart } from 'lucide-react';
 import { PLUGIN_PATHS } from '@/modules/plugin/config';
+import { designTokens } from '@topems/tokens';
+import i18n from '@/i18n';
 
 type IconComponent = React.ComponentType<{
   className?: string;
@@ -65,7 +67,7 @@ export const DashboardQuickActions: React.FC<DashboardQuickActionsProps> = ({
               transition: 'all 0.3s ease',
               '&:hover': {
                 backgroundColor: action.hoverColor,
-                boxShadow: '0 8px 24px rgba(0,0,0,0.15)',
+                boxShadow: `0 8px 24px ${designTokens.colors.action.selected}`,
                 transform: 'translateY(-4px)',
               },
               border: 'none',
@@ -86,7 +88,7 @@ export const DashboardQuickActions: React.FC<DashboardQuickActionsProps> = ({
                 '&:hover': {
                   backgroundColor: 'common.white',
                 },
-                boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
+                boxShadow: `0 2px 8px ${designTokens.colors.action.selected}`,
               }}
             >
               <Icon style={{ width: 24, height: 24, color: action.color }} />
@@ -110,7 +112,7 @@ export const DashboardQuickActions: React.FC<DashboardQuickActionsProps> = ({
 
 export const defaultQuickActions: QuickAction[] = [
   {
-    label: '上传文件',
+    label: i18n.t('shared.dashboard_quick_actions.k0'),
     icon: FileText,
     path: '/documents',
     color: 'primary.dark',
@@ -119,7 +121,7 @@ export const defaultQuickActions: QuickAction[] = [
     service: 'doc',
   },
   {
-    label: 'AI 问答',
+    label: i18n.t('components.dashboard_quick_actions.ai_0'),
     icon: Brain,
     path: '/ai',
     color: 'secondary.dark',
@@ -128,7 +130,7 @@ export const defaultQuickActions: QuickAction[] = [
     service: 'ai',
   },
   {
-    label: '发起流程',
+    label: i18n.t('shared.dashboard_quick_actions.k1'),
     icon: GitBranch,
     path: '/flow/definitions',
     color: 'success.dark',
@@ -137,7 +139,7 @@ export const defaultQuickActions: QuickAction[] = [
     service: 'flow',
   },
   {
-    label: '我的待办',
+    label: i18n.t('shared.dashboard_quick_actions.k2'),
     icon: Clock,
     path: '/flow/approvals',
     color: 'warning.600',
@@ -146,7 +148,7 @@ export const defaultQuickActions: QuickAction[] = [
     service: 'flow',
   },
   {
-    label: '通知中心',
+    label: i18n.t('shared.dashboard_quick_actions.k3'),
     icon: Bell,
     path: '/notifications',
     color: 'yellow.600',
@@ -155,7 +157,7 @@ export const defaultQuickActions: QuickAction[] = [
     service: 'notification',
   },
   {
-    label: '个人中心',
+    label: i18n.t('shared.dashboard_quick_actions.k4'),
     icon: User,
     path: '/profile',
     color: 'primary.main',
@@ -164,7 +166,7 @@ export const defaultQuickActions: QuickAction[] = [
     service: null,
   },
   {
-    label: '插件市场',
+    label: i18n.t('shared.dashboard_quick_actions.k5'),
     icon: ShoppingCart,
     path: PLUGIN_PATHS.marketplace,
     color: 'secondary.600',

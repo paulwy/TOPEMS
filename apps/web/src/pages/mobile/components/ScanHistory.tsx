@@ -9,11 +9,10 @@ import {
   List,
   useTheme,
 } from '@mui/material';
+import i18n from '@/i18n';
 import { History, Search, Trash2, Clock, Barcode, QrCode } from 'lucide-react';
-import { useTranslation } from 'react-i18next';
 import { MobileCard } from '@/components/mobile';
 import type { ScanHistoryItem } from '../hooks/useMobileScan';
-
 interface ScanHistoryProps {
   searchQuery: string;
   onSearchChange: (value: string) => void;
@@ -22,7 +21,6 @@ interface ScanHistoryProps {
   onClearHistory: () => void;
   onItemClick: (content: string) => void;
 }
-
 const ScanHistory: React.FC<ScanHistoryProps> = ({
   searchQuery,
   onSearchChange,
@@ -31,16 +29,14 @@ const ScanHistory: React.FC<ScanHistoryProps> = ({
   onClearHistory,
   onItemClick,
 }) => {
-  const { t } = useTranslation();
   const theme = useTheme();
-
   return (
     <Box>
       <Box sx={{ p: 2 }}>
         <TextField
           fullWidth
           size='small'
-          placeholder={t('mobile.scan.action.search_history')}
+          placeholder={i18n.t('mobile.scan.action.search_history')}
           value={searchQuery}
           onChange={(e) => onSearchChange(e.target.value)}
           sx={{
@@ -63,7 +59,7 @@ const ScanHistory: React.FC<ScanHistoryProps> = ({
                     <IconButton
                       size='small'
                       onClick={onClearHistory}
-                      aria-label='删除'
+                      aria-label={i18n.t('mobile.scan_history.k0')}
                     >
                       <Trash2 style={{ width: 18, height: 18 }} />
                     </IconButton>
@@ -73,7 +69,6 @@ const ScanHistory: React.FC<ScanHistoryProps> = ({
           }}
         />
       </Box>
-
       {filteredHistory.length === 0 ? (
         <Box
           sx={{
@@ -102,13 +97,13 @@ const ScanHistory: React.FC<ScanHistoryProps> = ({
             variant='subtitle1'
             sx={{ mb: 1, fontWeight: 500 }}
           >
-            {t('mobile.scan.status.empty_history')}
+            {i18n.t('mobile.scan.status.empty_history')}
           </Typography>
           <Typography
             variant='body2'
             color='text.secondary'
           >
-            {t('mobile.scan.status.history_desc')}
+            {i18n.t('mobile.scan.status.history_desc')}
           </Typography>
         </Box>
       ) : (
@@ -161,5 +156,4 @@ const ScanHistory: React.FC<ScanHistoryProps> = ({
     </Box>
   );
 };
-
 export default ScanHistory;

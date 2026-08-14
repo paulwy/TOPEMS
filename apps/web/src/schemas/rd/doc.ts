@@ -2,13 +2,14 @@ import React from 'react';
 import { Box, Chip } from '@mui/material';
 import { File, FileText, BookOpen, Folder } from 'lucide-react';
 import type { EntitySchema } from '@/schema';
+import i18n from '@/i18n';
 
 const DOC_TYPE_OPTIONS: { value: string; label: string }[] = [
-  { value: '设计文档', label: '设计文档' },
-  { value: '接口文档', label: '接口文档' },
-  { value: '用户文档', label: '用户文档' },
-  { value: '测试文档', label: '测试文档' },
-  { value: '运维文档', label: '运维文档' },
+  { value: i18n.t('rd.doc.k0'), label: i18n.t('rd.doc.k1') },
+  { value: i18n.t('rd.doc.k2'), label: i18n.t('rd.doc.k3') },
+  { value: i18n.t('rd.doc.k4'), label: i18n.t('rd.doc.k5') },
+  { value: i18n.t('rd.doc.k6'), label: i18n.t('rd.doc.k7') },
+  { value: i18n.t('rd.doc.k8'), label: i18n.t('rd.doc.k9') },
 ];
 
 const STATUS_COLOR_MAP: Record<string, 'success' | 'warning' | 'default'> = {
@@ -17,17 +18,17 @@ const STATUS_COLOR_MAP: Record<string, 'success' | 'warning' | 'default'> = {
 };
 
 const STATUS_LABEL_MAP: Record<string, string> = {
-  published: '已发布',
-  draft: '草稿',
+  published: i18n.t('rd.doc.k10'),
+  draft: i18n.t('rd.doc.k11'),
 };
 
 const getDocTypeIcon = (type: string) => {
   switch (type) {
-    case '设计文档':
+    case i18n.t('rd.doc.k12'):
       return React.createElement(File, { size: 16, color: 'primary.main' });
-    case '接口文档':
+    case i18n.t('rd.doc.k13'):
       return React.createElement(FileText, { size: 16, color: 'primary.main' });
-    case '用户文档':
+    case i18n.t('rd.doc.k14'):
       return React.createElement(BookOpen, { size: 16, color: 'primary.main' });
     default:
       return React.createElement(Folder, { size: 16, color: 'primary.main' });
@@ -36,8 +37,8 @@ const getDocTypeIcon = (type: string) => {
 
 export const docSchema: EntitySchema = {
   entity: 'rd_doc',
-  title: '文档',
-  description: '管理项目文档和版本',
+  title: i18n.t('rd.doc.k15'),
+  description: i18n.t('rd.doc.k16'),
 
   api: {
     module: 'rd',
@@ -47,7 +48,7 @@ export const docSchema: EntitySchema = {
   fields: [
     {
       name: 'doc_name',
-      label: '文档名称',
+      label: i18n.t('rd.doc.k17'),
       type: 'text',
       required: true,
       listWidth: 250,
@@ -63,15 +64,15 @@ export const docSchema: EntitySchema = {
     },
     {
       name: 'doc_type',
-      label: '文档类型',
+      label: i18n.t('rd.doc.k18'),
       type: 'select',
-      defaultValue: '设计文档',
+      defaultValue: i18n.t('rd.doc.k19'),
       options: { type: 'static', options: DOC_TYPE_OPTIONS },
       listWidth: 120,
     },
     {
       name: 'version',
-      label: '版本',
+      label: i18n.t('rd.doc.k20'),
       type: 'text',
       listWidth: 100,
       hideInForm: true,
@@ -85,7 +86,7 @@ export const docSchema: EntitySchema = {
     },
     {
       name: 'author',
-      label: '作者',
+      label: i18n.t('rd.doc.k21'),
       type: 'text',
       listWidth: 120,
       hideInForm: true,
@@ -93,21 +94,21 @@ export const docSchema: EntitySchema = {
     },
     {
       name: 'update_time',
-      label: '更新时间',
+      label: i18n.t('rd.doc.k22'),
       type: 'datetime',
       listWidth: 160,
       hideInForm: true,
     },
     {
       name: 'status',
-      label: '状态',
+      label: i18n.t('rd.doc.k23'),
       type: 'select',
       defaultValue: 'draft',
       options: {
         type: 'static',
         options: [
-          { value: 'published', label: '已发布' },
-          { value: 'draft', label: '草稿' },
+          { value: 'published', label: i18n.t('rd.doc.k24') },
+          { value: 'draft', label: i18n.t('rd.doc.k25') },
         ],
       },
       listWidth: 110,
@@ -115,7 +116,7 @@ export const docSchema: EntitySchema = {
     },
     {
       name: 'description',
-      label: '描述',
+      label: i18n.t('rd.doc.k26'),
       type: 'textarea',
       showInList: false,
     },
@@ -128,19 +129,19 @@ export const docSchema: EntitySchema = {
     filters: [
       {
         id: 'doc_type',
-        label: '文档类型',
+        label: i18n.t('rd.doc.k27'),
         type: 'select',
-        options: [{ label: '全部', value: 'all' }, ...DOC_TYPE_OPTIONS],
+        options: [{ label: i18n.t('rd.doc.k28'), value: 'all' }, ...DOC_TYPE_OPTIONS],
         defaultValue: 'all',
       },
       {
         id: 'status',
-        label: '状态',
+        label: i18n.t('rd.doc.k29'),
         type: 'select',
         options: [
-          { label: '全部', value: 'all' },
-          { label: '已发布', value: 'published' },
-          { label: '草稿', value: 'draft' },
+          { label: i18n.t('rd.doc.k30'), value: 'all' },
+          { label: i18n.t('rd.doc.k31'), value: 'published' },
+          { label: i18n.t('rd.doc.k32'), value: 'draft' },
         ],
         defaultValue: 'all',
       },
@@ -154,19 +155,19 @@ export const docSchema: EntitySchema = {
 
   formSections: [
     {
-      title: '基本信息',
+      title: i18n.t('rd.doc.k33'),
       fields: ['doc_name', 'doc_type', 'status'],
     },
     {
-      title: '描述',
+      title: i18n.t('rd.doc.k34'),
       fields: ['description'],
     },
   ],
 
   formColCount: 2,
-  createTitle: '新建文档',
-  editTitle: '编辑文档',
-  detailTitle: '文档详情',
+  createTitle: i18n.t('rd.doc.k35'),
+  editTitle: i18n.t('rd.doc.k36'),
+  detailTitle: i18n.t('rd.doc.k37'),
 
   actions: ['create', 'edit', 'detail', 'delete'],
 };

@@ -9,9 +9,8 @@ import { limsApi } from '@/api/lims';
 import type { UncertaintyProject } from '@/api/lims';
 import { designTokens } from '@/theme/tokens';
 import { DASHBOARD_PATHS } from '@/routes/dashboard';
-
+import i18n from '@/i18n';
 const ct= designTokens.colors;
-
 const uncertaintyAdapter = {
   list: async (params?: { page?: number; pageSize?: number; search?: string; status?: string }) => {
     const response = await limsApi.listUncertaintyProjects();
@@ -27,7 +26,6 @@ const uncertaintyAdapter = {
         else if (Array.isArray(obj.data)) data = obj.data as UncertaintyProject[];
       }
     }
-
     if (params?.search) {
       const search = params.search.toLowerCase();
       data = data.filter(
@@ -36,18 +34,15 @@ const uncertaintyAdapter = {
           item.project_no.toLowerCase().includes(search)
       );
     }
-
     if (params?.status && params.status !== 'all') {
       data = data.filter((item) => item.status === params.status);
     }
-
     const total = data.length;
     const page = params?.page || 1;
     const pageSize = params?.pageSize || 10;
     const start = (page - 1) * pageSize;
     const end = start + pageSize;
     const paginatedData = data.slice(start, end);
-
     return { data: paginatedData, total };
   },
   create: async (data: Partial<UncertaintyProject>) => {
@@ -55,7 +50,7 @@ const uncertaintyAdapter = {
       data as Parameters<typeof limsApi.createUncertaintyProject>[0]
     );
     if (!response.success || !response.data) {
-      throw new Error(response.message || '创建失败，请稍后重试');
+      throw new Error(response.message || i18n.t('lims.lims_uncertainty_page.k0'));
     }
     return response.data as unknown as UncertaintyProject;
   },
@@ -65,18 +60,17 @@ const uncertaintyAdapter = {
       data as Parameters<typeof limsApi.updateUncertaintyProject>[1]
     );
     if (!response.success || !response.data) {
-      throw new Error(response.message || '更新失败，请稍后重试');
+      throw new Error(response.message || i18n.t('lims.lims_uncertainty_page.k1'));
     }
     return response.data as unknown as UncertaintyProject;
   },
   delete: async (id: string) => {
     const response = await limsApi.deleteUncertaintyProject(id);
     if (!response.success) {
-      throw new Error(response.message || '删除失败');
+      throw new Error(response.message || i18n.t('lims.lims_uncertainty_page.k2'));
     }
   },
 };
-
 const StatCard: React.FC<{
   label: string;
   value: number;
@@ -126,7 +120,6 @@ const StatCard: React.FC<{
     </CardContent>
   </Card>
 );
-
 const LimsUncertaintyPage: React.FC = () => {
   const { data: allProjects } = useQuery({
     queryKey: [uncertaintyProjectSchema.entity, 'stats'],
@@ -147,18 +140,15 @@ const LimsUncertaintyPage: React.FC = () => {
     },
     staleTime: 5 * 60 * 1000,
   });
-
   const projects = allProjects || [];
-
   const stats = useMemo(() => {
     return {
       total: projects.length,
-      draft: projects.filter((p) => p.status === '草稿').length,
-      calculating: projects.filter((p) => p.status === '计算中').length,
-      completed: projects.filter((p) => p.status === '已完成').length,
+      draft: projects.filter((p) => p.status === i18n.t('lims.lims_uncertainty_page.k3')).length,
+      calculating: projects.filter((p) => p.status === i18n.t('lims.lims_uncertainty_page.k4')).length,
+      completed: projects.filter((p) => p.status === i18n.t('lims.lims_uncertainty_page.k5')).length,
     };
   }, [projects]);
-
   const headerContent = () => (
     <Box
       sx={{
@@ -169,7 +159,7 @@ const LimsUncertaintyPage: React.FC = () => {
       }}
     >
       <StatCard
-        label='项目总数'
+        label={i18n.t('lims.lims_uncertainty_page.k6')}
         value={stats.total}
         icon={<Calculator size={20} />}
         bgColor={ct.orange[50]}
@@ -177,7 +167,7 @@ const LimsUncertaintyPage: React.FC = () => {
         iconColor='warning.600'
       />
       <StatCard
-        label='草稿'
+        label={i18n.t('lims.lims_uncertainty_page.k7')}
         value={stats.draft}
         icon={<Calculator size={20} />}
         iconBgColor={ct.primary.main}
@@ -185,14 +175,14 @@ const LimsUncertaintyPage: React.FC = () => {
         gradient
       />
       <StatCard
-        label='计算中'
+        label={i18n.t('lims.lims_uncertainty_page.k8')}
         value={stats.calculating}
         icon={<Calculator size={20} />}
         iconBgColor='primary.100'
         iconColor='primary.dark'
       />
       <StatCard
-        label='已完成'
+        label={i18n.t('lims.lims_uncertainty_page.k9')}
         value={stats.completed}
         icon={<Calculator size={20} />}
         iconBgColor={ct.success.main}
@@ -201,10 +191,9 @@ const LimsUncertaintyPage: React.FC = () => {
       />
     </Box>
   );
-
   return (
     <PageContainer
-      title='不确定度评定'
+      title={i18n.t('lims.lims_uncertainty_page.k10')}
       subtitle='Uncertainty Evaluation'
       headerProps={{
         pageIcon: <Calculator style={{ width: 20, height: 20 }} />,
@@ -215,14 +204,13 @@ const LimsUncertaintyPage: React.FC = () => {
         schema={uncertaintyProjectSchema}
         apiAdapter={uncertaintyAdapter}
         breadcrumbs={[
-          { label: '首页', href: DASHBOARD_PATHS.dashboard },
+          { label: i18n.t('lims.lims_uncertainty_page.k11'), href: DASHBOARD_PATHS.dashboard },
           { label: 'LIMS' },
-          { label: '不确定度评定' },
+          { label: i18n.t('lims.lims_uncertainty_page.k12') },
         ]}
         headerContent={headerContent}
       />
     </PageContainer>
   );
 };
-
 export default LimsUncertaintyPage;

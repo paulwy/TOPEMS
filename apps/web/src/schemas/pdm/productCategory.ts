@@ -1,10 +1,11 @@
 import type { EntitySchema } from '@/schema';
 import type { SchemaExtensions } from '@/schema/schemaExtensions';
+import i18n from '@/i18n';
 
 export const productCategorySchema: EntitySchema & SchemaExtensions = {
   entity: 'pdm_product_category',
-  title: '产品分类',
-  description: '管理产品分类层级结构，支持多级分类体系',
+  title: i18n.t('pdm.product_category.k0'),
+  description: i18n.t('pdm.product_category.k1'),
 
   api: {
     module: 'pdm',
@@ -14,7 +15,7 @@ export const productCategorySchema: EntitySchema & SchemaExtensions = {
   fields: [
     {
       name: 'name',
-      label: '分类名称',
+      label: i18n.t('pdm.product_category.k2'),
       type: 'text',
       required: true,
       sortable: true,
@@ -22,7 +23,7 @@ export const productCategorySchema: EntitySchema & SchemaExtensions = {
     },
     {
       name: 'code',
-      label: '分类编码',
+      label: i18n.t('pdm.product_category.k3'),
       type: 'text',
       readonlyOnEdit: true,
       sortable: true,
@@ -30,42 +31,42 @@ export const productCategorySchema: EntitySchema & SchemaExtensions = {
     },
     {
       name: 'category_type',
-      label: '分类类型',
+      label: i18n.t('pdm.product_category.k4'),
       type: 'select',
       options: {
         type: 'static',
         options: [
-          { value: 'product', label: '产品' },
-          { value: 'semi_finished', label: '半成品' },
-          { value: 'material', label: '原材料' },
-          { value: 'accessory', label: '辅料' },
+          { value: 'product', label: i18n.t('pdm.product_category.k5') },
+          { value: 'semi_finished', label: i18n.t('pdm.product_category.k6') },
+          { value: 'material', label: i18n.t('pdm.product_category.k7') },
+          { value: 'accessory', label: i18n.t('pdm.product_category.k8') },
         ],
       },
       listWidth: 100,
     },
     {
       name: 'parentId',
-      label: '上级分类',
+      label: i18n.t('pdm.product_category.k9'),
       type: 'text',
       showInList: false,
       showInDetail: false,
     },
     {
       name: 'description',
-      label: '描述',
+      label: i18n.t('pdm.product_category.k10'),
       type: 'textarea',
       showInList: false,
     },
     {
       name: 'status',
-      label: '状态',
+      label: i18n.t('pdm.product_category.k11'),
       type: 'select',
       defaultValue: 'active',
       options: {
         type: 'static',
         options: [
-          { value: 'active', label: '启用' },
-          { value: 'inactive', label: '停用' },
+          { value: 'active', label: i18n.t('pdm.product_category.k12') },
+          { value: 'inactive', label: i18n.t('pdm.product_category.k13') },
         ],
       },
       listWidth: 100,
@@ -83,8 +84,8 @@ export const productCategorySchema: EntitySchema & SchemaExtensions = {
         inactive: 'default',
       },
       labelMap: {
-        active: '启用',
-        inactive: '停用',
+        active: i18n.t('pdm.product_category.k14'),
+        inactive: i18n.t('pdm.product_category.k15'),
       },
     },
   },
@@ -99,21 +100,21 @@ export const productCategorySchema: EntitySchema & SchemaExtensions = {
 
   formSections: [
     {
-      title: '基本信息',
+      title: i18n.t('pdm.product_category.k16'),
       fields: ['name', 'code', 'category_type'],
     },
     {
-      title: '层级关系',
+      title: i18n.t('pdm.product_category.k17'),
       fields: ['parentId'],
     },
     {
-      title: '其他',
+      title: i18n.t('pdm.product_category.k18'),
       fields: ['status', 'description'],
     },
   ],
 
   formColCount: 2,
-  createTitle: '新增分类',
-  editTitle: '编辑分类',
-  detailTitle: '分类详情',
+  createTitle: i18n.t('pdm.product_category.k19'),
+  editTitle: i18n.t('pdm.product_category.k20'),
+  detailTitle: i18n.t('pdm.product_category.k21'),
 };

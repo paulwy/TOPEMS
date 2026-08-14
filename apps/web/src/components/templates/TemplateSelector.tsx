@@ -13,6 +13,7 @@ import {
   Button,
   useTheme,
 } from '@mui/material';
+import i18n from '@/i18n';
 import React, { useState, useEffect } from 'react';
 
 import {
@@ -51,11 +52,11 @@ const TYPE_ICONS: Record<TemplateType, React.ReactNode> = {
 };
 
 const TYPE_LABELS: Record<TemplateType, string> = {
-  document: '文档',
-  workflow: '工作流',
-  form: '表单',
-  report: '报表',
-  notification: '通知',
+  document: i18n.t('components.template_selector.k0'),
+  workflow: i18n.t('components.template_selector.k1'),
+  form: i18n.t('components.template_selector.k2'),
+  report: i18n.t('components.template_selector.k3'),
+  notification: i18n.t('components.template_selector.k4'),
 };
 
 const TemplateSelector: React.FC<TemplateSelectorProps> = ({
@@ -163,7 +164,7 @@ const TemplateSelector: React.FC<TemplateSelectorProps> = ({
           variant='h6'
           sx={{ mb: 2 }}
         >
-          选择模板
+          {i18n.t('components.template_selector.k0')}
         </Typography>
 
         <Box
@@ -196,7 +197,7 @@ const TemplateSelector: React.FC<TemplateSelectorProps> = ({
                 }}
               />
               <TextField
-                placeholder='搜索模板...'
+                placeholder={i18n.t('components.template_selector.k1')}
                 value={searchQuery}
                 onChange={(e) => handleSearch(e.target.value)}
                 size='small'
@@ -204,14 +205,14 @@ const TemplateSelector: React.FC<TemplateSelectorProps> = ({
               />
             </Box>
             <Box sx={{ width: { xs: '100%', sm: 'auto' } }}>
-              <InputLabel sx={{ fontSize: 14, mb: 0.5 }}>分类筛选</InputLabel>
+              <InputLabel sx={{ fontSize: 14, mb: 0.5 }}>{i18n.t('components.template_selector.k5')}</InputLabel>
               <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
                 <Button
                   variant={!selectedCategory ? 'contained' : 'outlined'}
                   size='small'
                   onClick={() => handleCategoryChange(undefined)}
                 >
-                  全部
+                  {i18n.t('components.template_selector.k2')}
                 </Button>
                 {categories.map((cat) => (
                   <Button
@@ -295,7 +296,7 @@ const TemplateSelector: React.FC<TemplateSelectorProps> = ({
                           WebkitBoxOrient: 'vertical',
                         }}
                       >
-                        {template.description || '暂无描述'}
+                        {template.description || i18n.t('components.template_selector.k6')}
                       </Typography>
                       <Box
                         sx={{
@@ -308,12 +309,12 @@ const TemplateSelector: React.FC<TemplateSelectorProps> = ({
                           <Chip
                             size='small'
                             variant='outlined'
-                            label={template.category_name || '未分类'}
+                            label={template.category_name || i18n.t('components.template_selector.k7')}
                           />
                           {template.is_public && (
                             <Chip
                               size='small'
-                              label='公开'
+                              label={i18n.t('components.template_selector.k8')}
                             />
                           )}
                         </Box>
@@ -348,8 +349,8 @@ const TemplateSelector: React.FC<TemplateSelectorProps> = ({
                       opacity: 0.5,
                     }}
                   />
-                  <Typography>暂无模板</Typography>
-                  <Typography variant='body2'>请先在系统管理中创建模板</Typography>
+                  <Typography>{i18n.t('components.template_selector.k9')}</Typography>
+                  <Typography variant='body2'>{i18n.t('components.template_selector.k10')}</Typography>
                 </Box>
               )}
             </Box>
@@ -389,14 +390,14 @@ const TemplateSelector: React.FC<TemplateSelectorProps> = ({
                           {selectedTemplate.is_public && (
                             <Chip
                               size='small'
-                              label='公开'
+                              label={i18n.t('components.template_selector.k11')}
                             />
                           )}
                           {selectedTemplate.ai_enabled && (
                             <Chip
                               size='small'
                               icon={<Sparkles style={{ width: 12, height: 12 }} />}
-                              label='AI 辅助'
+                              label={i18n.t('components.template_selector.ai_3')}
                               sx={{ bgcolor: 'warning.light', color: 'warning.dark' }}
                             />
                           )}
@@ -407,7 +408,7 @@ const TemplateSelector: React.FC<TemplateSelectorProps> = ({
                       variant='text'
                       onClick={() => setSelectedTemplate(null)}
                     >
-                      返回列表
+                      {i18n.t('components.template_selector.k4')}
                     </Button>
                   </Box>
                 </CardHeader>
@@ -417,7 +418,7 @@ const TemplateSelector: React.FC<TemplateSelectorProps> = ({
                   </Typography>
 
                   <Box sx={{ mb: 3 }}>
-                    <InputLabel sx={{ mb: 1 }}>模板预览</InputLabel>
+                    <InputLabel sx={{ mb: 1 }}>{i18n.t('components.template_selector.k12')}</InputLabel>
                     <Box
                       sx={{
                         p: 2,
@@ -437,7 +438,7 @@ const TemplateSelector: React.FC<TemplateSelectorProps> = ({
 
                   {showVariables && selectedTemplate.variables.length > 0 && (
                     <Box>
-                      <InputLabel sx={{ mb: 1.5, fontWeight: 'bold' }}>变量配置</InputLabel>
+                      <InputLabel sx={{ mb: 1.5, fontWeight: 'bold' }}>{i18n.t('components.template_selector.k13')}</InputLabel>
                       <Box
                         sx={{
                           display: 'flex',
@@ -460,12 +461,12 @@ const TemplateSelector: React.FC<TemplateSelectorProps> = ({
                               </span>
                               {variable.required && (
                                 <span style={{ fontSize: 12, color: theme.palette.error.main }}>
-                                  必填
+                                  {i18n.t('components.template_selector.k5')}
                                 </span>
                               )}
                             </Box>
                             <TextField
-                              placeholder={variable.placeholder || `输入${variable.label}`}
+                              placeholder={variable.placeholder || `${i18n.t('components.template_selector.k6')}${variable.label}`}
                               defaultValue={variable.default_value}
                               onChange={(e) => handleVariableChange(variable.key, e.target.value)}
                               size='small'
@@ -489,18 +490,18 @@ const TemplateSelector: React.FC<TemplateSelectorProps> = ({
                 variant='outlined'
                 onClick={() => setSelectedTemplate(null)}
               >
-                返回列表
+                {i18n.t('components.template_selector.k7')}
               </Button>
               <Button
                 onClick={handleApply}
                 disabled={isRendering}
               >
                 {isRendering ? (
-                  '处理中...'
+                  i18n.t('components.template_selector.k8')
                 ) : (
                   <>
                     <Check style={{ width: 16, height: 16, marginRight: 8 }} />
-                    应用模板
+                    {i18n.t('components.template_selector.k9')}
                   </>
                 )}
               </Button>
@@ -511,13 +512,13 @@ const TemplateSelector: React.FC<TemplateSelectorProps> = ({
                 variant='outlined'
                 onClick={() => onOpenChange(false)}
               >
-                取消
+                {i18n.t('components.template_selector.k10')}
               </Button>
               <Button
                 disabled={!selectedTemplate}
                 onClick={handleApply}
               >
-                应用模板
+                {i18n.t('components.template_selector.k11')}
               </Button>
             </>
           )}

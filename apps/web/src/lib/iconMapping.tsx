@@ -170,6 +170,7 @@ import {
   // V202: QMS/WMS analytics 图标
   LineChart,
   AreaChart,
+  ToggleLeft,
   // 保留别名导入（lucideIcons map 中通过别名引用）
   Box as BoxIcon,
   DollarSign as DollarSignIcon,
@@ -353,6 +354,7 @@ export const lucideIcons: Record<
   // V202: QMS/WMS analytics 图标
   LineChart,
   AreaChart,
+  ToggleLeft,
   // Grid3x3: alias for Grid3X3 (config.ts uses lowercase x)
   Grid3x3: Grid3X3,
   RefreshCwIcon,

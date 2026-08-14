@@ -1,23 +1,19 @@
 import React from 'react';
 import { Box, Typography, Chip, Paper, TextField } from '@mui/material';
 import { Barcode } from 'lucide-react';
-import { useTranslation } from 'react-i18next';
 import { MobileButton } from '@/components/mobile';
 import { sizeTokens } from '@/theme';
-
+import i18n from '@/i18n';
 interface ManualInputProps {
   manualInput: string;
   onManualInputChange: (value: string) => void;
   onSubmit: () => void;
 }
-
 const ManualInput: React.FC<ManualInputProps> = ({
   manualInput,
   onManualInputChange,
   onSubmit,
 }) => {
-  const { t } = useTranslation();
-
   return (
     <Box sx={{ p: 2 }}>
       <Paper
@@ -33,19 +29,18 @@ const ManualInput: React.FC<ManualInputProps> = ({
           variant='subtitle1'
           sx={{ fontWeight: 600, mb: 2 }}
         >
-          {t('mobile.scan.action.manual_input')}
+          {i18n.t('mobile.scan.action.manual_input')}
         </Typography>
         <Typography
           variant='body2'
           color='text.secondary'
           sx={{ mb: 3 }}
         >
-          {t('mobile.scan.status.manual_desc')}
+          {i18n.t('mobile.scan.status.manual_desc')}
         </Typography>
-
         <TextField
           fullWidth
-          placeholder={t('mobile.scan.field.input_placeholder')}
+          placeholder={i18n.t('mobile.scan.field.input_placeholder')}
           value={manualInput}
           onChange={(e) => onManualInputChange(e.target.value)}
           sx={{
@@ -60,7 +55,6 @@ const ManualInput: React.FC<ManualInputProps> = ({
             }
           }}
         />
-
         <MobileButton
           fullWidth
           variant='contained'
@@ -68,16 +62,15 @@ const ManualInput: React.FC<ManualInputProps> = ({
           disabled={!manualInput.trim()}
           startIcon={<Barcode style={{ width: 20, height: 20 }} />}
         >
-          {t('mobile.scan.action.confirm')}
+          {i18n.t('mobile.scan.action.confirm')}
         </MobileButton>
       </Paper>
-
       <Box sx={{ mt: 3 }}>
         <Typography
           variant='subtitle2'
           sx={{ fontWeight: 600, mb: 2 }}
         >
-          {t('mobile.scan.label.supported_formats')}
+          {i18n.t('mobile.scan.label.supported_formats')}
         </Typography>
         <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
           {['Code 128', 'EAN-13', 'UPC-A', 'QR Code', 'Code 39', 'ITF'].map((format) => (
@@ -94,5 +87,4 @@ const ManualInput: React.FC<ManualInputProps> = ({
     </Box>
   );
 };
-
 export default ManualInput;

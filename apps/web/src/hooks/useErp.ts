@@ -28,6 +28,7 @@ import {
   type VehicleRequest,
   type Announcement,
 } from '@/api/erp';
+import i18n from '@/i18n';
 import { useNotificationStore } from '../store';
 
 export interface UseErpResult<T> {
@@ -75,7 +76,7 @@ function useErpBase<T extends { id?: string }>(
       const errAny = err as { response?: { data?: { message?: string } }; message?: string };
       const message = errAny?.response?.data?.message || errAny?.message || defaultMessage;
       setError(message);
-      addNotification({ title: '错误', message, type: 'error' });
+      addNotification({ title: i18n.t('shared.use_erp.k0'), message, type: 'error' });
       return Promise.reject(err);
     },
     [addNotification]
@@ -83,7 +84,7 @@ function useErpBase<T extends { id?: string }>(
 
   const handleSuccess = useCallback(
     (message: string) => {
-      addNotification({ title: '成功', message, type: 'success' });
+      addNotification({ title: i18n.t('shared.use_erp.k1'), message, type: 'success' });
     },
     [addNotification]
   );
@@ -100,7 +101,7 @@ function useErpBase<T extends { id?: string }>(
         setError(null);
         return response.data?.items || [];
       } catch (err: unknown) {
-        return handleError(err, '加载数据失败');
+        return handleError(err, i18n.t('shared.use_erp.k2'));
       } finally {
         setLoading(false);
       }
@@ -119,7 +120,7 @@ function useErpBase<T extends { id?: string }>(
         }
         return null;
       } catch (err: unknown) {
-        handleError(err, '获取数据失败');
+        handleError(err, i18n.t('shared.use_erp.k3'));
         return null;
       } finally {
         setLoading(false);
@@ -136,12 +137,12 @@ function useErpBase<T extends { id?: string }>(
         if (response.success && response.data) {
           setData((prev) => [...prev, response.data!]);
           setError(null);
-          handleSuccess('创建成功');
+          handleSuccess(i18n.t('shared.use_erp.k4'));
           return response.data;
         }
         return null;
       } catch (err: unknown) {
-        handleError(err, '创建失败');
+        handleError(err, i18n.t('shared.use_erp.k5'));
         return null;
       } finally {
         setLoading(false);
@@ -158,12 +159,12 @@ function useErpBase<T extends { id?: string }>(
         if (response.success && response.data) {
           setData((prev) => prev.map((d) => (d.id === id ? response.data! : d)));
           setError(null);
-          handleSuccess('更新成功');
+          handleSuccess(i18n.t('shared.use_erp.k6'));
           return response.data;
         }
         return null;
       } catch (err: unknown) {
-        handleError(err, '更新失败');
+        handleError(err, i18n.t('shared.use_erp.k7'));
         return null;
       } finally {
         setLoading(false);
@@ -181,10 +182,10 @@ function useErpBase<T extends { id?: string }>(
           setData((prev) => prev.filter((d) => d.id !== id));
           setTotal((prev) => Math.max(0, prev - 1));
           setError(null);
-          handleSuccess('删除成功');
+          handleSuccess(i18n.t('shared.use_erp.k8'));
         }
       } catch (err: unknown) {
-        handleError(err, '删除失败');
+        handleError(err, i18n.t('shared.use_erp.k9'));
       } finally {
         setLoading(false);
       }
@@ -200,9 +201,9 @@ function useErpBase<T extends { id?: string }>(
         setData((prev) => prev.filter((d) => !ids.includes(d.id!)));
         setTotal((prev) => Math.max(0, prev - ids.length));
         setError(null);
-        handleSuccess(`已删除 ${ids.length} 条记录`);
+        handleSuccess(`${i18n.t('shared.use_erp.k0')}${ids.length}${i18n.t('shared.use_erp.k1')}`);
       } catch (err: unknown) {
-        handleError(err, '批量删除失败');
+        handleError(err, i18n.t('shared.use_erp.k10'));
       } finally {
         setLoading(false);
       }
@@ -326,7 +327,7 @@ export function useFinanceReports() {
       const errAny = err as { response?: { data?: { message?: string } }; message?: string };
       const message = errAny?.response?.data?.message || errAny?.message || defaultMessage;
       setError(message);
-      addNotification({ title: '错误', message, type: 'error' });
+      addNotification({ title: i18n.t('shared.use_erp.k11'), message, type: 'error' });
       return Promise.reject(err);
     },
     [addNotification]
@@ -340,7 +341,7 @@ export function useFinanceReports() {
         setError(null);
         return response.data;
       } catch (err: unknown) {
-        handleError(err, '获取资产负债表失败');
+        handleError(err, i18n.t('shared.use_erp.k12'));
         return null;
       } finally {
         setLoading(false);
@@ -357,7 +358,7 @@ export function useFinanceReports() {
         setError(null);
         return response.data;
       } catch (err: unknown) {
-        handleError(err, '获取利润表失败');
+        handleError(err, i18n.t('shared.use_erp.k13'));
         return null;
       } finally {
         setLoading(false);
@@ -374,7 +375,7 @@ export function useFinanceReports() {
         setError(null);
         return response.data;
       } catch (err: unknown) {
-        handleError(err, '获取现金流量表失败');
+        handleError(err, i18n.t('shared.use_erp.k14'));
         return null;
       } finally {
         setLoading(false);
@@ -391,7 +392,7 @@ export function useFinanceReports() {
         setError(null);
         return response.data;
       } catch (err: unknown) {
-        handleError(err, '获取经营概览失败');
+        handleError(err, i18n.t('shared.use_erp.k15'));
         return null;
       } finally {
         setLoading(false);
@@ -408,7 +409,7 @@ export function useFinanceReports() {
         setError(null);
         return response.data;
       } catch (err: unknown) {
-        handleError(err, '获取项目财务汇总失败');
+        handleError(err, i18n.t('shared.use_erp.k16'));
         return null;
       } finally {
         setLoading(false);
@@ -424,7 +425,7 @@ export function useFinanceReports() {
       setError(null);
       return response.data;
     } catch (err: unknown) {
-      handleError(err, '获取月度趋势失败');
+      handleError(err, i18n.t('shared.use_erp.k17'));
       return null;
     } finally {
       setLoading(false);
@@ -439,7 +440,7 @@ export function useFinanceReports() {
         setError(null);
         return response.data;
       } catch (err: unknown) {
-        handleError(err, '获取部门财务汇总失败');
+        handleError(err, i18n.t('shared.use_erp.k18'));
         return null;
       } finally {
         setLoading(false);
@@ -455,7 +456,7 @@ export function useFinanceReports() {
       setError(null);
       return response.data;
     } catch (err: unknown) {
-      handleError(err, '获取账龄分析失败');
+      handleError(err, i18n.t('shared.use_erp.k19'));
       return null;
     } finally {
       setLoading(false);
@@ -470,7 +471,7 @@ export function useFinanceReports() {
         setError(null);
         return response.data;
       } catch (err: unknown) {
-        handleError(err, '获取现金流分析失败');
+        handleError(err, i18n.t('shared.use_erp.k20'));
         return null;
       } finally {
         setLoading(false);
@@ -487,7 +488,7 @@ export function useFinanceReports() {
         setError(null);
         return response.data;
       } catch (err: unknown) {
-        handleError(err, '获取费用分析失败');
+        handleError(err, i18n.t('shared.use_erp.k21'));
         return null;
       } finally {
         setLoading(false);
@@ -504,7 +505,7 @@ export function useFinanceReports() {
         setError(null);
         return response.data;
       } catch (err: unknown) {
-        handleError(err, '获取利润分析失败');
+        handleError(err, i18n.t('shared.use_erp.k22'));
         return null;
       } finally {
         setLoading(false);
@@ -521,7 +522,7 @@ export function useFinanceReports() {
         setError(null);
         return response.data;
       } catch (err: unknown) {
-        handleError(err, '获取财务概览失败');
+        handleError(err, i18n.t('shared.use_erp.k23'));
         return null;
       } finally {
         setLoading(false);

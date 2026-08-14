@@ -2,6 +2,7 @@ import CrudPage from '@/components/templates/CrudPage';
 import { createCrudPageAdapter } from '@/schema/crudPageAdapter';
 import { apqpSchema } from '@/schemas/qms/apqp';
 import { qmsApi } from '@/api/qms';
+import i18n from '@/i18n';
 
 const apiAdapter = createCrudPageAdapter({
   list: qmsApi.listApqpProjects,
@@ -15,7 +16,7 @@ export default function QmsApqpPage() {
     <CrudPage
       schema={apqpSchema}
       apiAdapter={apiAdapter}
-      breadcrumbs={[{ label: 'QMS' }, { label: 'APQP 产品质量先期策划' }]}
+      breadcrumbs={[{ label: 'QMS' }, { label: i18n.t('pages.qms_apqp_page.apqp_0') }]}
     />
   );
 }

@@ -2,6 +2,7 @@ import React from 'react';
 import { Chip, Box, Button, Typography } from '@mui/material';
 import { Rocket, CheckCircle, XCircle, Clock, Globe } from 'lucide-react';
 import type { EntitySchema } from '@/schema';
+import i18n from '@/i18n';
 
 const STATUS_COLOR_MAP: Record<string, 'default' | 'success' | 'error' | 'warning'> = {
   success: 'success',
@@ -11,10 +12,10 @@ const STATUS_COLOR_MAP: Record<string, 'default' | 'success' | 'error' | 'warnin
 };
 
 const STATUS_LABEL_MAP: Record<string, string> = {
-  success: '成功',
-  failed: '失败',
-  running: '进行中',
-  pending: '待部署',
+  success: i18n.t('rd.deploy.k0'),
+  failed: i18n.t('rd.deploy.k1'),
+  running: i18n.t('rd.deploy.k2'),
+  pending: i18n.t('rd.deploy.k3'),
 };
 
 const ENV_COLOR_MAP: Record<string, 'default' | 'success' | 'error' | 'warning'> = {
@@ -25,23 +26,23 @@ const ENV_COLOR_MAP: Record<string, 'default' | 'success' | 'error' | 'warning'>
 };
 
 const ENV_LABEL_MAP: Record<string, string> = {
-  prod: '生产环境',
-  staging: '预发布环境',
-  test: '测试环境',
-  dev: '开发环境',
+  prod: i18n.t('rd.deploy.k4'),
+  staging: i18n.t('rd.deploy.k5'),
+  test: i18n.t('rd.deploy.k6'),
+  dev: i18n.t('rd.deploy.k7'),
 };
 
 const DEPLOY_TYPE_LABEL_MAP: Record<string, string> = {
-  full: '全量部署',
-  rolling: '滚动部署',
-  'blue-green': '蓝绿部署',
-  canary: '灰度发布',
+  full: i18n.t('rd.deploy.k8'),
+  rolling: i18n.t('rd.deploy.k9'),
+  'blue-green': i18n.t('rd.deploy.k10'),
+  canary: i18n.t('rd.deploy.k11'),
 };
 
 export const deploySchema: EntitySchema = {
   entity: 'rd_deploy',
-  title: '部署管理',
-  description: '管理应用部署和发布流程',
+  title: i18n.t('rd.deploy.k12'),
+  description: i18n.t('rd.deploy.k13'),
 
   api: {
     module: 'rd',
@@ -51,7 +52,7 @@ export const deploySchema: EntitySchema = {
   fields: [
     {
       name: 'deploy_no',
-      label: '部署编号',
+      label: i18n.t('rd.deploy.k14'),
       type: 'text',
       readonlyOnEdit: true,
       sortable: true,
@@ -71,22 +72,22 @@ export const deploySchema: EntitySchema = {
     },
     {
       name: 'project_name',
-      label: '项目',
+      label: i18n.t('rd.deploy.k15'),
       type: 'text',
       listWidth: 160,
     },
     {
       name: 'env',
-      label: '环境',
+      label: i18n.t('rd.deploy.k16'),
       type: 'select',
       defaultValue: 'prod',
       options: {
         type: 'static',
         options: [
-          { value: 'prod', label: '生产环境' },
-          { value: 'staging', label: '预发布环境' },
-          { value: 'test', label: '测试环境' },
-          { value: 'dev', label: '开发环境' },
+          { value: 'prod', label: i18n.t('rd.deploy.k17') },
+          { value: 'staging', label: i18n.t('rd.deploy.k18') },
+          { value: 'test', label: i18n.t('rd.deploy.k19') },
+          { value: 'dev', label: i18n.t('rd.deploy.k20') },
         ],
       },
       listWidth: 120,
@@ -99,16 +100,16 @@ export const deploySchema: EntitySchema = {
     },
     {
       name: 'deploy_type',
-      label: '部署方式',
+      label: i18n.t('rd.deploy.k21'),
       type: 'select',
       defaultValue: 'full',
       options: {
         type: 'static',
         options: [
-          { value: 'full', label: '全量部署' },
-          { value: 'rolling', label: '滚动部署' },
-          { value: 'blue-green', label: '蓝绿部署' },
-          { value: 'canary', label: '灰度发布' },
+          { value: 'full', label: i18n.t('rd.deploy.k22') },
+          { value: 'rolling', label: i18n.t('rd.deploy.k23') },
+          { value: 'blue-green', label: i18n.t('rd.deploy.k24') },
+          { value: 'canary', label: i18n.t('rd.deploy.k25') },
         ],
       },
       listWidth: 120,
@@ -120,16 +121,16 @@ export const deploySchema: EntitySchema = {
     },
     {
       name: 'status',
-      label: '状态',
+      label: i18n.t('rd.deploy.k26'),
       type: 'select',
       defaultValue: 'pending',
       options: {
         type: 'static',
         options: [
-          { value: 'pending', label: '待部署' },
-          { value: 'running', label: '进行中' },
-          { value: 'success', label: '成功' },
-          { value: 'failed', label: '失败' },
+          { value: 'pending', label: i18n.t('rd.deploy.k27') },
+          { value: 'running', label: i18n.t('rd.deploy.k28') },
+          { value: 'success', label: i18n.t('rd.deploy.k29') },
+          { value: 'failed', label: i18n.t('rd.deploy.k30') },
         ],
       },
       listWidth: 130,
@@ -155,13 +156,13 @@ export const deploySchema: EntitySchema = {
     },
     {
       name: 'deployer',
-      label: '部署人',
+      label: i18n.t('rd.deploy.k31'),
       type: 'text',
       listWidth: 100,
     },
     {
       name: 'deploy_time',
-      label: '部署时间',
+      label: i18n.t('rd.deploy.k32'),
       type: 'datetime',
       listWidth: 150,
       renderCell: (row: Record<string, unknown>) => {
@@ -171,7 +172,7 @@ export const deploySchema: EntitySchema = {
     },
     {
       name: 'target_url',
-      label: '访问地址',
+      label: i18n.t('rd.deploy.k33'),
       type: 'text',
       listWidth: 120,
       renderCell: (row: Record<string, unknown>) => {
@@ -187,52 +188,52 @@ export const deploySchema: EntitySchema = {
             size: 'small',
             startIcon: React.createElement(Globe, { size: 14 }),
           } as React.ComponentProps<typeof Button> & { component: React.ElementType; href: string },
-          '访问'
+          i18n.t('rd.deploy.k34')
         );
       },
     },
     {
       name: 'project_id',
-      label: '项目ID',
+      label: i18n.t('rd.deploy.id_35'),
       type: 'text',
       required: true,
       showInList: false,
     },
     {
       name: 'build_id',
-      label: '构建ID',
+      label: i18n.t('rd.deploy.id_36'),
       type: 'text',
       required: true,
       showInList: false,
     },
     {
       name: 'environment',
-      label: '环境标识',
+      label: i18n.t('rd.deploy.k37'),
       type: 'text',
       showInList: false,
     },
     {
       name: 'app_name',
-      label: '应用名称',
+      label: i18n.t('rd.deploy.k38'),
       type: 'text',
       showInList: false,
     },
     {
       name: 'version',
-      label: '版本号',
+      label: i18n.t('rd.deploy.k39'),
       type: 'text',
       showInList: false,
     },
     {
       name: 'logs',
-      label: '部署日志',
+      label: i18n.t('rd.deploy.k40'),
       type: 'textarea',
       showInList: false,
       readonly: true,
     },
     {
       name: 'created_at',
-      label: '创建时间',
+      label: i18n.t('rd.deploy.k41'),
       type: 'datetime',
       readonly: true,
       sortable: true,
@@ -257,27 +258,27 @@ export const deploySchema: EntitySchema = {
     filters: [
       {
         id: 'env',
-        label: '环境',
+        label: i18n.t('rd.deploy.k42'),
         type: 'select',
         options: [
-          { label: '全部', value: 'all' },
-          { label: '生产环境', value: 'prod' },
-          { label: '预发布环境', value: 'staging' },
-          { label: '测试环境', value: 'test' },
-          { label: '开发环境', value: 'dev' },
+          { label: i18n.t('rd.deploy.k43'), value: 'all' },
+          { label: i18n.t('rd.deploy.k44'), value: 'prod' },
+          { label: i18n.t('rd.deploy.k45'), value: 'staging' },
+          { label: i18n.t('rd.deploy.k46'), value: 'test' },
+          { label: i18n.t('rd.deploy.k47'), value: 'dev' },
         ],
         defaultValue: 'all',
       },
       {
         id: 'status',
-        label: '状态',
+        label: i18n.t('rd.deploy.k48'),
         type: 'select',
         options: [
-          { label: '全部', value: 'all' },
-          { label: '成功', value: 'success' },
-          { label: '失败', value: 'failed' },
-          { label: '进行中', value: 'running' },
-          { label: '待部署', value: 'pending' },
+          { label: i18n.t('rd.deploy.k49'), value: 'all' },
+          { label: i18n.t('rd.deploy.k50'), value: 'success' },
+          { label: i18n.t('rd.deploy.k51'), value: 'failed' },
+          { label: i18n.t('rd.deploy.k52'), value: 'running' },
+          { label: i18n.t('rd.deploy.k53'), value: 'pending' },
         ],
         defaultValue: 'all',
       },
@@ -286,19 +287,19 @@ export const deploySchema: EntitySchema = {
 
   formSections: [
     {
-      title: '部署信息',
+      title: i18n.t('rd.deploy.k54'),
       fields: ['project_id', 'build_id', 'env', 'deploy_type'],
     },
     {
-      title: '应用信息',
+      title: i18n.t('rd.deploy.k55'),
       fields: ['app_name', 'version', 'environment'],
     },
   ],
 
   formColCount: 2,
-  createTitle: '发起部署',
-  editTitle: '编辑部署',
-  detailTitle: '部署详情',
+  createTitle: i18n.t('rd.deploy.k56'),
+  editTitle: i18n.t('rd.deploy.k57'),
+  detailTitle: i18n.t('rd.deploy.k58'),
 
   actions: ['create', 'detail'],
 };

@@ -21,6 +21,7 @@ import {
   TextField,
   Button,
 } from '@mui/material';
+import i18n from '@/i18n';
 
 import { ModeToggle } from '@/components/theme/ModeToggle';
 import { designTokens } from '@/theme/tokens';
@@ -32,10 +33,10 @@ const ct= designTokens.colors;
 const loginFormSchema = z.object({
   username: z
     .string()
-    .min(2, { message: '用户名长度至少为2位' })
-    .max(20, { message: '用户名不能超过20个字符' })
-    .regex(/^[a-zA-Z0-9]+$/, { message: '用户名只能包含字母和数字' }),
-  password: z.string().min(6, { message: '密码至少需要6个字符' }),
+    .min(2, { message: i18n.t('pages.login_page.2_0') })
+    .max(20, { message: i18n.t('pages.login_page.20_1') })
+    .regex(/^[a-zA-Z0-9]+$/, { message: i18n.t('pages.login_page.k2') }),
+  password: z.string().min(6, { message: i18n.t('pages.login_page.6_3') }),
   email: z.string().optional(),
 });
 
@@ -75,11 +76,11 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
         exact: false,
         refetchType: 'active',
       });
-      apiLogger.info('登录响应:', response);
+      apiLogger.info(i18n.t('pages.login_page.k0'), response);
       if (response.success) {
         addNotification({
-          title: '登录成功',
-          message: '欢迎回来!',
+          title: i18n.t('pages.login_page.k4'),
+          message: i18n.t('pages.login_page.k5'),
           type: 'success',
         });
         const locationState = (window.history.state as { usr?: { from?: { pathname?: string } } })
@@ -88,17 +89,17 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
         navigate(from, { replace: true });
       } else {
         addNotification({
-          title: '登录失败',
-          message: (response.message as string) || '操作失败',
+          title: i18n.t('pages.login_page.k6'),
+          message: (response.message as string) || i18n.t('pages.login_page.k7'),
           type: 'error',
         });
       }
     },
     onError: (err: unknown) => {
-      apiLogger.error('登录错误:', err);
+      apiLogger.error(i18n.t('pages.login_page.k1'), err);
       addNotification({
-        title: '错误',
-        message: (err as { message?: string }).message || '请求失败',
+        title: i18n.t('pages.login_page.k8'),
+        message: (err as { message?: string }).message || i18n.t('pages.login_page.k9'),
         type: 'error',
       });
     },
@@ -115,15 +116,15 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
           password: values.password,
         });
         addNotification({
-          title: '注册成功',
-          message: '请登录',
+          title: i18n.t('pages.login_page.k10'),
+          message: i18n.t('pages.login_page.k11'),
           type: 'success',
         });
         setIsRegister(false);
       } catch (err) {
         addNotification({
-          title: '注册失败',
-          message: err instanceof Error ? err.message : '未知错误',
+          title: i18n.t('pages.login_page.k12'),
+          message: err instanceof Error ? err.message : i18n.t('pages.login_page.k13'),
           type: 'error',
         });
       }
@@ -252,13 +253,13 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
             variant='h4'
             sx={{ fontWeight: 700, color: 'common.white' }}
           >
-            {isRegister ? '用户注册' : '欢迎回来'}
+            {isRegister ? i18n.t('pages.login_page.k15') : i18n.t('pages.login_page.k14')}
           </Typography>
           <Typography
             variant='body2'
             sx={{ color: 'common.white', mt: 1 }}
           >
-            {isRegister ? '创建您的账号' : '请登录您的账号'}
+            {isRegister ? i18n.t('pages.login_page.k17') : i18n.t('pages.login_page.k16')}
           </Typography>
         </Box>
 
@@ -266,8 +267,8 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
           <form onSubmit={form.handleSubmit(handleSubmit)}>
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
               <TextField
-                label='用户名'
-                placeholder='请输入用户名'
+                label={i18n.t('pages.login_page.k18')}
+                placeholder={i18n.t('pages.login_page.k19')}
                 value={form.watch('username')}
                 onChange={(e) => form.setValue('username', e.target.value)}
                 error={!!form.formState.errors.username}
@@ -306,9 +307,9 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
 
               {isRegister && (
                 <TextField
-                  label='邮箱'
+                  label={i18n.t('pages.login_page.k20')}
                   type='email'
-                  placeholder='请输入邮箱'
+                  placeholder={i18n.t('pages.login_page.k21')}
                   value={form.watch('email') || ''}
                   onChange={(e) => form.setValue('email', e.target.value)}
                   error={!!form.formState.errors.email}
@@ -324,9 +325,9 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
               )}
 
               <TextField
-                label='密码'
+                label={i18n.t('pages.login_page.k22')}
                 type={showPassword ? 'text' : 'password'}
-                placeholder='请输入密码'
+                placeholder={i18n.t('pages.login_page.k23')}
                 value={form.watch('password')}
                 onChange={(e) => form.setValue('password', e.target.value)}
                 error={!!form.formState.errors.password}
@@ -351,7 +352,7 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
                       <IconButton
                         onClick={() => setShowPassword(!showPassword)}
                         sx={{ color: 'grey.400' }}
-                        aria-label='隐藏'
+                        aria-label={i18n.t('pages.login_page.k24')}
                       >
                         {showPassword ? (
                           <EyeOff sx={{ width: 20, height: 20 }} />
@@ -393,7 +394,7 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
                       variant='caption'
                       sx={{ color: 'text.secondary' }}
                     >
-                      大写字母
+                      {i18n.t('pages.login_page.k0')}
                     </Typography>
                   </Box>
                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75 }}>
@@ -411,7 +412,7 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
                       variant='caption'
                       sx={{ color: 'text.secondary' }}
                     >
-                      小写字母
+                      {i18n.t('pages.login_page.k1')}
                     </Typography>
                   </Box>
                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75 }}>
@@ -429,7 +430,7 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
                       variant='caption'
                       sx={{ color: 'text.secondary' }}
                     >
-                      数字
+                      {i18n.t('pages.login_page.k2')}
                     </Typography>
                   </Box>
                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75 }}>
@@ -447,7 +448,7 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
                       variant='caption'
                       sx={{ color: 'text.secondary' }}
                     >
-                      特殊字符
+                      {i18n.t('pages.login_page.k3')}
                     </Typography>
                   </Box>
                 </Box>
@@ -470,7 +471,7 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
                       minWidth: 'auto',
                     }}
                   >
-                    忘记密码？
+                    {i18n.t('pages.login_page.k4')}
                   </Button>
                 </Box>
               )}
@@ -493,7 +494,7 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
                 }}
                 disabled={loading}
               >
-                {loading ? '处理中...' : isRegister ? '注册' : '登录'}
+                {loading ? i18n.t('pages.login_page.k2') : isRegister ? i18n.t('pages.login_page.k26') : i18n.t('pages.login_page.k25')}
               </Button>
             </Box>
           </form>
@@ -510,7 +511,7 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
                 fontWeight: 500,
               }}
             >
-              {isRegister ? '已有账号？立即登录' : '没有账号？立即注册'}
+              {isRegister ? i18n.t('pages.login_page.k28') : i18n.t('pages.login_page.k27')}
             </Button>
           </Box>
 
@@ -520,7 +521,7 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
                 variant='caption'
                 sx={{ color: 'text.disabled', textAlign: 'center', display: 'block' }}
               >
-                演示账号: admin / admin123 (管理员) | user / user123 (普通员工)
+                [i18n.t('pages.login_page.k5')]: admin / admin123 (管理员) | user / user123 (普通员工)
               </Typography>
             </Box>
           )}

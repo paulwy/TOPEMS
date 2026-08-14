@@ -1,4 +1,5 @@
 import { designTokens, semanticTokens } from '@topems/tokens';
+import i18n from '@/i18n';
 /**
  * V45.0 Track F: 微前端终极形态 — 运行时控制台
  *
@@ -104,10 +105,10 @@ const statusColors: Record<ModuleLoadStatus, string> = {
 };
 
 const statusLabels: Record<ModuleLoadStatus, string> = {
-  [ModuleLoadStatus.UNLOADED]: '未加载',
-  [ModuleLoadStatus.LOADING]: '加载中',
-  [ModuleLoadStatus.LOADED]: '已加载',
-  [ModuleLoadStatus.FAILED]: '失败',
+  [ModuleLoadStatus.UNLOADED]: i18n.t('microfrontend.runtime_dashboard.k0'),
+  [ModuleLoadStatus.LOADING]: i18n.t('microfrontend.runtime_dashboard.k1'),
+  [ModuleLoadStatus.LOADED]: i18n.t('microfrontend.runtime_dashboard.k2'),
+  [ModuleLoadStatus.FAILED]: i18n.t('microfrontend.runtime_dashboard.k3'),
 };
 
 const lifecycleStateColors: Record<LifecycleState, string> = {
@@ -123,22 +124,22 @@ const lifecycleStateColors: Record<LifecycleState, string> = {
 };
 
 const lifecycleStateLabels: Record<LifecycleState, string> = {
-  [LifecycleState.REGISTERED]: '已注册',
-  [LifecycleState.PRELOADING]: '预加载中',
-  [LifecycleState.LOADED]: '已加载',
-  [LifecycleState.MOUNTING]: '挂载中',
-  [LifecycleState.MOUNTED]: '已挂载',
-  [LifecycleState.UPDATING]: '更新中',
-  [LifecycleState.ERROR]: '错误',
-  [LifecycleState.UNMOUNTING]: '卸载中',
-  [LifecycleState.UNMOUNTED]: '已卸载',
+  [LifecycleState.REGISTERED]: i18n.t('microfrontend.runtime_dashboard.k4'),
+  [LifecycleState.PRELOADING]: i18n.t('microfrontend.runtime_dashboard.k5'),
+  [LifecycleState.LOADED]: i18n.t('microfrontend.runtime_dashboard.k6'),
+  [LifecycleState.MOUNTING]: i18n.t('microfrontend.runtime_dashboard.k7'),
+  [LifecycleState.MOUNTED]: i18n.t('microfrontend.runtime_dashboard.k8'),
+  [LifecycleState.UPDATING]: i18n.t('microfrontend.runtime_dashboard.k9'),
+  [LifecycleState.ERROR]: i18n.t('microfrontend.runtime_dashboard.k10'),
+  [LifecycleState.UNMOUNTING]: i18n.t('microfrontend.runtime_dashboard.k11'),
+  [LifecycleState.UNMOUNTED]: i18n.t('microfrontend.runtime_dashboard.k12'),
 };
 
 const frameworkColors: Record<FrameworkType, string> = {
   [FrameworkType.REACT]: '#61dafb',
   [FrameworkType.VUE]: '#42b883',
-  [FrameworkType.ANGULAR]: '#dd0031',
-  [FrameworkType.SVELTE]: '#ff3e00',
+  [FrameworkType.ANGULAR]: designTokens.colors.error[700],
+  [FrameworkType.SVELTE]: designTokens.colors.error[600],
   [FrameworkType.VANILLA]: 'colors.grey.500',
 };
 
@@ -151,31 +152,31 @@ const frameworkLabels: Record<FrameworkType, string> = {
 };
 
 const tokenTypeLabels: Record<TokenType, string> = {
-  [TokenType.COLOR]: '颜色',
-  [TokenType.TYPOGRAPHY]: '排版',
-  [TokenType.SPACING]: '间距',
-  [TokenType.BORDER]: '边框',
-  [TokenType.SHADOW]: '阴影',
-  [TokenType.ANIMATION]: '动画',
-  [TokenType.ZINDEX]: '层级',
-  [TokenType.BREAKPOINT]: '断点',
+  [TokenType.COLOR]: i18n.t('microfrontend.runtime_dashboard.k13'),
+  [TokenType.TYPOGRAPHY]: i18n.t('microfrontend.runtime_dashboard.k14'),
+  [TokenType.SPACING]: i18n.t('microfrontend.runtime_dashboard.k15'),
+  [TokenType.BORDER]: i18n.t('microfrontend.runtime_dashboard.k16'),
+  [TokenType.SHADOW]: i18n.t('microfrontend.runtime_dashboard.k17'),
+  [TokenType.ANIMATION]: i18n.t('microfrontend.runtime_dashboard.k18'),
+  [TokenType.ZINDEX]: i18n.t('microfrontend.runtime_dashboard.k19'),
+  [TokenType.BREAKPOINT]: i18n.t('microfrontend.runtime_dashboard.k20'),
 };
 
 const eventTypeLabels: Record<LifecycleEventType, string> = {
-  [LifecycleEventType.REGISTERED]: '注册',
-  [LifecycleEventType.PRELOADSTART]: '预加载开始',
-  [LifecycleEventType.PRELOADEND]: '预加载完成',
-  [LifecycleEventType.LOADSTART]: '加载开始',
-  [LifecycleEventType.LOADEND]: '加载完成',
-  [LifecycleEventType.MOUNTSTART]: '挂载开始',
-  [LifecycleEventType.MOUNTEND]: '挂载完成',
-  [LifecycleEventType.UPDATESTART]: '更新开始',
-  [LifecycleEventType.UPDATEEND]: '更新完成',
-  [LifecycleEventType.UNMOUNTSTART]: '卸载开始',
-  [LifecycleEventType.UNMOUNTEND]: '卸载完成',
-  [LifecycleEventType.ERROR]: '错误',
-  [LifecycleEventType.DESTROYED]: '销毁',
-  [LifecycleEventType.STATECHANGE]: '状态变更',
+  [LifecycleEventType.REGISTERED]: i18n.t('microfrontend.runtime_dashboard.k21'),
+  [LifecycleEventType.PRELOADSTART]: i18n.t('microfrontend.runtime_dashboard.k22'),
+  [LifecycleEventType.PRELOADEND]: i18n.t('microfrontend.runtime_dashboard.k23'),
+  [LifecycleEventType.LOADSTART]: i18n.t('microfrontend.runtime_dashboard.k24'),
+  [LifecycleEventType.LOADEND]: i18n.t('microfrontend.runtime_dashboard.k25'),
+  [LifecycleEventType.MOUNTSTART]: i18n.t('microfrontend.runtime_dashboard.k26'),
+  [LifecycleEventType.MOUNTEND]: i18n.t('microfrontend.runtime_dashboard.k27'),
+  [LifecycleEventType.UPDATESTART]: i18n.t('microfrontend.runtime_dashboard.k28'),
+  [LifecycleEventType.UPDATEEND]: i18n.t('microfrontend.runtime_dashboard.k29'),
+  [LifecycleEventType.UNMOUNTSTART]: i18n.t('microfrontend.runtime_dashboard.k30'),
+  [LifecycleEventType.UNMOUNTEND]: i18n.t('microfrontend.runtime_dashboard.k31'),
+  [LifecycleEventType.ERROR]: i18n.t('microfrontend.runtime_dashboard.k32'),
+  [LifecycleEventType.DESTROYED]: i18n.t('microfrontend.runtime_dashboard.k33'),
+  [LifecycleEventType.STATECHANGE]: i18n.t('microfrontend.runtime_dashboard.k34'),
 };
 
 // ==================== 主组件 ====================
@@ -203,7 +204,7 @@ const RuntimeDashboard: React.FC<RuntimeDashboardProps> = ({ onClose }) => {
             variant='h6'
             sx={{ fontWeight: 600 }}
           >
-            V45.0 运行时控制台 — 微前端终极形态
+            {i18n.t('microfrontend.runtime_dashboard.k0')}
           </Typography>
         </Box>
         {onClose && (
@@ -231,25 +232,25 @@ const RuntimeDashboard: React.FC<RuntimeDashboardProps> = ({ onClose }) => {
         <Tab
           icon={<PackageIcon size={16} />}
           iconPosition='start'
-          label='动态加载'
+          label={i18n.t('microfrontend.runtime_dashboard.k35')}
           value='loader'
         />
         <Tab
           icon={<LayersIcon size={16} />}
           iconPosition='start'
-          label='跨框架'
+          label={i18n.t('microfrontend.runtime_dashboard.k36')}
           value='framework'
         />
         <Tab
           icon={<PaletteIcon size={16} />}
           iconPosition='start'
-          label='设计系统'
+          label={i18n.t('microfrontend.runtime_dashboard.k37')}
           value='design'
         />
         <Tab
           icon={<ActivityIcon size={16} />}
           iconPosition='start'
-          label='生命周期'
+          label={i18n.t('microfrontend.runtime_dashboard.k38')}
           value='lifecycle'
         />
       </Tabs>
@@ -298,38 +299,38 @@ const DynamicLoaderTab: React.FC = () => {
   const handleLoad = async (id: string) => {
     try {
       await dynamicLoader.loadModule(id);
-      setSnack({ open: true, msg: `模块 ${id} 加载成功`, type: 'success' });
+      setSnack({ open: true, msg: `${i18n.t('microfrontend.runtime_dashboard.k0')}${id}${i18n.t('microfrontend.runtime_dashboard.k1')}`, type: 'success' });
       refresh();
     } catch (err) {
-      setSnack({ open: true, msg: `加载失败: ${(err as Error).message}`, type: 'error' });
+      setSnack({ open: true, msg: `${i18n.t('microfrontend.runtime_dashboard.k2')}${(err as Error).message}`, type: 'error' });
     }
   };
 
   const handleUnload = (id: string) => {
     dynamicLoader.unloadModule(id);
-    setSnack({ open: true, msg: `模块 ${id} 已卸载`, type: 'success' });
+    setSnack({ open: true, msg: `${i18n.t('microfrontend.runtime_dashboard.k3')}${id}${i18n.t('microfrontend.runtime_dashboard.k4')}`, type: 'success' });
     refresh();
   };
 
   const handleReload = async (id: string) => {
     try {
       await dynamicLoader.reloadModule(id);
-      setSnack({ open: true, msg: `模块 ${id} 重载成功`, type: 'success' });
+      setSnack({ open: true, msg: `${i18n.t('microfrontend.runtime_dashboard.k5')}${id}${i18n.t('microfrontend.runtime_dashboard.k6')}`, type: 'success' });
       refresh();
     } catch (err) {
-      setSnack({ open: true, msg: `重载失败: ${(err as Error).message}`, type: 'error' });
+      setSnack({ open: true, msg: `${i18n.t('microfrontend.runtime_dashboard.k7')}${(err as Error).message}`, type: 'error' });
     }
   };
 
   const handlePreload = async (id: string) => {
     await dynamicLoader.preloadModule(id);
-    setSnack({ open: true, msg: `模块 ${id} 预加载完成`, type: 'success' });
+    setSnack({ open: true, msg: `${i18n.t('microfrontend.runtime_dashboard.k8')}${id}${i18n.t('microfrontend.runtime_dashboard.k9')}`, type: 'success' });
     refresh();
   };
 
   const handleRegister = async () => {
     if (!newModuleId.trim()) {
-      setSnack({ open: true, msg: '请输入模块 ID', type: 'error' });
+      setSnack({ open: true, msg: i18n.t('microfrontend.runtime_dashboard.id_39'), type: 'error' });
       return;
     }
     try {
@@ -340,12 +341,12 @@ const DynamicLoaderTab: React.FC = () => {
           Promise.resolve({ default: () => null })
         );
       }
-      setSnack({ open: true, msg: `模块 ${newModuleId} 注册成功`, type: 'success' });
+      setSnack({ open: true, msg: `${i18n.t('microfrontend.runtime_dashboard.k10')}${newModuleId}${i18n.t('microfrontend.runtime_dashboard.k11')}`, type: 'success' });
       setNewModuleId('');
       setNewModuleUrl('');
       refresh();
     } catch (err) {
-      setSnack({ open: true, msg: `注册失败: ${(err as Error).message}`, type: 'error' });
+      setSnack({ open: true, msg: `${i18n.t('microfrontend.runtime_dashboard.k12')}${(err as Error).message}`, type: 'error' });
     }
   };
 
@@ -362,7 +363,7 @@ const DynamicLoaderTab: React.FC = () => {
       >
         <Grid size={{ xs: 12, sm: 6, md: 3 }}>
           <StatCard
-            label='已注册模块'
+            label={i18n.t('microfrontend.runtime_dashboard.k40')}
             value={modules.length}
             icon={<PackageIcon size={20} />}
             color={designTokens.colors.primary.main}
@@ -370,7 +371,7 @@ const DynamicLoaderTab: React.FC = () => {
         </Grid>
         <Grid size={{ xs: 12, sm: 6, md: 3 }}>
           <StatCard
-            label='已加载'
+            label={i18n.t('microfrontend.runtime_dashboard.k41')}
             value={loadedCount}
             icon={<CheckCircleIcon size={20} />}
             color={designTokens.colors.success.dark}
@@ -378,7 +379,7 @@ const DynamicLoaderTab: React.FC = () => {
         </Grid>
         <Grid size={{ xs: 12, sm: 6, md: 3 }}>
           <StatCard
-            label='加载失败'
+            label={i18n.t('microfrontend.runtime_dashboard.k42')}
             value={failedCount}
             icon={<XCircleIcon size={20} />}
             color={designTokens.colors.error.main}
@@ -386,7 +387,7 @@ const DynamicLoaderTab: React.FC = () => {
         </Grid>
         <Grid size={{ xs: 12, sm: 6, md: 3 }}>
           <StatCard
-            label='并发/等待'
+            label={i18n.t('microfrontend.runtime_dashboard.k43')}
             value={`${currentLoads}/${pendingCount}`}
             icon={<CpuIcon size={20} />}
             color={designTokens.colors.warning.main}
@@ -401,19 +402,19 @@ const DynamicLoaderTab: React.FC = () => {
             variant='subtitle2'
             sx={{ mb: 1, fontWeight: 600 }}
           >
-            注册新模块
+            {i18n.t('microfrontend.runtime_dashboard.k1')}
           </Typography>
           <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
             <TextField
               size='small'
-              label='模块 ID'
+              label={i18n.t('microfrontend.runtime_dashboard.id_44')}
               value={newModuleId}
               onChange={(e) => setNewModuleId(e.target.value)}
               sx={{ minWidth: 150 }}
             />
             <TextField
               size='small'
-              label='远程 URL（可选）'
+              label={i18n.t('microfrontend.runtime_dashboard.url_45')}
               value={newModuleUrl}
               onChange={(e) => setNewModuleUrl(e.target.value)}
               sx={{ minWidth: 250 }}
@@ -424,7 +425,7 @@ const DynamicLoaderTab: React.FC = () => {
               startIcon={<DownloadIcon size={16} />}
               onClick={handleRegister}
             >
-              注册
+              {i18n.t('microfrontend.runtime_dashboard.k2')}
             </Button>
             <Button
               variant='outlined'
@@ -432,7 +433,7 @@ const DynamicLoaderTab: React.FC = () => {
               startIcon={<RefreshIcon size={16} />}
               onClick={() => dynamicLoader.clearCache()}
             >
-              清空缓存
+              {i18n.t('microfrontend.runtime_dashboard.k3')}
             </Button>
           </Box>
         </CardContent>
@@ -448,14 +449,14 @@ const DynamicLoaderTab: React.FC = () => {
               variant='subtitle2'
               sx={{ fontWeight: 600 }}
             >
-              模块列表
+              {i18n.t('microfrontend.runtime_dashboard.k4')}
             </Typography>
             <Button
               size='small'
               startIcon={<RefreshIcon size={14} />}
               onClick={refresh}
             >
-              刷新
+              {i18n.t('microfrontend.runtime_dashboard.k5')}
             </Button>
           </Box>
           {modules.length === 0 ? (
@@ -463,7 +464,7 @@ const DynamicLoaderTab: React.FC = () => {
               color='text.secondary'
               sx={{ py: 3, textAlign: 'center' }}
             >
-              暂无已注册模块
+              {i18n.t('microfrontend.runtime_dashboard.k6')}
             </Typography>
           ) : (
             <TableContainer
@@ -474,12 +475,12 @@ const DynamicLoaderTab: React.FC = () => {
                 <TableHead>
                   <TableRow>
                     <TableCell>ID</TableCell>
-                    <TableCell>名称</TableCell>
-                    <TableCell>状态</TableCell>
-                    <TableCell>耗时</TableCell>
-                    <TableCell>重试</TableCell>
-                    <TableCell>错误</TableCell>
-                    <TableCell align='right'>操作</TableCell>
+                    <TableCell>{i18n.t('microfrontend.runtime_dashboard.k46')}</TableCell>
+                    <TableCell>{i18n.t('microfrontend.runtime_dashboard.k47')}</TableCell>
+                    <TableCell>{i18n.t('microfrontend.runtime_dashboard.k48')}</TableCell>
+                    <TableCell>{i18n.t('microfrontend.runtime_dashboard.k49')}</TableCell>
+                    <TableCell>{i18n.t('microfrontend.runtime_dashboard.k50')}</TableCell>
+                    <TableCell align='right'>{i18n.t('microfrontend.runtime_dashboard.k51')}</TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
@@ -527,7 +528,7 @@ const DynamicLoaderTab: React.FC = () => {
                       <TableCell align='right'>
                         <Box sx={{ display: 'flex', gap: 0.5, justifyContent: 'flex-end' }}>
                           {mod.status !== ModuleLoadStatus.LOADED && (
-                            <Tooltip title='加载'>
+                            <Tooltip title={i18n.t('microfrontend.runtime_dashboard.k52')}>
                               <IconButton
                                 size='small'
                                 onClick={() => handleLoad(mod.id)}
@@ -537,7 +538,7 @@ const DynamicLoaderTab: React.FC = () => {
                             </Tooltip>
                           )}
                           {mod.status === ModuleLoadStatus.LOADED && (
-                            <Tooltip title='预加载'>
+                            <Tooltip title={i18n.t('microfrontend.runtime_dashboard.k53')}>
                               <IconButton
                                 size='small'
                                 onClick={() => handlePreload(mod.id)}
@@ -547,7 +548,7 @@ const DynamicLoaderTab: React.FC = () => {
                             </Tooltip>
                           )}
                           {mod.status === ModuleLoadStatus.LOADED && (
-                            <Tooltip title='卸载'>
+                            <Tooltip title={i18n.t('microfrontend.runtime_dashboard.k54')}>
                               <IconButton
                                 size='small'
                                 onClick={() => handleUnload(mod.id)}
@@ -556,7 +557,7 @@ const DynamicLoaderTab: React.FC = () => {
                               </IconButton>
                             </Tooltip>
                           )}
-                          <Tooltip title='重载'>
+                          <Tooltip title={i18n.t('microfrontend.runtime_dashboard.k55')}>
                             <IconButton
                               size='small'
                               onClick={() => handleReload(mod.id)}
@@ -597,7 +598,7 @@ const DynamicLoaderTab: React.FC = () => {
 const CrossFrameworkTab: React.FC = () => {
   const [mountedComponents, setMountedComponents] = useState<MountedComponent[]>([]);
   const [selectedFramework, setSelectedFramework] = useState<FrameworkType>(FrameworkType.REACT);
-  const [propsInput, setPropsInput] = useState('{\n  "title": "测试组件",\n  "count": 42\n}');
+  const [propsInput, setPropsInput] = useState('{\n  "title": "' + i18n.t('microfrontend.runtime_dashboard.k56') + '",\n  "count": 42\n}');
   const [snack, setSnack] = useState<{ open: boolean; msg: string; type: 'success' | 'error' }>({
     open: false,
     msg: '',
@@ -622,7 +623,7 @@ const CrossFrameworkTab: React.FC = () => {
     try {
       props = JSON.parse(propsInput);
     } catch {
-      setSnack({ open: true, msg: 'Props JSON 格式错误', type: 'error' });
+      setSnack({ open: true, msg: i18n.t('microfrontend.runtime_dashboard.propsjson_13'), type: 'error' });
       return;
     }
 
@@ -638,30 +639,30 @@ const CrossFrameworkTab: React.FC = () => {
         onClick: () =>
           setSnack({
             open: true,
-            msg: `${frameworkLabels[selectedFramework]} 事件触发`,
+            msg: `${frameworkLabels[selectedFramework]}${i18n.t('microfrontend.runtime_dashboard.k14')}`,
             type: 'success',
           }),
       });
       setSnack({
         open: true,
-        msg: `${frameworkLabels[selectedFramework]} 组件已挂载`,
+        msg: `${frameworkLabels[selectedFramework]}${i18n.t('microfrontend.runtime_dashboard.k15')}`,
         type: 'success',
       });
       refresh();
     } catch (err) {
-      setSnack({ open: true, msg: `挂载失败: ${(err as Error).message}`, type: 'error' });
+      setSnack({ open: true, msg: `${i18n.t('microfrontend.runtime_dashboard.k16')}${(err as Error).message}`, type: 'error' });
     }
   };
 
   const handleUnmount = (id: string) => {
     crossFrameworkBridge.unmountComponent(id);
-    setSnack({ open: true, msg: `组件 ${id} 已卸载`, type: 'success' });
+    setSnack({ open: true, msg: `${i18n.t('microfrontend.runtime_dashboard.k17')}${id}${i18n.t('microfrontend.runtime_dashboard.k18')}`, type: 'success' });
     refresh();
   };
 
   const handleUnmountAll = () => {
     crossFrameworkBridge.unmountAll();
-    setSnack({ open: true, msg: '所有组件已卸载', type: 'success' });
+    setSnack({ open: true, msg: i18n.t('microfrontend.runtime_dashboard.k57'), type: 'success' });
     refresh();
   };
 
@@ -675,7 +676,7 @@ const CrossFrameworkTab: React.FC = () => {
       >
         <Grid size={{ xs: 12, sm: 6, md: 3 }}>
           <StatCard
-            label='已挂载组件'
+            label={i18n.t('microfrontend.runtime_dashboard.k58')}
             value={mountedComponents.length}
             icon={<LayersIcon size={20} />}
             color={designTokens.colors.secondary.main}
@@ -706,7 +707,7 @@ const CrossFrameworkTab: React.FC = () => {
               ).length
             }
             icon={<CodeIcon size={20} />}
-            color='#dd0031'
+            color={designTokens.colors.error[700]}
           />
         </Grid>
       </Grid>
@@ -718,17 +719,17 @@ const CrossFrameworkTab: React.FC = () => {
             variant='subtitle2'
             sx={{ mb: 1, fontWeight: 600 }}
           >
-            跨框架组件挂载测试
+            {i18n.t('microfrontend.runtime_dashboard.k7')}
           </Typography>
           <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap', mb: 2 }}>
             <FormControl
               size='small'
               sx={{ minWidth: 150 }}
             >
-              <InputLabel>框架类型</InputLabel>
+              <InputLabel>{i18n.t('microfrontend.runtime_dashboard.k59')}</InputLabel>
               <Select
                 value={selectedFramework}
-                label='框架类型'
+                label={i18n.t('microfrontend.runtime_dashboard.k60')}
                 onChange={(e) => setSelectedFramework(e.target.value as FrameworkType)}
               >
                 {Object.values(FrameworkType).map((ft) => (
@@ -747,7 +748,7 @@ const CrossFrameworkTab: React.FC = () => {
               startIcon={<PlayIcon size={16} />}
               onClick={handleTestMount}
             >
-              挂载组件
+              {i18n.t('microfrontend.runtime_dashboard.k8')}
             </Button>
             <Button
               variant='outlined'
@@ -755,7 +756,7 @@ const CrossFrameworkTab: React.FC = () => {
               startIcon={<TrashIcon size={16} />}
               onClick={handleUnmountAll}
             >
-              全部卸载
+              {i18n.t('microfrontend.runtime_dashboard.k9')}
             </Button>
           </Box>
           <TextField
@@ -783,7 +784,7 @@ const CrossFrameworkTab: React.FC = () => {
               variant='caption'
               color='text.secondary'
             >
-              ↓ 组件将挂载到此处 ↓
+              {i18n.t('microfrontend.runtime_dashboard.k10')}
             </Typography>
           </Box>
         </CardContent>
@@ -796,14 +797,14 @@ const CrossFrameworkTab: React.FC = () => {
             variant='subtitle2'
             sx={{ mb: 1, fontWeight: 600 }}
           >
-            已挂载组件列表
+            {i18n.t('microfrontend.runtime_dashboard.k11')}
           </Typography>
           {mountedComponents.length === 0 ? (
             <Typography
               color='text.secondary'
               sx={{ py: 3, textAlign: 'center' }}
             >
-              暂无已挂载组件
+              {i18n.t('microfrontend.runtime_dashboard.k12')}
             </Typography>
           ) : (
             <TableContainer
@@ -814,10 +815,10 @@ const CrossFrameworkTab: React.FC = () => {
                 <TableHead>
                   <TableRow>
                     <TableCell>ID</TableCell>
-                    <TableCell>框架</TableCell>
-                    <TableCell>属性数</TableCell>
-                    <TableCell>挂载时间</TableCell>
-                    <TableCell align='right'>操作</TableCell>
+                    <TableCell>{i18n.t('microfrontend.runtime_dashboard.k61')}</TableCell>
+                    <TableCell>{i18n.t('microfrontend.runtime_dashboard.k62')}</TableCell>
+                    <TableCell>{i18n.t('microfrontend.runtime_dashboard.k63')}</TableCell>
+                    <TableCell align='right'>{i18n.t('microfrontend.runtime_dashboard.k64')}</TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
@@ -843,7 +844,7 @@ const CrossFrameworkTab: React.FC = () => {
                       <TableCell>{Object.keys(comp.props).length}</TableCell>
                       <TableCell>{new Date(comp.mountedAt).toLocaleTimeString('zh-CN')}</TableCell>
                       <TableCell align='right'>
-                        <Tooltip title='卸载'>
+                        <Tooltip title={i18n.t('microfrontend.runtime_dashboard.k65')}>
                           <IconButton
                             size='small'
                             onClick={() => handleUnmount(comp.id)}
@@ -905,7 +906,7 @@ const DesignSystemTab: React.FC = () => {
     designSystemManager.toggleTheme();
     setSnack({
       open: true,
-      msg: `已切换到${theme.mode === 'dark' ? '亮色' : '暗色'}主题`,
+      msg: `${i18n.t('microfrontend.runtime_dashboard.k19')}${theme.mode === 'dark' ? i18n.t('microfrontend.runtime_dashboard.k67') : i18n.t('microfrontend.runtime_dashboard.k66')}${i18n.t('microfrontend.runtime_dashboard.k20')}`,
       type: 'success',
     });
     refresh();
@@ -913,7 +914,7 @@ const DesignSystemTab: React.FC = () => {
 
   const handleSync = () => {
     designSystemManager.syncToFramework();
-    setSnack({ open: true, msg: '已同步到所有框架', type: 'success' });
+    setSnack({ open: true, msg: i18n.t('microfrontend.runtime_dashboard.k68'), type: 'success' });
   };
 
   const categories = ['all', ...Array.from(new Set(tokens.map((t) => t.category)))];
@@ -931,7 +932,7 @@ const DesignSystemTab: React.FC = () => {
       >
         <Grid size={{ xs: 12, sm: 6, md: 3 }}>
           <StatCard
-            label='设计令牌总数'
+            label={i18n.t('microfrontend.runtime_dashboard.k69')}
             value={tokens.length}
             icon={<PaletteIcon size={20} />}
             color='colors.secondary.dark'
@@ -939,7 +940,7 @@ const DesignSystemTab: React.FC = () => {
         </Grid>
         <Grid size={{ xs: 12, sm: 6, md: 3 }}>
           <StatCard
-            label='CSS 变量数'
+            label={i18n.t('microfrontend.runtime_dashboard.css_21')}
             value={cssVars.length}
             icon={<CodeIcon size={20} />}
             color={designTokens.colors.primary.main}
@@ -947,15 +948,15 @@ const DesignSystemTab: React.FC = () => {
         </Grid>
         <Grid size={{ xs: 12, sm: 6, md: 3 }}>
           <StatCard
-            label='当前主题'
-            value={theme.mode === 'dark' ? '暗色' : '亮色'}
+            label={i18n.t('microfrontend.runtime_dashboard.k70')}
+            value={theme.mode === 'dark' ? i18n.t('microfrontend.runtime_dashboard.k72') : i18n.t('microfrontend.runtime_dashboard.k71')}
             icon={theme.mode === 'dark' ? <MoonIcon size={20} /> : <SunIcon size={20} />}
             color={theme.mode === 'dark' ? 'colors.grey.800' : designTokens.colors.warning.main}
           />
         </Grid>
         <Grid size={{ xs: 12, sm: 6, md: 3 }}>
           <StatCard
-            label='组件覆盖'
+            label={i18n.t('microfrontend.runtime_dashboard.k73')}
             value={Object.keys(theme.component_overrides).length}
             icon={<BoxesIcon size={20} />}
             color={designTokens.colors.success.dark}
@@ -973,7 +974,7 @@ const DesignSystemTab: React.FC = () => {
               variant='subtitle2'
               sx={{ fontWeight: 600 }}
             >
-              主题控制
+              {i18n.t('microfrontend.runtime_dashboard.k13')}
             </Typography>
             <Box sx={{ display: 'flex', gap: 1 }}>
               <Button
@@ -982,7 +983,7 @@ const DesignSystemTab: React.FC = () => {
                 startIcon={theme.mode === 'dark' ? <SunIcon size={16} /> : <MoonIcon size={16} />}
                 onClick={handleThemeToggle}
               >
-                {theme.mode === 'dark' ? '切换亮色' : '切换暗色'}
+                {theme.mode === 'dark' ? i18n.t('microfrontend.runtime_dashboard.k75') : i18n.t('microfrontend.runtime_dashboard.k74')}
               </Button>
               <Button
                 variant='contained'
@@ -990,7 +991,7 @@ const DesignSystemTab: React.FC = () => {
                 startIcon={<ZapIcon size={16} />}
                 onClick={handleSync}
               >
-                同步到所有框架
+                {i18n.t('microfrontend.runtime_dashboard.k14')}
               </Button>
             </Box>
           </Box>
@@ -1011,23 +1012,23 @@ const DesignSystemTab: React.FC = () => {
                 <Typography
                   sx={{ color: theme.text_colors.primary, fontSize: 14, fontWeight: 600 }}
                 >
-                  主文字 (Primary Text)
+                  {i18n.t('microfrontend.runtime_dashboard.k15')}
                 </Typography>
                 <Typography sx={{ color: theme.text_colors.secondary, fontSize: 13 }}>
-                  次文字 (Secondary Text)
+                  {i18n.t('microfrontend.runtime_dashboard.k16')}
                 </Typography>
                 <Typography sx={{ color: theme.text_colors.disabled, fontSize: 12 }}>
-                  禁用文字 (Disabled Text)
+                  {i18n.t('microfrontend.runtime_dashboard.k17')}
                 </Typography>
                 <Box sx={{ mt: 1, display: 'flex', gap: 1 }}>
                   <Chip
                     size='small'
-                    label='主色'
+                    label={i18n.t('microfrontend.runtime_dashboard.k76')}
                     sx={{ bgcolor: theme.primary_color, color: 'common.white' }}
                   />
                   <Chip
                     size='small'
-                    label='辅色'
+                    label={i18n.t('microfrontend.runtime_dashboard.k77')}
                     sx={{ bgcolor: theme.secondary_color, color: 'common.white' }}
                   />
                 </Box>
@@ -1038,7 +1039,7 @@ const DesignSystemTab: React.FC = () => {
                 variant='caption'
                 color='text.secondary'
               >
-                CSS 变量同步状态
+                {i18n.t('microfrontend.runtime_dashboard.css_18')}
               </Typography>
               <Box sx={{ mt: 0.5 }}>
                 <Chip
@@ -1071,7 +1072,7 @@ const DesignSystemTab: React.FC = () => {
                 color='text.secondary'
                 sx={{ display: 'block', mt: 1 }}
               >
-                跨框架同步: CustomEvent + CSS Variables + SharedState
+                [i18n.t('microfrontend.runtime_dashboard.k19')]: CustomEvent + CSS Variables + SharedState
               </Typography>
             </Grid>
           </Grid>
@@ -1103,7 +1104,7 @@ const DesignSystemTab: React.FC = () => {
                     key={cat}
                     value={cat}
                   >
-                    {cat === 'all' ? '全部分类' : cat}
+                    {cat === 'all' ? i18n.t('microfrontend.runtime_dashboard.k78') : cat}
                   </MenuItem>
                 ))}
               </Select>
@@ -1120,11 +1121,11 @@ const DesignSystemTab: React.FC = () => {
             >
               <TableHead>
                 <TableRow>
-                  <TableCell>名称</TableCell>
-                  <TableCell>分类</TableCell>
-                  <TableCell>类型</TableCell>
-                  <TableCell>值</TableCell>
-                  <TableCell>预览</TableCell>
+                  <TableCell>{i18n.t('microfrontend.runtime_dashboard.k79')}</TableCell>
+                  <TableCell>{i18n.t('microfrontend.runtime_dashboard.k80')}</TableCell>
+                  <TableCell>{i18n.t('microfrontend.runtime_dashboard.k81')}</TableCell>
+                  <TableCell>{i18n.t('microfrontend.runtime_dashboard.k20')}</TableCell>
+                  <TableCell>{i18n.t('microfrontend.runtime_dashboard.k82')}</TableCell>
                   <TableCell>CSS 变量</TableCell>
                 </TableRow>
               </TableHead>
@@ -1266,13 +1267,13 @@ const LifecycleTab: React.FC = () => {
 
   const handleRegister = () => {
     if (!newModuleId.trim()) {
-      setSnack({ open: true, msg: '请输入模块 ID', type: 'error' });
+      setSnack({ open: true, msg: i18n.t('microfrontend.runtime_dashboard.id_83'), type: 'error' });
       return;
     }
     lifecycleManager.register(newModuleId.trim(), {
       name: newModuleName.trim() || newModuleId.trim(),
     });
-    setSnack({ open: true, msg: `模块 ${newModuleId} 已注册`, type: 'success' });
+    setSnack({ open: true, msg: `${i18n.t('microfrontend.runtime_dashboard.k22')}${newModuleId}${i18n.t('microfrontend.runtime_dashboard.k23')}`, type: 'success' });
     setNewModuleId('');
     setNewModuleName('');
     refresh();
@@ -1280,9 +1281,9 @@ const LifecycleTab: React.FC = () => {
 
   const handlePreload = (id: string) => {
     if (lifecycleManager.preload(id)) {
-      setSnack({ open: true, msg: `模块 ${id} 预加载完成`, type: 'success' });
+      setSnack({ open: true, msg: `${i18n.t('microfrontend.runtime_dashboard.k24')}${id}${i18n.t('microfrontend.runtime_dashboard.k25')}`, type: 'success' });
     } else {
-      setSnack({ open: true, msg: `预加载失败（状态不允许）`, type: 'error' });
+      setSnack({ open: true, msg: i18n.t('microfrontend.runtime_dashboard.k21'), type: 'error' });
     }
     refresh();
   };
@@ -1291,27 +1292,27 @@ const LifecycleTab: React.FC = () => {
     const el = document.createElement('div');
     el.id = `lifecycle-mount-${id}`;
     if (lifecycleManager.mount(id, el, { timestamp: Date.now() })) {
-      setSnack({ open: true, msg: `模块 ${id} 已挂载`, type: 'success' });
+      setSnack({ open: true, msg: `${i18n.t('microfrontend.runtime_dashboard.k26')}${id}${i18n.t('microfrontend.runtime_dashboard.k27')}`, type: 'success' });
     } else {
-      setSnack({ open: true, msg: `挂载失败（状态不允许）`, type: 'error' });
+      setSnack({ open: true, msg: i18n.t('microfrontend.runtime_dashboard.k22'), type: 'error' });
     }
     refresh();
   };
 
   const handleUnmount = (id: string) => {
     if (lifecycleManager.unmount(id)) {
-      setSnack({ open: true, msg: `模块 ${id} 已卸载`, type: 'success' });
+      setSnack({ open: true, msg: `${i18n.t('microfrontend.runtime_dashboard.k28')}${id}${i18n.t('microfrontend.runtime_dashboard.k29')}`, type: 'success' });
     } else {
-      setSnack({ open: true, msg: `卸载失败（状态不允许）`, type: 'error' });
+      setSnack({ open: true, msg: i18n.t('microfrontend.runtime_dashboard.k23'), type: 'error' });
     }
     refresh();
   };
 
   const handleDestroy = (id: string) => {
     if (lifecycleManager.destroy(id)) {
-      setSnack({ open: true, msg: `模块 ${id} 已销毁`, type: 'success' });
+      setSnack({ open: true, msg: `${i18n.t('microfrontend.runtime_dashboard.k30')}${id}${i18n.t('microfrontend.runtime_dashboard.k31')}`, type: 'success' });
     } else {
-      setSnack({ open: true, msg: `销毁失败`, type: 'error' });
+      setSnack({ open: true, msg: i18n.t('microfrontend.runtime_dashboard.k24'), type: 'error' });
     }
     refresh();
   };
@@ -1340,7 +1341,7 @@ const LifecycleTab: React.FC = () => {
       >
         <Grid size={{ xs: 12, sm: 6, md: 3 }}>
           <StatCard
-            label='模块总数'
+            label={i18n.t('microfrontend.runtime_dashboard.k84')}
             value={records.length}
             icon={<ActivityIcon size={20} />}
             color={designTokens.colors.secondary.main}
@@ -1348,7 +1349,7 @@ const LifecycleTab: React.FC = () => {
         </Grid>
         <Grid size={{ xs: 12, sm: 6, md: 3 }}>
           <StatCard
-            label='已挂载'
+            label={i18n.t('microfrontend.runtime_dashboard.k85')}
             value={records.filter((r) => r.state === LifecycleState.MOUNTED).length}
             icon={<CheckCircleIcon size={20} />}
             color={designTokens.colors.success.dark}
@@ -1356,7 +1357,7 @@ const LifecycleTab: React.FC = () => {
         </Grid>
         <Grid size={{ xs: 12, sm: 6, md: 3 }}>
           <StatCard
-            label='事件总数'
+            label={i18n.t('microfrontend.runtime_dashboard.k86')}
             value={lifecycleManager.eventCount}
             icon={<ClockIcon size={20} />}
             color={designTokens.colors.primary.main}
@@ -1364,7 +1365,7 @@ const LifecycleTab: React.FC = () => {
         </Grid>
         <Grid size={{ xs: 12, sm: 6, md: 3 }}>
           <StatCard
-            label='错误状态'
+            label={i18n.t('microfrontend.runtime_dashboard.k87')}
             value={records.filter((r) => r.state === LifecycleState.ERROR).length}
             icon={<AlertCircleIcon size={20} />}
             color={designTokens.colors.error.main}
@@ -1379,19 +1380,19 @@ const LifecycleTab: React.FC = () => {
             variant='subtitle2'
             sx={{ mb: 1, fontWeight: 600 }}
           >
-            注册模块到生命周期管理器
+            {i18n.t('microfrontend.runtime_dashboard.k25')}
           </Typography>
           <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
             <TextField
               size='small'
-              label='模块 ID'
+              label={i18n.t('microfrontend.runtime_dashboard.id_88')}
               value={newModuleId}
               onChange={(e) => setNewModuleId(e.target.value)}
               sx={{ minWidth: 150 }}
             />
             <TextField
               size='small'
-              label='模块名称（可选）'
+              label={i18n.t('microfrontend.runtime_dashboard.k89')}
               value={newModuleName}
               onChange={(e) => setNewModuleName(e.target.value)}
               sx={{ minWidth: 200 }}
@@ -1402,7 +1403,7 @@ const LifecycleTab: React.FC = () => {
               startIcon={<PlayIcon size={16} />}
               onClick={handleRegister}
             >
-              注册
+              {i18n.t('microfrontend.runtime_dashboard.k26')}
             </Button>
           </Box>
         </CardContent>
@@ -1415,7 +1416,7 @@ const LifecycleTab: React.FC = () => {
             variant='subtitle2'
             sx={{ mb: 1, fontWeight: 600 }}
           >
-            生命周期状态转换图
+            {i18n.t('microfrontend.runtime_dashboard.k27')}
           </Typography>
           <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, alignItems: 'center' }}>
             {stateFlow.map((flow, idx) => (
@@ -1473,14 +1474,14 @@ const LifecycleTab: React.FC = () => {
                   variant='subtitle2'
                   sx={{ fontWeight: 600 }}
                 >
-                  模块状态列表
+                  {i18n.t('microfrontend.runtime_dashboard.k28')}
                 </Typography>
                 <Button
                   size='small'
                   startIcon={<RefreshIcon size={14} />}
                   onClick={refresh}
                 >
-                  刷新
+                  {i18n.t('microfrontend.runtime_dashboard.k29')}
                 </Button>
               </Box>
               {records.length === 0 ? (
@@ -1488,7 +1489,7 @@ const LifecycleTab: React.FC = () => {
                   color='text.secondary'
                   sx={{ py: 3, textAlign: 'center' }}
                 >
-                  暂无模块
+                  {i18n.t('microfrontend.runtime_dashboard.k30')}
                 </Typography>
               ) : (
                 <TableContainer
@@ -1499,9 +1500,9 @@ const LifecycleTab: React.FC = () => {
                     <TableHead>
                       <TableRow>
                         <TableCell>ID</TableCell>
-                        <TableCell>名称</TableCell>
-                        <TableCell>状态</TableCell>
-                        <TableCell align='right'>操作</TableCell>
+                        <TableCell>{i18n.t('microfrontend.runtime_dashboard.k90')}</TableCell>
+                        <TableCell>{i18n.t('microfrontend.runtime_dashboard.k91')}</TableCell>
+                        <TableCell align='right'>{i18n.t('microfrontend.runtime_dashboard.k92')}</TableCell>
                       </TableRow>
                     </TableHead>
                     <TableBody>
@@ -1530,7 +1531,7 @@ const LifecycleTab: React.FC = () => {
                           </TableCell>
                           <TableCell align='right'>
                             <Box sx={{ display: 'flex', gap: 0.25, justifyContent: 'flex-end' }}>
-                              <Tooltip title='预加载'>
+                              <Tooltip title={i18n.t('microfrontend.runtime_dashboard.k93')}>
                                 <span>
                                   <IconButton
                                     size='small'
@@ -1550,7 +1551,7 @@ const LifecycleTab: React.FC = () => {
                                   </IconButton>
                                 </span>
                               </Tooltip>
-                              <Tooltip title='挂载'>
+                              <Tooltip title={i18n.t('microfrontend.runtime_dashboard.k94')}>
                                 <span>
                                   <IconButton
                                     size='small'
@@ -1570,7 +1571,7 @@ const LifecycleTab: React.FC = () => {
                                   </IconButton>
                                 </span>
                               </Tooltip>
-                              <Tooltip title='卸载'>
+                              <Tooltip title={i18n.t('microfrontend.runtime_dashboard.k95')}>
                                 <span>
                                   <IconButton
                                     size='small'
@@ -1588,7 +1589,7 @@ const LifecycleTab: React.FC = () => {
                                   </IconButton>
                                 </span>
                               </Tooltip>
-                              <Tooltip title='销毁'>
+                              <Tooltip title={i18n.t('microfrontend.runtime_dashboard.k96')}>
                                 <IconButton
                                   size='small'
                                   onClick={(e) => {
@@ -1619,7 +1620,7 @@ const LifecycleTab: React.FC = () => {
                 variant='subtitle2'
                 sx={{ mb: 1, fontWeight: 600 }}
               >
-                {selectedRecord ? `模块 ${selectedRecord.id} 状态历史` : '选择模块查看历史'}
+                {selectedRecord ? `${i18n.t('microfrontend.runtime_dashboard.k32')}${selectedRecord.id}${i18n.t('microfrontend.runtime_dashboard.k33')}` : i18n.t('microfrontend.runtime_dashboard.k97')}
               </Typography>
               {selectedRecord && (
                 <Box>
@@ -1691,10 +1692,10 @@ const LifecycleTab: React.FC = () => {
             >
               <TableHead>
                 <TableRow>
-                  <TableCell>时间</TableCell>
-                  <TableCell>模块</TableCell>
-                  <TableCell>事件</TableCell>
-                  <TableCell>数据</TableCell>
+                  <TableCell>{i18n.t('microfrontend.runtime_dashboard.k98')}</TableCell>
+                  <TableCell>{i18n.t('microfrontend.runtime_dashboard.k99')}</TableCell>
+                  <TableCell>{i18n.t('microfrontend.runtime_dashboard.k100')}</TableCell>
+                  <TableCell>{i18n.t('microfrontend.runtime_dashboard.k101')}</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
@@ -1705,7 +1706,7 @@ const LifecycleTab: React.FC = () => {
                       align='center'
                       sx={{ py: 3, color: 'text.secondary' }}
                     >
-                      暂无事件
+                      {i18n.t('microfrontend.runtime_dashboard.k31')}
                     </TableCell>
                   </TableRow>
                 ) : (

@@ -11,6 +11,7 @@ import {
   Box,
   Button,
 } from '@mui/material';
+import i18n from '@/i18n';
 
 interface ToolbarProps {
   activeTab: number;
@@ -50,7 +51,7 @@ const Toolbar: React.FC<ToolbarProps> = ({
       >
         <TextField
           size='small'
-          placeholder='搜索...'
+          placeholder={i18n.t('pages.toolbar.k0')}
           value={searchKeyword}
           onChange={(e) => onSearchChange(e.target.value)}
           sx={{ width: 250 }}
@@ -59,20 +60,20 @@ const Toolbar: React.FC<ToolbarProps> = ({
           size='small'
           sx={{ width: 150 }}
         >
-          <InputLabel>状态</InputLabel>
+          <InputLabel>{i18n.t('pages.toolbar.k0')}</InputLabel>
           <Select
             value={statusFilter}
-            label='状态'
+            label={i18n.t('pages.toolbar.k1')}
             onChange={(e) => onStatusFilterChange(e.target.value)}
           >
-            <MenuItem value=''>全部</MenuItem>
-            <MenuItem value='pending'>待解析</MenuItem>
-            <MenuItem value='success'>成功</MenuItem>
-            <MenuItem value='failed'>失败</MenuItem>
-            <MenuItem value='running'>运行中</MenuItem>
-            <MenuItem value='stopped'>已停止</MenuItem>
-            <MenuItem value='active'>启用</MenuItem>
-            <MenuItem value='inactive'>禁用</MenuItem>
+            <MenuItem value=''>{i18n.t('pages.toolbar.k2')}</MenuItem>
+            <MenuItem value='pending'>{i18n.t('pages.toolbar.k3')}</MenuItem>
+            <MenuItem value='success'>{i18n.t('pages.toolbar.k4')}</MenuItem>
+            <MenuItem value='failed'>{i18n.t('pages.toolbar.k5')}</MenuItem>
+            <MenuItem value='running'>{i18n.t('pages.toolbar.k6')}</MenuItem>
+            <MenuItem value='stopped'>{i18n.t('pages.toolbar.k7')}</MenuItem>
+            <MenuItem value='active'>{i18n.t('pages.toolbar.k8')}</MenuItem>
+            <MenuItem value='inactive'>{i18n.t('pages.toolbar.k9')}</MenuItem>
           </Select>
         </FormControl>
         <Box sx={{ flexGrow: 1 }} />
@@ -83,14 +84,14 @@ const Toolbar: React.FC<ToolbarProps> = ({
               startIcon={<RefreshCw size={18} />}
               onClick={onRefetchData}
             >
-              刷新
+              {i18n.t('pages.toolbar.k1')}
             </Button>
             <Button
               variant='contained'
               startIcon={<Plus size={18} />}
               onClick={onCreateData}
             >
-              新增数据
+              {i18n.t('pages.toolbar.k2')}
             </Button>
           </>
         )}
@@ -101,14 +102,14 @@ const Toolbar: React.FC<ToolbarProps> = ({
               startIcon={<RefreshCw size={18} />}
               onClick={onRefetchTasks}
             >
-              刷新
+              {i18n.t('pages.toolbar.k3')}
             </Button>
             <Button
               variant='contained'
               startIcon={<Plus size={18} />}
               onClick={onCreateTask}
             >
-              新建任务
+              {i18n.t('pages.toolbar.k4')}
             </Button>
           </>
         )}
@@ -119,21 +120,21 @@ const Toolbar: React.FC<ToolbarProps> = ({
               startIcon={<FileJson size={18} />}
               onClick={onShowParseTest}
             >
-              解析测试
+              {i18n.t('pages.toolbar.k5')}
             </Button>
             <Button
               variant='outlined'
               startIcon={<RefreshCw size={18} />}
               onClick={onRefetchRules}
             >
-              刷新
+              {i18n.t('pages.toolbar.k6')}
             </Button>
             <Button
               variant='contained'
               startIcon={<Plus size={18} />}
               onClick={onCreateRule}
             >
-              新建规则
+              {i18n.t('pages.toolbar.k7')}
             </Button>
           </>
         )}

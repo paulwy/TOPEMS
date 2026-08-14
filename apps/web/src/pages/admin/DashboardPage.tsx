@@ -9,150 +9,137 @@ import { IAM_PATHS } from '@/modules/iam/config';
 import { ADMIN_PATHS } from '@/modules/admin/config';
 import { designTokens } from '@/theme/tokens';
 import { LazyChart } from '@/components/charts';
-
-
 import { QUERY_KEYS } from '@/lib/reactQuery';
-
+import i18n from '@/i18n';
 const ct= designTokens.colors;
-
 const iconMap: Record<string, React.ReactNode> = {
   Users: <Users size={24} />,
   Shield: <Shield size={24} />,
   Activity: <Activity size={24} />,
   AlertTriangle: <AlertTriangle size={24} />,
 };
-
 const pieData = [
-  { name: '管理员', value: 5 },
-  { name: '审计员', value: 10 },
-  { name: '普通用户', value: 75 },
-  { name: '访客', value: 10 },
+  { name: i18n.t('admin.dashboard_page.k0'), value: 5 },
+  { name: i18n.t('admin.dashboard_page.k1'), value: 10 },
+  { name: i18n.t('admin.dashboard_page.k2'), value: 75 },
+  { name: i18n.t('admin.dashboard_page.k3'), value: 10 },
 ];
-
 const getGreeting = (): string => {
   const hour = new Date().getHours();
-  if (hour < 12) return '上午好';
-  if (hour < 18) return '下午好';
-  return '晚上好';
+  if (hour < 12) return i18n.t('admin.dashboard_page.k4');
+  if (hour < 18) return i18n.t('admin.dashboard_page.k5');
+  return i18n.t('admin.dashboard_page.k6');
 };
-
 export const DashboardPage: React.FC = () => {
   const navigate = useNavigate();
-
   const dashboardQuery = useQuery<boolean>({
     queryKey: QUERY_KEYS.AD_HOC.ADMIN_DASHBOARD_BASE,
     queryFn: async () => true,
     staleTime: 5 * 60 * 1000,
   });
-
   const loading = dashboardQuery.isLoading;
-
   const stats: StatCard[] = [
     {
       id: 'total-users',
-      title: '用户总数',
+      title: i18n.t('admin.dashboard_page.k7'),
       value: '1,280',
       icon: iconMap.Users,
       change: 45,
-      changeLabel: 'vs 上周期',
+      changeLabel: i18n.t('pages.dashboard_page.vs_0'),
       color: 'primary',
     },
     {
       id: 'online-users',
-      title: '在线用户',
+      title: i18n.t('admin.dashboard_page.k8'),
       value: '128',
       icon: iconMap.Activity,
       change: 12,
-      changeLabel: 'vs 上周期',
+      changeLabel: i18n.t('pages.dashboard_page.vs_1'),
       color: 'success',
     },
     {
       id: 'role-count',
-      title: '角色数量',
+      title: i18n.t('admin.dashboard_page.k9'),
       value: '15',
       icon: iconMap.Shield,
       change: 2,
-      changeLabel: 'vs 上周期',
+      changeLabel: i18n.t('pages.dashboard_page.vs_2'),
       color: 'info',
     },
     {
       id: 'system-alerts',
-      title: '系统告警',
+      title: i18n.t('admin.dashboard_page.k10'),
       value: '3',
       icon: iconMap.AlertTriangle,
       change: -5,
-      changeLabel: 'vs 上周期',
+      changeLabel: i18n.t('pages.dashboard_page.vs_3'),
       color: 'warning',
     },
   ];
-
   const charts: ChartCard[] = [
     {
       id: 'user-role-distribution',
-      title: '用户角色分布',
+      title: i18n.t('admin.dashboard_page.k11'),
       chart: <LazyChart type='pie' data={pieData} />,
       height: 300,
     },
   ];
-
   const recentItems: RecentItem[] = [
     {
       id: 'user-1',
-      title: '张三',
-      description: '管理员 · 10分钟前',
+      title: i18n.t('admin.dashboard_page.k12'),
+      description: i18n.t('admin.dashboard_page.10_13'),
       status: 'success',
     },
     {
       id: 'user-2',
-      title: '李四',
-      description: '普通用户 · 30分钟前',
+      title: i18n.t('admin.dashboard_page.k14'),
+      description: i18n.t('admin.dashboard_page.30_15'),
       status: 'success',
     },
     {
       id: 'user-3',
-      title: '王五',
-      description: '审计员 · 1小时前',
+      title: i18n.t('admin.dashboard_page.k16'),
+      description: i18n.t('admin.dashboard_page.1_17'),
       status: 'default',
     },
     {
       id: 'user-4',
-      title: '赵六',
-      description: '普通用户 · 2小时前',
+      title: i18n.t('admin.dashboard_page.k18'),
+      description: i18n.t('admin.dashboard_page.2_19'),
       status: 'success',
     },
   ];
-
   const quickActions: QuickAction[] = [
     {
       id: 'user-management',
-      label: '用户管理',
+      label: i18n.t('admin.dashboard_page.k20'),
       icon: <ArrowRight size={18} />,
       onClick: () => navigate(IAM_PATHS.user),
     },
     {
       id: 'role-management',
-      label: '角色管理',
+      label: i18n.t('admin.dashboard_page.k21'),
       icon: <ArrowRight size={18} />,
       onClick: () => navigate(IAM_PATHS.role),
     },
     {
       id: 'permission-management',
-      label: '权限管理',
+      label: i18n.t('admin.dashboard_page.k22'),
       icon: <ArrowRight size={18} />,
       onClick: () => navigate(IAM_PATHS.permission),
     },
     {
       id: 'audit-log',
-      label: '审计日志',
+      label: i18n.t('admin.dashboard_page.k23'),
       icon: <ArrowRight size={18} />,
       onClick: () => navigate(ADMIN_PATHS.auditLog),
     },
   ];
-
   return (
     <PageContainer
-      title='仪表盘'
-      subtitle={`${getGreeting()}，身份认证与访问控制`}
+      title={i18n.t('admin.dashboard_page.k24')}
+      subtitle={`${getGreeting()}${i18n.t('pages.dashboard_page.k4')}`}
       headerProps={{
         pageIcon: <Shield style={{ width: 20, height: 20 }} />,
         pageGradient: `linear-gradient(135deg, ${ct.secondary[400]} 0%, ${ct.secondary.main} 100%)`,
@@ -166,13 +153,12 @@ export const DashboardPage: React.FC = () => {
         stats={stats}
         charts={charts}
         recentItems={recentItems}
-        recentTitle='最近活跃用户'
+        recentTitle={i18n.t('admin.dashboard_page.k25')}
         quickActions={quickActions}
-        quickActionsTitle='快速操作'
+        quickActionsTitle={i18n.t('admin.dashboard_page.k26')}
         loading={loading}
       />
     </PageContainer>
   );
 };
-
 export default DashboardPage;

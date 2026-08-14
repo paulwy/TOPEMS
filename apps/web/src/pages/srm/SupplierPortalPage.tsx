@@ -16,6 +16,7 @@ import {
   Avatar,
   LinearProgress,
 } from '@mui/material';
+import i18n from '@/i18n';
 import {
   Package,
   FileText,
@@ -152,9 +153,9 @@ const SupplierPortalPage: React.FC = () => {
         announcements = (announcementsRes.data as SupplierPortalAnnouncement[]) || [];
       } else {
         announcements = [
-          { id: '1', title: '关于春节期间发货安排的通知', date: '2024-01-15', type: 'important' },
-          { id: '2', title: '新增供应商门户功能上线公告', date: '2024-01-10', type: 'normal' },
-          { id: '3', title: '2024年第一季度质量考核结果', date: '2024-01-05', type: 'normal' },
+          { id: '1', title: i18n.t('pages.supplier_portal_page.k0'), date: '2024-01-15', type: 'important' },
+          { id: '2', title: i18n.t('pages.supplier_portal_page.k1'), date: '2024-01-10', type: 'normal' },
+          { id: '3', title: i18n.t('pages.supplier_portal_page.2024_0'), date: '2024-01-05', type: 'normal' },
         ];
       }
 
@@ -170,11 +171,11 @@ const SupplierPortalPage: React.FC = () => {
 
   useEffect(() => {
     if (portalQuery.isError) {
-      apiLogger.error('加载供应商门户数据失败:', portalQuery.error);
+      apiLogger.error(i18n.t('pages.supplier_portal_page.k1'), portalQuery.error);
       addNotification({
         type: 'error',
-        title: '加载失败',
-        message: '无法加载供应商门户数据',
+        title: i18n.t('pages.supplier_portal_page.k2'),
+        message: i18n.t('pages.supplier_portal_page.k3'),
       });
     }
   }, [portalQuery.isError, portalQuery.error, addNotification]);
@@ -183,32 +184,32 @@ const SupplierPortalPage: React.FC = () => {
     string,
     { label: string; color: 'default' | 'primary' | 'success' | 'warning' | 'error' | 'info' }
   > = {
-    pending: { label: '待处理', color: 'warning' },
-    processing: { label: '处理中', color: 'primary' },
-    shipped: { label: '已发货', color: 'info' },
-    completed: { label: '已完成', color: 'success' },
-    cancelled: { label: '已取消', color: 'default' },
+    pending: { label: i18n.t('pages.supplier_portal_page.k4'), color: 'warning' },
+    processing: { label: i18n.t('pages.supplier_portal_page.k5'), color: 'primary' },
+    shipped: { label: i18n.t('pages.supplier_portal_page.k6'), color: 'info' },
+    completed: { label: i18n.t('pages.supplier_portal_page.k7'), color: 'success' },
+    cancelled: { label: i18n.t('pages.supplier_portal_page.k8'), color: 'default' },
   };
 
   const statCards = [
     {
-      title: '订单总数',
+      title: i18n.t('pages.supplier_portal_page.k9'),
       value: stats?.total_orders || 0,
       icon: <Package size={24} />,
       color: 'primary.main',
       bgColor: 'primary.50',
-      suffix: '个',
+      suffix: i18n.t('pages.supplier_portal_page.k10'),
     },
     {
-      title: '待处理订单',
+      title: i18n.t('pages.supplier_portal_page.k11'),
       value: stats?.pending_orders || 0,
       icon: <Clock size={24} />,
       color: 'warning.main',
       bgColor: 'warning.50',
-      suffix: '个',
+      suffix: i18n.t('pages.supplier_portal_page.k12'),
     },
     {
-      title: '累计金额',
+      title: i18n.t('pages.supplier_portal_page.k13'),
       value: stats?.total_amount || 0,
       icon: <DollarSign size={24} />,
       color: 'success.main',
@@ -217,7 +218,7 @@ const SupplierPortalPage: React.FC = () => {
       format: true,
     },
     {
-      title: '按时交付率',
+      title: i18n.t('pages.supplier_portal_page.k14'),
       value: stats?.on_time_delivery_rate || 0,
       icon: <CheckCircle size={24} />,
       color: 'info.main',
@@ -227,10 +228,10 @@ const SupplierPortalPage: React.FC = () => {
   ];
 
   const quickActions = [
-    { label: '查看订单', icon: <Package size={20} />, action: () => setActiveTab(1) },
-    { label: '查看发票', icon: <FileText size={20} />, action: () => setActiveTab(2) },
-    { label: '发货管理', icon: <Truck size={20} />, action: () => setActiveTab(3) },
-    { label: '询报价', icon: <TrendingUp size={20} />, action: () => setActiveTab(4) },
+    { label: i18n.t('pages.supplier_portal_page.k15'), icon: <Package size={20} />, action: () => setActiveTab(1) },
+    { label: i18n.t('pages.supplier_portal_page.k16'), icon: <FileText size={20} />, action: () => setActiveTab(2) },
+    { label: i18n.t('pages.supplier_portal_page.k17'), icon: <Truck size={20} />, action: () => setActiveTab(3) },
+    { label: i18n.t('pages.supplier_portal_page.k18'), icon: <TrendingUp size={20} />, action: () => setActiveTab(4) },
   ];
 
   return (
@@ -254,25 +255,25 @@ const SupplierPortalPage: React.FC = () => {
                   variant='h5'
                   sx={{ fontWeight: 600 }}
                 >
-                  {supplier?.name || '示例供应商'}
+                  {supplier?.name || i18n.t('pages.supplier_portal_page.k19')}
                 </Typography>
                 <Typography
                   variant='body2'
                   color='text.secondary'
                 >
-                  供应商编号: {supplier?.supplier_no || 'SUP-001'}
+                  [i18n.t('pages.supplier_portal_page.k0')]: {supplier?.supplier_no || 'SUP-001'}
                 </Typography>
                 <Box sx={{ display: 'flex', gap: 1, mt: 1 }}>
                   <Chip
                     size='small'
-                    label={supplier?.category || '原材料供应商'}
+                    label={supplier?.category || i18n.t('pages.supplier_portal_page.k20')}
                     color='primary'
                     variant='outlined'
                   />
                   <Chip
                     size='small'
                     icon={<Star size={12} />}
-                    label={`质量评分: ${stats?.quality_score || 92.3}`}
+                    label={`${i18n.t('pages.supplier_portal_page.k2')}${stats?.quality_score || 92.3}`}
                     color='warning'
                     variant='outlined'
                   />
@@ -362,17 +363,17 @@ const SupplierPortalPage: React.FC = () => {
                 sx={{ px: 2 }}
               >
                 <Tab
-                  label='最近订单'
+                  label={i18n.t('pages.supplier_portal_page.k21')}
                   icon={<Package size={16} />}
                   iconPosition='start'
                 />
                 <Tab
-                  label='待办事项'
+                  label={i18n.t('pages.supplier_portal_page.k22')}
                   icon={<Bell size={16} />}
                   iconPosition='start'
                 />
                 <Tab
-                  label='公告通知'
+                  label={i18n.t('pages.supplier_portal_page.k23')}
                   icon={<AlertCircle size={16} />}
                   iconPosition='start'
                 />
@@ -431,14 +432,14 @@ const SupplierPortalPage: React.FC = () => {
               {activeTab === 1 && (
                 <List disablePadding>
                   {[
-                    { id: '1', title: '确认订单 PO-2024-001', type: 'order', priority: 'high' },
+                    { id: '1', title: i18n.t('pages.supplier_portal_page.po2024001_24'), type: 'order', priority: 'high' },
                     {
                       id: '2',
-                      title: '发货提醒 PO-2024-002',
+                      title: i18n.t('pages.supplier_portal_page.po2024002_25'),
                       type: 'delivery',
                       priority: 'medium',
                     },
-                    { id: '3', title: '发票对账 INV-2024-005', type: 'invoice', priority: 'low' },
+                    { id: '3', title: i18n.t('pages.supplier_portal_page.inv2024005_26'), type: 'invoice', priority: 'low' },
                   ].map((item, index) => (
                     <React.Fragment key={item.id}>
                       {index > 0 && <Divider />}
@@ -451,10 +452,10 @@ const SupplierPortalPage: React.FC = () => {
                                 size='small'
                                 label={
                                   item.priority === 'high'
-                                    ? '高'
+                                    ? i18n.t('pages.supplier_portal_page.k27')
                                     : item.priority === 'medium'
-                                      ? '中'
-                                      : '低'
+                                      ? i18n.t('pages.supplier_portal_page.k28')
+                                      : i18n.t('pages.supplier_portal_page.k29')
                                 }
                                 color={
                                   item.priority === 'high'
@@ -489,7 +490,7 @@ const SupplierPortalPage: React.FC = () => {
                               {item.type === 'important' && (
                                 <Chip
                                   size='small'
-                                  label='重要'
+                                  label={i18n.t('pages.supplier_portal_page.k30')}
                                   color='error'
                                   sx={{ fontSize: '0.625rem', height: 16 }}
                                 />
@@ -519,11 +520,11 @@ const SupplierPortalPage: React.FC = () => {
                 variant='subtitle1'
                 sx={{ fontWeight: 600, mb: 2 }}
               >
-                绩效指标
+                {i18n.t('pages.supplier_portal_page.k1')}
               </Typography>
               <Box sx={{ mb: 2 }}>
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 0.5 }}>
-                  <Typography variant='body2'>质量评分</Typography>
+                  <Typography variant='body2'>{i18n.t('pages.supplier_portal_page.k31')}</Typography>
                   <Typography
                     variant='body2'
                     sx={{ fontWeight: 600 }}
@@ -540,7 +541,7 @@ const SupplierPortalPage: React.FC = () => {
               </Box>
               <Box sx={{ mb: 2 }}>
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 0.5 }}>
-                  <Typography variant='body2'>按时交付率</Typography>
+                  <Typography variant='body2'>{i18n.t('pages.supplier_portal_page.k32')}</Typography>
                   <Typography
                     variant='body2'
                     sx={{ fontWeight: 600 }}
@@ -557,7 +558,7 @@ const SupplierPortalPage: React.FC = () => {
               </Box>
               <Box>
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 0.5 }}>
-                  <Typography variant='body2'>合作评分</Typography>
+                  <Typography variant='body2'>{i18n.t('pages.supplier_portal_page.k33')}</Typography>
                   <Typography
                     variant='body2'
                     sx={{ fontWeight: 600 }}
@@ -581,19 +582,19 @@ const SupplierPortalPage: React.FC = () => {
                 variant='subtitle1'
                 sx={{ fontWeight: 600, mb: 2 }}
               >
-                快速入口
+                {i18n.t('pages.supplier_portal_page.k2')}
               </Typography>
               <Grid
                 container
                 spacing={2}
               >
                 {[
-                  { icon: <Package size={20} />, label: '订单管理' },
-                  { icon: <FileText size={20} />, label: '发票管理' },
-                  { icon: <Truck size={20} />, label: '发货管理' },
-                  { icon: <TrendingUp size={20} />, label: '询报价' },
-                  { icon: <Star size={20} />, label: '绩效评估' },
-                  { icon: <Bell size={20} />, label: '消息通知' },
+                  { icon: <Package size={20} />, label: i18n.t('pages.supplier_portal_page.k34') },
+                  { icon: <FileText size={20} />, label: i18n.t('pages.supplier_portal_page.k35') },
+                  { icon: <Truck size={20} />, label: i18n.t('pages.supplier_portal_page.k36') },
+                  { icon: <TrendingUp size={20} />, label: i18n.t('pages.supplier_portal_page.k37') },
+                  { icon: <Star size={20} />, label: i18n.t('pages.supplier_portal_page.k38') },
+                  { icon: <Bell size={20} />, label: i18n.t('pages.supplier_portal_page.k39') },
                 ].map((item, index) => (
                   <Grid
                     size={{ xs: 4 }}

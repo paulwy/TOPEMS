@@ -17,6 +17,7 @@ import { ChatSettingsModal } from './ChatSettingsModal';
 import { useNotificationStore } from '@/store';
 import { logger } from '@/utils/logger';
 import { DASHBOARD_PATHS } from '@/routes/dashboard';
+import i18n from '@/i18n';
 
 type TabType = 'all' | 'direct' | 'group' | 'notifications' | 'contacts';
 
@@ -59,16 +60,16 @@ export const ChatInterface: React.FC = () => {
 
   const handleWsOpen = useCallback(() => {
     addNotification({
-      title: '连接成功',
-      message: 'WebSocket 连接已建立',
+      title: i18n.t('components.chat_interface.k0'),
+      message: i18n.t('components.chat_interface.websocket_0'),
       type: 'success',
     });
   }, [addNotification]);
 
   const handleWsClose = useCallback(() => {
     addNotification({
-      title: '连接断开',
-      message: 'WebSocket 连接已断开',
+      title: i18n.t('components.chat_interface.k1'),
+      message: i18n.t('components.chat_interface.websocket_1'),
       type: 'warning',
     });
   }, [addNotification]);
@@ -113,8 +114,8 @@ export const ChatInterface: React.FC = () => {
     } catch (error: unknown) {
       logger.error('Failed to load chat rooms:', error);
       addNotification({
-        title: '加载失败',
-        message: '无法加载聊天室列表',
+        title: i18n.t('components.chat_interface.k2'),
+        message: i18n.t('components.chat_interface.k3'),
         type: 'error',
       });
     } finally {
@@ -150,8 +151,8 @@ export const ChatInterface: React.FC = () => {
     } catch (error: unknown) {
       logger.error('Failed to create chat room:', error);
       addNotification({
-        title: '创建失败',
-        message: '无法创建聊天会话',
+        title: i18n.t('components.chat_interface.k4'),
+        message: i18n.t('components.chat_interface.k5'),
         type: 'error',
       });
     }
@@ -216,31 +217,31 @@ export const ChatInterface: React.FC = () => {
     } catch (error: unknown) {
       logger.error('Failed to edit message:', error);
       addNotification({
-        title: '编辑失败',
-        message: '无法编辑消息',
+        title: i18n.t('components.chat_interface.k6'),
+        message: i18n.t('components.chat_interface.k7'),
         type: 'error',
       });
     }
   };
 
   const handleDeleteMessage = async (messageId: string) => {
-    if (!confirm('确定要删除这条消息吗？')) return;
+    if (!confirm(i18n.t('components.chat_interface.k8'))) return;
 
     try {
       const response = await imApi.deleteChatMessage(messageId);
       if (response.success) {
         setMessages((prev) => prev.filter((m) => m.id !== messageId));
         addNotification({
-          title: '删除成功',
-          message: '消息已删除',
+          title: i18n.t('components.chat_interface.k9'),
+          message: i18n.t('components.chat_interface.k10'),
           type: 'success',
         });
       }
     } catch (error: unknown) {
       logger.error('Failed to delete message:', error);
       addNotification({
-        title: '删除失败',
-        message: '无法删除消息',
+        title: i18n.t('components.chat_interface.k11'),
+        message: i18n.t('components.chat_interface.k12'),
         type: 'error',
       });
     }
@@ -260,8 +261,8 @@ export const ChatInterface: React.FC = () => {
         );
         setSelectedRoom((prev) => (prev ? { ...prev, is_muted: true } : null));
         addNotification({
-          title: '成功',
-          message: '已开启免打扰',
+          title: i18n.t('components.chat_interface.k13'),
+          message: i18n.t('components.chat_interface.k14'),
           type: 'success',
         });
       }
@@ -280,8 +281,8 @@ export const ChatInterface: React.FC = () => {
         );
         setSelectedRoom((prev) => (prev ? { ...prev, is_muted: false } : null));
         addNotification({
-          title: '成功',
-          message: '已关闭免打扰',
+          title: i18n.t('components.chat_interface.k15'),
+          message: i18n.t('components.chat_interface.k16'),
           type: 'success',
         });
       }
@@ -300,8 +301,8 @@ export const ChatInterface: React.FC = () => {
         );
         setSelectedRoom((prev) => (prev ? { ...prev, is_pinned: true } : null));
         addNotification({
-          title: '成功',
-          message: '已置顶会话',
+          title: i18n.t('components.chat_interface.k17'),
+          message: i18n.t('components.chat_interface.k18'),
           type: 'success',
         });
       }
@@ -320,8 +321,8 @@ export const ChatInterface: React.FC = () => {
         );
         setSelectedRoom((prev) => (prev ? { ...prev, is_pinned: false } : null));
         addNotification({
-          title: '成功',
-          message: '已取消置顶',
+          title: i18n.t('components.chat_interface.k19'),
+          message: i18n.t('components.chat_interface.k20'),
           type: 'success',
         });
       }
@@ -331,7 +332,7 @@ export const ChatInterface: React.FC = () => {
   };
 
   const handleDeleteRoom = async () => {
-    if (!selectedRoom || !confirm('确定要删除这个会话吗？')) return;
+    if (!selectedRoom || !confirm(i18n.t('components.chat_interface.k21'))) return;
     try {
       const response = await imApi.deleteChatRoom(selectedRoom.id);
       if (response.success) {
@@ -340,16 +341,16 @@ export const ChatInterface: React.FC = () => {
         setMessages([]);
         setIsSettingsModalOpen(false);
         addNotification({
-          title: '成功',
-          message: '会话已删除',
+          title: i18n.t('components.chat_interface.k22'),
+          message: i18n.t('components.chat_interface.k23'),
           type: 'success',
         });
       }
     } catch (error: unknown) {
       logger.error('Failed to delete room:', error);
       addNotification({
-        title: '失败',
-        message: '删除会话失败',
+        title: i18n.t('components.chat_interface.k24'),
+        message: i18n.t('components.chat_interface.k25'),
         type: 'error',
       });
     }
@@ -369,7 +370,7 @@ export const ChatInterface: React.FC = () => {
           msg_type: 'chat',
           chat_id: selectedRoom.id,
           sender_id: 'current-user',
-          sender_name: '当前用户',
+          sender_name: i18n.t('components.chat_interface.k26'),
           content,
           timestamp: new Date().toISOString(),
         };
@@ -378,7 +379,7 @@ export const ChatInterface: React.FC = () => {
         const response = await imApi.createChatMessage({
           chat_id: selectedRoom.id,
           sender_id: 'current-user',
-          sender_name: '当前用户',
+          sender_name: i18n.t('components.chat_interface.k27'),
           message_type: type,
           content,
           file_url: fileUrl,
@@ -392,8 +393,8 @@ export const ChatInterface: React.FC = () => {
     } catch (error: unknown) {
       logger.error('Failed to send message:', error);
       addNotification({
-        title: '发送失败',
-        message: '消息发送失败',
+        title: i18n.t('components.chat_interface.k28'),
+        message: i18n.t('components.chat_interface.k29'),
         type: 'error',
       });
     }
@@ -428,11 +429,11 @@ export const ChatInterface: React.FC = () => {
   });
 
   const tabs = [
-    { id: 'all' as TabType, label: '全部', icon: MessageSquare },
-    { id: 'direct' as TabType, label: '私聊', icon: MessageSquare },
-    { id: 'group' as TabType, label: '群聊', icon: Users },
-    { id: 'contacts' as TabType, label: '通讯录', icon: User },
-    { id: 'notifications' as TabType, label: '通知', icon: Bell },
+    { id: 'all' as TabType, label: i18n.t('components.chat_interface.k30'), icon: MessageSquare },
+    { id: 'direct' as TabType, label: i18n.t('components.chat_interface.k31'), icon: MessageSquare },
+    { id: 'group' as TabType, label: i18n.t('components.chat_interface.k32'), icon: Users },
+    { id: 'contacts' as TabType, label: i18n.t('components.chat_interface.k33'), icon: User },
+    { id: 'notifications' as TabType, label: i18n.t('components.chat_interface.k34'), icon: Bell },
   ];
 
   return (
@@ -466,7 +467,7 @@ export const ChatInterface: React.FC = () => {
                 <ChevronLeft style={{ width: 20, height: 20 }} />
               </Button>
               <h1 style={{ fontSize: 20, fontWeight: 'bold', color: theme.palette.text.primary }}>
-                消息
+                {i18n.t('components.chat_interface.k2')}
               </h1>
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
@@ -504,7 +505,7 @@ export const ChatInterface: React.FC = () => {
             />
             <TextField
               size='small'
-              placeholder='搜索聊天...'
+              placeholder={i18n.t('components.chat_interface.k3')}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               sx={{ pl: 5, width: '100%' }}
@@ -586,7 +587,7 @@ export const ChatInterface: React.FC = () => {
                     marginBottom: 12,
                   }}
                 />
-                <p style={{ color: theme.palette.text.secondary }}>暂无聊天记录</p>
+                <p style={{ color: theme.palette.text.secondary }}>{i18n.t('components.chat_interface.k35')}</p>
               </div>
             ) : (
               filteredRooms.map((room) => (
@@ -627,11 +628,11 @@ export const ChatInterface: React.FC = () => {
               >
                 <div>
                   <h2 style={{ fontWeight: 600, color: theme.palette.text.primary }}>
-                    {selectedRoom.name || '未命名会话'}
+                    {selectedRoom.name || i18n.t('components.chat_interface.k36')}
                   </h2>
                   <p style={{ fontSize: 14, color: theme.palette.text.secondary }}>
-                    {selectedRoom.room_type === 'direct' ? '私聊' : '群聊'}
-                    {!isConnected && ' · 连接断开'}
+                    {selectedRoom.room_type === 'direct' ? i18n.t('components.chat_interface.k38') : i18n.t('components.chat_interface.k37')}
+                    {!isConnected && i18n.t('components.chat_interface.k4')}
                   </p>
                 </div>
               </div>
@@ -649,7 +650,7 @@ export const ChatInterface: React.FC = () => {
                 />
                 <TextField
                   size='small'
-                  placeholder='搜索消息...'
+                  placeholder={i18n.t('components.chat_interface.k5')}
                   value={messageSearchQuery}
                   onChange={(e) => {
                     setMessageSearchQuery(e.target.value);
@@ -687,7 +688,7 @@ export const ChatInterface: React.FC = () => {
                         marginBottom: 12,
                       }}
                     />
-                    <p style={{ color: theme.palette.text.secondary }}>暂无消息，开始聊天吧</p>
+                    <p style={{ color: theme.palette.text.secondary }}>{i18n.t('components.chat_interface.k39')}</p>
                   </div>
                 </div>
               ) : messageSearchQuery.trim() && filteredMessages.length === 0 ? (
@@ -709,7 +710,7 @@ export const ChatInterface: React.FC = () => {
                         marginBottom: 12,
                       }}
                     />
-                    <p style={{ color: theme.palette.text.secondary }}>未找到匹配的消息</p>
+                    <p style={{ color: theme.palette.text.secondary }}>{i18n.t('components.chat_interface.k40')}</p>
                   </div>
                 </div>
               ) : (
@@ -780,17 +781,17 @@ export const ChatInterface: React.FC = () => {
                   marginBottom: 8,
                 }}
               >
-                欢迎使用 TOPEMS IM
+                {i18n.t('components.chat_interface.topemsim_6')}
               </h2>
               <p style={{ color: theme.palette.text.secondary, marginBottom: 16 }}>
-                {activeTab === 'notifications' ? '查看通知中心' : '选择一个聊天室开始聊天'}
+                {activeTab === 'notifications' ? i18n.t('components.chat_interface.k42') : i18n.t('components.chat_interface.k41')}
               </p>
               {activeTab !== 'notifications' && (
                 <Button
                   onClick={() => setIsCreateModalOpen(true)}
                   variant='contained'
                 >
-                  创建聊天室
+                  {i18n.t('components.chat_interface.k7')}
                 </Button>
               )}
             </div>

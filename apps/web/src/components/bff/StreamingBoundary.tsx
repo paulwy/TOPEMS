@@ -31,6 +31,7 @@ import React, {
   type ReactNode,
   type ErrorInfo,
 } from 'react';
+import i18n from '@/i18n';
 import { Box, Stack, Skeleton, Typography, Button, LinearProgress } from '@mui/material';
 import { AlertCircle, RefreshCw, Layers } from 'lucide-react';
 import { logger } from '@/utils/logger';
@@ -75,7 +76,7 @@ class LayerErrorBoundary extends Component<LayerErrorBoundaryProps, LayerErrorBo
   }
 
   override componentDidCatch(error: Error, info: ErrorInfo): void {
-    boundaryLogger.error(`层 [${this.props.layerName}] 错误:`, error, info.componentStack);
+    boundaryLogger.error(`${i18n.t('components.streaming_boundary.k0')}${this.props.layerName}${i18n.t('components.streaming_boundary.k1')}`, error, info.componentStack);
     this.props.onError?.(error, this.props.layerName);
   }
 
@@ -156,7 +157,7 @@ const DefaultLayerErrorFallback: React.FC<{
       startIcon={<RefreshCw size={14} />}
       onClick={onReset}
     >
-      重试此层
+      {i18n.t('components.streaming_boundary.k0')}
     </Button>
   </Box>
 );
@@ -343,7 +344,7 @@ export const StreamingBoundary: React.FC<StreamingBoundaryProps> = ({
               variant='caption'
               color='text.secondary'
             >
-              流式渲染: {readyLayers}/{totalLayers} 层就绪
+              [i18n.t('components.streaming_boundary.k1')]: {readyLayers}/{totalLayers} {i18n.t('components.streaming_boundary.k2')}
               {hasErrors && (
                 <Typography
                   component='span'

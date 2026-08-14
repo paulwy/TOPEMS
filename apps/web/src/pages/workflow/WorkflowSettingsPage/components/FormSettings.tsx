@@ -1,13 +1,12 @@
 import { Box, Typography, Switch, TextField, Stack, Divider } from '@mui/material';
 import React from 'react';
 import type { FormSettings as FormSettingsType } from '../types';
-
+import i18n from '@/i18n';
 interface FormSettingsProps {
   settings: FormSettingsType;
   onChange: (settings: FormSettingsType) => void;
   markUnsaved: () => void;
 }
-
 export const FormSettings: React.FC<FormSettingsProps> = ({ settings, onChange, markUnsaved }) => {
   return (
     <Stack spacing={3}>
@@ -16,14 +15,14 @@ export const FormSettings: React.FC<FormSettingsProps> = ({ settings, onChange, 
           variant='h6'
           sx={{ fontWeight: 600, mb: 1 }}
         >
-          表单字段
+          {i18n.t('pages.form_settings.k0')}
         </Typography>
         <Typography
           variant='body2'
           color='text.secondary'
           sx={{ mb: 3 }}
         >
-          配置表单字段相关设置
+          {i18n.t('pages.form_settings.k1')}
         </Typography>
         <Stack spacing={2}>
           <Box
@@ -41,13 +40,13 @@ export const FormSettings: React.FC<FormSettingsProps> = ({ settings, onChange, 
                 variant='body2'
                 sx={{ fontWeight: 500 }}
               >
-                字段校验
+                {i18n.t('pages.form_settings.k2')}
               </Typography>
               <Typography
                 variant='caption'
                 color='text.secondary'
               >
-                启用表单字段数据校验
+                {i18n.t('pages.form_settings.k3')}
               </Typography>
             </Box>
             <Switch
@@ -73,13 +72,13 @@ export const FormSettings: React.FC<FormSettingsProps> = ({ settings, onChange, 
                 variant='body2'
                 sx={{ fontWeight: 500 }}
               >
-                富文本编辑
+                {i18n.t('pages.form_settings.k4')}
               </Typography>
               <Typography
                 variant='caption'
                 color='text.secondary'
               >
-                启用富文本编辑器
+                {i18n.t('pages.form_settings.k5')}
               </Typography>
             </Box>
             <Switch
@@ -105,13 +104,13 @@ export const FormSettings: React.FC<FormSettingsProps> = ({ settings, onChange, 
                 variant='body2'
                 sx={{ fontWeight: 500 }}
               >
-                电子签名
+                {i18n.t('pages.form_settings.k6')}
               </Typography>
               <Typography
                 variant='caption'
                 color='text.secondary'
               >
-                启用手写签名功能
+                {i18n.t('pages.form_settings.k7')}
               </Typography>
             </Box>
             <Switch
@@ -124,15 +123,13 @@ export const FormSettings: React.FC<FormSettingsProps> = ({ settings, onChange, 
           </Box>
         </Stack>
       </Box>
-
       <Divider />
-
       <Box>
         <Typography
           variant='h6'
           sx={{ fontWeight: 600, mb: 2 }}
         >
-          附件设置
+          {i18n.t('pages.form_settings.k8')}
         </Typography>
         <Stack spacing={2}>
           <Box
@@ -149,7 +146,7 @@ export const FormSettings: React.FC<FormSettingsProps> = ({ settings, onChange, 
               variant='body2'
               sx={{ fontWeight: 500 }}
             >
-              允许上传附件
+              {i18n.t('pages.form_settings.k9')}
             </Typography>
             <Switch
               checked={settings.enableAttachment}
@@ -162,7 +159,7 @@ export const FormSettings: React.FC<FormSettingsProps> = ({ settings, onChange, 
           <TextField
             fullWidth
             type='number'
-            label='单文件最大大小（MB）'
+            label={i18n.t('workflow.form_settings.mb_0')}
             value={settings.maxAttachmentSize}
             onChange={(e) => {
               onChange({
@@ -177,7 +174,7 @@ export const FormSettings: React.FC<FormSettingsProps> = ({ settings, onChange, 
           <TextField
             fullWidth
             type='number'
-            label='最大附件数量'
+            label={i18n.t('workflow.form_settings.k1')}
             value={settings.maxAttachmentCount}
             onChange={(e) => {
               onChange({
@@ -191,15 +188,13 @@ export const FormSettings: React.FC<FormSettingsProps> = ({ settings, onChange, 
           />
         </Stack>
       </Box>
-
       <Divider />
-
       <Box>
         <Typography
           variant='h6'
           sx={{ fontWeight: 600, mb: 2 }}
         >
-          数据校验
+          {i18n.t('pages.form_settings.k10')}
         </Typography>
         <Stack spacing={2}>
           <Box
@@ -217,13 +212,13 @@ export const FormSettings: React.FC<FormSettingsProps> = ({ settings, onChange, 
                 variant='body2'
                 sx={{ fontWeight: 500 }}
               >
-                表单版本管理
+                {i18n.t('pages.form_settings.k11')}
               </Typography>
               <Typography
                 variant='caption'
                 color='text.secondary'
               >
-                记录表单数据修改历史
+                {i18n.t('pages.form_settings.k12')}
               </Typography>
             </Box>
             <Switch
@@ -244,7 +239,7 @@ export const FormSettings: React.FC<FormSettingsProps> = ({ settings, onChange, 
               borderRadius: 1,
             }}
           >
-            <Typography variant='body2'>自动保存表单草稿</Typography>
+            <Typography variant='body2'>{i18n.t('workflow.form_settings.k2')}</Typography>
             <Switch
               checked={settings.autoSaveDraft}
               onChange={(e) => {

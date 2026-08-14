@@ -9,6 +9,7 @@ import React from 'react';
 import { Box, Chip, Typography } from '@mui/material';
 import { Database } from 'lucide-react';
 import type { EntitySchema, SchemaField } from '@/schema';
+import i18n from '@/i18n';
 
 export const CONNECTION_TYPE_CONFIG: Record<
   string,
@@ -25,16 +26,16 @@ export const CONNECTION_STATUS_CONFIG: Record<
   string,
   { label: string; color: 'success' | 'warning' | 'error' | 'default' }
 > = {
-  active: { label: '活跃', color: 'success' },
-  inactive: { label: '停用', color: 'default' },
-  error: { label: '异常', color: 'error' },
-  pending: { label: '待配置', color: 'warning' },
+  active: { label: i18n.t('shared.connection.k0'), color: 'success' },
+  inactive: { label: i18n.t('shared.connection.k1'), color: 'default' },
+  error: { label: i18n.t('shared.connection.k2'), color: 'error' },
+  pending: { label: i18n.t('shared.connection.k3'), color: 'warning' },
 };
 
 const connectionFields: SchemaField[] = [
   {
     name: 'name',
-    label: '连接名称',
+    label: i18n.t('shared.connection.k4'),
     type: 'text',
     required: true,
     sortable: true,
@@ -76,13 +77,13 @@ const connectionFields: SchemaField[] = [
   },
   {
     name: 'description',
-    label: '描述',
+    label: i18n.t('shared.connection.k5'),
     type: 'textarea',
     showInList: false,
   },
   {
     name: 'type',
-    label: '系统类型',
+    label: i18n.t('shared.connection.k6'),
     type: 'select',
     required: true,
     listWidth: 110,
@@ -110,7 +111,7 @@ const connectionFields: SchemaField[] = [
   },
   {
     name: 'status',
-    label: '状态',
+    label: i18n.t('shared.connection.k7'),
     type: 'select',
     listWidth: 100,
     options: {
@@ -136,7 +137,7 @@ const connectionFields: SchemaField[] = [
   },
   {
     name: 'sync_frequency',
-    label: '同步频率',
+    label: i18n.t('shared.connection.k8'),
     type: 'text',
     listWidth: 120,
     renderCell: (row: Record<string, unknown>) => (
@@ -150,7 +151,7 @@ const connectionFields: SchemaField[] = [
   },
   {
     name: 'last_sync_at',
-    label: '最后同步',
+    label: i18n.t('shared.connection.k9'),
     type: 'datetime',
     listWidth: 160,
     renderCell: (row: Record<string, unknown>) => (
@@ -164,21 +165,21 @@ const connectionFields: SchemaField[] = [
   },
   {
     name: 'success_count',
-    label: '成功次数',
+    label: i18n.t('shared.connection.k10'),
     type: 'number',
     align: 'right',
     showInList: false,
   },
   {
     name: 'error_count',
-    label: '失败次数',
+    label: i18n.t('shared.connection.k11'),
     type: 'number',
     align: 'right',
     showInList: false,
   },
   {
     name: 'stats',
-    label: '同步统计',
+    label: i18n.t('shared.connection.k12'),
     type: 'text',
     listWidth: 180,
     hideInForm: true,
@@ -187,14 +188,14 @@ const connectionFields: SchemaField[] = [
         <Chip
           size='small'
           color='success'
-          label={`成功 ${row.success_count ?? 0}`}
+          label={`${i18n.t('shared.connection.k13')}${row.success_count ?? 0}`}
           sx={{ height: 22 }}
         />
         {(row.error_count as number) > 0 && (
           <Chip
             size='small'
             color='error'
-            label={`失败 ${row.error_count}`}
+            label={`${i18n.t('shared.connection.k14')}${row.error_count}`}
             sx={{ height: 22 }}
           />
         )}
@@ -205,8 +206,8 @@ const connectionFields: SchemaField[] = [
 
 export const integrationConnectionSchema: EntitySchema = {
   entity: 'integration_connection',
-  title: '连接管理',
-  description: '管理 ERP/CRM/SCM/WMS/MES 等外部系统连接',
+  title: i18n.t('shared.connection.k15'),
+  description: i18n.t('shared.connection.k16'),
 
   api: {
     module: 'integration',
@@ -221,10 +222,10 @@ export const integrationConnectionSchema: EntitySchema = {
     filters: [
       {
         id: 'type',
-        label: '系统类型',
+        label: i18n.t('shared.connection.k17'),
         type: 'select',
         options: [
-          { label: '全部类型', value: 'all' },
+          { label: i18n.t('shared.connection.k18'), value: 'all' },
           ...Object.entries(CONNECTION_TYPE_CONFIG).map(([value, cfg]) => ({
             label: cfg.label,
             value,
@@ -233,10 +234,10 @@ export const integrationConnectionSchema: EntitySchema = {
       },
       {
         id: 'status',
-        label: '状态',
+        label: i18n.t('shared.connection.k19'),
         type: 'select',
         options: [
-          { label: '全部状态', value: 'all' },
+          { label: i18n.t('shared.connection.k20'), value: 'all' },
           ...Object.entries(CONNECTION_STATUS_CONFIG).map(([value, cfg]) => ({
             label: cfg.label,
             value,
@@ -250,21 +251,21 @@ export const integrationConnectionSchema: EntitySchema = {
 
   formSections: [
     {
-      title: '基本信息',
+      title: i18n.t('shared.connection.k21'),
       fields: ['name', 'description', 'type', 'status'],
     },
     {
-      title: '同步配置',
+      title: i18n.t('shared.connection.k22'),
       fields: ['sync_frequency'],
     },
     {
-      title: '同步统计',
+      title: i18n.t('shared.connection.k23'),
       fields: ['success_count', 'error_count', 'last_sync_at'],
     },
   ],
 
   formColCount: 2,
-  createTitle: '新建连接',
-  editTitle: '编辑连接',
-  detailTitle: '连接详情',
+  createTitle: i18n.t('shared.connection.k24'),
+  editTitle: i18n.t('shared.connection.k25'),
+  detailTitle: i18n.t('shared.connection.k26'),
 };

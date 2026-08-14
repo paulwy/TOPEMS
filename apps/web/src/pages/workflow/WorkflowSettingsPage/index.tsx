@@ -15,17 +15,14 @@
  * @module pages/workflow
  * @path /workflow/settings
  */
-
 import { Box, Typography, Button, Paper } from '@mui/material';
 import React, { useState, useCallback, useMemo } from 'react';
 import { Settings, Save, RotateCcw } from 'lucide-react';
-
 import { useNotificationStore } from '../../../store';
 import { PageContainer } from '@/components/common';
 import { ConfirmDialog } from '@topems/shared-components';
 import { useConfirmDialog } from '@/hooks';
 import { WORKFLOW_PATHS } from '@/modules/workflow/config';
-
 import { SETTING_GROUPS } from './constants';
 import type {
   GeneralSettings as GeneralSettingsType,
@@ -35,6 +32,7 @@ import type {
   PermissionSettings as PermissionSettingsType,
   IntegrationSettings as IntegrationSettingsType,
 } from './types';
+import i18n from '@/i18n';
 import { SettingSidebar } from './components/SettingSidebar';
 import { GeneralSettings } from './components/GeneralSettings';
 import { ApprovalSettings } from './components/ApprovalSettings';
@@ -42,12 +40,9 @@ import { NotificationSettings } from './components/NotificationSettings';
 import { FormSettings } from './components/FormSettings';
 import { PermissionSettings } from './components/PermissionSettings';
 import { IntegrationSettings } from './components/IntegrationSettings';
-
 export const WorkflowSettingsPage: React.FC = () => {
   const addNotification = useNotificationStore((state) => state.addNotification);
-
   const [activeGroup, setActiveGroup] = useState('general');
-
   const [generalSettings, setGeneralSettings] = useState<GeneralSettingsType>({
     workflowPrefix: 'WF',
     numberingRule: 'YYYYMMDD-SEQ',
@@ -58,7 +53,6 @@ export const WorkflowSettingsPage: React.FC = () => {
     maxInstancePerDay: 1000,
     enableVersionControl: true,
   });
-
   const [approvalSettings, setApprovalSettings] = useState<ApprovalSettingsType>({
     defaultApprovalStrategy: 'sequential',
     enableAutoApprove: false,
@@ -71,7 +65,6 @@ export const WorkflowSettingsPage: React.FC = () => {
     enableDelegate: true,
     delegateRequiresApproval: false,
   });
-
   const [notificationSettings, setNotificationSettings] = useState<NotificationSettingsType>({
     emailEnabled: true,
     smsEnabled: false,
@@ -83,7 +76,6 @@ export const WorkflowSettingsPage: React.FC = () => {
     rejectNotify: true,
     defaultTemplate: 'default',
   });
-
   const [formSettings, setFormSettings] = useState<FormSettingsType>({
     enableFieldValidation: true,
     enableRichText: true,
@@ -94,7 +86,6 @@ export const WorkflowSettingsPage: React.FC = () => {
     enableFormVersion: true,
     autoSaveDraft: true,
   });
-
   const [permissionSettings, setPermissionSettings] = useState<PermissionSettingsType>({
     enableRoleBased: true,
     enableDeptBased: false,
@@ -104,7 +95,6 @@ export const WorkflowSettingsPage: React.FC = () => {
     allowExportData: true,
     workflowAdminRole: 'workflow_admin',
   });
-
   const [integrationSettings, setIntegrationSettings] = useState<IntegrationSettingsType>({
     enableCallback: true,
     callbackUrl: '',
@@ -116,9 +106,7 @@ export const WorkflowSettingsPage: React.FC = () => {
     enableApiAccess: true,
     apiRateLimit: 100,
   });
-
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
-
   // 确认对话框状态
   const {
     confirmOpen: confirmDialogOpen,
@@ -126,37 +114,32 @@ export const WorkflowSettingsPage: React.FC = () => {
     openConfirm: openConfirmDialog,
     closeConfirm: setConfirmDialogClosed,
   } = useConfirmDialog();
-
   const markUnsaved = useCallback(() => {
     setHasUnsavedChanges(true);
   }, []);
-
   const confirmSave = useCallback(() => {
     addNotification({
-      title: '保存成功',
-      message: '工作流设置已保存',
+      title: i18n.t('workflow.index.k0'),
+      message: i18n.t('workflow.index.k1'),
       type: 'success',
     });
     setHasUnsavedChanges(false);
     setConfirmDialogClosed();
   }, [addNotification]);
-
   const handleSave = useCallback(() => {
     openConfirmDialog({
-      title: '保存设置',
-      message: '确定要保存当前的工作流设置吗？',
+      title: i18n.t('workflow.index.k2'),
+      message: i18n.t('workflow.index.k3'),
       onConfirm: confirmSave,
     });
   }, [confirmSave, openConfirmDialog]);
-
   const handleReset = useCallback(() => {
     addNotification({
-      title: '已重置',
-      message: '当前分组设置已恢复默认值',
+      title: i18n.t('workflow.index.k4'),
+      message: i18n.t('workflow.index.k5'),
       type: 'info',
     });
   }, [addNotification]);
-
   const renderContent = useMemo(() => {
     switch (activeGroup) {
       case 'general':
@@ -226,9 +209,7 @@ export const WorkflowSettingsPage: React.FC = () => {
     integrationSettings,
     markUnsaved,
   ]);
-
   const currentGroup = SETTING_GROUPS.find((g) => g.id === activeGroup);
-
   return (
     <PageContainer
       headerProps={{
@@ -251,7 +232,6 @@ export const WorkflowSettingsPage: React.FC = () => {
             activeGroup={activeGroup}
             onGroupChange={setActiveGroup}
           />
-
           <Box sx={{ p: 4 }}>
             <Box sx={{ mb: 3 }}>
               <Typography
@@ -267,9 +247,7 @@ export const WorkflowSettingsPage: React.FC = () => {
                 {currentGroup?.description}
               </Typography>
             </Box>
-
             {renderContent}
-
             <Box
               sx={{
                 mt: 4,
@@ -286,7 +264,7 @@ export const WorkflowSettingsPage: React.FC = () => {
                   variant='body2'
                   color='warning.main'
                 >
-                  有未保存的更改
+                  {i18n.t('pages.index.k0')}
                 </Typography>
               )}
               {!hasUnsavedChanges && <Box />}
@@ -296,7 +274,7 @@ export const WorkflowSettingsPage: React.FC = () => {
                   startIcon={<RotateCcw size={16} />}
                   onClick={handleReset}
                 >
-                  重置
+                  {i18n.t('pages.index.k1')}
                 </Button>
                 <Button
                   variant='contained'
@@ -304,14 +282,13 @@ export const WorkflowSettingsPage: React.FC = () => {
                   onClick={handleSave}
                   disabled={!hasUnsavedChanges}
                 >
-                  保存设置
+                  {i18n.t('pages.index.k2')}
                 </Button>
               </Box>
             </Box>
           </Box>
         </Box>
       </Paper>
-
       <ConfirmDialog
         isOpen={confirmDialogOpen}
         onClose={setConfirmDialogClosed}
@@ -326,5 +303,4 @@ export const WorkflowSettingsPage: React.FC = () => {
     </PageContainer>
   );
 };
-
 export default WorkflowSettingsPage;

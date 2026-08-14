@@ -45,6 +45,7 @@ import {
   Switch,
   FormControlLabel,
 } from '@mui/material';
+import i18n from '@/i18n';
 import { Plus, Pencil, Trash2, X } from 'lucide-react';
 
 import type { NestedTableConfig } from '@/schema/schemaExtensions';
@@ -75,7 +76,7 @@ function validateFieldValue(
   _allValues: Record<string, unknown>
 ): string {
   if (field.required && !value) {
-    return `${field.label}为必填项`;
+    return `${field.label}${i18n.t('components.sub_table_builder.k0')}`;
   }
 
   if (field.validation) {
@@ -83,23 +84,23 @@ function validateFieldValue(
     for (const rule of field.validation) {
       switch (rule.type) {
         case 'required':
-          if (!value) return rule.message || `${field.label}为必填项`;
+          if (!value) return rule.message || `${field.label}${i18n.t('components.sub_table_builder.k1')}`;
           break;
         case 'minLength':
           if (stringValue.length < Number(rule.value ?? 0))
-            return rule.message || `${field.label}长度不能少于${rule.value}个字符`;
+            return rule.message || `${field.label}${i18n.t('components.sub_table_builder.k2')}${rule.value}${i18n.t('components.sub_table_builder.k3')}`;
           break;
         case 'maxLength':
           if (stringValue.length > Number(rule.value ?? Infinity))
-            return rule.message || `${field.label}长度不能超过${rule.value}个字符`;
+            return rule.message || `${field.label}${i18n.t('components.sub_table_builder.k4')}${rule.value}${i18n.t('components.sub_table_builder.k5')}`;
           break;
         case 'min':
           if (Number(value) < Number(rule.value ?? -Infinity))
-            return rule.message || `${field.label}不能小于${rule.value}`;
+            return rule.message || `${field.label}${i18n.t('components.sub_table_builder.k6')}${rule.value}`;
           break;
         case 'max':
           if (Number(value) > Number(rule.value ?? Infinity))
-            return rule.message || `${field.label}不能大于${rule.value}`;
+            return rule.message || `${field.label}${i18n.t('components.sub_table_builder.k7')}${rule.value}`;
           break;
         case 'pattern':
           break;
@@ -321,7 +322,7 @@ const RowFormDialog: React.FC<RowFormDialogProps> = ({
         <IconButton
           size='small'
           onClick={onClose}
-          aria-label='关闭'
+          aria-label={i18n.t('templates.sub_table_builder.k0')}
         >
           <X size={18} />
         </IconButton>
@@ -350,7 +351,7 @@ const RowFormDialog: React.FC<RowFormDialogProps> = ({
           variant='outlined'
           size='small'
         >
-          {mode === 'view' ? '关闭' : '取消'}
+          {mode === 'view' ? i18n.t('templates.sub_table_builder.k2') : i18n.t('templates.sub_table_builder.k1')}
         </Button>
         {mode !== 'view' && (
           <Button
@@ -358,7 +359,7 @@ const RowFormDialog: React.FC<RowFormDialogProps> = ({
             variant='contained'
             size='small'
           >
-            确定
+            {i18n.t('components.sub_table_builder.k0')}
           </Button>
         )}
       </DialogActions>
@@ -440,7 +441,7 @@ export function SubTableBuilder<T extends Record<string, unknown> = Record<strin
       const row = value[i];
       for (const field of fields) {
         const error = validateFieldValue(field, row[field.name], row);
-        if (error) return `第 ${i + 1} 行: ${error}`;
+        if (error) return `${i18n.t('components.sub_table_builder.k8')}${i + 1}${i18n.t('components.sub_table_builder.k9')}${error}`;
       }
     }
     if (config.validate) {
@@ -451,9 +452,9 @@ export function SubTableBuilder<T extends Record<string, unknown> = Record<strin
 
   const dialogTitle = useMemo(() => {
     const prefix = config.title ? `${config.title} - ` : '';
-    if (isViewMode) return `${prefix}查看行`;
-    if (editingIndex !== null) return `${prefix}编辑行`;
-    return `${prefix}新增行`;
+    if (isViewMode) return `${prefix}${i18n.t('components.sub_table_builder.k10')}`;
+    if (editingIndex !== null) return `${prefix}${i18n.t('components.sub_table_builder.k11')}`;
+    return `${prefix}${i18n.t('components.sub_table_builder.k12')}`;
   }, [config.title, editingIndex, isViewMode]);
 
   const dialogInitialValues = useMemo(() => {
@@ -488,10 +489,10 @@ export function SubTableBuilder<T extends Record<string, unknown> = Record<strin
             variant='subtitle2'
             sx={{ fontWeight: 600, color: 'text.secondary' }}
           >
-            {config.title || '子表'}
+            {config.title || i18n.t('templates.sub_table_builder.k3')}
             <Chip
               size='small'
-              label={`${value.length} 行`}
+              label={`${value.length}${i18n.t('components.sub_table_builder.k13')}`}
               sx={{ ml: 1, height: 20, fontSize: '0.75rem' }}
             />
           </Typography>
@@ -503,7 +504,7 @@ export function SubTableBuilder<T extends Record<string, unknown> = Record<strin
               onClick={handleAdd}
               disabled={disabled || (config.maxRows ? value.length >= config.maxRows : false)}
             >
-              {config.addButtonText || '新增行'}
+              {config.addButtonText || i18n.t('templates.sub_table_builder.k4')}
             </Button>
           )}
         </Box>
@@ -539,7 +540,7 @@ export function SubTableBuilder<T extends Record<string, unknown> = Record<strin
             color: 'text.secondary',
           }}
         >
-          <Typography variant='body2'>暂无数据</Typography>
+          <Typography variant='body2'>{i18n.t('templates.sub_table_builder.k5')}</Typography>
           {!readOnly && allowAdd && (
             <Button
               size='small'
@@ -549,7 +550,7 @@ export function SubTableBuilder<T extends Record<string, unknown> = Record<strin
               sx={{ mt: 1 }}
               disabled={disabled}
             >
-              {config.addButtonText || '新增第一行'}
+              {config.addButtonText || i18n.t('templates.sub_table_builder.k6')}
             </Button>
           )}
         </Box>
@@ -579,7 +580,7 @@ export function SubTableBuilder<T extends Record<string, unknown> = Record<strin
                   sx={{ fontWeight: 600, bgcolor: 'grey.50', width: 80 }}
                   align='center'
                 >
-                  操作
+                  {i18n.t('components.sub_table_builder.k1')}
                 </TableCell>
               )}
             </TableRow>
@@ -633,25 +634,25 @@ export function SubTableBuilder<T extends Record<string, unknown> = Record<strin
                   <TableCell align='center'>
                     <Box sx={{ display: 'flex', gap: 0.5, justifyContent: 'center' }}>
                       {allowEdit && (
-                        <Tooltip title='编辑'>
+                        <Tooltip title={i18n.t('templates.sub_table_builder.k7')}>
                           <IconButton
                             size='small'
                             onClick={() => handleEdit(index)}
                             disabled={disabled}
-                            aria-label='编辑'
+                            aria-label={i18n.t('templates.sub_table_builder.k8')}
                           >
                             <Pencil size={14} />
                           </IconButton>
                         </Tooltip>
                       )}
                       {allowDelete && (
-                        <Tooltip title='删除'>
+                        <Tooltip title={i18n.t('templates.sub_table_builder.k9')}>
                           <IconButton
                             size='small'
                             onClick={() => handleDelete(index)}
                             disabled={disabled}
                             color='error'
-                            aria-label='删除'
+                            aria-label={i18n.t('templates.sub_table_builder.k10')}
                           >
                             <Trash2 size={14} />
                           </IconButton>

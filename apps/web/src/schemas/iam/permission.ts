@@ -2,25 +2,26 @@ import React from 'react';
 import { Chip, Box, Typography } from '@mui/material';
 import { Shield } from 'lucide-react';
 import type { EntitySchema } from '@/schema';
+import i18n from '@/i18n';
 
 const categoryLabels: Record<string, string> = {
-  doc: '文档',
+  doc: i18n.t('shared.permission.k0'),
   ai: 'AI',
-  workflow: '流程',
+  workflow: i18n.t('shared.permission.k1'),
   iam: 'IAM',
-  rs: '研发',
+  rs: i18n.t('shared.permission.k2'),
   lims: 'LIMS',
-  qms: '质量',
+  qms: i18n.t('shared.permission.k3'),
   ehs: 'EHS',
-  srm: '采购',
-  pdm: '产品',
+  srm: i18n.t('shared.permission.k4'),
+  pdm: i18n.t('shared.permission.k5'),
   gis: 'GIS',
-  im: '即时通讯',
-  mail: '邮件',
-  system: '系统',
+  im: i18n.t('shared.permission.k6'),
+  mail: i18n.t('shared.permission.k7'),
+  system: i18n.t('shared.permission.k8'),
   crm: 'CRM',
-  pm: '项目',
-  integration: '集成',
+  pm: i18n.t('shared.permission.k9'),
+  integration: i18n.t('shared.permission.k10'),
 };
 
 const categoryColorMap: Record<string, { bgcolor: string; color: string }> = {
@@ -64,8 +65,8 @@ function renderCategoryBadge(row: Record<string, unknown>): React.ReactNode {
 
 export const permissionSchema: EntitySchema = {
   entity: 'permission',
-  title: '权限管理',
-  description: '查看和管理系统权限配置',
+  title: i18n.t('shared.permission.k11'),
+  description: i18n.t('shared.permission.k12'),
 
   api: {
     module: 'iam',
@@ -75,7 +76,7 @@ export const permissionSchema: EntitySchema = {
   fields: [
     {
       name: 'name',
-      label: '权限名称',
+      label: i18n.t('shared.permission.k13'),
       type: 'text',
       required: true,
       sortable: true,
@@ -125,7 +126,7 @@ export const permissionSchema: EntitySchema = {
     },
     {
       name: 'code',
-      label: '权限码',
+      label: i18n.t('shared.permission.k14'),
       type: 'text',
       required: true,
       sortable: true,
@@ -142,7 +143,7 @@ export const permissionSchema: EntitySchema = {
     },
     {
       name: 'category',
-      label: '分类',
+      label: i18n.t('shared.permission.k15'),
       type: 'select',
       required: true,
       sortable: true,
@@ -157,19 +158,19 @@ export const permissionSchema: EntitySchema = {
     },
     {
       name: 'description',
-      label: '描述',
+      label: i18n.t('shared.permission.k16'),
       type: 'textarea',
       listWidth: 200,
     },
     {
       name: 'resource',
-      label: '资源',
+      label: i18n.t('shared.permission.k17'),
       type: 'text',
       showInList: false,
     },
     {
       name: 'action',
-      label: '操作',
+      label: i18n.t('shared.permission.k18'),
       type: 'text',
       showInList: false,
     },
@@ -182,9 +183,9 @@ export const permissionSchema: EntitySchema = {
     filters: [
       {
         id: 'category',
-        label: '分类',
+        label: i18n.t('shared.permission.k19'),
         type: 'select',
-        options: [{ label: '全部分类', value: 'all' }, ...categoryOptions],
+        options: [{ label: i18n.t('shared.permission.k20'), value: 'all' }, ...categoryOptions],
       },
     ],
   },
@@ -193,13 +194,13 @@ export const permissionSchema: EntitySchema = {
 
   formSections: [
     {
-      title: '基本信息',
+      title: i18n.t('shared.permission.k21'),
       fields: ['name', 'code', 'category', 'description'],
     },
   ],
 
   formColCount: 2,
-  createTitle: '创建权限',
-  editTitle: '编辑权限',
-  detailTitle: '权限详情',
+  createTitle: i18n.t('shared.permission.k22'),
+  editTitle: i18n.t('shared.permission.k23'),
+  detailTitle: i18n.t('shared.permission.k24'),
 };

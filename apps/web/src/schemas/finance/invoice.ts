@@ -1,5 +1,6 @@
 import React from 'react';
 import type { EntitySchema } from '@/schema';
+import i18n from '@/i18n';
 
 const formatMoney = (amount: number | undefined, color?: string) => {
   const style: React.CSSProperties = { fontWeight: 'medium' };
@@ -13,7 +14,7 @@ const formatMoney = (amount: number | undefined, color?: string) => {
 
 export const invoiceSchema: EntitySchema = {
   entity: 'financeInvoice',
-  title: '发票管理',
+  title: i18n.t('finance.invoice.k0'),
 
   api: {
     module: 'finance',
@@ -23,7 +24,7 @@ export const invoiceSchema: EntitySchema = {
   fields: [
     {
       name: 'invoice_no',
-      label: '发票号',
+      label: i18n.t('finance.invoice.k1'),
       type: 'text',
       required: true,
       readonlyOnEdit: true,
@@ -31,35 +32,35 @@ export const invoiceSchema: EntitySchema = {
     },
     {
       name: 'invoice_type',
-      label: '发票类型',
+      label: i18n.t('finance.invoice.k2'),
       type: 'select',
       defaultValue: 'electronic',
       options: {
         type: 'static',
         options: [
-          { value: 'special', label: '增值税专用发票' },
-          { value: 'normal', label: '增值税普通发票' },
-          { value: 'electronic', label: '电子发票' },
+          { value: 'special', label: i18n.t('finance.invoice.k3') },
+          { value: 'normal', label: i18n.t('finance.invoice.k4') },
+          { value: 'electronic', label: i18n.t('finance.invoice.k5') },
         ],
       },
       listWidth: 120,
     },
     {
       name: 'title',
-      label: '抬头',
+      label: i18n.t('finance.invoice.k6'),
       type: 'text',
       required: true,
       listWidth: 150,
     },
     {
       name: 'tax_no',
-      label: '税号',
+      label: i18n.t('finance.invoice.k7'),
       type: 'text',
       listWidth: 140,
     },
     {
       name: 'amount',
-      label: '金额',
+      label: i18n.t('finance.invoice.k8'),
       type: 'number',
       required: true,
       defaultValue: 0,
@@ -75,7 +76,7 @@ export const invoiceSchema: EntitySchema = {
     },
     {
       name: 'tax_rate',
-      label: '税率',
+      label: i18n.t('finance.invoice.k9'),
       type: 'select',
       defaultValue: '13',
       options: {
@@ -92,29 +93,29 @@ export const invoiceSchema: EntitySchema = {
     },
     {
       name: 'invoice_date',
-      label: '开票日期',
+      label: i18n.t('finance.invoice.k10'),
       type: 'date',
       listWidth: 120,
     },
     {
       name: 'status',
-      label: '状态',
+      label: i18n.t('finance.invoice.k11'),
       type: 'select',
       defaultValue: 'draft',
       options: {
         type: 'static',
         options: [
-          { value: 'draft', label: '草稿' },
-          { value: 'issued', label: '已开具' },
-          { value: 'cancelled', label: '已作废' },
-          { value: 'red', label: '已红冲' },
+          { value: 'draft', label: i18n.t('finance.invoice.k12') },
+          { value: 'issued', label: i18n.t('finance.invoice.k13') },
+          { value: 'cancelled', label: i18n.t('finance.invoice.k14') },
+          { value: 'red', label: i18n.t('finance.invoice.k15') },
         ],
       },
       listWidth: 100,
     },
     {
       name: 'description',
-      label: '描述',
+      label: i18n.t('finance.invoice.k16'),
       type: 'textarea',
       listWidth: 150,
       showInList: false,
@@ -134,34 +135,34 @@ export const invoiceSchema: EntitySchema = {
         red: 'warning',
       },
       labelMap: {
-        draft: '草稿',
-        issued: '已开具',
-        cancelled: '已作废',
-        red: '已红冲',
+        draft: i18n.t('finance.invoice.k17'),
+        issued: i18n.t('finance.invoice.k18'),
+        cancelled: i18n.t('finance.invoice.k19'),
+        red: i18n.t('finance.invoice.k20'),
       },
     },
     filters: [
       {
         id: 'invoice_type',
-        label: '发票类型',
+        label: i18n.t('finance.invoice.k21'),
         type: 'select',
         options: [
-          { label: '全部类型', value: 'all' },
-          { label: '增值税专用发票', value: 'special' },
-          { label: '增值税普通发票', value: 'normal' },
-          { label: '电子发票', value: 'electronic' },
+          { label: i18n.t('finance.invoice.k22'), value: 'all' },
+          { label: i18n.t('finance.invoice.k23'), value: 'special' },
+          { label: i18n.t('finance.invoice.k24'), value: 'normal' },
+          { label: i18n.t('finance.invoice.k25'), value: 'electronic' },
         ],
       },
       {
         id: 'status',
-        label: '状态',
+        label: i18n.t('finance.invoice.k26'),
         type: 'select',
         options: [
-          { label: '全部状态', value: 'all' },
-          { label: '草稿', value: 'draft' },
-          { label: '已开具', value: 'issued' },
-          { label: '已作废', value: 'cancelled' },
-          { label: '已红冲', value: 'red' },
+          { label: i18n.t('finance.invoice.k27'), value: 'all' },
+          { label: i18n.t('finance.invoice.k28'), value: 'draft' },
+          { label: i18n.t('finance.invoice.k29'), value: 'issued' },
+          { label: i18n.t('finance.invoice.k30'), value: 'cancelled' },
+          { label: i18n.t('finance.invoice.k31'), value: 'red' },
         ],
       },
     ],
@@ -171,21 +172,21 @@ export const invoiceSchema: EntitySchema = {
 
   formSections: [
     {
-      title: '基本信息',
+      title: i18n.t('finance.invoice.k32'),
       fields: ['invoice_no', 'invoice_type', 'title', 'tax_no'],
     },
     {
-      title: '金额与日期',
+      title: i18n.t('finance.invoice.k33'),
       fields: ['amount', 'tax_rate', 'invoice_date'],
     },
     {
-      title: '状态与备注',
+      title: i18n.t('finance.invoice.k34'),
       fields: ['status', 'description'],
     },
   ],
 
   formColCount: 2,
-  createTitle: '新增发票',
-  editTitle: '编辑发票',
-  detailTitle: '发票详情',
+  createTitle: i18n.t('finance.invoice.k35'),
+  editTitle: i18n.t('finance.invoice.k36'),
+  detailTitle: i18n.t('finance.invoice.k37'),
 };

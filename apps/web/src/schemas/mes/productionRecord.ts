@@ -2,11 +2,12 @@ import React from 'react';
 import { Chip, Stack, Box } from '@mui/material';
 import { User, Package } from 'lucide-react';
 import type { EntitySchema } from '@/schema';
+import i18n from '@/i18n';
 
 export const productionRecordSchema: EntitySchema = {
   entity: 'mes_production_record',
-  title: '生产记录',
-  description: '管理生产记录，包括订单、工序、工位、操作员、完成数量、不良数量等',
+  title: i18n.t('mes.production_record.k0'),
+  description: i18n.t('mes.production_record.k1'),
 
   api: {
     module: 'mes',
@@ -16,7 +17,7 @@ export const productionRecordSchema: EntitySchema = {
   fields: [
     {
       name: 'order_id',
-      label: '订单ID',
+      label: i18n.t('mes.production_record.id_2'),
       type: 'text',
       required: true,
       readonlyOnEdit: true,
@@ -27,19 +28,19 @@ export const productionRecordSchema: EntitySchema = {
     },
     {
       name: 'process_id',
-      label: '工序',
+      label: i18n.t('mes.production_record.k3'),
       type: 'text',
       listWidth: 120,
     },
     {
       name: 'work_station_id',
-      label: '工作站',
+      label: i18n.t('mes.production_record.k4'),
       type: 'text',
       listWidth: 120,
     },
     {
       name: 'operator',
-      label: '操作员',
+      label: i18n.t('mes.production_record.k5'),
       type: 'text',
       required: true,
       readonlyOnEdit: true,
@@ -54,7 +55,7 @@ export const productionRecordSchema: EntitySchema = {
     },
     {
       name: 'quantity_completed',
-      label: '完成数量',
+      label: i18n.t('mes.production_record.k6'),
       type: 'number',
       required: true,
       sortable: true,
@@ -69,13 +70,13 @@ export const productionRecordSchema: EntitySchema = {
     },
     {
       name: 'quantity_rejected',
-      label: '不良数量',
+      label: i18n.t('mes.production_record.k7'),
       type: 'number',
       listWidth: 100,
     },
     {
       name: 'start_time',
-      label: '开始时间',
+      label: i18n.t('mes.production_record.k8'),
       type: 'datetime',
       required: true,
       readonlyOnEdit: true,
@@ -85,32 +86,32 @@ export const productionRecordSchema: EntitySchema = {
     },
     {
       name: 'end_time',
-      label: '结束时间',
+      label: i18n.t('mes.production_record.k9'),
       type: 'datetime',
       listWidth: 160,
       showInList: false,
     },
     {
       name: 'status',
-      label: '状态',
+      label: i18n.t('mes.production_record.k10'),
       type: 'select',
       defaultValue: 'pending',
       options: {
         type: 'static',
         options: [
-          { value: 'pending', label: '待处理' },
-          { value: 'in_progress', label: '进行中' },
-          { value: 'completed', label: '已完成' },
-          { value: 'cancelled', label: '已取消' },
+          { value: 'pending', label: i18n.t('mes.production_record.k11') },
+          { value: 'in_progress', label: i18n.t('mes.production_record.k12') },
+          { value: 'completed', label: i18n.t('mes.production_record.k13') },
+          { value: 'cancelled', label: i18n.t('mes.production_record.k14') },
         ],
       },
       listWidth: 100,
       renderCell: (row: Record<string, unknown>) => {
         const statusMap: Record<string, { label: string; bg: string; color: string }> = {
-          pending: { label: '待处理', bg: 'warning.light', color: 'warning.700' },
-          in_progress: { label: '进行中', bg: 'primary.100', color: 'primary.dark' },
-          completed: { label: '已完成', bg: 'success.lighter', color: 'success.700' },
-          cancelled: { label: '已取消', bg: 'error.lighter', color: 'error.dark' },
+          pending: { label: i18n.t('mes.production_record.k15'), bg: 'warning.light', color: 'warning.700' },
+          in_progress: { label: i18n.t('mes.production_record.k16'), bg: 'primary.100', color: 'primary.dark' },
+          completed: { label: i18n.t('mes.production_record.k17'), bg: 'success.lighter', color: 'success.700' },
+          cancelled: { label: i18n.t('mes.production_record.k18'), bg: 'error.lighter', color: 'error.dark' },
         };
         const s = statusMap[(row.status as string) || 'pending'] || {
           label: row.status,
@@ -127,13 +128,13 @@ export const productionRecordSchema: EntitySchema = {
     },
     {
       name: 'notes',
-      label: '备注',
+      label: i18n.t('mes.production_record.k19'),
       type: 'textarea',
       showInList: false,
     },
     {
       name: 'created_at',
-      label: '创建时间',
+      label: i18n.t('mes.production_record.k20'),
       type: 'datetime',
       readonly: true,
       showInList: false,
@@ -156,14 +157,14 @@ export const productionRecordSchema: EntitySchema = {
     filters: [
       {
         id: 'status',
-        label: '状态',
+        label: i18n.t('mes.production_record.k21'),
         type: 'select',
         options: [
-          { label: '全部状态', value: '' },
-          { label: '待处理', value: 'pending' },
-          { label: '进行中', value: 'in_progress' },
-          { label: '已完成', value: 'completed' },
-          { label: '已取消', value: 'cancelled' },
+          { label: i18n.t('mes.production_record.k22'), value: '' },
+          { label: i18n.t('mes.production_record.k23'), value: 'pending' },
+          { label: i18n.t('mes.production_record.k24'), value: 'in_progress' },
+          { label: i18n.t('mes.production_record.k25'), value: 'completed' },
+          { label: i18n.t('mes.production_record.k26'), value: 'cancelled' },
         ],
       },
     ],
@@ -173,25 +174,25 @@ export const productionRecordSchema: EntitySchema = {
 
   formSections: [
     {
-      title: '基本信息',
+      title: i18n.t('mes.production_record.k27'),
       fields: ['order_id', 'process_id', 'work_station_id', 'operator'],
     },
     {
-      title: '数量信息',
+      title: i18n.t('mes.production_record.k28'),
       fields: ['quantity_completed', 'quantity_rejected'],
     },
     {
-      title: '时间信息',
+      title: i18n.t('mes.production_record.k29'),
       fields: ['start_time', 'end_time'],
     },
     {
-      title: '状态与备注',
+      title: i18n.t('mes.production_record.k30'),
       fields: ['status', 'notes'],
     },
   ],
 
   formColCount: 2,
-  createTitle: '新增生产记录',
-  editTitle: '编辑生产记录',
-  detailTitle: '生产记录详情',
+  createTitle: i18n.t('mes.production_record.k31'),
+  editTitle: i18n.t('mes.production_record.k32'),
+  detailTitle: i18n.t('mes.production_record.k33'),
 };

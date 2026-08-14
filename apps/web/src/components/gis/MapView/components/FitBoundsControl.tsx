@@ -2,6 +2,7 @@ import React, { useCallback } from 'react';
 import { IconButton } from '@mui/material';
 import { Maximize2 } from 'lucide-react';
 import { designTokens, semanticTokens } from '@topems/tokens';
+import i18n from '@/i18n';
 
 const FitBoundsControl: React.FC<{
   bounds: [number, number][] | undefined;
@@ -17,8 +18,8 @@ const FitBoundsControl: React.FC<{
   return (
     <IconButton
       onClick={fitBounds}
-      aria-label='缩放到所有标记'
-      title='缩放到所有标记'
+      aria-label={i18n.t('gis.fit_bounds_control.k0')}
+      title={i18n.t('gis.fit_bounds_control.k1')}
       sx={{
         padding: 1,
         backgroundColor: 'common.white',

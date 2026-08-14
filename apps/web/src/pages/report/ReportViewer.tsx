@@ -13,6 +13,7 @@ import {
   Table,
   Eye,
 } from 'lucide-react';
+import i18n from '@/i18n';
 import {
   Box,
   Typography,
@@ -95,7 +96,7 @@ const ReportViewer: React.FC<ReportViewerProps> = ({ report, onClose }) => {
 
   const formatValue = (value: unknown): string => {
     if (value === null || value === undefined) return '-';
-    if (typeof value === 'boolean') return value ? '是' : '否';
+    if (typeof value === 'boolean') return value ? i18n.t('pages.report_viewer.k1') : i18n.t('pages.report_viewer.k0');
     if (typeof value === 'number') {
       return value.toLocaleString('zh-CN');
     }
@@ -208,18 +209,18 @@ const ReportViewer: React.FC<ReportViewerProps> = ({ report, onClose }) => {
             >
               <Box sx={{ display: 'flex', alignItems: 'center' }}>
                 <Hash sx={{ width: 16, height: 16, mr: 0.5 }} />
-                报表ID: {report.id}
+                [i18n.t('pages.report_viewer.id_0')]: {report.id}
               </Box>
               <Box sx={{ display: 'flex', alignItems: 'center' }}>
                 <Calendar sx={{ width: 16, height: 16, mr: 0.5 }} />
-                创建时间: {new Date(report.created_at).toLocaleDateString('zh-CN')}
+                [i18n.t('pages.report_viewer.k1')]: {new Date(report.created_at).toLocaleDateString('zh-CN')}
               </Box>
               <Box sx={{ display: 'flex', alignItems: 'center' }}>
                 <Table sx={{ width: 16, height: 16, mr: 0.5 }} />共 {report.row_count} 条记录
               </Box>
               <Box sx={{ display: 'flex', alignItems: 'center' }}>
                 <User sx={{ width: 16, height: 16, mr: 0.5 }} />
-                类型: {report.config.report_type}
+                [i18n.t('pages.report_viewer.k2')]: {report.config.report_type}
               </Box>
             </Box>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
@@ -231,7 +232,7 @@ const ReportViewer: React.FC<ReportViewerProps> = ({ report, onClose }) => {
                 startIcon={<Download sx={{ width: 16, height: 16 }} />}
                 sx={{ borderRadius: 3, textTransform: 'none' }}
               >
-                导出CSV
+                {i18n.t('pages.report_viewer.csv_3')}
               </Button>
               <Button
                 onClick={handleExportJSON}
@@ -241,7 +242,7 @@ const ReportViewer: React.FC<ReportViewerProps> = ({ report, onClose }) => {
                 startIcon={<Download sx={{ width: 16, height: 16 }} />}
                 sx={{ borderRadius: 3, textTransform: 'none' }}
               >
-                导出JSON
+                {i18n.t('pages.report_viewer.json_4')}
               </Button>
               <Button
                 onClick={handlePrint}
@@ -251,7 +252,7 @@ const ReportViewer: React.FC<ReportViewerProps> = ({ report, onClose }) => {
                 startIcon={<Printer sx={{ width: 16, height: 16 }} />}
                 sx={{ borderRadius: 3, textTransform: 'none' }}
               >
-                打印
+                {i18n.t('pages.report_viewer.k5')}
               </Button>
             </Box>
           </Box>
@@ -280,7 +281,7 @@ const ReportViewer: React.FC<ReportViewerProps> = ({ report, onClose }) => {
                   setSearchTerm(e.target.value);
                   setCurrentPage(1);
                 }}
-                placeholder='搜索报表数据...'
+                placeholder={i18n.t('pages.report_viewer.k6')}
                 sx={{ pl: 5, '& .MuiOutlinedInput-root': { borderRadius: 3 } }}
               />
             </Box>
@@ -291,7 +292,7 @@ const ReportViewer: React.FC<ReportViewerProps> = ({ report, onClose }) => {
               startIcon={<Eye sx={{ width: 16, height: 16 }} />}
               sx={{ borderRadius: 3, textTransform: 'none' }}
             >
-              {showAllColumns ? '收起列' : '显示全部列'}
+              {showAllColumns ? i18n.t('pages.report_viewer.k3') : i18n.t('pages.report_viewer.k2')}
             </Button>
             <Typography sx={{ fontSize: 14, color: 'grey.500' }}>
               {filteredData.length} 条匹配
@@ -312,7 +313,7 @@ const ReportViewer: React.FC<ReportViewerProps> = ({ report, onClose }) => {
                   mb: 2,
                 }}
               />
-              <Typography sx={{ color: 'grey.500' }}>暂无数据</Typography>
+              <Typography sx={{ color: 'grey.500' }}>{i18n.t('pages.report_viewer.k4')}</Typography>
             </Box>
           ) : (
             <TableContainer
@@ -399,7 +400,7 @@ const ReportViewer: React.FC<ReportViewerProps> = ({ report, onClose }) => {
                     '&:hover': { bgcolor: 'grey.50' },
                     '&.Mui-disabled': { opacity: 0.5 },
                   }}
-                  aria-label='展开'
+                  aria-label={i18n.t('pages.report_viewer.k5')}
                 >
                   <ChevronLeft sx={{ width: 16, height: 16 }} />
                 </IconButton>
@@ -436,7 +437,7 @@ const ReportViewer: React.FC<ReportViewerProps> = ({ report, onClose }) => {
                     '&:hover': { bgcolor: 'grey.50' },
                     '&.Mui-disabled': { opacity: 0.5 },
                   }}
-                  aria-label='展开'
+                  aria-label={i18n.t('pages.report_viewer.k6')}
                 >
                   <ChevronRight sx={{ width: 16, height: 16 }} />
                 </IconButton>
@@ -465,7 +466,7 @@ const ReportViewer: React.FC<ReportViewerProps> = ({ report, onClose }) => {
               }}
             >
               <Calendar sx={{ width: 16, height: 16, mr: 1 }} />
-              时间范围: {report.config.date_range.start_date} 至 {report.config.date_range.end_date}
+              [i18n.t('pages.report_viewer.k7')]: {report.config.date_range.start_date} 至 {report.config.date_range.end_date}
             </Box>
           </Box>
         )}

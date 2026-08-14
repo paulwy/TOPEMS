@@ -20,6 +20,7 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import { designTokens } from '@topems/tokens';
+import i18n from '@/i18n';
 
 // ==================== 类型定义 ====================
 
@@ -239,8 +240,8 @@ export class VueAdapter implements FrameworkAdapter {
     const entries = Object.entries(props)
       .map(([k, v]) => `${k}: ${typeof v === 'object' ? JSON.stringify(v) : String(v)}`)
       .join('<br/>');
-    return `<div data-framework="vue" style="padding:12px;border:1px solid #42b883;border-radius:6px;">
-      <strong>[Vue 模拟组件]</strong><br/>${entries || '(无属性)'}
+    return `<div data-framework="vue" style="padding: designTokens.spacing.md;border:1px solid #42b883;border-radius:6px;">
+      <strong>[Vue {i18n.t('microfrontend.cross-framework.k0')}]</strong><br/>${entries || i18n.t('microfrontend.cross-framework.k0')}
     </div>`;
   }
 }
@@ -318,7 +319,7 @@ export class AngularAdapter implements FrameworkAdapter {
       .join('');
     return `<div data-framework="angular" style="padding:12px;border:1px solid ${designTokens.colors.error['600']};border-radius:6px;">
       <strong>[Angular 模拟组件]</strong>
-      <ul style="margin:8px 0 0;padding-left:20px;">${entries || '<li>(无属性)</li>'}</ul>
+      <ul style="margin: designTokens.spacing.sm 0 0;padding-left:20px;">${entries || i18n.t('microfrontend.cross-framework.lili_1')}</ul>
     </div>`;
   }
 }
@@ -398,7 +399,7 @@ export class SvelteAdapter implements FrameworkAdapter {
       )
       .join('');
     return `<div data-framework="svelte" style="padding:12px;border:1px solid ${designTokens.colors.error['600']};border-radius:6px;">
-      <strong>[Svelte 模拟组件]</strong><br/>${entries || '<span style="color:#999;">(无属性)</span>'}
+      <strong>[Svelte {i18n.t('microfrontend.cross-framework.k1')}]</strong><br/>${entries || i18n.t('microfrontend.cross-framework.k2')}
     </div>`;
   }
 }
@@ -439,7 +440,7 @@ export class CrossFrameworkBridge {
   createAdapter(framework: FrameworkType, component: unknown): FrameworkAdapter {
     const factory = this.adapterFactories.get(framework);
     if (!factory) {
-      throw new Error(`[CrossFrameworkBridge] 不支持的框架类型: ${framework}`);
+      throw new Error(`${i18n.t('microfrontend.cross-framework.k3')}${framework}`);
     }
     return factory(component);
   }
@@ -485,7 +486,7 @@ export class CrossFrameworkBridge {
     try {
       mounted.adapter.unmount(mounted.container);
     } catch (err) {
-      console.error(`[CrossFrameworkBridge] 卸载组件 ${id} 失败:`, err);
+      console.error(`${i18n.t('microfrontend.cross-framework.k4')}${id}${i18n.t('microfrontend.cross-framework.k5')}`, err);
     }
     this.mounted.delete(id);
     this.notifyListeners();

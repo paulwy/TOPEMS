@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react';
 import { X, Maximize2, Minimize2, ZoomIn, ZoomOut } from 'lucide-react';
 import { Typography, Box, Button, useTheme } from '@mui/material';
+import { designTokens } from '@topems/tokens';
+import i18n from '@/i18n';
 
 interface FullscreenChartProps {
   children: React.ReactNode;
@@ -54,14 +56,14 @@ export const FullscreenChart = ({ children, title, onClose }: FullscreenChartPro
             backgroundColor: 'common.white',
             borderRadius: 8,
             border: 'none',
-            boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+            boxShadow: designTokens.shadows.sm,
             opacity: '0',
             transition: 'opacity 0.2s',
             cursor: 'pointer',
           }}
           onMouseEnter={(e) => (e.currentTarget.style.opacity = '1')}
           onMouseLeave={(e) => (e.currentTarget.style.opacity = '0')}
-          title='全屏查看'
+          title={i18n.t('shared.fullscreen_chart.k0')}
         >
           <Maximize2 style={{ width: 16, height: 16, color: theme.palette.text.secondary }} />
         </button>
@@ -84,7 +86,7 @@ export const FullscreenChart = ({ children, title, onClose }: FullscreenChartPro
           alignItems: 'center',
           justifyContent: 'space-between',
           padding: 2,
-          borderBottom: '1px solid rgba(0,0,0,0.1)',
+          borderBottom: `1px solid ${designTokens.colors.action.selected}`,
         }}
       >
         <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
@@ -92,7 +94,7 @@ export const FullscreenChart = ({ children, title, onClose }: FullscreenChartPro
             variant='h5'
             sx={{ fontWeight: 'bold' }}
           >
-            {title || '图表详情'}
+            {title || i18n.t('shared.fullscreen_chart.k1')}
           </Typography>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
@@ -100,7 +102,7 @@ export const FullscreenChart = ({ children, title, onClose }: FullscreenChartPro
             variant='text'
             size='small'
             onClick={handleZoomOut}
-            title='缩小'
+            title={i18n.t('shared.fullscreen_chart.k2')}
           >
             <ZoomOut sx={{ width: 16, height: 16 }} />
           </Button>
@@ -108,7 +110,7 @@ export const FullscreenChart = ({ children, title, onClose }: FullscreenChartPro
             variant='text'
             size='small'
             onClick={handleResetZoom}
-            title='重置'
+            title={i18n.t('shared.fullscreen_chart.k3')}
           >
             <span
               style={{
@@ -125,7 +127,7 @@ export const FullscreenChart = ({ children, title, onClose }: FullscreenChartPro
             variant='text'
             size='small'
             onClick={handleZoomIn}
-            title='放大'
+            title={i18n.t('shared.fullscreen_chart.k4')}
           >
             <ZoomIn sx={{ width: 16, height: 16 }} />
           </Button>
@@ -133,7 +135,7 @@ export const FullscreenChart = ({ children, title, onClose }: FullscreenChartPro
             variant='text'
             size='small'
             onClick={() => setIsFullscreen(false)}
-            title='退出全屏'
+            title={i18n.t('shared.fullscreen_chart.k5')}
           >
             <Minimize2 sx={{ width: 16, height: 16 }} />
           </Button>
@@ -145,7 +147,7 @@ export const FullscreenChart = ({ children, title, onClose }: FullscreenChartPro
               onClose?.();
             }}
             sx={{ color: 'error.main' }}
-            title='关闭'
+            title={i18n.t('shared.fullscreen_chart.k6')}
           >
             <X sx={{ width: 16, height: 16 }} />
           </Button>

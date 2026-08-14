@@ -1,10 +1,11 @@
 import React from 'react';
+import i18n from '@/i18n';
 
 const FinanceInvoicePage: React.FC = () => {
   return React.createElement(
     'div',
     { className: 'page-placeholder' },
-    'FinanceInvoicePage 页面开发中'
+    i18n.t('finance.finance_invoice_page.k0')
   );
 };
 

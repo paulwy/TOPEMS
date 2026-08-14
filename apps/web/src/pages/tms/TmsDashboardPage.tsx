@@ -1,7 +1,6 @@
 import React, { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
-import { useTranslation } from 'react-i18next';
 import { Truck, Users, Package, CheckCircle, ArrowRight } from 'lucide-react';
 import { PageContainer } from '@/components/common';
 import {
@@ -10,105 +9,98 @@ import {
   type ChartCard,
   type QuickAction,
 } from '@/components/templates';
+import i18n from '@/i18n';
 import { TMS_PATHS } from '@/modules/tms/config';
-
 const TmsDashboardPage: React.FC = () => {
-  const { t: _t } = useTranslation();
   const navigate = useNavigate();
-
   const loadingQuery = useQuery<boolean>({
     queryKey: ['tms-dashboard'],
     queryFn: async () => true,
     staleTime: Infinity,
   });
   const loading = loadingQuery.isLoading;
-
   const getGreeting = (): string => {
     const hour = new Date().getHours();
-    if (hour < 12) return '上午好';
-    if (hour < 18) return '下午好';
-    return '晚上好';
+    if (hour < 12) return i18n.t('tms.tms_dashboard_page.k0');
+    if (hour < 18) return i18n.t('tms.tms_dashboard_page.k1');
+    return i18n.t('tms.tms_dashboard_page.k2');
   };
-
   const lineData = useMemo(
     () => [
-      { label: '周一', value: 42 },
-      { label: '周二', value: 55 },
-      { label: '周三', value: 38 },
-      { label: '周四', value: 60 },
-      { label: '周五', value: 48 },
-      { label: '周六', value: 25 },
-      { label: '周日', value: 18 },
+      { label: i18n.t('tms.tms_dashboard_page.k3'), value: 42 },
+      { label: i18n.t('tms.tms_dashboard_page.k4'), value: 55 },
+      { label: i18n.t('tms.tms_dashboard_page.k5'), value: 38 },
+      { label: i18n.t('tms.tms_dashboard_page.k6'), value: 60 },
+      { label: i18n.t('tms.tms_dashboard_page.k7'), value: 48 },
+      { label: i18n.t('tms.tms_dashboard_page.k8'), value: 25 },
+      { label: i18n.t('tms.tms_dashboard_page.k9'), value: 18 },
     ],
     []
   );
-
   const barData = useMemo(
     () => [
-      { label: '京A-12345', value: 85 },
-      { label: '京A-67890', value: 72 },
-      { label: '京B-11111', value: 91 },
-      { label: '京B-22222', value: 64 },
-      { label: '京C-33333', value: 78 },
-      { label: '京C-44444', value: 53 },
+      { label: i18n.t('tms.tms_dashboard_page.a12345_10'), value: 85 },
+      { label: i18n.t('tms.tms_dashboard_page.a67890_11'), value: 72 },
+      { label: i18n.t('tms.tms_dashboard_page.b11111_12'), value: 91 },
+      { label: i18n.t('tms.tms_dashboard_page.b22222_13'), value: 64 },
+      { label: i18n.t('tms.tms_dashboard_page.c33333_14'), value: 78 },
+      { label: i18n.t('tms.tms_dashboard_page.c44444_15'), value: 53 },
     ],
     []
   );
-
   const stats: StatCard[] = useMemo(
     () => [
       {
         id: 'vehicles',
-        title: '车辆数',
+        title: i18n.t('tms.tms_dashboard_page.k16'),
         value: '48',
         icon: <Truck size={24} />,
         change: 2,
-        changeLabel: '较上期',
+        changeLabel: i18n.t('tms.tms_dashboard_page.k17'),
         color: 'primary',
       },
       {
         id: 'drivers',
-        title: '司机数',
+        title: i18n.t('tms.tms_dashboard_page.k18'),
         value: '65',
         icon: <Users size={24} />,
         change: 5,
-        changeLabel: '较上期',
+        changeLabel: i18n.t('tms.tms_dashboard_page.k19'),
         color: 'success',
       },
       {
         id: 'in-transit',
-        title: '在途运单',
+        title: i18n.t('tms.tms_dashboard_page.k20'),
         value: '23',
         icon: <Package size={24} />,
         change: 8,
-        changeLabel: '较上期',
+        changeLabel: i18n.t('tms.tms_dashboard_page.k21'),
         color: 'info',
       },
       {
         id: 'monthly-completed',
-        title: '本月完成',
+        title: i18n.t('tms.tms_dashboard_page.k22'),
         value: '186',
         icon: <CheckCircle size={24} />,
         change: 12,
-        changeLabel: '较上期',
+        changeLabel: i18n.t('tms.tms_dashboard_page.k23'),
         color: 'warning',
       },
     ],
     []
   );
-
   const charts: ChartCard[] = useMemo(
     () => [
       {
         id: 'shipment-trend',
-        title: '运单趋势',
+        title: i18n.t('tms.tms_dashboard_page.k24'),
         type: 'line',
         data: lineData,
         height: 300,
       },
       {
         id: 'vehicle-utilization',
-        title: '车辆利用率',
+        title: i18n.t('tms.tms_dashboard_page.k25'),
         type: 'bar',
         data: barData,
         height: 300,
@@ -116,29 +108,27 @@ const TmsDashboardPage: React.FC = () => {
     ],
     [lineData, barData]
   );
-
   const quickActions: QuickAction[] = useMemo(
     () => [
       {
         id: 'shipments',
-        label: '运单管理',
+        label: i18n.t('tms.tms_dashboard_page.k26'),
         icon: <ArrowRight size={16} />,
         onClick: () => navigate(TMS_PATHS.shipments),
       },
       {
         id: 'vehicles',
-        label: '车辆档案',
+        label: i18n.t('tms.tms_dashboard_page.k27'),
         icon: <ArrowRight size={16} />,
         onClick: () => navigate(TMS_PATHS.vehicles),
       },
     ],
     [navigate]
   );
-
   return (
     <PageContainer
-      title='运输管理概览'
-      subtitle={`${getGreeting()}，欢迎使用运输管理系统`}
+      title={i18n.t('tms.tms_dashboard_page.k28')}
+      subtitle={`${getGreeting()}${i18n.t('pages.tms_dashboard_page.k0')}`}
       padding={false}
       maxWidth={false}
     >
@@ -146,17 +136,16 @@ const TmsDashboardPage: React.FC = () => {
         title=''
         subtitle=''
         breadcrumbs={[
-          { label: '首页', href: '/dashboard' },
-          { label: '运输管理' },
+          { label: i18n.t('tms.tms_dashboard_page.k29'), href: '/dashboard' },
+          { label: i18n.t('tms.tms_dashboard_page.k30') },
         ]}
         stats={stats}
         charts={charts}
         quickActions={quickActions}
-        quickActionsTitle='快捷操作'
+        quickActionsTitle={i18n.t('tms.tms_dashboard_page.k31')}
         loading={loading}
       />
     </PageContainer>
   );
 };
-
 export default TmsDashboardPage;

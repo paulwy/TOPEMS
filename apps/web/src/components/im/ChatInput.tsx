@@ -3,6 +3,7 @@ import React, { useState, useRef } from 'react';
 import { Send, Paperclip, Image, FileText } from 'lucide-react';
 import { logger } from '@/utils/logger';
 import { designTokens, semanticTokens } from '@topems/tokens';
+import i18n from '@/i18n';
 
 interface ChatInputProps {
   onSendMessage: (
@@ -20,7 +21,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
   onSendMessage,
   onUploadFile,
   disabled = false,
-  placeholder = '输入消息...',
+  placeholder = i18n.t('components.chat_input.k0'),
 }) => {
   const theme = useTheme();
   const [message, setMessage] = useState('');
@@ -121,7 +122,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
               >
                 <Image style={{ width: 16, height: 16, color: theme.palette.text.secondary }} />
                 <span style={{ fontSize: 14, color: 'var(--mui-palette-text-secondary)' }}>
-                  图片
+                  {i18n.t('components.chat_input.k0')}
                 </span>
                 <input
                   ref={imageInputRef}
@@ -143,7 +144,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
               >
                 <FileText style={{ width: 16, height: 16, color: theme.palette.text.secondary }} />
                 <span style={{ fontSize: 14, color: 'var(--mui-palette-text-secondary)' }}>
-                  文件
+                  {i18n.t('components.chat_input.k1')}
                 </span>
                 <input
                   ref={fileInputRef}
@@ -203,7 +204,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
               animation: 'spin 1s linear infinite',
             }}
           />
-          上传中...
+          {i18n.t('components.chat_input.k2')}
         </div>
       )}
     </div>

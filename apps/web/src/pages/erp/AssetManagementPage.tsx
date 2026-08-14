@@ -1,7 +1,6 @@
 /**
  * 资产管理页面 — Schema 驱动的 CRUD 页面
  */
-
 import React from 'react';
 import CrudPage, { type CrudApiAdapter } from '@/components/templates/CrudPage';
 import { assetSchema } from '@/schemas/erp/asset';
@@ -10,36 +9,33 @@ import { QUERY_KEYS } from '@/lib/reactQuery';
 import { useQuery } from '@tanstack/react-query';
 import { Box, Typography } from '@mui/material';
 import { Building2 } from 'lucide-react';
-
+import i18n from '@/i18n';
 const AssetStats: React.FC = () => {
   const { data } = useQuery({
     queryKey: [QUERY_KEYS.ERP.ASSETS, 'stats'],
     queryFn: async () => {
       const response = await assetApi.list({ page: 0, pagesize: 1000 });
-      if (!response.success) throw new Error('加载资产统计失败');
+      if (!response.success) throw new Error(i18n.t('erp.asset_management_page.k0'));
       return response.data;
     },
     staleTime: 5 * 60 * 1000,
   });
-
   const assets = data?.items || [];
   const total = assets.length;
   const totalValue = assets.reduce((sum, a) => sum + (a.purchase_amount || 0), 0);
   const active = assets.filter((a) => a.status === 'active').length;
   const retired = assets.filter((a) => ['retired', 'transferred'].includes(a.status)).length;
-
   const stats = [
-    { label: '资产总数', value: total, color: 'secondary[100]', textColor: 'secondary.700' },
+    { label: i18n.t('erp.asset_management_page.k1'), value: total, color: 'secondary[100]', textColor: 'secondary.700' },
     {
-      label: '资产总值',
+      label: i18n.t('erp.asset_management_page.k2'),
       value: `¥${totalValue.toFixed(2)}`,
       color: 'success.lighter',
       textColor: 'success.700',
     },
-    { label: '在用资产', value: active, color: 'warning.light', textColor: 'warning.700' },
-    { label: '报废/转移', value: retired, color: 'error.lighter', textColor: 'error.dark' },
+    { label: i18n.t('erp.asset_management_page.k3'), value: active, color: 'warning.light', textColor: 'warning.700' },
+    { label: i18n.t('erp.asset_management_page.k4'), value: retired, color: 'error.lighter', textColor: 'error.dark' },
   ];
-
   return (
     <Box
       sx={{
@@ -77,7 +73,6 @@ const AssetStats: React.FC = () => {
     </Box>
   );
 };
-
 const assetApiAdapter: CrudApiAdapter = {
   list: async (params) => {
     const response = await assetApi.list({
@@ -87,7 +82,7 @@ const assetApiAdapter: CrudApiAdapter = {
       status: params?.status as string | undefined,
     });
     if (!response.success) {
-      throw new Error('加载资产失败');
+      throw new Error(i18n.t('erp.asset_management_page.k5'));
     }
     const data = response.data;
     return {
@@ -95,44 +90,39 @@ const assetApiAdapter: CrudApiAdapter = {
       total: data?.total || 0,
     };
   },
-
   create: async (data) => {
     const response = await assetApi.create(data as Parameters<typeof assetApi.create>[0]);
     if (!response.success) {
-      throw new Error('创建资产失败');
+      throw new Error(i18n.t('erp.asset_management_page.k6'));
     }
     return response.data as unknown as Record<string, unknown>;
   },
-
   update: async (id, data) => {
     const response = await assetApi.update(id, data as Parameters<typeof assetApi.update>[1]);
     if (!response.success) {
-      throw new Error('更新资产失败');
+      throw new Error(i18n.t('erp.asset_management_page.k7'));
     }
     return response.data as unknown as Record<string, unknown>;
   },
-
   delete: async (id) => {
     const response = await assetApi.delete(id);
     if (!response.success) {
-      throw new Error('删除资产失败');
+      throw new Error(i18n.t('erp.asset_management_page.k8'));
     }
   },
 };
-
 const AssetManagementPage: React.FC = () => {
   return (
     <CrudPage
       schema={assetSchema}
       apiAdapter={assetApiAdapter}
       breadcrumbs={[
-        { label: '首页', href: '/dashboard' },
+        { label: i18n.t('erp.asset_management_page.k9'), href: '/dashboard' },
         { label: 'ERP', href: '/erp' },
-        { label: '资产管理' },
+        { label: i18n.t('erp.asset_management_page.k10') },
       ]}
       headerContent={<AssetStats />}
     />
   );
 };
-
 export default AssetManagementPage;

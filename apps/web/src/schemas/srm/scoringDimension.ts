@@ -1,9 +1,10 @@
 import type { EntitySchema } from '@/schema';
+import i18n from '@/i18n';
 
 export const scoringDimensionSchema: EntitySchema = {
   entity: 'scoring_dimension',
-  title: '评分维度配置',
-  description: '管理供应商评分维度，配置权重、评分范围和状态',
+  title: i18n.t('srm.scoring_dimension.k0'),
+  description: i18n.t('srm.scoring_dimension.k1'),
 
   api: {
     module: 'srm',
@@ -13,7 +14,7 @@ export const scoringDimensionSchema: EntitySchema = {
   fields: [
     {
       name: 'dimension_code',
-      label: '维度编码',
+      label: i18n.t('srm.scoring_dimension.k2'),
       type: 'text',
       required: true,
       readonlyOnEdit: true,
@@ -22,7 +23,7 @@ export const scoringDimensionSchema: EntitySchema = {
     },
     {
       name: 'name',
-      label: '维度名称',
+      label: i18n.t('srm.scoring_dimension.k3'),
       type: 'text',
       required: true,
       sortable: true,
@@ -30,7 +31,7 @@ export const scoringDimensionSchema: EntitySchema = {
     },
     {
       name: 'weight',
-      label: '权重 (%)',
+      label: i18n.t('srm.scoring_dimension.k4'),
       type: 'number',
       required: true,
       defaultValue: 10,
@@ -38,7 +39,7 @@ export const scoringDimensionSchema: EntitySchema = {
     },
     {
       name: 'min_score',
-      label: '最低分',
+      label: i18n.t('srm.scoring_dimension.k5'),
       type: 'number',
       defaultValue: 0,
       listWidth: 100,
@@ -46,7 +47,7 @@ export const scoringDimensionSchema: EntitySchema = {
     },
     {
       name: 'max_score',
-      label: '最高分',
+      label: i18n.t('srm.scoring_dimension.k6'),
       type: 'number',
       defaultValue: 100,
       listWidth: 100,
@@ -54,28 +55,28 @@ export const scoringDimensionSchema: EntitySchema = {
     },
     {
       name: 'description',
-      label: '描述',
+      label: i18n.t('srm.scoring_dimension.k7'),
       type: 'textarea',
       listWidth: 200,
     },
     {
       name: 'status',
-      label: '状态',
+      label: i18n.t('srm.scoring_dimension.k8'),
       type: 'select',
       required: true,
       defaultValue: 'active',
       options: {
         type: 'static',
         options: [
-          { value: 'active', label: '启用' },
-          { value: 'inactive', label: '禁用' },
+          { value: 'active', label: i18n.t('srm.scoring_dimension.k9') },
+          { value: 'inactive', label: i18n.t('srm.scoring_dimension.k10') },
         ],
       },
       listWidth: 100,
     },
     {
       name: 'sort_order',
-      label: '排序',
+      label: i18n.t('srm.scoring_dimension.k11'),
       type: 'number',
       defaultValue: 0,
       listWidth: 80,
@@ -83,7 +84,7 @@ export const scoringDimensionSchema: EntitySchema = {
     },
     {
       name: 'created_at',
-      label: '创建时间',
+      label: i18n.t('srm.scoring_dimension.k12'),
       type: 'datetime',
       readonly: true,
       hideInForm: true,
@@ -92,7 +93,7 @@ export const scoringDimensionSchema: EntitySchema = {
     },
     {
       name: 'updated_at',
-      label: '更新时间',
+      label: i18n.t('srm.scoring_dimension.k13'),
       type: 'datetime',
       readonly: true,
       hideInForm: true,
@@ -112,8 +113,8 @@ export const scoringDimensionSchema: EntitySchema = {
         inactive: 'error',
       },
       labelMap: {
-        active: '启用',
-        inactive: '禁用',
+        active: i18n.t('srm.scoring_dimension.k14'),
+        inactive: i18n.t('srm.scoring_dimension.k15'),
       },
     },
   },
@@ -122,21 +123,21 @@ export const scoringDimensionSchema: EntitySchema = {
 
   formSections: [
     {
-      title: '基本信息',
+      title: i18n.t('srm.scoring_dimension.k16'),
       fields: ['dimension_code', 'name', 'description'],
     },
     {
-      title: '评分配置',
+      title: i18n.t('srm.scoring_dimension.k17'),
       fields: ['weight', 'min_score', 'max_score', 'sort_order'],
     },
     {
-      title: '状态',
+      title: i18n.t('srm.scoring_dimension.k18'),
       fields: ['status'],
     },
   ],
 
   formColCount: 2,
-  createTitle: '新增评分维度',
-  editTitle: '编辑评分维度',
-  detailTitle: '评分维度详情',
+  createTitle: i18n.t('srm.scoring_dimension.k19'),
+  editTitle: i18n.t('srm.scoring_dimension.k20'),
+  detailTitle: i18n.t('srm.scoring_dimension.k21'),
 };

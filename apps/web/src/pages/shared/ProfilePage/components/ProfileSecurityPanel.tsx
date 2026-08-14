@@ -10,6 +10,7 @@ import {
   TextField,
   useTheme,
 } from '@mui/material';
+import i18n from '@/i18n';
 import { Shield, Mail, Settings, CheckCircle2, Save } from 'lucide-react';
 import { designTokens } from '@/theme/tokens';
 import { AUTH_PATHS } from '@/routes/auth';
@@ -70,13 +71,13 @@ const ProfileSecurityPanel: React.FC<ProfileSecurityPanelProps> = ({
                 variant='subtitle1'
                 sx={{ fontWeight: 500 }}
               >
-                修改密码
+                {i18n.t('pages.profile_security_panel.k0')}
               </Typography>
               <Typography
                 variant='body2'
                 color='text.secondary'
               >
-                定期更新密码以保护账户安全
+                {i18n.t('pages.profile_security_panel.k1')}
               </Typography>
             </Box>
           </Box>
@@ -84,7 +85,7 @@ const ProfileSecurityPanel: React.FC<ProfileSecurityPanelProps> = ({
             variant='contained'
             onClick={onOpenPasswordDialog}
           >
-            修改密码
+            {i18n.t('pages.profile_security_panel.k2')}
           </Button>
         </Box>
 
@@ -108,7 +109,7 @@ const ProfileSecurityPanel: React.FC<ProfileSecurityPanelProps> = ({
                 variant='subtitle1'
                 sx={{ fontWeight: 500 }}
               >
-                邮箱验证
+                {i18n.t('pages.profile_security_panel.k3')}
               </Typography>
               <Typography
                 variant='body2'
@@ -144,13 +145,13 @@ const ProfileSecurityPanel: React.FC<ProfileSecurityPanelProps> = ({
                 variant='subtitle1'
                 sx={{ fontWeight: 500 }}
               >
-                登录状态
+                {i18n.t('pages.profile_security_panel.k4')}
               </Typography>
               <Typography
                 variant='body2'
                 color='text.secondary'
               >
-                当前会话活跃中
+                {i18n.t('pages.profile_security_panel.k5')}
               </Typography>
             </Box>
           </Box>
@@ -161,7 +162,7 @@ const ProfileSecurityPanel: React.FC<ProfileSecurityPanelProps> = ({
               navigate(AUTH_PATHS.login);
             }}
           >
-            退出登录
+            {i18n.t('pages.profile_security_panel.k6')}
           </Button>
         </Box>
       </Box>
@@ -172,7 +173,7 @@ const ProfileSecurityPanel: React.FC<ProfileSecurityPanelProps> = ({
         maxWidth='sm'
         fullWidth
       >
-        <DialogTitle>修改密码</DialogTitle>
+        <DialogTitle>{i18n.t('pages.profile_security_panel.k0')}</DialogTitle>
         <Box
           component='form'
           onSubmit={passwordForm.handleSubmit(onPasswordChangeSubmit)}
@@ -182,41 +183,41 @@ const ProfileSecurityPanel: React.FC<ProfileSecurityPanelProps> = ({
               variant='body2'
               color='text.secondary'
             >
-              请输入当前密码和新密码来完成密码修改
+              {i18n.t('pages.profile_security_panel.k7')}
             </Typography>
             <TextField
               fullWidth
-              label='当前密码 *'
+              label={i18n.t('pages.profile_security_panel.k8')}
               type='password'
               {...passwordForm.register('current_password', {
-                required: '当前密码是必填项',
+                required: i18n.t('pages.profile_security_panel.k1'),
               })}
-              placeholder='请输入当前密码'
+              placeholder={i18n.t('pages.profile_security_panel.k2')}
               error={!!passwordForm.formState.errors.current_password}
               helperText={passwordForm.formState.errors.current_password?.message}
               size='small'
             />
             <TextField
               fullWidth
-              label='新密码 *'
+              label={i18n.t('pages.profile_security_panel.k9')}
               type='password'
               {...passwordForm.register('new_password', {
-                required: '新密码是必填项',
-                minLength: { value: 6, message: '密码长度至少为6位' },
+                required: i18n.t('pages.profile_security_panel.k3'),
+                minLength: { value: 6, message: i18n.t('pages.profile_security_panel.6_4') },
               })}
-              placeholder='请输入新密码（至少6位）'
+              placeholder={i18n.t('pages.profile_security_panel.6_5')}
               error={!!passwordForm.formState.errors.new_password}
               helperText={passwordForm.formState.errors.new_password?.message}
               size='small'
             />
             <TextField
               fullWidth
-              label='确认新密码 *'
+              label={i18n.t('pages.profile_security_panel.k10')}
               type='password'
               {...passwordForm.register('confirm_password', {
-                required: '请再次输入新密码',
+                required: i18n.t('pages.profile_security_panel.k6'),
               })}
-              placeholder='请再次输入新密码'
+              placeholder={i18n.t('pages.profile_security_panel.k7')}
               error={!!passwordForm.formState.errors.confirm_password}
               helperText={passwordForm.formState.errors.confirm_password?.message}
               size='small'
@@ -230,14 +231,14 @@ const ProfileSecurityPanel: React.FC<ProfileSecurityPanelProps> = ({
                 passwordForm.reset();
               }}
             >
-              取消
+              {i18n.t('pages.profile_security_panel.k11')}
             </Button>
             <Button
               type='submit'
               variant='contained'
               startIcon={<Save size={16} />}
             >
-              确认修改
+              {i18n.t('pages.profile_security_panel.k12')}
             </Button>
           </DialogActions>
         </Box>

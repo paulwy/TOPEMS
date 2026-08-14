@@ -1,10 +1,11 @@
 import React from 'react';
+import i18n from '@/i18n';
 
 const MonitorAlertRulesPage: React.FC = () => {
   return React.createElement(
     'div',
     { className: 'page-placeholder' },
-    'MonitorAlertRulesPage 页面开发中'
+    i18n.t('monitor.monitor_alert_rules_page.k0')
   );
 };
 

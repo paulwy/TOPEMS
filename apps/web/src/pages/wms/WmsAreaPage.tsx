@@ -5,6 +5,7 @@ import type { EntitySchema } from '@/schema';
 import type { SchemaExtensions } from '@/schema/schemaExtensions';
 import { wmsApi } from '@/api/wms';
 import type { Location } from '@/api/wms/types';
+import i18n from '@/i18n';
 
 const apiAdapter = createCrudPageAdapter(wmsApi.locations);
 
@@ -31,7 +32,7 @@ export default function WmsAreaPage() {
       schema={areaSchema as EntitySchema & SchemaExtensions}
       apiAdapter={apiAdapter}
       treeDataAdapter={treeDataAdapter}
-      breadcrumbs={[{ label: 'WMS' }, { label: '库区管理' }]}
+      breadcrumbs={[{ label: 'WMS' }, { label: i18n.t('pages.wms_area_page.k0') }]}
     />
   );
 }

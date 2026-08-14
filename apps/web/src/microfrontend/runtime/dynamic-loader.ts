@@ -1,3 +1,4 @@
+import i18n from '@/i18n';
 /**
  * V45.0 Track F: 微前端终极形态 — 运行时动态加载器
  *
@@ -119,7 +120,7 @@ export class DynamicModuleLoader {
     url?: string
   ): RuntimeModule {
     if (this.modules.has(id)) {
-      console.warn(`[DynamicLoader] 模块 ${id} 已注册，将覆盖旧注册`);
+      console.warn(`${i18n.t('microfrontend.dynamic-loader.dynamicloader_0')}${id}${i18n.t('microfrontend.dynamic-loader.k1')}`);
     }
     const mod: RuntimeModule = {
       id,
@@ -156,7 +157,7 @@ export class DynamicModuleLoader {
   async loadModule(id: string): Promise<any> {
     const mod = this.modules.get(id);
     if (!mod) {
-      throw new Error(`[DynamicLoader] 模块 ${id} 未注册，请先调用 registerModule`);
+      throw new Error(`${i18n.t('microfrontend.dynamic-loader.dynamicloader_2')}${id}${i18n.t('microfrontend.dynamic-loader.k3')}`);
     }
 
     // 缓存命中：已加载则直接返回
@@ -200,7 +201,7 @@ export class DynamicModuleLoader {
     try {
       await this.loadModule(id);
     } catch (err) {
-      console.warn(`[DynamicLoader] 预加载模块 ${id} 失败:`, err);
+      console.warn(`${i18n.t('microfrontend.dynamic-loader.k4')}${id}${i18n.t('microfrontend.dynamic-loader.k5')}`, err);
     }
   }
 
@@ -353,7 +354,7 @@ export class DynamicModuleLoader {
         mod.retry_count = attempt;
         if (attempt < this.config.retry_count) {
           console.warn(
-            `[DynamicLoader] 模块 ${id} 加载失败（第 ${attempt + 1} 次），${this.config.retry_delay_ms}ms 后重试...`,
+            `${i18n.t('microfrontend.dynamic-loader.dynamicloader_6')}${id}${i18n.t('microfrontend.dynamic-loader.k7')}${attempt + 1}${i18n.t('microfrontend.dynamic-loader.k8')}${this.config.retry_delay_ms}${i18n.t('microfrontend.dynamic-loader.ms_9')}`,
             lastError.message
           );
           await this.delay(this.config.retry_delay_ms);
@@ -362,7 +363,7 @@ export class DynamicModuleLoader {
     }
 
     mod.status = ModuleLoadStatus.FAILED;
-    mod.error = lastError ?? new Error('未知加载错误');
+    mod.error = lastError ?? new Error(i18n.t('microfrontend.dynamic-loader.k0'));
     mod.load_duration = Date.now() - startTime;
     this.notifyListeners(mod);
     throw mod.error;
@@ -375,7 +376,7 @@ export class DynamicModuleLoader {
 
     return new Promise<any>((resolve, reject) => {
       const timer = setTimeout(() => {
-        reject(new Error(`[DynamicLoader] 模块 ${id} 加载超时（${timeoutMs}ms）`));
+        reject(new Error(`${i18n.t('microfrontend.dynamic-loader.dynamicloader_10')}${id}${i18n.t('microfrontend.dynamic-loader.k11')}${timeoutMs}ms）`));
       }, timeoutMs);
 
       mod

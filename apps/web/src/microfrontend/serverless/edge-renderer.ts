@@ -1,3 +1,4 @@
+import i18n from '@/i18n';
 /**
  * V48.0 Track Serverless: 无服务器架构 — 边缘渲染引擎
  *
@@ -361,7 +362,7 @@ class EdgeRendererImpl {
     const timeoutMs = this.config.renderTimeoutMs;
     return new Promise<string>((resolve, reject) => {
       const timer = setTimeout(() => {
-        reject(new Error(`[EdgeRenderer] 渲染路径 ${request.path} 超时（${timeoutMs}ms）`));
+        reject(new Error(`${i18n.t('microfrontend.edge-renderer.edgerenderer_0')}${request.path}${i18n.t('microfrontend.edge-renderer.k1')}${timeoutMs}ms）`));
       }, timeoutMs);
 
       this.doRenderWork(request)

@@ -22,6 +22,7 @@ import {
   BarChart3,
   Lightbulb,
 } from 'lucide-react';
+import i18n from '@/i18n';
 import type { Theme } from '@mui/material';
 import {
   Box,
@@ -84,12 +85,12 @@ interface PromptTemplateManagerProps {
 }
 
 const categories = [
-  { id: 'all', label: '全部', icon: <Tag size={18} /> },
-  { id: 'writing', label: '写作', icon: <FileText size={18} /> },
-  { id: 'code', label: '编程', icon: <Code2 size={18} /> },
-  { id: 'business', label: '商务', icon: <MessageSquare size={18} /> },
-  { id: 'analysis', label: '分析', icon: <BarChart3 size={18} /> },
-  { id: 'creative', label: '创意', icon: <Lightbulb size={18} /> },
+  { id: 'all', label: i18n.t('components.prompt_template_manager.k0'), icon: <Tag size={18} /> },
+  { id: 'writing', label: i18n.t('components.prompt_template_manager.k1'), icon: <FileText size={18} /> },
+  { id: 'code', label: i18n.t('components.prompt_template_manager.k2'), icon: <Code2 size={18} /> },
+  { id: 'business', label: i18n.t('components.prompt_template_manager.k3'), icon: <MessageSquare size={18} /> },
+  { id: 'analysis', label: i18n.t('components.prompt_template_manager.k4'), icon: <BarChart3 size={18} /> },
+  { id: 'creative', label: i18n.t('components.prompt_template_manager.k5'), icon: <Lightbulb size={18} /> },
 ];
 
 const getCategoryIcon = (category: string) => {
@@ -230,7 +231,7 @@ export const PromptTemplateManager: React.FC<PromptTemplateManagerProps> = ({
                   variant='subtitle2'
                   sx={{ fontWeight: 600, mb: 1, color: 'text.secondary' }}
                 >
-                  分类
+                  {i18n.t('components.prompt_template_manager.k0')}
                 </Typography>
                 <List
                   disablePadding
@@ -272,7 +273,7 @@ export const PromptTemplateManager: React.FC<PromptTemplateManagerProps> = ({
               <Box>
                 <Chip
                   icon={<Star size={14} />}
-                  label='仅显示收藏'
+                  label={i18n.t('components.prompt_template_manager.k6')}
                   variant={showFavoritesOnly ? 'filled' : 'outlined'}
                   color={showFavoritesOnly ? 'warning' : 'default'}
                   onClick={() => setShowFavoritesOnly(!showFavoritesOnly)}
@@ -303,12 +304,12 @@ export const PromptTemplateManager: React.FC<PromptTemplateManagerProps> = ({
                   sx={{ minHeight: 36, '& .MuiTab-root': { minHeight: 36, py: 0.5 } }}
                 >
                   <Tab
-                    label='全部模板'
+                    label={i18n.t('components.prompt_template_manager.k7')}
                     value='all'
                     sx={{ textTransform: 'none' }}
                   />
                   <Tab
-                    label='我的模板'
+                    label={i18n.t('components.prompt_template_manager.k8')}
                     value='mine'
                     sx={{ textTransform: 'none' }}
                   />
@@ -317,7 +318,7 @@ export const PromptTemplateManager: React.FC<PromptTemplateManagerProps> = ({
                 <Box sx={{ display: 'flex', gap: 1 }}>
                   <TextField
                     size='small'
-                    placeholder='搜索模板...'
+                    placeholder={i18n.t('components.prompt_template_manager.k1')}
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     slotProps={{
@@ -338,7 +339,7 @@ export const PromptTemplateManager: React.FC<PromptTemplateManagerProps> = ({
                     size='small'
                     onClick={() => handleOpenEditDialog()}
                   >
-                    新建模板
+                    {i18n.t('components.prompt_template_manager.k2')}
                   </Button>
                 </Box>
               </Box>
@@ -388,7 +389,7 @@ export const PromptTemplateManager: React.FC<PromptTemplateManagerProps> = ({
                             <IconButton
                               size='small'
                               onClick={() => onToggleFavorite(prompt.id)}
-                              aria-label='收藏'
+                              aria-label={i18n.t('components.prompt_template_manager.k9')}
                             >
                               <Star
                                 size={18}
@@ -401,14 +402,14 @@ export const PromptTemplateManager: React.FC<PromptTemplateManagerProps> = ({
                             <IconButton
                               size='small'
                               onClick={() => handleOpenEditDialog(prompt)}
-                              aria-label='编辑'
+                              aria-label={i18n.t('components.prompt_template_manager.k10')}
                             >
                               <Edit3 size={18} />
                             </IconButton>
                             <IconButton
                               size='small'
                               onClick={() => onDeletePrompt(prompt.id)}
-                              aria-label='删除'
+                              aria-label={i18n.t('components.prompt_template_manager.k11')}
                             >
                               <Trash2 size={18} />
                             </IconButton>
@@ -469,14 +470,14 @@ export const PromptTemplateManager: React.FC<PromptTemplateManagerProps> = ({
                             <IconButton
                               size='small'
                               onClick={() => onCopyPrompt(prompt.content)}
-                              aria-label='复制'
+                              aria-label={i18n.t('components.prompt_template_manager.k12')}
                             >
                               <Copy size={14} />
                             </IconButton>
                             <IconButton
                               size='small'
                               onClick={() => onUsePrompt(prompt)}
-                              aria-label='执行'
+                              aria-label={i18n.t('components.prompt_template_manager.k13')}
                             >
                               <PlayCircle size={14} />
                             </IconButton>
@@ -497,7 +498,7 @@ export const PromptTemplateManager: React.FC<PromptTemplateManagerProps> = ({
                       variant='body1'
                       color='text.secondary'
                     >
-                      没有找到匹配的模板
+                      {i18n.t('components.prompt_template_manager.k3')}
                     </Typography>
                   </Box>
                 )}
@@ -520,12 +521,12 @@ export const PromptTemplateManager: React.FC<PromptTemplateManagerProps> = ({
               variant='h6'
               sx={{ fontWeight: 600 }}
             >
-              {editingPrompt ? '编辑模板' : '新建模板'}
+              {editingPrompt ? i18n.t('components.prompt_template_manager.k15') : i18n.t('components.prompt_template_manager.k14')}
             </Typography>
             <IconButton
               size='small'
               onClick={handleCloseEditDialog}
-              aria-label='关闭'
+              aria-label={i18n.t('components.prompt_template_manager.k16')}
             >
               <X size={18} />
             </IconButton>
@@ -534,7 +535,7 @@ export const PromptTemplateManager: React.FC<PromptTemplateManagerProps> = ({
         <DialogContent dividers>
           <Box sx={{ mt: 1 }}>
             <TextField
-              label='模板名称'
+              label={i18n.t('components.prompt_template_manager.k17')}
               value={formData.name}
               onChange={(e) => setFormData((prev) => ({ ...prev, name: e.target.value }))}
               fullWidth
@@ -543,7 +544,7 @@ export const PromptTemplateManager: React.FC<PromptTemplateManagerProps> = ({
             />
 
             <TextField
-              label='描述'
+              label={i18n.t('components.prompt_template_manager.k18')}
               value={formData.description}
               onChange={(e) => setFormData((prev) => ({ ...prev, description: e.target.value }))}
               fullWidth
@@ -558,10 +559,10 @@ export const PromptTemplateManager: React.FC<PromptTemplateManagerProps> = ({
               size='small'
               sx={{ mb: 2 }}
             >
-              <InputLabel>分类</InputLabel>
+              <InputLabel>{i18n.t('components.prompt_template_manager.k19')}</InputLabel>
               <Select
                 value={formData.category}
-                label='分类'
+                label={i18n.t('components.prompt_template_manager.k20')}
                 onChange={(e) => setFormData((prev) => ({ ...prev, category: e.target.value }))}
               >
                 {(categories.filter((c) => c.id !== 'all') as { id: string; label: string }[]).map(
@@ -578,7 +579,7 @@ export const PromptTemplateManager: React.FC<PromptTemplateManagerProps> = ({
             </FormControl>
 
             <TextField
-              label='变量（每行一个）'
+              label={i18n.t('components.prompt_template_manager.k21')}
               value={formData.variables}
               onChange={(e) => setFormData((prev) => ({ ...prev, variables: e.target.value }))}
               fullWidth
@@ -592,14 +593,14 @@ key_points'
             />
 
             <TextField
-              label='模板内容'
+              label={i18n.t('components.prompt_template_manager.k22')}
               value={formData.content}
               onChange={(e) => setFormData((prev) => ({ ...prev, content: e.target.value }))}
               fullWidth
               sx={{ mb: 2 }}
               multiline
               rows={8}
-              placeholder='您的提示词模板内容，使用 {变量名} 来引用变量...'
+              placeholder={i18n.t('components.prompt_template_manager.k4')}
             />
 
             {formData.variables && (
@@ -607,7 +608,7 @@ key_points'
                 variant='caption'
                 color='text.secondary'
               >
-                可用变量:{' '}
+                [i18n.t('components.prompt_template_manager.k5')]:{' '}
                 {formData.variables
                   .split('\n')
                   .map((v) => `{${v.trim()}}`)
@@ -617,14 +618,14 @@ key_points'
           </Box>
         </DialogContent>
         <DialogActions>
-          <Button onClick={handleCloseEditDialog}>取消</Button>
+          <Button onClick={handleCloseEditDialog}>{i18n.t('components.prompt_template_manager.k23')}</Button>
           <Button
             variant='contained'
             startIcon={<Save size={16} />}
             onClick={handleSave}
             disabled={!formData.name || !formData.content}
           >
-            {editingPrompt ? '保存修改' : '创建模板'}
+            {editingPrompt ? i18n.t('components.prompt_template_manager.k25') : i18n.t('components.prompt_template_manager.k24')}
           </Button>
         </DialogActions>
       </Dialog>

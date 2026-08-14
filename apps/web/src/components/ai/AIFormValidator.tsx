@@ -4,6 +4,7 @@ import { Card, CardContent, Box, Typography, Button, useTheme } from '@mui/mater
 import { AIGenerateModal } from './AIGenerateModal';
 import { useAIHelper } from '../../hooks/useAIHelper';
 import type { ValidateRequest, ValidationIssue, Suggestion, ValidateResponse } from '@/types/ai';
+import i18n from '@/i18n';
 
 export interface AIFormValidatorProps {
   isOpen: boolean;
@@ -14,9 +15,9 @@ export interface AIFormValidatorProps {
 }
 
 const issueTitleMap: Record<string, string> = {
-  error: '错误',
-  warning: '警告',
-  info: '提示',
+  error: i18n.t('components.ai_form_validator.k0'),
+  warning: i18n.t('components.ai_form_validator.k1'),
+  info: i18n.t('components.ai_form_validator.k2'),
 };
 
 export function AIFormValidator({
@@ -78,11 +79,11 @@ export function AIFormValidator({
     <AIGenerateModal
       isOpen={isOpen}
       onClose={onClose}
-      title='AI 表单校验'
-      description='AI 将检查表单数据的完整性、格式和逻辑'
+      title={i18n.t('components.ai_form_validator.ai_0')}
+      description={i18n.t('components.ai_form_validator.k1')}
       isLoading={isLoading}
       onConfirm={isValid ? onClose : undefined}
-      confirmText={isValid ? '完成' : undefined}
+      confirmText={isValid ? i18n.t('components.ai_form_validator.k3') : undefined}
     >
       <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
         <Box
@@ -96,12 +97,12 @@ export function AIFormValidator({
             {isValid ? (
               <>
                 <CheckCircle style={{ width: 24, height: 24, color: theme.palette.success.dark }} />
-                <Typography sx={{ fontWeight: 500, color: 'success.700' }}>校验通过</Typography>
+                <Typography sx={{ fontWeight: 500, color: 'success.700' }}>{i18n.t('components.ai_form_validator.k4')}</Typography>
               </>
             ) : (
               <>
                 <AlertCircle style={{ width: 24, height: 24, color: theme.palette.error.main }} />
-                <Typography sx={{ fontWeight: 500, color: 'error.dark' }}>发现问题</Typography>
+                <Typography sx={{ fontWeight: 500, color: 'error.dark' }}>{i18n.t('components.ai_form_validator.k5')}</Typography>
               </>
             )}
           </Box>
@@ -120,14 +121,14 @@ export function AIFormValidator({
             ) : (
               <Sparkles style={{ width: 16, height: 16 }} />
             )}
-            重新校验
+            {i18n.t('components.ai_form_validator.k2')}
           </Button>
         </Box>
 
         {issues.length > 0 && (
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
             <Typography sx={{ fontSize: '0.875rem', fontWeight: 500, color: 'grey.700' }}>
-              发现的问题
+              {i18n.t('components.ai_form_validator.k3')}
             </Typography>
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
               {issues.map((issue, idx) => (
@@ -170,7 +171,7 @@ export function AIFormValidator({
                               sx={{ height: 28, fontSize: '0.75rem', px: 1 }}
                               onClick={() => handleFixIssue(issue)}
                             >
-                              修复
+                              {i18n.t('components.ai_form_validator.k4')}
                             </Button>
                           )}
                         </Box>
@@ -202,7 +203,7 @@ export function AIFormValidator({
               }}
             >
               <Typography sx={{ fontSize: '0.875rem', fontWeight: 500, color: 'grey.700' }}>
-                优化建议
+                {i18n.t('components.ai_form_validator.k5')}
               </Typography>
               {onApplySuggestions && (
                 <Button
@@ -210,7 +211,7 @@ export function AIFormValidator({
                   size='small'
                   onClick={handleApplyAllSuggestions}
                 >
-                  全部应用
+                  {i18n.t('components.ai_form_validator.k6')}
                 </Button>
               )}
             </Box>
@@ -283,8 +284,8 @@ export function AIFormValidator({
                 color: theme.palette.success.dark,
               }}
             />
-            <Typography>表单校验通过！</Typography>
-            <Typography sx={{ fontSize: '0.875rem', mt: 0.25 }}>未发现任何问题</Typography>
+            <Typography>{i18n.t('components.ai_form_validator.k6')}</Typography>
+            <Typography sx={{ fontSize: '0.875rem', mt: 0.25 }}>{i18n.t('components.ai_form_validator.k7')}</Typography>
           </Box>
         )}
       </Box>

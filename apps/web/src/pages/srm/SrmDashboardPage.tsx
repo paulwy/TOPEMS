@@ -8,6 +8,7 @@ import { PageContainer } from '@/components/common';
 import { useQuery } from '@tanstack/react-query';
 import { QUERY_KEYS } from '@/lib/reactQuery';
 import { useTranslation } from 'react-i18next';
+import i18n from '@/i18n';
 
 const SrmDashboardPage: React.FC = () => {
   const { t } = useTranslation();
@@ -25,15 +26,15 @@ const SrmDashboardPage: React.FC = () => {
 
   const mapStatusToChinese = (status: string) => {
     const statusMap: Record<string, string> = {
-      active: '活跃',
-      inactive: '停用',
-      pending: '待处理',
-      completed: '已完成',
-      delivered: '已交付',
-      cancelled: '已取消',
-      processing: '处理中',
-      draft: '草稿',
-      expired: '已过期',
+      active: i18n.t('pages.srm_dashboard_page.k0'),
+      inactive: i18n.t('pages.srm_dashboard_page.k1'),
+      pending: i18n.t('pages.srm_dashboard_page.k2'),
+      completed: i18n.t('pages.srm_dashboard_page.k3'),
+      delivered: i18n.t('pages.srm_dashboard_page.k4'),
+      cancelled: i18n.t('pages.srm_dashboard_page.k5'),
+      processing: i18n.t('pages.srm_dashboard_page.k6'),
+      draft: i18n.t('pages.srm_dashboard_page.k7'),
+      expired: i18n.t('pages.srm_dashboard_page.k8'),
     };
     return statusMap[status] || status;
   };

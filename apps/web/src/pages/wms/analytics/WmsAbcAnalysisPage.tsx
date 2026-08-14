@@ -12,6 +12,7 @@ import {
   YAxis,
   CartesianGrid,
 } from 'recharts';
+import i18n from '@/i18n';
 import { useWmsMock, type WmsMockShape } from '@/api/wms/_mock';
 import { designTokens, semanticTokens } from '@topems/tokens';
 
@@ -64,7 +65,7 @@ export default function WmsAbcAnalysisPage() {
 
       <div className='grid grid-cols-1 gap-4 md:grid-cols-2'>
         <div className='rounded-lg border p-4'>
-          <h3 className='mb-2 font-semibold'>金额占比（饼图）</h3>
+          <h3 className='mb-2 font-semibold'>{i18n.t('pages.wms_abc_analysis_page.k0')}</h3>
           <ResponsiveContainer
             width='100%'
             height={340}
@@ -79,7 +80,7 @@ export default function WmsAbcAnalysisPage() {
                 outerRadius={110}
                 innerRadius={50}
                 label={(d: { category?: string; percent?: number } | undefined) =>
-                  `${d?.category} 类 ${((d?.percent ?? 0) * 100).toFixed(0)}%`
+                  `${d?.category} ${i18n.t('pages.wms_abc_analysis_page.k0')} ${((d?.percent ?? 0) * 100).toFixed(0)}%`
                 }
               >
                 {abc.map((entry, i) => (
@@ -94,7 +95,7 @@ export default function WmsAbcAnalysisPage() {
                   `¥${Number(v).toLocaleString()}（${
                     totalAmount ? ((Number(v) / totalAmount) * 100).toFixed(1) : 0
                   }%）`,
-                  '金额',
+                  i18n.t('pages.wms_abc_analysis_page.k1'),
                 ]}
               />
               <Legend />
@@ -103,7 +104,7 @@ export default function WmsAbcAnalysisPage() {
         </div>
 
         <div className='rounded-lg border p-4'>
-          <h3 className='mb-2 font-semibold'>分类 SKU 数量（柱状）</h3>
+          <h3 className='mb-2 font-semibold'>{i18n.t('pages.wms_abc_analysis_page.sku_2')}</h3>
           <ResponsiveContainer
             width='100%'
             height={340}
@@ -118,12 +119,12 @@ export default function WmsAbcAnalysisPage() {
               <Tooltip
                 formatter={(v: unknown) => [
                   `${v}（${totalCount ? ((Number(v) / totalCount) * 100).toFixed(1) : 0}%）`,
-                  'SKU 数',
+                  i18n.t('pages.wms_abc_analysis_page.sku_1'),
                 ]}
               />
               <Bar
                 dataKey='count'
-                name='SKU 数'
+                name={i18n.t('pages.wms_abc_analysis_page.sku_2')}
                 radius={[6, 6, 0, 0]}
                 fill={designTokens.colors.primary.main}
               />
@@ -139,11 +140,11 @@ export default function WmsAbcAnalysisPage() {
             <thead className='bg-gray-50'>
               <tr>
                 <th className='px-3 py-2 text-left font-medium'>SKU 编码</th>
-                <th className='px-3 py-2 text-left font-medium'>物料名称</th>
-                <th className='px-3 py-2 text-left font-medium'>仓库</th>
-                <th className='px-3 py-2 text-right font-medium'>数量</th>
-                <th className='px-3 py-2 text-right font-medium'>单价</th>
-                <th className='px-3 py-2 text-right font-medium'>总金额</th>
+                <th className='px-3 py-2 text-left font-medium'>{i18n.t('pages.wms_abc_analysis_page.k3')}</th>
+                <th className='px-3 py-2 text-left font-medium'>{i18n.t('pages.wms_abc_analysis_page.k4')}</th>
+                <th className='px-3 py-2 text-right font-medium'>{i18n.t('pages.wms_abc_analysis_page.k5')}</th>
+                <th className='px-3 py-2 text-right font-medium'>{i18n.t('pages.wms_abc_analysis_page.k6')}</th>
+                <th className='px-3 py-2 text-right font-medium'>{i18n.t('pages.wms_abc_analysis_page.k7')}</th>
               </tr>
             </thead>
             <tbody>

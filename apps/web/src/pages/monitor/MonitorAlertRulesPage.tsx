@@ -21,7 +21,7 @@ import {
   MessageSquare,
   Smartphone,
 } from 'lucide-react';
-
+import i18n from '@/i18n';
 interface AlertRule {
   id: string;
   name: string;
@@ -38,7 +38,6 @@ interface AlertRule {
   created_at: string;
   updated_at: string;
 }
-
 const METRIC_TYPE_CONFIG: Record<
   string,
   {
@@ -48,30 +47,27 @@ const METRIC_TYPE_CONFIG: Record<
   }
 > = {
   cpu: { label: 'CPU', color: 'primary', icon: <Cpu size={14} /> },
-  memory: { label: '内存', color: 'success', icon: <HardDrive size={14} /> },
-  disk: { label: '磁盘', color: 'warning', icon: <HardDrive size={14} /> },
-  network: { label: '网络', color: 'info', icon: <Network size={14} /> },
-  database: { label: '数据库', color: 'error', icon: <Database size={14} /> },
+  memory: { label: i18n.t('monitor.monitor_alert_rules_page.k0'), color: 'success', icon: <HardDrive size={14} /> },
+  disk: { label: i18n.t('monitor.monitor_alert_rules_page.k1'), color: 'warning', icon: <HardDrive size={14} /> },
+  network: { label: i18n.t('monitor.monitor_alert_rules_page.k2'), color: 'info', icon: <Network size={14} /> },
+  database: { label: i18n.t('monitor.monitor_alert_rules_page.k3'), color: 'error', icon: <Database size={14} /> },
   api: { label: 'API', color: 'default', icon: <Globe size={14} /> },
 };
-
 const SEVERITY_CONFIG: Record<string, { label: string; color: 'error' | 'warning' | 'info' }> = {
-  critical: { label: '严重', color: 'error' },
-  warning: { label: '警告', color: 'warning' },
-  info: { label: '信息', color: 'info' },
+  critical: { label: i18n.t('monitor.monitor_alert_rules_page.k4'), color: 'error' },
+  warning: { label: i18n.t('monitor.monitor_alert_rules_page.k5'), color: 'warning' },
+  info: { label: i18n.t('monitor.monitor_alert_rules_page.k6'), color: 'info' },
 };
-
 const CHANNEL_CONFIG: Record<string, { label: string; icon: React.ReactNode }> = {
-  email: { label: '邮件', icon: <Mail size={14} /> },
-  sms: { label: '短信', icon: <Smartphone size={14} /> },
-  push: { label: '推送', icon: <Bell size={14} /> },
-  wechat: { label: '企业微信', icon: <MessageSquare size={14} /> },
+  email: { label: i18n.t('monitor.monitor_alert_rules_page.k7'), icon: <Mail size={14} /> },
+  sms: { label: i18n.t('monitor.monitor_alert_rules_page.k8'), icon: <Smartphone size={14} /> },
+  push: { label: i18n.t('monitor.monitor_alert_rules_page.k9'), icon: <Bell size={14} /> },
+  wechat: { label: i18n.t('monitor.monitor_alert_rules_page.k10'), icon: <MessageSquare size={14} /> },
 };
-
 const initialMockRules: AlertRule[] = [
   {
     id: '1',
-    name: 'CPU 使用率过高',
+    name: i18n.t('pages.monitor_alert_rules_page.cpu_0'),
     metric_type: 'cpu',
     metric_name: 'cpu_usage',
     condition: '>',
@@ -87,7 +83,7 @@ const initialMockRules: AlertRule[] = [
   },
   {
     id: '2',
-    name: '内存使用率告警',
+    name: i18n.t('monitor.monitor_alert_rules_page.k11'),
     metric_type: 'memory',
     metric_name: 'memory_usage',
     condition: '>',
@@ -103,7 +99,7 @@ const initialMockRules: AlertRule[] = [
   },
   {
     id: '3',
-    name: '磁盘空间不足',
+    name: i18n.t('monitor.monitor_alert_rules_page.k12'),
     metric_type: 'disk',
     metric_name: 'disk_usage',
     condition: '>',
@@ -119,7 +115,7 @@ const initialMockRules: AlertRule[] = [
   },
   {
     id: '4',
-    name: '网络带宽告警',
+    name: i18n.t('monitor.monitor_alert_rules_page.k13'),
     metric_type: 'network',
     metric_name: 'network_bandwidth',
     condition: '>',
@@ -135,12 +131,12 @@ const initialMockRules: AlertRule[] = [
   },
   {
     id: '5',
-    name: '数据库连接数过高',
+    name: i18n.t('monitor.monitor_alert_rules_page.k14'),
     metric_type: 'database',
     metric_name: 'db_connections',
     condition: '>',
     threshold: '500',
-    unit: '个',
+    unit: i18n.t('monitor.monitor_alert_rules_page.k15'),
     severity: 'critical',
     channels: ['email', 'push', 'wechat'],
     enabled: true,
@@ -151,7 +147,7 @@ const initialMockRules: AlertRule[] = [
   },
   {
     id: '6',
-    name: 'API 响应时间过长',
+    name: i18n.t('pages.monitor_alert_rules_page.api_1'),
     metric_type: 'api',
     metric_name: 'api_response_time',
     condition: '>',
@@ -167,7 +163,7 @@ const initialMockRules: AlertRule[] = [
   },
   {
     id: '7',
-    name: 'API 错误率告警',
+    name: i18n.t('pages.monitor_alert_rules_page.api_2'),
     metric_type: 'api',
     metric_name: 'api_error_rate',
     condition: '>',
@@ -183,7 +179,7 @@ const initialMockRules: AlertRule[] = [
   },
   {
     id: '8',
-    name: 'CPU 负载告警',
+    name: i18n.t('pages.monitor_alert_rules_page.cpu_3'),
     metric_type: 'cpu',
     metric_name: 'cpu_load',
     condition: '>',
@@ -199,12 +195,12 @@ const initialMockRules: AlertRule[] = [
   },
   {
     id: '9',
-    name: '数据库慢查询告警',
+    name: i18n.t('monitor.monitor_alert_rules_page.k16'),
     metric_type: 'database',
     metric_name: 'db_slow_queries',
     condition: '>',
     threshold: '10',
-    unit: '个/分钟',
+    unit: i18n.t('monitor.monitor_alert_rules_page.k17'),
     severity: 'warning',
     channels: ['email', 'wechat'],
     enabled: true,
@@ -214,11 +210,9 @@ const initialMockRules: AlertRule[] = [
     updated_at: '2024-01-20',
   },
 ];
-
 const MonitorAlertRulesPage: React.FC = () => {
   const addNotification = useNotificationStore((state) => state.addNotification);
   const [rules, setRules] = useState<AlertRule[]>(initialMockRules);
-
   const mockApiAdapter: CrudApiAdapter<AlertRule> = {
     list: async () => {
       return { data: rules, total: rules.length };
@@ -245,12 +239,10 @@ const MonitorAlertRulesPage: React.FC = () => {
       setRules(rules.filter((r) => r.id !== id));
     },
   };
-
   const handleToggleStatus = (ruleId: string) => {
     const rule = rules.find((r) => r.id === ruleId);
     if (!rule) return;
-
-    const action = rule.enabled ? '禁用' : '启用';
+    const action = rule.enabled ? i18n.t('monitor.monitor_alert_rules_page.k19') : i18n.t('monitor.monitor_alert_rules_page.k18');
     setRules(
       rules.map((r) =>
         r.id === ruleId
@@ -259,37 +251,35 @@ const MonitorAlertRulesPage: React.FC = () => {
       )
     );
     addNotification({
-      title: '成功',
-      message: `告警规则${action}成功`,
+      title: i18n.t('monitor.monitor_alert_rules_page.k20'),
+      message: `${i18n.t('pages.monitor_alert_rules_page.k4')}${action}${i18n.t('pages.monitor_alert_rules_page.k5')}`,
       type: 'success',
     });
   };
-
   const handleCopy = (ruleId: string) => {
     const rule = rules.find((r) => r.id === ruleId);
     if (rule) {
       const newRule: AlertRule = {
         ...rule,
         id: String(Date.now()),
-        name: `${rule.name} - 副本`,
+        name: `${rule.name}${i18n.t('pages.monitor_alert_rules_page.k6')}`,
         enabled: false,
         created_at: new Date().toISOString().split('T')[0],
         updated_at: new Date().toISOString().split('T')[0],
       };
       setRules([...rules, newRule]);
       addNotification({
-        title: '成功',
-        message: '告警规则复制成功',
+        title: i18n.t('monitor.monitor_alert_rules_page.k21'),
+        message: i18n.t('monitor.monitor_alert_rules_page.k22'),
         type: 'success',
       });
     }
   };
-
   const customColumns: ColumnDef<AlertRule>[] = useMemo(
     () => [
       {
         id: 'name',
-        label: '规则名称',
+        label: i18n.t('monitor.monitor_alert_rules_page.k23'),
         render: (row) => (
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
             <Box
@@ -327,7 +317,7 @@ const MonitorAlertRulesPage: React.FC = () => {
       },
       {
         id: 'metric_type',
-        label: '指标类型',
+        label: i18n.t('monitor.monitor_alert_rules_page.k24'),
         render: (row) => {
           const config = METRIC_TYPE_CONFIG[row.metric_type] || {
             label: row.metric_type,
@@ -351,7 +341,7 @@ const MonitorAlertRulesPage: React.FC = () => {
       },
       {
         id: 'condition',
-        label: '触发条件',
+        label: i18n.t('monitor.monitor_alert_rules_page.k25'),
         render: (row) => (
           <Typography
             variant='body2'
@@ -364,7 +354,7 @@ const MonitorAlertRulesPage: React.FC = () => {
       },
       {
         id: 'severity',
-        label: '严重级别',
+        label: i18n.t('monitor.monitor_alert_rules_page.k26'),
         render: (row) => {
           const config = SEVERITY_CONFIG[row.severity] || {
             label: row.severity,
@@ -381,7 +371,7 @@ const MonitorAlertRulesPage: React.FC = () => {
       },
       {
         id: 'channels',
-        label: '通知渠道',
+        label: i18n.t('monitor.monitor_alert_rules_page.k27'),
         render: (row) => (
           <Box sx={{ display: 'flex', gap: 0.5, flexWrap: 'wrap' }}>
             {row.channels.slice(0, 3).map((channel) => {
@@ -413,7 +403,7 @@ const MonitorAlertRulesPage: React.FC = () => {
       },
       {
         id: 'status',
-        label: '状态',
+        label: i18n.t('monitor.monitor_alert_rules_page.k28'),
         render: (row) => (
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
             <Switch
@@ -427,14 +417,14 @@ const MonitorAlertRulesPage: React.FC = () => {
               color={row.enabled ? 'success.main' : 'text.disabled'}
               sx={{ fontWeight: 500 }}
             >
-              {row.enabled ? '启用' : '禁用'}
+              {row.enabled ? i18n.t('monitor.monitor_alert_rules_page.k30') : i18n.t('monitor.monitor_alert_rules_page.k29')}
             </Typography>
           </Box>
         ),
       },
       {
         id: 'last_triggered_at',
-        label: '最后触发时间',
+        label: i18n.t('monitor.monitor_alert_rules_page.k31'),
         render: (row) => (
           <Typography
             variant='body2'
@@ -447,30 +437,27 @@ const MonitorAlertRulesPage: React.FC = () => {
     ],
     [handleToggleStatus]
   );
-
   const customRowActions: RowAction<AlertRule>[] = useMemo(
     () => [
       {
-        label: '复制',
+        label: i18n.t('monitor.monitor_alert_rules_page.k32'),
         icon: <Copy size={16} />,
         onClick: (row) => handleCopy(row.id),
       },
       {
-        label: '启用/禁用',
+        label: i18n.t('monitor.monitor_alert_rules_page.k33'),
         icon: <Power size={16} />,
         onClick: (row) => handleToggleStatus(row.id),
       },
     ],
     [handleCopy, handleToggleStatus]
   );
-
   const headerContent = (rows: Record<string, unknown>[]) => {
     const ruleList = rows as unknown as AlertRule[];
     const total = ruleList.length;
     const enabledCount = ruleList.filter((r) => r.enabled).length;
     const disabledCount = ruleList.filter((r) => !r.enabled).length;
     const totalTriggersToday = ruleList.reduce((sum, r) => sum + r.trigger_count_today, 0);
-
     return (
       <Box
         sx={{
@@ -490,7 +477,7 @@ const MonitorAlertRulesPage: React.FC = () => {
               variant='body2'
               sx={{ color: 'text.secondary' }}
             >
-              规则总数
+              {i18n.t('pages.monitor_alert_rules_page.k0')}
             </Typography>
           </Box>
           <Typography
@@ -510,7 +497,7 @@ const MonitorAlertRulesPage: React.FC = () => {
               variant='body2'
               sx={{ color: 'text.secondary' }}
             >
-              启用规则
+              {i18n.t('pages.monitor_alert_rules_page.k1')}
             </Typography>
           </Box>
           <Typography
@@ -530,7 +517,7 @@ const MonitorAlertRulesPage: React.FC = () => {
               variant='body2'
               sx={{ color: 'text.secondary' }}
             >
-              禁用规则
+              {i18n.t('pages.monitor_alert_rules_page.k2')}
             </Typography>
           </Box>
           <Typography
@@ -550,7 +537,7 @@ const MonitorAlertRulesPage: React.FC = () => {
               variant='body2'
               sx={{ color: 'text.secondary' }}
             >
-              今日触发次数
+              {i18n.t('pages.monitor_alert_rules_page.k3')}
             </Typography>
           </Box>
           <Typography
@@ -563,7 +550,6 @@ const MonitorAlertRulesPage: React.FC = () => {
       </Box>
     );
   };
-
   return (
     <PageContainer
       headerProps={{
@@ -573,7 +559,7 @@ const MonitorAlertRulesPage: React.FC = () => {
       <CrudPage
         schema={alertRuleSchema}
         apiAdapter={mockApiAdapter as unknown as CrudApiAdapter}
-        breadcrumbs={[{ label: '监控' }, { label: '告警规则' }]}
+        breadcrumbs={[{ label: i18n.t('monitor.monitor_alert_rules_page.k35') }, { label: i18n.t('monitor.monitor_alert_rules_page.k34') }]}
         customColumns={customColumns as unknown as ColumnDef<Record<string, unknown>>[]}
         customRowActions={customRowActions as unknown as RowAction<Record<string, unknown>>[]}
         detailMaxWidth='md'
@@ -582,5 +568,4 @@ const MonitorAlertRulesPage: React.FC = () => {
     </PageContainer>
   );
 };
-
 export default MonitorAlertRulesPage;

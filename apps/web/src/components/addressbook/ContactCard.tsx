@@ -1,5 +1,7 @@
 import { User, Building, Users, Mail, Phone } from 'lucide-react';
 import type { AddressbookEntry } from '../../types/addressbook';
+import { designTokens } from '@topems/tokens';
+import i18n from '@/i18n';
 
 interface ContactCardProps {
   contact: AddressbookEntry;
@@ -55,7 +57,7 @@ export const ContactCard: React.FC<ContactCardProps> = ({ contact, onClick }) =>
         transition: 'box-shadow 0.2s',
       }}
       onMouseEnter={(e) => {
-        e.currentTarget.style.boxShadow = '0 4px 6px -1px rgba(0, 0, 0, 0.1)';
+        e.currentTarget.style.boxShadow = `0 4px 6px -1px ${designTokens.colors.action.selected}`;
       }}
       onMouseLeave={(e) => {
         e.currentTarget.style.boxShadow = 'none';
@@ -164,7 +166,7 @@ export const ContactCard: React.FC<ContactCardProps> = ({ contact, onClick }) =>
                 : { backgroundColor: 'error.lighter', color: 'error.darker' }),
             }}
           >
-            {contact.status === 'active' ? '在职' : '离职'}
+            {contact.status === 'active' ? i18n.t('shared.contact_card.k1') : i18n.t('shared.contact_card.k0')}
           </span>
         </div>
       </div>

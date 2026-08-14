@@ -1,3 +1,4 @@
+import i18n from '@/i18n';
 export type MemoryEntryType = 'user_query' | 'action_result' | 'system_event';
 export type Sentiment = 'positive' | 'negative' | 'neutral';
 export type Intent =
@@ -148,7 +149,7 @@ export class ContextEngine {
 
     this.emit({
       type: 'input_processed',
-      message: `输入已处理: ${input.slice(0, 50)}...`,
+      message: `${i18n.t('ai.context-engine.k0')}${input.slice(0, 50)}...`,
       timestamp: Date.now(),
       details: { intent, sentiment, entities: entities.length },
     });
@@ -173,7 +174,7 @@ export class ContextEngine {
       const assistantMessages = olderMessages.filter((m) => m.role === 'assistant');
 
       summaryParts.push(
-        `历史对话: ${userMessages.length} 条用户消息, ${assistantMessages.length} 条助手消息`
+        `${i18n.t('ai.context-engine.k1')}${userMessages.length}${i18n.t('ai.context-engine.k2')}${assistantMessages.length}${i18n.t('ai.context-engine.k3')}`
       );
 
       if (context.entities.length > 0) {
@@ -186,7 +187,7 @@ export class ContextEngine {
       }
 
       if (context.topics.length > 0) {
-        summaryParts.push(`主题: ${context.topics.slice(0, 3).join(', ')}`);
+        summaryParts.push(`${i18n.t('ai.context-engine.k4')}${context.topics.slice(0, 3).join(', ')}`);
       }
     }
 
@@ -195,7 +196,7 @@ export class ContextEngine {
 
     this.emit({
       type: 'context_summarized',
-      message: `上下文已总结: ${summary}`,
+      message: `${i18n.t('ai.context-engine.k5')}${summary}`,
       timestamp: Date.now(),
       details: { messageCount: context.messages.length },
     });
@@ -240,27 +241,27 @@ export class ContextEngine {
     }
 
     const actionWords = [
-      '创建',
-      '删除',
-      '更新',
-      '查询',
-      '生成',
-      '发送',
-      '获取',
-      '执行',
-      '运行',
-      '启动',
-      '停止',
-      '导入',
-      '导出',
-      '下载',
-      '创建',
-      '提交',
-      '审批',
-      '批准',
-      '拒绝',
-      '分配',
-      '指派',
+      i18n.t('ai.context-engine.k0'),
+      i18n.t('ai.context-engine.k1'),
+      i18n.t('ai.context-engine.k2'),
+      i18n.t('ai.context-engine.k3'),
+      i18n.t('ai.context-engine.k4'),
+      i18n.t('ai.context-engine.k5'),
+      i18n.t('ai.context-engine.k6'),
+      i18n.t('ai.context-engine.k7'),
+      i18n.t('ai.context-engine.k8'),
+      i18n.t('ai.context-engine.k9'),
+      i18n.t('ai.context-engine.k10'),
+      i18n.t('ai.context-engine.k11'),
+      i18n.t('ai.context-engine.k12'),
+      i18n.t('ai.context-engine.k13'),
+      i18n.t('ai.context-engine.k14'),
+      i18n.t('ai.context-engine.k15'),
+      i18n.t('ai.context-engine.k16'),
+      i18n.t('ai.context-engine.k17'),
+      i18n.t('ai.context-engine.k18'),
+      i18n.t('ai.context-engine.k19'),
+      i18n.t('ai.context-engine.k20'),
       'create',
       'delete',
       'update',
@@ -353,15 +354,15 @@ export class ContextEngine {
 
   analyzeSentiment(input: string): Sentiment {
     const positiveWords = [
-      '好',
-      '棒',
-      '优秀',
-      '喜欢',
-      '满意',
-      '赞',
-      '完美',
-      '谢谢',
-      '感谢',
+      i18n.t('ai.context-engine.k21'),
+      i18n.t('ai.context-engine.k22'),
+      i18n.t('ai.context-engine.k23'),
+      i18n.t('ai.context-engine.k24'),
+      i18n.t('ai.context-engine.k25'),
+      i18n.t('ai.context-engine.k26'),
+      i18n.t('ai.context-engine.k27'),
+      i18n.t('ai.context-engine.k28'),
+      i18n.t('ai.context-engine.k29'),
       'good',
       'great',
       'excellent',
@@ -373,14 +374,14 @@ export class ContextEngine {
     ];
 
     const negativeWords = [
-      '差',
-      '不好',
-      '糟糕',
-      '讨厌',
-      '失望',
-      '失败',
-      '错误',
-      '问题',
+      i18n.t('ai.context-engine.k30'),
+      i18n.t('ai.context-engine.k31'),
+      i18n.t('ai.context-engine.k32'),
+      i18n.t('ai.context-engine.k33'),
+      i18n.t('ai.context-engine.k34'),
+      i18n.t('ai.context-engine.k35'),
+      i18n.t('ai.context-engine.k36'),
+      i18n.t('ai.context-engine.k37'),
       'bug',
       'bad',
       'terrible',
@@ -444,7 +445,7 @@ export class ContextEngine {
 
     this.emit({
       type: 'memory_stored',
-      message: `记忆已存储: ${type}`,
+      message: `${i18n.t('ai.context-engine.k6')}${type}`,
       timestamp: Date.now(),
       details: { importance: entry.importance },
     });
@@ -509,12 +510,12 @@ export class ContextEngine {
     const topics = new Set<string>();
 
     const topicKeywords: Record<string, string[]> = {
-      技术: ['代码', '编程', 'bug', '错误', 'api', '接口', '函数', 'code', 'function'],
-      业务: ['订单', '客户', '销售', '采购', '库存', 'order', 'customer', 'sale'],
-      人事: ['员工', '部门', '考勤', '薪资', '请假', 'employee', 'attendance'],
-      财务: ['金额', '预算', '成本', '发票', '金额', 'money', 'budget', 'cost'],
-      报表: ['报告', '统计', '数据', '分析', 'report', 'data', 'analysis'],
-      沟通: ['通知', '消息', '邮件', '会议', 'notify', 'message', 'email', 'meeting'],
+      [i18n.t('ai.context-engine.k0')]: [i18n.t('ai.context-engine.k42'), i18n.t('ai.context-engine.k41'), 'bug', i18n.t('ai.context-engine.k40'), 'api', i18n.t('ai.context-engine.k39'), i18n.t('ai.context-engine.k38'), 'code', 'function'],
+      [i18n.t('ai.context-engine.k1')]: [i18n.t('ai.context-engine.k47'), i18n.t('ai.context-engine.k46'), i18n.t('ai.context-engine.k45'), i18n.t('ai.context-engine.k44'), i18n.t('ai.context-engine.k43'), 'order', 'customer', 'sale'],
+      [i18n.t('ai.context-engine.k2')]: [i18n.t('ai.context-engine.k52'), i18n.t('ai.context-engine.k51'), i18n.t('ai.context-engine.k50'), i18n.t('ai.context-engine.k49'), i18n.t('ai.context-engine.k48'), 'employee', 'attendance'],
+      [i18n.t('ai.context-engine.k3')]: [i18n.t('ai.context-engine.k53'), i18n.t('ai.context-engine.k56'), i18n.t('ai.context-engine.k55'), i18n.t('ai.context-engine.k54'), i18n.t('ai.context-engine.k57'), 'money', 'budget', 'cost'],
+      [i18n.t('ai.context-engine.k4')]: [i18n.t('ai.context-engine.k61'), i18n.t('ai.context-engine.k60'), i18n.t('ai.context-engine.k59'), i18n.t('ai.context-engine.k58'), 'report', 'data', 'analysis'],
+      [i18n.t('ai.context-engine.k5')]: [i18n.t('ai.context-engine.k65'), i18n.t('ai.context-engine.k64'), i18n.t('ai.context-engine.k63'), i18n.t('ai.context-engine.k62'), 'notify', 'message', 'email', 'meeting'],
     };
 
     const lower = input.toLowerCase();

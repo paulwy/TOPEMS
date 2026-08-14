@@ -12,6 +12,7 @@ import {
   Tooltip,
   useTheme,
 } from '@mui/material';
+import i18n from '@/i18n';
 import type { Theme } from '@mui/material/styles';
 import { ChevronRight, Columns3, MoreHorizontal } from 'lucide-react';
 import type { ColumnDef, RowAction } from './types';
@@ -340,7 +341,7 @@ export function TableSection<T>({
               <IconButton
                 size='small'
                 onClick={onOpenColumnConfig}
-                aria-label='配置列'
+                aria-label={i18n.t('templates.table_section.k0')}
               >
                 <Columns3 style={{ width: 18, height: 18 }} />
               </IconButton>
@@ -460,7 +461,7 @@ export function TableSection<T>({
                     e.stopPropagation();
                     onExpandRow?.(row);
                   }}
-                  aria-label='展开'
+                  aria-label={i18n.t('templates.table_section.k1')}
                 >
                   <ChevronRight
                     style={{
@@ -491,7 +492,7 @@ export function TableSection<T>({
                       e.stopPropagation();
                       onToggleExpand?.(rowId);
                     }}
-                    aria-label='展开'
+                    aria-label={i18n.t('templates.table_section.k2')}
                   >
                     <ChevronRight
                       style={{
@@ -572,7 +573,7 @@ export function TableSection<T>({
                   <IconButton
                     size='small'
                     onClick={(e) => onRowActionClick?.(e, row)}
-                    aria-label='更多'
+                    aria-label={i18n.t('templates.table_section.k3')}
                   >
                     <MoreHorizontal style={{ width: 18, height: 18 }} />
                   </IconButton>
@@ -592,7 +593,7 @@ export function TableSection<T>({
                               action.onClick?.(row);
                             }}
                             color={action.color}
-                            aria-label='更多'
+                            aria-label={i18n.t('templates.table_section.k4')}
                           >
                             {action.icon || <MoreHorizontal style={{ width: 16, height: 16 }} />}
                           </IconButton>
@@ -603,7 +604,7 @@ export function TableSection<T>({
                       <IconButton
                         size='small'
                         onClick={(e) => onRowActionClick?.(e, row)}
-                        aria-label='更多'
+                        aria-label={i18n.t('templates.table_section.k5')}
                       >
                         <MoreHorizontal style={{ width: 16, height: 16 }} />
                       </IconButton>

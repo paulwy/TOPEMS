@@ -1,9 +1,10 @@
 import type { EntitySchema } from '@/schema';
+import i18n from '@/i18n';
 
 export const formulaSchema: EntitySchema = {
   entity: 'pdm_formula',
-  title: '生产配方',
-  description: '管理生产配方，包括配方编号、产品名称、版本、状态等',
+  title: i18n.t('pdm.formula.k0'),
+  description: i18n.t('pdm.formula.k1'),
 
   api: {
     module: 'pdm',
@@ -13,7 +14,7 @@ export const formulaSchema: EntitySchema = {
   fields: [
     {
       name: 'formula_no',
-      label: '配方编号',
+      label: i18n.t('pdm.formula.k2'),
       type: 'text',
       required: true,
       readonlyOnEdit: true,
@@ -22,7 +23,7 @@ export const formulaSchema: EntitySchema = {
     },
     {
       name: 'name',
-      label: '产品名称',
+      label: i18n.t('pdm.formula.k3'),
       type: 'text',
       required: true,
       sortable: true,
@@ -30,43 +31,43 @@ export const formulaSchema: EntitySchema = {
     },
     {
       name: 'version',
-      label: '版本',
+      label: i18n.t('pdm.formula.k4'),
       type: 'text',
       defaultValue: '1.0',
       listWidth: 80,
     },
     {
       name: 'process_id',
-      label: '所属工艺',
+      label: i18n.t('pdm.formula.k5'),
       type: 'text',
       listWidth: 120,
       showInList: false,
     },
     {
       name: 'status',
-      label: '状态',
+      label: i18n.t('pdm.formula.k6'),
       type: 'select',
       defaultValue: 'draft',
       options: {
         type: 'static',
         options: [
-          { value: 'draft', label: '草稿' },
-          { value: 'active', label: '启用' },
-          { value: 'inactive', label: '禁用' },
-          { value: 'approved', label: '已批准' },
+          { value: 'draft', label: i18n.t('pdm.formula.k7') },
+          { value: 'active', label: i18n.t('pdm.formula.k8') },
+          { value: 'inactive', label: i18n.t('pdm.formula.k9') },
+          { value: 'approved', label: i18n.t('pdm.formula.k10') },
         ],
       },
       listWidth: 100,
     },
     {
       name: 'description',
-      label: '描述',
+      label: i18n.t('pdm.formula.k11'),
       type: 'textarea',
       showInList: false,
     },
     {
       name: 'created_at',
-      label: '创建时间',
+      label: i18n.t('pdm.formula.k12'),
       type: 'datetime',
       readonly: true,
       sortable: true,
@@ -75,7 +76,7 @@ export const formulaSchema: EntitySchema = {
     },
     {
       name: 'updated_at',
-      label: '更新时间',
+      label: i18n.t('pdm.formula.k13'),
       type: 'datetime',
       readonly: true,
       hideInForm: true,
@@ -96,23 +97,23 @@ export const formulaSchema: EntitySchema = {
         approved: 'info',
       },
       labelMap: {
-        draft: '草稿',
-        active: '启用',
-        inactive: '禁用',
-        approved: '已批准',
+        draft: i18n.t('pdm.formula.k14'),
+        active: i18n.t('pdm.formula.k15'),
+        inactive: i18n.t('pdm.formula.k16'),
+        approved: i18n.t('pdm.formula.k17'),
       },
     },
     filters: [
       {
         id: 'status',
-        label: '状态',
+        label: i18n.t('pdm.formula.k18'),
         type: 'select',
         options: [
-          { label: '全部状态', value: 'all' },
-          { label: '草稿', value: 'draft' },
-          { label: '启用', value: 'active' },
-          { label: '禁用', value: 'inactive' },
-          { label: '已批准', value: 'approved' },
+          { label: i18n.t('pdm.formula.k19'), value: 'all' },
+          { label: i18n.t('pdm.formula.k20'), value: 'draft' },
+          { label: i18n.t('pdm.formula.k21'), value: 'active' },
+          { label: i18n.t('pdm.formula.k22'), value: 'inactive' },
+          { label: i18n.t('pdm.formula.k23'), value: 'approved' },
         ],
       },
     ],
@@ -122,17 +123,17 @@ export const formulaSchema: EntitySchema = {
 
   formSections: [
     {
-      title: '基本信息',
+      title: i18n.t('pdm.formula.k24'),
       fields: ['formula_no', 'name', 'version', 'process_id'],
     },
     {
-      title: '状态与描述',
+      title: i18n.t('pdm.formula.k25'),
       fields: ['status', 'description'],
     },
   ],
 
   formColCount: 2,
-  createTitle: '新增配方',
-  editTitle: '编辑配方',
-  detailTitle: '配方详情',
+  createTitle: i18n.t('pdm.formula.k26'),
+  editTitle: i18n.t('pdm.formula.k27'),
+  detailTitle: i18n.t('pdm.formula.k28'),
 };

@@ -1,9 +1,8 @@
 import React from 'react';
-import { useTranslation } from 'react-i18next';
 import { Box, Tabs, Tab, FormControl, InputLabel, Select, MenuItem } from '@mui/material';
 import { PieChart, TrendingUp, Activity, Building2 } from 'lucide-react';
 import type { PeriodOption, TabConfig } from '../hooks/useFinancialReport';
-
+import i18n from '@/i18n';
 interface FinancialReportFiltersProps {
   activeTab: string;
   onTabChange: (value: string) => void;
@@ -14,14 +13,12 @@ interface FinancialReportFiltersProps {
   periodOptions: PeriodOption[];
   tabs: TabConfig[];
 }
-
 const TAB_ICONS: Record<string, React.ReactElement> = {
   'balance-sheet': <PieChart size={16} />,
   'income-statement': <TrendingUp size={16} />,
   'cash-flow': <Activity size={16} />,
   'equity-change': <Building2 size={16} />,
 };
-
 export const FinancialReportFilters: React.FC<FinancialReportFiltersProps> = ({
   activeTab,
   onTabChange,
@@ -32,8 +29,6 @@ export const FinancialReportFilters: React.FC<FinancialReportFiltersProps> = ({
   periodOptions,
   tabs,
 }) => {
-  const { t } = useTranslation();
-
   return (
     <Box
       sx={{
@@ -57,31 +52,30 @@ export const FinancialReportFilters: React.FC<FinancialReportFiltersProps> = ({
           />
         ))}
       </Tabs>
-
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
         <FormControl
           size='small'
           sx={{ minWidth: 120 }}
         >
-          <InputLabel>{t('erp.financial_report.label.period_type')}</InputLabel>
+          <InputLabel>{i18n.t('erp.financial_report.label.period_type')}</InputLabel>
           <Select
             value={periodType}
-            label={t('erp.financial_report.label.period_type')}
+            label={i18n.t('erp.financial_report.label.period_type')}
             onChange={(e) => onPeriodTypeChange(e.target.value)}
           >
-            <MenuItem value='year'>{t('erp.financial_report.label.year')}</MenuItem>
-            <MenuItem value='quarter'>{t('erp.financial_report.label.quarter')}</MenuItem>
-            <MenuItem value='month'>{t('erp.financial_report.label.month')}</MenuItem>
+            <MenuItem value='year'>{i18n.t('erp.financial_report.label.year')}</MenuItem>
+            <MenuItem value='quarter'>{i18n.t('erp.financial_report.label.quarter')}</MenuItem>
+            <MenuItem value='month'>{i18n.t('erp.financial_report.label.month')}</MenuItem>
           </Select>
         </FormControl>
         <FormControl
           size='small'
           sx={{ minWidth: 160 }}
         >
-          <InputLabel>{t('erp.financial_report.label.select_period')}</InputLabel>
+          <InputLabel>{i18n.t('erp.financial_report.label.select_period')}</InputLabel>
           <Select
             value={period}
-            label={t('erp.financial_report.label.select_period')}
+            label={i18n.t('erp.financial_report.label.select_period')}
             onChange={(e) => onPeriodChange(e.target.value)}
           >
             {periodOptions.map((opt) => (

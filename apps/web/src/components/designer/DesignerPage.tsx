@@ -17,6 +17,7 @@ import {
   Snackbar,
   Alert,
 } from '@mui/material';
+import i18n from '@/i18n';
 import { Layout, Undo2, Redo2, Trash2, Save } from 'lucide-react';
 import { useDesigner } from './useDesigner';
 import { ComponentPalette } from './ComponentPalette';
@@ -54,12 +55,12 @@ export function DesignerPage({ initialSchema, onSave, onCancel }: DesignerPagePr
 
   const handleSave = () => {
     if (!initialSchema) {
-      setSnack({ msg: '缺少基础 Schema，无法保存', severity: 'error' });
+      setSnack({ msg: i18n.t('components.designer_page.schema_0'), severity: 'error' });
       return;
     }
     const output = designer.exportSchema(initialSchema);
     onSave?.(output.schema);
-    setSnack({ msg: 'Schema 已导出', severity: 'success' });
+    setSnack({ msg: i18n.t('components.designer_page.schema_0'), severity: 'success' });
   };
 
   return (
@@ -86,29 +87,29 @@ export function DesignerPage({ initialSchema, onSave, onCancel }: DesignerPagePr
             style={{ marginRight: 8, verticalAlign: 'middle' }}
             size={18}
           />
-          页面设计器
+          {i18n.t('components.designer_page.k1')}
         </Typography>
 
-        <Tooltip title='撤销 (Ctrl+Z)'>
+        <Tooltip title={i18n.t('components.designer_page.ctrlz_2')}>
           <span>
             <IconButton
               onClick={designer.undo}
               disabled={!designer.canUndo}
               size='small'
-              aria-label='撤销'
+              aria-label={i18n.t('components.designer_page.k1')}
             >
               <Undo2 size={18} />
             </IconButton>
           </span>
         </Tooltip>
 
-        <Tooltip title='重做 (Ctrl+Y)'>
+        <Tooltip title={i18n.t('components.designer_page.ctrly_3')}>
           <span>
             <IconButton
               onClick={designer.redo}
               disabled={!designer.canRedo}
               size='small'
-              aria-label='重做'
+              aria-label={i18n.t('components.designer_page.k2')}
             >
               <Redo2 size={18} />
             </IconButton>
@@ -121,12 +122,12 @@ export function DesignerPage({ initialSchema, onSave, onCancel }: DesignerPagePr
           sx={{ mx: 1 }}
         />
 
-        <Tooltip title='清空画布'>
+        <Tooltip title={i18n.t('components.designer_page.k3')}>
           <IconButton
             onClick={designer.clear}
             size='small'
             color='error'
-            aria-label='清空画布'
+            aria-label={i18n.t('components.designer_page.k4')}
           >
             <Trash2 size={18} />
           </IconButton>
@@ -144,7 +145,7 @@ export function DesignerPage({ initialSchema, onSave, onCancel }: DesignerPagePr
             size='small'
             onClick={onCancel}
           >
-            取消
+            {i18n.t('components.designer_page.k4')}
           </Button>
         )}
 
@@ -154,7 +155,7 @@ export function DesignerPage({ initialSchema, onSave, onCancel }: DesignerPagePr
           startIcon={<Save size={16} />}
           onClick={handleSave}
         >
-          导出 Schema
+          {i18n.t('components.designer_page.schema_5')}
         </Button>
       </Paper>
 

@@ -1,9 +1,10 @@
 import type { EntitySchema } from '@/schema';
+import i18n from '@/i18n';
 
 export const attendanceSchema: EntitySchema = {
   entity: 'hrm_attendance',
-  title: '考勤记录',
-  description: '管理员工考勤记录，包括签到、签退、工作时长、状态等',
+  title: i18n.t('hrm.attendance.k0'),
+  description: i18n.t('hrm.attendance.k1'),
 
   api: {
     module: 'hrm',
@@ -13,21 +14,21 @@ export const attendanceSchema: EntitySchema = {
   fields: [
     {
       name: 'employee_id',
-      label: '员工ID',
+      label: i18n.t('hrm.attendance.id_2'),
       type: 'text',
       listWidth: 120,
       showInForm: false,
     },
     {
       name: 'employee_name',
-      label: '员工姓名',
+      label: i18n.t('hrm.attendance.k3'),
       type: 'text',
       listWidth: 150,
       showInForm: false,
     },
     {
       name: 'date',
-      label: '日期',
+      label: i18n.t('hrm.attendance.k4'),
       type: 'date',
       required: true,
       sortable: true,
@@ -35,52 +36,52 @@ export const attendanceSchema: EntitySchema = {
     },
     {
       name: 'check_in',
-      label: '签到时间',
+      label: i18n.t('hrm.attendance.k5'),
       type: 'datetime',
       listWidth: 120,
     },
     {
       name: 'check_out',
-      label: '签退时间',
+      label: i18n.t('hrm.attendance.k6'),
       type: 'datetime',
       listWidth: 120,
     },
     {
       name: 'check_in_time',
-      label: '签到时间',
+      label: i18n.t('hrm.attendance.k7'),
       type: 'text',
       showInList: false,
       showInForm: false,
     },
     {
       name: 'check_out_time',
-      label: '签退时间',
+      label: i18n.t('hrm.attendance.k8'),
       type: 'text',
       showInList: false,
       showInForm: false,
     },
     {
       name: 'work_hours',
-      label: '工作时长',
+      label: i18n.t('hrm.attendance.k9'),
       type: 'number',
       sortable: true,
       listWidth: 100,
     },
     {
       name: 'status',
-      label: '考勤状态',
+      label: i18n.t('hrm.attendance.k10'),
       type: 'select',
       required: true,
       defaultValue: 'normal',
       options: {
         type: 'static',
         options: [
-          { value: 'normal', label: '正常' },
-          { value: 'late', label: '迟到' },
-          { value: 'early_leave', label: '早退' },
-          { value: 'absent', label: '缺勤' },
-          { value: 'leave', label: '请假' },
-          { value: 'business_trip', label: '出差' },
+          { value: 'normal', label: i18n.t('hrm.attendance.k11') },
+          { value: 'late', label: i18n.t('hrm.attendance.k12') },
+          { value: 'early_leave', label: i18n.t('hrm.attendance.k13') },
+          { value: 'absent', label: i18n.t('hrm.attendance.k14') },
+          { value: 'leave', label: i18n.t('hrm.attendance.k15') },
+          { value: 'business_trip', label: i18n.t('hrm.attendance.k16') },
         ],
       },
       listWidth: 100,
@@ -88,14 +89,14 @@ export const attendanceSchema: EntitySchema = {
     },
     {
       name: 'attendance_status',
-      label: '考勤状态码',
+      label: i18n.t('hrm.attendance.k17'),
       type: 'text',
       showInList: false,
       showInForm: false,
     },
     {
       name: 'created_at',
-      label: '创建时间',
+      label: i18n.t('hrm.attendance.k18'),
       type: 'datetime',
       readonly: true,
       hideInForm: true,
@@ -104,7 +105,7 @@ export const attendanceSchema: EntitySchema = {
     },
     {
       name: 'updated_at',
-      label: '更新时间',
+      label: i18n.t('hrm.attendance.k19'),
       type: 'datetime',
       readonly: true,
       hideInForm: true,
@@ -128,27 +129,27 @@ export const attendanceSchema: EntitySchema = {
         business_trip: 'primary',
       },
       labelMap: {
-        normal: '正常',
-        late: '迟到',
-        early_leave: '早退',
-        absent: '缺勤',
-        leave: '请假',
-        business_trip: '出差',
+        normal: i18n.t('hrm.attendance.k20'),
+        late: i18n.t('hrm.attendance.k21'),
+        early_leave: i18n.t('hrm.attendance.k22'),
+        absent: i18n.t('hrm.attendance.k23'),
+        leave: i18n.t('hrm.attendance.k24'),
+        business_trip: i18n.t('hrm.attendance.k25'),
       },
     },
     filters: [
       {
         id: 'status',
-        label: '考勤状态',
+        label: i18n.t('hrm.attendance.k26'),
         type: 'select',
         options: [
-          { label: '全部状态', value: 'all' },
-          { value: 'normal', label: '正常' },
-          { value: 'late', label: '迟到' },
-          { value: 'early_leave', label: '早退' },
-          { value: 'absent', label: '缺勤' },
-          { value: 'leave', label: '请假' },
-          { value: 'business_trip', label: '出差' },
+          { label: i18n.t('hrm.attendance.k27'), value: 'all' },
+          { value: 'normal', label: i18n.t('hrm.attendance.k28') },
+          { value: 'late', label: i18n.t('hrm.attendance.k29') },
+          { value: 'early_leave', label: i18n.t('hrm.attendance.k30') },
+          { value: 'absent', label: i18n.t('hrm.attendance.k31') },
+          { value: 'leave', label: i18n.t('hrm.attendance.k32') },
+          { value: 'business_trip', label: i18n.t('hrm.attendance.k33') },
         ],
       },
     ],
@@ -158,17 +159,17 @@ export const attendanceSchema: EntitySchema = {
 
   formSections: [
     {
-      title: '基本信息',
+      title: i18n.t('hrm.attendance.k34'),
       fields: ['employee_id', 'date', 'status'],
     },
     {
-      title: '打卡记录',
+      title: i18n.t('hrm.attendance.k35'),
       fields: ['check_in', 'check_out', 'work_hours'],
     },
   ],
 
   formColCount: 2,
-  createTitle: '新增考勤记录',
-  editTitle: '编辑考勤记录',
-  detailTitle: '考勤详情',
+  createTitle: i18n.t('hrm.attendance.k36'),
+  editTitle: i18n.t('hrm.attendance.k37'),
+  detailTitle: i18n.t('hrm.attendance.k38'),
 };

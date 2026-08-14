@@ -2,6 +2,7 @@ import type { Meta, StoryObj } from '@storybook/react-vite';
 import { Box, Typography, Button, Paper, Chip, Stack, Divider } from '@mui/material';
 import ThemePresetSwitcher from './ThemePresetSwitcher';
 import { themePresets, type ThemePreset } from '@/theme/presets';
+import { designTokens } from '@topems/tokens';
 
 // ============ Meta ============
 
@@ -335,7 +336,7 @@ export const ColorPaletteGrid: Story = {
                     sx={{
                       fontSize: 9,
                       fontWeight: 500,
-                      color: shade >= 500 ? 'rgba(255,255,255,0.9)' : 'rgba(0,0,0,0.5)',
+                      color: shade >= 500 ? designTokens.colors.cyber.metal.topLight : designTokens.colors.cyber.glass.divider,
                       userSelect: 'none',
                     }}
                   >

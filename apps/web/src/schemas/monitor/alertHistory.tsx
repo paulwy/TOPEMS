@@ -9,20 +9,21 @@ import React from 'react';
 import { Box, Chip, Typography, Paper, Stack } from '@mui/material';
 import { Clock, AlertTriangle, AlertCircle, CheckCircle, Bell } from 'lucide-react';
 import type { EntitySchema, SchemaField } from '@/schema';
+import i18n from '@/i18n';
 
 type AlertSeverity = 'critical' | 'warning' | 'info';
 type AlertStatus = 'active' | 'acknowledged' | 'resolved';
 
 const SEVERITY_LABELS: Record<string, string> = {
-  critical: '严重',
-  warning: '警告',
-  info: '信息',
+  critical: i18n.t('shared.alert_history.k0'),
+  warning: i18n.t('shared.alert_history.k1'),
+  info: i18n.t('shared.alert_history.k2'),
 };
 
 const STATUS_LABELS: Record<string, string> = {
-  active: '未处理',
-  acknowledged: '已确认',
-  resolved: '已解决',
+  active: i18n.t('shared.alert_history.k3'),
+  acknowledged: i18n.t('shared.alert_history.k4'),
+  resolved: i18n.t('shared.alert_history.k5'),
 };
 
 const getSeverityColor = (severity: string): 'error' | 'warning' | 'info' | 'default' => {
@@ -54,7 +55,7 @@ const getStatusColor = (status: string): 'error' | 'warning' | 'success' | 'defa
 const alertHistoryFields: SchemaField[] = [
   {
     name: 'severity',
-    label: '级别',
+    label: i18n.t('shared.alert_history.k6'),
     type: 'select',
     listWidth: 100,
     renderCell: (row: Record<string, unknown>) => (
@@ -68,7 +69,7 @@ const alertHistoryFields: SchemaField[] = [
   },
   {
     name: 'title',
-    label: '告警标题',
+    label: i18n.t('shared.alert_history.k7'),
     type: 'text',
     minWidth: 200,
     renderCell: (row: Record<string, unknown>) => (
@@ -84,19 +85,19 @@ const alertHistoryFields: SchemaField[] = [
   },
   {
     name: 'service_name',
-    label: '来源服务',
+    label: i18n.t('shared.alert_history.k8'),
     type: 'text',
     listWidth: 140,
   },
   {
     name: 'alert_type',
-    label: '类型',
+    label: i18n.t('shared.alert_history.k9'),
     type: 'text',
     listWidth: 120,
   },
   {
     name: 'created_at',
-    label: '触发时间',
+    label: i18n.t('shared.alert_history.k10'),
     type: 'datetime',
     listWidth: 160,
     sortable: true,
@@ -105,7 +106,7 @@ const alertHistoryFields: SchemaField[] = [
   },
   {
     name: 'status',
-    label: '状态',
+    label: i18n.t('shared.alert_history.k11'),
     type: 'select',
     listWidth: 100,
     renderCell: (row: Record<string, unknown>) => (
@@ -119,7 +120,7 @@ const alertHistoryFields: SchemaField[] = [
   },
   {
     name: 'message',
-    label: '告警描述',
+    label: i18n.t('shared.alert_history.k12'),
     type: 'textarea',
     showInList: false,
     showInDetail: true,
@@ -127,7 +128,7 @@ const alertHistoryFields: SchemaField[] = [
   },
   {
     name: 'acknowledged_at',
-    label: '确认时间',
+    label: i18n.t('shared.alert_history.k13'),
     type: 'datetime',
     showInList: false,
     showInDetail: true,
@@ -135,7 +136,7 @@ const alertHistoryFields: SchemaField[] = [
   },
   {
     name: 'resolved_at',
-    label: '解决时间',
+    label: i18n.t('shared.alert_history.k14'),
     type: 'datetime',
     showInList: false,
     showInDetail: true,
@@ -143,7 +144,7 @@ const alertHistoryFields: SchemaField[] = [
   },
   {
     name: 'acknowledged_by',
-    label: '确认人',
+    label: i18n.t('shared.alert_history.k15'),
     type: 'text',
     showInList: false,
     showInDetail: true,
@@ -151,7 +152,7 @@ const alertHistoryFields: SchemaField[] = [
   },
   {
     name: 'resolved_by',
-    label: '解决人',
+    label: i18n.t('shared.alert_history.k16'),
     type: 'text',
     showInList: false,
     showInDetail: true,
@@ -159,7 +160,7 @@ const alertHistoryFields: SchemaField[] = [
   },
   {
     name: 'resolution_note',
-    label: '解决备注',
+    label: i18n.t('shared.alert_history.k17'),
     type: 'textarea',
     showInList: false,
     showInDetail: true,
@@ -185,7 +186,7 @@ const renderHistoryDetail = (row: Record<string, unknown>): React.ReactNode => {
               color='text.secondary'
               gutterBottom
             >
-              基本信息
+              {i18n.t('schemas.alert_history.k0')}
             </Typography>
             <Stack spacing={1.5}>
               <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -193,7 +194,7 @@ const renderHistoryDetail = (row: Record<string, unknown>): React.ReactNode => {
                   variant='body2'
                   color='text.secondary'
                 >
-                  级别
+                  {i18n.t('schemas.alert_history.k1')}
                 </Typography>
                 <Chip
                   size='small'
@@ -206,7 +207,7 @@ const renderHistoryDetail = (row: Record<string, unknown>): React.ReactNode => {
                   variant='body2'
                   color='text.secondary'
                 >
-                  状态
+                  {i18n.t('schemas.alert_history.k2')}
                 </Typography>
                 <Chip
                   size='small'
@@ -220,7 +221,7 @@ const renderHistoryDetail = (row: Record<string, unknown>): React.ReactNode => {
                   variant='body2'
                   color='text.secondary'
                 >
-                  来源服务
+                  {i18n.t('schemas.alert_history.k3')}
                 </Typography>
                 <Typography
                   variant='body2'
@@ -234,7 +235,7 @@ const renderHistoryDetail = (row: Record<string, unknown>): React.ReactNode => {
                   variant='body2'
                   color='text.secondary'
                 >
-                  告警类型
+                  {i18n.t('schemas.alert_history.k4')}
                 </Typography>
                 <Typography
                   variant='body2'
@@ -248,7 +249,7 @@ const renderHistoryDetail = (row: Record<string, unknown>): React.ReactNode => {
                   variant='body2'
                   color='text.secondary'
                 >
-                  触发时间
+                  {i18n.t('schemas.alert_history.k5')}
                 </Typography>
                 <Typography
                   variant='body2'
@@ -267,7 +268,7 @@ const renderHistoryDetail = (row: Record<string, unknown>): React.ReactNode => {
               color='text.secondary'
               gutterBottom
             >
-              处理信息
+              {i18n.t('schemas.alert_history.k6')}
             </Typography>
             <Stack spacing={1.5}>
               {!!row.acknowledged_at && (
@@ -276,7 +277,7 @@ const renderHistoryDetail = (row: Record<string, unknown>): React.ReactNode => {
                     variant='body2'
                     color='text.secondary'
                   >
-                    确认时间
+                    {i18n.t('schemas.alert_history.k7')}
                   </Typography>
                   <Typography
                     variant='body2'
@@ -292,7 +293,7 @@ const renderHistoryDetail = (row: Record<string, unknown>): React.ReactNode => {
                     variant='body2'
                     color='text.secondary'
                   >
-                    确认人
+                    {i18n.t('schemas.alert_history.k8')}
                   </Typography>
                   <Typography
                     variant='body2'
@@ -308,7 +309,7 @@ const renderHistoryDetail = (row: Record<string, unknown>): React.ReactNode => {
                     variant='body2'
                     color='text.secondary'
                   >
-                    解决时间
+                    {i18n.t('schemas.alert_history.k9')}
                   </Typography>
                   <Typography
                     variant='body2'
@@ -324,7 +325,7 @@ const renderHistoryDetail = (row: Record<string, unknown>): React.ReactNode => {
                     variant='body2'
                     color='text.secondary'
                   >
-                    解决人
+                    {i18n.t('schemas.alert_history.k10')}
                   </Typography>
                   <Typography
                     variant='body2'
@@ -339,7 +340,7 @@ const renderHistoryDetail = (row: Record<string, unknown>): React.ReactNode => {
                   variant='body2'
                   color='text.disabled'
                 >
-                  暂无处理记录
+                  {i18n.t('schemas.alert_history.k11')}
                 </Typography>
               )}
             </Stack>
@@ -357,7 +358,7 @@ const renderHistoryDetail = (row: Record<string, unknown>): React.ReactNode => {
           color='text.secondary'
           gutterBottom
         >
-          告警描述
+          {i18n.t('schemas.alert_history.k12')}
         </Typography>
         <Typography
           variant='body2'
@@ -377,7 +378,7 @@ const renderHistoryDetail = (row: Record<string, unknown>): React.ReactNode => {
             color='text.secondary'
             gutterBottom
           >
-            解决备注
+            {i18n.t('schemas.alert_history.k13')}
           </Typography>
           <Typography variant='body2'>{row.resolution_note as string}</Typography>
         </Paper>
@@ -388,8 +389,8 @@ const renderHistoryDetail = (row: Record<string, unknown>): React.ReactNode => {
 
 export const alertHistorySchema: EntitySchema = {
   entity: 'monitor_alert_history',
-  title: '告警历史',
-  description: '查看和处理所有告警记录',
+  title: i18n.t('shared.alert_history.k18'),
+  description: i18n.t('shared.alert_history.k19'),
 
   api: {
     module: 'monitor',
@@ -404,36 +405,36 @@ export const alertHistorySchema: EntitySchema = {
     filters: [
       {
         id: 'severity',
-        label: '严重级别',
+        label: i18n.t('shared.alert_history.k20'),
         type: 'select',
         options: [
-          { label: '全部级别', value: 'all' },
-          { label: '严重', value: 'critical' },
-          { label: '警告', value: 'warning' },
-          { label: '信息', value: 'info' },
+          { label: i18n.t('shared.alert_history.k21'), value: 'all' },
+          { label: i18n.t('shared.alert_history.k22'), value: 'critical' },
+          { label: i18n.t('shared.alert_history.k23'), value: 'warning' },
+          { label: i18n.t('shared.alert_history.k24'), value: 'info' },
         ],
       },
       {
         id: 'status',
-        label: '状态',
+        label: i18n.t('shared.alert_history.k25'),
         type: 'select',
         options: [
-          { label: '全部状态', value: 'all' },
-          { label: '未处理', value: 'active' },
-          { label: '已确认', value: 'acknowledged' },
-          { label: '已解决', value: 'resolved' },
+          { label: i18n.t('shared.alert_history.k26'), value: 'all' },
+          { label: i18n.t('shared.alert_history.k27'), value: 'active' },
+          { label: i18n.t('shared.alert_history.k28'), value: 'acknowledged' },
+          { label: i18n.t('shared.alert_history.k29'), value: 'resolved' },
         ],
       },
       {
         id: 'timeRange',
-        label: '时间范围',
+        label: i18n.t('shared.alert_history.k30'),
         type: 'select',
         defaultValue: '7d',
         options: [
-          { label: '近1小时', value: '1h' },
-          { label: '近24小时', value: '24h' },
-          { label: '近7天', value: '7d' },
-          { label: '近30天', value: '30d' },
+          { label: i18n.t('shared.alert_history.1_31'), value: '1h' },
+          { label: i18n.t('shared.alert_history.24_32'), value: '24h' },
+          { label: i18n.t('shared.alert_history.7_33'), value: '7d' },
+          { label: i18n.t('shared.alert_history.30_34'), value: '30d' },
         ],
       },
     ],
@@ -442,7 +443,7 @@ export const alertHistorySchema: EntitySchema = {
   actions: ['detail'],
 
   formColCount: 2,
-  detailTitle: '告警详情',
+  detailTitle: i18n.t('shared.alert_history.k35'),
   detailMaxWidth: 'lg',
 
   renderDetail: renderHistoryDetail,

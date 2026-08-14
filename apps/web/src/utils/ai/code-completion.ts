@@ -1,4 +1,5 @@
 import { CACHE_DURATIONS, QUERY_KEYS, queryClient } from '@/lib/reactQuery';
+import i18n from '@/i18n';
 
 /**
  * V47.0 前端 AI 增强 — 智能代码补全引擎
@@ -96,7 +97,7 @@ const REACT_SNIPPETS: CodeSnippet[] = [
   {
     id: 'react-component',
     name: 'React Function Component',
-    description: '创建一个 React 函数组件',
+    description: i18n.t('shared.code-completion.react_0'),
     language: 'typescript',
     prefix: 'rfc',
     body: `interface \${1:ComponentName}Props {
@@ -116,7 +117,7 @@ export function \${1:ComponentName}({ \${2:children} }: \${1:ComponentName}Props
   {
     id: 'react-use-state',
     name: 'useState Hook',
-    description: '创建 useState 状态钩子',
+    description: i18n.t('shared.code-completion.usestate_1'),
     language: 'typescript',
     prefix: 'useState',
     body: `const [\${1:state}, set\${1:State}] = useState<\${2:type}>(\${3:initialValue});`,
@@ -126,7 +127,7 @@ export function \${1:ComponentName}({ \${2:children} }: \${1:ComponentName}Props
   {
     id: 'react-use-effect',
     name: 'useEffect Hook',
-    description: '创建 useEffect 副作用钩子',
+    description: i18n.t('shared.code-completion.useeffect_2'),
     language: 'typescript',
     prefix: 'useEffect',
     body: `useEffect(() => {
@@ -141,7 +142,7 @@ export function \${1:ComponentName}({ \${2:children} }: \${1:ComponentName}Props
   {
     id: 'react-use-callback',
     name: 'useCallback Hook',
-    description: '创建 useCallback 记忆化回调',
+    description: i18n.t('shared.code-completion.usecallback_3'),
     language: 'typescript',
     prefix: 'useCallback',
     body: `const \${1:callback} = useCallback((\${2:params}) => {
@@ -153,7 +154,7 @@ export function \${1:ComponentName}({ \${2:children} }: \${1:ComponentName}Props
   {
     id: 'react-use-memo',
     name: 'useMemo Hook',
-    description: '创建 useMemo 记忆化值',
+    description: i18n.t('shared.code-completion.usememo_4'),
     language: 'typescript',
     prefix: 'useMemo',
     body: `const \${1:memoValue} = useMemo(() => {
@@ -165,7 +166,7 @@ export function \${1:ComponentName}({ \${2:children} }: \${1:ComponentName}Props
   {
     id: 'react-use-ref',
     name: 'useRef Hook',
-    description: '创建 useRef 引用钩子',
+    description: i18n.t('shared.code-completion.useref_5'),
     language: 'typescript',
     prefix: 'useRef',
     body: `const \${1:ref} = useRef<\${2:type}>(\${3:initialValue});`,
@@ -175,7 +176,7 @@ export function \${1:ComponentName}({ \${2:children} }: \${1:ComponentName}Props
   {
     id: 'react-use-query',
     name: 'useQuery Hook (TanStack Query)',
-    description: '创建 TanStack Query 数据查询钩子',
+    description: i18n.t('shared.code-completion.k6'),
     language: 'typescript',
     prefix: 'useQuery',
     body: `const { data, isPending, error } = useQuery({
@@ -189,7 +190,7 @@ export function \${1:ComponentName}({ \${2:children} }: \${1:ComponentName}Props
   {
     id: 'react-use-mutation',
     name: 'useMutation Hook (TanStack Query)',
-    description: '创建 TanStack Query 数据变更钩子',
+    description: i18n.t('shared.code-completion.k7'),
     language: 'typescript',
     prefix: 'useMutation',
     body: `const { mutate, isPending } = useMutation({
@@ -213,7 +214,7 @@ const TYPESCRIPT_SNIPPETS: CodeSnippet[] = [
   {
     id: 'ts-interface',
     name: 'TypeScript Interface',
-    description: '定义 TypeScript 接口',
+    description: i18n.t('shared.code-completion.typescript_8'),
     language: 'typescript',
     prefix: 'interface',
     body: `interface \${1:Name} {
@@ -226,7 +227,7 @@ const TYPESCRIPT_SNIPPETS: CodeSnippet[] = [
   {
     id: 'ts-type-alias',
     name: 'TypeScript Type Alias',
-    description: '定义 TypeScript 类型别名',
+    description: i18n.t('shared.code-completion.typescript_9'),
     language: 'typescript',
     prefix: 'type',
     body: `type \${1:Name} = \${2:type};`,
@@ -236,7 +237,7 @@ const TYPESCRIPT_SNIPPETS: CodeSnippet[] = [
   {
     id: 'ts-enum',
     name: 'TypeScript Enum',
-    description: '定义 TypeScript 枚举',
+    description: i18n.t('shared.code-completion.typescript_10'),
     language: 'typescript',
     prefix: 'enum',
     body: `enum \${1:Name} {
@@ -249,7 +250,7 @@ const TYPESCRIPT_SNIPPETS: CodeSnippet[] = [
   {
     id: 'ts-generic-function',
     name: 'Generic Function',
-    description: '定义泛型函数',
+    description: i18n.t('shared.code-completion.k11'),
     language: 'typescript',
     prefix: 'gfn',
     body: `function \${1:name}<\${2:T}>(\${3:arg}: \${2:T}): \${2:T} {
@@ -262,7 +263,7 @@ const TYPESCRIPT_SNIPPETS: CodeSnippet[] = [
   {
     id: 'ts-async-function',
     name: 'Async Function',
-    description: '定义异步函数',
+    description: i18n.t('shared.code-completion.k12'),
     language: 'typescript',
     prefix: 'async',
     body: `async function \${1:name}(\${2:params}): Promise<\${3:type}> {
@@ -274,7 +275,7 @@ const TYPESCRIPT_SNIPPETS: CodeSnippet[] = [
   {
     id: 'ts-class',
     name: 'TypeScript Class',
-    description: '定义 TypeScript 类',
+    description: i18n.t('shared.code-completion.typescript_13'),
     language: 'typescript',
     prefix: 'class',
     body: `class \${1:Name} {
@@ -292,7 +293,7 @@ const TYPESCRIPT_SNIPPETS: CodeSnippet[] = [
   {
     id: 'ts-import-type',
     name: 'Import Type',
-    description: '导入类型定义',
+    description: i18n.t('shared.code-completion.k14'),
     language: 'typescript',
     prefix: 'import type',
     body: `import type { \${1:Type} } from '\${2:path}';`,
@@ -302,7 +303,7 @@ const TYPESCRIPT_SNIPPETS: CodeSnippet[] = [
   {
     id: 'ts-zod-schema',
     name: 'Zod Schema',
-    description: '定义 Zod 验证模式',
+    description: i18n.t('shared.code-completion.zod_15'),
     language: 'typescript',
     prefix: 'zod',
     body: `const \${1:schema} = z.object({
@@ -335,9 +336,9 @@ const PATTERN_RULES: PatternRule[] = [
       text: 'log(',
       insert_text: 'log($0)',
       type: CompletionType.SNIPPET,
-      description: 'console.log 调试输出',
+      description: i18n.t('shared.code-completion.consolelog_0'),
     },
-    description: '匹配 console. 并建议 log',
+    description: i18n.t('shared.code-completion.consolelog_1'),
   },
   {
     id: 'use-state-pattern',
@@ -347,9 +348,9 @@ const PATTERN_RULES: PatternRule[] = [
       text: 'useState(',
       insert_text: 'useState($0)',
       type: CompletionType.SNIPPET,
-      description: 'React useState 钩子',
+      description: i18n.t('shared.code-completion.reactusestate_2'),
     },
-    description: '匹配 const xxx = 并建议 useState',
+    description: i18n.t('shared.code-completion.k3'),
   },
   {
     id: 'arrow-function',
@@ -359,9 +360,9 @@ const PATTERN_RULES: PatternRule[] = [
       text: '{ ',
       insert_text: '{\n  $0\n}',
       type: CompletionType.SNIPPET,
-      description: '箭头函数体',
+      description: i18n.t('shared.code-completion.k16'),
     },
-    description: '匹配 => 并建议函数体块',
+    description: i18n.t('shared.code-completion.k4'),
   },
   {
     id: 'if-statement',
@@ -371,9 +372,9 @@ const PATTERN_RULES: PatternRule[] = [
       text: '(condition) {',
       insert_text: '($1) {\n  $0\n}',
       type: CompletionType.SNIPPET,
-      description: 'if 条件语句',
+      description: i18n.t('shared.code-completion.if_5'),
     },
-    description: '匹配 if 并建议条件语句结构',
+    description: i18n.t('shared.code-completion.if_17'),
   },
   {
     id: 'try-catch',
@@ -383,9 +384,9 @@ const PATTERN_RULES: PatternRule[] = [
       text: ' {',
       insert_text: ' {\n  $0\n} catch (error) {\n  console.error(error);\n}',
       type: CompletionType.TEMPLATE,
-      description: 'try-catch 错误处理',
+      description: i18n.t('shared.code-completion.trycatch_6'),
     },
-    description: '匹配 try 并建议 try-catch 结构',
+    description: i18n.t('shared.code-completion.k18'),
   },
 ];
 
@@ -560,10 +561,10 @@ export class CodeCompletionEngine {
           text: variable.name,
           type: CompletionType.VARIABLE,
           confidence: this.calculateVariableConfidence(variable, context),
-          description: `变量: ${variable.name} (${variable.type})`,
+          description: `${i18n.t('shared.code-completion.k7')}${variable.name} (${variable.type})`,
           insert_text: variable.name,
           cursor_offset: variable.name.length,
-          detail: `作用域: ${variable.scope}${variable.is_const ? ' (const)' : ''}`,
+          detail: `${i18n.t('shared.code-completion.k8')}${variable.scope}${variable.is_const ? ' (const)' : ''}`,
         });
       }
     }
@@ -576,10 +577,10 @@ export class CodeCompletionEngine {
             text: item,
             type: CompletionType.IMPORT,
             confidence: 0.7,
-            description: `导入: ${item} (from ${imp.path})`,
+            description: `${i18n.t('shared.code-completion.k9')}${item} (from ${imp.path})`,
             insert_text: item,
             cursor_offset: item.length,
-            detail: imp.is_default ? '默认导出' : imp.is_namespace ? '命名空间导入' : '命名导入',
+            detail: imp.is_default ? i18n.t('shared.code-completion.k21') : imp.is_namespace ? i18n.t('shared.code-completion.k20') : i18n.t('shared.code-completion.k19'),
           });
         }
       }
@@ -596,7 +597,7 @@ export class CodeCompletionEngine {
           description: snippet.description,
           insert_text: snippet.body,
           cursor_offset: 0,
-          detail: `片段: ${snippet.name}`,
+          detail: `${i18n.t('shared.code-completion.k10')}${snippet.name}`,
           documentation: snippet.body,
           preselect: currentWord === snippet.prefix,
         });
@@ -633,7 +634,7 @@ export class CodeCompletionEngine {
         text: `${varName}Value`,
         type: CompletionType.VARIABLE,
         confidence: 0.5,
-        description: `推断变量: ${varName}`,
+        description: `${i18n.t('shared.code-completion.k11')}${varName}`,
         insert_text: `${varName}Value`,
         cursor_offset: `${varName}Value`.length,
       });
@@ -655,7 +656,7 @@ export class CodeCompletionEngine {
           description: rule.description,
           insert_text: rule.suggestion.insert_text ?? rule.suggestion.text ?? '',
           cursor_offset: 0,
-          detail: `模式: ${rule.name}`,
+          detail: `${i18n.t('shared.code-completion.k12')}${rule.name}`,
         });
       }
     }
@@ -679,10 +680,10 @@ export class CodeCompletionEngine {
           text: nlMapping.name,
           type: CompletionType.NATURALLANGUAGE,
           confidence: 0.8,
-          description: `从描述生成: ${description}`,
+          description: `${i18n.t('shared.code-completion.k13')}${description}`,
           insert_text: nlMapping.body,
           cursor_offset: 0,
-          detail: `匹配模板: ${nlMapping.name}`,
+          detail: `${i18n.t('shared.code-completion.k14')}${nlMapping.name}`,
           documentation: nlMapping.body,
         });
       }
@@ -742,7 +743,7 @@ export class CodeCompletionEngine {
       description: `${type}.${method}()`,
       insert_text: `${method}($0)`,
       cursor_offset: method.length,
-      detail: `方法: ${method}`,
+      detail: `${i18n.t('shared.code-completion.k15')}${method}`,
     }));
   }
 

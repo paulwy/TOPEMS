@@ -7,6 +7,7 @@ import type { DevicePoint, Pipeline, StorageLocation } from '../../api/gis';
 import { X, RotateCcw, Maximize2 } from 'lucide-react';
 import { Box as MuiBox, Typography, IconButton, Paper } from '@mui/material';
 import { designTokens, semanticTokens } from '@topems/tokens';
+import i18n from '@/i18n';
 
 interface Map3DViewProps {
   devicePoints: DevicePoint[];
@@ -73,7 +74,7 @@ function DeviceMarker({
           style={{
             background: 'action.active',
             color: 'common.white',
-            padding: '8px 12px',
+            padding: `${designTokens.spacing.sm} 12px`,
             borderRadius: '4px',
             fontSize: '12px',
             pointerEvents: 'none',
@@ -125,7 +126,7 @@ function StorageMarker({
           style={{
             background: 'action.active',
             color: 'common.white',
-            padding: '8px 12px',
+            padding: `${designTokens.spacing.sm} 12px`,
             borderRadius: '4px',
             fontSize: '12px',
             pointerEvents: 'none',
@@ -133,7 +134,7 @@ function StorageMarker({
           }}
         >
           <div style={{ fontWeight: 500 }}>{name}</div>
-          <div style={{ fontSize: '0.75rem', opacity: 0.75 }}>仓储位置</div>
+          <div style={{ fontSize: '0.75rem', opacity: 0.75 }}>{i18n.t('gis.map3_d_view.k0')}</div>
         </Html>
       )}
     </group>
@@ -225,9 +226,9 @@ function Scene({
 }) {
   const getStatusColor = (status: string) => {
     const s = status.toLowerCase();
-    if (s.includes('active') || s.includes('启用')) return '#00C897';
-    if (s.includes('pending') || s.includes('待处理')) return 'warning.main';
-    if (s.includes('inactive') || s.includes('禁用')) return 'error.main';
+    if (s.includes('active') || s.includes(i18n.t('gis.map3_d_view.k1'))) return '#00C897';
+    if (s.includes('pending') || s.includes(i18n.t('gis.map3_d_view.k2'))) return 'warning.main';
+    if (s.includes('inactive') || s.includes(i18n.t('gis.map3_d_view.k3'))) return 'error.main';
     return 'text.secondary';
   };
 
@@ -331,7 +332,7 @@ const Map3DView: React.FC<Map3DViewProps> = ({
           }}
         >
           <Maximize2 size={20} />
-          3D 视图
+          {i18n.t('components.map3_d_view.3d_0')}
         </Typography>
         <MuiBox sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
           <IconButton
@@ -341,8 +342,8 @@ const Map3DView: React.FC<Map3DViewProps> = ({
               color: 'common.white',
               '&:hover': { bgcolor: 'action.disabledBackground' },
             }}
-            aria-label='重置视角'
-            title='重置视角'
+            aria-label={i18n.t('gis.map3_d_view.k4')}
+            title={i18n.t('gis.map3_d_view.k5')}
           >
             <RotateCcw size={16} />
           </IconButton>
@@ -353,7 +354,7 @@ const Map3DView: React.FC<Map3DViewProps> = ({
               color: 'common.white',
               '&:hover': { bgcolor: 'action.disabledBackground' },
             }}
-            aria-label='关闭'
+            aria-label={i18n.t('gis.map3_d_view.k6')}
           >
             <X size={20} />
           </IconButton>
@@ -401,7 +402,7 @@ const Map3DView: React.FC<Map3DViewProps> = ({
                   bgcolor: 'success.dark',
                 }}
               />
-              <Typography variant='caption'>设备点位</Typography>
+              <Typography variant='caption'>{i18n.t('gis.map3_d_view.k7')}</Typography>
             </MuiBox>
             <MuiBox sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
               <MuiBox
@@ -412,11 +413,11 @@ const Map3DView: React.FC<Map3DViewProps> = ({
                   bgcolor: 'warning.main',
                 }}
               />
-              <Typography variant='caption'>仓储位置</Typography>
+              <Typography variant='caption'>{i18n.t('gis.map3_d_view.k8')}</Typography>
             </MuiBox>
             <MuiBox sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
               <MuiBox sx={{ width: 24, height: 2, bgcolor: 'primary.light' }} />
-              <Typography variant='caption'>管线</Typography>
+              <Typography variant='caption'>{i18n.t('gis.map3_d_view.k9')}</Typography>
             </MuiBox>
             <MuiBox
               sx={{
@@ -447,7 +448,7 @@ const Map3DView: React.FC<Map3DViewProps> = ({
           }}
         >
           <MuiBox sx={{ fontSize: '0.75rem' }}>
-            <Typography sx={{ fontWeight: 500, mb: 1 }}>统计信息</Typography>
+            <Typography sx={{ fontWeight: 500, mb: 1 }}>{i18n.t('gis.map3_d_view.k10')}</Typography>
             <Typography variant='caption'>设备: {devicePoints.length}</Typography>
             <Typography variant='caption'>管线: {pipelines.length}</Typography>
             <Typography variant='caption'>仓储: {storageLocations.length}</Typography>

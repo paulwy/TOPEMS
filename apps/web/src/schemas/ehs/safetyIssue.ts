@@ -1,9 +1,10 @@
 import type { EntitySchema } from '@/schema';
+import i18n from '@/i18n';
 
 export const safetyIssueSchema: EntitySchema = {
   entity: 'ehsSafetyIssue',
-  title: '隐患管理',
-  description: '管理企业安全隐患信息，包括隐患等级、类别、来源、状态及整改流程',
+  title: i18n.t('ehs.safety_issue.k0'),
+  description: i18n.t('ehs.safety_issue.k1'),
 
   api: {
     module: 'ehs',
@@ -13,7 +14,7 @@ export const safetyIssueSchema: EntitySchema = {
   fields: [
     {
       name: 'hazard_no',
-      label: '隐患编号',
+      label: i18n.t('ehs.safety_issue.k2'),
       type: 'text',
       readonlyOnEdit: true,
       listWidth: 140,
@@ -21,7 +22,7 @@ export const safetyIssueSchema: EntitySchema = {
     },
     {
       name: 'title',
-      label: '隐患名称',
+      label: i18n.t('ehs.safety_issue.k3'),
       type: 'text',
       required: true,
       sortable: true,
@@ -29,98 +30,98 @@ export const safetyIssueSchema: EntitySchema = {
     },
     {
       name: 'category',
-      label: '隐患类别',
+      label: i18n.t('ehs.safety_issue.k4'),
       type: 'select',
       required: true,
       defaultValue: 'equipment',
       options: {
         type: 'static',
         options: [
-          { value: 'equipment', label: '设备隐患' },
-          { value: 'environment', label: '环境隐患' },
-          { value: 'behavior', label: '行为隐患' },
-          { value: 'management', label: '管理隐患' },
-          { value: 'fire', label: '消防隐患' },
-          { value: 'electrical', label: '电气隐患' },
-          { value: 'chemical', label: '化学品隐患' },
-          { value: 'structural', label: '结构隐患' },
+          { value: 'equipment', label: i18n.t('ehs.safety_issue.k5') },
+          { value: 'environment', label: i18n.t('ehs.safety_issue.k6') },
+          { value: 'behavior', label: i18n.t('ehs.safety_issue.k7') },
+          { value: 'management', label: i18n.t('ehs.safety_issue.k8') },
+          { value: 'fire', label: i18n.t('ehs.safety_issue.k9') },
+          { value: 'electrical', label: i18n.t('ehs.safety_issue.k10') },
+          { value: 'chemical', label: i18n.t('ehs.safety_issue.k11') },
+          { value: 'structural', label: i18n.t('ehs.safety_issue.k12') },
         ],
       },
       listWidth: 120,
       renderCell: (row: Record<string, unknown>) => {
         const v = row.category as string;
         const map: Record<string, string> = {
-          equipment: '设备隐患',
-          environment: '环境隐患',
-          behavior: '行为隐患',
-          management: '管理隐患',
-          fire: '消防隐患',
-          electrical: '电气隐患',
-          chemical: '化学品隐患',
-          structural: '结构隐患',
+          equipment: i18n.t('ehs.safety_issue.k13'),
+          environment: i18n.t('ehs.safety_issue.k14'),
+          behavior: i18n.t('ehs.safety_issue.k15'),
+          management: i18n.t('ehs.safety_issue.k16'),
+          fire: i18n.t('ehs.safety_issue.k17'),
+          electrical: i18n.t('ehs.safety_issue.k18'),
+          chemical: i18n.t('ehs.safety_issue.k19'),
+          structural: i18n.t('ehs.safety_issue.k20'),
         };
         return map[v] || v || '-';
       },
     },
     {
       name: 'level',
-      label: '隐患等级',
+      label: i18n.t('ehs.safety_issue.k21'),
       type: 'select',
       required: true,
       defaultValue: 'general',
       options: {
         type: 'static',
         options: [
-          { value: 'major', label: '重大隐患' },
-          { value: 'serious', label: '严重隐患' },
-          { value: 'general', label: '一般隐患' },
-          { value: 'minor', label: '轻微隐患' },
+          { value: 'major', label: i18n.t('ehs.safety_issue.k22') },
+          { value: 'serious', label: i18n.t('ehs.safety_issue.k23') },
+          { value: 'general', label: i18n.t('ehs.safety_issue.k24') },
+          { value: 'minor', label: i18n.t('ehs.safety_issue.k25') },
         ],
       },
       listWidth: 110,
       renderCell: (row: Record<string, unknown>) => {
         const v = row.level as string;
         const map: Record<string, string> = {
-          major: '重大隐患',
-          serious: '严重隐患',
-          general: '一般隐患',
-          minor: '轻微隐患',
+          major: i18n.t('ehs.safety_issue.k26'),
+          serious: i18n.t('ehs.safety_issue.k27'),
+          general: i18n.t('ehs.safety_issue.k28'),
+          minor: i18n.t('ehs.safety_issue.k29'),
         };
         return map[v] || v || '-';
       },
     },
     {
       name: 'source',
-      label: '来源',
+      label: i18n.t('ehs.safety_issue.k30'),
       type: 'select',
       required: true,
       defaultValue: 'inspection',
       options: {
         type: 'static',
         options: [
-          { value: 'inspection', label: '检查发现' },
-          { value: 'reporting', label: '员工上报' },
-          { value: 'audit', label: '审计发现' },
-          { value: 'accident', label: '事故排查' },
-          { value: 'monitoring', label: '监测预警' },
+          { value: 'inspection', label: i18n.t('ehs.safety_issue.k31') },
+          { value: 'reporting', label: i18n.t('ehs.safety_issue.k32') },
+          { value: 'audit', label: i18n.t('ehs.safety_issue.k33') },
+          { value: 'accident', label: i18n.t('ehs.safety_issue.k34') },
+          { value: 'monitoring', label: i18n.t('ehs.safety_issue.k35') },
         ],
       },
       listWidth: 110,
       renderCell: (row: Record<string, unknown>) => {
         const v = row.source as string;
         const map: Record<string, string> = {
-          inspection: '检查发现',
-          reporting: '员工上报',
-          audit: '审计发现',
-          accident: '事故排查',
-          monitoring: '监测预警',
+          inspection: i18n.t('ehs.safety_issue.k36'),
+          reporting: i18n.t('ehs.safety_issue.k37'),
+          audit: i18n.t('ehs.safety_issue.k38'),
+          accident: i18n.t('ehs.safety_issue.k39'),
+          monitoring: i18n.t('ehs.safety_issue.k40'),
         };
         return map[v] || v || '-';
       },
     },
     {
       name: 'location',
-      label: '位置',
+      label: i18n.t('ehs.safety_issue.k41'),
       type: 'text',
       listWidth: 140,
       renderCell: (row: Record<string, unknown>) => {
@@ -130,7 +131,7 @@ export const safetyIssueSchema: EntitySchema = {
     },
     {
       name: 'reported_by',
-      label: '上报人',
+      label: i18n.t('ehs.safety_issue.k42'),
       type: 'text',
       listWidth: 110,
       renderCell: (row: Record<string, unknown>) => {
@@ -140,7 +141,7 @@ export const safetyIssueSchema: EntitySchema = {
     },
     {
       name: 'reported_at',
-      label: '上报时间',
+      label: i18n.t('ehs.safety_issue.k43'),
       type: 'datetime',
       listWidth: 160,
       showInForm: false,
@@ -151,18 +152,18 @@ export const safetyIssueSchema: EntitySchema = {
     },
     {
       name: 'status',
-      label: '状态',
+      label: i18n.t('ehs.safety_issue.k44'),
       type: 'select',
       defaultValue: 'reported',
       options: {
         type: 'static',
         options: [
-          { value: 'reported', label: '已上报' },
-          { value: 'rectifying', label: '整改中' },
-          { value: 'pending_verification', label: '待验收' },
-          { value: 'verified', label: '已验收' },
-          { value: 'closed', label: '已闭环' },
-          { value: 'rejected', label: '已驳回' },
+          { value: 'reported', label: i18n.t('ehs.safety_issue.k45') },
+          { value: 'rectifying', label: i18n.t('ehs.safety_issue.k46') },
+          { value: 'pending_verification', label: i18n.t('ehs.safety_issue.k47') },
+          { value: 'verified', label: i18n.t('ehs.safety_issue.k48') },
+          { value: 'closed', label: i18n.t('ehs.safety_issue.k49') },
+          { value: 'rejected', label: i18n.t('ehs.safety_issue.k50') },
         ],
       },
       listWidth: 100,
@@ -170,7 +171,7 @@ export const safetyIssueSchema: EntitySchema = {
     },
     {
       name: 'description',
-      label: '隐患描述',
+      label: i18n.t('ehs.safety_issue.k51'),
       type: 'textarea',
       showInList: false,
       colSpan: 2,
@@ -201,39 +202,39 @@ export const safetyIssueSchema: EntitySchema = {
         rejected: 'error',
       },
       labelMap: {
-        reported: '已上报',
-        rectifying: '整改中',
-        pending_verification: '待验收',
-        verified: '已验收',
-        closed: '已闭环',
-        rejected: '已驳回',
+        reported: i18n.t('ehs.safety_issue.k52'),
+        rectifying: i18n.t('ehs.safety_issue.k53'),
+        pending_verification: i18n.t('ehs.safety_issue.k54'),
+        verified: i18n.t('ehs.safety_issue.k55'),
+        closed: i18n.t('ehs.safety_issue.k56'),
+        rejected: i18n.t('ehs.safety_issue.k57'),
       },
     },
     filters: [
       {
         id: 'level',
-        label: '隐患等级',
+        label: i18n.t('ehs.safety_issue.k58'),
         type: 'select',
         options: [
-          { label: '全部', value: 'all' },
-          { label: '重大隐患', value: 'major' },
-          { label: '严重隐患', value: 'serious' },
-          { label: '一般隐患', value: 'general' },
-          { label: '轻微隐患', value: 'minor' },
+          { label: i18n.t('ehs.safety_issue.k59'), value: 'all' },
+          { label: i18n.t('ehs.safety_issue.k60'), value: 'major' },
+          { label: i18n.t('ehs.safety_issue.k61'), value: 'serious' },
+          { label: i18n.t('ehs.safety_issue.k62'), value: 'general' },
+          { label: i18n.t('ehs.safety_issue.k63'), value: 'minor' },
         ],
       },
       {
         id: 'status',
-        label: '状态',
+        label: i18n.t('ehs.safety_issue.k64'),
         type: 'select',
         options: [
-          { label: '全部', value: 'all' },
-          { label: '已上报', value: 'reported' },
-          { label: '整改中', value: 'rectifying' },
-          { label: '待验收', value: 'pending_verification' },
-          { label: '已验收', value: 'verified' },
-          { label: '已闭环', value: 'closed' },
-          { label: '已驳回', value: 'rejected' },
+          { label: i18n.t('ehs.safety_issue.k65'), value: 'all' },
+          { label: i18n.t('ehs.safety_issue.k66'), value: 'reported' },
+          { label: i18n.t('ehs.safety_issue.k67'), value: 'rectifying' },
+          { label: i18n.t('ehs.safety_issue.k68'), value: 'pending_verification' },
+          { label: i18n.t('ehs.safety_issue.k69'), value: 'verified' },
+          { label: i18n.t('ehs.safety_issue.k70'), value: 'closed' },
+          { label: i18n.t('ehs.safety_issue.k71'), value: 'rejected' },
         ],
       },
     ],
@@ -243,21 +244,21 @@ export const safetyIssueSchema: EntitySchema = {
 
   formSections: [
     {
-      title: '基本信息',
+      title: i18n.t('ehs.safety_issue.k72'),
       fields: ['title', 'category', 'level'],
     },
     {
-      title: '来源与位置',
+      title: i18n.t('ehs.safety_issue.k73'),
       fields: ['source', 'location', 'reported_by'],
     },
     {
-      title: '隐患描述',
+      title: i18n.t('ehs.safety_issue.k74'),
       fields: ['description'],
     },
   ],
 
   formColCount: 2,
-  createTitle: '上报隐患',
-  editTitle: '编辑隐患',
-  detailTitle: '隐患详情',
+  createTitle: i18n.t('ehs.safety_issue.k75'),
+  editTitle: i18n.t('ehs.safety_issue.k76'),
+  detailTitle: i18n.t('ehs.safety_issue.k77'),
 };

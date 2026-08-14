@@ -13,22 +13,22 @@ import {
   Tooltip,
   Legend,
 } from 'recharts';
+import i18n from '@/i18n';
 import type { EnergyCostData } from '@/api/mes/types';
 import { designTokens, semanticTokens } from '@topems/tokens';
-
 function useEnergyMock(): EnergyCostData {
   return useMemo(() => {
-    const workshops = ['一车间', '二车间', '三车间', '四车间', '五车间', '六车间'];
+    const workshops = [i18n.t('mes.mes_energy_cost_page.k5'), i18n.t('mes.mes_energy_cost_page.k4'), i18n.t('mes.mes_energy_cost_page.k3'), i18n.t('mes.mes_energy_cost_page.k2'), i18n.t('mes.mes_energy_cost_page.k1'), i18n.t('mes.mes_energy_cost_page.k0')];
     return {
       per_unit_trend: Array.from({ length: 30 }, (_, i) => ({
         date: `D${i + 1}`,
         kwh_per_unit: Number((2.4 + Math.sin(i / 4) * 0.4 + (i % 7) * 0.03).toFixed(2)),
       })),
       energy_mix: [
-        { type: '电力', percentage: 62, cost: 184000 },
-        { type: '天然气', percentage: 21, cost: 62000 },
-        { type: '蒸汽', percentage: 11, cost: 33000 },
-        { type: '水', percentage: 6, cost: 18000 },
+        { type: i18n.t('mes.mes_energy_cost_page.k6'), percentage: 62, cost: 184000 },
+        { type: i18n.t('mes.mes_energy_cost_page.k7'), percentage: 21, cost: 62000 },
+        { type: i18n.t('mes.mes_energy_cost_page.k8'), percentage: 11, cost: 33000 },
+        { type: i18n.t('mes.mes_energy_cost_page.k9'), percentage: 6, cost: 18000 },
       ],
       workshop_top_n: workshops
         .map((w, i) => ({
@@ -39,36 +39,32 @@ function useEnergyMock(): EnergyCostData {
     };
   }, []);
 }
-
 const STACKED_TREND = Array.from({ length: 12 }, (_, i) => ({
   month: `M${i + 1}`,
-  电力: Math.round(15000 + Math.sin(i / 2) * 2000),
-  天然气: Math.round(5000 + Math.cos(i / 3) * 800),
-  蒸汽: Math.round(2800 + ((i * 100) % 600)),
-  水: Math.round(1500 + ((i * 80) % 300)),
+  [i18n.t('pages.mes_energy_cost_page.k0')]: Math.round(15000 + Math.sin(i / 2) * 2000),
+  [i18n.t('pages.mes_energy_cost_page.k1')]: Math.round(5000 + Math.cos(i / 3) * 800),
+  [i18n.t('pages.mes_energy_cost_page.k2')]: Math.round(2800 + ((i * 100) % 600)),
+  [i18n.t('pages.mes_energy_cost_page.k3')]: Math.round(1500 + ((i * 80) % 300)),
 }));
-
 export default function MesEnergyCostPage() {
   const data = useEnergyMock();
   const [energyType, setEnergyType] = useState('all');
-
   return (
     <div className="space-y-4 p-4">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">能耗成本分析</h1>
+        <h1 className="text-2xl font-bold">{i18n.t('mes.mes_energy_cost_page.k10')}</h1>
         <select
           value={energyType}
           onChange={(e) => setEnergyType(e.target.value)}
           className="border rounded px-3 py-1.5 text-sm"
-          aria-label="能源类型"
+          aria-label={i18n.t('mes.mes_energy_cost_page.k11')}
         >
-          <option value="all">全部能源</option>
-          <option value="elec">电力</option>
-          <option value="gas">天然气</option>
-          <option value="steam">蒸汽</option>
+          <option value="all">{i18n.t('mes.mes_energy_cost_page.k12')}</option>
+          <option value="elec">{i18n.t('mes.mes_energy_cost_page.k13')}</option>
+          <option value="gas">{i18n.t('mes.mes_energy_cost_page.k14')}</option>
+          <option value="steam">{i18n.t('mes.mes_energy_cost_page.k15')}</option>
         </select>
       </div>
-
       <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
         {data.energy_mix.map((e, idx) => {
           const colors = [designTokens.colors.secondary.dark, designTokens.colors.warning.main, designTokens.colors.success.dark, designTokens.colors.primary.main];
@@ -83,9 +79,8 @@ export default function MesEnergyCostPage() {
           );
         })}
       </div>
-
       <div className="rounded-lg border p-4">
-        <h3 className="mb-2 font-semibold">单位产品能耗趋势（30 天）</h3>
+        <h3 className="mb-2 font-semibold">{i18n.t('mes.mes_energy_cost_page.30_16')}</h3>
         <ResponsiveContainer width="100%" height={260}>
           <LineChart data={data.per_unit_trend}>
             <CartesianGrid strokeDasharray="3 3" />
@@ -95,7 +90,7 @@ export default function MesEnergyCostPage() {
             <Line
               type="monotone"
               dataKey="kwh_per_unit"
-              name="单位能耗"
+              name={i18n.t('mes.mes_energy_cost_page.k17')}
               stroke={designTokens.colors.secondary.dark}
               strokeWidth={2}
               dot={false}
@@ -103,10 +98,9 @@ export default function MesEnergyCostPage() {
           </LineChart>
         </ResponsiveContainer>
       </div>
-
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
         <div className="rounded-lg border p-4">
-          <h3 className="mb-2 font-semibold">能源占比堆叠（12 月）</h3>
+          <h3 className="mb-2 font-semibold">{i18n.t('mes.mes_energy_cost_page.12_18')}</h3>
           <ResponsiveContainer width="100%" height={260}>
             <AreaChart data={STACKED_TREND}>
               <CartesianGrid strokeDasharray="3 3" />
@@ -116,39 +110,38 @@ export default function MesEnergyCostPage() {
               <Legend />
               <Area
                 type="monotone"
-                dataKey="电力"
+                dataKey={i18n.t('mes.mes_energy_cost_page.k19')}
                 stackId="1"
                 stroke={designTokens.colors.secondary.dark}
                 fill={designTokens.colors.secondary.dark}
               />
               <Area
                 type="monotone"
-                dataKey="天然气"
+                dataKey={i18n.t('mes.mes_energy_cost_page.k20')}
                 stackId="1"
                 stroke={designTokens.colors.warning.main}
                 fill={designTokens.colors.warning.main}
               />
               <Area
                 type="monotone"
-                dataKey="蒸汽"
+                dataKey={i18n.t('mes.mes_energy_cost_page.k21')}
                 stackId="1"
                 stroke={designTokens.colors.success.dark}
                 fill={designTokens.colors.success.dark}
               />
-              <Area type="monotone" dataKey="水" stackId="1" stroke={designTokens.colors.primary.main} fill={designTokens.colors.primary.main} />
+              <Area type="monotone" dataKey={i18n.t('mes.mes_energy_cost_page.k22')} stackId="1" stroke={designTokens.colors.primary.main} fill={designTokens.colors.primary.main} />
             </AreaChart>
           </ResponsiveContainer>
         </div>
-
         <div className="rounded-lg border p-4">
-          <h3 className="mb-2 font-semibold">车间成本 Top N</h3>
+          <h3 className="mb-2 font-semibold">{i18n.t('mes.mes_energy_cost_page.topn_23')}</h3>
           <ResponsiveContainer width="100%" height={260}>
             <BarChart data={data.workshop_top_n} layout="vertical">
               <CartesianGrid strokeDasharray="3 3" />
               <XAxis type="number" unit="¥" />
               <YAxis dataKey="workshop" type="category" width={70} fontSize={11} />
               <Tooltip />
-              <Bar dataKey="cost" name="能耗成本" fill={designTokens.colors.error.main} radius={[0, 4, 4, 0]} />
+              <Bar dataKey="cost" name={i18n.t('mes.mes_energy_cost_page.k24')} fill={designTokens.colors.error.main} radius={[0, 4, 4, 0]} />
             </BarChart>
           </ResponsiveContainer>
         </div>

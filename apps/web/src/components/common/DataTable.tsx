@@ -31,6 +31,7 @@ import {
   FormControl,
   InputLabel,
 } from '@mui/material';
+import i18n from '@/i18n';
 import {
   Search,
   Filter,
@@ -188,7 +189,7 @@ function DataTableVirtualRow({ index, style, ...data }: RowComponentProps<Virtua
                 e.stopPropagation();
                 handleRowExpand(row.original);
               }}
-              aria-label='展开'
+              aria-label={i18n.t('shared.data_table.k0')}
             >
               <ChevronDown sx={{ width: 18, height: 18 }} />
             </IconButton>
@@ -595,13 +596,13 @@ export function DataTable<TData, TValue>({
   columns,
   data,
   searchKey,
-  searchPlaceholder = '搜索...',
+  searchPlaceholder = i18n.t('components.data_table.k0'),
   showSearch = true,
   showFilters = true,
   showExport = true,
   showSelection = false,
   showCreate = false,
-  createLabel = '新建',
+  createLabel = i18n.t('shared.data_table.k1'),
   onCreate,
   exportFileName = 'export',
   enablePagination = true,
@@ -617,7 +618,7 @@ export function DataTable<TData, TValue>({
   onRefresh,
   loading = false,
   responsive = true,
-  emptyMessage = '暂无数据',
+  emptyMessage = i18n.t('shared.data_table.k2'),
   getRowKey = (row: TData): string =>
     (row as unknown as Record<string, unknown>).id?.toString() ||
     (row as unknown as Record<string, unknown>).key?.toString() ||
@@ -812,8 +813,8 @@ export function DataTable<TData, TValue>({
       if (Object.keys(rowChanges).length > 0) {
         await onInlineEditSave(row, rowChanges);
         addNotification({
-          title: '保存成功',
-          message: '数据已成功更新',
+          title: i18n.t('shared.data_table.k3'),
+          message: i18n.t('shared.data_table.k4'),
           type: 'success',
         });
       }
@@ -839,14 +840,14 @@ export function DataTable<TData, TValue>({
     );
     if (result.success) {
       addNotification({
-        title: '导出成功',
-        message: '数据已成功导出为 CSV 文件',
+        title: i18n.t('shared.data_table.k5'),
+        message: i18n.t('shared.data_table.csv_6'),
         type: 'success',
       });
     } else {
       addNotification({
-        title: '导出失败',
-        message: '导出过程中发生错误',
+        title: i18n.t('shared.data_table.k7'),
+        message: i18n.t('shared.data_table.k8'),
         type: 'error',
       });
     }
@@ -860,14 +861,14 @@ export function DataTable<TData, TValue>({
     );
     if (result.success) {
       addNotification({
-        title: '导出成功',
-        message: '数据已成功导出为 Excel 文件',
+        title: i18n.t('shared.data_table.k9'),
+        message: i18n.t('shared.data_table.excel_10'),
         type: 'success',
       });
     } else {
       addNotification({
-        title: '导出失败',
-        message: '导出过程中发生错误',
+        title: i18n.t('shared.data_table.k11'),
+        message: i18n.t('shared.data_table.k12'),
         type: 'error',
       });
     }
@@ -934,7 +935,7 @@ export function DataTable<TData, TValue>({
                 onClick={() => setShowAdvancedFilterDialog(true)}
                 startIcon={<Filter style={{ width: 16, height: 16 }} />}
               >
-                高级筛选
+                {i18n.t('components.data_table.k0')}
               </Button>
             )}
           </Box>
@@ -955,7 +956,7 @@ export function DataTable<TData, TValue>({
                 onClick={onRefresh}
                 startIcon={<RefreshCw style={{ width: 16, height: 16 }} />}
               >
-                刷新
+                {i18n.t('components.data_table.k1')}
               </Button>
             )}
 
@@ -968,7 +969,7 @@ export function DataTable<TData, TValue>({
                   endIcon={<ChevronDown style={{ width: 16, height: 16 }} />}
                   startIcon={<Download style={{ width: 16, height: 16 }} />}
                 >
-                  导出
+                  {i18n.t('components.data_table.k2')}
                 </Button>
                 <Menu
                   anchorEl={exportAnchorEl}
@@ -977,8 +978,8 @@ export function DataTable<TData, TValue>({
                   anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
                   transformOrigin={{ vertical: 'top', horizontal: 'right' }}
                 >
-                  <MenuItem onClick={handleExportCSV}>导出 CSV</MenuItem>
-                  <MenuItem onClick={handleExportExcel}>导出 Excel</MenuItem>
+                  <MenuItem onClick={handleExportCSV}>{i18n.t('shared.data_table.csv_13')}</MenuItem>
+                  <MenuItem onClick={handleExportExcel}>{i18n.t('shared.data_table.excel_14')}</MenuItem>
                 </Menu>
               </>
             )}
@@ -990,7 +991,7 @@ export function DataTable<TData, TValue>({
                 onClick={handleMenuOpen}
                 startIcon={<Settings2 style={{ width: 16, height: 16 }} />}
               >
-                列设置
+                {i18n.t('components.data_table.k3')}
               </Button>
             </Box>
 
@@ -1035,7 +1036,7 @@ export function DataTable<TData, TValue>({
                   color='primary'
                   sx={{ mx: 0.5 }}
                 />{' '}
-                条记录
+                {i18n.t('components.data_table.k4')}
               </Box>
             </Box>
             {onSelectionChange && (
@@ -1044,7 +1045,7 @@ export function DataTable<TData, TValue>({
                 size='small'
                 onClick={() => onSelectionChange([])}
               >
-                取消选择
+                {i18n.t('components.data_table.k5')}
               </Button>
             )}
           </Box>
@@ -1088,7 +1089,7 @@ export function DataTable<TData, TValue>({
             handleMenuClose();
           }}
         >
-          重置列配置
+          {i18n.t('components.data_table.k6')}
         </MenuItem>
       </Menu>
 
@@ -1209,7 +1210,7 @@ export function DataTable<TData, TValue>({
                           bgcolor: 'grey.50',
                         }}
                       >
-                        展开
+                        {i18n.t('components.data_table.k7')}
                       </TableCell>
                     )}
                     {/* 数据列 */}
@@ -1263,7 +1264,7 @@ export function DataTable<TData, TValue>({
                           variant='body2'
                           color='text.secondary'
                         >
-                          加载中...
+                          {i18n.t('components.data_table.k8')}
                         </Typography>
                       </Box>
                     </TableCell>
@@ -1373,7 +1374,7 @@ export function DataTable<TData, TValue>({
                                     e.stopPropagation();
                                     handleRowExpand(row.original);
                                   }}
-                                  aria-label='展开'
+                                  aria-label={i18n.t('shared.data_table.k15')}
                                 >
                                   {isExpanded ? (
                                     <ChevronUp sx={{ width: 18, height: 18 }} />
@@ -1456,7 +1457,7 @@ export function DataTable<TData, TValue>({
                                       size='small'
                                       color='success'
                                       onClick={() => handleSaveEdit(row.original, rowKey)}
-                                      aria-label='保存'
+                                      aria-label={i18n.t('shared.data_table.k16')}
                                     >
                                       <Save sx={{ width: 16, height: 16 }} />
                                     </IconButton>
@@ -1464,7 +1465,7 @@ export function DataTable<TData, TValue>({
                                       size='small'
                                       color='error'
                                       onClick={handleCancelEdit}
-                                      aria-label='关闭'
+                                      aria-label={i18n.t('shared.data_table.k17')}
                                     >
                                       <XCircle sx={{ width: 16, height: 16 }} />
                                     </IconButton>
@@ -1566,7 +1567,7 @@ export function DataTable<TData, TValue>({
                   variant='body2'
                   color='text.secondary'
                 >
-                  每页
+                  {i18n.t('components.data_table.k9')}
                 </Typography>
                 <Select
                   size='small'
@@ -1593,13 +1594,13 @@ export function DataTable<TData, TValue>({
               disabled={!table.getCanPreviousPage()}
               sx={{ display: { xs: 'none', sm: 'flex' } }}
             >
-              上一页
+              {i18n.t('components.data_table.k10')}
             </Button>
             <IconButton
               onClick={() => table.previousPage()}
               disabled={!table.getCanPreviousPage()}
               sx={{ display: { xs: 'flex', sm: 'none' } }}
-              aria-label='展开'
+              aria-label={i18n.t('shared.data_table.k18')}
             >
               <ChevronLeft sx={{ width: 20, height: 20 }} />
             </IconButton>
@@ -1620,13 +1621,13 @@ export function DataTable<TData, TValue>({
               disabled={!table.getCanNextPage()}
               sx={{ display: { xs: 'none', sm: 'flex' } }}
             >
-              下一页
+              {i18n.t('components.data_table.k11')}
             </Button>
             <IconButton
               onClick={() => table.nextPage()}
               disabled={!table.getCanNextPage()}
               sx={{ display: { xs: 'flex', sm: 'none' } }}
-              aria-label='展开'
+              aria-label={i18n.t('shared.data_table.k19')}
             >
               <ChevronRight sx={{ width: 20, height: 20 }} />
             </IconButton>
@@ -1642,7 +1643,7 @@ export function DataTable<TData, TValue>({
           maxWidth='sm'
           fullWidth
         >
-          <DialogTitle>高级筛选</DialogTitle>
+          <DialogTitle>{i18n.t('shared.data_table.k20')}</DialogTitle>
           <DialogContent>
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 2 }}>
               {advancedFilters.map((filter) => (
@@ -1676,7 +1677,7 @@ export function DataTable<TData, TValue>({
                         '&:focus': { borderColor: 'primary.main' },
                       }}
                     >
-                      <option value=''>全部</option>
+                      <option value=''>{i18n.t('shared.data_table.k21')}</option>
                       {filter.options.map((option) => (
                         <option
                           key={option.value}
@@ -1712,13 +1713,13 @@ export function DataTable<TData, TValue>({
                     setShowAdvancedFilterDialog(false);
                   }}
                 >
-                  重置
+                  {i18n.t('components.data_table.k12')}
                 </Button>
                 <Button
                   variant='contained'
                   onClick={() => setShowAdvancedFilterDialog(false)}
                 >
-                  应用筛选
+                  {i18n.t('components.data_table.k13')}
                 </Button>
               </Box>
             </Box>
@@ -1782,7 +1783,7 @@ export function MobileCardView<TData>({
   displayFields,
   onRowClick,
   loading = false,
-  emptyMessage = '暂无数据',
+  emptyMessage = i18n.t('shared.data_table.k22'),
   getRowKey = (row: TData) =>
     (row as unknown as Record<string, unknown>).id?.toString() || Math.random().toString(),
   showSelection = false,
@@ -1845,7 +1846,7 @@ export function MobileCardView<TData>({
         const rowObj = row as unknown as Record<string, unknown>;
         const title = titleKey
           ? rowObj[titleKey]
-          : rowObj.name || rowObj.title || `项目 ${index + 1}`;
+          : rowObj.name || rowObj.title || `${i18n.t('components.data_table.k1')}${index + 1}`;
         const subtitle = subtitleKey ? rowObj[subtitleKey] : rowObj.code || rowObj.no || '';
 
         // 确定展示的字段列表
@@ -1936,8 +1937,8 @@ export function MobileCardView<TData>({
                       ? '-'
                       : typeof value === 'boolean'
                         ? value
-                          ? '是'
-                          : '否'
+                          ? i18n.t('shared.data_table.k23')
+                          : i18n.t('shared.data_table.k24')
                         : String(value);
 
                   return (

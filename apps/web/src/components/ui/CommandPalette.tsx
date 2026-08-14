@@ -12,6 +12,7 @@ import {
   Chip,
   useTheme,
 } from '@mui/material';
+import i18n from '@/i18n';
 import {
   Search,
   ArrowRight,
@@ -99,8 +100,8 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({ open, onClose })
     () => [
       {
         id: 'theme-toggle',
-        label: '切换主题',
-        description: '切换浅色/深色模式',
+        label: i18n.t('components.command_palette.k0'),
+        description: i18n.t('components.command_palette.k1'),
         icon: <Moon style={{ width: 18, height: 18 }} />,
         action: () => {
           // 通过自定义事件触发主题切换
@@ -111,24 +112,24 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({ open, onClose })
       },
       {
         id: 'go-settings',
-        label: '系统设置',
-        description: '打开系统设置页面',
+        label: i18n.t('components.command_palette.k2'),
+        description: i18n.t('components.command_palette.k3'),
         icon: <Settings style={{ width: 18, height: 18 }} />,
         action: () => navigate(ADMIN_PATHS.systemSettings),
         category: 'action',
       },
       {
         id: 'go-profile',
-        label: '个人中心',
-        description: '查看和编辑个人信息',
+        label: i18n.t('components.command_palette.k4'),
+        description: i18n.t('components.command_palette.k5'),
         icon: <User style={{ width: 18, height: 18 }} />,
         action: () => navigate(DASHBOARD_PATHS.profile),
         category: 'action',
       },
       {
         id: 'go-home',
-        label: '返回首页',
-        description: '回到首页仪表盘',
+        label: i18n.t('components.command_palette.k6'),
+        description: i18n.t('components.command_palette.k7'),
         icon: <Home style={{ width: 18, height: 18 }} />,
         action: () => navigate(DASHBOARD_PATHS.dashboard),
         category: 'action',
@@ -262,10 +263,10 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({ open, onClose })
   }, [filteredCommands]);
 
   const categoryLabels: { [key: string]: string } = {
-    recent: '最近访问',
-    favorite: '我的收藏',
-    page: '页面',
-    action: '操作',
+    recent: i18n.t('components.command_palette.k8'),
+    favorite: i18n.t('components.command_palette.k9'),
+    page: i18n.t('components.command_palette.k10'),
+    action: i18n.t('components.command_palette.k11'),
   };
 
   return (
@@ -289,7 +290,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({ open, onClose })
         <TextField
           inputRef={inputRef}
           fullWidth
-          placeholder='搜索页面、操作...'
+          placeholder={i18n.t('components.command_palette.k0')}
           value={query}
           onChange={(e) => {
             setQuery(e.target.value);
@@ -338,7 +339,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({ open, onClose })
         {filteredCommands.length === 0 ? (
           <Box sx={{ p: 4, textAlign: 'center' }}>
             <Typography sx={{ color: 'text.secondary', fontSize: '0.875rem' }}>
-              未找到匹配的结果
+              {i18n.t('components.command_palette.k1')}
             </Typography>
           </Box>
         ) : (
@@ -437,7 +438,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({ open, onClose })
             size='small'
             sx={{ height: 20, fontSize: '0.7rem' }}
           />
-          <Typography sx={{ fontSize: '0.75rem', color: 'text.secondary' }}>导航</Typography>
+          <Typography sx={{ fontSize: '0.75rem', color: 'text.secondary' }}>{i18n.t('components.command_palette.k12')}</Typography>
         </Box>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
           <Chip
@@ -445,7 +446,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({ open, onClose })
             size='small'
             sx={{ height: 20, fontSize: '0.7rem' }}
           />
-          <Typography sx={{ fontSize: '0.75rem', color: 'text.secondary' }}>选择</Typography>
+          <Typography sx={{ fontSize: '0.75rem', color: 'text.secondary' }}>{i18n.t('components.command_palette.k13')}</Typography>
         </Box>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, ml: 'auto' }}>
           <Chip
@@ -453,7 +454,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({ open, onClose })
             size='small'
             sx={{ height: 20, fontSize: '0.7rem' }}
           />
-          <Typography sx={{ fontSize: '0.75rem', color: 'text.secondary' }}>关闭</Typography>
+          <Typography sx={{ fontSize: '0.75rem', color: 'text.secondary' }}>{i18n.t('components.command_palette.k14')}</Typography>
         </Box>
       </Box>
     </Dialog>

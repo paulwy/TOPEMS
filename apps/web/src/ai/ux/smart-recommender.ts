@@ -1,3 +1,4 @@
+import i18n from '@/i18n';
 export type RecommendationType = 'page' | 'action' | 'content' | 'feature';
 
 export interface Recommendation {
@@ -42,85 +43,85 @@ const DEFAULT_CONTENT_LIBRARY: ContentItem[] = [
   {
     id: 'dashboard-main',
     type: 'page',
-    title: '综合仪表盘',
-    tags: ['首页', '概览', '核心指标'],
+    title: i18n.t('ai.smart-recommender.k0'),
+    tags: [i18n.t('ai.smart-recommender.k3'), i18n.t('ai.smart-recommender.k2'), i18n.t('ai.smart-recommender.k1')],
     metadata: { module: 'dashboard' },
   },
   {
     id: 'crm-dashboard',
     type: 'page',
-    title: 'CRM 仪表盘',
-    tags: ['客户', '销售', '漏斗'],
+    title: i18n.t('ai.smart-recommender.crm_0'),
+    tags: [i18n.t('ai.smart-recommender.k6'), i18n.t('ai.smart-recommender.k5'), i18n.t('ai.smart-recommender.k4')],
     metadata: { module: 'crm' },
   },
   {
     id: 'hrm-dashboard',
     type: 'page',
-    title: 'HRM 仪表盘',
-    tags: ['员工', '考勤', '绩效'],
+    title: i18n.t('ai.smart-recommender.hrm_1'),
+    tags: [i18n.t('ai.smart-recommender.k9'), i18n.t('ai.smart-recommender.k8'), i18n.t('ai.smart-recommender.k7')],
     metadata: { module: 'hrm' },
   },
   {
     id: 'mes-workorder',
     type: 'page',
-    title: '生产工单',
-    tags: ['制造', '工单', '排产'],
+    title: i18n.t('ai.smart-recommender.k10'),
+    tags: [i18n.t('ai.smart-recommender.k13'), i18n.t('ai.smart-recommender.k12'), i18n.t('ai.smart-recommender.k11')],
     metadata: { module: 'mes' },
   },
   {
     id: 'scm-purchase',
     type: 'page',
-    title: '采购订单',
-    tags: ['采购', '供应商', '订单'],
+    title: i18n.t('ai.smart-recommender.k14'),
+    tags: [i18n.t('ai.smart-recommender.k17'), i18n.t('ai.smart-recommender.k16'), i18n.t('ai.smart-recommender.k15')],
     metadata: { module: 'scm' },
   },
   {
     id: 'quality-report',
     type: 'content',
-    title: '质量分析报告',
-    tags: ['质量', 'SPC', '分析'],
+    title: i18n.t('ai.smart-recommender.k18'),
+    tags: [i18n.t('ai.smart-recommender.k20'), 'SPC', i18n.t('ai.smart-recommender.k19')],
     metadata: { module: 'qms' },
   },
   {
     id: 'financial-report',
     type: 'content',
-    title: '财务报表',
-    tags: ['财务', '报表', '分析'],
+    title: i18n.t('ai.smart-recommender.k21'),
+    tags: [i18n.t('ai.smart-recommender.k24'), i18n.t('ai.smart-recommender.k23'), i18n.t('ai.smart-recommender.k22')],
     metadata: { module: 'finance' },
   },
   {
     id: 'deep-analyze',
     type: 'action',
-    title: '深度数据分析',
-    tags: ['分析', 'BI', '钻取'],
+    title: i18n.t('ai.smart-recommender.k25'),
+    tags: [i18n.t('ai.smart-recommender.k27'), 'BI', i18n.t('ai.smart-recommender.k26')],
     metadata: { module: 'bi' },
   },
   {
     id: 'quick-approve',
     type: 'action',
-    title: '快速审批',
-    tags: ['审批', '工作流', '快捷'],
+    title: i18n.t('ai.smart-recommender.k28'),
+    tags: [i18n.t('ai.smart-recommender.k31'), i18n.t('ai.smart-recommender.k30'), i18n.t('ai.smart-recommender.k29')],
     metadata: { module: 'workflow' },
   },
   {
     id: 'generate-report',
     type: 'action',
-    title: '生成报告',
-    tags: ['报告', '生成', '自动化'],
+    title: i18n.t('ai.smart-recommender.k32'),
+    tags: [i18n.t('ai.smart-recommender.k35'), i18n.t('ai.smart-recommender.k34'), i18n.t('ai.smart-recommender.k33')],
     metadata: { module: 'report' },
   },
   {
     id: 'ai-assistant',
     type: 'feature',
-    title: 'AI 智能助手',
-    tags: ['AI', '助手', '智能'],
+    title: i18n.t('ai.smart-recommender.ai_2'),
+    tags: ['AI', i18n.t('ai.smart-recommender.k37'), i18n.t('ai.smart-recommender.k36')],
     metadata: { module: 'ai' },
   },
   {
     id: 'smart-search',
     type: 'feature',
-    title: '智能搜索',
-    tags: ['搜索', 'AI', '语义'],
+    title: i18n.t('ai.smart-recommender.k38'),
+    tags: [i18n.t('ai.smart-recommender.k40'), 'AI', i18n.t('ai.smart-recommender.k39')],
     metadata: { module: 'search' },
   },
 ];
@@ -212,7 +213,7 @@ export class SmartRecommender {
       return {
         id: `trending-${key}`,
         type: (item?.type || 'action') as RecommendationType,
-        reason: `热门趋势: ${action} ${target} (${score} 次)`,
+        reason: `${i18n.t('ai.smart-recommender.k3')}${action} ${target} (${score}${i18n.t('ai.smart-recommender.k4')}`,
         confidence: Math.min(0.95, 0.5 + score * 0.05),
         context: { trend_score: score, action, target },
       };
@@ -235,7 +236,7 @@ export class SmartRecommender {
     return similar.map((s) => ({
       id: `similar-${s.item.id}`,
       type: s.item.type,
-      reason: `与 "${item.title}" 相似 (相似度: ${s.similarity.toFixed(2)})`,
+      reason: `${i18n.t('ai.smart-recommender.k5')}${item.title}${i18n.t('ai.smart-recommender.k6')}${s.similarity.toFixed(2)})`,
       confidence: s.similarity,
       context: { source_item: itemId, similarity: s.similarity },
     }));
@@ -331,7 +332,7 @@ export class SmartRecommender {
         return {
           id: `cf-${target}`,
           type: data.type,
-          reason: `协同过滤: 与您行为相似的用户也浏览了 "${item?.title || target}"`,
+          reason: `${i18n.t('ai.smart-recommender.k7')}${item?.title || target}"`,
           confidence: Math.min(0.9, data.score),
           context: { method: 'collaborative', target },
         };
@@ -373,7 +374,7 @@ export class SmartRecommender {
     return candidates.map((c) => ({
       id: `cb-${c.item.id}`,
       type: c.item.type,
-      reason: `内容匹配: 基于您的兴趣标签推荐 "${c.item.title}"`,
+      reason: `${i18n.t('ai.smart-recommender.k8')}${c.item.title}"`,
       confidence: c.score,
       context: { method: 'content_based', item_id: c.item.id },
     }));

@@ -15,6 +15,7 @@ import {
   Info,
   Settings,
 } from 'lucide-react';
+import i18n from '@/i18n';
 import { PageContainer, StatusBadge, ConfirmDialog } from '@/components/common';
 import {
   Box,
@@ -79,7 +80,7 @@ const mockBackups: BackupRecord[] = [
     status: 'success',
     created_at: '2024-06-15 02:00:00',
     created_by: 'system',
-    remark: '每日定时全量备份',
+    remark: i18n.t('pages.database_management_page.k0'),
   },
   {
     id: '2',
@@ -89,7 +90,7 @@ const mockBackups: BackupRecord[] = [
     status: 'success',
     created_at: '2024-06-14 20:00:00',
     created_by: 'system',
-    remark: '增量备份',
+    remark: i18n.t('pages.database_management_page.k1'),
   },
   {
     id: '3',
@@ -99,7 +100,7 @@ const mockBackups: BackupRecord[] = [
     status: 'success',
     created_at: '2024-06-13 20:00:00',
     created_by: 'system',
-    remark: '增量备份',
+    remark: i18n.t('pages.database_management_page.k2'),
   },
   {
     id: '4',
@@ -109,7 +110,7 @@ const mockBackups: BackupRecord[] = [
     status: 'success',
     created_at: '2024-06-01 02:00:00',
     created_by: 'system',
-    remark: '月初全量备份',
+    remark: i18n.t('pages.database_management_page.k3'),
   },
   {
     id: '5',
@@ -118,8 +119,8 @@ const mockBackups: BackupRecord[] = [
     filesize: '128.5 MB',
     status: 'failed',
     created_at: '2024-05-20 14:30:00',
-    created_by: '管理员',
-    remark: '手动备份失败',
+    created_by: i18n.t('pages.database_management_page.k4'),
+    remark: i18n.t('pages.database_management_page.k5'),
   },
 ];
 
@@ -176,10 +177,10 @@ const DatabaseManagementPage: React.FC = () => {
 
   useEffect(() => {
     if (tablesQuery.isError) {
-      apiLogger.error('加载数据表失败:', tablesQuery.error);
+      apiLogger.error(i18n.t('pages.database_management_page.k0'), tablesQuery.error);
       addNotification({
-        title: '错误',
-        message: extractErrorMessage(tablesQuery.error, '加载数据表失败'),
+        title: i18n.t('pages.database_management_page.k6'),
+        message: extractErrorMessage(tablesQuery.error, i18n.t('pages.database_management_page.k7')),
         type: 'error',
       });
     }
@@ -187,10 +188,10 @@ const DatabaseManagementPage: React.FC = () => {
 
   useEffect(() => {
     if (tableDetailQuery.isError) {
-      apiLogger.error('获取表结构失败:', tableDetailQuery.error);
+      apiLogger.error(i18n.t('pages.database_management_page.k1'), tableDetailQuery.error);
       addNotification({
-        title: '错误',
-        message: extractErrorMessage(tableDetailQuery.error, '获取表结构失败'),
+        title: i18n.t('pages.database_management_page.k8'),
+        message: extractErrorMessage(tableDetailQuery.error, i18n.t('pages.database_management_page.k9')),
         type: 'error',
       });
     }
@@ -233,14 +234,14 @@ const DatabaseManagementPage: React.FC = () => {
       filesize: `${(Math.random() * 50 + 100).toFixed(1)} MB`,
       status: 'success',
       created_at: new Date().toISOString().replace('T', ' ').slice(0, 19),
-      created_by: '当前用户',
-      remark: '手动备份',
+      created_by: i18n.t('pages.database_management_page.k10'),
+      remark: i18n.t('pages.database_management_page.k11'),
     };
     setBackups((prev) => [newBackup, ...prev]);
 
     addNotification({
-      title: '备份成功',
-      message: '数据库备份已完成',
+      title: i18n.t('pages.database_management_page.k12'),
+      message: i18n.t('pages.database_management_page.k13'),
       type: 'success',
     });
   };
@@ -253,8 +254,8 @@ const DatabaseManagementPage: React.FC = () => {
   const confirmRestore = async () => {
     setShowRestoreModal(false);
     addNotification({
-      title: '恢复中',
-      message: '数据库恢复任务已开始，请耐心等待',
+      title: i18n.t('pages.database_management_page.k14'),
+      message: i18n.t('pages.database_management_page.k15'),
       type: 'info',
     });
     setRestoreBackupId(null);
@@ -270,12 +271,12 @@ const DatabaseManagementPage: React.FC = () => {
     try {
       setBackups((prev) => prev.filter((b) => b.id !== deletingBackupId));
       addNotification({
-        title: '成功',
-        message: '备份文件已删除',
+        title: i18n.t('pages.database_management_page.k16'),
+        message: i18n.t('pages.database_management_page.k17'),
         type: 'success',
       });
     } catch (err: unknown) {
-      addNotification({ title: '错误', message: '操作失败', type: 'error' });
+      addNotification({ title: i18n.t('pages.database_management_page.k19'), message: i18n.t('pages.database_management_page.k18'), type: 'error' });
     } finally {
       setDeleteBackupDialogOpen(false);
       setDeletingBackupId(null);
@@ -287,9 +288,9 @@ const DatabaseManagementPage: React.FC = () => {
       string,
       { color: 'success' | 'error' | 'info' | 'default'; label: string; icon: React.ReactNode }
     > = {
-      success: { color: 'success', label: '成功', icon: <CheckCircle size={14} /> },
-      failed: { color: 'error', label: '失败', icon: <AlertCircle size={14} /> },
-      running: { color: 'info', label: '进行中', icon: <CircularProgress size={14} /> },
+      success: { color: 'success', label: i18n.t('pages.database_management_page.k20'), icon: <CheckCircle size={14} /> },
+      failed: { color: 'error', label: i18n.t('pages.database_management_page.k21'), icon: <AlertCircle size={14} /> },
+      running: { color: 'info', label: i18n.t('pages.database_management_page.k22'), icon: <CircularProgress size={14} /> },
     };
     const config = badges[status] || { color: 'default', label: status, icon: <Info size={14} /> };
     return (
@@ -311,8 +312,8 @@ const DatabaseManagementPage: React.FC = () => {
 
   return (
     <PageContainer
-      title='数据库管理'
-      subtitle='数据表列表、表结构查看、数据备份与恢复'
+      title={i18n.t('pages.database_management_page.k23')}
+      subtitle={i18n.t('pages.database_management_page.k24')}
       maxWidth='xl'
       headerProps={{
         backButton: {
@@ -320,13 +321,13 @@ const DatabaseManagementPage: React.FC = () => {
         },
         actions: [
           {
-            label: '刷新',
+            label: i18n.t('pages.database_management_page.k25'),
             icon: <RefreshCw size={16} />,
             onClick: () => tablesQuery.refetch(),
             variant: 'outlined',
           },
           {
-            label: '数据备份',
+            label: i18n.t('pages.database_management_page.k26'),
             icon: <Download size={16} />,
             onClick: handleBackup,
             variant: 'contained',
@@ -341,7 +342,7 @@ const DatabaseManagementPage: React.FC = () => {
         >
           <Box sx={{ width: '100%' }}>
             <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
-              <Typography variant='body2'>正在备份数据库...</Typography>
+              <Typography variant='body2'>{i18n.t('pages.database_management_page.k2')}</Typography>
               <Typography variant='body2'>{backupProgress}%</Typography>
             </Box>
             <LinearProgress
@@ -362,14 +363,14 @@ const DatabaseManagementPage: React.FC = () => {
       >
         {[
           {
-            label: '数据表数量',
+            label: i18n.t('pages.database_management_page.k27'),
             value: stats.tableCount,
             icon: <Table size={20} />,
             color: 'primary',
             bg: 'primary.100',
           },
           {
-            label: '可用备份',
+            label: i18n.t('pages.database_management_page.k28'),
             value: stats.backupCount,
             icon: <Download size={20} />,
             color: 'info',
@@ -431,13 +432,13 @@ const DatabaseManagementPage: React.FC = () => {
         >
           <Tab
             value='tables'
-            label='数据表'
+            label={i18n.t('pages.database_management_page.k29')}
             icon={<Table size={16} />}
             iconPosition='start'
           />
           <Tab
             value='backup'
-            label='备份管理'
+            label={i18n.t('pages.database_management_page.k30')}
             icon={<Download size={16} />}
             iconPosition='start'
           />
@@ -458,7 +459,7 @@ const DatabaseManagementPage: React.FC = () => {
             >
               <TextField
                 size='small'
-                placeholder='搜索表名...'
+                placeholder={i18n.t('pages.database_management_page.k3')}
                 value={searchQuery}
                 onChange={(e) => {
                   setSearchQuery(e.target.value);
@@ -483,14 +484,14 @@ const DatabaseManagementPage: React.FC = () => {
                 size='small'
                 sx={{ minWidth: 140 }}
               >
-                <InputLabel>排序</InputLabel>
+                <InputLabel>{i18n.t('pages.database_management_page.k31')}</InputLabel>
                 <Select
                   value=''
-                  label='排序'
+                  label={i18n.t('pages.database_management_page.k32')}
                 >
-                  <MenuItem value=''>默认排序</MenuItem>
-                  <MenuItem value='name'>按表名</MenuItem>
-                  <MenuItem value='time'>按更新时间</MenuItem>
+                  <MenuItem value=''>{i18n.t('pages.database_management_page.k33')}</MenuItem>
+                  <MenuItem value='name'>{i18n.t('pages.database_management_page.k34')}</MenuItem>
+                  <MenuItem value='time'>{i18n.t('pages.database_management_page.k35')}</MenuItem>
                 </Select>
               </FormControl>
             </Box>
@@ -505,13 +506,13 @@ const DatabaseManagementPage: React.FC = () => {
                   <MuiTable>
                     <TableHead>
                       <TableRow sx={{ bgcolor: 'grey.50' }}>
-                        <TableCell sx={{ fontWeight: 'bold' }}>表名</TableCell>
-                        <TableCell sx={{ fontWeight: 'bold' }}>类型</TableCell>
+                        <TableCell sx={{ fontWeight: 'bold' }}>{i18n.t('pages.database_management_page.k36')}</TableCell>
+                        <TableCell sx={{ fontWeight: 'bold' }}>{i18n.t('pages.database_management_page.k37')}</TableCell>
                         <TableCell
                           align='center'
                           sx={{ fontWeight: 'bold', width: 120 }}
                         >
-                          操作
+                          {i18n.t('pages.database_management_page.k4')}
                         </TableCell>
                       </TableRow>
                     </TableHead>
@@ -535,7 +536,7 @@ const DatabaseManagementPage: React.FC = () => {
                               variant='body1'
                               sx={{ color: 'text.secondary' }}
                             >
-                              暂无数据表
+                              {i18n.t('pages.database_management_page.k5')}
                             </Typography>
                           </TableCell>
                         </TableRow>
@@ -571,11 +572,11 @@ const DatabaseManagementPage: React.FC = () => {
                               />
                             </TableCell>
                             <TableCell align='center'>
-                              <Tooltip title='查看结构'>
+                              <Tooltip title={i18n.t('pages.database_management_page.k38')}>
                                 <IconButton
                                   size='small'
                                   onClick={() => handleViewStructure(table)}
-                                  aria-label='查看'
+                                  aria-label={i18n.t('pages.database_management_page.k39')}
                                 >
                                   <Eye size={16} />
                                 </IconButton>
@@ -598,7 +599,7 @@ const DatabaseManagementPage: React.FC = () => {
                     setPage(0);
                   }}
                   rowsPerPageOptions={[10, 25, 50, 100]}
-                  labelRowsPerPage='每页行数'
+                  labelRowsPerPage={i18n.t('pages.database_management_page.k40')}
                 />
               </>
             )}
@@ -625,7 +626,7 @@ const DatabaseManagementPage: React.FC = () => {
                 startIcon={<Upload size={16} />}
                 onClick={() => setShowRestoreModal(true)}
               >
-                上传备份
+                {i18n.t('pages.database_management_page.k6')}
               </Button>
               <Button
                 variant='contained'
@@ -633,7 +634,7 @@ const DatabaseManagementPage: React.FC = () => {
                 startIcon={<Play size={16} />}
                 onClick={handleBackup}
               >
-                立即备份
+                {i18n.t('pages.database_management_page.k7')}
               </Button>
             </Box>
 
@@ -646,18 +647,18 @@ const DatabaseManagementPage: React.FC = () => {
                 <MuiTable>
                   <TableHead>
                     <TableRow sx={{ bgcolor: 'grey.50' }}>
-                      <TableCell sx={{ fontWeight: 'bold' }}>备份名称</TableCell>
-                      <TableCell sx={{ fontWeight: 'bold' }}>类型</TableCell>
-                      <TableCell sx={{ fontWeight: 'bold' }}>文件大小</TableCell>
-                      <TableCell sx={{ fontWeight: 'bold' }}>状态</TableCell>
-                      <TableCell sx={{ fontWeight: 'bold' }}>创建人</TableCell>
-                      <TableCell sx={{ fontWeight: 'bold' }}>创建时间</TableCell>
-                      <TableCell sx={{ fontWeight: 'bold' }}>备注</TableCell>
+                      <TableCell sx={{ fontWeight: 'bold' }}>{i18n.t('pages.database_management_page.k41')}</TableCell>
+                      <TableCell sx={{ fontWeight: 'bold' }}>{i18n.t('pages.database_management_page.k42')}</TableCell>
+                      <TableCell sx={{ fontWeight: 'bold' }}>{i18n.t('pages.database_management_page.k43')}</TableCell>
+                      <TableCell sx={{ fontWeight: 'bold' }}>{i18n.t('pages.database_management_page.k44')}</TableCell>
+                      <TableCell sx={{ fontWeight: 'bold' }}>{i18n.t('pages.database_management_page.k45')}</TableCell>
+                      <TableCell sx={{ fontWeight: 'bold' }}>{i18n.t('pages.database_management_page.k46')}</TableCell>
+                      <TableCell sx={{ fontWeight: 'bold' }}>{i18n.t('pages.database_management_page.k47')}</TableCell>
                       <TableCell
                         align='center'
                         sx={{ fontWeight: 'bold', width: 160 }}
                       >
-                        操作
+                        {i18n.t('pages.database_management_page.k8')}
                       </TableCell>
                     </TableRow>
                   </TableHead>
@@ -681,7 +682,7 @@ const DatabaseManagementPage: React.FC = () => {
                             variant='body1'
                             sx={{ color: 'text.secondary' }}
                           >
-                            暂无备份记录
+                            {i18n.t('pages.database_management_page.k9')}
                           </Typography>
                         </TableCell>
                       </TableRow>
@@ -710,7 +711,7 @@ const DatabaseManagementPage: React.FC = () => {
                           </TableCell>
                           <TableCell>
                             <Chip
-                              label={backup.backup_type === 'full' ? '全量备份' : '增量备份'}
+                              label={backup.backup_type === 'full' ? i18n.t('pages.database_management_page.k49') : i18n.t('pages.database_management_page.k48')}
                               size='small'
                               color={backup.backup_type === 'full' ? 'primary' : 'default'}
                               variant='outlined'
@@ -742,33 +743,33 @@ const DatabaseManagementPage: React.FC = () => {
                           </TableCell>
                           <TableCell align='center'>
                             <Box sx={{ display: 'flex', justifyContent: 'center', gap: 0.5 }}>
-                              <Tooltip title='下载'>
+                              <Tooltip title={i18n.t('pages.database_management_page.k50')}>
                                 <IconButton
                                   size='small'
                                   color='primary'
-                                  aria-label='下载'
+                                  aria-label={i18n.t('pages.database_management_page.k51')}
                                 >
                                   <Download size={16} />
                                 </IconButton>
                               </Tooltip>
                               {backup.status === 'success' && (
-                                <Tooltip title='恢复'>
+                                <Tooltip title={i18n.t('pages.database_management_page.k52')}>
                                   <IconButton
                                     size='small'
                                     color='warning'
                                     onClick={() => handleRestore(backup.id)}
-                                    aria-label='上传'
+                                    aria-label={i18n.t('pages.database_management_page.k53')}
                                   >
                                     <Upload size={16} />
                                   </IconButton>
                                 </Tooltip>
                               )}
-                              <Tooltip title='删除'>
+                              <Tooltip title={i18n.t('pages.database_management_page.k54')}>
                                 <IconButton
                                   size='small'
                                   color='error'
                                   onClick={() => handleDeleteBackup(backup.id)}
-                                  aria-label='删除'
+                                  aria-label={i18n.t('pages.database_management_page.k55')}
                                 >
                                   <Trash2 size={16} />
                                 </IconButton>
@@ -813,7 +814,7 @@ const DatabaseManagementPage: React.FC = () => {
                     variant='body2'
                     sx={{ color: 'text.secondary', mb: 0.5 }}
                   >
-                    表名
+                    {i18n.t('pages.database_management_page.k10')}
                   </Typography>
                   <Typography sx={{ fontFamily: 'monospace', fontWeight: 500 }}>
                     {currentTable.table_name}
@@ -824,7 +825,7 @@ const DatabaseManagementPage: React.FC = () => {
                     variant='body2'
                     sx={{ color: 'text.secondary', mb: 0.5 }}
                   >
-                    类型
+                    {i18n.t('pages.database_management_page.k11')}
                   </Typography>
                   <Typography sx={{ fontWeight: 500 }}>{currentTable.table_type}</Typography>
                 </Box>
@@ -833,7 +834,7 @@ const DatabaseManagementPage: React.FC = () => {
                     variant='body2'
                     sx={{ color: 'text.secondary', mb: 0.5 }}
                   >
-                    记录数
+                    {i18n.t('pages.database_management_page.k12')}
                   </Typography>
                   <Typography sx={{ fontWeight: 500 }}>
                     {tableRowCount?.toLocaleString() || '-'}
@@ -845,7 +846,7 @@ const DatabaseManagementPage: React.FC = () => {
                 variant='subtitle2'
                 sx={{ fontWeight: 600, mt: 1 }}
               >
-                字段列表
+                {i18n.t('pages.database_management_page.k13')}
               </Typography>
 
               <TableContainer
@@ -855,12 +856,12 @@ const DatabaseManagementPage: React.FC = () => {
                 <MuiTable size='small'>
                   <TableHead>
                     <TableRow sx={{ bgcolor: 'grey.50' }}>
-                      <TableCell sx={{ fontWeight: 'bold' }}>字段名</TableCell>
-                      <TableCell sx={{ fontWeight: 'bold' }}>类型</TableCell>
-                      <TableCell sx={{ fontWeight: 'bold' }}>长度</TableCell>
-                      <TableCell sx={{ fontWeight: 'bold' }}>可空</TableCell>
-                      <TableCell sx={{ fontWeight: 'bold' }}>默认值</TableCell>
-                      <TableCell sx={{ fontWeight: 'bold' }}>说明</TableCell>
+                      <TableCell sx={{ fontWeight: 'bold' }}>{i18n.t('pages.database_management_page.k56')}</TableCell>
+                      <TableCell sx={{ fontWeight: 'bold' }}>{i18n.t('pages.database_management_page.k57')}</TableCell>
+                      <TableCell sx={{ fontWeight: 'bold' }}>{i18n.t('pages.database_management_page.k58')}</TableCell>
+                      <TableCell sx={{ fontWeight: 'bold' }}>{i18n.t('pages.database_management_page.k59')}</TableCell>
+                      <TableCell sx={{ fontWeight: 'bold' }}>{i18n.t('pages.database_management_page.k60')}</TableCell>
+                      <TableCell sx={{ fontWeight: 'bold' }}>{i18n.t('pages.database_management_page.k61')}</TableCell>
                     </TableRow>
                   </TableHead>
                   <TableBody>
@@ -882,14 +883,14 @@ const DatabaseManagementPage: React.FC = () => {
                         <TableCell>
                           {col.is_nullable === 'YES' ? (
                             <Chip
-                              label='是'
+                              label={i18n.t('pages.database_management_page.k62')}
                               size='small'
                               color='default'
                               variant='outlined'
                             />
                           ) : (
                             <Chip
-                              label='否'
+                              label={i18n.t('pages.database_management_page.k63')}
                               size='small'
                               color='warning'
                               variant='outlined'
@@ -911,7 +912,7 @@ const DatabaseManagementPage: React.FC = () => {
           )}
         </DialogContent>
         <DialogActions sx={{ px: 3, py: 2 }}>
-          <Button onClick={() => setShowStructureModal(false)}>关闭</Button>
+          <Button onClick={() => setShowStructureModal(false)}>{i18n.t('pages.database_management_page.k64')}</Button>
         </DialogActions>
       </Dialog>
 
@@ -924,41 +925,41 @@ const DatabaseManagementPage: React.FC = () => {
         <DialogTitle>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
             <Download size={20} />
-            创建数据备份
+            {i18n.t('pages.database_management_page.k14')}
           </Box>
         </DialogTitle>
         <DialogContent dividers>
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, pt: 1 }}>
             <Alert severity='info'>
-              将对当前数据库进行全量备份，包括所有表结构和数据。备份过程可能需要几分钟，请耐心等待。
+              {i18n.t('pages.database_management_page.k15')}
             </Alert>
             <FormControl size='small'>
-              <InputLabel>备份类型</InputLabel>
+              <InputLabel>{i18n.t('pages.database_management_page.k65')}</InputLabel>
               <Select
                 value='full'
-                label='备份类型'
+                label={i18n.t('pages.database_management_page.k66')}
               >
-                <MenuItem value='full'>全量备份</MenuItem>
-                <MenuItem value='incremental'>增量备份</MenuItem>
+                <MenuItem value='full'>{i18n.t('pages.database_management_page.k67')}</MenuItem>
+                <MenuItem value='incremental'>{i18n.t('pages.database_management_page.k68')}</MenuItem>
               </Select>
             </FormControl>
             <TextField
               size='small'
-              label='备份备注'
+              label={i18n.t('pages.database_management_page.k69')}
               multiline
               rows={2}
-              placeholder='可选，填写备份说明'
+              placeholder={i18n.t('pages.database_management_page.k70')}
             />
           </Box>
         </DialogContent>
         <DialogActions sx={{ px: 3, py: 2 }}>
-          <Button onClick={() => setShowBackupModal(false)}>取消</Button>
+          <Button onClick={() => setShowBackupModal(false)}>{i18n.t('pages.database_management_page.k71')}</Button>
           <Button
             variant='contained'
             startIcon={<Play size={16} />}
             onClick={startBackup}
           >
-            开始备份
+            {i18n.t('pages.database_management_page.k16')}
           </Button>
         </DialogActions>
       </Dialog>
@@ -975,7 +976,7 @@ const DatabaseManagementPage: React.FC = () => {
         <DialogTitle>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
             <Upload size={20} />
-            数据恢复确认
+            {i18n.t('pages.database_management_page.k17')}
           </Box>
         </DialogTitle>
         <DialogContent dividers>
@@ -985,10 +986,10 @@ const DatabaseManagementPage: React.FC = () => {
                 variant='body2'
                 sx={{ fontWeight: 500, mb: 1 }}
               >
-                警告：数据恢复操作将覆盖当前数据库！
+                {i18n.t('pages.database_management_page.k18')}
               </Typography>
               <Typography variant='body2'>
-                此操作不可撤销，建议先对当前数据进行备份后再执行恢复操作。
+                {i18n.t('pages.database_management_page.k19')}
               </Typography>
             </Alert>
             <Box sx={{ mt: 2, p: 2, bgcolor: 'grey.50', borderRadius: 1 }}>
@@ -996,7 +997,7 @@ const DatabaseManagementPage: React.FC = () => {
                 variant='body2'
                 sx={{ color: 'text.secondary', mb: 0.5 }}
               >
-                要恢复的备份
+                {i18n.t('pages.database_management_page.k20')}
               </Typography>
               <Typography sx={{ fontWeight: 500, fontFamily: 'monospace' }}>
                 {backups.find((b) => b.id === restoreBackupId)?.backup_name || '-'}
@@ -1011,7 +1012,7 @@ const DatabaseManagementPage: React.FC = () => {
               setRestoreBackupId(null);
             }}
           >
-            取消
+            {i18n.t('pages.database_management_page.k21')}
           </Button>
           <Button
             variant='contained'
@@ -1019,7 +1020,7 @@ const DatabaseManagementPage: React.FC = () => {
             startIcon={<Upload size={16} />}
             onClick={confirmRestore}
           >
-            确认恢复
+            {i18n.t('pages.database_management_page.k22')}
           </Button>
         </DialogActions>
       </Dialog>
@@ -1031,8 +1032,8 @@ const DatabaseManagementPage: React.FC = () => {
           setDeletingBackupId(null);
         }}
         onConfirm={confirmDeleteBackup}
-        title='确认删除'
-        message='确定要删除该备份文件吗？此操作不可撤销。'
+        title={i18n.t('pages.database_management_page.k72')}
+        message={i18n.t('pages.database_management_page.k73')}
         danger
       />
     </PageContainer>

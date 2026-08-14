@@ -1,4 +1,5 @@
 import { Search, Download } from 'lucide-react';
+import i18n from '@/i18n';
 
 interface AddressbookHeaderProps {
   searchQuery: string;
@@ -41,7 +42,7 @@ export const AddressbookHeader: React.FC<AddressbookHeaderProps> = ({
             />
             <input
               type='text'
-              placeholder='搜索联系人、部门或公司...'
+              placeholder={i18n.t('components.addressbook_header.k0')}
               value={searchQuery}
               onChange={(e) => onSearchChange(e.target.value)}
               style={{
@@ -95,7 +96,7 @@ export const AddressbookHeader: React.FC<AddressbookHeaderProps> = ({
             }}
           >
             <Download sx={{ width: 16, height: 16 }} />
-            <span>导出</span>
+            <span>{i18n.t('components.addressbook_header.k0')}</span>
           </button>
         </div>
       </div>

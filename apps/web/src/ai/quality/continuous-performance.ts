@@ -1,3 +1,4 @@
+import i18n from '@/i18n';
 export type RegressionSeverity = 'info' | 'warning' | 'critical';
 
 export interface PerfMetric {
@@ -64,7 +65,7 @@ const DEFAULT_METRICS = [
   { name: 'bundle_size', value: 256, unit: 'KB' },
   { name: 'api_response_time', value: 350, unit: 'ms' },
   { name: 'memory_usage', value: 128, unit: 'MB' },
-  { name: 'render_count', value: 12, unit: '次' },
+  { name: 'render_count', value: 12, unit: i18n.t('ai.continuous-performance.k0') },
   { name: 'error_rate', value: 0.02, unit: '%' },
 ];
 
@@ -102,8 +103,8 @@ class ContinuousPerformanceImpl {
       metrics,
       createdAt: new Date().toISOString(),
       version: 'v1.0.0',
-      name: '默认性能基线',
-      description: '初始性能基线',
+      name: i18n.t('ai.continuous-performance.k1'),
+      description: i18n.t('ai.continuous-performance.k2'),
       environment: 'development',
     };
     this.baselines.set(baseline.id, baseline);
@@ -130,8 +131,8 @@ class ContinuousPerformanceImpl {
       metrics,
       createdAt: new Date().toISOString(),
       version: version || `v${Date.now()}`,
-      name: name || '自定义基线',
-      description: '用户手动设置的性能基线',
+      name: name || i18n.t('ai.continuous-performance.k3'),
+      description: i18n.t('ai.continuous-performance.k4'),
       environment: 'production',
     };
     this.baselines.set(baseline.id, baseline);
@@ -276,7 +277,7 @@ class ContinuousPerformanceImpl {
     const alert: PerfAlert = {
       id: generateId(),
       regressionId,
-      message: `性能回归告警: ${regression.metric} 从 ${regression.baseline.toFixed(2)} 变化到 ${regression.current.toFixed(2)} (${(regression.delta * 100).toFixed(1)}%)`,
+      message: `${i18n.t('ai.continuous-performance.k0')}${regression.metric}${i18n.t('ai.continuous-performance.k1')}${regression.baseline.toFixed(2)}${i18n.t('ai.continuous-performance.k2')}${regression.current.toFixed(2)} (${(regression.delta * 100).toFixed(1)}%)`,
       severity: regression.severity,
       acknowledged: false,
       createdAt: new Date().toISOString(),

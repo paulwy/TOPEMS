@@ -10,6 +10,7 @@ import {
   Paper,
   Button,
 } from '@mui/material';
+import i18n from '@/i18n';
 import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
@@ -468,7 +469,7 @@ const SupplierDetailPage: React.FC = () => {
       <DetailPageTemplate
         title=''
         subtitle=''
-        detailItemName={supplier?.name || supplier?.short_name || supplier?.id || '供应商详情'}
+        detailItemName={supplier?.name || supplier?.short_name || supplier?.id || i18n.t('pages.supplier_detail_page.k0')}
         loading={loading}
         backHref={SCM_PATHS.suppliers}
         onBack={() => navigate(SCM_PATHS.suppliers)}

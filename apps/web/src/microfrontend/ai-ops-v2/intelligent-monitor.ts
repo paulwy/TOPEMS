@@ -1,3 +1,4 @@
+import i18n from '@/i18n';
 /**
  * V50.0 微前端 AI 运维 - 智能监控模块
  * 提供实时监控、趋势分析、预警预测能力
@@ -355,7 +356,7 @@ export class IntelligentMonitor {
         level,
         status: 'active',
         timestamp: Date.now(),
-        message: `${metric.name} ${level === 'critical' ? '严重' : '警告'}: ${metric.value}${metric.unit}`,
+        message: `${metric.name} ${level === 'critical' ? i18n.t('microfrontend.intelligent-monitor.k1') : i18n.t('microfrontend.intelligent-monitor.k0')}: ${metric.value}${metric.unit}`,
         moduleId: metric.moduleId,
       };
 

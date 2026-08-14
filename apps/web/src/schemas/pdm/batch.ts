@@ -1,9 +1,10 @@
 import type { EntitySchema } from '@/schema';
+import i18n from '@/i18n';
 
 export const batchSchema: EntitySchema = {
   entity: 'pdm_batch',
-  title: '生产批次',
-  description: '管理生产批次，包括批次号、产品名称、计划数量、状态等',
+  title: i18n.t('pdm.batch.k0'),
+  description: i18n.t('pdm.batch.k1'),
 
   api: {
     module: 'pdm',
@@ -13,7 +14,7 @@ export const batchSchema: EntitySchema = {
   fields: [
     {
       name: 'batch_no',
-      label: '批次号',
+      label: i18n.t('pdm.batch.k2'),
       type: 'text',
       required: true,
       readonlyOnEdit: true,
@@ -23,7 +24,7 @@ export const batchSchema: EntitySchema = {
     },
     {
       name: 'product_name',
-      label: '产品名称',
+      label: i18n.t('pdm.batch.k3'),
       type: 'text',
       required: true,
       sortable: true,
@@ -32,22 +33,22 @@ export const batchSchema: EntitySchema = {
     },
     {
       name: 'plannedQuantity',
-      label: '计划数量',
+      label: i18n.t('pdm.batch.k4'),
       type: 'number',
       listWidth: 120,
     },
     {
       name: 'unit',
-      label: '单位',
+      label: i18n.t('pdm.batch.k5'),
       type: 'select',
       defaultValue: 'kg',
       options: {
         type: 'static',
         options: [
           { value: 'kg', label: 'kg' },
-          { value: '件', label: '件' },
-          { value: '盒', label: '盒' },
-          { value: '瓶', label: '瓶' },
+          { value: i18n.t('pdm.batch.k6'), label: i18n.t('pdm.batch.k7') },
+          { value: i18n.t('pdm.batch.k8'), label: i18n.t('pdm.batch.k9') },
+          { value: i18n.t('pdm.batch.k10'), label: i18n.t('pdm.batch.k11') },
         ],
       },
       listWidth: 80,
@@ -55,34 +56,34 @@ export const batchSchema: EntitySchema = {
     },
     {
       name: 'actual_quantity',
-      label: '实际数量',
+      label: i18n.t('pdm.batch.k12'),
       type: 'number',
       showInList: false,
     },
     {
       name: 'formula_id',
-      label: '关联配方',
+      label: i18n.t('pdm.batch.k13'),
       type: 'text',
       showInList: false,
     },
     {
       name: 'process_id',
-      label: '关联工艺',
+      label: i18n.t('pdm.batch.k14'),
       type: 'text',
       showInList: false,
     },
     {
       name: 'status',
-      label: '状态',
+      label: i18n.t('pdm.batch.k15'),
       type: 'select',
       defaultValue: 'planning',
       options: {
         type: 'static',
         options: [
-          { value: 'planning', label: '规划中' },
-          { value: 'in_progress', label: '进行中' },
-          { value: 'completed', label: '已完成' },
-          { value: 'cancelled', label: '已取消' },
+          { value: 'planning', label: i18n.t('pdm.batch.k16') },
+          { value: 'in_progress', label: i18n.t('pdm.batch.k17') },
+          { value: 'completed', label: i18n.t('pdm.batch.k18') },
+          { value: 'cancelled', label: i18n.t('pdm.batch.k19') },
         ],
       },
       listWidth: 100,
@@ -90,31 +91,31 @@ export const batchSchema: EntitySchema = {
     },
     {
       name: 'operator',
-      label: '操作员',
+      label: i18n.t('pdm.batch.k20'),
       type: 'text',
       showInList: false,
     },
     {
       name: 'start_date',
-      label: '开始日期',
+      label: i18n.t('pdm.batch.k21'),
       type: 'date',
       showInList: false,
     },
     {
       name: 'end_date',
-      label: '结束日期',
+      label: i18n.t('pdm.batch.k22'),
       type: 'date',
       showInList: false,
     },
     {
       name: 'remarks',
-      label: '备注',
+      label: i18n.t('pdm.batch.k23'),
       type: 'textarea',
       showInList: false,
     },
     {
       name: 'created_at',
-      label: '创建时间',
+      label: i18n.t('pdm.batch.k24'),
       type: 'datetime',
       readonly: true,
       sortable: true,
@@ -123,7 +124,7 @@ export const batchSchema: EntitySchema = {
     },
     {
       name: 'updated_at',
-      label: '更新时间',
+      label: i18n.t('pdm.batch.k25'),
       type: 'datetime',
       readonly: true,
       hideInForm: true,
@@ -144,23 +145,23 @@ export const batchSchema: EntitySchema = {
         cancelled: 'error',
       },
       labelMap: {
-        planning: '规划中',
-        in_progress: '进行中',
-        completed: '已完成',
-        cancelled: '已取消',
+        planning: i18n.t('pdm.batch.k26'),
+        in_progress: i18n.t('pdm.batch.k27'),
+        completed: i18n.t('pdm.batch.k28'),
+        cancelled: i18n.t('pdm.batch.k29'),
       },
     },
     filters: [
       {
         id: 'status',
-        label: '状态',
+        label: i18n.t('pdm.batch.k30'),
         type: 'select',
         options: [
-          { label: '全部状态', value: 'all' },
-          { label: '规划中', value: 'planning' },
-          { label: '进行中', value: 'in_progress' },
-          { label: '已完成', value: 'completed' },
-          { label: '已取消', value: 'cancelled' },
+          { label: i18n.t('pdm.batch.k31'), value: 'all' },
+          { label: i18n.t('pdm.batch.k32'), value: 'planning' },
+          { label: i18n.t('pdm.batch.k33'), value: 'in_progress' },
+          { label: i18n.t('pdm.batch.k34'), value: 'completed' },
+          { label: i18n.t('pdm.batch.k35'), value: 'cancelled' },
         ],
       },
     ],
@@ -170,25 +171,25 @@ export const batchSchema: EntitySchema = {
 
   formSections: [
     {
-      title: '基本信息',
+      title: i18n.t('pdm.batch.k36'),
       fields: ['batch_no', 'product_name', 'plannedQuantity', 'unit'],
     },
     {
-      title: '关联信息',
+      title: i18n.t('pdm.batch.k37'),
       fields: ['formula_id', 'process_id', 'operator'],
     },
     {
-      title: '状态与时间',
+      title: i18n.t('pdm.batch.k38'),
       fields: ['status', 'start_date', 'end_date'],
     },
     {
-      title: '备注',
+      title: i18n.t('pdm.batch.k39'),
       fields: ['remarks'],
     },
   ],
 
   formColCount: 2,
-  createTitle: '新增批次',
-  editTitle: '编辑批次',
-  detailTitle: '批次详情',
+  createTitle: i18n.t('pdm.batch.k40'),
+  editTitle: i18n.t('pdm.batch.k41'),
+  detailTitle: i18n.t('pdm.batch.k42'),
 };

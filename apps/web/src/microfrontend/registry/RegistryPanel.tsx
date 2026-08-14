@@ -22,6 +22,7 @@ import {
   Alert,
   Snackbar,
 } from '@mui/material';
+import i18n from '@/i18n';
 import {
   Layers as LayersIcon,
   X as XIcon,
@@ -91,7 +92,7 @@ const RegistryPanel: React.FC<RegistryPanelProps> = ({ onClose }) => {
     try {
       moduleRegistry.registerModule(newModule as any);
       setShowRegisterDialog(false);
-      setSnackbar({ open: true, message: `模块 ${newModule.id} 注册成功`, type: 'success' });
+      setSnackbar({ open: true, message: `${i18n.t('microfrontend.registry_panel.k0')} ${newModule.id} ${i18n.t('microfrontend.registry_panel.k1')}`, type: 'success' });
       setNewModule({
         id: '',
         name: '',
@@ -105,7 +106,7 @@ const RegistryPanel: React.FC<RegistryPanelProps> = ({ onClose }) => {
     } catch (err) {
       setSnackbar({
         open: true,
-        message: err instanceof Error ? err.message : '注册失败',
+        message: err instanceof Error ? err.message : i18n.t('microfrontend.registry_panel.k0'),
         type: 'error',
       });
     }
@@ -114,7 +115,7 @@ const RegistryPanel: React.FC<RegistryPanelProps> = ({ onClose }) => {
   const handleUnregister = (moduleId: string) => {
     const success = moduleRegistry.unregisterModule(moduleId);
     if (success) {
-      setSnackbar({ open: true, message: `模块 ${moduleId} 已注销`, type: 'success' });
+      setSnackbar({ open: true, message: `${i18n.t('microfrontend.registry_panel.k2')} ${moduleId} ${i18n.t('microfrontend.registry_panel.k3')}`, type: 'success' });
       if (selectedModule?.id === moduleId) {
         setSelectedModule(null);
       }
@@ -176,7 +177,7 @@ const RegistryPanel: React.FC<RegistryPanelProps> = ({ onClose }) => {
             variant='h6'
             sx={{ fontWeight: 700 }}
           >
-            模块注册中心
+            {i18n.t('microfrontend.registry_panel.k4')}
           </Typography>
           <Chip
             label={modules.length}
@@ -192,7 +193,7 @@ const RegistryPanel: React.FC<RegistryPanelProps> = ({ onClose }) => {
             sx={{ color: 'common.white', borderColor: 'action.disabledBackground' }}
             variant='outlined'
           >
-            检测循环依赖
+            {i18n.t('microfrontend.registry_panel.k5')}
           </Button>
           <Button
             size='small'
@@ -201,7 +202,7 @@ const RegistryPanel: React.FC<RegistryPanelProps> = ({ onClose }) => {
             sx={{ color: 'common.white', borderColor: 'action.disabledBackground' }}
             variant='outlined'
           >
-            注册模块
+            {i18n.t('microfrontend.registry_panel.k6')}
           </Button>
           <Button
             size='small'
@@ -210,7 +211,7 @@ const RegistryPanel: React.FC<RegistryPanelProps> = ({ onClose }) => {
             sx={{ color: 'common.white', borderColor: 'action.disabledBackground' }}
             variant='outlined'
           >
-            刷新
+            {i18n.t('microfrontend.registry_panel.k7')}
           </Button>
           {onClose && (
             <IconButton
@@ -236,7 +237,7 @@ const RegistryPanel: React.FC<RegistryPanelProps> = ({ onClose }) => {
       >
         <TextField
           size='small'
-          placeholder='搜索模块...'
+          placeholder={i18n.t('microfrontend.registry_panel.k8')}
           value={searchKeyword}
           onChange={(e) => setSearchKeyword(e.target.value)}
           sx={{ minWidth: 200 }}
@@ -245,34 +246,34 @@ const RegistryPanel: React.FC<RegistryPanelProps> = ({ onClose }) => {
           size='small'
           sx={{ minWidth: 120 }}
         >
-          <InputLabel>类型</InputLabel>
+          <InputLabel>{i18n.t('microfrontend.registry_panel.k1')}</InputLabel>
           <Select
             value={filterType}
             onChange={(e) => setFilterType(e.target.value)}
-            label='类型'
+            label={i18n.t('microfrontend.registry_panel.k2')}
           >
-            <MenuItem value=''>全部</MenuItem>
-            <MenuItem value='app'>应用</MenuItem>
-            <MenuItem value='component'>组件</MenuItem>
-            <MenuItem value='library'>库</MenuItem>
-            <MenuItem value='utility'>工具</MenuItem>
+            <MenuItem value=''>{i18n.t('microfrontend.registry_panel.k3')}</MenuItem>
+            <MenuItem value='app'>{i18n.t('microfrontend.registry_panel.k4')}</MenuItem>
+            <MenuItem value='component'>{i18n.t('microfrontend.registry_panel.k5')}</MenuItem>
+            <MenuItem value='library'>{i18n.t('microfrontend.registry_panel.k9')}</MenuItem>
+            <MenuItem value='utility'>{i18n.t('microfrontend.registry_panel.k6')}</MenuItem>
           </Select>
         </FormControl>
         <FormControl
           size='small'
           sx={{ minWidth: 120 }}
         >
-          <InputLabel>状态</InputLabel>
+          <InputLabel>{i18n.t('microfrontend.registry_panel.k7')}</InputLabel>
           <Select
             value={filterStatus}
             onChange={(e) => setFilterStatus(e.target.value)}
-            label='状态'
+            label={i18n.t('microfrontend.registry_panel.k8')}
           >
-            <MenuItem value=''>全部</MenuItem>
-            <MenuItem value='active'>活跃</MenuItem>
-            <MenuItem value='disabled'>禁用</MenuItem>
-            <MenuItem value='deprecated'>废弃</MenuItem>
-            <MenuItem value='error'>错误</MenuItem>
+            <MenuItem value=''>{i18n.t('microfrontend.registry_panel.k9')}</MenuItem>
+            <MenuItem value='active'>{i18n.t('microfrontend.registry_panel.k10')}</MenuItem>
+            <MenuItem value='disabled'>{i18n.t('microfrontend.registry_panel.k11')}</MenuItem>
+            <MenuItem value='deprecated'>{i18n.t('microfrontend.registry_panel.k12')}</MenuItem>
+            <MenuItem value='error'>{i18n.t('microfrontend.registry_panel.k13')}</MenuItem>
           </Select>
         </FormControl>
       </Box>
@@ -305,15 +306,15 @@ const RegistryPanel: React.FC<RegistryPanelProps> = ({ onClose }) => {
           <Table size='small'>
             <TableHead>
               <TableRow sx={{ bgcolor: 'action.hover' }}>
-                <TableCell sx={{ fontWeight: 600 }}>模块ID</TableCell>
-                <TableCell sx={{ fontWeight: 600 }}>名称</TableCell>
-                <TableCell sx={{ fontWeight: 600 }}>版本</TableCell>
-                <TableCell sx={{ fontWeight: 600 }}>类型</TableCell>
-                <TableCell sx={{ fontWeight: 600 }}>状态</TableCell>
-                <TableCell sx={{ fontWeight: 600 }}>入口URL</TableCell>
-                <TableCell sx={{ fontWeight: 600 }}>依赖数</TableCell>
-                <TableCell sx={{ fontWeight: 600 }}>更新时间</TableCell>
-                <TableCell sx={{ fontWeight: 600 }}>操作</TableCell>
+                <TableCell sx={{ fontWeight: 600 }}>{i18n.t('microfrontend.registry_panel.id_14')}</TableCell>
+                <TableCell sx={{ fontWeight: 600 }}>{i18n.t('microfrontend.registry_panel.k15')}</TableCell>
+                <TableCell sx={{ fontWeight: 600 }}>{i18n.t('microfrontend.registry_panel.k16')}</TableCell>
+                <TableCell sx={{ fontWeight: 600 }}>{i18n.t('microfrontend.registry_panel.k17')}</TableCell>
+                <TableCell sx={{ fontWeight: 600 }}>{i18n.t('microfrontend.registry_panel.k18')}</TableCell>
+                <TableCell sx={{ fontWeight: 600 }}>{i18n.t('microfrontend.registry_panel.url_19')}</TableCell>
+                <TableCell sx={{ fontWeight: 600 }}>{i18n.t('microfrontend.registry_panel.k20')}</TableCell>
+                <TableCell sx={{ fontWeight: 600 }}>{i18n.t('microfrontend.registry_panel.k21')}</TableCell>
+                <TableCell sx={{ fontWeight: 600 }}>{i18n.t('microfrontend.registry_panel.k22')}</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
@@ -382,7 +383,7 @@ const RegistryPanel: React.FC<RegistryPanelProps> = ({ onClose }) => {
                       color='text.secondary'
                       sx={{ py: 4 }}
                     >
-                      暂无注册模块
+                      {i18n.t('microfrontend.registry_panel.k10')}
                     </Typography>
                   </TableCell>
                 </TableRow>
@@ -405,7 +406,7 @@ const RegistryPanel: React.FC<RegistryPanelProps> = ({ onClose }) => {
               variant='h6'
               sx={{ fontWeight: 600 }}
             >
-              模块详情
+              {i18n.t('microfrontend.registry_panel.k11')}
             </Typography>
             <IconButton onClick={() => setSelectedModule(null)}>
               <XIcon size={20} />
@@ -419,7 +420,7 @@ const RegistryPanel: React.FC<RegistryPanelProps> = ({ onClose }) => {
                   variant='caption'
                   color='text.secondary'
                 >
-                  模块ID
+                  {i18n.t('microfrontend.registry_panel.id_12')}
                 </Typography>
                 <Typography
                   variant='body1'
@@ -433,7 +434,7 @@ const RegistryPanel: React.FC<RegistryPanelProps> = ({ onClose }) => {
                   variant='caption'
                   color='text.secondary'
                 >
-                  名称
+                  {i18n.t('microfrontend.registry_panel.k13')}
                 </Typography>
                 <Typography variant='body1'>{selectedModule.name}</Typography>
               </Box>
@@ -443,7 +444,7 @@ const RegistryPanel: React.FC<RegistryPanelProps> = ({ onClose }) => {
                     variant='caption'
                     color='text.secondary'
                   >
-                    描述
+                    {i18n.t('microfrontend.registry_panel.k14')}
                   </Typography>
                   <Typography variant='body1'>{selectedModule.description}</Typography>
                 </Box>
@@ -453,7 +454,7 @@ const RegistryPanel: React.FC<RegistryPanelProps> = ({ onClose }) => {
                   variant='caption'
                   color='text.secondary'
                 >
-                  版本
+                  {i18n.t('microfrontend.registry_panel.k15')}
                 </Typography>
                 <Typography
                   variant='body1'
@@ -467,7 +468,7 @@ const RegistryPanel: React.FC<RegistryPanelProps> = ({ onClose }) => {
                   variant='caption'
                   color='text.secondary'
                 >
-                  类型
+                  {i18n.t('microfrontend.registry_panel.k16')}
                 </Typography>
                 <Chip
                   label={selectedModule.type}
@@ -479,7 +480,7 @@ const RegistryPanel: React.FC<RegistryPanelProps> = ({ onClose }) => {
                   variant='caption'
                   color='text.secondary'
                 >
-                  状态
+                  {i18n.t('microfrontend.registry_panel.k17')}
                 </Typography>
                 <Chip
                   label={selectedModule.status}
@@ -492,7 +493,7 @@ const RegistryPanel: React.FC<RegistryPanelProps> = ({ onClose }) => {
                   variant='caption'
                   color='text.secondary'
                 >
-                  入口URL
+                  {i18n.t('microfrontend.registry_panel.url_18')}
                 </Typography>
                 <Typography
                   variant='body2'
@@ -516,7 +517,7 @@ const RegistryPanel: React.FC<RegistryPanelProps> = ({ onClose }) => {
                     variant='body2'
                     color='text.secondary'
                   >
-                    无依赖
+                    {i18n.t('microfrontend.registry_panel.k19')}
                   </Typography>
                 ) : (
                   <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
@@ -544,7 +545,7 @@ const RegistryPanel: React.FC<RegistryPanelProps> = ({ onClose }) => {
                     variant='body2'
                     color='text.secondary'
                   >
-                    无暴露
+                    {i18n.t('microfrontend.registry_panel.k20')}
                   </Typography>
                 ) : (
                   <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
@@ -566,7 +567,7 @@ const RegistryPanel: React.FC<RegistryPanelProps> = ({ onClose }) => {
                   variant='subtitle2'
                   sx={{ fontWeight: 600, mb: 1 }}
                 >
-                  被依赖模块
+                  {i18n.t('microfrontend.registry_panel.k21')}
                 </Typography>
                 {(() => {
                   const dependents = moduleRegistry.getModuleDependents(selectedModule.id);
@@ -576,7 +577,7 @@ const RegistryPanel: React.FC<RegistryPanelProps> = ({ onClose }) => {
                         variant='body2'
                         color='text.secondary'
                       >
-                        无被依赖
+                        {i18n.t('microfrontend.registry_panel.k22')}
                       </Typography>
                     );
                   }
@@ -603,7 +604,7 @@ const RegistryPanel: React.FC<RegistryPanelProps> = ({ onClose }) => {
                   variant='caption'
                   color='text.secondary'
                 >
-                  创建时间
+                  {i18n.t('microfrontend.registry_panel.k23')}
                 </Typography>
                 <Typography variant='body2'>{formatDate(selectedModule.createdAt)}</Typography>
               </Box>
@@ -612,7 +613,7 @@ const RegistryPanel: React.FC<RegistryPanelProps> = ({ onClose }) => {
                   variant='caption'
                   color='text.secondary'
                 >
-                  更新时间
+                  {i18n.t('microfrontend.registry_panel.k24')}
                 </Typography>
                 <Typography variant='body2'>{formatDate(selectedModule.updatedAt)}</Typography>
               </Box>
@@ -634,7 +635,7 @@ const RegistryPanel: React.FC<RegistryPanelProps> = ({ onClose }) => {
               variant='h6'
               sx={{ fontWeight: 600 }}
             >
-              注册新模块
+              {i18n.t('microfrontend.registry_panel.k25')}
             </Typography>
             <IconButton onClick={() => setShowRegisterDialog(false)}>
               <XIcon size={20} />
@@ -643,61 +644,61 @@ const RegistryPanel: React.FC<RegistryPanelProps> = ({ onClose }) => {
           <Divider sx={{ mb: 2 }} />
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
             <TextField
-              label='模块ID'
+              label={i18n.t('microfrontend.registry_panel.id_23')}
               value={newModule.id}
               onChange={(e) => setNewModule({ ...newModule, id: e.target.value })}
               size='small'
-              helperText='字母开头，字母数字下划线连字符'
+              helperText={i18n.t('microfrontend.registry_panel.k24')}
             />
             <TextField
-              label='模块名称'
+              label={i18n.t('microfrontend.registry_panel.k25')}
               value={newModule.name}
               onChange={(e) => setNewModule({ ...newModule, name: e.target.value })}
               size='small'
             />
             <TextField
-              label='版本号'
+              label={i18n.t('microfrontend.registry_panel.k26')}
               value={newModule.version}
               onChange={(e) => setNewModule({ ...newModule, version: e.target.value })}
               size='small'
             />
             <TextField
-              label='入口URL'
+              label={i18n.t('microfrontend.registry_panel.url_27')}
               value={newModule.entryUrl}
               onChange={(e) => setNewModule({ ...newModule, entryUrl: e.target.value })}
               size='small'
-              helperText='远程模块入口地址'
+              helperText={i18n.t('microfrontend.registry_panel.k28')}
             />
             <FormControl size='small'>
-              <InputLabel>类型</InputLabel>
+              <InputLabel>{i18n.t('microfrontend.registry_panel.k29')}</InputLabel>
               <Select
                 value={newModule.type}
                 onChange={(e) => setNewModule({ ...newModule, type: e.target.value as ModuleType })}
-                label='类型'
+                label={i18n.t('microfrontend.registry_panel.k30')}
               >
-                <MenuItem value='app'>应用</MenuItem>
-                <MenuItem value='component'>组件</MenuItem>
-                <MenuItem value='library'>库</MenuItem>
-                <MenuItem value='utility'>工具</MenuItem>
+                <MenuItem value='app'>{i18n.t('microfrontend.registry_panel.k31')}</MenuItem>
+                <MenuItem value='component'>{i18n.t('microfrontend.registry_panel.k32')}</MenuItem>
+                <MenuItem value='library'>{i18n.t('microfrontend.registry_panel.k26')}</MenuItem>
+                <MenuItem value='utility'>{i18n.t('microfrontend.registry_panel.k33')}</MenuItem>
               </Select>
             </FormControl>
             <FormControl size='small'>
-              <InputLabel>状态</InputLabel>
+              <InputLabel>{i18n.t('microfrontend.registry_panel.k34')}</InputLabel>
               <Select
                 value={newModule.status}
                 onChange={(e) =>
                   setNewModule({ ...newModule, status: e.target.value as ModuleStatus })
                 }
-                label='状态'
+                label={i18n.t('microfrontend.registry_panel.k35')}
               >
-                <MenuItem value='active'>活跃</MenuItem>
-                <MenuItem value='disabled'>禁用</MenuItem>
-                <MenuItem value='deprecated'>废弃</MenuItem>
-                <MenuItem value='error'>错误</MenuItem>
+                <MenuItem value='active'>{i18n.t('microfrontend.registry_panel.k36')}</MenuItem>
+                <MenuItem value='disabled'>{i18n.t('microfrontend.registry_panel.k37')}</MenuItem>
+                <MenuItem value='deprecated'>{i18n.t('microfrontend.registry_panel.k38')}</MenuItem>
+                <MenuItem value='error'>{i18n.t('microfrontend.registry_panel.k39')}</MenuItem>
               </Select>
             </FormControl>
             <TextField
-              label='描述'
+              label={i18n.t('microfrontend.registry_panel.k40')}
               value={newModule.description}
               onChange={(e) => setNewModule({ ...newModule, description: e.target.value })}
               size='small'
@@ -705,7 +706,7 @@ const RegistryPanel: React.FC<RegistryPanelProps> = ({ onClose }) => {
               rows={2}
             />
             <TextField
-              label='依赖模块 (逗号分隔)'
+              label={i18n.t('microfrontend.registry_panel.k41')}
               value={(newModule.dependencies || []).join(', ')}
               onChange={(e) =>
                 setNewModule({
@@ -717,14 +718,14 @@ const RegistryPanel: React.FC<RegistryPanelProps> = ({ onClose }) => {
                 })
               }
               size='small'
-              helperText='模块ID列表，用逗号分隔'
+              helperText={i18n.t('microfrontend.registry_panel.id_42')}
             />
             <Button
               variant='contained'
               onClick={handleRegister}
               startIcon={<PlusIcon size={18} />}
             >
-              注册模块
+              {i18n.t('microfrontend.registry_panel.k27')}
             </Button>
           </Box>
         </Box>

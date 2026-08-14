@@ -4,6 +4,7 @@ import type {
   AxiosRequestConfig,
   InternalAxiosRequestConfig,
 } from 'axios';
+import i18n from '@/i18n';
 import axios from 'axios';
 import config, { isProduction, isDevelopment } from '../config/runtime';
 import { createLogger, apiLogger } from '../utils/logger';
@@ -196,7 +197,7 @@ export const createAxiosClient = ({
       const requestBaseURL = requestConfig.baseURL || '';
       const fullUrl = `${requestBaseURL}${url}`;
 
-      apiLogger.info(`[日志1-请求发送] ${requestConfig.method?.toUpperCase()} ${fullUrl}`, {
+      apiLogger.info(`${i18n.t('shared.client.1_0')}${requestConfig.method?.toUpperCase()} ${fullUrl}`, {
         hasToken: !!token,
         tokenLength: token?.length || 0,
         hasAuthHeader: !!requestConfig.headers['Authorization'],
@@ -363,7 +364,7 @@ export const createAxiosClient = ({
         const tokenBefore = localStorage.getItem('token');
         const requestIsAuthPublicApi = isPublicPath(url);
 
-        apiLogger.warn(`[日志2-收到401响应] ${fullUrl}`, {
+        apiLogger.warn(`${i18n.t('shared.client.2401_1')}${fullUrl}`, {
           currentPath,
           hasTokenBeforeClear: !!tokenBefore,
           isUserOnLoginPage: currentPath === '/login' || currentPath === '/register',
@@ -453,7 +454,7 @@ export const downloadBlob = async (
   }
 
   if (responseData.status !== 200) {
-    let errorMessage = `请求失败: ${responseData.status}`;
+    let errorMessage = `${i18n.t('shared.client.k2')}${responseData.status}`;
     if (responseData.data && typeof responseData.data.text === 'function') {
       const text = await responseData.data.text();
       if (isDevelopment()) {

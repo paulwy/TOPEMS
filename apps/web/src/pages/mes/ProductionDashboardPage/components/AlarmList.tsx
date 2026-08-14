@@ -4,6 +4,7 @@ import { AlertTriangle, CheckCircle2 } from 'lucide-react';
 import type { RealtimeAlarm } from '../types';
 import { ALARM_LEVEL_META } from '../constants';
 import { formatRelativeTime } from '../utils';
+import i18n from '@/i18n';
 
 const AlarmList: React.FC<{ alarms: RealtimeAlarm[]; loading?: boolean }> = ({
   alarms,
@@ -39,7 +40,7 @@ const AlarmList: React.FC<{ alarms: RealtimeAlarm[]; loading?: boolean }> = ({
             variant='subtitle1'
             sx={{ fontWeight: 600 }}
           >
-            实时报警
+            {i18n.t('pages.alarm_list.k0')}
           </Typography>
           <Chip
             size='small'
@@ -73,7 +74,7 @@ const AlarmList: React.FC<{ alarms: RealtimeAlarm[]; loading?: boolean }> = ({
               variant='body2'
               sx={{ color: 'text.secondary' }}
             >
-              当前无报警，运行平稳
+              {i18n.t('pages.alarm_list.k1')}
             </Typography>
           </Box>
         ) : (

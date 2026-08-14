@@ -1,12 +1,13 @@
 import React from 'react';
 import { Chip } from '@mui/material';
 import type { EntitySchema } from '@/schema';
+import i18n from '@/i18n';
 
 const typeLabels: Record<string, string> = {
-  approval: '审批流程',
-  reimbursement: '报销流程',
-  purchase: '采购流程',
-  contract: '合同流程',
+  approval: i18n.t('shared.template.k0'),
+  reimbursement: i18n.t('shared.template.k1'),
+  purchase: i18n.t('shared.template.k2'),
+  contract: i18n.t('shared.template.k3'),
 };
 
 const typeColorMap: Record<string, { bgcolor: string; color: string }> = {
@@ -33,8 +34,8 @@ export function renderTemplateTypeBadge(type: string): React.ReactNode {
 
 export const workflowTemplateSchema: EntitySchema = {
   entity: 'workflow-template',
-  title: '流程模板',
-  description: '管理工作流模板定义',
+  title: i18n.t('shared.template.k4'),
+  description: i18n.t('shared.template.k5'),
 
   api: {
     module: 'workflow',
@@ -44,16 +45,16 @@ export const workflowTemplateSchema: EntitySchema = {
   fields: [
     {
       name: 'name',
-      label: '模板名称',
+      label: i18n.t('shared.template.k6'),
       type: 'text',
       required: true,
       sortable: true,
-      placeholder: '请输入模板名称',
+      placeholder: i18n.t('shared.template.k7'),
       validation: [{ type: 'maxLength', value: 128 }],
     },
     {
       name: 'type',
-      label: '模板类型',
+      label: i18n.t('shared.template.k8'),
       type: 'select',
       required: true,
       defaultValue: 'approval',
@@ -64,10 +65,10 @@ export const workflowTemplateSchema: EntitySchema = {
     },
     {
       name: 'scope',
-      label: '适用范围',
+      label: i18n.t('shared.template.k9'),
       type: 'text',
-      defaultValue: '全公司',
-      placeholder: '请输入适用范围',
+      defaultValue: i18n.t('shared.template.k10'),
+      placeholder: i18n.t('shared.template.k11'),
     },
   ],
 
@@ -77,9 +78,9 @@ export const workflowTemplateSchema: EntitySchema = {
     filters: [
       {
         id: 'type',
-        label: '类型',
+        label: i18n.t('shared.template.k12'),
         type: 'select',
-        options: [{ label: '全部类型', value: 'all' }, ...typeOptions],
+        options: [{ label: i18n.t('shared.template.k13'), value: 'all' }, ...typeOptions],
       },
     ],
   },
@@ -88,13 +89,13 @@ export const workflowTemplateSchema: EntitySchema = {
 
   formSections: [
     {
-      title: '基本信息',
+      title: i18n.t('shared.template.k14'),
       fields: ['name', 'type', 'scope'],
     },
   ],
 
   formColCount: 2,
-  createTitle: '新建模板',
-  editTitle: '编辑模板',
-  detailTitle: '模板详情',
+  createTitle: i18n.t('shared.template.k15'),
+  editTitle: i18n.t('shared.template.k16'),
+  detailTitle: i18n.t('shared.template.k17'),
 };

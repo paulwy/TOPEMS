@@ -33,6 +33,7 @@ import {
   shouldSuppressToast,
   type MFErrorEvent,
 } from './mf-error-classifier';
+import i18n from '@/i18n';
 
 const MAX_EVENTS = 200;
 let initialized = false;
@@ -73,7 +74,7 @@ function routeToToast(event: MFErrorEvent): void {
 
   try {
     useNotificationStore.getState().addNotification({
-      title: event.severity === 'critical' ? '微前端模块错误' : '微前端模块警告',
+      title: event.severity === 'critical' ? i18n.t('microfrontend.mf-runtime-plugin.k1') : i18n.t('microfrontend.mf-runtime-plugin.k0'),
       message: getUserMessage(event),
       type: event.severity === 'critical' ? 'error' : 'warning',
       duration: event.severity === 'critical' ? 0 : 8000,
@@ -306,7 +307,7 @@ const mfObservabilityPlugin: ModuleFederationRuntimePlugin = {
  */
 export function initMFObservability(): void {
   if (initialized) {
-    logger.debug('[MF-Observability] 已初始化，跳过重复注册');
+    logger.debug(i18n.t('microfrontend.mf-runtime-plugin.k0'));
     return;
   }
   if (typeof window === 'undefined') {
@@ -316,9 +317,9 @@ export function initMFObservability(): void {
   try {
     registerGlobalPlugins([mfObservabilityPlugin]);
     initialized = true;
-    logger.info('[MF-Observability] MF 运行时可观测性插件已注册');
+    logger.info(i18n.t('microfrontend.mf-runtime-plugin.k1'));
   } catch (err) {
-    logger.error('[MF-Observability] 插件注册失败:', err);
+    logger.error(i18n.t('microfrontend.mf-runtime-plugin.k2'), err);
   }
 }
 

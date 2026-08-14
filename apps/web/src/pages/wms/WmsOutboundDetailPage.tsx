@@ -3,15 +3,16 @@ import { useParams } from 'react-router-dom';
 import { useWmsMock, type WmsMockShape } from '@/api/wms/_mock';
 import { WmsStatusBadge, WmsFSMActionButtons } from '@/components/wms';
 import type { OutboundOrderDto } from '@/types/wms';
+import i18n from '@/i18n';
 
 const OUTBOUND_STAGES = ['created', 'confirmed', 'picking', 'packing', 'shipping', 'completed'];
 const STAGE_LABELS: Record<string, string> = {
-  created: '创建',
-  confirmed: '确认',
-  picking: '拣货',
-  packing: '包装',
-  shipping: '发运',
-  completed: '完成',
+  created: i18n.t('pages.wms_outbound_detail_page.k0'),
+  confirmed: i18n.t('pages.wms_outbound_detail_page.k1'),
+  picking: i18n.t('pages.wms_outbound_detail_page.k2'),
+  packing: i18n.t('pages.wms_outbound_detail_page.k3'),
+  shipping: i18n.t('pages.wms_outbound_detail_page.k4'),
+  completed: i18n.t('pages.wms_outbound_detail_page.k5'),
 };
 
 export default function WmsOutboundDetailPage() {
@@ -30,7 +31,7 @@ export default function WmsOutboundDetailPage() {
     return i < 0 ? 0 : i;
   }, [order]);
 
-  if (!order) return <div className='p-8'>加载中...</div>;
+  if (!order) return <div className='p-8'>{i18n.t('pages.wms_outbound_detail_page.k0')}</div>;
 
   return (
     <div className='space-y-4 p-4'>
@@ -53,7 +54,7 @@ export default function WmsOutboundDetailPage() {
       </div>
 
       <div className='rounded-lg border p-4'>
-        <h3 className='mb-3 font-semibold'>出库进度</h3>
+        <h3 className='mb-3 font-semibold'>{i18n.t('pages.wms_outbound_detail_page.k6')}</h3>
         <div className='flex items-center justify-between'>
           {OUTBOUND_STAGES.map((s, i) => (
             <div
@@ -86,7 +87,7 @@ export default function WmsOutboundDetailPage() {
 
       <div className='grid grid-cols-1 gap-4 md:grid-cols-4'>
         <div className='rounded-lg border p-4'>
-          <p className='text-sm text-gray-600'>仓库</p>
+          <p className='text-sm text-gray-600'>{i18n.t('pages.wms_outbound_detail_page.k7')}</p>
           <p className='mt-1 font-semibold'>{order.warehouse_name ?? '-'}</p>
         </div>
         <div className='rounded-lg border p-4'>
@@ -102,7 +103,7 @@ export default function WmsOutboundDetailPage() {
           </p>
         </div>
         <div className='rounded-lg border p-4'>
-          <p className='text-sm text-gray-600'>总金额</p>
+          <p className='text-sm text-gray-600'>{i18n.t('pages.wms_outbound_detail_page.k8')}</p>
           <p className='mt-1 font-semibold text-green-700'>
             ¥{(order.total_amount ?? 0).toLocaleString()}
           </p>

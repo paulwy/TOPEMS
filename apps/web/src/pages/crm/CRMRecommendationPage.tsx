@@ -9,6 +9,7 @@ import {
   Paper,
   LinearProgress,
 } from '@mui/material';
+import i18n from '@/i18n';
 import {
   Lightbulb,
   TrendingUp,
@@ -316,26 +317,26 @@ const CRMRecommendationPage: React.FC = () => {
   }> = [
     {
       key: 'crossSell',
-      label: t('crm.recommendation.col_cross_sell') || '交叉销售',
-      sublabel: t('crm.recommendation.col_cross_sell_sub') || '关联产品推荐',
+      label: t('crm.recommendation.col_cross_sell') || i18n.t('pages.crm_recommendation_page.k0'),
+      sublabel: t('crm.recommendation.col_cross_sell_sub') || i18n.t('pages.crm_recommendation_page.k1'),
       icon: <ShoppingCart size={20} color='white' />,
       gradient: ['colors.primary.dark', 'colors.primary.700'],
       data: mockRec.crossSell,
     },
     {
       key: 'upsell',
-      label: t('crm.recommendation.col_upsell') || '向上销售',
-      sublabel: t('crm.recommendation.col_upsell_sub') || '升级方案机会',
+      label: t('crm.recommendation.col_upsell') || i18n.t('pages.crm_recommendation_page.k2'),
+      sublabel: t('crm.recommendation.col_upsell_sub') || i18n.t('pages.crm_recommendation_page.k3'),
       icon: <TrendingUp size={20} color='white' />,
-      gradient: ['colors.success.dark', '#15803d'],
+      gradient: ['colors.success.dark', designTokens.colors.success[700]],
       data: mockRec.upsell,
     },
     {
       key: 'followup',
-      label: t('crm.recommendation.col_followup') || '跟进建议',
-      sublabel: t('crm.recommendation.col_followup_sub') || '主动沟通减少流失',
+      label: t('crm.recommendation.col_followup') || i18n.t('pages.crm_recommendation_page.k4'),
+      sublabel: t('crm.recommendation.col_followup_sub') || i18n.t('pages.crm_recommendation_page.k5'),
       icon: <MessageSquare size={20} color='white' />,
-      gradient: [designTokens.colors.warning.dark, '#b45309'],
+      gradient: [designTokens.colors.warning.dark, designTokens.colors.warning[700]],
       data: mockRec.followup,
     },
   ];
@@ -345,7 +346,7 @@ const CRMRecommendationPage: React.FC = () => {
       {mockEnabled && (
         <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
           <Chip
-            label={t('crm.common.mock_demo_badge') || 'Mock 演示'}
+            label={t('crm.common.mock_demo_badge') || i18n.t('pages.crm_recommendation_page.mock_6')}
             color='warning'
             size='small'
             variant='outlined'

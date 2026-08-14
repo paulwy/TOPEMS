@@ -10,6 +10,7 @@ import {
   Loader2,
   Columns,
 } from 'lucide-react';
+import i18n from '@/i18n';
 import type { ReportData, ExportFormat } from '@/api/report';
 import { logger } from '@/utils/logger';
 import { designTokens, semanticTokens } from '@topems/tokens';
@@ -33,7 +34,7 @@ const ExportModal: React.FC<ExportModalProps> = ({ report, onClose }) => {
       value: 'excel' as ExportFormat,
       label: 'Excel (.xlsx)',
       icon: FileSpreadsheet,
-      description: '适合数据分析，支持公式和图表',
+      description: i18n.t('components.export_modal.k0'),
       color: 'success.dark',
       bgColor: 'success.light',
       borderColor: 'success.light',
@@ -42,7 +43,7 @@ const ExportModal: React.FC<ExportModalProps> = ({ report, onClose }) => {
       value: 'pdf' as ExportFormat,
       label: 'PDF (.pdf)',
       icon: File,
-      description: '适合打印和文档分享',
+      description: i18n.t('components.export_modal.k1'),
       color: 'error.dark',
       bgColor: 'error.light',
       borderColor: 'error.light',
@@ -51,7 +52,7 @@ const ExportModal: React.FC<ExportModalProps> = ({ report, onClose }) => {
       value: 'csv' as ExportFormat,
       label: 'CSV (.csv)',
       icon: FileText,
-      description: '适合数据交换和程序读取',
+      description: i18n.t('components.export_modal.k2'),
       color: 'primary.dark',
       bgColor: 'primary.light',
       borderColor: 'primary.light',
@@ -84,8 +85,8 @@ const ExportModal: React.FC<ExportModalProps> = ({ report, onClose }) => {
         onClose();
       }, 1500);
     } catch (err: unknown) {
-      setExportError('导出失败，请重试');
-      logger.error('导出失败:', err);
+      setExportError(i18n.t('components.export_modal.k3'));
+      logger.error(i18n.t('components.export_modal.k4'), err);
     } finally {
       setExporting(false);
     }
@@ -219,7 +220,7 @@ const ExportModal: React.FC<ExportModalProps> = ({ report, onClose }) => {
                   color: 'grey.900',
                 }}
               >
-                导出报表
+                {i18n.t('components.export_modal.k0')}
               </Typography>
               <Typography sx={{ fontSize: '0.875rem', color: 'grey.600', marginTop: 0.5 }}>
                 {report.config.title}
@@ -251,7 +252,7 @@ const ExportModal: React.FC<ExportModalProps> = ({ report, onClose }) => {
                     marginBottom: 2,
                   }}
                 >
-                  选择导出格式
+                  {i18n.t('components.export_modal.k1')}
                 </Typography>
                 <Box
                   sx={{
@@ -330,7 +331,7 @@ const ExportModal: React.FC<ExportModalProps> = ({ report, onClose }) => {
                       marginBottom: 1,
                     }}
                   >
-                    自定义文件名（可选）
+                    {i18n.t('components.export_modal.k2')}
                   </Typography>
                   <TextField
                     type='text'
@@ -350,7 +351,7 @@ const ExportModal: React.FC<ExportModalProps> = ({ report, onClose }) => {
                       marginTop: 0.5,
                     }}
                   >
-                    默认文件名包含报表名称和导出日期
+                    {i18n.t('components.export_modal.k3')}
                   </Typography>
                 </Box>
 
@@ -365,7 +366,7 @@ const ExportModal: React.FC<ExportModalProps> = ({ report, onClose }) => {
                       }}
                     />
                     <Typography sx={{ fontSize: '0.875rem', color: 'grey.700' }}>
-                      包含表头
+                      {i18n.t('components.export_modal.k4')}
                     </Typography>
                   </Box>
                 )}
@@ -394,7 +395,7 @@ const ExportModal: React.FC<ExportModalProps> = ({ report, onClose }) => {
                       color: 'grey.700',
                     }}
                   >
-                    导出预览
+                    {i18n.t('components.export_modal.k5')}
                   </Typography>
                 </Box>
                 <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
@@ -436,7 +437,7 @@ const ExportModal: React.FC<ExportModalProps> = ({ report, onClose }) => {
                   color: 'grey.900',
                 }}
               >
-                正在导出报表...
+                {i18n.t('components.export_modal.k6')}
               </Typography>
               <Box sx={{ width: '100%', marginTop: 2 }}>
                 <LinearProgress
@@ -482,10 +483,10 @@ const ExportModal: React.FC<ExportModalProps> = ({ report, onClose }) => {
                   color: 'grey.900',
                 }}
               >
-                导出成功！
+                {i18n.t('components.export_modal.k7')}
               </Typography>
               <Typography sx={{ fontSize: '0.875rem', color: 'grey.600', marginTop: 1 }}>
-                文件已开始下载
+                {i18n.t('components.export_modal.k8')}
               </Typography>
             </Box>
           )}
@@ -527,7 +528,7 @@ const ExportModal: React.FC<ExportModalProps> = ({ report, onClose }) => {
                   '&:hover': { backgroundColor: 'error.darker' },
                 }}
               >
-                重试
+                {i18n.t('components.export_modal.k9')}
               </Button>
             </Box>
           )}
@@ -554,7 +555,7 @@ const ExportModal: React.FC<ExportModalProps> = ({ report, onClose }) => {
                 '&:hover': { backgroundColor: 'border.default' },
               }}
             >
-              取消
+              {i18n.t('components.export_modal.k10')}
             </Button>
             <Button
               onClick={handleExport}
@@ -569,7 +570,7 @@ const ExportModal: React.FC<ExportModalProps> = ({ report, onClose }) => {
                 '&:hover': { backgroundColor: 'success.700' },
               }}
             >
-              导出
+              {i18n.t('components.export_modal.k11')}
             </Button>
           </Box>
         )}

@@ -1,4 +1,5 @@
 import { designTokens, semanticTokens } from '@topems/tokens';
+import i18n from '@/i18n';
 'use client';
 
 import React, { useEffect, useState } from 'react';
@@ -101,7 +102,7 @@ const Toast = ({ id: _, title, message, type, duration, onClose }: ToastProps) =
         display: 'flex',
         alignItems: 'flex-start',
         gap: 1.5,
-        padding: '12px 16px',
+        padding: `${designTokens.spacing.md} 16px`,
         borderRadius: 'md',
         border: '1px solid',
         boxShadow: designTokens.shadows.lg,
@@ -146,7 +147,7 @@ const Toast = ({ id: _, title, message, type, duration, onClose }: ToastProps) =
           justifyContent: 'center',
           minWidth: 'auto',
         }}
-        aria-label='关闭通知'
+        aria-label={i18n.t('shared.notification_provider.k0')}
       >
         <X style={{ height: 16, width: 16 }} />
       </Button>

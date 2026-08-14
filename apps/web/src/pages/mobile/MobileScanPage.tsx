@@ -13,6 +13,7 @@ import {
   InputAdornment,
   Paper,
 } from '@mui/material';
+import i18n from '@/i18n';
 import {
   Home,
   ListTodo,
@@ -37,9 +38,7 @@ import { useNotificationStore } from '@/store';
 import { designTokens } from '@/theme/tokens';
 import { MOBILE_PATHS } from '@/modules/mobile/config';
 import { PageContainer } from '@/components/common';
-
 const ct= designTokens.colors;
-
 interface ScanHistoryItem {
   id: string;
   content: string;
@@ -52,7 +51,6 @@ interface ScanHistoryItem {
     code: string;
   };
 }
-
 const MobileScanPage: React.FC = () => {
   const theme = useTheme();
   const navigate = useNavigate();
@@ -64,9 +62,7 @@ const MobileScanPage: React.FC = () => {
   const [scanHistory, setScanHistory] = useState<ScanHistoryItem[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [manualInput, setManualInput] = useState('');
-
-  const tabs = ['扫码', '历史记录', '手动输入'];
-
+  const tabs = [i18n.t('mobile.mobile_scan_page.k2'), i18n.t('mobile.mobile_scan_page.k1'), i18n.t('mobile.mobile_scan_page.k0')];
   useEffect(() => {
     const history: ScanHistoryItem[] = [
       {
@@ -76,8 +72,8 @@ const MobileScanPage: React.FC = () => {
         format: 'Code 128',
         time: '10:30',
         relatedData: {
-          type: '产品',
-          name: '智能传感器模块',
+          type: i18n.t('mobile.mobile_scan_page.k3'),
+          name: i18n.t('mobile.mobile_scan_page.k4'),
           code: 'PROD-2024-001234',
         },
       },
@@ -88,7 +84,7 @@ const MobileScanPage: React.FC = () => {
         format: 'QR Code',
         time: '09:45',
         relatedData: {
-          type: '库位',
+          type: i18n.t('mobile.mobile_scan_page.k5'),
           name: 'A3-05-02',
           code: 'INV-A3-005678',
         },
@@ -98,10 +94,10 @@ const MobileScanPage: React.FC = () => {
         content: 'PO-2024-06-0891',
         type: 'barcode',
         format: 'EAN-13',
-        time: '昨天 16:20',
+        time: i18n.t('pages.mobile_scan_page.1620_0'),
         relatedData: {
-          type: '采购单',
-          name: '电子元件采购',
+          type: i18n.t('mobile.mobile_scan_page.k6'),
+          name: i18n.t('mobile.mobile_scan_page.k7'),
           code: 'PO-2024-06-0891',
         },
       },
@@ -110,10 +106,10 @@ const MobileScanPage: React.FC = () => {
         content: 'EMP-10086',
         type: 'qrcode',
         format: 'QR Code',
-        time: '昨天 14:15',
+        time: i18n.t('pages.mobile_scan_page.1415_1'),
         relatedData: {
-          type: '员工工牌',
-          name: '张明',
+          type: i18n.t('mobile.mobile_scan_page.k8'),
+          name: i18n.t('mobile.mobile_scan_page.k9'),
           code: 'EMP-10086',
         },
       },
@@ -122,56 +118,49 @@ const MobileScanPage: React.FC = () => {
         content: 'EQ-2024-0042',
         type: 'barcode',
         format: 'Code 39',
-        time: '前天 10:00',
+        time: i18n.t('pages.mobile_scan_page.1000_2'),
         relatedData: {
-          type: '设备',
-          name: 'CNC加工中心 #3',
+          type: i18n.t('mobile.mobile_scan_page.k10'),
+          name: i18n.t('pages.mobile_scan_page.cnc3_3'),
           code: 'EQ-2024-0042',
         },
       },
     ];
     setScanHistory(history);
   }, []);
-
   const simulateScan = useCallback(() => {
     if (!scanning) return;
-
     const mockResults = [
       { content: 'PROD-2024-009999', format: 'Code 128', type: 'barcode' as const },
       { content: 'https://topems.com/item/12345', format: 'QR Code', type: 'qrcode' as const },
       { content: 'INV-B2-001234', format: 'QR Code', type: 'qrcode' as const },
     ];
-
     const randomResult = mockResults[Math.floor(Math.random() * mockResults.length)];
-
     setTimeout(() => {
       if (scanning) {
         setScanResult(randomResult.content);
         setScanning(false);
-
         const newHistoryItem: ScanHistoryItem = {
           id: Date.now().toString(),
           content: randomResult.content,
           type: randomResult.type,
           format: randomResult.format,
-          time: '刚刚',
+          time: i18n.t('mobile.mobile_scan_page.k11'),
           relatedData: {
-            type: '物料',
-            name: '电阻 10kΩ',
+            type: i18n.t('mobile.mobile_scan_page.k12'),
+            name: i18n.t('pages.mobile_scan_page.10k_4'),
             code: randomResult.content,
           },
         };
-
         setScanHistory((prev) => [newHistoryItem, ...prev]);
         addNotification({
-          title: '扫描成功',
+          title: i18n.t('mobile.mobile_scan_page.k13'),
           message: randomResult.content,
           type: 'success',
         });
       }
     }, 2000);
   }, [scanning, addNotification]);
-
   useEffect(() => {
     if (activeTab === 0 && scanning && !scanResult) {
       const timer = setTimeout(() => {
@@ -181,12 +170,10 @@ const MobileScanPage: React.FC = () => {
     }
     return;
   }, [activeTab, scanning, scanResult, simulateScan]);
-
   const handleRescan = () => {
     setScanResult(null);
     setScanning(true);
   };
-
   const handleTabChange = (_event: React.SyntheticEvent, newValue: number) => {
     setActiveTab(newValue);
     if (newValue === 0) {
@@ -194,7 +181,6 @@ const MobileScanPage: React.FC = () => {
       setScanning(true);
     }
   };
-
   const handleBottomTabChange = (tabId: string) => {
     switch (tabId) {
       case 'home':
@@ -213,67 +199,60 @@ const MobileScanPage: React.FC = () => {
         break;
     }
   };
-
   const handleManualSubmit = () => {
     if (!manualInput.trim()) return;
-
     setScanResult(manualInput);
     const newHistoryItem: ScanHistoryItem = {
       id: Date.now().toString(),
       content: manualInput,
       type: 'barcode',
-      format: '手动输入',
-      time: '刚刚',
+      format: i18n.t('mobile.mobile_scan_page.k14'),
+      time: i18n.t('mobile.mobile_scan_page.k15'),
     };
     setScanHistory((prev) => [newHistoryItem, ...prev]);
     setActiveTab(0);
     addNotification({
-      title: '输入成功',
+      title: i18n.t('mobile.mobile_scan_page.k16'),
       message: manualInput,
       type: 'success',
     });
   };
-
   const handleCopyResult = () => {
     if (scanResult) {
       navigator.clipboard.writeText(scanResult);
       addNotification({
-        title: '已复制',
-        message: '内容已复制到剪贴板',
+        title: i18n.t('mobile.mobile_scan_page.k17'),
+        message: i18n.t('mobile.mobile_scan_page.k18'),
         type: 'info',
       });
     }
   };
-
   const handleClearHistory = () => {
     setScanHistory([]);
     addNotification({
-      title: '已清除',
-      message: '扫描历史已清空',
+      title: i18n.t('mobile.mobile_scan_page.k19'),
+      message: i18n.t('mobile.mobile_scan_page.k20'),
       type: 'info',
     });
   };
-
   const filteredHistory = scanHistory.filter((item) =>
     item.content.toLowerCase().includes(searchQuery.toLowerCase())
   );
-
   const bottomTabs = [
-    { id: 'home', label: '首页', icon: <Home style={{ width: 22, height: 22 }} /> },
-    { id: 'tasks', label: '任务', icon: <ListTodo style={{ width: 22, height: 22 }} /> },
-    { id: 'scan', label: '扫码', icon: <ScanLine style={{ width: 22, height: 22 }} /> },
+    { id: 'home', label: i18n.t('mobile.mobile_scan_page.k21'), icon: <Home style={{ width: 22, height: 22 }} /> },
+    { id: 'tasks', label: i18n.t('mobile.mobile_scan_page.k22'), icon: <ListTodo style={{ width: 22, height: 22 }} /> },
+    { id: 'scan', label: i18n.t('mobile.mobile_scan_page.k23'), icon: <ScanLine style={{ width: 22, height: 22 }} /> },
     {
       id: 'approval',
-      label: '审批',
+      label: i18n.t('mobile.mobile_scan_page.k24'),
       icon: <CheckSquare style={{ width: 22, height: 22 }} />,
       badge: 3,
     },
-    { id: 'profile', label: '我的', icon: <User style={{ width: 22, height: 22 }} /> },
+    { id: 'profile', label: i18n.t('mobile.mobile_scan_page.k25'), icon: <User style={{ width: 22, height: 22 }} /> },
   ];
-
   return (
     <MobileLayout
-      title='扫码'
+      title={i18n.t('mobile.mobile_scan_page.k26')}
       showBack={false}
       showMenu={false}
       showTabBar
@@ -285,7 +264,7 @@ const MobileScanPage: React.FC = () => {
           size='large'
           onClick={() => navigate(MOBILE_PATHS.scan)}
           sx={{ minWidth: 44, minHeight: 44 }}
-          aria-label='设置'
+          aria-label={i18n.t('mobile.mobile_scan_page.k27')}
         >
           <Settings size={20} />
         </IconButton>
@@ -315,7 +294,6 @@ const MobileScanPage: React.FC = () => {
             />
           ))}
         </Tabs>
-
         {activeTab === 0 && (
           <Box sx={{ p: 2 }}>
             <Paper
@@ -399,7 +377,6 @@ const MobileScanPage: React.FC = () => {
                       borderRadius: '0 0 4px 0',
                     }}
                   />
-
                   {scanning && (
                     <Box
                       sx={{
@@ -417,7 +394,6 @@ const MobileScanPage: React.FC = () => {
                     />
                   )}
                 </Box>
-
                 <style>{`
                 @keyframes scanLine {
                   0%, 100% { top: 15%; }
@@ -425,7 +401,6 @@ const MobileScanPage: React.FC = () => {
                 }
               `}</style>
               </Box>
-
               {scanResult && (
                 <Box
                   sx={{
@@ -457,7 +432,7 @@ const MobileScanPage: React.FC = () => {
                     variant='h6'
                     sx={{ color: 'common.white', mb: 1, fontWeight: 600 }}
                   >
-                    扫描成功
+                    {i18n.t('pages.mobile_scan_page.k0')}
                   </Typography>
                   <Typography
                     variant='body2'
@@ -478,20 +453,19 @@ const MobileScanPage: React.FC = () => {
                       onClick={handleRescan}
                       sx={{ color: 'common.white', borderColor: 'common.white' }}
                     >
-                      重新扫描
+                      {i18n.t('pages.mobile_scan_page.k1')}
                     </MobileButton>
                     <MobileButton
                       variant='contained'
                       size='small'
                       onClick={handleCopyResult}
                     >
-                      复制结果
+                      {i18n.t('pages.mobile_scan_page.k2')}
                     </MobileButton>
                   </Box>
                 </Box>
               )}
             </Paper>
-
             <Box sx={{ display: 'flex', justifyContent: 'center', gap: 4, mb: 3 }}>
               <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 1 }}>
                 <IconButton
@@ -505,7 +479,7 @@ const MobileScanPage: React.FC = () => {
                     },
                   }}
                   onClick={() => setFlashOn(!flashOn)}
-                  aria-label='手电筒'
+                  aria-label={i18n.t('mobile.mobile_scan_page.k28')}
                 >
                   <Flashlight style={{ width: 24, height: 24 }} />
                 </IconButton>
@@ -513,10 +487,9 @@ const MobileScanPage: React.FC = () => {
                   variant='caption'
                   color='text.secondary'
                 >
-                  闪光灯
+                  {i18n.t('pages.mobile_scan_page.k3')}
                 </Typography>
               </Box>
-
               <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 1 }}>
                 <IconButton
                   sx={{
@@ -528,7 +501,7 @@ const MobileScanPage: React.FC = () => {
                       bgcolor: 'grey.200',
                     },
                   }}
-                  aria-label='图片'
+                  aria-label={i18n.t('mobile.mobile_scan_page.k29')}
                 >
                   <Image style={{ width: 24, height: 24 }} />
                 </IconButton>
@@ -536,10 +509,9 @@ const MobileScanPage: React.FC = () => {
                   variant='caption'
                   color='text.secondary'
                 >
-                  相册
+                  {i18n.t('pages.mobile_scan_page.k4')}
                 </Typography>
               </Box>
-
               <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 1 }}>
                 <IconButton
                   sx={{
@@ -552,7 +524,7 @@ const MobileScanPage: React.FC = () => {
                     },
                   }}
                   onClick={() => setActiveTab(2)}
-                  aria-label='扫码'
+                  aria-label={i18n.t('mobile.mobile_scan_page.k30')}
                 >
                   <Barcode style={{ width: 24, height: 24 }} />
                 </IconButton>
@@ -560,11 +532,10 @@ const MobileScanPage: React.FC = () => {
                   variant='caption'
                   color='text.secondary'
                 >
-                  手动输入
+                  {i18n.t('pages.mobile_scan_page.k5')}
                 </Typography>
               </Box>
             </Box>
-
             {scanResult && (
               <Paper
                 elevation={0}
@@ -579,7 +550,7 @@ const MobileScanPage: React.FC = () => {
                   variant='subtitle2'
                   sx={{ fontWeight: 600, mb: 2 }}
                 >
-                  关联信息
+                  {i18n.t('pages.mobile_scan_page.k6')}
                 </Typography>
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
                   <Box
@@ -601,29 +572,28 @@ const MobileScanPage: React.FC = () => {
                       variant='body2'
                       sx={{ fontWeight: 500 }}
                     >
-                      电阻 10kΩ
+                      {i18n.t('pages.mobile_scan_page.10k_7')}
                     </Typography>
                     <Typography
                       variant='caption'
                       color='text.secondary'
                     >
-                      物料编码: {scanResult}
+                      [i18n.t('pages.mobile_scan_page.k8')]: {scanResult}
                     </Typography>
                   </Box>
-                  <Button endIcon={<ArrowRight style={{ width: 16, height: 16 }} />}>查看</Button>
+                  <Button endIcon={<ArrowRight style={{ width: 16, height: 16 }} />}>{i18n.t('mobile.mobile_scan_page.k31')}</Button>
                 </Box>
               </Paper>
             )}
           </Box>
         )}
-
         {activeTab === 1 && (
           <Box>
             <Box sx={{ p: 2 }}>
               <TextField
                 fullWidth
                 size='small'
-                placeholder='搜索历史记录'
+                placeholder={i18n.t('mobile.mobile_scan_page.k32')}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 sx={{
@@ -646,7 +616,7 @@ const MobileScanPage: React.FC = () => {
                           <IconButton
                             size='small'
                             onClick={handleClearHistory}
-                            aria-label='删除'
+                            aria-label={i18n.t('mobile.mobile_scan_page.k33')}
                           >
                             <Trash2 style={{ width: 18, height: 18 }} />
                           </IconButton>
@@ -656,7 +626,6 @@ const MobileScanPage: React.FC = () => {
                 }}
               />
             </Box>
-
             {filteredHistory.length === 0 ? (
               <Box
                 sx={{
@@ -685,13 +654,13 @@ const MobileScanPage: React.FC = () => {
                   variant='subtitle1'
                   sx={{ mb: 1, fontWeight: 500 }}
                 >
-                  暂无历史记录
+                  {i18n.t('pages.mobile_scan_page.k9')}
                 </Typography>
                 <Typography
                   variant='body2'
                   color='text.secondary'
                 >
-                  扫描的条码将自动保存在这里
+                  {i18n.t('pages.mobile_scan_page.k10')}
                 </Typography>
               </Box>
             ) : (
@@ -748,7 +717,6 @@ const MobileScanPage: React.FC = () => {
             )}
           </Box>
         )}
-
         {activeTab === 2 && (
           <Box sx={{ p: 2 }}>
             <Paper
@@ -764,19 +732,18 @@ const MobileScanPage: React.FC = () => {
                 variant='subtitle1'
                 sx={{ fontWeight: 600, mb: 2 }}
               >
-                手动输入条码
+                {i18n.t('pages.mobile_scan_page.k11')}
               </Typography>
               <Typography
                 variant='body2'
                 color='text.secondary'
                 sx={{ mb: 3 }}
               >
-                如果无法扫描，可以手动输入条码或二维码内容
+                {i18n.t('pages.mobile_scan_page.k12')}
               </Typography>
-
               <TextField
                 fullWidth
-                placeholder='请输入条码内容'
+                placeholder={i18n.t('mobile.mobile_scan_page.k34')}
                 value={manualInput}
                 onChange={(e) => setManualInput(e.target.value)}
                 sx={{
@@ -791,7 +758,6 @@ const MobileScanPage: React.FC = () => {
                   }
                 }}
               />
-
               <MobileButton
                 fullWidth
                 variant='contained'
@@ -799,16 +765,15 @@ const MobileScanPage: React.FC = () => {
                 disabled={!manualInput.trim()}
                 startIcon={<Barcode style={{ width: 20, height: 20 }} />}
               >
-                确认
+                {i18n.t('pages.mobile_scan_page.k13')}
               </MobileButton>
             </Paper>
-
             <Box sx={{ mt: 3 }}>
               <Typography
                 variant='subtitle2'
                 sx={{ fontWeight: 600, mb: 2 }}
               >
-                支持的格式
+                {i18n.t('pages.mobile_scan_page.k14')}
               </Typography>
               <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
                 {['Code 128', 'EAN-13', 'UPC-A', 'QR Code', 'Code 39', 'ITF'].map((format) => (
@@ -828,5 +793,4 @@ const MobileScanPage: React.FC = () => {
     </MobileLayout>
   );
 };
-
 export default MobileScanPage;

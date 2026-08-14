@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { Moon, Sun, Monitor } from 'lucide-react';
 import { Menu, MenuItem, Button } from '@mui/material';
 import { useThemeStore } from '@/store';
+import i18n from '@/i18n';
 
 export function ModeToggle() {
   const setTheme = useThemeStore((state) => state.setTheme);
@@ -59,15 +60,15 @@ export function ModeToggle() {
       >
         <MenuItem onClick={() => handleThemeChange('light')}>
           <Sun style={{ width: 16, height: 16, marginRight: 8 }} />
-          浅色模式
+          {i18n.t('components.mode_toggle.k0')}
         </MenuItem>
         <MenuItem onClick={() => handleThemeChange('dark')}>
           <Moon style={{ width: 16, height: 16, marginRight: 8 }} />
-          深色模式
+          {i18n.t('components.mode_toggle.k1')}
         </MenuItem>
         <MenuItem onClick={() => handleThemeChange('system')}>
           <Monitor style={{ width: 16, height: 16, marginRight: 8 }} />
-          跟随系统
+          {i18n.t('components.mode_toggle.k2')}
         </MenuItem>
       </Menu>
     </>

@@ -12,6 +12,7 @@ import type { CustomerScore, ScoreFactor } from '@/api/crm';
 import { useNotificationStore } from '@/store';
 import { apiLogger } from '@/utils/logger';
 import { CRM_PATHS } from '@/modules/crm/config';
+import i18n from '@/i18n';
 
 // ============ 辅助函数 ============
 
@@ -286,15 +287,15 @@ const CRMCustomerScoringPage: React.FC = () => {
 
     const rfm = mockScoring.rfm;
     const rfmLabels: Array<{ key: keyof typeof rfm; label: string; color: string; bgColor: string }> = [
-      { key: 'recencyHigh', label: t('crm.customerScoring.rfm_recency_high') || '高新近', color: 'success.main', bgColor: 'success.light' },
-      { key: 'recencyMedium', label: t('crm.customerScoring.rfm_recency_med') || '中新近', color: 'primary.main', bgColor: 'primary.light' },
-      { key: 'recencyLow', label: t('crm.customerScoring.rfm_recency_low') || '低新近', color: 'warning.main', bgColor: 'warning.light' },
-      { key: 'frequencyHigh', label: t('crm.customerScoring.rfm_freq_high') || '高频', color: 'success.main', bgColor: 'success.light' },
-      { key: 'frequencyMedium', label: t('crm.customerScoring.rfm_freq_med') || '中频', color: 'primary.main', bgColor: 'primary.light' },
-      { key: 'frequencyLow', label: t('crm.customerScoring.rfm_freq_low') || '低频', color: 'warning.main', bgColor: 'warning.light' },
-      { key: 'monetaryHigh', label: t('crm.customerScoring.rfm_mon_high') || '高价值', color: 'success.main', bgColor: 'success.light' },
-      { key: 'monetaryMedium', label: t('crm.customerScoring.rfm_mon_med') || '中价值', color: 'primary.main', bgColor: 'primary.light' },
-      { key: 'monetaryLow', label: t('crm.customerScoring.rfm_mon_low') || '低价值', color: 'warning.main', bgColor: 'warning.light' },
+      { key: 'recencyHigh', label: t('crm.customerScoring.rfm_recency_high') || i18n.t('pages.crm_customer_scoring_page.k0'), color: 'success.main', bgColor: 'success.light' },
+      { key: 'recencyMedium', label: t('crm.customerScoring.rfm_recency_med') || i18n.t('pages.crm_customer_scoring_page.k1'), color: 'primary.main', bgColor: 'primary.light' },
+      { key: 'recencyLow', label: t('crm.customerScoring.rfm_recency_low') || i18n.t('pages.crm_customer_scoring_page.k2'), color: 'warning.main', bgColor: 'warning.light' },
+      { key: 'frequencyHigh', label: t('crm.customerScoring.rfm_freq_high') || i18n.t('pages.crm_customer_scoring_page.k3'), color: 'success.main', bgColor: 'success.light' },
+      { key: 'frequencyMedium', label: t('crm.customerScoring.rfm_freq_med') || i18n.t('pages.crm_customer_scoring_page.k4'), color: 'primary.main', bgColor: 'primary.light' },
+      { key: 'frequencyLow', label: t('crm.customerScoring.rfm_freq_low') || i18n.t('pages.crm_customer_scoring_page.k5'), color: 'warning.main', bgColor: 'warning.light' },
+      { key: 'monetaryHigh', label: t('crm.customerScoring.rfm_mon_high') || i18n.t('pages.crm_customer_scoring_page.k6'), color: 'success.main', bgColor: 'success.light' },
+      { key: 'monetaryMedium', label: t('crm.customerScoring.rfm_mon_med') || i18n.t('pages.crm_customer_scoring_page.k7'), color: 'primary.main', bgColor: 'primary.light' },
+      { key: 'monetaryLow', label: t('crm.customerScoring.rfm_mon_low') || i18n.t('pages.crm_customer_scoring_page.k8'), color: 'warning.main', bgColor: 'warning.light' },
     ];
 
     return (
@@ -302,7 +303,7 @@ const CRMCustomerScoringPage: React.FC = () => {
         {mockEnabled && (
           <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 2 }}>
             <Chip
-              label={t('crm.common.mock_demo_badge') || 'Mock 演示'}
+              label={t('crm.common.mock_demo_badge') || i18n.t('pages.crm_customer_scoring_page.mock_9')}
               color='warning'
               size='small'
               variant='outlined'

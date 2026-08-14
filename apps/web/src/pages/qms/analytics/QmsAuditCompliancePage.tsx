@@ -21,9 +21,11 @@ import {
 } from 'recharts';
 import { useQmsMock, type QmsMockShape } from '@/api/qms/_mock';
 import { designTokens, semanticTokens } from '@topems/tokens';
+import { useTranslation } from 'react-i18next';
 
 export default function QmsAuditCompliancePage() {
   const { data } = useQmsMock<QmsMockShape>();
+  const { t } = useTranslation('qms');
 
   const plans = data.auditPlans ?? [];
   const tasks = data.auditTasks ?? [];
@@ -114,15 +116,15 @@ export default function QmsAuditCompliancePage() {
   }, [plans]);
 
   const radialData = [
-    { name: '计划完成率', value: overall.planCompletionRate, fill: designTokens.colors.secondary.dark },
-    { name: '任务完成率', value: overall.taskCompletionRate, fill: designTokens.colors.success.dark },
-    { name: '发现项关闭率', value: overall.findingCloseRate, fill: designTokens.colors.warning.main },
+    { name: t('qms.qms_audit_compliance_page.k0'), value: overall.planCompletionRate, fill: designTokens.colors.secondary.dark },
+    { name: t('qms.qms_audit_compliance_page.k1'), value: overall.taskCompletionRate, fill: designTokens.colors.success.dark },
+    { name: t('qms.qms_audit_compliance_page.k2'), value: overall.findingCloseRate, fill: designTokens.colors.warning.main },
   ];
 
   return (
     <div className='space-y-4 p-4'>
       <div className='flex items-center justify-between'>
-        <h1 className='text-2xl font-bold'>审核合规率分析</h1>
+        <h1 className='text-2xl font-bold'>{t('qms.qms_audit_compliance_page.k3')}</h1>
         <span className='text-sm text-gray-500'>
           审核计划：{overall.totalPlans} | 任务：{overall.totalTasks} | 发现项：
           {overall.totalFindings}
@@ -131,21 +133,21 @@ export default function QmsAuditCompliancePage() {
 
       <div className='grid grid-cols-1 gap-4 md:grid-cols-3'>
         <div className='rounded-lg border p-4'>
-          <p className='text-sm text-gray-600'>审核计划完成率</p>
+          <p className='text-sm text-gray-600'>{t('qms.qms_audit_compliance_page.k4')}</p>
           <p className='mt-1 text-3xl font-bold text-indigo-600'>{overall.planCompletionRate}%</p>
           <p className='mt-1 text-xs text-gray-500'>
             {overall.completedPlans} / {overall.totalPlans}
           </p>
         </div>
         <div className='rounded-lg border p-4'>
-          <p className='text-sm text-gray-600'>审核任务完成率</p>
+          <p className='text-sm text-gray-600'>{t('qms.qms_audit_compliance_page.k5')}</p>
           <p className='mt-1 text-3xl font-bold text-green-600'>{overall.taskCompletionRate}%</p>
           <p className='mt-1 text-xs text-gray-500'>
             {overall.completedTasks} / {overall.totalTasks}
           </p>
         </div>
         <div className='rounded-lg border p-4'>
-          <p className='text-sm text-gray-600'>发现项关闭率</p>
+          <p className='text-sm text-gray-600'>{t('qms.qms_audit_compliance_page.k6')}</p>
           <p className='mt-1 text-3xl font-bold text-orange-600'>{overall.findingCloseRate}%</p>
           <p className='mt-1 text-xs text-gray-500'>
             {overall.closedFindings} / {overall.totalFindings}
@@ -155,7 +157,7 @@ export default function QmsAuditCompliancePage() {
 
       <div className='grid grid-cols-1 gap-4 md:grid-cols-3'>
         <div className='rounded-lg border p-4 md:col-span-1'>
-          <h3 className='mb-2 font-semibold'>整体合规率</h3>
+          <h3 className='mb-2 font-semibold'>{t('qms.qms_audit_compliance_page.k7')}</h3>
           <ResponsiveContainer
             width='100%'
             height={240}
@@ -207,13 +209,13 @@ export default function QmsAuditCompliancePage() {
               <Legend />
               <Bar
                 dataKey='completionRate'
-                name='任务完成率'
+                name={t('qms.qms_audit_compliance_page.k8')}
                 fill={designTokens.colors.success.dark}
                 barSize={20}
               />
               <Bar
                 dataKey='findingCloseRate'
-                name='发现项关闭率'
+                name={t('qms.qms_audit_compliance_page.k9')}
                 fill={designTokens.colors.warning.main}
                 barSize={20}
               />
@@ -223,7 +225,7 @@ export default function QmsAuditCompliancePage() {
       </div>
 
       <div className='rounded-lg border p-4'>
-        <h3 className='mb-2 font-semibold'>按审核类型合规率</h3>
+        <h3 className='mb-2 font-semibold'>{t('qms.qms_audit_compliance_page.k10')}</h3>
         <ResponsiveContainer
           width='100%'
           height={260}
@@ -246,7 +248,7 @@ export default function QmsAuditCompliancePage() {
             <Legend />
             <Bar
               dataKey='complianceRate'
-              name='合规率'
+              name={t('qms.qms_audit_compliance_page.k11')}
               fill={designTokens.colors.secondary.dark}
               barSize={32}
             />

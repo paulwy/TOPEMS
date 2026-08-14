@@ -3,6 +3,7 @@ import AMapLoader from '@amap/amap-jsapi-loader';
 import type { DevicePoint, StorageLocation } from '../../api/gis';
 import config from '../../config/runtime';
 import { logger } from '@/utils/logger';
+import i18n from '@/i18n';
 
 interface AmapLayerProps {
   devicePoints: DevicePoint[];
@@ -29,7 +30,7 @@ const AmapLayer = forwardRef<AmapLayerRef, AmapLayerProps>(
       if (!mapContainer.current) return;
 
       AMapLoader.load({
-        key: config.thirdParty.amapKey || '您的高德地图API Key',
+        key: config.thirdParty.amapKey || i18n.t('gis.amap_layer.apikey_0'),
         version: '2.0',
         plugins: ['AMap.SCALE', 'AMap.ToolBar', 'AMap.MarkerClusterer'],
       })
@@ -57,7 +58,7 @@ const AmapLayer = forwardRef<AmapLayerRef, AmapLayerProps>(
           };
         })
         .catch((error) => {
-          logger.error('高德地图加载失败:', error);
+          logger.error(i18n.t('components.amap_layer.k0'), error);
         });
     }, []);
 
@@ -158,7 +159,7 @@ const AmapLayer = forwardRef<AmapLayerRef, AmapLayerProps>(
             <div style="padding: 10px;">
               <h4>${location.name}</h4>
               <p>类型: ${location.location_type}</p>
-              <p>容量: ${location.capacity || '未设置'}</p>
+              <p>{i18n.t('components.amap_layer.k0')}${location.capacity || i18n.t('gis.amap_layer.k1')}</p>
               <p>坐标: ${location.latitude}, ${location.longitude}</p>
             </div>
           `,

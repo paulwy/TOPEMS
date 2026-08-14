@@ -2,6 +2,7 @@ import React from 'react';
 import { CheckCircle, Send } from 'lucide-react';
 import type { EntitySchema } from '@/schema';
 import type { RowAction } from '@/components/templates';
+import i18n from '@/i18n';
 
 const formatCurrency = (amount: number | undefined) => {
   return (
@@ -18,8 +19,8 @@ const formatDate = (dateStr?: string) => {
 
 export const billingSchema: EntitySchema = {
   entity: 'crm_billing',
-  title: '账单管理',
-  description: '管理客户账单、收款和账龄分析',
+  title: i18n.t('shared.billing.k0'),
+  description: i18n.t('shared.billing.k1'),
 
   api: {
     module: 'crm',
@@ -29,7 +30,7 @@ export const billingSchema: EntitySchema = {
   fields: [
     {
       name: 'invoice_no',
-      label: '发票号',
+      label: i18n.t('shared.billing.k2'),
       type: 'text',
       required: true,
       readonlyOnEdit: true,
@@ -38,7 +39,7 @@ export const billingSchema: EntitySchema = {
     },
     {
       name: 'customer_name',
-      label: '客户',
+      label: i18n.t('shared.billing.k3'),
       type: 'text',
       required: true,
       sortable: true,
@@ -46,14 +47,14 @@ export const billingSchema: EntitySchema = {
     },
     {
       name: 'customer_id',
-      label: '客户ID',
+      label: i18n.t('shared.billing.id_4'),
       type: 'text',
       listWidth: 120,
       showInList: false,
     },
     {
       name: 'amount',
-      label: '金额',
+      label: i18n.t('shared.billing.k5'),
       type: 'number',
       required: true,
       sortable: true,
@@ -62,7 +63,7 @@ export const billingSchema: EntitySchema = {
     },
     {
       name: 'currency',
-      label: '币种',
+      label: i18n.t('shared.billing.k6'),
       type: 'text',
       defaultValue: 'CNY',
       listWidth: 80,
@@ -70,16 +71,16 @@ export const billingSchema: EntitySchema = {
     },
     {
       name: 'status',
-      label: '状态',
+      label: i18n.t('shared.billing.k7'),
       type: 'select',
       defaultValue: 'pending',
       options: {
         type: 'static',
         options: [
-          { value: 'pending', label: '待支付' },
-          { value: 'paid', label: '已支付' },
-          { value: 'overdue', label: '已逾期' },
-          { value: 'cancelled', label: '已取消' },
+          { value: 'pending', label: i18n.t('shared.billing.k8') },
+          { value: 'paid', label: i18n.t('shared.billing.k9') },
+          { value: 'overdue', label: i18n.t('shared.billing.k10') },
+          { value: 'cancelled', label: i18n.t('shared.billing.k11') },
         ],
       },
       listWidth: 120,
@@ -87,7 +88,7 @@ export const billingSchema: EntitySchema = {
     },
     {
       name: 'due_date',
-      label: '到期日',
+      label: i18n.t('shared.billing.k12'),
       type: 'date',
       required: true,
       sortable: true,
@@ -96,7 +97,7 @@ export const billingSchema: EntitySchema = {
     },
     {
       name: 'paid_at',
-      label: '支付日期',
+      label: i18n.t('shared.billing.k13'),
       type: 'datetime',
       readonly: true,
       sortable: true,
@@ -105,7 +106,7 @@ export const billingSchema: EntitySchema = {
     },
     {
       name: 'created_at',
-      label: '创建时间',
+      label: i18n.t('shared.billing.k14'),
       type: 'datetime',
       readonly: true,
       hideInForm: true,
@@ -115,7 +116,7 @@ export const billingSchema: EntitySchema = {
     },
     {
       name: 'updated_at',
-      label: '更新时间',
+      label: i18n.t('shared.billing.k15'),
       type: 'datetime',
       readonly: true,
       hideInForm: true,
@@ -138,23 +139,23 @@ export const billingSchema: EntitySchema = {
         cancelled: 'default',
       },
       labelMap: {
-        pending: '待支付',
-        paid: '已支付',
-        overdue: '已逾期',
-        cancelled: '已取消',
+        pending: i18n.t('shared.billing.k16'),
+        paid: i18n.t('shared.billing.k17'),
+        overdue: i18n.t('shared.billing.k18'),
+        cancelled: i18n.t('shared.billing.k19'),
       },
     },
     filters: [
       {
         id: 'status',
-        label: '状态',
+        label: i18n.t('shared.billing.k20'),
         type: 'select',
         options: [
-          { label: '全部状态', value: 'all' },
-          { label: '待支付', value: 'pending' },
-          { label: '已支付', value: 'paid' },
-          { label: '已逾期', value: 'overdue' },
-          { label: '已取消', value: 'cancelled' },
+          { label: i18n.t('shared.billing.k21'), value: 'all' },
+          { label: i18n.t('shared.billing.k22'), value: 'pending' },
+          { label: i18n.t('shared.billing.k23'), value: 'paid' },
+          { label: i18n.t('shared.billing.k24'), value: 'overdue' },
+          { label: i18n.t('shared.billing.k25'), value: 'cancelled' },
         ],
       },
     ],
@@ -164,19 +165,19 @@ export const billingSchema: EntitySchema = {
 
   formSections: [
     {
-      title: '基本信息',
+      title: i18n.t('shared.billing.k26'),
       fields: ['invoice_no', 'customer_id', 'customer_name', 'amount', 'currency'],
     },
     {
-      title: '账单信息',
+      title: i18n.t('shared.billing.k27'),
       fields: ['status', 'due_date', 'paid_at'],
     },
   ],
 
   formColCount: 2,
-  createTitle: '新建账单',
-  editTitle: '编辑账单',
-  detailTitle: '账单详情',
+  createTitle: i18n.t('shared.billing.k28'),
+  editTitle: i18n.t('shared.billing.k29'),
+  detailTitle: i18n.t('shared.billing.k30'),
 };
 
 export const getBillingRowActions = (
@@ -187,13 +188,13 @@ export const getBillingRowActions = (
   if (activeTab === 'invoices') {
     return [
       {
-        label: '标记支付',
+        label: i18n.t('shared.billing.k31'),
         icon: <CheckCircle size={16} />,
         color: 'success',
         onClick: (row: Record<string, unknown>) => handleMarkPaid(String(row.id)),
       },
       {
-        label: '发送通知',
+        label: i18n.t('shared.billing.k32'),
         icon: <Send size={16} />,
         color: 'primary',
         onClick: (row: Record<string, unknown>) => handleSendNotification(String(row.id)),

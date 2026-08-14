@@ -5,6 +5,7 @@
 import React, { useEffect, useState } from 'react';
 import { Box, Typography, useTheme } from '@mui/material';
 import { useModuleLoadingStore } from '@/store/moduleLoadingStore';
+import i18n from '@/i18n';
 
 interface ModuleLoadingProgressProps {
   moduleId?: string;
@@ -22,10 +23,10 @@ const calculateEstimatedTime = (progress: number, startTime: number | undefined)
 
   if (remaining <= 0) return null;
 
-  if (remaining < 1000) return '< 1秒';
-  if (remaining < 60000) return `约 ${Math.ceil(remaining / 1000)} 秒`;
+  if (remaining < 1000) return i18n.t('shared.module_loading_progress.1_0');
+  if (remaining < 60000) return `${i18n.t('shared.module_loading_progress.k1')}${Math.ceil(remaining / 1000)}${i18n.t('shared.module_loading_progress.k2')}`;
 
-  return `约 ${Math.ceil(remaining / 60000)} 分钟`;
+  return `${i18n.t('shared.module_loading_progress.k3')}${Math.ceil(remaining / 60000)}${i18n.t('shared.module_loading_progress.k4')}`;
 };
 
 export const ModuleLoadingProgress: React.FC<ModuleLoadingProgressProps> = ({
@@ -45,7 +46,7 @@ export const ModuleLoadingProgress: React.FC<ModuleLoadingProgressProps> = ({
 
   const progress = isOverall ? totalProgress : (targetModule?.progress ?? 0);
   const startTime = targetModule?.startTime;
-  const moduleName = targetModule ? moduleId : '系统';
+  const moduleName = targetModule ? moduleId : i18n.t('shared.module_loading_progress.k5');
 
   useEffect(() => {
     if (!showEstimatedTime) return;
@@ -144,7 +145,7 @@ export const ModuleLoadingProgress: React.FC<ModuleLoadingProgressProps> = ({
             color='text.disabled'
             sx={{ mt: 0.5, display: 'block' }}
           >
-            预计剩余: {estimatedTime}
+            [i18n.t('lib.module_loading_progress.k0')]: {estimatedTime}
           </Typography>
         )}
       </Box>

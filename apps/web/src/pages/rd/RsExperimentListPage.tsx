@@ -8,7 +8,7 @@ import { experimentSchema } from '@/schemas/rd';
 import { rdApi } from '@/api/rd';
 import type { Experiment } from '@/api/rd';
 import { RD_PATHS } from '@/modules/rd/config';
-
+import i18n from '@/i18n';
 const experimentApiAdapter: CrudApiAdapter<Experiment> = {
   list: async (params) => {
     const queryParams: Record<string, unknown> = {
@@ -17,7 +17,6 @@ const experimentApiAdapter: CrudApiAdapter<Experiment> = {
     };
     if (params?.search) queryParams.search = params.search;
     if (params?.status) queryParams.status = params.status;
-
     const phaseTab = Number(params?.phaseTab ?? 0);
     let response;
     switch (phaseTab) {
@@ -33,54 +32,47 @@ const experimentApiAdapter: CrudApiAdapter<Experiment> = {
       default:
         response = await rdApi.listExperiments(queryParams);
     }
-
     if (!response.success || !response.data) {
-      throw new Error(response.message || '加载试验数据失败');
+      throw new Error(response.message || i18n.t('rd.rs_experiment_list_page.k0'));
     }
     return {
       data: response.data.experiments || [],
       total: response.data.total || 0,
     };
   },
-
   create: async (data) => {
     const response = await rdApi.createExperiment(
       data as Parameters<typeof rdApi.createExperiment>[0]
     );
     if (!response.success || !response.data) {
-      throw new Error(response.message || '创建试验失败');
+      throw new Error(response.message || i18n.t('rd.rs_experiment_list_page.k1'));
     }
     return response.data;
   },
-
   update: async (id, data) => {
     const response = await rdApi.updateExperiment(
       id,
       data as Parameters<typeof rdApi.updateExperiment>[1]
     );
     if (!response.success || !response.data) {
-      throw new Error(response.message || '更新试验失败');
+      throw new Error(response.message || i18n.t('rd.rs_experiment_list_page.k2'));
     }
     return response.data;
   },
-
   delete: async (id) => {
     const response = await rdApi.deleteExperiment(id);
     if (!response.success) {
-      throw new Error(response.message || '删除试验失败');
+      throw new Error(response.message || i18n.t('rd.rs_experiment_list_page.k3'));
     }
   },
 };
-
 interface ExperimentPhaseTabsProps {
   activeTab: number;
   onChange: (value: number) => void;
 }
-
 const ExperimentPhaseTabs: React.FC<ExperimentPhaseTabsProps> = ({ activeTab, onChange }) => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
-
   return (
     <Paper sx={{ mb: 3 }}>
       <Tabs
@@ -89,19 +81,19 @@ const ExperimentPhaseTabs: React.FC<ExperimentPhaseTabsProps> = ({ activeTab, on
         variant={isMobile ? 'scrollable' : 'standard'}
         scrollButtons={isMobile}
       >
-        <Tab label='全部试验' />
+        <Tab label={i18n.t('rd.rs_experiment_list_page.k4')} />
         <Tab
-          label='小试阶段'
+          label={i18n.t('rd.rs_experiment_list_page.k5')}
           icon={<Flask size={16} />}
           iconPosition='start'
         />
         <Tab
-          label='中试阶段'
+          label={i18n.t('rd.rs_experiment_list_page.k6')}
           icon={<Flask size={16} />}
           iconPosition='start'
         />
         <Tab
-          label='放大试验'
+          label={i18n.t('rd.rs_experiment_list_page.k7')}
           icon={<Flask size={16} />}
           iconPosition='start'
         />
@@ -109,26 +101,23 @@ const ExperimentPhaseTabs: React.FC<ExperimentPhaseTabsProps> = ({ activeTab, on
     </Paper>
   );
 };
-
 const RsExperimentListPage: React.FC = () => {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState(0);
-
   const customRowActions: RowAction[] = [
     {
       key: 'view-detail',
-      label: '查看详情',
+      label: i18n.t('rd.rs_experiment_list_page.k8'),
       icon: <Eye size={16} />,
       onClick: (row) => navigate(`${RD_PATHS.experiment}/${row.id}`),
     },
     {
       key: 'edit-page',
-      label: '编辑(跳转)',
+      label: i18n.t('rd.rs_experiment_list_page.k9'),
       icon: <Edit size={16} />,
       onClick: (row) => navigate(`${RD_PATHS.experiment}/${row.id}/edit`),
     },
   ];
-
   return (
     <CrudPage
       key={activeTab}
@@ -142,9 +131,8 @@ const RsExperimentListPage: React.FC = () => {
           onChange={setActiveTab}
         />
       }
-      breadcrumbs={[{ label: '研发管理', href: RD_PATHS.root }, { label: '试验管理' }]}
+      breadcrumbs={[{ label: i18n.t('rd.rs_experiment_list_page.k11'), href: RD_PATHS.root }, { label: i18n.t('rd.rs_experiment_list_page.k10') }]}
     />
   );
 };
-
 export default RsExperimentListPage;

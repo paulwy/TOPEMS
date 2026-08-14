@@ -19,6 +19,7 @@ import {
   MenuItem,
   Button,
 } from '@mui/material';
+import i18n from '@/i18n';
 import { DataTable } from '@/components/common/DataTable';
 import type { ColumnDef } from '@tanstack/react-table';
 import { ehsApi } from '@/api/ehs';
@@ -318,17 +319,17 @@ const EhsHazardDetailPage: React.FC = () => {
           row.original.likelihood || 'medium'
         );
         const colorMap: Record<string, { bg: string; color: string }> = {
-          高风险: { bg: 'error.lighter', color: 'error.dark' },
-          中风险: { bg: 'warning.100', color: ct.yellow[600] },
-          低风险: { bg: 'success.lighter', color: 'success.dark' },
+          [i18n.t('pages.ehs_hazard_detail_page.k0')]: { bg: 'error.lighter', color: 'error.dark' },
+          [i18n.t('pages.ehs_hazard_detail_page.k1')]: { bg: 'warning.100', color: ct.yellow[600] },
+          [i18n.t('pages.ehs_hazard_detail_page.k2')]: { bg: 'success.lighter', color: 'success.dark' },
         };
-        const colors = colorMap[`${riskResult.level}风险`] || {
+        const colors = colorMap[`${riskResult.level}${i18n.t('pages.ehs_hazard_detail_page.k0')}`] || {
           bg: 'grey.100',
           color: 'text.secondary',
         };
         return (
           <Chip
-            label={`${riskResult.level}风险`}
+            label={`${riskResult.level}${i18n.t('pages.ehs_hazard_detail_page.k1')}`}
             size='small'
             sx={{ backgroundColor: colors.bg, color: colors.color }}
           />
@@ -413,7 +414,7 @@ const EhsHazardDetailPage: React.FC = () => {
             variant='subtitle1'
             sx={{ fontWeight: 600, mb: 2 }}
           >
-            风险等级
+            {i18n.t('pages.ehs_hazard_detail_page.k3')}
           </Typography>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
             <Box
@@ -511,7 +512,7 @@ const EhsHazardDetailPage: React.FC = () => {
             variant='subtitle1'
             sx={{ fontWeight: 600 }}
           >
-            风险评估记录
+            {i18n.t('pages.ehs_hazard_detail_page.k4')}
           </Typography>
           <Typography
             variant='body2'
@@ -547,7 +548,7 @@ const EhsHazardDetailPage: React.FC = () => {
             variant='subtitle1'
             sx={{ fontWeight: 600 }}
           >
-            控制措施
+            {i18n.t('pages.ehs_hazard_detail_page.k5')}
           </Typography>
           <Typography
             variant='body2'
@@ -581,7 +582,7 @@ const EhsHazardDetailPage: React.FC = () => {
                 />
               }
             >
-              添加控制措施
+              {i18n.t('pages.ehs_hazard_detail_page.k6')}
             </Button>
           </Box>
         )}
@@ -633,7 +634,7 @@ const EhsHazardDetailPage: React.FC = () => {
                 ? t('ehs.ehs_hazard_detail_page.text_aed1df')
                 : t('ehs.ehs_hazard_detail_page.text_19ac67'),
         },
-        { label: t('ehs.ehs_hazard_detail_page.text_25eb6b'), value: `${riskInfo.level}风险` },
+        { label: t('ehs.ehs_hazard_detail_page.text_25eb6b'), value: `${riskInfo.level}${i18n.t('pages.ehs_hazard_detail_page.k2')}` },
       ],
     };
   }, [hazard]);
@@ -680,7 +681,7 @@ const EhsHazardDetailPage: React.FC = () => {
                 variant='body2'
                 sx={{ mb: 0.5, display: 'block' }}
               >
-                危险源名称 *
+                {i18n.t('pages.ehs_hazard_detail_page.k7')}
               </Typography>
               <TextField
                 size='small'
@@ -698,7 +699,7 @@ const EhsHazardDetailPage: React.FC = () => {
                   variant='body2'
                   sx={{ mb: 0.5, display: 'block' }}
                 >
-                  分类
+                  {i18n.t('pages.ehs_hazard_detail_page.k8')}
                 </Typography>
                 <TextField
                   size='small'
@@ -715,7 +716,7 @@ const EhsHazardDetailPage: React.FC = () => {
                   variant='body2'
                   sx={{ mb: 0.5, display: 'block' }}
                 >
-                  位置
+                  {i18n.t('pages.ehs_hazard_detail_page.k9')}
                 </Typography>
                 <TextField
                   size='small'
@@ -734,7 +735,7 @@ const EhsHazardDetailPage: React.FC = () => {
                   variant='body2'
                   sx={{ mb: 0.5, display: 'block' }}
                 >
-                  严重程度
+                  {i18n.t('pages.ehs_hazard_detail_page.k10')}
                 </Typography>
                 <FormControl
                   fullWidth
@@ -751,9 +752,9 @@ const EhsHazardDetailPage: React.FC = () => {
                       }))
                     }
                   >
-                    <MenuItem value='high'>高</MenuItem>
-                    <MenuItem value='medium'>中</MenuItem>
-                    <MenuItem value='low'>低</MenuItem>
+                    <MenuItem value='high'>{i18n.t('pages.ehs_hazard_detail_page.k11')}</MenuItem>
+                    <MenuItem value='medium'>{i18n.t('pages.ehs_hazard_detail_page.k12')}</MenuItem>
+                    <MenuItem value='low'>{i18n.t('pages.ehs_hazard_detail_page.k13')}</MenuItem>
                   </Select>
                 </FormControl>
               </Box>
@@ -762,7 +763,7 @@ const EhsHazardDetailPage: React.FC = () => {
                   variant='body2'
                   sx={{ mb: 0.5, display: 'block' }}
                 >
-                  暴露频率
+                  {i18n.t('pages.ehs_hazard_detail_page.k14')}
                 </Typography>
                 <FormControl
                   fullWidth
@@ -779,9 +780,9 @@ const EhsHazardDetailPage: React.FC = () => {
                       }))
                     }
                   >
-                    <MenuItem value='high'>高</MenuItem>
-                    <MenuItem value='medium'>中</MenuItem>
-                    <MenuItem value='low'>低</MenuItem>
+                    <MenuItem value='high'>{i18n.t('pages.ehs_hazard_detail_page.k15')}</MenuItem>
+                    <MenuItem value='medium'>{i18n.t('pages.ehs_hazard_detail_page.k16')}</MenuItem>
+                    <MenuItem value='low'>{i18n.t('pages.ehs_hazard_detail_page.k17')}</MenuItem>
                   </Select>
                 </FormControl>
               </Box>
@@ -790,7 +791,7 @@ const EhsHazardDetailPage: React.FC = () => {
                   variant='body2'
                   sx={{ mb: 0.5, display: 'block' }}
                 >
-                  发生概率
+                  {i18n.t('pages.ehs_hazard_detail_page.k18')}
                 </Typography>
                 <FormControl
                   fullWidth
@@ -807,9 +808,9 @@ const EhsHazardDetailPage: React.FC = () => {
                       }))
                     }
                   >
-                    <MenuItem value='high'>高</MenuItem>
-                    <MenuItem value='medium'>中</MenuItem>
-                    <MenuItem value='low'>低</MenuItem>
+                    <MenuItem value='high'>{i18n.t('pages.ehs_hazard_detail_page.k19')}</MenuItem>
+                    <MenuItem value='medium'>{i18n.t('pages.ehs_hazard_detail_page.k20')}</MenuItem>
+                    <MenuItem value='low'>{i18n.t('pages.ehs_hazard_detail_page.k21')}</MenuItem>
                   </Select>
                 </FormControl>
               </Box>
@@ -819,7 +820,7 @@ const EhsHazardDetailPage: React.FC = () => {
                 variant='body2'
                 sx={{ mb: 0.5, display: 'block' }}
               >
-                状态
+                {i18n.t('pages.ehs_hazard_detail_page.k22')}
               </Typography>
               <FormControl
                 fullWidth
@@ -848,7 +849,7 @@ const EhsHazardDetailPage: React.FC = () => {
                 variant='body2'
                 sx={{ mb: 0.5, display: 'block' }}
               >
-                描述
+                {i18n.t('pages.ehs_hazard_detail_page.k23')}
               </Typography>
               <TextField
                 multiline
@@ -868,14 +869,14 @@ const EhsHazardDetailPage: React.FC = () => {
             variant='outlined'
             onClick={() => setShowEditModal(false)}
           >
-            取消
+            {i18n.t('pages.ehs_hazard_detail_page.k24')}
           </Button>
           <Button
             variant='contained'
             onClick={handleUpdateHazard}
             sx={{ backgroundColor: 'warning.600', '&:hover': { backgroundColor: ct.orange[700] } }}
           >
-            保存更改
+            {i18n.t('pages.ehs_hazard_detail_page.k25')}
           </Button>
         </DialogActions>
       </Dialog>
@@ -894,7 +895,7 @@ const EhsHazardDetailPage: React.FC = () => {
                 variant='body2'
                 sx={{ mb: 0.5, display: 'block' }}
               >
-                措施类型 *
+                {i18n.t('pages.ehs_hazard_detail_page.k26')}
               </Typography>
               <FormControl
                 fullWidth
@@ -922,7 +923,7 @@ const EhsHazardDetailPage: React.FC = () => {
                 variant='body2'
                 sx={{ mb: 0.5, display: 'block' }}
               >
-                措施描述 *
+                {i18n.t('pages.ehs_hazard_detail_page.k27')}
               </Typography>
               <TextField
                 multiline
@@ -941,7 +942,7 @@ const EhsHazardDetailPage: React.FC = () => {
                   variant='body2'
                   sx={{ mb: 0.5, display: 'block' }}
                 >
-                  负责人
+                  {i18n.t('pages.ehs_hazard_detail_page.k28')}
                 </Typography>
                 <TextField
                   size='small'
@@ -958,7 +959,7 @@ const EhsHazardDetailPage: React.FC = () => {
                   variant='body2'
                   sx={{ mb: 0.5, display: 'block' }}
                 >
-                  完成期限
+                  {i18n.t('pages.ehs_hazard_detail_page.k29')}
                 </Typography>
                 <TextField
                   type='date'
@@ -978,14 +979,14 @@ const EhsHazardDetailPage: React.FC = () => {
             variant='outlined'
             onClick={() => setShowControlModal(false)}
           >
-            取消
+            {i18n.t('pages.ehs_hazard_detail_page.k30')}
           </Button>
           <Button
             variant='contained'
             onClick={handleAddControl}
             sx={{ backgroundColor: 'warning.600', '&:hover': { backgroundColor: ct.orange[700] } }}
           >
-            添加措施
+            {i18n.t('pages.ehs_hazard_detail_page.k31')}
           </Button>
         </DialogActions>
       </Dialog>

@@ -11,6 +11,7 @@ import type {
   StorageUsage,
   RetentionPolicy,
 } from './storage';
+import i18n from '@/i18n';
 
 import { fileImageApi } from './image';
 import type {
@@ -251,21 +252,21 @@ export const fileApi = {
 // ==================== 常量 ====================
 
 export const VISIBILITY_OPTIONS = [
-  { value: 'private', label: '私有', description: '只有所有者可以访问' },
-  { value: 'public', label: '公开', description: '所有用户都可以访问' },
-  { value: 'department', label: '部门', description: '同一部门用户可以访问' },
+  { value: 'private', label: i18n.t('shared.index.k1'), description: i18n.t('shared.index.k0') },
+  { value: 'public', label: i18n.t('shared.index.k3'), description: i18n.t('shared.index.k2') },
+  { value: 'department', label: i18n.t('shared.index.k5'), description: i18n.t('shared.index.k4') },
 ];
 
 export const PERMISSION_OPTIONS = [
-  { value: 'read', label: '只读', description: '只能查看和下载文件' },
-  { value: 'write', label: '读写', description: '可以查看、下载和修改文件' },
-  { value: 'manage', label: '管理', description: '完全控制，包括分享和删除' },
+  { value: 'read', label: i18n.t('shared.index.k7'), description: i18n.t('shared.index.k6') },
+  { value: 'write', label: i18n.t('shared.index.k9'), description: i18n.t('shared.index.k8') },
+  { value: 'manage', label: i18n.t('shared.index.k11'), description: i18n.t('shared.index.k10') },
 ];
 
 export const PRINCIPAL_TYPE_OPTIONS = [
-  { value: 'user', label: '用户' },
-  { value: 'group', label: '用户组' },
-  { value: 'department', label: '部门' },
+  { value: 'user', label: i18n.t('shared.index.k12') },
+  { value: 'group', label: i18n.t('shared.index.k13') },
+  { value: 'department', label: i18n.t('shared.index.k14') },
 ];
 
 // ==================== 工具函数 ====================

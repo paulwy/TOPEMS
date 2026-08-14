@@ -1,6 +1,7 @@
 import apiClient from '../client';
 import type { ApiResponse } from '../client';
 import { logger } from '@/utils/logger';
+import i18n from '@/i18n';
 
 export interface MigrationService {
   name: string;
@@ -38,7 +39,7 @@ export interface RollbackResult {
 }
 
 const extractMessage = (err: unknown): string => {
-  if (!err) return '未知错误';
+  if (!err) return i18n.t('shared.index.k0');
   if (typeof err === 'string') return err;
   if (
     err &&
@@ -56,7 +57,7 @@ const extractMessage = (err: unknown): string => {
   ) {
     return (err as { response: { data: { message: string } } }).response.data.message;
   }
-  return '请求失败，请稍后重试';
+  return i18n.t('shared.index.k1');
 };
 
 export const migrationApi = {
@@ -67,7 +68,7 @@ export const migrationApi = {
       if (res && res.success && Array.isArray(res.data)) {
         return res.data;
       }
-      throw new Error((res && res.message) || '获取服务列表失败');
+      throw new Error((res && res.message) || i18n.t('shared.index.k2'));
     } catch (err: unknown) {
       logger.error(`[MigrationAPI] listServices failed: ${extractMessage(err)}`);
       throw new Error(extractMessage(err));
@@ -86,7 +87,7 @@ export const migrationApi = {
       if (res && res.success && res.data) {
         return res.data;
       }
-      throw new Error((res && res.message) || `执行 ${serviceName} 迁移失败`);
+      throw new Error((res && res.message) || `${i18n.t('shared.index.k3')}${serviceName}${i18n.t('shared.index.k4')}`);
     } catch (err: unknown) {
       throw new Error(extractMessage(err));
     }
@@ -101,7 +102,7 @@ export const migrationApi = {
       if (res && res.success && res.data) {
         return res.data;
       }
-      throw new Error((res && res.message) || `回滚 ${serviceName} 迁移失败`);
+      throw new Error((res && res.message) || `${i18n.t('shared.index.k5')}${serviceName}${i18n.t('shared.index.k6')}`);
     } catch (err: unknown) {
       throw new Error(extractMessage(err));
     }
@@ -117,7 +118,7 @@ export const migrationApi = {
           applied: Array.isArray(res.data.applied) ? res.data.applied : [],
         };
       }
-      throw new Error((res && res.message) || `获取 ${serviceName} 迁移状态失败`);
+      throw new Error((res && res.message) || `${i18n.t('shared.index.k7')}${serviceName}${i18n.t('shared.index.k8')}`);
     } catch (err: unknown) {
       logger.error(`[MigrationAPI] getMigrationStatus failed: ${extractMessage(err)}`);
       throw new Error(extractMessage(err));

@@ -1,6 +1,7 @@
 import React from 'react';
 import { Chip } from '@mui/material';
 import type { EntitySchema } from '@/schema';
+import i18n from '@/i18n';
 
 const PRIORITY_COLOR_MAP: Record<string, 'default' | 'warning' | 'error'> = {
   high: 'error',
@@ -9,9 +10,9 @@ const PRIORITY_COLOR_MAP: Record<string, 'default' | 'warning' | 'error'> = {
 };
 
 const PRIORITY_LABEL_MAP: Record<string, string> = {
-  high: '高',
-  medium: '中',
-  low: '低',
+  high: i18n.t('rd.test.k0'),
+  medium: i18n.t('rd.test.k1'),
+  low: i18n.t('rd.test.k2'),
 };
 
 const STATUS_COLOR_MAP: Record<string, 'default' | 'success' | 'error' | 'warning'> = {
@@ -21,15 +22,15 @@ const STATUS_COLOR_MAP: Record<string, 'default' | 'success' | 'error' | 'warnin
 };
 
 const STATUS_LABEL_MAP: Record<string, string> = {
-  pending: '待测试',
-  passed: '通过',
-  failed: '失败',
+  pending: i18n.t('rd.test.k3'),
+  passed: i18n.t('rd.test.k4'),
+  failed: i18n.t('rd.test.k5'),
 };
 
 export const testSchema: EntitySchema = {
   entity: 'rd_test_case',
-  title: '测试用例',
-  description: '管理测试用例，包括用例编号、名称、类型、优先级、状态等',
+  title: i18n.t('rd.test.k6'),
+  description: i18n.t('rd.test.k7'),
 
   api: {
     module: 'rd',
@@ -39,7 +40,7 @@ export const testSchema: EntitySchema = {
   fields: [
     {
       name: 'case_no',
-      label: '用例编号',
+      label: i18n.t('rd.test.k8'),
       type: 'text',
       readonlyOnEdit: true,
       sortable: true,
@@ -47,7 +48,7 @@ export const testSchema: EntitySchema = {
     },
     {
       name: 'case_name',
-      label: '用例名称',
+      label: i18n.t('rd.test.k9'),
       type: 'text',
       required: true,
       sortable: true,
@@ -55,32 +56,32 @@ export const testSchema: EntitySchema = {
     },
     {
       name: 'case_type',
-      label: '用例类型',
+      label: i18n.t('rd.test.k10'),
       type: 'select',
-      defaultValue: '功能测试',
+      defaultValue: i18n.t('rd.test.k11'),
       options: {
         type: 'static',
         options: [
-          { value: '功能测试', label: '功能测试' },
-          { value: '性能测试', label: '性能测试' },
-          { value: '压力测试', label: '压力测试' },
-          { value: 'UI测试', label: 'UI测试' },
-          { value: '安全测试', label: '安全测试' },
+          { value: i18n.t('rd.test.k12'), label: i18n.t('rd.test.k13') },
+          { value: i18n.t('rd.test.k14'), label: i18n.t('rd.test.k15') },
+          { value: i18n.t('rd.test.k16'), label: i18n.t('rd.test.k17') },
+          { value: i18n.t('shared.test.ui_0'), label: i18n.t('shared.test.ui_1') },
+          { value: i18n.t('rd.test.k18'), label: i18n.t('rd.test.k19') },
         ],
       },
       listWidth: 120,
     },
     {
       name: 'priority',
-      label: '优先级',
+      label: i18n.t('rd.test.k20'),
       type: 'select',
       defaultValue: 'medium',
       options: {
         type: 'static',
         options: [
-          { value: 'high', label: '高' },
-          { value: 'medium', label: '中' },
-          { value: 'low', label: '低' },
+          { value: 'high', label: i18n.t('rd.test.k21') },
+          { value: 'medium', label: i18n.t('rd.test.k22') },
+          { value: 'low', label: i18n.t('rd.test.k23') },
         ],
       },
       listWidth: 100,
@@ -97,22 +98,22 @@ export const testSchema: EntitySchema = {
     },
     {
       name: 'status',
-      label: '状态',
+      label: i18n.t('rd.test.k24'),
       type: 'select',
       defaultValue: 'pending',
       options: {
         type: 'static',
         options: [
-          { value: 'pending', label: '待测试' },
-          { value: 'passed', label: '通过' },
-          { value: 'failed', label: '失败' },
+          { value: 'pending', label: i18n.t('rd.test.k25') },
+          { value: 'passed', label: i18n.t('rd.test.k26') },
+          { value: 'failed', label: i18n.t('rd.test.k27') },
         ],
       },
       listWidth: 110,
     },
     {
       name: 'related_requirement',
-      label: '关联需求',
+      label: i18n.t('rd.test.k28'),
       type: 'text',
       listWidth: 200,
     },
@@ -125,39 +126,39 @@ export const testSchema: EntitySchema = {
     filters: [
       {
         id: 'case_type',
-        label: '用例类型',
+        label: i18n.t('rd.test.k29'),
         type: 'select',
         options: [
-          { label: '全部类型', value: 'all' },
-          { label: '功能测试', value: '功能测试' },
-          { label: '性能测试', value: '性能测试' },
-          { label: '压力测试', value: '压力测试' },
-          { label: 'UI测试', value: 'UI测试' },
-          { label: '安全测试', value: '安全测试' },
+          { label: i18n.t('rd.test.k30'), value: 'all' },
+          { label: i18n.t('rd.test.k31'), value: i18n.t('rd.test.k32') },
+          { label: i18n.t('rd.test.k33'), value: i18n.t('rd.test.k34') },
+          { label: i18n.t('rd.test.k35'), value: i18n.t('rd.test.k36') },
+          { label: i18n.t('shared.test.ui_2'), value: i18n.t('shared.test.ui_3') },
+          { label: i18n.t('rd.test.k37'), value: i18n.t('rd.test.k38') },
         ],
         defaultValue: 'all',
       },
       {
         id: 'priority',
-        label: '优先级',
+        label: i18n.t('rd.test.k39'),
         type: 'select',
         options: [
-          { label: '全部优先级', value: 'all' },
-          { label: '高', value: 'high' },
-          { label: '中', value: 'medium' },
-          { label: '低', value: 'low' },
+          { label: i18n.t('rd.test.k40'), value: 'all' },
+          { label: i18n.t('rd.test.k41'), value: 'high' },
+          { label: i18n.t('rd.test.k42'), value: 'medium' },
+          { label: i18n.t('rd.test.k43'), value: 'low' },
         ],
         defaultValue: 'all',
       },
       {
         id: 'status',
-        label: '状态',
+        label: i18n.t('rd.test.k44'),
         type: 'select',
         options: [
-          { label: '全部状态', value: 'all' },
-          { label: '待测试', value: 'pending' },
-          { label: '通过', value: 'passed' },
-          { label: '失败', value: 'failed' },
+          { label: i18n.t('rd.test.k45'), value: 'all' },
+          { label: i18n.t('rd.test.k46'), value: 'pending' },
+          { label: i18n.t('rd.test.k47'), value: 'passed' },
+          { label: i18n.t('rd.test.k48'), value: 'failed' },
         ],
         defaultValue: 'all',
       },
@@ -171,19 +172,19 @@ export const testSchema: EntitySchema = {
 
   formSections: [
     {
-      title: '基本信息',
+      title: i18n.t('rd.test.k49'),
       fields: ['case_name', 'case_type', 'priority', 'status'],
     },
     {
-      title: '关联信息',
+      title: i18n.t('rd.test.k50'),
       fields: ['related_requirement'],
     },
   ],
 
   formColCount: 2,
-  createTitle: '新建测试用例',
-  editTitle: '编辑测试用例',
-  detailTitle: '用例详情',
+  createTitle: i18n.t('rd.test.k51'),
+  editTitle: i18n.t('rd.test.k52'),
+  detailTitle: i18n.t('rd.test.k53'),
 
   actions: ['create', 'edit', 'detail', 'delete'],
 };

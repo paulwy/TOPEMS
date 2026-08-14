@@ -32,6 +32,7 @@ import { sandboxManager } from './sandbox-manager';
 import type { SandboxBundle } from './sandbox-manager';
 import type { StyleIsolationMode } from './style-isolation';
 import type { SandboxOptions } from './js-sandbox';
+import i18n from '@/i18n';
 
 // ==================== 类型定义 ====================
 
@@ -92,7 +93,7 @@ class SandboxedErrorBoundary extends Component<
 
   componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
     logger.error(
-      `[SandboxedRemoteLoader] 模块 ${this.props.moduleName} 加载失败:`,
+      `${i18n.t('microfrontend.sandboxed_remote_loader.k0')}${this.props.moduleName}${i18n.t('microfrontend.sandboxed_remote_loader.k1')}`,
       error,
       errorInfo
     );
@@ -141,7 +142,7 @@ class SandboxedErrorBoundary extends Component<
             variant='contained'
             onClick={this.handleRetry}
           >
-            重试
+            {i18n.t('microfrontend.sandboxed_remote_loader.k0')}
           </Button>
         </Box>
       );
@@ -229,14 +230,14 @@ export const SandboxedRemoteLoader: React.FC<SandboxedRemoteLoaderProps> = ({
     bundle.status = 'active';
 
     logger.info(
-      `[SandboxedRemoteLoader] 已为模块 ${moduleName} 创建沙箱 (js=${isoConfig.js}, style=${isoConfig.style}, events=${isoConfig.events})`
+      `${i18n.t('microfrontend.sandboxed_remote_loader.k2')}${moduleName}${i18n.t('microfrontend.sandboxed_remote_loader.js_3')}${isoConfig.js}, style=${isoConfig.style}, events=${isoConfig.events})`
     );
 
     return () => {
       // 卸载时销毁沙箱，清理所有资源
       sandboxManager.destroySandbox(sandboxId);
       bundleRef.current = null;
-      logger.info(`[SandboxedRemoteLoader] 已销毁模块 ${moduleName} 的沙箱`);
+      logger.info(`${i18n.t('microfrontend.sandboxed_remote_loader.k4')}${moduleName}${i18n.t('microfrontend.sandboxed_remote_loader.k5')}`);
     };
   }, [sandboxId, moduleName]);
 
@@ -260,7 +261,7 @@ export const SandboxedRemoteLoader: React.FC<SandboxedRemoteLoaderProps> = ({
         const loadStart = performance.now();
         try {
           logger.info(
-            `[SandboxedRemoteLoader] 加载 ${moduleName}/${expose} from ${url} (沙箱模式)`
+            `${i18n.t('microfrontend.sandboxed_remote_loader.k6')}${moduleName}/${expose} from ${url}${i18n.t('microfrontend.sandboxed_remote_loader.k7')}`
           );
 
           // 通过 module federation 动态导入
@@ -282,7 +283,7 @@ export const SandboxedRemoteLoader: React.FC<SandboxedRemoteLoaderProps> = ({
 
           return { default: mod.default || mod };
         } catch (err) {
-          console.error(`[SandboxedRemoteLoader] 加载 ${moduleName}/${expose} 失败:`, err);
+          console.error(`${i18n.t('microfrontend.sandboxed_remote_loader.k8')}${moduleName}/${expose}${i18n.t('microfrontend.sandboxed_remote_loader.k9')}`, err);
           microFrontendPerf.recordModuleLoad(moduleName, expose, {
             success: false,
             error: err instanceof Error ? err.message : String(err),
@@ -315,7 +316,7 @@ export const SandboxedRemoteLoader: React.FC<SandboxedRemoteLoaderProps> = ({
     const checkInterval = setInterval(() => {
       const health = sandboxManager.healthCheck(sandboxId);
       if (health && !health.healthy) {
-        logger.warn(`[SandboxedRemoteLoader] 模块 ${moduleName} 沙箱健康检查异常:`, health.issues);
+        logger.warn(`${i18n.t('microfrontend.sandboxed_remote_loader.k10')}${moduleName}${i18n.t('microfrontend.sandboxed_remote_loader.k11')}`, health.issues);
       }
     }, 30000); // 30s 检查一次
     return () => clearInterval(checkInterval);

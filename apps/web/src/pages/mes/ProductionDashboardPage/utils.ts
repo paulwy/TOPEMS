@@ -1,6 +1,7 @@
 import type { ProductionRecord } from '@/api/mes';
 import type { TrendPoint } from './types';
 import { TREND_HOURS } from './constants';
+import i18n from '@/i18n';
 
 export const safeNumber = (value: unknown, fallback = 0): number => {
   const n = Number(value);
@@ -22,14 +23,14 @@ export const formatTime = (date: Date): string => {
 export const formatRelativeTime = (timestamp: string | Date): string => {
   const t = typeof timestamp === 'string' ? new Date(timestamp).getTime() : timestamp.getTime();
   const diff = Date.now() - t;
-  if (!Number.isFinite(diff) || diff < 0) return '刚刚';
+  if (!Number.isFinite(diff) || diff < 0) return i18n.t('pages.utils.k0');
   const sec = Math.floor(diff / 1000);
-  if (sec < 60) return `${sec} 秒前`;
+  if (sec < 60) return `${sec}${i18n.t('pages.utils.k0')}`;
   const min = Math.floor(sec / 60);
-  if (min < 60) return `${min} 分钟前`;
+  if (min < 60) return `${min}${i18n.t('pages.utils.k1')}`;
   const hr = Math.floor(min / 60);
-  if (hr < 24) return `${hr} 小时前`;
-  return `${Math.floor(hr / 24)} 天前`;
+  if (hr < 24) return `${hr}${i18n.t('pages.utils.k2')}`;
+  return `${Math.floor(hr / 24)}${i18n.t('pages.utils.k3')}`;
 };
 
 export const buildHourlyTrend = (records: ProductionRecord[], hours: number): TrendPoint[] => {

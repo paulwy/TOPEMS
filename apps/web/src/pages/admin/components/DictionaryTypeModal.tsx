@@ -14,9 +14,8 @@ import {
   MenuItem,
   Switch,
 } from '@mui/material';
-import { useTranslation } from 'react-i18next';
+import i18n from '@/i18n';
 import type { DictType } from '@/api/system';
-
 interface DictionaryTypeModalProps {
   open: boolean;
   editingType: DictType | null;
@@ -26,7 +25,6 @@ interface DictionaryTypeModalProps {
   setNewType: React.Dispatch<React.SetStateAction<Partial<DictType>>>;
   onSubmit: (e: React.FormEvent) => void;
 }
-
 const DictionaryTypeModal: React.FC<DictionaryTypeModalProps> = ({
   open,
   editingType,
@@ -36,8 +34,6 @@ const DictionaryTypeModal: React.FC<DictionaryTypeModalProps> = ({
   setNewType,
   onSubmit,
 }) => {
-  const { t } = useTranslation();
-
   return (
     <Dialog
       open={open}
@@ -47,8 +43,8 @@ const DictionaryTypeModal: React.FC<DictionaryTypeModalProps> = ({
     >
       <DialogTitle>
         {editingType
-          ? ` + ${t('admin.dictionary_management.edit_dictionary_type')} + `
-          : t('admin.dictionary_management.new_dictionary_type')}
+          ? ` + ${i18n.t('admin.dictionary_management.edit_dictionary_type')} + `
+          : i18n.t('admin.dictionary_management.new_dictionary_type')}
       </DialogTitle>
       <Box
         component='form'
@@ -58,7 +54,7 @@ const DictionaryTypeModal: React.FC<DictionaryTypeModalProps> = ({
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, pt: 1 }}>
             <TextField
               fullWidth
-              label={t('admin.dictionary_management_page.attr_e21e27')}
+              label={i18n.t('admin.dictionary_management_page.attr_e21e27')}
               required
               disabled={!!editingType}
               value={editingType?.code || newType.code || ''}
@@ -69,12 +65,12 @@ const DictionaryTypeModal: React.FC<DictionaryTypeModalProps> = ({
                   setNewType({ ...newType, code: e.target.value });
                 }
               }}
-              placeholder={t('admin.dictionary_management_page.attr_02123e')}
+              placeholder={i18n.t('admin.dictionary_management_page.attr_02123e')}
               size='small'
             />
             <TextField
               fullWidth
-              label={t('admin.dictionary_management_page.attr_456f3a')}
+              label={i18n.t('admin.dictionary_management_page.attr_456f3a')}
               required
               value={editingType?.name || newType.name || ''}
               onChange={(e) => {
@@ -84,17 +80,17 @@ const DictionaryTypeModal: React.FC<DictionaryTypeModalProps> = ({
                   setNewType({ ...newType, name: e.target.value });
                 }
               }}
-              placeholder={t('admin.dictionary_management_page.attr_7bd820')}
+              placeholder={i18n.t('admin.dictionary_management_page.attr_7bd820')}
               size='small'
             />
             <FormControl
               size='small'
               fullWidth
             >
-              <InputLabel> {t('admin.dictionary_management.category')} </InputLabel>
+              <InputLabel> {i18n.t('admin.dictionary_management.category')} </InputLabel>
               <Select
                 value={editingType?.category || newType.category || 'business'}
-                label={t('admin.dictionary_management.category')}
+                label={i18n.t('admin.dictionary_management.category')}
                 onChange={(e) => {
                   if (editingType) {
                     setEditingType({ ...editingType, category: e.target.value });
@@ -105,22 +101,22 @@ const DictionaryTypeModal: React.FC<DictionaryTypeModalProps> = ({
               >
                 <MenuItem value='system'>
                   {' '}
-                  {t('admin.dictionary_management.system_dictionary')}{' '}
+                  {i18n.t('admin.dictionary_management.system_dictionary')}{' '}
                 </MenuItem>
                 <MenuItem value='business'>
                   {' '}
-                  {t('admin.dictionary_management.business_dictionary')}{' '}
+                  {i18n.t('admin.dictionary_management.business_dictionary')}{' '}
                 </MenuItem>
-                <MenuItem value='basic'> {t('admin.dictionary_management.base_data')} </MenuItem>
+                <MenuItem value='basic'> {i18n.t('admin.dictionary_management.base_data')} </MenuItem>
                 <MenuItem value='custom'>
                   {' '}
-                  {t('admin.dictionary_management.custom_dictionary')}{' '}
+                  {i18n.t('admin.dictionary_management.custom_dictionary')}{' '}
                 </MenuItem>
               </Select>
             </FormControl>
             <TextField
               fullWidth
-              label={t('admin.dictionary_management.description')}
+              label={i18n.t('admin.dictionary_management.description')}
               value={editingType?.description || newType.description || ''}
               onChange={(e) => {
                 if (editingType) {
@@ -140,15 +136,15 @@ const DictionaryTypeModal: React.FC<DictionaryTypeModalProps> = ({
                 justifyContent: 'space-between',
               }}
             >
-              <Typography variant='body2'> {t('admin.dictionary_management.status')} </Typography>
+              <Typography variant='body2'> {i18n.t('admin.dictionary_management.status')} </Typography>
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                 <Typography
                   variant='body2'
                   color='text.secondary'
                 >
                   {(editingType?.status || newType.status) === 'active'
-                    ? ` + ${t('admin.dictionary_management.enable')} + `
-                    : t('admin.dictionary_management.disable')}
+                    ? ` + ${i18n.t('admin.dictionary_management.enable')} + `
+                    : i18n.t('admin.dictionary_management.disable')}
                 </Typography>
                 <Switch
                   checked={(editingType?.status || newType.status) === 'active'}
@@ -170,20 +166,19 @@ const DictionaryTypeModal: React.FC<DictionaryTypeModalProps> = ({
             variant='outlined'
             onClick={onClose}
           >
-            {t('admin.dictionary_management_page.text_625fb2')}
+            {i18n.t('admin.dictionary_management_page.text_625fb2')}
           </Button>
           <Button
             type='submit'
             variant='contained'
           >
             {editingType
-              ? ` + ${t('admin.dictionary_management.save')} + `
-              : t('admin.dictionary_management.create')}
+              ? ` + ${i18n.t('admin.dictionary_management.save')} + `
+              : i18n.t('admin.dictionary_management.create')}
           </Button>
         </DialogActions>
       </Box>
     </Dialog>
   );
 };
-
 export default DictionaryTypeModal;

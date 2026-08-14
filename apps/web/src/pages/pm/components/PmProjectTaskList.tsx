@@ -4,7 +4,6 @@
  */
 import React from 'react';
 import { Edit } from 'lucide-react';
-import { useTranslation } from 'react-i18next';
 import {
   Box,
   Typography,
@@ -18,17 +17,14 @@ import {
   TableHead,
   TableRow,
 } from '@mui/material';
+import i18n from '@/i18n';
 import type { ProjectPhase } from '@/api/pm';
 import { ActionButton, StatusBadge } from '@/components/common';
-
 export interface PmProjectTaskListProps {
   phases: ProjectPhase[];
   formatDate: (dateStr?: string) => string;
 }
-
 const PmProjectTaskList: React.FC<PmProjectTaskListProps> = ({ phases, formatDate }) => {
-  const { t } = useTranslation();
-
   return (
     <Card>
       <CardHeader
@@ -44,12 +40,12 @@ const PmProjectTaskList: React.FC<PmProjectTaskListProps> = ({ phases, formatDat
             variant='h6'
             sx={{ fontSize: '1.125rem' }}
           >
-            {t('pm.project_detail.phase_list')}
+            {i18n.t('pm.project_detail.phase_list')}
           </Typography>
         }
         action={
           <ActionButton
-            label={t('pm.project_detail.add_phase')}
+            label={i18n.t('pm.project_detail.add_phase')}
             variant='secondary'
             size='small'
           />
@@ -60,11 +56,11 @@ const PmProjectTaskList: React.FC<PmProjectTaskListProps> = ({ phases, formatDat
           <Table>
             <TableHead>
               <TableRow>
-                <TableCell sx={{ width: 200 }}>{t('pm.project_detail.phase_name')}</TableCell>
-                <TableCell>{t('pm.project_detail.status')}</TableCell>
-                <TableCell sx={{ width: 180 }}>{t('pm.project_detail.progress')}</TableCell>
-                <TableCell sx={{ width: 150 }}>{t('pm.project_detail.time')}</TableCell>
-                <TableCell sx={{ width: 120 }}>{t('pm.project_detail.action')}</TableCell>
+                <TableCell sx={{ width: 200 }}>{i18n.t('pm.project_detail.phase_name')}</TableCell>
+                <TableCell>{i18n.t('pm.project_detail.status')}</TableCell>
+                <TableCell sx={{ width: 180 }}>{i18n.t('pm.project_detail.progress')}</TableCell>
+                <TableCell sx={{ width: 150 }}>{i18n.t('pm.project_detail.time')}</TableCell>
+                <TableCell sx={{ width: 120 }}>{i18n.t('pm.project_detail.action')}</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
@@ -74,7 +70,7 @@ const PmProjectTaskList: React.FC<PmProjectTaskListProps> = ({ phases, formatDat
                     colSpan={5}
                     sx={{ textAlign: 'center', py: 6, color: 'grey.500' }}
                   >
-                    {t('pm.project_detail.no_phase_data')}
+                    {i18n.t('pm.project_detail.no_phase_data')}
                   </TableCell>
                 </TableRow>
               ) : (
@@ -108,10 +104,10 @@ const PmProjectTaskList: React.FC<PmProjectTaskListProps> = ({ phases, formatDat
                         status={phase.status}
                         label={
                           phase.status === 'completed'
-                            ? t('pm.project_detail.completed')
+                            ? i18n.t('pm.project_detail.completed')
                             : phase.status === 'active'
-                              ? t('pm.project_detail.in_progress')
-                              : t('pm.project_detail.not_started')
+                              ? i18n.t('pm.project_detail.in_progress')
+                              : i18n.t('pm.project_detail.not_started')
                         }
                         color={
                           phase.status === 'completed'
@@ -145,13 +141,13 @@ const PmProjectTaskList: React.FC<PmProjectTaskListProps> = ({ phases, formatDat
                           variant='body2'
                           sx={{ color: 'grey.400', fontSize: '0.75rem' }}
                         >
-                          {t('pm.project_detail.to')} {formatDate(phase.end_date)}
+                          {i18n.t('pm.project_detail.to')} {formatDate(phase.end_date)}
                         </Typography>
                       </Box>
                     </TableCell>
                     <TableCell>
                       <ActionButton
-                        label={t('pm.project_detail.edit')}
+                        label={i18n.t('pm.project_detail.edit')}
                         icon={<Edit size={16} />}
                         variant='text'
                         size='small'
@@ -167,5 +163,4 @@ const PmProjectTaskList: React.FC<PmProjectTaskListProps> = ({ phases, formatDat
     </Card>
   );
 };
-
 export default PmProjectTaskList;

@@ -8,7 +8,6 @@
  * - 左侧：字典类型列表（带增删改）
  * - 右侧：字典项 CrudPage（Schema 驱动的完整 CRUD）
  */
-
 import React, { useState, useMemo, useCallback } from 'react';
 import {
   Box,
@@ -28,9 +27,9 @@ import {
   Tooltip,
   CircularProgress,
 } from '@mui/material';
+import i18n from '@/i18n';
 import { Plus, Edit, Trash2, RefreshCw, Book } from 'lucide-react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-
 import CrudPage, { type CrudApiAdapter } from '@/components/templates/CrudPage';
 import { PageContainer } from '@/components/common';
 import { ConfirmDialog } from '@topems/shared-components';
@@ -39,31 +38,26 @@ import { useNotificationStore } from '@/store';
 import { extractErrorMessage } from '@/utils/errors';
 import { dictTypeApi, dictItemApi, type DictType, type DictItem } from '@/api/system';
 import { dictItemSchema } from '@/schemas/admin';
-
-
 import { QUERY_KEYS } from '@/lib/reactQuery';
-
 const categoryLabels: Record<string, string> = {
-  system: '系统字典',
-  iam: 'IAM字典',
-  workflow: '审批字典',
-  hrm: 'HRM字典',
-  crm: 'CRM字典',
-  erp: 'ERP字典',
-  wms: 'WMS字典',
-  mes: 'MES字典',
-  common: '通用字典',
-  notification: '通知字典',
-  audit: '审计字典',
-  business: '业务字典',
-  basic: '基础数据',
-  custom: '自定义字典',
+  system: i18n.t('erp.dict_management_page.k0'),
+  iam: i18n.t('pages.dict_management_page.iam_0'),
+  workflow: i18n.t('erp.dict_management_page.k1'),
+  hrm: i18n.t('pages.dict_management_page.hrm_1'),
+  crm: i18n.t('pages.dict_management_page.crm_2'),
+  erp: i18n.t('pages.dict_management_page.erp_3'),
+  wms: i18n.t('pages.dict_management_page.wms_4'),
+  mes: i18n.t('pages.dict_management_page.mes_5'),
+  common: i18n.t('erp.dict_management_page.k2'),
+  notification: i18n.t('erp.dict_management_page.k3'),
+  audit: i18n.t('erp.dict_management_page.k4'),
+  business: i18n.t('erp.dict_management_page.k5'),
+  basic: i18n.t('erp.dict_management_page.k6'),
+  custom: i18n.t('erp.dict_management_page.k7'),
 };
-
 const DictManagementPage: React.FC = () => {
   const addNotification = useNotificationStore((state) => state.addNotification);
   const queryClient = useQueryClient();
-
   const [selectedTypeId, setSelectedTypeId] = useState<string | null>(null);
   const [typeDialogOpen, setTypeDialogOpen] = useState(false);
   const [editingType, setEditingType] = useState<DictType | null>(null);
@@ -80,7 +74,6 @@ const DictManagementPage: React.FC = () => {
     openConfirm: openDeleteTypeConfirm,
     closeConfirm: closeDeleteTypeConfirm,
   } = useConfirmDialog();
-
   // ── 字典类型列表 ──
   const dictTypesQuery = useQuery<{ items: DictType[]; total: number }>({
     queryKey: QUERY_KEYS.AD_HOC.SYSTEM_DICT_TYPES_BASE,
@@ -93,23 +86,20 @@ const DictManagementPage: React.FC = () => {
     },
     staleTime: 5 * 60 * 1000,
   });
-
   const dictTypes = dictTypesQuery.data?.items || [];
   const typesLoading = dictTypesQuery.isLoading;
   const selectedType = dictTypes.find((t) => t.id === selectedTypeId) || null;
-
   // 选中第一个字典类型
   React.useEffect(() => {
     if (!selectedTypeId && dictTypes.length > 0) {
       setSelectedTypeId(dictTypes[0].id);
     }
   }, [dictTypes, selectedTypeId]);
-
   // ── 字典类型 CRUD ──
   const createTypeMutation = useMutation({
     mutationFn: (data: Partial<DictType>) => dictTypeApi.create(data),
     onSuccess: () => {
-      addNotification({ title: '成功', message: '字典类型创建成功', type: 'success' });
+      addNotification({ title: i18n.t('erp.dict_management_page.k9'), message: i18n.t('erp.dict_management_page.k8'), type: 'success' });
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.SYSTEM_DICT_TYPES_BASE ,
   exact: false,
   refetchType: 'active',
@@ -118,18 +108,17 @@ const DictManagementPage: React.FC = () => {
     },
     onError: (err: unknown) => {
       addNotification({
-        title: '错误',
-        message: extractErrorMessage(err, '创建失败'),
+        title: i18n.t('erp.dict_management_page.k10'),
+        message: extractErrorMessage(err, i18n.t('erp.dict_management_page.k11')),
         type: 'error',
       });
     },
   });
-
   const updateTypeMutation = useMutation({
     mutationFn: ({ id, data }: { id: string; data: Partial<DictType> }) =>
       dictTypeApi.update(id, data),
     onSuccess: () => {
-      addNotification({ title: '成功', message: '字典类型更新成功', type: 'success' });
+      addNotification({ title: i18n.t('erp.dict_management_page.k13'), message: i18n.t('erp.dict_management_page.k12'), type: 'success' });
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.SYSTEM_DICT_TYPES_BASE ,
   exact: false,
   refetchType: 'active',
@@ -138,17 +127,16 @@ const DictManagementPage: React.FC = () => {
     },
     onError: (err: unknown) => {
       addNotification({
-        title: '错误',
-        message: extractErrorMessage(err, '更新失败'),
+        title: i18n.t('erp.dict_management_page.k14'),
+        message: extractErrorMessage(err, i18n.t('erp.dict_management_page.k15')),
         type: 'error',
       });
     },
   });
-
   const deleteTypeMutation = useMutation({
     mutationFn: (id: string) => dictTypeApi.delete(id),
     onSuccess: (_, id) => {
-      addNotification({ title: '成功', message: '删除成功', type: 'success' });
+      addNotification({ title: i18n.t('erp.dict_management_page.k17'), message: i18n.t('erp.dict_management_page.k16'), type: 'success' });
       if (selectedTypeId === id) {
         setSelectedTypeId(null);
       }
@@ -159,13 +147,12 @@ const DictManagementPage: React.FC = () => {
     },
     onError: (err: unknown) => {
       addNotification({
-        title: '错误',
-        message: extractErrorMessage(err, '删除失败'),
+        title: i18n.t('erp.dict_management_page.k18'),
+        message: extractErrorMessage(err, i18n.t('erp.dict_management_page.k19')),
         type: 'error',
       });
     },
   });
-
   const handleCreateType = () => {
     setEditingType(null);
     setTypeForm({
@@ -177,7 +164,6 @@ const DictManagementPage: React.FC = () => {
     });
     setTypeDialogOpen(true);
   };
-
   const handleEditType = (type: DictType) => {
     setEditingType(type);
     setTypeForm({
@@ -189,10 +175,9 @@ const DictManagementPage: React.FC = () => {
     });
     setTypeDialogOpen(true);
   };
-
   const handleSaveType = () => {
     if (!typeForm.code || !typeForm.name) {
-      addNotification({ title: '提示', message: '请填写编码和名称', type: 'warning' });
+      addNotification({ title: i18n.t('erp.dict_management_page.k21'), message: i18n.t('erp.dict_management_page.k20'), type: 'warning' });
       return;
     }
     if (editingType) {
@@ -201,16 +186,14 @@ const DictManagementPage: React.FC = () => {
       createTypeMutation.mutate(typeForm);
     }
   };
-
   const handleDeleteType = (type: DictType) => {
     openDeleteTypeConfirm({
-      title: '确认删除',
-      message: `确定要删除字典类型「${type.name}」吗？所有关联的字典项也将被删除，此操作不可撤销。`,
+      title: i18n.t('erp.dict_management_page.k22'),
+      message: `${i18n.t('pages.dict_management_page.k6')}${type.name}${i18n.t('pages.dict_management_page.k7')}`,
       danger: true,
       onConfirm: () => deleteTypeMutation.mutate(type.id),
     });
   };
-
   // ── 字典项 API 适配器（Schema 驱动） ──
   const itemApiAdapter: CrudApiAdapter<DictItem> = useMemo(
     () => ({
@@ -230,12 +213,12 @@ const DictManagementPage: React.FC = () => {
         return { data: [], total: 0 };
       },
       create: async (data) => {
-        if (!selectedTypeId) throw new Error('请先选择字典类型');
+        if (!selectedTypeId) throw new Error(i18n.t('erp.dict_management_page.k23'));
         const res = await dictItemApi.create({
           ...data,
           dict_type_id: selectedTypeId,
         });
-        if (!res.success) throw new Error(res.message || '创建失败');
+        if (!res.success) throw new Error(res.message || i18n.t('erp.dict_management_page.k24'));
         queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.SYSTEM_DICT_TYPES_BASE ,
   exact: false,
   refetchType: 'active',
@@ -244,12 +227,12 @@ const DictManagementPage: React.FC = () => {
       },
       update: async (id, data) => {
         const res = await dictItemApi.update(id, data);
-        if (!res.success) throw new Error(res.message || '更新失败');
+        if (!res.success) throw new Error(res.message || i18n.t('erp.dict_management_page.k25'));
         return res.data as DictItem;
       },
       delete: async (id) => {
         const res = await dictItemApi.delete(id);
-        if (!res.success) throw new Error(res.message || '删除失败');
+        if (!res.success) throw new Error(res.message || i18n.t('erp.dict_management_page.k26'));
         queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.SYSTEM_DICT_TYPES_BASE ,
   exact: false,
   refetchType: 'active',
@@ -258,20 +241,17 @@ const DictManagementPage: React.FC = () => {
     }),
     [selectedTypeId, queryClient]
   );
-
   const handleRefresh = useCallback(() => {
     queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.SYSTEM_DICT_TYPES_BASE ,
   exact: false,
   refetchType: 'active',
 });
   }, [queryClient]);
-
   const saving = createTypeMutation.isPending || updateTypeMutation.isPending;
-
   return (
     <PageContainer
-      title='字典管理'
-      subtitle='管理系统字典类型与字典项'
+      title={i18n.t('erp.dict_management_page.k27')}
+      subtitle={i18n.t('erp.dict_management_page.k28')}
       headerActions={
         <Button
           variant='outlined'
@@ -280,7 +260,7 @@ const DictManagementPage: React.FC = () => {
           onClick={handleRefresh}
           disabled={typesLoading}
         >
-          刷新
+          {i18n.t('pages.dict_management_page.k0')}
         </Button>
       }
     >
@@ -308,19 +288,18 @@ const DictManagementPage: React.FC = () => {
               sx={{ display: 'flex', alignItems: 'center', gap: 1, fontWeight: 600 }}
             >
               <Book size={18} />
-              字典类型
+              {i18n.t('pages.dict_management_page.k1')}
             </Typography>
             <IconButton
               size='small'
               color='primary'
               onClick={handleCreateType}
-              aria-label='新增字典类型'
-              title='新增字典类型'
+              aria-label={i18n.t('erp.dict_management_page.k29')}
+              title={i18n.t('erp.dict_management_page.k30')}
             >
               <Plus size={18} />
             </IconButton>
           </Box>
-
           {typesLoading ? (
             <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
               <CircularProgress size={24} />
@@ -331,7 +310,7 @@ const DictManagementPage: React.FC = () => {
               color='text.secondary'
               sx={{ textAlign: 'center', py: 4 }}
             >
-              暂无字典类型
+              {i18n.t('pages.dict_management_page.k2')}
             </Typography>
           ) : (
             <Box sx={{ flex: 1 }}>
@@ -368,19 +347,19 @@ const DictManagementPage: React.FC = () => {
                     </Typography>
                   </Box>
                   <Box sx={{ display: 'flex', gap: 0.5 }}>
-                    <Tooltip title='编辑'>
+                    <Tooltip title={i18n.t('erp.dict_management_page.k31')}>
                       <IconButton
                         size='small'
                         onClick={(e) => {
                           e.stopPropagation();
                           handleEditType(type);
                         }}
-                        aria-label='编辑'
+                        aria-label={i18n.t('erp.dict_management_page.k32')}
                       >
                         <Edit size={14} />
                       </IconButton>
                     </Tooltip>
-                    <Tooltip title='删除'>
+                    <Tooltip title={i18n.t('erp.dict_management_page.k33')}>
                       <IconButton
                         size='small'
                         color='error'
@@ -388,7 +367,7 @@ const DictManagementPage: React.FC = () => {
                           e.stopPropagation();
                           handleDeleteType(type);
                         }}
-                        aria-label='删除'
+                        aria-label={i18n.t('erp.dict_management_page.k34')}
                       >
                         <Trash2 size={14} />
                       </IconButton>
@@ -399,21 +378,20 @@ const DictManagementPage: React.FC = () => {
             </Box>
           )}
         </Paper>
-
         {/* 右侧：字典项 CrudPage */}
         <Box sx={{ flex: 1, minWidth: 0 }}>
           {selectedType ? (
             <CrudPage
               schema={dictItemSchema}
               apiAdapter={itemApiAdapter}
-              breadcrumbs={[{ label: '字典管理' }, { label: selectedType.name }]}
+              breadcrumbs={[{ label: i18n.t('erp.dict_management_page.k35') }, { label: selectedType.name }]}
               headerContent={
                 <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
                   <Typography
                     variant='body2'
                     color='text.secondary'
                   >
-                    {selectedType.description || `管理「${selectedType.name}」的字典项`}
+                    {selectedType.description || `${i18n.t('pages.dict_management_page.k8')}${selectedType.name}${i18n.t('pages.dict_management_page.k9')}`}
                   </Typography>
                   <Typography
                     variant='caption'
@@ -451,7 +429,7 @@ const DictManagementPage: React.FC = () => {
                   color='text.secondary'
                   sx={{ mt: 2 }}
                 >
-                  请从左侧选择一个字典类型
+                  {i18n.t('pages.dict_management_page.k3')}
                 </Typography>
                 <Button
                   variant='outlined'
@@ -460,14 +438,13 @@ const DictManagementPage: React.FC = () => {
                   onClick={handleCreateType}
                   sx={{ mt: 2 }}
                 >
-                  新增字典类型
+                  {i18n.t('pages.dict_management_page.k4')}
                 </Button>
               </Box>
             </Paper>
           )}
         </Box>
       </Box>
-
       {/* 字典类型新增/编辑 Dialog */}
       <Dialog
         open={typeDialogOpen}
@@ -475,28 +452,28 @@ const DictManagementPage: React.FC = () => {
         maxWidth='sm'
         fullWidth
       >
-        <DialogTitle>{editingType ? '编辑字典类型' : '新增字典类型'}</DialogTitle>
+        <DialogTitle>{editingType ? i18n.t('erp.dict_management_page.k37') : i18n.t('erp.dict_management_page.k36')}</DialogTitle>
         <DialogContent>
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 1 }}>
             <TextField
-              label='编码'
+              label={i18n.t('erp.dict_management_page.k38')}
               value={typeForm.code || ''}
               onChange={(e) => setTypeForm({ ...typeForm, code: e.target.value })}
               disabled={!!editingType}
-              helperText={editingType ? '编码不可修改' : '唯一标识，创建后不可修改'}
+              helperText={editingType ? i18n.t('erp.dict_management_page.k40') : i18n.t('erp.dict_management_page.k39')}
               size='small'
             />
             <TextField
-              label='名称'
+              label={i18n.t('erp.dict_management_page.k41')}
               value={typeForm.name || ''}
               onChange={(e) => setTypeForm({ ...typeForm, name: e.target.value })}
               size='small'
             />
             <FormControl size='small'>
-              <InputLabel>分类</InputLabel>
+              <InputLabel>{i18n.t('erp.dict_management_page.k42')}</InputLabel>
               <Select
                 value={typeForm.category || 'business'}
-                label='分类'
+                label={i18n.t('erp.dict_management_page.k43')}
                 onChange={(e) => setTypeForm({ ...typeForm, category: e.target.value })}
               >
                 {Object.entries(categoryLabels).map(([value, label]) => (
@@ -510,7 +487,7 @@ const DictManagementPage: React.FC = () => {
               </Select>
             </FormControl>
             <TextField
-              label='描述'
+              label={i18n.t('erp.dict_management_page.k44')}
               value={typeForm.description || ''}
               onChange={(e) => setTypeForm({ ...typeForm, description: e.target.value })}
               multiline
@@ -520,17 +497,16 @@ const DictManagementPage: React.FC = () => {
           </Box>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setTypeDialogOpen(false)}>取消</Button>
+          <Button onClick={() => setTypeDialogOpen(false)}>{i18n.t('erp.dict_management_page.k45')}</Button>
           <Button
             variant='contained'
             onClick={handleSaveType}
             disabled={saving}
           >
-            {saving ? <CircularProgress size={20} /> : '保存'}
+            {saving ? <CircularProgress size={20} /> : i18n.t('erp.dict_management_page.k46')}
           </Button>
         </DialogActions>
       </Dialog>
-
       {/* 删除确认 */}
       <ConfirmDialog
         isOpen={deleteTypeConfirmOpen}
@@ -546,5 +522,4 @@ const DictManagementPage: React.FC = () => {
     </PageContainer>
   );
 };
-
 export default DictManagementPage;

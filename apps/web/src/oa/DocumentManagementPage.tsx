@@ -1,10 +1,11 @@
 import React from 'react';
+import i18n from '@/i18n';
 
 const DocumentManagementPage: React.FC = () => {
   return React.createElement(
     'div',
     { className: 'page-placeholder' },
-    'DocumentManagementPage 页面开发中'
+    i18n.t('oa.document_management_page.k0')
   );
 };
 

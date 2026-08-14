@@ -2,16 +2,17 @@ import React from 'react';
 import { Box, Chip, Typography } from '@mui/material';
 import { Clock } from 'lucide-react';
 import type { EntitySchema } from '@/schema';
+import i18n from '@/i18n';
 
 // ============ 分类与等级配色 ============
 
 const categoryColorMap: Record<string, 'error' | 'warning' | 'secondary' | 'info'> = {
-  易燃: 'error',
-  易爆: 'warning',
-  有毒: 'secondary',
-  腐蚀: 'info',
-  氧化: 'warning',
-  放射性: 'secondary',
+  [i18n.t('schemas.hazardous_material.k0')]: 'error',
+  [i18n.t('schemas.hazardous_material.k1')]: 'warning',
+  [i18n.t('schemas.hazardous_material.k2')]: 'secondary',
+  [i18n.t('schemas.hazardous_material.k3')]: 'info',
+  [i18n.t('schemas.hazardous_material.k4')]: 'warning',
+  [i18n.t('schemas.hazardous_material.k5')]: 'secondary',
 };
 
 function renderCategoryCell(row: Record<string, unknown>, _index: number) {
@@ -81,8 +82,8 @@ function getExpiryStatus(
   const expiry = new Date(expiryDate);
   if (Number.isNaN(expiry.getTime())) return null;
   const daysDiff = Math.ceil((expiry.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
-  if (daysDiff <= 0) return { text: '已过期', color: 'error' };
-  if (daysDiff <= 30) return { text: '即将过期', color: 'warning' };
+  if (daysDiff <= 0) return { text: i18n.t('ehs.hazardous_material.k0'), color: 'error' };
+  if (daysDiff <= 30) return { text: i18n.t('ehs.hazardous_material.k1'), color: 'warning' };
   return null;
 }
 
@@ -122,8 +123,8 @@ function renderExpiryCell(row: Record<string, unknown>, _index: number) {
 
 export const hazardousMaterialSchema: EntitySchema = {
   entity: 'ehsHazardousMaterial',
-  title: '危化品管理',
-  description: '管理企业危险物料信息，包括编码、分类、危险等级、库存、有效期等',
+  title: i18n.t('ehs.hazardous_material.k2'),
+  description: i18n.t('ehs.hazardous_material.k3'),
 
   api: {
     module: 'ehs',
@@ -133,7 +134,7 @@ export const hazardousMaterialSchema: EntitySchema = {
   fields: [
     {
       name: 'material_code',
-      label: '编码',
+      label: i18n.t('ehs.hazardous_material.k4'),
       type: 'text',
       readonlyOnEdit: true,
       listWidth: 130,
@@ -141,7 +142,7 @@ export const hazardousMaterialSchema: EntitySchema = {
     },
     {
       name: 'name',
-      label: '名称',
+      label: i18n.t('ehs.hazardous_material.k5'),
       type: 'text',
       required: true,
       sortable: true,
@@ -151,19 +152,19 @@ export const hazardousMaterialSchema: EntitySchema = {
     },
     {
       name: 'category',
-      label: '分类',
+      label: i18n.t('ehs.hazardous_material.k6'),
       type: 'select',
       required: true,
-      defaultValue: '易燃',
+      defaultValue: i18n.t('ehs.hazardous_material.k7'),
       options: {
         type: 'static',
         options: [
-          { value: '易燃', label: '易燃' },
-          { value: '易爆', label: '易爆' },
-          { value: '有毒', label: '有毒' },
-          { value: '腐蚀', label: '腐蚀' },
-          { value: '氧化', label: '氧化' },
-          { value: '放射性', label: '放射性' },
+          { value: i18n.t('ehs.hazardous_material.k8'), label: i18n.t('ehs.hazardous_material.k9') },
+          { value: i18n.t('ehs.hazardous_material.k10'), label: i18n.t('ehs.hazardous_material.k11') },
+          { value: i18n.t('ehs.hazardous_material.k12'), label: i18n.t('ehs.hazardous_material.k13') },
+          { value: i18n.t('ehs.hazardous_material.k14'), label: i18n.t('ehs.hazardous_material.k15') },
+          { value: i18n.t('ehs.hazardous_material.k16'), label: i18n.t('ehs.hazardous_material.k17') },
+          { value: i18n.t('ehs.hazardous_material.k18'), label: i18n.t('ehs.hazardous_material.k19') },
         ],
       },
       listWidth: 100,
@@ -173,7 +174,7 @@ export const hazardousMaterialSchema: EntitySchema = {
     },
     {
       name: 'cas_no',
-      label: 'CAS号',
+      label: i18n.t('shared.hazardous_material.cas_0'),
       type: 'text',
       listWidth: 120,
       renderCell: renderCasNoCell,
@@ -181,7 +182,7 @@ export const hazardousMaterialSchema: EntitySchema = {
     },
     {
       name: 'quantity',
-      label: '库存量',
+      label: i18n.t('ehs.hazardous_material.k20'),
       type: 'number',
       listWidth: 100,
       align: 'right',
@@ -189,7 +190,7 @@ export const hazardousMaterialSchema: EntitySchema = {
     },
     {
       name: 'unit',
-      label: '单位',
+      label: i18n.t('ehs.hazardous_material.k21'),
       type: 'select',
       defaultValue: 'kg',
       options: {
@@ -197,10 +198,10 @@ export const hazardousMaterialSchema: EntitySchema = {
         options: [
           { value: 'kg', label: 'kg' },
           { value: 'L', label: 'L' },
-          { value: '瓶', label: '瓶' },
-          { value: '桶', label: '桶' },
-          { value: '箱', label: '箱' },
-          { value: '袋', label: '袋' },
+          { value: i18n.t('ehs.hazardous_material.k22'), label: i18n.t('ehs.hazardous_material.k23') },
+          { value: i18n.t('ehs.hazardous_material.k24'), label: i18n.t('ehs.hazardous_material.k25') },
+          { value: i18n.t('ehs.hazardous_material.k26'), label: i18n.t('ehs.hazardous_material.k27') },
+          { value: i18n.t('ehs.hazardous_material.k28'), label: i18n.t('ehs.hazardous_material.k29') },
         ],
       },
       showInList: false,
@@ -208,7 +209,7 @@ export const hazardousMaterialSchema: EntitySchema = {
     },
     {
       name: 'storage_location',
-      label: '存放位置',
+      label: i18n.t('ehs.hazardous_material.k30'),
       type: 'text',
       required: true,
       listWidth: 140,
@@ -217,16 +218,16 @@ export const hazardousMaterialSchema: EntitySchema = {
     },
     {
       name: 'danger_level',
-      label: '危险等级',
+      label: i18n.t('ehs.hazardous_material.k31'),
       type: 'select',
-      defaultValue: '三级',
+      defaultValue: i18n.t('ehs.hazardous_material.k32'),
       options: {
         type: 'static',
         options: [
-          { value: '一级', label: '一级' },
-          { value: '二级', label: '二级' },
-          { value: '三级', label: '三级' },
-          { value: '四级', label: '四级' },
+          { value: i18n.t('ehs.hazardous_material.k33'), label: i18n.t('ehs.hazardous_material.k34') },
+          { value: i18n.t('ehs.hazardous_material.k35'), label: i18n.t('ehs.hazardous_material.k36') },
+          { value: i18n.t('ehs.hazardous_material.k37'), label: i18n.t('ehs.hazardous_material.k38') },
+          { value: i18n.t('ehs.hazardous_material.k39'), label: i18n.t('ehs.hazardous_material.k40') },
         ],
       },
       listWidth: 100,
@@ -234,7 +235,7 @@ export const hazardousMaterialSchema: EntitySchema = {
     },
     {
       name: 'expiry_date',
-      label: '有效期',
+      label: i18n.t('ehs.hazardous_material.k41'),
       type: 'date',
       listWidth: 130,
       sortable: true,
@@ -242,13 +243,13 @@ export const hazardousMaterialSchema: EntitySchema = {
     },
     {
       name: 'hazard_class',
-      label: '危险类别',
+      label: i18n.t('ehs.hazardous_material.k42'),
       type: 'text',
       showInList: false,
     },
     {
       name: 'description',
-      label: '描述',
+      label: i18n.t('ehs.hazardous_material.k43'),
       type: 'textarea',
       showInList: false,
     },
@@ -270,43 +271,43 @@ export const hazardousMaterialSchema: EntitySchema = {
     statusBadge: {
       field: 'danger_level',
       colorMap: {
-        一级: 'error',
-        二级: 'warning',
-        三级: 'primary',
-        四级: 'success',
+        [i18n.t('schemas.hazardous_material.k6')]: 'error',
+        [i18n.t('schemas.hazardous_material.k7')]: 'warning',
+        [i18n.t('schemas.hazardous_material.k8')]: 'primary',
+        [i18n.t('schemas.hazardous_material.k9')]: 'success',
       },
       labelMap: {
-        一级: '一级',
-        二级: '二级',
-        三级: '三级',
-        四级: '四级',
+        [i18n.t('schemas.hazardous_material.k10')]: i18n.t('ehs.hazardous_material.k44'),
+        [i18n.t('schemas.hazardous_material.k11')]: i18n.t('ehs.hazardous_material.k45'),
+        [i18n.t('schemas.hazardous_material.k12')]: i18n.t('ehs.hazardous_material.k46'),
+        [i18n.t('schemas.hazardous_material.k13')]: i18n.t('ehs.hazardous_material.k47'),
       },
     },
     filters: [
       {
         id: 'category',
-        label: '分类',
+        label: i18n.t('ehs.hazardous_material.k48'),
         type: 'select',
         options: [
-          { label: '全部', value: 'all' },
-          { label: '易燃', value: '易燃' },
-          { label: '易爆', value: '易爆' },
-          { label: '有毒', value: '有毒' },
-          { label: '腐蚀', value: '腐蚀' },
-          { label: '氧化', value: '氧化' },
-          { label: '放射性', value: '放射性' },
+          { label: i18n.t('ehs.hazardous_material.k49'), value: 'all' },
+          { label: i18n.t('ehs.hazardous_material.k50'), value: i18n.t('ehs.hazardous_material.k51') },
+          { label: i18n.t('ehs.hazardous_material.k52'), value: i18n.t('ehs.hazardous_material.k53') },
+          { label: i18n.t('ehs.hazardous_material.k54'), value: i18n.t('ehs.hazardous_material.k55') },
+          { label: i18n.t('ehs.hazardous_material.k56'), value: i18n.t('ehs.hazardous_material.k57') },
+          { label: i18n.t('ehs.hazardous_material.k58'), value: i18n.t('ehs.hazardous_material.k59') },
+          { label: i18n.t('ehs.hazardous_material.k60'), value: i18n.t('ehs.hazardous_material.k61') },
         ],
       },
       {
         id: 'danger_level',
-        label: '危险等级',
+        label: i18n.t('ehs.hazardous_material.k62'),
         type: 'select',
         options: [
-          { label: '全部', value: 'all' },
-          { label: '一级', value: '一级' },
-          { label: '二级', value: '二级' },
-          { label: '三级', value: '三级' },
-          { label: '四级', value: '四级' },
+          { label: i18n.t('ehs.hazardous_material.k63'), value: 'all' },
+          { label: i18n.t('ehs.hazardous_material.k64'), value: i18n.t('ehs.hazardous_material.k65') },
+          { label: i18n.t('ehs.hazardous_material.k66'), value: i18n.t('ehs.hazardous_material.k67') },
+          { label: i18n.t('ehs.hazardous_material.k68'), value: i18n.t('ehs.hazardous_material.k69') },
+          { label: i18n.t('ehs.hazardous_material.k70'), value: i18n.t('ehs.hazardous_material.k71') },
         ],
       },
     ],
@@ -316,25 +317,25 @@ export const hazardousMaterialSchema: EntitySchema = {
 
   formSections: [
     {
-      title: '基本信息',
+      title: i18n.t('ehs.hazardous_material.k72'),
       fields: ['material_code', 'name', 'category', 'hazard_class'],
     },
     {
-      title: '库存信息',
+      title: i18n.t('ehs.hazardous_material.k73'),
       fields: ['cas_no', 'quantity', 'unit', 'storage_location'],
     },
     {
-      title: '安全信息',
+      title: i18n.t('ehs.hazardous_material.k74'),
       fields: ['danger_level', 'expiry_date'],
     },
     {
-      title: '描述',
+      title: i18n.t('ehs.hazardous_material.k75'),
       fields: ['description'],
     },
   ],
 
   formColCount: 2,
-  createTitle: '入库登记',
-  editTitle: '编辑危化品',
-  detailTitle: '危化品详情',
+  createTitle: i18n.t('ehs.hazardous_material.k76'),
+  editTitle: i18n.t('ehs.hazardous_material.k77'),
+  detailTitle: i18n.t('ehs.hazardous_material.k78'),
 };

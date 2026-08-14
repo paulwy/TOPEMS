@@ -1,3 +1,4 @@
+import i18n from '@/i18n';
 export type CSPDirective =
   | 'defaultSrc'
   | 'scriptSrc'
@@ -266,45 +267,45 @@ export class CSPManager {
 
     const scriptSrc = directives.scriptSrc || [];
     if (scriptSrc.includes("'unsafe-inline'")) {
-      risks.push('script-src 包含 unsafe-inline，存在 XSS 风险');
+      risks.push(i18n.t('microfrontend.csp-manager.k0'));
       score -= 15;
     }
     if (scriptSrc.includes("'unsafe-eval'")) {
-      risks.push('script-src 包含 unsafe-eval，存在代码注入风险');
+      risks.push(i18n.t('microfrontend.csp-manager.k1'));
       score -= 20;
     }
     if (scriptSrc.includes('*')) {
-      risks.push('script-src 过于宽松，允许任意来源脚本');
+      risks.push(i18n.t('microfrontend.csp-manager.k2'));
       score -= 25;
     }
     if (scriptSrc.includes("'nonce-") || scriptSrc.some((s) => /'sha\d+-/.test(s))) {
-      strengths.push('使用了 nonce 或 hash 机制，增强了脚本安全性');
+      strengths.push(i18n.t('microfrontend.csp-manager.k0'));
       score += 10;
     }
 
     const objectSrc = directives.objectSrc || [];
     if (objectSrc.includes("'none'")) {
-      strengths.push('object-src 设置为 none，阻止了插件加载');
+      strengths.push(i18n.t('microfrontend.csp-manager.k3'));
       score += 5;
     } else {
-      risks.push('object-src 未设置为 none，可能存在插件安全风险');
+      risks.push(i18n.t('microfrontend.csp-manager.k4'));
       score -= 10;
     }
 
     const defaultSrc = directives.defaultSrc || [];
     if (defaultSrc.includes("'self'") && !defaultSrc.includes('*')) {
-      strengths.push('default-src 限制为同源，基础安全策略良好');
+      strengths.push(i18n.t('microfrontend.csp-manager.k5'));
       score += 5;
     }
 
     const frameSrc = directives.frameSrc || [];
     if (frameSrc.includes("'none'")) {
-      strengths.push('frame-src 设置为 none，阻止了 iframe 嵌入');
+      strengths.push(i18n.t('microfrontend.csp-manager.k6'));
       score += 5;
     }
 
     if (this.currentPolicy.reportOnly) {
-      strengths.push('当前为报告模式，可安全收集违规信息');
+      strengths.push(i18n.t('microfrontend.csp-manager.k1'));
     }
 
     return {
@@ -319,23 +320,23 @@ export class CSPManager {
     const recommendations: string[] = [];
 
     if (risks.some((r) => r.includes('unsafe-inline'))) {
-      recommendations.push('建议移除 script-src 中的 unsafe-inline，改用 nonce 或 hash 机制');
+      recommendations.push(i18n.t('microfrontend.csp-manager.k2'));
     }
     if (risks.some((r) => r.includes('unsafe-eval'))) {
-      recommendations.push('建议移除 script-src 中的 unsafe-eval，避免动态代码执行');
+      recommendations.push(i18n.t('microfrontend.csp-manager.k3'));
     }
-    if (risks.some((r) => r.includes('过于宽松'))) {
-      recommendations.push('建议收紧 script-src 策略，仅允许可信来源');
+    if (risks.some((r) => r.includes(i18n.t('microfrontend.csp-manager.k4')))) {
+      recommendations.push(i18n.t('microfrontend.csp-manager.k5'));
     }
     if (risks.some((r) => r.includes('object-src'))) {
-      recommendations.push('建议将 object-src 设置为 none，禁用插件加载');
+      recommendations.push(i18n.t('microfrontend.csp-manager.k6'));
     }
     if (!risks.some((r) => r.includes('frame-src'))) {
-      recommendations.push('考虑配置 frame-ancestors 防止点击劫持');
+      recommendations.push(i18n.t('microfrontend.csp-manager.k7'));
     }
 
-    recommendations.push('建议定期审查 CSP 违规报告，优化策略');
-    recommendations.push('建议先使用 report-only 模式测试策略，再启用强制模式');
+    recommendations.push(i18n.t('microfrontend.csp-manager.csp_8'));
+    recommendations.push(i18n.t('microfrontend.csp-manager.k9'));
 
     return recommendations;
   }

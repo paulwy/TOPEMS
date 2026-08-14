@@ -28,6 +28,7 @@ import {
   ListItemText,
   Card,
 } from '@mui/material';
+import i18n from '@/i18n';
 import {
   X as XIcon,
   Shield,
@@ -108,10 +109,10 @@ const SAMPLE_BUNDLES = [
 
 const TYPE_LABELS: Record<IssueType, string> = {
   bug: 'Bug',
-  style: '样式',
-  performance: '性能',
-  security: '安全',
-  maintainability: '可维护性',
+  style: i18n.t('ai.v56-review-panel.k0'),
+  performance: i18n.t('ai.v56-review-panel.k1'),
+  security: i18n.t('ai.v56-review-panel.k2'),
+  maintainability: i18n.t('ai.v56-review-panel.k3'),
 };
 
 const SEVERITY_COLORS: Record<IssueSeverity, string> = {
@@ -121,12 +122,12 @@ const SEVERITY_COLORS: Record<IssueSeverity, string> = {
 };
 
 const CATEGORY_LABELS: Record<SecurityCategory, string> = {
-  XSS: '跨站脚本',
-  Injection: '注入',
-  CSRF: '跨站请求伪造',
-  Auth: '认证授权',
-  Encryption: '加密',
-  Exposure: '信息泄露',
+  XSS: i18n.t('ai.v56-review-panel.k4'),
+  Injection: i18n.t('ai.v56-review-panel.k5'),
+  CSRF: i18n.t('ai.v56-review-panel.k6'),
+  Auth: i18n.t('ai.v56-review-panel.k7'),
+  Encryption: i18n.t('ai.v56-review-panel.k8'),
+  Exposure: i18n.t('ai.v56-review-panel.k9'),
 };
 
 const V56ReviewPanel: React.FC<{ onClose: () => void }> = ({ onClose }) => {
@@ -217,25 +218,25 @@ const V56ReviewPanel: React.FC<{ onClose: () => void }> = ({ onClose }) => {
             <Tab
               icon={<Gauge size={16} />}
               iconPosition='start'
-              label='总览'
+              label={i18n.t('ai.v56-review-panel.k10')}
               value='overview'
             />
             <Tab
               icon={<Code size={16} />}
               iconPosition='start'
-              label={`代码审查${reviewResult ? ` (${reviewResult.issues.length})` : ''}`}
+              label={`${i18n.t('ai.code_assistant.tab.review')}${reviewResult ? ` (${reviewResult.issues.length})` : ''}`}
               value='code'
             />
             <Tab
               icon={<Shield size={16} />}
               iconPosition='start'
-              label={`安全扫描${scanResult ? ` (${scanResult.findings.length})` : ''}`}
+              label={`${i18n.t('devtools.panels.security.sublabel')}${scanResult ? ` (${scanResult.findings.length})` : ''}`}
               value='security'
             />
             <Tab
               icon={<Zap size={16} />}
               iconPosition='start'
-              label={`性能审计${auditResult ? ` (${auditResult.findings.length})` : ''}`}
+              label={`${i18n.t('ai.v56-review-panel.k2')}${auditResult ? ` (${auditResult.findings.length})` : ''}`}
               value='performance'
             />
           </Tabs>
@@ -319,13 +320,13 @@ const V56PanelHeader: React.FC<{ onClose: () => void }> = ({ onClose }) => (
           variant='h6'
           sx={{ fontWeight: 700, fontSize: 18 }}
         >
-          V56.0 AI 代码审查面板
+          {i18n.t('ai.v56-review-panel.v560ai_3')}
         </Typography>
         <Typography
           variant='caption'
           sx={{ opacity: 0.85, fontSize: 12 }}
         >
-          代码质量 · 安全扫描 · 性能审计 · 智能分析
+          {i18n.t('ai.v56-review-panel.k4')}
         </Typography>
       </Box>
     </Box>
@@ -380,7 +381,7 @@ const OverviewTab: React.FC<{
           sx={{ fontWeight: 600, display: 'flex', alignItems: 'center', gap: 1 }}
         >
           <Gauge size={20} />
-          AI 分析总览
+          {i18n.t('ai.v56-review-panel.ai_5')}
         </Typography>
         <Button
           variant='outlined'
@@ -388,34 +389,34 @@ const OverviewTab: React.FC<{
           onClick={onReRun}
           size='small'
         >
-          重新分析
+          {i18n.t('ai.v56-review-panel.k6')}
         </Button>
       </Stack>
 
       <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 2, mb: 3 }}>
         <ScoreCard
-          title='代码质量'
+          title={i18n.t('ai.v56-review-panel.k11')}
           score={reviewResult.score}
           color={getScoreColor(reviewResult.score)}
           icon={<Code size={24} />}
-          subtitle={`${reviewResult.issues.length} 个问题`}
+          subtitle={`${reviewResult.issues.length} ${i18n.t('ai.v56-review-panel.k7')}`}
         />
         <ScoreCard
-          title='安全评分'
+          title={i18n.t('ai.v56-review-panel.k12')}
           score={scanResult.risk_score}
           color={getScoreColor(scanResult.risk_score)}
           icon={<Shield size={24} />}
-          subtitle={`${scanResult.findings.length} 个发现`}
+          subtitle={`${scanResult.findings.length} ${i18n.t('ai.v56-review-panel.k8')}`}
         />
         <ScoreCard
-          title='性能评分'
+          title={i18n.t('ai.v56-review-panel.k13')}
           score={auditResult.lighthouse_scores.performance}
           color={getScoreColor(auditResult.lighthouse_scores.performance)}
           icon={<Zap size={24} />}
-          subtitle={`${auditResult.findings.length} 个建议`}
+          subtitle={`${auditResult.findings.length} ${i18n.t('ai.v56-review-panel.k9')}`}
         />
         <ScoreCard
-          title='综合评级'
+          title={i18n.t('ai.v56-review-panel.k14')}
           score={Math.round(
             (reviewResult.score +
               scanResult.risk_score +
@@ -432,7 +433,7 @@ const OverviewTab: React.FC<{
           )}
           icon={<TrendingUp size={24} />}
           subtitle={
-            reviewResult.passed && scanResult.passed && auditResult.optimized ? '通过' : '需改进'
+            reviewResult.passed && scanResult.passed && auditResult.optimized ? i18n.t('ai.v56-review-panel.k16') : i18n.t('ai.v56-review-panel.k15')
           }
         />
       </Box>
@@ -444,7 +445,7 @@ const OverviewTab: React.FC<{
             sx={{ fontWeight: 600, mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}
           >
             <FileText size={16} />
-            代码审查摘要
+            {i18n.t('ai.v56-review-panel.k10')}
           </Typography>
           <Typography
             variant='body2'
@@ -483,7 +484,7 @@ const OverviewTab: React.FC<{
             sx={{ fontWeight: 600, mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}
           >
             <Lock size={16} />
-            安全扫描摘要
+            {i18n.t('ai.v56-review-panel.k11')}
           </Typography>
           <Typography
             variant='body2'
@@ -522,7 +523,7 @@ const OverviewTab: React.FC<{
             sx={{ fontWeight: 600, mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}
           >
             <Activity size={16} />
-            Web Vitals 指标
+            {i18n.t('ai.v56-review-panel.webvitals_12')}
           </Typography>
           <MetricsList metrics={auditResult.metrics} />
         </Card>
@@ -533,24 +534,24 @@ const OverviewTab: React.FC<{
             sx={{ fontWeight: 600, mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}
           >
             <Target size={16} />
-            历史趋势
+            {i18n.t('ai.v56-review-panel.k13')}
           </Typography>
           {history.length === 0 ? (
             <Alert
               severity='info'
               sx={{ fontSize: 12 }}
             >
-              暂无历史记录
+              {i18n.t('ai.v56-review-panel.k14')}
             </Alert>
           ) : (
             <TableContainer>
               <Table size='small'>
                 <TableHead>
                   <TableRow>
-                    <TableCell sx={{ fontSize: 11, fontWeight: 600 }}>时间</TableCell>
-                    <TableCell sx={{ fontSize: 11, fontWeight: 600 }}>质量</TableCell>
-                    <TableCell sx={{ fontSize: 11, fontWeight: 600 }}>安全</TableCell>
-                    <TableCell sx={{ fontSize: 11, fontWeight: 600 }}>状态</TableCell>
+                    <TableCell sx={{ fontSize: 11, fontWeight: 600 }}>{i18n.t('ai.v56-review-panel.k17')}</TableCell>
+                    <TableCell sx={{ fontSize: 11, fontWeight: 600 }}>{i18n.t('ai.v56-review-panel.k18')}</TableCell>
+                    <TableCell sx={{ fontSize: 11, fontWeight: 600 }}>{i18n.t('ai.v56-review-panel.k19')}</TableCell>
+                    <TableCell sx={{ fontSize: 11, fontWeight: 600 }}>{i18n.t('ai.v56-review-panel.k20')}</TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
@@ -564,7 +565,7 @@ const OverviewTab: React.FC<{
                       <TableCell>
                         {h.passed ? (
                           <Chip
-                            label='通过'
+                            label={i18n.t('ai.v56-review-panel.k21')}
                             size='small'
                             sx={{
                               fontSize: 10,
@@ -575,7 +576,7 @@ const OverviewTab: React.FC<{
                           />
                         ) : (
                           <Chip
-                            label='未通过'
+                            label={i18n.t('ai.v56-review-panel.k22')}
                             size='small'
                             sx={{
                               fontSize: 10,
@@ -642,22 +643,22 @@ const ScoreCard: React.FC<{
 const MetricsList: React.FC<{ metrics: AuditMetrics }> = ({ metrics }) => {
   const items = [
     {
-      label: 'FCP (首次内容绘制)',
+      label: i18n.t('ai.v56-review-panel.fcp_15'),
       value: `${metrics.fcp}ms`,
       color: metrics.fcp < 1800 ? designTokens.colors.success.dark : designTokens.colors.warning.main,
     },
     {
-      label: 'LCP (最大内容绘制)',
+      label: i18n.t('ai.v56-review-panel.lcp_16'),
       value: `${metrics.lcp}ms`,
       color: metrics.lcp < 2500 ? designTokens.colors.success.dark : designTokens.colors.warning.main,
     },
     {
-      label: 'TTI (可交互时间)',
+      label: i18n.t('ai.v56-review-panel.tti_17'),
       value: `${metrics.tti}ms`,
       color: metrics.tti < 3500 ? designTokens.colors.success.dark : designTokens.colors.warning.main,
     },
     {
-      label: 'CLS (累计布局偏移)',
+      label: i18n.t('ai.v56-review-panel.cls_18'),
       value: metrics.cls.toFixed(2),
       color: metrics.cls < 0.1 ? designTokens.colors.success.dark : designTokens.colors.warning.main,
     },
@@ -718,10 +719,10 @@ const CodeReviewTab: React.FC<{ result: ReviewResult }> = ({ result }) => {
             sx={{ fontWeight: 600, display: 'flex', alignItems: 'center', gap: 1 }}
           >
             <Code size={20} />
-            代码审查
+            {i18n.t('ai.v56-review-panel.k19')}
           </Typography>
           <Chip
-            label={`${result.issues.length} 个问题`}
+            label={`${result.issues.length} ${i18n.t('ai.v56-review-panel.k20')}`}
             size='small'
             sx={{
               bgcolor: result.passed ? 'colors.success.100' : 'colors.error.50',
@@ -730,7 +731,7 @@ const CodeReviewTab: React.FC<{ result: ReviewResult }> = ({ result }) => {
             }}
           />
           <Chip
-            label={`评分: ${result.score}`}
+            label={`${i18n.t('ai.v56-review-panel.k21')} ${result.score}`}
             size='small'
             sx={{ bgcolor: 'primary.100', color: 'primary.800', fontWeight: 600 }}
           />
@@ -755,21 +756,21 @@ const CodeReviewTab: React.FC<{ result: ReviewResult }> = ({ result }) => {
           size='small'
           sx={{ minWidth: 120 }}
         >
-          <InputLabel>严重程度</InputLabel>
+          <InputLabel>{i18n.t('ai.v56-review-panel.k23')}</InputLabel>
           <Select
             value={filter}
-            label='严重程度'
+            label={i18n.t('ai.v56-review-panel.k24')}
             onChange={(e) => setFilter(e.target.value as IssueSeverity | 'all')}
           >
-            <MenuItem value='all'>全部</MenuItem>
-            <MenuItem value='error'>错误</MenuItem>
-            <MenuItem value='warning'>警告</MenuItem>
-            <MenuItem value='info'>建议</MenuItem>
+            <MenuItem value='all'>{i18n.t('ai.v56-review-panel.k25')}</MenuItem>
+            <MenuItem value='error'>{i18n.t('ai.v56-review-panel.k26')}</MenuItem>
+            <MenuItem value='warning'>{i18n.t('ai.v56-review-panel.k27')}</MenuItem>
+            <MenuItem value='info'>{i18n.t('ai.v56-review-panel.k28')}</MenuItem>
           </Select>
         </FormControl>
         <TextField
           size='small'
-          placeholder='搜索问题...'
+          placeholder={i18n.t('ai.v56-review-panel.k22')}
           value={searchText}
           onChange={(e) => setSearchText(e.target.value)}
           sx={{ flex: 1 }}
@@ -777,18 +778,18 @@ const CodeReviewTab: React.FC<{ result: ReviewResult }> = ({ result }) => {
       </Stack>
 
       {filtered.length === 0 ? (
-        <Alert severity='info'>暂无匹配的问题</Alert>
+        <Alert severity='info'>{i18n.t('ai.v56-review-panel.k29')}</Alert>
       ) : (
         <Card variant='outlined' sx={{ p: 2 }}>
           <TableContainer>
             <Table size='small'>
               <TableHead>
                 <TableRow>
-                  <TableCell sx={{ fontWeight: 600, fontSize: 12 }}>严重程度</TableCell>
-                  <TableCell sx={{ fontWeight: 600, fontSize: 12 }}>类型</TableCell>
+                  <TableCell sx={{ fontWeight: 600, fontSize: 12 }}>{i18n.t('ai.v56-review-panel.k30')}</TableCell>
+                  <TableCell sx={{ fontWeight: 600, fontSize: 12 }}>{i18n.t('ai.v56-review-panel.k31')}</TableCell>
                   <TableCell sx={{ fontWeight: 600, fontSize: 12 }}>文件:行号</TableCell>
-                  <TableCell sx={{ fontWeight: 600, fontSize: 12 }}>描述</TableCell>
-                  <TableCell sx={{ fontWeight: 600, fontSize: 12 }}>建议</TableCell>
+                  <TableCell sx={{ fontWeight: 600, fontSize: 12 }}>{i18n.t('ai.v56-review-panel.k32')}</TableCell>
+                  <TableCell sx={{ fontWeight: 600, fontSize: 12 }}>{i18n.t('ai.v56-review-panel.k33')}</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
@@ -864,10 +865,10 @@ const SecurityTab: React.FC<{ result: ScanResult }> = ({ result }) => {
             sx={{ fontWeight: 600, display: 'flex', alignItems: 'center', gap: 1 }}
           >
             <Shield size={20} />
-            安全扫描
+            {i18n.t('ai.v56-review-panel.k23')}
           </Typography>
           <Chip
-            label={`${result.findings.length} 个发现`}
+            label={`${result.findings.length} ${i18n.t('ai.v56-review-panel.k24')}`}
             size='small'
             sx={{
               bgcolor: result.passed ? 'colors.success.100' : 'colors.error.50',
@@ -876,12 +877,12 @@ const SecurityTab: React.FC<{ result: ScanResult }> = ({ result }) => {
             }}
           />
           <Chip
-            label={`高危: ${result.high_risk_count}`}
+            label={`${i18n.t('ai.v56-review-panel.k25')} ${result.high_risk_count}`}
             size='small'
             sx={{ bgcolor: 'error.50', color: 'error.800', fontWeight: 600 }}
           />
           <Chip
-            label={`风险评分: ${result.risk_score}`}
+            label={`${i18n.t('ai.v56-review-panel.k26')} ${result.risk_score}`}
             size='small'
             sx={{ bgcolor: 'primary.100', color: 'primary.800', fontWeight: 600 }}
           />
@@ -889,18 +890,18 @@ const SecurityTab: React.FC<{ result: ScanResult }> = ({ result }) => {
       </Stack>
 
       {result.findings.length === 0 ? (
-        <Alert severity='success'>未发现安全问题</Alert>
+        <Alert severity='success'>{i18n.t('ai.v56-review-panel.k34')}</Alert>
       ) : (
         <Card variant='outlined' sx={{ p: 2 }}>
           <TableContainer>
             <Table size='small'>
               <TableHead>
                 <TableRow>
-                  <TableCell sx={{ fontWeight: 600, fontSize: 12 }}>严重程度</TableCell>
-                  <TableCell sx={{ fontWeight: 600, fontSize: 12 }}>类别</TableCell>
-                  <TableCell sx={{ fontWeight: 600, fontSize: 12 }}>位置</TableCell>
-                  <TableCell sx={{ fontWeight: 600, fontSize: 12 }}>描述</TableCell>
-                  <TableCell sx={{ fontWeight: 600, fontSize: 12 }}>修复建议</TableCell>
+                  <TableCell sx={{ fontWeight: 600, fontSize: 12 }}>{i18n.t('ai.v56-review-panel.k35')}</TableCell>
+                  <TableCell sx={{ fontWeight: 600, fontSize: 12 }}>{i18n.t('ai.v56-review-panel.k36')}</TableCell>
+                  <TableCell sx={{ fontWeight: 600, fontSize: 12 }}>{i18n.t('ai.v56-review-panel.k37')}</TableCell>
+                  <TableCell sx={{ fontWeight: 600, fontSize: 12 }}>{i18n.t('ai.v56-review-panel.k38')}</TableCell>
+                  <TableCell sx={{ fontWeight: 600, fontSize: 12 }}>{i18n.t('ai.v56-review-panel.k39')}</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
@@ -969,10 +970,10 @@ const PerformanceTab: React.FC<{ result: AuditResult }> = ({ result }) => {
             sx={{ fontWeight: 600, display: 'flex', alignItems: 'center', gap: 1 }}
           >
             <Zap size={20} />
-            性能审计
+            {i18n.t('ai.v56-review-panel.k27')}
           </Typography>
           <Chip
-            label={result.optimized ? '已优化' : '待优化'}
+            label={result.optimized ? i18n.t('ai.v56-review-panel.k41') : i18n.t('ai.v56-review-panel.k40')}
             size='small'
             sx={{
               bgcolor: result.optimized ? 'colors.success.100' : 'colors.error.50',
@@ -990,7 +991,7 @@ const PerformanceTab: React.FC<{ result: AuditResult }> = ({ result }) => {
             sx={{ fontWeight: 600, mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}
           >
             <BarChart3 size={16} />
-            Lighthouse 评分
+            {i18n.t('ai.v56-review-panel.lighthouse_28')}
           </Typography>
           <Stack
             direction='column'
@@ -998,9 +999,9 @@ const PerformanceTab: React.FC<{ result: AuditResult }> = ({ result }) => {
           >
             {Object.entries(result.lighthouse_scores).map(([key, value]) => {
               const labelMap: Record<string, string> = {
-                performance: '性能',
-                accessibility: '无障碍',
-                best_practices: '最佳实践',
+                performance: i18n.t('ai.v56-review-panel.k42'),
+                accessibility: i18n.t('ai.v56-review-panel.k43'),
+                best_practices: i18n.t('ai.v56-review-panel.k44'),
                 seo: 'SEO',
               };
               return (
@@ -1048,10 +1049,10 @@ const PerformanceTab: React.FC<{ result: AuditResult }> = ({ result }) => {
           sx={{ fontWeight: 600, mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}
         >
           <Lightbulb size={16} />
-          性能优化建议
+          {i18n.t('ai.v56-review-panel.k29')}
         </Typography>
         {result.findings.length === 0 ? (
-          <Alert severity='success'>未发现性能问题，表现优秀！</Alert>
+          <Alert severity='success'>{i18n.t('ai.v56-review-panel.k45')}</Alert>
         ) : (
           <List dense>
             {result.findings.map((finding) => (

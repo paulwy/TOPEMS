@@ -3,15 +3,16 @@
  */
 
 import type { EntitySchema } from '@/schema';
+import i18n from '@/i18n';
 
 const statusColorMap: Record<
   string,
   'default' | 'primary' | 'success' | 'warning' | 'error' | 'info'
 > = {
-  正常: 'success',
-  已打印: 'info',
-  已扫描: 'primary',
-  停用: 'default',
+  [i18n.t('schemas.barcode.k0')]: 'success',
+  [i18n.t('schemas.barcode.k1')]: 'info',
+  [i18n.t('schemas.barcode.k2')]: 'primary',
+  [i18n.t('schemas.barcode.k3')]: 'default',
   normal: 'success',
   printed: 'info',
   scanned: 'primary',
@@ -19,20 +20,20 @@ const statusColorMap: Record<
 };
 
 const statusLabelMap: Record<string, string> = {
-  正常: '正常',
-  已打印: '已打印',
-  已扫描: '已扫描',
-  停用: '停用',
-  normal: '正常',
-  printed: '已打印',
-  scanned: '已扫描',
-  disabled: '停用',
+  [i18n.t('schemas.barcode.k4')]: i18n.t('lims.barcode.k0'),
+  [i18n.t('schemas.barcode.k5')]: i18n.t('lims.barcode.k1'),
+  [i18n.t('schemas.barcode.k6')]: i18n.t('lims.barcode.k2'),
+  [i18n.t('schemas.barcode.k7')]: i18n.t('lims.barcode.k3'),
+  normal: i18n.t('lims.barcode.k4'),
+  printed: i18n.t('lims.barcode.k5'),
+  scanned: i18n.t('lims.barcode.k6'),
+  disabled: i18n.t('lims.barcode.k7'),
 };
 
 export const barcodeSchema: EntitySchema = {
   entity: 'limsBarcode',
-  title: '条码管理',
-  description: '管理条码生成、打印、扫描及全流程追踪',
+  title: i18n.t('lims.barcode.k8'),
+  description: i18n.t('lims.barcode.k9'),
 
   api: {
     module: 'lims',
@@ -42,20 +43,20 @@ export const barcodeSchema: EntitySchema = {
   fields: [
     {
       name: 'barcode',
-      label: '条码',
+      label: i18n.t('lims.barcode.k10'),
       type: 'text',
       sortable: true,
       listWidth: 160,
     },
     {
       name: 'barcode_type',
-      label: '条码类型',
+      label: i18n.t('lims.barcode.k11'),
       type: 'text',
       listWidth: 120,
     },
     {
       name: 'format',
-      label: '格式',
+      label: i18n.t('lims.barcode.k12'),
       type: 'select',
       defaultValue: 'CODE128',
       options: {
@@ -66,43 +67,43 @@ export const barcodeSchema: EntitySchema = {
           { value: 'EAN13', label: 'EAN13' },
           { value: 'EAN8', label: 'EAN8' },
           { value: 'UPC', label: 'UPC' },
-          { value: 'QR_CODE', label: '二维码' },
+          { value: 'QR_CODE', label: i18n.t('lims.barcode.k13') },
         ],
       },
       listWidth: 100,
     },
     {
       name: 'sample_name',
-      label: '关联样品',
+      label: i18n.t('lims.barcode.k14'),
       type: 'text',
       listWidth: 140,
       renderCell: (row: Record<string, unknown>) => String(row.sample_name || '-'),
     },
     {
       name: 'status',
-      label: '状态',
+      label: i18n.t('lims.barcode.k15'),
       type: 'select',
-      defaultValue: '正常',
+      defaultValue: i18n.t('lims.barcode.k16'),
       options: {
         type: 'static',
         options: [
-          { value: '正常', label: '正常' },
-          { value: '已打印', label: '已打印' },
-          { value: '已扫描', label: '已扫描' },
-          { value: '停用', label: '停用' },
+          { value: i18n.t('lims.barcode.k17'), label: i18n.t('lims.barcode.k18') },
+          { value: i18n.t('lims.barcode.k19'), label: i18n.t('lims.barcode.k20') },
+          { value: i18n.t('lims.barcode.k21'), label: i18n.t('lims.barcode.k22') },
+          { value: i18n.t('lims.barcode.k23'), label: i18n.t('lims.barcode.k24') },
         ],
       },
       listWidth: 100,
     },
     {
       name: 'content',
-      label: '条码内容',
+      label: i18n.t('lims.barcode.k25'),
       type: 'text',
       showInList: false,
     },
     {
       name: 'generated_at',
-      label: '生成时间',
+      label: i18n.t('lims.barcode.k26'),
       type: 'date',
       listWidth: 130,
       renderCell: (row: Record<string, unknown>) => {
@@ -113,7 +114,7 @@ export const barcodeSchema: EntitySchema = {
     },
     {
       name: 'printed_at',
-      label: '打印时间',
+      label: i18n.t('lims.barcode.k27'),
       type: 'date',
       listWidth: 130,
       renderCell: (row: Record<string, unknown>) => {
@@ -124,38 +125,38 @@ export const barcodeSchema: EntitySchema = {
     },
     {
       name: 'scanned_at',
-      label: '扫描时间',
+      label: i18n.t('lims.barcode.k28'),
       type: 'date',
       showInList: false,
     },
     {
       name: 'created_by',
-      label: '创建人',
+      label: i18n.t('lims.barcode.k29'),
       type: 'text',
       showInList: false,
     },
     {
       name: 'created_at',
-      label: '创建时间',
+      label: i18n.t('lims.barcode.k30'),
       type: 'date',
       showInList: false,
     },
     {
       name: 'quantity',
-      label: '数量',
+      label: i18n.t('lims.barcode.k31'),
       type: 'number',
       defaultValue: 1,
       showInList: false,
     },
     {
       name: 'prefix',
-      label: '前缀',
+      label: i18n.t('lims.barcode.k32'),
       type: 'text',
       showInList: false,
     },
     {
       name: 'sample_id',
-      label: '关联样品ID',
+      label: i18n.t('lims.barcode.id_33'),
       type: 'text',
       showInList: false,
     },
@@ -181,14 +182,14 @@ export const barcodeSchema: EntitySchema = {
     filters: [
       {
         id: 'status',
-        label: '状态',
+        label: i18n.t('lims.barcode.k34'),
         type: 'select',
         options: [
-          { label: '全部状态', value: 'all' },
-          { label: '正常', value: '正常' },
-          { label: '已打印', value: '已打印' },
-          { label: '已扫描', value: '已扫描' },
-          { label: '停用', value: '停用' },
+          { label: i18n.t('lims.barcode.k35'), value: 'all' },
+          { label: i18n.t('lims.barcode.k36'), value: i18n.t('lims.barcode.k37') },
+          { label: i18n.t('lims.barcode.k38'), value: i18n.t('lims.barcode.k39') },
+          { label: i18n.t('lims.barcode.k40'), value: i18n.t('lims.barcode.k41') },
+          { label: i18n.t('lims.barcode.k42'), value: i18n.t('lims.barcode.k43') },
         ],
       },
     ],
@@ -198,17 +199,17 @@ export const barcodeSchema: EntitySchema = {
 
   formSections: [
     {
-      title: '条码信息',
+      title: i18n.t('lims.barcode.k44'),
       fields: ['barcode_type', 'format', 'quantity', 'prefix'],
     },
     {
-      title: '关联信息',
+      title: i18n.t('lims.barcode.k45'),
       fields: ['sample_id', 'content'],
     },
   ],
 
   formColCount: 2,
-  createTitle: '生成条码',
-  editTitle: '编辑条码',
-  detailTitle: '条码详情',
+  createTitle: i18n.t('lims.barcode.k46'),
+  editTitle: i18n.t('lims.barcode.k47'),
+  detailTitle: i18n.t('lims.barcode.k48'),
 };

@@ -13,6 +13,7 @@ import {
   useMediaQuery,
   useTheme,
 } from '@mui/material';
+import i18n from '@/i18n';
 import { Home, Bell, ChevronRight, X, Menu, Lightbulb, HelpCircle, Search } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { usePermission } from '../../hooks/usePermission';
@@ -201,7 +202,7 @@ export const MobileNav: React.FC<MobileNavProps> = ({ open, onClose, onOpen }) =
           display: { xs: 'flex', lg: 'none' },
           ml: 1,
         }}
-        aria-label='菜单'
+        aria-label={i18n.t('components.mobile_nav.k0')}
       >
         <Menu style={{ width: 24, height: 24 }} />
       </IconButton>
@@ -259,7 +260,7 @@ export const MobileNav: React.FC<MobileNavProps> = ({ open, onClose, onOpen }) =
           <IconButton
             onClick={onClose}
             sx={{ color: 'common.white' }}
-            aria-label='关闭'
+            aria-label={i18n.t('components.mobile_nav.k1')}
           >
             <X style={{ width: 20, height: 20 }} />
           </IconButton>
@@ -280,7 +281,7 @@ export const MobileNav: React.FC<MobileNavProps> = ({ open, onClose, onOpen }) =
             <Search style={{ width: 16, height: 16, color: 'text.secondary' }} />
             <input
               type='text'
-              placeholder='搜索菜单...'
+              placeholder={i18n.t('components.mobile_nav.k0')}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               style={{
@@ -297,7 +298,7 @@ export const MobileNav: React.FC<MobileNavProps> = ({ open, onClose, onOpen }) =
                 size='small'
                 onClick={() => setSearchQuery('')}
                 sx={{ p: 0, color: 'text.secondary' }}
-                aria-label='关闭'
+                aria-label={i18n.t('components.mobile_nav.k2')}
               >
                 <X style={{ width: 14, height: 14 }} />
               </IconButton>
@@ -364,7 +365,7 @@ export const MobileNav: React.FC<MobileNavProps> = ({ open, onClose, onOpen }) =
                     flex: 1,
                   }}
                 >
-                  首页
+                  {i18n.t('components.mobile_nav.k1')}
                 </Typography>
               </ListItemButton>
             </ListItem>
@@ -388,7 +389,7 @@ export const MobileNav: React.FC<MobileNavProps> = ({ open, onClose, onOpen }) =
                 navigate(NOTIFICATION_PATHS.list);
                 onClose();
               }}
-              aria-label='通知'
+              aria-label={i18n.t('components.mobile_nav.k3')}
             >
               <Bell style={{ width: 20, height: 20 }} />
             </IconButton>
@@ -403,7 +404,7 @@ export const MobileNav: React.FC<MobileNavProps> = ({ open, onClose, onOpen }) =
                 navigate(AI_PATHS.root);
                 onClose();
               }}
-              aria-label='提示'
+              aria-label={i18n.t('components.mobile_nav.k4')}
             >
               <Lightbulb style={{ width: 20, height: 20 }} />
             </IconButton>
@@ -413,7 +414,7 @@ export const MobileNav: React.FC<MobileNavProps> = ({ open, onClose, onOpen }) =
                 navigate(DASHBOARD_PATHS.help);
                 onClose();
               }}
-              aria-label='帮助'
+              aria-label={i18n.t('components.mobile_nav.k5')}
             >
               <HelpCircle style={{ width: 20, height: 20 }} />
             </IconButton>

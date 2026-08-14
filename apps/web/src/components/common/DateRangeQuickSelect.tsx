@@ -3,6 +3,8 @@ import { Box, Button, Typography, Popover, Divider } from '@mui/material';
 import type { SxProps, Theme } from '@mui/material/styles';
 import { Calendar, ChevronDown, Clock } from 'lucide-react';
 import { formatDate } from '@/utils/format';
+import { designTokens } from '@topems/tokens';
+import i18n from '@/i18n';
 
 export interface DateRange {
   startDate: string;
@@ -28,7 +30,7 @@ const getDateRange = (type: string): DateRange => {
       return {
         startDate: formatDate(now.toISOString(), 'YYYY-MM-DD'),
         endDate: formatDate(now.toISOString(), 'YYYY-MM-DD'),
-        label: '今天',
+        label: i18n.t('shared.date_range_quick_select.k0'),
       };
     case 'yesterday':
       start.setDate(now.getDate() - 1);
@@ -36,7 +38,7 @@ const getDateRange = (type: string): DateRange => {
       return {
         startDate: formatDate(start.toISOString(), 'YYYY-MM-DD'),
         endDate: formatDate(end.toISOString(), 'YYYY-MM-DD'),
-        label: '昨天',
+        label: i18n.t('shared.date_range_quick_select.k1'),
       };
     case 'week':
       const weekDay = now.getDay();
@@ -44,7 +46,7 @@ const getDateRange = (type: string): DateRange => {
       return {
         startDate: formatDate(start.toISOString(), 'YYYY-MM-DD'),
         endDate: formatDate(now.toISOString(), 'YYYY-MM-DD'),
-        label: '本周',
+        label: i18n.t('shared.date_range_quick_select.k2'),
       };
     case 'lastWeek':
       const lastWeekDay = now.getDay();
@@ -53,14 +55,14 @@ const getDateRange = (type: string): DateRange => {
       return {
         startDate: formatDate(start.toISOString(), 'YYYY-MM-DD'),
         endDate: formatDate(end.toISOString(), 'YYYY-MM-DD'),
-        label: '上周',
+        label: i18n.t('shared.date_range_quick_select.k3'),
       };
     case 'month':
       start.setDate(1);
       return {
         startDate: formatDate(start.toISOString(), 'YYYY-MM-DD'),
         endDate: formatDate(now.toISOString(), 'YYYY-MM-DD'),
-        label: '本月',
+        label: i18n.t('shared.date_range_quick_select.k4'),
       };
     case 'lastMonth':
       start.setMonth(now.getMonth() - 1);
@@ -70,7 +72,7 @@ const getDateRange = (type: string): DateRange => {
       return {
         startDate: formatDate(start.toISOString(), 'YYYY-MM-DD'),
         endDate: formatDate(end.toISOString(), 'YYYY-MM-DD'),
-        label: '上月',
+        label: i18n.t('shared.date_range_quick_select.k5'),
       };
     case 'quarter':
       const quarter = Math.floor(now.getMonth() / 3);
@@ -79,7 +81,7 @@ const getDateRange = (type: string): DateRange => {
       return {
         startDate: formatDate(start.toISOString(), 'YYYY-MM-DD'),
         endDate: formatDate(now.toISOString(), 'YYYY-MM-DD'),
-        label: '本季度',
+        label: i18n.t('shared.date_range_quick_select.k6'),
       };
     case 'year':
       start.setMonth(0);
@@ -87,60 +89,60 @@ const getDateRange = (type: string): DateRange => {
       return {
         startDate: formatDate(start.toISOString(), 'YYYY-MM-DD'),
         endDate: formatDate(now.toISOString(), 'YYYY-MM-DD'),
-        label: '本年',
+        label: i18n.t('shared.date_range_quick_select.k7'),
       };
     case 'last7Days':
       start.setDate(now.getDate() - 6);
       return {
         startDate: formatDate(start.toISOString(), 'YYYY-MM-DD'),
         endDate: formatDate(now.toISOString(), 'YYYY-MM-DD'),
-        label: '近7天',
+        label: i18n.t('shared.date_range_quick_select.7_8'),
       };
     case 'last30Days':
       start.setDate(now.getDate() - 29);
       return {
         startDate: formatDate(start.toISOString(), 'YYYY-MM-DD'),
         endDate: formatDate(now.toISOString(), 'YYYY-MM-DD'),
-        label: '近30天',
+        label: i18n.t('shared.date_range_quick_select.30_9'),
       };
     case 'last90Days':
       start.setDate(now.getDate() - 89);
       return {
         startDate: formatDate(start.toISOString(), 'YYYY-MM-DD'),
         endDate: formatDate(now.toISOString(), 'YYYY-MM-DD'),
-        label: '近90天',
+        label: i18n.t('shared.date_range_quick_select.90_10'),
       };
     default:
       return {
         startDate: '',
         endDate: '',
-        label: '自定义',
+        label: i18n.t('shared.date_range_quick_select.k11'),
       };
   }
 };
 
 const quickRanges = [
-  { type: 'today', label: '今天', icon: Calendar },
-  { type: 'yesterday', label: '昨天', icon: Calendar },
-  { type: 'week', label: '本周', icon: Calendar },
-  { type: 'lastWeek', label: '上周', icon: Calendar },
-  { type: 'month', label: '本月', icon: Calendar },
-  { type: 'lastMonth', label: '上月', icon: Calendar },
-  { type: 'quarter', label: '本季度', icon: Calendar },
-  { type: 'year', label: '本年', icon: Calendar },
+  { type: 'today', label: i18n.t('shared.date_range_quick_select.k12'), icon: Calendar },
+  { type: 'yesterday', label: i18n.t('shared.date_range_quick_select.k13'), icon: Calendar },
+  { type: 'week', label: i18n.t('shared.date_range_quick_select.k14'), icon: Calendar },
+  { type: 'lastWeek', label: i18n.t('shared.date_range_quick_select.k15'), icon: Calendar },
+  { type: 'month', label: i18n.t('shared.date_range_quick_select.k16'), icon: Calendar },
+  { type: 'lastMonth', label: i18n.t('shared.date_range_quick_select.k17'), icon: Calendar },
+  { type: 'quarter', label: i18n.t('shared.date_range_quick_select.k18'), icon: Calendar },
+  { type: 'year', label: i18n.t('shared.date_range_quick_select.k19'), icon: Calendar },
 ];
 
 const recentRanges = [
-  { type: 'last7Days', label: '近7天', icon: Clock },
-  { type: 'last30Days', label: '近30天', icon: Clock },
-  { type: 'last90Days', label: '近90天', icon: Clock },
+  { type: 'last7Days', label: i18n.t('shared.date_range_quick_select.7_20'), icon: Clock },
+  { type: 'last30Days', label: i18n.t('shared.date_range_quick_select.30_21'), icon: Clock },
+  { type: 'last90Days', label: i18n.t('shared.date_range_quick_select.90_22'), icon: Clock },
 ];
 
 export const DateRangeQuickSelect: React.FC<DateRangeQuickSelectProps> = ({
   value,
   onChange,
   label,
-  placeholder = '选择日期范围',
+  placeholder = i18n.t('shared.date_range_quick_select.k23'),
   sx,
 }) => {
   const [anchorEl, setAnchorEl] = useState<HTMLButtonElement | null>(null);
@@ -178,7 +180,7 @@ export const DateRangeQuickSelect: React.FC<DateRangeQuickSelectProps> = ({
         sx={{
           justifyContent: 'flex-start',
           textTransform: 'none',
-          padding: '8px 12px',
+          padding: `${designTokens.spacing.sm} 12px`,
           minHeight: 36,
         }}
       >
@@ -229,7 +231,7 @@ export const DateRangeQuickSelect: React.FC<DateRangeQuickSelectProps> = ({
             variant='caption'
             sx={{ px: 2, color: 'text.secondary' }}
           >
-            常用
+            {i18n.t('components.date_range_quick_select.k0')}
           </Typography>
           {quickRanges.map((range) => (
             <Button
@@ -258,7 +260,7 @@ export const DateRangeQuickSelect: React.FC<DateRangeQuickSelectProps> = ({
             variant='caption'
             sx={{ px: 2, color: 'text.secondary' }}
           >
-            最近
+            {i18n.t('components.date_range_quick_select.k1')}
           </Typography>
           {recentRanges.map((range) => (
             <Button

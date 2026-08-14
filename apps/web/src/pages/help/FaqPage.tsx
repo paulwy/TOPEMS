@@ -94,7 +94,7 @@ export const FaqPage: React.FC = () => {
 
   React.useEffect(() => {
     if (faqsQuery.isError) {
-      apiLogger.error('获取FAQ列表失败:', faqsQuery.error);
+      apiLogger.error(i18n.t('pages.faq_page.faq_0'), faqsQuery.error);
       addNotification({
         type: 'error',
         title: i18n.t('help.faq_page.k6'),
@@ -105,7 +105,7 @@ export const FaqPage: React.FC = () => {
 
   React.useEffect(() => {
     if (categoriesQuery.isError) {
-      apiLogger.error('获取FAQ分类失败:', categoriesQuery.error);
+      apiLogger.error(i18n.t('pages.faq_page.faq_1'), categoriesQuery.error);
     }
   }, [categoriesQuery.isError, categoriesQuery.error, apiLogger]);
 
@@ -133,7 +133,7 @@ export const FaqPage: React.FC = () => {
             size={16}
             sx={{ mr: 1 }}
           />
-          返回帮助中心
+          {i18n.t('pages.faq_page.k0')}
         </Button>
       </Box>
 
@@ -173,7 +173,7 @@ export const FaqPage: React.FC = () => {
         >
           <Chip
             key='all'
-            label={`📋 全部`}
+            label={i18n.t('pages.faq_page.k1')}
             onClick={() => setSelectedCategory('all')}
             color={selectedCategory === 'all' ? 'primary' : 'default'}
             sx={{ cursor: 'pointer', fontWeight: selectedCategory === 'all' ? 600 : 400 }}

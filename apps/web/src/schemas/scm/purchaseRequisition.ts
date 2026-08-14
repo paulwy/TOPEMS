@@ -1,47 +1,48 @@
 import type { EntitySchema } from '@/schema';
 import type { SchemaExtensions } from '@/schema/schemaExtensions';
 import { columnsFromFields } from '@/schema/schemaExtensions';
+import i18n from '@/i18n';
 
 const itemFields = [
   {
     name: 'line_no',
-    label: '行号',
+    label: i18n.t('scm.purchase_requisition.k0'),
     type: 'number' as const,
     listWidth: 80,
   },
   {
     name: 'material_code',
-    label: '物料编码',
+    label: i18n.t('scm.purchase_requisition.k1'),
     type: 'text' as const,
     listWidth: 140,
   },
   {
     name: 'material_name',
-    label: '物料名称',
+    label: i18n.t('scm.purchase_requisition.k2'),
     type: 'text' as const,
     listWidth: 160,
   },
   {
     name: 'qty',
-    label: '数量',
+    label: i18n.t('scm.purchase_requisition.k3'),
     type: 'number' as const,
     listWidth: 100,
   },
   {
     name: 'unit',
-    label: '单位',
+    label: i18n.t('scm.purchase_requisition.k4'),
     type: 'text' as const,
     listWidth: 80,
   },
   {
     name: 'price',
-    label: '单价',
+    label: i18n.t('scm.purchase_requisition.k5'),
     type: 'number' as const,
     listWidth: 100,
   },
   {
     name: 'amount',
-    label: '金额',
+    label: i18n.t('scm.purchase_requisition.k6'),
     type: 'number' as const,
     listWidth: 120,
   },
@@ -49,8 +50,8 @@ const itemFields = [
 
 export const purchaseRequisitionSchema: EntitySchema & SchemaExtensions = {
   entity: 'purchaseRequisition',
-  title: '采购申请',
-  description: '管理采购申请单，包括申请创建、审批流转、转单等',
+  title: i18n.t('scm.purchase_requisition.k7'),
+  description: i18n.t('scm.purchase_requisition.k8'),
 
   api: {
     module: 'scm',
@@ -60,7 +61,7 @@ export const purchaseRequisitionSchema: EntitySchema & SchemaExtensions = {
   fields: [
     {
       name: 'req_no',
-      label: '申请单号',
+      label: i18n.t('scm.purchase_requisition.k9'),
       type: 'text',
       required: true,
       readonlyOnEdit: true,
@@ -69,7 +70,7 @@ export const purchaseRequisitionSchema: EntitySchema & SchemaExtensions = {
     },
     {
       name: 'title',
-      label: '标题',
+      label: i18n.t('scm.purchase_requisition.k10'),
       type: 'text',
       required: true,
       listWidth: 180,
@@ -77,34 +78,34 @@ export const purchaseRequisitionSchema: EntitySchema & SchemaExtensions = {
     },
     {
       name: 'requester',
-      label: '申请人',
+      label: i18n.t('scm.purchase_requisition.k11'),
       type: 'text',
       listWidth: 100,
     },
     {
       name: 'department',
-      label: '部门',
+      label: i18n.t('scm.purchase_requisition.k12'),
       type: 'text',
       listWidth: 120,
     },
     {
       name: 'reason',
-      label: '申请原因',
+      label: i18n.t('scm.purchase_requisition.k13'),
       type: 'textarea',
       showInList: false,
     },
     {
       name: 'priority',
-      label: '优先级',
+      label: i18n.t('scm.purchase_requisition.k14'),
       type: 'select',
       defaultValue: 'medium',
       options: {
         type: 'static',
         options: [
-          { value: 'low', label: '低' },
-          { value: 'medium', label: '中' },
-          { value: 'high', label: '高' },
-          { value: 'urgent', label: '紧急' },
+          { value: 'low', label: i18n.t('scm.purchase_requisition.k15') },
+          { value: 'medium', label: i18n.t('scm.purchase_requisition.k16') },
+          { value: 'high', label: i18n.t('scm.purchase_requisition.k17') },
+          { value: 'urgent', label: i18n.t('scm.purchase_requisition.k18') },
         ],
       },
       listWidth: 100,
@@ -112,18 +113,18 @@ export const purchaseRequisitionSchema: EntitySchema & SchemaExtensions = {
     },
     {
       name: 'status',
-      label: '状态',
+      label: i18n.t('scm.purchase_requisition.k19'),
       type: 'select',
       defaultValue: 'draft',
       options: {
         type: 'static',
         options: [
-          { value: 'draft', label: '草稿' },
-          { value: 'pending', label: '待审批' },
-          { value: 'approved', label: '已审批' },
-          { value: 'rejected', label: '已拒绝' },
-          { value: 'cancelled', label: '已取消' },
-          { value: 'converted', label: '已转单' },
+          { value: 'draft', label: i18n.t('scm.purchase_requisition.k20') },
+          { value: 'pending', label: i18n.t('scm.purchase_requisition.k21') },
+          { value: 'approved', label: i18n.t('scm.purchase_requisition.k22') },
+          { value: 'rejected', label: i18n.t('scm.purchase_requisition.k23') },
+          { value: 'cancelled', label: i18n.t('scm.purchase_requisition.k24') },
+          { value: 'converted', label: i18n.t('scm.purchase_requisition.k25') },
         ],
       },
       listWidth: 100,
@@ -146,39 +147,39 @@ export const purchaseRequisitionSchema: EntitySchema & SchemaExtensions = {
         converted: 'primary',
       },
       labelMap: {
-        draft: '草稿',
-        pending: '待审批',
-        approved: '已审批',
-        rejected: '已拒绝',
-        cancelled: '已取消',
-        converted: '已转单',
+        draft: i18n.t('scm.purchase_requisition.k26'),
+        pending: i18n.t('scm.purchase_requisition.k27'),
+        approved: i18n.t('scm.purchase_requisition.k28'),
+        rejected: i18n.t('scm.purchase_requisition.k29'),
+        cancelled: i18n.t('scm.purchase_requisition.k30'),
+        converted: i18n.t('scm.purchase_requisition.k31'),
       },
     },
     filters: [
       {
         id: 'status',
-        label: '状态',
+        label: i18n.t('scm.purchase_requisition.k32'),
         type: 'select',
         options: [
-          { label: '全部状态', value: 'all' },
-          { label: '草稿', value: 'draft' },
-          { label: '待审批', value: 'pending' },
-          { label: '已审批', value: 'approved' },
-          { label: '已拒绝', value: 'rejected' },
-          { label: '已取消', value: 'cancelled' },
-          { label: '已转单', value: 'converted' },
+          { label: i18n.t('scm.purchase_requisition.k33'), value: 'all' },
+          { label: i18n.t('scm.purchase_requisition.k34'), value: 'draft' },
+          { label: i18n.t('scm.purchase_requisition.k35'), value: 'pending' },
+          { label: i18n.t('scm.purchase_requisition.k36'), value: 'approved' },
+          { label: i18n.t('scm.purchase_requisition.k37'), value: 'rejected' },
+          { label: i18n.t('scm.purchase_requisition.k38'), value: 'cancelled' },
+          { label: i18n.t('scm.purchase_requisition.k39'), value: 'converted' },
         ],
       },
       {
         id: 'priority',
-        label: '优先级',
+        label: i18n.t('scm.purchase_requisition.k40'),
         type: 'select',
         options: [
-          { label: '全部优先级', value: 'all' },
-          { label: '低', value: 'low' },
-          { label: '中', value: 'medium' },
-          { label: '高', value: 'high' },
-          { label: '紧急', value: 'urgent' },
+          { label: i18n.t('scm.purchase_requisition.k41'), value: 'all' },
+          { label: i18n.t('scm.purchase_requisition.k42'), value: 'low' },
+          { label: i18n.t('scm.purchase_requisition.k43'), value: 'medium' },
+          { label: i18n.t('scm.purchase_requisition.k44'), value: 'high' },
+          { label: i18n.t('scm.purchase_requisition.k45'), value: 'urgent' },
         ],
       },
     ],
@@ -188,31 +189,31 @@ export const purchaseRequisitionSchema: EntitySchema & SchemaExtensions = {
 
   formSections: [
     {
-      title: '基本信息',
+      title: i18n.t('scm.purchase_requisition.k46'),
       fields: ['req_no', 'title', 'requester', 'department', 'priority', 'status'],
     },
     {
-      title: '申请详情',
+      title: i18n.t('scm.purchase_requisition.k47'),
       fields: ['reason'],
     },
   ],
 
   formColCount: 2,
-  createTitle: '新增采购申请',
-  editTitle: '编辑采购申请',
-  detailTitle: '采购申请详情',
+  createTitle: i18n.t('scm.purchase_requisition.k48'),
+  editTitle: i18n.t('scm.purchase_requisition.k49'),
+  detailTitle: i18n.t('scm.purchase_requisition.k50'),
 
   nestedTables: [
     {
       field: 'items',
-      title: '申请明细',
+      title: i18n.t('scm.purchase_requisition.k51'),
       columns: columnsFromFields(itemFields),
       fields: itemFields,
       allowAdd: true,
       allowEdit: true,
       allowDelete: true,
       allowDuplicate: true,
-      addButtonText: '新增明细',
+      addButtonText: i18n.t('scm.purchase_requisition.k52'),
       rowKeyField: 'line_no',
       minRows: 1,
       formColCount: 2,

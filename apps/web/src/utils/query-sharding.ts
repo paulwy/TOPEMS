@@ -9,6 +9,7 @@
 
 import { analyzeQueryCost } from './query-cost-analyzer';
 import { logger } from './logger';
+import i18n from '@/i18n';
 
 const shardLogger = logger.child({ prefix: 'QuerySharding' });
 
@@ -66,7 +67,7 @@ export function shouldShard(
   if (analysis.score >= SHARD_THRESHOLD_SCORE) {
     return {
       shouldShard: true,
-      reason: `查询成本过高(${analysis.score}分)，建议分片`,
+      reason: `${i18n.t('shared.query-sharding.k0')}${analysis.score}${i18n.t('shared.query-sharding.k1')}`,
       estimatedRecords,
       score: analysis.score,
     };
@@ -75,7 +76,7 @@ export function shouldShard(
   if (estimatedRecords >= SHARD_THRESHOLD_ESTIMATED_RECORDS) {
     return {
       shouldShard: true,
-      reason: `预估数据量过大(${estimatedRecords}条)，建议分片`,
+      reason: `${i18n.t('shared.query-sharding.k2')}${estimatedRecords}${i18n.t('shared.query-sharding.k3')}`,
       estimatedRecords,
       score: analysis.score,
     };
@@ -84,7 +85,7 @@ export function shouldShard(
   if (variables?.total && typeof variables.total === 'number' && variables.total > maxRecords) {
     return {
       shouldShard: true,
-      reason: `总记录数(${variables.total})超过单分片限制(${maxRecords})`,
+      reason: `${i18n.t('shared.query-sharding.k4')}${variables.total}${i18n.t('shared.query-sharding.k5')}${maxRecords})`,
       estimatedRecords: variables.total,
       score: analysis.score,
     };
@@ -92,7 +93,7 @@ export function shouldShard(
 
   return {
     shouldShard: false,
-    reason: '查询成本在可接受范围内，无需分片',
+    reason: i18n.t('shared.query-sharding.k0'),
     estimatedRecords,
     score: analysis.score,
   };
@@ -282,7 +283,7 @@ export async function executeShardedQuery<T>(
   const totalCount = shardPlan.shards.length;
 
   shardLogger.info(
-    `开始执行分片查询: ${totalCount}个分片, 策略: ${shardPlan.strategy}, 最大并发: ${maxConcurrency}`
+    `${i18n.t('shared.query-sharding.k6')}${totalCount}${i18n.t('shared.query-sharding.k7')}${shardPlan.strategy}${i18n.t('shared.query-sharding.k8')}${maxConcurrency}`
   );
 
   const shards = [...shardPlan.shards];
@@ -298,7 +299,7 @@ export async function executeShardedQuery<T>(
       } catch (error) {
         const err = error instanceof Error ? error : new Error(String(error));
         errors.push({ shardIndex: shard.index, error: err });
-        shardLogger.error(`分片 ${shard.index} 执行失败: ${err.message}`);
+        shardLogger.error(`${i18n.t('shared.query-sharding.k9')}${shard.index}${i18n.t('shared.query-sharding.k10')}${err.message}`);
       } finally {
         completedCount++;
         const progress = (completedCount / totalCount) * 100;
@@ -317,7 +318,7 @@ export async function executeShardedQuery<T>(
   await Promise.all(workers);
 
   const successCount = totalCount - errors.length;
-  shardLogger.info(`分片查询完成: 成功${successCount}/${totalCount}, 失败${errors.length}`);
+  shardLogger.info(`${i18n.t('shared.query-sharding.k11')}${successCount}/${totalCount}${i18n.t('shared.query-sharding.k12')}${errors.length}`);
 
   return {
     data: results.filter((r): r is T => r !== undefined),

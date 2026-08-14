@@ -1,5 +1,6 @@
 import React from 'react';
 import { Box, Typography } from '@mui/material';
+import i18n from '@/i18n';
 
 interface LoadingProps {
   size?: 'sm' | 'md' | 'lg';
@@ -136,7 +137,7 @@ export const LoadingOverlay: React.FC<{
   isLoading: boolean;
   children?: React.ReactNode;
   text?: string;
-}> = ({ isLoading, children, text = '加载中...' }) => {
+}> = ({ isLoading, children, text = i18n.t('components.loading.k0') }) => {
   if (!isLoading) {
     return <>{children}</>;
   }

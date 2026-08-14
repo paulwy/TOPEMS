@@ -1,22 +1,23 @@
 import React from 'react';
 import { Chip } from '@mui/material';
 import type { EntitySchema } from '@/schema';
+import i18n from '@/i18n';
 
 const ptPlanStatusColorMap: Record<
   string,
   'default' | 'primary' | 'success' | 'warning' | 'error' | 'info'
 > = {
-  待执行: 'default',
-  执行中: 'primary',
-  已完成: 'success',
-  已评价: 'info',
+  [i18n.t('schemas.pt_plan.k0')]: 'default',
+  [i18n.t('schemas.pt_plan.k1')]: 'primary',
+  [i18n.t('schemas.pt_plan.k2')]: 'success',
+  [i18n.t('schemas.pt_plan.k3')]: 'info',
 };
 
 const ptPlanStatusLabelMap: Record<string, string> = {
-  待执行: '待执行',
-  执行中: '执行中',
-  已完成: '已完成',
-  已评价: '已评价',
+  [i18n.t('schemas.pt_plan.k4')]: i18n.t('lims.pt_plan.k0'),
+  [i18n.t('schemas.pt_plan.k5')]: i18n.t('lims.pt_plan.k1'),
+  [i18n.t('schemas.pt_plan.k6')]: i18n.t('lims.pt_plan.k2'),
+  [i18n.t('schemas.pt_plan.k7')]: i18n.t('lims.pt_plan.k3'),
 };
 
 function renderPtPlanStatusCell(row: Record<string, unknown>) {
@@ -39,8 +40,8 @@ function renderDateCell(row: Record<string, unknown>, field: string) {
 
 export const ptPlanSchema: EntitySchema = {
   entity: 'limsPtPlan',
-  title: '能力验证计划',
-  description: '管理能力验证计划，包括计划信息、检测项目、方法和结果等',
+  title: i18n.t('lims.pt_plan.k4'),
+  description: i18n.t('lims.pt_plan.k5'),
 
   api: {
     module: 'lims',
@@ -50,80 +51,80 @@ export const ptPlanSchema: EntitySchema = {
   fields: [
     {
       name: 'plan_no',
-      label: '计划编号',
+      label: i18n.t('lims.pt_plan.k6'),
       type: 'text',
       readonlyOnEdit: true,
       sortable: true,
       listWidth: 140,
-      placeholder: '请输入计划编号',
+      placeholder: i18n.t('lims.pt_plan.k7'),
     },
     {
       name: 'plan_name',
-      label: '计划名称',
+      label: i18n.t('lims.pt_plan.k8'),
       type: 'text',
       required: true,
       sortable: true,
       listWidth: 200,
-      placeholder: '请输入计划名称',
+      placeholder: i18n.t('lims.pt_plan.k9'),
     },
     {
       name: 'provider',
-      label: '提供方',
+      label: i18n.t('lims.pt_plan.k10'),
       type: 'text',
       listWidth: 140,
       showInList: false,
-      placeholder: '请输入提供方',
+      placeholder: i18n.t('lims.pt_plan.k11'),
     },
     {
       name: 'testitem',
-      label: '检测项目',
+      label: i18n.t('lims.pt_plan.k12'),
       type: 'text',
       listWidth: 140,
       showInList: false,
-      placeholder: '请输入检测项目',
+      placeholder: i18n.t('lims.pt_plan.k13'),
     },
     {
       name: 'test_method',
-      label: '检测方法',
+      label: i18n.t('lims.pt_plan.k14'),
       type: 'text',
       listWidth: 140,
       showInList: false,
-      placeholder: '请输入检测方法',
+      placeholder: i18n.t('lims.pt_plan.k15'),
     },
     {
       name: 'plan_year',
-      label: '验证周期',
+      label: i18n.t('lims.pt_plan.k16'),
       type: 'select',
       options: {
         type: 'static',
         options: [
-          { value: '月度', label: '月度' },
-          { value: '季度', label: '季度' },
-          { value: '年度', label: '年度' },
+          { value: i18n.t('lims.pt_plan.k17'), label: i18n.t('lims.pt_plan.k18') },
+          { value: i18n.t('lims.pt_plan.k19'), label: i18n.t('lims.pt_plan.k20') },
+          { value: i18n.t('lims.pt_plan.k21'), label: i18n.t('lims.pt_plan.k22') },
         ],
       },
       listWidth: 100,
     },
     {
       name: 'sample_type',
-      label: '样品类型',
+      label: i18n.t('lims.pt_plan.k23'),
       type: 'text',
       listWidth: 120,
       showInList: false,
-      placeholder: '请输入样品类型',
+      placeholder: i18n.t('lims.pt_plan.k24'),
     },
     {
       name: 'status',
-      label: '状态',
+      label: i18n.t('lims.pt_plan.k25'),
       type: 'select',
-      defaultValue: '待执行',
+      defaultValue: i18n.t('lims.pt_plan.k26'),
       options: {
         type: 'static',
         options: [
-          { value: '待执行', label: '待执行' },
-          { value: '执行中', label: '执行中' },
-          { value: '已完成', label: '已完成' },
-          { value: '已评价', label: '已评价' },
+          { value: i18n.t('lims.pt_plan.k27'), label: i18n.t('lims.pt_plan.k28') },
+          { value: i18n.t('lims.pt_plan.k29'), label: i18n.t('lims.pt_plan.k30') },
+          { value: i18n.t('lims.pt_plan.k31'), label: i18n.t('lims.pt_plan.k32') },
+          { value: i18n.t('lims.pt_plan.k33'), label: i18n.t('lims.pt_plan.k34') },
         ],
       },
       listWidth: 100,
@@ -131,14 +132,14 @@ export const ptPlanSchema: EntitySchema = {
     },
     {
       name: 'registration_date',
-      label: '开始日期',
+      label: i18n.t('lims.pt_plan.k35'),
       type: 'date',
       listWidth: 120,
       renderCell: (row: Record<string, unknown>) => renderDateCell(row, 'registration_date'),
     },
     {
       name: 'test_deadline',
-      label: '检测截止日期',
+      label: i18n.t('lims.pt_plan.k36'),
       type: 'date',
       showInList: false,
       showInDetail: true,
@@ -146,37 +147,37 @@ export const ptPlanSchema: EntitySchema = {
     },
     {
       name: 'report_deadline',
-      label: '结束日期',
+      label: i18n.t('lims.pt_plan.k37'),
       type: 'date',
       listWidth: 120,
       renderCell: (row: Record<string, unknown>) => renderDateCell(row, 'report_deadline'),
     },
     {
       name: 'contact_person',
-      label: '联系人',
+      label: i18n.t('lims.pt_plan.k38'),
       type: 'text',
       listWidth: 100,
       showInList: false,
-      placeholder: '请输入联系人',
+      placeholder: i18n.t('lims.pt_plan.k39'),
     },
     {
       name: 'contact_phone',
-      label: '联系电话',
+      label: i18n.t('lims.pt_plan.k40'),
       type: 'text',
       listWidth: 120,
       showInList: false,
-      placeholder: '请输入联系电话',
+      placeholder: i18n.t('lims.pt_plan.k41'),
     },
     {
       name: 'notes',
-      label: '备注',
+      label: i18n.t('lims.pt_plan.k42'),
       type: 'textarea',
       showInList: false,
-      placeholder: '请输入备注',
+      placeholder: i18n.t('lims.pt_plan.k43'),
     },
     {
       name: 'created_at',
-      label: '创建时间',
+      label: i18n.t('lims.pt_plan.k44'),
       type: 'date',
       readonly: true,
       listWidth: 120,
@@ -185,7 +186,7 @@ export const ptPlanSchema: EntitySchema = {
     },
     {
       name: 'updated_at',
-      label: '更新时间',
+      label: i18n.t('lims.pt_plan.k45'),
       type: 'date',
       readonly: true,
       showInList: false,
@@ -200,26 +201,26 @@ export const ptPlanSchema: EntitySchema = {
     filters: [
       {
         id: 'status',
-        label: '状态',
+        label: i18n.t('lims.pt_plan.k46'),
         type: 'select',
         options: [
-          { label: '全部状态', value: 'all' },
-          { label: '待执行', value: '待执行' },
-          { label: '执行中', value: '执行中' },
-          { label: '已完成', value: '已完成' },
-          { label: '已评价', value: '已评价' },
+          { label: i18n.t('lims.pt_plan.k47'), value: 'all' },
+          { label: i18n.t('lims.pt_plan.k48'), value: i18n.t('lims.pt_plan.k49') },
+          { label: i18n.t('lims.pt_plan.k50'), value: i18n.t('lims.pt_plan.k51') },
+          { label: i18n.t('lims.pt_plan.k52'), value: i18n.t('lims.pt_plan.k53') },
+          { label: i18n.t('lims.pt_plan.k54'), value: i18n.t('lims.pt_plan.k55') },
         ],
         defaultValue: 'all',
       },
       {
         id: 'cycle',
-        label: '验证周期',
+        label: i18n.t('lims.pt_plan.k56'),
         type: 'select',
         options: [
-          { label: '全部周期', value: 'all' },
-          { label: '月度', value: '月度' },
-          { label: '季度', value: '季度' },
-          { label: '年度', value: '年度' },
+          { label: i18n.t('lims.pt_plan.k57'), value: 'all' },
+          { label: i18n.t('lims.pt_plan.k58'), value: i18n.t('lims.pt_plan.k59') },
+          { label: i18n.t('lims.pt_plan.k60'), value: i18n.t('lims.pt_plan.k61') },
+          { label: i18n.t('lims.pt_plan.k62'), value: i18n.t('lims.pt_plan.k63') },
         ],
         defaultValue: 'all',
       },
@@ -233,31 +234,31 @@ export const ptPlanSchema: EntitySchema = {
 
   formSections: [
     {
-      title: '基本信息',
+      title: i18n.t('lims.pt_plan.k64'),
       fields: ['plan_no', 'plan_name', 'plan_year', 'status'],
     },
     {
-      title: '检测信息',
+      title: i18n.t('lims.pt_plan.k65'),
       fields: ['provider', 'testitem', 'test_method', 'sample_type'],
     },
     {
-      title: '时间安排',
+      title: i18n.t('lims.pt_plan.k66'),
       fields: ['registration_date', 'test_deadline', 'report_deadline'],
     },
     {
-      title: '联系信息',
+      title: i18n.t('lims.pt_plan.k67'),
       fields: ['contact_person', 'contact_phone'],
     },
     {
-      title: '备注',
+      title: i18n.t('lims.pt_plan.k68'),
       fields: ['notes'],
     },
   ],
 
   formColCount: 2,
-  createTitle: '新建能力验证计划',
-  editTitle: '编辑能力验证计划',
-  detailTitle: '能力验证计划详情',
+  createTitle: i18n.t('lims.pt_plan.k69'),
+  editTitle: i18n.t('lims.pt_plan.k70'),
+  detailTitle: i18n.t('lims.pt_plan.k71'),
 
   actions: ['create', 'edit', 'detail', 'delete'],
 };

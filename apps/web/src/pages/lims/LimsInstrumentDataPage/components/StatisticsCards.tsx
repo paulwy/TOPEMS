@@ -4,7 +4,7 @@ import { Database, Activity, Play, Settings } from 'lucide-react';
 import { Card, CardContent, Stack, Box, Typography } from '@mui/material';
 import { Grid } from '@/components';
 import type { InstrumentDataStatistics } from '@/api/lims';
-
+import i18n from '@/i18n';
 const StatCard = ({
   title,
   value,
@@ -57,11 +57,9 @@ const StatCard = ({
     </CardContent>
   </Card>
 );
-
 interface StatisticsCardsProps {
   statistics: InstrumentDataStatistics;
 }
-
 const StatisticsCards: React.FC<StatisticsCardsProps> = ({ statistics }) => {
   return (
     <Grid
@@ -76,7 +74,7 @@ const StatisticsCards: React.FC<StatisticsCardsProps> = ({ statistics }) => {
         md={3}
       >
         <StatCard
-          title='数据总条数'
+          title={i18n.t('lims.statistics_cards.k0')}
           value={statistics.total_data_count}
           icon={Database}
           color='primary'
@@ -89,7 +87,7 @@ const StatisticsCards: React.FC<StatisticsCardsProps> = ({ statistics }) => {
         md={3}
       >
         <StatCard
-          title='今日采集'
+          title={i18n.t('lims.statistics_cards.k1')}
           value={statistics.today_count}
           icon={Activity}
           color='success'
@@ -102,7 +100,7 @@ const StatisticsCards: React.FC<StatisticsCardsProps> = ({ statistics }) => {
         md={3}
       >
         <StatCard
-          title='采集任务'
+          title={i18n.t('lims.statistics_cards.k2')}
           value={statistics.total_tasks}
           icon={Play}
           color='info'
@@ -115,7 +113,7 @@ const StatisticsCards: React.FC<StatisticsCardsProps> = ({ statistics }) => {
         md={3}
       >
         <StatCard
-          title='解析规则'
+          title={i18n.t('lims.statistics_cards.k3')}
           value={statistics.total_rules}
           icon={Settings}
           color='warning'
@@ -124,5 +122,4 @@ const StatisticsCards: React.FC<StatisticsCardsProps> = ({ statistics }) => {
     </Grid>
   );
 };
-
 export default StatisticsCards;

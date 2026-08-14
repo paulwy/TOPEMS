@@ -11,6 +11,7 @@ import { useNotificationStore } from '@/store';
 
 
 import { QUERY_KEYS } from '@/lib/reactQuery';
+import i18n from '@/i18n';
 
 const ct= designTokens.colors;
 
@@ -43,7 +44,7 @@ const OutboundStats: React.FC = () => {
 
   const statCards = [
     {
-      label: '出库单总数',
+      label: i18n.t('pages.outbound_page.k0'),
       value: stats.total,
       color: ct.warning.main,
       bgColor: 'grey.100',
@@ -55,7 +56,7 @@ const OutboundStats: React.FC = () => {
       ),
     },
     {
-      label: '待确认',
+      label: i18n.t('pages.outbound_page.k1'),
       value: stats.pending,
       color: 'warning.dark',
       bgColor: 'warning.light',
@@ -67,7 +68,7 @@ const OutboundStats: React.FC = () => {
       ),
     },
     {
-      label: '拣货中',
+      label: i18n.t('pages.outbound_page.k2'),
       value: stats.picking,
       color: 'info.dark',
       bgColor: 'info.light',
@@ -79,7 +80,7 @@ const OutboundStats: React.FC = () => {
       ),
     },
     {
-      label: '已完成',
+      label: i18n.t('pages.outbound_page.k3'),
       value: stats.completed,
       color: 'success.dark',
       bgColor: 'success.light',
@@ -153,14 +154,14 @@ export default function OutboundPage() {
       try {
         const response = await wmsApi.outboundOrders.confirm(id);
         if (response.success) {
-          addNotification({ type: 'success', title: '成功', message: '出库单已确认' });
+          addNotification({ type: 'success', title: i18n.t('pages.outbound_page.k5'), message: i18n.t('pages.outbound_page.k4') });
           queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.WMS_OUTBOUND_ORDERS_BASE ,
   exact: false,
   refetchType: 'active',
 });
         }
       } catch {
-        addNotification({ type: 'error', title: '失败', message: '确认出库单失败' });
+        addNotification({ type: 'error', title: i18n.t('pages.outbound_page.k7'), message: i18n.t('pages.outbound_page.k6') });
       }
     },
     [queryClient, addNotification]
@@ -171,14 +172,14 @@ export default function OutboundPage() {
       try {
         const response = await wmsApi.outboundOrders.pick(id);
         if (response.success) {
-          addNotification({ type: 'success', title: '成功', message: '已开始拣货' });
+          addNotification({ type: 'success', title: i18n.t('pages.outbound_page.k9'), message: i18n.t('pages.outbound_page.k8') });
           queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.WMS_OUTBOUND_ORDERS_BASE ,
   exact: false,
   refetchType: 'active',
 });
         }
       } catch {
-        addNotification({ type: 'error', title: '失败', message: '拣货失败' });
+        addNotification({ type: 'error', title: i18n.t('pages.outbound_page.k11'), message: i18n.t('pages.outbound_page.k10') });
       }
     },
     [queryClient, addNotification]
@@ -189,14 +190,14 @@ export default function OutboundPage() {
       try {
         const response = await wmsApi.outboundOrders.ship(id, []);
         if (response.success) {
-          addNotification({ type: 'success', title: '成功', message: '出库单已发货' });
+          addNotification({ type: 'success', title: i18n.t('pages.outbound_page.k13'), message: i18n.t('pages.outbound_page.k12') });
           queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.WMS_OUTBOUND_ORDERS_BASE ,
   exact: false,
   refetchType: 'active',
 });
         }
       } catch {
-        addNotification({ type: 'error', title: '失败', message: '发货失败' });
+        addNotification({ type: 'error', title: i18n.t('pages.outbound_page.k15'), message: i18n.t('pages.outbound_page.k14') });
       }
     },
     [queryClient, addNotification]
@@ -207,14 +208,14 @@ export default function OutboundPage() {
       try {
         const response = await wmsApi.outboundOrders.complete(id);
         if (response.success) {
-          addNotification({ type: 'success', title: '成功', message: '出库单已完成' });
+          addNotification({ type: 'success', title: i18n.t('pages.outbound_page.k17'), message: i18n.t('pages.outbound_page.k16') });
           queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.WMS_OUTBOUND_ORDERS_BASE ,
   exact: false,
   refetchType: 'active',
 });
         }
       } catch {
-        addNotification({ type: 'error', title: '失败', message: '完成出库单失败' });
+        addNotification({ type: 'error', title: i18n.t('pages.outbound_page.k19'), message: i18n.t('pages.outbound_page.k18') });
       }
     },
     [queryClient, addNotification]
@@ -225,7 +226,7 @@ export default function OutboundPage() {
       const response = await wmsApi.outboundOrders.list(
         params as Parameters<typeof wmsApi.outboundOrders.list>[0]
       );
-      if (!response.success) throw new Error('加载出库单列表失败');
+      if (!response.success) throw new Error(i18n.t('pages.outbound_page.k20'));
       const items = response.data?.items || [];
       const total = response.data?.total || 0;
       return { data: items as unknown as Record<string, unknown>[], total };
@@ -235,7 +236,7 @@ export default function OutboundPage() {
       const response = await wmsApi.outboundOrders.create(
         data as unknown as Parameters<typeof wmsApi.outboundOrders.create>[0]
       );
-      if (!response.success) throw new Error('创建出库单失败');
+      if (!response.success) throw new Error(i18n.t('pages.outbound_page.k21'));
       return response.data as unknown as Record<string, unknown>;
     },
 
@@ -244,26 +245,26 @@ export default function OutboundPage() {
         id,
         data as Parameters<typeof wmsApi.outboundOrders.update>[1]
       );
-      if (!response.success) throw new Error('更新出库单失败');
+      if (!response.success) throw new Error(i18n.t('pages.outbound_page.k22'));
       return response.data as unknown as Record<string, unknown>;
     },
 
     delete: async (id) => {
       const response = await wmsApi.outboundOrders.delete(id);
-      if (!response.success) throw new Error('删除出库单失败');
+      if (!response.success) throw new Error(i18n.t('pages.outbound_page.k23'));
     },
   };
 
   const customRowActions: RowAction[] = [
     {
-      label: '确认',
+      label: i18n.t('pages.outbound_page.k24'),
       icon: <Check size={16} />,
       onClick: (row: Record<string, unknown>) => handleConfirm(row.id as string),
       color: 'info',
       show: (row: Record<string, unknown>) => row.status === 'pending',
     },
     {
-      label: '拣货',
+      label: i18n.t('pages.outbound_page.k25'),
       icon: <ClipboardList size={16} />,
       onClick: (row: Record<string, unknown>) => handlePick(row.id as string),
       color: 'info',
@@ -271,14 +272,14 @@ export default function OutboundPage() {
         row.status === 'confirmed' || row.status === 'picking',
     },
     {
-      label: '发货',
+      label: i18n.t('pages.outbound_page.k26'),
       icon: <Truck size={16} />,
       onClick: (row: Record<string, unknown>) => handleShip(row.id as string),
       color: 'warning',
       show: (row: Record<string, unknown>) => row.status === 'picked' || row.status === 'packing',
     },
     {
-      label: '完成',
+      label: i18n.t('pages.outbound_page.k27'),
       icon: <Package size={16} />,
       onClick: (row: Record<string, unknown>) => handleComplete(row.id as string),
       color: 'success',
@@ -291,7 +292,7 @@ export default function OutboundPage() {
       schema={outboundOrderSchema}
       apiAdapter={outboundApiAdapter}
       customRowActions={customRowActions}
-      breadcrumbs={[{ label: 'WMS' }, { label: '出库管理' }]}
+      breadcrumbs={[{ label: 'WMS' }, { label: i18n.t('pages.outbound_page.k28') }]}
       headerContent={<OutboundStats />}
     />
   );

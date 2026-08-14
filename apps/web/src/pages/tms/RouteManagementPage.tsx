@@ -1,6 +1,5 @@
 import React, { useMemo, useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { useTranslation } from 'react-i18next';
 import {
   Box,
   Typography,
@@ -25,112 +24,98 @@ import {
   Stack,
   CircularProgress,
 } from '@mui/material';
+import i18n from '@/i18n';
 import { Plus, Pencil, Trash2, Search, RefreshCw } from 'lucide-react';
 import { PageContainer } from '@/components/common';
 import { useNotificationStore } from '@/store/notificationStore';
 import { routeApi } from '@/api/tms';
 import type { Route, CreateRouteRequest, RouteStatus } from '@/api/tms';
-
 const QUERY_KEY = 'tms-routes';
-
 const statusOptions = [
-  { value: 'active', label: '启用' },
-  { value: 'inactive', label: '停用' },
+  { value: 'active', label: i18n.t('tms.route_management_page.k0') },
+  { value: 'inactive', label: i18n.t('tms.route_management_page.k1') },
 ];
-
 const renderStatusChip = (status?: string) => {
-  if (status === 'active') return <Chip size='small' color='success' label='启用' />;
-  if (status === 'inactive') return <Chip size='small' color='default' label='停用' />;
+  if (status === 'active') return <Chip size='small' color='success' label={i18n.t('tms.route_management_page.k2')} />;
+  if (status === 'inactive') return <Chip size='small' color='default' label={i18n.t('tms.route_management_page.k3')} />;
   return <Chip size='small' color='default' label={status || '-'} />;
 };
-
 const RouteManagementPage: React.FC = () => {
-  const { t: _t } = useTranslation();
   const queryClient = useQueryClient();
   const { addNotification } = useNotificationStore();
-
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
   const [search, setSearch] = useState('');
   const [searchInput, setSearchInput] = useState('');
-
   const [formOpen, setFormOpen] = useState(false);
   const [formMode, setFormMode] = useState<'create' | 'edit'>('create');
   const [formData, setFormData] = useState<Partial<Route>>({});
   const [deleteTarget, setDeleteTarget] = useState<Route | null>(null);
-
   const queryKey = useMemo(() => [QUERY_KEY, page, pageSize, search], [page, pageSize, search]);
-
   const { data, isLoading } = useQuery({
     queryKey,
     queryFn: async () => {
       const res = await routeApi.list({ page, pageSize, search: search || undefined });
-      if (!res.success) throw new Error('加载路线列表失败');
+      if (!res.success) throw new Error(i18n.t('tms.route_management_page.k4'));
       return { items: res.data?.items || [], total: res.data?.total || 0 };
     },
   });
-
   const createMutation = useMutation({
     mutationFn: (data: CreateRouteRequest) => routeApi.create(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [QUERY_KEY] });
-      addNotification({ type: 'success', title: '创建成功', message: '路线已创建' });
+      addNotification({ type: 'success', title: i18n.t('tms.route_management_page.k6'), message: i18n.t('tms.route_management_page.k5') });
       setFormOpen(false);
     },
     onError: (err: unknown) => {
       addNotification({
         type: 'error',
-        title: '创建失败',
+        title: i18n.t('tms.route_management_page.k7'),
         message: err instanceof Error ? err.message : '',
       });
     },
   });
-
   const updateMutation = useMutation({
     mutationFn: ({ id, data }: { id: string; data: Partial<CreateRouteRequest> }) =>
       routeApi.update(id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [QUERY_KEY] });
-      addNotification({ type: 'success', title: '更新成功', message: '路线已更新' });
+      addNotification({ type: 'success', title: i18n.t('tms.route_management_page.k9'), message: i18n.t('tms.route_management_page.k8') });
       setFormOpen(false);
     },
     onError: (err: unknown) => {
       addNotification({
         type: 'error',
-        title: '更新失败',
+        title: i18n.t('tms.route_management_page.k10'),
         message: err instanceof Error ? err.message : '',
       });
     },
   });
-
   const deleteMutation = useMutation({
     mutationFn: (id: string) => routeApi.delete(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [QUERY_KEY] });
-      addNotification({ type: 'success', title: '删除成功', message: '路线已删除' });
+      addNotification({ type: 'success', title: i18n.t('tms.route_management_page.k12'), message: i18n.t('tms.route_management_page.k11') });
       setDeleteTarget(null);
     },
     onError: (err: unknown) => {
       addNotification({
         type: 'error',
-        title: '删除失败',
+        title: i18n.t('tms.route_management_page.k13'),
         message: err instanceof Error ? err.message : '',
       });
     },
   });
-
   const handleOpenCreate = () => {
     setFormMode('create');
     setFormData({ status: 'active' });
     setFormOpen(true);
   };
-
   const handleOpenEdit = (row: Route) => {
     setFormMode('edit');
     setFormData({ ...row });
     setFormOpen(true);
   };
-
   const handleSubmit = () => {
     const payload: CreateRouteRequest = {
       route_no: formData.route_no || '',
@@ -147,24 +132,20 @@ const RouteManagementPage: React.FC = () => {
       updateMutation.mutate({ id: formData.id, data: payload });
     }
   };
-
   const handleSearchSubmit = () => {
     setSearch(searchInput);
     setPage(1);
   };
-
   const handleRefresh = () => {
     queryClient.invalidateQueries({ queryKey: [QUERY_KEY] });
   };
-
   const rows = data?.items || [];
   const total = data?.total || 0;
   const submitting = createMutation.isPending || updateMutation.isPending;
-
   return (
     <PageContainer
-      title='路线管理'
-      subtitle='管理运输路线信息'
+      title={i18n.t('tms.route_management_page.k14')}
+      subtitle={i18n.t('tms.route_management_page.k15')}
       maxWidth={false}
     >
       <Stack
@@ -179,7 +160,7 @@ const RouteManagementPage: React.FC = () => {
         >
           <TextField
             size='small'
-            placeholder='按路线编号 / 名称搜索'
+            placeholder={i18n.t('tms.route_management_page.k16')}
             value={searchInput}
             onChange={(e) => setSearchInput(e.target.value)}
             onKeyDown={(e) => {
@@ -197,9 +178,9 @@ const RouteManagementPage: React.FC = () => {
             size='small'
             onClick={handleSearchSubmit}
           >
-            搜索
+            {i18n.t('pages.route_management_page.k0')}
           </Button>
-          <Tooltip title='刷新'>
+          <Tooltip title={i18n.t('tms.route_management_page.k17')}>
             <IconButton
               size='small'
               onClick={handleRefresh}
@@ -214,23 +195,22 @@ const RouteManagementPage: React.FC = () => {
           startIcon={<Plus size={16} />}
           onClick={handleOpenCreate}
         >
-          新增路线
+          {i18n.t('pages.route_management_page.k1')}
         </Button>
       </Stack>
-
       <Card variant='outlined'>
         <TableContainer>
           <Table size='small'>
             <TableHead>
               <TableRow>
-                <TableCell>路线编号</TableCell>
-                <TableCell>名称</TableCell>
-                <TableCell>起点</TableCell>
-                <TableCell>终点</TableCell>
-                <TableCell align='right'>距离(km)</TableCell>
-                <TableCell align='right'>预计时长(h)</TableCell>
-                <TableCell>状态</TableCell>
-                <TableCell align='center'>操作</TableCell>
+                <TableCell>{i18n.t('tms.route_management_page.k18')}</TableCell>
+                <TableCell>{i18n.t('tms.route_management_page.k19')}</TableCell>
+                <TableCell>{i18n.t('tms.route_management_page.k20')}</TableCell>
+                <TableCell>{i18n.t('tms.route_management_page.k21')}</TableCell>
+                <TableCell align='right'>{i18n.t('tms.route_management_page.km_22')}</TableCell>
+                <TableCell align='right'>{i18n.t('tms.route_management_page.h_23')}</TableCell>
+                <TableCell>{i18n.t('tms.route_management_page.k24')}</TableCell>
+                <TableCell align='center'>{i18n.t('tms.route_management_page.k25')}</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
@@ -251,7 +231,7 @@ const RouteManagementPage: React.FC = () => {
                     align='center'
                     sx={{ py: 4, color: 'text.secondary' }}
                   >
-                    暂无路线数据
+                    {i18n.t('pages.route_management_page.k2')}
                   </TableCell>
                 </TableRow>
               ) : (
@@ -273,7 +253,7 @@ const RouteManagementPage: React.FC = () => {
                         spacing={0.5}
                         sx={{ justifyContent: 'center' }}
                       >
-                        <Tooltip title='编辑'>
+                        <Tooltip title={i18n.t('tms.route_management_page.k26')}>
                           <IconButton
                             size='small'
                             onClick={() => handleOpenEdit(row)}
@@ -281,7 +261,7 @@ const RouteManagementPage: React.FC = () => {
                             <Pencil size={16} />
                           </IconButton>
                         </Tooltip>
-                        <Tooltip title='删除'>
+                        <Tooltip title={i18n.t('tms.route_management_page.k27')}>
                           <IconButton
                             size='small'
                             color='error'
@@ -309,18 +289,17 @@ const RouteManagementPage: React.FC = () => {
             setPage(1);
           }}
           rowsPerPageOptions={[10, 20, 50]}
-          labelRowsPerPage='每页'
-          labelDisplayedRows={({ from, to, count }) => `${from}-${to} / 共 ${count} 条`}
+          labelRowsPerPage={i18n.t('tms.route_management_page.k28')}
+          labelDisplayedRows={({ from, to, count }) => `${from}-${to}${i18n.t('pages.route_management_page.k0')}${count}${i18n.t('pages.route_management_page.k1')}`}
         />
       </Card>
-
       <Dialog
         open={formOpen}
         onClose={() => setFormOpen(false)}
         maxWidth='md'
         fullWidth
       >
-        <DialogTitle>{formMode === 'create' ? '新增路线' : '编辑路线'}</DialogTitle>
+        <DialogTitle>{formMode === 'create' ? i18n.t('tms.route_management_page.k30') : i18n.t('tms.route_management_page.k29')}</DialogTitle>
         <DialogContent>
           <Box
             sx={{
@@ -331,40 +310,40 @@ const RouteManagementPage: React.FC = () => {
             }}
           >
             <TextField
-              label='路线编号'
+              label={i18n.t('tms.route_management_page.k31')}
               value={formData.route_no || ''}
               onChange={(e) => setFormData({ ...formData, route_no: e.target.value })}
               size='small'
               required
             />
             <TextField
-              label='名称'
+              label={i18n.t('tms.route_management_page.k32')}
               value={formData.name || ''}
               onChange={(e) => setFormData({ ...formData, name: e.target.value })}
               size='small'
               required
             />
             <TextField
-              label='起点'
+              label={i18n.t('tms.route_management_page.k33')}
               value={formData.origin || ''}
               onChange={(e) => setFormData({ ...formData, origin: e.target.value })}
               size='small'
             />
             <TextField
-              label='终点'
+              label={i18n.t('tms.route_management_page.k34')}
               value={formData.destination || ''}
               onChange={(e) => setFormData({ ...formData, destination: e.target.value })}
               size='small'
             />
             <TextField
-              label='距离(km)'
+              label={i18n.t('tms.route_management_page.km_35')}
               type='number'
               value={formData.distance_km ?? ''}
               onChange={(e) => setFormData({ ...formData, distance_km: Number(e.target.value) })}
               size='small'
             />
             <TextField
-              label='预计时长(h)'
+              label={i18n.t('tms.route_management_page.h_36')}
               type='number'
               value={formData.estimated_hours ?? ''}
               onChange={(e) =>
@@ -373,7 +352,7 @@ const RouteManagementPage: React.FC = () => {
               size='small'
             />
             <TextField
-              label='状态'
+              label={i18n.t('tms.route_management_page.k37')}
               select
               value={formData.status || 'active'}
               onChange={(e) => setFormData({ ...formData, status: e.target.value as RouteStatus })}
@@ -391,43 +370,41 @@ const RouteManagementPage: React.FC = () => {
           </Box>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setFormOpen(false)}>取消</Button>
+          <Button onClick={() => setFormOpen(false)}>{i18n.t('tms.route_management_page.k38')}</Button>
           <Button
             variant='contained'
             onClick={handleSubmit}
             disabled={submitting || !formData.route_no || !formData.name}
           >
-            {submitting ? '保存中...' : '保存'}
+            {submitting ? i18n.t('pages.route_management_page.k2') : i18n.t('tms.route_management_page.k39')}
           </Button>
         </DialogActions>
       </Dialog>
-
       <Dialog
         open={!!deleteTarget}
         onClose={() => setDeleteTarget(null)}
         maxWidth='xs'
         fullWidth
       >
-        <DialogTitle>确认删除</DialogTitle>
+        <DialogTitle>{i18n.t('tms.route_management_page.k40')}</DialogTitle>
         <DialogContent>
           <Typography>
             确定要删除路线「{deleteTarget?.name}」吗？此操作不可撤销。
           </Typography>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setDeleteTarget(null)}>取消</Button>
+          <Button onClick={() => setDeleteTarget(null)}>{i18n.t('tms.route_management_page.k41')}</Button>
           <Button
             color='error'
             variant='contained'
             onClick={() => deleteTarget && deleteMutation.mutate(deleteTarget.id)}
             disabled={deleteMutation.isPending}
           >
-            {deleteMutation.isPending ? '删除中...' : '删除'}
+            {deleteMutation.isPending ? i18n.t('pages.route_management_page.k3') : i18n.t('tms.route_management_page.k42')}
           </Button>
         </DialogActions>
       </Dialog>
     </PageContainer>
   );
 };
-
 export default RouteManagementPage;

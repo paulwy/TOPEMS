@@ -3,7 +3,6 @@
  * Database structure tree view component - displays database table list
  */
 import React from 'react';
-import { useTranslation } from 'react-i18next';
 import {
   Box,
   Paper,
@@ -13,9 +12,9 @@ import {
   Stack,
   CircularProgress,
 } from '@mui/material';
+import i18n from '@/i18n';
 import { Table, Search } from 'lucide-react';
 import type { TableInfo, TableDetail } from '@/api/system';
-
 interface DatabaseStructureTreeProps {
   loading: boolean;
   searchQuery: string;
@@ -24,7 +23,6 @@ interface DatabaseStructureTreeProps {
   selectedTable: TableDetail | null;
   onTableSelect: (table: TableDetail) => void;
 }
-
 export const DatabaseStructureTree: React.FC<DatabaseStructureTreeProps> = ({
   loading,
   searchQuery,
@@ -33,8 +31,6 @@ export const DatabaseStructureTree: React.FC<DatabaseStructureTreeProps> = ({
   selectedTable,
   onTableSelect,
 }) => {
-  const { t } = useTranslation();
-
   return (
     <Paper
       elevation={0}
@@ -50,7 +46,7 @@ export const DatabaseStructureTree: React.FC<DatabaseStructureTreeProps> = ({
       <TextField
         fullWidth
         size='small'
-        placeholder={t('admin.database_structure_page.attr_f5f091')}
+        placeholder={i18n.t('admin.database_structure_page.attr_f5f091')}
         value={searchQuery}
         onChange={(e) => onSearchChange(e.target.value)}
         sx={{ mb: 2 }}
@@ -67,7 +63,6 @@ export const DatabaseStructureTree: React.FC<DatabaseStructureTreeProps> = ({
           },
         }}
       />
-
       {loading ? (
         <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
           <CircularProgress size={24} />

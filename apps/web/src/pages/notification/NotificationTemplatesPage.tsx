@@ -11,6 +11,7 @@ import {
   Stack,
   Divider,
 } from '@mui/material';
+import i18n from '@/i18n';
 import { FileText, Copy, Eye, Upload, Download } from 'lucide-react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import CrudPage, { type CrudApiAdapter } from '@/components/templates/CrudPage';
@@ -33,21 +34,16 @@ import { extractErrorMessage } from '@/utils/errors';
 import { apiLogger } from '@/utils/logger';
 import { NOTIFICATION_PATHS } from '@/modules/notification/config';
 import { ConfirmDialog } from '@topems/shared-components';
-
-
 import { QUERY_KEYS } from '@/lib/reactQuery';
-
 const NotificationTemplatesPage: React.FC = () => {
   const addNotification = useNotificationStore((state) => state.addNotification);
   const queryClient = useQueryClient();
-
   const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<NotificationTemplate | null>(null);
   const [previewOpen, setPreviewOpen] = useState(false);
   const [previewTemplate, setPreviewTemplate] = useState<NotificationTemplate | null>(null);
   const [previewData, setPreviewData] = useState<{ title: string; content: string } | null>(null);
   const [previewLoading, setPreviewLoading] = useState(false);
-
   const apiAdapter: CrudApiAdapter = useMemo(
     () => ({
       list: async (params) => {
@@ -56,24 +52,19 @@ const NotificationTemplatesPage: React.FC = () => {
         const search = (params?.search as string) || '';
         const statusFilter = (params?.status as string) || '';
         const typeFilter = (params?.notification_type as string) || '';
-
         const response = await getTemplates(
           page,
           pageSize,
           statusFilter && statusFilter !== 'all' ? (statusFilter as TemplateStatusEnum) : undefined,
           search || undefined
         );
-
         if (!response.success || !response.data) {
           return { data: [], total: 0 };
         }
-
         let templates = response.data.templates;
-
         if (typeFilter && typeFilter !== 'all') {
           templates = templates.filter((t) => t.notification_type === typeFilter);
         }
-
         return {
           data: templates as unknown as Record<string, unknown>[],
           total: response.data.total || templates.length,
@@ -92,14 +83,13 @@ const NotificationTemplatesPage: React.FC = () => {
           data_schema: requestData.data_schema,
           default_priority: requestData.default_priority,
         };
-
         const response = await createTemplate(createData);
         if (!response.success) {
-          throw new Error(response.message || '创建模板失败');
+          throw new Error(response.message || i18n.t('notification.notification_templates_page.k0'));
         }
         addNotification({
-          title: '创建成功',
-          message: '模板已创建',
+          title: i18n.t('notification.notification_templates_page.k1'),
+          message: i18n.t('notification.notification_templates_page.k2'),
           type: 'success',
         });
         return response.data as unknown as Record<string, unknown>;
@@ -118,14 +108,13 @@ const NotificationTemplatesPage: React.FC = () => {
           data_schema: requestData.data_schema,
           default_priority: requestData.default_priority,
         };
-
         const response = await updateTemplate(String(id), updateData);
         if (!response.success) {
-          throw new Error(response.message || '更新模板失败');
+          throw new Error(response.message || i18n.t('notification.notification_templates_page.k3'));
         }
         addNotification({
-          title: '更新成功',
-          message: '模板已更新',
+          title: i18n.t('notification.notification_templates_page.k4'),
+          message: i18n.t('notification.notification_templates_page.k5'),
           type: 'success',
         });
         return response.data as unknown as Record<string, unknown>;
@@ -133,18 +122,17 @@ const NotificationTemplatesPage: React.FC = () => {
       delete: async (id) => {
         const response = await deleteTemplate(String(id));
         if (!response.success) {
-          throw new Error(response.message || '删除模板失败');
+          throw new Error(response.message || i18n.t('notification.notification_templates_page.k6'));
         }
         addNotification({
-          title: '删除成功',
-          message: '模板已删除',
+          title: i18n.t('notification.notification_templates_page.k7'),
+          message: i18n.t('notification.notification_templates_page.k8'),
           type: 'success',
         });
       },
     }),
     [addNotification]
   );
-
   const createMutation = useMutation({
     mutationFn: (data: CreateTemplateRequest) => createTemplate(data),
     onSuccess: () => {
@@ -154,7 +142,6 @@ const NotificationTemplatesPage: React.FC = () => {
 });
     },
   });
-
   const handleCopy = useCallback(
     async (template: NotificationTemplate) => {
       try {
@@ -162,7 +149,7 @@ const NotificationTemplatesPage: React.FC = () => {
         if (original.success && original.data) {
           const t = original.data;
           await createMutation.mutateAsync({
-            name: `${t.name} - 副本`,
+            name: `${t.name}${i18n.t('pages.notification_templates_page.k0')}`,
             description: t.description,
             title_template: t.title_template,
             content_template: t.content_template,
@@ -173,29 +160,27 @@ const NotificationTemplatesPage: React.FC = () => {
             default_priority: t.default_priority,
           });
           addNotification({
-            title: '复制成功',
-            message: `模板「${template.name}」已复制`,
+            title: i18n.t('notification.notification_templates_page.k9'),
+            message: `${i18n.t('pages.notification_templates_page.k1')}${template.name}${i18n.t('pages.notification_templates_page.k2')}`,
             type: 'success',
           });
         }
       } catch (err: unknown) {
-        apiLogger.error('复制模板失败:', err);
+        apiLogger.error(i18n.t('pages.notification_templates_page.k3'), err);
         addNotification({
-          title: '失败',
-          message: '复制模板失败',
+          title: i18n.t('notification.notification_templates_page.k10'),
+          message: i18n.t('notification.notification_templates_page.k11'),
           type: 'error',
         });
       }
     },
     [addNotification, createMutation]
   );
-
   const handlePreview = useCallback(async (template: NotificationTemplate) => {
     setPreviewTemplate(template);
     setPreviewOpen(true);
     setPreviewLoading(true);
     setPreviewData(null);
-
     try {
       const sampleData: Record<string, unknown> = {};
       if (template.variables && template.variables.length > 0) {
@@ -203,30 +188,27 @@ const NotificationTemplatesPage: React.FC = () => {
           sampleData[v] = `{${v}}`;
         });
       }
-
       const response = await renderTemplate(template.id, sampleData);
       if (response.success && response.data) {
         setPreviewData(response.data);
       }
     } catch (err: unknown) {
-      apiLogger.error('渲染模板失败:', err);
+      apiLogger.error(i18n.t('pages.notification_templates_page.k4'), err);
     } finally {
       setPreviewLoading(false);
     }
   }, []);
-
   const handleDelete = useCallback((template: NotificationTemplate) => {
     setDeleteTarget(template);
     setConfirmDialogOpen(true);
   }, []);
-
   const confirmDelete = useCallback(async () => {
     if (!deleteTarget) return;
     try {
       await deleteTemplate(deleteTarget.id);
       addNotification({
-        title: '删除成功',
-        message: `模板「${deleteTarget.name}」已删除`,
+        title: i18n.t('notification.notification_templates_page.k12'),
+        message: `${i18n.t('pages.notification_templates_page.k5')}${deleteTarget.name}${i18n.t('pages.notification_templates_page.k6')}`,
         type: 'success',
       });
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.NOTIFICATION_TEMPLATES_BASE ,
@@ -234,39 +216,36 @@ const NotificationTemplatesPage: React.FC = () => {
   refetchType: 'active',
 });
     } catch (_err: unknown) {
-      const errorMsg = extractErrorMessage(_err, '删除失败');
-      addNotification({ title: '失败', message: errorMsg, type: 'error' });
+      const errorMsg = extractErrorMessage(_err, i18n.t('notification.notification_templates_page.k13'));
+      addNotification({ title: i18n.t('notification.notification_templates_page.k14'), message: errorMsg, type: 'error' });
     } finally {
       setConfirmDialogOpen(false);
       setDeleteTarget(null);
     }
   }, [deleteTarget, addNotification, queryClient]);
-
   const handleImport = useCallback(() => {
     addNotification({
-      title: '导入模板',
-      message: '请选择要导入的模板文件',
+      title: i18n.t('notification.notification_templates_page.k15'),
+      message: i18n.t('notification.notification_templates_page.k16'),
       type: 'info',
     });
   }, [addNotification]);
-
   const handleExport = useCallback(() => {
     addNotification({
-      title: '导出成功',
-      message: '模板数据已导出',
+      title: i18n.t('notification.notification_templates_page.k17'),
+      message: i18n.t('notification.notification_templates_page.k18'),
       type: 'success',
     });
   }, [addNotification]);
-
   const customRowActions: RowAction[] = useMemo(
     () => [
       {
-        label: '预览',
+        label: i18n.t('notification.notification_templates_page.k19'),
         icon: <Eye size={16} />,
         onClick: (row) => handlePreview(row as unknown as NotificationTemplate),
       },
       {
-        label: '复制',
+        label: i18n.t('notification.notification_templates_page.k20'),
         icon: <Copy size={16} />,
         onClick: (row) => handleCopy(row as unknown as NotificationTemplate),
         divider: true,
@@ -274,16 +253,13 @@ const NotificationTemplatesPage: React.FC = () => {
     ],
     [handlePreview, handleCopy]
   );
-
   const headerContent = useCallback((rows: Record<string, unknown>[]) => {
     const templates = rows as unknown as NotificationTemplate[];
     const totalCount = templates.length;
     const active = templates.filter((t) => t.status === 'active').length;
     const inactive = templates.filter((t) => t.status === 'inactive').length;
     const todayUsage = templates.length * 10;
-
     const stats = { total: totalCount, active, inactive, todayUsage };
-
     return (
       <Box sx={{ px: { xs: 2, sm: 3 }, py: 2, borderBottom: 1, borderColor: 'divider', mb: 2 }}>
         <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2 }}>
@@ -319,7 +295,7 @@ const NotificationTemplatesPage: React.FC = () => {
                   variant='caption'
                   color='text.secondary'
                 >
-                  模板总数
+                  {i18n.t('pages.notification_templates_page.k0')}
                 </Typography>
                 <Typography
                   variant='h5'
@@ -362,7 +338,7 @@ const NotificationTemplatesPage: React.FC = () => {
                   variant='caption'
                   color='text.secondary'
                 >
-                  启用模板
+                  {i18n.t('pages.notification_templates_page.k1')}
                 </Typography>
                 <Typography
                   variant='h5'
@@ -405,7 +381,7 @@ const NotificationTemplatesPage: React.FC = () => {
                   variant='caption'
                   color='text.secondary'
                 >
-                  禁用模板
+                  {i18n.t('pages.notification_templates_page.k2')}
                 </Typography>
                 <Typography
                   variant='h5'
@@ -448,7 +424,7 @@ const NotificationTemplatesPage: React.FC = () => {
                   variant='caption'
                   color='text.secondary'
                 >
-                  今日使用次数
+                  {i18n.t('pages.notification_templates_page.k3')}
                 </Typography>
                 <Typography
                   variant='h5'
@@ -463,17 +439,16 @@ const NotificationTemplatesPage: React.FC = () => {
       </Box>
     );
   }, []);
-
   const extraActions = useMemo(
     () => [
       {
-        label: '导入',
+        label: i18n.t('notification.notification_templates_page.k21'),
         icon: <Upload size={16} />,
         onClick: handleImport,
         variant: 'outlined' as const,
       },
       {
-        label: '导出',
+        label: i18n.t('notification.notification_templates_page.k22'),
         icon: <Download size={16} />,
         onClick: handleExport,
         variant: 'outlined' as const,
@@ -481,7 +456,6 @@ const NotificationTemplatesPage: React.FC = () => {
     ],
     [handleImport, handleExport]
   );
-
   return (
     <>
       <CrudPage
@@ -489,9 +463,8 @@ const NotificationTemplatesPage: React.FC = () => {
         apiAdapter={apiAdapter}
         customRowActions={customRowActions}
         headerContent={headerContent}
-        breadcrumbs={[{ label: '首页', href: NOTIFICATION_PATHS.dashboard }, { label: '通知模板' }]}
+        breadcrumbs={[{ label: i18n.t('notification.notification_templates_page.k24'), href: NOTIFICATION_PATHS.dashboard }, { label: i18n.t('notification.notification_templates_page.k23') }]}
       />
-
       <ConfirmDialog
         isOpen={confirmDialogOpen}
         onClose={() => {
@@ -499,12 +472,11 @@ const NotificationTemplatesPage: React.FC = () => {
           setDeleteTarget(null);
         }}
         onConfirm={confirmDelete}
-        title='确认删除'
-        message={`确定要删除模板「${deleteTarget?.name}」吗？此操作不可恢复。`}
+        title={i18n.t('notification.notification_templates_page.k25')}
+        message={`${i18n.t('pages.notification_templates_page.k7')}${deleteTarget?.name}${i18n.t('pages.notification_templates_page.k8')}`}
         danger
-        confirmLabel='删除'
+        confirmLabel={i18n.t('notification.notification_templates_page.k26')}
       />
-
       <Dialog
         open={previewOpen}
         onClose={() => {
@@ -528,7 +500,7 @@ const NotificationTemplatesPage: React.FC = () => {
         <DialogContent dividers>
           {previewLoading ? (
             <Box sx={{ textAlign: 'center', py: 4 }}>
-              <Typography color='text.secondary'>加载中...</Typography>
+              <Typography color='text.secondary'>{i18n.t('pages.notification_templates_page.k9')}</Typography>
             </Box>
           ) : previewData ? (
             <Stack spacing={3}>
@@ -538,7 +510,7 @@ const NotificationTemplatesPage: React.FC = () => {
                   color='text.secondary'
                   sx={{ mb: 1, display: 'block' }}
                 >
-                  标题
+                  {i18n.t('pages.notification_templates_page.k4')}
                 </Typography>
                 <Box
                   sx={{
@@ -564,7 +536,7 @@ const NotificationTemplatesPage: React.FC = () => {
                   color='text.secondary'
                   sx={{ mb: 1, display: 'block' }}
                 >
-                  内容
+                  {i18n.t('pages.notification_templates_page.k5')}
                 </Typography>
                 <Box
                   sx={{
@@ -593,7 +565,7 @@ const NotificationTemplatesPage: React.FC = () => {
                       color='text.secondary'
                       sx={{ mb: 1, display: 'block' }}
                     >
-                      可用变量
+                      {i18n.t('pages.notification_templates_page.k6')}
                     </Typography>
                     <Stack
                       direction='row'
@@ -615,7 +587,7 @@ const NotificationTemplatesPage: React.FC = () => {
             </Stack>
           ) : (
             <Box sx={{ textAlign: 'center', py: 4 }}>
-              <Typography color='text.secondary'>无法加载预览</Typography>
+              <Typography color='text.secondary'>{i18n.t('notification.notification_templates_page.k27')}</Typography>
             </Box>
           )}
         </DialogContent>
@@ -627,12 +599,11 @@ const NotificationTemplatesPage: React.FC = () => {
               setPreviewData(null);
             }}
           >
-            关闭
+            {i18n.t('pages.notification_templates_page.k7')}
           </Button>
         </DialogActions>
       </Dialog>
     </>
   );
 };
-
 export default NotificationTemplatesPage;

@@ -9,6 +9,7 @@
 import { useEffect, useState } from 'react';
 import { Box, Typography, Chip, Stack } from '@mui/material';
 import { getDebugTrace } from './useDebugTrace';
+import i18n from '@/i18n';
 
 interface DebugInfo {
   route: string;
@@ -68,7 +69,7 @@ export function DebugOverlay() {
         cursor: 'pointer',
       }}
       onClick={() => setVisible(false)}
-      title='点击关闭（dev only）'
+      title={i18n.t('debug.debug_overlay.devonly_0')}
     >
       <Stack spacing={0.5}>
         <Typography

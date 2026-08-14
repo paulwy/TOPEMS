@@ -5,6 +5,7 @@ import { Box as MuiBox, Typography, Paper, IconButton } from '@mui/material';
 import type { DevicePoint, Pipeline, StorageLocation, GeoJSONFeature } from '../../../api/gis';
 import DeviceTrackPanel from '../DeviceTrackPanel';
 import HeatmapLayer, { HeatmapLegend } from '../HeatmapLayer';
+import i18n from '@/i18n';
 // C3 §5 P1-2: Map3DView 按需懒加载，将 three.js + @react-three/* 拆分为独立 chunk
 const Map3DView = lazy(() => import('../Map3DView'));
 import AmapLayer from '../AmapLayer';
@@ -108,16 +109,16 @@ const MapView: React.FC<MapViewProps> = ({
 
   const formatDistance = (meters: number): string => {
     if (meters < 1000) {
-      return `${meters.toFixed(2)} 米`;
+      return `${meters.toFixed(2)}${i18n.t('components.index.k0')}`;
     }
-    return `${(meters / 1000).toFixed(2)} 公里`;
+    return `${(meters / 1000).toFixed(2)}${i18n.t('components.index.k1')}`;
   };
 
   const formatArea = (squareMeters: number): string => {
     if (squareMeters < 10000) {
-      return `${squareMeters.toFixed(2)} 平方米`;
+      return `${squareMeters.toFixed(2)}${i18n.t('components.index.k2')}`;
     }
-    return `${(squareMeters / 10000).toFixed(2)} 公顷`;
+    return `${(squareMeters / 10000).toFixed(2)}${i18n.t('components.index.k3')}`;
   };
 
   const handleMarkerClick = (item: DevicePoint | StorageLocation) => {
@@ -138,14 +139,14 @@ const MapView: React.FC<MapViewProps> = ({
       setMeasurePoints(newPoints);
       if (newPoints.length >= 2) {
         const totalDistance = calculateTotalDistance(newPoints);
-        setMeasureResult(`距离: ${formatDistance(totalDistance)}`);
+        setMeasureResult(`${i18n.t('components.index.k4')}${formatDistance(totalDistance)}`);
       }
     } else if (toolMode === 'measure-area') {
       const newPoints = [...measurePoints, point];
       setMeasurePoints(newPoints);
       if (newPoints.length >= 3) {
         const area = calculateArea(newPoints);
-        setMeasureResult(`面积: ${formatArea(area)}`);
+        setMeasureResult(`${i18n.t('components.index.k5')}${formatArea(area)}`);
       }
     } else if (toolMode === 'draw-point') {
       const newFeature: DrawFeature = {
@@ -204,10 +205,10 @@ const MapView: React.FC<MapViewProps> = ({
         const tempPoints: [number, number][] = [...measurePoints, [latlng.lat, latlng.lng]];
         if (toolMode === 'measure-distance') {
           const totalDistance = calculateTotalDistance(tempPoints);
-          setMeasureResult(`距离: ${formatDistance(totalDistance)}`);
+          setMeasureResult(`${i18n.t('components.index.k6')}${formatDistance(totalDistance)}`);
         } else if (toolMode === 'measure-area' && tempPoints.length >= 3) {
           const area = calculateArea(tempPoints);
-          setMeasureResult(`面积: ${formatArea(area)}`);
+          setMeasureResult(`${i18n.t('components.index.k7')}${formatArea(area)}`);
         }
       }
     } else {
@@ -533,7 +534,7 @@ const MapView: React.FC<MapViewProps> = ({
             backgroundColor: 'common.white',
             borderRadius: 2,
             boxShadow: designTokens.shadows.md,
-            padding: '8px 16px',
+            padding: `${designTokens.spacing.sm} 16px`,
           }}
         >
           <Typography
@@ -554,14 +555,14 @@ const MapView: React.FC<MapViewProps> = ({
             backgroundColor: ct.warning[100],
             border: `1px solid ${ct.warning[200]}`,
             borderRadius: 2,
-            padding: '8px 16px',
+            padding: `${designTokens.spacing.sm} 16px`,
           }}
         >
           <Typography
             variant='caption'
             sx={{ color: ct.warning[800] }}
           >
-            按 ESC 退出工具模式 | 按 Enter 完成绘制
+            {i18n.t('components.index.k0')}
           </Typography>
         </Paper>
       )}
@@ -578,8 +579,8 @@ const MapView: React.FC<MapViewProps> = ({
       >
         <IconButton
           onClick={() => setZoom((z) => Math.min(z + 1, 18))}
-          aria-label='放大'
-          title='放大'
+          aria-label={i18n.t('gis.index.k0')}
+          title={i18n.t('gis.index.k1')}
           sx={{
             padding: 1,
             backgroundColor: 'common.white',
@@ -597,8 +598,8 @@ const MapView: React.FC<MapViewProps> = ({
         </IconButton>
         <IconButton
           onClick={() => setZoom((z) => Math.max(z - 1, 1))}
-          aria-label='缩小'
-          title='缩小'
+          aria-label={i18n.t('gis.index.k2')}
+          title={i18n.t('gis.index.k3')}
           sx={{
             padding: 1,
             backgroundColor: 'common.white',

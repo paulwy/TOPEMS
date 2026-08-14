@@ -11,9 +11,7 @@ import type {
   BusinessLocation,
 } from '@/api/gis';
 import type { GisEntity } from '../types';
-
 import i18n from '@/i18n';
-
 export const getStatusStyle = (status: string) => {
   if (!status) return { bgcolor: 'grey.100', color: 'grey.600' };
   const s = status.toLowerCase();
@@ -28,7 +26,6 @@ export const getStatusStyle = (status: string) => {
     return { bgcolor: 'error.lighter', color: 'error.darker' };
   return { bgcolor: 'grey.100', color: 'grey.600' };
 };
-
 export const StatusChip: React.FC<{ status: string }> = ({ status }) => {
   const style = getStatusStyle(status);
   return (
@@ -39,13 +36,11 @@ export const StatusChip: React.FC<{ status: string }> = ({ status }) => {
     />
   );
 };
-
 export interface ActionButtonsProps {
   item: GisEntity;
   onEdit: (item: GisEntity) => void;
   onDelete: (id: string) => void;
 }
-
 export const ActionButtons: React.FC<ActionButtonsProps> = ({ item, onEdit, onDelete }) => (
   <Stack
     direction='row'
@@ -55,7 +50,7 @@ export const ActionButtons: React.FC<ActionButtonsProps> = ({ item, onEdit, onDe
       size='small'
       sx={{ color: 'info.main' }}
       onClick={() => onEdit(item)}
-      aria-label='编辑'
+      aria-label={i18n.t('bi.table_utils.k0')}
     >
       <Edit size={16} />
     </IconButton>
@@ -67,13 +62,12 @@ export const ActionButtons: React.FC<ActionButtonsProps> = ({ item, onEdit, onDe
           onDelete(item.id);
         }
       }}
-      aria-label='删除'
+      aria-label={i18n.t('bi.table_utils.k1')}
     >
       <Trash2 size={16} />
     </IconButton>
   </Stack>
 );
-
 export const getDevicePointColumns = (
   onEdit: (item: GisEntity) => void,
   onDelete: (id: string) => void
@@ -99,7 +93,6 @@ export const getDevicePointColumns = (
     ),
   },
 ];
-
 export const getPipelineColumns = (
   onEdit: (item: GisEntity) => void,
   onDelete: (id: string) => void
@@ -139,7 +132,6 @@ export const getPipelineColumns = (
     ),
   },
 ];
-
 export const getStorageLocationColumns = (
   onEdit: (item: GisEntity) => void,
   onDelete: (id: string) => void
@@ -170,7 +162,6 @@ export const getStorageLocationColumns = (
     ),
   },
 ];
-
 export const getEvidenceRecordColumns = (
   onEdit: (item: GisEntity) => void,
   onDelete: (id: string) => void
@@ -199,7 +190,6 @@ export const getEvidenceRecordColumns = (
     ),
   },
 ];
-
 export const getFactoryMapColumns = (
   onEdit: (item: GisEntity) => void,
   onDelete: (id: string) => void
@@ -228,7 +218,6 @@ export const getFactoryMapColumns = (
     ),
   },
 ];
-
 export const getBusinessLocationColumns = (
   onEdit: (item: GisEntity) => void,
   onDelete: (id: string) => void
@@ -254,7 +243,6 @@ export const getBusinessLocationColumns = (
     ),
   },
 ];
-
 export const InputField: React.FC<{
   label: string;
   name: string;
@@ -286,7 +274,6 @@ export const InputField: React.FC<{
     </Box>
   );
 };
-
 export const TextAreaField: React.FC<{
   label: string;
   value: unknown;

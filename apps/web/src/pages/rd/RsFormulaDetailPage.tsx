@@ -17,6 +17,7 @@ import {
   LinearProgress,
   Alert,
 } from '@mui/material';
+import i18n from '@/i18n';
 import { Edit, History, CheckCircle } from 'lucide-react';
 import { DetailPageTemplate, type SectionConfig, type PageAction } from '@/components/templates';
 import { formulaApi } from '@/api/rd';
@@ -25,44 +26,40 @@ import type { Formula, FormulaVersion } from '@/api/rd';
 import { useNotificationStore } from '@/store';
 import {QUERY_KEYS, CACHE_DURATIONS} from '@/lib/reactQuery';
 import { logger } from '@/utils/logger';
-
 const RsFormulaDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { addNotification } = useNotificationStore();
-
   const formulaQuery = useQuery({
     queryKey: QUERY_KEYS.RD.FORMULA(id || ''),
     queryFn: async () => {
       const response = await formulaApi.getFormula(id || '');
       if (!response.success || !response.data) {
-        throw new Error(response.message || '无法获取配方详情');
+        throw new Error(response.message || i18n.t('rd.rs_formula_detail_page.k0'));
       }
       return response.data;
     },
     enabled: !!id,
   
       staleTime: CACHE_DURATIONS.MEDIUM,});
-
   const versionsQuery = useQuery({
     queryKey: QUERY_KEYS.RD.FORMULA_VERSIONS(id || ''),
     queryFn: async () => {
       const response = await formulaApi.listVersions(id || '');
       if (!response.success || !response.data) {
-        throw new Error(response.message || '无法获取版本历史');
+        throw new Error(response.message || i18n.t('rd.rs_formula_detail_page.k1'));
       }
       return response.data;
     },
     enabled: !!id,
   
       staleTime: CACHE_DURATIONS.MEDIUM,});
-
   const approveMutation = useMutation({
     mutationFn: async (formulaId: string) => {
       const response = await formulaApi.approveFormula(formulaId);
       if (!response.success || !response.data) {
-        throw new Error(response.message || '无法审批配方');
+        throw new Error(response.message || i18n.t('rd.rs_formula_detail_page.k2'));
       }
       return response.data;
     },
@@ -74,72 +71,65 @@ const RsFormulaDetailPage: React.FC = () => {
 });
       addNotification({
         type: 'success',
-        title: '审批成功',
-        message: '配方已通过审批',
+        title: i18n.t('rd.rs_formula_detail_page.k3'),
+        message: i18n.t('rd.rs_formula_detail_page.k4'),
       });
     },
     onError: (error: unknown) => {
-      logger.error('审批配方失败:', error);
+      logger.error(i18n.t('pages.rs_formula_detail_page.k0'), error);
       addNotification({
         type: 'error',
-        title: '审批失败',
-        message: error instanceof Error ? error.message : '无法审批配方',
+        title: i18n.t('rd.rs_formula_detail_page.k5'),
+        message: error instanceof Error ? error.message : i18n.t('rd.rs_formula_detail_page.k6'),
       });
     },
   });
-
   const formula = formulaQuery.data || null;
   const versions = versionsQuery.data || [];
   const loading = formulaQuery.isLoading || versionsQuery.isLoading;
-  const error = formulaQuery.error ? '加载配方详情失败' : null;
+  const error = formulaQuery.error ? i18n.t('rd.rs_formula_detail_page.k7') : null;
   const approving = approveMutation.isPending;
-
   React.useEffect(() => {
     if (formulaQuery.error) {
-      logger.error('加载配方详情失败:', formulaQuery.error);
+      logger.error(i18n.t('pages.rs_formula_detail_page.k1'), formulaQuery.error);
     }
   }, [formulaQuery.error]);
-
   const handleApprove = () => {
     if (!formula || approving) return;
     approveMutation.mutate(formula.id);
   };
-
   const handleEdit = () => {
     if (formula) {
       navigate(`${RD_PATHS.formula}/${formula.id}/edit`);
     }
   };
-
   const getStatusColor = (status: string): 'success' | 'warning' | 'primary' | 'default' => {
     switch (status) {
-      case '已发布':
+      case i18n.t('rd.rs_formula_detail_page.k8'):
       case 'approved':
         return 'success';
-      case '测试中':
+      case i18n.t('rd.rs_formula_detail_page.k9'):
       case 'testing':
         return 'warning';
-      case '草稿':
+      case i18n.t('rd.rs_formula_detail_page.k10'):
       case 'draft':
         return 'default';
       default:
         return 'primary';
     }
   };
-
   const getStatusLabel = (status: string): string => {
     switch (status) {
       case 'approved':
-        return '已发布';
+        return i18n.t('rd.rs_formula_detail_page.k11');
       case 'testing':
-        return '测试中';
+        return i18n.t('rd.rs_formula_detail_page.k12');
       case 'draft':
-        return '草稿';
+        return i18n.t('rd.rs_formula_detail_page.k13');
       default:
         return status;
     }
   };
-
   if (loading) {
     return (
       <Box sx={{ p: 3 }}>
@@ -147,54 +137,52 @@ const RsFormulaDetailPage: React.FC = () => {
       </Box>
     );
   }
-
   if (error || !formula) {
     return (
       <Box sx={{ p: 3 }}>
-        <Alert severity='error'>{error || '配方不存在'}</Alert>
+        <Alert severity='error'>{error || i18n.t('rd.rs_formula_detail_page.k14')}</Alert>
       </Box>
     );
   }
-
   const sections: SectionConfig[] = [
     {
       id: 'description',
-      title: '配方描述',
+      title: i18n.t('rd.rs_formula_detail_page.k15'),
       content: (
         <Typography
           variant='body2'
           color='text.secondary'
         >
-          {formula.description || '暂无描述'}
+          {formula.description || i18n.t('rd.rs_formula_detail_page.k16')}
         </Typography>
       ),
     },
     {
       id: 'process_steps',
-      title: '工艺流程',
+      title: i18n.t('rd.rs_formula_detail_page.k17'),
       content: (
         <Typography
           variant='body2'
           color='text.secondary'
         >
-          {formula.process_steps || '暂无工艺流程'}
+          {formula.process_steps || i18n.t('rd.rs_formula_detail_page.k18')}
         </Typography>
       ),
     },
     {
       id: 'components',
-      title: '配方组成',
+      title: i18n.t('rd.rs_formula_detail_page.k19'),
       content: (
         <TableContainer>
           <Table size='small'>
             <TableHead>
               <TableRow>
-                <TableCell>组分名称</TableCell>
-                <TableCell>数量</TableCell>
-                <TableCell>单位</TableCell>
-                <TableCell>纯度</TableCell>
-                <TableCell>供应商</TableCell>
-                <TableCell>备注</TableCell>
+                <TableCell>{i18n.t('rd.rs_formula_detail_page.k20')}</TableCell>
+                <TableCell>{i18n.t('rd.rs_formula_detail_page.k21')}</TableCell>
+                <TableCell>{i18n.t('rd.rs_formula_detail_page.k22')}</TableCell>
+                <TableCell>{i18n.t('rd.rs_formula_detail_page.k23')}</TableCell>
+                <TableCell>{i18n.t('rd.rs_formula_detail_page.k24')}</TableCell>
+                <TableCell>{i18n.t('rd.rs_formula_detail_page.k25')}</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
@@ -219,7 +207,7 @@ const RsFormulaDetailPage: React.FC = () => {
                       variant='body2'
                       color='text.secondary'
                     >
-                      暂无配方组成
+                      {i18n.t('pages.rs_formula_detail_page.k0')}
                     </Typography>
                   </TableCell>
                 </TableRow>
@@ -230,14 +218,13 @@ const RsFormulaDetailPage: React.FC = () => {
       ),
     },
   ];
-
   const sidebar = (
     <Stack spacing={2}>
       <Typography
         variant='subtitle1'
         sx={{ fontWeight: 'bold' }}
       >
-        版本历史
+        {i18n.t('pages.rs_formula_detail_page.k1')}
       </Typography>
       {versions.length > 0 ? (
         versions.map((v, index) => (
@@ -260,7 +247,7 @@ const RsFormulaDetailPage: React.FC = () => {
               variant='body2'
               sx={{ mt: 1 }}
             >
-              {v.changes || '暂无变更说明'}
+              {v.changes || i18n.t('rd.rs_formula_detail_page.k26')}
             </Typography>
             {v.approved_by && (
               <Typography
@@ -268,7 +255,7 @@ const RsFormulaDetailPage: React.FC = () => {
                 color='text.secondary'
                 sx={{ mt: 1 }}
               >
-                审批人: {v.approved_by}
+                [i18n.t('pages.rs_formula_detail_page.k2')]: {v.approved_by}
               </Typography>
             )}
           </Paper>
@@ -278,40 +265,38 @@ const RsFormulaDetailPage: React.FC = () => {
           variant='body2'
           color='text.secondary'
         >
-          暂无版本历史
+          {i18n.t('pages.rs_formula_detail_page.k3')}
         </Typography>
       )}
     </Stack>
   );
-
   const infoCard = {
     title: formula.name,
-    subtitle: `编码: ${formula.code}`,
+    subtitle: `${i18n.t('pages.rs_formula_detail_page.k2')}${formula.code}`,
     tags: [formula.version, getStatusLabel(formula.status)],
     stats: [
-      { label: '创建人', value: formula.created_by },
-      { label: '创建时间', value: formula.created_at },
-      { label: '更新时间', value: formula.updated_at },
-      { label: '生效日期', value: formula.effective_date || '-' },
-      { label: '过期日期', value: formula.expiration_date || '-' },
+      { label: i18n.t('rd.rs_formula_detail_page.k27'), value: formula.created_by },
+      { label: i18n.t('rd.rs_formula_detail_page.k28'), value: formula.created_at },
+      { label: i18n.t('rd.rs_formula_detail_page.k29'), value: formula.updated_at },
+      { label: i18n.t('rd.rs_formula_detail_page.k30'), value: formula.effective_date || '-' },
+      { label: i18n.t('rd.rs_formula_detail_page.k31'), value: formula.expiration_date || '-' },
     ],
   };
-
   const actions: PageAction[] = [
     {
-      label: '版本历史',
+      label: i18n.t('rd.rs_formula_detail_page.k32'),
       icon: <History size={18} />,
       onClick: () => {},
       variant: 'outlined' as const,
     },
     {
-      label: '编辑',
+      label: i18n.t('rd.rs_formula_detail_page.k33'),
       icon: <Edit size={18} />,
       onClick: handleEdit,
       variant: 'contained' as const,
     },
     formula.status !== 'approved' && {
-      label: '审批',
+      label: i18n.t('rd.rs_formula_detail_page.k34'),
       icon: <CheckCircle size={18} />,
       onClick: handleApprove,
       variant: 'contained' as const,
@@ -319,17 +304,16 @@ const RsFormulaDetailPage: React.FC = () => {
       loading: approving,
     },
   ].filter(Boolean) as PageAction[];
-
   return (
     <PageContainer
       title={formula.name}
-      subtitle={`编码: ${formula.code}`}
+      subtitle={`${i18n.t('pages.rs_formula_detail_page.k3')}${formula.code}`}
     >
       <DetailPageTemplate
         title=''
         subtitle=''
         backHref={RD_PATHS.formula}
-        detailItemName={formula?.name || formula?.code || '配方详情'}
+        detailItemName={formula?.name || formula?.code || i18n.t('rd.rs_formula_detail_page.k35')}
         infoCard={infoCard}
         sections={sections}
         sidebar={sidebar}
@@ -338,5 +322,4 @@ const RsFormulaDetailPage: React.FC = () => {
     </PageContainer>
   );
 };
-
 export default RsFormulaDetailPage;

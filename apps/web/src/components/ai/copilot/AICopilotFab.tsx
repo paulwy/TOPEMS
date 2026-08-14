@@ -1,6 +1,7 @@
 import React from 'react';
 import { Fab, Zoom } from '@mui/material';
 import { Sparkles } from 'lucide-react';
+import i18n from '@/i18n';
 
 interface AICopilotFabProps {
   onClick: (event: React.MouseEvent<HTMLElement>) => void;
@@ -10,7 +11,7 @@ export const AICopilotFab: React.FC<AICopilotFabProps> = ({ onClick }) => (
   <Zoom in>
     <Fab
       color='primary'
-      aria-label='AI助手'
+      aria-label={i18n.t('components.ai_copilot_fab.ai_0')}
       className='ai-helper-fab'
       sx={{
         position: 'fixed',

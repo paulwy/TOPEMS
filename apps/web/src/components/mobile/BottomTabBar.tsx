@@ -1,6 +1,8 @@
 import React from 'react';
 import { BottomNavigation, BottomNavigationAction, Paper, useTheme, Badge } from '@mui/material';
 import { Home, ListTodo, ScanLine, CheckSquare, User } from 'lucide-react';
+import { designTokens } from '@topems/tokens';
+import i18n from '@/i18n';
 
 export interface TabItem {
   id: string;
@@ -16,16 +18,16 @@ export interface BottomTabBarProps {
 }
 
 const defaultTabs: TabItem[] = [
-  { id: 'home', label: '首页', icon: <Home style={{ width: 22, height: 22 }} /> },
-  { id: 'tasks', label: '任务', icon: <ListTodo style={{ width: 22, height: 22 }} /> },
-  { id: 'scan', label: '扫码', icon: <ScanLine style={{ width: 22, height: 22 }} /> },
+  { id: 'home', label: i18n.t('shared.bottom_tab_bar.k0'), icon: <Home style={{ width: 22, height: 22 }} /> },
+  { id: 'tasks', label: i18n.t('shared.bottom_tab_bar.k1'), icon: <ListTodo style={{ width: 22, height: 22 }} /> },
+  { id: 'scan', label: i18n.t('shared.bottom_tab_bar.k2'), icon: <ScanLine style={{ width: 22, height: 22 }} /> },
   {
     id: 'approval',
-    label: '审批',
+    label: i18n.t('shared.bottom_tab_bar.k3'),
     icon: <CheckSquare style={{ width: 22, height: 22 }} />,
     badge: 3,
   },
-  { id: 'profile', label: '我的', icon: <User style={{ width: 22, height: 22 }} /> },
+  { id: 'profile', label: i18n.t('shared.bottom_tab_bar.k4'), icon: <User style={{ width: 22, height: 22 }} /> },
 ];
 
 export const BottomTabBar: React.FC<BottomTabBarProps> = ({
@@ -62,7 +64,7 @@ export const BottomTabBar: React.FC<BottomTabBarProps> = ({
           height: 56,
           '& .MuiBottomNavigationAction-root': {
             minWidth: 0,
-            padding: '6px 0',
+            padding: `${designTokens.spacing.sm} 0`,
             minHeight: 56,
           },
           '& .MuiBottomNavigationAction-label': {

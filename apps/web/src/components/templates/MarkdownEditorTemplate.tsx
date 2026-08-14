@@ -24,6 +24,7 @@ import {
   Alert as MuiAlert,
   useTheme,
 } from '@mui/material';
+import i18n from '@/i18n';
 import {
   Bold,
   Italic,
@@ -121,46 +122,46 @@ const defaultToolbarActions: MarkdownEditorToolbarAction[] = [
   {
     id: 'bold',
     icon: <Bold size={18} />,
-    label: '粗体',
+    label: i18n.t('components.markdown_editor_template.k0'),
     shortcut: 'Ctrl+B',
     action: wrapSelection('**', '**'),
   },
   {
     id: 'italic',
     icon: <Italic size={18} />,
-    label: '斜体',
+    label: i18n.t('components.markdown_editor_template.k1'),
     shortcut: 'Ctrl+I',
     action: wrapSelection('*', '*'),
   },
   {
     id: 'underline',
     icon: <Underline size={18} />,
-    label: '下划线',
+    label: i18n.t('components.markdown_editor_template.k2'),
     action: wrapSelection('<u>', '</u>'),
   },
   {
     id: 'strikethrough',
     icon: <Strikethrough size={18} />,
-    label: '删除线',
+    label: i18n.t('components.markdown_editor_template.k3'),
     action: wrapSelection('~~', '~~'),
   },
   { id: 'divider1', divider: true },
-  { id: 'h1', icon: <Heading1 size={18} />, label: '一级标题', action: prependLine('# ') },
-  { id: 'h2', icon: <Heading2 size={18} />, label: '二级标题', action: prependLine('## ') },
-  { id: 'h3', icon: <Heading3 size={18} />, label: '三级标题', action: prependLine('### ') },
+  { id: 'h1', icon: <Heading1 size={18} />, label: i18n.t('components.markdown_editor_template.k4'), action: prependLine('# ') },
+  { id: 'h2', icon: <Heading2 size={18} />, label: i18n.t('components.markdown_editor_template.k5'), action: prependLine('## ') },
+  { id: 'h3', icon: <Heading3 size={18} />, label: i18n.t('components.markdown_editor_template.k6'), action: prependLine('### ') },
   { id: 'divider2', divider: true },
-  { id: 'ul', icon: <ListIcon size={18} />, label: '无序列表', action: prependLine('- ') },
-  { id: 'ol', icon: <ListOrdered size={18} />, label: '有序列表', action: prependLine('1. ') },
-  { id: 'quote', icon: <Quote size={18} />, label: '引用', action: prependLine('> ') },
+  { id: 'ul', icon: <ListIcon size={18} />, label: i18n.t('components.markdown_editor_template.k7'), action: prependLine('- ') },
+  { id: 'ol', icon: <ListOrdered size={18} />, label: i18n.t('components.markdown_editor_template.k8'), action: prependLine('1. ') },
+  { id: 'quote', icon: <Quote size={18} />, label: i18n.t('components.markdown_editor_template.k9'), action: prependLine('> ') },
   { id: 'divider3', divider: true },
-  { id: 'code', icon: <Code size={18} />, label: '行内代码', action: wrapSelection('`', '`') },
-  { id: 'codeblock', icon: <CodeSquare size={18} />, label: '代码块', action: insertCodeBlock },
-  { id: 'table', icon: <Table size={18} />, label: '表格', action: insertTable },
+  { id: 'code', icon: <Code size={18} />, label: i18n.t('components.markdown_editor_template.k10'), action: wrapSelection('`', '`') },
+  { id: 'codeblock', icon: <CodeSquare size={18} />, label: i18n.t('components.markdown_editor_template.k11'), action: insertCodeBlock },
+  { id: 'table', icon: <Table size={18} />, label: i18n.t('components.markdown_editor_template.k12'), action: insertTable },
   { id: 'divider4', divider: true },
-  { id: 'link', icon: <Link size={18} />, label: '链接', action: insertLink },
-  { id: 'image', icon: <Image size={18} />, label: '图片', action: insertImage },
+  { id: 'link', icon: <Link size={18} />, label: i18n.t('components.markdown_editor_template.k13'), action: insertLink },
+  { id: 'image', icon: <Image size={18} />, label: i18n.t('components.markdown_editor_template.k14'), action: insertImage },
   { id: 'divider5', divider: true },
-  { id: 'hr', icon: <Minus size={18} />, label: '分隔线', action: insertHorizontalRule },
+  { id: 'hr', icon: <Minus size={18} />, label: i18n.t('components.markdown_editor_template.k15'), action: insertHorizontalRule },
 ];
 
 function wrapSelection(prefix: string, suffix: string) {
@@ -229,7 +230,7 @@ function insertTable(editor: React.RefObject<HTMLTextAreaElement | null>) {
   const start = textarea.selectionStart;
   const before = textarea.value.substring(0, start);
   const after = textarea.value.substring(start);
-  const table = `\n| 列1 | 列2 | 列3 |\n| --- | --- | --- |\n| 内容1 | 内容2 | 内容3 |\n`;
+  const table = i18n.t('components.markdown_editor_template.k0');
 
   textarea.value = before + table + after;
   textarea.focus();
@@ -246,11 +247,11 @@ function insertLink(editor: React.RefObject<HTMLTextAreaElement | null>) {
   const selectedText = textarea.value.substring(start, end);
   const before = textarea.value.substring(0, start);
   const after = textarea.value.substring(end);
-  const link = `[${selectedText || '链接文本'}](https://)`;
+  const link = `[${selectedText || i18n.t('components.markdown_editor_template.k16')}](https://)`;
 
   textarea.value = before + link + after;
   textarea.focus();
-  textarea.setSelectionRange(start + 1, start + (selectedText || '链接文本').length + 1);
+  textarea.setSelectionRange(start + 1, start + (selectedText || i18n.t('components.markdown_editor_template.k17')).length + 1);
   textarea.dispatchEvent(new Event('input', { bubbles: true }));
 }
 
@@ -261,7 +262,7 @@ function insertImage(editor: React.RefObject<HTMLTextAreaElement | null>) {
   const start = textarea.selectionStart;
   const before = textarea.value.substring(0, start);
   const after = textarea.value.substring(start);
-  const image = `![图片描述](https://)`;
+  const image = i18n.t('components.markdown_editor_template.k1');
 
   textarea.value = before + image + after;
   textarea.focus();
@@ -352,10 +353,10 @@ export const MarkdownEditorTemplate: React.FC<MarkdownEditorTemplateProps> = ({
   const handleSave = useCallback(async () => {
     try {
       await onSave?.(content);
-      setNotification({ message: '保存成功', type: 'success' });
+      setNotification({ message: i18n.t('components.markdown_editor_template.k18'), type: 'success' });
     } catch (err) {
       logger.error('Save error:', err);
-      setNotification({ message: '保存失败', type: 'error' });
+      setNotification({ message: i18n.t('components.markdown_editor_template.k19'), type: 'error' });
     }
   }, [content, onSave]);
 
@@ -419,7 +420,7 @@ ${content
       URL.revokeObjectURL(url);
 
       onExport?.(format);
-      setNotification({ message: `已导出为 ${filename}`, type: 'success' });
+      setNotification({ message: `${i18n.t('components.markdown_editor_template.k2')} ${filename}`, type: 'success' });
     },
     [content, onExport]
   );
@@ -433,23 +434,23 @@ ${content
   const handleRestoreVersion = useCallback((version: MarkdownVersion) => {
     setContent(version.content);
     setShowHistory(false);
-    setNotification({ message: '已恢复历史版本', type: 'success' });
+    setNotification({ message: i18n.t('components.markdown_editor_template.k20'), type: 'success' });
   }, []);
 
   const handleSaveVersion = useCallback(async () => {
     try {
       await onSaveVersion?.(content);
-      setNotification({ message: '版本已保存', type: 'success' });
+      setNotification({ message: i18n.t('components.markdown_editor_template.k21'), type: 'success' });
     } catch (err) {
       logger.error('Save version error:', err);
-      setNotification({ message: '保存版本失败', type: 'error' });
+      setNotification({ message: i18n.t('components.markdown_editor_template.k22'), type: 'error' });
     }
   }, [content, onSaveVersion]);
 
   const handleImageInsert = useCallback(() => {
     if (!imageUrl.trim()) return;
 
-    const imgMarkdown = `![${imageAlt || '图片'}](${imageUrl})`;
+    const imgMarkdown = `![${imageAlt || i18n.t('components.markdown_editor_template.k23')}](${imageUrl})`;
     const textarea = editorRef.current;
     if (textarea) {
       const start = textarea.selectionStart;
@@ -463,7 +464,7 @@ ${content
     setImageDialogOpen(false);
     setImageUrl('');
     setImageAlt('');
-    setNotification({ message: '图片已插入', type: 'success' });
+    setNotification({ message: i18n.t('components.markdown_editor_template.k24'), type: 'success' });
   }, [imageUrl, imageAlt, content]);
 
   const wordCount = content.replace(/\s/g, '').length;
@@ -523,13 +524,13 @@ ${content
             sx={{ flex: 1 }}
           >
             <Tab
-              label='编辑'
+              label={i18n.t('components.markdown_editor_template.k25')}
               icon={<FileText size={16} />}
               iconPosition='start'
               disabled={readOnly}
             />
             <Tab
-              label='预览'
+              label={i18n.t('components.markdown_editor_template.k26')}
               icon={<Eye size={16} />}
               iconPosition='start'
             />
@@ -539,29 +540,29 @@ ${content
             {enableWordCount && (
               <Chip
                 size='small'
-                label={`${wordCount} 字 / ${charCount} 字符`}
+                label={`${wordCount} ${i18n.t('components.markdown_editor_template.k3')} ${charCount} ${i18n.t('components.markdown_editor_template.k4')}`}
                 color='primary'
                 variant='outlined'
               />
             )}
 
             {enableVersionHistory && (
-              <Tooltip title='版本历史'>
+              <Tooltip title={i18n.t('components.markdown_editor_template.k27')}>
                 <IconButton
                   onClick={() => setShowHistory(true)}
                   size='small'
-                  aria-label='历史'
+                  aria-label={i18n.t('components.markdown_editor_template.k28')}
                 >
                   <History size={18} />
                 </IconButton>
               </Tooltip>
             )}
 
-            <Tooltip title={copied ? '已复制' : '复制内容'}>
+            <Tooltip title={copied ? i18n.t('components.markdown_editor_template.k30') : i18n.t('components.markdown_editor_template.k29')}>
               <IconButton
                 onClick={handleCopy}
                 size='small'
-                aria-label='确认'
+                aria-label={i18n.t('components.markdown_editor_template.k31')}
               >
                 {copied ? <Check size={18} /> : <Copy size={18} />}
               </IconButton>
@@ -616,11 +617,11 @@ ${content
                   orientation='vertical'
                   sx={{ mx: 0.5 }}
                 />
-                <Tooltip title='插入图片'>
+                <Tooltip title={i18n.t('components.markdown_editor_template.k32')}>
                   <IconButton
                     size='small'
                     onClick={() => setImageDialogOpen(true)}
-                    aria-label='新增'
+                    aria-label={i18n.t('components.markdown_editor_template.k33')}
                   >
                     <Plus size={18} />
                     <Image size={18} />
@@ -639,7 +640,7 @@ ${content
                 value={content}
                 onChange={handleContentChange}
                 disabled={readOnly}
-                placeholder='开始编写 Markdown...'
+                placeholder={i18n.t('components.markdown_editor_template.k5')}
                 style={{
                   flex: 1,
                   width: '100%',
@@ -674,8 +675,8 @@ ${content
                     size={48}
                     sx={{ mb: 2, opacity: 0.5 }}
                   />
-                  <Typography variant='body1'>暂无内容</Typography>
-                  <Typography variant='body2'>在编辑模式下开始编写 Markdown</Typography>
+                  <Typography variant='body1'>{i18n.t('components.markdown_editor_template.k34')}</Typography>
+                  <Typography variant='body2'>{i18n.t('components.markdown_editor_template.markdown_35')}</Typography>
                 </Box>
               ) : (
                 <div
@@ -847,8 +848,8 @@ ${content
               variant='caption'
               color='text.secondary'
             >
-              {tabValue === 0 ? '编辑模式' : '预览模式'}
-              {readOnly && ' (只读)'}
+              {tabValue === 0 ? i18n.t('components.markdown_editor_template.k37') : i18n.t('components.markdown_editor_template.k36')}
+              {readOnly && i18n.t('components.markdown_editor_template.k6')}
             </Typography>
           </Box>
 
@@ -858,7 +859,7 @@ ${content
                 variant='outlined'
                 onClick={onCancel}
               >
-                取消
+                {i18n.t('components.markdown_editor_template.k7')}
               </Button>
             )}
 
@@ -868,7 +869,7 @@ ${content
                 onClick={() => handleExport('md')}
                 startIcon={<Download size={16} />}
               >
-                导出 MD
+                {i18n.t('components.markdown_editor_template.md_8')}
               </Button>
             )}
 
@@ -878,7 +879,7 @@ ${content
                 onClick={handleSaveVersion}
                 startIcon={<History size={16} />}
               >
-                保存版本
+                {i18n.t('components.markdown_editor_template.k9')}
               </Button>
             )}
 
@@ -888,7 +889,7 @@ ${content
                 onClick={handleSave}
                 startIcon={<Save size={16} />}
               >
-                保存
+                {i18n.t('components.markdown_editor_template.k10')}
               </Button>
             )}
           </Box>
@@ -903,12 +904,12 @@ ${content
         maxWidth='md'
         fullWidth
       >
-        <DialogTitle>版本历史</DialogTitle>
+        <DialogTitle>{i18n.t('components.markdown_editor_template.k38')}</DialogTitle>
         <DialogContent>
           <TextField
             fullWidth
             size='small'
-            placeholder='搜索版本...'
+            placeholder={i18n.t('components.markdown_editor_template.k11')}
             value={historyFilter}
             onChange={(e) => setHistoryFilter(e.target.value)}
             sx={{ mb: 2 }}
@@ -924,7 +925,7 @@ ${content
                 variant='body1'
                 color='text.secondary'
               >
-                暂无版本历史
+                {i18n.t('components.markdown_editor_template.k12')}
               </Typography>
             </Box>
           ) : (
@@ -950,11 +951,11 @@ ${content
                           )}
                         </Box>
                       }
-                      secondary={version.comment || '无备注'}
+                      secondary={version.comment || i18n.t('components.markdown_editor_template.k39')}
                     />
                     <IconButton
                       size='small'
-                      aria-label='查看'
+                      aria-label={i18n.t('components.markdown_editor_template.k40')}
                     >
                       <Eye size={16} />
                     </IconButton>
@@ -965,7 +966,7 @@ ${content
           )}
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setShowHistory(false)}>关闭</Button>
+          <Button onClick={() => setShowHistory(false)}>{i18n.t('components.markdown_editor_template.k41')}</Button>
         </DialogActions>
       </Dialog>
 
@@ -975,11 +976,11 @@ ${content
         maxWidth='sm'
         fullWidth
       >
-        <DialogTitle>插入图片</DialogTitle>
+        <DialogTitle>{i18n.t('components.markdown_editor_template.k42')}</DialogTitle>
         <DialogContent>
           <TextField
             fullWidth
-            label='图片 URL'
+            label={i18n.t('components.markdown_editor_template.url_43')}
             value={imageUrl}
             onChange={(e) => setImageUrl(e.target.value)}
             placeholder='https://example.com/image.jpg'
@@ -987,19 +988,19 @@ ${content
           />
           <TextField
             fullWidth
-            label='图片描述'
+            label={i18n.t('components.markdown_editor_template.k44')}
             value={imageAlt}
             onChange={(e) => setImageAlt(e.target.value)}
-            placeholder='图片描述（可选）'
+            placeholder={i18n.t('components.markdown_editor_template.k45')}
           />
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setImageDialogOpen(false)}>取消</Button>
+          <Button onClick={() => setImageDialogOpen(false)}>{i18n.t('components.markdown_editor_template.k46')}</Button>
           <Button
             variant='contained'
             onClick={handleImageInsert}
           >
-            插入
+            {i18n.t('components.markdown_editor_template.k13')}
           </Button>
         </DialogActions>
       </Dialog>

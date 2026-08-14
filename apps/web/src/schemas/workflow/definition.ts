@@ -1,14 +1,15 @@
 import React from 'react';
 import { Chip } from '@mui/material';
 import type { EntitySchema } from '@/schema';
+import i18n from '@/i18n';
 
 // ============ 流程类型 ============
 
 const categoryLabels: Record<string, string> = {
-  approval: '审批流',
-  business: '业务流',
-  notification: '通知流',
-  automation: '自动化',
+  approval: i18n.t('shared.definition.k0'),
+  business: i18n.t('shared.definition.k1'),
+  notification: i18n.t('shared.definition.k2'),
+  automation: i18n.t('shared.definition.k3'),
 };
 
 const categoryColorMap: Record<string, { bgcolor: string; color: string }> = {
@@ -26,10 +27,10 @@ const categoryOptions = Object.entries(categoryLabels).map(([value, label]) => (
 // ============ 流程状态 ============
 
 const statusLabels: Record<string, string> = {
-  active: '已发布',
-  draft: '草稿',
-  archived: '已归档',
-  disabled: '已停用',
+  active: i18n.t('shared.definition.k4'),
+  draft: i18n.t('shared.definition.k5'),
+  archived: i18n.t('shared.definition.k6'),
+  disabled: i18n.t('shared.definition.k7'),
 };
 
 const statusColorMap: Record<
@@ -75,8 +76,8 @@ export function renderWorkflowStatusBadge(status: string): React.ReactNode {
 
 export const workflowDefinitionSchema: EntitySchema = {
   entity: 'workflow-definition',
-  title: '流程定义',
-  description: '管理工作流流程定义',
+  title: i18n.t('shared.definition.k8'),
+  description: i18n.t('shared.definition.k9'),
 
   api: {
     module: 'workflow',
@@ -86,24 +87,24 @@ export const workflowDefinitionSchema: EntitySchema = {
   fields: [
     {
       name: 'name',
-      label: '流程名称',
+      label: i18n.t('shared.definition.k10'),
       type: 'text',
       required: true,
       sortable: true,
-      placeholder: '请输入流程名称',
+      placeholder: i18n.t('shared.definition.k11'),
       validation: [{ type: 'maxLength', value: 128 }],
     },
     {
       name: 'code',
-      label: '流程编码',
+      label: i18n.t('shared.definition.k12'),
       type: 'text',
       required: true,
       readonlyOnEdit: true,
-      placeholder: '请输入流程编码',
+      placeholder: i18n.t('shared.definition.k13'),
     },
     {
       name: 'category',
-      label: '流程类型',
+      label: i18n.t('shared.definition.k14'),
       type: 'select',
       required: true,
       defaultValue: 'approval',
@@ -114,14 +115,14 @@ export const workflowDefinitionSchema: EntitySchema = {
     },
     {
       name: 'version',
-      label: '版本',
+      label: i18n.t('shared.definition.k15'),
       type: 'text',
       defaultValue: 'v1.0',
-      placeholder: '请输入版本号',
+      placeholder: i18n.t('shared.definition.k16'),
     },
     {
       name: 'status',
-      label: '状态',
+      label: i18n.t('shared.definition.k17'),
       type: 'select',
       defaultValue: 'draft',
       options: {
@@ -132,22 +133,22 @@ export const workflowDefinitionSchema: EntitySchema = {
     },
     {
       name: 'description',
-      label: '描述',
+      label: i18n.t('shared.definition.k18'),
       type: 'textarea',
-      placeholder: '请输入流程描述',
+      placeholder: i18n.t('shared.definition.k19'),
       showInList: false,
       colSpan: 2,
     },
     {
       name: 'node_count',
-      label: '节点数',
+      label: i18n.t('shared.definition.k20'),
       type: 'number',
       defaultValue: 0,
       readonlyOnEdit: true,
     },
     {
       name: 'instance_count',
-      label: '实例数',
+      label: i18n.t('shared.definition.k21'),
       type: 'number',
       defaultValue: 0,
       readonlyOnEdit: true,
@@ -160,15 +161,15 @@ export const workflowDefinitionSchema: EntitySchema = {
     filters: [
       {
         id: 'category',
-        label: '流程类型',
+        label: i18n.t('shared.definition.k22'),
         type: 'select',
-        options: [{ label: '全部类型', value: 'all' }, ...categoryOptions],
+        options: [{ label: i18n.t('shared.definition.k23'), value: 'all' }, ...categoryOptions],
       },
       {
         id: 'status',
-        label: '状态',
+        label: i18n.t('shared.definition.k24'),
         type: 'select',
-        options: [{ label: '全部状态', value: 'all' }, ...statusOptions],
+        options: [{ label: i18n.t('shared.definition.k25'), value: 'all' }, ...statusOptions],
       },
     ],
     statusBadge: {
@@ -182,17 +183,17 @@ export const workflowDefinitionSchema: EntitySchema = {
 
   formSections: [
     {
-      title: '基本信息',
+      title: i18n.t('shared.definition.k26'),
       fields: ['name', 'code', 'category', 'version', 'status', 'description'],
     },
     {
-      title: '统计信息',
+      title: i18n.t('shared.definition.k27'),
       fields: ['node_count', 'instance_count'],
     },
   ],
 
   formColCount: 2,
-  createTitle: '新建流程',
-  editTitle: '编辑流程',
-  detailTitle: '流程详情',
+  createTitle: i18n.t('shared.definition.k28'),
+  editTitle: i18n.t('shared.definition.k29'),
+  detailTitle: i18n.t('shared.definition.k30'),
 };

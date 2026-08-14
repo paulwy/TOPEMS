@@ -9,6 +9,7 @@
  */
 
 import { openDB } from 'idb';
+import i18n from '@/i18n';
 import { logger } from '@/utils/logger';
 
 const DB_NAME = 'gis_offline_db';
@@ -184,4 +185,4 @@ if (typeof window !== 'undefined') {
   };
 }
 
-logger.info('离线瓦片工具已加载。使用 gisOffline.importTilesFromManifest(manifest) 导入瓦片。');
+logger.info(i18n.t('components.tile_importer.k0'));

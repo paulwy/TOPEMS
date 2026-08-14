@@ -23,6 +23,7 @@ import {
   Switch,
   Checkbox,
 } from '@mui/material';
+import i18n from '@/i18n';
 import { Grid } from '@/components';
 import {
   Save,
@@ -399,9 +400,9 @@ export const FormPageTemplate: React.FC<FormPageTemplateProps> = ({
   onSubmit,
   onCancel,
   onReset,
-  submitText = '保存',
-  cancelText = '取消',
-  resetText = '重置',
+  submitText = i18n.t('templates.form_page_template.k0'),
+  cancelText = i18n.t('templates.form_page_template.k1'),
+  resetText = i18n.t('templates.form_page_template.k2'),
   columns = 3,
   stickyFooter = true,
   headerContent,
@@ -749,7 +750,7 @@ export const FormPageTemplate: React.FC<FormPageTemplateProps> = ({
       reset(draft.data);
       setShowDraftDialog(false);
       displayValidationHint({
-        message: `已加载草稿（保存于 ${new Date(draft.timestamp).toLocaleString()}）`,
+        message: `${i18n.t('components.form_page_template.k0')}${new Date(draft.timestamp).toLocaleString()}）`,
         type: 'info',
       });
     },
@@ -775,7 +776,7 @@ export const FormPageTemplate: React.FC<FormPageTemplateProps> = ({
     if (!fieldError) return '';
 
     const error = fieldError as { message?: string };
-    let message = error?.message || '验证失败';
+    let message = error?.message || i18n.t('templates.form_page_template.k3');
 
     // 使用自定义验证消息
     if (customValidationMessages[fieldName]) {
@@ -828,7 +829,7 @@ export const FormPageTemplate: React.FC<FormPageTemplateProps> = ({
             <IconButton
               size='small'
               sx={{ position: 'absolute', top: 0, right: 0 }}
-              aria-label='信息'
+              aria-label={i18n.t('templates.form_page_template.k4')}
             >
               <Info style={{ width: 16, height: 16 }} />
             </IconButton>
@@ -837,7 +838,7 @@ export const FormPageTemplate: React.FC<FormPageTemplateProps> = ({
 
         {dirtyFields[field.name] && (
           <Chip
-            label='已修改'
+            label={i18n.t('templates.form_page_template.k5')}
             size='small'
             color='primary'
             sx={{
@@ -853,7 +854,7 @@ export const FormPageTemplate: React.FC<FormPageTemplateProps> = ({
           control={control}
           defaultValue={field.defaultValue || ''}
           rules={{
-            required: isRequired ? `${field.label}不能为空` : false,
+            required: isRequired ? `${field.label}${i18n.t('components.form_page_template.k1')}` : false,
           }}
           render={({ field: controllerField }) => {
             switch (field.type) {
@@ -876,7 +877,7 @@ export const FormPageTemplate: React.FC<FormPageTemplateProps> = ({
                     select
                     required={isRequired}
                   >
-                    <option value=''>请选择</option>
+                    <option value=''>{i18n.t('templates.form_page_template.k6')}</option>
                     {options?.map((option) => (
                       <option
                         key={String(option.value)}
@@ -1084,7 +1085,7 @@ export const FormPageTemplate: React.FC<FormPageTemplateProps> = ({
                     select
                     required={isRequired}
                   >
-                    <option value=''>请选择</option>
+                    <option value=''>{i18n.t('templates.form_page_template.k7')}</option>
                     {options?.map((option) => (
                       <option
                         key={String(option.value)}
@@ -1173,7 +1174,7 @@ export const FormPageTemplate: React.FC<FormPageTemplateProps> = ({
           {section.collapsible && (
             <IconButton
               size='small'
-              aria-label='展开'
+              aria-label={i18n.t('templates.form_page_template.k8')}
             >
               {isExpanded ? (
                 <ChevronUp style={{ width: 18, height: 18 }} />
@@ -1239,7 +1240,7 @@ export const FormPageTemplate: React.FC<FormPageTemplateProps> = ({
         sx={{ mb: 2 }}
       >
         <Tab
-          label='全部'
+          label={i18n.t('templates.form_page_template.k9')}
           value='all'
         />
         {groups.map((group) => (
@@ -1271,7 +1272,7 @@ export const FormPageTemplate: React.FC<FormPageTemplateProps> = ({
             variant='body2'
             color='text.secondary'
           >
-            表单填写进度
+            {i18n.t('components.form_page_template.k0')}
           </Typography>
           <Typography
             variant='body2'
@@ -1298,7 +1299,7 @@ export const FormPageTemplate: React.FC<FormPageTemplateProps> = ({
     if (!draftConfig?.enabled || drafts.length === 0) return null;
 
     return (
-      <Tooltip title={`有 ${drafts.length} 个草稿可恢复`}>
+      <Tooltip title={`${i18n.t('components.form_page_template.k2')}${drafts.length}${i18n.t('components.form_page_template.k3')}`}>
         <Button
           variant='outlined'
           size='small'
@@ -1333,11 +1334,11 @@ export const FormPageTemplate: React.FC<FormPageTemplateProps> = ({
             variant='caption'
             color='text.secondary'
           >
-            有未保存的更改
+            {i18n.t('components.form_page_template.k1')}
           </Typography>
         )}
         {showValidationHints && Object.keys(errors).length > 0 && (
-          <Tooltip title='表单存在验证错误'>
+          <Tooltip title={i18n.t('templates.form_page_template.k10')}>
             <Box
               sx={{
                 display: 'flex',
@@ -1364,7 +1365,7 @@ export const FormPageTemplate: React.FC<FormPageTemplateProps> = ({
             onClick={() => {}}
             startIcon={<Unlock style={{ width: 16, height: 16 }} />}
           >
-            编辑
+            {i18n.t('components.form_page_template.k2')}
           </Button>
         )}
         {mode !== 'view' && onCancel && (
@@ -1404,7 +1405,7 @@ export const FormPageTemplate: React.FC<FormPageTemplateProps> = ({
               )
             }
           >
-            {submitting ? '保存中...' : submitText}
+            {submitting ? i18n.t('components.form_page_template.k4') : submitText}
           </Button>
         )}
       </Box>
@@ -1450,7 +1451,7 @@ export const FormPageTemplate: React.FC<FormPageTemplateProps> = ({
               <IconButton
                 size='small'
                 onClick={() => {}}
-                aria-label='关闭'
+                aria-label={i18n.t('templates.form_page_template.k11')}
               >
                 <X style={{ width: 16, height: 16 }} />
               </IconButton>
@@ -1470,7 +1471,7 @@ export const FormPageTemplate: React.FC<FormPageTemplateProps> = ({
               <IconButton
                 size='small'
                 onClick={() => {}}
-                aria-label='关闭'
+                aria-label={i18n.t('templates.form_page_template.k12')}
               >
                 <X style={{ width: 16, height: 16 }} />
               </IconButton>
@@ -1525,7 +1526,7 @@ export const FormPageTemplate: React.FC<FormPageTemplateProps> = ({
               variant='subtitle1'
               sx={{ mb: 2, fontWeight: 600 }}
             >
-              选择草稿
+              {i18n.t('components.form_page_template.k3')}
             </Typography>
             {drafts.map((draft, index) => (
               <Box
@@ -1557,7 +1558,7 @@ export const FormPageTemplate: React.FC<FormPageTemplateProps> = ({
               variant='outlined'
               onClick={() => setShowDraftDialog(false)}
             >
-              关闭
+              {i18n.t('components.form_page_template.k4')}
             </Button>
           </Paper>
         )}

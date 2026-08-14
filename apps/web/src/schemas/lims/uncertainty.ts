@@ -1,11 +1,12 @@
 import React from 'react';
 import { Chip } from '@mui/material';
 import type { EntitySchema } from '@/schema';
+import i18n from '@/i18n';
 
 const statusColorMap: Record<string, 'default' | 'primary' | 'success'> = {
-  草稿: 'default',
-  计算中: 'primary',
-  已完成: 'success',
+  [i18n.t('schemas.uncertainty.k0')]: 'default',
+  [i18n.t('schemas.uncertainty.k1')]: 'primary',
+  [i18n.t('schemas.uncertainty.k2')]: 'success',
 };
 
 function renderStatusCell(row: Record<string, unknown>) {
@@ -34,8 +35,8 @@ function renderCombinedUncertaintyCell(row: Record<string, unknown>) {
 
 export const uncertaintyProjectSchema: EntitySchema = {
   entity: 'limsUncertaintyProject',
-  title: '不确定度评定',
-  description: '管理不确定度评定项目，包括项目信息、检测方法、被测量、测量范围和评定结果等',
+  title: i18n.t('lims.uncertainty.k0'),
+  description: i18n.t('lims.uncertainty.k1'),
 
   api: {
     module: 'lims',
@@ -49,60 +50,60 @@ export const uncertaintyProjectSchema: EntitySchema = {
   fields: [
     {
       name: 'project_no',
-      label: '项目编号',
+      label: i18n.t('lims.uncertainty.k2'),
       type: 'text',
       readonlyOnEdit: true,
       sortable: true,
       listWidth: 140,
-      placeholder: '请输入项目编号',
+      placeholder: i18n.t('lims.uncertainty.k3'),
     },
     {
       name: 'project_name',
-      label: '项目名称',
+      label: i18n.t('lims.uncertainty.k4'),
       type: 'text',
       required: true,
       sortable: true,
       listWidth: 200,
-      placeholder: '请输入项目名称',
+      placeholder: i18n.t('lims.uncertainty.k5'),
     },
     {
       name: 'method_name',
-      label: '检测方法',
+      label: i18n.t('lims.uncertainty.k6'),
       type: 'text',
       listWidth: 180,
-      placeholder: '请输入检测方法',
+      placeholder: i18n.t('lims.uncertainty.k7'),
     },
     {
       name: 'testitem',
-      label: '检测项目',
+      label: i18n.t('lims.uncertainty.k8'),
       type: 'text',
       showInList: false,
-      placeholder: '请输入检测项目',
+      placeholder: i18n.t('lims.uncertainty.k9'),
     },
     {
       name: 'measurand',
-      label: '被测量',
+      label: i18n.t('lims.uncertainty.k10'),
       type: 'text',
       showInList: false,
-      placeholder: '请输入被测量',
+      placeholder: i18n.t('lims.uncertainty.k11'),
     },
     {
       name: 'measurement_range',
-      label: '测量范围',
+      label: i18n.t('lims.uncertainty.k12'),
       type: 'text',
       showInList: false,
-      placeholder: '请输入测量范围',
+      placeholder: i18n.t('lims.uncertainty.k13'),
     },
     {
       name: 'unit',
-      label: '单位',
+      label: i18n.t('lims.uncertainty.k14'),
       type: 'text',
       showInList: false,
-      placeholder: '请输入单位',
+      placeholder: i18n.t('lims.uncertainty.k15'),
     },
     {
       name: 'combined_uncertainty',
-      label: '合成不确定度',
+      label: i18n.t('lims.uncertainty.k16'),
       type: 'number',
       readonly: true,
       listWidth: 120,
@@ -110,7 +111,7 @@ export const uncertaintyProjectSchema: EntitySchema = {
     },
     {
       name: 'expanded_uncertainty',
-      label: '扩展不确定度',
+      label: i18n.t('lims.uncertainty.k17'),
       type: 'number',
       readonly: true,
       showInList: false,
@@ -118,29 +119,29 @@ export const uncertaintyProjectSchema: EntitySchema = {
     },
     {
       name: 'coverage_factor',
-      label: '包含因子',
+      label: i18n.t('lims.uncertainty.k18'),
       type: 'number',
       showInList: false,
       showInDetail: true,
     },
     {
       name: 'confidencelevel',
-      label: '置信水平',
+      label: i18n.t('lims.uncertainty.k19'),
       type: 'number',
       showInList: false,
       showInDetail: true,
     },
     {
       name: 'status',
-      label: '状态',
+      label: i18n.t('lims.uncertainty.k20'),
       type: 'select',
-      defaultValue: '草稿',
+      defaultValue: i18n.t('lims.uncertainty.k21'),
       options: {
         type: 'static',
         options: [
-          { value: '草稿', label: '草稿' },
-          { value: '计算中', label: '计算中' },
-          { value: '已完成', label: '已完成' },
+          { value: i18n.t('lims.uncertainty.k22'), label: i18n.t('lims.uncertainty.k23') },
+          { value: i18n.t('lims.uncertainty.k24'), label: i18n.t('lims.uncertainty.k25') },
+          { value: i18n.t('lims.uncertainty.k26'), label: i18n.t('lims.uncertainty.k27') },
         ],
       },
       listWidth: 100,
@@ -148,15 +149,15 @@ export const uncertaintyProjectSchema: EntitySchema = {
     },
     {
       name: 'evaluator',
-      label: '评定人',
+      label: i18n.t('lims.uncertainty.k28'),
       type: 'text',
       listWidth: 100,
       showInList: false,
-      placeholder: '请输入评定人',
+      placeholder: i18n.t('lims.uncertainty.k29'),
     },
     {
       name: 'evaluation_date',
-      label: '评定日期',
+      label: i18n.t('lims.uncertainty.k30'),
       type: 'date',
       showInList: false,
       showInDetail: true,
@@ -164,7 +165,7 @@ export const uncertaintyProjectSchema: EntitySchema = {
     },
     {
       name: 'created_at',
-      label: '创建时间',
+      label: i18n.t('lims.uncertainty.k31'),
       type: 'date',
       readonly: true,
       sortable: true,
@@ -173,10 +174,10 @@ export const uncertaintyProjectSchema: EntitySchema = {
     },
     {
       name: 'notes',
-      label: '备注',
+      label: i18n.t('lims.uncertainty.k32'),
       type: 'textarea',
       showInList: false,
-      placeholder: '请输入备注',
+      placeholder: i18n.t('lims.uncertainty.k33'),
     },
   ],
 
@@ -186,13 +187,13 @@ export const uncertaintyProjectSchema: EntitySchema = {
     filters: [
       {
         id: 'status',
-        label: '状态',
+        label: i18n.t('lims.uncertainty.k34'),
         type: 'select',
         options: [
-          { label: '全部状态', value: 'all' },
-          { label: '草稿', value: '草稿' },
-          { label: '计算中', value: '计算中' },
-          { label: '已完成', value: '已完成' },
+          { label: i18n.t('lims.uncertainty.k35'), value: 'all' },
+          { label: i18n.t('lims.uncertainty.k36'), value: i18n.t('lims.uncertainty.k37') },
+          { label: i18n.t('lims.uncertainty.k38'), value: i18n.t('lims.uncertainty.k39') },
+          { label: i18n.t('lims.uncertainty.k40'), value: i18n.t('lims.uncertainty.k41') },
         ],
         defaultValue: 'all',
       },
@@ -201,20 +202,20 @@ export const uncertaintyProjectSchema: EntitySchema = {
       field: 'status',
       colorMap: statusColorMap,
       labelMap: {
-        草稿: '草稿',
-        计算中: '计算中',
-        已完成: '已完成',
+        [i18n.t('schemas.uncertainty.k3')]: i18n.t('lims.uncertainty.k42'),
+        [i18n.t('schemas.uncertainty.k4')]: i18n.t('lims.uncertainty.k43'),
+        [i18n.t('schemas.uncertainty.k5')]: i18n.t('lims.uncertainty.k44'),
       },
     },
   },
 
   formSections: [
     {
-      title: '基本信息',
+      title: i18n.t('lims.uncertainty.k45'),
       fields: ['project_no', 'project_name', 'method_name', 'status'],
     },
     {
-      title: '评定信息',
+      title: i18n.t('lims.uncertainty.k46'),
       fields: [
         'testitem',
         'measurand',
@@ -225,7 +226,7 @@ export const uncertaintyProjectSchema: EntitySchema = {
       ],
     },
     {
-      title: '结果信息',
+      title: i18n.t('lims.uncertainty.k47'),
       fields: [
         'combined_uncertainty',
         'expanded_uncertainty',
@@ -234,15 +235,15 @@ export const uncertaintyProjectSchema: EntitySchema = {
       ],
     },
     {
-      title: '其他',
+      title: i18n.t('lims.uncertainty.k48'),
       fields: ['notes'],
     },
   ],
 
   formColCount: 2,
-  createTitle: '新建不确定度项目',
-  editTitle: '编辑不确定度项目',
-  detailTitle: '不确定度项目详情',
+  createTitle: i18n.t('lims.uncertainty.k49'),
+  editTitle: i18n.t('lims.uncertainty.k50'),
+  detailTitle: i18n.t('lims.uncertainty.k51'),
 
   actions: ['create', 'edit', 'detail', 'delete'],
 };

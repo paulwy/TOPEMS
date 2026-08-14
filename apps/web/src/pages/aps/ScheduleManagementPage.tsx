@@ -1,6 +1,5 @@
 import React, { useMemo, useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { useTranslation } from 'react-i18next';
 import {
   Box,
   Typography,
@@ -26,6 +25,7 @@ import {
   Paper,
   InputAdornment,
 } from '@mui/material';
+import i18n from '@/i18n';
 import {
   Plus,
   Search,
@@ -40,15 +40,13 @@ import {
 import { PageContainer } from '@/components/common';
 import { scheduleApi } from '@/api/aps';
 import type { Schedule, CreateScheduleRequest } from '@/api/aps/types';
-
 const STATUS_LABEL: Record<string, string> = {
-  pending: '待处理',
-  released: '已发布',
-  running: '运行中',
-  completed: '已完成',
-  cancelled: '已取消',
+  pending: i18n.t('aps.schedule_management_page.k0'),
+  released: i18n.t('aps.schedule_management_page.k1'),
+  running: i18n.t('aps.schedule_management_page.k2'),
+  completed: i18n.t('aps.schedule_management_page.k3'),
+  cancelled: i18n.t('aps.schedule_management_page.k4'),
 };
-
 const STATUS_COLOR: Record<string, 'default' | 'primary' | 'success' | 'error' | 'info' | 'warning'> = {
   pending: 'default',
   released: 'info',
@@ -56,9 +54,7 @@ const STATUS_COLOR: Record<string, 'default' | 'primary' | 'success' | 'error' |
   completed: 'success',
   cancelled: 'error',
 };
-
 const QUERY_KEY = 'aps-schedules';
-
 const emptyForm: CreateScheduleRequest = {
   schedule_no: '',
   plan_id: '',
@@ -73,23 +69,17 @@ const emptyForm: CreateScheduleRequest = {
   priority: 1,
   status: 'pending',
 };
-
 const ScheduleManagementPage: React.FC = () => {
-  const { t } = useTranslation();
   const queryClient = useQueryClient();
-
   const [page, setPage] = useState(0);
   const [pageSize, setPageSize] = useState(10);
   const [search, setSearch] = useState('');
   const [searchInput, setSearchInput] = useState('');
-
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState<CreateScheduleRequest>(emptyForm);
-
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<Schedule | null>(null);
-
   const listQuery = useQuery({
     queryKey: [QUERY_KEY, page, pageSize, search],
     queryFn: async () => {
@@ -104,7 +94,6 @@ const ScheduleManagementPage: React.FC = () => {
       return { items: [], total: 0 };
     },
   });
-
   const createMutation = useMutation({
     mutationFn: (data: CreateScheduleRequest) => scheduleApi.create(data),
     onSuccess: () => {
@@ -112,7 +101,6 @@ const ScheduleManagementPage: React.FC = () => {
       setDialogOpen(false);
     },
   });
-
   const updateMutation = useMutation({
     mutationFn: ({ id, data }: { id: string; data: CreateScheduleRequest }) =>
       scheduleApi.update(id, data),
@@ -121,7 +109,6 @@ const ScheduleManagementPage: React.FC = () => {
       setDialogOpen(false);
     },
   });
-
   const deleteMutation = useMutation({
     mutationFn: (id: string) => scheduleApi.delete(id),
     onSuccess: () => {
@@ -130,37 +117,30 @@ const ScheduleManagementPage: React.FC = () => {
       setDeleteTarget(null);
     },
   });
-
   const startMutation = useMutation({
     mutationFn: (id: string) => scheduleApi.start(id),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: [QUERY_KEY] }),
   });
-
   const completeMutation = useMutation({
     mutationFn: (id: string) => scheduleApi.complete(id),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: [QUERY_KEY] }),
   });
-
   const cancelMutation = useMutation({
     mutationFn: (id: string) => scheduleApi.cancel(id),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: [QUERY_KEY] }),
   });
-
   const items = listQuery.data?.items ?? [];
   const total = listQuery.data?.total ?? 0;
   const saving = createMutation.isPending || updateMutation.isPending;
-
   const handleSearch = () => {
     setSearch(searchInput.trim());
     setPage(0);
   };
-
   const handleOpenCreate = () => {
     setEditingId(null);
     setForm(emptyForm);
     setDialogOpen(true);
   };
-
   const handleOpenEdit = (row: Schedule) => {
     setEditingId(row.id);
     setForm({
@@ -179,7 +159,6 @@ const ScheduleManagementPage: React.FC = () => {
     });
     setDialogOpen(true);
   };
-
   const handleSave = () => {
     if (editingId) {
       updateMutation.mutate({ id: editingId, data: form });
@@ -187,31 +166,26 @@ const ScheduleManagementPage: React.FC = () => {
       createMutation.mutate(form);
     }
   };
-
   const handleDelete = (row: Schedule) => {
     setDeleteTarget(row);
     setDeleteOpen(true);
   };
-
   const confirmDelete = () => {
     if (deleteTarget) {
       deleteMutation.mutate(deleteTarget.id);
     }
   };
-
   const handleRefresh = () => {
     queryClient.invalidateQueries({ queryKey: [QUERY_KEY] });
   };
-
   const fieldSx = useMemo(
     () => ({ minWidth: { xs: '100%', sm: 240 } }),
     []
   );
-
   return (
     <PageContainer
-      title='排程管理'
-      subtitle='生产排程管理（开始/完成/取消）'
+      title={i18n.t('aps.schedule_management_page.k5')}
+      subtitle={i18n.t('aps.schedule_management_page.k6')}
       padding={false}
       maxWidth={false}
     >
@@ -227,7 +201,7 @@ const ScheduleManagementPage: React.FC = () => {
         >
           <Box sx={{ display: 'flex', gap: 1, alignItems: 'center', flex: 1 }}>
             <TextField
-              placeholder='按排程编号/产品搜索'
+              placeholder={i18n.t('aps.schedule_management_page.k7')}
               value={searchInput}
               onChange={(e) => setSearchInput(e.target.value)}
               size='small'
@@ -246,9 +220,9 @@ const ScheduleManagementPage: React.FC = () => {
               }}
             />
             <Button variant='outlined' size='small' onClick={handleSearch}>
-              搜索
+              {i18n.t('pages.schedule_management_page.k0')}
             </Button>
-            <Tooltip title='刷新'>
+            <Tooltip title={i18n.t('aps.schedule_management_page.k8')}>
               <IconButton onClick={handleRefresh} size='small'>
                 <RefreshCw size={16} />
               </IconButton>
@@ -260,32 +234,31 @@ const ScheduleManagementPage: React.FC = () => {
             startIcon={<Plus size={16} />}
             onClick={handleOpenCreate}
           >
-            新增排程
+            {i18n.t('pages.schedule_management_page.k1')}
           </Button>
         </Box>
-
         <Card>
           <CardContent sx={{ p: 0 }}>
             <TableContainer component={Paper} variant='outlined'>
               <Table size='small'>
                 <TableHead>
                   <TableRow>
-                    <TableCell>排程编号</TableCell>
-                    <TableCell>产品</TableCell>
-                    <TableCell>工作中心</TableCell>
-                    <TableCell>计划开始</TableCell>
-                    <TableCell>计划结束</TableCell>
-                    <TableCell align='right'>数量</TableCell>
-                    <TableCell align='center'>优先级</TableCell>
-                    <TableCell>状态</TableCell>
-                    <TableCell align='center'>操作</TableCell>
+                    <TableCell>{i18n.t('aps.schedule_management_page.k9')}</TableCell>
+                    <TableCell>{i18n.t('aps.schedule_management_page.k10')}</TableCell>
+                    <TableCell>{i18n.t('aps.schedule_management_page.k11')}</TableCell>
+                    <TableCell>{i18n.t('aps.schedule_management_page.k12')}</TableCell>
+                    <TableCell>{i18n.t('aps.schedule_management_page.k13')}</TableCell>
+                    <TableCell align='right'>{i18n.t('aps.schedule_management_page.k14')}</TableCell>
+                    <TableCell align='center'>{i18n.t('aps.schedule_management_page.k15')}</TableCell>
+                    <TableCell>{i18n.t('aps.schedule_management_page.k16')}</TableCell>
+                    <TableCell align='center'>{i18n.t('aps.schedule_management_page.k17')}</TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
                   {listQuery.isLoading ? (
                     <TableRow>
                       <TableCell colSpan={9} align='center'>
-                        加载中...
+                        {i18n.t('pages.schedule_management_page.k2')}
                       </TableCell>
                     </TableRow>
                   ) : items.length === 0 ? (
@@ -294,7 +267,7 @@ const ScheduleManagementPage: React.FC = () => {
                         <Box sx={{ py: 4, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 1 }}>
                           <CalendarCheck size={32} />
                           <Typography variant='body2' color='text.secondary'>
-                            暂无排程数据
+                            {i18n.t('pages.schedule_management_page.k3')}
                           </Typography>
                         </Box>
                       </TableCell>
@@ -319,7 +292,7 @@ const ScheduleManagementPage: React.FC = () => {
                         <TableCell align='center'>
                           <Box sx={{ display: 'flex', gap: 0.5, justifyContent: 'center', flexWrap: 'wrap' }}>
                             {row.status === 'pending' && (
-                              <Tooltip title='开始'>
+                              <Tooltip title={i18n.t('aps.schedule_management_page.k18')}>
                                 <IconButton
                                   size='small'
                                   color='primary'
@@ -331,7 +304,7 @@ const ScheduleManagementPage: React.FC = () => {
                               </Tooltip>
                             )}
                             {row.status === 'running' && (
-                              <Tooltip title='完成'>
+                              <Tooltip title={i18n.t('aps.schedule_management_page.k19')}>
                                 <IconButton
                                   size='small'
                                   color='success'
@@ -343,7 +316,7 @@ const ScheduleManagementPage: React.FC = () => {
                               </Tooltip>
                             )}
                             {(row.status === 'pending' || row.status === 'running') && (
-                              <Tooltip title='取消'>
+                              <Tooltip title={i18n.t('aps.schedule_management_page.k20')}>
                                 <IconButton
                                   size='small'
                                   color='error'
@@ -354,12 +327,12 @@ const ScheduleManagementPage: React.FC = () => {
                                 </IconButton>
                               </Tooltip>
                             )}
-                            <Tooltip title='编辑'>
+                            <Tooltip title={i18n.t('aps.schedule_management_page.k21')}>
                               <IconButton size='small' onClick={() => handleOpenEdit(row)}>
                                 <Edit size={16} />
                               </IconButton>
                             </Tooltip>
-                            <Tooltip title='删除'>
+                            <Tooltip title={i18n.t('aps.schedule_management_page.k22')}>
                               <IconButton size='small' color='error' onClick={() => handleDelete(row)}>
                                 <Trash2 size={16} />
                               </IconButton>
@@ -383,54 +356,53 @@ const ScheduleManagementPage: React.FC = () => {
                 setPage(0);
               }}
               rowsPerPageOptions={[10, 20, 50]}
-              labelRowsPerPage='每页'
-              labelDisplayedRows={({ from, to, count }) => `${from}-${to} / 共 ${count}`}
+              labelRowsPerPage={i18n.t('aps.schedule_management_page.k23')}
+              labelDisplayedRows={({ from, to, count }) => `${from}-${to}${i18n.t('pages.schedule_management_page.k0')}${count}`}
             />
           </CardContent>
         </Card>
       </Box>
-
       <Dialog open={dialogOpen} onClose={() => setDialogOpen(false)} fullWidth maxWidth='md'>
-        <DialogTitle>{editingId ? '编辑排程' : '新增排程'}</DialogTitle>
+        <DialogTitle>{editingId ? i18n.t('aps.schedule_management_page.k25') : i18n.t('aps.schedule_management_page.k24')}</DialogTitle>
         <DialogContent>
           <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2, pt: 1 }}>
             <TextField
-              label='排程编号'
+              label={i18n.t('aps.schedule_management_page.k26')}
               value={form.schedule_no}
               onChange={(e) => setForm({ ...form, schedule_no: e.target.value })}
               size='small'
               sx={fieldSx}
             />
             <TextField
-              label='计划ID'
+              label={i18n.t('aps.schedule_management_page.id_27')}
               value={form.plan_id ?? ''}
               onChange={(e) => setForm({ ...form, plan_id: e.target.value })}
               size='small'
               sx={fieldSx}
             />
             <TextField
-              label='工单ID'
+              label={i18n.t('aps.schedule_management_page.id_28')}
               value={form.work_order_id ?? ''}
               onChange={(e) => setForm({ ...form, work_order_id: e.target.value })}
               size='small'
               sx={fieldSx}
             />
             <TextField
-              label='产品名称'
+              label={i18n.t('aps.schedule_management_page.k29')}
               value={form.product_name ?? ''}
               onChange={(e) => setForm({ ...form, product_name: e.target.value })}
               size='small'
               sx={fieldSx}
             />
             <TextField
-              label='工作中心名称'
+              label={i18n.t('aps.schedule_management_page.k30')}
               value={form.work_center_name ?? ''}
               onChange={(e) => setForm({ ...form, work_center_name: e.target.value })}
               size='small'
               sx={fieldSx}
             />
             <TextField
-              label='计划开始'
+              label={i18n.t('aps.schedule_management_page.k31')}
               type='datetime-local'
               value={form.planned_start ?? ''}
               onChange={(e) => setForm({ ...form, planned_start: e.target.value })}
@@ -439,7 +411,7 @@ const ScheduleManagementPage: React.FC = () => {
               slotProps={{ inputLabel: { shrink: true } }}
             />
             <TextField
-              label='计划结束'
+              label={i18n.t('aps.schedule_management_page.k32')}
               type='datetime-local'
               value={form.planned_end ?? ''}
               onChange={(e) => setForm({ ...form, planned_end: e.target.value })}
@@ -448,7 +420,7 @@ const ScheduleManagementPage: React.FC = () => {
               slotProps={{ inputLabel: { shrink: true } }}
             />
             <TextField
-              label='数量'
+              label={i18n.t('aps.schedule_management_page.k33')}
               type='number'
               value={form.quantity ?? 0}
               onChange={(e) => setForm({ ...form, quantity: Number(e.target.value) })}
@@ -456,7 +428,7 @@ const ScheduleManagementPage: React.FC = () => {
               sx={fieldSx}
             />
             <TextField
-              label='优先级'
+              label={i18n.t('aps.schedule_management_page.k34')}
               type='number'
               value={form.priority ?? 1}
               onChange={(e) => setForm({ ...form, priority: Number(e.target.value) })}
@@ -464,7 +436,7 @@ const ScheduleManagementPage: React.FC = () => {
               sx={fieldSx}
             />
             <TextField
-              label='状态'
+              label={i18n.t('aps.schedule_management_page.k35')}
               select
               value={form.status ?? 'pending'}
               onChange={(e) =>
@@ -473,42 +445,40 @@ const ScheduleManagementPage: React.FC = () => {
               size='small'
               sx={fieldSx}
             >
-              <MenuItem value='pending'>待开始</MenuItem>
-              <MenuItem value='in_progress'>进行中</MenuItem>
-              <MenuItem value='completed'>已完成</MenuItem>
-              <MenuItem value='cancelled'>已取消</MenuItem>
+              <MenuItem value='pending'>{i18n.t('aps.schedule_management_page.k36')}</MenuItem>
+              <MenuItem value='in_progress'>{i18n.t('aps.schedule_management_page.k37')}</MenuItem>
+              <MenuItem value='completed'>{i18n.t('aps.schedule_management_page.k38')}</MenuItem>
+              <MenuItem value='cancelled'>{i18n.t('aps.schedule_management_page.k39')}</MenuItem>
             </TextField>
           </Box>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setDialogOpen(false)}>取消</Button>
+          <Button onClick={() => setDialogOpen(false)}>{i18n.t('aps.schedule_management_page.k40')}</Button>
           <Button variant='contained' onClick={handleSave} disabled={saving}>
-            {saving ? '保存中...' : '保存'}
+            {saving ? i18n.t('pages.schedule_management_page.k1') : i18n.t('aps.schedule_management_page.k41')}
           </Button>
         </DialogActions>
       </Dialog>
-
       <Dialog open={deleteOpen} onClose={() => setDeleteOpen(false)} maxWidth='xs' fullWidth>
-        <DialogTitle>确认删除</DialogTitle>
+        <DialogTitle>{i18n.t('aps.schedule_management_page.k42')}</DialogTitle>
         <DialogContent>
           <Typography>
             确认要删除排程「{deleteTarget?.schedule_no}」吗？此操作不可撤销。
           </Typography>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setDeleteOpen(false)}>取消</Button>
+          <Button onClick={() => setDeleteOpen(false)}>{i18n.t('aps.schedule_management_page.k43')}</Button>
           <Button
             variant='contained'
             color='error'
             onClick={confirmDelete}
             disabled={deleteMutation.isPending}
           >
-            {deleteMutation.isPending ? '删除中...' : '删除'}
+            {deleteMutation.isPending ? i18n.t('pages.schedule_management_page.k2') : i18n.t('aps.schedule_management_page.k44')}
           </Button>
         </DialogActions>
       </Dialog>
     </PageContainer>
   );
 };
-
 export default ScheduleManagementPage;

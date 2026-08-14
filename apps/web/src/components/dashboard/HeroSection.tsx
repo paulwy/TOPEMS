@@ -3,15 +3,16 @@ import { Box, Typography, Button } from '@mui/material';
 import { Sparkles, ChevronRight, Activity } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
 import { designTokens } from '@topems/tokens';
+import i18n from '@/i18n';
 
 export const HeroSection: React.FC = () => {
   const { user } = useAuth();
 
   const getGreeting = (): string => {
     const hour = new Date().getHours();
-    if (hour < 12) return '上午好';
-    if (hour < 18) return '下午好';
-    return '晚上好';
+    if (hour < 12) return i18n.t('shared.hero_section.k0');
+    if (hour < 18) return i18n.t('shared.hero_section.k1');
+    return i18n.t('shared.hero_section.k2');
   };
 
   return (
@@ -23,7 +24,7 @@ export const HeroSection: React.FC = () => {
           p: { xs: 4, md: 8 },
           position: 'relative',
           overflow: 'hidden',
-          border: '1px solid rgba(255, 255, 255, 0.05)',
+          border: `1px solid ${designTokens.colors.cyber.glass.bgLight}`,
         }}
       >
         <Box
@@ -72,7 +73,7 @@ export const HeroSection: React.FC = () => {
                 textTransform: 'uppercase',
               }}
             >
-              {getGreeting()}，{user?.full_name || user?.username || '用户'}
+              {getGreeting()}，{user?.full_name || user?.username || i18n.t('shared.hero_section.k3')}
             </Typography>
           </Box>
 
@@ -85,7 +86,7 @@ export const HeroSection: React.FC = () => {
               lineHeight: 1.2,
             }}
           >
-            欢迎回到
+            {i18n.t('components.hero_section.k0')}
             <Box
               component='span'
               sx={{
@@ -98,7 +99,7 @@ export const HeroSection: React.FC = () => {
             >
               {' TOPEMS '}
             </Box>
-            平台
+            {i18n.t('components.hero_section.k1')}
           </Typography>
 
           <Typography
@@ -109,7 +110,7 @@ export const HeroSection: React.FC = () => {
               maxWidth: '600px',
             }}
           >
-            化工新材料企业数字化平台，助力企业实现数字化转型，提升运营效率，创造更大价值
+            {i18n.t('components.hero_section.k2')}
           </Typography>
 
           <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 3 }}>
@@ -126,13 +127,13 @@ export const HeroSection: React.FC = () => {
                 borderRadius: 3,
                 transition: 'all 0.3s',
                 '&:hover': {
-                  boxShadow: '0 10px 15px -3px rgba(59, 130, 246, 0.25)',
+                  boxShadow: `0 10px 15px -3px ${designTokens.colors.cyber.grid.lineHeavy}`,
                   transform: 'scale(1.05)',
                 },
               }}
             >
               <Activity size={20} />
-              <span>开始工作</span>
+              <span>{i18n.t('shared.hero_section.k4')}</span>
               <ChevronRight size={18} />
             </Button>
             <Button
@@ -146,14 +147,14 @@ export const HeroSection: React.FC = () => {
                 color: 'common.white',
                 fontWeight: 600,
                 borderRadius: 3,
-                border: '1px solid rgba(255, 255, 255, 0.1)',
+                border: `1px solid ${designTokens.colors.cyber.metal.topLight}`,
                 transition: 'all 0.3s',
                 '&:hover': {
                   bgcolor: 'action.disabledBackground',
                 },
               }}
             >
-              <span>了解更多</span>
+              <span>{i18n.t('shared.hero_section.k5')}</span>
             </Button>
           </Box>
         </Box>
@@ -166,7 +167,7 @@ export const HeroSection: React.FC = () => {
             width: '16rem',
             height: '16rem',
             background:
-              'linear-gradient(to bottom right, rgba(59, 130, 246, 0.2), rgba(147, 51, 234, 0.2))',
+              `linear-gradient(to bottom right, ${designTokens.colors.cyber.grid.lineHeavy}, rgba(147, 51, 234, 0.2))`,
             borderRadius: '50%',
             filter: 'blur(64px)',
           }}

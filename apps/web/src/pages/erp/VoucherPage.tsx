@@ -9,7 +9,6 @@
  * 本页已使用 `createCrudPageAdapter` 帮助函数，
  * 将原本 30 行的 adapter 样板代码压缩为 1 行。
  */
-
 import { useQuery } from '@tanstack/react-query';
 import { Box, Typography, Card, CardContent } from '@mui/material';
 import { FileText } from 'lucide-react';
@@ -19,12 +18,9 @@ import { voucherSchema } from '@/schemas/erp/voucher';
 import { voucherApi } from '@/api/erp';
 import type { EntitySchema } from '@/schema';
 import type { SchemaExtensions } from '@/schema/schemaExtensions';
-
-
 import { QUERY_KEYS } from '@/lib/reactQuery';
-
+import i18n from '@/i18n';
 // ============ 统计卡片 ============
-
 interface VoucherStatsData {
   total: number;
   draft: number;
@@ -32,13 +28,12 @@ interface VoucherStatsData {
   approved: number;
   posted: number;
 }
-
 function VoucherStats() {
   const { data: stats, isPending} = useQuery<VoucherStatsData>({
     queryKey: QUERY_KEYS.AD_HOC.ERP_VOUCHER_STATS_BASE,
     queryFn: async () => {
       const response = await voucherApi.list({ page: 1, pagesize: 100 });
-      if (!response.success) throw new Error('加载凭证统计失败');
+      if (!response.success) throw new Error(i18n.t('erp.voucher_page.k0'));
       const items = response.data?.items || [];
       return {
         total: response.data?.total ?? items.length,
@@ -50,15 +45,13 @@ function VoucherStats() {
     },
     staleTime: 5 * 60 * 1000,
   });
-
   const cards = [
-    { label: '凭证总数', value: stats?.total ?? 0, iconColor: 'primary.main' },
-    { label: '草稿', value: stats?.draft ?? 0, iconColor: 'grey.500' },
-    { label: '待审核', value: stats?.submitted ?? 0, iconColor: 'warning.main' },
-    { label: '已审核', value: stats?.approved ?? 0, iconColor: 'info.main' },
-    { label: '已过账', value: stats?.posted ?? 0, iconColor: 'success.main' },
+    { label: i18n.t('erp.voucher_page.k1'), value: stats?.total ?? 0, iconColor: 'primary.main' },
+    { label: i18n.t('erp.voucher_page.k2'), value: stats?.draft ?? 0, iconColor: 'grey.500' },
+    { label: i18n.t('erp.voucher_page.k3'), value: stats?.submitted ?? 0, iconColor: 'warning.main' },
+    { label: i18n.t('erp.voucher_page.k4'), value: stats?.approved ?? 0, iconColor: 'info.main' },
+    { label: i18n.t('erp.voucher_page.k5'), value: stats?.posted ?? 0, iconColor: 'success.main' },
   ];
-
   return (
     <Box
       sx={{
@@ -91,20 +84,16 @@ function VoucherStats() {
     </Box>
   );
 }
-
 // ============ API 适配器（一行搞定）============
-
 const voucherAdapter = createCrudPageAdapter(voucherApi);
-
 // ============ 页面组件 ============
-
 export default function VoucherPage() {
   const schema = voucherSchema as EntitySchema & SchemaExtensions;
   return (
     <CrudPage
       schema={schema}
       apiAdapter={voucherAdapter}
-      breadcrumbs={[{ label: 'ERP' }, { label: '财务管理' }, { label: '凭证管理' }]}
+      breadcrumbs={[{ label: 'ERP' }, { label: i18n.t('erp.voucher_page.k7') }, { label: i18n.t('erp.voucher_page.k6') }]}
       headerContent={<VoucherStats />}
     />
   );

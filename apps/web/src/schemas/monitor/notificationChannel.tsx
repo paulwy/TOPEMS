@@ -10,6 +10,7 @@ import { Box, Chip, Typography, Switch } from '@mui/material';
 import { Mail, MessageSquare, Smartphone, Webhook, Bell, CheckCircle, XCircle } from 'lucide-react';
 import type { EntitySchema, SchemaField } from '@/schema';
 import { designTokens } from '@/theme/tokens';
+import i18n from '@/i18n';
 
 const ct= designTokens.colors;
 
@@ -21,10 +22,10 @@ export const CHANNEL_TYPE_OPTIONS: {
   icon: React.ReactNode;
   color: string;
 }[] = [
-  { value: 'email', label: '邮件', icon: <Mail size={18} />, color: ct.primary.dark },
-  { value: 'dingtalk', label: '钉钉', icon: <MessageSquare size={18} />, color: ct.success.main },
-  { value: 'wechat', label: '企业微信', icon: <MessageSquare size={18} />, color: 'success.main' },
-  { value: 'sms', label: '短信', icon: <Smartphone size={18} />, color: 'secondary.main' },
+  { value: 'email', label: i18n.t('shared.notification_channel.k0'), icon: <Mail size={18} />, color: ct.primary.dark },
+  { value: 'dingtalk', label: i18n.t('shared.notification_channel.k1'), icon: <MessageSquare size={18} />, color: ct.success.main },
+  { value: 'wechat', label: i18n.t('shared.notification_channel.k2'), icon: <MessageSquare size={18} />, color: 'success.main' },
+  { value: 'sms', label: i18n.t('shared.notification_channel.k3'), icon: <Smartphone size={18} />, color: 'secondary.main' },
   { value: 'webhook', label: 'Webhook', icon: <Webhook size={18} />, color: 'warning.main' },
 ];
 
@@ -56,7 +57,7 @@ const isWebhook = (v: Record<string, unknown>) => v.type === 'webhook';
 const channelFields: SchemaField[] = [
   {
     name: 'name',
-    label: '渠道名称',
+    label: i18n.t('shared.notification_channel.k4'),
     type: 'text',
     required: true,
     sortable: true,
@@ -101,7 +102,7 @@ const channelFields: SchemaField[] = [
   },
   {
     name: 'type',
-    label: '渠道类型',
+    label: i18n.t('shared.notification_channel.k5'),
     type: 'select',
     required: true,
     defaultValue: 'email',
@@ -128,14 +129,14 @@ const channelFields: SchemaField[] = [
   },
   {
     name: 'description',
-    label: '渠道描述',
+    label: i18n.t('shared.notification_channel.k6'),
     type: 'textarea',
     showInList: false,
-    placeholder: '描述此通知渠道的用途',
+    placeholder: i18n.t('shared.notification_channel.k7'),
   },
   {
     name: 'enabled',
-    label: '启用状态',
+    label: i18n.t('shared.notification_channel.k8'),
     type: 'switch',
     defaultValue: true,
     listWidth: 200,
@@ -151,7 +152,7 @@ const channelFields: SchemaField[] = [
             variant='body2'
             color={row.enabled ? 'success.main' : 'text.disabled'}
           >
-            {row.enabled ? '已启用' : '已停用'}
+            {row.enabled ? i18n.t('shared.notification_channel.k10') : i18n.t('shared.notification_channel.k9')}
           </Typography>
         </Box>
         {!!row.last_test_at && (
@@ -171,7 +172,7 @@ const channelFields: SchemaField[] = [
               variant='caption'
               color='text.secondary'
             >
-              上次测试: {new Date(row.last_test_at as string).toLocaleString('zh-CN')}
+              [i18n.t('schemas.notification_channel.k0')]: {new Date(row.last_test_at as string).toLocaleString('zh-CN')}
             </Typography>
           </Box>
         )}
@@ -180,7 +181,7 @@ const channelFields: SchemaField[] = [
   },
   {
     name: 'last_test_at',
-    label: '上次测试时间',
+    label: i18n.t('shared.notification_channel.k11'),
     type: 'datetime',
     showInList: false,
     showInDetail: true,
@@ -188,7 +189,7 @@ const channelFields: SchemaField[] = [
   },
   {
     name: 'last_test_status',
-    label: '上次测试状态',
+    label: i18n.t('shared.notification_channel.k12'),
     type: 'text',
     showInList: false,
     showInDetail: true,
@@ -196,7 +197,7 @@ const channelFields: SchemaField[] = [
   },
   {
     name: 'created_at',
-    label: '创建时间',
+    label: i18n.t('shared.notification_channel.k13'),
     type: 'datetime',
     showInList: false,
     showInDetail: true,
@@ -205,7 +206,7 @@ const channelFields: SchemaField[] = [
   },
   {
     name: 'updated_at',
-    label: '更新时间',
+    label: i18n.t('shared.notification_channel.k14'),
     type: 'datetime',
     showInList: false,
     showInDetail: true,
@@ -215,7 +216,7 @@ const channelFields: SchemaField[] = [
   // ── 邮件配置 ──
   {
     name: 'email_smtp_host',
-    label: 'SMTP 服务器地址',
+    label: i18n.t('shared.notification_channel.smtp_15'),
     type: 'text',
     showInList: false,
     placeholder: 'smtp.example.com',
@@ -223,7 +224,7 @@ const channelFields: SchemaField[] = [
   },
   {
     name: 'email_smtp_port',
-    label: 'SMTP 端口',
+    label: i18n.t('shared.notification_channel.smtp_16'),
     type: 'text',
     defaultValue: '465',
     showInList: false,
@@ -232,7 +233,7 @@ const channelFields: SchemaField[] = [
   },
   {
     name: 'email_address',
-    label: '发件人邮箱',
+    label: i18n.t('shared.notification_channel.k17'),
     type: 'text',
     showInList: false,
     placeholder: 'noreply@example.com',
@@ -240,7 +241,7 @@ const channelFields: SchemaField[] = [
   },
   {
     name: 'email_username',
-    label: 'SMTP 用户名',
+    label: i18n.t('shared.notification_channel.smtp_18'),
     type: 'text',
     showInList: false,
     placeholder: 'user@example.com',
@@ -248,7 +249,7 @@ const channelFields: SchemaField[] = [
   },
   {
     name: 'email_password',
-    label: 'SMTP 密码',
+    label: i18n.t('shared.notification_channel.smtp_19'),
     type: 'text',
     showInList: false,
     visibleWhen: isEmail,
@@ -256,7 +257,7 @@ const channelFields: SchemaField[] = [
   // ── 钉钉配置 ──
   {
     name: 'dingtalk_webhook',
-    label: 'Webhook 地址',
+    label: i18n.t('shared.notification_channel.webhook_20'),
     type: 'text',
     showInList: false,
     placeholder: 'https://oapi.dingtalk.com/robot/send?access_token=...',
@@ -264,7 +265,7 @@ const channelFields: SchemaField[] = [
   },
   {
     name: 'dingtalk_secret',
-    label: '加签密钥 (可选)',
+    label: i18n.t('shared.notification_channel.k21'),
     type: 'text',
     showInList: false,
     placeholder: 'SEC...',
@@ -273,7 +274,7 @@ const channelFields: SchemaField[] = [
   // ── 企业微信配置 ──
   {
     name: 'wechat_webhook',
-    label: 'Webhook 地址',
+    label: i18n.t('shared.notification_channel.webhook_22'),
     type: 'text',
     showInList: false,
     placeholder: 'https://qyapi.weixin.qq.com/cgi-bin/webhook/send?key=...',
@@ -281,7 +282,7 @@ const channelFields: SchemaField[] = [
   },
   {
     name: 'wechat_corp_id',
-    label: '企业 ID (可选)',
+    label: i18n.t('shared.notification_channel.id_23'),
     type: 'text',
     showInList: false,
     placeholder: 'ww...',
@@ -289,7 +290,7 @@ const channelFields: SchemaField[] = [
   },
   {
     name: 'wechat_agent_id',
-    label: '应用 ID (可选)',
+    label: i18n.t('shared.notification_channel.id_24'),
     type: 'text',
     showInList: false,
     placeholder: '1000001',
@@ -298,16 +299,16 @@ const channelFields: SchemaField[] = [
   // ── 短信配置 ──
   {
     name: 'sms_provider',
-    label: '短信服务商',
+    label: i18n.t('shared.notification_channel.k25'),
     type: 'select',
     defaultValue: 'aliyun',
     showInList: false,
     options: {
       type: 'static',
       options: [
-        { value: 'aliyun', label: '阿里云短信' },
-        { value: 'tencent', label: '腾讯云短信' },
-        { value: 'huawei', label: '华为云短信' },
+        { value: 'aliyun', label: i18n.t('shared.notification_channel.k26') },
+        { value: 'tencent', label: i18n.t('shared.notification_channel.k27') },
+        { value: 'huawei', label: i18n.t('shared.notification_channel.k28') },
       ],
     },
     visibleWhen: isSms,
@@ -329,7 +330,7 @@ const channelFields: SchemaField[] = [
   },
   {
     name: 'sms_sign_name',
-    label: '短信签名',
+    label: i18n.t('shared.notification_channel.k29'),
     type: 'text',
     showInList: false,
     placeholder: 'TOPEMS',
@@ -337,7 +338,7 @@ const channelFields: SchemaField[] = [
   },
   {
     name: 'sms_template_code',
-    label: '模板编码',
+    label: i18n.t('shared.notification_channel.k30'),
     type: 'text',
     showInList: false,
     placeholder: 'SMS_123456',
@@ -355,7 +356,7 @@ const channelFields: SchemaField[] = [
   },
   {
     name: 'webhook_method',
-    label: '请求方法',
+    label: i18n.t('shared.notification_channel.k31'),
     type: 'select',
     defaultValue: 'POST',
     showInList: false,
@@ -371,7 +372,7 @@ const channelFields: SchemaField[] = [
   },
   {
     name: 'webhook_headers',
-    label: '自定义 Headers (JSON 格式)',
+    label: i18n.t('shared.notification_channel.k32'),
     type: 'textarea',
     showInList: false,
     placeholder: '{"Content-Type": "application/json"}',
@@ -381,8 +382,8 @@ const channelFields: SchemaField[] = [
 
 export const notificationChannelSchema: EntitySchema = {
   entity: 'monitor_notification_channel',
-  title: '通知渠道',
-  description: '管理系统告警的通知发送渠道',
+  title: i18n.t('shared.notification_channel.k33'),
+  description: i18n.t('shared.notification_channel.k34'),
 
   api: {
     module: 'monitor',
@@ -397,10 +398,10 @@ export const notificationChannelSchema: EntitySchema = {
     filters: [
       {
         id: 'type',
-        label: '渠道类型',
+        label: i18n.t('shared.notification_channel.k35'),
         type: 'select',
         options: [
-          { label: '全部类型', value: 'all' },
+          { label: i18n.t('shared.notification_channel.k36'), value: 'all' },
           ...CHANNEL_TYPE_OPTIONS.map((t) => ({ label: t.label, value: t.value })),
         ],
       },
@@ -411,11 +412,11 @@ export const notificationChannelSchema: EntitySchema = {
 
   formSections: [
     {
-      title: '基本信息',
+      title: i18n.t('shared.notification_channel.k37'),
       fields: ['name', 'description', 'type'],
     },
     {
-      title: '渠道配置',
+      title: i18n.t('shared.notification_channel.k38'),
       fields: [
         'email_smtp_host',
         'email_smtp_port',
@@ -438,14 +439,14 @@ export const notificationChannelSchema: EntitySchema = {
       ],
     },
     {
-      title: '启用状态',
+      title: i18n.t('shared.notification_channel.k39'),
       fields: ['enabled'],
     },
   ],
 
   formColCount: 2,
-  createTitle: '添加通知渠道',
-  editTitle: '编辑通知渠道',
-  detailTitle: '通知渠道详情',
+  createTitle: i18n.t('shared.notification_channel.k40'),
+  editTitle: i18n.t('shared.notification_channel.k41'),
+  detailTitle: i18n.t('shared.notification_channel.k42'),
   detailMaxWidth: 'md',
 };

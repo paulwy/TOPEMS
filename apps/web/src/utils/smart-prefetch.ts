@@ -9,6 +9,7 @@
  */
 
 import { logger } from './logger';
+import i18n from '@/i18n';
 
 const prefetchLogger = logger.child({ prefix: 'SmartPrefetch' });
 
@@ -85,7 +86,7 @@ export class PrefetchEngine {
 
     this.lastRoute = route;
 
-    prefetchLogger.debug(`记录访问: ${route}`);
+    prefetchLogger.debug(`${i18n.t('shared.smart-prefetch.k0')}${route}`);
   }
 
   private recordTransition(from: string, to: string): void {
@@ -271,7 +272,7 @@ export class PrefetchEngine {
     }
 
     prefetchLogger.info(
-      `调度预加载任务: ${tasks.length}个, 队列长度: ${this.prefetchQueue.length}`
+      `${i18n.t('shared.smart-prefetch.k1')}${tasks.length}${i18n.t('shared.smart-prefetch.k2')}${this.prefetchQueue.length}`
     );
 
     return tasks;
@@ -299,7 +300,7 @@ export class PrefetchEngine {
     queries: Array<{ query: string; variables?: Record<string, unknown> }>
   ): void {
     this.routeQueries.set(route, queries);
-    prefetchLogger.debug(`注册路由查询: ${route} (${queries.length}个查询)`);
+    prefetchLogger.debug(`${i18n.t('shared.smart-prefetch.k3')}${route} (${queries.length}${i18n.t('shared.smart-prefetch.k4')}`);
   }
 
   getRouteQueries(route: string): Array<{ query: string; variables?: Record<string, unknown> }> {
@@ -318,7 +319,7 @@ export class PrefetchEngine {
     };
     this.lastRoute = null;
     this.prefetchQueue = [];
-    prefetchLogger.info('已清空访问历史和预加载队列');
+    prefetchLogger.info(i18n.t('shared.smart-prefetch.k0'));
   }
 
   setStrategies(strategies: PrefetchStrategy[]): void {

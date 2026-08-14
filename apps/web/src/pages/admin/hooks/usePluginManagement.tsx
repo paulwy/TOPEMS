@@ -1,6 +1,5 @@
 import React, { useCallback, useMemo, useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { useTranslation } from 'react-i18next';
 import { Play, Square, Trash2, Download } from 'lucide-react';
 import type { CrudApiAdapter } from '@/components/templates/CrudPage';
 import type { RowAction } from '@/components/templates/list/types';
@@ -9,7 +8,7 @@ import { useNotificationStore } from '@/store';
 import { type Plugin, fetchAllPluginInfo, PLUGIN_REGISTRY } from '@/api/plugin';
 import { usePluginStore } from '@/store/pluginStore';
 import { extractErrorMessage } from '@/utils/errors';
-
+import i18n from '@/i18n';
 export interface MarketplacePlugin {
   code: string;
   name: string;
@@ -23,30 +22,27 @@ export interface MarketplacePlugin {
   plugin_type: string;
   permissions: Array<{ code: string; name: string }>;
 }
-
 export type UninstallTier = 'disable' | 'uninstall' | 'delete';
-
 export const getPluginDisplayNames = (t: (key: string) => string): Record<string, string> => ({
-  workflow: t('admin.plugin_management.workflow_engine'),
-  erp: t('admin.plugin_management.enterprise_resource_planning'),
-  hrm: t('admin.plugin_management.human_resource_management'),
-  crm: t('admin.plugin_management.customer_relationship_management'),
-  mes: t('admin.plugin_management.manufacturing_execution_system'),
-  qa: t('admin.plugin_management.quality_management_safety'),
-  scm: t('admin.plugin_management.supply_chain_management'),
-  wms: t('admin.plugin_management.warehouse_management'),
-  bi: t('admin.plugin_management.business_intelligence'),
-  pm: t('admin.plugin_management.project_management'),
-  ai: t('admin.plugin_management_page.ai_e93885'),
-  gis: t('admin.plugin_management.geographic_information_service'),
-  mobile: t('admin.plugin_management.mobile_services'),
-  rs: t('admin.plugin_management.r_d_management'),
-  srm: t('admin.plugin_management.supplier_management'),
-  monitor: t('admin.plugin_management.monitoring_alerts'),
-  portal: t('admin.plugin_management.enterprise_portal'),
-  integration: t('admin.plugin_management.system_integration'),
+  workflow: i18n.t('admin.plugin_management.workflow_engine'),
+  erp: i18n.t('admin.plugin_management.enterprise_resource_planning'),
+  hrm: i18n.t('admin.plugin_management.human_resource_management'),
+  crm: i18n.t('admin.plugin_management.customer_relationship_management'),
+  mes: i18n.t('admin.plugin_management.manufacturing_execution_system'),
+  qa: i18n.t('admin.plugin_management.quality_management_safety'),
+  scm: i18n.t('admin.plugin_management.supply_chain_management'),
+  wms: i18n.t('admin.plugin_management.warehouse_management'),
+  bi: i18n.t('admin.plugin_management.business_intelligence'),
+  pm: i18n.t('admin.plugin_management.project_management'),
+  ai: i18n.t('admin.plugin_management_page.ai_e93885'),
+  gis: i18n.t('admin.plugin_management.geographic_information_service'),
+  mobile: i18n.t('admin.plugin_management.mobile_services'),
+  rs: i18n.t('admin.plugin_management.r_d_management'),
+  srm: i18n.t('admin.plugin_management.supplier_management'),
+  monitor: i18n.t('admin.plugin_management.monitoring_alerts'),
+  portal: i18n.t('admin.plugin_management.enterprise_portal'),
+  integration: i18n.t('admin.plugin_management.system_integration'),
 });
-
 export const PLUGIN_CATEGORIES: Record<string, string> = {
   workflow: 'System',
   erp: 'Business',
@@ -67,12 +63,10 @@ export const PLUGIN_CATEGORIES: Record<string, string> = {
   portal: 'System',
   integration: 'System',
 };
-
 export interface UninstallTarget {
   code: string;
   tier: UninstallTier;
 }
-
 type EnableMutation = ReturnType<typeof useMutation<string, unknown, string>>;
 type DisableMutation = ReturnType<typeof useMutation<string, unknown, string>>;
 type UpgradeMutation = ReturnType<typeof useMutation<string, unknown, string>>;
@@ -84,7 +78,6 @@ type UninstallMutation = ReturnType<
   >
 >;
 type InstallMutation = ReturnType<typeof useMutation<string, unknown, string>>;
-
 export interface UsePluginManagementReturn {
   // marketplace state
   marketplaceOpen: boolean;
@@ -94,26 +87,21 @@ export interface UsePluginManagementReturn {
   installStep: number;
   installLoading: boolean;
   installError: string | null;
-
   // uninstall state
   uninstallTarget: UninstallTarget | null;
   setUninstallTarget: React.Dispatch<React.SetStateAction<UninstallTarget | null>>;
-
   // marketplace setters
   setMarketplaceTab: React.Dispatch<React.SetStateAction<number>>;
   setMarketplaceSearch: React.Dispatch<React.SetStateAction<string>>;
-
   // marketplace data
   filteredMarketplace: MarketplacePlugin[];
   installedCodes: string[];
-
   // mutations
   enableMutation: EnableMutation;
   disableMutation: DisableMutation;
   upgradeMutation: UpgradeMutation;
   uninstallMutation: UninstallMutation;
   installMutation: InstallMutation;
-
   // handlers
   handleOpenMarketplace: () => void;
   handleCloseMarketplace: () => void;
@@ -121,16 +109,12 @@ export interface UsePluginManagementReturn {
   handleInstallNext: () => Promise<void>;
   handleInstallBack: () => void;
   getUninstallMessage: (pluginCode: string, tier: UninstallTier) => string;
-
   // adapters / config
   apiAdapter: CrudApiAdapter;
   customRowActions: RowAction[];
 }
-
 export function usePluginManagement(): UsePluginManagementReturn {
-  const { t } = useTranslation();
-  const pluginDisplayNames = getPluginDisplayNames(t);
-
+  const pluginDisplayNames = getPluginDisplayNames(i18n.t);
   const {
     installedPlugins,
     fetchInstalledPlugins,
@@ -141,10 +125,8 @@ export function usePluginManagement(): UsePluginManagementReturn {
     installPlugin,
     upgradePlugin,
   } = usePluginStore();
-
   const addNotification = useNotificationStore((state) => state.addNotification);
   const queryClient = useQueryClient();
-
   const [marketplaceOpen, setMarketplaceOpen] = useState(false);
   const [marketplaceTab, setMarketplaceTab] = useState(0);
   const [marketplaceSearch, setMarketplaceSearch] = useState('');
@@ -152,25 +134,20 @@ export function usePluginManagement(): UsePluginManagementReturn {
   const [installStep, setInstallStep] = useState(0);
   const [installLoading, setInstallLoading] = useState(false);
   const [installError, setInstallError] = useState<string | null>(null);
-
   const [uninstallTarget, setUninstallTarget] = useState<UninstallTarget | null>(null);
-
   const loadPlugins = useCallback(() => {
     queryClient.invalidateQueries({ queryKey: QUERY_KEYS.SYSTEM.PLUGINS ,
   exact: false,
   refetchType: 'active',
 });
   }, [queryClient]);
-
   const apiAdapter: CrudApiAdapter = useMemo(
     () => ({
       list: async (params) => {
         await Promise.all([fetchInstalledPlugins(), fetchHealthStatus()]);
         const pluginInfoList = await fetchAllPluginInfo();
-
         const search = (params?.search as string) || '';
         const typeFilter = (params?.plugin_type as string) || 'all';
-
         const runtimePlugins: Plugin[] = pluginInfoList.map((info, index) => ({
           id: String(index + 1),
           code: info.code,
@@ -184,7 +161,6 @@ export function usePluginManagement(): UsePluginManagementReturn {
           runtime_url: PLUGIN_REGISTRY[info.code]?.url || '',
           base_path: `/api/${info.code}`,
         }));
-
         const filtered = runtimePlugins.filter((plugin) => {
           const matchesSearch =
             !search ||
@@ -194,28 +170,26 @@ export function usePluginManagement(): UsePluginManagementReturn {
           const matchesType = typeFilter === 'all' || plugin.plugin_type === typeFilter;
           return matchesSearch && matchesType;
         });
-
         return { data: filtered as unknown as Record<string, unknown>[], total: filtered.length };
       },
       create: async () => {
-        throw new Error(` + ${t('admin.plugin_management_page.error_6b5f03')} + `);
+        throw new Error(` + ${i18n.t('admin.plugin_management_page.error_6b5f03')} + `);
       },
       update: async () => {
         throw new Error(
-          t('admin.plugin_management.plugin_configuration_does_not_support_direct_editing')
+          i18n.t('admin.plugin_management.plugin_configuration_does_not_support_direct_editing')
         );
       },
       delete: async () => {
-        throw new Error(t('admin.plugin_management.please_use_uninstall_to_remove_the_plugin'));
+        throw new Error(i18n.t('admin.plugin_management.please_use_uninstall_to_remove_the_plugin'));
       },
     }),
-    [fetchInstalledPlugins, fetchHealthStatus, t]
+    [fetchInstalledPlugins, fetchHealthStatus, i18n.t]
   );
-
   const enableMutation = useMutation({
     mutationFn: async (pluginCode: string) => {
       const success = await enablePlugin(pluginCode);
-      if (!success) throw new Error(t('admin.plugin_management.enable_failed'));
+      if (!success) throw new Error(i18n.t('admin.plugin_management.enable_failed'));
       return pluginCode;
     },
     onSuccess: (pluginCode) => {
@@ -226,25 +200,24 @@ export function usePluginManagement(): UsePluginManagementReturn {
           refetchType: 'active',
         });
       addNotification({
-        title: t('admin.plugin_management.enabled_successfully'),
-        message: t('admin.plugin_management_page.text_773966', { pluginCode }),
+        title: i18n.t('admin.plugin_management.enabled_successfully'),
+        message: i18n.t('admin.plugin_management_page.text_773966', { pluginCode }),
         type: 'success',
       });
       loadPlugins();
     },
     onError: (err: unknown) => {
       addNotification({
-        title: t('admin.plugin_management.failed'),
-        message: (err as Error).message || t('admin.plugin_management.enable_failed'),
+        title: i18n.t('admin.plugin_management.failed'),
+        message: (err as Error).message || i18n.t('admin.plugin_management.enable_failed'),
         type: 'error',
       });
     },
   });
-
   const disableMutation = useMutation({
     mutationFn: async (pluginCode: string) => {
       const success = await disablePlugin(pluginCode);
-      if (!success) throw new Error(t('admin.plugin_management.disable_failed'));
+      if (!success) throw new Error(i18n.t('admin.plugin_management.disable_failed'));
       return pluginCode;
     },
     onSuccess: (pluginCode) => {
@@ -255,25 +228,24 @@ export function usePluginManagement(): UsePluginManagementReturn {
           refetchType: 'active',
         });
       addNotification({
-        title: t('admin.plugin_management.disabled_successfully'),
-        message: t('admin.plugin_management_page.text_c0f589', { pluginCode }),
+        title: i18n.t('admin.plugin_management.disabled_successfully'),
+        message: i18n.t('admin.plugin_management_page.text_c0f589', { pluginCode }),
         type: 'success',
       });
       loadPlugins();
     },
     onError: (err: unknown) => {
       addNotification({
-        title: t('admin.plugin_management.failed'),
-        message: (err as Error).message || t('admin.plugin_management.disable_failed'),
+        title: i18n.t('admin.plugin_management.failed'),
+        message: (err as Error).message || i18n.t('admin.plugin_management.disable_failed'),
         type: 'error',
       });
     },
   });
-
   const upgradeMutation = useMutation({
     mutationFn: async (pluginCode: string) => {
       const success = await upgradePlugin(pluginCode);
-      if (!success) throw new Error(t('admin.plugin_management.upgrade_failed'));
+      if (!success) throw new Error(i18n.t('admin.plugin_management.upgrade_failed'));
       return pluginCode;
     },
     onSuccess: (pluginCode) => {
@@ -284,25 +256,24 @@ export function usePluginManagement(): UsePluginManagementReturn {
           refetchType: 'active',
         });
       addNotification({
-        title: t('admin.plugin_management.upgraded_successfully'),
-        message: t('admin.plugin_management_page.text_b13651', { pluginCode }),
+        title: i18n.t('admin.plugin_management.upgraded_successfully'),
+        message: i18n.t('admin.plugin_management_page.text_b13651', { pluginCode }),
         type: 'success',
       });
       loadPlugins();
     },
     onError: (err: unknown) => {
       addNotification({
-        title: t('admin.plugin_management.failed'),
-        message: (err as Error).message || t('admin.plugin_management.upgrade_failed'),
+        title: i18n.t('admin.plugin_management.failed'),
+        message: (err as Error).message || i18n.t('admin.plugin_management.upgrade_failed'),
         type: 'error',
       });
     },
   });
-
   const uninstallMutation = useMutation({
     mutationFn: async ({ pluginCode, tier }: { pluginCode: string; tier: UninstallTier }) => {
       const success = await uninstallPlugin(pluginCode, tier);
-      if (!success) throw new Error(t('admin.plugin_management.uninstall_failed'));
+      if (!success) throw new Error(i18n.t('admin.plugin_management.uninstall_failed'));
       return { pluginCode, tier };
     },
     onSuccess: ({ pluginCode, tier }) => {
@@ -313,21 +284,21 @@ export function usePluginManagement(): UsePluginManagementReturn {
           refetchType: 'active',
         });
       addNotification({
-        title: t('admin.plugin_management.operation_successful'),
+        title: i18n.t('admin.plugin_management.operation_successful'),
         message:
           tier === 'delete'
-            ? t('admin.plugin_management_page.text_9e796d', { pluginCode })
+            ? i18n.t('admin.plugin_management_page.text_9e796d', { pluginCode })
             : tier === 'disable'
-              ? t('admin.plugin_management_page.text_c0f589', { pluginCode })
-              : t('admin.plugin_management_page.text_46c7c3', { pluginCode }),
+              ? i18n.t('admin.plugin_management_page.text_c0f589', { pluginCode })
+              : i18n.t('admin.plugin_management_page.text_46c7c3', { pluginCode }),
         type: 'success',
       });
       loadPlugins();
     },
     onError: (err: unknown) => {
       addNotification({
-        title: t('admin.plugin_management.failed'),
-        message: (err as Error).message || t('admin.plugin_management.uninstall_failed'),
+        title: i18n.t('admin.plugin_management.failed'),
+        message: (err as Error).message || i18n.t('admin.plugin_management.uninstall_failed'),
         type: 'error',
       });
     },
@@ -335,11 +306,10 @@ export function usePluginManagement(): UsePluginManagementReturn {
       setUninstallTarget(null);
     },
   });
-
   const installMutation = useMutation({
     mutationFn: async (pluginCode: string) => {
       const success = await installPlugin(pluginCode);
-      if (!success) throw new Error(t('admin.plugin_management.install_failed'));
+      if (!success) throw new Error(i18n.t('admin.plugin_management.install_failed'));
       return pluginCode;
     },
   
@@ -350,7 +320,6 @@ export function usePluginManagement(): UsePluginManagementReturn {
           refetchType: 'active',
         });
       },});
-
   const allMarketplacePlugins: MarketplacePlugin[] = useMemo(
     () =>
       Object.entries(PLUGIN_REGISTRY).map(([code, config]) => ({
@@ -358,7 +327,7 @@ export function usePluginManagement(): UsePluginManagementReturn {
         name: pluginDisplayNames[code] || code.toUpperCase(),
         version: '1.0.0',
         latest_version: '1.0.0',
-        description: t('admin.plugin_management_page.text_97114b', {
+        description: i18n.t('admin.plugin_management_page.text_97114b', {
           var0: pluginDisplayNames[code] || code,
           var1: config.port,
         }),
@@ -369,9 +338,8 @@ export function usePluginManagement(): UsePluginManagementReturn {
         plugin_type: code === 'workflow' ? 'core' : 'business',
         permissions: [],
       })),
-    [t]
+    [i18n.t]
   );
-
   const filteredMarketplace = useMemo(
     () =>
       allMarketplacePlugins.filter((plugin) => {
@@ -384,7 +352,6 @@ export function usePluginManagement(): UsePluginManagementReturn {
       }),
     [allMarketplacePlugins, marketplaceSearch]
   );
-
   const installedCodes = useMemo(
     () => [
       ...(queryClient.getQueryData<Plugin[]>(QUERY_KEYS.SYSTEM.PLUGINS) || []).map((p) => p.code),
@@ -392,26 +359,22 @@ export function usePluginManagement(): UsePluginManagementReturn {
     ],
     [queryClient, installedPlugins]
   );
-
   const handleOpenMarketplace = useCallback(() => {
     setMarketplaceOpen(true);
     setMarketplaceTab(0);
     setMarketplaceSearch('');
   }, []);
-
   const handleCloseMarketplace = useCallback(() => {
     setMarketplaceOpen(false);
     setInstallingPlugin(null);
     setInstallStep(0);
     setInstallError(null);
   }, []);
-
   const handleInstallPlugin = useCallback((plugin: MarketplacePlugin) => {
     setInstallingPlugin(plugin);
     setInstallStep(0);
     setInstallError(null);
   }, []);
-
   const handleInstallNext = useCallback(async () => {
     if (installStep === 0) {
       setInstallStep(1);
@@ -423,55 +386,52 @@ export function usePluginManagement(): UsePluginManagementReturn {
         setInstallStep(2);
         loadPlugins();
       } catch (err: unknown) {
-        setInstallError(extractErrorMessage(err, t('admin.plugin_management.install_failed')));
+        setInstallError(extractErrorMessage(err, i18n.t('admin.plugin_management.install_failed')));
       } finally {
         setInstallLoading(false);
       }
     } else if (installStep === 2) {
       handleCloseMarketplace();
     }
-  }, [installStep, installMutation, installingPlugin, loadPlugins, handleCloseMarketplace, t]);
-
+  }, [installStep, installMutation, installingPlugin, loadPlugins, handleCloseMarketplace, i18n.t]);
   const handleInstallBack = useCallback(() => {
     if (installStep > 0) {
       setInstallStep(installStep - 1);
     }
   }, [installStep]);
-
   const getUninstallMessage = useCallback(
     (pluginCode: string, tier: UninstallTier) => {
       switch (tier) {
         case 'disable':
-          return t('admin.plugin_management_page.text_ede147', { pluginCode });
+          return i18n.t('admin.plugin_management_page.text_ede147', { pluginCode });
         case 'uninstall':
-          return t('admin.plugin_management_page.text_c0b87f', { pluginCode });
+          return i18n.t('admin.plugin_management_page.text_c0b87f', { pluginCode });
         case 'delete':
-          return t('admin.plugin_management_page.text_5cb48f', { pluginCode });
+          return i18n.t('admin.plugin_management_page.text_5cb48f', { pluginCode });
         default:
-          return t(`admin.plugin_management_page.text_3ad04c${{ pluginCode }}`);
+          return i18n.t(`admin.plugin_management_page.text_3ad04c${{ pluginCode }}`);
       }
     },
-    [t]
+    [i18n.t]
   );
-
   const customRowActions: RowAction[] = useMemo(
     () => [
       {
-        label: t('admin.plugin_management.enable'),
+        label: i18n.t('admin.plugin_management.enable'),
         icon: <Play size={16} />,
         onClick: (row) => enableMutation.mutate(String(row.code)),
         color: 'success',
         show: (row) => row.runtime_status !== 'running',
       },
       {
-        label: t('admin.plugin_management.disable'),
+        label: i18n.t('admin.plugin_management.disable'),
         icon: <Square size={16} />,
         onClick: (row) => disableMutation.mutate(String(row.code)),
         color: 'warning',
         show: (row) => row.runtime_status === 'running',
       },
       {
-        label: t('admin.plugin_management.upgrade'),
+        label: i18n.t('admin.plugin_management.upgrade'),
         icon: <Download size={16} />,
         onClick: (row) => upgradeMutation.mutate(String(row.code)),
         color: 'primary',
@@ -482,16 +442,15 @@ export function usePluginManagement(): UsePluginManagementReturn {
         },
       },
       {
-        label: t('admin.plugin_management.uninstall'),
+        label: i18n.t('admin.plugin_management.uninstall'),
         icon: <Trash2 size={16} />,
         onClick: (row) => setUninstallTarget({ code: String(row.code), tier: 'uninstall' }),
         color: 'error',
         divider: true,
       },
     ],
-    [enableMutation, disableMutation, upgradeMutation, allMarketplacePlugins, t]
+    [enableMutation, disableMutation, upgradeMutation, allMarketplacePlugins, i18n.t]
   );
-
   return {
     marketplaceOpen,
     marketplaceTab,

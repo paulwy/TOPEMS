@@ -1,6 +1,7 @@
 import React from 'react';
 import { ContactCard } from './ContactCard';
 import type { AddressbookEntry } from '../../types/addressbook';
+import i18n from '@/i18n';
 
 interface AddressbookListProps {
   contacts: AddressbookEntry[];
@@ -23,7 +24,7 @@ export const AddressbookList: React.FC<AddressbookListProps> = ({
           height: 256,
         }}
       >
-        <div style={{ color: 'var(--mui-palette-text-secondary)' }}>加载中...</div>
+        <div style={{ color: 'var(--mui-palette-text-secondary)' }}>{i18n.t('components.addressbook_list.k0')}</div>
       </div>
     );
   }
@@ -39,7 +40,7 @@ export const AddressbookList: React.FC<AddressbookListProps> = ({
         }}
       >
         <div style={{ textAlign: 'center' }}>
-          <p style={{ color: 'var(--mui-palette-text-secondary)' }}>没有找到联系人</p>
+          <p style={{ color: 'var(--mui-palette-text-secondary)' }}>{i18n.t('shared.addressbook_list.k0')}</p>
         </div>
       </div>
     );

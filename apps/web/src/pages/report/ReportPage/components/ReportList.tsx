@@ -3,6 +3,7 @@ import { Box, Typography, Chip, Button } from '@mui/material';
 import { FileText, Eye, Download, Trash2, Calendar, Columns } from 'lucide-react';
 import type { ReportData, ReportTypeInfo } from '@/api/report';
 import { getModuleColor, getFormatIcon, getModuleFromReportType } from '../utils';
+import i18n from '@/i18n';
 
 interface ReportListProps {
   reports: ReportData[];
@@ -28,7 +29,7 @@ const ReportList: React.FC<ReportListProps> = ({
           variant='h6'
           sx={{ fontWeight: 600, color: 'grey.900' }}
         >
-          报表列表
+          {i18n.t('pages.report_list.k0')}
         </Typography>
       </Box>
       <Box
@@ -50,13 +51,13 @@ const ReportList: React.FC<ReportListProps> = ({
                 mb: 2,
               }}
             />
-            <Typography sx={{ color: 'grey.600' }}>暂无报表</Typography>
+            <Typography sx={{ color: 'grey.600' }}>{i18n.t('pages.report_list.k0')}</Typography>
             <Button
               onClick={onShowBuilder}
               variant='contained'
               sx={{ mt: 2, borderRadius: 3 }}
             >
-              生成第一个报表
+              {i18n.t('pages.report_list.k1')}
             </Button>
           </Box>
         ) : (
@@ -96,7 +97,7 @@ const ReportList: React.FC<ReportListProps> = ({
                       sx={{ borderRadius: '50%' }}
                     />
                     <Chip
-                      label={`${report.row_count} 条数据`}
+                      label={`${report.row_count}${i18n.t('pages.report_list.k0')}`}
                       size='small'
                       sx={{
                         bgcolor: 'grey.100',
@@ -127,7 +128,7 @@ const ReportList: React.FC<ReportListProps> = ({
                       }}
                     >
                       <Calendar sx={{ width: 16, height: 16 }} />
-                      创建时间: {new Date(report.created_at).toLocaleDateString('zh-CN')}
+                      [i18n.t('pages.report_list.k2')]: {new Date(report.created_at).toLocaleDateString('zh-CN')}
                     </Box>
                     <Box
                       sx={{
@@ -162,7 +163,7 @@ const ReportList: React.FC<ReportListProps> = ({
                       borderRadius: 3,
                     }}
                   >
-                    查看
+                    {i18n.t('pages.report_list.k3')}
                   </Button>
                   <Button
                     onClick={() => onExport(report)}
@@ -174,7 +175,7 @@ const ReportList: React.FC<ReportListProps> = ({
                       borderRadius: 3,
                     }}
                   >
-                    导出
+                    {i18n.t('pages.report_list.k4')}
                   </Button>
                   <Button
                     onClick={() => onDelete(report.id)}

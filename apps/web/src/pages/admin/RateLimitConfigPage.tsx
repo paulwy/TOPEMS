@@ -23,6 +23,7 @@ import {
   Alert,
   Snackbar,
 } from '@mui/material';
+import i18n from '@/i18n';
 import {
   Shield,
   Save,
@@ -36,7 +37,6 @@ import {
   AlertCircle,
 } from 'lucide-react';
 import React, { useEffect, useMemo, useState } from 'react';
-import { useTranslation } from 'react-i18next';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { PageContainer } from '@/components/common';
 import { apiClient } from '@/api/client';
@@ -44,23 +44,17 @@ import { designTokens } from '@/theme/tokens';
 import { extractErrorMessage } from '@/utils/errors';
 import { useNotificationStore } from '@/store';
 import { apiLogger } from '@/utils/logger';
-
-
 import { QUERY_KEYS } from '@/lib/reactQuery';
-
 const ct= designTokens.colors;
-
 interface RateLimitRule {
   requests: number;
   window_secs: number;
   priority: number;
 }
-
 interface PathRule {
   path: string;
   rule: RateLimitRule;
 }
-
 interface RateLimitConfig {
   enabled: boolean;
   by_tenant: boolean;
@@ -75,7 +69,6 @@ interface RateLimitConfig {
   skip_paths: string[];
   updated_at?: string;
 }
-
 interface AntiReplayConfig {
   enabled: boolean;
   tolerance_secs: number;
@@ -84,7 +77,6 @@ interface AntiReplayConfig {
   nonce_header: string;
   enforce_paths: string[];
 }
-
 const DEFAULT_CONFIG: RateLimitConfig = {
   enabled: true,
   by_tenant: true,
@@ -98,7 +90,6 @@ const DEFAULT_CONFIG: RateLimitConfig = {
   path_rules: [],
   skip_paths: ['/health', '/api', '/api/info', '/metrics'],
 };
-
 const DEFAULT_ANTI_REPLAY: AntiReplayConfig = {
   enabled: false,
   tolerance_secs: 300,
@@ -107,9 +98,7 @@ const DEFAULT_ANTI_REPLAY: AntiReplayConfig = {
   nonce_header: 'X-Request-Nonce',
   enforce_paths: [],
 };
-
 const RateLimitConfigPage: React.FC = () => {
-  const { t } = useTranslation();
   const queryClient = useQueryClient();
   const addNotification = useNotificationStore((s) => s.addNotification);
   const [config, setConfig] = useState<RateLimitConfig>(DEFAULT_CONFIG);
@@ -119,7 +108,6 @@ const RateLimitConfigPage: React.FC = () => {
   const [newPathWindow, setNewPathWindow] = useState(60);
   const [newSkipPath, setNewSkipPath] = useState('');
   const [newEnforcePath, setNewEnforcePath] = useState('');
-
   const configQuery = useQuery({
     queryKey: QUERY_KEYS.AD_HOC.ADMIN_RATE_LIMIT_CONFIG_BASE,
     queryFn: async () => {
@@ -131,7 +119,6 @@ const RateLimitConfigPage: React.FC = () => {
     },
     staleTime: 30_000,
   });
-
   const antiReplayQuery = useQuery({
     queryKey: QUERY_KEYS.AD_HOC.ADMIN_ANTI_REPLAY_CONFIG_BASE,
     queryFn: async () => {
@@ -145,19 +132,16 @@ const RateLimitConfigPage: React.FC = () => {
     },
     staleTime: 30_000,
   });
-
   useEffect(() => {
     if (configQuery.data) {
       setConfig(configQuery.data);
     }
   }, [configQuery.data]);
-
   useEffect(() => {
     if (antiReplayQuery.data) {
       setAntiReplay(antiReplayQuery.data);
     }
   }, [antiReplayQuery.data]);
-
   const saveMutation = useMutation({
     mutationFn: async (next: RateLimitConfig) => {
       const res = await apiClient.core.put<RateLimitConfig>(
@@ -169,8 +153,8 @@ const RateLimitConfigPage: React.FC = () => {
     onSuccess: (res) => {
       if (res.success) {
         addNotification({
-          title: t('admin:rate_limit_config_page.save_success'),
-          message: t('admin:rate_limit_config_page.rate_limit_config_updated'),
+          title: i18n.t('admin:rate_limit_config_page.save_success'),
+          message: i18n.t('admin:rate_limit_config_page.rate_limit_config_updated'),
           type: 'success',
         });
         queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.ADMIN_RATE_LIMIT_CONFIG_BASE ,
@@ -179,22 +163,21 @@ const RateLimitConfigPage: React.FC = () => {
 });
       } else {
         addNotification({
-          title: t('admin:rate_limit_config_page.save_fail'),
-          message: res.message || t('admin:rate_limit_config_page.rate_limit_config_save_fail'),
+          title: i18n.t('admin:rate_limit_config_page.save_fail'),
+          message: res.message || i18n.t('admin:rate_limit_config_page.rate_limit_config_save_fail'),
           type: 'error',
         });
       }
     },
     onError: (err: unknown) => {
-      apiLogger.error(t('admin:rate_limit_config_page.log_save_rate_limit_fail'), err);
+      apiLogger.error(i18n.t('admin:rate_limit_config_page.log_save_rate_limit_fail'), err);
       addNotification({
-        title: t('admin:rate_limit_config_page.save_fail'),
-        message: extractErrorMessage(err, t('admin:rate_limit_config_page.save_rate_limit_fail')),
+        title: i18n.t('admin:rate_limit_config_page.save_fail'),
+        message: extractErrorMessage(err, i18n.t('admin:rate_limit_config_page.save_rate_limit_fail')),
         type: 'error',
       });
     },
   });
-
   const saveAntiReplayMutation = useMutation({
     mutationFn: async (next: AntiReplayConfig) => {
       const res = await apiClient.core.put<AntiReplayConfig>(
@@ -206,8 +189,8 @@ const RateLimitConfigPage: React.FC = () => {
     onSuccess: (res) => {
       if (res.success) {
         addNotification({
-          title: t('admin:rate_limit_config_page.save_success'),
-          message: t('admin:rate_limit_config_page.anti_replay_config_updated'),
+          title: i18n.t('admin:rate_limit_config_page.save_success'),
+          message: i18n.t('admin:rate_limit_config_page.anti_replay_config_updated'),
           type: 'success',
         });
         queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.ADMIN_ANTI_REPLAY_CONFIG_BASE ,
@@ -216,22 +199,21 @@ const RateLimitConfigPage: React.FC = () => {
 });
       } else {
         addNotification({
-          title: t('admin:rate_limit_config_page.save_fail'),
-          message: res.message || t('admin:rate_limit_config_page.anti_replay_config_save_fail'),
+          title: i18n.t('admin:rate_limit_config_page.save_fail'),
+          message: res.message || i18n.t('admin:rate_limit_config_page.anti_replay_config_save_fail'),
           type: 'error',
         });
       }
     },
     onError: (err: unknown) => {
-      apiLogger.error(t('admin:rate_limit_config_page.log_save_anti_replay_fail'), err);
+      apiLogger.error(i18n.t('admin:rate_limit_config_page.log_save_anti_replay_fail'), err);
       addNotification({
-        title: t('admin:rate_limit_config_page.save_fail'),
-        message: extractErrorMessage(err, t('admin:rate_limit_config_page.save_anti_replay_fail')),
+        title: i18n.t('admin:rate_limit_config_page.save_fail'),
+        message: extractErrorMessage(err, i18n.t('admin:rate_limit_config_page.save_anti_replay_fail')),
         type: 'error',
       });
     },
   });
-
   const resetMutation = useMutation({
     mutationFn: async () => {
       const res = await apiClient.core.post<RateLimitConfig>(
@@ -244,8 +226,8 @@ const RateLimitConfigPage: React.FC = () => {
       if (res.success && res.data) {
         setConfig(res.data);
         addNotification({
-          title: t('admin:rate_limit_config_page.reset_done'),
-          message: t('admin:rate_limit_config_page.rate_limit_config_reset'),
+          title: i18n.t('admin:rate_limit_config_page.reset_done'),
+          message: i18n.t('admin:rate_limit_config_page.rate_limit_config_reset'),
           type: 'success',
         });
         queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.ADMIN_RATE_LIMIT_CONFIG_BASE ,
@@ -255,7 +237,6 @@ const RateLimitConfigPage: React.FC = () => {
       }
     },
   });
-
   const updateRule = (
     key: keyof Pick<
       RateLimitConfig,
@@ -269,11 +250,9 @@ const RateLimitConfigPage: React.FC = () => {
       [key]: { ...prev[key], [field]: value },
     }));
   };
-
   const updateToggle = (key: keyof RateLimitConfig) => {
     setConfig((prev) => ({ ...prev, [key]: !prev[key] }));
   };
-
   const handleAddPath = () => {
     if (!newPath) return;
     setConfig((prev) => ({
@@ -294,94 +273,84 @@ const RateLimitConfigPage: React.FC = () => {
     setNewPathRequests(200);
     setNewPathWindow(60);
   };
-
   const handleRemovePath = (path: string) => {
     setConfig((prev) => ({
       ...prev,
       path_rules: prev.path_rules.filter((r) => r.path !== path),
     }));
   };
-
   const handleAddSkipPath = () => {
     if (!newSkipPath) return;
     if (config.skip_paths.includes(newSkipPath)) return;
     setConfig((prev) => ({ ...prev, skip_paths: [...prev.skip_paths, newSkipPath] }));
     setNewSkipPath('');
   };
-
   const handleRemoveSkipPath = (path: string) => {
     setConfig((prev) => ({
       ...prev,
       skip_paths: prev.skip_paths.filter((p) => p !== path),
     }));
   };
-
   const handleAddEnforcePath = () => {
     if (!newEnforcePath) return;
     if (antiReplay.enforce_paths.includes(newEnforcePath)) return;
     setAntiReplay((prev) => ({ ...prev, enforce_paths: [...prev.enforce_paths, newEnforcePath] }));
     setNewEnforcePath('');
   };
-
   const handleRemoveEnforcePath = (path: string) => {
     setAntiReplay((prev) => ({
       ...prev,
       enforce_paths: prev.enforce_paths.filter((p) => p !== path),
     }));
   };
-
   const handleSave = () => {
     saveMutation.mutate(config);
   };
-
   const handleReset = () => {
-    if (window.confirm(t('admin:rate_limit_config_page.confirm_reset'))) {
+    if (window.confirm(i18n.t('admin:rate_limit_config_page.confirm_reset'))) {
       resetMutation.mutate();
     }
   };
-
   const handleSaveAntiReplay = () => {
     saveAntiReplayMutation.mutate(antiReplay);
   };
-
   const dimensions = useMemo(
     () => [
       {
         key: 'tenant_default' as const,
-        title: t('admin:rate_limit_config_page.dimension_tenant'),
+        title: i18n.t('admin:rate_limit_config_page.dimension_tenant'),
         icon: <Server size={18} />,
         color: ct.primary.dark,
-        description: t('admin:rate_limit_config_page.dimension_tenant_desc'),
+        description: i18n.t('admin:rate_limit_config_page.dimension_tenant_desc'),
       },
       {
         key: 'user_default' as const,
-        title: t('admin:rate_limit_config_page.dimension_user'),
+        title: i18n.t('admin:rate_limit_config_page.dimension_user'),
         icon: <Users size={18} />,
         color: ct.info.dark,
-        description: t('admin:rate_limit_config_page.dimension_user_desc'),
+        description: i18n.t('admin:rate_limit_config_page.dimension_user_desc'),
       },
       {
         key: 'ip_default' as const,
-        title: t('admin:rate_limit_config_page.dimension_ip'),
+        title: i18n.t('admin:rate_limit_config_page.dimension_ip'),
         icon: <Globe size={18} />,
         color: ct.success.dark,
-        description: t('admin:rate_limit_config_page.dimension_ip_desc'),
+        description: i18n.t('admin:rate_limit_config_page.dimension_ip_desc'),
       },
       {
         key: 'global_default' as const,
-        title: t('admin:rate_limit_config_page.dimension_global'),
+        title: i18n.t('admin:rate_limit_config_page.dimension_global'),
         icon: <Shield size={18} />,
         color: ct.warning.dark,
-        description: t('admin:rate_limit_config_page.dimension_global_desc'),
+        description: i18n.t('admin:rate_limit_config_page.dimension_global_desc'),
       },
     ],
-    [t]
+    [i18n.t]
   );
-
   return (
     <PageContainer
-      title={t('admin:rate_limit_config_page.title')}
-      subtitle={t('admin:rate_limit_config_page.subtitle')}
+      title={i18n.t('admin:rate_limit_config_page.title')}
+      subtitle={i18n.t('admin:rate_limit_config_page.subtitle')}
       headerProps={{
         backButton: { href: '/admin/system' },
         pageIcon: <Shield size={20} />,
@@ -407,13 +376,13 @@ const RateLimitConfigPage: React.FC = () => {
                     variant='subtitle1'
                     sx={{ fontWeight: 600 }}
                   >
-                    {t('admin:rate_limit_config_page.enable_rate_limit')}
+                    {i18n.t('admin:rate_limit_config_page.enable_rate_limit')}
                   </Typography>
                   <Typography
                     variant='body2'
                     color='text.secondary'
                   >
-                    {t('admin:rate_limit_config_page.enable_rate_limit_desc')}
+                    {i18n.t('admin:rate_limit_config_page.enable_rate_limit_desc')}
                   </Typography>
                 </Box>
                 <Switch
@@ -425,7 +394,6 @@ const RateLimitConfigPage: React.FC = () => {
             </CardContent>
           </Card>
         </Grid>
-
         {/* 维度开关 */}
         <Grid size={{ xs: 12 }}>
           <Card>
@@ -434,7 +402,7 @@ const RateLimitConfigPage: React.FC = () => {
                 variant='subtitle1'
                 sx={{ fontWeight: 600, mb: 2 }}
               >
-                {t('admin:rate_limit_config_page.dimensions_title')}
+                {i18n.t('admin:rate_limit_config_page.dimensions_title')}
               </Typography>
               <Grid
                 container
@@ -443,23 +411,23 @@ const RateLimitConfigPage: React.FC = () => {
                 {[
                   {
                     key: 'by_tenant',
-                    label: t('admin:rate_limit_config_page.dim_tenant'),
-                    desc: t('admin:rate_limit_config_page.dim_tenant_desc'),
+                    label: i18n.t('admin:rate_limit_config_page.dim_tenant'),
+                    desc: i18n.t('admin:rate_limit_config_page.dim_tenant_desc'),
                   },
                   {
                     key: 'by_user',
-                    label: t('admin:rate_limit_config_page.dim_user'),
-                    desc: t('admin:rate_limit_config_page.dim_user_desc'),
+                    label: i18n.t('admin:rate_limit_config_page.dim_user'),
+                    desc: i18n.t('admin:rate_limit_config_page.dim_user_desc'),
                   },
                   {
                     key: 'by_ip',
                     label: 'IP',
-                    desc: t('admin:rate_limit_config_page.dim_ip_desc'),
+                    desc: i18n.t('admin:rate_limit_config_page.dim_ip_desc'),
                   },
                   {
                     key: 'by_global',
-                    label: t('admin:rate_limit_config_page.dim_global'),
-                    desc: t('admin:rate_limit_config_page.dim_global_desc'),
+                    label: i18n.t('admin:rate_limit_config_page.dim_global'),
+                    desc: i18n.t('admin:rate_limit_config_page.dim_global_desc'),
                   },
                 ].map((dim) => (
                   <Grid
@@ -502,7 +470,6 @@ const RateLimitConfigPage: React.FC = () => {
             </CardContent>
           </Card>
         </Grid>
-
         {/* 默认规则 */}
         {dimensions.map((dim) => {
           const rule = config[dim.key];
@@ -549,7 +516,7 @@ const RateLimitConfigPage: React.FC = () => {
                   >
                     <Grid size={{ xs: 6 }}>
                       <TextField
-                        label={t('admin:rate_limit_config_page.label_max_requests')}
+                        label={i18n.t('admin:rate_limit_config_page.label_max_requests')}
                         type='number'
                         fullWidth
                         value={rule.requests}
@@ -560,7 +527,7 @@ const RateLimitConfigPage: React.FC = () => {
                           input: {
                             endAdornment: (
                               <InputAdornment position='end'>
-                                {t('admin:rate_limit_config_page.unit_times')}
+                                {i18n.t('admin:rate_limit_config_page.unit_times')}
                               </InputAdornment>
                             ),
                           },
@@ -569,7 +536,7 @@ const RateLimitConfigPage: React.FC = () => {
                     </Grid>
                     <Grid size={{ xs: 6 }}>
                       <TextField
-                        label={t('admin:rate_limit_config_page.label_time_window')}
+                        label={i18n.t('admin:rate_limit_config_page.label_time_window')}
                         type='number'
                         fullWidth
                         value={rule.window_secs}
@@ -580,7 +547,7 @@ const RateLimitConfigPage: React.FC = () => {
                           input: {
                             endAdornment: (
                               <InputAdornment position='end'>
-                                {t('admin:rate_limit_config_page.unit_seconds')}
+                                {i18n.t('admin:rate_limit_config_page.unit_seconds')}
                               </InputAdornment>
                             ),
                           },
@@ -589,14 +556,14 @@ const RateLimitConfigPage: React.FC = () => {
                     </Grid>
                     <Grid size={{ xs: 12 }}>
                       <TextField
-                        label={t('admin:rate_limit_config_page.label_priority')}
+                        label={i18n.t('admin:rate_limit_config_page.label_priority')}
                         type='number'
                         fullWidth
                         value={rule.priority}
                         onChange={(e) =>
                           updateRule(dim.key, 'priority', Number(e.target.value) || 0)
                         }
-                        helperText={t('admin:rate_limit_config_page.priority_helper')}
+                        helperText={i18n.t('admin:rate_limit_config_page.priority_helper')}
                       />
                     </Grid>
                   </Grid>
@@ -605,7 +572,6 @@ const RateLimitConfigPage: React.FC = () => {
             </Grid>
           );
         })}
-
         {/* 路径规则 */}
         <Grid size={{ xs: 12 }}>
           <Card>
@@ -614,11 +580,11 @@ const RateLimitConfigPage: React.FC = () => {
                 variant='subtitle1'
                 sx={{ fontWeight: 600, mb: 2 }}
               >
-                {t('admin:rate_limit_config_page.path_rules_title')}
+                {i18n.t('admin:rate_limit_config_page.path_rules_title')}
               </Typography>
               <Box sx={{ display: 'flex', gap: 2, mb: 2, flexWrap: 'wrap' }}>
                 <TextField
-                  label={t('admin:rate_limit_config_page.label_path_prefix')}
+                  label={i18n.t('admin:rate_limit_config_page.label_path_prefix')}
                   size='small'
                   value={newPath}
                   onChange={(e) => setNewPath(e.target.value)}
@@ -626,14 +592,14 @@ const RateLimitConfigPage: React.FC = () => {
                   sx={{ minWidth: 240 }}
                 />
                 <TextField
-                  label={t('admin:rate_limit_config_page.label_requests')}
+                  label={i18n.t('admin:rate_limit_config_page.label_requests')}
                   type='number'
                   size='small'
                   value={newPathRequests}
                   onChange={(e) => setNewPathRequests(Number(e.target.value) || 0)}
                 />
                 <TextField
-                  label={t('admin:rate_limit_config_page.label_window_seconds')}
+                  label={i18n.t('admin:rate_limit_config_page.label_window_seconds')}
                   type='number'
                   size='small'
                   value={newPathWindow}
@@ -644,7 +610,7 @@ const RateLimitConfigPage: React.FC = () => {
                   startIcon={<Plus size={16} />}
                   onClick={handleAddPath}
                 >
-                  {t('admin:rate_limit_config_page.add_rule')}
+                  {i18n.t('admin:rate_limit_config_page.add_rule')}
                 </Button>
               </Box>
               <TableContainer
@@ -654,13 +620,13 @@ const RateLimitConfigPage: React.FC = () => {
                 <Table size='small'>
                   <TableHead>
                     <TableRow>
-                      <TableCell>{t('admin:rate_limit_config_page.label_path_prefix')}</TableCell>
-                      <TableCell>{t('admin:rate_limit_config_page.label_requests')}</TableCell>
+                      <TableCell>{i18n.t('admin:rate_limit_config_page.label_path_prefix')}</TableCell>
+                      <TableCell>{i18n.t('admin:rate_limit_config_page.label_requests')}</TableCell>
                       <TableCell>
-                        {t('admin:rate_limit_config_page.label_window_seconds')}
+                        {i18n.t('admin:rate_limit_config_page.label_window_seconds')}
                       </TableCell>
                       <TableCell align='right'>
-                        {t('admin:rate_limit_config_page.col_action')}
+                        {i18n.t('admin:rate_limit_config_page.col_action')}
                       </TableCell>
                     </TableRow>
                   </TableHead>
@@ -676,7 +642,7 @@ const RateLimitConfigPage: React.FC = () => {
                             color='text.secondary'
                             sx={{ py: 2 }}
                           >
-                            {t('admin:rate_limit_config_page.no_custom_rules')}
+                            {i18n.t('admin:rate_limit_config_page.no_custom_rules')}
                           </Typography>
                         </TableCell>
                       </TableRow>
@@ -692,11 +658,11 @@ const RateLimitConfigPage: React.FC = () => {
                           <TableCell>{rule.rule.requests}</TableCell>
                           <TableCell>{rule.rule.window_secs}</TableCell>
                           <TableCell align='right'>
-                            <Tooltip title={t('admin:rate_limit_config_page.delete')}>
+                            <Tooltip title={i18n.t('admin:rate_limit_config_page.delete')}>
                               <IconButton
                                 size='small'
                                 onClick={() => handleRemovePath(rule.path)}
-                                aria-label={t('admin:rate_limit_config_page.delete')}
+                                aria-label={i18n.t('admin:rate_limit_config_page.delete')}
                               >
                                 <Trash2 size={16} />
                               </IconButton>
@@ -711,7 +677,6 @@ const RateLimitConfigPage: React.FC = () => {
             </CardContent>
           </Card>
         </Grid>
-
         {/* 跳过路径 */}
         <Grid size={{ xs: 12, md: 6 }}>
           <Card>
@@ -720,7 +685,7 @@ const RateLimitConfigPage: React.FC = () => {
                 variant='subtitle1'
                 sx={{ fontWeight: 600, mb: 2 }}
               >
-                {t('admin:rate_limit_config_page.skip_paths_title')}
+                {i18n.t('admin:rate_limit_config_page.skip_paths_title')}
               </Typography>
               <Box sx={{ display: 'flex', gap: 1, mb: 2 }}>
                 <TextField
@@ -734,7 +699,7 @@ const RateLimitConfigPage: React.FC = () => {
                   variant='outlined'
                   onClick={handleAddSkipPath}
                 >
-                  {t('admin:rate_limit_config_page.add')}
+                  {i18n.t('admin:rate_limit_config_page.add')}
                 </Button>
               </Box>
               <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
@@ -750,7 +715,6 @@ const RateLimitConfigPage: React.FC = () => {
             </CardContent>
           </Card>
         </Grid>
-
         {/* 防重放配置 */}
         <Grid size={{ xs: 12, md: 6 }}>
           <Card>
@@ -764,7 +728,7 @@ const RateLimitConfigPage: React.FC = () => {
                   variant='subtitle1'
                   sx={{ fontWeight: 600 }}
                 >
-                  {t('admin:rate_limit_config_page.anti_replay_title')}
+                  {i18n.t('admin:rate_limit_config_page.anti_replay_title')}
                 </Typography>
                 <Box sx={{ flex: 1 }} />
                 <Switch
@@ -778,7 +742,7 @@ const RateLimitConfigPage: React.FC = () => {
               >
                 <Grid size={{ xs: 6 }}>
                   <TextField
-                    label={t('admin:rate_limit_config_page.label_tolerance_secs')}
+                    label={i18n.t('admin:rate_limit_config_page.label_tolerance_secs')}
                     type='number'
                     fullWidth
                     size='small'
@@ -793,7 +757,7 @@ const RateLimitConfigPage: React.FC = () => {
                 </Grid>
                 <Grid size={{ xs: 6 }}>
                   <TextField
-                    label={t('admin:rate_limit_config_page.label_nonce_cache_secs')}
+                    label={i18n.t('admin:rate_limit_config_page.label_nonce_cache_secs')}
                     type='number'
                     fullWidth
                     size='small'
@@ -808,7 +772,7 @@ const RateLimitConfigPage: React.FC = () => {
                 </Grid>
                 <Grid size={{ xs: 6 }}>
                   <TextField
-                    label={t('admin:rate_limit_config_page.label_timestamp_header')}
+                    label={i18n.t('admin:rate_limit_config_page.label_timestamp_header')}
                     fullWidth
                     size='small'
                     value={antiReplay.timestamp_header}
@@ -840,7 +804,7 @@ const RateLimitConfigPage: React.FC = () => {
                     variant='body2'
                     sx={{ mb: 1, fontWeight: 500 }}
                   >
-                    {t('admin:rate_limit_config_page.enforce_paths_title')}
+                    {i18n.t('admin:rate_limit_config_page.enforce_paths_title')}
                   </Typography>
                   <Box sx={{ display: 'flex', gap: 1, mb: 1 }}>
                     <TextField
@@ -854,7 +818,7 @@ const RateLimitConfigPage: React.FC = () => {
                       variant='outlined'
                       onClick={handleAddEnforcePath}
                     >
-                      {t('admin:rate_limit_config_page.add')}
+                      {i18n.t('admin:rate_limit_config_page.add')}
                     </Button>
                   </Box>
                   <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
@@ -875,14 +839,13 @@ const RateLimitConfigPage: React.FC = () => {
                     onClick={handleSaveAntiReplay}
                     disabled={saveAntiReplayMutation.isPending}
                   >
-                    {t('admin:rate_limit_config_page.save_anti_replay')}
+                    {i18n.t('admin:rate_limit_config_page.save_anti_replay')}
                   </Button>
                 </Grid>
               </Grid>
             </CardContent>
           </Card>
         </Grid>
-
         {/* 操作按钮 */}
         <Grid size={{ xs: 12 }}>
           <Box sx={{ display: 'flex', gap: 2, justifyContent: 'flex-end' }}>
@@ -893,7 +856,7 @@ const RateLimitConfigPage: React.FC = () => {
               onClick={handleReset}
               disabled={resetMutation.isPending}
             >
-              {t('admin:rate_limit_config_page.reset_to_default')}
+              {i18n.t('admin:rate_limit_config_page.reset_to_default')}
             </Button>
             <Button
               variant='contained'
@@ -902,8 +865,8 @@ const RateLimitConfigPage: React.FC = () => {
               disabled={saveMutation.isPending}
             >
               {saveMutation.isPending
-                ? t('admin:rate_limit_config_page.saving')
-                : t('admin:rate_limit_config_page.save_config')}
+                ? i18n.t('admin:rate_limit_config_page.saving')
+                : i18n.t('admin:rate_limit_config_page.save_config')}
             </Button>
           </Box>
         </Grid>
@@ -911,5 +874,4 @@ const RateLimitConfigPage: React.FC = () => {
     </PageContainer>
   );
 };
-
 export default RateLimitConfigPage;

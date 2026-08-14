@@ -1,3 +1,4 @@
+import i18n from '@/i18n';
 /**
  * V53.0 前端 AI 增强 — 自动化测试生成
  *
@@ -62,30 +63,30 @@ export interface AnalysisResult {
 }
 
 const COMMON_EDGE_CASES: string[] = [
-  '空值/null 输入',
-  'undefined 输入',
-  '空字符串',
-  '空数组',
-  '空对象',
-  '超大值',
-  '负数',
-  '特殊字符',
-  'Unicode 字符',
-  'HTML 注入尝试',
-  'SQL 注入尝试',
-  '超长文本',
-  '边界数值 (0, MAX, MIN)',
-  '并发操作',
-  '网络错误',
-  '超时场景',
-  '权限不足',
-  '未登录状态',
-  '深色/浅色主题切换',
-  '不同语言/区域设置',
-  '屏幕尺寸变化 (响应式)',
-  '高 DPI / Retina 屏幕',
-  '无障碍辅助功能',
-  '浏览器兼容性',
+  i18n.t('ai.test-generator.null_0'),
+  i18n.t('ai.test-generator.undefined_0'),
+  i18n.t('ai.test-generator.k1'),
+  i18n.t('ai.test-generator.k2'),
+  i18n.t('ai.test-generator.k3'),
+  i18n.t('ai.test-generator.k4'),
+  i18n.t('ai.test-generator.k5'),
+  i18n.t('ai.test-generator.k6'),
+  i18n.t('ai.test-generator.unicode_1'),
+  i18n.t('ai.test-generator.html_2'),
+  i18n.t('ai.test-generator.sql_3'),
+  i18n.t('ai.test-generator.k7'),
+  i18n.t('ai.test-generator.0maxmin_4'),
+  i18n.t('ai.test-generator.k8'),
+  i18n.t('ai.test-generator.k9'),
+  i18n.t('ai.test-generator.k10'),
+  i18n.t('ai.test-generator.k11'),
+  i18n.t('ai.test-generator.k12'),
+  i18n.t('ai.test-generator.k13'),
+  i18n.t('ai.test-generator.k14'),
+  i18n.t('ai.test-generator.k15'),
+  i18n.t('ai.test-generator.dpiretina_16'),
+  i18n.t('ai.test-generator.k17'),
+  i18n.t('ai.test-generator.k18'),
 ];
 
 const MOCK_DATA_GENERATORS: Record<string, () => unknown> = {
@@ -197,13 +198,13 @@ export class AutoTestGenerator {
     lines2.push(`  });`);
     lines2.push('');
 
-    lines2.push(`  it('应该正确渲染组件', () => {`);
+    lines2.push(`  it(i18n.t('ai.test-generator.k19'), () => {`);
     lines2.push(`    render(<${componentName} ${props ? this.toPropsString(props) : ''} />);`);
     lines2.push(`    expect(screen).toBeDefined();`);
     lines2.push(`  });`);
     lines2.push('');
 
-    lines2.push(`  it('应该处理 props 变更', async () => {`);
+    lines2.push(`  it(i18n.t('ai.test-generator.props_20'), async () => {`);
     lines2.push(
       `    const { rerender } = render(<${componentName} ${props ? this.toPropsString(props) : ''} />);`
     );
@@ -214,7 +215,7 @@ export class AutoTestGenerator {
     lines2.push(`  });`);
     lines2.push('');
 
-    lines2.push(`  it('应该通过 a11y 检查', async () => {`);
+    lines2.push(`  it(i18n.t('ai.test-generator.a11y_21'), async () => {`);
     lines2.push(
       `    const { container } = render(<${componentName} ${props ? this.toPropsString(props) : ''} />);`
     );
@@ -234,12 +235,12 @@ export class AutoTestGenerator {
     lines.push(`import { ${hookName} } from './${hookName}';`);
     lines.push('');
     lines.push(`describe('${hookName}', () => {`);
-    lines.push(`  it('应该正确初始化', () => {`);
+    lines.push(`  it(i18n.t('ai.test-generator.k22'), () => {`);
     lines.push(`    const { result } = renderHook(() => ${hookName}());`);
     lines.push(`    expect(result.current).toBeDefined();`);
     lines.push(`  });`);
     lines.push('');
-    lines.push(`  it('应该处理状态更新', () => {`);
+    lines.push(`  it(i18n.t('ai.test-generator.k23'), () => {`);
     lines.push(`    const { result } = renderHook(() => ${hookName}());`);
     lines.push(`    act(() => {`);
     lines.push(`      result.current.update?.();`);
@@ -263,12 +264,12 @@ export class AutoTestGenerator {
     lines.push(`    vi.spyOn(apiClient, '${endpoint}').mockResolvedValue({});`);
     lines.push(`  });`);
     lines.push('');
-    lines.push(`  it('应该成功调用 ${endpoint}', async () => {`);
+    lines.push(`${i18n.t('ai.test-generator.it_5')}${endpoint}', async () => {`);
     lines.push(`    const result = await apiClient.${endpoint}();`);
     lines.push(`    expect(result).toBeDefined();`);
     lines.push(`  });`);
     lines.push('');
-    lines.push(`  it('应该处理 API 错误', async () => {`);
+    lines.push(`  it(i18n.t('ai.test-generator.api_24'), async () => {`);
     lines.push(`    vi.spyOn(apiClient, '${endpoint}').mockRejectedValue(new Error('API Error'));`);
     lines.push(`    await expect(apiClient.${endpoint}()).rejects.toThrow('API Error');`);
     lines.push(`  });`);
@@ -294,22 +295,22 @@ export class AutoTestGenerator {
   }
 
   private generateRenderTest(componentName: string, result?: AnalysisResult): TestMethod {
-    const assertions: string[] = ['组件正常渲染', '不应抛出错误', '基本 DOM 结构正确'];
+    const assertions: string[] = [i18n.t('ai.test-generator.k27'), i18n.t('ai.test-generator.k26'), i18n.t('ai.test-generator.dom_25')];
 
-    const given: string[] = [`已渲染 <${componentName} /> 组件`];
-    const when: string[] = ['组件挂载完成'];
-    const then: string[] = assertions.map((a) => `验证：${a}`);
+    const given: string[] = [`${i18n.t('ai.test-generator.k6')}${componentName}${i18n.t('ai.test-generator.k7')}`];
+    const when: string[] = [i18n.t('ai.test-generator.k28')];
+    const then: string[] = assertions.map((a) => `${i18n.t('ai.test-generator.k8')}${a}`);
 
     if (result?.props.length) {
       const requiredProps = result.props.filter((p) => p.required);
       if (requiredProps.length) {
-        given.push(`提供必要 props: ${requiredProps.map((p) => p.name).join(', ')}`);
+        given.push(`${i18n.t('ai.test-generator.props_9')}${requiredProps.map((p) => p.name).join(', ')}`);
       }
     }
 
     return {
-      name: '应该正确渲染',
-      description: `验证 ${componentName} 基本渲染功能`,
+      name: i18n.t('ai.test-generator.k29'),
+      description: `${i18n.t('ai.test-generator.k10')}${componentName}${i18n.t('ai.test-generator.k11')}`,
       given_when_then: { given, when, then },
       assertions,
     };
@@ -320,16 +321,16 @@ export class AutoTestGenerator {
 
     for (const prop of result.props) {
       tests.push({
-        name: `应该接受 ${prop.name} prop`,
-        description: `验证 ${prop.name} prop 类型: ${prop.type}${prop.required ? ' (必填)' : ''}`,
+        name: `${i18n.t('ai.test-generator.k12')}${prop.name} prop`,
+        description: `${i18n.t('ai.test-generator.k13')}${prop.name}${i18n.t('ai.test-generator.prop_14')}${prop.type}${prop.required ? i18n.t('ai.test-generator.k0') : ''}`,
         given_when_then: {
-          given: [`组件已渲染`, `传入 ${prop.name} prop`],
-          when: [`Prop 值传递给组件`],
-          then: [`正确渲染 prop 值`, `不应产生警告`],
+          given: [i18n.t('ai.test-generator.k0'), `${i18n.t('ai.test-generator.k15')}${prop.name} prop`],
+          when: [i18n.t('ai.test-generator.prop_1')],
+          then: [i18n.t('ai.test-generator.prop_2'), `{i18n.t('ai.test-generator.k4')}`],
         },
         assertions: [
-          `prop ${prop.name} 被正确接收`,
-          prop.required ? '缺少必填 prop 时应有警告' : '可选 prop 缺失时正常工作',
+          `prop ${prop.name}${i18n.t('ai.test-generator.k16')}`,
+          prop.required ? i18n.t('ai.test-generator.prop_31') : i18n.t('ai.test-generator.prop_30'),
         ],
       });
     }
@@ -342,27 +343,27 @@ export class AutoTestGenerator {
 
     for (const handler of result.eventHandlers) {
       tests.push({
-        name: `应该响应 ${handler} 事件`,
-        description: `验证 ${handler} 事件处理器正确触发`,
+        name: `${i18n.t('ai.test-generator.k17')}${handler}${i18n.t('ai.test-generator.k18')}`,
+        description: `${i18n.t('ai.test-generator.k19')}${handler}${i18n.t('ai.test-generator.k20')}`,
         given_when_then: {
-          given: [`组件已渲染`, `${handler} 处理器已注册`],
-          when: [`用户触发 ${handler} 对应的交互`],
-          then: [`处理器被调用`, `参数正确传递`],
+          given: [i18n.t('ai.test-generator.k5'), `${handler}${i18n.t('ai.test-generator.k21')}`],
+          when: [`${i18n.t('ai.test-generator.k22')}${handler}${i18n.t('ai.test-generator.k23')}`],
+          then: [i18n.t('ai.test-generator.k6'), `{i18n.t('ai.test-generator.k8')}`],
         },
-        assertions: [`${handler} 处理器被调用`, `调用次数正确`, `参数符合预期`],
+        assertions: [`${handler}${i18n.t('ai.test-generator.k24')}`, i18n.t('ai.test-generator.k9'), `{i18n.t('ai.test-generator.k11')}`],
       });
     }
 
     if (result.stateHooks.length > 0) {
       tests.push({
-        name: '应该正确管理状态',
-        description: '验证状态更新逻辑',
+        name: i18n.t('ai.test-generator.k32'),
+        description: i18n.t('ai.test-generator.k33'),
         given_when_then: {
-          given: ['组件已渲染', '初始状态已设定'],
-          when: ['触发状态变更操作'],
-          then: ['状态正确更新', 'UI 响应状态变化'],
+          given: [i18n.t('ai.test-generator.k35'), i18n.t('ai.test-generator.k34')],
+          when: [i18n.t('ai.test-generator.k36')],
+          then: [i18n.t('ai.test-generator.k37'), i18n.t('ai.test-generator.ui_25')],
         },
-        assertions: ['状态值正确', '渲染结果与状态一致'],
+        assertions: [i18n.t('ai.test-generator.k39'), i18n.t('ai.test-generator.k38')],
       });
     }
 
@@ -374,14 +375,14 @@ export class AutoTestGenerator {
 
     if (result.effects.length > 0) {
       tests.push({
-        name: '应该正确执行副作用',
-        description: '验证 useEffect/useLayoutEffect 正确执行',
+        name: i18n.t('ai.test-generator.k40'),
+        description: i18n.t('ai.test-generator.k41'),
         given_when_then: {
-          given: ['组件已挂载'],
-          when: ['副作用触发'],
-          then: ['API 调用正确', '数据正确获取'],
+          given: [i18n.t('ai.test-generator.k42')],
+          when: [i18n.t('ai.test-generator.k43')],
+          then: [i18n.t('ai.test-generator.api_26'), i18n.t('ai.test-generator.k44')],
         },
-        assertions: ['数据获取成功', '加载状态正确', '错误处理正确'],
+        assertions: [i18n.t('ai.test-generator.k47'), i18n.t('ai.test-generator.k46'), i18n.t('ai.test-generator.k45')],
       });
     }
 
@@ -393,14 +394,14 @@ export class AutoTestGenerator {
 
     for (const edgeCase of result.edgeCases.slice(0, 5)) {
       tests.push({
-        name: `应该处理 ${edgeCase}`,
-        description: `边界场景测试: ${edgeCase}`,
+        name: `${i18n.t('ai.test-generator.k27')}${edgeCase}`,
+        description: `${i18n.t('ai.test-generator.k28')}${edgeCase}`,
         given_when_then: {
-          given: [`组件已渲染`, `模拟 ${edgeCase} 场景`],
-          when: [`触发边界条件`],
-          then: ['组件不崩溃', '显示适当错误信息或降级'],
+          given: [i18n.t('ai.test-generator.k12'), `${i18n.t('ai.test-generator.k29')}${edgeCase}${i18n.t('ai.test-generator.k30')}`],
+          when: [i18n.t('ai.test-generator.k13')],
+          then: [i18n.t('ai.test-generator.k49'), i18n.t('ai.test-generator.k48')],
         },
-        assertions: ['无未捕获错误', 'UI 保持可用', '用户体验可接受'],
+        assertions: [i18n.t('ai.test-generator.k51'), i18n.t('ai.test-generator.ui_31'), i18n.t('ai.test-generator.k50')],
       });
     }
 
@@ -496,30 +497,30 @@ export class AutoTestGenerator {
     const cases: string[] = [];
 
     if (/fetch\(|axios\.|apiClient\./.test(source)) {
-      cases.push('网络错误', '超时场景', 'API 错误响应');
+      cases.push(i18n.t('ai.test-generator.k53'), i18n.t('ai.test-generator.k52'), i18n.t('ai.test-generator.api_32'));
     }
 
     if (/JSON\.parse|JSON\.stringify/.test(source)) {
-      cases.push('无效 JSON', '大数据量序列化');
+      cases.push(i18n.t('ai.test-generator.json_55'), i18n.t('ai.test-generator.k54'));
     }
 
     if (/localStorage|sessionStorage/.test(source)) {
-      cases.push('存储空间不足', '隐私模式');
+      cases.push(i18n.t('ai.test-generator.k57'), i18n.t('ai.test-generator.k56'));
     }
 
     if (/window\.|document\./.test(source)) {
-      cases.push('SSR 环境', '浏览器兼容性');
+      cases.push(i18n.t('ai.test-generator.ssr_33'), i18n.t('ai.test-generator.k58'));
     }
 
     if (/\?\.|\|\|/.test(source)) {
-      cases.push('空值/null 输入', 'undefined 输入');
+      cases.push(i18n.t('ai.test-generator.null_59'), i18n.t('ai.test-generator.undefined_34'));
     }
 
     if (/<input|<select|<textarea|<form/.test(source)) {
-      cases.push('表单验证', '无效输入', '特殊字符');
+      cases.push(i18n.t('ai.test-generator.k62'), i18n.t('ai.test-generator.k61'), i18n.t('ai.test-generator.k60'));
     }
 
-    return cases.length > 0 ? cases : ['基本渲染', 'Props 变更'];
+    return cases.length > 0 ? cases : [i18n.t('ai.test-generator.k63'), i18n.t('ai.test-generator.props_35')];
   }
 
   private estimateCoverage(source: string): {

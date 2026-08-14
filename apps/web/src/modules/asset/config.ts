@@ -1,6 +1,7 @@
 import { lazyWithRetry } from '@/routes/utils';
 import type { RouteModuleConfig } from '@/routes/v2/types';
 import type { ModuleNavConfig } from '@/lib/navigation/types';
+import i18n from '@/i18n';
 
 export const ASSET_PATHS = {
   root: '/asset',
@@ -13,21 +14,21 @@ export const ASSET_PATHS = {
 
 export const assetModuleConfig: RouteModuleConfig = {
   code: 'asset',
-  name: '资产管理',
+  name: i18n.t('shared.config.k0'),
   icon: 'Package',
   path: ASSET_PATHS.root,
   source: 'plugin',
   suite: 'collaboration',
   status: 'online',
   order: 91,
-  description: '企业固定资产管理',
+  description: i18n.t('shared.config.k1'),
   permission: 'asset:list:read',
   routes: [
     {
       path: ASSET_PATHS.dashboard,
       element: lazyWithRetry(() => import('@/pages/asset/DashboardPage'), 'DashboardPage'),
       module: 'asset',
-      title: '资产管理概览',
+      title: i18n.t('shared.config.k2'),
       code: 'asset-dashboard',
       requiredPermissions: ['asset:dashboard:read'],
       action: 'read',
@@ -39,7 +40,7 @@ export const assetModuleConfig: RouteModuleConfig = {
       element: lazyWithRetry(() => import('@/pages/asset/AssetListPage'), 'AssetListPage'),
       module: 'asset',
       code: 'asset-list',
-      title: '资产列表',
+      title: i18n.t('shared.config.k3'),
       template: 'list',
       group: 'business',
       requiredPermissions: ['asset:list:read'],
@@ -53,7 +54,7 @@ export const assetModuleConfig: RouteModuleConfig = {
       ),
       module: 'asset',
       code: 'asset-categories',
-      title: '资产分类',
+      title: i18n.t('shared.config.k4'),
       template: 'list',
       group: 'master',
       requiredPermissions: ['asset:category:read'],
@@ -64,7 +65,7 @@ export const assetModuleConfig: RouteModuleConfig = {
       element: lazyWithRetry(() => import('@/pages/asset/DepreciationPage'), 'DepreciationPage'),
       module: 'asset',
       code: 'asset-depreciation',
-      title: '折旧分析',
+      title: i18n.t('shared.config.k5'),
       template: 'form',
       group: 'analytics',
       requiredPermissions: ['asset:depreciation:read'],
@@ -75,7 +76,7 @@ export const assetModuleConfig: RouteModuleConfig = {
       element: lazyWithRetry(() => import('@/pages/asset/TransferPage'), 'TransferPage'),
       module: 'asset',
       code: 'asset-transfers',
-      title: '资产调拨',
+      title: i18n.t('shared.config.k6'),
       template: 'form',
       group: 'process',
       requiredPermissions: ['asset:transfer:read'],
@@ -86,7 +87,7 @@ export const assetModuleConfig: RouteModuleConfig = {
 
 export const assetNavConfig: ModuleNavConfig = {
   code: 'asset',
-  name: '资产管理',
+  name: i18n.t('shared.config.k7'),
   icon: 'Package',
   path: ASSET_PATHS.root,
   source: 'plugin' as const,
@@ -95,18 +96,18 @@ export const assetNavConfig: ModuleNavConfig = {
   navItems: [
     {
       code: 'asset-dashboard',
-      label: '资产管理概览',
+      label: i18n.t('shared.config.k8'),
       icon: 'LayoutDashboard',
       path: ASSET_PATHS.dashboard,
       permission: 'asset:dashboard:read',
       order: 0,
       group: 'overview',
       showInTabs: true,
-      description: '资产管理数据概览',
+      description: i18n.t('shared.config.k9'),
     },
     {
       code: 'asset-list',
-      label: '资产列表',
+      label: i18n.t('shared.config.k10'),
       path: ASSET_PATHS.list,
       permission: 'asset:list:read',
       group: 'business',
@@ -114,7 +115,7 @@ export const assetNavConfig: ModuleNavConfig = {
     },
     {
       code: 'asset-categories',
-      label: '资产分类',
+      label: i18n.t('shared.config.k11'),
       path: ASSET_PATHS.categories,
       permission: 'asset:category:read',
       group: 'master',
@@ -122,7 +123,7 @@ export const assetNavConfig: ModuleNavConfig = {
     },
     {
       code: 'asset-depreciation',
-      label: '折旧分析',
+      label: i18n.t('shared.config.k12'),
       path: ASSET_PATHS.depreciation,
       permission: 'asset:depreciation:read',
       group: 'analytics',
@@ -130,7 +131,7 @@ export const assetNavConfig: ModuleNavConfig = {
     },
     {
       code: 'asset-transfers',
-      label: '资产调拨',
+      label: i18n.t('shared.config.k13'),
       path: ASSET_PATHS.transfers,
       permission: 'asset:transfer:read',
       group: 'process',

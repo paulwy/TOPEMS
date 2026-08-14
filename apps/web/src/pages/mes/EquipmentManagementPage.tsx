@@ -13,6 +13,7 @@ import {
   MenuItem,
   Typography,
 } from '@mui/material';
+import i18n from '@/i18n';
 import { PageContainer } from '@/components/common';
 import CrudPage from '@/components/templates/CrudPage';
 import type { RowAction } from '@/components/templates/list/types';
@@ -20,24 +21,17 @@ import { createCrudPageAdapter } from '@/schema/crudPageAdapter';
 import { equipmentSchema } from '@/schemas/mes';
 import { mesApi } from '@/api/mes';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { useTranslation } from 'react-i18next';
 import { Wrench, Power, Monitor, AlertTriangle } from 'lucide-react';
 import { designTokens } from '@/theme/tokens';
 import { useNotificationStore } from '@/store';
 import { apiLogger } from '@/utils/logger';
 import type { Equipment, MaintenanceEquipmentRequest } from '@/api/mes';
-
-
 import { QUERY_KEYS } from '@/lib/reactQuery';
-
 const ct= designTokens.colors;
 const apiAdapter = createCrudPageAdapter(mesApi.equipment);
-
 export default function EquipmentManagementPage() {
-  const { t } = useTranslation();
   const queryClient = useQueryClient();
   const { addNotification } = useNotificationStore();
-
   const [showMaintenanceDialog, setShowMaintenanceDialog] = useState(false);
   const [selectedEquipment, setSelectedEquipment] = useState<Equipment | null>(null);
   const [maintenanceData, setMaintenanceData] = useState<MaintenanceEquipmentRequest>({
@@ -46,27 +40,24 @@ export default function EquipmentManagementPage() {
     maintainer: '',
     start_time: '',
   });
-
   const statisticsQuery = useQuery({
     queryKey: QUERY_KEYS.AD_HOC.MES_EQUIPMENT_STATISTICS_BASE,
     queryFn: async () => {
       const response = await mesApi.equipment.getStatistics();
       if (!response.success || !response.data) {
-        throw new Error(response.message || t('mes.equipment_management_page.fail'));
+        throw new Error(response.message || i18n.t('mes.equipment_management_page.fail'));
       }
       return response.data;
     },
     staleTime: 5 * 60 * 1000,
     retry: 2,
   });
-
   const statistics = statisticsQuery.data ?? null;
-
   const maintenanceMutation = useMutation({
     mutationFn: async ({ id, data }: { id: string; data: MaintenanceEquipmentRequest }) => {
       const response = await mesApi.equipment.maintenance(id, data);
       if (!response.success) {
-        throw new Error(response.message || t('mes.equipment_management_page.create_4'));
+        throw new Error(response.message || i18n.t('mes.equipment_management_page.create_4'));
       }
       return response.data;
     },
@@ -81,20 +72,19 @@ export default function EquipmentManagementPage() {
 });
       addNotification({
         type: 'success',
-        title: t('mes.equipment_management_page.success'),
-        message: t('mes.equipment_management_page.create_5'),
+        title: i18n.t('mes.equipment_management_page.success'),
+        message: i18n.t('mes.equipment_management_page.create_5'),
       });
     },
     onError: (error: unknown) => {
-      apiLogger.error(t('mes.equipment_management_page.create_6'), error);
+      apiLogger.error(i18n.t('mes.equipment_management_page.create_6'), error);
       addNotification({
         type: 'error',
-        title: t('mes.equipment_management_page.operation_failed'),
-        message: t('mes.equipment_management_page.create_4'),
+        title: i18n.t('mes.equipment_management_page.operation_failed'),
+        message: i18n.t('mes.equipment_management_page.create_4'),
       });
     },
   });
-
   const handleMaintenanceSubmit = async () => {
     if (!selectedEquipment) return;
     try {
@@ -106,7 +96,6 @@ export default function EquipmentManagementPage() {
       resetMaintenanceForm();
     } catch (e) { console.error("[MES] Failed to submit equipment maintenance update", e); }
   };
-
   const resetMaintenanceForm = () => {
     setMaintenanceData({
       maintenance_type: 'routine',
@@ -115,7 +104,6 @@ export default function EquipmentManagementPage() {
       start_time: '',
     });
   };
-
   const handleOpenMaintenance = (row: Equipment) => {
     setSelectedEquipment(row);
     setMaintenanceData({
@@ -126,7 +114,6 @@ export default function EquipmentManagementPage() {
     });
     setShowMaintenanceDialog(true);
   };
-
   const statsContent = useMemo(() => {
     return (rows: Equipment[]) => (
       <Box
@@ -147,7 +134,7 @@ export default function EquipmentManagementPage() {
               variant='body2'
               sx={{ color: 'text.secondary' }}
             >
-              运行中
+              {i18n.t('pages.equipment_management_page.k0')}
             </Typography>
           </Box>
           <Typography
@@ -167,7 +154,7 @@ export default function EquipmentManagementPage() {
               variant='body2'
               sx={{ color: 'text.secondary' }}
             >
-              空闲
+              {i18n.t('pages.equipment_management_page.k1')}
             </Typography>
           </Box>
           <Typography
@@ -187,7 +174,7 @@ export default function EquipmentManagementPage() {
               variant='body2'
               sx={{ color: 'text.secondary' }}
             >
-              维护中
+              {i18n.t('pages.equipment_management_page.k2')}
             </Typography>
           </Box>
           <Typography
@@ -207,7 +194,7 @@ export default function EquipmentManagementPage() {
               variant='body2'
               sx={{ color: 'text.secondary' }}
             >
-              故障
+              {i18n.t('pages.equipment_management_page.k3')}
             </Typography>
           </Box>
           <Typography
@@ -220,22 +207,20 @@ export default function EquipmentManagementPage() {
       </Box>
     );
   }, [statistics]);
-
   const customRowActions = useMemo(
     () => [
       {
-        label: t('mes.equipment_management_page.equipment_1'),
+        label: i18n.t('mes.equipment_management_page.equipment_1'),
         icon: <Wrench size={16} />,
         onClick: (row: Equipment) => handleOpenMaintenance(row),
       },
     ],
-    [t]
+    [i18n.t]
   );
-
   return (
     <PageContainer
-      title={t('mes.equipment_management_page.breadcrumb_current')}
-      subtitle={t('mes.equipment_management_page.name')}
+      title={i18n.t('mes.equipment_management_page.breadcrumb_current')}
+      subtitle={i18n.t('mes.equipment_management_page.name')}
       headerProps={{
         pageIcon: <Wrench style={{ width: 20, height: 20 }} />,
         pageGradient: `linear-gradient(135deg, ${ct.warning.main} 0%, ${ct.warning.dark} 100%)`,
@@ -244,17 +229,16 @@ export default function EquipmentManagementPage() {
       <CrudPage
         schema={equipmentSchema}
         apiAdapter={apiAdapter}
-        breadcrumbs={[{ label: 'MES' }, { label: '设备管理' }]}
+        breadcrumbs={[{ label: 'MES' }, { label: i18n.t('mes.equipment_management_page.k0') }]}
         headerContent={statsContent}
         customRowActions={customRowActions as unknown as RowAction<Record<string, unknown>>[]}
       />
-
       <Dialog
         open={showMaintenanceDialog}
         onClose={() => setShowMaintenanceDialog(false)}
         maxWidth='sm'
       >
-        <DialogTitle>设备维护</DialogTitle>
+        <DialogTitle>{i18n.t('mes.equipment_management_page.k1')}</DialogTitle>
         <DialogContent>
           <Box
             component='span'
@@ -284,10 +268,10 @@ export default function EquipmentManagementPage() {
                     })
                   }
                 >
-                  <MenuItem value='routine'>例行维护</MenuItem>
-                  <MenuItem value='repair'>故障维修</MenuItem>
-                  <MenuItem value='preventive'>预防性维护</MenuItem>
-                  <MenuItem value='inspection'>检查保养</MenuItem>
+                  <MenuItem value='routine'>{i18n.t('mes.equipment_management_page.k2')}</MenuItem>
+                  <MenuItem value='repair'>{i18n.t('mes.equipment_management_page.k3')}</MenuItem>
+                  <MenuItem value='preventive'>{i18n.t('mes.equipment_management_page.k4')}</MenuItem>
+                  <MenuItem value='inspection'>{i18n.t('mes.equipment_management_page.k5')}</MenuItem>
                 </Select>
               </FormControl>
             </Box>
@@ -317,7 +301,7 @@ export default function EquipmentManagementPage() {
               />
             </Box>
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-              <InputLabel htmlFor='end_time'>结束时间</InputLabel>
+              <InputLabel htmlFor='end_time'>{i18n.t('mes.equipment_management_page.k6')}</InputLabel>
               <TextField
                 id='end_time'
                 type='datetime-local'
@@ -329,7 +313,7 @@ export default function EquipmentManagementPage() {
               />
             </Box>
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-              <InputLabel htmlFor='cost'>费用</InputLabel>
+              <InputLabel htmlFor='cost'>{i18n.t('mes.equipment_management_page.k7')}</InputLabel>
               <TextField
                 id='cost'
                 type='number'
@@ -358,7 +342,7 @@ export default function EquipmentManagementPage() {
               />
             </Box>
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-              <InputLabel htmlFor='result'>维护结果</InputLabel>
+              <InputLabel htmlFor='result'>{i18n.t('mes.equipment_management_page.k8')}</InputLabel>
               <TextField
                 id='result'
                 size='small'
@@ -367,7 +351,7 @@ export default function EquipmentManagementPage() {
               />
             </Box>
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-              <InputLabel htmlFor='remarks'>备注</InputLabel>
+              <InputLabel htmlFor='remarks'>{i18n.t('mes.equipment_management_page.k9')}</InputLabel>
               <TextField
                 id='remarks'
                 size='small'
@@ -386,7 +370,7 @@ export default function EquipmentManagementPage() {
               variant='outlined'
               onClick={() => setShowMaintenanceDialog(false)}
             >
-              取消
+              {i18n.t('pages.equipment_management_page.k4')}
             </Button>
             <Button
               type='submit'
@@ -394,7 +378,7 @@ export default function EquipmentManagementPage() {
               disabled={maintenanceMutation.isPending}
               onClick={handleMaintenanceSubmit}
             >
-              创建维护
+              {i18n.t('pages.equipment_management_page.k5')}
             </Button>
           </DialogActions>
         </DialogContent>

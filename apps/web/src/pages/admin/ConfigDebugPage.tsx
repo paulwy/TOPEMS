@@ -4,41 +4,39 @@ import { Server, Database, Code } from 'lucide-react';
 import config from '../../config/runtime';
 import { SettingsPageTemplate, type SettingSection } from '@/components/templates';
 import { designTokens } from '@/theme/tokens';
-
+import i18n from '@/i18n';
 const ct= designTokens.colors;
-
 const ConfigDebugPage: React.FC = () => {
   const sections: SettingSection[] = [
     {
       id: 'services',
-      title: '服务配置',
-      description: '各微服务的连接配置信息',
+      title: i18n.t('admin.config_debug_page.k0'),
+      description: i18n.t('admin.config_debug_page.k1'),
       icon: <Server style={{ width: 20, height: 20 }} />,
       color: 'primary',
       fields: [],
     },
     {
       id: 'api',
-      title: 'API 配置',
-      description: 'API 端点和请求配置',
+      title: i18n.t('pages.config_debug_page.api_0'),
+      description: i18n.t('pages.config_debug_page.api_1'),
       icon: <Database style={{ width: 20, height: 20 }} />,
       color: 'success',
       fields: [],
     },
     {
       id: 'env',
-      title: '环境变量',
-      description: '前端运行时环境变量',
+      title: i18n.t('admin.config_debug_page.k2'),
+      description: i18n.t('admin.config_debug_page.k3'),
       icon: <Code style={{ width: 20, height: 20 }} />,
       color: 'warning',
       fields: [],
     },
   ];
-
   return (
     <SettingsPageTemplate
-      title='配置诊断'
-      subtitle='系统配置信息和环境变量'
+      title={i18n.t('admin.config_debug_page.k4')}
+      subtitle={i18n.t('admin.config_debug_page.k5')}
       sections={sections}
       showSaveButton={false}
       showResetButton={false}
@@ -67,13 +65,13 @@ const ConfigDebugPage: React.FC = () => {
                     variant='subtitle1'
                     sx={{ fontWeight: 600 }}
                   >
-                    服务配置
+                    {i18n.t('pages.config_debug_page.k0')}
                   </Typography>
                   <Typography
                     variant='caption'
                     color='text.secondary'
                   >
-                    各微服务的连接配置信息
+                    {i18n.t('pages.config_debug_page.k1')}
                   </Typography>
                 </Box>
               </Box>
@@ -94,7 +92,6 @@ const ConfigDebugPage: React.FC = () => {
             </pre>
           </CardContent>
         </Paper>
-
         <Paper sx={{ borderRadius: 3, mb: 3, overflow: 'hidden' }}>
           <CardHeader
             title={
@@ -118,13 +115,13 @@ const ConfigDebugPage: React.FC = () => {
                     variant='subtitle1'
                     sx={{ fontWeight: 600 }}
                   >
-                    API 配置
+                    {i18n.t('pages.config_debug_page.api_2')}
                   </Typography>
                   <Typography
                     variant='caption'
                     color='text.secondary'
                   >
-                    API 端点和请求配置
+                    {i18n.t('pages.config_debug_page.api_3')}
                   </Typography>
                 </Box>
               </Box>
@@ -145,7 +142,6 @@ const ConfigDebugPage: React.FC = () => {
             </pre>
           </CardContent>
         </Paper>
-
         <Paper sx={{ borderRadius: 3, overflow: 'hidden' }}>
           <CardHeader
             title={
@@ -169,13 +165,13 @@ const ConfigDebugPage: React.FC = () => {
                     variant='subtitle1'
                     sx={{ fontWeight: 600 }}
                   >
-                    环境变量
+                    {i18n.t('pages.config_debug_page.k4')}
                   </Typography>
                   <Typography
                     variant='caption'
                     color='text.secondary'
                   >
-                    前端运行时环境变量
+                    {i18n.t('pages.config_debug_page.k5')}
                   </Typography>
                 </Box>
               </Box>
@@ -206,5 +202,4 @@ const ConfigDebugPage: React.FC = () => {
     </SettingsPageTemplate>
   );
 };
-
 export default ConfigDebugPage;

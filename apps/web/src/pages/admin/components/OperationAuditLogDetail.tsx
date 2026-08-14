@@ -1,5 +1,4 @@
 import React from 'react';
-import { useTranslation } from 'react-i18next';
 import { FileText, X } from 'lucide-react';
 import {
   Box,
@@ -12,8 +11,8 @@ import {
   Grid,
   IconButton,
 } from '@mui/material';
+import i18n from '@/i18n';
 import type { OperationLog } from '@/api/admin/operationAudit';
-
 interface OperationAuditLogDetailProps {
   showDetailModal: boolean;
   setShowDetailModal: (v: boolean) => void;
@@ -22,7 +21,6 @@ interface OperationAuditLogDetailProps {
   getOperationLabel: (code: string) => string;
   getResponseStatusBadge: (status?: number) => React.ReactNode;
 }
-
 const OperationAuditLogDetail: React.FC<OperationAuditLogDetailProps> = ({
   showDetailModal,
   setShowDetailModal,
@@ -31,8 +29,6 @@ const OperationAuditLogDetail: React.FC<OperationAuditLogDetailProps> = ({
   getOperationLabel,
   getResponseStatusBadge,
 }) => {
-  const { t } = useTranslation();
-
   return (
     <Dialog
       open={showDetailModal}
@@ -44,12 +40,12 @@ const OperationAuditLogDetail: React.FC<OperationAuditLogDetailProps> = ({
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
           <FileText size={24} />
           <Typography variant='h6'>
-            {t('admin.operation_audit_log.operation_audit_log_detail')}
+            {i18n.t('admin.operation_audit_log.operation_audit_log_detail')}
           </Typography>
         </Box>
         <IconButton
           onClick={() => setShowDetailModal(false)}
-          aria-label='关闭'
+          aria-label={i18n.t('admin.operation_audit_log_detail.k0')}
         >
           <X size={20} />
         </IconButton>
@@ -75,7 +71,7 @@ const OperationAuditLogDetail: React.FC<OperationAuditLogDetailProps> = ({
                   color='text.secondary'
                   gutterBottom
                 >
-                  {t('admin.operation_audit_log_page.text_6ea1fe')}
+                  {i18n.t('admin.operation_audit_log_page.text_6ea1fe')}
                 </Typography>
                 <Grid
                   container
@@ -87,7 +83,7 @@ const OperationAuditLogDetail: React.FC<OperationAuditLogDetailProps> = ({
                         variant='body2'
                         color='text.secondary'
                       >
-                        {t('admin.operation_audit_log_page.text_6e491f')}
+                        {i18n.t('admin.operation_audit_log_page.text_6e491f')}
                       </Typography>
                       <Typography
                         variant='body2'
@@ -103,7 +99,7 @@ const OperationAuditLogDetail: React.FC<OperationAuditLogDetailProps> = ({
                         variant='body2'
                         color='text.secondary'
                       >
-                        {t('admin.operation_audit_log_page.text_fac54c')}
+                        {i18n.t('admin.operation_audit_log_page.text_fac54c')}
                       </Typography>
                       <Typography
                         variant='body2'
@@ -119,7 +115,7 @@ const OperationAuditLogDetail: React.FC<OperationAuditLogDetailProps> = ({
                         variant='body2'
                         color='text.secondary'
                       >
-                        {t('admin.operation_audit_log_page.text_2b6bc0')}
+                        {i18n.t('admin.operation_audit_log_page.text_2b6bc0')}
                       </Typography>
                       <Typography
                         variant='body2'
@@ -135,7 +131,7 @@ const OperationAuditLogDetail: React.FC<OperationAuditLogDetailProps> = ({
                         variant='body2'
                         color='text.secondary'
                       >
-                        {t('admin.operation_audit_log_page.text_14871a')}
+                        {i18n.t('admin.operation_audit_log_page.text_14871a')}
                       </Typography>
                       <Typography
                         variant='body2'
@@ -151,7 +147,7 @@ const OperationAuditLogDetail: React.FC<OperationAuditLogDetailProps> = ({
                         variant='body2'
                         color='text.secondary'
                       >
-                        {t('admin.operation_audit_log_page.text_044449')}
+                        {i18n.t('admin.operation_audit_log_page.text_044449')}
                       </Typography>
                       <Typography
                         variant='body2'
@@ -167,7 +163,7 @@ const OperationAuditLogDetail: React.FC<OperationAuditLogDetailProps> = ({
                         variant='body2'
                         color='text.secondary'
                       >
-                        {t('admin.operation_audit_log_page.text_092798')}
+                        {i18n.t('admin.operation_audit_log_page.text_092798')}
                       </Typography>
                       {getResponseStatusBadge(currentLog.response_status)}
                     </Box>
@@ -178,7 +174,7 @@ const OperationAuditLogDetail: React.FC<OperationAuditLogDetailProps> = ({
                         variant='body2'
                         color='text.secondary'
                       >
-                        {t('admin.operation_audit_log_page.text_eca37c')}
+                        {i18n.t('admin.operation_audit_log_page.text_eca37c')}
                       </Typography>
                       <Typography
                         variant='body2'
@@ -206,7 +202,7 @@ const OperationAuditLogDetail: React.FC<OperationAuditLogDetailProps> = ({
                   color='text.secondary'
                   gutterBottom
                 >
-                  {t('admin.operation_audit_log_page.text_d587e0')}
+                  {i18n.t('admin.operation_audit_log_page.text_d587e0')}
                 </Typography>
                 <Grid
                   container
@@ -218,7 +214,7 @@ const OperationAuditLogDetail: React.FC<OperationAuditLogDetailProps> = ({
                         variant='body2'
                         color='text.secondary'
                       >
-                        {t('admin.operation_audit_log_page.text_e53376')}
+                        {i18n.t('admin.operation_audit_log_page.text_e53376')}
                       </Typography>
                       <Typography
                         variant='body2'
@@ -234,7 +230,7 @@ const OperationAuditLogDetail: React.FC<OperationAuditLogDetailProps> = ({
                         variant='body2'
                         color='text.secondary'
                       >
-                        {t('admin.operation_audit_log_page.text_819767')}
+                        {i18n.t('admin.operation_audit_log_page.text_819767')}
                       </Typography>
                       <Typography
                         variant='body2'
@@ -250,7 +246,7 @@ const OperationAuditLogDetail: React.FC<OperationAuditLogDetailProps> = ({
                         variant='body2'
                         color='text.secondary'
                       >
-                        {t('admin.operation_audit_log_page.text_c10992')}
+                        {i18n.t('admin.operation_audit_log_page.text_c10992')}
                       </Typography>
                       <Typography
                         variant='body2'
@@ -307,7 +303,7 @@ const OperationAuditLogDetail: React.FC<OperationAuditLogDetailProps> = ({
                         color='text.secondary'
                         gutterBottom
                       >
-                        {t('admin.operation_audit_log_page.text_3bdd08')}
+                        {i18n.t('admin.operation_audit_log_page.text_3bdd08')}
                       </Typography>
                       <Typography
                         variant='body2'
@@ -336,7 +332,7 @@ const OperationAuditLogDetail: React.FC<OperationAuditLogDetailProps> = ({
                     color='text.secondary'
                     gutterBottom
                   >
-                    {t('admin.operation_audit_log_page.text_466a83')}
+                    {i18n.t('admin.operation_audit_log_page.text_466a83')}
                   </Typography>
                   <pre
                     style={{
@@ -361,11 +357,10 @@ const OperationAuditLogDetail: React.FC<OperationAuditLogDetailProps> = ({
       </DialogContent>
       <DialogActions sx={{ px: 3, py: 2 }}>
         <Button onClick={() => setShowDetailModal(false)}>
-          {t('admin.operation_audit_log.close')}
+          {i18n.t('admin.operation_audit_log.close')}
         </Button>
       </DialogActions>
     </Dialog>
   );
 };
-
 export default OperationAuditLogDetail;

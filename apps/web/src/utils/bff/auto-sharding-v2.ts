@@ -11,6 +11,7 @@
 
 import { bffGraphQL } from '@/api/bff';
 import { logger } from '@/utils/logger';
+import i18n from '@/i18n';
 
 const shardV2Logger = logger.child({ prefix: 'AutoShardingV2' });
 
@@ -138,13 +139,13 @@ export class SmartShardingDecider {
     const { maxRecordsPerShard, minShardSize } = this.options;
 
     if (estimatedRecords < minShardSize) {
-      return { shouldShard: false, reason: '数据量太小，无需分片', confidence: 0.95 };
+      return { shouldShard: false, reason: i18n.t('shared.auto-sharding-v2.k0'), confidence: 0.95 };
     }
 
     if (estimatedRecords > maxRecordsPerShard) {
       return {
         shouldShard: true,
-        reason: `预估数据量(${estimatedRecords})超过单分片上限(${maxRecordsPerShard})`,
+        reason: `${i18n.t('shared.auto-sharding-v2.k0')}${estimatedRecords}${i18n.t('shared.auto-sharding-v2.k1')}${maxRecordsPerShard})`,
         confidence: 0.9,
       };
     }
@@ -152,7 +153,7 @@ export class SmartShardingDecider {
     if (queryComplexityScore > 300) {
       return {
         shouldShard: true,
-        reason: `查询复杂度过高(${queryComplexityScore}分)，建议分片降低单次压力`,
+        reason: `${i18n.t('shared.auto-sharding-v2.k2')}${queryComplexityScore}${i18n.t('shared.auto-sharding-v2.k3')}`,
         confidence: 0.75,
       };
     }
@@ -160,14 +161,14 @@ export class SmartShardingDecider {
     if (fieldCount > 30) {
       return {
         shouldShard: true,
-        reason: `查询字段过多(${fieldCount}个)，建议分片减少单条数据体积`,
+        reason: `${i18n.t('shared.auto-sharding-v2.k4')}${fieldCount}${i18n.t('shared.auto-sharding-v2.k5')}`,
         confidence: 0.6,
       };
     }
 
     return {
       shouldShard: false,
-      reason: '数据量和查询复杂度在可接受范围内',
+      reason: i18n.t('shared.auto-sharding-v2.k1'),
       confidence: 0.8,
     };
   }
@@ -392,7 +393,7 @@ export class ProgressiveLoader<T = unknown> {
 
     if (!this.isCancelled && backgroundShards.length > 0) {
       this.loadBackgroundShards(backgroundShards).catch((err) => {
-        shardV2Logger.error('后台分片加载失败:', err);
+        shardV2Logger.error(i18n.t('shared.auto-sharding-v2.k6'), err);
       });
     }
 
@@ -527,7 +528,7 @@ export class ProgressiveLoader<T = unknown> {
 
   cancel(): void {
     this.isCancelled = true;
-    shardV2Logger.info('渐进式加载已取消');
+    shardV2Logger.info(i18n.t('shared.auto-sharding-v2.k2'));
   }
 
   get isCompleted(): boolean {

@@ -13,6 +13,7 @@ import {
   ListItemText,
   Alert,
 } from '@mui/material';
+import i18n from '@/i18n';
 import {
   Shield,
   LayoutDashboard,
@@ -84,14 +85,14 @@ const V4DemoPage: React.FC = () => {
   const moduleInfo = navigationRegistryV2.getModule('iam');
 
   const stats = [
-    { label: '导航项总数', value: allNavItems.length, color: 'primary' },
+    { label: i18n.t('pages.v4_demo_page.k0'), value: allNavItems.length, color: 'primary' },
     {
-      label: '侧边栏显示',
+      label: i18n.t('pages.v4_demo_page.k1'),
       value: allNavItems.filter((i) => i.showInSidebar).length,
       color: 'success',
     },
-    { label: 'Tab显示', value: allNavItems.filter((i) => i.showInTabs).length, color: 'info' },
-    { label: '分组数', value: Object.keys(sidebarGrouped).length, color: 'warning' },
+    { label: i18n.t('pages.v4_demo_page.tab_0'), value: allNavItems.filter((i) => i.showInTabs).length, color: 'info' },
+    { label: i18n.t('pages.v4_demo_page.k2'), value: Object.keys(sidebarGrouped).length, color: 'warning' },
   ];
 
   const renderIcon = (iconName?: string) => {
@@ -101,8 +102,8 @@ const V4DemoPage: React.FC = () => {
 
   return (
     <PageContainer
-      title='V4.0 架构重整演示'
-      subtitle='IAM模块导航系统标准化样板'
+      title={i18n.t('pages.v4_demo_page.v40_1')}
+      subtitle={i18n.t('pages.v4_demo_page.iam_2')}
       headerProps={{
         pageIcon: <Shield size={20} />,
         pageGradient: `linear-gradient(135deg, ${ct.secondary[400]} 0%, ${ct.secondary.main} 100%)`,
@@ -112,8 +113,8 @@ const V4DemoPage: React.FC = () => {
         severity='info'
         sx={{ mb: 3 }}
       >
-        本页面展示 V4.0
-        架构重整后的导航系统效果，包括侧边栏分组、面包屑自动生成、路由-导航联动等特性。
+        {i18n.t('pages.v4_demo_page.v40_3')}
+        {i18n.t('pages.v4_demo_page.k4')}
       </Alert>
 
       <Tabs
@@ -121,10 +122,10 @@ const V4DemoPage: React.FC = () => {
         onChange={(_, v) => setActiveTab(v)}
         sx={{ mb: 3 }}
       >
-        <Tab label='侧边栏分组效果' />
-        <Tab label='面包屑层级' />
-        <Tab label='导航数据结构' />
-        <Tab label='模板分类' />
+        <Tab label={i18n.t('pages.v4_demo_page.k3')} />
+        <Tab label={i18n.t('pages.v4_demo_page.k4')} />
+        <Tab label={i18n.t('pages.v4_demo_page.k5')} />
+        <Tab label={i18n.t('pages.v4_demo_page.k6')} />
       </Tabs>
 
       {activeTab === 0 && (
@@ -139,13 +140,13 @@ const V4DemoPage: React.FC = () => {
                   variant='subtitle2'
                   sx={{ fontWeight: 600 }}
                 >
-                  IAM 模块侧边栏
+                  {i18n.t('pages.v4_demo_page.iam_5')}
                 </Typography>
                 <Typography
                   variant='caption'
                   color='text.secondary'
                 >
-                  5大标准分组
+                  {i18n.t('pages.v4_demo_page.5_6')}
                 </Typography>
               </Box>
               <Box sx={{ maxHeight: 500, overflowY: 'auto' }}>
@@ -190,7 +191,7 @@ const V4DemoPage: React.FC = () => {
                 variant='subtitle2'
                 sx={{ fontWeight: 600, mb: 2 }}
               >
-                点击侧边栏菜单项查看效果
+                {i18n.t('pages.v4_demo_page.k7')}
               </Typography>
               <List>
                 {allNavItems.slice(0, 8).map((item) => (
@@ -247,7 +248,7 @@ const V4DemoPage: React.FC = () => {
                 variant='subtitle2'
                 sx={{ fontWeight: 600, mb: 2 }}
               >
-                面包屑层级自动生成
+                {i18n.t('pages.v4_demo_page.k8')}
               </Typography>
               <Box
                 sx={{
@@ -281,7 +282,7 @@ const V4DemoPage: React.FC = () => {
                 variant='body2'
                 color='text.secondary'
               >
-                当前路径: <code>{selectedPath}</code>
+                [i18n.t('pages.v4_demo_page.k9')]: <code>{selectedPath}</code>
               </Typography>
             </Paper>
           </Box>
@@ -295,7 +296,7 @@ const V4DemoPage: React.FC = () => {
                 variant='subtitle2'
                 sx={{ fontWeight: 600, mb: 2 }}
               >
-                模块信息
+                {i18n.t('pages.v4_demo_page.k10')}
               </Typography>
               <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2 }}>
                 <Box
@@ -308,7 +309,7 @@ const V4DemoPage: React.FC = () => {
                     variant='caption'
                     color='text.secondary'
                   >
-                    模块编码
+                    {i18n.t('pages.v4_demo_page.k11')}
                   </Typography>
                   <Typography
                     variant='body2'
@@ -327,7 +328,7 @@ const V4DemoPage: React.FC = () => {
                     variant='caption'
                     color='text.secondary'
                   >
-                    模块名称
+                    {i18n.t('pages.v4_demo_page.k12')}
                   </Typography>
                   <Typography variant='body2'>{moduleInfo?.name}</Typography>
                 </Box>
@@ -341,7 +342,7 @@ const V4DemoPage: React.FC = () => {
                     variant='caption'
                     color='text.secondary'
                   >
-                    模块来源
+                    {i18n.t('pages.v4_demo_page.k13')}
                   </Typography>
                   <Chip
                     label={moduleInfo?.source}
@@ -359,7 +360,7 @@ const V4DemoPage: React.FC = () => {
                     variant='caption'
                     color='text.secondary'
                   >
-                    入口路径
+                    {i18n.t('pages.v4_demo_page.k14')}
                   </Typography>
                   <Typography
                     variant='body2'
@@ -385,7 +386,7 @@ const V4DemoPage: React.FC = () => {
                 variant='subtitle2'
                 sx={{ fontWeight: 600, mb: 2 }}
               >
-                NavItemConfig 数据结构
+                {i18n.t('pages.v4_demo_page.k15')}
               </Typography>
               <Box
                 component='pre'
@@ -399,7 +400,7 @@ const V4DemoPage: React.FC = () => {
               >
                 {`{
   code: 'iam-users',
-  label: '用户管理',
+  label: i18n.t('pages.v4_demo_page.k7'),
   icon: 'Users',
   path: '/iam/users',
   permission: 'iam:user:read',
@@ -425,7 +426,7 @@ const V4DemoPage: React.FC = () => {
                 variant='subtitle2'
                 sx={{ fontWeight: 600, mb: 2 }}
               >
-                5大标准分组
+                {i18n.t('pages.v4_demo_page.5_16')}
               </Typography>
               <List>
                 {(Object.entries(NAV_GROUPS) as [NavGroup, (typeof NAV_GROUPS)[NavGroup]][]).map(
@@ -440,7 +441,7 @@ const V4DemoPage: React.FC = () => {
                         secondary={`order: ${group.order} | key: ${key}`}
                       />
                       <Chip
-                        label={`${(sidebarGrouped[key] || []).length} 项`}
+                        label={`${(sidebarGrouped[key] || []).length} ${i18n.t('pages.v4_demo_page.k17')}`}
                         size='small'
                         color='primary'
                         variant='outlined'
@@ -465,50 +466,50 @@ const V4DemoPage: React.FC = () => {
                 variant='subtitle2'
                 sx={{ fontWeight: 600, mb: 2 }}
               >
-                8大核心页面模板
+                {i18n.t('pages.v4_demo_page.8_18')}
               </Typography>
               <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2 }}>
                 {[
                   {
                     name: 'DashboardTemplate',
-                    desc: '仪表盘/看板',
+                    desc: i18n.t('pages.v4_demo_page.k8'),
                     icon: 'LayoutDashboard',
                     color: 'primary',
                   },
-                  { name: 'ListPageTemplate', desc: '列表页/CRUD', icon: 'List', color: 'success' },
+                  { name: 'ListPageTemplate', desc: i18n.t('pages.v4_demo_page.crud_9'), icon: 'List', color: 'success' },
                   {
                     name: 'DetailPageTemplate',
-                    desc: '详情页/查看',
+                    desc: i18n.t('pages.v4_demo_page.k10'),
                     icon: 'FileText',
                     color: 'info',
                   },
                   {
                     name: 'FormPageTemplate',
-                    desc: '表单页/新增编辑',
+                    desc: i18n.t('pages.v4_demo_page.k11'),
                     icon: 'FormInput',
                     color: 'warning',
                   },
                   {
                     name: 'TreePageTemplate',
-                    desc: '树形结构/层级',
+                    desc: i18n.t('pages.v4_demo_page.k12'),
                     icon: 'FolderTree',
                     color: 'secondary',
                   },
                   {
                     name: 'StatsPageTemplate',
-                    desc: '统计分析/报表',
+                    desc: i18n.t('pages.v4_demo_page.k13'),
                     icon: 'BarChart3',
                     color: 'error',
                   },
                   {
                     name: 'SettingsPageTemplate',
-                    desc: '设置/配置',
+                    desc: i18n.t('pages.v4_demo_page.k14'),
                     icon: 'Settings',
                     color: 'default',
                   },
                   {
                     name: 'KanbanPageTemplate',
-                    desc: '看板/任务板',
+                    desc: i18n.t('pages.v4_demo_page.k15'),
                     icon: 'LayoutGrid',
                     color: 'info',
                   },

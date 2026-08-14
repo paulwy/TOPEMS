@@ -1,6 +1,7 @@
 import React from 'react';
 import { Box, Chip, LinearProgress, Stack, Typography } from '@mui/material';
 import type { EntitySchema } from '@/schema';
+import i18n from '@/i18n';
 
 const STATUS_COLOR_MAP: Record<string, 'default' | 'primary' | 'success' | 'warning'> = {
   completed: 'success',
@@ -9,15 +10,15 @@ const STATUS_COLOR_MAP: Record<string, 'default' | 'primary' | 'success' | 'warn
 };
 
 const STATUS_LABEL_MAP: Record<string, string> = {
-  completed: '已完成',
-  active: '进行中',
-  planning: '规划中',
+  completed: i18n.t('rd.milestone.k0'),
+  active: i18n.t('rd.milestone.k1'),
+  planning: i18n.t('rd.milestone.k2'),
 };
 
 export const milestoneSchema: EntitySchema = {
   entity: 'rd_milestone',
-  title: '里程碑',
-  description: '管理研发里程碑，包括名称、日期、进度、关联项目和状态',
+  title: i18n.t('rd.milestone.k3'),
+  description: i18n.t('rd.milestone.k4'),
 
   api: {
     module: 'rd',
@@ -27,7 +28,7 @@ export const milestoneSchema: EntitySchema = {
   fields: [
     {
       name: 'name',
-      label: '里程碑名称',
+      label: i18n.t('rd.milestone.k5'),
       type: 'text',
       required: true,
       sortable: true,
@@ -36,19 +37,19 @@ export const milestoneSchema: EntitySchema = {
     },
     {
       name: 'start_date',
-      label: '开始日期',
+      label: i18n.t('rd.milestone.k6'),
       type: 'date',
       listWidth: 130,
     },
     {
       name: 'end_date',
-      label: '结束日期',
+      label: i18n.t('rd.milestone.k7'),
       type: 'date',
       listWidth: 130,
     },
     {
       name: 'progress',
-      label: '进度',
+      label: i18n.t('rd.milestone.k8'),
       type: 'number',
       defaultValue: 0,
       listWidth: 170,
@@ -69,22 +70,22 @@ export const milestoneSchema: EntitySchema = {
     },
     {
       name: 'related_project',
-      label: '关联项目',
+      label: i18n.t('rd.milestone.k9'),
       type: 'text',
       listWidth: 160,
     },
     {
       name: 'status',
-      label: '状态',
+      label: i18n.t('rd.milestone.k10'),
       type: 'select',
       defaultValue: 'planning',
       hideInForm: true,
       options: {
         type: 'static',
         options: [
-          { value: 'completed', label: '已完成' },
-          { value: 'active', label: '进行中' },
-          { value: 'planning', label: '规划中' },
+          { value: 'completed', label: i18n.t('rd.milestone.k11') },
+          { value: 'active', label: i18n.t('rd.milestone.k12') },
+          { value: 'planning', label: i18n.t('rd.milestone.k13') },
         ],
       },
       listWidth: 110,
@@ -99,12 +100,12 @@ export const milestoneSchema: EntitySchema = {
     filters: [
       {
         id: 'status',
-        label: '状态',
+        label: i18n.t('rd.milestone.k14'),
         type: 'select',
         options: [
-          { label: '全部状态', value: 'all' },
-          { label: '进行中', value: 'active' },
-          { label: '已完成', value: 'completed' },
+          { label: i18n.t('rd.milestone.k15'), value: 'all' },
+          { label: i18n.t('rd.milestone.k16'), value: 'active' },
+          { label: i18n.t('rd.milestone.k17'), value: 'completed' },
         ],
         defaultValue: 'all',
       },
@@ -118,15 +119,15 @@ export const milestoneSchema: EntitySchema = {
 
   formSections: [
     {
-      title: '基本信息',
+      title: i18n.t('rd.milestone.k18'),
       fields: ['name', 'start_date', 'end_date', 'related_project'],
     },
   ],
 
   formColCount: 2,
-  createTitle: '新建里程碑',
-  editTitle: '编辑里程碑',
-  detailTitle: '里程碑详情',
+  createTitle: i18n.t('rd.milestone.k19'),
+  editTitle: i18n.t('rd.milestone.k20'),
+  detailTitle: i18n.t('rd.milestone.k21'),
 
   actions: ['create', 'detail'],
 
@@ -156,7 +157,7 @@ export const milestoneSchema: EntitySchema = {
       React.createElement(
         Box,
         { sx: { mt: 3 } },
-        React.createElement(Typography, { variant: 'subtitle2', color: 'text.secondary' }, '进度'),
+        React.createElement(Typography, { variant: 'subtitle2', color: 'text.secondary' }, i18n.t('rd.milestone.k22')),
         React.createElement(
           Box,
           { sx: { display: 'flex', alignItems: 'center', gap: 2, mt: 1 } },
@@ -181,7 +182,7 @@ export const milestoneSchema: EntitySchema = {
           React.createElement(
             Typography,
             { variant: 'caption', color: 'text.secondary' },
-            '开始日期'
+            i18n.t('rd.milestone.k23')
           ),
           React.createElement(
             Typography,
@@ -195,7 +196,7 @@ export const milestoneSchema: EntitySchema = {
           React.createElement(
             Typography,
             { variant: 'caption', color: 'text.secondary' },
-            '结束日期'
+            i18n.t('rd.milestone.k24')
           ),
           React.createElement(
             Typography,
@@ -209,7 +210,7 @@ export const milestoneSchema: EntitySchema = {
           React.createElement(
             Typography,
             { variant: 'caption', color: 'text.secondary' },
-            '关联项目'
+            i18n.t('rd.milestone.k25')
           ),
           React.createElement(
             Typography,

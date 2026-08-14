@@ -30,6 +30,7 @@ import {
   Switch,
   Tooltip,
 } from '@mui/material';
+import i18n from '@/i18n';
 import {
   Brain as BrainIcon,
   AlertTriangle as AlertIcon,
@@ -191,7 +192,7 @@ const AIOpsPanel: React.FC<AIOpsPanelProps> = ({ onClose, refreshInterval = 3000
       if (policy.length === 0) {
         autoScaler.registerPolicy({
           moduleId,
-          name: `${moduleId} 自动扩缩容`,
+          name: `${moduleId} ${i18n.t('microfrontend.ai_ops_panel.k0')}`,
           enabled: true,
           minInstances: 1,
           maxInstances: 10,
@@ -220,24 +221,24 @@ const AIOpsPanel: React.FC<AIOpsPanelProps> = ({ onClose, refreshInterval = 3000
     const firingAlerts = smartAlertManager.getAlerts({ status: 'firing' });
     if (firingAlerts.length < 3) {
       smartAlertManager.addRule({
-        name: 'CPU 使用率过高',
-        description: '当 CPU 使用率超过阈值时触发告警',
+        name: i18n.t('microfrontend.ai_ops_panel.cpu_1'),
+        description: i18n.t('microfrontend.ai_ops_panel.cpu_0'),
         condition: { metricName: 'cpuUsage', operator: 'gt', threshold: 80 },
         severity: 'high',
         enabled: true,
         cooldown: 300000,
       });
       smartAlertManager.addRule({
-        name: '响应时间过长',
-        description: '当响应时间超过阈值时触发告警',
+        name: i18n.t('microfrontend.ai_ops_panel.k1'),
+        description: i18n.t('microfrontend.ai_ops_panel.k2'),
         condition: { metricName: 'responseTime', operator: 'gt', threshold: 2000 },
         severity: 'medium',
         enabled: true,
         cooldown: 600000,
       });
       smartAlertManager.addRule({
-        name: '错误率过高',
-        description: '当错误率超过阈值时触发告警',
+        name: i18n.t('microfrontend.ai_ops_panel.k3'),
+        description: i18n.t('microfrontend.ai_ops_panel.k4'),
         condition: { metricName: 'errorRate', operator: 'gt', threshold: 5 },
         severity: 'critical',
         enabled: true,
@@ -304,10 +305,10 @@ const AIOpsPanel: React.FC<AIOpsPanelProps> = ({ onClose, refreshInterval = 3000
 
   const formatRelativeTime = (timestamp: number): string => {
     const diff = Date.now() - timestamp;
-    if (diff < 60000) return '刚刚';
-    if (diff < 3600000) return `${Math.floor(diff / 60000)}分钟前`;
-    if (diff < 86400000) return `${Math.floor(diff / 3600000)}小时前`;
-    return `${Math.floor(diff / 86400000)}天前`;
+    if (diff < 60000) return i18n.t('microfrontend.ai_ops_panel.k5');
+    if (diff < 3600000) return `${Math.floor(diff / 60000)}${i18n.t('microfrontend.ai_ops_panel.k2')}`;
+    if (diff < 86400000) return `${Math.floor(diff / 3600000)}${i18n.t('microfrontend.ai_ops_panel.k3')}`;
+    return `${Math.floor(diff / 86400000)}${i18n.t('microfrontend.ai_ops_panel.k4')}`;
   };
 
   const getSeverityColor = (severity: string): string => {
@@ -402,35 +403,35 @@ const AIOpsPanel: React.FC<AIOpsPanelProps> = ({ onClose, refreshInterval = 3000
     <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
       <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
         <StatCard
-          label='活动告警'
+          label={i18n.t('microfrontend.ai_ops_panel.k6')}
           value={firingAlerts}
           icon={<AlertIcon size={24} />}
           color={designTokens.colors.error.dark}
-          trend={`${totalAlerts} 总计`}
+          trend={`${totalAlerts} ${i18n.t('microfrontend.ai_ops_panel.k5')}`}
           trendUp={firingAlerts > 5}
         />
         <StatCard
-          label='未解决异常'
+          label={i18n.t('microfrontend.ai_ops_panel.k7')}
           value={unresolvedAnomalies}
           icon={<ActivityIcon size={24} />}
           color='#ef6c00'
-          trend={`${totalAnomalies} 总计`}
+          trend={`${totalAnomalies} ${i18n.t('microfrontend.ai_ops_panel.k6')}`}
           trendUp={unresolvedAnomalies > 10}
         />
         <StatCard
-          label='预测异常'
+          label={i18n.t('microfrontend.ai_ops_panel.k8')}
           value={totalPredictions}
           icon={<TrendingUpIcon size={24} />}
           color={designTokens.colors.purple['700']}
-          trend='未来24h'
+          trend={i18n.t('microfrontend.ai_ops_panel.24h_9')}
           trendUp
         />
         <StatCard
-          label='扩缩容次数'
+          label={i18n.t('microfrontend.ai_ops_panel.k10')}
           value={scalingEvents}
           icon={<LayersIcon size={24} />}
           color={designTokens.colors.teal['700']}
-          trend={`${totalInstances} 运行中`}
+          trend={`${totalInstances} ${i18n.t('microfrontend.ai_ops_panel.k7')}`}
         />
       </Box>
 
@@ -441,7 +442,7 @@ const AIOpsPanel: React.FC<AIOpsPanelProps> = ({ onClose, refreshInterval = 3000
               variant='h6'
               sx={{ fontWeight: 600, mb: 2 }}
             >
-              异常级别分布
+              {i18n.t('microfrontend.ai_ops_panel.k8')}
             </Typography>
             <Box sx={{ display: 'flex', gap: 2, alignItems: 'flex-end', height: 200 }}>
               {(['critical', 'high', 'medium', 'low'] as const).map((sev) => {
@@ -473,12 +474,12 @@ const AIOpsPanel: React.FC<AIOpsPanelProps> = ({ onClose, refreshInterval = 3000
                       sx={{ mt: 1, textTransform: 'capitalize' }}
                     >
                       {sev === 'critical'
-                        ? '严重'
+                        ? i18n.t('microfrontend.ai_ops_panel.k11')
                         : sev === 'high'
-                          ? '高'
+                          ? i18n.t('microfrontend.ai_ops_panel.k12')
                           : sev === 'medium'
-                            ? '中'
-                            : '低'}
+                            ? i18n.t('microfrontend.ai_ops_panel.k13')
+                            : i18n.t('microfrontend.ai_ops_panel.k14')}
                     </Typography>
                   </Box>
                 );
@@ -492,19 +493,19 @@ const AIOpsPanel: React.FC<AIOpsPanelProps> = ({ onClose, refreshInterval = 3000
               variant='h6'
               sx={{ fontWeight: 600, mb: 2 }}
             >
-              告警状态
+              {i18n.t('microfrontend.ai_ops_panel.k9')}
             </Typography>
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
               {(['firing', 'acknowledged', 'resolved', 'suppressed'] as const).map((status) => {
                 const count = alertStats?.[status] || 0;
                 const label =
                   status === 'firing'
-                    ? '触发中'
+                    ? i18n.t('microfrontend.ai_ops_panel.k15')
                     : status === 'acknowledged'
-                      ? '已确认'
+                      ? i18n.t('microfrontend.ai_ops_panel.k16')
                       : status === 'resolved'
-                        ? '已解决'
-                        : '已抑制';
+                        ? i18n.t('microfrontend.ai_ops_panel.k17')
+                        : i18n.t('microfrontend.ai_ops_panel.k18');
                 return (
                   <Box key={status}>
                     <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 0.5 }}>
@@ -545,10 +546,10 @@ const AIOpsPanel: React.FC<AIOpsPanelProps> = ({ onClose, refreshInterval = 3000
               variant='h6'
               sx={{ fontWeight: 600, mb: 2 }}
             >
-              最近异常
+              {i18n.t('microfrontend.ai_ops_panel.k10')}
             </Typography>
             {anomalies.length === 0 ? (
-              <Typography color='text.secondary'>暂无异常</Typography>
+              <Typography color='text.secondary'>{i18n.t('microfrontend.ai_ops_panel.k19')}</Typography>
             ) : (
               <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
                 {anomalies.slice(0, 5).map((a) => (
@@ -582,7 +583,7 @@ const AIOpsPanel: React.FC<AIOpsPanelProps> = ({ onClose, refreshInterval = 3000
                           variant='caption'
                           color='text.secondary'
                         >
-                          {a.moduleId || '全局'} · {formatRelativeTime(a.timestamp)}
+                          {a.moduleId || i18n.t('microfrontend.ai_ops_panel.k20')} · {formatRelativeTime(a.timestamp)}
                         </Typography>
                       </Box>
                       <Typography
@@ -604,10 +605,10 @@ const AIOpsPanel: React.FC<AIOpsPanelProps> = ({ onClose, refreshInterval = 3000
               variant='h6'
               sx={{ fontWeight: 600, mb: 2 }}
             >
-              扩缩容历史
+              {i18n.t('microfrontend.ai_ops_panel.k11')}
             </Typography>
             {scalingHistory.length === 0 ? (
-              <Typography color='text.secondary'>暂无扩缩容记录</Typography>
+              <Typography color='text.secondary'>{i18n.t('microfrontend.ai_ops_panel.k21')}</Typography>
             ) : (
               <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
                 {scalingHistory.slice(0, 5).map((e) => (
@@ -654,7 +655,7 @@ const AIOpsPanel: React.FC<AIOpsPanelProps> = ({ onClose, refreshInterval = 3000
                         </Typography>
                       </Box>
                       <Chip
-                        label={e.status === 'completed' ? '完成' : e.status}
+                        label={e.status === 'completed' ? i18n.t('microfrontend.ai_ops_panel.k22') : e.status}
                         size='small'
                         color={
                           e.status === 'completed'
@@ -680,25 +681,25 @@ const AIOpsPanel: React.FC<AIOpsPanelProps> = ({ onClose, refreshInterval = 3000
     <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
       <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
         <StatCard
-          label='总异常数'
+          label={i18n.t('microfrontend.ai_ops_panel.k23')}
           value={anomalies.length}
           icon={<ActivityIcon size={24} />}
           color={designTokens.colors.primary.dark}
         />
         <StatCard
-          label='严重异常'
+          label={i18n.t('microfrontend.ai_ops_panel.k24')}
           value={severityCounts.critical + severityCounts.high}
           icon={<AlertIcon size={24} />}
           color={designTokens.colors.error.dark}
         />
         <StatCard
-          label='已确认'
+          label={i18n.t('microfrontend.ai_ops_panel.k25')}
           value={anomalies.filter((a) => a.acknowledged).length}
           icon={<CheckCircleIcon size={24} />}
           color={designTokens.colors.success.dark}
         />
         <StatCard
-          label='监控指标'
+          label={i18n.t('microfrontend.ai_ops_panel.k26')}
           value={baselines.length}
           icon={<GaugeIcon size={24} />}
           color={designTokens.colors.purple['700']}
@@ -722,19 +723,19 @@ const AIOpsPanel: React.FC<AIOpsPanelProps> = ({ onClose, refreshInterval = 3000
                 variant='h6'
                 sx={{ fontWeight: 600 }}
               >
-                异常事件列表
+                {i18n.t('microfrontend.ai_ops_panel.k12')}
               </Typography>
               <FormControl
                 size='small'
                 sx={{ minWidth: 150 }}
               >
-                <InputLabel>按模块筛选</InputLabel>
+                <InputLabel>{i18n.t('microfrontend.ai_ops_panel.k27')}</InputLabel>
                 <Select
                   value={selectedModule || ''}
                   onChange={(e) => setSelectedModule(e.target.value || null)}
-                  label='按模块筛选'
+                  label={i18n.t('microfrontend.ai_ops_panel.k28')}
                 >
-                  <MenuItem value=''>全部</MenuItem>
+                  <MenuItem value=''>{i18n.t('microfrontend.ai_ops_panel.k29')}</MenuItem>
                   {registeredModules.map((m) => (
                     <MenuItem
                       key={m.id}
@@ -753,14 +754,14 @@ const AIOpsPanel: React.FC<AIOpsPanelProps> = ({ onClose, refreshInterval = 3000
               <Table size='small'>
                 <TableHead>
                   <TableRow sx={{ bgcolor: 'action.hover' }}>
-                    <TableCell sx={{ fontWeight: 600 }}>级别</TableCell>
-                    <TableCell sx={{ fontWeight: 600 }}>指标</TableCell>
-                    <TableCell sx={{ fontWeight: 600 }}>模块</TableCell>
-                    <TableCell sx={{ fontWeight: 600 }}>值</TableCell>
-                    <TableCell sx={{ fontWeight: 600 }}>检测方法</TableCell>
-                    <TableCell sx={{ fontWeight: 600 }}>状态</TableCell>
-                    <TableCell sx={{ fontWeight: 600 }}>时间</TableCell>
-                    <TableCell sx={{ fontWeight: 600 }}>操作</TableCell>
+                    <TableCell sx={{ fontWeight: 600 }}>{i18n.t('microfrontend.ai_ops_panel.k30')}</TableCell>
+                    <TableCell sx={{ fontWeight: 600 }}>{i18n.t('microfrontend.ai_ops_panel.k31')}</TableCell>
+                    <TableCell sx={{ fontWeight: 600 }}>{i18n.t('microfrontend.ai_ops_panel.k32')}</TableCell>
+                    <TableCell sx={{ fontWeight: 600 }}>{i18n.t('microfrontend.ai_ops_panel.k13')}</TableCell>
+                    <TableCell sx={{ fontWeight: 600 }}>{i18n.t('microfrontend.ai_ops_panel.k33')}</TableCell>
+                    <TableCell sx={{ fontWeight: 600 }}>{i18n.t('microfrontend.ai_ops_panel.k34')}</TableCell>
+                    <TableCell sx={{ fontWeight: 600 }}>{i18n.t('microfrontend.ai_ops_panel.k35')}</TableCell>
+                    <TableCell sx={{ fontWeight: 600 }}>{i18n.t('microfrontend.ai_ops_panel.k36')}</TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
@@ -797,21 +798,21 @@ const AIOpsPanel: React.FC<AIOpsPanelProps> = ({ onClose, refreshInterval = 3000
                           {a.resolved ? (
                             <Chip
                               icon={<CheckCircleIcon size={14} />}
-                              label='已解决'
+                              label={i18n.t('microfrontend.ai_ops_panel.k37')}
                               size='small'
                               color='success'
                               variant='outlined'
                             />
                           ) : a.acknowledged ? (
                             <Chip
-                              label='已确认'
+                              label={i18n.t('microfrontend.ai_ops_panel.k38')}
                               size='small'
                               color='warning'
                               variant='outlined'
                             />
                           ) : (
                             <Chip
-                              label='未处理'
+                              label={i18n.t('microfrontend.ai_ops_panel.k39')}
                               size='small'
                               color='error'
                               variant='outlined'
@@ -830,7 +831,7 @@ const AIOpsPanel: React.FC<AIOpsPanelProps> = ({ onClose, refreshInterval = 3000
                                   refreshData();
                                 }}
                               >
-                                确认
+                                {i18n.t('microfrontend.ai_ops_panel.k14')}
                               </Button>
                             )}
                             {!a.resolved && (
@@ -842,7 +843,7 @@ const AIOpsPanel: React.FC<AIOpsPanelProps> = ({ onClose, refreshInterval = 3000
                                   refreshData();
                                 }}
                               >
-                                解决
+                                {i18n.t('microfrontend.ai_ops_panel.k15')}
                               </Button>
                             )}
                           </Box>
@@ -859,7 +860,7 @@ const AIOpsPanel: React.FC<AIOpsPanelProps> = ({ onClose, refreshInterval = 3000
                           color='text.secondary'
                           sx={{ py: 3 }}
                         >
-                          暂无异常数据
+                          {i18n.t('microfrontend.ai_ops_panel.k16')}
                         </Typography>
                       </TableCell>
                     </TableRow>
@@ -878,7 +879,7 @@ const AIOpsPanel: React.FC<AIOpsPanelProps> = ({ onClose, refreshInterval = 3000
                 variant='h6'
                 sx={{ fontWeight: 600, mb: 2 }}
               >
-                基线对比
+                {i18n.t('microfrontend.ai_ops_panel.k17')}
               </Typography>
               {baselines.slice(0, 8).map((b) => (
                 <Box
@@ -896,7 +897,7 @@ const AIOpsPanel: React.FC<AIOpsPanelProps> = ({ onClose, refreshInterval = 3000
                       variant='caption'
                       color='text.secondary'
                     >
-                      {b.moduleId || '全局'}
+                      {b.moduleId || i18n.t('microfrontend.ai_ops_panel.k40')}
                     </Typography>
                   </Box>
                   <Paper
@@ -943,10 +944,10 @@ const AIOpsPanel: React.FC<AIOpsPanelProps> = ({ onClose, refreshInterval = 3000
                 variant='h6'
                 sx={{ fontWeight: 600, mb: 2 }}
               >
-                模块异常分布
+                {i18n.t('microfrontend.ai_ops_panel.k18')}
               </Typography>
               {moduleAnomalies.length === 0 ? (
-                <Typography color='text.secondary'>暂无数据</Typography>
+                <Typography color='text.secondary'>{i18n.t('microfrontend.ai_ops_panel.k41')}</Typography>
               ) : (
                 <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
                   {moduleAnomalies.slice(0, 10).map(([moduleId, count]) => {
@@ -988,25 +989,25 @@ const AIOpsPanel: React.FC<AIOpsPanelProps> = ({ onClose, refreshInterval = 3000
     <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
       <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
         <StatCard
-          label='触发中告警'
+          label={i18n.t('microfrontend.ai_ops_panel.k42')}
           value={alertStats?.firing || 0}
           icon={<AlertIcon size={24} />}
           color={designTokens.colors.error.dark}
         />
         <StatCard
-          label='告警规则'
+          label={i18n.t('microfrontend.ai_ops_panel.k43')}
           value={alertRules.length}
           icon={<TargetIcon size={24} />}
           color={designTokens.colors.primary.dark}
         />
         <StatCard
-          label='今日告警'
+          label={i18n.t('microfrontend.ai_ops_panel.k44')}
           value={alertStats?.last24h || 0}
           icon={<ClockIcon size={24} />}
           color='colors.orange.700'
         />
         <StatCard
-          label='解决率'
+          label={i18n.t('microfrontend.ai_ops_panel.k45')}
           value={
             alertStats?.total
               ? `${((alertStats.resolved / alertStats.total) * 100).toFixed(1)}%`
@@ -1027,7 +1028,7 @@ const AIOpsPanel: React.FC<AIOpsPanelProps> = ({ onClose, refreshInterval = 3000
                 variant='h6'
                 sx={{ fontWeight: 600 }}
               >
-                告警列表
+                {i18n.t('microfrontend.ai_ops_panel.k19')}
               </Typography>
             </Box>
             <TableContainer
@@ -1037,15 +1038,15 @@ const AIOpsPanel: React.FC<AIOpsPanelProps> = ({ onClose, refreshInterval = 3000
               <Table size='small'>
                 <TableHead>
                   <TableRow sx={{ bgcolor: 'action.hover' }}>
-                    <TableCell sx={{ fontWeight: 600 }}>告警名称</TableCell>
-                    <TableCell sx={{ fontWeight: 600 }}>级别</TableCell>
-                    <TableCell sx={{ fontWeight: 600 }}>状态</TableCell>
-                    <TableCell sx={{ fontWeight: 600 }}>指标</TableCell>
-                    <TableCell sx={{ fontWeight: 600 }}>模块</TableCell>
-                    <TableCell sx={{ fontWeight: 600 }}>值</TableCell>
-                    <TableCell sx={{ fontWeight: 600 }}>次数</TableCell>
-                    <TableCell sx={{ fontWeight: 600 }}>触发时间</TableCell>
-                    <TableCell sx={{ fontWeight: 600 }}>操作</TableCell>
+                    <TableCell sx={{ fontWeight: 600 }}>{i18n.t('microfrontend.ai_ops_panel.k46')}</TableCell>
+                    <TableCell sx={{ fontWeight: 600 }}>{i18n.t('microfrontend.ai_ops_panel.k47')}</TableCell>
+                    <TableCell sx={{ fontWeight: 600 }}>{i18n.t('microfrontend.ai_ops_panel.k48')}</TableCell>
+                    <TableCell sx={{ fontWeight: 600 }}>{i18n.t('microfrontend.ai_ops_panel.k49')}</TableCell>
+                    <TableCell sx={{ fontWeight: 600 }}>{i18n.t('microfrontend.ai_ops_panel.k50')}</TableCell>
+                    <TableCell sx={{ fontWeight: 600 }}>{i18n.t('microfrontend.ai_ops_panel.k20')}</TableCell>
+                    <TableCell sx={{ fontWeight: 600 }}>{i18n.t('microfrontend.ai_ops_panel.k51')}</TableCell>
+                    <TableCell sx={{ fontWeight: 600 }}>{i18n.t('microfrontend.ai_ops_panel.k52')}</TableCell>
+                    <TableCell sx={{ fontWeight: 600 }}>{i18n.t('microfrontend.ai_ops_panel.k53')}</TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
@@ -1089,7 +1090,7 @@ const AIOpsPanel: React.FC<AIOpsPanelProps> = ({ onClose, refreshInterval = 3000
                                 refreshData();
                               }}
                             >
-                              确认
+                              {i18n.t('microfrontend.ai_ops_panel.k21')}
                             </Button>
                           )}
                           {alert.status !== 'resolved' && (
@@ -1101,7 +1102,7 @@ const AIOpsPanel: React.FC<AIOpsPanelProps> = ({ onClose, refreshInterval = 3000
                                 refreshData();
                               }}
                             >
-                              解决
+                              {i18n.t('microfrontend.ai_ops_panel.k22')}
                             </Button>
                           )}
                         </Box>
@@ -1118,7 +1119,7 @@ const AIOpsPanel: React.FC<AIOpsPanelProps> = ({ onClose, refreshInterval = 3000
                           color='text.secondary'
                           sx={{ py: 3 }}
                         >
-                          暂无告警
+                          {i18n.t('microfrontend.ai_ops_panel.k23')}
                         </Typography>
                       </TableCell>
                     </TableRow>
@@ -1145,7 +1146,7 @@ const AIOpsPanel: React.FC<AIOpsPanelProps> = ({ onClose, refreshInterval = 3000
                   variant='h6'
                   sx={{ fontWeight: 600 }}
                 >
-                  告警规则
+                  {i18n.t('microfrontend.ai_ops_panel.k24')}
                 </Typography>
                 <Button
                   size='small'
@@ -1153,7 +1154,7 @@ const AIOpsPanel: React.FC<AIOpsPanelProps> = ({ onClose, refreshInterval = 3000
                   onClick={() => setShowAddRuleDialog(true)}
                   variant='contained'
                 >
-                  添加
+                  {i18n.t('microfrontend.ai_ops_panel.k25')}
                 </Button>
               </Box>
               <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
@@ -1226,7 +1227,7 @@ const AIOpsPanel: React.FC<AIOpsPanelProps> = ({ onClose, refreshInterval = 3000
                 variant='h6'
                 sx={{ fontWeight: 600, mb: 2 }}
               >
-                告警统计
+                {i18n.t('microfrontend.ai_ops_panel.k26')}
               </Typography>
               <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
                 <Box>
@@ -1262,7 +1263,7 @@ const AIOpsPanel: React.FC<AIOpsPanelProps> = ({ onClose, refreshInterval = 3000
                   variant='body2'
                   sx={{ fontWeight: 600 }}
                 >
-                  按级别分布
+                  {i18n.t('microfrontend.ai_ops_panel.k27')}
                 </Typography>
                 {(['critical', 'high', 'medium', 'low'] as const).map((sev) => (
                   <Box
@@ -1282,12 +1283,12 @@ const AIOpsPanel: React.FC<AIOpsPanelProps> = ({ onClose, refreshInterval = 3000
                       sx={{ flex: 1 }}
                     >
                       {sev === 'critical'
-                        ? '严重'
+                        ? i18n.t('microfrontend.ai_ops_panel.k54')
                         : sev === 'high'
-                          ? '高'
+                          ? i18n.t('microfrontend.ai_ops_panel.k55')
                           : sev === 'medium'
-                            ? '中'
-                            : '低'}
+                            ? i18n.t('microfrontend.ai_ops_panel.k56')
+                            : i18n.t('microfrontend.ai_ops_panel.k57')}
                     </Typography>
                     <Typography
                       variant='body2'
@@ -1311,7 +1312,7 @@ const AIOpsPanel: React.FC<AIOpsPanelProps> = ({ onClose, refreshInterval = 3000
       >
         <DialogTitle>
           <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            添加告警规则
+            {i18n.t('microfrontend.ai_ops_panel.k28')}
             <IconButton
               size='small'
               onClick={() => setShowAddRuleDialog(false)}
@@ -1323,7 +1324,7 @@ const AIOpsPanel: React.FC<AIOpsPanelProps> = ({ onClose, refreshInterval = 3000
         <DialogContent>
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, pt: 1 }}>
             <TextField
-              label='规则名称'
+              label={i18n.t('microfrontend.ai_ops_panel.k58')}
               fullWidth
               size='small'
               value={newRuleName}
@@ -1335,18 +1336,18 @@ const AIOpsPanel: React.FC<AIOpsPanelProps> = ({ onClose, refreshInterval = 3000
                 size='small'
                 sx={{ flex: '1 1 150px' }}
               >
-                <InputLabel>监控指标</InputLabel>
+                <InputLabel>{i18n.t('microfrontend.ai_ops_panel.k59')}</InputLabel>
                 <Select
                   value={newRuleMetric}
-                  label='监控指标'
+                  label={i18n.t('microfrontend.ai_ops_panel.k60')}
                   onChange={(e) => setNewRuleMetric(e.target.value)}
                 >
                   <MenuItem value='cpuUsage'>CPU 使用率</MenuItem>
-                  <MenuItem value='memoryUsage'>内存使用率</MenuItem>
-                  <MenuItem value='responseTime'>响应时间</MenuItem>
-                  <MenuItem value='errorRate'>错误率</MenuItem>
-                  <MenuItem value='requestRate'>请求速率</MenuItem>
-                  <MenuItem value='totalLoadTime'>总加载时间</MenuItem>
+                  <MenuItem value='memoryUsage'>{i18n.t('microfrontend.ai_ops_panel.k61')}</MenuItem>
+                  <MenuItem value='responseTime'>{i18n.t('microfrontend.ai_ops_panel.k62')}</MenuItem>
+                  <MenuItem value='errorRate'>{i18n.t('microfrontend.ai_ops_panel.k63')}</MenuItem>
+                  <MenuItem value='requestRate'>{i18n.t('microfrontend.ai_ops_panel.k64')}</MenuItem>
+                  <MenuItem value='totalLoadTime'>{i18n.t('microfrontend.ai_ops_panel.k65')}</MenuItem>
                 </Select>
               </FormControl>
               <FormControl
@@ -1354,23 +1355,23 @@ const AIOpsPanel: React.FC<AIOpsPanelProps> = ({ onClose, refreshInterval = 3000
                 size='small'
                 sx={{ flex: '1 1 150px' }}
               >
-                <InputLabel>操作符</InputLabel>
+                <InputLabel>{i18n.t('microfrontend.ai_ops_panel.k66')}</InputLabel>
                 <Select
                   value={newRuleOperator}
-                  label='操作符'
+                  label={i18n.t('microfrontend.ai_ops_panel.k67')}
                   onChange={(e) =>
                     setNewRuleOperator(e.target.value as 'gt' | 'gte' | 'lt' | 'lte')
                   }
                 >
-                  <MenuItem value='gt'>大于 (gt)</MenuItem>
-                  <MenuItem value='gte'>大于等于 (gte)</MenuItem>
-                  <MenuItem value='lt'>小于 (lt)</MenuItem>
-                  <MenuItem value='lte'>小于等于 (lte)</MenuItem>
+                  <MenuItem value='gt'>{i18n.t('microfrontend.ai_ops_panel.gt_68')}</MenuItem>
+                  <MenuItem value='gte'>{i18n.t('microfrontend.ai_ops_panel.gte_69')}</MenuItem>
+                  <MenuItem value='lt'>{i18n.t('microfrontend.ai_ops_panel.lt_70')}</MenuItem>
+                  <MenuItem value='lte'>{i18n.t('microfrontend.ai_ops_panel.lte_71')}</MenuItem>
                 </Select>
               </FormControl>
             </Box>
             <TextField
-              label='阈值'
+              label={i18n.t('microfrontend.ai_ops_panel.k72')}
               type='number'
               fullWidth
               size='small'
@@ -1383,22 +1384,22 @@ const AIOpsPanel: React.FC<AIOpsPanelProps> = ({ onClose, refreshInterval = 3000
                 size='small'
                 sx={{ flex: '1 1 150px' }}
               >
-                <InputLabel>严重级别</InputLabel>
+                <InputLabel>{i18n.t('microfrontend.ai_ops_panel.k73')}</InputLabel>
                 <Select
                   value={newRuleSeverity}
-                  label='严重级别'
+                  label={i18n.t('microfrontend.ai_ops_panel.k74')}
                   onChange={(e) =>
                     setNewRuleSeverity(e.target.value as 'low' | 'medium' | 'high' | 'critical')
                   }
                 >
-                  <MenuItem value='critical'>严重</MenuItem>
-                  <MenuItem value='high'>高</MenuItem>
-                  <MenuItem value='medium'>中</MenuItem>
-                  <MenuItem value='low'>低</MenuItem>
+                  <MenuItem value='critical'>{i18n.t('microfrontend.ai_ops_panel.k75')}</MenuItem>
+                  <MenuItem value='high'>{i18n.t('microfrontend.ai_ops_panel.k29')}</MenuItem>
+                  <MenuItem value='medium'>{i18n.t('microfrontend.ai_ops_panel.k30')}</MenuItem>
+                  <MenuItem value='low'>{i18n.t('microfrontend.ai_ops_panel.k31')}</MenuItem>
                 </Select>
               </FormControl>
               <TextField
-                label='冷却时间(秒)'
+                label={i18n.t('microfrontend.ai_ops_panel.k76')}
                 type='number'
                 fullWidth
                 size='small'
@@ -1410,12 +1411,12 @@ const AIOpsPanel: React.FC<AIOpsPanelProps> = ({ onClose, refreshInterval = 3000
           </Box>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setShowAddRuleDialog(false)}>取消</Button>
+          <Button onClick={() => setShowAddRuleDialog(false)}>{i18n.t('microfrontend.ai_ops_panel.k77')}</Button>
           <Button
             variant='contained'
             onClick={() => {
               smartAlertManager.addRule({
-                name: newRuleName || '新告警规则',
+                name: newRuleName || i18n.t('microfrontend.ai_ops_panel.k78'),
                 condition: {
                   metricName: newRuleMetric,
                   operator: newRuleOperator,
@@ -1429,7 +1430,7 @@ const AIOpsPanel: React.FC<AIOpsPanelProps> = ({ onClose, refreshInterval = 3000
               refreshData();
             }}
           >
-            创建
+            {i18n.t('microfrontend.ai_ops_panel.k32')}
           </Button>
         </DialogActions>
       </Dialog>
@@ -1440,13 +1441,13 @@ const AIOpsPanel: React.FC<AIOpsPanelProps> = ({ onClose, refreshInterval = 3000
     <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
       <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
         <StatCard
-          label='预测异常数'
+          label={i18n.t('microfrontend.ai_ops_panel.k79')}
           value={predictedAnomalies.length}
           icon={<TrendingUpIcon size={24} />}
           color={designTokens.colors.purple['700']}
         />
         <StatCard
-          label='高风险预测'
+          label={i18n.t('microfrontend.ai_ops_panel.k80')}
           value={
             predictedAnomalies.filter((a) => a.severity === 'critical' || a.severity === 'high')
               .length
@@ -1455,13 +1456,13 @@ const AIOpsPanel: React.FC<AIOpsPanelProps> = ({ onClose, refreshInterval = 3000
           color={designTokens.colors.error.dark}
         />
         <StatCard
-          label='预测准确率'
+          label={i18n.t('microfrontend.ai_ops_panel.k81')}
           value='87.5%'
           icon={<TargetIcon size={24} />}
           color={designTokens.colors.success.dark}
         />
         <StatCard
-          label='监控指标'
+          label={i18n.t('microfrontend.ai_ops_panel.k82')}
           value={baselines.length}
           icon={<ZapIcon size={24} />}
           color={designTokens.colors.teal['700']}
@@ -1492,30 +1493,30 @@ const AIOpsPanel: React.FC<AIOpsPanelProps> = ({ onClose, refreshInterval = 3000
                   size='small'
                   sx={{ minWidth: 150 }}
                 >
-                  <InputLabel>指标</InputLabel>
+                  <InputLabel>{i18n.t('microfrontend.ai_ops_panel.k83')}</InputLabel>
                   <Select
                     value={selectedPredMetric}
-                    label='指标'
+                    label={i18n.t('microfrontend.ai_ops_panel.k84')}
                     onChange={(e) => setSelectedPredMetric(e.target.value)}
                   >
                     <MenuItem value='cpuUsage'>CPU 使用率</MenuItem>
-                    <MenuItem value='memoryUsage'>内存使用率</MenuItem>
-                    <MenuItem value='responseTime'>响应时间</MenuItem>
-                    <MenuItem value='errorRate'>错误率</MenuItem>
-                    <MenuItem value='totalLoadTime'>总加载时间</MenuItem>
+                    <MenuItem value='memoryUsage'>{i18n.t('microfrontend.ai_ops_panel.k85')}</MenuItem>
+                    <MenuItem value='responseTime'>{i18n.t('microfrontend.ai_ops_panel.k86')}</MenuItem>
+                    <MenuItem value='errorRate'>{i18n.t('microfrontend.ai_ops_panel.k87')}</MenuItem>
+                    <MenuItem value='totalLoadTime'>{i18n.t('microfrontend.ai_ops_panel.k88')}</MenuItem>
                   </Select>
                 </FormControl>
                 <FormControl
                   size='small'
                   sx={{ minWidth: 150 }}
                 >
-                  <InputLabel>模块</InputLabel>
+                  <InputLabel>{i18n.t('microfrontend.ai_ops_panel.k89')}</InputLabel>
                   <Select
                     value={selectedPredModule || ''}
-                    label='模块'
+                    label={i18n.t('microfrontend.ai_ops_panel.k90')}
                     onChange={(e) => setSelectedPredModule(e.target.value || null)}
                   >
-                    <MenuItem value=''>全部</MenuItem>
+                    <MenuItem value=''>{i18n.t('microfrontend.ai_ops_panel.k91')}</MenuItem>
                     {registeredModules.map((m) => (
                       <MenuItem
                         key={m.id}
@@ -1542,7 +1543,7 @@ const AIOpsPanel: React.FC<AIOpsPanelProps> = ({ onClose, refreshInterval = 3000
                     height: '100%',
                   }}
                 >
-                  <Typography color='text.secondary'>暂无数据</Typography>
+                  <Typography color='text.secondary'>{i18n.t('microfrontend.ai_ops_panel.k92')}</Typography>
                 </Box>
               ) : (
                 <svg
@@ -1591,13 +1592,13 @@ const AIOpsPanel: React.FC<AIOpsPanelProps> = ({ onClose, refreshInterval = 3000
               <Box sx={{ position: 'absolute', bottom: 8, left: 16, display: 'flex', gap: 2 }}>
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
                   <Box sx={{ width: 16, height: 2, bgcolor: 'info.600' }} />
-                  <Typography variant='caption'>历史数据</Typography>
+                  <Typography variant='caption'>{i18n.t('microfrontend.ai_ops_panel.k93')}</Typography>
                 </Box>
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
                   <Box
                     sx={{ width: 16, height: 2, bgcolor: 'purple.800', borderStyle: 'dashed' }}
                   />
-                  <Typography variant='caption'>预测值</Typography>
+                  <Typography variant='caption'>{i18n.t('microfrontend.ai_ops_panel.k94')}</Typography>
                 </Box>
               </Box>
             </Paper>
@@ -1609,10 +1610,10 @@ const AIOpsPanel: React.FC<AIOpsPanelProps> = ({ onClose, refreshInterval = 3000
               variant='h6'
               sx={{ fontWeight: 600, mb: 2 }}
             >
-              预测异常预警
+              {i18n.t('microfrontend.ai_ops_panel.k33')}
             </Typography>
             {predictedAnomalies.length === 0 ? (
-              <Typography color='text.secondary'>暂无预测异常</Typography>
+              <Typography color='text.secondary'>{i18n.t('microfrontend.ai_ops_panel.k95')}</Typography>
             ) : (
               <Box
                 sx={{
@@ -1667,14 +1668,14 @@ const AIOpsPanel: React.FC<AIOpsPanelProps> = ({ onClose, refreshInterval = 3000
                           variant='caption'
                           color='text.secondary'
                         >
-                          {a.moduleId || '全局'}
+                          {a.moduleId || i18n.t('microfrontend.ai_ops_panel.k96')}
                         </Typography>
                         <Box
                           component='span'
                           sx={{ mt: 0.5, display: 'block' }}
                         >
                           <Typography variant='caption'>
-                            预计: {formatRelativeTime(a.expectedTime)}
+                            [i18n.t('microfrontend.ai_ops_panel.k34')]: {formatRelativeTime(a.expectedTime)}
                           </Typography>
                         </Box>
                       </Box>
@@ -1707,25 +1708,25 @@ const AIOpsPanel: React.FC<AIOpsPanelProps> = ({ onClose, refreshInterval = 3000
     <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
       <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
         <StatCard
-          label='运行中实例'
+          label={i18n.t('microfrontend.ai_ops_panel.k97')}
           value={totalRunning}
           icon={<LayersIcon size={24} />}
           color={designTokens.colors.success.dark}
         />
         <StatCard
-          label='启用策略'
+          label={i18n.t('microfrontend.ai_ops_panel.k98')}
           value={`${enabledPolicies}/${totalPolicies}`}
           icon={<TargetIcon size={24} />}
           color={designTokens.colors.primary.dark}
         />
         <StatCard
-          label='今日扩容'
+          label={i18n.t('microfrontend.ai_ops_panel.k99')}
           value={scalingHistory.filter((e) => e.direction === 'up').length}
           icon={<ArrowUpIcon size={24} />}
           color='colors.orange.700'
         />
         <StatCard
-          label='今日缩容'
+          label={i18n.t('microfrontend.ai_ops_panel.k100')}
           value={scalingHistory.filter((e) => e.direction === 'down').length}
           icon={<ArrowDownIcon size={24} />}
           color={designTokens.colors.teal['700']}
@@ -1749,19 +1750,19 @@ const AIOpsPanel: React.FC<AIOpsPanelProps> = ({ onClose, refreshInterval = 3000
                 variant='h6'
                 sx={{ fontWeight: 600 }}
               >
-                实例状态
+                {i18n.t('microfrontend.ai_ops_panel.k35')}
               </Typography>
               <FormControl
                 size='small'
                 sx={{ minWidth: 180 }}
               >
-                <InputLabel>选择模块</InputLabel>
+                <InputLabel>{i18n.t('microfrontend.ai_ops_panel.k101')}</InputLabel>
                 <Select
                   value={selectedScaleModule || ''}
-                  label='选择模块'
+                  label={i18n.t('microfrontend.ai_ops_panel.k102')}
                   onChange={(e) => setSelectedScaleModule(e.target.value || null)}
                 >
-                  <MenuItem value=''>全部模块</MenuItem>
+                  <MenuItem value=''>{i18n.t('microfrontend.ai_ops_panel.k103')}</MenuItem>
                   {Object.keys(instances).map((moduleId) => (
                     <MenuItem
                       key={moduleId}
@@ -1801,7 +1802,7 @@ const AIOpsPanel: React.FC<AIOpsPanelProps> = ({ onClose, refreshInterval = 3000
                           {inst.moduleId} #{inst.instanceNumber}
                         </Typography>
                         <Chip
-                          label={inst.status === 'running' ? '运行中' : inst.status}
+                          label={inst.status === 'running' ? i18n.t('microfrontend.ai_ops_panel.k104') : inst.status}
                           size='small'
                           color={
                             inst.status === 'running'
@@ -1823,7 +1824,7 @@ const AIOpsPanel: React.FC<AIOpsPanelProps> = ({ onClose, refreshInterval = 3000
                           variant='caption'
                           color='text.secondary'
                         >
-                          启动: {formatRelativeTime(inst.startedAt || inst.createdAt)}
+                          [i18n.t('microfrontend.ai_ops_panel.k36')]: {formatRelativeTime(inst.startedAt || inst.createdAt)}
                         </Typography>
                       </Box>
                     </Box>
@@ -1835,7 +1836,7 @@ const AIOpsPanel: React.FC<AIOpsPanelProps> = ({ onClose, refreshInterval = 3000
                   color='text.secondary'
                   sx={{ py: 3, textAlign: 'center' }}
                 >
-                  暂无实例
+                  {i18n.t('microfrontend.ai_ops_panel.k37')}
                 </Typography>
               )}
             </Box>
@@ -1847,22 +1848,22 @@ const AIOpsPanel: React.FC<AIOpsPanelProps> = ({ onClose, refreshInterval = 3000
                   startIcon={<ArrowUpIcon size={16} />}
                   onClick={() => {
                     const current = moduleInstances.filter((i) => i.status === 'running').length;
-                    autoScaler.scale(selectedScaleModule!, current + 1, '手动扩容');
+                    autoScaler.scale(selectedScaleModule!, current + 1, i18n.t('microfrontend.ai_ops_panel.k105'));
                     refreshData();
                   }}
                 >
-                  扩容
+                  {i18n.t('microfrontend.ai_ops_panel.k38')}
                 </Button>
                 <Button
                   variant='outlined'
                   startIcon={<ArrowDownIcon size={16} />}
                   onClick={() => {
                     const current = moduleInstances.filter((i) => i.status === 'running').length;
-                    autoScaler.scale(selectedScaleModule!, Math.max(1, current - 1), '手动缩容');
+                    autoScaler.scale(selectedScaleModule!, Math.max(1, current - 1), i18n.t('microfrontend.ai_ops_panel.k106'));
                     refreshData();
                   }}
                 >
-                  缩容
+                  {i18n.t('microfrontend.ai_ops_panel.k39')}
                 </Button>
                 <Button
                   variant='outlined'
@@ -1872,7 +1873,7 @@ const AIOpsPanel: React.FC<AIOpsPanelProps> = ({ onClose, refreshInterval = 3000
                     refreshData();
                   }}
                 >
-                  缩至最小
+                  {i18n.t('microfrontend.ai_ops_panel.k40')}
                 </Button>
               </Box>
             )}
@@ -1895,7 +1896,7 @@ const AIOpsPanel: React.FC<AIOpsPanelProps> = ({ onClose, refreshInterval = 3000
                   variant='h6'
                   sx={{ fontWeight: 600 }}
                 >
-                  扩缩容策略
+                  {i18n.t('microfrontend.ai_ops_panel.k41')}
                 </Typography>
                 <Button
                   size='small'
@@ -1903,7 +1904,7 @@ const AIOpsPanel: React.FC<AIOpsPanelProps> = ({ onClose, refreshInterval = 3000
                   variant='contained'
                   onClick={() => setShowAddPolicyDialog(true)}
                 >
-                  添加策略
+                  {i18n.t('microfrontend.ai_ops_panel.k42')}
                 </Button>
               </Box>
               <Box
@@ -1978,7 +1979,7 @@ const AIOpsPanel: React.FC<AIOpsPanelProps> = ({ onClose, refreshInterval = 3000
                     color='text.secondary'
                     sx={{ py: 3, textAlign: 'center' }}
                   >
-                    暂无策略
+                    {i18n.t('microfrontend.ai_ops_panel.k43')}
                   </Typography>
                 )}
               </Box>
@@ -1991,7 +1992,7 @@ const AIOpsPanel: React.FC<AIOpsPanelProps> = ({ onClose, refreshInterval = 3000
                 variant='h6'
                 sx={{ fontWeight: 600, mb: 2 }}
               >
-                扩缩容历史
+                {i18n.t('microfrontend.ai_ops_panel.k44')}
               </Typography>
               <TableContainer
                 component={Paper}
@@ -2001,11 +2002,11 @@ const AIOpsPanel: React.FC<AIOpsPanelProps> = ({ onClose, refreshInterval = 3000
                 <Table size='small'>
                   <TableHead>
                     <TableRow sx={{ bgcolor: 'action.hover' }}>
-                      <TableCell sx={{ fontWeight: 600 }}>模块</TableCell>
-                      <TableCell sx={{ fontWeight: 600 }}>方向</TableCell>
-                      <TableCell sx={{ fontWeight: 600 }}>实例变化</TableCell>
-                      <TableCell sx={{ fontWeight: 600 }}>状态</TableCell>
-                      <TableCell sx={{ fontWeight: 600 }}>时间</TableCell>
+                      <TableCell sx={{ fontWeight: 600 }}>{i18n.t('microfrontend.ai_ops_panel.k107')}</TableCell>
+                      <TableCell sx={{ fontWeight: 600 }}>{i18n.t('microfrontend.ai_ops_panel.k108')}</TableCell>
+                      <TableCell sx={{ fontWeight: 600 }}>{i18n.t('microfrontend.ai_ops_panel.k109')}</TableCell>
+                      <TableCell sx={{ fontWeight: 600 }}>{i18n.t('microfrontend.ai_ops_panel.k110')}</TableCell>
+                      <TableCell sx={{ fontWeight: 600 }}>{i18n.t('microfrontend.ai_ops_panel.k111')}</TableCell>
                     </TableRow>
                   </TableHead>
                   <TableBody>
@@ -2021,7 +2022,7 @@ const AIOpsPanel: React.FC<AIOpsPanelProps> = ({ onClose, refreshInterval = 3000
                           {e.direction === 'up' ? (
                             <Chip
                               icon={<ArrowUpIcon size={14} />}
-                              label='扩容'
+                              label={i18n.t('microfrontend.ai_ops_panel.k112')}
                               size='small'
                               color='success'
                               variant='outlined'
@@ -2029,14 +2030,14 @@ const AIOpsPanel: React.FC<AIOpsPanelProps> = ({ onClose, refreshInterval = 3000
                           ) : e.direction === 'down' ? (
                             <Chip
                               icon={<ArrowDownIcon size={14} />}
-                              label='缩容'
+                              label={i18n.t('microfrontend.ai_ops_panel.k113')}
                               size='small'
                               color='error'
                               variant='outlined'
                             />
                           ) : (
                             <Chip
-                              label='无'
+                              label={i18n.t('microfrontend.ai_ops_panel.k114')}
                               size='small'
                               variant='outlined'
                             />
@@ -2047,7 +2048,7 @@ const AIOpsPanel: React.FC<AIOpsPanelProps> = ({ onClose, refreshInterval = 3000
                         </TableCell>
                         <TableCell>
                           <Chip
-                            label={e.status === 'completed' ? '完成' : e.status}
+                            label={e.status === 'completed' ? i18n.t('microfrontend.ai_ops_panel.k115') : e.status}
                             size='small'
                             color={
                               e.status === 'completed'
@@ -2071,7 +2072,7 @@ const AIOpsPanel: React.FC<AIOpsPanelProps> = ({ onClose, refreshInterval = 3000
                             color='text.secondary'
                             sx={{ py: 3 }}
                           >
-                            暂无记录
+                            {i18n.t('microfrontend.ai_ops_panel.k45')}
                           </Typography>
                         </TableCell>
                       </TableRow>
@@ -2092,7 +2093,7 @@ const AIOpsPanel: React.FC<AIOpsPanelProps> = ({ onClose, refreshInterval = 3000
       >
         <DialogTitle>
           <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            添加扩缩容策略
+            {i18n.t('microfrontend.ai_ops_panel.k46')}
             <IconButton
               size='small'
               onClick={() => setShowAddPolicyDialog(false)}
@@ -2104,7 +2105,7 @@ const AIOpsPanel: React.FC<AIOpsPanelProps> = ({ onClose, refreshInterval = 3000
         <DialogContent>
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, pt: 1 }}>
             <TextField
-              label='策略名称'
+              label={i18n.t('microfrontend.ai_ops_panel.k116')}
               fullWidth
               size='small'
               value={newPolicyName}
@@ -2114,10 +2115,10 @@ const AIOpsPanel: React.FC<AIOpsPanelProps> = ({ onClose, refreshInterval = 3000
               fullWidth
               size='small'
             >
-              <InputLabel>模块</InputLabel>
+              <InputLabel>{i18n.t('microfrontend.ai_ops_panel.k117')}</InputLabel>
               <Select
                 value={selectedScaleModule || ''}
-                label='模块'
+                label={i18n.t('microfrontend.ai_ops_panel.k118')}
                 onChange={(e) => setSelectedScaleModule(e.target.value || null)}
               >
                 {registeredModules.map((m) => (
@@ -2132,7 +2133,7 @@ const AIOpsPanel: React.FC<AIOpsPanelProps> = ({ onClose, refreshInterval = 3000
             </FormControl>
             <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
               <TextField
-                label='最小实例数'
+                label={i18n.t('microfrontend.ai_ops_panel.k119')}
                 type='number'
                 fullWidth
                 size='small'
@@ -2141,7 +2142,7 @@ const AIOpsPanel: React.FC<AIOpsPanelProps> = ({ onClose, refreshInterval = 3000
                 sx={{ flex: '1 1 150px' }}
               />
               <TextField
-                label='最大实例数'
+                label={i18n.t('microfrontend.ai_ops_panel.k120')}
                 type='number'
                 fullWidth
                 size='small'
@@ -2152,7 +2153,7 @@ const AIOpsPanel: React.FC<AIOpsPanelProps> = ({ onClose, refreshInterval = 3000
             </Box>
             <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
               <TextField
-                label='CPU 扩容阈值(%)'
+                label={i18n.t('microfrontend.ai_ops_panel.cpu_47')}
                 type='number'
                 fullWidth
                 size='small'
@@ -2161,7 +2162,7 @@ const AIOpsPanel: React.FC<AIOpsPanelProps> = ({ onClose, refreshInterval = 3000
                 sx={{ flex: '1 1 150px' }}
               />
               <TextField
-                label='CPU 缩容阈值(%)'
+                label={i18n.t('microfrontend.ai_ops_panel.cpu_48')}
                 type='number'
                 fullWidth
                 size='small'
@@ -2173,14 +2174,14 @@ const AIOpsPanel: React.FC<AIOpsPanelProps> = ({ onClose, refreshInterval = 3000
           </Box>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setShowAddPolicyDialog(false)}>取消</Button>
+          <Button onClick={() => setShowAddPolicyDialog(false)}>{i18n.t('microfrontend.ai_ops_panel.k121')}</Button>
           <Button
             variant='contained'
             onClick={() => {
               if (selectedScaleModule) {
                 autoScaler.registerPolicy({
                   moduleId: selectedScaleModule,
-                  name: newPolicyName || '自动扩缩容策略',
+                  name: newPolicyName || i18n.t('microfrontend.ai_ops_panel.k122'),
                   enabled: true,
                   minInstances: newPolicyMin,
                   maxInstances: newPolicyMax,
@@ -2204,7 +2205,7 @@ const AIOpsPanel: React.FC<AIOpsPanelProps> = ({ onClose, refreshInterval = 3000
               }
             }}
           >
-            创建
+            {i18n.t('microfrontend.ai_ops_panel.k49')}
           </Button>
         </DialogActions>
       </Dialog>
@@ -2244,7 +2245,7 @@ const AIOpsPanel: React.FC<AIOpsPanelProps> = ({ onClose, refreshInterval = 3000
             variant='h6'
             sx={{ fontWeight: 700 }}
           >
-            AI 运维中心
+            {i18n.t('microfrontend.ai_ops_panel.ai_50')}
           </Typography>
           <Chip
             label='V43.0'
@@ -2253,7 +2254,7 @@ const AIOpsPanel: React.FC<AIOpsPanelProps> = ({ onClose, refreshInterval = 3000
           />
         </Box>
         <Box sx={{ display: 'flex', gap: 1, alignItems: 'center', flexWrap: 'wrap' }}>
-          <Tooltip title={autoRefresh ? '暂停自动刷新' : '开启自动刷新'}>
+          <Tooltip title={autoRefresh ? i18n.t('microfrontend.ai_ops_panel.k124') : i18n.t('microfrontend.ai_ops_panel.k123')}>
             <Button
               size='small'
               onClick={() => setAutoRefresh(!autoRefresh)}
@@ -2261,7 +2262,7 @@ const AIOpsPanel: React.FC<AIOpsPanelProps> = ({ onClose, refreshInterval = 3000
               sx={{ color: 'common.white', borderColor: 'action.disabledBackground' }}
               variant={autoRefresh ? 'contained' : 'outlined'}
             >
-              {autoRefresh ? '自动刷新' : '已暂停'}
+              {autoRefresh ? i18n.t('microfrontend.ai_ops_panel.k126') : i18n.t('microfrontend.ai_ops_panel.k125')}
             </Button>
           </Tooltip>
           <Button
@@ -2271,7 +2272,7 @@ const AIOpsPanel: React.FC<AIOpsPanelProps> = ({ onClose, refreshInterval = 3000
             sx={{ color: 'common.white', borderColor: 'action.disabledBackground' }}
             variant='outlined'
           >
-            刷新
+            {i18n.t('microfrontend.ai_ops_panel.k51')}
           </Button>
           <Button
             size='small'
@@ -2280,7 +2281,7 @@ const AIOpsPanel: React.FC<AIOpsPanelProps> = ({ onClose, refreshInterval = 3000
             sx={{ color: 'common.white', borderColor: 'action.disabledBackground' }}
             variant='outlined'
           >
-            导出
+            {i18n.t('microfrontend.ai_ops_panel.k52')}
           </Button>
           {onClose && (
             <IconButton
@@ -2299,31 +2300,31 @@ const AIOpsPanel: React.FC<AIOpsPanelProps> = ({ onClose, refreshInterval = 3000
         sx={{ bgcolor: 'background.paper', borderBottom: 1, borderColor: 'divider', px: 2 }}
       >
         <Tab
-          label='总览'
+          label={i18n.t('microfrontend.ai_ops_panel.k127')}
           value='overview'
           icon={<ActivityIcon size={16} />}
           iconPosition='start'
         />
         <Tab
-          label='异常检测'
+          label={i18n.t('microfrontend.ai_ops_panel.k128')}
           value='anomaly'
           icon={<ZapIcon size={16} />}
           iconPosition='start'
         />
         <Tab
-          label='智能告警'
+          label={i18n.t('microfrontend.ai_ops_panel.k129')}
           value='alert'
           icon={<AlertIcon size={16} />}
           iconPosition='start'
         />
         <Tab
-          label='趋势预测'
+          label={i18n.t('microfrontend.ai_ops_panel.k130')}
           value='prediction'
           icon={<TrendingUpIcon size={16} />}
           iconPosition='start'
         />
         <Tab
-          label='自动扩缩容'
+          label={i18n.t('microfrontend.ai_ops_panel.k131')}
           value='autoscale'
           icon={<LayersIcon size={16} />}
           iconPosition='start'

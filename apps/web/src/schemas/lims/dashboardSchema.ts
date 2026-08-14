@@ -1,5 +1,6 @@
 import type { DashboardSchema, StatCardSchema, ChartSchema } from '@/schema';
 import type { LimsDashboardStats } from '@/api/lims/dashboard';
+import i18n from '@/i18n';
 
 declare global {
   interface Window {
@@ -12,54 +13,54 @@ export function useLimsDashboardSchema(): DashboardSchema {
   const statCards: StatCardSchema[] = [
     {
       id: 'pending-samples',
-      title: '待检样本',
+      title: i18n.t('lims.dashboard_schema.k0'),
       value: () => {
         const stats = window.__limsStats;
         return (stats?.pending_samples as number)?.toLocaleString() ?? '-';
       },
       icon: 'FileText',
       color: 'warning',
-      trend: { value: 0, label: '上月' },
+      trend: { value: 0, label: i18n.t('lims.dashboard_schema.k1') },
     },
     {
       id: 'in-progress-tasks',
-      title: '进行中任务',
+      title: i18n.t('lims.dashboard_schema.k2'),
       value: () => {
         const stats = window.__limsStats;
         return (stats?.in_progress_tasks as number)?.toLocaleString() ?? '-';
       },
       icon: 'Clock',
       color: 'info',
-      trend: { value: 0, label: '上月' },
+      trend: { value: 0, label: i18n.t('lims.dashboard_schema.k3') },
     },
     {
       id: 'instrument-usage',
-      title: '仪器使用率',
+      title: i18n.t('lims.dashboard_schema.k4'),
       value: () => {
         const stats = window.__limsStats;
         return stats ? `${stats?.instrument_usage ?? 0}%` : '-';
       },
       icon: 'BarChart3',
       color: 'primary',
-      trend: { value: 0, label: '上月' },
+      trend: { value: 0, label: i18n.t('lims.dashboard_schema.k5') },
     },
     {
       id: 'pass-rate',
-      title: '合格率',
+      title: i18n.t('lims.dashboard_schema.k6'),
       value: () => {
         const stats = window.__limsStats;
         return stats ? `${stats?.pass_rate ?? 0}%` : '-';
       },
       icon: 'CheckCircle',
       color: 'success',
-      trend: { value: 0, label: '上月' },
+      trend: { value: 0, label: i18n.t('lims.dashboard_schema.k7') },
     },
   ];
 
   const charts: ChartSchema[] = [
     {
       id: 'test-item-distribution',
-      title: '检测项目分布',
+      title: i18n.t('lims.dashboard_schema.k8'),
       type: 'bar',
       data: () => {
         const stats = window.__limsStats;
@@ -71,7 +72,7 @@ export function useLimsDashboardSchema(): DashboardSchema {
     },
     {
       id: 'task-completion-rate',
-      title: '任务完成率',
+      title: i18n.t('lims.dashboard_schema.k9'),
       type: 'line',
       data: () => {
         const stats = window.__limsStats;
@@ -83,7 +84,7 @@ export function useLimsDashboardSchema(): DashboardSchema {
     },
     {
       id: 'instrument-status',
-      title: '仪器状态',
+      title: i18n.t('lims.dashboard_schema.k10'),
       type: 'pie',
       data: () => {
         const stats = window.__limsStats;
@@ -97,7 +98,7 @@ export function useLimsDashboardSchema(): DashboardSchema {
   ];
 
   return {
-    title: 'LIMS 仪表盘',
+    title: i18n.t('shared.dashboard_schema.lims_0'),
     loader: async () => {
       const api = await import('@/api/lims/dashboard');
       const response = await api.limsDashboardApi.getOverview();

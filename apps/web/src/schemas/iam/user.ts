@@ -11,6 +11,7 @@ import { authApi } from '@/api/iam';
 
 import { QUERY_KEYS } from '@/lib/reactQuery';
 import { designTokens } from '@topems/tokens';
+import i18n from '@/i18n';
 
 /**
  * 加载角色列表（动态选项）
@@ -18,7 +19,7 @@ import { designTokens } from '@topems/tokens';
 async function loadRoles(): Promise<{ value: string; label: string }[]> {
   const response = await authApi.listRoles();
   if (!response.success) {
-    throw new Error('加载角色失败');
+    throw new Error(i18n.t('shared.user.k0'));
   }
   const roles = response.data ?? [];
   return roles.map((role) => ({
@@ -32,8 +33,8 @@ async function loadRoles(): Promise<{ value: string; label: string }[]> {
  */
 export const userSchema: EntitySchema = {
   entity: 'user',
-  title: '用户管理',
-  description: '管理平台用户账户、角色和权限',
+  title: i18n.t('shared.user.k1'),
+  description: i18n.t('shared.user.k2'),
 
   api: {
     module: 'iam',
@@ -43,7 +44,7 @@ export const userSchema: EntitySchema = {
   fields: [
     {
       name: 'username',
-      label: '用户名',
+      label: i18n.t('shared.user.k3'),
       type: 'text',
       required: true,
       readonlyOnEdit: true,
@@ -106,14 +107,14 @@ export const userSchema: EntitySchema = {
     },
     {
       name: 'full_name',
-      label: '姓名',
+      label: i18n.t('shared.user.k4'),
       type: 'text',
       listWidth: 120,
       validation: [{ type: 'maxLength', value: 128 }],
     },
     {
       name: 'email',
-      label: '邮箱',
+      label: i18n.t('shared.user.k5'),
       type: 'text',
       required: true,
       listWidth: 180,
@@ -121,7 +122,7 @@ export const userSchema: EntitySchema = {
     },
     {
       name: 'password',
-      label: '密码',
+      label: i18n.t('shared.user.k6'),
       type: 'text',
       required: true,
       showInList: false,
@@ -129,7 +130,7 @@ export const userSchema: EntitySchema = {
     },
     {
       name: 'role',
-      label: '角色',
+      label: i18n.t('shared.user.k7'),
       type: 'select',
       listWidth: 120,
       renderCell: (row: Record<string, unknown>) => {
@@ -145,7 +146,7 @@ export const userSchema: EntitySchema = {
             {
               style: {
                 display: 'inline-block',
-                padding: '2px 8px',
+                padding: `${designTokens.spacing.xs} 8px`,
                 borderRadius: 'lg',
                 fontSize: '12px',
                 fontWeight: 500,
@@ -169,7 +170,7 @@ export const userSchema: EntitySchema = {
     },
     {
       name: 'isactive',
-      label: '状态',
+      label: i18n.t('shared.user.k8'),
       type: 'switch',
       defaultValue: true,
       listWidth: 80,
@@ -192,14 +193,14 @@ export const userSchema: EntitySchema = {
           React.createElement(
             'span',
             { style: { fontSize: '0.875rem' } },
-            isActive ? '活跃' : '禁用'
+            isActive ? i18n.t('shared.user.k10') : i18n.t('shared.user.k9')
           )
         );
       },
     },
     {
       name: 'created_at',
-      label: '创建时间',
+      label: i18n.t('shared.user.k11'),
       type: 'text',
       listWidth: 120,
       renderCell: (row: Record<string, unknown>) =>
@@ -218,8 +219,8 @@ export const userSchema: EntitySchema = {
         false: 'error',
       },
       labelMap: {
-        true: '活跃',
-        false: '禁用',
+        true: i18n.t('shared.user.k12'),
+        false: i18n.t('shared.user.k13'),
       },
     },
   },
@@ -229,7 +230,7 @@ export const userSchema: EntitySchema = {
   batchActions: [
     {
       key: 'batch-enable',
-      label: '批量启用',
+      label: i18n.t('shared.user.k14'),
       color: 'success',
       onClick: async (selectedIds) => {
         const response = await authApi.batchUpdateUsers({
@@ -237,15 +238,15 @@ export const userSchema: EntitySchema = {
           isactive: true,
         });
         if (!response.success) {
-          throw new Error(response.message || '操作失败');
+          throw new Error(response.message || i18n.t('shared.user.k15'));
         }
       },
       confirm: true,
-      confirmMessage: '确定要启用选中的用户吗？',
+      confirmMessage: i18n.t('shared.user.k16'),
     },
     {
       key: 'batch-disable',
-      label: '批量禁用',
+      label: i18n.t('shared.user.k17'),
       color: 'warning',
       onClick: async (selectedIds) => {
         const response = await authApi.batchUpdateUsers({
@@ -253,40 +254,40 @@ export const userSchema: EntitySchema = {
           isactive: false,
         });
         if (!response.success) {
-          throw new Error(response.message || '操作失败');
+          throw new Error(response.message || i18n.t('shared.user.k18'));
         }
       },
       confirm: true,
-      confirmMessage: '确定要禁用选中的用户吗？',
+      confirmMessage: i18n.t('shared.user.k19'),
     },
     {
       key: 'batch-delete',
-      label: '批量删除',
+      label: i18n.t('shared.user.k20'),
       color: 'error',
       onClick: async (selectedIds) => {
         const response = await authApi.batchDeleteUsers({
           user_ids: selectedIds,
         });
         if (!response.success) {
-          throw new Error(response.message || '删除失败');
+          throw new Error(response.message || i18n.t('shared.user.k21'));
         }
       },
       confirm: true,
-      confirmMessage: '确定要删除选中的用户吗？此操作不可恢复。',
+      confirmMessage: i18n.t('shared.user.k22'),
     },
   ],
 
   formSections: [
     {
-      title: '基本信息',
+      title: i18n.t('shared.user.k23'),
       fields: ['username', 'full_name', 'email', 'password'],
     },
   ],
 
   formColCount: 2,
-  createTitle: '创建用户',
-  editTitle: '编辑用户',
-  detailTitle: '用户详情',
+  createTitle: i18n.t('shared.user.k24'),
+  editTitle: i18n.t('shared.user.k25'),
+  detailTitle: i18n.t('shared.user.k26'),
 
   dynamicOptions: [
     {

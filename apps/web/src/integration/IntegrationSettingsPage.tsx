@@ -1,10 +1,11 @@
 import React from 'react';
+import i18n from '@/i18n';
 
 const IntegrationSettingsPage: React.FC = () => {
   return React.createElement(
     'div',
     { className: 'page-placeholder' },
-    'IntegrationSettingsPage 页面开发中'
+    i18n.t('integration.integration_settings_page.k0')
   );
 };
 

@@ -235,7 +235,7 @@ const HrmContractDetailPage: React.FC = () => {
               label={statusConfig.label}
               color={statusConfig.color}
               icon={statusConfig.icon}
-              sx={{ fontSize: 14, padding: '4px 16px' }}
+              sx={{ fontSize: 14, padding: `${designTokens.spacing.xs} 16px` }}
             />
           </Box>
         </Box>

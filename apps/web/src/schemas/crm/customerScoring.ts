@@ -6,11 +6,12 @@
  */
 
 import type { EntitySchema } from '@/schema';
+import i18n from '@/i18n';
 
 export const customerScoringSchema: EntitySchema = {
   entity: 'crm_customer_scoring',
-  title: '客户价值评分',
-  description: '根据客户数据自动计算客户价值评分和等级',
+  title: i18n.t('shared.customer_scoring.k0'),
+  description: i18n.t('shared.customer_scoring.k1'),
 
   api: {
     module: 'crm',
@@ -20,14 +21,14 @@ export const customerScoringSchema: EntitySchema = {
   fields: [
     {
       name: 'customer_name',
-      label: '客户名称',
+      label: i18n.t('shared.customer_scoring.k2'),
       type: 'text',
       listWidth: 200,
       sortable: true,
     },
     {
       name: 'score',
-      label: '综合评分',
+      label: i18n.t('shared.customer_scoring.k3'),
       type: 'number',
       listWidth: 120,
       align: 'center',
@@ -35,28 +36,28 @@ export const customerScoringSchema: EntitySchema = {
     },
     {
       name: 'scorelevel',
-      label: '客户等级',
+      label: i18n.t('shared.customer_scoring.k4'),
       type: 'text',
       listWidth: 100,
       align: 'center',
     },
     {
       name: 'trend',
-      label: '趋势',
+      label: i18n.t('shared.customer_scoring.k5'),
       type: 'text',
       listWidth: 80,
       align: 'center',
     },
     {
       name: 'scoring_date',
-      label: '评分日期',
+      label: i18n.t('shared.customer_scoring.k6'),
       type: 'date',
       listWidth: 150,
       sortable: true,
     },
     {
       name: 'last_score',
-      label: '上次评分',
+      label: i18n.t('shared.customer_scoring.k7'),
       type: 'number',
       listWidth: 120,
       align: 'center',
@@ -71,5 +72,5 @@ export const customerScoringSchema: EntitySchema = {
 
   actions: ['detail'],
 
-  detailTitle: '评分详情',
+  detailTitle: i18n.t('shared.customer_scoring.k8'),
 };

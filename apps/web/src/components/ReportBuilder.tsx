@@ -5,6 +5,7 @@ import type { ReportType, ReportTypeInfo, CreateReportRequest } from '@/api/repo
 import { reportApi } from '@/api/report';
 import { logger } from '@/utils/logger';
 import { designTokens, semanticTokens } from '@topems/tokens';
+import i18n from '@/i18n';
 
 interface ReportBuilderProps {
   onClose: () => void;
@@ -24,18 +25,18 @@ const ReportBuilder: React.FC<ReportBuilderProps> = ({ onClose, reportTypes, onS
   const [step, setStep] = useState(1);
 
   const defaultColumns: Record<string, string[]> = {
-    rs_project_progress: ['项目编号', '项目名称', '负责人', '开始日期', '完成进度', '状态'],
-    rs_experiment_record: ['试验编号', '试验标题', '试验类型', '试验日期', '试验员', '结果'],
-    lims_inspection_stats: ['检验编号', '检验项目', '样品数量', '合格数量', '合格率', '检验日期'],
-    lims_sample_summary: ['样品编号', '样品名称', '批次号', '接收日期', '检验状态', '备注'],
-    qms_quality_analysis: ['分析编号', '产品名称', '批次号', '合格率', '不良率', '分析日期'],
-    qms_defect_stats: ['不良编号', '不良类型', '数量', '占比', '原因分析', '处理措施'],
-    ehs_safety_check: ['检查编号', '检查项目', '检查区域', '检查日期', '检查人', '检查结果'],
-    ehs_risk_assessment: ['评估编号', '风险点', '风险等级', '可能性', '严重性', '控制措施'],
-    srm_supplier_eval: ['供应商编号', '供应商名称', '评估项目', '综合评分', '合作等级', '评估日期'],
-    srm_purchase_stats: ['采购单号', '供应商', '物料名称', '采购数量', '采购金额', '采购日期'],
-    pdm_production_stats: ['生产单号', '产品名称', '计划数量', '完成数量', '完成率', '生产日期'],
-    pdm_process_summary: ['工序编号', '工序名称', '负责人', '加工数量', '合格数量', '合格率'],
+    rs_project_progress: [i18n.t('components.report_builder.k5'), i18n.t('components.report_builder.k4'), i18n.t('components.report_builder.k3'), i18n.t('components.report_builder.k2'), i18n.t('components.report_builder.k1'), i18n.t('components.report_builder.k0')],
+    rs_experiment_record: [i18n.t('components.report_builder.k11'), i18n.t('components.report_builder.k10'), i18n.t('components.report_builder.k9'), i18n.t('components.report_builder.k8'), i18n.t('components.report_builder.k7'), i18n.t('components.report_builder.k6')],
+    lims_inspection_stats: [i18n.t('components.report_builder.k17'), i18n.t('components.report_builder.k16'), i18n.t('components.report_builder.k15'), i18n.t('components.report_builder.k14'), i18n.t('components.report_builder.k13'), i18n.t('components.report_builder.k12')],
+    lims_sample_summary: [i18n.t('components.report_builder.k23'), i18n.t('components.report_builder.k22'), i18n.t('components.report_builder.k21'), i18n.t('components.report_builder.k20'), i18n.t('components.report_builder.k19'), i18n.t('components.report_builder.k18')],
+    qms_quality_analysis: [i18n.t('components.report_builder.k29'), i18n.t('components.report_builder.k28'), i18n.t('components.report_builder.k27'), i18n.t('components.report_builder.k26'), i18n.t('components.report_builder.k25'), i18n.t('components.report_builder.k24')],
+    qms_defect_stats: [i18n.t('components.report_builder.k35'), i18n.t('components.report_builder.k34'), i18n.t('components.report_builder.k33'), i18n.t('components.report_builder.k32'), i18n.t('components.report_builder.k31'), i18n.t('components.report_builder.k30')],
+    ehs_safety_check: [i18n.t('components.report_builder.k41'), i18n.t('components.report_builder.k40'), i18n.t('components.report_builder.k39'), i18n.t('components.report_builder.k38'), i18n.t('components.report_builder.k37'), i18n.t('components.report_builder.k36')],
+    ehs_risk_assessment: [i18n.t('components.report_builder.k47'), i18n.t('components.report_builder.k46'), i18n.t('components.report_builder.k45'), i18n.t('components.report_builder.k44'), i18n.t('components.report_builder.k43'), i18n.t('components.report_builder.k42')],
+    srm_supplier_eval: [i18n.t('components.report_builder.k53'), i18n.t('components.report_builder.k52'), i18n.t('components.report_builder.k51'), i18n.t('components.report_builder.k50'), i18n.t('components.report_builder.k49'), i18n.t('components.report_builder.k48')],
+    srm_purchase_stats: [i18n.t('components.report_builder.k59'), i18n.t('components.report_builder.k58'), i18n.t('components.report_builder.k57'), i18n.t('components.report_builder.k56'), i18n.t('components.report_builder.k55'), i18n.t('components.report_builder.k54')],
+    pdm_production_stats: [i18n.t('components.report_builder.k65'), i18n.t('components.report_builder.k64'), i18n.t('components.report_builder.k63'), i18n.t('components.report_builder.k62'), i18n.t('components.report_builder.k61'), i18n.t('components.report_builder.k60')],
+    pdm_process_summary: [i18n.t('components.report_builder.k71'), i18n.t('components.report_builder.k70'), i18n.t('components.report_builder.k69'), i18n.t('components.report_builder.k68'), i18n.t('components.report_builder.k67'), i18n.t('components.report_builder.k66')],
   };
 
   const handleReportTypeChange = (type: ReportType) => {
@@ -66,7 +67,7 @@ const ReportBuilder: React.FC<ReportBuilderProps> = ({ onClose, reportTypes, onS
 
   const handleCreate = async () => {
     if (!reportType || selectedColumns.length === 0) {
-      alert('请选择报表类型和至少一列');
+      alert(i18n.t('components.report_builder.k72'));
       return;
     }
 
@@ -95,11 +96,11 @@ const ReportBuilder: React.FC<ReportBuilderProps> = ({ onClose, reportTypes, onS
       if (response.success) {
         onSuccess();
       } else {
-        alert(response.message || '创建报表失败');
+        alert(response.message || i18n.t('components.report_builder.k73'));
       }
     } catch (err: unknown) {
-      logger.error('创建报表失败:', err);
-      alert('创建报表失败，请重试');
+      logger.error(i18n.t('components.report_builder.k0'), err);
+      alert(i18n.t('components.report_builder.k74'));
     } finally {
       setCreating(false);
     }
@@ -175,9 +176,9 @@ const ReportBuilder: React.FC<ReportBuilderProps> = ({ onClose, reportTypes, onS
         >
           <div>
             <h3 style={{ fontSize: 20, fontWeight: 600, color: 'var(--mui-palette-text-primary)' }}>
-              报表生成器
+              {i18n.t('components.report_builder.k1')}
             </h3>
-            <p style={{ fontSize: 14, color: 'grey.600', marginTop: 4 }}>创建自定义报表</p>
+            <p style={{ fontSize: 14, color: 'grey.600', marginTop: 4 }}>{i18n.t('components.report_builder.k75')}</p>
           </div>
           <button
             onClick={onClose}
@@ -226,7 +227,7 @@ const ReportBuilder: React.FC<ReportBuilderProps> = ({ onClose, reportTypes, onS
               >
                 {step > 1 ? <CheckCircle style={{ width: 20, height: 20 }} /> : '1'}
               </div>
-              <span style={{ marginLeft: 8, fontWeight: 500 }}>选择类型</span>
+              <span style={{ marginLeft: 8, fontWeight: 500 }}>{i18n.t('components.report_builder.k76')}</span>
             </div>
             <div style={{ flex: 1, height: 2, backgroundColor: 'var(--mui-palette-divider)' }}>
               <div
@@ -262,7 +263,7 @@ const ReportBuilder: React.FC<ReportBuilderProps> = ({ onClose, reportTypes, onS
               >
                 {step > 2 ? <CheckCircle style={{ width: 20, height: 20 }} /> : '2'}
               </div>
-              <span style={{ marginLeft: 8, fontWeight: 500 }}>配置选项</span>
+              <span style={{ marginLeft: 8, fontWeight: 500 }}>{i18n.t('components.report_builder.k77')}</span>
             </div>
             <div style={{ flex: 1, height: 2, backgroundColor: 'var(--mui-palette-divider)' }}>
               <div
@@ -298,7 +299,7 @@ const ReportBuilder: React.FC<ReportBuilderProps> = ({ onClose, reportTypes, onS
               >
                 3
               </div>
-              <span style={{ marginLeft: 8, fontWeight: 500 }}>生成报表</span>
+              <span style={{ marginLeft: 8, fontWeight: 500 }}>{i18n.t('components.report_builder.k78')}</span>
             </div>
           </div>
         </div>
@@ -321,7 +322,7 @@ const ReportBuilder: React.FC<ReportBuilderProps> = ({ onClose, reportTypes, onS
                     marginBottom: 16,
                   }}
                 >
-                  选择报表类型
+                  {i18n.t('components.report_builder.k2')}
                 </h4>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
                   {Object.entries(groupedTypes).map(([module, types]) => (
@@ -427,7 +428,7 @@ const ReportBuilder: React.FC<ReportBuilderProps> = ({ onClose, reportTypes, onS
                     marginBottom: 16,
                   }}
                 >
-                  配置报表选项
+                  {i18n.t('components.report_builder.k3')}
                 </h4>
 
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
@@ -442,14 +443,14 @@ const ReportBuilder: React.FC<ReportBuilderProps> = ({ onClose, reportTypes, onS
                         marginBottom: 8,
                       }}
                     >
-                      报表标题
+                      {i18n.t('components.report_builder.k4')}
                     </label>
                     <input
                       id='report-title'
                       type='text'
                       value={title}
                       onChange={(e) => setTitle(e.target.value)}
-                      placeholder='输入报表标题'
+                      placeholder={i18n.t('components.report_builder.k79')}
                       style={{
                         width: '100%',
                         padding: '8px 12px',
@@ -472,13 +473,13 @@ const ReportBuilder: React.FC<ReportBuilderProps> = ({ onClose, reportTypes, onS
                         marginBottom: 8,
                       }}
                     >
-                      报表描述（可选）
+                      {i18n.t('components.report_builder.k5')}
                     </label>
                     <textarea
                       id='report-description'
                       value={description}
                       onChange={(e) => setDescription(e.target.value)}
-                      placeholder='输入报表描述'
+                      placeholder={i18n.t('components.report_builder.k80')}
                       rows={3}
                       style={{
                         width: '100%',
@@ -510,7 +511,7 @@ const ReportBuilder: React.FC<ReportBuilderProps> = ({ onClose, reportTypes, onS
                           marginBottom: 8,
                         }}
                       >
-                        开始日期
+                        {i18n.t('components.report_builder.k6')}
                       </label>
                       <input
                         id='report-start-date'
@@ -538,7 +539,7 @@ const ReportBuilder: React.FC<ReportBuilderProps> = ({ onClose, reportTypes, onS
                           marginBottom: 8,
                         }}
                       >
-                        结束日期
+                        {i18n.t('components.report_builder.k7')}
                       </label>
                       <input
                         id='report-end-date'
@@ -586,7 +587,7 @@ const ReportBuilder: React.FC<ReportBuilderProps> = ({ onClose, reportTypes, onS
                             cursor: 'pointer',
                           }}
                         >
-                          全选
+                          {i18n.t('components.report_builder.k8')}
                         </button>
                         <button
                           onClick={handleDeselectAll}
@@ -598,7 +599,7 @@ const ReportBuilder: React.FC<ReportBuilderProps> = ({ onClose, reportTypes, onS
                             cursor: 'pointer',
                           }}
                         >
-                          取消全选
+                          {i18n.t('components.report_builder.k9')}
                         </button>
                       </div>
                     </div>
@@ -653,7 +654,7 @@ const ReportBuilder: React.FC<ReportBuilderProps> = ({ onClose, reportTypes, onS
               <h4
                 style={{ fontSize: 18, fontWeight: 600, color: 'var(--mui-palette-text-primary)' }}
               >
-                确认报表配置
+                {i18n.t('components.report_builder.k10')}
               </h4>
 
               <div
@@ -668,7 +669,7 @@ const ReportBuilder: React.FC<ReportBuilderProps> = ({ onClose, reportTypes, onS
               >
                 <div>
                   <p style={{ fontSize: 14, color: 'var(--mui-palette-text-secondary)' }}>
-                    报表类型
+                    {i18n.t('components.report_builder.k11')}
                   </p>
                   <p style={{ fontWeight: 500, color: 'var(--mui-palette-text-primary)' }}>
                     {reportTypes.find((t) => t.type === reportType)?.name}
@@ -676,7 +677,7 @@ const ReportBuilder: React.FC<ReportBuilderProps> = ({ onClose, reportTypes, onS
                 </div>
                 <div>
                   <p style={{ fontSize: 14, color: 'var(--mui-palette-text-secondary)' }}>
-                    报表标题
+                    {i18n.t('components.report_builder.k12')}
                   </p>
                   <p style={{ fontWeight: 500, color: 'var(--mui-palette-text-primary)' }}>
                     {title}
@@ -685,7 +686,7 @@ const ReportBuilder: React.FC<ReportBuilderProps> = ({ onClose, reportTypes, onS
                 {description && (
                   <div>
                     <p style={{ fontSize: 14, color: 'var(--mui-palette-text-secondary)' }}>
-                      报表描述
+                      {i18n.t('components.report_builder.k13')}
                     </p>
                     <p style={{ fontWeight: 500, color: 'var(--mui-palette-text-primary)' }}>
                       {description}
@@ -694,7 +695,7 @@ const ReportBuilder: React.FC<ReportBuilderProps> = ({ onClose, reportTypes, onS
                 )}
                 <div>
                   <p style={{ fontSize: 14, color: 'var(--mui-palette-text-secondary)' }}>
-                    选择的列
+                    {i18n.t('components.report_builder.k14')}
                   </p>
                   <div
                     style={{
@@ -723,7 +724,7 @@ const ReportBuilder: React.FC<ReportBuilderProps> = ({ onClose, reportTypes, onS
                 {startDate && endDate && (
                   <div>
                     <p style={{ fontSize: 14, color: 'var(--mui-palette-text-secondary)' }}>
-                      日期范围
+                      {i18n.t('components.report_builder.k15')}
                     </p>
                     <p style={{ fontWeight: 500, color: 'var(--mui-palette-text-primary)' }}>
                       {startDate} 至 {endDate}
@@ -754,7 +755,7 @@ const ReportBuilder: React.FC<ReportBuilderProps> = ({ onClose, reportTypes, onS
               cursor: 'pointer',
             }}
           >
-            {step === 1 ? '取消' : '上一步'}
+            {step === 1 ? i18n.t('components.report_builder.k82') : i18n.t('components.report_builder.k81')}
           </button>
           <button
             onClick={step === 3 ? handleCreate : () => setStep(step + 1)}
@@ -781,12 +782,12 @@ const ReportBuilder: React.FC<ReportBuilderProps> = ({ onClose, reportTypes, onS
                     animation: 'spin 1s linear infinite',
                   }}
                 />
-                生成中...
+                {i18n.t('components.report_builder.k16')}
               </>
             ) : step === 3 ? (
-              '生成报表'
+              i18n.t('components.report_builder.k83')
             ) : (
-              '下一步'
+              i18n.t('components.report_builder.k84')
             )}
           </button>
         </div>

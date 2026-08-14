@@ -8,7 +8,6 @@
  *
  * 注意：本文件为纯 Schema 定义，不含 JSX。自定义渲染函数在 QmsEightDPage.tsx 中定义并注入。
  */
-
 import type { EntitySchema } from '@/schema';
 import { columnsFromFields } from '@/schema/schemaExtensions';
 import type {
@@ -17,113 +16,105 @@ import type {
   TreeConfig,
   WizardStepRenderProps,
 } from '@/schema/schemaExtensions';
+import i18n from '@/i18n';
 import type { TreeNode } from '@/components/templates/TreeBuilder';
 import type { SchemaField } from '@/schema/types';
-
 /** D4 根因分析自定义渲染函数类型 */
 export type RootCauseRenderer = (props: WizardStepRenderProps) => React.ReactNode;
-
 // ============ D1 团队成员子表 ============
-
 const teamMembersFields: NestedTableConfig['fields'] = [
-  { name: 'name', label: '姓名', type: 'text', required: true, listWidth: 120 },
+  { name: 'name', label: i18n.t('qms.eight_d.k0'), type: 'text', required: true, listWidth: 120 },
   {
     name: 'role',
-    label: '角色',
+    label: i18n.t('qms.eight_d.k1'),
     type: 'select',
     listWidth: 120,
     options: {
       type: 'static',
       options: [
-        { label: '团队负责人', value: 'leader' },
-        { label: '质量代表', value: 'quality' },
-        { label: '工程', value: 'engineering' },
-        { label: '生产', value: 'production' },
-        { label: '采购', value: 'procurement' },
-        { label: '其他', value: 'other' },
+        { label: i18n.t('qms.eight_d.k2'), value: 'leader' },
+        { label: i18n.t('qms.eight_d.k3'), value: 'quality' },
+        { label: i18n.t('qms.eight_d.k4'), value: 'engineering' },
+        { label: i18n.t('qms.eight_d.k5'), value: 'production' },
+        { label: i18n.t('qms.eight_d.k6'), value: 'procurement' },
+        { label: i18n.t('qms.eight_d.k7'), value: 'other' },
       ],
     },
   },
-  { name: 'department', label: '部门', type: 'text', listWidth: 120 },
-  { name: 'contact', label: '联系方式', type: 'text', listWidth: 140 },
+  { name: 'department', label: i18n.t('qms.eight_d.k8'), type: 'text', listWidth: 120 },
+  { name: 'contact', label: i18n.t('qms.eight_d.k9'), type: 'text', listWidth: 140 },
 ];
-
 const teamMembersTable: NestedTableConfig = {
   field: 'team_members',
-  title: '团队成员',
+  title: i18n.t('qms.eight_d.k10'),
   columns: columnsFromFields(teamMembersFields),
   fields: teamMembersFields,
   allowAdd: true,
   allowEdit: true,
   allowDelete: true,
-  addButtonText: '添加成员',
+  addButtonText: i18n.t('qms.eight_d.k11'),
   rowKeyField: 'id',
   minRows: 1,
 };
-
 // ============ D3 临时措施子表 ============
-
 const containmentActionsFields: NestedTableConfig['fields'] = [
-  { name: 'description', label: '措施描述', type: 'text', required: true, listWidth: 250 },
-  { name: 'implement_date', label: '实施日期', type: 'date', listWidth: 130 },
-  { name: 'owner', label: '负责人', type: 'text', listWidth: 100 },
+  { name: 'description', label: i18n.t('qms.eight_d.k12'), type: 'text', required: true, listWidth: 250 },
+  { name: 'implement_date', label: i18n.t('qms.eight_d.k13'), type: 'date', listWidth: 130 },
+  { name: 'owner', label: i18n.t('qms.eight_d.k14'), type: 'text', listWidth: 100 },
   {
     name: 'effectiveness',
-    label: '有效性',
+    label: i18n.t('qms.eight_d.k15'),
     type: 'select',
     listWidth: 100,
     options: {
       type: 'static',
       options: [
-        { label: '有效', value: 'effective' },
-        { label: '部分有效', value: 'partial' },
-        { label: '无效', value: 'ineffective' },
+        { label: i18n.t('qms.eight_d.k16'), value: 'effective' },
+        { label: i18n.t('qms.eight_d.k17'), value: 'partial' },
+        { label: i18n.t('qms.eight_d.k18'), value: 'ineffective' },
       ],
     },
   },
 ];
-
 const containmentActionsTable: NestedTableConfig = {
   field: 'containment_actions',
-  title: '临时措施',
+  title: i18n.t('qms.eight_d.k19'),
   columns: columnsFromFields(containmentActionsFields),
   fields: containmentActionsFields,
   allowAdd: true,
   allowEdit: true,
   allowDelete: true,
-  addButtonText: '添加措施',
+  addButtonText: i18n.t('qms.eight_d.k20'),
   rowKeyField: 'id',
   minRows: 1,
   validate: (rows) => {
-    if (rows.length === 0) return '至少需要一项临时措施';
+    if (rows.length === 0) return i18n.t('qms.eight_d.k21');
     return null;
   },
 };
-
 // ============ D4 根因分析子表 ============
-
 const rootCausesFields: NestedTableConfig['fields'] = [
-  { name: 'cause', label: '原因描述', type: 'text', required: true, listWidth: 200 },
+  { name: 'cause', label: i18n.t('qms.eight_d.k22'), type: 'text', required: true, listWidth: 200 },
   {
     name: 'category',
-    label: '类别',
+    label: i18n.t('qms.eight_d.k23'),
     type: 'select',
     listWidth: 100,
     options: {
       type: 'static',
       options: [
-        { label: '人 (Man)', value: 'man' },
-        { label: '机 (Machine)', value: 'machine' },
-        { label: '料 (Material)', value: 'material' },
-        { label: '法 (Method)', value: 'method' },
-        { label: '环 (Environment)', value: 'environment' },
-        { label: '测 (Measurement)', value: 'measurement' },
+        { label: i18n.t('qms.eight_d.man_24'), value: 'man' },
+        { label: i18n.t('qms.eight_d.machine_25'), value: 'machine' },
+        { label: i18n.t('qms.eight_d.material_26'), value: 'material' },
+        { label: i18n.t('qms.eight_d.method_27'), value: 'method' },
+        { label: i18n.t('qms.eight_d.environment_28'), value: 'environment' },
+        { label: i18n.t('qms.eight_d.measurement_29'), value: 'measurement' },
       ],
     },
   },
   {
     name: 'level',
-    label: '层级',
+    label: i18n.t('qms.eight_d.k30'),
     type: 'select',
     listWidth: 80,
     options: {
@@ -133,83 +124,77 @@ const rootCausesFields: NestedTableConfig['fields'] = [
         { label: '2', value: '2' },
         { label: '3', value: '3' },
         { label: '4', value: '4' },
-        { label: '5 (根因)', value: '5' },
+        { label: i18n.t('shared.eight_d.5_0'), value: '5' },
       ],
     },
   },
-  { name: 'is_root', label: '是否根因', type: 'switch', listWidth: 80 },
+  { name: 'is_root', label: i18n.t('qms.eight_d.k31'), type: 'switch', listWidth: 80 },
   {
     name: 'analysis_method',
-    label: '分析方法',
+    label: i18n.t('qms.eight_d.k32'),
     type: 'select',
     listWidth: 120,
     options: {
       type: 'static',
       options: [
         { label: '5Why', value: '5why' },
-        { label: '鱼骨图', value: 'fishbone' },
+        { label: i18n.t('qms.eight_d.k33'), value: 'fishbone' },
         { label: 'FMEA', value: 'fmea' },
         { label: 'Pareto', value: 'pareto' },
       ],
     },
   },
 ];
-
 const rootCausesTable: NestedTableConfig = {
   field: 'root_causes',
-  title: '原因分析',
+  title: i18n.t('qms.eight_d.k34'),
   columns: columnsFromFields(rootCausesFields as SchemaField[]),
   fields: rootCausesFields,
   allowAdd: true,
   allowEdit: true,
   allowDelete: true,
-  addButtonText: '添加原因',
+  addButtonText: i18n.t('qms.eight_d.k35'),
   rowKeyField: 'id',
   minRows: 1,
 };
-
 // ============ D5 永久措施子表 ============
-
 const permanentActionsFields: NestedTableConfig['fields'] = [
-  { name: 'action', label: '措施描述', type: 'text', required: true, listWidth: 200 },
-  { name: 'target_date', label: '目标完成日期', type: 'date', listWidth: 130 },
-  { name: 'owner', label: '负责人', type: 'text', listWidth: 100 },
-  { name: 'verification_standard', label: '验证标准', type: 'text', listWidth: 180 },
+  { name: 'action', label: i18n.t('qms.eight_d.k36'), type: 'text', required: true, listWidth: 200 },
+  { name: 'target_date', label: i18n.t('qms.eight_d.k37'), type: 'date', listWidth: 130 },
+  { name: 'owner', label: i18n.t('qms.eight_d.k38'), type: 'text', listWidth: 100 },
+  { name: 'verification_standard', label: i18n.t('qms.eight_d.k39'), type: 'text', listWidth: 180 },
   {
     name: 'status',
-    label: '状态',
+    label: i18n.t('qms.eight_d.k40'),
     type: 'select',
     listWidth: 100,
     options: {
       type: 'static',
       options: [
-        { label: '待实施', value: 'pending' },
-        { label: '实施中', value: 'in_progress' },
-        { label: '已完成', value: 'completed' },
+        { label: i18n.t('qms.eight_d.k41'), value: 'pending' },
+        { label: i18n.t('qms.eight_d.k42'), value: 'in_progress' },
+        { label: i18n.t('qms.eight_d.k43'), value: 'completed' },
       ],
     },
   },
 ];
-
 const permanentActionsTable: NestedTableConfig = {
   field: 'permanent_actions',
-  title: '永久措施',
+  title: i18n.t('qms.eight_d.k44'),
   columns: columnsFromFields(permanentActionsFields),
   fields: permanentActionsFields,
   allowAdd: true,
   allowEdit: true,
   allowDelete: true,
-  addButtonText: '添加措施',
+  addButtonText: i18n.t('qms.eight_d.k45'),
   rowKeyField: 'id',
   minRows: 1,
   validate: (rows) => {
-    if (rows.length === 0) return '至少需要一项永久措施';
+    if (rows.length === 0) return i18n.t('qms.eight_d.k46');
     return null;
   },
 };
-
 // ============ 向导配置 ============
-
 /**
  * 8D 向导步骤配置
  *
@@ -221,136 +206,132 @@ export const eightDWizard: WizardConfig = {
   steps: [
     {
       key: 'd1',
-      title: 'D1 团队建立',
-      description: '组建跨职能团队，明确成员和职责',
+      title: i18n.t('shared.eight_d.d1_1'),
+      description: i18n.t('qms.eight_d.k47'),
       fields: ['team_leader', 'team_members'],
-      groupTitle: '团队信息',
+      groupTitle: i18n.t('qms.eight_d.k48'),
       validate: (values) => {
-        if (!values.team_leader) return '请填写团队负责人';
+        if (!values.team_leader) return i18n.t('qms.eight_d.k49');
         const members = (values.team_members as Record<string, unknown>[]) || [];
-        if (members.length === 0) return '至少需要一名团队成员';
+        if (members.length === 0) return i18n.t('qms.eight_d.k50');
         return null;
       },
     },
     {
       key: 'd2',
-      title: 'D2 问题描述',
-      description: '详细描述问题现象、发生日期和影响范围',
+      title: i18n.t('shared.eight_d.d2_2'),
+      description: i18n.t('qms.eight_d.k51'),
       fields: ['title', 'problem_description', 'problem_date', 'impact_scope', 'severity'],
-      groupTitle: '问题详情',
+      groupTitle: i18n.t('qms.eight_d.k52'),
       validate: (values) => {
-        if (!values.title) return '请填写问题标题';
-        if (!values.problem_description) return '请填写问题描述';
+        if (!values.title) return i18n.t('qms.eight_d.k53');
+        if (!values.problem_description) return i18n.t('qms.eight_d.k54');
         return null;
       },
     },
     {
       key: 'd3',
-      title: 'D3 临时措施',
-      description: '实施临时遏制措施，防止问题扩大',
+      title: i18n.t('shared.eight_d.d3_3'),
+      description: i18n.t('qms.eight_d.k55'),
       fields: ['containment_actions', 'd3_effectiveness_check'],
-      groupTitle: '遏制措施',
+      groupTitle: i18n.t('qms.eight_d.k56'),
       validate: (values) => {
         const actions = (values.containment_actions as Record<string, unknown>[]) || [];
-        if (actions.length === 0) return '请至少添加一项临时措施';
+        if (actions.length === 0) return i18n.t('qms.eight_d.k57');
         return null;
       },
     },
     {
       key: 'd4',
-      title: 'D4 根本原因分析',
-      description: '使用鱼骨图或 5Why 方法分析根本原因',
+      title: i18n.t('shared.eight_d.d4_4'),
+      description: i18n.t('qms.eight_d.5why_58'),
       fields: ['root_causes', 'root_cause_tree'],
-      groupTitle: '根因分析',
+      groupTitle: i18n.t('qms.eight_d.k59'),
       // renderContent 在页面初始化时由 QmsEightDPage.tsx 注入
       validate: (values) => {
         const causes = (values.root_causes as Record<string, unknown>[]) || [];
         const tree = (values.root_cause_tree as TreeNode[]) || [];
         if (causes.length === 0 && tree.length === 0) {
-          return '请至少添加一项原因分析';
+          return i18n.t('qms.eight_d.k60');
         }
         return null;
       },
     },
     {
       key: 'd5',
-      title: 'D5 永久措施',
-      description: '制定永久纠正措施并设定验证标准',
+      title: i18n.t('shared.eight_d.d5_5'),
+      description: i18n.t('qms.eight_d.k61'),
       fields: ['permanent_actions', 'd5_validation_standard'],
-      groupTitle: '永久措施',
+      groupTitle: i18n.t('qms.eight_d.k62'),
       validate: (values) => {
         const actions = (values.permanent_actions as Record<string, unknown>[]) || [];
-        if (actions.length === 0) return '请至少添加一项永久措施';
+        if (actions.length === 0) return i18n.t('qms.eight_d.k63');
         return null;
       },
     },
     {
       key: 'd6',
-      title: 'D6 效果验证',
-      description: '验证永久措施的实施效果，进行数据对比',
+      title: i18n.t('shared.eight_d.d6_6'),
+      description: i18n.t('qms.eight_d.k64'),
       fields: ['d6_verification_result', 'd6_data_comparison', 'd6_is_effective'],
-      groupTitle: '效果验证',
+      groupTitle: i18n.t('qms.eight_d.k65'),
       validate: (values) => {
-        if (!values.d6_verification_result) return '请填写验证结果';
+        if (!values.d6_verification_result) return i18n.t('qms.eight_d.k66');
         return null;
       },
     },
     {
       key: 'd7',
-      title: 'D7 预防措施',
-      description: '制定预防再发措施，更新相关文档和流程',
+      title: i18n.t('shared.eight_d.d7_7'),
+      description: i18n.t('qms.eight_d.k67'),
       fields: ['d7_preventive_action', 'd7_updated_documents', 'd7_target_date'],
-      groupTitle: '预防措施',
+      groupTitle: i18n.t('qms.eight_d.k68'),
       validate: (values) => {
-        if (!values.d7_preventive_action) return '请填写预防措施';
+        if (!values.d7_preventive_action) return i18n.t('qms.eight_d.k69');
         return null;
       },
     },
     {
       key: 'd8',
-      title: 'D8 团队认可',
-      description: '团队签字确认，关闭 8D 报告',
+      title: i18n.t('shared.eight_d.d8_8'),
+      description: i18n.t('qms.eight_d.8d_70'),
       fields: ['d8_approver', 'd8_sign_off_date', 'd8_closure_summary'],
-      groupTitle: '认可与关闭',
+      groupTitle: i18n.t('qms.eight_d.k71'),
       isFinalStep: true,
       validate: (values) => {
-        if (!values.d8_approver) return '请填写审批人';
-        if (!values.d8_sign_off_date) return '请选择签字日期';
+        if (!values.d8_approver) return i18n.t('qms.eight_d.k72');
+        if (!values.d8_sign_off_date) return i18n.t('qms.eight_d.k73');
         return null;
       },
     },
   ],
-  title: '8D 问题解决报告',
+  title: i18n.t('shared.eight_d.8d_9'),
   navigationPosition: 'top',
   showProgress: true,
   allowBack: true,
   showSummaryOnComplete: true,
-  finishButtonText: '提交 8D 报告',
-  nextButtonText: '下一步',
-  prevButtonText: '上一步',
+  finishButtonText: i18n.t('qms.eight_d.8d_74'),
+  nextButtonText: i18n.t('qms.eight_d.k75'),
+  prevButtonText: i18n.t('qms.eight_d.k76'),
 };
-
 // ============ 主 Schema ============
-
 export const eightDSchema: EntitySchema & {
   nestedTables: NestedTableConfig[];
   wizard: WizardConfig;
   tree: TreeConfig;
 } = {
   entity: 'eightD',
-  title: '8D 问题解决',
-  description: 'Eight Disciplines Problem Solving — 结构化问题解决流程',
-
+  title: i18n.t('shared.eight_d.8d_10'),
+  description: i18n.t('shared.eight_d.k11'),
   api: {
     module: 'qms',
     resource: 'eightD',
   },
-
   fields: [
     // ── 基础信息 ──
     {
       name: 'report_no',
-      label: '报告编号',
+      label: i18n.t('qms.eight_d.k77'),
       type: 'text',
       readonlyOnEdit: true,
       sortable: true,
@@ -358,7 +339,7 @@ export const eightDSchema: EntitySchema & {
     },
     {
       name: 'title',
-      label: '问题标题',
+      label: i18n.t('qms.eight_d.k78'),
       type: 'text',
       required: true,
       sortable: true,
@@ -367,23 +348,23 @@ export const eightDSchema: EntitySchema & {
     },
     {
       name: 'problem_description',
-      label: '问题描述',
+      label: i18n.t('qms.eight_d.k79'),
       type: 'textarea',
       required: true,
       showInList: false,
     },
     {
       name: 'severity',
-      label: '严重程度',
+      label: i18n.t('qms.eight_d.k80'),
       type: 'select',
       required: true,
       options: {
         type: 'static',
         options: [
-          { label: '严重 (Critical)', value: 'critical' },
-          { label: '高 (High)', value: 'high' },
-          { label: '中 (Medium)', value: 'medium' },
-          { label: '低 (Low)', value: 'low' },
+          { label: i18n.t('qms.eight_d.critical_81'), value: 'critical' },
+          { label: i18n.t('qms.eight_d.high_82'), value: 'high' },
+          { label: i18n.t('qms.eight_d.medium_83'), value: 'medium' },
+          { label: i18n.t('qms.eight_d.low_84'), value: 'low' },
         ],
       },
       defaultValue: 'medium',
@@ -392,15 +373,15 @@ export const eightDSchema: EntitySchema & {
     },
     {
       name: 'status',
-      label: '状态',
+      label: i18n.t('qms.eight_d.k85'),
       type: 'select',
       options: {
         type: 'static',
         options: [
-          { label: '待处理', value: 'open' },
-          { label: '进行中', value: 'in_progress' },
-          { label: '已完成', value: 'completed' },
-          { label: '已关闭', value: 'closed' },
+          { label: i18n.t('qms.eight_d.k86'), value: 'open' },
+          { label: i18n.t('qms.eight_d.k87'), value: 'in_progress' },
+          { label: i18n.t('qms.eight_d.k88'), value: 'completed' },
+          { label: i18n.t('qms.eight_d.k89'), value: 'closed' },
         ],
       },
       defaultValue: 'open',
@@ -409,169 +390,162 @@ export const eightDSchema: EntitySchema & {
     },
     {
       name: 'source',
-      label: '问题来源',
+      label: i18n.t('qms.eight_d.k90'),
       type: 'select',
       options: {
         type: 'static',
         options: [
-          { label: '客户投诉', value: 'customer_complaint' },
-          { label: '内部审核', value: 'internal_audit' },
-          { label: '供应商', value: 'supplier' },
-          { label: '生产异常', value: 'production' },
-          { label: '其他', value: 'other' },
+          { label: i18n.t('qms.eight_d.k91'), value: 'customer_complaint' },
+          { label: i18n.t('qms.eight_d.k92'), value: 'internal_audit' },
+          { label: i18n.t('qms.eight_d.k93'), value: 'supplier' },
+          { label: i18n.t('qms.eight_d.k94'), value: 'production' },
+          { label: i18n.t('qms.eight_d.k95'), value: 'other' },
         ],
       },
     },
     {
       name: 'product_name',
-      label: '产品',
+      label: i18n.t('qms.eight_d.k96'),
       type: 'text',
       showInList: true,
       listWidth: 120,
     },
     {
       name: 'customer',
-      label: '客户',
+      label: i18n.t('qms.eight_d.k97'),
       type: 'text',
       showInList: true,
       listWidth: 120,
     },
     {
       name: 'team_leader',
-      label: '团队负责人',
+      label: i18n.t('qms.eight_d.k98'),
       type: 'text',
       showInList: true,
     },
     {
       name: 'due_date',
-      label: '截止日期',
+      label: i18n.t('qms.eight_d.k99'),
       type: 'date',
       showInList: true,
     },
     {
       name: 'created_at',
-      label: '创建日期',
+      label: i18n.t('qms.eight_d.k100'),
       type: 'date',
       readonly: true,
       showInList: true,
       sortable: true,
     },
-
     // ── D2 问题描述 ──
     {
       name: 'problem_date',
-      label: '问题发生日期',
+      label: i18n.t('qms.eight_d.k101'),
       type: 'date',
     },
     {
       name: 'impact_scope',
-      label: '影响范围',
+      label: i18n.t('qms.eight_d.k102'),
       type: 'textarea',
-      placeholder: '描述问题影响的产品、流程、客户等',
+      placeholder: i18n.t('qms.eight_d.k103'),
     },
-
     // ── D3 临时措施 ──
     {
       name: 'd3_effectiveness_check',
-      label: '措施有效性检查',
+      label: i18n.t('qms.eight_d.k104'),
       type: 'textarea',
-      placeholder: '描述临时措施的有效性检查结果',
+      placeholder: i18n.t('qms.eight_d.k105'),
     },
-
     // ── D5 永久措施 ──
     {
       name: 'd5_validation_standard',
-      label: '验证标准',
+      label: i18n.t('qms.eight_d.k106'),
       type: 'textarea',
-      placeholder: '描述永久措施的验证标准',
+      placeholder: i18n.t('qms.eight_d.k107'),
     },
-
     // ── D6 效果验证 ──
     {
       name: 'd6_verification_result',
-      label: '验证结果',
+      label: i18n.t('qms.eight_d.k108'),
       type: 'textarea',
-      placeholder: '描述永久措施实施后的验证结果',
+      placeholder: i18n.t('qms.eight_d.k109'),
     },
     {
       name: 'd6_data_comparison',
-      label: '数据对比',
+      label: i18n.t('qms.eight_d.k110'),
       type: 'textarea',
-      placeholder: '记录措施实施前后的数据对比',
+      placeholder: i18n.t('qms.eight_d.k111'),
     },
     {
       name: 'd6_is_effective',
-      label: '是否有效',
+      label: i18n.t('qms.eight_d.k112'),
       type: 'switch',
       defaultValue: false,
     },
-
     // ── D7 预防措施 ──
     {
       name: 'd7_preventive_action',
-      label: '预防再发措施',
+      label: i18n.t('qms.eight_d.k113'),
       type: 'textarea',
-      placeholder: '描述防止问题再次发生的预防措施',
+      placeholder: i18n.t('qms.eight_d.k114'),
     },
     {
       name: 'd7_updated_documents',
-      label: '更新的文档',
+      label: i18n.t('qms.eight_d.k115'),
       type: 'text',
-      placeholder: '列出需要更新的 SOP、规范、流程等',
+      placeholder: i18n.t('qms.eight_d.sop_116'),
     },
     {
       name: 'd7_target_date',
-      label: '预防措施目标日期',
+      label: i18n.t('qms.eight_d.k117'),
       type: 'date',
     },
-
     // ── D8 团队认可 ──
     {
       name: 'd8_approver',
-      label: '审批人',
+      label: i18n.t('qms.eight_d.k118'),
       type: 'text',
-      placeholder: '填写审批人姓名',
+      placeholder: i18n.t('qms.eight_d.k119'),
     },
     {
       name: 'd8_sign_off_date',
-      label: '签字确认日期',
+      label: i18n.t('qms.eight_d.k120'),
       type: 'date',
     },
     {
       name: 'd8_closure_summary',
-      label: '关闭总结',
+      label: i18n.t('qms.eight_d.k121'),
       type: 'textarea',
-      placeholder: '总结整个 8D 过程和经验教训',
+      placeholder: i18n.t('qms.eight_d.8d_122'),
     },
   ],
-
   list: {
     pageSize: 10,
     searchFields: ['title', 'report_no', 'product_name'],
     filters: [
       {
         id: 'status',
-        label: '状态',
+        label: i18n.t('qms.eight_d.k123'),
         type: 'select',
         options: [
-          { label: '全部状态', value: 'all' },
-          { label: '待处理', value: 'open' },
-          { label: '进行中', value: 'in_progress' },
-          { label: '已完成', value: 'completed' },
-          { label: '已关闭', value: 'closed' },
+          { label: i18n.t('qms.eight_d.k124'), value: 'all' },
+          { label: i18n.t('qms.eight_d.k125'), value: 'open' },
+          { label: i18n.t('qms.eight_d.k126'), value: 'in_progress' },
+          { label: i18n.t('qms.eight_d.k127'), value: 'completed' },
+          { label: i18n.t('qms.eight_d.k128'), value: 'closed' },
         ],
         defaultValue: 'all',
       },
       {
         id: 'severity',
-        label: '严重程度',
+        label: i18n.t('qms.eight_d.k129'),
         type: 'select',
         options: [
-          { label: '全部等级', value: 'all' },
-          { label: '严重', value: 'critical' },
-          { label: '高', value: 'high' },
-          { label: '中', value: 'medium' },
-          { label: '低', value: 'low' },
+          { label: i18n.t('qms.eight_d.k130'), value: 'all' },
+          { label: i18n.t('qms.eight_d.k131'), value: 'critical' },
+          { label: i18n.t('qms.eight_d.k132'), value: 'high' },
+          { label: i18n.t('qms.eight_d.k133'), value: 'medium' },
+          { label: i18n.t('qms.eight_d.k134'), value: 'low' },
         ],
         defaultValue: 'all',
       },
@@ -585,17 +559,16 @@ export const eightDSchema: EntitySchema & {
         closed: 'default',
       },
       labelMap: {
-        open: '待处理',
-        in_progress: '进行中',
-        completed: '已完成',
-        closed: '已关闭',
+        open: i18n.t('qms.eight_d.k135'),
+        in_progress: i18n.t('qms.eight_d.k136'),
+        completed: i18n.t('qms.eight_d.k137'),
+        closed: i18n.t('qms.eight_d.k138'),
       },
     },
   },
-
   formSections: [
     {
-      title: '基础信息',
+      title: i18n.t('qms.eight_d.k139'),
       fields: [
         'report_no',
         'title',
@@ -608,28 +581,23 @@ export const eightDSchema: EntitySchema & {
       ],
     },
     {
-      title: '团队',
+      title: i18n.t('qms.eight_d.k140'),
       fields: ['team_leader'],
     },
     {
-      title: '问题描述',
+      title: i18n.t('qms.eight_d.k141'),
       fields: ['problem_description', 'problem_date', 'impact_scope'],
     },
   ],
-
   formColCount: 2,
-  createTitle: '新建 8D 报告',
-  editTitle: '编辑 8D 报告',
-  detailTitle: '8D 报告详情',
-
+  createTitle: i18n.t('qms.eight_d.8d_142'),
+  editTitle: i18n.t('qms.eight_d.8d_143'),
+  detailTitle: i18n.t('shared.eight_d.8d_12'),
   actions: ['create', 'edit', 'detail', 'delete'],
-
   // Phase 3 扩展：嵌套子表
   nestedTables: [teamMembersTable, containmentActionsTable, rootCausesTable, permanentActionsTable],
-
   // Phase 3 扩展：向导表单
   wizard: eightDWizard,
-
   // Phase 3 扩展：树形结构（根因分析）
   tree: {
     keyField: 'id',
@@ -641,7 +609,6 @@ export const eightDSchema: EntitySchema & {
     showLine: true,
   } as TreeConfig,
 };
-
 /** D4 步骤的 renderContent 延迟注入 */
 export function injectRootCauseRenderer(renderer: RootCauseRenderer) {
   const d4Step = eightDWizard.steps.find((s) => s.key === 'd4');

@@ -4,6 +4,7 @@ import { Check, Trash2, ExternalLink } from 'lucide-react';
 import type { Notification } from '@/api/notification';
 import { markAsRead, deleteNotification } from '@/api/notification';
 import { logger } from '@/utils/logger';
+import i18n from '@/i18n';
 
 interface NotificationItemProps {
   notification: Notification;
@@ -210,10 +211,10 @@ const getPriorityColor = (priority: number) => {
 };
 
 const getPriorityLabel = (priority: number) => {
-  if (priority >= 4) return '紧急';
-  if (priority >= 3) return '高';
-  if (priority >= 2) return '中';
-  return '低';
+  if (priority >= 4) return i18n.t('shared.notification_item.k0');
+  if (priority >= 3) return i18n.t('shared.notification_item.k1');
+  if (priority >= 2) return i18n.t('shared.notification_item.k2');
+  return i18n.t('shared.notification_item.k3');
 };
 
 const getLink = (notification: Notification) => notification.data?.link;
@@ -272,10 +273,10 @@ const NotificationItem: React.FC<NotificationItemProps> = ({
     const hours = Math.floor(diff / 3600000);
     const days = Math.floor(diff / 86400000);
 
-    if (minutes < 1) return '刚刚';
-    if (minutes < 60) return `${minutes}分钟前`;
-    if (hours < 24) return `${hours}小时前`;
-    if (days < 7) return `${days}天前`;
+    if (minutes < 1) return i18n.t('shared.notification_item.k4');
+    if (minutes < 60) return `${minutes}${i18n.t('components.notification_item.k0')}`;
+    if (hours < 24) return `${hours}${i18n.t('components.notification_item.k1')}`;
+    if (days < 7) return `${days}${i18n.t('components.notification_item.k2')}`;
     return date.toLocaleDateString('zh-CN');
   };
 
@@ -398,7 +399,7 @@ const NotificationItem: React.FC<NotificationItemProps> = ({
                 cursor: 'pointer',
                 transition: 'all 0.15s',
               }}
-              title='标记已读'
+              title={i18n.t('shared.notification_item.k5')}
             >
               <Check style={{ width: 16, height: 16 }} />
             </button>
@@ -414,7 +415,7 @@ const NotificationItem: React.FC<NotificationItemProps> = ({
               cursor: 'pointer',
               transition: 'all 0.15s',
             }}
-            title='删除'
+            title={i18n.t('shared.notification_item.k6')}
           >
             <Trash2 style={{ width: 16, height: 16 }} />
           </button>
@@ -433,7 +434,7 @@ const NotificationItem: React.FC<NotificationItemProps> = ({
                 cursor: 'pointer',
                 transition: 'all 0.15s',
               }}
-              title='查看详情'
+              title={i18n.t('shared.notification_item.k7')}
             >
               <ExternalLink style={{ width: 16, height: 16 }} />
             </button>

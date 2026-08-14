@@ -26,6 +26,7 @@ import {
   Paper,
   InputAdornment,
 } from '@mui/material';
+import i18n from '@/i18n';
 import {
   Plus,
   Search,
@@ -41,9 +42,9 @@ import { forecastApi } from '@/api/aps';
 import type { DemandForecast, CreateDemandForecastRequest } from '@/api/aps/types';
 
 const METHOD_LABEL: Record<string, string> = {
-  moving_average: '移动平均',
-  exponential_smoothing: '指数平滑',
-  linear_regression: '线性回归',
+  moving_average: i18n.t('pages.forecast_management_page.k0'),
+  exponential_smoothing: i18n.t('pages.forecast_management_page.k1'),
+  linear_regression: i18n.t('pages.forecast_management_page.k2'),
   arima: 'ARIMA',
 };
 
@@ -193,8 +194,8 @@ const ForecastManagementPage: React.FC = () => {
 
   return (
     <PageContainer
-      title='需求预测'
-      subtitle='需求预测管理（计算/验证）'
+      title={i18n.t('pages.forecast_management_page.k3')}
+      subtitle={i18n.t('pages.forecast_management_page.k4')}
       padding={false}
       maxWidth={false}
     >
@@ -210,7 +211,7 @@ const ForecastManagementPage: React.FC = () => {
         >
           <Box sx={{ display: 'flex', gap: 1, alignItems: 'center', flex: 1 }}>
             <TextField
-              placeholder='按预测编号/产品搜索'
+              placeholder={i18n.t('pages.forecast_management_page.k5')}
               value={searchInput}
               onChange={(e) => setSearchInput(e.target.value)}
               size='small'
@@ -229,9 +230,9 @@ const ForecastManagementPage: React.FC = () => {
               }}
             />
             <Button variant='outlined' size='small' onClick={handleSearch}>
-              搜索
+              {i18n.t('pages.forecast_management_page.k0')}
             </Button>
-            <Tooltip title='刷新'>
+            <Tooltip title={i18n.t('pages.forecast_management_page.k6')}>
               <IconButton onClick={handleRefresh} size='small'>
                 <RefreshCw size={16} />
               </IconButton>
@@ -243,7 +244,7 @@ const ForecastManagementPage: React.FC = () => {
             startIcon={<Plus size={16} />}
             onClick={handleOpenCreate}
           >
-            新增预测
+            {i18n.t('pages.forecast_management_page.k1')}
           </Button>
         </Box>
 
@@ -253,21 +254,21 @@ const ForecastManagementPage: React.FC = () => {
               <Table size='small'>
                 <TableHead>
                   <TableRow>
-                    <TableCell>预测编号</TableCell>
-                    <TableCell>产品</TableCell>
-                    <TableCell>预测周期</TableCell>
-                    <TableCell align='right'>预测数量</TableCell>
-                    <TableCell align='right'>实际数量</TableCell>
-                    <TableCell align='right'>准确率</TableCell>
-                    <TableCell>方法</TableCell>
-                    <TableCell align='center'>操作</TableCell>
+                    <TableCell>{i18n.t('pages.forecast_management_page.k7')}</TableCell>
+                    <TableCell>{i18n.t('pages.forecast_management_page.k8')}</TableCell>
+                    <TableCell>{i18n.t('pages.forecast_management_page.k9')}</TableCell>
+                    <TableCell align='right'>{i18n.t('pages.forecast_management_page.k10')}</TableCell>
+                    <TableCell align='right'>{i18n.t('pages.forecast_management_page.k11')}</TableCell>
+                    <TableCell align='right'>{i18n.t('pages.forecast_management_page.k12')}</TableCell>
+                    <TableCell>{i18n.t('pages.forecast_management_page.k13')}</TableCell>
+                    <TableCell align='center'>{i18n.t('pages.forecast_management_page.k14')}</TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
                   {listQuery.isLoading ? (
                     <TableRow>
                       <TableCell colSpan={8} align='center'>
-                        加载中...
+                        {i18n.t('pages.forecast_management_page.k2')}
                       </TableCell>
                     </TableRow>
                   ) : items.length === 0 ? (
@@ -276,7 +277,7 @@ const ForecastManagementPage: React.FC = () => {
                         <Box sx={{ py: 4, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 1 }}>
                           <TrendingUp size={32} />
                           <Typography variant='body2' color='text.secondary'>
-                            暂无需求预测数据
+                            {i18n.t('pages.forecast_management_page.k3')}
                           </Typography>
                         </Box>
                       </TableCell>
@@ -299,7 +300,7 @@ const ForecastManagementPage: React.FC = () => {
                         </TableCell>
                         <TableCell align='center'>
                           <Box sx={{ display: 'flex', gap: 0.5, justifyContent: 'center', flexWrap: 'wrap' }}>
-                            <Tooltip title='计算'>
+                            <Tooltip title={i18n.t('pages.forecast_management_page.k15')}>
                               <IconButton
                                 size='small'
                                 color='primary'
@@ -309,7 +310,7 @@ const ForecastManagementPage: React.FC = () => {
                                 <Calculator size={16} />
                               </IconButton>
                             </Tooltip>
-                            <Tooltip title='验证'>
+                            <Tooltip title={i18n.t('pages.forecast_management_page.k16')}>
                               <IconButton
                                 size='small'
                                 color='success'
@@ -319,12 +320,12 @@ const ForecastManagementPage: React.FC = () => {
                                 <ShieldCheck size={16} />
                               </IconButton>
                             </Tooltip>
-                            <Tooltip title='编辑'>
+                            <Tooltip title={i18n.t('pages.forecast_management_page.k17')}>
                               <IconButton size='small' onClick={() => handleOpenEdit(row)}>
                                 <Edit size={16} />
                               </IconButton>
                             </Tooltip>
-                            <Tooltip title='删除'>
+                            <Tooltip title={i18n.t('pages.forecast_management_page.k18')}>
                               <IconButton size='small' color='error' onClick={() => handleDelete(row)}>
                                 <Trash2 size={16} />
                               </IconButton>
@@ -348,41 +349,41 @@ const ForecastManagementPage: React.FC = () => {
                 setPage(0);
               }}
               rowsPerPageOptions={[10, 20, 50]}
-              labelRowsPerPage='每页'
-              labelDisplayedRows={({ from, to, count }) => `${from}-${to} / 共 ${count}`}
+              labelRowsPerPage={i18n.t('pages.forecast_management_page.k19')}
+              labelDisplayedRows={({ from, to, count }) => `${from}-${to} ${i18n.t('pages.forecast_management_page.k4')} ${count}`}
             />
           </CardContent>
         </Card>
       </Box>
 
       <Dialog open={dialogOpen} onClose={() => setDialogOpen(false)} fullWidth maxWidth='md'>
-        <DialogTitle>{editingId ? '编辑需求预测' : '新增需求预测'}</DialogTitle>
+        <DialogTitle>{editingId ? i18n.t('pages.forecast_management_page.k21') : i18n.t('pages.forecast_management_page.k20')}</DialogTitle>
         <DialogContent>
           <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2, pt: 1 }}>
             <TextField
-              label='预测编号'
+              label={i18n.t('pages.forecast_management_page.k22')}
               value={form.forecast_no}
               onChange={(e) => setForm({ ...form, forecast_no: e.target.value })}
               size='small'
               sx={fieldSx}
             />
             <TextField
-              label='产品名称'
+              label={i18n.t('pages.forecast_management_page.k23')}
               value={form.product_name ?? ''}
               onChange={(e) => setForm({ ...form, product_name: e.target.value })}
               size='small'
               sx={fieldSx}
             />
             <TextField
-              label='预测周期'
+              label={i18n.t('pages.forecast_management_page.k24')}
               value={form.forecast_period ?? ''}
               onChange={(e) => setForm({ ...form, forecast_period: e.target.value })}
               size='small'
               sx={fieldSx}
-              placeholder='如 2026-W33'
+              placeholder={i18n.t('pages.forecast_management_page.2026w33_25')}
             />
             <TextField
-              label='预测日期'
+              label={i18n.t('pages.forecast_management_page.k26')}
               type='date'
               value={form.forecast_date ?? ''}
               onChange={(e) => setForm({ ...form, forecast_date: e.target.value })}
@@ -391,7 +392,7 @@ const ForecastManagementPage: React.FC = () => {
               slotProps={{ inputLabel: { shrink: true } }}
             />
             <TextField
-              label='预测数量'
+              label={i18n.t('pages.forecast_management_page.k27')}
               type='number'
               value={form.forecast_quantity ?? 0}
               onChange={(e) => setForm({ ...form, forecast_quantity: Number(e.target.value) })}
@@ -399,7 +400,7 @@ const ForecastManagementPage: React.FC = () => {
               sx={fieldSx}
             />
             <TextField
-              label='实际数量'
+              label={i18n.t('pages.forecast_management_page.k28')}
               type='number'
               value={form.actual_quantity ?? 0}
               onChange={(e) => setForm({ ...form, actual_quantity: Number(e.target.value) })}
@@ -407,7 +408,7 @@ const ForecastManagementPage: React.FC = () => {
               sx={fieldSx}
             />
             <TextField
-              label='预测方法'
+              label={i18n.t('pages.forecast_management_page.k29')}
               select
               value={form.method ?? 'moving_average'}
               onChange={(e) =>
@@ -416,22 +417,22 @@ const ForecastManagementPage: React.FC = () => {
               size='small'
               sx={fieldSx}
             >
-              <MenuItem value='moving_average'>移动平均</MenuItem>
-              <MenuItem value='exponential_smoothing'>指数平滑</MenuItem>
-              <MenuItem value='linear_regression'>线性回归</MenuItem>
+              <MenuItem value='moving_average'>{i18n.t('pages.forecast_management_page.k30')}</MenuItem>
+              <MenuItem value='exponential_smoothing'>{i18n.t('pages.forecast_management_page.k31')}</MenuItem>
+              <MenuItem value='linear_regression'>{i18n.t('pages.forecast_management_page.k32')}</MenuItem>
               <MenuItem value='arima'>ARIMA</MenuItem>
             </TextField>
             <TextField
-              label='置信水平'
+              label={i18n.t('pages.forecast_management_page.k33')}
               type='number'
               value={form.confidence_level ?? 0.95}
               onChange={(e) => setForm({ ...form, confidence_level: Number(e.target.value) })}
               size='small'
               sx={fieldSx}
-              helperText='0-1 之间，如 0.95'
+              helperText={i18n.t('pages.forecast_management_page.01095_5')}
             />
             <TextField
-              label='备注'
+              label={i18n.t('pages.forecast_management_page.k34')}
               value={form.notes ?? ''}
               onChange={(e) => setForm({ ...form, notes: e.target.value })}
               size='small'
@@ -442,29 +443,29 @@ const ForecastManagementPage: React.FC = () => {
           </Box>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setDialogOpen(false)}>取消</Button>
+          <Button onClick={() => setDialogOpen(false)}>{i18n.t('pages.forecast_management_page.k35')}</Button>
           <Button variant='contained' onClick={handleSave} disabled={saving}>
-            {saving ? '保存中...' : '保存'}
+            {saving ? i18n.t('pages.forecast_management_page.k6') : i18n.t('pages.forecast_management_page.k36')}
           </Button>
         </DialogActions>
       </Dialog>
 
       <Dialog open={deleteOpen} onClose={() => setDeleteOpen(false)} maxWidth='xs' fullWidth>
-        <DialogTitle>确认删除</DialogTitle>
+        <DialogTitle>{i18n.t('pages.forecast_management_page.k37')}</DialogTitle>
         <DialogContent>
           <Typography>
             确认要删除需求预测「{deleteTarget?.forecast_no}」吗？此操作不可撤销。
           </Typography>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setDeleteOpen(false)}>取消</Button>
+          <Button onClick={() => setDeleteOpen(false)}>{i18n.t('pages.forecast_management_page.k38')}</Button>
           <Button
             variant='contained'
             color='error'
             onClick={confirmDelete}
             disabled={deleteMutation.isPending}
           >
-            {deleteMutation.isPending ? '删除中...' : '删除'}
+            {deleteMutation.isPending ? i18n.t('pages.forecast_management_page.k7') : i18n.t('pages.forecast_management_page.k39')}
           </Button>
         </DialogActions>
       </Dialog>

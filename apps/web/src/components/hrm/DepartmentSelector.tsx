@@ -4,6 +4,7 @@ import { Building2, ChevronRight } from 'lucide-react';
 import { type Department, type Employee } from '@/api/hrm';
 import type { TreeNode } from '../common/TreeView';
 import TreeView from '../common/TreeView';
+import i18n from '@/i18n';
 
 interface DepartmentSelectorProps {
   departments: Department[];
@@ -76,7 +77,7 @@ export const DepartmentSelector: React.FC<DepartmentSelectorProps> = ({
           }}
         >
           <Building2 style={{ width: 20, height: 20, color: theme.palette.success.main }} />
-          部门树
+          {i18n.t('components.department_selector.k0')}
         </Typography>
         <Typography sx={{ fontSize: '0.875rem', color: 'grey.600' }}>
           {departments.length} 个部门
@@ -92,7 +93,7 @@ export const DepartmentSelector: React.FC<DepartmentSelectorProps> = ({
               margin: '0 auto 12px',
             }}
           />
-          <Typography>暂无部门数据</Typography>
+          <Typography>{i18n.t('components.department_selector.k0')}</Typography>
         </Box>
       ) : (
         <TreeView

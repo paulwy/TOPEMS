@@ -10,6 +10,7 @@ import { customerSegmentationSchema } from '@/schemas/crm';
 import { crmApi, useCrmMock, type SegmentationData, type Period } from '@/api/crm';
 import type { CustomerSegment, CreateSegmentRequest, SegmentCriteria } from '@/api/crm';
 import { CRM_PATHS } from '@/modules/crm/config';
+import i18n from '@/i18n';
 
 // ============ 组件 ============
 
@@ -227,7 +228,7 @@ const CRMCustomerSegmentationPage: React.FC = () => {
           {mockEnabled && (
             <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 2 }}>
               <Chip
-                label={t('crm.common.mock_demo_badge') || 'Mock 演示'}
+                label={t('crm.common.mock_demo_badge') || i18n.t('pages.crm_customer_segmentation_page.mock_0')}
                 color='warning'
                 size='small'
                 variant='outlined'
@@ -323,7 +324,7 @@ const CRMCustomerSegmentationPage: React.FC = () => {
           {mockEnabled && (
             <Paper variant='outlined' sx={{ p: 3, mb: 3, position: 'relative' }}>
               <Typography variant='subtitle2' sx={{ fontWeight: 600, mb: 2 }}>
-                {t('crm.customerSegmentation.quadrant_title') || '客户价值×活动 四象限分布'}
+                {t('crm.customerSegmentation.quadrant_title') || i18n.t('pages.crm_customer_segmentation_page.k1')}
               </Typography>
               <Box
                 sx={{
@@ -357,16 +358,16 @@ const CRMCustomerSegmentationPage: React.FC = () => {
                   }}
                 />
                 <Box sx={{ position: 'absolute', left: 8, top: 8, fontSize: 12, color: 'success.main', fontWeight: 600 }}>
-                  {t('crm.customerSegmentation.q2_high_active_high_value') || '高价值·高活动'}
+                  {t('crm.customerSegmentation.q2_high_active_high_value') || i18n.t('pages.crm_customer_segmentation_page.k2')}
                 </Box>
                 <Box sx={{ position: 'absolute', right: 8, top: 8, fontSize: 12, color: 'primary.main', fontWeight: 600 }}>
-                  {t('crm.customerSegmentation.q1_high_value_low_active') || '高价值·低活动'}
+                  {t('crm.customerSegmentation.q1_high_value_low_active') || i18n.t('pages.crm_customer_segmentation_page.k3')}
                 </Box>
                 <Box sx={{ position: 'absolute', left: 8, bottom: 8, fontSize: 12, color: 'warning.main', fontWeight: 600 }}>
-                  {t('crm.customerSegmentation.q3_low_value_high_active') || '低价值·高活动'}
+                  {t('crm.customerSegmentation.q3_low_value_high_active') || i18n.t('pages.crm_customer_segmentation_page.k4')}
                 </Box>
                 <Box sx={{ position: 'absolute', right: 8, bottom: 8, fontSize: 12, color: 'error.main', fontWeight: 600 }}>
-                  {t('crm.customerSegmentation.q4_low_value_low_active') || '低价值·低活动'}
+                  {t('crm.customerSegmentation.q4_low_value_low_active') || i18n.t('pages.crm_customer_segmentation_page.k5')}
                 </Box>
                 <Box sx={{ position: 'absolute', inset: 0 }}>
                   {quadrants.map((p) => {
@@ -402,7 +403,7 @@ const CRMCustomerSegmentationPage: React.FC = () => {
                           border: '2px solid white',
                           boxShadow: 1,
                         }}
-                        title={`${p.name} 价值:${p.value} 活动:${p.activity}`}
+                        title={`${p.name}${i18n.t('pages.crm_customer_segmentation_page.k6')}${p.value}${i18n.t('pages.crm_customer_segmentation_page.k7')}${p.activity}`}
                       >
                         {p.size}
                       </Box>
@@ -420,8 +421,8 @@ const CRMCustomerSegmentationPage: React.FC = () => {
                   color: 'text.secondary',
                 }}
               >
-                <Box>← {t('crm.customerSegmentation.x_axis_activity') || '活跃度 低'}</Box>
-                <Box>{t('crm.customerSegmentation.x_axis_activity_high') || '活跃度 高'} →</Box>
+                <Box>← {t('crm.customerSegmentation.x_axis_activity') || i18n.t('pages.crm_customer_segmentation_page.k8')}</Box>
+                <Box>{t('crm.customerSegmentation.x_axis_activity_high') || i18n.t('pages.crm_customer_segmentation_page.k9')} →</Box>
               </Box>
             </Paper>
           )}

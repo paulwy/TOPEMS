@@ -2,6 +2,7 @@ import React, { useEffect, useState, useRef } from 'react';
 import { logger } from '@/utils/logger';
 import { designTokens, semanticTokens } from '@topems/tokens';
 import { useTranslation } from 'react-i18next';
+import i18n from '@/i18n';
 
 interface LayoutShift {
   value: number;
@@ -281,18 +282,18 @@ const PerformanceTestPage: React.FC = () => {
       value: t('performance.performance_test_page.k1'),
       color: 'success.600',
       bgColor: 'success.100',
-      description: 'Lighthouse性能基准测试页面',
+      description: i18n.t('pages.performance_test_page.lighthouse_0'),
     },
     {
       label: t('performance.performance_test_page.k2'),
-      value: loadTime ? `${loadTime.toFixed(2)}ms` : '测量中...',
+      value: loadTime ? `${loadTime.toFixed(2)}ms` : i18n.t('pages.performance_test_page.k1'),
       color: loadTime && loadTime < 100 ? `${designTokens.colors.success.dark}` : designTokens.colors.warning.dark,
       bgColor: loadTime && loadTime < 100 ? 'colors.success.100' : 'colors.warning.100',
       description: t('performance.performance_test_page.k3'),
     },
     {
       label: t('performance.performance_test_page.k4'),
-      value: lcpTime ? `${lcpTime.toFixed(2)}ms` : '测量中...',
+      value: lcpTime ? `${lcpTime.toFixed(2)}ms` : i18n.t('pages.performance_test_page.k2'),
       color:
         lcpTime && lcpTime < 2500 ? `${designTokens.colors.success.dark}` : lcpTime && lcpTime < 4000 ? designTokens.colors.warning.dark : designTokens.colors.error.dark,
       bgColor:
@@ -301,7 +302,7 @@ const PerformanceTestPage: React.FC = () => {
     },
     {
       label: t('performance.performance_test_page.k5'),
-      value: ttiTime ? `${ttiTime.toFixed(2)}ms` : '测量中...',
+      value: ttiTime ? `${ttiTime.toFixed(2)}ms` : i18n.t('pages.performance_test_page.k3'),
       color:
         ttiTime && ttiTime < 3800 ? `${designTokens.colors.success.dark}` : ttiTime && ttiTime < 7300 ? designTokens.colors.warning.dark : designTokens.colors.error.dark,
       bgColor:
@@ -310,7 +311,7 @@ const PerformanceTestPage: React.FC = () => {
     },
     {
       label: t('performance.performance_test_page.k6'),
-      value: fidTime ? `${fidTime.toFixed(2)}ms` : '等待输入...',
+      value: fidTime ? `${fidTime.toFixed(2)}ms` : i18n.t('pages.performance_test_page.k4'),
       color:
         fidTime && fidTime < 100 ? `${designTokens.colors.success.dark}` : fidTime && fidTime < 300 ? designTokens.colors.warning.dark : designTokens.colors.error.dark,
       bgColor:
@@ -319,7 +320,7 @@ const PerformanceTestPage: React.FC = () => {
     },
     {
       label: t('performance.performance_test_page.k7'),
-      value: clsScore !== null ? clsScore.toFixed(2) : '测量中...',
+      value: clsScore !== null ? clsScore.toFixed(2) : i18n.t('pages.performance_test_page.k5'),
       color:
         clsScore !== null && clsScore < 0.1
           ? `${designTokens.colors.success.dark}`
@@ -336,28 +337,28 @@ const PerformanceTestPage: React.FC = () => {
     },
     {
       label: t('performance.performance_test_page.k8'),
-      value: firstPaint ? `${firstPaint.toFixed(2)}ms` : '测量中...',
+      value: firstPaint ? `${firstPaint.toFixed(2)}ms` : i18n.t('pages.performance_test_page.k6'),
       color: firstPaint && firstPaint < 1000 ? `${designTokens.colors.success.dark}` : designTokens.colors.warning.dark,
       bgColor: firstPaint && firstPaint < 1000 ? 'colors.success.100' : 'colors.warning.100',
       description: 'First Paint (FP)',
     },
     {
       label: t('performance.performance_test_page.k9'),
-      value: firstContentfulPaint ? `${firstContentfulPaint.toFixed(2)}ms` : '测量中...',
+      value: firstContentfulPaint ? `${firstContentfulPaint.toFixed(2)}ms` : i18n.t('pages.performance_test_page.k7'),
       color: firstContentfulPaint && firstContentfulPaint < 1500 ? `${designTokens.colors.success.dark}` : designTokens.colors.warning.dark,
       bgColor: firstContentfulPaint && firstContentfulPaint < 1500 ? 'colors.success.100' : 'colors.warning.100',
       description: 'First Contentful Paint (FCP)',
     },
     {
       label: t('performance.performance_test_page.k10'),
-      value: navigationTime ? `${navigationTime.toFixed(2)}ms` : '测量中...',
+      value: navigationTime ? `${navigationTime.toFixed(2)}ms` : i18n.t('pages.performance_test_page.k8'),
       color: navigationTime && navigationTime < 2000 ? `${designTokens.colors.success.dark}` : designTokens.colors.warning.dark,
       bgColor: navigationTime && navigationTime < 2000 ? 'colors.success.100' : 'colors.warning.100',
       description: t('performance.performance_test_page.k11'),
     },
     {
       label: t('performance.performance_test_page.k12'),
-      value: `${renderCount}次`,
+      value: `${renderCount}${i18n.t('pages.performance_test_page.k9')}`,
       color: 'primary.600',
       bgColor: 'primary.100',
       description: t('performance.performance_test_page.k13'),
@@ -370,21 +371,21 @@ const PerformanceTestPage: React.FC = () => {
       description: t('performance.performance_test_page.k15'),
     },
     {
-      label: 'DOM加载',
-      value: domContentLoaded ? `${domContentLoaded.toFixed(2)}ms` : '测量中...',
+      label: i18n.t('pages.performance_test_page.dom_10'),
+      value: domContentLoaded ? `${domContentLoaded.toFixed(2)}ms` : i18n.t('pages.performance_test_page.k11'),
       color: domContentLoaded && domContentLoaded < 1000 ? `${designTokens.colors.success.dark}` : designTokens.colors.warning.dark,
       bgColor: domContentLoaded && domContentLoaded < 1000 ? 'colors.success.100' : 'colors.warning.100',
       description: 'DOM Content Loaded',
     },
     {
-      label: 'CPU占用',
+      label: i18n.t('pages.performance_test_page.cpu_12'),
       value: t('performance.performance_test_page.k16'),
       color: 'success.600',
       bgColor: 'success.100',
       description: t('performance.performance_test_page.cpu_17'),
     },
     {
-      label: 'DOM节点',
+      label: i18n.t('pages.performance_test_page.dom_13'),
       value: t('performance.performance_test_page.k18'),
       color: 'success.600',
       bgColor: 'success.100',
@@ -410,7 +411,7 @@ const PerformanceTestPage: React.FC = () => {
     <div
       style={{
         minHeight: '100vh',
-        background: `linear-gradient(135deg, #1e3a8a 0%, ${designTokens.colors.primary.main} 50%, ${designTokens.colors.primary['400']} 100%)`,
+        background: `linear-gradient(135deg, ${designTokens.colors.primary[900]} 0%, ${designTokens.colors.primary.main} 50%, ${designTokens.colors.primary['400']} 100%)`,
         padding: '2rem',
         animation: 'fadeIn 0.5s ease-out',
         fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
@@ -466,7 +467,7 @@ const PerformanceTestPage: React.FC = () => {
               marginBottom: '0.5rem',
             }}
           >
-            TOPEMS 性能测试基准页
+            {i18n.t('pages.performance_test_page.topems_0')}
           </h1>
           <p
             style={{
@@ -476,8 +477,8 @@ const PerformanceTestPage: React.FC = () => {
               fontSize: '1rem',
             }}
           >
-            此页面用于Lighthouse性能测试，无需认证，独立运行。
-            包含完整的页面结构、组件渲染和交互元素。
+            {i18n.t('pages.performance_test_page.k1')}
+            {i18n.t('pages.performance_test_page.k2')}
           </p>
           <span
             style={{
@@ -491,7 +492,7 @@ const PerformanceTestPage: React.FC = () => {
             }}
             className={!renderComplete ? 'animate-pulse' : ''}
           >
-            {renderComplete ? t('performance.performance_test_page.k24') : '渲染中...'}
+            {renderComplete ? t('performance.performance_test_page.k24') : i18n.t('pages.performance_test_page.k14')}
           </span>
         </div>
 
@@ -509,18 +510,18 @@ const PerformanceTestPage: React.FC = () => {
                 background: 'common.white',
                 backdropFilter: 'blur(20px)',
                 borderRadius: '16px',
-                boxShadow: '0 10px 40px rgba(0,0,0,0.1)',
+                boxShadow: `0 10px 40px ${designTokens.colors.action.selected}`,
                 padding: '1.5rem',
                 transition: 'transform 0.3s ease, box-shadow 0.3s ease',
                 animation: `fadeIn 0.5s ease-out ${index * 0.1}s both`,
               }}
               onMouseEnter={(e) => {
                 (e.currentTarget as HTMLElement).style.transform = 'translateY(-4px)';
-                (e.currentTarget as HTMLElement).style.boxShadow = '0 15px 50px rgba(0,0,0,0.15)';
+                (e.currentTarget as HTMLElement).style.boxShadow = `0 15px 50px ${designTokens.colors.action.selected}`;
               }}
               onMouseLeave={(e) => {
                 (e.currentTarget as HTMLElement).style.transform = 'translateY(0)';
-                (e.currentTarget as HTMLElement).style.boxShadow = '0 10px 40px rgba(0,0,0,0.1)';
+                (e.currentTarget as HTMLElement).style.boxShadow = `0 10px 40px ${designTokens.colors.action.selected}`;
               }}
             >
               <div
@@ -533,8 +534,8 @@ const PerformanceTestPage: React.FC = () => {
               >
                 <div
                   style={{
-                    width: '48px',
-                    height: '48px',
+                    width: designTokens.spacing['2xl'],
+                    height: designTokens.spacing['2xl'],
                     background: metric.bgColor,
                     borderRadius: '12px',
                     display: 'flex',
@@ -580,7 +581,7 @@ const PerformanceTestPage: React.FC = () => {
               background: 'common.white',
               backdropFilter: 'blur(20px)',
               borderRadius: '16px',
-              boxShadow: '0 10px 40px rgba(0,0,0,0.1)',
+              boxShadow: `0 10px 40px ${designTokens.colors.action.selected}`,
               maxWidth: '600px',
               margin: '0 auto',
               padding: '2rem',
@@ -595,7 +596,7 @@ const PerformanceTestPage: React.FC = () => {
                 color: 'grey.900',
               }}
             >
-              页面信息
+              {i18n.t('pages.performance_test_page.k3')}
             </div>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '1rem' }}>
               <div>
@@ -627,7 +628,7 @@ const PerformanceTestPage: React.FC = () => {
                 onClick={() => window.location.reload()}
                 style={{
                   padding: '0.75rem 1.5rem',
-                  background: `linear-gradient(135deg, #1e3a8a 0%, ${designTokens.colors.primary.main} 100%)`,
+                  background: `linear-gradient(135deg, ${designTokens.colors.primary[900]} 0%, ${designTokens.colors.primary.main} 100%)`,
                   color: 'common.white',
                   border: 'none',
                   borderRadius: '8px',
@@ -636,7 +637,7 @@ const PerformanceTestPage: React.FC = () => {
                   fontSize: '0.875rem',
                 }}
               >
-                刷新页面
+                {i18n.t('pages.performance_test_page.k4')}
               </button>
               <button
                 onClick={() => {
@@ -656,7 +657,7 @@ const PerformanceTestPage: React.FC = () => {
                   fontSize: '0.875rem',
                 }}
               >
-                性能标记
+                {i18n.t('pages.performance_test_page.k5')}
               </button>
             </div>
           </div>
@@ -664,7 +665,7 @@ const PerformanceTestPage: React.FC = () => {
 
         <div style={{ marginTop: '3rem', textAlign: 'center' }}>
           <div style={{ fontSize: '0.875rem', color: 'common.white' }}>
-            TOPEMS - 企业数字化平台 | 性能基准测试页
+            {i18n.t('pages.performance_test_page.k6')}
           </div>
         </div>
       </div>

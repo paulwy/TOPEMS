@@ -3,6 +3,7 @@ import { useParams } from 'react-router-dom';
 import { useWmsMock, type WmsMockShape } from '@/api/wms/_mock';
 import { WmsStatusBadge, WmsFSMActionButtons } from '@/components/wms';
 import type { StockTakeDto } from '@/types/wms';
+import i18n from '@/i18n';
 
 function buildStockTakeItems(id: string, count: number) {
   return Array.from({ length: count }, (_, i) => {
@@ -12,12 +13,12 @@ function buildStockTakeItems(id: string, count: number) {
     return {
       id: `${id}-item-${i}`,
       sku: `SKU-${String(1000 + i).padStart(4, '0')}`,
-      name: `盘点物料-${i + 1}`,
+      name: `${i18n.t('pages.wms_stock_take_detail_page.k0')}${i + 1}`,
       location: `A-${Math.floor(i / 4) + 1}-${(i % 10) + 1}`,
       systemQty: system,
       actualQty: actual,
       diff,
-      reason: diff === 0 ? '无差异' : diff > 0 ? '盘盈（漏记）' : '盘亏（损耗）',
+      reason: diff === 0 ? i18n.t('pages.wms_stock_take_detail_page.k2') : diff > 0 ? i18n.t('pages.wms_stock_take_detail_page.k1') : i18n.t('pages.wms_stock_take_detail_page.k0'),
     };
   });
 }
@@ -43,7 +44,7 @@ export default function WmsStockTakeDetailPage() {
     return { over, under, ok, total: items.length };
   }, [items]);
 
-  if (!task) return <div className='p-8'>加载中...</div>;
+  if (!task) return <div className='p-8'>{i18n.t('pages.wms_stock_take_detail_page.k1')}</div>;
 
   return (
     <div className='space-y-4 p-4'>
@@ -51,7 +52,7 @@ export default function WmsStockTakeDetailPage() {
         <div>
           <h1 className='text-2xl font-bold'>盘点单详情 — {task.stock_take_number}</h1>
           <p className='text-sm text-gray-500'>
-            盘点类型：{task.stock_take_type ?? '周期'} · 仓库：{task.warehouse_name ?? '-'}
+            {i18n.t('pages.wms_stock_take_detail_page.k2')}{task.stock_take_type ?? i18n.t('pages.wms_stock_take_detail_page.k3')} · 仓库：{task.warehouse_name ?? '-'}
           </p>
         </div>
         <div className='flex items-center gap-3'>
@@ -69,19 +70,19 @@ export default function WmsStockTakeDetailPage() {
 
       <div className='grid grid-cols-1 gap-4 md:grid-cols-4'>
         <div className='rounded-lg border-l-4 border-green-500 p-4'>
-          <p className='text-sm text-gray-600'>账实一致</p>
+          <p className='text-sm text-gray-600'>{i18n.t('pages.wms_stock_take_detail_page.k4')}</p>
           <p className='mt-1 text-3xl font-bold text-green-600'>{diffSummary.ok}</p>
         </div>
         <div className='rounded-lg border-l-4 border-amber-500 p-4'>
-          <p className='text-sm text-gray-600'>盘盈（数多）</p>
+          <p className='text-sm text-gray-600'>{i18n.t('pages.wms_stock_take_detail_page.k5')}</p>
           <p className='mt-1 text-3xl font-bold text-amber-600'>{diffSummary.over}</p>
         </div>
         <div className='rounded-lg border-l-4 border-red-500 p-4'>
-          <p className='text-sm text-gray-600'>盘亏（数少）</p>
+          <p className='text-sm text-gray-600'>{i18n.t('pages.wms_stock_take_detail_page.k6')}</p>
           <p className='mt-1 text-3xl font-bold text-red-600'>{diffSummary.under}</p>
         </div>
         <div className='rounded-lg border-l-4 border-blue-500 p-4'>
-          <p className='text-sm text-gray-600'>准确率</p>
+          <p className='text-sm text-gray-600'>{i18n.t('pages.wms_stock_take_detail_page.k7')}</p>
           <p className='mt-1 text-3xl font-bold text-blue-600'>
             {diffSummary.total ? Math.round((diffSummary.ok / diffSummary.total) * 100) : 0}%
           </p>
@@ -95,12 +96,12 @@ export default function WmsStockTakeDetailPage() {
             <thead className='bg-gray-50'>
               <tr>
                 <th className='px-3 py-2 text-left'>SKU</th>
-                <th className='px-3 py-2 text-left'>名称</th>
-                <th className='px-3 py-2 text-left'>库位</th>
-                <th className='px-3 py-2 text-right'>系统数</th>
-                <th className='px-3 py-2 text-right'>实盘数</th>
-                <th className='px-3 py-2 text-right'>差额</th>
-                <th className='px-3 py-2 text-left'>原因</th>
+                <th className='px-3 py-2 text-left'>{i18n.t('pages.wms_stock_take_detail_page.k8')}</th>
+                <th className='px-3 py-2 text-left'>{i18n.t('pages.wms_stock_take_detail_page.k9')}</th>
+                <th className='px-3 py-2 text-right'>{i18n.t('pages.wms_stock_take_detail_page.k10')}</th>
+                <th className='px-3 py-2 text-right'>{i18n.t('pages.wms_stock_take_detail_page.k11')}</th>
+                <th className='px-3 py-2 text-right'>{i18n.t('pages.wms_stock_take_detail_page.k12')}</th>
+                <th className='px-3 py-2 text-left'>{i18n.t('pages.wms_stock_take_detail_page.k13')}</th>
               </tr>
             </thead>
             <tbody>

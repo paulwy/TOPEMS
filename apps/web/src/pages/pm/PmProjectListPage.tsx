@@ -10,9 +10,8 @@ import { pmApi } from '@/api/pm';
 import type { Project } from '@/api/pm';
 import { PM_PATHS } from '@/modules/pm/config';
 import { designTokens } from '@/theme/tokens';
-
+import i18n from '@/i18n';
 const ct= designTokens.colors;
-
 const projectApiAdapter: CrudApiAdapter<Project> = {
   list: async (params) => {
     const response = await pmApi.projects.list({
@@ -22,7 +21,7 @@ const projectApiAdapter: CrudApiAdapter<Project> = {
       pagesize: params?.pageSize,
     });
     if (!response.success || !response.data) {
-      throw new Error(response.message || '加载项目列表失败');
+      throw new Error(response.message || i18n.t('pm.pm_project_list_page.k0'));
     }
     return {
       data: (response.data.projects || []) as unknown as Project[],
@@ -34,7 +33,7 @@ const projectApiAdapter: CrudApiAdapter<Project> = {
       data as Parameters<typeof pmApi.projects.create>[0]
     );
     if (!response.success) {
-      throw new Error(response.message || '创建项目失败');
+      throw new Error(response.message || i18n.t('pm.pm_project_list_page.k1'));
     }
     return (response.data ?? data) as Project;
   },
@@ -44,26 +43,24 @@ const projectApiAdapter: CrudApiAdapter<Project> = {
       data as Parameters<typeof pmApi.projects.update>[1]
     );
     if (!response.success) {
-      throw new Error(response.message || '更新项目失败');
+      throw new Error(response.message || i18n.t('pm.pm_project_list_page.k2'));
     }
     return { ...(data as Project), id } as Project;
   },
   delete: async (id) => {
     const response = await pmApi.projects.delete(id);
     if (!response.success) {
-      throw new Error(response.message || '删除项目失败');
+      throw new Error(response.message || i18n.t('pm.pm_project_list_page.k3'));
     }
   },
 };
-
 const PmProjectListPage: React.FC = () => {
   const navigate = useNavigate();
-
   const customRowActions: RowAction[] = useMemo(
     () => [
       {
         key: 'view-detail',
-        label: '查看详情',
+        label: i18n.t('pm.pm_project_list_page.k4'),
         icon: <Eye size={16} />,
         onClick: (row) => {
           const id = String(row.id);
@@ -74,7 +71,7 @@ const PmProjectListPage: React.FC = () => {
       },
       {
         key: 'edit',
-        label: '编辑',
+        label: i18n.t('pm.pm_project_list_page.k5'),
         icon: <Edit size={16} />,
         onClick: (row) => {
           const id = String(row.id);
@@ -86,12 +83,10 @@ const PmProjectListPage: React.FC = () => {
     ],
     [navigate]
   );
-
   const headerContent = React.useCallback((rows: Project[]) => {
     const activeCount = rows.filter((r) => r.status === 'active').length;
     const pendingCount = rows.filter((r) => r.status === 'pending').length;
     const completedCount = rows.filter((r) => r.status === 'completed').length;
-
     return (
       <Box sx={{ mb: 2 }}>
         <Box
@@ -103,23 +98,23 @@ const PmProjectListPage: React.FC = () => {
           }}
         >
           <Box sx={{ bgcolor: 'background.paper', borderRadius: 2, boxShadow: 1, p: 2 }}>
-            <Box sx={{ fontSize: '0.875rem', color: 'grey.600' }}>项目总数</Box>
+            <Box sx={{ fontSize: '0.875rem', color: 'grey.600' }}>{i18n.t('pm.pm_project_list_page.k6')}</Box>
             <Box sx={{ fontSize: '1.5rem', fontWeight: 700 }}>{rows.length}</Box>
           </Box>
           <Box sx={{ bgcolor: 'background.paper', borderRadius: 2, boxShadow: 1, p: 2 }}>
-            <Box sx={{ fontSize: '0.875rem', color: 'success.dark' }}>进行中</Box>
+            <Box sx={{ fontSize: '0.875rem', color: 'success.dark' }}>{i18n.t('pm.pm_project_list_page.k7')}</Box>
             <Box sx={{ fontSize: '1.5rem', fontWeight: 700, color: 'success.dark' }}>
               {activeCount}
             </Box>
           </Box>
           <Box sx={{ bgcolor: 'background.paper', borderRadius: 2, boxShadow: 1, p: 2 }}>
-            <Box sx={{ fontSize: '0.875rem', color: 'warning.dark' }}>待审批</Box>
+            <Box sx={{ fontSize: '0.875rem', color: 'warning.dark' }}>{i18n.t('pm.pm_project_list_page.k8')}</Box>
             <Box sx={{ fontSize: '1.5rem', fontWeight: 700, color: 'warning.dark' }}>
               {pendingCount}
             </Box>
           </Box>
           <Box sx={{ bgcolor: 'background.paper', borderRadius: 2, boxShadow: 1, p: 2 }}>
-            <Box sx={{ fontSize: '0.875rem', color: 'primary.dark' }}>已完成</Box>
+            <Box sx={{ fontSize: '0.875rem', color: 'primary.dark' }}>{i18n.t('pm.pm_project_list_page.k9')}</Box>
             <Box sx={{ fontSize: '1.5rem', fontWeight: 700, color: 'primary.dark' }}>
               {completedCount}
             </Box>
@@ -128,26 +123,25 @@ const PmProjectListPage: React.FC = () => {
         <DataExport
           data={rows as unknown as Record<string, unknown>[]}
           fields={[
-            { key: 'name', title: '项目名称' },
-            { key: 'code', title: '项目编码' },
-            { key: 'project_type', title: '项目类型' },
-            { key: 'status', title: '状态' },
-            { key: 'progress', title: '进度' },
-            { key: 'budget', title: '预算' },
-            { key: 'start_date', title: '开始日期' },
-            { key: 'end_date', title: '结束日期' },
+            { key: 'name', title: i18n.t('pm.pm_project_list_page.k10') },
+            { key: 'code', title: i18n.t('pm.pm_project_list_page.k11') },
+            { key: 'project_type', title: i18n.t('pm.pm_project_list_page.k12') },
+            { key: 'status', title: i18n.t('pm.pm_project_list_page.k13') },
+            { key: 'progress', title: i18n.t('pm.pm_project_list_page.k14') },
+            { key: 'budget', title: i18n.t('pm.pm_project_list_page.k15') },
+            { key: 'start_date', title: i18n.t('pm.pm_project_list_page.k16') },
+            { key: 'end_date', title: i18n.t('pm.pm_project_list_page.k17') },
           ]}
-          defaultFileName='项目数据'
-          buttonText='导出'
+          defaultFileName={i18n.t('pm.pm_project_list_page.k18')}
+          buttonText={i18n.t('pm.pm_project_list_page.k19')}
         />
       </Box>
     );
   }, []);
-
   return (
     <PageContainer
-      title='项目管理'
-      subtitle='管理所有类型的项目，跟踪进度和状态'
+      title={i18n.t('pm.pm_project_list_page.k20')}
+      subtitle={i18n.t('pm.pm_project_list_page.k21')}
       headerProps={{
         pageIcon: <FolderKanban style={{ width: 20, height: 20 }} />,
         pageGradient: `linear-gradient(135deg, ${ct.secondary.main} 0%, ${ct.secondary.dark} 100%)`,
@@ -158,10 +152,9 @@ const PmProjectListPage: React.FC = () => {
         apiAdapter={projectApiAdapter}
         customRowActions={customRowActions}
         headerContent={headerContent}
-        breadcrumbs={[{ label: '首页', href: '/dashboard' }, { label: '项目' }]}
+        breadcrumbs={[{ label: i18n.t('pm.pm_project_list_page.k23'), href: '/dashboard' }, { label: i18n.t('pm.pm_project_list_page.k22') }]}
       />
     </PageContainer>
   );
 };
-
 export default PmProjectListPage;

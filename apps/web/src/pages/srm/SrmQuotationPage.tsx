@@ -5,11 +5,12 @@ import { quotationSchema } from '@/schemas/srm';
 import { srmApi } from '@/api/srm';
 import { useNotificationStore } from '@/store';
 import { CheckCircle, XCircle } from 'lucide-react';
+import i18n from '@/i18n';
 
 const quotationApiAdapter: CrudApiAdapter = {
   list: async (_params) => {
     const response = await srmApi.listQuotations();
-    if (!response.success) throw new Error('加载报价单失败');
+    if (!response.success) throw new Error(i18n.t('pages.srm_quotation_page.k0'));
     const items = (response.data || []) as unknown as Array<Record<string, unknown>>;
     return { data: items, total: items.length };
   },
@@ -18,7 +19,7 @@ const quotationApiAdapter: CrudApiAdapter = {
     const response = await srmApi.createQuotation(
       data as unknown as Parameters<typeof srmApi.createQuotation>[0]
     );
-    if (!response.success) throw new Error('创建报价单失败');
+    if (!response.success) throw new Error(i18n.t('pages.srm_quotation_page.k1'));
     return response.data as unknown as Record<string, unknown>;
   },
 
@@ -27,7 +28,7 @@ const quotationApiAdapter: CrudApiAdapter = {
       id,
       data as unknown as Parameters<typeof srmApi.updateQuotation>[1]
     );
-    if (!response.success) throw new Error('更新报价单失败');
+    if (!response.success) throw new Error(i18n.t('pages.srm_quotation_page.k2'));
     return response.data as unknown as Record<string, unknown>;
   },
 
@@ -47,15 +48,15 @@ const SrmQuotationPage: React.FC = () => {
       if (response.success) {
         addNotification({
           type: 'success',
-          title: t('common.success', '成功'),
-          message: t('srm.quotation_page.award_success', '报价单已中标'),
+          title: t('common.success', i18n.t('pages.srm_quotation_page.k0')),
+          message: t('srm.quotation_page.award_success', i18n.t('pages.srm_quotation_page.k1')),
         });
       }
     } catch (error) {
       addNotification({
         type: 'error',
-        title: t('common.fail', '失败'),
-        message: t('srm.quotation_page.award_fail', '中标操作失败'),
+        title: t('common.fail', i18n.t('pages.srm_quotation_page.k2')),
+        message: t('srm.quotation_page.award_fail', i18n.t('pages.srm_quotation_page.k3')),
       });
     }
   };
@@ -67,15 +68,15 @@ const SrmQuotationPage: React.FC = () => {
       if (response.success) {
         addNotification({
           type: 'success',
-          title: t('common.success', '成功'),
-          message: t('srm.quotation_page.reject_success', '报价单已驳回'),
+          title: t('common.success', i18n.t('pages.srm_quotation_page.k4')),
+          message: t('srm.quotation_page.reject_success', i18n.t('pages.srm_quotation_page.k5')),
         });
       }
     } catch (error) {
       addNotification({
         type: 'error',
-        title: t('common.fail', '失败'),
-        message: t('srm.quotation_page.reject_fail', '驳回操作失败'),
+        title: t('common.fail', i18n.t('pages.srm_quotation_page.k6')),
+        message: t('srm.quotation_page.reject_fail', i18n.t('pages.srm_quotation_page.k7')),
       });
     }
   };
@@ -86,7 +87,7 @@ const SrmQuotationPage: React.FC = () => {
       apiAdapter={quotationApiAdapter}
       customRowActions={[
         {
-          label: t('srm.quotation_page.award', '中标'),
+          label: t('srm.quotation_page.award', i18n.t('pages.srm_quotation_page.k8')),
           icon: <CheckCircle size={16} />,
           onClick: handleAward,
           color: 'success',
@@ -94,14 +95,14 @@ const SrmQuotationPage: React.FC = () => {
             row.status === 'submitted' || row.status === 'accepted',
         },
         {
-          label: t('srm.quotation_page.reject', '驳回'),
+          label: t('srm.quotation_page.reject', i18n.t('pages.srm_quotation_page.k9')),
           icon: <XCircle size={16} />,
           onClick: handleReject,
           color: 'error',
           show: (row: Record<string, unknown>) => row.status === 'submitted',
         },
       ]}
-      breadcrumbs={[{ label: 'SRM' }, { label: '报价单管理' }]}
+      breadcrumbs={[{ label: 'SRM' }, { label: i18n.t('pages.srm_quotation_page.k3') }]}
     />
   );
 };

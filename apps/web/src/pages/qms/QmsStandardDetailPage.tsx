@@ -13,6 +13,7 @@ import {
   Typography,
   Button,
 } from '@mui/material';
+import i18n from '@/i18n';
 
 import { DetailPageTemplate } from '@/components/templates';
 import CrudPage from '@/components/templates/CrudPage';
@@ -39,7 +40,7 @@ const QmsStandardDetailPage: React.FC = () => {
       if (!id) return null;
       const res = await qmsApi.getStandard(id);
       if (!res.success) {
-        throw new Error(res.message || '加载质量标准详情失败');
+        throw new Error(res.message || i18n.t('pages.qms_standard_detail_page.k0'));
       }
       return (res.data as QualityStandard) ?? null;
     },
@@ -53,7 +54,7 @@ const QmsStandardDetailPage: React.FC = () => {
       if (!id) return [];
       const res = await qmsApi.listRevisions(id);
       if (!res.success) {
-        throw new Error(res.message || '加载版本历史失败');
+        throw new Error(res.message || i18n.t('pages.qms_standard_detail_page.k1'));
       }
       const revisionsData = res.data as unknown as
         StandardRevision[] | { revisions?: StandardRevision[] };
@@ -93,14 +94,14 @@ const QmsStandardDetailPage: React.FC = () => {
 
   const getStatusBadge = (status: string) => {
     const statusMap: Record<string, { color: string; label: string }> = {
-      active: { color: 'bg-green-100 text-green-700', label: '有效' },
-      有效: { color: 'bg-green-100 text-green-700', label: '有效' },
-      draft: { color: 'bg-yellow-100 text-yellow-700', label: '草稿' },
-      草稿: { color: 'bg-yellow-100 text-yellow-700', label: '草稿' },
-      expired: { color: 'bg-red-100 text-red-700', label: '已过期' },
-      已过期: { color: 'bg-red-100 text-red-700', label: '已过期' },
-      archived: { color: 'bg-gray-100 text-gray-700', label: '已归档' },
-      已归档: { color: 'bg-gray-100 text-gray-700', label: '已归档' },
+      active: { color: 'bg-green-100 text-green-700', label: i18n.t('pages.qms_standard_detail_page.k2') },
+      [i18n.t('pages.qms_standard_detail_page.k0')]: { color: 'bg-green-100 text-green-700', label: i18n.t('pages.qms_standard_detail_page.k3') },
+      draft: { color: 'bg-yellow-100 text-yellow-700', label: i18n.t('pages.qms_standard_detail_page.k4') },
+      [i18n.t('pages.qms_standard_detail_page.k1')]: { color: 'bg-yellow-100 text-yellow-700', label: i18n.t('pages.qms_standard_detail_page.k5') },
+      expired: { color: 'bg-red-100 text-red-700', label: i18n.t('pages.qms_standard_detail_page.k6') },
+      [i18n.t('pages.qms_standard_detail_page.k2')]: { color: 'bg-red-100 text-red-700', label: i18n.t('pages.qms_standard_detail_page.k7') },
+      archived: { color: 'bg-gray-100 text-gray-700', label: i18n.t('pages.qms_standard_detail_page.k8') },
+      [i18n.t('pages.qms_standard_detail_page.k3')]: { color: 'bg-gray-100 text-gray-700', label: i18n.t('pages.qms_standard_detail_page.k9') },
     };
     const item = statusMap[status] || {
       color: 'bg-gray-100 text-gray-700',
@@ -139,25 +140,25 @@ const QmsStandardDetailPage: React.FC = () => {
     createFn: async (data) => {
       const response = await qmsApi.createStandard(data);
       if (!response.success) {
-        throw new Error(response.message || '创建版本失败');
+        throw new Error(response.message || i18n.t('pages.qms_standard_detail_page.k10'));
       }
       return response;
     },
     updateFn: async ({ id, data }) => {
       const response = await qmsApi.updateStandard(String(id), data);
       if (!response.success) {
-        throw new Error(response.message || '更新质量标准失败');
+        throw new Error(response.message || i18n.t('pages.qms_standard_detail_page.k11'));
       }
       return response;
     },
     deleteFn: async (id) => {
       const response = await qmsApi.deleteStandard(String(id));
       if (!response.success) {
-        throw new Error(response.message || '删除质量标准失败');
+        throw new Error(response.message || i18n.t('pages.qms_standard_detail_page.k12'));
       }
       return response;
     },
-    entityName: '质量标准',
+    entityName: i18n.t('pages.qms_standard_detail_page.k13'),
     onUpdateSuccess: () => {
       setShowEditModal(false);
       if (standard) {
@@ -208,7 +209,7 @@ const QmsStandardDetailPage: React.FC = () => {
       name: standard.name,
       code: `${standard.code}-v${nextVersion}`,
       version: nextVersion,
-      description: `升级至版本 ${nextVersion}`,
+      description: `${i18n.t('pages.qms_standard_detail_page.k4')} ${nextVersion}`,
       category: standard.category,
       content: standard.content,
       status: 'draft',
@@ -260,8 +261,8 @@ const QmsStandardDetailPage: React.FC = () => {
               y2={16}
             />
           </Box>
-          <Typography sx={{ color: 'grey.600', mb: 2 }}>质量标准不存在或已被删除</Typography>
-          <Button onClick={() => navigate(QMS_PATHS.root)}>返回列表</Button>
+          <Typography sx={{ color: 'grey.600', mb: 2 }}>{i18n.t('pages.qms_standard_detail_page.k14')}</Typography>
+          <Button onClick={() => navigate(QMS_PATHS.root)}>{i18n.t('pages.qms_standard_detail_page.k15')}</Button>
         </Box>
       </Box>
     );
@@ -269,13 +270,13 @@ const QmsStandardDetailPage: React.FC = () => {
 
   return (
     <PageContainer
-      title='质量标准详情'
+      title={i18n.t('pages.qms_standard_detail_page.k16')}
       subtitle='Quality Standard Detail'
     >
       <DetailPageTemplate
         title=''
         subtitle=''
-        detailItemName={standard?.title || standard?.name || standard?.code || '质量标准详情'}
+        detailItemName={standard?.title || standard?.name || standard?.code || i18n.t('pages.qms_standard_detail_page.k17')}
         backHref={QMS_PATHS.root}
         onBack={() => navigate(QMS_PATHS.root)}
         onEdit={() => setShowEditModal(true)}
@@ -284,12 +285,12 @@ const QmsStandardDetailPage: React.FC = () => {
           title: standard?.name,
           subtitle: standard?.code || standard?.id,
           tags: [
-            standard?.status === 'active' ? '有效' : standard?.status || '',
+            standard?.status === 'active' ? i18n.t('pages.qms_standard_detail_page.k18') : standard?.status || '',
             `v${standard?.version || '1.0'}`,
           ].filter(Boolean),
           stats: [
-            { label: '版本', value: `v${standard?.version || '1.0'}` },
-            { label: '分类', value: standard?.category || '-' },
+            { label: i18n.t('pages.qms_standard_detail_page.k19'), value: `v${standard?.version || '1.0'}` },
+            { label: i18n.t('pages.qms_standard_detail_page.k20'), value: standard?.category || '-' },
           ],
         }}
         sidebar={
@@ -298,7 +299,7 @@ const QmsStandardDetailPage: React.FC = () => {
               variant='subtitle1'
               sx={{ fontWeight: 600 }}
             >
-              操作
+              {i18n.t('pages.qms_standard_detail_page.k5')}
             </Typography>
             <Button
               fullWidth
@@ -306,7 +307,7 @@ const QmsStandardDetailPage: React.FC = () => {
               variant='outlined'
               startIcon={<Download sx={{ width: 16, height: 16 }} />}
             >
-              下载标准文档
+              {i18n.t('pages.qms_standard_detail_page.k6')}
             </Button>
             <Button
               fullWidth
@@ -314,14 +315,14 @@ const QmsStandardDetailPage: React.FC = () => {
               variant='outlined'
               startIcon={<Upload sx={{ width: 16, height: 16 }} />}
             >
-              上传新版本文件
+              {i18n.t('pages.qms_standard_detail_page.k7')}
             </Button>
           </Box>
         }
         tabs={[
           {
             id: 'info',
-            label: '标准信息',
+            label: i18n.t('pages.qms_standard_detail_page.k21'),
             icon: <FileText style={{ width: 16, height: 16 }} />,
             content: (
               <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
@@ -337,7 +338,7 @@ const QmsStandardDetailPage: React.FC = () => {
                       variant='body2'
                       sx={{ color: 'text.secondary' }}
                     >
-                      标准编号
+                      {i18n.t('pages.qms_standard_detail_page.k8')}
                     </Typography>
                     <Typography sx={{ fontWeight: 500, mt: 0.5 }}>
                       {standard?.code || standard?.id}
@@ -348,7 +349,7 @@ const QmsStandardDetailPage: React.FC = () => {
                       variant='body2'
                       sx={{ color: 'text.secondary' }}
                     >
-                      状态
+                      {i18n.t('pages.qms_standard_detail_page.k9')}
                     </Typography>
                     <Box sx={{ mt: 0.5 }}>{getStatusBadge(standard?.status || '')}</Box>
                   </Box>
@@ -358,7 +359,7 @@ const QmsStandardDetailPage: React.FC = () => {
                     variant='body2'
                     sx={{ color: 'text.secondary' }}
                   >
-                    标准名称
+                    {i18n.t('pages.qms_standard_detail_page.k10')}
                   </Typography>
                   <Typography sx={{ fontWeight: 500, mt: 0.5 }}>{standard?.name}</Typography>
                 </Box>
@@ -367,7 +368,7 @@ const QmsStandardDetailPage: React.FC = () => {
                     variant='body2'
                     sx={{ color: 'text.secondary' }}
                   >
-                    分类
+                    {i18n.t('pages.qms_standard_detail_page.k11')}
                   </Typography>
                   <Typography sx={{ mt: 0.5 }}>{standard?.category || '-'}</Typography>
                 </Box>
@@ -376,7 +377,7 @@ const QmsStandardDetailPage: React.FC = () => {
                     variant='body2'
                     sx={{ color: 'text.secondary' }}
                   >
-                    生效日期
+                    {i18n.t('pages.qms_standard_detail_page.k12')}
                   </Typography>
                   <Box
                     sx={{
@@ -397,7 +398,7 @@ const QmsStandardDetailPage: React.FC = () => {
                     variant='body2'
                     sx={{ color: 'text.secondary' }}
                   >
-                    标准描述
+                    {i18n.t('pages.qms_standard_detail_page.k13')}
                   </Typography>
                   <Typography
                     sx={{
@@ -406,7 +407,7 @@ const QmsStandardDetailPage: React.FC = () => {
                       lineHeight: 1.6,
                     }}
                   >
-                    {standard?.description || '暂无描述'}
+                    {standard?.description || i18n.t('pages.qms_standard_detail_page.k22')}
                   </Typography>
                 </Box>
               </Box>
@@ -414,7 +415,7 @@ const QmsStandardDetailPage: React.FC = () => {
           },
           {
             id: 'history',
-            label: '版本历史',
+            label: i18n.t('pages.qms_standard_detail_page.k23'),
             icon: <FileCheck style={{ width: 16, height: 16 }} />,
             badge: revisions.length,
             content: (
@@ -438,7 +439,7 @@ const QmsStandardDetailPage: React.FC = () => {
                           opacity: 0.5,
                         }}
                       />
-                      <Typography>暂无版本记录</Typography>
+                      <Typography>{i18n.t('pages.qms_standard_detail_page.k24')}</Typography>
                       <Button
                         variant='outlined'
                         size='small'
@@ -446,7 +447,7 @@ const QmsStandardDetailPage: React.FC = () => {
                         onClick={() => setShowRevisionModal(true)}
                         startIcon={<Plus style={{ width: 12, height: 12 }} />}
                       >
-                        创建第一个版本
+                        {i18n.t('pages.qms_standard_detail_page.k14')}
                       </Button>
                     </Box>
                   ) : null
@@ -457,7 +458,7 @@ const QmsStandardDetailPage: React.FC = () => {
         ]}
         actions={[
           {
-            label: '新建版本',
+            label: i18n.t('pages.qms_standard_detail_page.k25'),
             icon: <Plus style={{ width: 16, height: 16 }} />,
             onClick: () => setShowRevisionModal(true),
             variant: 'outlined',
@@ -471,7 +472,7 @@ const QmsStandardDetailPage: React.FC = () => {
         maxWidth='lg'
         fullWidth
       >
-        <DialogTitle>编辑质量标准</DialogTitle>
+        <DialogTitle>{i18n.t('pages.qms_standard_detail_page.k26')}</DialogTitle>
         <DialogContent>
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 1 }}>
             <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2 }}>
@@ -485,14 +486,14 @@ const QmsStandardDetailPage: React.FC = () => {
                     color: 'text.secondary',
                   }}
                 >
-                  标准编号 *
+                  {i18n.t('pages.qms_standard_detail_page.k15')}
                 </Box>
                 <TextField
                   size='small'
                   fullWidth
                   value={formData.code}
                   onChange={(e) => setFormData((prev) => ({ ...prev, code: e.target.value }))}
-                  placeholder='请输入标准编号'
+                  placeholder={i18n.t('pages.qms_standard_detail_page.k27')}
                 />
               </Box>
               <Box>
@@ -505,7 +506,7 @@ const QmsStandardDetailPage: React.FC = () => {
                     color: 'text.secondary',
                   }}
                 >
-                  版本号
+                  {i18n.t('pages.qms_standard_detail_page.k16')}
                 </Box>
                 <TextField
                   size='small'
@@ -517,7 +518,7 @@ const QmsStandardDetailPage: React.FC = () => {
                       version: e.target.value,
                     }))
                   }
-                  placeholder='如 1.0'
+                  placeholder={i18n.t('pages.qms_standard_detail_page.10_17')}
                 />
               </Box>
             </Box>
@@ -531,14 +532,14 @@ const QmsStandardDetailPage: React.FC = () => {
                   color: 'text.secondary',
                 }}
               >
-                标准名称 *
+                {i18n.t('pages.qms_standard_detail_page.k18')}
               </Box>
               <TextField
                 size='small'
                 fullWidth
                 value={formData.title}
                 onChange={(e) => setFormData((prev) => ({ ...prev, title: e.target.value }))}
-                placeholder='请输入标准名称'
+                placeholder={i18n.t('pages.qms_standard_detail_page.k28')}
               />
             </Box>
             <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2 }}>
@@ -552,7 +553,7 @@ const QmsStandardDetailPage: React.FC = () => {
                     color: 'text.secondary',
                   }}
                 >
-                  分类
+                  {i18n.t('pages.qms_standard_detail_page.k19')}
                 </Box>
                 <TextField
                   size='small'
@@ -564,7 +565,7 @@ const QmsStandardDetailPage: React.FC = () => {
                       category: e.target.value,
                     }))
                   }
-                  placeholder='请输入分类'
+                  placeholder={i18n.t('pages.qms_standard_detail_page.k29')}
                 />
               </Box>
               <Box>
@@ -577,7 +578,7 @@ const QmsStandardDetailPage: React.FC = () => {
                     color: 'text.secondary',
                   }}
                 >
-                  状态
+                  {i18n.t('pages.qms_standard_detail_page.k20')}
                 </Box>
                 <select
                   value={formData.status}
@@ -589,10 +590,10 @@ const QmsStandardDetailPage: React.FC = () => {
                     border: '1px solid border.default',
                   }}
                 >
-                  <option value='active'>有效</option>
-                  <option value='draft'>草稿</option>
-                  <option value='expired'>已过期</option>
-                  <option value='archived'>已归档</option>
+                  <option value='active'>{i18n.t('pages.qms_standard_detail_page.k30')}</option>
+                  <option value='draft'>{i18n.t('pages.qms_standard_detail_page.k31')}</option>
+                  <option value='expired'>{i18n.t('pages.qms_standard_detail_page.k32')}</option>
+                  <option value='archived'>{i18n.t('pages.qms_standard_detail_page.k33')}</option>
                 </select>
               </Box>
             </Box>
@@ -606,7 +607,7 @@ const QmsStandardDetailPage: React.FC = () => {
                   color: 'text.secondary',
                 }}
               >
-                生效日期
+                {i18n.t('pages.qms_standard_detail_page.k21')}
               </Box>
               <TextField
                 type='date'
@@ -631,7 +632,7 @@ const QmsStandardDetailPage: React.FC = () => {
                   color: 'text.secondary',
                 }}
               >
-                描述
+                {i18n.t('pages.qms_standard_detail_page.k22')}
               </Box>
               <textarea
                 value={formData.description}
@@ -641,7 +642,7 @@ const QmsStandardDetailPage: React.FC = () => {
                     description: e.target.value,
                   }))
                 }
-                placeholder='请输入标准描述...'
+                placeholder={i18n.t('pages.qms_standard_detail_page.k23')}
                 style={{
                   width: '100%',
                   padding: 3,
@@ -660,14 +661,14 @@ const QmsStandardDetailPage: React.FC = () => {
             onClick={() => setShowEditModal(false)}
             disabled={submitting}
           >
-            取消
+            {i18n.t('pages.qms_standard_detail_page.k24')}
           </Button>
           <Button
             variant='contained'
             onClick={handleUpdateStandard}
             disabled={submitting}
           >
-            {submitting ? '保存中...' : '保存更改'}
+            {submitting ? i18n.t('pages.qms_standard_detail_page.k25') : i18n.t('pages.qms_standard_detail_page.k34')}
           </Button>
         </DialogActions>
       </Dialog>
@@ -678,7 +679,7 @@ const QmsStandardDetailPage: React.FC = () => {
         maxWidth='sm'
         fullWidth
       >
-        <DialogTitle>新建版本</DialogTitle>
+        <DialogTitle>{i18n.t('pages.qms_standard_detail_page.k35')}</DialogTitle>
         <DialogContent>
           <Box sx={{ py: 2 }}>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
@@ -686,7 +687,7 @@ const QmsStandardDetailPage: React.FC = () => {
                 component='span'
                 sx={{ color: 'text.secondary' }}
               >
-                当前版本:
+                [i18n.t('pages.qms_standard_detail_page.k26')]:
               </Box>
               <Box
                 component='span'
@@ -696,7 +697,7 @@ const QmsStandardDetailPage: React.FC = () => {
               </Box>
             </Box>
             <Box sx={{ color: 'text.secondary', mt: 2 }}>
-              创建新版本后，版本号将自动递增（如 1.0 → 1.1）
+              {i18n.t('pages.qms_standard_detail_page.k27')}
             </Box>
             <Box sx={{ mt: 2 }}>
               <Box
@@ -708,10 +709,10 @@ const QmsStandardDetailPage: React.FC = () => {
                   color: 'text.secondary',
                 }}
               >
-                变更说明
+                {i18n.t('pages.qms_standard_detail_page.k28')}
               </Box>
               <textarea
-                placeholder='请描述本次版本变更的内容...'
+                placeholder={i18n.t('pages.qms_standard_detail_page.k29')}
                 style={{
                   width: '100%',
                   padding: 3,
@@ -730,7 +731,7 @@ const QmsStandardDetailPage: React.FC = () => {
             onClick={() => setShowRevisionModal(false)}
             disabled={submitting}
           >
-            取消
+            {i18n.t('pages.qms_standard_detail_page.k30')}
           </Button>
           <Button
             variant='contained'
@@ -741,7 +742,7 @@ const QmsStandardDetailPage: React.FC = () => {
               '&:hover': { backgroundColor: ct.purple[700] },
             }}
           >
-            {submitting ? '创建中...' : '创建版本'}
+            {submitting ? i18n.t('pages.qms_standard_detail_page.k31') : i18n.t('pages.qms_standard_detail_page.k36')}
           </Button>
         </DialogActions>
       </Dialog>

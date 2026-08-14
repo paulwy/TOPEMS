@@ -1,11 +1,12 @@
 import React from 'react';
 import { Chip } from '@mui/material';
 import type { EntitySchema } from '@/schema';
+import i18n from '@/i18n';
 
 export const materialBomSchema: EntitySchema = {
   entity: 'mes_material_bom',
-  title: '物料BOM',
-  description: '管理物料清单（BOM），包括产品信息、版本、状态和BOM子项',
+  title: i18n.t('mes.material_bom.bom_0'),
+  description: i18n.t('mes.material_bom.k1'),
 
   api: {
     module: 'mes',
@@ -15,7 +16,7 @@ export const materialBomSchema: EntitySchema = {
   fields: [
     {
       name: 'product_code',
-      label: '产品编码',
+      label: i18n.t('mes.material_bom.k2'),
       type: 'text',
       required: true,
       readonlyOnEdit: true,
@@ -25,7 +26,7 @@ export const materialBomSchema: EntitySchema = {
     },
     {
       name: 'product_name',
-      label: '产品名称',
+      label: i18n.t('mes.material_bom.k3'),
       type: 'text',
       required: true,
       sortable: true,
@@ -34,7 +35,7 @@ export const materialBomSchema: EntitySchema = {
     },
     {
       name: 'version',
-      label: '版本',
+      label: i18n.t('mes.material_bom.k4'),
       type: 'text',
       sortable: true,
       listWidth: 80,
@@ -42,25 +43,25 @@ export const materialBomSchema: EntitySchema = {
     },
     {
       name: 'status',
-      label: '状态',
+      label: i18n.t('mes.material_bom.k5'),
       type: 'select',
       defaultValue: 'active',
       options: {
         type: 'static',
         options: [
-          { value: 'draft', label: '草稿' },
-          { value: 'active', label: '启用' },
-          { value: 'inactive', label: '停用' },
-          { value: 'obsolete', label: '作废' },
+          { value: 'draft', label: i18n.t('mes.material_bom.k6') },
+          { value: 'active', label: i18n.t('mes.material_bom.k7') },
+          { value: 'inactive', label: i18n.t('mes.material_bom.k8') },
+          { value: 'obsolete', label: i18n.t('mes.material_bom.k9') },
         ],
       },
       listWidth: 100,
       renderCell: (row: Record<string, unknown>) => {
         const statusMap: Record<string, { label: string; bg: string; color: string }> = {
-          draft: { label: '草稿', bg: 'grey.100', color: 'text.secondary' },
-          active: { label: '启用', bg: 'success.lighter', color: 'success.700' },
-          inactive: { label: '停用', bg: 'warning.light', color: 'warning.700' },
-          obsolete: { label: '作废', bg: 'error.lighter', color: 'error.dark' },
+          draft: { label: i18n.t('mes.material_bom.k10'), bg: 'grey.100', color: 'text.secondary' },
+          active: { label: i18n.t('mes.material_bom.k11'), bg: 'success.lighter', color: 'success.700' },
+          inactive: { label: i18n.t('mes.material_bom.k12'), bg: 'warning.light', color: 'warning.700' },
+          obsolete: { label: i18n.t('mes.material_bom.k13'), bg: 'error.lighter', color: 'error.dark' },
         };
         const s = statusMap[(row.status as string) || 'draft'] || {
           label: row.status,
@@ -77,7 +78,7 @@ export const materialBomSchema: EntitySchema = {
     },
     {
       name: 'items_count',
-      label: '子项数',
+      label: i18n.t('mes.material_bom.k14'),
       type: 'number',
       readonly: true,
       listWidth: 80,
@@ -86,20 +87,20 @@ export const materialBomSchema: EntitySchema = {
     },
     {
       name: 'description',
-      label: '描述',
+      label: i18n.t('mes.material_bom.k15'),
       type: 'textarea',
       showInList: false,
     },
     {
       name: 'items',
-      label: 'BOM子项',
+      label: i18n.t('shared.material_bom.bom_0'),
       type: 'textarea',
       showInList: false,
       showInForm: false,
     },
     {
       name: 'created_at',
-      label: '创建时间',
+      label: i18n.t('mes.material_bom.k16'),
       type: 'datetime',
       readonly: true,
       sortable: true,
@@ -107,7 +108,7 @@ export const materialBomSchema: EntitySchema = {
     },
     {
       name: 'updated_at',
-      label: '更新时间',
+      label: i18n.t('mes.material_bom.k17'),
       type: 'datetime',
       readonly: true,
       showInList: false,
@@ -122,14 +123,14 @@ export const materialBomSchema: EntitySchema = {
     filters: [
       {
         id: 'status',
-        label: '状态',
+        label: i18n.t('mes.material_bom.k18'),
         type: 'select',
         options: [
-          { label: '全部状态', value: 'all' },
-          { label: '草稿', value: 'draft' },
-          { label: '启用', value: 'active' },
-          { label: '停用', value: 'inactive' },
-          { label: '作废', value: 'obsolete' },
+          { label: i18n.t('mes.material_bom.k19'), value: 'all' },
+          { label: i18n.t('mes.material_bom.k20'), value: 'draft' },
+          { label: i18n.t('mes.material_bom.k21'), value: 'active' },
+          { label: i18n.t('mes.material_bom.k22'), value: 'inactive' },
+          { label: i18n.t('mes.material_bom.k23'), value: 'obsolete' },
         ],
       },
     ],
@@ -139,17 +140,17 @@ export const materialBomSchema: EntitySchema = {
 
   formSections: [
     {
-      title: '基本信息',
+      title: i18n.t('mes.material_bom.k24'),
       fields: ['product_code', 'product_name', 'version', 'status'],
     },
     {
-      title: '描述',
+      title: i18n.t('mes.material_bom.k25'),
       fields: ['description'],
     },
   ],
 
   formColCount: 2,
-  createTitle: '新建BOM',
-  editTitle: '编辑BOM',
-  detailTitle: 'BOM详情',
+  createTitle: i18n.t('mes.material_bom.bom_26'),
+  editTitle: i18n.t('mes.material_bom.bom_27'),
+  detailTitle: i18n.t('shared.material_bom.bom_1'),
 };

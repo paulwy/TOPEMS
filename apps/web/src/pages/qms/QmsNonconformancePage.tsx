@@ -6,17 +6,15 @@ import { nonconformanceSchema } from '@/schemas/qms';
 import { qmsApi } from '@/api/qms';
 import type { QualityIssue } from '@/api/qms';
 import { designTokens } from '@/theme/tokens';
-
+import i18n from '@/i18n';
 const ct= designTokens.colors;
-
 const issueAdapter: CrudApiAdapter<QualityIssue> = {
   list: async (params) => {
     const response = await qmsApi.listIssues();
     if (!response.success || !response.data) {
-      throw new Error(response.message || '加载不合格品数据失败');
+      throw new Error(response.message || i18n.t('qms.qms_nonconformance_page.k0'));
     }
     const items = response.data;
-
     const search = params?.search as string | undefined;
     let filtered = items;
     if (search) {
@@ -26,7 +24,6 @@ const issueAdapter: CrudApiAdapter<QualityIssue> = {
           item.title.toLowerCase().includes(lower) || item.issue_no.toLowerCase().includes(lower)
       );
     }
-
     const filterParams = params as Record<string, string | undefined>;
     if (filterParams.severity && filterParams.severity !== 'all') {
       filtered = filtered.filter((item) => item.severity === filterParams.severity);
@@ -34,47 +31,40 @@ const issueAdapter: CrudApiAdapter<QualityIssue> = {
     if (filterParams.status && filterParams.status !== 'all') {
       filtered = filtered.filter((item) => item.status === filterParams.status);
     }
-
     const page = Number(params?.page) || 1;
     const pageSize = Number(params?.pageSize) || 10;
     const total = filtered.length;
     const start = (page - 1) * pageSize;
     const paged = filtered.slice(start, start + pageSize);
-
     return { data: paged, total };
   },
-
   create: async (data) => {
     const response = await qmsApi.createIssue(data as Parameters<typeof qmsApi.createIssue>[0]);
     if (!response.success) {
-      throw new Error(response.message || '创建失败');
+      throw new Error(response.message || i18n.t('qms.qms_nonconformance_page.k1'));
     }
     return (response.data ?? {}) as QualityIssue;
   },
-
   update: async (id, data) => {
     const response = await qmsApi.updateIssue(id, data as Parameters<typeof qmsApi.updateIssue>[1]);
     if (!response.success) {
-      throw new Error(response.message || '更新失败');
+      throw new Error(response.message || i18n.t('qms.qms_nonconformance_page.k2'));
     }
     return (response.data ?? {}) as QualityIssue;
   },
-
   delete: async (id) => {
     const response = await qmsApi.deleteIssue(id);
     if (!response.success) {
-      throw new Error(response.message || '删除失败');
+      throw new Error(response.message || i18n.t('qms.qms_nonconformance_page.k3'));
     }
   },
 };
-
 const QmsNonconformancePage: React.FC = () => {
   const headerContent = (rows: QualityIssue[], total: number) => {
-    const openCount = rows.filter((n) => n.status === 'open' || n.status === '待处理').length;
+    const openCount = rows.filter((n) => n.status === 'open' || n.status === i18n.t('qms.qms_nonconformance_page.k4')).length;
     const closedCount = rows.filter(
-      (n) => n.status === 'closed' || n.status === 'resolved' || n.status === '已关闭'
+      (n) => n.status === 'closed' || n.status === 'resolved' || n.status === i18n.t('qms.qms_nonconformance_page.k5')
     ).length;
-
     return (
       <Box
         sx={{
@@ -108,7 +98,7 @@ const QmsNonconformancePage: React.FC = () => {
                   variant='body2'
                   sx={{ color: 'slate.600', fontSize: '0.875rem' }}
                 >
-                  不合格品总数
+                  {i18n.t('pages.qms_nonconformance_page.k0')}
                 </Typography>
                 <Typography
                   variant='h5'
@@ -141,7 +131,7 @@ const QmsNonconformancePage: React.FC = () => {
                   variant='body2'
                   sx={{ color: 'slate.600', fontSize: '0.875rem' }}
                 >
-                  待处理
+                  {i18n.t('pages.qms_nonconformance_page.k1')}
                 </Typography>
                 <Typography
                   variant='h5'
@@ -174,7 +164,7 @@ const QmsNonconformancePage: React.FC = () => {
                   variant='body2'
                   sx={{ color: 'slate.600', fontSize: '0.875rem' }}
                 >
-                  已关闭
+                  {i18n.t('pages.qms_nonconformance_page.k2')}
                 </Typography>
                 <Typography
                   variant='h5'
@@ -189,16 +179,14 @@ const QmsNonconformancePage: React.FC = () => {
       </Box>
     );
   };
-
   return (
     <CrudPage
       schema={nonconformanceSchema}
       apiAdapter={issueAdapter}
-      breadcrumbs={[{ label: 'QMS' }, { label: '不合格品管理' }]}
+      breadcrumbs={[{ label: 'QMS' }, { label: i18n.t('qms.qms_nonconformance_page.k6') }]}
       headerContent={headerContent}
       detailMaxWidth='lg'
     />
   );
 };
-
 export default QmsNonconformancePage;

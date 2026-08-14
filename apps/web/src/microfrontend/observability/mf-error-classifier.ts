@@ -1,3 +1,4 @@
+import i18n from '@/i18n';
 /**
  * V217 MF 运行时错误分类器
  *
@@ -49,16 +50,16 @@ const SEVERITY_MAP: Record<MFErrorType, MFErrorSeverity> = {
 };
 
 const USER_MESSAGES: Record<MFErrorType, string> = {
-  chunk_404: '模块资源加载失败 (404)，请检查模块是否已部署',
-  content_type_missing: '模块资源 Content-Type 异常，请检查服务器配置',
-  loadShare_failure: '共享依赖加载失败，可能存在版本冲突',
-  loadRemote_failure: '远程模块加载失败，请稍后重试',
-  remote_entry_error: '远程入口加载失败，模块可能未部署',
-  init_container_error: '容器初始化失败，请检查模块兼容性',
-  script_load_error: '脚本加载失败',
-  fetch_error: '网络请求失败，请检查网络连接',
-  timeout: '模块加载超时，请稍后重试',
-  unknown: '微前端模块发生未知错误',
+  chunk_404: i18n.t('microfrontend.mf-error-classifier.k0'),
+  content_type_missing: i18n.t('microfrontend.mf-error-classifier.k1'),
+  loadShare_failure: i18n.t('microfrontend.mf-error-classifier.k2'),
+  loadRemote_failure: i18n.t('microfrontend.mf-error-classifier.k3'),
+  remote_entry_error: i18n.t('microfrontend.mf-error-classifier.k4'),
+  init_container_error: i18n.t('microfrontend.mf-error-classifier.k5'),
+  script_load_error: i18n.t('microfrontend.mf-error-classifier.k6'),
+  fetch_error: i18n.t('microfrontend.mf-error-classifier.k7'),
+  timeout: i18n.t('microfrontend.mf-error-classifier.k8'),
+  unknown: i18n.t('microfrontend.mf-error-classifier.k9'),
 };
 
 function extractModuleName(remoteInfo?: { name?: string; alias?: string } | null): string | undefined {

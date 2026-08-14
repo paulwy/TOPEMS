@@ -1,6 +1,8 @@
 import React, { useState, useCallback } from 'react';
 import { Box, Typography, IconButton, Collapse, Badge } from '@mui/material';
 import { ChevronRight, ChevronDown, Folder, File } from 'lucide-react';
+import { designTokens } from '@topems/tokens';
+import i18n from '@/i18n';
 
 export interface TreeNode {
   id: string;
@@ -34,19 +36,19 @@ interface TreeNodeItemProps {
 
 const densityStyles = {
   compact: {
-    padding: '4px 8px',
+    padding: `${designTokens.spacing.xs} 8px`,
     fontSize: '0.875rem',
     iconSize: 16,
     indent: 16,
   },
   normal: {
-    padding: '8px 12px',
+    padding: `${designTokens.spacing.sm} 12px`,
     fontSize: '1rem',
     iconSize: 20,
     indent: 24,
   },
   comfortable: {
-    padding: '12px 16px',
+    padding: `${designTokens.spacing.md} 16px`,
     fontSize: '1.125rem',
     iconSize: 24,
     indent: 32,
@@ -130,7 +132,7 @@ function TreeNodeItem({
           size='small'
           onClick={handleToggle}
           disabled={isDisabled || !hasChildren}
-          aria-label={isExpanded ? '折叠' : '展开'}
+          aria-label={isExpanded ? i18n.t('shared.tree_view.k1') : i18n.t('shared.tree_view.k0')}
           sx={{
             padding: 0.5,
             '&:hover': {
@@ -180,7 +182,7 @@ function TreeNodeItem({
               sx={{
                 '& .MuiBadge-badge': {
                   fontSize: '0.75rem',
-                  height: '20px',
+                  height: designTokens.spacing.lg,
                   minWidth: '20px',
                 },
               }}

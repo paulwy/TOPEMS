@@ -19,6 +19,7 @@ import {
   InventoryReportTurnoverSummary,
   InventoryReportValueDistribution,
 } from './components/InventoryReportChart';
+import i18n from '@/i18n';
 import {
 
   InventoryReportABCTable,
@@ -195,7 +196,7 @@ const InventoryReportPage: React.FC = () => {
 
   const formatNumber = (num: number) => {
     if (num >= 10000) {
-      return `${(num / 10000).toFixed(2)}万`;
+      return `${(num / 10000).toFixed(2)}${i18n.t('pages.inventory_report_page.k0')}`;
     }
     return num.toLocaleString('zh-CN', { maximumFractionDigits: 2 });
   };

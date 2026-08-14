@@ -6,11 +6,12 @@
  */
 
 import type { EntitySchema } from '@/schema';
+import i18n from '@/i18n';
 
 export const approvalConfigSchema: EntitySchema = {
   entity: 'finance_approval_config',
-  title: '审批配置',
-  description: '管理财务审批流程配置，包括金额阈值、审批层级、审批节点等',
+  title: i18n.t('finance.approval_config.k0'),
+  description: i18n.t('finance.approval_config.k1'),
 
   api: {
     module: 'finance',
@@ -20,7 +21,7 @@ export const approvalConfigSchema: EntitySchema = {
   fields: [
     {
       name: 'name',
-      label: '配置名称',
+      label: i18n.t('finance.approval_config.k2'),
       type: 'text',
       required: true,
       sortable: true,
@@ -29,7 +30,7 @@ export const approvalConfigSchema: EntitySchema = {
     },
     {
       name: 'amountThreshold',
-      label: '金额阈值',
+      label: i18n.t('finance.approval_config.k3'),
       type: 'number',
       required: true,
       defaultValue: 0,
@@ -41,19 +42,19 @@ export const approvalConfigSchema: EntitySchema = {
     },
     {
       name: 'maxAmount',
-      label: '金额上限',
+      label: i18n.t('finance.approval_config.k4'),
       type: 'number',
       listWidth: 120,
       showInList: false,
       renderCell: (row: Record<string, unknown>) => {
         const val = row.maxAmount;
-        if (val === undefined || val === null) return '不限';
+        if (val === undefined || val === null) return i18n.t('finance.approval_config.k5');
         return `¥${Number(val).toLocaleString()}`;
       },
     },
     {
       name: 'approvalLevels',
-      label: '审批层级',
+      label: i18n.t('finance.approval_config.k6'),
       type: 'number',
       required: true,
       defaultValue: 1,
@@ -61,47 +62,47 @@ export const approvalConfigSchema: EntitySchema = {
     },
     {
       name: 'priority',
-      label: '优先级',
+      label: i18n.t('finance.approval_config.k7'),
       type: 'select',
       required: true,
       defaultValue: 2,
       options: {
         type: 'static',
         options: [
-          { value: 1, label: '高' },
-          { value: 2, label: '中' },
-          { value: 3, label: '低' },
+          { value: 1, label: i18n.t('finance.approval_config.k8') },
+          { value: 2, label: i18n.t('finance.approval_config.k9') },
+          { value: 3, label: i18n.t('finance.approval_config.k10') },
         ],
       },
       listWidth: 80,
     },
     {
       name: 'isActive',
-      label: '状态',
+      label: i18n.t('finance.approval_config.k11'),
       type: 'select',
       defaultValue: true,
       options: {
         type: 'static',
         options: [
-          { value: true, label: '启用' },
-          { value: false, label: '停用' },
+          { value: true, label: i18n.t('finance.approval_config.k12') },
+          { value: false, label: i18n.t('finance.approval_config.k13') },
         ],
       },
       listWidth: 80,
       renderCell: (row: Record<string, unknown>) => {
         const active = row.isActive !== false;
-        return active ? '启用' : '停用';
+        return active ? i18n.t('finance.approval_config.k15') : i18n.t('finance.approval_config.k14');
       },
     },
     {
       name: 'description',
-      label: '描述',
+      label: i18n.t('finance.approval_config.k16'),
       type: 'textarea',
       showInList: false,
     },
     {
       name: 'workflowId',
-      label: '关联工作流',
+      label: i18n.t('finance.approval_config.k17'),
       type: 'text',
       showInList: false,
     },
@@ -118,31 +119,31 @@ export const approvalConfigSchema: EntitySchema = {
         false: 'error',
       },
       labelMap: {
-        true: '启用',
-        false: '停用',
+        true: i18n.t('finance.approval_config.k18'),
+        false: i18n.t('finance.approval_config.k19'),
       },
     },
     filters: [
       {
         id: 'isActive',
-        label: '状态',
+        label: i18n.t('finance.approval_config.k20'),
         type: 'select',
         options: [
-          { label: '全部', value: 'all' },
-          { label: '启用', value: 'true' },
-          { label: '停用', value: 'false' },
+          { label: i18n.t('finance.approval_config.k21'), value: 'all' },
+          { label: i18n.t('finance.approval_config.k22'), value: 'true' },
+          { label: i18n.t('finance.approval_config.k23'), value: 'false' },
         ],
         defaultValue: 'all',
       },
       {
         id: 'priority',
-        label: '优先级',
+        label: i18n.t('finance.approval_config.k24'),
         type: 'select',
         options: [
-          { label: '全部', value: 'all' },
-          { label: '高', value: '1' },
-          { label: '中', value: '2' },
-          { label: '低', value: '3' },
+          { label: i18n.t('finance.approval_config.k25'), value: 'all' },
+          { label: i18n.t('finance.approval_config.k26'), value: '1' },
+          { label: i18n.t('finance.approval_config.k27'), value: '2' },
+          { label: i18n.t('finance.approval_config.k28'), value: '3' },
         ],
         defaultValue: 'all',
       },
@@ -153,17 +154,17 @@ export const approvalConfigSchema: EntitySchema = {
 
   formSections: [
     {
-      title: '基本信息',
+      title: i18n.t('finance.approval_config.k29'),
       fields: ['name', 'description', 'priority', 'isActive'],
     },
     {
-      title: '金额与审批',
+      title: i18n.t('finance.approval_config.k30'),
       fields: ['amountThreshold', 'maxAmount', 'approvalLevels', 'workflowId'],
     },
   ],
 
   formColCount: 2,
-  createTitle: '新增审批配置',
-  editTitle: '编辑审批配置',
-  detailTitle: '审批配置详情',
+  createTitle: i18n.t('finance.approval_config.k31'),
+  editTitle: i18n.t('finance.approval_config.k32'),
+  detailTitle: i18n.t('finance.approval_config.k33'),
 };

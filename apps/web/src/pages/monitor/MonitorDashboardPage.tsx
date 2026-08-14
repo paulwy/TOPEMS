@@ -4,7 +4,6 @@
  * @module pages/monitor
  * @path /monitor/dashboard
  */
-
 import React, { useState, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import {
@@ -25,6 +24,7 @@ import {
   CheckCircle,
   XCircle,
 } from 'lucide-react';
+import i18n from '@/i18n';
 import {
   Box,
   Typography,
@@ -41,7 +41,6 @@ import {
   MenuItem,
   useTheme,
 } from '@mui/material';
-
 import { PageContainer } from '@/components/common';
 import {
   DashboardTemplate,
@@ -54,19 +53,15 @@ import { useNotificationStore } from '../../store';
 import { designTokens } from '@/theme/tokens';
 import {QUERY_KEYS, CACHE_DURATIONS} from '@/lib/reactQuery';
 import { monitorApi, type SystemMetrics, type DatabaseMetrics } from '@/api/monitor';
-
 const ct= designTokens.colors;
-
 type TimeRange = '1h' | '6h' | '24h' | '7d' | '30d';
-
 const timeRangeOptions: { value: TimeRange; label: string }[] = [
-  { value: '1h', label: '近1小时' },
-  { value: '6h', label: '近6小时' },
-  { value: '24h', label: '近24小时' },
-  { value: '7d', label: '近7天' },
-  { value: '30d', label: '近30天' },
+  { value: '1h', label: i18n.t('monitor.monitor_dashboard_page.1_0') },
+  { value: '6h', label: i18n.t('monitor.monitor_dashboard_page.6_1') },
+  { value: '24h', label: i18n.t('monitor.monitor_dashboard_page.24_2') },
+  { value: '7d', label: i18n.t('monitor.monitor_dashboard_page.7_3') },
+  { value: '30d', label: i18n.t('monitor.monitor_dashboard_page.30_4') },
 ];
-
 interface ServiceHealth {
   id: string;
   name: string;
@@ -76,7 +71,6 @@ interface ServiceHealth {
   uptime: string;
   lastCheck: string;
 }
-
 interface AlertItem {
   id: string;
   title: string;
@@ -85,11 +79,9 @@ interface AlertItem {
   time: string;
   message: string;
 }
-
 const generateTimeLabels = (range: TimeRange): string[] => {
   const labels: string[] = [];
   const now = new Date();
-
   if (range === '1h') {
     for (let i = 60; i >= 0; i -= 5) {
       const time = new Date(now.getTime() - i * 60 * 1000);
@@ -116,28 +108,24 @@ const generateTimeLabels = (range: TimeRange): string[] => {
       labels.push(date.toLocaleDateString('zh-CN', { month: 'short', day: 'numeric' }));
     }
   }
-
   return labels;
 };
-
 const createFlatTrend = (length: number, value: number): number[] => {
   return Array.from({ length }, () => value);
 };
-
 const formatRelativeTime = (dateString: string): string => {
   const date = new Date(dateString);
   const now = new Date();
   const diffMs = now.getTime() - date.getTime();
-  if (Number.isNaN(diffMs) || diffMs < 0) return '刚刚';
+  if (Number.isNaN(diffMs) || diffMs < 0) return i18n.t('monitor.monitor_dashboard_page.k5');
   const diffMin = Math.floor(diffMs / 60000);
-  if (diffMin < 1) return '刚刚';
-  if (diffMin < 60) return `${diffMin}分钟前`;
+  if (diffMin < 1) return i18n.t('monitor.monitor_dashboard_page.k6');
+  if (diffMin < 60) return `${diffMin}${i18n.t('pages.monitor_dashboard_page.k0')}`;
   const diffHour = Math.floor(diffMin / 60);
-  if (diffHour < 24) return `${diffHour}小时前`;
+  if (diffHour < 24) return `${diffHour}${i18n.t('pages.monitor_dashboard_page.k1')}`;
   const diffDay = Math.floor(diffHour / 24);
-  return `${diffDay}天前`;
+  return `${diffDay}${i18n.t('pages.monitor_dashboard_page.k2')}`;
 };
-
 const MiniLineChart: React.FC<{
   data: number[];
   labels: string[];
@@ -147,16 +135,13 @@ const MiniLineChart: React.FC<{
   if (!data || data.length === 0) {
     return <Box sx={{ width: '100%', height }} />;
   }
-
   const max = Math.max(...data);
   const min = Math.min(...data);
   const range = max - min || 1;
-
   const width = 100;
   const chartHeight = 100;
   const padding = { top: 10, right: 10, bottom: 20, left: 30 };
   const denom = data.length - 1 || 1;
-
   const points = data
     .map((value, index) => {
       const x = padding.left + (index / denom) * (width - padding.left - padding.right);
@@ -168,7 +153,6 @@ const MiniLineChart: React.FC<{
       return `${x},${y}`;
     })
     .join(' ');
-
   return (
     <Box sx={{ width: '100%', height, position: 'relative' }}>
       <svg
@@ -201,7 +185,6 @@ const MiniLineChart: React.FC<{
     </Box>
   );
 };
-
 const MiniBarChart: React.FC<{
   data: number[];
   labels: string[];
@@ -211,10 +194,8 @@ const MiniBarChart: React.FC<{
   if (!data || data.length === 0) {
     return <Box sx={{ width: '100%', height }} />;
   }
-
   const max = Math.max(...data) || 1;
   const barWidth = (100 - 40) / data.length - 2;
-
   return (
     <Box sx={{ width: '100%', height, position: 'relative' }}>
       <svg
@@ -243,7 +224,6 @@ const MiniBarChart: React.FC<{
     </Box>
   );
 };
-
 const MiniPieChart: React.FC<{
   data: { label: string; value: number; color: string }[];
   size?: number;
@@ -252,24 +232,19 @@ const MiniPieChart: React.FC<{
   const radius = 40;
   const centerX = 50;
   const centerY = 50;
-
   let currentAngle = -90;
   const paths = data.map((item) => {
     const angle = (item.value / total) * 360;
     const startAngle = currentAngle;
     const endAngle = currentAngle + angle;
     currentAngle = endAngle;
-
     const startRad = (startAngle * Math.PI) / 180;
     const endRad = (endAngle * Math.PI) / 180;
-
     const x1 = centerX + radius * Math.cos(startRad);
     const y1 = centerY + radius * Math.sin(startRad);
     const x2 = centerX + radius * Math.cos(endRad);
     const y2 = centerY + radius * Math.sin(endRad);
-
     const largeArc = angle > 180 ? 1 : 0;
-
     return {
       d: `M ${centerX} ${centerY} L ${x1} ${y1} A ${radius} ${radius} 0 ${largeArc} 1 ${x2} ${y2} Z`,
       color: item.color,
@@ -278,7 +253,6 @@ const MiniPieChart: React.FC<{
       percentage: ((item.value / total) * 100).toFixed(1),
     };
   });
-
   return (
     <Box sx={{ display: 'flex', alignItems: 'center', gap: 3, height: '100%' }}>
       <Box sx={{ width: size, height: size, flexShrink: 0 }}>
@@ -333,15 +307,12 @@ const MiniPieChart: React.FC<{
     </Box>
   );
 };
-
 export const MonitorDashboardPage: React.FC = () => {
   const theme = useTheme();
   const addNotification = useNotificationStore((state) => state.addNotification);
   const [timeRange, setTimeRange] = useState<TimeRange>('24h');
   const [timeRangeAnchorEl, setTimeRangeAnchorEl] = useState<null | HTMLElement>(null);
-
   const timeLabels = useMemo(() => generateTimeLabels(timeRange), [timeRange]);
-
   const systemMetricsQuery = useQuery({
     queryKey: [...QUERY_KEYS.MONITOR.METRICS, timeRange],
     queryFn: async () => {
@@ -350,7 +321,6 @@ export const MonitorDashboardPage: React.FC = () => {
     },
   
       staleTime: CACHE_DURATIONS.MEDIUM,});
-
   const serviceHealthQuery = useQuery({
     queryKey: [...QUERY_KEYS.MONITOR.HEALTH, timeRange],
     queryFn: async () => {
@@ -359,7 +329,6 @@ export const MonitorDashboardPage: React.FC = () => {
     },
   
       staleTime: CACHE_DURATIONS.MEDIUM,});
-
   const alertsQuery = useQuery({
     queryKey: [...QUERY_KEYS.MONITOR.ALERTS, timeRange],
     queryFn: async () => {
@@ -368,7 +337,6 @@ export const MonitorDashboardPage: React.FC = () => {
     },
   
       staleTime: CACHE_DURATIONS.MEDIUM,});
-
   const apiPerformanceQuery = useQuery({
     queryKey: [...QUERY_KEYS.MONITOR.PERFORMANCE, timeRange],
     queryFn: async () => {
@@ -377,7 +345,6 @@ export const MonitorDashboardPage: React.FC = () => {
     },
   
       staleTime: CACHE_DURATIONS.MEDIUM,});
-
   const dbMetricsQuery = useQuery({
     queryKey: [...QUERY_KEYS.MONITOR.DATABASE, timeRange],
     queryFn: async () => {
@@ -386,20 +353,17 @@ export const MonitorDashboardPage: React.FC = () => {
     },
   
       staleTime: CACHE_DURATIONS.MEDIUM,});
-
   const loading =
     systemMetricsQuery.isFetching ||
     serviceHealthQuery.isFetching ||
     alertsQuery.isFetching ||
     apiPerformanceQuery.isFetching ||
     dbMetricsQuery.isFetching;
-
   const systemMetrics = (systemMetricsQuery.data || {}) as SystemMetrics;
   const apiServices = Array.isArray(serviceHealthQuery.data) ? serviceHealthQuery.data : [];
   const apiAlerts = Array.isArray(alertsQuery.data) ? alertsQuery.data : [];
   const apiPerf = Array.isArray(apiPerformanceQuery.data) ? apiPerformanceQuery.data : [];
   const dbMetrics = (dbMetricsQuery.data || {}) as DatabaseMetrics;
-
   const services: ServiceHealth[] = useMemo(
     () =>
       apiServices.map((s) => ({
@@ -413,7 +377,6 @@ export const MonitorDashboardPage: React.FC = () => {
       })),
     [apiServices]
   );
-
   const recentAlerts: AlertItem[] = useMemo(
     () =>
       apiAlerts.map((a) => ({
@@ -426,7 +389,6 @@ export const MonitorDashboardPage: React.FC = () => {
       })),
     [apiAlerts]
   );
-
   const stats: StatCard[] = useMemo(() => {
     const cpuUsage = Math.round(systemMetrics?.cpu_usage ?? 0);
     const memUsage = Math.round(systemMetrics?.memory_usage ?? 0);
@@ -441,62 +403,61 @@ export const MonitorDashboardPage: React.FC = () => {
       apiPerf.length > 0
         ? Math.round(apiPerf.reduce((sum, p) => sum + p.avg_response_time, 0) / apiPerf.length)
         : 0;
-
     return [
       {
         id: 'online-services',
-        title: '在线服务数',
+        title: i18n.t('monitor.monitor_dashboard_page.k7'),
         value: onlineServices,
-        unit: '个',
+        unit: i18n.t('monitor.monitor_dashboard_page.k8'),
         icon: <Server size={20} />,
         color: 'success',
         trend: createFlatTrend(12, onlineServices),
       },
       {
         id: 'alerts',
-        title: '告警数',
+        title: i18n.t('monitor.monitor_dashboard_page.k9'),
         value: alertCount,
-        unit: '条',
+        unit: i18n.t('monitor.monitor_dashboard_page.k10'),
         icon: <AlertTriangle size={20} />,
         color: 'error',
         trend: createFlatTrend(12, alertCount),
       },
       {
         id: 'cpu-usage',
-        title: 'CPU使用率',
+        title: i18n.t('pages.monitor_dashboard_page.cpu_3'),
         value: cpuUsage,
         unit: '%',
         icon: <Cpu size={20} />,
         color: 'warning',
         progress: cpuUsage,
-        progressLabel: '使用率',
+        progressLabel: i18n.t('monitor.monitor_dashboard_page.k11'),
         trend: createFlatTrend(12, cpuUsage),
       },
       {
         id: 'memory-usage',
-        title: '内存使用率',
+        title: i18n.t('monitor.monitor_dashboard_page.k12'),
         value: memUsage,
         unit: '%',
         icon: <Zap size={20} />,
         color: 'warning',
         progress: memUsage,
-        progressLabel: '使用率',
+        progressLabel: i18n.t('monitor.monitor_dashboard_page.k13'),
         trend: createFlatTrend(12, memUsage),
       },
       {
         id: 'disk-usage',
-        title: '磁盘使用率',
+        title: i18n.t('monitor.monitor_dashboard_page.k14'),
         value: diskUsage,
         unit: '%',
         icon: <HardDrive size={20} />,
         color: 'info',
         progress: diskUsage,
-        progressLabel: '使用率',
+        progressLabel: i18n.t('monitor.monitor_dashboard_page.k15'),
         trend: createFlatTrend(12, diskUsage),
       },
       {
         id: 'network-throughput',
-        title: '网络吞吐',
+        title: i18n.t('monitor.monitor_dashboard_page.k16'),
         value: networkThroughput,
         unit: 'MB/s',
         icon: <Activity size={20} />,
@@ -505,16 +466,16 @@ export const MonitorDashboardPage: React.FC = () => {
       },
       {
         id: 'db-connections',
-        title: '数据库连接',
+        title: i18n.t('monitor.monitor_dashboard_page.k17'),
         value: dbConnections,
-        unit: '个',
+        unit: i18n.t('monitor.monitor_dashboard_page.k18'),
         icon: <Database size={20} />,
         color: 'secondary',
         trend: createFlatTrend(12, dbConnections),
       },
       {
         id: 'api-response-time',
-        title: 'API响应时间',
+        title: i18n.t('pages.monitor_dashboard_page.api_4'),
         value: apiResponseTime,
         unit: 'ms',
         icon: <Clock size={20} />,
@@ -523,7 +484,6 @@ export const MonitorDashboardPage: React.FC = () => {
       },
     ];
   }, [systemMetrics, dbMetrics, apiServices, apiAlerts, apiPerf]);
-
   const systemResourceData = useMemo(
     () => ({
       cpu: createFlatTrend(timeLabels.length, Math.round(systemMetrics?.cpu_usage ?? 0)),
@@ -532,28 +492,26 @@ export const MonitorDashboardPage: React.FC = () => {
     }),
     [timeLabels, systemMetrics]
   );
-
   const serviceHealthData = useMemo(
     () => [
       {
-        label: '正常',
+        label: i18n.t('monitor.monitor_dashboard_page.k19'),
         value: apiServices.filter((s) => s.status === 'healthy').length,
         color: theme.palette.success.main,
       },
       {
-        label: '警告',
+        label: i18n.t('monitor.monitor_dashboard_page.k20'),
         value: apiServices.filter((s) => s.status === 'degraded').length,
         color: theme.palette.warning.main,
       },
       {
-        label: '异常',
+        label: i18n.t('monitor.monitor_dashboard_page.k21'),
         value: apiServices.filter((s) => s.status === 'unhealthy').length,
         color: theme.palette.error.main,
       },
     ],
     [apiServices, theme]
   );
-
   const alertDistributionData = useMemo(() => {
     const serviceSet = new Set<string>();
     apiServices.forEach((s) => serviceSet.add(s.service_name));
@@ -564,7 +522,6 @@ export const MonitorDashboardPage: React.FC = () => {
     );
     return { services: serviceNames, alerts };
   }, [apiServices, apiAlerts]);
-
   const apiResponseTimeData = useMemo(() => {
     const avg =
       apiPerf.length > 0
@@ -584,13 +541,12 @@ export const MonitorDashboardPage: React.FC = () => {
       p99: createFlatTrend(timeLabels.length, p99),
     };
   }, [timeLabels, apiPerf]);
-
   const charts: ChartCard[] = useMemo(
     () => [
       {
         id: 'system-resource',
-        title: '系统资源趋势',
-        subtitle: 'CPU / 内存 / 磁盘使用率',
+        title: i18n.t('monitor.monitor_dashboard_page.k22'),
+        subtitle: i18n.t('pages.monitor_dashboard_page.cpu_5'),
         type: 'line',
         chart: (
           <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
@@ -610,7 +566,7 @@ export const MonitorDashboardPage: React.FC = () => {
                   variant='caption'
                   color='text.secondary'
                 >
-                  内存
+                  {i18n.t('pages.monitor_dashboard_page.k0')}
                 </Typography>
               </Box>
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
@@ -619,7 +575,7 @@ export const MonitorDashboardPage: React.FC = () => {
                   variant='caption'
                   color='text.secondary'
                 >
-                  磁盘
+                  {i18n.t('pages.monitor_dashboard_page.k1')}
                 </Typography>
               </Box>
             </Box>
@@ -636,15 +592,15 @@ export const MonitorDashboardPage: React.FC = () => {
       },
       {
         id: 'service-health',
-        title: '服务健康状态',
-        subtitle: '服务运行状态分布',
+        title: i18n.t('monitor.monitor_dashboard_page.k23'),
+        subtitle: i18n.t('monitor.monitor_dashboard_page.k24'),
         type: 'pie',
         chart: <MiniPieChart data={serviceHealthData} />,
       },
       {
         id: 'alert-distribution',
-        title: '告警分布',
-        subtitle: '各服务告警数量统计',
+        title: i18n.t('monitor.monitor_dashboard_page.k25'),
+        subtitle: i18n.t('monitor.monitor_dashboard_page.k26'),
         type: 'bar',
         chart: (
           <Box sx={{ height: '100%' }}>
@@ -662,7 +618,7 @@ export const MonitorDashboardPage: React.FC = () => {
                   color='text.secondary'
                   sx={{ fontSize: '0.65rem' }}
                 >
-                  {service.replace('服务', '')}
+                  {service.replace(i18n.t('monitor.monitor_dashboard_page.k27'), '')}
                 </Typography>
               ))}
             </Box>
@@ -671,8 +627,8 @@ export const MonitorDashboardPage: React.FC = () => {
       },
       {
         id: 'api-response',
-        title: 'API响应时间趋势',
-        subtitle: '平均响应时间 / P95 / P99',
+        title: i18n.t('pages.monitor_dashboard_page.api_6'),
+        subtitle: i18n.t('monitor.monitor_dashboard_page.p95p99_28'),
         type: 'line',
         chart: (
           <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
@@ -683,7 +639,7 @@ export const MonitorDashboardPage: React.FC = () => {
                   variant='caption'
                   color='text.secondary'
                 >
-                  平均
+                  {i18n.t('pages.monitor_dashboard_page.k2')}
                 </Typography>
               </Box>
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
@@ -726,65 +682,63 @@ export const MonitorDashboardPage: React.FC = () => {
       theme,
     ]
   );
-
   const quickActions: QuickAction[] = useMemo(
     () => [
       {
         id: 'view-alerts',
-        label: '查看告警',
+        label: i18n.t('monitor.monitor_dashboard_page.k29'),
         icon: <Bell size={20} />,
         color: 'error.light',
-        description: '查看系统告警列表',
+        description: i18n.t('monitor.monitor_dashboard_page.k30'),
         onClick: () => {
           addNotification({
             type: 'info',
-            message: '正在跳转到告警列表...',
+            message: i18n.t('pages.monitor_dashboard_page.k7'),
           });
         },
       },
       {
         id: 'view-metrics',
-        label: '查看指标',
+        label: i18n.t('monitor.monitor_dashboard_page.k31'),
         icon: <BarChart3 size={20} />,
         color: 'primary.light',
-        description: '查看详细监控指标',
+        description: i18n.t('monitor.monitor_dashboard_page.k32'),
         onClick: () => {
           addNotification({
             type: 'info',
-            message: '正在跳转到指标详情...',
+            message: i18n.t('pages.monitor_dashboard_page.k8'),
           });
         },
       },
       {
         id: 'view-logs',
-        label: '查看日志',
+        label: i18n.t('monitor.monitor_dashboard_page.k33'),
         icon: <FileText size={20} />,
         color: 'info.light',
-        description: '查看系统运行日志',
+        description: i18n.t('monitor.monitor_dashboard_page.k34'),
         onClick: () => {
           addNotification({
             type: 'info',
-            message: '正在跳转到日志中心...',
+            message: i18n.t('pages.monitor_dashboard_page.k9'),
           });
         },
       },
       {
         id: 'alert-rules',
-        label: '告警规则',
+        label: i18n.t('monitor.monitor_dashboard_page.k35'),
         icon: <Settings size={20} />,
         color: 'warning.light',
-        description: '配置告警规则',
+        description: i18n.t('monitor.monitor_dashboard_page.k36'),
         onClick: () => {
           addNotification({
             type: 'info',
-            message: '正在跳转到告警规则配置...',
+            message: i18n.t('pages.monitor_dashboard_page.k10'),
           });
         },
       },
     ],
     [addNotification]
   );
-
   const recentItems: RecentItem[] = useMemo(
     () =>
       recentAlerts.map((alert) => ({
@@ -809,20 +763,16 @@ export const MonitorDashboardPage: React.FC = () => {
       })),
     [recentAlerts]
   );
-
   const handleTimeRangeClick = (event: React.MouseEvent<HTMLElement>) => {
     setTimeRangeAnchorEl(event.currentTarget);
   };
-
   const handleTimeRangeClose = () => {
     setTimeRangeAnchorEl(null);
   };
-
   const handleTimeRangeSelect = (range: TimeRange) => {
     setTimeRange(range);
     setTimeRangeAnchorEl(null);
   };
-
   const handleRefresh = async () => {
     await Promise.allSettled([
       systemMetricsQuery.refetch(),
@@ -833,15 +783,14 @@ export const MonitorDashboardPage: React.FC = () => {
     ]);
     addNotification({
       type: 'success',
-      message: '监控数据已刷新',
+      message: i18n.t('monitor.monitor_dashboard_page.k37'),
     });
   };
-
   const getStatusChip = (status: ServiceHealth['status']) => {
     const statusMap = {
-      healthy: { label: '正常', color: 'success' as const, icon: <CheckCircle size={14} /> },
-      warning: { label: '警告', color: 'warning' as const, icon: <AlertTriangle size={14} /> },
-      error: { label: '异常', color: 'error' as const, icon: <XCircle size={14} /> },
+      healthy: { label: i18n.t('monitor.monitor_dashboard_page.k38'), color: 'success' as const, icon: <CheckCircle size={14} /> },
+      warning: { label: i18n.t('monitor.monitor_dashboard_page.k39'), color: 'warning' as const, icon: <AlertTriangle size={14} /> },
+      error: { label: i18n.t('monitor.monitor_dashboard_page.k40'), color: 'error' as const, icon: <XCircle size={14} /> },
     };
     const config = statusMap[status];
     return (
@@ -854,10 +803,8 @@ export const MonitorDashboardPage: React.FC = () => {
       />
     );
   };
-
   const timeRangeLabel =
-    timeRangeOptions.find((opt) => opt.value === timeRange)?.label || '近24小时';
-
+    timeRangeOptions.find((opt) => opt.value === timeRange)?.label || i18n.t('monitor.monitor_dashboard_page.24_41');
   const headerContent = (
     <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
       <Button
@@ -886,7 +833,6 @@ export const MonitorDashboardPage: React.FC = () => {
       </Menu>
     </Box>
   );
-
   return (
     <PageContainer
       headerProps={{
@@ -902,8 +848,8 @@ export const MonitorDashboardPage: React.FC = () => {
         charts={charts}
         quickActions={quickActions}
         recentItems={recentItems}
-        recentTitle='最近告警'
-        quickActionsTitle='快捷操作'
+        recentTitle={i18n.t('monitor.monitor_dashboard_page.k42')}
+        quickActionsTitle={i18n.t('monitor.monitor_dashboard_page.k43')}
         onRefresh={handleRefresh}
       >
         <Box sx={{ mt: 3 }}>
@@ -922,23 +868,23 @@ export const MonitorDashboardPage: React.FC = () => {
                 variant='subtitle1'
                 sx={{ fontWeight: 600 }}
               >
-                服务健康状态
+                {i18n.t('pages.monitor_dashboard_page.k3')}
               </Typography>
               <Box sx={{ display: 'flex', gap: 1 }}>
                 <Chip
-                  label={`正常 ${services.filter((s) => s.status === 'healthy').length}`}
+                  label={`${i18n.t('pages.monitor_dashboard_page.k11')}${services.filter((s) => s.status === 'healthy').length}`}
                   size='small'
                   color='success'
                   variant='outlined'
                 />
                 <Chip
-                  label={`警告 ${services.filter((s) => s.status === 'warning').length}`}
+                  label={`${i18n.t('pages.monitor_dashboard_page.k12')}${services.filter((s) => s.status === 'warning').length}`}
                   size='small'
                   color='warning'
                   variant='outlined'
                 />
                 <Chip
-                  label={`异常 ${services.filter((s) => s.status === 'error').length}`}
+                  label={`${i18n.t('pages.monitor_dashboard_page.k13')}${services.filter((s) => s.status === 'error').length}`}
                   size='small'
                   color='error'
                   variant='outlined'
@@ -949,12 +895,12 @@ export const MonitorDashboardPage: React.FC = () => {
               <Table size='small'>
                 <TableHead>
                   <TableRow>
-                    <TableCell>服务名称</TableCell>
-                    <TableCell>状态</TableCell>
+                    <TableCell>{i18n.t('monitor.monitor_dashboard_page.k44')}</TableCell>
+                    <TableCell>{i18n.t('monitor.monitor_dashboard_page.k45')}</TableCell>
                     <TableCell>CPU使用率</TableCell>
-                    <TableCell>内存使用率</TableCell>
-                    <TableCell>运行时长</TableCell>
-                    <TableCell>最后检查</TableCell>
+                    <TableCell>{i18n.t('monitor.monitor_dashboard_page.k46')}</TableCell>
+                    <TableCell>{i18n.t('monitor.monitor_dashboard_page.k47')}</TableCell>
+                    <TableCell>{i18n.t('monitor.monitor_dashboard_page.k48')}</TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
@@ -978,7 +924,7 @@ export const MonitorDashboardPage: React.FC = () => {
                           onClick={() => {
                             addNotification({
                               type: 'info',
-                              message: `查看 ${service.name} 详情`,
+                              message: `${i18n.t('pages.monitor_dashboard_page.k14')}${service.name}${i18n.t('pages.monitor_dashboard_page.k15')}`,
                             });
                           }}
                         >
@@ -1069,5 +1015,4 @@ export const MonitorDashboardPage: React.FC = () => {
     </PageContainer>
   );
 };
-
 export default MonitorDashboardPage;

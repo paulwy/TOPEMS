@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { ChevronLeft, Settings } from 'lucide-react';
 import { DASHBOARD_PATHS } from '@/routes/dashboard';
 import { ADMIN_PATHS } from '@/modules/admin/config';
+import i18n from '@/i18n';
 
 export interface SidebarUserPanelProps {
   collapsed: boolean;
@@ -64,7 +65,7 @@ export const SidebarUserPanel: React.FC<SidebarUserPanelProps> = ({
                 textOverflow: 'ellipsis',
               }}
             >
-              {displayName || '用户'}
+              {displayName || i18n.t('shared.sidebar_user_panel.k0')}
             </Typography>
             <Typography
               sx={{
@@ -75,15 +76,15 @@ export const SidebarUserPanel: React.FC<SidebarUserPanelProps> = ({
                 textOverflow: 'ellipsis',
               }}
             >
-              {userRole || '用户'}
+              {userRole || i18n.t('shared.sidebar_user_panel.k1')}
             </Typography>
           </Box>
-          <Tooltip title='设置'>
+          <Tooltip title={i18n.t('shared.sidebar_user_panel.k2')}>
             <IconButton
               size='small'
               onClick={() => navigate(ADMIN_PATHS.systemSettings)}
               sx={{ width: 32, height: 32 }}
-              aria-label='设置'
+              aria-label={i18n.t('shared.sidebar_user_panel.k3')}
             >
               <Settings style={{ width: 16, height: 16 }} />
             </IconButton>
@@ -98,7 +99,7 @@ export const SidebarUserPanel: React.FC<SidebarUserPanelProps> = ({
           }}
         >
           <Tooltip
-            title={[displayName, userRole].filter(Boolean).join(' - ') || '用户'}
+            title={[displayName, userRole].filter(Boolean).join(' - ') || i18n.t('shared.sidebar_user_panel.k4')}
             placement='right'
           >
             <Avatar
@@ -145,7 +146,7 @@ export const SidebarUserPanel: React.FC<SidebarUserPanelProps> = ({
               transition: 'transform 300ms ease',
             }}
           />
-          {!collapsed && <Typography sx={{ fontSize: 13, fontWeight: 500 }}>收起菜单</Typography>}
+          {!collapsed && <Typography sx={{ fontSize: 13, fontWeight: 500 }}>{i18n.t('shared.sidebar_user_panel.k5')}</Typography>}
         </Button>
       </Box>
     </Box>

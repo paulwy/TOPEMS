@@ -1,3 +1,4 @@
+import i18n from '@/i18n';
 export enum TrustLevel {
   TRUSTED = 'trusted',
   VERIFIED = 'verified',
@@ -45,7 +46,7 @@ export class ModuleSigner {
   private initializeDefaultPublishers(): void {
     const defaultPublisher: TrustedPublisher = {
       id: 'system-publisher',
-      name: '系统官方发布者',
+      name: i18n.t('microfrontend.module-signer.k0'),
       publicKey: 'system-public-key-base64',
       trustedAt: Date.now(),
       permissions: ['*'],
@@ -62,7 +63,7 @@ export class ModuleSigner {
   ): Promise<ModuleSignature> {
     const publisher = this.trustedPublishers.get(publisherId);
     if (!publisher) {
-      throw new Error(`发布者 ${publisherId} 不存在或不受信任`);
+      throw new Error(`${i18n.t('microfrontend.module-signer.k0')}${publisherId}${i18n.t('microfrontend.module-signer.k1')}`);
     }
 
     const signature = await this.generateSignature(content, algorithm);
@@ -114,7 +115,7 @@ export class ModuleSigner {
       return {
         valid: false,
         trustLevel: TrustLevel.REVOKED,
-        reason: '该模块签名已被吊销',
+        reason: i18n.t('microfrontend.module-signer.k1'),
       };
     }
 
@@ -123,7 +124,7 @@ export class ModuleSigner {
       return {
         valid: false,
         trustLevel: TrustLevel.UNKNOWN,
-        reason: '未找到模块签名信息',
+        reason: i18n.t('microfrontend.module-signer.k2'),
       };
     }
 
@@ -132,7 +133,7 @@ export class ModuleSigner {
       return {
         valid: false,
         trustLevel: TrustLevel.UNTRUSTED,
-        reason: '模块内容完整性校验失败，内容可能被篡改',
+        reason: i18n.t('microfrontend.module-signer.k3'),
         signer: signature.publisher,
         signedAt: signature.signedAt,
       };
@@ -146,7 +147,7 @@ export class ModuleSigner {
       return {
         valid: true,
         trustLevel: TrustLevel.TRUSTED,
-        reason: '模块签名验证通过，来自可信发布者',
+        reason: i18n.t('microfrontend.module-signer.k4'),
         signer: signature.publisher,
         signedAt: signature.signedAt,
       };
@@ -155,7 +156,7 @@ export class ModuleSigner {
     return {
       valid: true,
       trustLevel: TrustLevel.VERIFIED,
-      reason: '模块签名验证通过，但发布者不在可信列表中',
+      reason: i18n.t('microfrontend.module-signer.k5'),
       signer: signature.publisher,
       signedAt: signature.signedAt,
     };
@@ -217,7 +218,7 @@ export class ModuleSigner {
       {
         valid: true,
         trustLevel: TrustLevel.TRUSTED,
-        reason: '根签名验证通过',
+        reason: i18n.t('microfrontend.module-signer.k6'),
         signer: 'system-publisher',
         signedAt: Date.now(),
       },

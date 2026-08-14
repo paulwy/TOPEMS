@@ -1,10 +1,11 @@
 import type { EntitySchema } from '@/schema';
 import type { SchemaExtensions } from '@/schema/schemaExtensions';
+import i18n from '@/i18n';
 
 export const organizationSchema: EntitySchema & SchemaExtensions = {
   entity: 'hrm_org_unit',
-  title: '组织架构',
-  description: '管理企业组织架构，包括公司、部门、团队等层级结构',
+  title: i18n.t('hrm.organization.k0'),
+  description: i18n.t('hrm.organization.k1'),
 
   api: {
     module: 'hrm',
@@ -14,7 +15,7 @@ export const organizationSchema: EntitySchema & SchemaExtensions = {
   fields: [
     {
       name: 'name',
-      label: '名称',
+      label: i18n.t('hrm.organization.k2'),
       type: 'text',
       required: true,
       sortable: true,
@@ -22,7 +23,7 @@ export const organizationSchema: EntitySchema & SchemaExtensions = {
     },
     {
       name: 'code',
-      label: '编码',
+      label: i18n.t('hrm.organization.k3'),
       type: 'text',
       readonlyOnEdit: true,
       sortable: true,
@@ -30,36 +31,36 @@ export const organizationSchema: EntitySchema & SchemaExtensions = {
     },
     {
       name: 'type',
-      label: '类型',
+      label: i18n.t('hrm.organization.k4'),
       type: 'select',
       required: true,
       defaultValue: 'department',
       options: {
         type: 'static',
         options: [
-          { value: 'company', label: '公司' },
-          { value: 'department', label: '部门' },
-          { value: 'team', label: '团队' },
+          { value: 'company', label: i18n.t('hrm.organization.k5') },
+          { value: 'department', label: i18n.t('hrm.organization.k6') },
+          { value: 'team', label: i18n.t('hrm.organization.k7') },
         ],
       },
       listWidth: 100,
     },
     {
       name: 'manager',
-      label: '负责人',
+      label: i18n.t('hrm.organization.k8'),
       type: 'text',
       listWidth: 120,
     },
     {
       name: 'parentId',
-      label: '上级组织',
+      label: i18n.t('hrm.organization.k9'),
       type: 'text',
       showInList: false,
       showInDetail: false,
     },
     {
       name: 'description',
-      label: '描述',
+      label: i18n.t('hrm.organization.k10'),
       type: 'textarea',
       showInList: false,
     },
@@ -77,9 +78,9 @@ export const organizationSchema: EntitySchema & SchemaExtensions = {
         team: 'info',
       },
       labelMap: {
-        company: '公司',
-        department: '部门',
-        team: '团队',
+        company: i18n.t('hrm.organization.k11'),
+        department: i18n.t('hrm.organization.k12'),
+        team: i18n.t('hrm.organization.k13'),
       },
     },
   },
@@ -94,21 +95,21 @@ export const organizationSchema: EntitySchema & SchemaExtensions = {
 
   formSections: [
     {
-      title: '基本信息',
+      title: i18n.t('hrm.organization.k14'),
       fields: ['name', 'code', 'type'],
     },
     {
-      title: '组织关系',
+      title: i18n.t('hrm.organization.k15'),
       fields: ['manager', 'parentId'],
     },
     {
-      title: '其他',
+      title: i18n.t('hrm.organization.k16'),
       fields: ['description'],
     },
   ],
 
   formColCount: 2,
-  createTitle: '新增组织',
-  editTitle: '编辑组织',
-  detailTitle: '组织详情',
+  createTitle: i18n.t('hrm.organization.k17'),
+  editTitle: i18n.t('hrm.organization.k18'),
+  detailTitle: i18n.t('hrm.organization.k19'),
 };

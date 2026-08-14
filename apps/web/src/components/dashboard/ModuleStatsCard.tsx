@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import { Box, Typography, Paper } from '@mui/material';
 import { CheckCircle2 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
+import { designTokens } from '@topems/tokens';
+import i18n from '@/i18n';
 
 interface ModuleStatsCardProps {
   title?: string;
@@ -13,7 +15,7 @@ interface ModuleStatsCardProps {
 }
 
 export const ModuleStatsCard: React.FC<ModuleStatsCardProps> = ({
-  title = '系统状态',
+  title = i18n.t('shared.module_stats_card.k0'),
   total = 8,
   active = 8,
   icon: Icon = CheckCircle2,
@@ -33,10 +35,10 @@ export const ModuleStatsCard: React.FC<ModuleStatsCardProps> = ({
         p: 5,
         transition: 'all 0.4s ease-out',
         cursor: 'pointer',
-        border: '1px solid rgba(255, 255, 255, 0.05)',
+        border: `1px solid ${designTokens.colors.cyber.glass.bgLight}`,
         boxShadow: isHovered ? 20 : 10,
         transform: isHovered ? 'scale(1.02)' : 'scale(1)',
-        borderColor: isHovered ? 'glass.topLight' : 'rgba(255, 255, 255, 0.05)',
+        borderColor: isHovered ? 'glass.topLight' : designTokens.colors.cyber.glass.bgLight,
         '&:hover .top-bar': {
           transform: 'scaleX(1)',
         },

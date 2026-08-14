@@ -14,6 +14,7 @@ import {
   V51Avatar,
   V51Table,
 } from './components/index';
+import i18n from '@/i18n';
 import { useV51Theme, V51ThemeProvider } from './theme-manager';
 import { v51DesignLint, formatReport, runColorContrastChecks } from './design-lint';
 import { designTokens, semanticTokens } from '@topems/tokens';
@@ -30,13 +31,13 @@ const DesignSystemPanelContent: React.FC<{ onClose: () => void }> = ({ onClose }
   };
 
   const tabs = [
-    { id: 'overview', label: '概览', content: <OverviewTab /> },
+    { id: 'overview', label: i18n.t('design-system.design_system_panel.k0'), content: <OverviewTab /> },
     { id: 'tokens', label: 'Tokens', content: <TokensTab /> },
-    { id: 'components', label: '组件', content: <ComponentsTab /> },
-    { id: 'theming', label: '主题', content: <ThemingTab /> },
+    { id: 'components', label: i18n.t('design-system.design_system_panel.k1'), content: <ComponentsTab /> },
+    { id: 'theming', label: i18n.t('design-system.design_system_panel.k2'), content: <ThemingTab /> },
     {
       id: 'lint',
-      label: '合规',
+      label: i18n.t('design-system.design_system_panel.k3'),
       content: (
         <LintTab
           onRunLint={handleRunLint}
@@ -129,14 +130,14 @@ const OverviewTab: React.FC = () => (
     >
       <Grid size={{ xs: 12, md: 4 }}>
         <V51Card
-          title='设计令牌'
+          title={i18n.t('design-system.design_system_panel.k4')}
           subtitle='Tokens & Variables'
         >
           <Typography
             variant='body2'
             sx={{ color: 'text.secondary', mb: 2 }}
           >
-            V51.0 设计令牌系统，支持 CSS 自定义属性和 TypeScript 常量
+            {i18n.t('design_system.design_system_panel.k0')}
           </Typography>
           <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
             <V51Badge
@@ -169,14 +170,14 @@ const OverviewTab: React.FC = () => (
       </Grid>
       <Grid size={{ xs: 12, md: 4 }}>
         <V51Card
-          title='组件库'
-          subtitle='11 个核心组件'
+          title={i18n.t('design-system.design_system_panel.k5')}
+          subtitle={i18n.t('design_system.design_system_panel.11_1')}
         >
           <Typography
             variant='body2'
             sx={{ color: 'text.secondary', mb: 2 }}
           >
-            基于 MUI 的 V51 设计系统组件，提供一致的视觉体验
+            {i18n.t('design_system.design_system_panel.k2')}
           </Typography>
           <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
             <V51Badge
@@ -214,14 +215,14 @@ const OverviewTab: React.FC = () => (
       </Grid>
       <Grid size={{ xs: 12, md: 4 }}>
         <V51Card
-          title='主题管理'
+          title={i18n.t('design-system.design_system_panel.k6')}
           subtitle='Theme Manager'
         >
           <Typography
             variant='body2'
             sx={{ color: 'text.secondary', mb: 2 }}
           >
-            完整的主题管理系统，支持 light/dark/system 模式
+            {i18n.t('design_system.design_system_panel.k3')}
           </Typography>
           <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
             <V51Badge
@@ -250,23 +251,23 @@ const OverviewTab: React.FC = () => (
       variant='h6'
       sx={{ fontWeight: 600, mb: 2 }}
     >
-      快速预览
+      {i18n.t('design_system.design_system_panel.k4')}
     </Typography>
     <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap', alignItems: 'center' }}>
-      <V51Button variant='primary'>主要按钮</V51Button>
-      <V51Button variant='secondary'>次要按钮</V51Button>
-      <V51Button variant='outline'>轮廓按钮</V51Button>
-      <V51Button variant='text'>文本按钮</V51Button>
+      <V51Button variant='primary'>{i18n.t('design-system.design_system_panel.k7')}</V51Button>
+      <V51Button variant='secondary'>{i18n.t('design-system.design_system_panel.k8')}</V51Button>
+      <V51Button variant='outline'>{i18n.t('design-system.design_system_panel.k9')}</V51Button>
+      <V51Button variant='text'>{i18n.t('design-system.design_system_panel.k10')}</V51Button>
       <V51Button variant='icon'>
         <Palette size={18} />
       </V51Button>
       <V51Avatar
-        fallback='张三'
+        fallback={i18n.t('design-system.design_system_panel.k11')}
         size='md'
         online
       />
       <V51Avatar
-        fallback='李四'
+        fallback={i18n.t('design-system.design_system_panel.k12')}
         size='lg'
       />
       <V51Badge
@@ -411,7 +412,7 @@ const TokensTab: React.FC = () => {
                   variant='caption'
                   sx={{ fontFamily: v51DesignTokens.typography.fontFamily, fontSize: value }}
                 >
-                  Aa 文本示例
+                  {i18n.t('design_system.design_system_panel.aa_5')}
                 </Typography>
                 <Typography
                   variant='caption'
@@ -436,7 +437,7 @@ const TokensTab: React.FC = () => {
               variant='caption'
               sx={{ color: 'text.secondary', mb: 1, display: 'block' }}
             >
-              间距 (4px 基准)
+              {i18n.t('design_system.design_system_panel.4px_6')}
             </Typography>
             <Box sx={{ display: 'flex', gap: 1, alignItems: 'center', mb: 2 }}>
               {Object.entries(v51DesignTokens.spacing)
@@ -467,7 +468,7 @@ const TokensTab: React.FC = () => {
               variant='caption'
               sx={{ color: 'text.secondary', mb: 1, display: 'block' }}
             >
-              圆角
+              {i18n.t('design_system.design_system_panel.k7')}
             </Typography>
             <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
               {Object.entries(v51DesignTokens.borderRadius).map(([name, value]) => (
@@ -505,14 +506,14 @@ const ComponentsTab: React.FC = () => (
       variant='h6'
       sx={{ fontWeight: 600, mb: 2 }}
     >
-      组件预览
+      {i18n.t('design_system.design_system_panel.k8')}
     </Typography>
     <Grid
       container
       spacing={3}
     >
       <Grid size={{ xs: 12, md: 6 }}>
-        <V51Card title='Button 按钮'>
+        <V51Card title={i18n.t('design_system.design_system_panel.button_9')}>
           <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap', alignItems: 'center' }}>
             <V51Button variant='primary'>Primary</V51Button>
             <V51Button variant='secondary'>Secondary</V51Button>
@@ -527,40 +528,40 @@ const ComponentsTab: React.FC = () => (
       </Grid>
 
       <Grid size={{ xs: 12, md: 6 }}>
-        <V51Card title='Input 输入框'>
+        <V51Card title={i18n.t('design_system.design_system_panel.input_10')}>
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
             <V51Input
-              label='用户名'
-              placeholder='请输入用户名'
+              label={i18n.t('design-system.design_system_panel.k13')}
+              placeholder={i18n.t('design-system.design_system_panel.k14')}
             />
             <V51Input
-              label='邮箱'
+              label={i18n.t('design-system.design_system_panel.k15')}
               type='email'
               placeholder='user@example.com'
               validationState='success'
             />
             <V51Input
-              label='密码'
+              label={i18n.t('design-system.design_system_panel.k16')}
               type='password'
-              placeholder='请输入密码'
+              placeholder={i18n.t('design-system.design_system_panel.k17')}
               validationState='error'
-              helperText='密码长度至少 8 位'
+              helperText={i18n.t('design-system.design_system_panel.8_18')}
             />
           </Box>
         </V51Card>
       </Grid>
 
       <Grid size={{ xs: 12, md: 6 }}>
-        <V51Card title='Select 选择器'>
+        <V51Card title={i18n.t('design_system.design_system_panel.select_11')}>
           <V51Select
-            label='国家/地区'
+            label={i18n.t('design-system.design_system_panel.k19')}
             searchable
             options={[
-              { value: 'cn', label: '中国' },
-              { value: 'us', label: '美国' },
-              { value: 'jp', label: '日本' },
-              { value: 'de', label: '德国' },
-              { value: 'fr', label: '法国' },
+              { value: 'cn', label: i18n.t('design-system.design_system_panel.k20') },
+              { value: 'us', label: i18n.t('design-system.design_system_panel.k21') },
+              { value: 'jp', label: i18n.t('design-system.design_system_panel.k22') },
+              { value: 'de', label: i18n.t('design-system.design_system_panel.k23') },
+              { value: 'fr', label: i18n.t('design-system.design_system_panel.k24') },
             ]}
           />
         </V51Card>
@@ -570,45 +571,45 @@ const ComponentsTab: React.FC = () => (
         <V51Card title='Badge & Avatar'>
           <Box sx={{ display: 'flex', gap: 2, alignItems: 'center', flexWrap: 'wrap' }}>
             <V51Badge
-              label='进行中'
+              label={i18n.t('design-system.design_system_panel.k25')}
               variant='primary'
             />
             <V51Badge
-              label='已完成'
+              label={i18n.t('design-system.design_system_panel.k26')}
               variant='success'
             />
             <V51Badge
-              label='警告'
+              label={i18n.t('design-system.design_system_panel.k27')}
               variant='warning'
             />
             <V51Badge
-              label='错误'
+              label={i18n.t('design-system.design_system_panel.k28')}
               variant='error'
             />
             <V51Badge
-              label='信息'
+              label={i18n.t('design-system.design_system_panel.k29')}
               variant='info'
             />
             <V51Badge
-              label='中性'
+              label={i18n.t('design-system.design_system_panel.k30')}
               variant='neutral'
             />
             <V51Avatar
-              fallback='张三'
+              fallback={i18n.t('design-system.design_system_panel.k31')}
               size='sm'
               online
             />
             <V51Avatar
-              fallback='李四'
+              fallback={i18n.t('design-system.design_system_panel.k32')}
               size='md'
             />
             <V51Avatar
-              fallback='王五'
+              fallback={i18n.t('design-system.design_system_panel.k33')}
               size='lg'
               online
             />
             <V51Avatar
-              fallback='赵六'
+              fallback={i18n.t('design-system.design_system_panel.k34')}
               size='xl'
             />
           </Box>
@@ -616,17 +617,17 @@ const ComponentsTab: React.FC = () => (
       </Grid>
 
       <Grid size={{ xs: 12, md: 12 }}>
-        <V51Card title='Table 数据表格'>
+        <V51Card title={i18n.t('design_system.design_system_panel.table_12')}>
           <V51Table
             columns={[
-              { id: 'name', label: '名称', accessor: 'name' },
-              { id: 'status', label: '状态', accessor: 'status' },
-              { id: 'value', label: '数值', accessor: 'value', align: 'right' },
+              { id: 'name', label: i18n.t('design-system.design_system_panel.k35'), accessor: 'name' },
+              { id: 'status', label: i18n.t('design-system.design_system_panel.k36'), accessor: 'status' },
+              { id: 'value', label: i18n.t('design-system.design_system_panel.k37'), accessor: 'value', align: 'right' },
             ]}
             data={[
-              { name: '项目 A', status: '进行中', value: 100 },
-              { name: '项目 B', status: '已完成', value: 200 },
-              { name: '项目 C', status: '待开始', value: 50 },
+              { name: i18n.t('design-system.design_system_panel.a_39'), status: i18n.t('design-system.design_system_panel.k38'), value: 100 },
+              { name: i18n.t('design-system.design_system_panel.b_41'), status: i18n.t('design-system.design_system_panel.k40'), value: 200 },
+              { name: i18n.t('design-system.design_system_panel.c_43'), status: i18n.t('design-system.design_system_panel.k42'), value: 50 },
             ]}
             sortable
             selectable
@@ -636,7 +637,7 @@ const ComponentsTab: React.FC = () => (
       </Grid>
 
       <Grid size={{ xs: 12, md: 6 }}>
-        <V51Card title='Skeleton 骨架屏'>
+        <V51Card title={i18n.t('design_system.design_system_panel.skeleton_13')}>
           <V51Skeleton
             variant='text'
             width='60%'
@@ -653,12 +654,12 @@ const ComponentsTab: React.FC = () => (
       </Grid>
 
       <Grid size={{ xs: 12, md: 6 }}>
-        <V51Card title='Tabs 选项卡'>
+        <V51Card title={i18n.t('design_system.design_system_panel.tabs_14')}>
           <V51Tabs
             tabs={[
-              { id: 'tab1', label: '选项一', content: <Typography>选项一内容</Typography> },
-              { id: 'tab2', label: '选项二', content: <Typography>选项二内容</Typography> },
-              { id: 'tab3', label: '选项三', content: <Typography>选项三内容</Typography> },
+              { id: 'tab1', label: i18n.t('design-system.design_system_panel.k44'), content: <Typography>{i18n.t('design-system.design_system_panel.k45')}</Typography> },
+              { id: 'tab2', label: i18n.t('design-system.design_system_panel.k46'), content: <Typography>{i18n.t('design-system.design_system_panel.k47')}</Typography> },
+              { id: 'tab3', label: i18n.t('design-system.design_system_panel.k48'), content: <Typography>{i18n.t('design-system.design_system_panel.k49')}</Typography> },
             ]}
           />
         </V51Card>
@@ -677,17 +678,17 @@ const ThemingTab: React.FC = () => {
         variant='h6'
         sx={{ fontWeight: 600, mb: 2 }}
       >
-        主题配置
+        {i18n.t('design_system.design_system_panel.k15')}
       </Typography>
       <Grid
         container
         spacing={3}
       >
         <Grid size={{ xs: 12, md: 6 }}>
-          <V51Card title='当前主题'>
+          <V51Card title={i18n.t('design-system.design_system_panel.k50')}>
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
               <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <Typography variant='body2'>主题模式</Typography>
+                <Typography variant='body2'>{i18n.t('design-system.design_system_panel.k51')}</Typography>
                 <V51Badge
                   label={theme.mode}
                   variant='primary'
@@ -695,7 +696,7 @@ const ThemingTab: React.FC = () => {
                 />
               </Box>
               <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <Typography variant='body2'>主色调</Typography>
+                <Typography variant='body2'>{i18n.t('design-system.design_system_panel.k52')}</Typography>
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                   <Box
                     sx={{ width: 16, height: 16, borderRadius: '50%', bgcolor: theme.primaryColor }}
@@ -709,11 +710,11 @@ const ThemingTab: React.FC = () => {
                 </Box>
               </Box>
               <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <Typography variant='body2'>字号</Typography>
+                <Typography variant='body2'>{i18n.t('design-system.design_system_panel.k53')}</Typography>
                 <Typography variant='body2'>{theme.fontSize}px</Typography>
               </Box>
               <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <Typography variant='body2'>密度</Typography>
+                <Typography variant='body2'>{i18n.t('design-system.design_system_panel.k54')}</Typography>
                 <V51Badge
                   label={theme.density}
                   variant='neutral'
@@ -725,17 +726,17 @@ const ThemingTab: React.FC = () => {
         </Grid>
 
         <Grid size={{ xs: 12, md: 6 }}>
-          <V51Card title='操作'>
+          <V51Card title={i18n.t('design-system.design_system_panel.k55')}>
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
               <V51Button
                 variant='primary'
                 onClick={toggleDarkMode}
               >
-                切换 {theme.mode === 'dark' ? '亮色' : '暗色'} 模式
+                切换 {theme.mode === 'dark' ? i18n.t('design-system.design_system_panel.k57') : i18n.t('design-system.design_system_panel.k56')} 模式
               </V51Button>
 
               <V51Input
-                label='主色调 (Hex)'
+                label={i18n.t('design-system.design_system_panel.hex_58')}
                 value={tempColor}
                 onChange={(v) => setTempColor(v)}
               />
@@ -743,11 +744,11 @@ const ThemingTab: React.FC = () => {
                 variant='outline'
                 onClick={() => setPrimaryColor(tempColor)}
               >
-                应用主色调
+                {i18n.t('design_system.design_system_panel.k16')}
               </V51Button>
 
               <V51Input
-                label={`字号 (${theme.fontSize}px)`}
+                label={`${i18n.t('design_system.design_system_panel.k17')}${theme.fontSize}px)`}
                 type='number'
                 value={String(theme.fontSize)}
                 onChange={(v) => setFontSize(parseInt(v, 10) || 14)}
@@ -763,7 +764,7 @@ const ThemingTab: React.FC = () => {
         variant='h6'
         sx={{ fontWeight: 600, mb: 2 }}
       >
-        CSS 变量预览
+        {i18n.t('design_system.design_system_panel.css_18')}
       </Typography>
       <Paper sx={{ p: 2, borderRadius: 2, bgcolor: 'grey.50', maxHeight: 300, overflow: 'auto' }}>
         <Typography
@@ -794,7 +795,7 @@ const LintTab: React.FC<{ onRunLint: () => void; lintResult: string }> = ({
         variant='h6'
         sx={{ fontWeight: 600, mb: 2 }}
       >
-        设计合规检查
+        {i18n.t('design_system.design_system_panel.k19')}
       </Typography>
 
       <Grid
@@ -814,7 +815,7 @@ const LintTab: React.FC<{ onRunLint: () => void; lintResult: string }> = ({
               variant='caption'
               sx={{ color: 'text.secondary' }}
             >
-              对比度检查
+              {i18n.t('design_system.design_system_panel.k20')}
             </Typography>
           </Paper>
         </Grid>
@@ -830,7 +831,7 @@ const LintTab: React.FC<{ onRunLint: () => void; lintResult: string }> = ({
               variant='caption'
               sx={{ color: 'text.secondary' }}
             >
-              检查项总数
+              {i18n.t('design_system.design_system_panel.k21')}
             </Typography>
           </Paper>
         </Grid>
@@ -846,7 +847,7 @@ const LintTab: React.FC<{ onRunLint: () => void; lintResult: string }> = ({
               variant='caption'
               sx={{ color: 'text.secondary' }}
             >
-              通过率
+              {i18n.t('design_system.design_system_panel.k22')}
             </Typography>
           </Paper>
         </Grid>
@@ -862,7 +863,7 @@ const LintTab: React.FC<{ onRunLint: () => void; lintResult: string }> = ({
               variant='caption'
               sx={{ color: 'text.secondary' }}
             >
-              标准
+              {i18n.t('design_system.design_system_panel.k23')}
             </Typography>
           </Paper>
         </Grid>
@@ -873,7 +874,7 @@ const LintTab: React.FC<{ onRunLint: () => void; lintResult: string }> = ({
         onClick={onRunLint}
         sx={{ mb: 2 }}
       >
-        运行合规检查
+        {i18n.t('design_system.design_system_panel.k24')}
       </V51Button>
 
       {lintResult && (
@@ -893,7 +894,7 @@ const LintTab: React.FC<{ onRunLint: () => void; lintResult: string }> = ({
         variant='subtitle2'
         sx={{ fontWeight: 600, mb: 1 }}
       >
-        对比度详情
+        {i18n.t('design_system.design_system_panel.k25')}
       </Typography>
       <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
         {checks.map((check, idx) => (

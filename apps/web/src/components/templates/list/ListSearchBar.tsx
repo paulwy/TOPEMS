@@ -14,6 +14,7 @@ import {
   Tooltip,
   IconButton,
 } from '@mui/material';
+import i18n from '@/i18n';
 import { Search, RefreshCw } from 'lucide-react';
 import type { FilterConfig, FilterValue } from '@topems/shared-components';
 import { designTokens, semanticTokens } from '@topems/tokens';
@@ -125,7 +126,7 @@ export const ListSearchBar: React.FC<ListSearchBarProps> = ({
           <TextField
             key={filter.id}
             {...commonProps}
-            placeholder='搜索...'
+            placeholder={i18n.t('components.list_search_bar.k0')}
             slotProps={{
               input: {
                 startAdornment: (
@@ -156,7 +157,7 @@ export const ListSearchBar: React.FC<ListSearchBarProps> = ({
             key=''
             value=''
           >
-            全部
+            {i18n.t('components.list_search_bar.k1')}
           </MenuItem>,
           ...(filter.options?.map((option) => (
             <MenuItem
@@ -245,11 +246,11 @@ export const ListSearchBar: React.FC<ListSearchBarProps> = ({
       })}
 
       {onRefresh && (
-        <Tooltip title='刷新'>
+        <Tooltip title={i18n.t('components.list_search_bar.k0')}>
           <IconButton
             size='small'
             onClick={onRefresh}
-            aria-label='刷新'
+            aria-label={i18n.t('components.list_search_bar.k1')}
           >
             <RefreshCw style={{ width: 18, height: 18 }} />
           </IconButton>

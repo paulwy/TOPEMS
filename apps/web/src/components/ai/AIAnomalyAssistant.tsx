@@ -12,6 +12,7 @@ import {
   Slider,
   AlertTitle,
 } from '@mui/material';
+import i18n from '@/i18n';
 import { Activity, RefreshCw, Lightbulb } from 'lucide-react';
 import { assistantApi } from '../../api/ai/assistant';
 import { useNotificationStore } from '@/store/notificationStore';
@@ -33,7 +34,7 @@ export const AIAnomalyAssistant: React.FC<AIAnomalyAssistantProps> = ({ initialM
 
   const handlePredictAnomaly = async () => {
     if (!metric.trim()) {
-      addNotification({ title: '警告', message: '请输入监控指标', type: 'warning' });
+      addNotification({ title: i18n.t('components.ai_anomaly_assistant.k1'), message: i18n.t('components.ai_anomaly_assistant.k0'), type: 'warning' });
       return;
     }
 
@@ -51,17 +52,17 @@ export const AIAnomalyAssistant: React.FC<AIAnomalyAssistantProps> = ({ initialM
       if (response.success && response.data) {
         setResult(response.data);
         addNotification({
-          title: '分析完成',
-          message: `发现 ${response.data.anomaly_count} 个异常点`,
+          title: i18n.t('components.ai_anomaly_assistant.k2'),
+          message: `${i18n.t('components.ai_anomaly_assistant.k0')} ${response.data.anomaly_count} ${i18n.t('components.ai_anomaly_assistant.k1')}`,
           type: response.data.anomaly_count > 0 ? 'warning' : 'success',
         });
       } else {
-        setError(response.message || '异常预测失败');
+        setError(response.message || i18n.t('components.ai_anomaly_assistant.k3'));
       }
     } catch (err: unknown) {
-      logger.error('异常预测调用失败:', err);
-      setError('异常预测服务暂不可用');
-      addNotification({ title: '错误', message: '异常预测服务暂不可用', type: 'error' });
+      logger.error(i18n.t('components.ai_anomaly_assistant.k2'), err);
+      setError(i18n.t('components.ai_anomaly_assistant.k4'));
+      addNotification({ title: i18n.t('components.ai_anomaly_assistant.k6'), message: i18n.t('components.ai_anomaly_assistant.k5'), type: 'error' });
     } finally {
       setIsLoading(false);
     }
@@ -83,11 +84,11 @@ export const AIAnomalyAssistant: React.FC<AIAnomalyAssistantProps> = ({ initialM
   const getSeverityLabel = (severity: string) => {
     switch (severity) {
       case 'high':
-        return '严重';
+        return i18n.t('components.ai_anomaly_assistant.k7');
       case 'medium':
-        return '中等';
+        return i18n.t('components.ai_anomaly_assistant.k8');
       case 'low':
-        return '轻微';
+        return i18n.t('components.ai_anomaly_assistant.k9');
       default:
         return severity;
     }
@@ -107,7 +108,7 @@ export const AIAnomalyAssistant: React.FC<AIAnomalyAssistantProps> = ({ initialM
           variant='subtitle2'
           sx={{ mb: 2 }}
         >
-          异常点分布
+          {i18n.t('components.ai_anomaly_assistant.k3')}
         </Typography>
         <Box sx={{ display: 'flex', alignItems: 'flex-end', height: 180, gap: 1, px: 2 }}>
           {result.anomalies.map((item: any, idx: number) => {
@@ -152,28 +153,28 @@ export const AIAnomalyAssistant: React.FC<AIAnomalyAssistantProps> = ({ initialM
   };
 
   const metrics = [
-    { value: 'cpu_usage', label: 'CPU 使用率' },
-    { value: 'memory_usage', label: '内存使用率' },
-    { value: 'disk_io', label: '磁盘 IO' },
-    { value: 'network_latency', label: '网络延迟' },
-    { value: 'request_count', label: '请求量' },
-    { value: 'error_rate', label: '错误率' },
-    { value: 'production_yield', label: '生产良率' },
-    { value: 'energy_consumption', label: '能耗' },
+    { value: 'cpu_usage', label: i18n.t('components.ai_anomaly_assistant.cpu_4') },
+    { value: 'memory_usage', label: i18n.t('components.ai_anomaly_assistant.k10') },
+    { value: 'disk_io', label: i18n.t('components.ai_anomaly_assistant.io_11') },
+    { value: 'network_latency', label: i18n.t('components.ai_anomaly_assistant.k12') },
+    { value: 'request_count', label: i18n.t('components.ai_anomaly_assistant.k13') },
+    { value: 'error_rate', label: i18n.t('components.ai_anomaly_assistant.k14') },
+    { value: 'production_yield', label: i18n.t('components.ai_anomaly_assistant.k15') },
+    { value: 'energy_consumption', label: i18n.t('components.ai_anomaly_assistant.k16') },
   ];
 
   const timeRanges = [
-    { value: '1d', label: '1天' },
-    { value: '7d', label: '7天' },
-    { value: '30d', label: '30天' },
-    { value: '90d', label: '90天' },
+    { value: '1d', label: i18n.t('components.ai_anomaly_assistant.1_5') },
+    { value: '7d', label: i18n.t('components.ai_anomaly_assistant.7_6') },
+    { value: '30d', label: i18n.t('components.ai_anomaly_assistant.30_7') },
+    { value: '90d', label: i18n.t('components.ai_anomaly_assistant.90_8') },
   ];
 
   return (
     <Card>
       <CardHeader
-        title='AI 异常预警'
-        subheader='基于历史数据预测业务指标异常，提前发现潜在风险'
+        title={i18n.t('components.ai_anomaly_assistant.ai_9')}
+        subheader={i18n.t('components.ai_anomaly_assistant.k17')}
       />
       <CardContent>
         <Box sx={{ mb: 3 }}>
@@ -181,7 +182,7 @@ export const AIAnomalyAssistant: React.FC<AIAnomalyAssistantProps> = ({ initialM
             variant='subtitle2'
             sx={{ mb: 2, color: 'text.secondary' }}
           >
-            监控指标:
+            [i18n.t('components.ai_anomaly_assistant.k10')]:
           </Typography>
           <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1.5 }}>
             {metrics.map((item) => (
@@ -199,8 +200,8 @@ export const AIAnomalyAssistant: React.FC<AIAnomalyAssistantProps> = ({ initialM
 
         <TextField
           fullWidth
-          label='监控指标'
-          placeholder='例如：cpu_usage、production_yield'
+          label={i18n.t('components.ai_anomaly_assistant.k18')}
+          placeholder={i18n.t('components.ai_anomaly_assistant.k19')}
           value={metric}
           onChange={(e) => setMetric(e.target.value)}
           size='small'
@@ -212,7 +213,7 @@ export const AIAnomalyAssistant: React.FC<AIAnomalyAssistantProps> = ({ initialM
             variant='subtitle2'
             sx={{ mb: 1.5, color: 'text.secondary' }}
           >
-            时间范围:
+            [i18n.t('components.ai_anomaly_assistant.k11')]:
           </Typography>
           <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1.5 }}>
             {timeRanges.map((item) => (
@@ -233,7 +234,7 @@ export const AIAnomalyAssistant: React.FC<AIAnomalyAssistantProps> = ({ initialM
             variant='subtitle2'
             sx={{ mb: 1, color: 'text.secondary' }}
           >
-            异常阈值: {threshold} 倍标准差
+            [i18n.t('components.ai_anomaly_assistant.k12')]: {threshold} {i18n.t('components.ai_anomaly_assistant.k13')}
           </Typography>
           <Slider
             value={threshold}
@@ -268,7 +269,7 @@ export const AIAnomalyAssistant: React.FC<AIAnomalyAssistantProps> = ({ initialM
           }
           fullWidth
         >
-          {isLoading ? '分析中...' : '开始异常预测'}
+          {isLoading ? i18n.t('components.ai_anomaly_assistant.k14') : i18n.t('components.ai_anomaly_assistant.k20')}
         </Button>
 
         {error && (
@@ -284,11 +285,11 @@ export const AIAnomalyAssistant: React.FC<AIAnomalyAssistantProps> = ({ initialM
           <Box sx={{ mt: 4 }}>
             <Card>
               <CardHeader
-                title={`${result.metric} 异常分析`}
+                title={`${result.metric} ${i18n.t('components.ai_anomaly_assistant.k15')}`}
                 subheader={result.summary}
                 action={
                   <Chip
-                    label={`${result.anomaly_count} 个异常`}
+                    label={`${result.anomaly_count} ${i18n.t('components.ai_anomaly_assistant.k16')}`}
                     color={result.anomaly_count > 0 ? 'error' : 'success'}
                     size='small'
                   />
@@ -303,7 +304,7 @@ export const AIAnomalyAssistant: React.FC<AIAnomalyAssistantProps> = ({ initialM
                       variant='subtitle2'
                       sx={{ mb: 2 }}
                     >
-                      异常详情
+                      {i18n.t('components.ai_anomaly_assistant.k17')}
                     </Typography>
                     <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
                       {result.anomalies.map((anomaly: any, idx: number) => (
@@ -317,13 +318,13 @@ export const AIAnomalyAssistant: React.FC<AIAnomalyAssistantProps> = ({ initialM
                           </AlertTitle>
                           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
                             <Typography variant='body2'>
-                              实际值: <strong>{anomaly.value.toFixed(2)}</strong>
+                              [i18n.t('components.ai_anomaly_assistant.k18')]: <strong>{anomaly.value.toFixed(2)}</strong>
                               {anomaly.expected !== undefined && (
                                 <span> | 预期值: {anomaly.expected.toFixed(2)}</span>
                               )}
                             </Typography>
                             <Typography variant='body2'>
-                              严重程度: <strong>{getSeverityLabel(anomaly.severity)}</strong>
+                              [i18n.t('components.ai_anomaly_assistant.k19')]: <strong>{getSeverityLabel(anomaly.severity)}</strong>
                             </Typography>
                             {anomaly.reason && (
                               <Typography
@@ -352,7 +353,7 @@ export const AIAnomalyAssistant: React.FC<AIAnomalyAssistantProps> = ({ initialM
                           variant='subtitle1'
                           sx={{ fontWeight: 600 }}
                         >
-                          处理建议
+                          {i18n.t('components.ai_anomaly_assistant.k20')}
                         </Typography>
                       </Box>
                       <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>

@@ -1,9 +1,10 @@
 import type { EntitySchema } from '@/schema';
+import i18n from '@/i18n';
 
 export const occupationalDiseaseSchema: EntitySchema = {
   entity: 'ehsOccupationalDiseaseCase',
-  title: '职业病管理',
-  description: '管理企业职业病案例，包括员工信息、危害因素、诊断信息、严重程度、状态等',
+  title: i18n.t('ehs.occupational_disease.k0'),
+  description: i18n.t('ehs.occupational_disease.k1'),
 
   api: {
     module: 'ehs',
@@ -13,7 +14,7 @@ export const occupationalDiseaseSchema: EntitySchema = {
   fields: [
     {
       name: 'case_no',
-      label: '案例编号',
+      label: i18n.t('ehs.occupational_disease.k2'),
       type: 'text',
       readonlyOnEdit: true,
       listWidth: 150,
@@ -26,7 +27,7 @@ export const occupationalDiseaseSchema: EntitySchema = {
     },
     {
       name: 'employee_name',
-      label: '员工姓名',
+      label: i18n.t('ehs.occupational_disease.k3'),
       type: 'text',
       required: true,
       sortable: true,
@@ -35,7 +36,7 @@ export const occupationalDiseaseSchema: EntitySchema = {
     },
     {
       name: 'employee_id',
-      label: '员工编号',
+      label: i18n.t('ehs.occupational_disease.k4'),
       type: 'text',
       listWidth: 120,
       showInList: false,
@@ -43,7 +44,7 @@ export const occupationalDiseaseSchema: EntitySchema = {
     },
     {
       name: 'department',
-      label: '部门',
+      label: i18n.t('ehs.occupational_disease.k5'),
       type: 'text',
       listWidth: 120,
       renderCell: (row: Record<string, unknown>) => {
@@ -54,15 +55,15 @@ export const occupationalDiseaseSchema: EntitySchema = {
     },
     {
       name: 'hazard_factor',
-      label: '危害因素',
+      label: i18n.t('ehs.occupational_disease.k6'),
       type: 'select',
       options: {
         type: 'static',
         options: [
-          { value: '粉尘', label: '粉尘' },
-          { value: '化学', label: '化学' },
-          { value: '物理', label: '物理' },
-          { value: '生物', label: '生物' },
+          { value: i18n.t('ehs.occupational_disease.k7'), label: i18n.t('ehs.occupational_disease.k8') },
+          { value: i18n.t('ehs.occupational_disease.k9'), label: i18n.t('ehs.occupational_disease.k10') },
+          { value: i18n.t('ehs.occupational_disease.k11'), label: i18n.t('ehs.occupational_disease.k12') },
+          { value: i18n.t('ehs.occupational_disease.k13'), label: i18n.t('ehs.occupational_disease.k14') },
         ],
       },
       listWidth: 120,
@@ -73,7 +74,7 @@ export const occupationalDiseaseSchema: EntitySchema = {
     },
     {
       name: 'diagnosis_date',
-      label: '诊断日期',
+      label: i18n.t('ehs.occupational_disease.k15'),
       type: 'date',
       sortable: true,
       listWidth: 140,
@@ -84,7 +85,7 @@ export const occupationalDiseaseSchema: EntitySchema = {
     },
     {
       name: 'disease_name',
-      label: '职业病名称',
+      label: i18n.t('ehs.occupational_disease.k16'),
       type: 'text',
       required: true,
       listWidth: 160,
@@ -96,7 +97,7 @@ export const occupationalDiseaseSchema: EntitySchema = {
     },
     {
       name: 'disease_type',
-      label: '疾病类型',
+      label: i18n.t('ehs.occupational_disease.k17'),
       type: 'text',
       listWidth: 120,
       showInList: false,
@@ -104,25 +105,25 @@ export const occupationalDiseaseSchema: EntitySchema = {
     },
     {
       name: 'severity',
-      label: '严重程度',
+      label: i18n.t('ehs.occupational_disease.k18'),
       type: 'select',
       options: {
         type: 'static',
         options: [
-          { value: 'mild', label: '轻度' },
-          { value: 'moderate', label: '中度' },
-          { value: 'severe', label: '重度' },
-          { value: 'fatal', label: '极重度' },
+          { value: 'mild', label: i18n.t('ehs.occupational_disease.k19') },
+          { value: 'moderate', label: i18n.t('ehs.occupational_disease.k20') },
+          { value: 'severe', label: i18n.t('ehs.occupational_disease.k21') },
+          { value: 'fatal', label: i18n.t('ehs.occupational_disease.k22') },
         ],
       },
       listWidth: 100,
       renderCell: (row: Record<string, unknown>) => {
         const v = row.severity as string;
         const map: Record<string, string> = {
-          mild: '轻度',
-          moderate: '中度',
-          severe: '重度',
-          fatal: '极重度',
+          mild: i18n.t('ehs.occupational_disease.k23'),
+          moderate: i18n.t('ehs.occupational_disease.k24'),
+          severe: i18n.t('ehs.occupational_disease.k25'),
+          fatal: i18n.t('ehs.occupational_disease.k26'),
         };
         return map[v] || v || '-';
       },
@@ -130,28 +131,28 @@ export const occupationalDiseaseSchema: EntitySchema = {
     },
     {
       name: 'status',
-      label: '状态',
+      label: i18n.t('ehs.occupational_disease.k27'),
       type: 'select',
       defaultValue: 'suspected',
       options: {
         type: 'static',
         options: [
-          { value: 'suspected', label: '疑似' },
-          { value: 'confirmed', label: '确诊' },
-          { value: 'recovered', label: '康复' },
-          { value: 'chronic', label: '慢性' },
-          { value: 'deceased', label: '死亡' },
+          { value: 'suspected', label: i18n.t('ehs.occupational_disease.k28') },
+          { value: 'confirmed', label: i18n.t('ehs.occupational_disease.k29') },
+          { value: 'recovered', label: i18n.t('ehs.occupational_disease.k30') },
+          { value: 'chronic', label: i18n.t('ehs.occupational_disease.k31') },
+          { value: 'deceased', label: i18n.t('ehs.occupational_disease.k32') },
         ],
       },
       listWidth: 100,
       renderCell: (row: Record<string, unknown>) => {
         const v = row.status as string;
         const map: Record<string, string> = {
-          suspected: '疑似',
-          confirmed: '确诊',
-          recovered: '康复',
-          chronic: '慢性',
-          deceased: '死亡',
+          suspected: i18n.t('ehs.occupational_disease.k33'),
+          confirmed: i18n.t('ehs.occupational_disease.k34'),
+          recovered: i18n.t('ehs.occupational_disease.k35'),
+          chronic: i18n.t('ehs.occupational_disease.k36'),
+          deceased: i18n.t('ehs.occupational_disease.k37'),
         };
         return map[v] || v || '-';
       },
@@ -159,20 +160,20 @@ export const occupationalDiseaseSchema: EntitySchema = {
     },
     {
       name: 'diagnosis_hospital',
-      label: '诊断医院',
+      label: i18n.t('ehs.occupational_disease.k38'),
       type: 'text',
       showInList: false,
     },
     {
       name: 'treatment',
-      label: '治疗方案',
+      label: i18n.t('ehs.occupational_disease.k39'),
       type: 'textarea',
       showInList: false,
       colSpan: 2,
     },
     {
       name: 'description',
-      label: '描述',
+      label: i18n.t('ehs.occupational_disease.k40'),
       type: 'textarea',
       showInList: false,
       colSpan: 2,
@@ -202,37 +203,37 @@ export const occupationalDiseaseSchema: EntitySchema = {
         deceased: 'default',
       },
       labelMap: {
-        suspected: '疑似',
-        confirmed: '确诊',
-        recovered: '康复',
-        chronic: '慢性',
-        deceased: '死亡',
+        suspected: i18n.t('ehs.occupational_disease.k41'),
+        confirmed: i18n.t('ehs.occupational_disease.k42'),
+        recovered: i18n.t('ehs.occupational_disease.k43'),
+        chronic: i18n.t('ehs.occupational_disease.k44'),
+        deceased: i18n.t('ehs.occupational_disease.k45'),
       },
     },
     filters: [
       {
         id: 'severity',
-        label: '严重程度',
+        label: i18n.t('ehs.occupational_disease.k46'),
         type: 'select',
         options: [
-          { label: '全部', value: 'all' },
-          { label: '轻度', value: 'mild' },
-          { label: '中度', value: 'moderate' },
-          { label: '重度', value: 'severe' },
-          { label: '极重度', value: 'fatal' },
+          { label: i18n.t('ehs.occupational_disease.k47'), value: 'all' },
+          { label: i18n.t('ehs.occupational_disease.k48'), value: 'mild' },
+          { label: i18n.t('ehs.occupational_disease.k49'), value: 'moderate' },
+          { label: i18n.t('ehs.occupational_disease.k50'), value: 'severe' },
+          { label: i18n.t('ehs.occupational_disease.k51'), value: 'fatal' },
         ],
       },
       {
         id: 'status',
-        label: '状态',
+        label: i18n.t('ehs.occupational_disease.k52'),
         type: 'select',
         options: [
-          { label: '全部', value: 'all' },
-          { label: '疑似', value: 'suspected' },
-          { label: '确诊', value: 'confirmed' },
-          { label: '康复', value: 'recovered' },
-          { label: '慢性', value: 'chronic' },
-          { label: '死亡', value: 'deceased' },
+          { label: i18n.t('ehs.occupational_disease.k53'), value: 'all' },
+          { label: i18n.t('ehs.occupational_disease.k54'), value: 'suspected' },
+          { label: i18n.t('ehs.occupational_disease.k55'), value: 'confirmed' },
+          { label: i18n.t('ehs.occupational_disease.k56'), value: 'recovered' },
+          { label: i18n.t('ehs.occupational_disease.k57'), value: 'chronic' },
+          { label: i18n.t('ehs.occupational_disease.k58'), value: 'deceased' },
         ],
       },
     ],
@@ -242,11 +243,11 @@ export const occupationalDiseaseSchema: EntitySchema = {
 
   formSections: [
     {
-      title: '员工信息',
+      title: i18n.t('ehs.occupational_disease.k59'),
       fields: ['employee_name', 'employee_id', 'department'],
     },
     {
-      title: '诊断信息',
+      title: i18n.t('ehs.occupational_disease.k60'),
       fields: [
         'hazard_factor',
         'diagnosis_date',
@@ -256,17 +257,17 @@ export const occupationalDiseaseSchema: EntitySchema = {
       ],
     },
     {
-      title: '严重程度与状态',
+      title: i18n.t('ehs.occupational_disease.k61'),
       fields: ['severity', 'status'],
     },
     {
-      title: '其他信息',
+      title: i18n.t('ehs.occupational_disease.k62'),
       fields: ['treatment', 'description'],
     },
   ],
 
   formColCount: 2,
-  createTitle: '新增职业病案例',
-  editTitle: '编辑职业病案例',
-  detailTitle: '职业病案例详情',
+  createTitle: i18n.t('ehs.occupational_disease.k63'),
+  editTitle: i18n.t('ehs.occupational_disease.k64'),
+  detailTitle: i18n.t('ehs.occupational_disease.k65'),
 };

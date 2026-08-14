@@ -1,3 +1,4 @@
+import i18n from '@/i18n';
 export interface ModulePermission {
   module: string;
   action: PermissionAction;
@@ -47,42 +48,42 @@ export const MODULES = {
 export type ModuleCode = (typeof MODULES)[keyof typeof MODULES];
 
 export const ACTIONS: { action: PermissionAction; name: string; level: number }[] = [
-  { action: 'read', name: '只读', level: 1 },
-  { action: 'write', name: '写入', level: 2 },
-  { action: 'delete', name: '删除', level: 3 },
-  { action: 'approve', name: '审批', level: 3 },
-  { action: 'admin', name: '管理', level: 4 },
+  { action: 'read', name: i18n.t('shared.permissions.k0'), level: 1 },
+  { action: 'write', name: i18n.t('shared.permissions.k1'), level: 2 },
+  { action: 'delete', name: i18n.t('shared.permissions.k2'), level: 3 },
+  { action: 'approve', name: i18n.t('shared.permissions.k3'), level: 3 },
+  { action: 'admin', name: i18n.t('shared.permissions.k4'), level: 4 },
 ];
 
 export const PERMISSION_GROUPS: Record<string, PermissionGroup> = {
   core: {
     id: 'core',
-    name: '核心模块',
-    description: '系统核心功能模块',
+    name: i18n.t('shared.permissions.k5'),
+    description: i18n.t('shared.permissions.k6'),
     modules: ['iam'],
   },
   business: {
     id: 'business',
-    name: '业务模块',
-    description: '核心业务管理模块',
+    name: i18n.t('shared.permissions.k7'),
+    description: i18n.t('shared.permissions.k8'),
     modules: ['hrm', 'erp', 'pm', 'rs', 'scm', 'crm'],
   },
   advanced: {
     id: 'advanced',
-    name: '高级模块',
-    description: '高级功能模块',
+    name: i18n.t('shared.permissions.k9'),
+    description: i18n.t('shared.permissions.k10'),
     modules: ['ai', 'gis', 'qms', 'ehs', 'mes', 'wms'],
   },
   infrastructure: {
     id: 'infrastructure',
-    name: '基础设施',
-    description: '系统基础设施模块',
+    name: i18n.t('shared.permissions.k11'),
+    description: i18n.t('shared.permissions.k12'),
     modules: ['doc', 'file', 'notification', 'im', 'integration'],
   },
   system: {
     id: 'system',
-    name: '系统管理',
-    description: '系统配置与管理',
+    name: i18n.t('shared.permissions.k13'),
+    description: i18n.t('shared.permissions.k14'),
     modules: ['system', 'workflow'],
   },
 };
@@ -266,52 +267,52 @@ export const ROLE_PERMISSIONS: Record<string, string[]> = {
 
 export const MODULE_INFO: Record<ModuleCode, { name: string; description: string }> = {
   // 核心模块
-  [MODULES.IAM]: { name: '身份管理', description: '用户、角色、权限管理' },
+  [MODULES.IAM]: { name: i18n.t('shared.permissions.k16'), description: i18n.t('shared.permissions.k15') },
   // 业务模块
-  [MODULES.HRM]: { name: '人力资源', description: '员工、公司、部门管理' },
-  [MODULES.ERP]: { name: '企业资源', description: '财务、库存、销售管理' },
-  [MODULES.PM]: { name: '项目管理', description: '项目、任务、时间线' },
-  [MODULES.RS]: { name: '研发管理', description: '研发项目、文档、测试' },
-  [MODULES.SCM]: { name: '供应链', description: '供应商、采购、仓储' },
-  [MODULES.CRM]: { name: '客户关系', description: '客户、商机、活动' },
-  [MODULES.AI]: { name: 'AI助手', description: '智能对话、数据分析' },
-  [MODULES.GIS]: { name: '地理信息', description: '地图、图层、空间分析' },
-  [MODULES.QMS]: { name: '质量管理', description: '质量标准、审核记录' },
-  [MODULES.EHS]: { name: '环境健康安全', description: '环境、安全、健康管理' },
-  [MODULES.MES]: { name: '制造执行', description: '生产执行、工序管理' },
-  [MODULES.WMS]: { name: '仓储管理', description: '仓库、库存、入库出库' },
+  [MODULES.HRM]: { name: i18n.t('shared.permissions.k18'), description: i18n.t('shared.permissions.k17') },
+  [MODULES.ERP]: { name: i18n.t('shared.permissions.k20'), description: i18n.t('shared.permissions.k19') },
+  [MODULES.PM]: { name: i18n.t('shared.permissions.k22'), description: i18n.t('shared.permissions.k21') },
+  [MODULES.RS]: { name: i18n.t('shared.permissions.k24'), description: i18n.t('shared.permissions.k23') },
+  [MODULES.SCM]: { name: i18n.t('shared.permissions.k26'), description: i18n.t('shared.permissions.k25') },
+  [MODULES.CRM]: { name: i18n.t('shared.permissions.k28'), description: i18n.t('shared.permissions.k27') },
+  [MODULES.AI]: { name: i18n.t('shared.permissions.ai_0'), description: i18n.t('shared.permissions.k29') },
+  [MODULES.GIS]: { name: i18n.t('shared.permissions.k31'), description: i18n.t('shared.permissions.k30') },
+  [MODULES.QMS]: { name: i18n.t('shared.permissions.k33'), description: i18n.t('shared.permissions.k32') },
+  [MODULES.EHS]: { name: i18n.t('shared.permissions.k35'), description: i18n.t('shared.permissions.k34') },
+  [MODULES.MES]: { name: i18n.t('shared.permissions.k37'), description: i18n.t('shared.permissions.k36') },
+  [MODULES.WMS]: { name: i18n.t('shared.permissions.k39'), description: i18n.t('shared.permissions.k38') },
   // 特殊模块
-  [MODULES.WORKFLOW]: { name: '工作流', description: '流程定义、审批' },
+  [MODULES.WORKFLOW]: { name: i18n.t('shared.permissions.k41'), description: i18n.t('shared.permissions.k40') },
   // 基础设施模块
-  [MODULES.DOC]: { name: '文档管理', description: '文档存储、协作' },
-  [MODULES.FILE]: { name: '文件服务', description: '文件上传、存储' },
-  [MODULES.NOTIFICATION]: { name: '通知服务', description: '消息通知、推送' },
-  [MODULES.IM]: { name: '即时通讯', description: '即时消息、群聊' },
-  [MODULES.INTEGRATION]: { name: '系统集成', description: '第三方系统集成' },
+  [MODULES.DOC]: { name: i18n.t('shared.permissions.k43'), description: i18n.t('shared.permissions.k42') },
+  [MODULES.FILE]: { name: i18n.t('shared.permissions.k45'), description: i18n.t('shared.permissions.k44') },
+  [MODULES.NOTIFICATION]: { name: i18n.t('shared.permissions.k47'), description: i18n.t('shared.permissions.k46') },
+  [MODULES.IM]: { name: i18n.t('shared.permissions.k49'), description: i18n.t('shared.permissions.k48') },
+  [MODULES.INTEGRATION]: { name: i18n.t('shared.permissions.k51'), description: i18n.t('shared.permissions.k50') },
   // 系统模块
-  [MODULES.SYSTEM]: { name: '系统设置', description: '系统配置、监控、审计' },
+  [MODULES.SYSTEM]: { name: i18n.t('shared.permissions.k53'), description: i18n.t('shared.permissions.k52') },
 };
 
 export const ROLES = {
   ADMIN: {
     ID: '00000000-0000-0000-0000-000000000001',
-    NAME: '管理员',
-    DESCRIPTION: '系统管理员，拥有所有权限',
+    NAME: i18n.t('shared.permissions.k54'),
+    DESCRIPTION: i18n.t('shared.permissions.k55'),
   },
   MANAGER: {
     ID: '00000000-0000-0000-0000-000000000002',
-    NAME: '部门经理',
-    DESCRIPTION: '部门经理，拥有本部门管理权限',
+    NAME: i18n.t('shared.permissions.k56'),
+    DESCRIPTION: i18n.t('shared.permissions.k57'),
   },
   USER: {
     ID: '00000000-0000-0000-0000-000000000003',
-    NAME: '普通员工',
-    DESCRIPTION: '普通员工，拥有基础操作权限',
+    NAME: i18n.t('shared.permissions.k58'),
+    DESCRIPTION: i18n.t('shared.permissions.k59'),
   },
   GUEST: {
     ID: '00000000-0000-0000-0000-000000000004',
-    NAME: '访客',
-    DESCRIPTION: '访客，只读权限',
+    NAME: i18n.t('shared.permissions.k60'),
+    DESCRIPTION: i18n.t('shared.permissions.k61'),
   },
 };
 
@@ -452,7 +453,7 @@ export const getAllPermissions = (): ModulePermission[] => {
         action: action.action,
         code,
         name: `${info.name} - ${action.name}`,
-        description: `${info.description}的${action.name}权限`,
+        description: `${info.description}${i18n.t('shared.permissions.k1')}${action.name}${i18n.t('shared.permissions.k2')}`,
         group,
       });
     });
@@ -475,7 +476,7 @@ export const getPermissionsByGroup = (groupId: string): ModulePermission[] => {
         action: action.action,
         code,
         name: `${info.name} - ${action.name}`,
-        description: `${info.description}的${action.name}权限`,
+        description: `${info.description}${i18n.t('shared.permissions.k3')}${action.name}${i18n.t('shared.permissions.k4')}`,
         group: groupId,
       });
     });

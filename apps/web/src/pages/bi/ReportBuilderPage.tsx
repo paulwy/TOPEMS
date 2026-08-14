@@ -28,6 +28,7 @@ import {
   CircularProgress,
   Grid,
 } from '@mui/material';
+import i18n from '@/i18n';
 import { PageContainer } from '@/components/common';
 import { DashboardTemplate } from '@/components/templates';
 import {
@@ -40,73 +41,64 @@ import {
 } from '@/api/bi';
 import { logger } from '@/utils/logger';
 import { designTokens } from '@/theme/tokens';
-
-import { useTranslation } from 'react-i18next';
-
-
 import { QUERY_KEYS, queryClient } from '@/lib/reactQuery';
-
 const ct= designTokens.colors;
-
 type ViewMode = 'list' | 'builder';
-
 const mockReports: Report[] = [
   {
     id: 'rpt-001',
-    name: '月度销售报表',
-    description: '每月销售数据汇总报表，包含销售额、订单量、客户数等指标',
+    name: i18n.t('bi.report_builder_page.k0'),
+    description: i18n.t('bi.report_builder_page.k1'),
     report_type: 'sales',
     type: 'sales',
     config: {},
     status: 'published',
     format: 'excel',
-    created_by: '张三',
+    created_by: i18n.t('bi.report_builder_page.k2'),
     created_at: '2026-01-15T10:30:00Z',
     updated_at: '2026-06-28T08:00:00Z',
   },
   {
     id: 'rpt-002',
-    name: '质量周报',
-    description: '每周生产质量检验数据汇总，包含缺陷率、合格率等',
+    name: i18n.t('bi.report_builder_page.k3'),
+    description: i18n.t('bi.report_builder_page.k4'),
     report_type: 'quality',
     type: 'quality',
     config: {},
     status: 'published',
     format: 'pdf',
-    created_by: '李四',
+    created_by: i18n.t('bi.report_builder_page.k5'),
     created_at: '2026-02-20T14:00:00Z',
     updated_at: '2026-06-23T00:00:00Z',
   },
   {
     id: 'rpt-003',
-    name: '库存月报',
-    description: '每月库存周转分析报表，包含出入库、库存余额等',
+    name: i18n.t('bi.report_builder_page.k6'),
+    description: i18n.t('bi.report_builder_page.k7'),
     report_type: 'inventory',
     type: 'inventory',
     config: {},
     status: 'draft',
     format: 'excel',
-    created_by: '王五',
+    created_by: i18n.t('bi.report_builder_page.k8'),
     created_at: '2026-05-10T09:00:00Z',
     updated_at: '2026-06-25T16:30:00Z',
   },
   {
     id: 'rpt-004',
-    name: '人事月报',
-    description: '每月人力资源数据报表，包含入职、离职、人员结构等',
+    name: i18n.t('bi.report_builder_page.k9'),
+    description: i18n.t('bi.report_builder_page.k10'),
     report_type: 'hr',
     type: 'hr',
     config: {},
     status: 'published',
     format: 'pdf',
-    created_by: '赵六',
+    created_by: i18n.t('bi.report_builder_page.k11'),
     created_at: '2026-03-01T11:00:00Z',
     updated_at: '2026-06-01T00:00:00Z',
   },
 ];
-
 const ReportBuilderPage = () => {
-  const { t } = useTranslation();
   const queryClient = useQueryClient();
   const [viewMode, setViewMode] = useState<ViewMode>('list');
   const [searchTerm, setSearchTerm] = useState('');
@@ -121,7 +113,6 @@ const ReportBuilderPage = () => {
     status: 'draft',
     format: 'excel',
   });
-
   const reportsQuery = useQuery<Report[]>({
     queryKey: QUERY_KEYS.AD_HOC.BI_REPORTS_BASE,
     queryFn: async () => {
@@ -138,22 +129,18 @@ const ReportBuilderPage = () => {
     },
     staleTime: 5 * 60 * 1000,
   });
-
   const reports = reportsQuery.data ?? mockReports;
   const loading = reportsQuery.isLoading;
-
   useEffect(() => {
     if (reportsQuery.isError) {
       logger.error('Failed to load reports:', reportsQuery.error);
     }
   }, [reportsQuery.isError, reportsQuery.error]);
-
   const filteredReports = reports.filter(
     (r) =>
       r.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       r.description?.toLowerCase().includes(searchTerm.toLowerCase())
   );
-
   const handleCreate = () => {
     setSelectedReport(null);
     setFormData({
@@ -168,14 +155,12 @@ const ReportBuilderPage = () => {
     setViewMode('builder');
     setBuilderTab(0);
   };
-
   const handleEdit = (report: Report) => {
     setSelectedReport(report);
     setFormData(report);
     setViewMode('builder');
     setBuilderTab(0);
   };
-
   const deleteMutation = useMutation({
     mutationFn: (id: string) => deleteReport(id),
     onSuccess: () => {
@@ -188,7 +173,6 @@ const ReportBuilderPage = () => {
       logger.error('Failed to delete report:', error);
     },
   });
-
   const saveMutation = useMutation({
     mutationFn: async ({
       selectedReport,
@@ -214,7 +198,6 @@ const ReportBuilderPage = () => {
       setViewMode('list');
     },
   });
-
   const exportMutation = useMutation({
     mutationFn: ({ id, format }: { id: string; format: 'pdf' | 'excel' | 'csv' | 'word' }) =>
       exportReport(id, format),
@@ -225,35 +208,30 @@ const ReportBuilderPage = () => {
           exact: false,
           refetchType: 'active',
         });
-      alert('报表导出成功！');
+      alert(i18n.t('bi.report_builder_page.k12'));
     },
     onError: (error: unknown) => {
       logger.error('Failed to export report:', error);
-      alert('报表导出成功！（模拟）');
+      alert(i18n.t('bi.report_builder_page.k13'));
     },
   });
-
   const actionLoading =
     saveMutation.isPending || deleteMutation.isPending || exportMutation.isPending;
-
   const handleDelete = (id: string) => {
-    if (!confirm(t('bi.report_builder_page.confirm'))) return;
+    if (!confirm(i18n.t('bi.report_builder_page.confirm'))) return;
     deleteMutation.mutate(id);
   };
-
   const handleSave = () => {
     saveMutation.mutate({ selectedReport, formData });
   };
-
   const handleExport = (id: string, format: 'pdf' | 'excel' | 'csv' | 'word') => {
     exportMutation.mutate({ id, format });
   };
-
   const getStatusChip = (status: string) => {
     const configs: Record<string, { color: 'success' | 'warning' | 'primary'; label: string }> = {
-      published: { color: 'success', label: t('bi.report_builder_page.text_dca0c1') },
-      draft: { color: 'warning', label: t('bi.report_builder_page.text_22b433') },
-      archived: { color: 'primary', label: t('bi.report_builder_page.text_c3ba16') },
+      published: { color: 'success', label: i18n.t('bi.report_builder_page.text_dca0c1') },
+      draft: { color: 'warning', label: i18n.t('bi.report_builder_page.text_22b433') },
+      archived: { color: 'primary', label: i18n.t('bi.report_builder_page.text_c3ba16') },
     };
     const config = configs[status] || configs.draft;
     return (
@@ -265,19 +243,17 @@ const ReportBuilderPage = () => {
       />
     );
   };
-
   const getTypeLabel = (type: string) => {
     const types: Record<string, string> = {
-      sales: t('bi.report_builder_page.text_87821b'),
-      quality: t('bi.report_builder_page.text_c42f64'),
-      inventory: t('bi.report_builder_page.text_25f371'),
-      hr: t('bi.report_builder_page.text_76cb67'),
-      finance: t('bi.report_builder_page.text_af7d91'),
-      production: t('bi.report_builder_page.production'),
+      sales: i18n.t('bi.report_builder_page.text_87821b'),
+      quality: i18n.t('bi.report_builder_page.text_c42f64'),
+      inventory: i18n.t('bi.report_builder_page.text_25f371'),
+      hr: i18n.t('bi.report_builder_page.text_76cb67'),
+      finance: i18n.t('bi.report_builder_page.text_af7d91'),
+      production: i18n.t('bi.report_builder_page.production'),
     };
     return types[type] || type;
   };
-
   const renderListView = () => (
     <Box sx={{ p: 3 }}>
       <Box
@@ -292,20 +268,19 @@ const ReportBuilderPage = () => {
           variant='h4'
           sx={{ fontWeight: 700 }}
         >
-          报表设计器
+          {i18n.t('pages.report_builder_page.k0')}
         </Typography>
         <Button
           variant='contained'
           startIcon={<Plus />}
           onClick={handleCreate}
         >
-          创建报表
+          {i18n.t('pages.report_builder_page.k1')}
         </Button>
       </Box>
-
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 3 }}>
         <TextField
-          placeholder={t('bi.report_builder_page.search')}
+          placeholder={i18n.t('bi.report_builder_page.search')}
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
           size='small'
@@ -317,10 +292,9 @@ const ReportBuilderPage = () => {
           startIcon={<RefreshCw size={16} />}
           onClick={() => reportsQuery.refetch()}
         >
-          刷新
+          {i18n.t('pages.report_builder_page.k2')}
         </Button>
       </Box>
-
       {loading ? (
         <Box sx={{ display: 'flex', justifyContent: 'center', py: 8 }}>
           <CircularProgress />
@@ -337,15 +311,15 @@ const ReportBuilderPage = () => {
           }}
         >
           <FileText sx={{ width: 64, height: 64, mb: 3, opacity: 0.5 }} />
-          <Typography variant='h6'>暂无报表</Typography>
-          <Typography variant='body2'>点击上方按钮创建您的第一个报表</Typography>
+          <Typography variant='h6'>{i18n.t('bi.report_builder_page.k14')}</Typography>
+          <Typography variant='body2'>{i18n.t('bi.report_builder_page.k15')}</Typography>
           <Button
             variant='contained'
             startIcon={<Plus />}
             sx={{ mt: 3 }}
             onClick={handleCreate}
           >
-            创建报表
+            {i18n.t('pages.report_builder_page.k3')}
           </Button>
         </Box>
       ) : (
@@ -357,13 +331,13 @@ const ReportBuilderPage = () => {
           <Table>
             <TableHead>
               <TableRow>
-                <TableCell>报表名称</TableCell>
-                <TableCell>类型</TableCell>
-                <TableCell>格式</TableCell>
-                <TableCell>状态</TableCell>
-                <TableCell>创建人</TableCell>
-                <TableCell>更新时间</TableCell>
-                <TableCell align='right'>操作</TableCell>
+                <TableCell>{i18n.t('bi.report_builder_page.k16')}</TableCell>
+                <TableCell>{i18n.t('bi.report_builder_page.k17')}</TableCell>
+                <TableCell>{i18n.t('bi.report_builder_page.k18')}</TableCell>
+                <TableCell>{i18n.t('bi.report_builder_page.k19')}</TableCell>
+                <TableCell>{i18n.t('bi.report_builder_page.k20')}</TableCell>
+                <TableCell>{i18n.t('bi.report_builder_page.k21')}</TableCell>
+                <TableCell align='right'>{i18n.t('bi.report_builder_page.k22')}</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
@@ -417,37 +391,37 @@ const ReportBuilderPage = () => {
                     {report.updated_at ? new Date(report.updated_at).toLocaleDateString() : '-'}
                   </TableCell>
                   <TableCell align='right'>
-                    <Tooltip title={t('bi.report_builder_page.edit')}>
+                    <Tooltip title={i18n.t('bi.report_builder_page.edit')}>
                       <IconButton
                         size='small'
                         onClick={() => handleEdit(report)}
-                        aria-label={t('bi.report_builder_page.edit_1')}
+                        aria-label={i18n.t('bi.report_builder_page.edit_1')}
                       >
                         <Edit2 size={16} />
                       </IconButton>
                     </Tooltip>
-                    <Tooltip title={t('bi.report_builder_page.view')}>
+                    <Tooltip title={i18n.t('bi.report_builder_page.view')}>
                       <IconButton
                         size='small'
-                        aria-label={t('bi.report_builder_page.view_1')}
+                        aria-label={i18n.t('bi.report_builder_page.view_1')}
                       >
                         <Eye size={16} />
                       </IconButton>
                     </Tooltip>
-                    <Tooltip title={t('bi.report_builder_page.export')}>
+                    <Tooltip title={i18n.t('bi.report_builder_page.export')}>
                       <IconButton
                         size='small'
                         onClick={() => handleExport(report.id, report.format as 'excel' | 'pdf')}
-                        aria-label={t('bi.report_builder_page.export_1')}
+                        aria-label={i18n.t('bi.report_builder_page.export_1')}
                       >
                         <Download size={16} />
                       </IconButton>
                     </Tooltip>
-                    <Tooltip title={t('bi.report_builder_page.delete')}>
+                    <Tooltip title={i18n.t('bi.report_builder_page.delete')}>
                       <IconButton
                         size='small'
                         onClick={() => handleDelete(report.id)}
-                        aria-label={t('bi.report_builder_page.delete_1')}
+                        aria-label={i18n.t('bi.report_builder_page.delete_1')}
                       >
                         <Trash2 size={16} />
                       </IconButton>
@@ -461,7 +435,6 @@ const ReportBuilderPage = () => {
       )}
     </Box>
   );
-
   const renderBuilderView = () => (
     <Box sx={{ p: 3 }}>
       <Box
@@ -478,15 +451,15 @@ const ReportBuilderPage = () => {
             size='small'
             onClick={() => setViewMode('list')}
           >
-            返回列表
+            {i18n.t('pages.report_builder_page.k4')}
           </Button>
           <Typography
             variant='h5'
             sx={{ fontWeight: 600 }}
           >
             {selectedReport
-              ? t('bi.report_builder_page.edit_1')
-              : t('bi.report_builder_page.create')}
+              ? i18n.t('bi.report_builder_page.edit_1')
+              : i18n.t('bi.report_builder_page.create')}
           </Typography>
         </Box>
         <Box sx={{ display: 'flex', gap: 2 }}>
@@ -494,23 +467,22 @@ const ReportBuilderPage = () => {
             variant='outlined'
             startIcon={<Eye size={16} />}
           >
-            预览
+            {i18n.t('pages.report_builder_page.k5')}
           </Button>
           <Button
             variant='outlined'
             onClick={() => setViewMode('list')}
           >
-            取消
+            {i18n.t('pages.report_builder_page.k6')}
           </Button>
           <Button
             variant='contained'
             onClick={handleSave}
           >
-            保存
+            {i18n.t('pages.report_builder_page.k7')}
           </Button>
         </Box>
       </Box>
-
       <Card
         elevation={0}
         sx={{ border: '1px solid', borderColor: 'divider' }}
@@ -521,24 +493,23 @@ const ReportBuilderPage = () => {
             onChange={(_, v) => setBuilderTab(v)}
             sx={{ mb: 3 }}
           >
-            <Tab label={t('bi.report_builder_page.info')} />
-            <Tab label={t('bi.report_builder_page.text_8abf44')} />
-            <Tab label={t('bi.report_builder_page.text_d75a79')} />
-            <Tab label={t('bi.report_builder_page.text_a1bd97')} />
+            <Tab label={i18n.t('bi.report_builder_page.info')} />
+            <Tab label={i18n.t('bi.report_builder_page.text_8abf44')} />
+            <Tab label={i18n.t('bi.report_builder_page.text_d75a79')} />
+            <Tab label={i18n.t('bi.report_builder_page.text_a1bd97')} />
           </Tabs>
-
           {builderTab === 0 && (
             <Box sx={{ maxWidth: 600 }}>
               <TextField
                 fullWidth
-                label={t('bi.report_builder_page.name')}
+                label={i18n.t('bi.report_builder_page.name')}
                 value={formData.name || ''}
                 onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                 sx={{ mb: 3 }}
               />
               <TextField
                 fullWidth
-                label={t('bi.report_builder_page.description')}
+                label={i18n.t('bi.report_builder_page.description')}
                 multiline
                 rows={3}
                 value={formData.description || ''}
@@ -549,30 +520,30 @@ const ReportBuilderPage = () => {
                 fullWidth
                 sx={{ mb: 3 }}
               >
-                <InputLabel>报表类型</InputLabel>
+                <InputLabel>{i18n.t('bi.report_builder_page.k23')}</InputLabel>
                 <Select
                   value={formData.type || 'sales'}
-                  label={t('bi.report_builder_page.type')}
+                  label={i18n.t('bi.report_builder_page.type')}
                   onChange={(e) =>
                     setFormData({ ...formData, type: e.target.value, report_type: e.target.value })
                   }
                 >
-                  <MenuItem value='sales'>销售报表</MenuItem>
-                  <MenuItem value='quality'>质量报表</MenuItem>
-                  <MenuItem value='inventory'>库存报表</MenuItem>
-                  <MenuItem value='hr'>人事报表</MenuItem>
-                  <MenuItem value='finance'>财务报表</MenuItem>
-                  <MenuItem value='production'>生产报表</MenuItem>
+                  <MenuItem value='sales'>{i18n.t('bi.report_builder_page.k24')}</MenuItem>
+                  <MenuItem value='quality'>{i18n.t('bi.report_builder_page.k25')}</MenuItem>
+                  <MenuItem value='inventory'>{i18n.t('bi.report_builder_page.k26')}</MenuItem>
+                  <MenuItem value='hr'>{i18n.t('bi.report_builder_page.k27')}</MenuItem>
+                  <MenuItem value='finance'>{i18n.t('bi.report_builder_page.k28')}</MenuItem>
+                  <MenuItem value='production'>{i18n.t('bi.report_builder_page.k29')}</MenuItem>
                 </Select>
               </FormControl>
               <FormControl
                 fullWidth
                 sx={{ mb: 3 }}
               >
-                <InputLabel>默认格式</InputLabel>
+                <InputLabel>{i18n.t('bi.report_builder_page.k30')}</InputLabel>
                 <Select
                   value={formData.format || 'excel'}
-                  label={t('bi.report_builder_page.text_6f07cd')}
+                  label={i18n.t('bi.report_builder_page.text_6f07cd')}
                   onChange={(e) => setFormData({ ...formData, format: e.target.value })}
                 >
                   <MenuItem value='excel'>Excel</MenuItem>
@@ -582,10 +553,10 @@ const ReportBuilderPage = () => {
                 </Select>
               </FormControl>
               <FormControl fullWidth>
-                <InputLabel>状态</InputLabel>
+                <InputLabel>{i18n.t('bi.report_builder_page.k31')}</InputLabel>
                 <Select
                   value={formData.status || 'draft'}
-                  label={t('bi.report_builder_page.status')}
+                  label={i18n.t('bi.report_builder_page.status')}
                   onChange={(e) =>
                     setFormData({
                       ...formData,
@@ -593,21 +564,20 @@ const ReportBuilderPage = () => {
                     })
                   }
                 >
-                  <MenuItem value='draft'>草稿</MenuItem>
-                  <MenuItem value='published'>已发布</MenuItem>
-                  <MenuItem value='archived'>已归档</MenuItem>
+                  <MenuItem value='draft'>{i18n.t('bi.report_builder_page.k32')}</MenuItem>
+                  <MenuItem value='published'>{i18n.t('bi.report_builder_page.k33')}</MenuItem>
+                  <MenuItem value='archived'>{i18n.t('bi.report_builder_page.k34')}</MenuItem>
                 </Select>
               </FormControl>
             </Box>
           )}
-
           {builderTab === 1 && (
             <Box>
               <Typography
                 variant='subtitle1'
                 sx={{ mb: 2 }}
               >
-                选择报表模板
+                {i18n.t('pages.report_builder_page.k8')}
               </Typography>
               <Grid
                 container
@@ -615,20 +585,20 @@ const ReportBuilderPage = () => {
               >
                 {[
                   {
-                    name: t('bi.report_builder_page.text_93c5b1'),
-                    desc: t('bi.report_builder_page.text_08d85e'),
+                    name: i18n.t('bi.report_builder_page.text_93c5b1'),
+                    desc: i18n.t('bi.report_builder_page.text_08d85e'),
                   },
                   {
-                    name: t('bi.report_builder_page.text_945783'),
-                    desc: t('bi.report_builder_page.text_a13eb6'),
+                    name: i18n.t('bi.report_builder_page.text_945783'),
+                    desc: i18n.t('bi.report_builder_page.text_a13eb6'),
                   },
                   {
-                    name: t('bi.report_builder_page.text_4ae3a8'),
-                    desc: t('bi.report_builder_page.text_386c14'),
+                    name: i18n.t('bi.report_builder_page.text_4ae3a8'),
+                    desc: i18n.t('bi.report_builder_page.text_386c14'),
                   },
                   {
-                    name: t('bi.report_builder_page.text_3d2c48'),
-                    desc: t('bi.report_builder_page.text_95ccc2'),
+                    name: i18n.t('bi.report_builder_page.text_3d2c48'),
+                    desc: i18n.t('bi.report_builder_page.text_95ccc2'),
                   },
                 ].map((template, idx) => (
                   <Grid
@@ -682,28 +652,27 @@ const ReportBuilderPage = () => {
               </Grid>
             </Box>
           )}
-
           {builderTab === 2 && (
             <Box>
               <Typography
                 variant='subtitle1'
                 sx={{ mb: 2 }}
               >
-                数据源配置
+                {i18n.t('pages.report_builder_page.k9')}
               </Typography>
               <FormControl
                 fullWidth
                 sx={{ mb: 3, maxWidth: 400 }}
               >
-                <InputLabel>选择数据集</InputLabel>
+                <InputLabel>{i18n.t('bi.report_builder_page.k35')}</InputLabel>
                 <Select
                   value=''
-                  label={t('bi.report_builder_page.text_0bca05')}
+                  label={i18n.t('bi.report_builder_page.text_0bca05')}
                   onChange={() => {}}
                 >
-                  <MenuItem value='ds-001'>销售数据分析集</MenuItem>
-                  <MenuItem value='ds-002'>生产质量数据集</MenuItem>
-                  <MenuItem value='ds-003'>库存周转数据集</MenuItem>
+                  <MenuItem value='ds-001'>{i18n.t('bi.report_builder_page.k36')}</MenuItem>
+                  <MenuItem value='ds-002'>{i18n.t('bi.report_builder_page.k37')}</MenuItem>
+                  <MenuItem value='ds-003'>{i18n.t('bi.report_builder_page.k38')}</MenuItem>
                 </Select>
               </FormControl>
               <Box sx={{ mt: 3, p: 3, backgroundColor: ct.grey[50], borderRadius: 1 }}>
@@ -711,47 +680,46 @@ const ReportBuilderPage = () => {
                   variant='body2'
                   color='text.secondary'
                 >
-                  提示：选择数据集后，可以在下方配置报表字段、筛选条件、排序方式等。
+                  {i18n.t('pages.report_builder_page.k10')}
                 </Typography>
               </Box>
             </Box>
           )}
-
           {builderTab === 3 && (
             <Box sx={{ maxWidth: 600 }}>
               <Typography
                 variant='subtitle1'
                 sx={{ mb: 2 }}
               >
-                定时任务配置
+                {i18n.t('pages.report_builder_page.k11')}
               </Typography>
               <FormControl
                 fullWidth
                 sx={{ mb: 3 }}
               >
-                <InputLabel>执行频率</InputLabel>
+                <InputLabel>{i18n.t('bi.report_builder_page.k39')}</InputLabel>
                 <Select
                   value='daily'
-                  label={t('bi.report_builder_page.text_6b6f80')}
+                  label={i18n.t('bi.report_builder_page.text_6b6f80')}
                   onChange={() => {}}
                 >
-                  <MenuItem value='daily'>每天</MenuItem>
-                  <MenuItem value='weekly'>每周</MenuItem>
-                  <MenuItem value='monthly'>每月</MenuItem>
-                  <MenuItem value='hourly'>每小时</MenuItem>
+                  <MenuItem value='daily'>{i18n.t('bi.report_builder_page.k40')}</MenuItem>
+                  <MenuItem value='weekly'>{i18n.t('bi.report_builder_page.k41')}</MenuItem>
+                  <MenuItem value='monthly'>{i18n.t('bi.report_builder_page.k42')}</MenuItem>
+                  <MenuItem value='hourly'>{i18n.t('bi.report_builder_page.k43')}</MenuItem>
                 </Select>
               </FormControl>
               <TextField
                 fullWidth
-                label={t('bi.report_builder_page.time')}
+                label={i18n.t('bi.report_builder_page.time')}
                 type='time'
                 value='08:00'
                 sx={{ mb: 3 }}
               />
               <TextField
                 fullWidth
-                label={t('bi.report_builder_page.email')}
-                placeholder={t('bi.report_builder_page.email_1')}
+                label={i18n.t('bi.report_builder_page.email')}
+                placeholder={i18n.t('bi.report_builder_page.email_1')}
                 sx={{ mb: 3 }}
               />
               <Box sx={{ mt: 3, p: 3, backgroundColor: ct.grey[50], borderRadius: 1 }}>
@@ -759,7 +727,7 @@ const ReportBuilderPage = () => {
                   variant='body2'
                   color='text.secondary'
                 >
-                  提示：配置定时任务后，系统将按照设定的时间自动生成报表并发送到指定邮箱。
+                  {i18n.t('pages.report_builder_page.k12')}
                 </Typography>
               </Box>
             </Box>
@@ -768,11 +736,10 @@ const ReportBuilderPage = () => {
       </Card>
     </Box>
   );
-
   return (
     <PageContainer
-      title={t('bi.report_builder_page.text_95a8d1')}
-      subtitle={t('bi.report_builder_page.create_1')}
+      title={i18n.t('bi.report_builder_page.text_95a8d1')}
+      subtitle={i18n.t('bi.report_builder_page.create_1')}
       headerProps={{
         pageIcon: <FileText style={{ width: 20, height: 20 }} />,
         pageGradient: `linear-gradient(135deg, ${ct.warning.main} 0%, ${ct.warning.dark} 100%)`,
@@ -784,9 +751,9 @@ const ReportBuilderPage = () => {
         title=''
         subtitle=''
         breadcrumbs={[
-          { label: t('bi.report_builder_page.home'), href: '/dashboard' },
+          { label: i18n.t('bi.report_builder_page.home'), href: '/dashboard' },
           { label: 'BI' },
-          { label: t('bi.report_builder_page.text_fc00f3') },
+          { label: i18n.t('bi.report_builder_page.text_fc00f3') },
         ]}
       >
         {viewMode === 'list' ? renderListView() : renderBuilderView()}
@@ -794,5 +761,4 @@ const ReportBuilderPage = () => {
     </PageContainer>
   );
 };
-
 export default ReportBuilderPage;

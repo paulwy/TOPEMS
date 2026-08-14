@@ -116,7 +116,7 @@ export function MobileCardView<T>({
         const rowObj = row as unknown as Record<string, unknown>;
         const title = mobileCardTitleKey
           ? rowObj[mobileCardTitleKey]
-          : rowObj.name || rowObj.title || rowObj.code || `项目 ${index + 1}`;
+          : rowObj.name || rowObj.title || rowObj.code || `${i18n.t('components.mobile_card_view.k0')}${index + 1}`;
         const subtitle = mobileCardSubtitleKey ? rowObj[mobileCardSubtitleKey] : '';
 
         return (
@@ -187,7 +187,7 @@ export function MobileCardView<T>({
                   <IconButton
                     size='small'
                     onClick={(e) => onRowActionClick(e, row)}
-                    aria-label='更多'
+                    aria-label={i18n.t('templates.mobile_card_view.k0')}
                   >
                     <MoreHorizontal style={{ width: 18, height: 18 }} />
                   </IconButton>

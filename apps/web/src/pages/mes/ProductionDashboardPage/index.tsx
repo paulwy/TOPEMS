@@ -13,6 +13,7 @@ import {
   Typography,
   Paper,
 } from '@mui/material';
+import i18n from '@/i18n';
 import {
   Activity,
   Clock,
@@ -43,7 +44,6 @@ import {
 } from '@/api/mes';
 import { apiLogger } from '@/utils/logger';
 import { PageContainer } from '@/components/common';
-
 import type {
   RealtimeAlarm,
   WorkStationUtilization,
@@ -57,25 +57,20 @@ import AlarmList from './components/AlarmList';
 import WorkStationUtilizationCard from './components/WorkStationUtilizationCard';
 import EquipmentStatusPanel from './components/EquipmentStatusPanel';
 import ProductionGantt from './components/ProductionGantt';
-
 export const ProductionDashboardPage: React.FC = () => {
   const { token } = useAuth();
   const [loading, setLoading] = useState(true);
   const [refreshStatus, setRefreshStatus] = useState<RefreshStatus>('idle');
   const [autoRefresh, setAutoRefresh] = useState(true);
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
-
   const [orders, setOrders] = useState<ProductionOrder[]>([]);
   const [records, setRecords] = useState<ProductionRecord[]>([]);
   const [workStations, setWorkStations] = useState<WorkStation[]>([]);
   const [equipment, setEquipment] = useState<Equipment[]>([]);
   const [schedules, setSchedules] = useState<ProductionSchedule[]>([]);
   const [alarms, setAlarms] = useState<RealtimeAlarm[]>([]);
-
   const [wsSupported] = useState(typeof window !== 'undefined' && 'WebSocket' in window);
-
   const refreshTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
-
   const {
     isConnected: wsConnected,
     connectionStatus: wsStatus,
@@ -96,11 +91,10 @@ export const ProductionDashboardPage: React.FC = () => {
           setAlarms(payload.data.alarms);
         }
       } catch (err) {
-        apiLogger.warn('解析 MES WS 消息失败', err);
+        apiLogger.warn(i18n.t('mes.index.mesws_0'), err);
       }
     },
   });
-
   const loadAll = useCallback(async () => {
     setRefreshStatus('loading');
     try {
@@ -112,19 +106,16 @@ export const ProductionDashboardPage: React.FC = () => {
           mesEquipmentApi.getStatistics(),
           productionScheduleApi.list({ page: 1, pagesize: 50 }),
         ]);
-
       const orderData =
         orderRes.status === 'fulfilled' && orderRes.value.success && orderRes.value.data
           ? (orderRes.value.data as { orders?: ProductionOrder[] }).orders || []
           : [];
       setOrders(orderData);
-
       const recordData =
         recordRes.status === 'fulfilled' && recordRes.value.success && recordRes.value.data
           ? (recordRes.value.data as { records?: ProductionRecord[] }).records || []
           : [];
       setRecords(recordData);
-
       const workStationData =
         workStationRes.status === 'fulfilled' &&
         workStationRes.value.success &&
@@ -132,7 +123,6 @@ export const ProductionDashboardPage: React.FC = () => {
           ? (workStationRes.value.data as { workstations?: WorkStation[] }).workstations || []
           : [];
       setWorkStations(workStationData);
-
       const equipmentListData: Equipment[] = [];
       try {
         const eqListRes = await equipmentApi.list({ page: 1, pagesize: 200 });
@@ -141,16 +131,14 @@ export const ProductionDashboardPage: React.FC = () => {
           equipmentListData.push(...list);
         }
       } catch (err) {
-        apiLogger.warn('加载设备列表失败，使用统计数据', err);
+        apiLogger.warn(i18n.t('mes.index.k1'), err);
       }
       setEquipment(equipmentListData);
-
       const scheduleData =
         scheduleRes.status === 'fulfilled' && scheduleRes.value.success && scheduleRes.value.data
           ? (scheduleRes.value.data as { schedules?: ProductionSchedule[] }).schedules || []
           : [];
       setSchedules(scheduleData);
-
       const stats =
         equipmentStatsRes.status === 'fulfilled' &&
         equipmentStatsRes.value.success &&
@@ -163,8 +151,8 @@ export const ProductionDashboardPage: React.FC = () => {
           generatedAlarms.push({
             id: 'eq-maint',
             level: 'warning',
-            source: '设备管理',
-            message: `${stats.maintenance} 台设备处于维护状态，请关注维护进度。`,
+            source: i18n.t('mes.index.k2'),
+            message: `${stats.maintenance}${i18n.t('pages.index.k0')}`,
             timestamp: new Date().toISOString(),
           });
         }
@@ -172,8 +160,8 @@ export const ProductionDashboardPage: React.FC = () => {
           generatedAlarms.push({
             id: 'eq-repair',
             level: 'critical',
-            source: '设备管理',
-            message: `${stats.pending_repairs} 台设备待维修，存在生产风险。`,
+            source: i18n.t('mes.index.k3'),
+            message: `${stats.pending_repairs}${i18n.t('pages.index.k1')}`,
             timestamp: new Date().toISOString(),
           });
         }
@@ -185,8 +173,8 @@ export const ProductionDashboardPage: React.FC = () => {
         generatedAlarms.push({
           id: 'order-abnormal',
           level: 'critical',
-          source: '生产工单',
-          message: `检测到 ${abnormalOrders.length} 个异常工单，需要立即处理。`,
+          source: i18n.t('mes.index.k4'),
+          message: `${i18n.t('pages.index.k2')}${abnormalOrders.length}${i18n.t('pages.index.k3')}`,
           timestamp: new Date().toISOString(),
         });
       }
@@ -194,37 +182,32 @@ export const ProductionDashboardPage: React.FC = () => {
         generatedAlarms.push({
           id: 'heartbeat',
           level: 'info',
-          source: '系统',
-          message: 'MES 服务运行正常，采集频率 10s。',
+          source: i18n.t('mes.index.k5'),
+          message: i18n.t('pages.index.mes10s_4'),
           timestamp: new Date().toISOString(),
         });
       }
       setAlarms(generatedAlarms);
-
       setLastUpdated(new Date());
       setRefreshStatus('success');
     } catch (err) {
-      apiLogger.error('加载生产看板数据失败:', err);
+      apiLogger.error(i18n.t('pages.index.k5'), err);
       setRefreshStatus('error');
     } finally {
       setLoading(false);
     }
   }, []);
-
   const todayKey = useMemo(() => new Date().toISOString().slice(0, 10), []);
-
   const todayOutput = useMemo(() => {
     return records
       .filter((r) => (r.start_time || '').slice(0, 10) === todayKey)
       .reduce((sum, r) => sum + safeNumber(r.quantity_completed), 0);
   }, [records, todayKey]);
-
   const todayDefects = useMemo(() => {
     return records
       .filter((r) => (r.start_time || '').slice(0, 10) === todayKey)
       .reduce((sum, r) => sum + safeNumber(r.quantity_rejected), 0);
   }, [records, todayKey]);
-
   const activeOrderCount = useMemo(
     () =>
       orders.filter(
@@ -232,12 +215,10 @@ export const ProductionDashboardPage: React.FC = () => {
       ).length,
     [orders]
   );
-
   const completedOrderCount = useMemo(
     () => orders.filter((o) => o.status === 'completed').length,
     [orders]
   );
-
   const equipmentBuckets = useMemo<EquipmentStatusBucket[]>(() => {
     const map = new Map<string, number>();
     equipment.forEach((e) => {
@@ -251,7 +232,6 @@ export const ProductionDashboardPage: React.FC = () => {
     });
     return buckets.sort((a, b) => b.count - a.count);
   }, [equipment]);
-
   const workStationUtilization = useMemo<WorkStationUtilization[]>(() => {
     if (workStations.length === 0) return [];
     const recordsByStation = new Map<string, ProductionRecord[]>();
@@ -281,41 +261,36 @@ export const ProductionDashboardPage: React.FC = () => {
       };
     });
   }, [workStations, records, orders, todayKey]);
-
   const hourlyOutputTrend = useMemo(() => buildHourlyTrend(records, TREND_HOURS), [records]);
   const targetTrend = useMemo(() => buildDailyTarget(todayOutput), [todayOutput]);
-
   const orderStatusDistribution = useMemo(() => {
     const map = new Map<string, number>();
     orders.forEach((o) => {
       map.set(o.status, (map.get(o.status) || 0) + 1);
     });
     const statusLabel: Record<string, string> = {
-      pending: '待生产',
-      in_progress: '生产中',
-      processing: '生产中',
-      completed: '已完成',
-      cancelled: '已取消',
-      abnormal: '异常',
-      error: '异常',
-      delayed: '延期',
+      pending: i18n.t('mes.index.k6'),
+      in_progress: i18n.t('mes.index.k7'),
+      processing: i18n.t('mes.index.k8'),
+      completed: i18n.t('mes.index.k9'),
+      cancelled: i18n.t('mes.index.k10'),
+      abnormal: i18n.t('mes.index.k11'),
+      error: i18n.t('mes.index.k12'),
+      delayed: i18n.t('mes.index.k13'),
     };
     return Array.from(map.entries()).map(([status, value]) => ({
       name: statusLabel[status] || status,
       value,
     }));
   }, [orders]);
-
   const overallUtilization = useMemo(() => {
     if (workStationUtilization.length === 0) return 0;
     const total = workStationUtilization.reduce((sum, w) => sum + w.utilization, 0);
     return total / workStationUtilization.length;
   }, [workStationUtilization]);
-
   useEffect(() => {
     void loadAll();
   }, [loadAll]);
-
   useEffect(() => {
     if (!autoRefresh) {
       if (refreshTimerRef.current) {
@@ -334,11 +309,9 @@ export const ProductionDashboardPage: React.FC = () => {
       }
     };
   }, [autoRefresh, loadAll]);
-
   const runningEquipmentCount = equipmentBuckets
     .filter((b) => b.status === 'running' || b.status === 'in_use' || b.status === 'normal')
     .reduce((sum, b) => sum + b.count, 0);
-
   const trendData = useMemo(
     () =>
       hourlyOutputTrend.map((d, i) => ({
@@ -347,7 +320,6 @@ export const ProductionDashboardPage: React.FC = () => {
       })),
     [hourlyOutputTrend, targetTrend]
   );
-
   return (
     <PageContainer
       padding={false}
@@ -358,9 +330,9 @@ export const ProductionDashboardPage: React.FC = () => {
         pageIcon: <Factory style={{ width: 20, height: 20 }} />,
         pageGradient: `linear-gradient(135deg, ${ct.error.main} 0%, ${ct.error[700]} 100%)`,
         breadcrumbs: [
-          { label: '首页', href: '/dashboard' },
-          { label: '生产执行', href: MES_PATHS.root },
-          { label: '生产看板' },
+          { label: i18n.t('mes.index.k14'), href: '/dashboard' },
+          { label: i18n.t('mes.index.k15'), href: MES_PATHS.root },
+          { label: i18n.t('mes.index.k16') },
         ],
         customToolbar: (
           <Stack
@@ -371,10 +343,10 @@ export const ProductionDashboardPage: React.FC = () => {
             <Tooltip
               title={
                 wsConnected
-                  ? 'WebSocket 实时连接已建立'
+                  ? i18n.t('pages.index.websocket_6')
                   : wsSupported
-                    ? 'WebSocket 未连接，使用轮询刷新'
-                    : '当前浏览器不支持 WebSocket'
+                    ? i18n.t('pages.index.websocket_7')
+                    : i18n.t('mes.index.websocket_17')
               }
             >
               <Stack
@@ -397,7 +369,7 @@ export const ProductionDashboardPage: React.FC = () => {
                   variant='caption'
                   sx={{ color: 'text.secondary' }}
                 >
-                  {wsConnected ? '实时' : '轮询'}
+                  {wsConnected ? i18n.t('mes.index.k19') : i18n.t('mes.index.k18')}
                 </Typography>
               </Stack>
             </Tooltip>
@@ -409,7 +381,7 @@ export const ProductionDashboardPage: React.FC = () => {
                   onChange={(e) => setAutoRefresh(e.target.checked)}
                 />
               }
-              label={<Typography variant='caption'>自动刷新</Typography>}
+              label={<Typography variant='caption'>{i18n.t('mes.index.k20')}</Typography>}
             />
             <Button
               size='small'
@@ -421,7 +393,7 @@ export const ProductionDashboardPage: React.FC = () => {
               }}
               disabled={refreshStatus === 'loading'}
             >
-              立即刷新
+              {i18n.t('pages.index.k0')}
             </Button>
           </Stack>
         ),
@@ -470,10 +442,10 @@ export const ProductionDashboardPage: React.FC = () => {
               sx={{ color: 'text.secondary' }}
             >
               {refreshStatus === 'loading'
-                ? '采集中…'
+                ? i18n.t('pages.index.k8')
                 : refreshStatus === 'error'
-                  ? '采集失败'
-                  : '运行正常'}
+                  ? i18n.t('mes.index.k21')
+                  : i18n.t('mes.index.k22')}
             </Typography>
           </Stack>
           <Divider
@@ -490,7 +462,7 @@ export const ProductionDashboardPage: React.FC = () => {
               variant='caption'
               sx={{ color: 'text.secondary' }}
             >
-              {lastUpdated ? `更新于 ${formatTime(lastUpdated)}` : '未更新'}
+              {lastUpdated ? `${i18n.t('pages.index.k9')}${formatTime(lastUpdated)}` : i18n.t('mes.index.k23')}
             </Typography>
           </Stack>
           <Divider
@@ -530,12 +502,12 @@ export const ProductionDashboardPage: React.FC = () => {
               sx={{ color: 'text.secondary' }}
             >
               {wsStatus === 'connected'
-                ? '实时连接'
+                ? i18n.t('mes.index.k24')
                 : wsStatus === 'connecting'
-                  ? '连接中…'
+                  ? i18n.t('pages.index.k10')
                   : wsStatus === 'reconnecting'
-                    ? `重连中 (${wsReconnectCount})`
-                    : '未连接'}
+                    ? `${i18n.t('pages.index.k11')}${wsReconnectCount})`
+                    : i18n.t('mes.index.k25')}
             </Typography>
           </Stack>
           <Box sx={{ flex: 1 }} />
@@ -546,7 +518,6 @@ export const ProductionDashboardPage: React.FC = () => {
             刷新间隔 {REFRESH_INTERVAL_MS / 1000}s
           </Typography>
         </Stack>
-
         <Box
           sx={{
             display: 'grid',
@@ -560,46 +531,45 @@ export const ProductionDashboardPage: React.FC = () => {
           }}
         >
           <StatCard
-            title='今日产量'
+            title={i18n.t('mes.index.k26')}
             value={todayOutput.toLocaleString()}
-            unit='件'
+            unit={i18n.t('mes.index.k27')}
             icon={<Package size={22} />}
             color='primary.main'
             delta={8.2}
-            hint='当日累计完成数量'
+            hint={i18n.t('mes.index.k28')}
             loading={loading}
           />
           <StatCard
-            title='不良品数'
+            title={i18n.t('mes.index.k29')}
             value={todayDefects.toLocaleString()}
-            unit='件'
+            unit={i18n.t('mes.index.k30')}
             icon={<XCircle size={22} />}
             color='error.main'
             delta={-3.1}
-            hint='当日累计不良数'
+            hint={i18n.t('mes.index.k31')}
             loading={loading}
           />
           <StatCard
-            title='在制工单'
+            title={i18n.t('mes.index.k32')}
             value={activeOrderCount}
-            unit='单'
+            unit={i18n.t('mes.index.k33')}
             icon={<Factory size={22} />}
             color='warning.main'
             delta={2.4}
-            hint={`已完成 ${completedOrderCount} 单`}
+            hint={`${i18n.t('pages.index.k12')}${completedOrderCount}${i18n.t('pages.index.k13')}`}
             loading={loading}
           />
           <StatCard
-            title='设备综合利用率'
+            title={i18n.t('mes.index.k34')}
             value={formatPercent(overallUtilization)}
             icon={<Gauge size={22} />}
             color='success.main'
             delta={overallUtilization > 0.6 ? 1.8 : -0.6}
-            hint={`运行 ${runningEquipmentCount} / 总 ${equipment.length} 台`}
+            hint={`${i18n.t('pages.index.k14')}${runningEquipmentCount}${i18n.t('pages.index.k15')}${equipment.length}${i18n.t('pages.index.k16')}`}
             loading={loading}
           />
         </Box>
-
         <Box
           sx={{
             display: 'grid',
@@ -635,7 +605,7 @@ export const ProductionDashboardPage: React.FC = () => {
                   variant='subtitle1'
                   sx={{ fontWeight: 600 }}
                 >
-                  实时产量趋势
+                  {i18n.t('pages.index.k1')}
                 </Typography>
               </Stack>
               <Typography
@@ -652,8 +622,8 @@ export const ProductionDashboardPage: React.FC = () => {
                 xKey='name'
                 yKey='value'
                 yKeys={[
-                  { key: 'value', name: '实际产量', color: 'primary.main' },
-                  { key: 'target', name: '目标产量', color: 'grey.400' },
+                  { key: 'value', name: i18n.t('mes.index.k35'), color: 'primary.main' },
+                  { key: 'target', name: i18n.t('mes.index.k36'), color: 'grey.400' },
                 ]}
                 height={280}
               />
@@ -686,7 +656,7 @@ export const ProductionDashboardPage: React.FC = () => {
                   variant='subtitle1'
                   sx={{ fontWeight: 600 }}
                 >
-                  工单状态分布
+                  {i18n.t('pages.index.k2')}
                 </Typography>
               </Stack>
             </Stack>
@@ -696,13 +666,12 @@ export const ProductionDashboardPage: React.FC = () => {
                 data={
                   orderStatusDistribution.length > 0
                     ? orderStatusDistribution
-                    : [{ name: '暂无数据', value: 1, color: 'grey.300' }]
+                    : [{ name: i18n.t('mes.index.k37'), value: 1, color: 'grey.300' }]
                 }
               />
             </Box>
           </Paper>
         </Box>
-
         <Box
           sx={{
             display: 'grid',
@@ -721,7 +690,6 @@ export const ProductionDashboardPage: React.FC = () => {
             loading={loading}
           />
         </Box>
-
         <Box
           sx={{
             display: 'grid',
@@ -739,7 +707,6 @@ export const ProductionDashboardPage: React.FC = () => {
             loading={loading}
           />
         </Box>
-
         <Paper
           elevation={0}
           sx={{
@@ -766,14 +733,14 @@ export const ProductionDashboardPage: React.FC = () => {
                 variant='subtitle1'
                 sx={{ fontWeight: 600 }}
               >
-                工站当日产出对比
+                {i18n.t('pages.index.k3')}
               </Typography>
             </Stack>
             <Typography
               variant='caption'
               sx={{ color: 'text.secondary' }}
             >
-              数据按工站聚合
+              {i18n.t('pages.index.k4')}
             </Typography>
           </Stack>
           <Divider sx={{ mb: 1.5 }} />
@@ -790,7 +757,6 @@ export const ProductionDashboardPage: React.FC = () => {
             />
           </Box>
         </Paper>
-
         <Box sx={{ mt: 3, textAlign: 'center' }}>
           <Stack
             direction='row'
@@ -806,7 +772,7 @@ export const ProductionDashboardPage: React.FC = () => {
               sx={{ color: 'text.disabled' }}
             >
               TOPEMS MES v1.0 · 数据每 {REFRESH_INTERVAL_MS / 1000} 秒自动刷新
-              {wsConnected ? ' · WebSocket 实时推送' : ' · 轮询采集模式'}
+              {wsConnected ? i18n.t('pages.index.websocket_18') : i18n.t('pages.index.k17')}
             </Typography>
           </Stack>
         </Box>
@@ -814,5 +780,4 @@ export const ProductionDashboardPage: React.FC = () => {
     </PageContainer>
   );
 };
-
 export default ProductionDashboardPage;

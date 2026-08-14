@@ -3,6 +3,7 @@ import { Box as MuiBox, Typography, Paper, IconButton, Chip } from '@mui/materia
 import { X } from 'lucide-react';
 import type { DevicePoint, StorageLocation } from '../../../../api/gis';
 import { designTokens } from '@/theme/tokens';
+import i18n from '@/i18n';
 
 const ct= designTokens.colors;
 
@@ -35,7 +36,7 @@ const DetailsPanel: React.FC<DetailsPanelProps> = ({ selectedItem, onClose }) =>
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
-          padding: '12px 16px',
+          padding: `${designTokens.spacing.md} 16px`,
           background: `linear-gradient(to right, ${ct.info[400]}, ${ct.primary.main})`,
         }}
       >
@@ -43,7 +44,7 @@ const DetailsPanel: React.FC<DetailsPanelProps> = ({ selectedItem, onClose }) =>
           variant='h6'
           sx={{ fontWeight: 'semibold', color: 'common.white' }}
         >
-          详情信息
+          {i18n.t('components.details_panel.k0')}
         </Typography>
         <IconButton
           onClick={onClose}
@@ -54,7 +55,7 @@ const DetailsPanel: React.FC<DetailsPanelProps> = ({ selectedItem, onClose }) =>
             },
             borderRadius: 1,
           }}
-          aria-label='关闭'
+          aria-label={i18n.t('gis.details_panel.k0')}
         >
           <X
             size={20}
@@ -75,7 +76,7 @@ const DetailsPanel: React.FC<DetailsPanelProps> = ({ selectedItem, onClose }) =>
             variant='caption'
             sx={{ color: 'text.secondary', marginBottom: 0.5 }}
           >
-            名称
+            {i18n.t('components.details_panel.k1')}
           </Typography>
           <Typography
             variant='body1'
@@ -90,7 +91,7 @@ const DetailsPanel: React.FC<DetailsPanelProps> = ({ selectedItem, onClose }) =>
               variant='caption'
               sx={{ color: 'text.secondary', marginBottom: 0.5 }}
             >
-              设备类型
+              {i18n.t('components.details_panel.k2')}
             </Typography>
             <Typography
               variant='body2'
@@ -106,7 +107,7 @@ const DetailsPanel: React.FC<DetailsPanelProps> = ({ selectedItem, onClose }) =>
               variant='caption'
               sx={{ color: 'text.secondary', marginBottom: 0.5 }}
             >
-              位置类型
+              {i18n.t('components.details_panel.k3')}
             </Typography>
             <Typography
               variant='body2'
@@ -122,7 +123,7 @@ const DetailsPanel: React.FC<DetailsPanelProps> = ({ selectedItem, onClose }) =>
               variant='caption'
               sx={{ color: 'text.secondary', marginBottom: 0.5 }}
             >
-              状态
+              {i18n.t('components.details_panel.k4')}
             </Typography>
             <Chip
               label={selectedItem.status}
@@ -130,18 +131,18 @@ const DetailsPanel: React.FC<DetailsPanelProps> = ({ selectedItem, onClose }) =>
               sx={{
                 backgroundColor:
                   selectedItem.status.toLowerCase().includes('active') ||
-                  selectedItem.status.includes('启用')
+                  selectedItem.status.includes(i18n.t('gis.details_panel.k1'))
                     ? ct.success[50]
                     : selectedItem.status.toLowerCase().includes('pending') ||
-                        selectedItem.status.includes('待处理')
+                        selectedItem.status.includes(i18n.t('gis.details_panel.k2'))
                       ? ct.warning[100]
                       : ct.error[50],
                 color:
                   selectedItem.status.toLowerCase().includes('active') ||
-                  selectedItem.status.includes('启用')
+                  selectedItem.status.includes(i18n.t('gis.details_panel.k3'))
                     ? ct.success[800]
                     : selectedItem.status.toLowerCase().includes('pending') ||
-                        selectedItem.status.includes('待处理')
+                        selectedItem.status.includes(i18n.t('gis.details_panel.k4'))
                       ? ct.warning[800]
                       : ct.error[800],
                 fontWeight: 'medium',
@@ -155,7 +156,7 @@ const DetailsPanel: React.FC<DetailsPanelProps> = ({ selectedItem, onClose }) =>
               variant='caption'
               sx={{ color: 'text.secondary', marginBottom: 0.5 }}
             >
-              容量
+              {i18n.t('components.details_panel.k5')}
             </Typography>
             <Typography
               variant='body2'
@@ -171,7 +172,7 @@ const DetailsPanel: React.FC<DetailsPanelProps> = ({ selectedItem, onClose }) =>
               variant='caption'
               sx={{ color: 'text.secondary', marginBottom: 0.5 }}
             >
-              当前用量
+              {i18n.t('components.details_panel.k6')}
             </Typography>
             <Typography
               variant='body2'
@@ -187,7 +188,7 @@ const DetailsPanel: React.FC<DetailsPanelProps> = ({ selectedItem, onClose }) =>
               variant='caption'
               sx={{ color: 'text.secondary', marginBottom: 0.5 }}
             >
-              描述
+              {i18n.t('components.details_panel.k7')}
             </Typography>
             <Typography
               variant='body2'
@@ -202,7 +203,7 @@ const DetailsPanel: React.FC<DetailsPanelProps> = ({ selectedItem, onClose }) =>
             variant='caption'
             sx={{ color: 'text.secondary', marginBottom: 0.5 }}
           >
-            坐标
+            {i18n.t('components.details_panel.k8')}
           </Typography>
           <Typography
             variant='body2'

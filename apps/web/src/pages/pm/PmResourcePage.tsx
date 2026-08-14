@@ -9,9 +9,8 @@ import { pmApi } from '@/api/pm';
 import type { ProjectResource, Project } from '@/api/pm';
 import { QUERY_KEYS } from '@/lib/reactQuery';
 import { designTokens } from '@/theme/tokens';
-
+import i18n from '@/i18n';
 const ct= designTokens.colors;
-
 interface StatCardProps {
   label: string;
   value: React.ReactNode;
@@ -20,7 +19,6 @@ interface StatCardProps {
   icon: React.ReactNode;
   iconColor: string;
 }
-
 const StatCard: React.FC<StatCardProps> = ({
   label,
   value,
@@ -50,24 +48,20 @@ const StatCard: React.FC<StatCardProps> = ({
     </Box>
   </Box>
 );
-
 const PmResourcePage: React.FC = () => {
   const [selectedProject, setSelectedProject] = useState<string>('');
-
   const projectsQuery = useQuery({
     queryKey: QUERY_KEYS.PM.PROJECTS,
     queryFn: () => pmApi.projects.list(),
     staleTime: 5 * 60 * 1000,
     gcTime: 10 * 60 * 1000,
   });
-
   const projects = useMemo(() => {
     const data = projectsQuery.data;
     if (!data?.success || !data.data) return [];
     const items = (data.data as { items?: Project[] }).items;
     return items || (data.data as unknown as Project[]) || [];
   }, [projectsQuery.data]);
-
   const apiAdapter: CrudApiAdapter<ProjectResource> = useMemo(
     () => ({
       list: async (params) => {
@@ -77,7 +71,6 @@ const PmResourcePage: React.FC = () => {
           return { data: [], total: 0 };
         }
         let items = (response.data as ProjectResource[]) || [];
-
         if (params?.resource_type && params.resource_type !== 'all') {
           items = items.filter((r) => r.resource_type === params.resource_type);
         }
@@ -93,7 +86,6 @@ const PmResourcePage: React.FC = () => {
               r.resource_type.toLowerCase().includes(q)
           );
         }
-
         const total = items.length;
         const page = params?.page || 1;
         const pageSize = params?.pageSize || 10;
@@ -106,7 +98,7 @@ const PmResourcePage: React.FC = () => {
           data as Parameters<typeof pmApi.resources.create>[1]
         );
         if (!response.success) {
-          throw new Error(response.message || '创建资源失败');
+          throw new Error(response.message || i18n.t('pm.pm_resource_page.k0'));
         }
         return data as ProjectResource;
       },
@@ -117,24 +109,23 @@ const PmResourcePage: React.FC = () => {
           data as Parameters<typeof pmApi.resources.update>[2]
         );
         if (!response.success) {
-          throw new Error(response.message || '更新资源失败');
+          throw new Error(response.message || i18n.t('pm.pm_resource_page.k1'));
         }
         return { ...(data as ProjectResource), id } as ProjectResource;
       },
       delete: async (id) => {
         const response = await pmApi.resources.delete(selectedProject, id);
         if (!response.success) {
-          throw new Error(response.message || '删除资源失败');
+          throw new Error(response.message || i18n.t('pm.pm_resource_page.k2'));
         }
       },
     }),
     [selectedProject]
   );
-
   const customRowActions: RowAction[] = [
     {
       key: 'release',
-      label: '释放资源',
+      label: i18n.t('pm.pm_resource_page.k3'),
       icon: <CheckCircle2 size={16} />,
       color: 'success',
       show: (row) => row.status === 'in_use',
@@ -144,12 +135,10 @@ const PmResourcePage: React.FC = () => {
       },
     },
   ];
-
   const headerContent = React.useCallback((rows: ProjectResource[]) => {
     const availableCount = rows.filter((r) => r.status === 'available').length;
     const inUseCount = rows.filter((r) => r.status === 'in_use').length;
     const totalHours = rows.reduce((sum, r) => sum + (r.actual_hours || 0), 0);
-
     return (
       <Box
         sx={{
@@ -160,7 +149,7 @@ const PmResourcePage: React.FC = () => {
         }}
       >
         <StatCard
-          label='资源总数'
+          label={i18n.t('pm.pm_resource_page.k4')}
           value={rows.length}
           valueColor='grey.900'
           bgColor='primary.100'
@@ -168,7 +157,7 @@ const PmResourcePage: React.FC = () => {
           iconColor='primary.dark'
         />
         <StatCard
-          label='可用资源'
+          label={i18n.t('pm.pm_resource_page.k5')}
           value={availableCount}
           valueColor='success.dark'
           bgColor='success.light'
@@ -176,7 +165,7 @@ const PmResourcePage: React.FC = () => {
           iconColor='success.dark'
         />
         <StatCard
-          label='使用中'
+          label={i18n.t('pm.pm_resource_page.k6')}
           value={inUseCount}
           valueColor='warning.dark'
           bgColor='warning.light'
@@ -184,7 +173,7 @@ const PmResourcePage: React.FC = () => {
           iconColor={ct.yellow[600]}
         />
         <StatCard
-          label='累计工时'
+          label={i18n.t('pm.pm_resource_page.k7')}
           value={`${totalHours.toFixed(0)}h`}
           valueColor='secondary.dark'
           bgColor={ct.purple[200]}
@@ -194,7 +183,6 @@ const PmResourcePage: React.FC = () => {
       </Box>
     );
   }, []);
-
   return (
     <Box>
       <Box
@@ -209,14 +197,14 @@ const PmResourcePage: React.FC = () => {
           size='small'
           sx={{ minWidth: 320 }}
         >
-          <InputLabel>选择项目</InputLabel>
+          <InputLabel>{i18n.t('pm.pm_resource_page.k8')}</InputLabel>
           <Select
             value={selectedProject}
-            label='选择项目'
+            label={i18n.t('pm.pm_resource_page.k9')}
             onChange={(e) => setSelectedProject(e.target.value)}
           >
             <MenuItem value=''>
-              <em>请选择项目</em>
+              <em>{i18n.t('pm.pm_resource_page.k10')}</em>
             </MenuItem>
             {projects.map((p: { id: string; name: string }) => (
               <MenuItem
@@ -229,16 +217,15 @@ const PmResourcePage: React.FC = () => {
           </Select>
         </FormControl>
       </Box>
-
       {selectedProject ? (
         <CrudPage
           schema={resourceSchema}
           apiAdapter={apiAdapter}
           customRowActions={customRowActions}
           breadcrumbs={[
-            { label: '首页', href: '/dashboard' },
-            { label: '项目管理' },
-            { label: '资源管理' },
+            { label: i18n.t('pm.pm_resource_page.k11'), href: '/dashboard' },
+            { label: i18n.t('pm.pm_resource_page.k12') },
+            { label: i18n.t('pm.pm_resource_page.k13') },
           ]}
           headerContent={headerContent}
         />
@@ -252,11 +239,10 @@ const PmResourcePage: React.FC = () => {
             borderRadius: 2,
           }}
         >
-          <Typography variant='body1'>请先选择一个项目以查看资源列表</Typography>
+          <Typography variant='body1'>{i18n.t('pm.pm_resource_page.k14')}</Typography>
         </Box>
       )}
     </Box>
   );
 };
-
 export default PmResourcePage;

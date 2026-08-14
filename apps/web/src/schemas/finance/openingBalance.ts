@@ -1,6 +1,7 @@
 import React from 'react';
 import type { EntitySchema } from '@/schema';
 import { designTokens } from '@topems/tokens';
+import i18n from '@/i18n';
 
 const formatMoney = (amount: number | undefined) =>
   `¥${(Number(amount ?? 0) || 0).toLocaleString('zh-CN', {
@@ -10,8 +11,8 @@ const formatMoney = (amount: number | undefined) =>
 
 export const openingBalanceSchema: EntitySchema = {
   entity: 'finance_opening_balance',
-  title: '期初余额',
-  description: '管理科目期初余额，支持结转与期间查询',
+  title: i18n.t('finance.opening_balance.k0'),
+  description: i18n.t('finance.opening_balance.k1'),
 
   api: {
     module: 'finance',
@@ -21,7 +22,7 @@ export const openingBalanceSchema: EntitySchema = {
   fields: [
     {
       name: 'subject_code',
-      label: '科目编码',
+      label: i18n.t('finance.opening_balance.k2'),
       type: 'text',
       required: true,
       sortable: true,
@@ -36,7 +37,7 @@ export const openingBalanceSchema: EntitySchema = {
     },
     {
       name: 'subject_name',
-      label: '科目名称',
+      label: i18n.t('finance.opening_balance.k3'),
       type: 'text',
       required: true,
       sortable: true,
@@ -45,7 +46,7 @@ export const openingBalanceSchema: EntitySchema = {
     },
     {
       name: 'period',
-      label: '期间',
+      label: i18n.t('finance.opening_balance.k4'),
       type: 'text',
       required: true,
       sortable: true,
@@ -60,14 +61,14 @@ export const openingBalanceSchema: EntitySchema = {
     },
     {
       name: 'company_id',
-      label: '公司ID',
+      label: i18n.t('finance.opening_balance.id_5'),
       type: 'text',
       listWidth: 140,
       showInList: false,
     },
     {
       name: 'debit_balance',
-      label: '借方余额',
+      label: i18n.t('finance.opening_balance.k6'),
       type: 'number',
       required: true,
       defaultValue: 0,
@@ -82,7 +83,7 @@ export const openingBalanceSchema: EntitySchema = {
     },
     {
       name: 'credit_balance',
-      label: '贷方余额',
+      label: i18n.t('finance.opening_balance.k7'),
       type: 'number',
       required: true,
       defaultValue: 0,
@@ -97,7 +98,7 @@ export const openingBalanceSchema: EntitySchema = {
     },
     {
       name: 'created_at',
-      label: '创建时间',
+      label: i18n.t('finance.opening_balance.k8'),
       type: 'datetime',
       readonly: true,
       hideInForm: true,
@@ -107,7 +108,7 @@ export const openingBalanceSchema: EntitySchema = {
     },
     {
       name: 'updated_at',
-      label: '更新时间',
+      label: i18n.t('finance.opening_balance.k9'),
       type: 'datetime',
       readonly: true,
       hideInForm: true,
@@ -127,17 +128,17 @@ export const openingBalanceSchema: EntitySchema = {
 
   formSections: [
     {
-      title: '科目信息',
+      title: i18n.t('finance.opening_balance.k10'),
       fields: ['subject_code', 'subject_name', 'period', 'company_id'],
     },
     {
-      title: '期初余额',
+      title: i18n.t('finance.opening_balance.k11'),
       fields: ['debit_balance', 'credit_balance'],
     },
   ],
 
   formColCount: 2,
-  createTitle: '新增期初余额',
-  editTitle: '编辑期初余额',
-  detailTitle: '期初余额详情',
+  createTitle: i18n.t('finance.opening_balance.k12'),
+  editTitle: i18n.t('finance.opening_balance.k13'),
+  detailTitle: i18n.t('finance.opening_balance.k14'),
 };

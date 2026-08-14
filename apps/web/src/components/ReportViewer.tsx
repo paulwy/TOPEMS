@@ -3,6 +3,7 @@ import { useTheme } from '@mui/material';
 import { X, ChevronLeft, ChevronRight, FileText, Columns, Rows3 } from 'lucide-react';
 import type { ReportData } from '@/api/report';
 import { designTokens, semanticTokens } from '@topems/tokens';
+import i18n from '@/i18n';
 
 interface ReportViewerProps {
   report: ReportData;
@@ -86,7 +87,7 @@ const ReportViewer: React.FC<ReportViewerProps> = ({ report, onClose }) => {
           style={{
             padding: 6,
             borderBottom: '1px solid border.default',
-            background: 'linear-gradient(to right, primary.light, #eef2ff)',
+            background: `linear-gradient(to right, primary.light, ${designTokens.colors.secondary[50]})`,
           }}
         >
           <div
@@ -129,7 +130,7 @@ const ReportViewer: React.FC<ReportViewerProps> = ({ report, onClose }) => {
               >
                 <span style={{ display: 'flex', alignItems: 'center' }}>
                   <Rows3 sx={{ width: 16, height: 16, marginRight: 0.5 }} />共 {report.row_count}{' '}
-                  条记录
+                  {i18n.t('components.report_viewer.k0')}
                 </span>
                 <span style={{ display: 'flex', alignItems: 'center' }}>
                   <Columns sx={{ width: 16, height: 16, marginRight: 0.5 }} />
@@ -168,7 +169,7 @@ const ReportViewer: React.FC<ReportViewerProps> = ({ report, onClose }) => {
                 <tr>
                   <th
                     style={{
-                      padding: '12px 16px',
+                      padding: `${designTokens.spacing.md} 16px`,
                       textAlign: 'left',
                       fontSize: '12px',
                       fontWeight: 500,
@@ -184,7 +185,7 @@ const ReportViewer: React.FC<ReportViewerProps> = ({ report, onClose }) => {
                       key={column}
                       onClick={() => handleSort(column)}
                       style={{
-                        padding: '12px 16px',
+                        padding: `${designTokens.spacing.md} 16px`,
                         textAlign: 'left',
                         fontSize: '12px',
                         fontWeight: 500,
@@ -218,7 +219,7 @@ const ReportViewer: React.FC<ReportViewerProps> = ({ report, onClose }) => {
                   <tr>
                     <td
                       colSpan={report.config.columns.length + 1}
-                      style={{ padding: '48px 16px', textAlign: 'center' }}
+                      style={{ padding: `${designTokens.spacing['2xl']} 16px`, textAlign: 'center' }}
                     >
                       <FileText
                         sx={{
@@ -229,7 +230,7 @@ const ReportViewer: React.FC<ReportViewerProps> = ({ report, onClose }) => {
                           marginBottom: 1.5,
                         }}
                       />
-                      <p style={{ color: 'text.muted' }}>暂无数据</p>
+                      <p style={{ color: 'text.muted' }}>{i18n.t('components.report_viewer.k0')}</p>
                     </td>
                   </tr>
                 ) : (
@@ -240,7 +241,7 @@ const ReportViewer: React.FC<ReportViewerProps> = ({ report, onClose }) => {
                     >
                       <td
                         style={{
-                          padding: '12px 16px',
+                          padding: `${designTokens.spacing.md} 16px`,
                           fontSize: '14px',
                           color: theme.palette.grey[600],
                         }}
@@ -251,7 +252,7 @@ const ReportViewer: React.FC<ReportViewerProps> = ({ report, onClose }) => {
                         <td
                           key={column}
                           style={{
-                            padding: '12px 16px',
+                            padding: `${designTokens.spacing.md} 16px`,
                             fontSize: '14px',
                             color: theme.palette.text.primary,
                           }}
@@ -283,7 +284,7 @@ const ReportViewer: React.FC<ReportViewerProps> = ({ report, onClose }) => {
             }}
           >
             <div style={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-              <span style={{ fontSize: '14px', color: 'grey.600' }}>每页显示</span>
+              <span style={{ fontSize: '14px', color: 'grey.600' }}>{i18n.t('components.report_viewer.k1')}</span>
               <select
                 value={pageSize}
                 onChange={(e) => {
@@ -291,7 +292,7 @@ const ReportViewer: React.FC<ReportViewerProps> = ({ report, onClose }) => {
                   setCurrentPage(1);
                 }}
                 style={{
-                  padding: '4px 8px',
+                  padding: `${designTokens.spacing.xs} 8px`,
                   border: '1px solid border.default',
                   borderRadius: 'sm',
                   fontSize: '14px',
@@ -302,7 +303,7 @@ const ReportViewer: React.FC<ReportViewerProps> = ({ report, onClose }) => {
                 <option value={50}>50</option>
                 <option value={100}>100</option>
               </select>
-              <span style={{ fontSize: '14px', color: 'grey.600' }}>条</span>
+              <span style={{ fontSize: '14px', color: 'grey.600' }}>{i18n.t('components.report_viewer.k1')}</span>
             </div>
 
             <div style={{ display: 'flex', alignItems: 'center', gap: 2 }}>

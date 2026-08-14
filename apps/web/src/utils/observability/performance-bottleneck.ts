@@ -1,4 +1,5 @@
 import { logger } from '../logger';
+import i18n from '@/i18n';
 
 export enum BottleneckType {
   RENDERING = 'rendering',
@@ -180,7 +181,7 @@ export class PerformanceBottleneckDetector {
     }
 
     this.initialized = true;
-    logger.info('[PerformanceBottleneckDetector] 性能瓶颈检测已初始化');
+    logger.info(i18n.t('shared.performance-bottleneck.k0'));
   }
 
   private observeWebVitals(): void {
@@ -199,7 +200,7 @@ export class PerformanceBottleneckDetector {
       });
       paintObserver.observe({ entryTypes: ['paint'] });
     } catch (e) {
-      logger.debug('[Performance] Paint 指标不支持');
+      logger.debug(i18n.t('shared.performance-bottleneck.k1'));
     }
 
     try {
@@ -213,7 +214,7 @@ export class PerformanceBottleneckDetector {
       });
       lcpObserver.observe({ entryTypes: ['largest-contentful-paint'] });
     } catch (e) {
-      logger.debug('[Performance] LCP 指标不支持');
+      logger.debug(i18n.t('shared.performance-bottleneck.k2'));
     }
 
     try {
@@ -229,7 +230,7 @@ export class PerformanceBottleneckDetector {
       });
       clsObserver.observe({ entryTypes: ['layout-shift'] });
     } catch (e) {
-      logger.debug('[Performance] CLS 指标不支持');
+      logger.debug(i18n.t('shared.performance-bottleneck.k3'));
     }
 
     try {
@@ -244,7 +245,7 @@ export class PerformanceBottleneckDetector {
       });
       inpObserver.observe({ entryTypes: ['event'] });
     } catch (e) {
-      logger.debug('[Performance] INP 指标不支持');
+      logger.debug(i18n.t('shared.performance-bottleneck.k4'));
     }
 
     const navEntries = performance.getEntriesByType('navigation');
@@ -281,7 +282,7 @@ export class PerformanceBottleneckDetector {
                 this.config.thresholds.longTask,
                 this.config.thresholds.longTask * 3
               ),
-              description: `检测到长任务: ${entry.duration.toFixed(0)}ms`,
+              description: `${i18n.t('shared.performance-bottleneck.k5')}${entry.duration.toFixed(0)}ms`,
               metric: 'longTask',
               value: entry.duration,
               threshold: this.config.thresholds.longTask,
@@ -294,7 +295,7 @@ export class PerformanceBottleneckDetector {
 
       this.observer.observe({ entryTypes: ['longtask'] });
     } catch (e) {
-      logger.debug('[Performance] Long Task 检测不支持');
+      logger.debug(i18n.t('shared.performance-bottleneck.k6'));
     }
   }
 
@@ -312,7 +313,7 @@ export class PerformanceBottleneckDetector {
         this.addBottleneck({
           type: BottleneckType.MEMORY,
           severity: this.getSeverity(usageRatio, this.config.thresholds.memoryUsage, 0.95),
-          description: `内存使用率过高: ${(usageRatio * 100).toFixed(1)}%`,
+          description: `${i18n.t('shared.performance-bottleneck.k7')}${(usageRatio * 100).toFixed(1)}%`,
           metric: 'memoryUsage',
           value: usageRatio,
           threshold: this.config.thresholds.memoryUsage,
@@ -357,7 +358,7 @@ export class PerformanceBottleneckDetector {
         this.addBottleneck({
           type: BottleneckType.NETWORK,
           severity: slowCount > 5 ? BottleneckSeverity.HIGH : BottleneckSeverity.MEDIUM,
-          description: `检测到 ${slowCount} 个慢速网络请求`,
+          description: `${i18n.t('shared.performance-bottleneck.k8')}${slowCount}${i18n.t('shared.performance-bottleneck.k9')}`,
           metric: 'slowRequests',
           value: slowCount,
           threshold: 3,
@@ -392,7 +393,7 @@ export class PerformanceBottleneckDetector {
       detected.push({
         type: BottleneckType.PAINT,
         severity: this.getSeverity(this.webVitals.fcp, this.config.thresholds.fcp, 3000),
-        description: `首次内容绘制较慢: ${this.webVitals.fcp.toFixed(0)}ms`,
+        description: `${i18n.t('shared.performance-bottleneck.k10')}${this.webVitals.fcp.toFixed(0)}ms`,
         metric: 'fcp',
         value: this.webVitals.fcp,
         threshold: this.config.thresholds.fcp,
@@ -405,7 +406,7 @@ export class PerformanceBottleneckDetector {
       detected.push({
         type: BottleneckType.RENDERING,
         severity: this.getSeverity(this.webVitals.lcp, this.config.thresholds.lcp, 4000),
-        description: `最大内容绘制较慢: ${this.webVitals.lcp.toFixed(0)}ms`,
+        description: `${i18n.t('shared.performance-bottleneck.k11')}${this.webVitals.lcp.toFixed(0)}ms`,
         metric: 'lcp',
         value: this.webVitals.lcp,
         threshold: this.config.thresholds.lcp,
@@ -418,7 +419,7 @@ export class PerformanceBottleneckDetector {
       detected.push({
         type: BottleneckType.LAYOUT,
         severity: this.getSeverity(this.webVitals.cls, this.config.thresholds.cls, 0.25),
-        description: `布局偏移过大: ${this.webVitals.cls.toFixed(3)}`,
+        description: `${i18n.t('shared.performance-bottleneck.k12')}${this.webVitals.cls.toFixed(3)}`,
         metric: 'cls',
         value: this.webVitals.cls,
         threshold: this.config.thresholds.cls,
@@ -431,7 +432,7 @@ export class PerformanceBottleneckDetector {
       detected.push({
         type: BottleneckType.JAVASCRIPT,
         severity: this.getSeverity(this.webVitals.inp, this.config.thresholds.inp, 500),
-        description: `交互延迟较高: ${this.webVitals.inp.toFixed(0)}ms`,
+        description: `${i18n.t('shared.performance-bottleneck.k13')}${this.webVitals.inp.toFixed(0)}ms`,
         metric: 'inp',
         value: this.webVitals.inp,
         threshold: this.config.thresholds.inp,
@@ -444,7 +445,7 @@ export class PerformanceBottleneckDetector {
       detected.push({
         type: BottleneckType.NETWORK,
         severity: this.getSeverity(this.webVitals.ttfb, this.config.thresholds.ttfb, 1800),
-        description: `首字节时间过长: ${this.webVitals.ttfb.toFixed(0)}ms`,
+        description: `${i18n.t('shared.performance-bottleneck.k14')}${this.webVitals.ttfb.toFixed(0)}ms`,
         metric: 'ttfb',
         value: this.webVitals.ttfb,
         threshold: this.config.thresholds.ttfb,
@@ -553,7 +554,7 @@ export class PerformanceBottleneckDetector {
 
   private generateSummary(bottlenecks: BottleneckInfo[], score: number): string {
     if (bottlenecks.length === 0) {
-      return '性能优秀，未检测到明显瓶颈';
+      return i18n.t('shared.performance-bottleneck.k0');
     }
 
     const critical = bottlenecks.filter((b) => b.severity === BottleneckSeverity.CRITICAL).length;
@@ -561,12 +562,12 @@ export class PerformanceBottleneckDetector {
     const medium = bottlenecks.filter((b) => b.severity === BottleneckSeverity.MEDIUM).length;
 
     let rating = '';
-    if (score >= 90) rating = '优秀';
-    else if (score >= 80) rating = '良好';
-    else if (score >= 60) rating = '一般';
-    else rating = '较差';
+    if (score >= 90) rating = i18n.t('shared.performance-bottleneck.k1');
+    else if (score >= 80) rating = i18n.t('shared.performance-bottleneck.k2');
+    else if (score >= 60) rating = i18n.t('shared.performance-bottleneck.k3');
+    else rating = i18n.t('shared.performance-bottleneck.k4');
 
-    return `性能评分: ${score} (${rating})，检测到 ${critical} 个严重、${high} 个高优、${medium} 个中优瓶颈`;
+    return `${i18n.t('shared.performance-bottleneck.k15')}${score} (${rating}${i18n.t('shared.performance-bottleneck.k16')}${critical}${i18n.t('shared.performance-bottleneck.k17')}${high}${i18n.t('shared.performance-bottleneck.k18')}${medium}${i18n.t('shared.performance-bottleneck.k19')}`;
   }
 
   private checkWebVitalBottleneck(metric: string, value: number): void {
@@ -584,7 +585,7 @@ export class PerformanceBottleneckDetector {
 
     const threshold = thresholds[thresholdKey] as number;
     if (value > threshold) {
-      logger.debug(`[Performance] ${metric} 超出阈值: ${value} > ${threshold}`);
+      logger.debug(`[Performance] ${metric}${i18n.t('shared.performance-bottleneck.k20')}${value} > ${threshold}`);
     }
   }
 
@@ -600,7 +601,7 @@ export class PerformanceBottleneckDetector {
         this.config.onBottleneckDetected(bottleneck);
       }
 
-      logger.warn(`[Performance] 检测到${bottleneck.severity}级瓶颈: ${bottleneck.description}`);
+      logger.warn(`${i18n.t('shared.performance-bottleneck.performance_21')}${bottleneck.severity}${i18n.t('shared.performance-bottleneck.k22')}${bottleneck.description}`);
     }
   }
 
@@ -623,14 +624,14 @@ export class PerformanceBottleneckDetector {
 
   private generateLongTaskSuggestions(duration: number): string[] {
     const suggestions: string[] = [
-      '使用 requestIdleCallback 或 setTimeout 将长任务分解为多个小任务',
-      '考虑使用 Web Worker 处理计算密集型任务',
-      '使用 React.memo / useMemo / useCallback 减少不必要的渲染',
+      i18n.t('shared.performance-bottleneck.k5'),
+      i18n.t('shared.performance-bottleneck.k6'),
+      i18n.t('shared.performance-bottleneck.k23'),
     ];
 
     if (duration > 200) {
-      suggestions.push('使用 Chrome DevTools Performance 面板分析具体瓶颈');
-      suggestions.push('检查是否有大型数据同步操作，考虑异步分批处理');
+      suggestions.push(i18n.t('shared.performance-bottleneck.k7'));
+      suggestions.push(i18n.t('shared.performance-bottleneck.k8'));
     }
 
     return suggestions;
@@ -638,26 +639,26 @@ export class PerformanceBottleneckDetector {
 
   private generateMemorySuggestions(): string[] {
     return [
-      '检查是否存在未清理的事件监听器',
-      '确保定时器、订阅等资源在组件卸载时正确清理',
-      '检查是否存在闭包引用导致的内存泄漏',
-      '使用 WeakMap / WeakSet 替代 Map / Set 存储临时数据',
-      '减少全局变量和长期对象的引用',
-      '使用 Chrome DevTools Memory 面板进行堆快照分析',
+      i18n.t('shared.performance-bottleneck.k9'),
+      i18n.t('shared.performance-bottleneck.k10'),
+      i18n.t('shared.performance-bottleneck.k11'),
+      i18n.t('shared.performance-bottleneck.k12'),
+      i18n.t('shared.performance-bottleneck.k13'),
+      i18n.t('shared.performance-bottleneck.k14'),
     ];
   }
 
   private generateNetworkSuggestions(slowRequests: NetworkMetrics['slowRequests']): string[] {
     const suggestions: string[] = [
-      '启用 HTTP/2 或 HTTP/3 多路复用',
-      '优化图片格式和大小（使用 WebP/AVIF、响应式图片）',
-      '启用 Gzip/Brotli 压缩',
-      '添加资源缓存策略（HTTP 缓存、Service Worker）',
+      i18n.t('shared.performance-bottleneck.k15'),
+      i18n.t('shared.performance-bottleneck.k16'),
+      i18n.t('shared.performance-bottleneck.gzipbrotli_17'),
+      i18n.t('shared.performance-bottleneck.k18'),
     ];
 
     if (slowRequests.some((r) => r.duration > 5000)) {
-      suggestions.push('考虑使用 CDN 加速静态资源');
-      suggestions.push('评估是否需要后端接口性能优化');
+      suggestions.push(i18n.t('shared.performance-bottleneck.cdn_19'));
+      suggestions.push(i18n.t('shared.performance-bottleneck.k20'));
     }
 
     return suggestions;
@@ -665,58 +666,58 @@ export class PerformanceBottleneckDetector {
 
   private generateFCPSuggestions(): string[] {
     return [
-      '优化关键渲染路径，减少阻塞渲染的 CSS 和 JS',
-      '使用 preload 预加载关键资源',
-      '内联关键 CSS',
-      '延迟加载非关键 JavaScript',
-      '减少首屏所需的字体文件大小',
-      '使用字体显示: swap 避免 FOIT',
+      i18n.t('shared.performance-bottleneck.k21'),
+      i18n.t('shared.performance-bottleneck.preload_22'),
+      i18n.t('shared.performance-bottleneck.css_23'),
+      i18n.t('shared.performance-bottleneck.javascript_24'),
+      i18n.t('shared.performance-bottleneck.k25'),
+      i18n.t('shared.performance-bottleneck.swapfoit_24'),
     ];
   }
 
   private generateLCPSuggestions(): string[] {
     return [
-      '优化 LCP 元素的加载（通常是图片或文本块）',
+      i18n.t('shared.performance-bottleneck.k26'),
       '为 LCP 图片添加 fetchpriority="high"',
-      '使用 preload 预加载 LCP 图片',
-      '优化图片格式和压缩质量',
-      '使用 CDN 加速图片加载',
-      '确保服务端响应速度快（优化 TTFB）',
-      '减少阻塞渲染的资源数量',
+      i18n.t('shared.performance-bottleneck.k27'),
+      i18n.t('shared.performance-bottleneck.k28'),
+      i18n.t('shared.performance-bottleneck.cdn_29'),
+      i18n.t('shared.performance-bottleneck.ttfb_30'),
+      i18n.t('shared.performance-bottleneck.k31'),
     ];
   }
 
   private generateCLSSuggestions(): string[] {
     return [
-      '为图片和视频设置明确的 width/height 属性',
-      '使用 aspect-ratio CSS 属性保持宽高比',
-      '为动态插入的内容预留空间',
-      '避免在已有内容上方插入新内容',
-      '使用 transform 动画替代 top/left 等触发布局的属性',
-      '选择系统字体或确保 web 字体加载时不导致布局偏移',
+      i18n.t('shared.performance-bottleneck.k32'),
+      i18n.t('shared.performance-bottleneck.k33'),
+      i18n.t('shared.performance-bottleneck.k34'),
+      i18n.t('shared.performance-bottleneck.k35'),
+      i18n.t('shared.performance-bottleneck.k36'),
+      i18n.t('shared.performance-bottleneck.k37'),
     ];
   }
 
   private generateINPSuggestions(): string[] {
     return [
-      '优化事件处理函数，减少同步执行时间',
-      '将耗时操作移至 requestIdleCallback 或 Web Worker',
-      '使用 debounce/throttle 优化高频事件处理',
-      '减少组件渲染次数（使用 memoization）',
-      '避免在事件处理中触发大型 DOM 更新',
-      '使用 isInputPending API 让出主线程',
+      i18n.t('shared.performance-bottleneck.k38'),
+      i18n.t('shared.performance-bottleneck.k39'),
+      i18n.t('shared.performance-bottleneck.k40'),
+      i18n.t('shared.performance-bottleneck.k41'),
+      i18n.t('shared.performance-bottleneck.dom_42'),
+      i18n.t('shared.performance-bottleneck.k43'),
     ];
   }
 
   private generateTTFBSuggestions(): string[] {
     return [
-      '优化后端接口响应时间',
-      '使用 CDN 加速静态资源',
-      '启用服务端缓存（Redis、数据库查询缓存）',
-      '使用 HTTP 缓存头（Cache-Control、ETag）',
-      '考虑使用 Service Worker 缓存策略',
-      '评估是否需要升级服务器配置',
-      '优化数据库查询性能',
+      i18n.t('shared.performance-bottleneck.k44'),
+      i18n.t('shared.performance-bottleneck.cdn_45'),
+      i18n.t('shared.performance-bottleneck.k46'),
+      i18n.t('shared.performance-bottleneck.k47'),
+      i18n.t('shared.performance-bottleneck.k48'),
+      i18n.t('shared.performance-bottleneck.k49'),
+      i18n.t('shared.performance-bottleneck.k50'),
     ];
   }
 

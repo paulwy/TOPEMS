@@ -27,6 +27,7 @@ import {
   IconButton,
   Tooltip,
 } from '@mui/material';
+import i18n from '@/i18n';
 import {
   AlertTriangle,
   AlertCircle,
@@ -44,29 +45,25 @@ import type { AnomalyAlert, AnomalyRule } from '../../api/mes/anomalyDetection';
 import { useQuery, useQueryClient, useMutation } from '@tanstack/react-query';
 import { useNotificationStore } from '@/store/notificationStore';
 import { PageContainer } from '@/components/common';
-
 import { CACHE_DURATIONS, QUERY_KEYS } from '@/lib/reactQuery';
 import { designTokens, semanticTokens } from '@topems/tokens';
-
 const SEVERITY_CONFIG = {
-  critical: { color: 'error' as const, icon: <AlertCircle size={16} />, label: '严重' },
-  warning: { color: 'warning' as const, icon: <AlertTriangle size={16} />, label: '警告' },
-  info: { color: 'info' as const, icon: <CheckCircle size={16} />, label: '提示' },
+  critical: { color: 'error' as const, icon: <AlertCircle size={16} />, label: i18n.t('mes.anomaly_detection_page.k0') },
+  warning: { color: 'warning' as const, icon: <AlertTriangle size={16} />, label: i18n.t('mes.anomaly_detection_page.k1') },
+  info: { color: 'info' as const, icon: <CheckCircle size={16} />, label: i18n.t('mes.anomaly_detection_page.k2') },
 };
-
 const ANOMALY_TYPE_LABELS: Record<string, string> = {
-  equipment_overheat: '设备过热',
-  equipment_vibration: '设备振动异常',
-  equipment_noise: '设备噪音异常',
-  equipment_oee_drop: 'OEE 偏低',
-  equipment_maintenance_overdue: '维护逾期',
-  quality_defect_rate: '缺陷率偏高',
-  quality_batch_failure: '批次不合格',
-  production_delay: '生产延期',
-  production_output_drop: '产量下降',
-  wip_backlog: '在制品积压',
+  equipment_overheat: i18n.t('mes.anomaly_detection_page.k3'),
+  equipment_vibration: i18n.t('mes.anomaly_detection_page.k4'),
+  equipment_noise: i18n.t('mes.anomaly_detection_page.k5'),
+  equipment_oee_drop: i18n.t('pages.anomaly_detection_page.oee_0'),
+  equipment_maintenance_overdue: i18n.t('mes.anomaly_detection_page.k6'),
+  quality_defect_rate: i18n.t('mes.anomaly_detection_page.k7'),
+  quality_batch_failure: i18n.t('mes.anomaly_detection_page.k8'),
+  production_delay: i18n.t('mes.anomaly_detection_page.k9'),
+  production_output_drop: i18n.t('mes.anomaly_detection_page.k10'),
+  wip_backlog: i18n.t('mes.anomaly_detection_page.k11'),
 };
-
 const AnomalyDetectionPage: React.FC = () => {
   const [activeTab, setActiveTab] = useState(0);
   const [severityFilter, setSeverityFilter] = useState<string>('');
@@ -77,10 +74,8 @@ const AnomalyDetectionPage: React.FC = () => {
     critical_threshold: '',
     enabled: true,
   });
-
   const queryClient = useQueryClient();
   const addNotification = useNotificationStore((state) => state.addNotification);
-
   // Summary query
   const summaryQuery = useQuery({
     queryKey: QUERY_KEYS.AD_HOC.ANOMALY_SUMMARY_BASE,
@@ -88,7 +83,6 @@ const AnomalyDetectionPage: React.FC = () => {
     refetchInterval: 30000,
   
       staleTime: CACHE_DURATIONS.MEDIUM,});
-
   // Alerts query
   const alertsQuery = useQuery({
     queryKey: [...QUERY_KEYS.AD_HOC.ANOMALY_ALERTS_BASE, severityFilter, typeFilter],
@@ -100,21 +94,18 @@ const AnomalyDetectionPage: React.FC = () => {
     refetchInterval: 30000,
   
       staleTime: CACHE_DURATIONS.MEDIUM,});
-
   // Rules query
   const rulesQuery = useQuery({
     queryKey: QUERY_KEYS.AD_HOC.ANOMALY_RULES_BASE,
     queryFn: () => anomalyDetectionApi.getRules(),
   
       staleTime: CACHE_DURATIONS.MEDIUM,});
-
   // Trend query
   const trendQuery = useQuery({
     queryKey: QUERY_KEYS.AD_HOC.ANOMALY_TREND_BASE,
     queryFn: () => anomalyDetectionApi.getTrend(),
   
       staleTime: CACHE_DURATIONS.MEDIUM,});
-
   // Scan mutation
   const scanMutation = useMutation({
     mutationFn: () => anomalyDetectionApi.triggerScan(),
@@ -127,13 +118,12 @@ const AnomalyDetectionPage: React.FC = () => {
   exact: false,
   refetchType: 'active',
 });
-      addNotification({ title: '扫描完成', message: '异常扫描已触发', type: 'success' });
+      addNotification({ title: i18n.t('mes.anomaly_detection_page.k13'), message: i18n.t('mes.anomaly_detection_page.k12'), type: 'success' });
     },
     onError: () => {
-      addNotification({ title: '错误', message: '扫描触发失败', type: 'error' });
+      addNotification({ title: i18n.t('mes.anomaly_detection_page.k15'), message: i18n.t('mes.anomaly_detection_page.k14'), type: 'error' });
     },
   });
-
   // Rule update mutation
   const updateRuleMutation = useMutation({
     mutationFn: ({ ruleId, req }: { ruleId: string; req: Record<string, unknown> }) =>
@@ -143,14 +133,13 @@ const AnomalyDetectionPage: React.FC = () => {
   exact: false,
   refetchType: 'active',
 });
-      addNotification({ title: '成功', message: '规则已更新', type: 'success' });
+      addNotification({ title: i18n.t('mes.anomaly_detection_page.k17'), message: i18n.t('mes.anomaly_detection_page.k16'), type: 'success' });
       setEditingRule(null);
     },
     onError: () => {
-      addNotification({ title: '错误', message: '规则更新失败', type: 'error' });
+      addNotification({ title: i18n.t('mes.anomaly_detection_page.k19'), message: i18n.t('mes.anomaly_detection_page.k18'), type: 'error' });
     },
   });
-
   const handleRefresh = () => {
     queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.ANOMALY_SUMMARY_BASE ,
   exact: false,
@@ -164,13 +153,11 @@ const AnomalyDetectionPage: React.FC = () => {
   exact: false,
   refetchType: 'active',
 });
-    addNotification({ title: '成功', message: '数据已刷新', type: 'success' });
+    addNotification({ title: i18n.t('mes.anomaly_detection_page.k21'), message: i18n.t('mes.anomaly_detection_page.k20'), type: 'success' });
   };
-
   const handleScan = () => {
     scanMutation.mutate();
   };
-
   const handleEditRule = (rule: AnomalyRule) => {
     setEditingRule(rule);
     setEditForm({
@@ -179,7 +166,6 @@ const AnomalyDetectionPage: React.FC = () => {
       enabled: rule.enabled,
     });
   };
-
   const handleSaveRule = () => {
     if (!editingRule) return;
     const req: Record<string, unknown> = {
@@ -189,14 +175,11 @@ const AnomalyDetectionPage: React.FC = () => {
     };
     updateRuleMutation.mutate({ ruleId: editingRule.id, req });
   };
-
   const summary = summaryQuery.data?.data;
   const alerts = alertsQuery.data?.data || [];
   const rules = rulesQuery.data?.data || [];
   const trend = trendQuery.data?.data || [];
-
   const isLoading = summaryQuery.isPending || alertsQuery.isPending;
-
   const getTrendIcon = (trend: string) => {
     switch (trend) {
       case 'rising':
@@ -222,11 +205,9 @@ const AnomalyDetectionPage: React.FC = () => {
         );
     }
   };
-
   const maxTrendCount = Math.max(...trend.map((t) => t.count), 1);
-
   return (
-    <PageContainer title='异常检测'>
+    <PageContainer title={i18n.t('mes.anomaly_detection_page.k22')}>
       <Box sx={{ p: 3 }}>
         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
           <Typography
@@ -234,7 +215,7 @@ const AnomalyDetectionPage: React.FC = () => {
             sx={{ display: 'flex', alignItems: 'center', gap: 1 }}
           >
             <AlertTriangle size={24} />
-            生产异常预警
+            {i18n.t('pages.anomaly_detection_page.k0')}
           </Typography>
           <Box sx={{ display: 'flex', gap: 1 }}>
             <Button
@@ -243,7 +224,7 @@ const AnomalyDetectionPage: React.FC = () => {
               onClick={handleRefresh}
               disabled={isLoading}
             >
-              刷新
+              {i18n.t('pages.anomaly_detection_page.k1')}
             </Button>
             <Button
               variant='contained'
@@ -251,24 +232,21 @@ const AnomalyDetectionPage: React.FC = () => {
               onClick={handleScan}
               disabled={scanMutation.isPending}
             >
-              {scanMutation.isPending ? '扫描中...' : '手动扫描'}
+              {scanMutation.isPending ? i18n.t('pages.anomaly_detection_page.k1') : i18n.t('mes.anomaly_detection_page.k23')}
             </Button>
           </Box>
         </Box>
-
         {isLoading && <LinearProgress sx={{ mb: 2 }} />}
-
         <Tabs
           value={activeTab}
           onChange={(_, v) => setActiveTab(v)}
           sx={{ mb: 3 }}
         >
-          <Tab label='预警总览' />
-          <Tab label={`预警列表 (${alerts.length})`} />
-          <Tab label='趋势分析' />
-          <Tab label='预警规则' />
+          <Tab label={i18n.t('mes.anomaly_detection_page.k24')} />
+          <Tab label={`${i18n.t('pages.anomaly_detection_page.k2')}${alerts.length})`} />
+          <Tab label={i18n.t('mes.anomaly_detection_page.k25')} />
+          <Tab label={i18n.t('mes.anomaly_detection_page.k26')} />
         </Tabs>
-
         {/* Tab 1: Summary */}
         {activeTab === 0 && (
           <Box>
@@ -295,7 +273,7 @@ const AnomalyDetectionPage: React.FC = () => {
                       color='textSecondary'
                       variant='body2'
                     >
-                      严重预警
+                      {i18n.t('pages.anomaly_detection_page.k2')}
                     </Typography>
                   </Box>
                   <Typography
@@ -317,7 +295,7 @@ const AnomalyDetectionPage: React.FC = () => {
                       color='textSecondary'
                       variant='body2'
                     >
-                      警告预警
+                      {i18n.t('pages.anomaly_detection_page.k3')}
                     </Typography>
                   </Box>
                   <Typography
@@ -332,14 +310,14 @@ const AnomalyDetectionPage: React.FC = () => {
                 <CardContent>
                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
                     <CheckCircle
-                      color='#2196f3'
+                      color={designTokens.colors.primary[500]}
                       size={20}
                     />
                     <Typography
                       color='textSecondary'
                       variant='body2'
                     >
-                      提示信息
+                      {i18n.t('pages.anomaly_detection_page.k4')}
                     </Typography>
                   </Box>
                   <Typography
@@ -361,14 +339,13 @@ const AnomalyDetectionPage: React.FC = () => {
                       color='textSecondary'
                       variant='body2'
                     >
-                      预警总数
+                      {i18n.t('pages.anomaly_detection_page.k5')}
                     </Typography>
                   </Box>
                   <Typography variant='h4'>{summary?.total_alerts ?? 0}</Typography>
                 </CardContent>
               </Card>
             </Grid>
-
             <Grid
               sx={{
                 display: 'grid',
@@ -377,7 +354,7 @@ const AnomalyDetectionPage: React.FC = () => {
               }}
             >
               <Card>
-                <CardHeader title='按类型分布' />
+                <CardHeader title={i18n.t('mes.anomaly_detection_page.k27')} />
                 <CardContent>
                   {summary && Object.entries(summary.byType).length > 0 ? (
                     Object.entries(summary.byType).map(([type, count]) => (
@@ -401,22 +378,22 @@ const AnomalyDetectionPage: React.FC = () => {
                     ))
                   ) : (
                     <Alert severity='success'>
-                      <AlertTitle>暂无异常</AlertTitle>
-                      当前没有检测到异常预警
+                      <AlertTitle>{i18n.t('mes.anomaly_detection_page.k28')}</AlertTitle>
+                      {i18n.t('pages.anomaly_detection_page.k6')}
                     </Alert>
                   )}
                 </CardContent>
               </Card>
               <Card>
-                <CardHeader title='设备预警排行' />
+                <CardHeader title={i18n.t('mes.anomaly_detection_page.k29')} />
                 <CardContent>
                   {summary && summary.by_equipment.length > 0 ? (
                     <Table size='small'>
                       <TableHead>
                         <TableRow>
-                          <TableCell>设备名称</TableCell>
-                          <TableCell align='center'>预警数</TableCell>
-                          <TableCell align='center'>最高级别</TableCell>
+                          <TableCell>{i18n.t('mes.anomaly_detection_page.k30')}</TableCell>
+                          <TableCell align='center'>{i18n.t('mes.anomaly_detection_page.k31')}</TableCell>
+                          <TableCell align='center'>{i18n.t('mes.anomaly_detection_page.k32')}</TableCell>
                         </TableRow>
                       </TableHead>
                       <TableBody>
@@ -448,8 +425,8 @@ const AnomalyDetectionPage: React.FC = () => {
                     </Table>
                   ) : (
                     <Alert severity='success'>
-                      <AlertTitle>暂无设备异常</AlertTitle>
-                      所有设备运行正常
+                      <AlertTitle>{i18n.t('mes.anomaly_detection_page.k33')}</AlertTitle>
+                      {i18n.t('pages.anomaly_detection_page.k7')}
                     </Alert>
                   )}
                 </CardContent>
@@ -457,7 +434,6 @@ const AnomalyDetectionPage: React.FC = () => {
             </Grid>
           </Box>
         )}
-
         {/* Tab 2: Alert List */}
         {activeTab === 1 && (
           <Box>
@@ -465,27 +441,27 @@ const AnomalyDetectionPage: React.FC = () => {
               <TextField
                 select
                 size='small'
-                label='严重程度'
+                label={i18n.t('mes.anomaly_detection_page.k34')}
                 value={severityFilter}
                 onChange={(e) => setSeverityFilter(e.target.value)}
                 sx={{ minWidth: 120 }}
                 slotProps={{ select: { native: true } }}
               >
-                <option value=''>全部</option>
-                <option value='critical'>严重</option>
-                <option value='warning'>警告</option>
-                <option value='info'>提示</option>
+                <option value=''>{i18n.t('mes.anomaly_detection_page.k35')}</option>
+                <option value='critical'>{i18n.t('mes.anomaly_detection_page.k36')}</option>
+                <option value='warning'>{i18n.t('mes.anomaly_detection_page.k37')}</option>
+                <option value='info'>{i18n.t('mes.anomaly_detection_page.k38')}</option>
               </TextField>
               <TextField
                 select
                 size='small'
-                label='异常类型'
+                label={i18n.t('mes.anomaly_detection_page.k39')}
                 value={typeFilter}
                 onChange={(e) => setTypeFilter(e.target.value)}
                 sx={{ minWidth: 150 }}
                 slotProps={{ select: { native: true } }}
               >
-                <option value=''>全部</option>
+                <option value=''>{i18n.t('mes.anomaly_detection_page.k40')}</option>
                 {Object.entries(ANOMALY_TYPE_LABELS).map(([value, label]) => (
                   <option
                     key={value}
@@ -496,11 +472,10 @@ const AnomalyDetectionPage: React.FC = () => {
                 ))}
               </TextField>
             </Box>
-
             {alerts.length === 0 ? (
               <Alert severity='success'>
-                <AlertTitle>暂无预警</AlertTitle>
-                当前没有检测到符合筛选条件的异常预警
+                <AlertTitle>{i18n.t('mes.anomaly_detection_page.k41')}</AlertTitle>
+                {i18n.t('pages.anomaly_detection_page.k8')}
               </Alert>
             ) : (
               <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
@@ -558,13 +533,13 @@ const AnomalyDetectionPage: React.FC = () => {
                                 variant='caption'
                                 color='textSecondary'
                               >
-                                来源: {alert.source_name}
+                                [i18n.t('pages.anomaly_detection_page.k9')]: {alert.source_name}
                               </Typography>
                               <Typography
                                 variant='caption'
                                 color='textSecondary'
                               >
-                                指标: {alert.metric_name} = {alert.metric_value.toFixed(2)} (阈值:{' '}
+                                [i18n.t('pages.anomaly_detection_page.k10')]: {alert.metric_name} = {alert.metric_value.toFixed(2)} (阈值:{' '}
                                 {alert.threshold_value})
                               </Typography>
                               <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
@@ -572,7 +547,7 @@ const AnomalyDetectionPage: React.FC = () => {
                                   variant='caption'
                                   color='textSecondary'
                                 >
-                                  趋势:
+                                  [i18n.t('pages.anomaly_detection_page.k11')]:
                                 </Typography>
                                 {getTrendIcon(alert.trend)}
                               </Box>
@@ -602,11 +577,10 @@ const AnomalyDetectionPage: React.FC = () => {
             )}
           </Box>
         )}
-
         {/* Tab 3: Trend */}
         {activeTab === 2 && (
           <Card>
-            <CardHeader title='异常趋势（近7天）' />
+            <CardHeader title={i18n.t('mes.anomaly_detection_page.7_42')} />
             <CardContent>
               {trend.length > 0 ? (
                 <Box>
@@ -668,41 +642,40 @@ const AnomalyDetectionPage: React.FC = () => {
                       <Box
                         sx={{ width: 12, height: 12, bgcolor: 'primary.main', borderRadius: 0.5 }}
                       />
-                      <Typography variant='caption'>总预警</Typography>
+                      <Typography variant='caption'>{i18n.t('mes.anomaly_detection_page.k43')}</Typography>
                     </Box>
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
                       <Box
                         sx={{ width: 12, height: 12, bgcolor: 'error.main', borderRadius: 0.5 }}
                       />
-                      <Typography variant='caption'>严重预警</Typography>
+                      <Typography variant='caption'>{i18n.t('mes.anomaly_detection_page.k44')}</Typography>
                     </Box>
                   </Box>
                 </Box>
               ) : (
                 <Alert severity='info'>
-                  <AlertTitle>暂无趋势数据</AlertTitle>
-                  近期没有异常记录
+                  <AlertTitle>{i18n.t('mes.anomaly_detection_page.k45')}</AlertTitle>
+                  {i18n.t('pages.anomaly_detection_page.k12')}
                 </Alert>
               )}
             </CardContent>
           </Card>
         )}
-
         {/* Tab 4: Rules */}
         {activeTab === 3 && (
           <Card>
-            <CardHeader title='预警规则配置' />
+            <CardHeader title={i18n.t('mes.anomaly_detection_page.k46')} />
             <CardContent>
               <Table size='small'>
                 <TableHead>
                   <TableRow>
-                    <TableCell>规则名称</TableCell>
-                    <TableCell>指标</TableCell>
-                    <TableCell align='center'>警告阈值</TableCell>
-                    <TableCell align='center'>严重阈值</TableCell>
-                    <TableCell align='center'>窗口</TableCell>
-                    <TableCell align='center'>启用</TableCell>
-                    <TableCell align='center'>操作</TableCell>
+                    <TableCell>{i18n.t('mes.anomaly_detection_page.k47')}</TableCell>
+                    <TableCell>{i18n.t('mes.anomaly_detection_page.k48')}</TableCell>
+                    <TableCell align='center'>{i18n.t('mes.anomaly_detection_page.k49')}</TableCell>
+                    <TableCell align='center'>{i18n.t('mes.anomaly_detection_page.k50')}</TableCell>
+                    <TableCell align='center'>{i18n.t('mes.anomaly_detection_page.k51')}</TableCell>
+                    <TableCell align='center'>{i18n.t('mes.anomaly_detection_page.k52')}</TableCell>
+                    <TableCell align='center'>{i18n.t('mes.anomaly_detection_page.k53')}</TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
@@ -735,11 +708,11 @@ const AnomalyDetectionPage: React.FC = () => {
                         />
                       </TableCell>
                       <TableCell align='center'>
-                        <Tooltip title='编辑规则'>
+                        <Tooltip title={i18n.t('mes.anomaly_detection_page.k54')}>
                           <IconButton
                             size='small'
                             onClick={() => handleEditRule(rule)}
-                            aria-label='设置'
+                            aria-label={i18n.t('mes.anomaly_detection_page.k55')}
                           >
                             <SettingsIcon size={16} />
                           </IconButton>
@@ -752,7 +725,6 @@ const AnomalyDetectionPage: React.FC = () => {
             </CardContent>
           </Card>
         )}
-
         {/* Edit Rule Dialog */}
         <Dialog
           open={!!editingRule}
@@ -760,7 +732,7 @@ const AnomalyDetectionPage: React.FC = () => {
           maxWidth='sm'
           fullWidth
         >
-          <DialogTitle>编辑预警规则</DialogTitle>
+          <DialogTitle>{i18n.t('mes.anomaly_detection_page.k56')}</DialogTitle>
           <DialogContent>
             {editingRule && (
               <Box sx={{ pt: 1, display: 'flex', flexDirection: 'column', gap: 2 }}>
@@ -771,14 +743,14 @@ const AnomalyDetectionPage: React.FC = () => {
                   {editingRule.description}
                 </Typography>
                 <TextField
-                  label='警告阈值'
+                  label={i18n.t('mes.anomaly_detection_page.k57')}
                   type='number'
                   value={editForm.warning_threshold}
                   onChange={(e) => setEditForm({ ...editForm, warning_threshold: e.target.value })}
                   fullWidth
                 />
                 <TextField
-                  label='严重阈值'
+                  label={i18n.t('mes.anomaly_detection_page.k58')}
                   type='number'
                   value={editForm.critical_threshold}
                   onChange={(e) => setEditForm({ ...editForm, critical_threshold: e.target.value })}
@@ -790,19 +762,19 @@ const AnomalyDetectionPage: React.FC = () => {
                     onChange={(e) => setEditForm({ ...editForm, enabled: e.target.checked })}
                     color='success'
                   />
-                  <Typography>启用此规则</Typography>
+                  <Typography>{i18n.t('mes.anomaly_detection_page.k59')}</Typography>
                 </Box>
               </Box>
             )}
           </DialogContent>
           <DialogActions>
-            <Button onClick={() => setEditingRule(null)}>取消</Button>
+            <Button onClick={() => setEditingRule(null)}>{i18n.t('mes.anomaly_detection_page.k60')}</Button>
             <Button
               variant='contained'
               onClick={handleSaveRule}
               disabled={updateRuleMutation.isPending}
             >
-              {updateRuleMutation.isPending ? '保存中...' : '保存'}
+              {updateRuleMutation.isPending ? i18n.t('pages.anomaly_detection_page.k3') : i18n.t('mes.anomaly_detection_page.k61')}
             </Button>
           </DialogActions>
         </Dialog>
@@ -810,5 +782,4 @@ const AnomalyDetectionPage: React.FC = () => {
     </PageContainer>
   );
 };
-
 export default AnomalyDetectionPage;

@@ -11,6 +11,7 @@ import React, { useEffect, useState } from 'react';
 import { useAuth } from '../../hooks/useAuth';
 import { Clock, RefreshCw, AlertCircle } from 'lucide-react';
 import { logger } from '@/utils/logger';
+import i18n from '@/i18n';
 
 const SessionExpiryWarning: React.FC = () => {
   const { isSessionExpiringSoon, getTimeUntilExpiry, refreshToken } = useAuth();
@@ -91,14 +92,14 @@ const SessionExpiryWarning: React.FC = () => {
           <AlertCircle style={{ width: 32, height: 32, color: theme.palette.warning.dark }} />
         </Box>
         <DialogTitle sx={{ fontSize: 20, fontWeight: 600, textAlign: 'center' }}>
-          会话即将过期
+          {i18n.t('components.session_expiry_warning.k0')}
         </DialogTitle>
         <Typography
           variant='body2'
           color='text.secondary'
           sx={{ textAlign: 'center', mb: 3 }}
         >
-          您的登录会话即将过期，请点击下方按钮保持登录状态。
+          {i18n.t('components.session_expiry_warning.k1')}
         </Typography>
 
         <Box
@@ -147,7 +148,7 @@ const SessionExpiryWarning: React.FC = () => {
                 '&:hover': { backgroundColor: 'warning.darker' },
               }}
             >
-              继续使用
+              {i18n.t('components.session_expiry_warning.k2')}
             </Button>
           </Box>
         </Box>

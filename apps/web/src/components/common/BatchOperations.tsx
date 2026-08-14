@@ -1,5 +1,7 @@
 import React, { useRef, useEffect } from 'react';
 import { Box, Checkbox, Typography, Button } from '@mui/material';
+import { designTokens } from '@topems/tokens';
+import i18n from '@/i18n';
 
 export interface BatchAction {
   id: string;
@@ -91,7 +93,7 @@ const BatchOperations: React.FC<BatchOperationsProps> = ({
             variant='body2'
             color='text.secondary'
           >
-            {allItemsSelected ? '取消全选' : '全选'}
+            {allItemsSelected ? i18n.t('shared.batch_operations.k1') : i18n.t('shared.batch_operations.k0')}
           </Typography>
           {hasSelection && (
             <Box
@@ -137,7 +139,7 @@ const BatchOperations: React.FC<BatchOperationsProps> = ({
         )}
       </Box>
 
-      <Box sx={{ width: '48px' }}>
+      <Box sx={{ width: designTokens.spacing['2xl'] }}>
         <Checkbox
           ref={checkboxRef2}
           checked={allItemsSelected}
@@ -152,7 +154,7 @@ const BatchOperations: React.FC<BatchOperationsProps> = ({
         />
       </Box>
 
-      <Box sx={{ width: '48px' }}>
+      <Box sx={{ width: designTokens.spacing['2xl'] }}>
         <Checkbox size='small' />
       </Box>
     </>

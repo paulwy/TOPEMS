@@ -1,3 +1,4 @@
+import i18n from '@/i18n';
 export type FairnessType = 'Demographic' | 'Equalized' | 'Calibrated';
 
 export type AuditStatus = 'passed' | 'failed' | 'warning';
@@ -233,10 +234,10 @@ export class FairnessAssurance {
     const industryAverage = 0.78;
     const topQuartile = 0.92;
     const percentile = Math.max(1, Math.min(99, Math.round(yourScore * 100)));
-    let ranking = '低于行业平均';
-    if (yourScore >= topQuartile) ranking = '顶尖 25%';
-    else if (yourScore >= industryAverage) ranking = '高于行业平均';
-    else if (yourScore >= 0.6) ranking = '接近行业平均';
+    let ranking = i18n.t('ai.fairness-assurance.k0');
+    if (yourScore >= topQuartile) ranking = i18n.t('ai.fairness-assurance.25_1');
+    else if (yourScore >= industryAverage) ranking = i18n.t('ai.fairness-assurance.k2');
+    else if (yourScore >= 0.6) ranking = i18n.t('ai.fairness-assurance.k3');
 
     return {
       modelId,

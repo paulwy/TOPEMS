@@ -4,7 +4,6 @@
  */
 import React from 'react';
 import { Box, Typography, Paper, Chip, List, Divider, Avatar, useTheme } from '@mui/material';
-import { useTranslation } from 'react-i18next';
 import {
   Play,
   Pause,
@@ -15,11 +14,11 @@ import {
   ClipboardList,
   Monitor,
 } from 'lucide-react';
+import i18n from '@/i18n';
 import { MobileCard } from '@/components/mobile';
 import { sizeTokens } from '@/theme';
 import type { ProductionOrder, WorkReport, Equipment } from '@/api/mobile';
 import { MobileProductionActions } from './MobileProductionActions';
-
 interface MobileProductionCardProps {
   activeTab: number;
   filteredOrders: ProductionOrder[];
@@ -28,7 +27,6 @@ interface MobileProductionCardProps {
   onOrderAction: (order: ProductionOrder, action: 'start' | 'pause' | 'resume') => void;
   onStartReport: (order: ProductionOrder) => void;
 }
-
 export const MobileProductionCard: React.FC<MobileProductionCardProps> = ({
   activeTab,
   filteredOrders,
@@ -37,23 +35,20 @@ export const MobileProductionCard: React.FC<MobileProductionCardProps> = ({
   onOrderAction,
   onStartReport,
 }) => {
-  const { t } = useTranslation();
   const theme = useTheme();
-
   const getStatusLabel = (status: string) => {
     const map: Record<string, string> = {
-      pending: t('mobile.production.status.pending'),
-      in_progress: t('mobile.production.status.in_progress'),
-      paused: t('mobile.production.status.paused'),
-      completed: t('mobile.production.status.completed'),
-      running: t('mobile.production.status.running'),
-      idle: t('mobile.production.status.idle'),
-      maintenance: t('mobile.production.status.maintenance'),
-      fault: t('mobile.production.status.fault'),
+      pending: i18n.t('mobile.production.status.pending'),
+      in_progress: i18n.t('mobile.production.status.in_progress'),
+      paused: i18n.t('mobile.production.status.paused'),
+      completed: i18n.t('mobile.production.status.completed'),
+      running: i18n.t('mobile.production.status.running'),
+      idle: i18n.t('mobile.production.status.idle'),
+      maintenance: i18n.t('mobile.production.status.maintenance'),
+      fault: i18n.t('mobile.production.status.fault'),
     };
     return map[status] || status;
   };
-
   const getStatusColor = (status: string) => {
     const map: Record<string, 'warning' | 'primary' | 'success' | 'error' | 'info' | 'default'> = {
       pending: 'warning',
@@ -67,7 +62,6 @@ export const MobileProductionCard: React.FC<MobileProductionCardProps> = ({
     };
     return map[status] || 'default';
   };
-
   const getStatusIcon = (status: string) => {
     switch (status) {
       case 'running':
@@ -86,7 +80,6 @@ export const MobileProductionCard: React.FC<MobileProductionCardProps> = ({
         return <Clock style={{ width: 20, height: 20 }} />;
     }
   };
-
   return (
     <>
       {activeTab === 0 && (
@@ -144,7 +137,7 @@ export const MobileProductionCard: React.FC<MobileProductionCardProps> = ({
                         color='text.secondary'
                         sx={{ display: 'block', mb: 0.5 }}
                       >
-                        {t('mobile.production.label.plannedQuantity')}
+                        {i18n.t('mobile.production.label.plannedQuantity')}
                       </Typography>
                       <Typography variant='body2'>{order.quantity}</Typography>
                     </Box>
@@ -154,7 +147,7 @@ export const MobileProductionCard: React.FC<MobileProductionCardProps> = ({
                         color='text.secondary'
                         sx={{ display: 'block', mb: 0.5 }}
                       >
-                        {t('mobile.production.label.completed')}
+                        {i18n.t('mobile.production.label.completed')}
                       </Typography>
                       <Typography variant='body2'>{order.completed_quantity}</Typography>
                     </Box>
@@ -164,7 +157,7 @@ export const MobileProductionCard: React.FC<MobileProductionCardProps> = ({
                         color='text.secondary'
                         sx={{ display: 'block', mb: 0.5 }}
                       >
-                        {t('mobile.production.label.workstation')}
+                        {i18n.t('mobile.production.label.workstation')}
                       </Typography>
                       <Typography variant='body2'>{order.workstation}</Typography>
                     </Box>
@@ -181,7 +174,7 @@ export const MobileProductionCard: React.FC<MobileProductionCardProps> = ({
                         variant='caption'
                         color='text.secondary'
                       >
-                        {t('mobile.production.label.production_progress')}
+                        {i18n.t('mobile.production.label.production_progress')}
                       </Typography>
                       <Typography variant='caption'>{progress.toFixed(1)}%</Typography>
                     </Box>
@@ -217,7 +210,6 @@ export const MobileProductionCard: React.FC<MobileProductionCardProps> = ({
           })}
         </List>
       )}
-
       {activeTab === 1 && (
         <List disablePadding>
           {workReports.map((report, index) => (
@@ -246,7 +238,7 @@ export const MobileProductionCard: React.FC<MobileProductionCardProps> = ({
                     </Typography>
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                       <Chip
-                        label={t('mobile.production.label.qualified_count', {
+                        label={i18n.t('mobile.production.label.qualified_count', {
                           count: report.good_quantity,
                         })}
                         size='small'
@@ -254,7 +246,7 @@ export const MobileProductionCard: React.FC<MobileProductionCardProps> = ({
                         sx={{ height: 18, fontSize: '0.65rem' }}
                       />
                       <Chip
-                        label={t('mobile.production.label.defective_count', {
+                        label={i18n.t('mobile.production.label.defective_count', {
                           count: report.bad_quantity,
                         })}
                         size='small'
@@ -272,7 +264,7 @@ export const MobileProductionCard: React.FC<MobileProductionCardProps> = ({
                       variant='subtitle2'
                       sx={{ fontWeight: 600 }}
                     >
-                      {t('mobile.production.label.count_unit', { count: report.quantity })}
+                      {i18n.t('mobile.production.label.count_unit', { count: report.quantity })}
                     </Typography>
                     <Typography
                       variant='caption'
@@ -298,7 +290,6 @@ export const MobileProductionCard: React.FC<MobileProductionCardProps> = ({
           ))}
         </List>
       )}
-
       {activeTab === 2 && (
         <List disablePadding>
           {equipmentList.map((equipment, index) => (
@@ -347,7 +338,7 @@ export const MobileProductionCard: React.FC<MobileProductionCardProps> = ({
                       color='text.secondary'
                       sx={{ display: 'block', mb: 0.5 }}
                     >
-                      {t('mobile.production.label.running_hours')}
+                      {i18n.t('mobile.production.label.running_hours')}
                     </Typography>
                     <Typography variant='body2'>
                       {equipment.running_hours.toLocaleString()}h

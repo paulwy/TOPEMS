@@ -16,6 +16,7 @@ import {
   useMediaQuery,
   Button,
 } from '@mui/material';
+import i18n from '@/i18n';
 import { ChevronRight, RefreshCw, MoreHorizontal } from 'lucide-react';
 import { Link as RouterLink, useLocation, useNavigate } from 'react-router-dom';
 import { useAutoBreadcrumbs } from '@/hooks';
@@ -279,7 +280,7 @@ export const PageHeader: React.FC<PageHeaderProps> = ({
         size={search.size || 'small'}
         value={search.value}
         onChange={(e) => search.onChange(e.target.value)}
-        placeholder={search.placeholder || '搜索...'}
+        placeholder={search.placeholder || i18n.t('components.page_header.k0')}
         sx={{
           width: { xs: '100%', sm: 280 },
           '& .MuiOutlinedInput-root': {
@@ -373,10 +374,10 @@ export const PageHeader: React.FC<PageHeaderProps> = ({
         })}
 
         {hiddenActions.length > 0 && (
-          <Tooltip title='更多操作'>
+          <Tooltip title={i18n.t('templates.page_header.k0')}>
             <IconButton
               size='small'
-              aria-label='更多'
+              aria-label={i18n.t('templates.page_header.k1')}
             >
               <MoreHorizontal style={{ width: 20, height: 20 }} />
             </IconButton>
@@ -609,11 +610,11 @@ export const PageHeader: React.FC<PageHeaderProps> = ({
               {customToolbar}
               {!loading && renderActions()}
               {onRefresh && !loading && (
-                <Tooltip title='刷新'>
+                <Tooltip title={i18n.t('templates.page_header.k2')}>
                   <IconButton
                     size='small'
                     onClick={onRefresh}
-                    aria-label='刷新'
+                    aria-label={i18n.t('templates.page_header.k3')}
                   >
                     <RefreshCw style={{ width: 18, height: 18 }} />
                   </IconButton>

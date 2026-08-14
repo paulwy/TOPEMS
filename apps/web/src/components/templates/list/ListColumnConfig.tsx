@@ -12,6 +12,7 @@ import {
 } from '@mui/material';
 import { RotateCcw, Check, X } from 'lucide-react';
 import type { ColumnDef, ColumnConfig } from './types';
+import i18n from '@/i18n';
 
 interface ListColumnConfigProps {
   open: boolean;
@@ -62,14 +63,14 @@ export const ListColumnConfig: React.FC<ListColumnConfigProps> = ({
             variant='subtitle2'
             sx={{ fontWeight: 600 }}
           >
-            配置列显示
+            {i18n.t('components.list_column_config.k0')}
           </Typography>
           <Button
             size='small'
             onClick={onReset}
             startIcon={<RotateCcw size={14} />}
           >
-            重置
+            {i18n.t('components.list_column_config.k1')}
           </Button>
         </Box>
 
@@ -78,7 +79,7 @@ export const ListColumnConfig: React.FC<ListColumnConfigProps> = ({
           color='text.secondary'
           sx={{ mb: 2, fontSize: 12 }}
         >
-          选择要显示的列
+          {i18n.t('components.list_column_config.k2')}
         </Typography>
 
         <List
@@ -125,7 +126,7 @@ export const ListColumnConfig: React.FC<ListColumnConfigProps> = ({
             }}
             startIcon={<Check size={14} />}
           >
-            全选
+            {i18n.t('components.list_column_config.k3')}
           </Button>
           <Button
             size='small'
@@ -139,7 +140,7 @@ export const ListColumnConfig: React.FC<ListColumnConfigProps> = ({
             }}
             startIcon={<X size={14} />}
           >
-            全不选
+            {i18n.t('components.list_column_config.k4')}
           </Button>
         </Box>
       </Box>

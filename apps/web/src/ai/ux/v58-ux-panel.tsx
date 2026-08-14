@@ -27,6 +27,7 @@ import {
   Grid,
   TextField,
 } from '@mui/material';
+import i18n from '@/i18n';
 import {
   X as XIcon,
   Sparkles,
@@ -81,30 +82,30 @@ type PanelTab = 'recommendations' | 'adaptive' | 'emotion' | 'settings';
 const SAMPLE_USER_ID = 'v58-demo-user';
 
 const EMOTION_LABELS: Record<EmotionType, string> = {
-  joy: '喜悦',
-  trust: '信任',
-  fear: '恐惧',
-  surprise: '惊讶',
-  sadness: '悲伤',
-  disgust: '厌恶',
-  anger: '愤怒',
-  anticipation: '期待',
-  frustration: '挫败',
-  satisfaction: '满足',
-  confusion: '困惑',
-  boredom: '无聊',
-  excitement: '兴奋',
-  calm: '平静',
+  joy: i18n.t('ai.v58-ux-panel.k0'),
+  trust: i18n.t('ai.v58-ux-panel.k1'),
+  fear: i18n.t('ai.v58-ux-panel.k2'),
+  surprise: i18n.t('ai.v58-ux-panel.k3'),
+  sadness: i18n.t('ai.v58-ux-panel.k4'),
+  disgust: i18n.t('ai.v58-ux-panel.k5'),
+  anger: i18n.t('ai.v58-ux-panel.k6'),
+  anticipation: i18n.t('ai.v58-ux-panel.k7'),
+  frustration: i18n.t('ai.v58-ux-panel.k8'),
+  satisfaction: i18n.t('ai.v58-ux-panel.k9'),
+  confusion: i18n.t('ai.v58-ux-panel.k10'),
+  boredom: i18n.t('ai.v58-ux-panel.k11'),
+  excitement: i18n.t('ai.v58-ux-panel.k12'),
+  calm: i18n.t('ai.v58-ux-panel.k13'),
 };
 
 const ANIMATION_LABELS: Record<AnimationType, string> = {
-  bounce: '弹跳',
-  pulse: '脉冲',
-  fade: '淡入淡出',
-  slide: '滑动',
-  shake: '抖动',
-  glow: '发光',
-  none: '无',
+  bounce: i18n.t('ai.v58-ux-panel.k14'),
+  pulse: i18n.t('ai.v58-ux-panel.k15'),
+  fade: i18n.t('ai.v58-ux-panel.k16'),
+  slide: i18n.t('ai.v58-ux-panel.k17'),
+  shake: i18n.t('ai.v58-ux-panel.k18'),
+  glow: i18n.t('ai.v58-ux-panel.k19'),
+  none: i18n.t('ai.v58-ux-panel.k20'),
 };
 
 export const V58UXPanel: React.FC<{ onClose: () => void }> = ({ onClose }) => {
@@ -256,7 +257,7 @@ export const V58UXPanel: React.FC<{ onClose: () => void }> = ({ onClose }) => {
               variant='h6'
               sx={{ fontWeight: 600 }}
             >
-              V58.0 AI UX — 智能推荐 · 自适应交互 · 情感化设计
+              {i18n.t('ai.v58-ux-panel.k0')}
             </Typography>
           </Box>
           <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
@@ -271,7 +272,7 @@ export const V58UXPanel: React.FC<{ onClose: () => void }> = ({ onClose }) => {
                 size={14}
                 style={{ marginRight: 4 }}
               />
-              {isSimulating ? '模拟中...' : '模拟用户行为'}
+              {isSimulating ? i18n.t('ai.v58-ux-panel.k0') : i18n.t('ai.v58-ux-panel.k21')}
             </Button>
             <IconButton
               size='small'
@@ -293,25 +294,25 @@ export const V58UXPanel: React.FC<{ onClose: () => void }> = ({ onClose }) => {
             <Tab
               icon={<Sparkles size={16} />}
               iconPosition='start'
-              label='智能推荐'
+              label={i18n.t('ai.v58-ux-panel.k22')}
               value='recommendations'
             />
             <Tab
               icon={<Layers size={16} />}
               iconPosition='start'
-              label='自适应交互'
+              label={i18n.t('ai.v58-ux-panel.k23')}
               value='adaptive'
             />
             <Tab
               icon={<Heart size={16} />}
               iconPosition='start'
-              label='情感化设计'
+              label={i18n.t('ai.v58-ux-panel.k24')}
               value='emotion'
             />
             <Tab
               icon={<Settings size={16} />}
               iconPosition='start'
-              label='个性化设置'
+              label={i18n.t('ai.v58-ux-panel.k25')}
               value='settings'
             />
           </Tabs>
@@ -399,11 +400,11 @@ const RecommendationsTab: React.FC<{
               variant='subtitle2'
               sx={{ fontWeight: 600 }}
             >
-              个性化推荐
+              {i18n.t('ai.v58-ux-panel.k1')}
             </Typography>
             <Chip
               size='small'
-              label={`${recommendations.length} 条`}
+              label={`${recommendations.length}${i18n.t('ai.v58-ux-panel.k1')}`}
               color='primary'
               variant='outlined'
             />
@@ -414,7 +415,7 @@ const RecommendationsTab: React.FC<{
               severity='info'
               variant='outlined'
             >
-              暂无推荐。点击"模拟用户行为"开始生成推荐。
+              {i18n.t('ai.v58-ux-panel.i18n_2')}.t('ai.v58-ux-panel.k26')开始生成推荐。
             </Alert>
           ) : (
             <List dense>
@@ -447,7 +448,7 @@ const RecommendationsTab: React.FC<{
                       >
                         {rec.id}
                       </Typography>
-                      <Tooltip title={`置信度: ${(rec.confidence * 100).toFixed(1)}%`}>
+                      <Tooltip title={`${i18n.t('ai.v58-ux-panel.k2')}${(rec.confidence * 100).toFixed(1)}%`}>
                         <Gauge
                           size={14}
                           color={
@@ -475,7 +476,7 @@ const RecommendationsTab: React.FC<{
                     </Box>
                   </Box>
                   <Box sx={{ display: 'flex', gap: 0.5, ml: 1 }}>
-                    <Tooltip title='采纳'>
+                    <Tooltip title={i18n.t('ai.v58-ux-panel.k27')}>
                       <IconButton
                         size='small'
                         color='success'
@@ -484,7 +485,7 @@ const RecommendationsTab: React.FC<{
                         <ThumbsUp size={14} />
                       </IconButton>
                     </Tooltip>
-                    <Tooltip title='忽略'>
+                    <Tooltip title={i18n.t('ai.v58-ux-panel.k28')}>
                       <IconButton
                         size='small'
                         color='error'
@@ -519,7 +520,7 @@ const RecommendationsTab: React.FC<{
                 variant='subtitle2'
                 sx={{ fontWeight: 600 }}
               >
-                热门趋势
+                {i18n.t('ai.v58-ux-panel.k4')}
               </Typography>
             </Stack>
             {trending.length === 0 ? (
@@ -527,7 +528,7 @@ const RecommendationsTab: React.FC<{
                 variant='body2'
                 sx={{ color: 'text.secondary' }}
               >
-                暂无趋势数据
+                {i18n.t('ai.v58-ux-panel.k5')}
               </Typography>
             ) : (
               <List dense>
@@ -545,7 +546,7 @@ const RecommendationsTab: React.FC<{
                           {t.reason}
                         </Typography>
                       }
-                      secondary={`置信度: ${(t.confidence * 100).toFixed(0)}%`}
+                      secondary={`${i18n.t('ai.v58-ux-panel.k3')}${(t.confidence * 100).toFixed(0)}%`}
                     />
                   </ListItem>
                 ))}
@@ -570,7 +571,7 @@ const RecommendationsTab: React.FC<{
                   variant='subtitle2'
                   sx={{ fontWeight: 600 }}
                 >
-                  统计概况
+                  {i18n.t('ai.v58-ux-panel.k6')}
                 </Typography>
               </Stack>
               <Grid
@@ -579,27 +580,27 @@ const RecommendationsTab: React.FC<{
               >
                 <Grid size={6}>
                   <StatItem
-                    label='总行为'
+                    label={i18n.t('ai.v58-ux-panel.k29')}
                     value={stats.total_recommendations}
                   />
                 </Grid>
                 <Grid size={6}>
                   <StatItem
-                    label='已采纳'
+                    label={i18n.t('ai.v58-ux-panel.k30')}
                     value={stats.accepted_count}
                     color={designTokens.colors.success.dark}
                   />
                 </Grid>
                 <Grid size={6}>
                   <StatItem
-                    label='已忽略'
+                    label={i18n.t('ai.v58-ux-panel.k31')}
                     value={stats.rejected_count}
                     color={designTokens.colors.error.main}
                   />
                 </Grid>
                 <Grid size={6}>
                   <StatItem
-                    label='平均置信度'
+                    label={i18n.t('ai.v58-ux-panel.k32')}
                     value={`${(stats.avg_confidence * 100).toFixed(0)}%`}
                     color='colors.cyan.600'
                   />
@@ -612,7 +613,7 @@ const RecommendationsTab: React.FC<{
                     variant='caption'
                     sx={{ color: 'text.secondary', mb: 0.5 }}
                   >
-                    热门类别
+                    {i18n.t('ai.v58-ux-panel.k7')}
                   </Typography>
                   <Stack
                     direction='row'
@@ -714,7 +715,7 @@ const AdaptiveTab: React.FC<{
                 variant='subtitle2'
                 sx={{ fontWeight: 600 }}
               >
-                交互画像
+                {i18n.t('ai.v58-ux-panel.k8')}
               </Typography>
               <Chip
                 size='small'
@@ -734,7 +735,7 @@ const AdaptiveTab: React.FC<{
                     size={12}
                     style={{ marginRight: 4 }}
                   />{' '}
-                  设备类型
+                  {i18n.t('ai.v58-ux-panel.k9')}
                 </Typography>
                 <Stack
                   direction='row'
@@ -762,7 +763,7 @@ const AdaptiveTab: React.FC<{
                     size={12}
                     style={{ marginRight: 4 }}
                   />{' '}
-                  熟练度
+                  {i18n.t('ai.v58-ux-panel.k10')}
                 </Typography>
                 <Stack
                   direction='row'
@@ -786,7 +787,7 @@ const AdaptiveTab: React.FC<{
                   variant='caption'
                   sx={{ color: 'text.secondary', mb: 0.5 }}
                 >
-                  布局密度
+                  {i18n.t('ai.v58-ux-panel.k11')}
                 </Typography>
                 <Stack
                   direction='row'
@@ -810,7 +811,7 @@ const AdaptiveTab: React.FC<{
                   variant='caption'
                   sx={{ color: 'text.secondary', mb: 0.5 }}
                 >
-                  字体大小: {profile.preferences.fontSize}px
+                  [i18n.t('ai.v58-ux-panel.k12')]: {profile.preferences.fontSize}px
                 </Typography>
                 <Slider
                   value={profile.preferences.fontSize}
@@ -831,7 +832,7 @@ const AdaptiveTab: React.FC<{
                     size={12}
                     style={{ marginRight: 4 }}
                   />{' '}
-                  辅助功能
+                  {i18n.t('ai.v58-ux-panel.k13')}
                 </Typography>
                 <Stack
                   direction='row'
@@ -842,10 +843,10 @@ const AdaptiveTab: React.FC<{
                     variant='standard'
                     sx={{ minWidth: 120 }}
                   >
-                    <InputLabel>主题</InputLabel>
+                    <InputLabel>{i18n.t('ai.v58-ux-panel.k33')}</InputLabel>
                     <Select
                       value={profile.preferences.theme}
-                      label='主题'
+                      label={i18n.t('ai.v58-ux-panel.k34')}
                       onChange={(e) =>
                         onUpdate({
                           ...profile,
@@ -856,9 +857,9 @@ const AdaptiveTab: React.FC<{
                         })
                       }
                     >
-                      <MenuItem value='light'>浅色</MenuItem>
-                      <MenuItem value='dark'>深色</MenuItem>
-                      <MenuItem value='auto'>自动</MenuItem>
+                      <MenuItem value='light'>{i18n.t('ai.v58-ux-panel.k35')}</MenuItem>
+                      <MenuItem value='dark'>{i18n.t('ai.v58-ux-panel.k36')}</MenuItem>
+                      <MenuItem value='auto'>{i18n.t('ai.v58-ux-panel.k37')}</MenuItem>
                     </Select>
                   </FormControl>
                   <FormControl
@@ -866,10 +867,10 @@ const AdaptiveTab: React.FC<{
                     variant='standard'
                     sx={{ minWidth: 120 }}
                   >
-                    <InputLabel>语言</InputLabel>
+                    <InputLabel>{i18n.t('ai.v58-ux-panel.k38')}</InputLabel>
                     <Select
                       value={profile.preferences.language}
-                      label='语言'
+                      label={i18n.t('ai.v58-ux-panel.k39')}
                       onChange={(e) =>
                         onUpdate({
                           ...profile,
@@ -880,7 +881,7 @@ const AdaptiveTab: React.FC<{
                         })
                       }
                     >
-                      <MenuItem value='zh'>中文</MenuItem>
+                      <MenuItem value='zh'>{i18n.t('ai.v58-ux-panel.k40')}</MenuItem>
                       <MenuItem value='en'>English</MenuItem>
                     </Select>
                   </FormControl>
@@ -892,7 +893,7 @@ const AdaptiveTab: React.FC<{
                 spacing={2}
               >
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                  <Typography variant='caption'>减少动画</Typography>
+                  <Typography variant='caption'>{i18n.t('ai.v58-ux-panel.k41')}</Typography>
                   <Switch
                     size='small'
                     checked={profile.preferences.reducedMotion}
@@ -905,7 +906,7 @@ const AdaptiveTab: React.FC<{
                   />
                 </Box>
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                  <Typography variant='caption'>高对比度</Typography>
+                  <Typography variant='caption'>{i18n.t('ai.v58-ux-panel.k42')}</Typography>
                   <Switch
                     size='small'
                     checked={profile.preferences.highContrast}
@@ -918,7 +919,7 @@ const AdaptiveTab: React.FC<{
                   />
                 </Box>
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                  <Typography variant='caption'>大字体</Typography>
+                  <Typography variant='caption'>{i18n.t('ai.v58-ux-panel.k43')}</Typography>
                   <Switch
                     size='small'
                     checked={profile.preferences.largeText}
@@ -952,11 +953,11 @@ const AdaptiveTab: React.FC<{
                 variant='subtitle2'
                 sx={{ fontWeight: 600 }}
               >
-                自适应响应
+                {i18n.t('ai.v58-ux-panel.k14')}
               </Typography>
               <Chip
                 size='small'
-                label={`置信度: ${(adaptation.confidence * 100).toFixed(1)}%`}
+                label={`${i18n.t('ai.v58-ux-panel.k4')}${(adaptation.confidence * 100).toFixed(1)}%`}
                 color='success'
                 variant='outlined'
                 sx={{ ml: 'auto' }}
@@ -977,38 +978,38 @@ const AdaptiveTab: React.FC<{
             >
               <Grid size={6}>
                 <InfoBlock
-                  title='组件变体'
+                  title={i18n.t('ai.v58-ux-panel.k44')}
                   value={adaptation.component.variant}
                 />
               </Grid>
               <Grid size={6}>
                 <InfoBlock
-                  title='组件尺寸'
+                  title={i18n.t('ai.v58-ux-panel.k45')}
                   value={adaptation.component.size}
                 />
               </Grid>
               <Grid size={6}>
                 <InfoBlock
-                  title='布局模板'
+                  title={i18n.t('ai.v58-ux-panel.k46')}
                   value={adaptation.layout.template}
                 />
               </Grid>
               <Grid size={6}>
                 <InfoBlock
-                  title='内容宽度'
+                  title={i18n.t('ai.v58-ux-panel.k47')}
                   value={adaptation.layout.contentWidth}
                 />
               </Grid>
               <Grid size={6}>
                 <InfoBlock
-                  title='间距'
+                  title={i18n.t('ai.v58-ux-panel.k48')}
                   value={adaptation.layout.spacing}
                 />
               </Grid>
               <Grid size={6}>
                 <InfoBlock
-                  title='侧边栏'
-                  value={adaptation.layout.sidebarCollapsed ? '已折叠' : '已展开'}
+                  title={i18n.t('ai.v58-ux-panel.k49')}
+                  value={adaptation.layout.sidebarCollapsed ? i18n.t('ai.v58-ux-panel.k51') : i18n.t('ai.v58-ux-panel.k50')}
                 />
               </Grid>
             </Grid>
@@ -1019,7 +1020,7 @@ const AdaptiveTab: React.FC<{
               variant='caption'
               sx={{ color: 'text.secondary', mb: 1 }}
             >
-              内容调整
+              {i18n.t('ai.v58-ux-panel.k15')}
             </Typography>
             <Stack
               direction='row'
@@ -1029,35 +1030,35 @@ const AdaptiveTab: React.FC<{
               {adaptation.content.simplified && (
                 <Chip
                   size='small'
-                  label='简化内容'
+                  label={i18n.t('ai.v58-ux-panel.k52')}
                   color='info'
                 />
               )}
               {adaptation.content.showTooltips && (
                 <Chip
                   size='small'
-                  label='显示提示'
+                  label={i18n.t('ai.v58-ux-panel.k53')}
                   variant='outlined'
                 />
               )}
               {adaptation.content.showShortcuts && (
                 <Chip
                   size='small'
-                  label='显示快捷键'
+                  label={i18n.t('ai.v58-ux-panel.k54')}
                   variant='outlined'
                 />
               )}
               {adaptation.content.verboseLabels && (
                 <Chip
                   size='small'
-                  label='详细标签'
+                  label={i18n.t('ai.v58-ux-panel.k55')}
                   variant='outlined'
                 />
               )}
               {adaptation.content.highlightPrimaryActions && (
                 <Chip
                   size='small'
-                  label='高亮主要操作'
+                  label={i18n.t('ai.v58-ux-panel.k56')}
                   color='warning'
                 />
               )}
@@ -1067,7 +1068,7 @@ const AdaptiveTab: React.FC<{
               variant='caption'
               sx={{ color: 'text.secondary', mb: 1 }}
             >
-              行为调整
+              {i18n.t('ai.v58-ux-panel.k16')}
             </Typography>
             <Stack
               direction='row'
@@ -1077,42 +1078,42 @@ const AdaptiveTab: React.FC<{
               {adaptation.behavior.enableAnimations && (
                 <Chip
                   size='small'
-                  label='动画'
+                  label={i18n.t('ai.v58-ux-panel.k57')}
                   variant='outlined'
                 />
               )}
               {adaptation.behavior.keyboardShortcuts && (
                 <Chip
                   size='small'
-                  label='键盘快捷键'
+                  label={i18n.t('ai.v58-ux-panel.k58')}
                   variant='outlined'
                 />
               )}
               {adaptation.behavior.gestureSupport && (
                 <Chip
                   size='small'
-                  label='手势支持'
+                  label={i18n.t('ai.v58-ux-panel.k59')}
                   variant='outlined'
                 />
               )}
               {adaptation.behavior.autoComplete && (
                 <Chip
                   size='small'
-                  label='自动完成'
+                  label={i18n.t('ai.v58-ux-panel.k60')}
                   variant='outlined'
                 />
               )}
               {adaptation.behavior.autoSave && (
                 <Chip
                   size='small'
-                  label='自动保存'
+                  label={i18n.t('ai.v58-ux-panel.k61')}
                   color='success'
                 />
               )}
               {adaptation.behavior.confirmDangerousActions && (
                 <Chip
                   size='small'
-                  label='危险确认'
+                  label={i18n.t('ai.v58-ux-panel.k62')}
                   color='warning'
                 />
               )}
@@ -1166,11 +1167,11 @@ const EmotionTab: React.FC<{
               variant='subtitle2'
               sx={{ fontWeight: 600 }}
             >
-              情感状态
+              {i18n.t('ai.v58-ux-panel.k17')}
             </Typography>
             <Chip
               size='small'
-              label={`置信度: ${(state.confidence * 100).toFixed(1)}%`}
+              label={`${i18n.t('ai.v58-ux-panel.k5')}${(state.confidence * 100).toFixed(1)}%`}
               color='primary'
               sx={{ ml: 'auto' }}
             />
@@ -1221,7 +1222,7 @@ const EmotionTab: React.FC<{
                 variant='caption'
                 sx={{ color: 'text.secondary' }}
               >
-                情绪强度: {(state.emotionIntensity * 100).toFixed(0)}%
+                [i18n.t('ai.v58-ux-panel.k18')]: {(state.emotionIntensity * 100).toFixed(0)}%
               </Typography>
             </Box>
           </Box>
@@ -1232,7 +1233,7 @@ const EmotionTab: React.FC<{
                 variant='caption'
                 sx={{ color: 'text.secondary' }}
               >
-                次要情绪: {EMOTION_LABELS[state.secondary_emotion]}
+                [i18n.t('ai.v58-ux-panel.k19')]: {EMOTION_LABELS[state.secondary_emotion]}
               </Typography>
             </Box>
           )}
@@ -1243,7 +1244,7 @@ const EmotionTab: React.FC<{
                 variant='caption'
                 sx={{ color: 'text.secondary', display: 'block', mb: 0.5 }}
               >
-                触发因素
+                {i18n.t('ai.v58-ux-panel.k20')}
               </Typography>
               <Stack
                 direction='row'
@@ -1268,7 +1269,7 @@ const EmotionTab: React.FC<{
             variant='caption'
             sx={{ color: 'text.secondary', mb: 1 }}
           >
-            模拟情绪信号
+            {i18n.t('ai.v58-ux-panel.k21')}
           </Typography>
           <Grid
             container
@@ -1284,7 +1285,7 @@ const EmotionTab: React.FC<{
                   size={14}
                   style={{ marginRight: 4 }}
                 />
-                成功
+                {i18n.t('ai.v58-ux-panel.k22')}
               </Button>
             </Grid>
             <Grid size={4}>
@@ -1298,7 +1299,7 @@ const EmotionTab: React.FC<{
                   size={14}
                   style={{ marginRight: 4 }}
                 />
-                错误
+                {i18n.t('ai.v58-ux-panel.k23')}
               </Button>
             </Grid>
             <Grid size={4}>
@@ -1308,7 +1309,7 @@ const EmotionTab: React.FC<{
                 color='warning'
                 onClick={() => onSimulate('delay', 0.6)}
               >
-                延迟
+                {i18n.t('ai.v58-ux-panel.k24')}
               </Button>
             </Grid>
             <Grid size={4}>
@@ -1318,7 +1319,7 @@ const EmotionTab: React.FC<{
                 color='success'
                 onClick={() => onSimulate('achievement', 0.9)}
               >
-                成就
+                {i18n.t('ai.v58-ux-panel.k25')}
               </Button>
             </Grid>
             <Grid size={4}>
@@ -1328,7 +1329,7 @@ const EmotionTab: React.FC<{
                 color='info'
                 onClick={() => onSimulate('helpful_interaction', 0.7)}
               >
-                帮助
+                {i18n.t('ai.v58-ux-panel.k26')}
               </Button>
             </Grid>
             <Grid size={4}>
@@ -1337,7 +1338,7 @@ const EmotionTab: React.FC<{
                 fullWidth
                 onClick={() => onSimulate('focus_flow', 0.6)}
               >
-                专注
+                {i18n.t('ai.v58-ux-panel.k27')}
               </Button>
             </Grid>
           </Grid>
@@ -1361,7 +1362,7 @@ const EmotionTab: React.FC<{
               variant='subtitle2'
               sx={{ fontWeight: 600 }}
             >
-              设计响应
+              {i18n.t('ai.v58-ux-panel.k28')}
             </Typography>
           </Stack>
 
@@ -1371,29 +1372,29 @@ const EmotionTab: React.FC<{
           >
             <Grid size={6}>
               <InfoBlock
-                title='动画类型'
+                title={i18n.t('ai.v58-ux-panel.k63')}
                 value={ANIMATION_LABELS[response.animationType]}
               />
             </Grid>
             <Grid size={6}>
               <InfoBlock
-                title='反馈样式'
+                title={i18n.t('ai.v58-ux-panel.k64')}
                 value={response.feedbackStyle}
               />
             </Grid>
             <Grid size={6}>
               <InfoBlock
-                title='视觉色调'
+                title={i18n.t('ai.v58-ux-panel.k65')}
                 value={response.visualTone}
               />
             </Grid>
             <Grid size={6}>
               <InfoBlock
-                title='声音'
+                title={i18n.t('ai.v58-ux-panel.k66')}
                 value={
                   response.soundDesign.enable_sound
                     ? `${response.soundDesign.soundType} (${Math.round(response.soundDesign.volume * 100)}%)`
-                    : '静音'
+                    : i18n.t('ai.v58-ux-panel.k67')
                 }
               />
             </Grid>
@@ -1405,7 +1406,7 @@ const EmotionTab: React.FC<{
             variant='caption'
             sx={{ color: 'text.secondary', mb: 1 }}
           >
-            色彩调整
+            {i18n.t('ai.v58-ux-panel.k29')}
           </Typography>
           <Grid
             container
@@ -1413,25 +1414,25 @@ const EmotionTab: React.FC<{
           >
             <Grid size={3}>
               <ColorBar
-                label='饱和度'
+                label={i18n.t('ai.v58-ux-panel.k68')}
                 value={response.colorAdjustments.saturation}
               />
             </Grid>
             <Grid size={3}>
               <ColorBar
-                label='亮度'
+                label={i18n.t('ai.v58-ux-panel.k69')}
                 value={response.colorAdjustments.brightness}
               />
             </Grid>
             <Grid size={3}>
               <ColorBar
-                label='对比度'
+                label={i18n.t('ai.v58-ux-panel.k70')}
                 value={response.colorAdjustments.contrast}
               />
             </Grid>
             <Grid size={3}>
               <ColorBar
-                label='色温'
+                label={i18n.t('ai.v58-ux-panel.k71')}
                 value={0.5 + response.colorAdjustments.warmth}
               />
             </Grid>
@@ -1443,7 +1444,7 @@ const EmotionTab: React.FC<{
             variant='caption'
             sx={{ color: 'text.secondary', mb: 1 }}
           >
-            消息风格
+            {i18n.t('ai.v58-ux-panel.k30')}
           </Typography>
           <Stack
             direction='row'
@@ -1468,7 +1469,7 @@ const EmotionTab: React.FC<{
                 variant='caption'
                 sx={{ color: 'text.secondary', display: 'block', mb: 0.5 }}
               >
-                建议语
+                {i18n.t('ai.v58-ux-panel.k31')}
               </Typography>
               <Stack spacing={0.5}>
                 {response.messaging.suggestions.map((s, i) => (
@@ -1537,7 +1538,7 @@ const SettingsTab: React.FC<{
               variant='subtitle2'
               sx={{ fontWeight: 600 }}
             >
-              个性化偏好
+              {i18n.t('ai.v58-ux-panel.k32')}
             </Typography>
           </Stack>
 
@@ -1547,7 +1548,7 @@ const SettingsTab: React.FC<{
                 variant='caption'
                 sx={{ color: 'text.secondary', mb: 0.5 }}
               >
-                用户 ID
+                {i18n.t('ai.v58-ux-panel.id_33')}
               </Typography>
               <Typography
                 variant='body2'
@@ -1566,7 +1567,7 @@ const SettingsTab: React.FC<{
                   size={12}
                   style={{ marginRight: 4 }}
                 />{' '}
-                动画偏好
+                {i18n.t('ai.v58-ux-panel.k34')}
               </Typography>
               <Stack
                 direction='row'
@@ -1584,7 +1585,7 @@ const SettingsTab: React.FC<{
                       })
                     }
                   >
-                    {m === 'no_preference' ? '默认' : m === 'reduce' ? '减少' : '增强'}
+                    {m === 'no_preference' ? i18n.t('ai.v58-ux-panel.k74') : m === 'reduce' ? i18n.t('ai.v58-ux-panel.k73') : i18n.t('ai.v58-ux-panel.k72')}
                   </Button>
                 ))}
               </Stack>
@@ -1599,7 +1600,7 @@ const SettingsTab: React.FC<{
                   size={12}
                   style={{ marginRight: 4 }}
                 />{' '}
-                色盲模式
+                {i18n.t('ai.v58-ux-panel.k35')}
               </Typography>
               <FormControl
                 size='small'
@@ -1618,10 +1619,10 @@ const SettingsTab: React.FC<{
                     })
                   }
                 >
-                  <MenuItem value='none'>无</MenuItem>
-                  <MenuItem value='protanopia'>红色盲</MenuItem>
-                  <MenuItem value='deuteranopia'>绿色盲</MenuItem>
-                  <MenuItem value='tritanopia'>蓝色盲</MenuItem>
+                  <MenuItem value='none'>{i18n.t('ai.v58-ux-panel.k36')}</MenuItem>
+                  <MenuItem value='protanopia'>{i18n.t('ai.v58-ux-panel.k75')}</MenuItem>
+                  <MenuItem value='deuteranopia'>{i18n.t('ai.v58-ux-panel.k76')}</MenuItem>
+                  <MenuItem value='tritanopia'>{i18n.t('ai.v58-ux-panel.k77')}</MenuItem>
                 </Select>
               </FormControl>
             </Box>
@@ -1631,7 +1632,7 @@ const SettingsTab: React.FC<{
                 variant='caption'
                 sx={{ color: 'text.secondary', mb: 0.5 }}
               >
-                屏幕尺寸
+                {i18n.t('ai.v58-ux-panel.k37')}
               </Typography>
               <Grid
                 container
@@ -1641,7 +1642,7 @@ const SettingsTab: React.FC<{
                   <TextField
                     size='small'
                     type='number'
-                    label='宽度'
+                    label={i18n.t('ai.v58-ux-panel.k78')}
                     value={profile.device.screenWidth}
                     onChange={(e) =>
                       onUpdate({
@@ -1656,7 +1657,7 @@ const SettingsTab: React.FC<{
                   <TextField
                     size='small'
                     type='number'
-                    label='高度'
+                    label={i18n.t('ai.v58-ux-panel.k79')}
                     value={profile.device.screenHeight}
                     onChange={(e) =>
                       onUpdate({
@@ -1675,7 +1676,7 @@ const SettingsTab: React.FC<{
                 variant='caption'
                 sx={{ color: 'text.secondary', mb: 0.5 }}
               >
-                网络质量
+                {i18n.t('ai.v58-ux-panel.k38')}
               </Typography>
               <Stack
                 direction='row'
@@ -1706,7 +1707,7 @@ const SettingsTab: React.FC<{
               onClick={onReset}
               fullWidth
             >
-              重置为默认设置
+              {i18n.t('ai.v58-ux-panel.k39')}
             </Button>
           </Stack>
         </CardContent>
@@ -1730,7 +1731,7 @@ const SettingsTab: React.FC<{
                 variant='subtitle2'
                 sx={{ fontWeight: 600 }}
               >
-                AI UX 引擎状态
+                {i18n.t('ai.v58-ux-panel.aiux_40')}
               </Typography>
             </Stack>
             <Grid
@@ -1739,29 +1740,29 @@ const SettingsTab: React.FC<{
             >
               <Grid size={6}>
                 <StatItem
-                  label='推荐引擎'
-                  value='活跃'
+                  label={i18n.t('ai.v58-ux-panel.k80')}
+                  value={i18n.t('ai.v58-ux-panel.k81')}
                   color={designTokens.colors.success.dark}
                 />
               </Grid>
               <Grid size={6}>
                 <StatItem
-                  label='自适应引擎'
-                  value='活跃'
+                  label={i18n.t('ai.v58-ux-panel.k82')}
+                  value={i18n.t('ai.v58-ux-panel.k83')}
                   color={designTokens.colors.success.dark}
                 />
               </Grid>
               <Grid size={6}>
                 <StatItem
-                  label='情感引擎'
-                  value='活跃'
+                  label={i18n.t('ai.v58-ux-panel.k84')}
+                  value={i18n.t('ai.v58-ux-panel.k85')}
                   color={designTokens.colors.success.dark}
                 />
               </Grid>
               <Grid size={6}>
                 <StatItem
-                  label='行为记录'
-                  value='运行中'
+                  label={i18n.t('ai.v58-ux-panel.k86')}
+                  value={i18n.t('ai.v58-ux-panel.k87')}
                   color='colors.cyan.600'
                 />
               </Grid>
@@ -1778,28 +1779,28 @@ const SettingsTab: React.FC<{
             >
               <Star
                 size={18}
-                color='#eab308'
+                color={designTokens.colors.warning[500]}
               />
               <Typography
                 variant='subtitle2'
                 sx={{ fontWeight: 600 }}
               >
-                使用提示
+                {i18n.t('ai.v58-ux-panel.k41')}
               </Typography>
             </Stack>
             <Typography
               variant='body2'
               sx={{ color: 'text.secondary', lineHeight: 1.8 }}
             >
-              1. 点击"模拟用户行为"来生成示例数据
+              1. {i18n.t('ai.v58-ux-panel.i18n_42')}.t('ai.v58-ux-panel.k88')来生成示例数据
               <br />
-              2. 在"自适应交互"标签页调整设备和熟练度
+              2. {i18n.t('ai.v58-ux-panel.i18n_44')}.t('ai.v58-ux-panel.k89')标签页调整设备和熟练度
               <br />
-              3. 在"情感化设计"标签页模拟情绪信号
+              3. {i18n.t('ai.v58-ux-panel.i18n_46')}.t('ai.v58-ux-panel.k90')标签页模拟情绪信号
               <br />
-              4. 所有设置会实时保存到用户画像中
+              {i18n.t('ai.v58-ux-panel.k48')}
               <br />
-              5. 引擎会基于你的画像自动调整 UI 体验
+              {i18n.t('ai.v58-ux-panel.k49')}
             </Typography>
           </CardContent>
         </Card>

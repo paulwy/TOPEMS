@@ -3,19 +3,20 @@ import { useParams } from 'react-router-dom';
 import { useWmsMock, type WmsMockShape } from '@/api/wms/_mock';
 import { WmsStatusBadge } from '@/components/wms';
 import type { WavePickDto } from '@/types/wms';
+import i18n from '@/i18n';
 
 function buildWaveOrders(waveId: string, count: number) {
   return Array.from({ length: count }, (_, i) => ({
     id: `${waveId}-order-${i + 1}`,
     orderNumber: `OUT-${20250100 + i + 1}`,
-    customer: `客户-${i + 1}`,
+    customer: `${i18n.t('pages.wms_wave_pick_detail_page.k0')}${i + 1}`,
     lines: 2 + (i % 3),
     totalQty: 10 + i * 4,
     pickedQty: Math.floor((10 + i * 4) * (0.6 + i * 0.1)),
   }));
 }
 
-const PICKERS = ['张伟', '李强', '王磊', '赵敏', '陈晨'];
+const PICKERS = [i18n.t('pages.wms_wave_pick_detail_page.k4'), i18n.t('pages.wms_wave_pick_detail_page.k3'), i18n.t('pages.wms_wave_pick_detail_page.k2'), i18n.t('pages.wms_wave_pick_detail_page.k1'), i18n.t('pages.wms_wave_pick_detail_page.k0')];
 
 export default function WmsWavePickDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -37,10 +38,10 @@ export default function WmsWavePickDetailPage() {
     return { total, picked, pct: total ? Math.round((picked / total) * 100) : 0 };
   }, [orders]);
 
-  if (!wave) return <div className='p-8'>加载中...</div>;
+  if (!wave) return <div className='p-8'>{i18n.t('pages.wms_wave_pick_detail_page.k1')}</div>;
 
   const picker =
-    wave.assigned_user_name ?? PICKERS[Number(wave.assigned_to ?? 0) % PICKERS.length] ?? '未分配';
+    wave.assigned_user_name ?? PICKERS[Number(wave.assigned_to ?? 0) % PICKERS.length] ?? i18n.t('pages.wms_wave_pick_detail_page.k5');
 
   return (
     <div className='space-y-4 p-4'>
@@ -48,7 +49,7 @@ export default function WmsWavePickDetailPage() {
         <div>
           <h1 className='text-2xl font-bold'>波次拣货详情 — {wave.wave_pick_number}</h1>
           <p className='text-sm text-gray-500'>
-            创建于 {wave.created_at.slice(0, 10)} · 优先级：{wave.priority ?? '普通'}
+            {i18n.t('pages.wms_wave_pick_detail_page.k0')}{wave.created_at.slice(0, 10)} · 优先级：{wave.priority ?? i18n.t('pages.wms_wave_pick_detail_page.k6')}
           </p>
         </div>
         <WmsStatusBadge
@@ -59,11 +60,11 @@ export default function WmsWavePickDetailPage() {
 
       <div className='grid grid-cols-1 gap-4 md:grid-cols-4'>
         <div className='rounded-lg border p-4'>
-          <p className='text-sm text-gray-600'>拣货员</p>
+          <p className='text-sm text-gray-600'>{i18n.t('pages.wms_wave_pick_detail_page.k7')}</p>
           <p className='mt-1 text-lg font-semibold'>{picker}</p>
         </div>
         <div className='rounded-lg border p-4'>
-          <p className='text-sm text-gray-600'>包含订单数</p>
+          <p className='text-sm text-gray-600'>{i18n.t('pages.wms_wave_pick_detail_page.k8')}</p>
           <p className='mt-1 text-3xl font-bold text-blue-600'>{orders.length}</p>
         </div>
         <div className='rounded-lg border p-4'>
@@ -75,14 +76,14 @@ export default function WmsWavePickDetailPage() {
           </p>
         </div>
         <div className='rounded-lg border p-4'>
-          <p className='text-sm text-gray-600'>完成进度</p>
+          <p className='text-sm text-gray-600'>{i18n.t('pages.wms_wave_pick_detail_page.k9')}</p>
           <p className='mt-1 text-3xl font-bold text-purple-600'>{progress.pct}%</p>
         </div>
       </div>
 
       <div className='rounded-lg border p-4'>
         <div className='flex justify-between mb-2 text-sm'>
-          <span className='font-semibold'>整体拣货进度</span>
+          <span className='font-semibold'>{i18n.t('pages.wms_wave_pick_detail_page.k10')}</span>
           <span>
             {progress.picked} / {progress.total}（{progress.pct}%）
           </span>
@@ -96,17 +97,17 @@ export default function WmsWavePickDetailPage() {
       </div>
 
       <div className='rounded-lg border p-4'>
-        <h3 className='mb-2 font-semibold'>波次包含订单明细</h3>
+        <h3 className='mb-2 font-semibold'>{i18n.t('pages.wms_wave_pick_detail_page.k11')}</h3>
         <div className='overflow-x-auto'>
           <table className='w-full text-sm'>
             <thead className='bg-gray-50'>
               <tr>
-                <th className='px-3 py-2 text-left'>出库单号</th>
-                <th className='px-3 py-2 text-left'>客户</th>
-                <th className='px-3 py-2 text-right'>行数</th>
-                <th className='px-3 py-2 text-right'>总数量</th>
-                <th className='px-3 py-2 text-right'>已拣</th>
-                <th className='px-3 py-2 w-48'>单行进度</th>
+                <th className='px-3 py-2 text-left'>{i18n.t('pages.wms_wave_pick_detail_page.k12')}</th>
+                <th className='px-3 py-2 text-left'>{i18n.t('pages.wms_wave_pick_detail_page.k13')}</th>
+                <th className='px-3 py-2 text-right'>{i18n.t('pages.wms_wave_pick_detail_page.k14')}</th>
+                <th className='px-3 py-2 text-right'>{i18n.t('pages.wms_wave_pick_detail_page.k15')}</th>
+                <th className='px-3 py-2 text-right'>{i18n.t('pages.wms_wave_pick_detail_page.k16')}</th>
+                <th className='px-3 py-2 w-48'>{i18n.t('pages.wms_wave_pick_detail_page.k17')}</th>
               </tr>
             </thead>
             <tbody>

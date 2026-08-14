@@ -1,10 +1,11 @@
 import React from 'react';
+import i18n from '@/i18n';
 
 const IntegrationWmsScmPage: React.FC = () => {
   return React.createElement(
     'div',
     { className: 'page-placeholder' },
-    'IntegrationWmsScmPage 页面开发中'
+    i18n.t('integration.integration_wms_scm_page.k0')
   );
 };
 

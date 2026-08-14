@@ -10,6 +10,7 @@ import {
   FormControlLabel,
   Switch,
 } from '@mui/material';
+import i18n from '@/i18n';
 import { Table, BarChart3, LayoutGrid } from 'lucide-react';
 import type {
   LayoutConfig,
@@ -39,7 +40,7 @@ export const LayoutPanel: React.FC<LayoutPanelProps> = ({
         variant='subtitle2'
         sx={{ fontWeight: 600, color: 'grey.600' }}
       >
-        布局类型
+        {i18n.t('components.layout_panel.k0')}
       </Typography>
       <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
         <Button
@@ -48,7 +49,7 @@ export const LayoutPanel: React.FC<LayoutPanelProps> = ({
           sx={{ borderRadius: 1 }}
         >
           <Table sx={{ width: 16, height: 16, mr: 1 }} />
-          表格
+          {i18n.t('components.layout_panel.k1')}
         </Button>
         <Button
           variant={layout.type === 'chart' ? 'contained' : 'outlined'}
@@ -56,7 +57,7 @@ export const LayoutPanel: React.FC<LayoutPanelProps> = ({
           sx={{ borderRadius: 1 }}
         >
           <BarChart3 sx={{ width: 16, height: 16, mr: 1 }} />
-          图表
+          {i18n.t('components.layout_panel.k2')}
         </Button>
         <Button
           variant={layout.type === 'card' ? 'contained' : 'outlined'}
@@ -64,7 +65,7 @@ export const LayoutPanel: React.FC<LayoutPanelProps> = ({
           sx={{ borderRadius: 1 }}
         >
           <LayoutGrid sx={{ width: 16, height: 16, mr: 1 }} />
-          卡片
+          {i18n.t('components.layout_panel.k3')}
         </Button>
       </Box>
 
@@ -74,15 +75,15 @@ export const LayoutPanel: React.FC<LayoutPanelProps> = ({
             variant='body2'
             sx={{ fontWeight: 500, mb: 2 }}
           >
-            图表配置
+            {i18n.t('components.layout_panel.k4')}
           </Typography>
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
             <FormControl>
-              <InputLabel size='small'>图表类型</InputLabel>
+              <InputLabel size='small'>{i18n.t('components.layout_panel.k0')}</InputLabel>
               <Select
                 size='small'
                 value={layout.chart?.type || 'bar'}
-                label='图表类型'
+                label={i18n.t('components.layout_panel.k1')}
                 onChange={(e) =>
                   setState((prev: ReportDesignerState) => ({
                     ...prev,
@@ -93,11 +94,11 @@ export const LayoutPanel: React.FC<LayoutPanelProps> = ({
                   }))
                 }
               >
-                <MenuItem value='line'>折线图</MenuItem>
-                <MenuItem value='bar'>柱状图</MenuItem>
-                <MenuItem value='pie'>饼图</MenuItem>
-                <MenuItem value='area'>面积图</MenuItem>
-                <MenuItem value='scatter'>散点图</MenuItem>
+                <MenuItem value='line'>{i18n.t('components.layout_panel.k2')}</MenuItem>
+                <MenuItem value='bar'>{i18n.t('components.layout_panel.k3')}</MenuItem>
+                <MenuItem value='pie'>{i18n.t('components.layout_panel.k4')}</MenuItem>
+                <MenuItem value='area'>{i18n.t('components.layout_panel.k5')}</MenuItem>
+                <MenuItem value='scatter'>{i18n.t('components.layout_panel.k6')}</MenuItem>
               </Select>
             </FormControl>
             <FormControl>
@@ -105,7 +106,7 @@ export const LayoutPanel: React.FC<LayoutPanelProps> = ({
               <Select
                 size='small'
                 value={layout.chart?.xAxisField || ''}
-                label='X轴字段'
+                label={i18n.t('components.layout_panel.x_5')}
                 onChange={(e) =>
                   setState((prev: ReportDesignerState) => ({
                     ...prev,
@@ -137,7 +138,7 @@ export const LayoutPanel: React.FC<LayoutPanelProps> = ({
                 size='small'
                 multiple
                 value={layout.chart?.yAxisFields || []}
-                label='Y轴字段'
+                label={i18n.t('components.layout_panel.y_6')}
                 onChange={(e) =>
                   setState((prev: ReportDesignerState) => ({
                     ...prev,
@@ -182,7 +183,7 @@ export const LayoutPanel: React.FC<LayoutPanelProps> = ({
                     }
                   />
                 }
-                label='显示图例'
+                label={i18n.t('components.layout_panel.k7')}
               />
               <FormControlLabel
                 control={
@@ -202,7 +203,7 @@ export const LayoutPanel: React.FC<LayoutPanelProps> = ({
                     }
                   />
                 }
-                label='显示网格'
+                label={i18n.t('components.layout_panel.k8')}
               />
             </Box>
           </Box>
@@ -215,14 +216,14 @@ export const LayoutPanel: React.FC<LayoutPanelProps> = ({
             variant='body2'
             sx={{ fontWeight: 500, mb: 2 }}
           >
-            卡片配置
+            {i18n.t('components.layout_panel.k7')}
           </Typography>
           <FormControl>
-            <InputLabel size='small'>列数</InputLabel>
+            <InputLabel size='small'>{i18n.t('components.layout_panel.k9')}</InputLabel>
             <Select
               size='small'
               value={layout.columns}
-              label='列数'
+              label={i18n.t('components.layout_panel.k10')}
               onChange={(e) =>
                 setState((prev: ReportDesignerState) => ({
                   ...prev,
@@ -230,10 +231,10 @@ export const LayoutPanel: React.FC<LayoutPanelProps> = ({
                 }))
               }
             >
-              <MenuItem value={1}>单列</MenuItem>
-              <MenuItem value={2}>两列</MenuItem>
-              <MenuItem value={3}>三列</MenuItem>
-              <MenuItem value={4}>四列</MenuItem>
+              <MenuItem value={1}>{i18n.t('components.layout_panel.k11')}</MenuItem>
+              <MenuItem value={2}>{i18n.t('components.layout_panel.k12')}</MenuItem>
+              <MenuItem value={3}>{i18n.t('components.layout_panel.k13')}</MenuItem>
+              <MenuItem value={4}>{i18n.t('components.layout_panel.k14')}</MenuItem>
             </Select>
           </FormControl>
         </Box>
@@ -252,7 +253,7 @@ export const LayoutPanel: React.FC<LayoutPanelProps> = ({
               }
             />
           }
-          label='显示表头'
+          label={i18n.t('components.layout_panel.k15')}
         />
         <FormControlLabel
           control={
@@ -266,7 +267,7 @@ export const LayoutPanel: React.FC<LayoutPanelProps> = ({
               }
             />
           }
-          label='显示表尾'
+          label={i18n.t('components.layout_panel.k16')}
         />
         <FormControlLabel
           control={
@@ -280,17 +281,17 @@ export const LayoutPanel: React.FC<LayoutPanelProps> = ({
               }
             />
           }
-          label='分页显示'
+          label={i18n.t('components.layout_panel.k17')}
         />
       </Box>
 
       {layout.pagination && (
         <FormControl sx={{ minWidth: 120 }}>
-          <InputLabel size='small'>每页条数</InputLabel>
+          <InputLabel size='small'>{i18n.t('components.layout_panel.k18')}</InputLabel>
           <Select
             size='small'
             value={layout.pageSize}
-            label='每页条数'
+            label={i18n.t('components.layout_panel.k19')}
             onChange={(e) =>
               setState((prev: ReportDesignerState) => ({
                 ...prev,
