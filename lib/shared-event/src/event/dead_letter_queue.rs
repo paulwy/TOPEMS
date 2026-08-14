@@ -577,3 +577,248 @@ impl DeadLetterQueue {
         Ok(None)
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::event::event_types::{Event, EventType};
+    use crate::test_helpers::redis_pubsub;
+
+    fn make_event() -> Event {
+        Event::new(
+            EventType::HealthCheck,
+            "test-source",
+            serde_json::json!({"key": "value", "n": 42}),
+        )
+    }
+
+    fn make_dead_letter(retry_count: usize) -> DeadLetter {
+        let event = make_event();
+        DeadLetter {
+            event,
+            retry_count,
+            last_error: format!("error #{}", retry_count),
+            created_at: Utc::now(),
+            last_attempt_at: Utc::now(),
+        }
+    }
+
+    #[test]
+    fn test_dead_letter_serde_roundtrip() {
+        let dl = make_dead_letter(2);
+        let json = serde_json::to_string(&dl).expect("serialize");
+        let back: DeadLetter = serde_json::from_str(&json).expect("deserialize");
+        assert_eq!(back.retry_count, 2);
+        assert_eq!(back.last_error, "error #2");
+        assert_eq!(back.event.event_id, dl.event.event_id);
+        assert_eq!(back.event.event_type, EventType::HealthCheck);
+        assert_eq!(back.event.source, "test-source");
+        assert_eq!(back.created_at, dl.created_at);
+        assert_eq!(back.last_attempt_at, dl.last_attempt_at);
+    }
+
+    #[test]
+    fn test_dead_letter_list_serde_roundtrip_with_items() {
+        let items = vec![make_dead_letter(0), make_dead_letter(1), make_dead_letter(2)];
+        let list = DeadLetterList {
+            total: 42,
+            page: 1,
+            page_size: 10,
+            total_pages: 5,
+            items,
+        };
+        let json = serde_json::to_string(&list).expect("serialize");
+        let back: DeadLetterList = serde_json::from_str(&json).expect("deserialize");
+        assert_eq!(back.total, 42);
+        assert_eq!(back.page, 1);
+        assert_eq!(back.page_size, 10);
+        assert_eq!(back.total_pages, 5);
+        assert_eq!(back.items.len(), 3);
+        assert_eq!(back.items[0].retry_count, 0);
+        assert_eq!(back.items[2].retry_count, 2);
+    }
+
+    #[test]
+    fn test_dead_letter_list_serde_roundtrip_empty() {
+        let list = DeadLetterList {
+            items: Vec::new(),
+            total: 0,
+            page: 0,
+            page_size: 20,
+            total_pages: 0,
+        };
+        let json = serde_json::to_string(&list).expect("serialize");
+        let back: DeadLetterList = serde_json::from_str(&json).expect("deserialize");
+        assert!(back.items.is_empty());
+        assert_eq!(back.total, 0);
+        assert_eq!(back.total_pages, 0);
+    }
+
+    #[test]
+    fn test_dead_letter_stats_serde_roundtrip_with_values() {
+        let mut by_event_type = HashMap::new();
+        by_event_type.insert("HealthCheck".to_string(), 5usize);
+        by_event_type.insert("CacheInvalidated".to_string(), 3usize);
+        let stats = DeadLetterStats {
+            total_dead_letters: 8,
+            by_event_type,
+            oldest_dead_letter_at: Some(Utc::now()),
+            retry_success_count: 10,
+            retry_failure_count: 2,
+        };
+        let json = serde_json::to_string(&stats).expect("serialize");
+        let back: DeadLetterStats = serde_json::from_str(&json).expect("deserialize");
+        assert_eq!(back.total_dead_letters, 8);
+        assert_eq!(back.by_event_type.len(), 2);
+        assert_eq!(back.by_event_type.get("HealthCheck"), Some(&5));
+        assert_eq!(back.by_event_type.get("CacheInvalidated"), Some(&3));
+        assert!(back.oldest_dead_letter_at.is_some());
+        assert_eq!(back.retry_success_count, 10);
+        assert_eq!(back.retry_failure_count, 2);
+    }
+
+    #[test]
+    fn test_dead_letter_stats_serde_roundtrip_empty() {
+        let stats = DeadLetterStats {
+            total_dead_letters: 0,
+            by_event_type: HashMap::new(),
+            oldest_dead_letter_at: None,
+            retry_success_count: 0,
+            retry_failure_count: 0,
+        };
+        let json = serde_json::to_string(&stats).expect("serialize");
+        let back: DeadLetterStats = serde_json::from_str(&json).expect("deserialize");
+        assert_eq!(back.total_dead_letters, 0);
+        assert!(back.by_event_type.is_empty());
+        assert!(back.oldest_dead_letter_at.is_none());
+        assert_eq!(back.retry_success_count, 0);
+        assert_eq!(back.retry_failure_count, 0);
+    }
+
+    #[test]
+    fn test_dead_letter_clone_preserves_fields() {
+        let dl = make_dead_letter(3);
+        let cloned = dl.clone();
+        assert_eq!(cloned.retry_count, dl.retry_count);
+        assert_eq!(cloned.last_error, dl.last_error);
+        assert_eq!(cloned.event.event_id, dl.event.event_id);
+        assert_eq!(cloned.created_at, dl.created_at);
+        assert_eq!(cloned.last_attempt_at, dl.last_attempt_at);
+    }
+
+    #[test]
+    fn test_dead_letter_list_clone_preserves_fields() {
+        let list = DeadLetterList {
+            items: vec![make_dead_letter(0)],
+            total: 1,
+            page: 0,
+            page_size: 5,
+            total_pages: 1,
+        };
+        let cloned = list.clone();
+        assert_eq!(cloned.total, list.total);
+        assert_eq!(cloned.page, list.page);
+        assert_eq!(cloned.page_size, list.page_size);
+        assert_eq!(cloned.total_pages, list.total_pages);
+        assert_eq!(cloned.items.len(), list.items.len());
+    }
+
+    #[test]
+    fn test_dead_letter_stats_clone_preserves_fields() {
+        let mut by_event_type = HashMap::new();
+        by_event_type.insert("A".to_string(), 1usize);
+        let stats = DeadLetterStats {
+            total_dead_letters: 1,
+            by_event_type,
+            oldest_dead_letter_at: Some(Utc::now()),
+            retry_success_count: 7,
+            retry_failure_count: 3,
+        };
+        let cloned = stats.clone();
+        assert_eq!(cloned.total_dead_letters, stats.total_dead_letters);
+        assert_eq!(cloned.by_event_type.len(), stats.by_event_type.len());
+        assert_eq!(cloned.retry_success_count, stats.retry_success_count);
+        assert_eq!(cloned.retry_failure_count, stats.retry_failure_count);
+        assert_eq!(cloned.oldest_dead_letter_at, stats.oldest_dead_letter_at);
+    }
+
+    #[test]
+    fn test_dlq_new_succeeds_lazily() {
+        // DeadLetterQueue::new 仅做 Client::open，不建立实际连接。
+        // 此测试保证：即使本地完全没有 Redis，构造函数也不会失败。
+        let queue = DeadLetterQueue::new();
+        assert!(queue.is_ok(), "DeadLetterQueue::new 惰性构造应始终成功");
+    }
+
+    #[test]
+    fn test_dlq_list_dead_letters_page_size_zero_returns_config_error() {
+        // page_size=0 的校验在 Redis 连接之前，无需 Redis 即可测试错误路径
+        let queue = DeadLetterQueue::new().expect("lazy construction succeeds");
+        let rt = tokio::runtime::Runtime::new().expect("runtime");
+        let result = rt
+            .block_on(queue.list_dead_letters(None, 0, 0));
+        assert!(result.is_err());
+        match result.unwrap_err() {
+            EventError::ConfigError(msg) => assert!(msg.contains("page_size")),
+            other => panic!("Expected ConfigError, got {other:?}"),
+        }
+    }
+
+    #[tokio::test]
+    async fn test_dlq_push_returns_err_when_redis_unavailable() {
+        // 仅在 Redis 不可达时验证错误路径（避免与可用 Redis 环境的测试冲突）
+        if redis_pubsub::maybe_connect_redis().await.is_some() {
+            eprintln!("[skip] Redis 可用，跳过不可达错误路径测试");
+            return;
+        }
+        let queue = DeadLetterQueue::new().expect("lazy construction succeeds");
+        let event = make_event();
+        let result = queue.push(event, "test error").await;
+        assert!(result.is_err(), "Redis 不可达时 push 应返回 Err");
+    }
+
+    #[tokio::test]
+    async fn test_dlq_pop_returns_err_when_redis_unavailable() {
+        if redis_pubsub::maybe_connect_redis().await.is_some() {
+            eprintln!("[skip] Redis 可用，跳过不可达错误路径测试");
+            return;
+        }
+        let queue = DeadLetterQueue::new().expect("lazy construction succeeds");
+        let result = queue.pop("HealthCheck").await;
+        assert!(result.is_err(), "Redis 不可达时 pop 应返回 Err");
+    }
+
+    #[tokio::test]
+    async fn test_dlq_size_returns_err_when_redis_unavailable() {
+        if redis_pubsub::maybe_connect_redis().await.is_some() {
+            eprintln!("[skip] Redis 可用，跳过不可达错误路径测试");
+            return;
+        }
+        let queue = DeadLetterQueue::new().expect("lazy construction succeeds");
+        let result = queue.size("HealthCheck").await;
+        assert!(result.is_err(), "Redis 不可达时 size 应返回 Err");
+    }
+
+    #[tokio::test]
+    async fn test_dlq_get_retry_count_returns_err_when_redis_unavailable() {
+        if redis_pubsub::maybe_connect_redis().await.is_some() {
+            eprintln!("[skip] Redis 可用，跳过不可达错误路径测试");
+            return;
+        }
+        let queue = DeadLetterQueue::new().expect("lazy construction succeeds");
+        let event_id = Uuid::new_v4();
+        let result = queue.get_retry_count(&event_id).await;
+        assert!(result.is_err(), "Redis 不可达时 get_retry_count 应返回 Err");
+    }
+
+    #[tokio::test]
+    async fn test_dlq_get_stats_returns_err_when_redis_unavailable() {
+        if redis_pubsub::maybe_connect_redis().await.is_some() {
+            eprintln!("[skip] Redis 可用，跳过不可达错误路径测试");
+            return;
+        }
+        let queue = DeadLetterQueue::new().expect("lazy construction succeeds");
+        let result = queue.get_stats().await;
+        assert!(result.is_err(), "Redis 不可达时 get_stats 应返回 Err");
+    }
+}
