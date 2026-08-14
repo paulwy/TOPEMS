@@ -13,11 +13,12 @@ import {
   CartesianGrid,
 } from 'recharts';
 import { useWmsMock, type WmsMockShape } from '@/api/wms/_mock';
+import { designTokens, semanticTokens } from '@topems/tokens';
 
 const ABC_COLORS: Record<string, string> = {
-  A: '#ef4444',
-  B: '#f59e0b',
-  C: '#10b981',
+  A: designTokens.colors.error.main,
+  B: designTokens.colors.warning.main,
+  C: designTokens.colors.success.dark,
 };
 
 export default function WmsAbcAnalysisPage() {
@@ -84,7 +85,7 @@ export default function WmsAbcAnalysisPage() {
                 {abc.map((entry, i) => (
                   <Cell
                     key={i}
-                    fill={ABC_COLORS[entry.category] ?? '#6b7280'}
+                    fill={ABC_COLORS[entry.category] ?? 'colors.grey.500'}
                   />
                 ))}
               </Pie>
@@ -124,7 +125,7 @@ export default function WmsAbcAnalysisPage() {
                 dataKey='count'
                 name='SKU 数'
                 radius={[6, 6, 0, 0]}
-                fill='#3b82f6'
+                fill={designTokens.colors.primary.main}
               />
             </BarChart>
           </ResponsiveContainer>

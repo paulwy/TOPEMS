@@ -81,6 +81,7 @@ import {
   type RollbackEvent,
   type RollbackMetric,
 } from './auto-rollback';
+import { designTokens, semanticTokens } from '@topems/tokens';
 
 type TabId = 'pipelines' | 'deployments' | 'rollbacks' | 'health';
 
@@ -434,7 +435,7 @@ const PipelinesTab: React.FC<{
           icon={<Layers size={20} />}
           label='流水线总数'
           value={stats.total}
-          color='#6366f1'
+          color={designTokens.colors.secondary.dark}
         />
       </Grid>
       <Grid size={{ xs: 6, md: 3 }}>
@@ -450,7 +451,7 @@ const PipelinesTab: React.FC<{
           icon={<CheckCircle2 size={20} />}
           label='成功'
           value={stats.completed}
-          color='#10b981'
+          color={designTokens.colors.success.dark}
         />
       </Grid>
       <Grid size={{ xs: 6, md: 3 }}>
@@ -458,7 +459,7 @@ const PipelinesTab: React.FC<{
           icon={<XCircle size={20} />}
           label='失败'
           value={stats.failed}
-          color='#ef4444'
+          color={designTokens.colors.error.main}
         />
       </Grid>
     </Grid>
@@ -560,7 +561,7 @@ const PipelinesTab: React.FC<{
                           >
                             <Play
                               size={16}
-                              color='#10b981'
+                              color={designTokens.colors.success.dark}
                             />
                           </IconButton>
                         </Tooltip>
@@ -670,7 +671,7 @@ const PipelinesTab: React.FC<{
                             >
                               <Square
                                 size={16}
-                                color='#ef4444'
+                                color={designTokens.colors.error.main}
                               />
                             </IconButton>
                           </Tooltip>
@@ -804,7 +805,7 @@ const DeploymentsTab: React.FC<{
           icon={<Server size={20} />}
           label='部署总数'
           value={stats.total}
-          color='#6366f1'
+          color={designTokens.colors.secondary.dark}
         />
       </Grid>
       <Grid size={{ xs: 4, md: 4 }}>
@@ -820,7 +821,7 @@ const DeploymentsTab: React.FC<{
           icon={<RotateCcw size={20} />}
           label='已回滚'
           value={stats.rolled}
-          color='#f59e0b'
+          color={designTokens.colors.warning.main}
         />
       </Grid>
     </Grid>
@@ -962,7 +963,7 @@ const DeploymentsTab: React.FC<{
                             >
                               <RotateCcw
                                 size={16}
-                                color='#ef4444'
+                                color={designTokens.colors.error.main}
                               />
                             </IconButton>
                           </Tooltip>
@@ -973,7 +974,7 @@ const DeploymentsTab: React.FC<{
                               <IconButton size='small'>
                                 <TrendingUp
                                   size={16}
-                                  color='#10b981'
+                                  color={designTokens.colors.success.dark}
                                 />
                               </IconButton>
                             </Tooltip>
@@ -1002,7 +1003,7 @@ const DeploymentsTab: React.FC<{
           <Grid size={{ xs: 12, md: 4 }}>
             <PolicyCard
               icon={<GitBranch size={24} />}
-              color='#6366f1'
+              color={designTokens.colors.secondary.dark}
               title='蓝绿部署'
               description='通过同时维护两套环境实现零停机切换，适用于生产环境重大变更'
             />
@@ -1018,7 +1019,7 @@ const DeploymentsTab: React.FC<{
           <Grid size={{ xs: 12, md: 4 }}>
             <PolicyCard
               icon={<RefreshCw size={24} />}
-              color='#10b981'
+              color={designTokens.colors.success.dark}
               title='滚动更新'
               description='逐个替换实例，保证服务持续可用，适用于开发/测试环境'
             />
@@ -1049,7 +1050,7 @@ const RollbacksTab: React.FC<{
             icon={<Shield size={20} />}
             label='自动回滚'
             value={autoEnabled ? '启用' : '禁用'}
-            color={autoEnabled ? '#10b981' : '#9ca3af'}
+            color={autoEnabled ? designTokens.colors.success.dark : '#9ca3af'}
           />
         </Grid>
         <Grid size={{ xs: 6, md: 3 }}>
@@ -1057,7 +1058,7 @@ const RollbacksTab: React.FC<{
             icon={<AlertTriangle size={20} />}
             label='触发条件'
             value={conditions.length}
-            color='#f59e0b'
+            color={designTokens.colors.warning.main}
           />
         </Grid>
         <Grid size={{ xs: 6, md: 3 }}>
@@ -1065,7 +1066,7 @@ const RollbacksTab: React.FC<{
             icon={<RotateCcw size={20} />}
             label='回滚事件'
             value={events.length}
-            color='#6366f1'
+            color={designTokens.colors.secondary.dark}
           />
         </Grid>
         <Grid size={{ xs: 6, md: 3 }}>
@@ -1380,7 +1381,7 @@ const HealthTab: React.FC<{
                     sx={{
                       p: 2,
                       borderRadius: 2,
-                      border: `2px solid ${isCritical ? '#ef4444' : isWarning ? '#f59e0b' : 'transparent'}`,
+                      border: `2px solid ${isCritical ? designTokens.colors.error.main : isWarning ? designTokens.colors.warning.main : 'transparent'}`,
                       bgcolor: isCritical
                         ? 'rgba(239, 68, 68, 0.05)'
                         : isWarning
@@ -1414,7 +1415,7 @@ const HealthTab: React.FC<{
                     <Box sx={{ display: 'flex', alignItems: 'baseline', gap: 1, mb: 1 }}>
                       <Typography
                         variant='h4'
-                        sx={{ fontWeight: 700, color: isCritical ? '#ef4444' : 'text.primary' }}
+                        sx={{ fontWeight: 700, color: isCritical ? designTokens.colors.error.main : 'text.primary' }}
                       >
                         {value.toFixed(config.key === 'error_rate' ? 2 : 0)}
                       </Typography>
@@ -2087,9 +2088,9 @@ const HealthStatusChip: React.FC<{ status: HealthCheckStatus }> = ({ status }) =
 
 const HealthStatusDot: React.FC<{ status: HealthCheckStatus }> = ({ status }) => {
   const colorMap: Record<string, string> = {
-    healthy: '#10b981',
-    unhealthy: '#ef4444',
-    degraded: '#f59e0b',
+    healthy: designTokens.colors.success.dark,
+    unhealthy: designTokens.colors.error.main,
+    degraded: designTokens.colors.warning.main,
     unknown: '#9ca3af',
   };
   return (

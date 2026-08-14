@@ -16,7 +16,7 @@ import { EmptyState } from '@/components';
 
 import { QUERY_KEYS } from '@/lib/reactQuery';
 
-const ct = designTokens.colors;
+const ct= designTokens.colors;
 
 const HrmDepartmentPage: React.FC = () => {
   const queryClient = useQueryClient();

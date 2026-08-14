@@ -8,7 +8,7 @@ import { erpApi } from '@/api/erp';
 import type { Inventory } from '@/api/erp';
 import { designTokens } from '@/theme/tokens';
 
-const ct = designTokens.colors;
+const ct= designTokens.colors;
 
 const inventoryAdapter = {
   list: async (params?: {

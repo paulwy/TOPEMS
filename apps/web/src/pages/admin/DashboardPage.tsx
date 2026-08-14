@@ -13,7 +13,7 @@ import { LazyChart } from '@/components/charts';
 
 import { QUERY_KEYS } from '@/lib/reactQuery';
 
-const ct = designTokens.colors;
+const ct= designTokens.colors;
 
 const iconMap: Record<string, React.ReactNode> = {
   Users: <Users size={24} />,

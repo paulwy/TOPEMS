@@ -68,28 +68,29 @@ import {
   type ThreatModel,
   type SecuritySeverity,
 } from './security-hardening';
+import { designTokens, semanticTokens } from '@topems/tokens';
 
 type TabId = 'models' | 'experiments' | 'security' | 'threats';
 
 const STATUS_COLORS: Record<VersionStatus, string> = {
-  Active: '#10b981',
-  Deprecated: '#f59e0b',
-  Archived: '#6b7280',
+  Active: designTokens.colors.success.dark,
+  Deprecated: designTokens.colors.warning.main,
+  Archived: 'colors.grey.500',
 };
 
 const EXPERIMENT_STATUS_COLORS: Record<string, string> = {
-  Draft: '#6b7280',
-  Running: '#3b82f6',
-  Paused: '#f59e0b',
-  Completed: '#10b981',
+  Draft: 'colors.grey.500',
+  Running: designTokens.colors.primary.main,
+  Paused: designTokens.colors.warning.main,
+  Completed: designTokens.colors.success.dark,
 };
 
 const SEVERITY_COLORS: Record<SecuritySeverity, string> = {
-  Critical: '#ef4444',
+  Critical: designTokens.colors.error.main,
   High: '#f97316',
-  Medium: '#f59e0b',
-  Low: '#3b82f6',
-  Info: '#6b7280',
+  Medium: designTokens.colors.warning.main,
+  Low: designTokens.colors.primary.main,
+  Info: 'colors.grey.500',
 };
 
 const V58EvolutionPanel: React.FC<{ onClose: () => void }> = ({ onClose }) => {
@@ -565,7 +566,7 @@ const ModelsTab: React.FC<{
                     sx={{
                       mb: 1,
                       border: '1px solid',
-                      borderColor: selectedModelId === model.id ? '#8b5cf6' : 'divider',
+                      borderColor: selectedModelId === model.id ? designTokens.colors.secondary.main : 'divider',
                       borderRadius: 1,
                       bgcolor: selectedModelId === model.id ? '#f5f3ff' : 'white',
                       cursor: 'pointer',
@@ -693,7 +694,7 @@ const ModelsTab: React.FC<{
                                   width: 24,
                                   height: 24,
                                   cursor: 'pointer',
-                                  bgcolor: compareIds.includes(v.id) ? '#8b5cf6' : 'transparent',
+                                  bgcolor: compareIds.includes(v.id) ? designTokens.colors.secondary.main : 'transparent',
                                   border: '1px solid #8b5cf6',
                                 }}
                               />
@@ -1032,7 +1033,7 @@ const ExperimentsTab: React.FC<{
                   sx={{
                     mb: 1,
                     border: '1px solid',
-                    borderColor: selectedExpId === exp.id ? '#10b981' : 'divider',
+                    borderColor: selectedExpId === exp.id ? designTokens.colors.success.dark : 'divider',
                     borderRadius: 1,
                     bgcolor: selectedExpId === exp.id ? '#f0fdf4' : 'white',
                     cursor: 'pointer',
@@ -1187,7 +1188,7 @@ const ExperimentsTab: React.FC<{
                               </TableCell>
                               <TableCell align='right'>
                                 <Typography
-                                  sx={{ fontWeight: 600, color: isWinner ? '#10b981' : 'inherit' }}
+                                  sx={{ fontWeight: 600, color: isWinner ? designTokens.colors.success.dark : 'inherit' }}
                                 >
                                   {(result.conversionRate * 100).toFixed(2)}%
                                 </Typography>
@@ -1280,7 +1281,7 @@ const ExperimentsTab: React.FC<{
                         variant='h6'
                         sx={{
                           fontWeight: 700,
-                          color: significance.relativeLift > 0 ? '#10b981' : '#ef4444',
+                          color: significance.relativeLift > 0 ? designTokens.colors.success.dark : designTokens.colors.error.main,
                         }}
                       >
                         {significance.relativeLift > 0 ? '+' : ''}
@@ -1377,7 +1378,7 @@ const SecurityTab: React.FC<{
             <Gauge
               size={32}
               style={{
-                color: report.score >= 80 ? '#10b981' : report.score >= 60 ? '#f59e0b' : '#ef4444',
+                color: report.score >= 80 ? designTokens.colors.success.dark : report.score >= 60 ? designTokens.colors.warning.main : designTokens.colors.error.main,
               }}
             />
             <Typography
@@ -1549,24 +1550,24 @@ const ThreatsTab: React.FC<{
 
   const getSeverityIcon = (severity: string) => {
     const colors: Record<string, string> = {
-      Critical: '#ef4444',
+      Critical: designTokens.colors.error.main,
       High: '#f97316',
-      Medium: '#f59e0b',
-      Low: '#3b82f6',
+      Medium: designTokens.colors.warning.main,
+      Low: designTokens.colors.primary.main,
     };
     return (
       <AlertTriangle
         size={16}
-        style={{ color: colors[severity] ?? '#6b7280' }}
+        style={{ color: colors[severity] ?? 'colors.grey.500' }}
       />
     );
   };
 
   const getStatusChip = (status: string) => {
     const colors: Record<string, string> = {
-      Identified: '#ef4444',
-      Mitigated: '#f59e0b',
-      Resolved: '#10b981',
+      Identified: designTokens.colors.error.main,
+      Mitigated: designTokens.colors.warning.main,
+      Resolved: designTokens.colors.success.dark,
     };
     return (
       <Chip
@@ -1722,7 +1723,7 @@ const ThreatsTab: React.FC<{
                 sx={{
                   mb: 1,
                   border: '1px solid',
-                  borderColor: expandedThreat === threat.id ? '#8b5cf6' : 'divider',
+                  borderColor: expandedThreat === threat.id ? designTokens.colors.secondary.main : 'divider',
                   borderRadius: 1,
                   bgcolor: expandedThreat === threat.id ? '#f5f3ff' : 'white',
                 }}

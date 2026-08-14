@@ -17,7 +17,7 @@ import { LIMS_PATHS } from '@/modules/lims/config';
 import { DASHBOARD_PATHS } from '@/routes/dashboard';
 import { useNotificationStore } from '@/store';
 
-const ct = designTokens.colors;
+const ct= designTokens.colors;
 
 const BarcodePage: React.FC = () => {
   const addNotification = useNotificationStore((state) => state.addNotification);

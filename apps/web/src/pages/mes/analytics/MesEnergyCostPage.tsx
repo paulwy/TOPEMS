@@ -14,6 +14,7 @@ import {
   Legend,
 } from 'recharts';
 import type { EnergyCostData } from '@/api/mes/types';
+import { designTokens, semanticTokens } from '@topems/tokens';
 
 function useEnergyMock(): EnergyCostData {
   return useMemo(() => {
@@ -70,7 +71,7 @@ export default function MesEnergyCostPage() {
 
       <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
         {data.energy_mix.map((e, idx) => {
-          const colors = ['#6366f1', '#f59e0b', '#10b981', '#3b82f6'];
+          const colors = [designTokens.colors.secondary.dark, designTokens.colors.warning.main, designTokens.colors.success.dark, designTokens.colors.primary.main];
           return (
             <div key={e.type} className="rounded-lg border p-3">
               <p className="text-xs text-gray-500">{e.type}</p>
@@ -95,7 +96,7 @@ export default function MesEnergyCostPage() {
               type="monotone"
               dataKey="kwh_per_unit"
               name="单位能耗"
-              stroke="#6366f1"
+              stroke={designTokens.colors.secondary.dark}
               strokeWidth={2}
               dot={false}
             />
@@ -117,24 +118,24 @@ export default function MesEnergyCostPage() {
                 type="monotone"
                 dataKey="电力"
                 stackId="1"
-                stroke="#6366f1"
-                fill="#6366f1"
+                stroke={designTokens.colors.secondary.dark}
+                fill={designTokens.colors.secondary.dark}
               />
               <Area
                 type="monotone"
                 dataKey="天然气"
                 stackId="1"
-                stroke="#f59e0b"
-                fill="#f59e0b"
+                stroke={designTokens.colors.warning.main}
+                fill={designTokens.colors.warning.main}
               />
               <Area
                 type="monotone"
                 dataKey="蒸汽"
                 stackId="1"
-                stroke="#10b981"
-                fill="#10b981"
+                stroke={designTokens.colors.success.dark}
+                fill={designTokens.colors.success.dark}
               />
-              <Area type="monotone" dataKey="水" stackId="1" stroke="#3b82f6" fill="#3b82f6" />
+              <Area type="monotone" dataKey="水" stackId="1" stroke={designTokens.colors.primary.main} fill={designTokens.colors.primary.main} />
             </AreaChart>
           </ResponsiveContainer>
         </div>
@@ -147,7 +148,7 @@ export default function MesEnergyCostPage() {
               <XAxis type="number" unit="¥" />
               <YAxis dataKey="workshop" type="category" width={70} fontSize={11} />
               <Tooltip />
-              <Bar dataKey="cost" name="能耗成本" fill="#ef4444" radius={[0, 4, 4, 0]} />
+              <Bar dataKey="cost" name="能耗成本" fill={designTokens.colors.error.main} radius={[0, 4, 4, 0]} />
             </BarChart>
           </ResponsiveContainer>
         </div>

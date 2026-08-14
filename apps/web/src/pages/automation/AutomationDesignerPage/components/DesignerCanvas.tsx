@@ -20,6 +20,7 @@ import {
   type DesignerCanvasEdge,
   type DesignerNodeItem,
 } from '../shared';
+import { designTokens, semanticTokens } from '@topems/tokens';
 
 export interface DesignerCanvasProps {
   nodes: DesignerNodeItem[];
@@ -324,7 +325,7 @@ export const DesignerCanvas: React.FC<DesignerCanvasProps> = ({
                   width={NODE_WIDTH}
                   height={NODE_HEIGHT}
                   rx={8}
-                  fill={isSelected ? '#1976d2' : '#9e9e9e'}
+                  fill={isSelected ? designTokens.colors.primary.dark : '#9e9e9e'}
                 />
               );
             })}
@@ -334,7 +335,7 @@ export const DesignerCanvas: React.FC<DesignerCanvasProps> = ({
               width={Math.min(CANVAS_WIDTH, viewport.w)}
               height={Math.min(CANVAS_HEIGHT, viewport.h)}
               fill='none'
-              stroke='#1976d2'
+              stroke={designTokens.colors.primary.dark}
               strokeWidth={24}
               strokeDasharray='48 24'
             />

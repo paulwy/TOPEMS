@@ -8,7 +8,7 @@ import { PageContainer } from '@/components/common';
 import { designTokens } from '@/theme/tokens';
 import { DASHBOARD_PATHS } from '@/routes/dashboard';
 
-const ct = designTokens.colors;
+const ct= designTokens.colors;
 
 interface SystemManagementPageProps {
   onNavigate?: (page: string) => void;

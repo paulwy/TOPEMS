@@ -11,7 +11,7 @@ import type { Project } from '@/api/pm';
 import { PM_PATHS } from '@/modules/pm/config';
 import { designTokens } from '@/theme/tokens';
 
-const ct = designTokens.colors;
+const ct= designTokens.colors;
 
 const projectApiAdapter: CrudApiAdapter<Project> = {
   list: async (params) => {

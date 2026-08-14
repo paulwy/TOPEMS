@@ -1,6 +1,7 @@
 import React from 'react';
 import { PieChart, Pie, Cell, Tooltip, Legend } from '../charts/_vendors/recharts-polar';
 import type { ChartData } from '../charts/AreaChart';
+import { designTokens, semanticTokens } from '@topems/tokens';
 
 export interface StatsChartPieProps {
   title?: string;
@@ -19,7 +20,7 @@ const defaultColors = [
   'secondary.main',
   '#a855f7',
   '#d946ef',
-  '#ec4899',
+  designTokens.colors.pink.main,
   '#f43f5e',
 ];
 

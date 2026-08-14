@@ -33,7 +33,7 @@ import { PageContainer } from '@/components/common';
 
 import { useTranslation } from 'react-i18next';
 
-const ct = designTokens.colors;
+const ct= designTokens.colors;
 
 interface BudgetItem {
   id: string;

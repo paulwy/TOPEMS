@@ -6,7 +6,7 @@ import type { Approval } from '@/api/workflow';
 import { designTokens } from '@/theme/tokens';
 import { getChipStatusColor } from '@/utils/status';
 
-const ct = designTokens.colors;
+const ct= designTokens.colors;
 
 export const getStatusIcon = (status: string) => {
   switch (status) {

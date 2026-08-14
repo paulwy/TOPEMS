@@ -48,6 +48,7 @@ import {
   type NavigationPath,
 } from '../user-behavior-analytics';
 import { moduleRegistry, type ModuleRegistration } from '../../registry/module-registry';
+import { designTokens, semanticTokens } from '@topems/tokens';
 
 type TabType = 'overview' | 'performance' | 'errors' | 'behavior' | 'modules';
 
@@ -221,7 +222,7 @@ const ObservabilityDashboard: React.FC<DashboardProps> = ({ onClose, refreshInte
             label='模块总数'
             value={totalModules}
             icon={<LayersIcon size={24} />}
-            color='#1976d2'
+            color={designTokens.colors.primary.dark}
           />
         </Grid>
         <Grid size={{ xs: 12, sm: 6, md: 3 }}>
@@ -229,7 +230,7 @@ const ObservabilityDashboard: React.FC<DashboardProps> = ({ onClose, refreshInte
             label='活跃模块'
             value={activeModules}
             icon={<CheckCircleIcon size={24} />}
-            color='#2e7d32'
+            color={designTokens.colors.success.dark}
           />
         </Grid>
         <Grid size={{ xs: 12, sm: 6, md: 3 }}>
@@ -237,7 +238,7 @@ const ObservabilityDashboard: React.FC<DashboardProps> = ({ onClose, refreshInte
             label='错误模块'
             value={errorModules}
             icon={<XCircleIcon size={24} />}
-            color='#d32f2f'
+            color={designTokens.colors.error.dark}
           />
         </Grid>
         <Grid size={{ xs: 12, sm: 6, md: 3 }}>
@@ -300,7 +301,7 @@ const ObservabilityDashboard: React.FC<DashboardProps> = ({ onClose, refreshInte
                   data={sortedPerformance.slice(0, 5).map((m) => ({
                     label: m.moduleId.split('/')[0]?.slice(0, 10) || m.moduleId,
                     value: Math.round(m.totalLoadTime),
-                    color: m.totalLoadTime > SLOW_MODULE_THRESHOLD ? '#f57c00' : '#1976d2',
+                    color: m.totalLoadTime > SLOW_MODULE_THRESHOLD ? '#f57c00' : designTokens.colors.primary.dark,
                   }))}
                 />
               )}
@@ -482,7 +483,7 @@ const ObservabilityDashboard: React.FC<DashboardProps> = ({ onClose, refreshInte
               data={sortedPerformance.slice(0, 10).map((m) => ({
                 label: m.moduleId.split('/')[0]?.slice(0, 8) || m.moduleId,
                 value: Math.round(m.totalLoadTime),
-                color: m.totalLoadTime > SLOW_MODULE_THRESHOLD ? '#f57c00' : '#1976d2',
+                color: m.totalLoadTime > SLOW_MODULE_THRESHOLD ? '#f57c00' : designTokens.colors.primary.dark,
               }))}
               height={250}
             />
@@ -578,7 +579,7 @@ const ObservabilityDashboard: React.FC<DashboardProps> = ({ onClose, refreshInte
             label='总错误数'
             value={totalErrors}
             icon={<AlertIcon size={24} />}
-            color='#d32f2f'
+            color={designTokens.colors.error.dark}
           />
         </Grid>
         <Grid size={{ xs: 12, sm: 6, md: 3 }}>
@@ -727,7 +728,7 @@ const ObservabilityDashboard: React.FC<DashboardProps> = ({ onClose, refreshInte
             label='访问模块数'
             value={behaviorStats.length}
             icon={<LayersIcon size={24} />}
-            color='#1976d2'
+            color={designTokens.colors.primary.dark}
           />
         </Grid>
         <Grid size={{ xs: 12, sm: 6, md: 4 }}>

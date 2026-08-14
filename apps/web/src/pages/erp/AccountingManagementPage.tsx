@@ -27,7 +27,7 @@ import {
 import { accountingSubjectSchema, openingBalanceSchema } from '@/schemas/finance';
 import { designTokens } from '@/theme/tokens';
 
-const ct = designTokens.colors;
+const ct= designTokens.colors;
 
 const AccountingManagementPage: React.FC = () => {
   const [activeTab, setActiveTab] = React.useState(0);

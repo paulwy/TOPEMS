@@ -28,7 +28,7 @@ import type { ParseDataRequest, ParseResult } from '@/api/lims';
 import { formatJson, parseJsonInput } from '../utils';
 import { designTokens } from '@/theme/tokens';
 
-const ct = designTokens.colors;
+const ct= designTokens.colors;
 
 interface ParseTestDialogProps {
   open: boolean;

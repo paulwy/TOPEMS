@@ -24,7 +24,7 @@ import type { Team, TeamMember, CreateTeamRequest, UpdateTeamRequest } from '@/a
 import {QUERY_KEYS, CACHE_DURATIONS} from '@/lib/reactQuery';
 import { designTokens } from '@/theme/tokens';
 
-const ct = designTokens.colors;
+const ct= designTokens.colors;
 
 const apiAdapter = createCrudPageAdapter<Team, CreateTeamRequest, UpdateTeamRequest>(
   {

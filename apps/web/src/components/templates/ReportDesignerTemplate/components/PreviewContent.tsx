@@ -2,6 +2,7 @@ import React from 'react';
 import { Box, Typography, Paper } from '@mui/material';
 import { BarChart3 } from 'lucide-react';
 import type { LayoutConfig, SelectedField } from '../types';
+import { designTokens, semanticTokens } from '@topems/tokens';
 
 interface PreviewContentProps {
   layout: LayoutConfig;
@@ -103,7 +104,7 @@ export const PreviewContent: React.FC<PreviewContentProps> = ({
       );
     }
 
-    const chartColors = ['#6366f1', '#f97316', '#10b981', '#ef4444', '#8b5cf6'];
+    const chartColors = [designTokens.colors.secondary.dark, '#f97316', designTokens.colors.success.dark, designTokens.colors.error.main, designTokens.colors.secondary.main];
 
     return (
       <Paper sx={{ p: 3, borderRadius: 1 }}>

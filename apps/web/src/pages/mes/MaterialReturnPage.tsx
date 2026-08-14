@@ -20,7 +20,7 @@ import { Undo2, FileText, Package } from 'lucide-react';
 import { designTokens } from '@/theme/tokens';
 import { PageContainer } from '@/components/common';
 
-const ct = designTokens.colors;
+const ct= designTokens.colors;
 
 const apiAdapter = createCrudPageAdapter(
   mesApi.materialReturns as unknown as CrudApi<MaterialReturn>,

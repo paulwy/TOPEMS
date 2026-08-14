@@ -1,5 +1,6 @@
 import React from 'react';
 import type { EntitySchema } from '@/schema';
+import { designTokens, semanticTokens } from '@topems/tokens';
 
 const formatCurrency = (amount: number | undefined, color?: string) => {
   const style: React.CSSProperties = { fontWeight: 'bold' };
@@ -77,7 +78,7 @@ export const voucherSchema: EntitySchema = {
       sortable: true,
       listWidth: 130,
       renderCell: (row: Record<string, unknown>) =>
-        formatCurrency(row.total_debit as number, '#d32f2f'),
+        formatCurrency(row.total_debit as number, designTokens.colors.error.dark),
     },
     {
       name: 'total_credit',
@@ -88,7 +89,7 @@ export const voucherSchema: EntitySchema = {
       sortable: true,
       listWidth: 130,
       renderCell: (row: Record<string, unknown>) =>
-        formatCurrency(row.total_credit as number, '#2e7d32'),
+        formatCurrency(row.total_credit as number, designTokens.colors.success.dark),
     },
     {
       name: 'status',

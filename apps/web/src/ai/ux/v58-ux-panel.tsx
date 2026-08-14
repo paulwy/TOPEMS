@@ -74,6 +74,7 @@ import {
   type EmotionType,
   type AnimationType,
 } from './emotional-design';
+import { designTokens, semanticTokens } from '@topems/tokens';
 
 type PanelTab = 'recommendations' | 'adaptive' | 'emotion' | 'settings';
 
@@ -392,7 +393,7 @@ const RecommendationsTab: React.FC<{
           >
             <Sparkles
               size={18}
-              color='#0891b2'
+              color='colors.cyan.600'
             />
             <Typography
               variant='subtitle2'
@@ -451,10 +452,10 @@ const RecommendationsTab: React.FC<{
                           size={14}
                           color={
                             rec.confidence > 0.7
-                              ? '#10b981'
+                              ? designTokens.colors.success.dark
                               : rec.confidence > 0.4
-                                ? '#f59e0b'
-                                : '#ef4444'
+                                ? designTokens.colors.warning.main
+                                : designTokens.colors.error.main
                           }
                         />
                       </Tooltip>
@@ -563,7 +564,7 @@ const RecommendationsTab: React.FC<{
               >
                 <BarChart3
                   size={18}
-                  color='#0891b2'
+                  color='colors.cyan.600'
                 />
                 <Typography
                   variant='subtitle2'
@@ -586,21 +587,21 @@ const RecommendationsTab: React.FC<{
                   <StatItem
                     label='已采纳'
                     value={stats.accepted_count}
-                    color='#10b981'
+                    color={designTokens.colors.success.dark}
                   />
                 </Grid>
                 <Grid size={6}>
                   <StatItem
                     label='已忽略'
                     value={stats.rejected_count}
-                    color='#ef4444'
+                    color={designTokens.colors.error.main}
                   />
                 </Grid>
                 <Grid size={6}>
                   <StatItem
                     label='平均置信度'
                     value={`${(stats.avg_confidence * 100).toFixed(0)}%`}
-                    color='#0891b2'
+                    color='colors.cyan.600'
                   />
                 </Grid>
               </Grid>
@@ -707,7 +708,7 @@ const AdaptiveTab: React.FC<{
             >
               <User
                 size={18}
-                color='#0891b2'
+                color='colors.cyan.600'
               />
               <Typography
                 variant='subtitle2'
@@ -945,7 +946,7 @@ const AdaptiveTab: React.FC<{
             >
               <Monitor
                 size={18}
-                color='#10b981'
+                color={designTokens.colors.success.dark}
               />
               <Typography
                 variant='subtitle2'
@@ -1159,7 +1160,7 @@ const EmotionTab: React.FC<{
           >
             <Activity
               size={18}
-              color='#ec4899'
+              color={designTokens.colors.pink.main}
             />
             <Typography
               variant='subtitle2'
@@ -1354,7 +1355,7 @@ const EmotionTab: React.FC<{
           >
             <Palette
               size={18}
-              color='#8b5cf6'
+              color={designTokens.colors.secondary.main}
             />
             <Typography
               variant='subtitle2'
@@ -1498,7 +1499,7 @@ const ColorBar: React.FC<{ label: string; value: number }> = ({ label, value }) 
         borderRadius: 3,
         bgcolor: 'grey.200',
         '& .MuiLinearProgress-bar': {
-          bgcolor: value > 1 ? '#10b981' : value < 0.95 ? '#ef4444' : '#0891b2',
+          bgcolor: value > 1 ? designTokens.colors.success.dark : value < 0.95 ? designTokens.colors.error.main : 'colors.cyan.600',
         },
       }}
     />
@@ -1530,7 +1531,7 @@ const SettingsTab: React.FC<{
           >
             <Settings
               size={18}
-              color='#0891b2'
+              color='colors.cyan.600'
             />
             <Typography
               variant='subtitle2'
@@ -1723,7 +1724,7 @@ const SettingsTab: React.FC<{
             >
               <Lightbulb
                 size={18}
-                color='#f59e0b'
+                color={designTokens.colors.warning.main}
               />
               <Typography
                 variant='subtitle2'
@@ -1740,28 +1741,28 @@ const SettingsTab: React.FC<{
                 <StatItem
                   label='推荐引擎'
                   value='活跃'
-                  color='#10b981'
+                  color={designTokens.colors.success.dark}
                 />
               </Grid>
               <Grid size={6}>
                 <StatItem
                   label='自适应引擎'
                   value='活跃'
-                  color='#10b981'
+                  color={designTokens.colors.success.dark}
                 />
               </Grid>
               <Grid size={6}>
                 <StatItem
                   label='情感引擎'
                   value='活跃'
-                  color='#10b981'
+                  color={designTokens.colors.success.dark}
                 />
               </Grid>
               <Grid size={6}>
                 <StatItem
                   label='行为记录'
                   value='运行中'
-                  color='#0891b2'
+                  color='colors.cyan.600'
                 />
               </Grid>
             </Grid>

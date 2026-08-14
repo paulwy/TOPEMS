@@ -66,6 +66,7 @@ import {
   type ModuleInstanceInfo,
 } from './auto-scaler';
 import { moduleRegistry, type ModuleRegistration } from '../registry/module-registry';
+import { designTokens, semanticTokens } from '@topems/tokens';
 
 type TabType = 'overview' | 'anomaly' | 'alert' | 'prediction' | 'autoscale';
 
@@ -107,7 +108,7 @@ const StatCard: React.FC<{
                 display: 'flex',
                 alignItems: 'center',
                 gap: 0.5,
-                color: trendUp ? '#2e7d32' : '#d32f2f',
+                color: trendUp ? designTokens.colors.success.dark : designTokens.colors.error.dark,
               }}
             >
               {trendUp ? <ArrowUpIcon size={12} /> : <ArrowDownIcon size={12} />}
@@ -312,13 +313,13 @@ const AIOpsPanel: React.FC<AIOpsPanelProps> = ({ onClose, refreshInterval = 3000
   const getSeverityColor = (severity: string): string => {
     switch (severity) {
       case 'critical':
-        return '#d32f2f';
+        return designTokens.colors.error.dark;
       case 'high':
         return '#ef6c00';
       case 'medium':
         return '#f57c00';
       case 'low':
-        return '#1976d2';
+        return designTokens.colors.primary.dark;
       default:
         return '#757575';
     }
@@ -327,11 +328,11 @@ const AIOpsPanel: React.FC<AIOpsPanelProps> = ({ onClose, refreshInterval = 3000
   const getAlertStatusColor = (status: string): string => {
     switch (status) {
       case 'firing':
-        return '#d32f2f';
+        return designTokens.colors.error.dark;
       case 'acknowledged':
         return '#f57c00';
       case 'resolved':
-        return '#2e7d32';
+        return designTokens.colors.success.dark;
       case 'suppressed':
         return '#757575';
       default:
@@ -404,7 +405,7 @@ const AIOpsPanel: React.FC<AIOpsPanelProps> = ({ onClose, refreshInterval = 3000
           label='活动告警'
           value={firingAlerts}
           icon={<AlertIcon size={24} />}
-          color='#d32f2f'
+          color={designTokens.colors.error.dark}
           trend={`${totalAlerts} 总计`}
           trendUp={firingAlerts > 5}
         />
@@ -627,12 +628,12 @@ const AIOpsPanel: React.FC<AIOpsPanelProps> = ({ onClose, refreshInterval = 3000
                           {e.direction === 'up' ? (
                             <ArrowUpIcon
                               size={16}
-                              color='#2e7d32'
+                              color={designTokens.colors.success.dark}
                             />
                           ) : e.direction === 'down' ? (
                             <ArrowDownIcon
                               size={16}
-                              color='#d32f2f'
+                              color={designTokens.colors.error.dark}
                             />
                           ) : (
                             <MinusIcon size={16} />
@@ -682,19 +683,19 @@ const AIOpsPanel: React.FC<AIOpsPanelProps> = ({ onClose, refreshInterval = 3000
           label='总异常数'
           value={anomalies.length}
           icon={<ActivityIcon size={24} />}
-          color='#1976d2'
+          color={designTokens.colors.primary.dark}
         />
         <StatCard
           label='严重异常'
           value={severityCounts.critical + severityCounts.high}
           icon={<AlertIcon size={24} />}
-          color='#d32f2f'
+          color={designTokens.colors.error.dark}
         />
         <StatCard
           label='已确认'
           value={anomalies.filter((a) => a.acknowledged).length}
           icon={<CheckCircleIcon size={24} />}
-          color='#2e7d32'
+          color={designTokens.colors.success.dark}
         />
         <StatCard
           label='监控指标'
@@ -990,13 +991,13 @@ const AIOpsPanel: React.FC<AIOpsPanelProps> = ({ onClose, refreshInterval = 3000
           label='触发中告警'
           value={alertStats?.firing || 0}
           icon={<AlertIcon size={24} />}
-          color='#d32f2f'
+          color={designTokens.colors.error.dark}
         />
         <StatCard
           label='告警规则'
           value={alertRules.length}
           icon={<TargetIcon size={24} />}
-          color='#1976d2'
+          color={designTokens.colors.primary.dark}
         />
         <StatCard
           label='今日告警'
@@ -1012,7 +1013,7 @@ const AIOpsPanel: React.FC<AIOpsPanelProps> = ({ onClose, refreshInterval = 3000
               : '0%'
           }
           icon={<CheckCircleIcon size={24} />}
-          color='#2e7d32'
+          color={designTokens.colors.success.dark}
         />
       </Box>
 
@@ -1451,13 +1452,13 @@ const AIOpsPanel: React.FC<AIOpsPanelProps> = ({ onClose, refreshInterval = 3000
               .length
           }
           icon={<AlertIcon size={24} />}
-          color='#d32f2f'
+          color={designTokens.colors.error.dark}
         />
         <StatCard
           label='预测准确率'
           value='87.5%'
           icon={<TargetIcon size={24} />}
-          color='#2e7d32'
+          color={designTokens.colors.success.dark}
         />
         <StatCard
           label='监控指标'
@@ -1552,7 +1553,7 @@ const AIOpsPanel: React.FC<AIOpsPanelProps> = ({ onClose, refreshInterval = 3000
                 >
                   <polyline
                     fill='none'
-                    stroke='#1976d2'
+                    stroke={designTokens.colors.primary.dark}
                     strokeWidth='1.5'
                     points={predictionHistory.values
                       .map((v, i) => {
@@ -1709,13 +1710,13 @@ const AIOpsPanel: React.FC<AIOpsPanelProps> = ({ onClose, refreshInterval = 3000
           label='运行中实例'
           value={totalRunning}
           icon={<LayersIcon size={24} />}
-          color='#2e7d32'
+          color={designTokens.colors.success.dark}
         />
         <StatCard
           label='启用策略'
           value={`${enabledPolicies}/${totalPolicies}`}
           icon={<TargetIcon size={24} />}
-          color='#1976d2'
+          color={designTokens.colors.primary.dark}
         />
         <StatCard
           label='今日扩容'

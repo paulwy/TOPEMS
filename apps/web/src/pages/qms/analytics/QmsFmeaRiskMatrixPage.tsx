@@ -22,10 +22,11 @@ import {
   ReferenceArea,
 } from 'recharts';
 import { useQmsMock, type QmsMockShape } from '@/api/qms/_mock';
+import { designTokens, semanticTokens } from '@topems/tokens';
 
-const HIGH_RISK_COLOR = '#ef4444';
-const MEDIUM_RISK_COLOR = '#f59e0b';
-const LOW_RISK_COLOR = '#10b981';
+const HIGH_RISK_COLOR= designTokens.colors.error.main;
+const MEDIUM_RISK_COLOR= designTokens.colors.warning.main;
+const LOW_RISK_COLOR= designTokens.colors.success.dark;
 
 function riskLevel(rpn: number): 'high' | 'medium' | 'low' {
   if (rpn >= 200) return 'high';

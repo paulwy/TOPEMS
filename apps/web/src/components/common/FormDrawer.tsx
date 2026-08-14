@@ -28,6 +28,7 @@
  */
 import React from 'react';
 import { Drawer, type DrawerAnchor } from './Drawer';
+import { designTokens, semanticTokens } from '@topems/tokens';
 
 // ============ 类型定义 ============
 
@@ -116,7 +117,7 @@ export const FormDrawer = React.memo(function FormDrawer({
           padding: '8px 16px',
           borderRadius: 4,
           border: 'none',
-          backgroundColor: loading || disableSubmit ? '#a0c4e8' : '#1976d2',
+          backgroundColor: loading || disableSubmit ? '#a0c4e8' : designTokens.colors.primary.dark,
           cursor: loading || disableSubmit ? 'not-allowed' : 'pointer',
           fontSize: 14,
           color: 'common.white',

@@ -10,6 +10,7 @@ import { DetailPageTemplate, type SectionConfig } from '@/components/templates';
 import { useQuery } from '@tanstack/react-query';
 
 import { QUERY_KEYS } from '@/lib/reactQuery';
+import { designTokens, semanticTokens } from '@topems/tokens';
 
 const SrmSupplierDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -57,7 +58,7 @@ const SrmSupplierDetailPage: React.FC = () => {
       avatar: (
         <Building2
           size={36}
-          color='#fff'
+          color={designTokens.colors.background.paper}
         />
       ),
       title: supplier?.name,

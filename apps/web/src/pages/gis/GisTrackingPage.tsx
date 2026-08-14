@@ -33,7 +33,7 @@ import { designTokens } from '@/theme/tokens';
 
 import {QUERY_KEYS, CACHE_DURATIONS} from '@/lib/reactQuery';
 
-const ct = designTokens.colors;
+const ct= designTokens.colors;
 
 export const GisTrackingPage: React.FC = () => {
   const addNotification = useNotificationStore((state) => state.addNotification);

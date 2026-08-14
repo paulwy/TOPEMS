@@ -16,7 +16,7 @@ import { useTranslation } from 'react-i18next';
 import { designTokens } from '@/theme/tokens';
 import type { AntiReplayConfig } from '../hooks/useRateLimitConfig';
 
-const ct = designTokens.colors;
+const ct= designTokens.colors;
 
 interface AntiReplayConfigPanelProps {
   antiReplay: AntiReplayConfig;

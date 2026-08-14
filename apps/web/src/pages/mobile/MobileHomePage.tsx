@@ -26,7 +26,7 @@ import { useNotificationStore } from '../../store';
 import { designTokens } from '@/theme/tokens';
 import { MOBILE_PATHS } from '@/modules/mobile/config';
 
-const ct = designTokens.colors;
+const ct= designTokens.colors;
 
 const quickActions = [
   {

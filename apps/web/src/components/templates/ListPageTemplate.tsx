@@ -2989,7 +2989,7 @@ export function ListPageTemplate<T extends { id?: string | number }>({
                 transition: 'background-color 150ms ease',
               },
               '&.Mui-selected': {
-                bgcolor: theme.palette.mode === 'dark' ? 'rgba(59,130,246,0.12)' : 'primary.50',
+                bgcolor: theme.palette.mode === 'dark' ? 'background.selectedDark' : 'primary.50',
               },
               cursor: resolvedOnRowClick ? 'pointer' : 'default',
               transition: 'background-color 150ms ease',

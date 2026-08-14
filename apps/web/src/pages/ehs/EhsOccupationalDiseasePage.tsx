@@ -18,7 +18,7 @@ import { designTokens } from '@/theme/tokens';
 
 import { CACHE_DURATIONS, QUERY_KEYS } from '@/lib/reactQuery';
 
-const ct = designTokens.colors;
+const ct= designTokens.colors;
 
 const occupationalDiseaseCaseApi = {
   list: ehsApi.occupationalDiseases.listOccupationalDiseaseCases,

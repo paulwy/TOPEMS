@@ -69,15 +69,16 @@ import {
   type PrivacyReport,
   type NoiseStrategy,
 } from './privacy-enhancement';
+import { designTokens, semanticTokens } from '@topems/tokens';
 
 type PanelTab = 'audit' | 'robustness' | 'privacy' | 'summary';
 
 const SEVERITY_COLORS: Record<AuditSeverity, string> = {
-  critical: '#dc2626',
+  critical: designTokens.colors.error.dark,
   high: '#ea580c',
-  medium: '#d97706',
+  medium: designTokens.colors.warning.dark,
   low: '#2563eb',
-  info: '#6b7280',
+  info: 'colors.grey.500',
 };
 
 const ATTACK_TYPE_LABELS: Record<AttackType, string> = {
@@ -370,7 +371,7 @@ const AuditTab: React.FC<{
           >
             <Shield
               size={18}
-              color='#dc2626'
+              color={designTokens.colors.error.dark}
             />
             <Typography
               variant='subtitle2'
@@ -485,10 +486,10 @@ const AuditTab: React.FC<{
                               '& .MuiLinearProgress-bar': {
                                 bgcolor:
                                   audit.score >= 0.8
-                                    ? '#10b981'
+                                    ? designTokens.colors.success.dark
                                     : audit.score >= 0.5
-                                      ? '#f59e0b'
-                                      : '#ef4444',
+                                      ? designTokens.colors.warning.main
+                                      : designTokens.colors.error.main,
                               },
                             }}
                           />
@@ -599,7 +600,7 @@ const AuditTab: React.FC<{
             >
               <Gauge
                 size={18}
-                color='#dc2626'
+                color={designTokens.colors.error.dark}
               />
               <Typography
                 variant='subtitle2'
@@ -623,7 +624,7 @@ const AuditTab: React.FC<{
                 <StatBlock
                   label='通过'
                   value={summary.passed_audits}
-                  color='#10b981'
+                  color={designTokens.colors.success.dark}
                   icon={<CheckCircle2 size={14} />}
                 />
               </Grid>
@@ -631,7 +632,7 @@ const AuditTab: React.FC<{
                 <StatBlock
                   label='失败'
                   value={summary.failed_audits}
-                  color='#ef4444'
+                  color={designTokens.colors.error.main}
                   icon={<XCircle size={14} />}
                 />
               </Grid>
@@ -639,7 +640,7 @@ const AuditTab: React.FC<{
                 <StatBlock
                   label='平均分'
                   value={`${(summary.avg_score * 100).toFixed(0)}%`}
-                  color='#0891b2'
+                  color='colors.cyan.600'
                   icon={<TrendingUp size={14} />}
                 />
               </Grid>
@@ -656,7 +657,7 @@ const AuditTab: React.FC<{
             >
               <AlertTriangle
                 size={18}
-                color='#f59e0b'
+                color={designTokens.colors.warning.main}
               />
               <Typography
                 variant='subtitle2'
@@ -707,7 +708,7 @@ const AuditTab: React.FC<{
             >
               <Sparkles
                 size={18}
-                color='#8b5cf6'
+                color={designTokens.colors.secondary.main}
               />
               <Typography
                 variant='subtitle2'
@@ -872,7 +873,7 @@ const RobustnessTab: React.FC<{
             >
               <Activity
                 size={18}
-                color='#0891b2'
+                color='colors.cyan.600'
               />
               <Typography
                 variant='subtitle2'
@@ -896,7 +897,7 @@ const RobustnessTab: React.FC<{
                 <StatBlock
                   label='已启用'
                   value={defenseStatus.enabled_defenses}
-                  color='#10b981'
+                  color={designTokens.colors.success.dark}
                   icon={<CheckCircle2 size={14} />}
                 />
               </Grid>
@@ -953,7 +954,7 @@ const RobustnessTab: React.FC<{
             >
               <BarChart3
                 size={18}
-                color='#8b5cf6'
+                color={designTokens.colors.secondary.main}
               />
               <Typography
                 variant='subtitle2'
@@ -1091,7 +1092,7 @@ const PrivacyTab: React.FC<{
           >
             <Lock
               size={18}
-              color='#0891b2'
+              color='colors.cyan.600'
             />
             <Typography
               variant='subtitle2'
@@ -1121,7 +1122,7 @@ const PrivacyTab: React.FC<{
               sx={{
                 p: 1.5,
                 mb: 1,
-                borderColor: selectedConfig?.id === config.id ? '#0891b2' : 'divider',
+                borderColor: selectedConfig?.id === config.id ? 'colors.cyan.600' : 'divider',
                 borderWidth: selectedConfig?.id === config.id ? 2 : 1,
                 cursor: 'pointer',
               }}
@@ -1256,7 +1257,7 @@ const PrivacyTab: React.FC<{
             >
               <Fingerprint
                 size={18}
-                color='#10b981'
+                color={designTokens.colors.success.dark}
               />
               <Typography
                 variant='subtitle2'
@@ -1369,12 +1370,12 @@ const PrivacyTab: React.FC<{
                 size={18}
                 color={
                   leakageRisk.risk_level === 'low'
-                    ? '#10b981'
+                    ? designTokens.colors.success.dark
                     : leakageRisk.risk_level === 'medium'
-                      ? '#f59e0b'
+                      ? designTokens.colors.warning.main
                       : leakageRisk.risk_level === 'high'
                         ? '#ea580c'
-                        : '#dc2626'
+                        : designTokens.colors.error.dark
                 }
               />
               <Typography
@@ -1433,7 +1434,7 @@ const PrivacyTab: React.FC<{
                       <Typography
                         variant='caption'
                         sx={{
-                          color: factor.contribution > 0 ? '#ef4444' : '#10b981',
+                          color: factor.contribution > 0 ? designTokens.colors.error.main : designTokens.colors.success.dark,
                           fontWeight: 600,
                         }}
                       >
@@ -1458,7 +1459,7 @@ const PrivacyTab: React.FC<{
               >
                 <Sparkles
                   size={18}
-                  color='#8b5cf6'
+                  color={designTokens.colors.secondary.main}
                 />
                 <Typography
                   variant='subtitle2'
@@ -1530,7 +1531,7 @@ const ThreatSummaryTab: React.FC<{
             >
               <Shield
                 size={24}
-                color='#dc2626'
+                color={designTokens.colors.error.dark}
               />
               <Typography
                 variant='h6'
@@ -1544,7 +1545,7 @@ const ThreatSummaryTab: React.FC<{
                   sx={{
                     fontWeight: 700,
                     color:
-                      overallScore > 0.7 ? '#10b981' : overallScore > 0.4 ? '#f59e0b' : '#ef4444',
+                      overallScore > 0.7 ? designTokens.colors.success.dark : overallScore > 0.4 ? designTokens.colors.warning.main : designTokens.colors.error.main,
                   }}
                 >
                   {(overallScore * 100).toFixed(0)}
@@ -1571,7 +1572,7 @@ const ThreatSummaryTab: React.FC<{
             >
               <AlertTriangle
                 size={18}
-                color='#dc2626'
+                color={designTokens.colors.error.dark}
               />
               <Typography
                 variant='subtitle2'
@@ -1623,7 +1624,7 @@ const ThreatSummaryTab: React.FC<{
             >
               <Lock
                 size={18}
-                color='#0891b2'
+                color='colors.cyan.600'
               />
               <Typography
                 variant='subtitle2'
@@ -1656,14 +1657,14 @@ const ThreatSummaryTab: React.FC<{
                     <StatBlock
                       label='重识别'
                       value={`${(privacyReport.reidentification_risk * 100).toFixed(0)}%`}
-                      color={privacyReport.reidentification_risk < 0.3 ? '#10b981' : '#ef4444'}
+                      color={privacyReport.reidentification_risk < 0.3 ? designTokens.colors.success.dark : designTokens.colors.error.main}
                     />
                   </Grid>
                   <Grid size={6}>
                     <StatBlock
                       label='泄漏'
                       value={`${(privacyReport.data_leakage_risk * 100).toFixed(0)}%`}
-                      color={privacyReport.data_leakage_risk < 0.3 ? '#10b981' : '#ef4444'}
+                      color={privacyReport.data_leakage_risk < 0.3 ? designTokens.colors.success.dark : designTokens.colors.error.main}
                     />
                   </Grid>
                 </Grid>
@@ -1690,7 +1691,7 @@ const ThreatSummaryTab: React.FC<{
             >
               <Shield
                 size={18}
-                color='#10b981'
+                color={designTokens.colors.success.dark}
               />
               <Typography
                 variant='subtitle2'
@@ -1734,7 +1735,7 @@ const ThreatSummaryTab: React.FC<{
             >
               <Sparkles
                 size={18}
-                color='#8b5cf6'
+                color={designTokens.colors.secondary.main}
               />
               <Typography
                 variant='subtitle2'
@@ -1867,7 +1868,7 @@ const RiskItem: React.FC<{
         variant='h6'
         sx={{
           fontWeight: 600,
-          color: value < 0.3 ? '#10b981' : value < 0.6 ? '#f59e0b' : '#ef4444',
+          color: value < 0.3 ? designTokens.colors.success.dark : value < 0.6 ? designTokens.colors.warning.main : designTokens.colors.error.main,
         }}
       >
         {(value * 100).toFixed(0)}%

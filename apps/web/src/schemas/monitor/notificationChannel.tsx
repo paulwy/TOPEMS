@@ -11,7 +11,7 @@ import { Mail, MessageSquare, Smartphone, Webhook, Bell, CheckCircle, XCircle } 
 import type { EntitySchema, SchemaField } from '@/schema';
 import { designTokens } from '@/theme/tokens';
 
-const ct = designTokens.colors;
+const ct= designTokens.colors;
 
 type ChannelType = 'email' | 'dingtalk' | 'wechat' | 'sms' | 'webhook';
 

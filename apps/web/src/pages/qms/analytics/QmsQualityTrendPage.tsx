@@ -19,6 +19,7 @@ import {
   ReferenceLine,
 } from 'recharts';
 import { useQmsMock, type QmsMockShape } from '@/api/qms/_mock';
+import { designTokens, semanticTokens } from '@topems/tokens';
 
 export default function QmsQualityTrendPage() {
   const { data } = useQmsMock<QmsMockShape>();
@@ -99,7 +100,7 @@ export default function QmsQualityTrendPage() {
             <ReferenceLine
               yAxisId='left'
               y={95}
-              stroke='#10b981'
+              stroke={designTokens.colors.success.dark}
               strokeDasharray='4 4'
               label='目标 95%'
             />
@@ -108,7 +109,7 @@ export default function QmsQualityTrendPage() {
               type='monotone'
               dataKey='passRate'
               name='合格率'
-              stroke='#10b981'
+              stroke={designTokens.colors.success.dark}
               strokeWidth={2}
               dot={{ r: 3 }}
             />
@@ -117,7 +118,7 @@ export default function QmsQualityTrendPage() {
               type='monotone'
               dataKey='defectCount'
               name='缺陷数'
-              stroke='#ef4444'
+              stroke={designTokens.colors.error.main}
               strokeWidth={2}
               dot={{ r: 3 }}
             />
@@ -126,7 +127,7 @@ export default function QmsQualityTrendPage() {
               type='monotone'
               dataKey='issueCount'
               name='问题数'
-              stroke='#f59e0b'
+              stroke={designTokens.colors.warning.main}
               strokeWidth={2}
               dot={{ r: 3 }}
             />
@@ -153,7 +154,7 @@ export default function QmsQualityTrendPage() {
               type='monotone'
               dataKey='inspectionCount'
               name='检验批次'
-              stroke='#6366f1'
+              stroke={designTokens.colors.secondary.dark}
               strokeWidth={2}
               dot={{ r: 3 }}
             />

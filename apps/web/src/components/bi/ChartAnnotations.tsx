@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Flag, MessageSquare, Tag, Plus, X, Edit3, Check } from 'lucide-react';
 import { TextField, Chip, Paper, Button, useTheme } from '@mui/material';
+import { designTokens, semanticTokens } from '@topems/tokens';
 
 export interface Annotation {
   id: string;
@@ -35,7 +36,7 @@ const annotationTypes = [
     id: 'tag',
     label: '标签',
     icon: Tag,
-    colors: ['#EC4899', '#14B8A6', '#84CC16'],
+    colors: [designTokens.colors.pink.main, '#14B8A6', '#84CC16'],
   },
 ];
 

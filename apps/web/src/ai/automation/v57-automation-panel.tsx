@@ -76,6 +76,7 @@ import {
   type GateStatus,
   type TrendPoint,
 } from './quality-gate';
+import { designTokens, semanticTokens } from '@topems/tokens';
 
 type TabId = 'tests' | 'ci' | 'quality' | 'trends';
 
@@ -254,7 +255,7 @@ const TestsTab: React.FC = () => {
             icon={<TestTube size={20} />}
             label='测试场景'
             value={stats.total}
-            color='#10b981'
+            color={designTokens.colors.success.dark}
           />
         </Grid>
         <Grid size={{ xs: 6, md: 3 }}>
@@ -262,7 +263,7 @@ const TestsTab: React.FC = () => {
             icon={<CheckCircle2 size={20} />}
             label='通过率'
             value={`${passRate.toFixed(1)}%`}
-            color='#059669'
+            color={designTokens.colors.success.dark}
           />
         </Grid>
         <Grid size={{ xs: 6, md: 3 }}>
@@ -270,7 +271,7 @@ const TestsTab: React.FC = () => {
             icon={<XCircle size={20} />}
             label='失败数'
             value={failedCount}
-            color='#ef4444'
+            color={designTokens.colors.error.main}
           />
         </Grid>
         <Grid size={{ xs: 6, md: 3 }}>
@@ -395,7 +396,7 @@ const TestsTab: React.FC = () => {
                         >
                           <Play
                             size={16}
-                            color='#10b981'
+                            color={designTokens.colors.success.dark}
                           />
                         </IconButton>
                       </Tooltip>
@@ -541,7 +542,7 @@ const TestsTab: React.FC = () => {
               <CoverageGauge
                 label='行覆盖率'
                 value={coverage.line_coverage}
-                color='#10b981'
+                color={designTokens.colors.success.dark}
               />
             </Grid>
             <Grid size={{ xs: 12, md: 4 }}>
@@ -555,7 +556,7 @@ const TestsTab: React.FC = () => {
               <CoverageGauge
                 label='函数覆盖率'
                 value={coverage.function_coverage}
-                color='#8b5cf6'
+                color={designTokens.colors.secondary.main}
               />
             </Grid>
           </Grid>
@@ -626,7 +627,7 @@ const CITab: React.FC = () => {
             icon={<GitBranch size={20} />}
             label='流水线'
             value={configs.length}
-            color='#6366f1'
+            color={designTokens.colors.secondary.dark}
           />
         </Grid>
         <Grid size={{ xs: 6, md: 3 }}>
@@ -642,7 +643,7 @@ const CITab: React.FC = () => {
             icon={<CheckCircle2 size={20} />}
             label='成功'
             value={stats.success}
-            color='#10b981'
+            color={designTokens.colors.success.dark}
           />
         </Grid>
         <Grid size={{ xs: 6, md: 3 }}>
@@ -650,7 +651,7 @@ const CITab: React.FC = () => {
             icon={<XCircle size={20} />}
             label='失败'
             value={stats.failed}
-            color='#ef4444'
+            color={designTokens.colors.error.main}
           />
         </Grid>
       </Grid>
@@ -751,7 +752,7 @@ const CITab: React.FC = () => {
                         >
                           <Play
                             size={16}
-                            color='#10b981'
+                            color={designTokens.colors.success.dark}
                           />
                         </IconButton>
                       </Tooltip>
@@ -855,7 +856,7 @@ const CITab: React.FC = () => {
                             >
                               <Square
                                 size={16}
-                                color='#ef4444'
+                                color={designTokens.colors.error.main}
                               />
                             </IconButton>
                           </Tooltip>
@@ -931,7 +932,7 @@ const QualityTab: React.FC = () => {
             icon={<Shield size={20} />}
             label='总规则'
             value={totalCriteria}
-            color='#6366f1'
+            color={designTokens.colors.secondary.dark}
           />
         </Grid>
         <Grid size={{ xs: 6, md: 3 }}>
@@ -939,7 +940,7 @@ const QualityTab: React.FC = () => {
             icon={<CheckCircle2 size={20} />}
             label='通过'
             value={passedCount}
-            color='#10b981'
+            color={designTokens.colors.success.dark}
           />
         </Grid>
         <Grid size={{ xs: 6, md: 3 }}>
@@ -947,7 +948,7 @@ const QualityTab: React.FC = () => {
             icon={<AlertTriangle size={20} />}
             label='警告'
             value={warnedCount}
-            color='#f59e0b'
+            color={designTokens.colors.warning.main}
           />
         </Grid>
         <Grid size={{ xs: 6, md: 3 }}>
@@ -955,7 +956,7 @@ const QualityTab: React.FC = () => {
             icon={<XCircle size={20} />}
             label='阻塞'
             value={failedCount}
-            color='#ef4444'
+            color={designTokens.colors.error.main}
           />
         </Grid>
       </Grid>
@@ -1060,7 +1061,7 @@ const QualityTab: React.FC = () => {
                             >
                               <BarChart3
                                 size={16}
-                                color='#6366f1'
+                                color={designTokens.colors.secondary.dark}
                               />
                             </IconButton>
                           </Tooltip>
@@ -1071,7 +1072,7 @@ const QualityTab: React.FC = () => {
                             >
                               <Lock
                                 size={16}
-                                color='#f59e0b'
+                                color={designTokens.colors.warning.main}
                               />
                             </IconButton>
                           </Tooltip>
@@ -1207,7 +1208,7 @@ const TrendsTab: React.FC = () => {
             icon={<TestTube size={20} />}
             label='测试通过'
             value={`${testStats.by_status.passed}/${testStats.total}`}
-            color='#10b981'
+            color={designTokens.colors.success.dark}
           />
         </Grid>
         <Grid size={{ xs: 6, md: 3 }}>
@@ -1215,7 +1216,7 @@ const TrendsTab: React.FC = () => {
             icon={<GitBranch size={20} />}
             label='CI 成功率'
             value={`${ciStats.success_rate.toFixed(1)}%`}
-            color='#059669'
+            color={designTokens.colors.success.dark}
           />
         </Grid>
         <Grid size={{ xs: 6, md: 3 }}>
@@ -1231,7 +1232,7 @@ const TrendsTab: React.FC = () => {
             icon={<Shield size={20} />}
             label='门禁通过率'
             value={`${gateSummary.total_criteria > 0 ? ((gateSummary.status_counts.passed / gateSummary.total_criteria) * 100).toFixed(0) : 0}%`}
-            color='#8b5cf6'
+            color={designTokens.colors.secondary.main}
           />
         </Grid>
       </Grid>
@@ -1263,7 +1264,7 @@ const TrendsTab: React.FC = () => {
                   sx={{
                     justifyContent: 'flex-start',
                     textTransform: 'none',
-                    borderColor: selectedCriteria?.id === c.id ? '#10b981' : undefined,
+                    borderColor: selectedCriteria?.id === c.id ? designTokens.colors.success.dark : undefined,
                   }}
                 >
                   <GateTypeIcon type={c.type} />
@@ -1398,7 +1399,7 @@ const TrendChart: React.FC<{ data: TrendPoint[]; criteria: GateCriteria | null }
           y1={thresholdY}
           x2={chartWidth - padding}
           y2={thresholdY}
-          stroke='#ef4444'
+          stroke={designTokens.colors.error.main}
           strokeWidth={2}
           strokeDasharray='6,3'
         />
@@ -1406,7 +1407,7 @@ const TrendChart: React.FC<{ data: TrendPoint[]; criteria: GateCriteria | null }
           x={chartWidth - padding - 60}
           y={thresholdY - 4}
           fontSize={10}
-          fill='#ef4444'
+          fill={designTokens.colors.error.main}
         >
           阈值: {data[0]?.threshold}
         </text>
@@ -1414,7 +1415,7 @@ const TrendChart: React.FC<{ data: TrendPoint[]; criteria: GateCriteria | null }
         <path
           d={valuePath}
           fill='none'
-          stroke='#10b981'
+          stroke={designTokens.colors.success.dark}
           strokeWidth={2}
         />
 
@@ -1424,7 +1425,7 @@ const TrendChart: React.FC<{ data: TrendPoint[]; criteria: GateCriteria | null }
               cx={getX(i)}
               cy={getY(d.value)}
               r={4}
-              fill={d.passed ? '#10b981' : '#ef4444'}
+              fill={d.passed ? designTokens.colors.success.dark : designTokens.colors.error.main}
               stroke='white'
               strokeWidth={2}
             />
@@ -1963,25 +1964,25 @@ const GateTypeIcon: React.FC<{ type: GateType }> = ({ type }) => {
     bundle: (
       <BarChart3
         size={14}
-        color='#8b5cf6'
+        color={designTokens.colors.secondary.main}
       />
     ),
     size: (
       <HardDrive
         size={14}
-        color='#f59e0b'
+        color={designTokens.colors.warning.main}
       />
     ),
     performance: (
       <Gauge
         size={14}
-        color='#10b981'
+        color={designTokens.colors.success.dark}
       />
     ),
     security: (
       <Shield
         size={14}
-        color='#ef4444'
+        color={designTokens.colors.error.main}
       />
     ),
   };

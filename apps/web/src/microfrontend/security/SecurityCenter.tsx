@@ -60,6 +60,7 @@ import {
   type PermissionAudit,
   type ScanHistoryEntry,
 } from './security-scanner';
+import { designTokens, semanticTokens } from '@topems/tokens';
 
 interface SecurityCenterProps {
   onClose?: () => void;
@@ -67,10 +68,10 @@ interface SecurityCenterProps {
 
 const severityColors: Record<SecurityIssueSeverity, string> = {
   info: '#64748b',
-  low: '#10b981',
-  medium: '#f59e0b',
-  high: '#ef4444',
-  critical: '#dc2626',
+  low: designTokens.colors.success.dark,
+  medium: designTokens.colors.warning.main,
+  high: designTokens.colors.error.main,
+  critical: designTokens.colors.error.dark,
 };
 
 const severityLabels: Record<SecurityIssueSeverity, string> = {
@@ -133,10 +134,10 @@ const StatCard: React.FC<{
 
 const SecurityScoreGauge: React.FC<{ score: number }> = ({ score }) => {
   const getScoreColor = () => {
-    if (score >= 90) return '#10b981';
-    if (score >= 70) return '#f59e0b';
-    if (score >= 50) return '#ef4444';
-    return '#dc2626';
+    if (score >= 90) return designTokens.colors.success.dark;
+    if (score >= 70) return designTokens.colors.warning.main;
+    if (score >= 50) return designTokens.colors.error.main;
+    return designTokens.colors.error.dark;
   };
 
   const color = getScoreColor();
@@ -604,7 +605,7 @@ const SecurityCenter: React.FC<SecurityCenterProps> = ({ onClose }) => {
                   label='已扫描模块'
                   value={scanResults.length}
                   icon={<PackageIcon size={20} />}
-                  color='#1976d2'
+                  color={designTokens.colors.primary.dark}
                 />
               </Grid>
               <Grid size={{ xs: 6, sm: 3 }}>
@@ -612,7 +613,7 @@ const SecurityCenter: React.FC<SecurityCenterProps> = ({ onClose }) => {
                   label='严重问题'
                   value={criticalCount}
                   icon={<XCircleIcon size={20} />}
-                  color='#dc2626'
+                  color={designTokens.colors.error.dark}
                 />
               </Grid>
               <Grid size={{ xs: 6, sm: 3 }}>
@@ -620,7 +621,7 @@ const SecurityCenter: React.FC<SecurityCenterProps> = ({ onClose }) => {
                   label='高危问题'
                   value={highCount}
                   icon={<AlertTriangleIcon size={20} />}
-                  color='#ef4444'
+                  color={designTokens.colors.error.main}
                 />
               </Grid>
               <Grid size={{ xs: 6, sm: 3 }}>
@@ -628,7 +629,7 @@ const SecurityCenter: React.FC<SecurityCenterProps> = ({ onClose }) => {
                   label='中低危问题'
                   value={mediumCount + lowCount}
                   icon={<AlertCircleIcon size={20} />}
-                  color='#f59e0b'
+                  color={designTokens.colors.warning.main}
                 />
               </Grid>
             </Grid>

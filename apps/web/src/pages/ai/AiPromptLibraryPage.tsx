@@ -52,7 +52,7 @@ import { useTranslation } from 'react-i18next';
 
 import { QUERY_KEYS } from '@/lib/reactQuery';
 
-const ct = designTokens.colors;
+const ct= designTokens.colors;
 
 type PromptCategory = 'all' | 'writing' | 'code' | 'business' | 'analysis' | 'creative';
 

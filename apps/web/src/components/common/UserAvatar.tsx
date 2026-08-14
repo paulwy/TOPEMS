@@ -2,6 +2,7 @@ import React from 'react';
 import { Avatar as MuiAvatar, Tooltip } from '@mui/material';
 import type { SxProps, Theme } from '@mui/material';
 import { User } from 'lucide-react';
+import { designTokens, semanticTokens } from '@topems/tokens';
 
 export type UserAvatarSize = 24 | 32 | 40 | 48 | number;
 
@@ -54,7 +55,7 @@ const getInitialsFromEmail = (email: string): string => {
 const fallbackColors = [
   { bg: '#E3F2FD', fg: '#1565C0' },
   { bg: '#F3E5F5', fg: '#7B1FA2' },
-  { bg: '#E8F5E9', fg: '#2E7D32' },
+  { bg: '#E8F5E9', fg: designTokens.colors.success.dark },
   { bg: '#FFF3E0', fg: '#E65100' },
   { bg: '#FCE4EC', fg: '#C2185B' },
   { bg: '#E0F7FA', fg: '#00838F' },

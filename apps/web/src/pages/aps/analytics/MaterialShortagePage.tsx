@@ -1,3 +1,4 @@
+import { designTokens, semanticTokens } from '@topems/tokens';
 /**
  * 物料短缺帕累托分析页
  *
@@ -119,7 +120,7 @@ export default function MaterialShortagePage() {
             <ReferenceLine
               yAxisId='right'
               y={80}
-              stroke='#ef4444'
+              stroke={designTokens.colors.error.main}
               strokeDasharray='4 4'
               label='80% 基准'
             />
@@ -127,7 +128,7 @@ export default function MaterialShortagePage() {
               yAxisId='left'
               dataKey='shortage'
               name='短缺量'
-              fill='#6366f1'
+              fill={designTokens.colors.secondary.dark}
               barSize={36}
             />
             <Line
@@ -135,7 +136,7 @@ export default function MaterialShortagePage() {
               type='monotone'
               dataKey='cumulativePct'
               name='累积占比'
-              stroke='#ef4444'
+              stroke={designTokens.colors.error.main}
               strokeWidth={2}
               dot={{ r: 3 }}
             />

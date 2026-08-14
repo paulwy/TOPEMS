@@ -26,6 +26,7 @@ import DeviceTrackPanel from '../../DeviceTrackPanel';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import 'leaflet-draw/dist/leaflet.draw.css';
+import { designTokens, semanticTokens } from '@topems/tokens';
 
 type ToolMode =
   'select' | 'measure-distance' | 'measure-area' | 'draw-point' | 'draw-line' | 'draw-polygon';
@@ -695,7 +696,7 @@ const MapView: React.FC<MapViewProps> = ({
                 <Polyline
                   key={pipeline.id}
                   positions={pathCoords}
-                  color='#6366F1'
+                  color={designTokens.colors.secondary.dark}
                   weight={4}
                   opacity={0.8}
                 >

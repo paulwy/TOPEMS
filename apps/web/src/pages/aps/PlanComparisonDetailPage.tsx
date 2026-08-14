@@ -19,6 +19,7 @@ import {
 import { productionPlanApi } from '@/api/aps';
 import type { ProductionPlan } from '@/api/aps/types';
 import { StatusBadge } from '@/components/aps/StatusBadge';
+import { designTokens, semanticTokens } from '@topems/tokens';
 
 interface ComparisonData {
   period: string;
@@ -120,8 +121,8 @@ export default function PlanComparisonDetailPage() {
             <YAxis />
             <Tooltip />
             <Legend />
-            <Bar dataKey='planned' name='计划产量' fill='#3b82f6' />
-            <Bar dataKey='actual' name='实际产量' fill='#10b981' />
+            <Bar dataKey='planned' name='计划产量' fill={designTokens.colors.primary.main} />
+            <Bar dataKey='actual' name='实际产量' fill={designTokens.colors.success.dark} />
           </BarChart>
         </ResponsiveContainer>
       </div>

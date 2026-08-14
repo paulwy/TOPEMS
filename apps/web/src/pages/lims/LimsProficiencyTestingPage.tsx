@@ -8,7 +8,7 @@ import { ptPlanApi } from '@/api/lims/proficiencyTesting';
 import type { PtPlan } from '@/api/lims/types';
 import { designTokens } from '@/theme/tokens';
 
-const ct = designTokens.colors;
+const ct= designTokens.colors;
 
 const ptPlanAdapter = {
   list: async (params?: {

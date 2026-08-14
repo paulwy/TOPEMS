@@ -13,12 +13,13 @@ import {
   Cell,
 } from 'recharts';
 import { useWmsMock, type WmsMockShape } from '@/api/wms/_mock';
+import { designTokens, semanticTokens } from '@topems/tokens';
 
 function getColor(rate: number): string {
-  if (rate >= 95) return '#10b981';
-  if (rate >= 90) return '#3b82f6';
-  if (rate >= 85) return '#f59e0b';
-  return '#ef4444';
+  if (rate >= 95) return designTokens.colors.success.dark;
+  if (rate >= 90) return designTokens.colors.primary.main;
+  if (rate >= 85) return designTokens.colors.warning.main;
+  return designTokens.colors.error.main;
 }
 
 export default function WmsOrderFulfillmentPage() {
@@ -133,12 +134,12 @@ export default function WmsOrderFulfillmentPage() {
                     key={i}
                     fill={
                       f.avgHours <= 10
-                        ? '#10b981'
+                        ? designTokens.colors.success.dark
                         : f.avgHours <= 15
-                          ? '#3b82f6'
+                          ? designTokens.colors.primary.main
                           : f.avgHours <= 20
-                            ? '#f59e0b'
-                            : '#ef4444'
+                            ? designTokens.colors.warning.main
+                            : designTokens.colors.error.main
                     }
                   />
                 ))}
@@ -169,13 +170,13 @@ export default function WmsOrderFulfillmentPage() {
             <Bar
               dataKey='onTimeRate'
               name='准时履约率'
-              fill='#3b82f6'
+              fill={designTokens.colors.primary.main}
               radius={[4, 4, 0, 0]}
             />
             <Bar
               dataKey='slaPass'
               name='SLA 达标率'
-              fill='#10b981'
+              fill={designTokens.colors.success.dark}
               radius={[4, 4, 0, 0]}
             />
           </BarChart>

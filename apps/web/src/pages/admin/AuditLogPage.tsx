@@ -26,7 +26,7 @@ import { extractErrorMessage } from '@/utils/errors';
 import { apiLogger } from '@/utils/logger';
 import { designTokens } from '@/theme/tokens';
 
-const ct = designTokens.colors;
+const ct= designTokens.colors;
 type AuditLogSource = 'lims' | 'rd' | 'core';
 
 const formatDateTimeForApi = (dateTimeString: string): string => {

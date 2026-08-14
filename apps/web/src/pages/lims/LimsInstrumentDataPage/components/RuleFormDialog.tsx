@@ -20,7 +20,7 @@ import type { CreateParseRuleRequest } from '@/api/lims';
 import { formatJson, parseJsonInput } from '../utils';
 import { designTokens } from '@/theme/tokens';
 
-const ct = designTokens.colors;
+const ct= designTokens.colors;
 
 interface RuleFormDialogProps {
   open: boolean;

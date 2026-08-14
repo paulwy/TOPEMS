@@ -5,7 +5,7 @@ import { FileText, CheckCircle2, XCircle, User, Clock, PlayCircle, GitBranch } f
 import type { Approval, ApprovalRecord } from '@/api/workflow';
 import { designTokens } from '@/theme/tokens';
 
-const ct = designTokens.colors;
+const ct= designTokens.colors;
 
 interface ApprovalTimelineProps {
   approval: Approval | null;

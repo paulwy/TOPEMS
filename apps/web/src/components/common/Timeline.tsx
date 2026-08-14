@@ -2,6 +2,7 @@ import React from 'react';
 import { Box, Typography, Chip, Skeleton } from '@mui/material';
 import type { SxProps, Theme } from '@mui/material/styles';
 import { Circle, CheckCircle, XCircle, Clock, AlertCircle, type LucideIcon } from 'lucide-react';
+import { designTokens, semanticTokens } from '@topems/tokens';
 
 export interface TimelineItem {
   id: string;
@@ -111,7 +112,7 @@ export const Timeline: React.FC<TimelineProps> = ({
                   variant === 'soft'
                     ? `${statusColor[item.status || 'pending']}20`
                     : statusColor[item.status || 'pending'],
-                color: variant === 'soft' ? statusColor[item.status || 'pending'] : '#fff',
+                color: variant === 'soft' ? statusColor[item.status || 'pending'] : designTokens.colors.background.paper,
                 mb: 1,
                 cursor: onItemClick ? 'pointer' : 'default',
                 '&:hover': onItemClick
@@ -210,7 +211,7 @@ export const Timeline: React.FC<TimelineProps> = ({
               color:
                 variant === 'outlined' || variant === 'soft'
                   ? statusColor[item.status || 'pending']
-                  : '#fff',
+                  : designTokens.colors.background.paper,
               border:
                 variant === 'outlined'
                   ? `2px solid ${statusColor[item.status || 'pending']}`

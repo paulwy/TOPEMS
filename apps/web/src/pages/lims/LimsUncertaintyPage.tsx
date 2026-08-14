@@ -10,7 +10,7 @@ import type { UncertaintyProject } from '@/api/lims';
 import { designTokens } from '@/theme/tokens';
 import { DASHBOARD_PATHS } from '@/routes/dashboard';
 
-const ct = designTokens.colors;
+const ct= designTokens.colors;
 
 const uncertaintyAdapter = {
   list: async (params?: { page?: number; pageSize?: number; search?: string; status?: string }) => {

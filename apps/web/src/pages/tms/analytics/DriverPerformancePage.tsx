@@ -1,3 +1,4 @@
+import { designTokens, semanticTokens } from '@topems/tokens';
 /**
  * 司机绩效分析页
  *
@@ -76,8 +77,8 @@ export default function DriverPerformancePage() {
             <YAxis domain={[60, 100]} unit='%' fontSize={11} />
             <Tooltip formatter={(value: unknown) => `${value}%`} />
             <Legend />
-            <ReferenceLine y={90} stroke='#10b981' strokeDasharray='4 4' label='目标 90%' />
-            <Bar dataKey='onTimeRate' name='准点率' fill='#3b82f6' barSize={28} />
+            <ReferenceLine y={90} stroke={designTokens.colors.success.dark} strokeDasharray='4 4' label='目标 90%' />
+            <Bar dataKey='onTimeRate' name='准点率' fill={designTokens.colors.primary.main} barSize={28} />
           </BarChart>
         </ResponsiveContainer>
       </div>
@@ -91,8 +92,8 @@ export default function DriverPerformancePage() {
             <YAxis fontSize={11} />
             <Tooltip />
             <Legend />
-            <Bar dataKey='totalDeliveries' name='配送量' fill='#6366f1' barSize={20} />
-            <Bar dataKey='avgDelayMin' name='平均延误(分钟)' fill='#f59e0b' barSize={20} />
+            <Bar dataKey='totalDeliveries' name='配送量' fill={designTokens.colors.secondary.dark} barSize={20} />
+            <Bar dataKey='avgDelayMin' name='平均延误(分钟)' fill={designTokens.colors.warning.main} barSize={20} />
           </BarChart>
         </ResponsiveContainer>
       </div>

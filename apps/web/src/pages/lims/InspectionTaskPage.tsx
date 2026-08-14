@@ -32,7 +32,7 @@ import { useNotificationStore } from '@/store';
 import { QUERY_KEYS } from '@/lib/reactQuery';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 
-const ct = designTokens.colors;
+const ct= designTokens.colors;
 
 const mapStatusToChinese = (status: string): string => {
   const statusMap: Record<string, string> = {

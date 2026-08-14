@@ -7,7 +7,7 @@ import { qmsApi } from '@/api/qms';
 import type { QualityIssue } from '@/api/qms';
 import { designTokens } from '@/theme/tokens';
 
-const ct = designTokens.colors;
+const ct= designTokens.colors;
 
 const issueAdapter: CrudApiAdapter<QualityIssue> = {
   list: async (params) => {

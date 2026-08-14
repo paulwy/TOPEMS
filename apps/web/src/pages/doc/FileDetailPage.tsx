@@ -14,7 +14,7 @@ import { DOC_PATHS } from '@/modules/doc/config';
 
 import {QUERY_KEYS, CACHE_DURATIONS} from '@/lib/reactQuery';
 
-const ct = designTokens.colors;
+const ct= designTokens.colors;
 
 const DocsFileDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();

@@ -9,7 +9,7 @@ import { PageContainer } from '@/components/common';
 import { documentSchema } from '@/schemas/doc';
 import { designTokens } from '@/theme/tokens';
 
-const ct = designTokens.colors;
+const ct= designTokens.colors;
 
 interface KnowledgeDoc {
   id: string;

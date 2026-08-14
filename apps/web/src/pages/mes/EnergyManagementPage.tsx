@@ -34,6 +34,7 @@ import { useNotificationStore } from '@/store/notificationStore';
 import { PageContainer } from '@/components/common';
 
 import { CACHE_DURATIONS, QUERY_KEYS } from '@/lib/reactQuery';
+import { designTokens, semanticTokens } from '@topems/tokens';
 
 const EnergyManagementPage: React.FC = () => {
   const [activeTab, setActiveTab] = useState(0);
@@ -208,7 +209,7 @@ const EnergyManagementPage: React.FC = () => {
                   >
                     <Card
                       sx={{
-                        borderLeft: `4px solid ${item.status === 'normal' ? '#22c55e' : item.status === 'warning' ? '#f59e0b' : '#ef4444'}`,
+                        borderLeft: `4px solid ${item.status === 'normal' ? '#22c55e' : item.status === 'warning' ? designTokens.colors.warning.main : designTokens.colors.error.main}`,
                       }}
                     >
                       <CardContent>

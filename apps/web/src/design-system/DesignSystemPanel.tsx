@@ -16,6 +16,7 @@ import {
 } from './components/index';
 import { useV51Theme, V51ThemeProvider } from './theme-manager';
 import { v51DesignLint, formatReport, runColorContrastChecks } from './design-lint';
+import { designTokens, semanticTokens } from '@topems/tokens';
 
 const DesignSystemPanelContent: React.FC<{ onClose: () => void }> = ({ onClose }) => {
   const { theme, toggleDarkMode, setPrimaryColor, setFontSize } = useV51Theme();
@@ -909,7 +910,7 @@ const LintTab: React.FC<{ onRunLint: () => void; lintResult: string }> = ({
               ) : (
                 <Eye
                   size={16}
-                  color='#dc2626'
+                  color={designTokens.colors.error.dark}
                 />
               )}
               <Typography

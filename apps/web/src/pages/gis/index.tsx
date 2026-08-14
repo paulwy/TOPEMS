@@ -35,7 +35,7 @@ import type {
 } from '../../api/gis';
 import { designTokens } from '@/theme/tokens';
 
-const ct = designTokens.colors;
+const ct= designTokens.colors;
 
 type TabType =
   | 'map'

@@ -5,7 +5,7 @@ import config from '../../config/runtime';
 import { SettingsPageTemplate, type SettingSection } from '@/components/templates';
 import { designTokens } from '@/theme/tokens';
 
-const ct = designTokens.colors;
+const ct= designTokens.colors;
 
 const ConfigDebugPage: React.FC = () => {
   const sections: SettingSection[] = [

@@ -19,7 +19,7 @@ import { formatDate } from '@/utils/date';
 
 import { QUERY_KEYS } from '@/lib/reactQuery';
 
-const ct = designTokens.colors;
+const ct= designTokens.colors;
 
 const CustomerDetailPage: React.FC = () => {
   const { t } = useTranslation();

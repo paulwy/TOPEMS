@@ -16,8 +16,9 @@ import {
   Legend,
 } from 'recharts';
 import type { CapacityUtilizationData } from '@/api/mes/types';
+import { designTokens, semanticTokens } from '@topems/tokens';
 
-const SCHEDULE_COLORS = ['#10b981', '#f59e0b', '#ef4444', '#6366f1'];
+const SCHEDULE_COLORS = [designTokens.colors.success.dark, designTokens.colors.warning.main, designTokens.colors.error.main, designTokens.colors.secondary.dark];
 
 function useCapacityMock(): CapacityUtilizationData {
   return useMemo(() => {
@@ -101,7 +102,7 @@ export default function MesCapacityUtilizationPage() {
             <YAxis dataKey="shift" name="班次" type="category" fontSize={11} />
             <ZAxis dataKey="utilization" range={[50, 400]} name="利用率" unit="%" />
             <Tooltip cursor={{ strokeDasharray: '3 3' }} />
-            <Scatter data={data.heatmap} fill="#6366f1" />
+            <Scatter data={data.heatmap} fill={designTokens.colors.secondary.dark} />
           </ScatterChart>
         </ResponsiveContainer>
       </div>
@@ -116,7 +117,7 @@ export default function MesCapacityUtilizationPage() {
               <YAxis unit="%" />
               <Tooltip />
               <Legend />
-              <Bar dataKey="value" name="变化" fill="#f59e0b" radius={[4, 4, 0, 0]} />
+              <Bar dataKey="value" name="变化" fill={designTokens.colors.warning.main} radius={[4, 4, 0, 0]} />
             </BarChart>
           </ResponsiveContainer>
         </div>

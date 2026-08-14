@@ -21,7 +21,7 @@ import { suggestionSchema } from '@/schemas/wms/suggestion';
 
 import { QUERY_KEYS } from '@/lib/reactQuery';
 
-const ct = designTokens.colors;
+const ct= designTokens.colors;
 
 type TabValue = 'suggestions' | 'orders';
 

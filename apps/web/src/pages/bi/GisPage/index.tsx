@@ -52,7 +52,7 @@ import { DataTableSection } from './components/DataTableSection';
 import { EntityFormModal } from './components/EntityFormModal';
 import { ImportModal } from './components/ImportModal';
 
-const ct = designTokens.colors;
+const ct= designTokens.colors;
 
 const GisContent: React.FC = () => {
   const {

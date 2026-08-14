@@ -38,8 +38,9 @@ import { useTranslation } from 'react-i18next';
 import type { ReportAssistantResponse } from '@/api/ai';
 import { BIChartColors } from '@/components/charts/chartTheme';
 import MetricCard from './AiAssistantMetricCard';
+import { designTokens, semanticTokens } from '@topems/tokens';
 
-const DEFAULT_PIE_COLORS = [...BIChartColors.series, '#06B6D4', '#EC4899'];
+const DEFAULT_PIE_COLORS = [...BIChartColors.series, '#06B6D4', designTokens.colors.pink.main];
 
 export interface AiAssistantReportTabProps {
   reportQuery: string;

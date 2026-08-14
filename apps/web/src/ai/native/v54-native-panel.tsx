@@ -79,6 +79,7 @@ import {
   type UserProfile,
   type DeviceType,
 } from './adaptive-ui';
+import { designTokens, semanticTokens } from '@topems/tokens';
 
 type TabId = 'dashboard' | 'capabilities' | 'router' | 'ui' | 'settings';
 
@@ -278,7 +279,7 @@ const TabBar: React.FC<{ activeTab: TabId; onChange: (tab: TabId) => void }> = (
           px: 2,
           py: 1,
           borderRadius: 1,
-          bgcolor: activeTab === tab.id ? '#6366f1' : 'transparent',
+          bgcolor: activeTab === tab.id ? designTokens.colors.secondary.dark : 'transparent',
           color: activeTab === tab.id ? 'white' : 'text.secondary',
           fontWeight: activeTab === tab.id ? 600 : 400,
           '&:hover': {
@@ -314,10 +315,10 @@ const DashboardTab: React.FC<{
             icon={
               <Cpu
                 size={24}
-                color='#3b82f6'
+                color={designTokens.colors.primary.main}
               />
             }
-            color='#3b82f6'
+            color={designTokens.colors.primary.main}
             progress={caps.length > 0 ? (activeCaps / caps.length) * 100 : 0}
           />
         </Grid>
@@ -329,10 +330,10 @@ const DashboardTab: React.FC<{
             icon={
               <Route
                 size={24}
-                color='#10b981'
+                color={designTokens.colors.success.dark}
               />
             }
-            color='#10b981'
+            color={designTokens.colors.success.dark}
             progress={routerStats.acceptance_rate * 100}
           />
         </Grid>
@@ -344,10 +345,10 @@ const DashboardTab: React.FC<{
             icon={
               <LayoutDashboard
                 size={24}
-                color='#f59e0b'
+                color={designTokens.colors.warning.main}
               />
             }
-            color='#f59e0b'
+            color={designTokens.colors.warning.main}
             progress={adaptationStats.avg_layout_confidence * 100}
           />
         </Grid>
@@ -359,10 +360,10 @@ const DashboardTab: React.FC<{
             icon={
               <Activity
                 size={24}
-                color='#8b5cf6'
+                color={designTokens.colors.secondary.main}
               />
             }
-            color='#8b5cf6'
+            color={designTokens.colors.secondary.main}
             progress={status.initialized ? 100 : 0}
           />
         </Grid>
@@ -628,7 +629,7 @@ const CapabilitiesTab: React.FC = () => {
                 >
                   <Cpu
                     size={18}
-                    color={cap.enabled ? '#059669' : '#dc2626'}
+                    color={cap.enabled ? designTokens.colors.success.dark : designTokens.colors.error.dark}
                   />
                 </Box>
                 <Box sx={{ flex: 1 }}>
@@ -920,28 +921,28 @@ const RouterTab: React.FC = () => {
                 <StatBox
                   label='总推荐'
                   value={stats.total_recommendations}
-                  color='#3b82f6'
+                  color={designTokens.colors.primary.main}
                 />
               </Grid>
               <Grid size={6}>
                 <StatBox
                   label='接受率'
                   value={`${(stats.acceptance_rate * 100).toFixed(1)}%`}
-                  color='#10b981'
+                  color={designTokens.colors.success.dark}
                 />
               </Grid>
               <Grid size={6}>
                 <StatBox
                   label='平均置信度'
                   value={`${(stats.avg_confidence * 100).toFixed(1)}%`}
-                  color='#f59e0b'
+                  color={designTokens.colors.warning.main}
                 />
               </Grid>
               <Grid size={6}>
                 <StatBox
                   label='策略数'
                   value={Object.keys(stats.by_strategy).length}
-                  color='#8b5cf6'
+                  color={designTokens.colors.secondary.main}
                 />
               </Grid>
             </Grid>
@@ -1473,28 +1474,28 @@ const AdaptiveUITab: React.FC<{
                 <StatBox
                   label='总适配'
                   value={stats.total_adaptations}
-                  color='#3b82f6'
+                  color={designTokens.colors.primary.main}
                 />
               </Grid>
               <Grid size={6}>
                 <StatBox
                   label='布局变更'
                   value={stats.layout_changes}
-                  color='#10b981'
+                  color={designTokens.colors.success.dark}
                 />
               </Grid>
               <Grid size={6}>
                 <StatBox
                   label='内容推荐'
                   value={stats.content_recommendations}
-                  color='#f59e0b'
+                  color={designTokens.colors.warning.main}
                 />
               </Grid>
               <Grid size={6}>
                 <StatBox
                   label='满意度'
                   value={`${(stats.user_satisfaction_score * 100).toFixed(0)}%`}
-                  color='#8b5cf6'
+                  color={designTokens.colors.secondary.main}
                 />
               </Grid>
             </Grid>
@@ -1776,14 +1777,14 @@ const SettingsTab: React.FC = () => {
                 <StatBox
                   label='中间件数'
                   value={status.middleware.total}
-                  color='#3b82f6'
+                  color={designTokens.colors.primary.main}
                 />
               </Grid>
               <Grid size={6}>
                 <StatBox
                   label='健康数'
                   value={status.middleware.healthy}
-                  color='#10b981'
+                  color={designTokens.colors.success.dark}
                 />
               </Grid>
             </Grid>
@@ -1829,28 +1830,28 @@ const SettingsTab: React.FC = () => {
                 <StatBox
                   label='运行时间'
                   value={`${status.uptime}s`}
-                  color='#8b5cf6'
+                  color={designTokens.colors.secondary.main}
                 />
               </Grid>
               <Grid size={6}>
                 <StatBox
                   label='总能力'
                   value={status.capabilities.total}
-                  color='#3b82f6'
+                  color={designTokens.colors.primary.main}
                 />
               </Grid>
               <Grid size={6}>
                 <StatBox
                   label='已激活'
                   value={status.capabilities.active}
-                  color='#10b981'
+                  color={designTokens.colors.success.dark}
                 />
               </Grid>
               <Grid size={6}>
                 <StatBox
                   label='已降级'
                   value={status.capabilities.degraded}
-                  color='#f59e0b'
+                  color={designTokens.colors.warning.main}
                 />
               </Grid>
             </Grid>

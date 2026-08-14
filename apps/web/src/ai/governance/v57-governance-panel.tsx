@@ -81,35 +81,36 @@ import {
   type PolicyDecision,
   type EnforcementMode,
 } from './policy-enforcement';
+import { designTokens, semanticTokens } from '@topems/tokens';
 
 type TabId = 'compliance' | 'risk' | 'policy' | 'audit';
 
 const REGULATION_COLORS: Record<Regulation, string> = {
-  GDPR: '#3b82f6',
-  SOX: '#f59e0b',
-  HIPAA: '#ef4444',
-  PCI: '#8b5cf6',
+  GDPR: designTokens.colors.primary.main,
+  SOX: designTokens.colors.warning.main,
+  HIPAA: designTokens.colors.error.main,
+  PCI: designTokens.colors.secondary.main,
 };
 
 const SEVERITY_COLORS: Record<Severity, string> = {
-  critical: '#dc2626',
+  critical: designTokens.colors.error.dark,
   high: '#ea580c',
-  medium: '#d97706',
+  medium: designTokens.colors.warning.dark,
   low: '#2563eb',
 };
 
 const RISK_LEVEL_COLORS: Record<RiskLevel, string> = {
-  critical: '#dc2626',
+  critical: designTokens.colors.error.dark,
   high: '#ea580c',
-  medium: '#d97706',
+  medium: designTokens.colors.warning.dark,
   low: '#2563eb',
 };
 
 const CATEGORY_COLORS: Record<RiskCategory, string> = {
-  Security: '#dc2626',
-  Compliance: '#f59e0b',
-  Performance: '#3b82f6',
-  Financial: '#10b981',
+  Security: designTokens.colors.error.dark,
+  Compliance: designTokens.colors.warning.main,
+  Performance: designTokens.colors.primary.main,
+  Financial: designTokens.colors.success.dark,
 };
 
 const CATEGORY_LABELS: Record<RiskCategory, string> = {
@@ -531,10 +532,10 @@ const ComplianceTab: React.FC<{
   }
 
   const getScoreColor = (score: number) => {
-    if (score >= 90) return '#10b981';
-    if (score >= 75) return '#f59e0b';
+    if (score >= 90) return designTokens.colors.success.dark;
+    if (score >= 75) return designTokens.colors.warning.main;
     if (score >= 50) return '#ea580c';
-    return '#dc2626';
+    return designTokens.colors.error.dark;
   };
 
   return (
@@ -674,7 +675,7 @@ const ComplianceTab: React.FC<{
           size='small'
           onClick={() => setFilter('all')}
           sx={{
-            bgcolor: filter === 'all' ? '#10b981' : 'grey.100',
+            bgcolor: filter === 'all' ? designTokens.colors.success.dark : 'grey.100',
             color: filter === 'all' ? 'white' : 'text.secondary',
             fontWeight: 600,
           }}
@@ -713,12 +714,12 @@ const ComplianceTab: React.FC<{
                     {check.passed ? (
                       <CheckCircle2
                         size={18}
-                        color='#10b981'
+                        color={designTokens.colors.success.dark}
                       />
                     ) : (
                       <XCircle
                         size={18}
-                        color='#dc2626'
+                        color={designTokens.colors.error.dark}
                       />
                     )}
                   </TableCell>
@@ -793,31 +794,31 @@ const RiskTab: React.FC<{
         return (
           <ArrowDownRight
             size={18}
-            color='#10b981'
+            color={designTokens.colors.success.dark}
           />
         );
       case 'deteriorating':
         return (
           <ArrowUpRight
             size={18}
-            color='#dc2626'
+            color={designTokens.colors.error.dark}
           />
         );
       default:
         return (
           <Activity
             size={18}
-            color='#6b7280'
+            color='colors.grey.500'
           />
         );
     }
   };
 
   const getScoreColor = (score: number) => {
-    if (score <= 25) return '#10b981';
-    if (score <= 50) return '#f59e0b';
+    if (score <= 25) return designTokens.colors.success.dark;
+    if (score <= 50) return designTokens.colors.warning.main;
     if (score <= 75) return '#ea580c';
-    return '#dc2626';
+    return designTokens.colors.error.dark;
   };
 
   return (
@@ -927,7 +928,7 @@ const RiskTab: React.FC<{
                       ) : (
                         <CheckCircle2
                           size={14}
-                          color='#10b981'
+                          color={designTokens.colors.success.dark}
                         />
                       )}
                     </Stack>
@@ -1529,7 +1530,7 @@ const AuditTab: React.FC<{
           size='small'
           onClick={() => onFilterChange('all')}
           sx={{
-            bgcolor: filter === 'all' ? '#10b981' : 'grey.100',
+            bgcolor: filter === 'all' ? designTokens.colors.success.dark : 'grey.100',
             color: filter === 'all' ? 'white' : 'text.secondary',
             fontWeight: 600,
           }}
@@ -1539,7 +1540,7 @@ const AuditTab: React.FC<{
           size='small'
           onClick={() => onFilterChange('allowed')}
           sx={{
-            bgcolor: filter === 'allowed' ? '#10b981' : 'grey.100',
+            bgcolor: filter === 'allowed' ? designTokens.colors.success.dark : 'grey.100',
             color: filter === 'allowed' ? 'white' : 'text.secondary',
             fontWeight: 600,
           }}
@@ -1549,7 +1550,7 @@ const AuditTab: React.FC<{
           size='small'
           onClick={() => onFilterChange('denied')}
           sx={{
-            bgcolor: filter === 'denied' ? '#dc2626' : 'grey.100',
+            bgcolor: filter === 'denied' ? designTokens.colors.error.dark : 'grey.100',
             color: filter === 'denied' ? 'white' : 'text.secondary',
             fontWeight: 600,
           }}
@@ -1559,7 +1560,7 @@ const AuditTab: React.FC<{
           size='small'
           onClick={() => onFilterChange('simulated')}
           sx={{
-            bgcolor: filter === 'simulated' ? '#f59e0b' : 'grey.100',
+            bgcolor: filter === 'simulated' ? designTokens.colors.warning.main : 'grey.100',
             color: filter === 'simulated' ? 'white' : 'text.secondary',
             fontWeight: 600,
           }}

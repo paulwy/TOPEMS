@@ -11,7 +11,7 @@ import { wmsApi } from '@/api/wms';
 import type { Batch, CreateBatchRequest, UpdateBatchRequest } from '@/api/wms';
 import { designTokens } from '@/theme/tokens';
 
-const ct = designTokens.colors;
+const ct= designTokens.colors;
 
 const BatchManagementPage: React.FC = () => {
   const { t } = useTranslation();

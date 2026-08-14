@@ -35,7 +35,7 @@ import { useNotificationStore } from '@/store';
 
 import { QUERY_KEYS, queryClient } from '@/lib/reactQuery';
 
-const ct = designTokens.colors;
+const ct= designTokens.colors;
 
 const baseAdapter = createCrudPageAdapter<BomVersion, CreateBomVersionRequest>({
   list: bomApi.listVersions,

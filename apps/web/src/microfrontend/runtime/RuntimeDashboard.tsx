@@ -1,3 +1,4 @@
+import { designTokens, semanticTokens } from '@topems/tokens';
 /**
  * V45.0 Track F: 微前端终极形态 — 运行时控制台
  *
@@ -97,9 +98,9 @@ type TabType = 'loader' | 'framework' | 'design' | 'lifecycle';
 
 const statusColors: Record<ModuleLoadStatus, string> = {
   [ModuleLoadStatus.UNLOADED]: '#64748b',
-  [ModuleLoadStatus.LOADING]: '#f59e0b',
-  [ModuleLoadStatus.LOADED]: '#10b981',
-  [ModuleLoadStatus.FAILED]: '#ef4444',
+  [ModuleLoadStatus.LOADING]: designTokens.colors.warning.main,
+  [ModuleLoadStatus.LOADED]: designTokens.colors.success.dark,
+  [ModuleLoadStatus.FAILED]: designTokens.colors.error.main,
 };
 
 const statusLabels: Record<ModuleLoadStatus, string> = {
@@ -111,12 +112,12 @@ const statusLabels: Record<ModuleLoadStatus, string> = {
 
 const lifecycleStateColors: Record<LifecycleState, string> = {
   [LifecycleState.REGISTERED]: '#64748b',
-  [LifecycleState.PRELOADING]: '#f59e0b',
-  [LifecycleState.LOADED]: '#3b82f6',
-  [LifecycleState.MOUNTING]: '#8b5cf6',
-  [LifecycleState.MOUNTED]: '#10b981',
+  [LifecycleState.PRELOADING]: designTokens.colors.warning.main,
+  [LifecycleState.LOADED]: designTokens.colors.primary.main,
+  [LifecycleState.MOUNTING]: designTokens.colors.secondary.main,
+  [LifecycleState.MOUNTED]: designTokens.colors.success.dark,
   [LifecycleState.UPDATING]: '#06b6d4',
-  [LifecycleState.ERROR]: '#ef4444',
+  [LifecycleState.ERROR]: designTokens.colors.error.main,
   [LifecycleState.UNMOUNTING]: '#f97316',
   [LifecycleState.UNMOUNTED]: '#94a3b8',
 };
@@ -364,7 +365,7 @@ const DynamicLoaderTab: React.FC = () => {
             label='已注册模块'
             value={modules.length}
             icon={<PackageIcon size={20} />}
-            color='#3b82f6'
+            color={designTokens.colors.primary.main}
           />
         </Grid>
         <Grid size={{ xs: 12, sm: 6, md: 3 }}>
@@ -372,7 +373,7 @@ const DynamicLoaderTab: React.FC = () => {
             label='已加载'
             value={loadedCount}
             icon={<CheckCircleIcon size={20} />}
-            color='#10b981'
+            color={designTokens.colors.success.dark}
           />
         </Grid>
         <Grid size={{ xs: 12, sm: 6, md: 3 }}>
@@ -380,7 +381,7 @@ const DynamicLoaderTab: React.FC = () => {
             label='加载失败'
             value={failedCount}
             icon={<XCircleIcon size={20} />}
-            color='#ef4444'
+            color={designTokens.colors.error.main}
           />
         </Grid>
         <Grid size={{ xs: 12, sm: 6, md: 3 }}>
@@ -388,7 +389,7 @@ const DynamicLoaderTab: React.FC = () => {
             label='并发/等待'
             value={`${currentLoads}/${pendingCount}`}
             icon={<CpuIcon size={20} />}
-            color='#f59e0b'
+            color={designTokens.colors.warning.main}
           />
         </Grid>
       </Grid>
@@ -516,7 +517,7 @@ const DynamicLoaderTab: React.FC = () => {
                           <Tooltip title={mod.error.message}>
                             <AlertCircleIcon
                               size={16}
-                              color='#ef4444'
+                              color={designTokens.colors.error.main}
                             />
                           </Tooltip>
                         ) : (
@@ -677,7 +678,7 @@ const CrossFrameworkTab: React.FC = () => {
             label='已挂载组件'
             value={mountedComponents.length}
             icon={<LayersIcon size={20} />}
-            color='#8b5cf6'
+            color={designTokens.colors.secondary.main}
           />
         </Grid>
         <Grid size={{ xs: 12, sm: 6, md: 3 }}>
@@ -941,7 +942,7 @@ const DesignSystemTab: React.FC = () => {
             label='CSS 变量数'
             value={cssVars.length}
             icon={<CodeIcon size={20} />}
-            color='#3b82f6'
+            color={designTokens.colors.primary.main}
           />
         </Grid>
         <Grid size={{ xs: 12, sm: 6, md: 3 }}>
@@ -949,7 +950,7 @@ const DesignSystemTab: React.FC = () => {
             label='当前主题'
             value={theme.mode === 'dark' ? '暗色' : '亮色'}
             icon={theme.mode === 'dark' ? <MoonIcon size={20} /> : <SunIcon size={20} />}
-            color={theme.mode === 'dark' ? '#1e293b' : '#f59e0b'}
+            color={theme.mode === 'dark' ? '#1e293b' : designTokens.colors.warning.main}
           />
         </Grid>
         <Grid size={{ xs: 12, sm: 6, md: 3 }}>
@@ -957,7 +958,7 @@ const DesignSystemTab: React.FC = () => {
             label='组件覆盖'
             value={Object.keys(theme.component_overrides).length}
             icon={<BoxesIcon size={20} />}
-            color='#10b981'
+            color={designTokens.colors.success.dark}
           />
         </Grid>
       </Grid>
@@ -1342,7 +1343,7 @@ const LifecycleTab: React.FC = () => {
             label='模块总数'
             value={records.length}
             icon={<ActivityIcon size={20} />}
-            color='#8b5cf6'
+            color={designTokens.colors.secondary.main}
           />
         </Grid>
         <Grid size={{ xs: 12, sm: 6, md: 3 }}>
@@ -1350,7 +1351,7 @@ const LifecycleTab: React.FC = () => {
             label='已挂载'
             value={records.filter((r) => r.state === LifecycleState.MOUNTED).length}
             icon={<CheckCircleIcon size={20} />}
-            color='#10b981'
+            color={designTokens.colors.success.dark}
           />
         </Grid>
         <Grid size={{ xs: 12, sm: 6, md: 3 }}>
@@ -1358,7 +1359,7 @@ const LifecycleTab: React.FC = () => {
             label='事件总数'
             value={lifecycleManager.eventCount}
             icon={<ClockIcon size={20} />}
-            color='#3b82f6'
+            color={designTokens.colors.primary.main}
           />
         </Grid>
         <Grid size={{ xs: 12, sm: 6, md: 3 }}>
@@ -1366,7 +1367,7 @@ const LifecycleTab: React.FC = () => {
             label='错误状态'
             value={records.filter((r) => r.state === LifecycleState.ERROR).length}
             icon={<AlertCircleIcon size={20} />}
-            color='#ef4444'
+            color={designTokens.colors.error.main}
           />
         </Grid>
       </Grid>

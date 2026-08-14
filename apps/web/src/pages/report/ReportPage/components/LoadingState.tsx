@@ -3,7 +3,7 @@ import { Box, Typography } from '@mui/material';
 import { Loader2 } from 'lucide-react';
 import { designTokens } from '@/theme/tokens';
 
-const ct = designTokens.colors;
+const ct= designTokens.colors;
 
 const LoadingState: React.FC = () => {
   return (

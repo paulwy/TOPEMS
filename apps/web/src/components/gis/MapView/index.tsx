@@ -23,7 +23,7 @@ import Toolbar from './components/Toolbar';
 import LayerPanel from './components/LayerPanel';
 import DetailsPanel from './components/DetailsPanel';
 
-const ct = designTokens.colors;
+const ct= designTokens.colors;
 
 const MapView: React.FC<MapViewProps> = ({
   devicePoints = [],

@@ -36,7 +36,7 @@ import { PageContainer } from '@/components/common';
 import { designTokens } from '@/theme/tokens';
 import { LIMS_PATHS } from '@/modules/lims/config';
 
-const ct = designTokens.colors;
+const ct= designTokens.colors;
 
 interface TaskRecord extends InspectionRecord {
   step_name: string;

@@ -1,6 +1,7 @@
 import React from 'react';
 import { Chip, Typography } from '@mui/material';
 import type { EntitySchema } from '@/schema';
+import { designTokens, semanticTokens } from '@topems/tokens';
 
 export const inventoryTurnoverSchema: EntitySchema = {
   entity: 'inventoryTurnover',
@@ -58,7 +59,7 @@ export const inventoryTurnoverSchema: EntitySchema = {
         const isLow = val < 3;
         const style: React.CSSProperties = {
           fontWeight: 600,
-          color: isLow ? '#d32f2f' : '#2e7d32',
+          color: isLow ? designTokens.colors.error.dark : designTokens.colors.success.dark,
         };
         return React.createElement(
           Typography,
@@ -79,7 +80,7 @@ export const inventoryTurnoverSchema: EntitySchema = {
         if (val == null) return '-';
         const isHigh = val > 90;
         const style: React.CSSProperties = {
-          color: isHigh ? '#d32f2f' : undefined,
+          color: isHigh ? designTokens.colors.error.dark : undefined,
         };
         return React.createElement(Typography, { variant: 'body2', style }, `${val}天`);
       },

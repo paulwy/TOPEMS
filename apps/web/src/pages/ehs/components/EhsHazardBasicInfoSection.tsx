@@ -10,7 +10,7 @@ import { designTokens } from '@/theme/tokens';
 import { calculateRiskLevel } from '@/components/ehs';
 import type { Hazard } from '@/api/ehs';
 
-const ct = designTokens.colors;
+const ct= designTokens.colors;
 
 export interface EhsHazardBasicInfoSectionProps {
   hazard: Hazard;

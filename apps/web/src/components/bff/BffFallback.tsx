@@ -28,6 +28,7 @@ import {
 } from '@mui/material';
 import { RefreshCw, WifiOff, Database, AlertCircle, CloudOff, History } from 'lucide-react';
 import { FallbackLevel } from '@/utils/bff/fallback-strategy';
+import { designTokens, semanticTokens } from '@topems/tokens';
 
 // ==================== 公共类型 ====================
 
@@ -192,7 +193,7 @@ export const BffErrorFallback: React.FC<BffErrorFallbackProps> = ({
         >
           <AlertCircle
             size={20}
-            color='#d32f2f'
+            color={designTokens.colors.error.dark}
           />
           <Typography
             variant='subtitle2'

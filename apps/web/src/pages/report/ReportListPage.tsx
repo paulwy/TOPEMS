@@ -23,7 +23,7 @@ import { REPORT_PATHS } from '@/modules/report/config';
 
 import { queryClient, QUERY_KEYS } from '@/lib/reactQuery';
 
-const ct = designTokens.colors;
+const ct= designTokens.colors;
 
 const reportApiAdapter: CrudApiAdapter<ReportData> = {
   list: async (params) => {

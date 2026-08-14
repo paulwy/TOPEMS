@@ -10,6 +10,7 @@ import {
   Legend,
 } from 'recharts';
 import { useWmsMock, type WmsMockShape } from '@/api/wms/_mock';
+import { designTokens, semanticTokens } from '@topems/tokens';
 
 export default function WmsLocationUtilizationPage() {
   const { data } = useWmsMock<WmsMockShape>();
@@ -85,19 +86,19 @@ export default function WmsLocationUtilizationPage() {
               dataKey='utilization'
               name='已用'
               stackId='a'
-              fill='#10b981'
+              fill={designTokens.colors.success.dark}
             />
             <Bar
               dataKey='vacancy'
               name='空置'
               stackId='a'
-              fill='#3b82f6'
+              fill={designTokens.colors.primary.main}
             />
             <Bar
               dataKey='deadStock'
               name='呆滞'
               stackId='a'
-              fill='#ef4444'
+              fill={designTokens.colors.error.main}
               radius={[6, 6, 0, 0]}
             />
           </BarChart>

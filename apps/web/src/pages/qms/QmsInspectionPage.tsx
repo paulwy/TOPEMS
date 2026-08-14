@@ -43,7 +43,7 @@ import { designTokens } from '@/theme/tokens';
 import { QUERY_KEYS } from '@/lib/reactQuery';
 import { inspectionSchema } from '@/schemas/qms';
 
-const ct = designTokens.colors;
+const ct= designTokens.colors;
 
 interface InspectionResultItem {
   item_name: string;

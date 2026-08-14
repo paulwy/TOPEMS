@@ -39,7 +39,7 @@ import { useQuery } from '@tanstack/react-query';
 
 import { QUERY_KEYS } from '@/lib/reactQuery';
 
-const ct = designTokens.colors;
+const ct= designTokens.colors;
 
 interface SupplierPortalAnnouncement {
   id: string;

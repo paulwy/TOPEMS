@@ -11,7 +11,7 @@ import { designTokens } from '@/theme/tokens';
 
 import { QUERY_KEYS } from '@/lib/reactQuery';
 
-const ct = designTokens.colors;
+const ct= designTokens.colors;
 
 export interface RateLimitRule {
   requests: number;

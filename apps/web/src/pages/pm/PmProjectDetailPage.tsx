@@ -27,7 +27,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 
 import { QUERY_KEYS } from '@/lib/reactQuery';
 
-const ct = designTokens.colors;
+const ct= designTokens.colors;
 
 const STATUS_LABELS: Record<string, string> = {
   active: '进行中',

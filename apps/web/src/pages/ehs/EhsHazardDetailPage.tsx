@@ -33,7 +33,7 @@ import { EHS_PATHS } from '@/modules/ehs/config';
 
 import { useTranslation } from 'react-i18next';
 
-const ct = designTokens.colors;
+const ct= designTokens.colors;
 
 interface ControlFormData {
   measure_type: 'engineering' | 'administrative' | 'ppe';

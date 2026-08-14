@@ -20,6 +20,7 @@ import {
 import { useQmsMock, type QmsMockShape } from '@/api/qms/_mock';
 import { StatusBadge } from '@/components/qms/StatusBadge';
 import { QMS_PATHS } from '@/modules/qms/config';
+import { designTokens, semanticTokens } from '@topems/tokens';
 
 const TABS = [
   { id: 'info', label: '基本信息' },
@@ -58,9 +59,9 @@ export default function QmsFmeaDetailPage() {
       buckets[riskLevel(it.rpn)] += 1;
     });
     return [
-      { level: '高风险(≥200)', count: buckets.high, fill: '#ef4444' },
-      { level: '中风险(100-199)', count: buckets.medium, fill: '#f59e0b' },
-      { level: '低风险(<100)', count: buckets.low, fill: '#10b981' },
+      { level: '高风险(≥200)', count: buckets.high, fill: designTokens.colors.error.main },
+      { level: '中风险(100-199)', count: buckets.medium, fill: designTokens.colors.warning.main },
+      { level: '低风险(<100)', count: buckets.low, fill: designTokens.colors.success.dark },
     ];
   }, [items]);
 
@@ -252,7 +253,7 @@ export default function QmsFmeaDetailPage() {
                 <Bar
                   dataKey='count'
                   name='风险项数'
-                  fill='#6366f1'
+                  fill={designTokens.colors.secondary.dark}
                   barSize={40}
                 />
               </BarChart>
@@ -284,7 +285,7 @@ export default function QmsFmeaDetailPage() {
                 <Bar
                   dataKey='rpn'
                   name='RPN'
-                  fill='#ef4444'
+                  fill={designTokens.colors.error.main}
                   barSize={16}
                 />
               </BarChart>

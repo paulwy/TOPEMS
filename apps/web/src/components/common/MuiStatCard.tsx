@@ -70,7 +70,7 @@ export const StatCard: React.FC<StatCardProps> = ({
     success: { main: 'success.dark', light: 'success.400', dark: 'success.dark' },
     warning: { main: 'warning.main', light: 'warning.light', dark: 'warning.dark' },
     error: { main: 'error.main', light: 'error.light', dark: 'error.dark' },
-    info: { main: 'info.main', light: '#22d3ee', dark: '#0891b2' },
+    info: { main: 'info.main', light: '#22d3ee', dark: 'colors.cyan.600' },
   };
 
   const colors = colorMap[color];

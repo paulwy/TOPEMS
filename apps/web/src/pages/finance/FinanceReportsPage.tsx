@@ -37,7 +37,7 @@ import { PageContainer } from '@/components/common';
 
 import { useTranslation } from 'react-i18next';
 
-const ct = designTokens.colors;
+const ct= designTokens.colors;
 
 const FinanceReportsPage: React.FC = () => {
   const { t } = useTranslation();

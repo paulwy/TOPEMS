@@ -23,7 +23,7 @@ import { designTokens } from '@/theme/tokens';
 import { LIMS_PATHS } from '@/modules/lims/config';
 import { instrumentMaintenanceSchema } from '@/schemas/lims';
 
-const ct = designTokens.colors;
+const ct= designTokens.colors;
 
 const LimsInstrumentMaintenancePage: React.FC = () => {
   const { id } = useParams<{ id: string }>();

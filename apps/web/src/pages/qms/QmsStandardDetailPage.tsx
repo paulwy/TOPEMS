@@ -26,7 +26,7 @@ import { designTokens } from '@/theme/tokens';
 import {QUERY_KEYS, CACHE_DURATIONS} from '@/lib/reactQuery';
 import { QMS_PATHS } from '@/modules/qms/config';
 
-const ct = designTokens.colors;
+const ct= designTokens.colors;
 
 const QmsStandardDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();

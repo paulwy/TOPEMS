@@ -4,7 +4,7 @@ import { X } from 'lucide-react';
 import type { DevicePoint, StorageLocation } from '../../../../api/gis';
 import { designTokens } from '@/theme/tokens';
 
-const ct = designTokens.colors;
+const ct= designTokens.colors;
 
 interface DetailsPanelProps {
   selectedItem: DevicePoint | StorageLocation;

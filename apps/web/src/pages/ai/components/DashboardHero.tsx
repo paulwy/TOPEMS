@@ -7,7 +7,7 @@ import { AI_PATHS } from '@/modules/ai/config';
 import { alpha } from '@mui/material/styles';
 import { designTokens } from '@/theme/tokens';
 
-const ct = designTokens.colors;
+const ct= designTokens.colors;
 
 export const DashboardHero: React.FC = () => {
   const { t } = useTranslation();

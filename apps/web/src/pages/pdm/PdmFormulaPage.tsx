@@ -7,7 +7,7 @@ import { pdmApi, type ProductionFormula } from '@/api/pdm';
 import { QUERY_KEYS } from '@/lib/reactQuery';
 import { designTokens } from '@/theme/tokens';
 
-const ct = designTokens.colors;
+const ct= designTokens.colors;
 
 export default function PdmFormulaPage() {
   const queryClient = useQueryClient();

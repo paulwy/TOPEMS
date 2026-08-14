@@ -12,6 +12,7 @@ import {
   Cell,
 } from '../charts/_vendors/recharts-cartesian';
 import type { ChartData } from '../charts/AreaChart';
+import { designTokens, semanticTokens } from '@topems/tokens';
 
 export interface StatsChartBarProps {
   type: 'bar' | 'line';
@@ -30,7 +31,7 @@ const defaultColors = [
   'secondary.main',
   '#a855f7',
   '#d946ef',
-  '#ec4899',
+  designTokens.colors.pink.main,
   '#f43f5e',
 ];
 

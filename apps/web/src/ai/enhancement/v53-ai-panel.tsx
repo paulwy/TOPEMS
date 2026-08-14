@@ -60,6 +60,7 @@ import {
   type IntentCategory,
   type ComponentRecommendation,
 } from './ui-recommender';
+import { designTokens, semanticTokens } from '@topems/tokens';
 
 type TabId = 'completion' | 'test' | 'ui' | 'chat';
 
@@ -572,13 +573,13 @@ const CodeCompletionTab: React.FC = () => {
 
 const getKindColor = (kind: CompletionKind): string => {
   const colors: Record<CompletionKind, string> = {
-    snippet: '#8b5cf6',
+    snippet: designTokens.colors.secondary.main,
     property: '#06b6d4',
-    function: '#10b981',
-    import: '#f59e0b',
-    keyword: '#ef4444',
-    variable: '#6366f1',
-    type: '#3b82f6',
+    function: designTokens.colors.success.dark,
+    import: designTokens.colors.warning.main,
+    keyword: designTokens.colors.error.main,
+    variable: designTokens.colors.secondary.dark,
+    type: designTokens.colors.primary.main,
     'snippet-placeholder': '#a855f7',
   };
   return colors[kind] ?? '#64748b';
@@ -1007,7 +1008,7 @@ const UIRecommenderTab: React.FC = () => {
                   p: 2,
                   borderRadius: 2,
                   border: '2px solid',
-                  borderColor: idx === 0 ? '#8b5cf6' : 'divider',
+                  borderColor: idx === 0 ? designTokens.colors.secondary.main : 'divider',
                   background:
                     idx === 0 ? 'linear-gradient(135deg, #f5f3ff 0%, #ede9fe 100%)' : 'white',
                 }}
@@ -1036,7 +1037,7 @@ const UIRecommenderTab: React.FC = () => {
                   {idx === 0 && (
                     <Sparkles
                       size={16}
-                      color='#8b5cf6'
+                      color={designTokens.colors.secondary.main}
                     />
                   )}
                 </Box>
@@ -1306,7 +1307,7 @@ const AIChatTab: React.FC = () => {
                 maxWidth: '80%',
                 p: 2,
                 borderRadius: 2,
-                bgcolor: msg.role === 'user' ? '#6366f1' : '#fff',
+                bgcolor: msg.role === 'user' ? designTokens.colors.secondary.dark : designTokens.colors.background.paper,
                 color: msg.role === 'user' ? 'white' : 'inherit',
                 border: msg.role === 'assistant' ? '1px solid #e2e8f0' : 'none',
               }}

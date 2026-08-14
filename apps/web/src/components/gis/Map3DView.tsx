@@ -6,6 +6,7 @@ import type * as THREE from 'three';
 import type { DevicePoint, Pipeline, StorageLocation } from '../../api/gis';
 import { X, RotateCcw, Maximize2 } from 'lucide-react';
 import { Box as MuiBox, Typography, IconButton, Paper } from '@mui/material';
+import { designTokens, semanticTokens } from '@topems/tokens';
 
 interface Map3DViewProps {
   devicePoints: DevicePoint[];
@@ -149,7 +150,7 @@ function PipelineLine({
   return (
     <Line
       points={[start, end]}
-      color='#6366F1'
+      color={designTokens.colors.secondary.dark}
       lineWidth={3}
     />
   );

@@ -38,7 +38,7 @@ export const EmployeeFinanceTab: React.FC<EmployeeFinanceTabProps> = ({
   const { t } = useTranslation();
   const { data, isLoading, error } = useEmployeeFinanceInfo(employeeId);
   const theme = useTheme();
-  const ct = designTokens.colors;
+  const ct= designTokens.colors;
   const updateFinanceInfo = useUpdateEmployeeFinanceInfo();
 
   const [isEditing, setIsEditing] = useState(false);

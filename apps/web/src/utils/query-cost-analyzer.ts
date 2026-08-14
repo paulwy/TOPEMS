@@ -9,6 +9,7 @@
  */
 
 import { parseQueryName } from './graphql-performance';
+import { designTokens, semanticTokens } from '@topems/tokens';
 
 export type CostLevel = 'low' | 'medium' | 'high' | 'critical';
 
@@ -435,10 +436,10 @@ export function validateQuery(
 
 export function getCostLevelColor(level: CostLevel): string {
   const colors: Record<CostLevel, string> = {
-    low: '#10b981',
-    medium: '#f59e0b',
+    low: designTokens.colors.success.dark,
+    medium: designTokens.colors.warning.main,
     high: '#f97316',
-    critical: '#ef4444',
+    critical: designTokens.colors.error.main,
   };
   return colors[level];
 }

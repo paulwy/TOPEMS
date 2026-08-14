@@ -10,6 +10,7 @@ import { DetailPageTemplate, type SectionConfig } from '@/components/templates';
 import { useQuery } from '@tanstack/react-query';
 
 import { QUERY_KEYS } from '@/lib/reactQuery';
+import { designTokens, semanticTokens } from '@topems/tokens';
 
 const SrmContractDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -61,7 +62,7 @@ const SrmContractDetailPage: React.FC = () => {
       avatar: (
         <FileText
           size={36}
-          color='#fff'
+          color={designTokens.colors.background.paper}
         />
       ),
       title: contract?.title || undefined,

@@ -403,7 +403,7 @@ export function TableSection<T>({
                   theme.transitions.create(['background-color'], { duration: 150 }),
               },
               '&.Mui-selected': {
-                bgcolor: theme.palette.mode === 'dark' ? 'rgba(59,130,246,0.12)' : 'primary.50',
+                bgcolor: theme.palette.mode === 'dark' ? 'background.selectedDark' : 'primary.50',
               },
               cursor: onRowClick ? 'pointer' : 'default',
               transition: (theme) =>

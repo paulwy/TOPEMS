@@ -101,7 +101,7 @@ export const TouchRipple: React.FC<TouchRippleProps> = ({
   onClick,
   onLongPress,
   longPressDelay = 500,
-  rippleColor = 'rgba(0, 0, 0, 0.1)',
+  rippleColor = 'colors.cyber.glass.bgLight',
   minTouchTarget = 44,
 }) => {
   const {

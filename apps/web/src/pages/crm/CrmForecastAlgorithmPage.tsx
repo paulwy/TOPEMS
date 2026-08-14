@@ -32,11 +32,12 @@ import { useNotificationStore } from '@/store';
 import { apiLogger } from '@/utils/logger';
 import { PageContainer } from '@/components/common';
 import { QUERY_KEYS } from '@/lib/reactQuery';
+import { designTokens, semanticTokens } from '@topems/tokens';
 
 const METHOD_COLORS: Record<ForecastMethod, string> = {
-  moving_average: '#1976d2',
+  moving_average: designTokens.colors.primary.dark,
   weighted_moving_average: '#9c27b0',
-  exponential_smoothing: '#2e7d32',
+  exponential_smoothing: designTokens.colors.success.dark,
   linear_regression: '#ed6c02',
 };
 
@@ -314,7 +315,7 @@ const CrmForecastAlgorithmPage: React.FC = () => {
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
                 <TrendingUp
                   size={20}
-                  color={METHOD_COLORS[predictResult.method] ?? '#1976d2'}
+                  color={METHOD_COLORS[predictResult.method] ?? designTokens.colors.primary.dark}
                 />
                 <Typography
                   variant='subtitle2'
@@ -326,8 +327,8 @@ const CrmForecastAlgorithmPage: React.FC = () => {
                   label={predictResult.method}
                   size='small'
                   sx={{
-                    bgcolor: `${METHOD_COLORS[predictResult.method] ?? '#1976d2'}20`,
-                    color: METHOD_COLORS[predictResult.method] ?? '#1976d2',
+                    bgcolor: `${METHOD_COLORS[predictResult.method] ?? designTokens.colors.primary.dark}20`,
+                    color: METHOD_COLORS[predictResult.method] ?? designTokens.colors.primary.dark,
                     fontWeight: 600,
                   }}
                 />
@@ -501,7 +502,7 @@ const CrmForecastAlgorithmPage: React.FC = () => {
                             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                               <Activity
                                 size={14}
-                                color={METHOD_COLORS[r.method] ?? '#1976d2'}
+                                color={METHOD_COLORS[r.method] ?? designTokens.colors.primary.dark}
                               />
                               <Typography
                                 variant='body2'
@@ -579,7 +580,7 @@ const CrmForecastAlgorithmPage: React.FC = () => {
                   >
                     <Activity
                       size={16}
-                      color={METHOD_COLORS[m.method] ?? '#1976d2'}
+                      color={METHOD_COLORS[m.method] ?? designTokens.colors.primary.dark}
                     />
                     <Box>
                       <Typography

@@ -29,7 +29,7 @@ import { designTokens } from '@/theme/tokens';
 
 import { useTranslation } from 'react-i18next';
 
-const ct = designTokens.colors;
+const ct= designTokens.colors;
 
 const mockSalesData = [
   { month: '1月', 销售额: 125000, 订单数: 450, 客户数: 180 },

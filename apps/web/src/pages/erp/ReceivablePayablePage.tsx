@@ -7,7 +7,7 @@ import { receivableSchema, payableSchema } from '@/schemas/finance';
 import { receivableApi, payableApi, type Receivable, type Payable } from '@/api/erp';
 import { designTokens } from '@/theme/tokens';
 
-const ct = designTokens.colors;
+const ct= designTokens.colors;
 
 const ReceivablePayablePage: React.FC = () => {
   const [activeTab, setActiveTab] = useState(0);

@@ -21,7 +21,7 @@ import { apiLogger } from '@/utils/logger';
 import { designTokens } from '@/theme/tokens';
 import { BarChart3, TrendingUp, PieChart, FileText, Download, RefreshCw } from 'lucide-react';
 
-const ct = designTokens.colors;
+const ct= designTokens.colors;
 
 interface ChartDataItem {
   category: string;
@@ -320,7 +320,7 @@ const FinancialAnalysisPage: React.FC = () => {
                 key={index}
                 d={`M 100 100 L ${x1} ${y1} A 80 80 0 ${largeArcFlag} 1 ${x2} ${y2} Z`}
                 fill={item.color}
-                stroke='#fff'
+                stroke={designTokens.colors.background.paper}
                 strokeWidth='2'
               />
             );
@@ -329,7 +329,7 @@ const FinancialAnalysisPage: React.FC = () => {
             cx='100'
             cy='100'
             r='50'
-            fill='#fff'
+            fill={designTokens.colors.background.paper}
           />
           <text
             x='100'
@@ -392,7 +392,7 @@ const FinancialAnalysisPage: React.FC = () => {
             {dataKeys.map((key, index) => (
               <tr
                 key={key}
-                style={{ backgroundColor: index % 2 === 0 ? '#fff' : ct.grey[50] }}
+                style={{ backgroundColor: index % 2 === 0 ? designTokens.colors.background.paper : ct.grey[50] }}
               >
                 <td style={{ borderBottom: `1px solid ${ct.grey[100]}`, padding: '8px' }}>
                   {key.replace(/_/g, ' ')}

@@ -8,7 +8,7 @@ import { tenantApi } from '@/api/tenant';
 import type { Tenant, CreateTenantRequest, UpdateTenantRequest } from '@/api/tenant/types';
 import { designTokens } from '@/theme/tokens';
 
-const ct = designTokens.colors;
+const ct= designTokens.colors;
 
 const tenantAdapter = {
   list: async (params?: { page?: number; pageSize?: number; search?: string; status?: string }) => {

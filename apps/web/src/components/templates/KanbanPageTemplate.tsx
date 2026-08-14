@@ -614,7 +614,7 @@ export const KanbanPageTemplate: React.FC<KanbanPageTemplateProps> = ({
             borderColor: isDragOver ? 'primary.main' : undefined,
             bgcolor: isDragOver
               ? theme.palette.mode === 'dark'
-                ? 'rgba(59,130,246,0.15)'
+                ? 'background.selectedDark'
                 : 'primary.50'
               : undefined,
           }}
@@ -792,7 +792,7 @@ export const KanbanPageTemplate: React.FC<KanbanPageTemplateProps> = ({
                 cursor: 'pointer',
                 '&:hover': {
                   borderColor: 'primary.main',
-                  bgcolor: theme.palette.mode === 'dark' ? 'rgba(59,130,246,0.15)' : 'primary.50',
+                  bgcolor: theme.palette.mode === 'dark' ? 'background.selectedDark' : 'primary.50',
                 },
               }}
             >

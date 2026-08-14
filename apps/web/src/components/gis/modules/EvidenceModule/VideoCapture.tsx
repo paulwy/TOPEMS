@@ -288,7 +288,7 @@ const VideoCapture: React.FC<VideoCaptureProps> = ({
                 disabled={isRecording}
                 sx={{
                   borderRadius: '9999px',
-                  bgcolor: isRecording ? 'rgba(31,41,55,0.5)' : 'rgba(0,0,0,0.5)',
+                  bgcolor: isRecording ? 'rgba(31,41,55,0.5)' : 'colors.cyber.glass.divider',
                   color: isRecording ? 'text.secondary' : 'white',
                   '&:hover': {
                     bgcolor: isRecording ? 'rgba(31,41,55,0.5)' : 'rgba(0,0,0,0.7)',

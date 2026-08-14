@@ -28,6 +28,7 @@ import {
 } from './module-performance-metrics';
 import { errorTracker, type ErrorStats } from './error-tracker';
 import { userBehaviorAnalytics, type ModuleVisitStats } from './user-behavior-analytics';
+import { designTokens, semanticTokens } from '@topems/tokens';
 
 const SLOW_MODULE_THRESHOLD = 3000;
 
@@ -206,7 +207,7 @@ const ObservabilityPanel: React.FC = () => {
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                   <ZapIcon
                     size={16}
-                    color='#f59e0b'
+                    color={designTokens.colors.warning.main}
                   />
                   <Typography
                     variant='body2'
@@ -315,7 +316,7 @@ const ObservabilityPanel: React.FC = () => {
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                   <AlertIcon
                     size={16}
-                    color='#ef4444'
+                    color={designTokens.colors.error.main}
                   />
                   <Typography
                     variant='body2'
@@ -437,7 +438,7 @@ const ObservabilityPanel: React.FC = () => {
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                   <EyeIcon
                     size={16}
-                    color='#8b5cf6'
+                    color={designTokens.colors.secondary.main}
                   />
                   <Typography
                     variant='body2'
@@ -548,7 +549,7 @@ const ObservabilityPanel: React.FC = () => {
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
                   <AlertIcon
                     size={16}
-                    color='#f59e0b'
+                    color={designTokens.colors.warning.main}
                   />
                   <Typography
                     variant='body2'

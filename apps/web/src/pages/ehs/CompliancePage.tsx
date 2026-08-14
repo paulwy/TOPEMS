@@ -11,7 +11,7 @@ import { designTokens } from '@/theme/tokens';
 
 import { CACHE_DURATIONS, QUERY_KEYS } from '@/lib/reactQuery';
 
-const ct = designTokens.colors;
+const ct= designTokens.colors;
 
 function extractListData<T>(response: unknown): T[] {
   if (!response || typeof response !== 'object') return [];

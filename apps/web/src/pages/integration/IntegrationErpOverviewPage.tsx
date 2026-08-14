@@ -44,7 +44,7 @@ import {
 import { useNotificationStore } from '@/store';
 import { designTokens } from '@/theme/tokens';
 
-const ct = designTokens.colors;
+const ct= designTokens.colors;
 
 type SyncStatus = 'success' | 'syncing' | 'error' | 'pending';
 

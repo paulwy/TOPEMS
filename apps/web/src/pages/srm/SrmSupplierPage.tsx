@@ -9,7 +9,7 @@ import { Box, Card, CardContent, Typography } from '@mui/material';
 import { Users } from 'lucide-react';
 import { designTokens } from '@/theme/tokens';
 
-const ct = designTokens.colors;
+const ct= designTokens.colors;
 
 const apiAdapter = createCrudPageAdapter({
   list: srmApi.listSuppliers,

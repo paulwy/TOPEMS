@@ -3,7 +3,7 @@ import { Mail, CheckCircle, Clock, XCircle } from 'lucide-react';
 import { designTokens } from '@/theme/tokens';
 import type { EmailStats } from '@/api/mail';
 
-const ct = designTokens.colors;
+const ct= designTokens.colors;
 
 interface EmailStatsCardsProps {
   stats: EmailStats | null;

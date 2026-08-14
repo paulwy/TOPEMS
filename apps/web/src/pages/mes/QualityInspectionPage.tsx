@@ -12,7 +12,7 @@ import type { QualityInspection } from '@/api/mes/quality';
 import { useTranslation } from 'react-i18next';
 import { designTokens } from '@/theme/tokens';
 
-const ct = designTokens.colors;
+const ct= designTokens.colors;
 
 const qualityApiAdapter: CrudApiAdapter<QualityInspection> = {
   list: async (params) => {

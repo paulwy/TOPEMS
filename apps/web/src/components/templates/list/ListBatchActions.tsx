@@ -51,7 +51,7 @@ export const ListBatchActions = <T,>({
         gap: 2,
         mb: 2,
         p: 2,
-        bgcolor: theme.palette.mode === 'dark' ? 'rgba(59,130,246,0.12)' : 'primary.50',
+        bgcolor: theme.palette.mode === 'dark' ? 'background.selectedDark' : 'primary.50',
         borderRadius: 1,
         border: '1px solid',
         borderColor: theme.palette.mode === 'dark' ? 'rgba(59,130,246,0.3)' : 'primary.200',

@@ -1,3 +1,4 @@
+import { designTokens, semanticTokens } from '@topems/tokens';
 /**
  * 路线效率分析页
  *
@@ -82,8 +83,8 @@ export default function RouteEfficiencyPage() {
             <YAxis yAxisId='right' orientation='right' fontSize={11} unit='/km' />
             <Tooltip />
             <Legend />
-            <Bar yAxisId='left' dataKey='avgHours' name='平均时长(h)' fill='#3b82f6' barSize={20} />
-            <Bar yAxisId='right' dataKey='costPerKm' name='单位成本(¥/km)' fill='#f59e0b' barSize={20} />
+            <Bar yAxisId='left' dataKey='avgHours' name='平均时长(h)' fill={designTokens.colors.primary.main} barSize={20} />
+            <Bar yAxisId='right' dataKey='costPerKm' name='单位成本(¥/km)' fill={designTokens.colors.warning.main} barSize={20} />
           </BarChart>
         </ResponsiveContainer>
       </div>
@@ -98,7 +99,7 @@ export default function RouteEfficiencyPage() {
             <ZAxis type='number' dataKey='avgHours' name='时长' unit='h' range={[60, 400]} />
             <Tooltip cursor={{ strokeDasharray: '3 3' }} />
             <Legend />
-            <Scatter name='路线' data={data} fill='#6366f1' />
+            <Scatter name='路线' data={data} fill={designTokens.colors.secondary.dark} />
           </ScatterChart>
         </ResponsiveContainer>
       </div>

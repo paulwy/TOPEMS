@@ -55,7 +55,7 @@ export const EmptyState: React.FC<EmptyStateProps> = ({
         alignItems: align === 'center' ? 'center' : 'flex-start',
         justifyContent: 'center',
         border: '1px dashed',
-        borderColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)',
+        borderColor: isDark ? 'rgba(255,255,255,0.1)' : 'colors.cyber.glass.bgLight',
         borderRadius: 2,
         bgcolor: isDark ? 'rgba(255,255,255,0.02)' : 'rgba(0,0,0,0.01)',
         px: compact ? 2 : 3,

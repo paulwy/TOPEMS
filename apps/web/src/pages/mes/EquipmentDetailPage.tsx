@@ -14,7 +14,7 @@ import { ConfirmDialog } from '@topems/shared-components';
 import { PageContainer } from '@/components/common';
 import { MES_PATHS } from '@/modules/mes/config';
 
-const ct = designTokens.colors;
+const ct= designTokens.colors;
 
 const EquipmentDetailPage: React.FC = () => {
   const { t } = useTranslation();

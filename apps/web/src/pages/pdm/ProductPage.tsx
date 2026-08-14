@@ -9,7 +9,7 @@ import { QUERY_KEYS } from '@/lib/reactQuery';
 import { PageContainer } from '@/components/common';
 import { designTokens } from '@/theme/tokens';
 
-const ct = designTokens.colors;
+const ct= designTokens.colors;
 
 export default function ProductPage() {
   const queryClient = useQueryClient();

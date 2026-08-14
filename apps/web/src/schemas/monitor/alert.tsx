@@ -11,7 +11,7 @@ import { AlertCircle, AlertTriangle, Info, Clock, Server } from 'lucide-react';
 import type { EntitySchema, SchemaField } from '@/schema';
 import { designTokens } from '@/theme/tokens';
 
-const ct = designTokens.colors;
+const ct= designTokens.colors;
 
 type AlertSeverity = 'critical' | 'warning' | 'info';
 type AlertStatus = 'active' | 'acknowledged' | 'resolved';
