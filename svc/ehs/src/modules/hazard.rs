@@ -992,4 +992,158 @@ mod tests {
         assert_eq!(hazard_quadrant(0, 0), "Ⅳ类-一般隐患");
         assert_eq!(hazard_quadrant(10, 10), "Ⅰ类-重大隐患");
     }
+
+    #[test]
+    fn test_hazard_serde_roundtrip() {
+        use serde_json;
+        let tenant_id = Uuid::new_v4();
+        let h = Hazard {
+            id: "h-001".to_string(),
+            hazard_no: "HZD-2024-001".to_string(),
+            title: "地面湿滑".to_string(),
+            description: Some("车间A区地面有油污".to_string()),
+            category: "physical".to_string(),
+            level: "medium".to_string(),
+            source: "巡检".to_string(),
+            location: Some("车间A".to_string()),
+            reported_by: Some("张三".to_string()),
+            reported_at: Some("2024-01-01T10:00:00Z".to_string()),
+            status: "open".to_string(),
+            inspection_id: None,
+            approval_workflow_id: None,
+            approval_status: None,
+            created_at: Some("2024-01-01T00:00:00Z".to_string()),
+            updated_at: Some("2024-01-01T00:00:00Z".to_string()),
+            tenant_id,
+        };
+        let json = serde_json::to_string(&h).unwrap();
+        let de: Hazard = serde_json::from_str(&json).unwrap();
+        assert_eq!(de.id, h.id);
+        assert_eq!(de.hazard_no, h.hazard_no);
+        assert_eq!(de.title, h.title);
+        assert_eq!(de.tenant_id, h.tenant_id);
+    }
+
+    #[test]
+    fn test_hazard_clone() {
+        let tenant_id = Uuid::new_v4();
+        let h = Hazard {
+            id: "1".to_string(),
+            hazard_no: "HZ-001".to_string(),
+            title: "隐患".to_string(),
+            description: None,
+            category: "c".to_string(),
+            level: "l".to_string(),
+            source: "s".to_string(),
+            location: None,
+            reported_by: None,
+            reported_at: None,
+            status: "st".to_string(),
+            inspection_id: None,
+            approval_workflow_id: None,
+            approval_status: None,
+            created_at: None,
+            updated_at: None,
+            tenant_id,
+        };
+        let c = h.clone();
+        assert_eq!(c.id, h.id);
+        assert_eq!(c.tenant_id, h.tenant_id);
+    }
+
+    #[test]
+    fn test_rectification_serde() {
+        use serde_json;
+        let tenant_id = Uuid::new_v4();
+        let r = Rectification {
+            id: "r-001".to_string(),
+            hazard_id: "h-001".to_string(),
+            description: "清理油污".to_string(),
+            responsible: Some("李四".to_string()),
+            deadline: Some("2024-01-10T00:00:00Z".to_string()),
+            status: "in_progress".to_string(),
+            progress: 50,
+            started_at: Some("2024-01-02T00:00:00Z".to_string()),
+            completed_at: None,
+            created_at: Some("2024-01-01T00:00:00Z".to_string()),
+            updated_at: Some("2024-01-01T00:00:00Z".to_string()),
+            tenant_id,
+        };
+        let json = serde_json::to_string(&r).unwrap();
+        let de: Rectification = serde_json::from_str(&json).unwrap();
+        assert_eq!(de.id, r.id);
+        assert_eq!(de.progress, 50);
+    }
+
+    #[test]
+    fn test_verification_serde() {
+        use serde_json;
+        let tenant_id = Uuid::new_v4();
+        let v = Verification {
+            id: "v-001".to_string(),
+            hazard_id: "h-001".to_string(),
+            verifier: Some("王五".to_string()),
+            result: "pass".to_string(),
+            remarks: Some("整改合格".to_string()),
+            verified_at: Some("2024-01-15T00:00:00Z".to_string()),
+            created_at: Some("2024-01-15T00:00:00Z".to_string()),
+            tenant_id,
+        };
+        let json = serde_json::to_string(&v).unwrap();
+        let de: Verification = serde_json::from_str(&json).unwrap();
+        assert_eq!(de.id, v.id);
+        assert_eq!(de.result, "pass");
+    }
+
+    #[test]
+    fn test_hazard_detail_serde() {
+        use serde_json;
+        let tenant_id = Uuid::new_v4();
+        let h = Hazard {
+            id: "h-001".into(),
+            hazard_no: "HZ-001".into(),
+            title: "隐患".into(),
+            description: None,
+            category: "c".into(),
+            level: "l".into(),
+            source: "s".into(),
+            location: None,
+            reported_by: None,
+            reported_at: None,
+            status: "st".into(),
+            inspection_id: None,
+            approval_workflow_id: None,
+            approval_status: None,
+            created_at: None,
+            updated_at: None,
+            tenant_id,
+        };
+        let hd = HazardDetail {
+            hazard: h.clone(),
+            rectification: None,
+            verification: None,
+            tenant_id,
+        };
+        let json = serde_json::to_string(&hd).unwrap();
+        let de: HazardDetail = serde_json::from_str(&json).unwrap();
+        assert_eq!(de.hazard.id, h.id);
+        assert!(de.rectification.is_none());
+    }
+
+    #[test]
+    fn test_hazard_query_defaults() {
+        let q: HazardQuery = serde_json::from_str("{}").unwrap();
+        assert!(q.page.is_none());
+        assert!(q.level.is_none());
+    }
+
+    #[test]
+    fn test_hazard_query_values() {
+        let q: HazardQuery = serde_json::from_str(
+            r#"{"page":2,"page_size":50,"status":"open","level":"high","source":"巡检"}"#,
+        )
+        .unwrap();
+        assert_eq!(q.page, Some(2));
+        assert_eq!(q.page_size, Some(50));
+    }
 }
