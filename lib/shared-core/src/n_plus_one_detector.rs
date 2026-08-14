@@ -299,4 +299,222 @@ mod tests {
         assert_eq!(cfg.query_threshold, DEFAULT_QUERY_THRESHOLD);
         std::env::remove_var("NPLUSONE_THRESHOLD");
     }
+
+    // ===== 新增：QueryCounter 基础测试 =====
+
+    #[test]
+    fn test_new_counter_has_zero_count() {
+        let counter = QueryCounter::new(10);
+        assert_eq!(counter.count(), 0);
+        assert!(!counter.is_exceeded());
+        assert_eq!(counter.threshold(), 10);
+    }
+
+    #[test]
+    fn test_record_accumulates_to_count() {
+        let counter = QueryCounter::new(100);
+        for _ in 0..5 {
+            counter.record();
+        }
+        assert_eq!(counter.count(), 5);
+        assert!(!counter.is_exceeded());
+    }
+
+    #[test]
+    fn test_record_n_with_large_value() {
+        let counter = QueryCounter::new(100);
+        counter.record_n(1000);
+        assert_eq!(counter.count(), 1000);
+        assert!(counter.is_exceeded());
+    }
+
+    #[test]
+    fn test_is_exceeded_false_below_threshold() {
+        let counter = QueryCounter::new(10);
+        counter.record_n(9);
+        assert!(!counter.is_exceeded());
+        counter.record();
+        assert_eq!(counter.count(), 10);
+        // 等于阈值不算超过（严格大于）
+        assert!(!counter.is_exceeded());
+    }
+
+    #[test]
+    fn test_threshold_zero_exceeded_after_one_record() {
+        let counter = QueryCounter::new(0);
+        // count=0, threshold=0: 0 > 0 is false
+        assert!(!counter.is_exceeded());
+        counter.record();
+        assert_eq!(counter.count(), 1);
+        // 1 > 0 is true
+        assert!(counter.is_exceeded());
+    }
+
+    #[test]
+    fn test_record_and_record_n_combined() {
+        let counter = QueryCounter::new(100);
+        counter.record();
+        counter.record_n(5);
+        counter.record();
+        counter.record_n(3);
+        assert_eq!(counter.count(), 10);
+    }
+
+    #[test]
+    fn test_record_n_one_equivalent_to_record() {
+        let counter1 = QueryCounter::new(10);
+        let counter2 = QueryCounter::new(10);
+        counter1.record();
+        counter2.record_n(1);
+        assert_eq!(counter1.count(), counter2.count());
+        assert_eq!(counter1.count(), 1);
+    }
+
+    // ===== 新增：NPlusOneConfig 测试 =====
+
+    #[test]
+    fn test_config_clone_preserves_all_fields() {
+        let cfg = NPlusOneConfig {
+            query_threshold: 42,
+            enabled: false,
+        };
+        let cloned = cfg.clone();
+        assert_eq!(cloned.query_threshold, 42);
+        assert!(!cloned.enabled);
+    }
+
+    #[test]
+    fn test_config_custom_threshold_and_disabled() {
+        let cfg = NPlusOneConfig {
+            query_threshold: 5,
+            enabled: false,
+        };
+        assert_eq!(cfg.query_threshold, 5);
+        assert!(!cfg.enabled);
+    }
+
+    #[test]
+    fn test_default_threshold_constant_value() {
+        assert_eq!(DEFAULT_QUERY_THRESHOLD, 20);
+    }
+
+    #[test]
+    fn test_query_counter_debug_repr_compiles() {
+        let counter = QueryCounter::new(15);
+        let debug_str = format!("{:?}", counter);
+        assert!(debug_str.contains("QueryCounter"));
+    }
+
+    #[test]
+    fn test_config_debug_repr_compiles() {
+        let cfg = NPlusOneConfig::default();
+        let debug_str = format!("{:?}", cfg);
+        assert!(debug_str.contains("NPlusOneConfig"));
+        assert!(debug_str.contains("20"));
+    }
+
+    // ===== 新增：中间件行为测试 =====
+
+    async fn handler_requires_counter(
+        axum::Extension(counter): axum::Extension<QueryCounter>,
+    ) -> axum::http::StatusCode {
+        counter.record();
+        axum::http::StatusCode::OK
+    }
+
+    async fn handler_exceeds_threshold(
+        axum::Extension(counter): axum::Extension<QueryCounter>,
+    ) -> axum::http::StatusCode {
+        for _ in 0..100 {
+            counter.record();
+        }
+        axum::http::StatusCode::OK
+    }
+
+    #[tokio::test]
+    async fn test_middleware_disabled_does_not_inject_counter() {
+        use axum::{body::Body, http::StatusCode, routing::get, Router};
+        use tower::ServiceExt;
+
+        let config = NPlusOneConfig {
+            query_threshold: 5,
+            enabled: false,
+        };
+        let app = Router::new()
+            .route("/", get(handler_requires_counter))
+            .layer(axum::middleware::from_fn_with_state(
+                config,
+                n_plus_one_middleware,
+            ));
+        let response = app
+            .oneshot(
+                Request::builder()
+                    .method("GET")
+                    .uri("/")
+                    .body(Body::empty())
+                    .expect("build request"),
+            )
+            .await
+            .expect("oneshot failed");
+        // 未注入 counter → Extension extractor 失败 → 500
+        assert_eq!(response.status(), StatusCode::INTERNAL_SERVER_ERROR);
+    }
+
+    #[tokio::test]
+    async fn test_middleware_enabled_injects_counter() {
+        use axum::{body::Body, http::StatusCode, routing::get, Router};
+        use tower::ServiceExt;
+
+        let config = NPlusOneConfig {
+            query_threshold: 5,
+            enabled: true,
+        };
+        let app = Router::new()
+            .route("/", get(handler_requires_counter))
+            .layer(axum::middleware::from_fn_with_state(
+                config,
+                n_plus_one_middleware,
+            ));
+        let response = app
+            .oneshot(
+                Request::builder()
+                    .method("GET")
+                    .uri("/")
+                    .body(Body::empty())
+                    .expect("build request"),
+            )
+            .await
+            .expect("oneshot failed");
+        // 注入了 counter → handler 正常执行 → 200
+        assert_eq!(response.status(), StatusCode::OK);
+    }
+
+    #[tokio::test]
+    async fn test_middleware_exceeded_does_not_block() {
+        use axum::{body::Body, http::StatusCode, routing::get, Router};
+        use tower::ServiceExt;
+
+        let config = NPlusOneConfig {
+            query_threshold: 5,
+            enabled: true,
+        };
+        let app = Router::new()
+            .route("/", get(handler_exceeds_threshold))
+            .layer(axum::middleware::from_fn_with_state(
+                config,
+                n_plus_one_middleware,
+            ));
+        let response = app
+            .oneshot(
+                Request::builder()
+                    .method("GET")
+                    .uri("/")
+                    .body(Body::empty())
+                    .expect("build request"),
+            )
+            .await
+            .expect("oneshot failed");
+        // 超过阈值只记录 warning 日志，不阻塞请求 → 200
+        assert_eq!(response.status(), StatusCode::OK);
+    }
 }

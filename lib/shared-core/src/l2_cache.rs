@@ -398,4 +398,223 @@ mod tests {
         cache.set("shared".to_string(), 7).await;
         assert_eq!(cloned.get("shared").await, Some(7));
     }
+
+    // ===== 新增：L2CacheConfig 测试 =====
+
+    #[test]
+    fn test_default_config_values() {
+        let cfg = L2CacheConfig::default();
+        assert_eq!(cfg.instance_prefix, "");
+        assert_eq!(cfg.l1_ttl, Duration::from_secs(60));
+        assert_eq!(cfg.l2_ttl, Duration::from_secs(600));
+        assert_eq!(cfg.l1_capacity, 10_000);
+    }
+
+    #[test]
+    fn test_custom_config_fields() {
+        let cfg = L2CacheConfig {
+            instance_prefix: "svc-A".to_string(),
+            l1_ttl: Duration::from_secs(10),
+            l2_ttl: Duration::from_secs(300),
+            l1_capacity: 500,
+        };
+        assert_eq!(cfg.instance_prefix, "svc-A");
+        assert_eq!(cfg.l1_ttl, Duration::from_secs(10));
+        assert_eq!(cfg.l2_ttl, Duration::from_secs(300));
+        assert_eq!(cfg.l1_capacity, 500);
+    }
+
+    #[test]
+    fn test_config_clone_preserves_fields() {
+        let cfg = L2CacheConfig {
+            instance_prefix: "instance-1".to_string(),
+            l1_ttl: Duration::from_secs(30),
+            l2_ttl: Duration::from_secs(900),
+            l1_capacity: 200,
+        };
+        let cloned = cfg.clone();
+        assert_eq!(cloned.instance_prefix, cfg.instance_prefix);
+        assert_eq!(cloned.l1_ttl, cfg.l1_ttl);
+        assert_eq!(cloned.l2_ttl, cfg.l2_ttl);
+        assert_eq!(cloned.l1_capacity, cfg.l1_capacity);
+    }
+
+    // ===== 新增：AsyncL2Cache 构造（L1 容量路径）测试 =====
+
+    #[tokio::test]
+    async fn test_new_l1_only_with_zero_capacity_works() {
+        let cfg = L2CacheConfig {
+            l1_capacity: 0,
+            ..Default::default()
+        };
+        let cache: AsyncL2Cache<u32> = AsyncL2Cache::new_l1_only(cfg);
+        assert!(!cache.has_l2());
+        cache.set("k".to_string(), 42).await;
+        assert_eq!(cache.get("k").await, Some(42));
+    }
+
+    #[tokio::test]
+    async fn test_new_l1_only_with_custom_capacity_works() {
+        let cfg = L2CacheConfig {
+            l1_capacity: 2,
+            ..Default::default()
+        };
+        let cache: AsyncL2Cache<u32> = AsyncL2Cache::new_l1_only(cfg);
+        assert!(!cache.has_l2());
+        cache.set("a".to_string(), 1).await;
+        cache.set("b".to_string(), 2).await;
+        assert_eq!(cache.get("a").await, Some(1));
+        assert_eq!(cache.get("b").await, Some(2));
+    }
+
+    // ===== 新增：Redis 不可达降级测试 =====
+
+    #[tokio::test]
+    async fn test_try_new_with_unreachable_redis_falls_back() {
+        let result = AsyncL2Cache::<u32>::try_new(
+            L2CacheConfig::default(),
+            Some("redis://127.0.0.1:1"),
+        )
+        .await;
+        match result {
+            Ok(_) => panic!("unreachable Redis should cause fallback to L1"),
+            Err((cache, warn)) => {
+                assert!(!cache.has_l2(), "fallback should not have L2");
+                assert!(
+                    warn.contains("回退"),
+                    "warning should mention fallback: {}",
+                    warn
+                );
+            }
+        }
+    }
+
+    #[tokio::test]
+    async fn test_try_new_unreachable_redis_l1_still_usable() {
+        let cache = match AsyncL2Cache::<u32>::try_new(
+            L2CacheConfig::default(),
+            Some("redis://127.0.0.1:1"),
+        )
+        .await
+        {
+            Ok(c) => c,
+            Err((c, _)) => c,
+        };
+        assert!(!cache.has_l2());
+        // L1 仍可正常读写
+        cache.set("fallback-key".to_string(), 100).await;
+        assert_eq!(cache.get("fallback-key").await, Some(100));
+    }
+
+    // ===== 新增：TTL 过期测试 =====
+
+    #[tokio::test]
+    async fn test_set_with_custom_ttl_l1_expires() {
+        let cache: AsyncL2Cache<u32> = AsyncL2Cache::new_l1_only(L2CacheConfig::default());
+        cache
+            .set_with_ttl(
+                "ephemeral".to_string(),
+                1,
+                Duration::from_millis(1),
+                Duration::from_secs(60),
+            )
+            .await;
+        tokio::time::sleep(Duration::from_millis(10)).await;
+        assert_eq!(cache.get("ephemeral").await, None);
+    }
+
+    // ===== 新增：结构体值序列化测试 =====
+
+    use serde::{Deserialize, Serialize};
+
+    #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+    struct TestData {
+        name: String,
+        value: i64,
+    }
+
+    #[tokio::test]
+    async fn test_set_get_with_struct_value() {
+        let cache: AsyncL2Cache<TestData> = AsyncL2Cache::new_l1_only(L2CacheConfig::default());
+        let data = TestData {
+            name: "alice".to_string(),
+            value: 42,
+        };
+        cache.set("user:1".to_string(), data.clone()).await;
+        assert_eq!(cache.get("user:1").await, Some(data));
+    }
+
+    // ===== 新增：缓存失效/remove 测试 =====
+
+    #[tokio::test]
+    async fn test_remove_and_delete_equivalent() {
+        let cache: AsyncL2Cache<u32> = AsyncL2Cache::new_l1_only(L2CacheConfig::default());
+        cache.set("a".to_string(), 1).await;
+        cache.set("b".to_string(), 2).await;
+        cache.remove("a").await;
+        cache.delete("b").await;
+        assert_eq!(cache.get("a").await, None);
+        assert_eq!(cache.get("b").await, None);
+    }
+
+    #[tokio::test]
+    async fn test_remove_nonexistent_no_panic() {
+        let cache: AsyncL2Cache<u32> = AsyncL2Cache::new_l1_only(L2CacheConfig::default());
+        // 删除不存在的 key 不应 panic
+        cache.remove("nonexistent").await;
+        cache.delete("also-nonexistent").await;
+    }
+
+    #[tokio::test]
+    async fn test_expire_nonexistent_returns_false() {
+        let cache: AsyncL2Cache<u32> = AsyncL2Cache::new_l1_only(L2CacheConfig::default());
+        let result = cache.expire("missing", Duration::from_secs(10)).await;
+        assert!(!result);
+    }
+
+    // ===== 新增：覆写与多 key 测试 =====
+
+    #[tokio::test]
+    async fn test_overwrite_existing_key() {
+        let cache: AsyncL2Cache<u32> = AsyncL2Cache::new_l1_only(L2CacheConfig::default());
+        cache.set("k".to_string(), 1).await;
+        assert_eq!(cache.get("k").await, Some(1));
+        cache.set("k".to_string(), 2).await;
+        assert_eq!(cache.get("k").await, Some(2));
+    }
+
+    #[tokio::test]
+    async fn test_multiple_keys_set_get() {
+        let cache: AsyncL2Cache<String> = AsyncL2Cache::new_l1_only(L2CacheConfig::default());
+        for i in 0..10 {
+            cache.set(format!("key-{i}"), format!("value-{i}")).await;
+        }
+        for i in 0..10 {
+            assert_eq!(
+                cache.get(&format!("key-{i}")).await,
+                Some(format!("value-{i}"))
+            );
+        }
+    }
+
+    // ===== 新增：L1 容量淘汰测试 =====
+
+    #[tokio::test]
+    async fn test_l1_only_capacity_eviction() {
+        let cfg = L2CacheConfig {
+            l1_capacity: 3,
+            l1_ttl: Duration::from_secs(60),
+            ..Default::default()
+        };
+        let cache: AsyncL2Cache<u32> = AsyncL2Cache::new_l1_only(cfg);
+        cache.set("a".to_string(), 1).await;
+        tokio::time::sleep(Duration::from_millis(1)).await;
+        cache.set("b".to_string(), 2).await;
+        tokio::time::sleep(Duration::from_millis(1)).await;
+        cache.set("c".to_string(), 3).await;
+        tokio::time::sleep(Duration::from_millis(1)).await;
+        cache.set("d".to_string(), 4).await;
+        // 插入第 4 个后应触发 LRU 淘汰，最新的 "d" 必然存在
+        assert_eq!(cache.get("d").await, Some(4));
+    }
 }
