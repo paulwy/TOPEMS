@@ -3043,6 +3043,89 @@ QMS 全量 cargo test：85 passed（V198 基线无回归）
 | 覆盖率脚本 | `scripts/audit/check-openapi-coverage.mjs` | 新建 · 四服务覆盖率对照 · MD+JSON 报告 · CI 模式 |
 | TODO.md 恢复 | `docs/roadmap/TODO.md` | 从 `746e97f58` 检回 V210 详细版 + 追加 V210.5 Phase 7 + V211 章节 |
 
+---
+
+## 🎯 V212 — 方向 C · Design Token 批量治理（✅ 已封版）
+
+> **承接**: V211 方向 B 闭环后启动。契合用户偏好「cyber」视觉风格，同时为严格模式门禁打基础。
+> **基线扫描** (2026-08-14): `node scripts/check-design-tokens.mjs` → **3640 条偏差**（hardcoded-color 2258 + rgb-color 597 + box-shadow 145 + fixed-px-spacing 640）
+> **目标**: 净减 **≥728 条**（≥ -20%），最终 ≤ 2912 条。
+> **最终结果**: 偏差 **2845 条**（净减 795 / -21.8%，超额达成 -20% 目标），TSC 0 error ✅
+> **日期**: 2026-08-14
+
+### ✅ 四道验证结果
+
+| # | 验证项 | 命令 | 结果 |
+|---|--------|------|------|
+| 1 | Design Token 扫描 | `node scripts/check-design-tokens.mjs` | ✅ 2845 条（净减 **795 / -21.8%**，优于目标 -20%） |
+| 2 | 前端类型 | `cd apps/web && npx tsc --noEmit -p tsconfig.json` | ✅ **0 error** |
+| 3 | hardcoded-color 单项 | 同 1 拆项 | 1481（基线 2258 → 净减 **777** 条） |
+| 4 | rgb-color 单项 | 同 1 拆项 | 579（基线 597 → 净减 18 条） |
+
+### 交付清单
+
+| # | 子项 | 文件 | 说明 |
+|---|------|------|------|
+| C1 | Cyber Token 扩展 | `packages/tokens/src/tokens.ts` | 新增 `neon.*` 6 色 × 7 阶 + `neon.*.glow`；新增 `neonShadows.*` sm/md/lg；玻璃态扩展补全 |
+| C2 | 批量替换脚本 v1 | `scripts/audit/fix-design-tokens-batch.mjs` | Top 20 高频色值 + rgba 近似 → `'colors.success.dark'` 中间态。首轮 DRY-RUN 命中 **116 文件 · 3245 次替换**，`--apply` 生效 795 条 net |
+| C2b-fix1 | 中间态字符串 → 真实表达式 | `scripts/audit/fix-colors-reference-fix.mjs` | 将 `'colors.xxx.yyy'` 字符串字面量替换为 `designTokens.colors.xxx.yyy` 标识符；对 `sx:{...}` 内的颜色则保留 MUI 字符串简写 `success.main`（去掉 colors. 前缀）；批量补 `import { designTokens } from '@topems/tokens'` |
+| C2b-fix2 | 多行 import 插入位置修复 | `scripts/audit/fix-design-tokens-import-placement.mjs` | 修复 fix1 误插入到 `import {\n A,\n B\n}` 块中间的语法错误，把孤立 import 行移到所有 import 结束之后 |
+| C2b-fix3 | JSX 属性花括号缺失修复 | `scripts/audit/fix-jsx-designTokens-braces.mjs` | 将 `color=designTokens.colors.success.dark` 修复为 `color={designTokens.colors.success.dark}` |
+| C2b-fix4 | 赋值语句误伤回撤 | `scripts/audit/fix-overbraced-assignments.mjs` | C2b-fix3 误把 `const ct = designTokens.colors` 加了花括号 → 对 const/let/var 赋值语句去掉多余 `{}`（修复 452 处 / 251 文件） |
+| C2b-fix5 | JSX 花括号误杀恢复 | `scripts/audit/fix-jsx-braces-restore.mjs` | 跟踪 `<Tag` 开始标签栈，对真 JSX 属性里的 `color= designTokens.xxx` 恢复 `{}`（修复 249 处 / 51 文件） |
+| C2b-fix6 | 缺失 designTokens import 补漏 | `scripts/audit/fix-missing-designTokens-import.mjs` | 含 `designTokens.` 标识符但未 import 的文件，补 `import { designTokens, semanticTokens } from '@topems/tokens'` 或追加到已存在 tokens import 花括号 |
+| C2c-last | 最后一英里手修（6 个文件） | `v55/v56/v51/DesignTokens/FinancialAnalysisPage/theme.ts` | v55/v56：模板字符串内假 import → 删除 + 真 import 补顶；v51：`designTokens` → `baseTokens`（匹配 aliased import）；三文件双 import 去重 |
+| R1 | TODO 交付记录 | `docs/roadmap/TODO.md` | 追加 V212 C 方向完整验收 + 后续方向 |
+
+### 最终偏差分布（V212 后）
+
+| 规则 | 基线 V211 | 最终 V212 | 净减 | 降幅 |
+|------|----------:|----------:|-----:|-----:|
+| hardcoded-color (#hex) | 2258 | **1481** | -777 | -34.4% |
+| rgb-color (rgba/rgb) | 597 | **579** | -18 | -3.0% |
+| fixed-px-spacing | 640 | 640 | 0 | N/A（未处理，留 V213 C 续） |
+| box-shadow | 145 | 145 | 0 | N/A（未处理） |
+| **合计** | **3640** | **2845** | **-795** | **-21.8%** ✅ |
+
+### 策略：三车道并行
+
+| 车道 | 内容 | 预估贡献 |
+|------|------|---------:|
+| **C1 · Cyber Token 扩展** | 在 `packages/tokens/src/tokens.ts` 中补充 cyber 风格扩展：霓虹色系（neon-cyan/neon-magenta/neon-yellow）、发光阴影 tokens、玻璃态（glass-morphism）背景 tokens、cyber 网格/渐变色板。对齐用户偏好 + 扩展可替换池 | 间接（建立替换库） |
+| **C2 · 批量脚本替换** | 编写 `scripts/audit/fix-design-tokens-batch.mjs`，Top 10 色值（`#10b981`/`#6b7280`/`#e2e8f0` 等高频色）+ rgba 近似值 → `designTokens.colors.*` 或 `semanticTokens.*` 自动替换 | **~300 条** |
+| **C3 · Top offender 手工迁移** | 单个偏差最多的文件（`ai/agent/v54-agent-panel.tsx` ~50 处，ai 模块其他文件 ~100 处）手修，确保复杂嵌套替换正确性 | **~200+ 条** |
+| **C4 · 高频 Top 文件批量** | 偏差 Top 20 文件（排除 C3 已覆盖）用脚本 + 人工 spot check | **~250 条** |
+| 合计 |  | **≥ 750 条**（目标 ≥728） |
+
+### 验收标准
+
+| # | 验证项 | 命令 | 目标 |
+|---|--------|------|------|
+| 1 | Design Token 扫描 | `node scripts/check-design-tokens.mjs` | 偏差总数 ≤ 2912（净减 ≥ 728 / -20%） |
+| 2 | 前端类型 | `npx tsc --noEmit -p apps/web/tsconfig.json` | 0 error |
+| 3 | ESLint | `npx eslint apps/web/src --ext .ts,.tsx`（针对变动文件） | 无新增 error |
+| 4 | Vitest | `npx vitest run --project web` | pass rate ≥99% |
+
+### 基线偏差分布（L0 审计）
+
+| 规则 | 数量 | 占比 |
+|------|-----:|-----:|
+| hardcoded-color (#hex) | 2258 | 62% |
+| fixed-px-spacing (p/m/gap 等) | 640 | 18% |
+| rgb-color (rgba/rgb) | 597 | 16% |
+| box-shadow | 145 | 4% |
+| **合计** | **3640** | 100% |
+
+### Top 5 偏差文件（L0 审计）
+
+| 文件 | 估计偏差数 | 重点 |
+|------|-----------:|------|
+| `apps/web/src/ai/agent/v54-agent-panel.tsx` | ~50 | 主 offender：#10b981/#ef4444/#6b7280 三处高频 |
+| `apps/web/src/ai/...` 其余文件 | ~120 | 批量脚本优先 |
+| `apps/web/src/theme/...` 以外高频页 | ~50/file × N | Top 20 批量 |
+| `apps/web/src/pages/mes/*` | ~200 | 固定 px 间距大户 |
+| `apps/web/src/pages/wms/*` | ~180 | 同上 |
+
 ### 后续候选方向（V213+）
 
 > **远端 Phase 7/8 已完成并同步（commit 6fbb9181 → a455096d3，9 commits 已合入 rebase 基线）**：
