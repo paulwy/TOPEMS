@@ -198,3 +198,47 @@ pub struct InstrumentStat {
     pub instrument_name: String,
     pub count: i64,
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use serde::{Deserialize, Serialize};
+
+    fn roundtrip<T>(value: &T)
+    where
+        T: Serialize + for<'de> Deserialize<'de>,
+    {
+        let s1 = serde_json::to_string(value).expect("serialize to string");
+        let v1: serde_json::Value = serde_json::from_str(&s1).expect("string -> Value");
+        let s2 = serde_json::to_string(&v1).expect("Value -> string");
+        let v2: serde_json::Value = serde_json::from_str(&s2).expect("roundtrip string -> Value");
+        assert_eq!(v1, v2);
+    }
+
+    #[test]
+    fn test_test_item_result_roundtrip() {
+        let r = TestItemResult {
+            test_item: "铅".to_string(),
+            test_item_name: Some("铅(Pb)".to_string()),
+            result: Some("0.15".to_string()),
+            numeric_result: Some(0.15),
+            unit: Some("mg/kg".to_string()),
+            reference_range: Some("≤0.2".to_string()),
+            status: Some("pass".to_string()),
+            abnormal_flag: None,
+        };
+        roundtrip(&r);
+
+        let empty = TestItemResult {
+            test_item: "汞".to_string(),
+            test_item_name: None,
+            result: None,
+            numeric_result: None,
+            unit: None,
+            reference_range: None,
+            status: None,
+            abnormal_flag: None,
+        };
+        roundtrip(&empty);
+    }
+}

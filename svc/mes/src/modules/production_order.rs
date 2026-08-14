@@ -1315,3 +1315,66 @@ pub async fn reject_order(
         "审批驳回成功",
     ))
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use serde::Serialize;
+    use serde::de::DeserializeOwned;
+    use uuid::Uuid;
+
+    fn uid() -> Uuid {
+        Uuid::new_v4()
+    }
+    fn now() -> chrono::DateTime<Utc> {
+        Utc::now()
+    }
+
+    fn roundtrip<T: Serialize + DeserializeOwned>(val: &T) {
+        let s1 = serde_json::to_string(val).unwrap();
+        let v1: serde_json::Value = serde_json::from_str(&s1).unwrap();
+        let val2: T = serde_json::from_str(&s1).unwrap();
+        let s2 = serde_json::to_string(&val2).unwrap();
+        let v2: serde_json::Value = serde_json::from_str(&s2).unwrap();
+        assert_eq!(v1, v2);
+    }
+
+    #[test]
+    fn test_production_order_source_roundtrip() {
+        roundtrip(&ProductionOrderSource::Manual);
+        roundtrip(&ProductionOrderSource::ErpSalesOrder);
+        roundtrip(&ProductionOrderSource::Mrp);
+    }
+
+    #[test]
+    fn test_erp_sales_order_info_roundtrip_some() {
+        let info = ErpSalesOrderInfo {
+            order_id: uid(),
+            order_number: "SO-20260815-001".to_string(),
+            customer_name: "ABC 公司".to_string(),
+            product_name: "轴承 SKF-6205".to_string(),
+            product_code: "BRG-6205".to_string(),
+            quantity: 500.0,
+            unit: "PCS".to_string(),
+            delivery_date: Some(now()),
+            priority: Some(1),
+        };
+        roundtrip(&info);
+    }
+
+    #[test]
+    fn test_erp_sales_order_info_roundtrip_none() {
+        let info = ErpSalesOrderInfo {
+            order_id: uid(),
+            order_number: "SO-20260815-002".to_string(),
+            customer_name: "XYZ 公司".to_string(),
+            product_name: "轴承 SKF-6205".to_string(),
+            product_code: "BRG-6205".to_string(),
+            quantity: 300.0,
+            unit: "PCS".to_string(),
+            delivery_date: None,
+            priority: None,
+        };
+        roundtrip(&info);
+    }
+}

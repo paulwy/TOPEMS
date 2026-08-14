@@ -61,3 +61,57 @@ pub struct ListProductionOrdersResponse {
     pub page: i64,
     pub pagesize: i64,
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use serde::Serialize;
+    use serde::de::DeserializeOwned;
+    use uuid::Uuid;
+
+    fn uid() -> Uuid {
+        Uuid::new_v4()
+    }
+    fn now() -> chrono::DateTime<Utc> {
+        Utc::now()
+    }
+
+    fn roundtrip<T: Serialize + DeserializeOwned>(val: &T) {
+        let s1 = serde_json::to_string(val).unwrap();
+        let v1: serde_json::Value = serde_json::from_str(&s1).unwrap();
+        let val2: T = serde_json::from_str(&s1).unwrap();
+        let s2 = serde_json::to_string(&val2).unwrap();
+        let v2: serde_json::Value = serde_json::from_str(&s2).unwrap();
+        assert_eq!(v1, v2);
+    }
+
+    #[test]
+    fn test_create_production_order_request_roundtrip_some() {
+        let r = CreateProductionOrderRequest {
+            product_id: Some(uid()),
+            product_name: "螺丝 M8".to_string(),
+            product_code: "SCR-M8".to_string(),
+            quantity: 1000.0,
+            planned_start_date: Some(now()),
+            planned_end_date: Some(now()),
+            workshop_id: Some(uid()),
+            notes: Some("加急订单".to_string()),
+        };
+        roundtrip(&r);
+    }
+
+    #[test]
+    fn test_create_production_order_request_roundtrip_none() {
+        let r = CreateProductionOrderRequest {
+            product_id: None,
+            product_name: "螺丝 M8".to_string(),
+            product_code: "SCR-M8".to_string(),
+            quantity: 1000.0,
+            planned_start_date: None,
+            planned_end_date: None,
+            workshop_id: None,
+            notes: None,
+        };
+        roundtrip(&r);
+    }
+}

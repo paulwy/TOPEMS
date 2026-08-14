@@ -195,6 +195,73 @@ fn get_runtime_url() -> String {
     std::env::var("RUNTIME_URL").unwrap_or_else(|_| "http://localhost:8051".to_string())
 }
 
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use serde::{Deserialize, Serialize};
+
+    fn roundtrip<T>(value: &T)
+    where
+        T: Serialize + for<'de> Deserialize<'de>,
+    {
+        let s1 = serde_json::to_string(value).expect("serialize to string");
+        let v1: serde_json::Value = serde_json::from_str(&s1).expect("string -> Value");
+        let s2 = serde_json::to_string(&v1).expect("Value -> string");
+        let v2: serde_json::Value = serde_json::from_str(&s2).expect("roundtrip string -> Value");
+        assert_eq!(v1, v2);
+    }
+
+    #[test]
+    fn test_permission_roundtrip() {
+        let p = Permission {
+            code: "qa:lims:sample:read".to_string(),
+            name: "查看样品".to_string(),
+            description: "查看实验室样品".to_string(),
+        };
+        roundtrip(&p);
+    }
+
+    #[test]
+    fn test_plugin_health_roundtrip() {
+        let h = PluginHealth {
+            status: "healthy".to_string(),
+            database: true,
+        };
+        roundtrip(&h);
+    }
+
+    #[test]
+    fn test_plugin_info_roundtrip() {
+        let info = PluginInfo {
+            code: "qa".to_string(),
+            name: "质量管理与安全".to_string(),
+            version: "1.0.0".to_string(),
+            description: "QMS + LIMS + EHS".to_string(),
+            author: "TOPEMS".to_string(),
+            category: "quality".to_string(),
+            plugin_type: "business".to_string(),
+            permissions: vec![
+                Permission {
+                    code: "qa:lims:sample:read".to_string(),
+                    name: "查看样品".to_string(),
+                    description: "查看实验室样品".to_string(),
+                },
+                Permission {
+                    code: "qa:lims:sample:write".to_string(),
+                    name: "管理样品".to_string(),
+                    description: "注册和管理样品".to_string(),
+                },
+            ],
+            runtime_url: "http://localhost:8051".to_string(),
+            dependencies: vec!["qms".to_string()],
+            navigation_config: Some(serde_json::json!([
+                {"code": "lims-samples", "label": "样品管理", "path": "/lims/samples", "order": 10}
+            ])),
+        };
+        roundtrip(&info);
+    }
+}
+
 /// 启动时自动注册到统一核心
 pub async fn auto_register_to_core(core_url: Option<&str>) {
     let core_url = core_url.unwrap_or("http://localhost:8000");
