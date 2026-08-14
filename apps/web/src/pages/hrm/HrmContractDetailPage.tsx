@@ -300,7 +300,7 @@ const HrmContractDetailPage: React.FC = () => {
           <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>
             {i18n.t('hrm.hrm_contract_detail_page.k5')}
           </InputLabel>
-          <Typography sx={{ mt: 0.5 }}>{contract.probation_period || 0} 个月</Typography>
+          <Typography sx={{ mt: 0.5 }}>{t('hrm.hrm_contract_detail_page.m1', { v1: contract.probation_period || 0 })}</Typography>
         </Box>
         <Box>
           <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>
@@ -445,7 +445,7 @@ const HrmContractDetailPage: React.FC = () => {
         <DialogTitle>{t('hrm.hrm_contract_detail_page.k13')}</DialogTitle>
         <DialogContent>
           <Typography variant='body1'>
-            确定要为 <strong>{contract?.employee_name}</strong> 的合同进行续签吗？
+            {t('hrm.hrm_contract_detail_page.e1', { v1: contract?.employee_name })}
           </Typography>
           <Box sx={{ mt: 2 }}>
             <Typography

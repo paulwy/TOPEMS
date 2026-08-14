@@ -274,7 +274,7 @@ const FinanceBudgetDetailPage: React.FC = () => {
                 sx={{ height: 8, borderRadius: 1, mb: 1 }}
               />
               <Typography variant='body2'>
-                使用率: <strong>{budget.usageRate}%</strong>
+                {t('finance.finance_budget_detail_page.l1')}{' '}<strong>{budget.usageRate}%</strong>
               </Typography>
             </Box>
           </Box>
@@ -303,7 +303,7 @@ const FinanceBudgetDetailPage: React.FC = () => {
             <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>
               {t('finance.finance_budget_detail_page.k2')}
             </InputLabel>
-            <Typography sx={{ mt: 0.5 }}>{budget.fiscalYear}年度</Typography>
+            <Typography sx={{ mt: 0.5 }}>{t('finance.finance_budget_detail_page.m1', { v1: budget.fiscalYear })}</Typography>
           </Box>
           <Box>
             <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>
@@ -658,7 +658,7 @@ const FinanceBudgetDetailPage: React.FC = () => {
                 {budget?.usageRate && budget.usageRate >= 80
                   ? t('finance.finance_budget_detail_page.text_6233c5')
                   : t('finance.finance_budget_detail_page.normal')}
-                ，请关注后续支出情况。
+                {t('finance.finance_budget_detail_page.e1')}
               </Typography>
             </Box>
             <Box sx={{ p: 2, bgcolor: 'grey.100', borderRadius: 1 }}>
@@ -688,13 +688,13 @@ const FinanceBudgetDetailPage: React.FC = () => {
             sx={{ pl: 2 }}
           >
             <li>
-              <Typography variant='body2'>• 根据预算执行情况合理安排后续支出</Typography>
+              <Typography variant='body2'>{t('finance.finance_budget_detail_page.l2')}</Typography>
             </li>
             <li>
-              <Typography variant='body2'>• 关注使用率较高的科目，必要时调整预算分配</Typography>
+              <Typography variant='body2'>{t('finance.finance_budget_detail_page.l3')}</Typography>
             </li>
             <li>
-              <Typography variant='body2'>• 定期进行预算执行分析，及时发现问题</Typography>
+              <Typography variant='body2'>{t('finance.finance_budget_detail_page.l4')}</Typography>
             </li>
           </Box>
         </DialogContent>

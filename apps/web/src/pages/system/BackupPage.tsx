@@ -362,7 +362,7 @@ const BackupPage: React.FC = () => {
                       <TableCell>
                         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                           <Clock size={14} />
-                          <Typography>{backup.duration_seconds}秒</Typography>
+                          <Typography>{t('system.backup_page.m1', { v1: backup.duration_seconds })}</Typography>
                         </Box>
                       </TableCell>
                       <TableCell>
@@ -616,7 +616,7 @@ const BackupPage: React.FC = () => {
                   >
                     {t('system.backup_page.e12')}
                   </Typography>
-                  <Typography>{selectedBackup.duration_seconds}秒</Typography>
+                  <Typography>{t('system.backup_page.m1', { v1: selectedBackup.duration_seconds })}</Typography>
                 </Box>
                 <Box sx={{ width: { xs: '100%', sm: 'calc(50% - 8px)' } }}>
                   <Typography

@@ -9,13 +9,13 @@ export const BomTemplatePage: React.FC = () => {
   const { t } = useTranslation('pdm');
   return (
     <PageContainer
-      title='BOM模板'
+      title={t('pdm.setting_bom_template_page.m1')}
       subtitle={t('pdm.bom_template_page.k0')}
       padding={false}
       maxWidth={false}
     >
       <SettingsPageTemplate
-        title='BOM模板'
+        title={t('pdm.setting_bom_template_page.m1')}
         description={i18n.t('pdm.setting_bom_template_page.r1')}
         icon={<Settings size={24} />}
         sections={[]}

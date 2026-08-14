@@ -117,7 +117,7 @@ export const BomPage: React.FC = () => {
   const activateVersionMutation = useMutation({
     mutationFn: (id: string) => bomApi.activateVersion(id),
     onSuccess: () => {
-      addNotification({ title: t('pdm.bom_page.k4'), message: 'BOM版本已激活', type: 'success' });
+      addNotification({ title: t('pdm.bom_page.k4'), message: i18n.t('pdm.bom_page.m1'), type: 'success' });
       queryClient.invalidateQueries({
         queryKey: QUERY_KEYS.PDM.BOM_VERSIONS,
         exact: false,
@@ -136,7 +136,7 @@ export const BomPage: React.FC = () => {
   const archiveVersionMutation = useMutation({
     mutationFn: (id: string) => bomApi.archiveVersion(id),
     onSuccess: () => {
-      addNotification({ title: t('pdm.bom_page.k7'), message: 'BOM版本已归档', type: 'success' });
+      addNotification({ title: t('pdm.bom_page.k7'), message: i18n.t('pdm.bom_page.m2'), type: 'success' });
       queryClient.invalidateQueries({
         queryKey: QUERY_KEYS.PDM.BOM_VERSIONS,
         exact: false,
@@ -285,7 +285,7 @@ export const BomPage: React.FC = () => {
                 variant='body2'
                 sx={{ color: 'text.secondary', fontSize: '0.875rem' }}
               >
-                BOM总数
+                {t('pdm.bom_page.e1')}
               </Typography>
               <Typography
                 variant='h5'
@@ -388,7 +388,7 @@ export const BomPage: React.FC = () => {
             component='span'
             sx={{ color: 'text.secondary', fontSize: '0.875rem' }}
           >
-            BOM编号
+            {t('pdm.bom_page.e2')}
           </Box>
           <Box sx={{ fontWeight: 500 }}>{bom.bom_no}</Box>
         </Box>
@@ -406,7 +406,7 @@ export const BomPage: React.FC = () => {
             component='span'
             sx={{ color: 'text.secondary', fontSize: '0.875rem' }}
           >
-            BOM名称
+            {t('pdm.bom_page.e3')}
           </Box>
           <Box>{bom.name}</Box>
         </Box>
@@ -541,17 +541,17 @@ export const BomPage: React.FC = () => {
   const tabs: CrudTab[] = [
     {
       id: 'versions',
-      label: 'BOM版本',
+      label: i18n.t('pdm.bom_page.m3'),
       content: null,
     },
     {
       id: 'items',
-      label: 'BOM物料',
+      label: i18n.t('pdm.bom_page.m4'),
       content: bomItemsTabContent,
     },
     {
       id: 'compare',
-      label: 'BOM对比',
+      label: i18n.t('pdm.bom_page.m5'),
       content: compareTabContent,
     },
   ];
@@ -567,7 +567,7 @@ export const BomPage: React.FC = () => {
       <CrudPage
         schema={bomSchema}
         apiAdapter={baseAdapter}
-        breadcrumbs={[{ label: 'PDM' }, { label: 'BOM管理' }]}
+        breadcrumbs={[{ label: 'PDM' }, { label: i18n.t('pdm.bom_page.m6') }]}
         headerContent={headerContent}
         detailContent={detailContent}
         detailMaxWidth='lg'
@@ -582,7 +582,7 @@ export const BomPage: React.FC = () => {
         maxWidth='sm'
         fullWidth
       >
-        <DialogTitle>BOM版本对比</DialogTitle>
+        <DialogTitle>{t('pdm.bom_page.e1')}</DialogTitle>
         <DialogContent>
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3, mt: 2 }}>
             <FormControl fullWidth>

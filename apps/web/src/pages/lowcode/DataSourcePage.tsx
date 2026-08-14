@@ -231,7 +231,7 @@ export const DataSourcePage: React.FC = () => {
             sx={{ p: 2, mt: 2 }}
           >
             <Typography variant='body2'>
-              测试结果：{testResult.success ? '✅ 成功' : '❌ 失败'} · {testResult.message}
+              {t('lowcode.data_source_page.e1', { v1: testResult.success ? t('lowcode.data_source_page.m1') : t('lowcode.data_source_page.l1'), v2: testResult.message })}
               {testResult.latency_ms ? ` · ${testResult.latency_ms}ms` : ''}
             </Typography>
           </Paper>

@@ -113,7 +113,7 @@ export const EmployeeFinanceTab: React.FC<EmployeeFinanceTabProps> = ({
       <Card>
         <CardContent sx={{ py: 4 }}>
           <Box sx={{ textAlign: 'center', color: 'text.secondary' }}>
-            <Typography>加载失败: {error.message}</Typography>
+            <Typography>{t('hrm.employee_finance_tab.m1', { v1: error.message })}</Typography>
             <Button
               variant='outlined'
               onClick={handleEdit}
@@ -554,7 +554,7 @@ export const EmployeeFinanceTab: React.FC<EmployeeFinanceTabProps> = ({
                   variant='body2'
                   sx={{ color: 'text.secondary' }}
                 >
-                  个人社保扣款(估算)
+                  {t('hrm.employee_finance_tab.l1')}
                 </Typography>
                 <Typography sx={{ fontFamily: 'monospace' }}>
                   ¥
@@ -578,7 +578,7 @@ export const EmployeeFinanceTab: React.FC<EmployeeFinanceTabProps> = ({
                   variant='body2'
                   sx={{ color: 'text.secondary' }}
                 >
-                  个人公积金扣款(估算)
+                  {t('hrm.employee_finance_tab.l2')}
                 </Typography>
                 <Typography sx={{ fontFamily: 'monospace' }}>
                   ¥

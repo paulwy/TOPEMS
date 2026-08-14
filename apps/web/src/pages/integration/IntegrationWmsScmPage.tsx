@@ -12,6 +12,7 @@ import { extractErrorMessage } from '@/utils/errors';
 
 import { QUERY_KEYS } from '@/lib/reactQuery';
 import { useTranslation } from 'react-i18next';
+import i18n from '@/i18n';
 
 const IntegrationWmsScmPage: React.FC = () => {
   const { t } = useTranslation('integration');
@@ -38,7 +39,7 @@ const IntegrationWmsScmPage: React.FC = () => {
       });
     },
     onError: (err: unknown) => {
-      apiLogger.error('WMS-SCM 同步失败:', err);
+      apiLogger.error(i18n.t('integration.integration_wms_scm_page.m1'), err);
       addNotification({
         title: t('integration.integration_wms_scm_page.k3'),
         message: extractErrorMessage(err, t('integration.integration_wms_scm_page.k4')),
@@ -86,7 +87,7 @@ const IntegrationWmsScmPage: React.FC = () => {
 
   return (
     <PageContainer
-      title='WMS ↔ SCM 同步'
+      title={t('integration.integration_wms_scm_page.m2')}
       subtitle={t('integration.integration_wms_scm_page.wmsscm_11')}
     >
       <CrudPage

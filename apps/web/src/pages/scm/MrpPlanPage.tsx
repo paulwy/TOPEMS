@@ -77,16 +77,16 @@ const MrpPlanPage: React.FC = () => {
         addNotification({
           type: 'success',
           title: t('scm.mrp_plan_page.k0'),
-          message: data.data.message || 'MRP运算已完成',
+          message: data.data.message || i18n.t('scm.mrp_plan_page.l1'),
         });
       }
     },
     onError: (err: unknown) => {
-      apiLogger.error('MRP运算失败:', err);
+      apiLogger.error(i18n.t('scm.mrp_plan_page.m1'), err);
       addNotification({
         type: 'error',
         title: t('scm.mrp_plan_page.k1'),
-        message: 'MRP运算执行失败',
+        message: i18n.t('scm.mrp_plan_page.m2'),
       });
     },
   });
@@ -128,7 +128,7 @@ const MrpPlanPage: React.FC = () => {
         schema={mrpPlanSchema}
         apiAdapter={apiAdapter as CrudApiAdapter}
         customRowActions={customRowActions as unknown as RowAction<Record<string, unknown>>[]}
-        breadcrumbs={[{ label: 'SCM' }, { label: 'MRP计划' }]}
+        breadcrumbs={[{ label: 'SCM' }, { label: i18n.t('scm.mrp_plan_page.m3') }]}
       />
 
       <Dialog
@@ -137,7 +137,7 @@ const MrpPlanPage: React.FC = () => {
         maxWidth='sm'
         fullWidth
       >
-        <DialogTitle>MRP运算结果</DialogTitle>
+        <DialogTitle>{t('scm.mrp_plan_page.e1')}</DialogTitle>
         <DialogContent>
           {calculationResult && (
             <Box sx={{ py: 2 }}>
@@ -145,7 +145,7 @@ const MrpPlanPage: React.FC = () => {
                 severity='success'
                 sx={{ mb: 2 }}
               >
-                {calculationResult.message || 'MRP运算已完成'}
+                {calculationResult.message || i18n.t('scm.mrp_plan_page.l1')}
               </Alert>
               <Box
                 sx={{

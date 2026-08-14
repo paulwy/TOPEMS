@@ -315,7 +315,7 @@ export const DesignerToolbar: React.FC<DesignerToolbarProps> = ({
                           color='warning.main'
                           sx={{ ml: 1 }}
                         >
-                          (未保存)
+                          ({t('automation.automation_designer_page_components_designer_toolbar.l1')})
                         </Typography>
                       )}
                     </Typography>

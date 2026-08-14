@@ -325,12 +325,12 @@ const FinanceReportsPage: React.FC = () => {
             onChange={(e) => setPeriod(e.target.value)}
           >
             <MenuItem value=''>{t('finance.finance_reports_page.k1')}</MenuItem>
-            <MenuItem value='2024-01'>2024年01月</MenuItem>
-            <MenuItem value='2024-02'>2024年02月</MenuItem>
-            <MenuItem value='2024-03'>2024年03月</MenuItem>
-            <MenuItem value='2024-04'>2024年04月</MenuItem>
-            <MenuItem value='2024-05'>2024年05月</MenuItem>
-            <MenuItem value='2024-06'>2024年06月</MenuItem>
+            <MenuItem value='2024-01'>{t('finance.finance_reports_page.e1')}</MenuItem>
+            <MenuItem value='2024-02'>{t('finance.finance_reports_page.e2')}</MenuItem>
+            <MenuItem value='2024-03'>{t('finance.finance_reports_page.e3')}</MenuItem>
+            <MenuItem value='2024-04'>{t('finance.finance_reports_page.e4')}</MenuItem>
+            <MenuItem value='2024-05'>{t('finance.finance_reports_page.e5')}</MenuItem>
+            <MenuItem value='2024-06'>{t('finance.finance_reports_page.e6')}</MenuItem>
           </Select>
         </FormControl>
       </Box>

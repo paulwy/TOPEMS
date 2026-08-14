@@ -3146,7 +3146,7 @@ QMS 全量 cargo test：85 passed（V198 基线无回归）
 >
 > **V218 已完成**：✅ 国际化 i18n 落地（详见下方 V218 章节，LanguageSelector 集成 · 37 命名空间全注册 · 9 空文件填充 · CI 扩展 · TSC 0 error）
 >
-> **V219 进行中**：🔄 i18n 硬编码清零 P2（10 中模块 · 1739 处批量替换 + 679 处模块级 t()→i18n.t() 修复 · TSC/ESLint 0 error）
+> **V219 已封版**：✅ i18n 硬编码清零 P2-Final（10 中模块 · P2 累计 3554 处替换 · P2 剩余 2 处 API 属性名 · TSC 0 error）
 >
 > **V220 候选（按 ROI 估算，均未启动）**：
 > - **i18n 硬编码清零 P3**：继续处理剩余 ~10700 处 · 优先 mes/monitor/mobile/admin 模块
@@ -3764,4 +3764,69 @@ QMS 全量 cargo test：85 passed（V198 基线无回归）
 | 完全清零模块 | 2 | 0 | 0 | 2/39 |
 | 剩余硬编码 | 11012 | 283(P2) | 205(P2) | ~10500 |
 | 清除率 | 2.8% | 20.4% | 21.2% | ~24% |
+
+---
+
+## 🎯 V219 P2-Final — i18n 硬编码清零收尾（159→2 · 262 处替换 · TSC 0 error · ✅ 已封版）
+
+> **承接**：V219 P2-Edge 结束后剩余 205 处边界用例，经 `fix-remaining.cjs` 降至 159 处，本阶段通过多轮脚本+手动修复将 159 处降至 2 处（API 属性名，保留）。
+
+### 交付物
+
+| 脚本 | 替换数 | 主要模式 |
+|------|--------|----------|
+| `fix-final-manual.cjs` | 143 | placeholder/label/title 属性、ternary、apiLogger、InputLabel、Typography、template literal |
+| `fix-last-mile.cjs` | 37 | t('key','中文') 回退移除、data 对象字面量、InputLabel、MenuItem、DialogTitle、bare JSX |
+| `fix-edge-final.cjs` R1 | 36 | shared.ts Record 值、error fallback、standalone fallback、template literal、zh-paren-expr |
+| `fix-edge-final.cjs` R2 | 24 | t('key', '中文fallback') 回退移除（HRM 两个文件） |
+| `fix-edge-final.cjs` R3 | 17 | InputLabel（ASCII+中文混排）、DialogTitle（BOM版本对比）、MenuItem（2024年01月）、bare URL text |
+| `fix-edge-final.cjs` R4 | 2 | ConsolidationReportsPage ternary-tmpl、VoucherCreatePage comma-expr |
+| 手动修复 | 3 | AppManagementPage（template literal 嵌套）、DataSourcePage（嵌套 ternary fallback）、ConsolidationReportsPage（API 属性名 bracket notation） |
+
+### 修复 Bug
+
+| 问题 | 修复 |
+|------|------|
+| `keyCounters` const 赋值报错 | 改为 `let` 声明 |
+| `t-fb-rm` 模式未设置 `modified=true` 导致文件未写入 | 在 `replaced` 块中添加 `modified = true` |
+| InputLabel/DialogTitle 正则要求首字符为中文，ASCII 前缀不匹配 | 改为 `[^<{}]*[\u4e00-\u9fff]` 允许 ASCII 前缀 |
+| `!line.includes('=')` 阻止 URL 文本匹配 | 移除条件，允许 `?page_id=xxx` 格式 |
+| `!line.includes('\`')` 阻止 ternary+template literal 匹配 | 移除条件 |
+| 模板字面量 `(` 前缀不匹配 | 正则添加 `[（(]?` 可选前缀 |
+| FormDesignPage/PageDesignPage 模板字面量未闭合 | 手动修复为 `t('key', { v1: form ? \`· ${form.name}\` : '' })` |
+| shared.ts/useAutomationDesigner.ts 重复 i18n 导入 | 移除手动添加的重复 import |
+| 翻译值包含代码语法（`m1` 键值含 `` ` : ''} ``） | 修正为 `表单设计器 {{v1}}` / `页面设计器 {{v1}}` |
+
+### 剩余 2 处（可接受保留）
+
+| 文件 | 行 | 内容 | 保留原因 |
+|------|----|------|----------|
+| ConsolidationReportsPage.tsx | 330 | `report['归属于母公司净利润']` | API 响应字段名，bracket notation 合法 |
+| ConsolidationReportsPage.tsx | 331 | `report['归属于母公司净利润']` | 同上（template literal 内） |
+
+### 验证结果
+
+| 检查项 | 结果 |
+|--------|------|
+| TSC `--noEmit` | ✅ 0 error |
+| 翻译文件完整性 | ✅ zh/en 双语齐全 |
+| 新增翻译键 | ~262 条（含 `l1-lN`、`e1-eN` 系列） |
+
+### 📈 累计进度（V219 P1 + P2 + P2-Edge + P2-Final）
+
+| 指标 | P1 | P2 | P2-Edge | P2-Final | 累计 |
+|------|----|----|---------|----------|------|
+| 处理模块数 | 10 | 10 | 10（同 P2） | 10（同 P2） | 20/39 |
+| 替换处数 | 322 | 2418 | 552 | 262 | 3554 |
+| 完全清零模块 | 2 | 0 | 0 | 0 | 2/39 |
+| P2 剩余硬编码 | - | 283 | 205 | 2 | 2（API 属性名） |
+| 清除率 | 2.8% | 20.4% | 21.2% | 99.9% (P2) | ~28% |
+
+### 新增脚本清单
+
+| 脚本 | 用途 |
+|------|------|
+| `scripts/i18n/fix-final-manual.cjs` | 29 种复杂模式匹配（对象键、JSX 混合文本、日志消息等） |
+| `scripts/i18n/fix-last-mile.cjs` | 20 种模式（t() 回退移除、data 字面量、InputLabel、MenuItem 等） |
+| `scripts/i18n/fix-edge-final.cjs` | 31 种模式（Record 值、error fallback、template literal、bracket notation 等） |
 

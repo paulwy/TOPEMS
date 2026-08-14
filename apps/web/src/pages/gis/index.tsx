@@ -555,7 +555,7 @@ const GisContent: React.FC = () => {
 
   return (
     <PageContainer
-      title='GIS地图'
+      title={t('gis.index.m1')}
       padding={false}
       maxWidth={false}
     >
@@ -586,7 +586,7 @@ const GisContent: React.FC = () => {
                   variant='h4'
                   sx={{ fontWeight: 700 }}
                 >
-                  GIS地图
+                  {t('gis.index.e1')}
                 </Typography>
                 <Typography color='text.secondary'>{t('gis.index.e27')}</Typography>
               </Box>

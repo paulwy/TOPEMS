@@ -226,7 +226,7 @@ const VoucherDetailPage: React.FC = () => {
           minHeight: '100vh',
         }}
       >
-        <Typography>加载中...</Typography>
+        <Typography>{t('finance.opening_balance_page.m1')}</Typography>
       </Box>
     );
   }
@@ -341,7 +341,7 @@ const VoucherDetailPage: React.FC = () => {
             >
               {t('finance.voucher_detail_page.e8')}
             </Typography>
-            <Typography variant='body1'>{voucher.attachment_count || 0} 个</Typography>
+            <Typography variant='body1'>{t('finance.voucher_detail_page.m2', { v1: voucher.attachment_count || 0 })}</Typography>
           </Box>
           <Box>
             <Typography

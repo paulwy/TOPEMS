@@ -47,12 +47,12 @@ const pieData = [
   { name: i18n.t('scm.dashboard_page.k6'), value: 20 },
 ];
 const lineData = [
-  { name: '1周', value: 8 },
-  { name: '2周', value: 12 },
-  { name: '3周', value: 10 },
-  { name: '4周', value: 15 },
-  { name: '5周', value: 11 },
-  { name: '6周', value: 14 },
+  { name: i18n.t('scm.dashboard_page.m1'), value: 8 },
+  { name: i18n.t('scm.dashboard_page.m2'), value: 12 },
+  { name: i18n.t('scm.dashboard_page.m3'), value: 10 },
+  { name: i18n.t('scm.dashboard_page.m4'), value: 15 },
+  { name: i18n.t('scm.dashboard_page.m5'), value: 11 },
+  { name: i18n.t('scm.dashboard_page.m6'), value: 14 },
 ];
 
 export const DashboardPage: React.FC = () => {

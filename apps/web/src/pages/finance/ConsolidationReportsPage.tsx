@@ -320,15 +320,15 @@ export default function ConsolidationReportsPage() {
             v1: report.company_count,
             v2:
               report.eliminated_company_count > 0
-                ? ` (抵消${report.eliminated_company_count}家)`
+                ? i18n.t('finance.consolidation_reports_page.e1', { v1: report.eliminated_company_count })
                 : '',
           }),
           total_assets: report.total_assets
             ? `¥${report.total_assets.toLocaleString('zh-CN')}`
             : '-',
           net_profit:
-            report.归属于母公司净利润 || report.net_profit
-              ? `¥${Math.abs(report.归属于母公司净利润 || report.net_profit || 0).toLocaleString('zh-CN')}`
+            report['归属于母公司净利润'] || report.net_profit
+              ? `¥${Math.abs(report['归属于母公司净利润'] || report.net_profit || 0).toLocaleString('zh-CN')}`
               : '-',
           status: STATUS_CONFIG[report.status]?.label || report.status,
           approval_status:

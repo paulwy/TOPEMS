@@ -58,7 +58,7 @@ const VoucherImportModal: React.FC<VoucherImportModalProps> = ({ open, onClose, 
             variant='body2'
             sx={{ fontWeight: 500 }}
           >
-            用友凭证数据 (JSON格式)
+            {t('finance.finance_voucher_page_components_voucher_import_modal.e1')}
           </Typography>
           <FormField
             name='importData'

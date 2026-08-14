@@ -305,7 +305,7 @@ export const AutomationVariablesPage: React.FC = () => {
                 onChange={(e) => setCreateForm({ ...createForm, key: e.target.value })}
                 fullWidth
                 required
-                helperText='变量名唯一，建议大写+下划线，如 API_KEY'
+                helperText={t('automation.automation_variables_page.m1')}
               />
               <TextField
                 label={t('automation.automation_variables_page.k26')}

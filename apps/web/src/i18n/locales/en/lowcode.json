@@ -233,5 +233,11 @@
   "lowcode.data_source_page.r1": "主机/库",
   "lowcode.form_design_page.r2": "提示：清空 form_id 可返回选择器 · {{v1}}",
   "lowcode.form_list_page.r2": "表单预览 · {{v1}}",
-  "lowcode.page_design_page.r2": "提示：清空 page_id 可返回选择器 · {{v1}}"
+  "lowcode.page_design_page.r2": "提示：清空 page_id 可返回选择器 · {{v1}}",
+  "lowcode.data_model_list_page.m1": "snake_case，如 leave_request",
+  "lowcode.data_source_page.m1": "✅ 成功",
+  "lowcode.form_design_page.m1": "Form Designer {{v1}}",
+  "lowcode.page_design_page.m1": "Page Designer {{v1}}",
+  "lowcode.low_code_home_page.l1": "{{v1}}（后端 lowcode 服务未就绪时显示占位统计）",
+  "lowcode.data_source_page.l1": "❌ Failed"
 }

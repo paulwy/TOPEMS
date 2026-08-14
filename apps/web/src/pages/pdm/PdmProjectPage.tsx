@@ -538,7 +538,7 @@ const PdmProjectPage: React.FC = () => {
 
   return (
     <PageContainer
-      title='PDM项目管理'
+      title={t('pdm.pdm_project_page.m1')}
       subtitle={t('pdm.pdm_project_page.k37')}
       headerProps={{
         pageIcon: <FolderKanban style={{ width: 20, height: 20 }} />,
@@ -577,7 +577,7 @@ const AddMemberForm: React.FC<AddMemberFormProps> = ({ onSubmit, onCancel }) => 
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3, mt: 2 }}>
       <TextField
-        label='用户ID *'
+        label={t('pdm.pdm_project_page.m2')}
         fullWidth
         required
         value={userId}

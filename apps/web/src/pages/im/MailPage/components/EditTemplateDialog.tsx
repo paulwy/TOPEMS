@@ -84,7 +84,7 @@ const EditTemplateDialog: React.FC<EditTemplateDialogProps> = ({
                       name: e.target.value,
                     }))
                   }
-                  placeholder='如: 流程审批通知'
+                  placeholder={t('im.mail_page_components_create_template_dialog.m2')}
                   size='small'
                 />
               </Box>
@@ -192,7 +192,7 @@ const EditTemplateDialog: React.FC<EditTemplateDialogProps> = ({
                 />
               </Box>
               <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-                <InputLabel htmlFor='edit-template-body-html'>HTML正文模板</InputLabel>
+                <InputLabel htmlFor='edit-template-body-html'>{t('im.mail_page_components_edit_template_dialog.e1')}</InputLabel>
                 <TextField
                   id='edit-template-body-html'
                   value={templateForm.body_html_template}

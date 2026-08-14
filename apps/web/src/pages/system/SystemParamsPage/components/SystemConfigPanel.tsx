@@ -259,9 +259,9 @@ const SystemConfigPanel: React.FC<SystemConfigPanelProps> = ({
                     }))
                   }
                 >
-                  <MenuItem value='Asia/Shanghai'>亚洲/上海 (UTC+8)</MenuItem>
-                  <MenuItem value='Asia/Tokyo'>亚洲/东京 (UTC+9)</MenuItem>
-                  <MenuItem value='Europe/London'>欧洲/伦敦 (UTC+0)</MenuItem>
+                  <MenuItem value='Asia/Shanghai'>{t('system.system_params_page_components_system_config_panel.m1')}</MenuItem>
+                  <MenuItem value='Asia/Tokyo'>{t('system.system_params_page_components_system_config_panel.m2')}</MenuItem>
+                  <MenuItem value='Europe/London'>{t('system.system_params_page_components_system_config_panel.m3')}</MenuItem>
                   <MenuItem value='America/New_York'>
                     {t('system.system_params_page_components_system_config_panel.r1')}
                   </MenuItem>
@@ -522,7 +522,7 @@ const SystemConfigPanel: React.FC<SystemConfigPanelProps> = ({
           onClick={onSave}
           disabled={isSaving}
         >
-          {isSaving ? '保存中...' : t('system.system_config_panel.k23')}
+          {isSaving ? t('system.system_params_page_components_cache_config_panel.m4') : t('system.system_config_panel.k23')}
         </Button>
       </Box>
     </Box>

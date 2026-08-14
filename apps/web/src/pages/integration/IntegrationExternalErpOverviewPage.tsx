@@ -102,7 +102,7 @@ const IntegrationExternalErpOverviewPage: React.FC = () => {
               variant='h5'
               sx={{ fontWeight: 700, color: 'text.primary' }}
             >
-              🔗 外部ERP连接管理
+              🔗 {t('integration.integration_external_erp_overview_page.m1')}
             </Typography>
             <Typography
               variant='body2'
@@ -426,7 +426,7 @@ const IntegrationExternalErpOverviewPage: React.FC = () => {
                         gap: 1,
                       }}
                     >
-                      <Cloud size={20} /> 金蝶K/3
+                      <Cloud size={20} /> {t('integration.integration_external_erp_overview_page.m2')}
                     </Typography>
                   </Stack>
                   <Typography
@@ -471,7 +471,7 @@ const IntegrationExternalErpOverviewPage: React.FC = () => {
                         gap: 1,
                       }}
                     >
-                      <Cloud size={20} /> 用友U8/NC
+                      <Cloud size={20} /> {t('integration.integration_external_erp_overview_page.m3')}
                     </Typography>
                   </Stack>
                   <Typography
@@ -545,7 +545,7 @@ const IntegrationExternalErpOverviewPage: React.FC = () => {
               variant='h6'
               sx={{ fontWeight: 600, color: 'text.primary', mb: 2 }}
             >
-              🔗 外部ERP连接说明
+              🔗 {t('integration.integration_external_erp_overview_page.m4')}
             </Typography>
             <Typography
               variant='body2'

@@ -88,7 +88,7 @@ const TemplateList: React.FC<TemplateListProps> = ({
           </Box>
           <TextField
             type='text'
-            placeholder='搜索模板名称、编码...'
+            placeholder={t('im.mail_page_components_template_list.m1')}
             value={searchQuery}
             onChange={(e) => {
               setSearchQuery(e.target.value);
@@ -144,7 +144,7 @@ const TemplateList: React.FC<TemplateListProps> = ({
                   },
                 }}
               />
-              <Typography sx={{ mt: 1, color: 'grey.500' }}>加载中...</Typography>
+              <Typography sx={{ mt: 1, color: 'grey.500' }}>{t('im.mail_page_components_email_list.m2')}</Typography>
             </Box>
           ) : templates.length === 0 ? (
             <Box sx={{ p: 4, textAlign: 'center' }}>

@@ -193,5 +193,13 @@
   "system.backup_page.r3": "创建时间： {{v1}}",
   "system.feature_flag_page_index.r1": "共 {{v1}} 个 Feature Flag · In-Memory 存储（重启后重置）",
   "system.system_params_page_components_system_config_panel.r1": "美洲/纽约 (UTC-5)",
-  "system.system_params_page_components_system_config_panel.r2": "美洲/洛杉矶 (UTC-8)"
+  "system.system_params_page_components_system_config_panel.r2": "美洲/洛杉矶 (UTC-8)",
+  "system.backup_page.m1": "{{v1}} 秒",
+  "system.system_params_page_components_cache_config_panel.m1": "Redis 主机",
+  "system.system_params_page_components_cache_config_panel.m2": "Redis 端口",
+  "system.system_params_page_components_cache_config_panel.m3": "Redis 数据库",
+  "system.system_params_page_components_cache_config_panel.m4": "保存中...",
+  "system.system_params_page_components_system_config_panel.m1": "亚洲/上海 (UTC+8)",
+  "system.system_params_page_components_system_config_panel.m2": "亚洲/东京 (UTC+9)",
+  "system.system_params_page_components_system_config_panel.m3": "欧洲/伦敦 (UTC+0)"
 }

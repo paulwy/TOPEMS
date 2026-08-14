@@ -582,8 +582,8 @@ const VoucherCreatePage: React.FC = () => {
             sx={{ mt: 2 }}
           >
             <Typography variant='body2'>
-              <strong>借贷不平衡:</strong> 借方合计 {formatCurrency(totalDebit)} ≠ 贷方合计{' '}
-              {formatCurrency(totalCredit)},差额{' '}
+              {t('finance.voucher_create_page.e1', { v1: t('finance.voucher_create_page.m1'), v2: formatCurrency(totalDebit) })}
+              {t('finance.voucher_create_page.e1', { v1: formatCurrency(totalCredit) })}
               {formatCurrency(Math.abs(totalDebit - totalCredit))}
             </Typography>
           </Alert>
@@ -596,7 +596,7 @@ const VoucherCreatePage: React.FC = () => {
             sx={{ mt: 2 }}
           >
             <Typography variant='body2'>
-              <strong>{t('finance.voucher_create_page.k5')}</strong> - 借方合计 = 贷方合计 ={' '}
+              {t('finance.voucher_create_page.e2', { v1: t('finance.voucher_create_page.k5') })}
               {formatCurrency(totalDebit)}
             </Typography>
           </Alert>

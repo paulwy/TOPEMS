@@ -13,6 +13,7 @@ import {
   type DesignerMode,
   type DesignerNodeItem,
 } from './shared';
+import i18n from '@/i18n';
 
 export interface UseAutomationDesignerResult {
   rules: AutomationRule[];
@@ -105,7 +106,7 @@ export function useAutomationDesigner(): UseAutomationDesignerResult {
       const res = await automationRulesApi.list({ page: 1, pageSize: 100 });
       setRules(res.data?.items ?? []);
     } catch (err) {
-      setError(err instanceof Error ? err.message : '加载规则列表失败');
+      setError(err instanceof Error ? err.message : i18n.t('automation.automation_designer_page_use_automation_designer.e1'));
     }
   }, []);
 
@@ -146,7 +147,7 @@ export function useAutomationDesigner(): UseAutomationDesignerResult {
             ? syncErr.message
             : err instanceof Error
               ? err.message
-              : '加载画布失败'
+              : i18n.t('automation.automation_designer_page_use_automation_designer.e2')
         );
         setCanvas(null);
         setNodes([]);
@@ -424,7 +425,7 @@ export function useAutomationDesigner(): UseAutomationDesignerResult {
       const newNode: DesignerNodeItem = {
         ...source,
         id: `node_${Date.now()}`,
-        name: `${source.name} (副本)`,
+        name: i18n.t('automation.automation_designer_page_use_automation_designer.e1', { v1: source.name }),
         position: {
           x: source.position.x + 40,
           y: source.position.y + 40,
@@ -504,7 +505,7 @@ export function useAutomationDesigner(): UseAutomationDesignerResult {
         setNodes(res.data.nodes);
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : '保存画布失败');
+      setError(err instanceof Error ? err.message : i18n.t('automation.automation_designer_page_use_automation_designer.e3'));
     } finally {
       setSaving(false);
     }
@@ -518,7 +519,7 @@ export function useAutomationDesigner(): UseAutomationDesignerResult {
       const res = await automationDesignerApi.validate(selectedRuleId, buildSavePayload());
       setValidationErrors(res.data?.errors ?? []);
     } catch (err) {
-      setError(err instanceof Error ? err.message : '校验画布失败');
+      setError(err instanceof Error ? err.message : i18n.t('automation.automation_designer_page_use_automation_designer.e4'));
     } finally {
       setValidating(false);
     }
@@ -530,7 +531,7 @@ export function useAutomationDesigner(): UseAutomationDesignerResult {
       await automationDesignerApi.syncToRule(selectedRuleId);
       setError(null);
     } catch (err) {
-      setError(err instanceof Error ? err.message : '同步到规则失败');
+      setError(err instanceof Error ? err.message : i18n.t('automation.automation_designer_page_use_automation_designer.e5'));
     }
   }, [selectedRuleId]);
 

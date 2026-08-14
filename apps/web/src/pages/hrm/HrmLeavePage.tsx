@@ -24,15 +24,15 @@ const HrmLeavePage: React.FC = () => {
         if (response.code === 200) {
           addNotification({
             type: 'success',
-            title: t('common.success', '成功'),
-            message: t('hrm.hrm_leave_page.text_337737', '审批通过成功'),
+            title: t('common.success'),
+            message: t('hrm.hrm_leave_page.text_337737'),
           });
         }
       } catch (error) {
         addNotification({
           type: 'error',
-          title: t('common.fail', '失败'),
-          message: t('hrm.hrm_leave_page.operation_failed', '操作失败'),
+          title: t('common.fail'),
+          message: t('hrm.hrm_leave_page.operation_failed'),
         });
       }
     },
@@ -46,20 +46,20 @@ const HrmLeavePage: React.FC = () => {
         const response = await leaveApi.reject(
           id,
           'admin',
-          t('hrm.hrm_leave_page.text_81233d', '审批驳回')
+          t('hrm.hrm_leave_page.text_81233d')
         );
         if (response.code === 200) {
           addNotification({
             type: 'success',
-            title: t('common.success', '成功'),
-            message: t('hrm.hrm_leave_page.text_81233d', '审批驳回成功'),
+            title: t('common.success'),
+            message: t('hrm.hrm_leave_page.text_81233d'),
           });
         }
       } catch (error) {
         addNotification({
           type: 'error',
-          title: t('common.fail', '失败'),
-          message: t('hrm.hrm_leave_page.operation_failed', '操作失败'),
+          title: t('common.fail'),
+          message: t('hrm.hrm_leave_page.operation_failed'),
         });
       }
     },
@@ -68,14 +68,14 @@ const HrmLeavePage: React.FC = () => {
 
   const customRowActions: RowAction[] = [
     {
-      label: t('hrm.hrm_leave_page.text_7a712b', '批准'),
+      label: t('hrm.hrm_leave_page.text_7a712b'),
       icon: <Check size={16} />,
       onClick: handleApprove,
       color: 'success',
       show: (row: Record<string, unknown>) => row.status === 'pending',
     },
     {
-      label: t('hrm.hrm_leave_page.text_7173f8', '驳回'),
+      label: t('hrm.hrm_leave_page.text_7173f8'),
       icon: <X size={16} />,
       onClick: handleReject,
       color: 'error',
@@ -107,25 +107,25 @@ const HrmLeavePage: React.FC = () => {
                 <StatCardGroup
                   stats={[
                     {
-                      title: t('hrm.hrm_leave_page.text_88ce9c', '总数'),
+                      title: t('hrm.hrm_leave_page.text_88ce9c'),
                       value: total,
                       icon: <FileText size={20} />,
                       color: 'primary' as const,
                     },
                     {
-                      title: t('hrm.hrm_leave_page.text_b0bf01', '待审批'),
+                      title: t('hrm.hrm_leave_page.text_b0bf01'),
                       value: pending,
                       icon: <Clock size={20} />,
                       color: 'warning' as const,
                     },
                     {
-                      title: t('hrm.hrm_leave_page.text_337737', '已批准'),
+                      title: t('hrm.hrm_leave_page.text_337737'),
                       value: approved,
                       icon: <CheckCircle size={20} />,
                       color: 'success' as const,
                     },
                     {
-                      title: t('hrm.hrm_leave_page.text_81233d', '已驳回'),
+                      title: t('hrm.hrm_leave_page.text_81233d'),
                       value: rejected,
                       icon: <XCircle size={20} />,
                       color: 'error' as const,

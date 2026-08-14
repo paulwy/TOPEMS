@@ -156,7 +156,7 @@ function NodesTable({ nodes }: { nodes: ApprovalNode[] }) {
               align='center'
               sx={{ fontWeight: 600 }}
             >
-              超时(小时)
+              {t('finance.finance_approval_config_page.l1')}
             </TableCell>
             <TableCell
               align='center'
@@ -218,7 +218,7 @@ export const FinanceApprovalConfigPage: React.FC = () => {
             variant='subtitle2'
             sx={{ fontWeight: 600 }}
           >
-            审批节点（{nodes.length}）
+            {t('finance.finance_approval_config_page.e1', { v1: nodes.length })}
           </Typography>
         </Stack>
         <NodesTable nodes={nodes} />

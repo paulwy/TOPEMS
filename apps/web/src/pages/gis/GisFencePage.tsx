@@ -485,7 +485,7 @@ export const GisFencePage: React.FC = () => {
                 title={t('gis.gis_fence_page.k22')}
                 action={
                   <TextField
-                    placeholder='搜索围栏...'
+                    placeholder={t('gis.gis_fence_page.m1')}
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
                     size='small'
@@ -540,7 +540,7 @@ export const GisFencePage: React.FC = () => {
                                 variant='caption'
                                 color='text.secondary'
                               >
-                                (半径: {fence.radius}m)
+                                ({t('gis.gis_fence_page.l1', { v1: fence.radius })})
                               </Typography>
                             )}
                           </TableCell>
@@ -627,19 +627,19 @@ export const GisFencePage: React.FC = () => {
                       time: '14:30',
                       location: t('gis.gis_fence_page.k38'),
                       type: t('gis.gis_fence_page.k39'),
-                      device: '设备 #003',
+                      device: i18n.t('gis.gis_fence_page.l2'),
                     },
                     {
                       time: '13:20',
                       location: t('gis.gis_fence_page.a_40'),
                       type: t('gis.gis_fence_page.k41'),
-                      device: '设备 #005',
+                      device: i18n.t('gis.gis_fence_page.l3'),
                     },
                     {
                       time: '12:00',
                       location: t('gis.gis_fence_page.k42'),
                       type: t('gis.gis_fence_page.k43'),
-                      device: '人员 #012',
+                      device: i18n.t('gis.gis_fence_page.l4'),
                     },
                   ].map((alert, idx) => (
                     <Box
@@ -714,7 +714,7 @@ export const GisFencePage: React.FC = () => {
               </FormControl>
               <TextField
                 label={t('gis.gis_fence_page.k57')}
-                placeholder='如: 39.9042, 116.4074'
+                placeholder={t('gis.gis_fence_page.m2')}
                 fullWidth
               />
               <TextField

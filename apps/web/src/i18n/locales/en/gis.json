@@ -169,5 +169,14 @@
   "gis.index.e33": "业务位置",
   "gis.gis_fence_page.r1": "类型:",
   "gis.gis_fence_page.r2": "触发次数:",
-  "gis.gis_tracking_page.r1": "状态:"
+  "gis.gis_tracking_page.r1": "状态:",
+  "gis.dashboard_page.m1": "vs 上周期",
+  "gis.gis_fence_page.m1": "搜索围栏...",
+  "gis.gis_fence_page.m2": "如: 39.9042, 116.4074",
+  "gis.gis_tracking_page.m1": "播放速度: {{v1}}x",
+  "gis.index.m1": "GIS地图",
+  "gis.gis_fence_page.l1": "半径: {{v1}}m",
+  "gis.gis_fence_page.l2": "设备 #003",
+  "gis.gis_fence_page.l3": "设备 #005",
+  "gis.gis_fence_page.l4": "人员 #012"
 }

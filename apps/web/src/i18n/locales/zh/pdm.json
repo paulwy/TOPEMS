@@ -310,5 +310,19 @@
   "pdm.setting_bom_template_page.r1": "BOM模板相关配置参数（页面建设中…）",
   "pdm.setting_category_rule_page.r1": "分类规则相关配置参数（页面建设中…）",
   "pdm.setting_change_template_page.r1": "变更模板相关配置参数（页面建设中…）",
-  "pdm.setting_doc_approval_flow_page.r1": "文档审批流相关配置参数（页面建设中…）"
+  "pdm.setting_doc_approval_flow_page.r1": "文档审批流相关配置参数（页面建设中…）",
+  "pdm.bom_page.m1": "BOM版本已激活",
+  "pdm.bom_page.m2": "BOM版本已归档",
+  "pdm.bom_page.m3": "BOM版本",
+  "pdm.bom_page.m4": "BOM物料",
+  "pdm.bom_page.m5": "BOM对比",
+  "pdm.bom_page.m6": "BOM管理",
+  "pdm.material_page.m1": "{{v1}} 种",
+  "pdm.material_page.m2": "{{v1}} 件",
+  "pdm.pdm_bom_page.m1": "{{v1}} 项",
+  "pdm.pdm_bom_page.m2": "BOM 管理",
+  "pdm.pdm_project_page.m1": "PDM项目管理",
+  "pdm.pdm_project_page.m2": "用户ID *",
+  "pdm.product_page.m1": "{{v1}} 个",
+  "pdm.setting_bom_template_page.m1": "BOM模板"
 }

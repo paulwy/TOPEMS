@@ -57,7 +57,7 @@ const ScmOverviewPage: React.FC = () => {
       },
       {
         id: 'mrp-plans',
-        title: 'MRP计划',
+        title: i18n.t('scm.mrp_plan_page.m3'),
         value: '8',
         icon: <Calculator size={24} />,
         change: 3,
@@ -78,12 +78,12 @@ const ScmOverviewPage: React.FC = () => {
   );
 
   const orderTrendData = [
-    { name: '1月', value: 32 },
-    { name: '2月', value: 28 },
-    { name: '3月', value: 45 },
-    { name: '4月', value: 38 },
-    { name: '5月', value: 52 },
-    { name: '6月', value: 56 },
+    { name: i18n.t('scm.scm_overview_page.m2'), value: 32 },
+    { name: i18n.t('scm.scm_overview_page.m3'), value: 28 },
+    { name: i18n.t('scm.scm_overview_page.m4'), value: 45 },
+    { name: i18n.t('scm.scm_overview_page.m5'), value: 38 },
+    { name: i18n.t('scm.scm_overview_page.m6'), value: 52 },
+    { name: i18n.t('scm.scm_overview_page.m7'), value: 56 },
   ];
 
   const supplierRatingData = [
@@ -130,7 +130,7 @@ const ScmOverviewPage: React.FC = () => {
       },
       {
         id: 'mrp-suggestion',
-        title: 'MRP建议状态',
+        title: i18n.t('scm.scm_overview_page.m8'),
         chart: (
           <LazyChart
             type='line'
@@ -163,7 +163,7 @@ const ScmOverviewPage: React.FC = () => {
       },
       {
         id: 'mrp-plan',
-        label: 'MRP计划',
+        label: i18n.t('scm.mrp_plan_page.m3'),
         icon: <Calculator size={20} />,
         onClick: () => navigate(SCM_PATHS.mrpPlan),
         color: ct.success[700],
@@ -201,7 +201,7 @@ const ScmOverviewPage: React.FC = () => {
       {
         id: 'sup1',
         title: i18n.t('scm.scm_overview_page.b_27'),
-        description: '综合评分: A (95分)',
+        description: i18n.t('scm.scm_overview_page.m10'),
         time: '2026-06-28 16:30',
         icon: <Star size={18} />,
         status: 'success',
@@ -210,7 +210,7 @@ const ScmOverviewPage: React.FC = () => {
       {
         id: 'mrp1',
         title: 'MRP-2026-0012',
-        description: '7月生产物料需求计划',
+        description: i18n.t('scm.scm_overview_page.m11'),
         time: '2026-06-28 14:00',
         icon: <Calculator size={18} />,
         status: 'info',

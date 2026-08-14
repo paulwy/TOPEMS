@@ -5,6 +5,7 @@ import { lowcodeFormsApi } from '@/api/lowcode';
 import type { LowcodeForm, UpdateLowcodeFormRequest } from '@/api/lowcode';
 import { PageContainer } from '@/components/common';
 import { useTranslation } from 'react-i18next';
+import i18n from '@/i18n';
 
 export const FormDesignPage: React.FC = () => {
   const { t } = useTranslation('lowcode');
@@ -72,7 +73,7 @@ export const FormDesignPage: React.FC = () => {
       <PageContainer title={t('lowcode.form_design_page.k2')}>
         <Box sx={{ p: 3 }}>
           <Typography color='text.secondary'>
-            请在 URL 上携带 ?form_id=xxx 以设计具体表单。
+            {t('lowcode.form_design_page.e1')}
           </Typography>
         </Box>
       </PageContainer>
@@ -97,7 +98,7 @@ export const FormDesignPage: React.FC = () => {
           spacing={2}
           sx={{ mb: 2, justifyContent: 'space-between', alignItems: 'center' }}
         >
-          <Typography variant='h5'>表单设计器 {form ? `· ${form.name}` : ''}</Typography>
+          <Typography variant='h5'>{t('lowcode.form_design_page.m1', { v1: form ? `· ${form.name}` : '' })}</Typography>
           <Button
             variant='contained'
             onClick={handleSave}
@@ -123,7 +124,7 @@ export const FormDesignPage: React.FC = () => {
           sx={{ mb: 1 }}
         >
           {t('lowcode.form_design_page.e2')}
-          {form && ` 绑定数据模型：${form.data_model_id ?? t('lowcode.form_design_page.k6')}`}
+          {form && i18n.t('lowcode.form_design_page.e2', { v1: form.data_model_id ?? t('lowcode.form_design_page.k6') })}
         </Typography>
 
         <Paper

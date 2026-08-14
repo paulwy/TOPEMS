@@ -45,7 +45,7 @@ interface IntegrationConfig {
 const MOCK_CONFIGS: IntegrationConfig[] = [
   {
     id: 'config-001',
-    name: 'ERP系统',
+    name: i18n.t('integration.integration_settings_page.m1'),
     enabled: true,
     endpoint: 'https://erp.example.com/api/v1',
     authType: 'oauth2',
@@ -54,7 +54,7 @@ const MOCK_CONFIGS: IntegrationConfig[] = [
   },
   {
     id: 'config-002',
-    name: 'CRM系统',
+    name: i18n.t('integration.integration_settings_page.m2'),
     enabled: true,
     endpoint: 'https://crm.example.com/api',
     authType: 'apikey',
@@ -63,7 +63,7 @@ const MOCK_CONFIGS: IntegrationConfig[] = [
   },
   {
     id: 'config-003',
-    name: 'WMS系统',
+    name: i18n.t('integration.integration_settings_page.m3'),
     enabled: false,
     endpoint: 'https://wms.example.com/api',
     authType: 'basic',
@@ -463,7 +463,7 @@ export const IntegrationSettingsPage: React.FC = () => {
                   <TextField
                     fullWidth
                     size='small'
-                    label='API端点'
+                    label={t('integration.integration_settings_page.m4')}
                     value={config.endpoint}
                     disabled
                     slotProps={{

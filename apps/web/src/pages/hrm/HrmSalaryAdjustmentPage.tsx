@@ -24,15 +24,15 @@ const HrmSalaryAdjustmentPage: React.FC = () => {
         if (response.success) {
           addNotification({
             type: 'success',
-            title: t('hrm.hrm_salary_adjustment_page.success', '成功'),
-            message: t('hrm.hrm_salary_adjustment_page.text_c0b5ba', '审批通过成功'),
+            title: t('hrm.hrm_salary_adjustment_page.success'),
+            message: t('hrm.hrm_salary_adjustment_page.text_c0b5ba'),
           });
         }
       } catch (error) {
         addNotification({
           type: 'error',
-          title: t('hrm.hrm_salary_adjustment_page.fail', '失败'),
-          message: t('hrm.hrm_salary_adjustment_page.fail', '操作失败'),
+          title: t('hrm.hrm_salary_adjustment_page.fail'),
+          message: t('hrm.hrm_salary_adjustment_page.fail'),
         });
       }
     },
@@ -41,18 +41,18 @@ const HrmSalaryAdjustmentPage: React.FC = () => {
 
   const customRowActions: RowAction[] = [
     {
-      label: t('hrm.hrm_salary_adjustment_page.view_detail', '查看详情'),
+      label: t('hrm.hrm_salary_adjustment_page.view_detail'),
       icon: <TrendingUp size={16} />,
       onClick: (row: Record<string, unknown>) => {
         addNotification({
           type: 'info',
-          title: t('hrm.hrm_salary_adjustment_page.detail', '详情'),
+          title: t('hrm.hrm_salary_adjustment_page.detail'),
           message: i18n.t('hrm.hrm_salary_adjustment_page.e1', { v1: row.employee_name }),
         });
       },
     },
     {
-      label: t('hrm.hrm_salary_adjustment_page.text_0273ba', '批准'),
+      label: t('hrm.hrm_salary_adjustment_page.text_0273ba'),
       icon: <CheckCircle size={16} />,
       onClick: handleApprove,
       color: 'success',
@@ -62,8 +62,8 @@ const HrmSalaryAdjustmentPage: React.FC = () => {
 
   return (
     <PageContainer
-      title={t('hrm.hrm_salary_adjustment_page.text_56e426', '薪酬调整')}
-      subtitle={t('hrm.hrm_salary_adjustment_page.text_cfb890', '管理员工薪酬调整记录')}
+      title={t('hrm.hrm_salary_adjustment_page.text_56e426')}
+      subtitle={t('hrm.hrm_salary_adjustment_page.text_cfb890')}
     >
       <CrudPage
         schema={salaryAdjustmentSchema}

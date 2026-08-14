@@ -74,7 +74,7 @@ const CreateTemplateDialog: React.FC<CreateTemplateDialogProps> = ({
                     code: e.target.value,
                   }))
                 }
-                placeholder='如: workflow_approval'
+                placeholder={t('im.mail_page_components_create_template_dialog.m1')}
                 required
                 size='small'
               />
@@ -92,7 +92,7 @@ const CreateTemplateDialog: React.FC<CreateTemplateDialogProps> = ({
                     name: e.target.value,
                   }))
                 }
-                placeholder='如: 流程审批通知'
+                placeholder={t('im.mail_page_components_create_template_dialog.m2')}
                 required
                 size='small'
               />
@@ -177,7 +177,7 @@ const CreateTemplateDialog: React.FC<CreateTemplateDialogProps> = ({
                     subject_template: e.target.value,
                   }))
                 }
-                placeholder='支持变量替换，如: 【TOPEMS】{{title}}'
+                placeholder={t('im.mail_page_components_create_template_dialog.m3')}
                 required
                 size='small'
               />
@@ -195,14 +195,14 @@ const CreateTemplateDialog: React.FC<CreateTemplateDialogProps> = ({
                     body_template: e.target.value,
                   }))
                 }
-                placeholder='支持变量替换，如: 尊敬的{{user_name}}'
+                placeholder={t('im.mail_page_components_create_template_dialog.m4')}
                 multiline
                 minRows={4}
                 required
               />
             </Box>
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-              <InputLabel htmlFor='template-body-html'>HTML正文模板</InputLabel>
+              <InputLabel htmlFor='template-body-html'>{t('im.mail_page_components_create_template_dialog.e1')}</InputLabel>
               <TextField
                 id='template-body-html'
                 value={templateForm.body_html_template}
@@ -212,7 +212,7 @@ const CreateTemplateDialog: React.FC<CreateTemplateDialogProps> = ({
                     body_html_template: e.target.value,
                   }))
                 }
-                placeholder='HTML格式的邮件内容'
+                placeholder={t('im.mail_page_components_create_template_dialog.m5')}
                 multiline
                 minRows={3}
                 sx={{ fontFamily: 'monospace', fontSize: '0.875rem' }}
@@ -247,7 +247,7 @@ const CreateTemplateDialog: React.FC<CreateTemplateDialogProps> = ({
                     borderRadius: 0.5,
                   }}
                 >
-                  {'{{变量名}}'}
+                  {t('im.mail_page_components_create_template_dialog.l1')}
                 </Box>{' '}
                 {t('im.mail_page_components_create_template_dialog.e4')}
               </Typography>

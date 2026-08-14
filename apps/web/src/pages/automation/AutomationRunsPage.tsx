@@ -260,7 +260,7 @@ export const AutomationRunsPage: React.FC = () => {
                     <br />
                     {t('automation.automation_runs_page.r2', { v1: detailRun.finished_at ?? '-' })}
                     <br />
-                    耗时：{detailRun.duration_ms ? `${detailRun.duration_ms}ms` : '-'}
+                    {t('automation.automation_runs_page.e1', { v1: detailRun.duration_ms ? `${detailRun.duration_ms}ms` : '-' })}
                   </Typography>
                 </Box>
                 {detailRun.error && (

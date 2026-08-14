@@ -224,7 +224,7 @@ const HrmEmployeeDetailPage: React.FC = () => {
           <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>
             {i18n.t('hrm.hrm_employee_detail_page.k8')}
           </InputLabel>
-          <Typography sx={{ mt: 0.5 }}>{employee.probation_period || 3} 个月</Typography>
+          <Typography sx={{ mt: 0.5 }}>{t('hrm.hrm_contract_detail_page.m1', { v1: employee.probation_period || 3 })}</Typography>
         </Box>
         <Box>
           <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>
@@ -408,7 +408,7 @@ const HrmEmployeeDetailPage: React.FC = () => {
         }}
       >
         <Typography variant='body1'>
-          确定要为 <strong>{employee?.name}</strong> 办理调岗手续吗？
+          {t('hrm.hrm_employee_detail_page.e1', { v1: employee?.name })}
         </Typography>
         <Box sx={{ mt: 2 }}>
           <Typography
