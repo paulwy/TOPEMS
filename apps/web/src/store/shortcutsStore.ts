@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
+import i18n from '@/i18n';
 
 export interface Shortcut {
   id: string;
@@ -9,8 +10,8 @@ export interface Shortcut {
 }
 
 const defaultShortcuts: Shortcut[] = [
-  { id: '1', title: '仪表盘', icon: 'Activity', path: '/dashboard' },
-  { id: '2', title: '文档中心', icon: 'FileText', path: '/documents' },
+  { id: '1', title: i18n.t('store.shortcuts_store.k0'), icon: 'Activity', path: '/dashboard' },
+  { id: '2', title: i18n.t('store.shortcuts_store.k1'), icon: 'FileText', path: '/documents' },
 ];
 
 interface ShortcutsState {

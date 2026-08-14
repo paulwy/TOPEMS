@@ -1432,7 +1432,7 @@ export const cyberpunkComponentStyles = `
   top: 0;
   left: 50%;
   transform: translateX(-50%);
-  width: 2px;
+  width: designTokens.spacing.xs;
   height: 100%;
   background: linear-gradient(180deg, rgba(0, 255, 255, 0.50), rgba(0, 255, 255, 0.10));
 }
@@ -1695,7 +1695,7 @@ export const cyberpunkComponentStyles = `
 /* Dialog 操作区 */
 .cyberpunk-mode .MuiDialogActions-root {
   border-top: 1px solid rgba(0, 255, 255, 0.15);
-  padding: 16px 24px;
+  padding: designTokens.spacing.md 24px;
 }
 
 /* ========== CommandPalette 命令面板 ========== */
@@ -1721,7 +1721,7 @@ export const cyberpunkComponentStyles = `
   top: 0;
   left: 0;
   right: 0;
-  height: 2px;
+  height: designTokens.spacing.xs;
   background: linear-gradient(90deg,
     transparent 0%,
     #00FFFF 20%,
@@ -1924,7 +1924,7 @@ export const cyberpunkComponentStyles = `
   top: 0;
   left: 0;
   right: 0;
-  height: 40px;
+  height: 48px;
   background: linear-gradient(180deg,
     transparent 0%,
     rgba(0, 255, 255, 0.08) 50%,
@@ -1948,8 +1948,8 @@ export const cyberpunkComponentStyles = `
 .cyberpunk-mode .cyber-hud-corners::after {
   content: '';
   position: absolute;
-  width: 32px;
-  height: 32px;
+  width: designTokens.spacing.xl;
+  height: designTokens.spacing.xl;
   border: 2px solid #00FFFF;
   box-shadow: 0 0 8px rgba(0, 255, 255, 0.50);
 }
@@ -1990,7 +1990,7 @@ export const cyberpunkComponentStyles = `
   top: 0;
   left: 0;
   right: 0;
-  height: 2px;
+  height: designTokens.spacing.xs;
   background: linear-gradient(90deg,
     transparent 0%,
     rgba(0, 255, 255, 0.30) 20%,
@@ -2028,7 +2028,7 @@ export const cyberpunkComponentStyles = `
   bottom: 16px;
   right: 16px;
   display: flex;
-  gap: 4px;
+  gap: designTokens.spacing.xs;
   font-family: 'JetBrains Mono', 'Fira Code', monospace;
   font-size: 0.6875rem;
   color: rgba(0, 255, 255, 0.60);
@@ -2156,7 +2156,7 @@ export const cyberpunkComponentStyles = `
 /* ========== 自定义滚动条 — 命令面板独立风格 ========== */
 
 .cyberpunk-mode .command-palette ::-webkit-scrollbar {
-  width: 6px;
+  width: designTokens.spacing.sm;
 }
 .cyberpunk-mode .command-palette ::-webkit-scrollbar-track {
   background: transparent;
@@ -2189,7 +2189,7 @@ export const cyberpunkComponentStyles = `
   top: 0;
   left: 0;
   right: 0;
-  height: 2px;
+  height: designTokens.spacing.xs;
   background: linear-gradient(90deg, transparent, #00FFFF, #FF00FF, transparent);
   opacity: 0.60;
 }
@@ -2374,7 +2374,7 @@ export const cyberpunkComponentStyles = `
   top: 0;
   left: 0;
   right: 0;
-  height: 2px;
+  height: designTokens.spacing.xs;
   background: linear-gradient(90deg, transparent, #00FFFF, #FF00FF, #00FFFF, transparent);
   box-shadow: 0 0 10px rgba(0, 255, 255, 0.60);
   z-index: 1;
@@ -2768,7 +2768,7 @@ export const cyberpunkComponentStyles = `
 .cyberpunk-mode .markdown-editor-preview {
   background-color: rgba(10, 10, 26, 0.60);
   color: #E2E8F0;
-  padding: 16px;
+  padding: designTokens.spacing.md;
 }
 
 /* 预览区标题 — 霓虹青 */
@@ -2785,7 +2785,7 @@ export const cyberpunkComponentStyles = `
   background-color: rgba(0, 0, 0, 0.40);
   border: 1px solid rgba(0, 255, 255, 0.20);
   border-radius: 4px;
-  padding: 12px;
+  padding: designTokens.spacing.md;
   overflow-x: auto;
 }
 
@@ -2793,7 +2793,7 @@ export const cyberpunkComponentStyles = `
 .cyberpunk-mode .markdown-editor-preview code {
   background-color: rgba(0, 255, 255, 0.10);
   color: #00FFFF;
-  padding: 2px 6px;
+  padding: designTokens.spacing.xs 6px;
   border-radius: 3px;
   font-family: 'JetBrains Mono', 'Fira Code', monospace;
 }
@@ -2802,8 +2802,8 @@ export const cyberpunkComponentStyles = `
 .cyberpunk-mode .markdown-editor-preview blockquote {
   border-left: 3px solid #00FFFF;
   background-color: rgba(0, 255, 255, 0.05);
-  padding: 8px 16px;
-  margin: 12px 0;
+  padding: designTokens.spacing.sm 16px;
+  margin: designTokens.spacing.md 0;
   color: #8892B0;
 }
 
@@ -3097,7 +3097,7 @@ export const cyberpunkComponentStyles = `
 /* ========== LinearProgress 线性进度条增强 ========== */
 
 .cyberpunk-mode .MuiLinearProgress-root {
-  height: 4px;
+  height: designTokens.spacing.xs;
 }
 .cyberpunk-mode .MuiLinearProgress-barColorPrimary {
   background: linear-gradient(90deg, #00FFFF, #FF00FF);
@@ -3128,10 +3128,10 @@ export const cyberpunkComponentStyles = `
 /* ========== MenuList 菜单列表 ========== */
 
 .cyberpunk-mode .MuiMenuList-root {
-  padding: 4px 0;
+  padding: designTokens.spacing.xs 0;
 }
 .cyberpunk-mode .MuiMenuList-root .MuiMenuItem-root {
-  padding: 8px 16px;
+  padding: designTokens.spacing.sm 16px;
 }
 
 /* ========== Popover 弹出层增强 ========== */
@@ -3257,7 +3257,7 @@ export const cyberpunkComponentStyles = `
 /* ========== FormGroup 表单组 ========== */
 
 .cyberpunk-mode .MuiFormGroup-root {
-  gap: 8px;
+  gap: designTokens.spacing.sm;
 }
 
 /* ========== Checkbox 复选框增强 ========== */

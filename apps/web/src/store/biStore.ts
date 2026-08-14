@@ -16,6 +16,7 @@ import {
   type ProductionAnalytics,
   type LaboratoryAnalytics,
 } from '../api/bi';
+import i18n from '@/i18n';
 
 interface BIStore {
   // 数据状态
@@ -125,7 +126,7 @@ export const useBIStore = create<BIStore>((set, get) => ({
       set({
         loading: false,
         refreshing: false,
-        error: err instanceof Error ? err.message : '加载数据失败',
+        error: err instanceof Error ? err.message : i18n.t('store.bi_store.k0'),
       });
     }
   },
