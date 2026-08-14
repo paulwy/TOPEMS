@@ -2507,4 +2507,266 @@ mod tests {
             roundtrip(&v);
         }
     }
+
+    // ============ TokenBucket ============
+
+    #[test]
+    fn test_token_bucket_initial_capacity() {
+        let mut tb = TokenBucket::new(5, 100.0);
+        for _ in 0..5 {
+            assert!(tb.try_acquire(), "first 5 acquires should succeed");
+        }
+        assert!(!tb.try_acquire(), "6th acquire should fail when empty");
+    }
+
+    #[test]
+    fn test_token_bucket_set_capacity_down() {
+        let mut tb = TokenBucket::new(10, 100.0);
+        tb.set_capacity(2);
+        for _ in 0..2 {
+            tb.try_acquire();
+        }
+        assert!(!tb.try_acquire(), "should be empty after truncate + drain");
+    }
+
+    #[test]
+    fn test_token_bucket_set_refill_rate() {
+        let mut tb = TokenBucket::new(2, 1000.0);
+        tb.set_refill_rate(0.0);
+        for _ in 0..2 {
+            tb.try_acquire();
+        }
+        assert!(!tb.try_acquire());
+    }
+
+    // ============ AdaptiveRateLimiter ============
+
+    #[test]
+    fn test_rate_limiter_new_is_empty() {
+        let rl = AdaptiveRateLimiter::new();
+        assert!(rl.get_configs().is_empty());
+    }
+
+    #[test]
+    fn test_rate_limiter_ensure_service_creates_default() {
+        let mut rl = AdaptiveRateLimiter::new();
+        rl.ensure_service("svc-a");
+        let configs = rl.get_configs();
+        assert_eq!(configs.len(), 1);
+        assert_eq!(configs[0].service, "svc-a");
+        assert_eq!(configs[0].max_requests_per_second, 100.0);
+        assert_eq!(configs[0].burst_capacity, 200);
+        assert!(configs[0].adaptive);
+    }
+
+    #[test]
+    fn test_rate_limiter_configure_overrides_default() {
+        let mut rl = AdaptiveRateLimiter::new();
+        rl.configure("svc-a", 50.0, 100, false);
+        let cfg = rl.get_config("svc-a").unwrap();
+        assert_eq!(cfg.max_requests_per_second, 50.0);
+        assert_eq!(cfg.burst_capacity, 100);
+        let statuses = rl.get_statuses();
+        let st = statuses.iter().find(|s| s.service == "svc-a").unwrap();
+        assert!(!st.adaptive, "get_statuses reads adaptive_enabled map");
+    }
+
+    #[test]
+    fn test_rate_limiter_check_respects_capacity() {
+        let mut rl = AdaptiveRateLimiter::new();
+        rl.configure("svc-a", 0.0, 3, true);
+        for _ in 0..3 {
+            assert!(rl.check("svc-a"));
+        }
+        assert!(!rl.check("svc-a"), "4th call should be rejected");
+    }
+
+    #[test]
+    fn test_rate_limiter_get_config_unknown() {
+        let rl = AdaptiveRateLimiter::new();
+        assert!(rl.get_config("unknown").is_none());
+    }
+
+    #[test]
+    fn test_rate_limiter_get_statuses() {
+        let mut rl = AdaptiveRateLimiter::new();
+        rl.ensure_service("svc-a");
+        let statuses = rl.get_statuses();
+        assert_eq!(statuses.len(), 1);
+        assert_eq!(statuses[0].service, "svc-a");
+        assert_eq!(statuses[0].max_capacity, 200);
+        assert_eq!(statuses[0].refill_rate_per_sec, 100.0);
+        assert_eq!(statuses[0].total_requests, 0);
+        assert_eq!(statuses[0].rejected_requests, 0);
+    }
+
+    // ============ CircuitBreaker ============
+
+    #[test]
+    fn test_circuit_breaker_initial_closed() {
+        let cb = CircuitBreaker::new(5, 30, 3);
+        assert_eq!(cb.state, CircuitState::Closed);
+    }
+
+    #[test]
+    fn test_circuit_breaker_closed_allows_execution() {
+        let mut cb = CircuitBreaker::new(5, 30, 3);
+        assert!(cb.can_execute());
+    }
+
+    #[test]
+    fn test_circuit_breaker_transitions_to_open() {
+        let mut cb = CircuitBreaker::new(3, 3600, 3);
+        for _ in 0..3 {
+            cb.record_failure();
+        }
+        assert_eq!(cb.state, CircuitState::Open);
+        assert!(!cb.can_execute(), "Open should block execution");
+    }
+
+    #[test]
+    fn test_circuit_breaker_open_transitions_to_halfopen_after_timeout() {
+        let mut cb = CircuitBreaker::new(3, 0, 3);
+        for _ in 0..3 {
+            cb.record_failure();
+        }
+        assert_eq!(cb.state, CircuitState::Open);
+        assert!(cb.can_execute(), "after 0s timeout should be HalfOpen");
+        assert_eq!(cb.state, CircuitState::HalfOpen);
+    }
+
+    #[test]
+    fn test_circuit_breaker_halfopen_success_closes() {
+        let mut cb = CircuitBreaker::new(3, 0, 2);
+        for _ in 0..3 {
+            cb.record_failure();
+        }
+        assert!(cb.can_execute()); // -> HalfOpen
+        cb.record_success();
+        cb.record_success();
+        assert_eq!(cb.state, CircuitState::Closed);
+    }
+
+    #[test]
+    fn test_circuit_breaker_halfopen_failure_reopens() {
+        let mut cb = CircuitBreaker::new(3, 0, 3);
+        for _ in 0..3 {
+            cb.record_failure();
+        }
+        assert!(cb.can_execute()); // -> HalfOpen
+        cb.record_failure();
+        assert_eq!(cb.state, CircuitState::Open);
+    }
+
+    #[test]
+    fn test_circuit_breaker_reset() {
+        let mut cb = CircuitBreaker::new(3, 3600, 3);
+        for _ in 0..3 {
+            cb.record_failure();
+        }
+        assert_eq!(cb.state, CircuitState::Open);
+        cb.reset();
+        assert_eq!(cb.state, CircuitState::Closed);
+        assert!(cb.can_execute());
+    }
+
+    #[test]
+    fn test_circuit_breaker_failure_rate_must_exceed_half() {
+        let mut cb = CircuitBreaker::new(5, 3600, 3);
+        for _ in 0..4 {
+            cb.record_success();
+        }
+        cb.record_failure();
+        assert_eq!(cb.state, CircuitState::Closed, "failure_rate=0.2 not >0.5");
+    }
+
+    // ============ CircuitBreakerManager ============
+
+    #[test]
+    fn test_cb_manager_new_empty() {
+        let mgr = CircuitBreakerManager::new();
+        assert!(mgr.get_degradation_configs().is_empty());
+    }
+
+    #[test]
+    fn test_cb_manager_ensure_service_defaults() {
+        let mut mgr = CircuitBreakerManager::new();
+        mgr.ensure_service("svc-a");
+        let state = mgr.get_state("svc-a").unwrap();
+        assert_eq!(state.service, "svc-a");
+        assert_eq!(state.state, CircuitStateGql::Closed);
+        let degrad = mgr.get_degradation_config("svc-a").unwrap();
+        assert_eq!(degrad.service, "svc-a");
+        assert!(!degrad.enabled);
+    }
+
+    #[test]
+    fn test_cb_manager_configure_and_state() {
+        let mut mgr = CircuitBreakerManager::new();
+        mgr.configure("svc-a", 2, 3600, 2);
+        mgr.record_failure("svc-a");
+        mgr.record_failure("svc-a");
+        let state = mgr.get_state("svc-a").unwrap();
+        assert_eq!(state.state, CircuitStateGql::Open);
+        mgr.reset("svc-a");
+        let state2 = mgr.get_state("svc-a").unwrap();
+        assert_eq!(state2.state, CircuitStateGql::Closed);
+    }
+
+    #[test]
+    fn test_cb_manager_configure_degradation() {
+        let mut mgr = CircuitBreakerManager::new();
+        mgr.configure_degradation("svc-a", true, "CacheFallback", 300, 1800);
+        let degrad = mgr.get_degradation_config("svc-a").unwrap();
+        assert!(degrad.enabled);
+        assert_eq!(degrad.strategy, "CacheFallback");
+        assert_eq!(degrad.fallback_ttl_sec, 300);
+        assert_eq!(degrad.max_degradation_duration_sec, 1800);
+    }
+
+    // ============ LoadAwareRouter ============
+
+    #[test]
+    fn test_router_register_instance() {
+        let mut r = LoadAwareRouter::new();
+        r.register_instance("svc-a", "inst-1", "http://localhost:8080");
+        let metrics = r.get_all_load_metrics();
+        assert_eq!(metrics.len(), 1);
+        assert_eq!(metrics[0].service, "svc-a");
+        assert_eq!(metrics[0].instance_id, "inst-1");
+        assert!(metrics[0].load_score >= 0.0);
+    }
+
+    #[test]
+    fn test_router_mark_unhealthy_then_healthy() {
+        let mut r = LoadAwareRouter::new();
+        r.register_instance("svc-a", "inst-1", "http://localhost:8080");
+        r.mark_unhealthy("svc-a", "inst-1");
+        let healths = r.get_all_instance_healths();
+        assert_eq!(healths.len(), 1);
+        assert!(!healths[0].healthy);
+        r.mark_healthy("svc-a", "inst-1");
+        let healths2 = r.get_all_instance_healths();
+        assert!(healths2[0].healthy);
+    }
+
+    #[test]
+    fn test_router_update_metrics() {
+        let mut r = LoadAwareRouter::new();
+        r.register_instance("svc-a", "inst-1", "http://localhost:8080");
+        r.update_metrics("svc-a", "inst-1", 0.8, 0.6, 50, 20, 200.0, 0.1);
+        let metrics = r.get_load_metrics("svc-a");
+        assert_eq!(metrics.len(), 1);
+        assert!((metrics[0].cpu_usage - 0.8).abs() < 1e-6);
+        assert!((metrics[0].memory_usage - 0.6).abs() < 1e-6);
+        assert!((metrics[0].load_score - (0.8 * 0.25 + 0.6 * 0.2 + (50.0 / 1000.0) * 0.15 + (20.0 / 100.0) * 0.15 + (200.0 / 1000.0) * 0.15 + 0.1 * 0.1)).abs() < 1e-6);
+    }
+
+    #[test]
+    fn test_circuit_state_roundtrip_all_variants_private() {
+        // 私有 enum CircuitState 无法用 serde，但有 PartialEq — 直接断言等值
+        assert_eq!(CircuitState::Closed, CircuitState::Closed);
+        assert_ne!(CircuitState::Closed, CircuitState::Open);
+        assert_ne!(CircuitState::Open, CircuitState::HalfOpen);
+    }
 }
