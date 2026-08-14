@@ -1760,4 +1760,1408 @@ mod tests {
         let second = state.evaluate_alert_rule(&rule, 50.0).await;
         assert!(second.is_none());
     }
+
+    // ===== Helpers =====
+
+    fn make_test_rule(
+        id: &str,
+        severity: AlertSeverity,
+        category: AlertCategory,
+        threshold: f64,
+        enabled: bool,
+        cooldown_seconds: u64,
+    ) -> AlertRule {
+        let now = Utc::now();
+        AlertRule {
+            id: id.to_string(),
+            name: format!("rule-{}", id),
+            description: None,
+            condition: AlertCondition {
+                metric: "test_metric".to_string(),
+                operator: AlertOperator::GreaterThan,
+                threshold,
+                duration_seconds: None,
+            },
+            severity,
+            category,
+            cooldown_seconds,
+            enabled,
+            escalation: false,
+            team: Some("test-team".to_string()),
+            runbook_url: None,
+            created_at: now,
+            updated_at: now,
+        }
+    }
+
+    fn make_alert_with_labels(
+        severity: AlertSeverity,
+        category: AlertCategory,
+        labels: HashMap<String, String>,
+        triggered_at: DateTime<Utc>,
+        resolved: bool,
+    ) -> Alert {
+        Alert {
+            id: Uuid::new_v4().to_string(),
+            rule_id: None,
+            rule_name: "manual".to_string(),
+            severity,
+            category,
+            message: "manual alert".to_string(),
+            description: None,
+            service_name: None,
+            instance: None,
+            triggered_at,
+            resolved_at: if resolved {
+                Some(triggered_at)
+            } else {
+                None
+            },
+            acknowledged: false,
+            acknowledged_at: None,
+            acknowledged_by: None,
+            escalation_level: 0,
+            labels,
+            annotations: HashMap::new(),
+        }
+    }
+
+    // ===== serde roundtrips for previously uncovered types =====
+
+    #[tokio::test]
+    async fn test_alert_severity_serde_roundtrip_all_variants() {
+        for original in [
+            AlertSeverity::P0,
+            AlertSeverity::P1,
+            AlertSeverity::P2,
+            AlertSeverity::P3,
+        ] {
+            let json = serde_json::to_string(&original).expect("serialize AlertSeverity");
+            let back: AlertSeverity =
+                serde_json::from_str(&json).expect("deserialize AlertSeverity");
+            assert_eq!(original, back);
+        }
+        // serde rename_all = "UPPERCASE"
+        assert_eq!(serde_json::to_string(&AlertSeverity::P0).unwrap(), "\"P0\"");
+        assert_eq!(serde_json::to_string(&AlertSeverity::P3).unwrap(), "\"P3\"");
+    }
+
+    #[tokio::test]
+    async fn test_alert_condition_serde_roundtrip() {
+        let original = AlertCondition {
+            metric: "cpu_usage".to_string(),
+            operator: AlertOperator::GreaterThanOrEqual,
+            threshold: 75.5,
+            duration_seconds: Some(300),
+        };
+        let json = serde_json::to_string(&original).expect("serialize AlertCondition");
+        let back: AlertCondition =
+            serde_json::from_str(&json).expect("deserialize AlertCondition");
+        let json_again = serde_json::to_string(&back).expect("serialize AlertCondition again");
+        assert_eq!(json, json_again);
+        assert_eq!(back.threshold, 75.5);
+        assert_eq!(back.operator, AlertOperator::GreaterThanOrEqual);
+    }
+
+    #[tokio::test]
+    async fn test_alert_condition_serde_duration_none() {
+        let original = AlertCondition {
+            metric: "m".to_string(),
+            operator: AlertOperator::Equal,
+            threshold: 0.0,
+            duration_seconds: None,
+        };
+        let json = serde_json::to_string(&original).unwrap();
+        let back: AlertCondition = serde_json::from_str(&json).unwrap();
+        assert!(back.duration_seconds.is_none());
+    }
+
+    #[tokio::test]
+    async fn test_alert_category_serde_roundtrip_all_variants() {
+        let variants = [
+            AlertCategory::Service,
+            AlertCategory::Database,
+            AlertCategory::Cache,
+            AlertCategory::Messaging,
+            AlertCategory::System,
+            AlertCategory::Container,
+            AlertCategory::Backup,
+            AlertCategory::Security,
+            AlertCategory::Network,
+            AlertCategory::Business,
+            AlertCategory::Other,
+        ];
+        for original in variants {
+            let json = serde_json::to_string(&original).expect("serialize AlertCategory");
+            let back: AlertCategory =
+                serde_json::from_str(&json).expect("deserialize AlertCategory");
+            assert_eq!(original, back);
+        }
+        // serde rename_all = "lowercase"
+        assert_eq!(
+            serde_json::to_string(&AlertCategory::Database).unwrap(),
+            "\"database\""
+        );
+    }
+
+    #[tokio::test]
+    async fn test_alert_statistics_serde_roundtrip() {
+        let original = AlertStatistics {
+            total_alerts: 10,
+            active_alerts: 4,
+            resolved_alerts: 6,
+            p0_count: 1,
+            p1_count: 2,
+            p2_count: 3,
+            p3_count: 4,
+            acknowledged_count: 5,
+            avg_resolution_time_seconds: Some(42.5),
+            top_services: vec![ServiceAlertCount {
+                service_name: "svc".to_string(),
+                alert_count: 3,
+            }],
+            top_categories: vec![CategoryAlertCount {
+                category: AlertCategory::System,
+                alert_count: 7,
+            }],
+            trend_last_24h: vec![HourlyAlertCount {
+                hour: Utc::now(),
+                count: 2,
+            }],
+        };
+        let json = serde_json::to_string(&original).expect("serialize AlertStatistics");
+        let back: AlertStatistics =
+            serde_json::from_str(&json).expect("deserialize AlertStatistics");
+        let json_again = serde_json::to_string(&back).expect("serialize AlertStatistics again");
+        assert_eq!(json, json_again);
+        assert_eq!(back.total_alerts, 10);
+        assert_eq!(back.avg_resolution_time_seconds, Some(42.5));
+    }
+
+    #[tokio::test]
+    async fn test_service_alert_count_serde_roundtrip() {
+        let original = ServiceAlertCount {
+            service_name: "api-svc".to_string(),
+            alert_count: 99,
+        };
+        let json = serde_json::to_string(&original).unwrap();
+        let back: ServiceAlertCount = serde_json::from_str(&json).unwrap();
+        let json_again = serde_json::to_string(&back).unwrap();
+        assert_eq!(json, json_again);
+        assert_eq!(back.service_name, "api-svc");
+        assert_eq!(back.alert_count, 99);
+    }
+
+    #[tokio::test]
+    async fn test_category_alert_count_serde_roundtrip() {
+        let original = CategoryAlertCount {
+            category: AlertCategory::Network,
+            alert_count: 7,
+        };
+        let json = serde_json::to_string(&original).unwrap();
+        let back: CategoryAlertCount = serde_json::from_str(&json).unwrap();
+        let json_again = serde_json::to_string(&back).unwrap();
+        assert_eq!(json, json_again);
+        assert_eq!(back.category, AlertCategory::Network);
+        assert_eq!(back.alert_count, 7);
+    }
+
+    #[tokio::test]
+    async fn test_hourly_alert_count_serde_roundtrip() {
+        let now = Utc::now();
+        let original = HourlyAlertCount { hour: now, count: 5 };
+        let json = serde_json::to_string(&original).unwrap();
+        let back: HourlyAlertCount = serde_json::from_str(&json).unwrap();
+        let json_again = serde_json::to_string(&back).unwrap();
+        assert_eq!(json, json_again);
+        assert_eq!(back.hour, now);
+        assert_eq!(back.count, 5);
+    }
+
+    #[tokio::test]
+    async fn test_alert_convergence_config_serde_roundtrip() {
+        let original = AlertConvergenceConfig {
+            group_by: vec!["a".to_string(), "b".to_string()],
+            group_wait_seconds: 10,
+            group_interval_seconds: 100,
+            repeat_interval_seconds: 1000,
+            max_alerts_per_group: 50,
+        };
+        let json = serde_json::to_string(&original).unwrap();
+        let back: AlertConvergenceConfig = serde_json::from_str(&json).unwrap();
+        let json_again = serde_json::to_string(&back).unwrap();
+        assert_eq!(json, json_again);
+        assert_eq!(back.group_by.len(), 2);
+        assert_eq!(back.max_alerts_per_group, 50);
+    }
+
+    #[tokio::test]
+    async fn test_silence_matcher_serde_roundtrip() {
+        let original = SilenceMatcher {
+            name: "severity".to_string(),
+            value: "P0".to_string(),
+            is_regex: true,
+        };
+        let json = serde_json::to_string(&original).unwrap();
+        let back: SilenceMatcher = serde_json::from_str(&json).unwrap();
+        let json_again = serde_json::to_string(&back).unwrap();
+        assert_eq!(json, json_again);
+        assert!(back.is_regex);
+    }
+
+    #[tokio::test]
+    async fn test_silence_recurrence_serde_all_patterns() {
+        for original in [
+            RecurrencePattern::Daily,
+            RecurrencePattern::Weekly,
+            RecurrencePattern::Weekdays,
+            RecurrencePattern::Weekends,
+            RecurrencePattern::Custom,
+        ] {
+            let json = serde_json::to_string(&original).unwrap();
+            let back: RecurrencePattern = serde_json::from_str(&json).unwrap();
+            assert_eq!(original, back);
+        }
+        // serde rename_all = "lowercase"
+        assert_eq!(
+            serde_json::to_string(&RecurrencePattern::Weekly).unwrap(),
+            "\"weekly\""
+        );
+        assert_eq!(
+            serde_json::to_string(&RecurrencePattern::Custom).unwrap(),
+            "\"custom\""
+        );
+    }
+
+    #[tokio::test]
+    async fn test_silence_recurrence_full_struct_serde() {
+        let original = SilenceRecurrence {
+            pattern: RecurrencePattern::Weekly,
+            interval_days: Some(7),
+            weekdays: Some(vec![1, 2, 3, 4, 5]),
+        };
+        let json = serde_json::to_string(&original).unwrap();
+        let back: SilenceRecurrence = serde_json::from_str(&json).unwrap();
+        let json_again = serde_json::to_string(&back).unwrap();
+        assert_eq!(json, json_again);
+        assert_eq!(back.interval_days, Some(7));
+        assert_eq!(back.weekdays.as_deref(), Some(&[1u8, 2, 3, 4, 5][..]));
+    }
+
+    #[tokio::test]
+    async fn test_monitoring_error_display() {
+        assert_eq!(
+            MonitoringError::DateTimeConstruction.to_string(),
+            "Invalid datetime construction"
+        );
+        assert_eq!(
+            MonitoringError::UnexpectedNone.to_string(),
+            "Unexpected none value"
+        );
+    }
+
+    // ===== record_request deep coverage =====
+
+    #[tokio::test]
+    async fn test_record_request_avg_calculation() {
+        let state = MonitoringState::new();
+        state.record_request(true, 100).await;
+        state.record_request(true, 200).await;
+        state.record_request(true, 300).await;
+        let metrics = state.get_metrics().await;
+        assert_eq!(metrics.requests_total, 3);
+        assert_eq!(metrics.requests_success, 3);
+        assert_eq!(metrics.avg_response_time_ms, 200); // (100+200+300)/3
+    }
+
+    #[tokio::test]
+    async fn test_record_request_all_failures() {
+        let state = MonitoringState::new();
+        state.record_request(false, 50).await;
+        state.record_request(false, 150).await;
+        let metrics = state.get_metrics().await;
+        assert_eq!(metrics.requests_success, 0);
+        assert_eq!(metrics.requests_failed, 2);
+        assert_eq!(metrics.requests_total, 2);
+        assert_eq!(metrics.avg_response_time_ms, 100); // (50+150)/2
+    }
+
+    #[tokio::test]
+    async fn test_record_request_zero_response_time() {
+        let state = MonitoringState::new();
+        state.record_request(true, 0).await;
+        let metrics = state.get_metrics().await;
+        assert_eq!(metrics.avg_response_time_ms, 0);
+        assert_eq!(metrics.requests_total, 1);
+    }
+
+    #[tokio::test]
+    async fn test_record_request_mixed_updates_counts() {
+        let state = MonitoringState::new();
+        for _ in 0..7 {
+            state.record_request(true, 10).await;
+        }
+        for _ in 0..3 {
+            state.record_request(false, 20).await;
+        }
+        let metrics = state.get_metrics().await;
+        assert_eq!(metrics.requests_total, 10);
+        assert_eq!(metrics.requests_success, 7);
+        assert_eq!(metrics.requests_failed, 3);
+        // avg = (7*10 + 3*20)/10 = 130/10 = 13
+        assert_eq!(metrics.avg_response_time_ms, 13);
+    }
+
+    #[tokio::test]
+    async fn test_record_request_response_times_capped_at_1000() {
+        let state = MonitoringState::new();
+        for i in 0..1005u64 {
+            state.record_request(true, i).await;
+        }
+        let times = state.response_times.read().await;
+        assert_eq!(times.len(), 1000);
+        // First 5 values (0..5) drained; oldest kept is value 5, newest is 1004.
+        assert_eq!(times[0], 5);
+        assert_eq!(times[999], 1004);
+    }
+
+    // ===== silence rule evaluation (via evaluate_alert_rule) =====
+
+    #[tokio::test]
+    async fn test_evaluate_alert_rule_silenced_by_severity() {
+        let state = MonitoringState::new();
+        let now = Utc::now();
+        let rule =
+            make_test_rule("sil-sev", AlertSeverity::P2, AlertCategory::Other, 10.0, true, 0);
+        let silence = SilenceRule {
+            id: "sil-1".to_string(),
+            name: "silence p2".to_string(),
+            description: None,
+            matchers: vec![SilenceMatcher {
+                name: "severity".to_string(),
+                value: "P2".to_string(),
+                is_regex: false,
+            }],
+            starts_at: now - Duration::hours(1),
+            ends_at: now + Duration::hours(1),
+            created_by: "tester".to_string(),
+            comment: None,
+            enabled: true,
+            recurrence: None,
+        };
+        state.add_silence_rule(silence).await;
+        let result = state.evaluate_alert_rule(&rule, 50.0).await;
+        assert!(result.is_none(), "P2 rule should be silenced by severity matcher");
+    }
+
+    #[tokio::test]
+    async fn test_evaluate_alert_rule_silenced_by_category() {
+        let state = MonitoringState::new();
+        let now = Utc::now();
+        let rule = make_test_rule(
+            "sil-cat",
+            AlertSeverity::P2,
+            AlertCategory::Database,
+            10.0,
+            true,
+            0,
+        );
+        let silence = SilenceRule {
+            id: "sil-cat".to_string(),
+            name: "silence database".to_string(),
+            description: None,
+            matchers: vec![SilenceMatcher {
+                name: "category".to_string(),
+                value: "database".to_string(),
+                is_regex: false,
+            }],
+            starts_at: now - Duration::hours(1),
+            ends_at: now + Duration::hours(1),
+            created_by: "tester".to_string(),
+            comment: None,
+            enabled: true,
+            recurrence: None,
+        };
+        state.add_silence_rule(silence).await;
+        assert!(state.evaluate_alert_rule(&rule, 50.0).await.is_none());
+    }
+
+    #[tokio::test]
+    async fn test_evaluate_alert_rule_silenced_by_regex() {
+        let state = MonitoringState::new();
+        let now = Utc::now();
+        let rule =
+            make_test_rule("sil-re", AlertSeverity::P2, AlertCategory::Other, 10.0, true, 0);
+        let silence = SilenceRule {
+            id: "sil-re".to_string(),
+            name: "regex silence".to_string(),
+            description: None,
+            matchers: vec![SilenceMatcher {
+                name: "severity".to_string(),
+                value: "P[23]".to_string(),
+                is_regex: true,
+            }],
+            starts_at: now - Duration::hours(1),
+            ends_at: now + Duration::hours(1),
+            created_by: "tester".to_string(),
+            comment: None,
+            enabled: true,
+            recurrence: None,
+        };
+        state.add_silence_rule(silence).await;
+        assert!(
+            state.evaluate_alert_rule(&rule, 50.0).await.is_none(),
+            "P2 matches P[23] regex"
+        );
+    }
+
+    #[tokio::test]
+    async fn test_silence_regex_does_not_match_other_severity() {
+        let state = MonitoringState::new();
+        let now = Utc::now();
+        // P0 rule: regex "P[23]" should NOT silence P0
+        let rule =
+            make_test_rule("sil-re-p0", AlertSeverity::P0, AlertCategory::Other, 10.0, true, 0);
+        let silence = SilenceRule {
+            id: "sil-re-p0".to_string(),
+            name: "regex p23".to_string(),
+            description: None,
+            matchers: vec![SilenceMatcher {
+                name: "severity".to_string(),
+                value: "P[23]".to_string(),
+                is_regex: true,
+            }],
+            starts_at: now - Duration::hours(1),
+            ends_at: now + Duration::hours(1),
+            created_by: "tester".to_string(),
+            comment: None,
+            enabled: true,
+            recurrence: None,
+        };
+        state.add_silence_rule(silence).await;
+        assert!(
+            state
+                .evaluate_alert_rule(&rule, 50.0)
+                .await
+                .is_some(),
+            "P0 not silenced by P[23] regex"
+        );
+    }
+
+    #[tokio::test]
+    async fn test_silence_disabled_does_not_silence() {
+        let state = MonitoringState::new();
+        let now = Utc::now();
+        let rule =
+            make_test_rule("sil-dis", AlertSeverity::P2, AlertCategory::Other, 10.0, true, 0);
+        let silence = SilenceRule {
+            id: "sil-dis".to_string(),
+            name: "disabled".to_string(),
+            description: None,
+            matchers: vec![SilenceMatcher {
+                name: "severity".to_string(),
+                value: "P2".to_string(),
+                is_regex: false,
+            }],
+            starts_at: now - Duration::hours(1),
+            ends_at: now + Duration::hours(1),
+            created_by: "tester".to_string(),
+            comment: None,
+            enabled: false,
+            recurrence: None,
+        };
+        state.add_silence_rule(silence).await;
+        assert!(state.evaluate_alert_rule(&rule, 50.0).await.is_some());
+    }
+
+    #[tokio::test]
+    async fn test_silence_out_of_window_does_not_silence() {
+        let state = MonitoringState::new();
+        let now = Utc::now();
+        let rule =
+            make_test_rule("sil-out", AlertSeverity::P2, AlertCategory::Other, 10.0, true, 0);
+        // Window entirely in the future → now < starts_at → skipped
+        let silence = SilenceRule {
+            id: "sil-out".to_string(),
+            name: "future".to_string(),
+            description: None,
+            matchers: vec![SilenceMatcher {
+                name: "severity".to_string(),
+                value: "P2".to_string(),
+                is_regex: false,
+            }],
+            starts_at: now + Duration::hours(1),
+            ends_at: now + Duration::hours(2),
+            created_by: "tester".to_string(),
+            comment: None,
+            enabled: true,
+            recurrence: None,
+        };
+        state.add_silence_rule(silence).await;
+        assert!(state.evaluate_alert_rule(&rule, 50.0).await.is_some());
+    }
+
+    #[tokio::test]
+    async fn test_silence_team_matcher_matches() {
+        let state = MonitoringState::new();
+        let now = Utc::now();
+        // make_test_rule sets team = Some("test-team")
+        let rule =
+            make_test_rule("sil-team", AlertSeverity::P2, AlertCategory::Other, 10.0, true, 0);
+        let silence = SilenceRule {
+            id: "sil-team".to_string(),
+            name: "team silence".to_string(),
+            description: None,
+            matchers: vec![SilenceMatcher {
+                name: "team".to_string(),
+                value: "test-team".to_string(),
+                is_regex: false,
+            }],
+            starts_at: now - Duration::hours(1),
+            ends_at: now + Duration::hours(1),
+            created_by: "tester".to_string(),
+            comment: None,
+            enabled: true,
+            recurrence: None,
+        };
+        state.add_silence_rule(silence).await;
+        assert!(state.evaluate_alert_rule(&rule, 50.0).await.is_none());
+    }
+
+    #[tokio::test]
+    async fn test_silence_unknown_matcher_name_ignored() {
+        // Matcher names other than severity/category/team are skipped (`continue`),
+        // leaving matches=true → silences any rule within window.
+        let state = MonitoringState::new();
+        let now = Utc::now();
+        let rule =
+            make_test_rule("sil-unk", AlertSeverity::P2, AlertCategory::Other, 10.0, true, 0);
+        let silence = SilenceRule {
+            id: "sil-unk".to_string(),
+            name: "unknown matcher".to_string(),
+            description: None,
+            matchers: vec![SilenceMatcher {
+                name: "unknown_field".to_string(),
+                value: "whatever".to_string(),
+                is_regex: false,
+            }],
+            starts_at: now - Duration::hours(1),
+            ends_at: now + Duration::hours(1),
+            created_by: "tester".to_string(),
+            comment: None,
+            enabled: true,
+            recurrence: None,
+        };
+        state.add_silence_rule(silence).await;
+        assert!(state.evaluate_alert_rule(&rule, 50.0).await.is_none());
+    }
+
+    // ===== suppression rule evaluation (via evaluate_alert_rule) =====
+
+    #[tokio::test]
+    async fn test_suppression_p0_suppresses_p2_same_category() {
+        let state = MonitoringState::new();
+        // new() loads default suppression rules incl. p0-suppress-p1-p2-p3
+        let mut labels = HashMap::new();
+        labels.insert("category".to_string(), "system".to_string());
+        let p0_alert = make_alert_with_labels(
+            AlertSeverity::P0,
+            AlertCategory::System,
+            labels,
+            Utc::now(),
+            false,
+        );
+        state.alerts.write().await.push(p0_alert);
+
+        let rule =
+            make_test_rule("sup-p2", AlertSeverity::P2, AlertCategory::System, 10.0, true, 0);
+        let result = state.evaluate_alert_rule(&rule, 50.0).await;
+        assert!(
+            result.is_none(),
+            "P2 should be suppressed by active P0 with matching category"
+        );
+    }
+
+    #[tokio::test]
+    async fn test_suppression_resolved_alert_does_not_suppress() {
+        let state = MonitoringState::new();
+        let mut labels = HashMap::new();
+        labels.insert("category".to_string(), "system".to_string());
+        let p0_alert = make_alert_with_labels(
+            AlertSeverity::P0,
+            AlertCategory::System,
+            labels,
+            Utc::now(),
+            true, // resolved → skipped
+        );
+        state.alerts.write().await.push(p0_alert);
+
+        let rule = make_test_rule(
+            "sup-resolved",
+            AlertSeverity::P2,
+            AlertCategory::System,
+            10.0,
+            true,
+            0,
+        );
+        let result = state.evaluate_alert_rule(&rule, 50.0).await;
+        assert!(result.is_some(), "Resolved P0 should not suppress");
+    }
+
+    #[tokio::test]
+    async fn test_suppression_aged_out_does_not_suppress() {
+        let state = MonitoringState::new();
+        let mut labels = HashMap::new();
+        labels.insert("category".to_string(), "system".to_string());
+        let p0_alert = make_alert_with_labels(
+            AlertSeverity::P0,
+            AlertCategory::System,
+            labels,
+            Utc::now() - Duration::hours(25), // older than 24h
+            false,
+        );
+        state.alerts.write().await.push(p0_alert);
+
+        let rule =
+            make_test_rule("sup-aged", AlertSeverity::P2, AlertCategory::System, 10.0, true, 0);
+        let result = state.evaluate_alert_rule(&rule, 50.0).await;
+        assert!(
+            result.is_some(),
+            "P0 alert older than 24h should not suppress"
+        );
+    }
+
+    #[tokio::test]
+    async fn test_suppression_different_category_does_not_suppress() {
+        let state = MonitoringState::new();
+        let mut labels = HashMap::new();
+        labels.insert("category".to_string(), "database".to_string());
+        let p0_alert = make_alert_with_labels(
+            AlertSeverity::P0,
+            AlertCategory::Database,
+            labels,
+            Utc::now(),
+            false,
+        );
+        state.alerts.write().await.push(p0_alert);
+
+        // P2 rule with System category; active P0 alert has Database category → labels mismatch
+        let rule = make_test_rule(
+            "sup-diff",
+            AlertSeverity::P2,
+            AlertCategory::System,
+            10.0,
+            true,
+            0,
+        );
+        let result = state.evaluate_alert_rule(&rule, 50.0).await;
+        assert!(result.is_some(), "Different category should not suppress");
+    }
+
+    #[tokio::test]
+    async fn test_suppression_higher_severity_rule_not_suppressed() {
+        // A P0 rule must not be suppressed by lower-severity (P1) source suppression rules
+        // (rule.severity.is_higher_than(source) → skip).
+        let state = MonitoringState::new();
+        let mut labels = HashMap::new();
+        labels.insert("category".to_string(), "system".to_string());
+        let p1_alert = make_alert_with_labels(
+            AlertSeverity::P1,
+            AlertCategory::System,
+            labels,
+            Utc::now(),
+            false,
+        );
+        state.alerts.write().await.push(p1_alert);
+
+        let rule =
+            make_test_rule("sup-p0", AlertSeverity::P0, AlertCategory::System, 10.0, true, 0);
+        let result = state.evaluate_alert_rule(&rule, 50.0).await;
+        assert!(
+            result.is_some(),
+            "P0 rule should not be suppressed by P1 source"
+        );
+    }
+
+    // ===== create / acknowledge / resolve deep coverage =====
+
+    #[tokio::test]
+    async fn test_create_alert_generates_unique_ids() {
+        let state = MonitoringState::new();
+        let rule = make_test_rule("ca-1", AlertSeverity::P2, AlertCategory::Service, 0.0, true, 0);
+        let a1 = state.create_alert(&rule, "m1".to_string()).await;
+        let a2 = state.create_alert(&rule, "m2".to_string()).await;
+        assert_ne!(a1.id, a2.id);
+        assert_eq!(a1.rule_id.as_deref(), Some("ca-1"));
+        assert_eq!(a1.message, "m1");
+        assert_eq!(a1.escalation_level, 0);
+        assert!(a1.labels.is_empty());
+        assert!(a1.annotations.is_empty());
+        assert!(a1.resolved_at.is_none());
+        assert!(!a1.acknowledged);
+    }
+
+    #[tokio::test]
+    async fn test_acknowledge_alert_not_found_returns_false() {
+        let state = MonitoringState::new();
+        assert!(!state.acknowledge_alert("nonexistent", "ops").await);
+    }
+
+    #[tokio::test]
+    async fn test_resolve_alert_not_found_returns_false() {
+        let state = MonitoringState::new();
+        assert!(!state.resolve_alert("nonexistent").await);
+    }
+
+    #[tokio::test]
+    async fn test_acknowledge_alert_sets_all_fields() {
+        let state = MonitoringState::new();
+        let rule = make_test_rule("ack-1", AlertSeverity::P1, AlertCategory::Service, 0.0, true, 0);
+        let alert = state.create_alert(&rule, "msg".to_string()).await;
+        assert!(state.acknowledge_alert(&alert.id, "oncall").await);
+        let active = state.get_active_alerts().await;
+        assert_eq!(active.len(), 1);
+        let a = &active[0];
+        assert!(a.acknowledged);
+        assert!(a.acknowledged_at.is_some());
+        assert_eq!(a.acknowledged_by.as_deref(), Some("oncall"));
+    }
+
+    #[tokio::test]
+    async fn test_resolve_alert_sets_resolved_at() {
+        let state = MonitoringState::new();
+        let rule = make_test_rule("res-1", AlertSeverity::P1, AlertCategory::Service, 0.0, true, 0);
+        let alert = state.create_alert(&rule, "msg".to_string()).await;
+        assert!(state.resolve_alert(&alert.id).await);
+        assert_eq!(state.get_active_alerts().await.len(), 0);
+    }
+
+    #[tokio::test]
+    async fn test_alerts_capped_at_1000() {
+        let state = MonitoringState::new();
+        let rule = make_test_rule("cap-1", AlertSeverity::P3, AlertCategory::Other, 0.0, true, 0);
+        for _ in 0..1005 {
+            state.create_alert(&rule, "m".to_string()).await;
+        }
+        let alerts = state.alerts.read().await;
+        assert_eq!(alerts.len(), 1000);
+    }
+
+    #[tokio::test]
+    async fn test_get_active_alerts_excludes_resolved() {
+        let state = MonitoringState::new();
+        let rule = make_test_rule("act-1", AlertSeverity::P2, AlertCategory::Service, 0.0, true, 0);
+        let a1 = state.create_alert(&rule, "m1".to_string()).await;
+        state.create_alert(&rule, "m2".to_string()).await;
+        state.resolve_alert(&a1.id).await;
+        let active = state.get_active_alerts().await;
+        assert_eq!(active.len(), 1);
+    }
+
+    #[tokio::test]
+    async fn test_get_alerts_by_severity_excludes_resolved() {
+        let state = MonitoringState::new();
+        let rule = make_test_rule("sev-1", AlertSeverity::P1, AlertCategory::Service, 0.0, true, 0);
+        let a1 = state.create_alert(&rule, "m1".to_string()).await;
+        state.create_alert(&rule, "m2".to_string()).await;
+        state.resolve_alert(&a1.id).await;
+        assert_eq!(
+            state.get_alerts_by_severity(AlertSeverity::P1).await.len(),
+            1
+        );
+    }
+
+    // ===== get_statistics deep coverage =====
+
+    #[tokio::test]
+    async fn test_statistics_empty_state() -> Result<(), MonitoringError> {
+        let state = MonitoringState::default();
+        let stats = state.get_statistics().await?;
+        assert_eq!(stats.total_alerts, 0);
+        assert_eq!(stats.active_alerts, 0);
+        assert_eq!(stats.resolved_alerts, 0);
+        assert_eq!(stats.acknowledged_count, 0);
+        assert!(stats.avg_resolution_time_seconds.is_none());
+        assert!(stats.top_services.is_empty());
+        assert!(stats.top_categories.is_empty());
+        assert_eq!(stats.trend_last_24h.len(), 24);
+        assert!(stats.trend_last_24h.iter().all(|h| h.count == 0));
+        Ok(())
+    }
+
+    #[tokio::test]
+    async fn test_statistics_resolved_and_active_counts() -> Result<(), MonitoringError> {
+        let state = MonitoringState::new();
+        let rule = make_test_rule("stat-1", AlertSeverity::P2, AlertCategory::Service, 0.0, true, 0);
+        let a1 = state.create_alert(&rule, "m1".to_string()).await;
+        let a2 = state.create_alert(&rule, "m2".to_string()).await;
+        state.create_alert(&rule, "m3".to_string()).await;
+        state.resolve_alert(&a1.id).await;
+        state.resolve_alert(&a2.id).await;
+        let stats = state.get_statistics().await?;
+        assert_eq!(stats.total_alerts, 3);
+        assert_eq!(stats.active_alerts, 1);
+        assert_eq!(stats.resolved_alerts, 2);
+        Ok(())
+    }
+
+    #[tokio::test]
+    async fn test_statistics_acknowledged_count() -> Result<(), MonitoringError> {
+        let state = MonitoringState::new();
+        let rule = make_test_rule("stat-ack", AlertSeverity::P2, AlertCategory::Service, 0.0, true, 0);
+        let a1 = state.create_alert(&rule, "m1".to_string()).await;
+        state.create_alert(&rule, "m2".to_string()).await;
+        state.acknowledge_alert(&a1.id, "ops").await;
+        let stats = state.get_statistics().await?;
+        assert_eq!(stats.acknowledged_count, 1);
+        Ok(())
+    }
+
+    #[tokio::test]
+    async fn test_statistics_avg_resolution_time() -> Result<(), MonitoringError> {
+        let state = MonitoringState::new();
+        let triggered = Utc::now() - Duration::seconds(100);
+        let alert = Alert {
+            id: Uuid::new_v4().to_string(),
+            rule_id: None,
+            rule_name: "manual".to_string(),
+            severity: AlertSeverity::P2,
+            category: AlertCategory::Service,
+            message: "manual".to_string(),
+            description: None,
+            service_name: None,
+            instance: None,
+            triggered_at: triggered,
+            resolved_at: Some(triggered + Duration::seconds(100)),
+            acknowledged: false,
+            acknowledged_at: None,
+            acknowledged_by: None,
+            escalation_level: 0,
+            labels: HashMap::new(),
+            annotations: HashMap::new(),
+        };
+        state.alerts.write().await.push(alert);
+        let stats = state.get_statistics().await?;
+        assert_eq!(stats.resolved_alerts, 1);
+        assert_eq!(stats.avg_resolution_time_seconds, Some(100.0));
+        Ok(())
+    }
+
+    #[tokio::test]
+    async fn test_statistics_top_services() -> Result<(), MonitoringError> {
+        let state = MonitoringState::new();
+        let mk_alert = |svc: &str| Alert {
+            id: Uuid::new_v4().to_string(),
+            rule_id: None,
+            rule_name: "manual".to_string(),
+            severity: AlertSeverity::P2,
+            category: AlertCategory::Service,
+            message: "m".to_string(),
+            description: None,
+            service_name: Some(svc.to_string()),
+            instance: None,
+            triggered_at: Utc::now(),
+            resolved_at: None,
+            acknowledged: false,
+            acknowledged_at: None,
+            acknowledged_by: None,
+            escalation_level: 0,
+            labels: HashMap::new(),
+            annotations: HashMap::new(),
+        };
+        {
+            let mut alerts = state.alerts.write().await;
+            alerts.push(mk_alert("svc-a"));
+            alerts.push(mk_alert("svc-a"));
+            alerts.push(mk_alert("svc-b"));
+        }
+        let stats = state.get_statistics().await?;
+        assert_eq!(stats.top_services.len(), 2);
+        // Sorted descending by count
+        assert_eq!(stats.top_services[0].service_name, "svc-a");
+        assert_eq!(stats.top_services[0].alert_count, 2);
+        assert_eq!(stats.top_services[1].alert_count, 1);
+        Ok(())
+    }
+
+    #[tokio::test]
+    async fn test_statistics_top_categories_sorted() -> Result<(), MonitoringError> {
+        let state = MonitoringState::new();
+        let mk_alert = |cat: AlertCategory| Alert {
+            id: Uuid::new_v4().to_string(),
+            rule_id: None,
+            rule_name: "manual".to_string(),
+            severity: AlertSeverity::P2,
+            category: cat,
+            message: "m".to_string(),
+            description: None,
+            service_name: None,
+            instance: None,
+            triggered_at: Utc::now(),
+            resolved_at: None,
+            acknowledged: false,
+            acknowledged_at: None,
+            acknowledged_by: None,
+            escalation_level: 0,
+            labels: HashMap::new(),
+            annotations: HashMap::new(),
+        };
+        {
+            let mut alerts = state.alerts.write().await;
+            alerts.push(mk_alert(AlertCategory::System));
+            alerts.push(mk_alert(AlertCategory::System));
+            alerts.push(mk_alert(AlertCategory::Database));
+        }
+        let stats = state.get_statistics().await?;
+        assert_eq!(stats.top_categories.len(), 2);
+        assert_eq!(stats.top_categories[0].category, AlertCategory::System);
+        assert_eq!(stats.top_categories[0].alert_count, 2);
+        assert_eq!(stats.top_categories[1].alert_count, 1);
+        Ok(())
+    }
+
+    #[tokio::test]
+    async fn test_statistics_trend_24h_structure() -> Result<(), MonitoringError> {
+        let state = MonitoringState::new();
+        let stats = state.get_statistics().await?;
+        assert_eq!(stats.trend_last_24h.len(), 24);
+        // Buckets are monotonically increasing, exactly 1 hour apart.
+        for i in 1..stats.trend_last_24h.len() {
+            let prev = stats.trend_last_24h[i - 1].hour;
+            let curr = stats.trend_last_24h[i].hour;
+            assert_eq!(curr - prev, Duration::hours(1));
+        }
+        // The last bucket is at most 1 hour behind `now` (window ends at now-1h).
+        let now = Utc::now();
+        assert!(stats.trend_last_24h[23].hour <= now);
+        Ok(())
+    }
+
+    // ===== default rules deep coverage =====
+
+    #[tokio::test]
+    async fn test_default_alert_rules_count_and_enabled() {
+        let rules = default_alert_rules();
+        assert_eq!(rules.len(), 10);
+        assert!(
+            rules.iter().all(|r| r.enabled),
+            "all default rules should be enabled"
+        );
+    }
+
+    #[tokio::test]
+    async fn test_default_alert_rules_unique_ids() {
+        let rules = default_alert_rules();
+        let mut ids: Vec<&str> = rules.iter().map(|r| r.id.as_str()).collect();
+        ids.sort();
+        let initial_len = ids.len();
+        ids.dedup();
+        assert_eq!(
+            ids.len(),
+            initial_len,
+            "default alert rule ids should be unique"
+        );
+    }
+
+    #[tokio::test]
+    async fn test_default_alert_rules_all_have_team() {
+        let rules = default_alert_rules();
+        assert!(rules.iter().all(|r| r.team.as_deref() == Some("devops")));
+    }
+
+    #[tokio::test]
+    async fn test_default_alert_rules_severity_distribution() {
+        let rules = default_alert_rules();
+        let p0 = rules
+            .iter()
+            .filter(|r| r.severity == AlertSeverity::P0)
+            .count();
+        let p1 = rules
+            .iter()
+            .filter(|r| r.severity == AlertSeverity::P1)
+            .count();
+        let p2 = rules
+            .iter()
+            .filter(|r| r.severity == AlertSeverity::P2)
+            .count();
+        let p3 = rules
+            .iter()
+            .filter(|r| r.severity == AlertSeverity::P3)
+            .count();
+        assert_eq!(p0, 2); // CPU-P0, error-rate-P0
+        assert_eq!(p1, 4); // CPU-P1, mem-P1, latency-P1, error-rate-P1
+        assert_eq!(p2, 4); // CPU-P2, mem-P2, latency-P2, error-rate-P2
+        assert_eq!(p3, 0);
+    }
+
+    #[tokio::test]
+    async fn test_default_suppression_rules_source_higher_than_target() {
+        let rules = default_suppression_rules();
+        for r in &rules {
+            assert!(
+                r.source_severity.is_higher_than(&r.target_severity),
+                "suppression source severity must be higher than target"
+            );
+        }
+    }
+
+    #[tokio::test]
+    async fn test_default_suppression_rules_all_enabled() {
+        let rules = default_suppression_rules();
+        assert!(rules.iter().all(|r| r.enabled));
+    }
+
+    // ===== get_night_silence_config deep coverage =====
+
+    #[tokio::test]
+    async fn test_night_silence_starts_at_22() -> Result<(), MonitoringError> {
+        let silence = MonitoringState::get_night_silence_config().await?;
+        assert_eq!(silence.starts_at.hour(), 22);
+        assert_eq!(silence.starts_at.minute(), 0);
+        assert_eq!(silence.starts_at.second(), 0);
+        Ok(())
+    }
+
+    #[tokio::test]
+    async fn test_night_silence_ends_10h_after_start() -> Result<(), MonitoringError> {
+        let silence = MonitoringState::get_night_silence_config().await?;
+        let diff = silence.ends_at - silence.starts_at;
+        assert_eq!(diff.num_hours(), 10);
+        Ok(())
+    }
+
+    #[tokio::test]
+    async fn test_night_silence_matcher_value_regex() -> Result<(), MonitoringError> {
+        let silence = MonitoringState::get_night_silence_config().await?;
+        assert_eq!(silence.matchers.len(), 1);
+        assert_eq!(silence.matchers[0].value, "P[23]");
+        assert!(silence.matchers[0].is_regex);
+        assert_eq!(silence.matchers[0].name, "severity");
+        Ok(())
+    }
+
+    #[tokio::test]
+    async fn test_night_silence_recurrence_daily() -> Result<(), MonitoringError> {
+        let silence = MonitoringState::get_night_silence_config().await?;
+        let rec = silence.recurrence.expect("recurrence should be set");
+        assert_eq!(rec.pattern, RecurrencePattern::Daily);
+        assert_eq!(rec.interval_days, Some(1));
+        Ok(())
+    }
+
+    // ===== AlertSeverity deep coverage =====
+
+    #[tokio::test]
+    async fn test_alert_severity_from_str_all_aliases() {
+        assert_eq!(AlertSeverity::from_str("CRITICAL"), Some(AlertSeverity::P0));
+        assert_eq!(AlertSeverity::from_str("EMERGENCY"), Some(AlertSeverity::P0));
+        assert_eq!(AlertSeverity::from_str("HIGH"), Some(AlertSeverity::P1));
+        assert_eq!(AlertSeverity::from_str("IMPORTANT"), Some(AlertSeverity::P1));
+        assert_eq!(AlertSeverity::from_str("WARNING"), Some(AlertSeverity::P2));
+        assert_eq!(AlertSeverity::from_str("MEDIUM"), Some(AlertSeverity::P2));
+        assert_eq!(AlertSeverity::from_str("INFO"), Some(AlertSeverity::P3));
+        assert_eq!(AlertSeverity::from_str("LOW"), Some(AlertSeverity::P3));
+        assert_eq!(AlertSeverity::from_str("TIP"), Some(AlertSeverity::P3));
+    }
+
+    #[tokio::test]
+    async fn test_alert_severity_from_str_case_insensitive() {
+        assert_eq!(AlertSeverity::from_str("p0"), Some(AlertSeverity::P0));
+        assert_eq!(AlertSeverity::from_str("P0"), Some(AlertSeverity::P0));
+        assert_eq!(AlertSeverity::from_str("Critical"), Some(AlertSeverity::P0));
+        assert_eq!(AlertSeverity::from_str("Warning"), Some(AlertSeverity::P2));
+        assert_eq!(AlertSeverity::from_str("mEdIuM"), Some(AlertSeverity::P2));
+    }
+
+    #[tokio::test]
+    async fn test_alert_severity_from_str_empty_and_invalid() {
+        assert_eq!(AlertSeverity::from_str(""), None);
+        assert_eq!(AlertSeverity::from_str("P5"), None);
+        assert_eq!(AlertSeverity::from_str("xyz"), None);
+        // trailing space is not trimmed
+        assert_eq!(AlertSeverity::from_str("critical "), None);
+    }
+
+    #[tokio::test]
+    async fn test_alert_severity_is_higher_than_irreflexive_and_antisymmetric() {
+        // Irreflexive: no severity is higher than itself
+        for s in [
+            AlertSeverity::P0,
+            AlertSeverity::P1,
+            AlertSeverity::P2,
+            AlertSeverity::P3,
+        ] {
+            assert!(!s.is_higher_than(&s));
+        }
+        // Antisymmetric
+        assert!(AlertSeverity::P0.is_higher_than(&AlertSeverity::P3));
+        assert!(!AlertSeverity::P3.is_higher_than(&AlertSeverity::P0));
+    }
+
+    // ===== AlertOperator deep coverage =====
+
+    #[tokio::test]
+    async fn test_alert_operator_evaluate_negative_values() {
+        assert!(AlertOperator::LessThan.evaluate(-10.0, 0.0));
+        assert!(AlertOperator::GreaterThan.evaluate(-5.0, -10.0));
+        assert!(AlertOperator::Equal.evaluate(-5.0, -5.0));
+        assert!(AlertOperator::NotEqual.evaluate(-5.0, -6.0));
+        assert!(!AlertOperator::LessThanOrEqual.evaluate(-1.0, -2.0));
+    }
+
+    #[tokio::test]
+    async fn test_alert_operator_evaluate_zero_threshold() {
+        assert!(AlertOperator::GreaterThan.evaluate(0.1, 0.0));
+        assert!(!AlertOperator::GreaterThan.evaluate(0.0, 0.0));
+        assert!(AlertOperator::Equal.evaluate(0.0, 0.0));
+        assert!(AlertOperator::LessThanOrEqual.evaluate(0.0, 0.0));
+        assert!(AlertOperator::NotEqual.evaluate(0.0001, 0.0));
+    }
+
+    // ===== MonitoringState new() vs default() =====
+
+    #[tokio::test]
+    async fn test_new_loads_default_alert_rules() {
+        let state = MonitoringState::new();
+        let rules = state.alert_rules.read().await;
+        assert_eq!(rules.len(), 10, "new() should load 10 default alert rules");
+    }
+
+    #[tokio::test]
+    async fn test_new_loads_default_suppression_rules() {
+        let state = MonitoringState::new();
+        let rules = state.suppression_rules.read().await;
+        assert_eq!(
+            rules.len(),
+            3,
+            "new() should load 3 default suppression rules"
+        );
+    }
+
+    #[tokio::test]
+    async fn test_new_has_empty_silence_rules() {
+        let state = MonitoringState::new();
+        let silences = state.silence_rules.read().await;
+        assert!(silences.is_empty(), "new() should start with no silence rules");
+    }
+
+    #[tokio::test]
+    async fn test_new_has_default_convergence_config() {
+        let state = MonitoringState::new();
+        let cfg = state.convergence_config.read().await;
+        assert_eq!(cfg.group_wait_seconds, 30);
+        assert_eq!(cfg.max_alerts_per_group, 100);
+    }
+
+    // ===== add / remove rules =====
+
+    #[tokio::test]
+    async fn test_add_alert_rule_appends() {
+        let state = MonitoringState::new();
+        let initial = state.alert_rules.read().await.len();
+        let rule =
+            make_test_rule("add-1", AlertSeverity::P3, AlertCategory::Other, 5.0, true, 10);
+        state.add_alert_rule(rule).await;
+        assert_eq!(state.alert_rules.read().await.len(), initial + 1);
+    }
+
+    #[tokio::test]
+    async fn test_remove_alert_rule_unknown_id_returns_false() {
+        let state = MonitoringState::new();
+        assert!(!state.remove_alert_rule("does-not-exist").await);
+    }
+
+    #[tokio::test]
+    async fn test_add_silence_rule_appends() {
+        let state = MonitoringState::new();
+        let now = Utc::now();
+        let silence = SilenceRule {
+            id: "add-sil".to_string(),
+            name: "s".to_string(),
+            description: None,
+            matchers: vec![],
+            starts_at: now,
+            ends_at: now + Duration::hours(1),
+            created_by: "tester".to_string(),
+            comment: None,
+            enabled: true,
+            recurrence: None,
+        };
+        state.add_silence_rule(silence).await;
+        assert_eq!(state.silence_rules.read().await.len(), 1);
+    }
+
+    #[tokio::test]
+    async fn test_remove_silence_rule_unknown_id_returns_false() {
+        let state = MonitoringState::new();
+        assert!(!state.remove_silence_rule("does-not-exist").await);
+    }
+
+    // ===== ServiceHealth serde edge cases =====
+
+    #[tokio::test]
+    async fn test_service_health_with_details_serde() {
+        let mut details = HashMap::new();
+        details.insert("region".to_string(), "us-east-1".to_string());
+        details.insert("version".to_string(), "1.2.3".to_string());
+        let original = ServiceHealth {
+            service_name: "svc".to_string(),
+            status: ServiceStatus::Healthy,
+            response_time_ms: 42,
+            last_check: Utc::now(),
+            message: None,
+            details,
+        };
+        let json = serde_json::to_string(&original).unwrap();
+        let back: ServiceHealth = serde_json::from_str(&json).unwrap();
+        let json_again = serde_json::to_string(&back).unwrap();
+        // HashMap key order is non-deterministic; compare semantically via Value.
+        let v1: serde_json::Value = serde_json::from_str(&json).unwrap();
+        let v2: serde_json::Value = serde_json::from_str(&json_again).unwrap();
+        assert_eq!(v1, v2);
+        assert_eq!(back.details.len(), 2);
+        assert_eq!(back.details.get("region").unwrap(), "us-east-1");
+    }
+
+    #[tokio::test]
+    async fn test_service_health_details_default_when_missing() {
+        // details has #[serde(default)], so omitting it yields an empty map.
+        let json = r#"{"service_name":"svc","status":"healthy","response_time_ms":1,"last_check":"2024-01-01T00:00:00Z","message":null}"#;
+        let back: ServiceHealth = serde_json::from_str(json).unwrap();
+        assert!(back.details.is_empty());
+        assert_eq!(back.status, ServiceStatus::Healthy);
+        assert_eq!(back.response_time_ms, 1);
+    }
+
+    #[tokio::test]
+    async fn test_service_health_message_none_serde() {
+        let original = ServiceHealth {
+            service_name: "svc".to_string(),
+            status: ServiceStatus::Unknown,
+            response_time_ms: 0,
+            last_check: Utc::now(),
+            message: None,
+            details: HashMap::new(),
+        };
+        let json = serde_json::to_string(&original).unwrap();
+        let back: ServiceHealth = serde_json::from_str(&json).unwrap();
+        assert!(back.message.is_none());
+        assert_eq!(back.status, ServiceStatus::Unknown);
+    }
+
+    // ===== Alert / AlertRule serde edge cases =====
+
+    #[tokio::test]
+    async fn test_alert_with_populated_labels_serde() {
+        let mut labels = HashMap::new();
+        labels.insert("env".to_string(), "prod".to_string());
+        labels.insert("region".to_string(), "ap".to_string());
+        let mut annotations = HashMap::new();
+        annotations.insert("summary".to_string(), "high cpu".to_string());
+        let original = Alert {
+            id: "a-2".to_string(),
+            rule_id: None,
+            rule_name: "r".to_string(),
+            severity: AlertSeverity::P2,
+            category: AlertCategory::System,
+            message: "msg".to_string(),
+            description: Some("d".to_string()),
+            service_name: Some("svc".to_string()),
+            instance: Some("i-1".to_string()),
+            triggered_at: Utc::now(),
+            resolved_at: None,
+            acknowledged: false,
+            acknowledged_at: None,
+            acknowledged_by: None,
+            escalation_level: 0,
+            labels,
+            annotations,
+        };
+        let json = serde_json::to_string(&original).unwrap();
+        let back: Alert = serde_json::from_str(&json).unwrap();
+        let json_again = serde_json::to_string(&back).unwrap();
+        // HashMap key order is non-deterministic; compare semantically via Value.
+        let v1: serde_json::Value = serde_json::from_str(&json).unwrap();
+        let v2: serde_json::Value = serde_json::from_str(&json_again).unwrap();
+        assert_eq!(v1, v2);
+        assert_eq!(back.labels.len(), 2);
+        assert_eq!(back.annotations.len(), 1);
+        assert_eq!(back.instance.as_deref(), Some("i-1"));
+    }
+
+    #[tokio::test]
+    async fn test_alert_rule_with_all_none_optionals_serde() {
+        let now = Utc::now();
+        let original = AlertRule {
+            id: "rn-1".to_string(),
+            name: "n".to_string(),
+            description: None,
+            condition: AlertCondition {
+                metric: "m".to_string(),
+                operator: AlertOperator::LessThan,
+                threshold: 0.0,
+                duration_seconds: None,
+            },
+            severity: AlertSeverity::P3,
+            category: AlertCategory::Other,
+            cooldown_seconds: 0,
+            enabled: false,
+            escalation: false,
+            team: None,
+            runbook_url: None,
+            created_at: now,
+            updated_at: now,
+        };
+        let json = serde_json::to_string(&original).unwrap();
+        let back: AlertRule = serde_json::from_str(&json).unwrap();
+        let json_again = serde_json::to_string(&back).unwrap();
+        assert_eq!(json, json_again);
+        assert!(back.description.is_none());
+        assert!(back.team.is_none());
+        assert!(back.runbook_url.is_none());
+        assert!(back.condition.duration_seconds.is_none());
+        assert!(!back.enabled);
+    }
+
+    #[tokio::test]
+    async fn test_alert_convergence_config_custom_values() {
+        let cfg = AlertConvergenceConfig {
+            group_by: vec!["alertname".to_string()],
+            group_wait_seconds: 60,
+            group_interval_seconds: 600,
+            repeat_interval_seconds: 7200,
+            max_alerts_per_group: 200,
+        };
+        assert_eq!(cfg.group_wait_seconds, 60);
+        assert_eq!(cfg.repeat_interval_seconds, 7200);
+        assert_eq!(cfg.max_alerts_per_group, 200);
+        assert_eq!(cfg.group_by.len(), 1);
+    }
+
+    #[tokio::test]
+    async fn test_update_service_health_overwrites_existing() {
+        let state = MonitoringState::new();
+        let h1 = ServiceHealth {
+            service_name: "svc-a".to_string(),
+            status: ServiceStatus::Healthy,
+            response_time_ms: 10,
+            last_check: Utc::now(),
+            message: None,
+            details: HashMap::new(),
+        };
+        state.update_service_health("svc-a".to_string(), h1).await;
+        let h2 = ServiceHealth {
+            service_name: "svc-a".to_string(),
+            status: ServiceStatus::Degraded,
+            response_time_ms: 500,
+            last_check: Utc::now(),
+            message: Some("slow".to_string()),
+            details: HashMap::new(),
+        };
+        state.update_service_health("svc-a".to_string(), h2).await;
+        let services = state.get_all_services_health().await;
+        assert_eq!(services.len(), 1);
+        assert_eq!(services[0].status, ServiceStatus::Degraded);
+        assert_eq!(services[0].response_time_ms, 500);
+    }
 }
