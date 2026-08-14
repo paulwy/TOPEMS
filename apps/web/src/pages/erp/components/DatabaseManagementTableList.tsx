@@ -1,5 +1,4 @@
 import React from 'react';
-import { useTranslation } from 'react-i18next';
 import {
   Box,
   Typography,
@@ -21,9 +20,9 @@ import {
   TablePagination,
   InputAdornment,
 } from '@mui/material';
+import i18n from '@/i18n';
 import { Database, Table, Eye, Search } from 'lucide-react';
 import type { TableInfo } from '@/api/erp/database';
-
 interface DatabaseManagementTableListProps {
   searchQuery: string;
   onSearchChange: (value: string) => void;
@@ -36,7 +35,6 @@ interface DatabaseManagementTableListProps {
   onRowsPerPageChange: (value: number) => void;
   onViewStructure: (table: TableInfo) => void;
 }
-
 export const DatabaseManagementTableList: React.FC<DatabaseManagementTableListProps> = ({
   searchQuery,
   onSearchChange,
@@ -49,8 +47,6 @@ export const DatabaseManagementTableList: React.FC<DatabaseManagementTableListPr
   onRowsPerPageChange,
   onViewStructure,
 }) => {
-  const { t } = useTranslation();
-
   return (
     <>
       <Box
@@ -66,7 +62,7 @@ export const DatabaseManagementTableList: React.FC<DatabaseManagementTableListPr
       >
         <TextField
           size='small'
-          placeholder={t('erp.database.label.search_table')}
+          placeholder={i18n.t('erp.database.label.search_table')}
           value={searchQuery}
           onChange={(e) => {
             onSearchChange(e.target.value);
@@ -91,18 +87,17 @@ export const DatabaseManagementTableList: React.FC<DatabaseManagementTableListPr
           size='small'
           sx={{ minWidth: 140 }}
         >
-          <InputLabel>{t('erp.database.label.sort')}</InputLabel>
+          <InputLabel>{i18n.t('erp.database.label.sort')}</InputLabel>
           <Select
             value=''
-            label={t('erp.database.label.sort')}
+            label={i18n.t('erp.database.label.sort')}
           >
-            <MenuItem value=''>{t('erp.database.label.default_sort')}</MenuItem>
-            <MenuItem value='name'>{t('erp.database.label.sort_by_name')}</MenuItem>
-            <MenuItem value='time'>{t('erp.database.label.sort_by_time')}</MenuItem>
+            <MenuItem value=''>{i18n.t('erp.database.label.default_sort')}</MenuItem>
+            <MenuItem value='name'>{i18n.t('erp.database.label.sort_by_name')}</MenuItem>
+            <MenuItem value='time'>{i18n.t('erp.database.label.sort_by_time')}</MenuItem>
           </Select>
         </FormControl>
       </Box>
-
       {loading ? (
         <Box sx={{ display: 'flex', justifyContent: 'center', py: 8 }}>
           <CircularProgress />
@@ -114,14 +109,14 @@ export const DatabaseManagementTableList: React.FC<DatabaseManagementTableListPr
               <TableHead>
                 <TableRow sx={{ bgcolor: 'grey.50' }}>
                   <TableCell sx={{ fontWeight: 'bold' }}>
-                    {t('erp.database.label.table_name')}
+                    {i18n.t('erp.database.label.table_name')}
                   </TableCell>
-                  <TableCell sx={{ fontWeight: 'bold' }}>{t('erp.database.label.type')}</TableCell>
+                  <TableCell sx={{ fontWeight: 'bold' }}>{i18n.t('erp.database.label.type')}</TableCell>
                   <TableCell
                     align='center'
                     sx={{ fontWeight: 'bold', width: 120 }}
                   >
-                    {t('erp.database.label.operation')}
+                    {i18n.t('erp.database.label.operation')}
                   </TableCell>
                 </TableRow>
               </TableHead>
@@ -145,7 +140,7 @@ export const DatabaseManagementTableList: React.FC<DatabaseManagementTableListPr
                         variant='body1'
                         sx={{ color: 'text.secondary' }}
                       >
-                        {t('erp.database.label.no_tables')}
+                        {i18n.t('erp.database.label.no_tables')}
                       </Typography>
                     </TableCell>
                   </TableRow>
@@ -181,11 +176,11 @@ export const DatabaseManagementTableList: React.FC<DatabaseManagementTableListPr
                         />
                       </TableCell>
                       <TableCell align='center'>
-                        <Tooltip title={t('erp.database.label.view_structure')}>
+                        <Tooltip title={i18n.t('erp.database.label.view_structure')}>
                           <IconButton
                             size='small'
                             onClick={() => onViewStructure(table)}
-                            aria-label='查看'
+                            aria-label={i18n.t('erp.database_management_table_list.k0')}
                           >
                             <Eye size={16} />
                           </IconButton>
@@ -208,7 +203,7 @@ export const DatabaseManagementTableList: React.FC<DatabaseManagementTableListPr
               onPageChange(0);
             }}
             rowsPerPageOptions={[10, 25, 50, 100]}
-            labelRowsPerPage={t('erp.database.label.rows_per_page')}
+            labelRowsPerPage={i18n.t('erp.database.label.rows_per_page')}
           />
         </>
       )}

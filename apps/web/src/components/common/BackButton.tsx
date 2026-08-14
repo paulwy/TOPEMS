@@ -3,6 +3,7 @@ import { IconButton, Button } from '@mui/material';
 import { ArrowLeft, Home, X } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { DASHBOARD_PATHS } from '@/routes/dashboard';
+import i18n from '@/i18n';
 
 export type BackButtonVariant = 'back' | 'home' | 'close' | 'text';
 export type BackButtonSize = 'small' | 'medium';
@@ -26,23 +27,23 @@ const VARIANT_CONFIG: Record<
 > = {
   back: {
     Icon: ArrowLeft,
-    defaultLabel: '返回',
-    defaultAriaLabel: '返回上一页',
+    defaultLabel: i18n.t('shared.back_button.k0'),
+    defaultAriaLabel: i18n.t('shared.back_button.k1'),
   },
   home: {
     Icon: Home,
-    defaultLabel: '首页',
-    defaultAriaLabel: '返回首页',
+    defaultLabel: i18n.t('shared.back_button.k2'),
+    defaultAriaLabel: i18n.t('shared.back_button.k3'),
   },
   close: {
     Icon: X,
-    defaultLabel: '关闭',
-    defaultAriaLabel: '关闭页面',
+    defaultLabel: i18n.t('shared.back_button.k4'),
+    defaultAriaLabel: i18n.t('shared.back_button.k5'),
   },
   text: {
     Icon: ArrowLeft,
-    defaultLabel: '返回',
-    defaultAriaLabel: '返回上一页',
+    defaultLabel: i18n.t('shared.back_button.k6'),
+    defaultAriaLabel: i18n.t('shared.back_button.k7'),
   },
 };
 

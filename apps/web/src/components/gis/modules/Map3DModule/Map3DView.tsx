@@ -8,6 +8,7 @@ import { MapContainer, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet.heat';
 import 'leaflet-3d-tiles';
+import i18n from '@/i18n';
 
 // 3D地图类型定义
 export interface ViewState3D {
@@ -210,7 +211,7 @@ export const Map3DView: React.FC<Map3DViewProps> = ({
               duration: 500,
             })
           }
-          title='2D视图'
+          title={i18n.t('components.map3_d_view.2d_0')}
         >
           2D
         </button>
@@ -222,7 +223,7 @@ export const Map3DView: React.FC<Map3DViewProps> = ({
               duration: 500,
             })
           }
-          title='3D视图'
+          title={i18n.t('components.map3_d_view.3d_1')}
         >
           3D
         </button>
@@ -234,7 +235,7 @@ export const Map3DView: React.FC<Map3DViewProps> = ({
               duration: 500,
             })
           }
-          title='旋转'
+          title={i18n.t('components.map3_d_view.k0')}
         >
           ↻
         </button>

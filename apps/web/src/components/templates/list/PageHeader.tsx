@@ -5,6 +5,7 @@ import { BackButton } from '@topems/shared-components';
 import { Link as RouterLink } from 'react-router-dom';
 import type { BatchAction } from './types';
 import { useTranslation } from 'react-i18next';
+import i18n from '@/i18n';
 
 export interface PageAction {
   label: string;
@@ -185,7 +186,7 @@ export function PageHeader<T = any>({
                 <IconButton
                   onClick={onRefresh}
                   size='small'
-                  aria-label='刷新'
+                  aria-label={i18n.t('templates.page_header.k0')}
                 >
                   <RefreshCw size={18} />
                 </IconButton>
@@ -208,7 +209,7 @@ export function PageHeader<T = any>({
                     size='small'
                     disabled={disabledExport}
                     color={exportComplete ? 'primary' : 'inherit'}
-                    aria-label='下载'
+                    aria-label={i18n.t('templates.page_header.k1')}
                   >
                     <Download size={18} />
                   </IconButton>

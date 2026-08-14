@@ -7,6 +7,7 @@
 
 import { VITEDeploymentMode, isDev } from '@/config/env';
 import { getMfPort } from '@/config/ports';
+import i18n from '@/i18n';
 
 export interface RemoteModuleConfig {
   /** 模块名（federation name） */
@@ -89,7 +90,7 @@ export const REMOTE_MODULES: RemoteModuleConfig[] = [
   {
     name: 'topems_core',
     entry: getRemoteEntry('topems_core', getMfPort('topems_core')),
-    displayName: '核心平台',
+    displayName: i18n.t('microfrontend.config.k0'),
     icon: 'Apps',
     routePrefix: '/core',
     isCore: true,
@@ -271,7 +272,7 @@ export const REMOTE_MODULES: RemoteModuleConfig[] = [
   {
     name: 'topems_doc',
     entry: getRemoteEntry('topems_doc', getMfPort('topems_doc')),
-    displayName: '文档管理',
+    displayName: i18n.t('microfrontend.config.k1'),
     icon: 'FileText',
     routePrefix: '/doc',
     isCore: false,

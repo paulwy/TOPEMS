@@ -11,6 +11,7 @@ import {
   Paper,
   InputLabel,
 } from '@mui/material';
+import i18n from '@/i18n';
 import CrudPage, { type CrudApiAdapter } from '@/components/templates/CrudPage';
 import { createCrudPageAdapter, type CrudApi } from '@/schema/crudPageAdapter';
 import { materialIssueSchema } from '@/schemas/mes';
@@ -19,16 +20,13 @@ import type { MaterialIssue, MaterialIssueItem } from '@/api/mes';
 import { PackageOpen, FileText } from 'lucide-react';
 import { designTokens } from '@/theme/tokens';
 import { PageContainer } from '@/components/common';
-
 const ct= designTokens.colors;
-
 const apiAdapter = createCrudPageAdapter(
   mesApi.materialIssues as unknown as CrudApi<MaterialIssue>,
   {
     itemsField: 'issues',
   }
 );
-
 const MaterialIssuePage: React.FC = () => {
   const renderDetailContent = (row: Record<string, unknown>) => {
     const issue = row as unknown as MaterialIssue;
@@ -42,7 +40,7 @@ const MaterialIssuePage: React.FC = () => {
           }}
         >
           <Box>
-            <InputLabel sx={{ color: 'text.secondary', fontSize: 12 }}>领用单号</InputLabel>
+            <InputLabel sx={{ color: 'text.secondary', fontSize: 12 }}>{i18n.t('mes.material_issue_page.k0')}</InputLabel>
             <Box
               component='span'
               sx={{ fontWeight: 500 }}
@@ -51,29 +49,28 @@ const MaterialIssuePage: React.FC = () => {
             </Box>
           </Box>
           <Box>
-            <InputLabel sx={{ color: 'text.secondary', fontSize: 12 }}>工单号</InputLabel>
+            <InputLabel sx={{ color: 'text.secondary', fontSize: 12 }}>{i18n.t('mes.material_issue_page.k1')}</InputLabel>
             <Box component='span'>{issue.order_number || '-'}</Box>
           </Box>
           <Box>
-            <InputLabel sx={{ color: 'text.secondary', fontSize: 12 }}>领用人</InputLabel>
+            <InputLabel sx={{ color: 'text.secondary', fontSize: 12 }}>{i18n.t('mes.material_issue_page.k2')}</InputLabel>
             <Box component='span'>{issue.operator}</Box>
           </Box>
           <Box>
-            <InputLabel sx={{ color: 'text.secondary', fontSize: 12 }}>领用时间</InputLabel>
+            <InputLabel sx={{ color: 'text.secondary', fontSize: 12 }}>{i18n.t('mes.material_issue_page.k3')}</InputLabel>
             <Box component='span'>
               {issue.issue_time ? new Date(issue.issue_time).toLocaleString('zh-CN') : '-'}
             </Box>
           </Box>
           <Box sx={{ gridColumn: '1 / -1' }}>
-            <InputLabel sx={{ color: 'text.secondary', fontSize: 12 }}>备注</InputLabel>
+            <InputLabel sx={{ color: 'text.secondary', fontSize: 12 }}>{i18n.t('mes.material_issue_page.k4')}</InputLabel>
             <Box component='span'>{issue.remark || '-'}</Box>
           </Box>
           <Box>
-            <InputLabel sx={{ color: 'text.secondary', fontSize: 12 }}>创建时间</InputLabel>
+            <InputLabel sx={{ color: 'text.secondary', fontSize: 12 }}>{i18n.t('mes.material_issue_page.k5')}</InputLabel>
             <Box component='span'>{new Date(issue.created_at).toLocaleString('zh-CN')}</Box>
           </Box>
         </Box>
-
         <Box>
           <Typography
             variant='subtitle2'
@@ -88,12 +85,12 @@ const MaterialIssuePage: React.FC = () => {
             <Table size='small'>
               <TableHead>
                 <TableRow>
-                  <TableCell>序号</TableCell>
-                  <TableCell>物料编码</TableCell>
-                  <TableCell>物料名称</TableCell>
-                  <TableCell>数量</TableCell>
-                  <TableCell>单位</TableCell>
-                  <TableCell>批次号</TableCell>
+                  <TableCell>{i18n.t('mes.material_issue_page.k6')}</TableCell>
+                  <TableCell>{i18n.t('mes.material_issue_page.k7')}</TableCell>
+                  <TableCell>{i18n.t('mes.material_issue_page.k8')}</TableCell>
+                  <TableCell>{i18n.t('mes.material_issue_page.k9')}</TableCell>
+                  <TableCell>{i18n.t('mes.material_issue_page.k10')}</TableCell>
+                  <TableCell>{i18n.t('mes.material_issue_page.k11')}</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
@@ -104,7 +101,7 @@ const MaterialIssuePage: React.FC = () => {
                       align='center'
                       sx={{ color: 'text.secondary', py: 3 }}
                     >
-                      暂无物料明细
+                      {i18n.t('pages.material_issue_page.k0')}
                     </TableCell>
                   </TableRow>
                 ) : (
@@ -126,7 +123,6 @@ const MaterialIssuePage: React.FC = () => {
       </Box>
     );
   };
-
   return (
     <PageContainer
       autoTitle
@@ -139,7 +135,7 @@ const MaterialIssuePage: React.FC = () => {
       <CrudPage
         schema={materialIssueSchema}
         apiAdapter={apiAdapter as CrudApiAdapter}
-        breadcrumbs={[{ label: 'MES' }, { label: '物料发放' }]}
+        breadcrumbs={[{ label: 'MES' }, { label: i18n.t('mes.material_issue_page.k12') }]}
         detailMaxWidth='lg'
         detailContent={renderDetailContent}
         headerContent={(rows) => {
@@ -147,7 +143,6 @@ const MaterialIssuePage: React.FC = () => {
           const approved = rows.filter((i) => i.status === 'approved').length;
           const issued = rows.filter((i) => i.status === 'issued').length;
           const total = rows.length;
-
           return (
             <Box
               sx={{
@@ -167,7 +162,7 @@ const MaterialIssuePage: React.FC = () => {
                     variant='body2'
                     sx={{ color: 'text.secondary' }}
                   >
-                    待审核
+                    {i18n.t('pages.material_issue_page.k1')}
                   </Typography>
                 </Box>
                 <Typography
@@ -182,7 +177,7 @@ const MaterialIssuePage: React.FC = () => {
                   variant='body2'
                   sx={{ color: 'text.secondary', mb: 1 }}
                 >
-                  已审核
+                  {i18n.t('pages.material_issue_page.k2')}
                 </Typography>
                 <Typography
                   variant='h5'
@@ -196,7 +191,7 @@ const MaterialIssuePage: React.FC = () => {
                   variant='body2'
                   sx={{ color: 'text.secondary', mb: 1 }}
                 >
-                  已出库
+                  {i18n.t('pages.material_issue_page.k3')}
                 </Typography>
                 <Typography
                   variant='h5'
@@ -215,7 +210,7 @@ const MaterialIssuePage: React.FC = () => {
                     variant='body2'
                     sx={{ color: 'text.secondary' }}
                   >
-                    总数
+                    {i18n.t('pages.material_issue_page.k4')}
                   </Typography>
                 </Box>
                 <Typography
@@ -232,5 +227,4 @@ const MaterialIssuePage: React.FC = () => {
     </PageContainer>
   );
 };
-
 export default MaterialIssuePage;

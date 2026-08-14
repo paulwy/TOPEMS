@@ -13,18 +13,17 @@ import {
   Paper,
   Button,
 } from '@mui/material';
+import i18n from '@/i18n';
 import { Grid } from '@/components';
 import type { InstrumentData } from '@/api/lims';
 import { getStatusColor, getStatusLabel, formatJson } from '../utils';
 import type { ChipColor } from '../utils';
-
 interface DataDetailDialogProps {
   open: boolean;
   selectedData: InstrumentData | null;
   onClose: () => void;
   onParse: (id: string) => void;
 }
-
 const DataDetailDialog: React.FC<DataDetailDialogProps> = ({
   open,
   selectedData,
@@ -38,7 +37,7 @@ const DataDetailDialog: React.FC<DataDetailDialogProps> = ({
       maxWidth='md'
       fullWidth
     >
-      <DialogTitle>数据详情</DialogTitle>
+      <DialogTitle>{i18n.t('lims.data_detail_dialog.k0')}</DialogTitle>
       <DialogContent dividers>
         {selectedData && (
           <Stack spacing={3}>
@@ -54,7 +53,7 @@ const DataDetailDialog: React.FC<DataDetailDialogProps> = ({
                   variant='subtitle2'
                   color='text.secondary'
                 >
-                  数据编号
+                  {i18n.t('pages.data_detail_dialog.k0')}
                 </Typography>
                 <Typography>{selectedData.data_no}</Typography>
               </Grid>
@@ -66,7 +65,7 @@ const DataDetailDialog: React.FC<DataDetailDialogProps> = ({
                   variant='subtitle2'
                   color='text.secondary'
                 >
-                  批次号
+                  {i18n.t('pages.data_detail_dialog.k1')}
                 </Typography>
                 <Typography>{selectedData.batch_no}</Typography>
               </Grid>
@@ -78,7 +77,7 @@ const DataDetailDialog: React.FC<DataDetailDialogProps> = ({
                   variant='subtitle2'
                   color='text.secondary'
                 >
-                  仪器
+                  {i18n.t('pages.data_detail_dialog.k2')}
                 </Typography>
                 <Typography>{selectedData.instrument_name || '-'}</Typography>
               </Grid>
@@ -90,7 +89,7 @@ const DataDetailDialog: React.FC<DataDetailDialogProps> = ({
                   variant='subtitle2'
                   color='text.secondary'
                 >
-                  协议
+                  {i18n.t('pages.data_detail_dialog.k3')}
                 </Typography>
                 <Chip
                   label={selectedData.protocol}
@@ -105,7 +104,7 @@ const DataDetailDialog: React.FC<DataDetailDialogProps> = ({
                   variant='subtitle2'
                   color='text.secondary'
                 >
-                  状态
+                  {i18n.t('pages.data_detail_dialog.k4')}
                 </Typography>
                 <Chip
                   label={getStatusLabel(selectedData.status)}
@@ -121,7 +120,7 @@ const DataDetailDialog: React.FC<DataDetailDialogProps> = ({
                   variant='subtitle2'
                   color='text.secondary'
                 >
-                  质量分
+                  {i18n.t('pages.data_detail_dialog.k5')}
                 </Typography>
                 <Typography>
                   {selectedData.quality_score !== undefined && selectedData.quality_score !== null
@@ -130,16 +129,14 @@ const DataDetailDialog: React.FC<DataDetailDialogProps> = ({
                 </Typography>
               </Grid>
             </Grid>
-
             <Divider />
-
             <Box>
               <Typography
                 variant='subtitle2'
                 color='text.secondary'
                 sx={{ mb: 1 }}
               >
-                原始数据
+                {i18n.t('pages.data_detail_dialog.k6')}
               </Typography>
               <Paper
                 variant='outlined'
@@ -154,7 +151,6 @@ const DataDetailDialog: React.FC<DataDetailDialogProps> = ({
                 </Typography>
               </Paper>
             </Box>
-
             {selectedData.parsed_data && (
               <Box>
                 <Typography
@@ -162,7 +158,7 @@ const DataDetailDialog: React.FC<DataDetailDialogProps> = ({
                   color='text.secondary'
                   sx={{ mb: 1 }}
                 >
-                  解析结果
+                  {i18n.t('pages.data_detail_dialog.k7')}
                 </Typography>
                 <Paper
                   variant='outlined'
@@ -178,7 +174,6 @@ const DataDetailDialog: React.FC<DataDetailDialogProps> = ({
                 </Paper>
               </Box>
             )}
-
             {selectedData.error_msg && (
               <Box>
                 <Typography
@@ -186,7 +181,7 @@ const DataDetailDialog: React.FC<DataDetailDialogProps> = ({
                   color='text.secondary'
                   sx={{ mb: 1 }}
                 >
-                  错误信息
+                  {i18n.t('pages.data_detail_dialog.k8')}
                 </Typography>
                 <Paper
                   variant='outlined'
@@ -200,7 +195,7 @@ const DataDetailDialog: React.FC<DataDetailDialogProps> = ({
         )}
       </DialogContent>
       <DialogActions>
-        <Button onClick={onClose}>关闭</Button>
+        <Button onClick={onClose}>{i18n.t('lims.data_detail_dialog.k1')}</Button>
         {(selectedData?.status === 'pending' || selectedData?.status === 'failed') && (
           <Button
             variant='contained'
@@ -212,12 +207,11 @@ const DataDetailDialog: React.FC<DataDetailDialogProps> = ({
               }
             }}
           >
-            重新解析
+            {i18n.t('pages.data_detail_dialog.k9')}
           </Button>
         )}
       </DialogActions>
     </Dialog>
   );
 };
-
 export default DataDetailDialog;

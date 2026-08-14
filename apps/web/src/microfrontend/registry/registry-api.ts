@@ -1,5 +1,6 @@
 import type { ModuleRegistration } from './module-registry';
 import { moduleRegistry } from './module-registry';
+import i18n from '@/i18n';
 
 export interface RegistryFetchResult {
   success: boolean;
@@ -164,7 +165,7 @@ class RegistryApi {
         moduleId,
         healthy: false,
         lastChecked: Date.now(),
-        error: '模块不存在',
+        error: i18n.t('microfrontend.registry-api.k0'),
       };
     }
 

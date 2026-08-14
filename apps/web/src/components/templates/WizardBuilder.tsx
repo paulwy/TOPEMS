@@ -11,6 +11,7 @@ import {
   Alert,
   Paper,
 } from '@mui/material';
+import i18n from '@/i18n';
 import { FormBuilder } from '@/components/common';
 import { SubTableBuilder } from './SubTableBuilder';
 import type {
@@ -95,7 +96,7 @@ export function WizardBuilder({
       if (field.required) {
         const value = values[field.name];
         if (value === undefined || value === null || value === '') {
-          return `${field.label}为必填项`;
+          return `${field.label}${i18n.t('components.wizard_builder.k0')}`;
         }
       }
     }
@@ -185,7 +186,7 @@ export function WizardBuilder({
             variant='body2'
             color='text.secondary'
           >
-            进度
+            {i18n.t('components.wizard_builder.k0')}
           </Typography>
           <Typography
             variant='body2'
@@ -316,7 +317,7 @@ export function WizardBuilder({
                 initialValues={values}
                 showReset={false}
                 submitLabel={
-                  isLastStep ? config.finishButtonText || '完成' : config.nextButtonText || '下一步'
+                  isLastStep ? config.finishButtonText || i18n.t('templates.wizard_builder.k1') : config.nextButtonText || i18n.t('templates.wizard_builder.k0')
                 }
                 onSubmit={async () => {
                   handleNext();
@@ -351,7 +352,7 @@ export function WizardBuilder({
           variant='subtitle1'
           sx={{ mb: 2, fontWeight: 600 }}
         >
-          信息确认
+          {i18n.t('components.wizard_builder.k1')}
         </Typography>
         <Box sx={{ display: 'grid', gap: 2, gridTemplateColumns: 'repeat(2, 1fr)' }}>
           {fields.map((field) => {
@@ -360,7 +361,7 @@ export function WizardBuilder({
 
             const isNestedTable = nestedTableFieldSet.has(field.name);
             const displayValue = isNestedTable
-              ? `${field.label}：${Array.isArray(value) ? value.length : 0} 行`
+              ? `${field.label}：${Array.isArray(value) ? value.length : 0}${i18n.t('components.wizard_builder.k1')}`
               : String(value);
 
             return (
@@ -390,14 +391,14 @@ export function WizardBuilder({
         variant='h5'
         sx={{ mb: 2, color: 'success.main' }}
       >
-        ✓ 操作成功
+        {i18n.t('components.wizard_builder.k2')}
       </Typography>
       <Typography
         variant='body1'
         color='text.secondary'
         sx={{ mb: 3 }}
       >
-        所有步骤已完成
+        {i18n.t('components.wizard_builder.k3')}
       </Typography>
     </Box>
   );
@@ -422,7 +423,7 @@ export function WizardBuilder({
             onClick={onCancel}
             disabled={disabled}
           >
-            取消
+            {i18n.t('components.wizard_builder.k4')}
           </Button>
         )}
       </Box>
@@ -434,7 +435,7 @@ export function WizardBuilder({
             onClick={handlePrev}
             disabled={disabled}
           >
-            {config.prevButtonText || '上一步'}
+            {config.prevButtonText || i18n.t('templates.wizard_builder.k2')}
           </Button>
         )}
 
@@ -443,7 +444,7 @@ export function WizardBuilder({
           onClick={handleNext}
           disabled={disabled}
         >
-          {isLastStep ? config.finishButtonText || '完成' : config.nextButtonText || '下一步'}
+          {isLastStep ? config.finishButtonText || i18n.t('templates.wizard_builder.k4') : config.nextButtonText || i18n.t('templates.wizard_builder.k3')}
         </Button>
       </Box>
     </Paper>

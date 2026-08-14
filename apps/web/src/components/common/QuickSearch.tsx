@@ -14,8 +14,10 @@ import {
   Fade,
   ClickAwayListener,
 } from '@mui/material';
+import i18n from '@/i18n';
 import { styled, alpha } from '@mui/material/styles';
 import { Search, Clock, X, ArrowRight, TrendingUp, Star } from 'lucide-react';
+import { designTokens } from '@topems/tokens';
 
 /**
  * 搜索建议项
@@ -82,7 +84,7 @@ const SearchWrapper = styled('div', {
   backgroundColor: 'action.hover',
   borderRadius: theme.shape.borderRadius,
   border: `1px solid ${isFocused ? theme.palette.primary.main : 'transparent'}`,
-  padding: '4px 12px',
+  padding: `${designTokens.spacing.xs} 12px`,
   transition: 'all 0.2s',
   '&:hover': {
     backgroundColor: 'action.selected',
@@ -133,7 +135,7 @@ const QuickSearch: React.FC<QuickSearchProps> = ({
   enableShortcut = true,
   shortcutModifier = ['ctrl', 'meta'],
   shortcutKey = 'k',
-  placeholder = '搜索...',
+  placeholder = i18n.t('components.quick_search.k0'),
   autoFocus = false,
   width = 400,
   disabled = false,
@@ -374,7 +376,7 @@ const QuickSearch: React.FC<QuickSearchProps> = ({
                 inputRef.current?.focus();
               }}
               sx={{ marginRight: 0.5 }}
-              aria-label='关闭'
+              aria-label={i18n.t('shared.quick_search.k0')}
             >
               <X size={16} />
             </IconButton>
@@ -385,7 +387,7 @@ const QuickSearch: React.FC<QuickSearchProps> = ({
                 display: 'flex',
                 alignItems: 'center',
                 gap: 0.25,
-                p: '2px 6px',
+                p: `${designTokens.spacing.xs} 6px`,
                 bgcolor: 'grey.200',
                 borderRadius: 4,
                 fontSize: '0.75rem',
@@ -422,17 +424,17 @@ const QuickSearch: React.FC<QuickSearchProps> = ({
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'space-between',
-                    p: '8px 12px',
+                    p: `${designTokens.spacing.sm} 12px`,
                   }}
                 >
                   <Typography
                     variant='body2'
                     color='text.secondary'
                   >
-                    最近搜索
+                    {i18n.t('components.quick_search.k0')}
                   </Typography>
                   <Chip
-                    label='清除'
+                    label={i18n.t('shared.quick_search.k1')}
                     size='small'
                     onClick={handleClearHistory}
                     sx={{ cursor: 'pointer' }}
@@ -462,14 +464,14 @@ const QuickSearch: React.FC<QuickSearchProps> = ({
               <>
                 <Typography
                   sx={{
-                    p: '8px 12px',
+                    p: `${designTokens.spacing.sm} 12px`,
                     fontSize: '0.75rem',
                     color: 'text.secondary',
                     textTransform: 'uppercase',
                     letterSpacing: '0.5px',
                   }}
                 >
-                  建议
+                  {i18n.t('components.quick_search.k1')}
                 </Typography>
                 <List disablePadding>
                   {filteredSuggestions.map((suggestion, index) => {
@@ -503,14 +505,14 @@ const QuickSearch: React.FC<QuickSearchProps> = ({
               <>
                 <Typography
                   sx={{
-                    p: '8px 12px',
+                    p: `${designTokens.spacing.sm} 12px`,
                     fontSize: '0.75rem',
                     color: 'text.secondary',
                     textTransform: 'uppercase',
                     letterSpacing: '0.5px',
                   }}
                 >
-                  历史记录
+                  {i18n.t('components.quick_search.k2')}
                 </Typography>
                 <List disablePadding>
                   {filteredHistory.map((item, index) => {
@@ -547,7 +549,7 @@ const QuickSearch: React.FC<QuickSearchProps> = ({
                   variant='body2'
                   color='text.secondary'
                 >
-                  未找到相关结果
+                  {i18n.t('components.quick_search.k3')}
                 </Typography>
                 <Typography
                   variant='caption'

@@ -1,4 +1,5 @@
 import { logger } from '@/utils/logger';
+import i18n from '@/i18n';
 
 export interface ErrorContext {
   moduleId?: string;
@@ -77,7 +78,7 @@ class ErrorTracker {
     window.addEventListener('unhandledrejection', this.rejectionHandler);
     this.isTracking = true;
 
-    logger.info('[ErrorTracker] 错误追踪已启动');
+    logger.info(i18n.t('microfrontend.error-tracker.k0'));
   }
 
   stopErrorTracking(): void {
@@ -93,7 +94,7 @@ class ErrorTracker {
     }
 
     this.isTracking = false;
-    logger.info('[ErrorTracker] 错误追踪已停止');
+    logger.info(i18n.t('microfrontend.error-tracker.k1'));
   }
 
   setModuleErrorContext(moduleId: string, context: ErrorContext): void {

@@ -25,6 +25,8 @@ import {
 } from 'recharts';
 import { useQmsMock, type QmsMockShape } from '@/api/qms/_mock';
 import { designTokens, semanticTokens } from '@topems/tokens';
+import { useTranslation } from 'react-i18next';
+import i18n from '@/i18n';
 
 const COST_TYPE_COLORS: Record<string, string> = {
   prevention: designTokens.colors.success.dark,
@@ -34,14 +36,15 @@ const COST_TYPE_COLORS: Record<string, string> = {
 };
 
 const COST_TYPE_LABELS: Record<string, string> = {
-  prevention: '预防成本',
-  appraisal: '鉴定成本',
-  internal_failure: '内部故障',
-  external_failure: '外部故障',
+  prevention: i18n.t('qms.qms_cost_analysis_page.k0'),
+  appraisal: i18n.t('qms.qms_cost_analysis_page.k1'),
+  internal_failure: i18n.t('qms.qms_cost_analysis_page.k2'),
+  external_failure: i18n.t('qms.qms_cost_analysis_page.k3'),
 };
 
 export default function QmsCostAnalysisPage() {
   const { data } = useQmsMock<QmsMockShape>();
+  const { t } = useTranslation('qms');
 
   const costByType = useMemo(() => {
     const map: Record<string, number> = {
@@ -64,7 +67,7 @@ export default function QmsCostAnalysisPage() {
   const costByDepartment = useMemo(() => {
     const map = new Map<string, number>();
     (data.qualityCosts ?? []).forEach((c) => {
-      const dept = c.department || '未分配';
+      const dept = c.department || t('qms.qms_cost_analysis_page.k4');
       map.set(dept, (map.get(dept) ?? 0) + c.amount);
     });
     return Array.from(map.entries()).map(([department, amount]) => ({ department, amount }));
@@ -101,27 +104,27 @@ export default function QmsCostAnalysisPage() {
   return (
     <div className='space-y-4 p-4'>
       <div className='flex items-center justify-between'>
-        <h1 className='text-2xl font-bold'>质量成本分析（PAF 模型）</h1>
+        <h1 className='text-2xl font-bold'>{t('qms.qms_cost_analysis_page.paf_5')}</h1>
         <span className='text-sm text-gray-500'>符合性 / 不符合性成本比：{ratio}</span>
       </div>
 
       <div className='grid grid-cols-1 gap-4 md:grid-cols-4'>
         <div className='rounded-lg border p-4'>
-          <p className='text-sm text-gray-600'>总质量成本</p>
+          <p className='text-sm text-gray-600'>{t('qms.qms_cost_analysis_page.k6')}</p>
           <p className='mt-1 text-2xl font-bold text-blue-600'>¥{totalCost.toLocaleString()}</p>
         </div>
         <div className='rounded-lg border p-4'>
-          <p className='text-sm text-gray-600'>预防成本</p>
+          <p className='text-sm text-gray-600'>{t('qms.qms_cost_analysis_page.k7')}</p>
           <p className='mt-1 text-2xl font-bold text-green-600'>
             ¥{preventionCost.toLocaleString()}
           </p>
         </div>
         <div className='rounded-lg border p-4'>
-          <p className='text-sm text-gray-600'>故障成本</p>
+          <p className='text-sm text-gray-600'>{t('qms.qms_cost_analysis_page.k8')}</p>
           <p className='mt-1 text-2xl font-bold text-red-600'>¥{failureCost.toLocaleString()}</p>
         </div>
         <div className='rounded-lg border p-4'>
-          <p className='text-sm text-gray-600'>成本记录数</p>
+          <p className='text-sm text-gray-600'>{t('qms.qms_cost_analysis_page.k9')}</p>
           <p className='mt-1 text-2xl font-bold text-orange-600'>
             {data.qualityCosts?.length ?? 0}
           </p>
@@ -160,7 +163,7 @@ export default function QmsCostAnalysisPage() {
         </div>
 
         <div className='rounded-lg border p-4'>
-          <h3 className='mb-2 font-semibold'>部门成本分布（柱状图）</h3>
+          <h3 className='mb-2 font-semibold'>{t('qms.qms_cost_analysis_page.k10')}</h3>
           <ResponsiveContainer
             width='100%'
             height={300}
@@ -179,7 +182,7 @@ export default function QmsCostAnalysisPage() {
               <Legend />
               <Bar
                 dataKey='amount'
-                name='成本'
+                name={t('qms.qms_cost_analysis_page.k11')}
                 fill={designTokens.colors.secondary.dark}
                 barSize={28}
               />
@@ -189,7 +192,7 @@ export default function QmsCostAnalysisPage() {
       </div>
 
       <div className='rounded-lg border p-4'>
-        <h3 className='mb-2 font-semibold'>月度成本趋势（折线图）</h3>
+        <h3 className='mb-2 font-semibold'>{t('qms.qms_cost_analysis_page.k12')}</h3>
         <ResponsiveContainer
           width='100%'
           height={300}
@@ -209,7 +212,7 @@ export default function QmsCostAnalysisPage() {
             <Line
               type='monotone'
               dataKey='prevention'
-              name='预防'
+              name={t('qms.qms_cost_analysis_page.k13')}
               stroke={COST_TYPE_COLORS.prevention}
               strokeWidth={2}
               dot={{ r: 3 }}
@@ -217,7 +220,7 @@ export default function QmsCostAnalysisPage() {
             <Line
               type='monotone'
               dataKey='appraisal'
-              name='鉴定'
+              name={t('qms.qms_cost_analysis_page.k14')}
               stroke={COST_TYPE_COLORS.appraisal}
               strokeWidth={2}
               dot={{ r: 3 }}
@@ -225,7 +228,7 @@ export default function QmsCostAnalysisPage() {
             <Line
               type='monotone'
               dataKey='internal_failure'
-              name='内部故障'
+              name={t('qms.qms_cost_analysis_page.k15')}
               stroke={COST_TYPE_COLORS.internal_failure}
               strokeWidth={2}
               dot={{ r: 3 }}
@@ -233,7 +236,7 @@ export default function QmsCostAnalysisPage() {
             <Line
               type='monotone'
               dataKey='external_failure'
-              name='外部故障'
+              name={t('qms.qms_cost_analysis_page.k16')}
               stroke={COST_TYPE_COLORS.external_failure}
               strokeWidth={2}
               dot={{ r: 3 }}

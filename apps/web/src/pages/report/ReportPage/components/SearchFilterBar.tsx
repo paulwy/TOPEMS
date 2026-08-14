@@ -1,6 +1,7 @@
 import React from 'react';
 import { Box, TextField, Select, MenuItem } from '@mui/material';
 import { Search } from 'lucide-react';
+import i18n from '@/i18n';
 
 interface SearchFilterBarProps {
   searchTerm: string;
@@ -38,7 +39,7 @@ const SearchFilterBar: React.FC<SearchFilterBarProps> = ({
           size='small'
           value={searchTerm}
           onChange={(e) => onSearchChange(e.target.value)}
-          placeholder='搜索...'
+          placeholder={i18n.t('pages.search_filter_bar.k0')}
           sx={{
             pl: 5,
             '& .MuiOutlinedInput-root': {
@@ -55,7 +56,7 @@ const SearchFilterBar: React.FC<SearchFilterBarProps> = ({
           size='small'
           sx={{ minWidth: 120, bgcolor: 'background.paper', borderRadius: 3 }}
         >
-          <MenuItem value='all'>全部模块</MenuItem>
+          <MenuItem value='all'>{i18n.t('pages.search_filter_bar.k0')}</MenuItem>
           {uniqueModules.map((module) => (
             <MenuItem
               key={module}

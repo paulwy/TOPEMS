@@ -10,6 +10,7 @@ import type {
   CreateFormulaRequest,
   UpdateFormulaRequest,
 } from '@/api/rd';
+import i18n from '@/i18n';
 import { useNotificationStore } from '@/store';
 import { RD_PATHS } from '@/modules/rd/config';
 import {QUERY_KEYS, CACHE_DURATIONS} from '@/lib/reactQuery';
@@ -29,49 +30,43 @@ import {
   Divider,
 } from '@mui/material';
 import { Plus, Trash2 } from 'lucide-react';
-
 const statuses = [
-  { value: 'draft', label: '草稿' },
-  { value: 'testing', label: '测试中' },
-  { value: 'approved', label: '已发布' },
+  { value: 'draft', label: i18n.t('rd.rs_formula_create_page.k0') },
+  { value: 'testing', label: i18n.t('rd.rs_formula_create_page.k1') },
+  { value: 'approved', label: i18n.t('rd.rs_formula_create_page.k2') },
 ];
-
 const RsFormulaCreatePage: React.FC = () => {
   const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
   const { addNotification } = useNotificationStore();
   const queryClient = useQueryClient();
   const isEdit = Boolean(id);
-
   const [ingredients, setIngredients] = useState<FormulaIngredient[]>([
     { name: '', quantity: 0, unit: '%', purity: '', supplier: '', notes: '' },
   ]);
-
   const projectsQuery = useQuery({
     queryKey: QUERY_KEYS.RD.PROJECTS,
     queryFn: async () => {
       const response = await rdApi.listProjects();
       if (!response.success || !response.data) {
-        throw new Error(response.message || '加载项目列表失败');
+        throw new Error(response.message || i18n.t('rd.rs_formula_create_page.k3'));
       }
       return response.data.projects?.map((p) => ({ id: p.id, name: p.name })) || [];
     },
   
       staleTime: CACHE_DURATIONS.MEDIUM,});
-
   const formulaQuery = useQuery({
     queryKey: QUERY_KEYS.RD.FORMULA(id || ''),
     queryFn: async () => {
       const response = await formulaApi.getFormula(id || '');
       if (!response.success || !response.data) {
-        throw new Error(response.message || '加载配方数据失败');
+        throw new Error(response.message || i18n.t('rd.rs_formula_create_page.k4'));
       }
       return response.data;
     },
     enabled: isEdit && !!id,
   
       staleTime: CACHE_DURATIONS.MEDIUM,});
-
   useEffect(() => {
     if (formulaQuery.data) {
       setIngredients(
@@ -81,7 +76,6 @@ const RsFormulaCreatePage: React.FC = () => {
       );
     }
   }, [formulaQuery.data]);
-
   const submitMutation = useMutation({
     mutationFn: async (params: {
       isEdit: boolean;
@@ -92,17 +86,17 @@ const RsFormulaCreatePage: React.FC = () => {
       if (params.isEdit && params.id && params.updateData) {
         const response = await formulaApi.updateFormula(params.id, params.updateData);
         if (!response.success) {
-          throw new Error(response.message || '更新配方失败');
+          throw new Error(response.message || i18n.t('rd.rs_formula_create_page.k5'));
         }
         return response;
       } else if (params.createData) {
         const response = await formulaApi.createFormula(params.createData);
         if (!response.success) {
-          throw new Error(response.message || '创建配方失败');
+          throw new Error(response.message || i18n.t('rd.rs_formula_create_page.k6'));
         }
         return response;
       }
-      throw new Error('无效的提交参数');
+      throw new Error(i18n.t('rd.rs_formula_create_page.k7'));
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.RD.FORMULAS ,
@@ -111,26 +105,24 @@ const RsFormulaCreatePage: React.FC = () => {
 });
       addNotification({
         type: 'success',
-        title: isEdit ? '更新成功' : '创建成功',
-        message: isEdit ? '配方已更新' : '配方已创建',
+        title: isEdit ? i18n.t('rd.rs_formula_create_page.k9') : i18n.t('rd.rs_formula_create_page.k8'),
+        message: isEdit ? i18n.t('rd.rs_formula_create_page.k11') : i18n.t('rd.rs_formula_create_page.k10'),
       });
       navigate(RD_PATHS.formula);
     },
     onError: (error: unknown) => {
-      logger.error('提交配方失败:', error);
+      logger.error(i18n.t('pages.rs_formula_create_page.k0'), error);
       addNotification({
         type: 'error',
-        title: '提交失败',
-        message: error instanceof Error ? error.message : '无法提交配方',
+        title: i18n.t('rd.rs_formula_create_page.k12'),
+        message: error instanceof Error ? error.message : i18n.t('rd.rs_formula_create_page.k13'),
       });
     },
   });
-
   const projects = projectsQuery.data || [];
   const loading = formulaQuery.isLoading;
   const submitting = submitMutation.isPending;
-  const error = formulaQuery.error ? '加载配方数据失败' : undefined;
-
+  const error = formulaQuery.error ? i18n.t('rd.rs_formula_create_page.k14') : undefined;
   const defaultValues = {
     name: '',
     code: '',
@@ -142,90 +134,86 @@ const RsFormulaCreatePage: React.FC = () => {
     effective_date: '',
     expiration_date: '',
   };
-
   const sections: FormSection[] = useMemo(
     () => [
       {
         id: 'basic',
-        title: '基本信息',
-        description: '配方核心信息',
+        title: i18n.t('rd.rs_formula_create_page.k15'),
+        description: i18n.t('rd.rs_formula_create_page.k16'),
         collapsible: true,
         defaultExpanded: true,
         fields: [
           {
             name: 'name',
-            label: '配方名称',
+            label: i18n.t('rd.rs_formula_create_page.k17'),
             type: 'text',
             required: true,
-            placeholder: '请输入配方名称',
+            placeholder: i18n.t('rd.rs_formula_create_page.k18'),
           },
           {
             name: 'code',
-            label: '配方编码',
+            label: i18n.t('rd.rs_formula_create_page.k19'),
             type: 'text',
             required: true,
-            placeholder: '例如: FM-2024-001',
+            placeholder: i18n.t('pages.rs_formula_create_page.fm2024001_1'),
           },
           {
             name: 'version',
-            label: '版本号',
+            label: i18n.t('rd.rs_formula_create_page.k20'),
             type: 'text',
-            placeholder: '例如: v1.0',
+            placeholder: i18n.t('pages.rs_formula_create_page.v10_2'),
           },
           {
             name: 'project_id',
-            label: '所属项目',
+            label: i18n.t('rd.rs_formula_create_page.k21'),
             type: 'select',
             required: true,
             options: projects.map((p) => ({ label: p.name, value: p.id })),
           },
           {
             name: 'status',
-            label: '状态',
+            label: i18n.t('rd.rs_formula_create_page.k22'),
             type: 'select',
             options: statuses.map((s) => ({ label: s.label, value: s.value })),
           },
           {
             name: 'category',
-            label: '配方类别',
+            label: i18n.t('rd.rs_formula_create_page.k23'),
             type: 'text',
-            placeholder: '请输入配方类别',
+            placeholder: i18n.t('rd.rs_formula_create_page.k24'),
           },
           {
             name: 'effective_date',
-            label: '生效日期',
+            label: i18n.t('rd.rs_formula_create_page.k25'),
             type: 'date',
           },
           {
             name: 'expiration_date',
-            label: '过期日期',
+            label: i18n.t('rd.rs_formula_create_page.k26'),
             type: 'date',
           },
           {
             name: 'description',
-            label: '配方描述',
+            label: i18n.t('rd.rs_formula_create_page.k27'),
             type: 'textarea',
             rows: 3,
-            placeholder: '请输入配方描述',
+            placeholder: i18n.t('rd.rs_formula_create_page.k28'),
           },
         ],
       },
     ],
     [projects]
   );
-
   const handleAddIngredient = () => {
     setIngredients([
       ...ingredients,
       { name: '', quantity: 0, unit: '%', purity: '', supplier: '', notes: '' },
     ]);
   };
-
   const handleRemoveIngredient = (index: number) => {
     if (ingredients.length === 1) return;
     setIngredients(ingredients.filter((_, i) => i !== index));
   };
-
   const handleIngredientChange = (
     index: number,
     field: keyof FormulaIngredient,
@@ -235,21 +223,17 @@ const RsFormulaCreatePage: React.FC = () => {
     (newIngredients[index] as unknown as Record<string, string | number>)[field] = value;
     setIngredients(newIngredients);
   };
-
   const handleSubmit = async (data: unknown) => {
     const formData = data as unknown as Record<string, unknown>;
-
     if (!formData.name || !formData.code || !formData.project_id) {
       addNotification({
         type: 'error',
-        title: '验证失败',
-        message: '请填写必填字段',
+        title: i18n.t('rd.rs_formula_create_page.k29'),
+        message: i18n.t('rd.rs_formula_create_page.k30'),
       });
       return;
     }
-
     const validIngredients = ingredients.filter((i) => i.name.trim());
-
     if (isEdit && id) {
       const updateData: UpdateFormulaRequest = {
         name: formData.name as string,
@@ -262,7 +246,6 @@ const RsFormulaCreatePage: React.FC = () => {
         effective_date: (formData.effective_date as string) || undefined,
         expiration_date: (formData.expiration_date as string) || undefined,
       };
-
       await submitMutation.mutateAsync({ isEdit, id, updateData });
     } else {
       const createData: CreateFormulaRequest = {
@@ -277,35 +260,32 @@ const RsFormulaCreatePage: React.FC = () => {
         effective_date: (formData.effective_date as string) || undefined,
         expiration_date: (formData.expiration_date as string) || undefined,
       };
-
       await submitMutation.mutateAsync({ isEdit, createData });
     }
   };
-
   const handleCancel = () => {
     navigate(RD_PATHS.formula);
   };
-
   const additionalContent = (
     <Paper sx={{ p: 3, mt: 3 }}>
       <Typography
         variant='h6'
         gutterBottom
       >
-        配方组成
+        {i18n.t('pages.rs_formula_create_page.k0')}
       </Typography>
       <Divider sx={{ mb: 2 }} />
       <TableContainer>
         <Table>
           <TableHead>
             <TableRow>
-              <TableCell>组分名称</TableCell>
-              <TableCell>数量</TableCell>
-              <TableCell>单位</TableCell>
-              <TableCell>纯度</TableCell>
-              <TableCell>供应商</TableCell>
-              <TableCell>备注</TableCell>
-              <TableCell align='center'>操作</TableCell>
+              <TableCell>{i18n.t('rd.rs_formula_create_page.k31')}</TableCell>
+              <TableCell>{i18n.t('rd.rs_formula_create_page.k32')}</TableCell>
+              <TableCell>{i18n.t('rd.rs_formula_create_page.k33')}</TableCell>
+              <TableCell>{i18n.t('rd.rs_formula_create_page.k34')}</TableCell>
+              <TableCell>{i18n.t('rd.rs_formula_create_page.k35')}</TableCell>
+              <TableCell>{i18n.t('rd.rs_formula_create_page.k36')}</TableCell>
+              <TableCell align='center'>{i18n.t('rd.rs_formula_create_page.k37')}</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
@@ -368,7 +348,7 @@ const RsFormulaCreatePage: React.FC = () => {
                     color='error'
                     onClick={() => handleRemoveIngredient(index)}
                     disabled={submitting || ingredients.length === 1}
-                    aria-label='删除'
+                    aria-label={i18n.t('rd.rs_formula_create_page.k38')}
                   >
                     <Trash2 />
                   </IconButton>
@@ -384,15 +364,14 @@ const RsFormulaCreatePage: React.FC = () => {
         sx={{ mt: 2 }}
         disabled={submitting}
       >
-        添加组分
+        {i18n.t('pages.rs_formula_create_page.k1')}
       </Button>
     </Paper>
   );
-
   return (
     <PageContainer
-      title={isEdit ? '编辑配方' : '新增配方'}
-      subtitle={isEdit ? '修改配方信息' : '创建新的研发配方'}
+      title={isEdit ? i18n.t('rd.rs_formula_create_page.k40') : i18n.t('rd.rs_formula_create_page.k39')}
+      subtitle={isEdit ? i18n.t('rd.rs_formula_create_page.k42') : i18n.t('rd.rs_formula_create_page.k41')}
     >
       <FormPageTemplate
         title=''
@@ -405,17 +384,16 @@ const RsFormulaCreatePage: React.FC = () => {
         error={error}
         onSubmit={handleSubmit}
         onCancel={handleCancel}
-        submitText={isEdit ? '保存修改' : '创建配方'}
+        submitText={isEdit ? i18n.t('rd.rs_formula_create_page.k44') : i18n.t('rd.rs_formula_create_page.k43')}
         columns={2}
         showValidationHints
         validationToasts={[
-          { message: '提交成功', type: 'success' },
-          { message: '提交失败，请检查表单', type: 'error' },
+          { message: i18n.t('rd.rs_formula_create_page.k45'), type: 'success' },
+          { message: i18n.t('rd.rs_formula_create_page.k46'), type: 'error' },
         ]}
         footerContent={additionalContent}
       />
     </PageContainer>
   );
 };
-
 export default RsFormulaCreatePage;

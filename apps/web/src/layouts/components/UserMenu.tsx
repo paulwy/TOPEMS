@@ -17,6 +17,7 @@ import {
   DialogTitle,
   Button,
 } from '@mui/material';
+import i18n from '@/i18n';
 import { User, Settings, LogOut, Building2, AlertTriangle, HelpCircle } from 'lucide-react';
 import type { User as UserType } from '@topems/shared-types';
 import { useAuth } from '@/hooks/useAuth';
@@ -59,7 +60,7 @@ export const UserMenu: React.FC<UserMenuProps> = ({
     return extractInitials(displayName);
   }, [user]);
 
-  const displayName = user?.realName || user?.name || user?.full_name || user?.username || '用户';
+  const displayName = user?.realName || user?.name || user?.full_name || user?.username || i18n.t('pages.user_menu.k0');
   const displayEmail = user?.email || user?.username || '';
   const currentTenant = tenantName || localStorage.getItem('current_tenant_id') || '';
 
@@ -112,10 +113,10 @@ export const UserMenu: React.FC<UserMenuProps> = ({
 
   return (
     <>
-      <Tooltip title='用户菜单'>
+      <Tooltip title={i18n.t('pages.user_menu.k1')}>
         <IconButton
           size='small'
-          aria-label='用户菜单'
+          aria-label={i18n.t('pages.user_menu.k2')}
           aria-controls={menuOpen ? 'user-menu' : undefined}
           aria-haspopup='true'
           aria-expanded={menuOpen ? 'true' : undefined}
@@ -246,7 +247,7 @@ export const UserMenu: React.FC<UserMenuProps> = ({
           <ListItemIcon sx={{ minWidth: 36 }}>
             <User style={{ width: 18, height: 18 }} />
           </ListItemIcon>
-          <ListItemText>个人资料</ListItemText>
+          <ListItemText>{i18n.t('pages.user_menu.k3')}</ListItemText>
         </MenuItem>
 
         <MenuItem
@@ -258,7 +259,7 @@ export const UserMenu: React.FC<UserMenuProps> = ({
           <ListItemIcon sx={{ minWidth: 36 }}>
             <Settings style={{ width: 18, height: 18 }} />
           </ListItemIcon>
-          <ListItemText>账号设置</ListItemText>
+          <ListItemText>{i18n.t('pages.user_menu.k4')}</ListItemText>
         </MenuItem>
 
         <MenuItem
@@ -317,7 +318,7 @@ export const UserMenu: React.FC<UserMenuProps> = ({
               },
             }}
           >
-            退出登录
+            {i18n.t('layouts.user_menu.k0')}
           </ListItemText>
         </MenuItem>
       </Menu>
@@ -363,7 +364,7 @@ export const UserMenu: React.FC<UserMenuProps> = ({
             component='span'
             sx={{ fontWeight: 600 }}
           >
-            确认退出登录？
+            {i18n.t('layouts.user_menu.k1')}
           </Typography>
         </DialogTitle>
         <DialogContent>
@@ -371,7 +372,7 @@ export const UserMenu: React.FC<UserMenuProps> = ({
             id='logout-confirm-dialog-description'
             sx={{ color: 'text.secondary', pl: 9 }}
           >
-            退出后清除本地会话需重登。您确定要退出当前账号吗？
+            {i18n.t('layouts.user_menu.k2')}
           </DialogContentText>
         </DialogContent>
         <DialogActions sx={{ px: 3, pb: 2.5, justifyContent: 'flex-end', gap: 1 }}>
@@ -386,7 +387,7 @@ export const UserMenu: React.FC<UserMenuProps> = ({
               px: 2.5,
             }}
           >
-            取消
+            {i18n.t('layouts.user_menu.k3')}
           </Button>
           <Button
             onClick={handleLogoutConfirm}
@@ -405,7 +406,7 @@ export const UserMenu: React.FC<UserMenuProps> = ({
               },
             }}
           >
-            确认退出
+            {i18n.t('layouts.user_menu.k4')}
           </Button>
         </DialogActions>
       </Dialog>

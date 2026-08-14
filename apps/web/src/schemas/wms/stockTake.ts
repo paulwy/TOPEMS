@@ -2,11 +2,12 @@ import type { EntitySchema } from '@/schema';
 
 
 import { QUERY_KEYS } from '@/lib/reactQuery';
+import i18n from '@/i18n';
 
 export const stockTakeSchema: EntitySchema = {
   entity: 'wms_stock_take',
-  title: '盘点单',
-  description: '管理库存盘点单，支持创建、盘点、调整等全流程操作',
+  title: i18n.t('wms.stock_take.k0'),
+  description: i18n.t('wms.stock_take.k1'),
 
   api: {
     module: 'wms',
@@ -16,7 +17,7 @@ export const stockTakeSchema: EntitySchema = {
   fields: [
     {
       name: 'stock_take_number',
-      label: '盘点单号',
+      label: i18n.t('wms.stock_take.k2'),
       type: 'text',
       required: true,
       readonlyOnEdit: true,
@@ -26,7 +27,7 @@ export const stockTakeSchema: EntitySchema = {
     },
     {
       name: 'warehouse_id',
-      label: '仓库',
+      label: i18n.t('wms.stock_take.k3'),
       type: 'select',
       required: true,
       listWidth: 120,
@@ -37,7 +38,7 @@ export const stockTakeSchema: EntitySchema = {
     },
     {
       name: 'warehouse_name',
-      label: '仓库名称',
+      label: i18n.t('wms.stock_take.k4'),
       type: 'text',
       listWidth: 140,
       hideInForm: true,
@@ -45,7 +46,7 @@ export const stockTakeSchema: EntitySchema = {
     },
     {
       name: 'status',
-      label: '状态',
+      label: i18n.t('wms.stock_take.k5'),
       type: 'select',
       defaultValue: 'planned',
       listWidth: 100,
@@ -53,16 +54,16 @@ export const stockTakeSchema: EntitySchema = {
       options: {
         type: 'static',
         options: [
-          { value: 'planned', label: '已计划' },
-          { value: 'in_progress', label: '进行中' },
-          { value: 'completed', label: '已完成' },
+          { value: 'planned', label: i18n.t('wms.stock_take.k6') },
+          { value: 'in_progress', label: i18n.t('wms.stock_take.k7') },
+          { value: 'completed', label: i18n.t('wms.stock_take.k8') },
         ],
       },
       validation: [{ type: 'maxLength', value: 20 }],
     },
     {
       name: 'accuracy_rate',
-      label: '准确率',
+      label: i18n.t('wms.stock_take.k9'),
       type: 'number',
       sortable: true,
       listWidth: 100,
@@ -71,27 +72,27 @@ export const stockTakeSchema: EntitySchema = {
     },
     {
       name: 'discrepancy_quantity',
-      label: '差异数量',
+      label: i18n.t('wms.stock_take.k10'),
       type: 'number',
       listWidth: 100,
       hideInForm: true,
     },
     {
       name: 'stock_adjusted',
-      label: '库存已调整',
+      label: i18n.t('wms.stock_take.k11'),
       type: 'switch',
       listWidth: 100,
       hideInForm: true,
     },
     {
       name: 'remarks',
-      label: '备注',
+      label: i18n.t('wms.stock_take.k12'),
       type: 'textarea',
       listWidth: 200,
     },
     {
       name: 'created_at',
-      label: '创建时间',
+      label: i18n.t('wms.stock_take.k13'),
       type: 'datetime',
       readonly: true,
       hideInForm: true,
@@ -119,21 +120,21 @@ export const stockTakeSchema: EntitySchema = {
         completed: 'success',
       },
       labelMap: {
-        planned: '已计划',
-        in_progress: '进行中',
-        completed: '已完成',
+        planned: i18n.t('wms.stock_take.k14'),
+        in_progress: i18n.t('wms.stock_take.k15'),
+        completed: i18n.t('wms.stock_take.k16'),
       },
     },
     filters: [
       {
         id: 'status',
-        label: '状态',
+        label: i18n.t('wms.stock_take.k17'),
         type: 'select',
         options: [
-          { label: '全部状态', value: 'all' },
-          { label: '已计划', value: 'planned' },
-          { label: '进行中', value: 'in_progress' },
-          { label: '已完成', value: 'completed' },
+          { label: i18n.t('wms.stock_take.k18'), value: 'all' },
+          { label: i18n.t('wms.stock_take.k19'), value: 'planned' },
+          { label: i18n.t('wms.stock_take.k20'), value: 'in_progress' },
+          { label: i18n.t('wms.stock_take.k21'), value: 'completed' },
         ],
       },
     ],
@@ -143,14 +144,14 @@ export const stockTakeSchema: EntitySchema = {
 
   formSections: [
     {
-      title: '基本信息',
+      title: i18n.t('wms.stock_take.k22'),
       fields: ['stock_take_number', 'warehouse_id', 'remarks'],
     },
   ],
 
   formColCount: 1,
-  createTitle: '创建盘点单',
-  detailTitle: '盘点单详情',
+  createTitle: i18n.t('wms.stock_take.k23'),
+  detailTitle: i18n.t('wms.stock_take.k24'),
 
   dynamicOptions: [
     {

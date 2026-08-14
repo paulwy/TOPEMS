@@ -11,6 +11,7 @@ import {
   Avatar,
   CircularProgress,
 } from '@mui/material';
+import i18n from '@/i18n';
 import { Bell, CheckCheck, Trash2, Settings } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { NOTIFICATION_PATHS } from '@/modules/notification/config';
@@ -110,10 +111,10 @@ export const HeaderNotifications: React.FC = () => {
 
   return (
     <>
-      <Tooltip title='通知'>
+      <Tooltip title={i18n.t('shared.header_notifications.k0')}>
         <IconButton
           size='small'
-          aria-label='通知'
+          aria-label={i18n.t('shared.header_notifications.k1')}
           onClick={handleNotificationOpen}
           sx={{ width: 36, height: 36, '&:hover': { bgcolor: 'action.hover' } }}
         >
@@ -161,7 +162,7 @@ export const HeaderNotifications: React.FC = () => {
           }}
         >
           <Typography sx={{ fontWeight: 600, fontSize: '0.9375rem' }}>
-            通知中心
+            {i18n.t('components.header_notifications.k0')}
             {unreadCount > 0 && (
               <Typography
                 component='span'
@@ -172,22 +173,22 @@ export const HeaderNotifications: React.FC = () => {
             )}
           </Typography>
           <Box sx={{ display: 'flex', gap: 1 }}>
-            <Tooltip title='全部已读'>
+            <Tooltip title={i18n.t('shared.header_notifications.k2')}>
               <IconButton
                 size='small'
                 sx={{ width: 28, height: 28 }}
-                aria-label='全部确认'
+                aria-label={i18n.t('shared.header_notifications.k3')}
                 onClick={handleMarkAllAsRead}
                 disabled={notificationsLoading || unreadCount === 0}
               >
                 <CheckCheck style={{ width: 16, height: 16 }} />
               </IconButton>
             </Tooltip>
-            <Tooltip title='通知设置'>
+            <Tooltip title={i18n.t('shared.header_notifications.k4')}>
               <IconButton
                 size='small'
                 sx={{ width: 28, height: 28 }}
-                aria-label='设置'
+                aria-label={i18n.t('shared.header_notifications.k5')}
                 onClick={() => {
                   navigate(NOTIFICATION_PATHS.settings);
                   handleNotificationClose();
@@ -213,7 +214,7 @@ export const HeaderNotifications: React.FC = () => {
                 fontSize: '0.875rem',
               }}
             >
-              暂无通知
+              {i18n.t('components.header_notifications.k1')}
             </Box>
           ) : (
             notifications.map((notification) => {
@@ -294,7 +295,7 @@ export const HeaderNotifications: React.FC = () => {
                       right: 8,
                       top: 8,
                     }}
-                    aria-label='删除'
+                    aria-label={i18n.t('shared.header_notifications.k6')}
                     onClick={(e) => {
                       e.stopPropagation();
                       handleDeleteOne(notification.id, read);
@@ -315,7 +316,7 @@ export const HeaderNotifications: React.FC = () => {
             handleNotificationClose();
           }}
         >
-          查看全部通知
+          {i18n.t('components.header_notifications.k2')}
         </MenuItem>
       </Menu>
     </>

@@ -1,20 +1,16 @@
 import { useState, useEffect } from 'react';
-import { useTranslation } from 'react-i18next';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useParams } from 'react-router-dom';
 import type { Approval, ApprovalRecord } from '@/api/workflow';
 import { workflowApi } from '@/api/workflow';
 import { useNotificationStore, useAuthStore } from '../../../store';
 import { apiLogger } from '@/utils/logger';
-
-
 import { QUERY_KEYS, queryClient } from '@/lib/reactQuery';
-
+import i18n from '@/i18n';
 interface ApprovalDetails {
   approval: Approval;
   records: ApprovalRecord[];
 }
-
 export interface UseWorkflowApprovalDetailReturn {
   approval: Approval | null;
   records: ApprovalRecord[];
@@ -37,30 +33,24 @@ export interface UseWorkflowApprovalDetailReturn {
   processing: boolean;
   delegateLoading: boolean;
 }
-
 export const useWorkflowApprovalDetail = (): UseWorkflowApprovalDetailReturn => {
-  const { t } = useTranslation();
   const { id } = useParams<{ id: string }>();
   const addNotification = useNotificationStore((state) => state.addNotification);
   const user = useAuthStore((state) => state.user);
   const queryClient = useQueryClient();
-
   const [showApprovalModal, setShowApprovalModal] = useState(false);
   const [approvalAction, setApprovalAction] = useState<'approve' | 'reject'>('approve');
   const [comment, setComment] = useState('');
   const [showDelegateModal, setShowDelegateModal] = useState(false);
   const [delegateTarget, setDelegateTarget] = useState('');
   const [delegateReason, setDelegateReason] = useState('');
-
   const detailsQuery = useQuery<ApprovalDetails | null>({
     queryKey: [...QUERY_KEYS.AD_HOC.WORKFLOW_APPROVAL_DETAILS_BASE, id],
     queryFn: async () => {
       if (!id) return null;
-
       const approvalResponse = await workflowApi.getApproval(id);
       if (approvalResponse.success && approvalResponse.data) {
         const data = approvalResponse.data as unknown as Approval;
-
         let recordsList: ApprovalRecord[] = [];
         const recordsResponse = await workflowApi.getRecordsByApproval(id);
         if (recordsResponse.success && recordsResponse.data) {
@@ -69,7 +59,6 @@ export const useWorkflowApprovalDetail = (): UseWorkflowApprovalDetailReturn => 
             ? (recordsData as ApprovalRecord[])
             : (recordsData.items as ApprovalRecord[]) || [];
         }
-
         return { approval: data, records: recordsList };
       }
       return null;
@@ -77,32 +66,28 @@ export const useWorkflowApprovalDetail = (): UseWorkflowApprovalDetailReturn => 
     enabled: !!id,
     staleTime: 5 * 60 * 1000,
   });
-
   const approval = detailsQuery.data?.approval ?? null;
   const records = detailsQuery.data?.records ?? [];
   const loading = detailsQuery.isLoading;
   const error = detailsQuery.isError
-    ? t('workflow.approval_detail.message.load_detail_failed')
+    ? i18n.t('workflow.approval_detail.message.load_detail_failed')
     : undefined;
-
   useEffect(() => {
     if (detailsQuery.isError) {
       apiLogger.error('Failed to load approval details:', detailsQuery.error);
       addNotification({
-        title: t('common.error'),
-        message: t('workflow.approval_detail.message.load_detail_failed'),
+        title: i18n.t('common.error'),
+        message: i18n.t('workflow.approval_detail.message.load_detail_failed'),
         type: 'error',
       });
     }
-  }, [detailsQuery.isError, detailsQuery.error, addNotification, t]);
-
+  }, [detailsQuery.isError, detailsQuery.error, addNotification, i18n.t]);
   const invalidateApprovalQueries = () => {
     queryClient.invalidateQueries({ queryKey: [...QUERY_KEYS.AD_HOC.WORKFLOW_APPROVAL_DETAILS_BASE, id] ,
   exact: false,
   refetchType: 'active',
 });
   };
-
   const processApprovalMutation = useMutation({
     mutationFn: (params: { approvalId: string; action: 'approve' | 'reject'; comment?: string }) =>
       workflowApi.processApproval(params.approvalId, {
@@ -120,12 +105,12 @@ export const useWorkflowApprovalDetail = (): UseWorkflowApprovalDetailReturn => 
         });
       invalidateApprovalQueries();
       addNotification({
-        title: t('common.success'),
-        message: t('workflow.approval_detail.message.approval_action_success', {
+        title: i18n.t('common.success'),
+        message: i18n.t('workflow.approval_detail.message.approval_action_success', {
           action:
             variables.action === 'approve'
-              ? t('workflow.approval_detail.label.approve')
-              : t('workflow.approval_detail.label.reject'),
+              ? i18n.t('workflow.approval_detail.label.approve')
+              : i18n.t('workflow.approval_detail.label.reject'),
         }),
         type: 'success',
       });
@@ -135,13 +120,12 @@ export const useWorkflowApprovalDetail = (): UseWorkflowApprovalDetailReturn => 
     onError: (err: unknown) => {
       apiLogger.error('Failed to process approval:', err);
       addNotification({
-        title: t('common.error'),
-        message: t('workflow.approval_detail.message.process_approval_failed'),
+        title: i18n.t('common.error'),
+        message: i18n.t('workflow.approval_detail.message.process_approval_failed'),
         type: 'error',
       });
     },
   });
-
   const delegateMutation = useMutation({
     mutationFn: (params: { approvalId: string; comment?: string; delegateTo: string }) =>
       workflowApi.processApproval(params.approvalId, {
@@ -161,8 +145,8 @@ export const useWorkflowApprovalDetail = (): UseWorkflowApprovalDetailReturn => 
         });
       invalidateApprovalQueries();
       addNotification({
-        title: t('common.success'),
-        message: t('workflow.approval_detail.message.delegated_to', { name: variables.delegateTo }),
+        title: i18n.t('common.success'),
+        message: i18n.t('workflow.approval_detail.message.delegated_to', { name: variables.delegateTo }),
         type: 'success',
       });
       setShowDelegateModal(false);
@@ -172,51 +156,45 @@ export const useWorkflowApprovalDetail = (): UseWorkflowApprovalDetailReturn => 
     onError: (err: unknown) => {
       apiLogger.error('Failed to delegate:', err);
       addNotification({
-        title: t('common.error'),
-        message: t('workflow.approval_detail.message.delegate_failed'),
+        title: i18n.t('common.error'),
+        message: i18n.t('workflow.approval_detail.message.delegate_failed'),
         type: 'error',
       });
     },
   });
-
   const processing = processApprovalMutation.isPending;
   const delegateLoading = delegateMutation.isPending;
-
   const handleProcessApproval = () => {
     if (!approval) return;
     if (!comment.trim() && approvalAction === 'reject') {
       addNotification({
-        title: t('common.info'),
-        message: t('workflow.approval_detail.message.please_input_reject_reason'),
+        title: i18n.t('common.info'),
+        message: i18n.t('workflow.approval_detail.message.please_input_reject_reason'),
         type: 'info',
       });
       return;
     }
-
     processApprovalMutation.mutate({
       approvalId: approval.id,
       action: approvalAction,
       comment: comment || undefined,
     });
   };
-
   const handleDelegate = () => {
     if (!approval || !delegateTarget.trim()) {
       addNotification({
-        title: t('common.info'),
-        message: t('workflow.approval_detail.message.please_input_delegate_target'),
+        title: i18n.t('common.info'),
+        message: i18n.t('workflow.approval_detail.message.please_input_delegate_target'),
         type: 'info',
       });
       return;
     }
-
     delegateMutation.mutate({
       approvalId: approval.id,
       comment: delegateReason || undefined,
       delegateTo: delegateTarget,
     });
   };
-
   return {
     approval,
     records,

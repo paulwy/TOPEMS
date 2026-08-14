@@ -12,6 +12,7 @@ import {
 import { Gauge } from 'lucide-react';
 import type { WorkStationUtilization } from '../types';
 import { formatPercent } from '../utils';
+import i18n from '@/i18n';
 
 const WorkStationUtilizationCard: React.FC<{
   data: WorkStationUtilization[];
@@ -47,7 +48,7 @@ const WorkStationUtilizationCard: React.FC<{
             variant='subtitle1'
             sx={{ fontWeight: 600 }}
           >
-            工站利用率
+            {i18n.t('pages.work_station_utilization_card.k0')}
           </Typography>
         </Stack>
         <Typography
@@ -68,7 +69,7 @@ const WorkStationUtilizationCard: React.FC<{
             variant='body2'
             sx={{ color: 'text.secondary', textAlign: 'center', py: 4 }}
           >
-            暂无工站数据
+            {i18n.t('pages.work_station_utilization_card.k1')}
           </Typography>
         ) : (
           <Stack spacing={1.5}>
@@ -134,13 +135,13 @@ const WorkStationUtilizationCard: React.FC<{
                       variant='caption'
                       sx={{ color: 'text.secondary' }}
                     >
-                      活跃工单: {item.activeOrders}
+                      [i18n.t('pages.work_station_utilization_card.k2')]: {item.activeOrders}
                     </Typography>
                     <Typography
                       variant='caption'
                       sx={{ color: 'text.secondary' }}
                     >
-                      今日产出: {item.todayOutput}
+                      [i18n.t('pages.work_station_utilization_card.k3')]: {item.todayOutput}
                     </Typography>
                   </Stack>
                 </Box>

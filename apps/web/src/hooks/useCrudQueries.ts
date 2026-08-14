@@ -14,6 +14,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useCallback, useMemo, useState } from 'react';
 import type { AxiosInstance } from 'axios';
 import { useNotificationStore } from '@/store';
+import i18n from '@/i18n';
 
 // ============ 类型定义 ============
 
@@ -242,9 +243,9 @@ export function useCrudQueries<
   exact: false,
   refetchType: 'active',
 });
-      onSuccess?.('创建成功');
+      onSuccess?.(i18n.t('shared.use_crud_queries.k0'));
     },
-    onError: (err) => handleMutationError(err, '创建失败'),
+    onError: (err) => handleMutationError(err, i18n.t('shared.use_crud_queries.k1')),
   });
 
   // ---- update ----
@@ -264,9 +265,9 @@ export function useCrudQueries<
   exact: false,
   refetchType: 'active',
 });
-      onSuccess?.('更新成功');
+      onSuccess?.(i18n.t('shared.use_crud_queries.k2'));
     },
-    onError: (err) => handleMutationError(err, '更新失败'),
+    onError: (err) => handleMutationError(err, i18n.t('shared.use_crud_queries.k3')),
   });
 
   // ---- delete ----
@@ -279,9 +280,9 @@ export function useCrudQueries<
   exact: false,
   refetchType: 'active',
 });
-      onSuccess?.('删除成功');
+      onSuccess?.(i18n.t('shared.use_crud_queries.k4'));
     },
-    onError: (err) => handleMutationError(err, '删除失败'),
+    onError: (err) => handleMutationError(err, i18n.t('shared.use_crud_queries.k5')),
   });
 
   // ---- bulkDelete ----
@@ -294,9 +295,9 @@ export function useCrudQueries<
   exact: false,
   refetchType: 'active',
 });
-      onSuccess?.(`已删除 ${variables.length} 条记录`);
+      onSuccess?.(`${i18n.t('shared.use_crud_queries.k0')}${variables.length}${i18n.t('shared.use_crud_queries.k1')}`);
     },
-    onError: (err) => handleMutationError(err, '批量删除失败'),
+    onError: (err) => handleMutationError(err, i18n.t('shared.use_crud_queries.k6')),
   });
 
   // ---- 便捷方法 ----
@@ -401,7 +402,7 @@ export function useModuleQueries<T extends { id?: string }>(
     queryFn: async () => {
       const response = await api.list({ page, pageSize, ...extraParams });
       if (!response.success || !response.data) {
-        throw new Error('加载数据失败');
+        throw new Error(i18n.t('shared.use_crud_queries.k7'));
       }
       return response.data;
     },
@@ -447,8 +448,8 @@ export function useModuleQueries<T extends { id?: string }>(
         return null;
       } catch (err: unknown) {
         const errAny = err as { response?: { data?: { message?: string } }; message?: string };
-        const message = errAny?.response?.data?.message || errAny?.message || '获取数据失败';
-        addNotification({ title: '错误', message, type: 'error' });
+        const message = errAny?.response?.data?.message || errAny?.message || i18n.t('shared.use_crud_queries.k8');
+        addNotification({ title: i18n.t('shared.use_crud_queries.k9'), message, type: 'error' });
         return null;
       }
     },
@@ -468,7 +469,7 @@ export function useModuleQueries<T extends { id?: string }>(
     (err: unknown, defaultMessage: string) => {
       const errAny = err as { response?: { data?: { message?: string } }; message?: string };
       const message = errAny?.response?.data?.message || errAny?.message || defaultMessage;
-      addNotification({ title: '错误', message, type: 'error' });
+      addNotification({ title: i18n.t('shared.use_crud_queries.k10'), message, type: 'error' });
       return Promise.reject(err);
     },
     [addNotification]
@@ -476,7 +477,7 @@ export function useModuleQueries<T extends { id?: string }>(
 
   const notifySuccess = useCallback(
     (message: string) => {
-      addNotification({ title: '成功', message, type: 'success' });
+      addNotification({ title: i18n.t('shared.use_crud_queries.k11'), message, type: 'success' });
     },
     [addNotification]
   );
@@ -486,7 +487,7 @@ export function useModuleQueries<T extends { id?: string }>(
     mutationFn: async (item: Partial<T>) => {
       const response = await api.create(item);
       if (!response.success) {
-        throw new Error('创建失败');
+        throw new Error(i18n.t('shared.use_crud_queries.k12'));
       }
       return response.data ?? null;
     },
@@ -495,9 +496,9 @@ export function useModuleQueries<T extends { id?: string }>(
   exact: false,
   refetchType: 'active',
 });
-      notifySuccess('创建成功');
+      notifySuccess(i18n.t('shared.use_crud_queries.k13'));
     },
-    onError: (err) => notifyError(err, '创建失败'),
+    onError: (err) => notifyError(err, i18n.t('shared.use_crud_queries.k14')),
   });
 
   // ---- update ----
@@ -505,7 +506,7 @@ export function useModuleQueries<T extends { id?: string }>(
     mutationFn: async ({ id, item }: { id: string; item: Partial<T> }) => {
       const response = await api.update(id, item);
       if (!response.success) {
-        throw new Error('更新失败');
+        throw new Error(i18n.t('shared.use_crud_queries.k15'));
       }
       return response.data ?? null;
     },
@@ -520,9 +521,9 @@ export function useModuleQueries<T extends { id?: string }>(
   exact: false,
   refetchType: 'active',
 });
-      notifySuccess('更新成功');
+      notifySuccess(i18n.t('shared.use_crud_queries.k16'));
     },
-    onError: (err) => notifyError(err, '更新失败'),
+    onError: (err) => notifyError(err, i18n.t('shared.use_crud_queries.k17')),
   });
 
   // ---- delete ----
@@ -530,7 +531,7 @@ export function useModuleQueries<T extends { id?: string }>(
     mutationFn: async (id: string) => {
       const response = await api.delete(id);
       if (!response.success) {
-        throw new Error('删除失败');
+        throw new Error(i18n.t('shared.use_crud_queries.k18'));
       }
     },
     onSuccess: () => {
@@ -538,9 +539,9 @@ export function useModuleQueries<T extends { id?: string }>(
   exact: false,
   refetchType: 'active',
 });
-      notifySuccess('删除成功');
+      notifySuccess(i18n.t('shared.use_crud_queries.k19'));
     },
-    onError: (err) => notifyError(err, '删除失败'),
+    onError: (err) => notifyError(err, i18n.t('shared.use_crud_queries.k20')),
   });
 
   // ---- bulkDelete ----
@@ -553,9 +554,9 @@ export function useModuleQueries<T extends { id?: string }>(
   exact: false,
   refetchType: 'active',
 });
-      notifySuccess(`已删除 ${variables.length} 条记录`);
+      notifySuccess(`${i18n.t('shared.use_crud_queries.k2')}${variables.length}${i18n.t('shared.use_crud_queries.k3')}`);
     },
-    onError: (err) => notifyError(err, '批量删除失败'),
+    onError: (err) => notifyError(err, i18n.t('shared.use_crud_queries.k21')),
   });
 
   // ---- 便捷方法 ----
@@ -700,7 +701,7 @@ export function useCrudOperations<
         ...extraParams,
       });
       if (!response.success || !response.data) {
-        throw new Error(response.message || '加载数据失败');
+        throw new Error(response.message || i18n.t('shared.use_crud_queries.k22'));
       }
       return { items: response.data.items, total: response.data.total };
     },
@@ -744,8 +745,8 @@ export function useCrudOperations<
         return null;
       } catch (err: unknown) {
         const errAny = err as { response?: { data?: { message?: string } }; message?: string };
-        const message = errAny?.response?.data?.message || errAny?.message || '获取数据失败';
-        addNotification({ title: '错误', message, type: 'error' });
+        const message = errAny?.response?.data?.message || errAny?.message || i18n.t('shared.use_crud_queries.k23');
+        addNotification({ title: i18n.t('shared.use_crud_queries.k24'), message, type: 'error' });
         return null;
       }
     },
@@ -763,7 +764,7 @@ export function useCrudOperations<
     (err: unknown, defaultMessage: string) => {
       const errAny = err as { response?: { data?: { message?: string } }; message?: string };
       const message = errAny?.response?.data?.message || errAny?.message || defaultMessage;
-      addNotification({ title: '错误', message, type: 'error' });
+      addNotification({ title: i18n.t('shared.use_crud_queries.k25'), message, type: 'error' });
       return Promise.reject(err);
     },
     [addNotification]
@@ -771,18 +772,18 @@ export function useCrudOperations<
 
   const notifySuccess = useCallback(
     (message: string) => {
-      addNotification({ title: '成功', message, type: 'success' });
+      addNotification({ title: i18n.t('shared.use_crud_queries.k26'), message, type: 'success' });
     },
     [addNotification]
   );
 
   // 语义化通知文案：传入 entityName 时变为"用户创建成功"，否则使用默认"创建成功"
-  const msgCreate = entityName ? `${entityName}创建成功` : '创建成功';
-  const msgUpdate = entityName ? `${entityName}更新成功` : '更新成功';
-  const msgDelete = entityName ? `${entityName}删除成功` : '删除成功';
-  const msgCreateErr = entityName ? `${entityName}创建失败` : '创建失败';
-  const msgUpdateErr = entityName ? `${entityName}更新失败` : '更新失败';
-  const msgDeleteErr = entityName ? `${entityName}删除失败` : '删除失败';
+  const msgCreate = entityName ? `${entityName}${i18n.t('shared.use_crud_queries.k4')}` : i18n.t('shared.use_crud_queries.k27');
+  const msgUpdate = entityName ? `${entityName}${i18n.t('shared.use_crud_queries.k5')}` : i18n.t('shared.use_crud_queries.k28');
+  const msgDelete = entityName ? `${entityName}${i18n.t('shared.use_crud_queries.k6')}` : i18n.t('shared.use_crud_queries.k29');
+  const msgCreateErr = entityName ? `${entityName}${i18n.t('shared.use_crud_queries.k7')}` : i18n.t('shared.use_crud_queries.k30');
+  const msgUpdateErr = entityName ? `${entityName}${i18n.t('shared.use_crud_queries.k8')}` : i18n.t('shared.use_crud_queries.k31');
+  const msgDeleteErr = entityName ? `${entityName}${i18n.t('shared.use_crud_queries.k9')}` : i18n.t('shared.use_crud_queries.k32');
 
   const createMutation = useMutation({
     mutationFn: async (item: TCreate) => {
@@ -852,11 +853,11 @@ export function useCrudOperations<
 });
       notifySuccess(
         entityName
-          ? `已删除 ${variables.length} 个${entityName}`
-          : `已删除 ${variables.length} 条记录`
+          ? `${i18n.t('shared.use_crud_queries.k10')}${variables.length}${i18n.t('shared.use_crud_queries.k11')}${entityName}`
+          : `${i18n.t('shared.use_crud_queries.k12')}${variables.length}${i18n.t('shared.use_crud_queries.k13')}`
       );
     },
-    onError: (err) => notifyError(err, '批量删除失败'),
+    onError: (err) => notifyError(err, i18n.t('shared.use_crud_queries.k33')),
   });
 
   const create = useCallback(

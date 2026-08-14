@@ -8,6 +8,7 @@ import {
   MenuItem,
   Button,
 } from '@mui/material';
+import i18n from '@/i18n';
 import { useState, useEffect } from 'react';
 import { RefreshCw, Copy, Check, Wand2, AlertCircle, ChevronDown, ChevronUp } from 'lucide-react';
 
@@ -26,30 +27,30 @@ export interface AITextOptimizerProps {
 
 const systemPromptTemplates: Record<string, string> = {
   description:
-    '你是专业的企业文档助手。请根据提供的关键词或简短描述，生成一段专业、简洁、清晰的描述文本。字数控制在200-500字之间。',
-  duty: '你是专业的HR助手。请根据部门名称和关键词，生成一段专业的部门职责描述。内容应包括：核心职能、主要工作范围、协作关系等。字数控制在300-600字之间。',
+    i18n.t('components.ai_text_optimizer.k0'),
+  duty: i18n.t('components.ai_text_optimizer.k1'),
   profile:
-    '你是专业的HR助手。请根据提供的信息，生成一段专业的个人简介。内容应正式、客观、突出重点。字数控制在200-400字之间。',
+    i18n.t('components.ai_text_optimizer.k2'),
   clause:
-    '你是专业的法务助手。请根据提供的信息，生成一段专业的合同条款描述。内容应严谨、规范、避免歧义。',
+    i18n.t('components.ai_text_optimizer.k3'),
 };
 
 const textTypeLabels: Record<string, string> = {
-  description: '描述优化',
-  duty: '职责描述',
-  profile: '个人简介',
-  clause: '合同条款',
+  description: i18n.t('components.ai_text_optimizer.k4'),
+  duty: i18n.t('components.ai_text_optimizer.k5'),
+  profile: i18n.t('components.ai_text_optimizer.k6'),
+  clause: i18n.t('components.ai_text_optimizer.k7'),
 };
 
 const optimizationStyles = [
   {
     value: 'professional',
-    label: '专业正式',
-    description: '使用专业术语，正式表达',
+    label: i18n.t('components.ai_text_optimizer.k8'),
+    description: i18n.t('components.ai_text_optimizer.k9'),
   },
-  { value: 'concise', label: '简洁明了', description: '精简内容，突出重点' },
-  { value: 'detailed', label: '详尽完整', description: '详细展开，全面覆盖' },
-  { value: 'friendly', label: '亲切友好', description: '语气柔和，易于理解' },
+  { value: 'concise', label: i18n.t('components.ai_text_optimizer.k11'), description: i18n.t('components.ai_text_optimizer.k10') },
+  { value: 'detailed', label: i18n.t('components.ai_text_optimizer.k13'), description: i18n.t('components.ai_text_optimizer.k12') },
+  { value: 'friendly', label: i18n.t('components.ai_text_optimizer.k15'), description: i18n.t('components.ai_text_optimizer.k14') },
 ];
 
 export function AITextOptimizer({
@@ -103,22 +104,22 @@ export function AITextOptimizer({
 
     const styleConfig = optimizationStyles.find((s) => s.value === optimizationStyle);
     if (styleConfig) {
-      prompt += `\n\n风格要求：${styleConfig.label} - ${styleConfig.description}`;
+      prompt += `${i18n.t('components.ai_text_optimizer.nn_0')}${styleConfig.label} - ${styleConfig.description}`;
     }
 
     prompt += '\n\n';
 
     if (name) {
-      prompt += `主体名称: ${name}\n`;
+      prompt += `${i18n.t('components.ai_text_optimizer.k1')} ${name}\n`;
     }
     if (keywords.length > 0) {
-      prompt += `关键词: ${keywords.join(', ')}\n`;
+      prompt += `${i18n.t('components.ai_text_optimizer.k2')} ${keywords.join(', ')}\n`;
     }
     if (originalText) {
-      prompt += `现有描述: ${originalText}\n`;
+      prompt += `${i18n.t('components.ai_text_optimizer.k3')} ${originalText}\n`;
     }
 
-    prompt += '\n请生成优化后的文本:';
+    prompt += i18n.t('components.ai_text_optimizer.n_4');
     return prompt;
   };
 
@@ -173,21 +174,21 @@ export function AITextOptimizer({
     <AIGenerateModal
       isOpen={isOpen}
       onClose={onClose}
-      title={`AI ${textTypeLabels[context.textType] || '文本优化'}`}
-      description='AI 将根据上下文智能优化文本内容'
+      title={`AI ${textTypeLabels[context.textType] || i18n.t('components.ai_text_optimizer.k16')}`}
+      description={i18n.t('components.ai_text_optimizer.k5')}
       isLoading={isLoading}
       onConfirm={optimizedText ? handleConfirm : undefined}
-      confirmText='使用此文本'
+      confirmText={i18n.t('components.ai_text_optimizer.k17')}
     >
       <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
         {/* 原始文本 */}
         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
           <InputLabel sx={{ fontSize: '0.875rem', fontWeight: 500, color: 'text.secondary' }}>
-            原始文本
+            {i18n.t('components.ai_text_optimizer.k6')}
           </InputLabel>
           <TextField
             value={originalText}
-            placeholder='暂无原始文本'
+            placeholder={i18n.t('components.ai_text_optimizer.k18')}
             disabled
             sx={{ bgcolor: 'grey.50' }}
             multiline
@@ -207,7 +208,7 @@ export function AITextOptimizer({
             onClick={() => setShowKeywords(!showKeywords)}
           >
             <InputLabel sx={{ fontSize: '0.875rem', fontWeight: 500, color: 'text.secondary' }}>
-              关键词（可选）
+              {i18n.t('components.ai_text_optimizer.k7')}
             </InputLabel>
             {showKeywords ? (
               <ChevronUp style={{ width: 16, height: 16 }} />
@@ -226,7 +227,7 @@ export function AITextOptimizer({
                       handleAddKeyword();
                     }
                   }}
-                  placeholder='输入关键词后按 Enter 添加'
+                  placeholder={i18n.t('components.ai_text_optimizer.enter_19')}
                   size='small'
                   sx={{ flex: 1 }}
                 />
@@ -235,7 +236,7 @@ export function AITextOptimizer({
                   size='small'
                   onClick={handleAddKeyword}
                 >
-                  添加
+                  {i18n.t('components.ai_text_optimizer.k8')}
                 </Button>
               </Box>
               {keywords.length > 0 && (
@@ -265,7 +266,7 @@ export function AITextOptimizer({
         {/* 优化风格选择 */}
         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
           <InputLabel sx={{ fontSize: '0.875rem', fontWeight: 500, color: 'text.secondary' }}>
-            优化风格
+            {i18n.t('components.ai_text_optimizer.k9')}
           </InputLabel>
           <Select
             value={optimizationStyle}
@@ -322,7 +323,7 @@ export function AITextOptimizer({
                   onClick={retry}
                   sx={{ ml: 'auto' }}
                 >
-                  重试
+                  {i18n.t('components.ai_text_optimizer.k10')}
                 </Button>
               )}
             </CardContent>
@@ -342,7 +343,7 @@ export function AITextOptimizer({
               )
             }
           >
-            {isLoading ? '生成中...' : optimizedText ? '重新生成' : 'AI 优化'}
+            {isLoading ? i18n.t('components.ai_text_optimizer.k11') : optimizedText ? i18n.t('components.ai_text_optimizer.k20') : i18n.t('components.ai_text_optimizer.ai_12')}
           </Button>
         </Box>
 
@@ -357,7 +358,7 @@ export function AITextOptimizer({
               }}
             >
               <InputLabel sx={{ fontSize: '0.875rem', fontWeight: 500, color: 'secondary.dark' }}>
-                优化后的文本
+                {i18n.t('components.ai_text_optimizer.k13')}
               </InputLabel>
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                 {history.length > 1 && (
@@ -398,7 +399,7 @@ export function AITextOptimizer({
                     )
                   }
                 >
-                  {copied ? '已复制' : '复制'}
+                  {copied ? i18n.t('components.ai_text_optimizer.k22') : i18n.t('components.ai_text_optimizer.k21')}
                 </Button>
               </Box>
             </Box>

@@ -1,8 +1,9 @@
 import type { EntitySchema } from '@/schema';
+import i18n from '@/i18n';
 
 export const teamSchema: EntitySchema = {
   entity: 'team',
-  title: '班组管理',
+  title: i18n.t('mes.team.k0'),
   api: {
     module: 'mes',
     resource: 'teams',
@@ -10,7 +11,7 @@ export const teamSchema: EntitySchema = {
   fields: [
     {
       name: 'team_code',
-      label: '班组编码',
+      label: i18n.t('mes.team.k1'),
       type: 'text',
       required: true,
       readonlyOnEdit: true,
@@ -19,7 +20,7 @@ export const teamSchema: EntitySchema = {
     },
     {
       name: 'team_name',
-      label: '班组名称',
+      label: i18n.t('mes.team.k2'),
       type: 'text',
       required: true,
       listWidth: 160,
@@ -27,49 +28,49 @@ export const teamSchema: EntitySchema = {
     },
     {
       name: 'team_type',
-      label: '班组类型',
+      label: i18n.t('mes.team.k3'),
       type: 'select',
       listWidth: 100,
       options: {
         type: 'static',
         options: [
-          { value: 'production', label: '生产班组' },
-          { value: 'maintenance', label: '维修班组' },
-          { value: 'quality', label: '质检班组' },
-          { value: 'logistics', label: '物流班组' },
+          { value: 'production', label: i18n.t('mes.team.k4') },
+          { value: 'maintenance', label: i18n.t('mes.team.k5') },
+          { value: 'quality', label: i18n.t('mes.team.k6') },
+          { value: 'logistics', label: i18n.t('mes.team.k7') },
         ],
       },
     },
     {
       name: 'work_station_id',
-      label: '所属工作站',
+      label: i18n.t('mes.team.k8'),
       type: 'text',
       listWidth: 140,
       showInList: false,
     },
     {
       name: 'work_station_name',
-      label: '工作站',
+      label: i18n.t('mes.team.k9'),
       type: 'text',
       listWidth: 140,
       showInForm: false,
     },
     {
       name: 'leader_id',
-      label: '班组长ID',
+      label: i18n.t('mes.team.id_10'),
       type: 'text',
       showInList: false,
     },
     {
       name: 'leader_name',
-      label: '班组长',
+      label: i18n.t('mes.team.k11'),
       type: 'text',
       listWidth: 120,
       showInForm: false,
     },
     {
       name: 'member_count',
-      label: '成员数',
+      label: i18n.t('mes.team.k12'),
       type: 'number',
       listWidth: 80,
       showInForm: false,
@@ -77,21 +78,21 @@ export const teamSchema: EntitySchema = {
     },
     {
       name: 'status',
-      label: '状态',
+      label: i18n.t('mes.team.k13'),
       type: 'select',
       listWidth: 100,
       options: {
         type: 'static',
         options: [
-          { value: 'active', label: '活跃' },
-          { value: 'inactive', label: '停用' },
+          { value: 'active', label: i18n.t('mes.team.k14') },
+          { value: 'inactive', label: i18n.t('mes.team.k15') },
         ],
       },
       validation: [{ type: 'maxLength', value: 32 }],
     },
     {
       name: 'description',
-      label: '描述',
+      label: i18n.t('mes.team.k16'),
       type: 'textarea',
       colSpan: 2,
       showInList: false,
@@ -102,12 +103,12 @@ export const teamSchema: EntitySchema = {
     filters: [
       {
         id: 'status',
-        label: '状态',
+        label: i18n.t('mes.team.k17'),
         type: 'select',
         options: [
-          { label: '全部状态', value: 'all' },
-          { label: '活跃', value: 'active' },
-          { label: '停用', value: 'inactive' },
+          { label: i18n.t('mes.team.k18'), value: 'all' },
+          { label: i18n.t('mes.team.k19'), value: 'active' },
+          { label: i18n.t('mes.team.k20'), value: 'inactive' },
         ],
         defaultValue: 'all',
       },
@@ -119,23 +120,23 @@ export const teamSchema: EntitySchema = {
         inactive: 'default',
       },
       labelMap: {
-        active: '活跃',
-        inactive: '停用',
+        active: i18n.t('mes.team.k21'),
+        inactive: i18n.t('mes.team.k22'),
       },
     },
     pageSize: 10,
   },
   formSections: [
     {
-      title: '基本信息',
+      title: i18n.t('mes.team.k23'),
       fields: ['team_code', 'team_name', 'team_type', 'status'],
     },
     {
-      title: '关联信息',
+      title: i18n.t('mes.team.k24'),
       fields: ['work_station_id', 'leader_id'],
     },
     {
-      title: '描述',
+      title: i18n.t('mes.team.k25'),
       fields: ['description'],
     },
   ],

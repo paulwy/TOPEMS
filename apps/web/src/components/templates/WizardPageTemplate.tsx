@@ -15,6 +15,7 @@ import {
   Alert,
   IconButton,
 } from '@mui/material';
+import i18n from '@/i18n';
 import {
   ChevronLeft,
   ChevronRight,
@@ -107,11 +108,11 @@ export const WizardPageTemplate: React.FC<WizardPageTemplateProps> = ({
   showStepNumbers = true,
   showProgress = true,
   showNavigation = true,
-  backButtonText = '上一步',
-  nextButtonText = '下一步',
-  skipButtonText = '跳过',
-  finishButtonText = '完成',
-  cancelButtonText = '取消',
+  backButtonText = i18n.t('templates.wizard_page_template.k0'),
+  nextButtonText = i18n.t('templates.wizard_page_template.k1'),
+  skipButtonText = i18n.t('templates.wizard_page_template.k2'),
+  finishButtonText = i18n.t('templates.wizard_page_template.k3'),
+  cancelButtonText = i18n.t('templates.wizard_page_template.k4'),
   customActions = [],
   headerContent,
   footerContent,
@@ -152,11 +153,11 @@ export const WizardPageTemplate: React.FC<WizardPageTemplateProps> = ({
       try {
         const isValid = await currentStepData.validation();
         if (!isValid) {
-          setValidationError('当前步骤验证失败，请检查填写内容');
+          setValidationError(i18n.t('templates.wizard_page_template.k5'));
           return;
         }
       } catch (err) {
-        setValidationError(err instanceof Error ? err.message : '验证过程中发生错误');
+        setValidationError(err instanceof Error ? err.message : i18n.t('templates.wizard_page_template.k6'));
         return;
       }
     }
@@ -235,7 +236,7 @@ export const WizardPageTemplate: React.FC<WizardPageTemplateProps> = ({
             variant='body2'
             color='text.secondary'
           >
-            进度
+            {i18n.t('components.wizard_page_template.k0')}
           </Typography>
           <Typography
             variant='body2'
@@ -275,7 +276,7 @@ export const WizardPageTemplate: React.FC<WizardPageTemplateProps> = ({
           >
             <StepLabel
               icon={renderStepIcon(step, index)}
-              optional={step.optional ? <Typography variant='caption'>可选</Typography> : undefined}
+              optional={step.optional ? <Typography variant='caption'>{i18n.t('templates.wizard_page_template.k7')}</Typography> : undefined}
             >
               {step.label}
               {step.description && (
@@ -397,7 +398,7 @@ export const WizardPageTemplate: React.FC<WizardPageTemplateProps> = ({
               onClick={handleNext}
               disabled={submitting || loading}
             >
-              {submitting ? '提交中...' : finishButtonText}
+              {submitting ? i18n.t('components.wizard_page_template.k0') : finishButtonText}
             </Button>
           ) : (
             <Button
@@ -469,7 +470,7 @@ export const WizardPageTemplate: React.FC<WizardPageTemplateProps> = ({
             <IconButton
               size='small'
               onClick={() => setValidationError(null)}
-              aria-label='关闭'
+              aria-label={i18n.t('templates.wizard_page_template.k8')}
             >
               <XCircle style={{ width: 16, height: 16 }} />
             </IconButton>

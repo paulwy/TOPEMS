@@ -41,6 +41,7 @@ import {
   ToggleButton,
   ToggleButtonGroup,
 } from '@mui/material';
+import i18n from '@/i18n';
 import {
   ChevronDown,
   ChevronUp,
@@ -66,10 +67,10 @@ import { useNotificationStore } from '@/store';
 // ==================== 状态映射 ====================
 
 const STATUS_LABELS: Record<ExperimentStatus, string> = {
-  [ExperimentStatus.DRAFT]: '草稿',
-  [ExperimentStatus.RUNNING]: '运行中',
-  [ExperimentStatus.PAUSED]: '已暂停',
-  [ExperimentStatus.COMPLETED]: '已完成',
+  [ExperimentStatus.DRAFT]: i18n.t('components.ab_test_panel.k0'),
+  [ExperimentStatus.RUNNING]: i18n.t('components.ab_test_panel.k1'),
+  [ExperimentStatus.PAUSED]: i18n.t('components.ab_test_panel.k2'),
+  [ExperimentStatus.COMPLETED]: i18n.t('components.ab_test_panel.k3'),
 };
 
 const STATUS_COLORS: Record<ExperimentStatus, 'default' | 'primary' | 'warning' | 'success'> = {
@@ -113,7 +114,7 @@ const ConversionRateBar: React.FC<{
           {isControl && (
             <Chip
               size='small'
-              label='对照'
+              label={i18n.t('components.ab_test_panel.k4')}
               variant='outlined'
               color='info'
               sx={{ height: 18 }}
@@ -123,7 +124,7 @@ const ConversionRateBar: React.FC<{
             <Chip
               size='small'
               icon={<Trophy size={12} />}
-              label='赢家'
+              label={i18n.t('components.ab_test_panel.k5')}
               color='success'
               sx={{ height: 18 }}
             />
@@ -163,7 +164,7 @@ const ExperimentResultPanel: React.FC<{ experimentId: string }> = ({ experimentI
         color='text.secondary'
         sx={{ py: 1, display: 'block' }}
       >
-        暂无数据（需要参与者与转化事件）
+        {i18n.t('components.ab_test_panel.k0')}
       </Typography>
     );
   }
@@ -178,7 +179,7 @@ const ExperimentResultPanel: React.FC<{ experimentId: string }> = ({ experimentI
         <Chip
           size='small'
           icon={<Activity size={14} />}
-          label={`置信度 ${(result.confidence * 100).toFixed(1)}%`}
+          label={`${i18n.t('components.ab_test_panel.k0')}${(result.confidence * 100).toFixed(1)}%`}
           color={isSignificant ? 'success' : 'default'}
           variant={isSignificant ? 'filled' : 'outlined'}
         />
@@ -194,7 +195,7 @@ const ExperimentResultPanel: React.FC<{ experimentId: string }> = ({ experimentI
         />
         <Chip
           size='small'
-          label={isSignificant ? '统计显著' : '未达显著'}
+          label={isSignificant ? i18n.t('components.ab_test_panel.k7') : i18n.t('components.ab_test_panel.k6')}
           color={isSignificant ? 'success' : 'warning'}
           variant='outlined'
         />
@@ -218,8 +219,8 @@ const ExperimentResultPanel: React.FC<{ experimentId: string }> = ({ experimentI
           icon={<Trophy size={18} />}
           sx={{ mt: 1.5, py: 0.5 }}
         >
-          <AlertTitle sx={{ mb: 0 }}>实验赢家已确定</AlertTitle>
-          赢家变体: {result.variant_results.find((v) => v.variant_id === winner)?.variant_name}
+          <AlertTitle sx={{ mb: 0 }}>{i18n.t('components.ab_test_panel.k8')}</AlertTitle>
+          [i18n.t('components.ab_test_panel.k1')]: {result.variant_results.find((v) => v.variant_id === winner)?.variant_name}
         </Alert>
       )}
     </Box>
@@ -243,7 +244,7 @@ const ExperimentRow: React.FC<{
           <IconButton
             size='small'
             onClick={() => setOpen((v) => !v)}
-            aria-label='展开实验'
+            aria-label={i18n.t('components.ab_test_panel.k9')}
           >
             {open ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
           </IconButton>
@@ -301,24 +302,24 @@ const ExperimentRow: React.FC<{
             sx={{ justifyContent: 'flex-end' }}
           >
             {experiment.status === ExperimentStatus.DRAFT && (
-              <Tooltip title='启动'>
+              <Tooltip title={i18n.t('components.ab_test_panel.k10')}>
                 <IconButton
                   size='small'
                   color='primary'
                   onClick={() => onAction('start', experiment.id)}
-                  aria-label='执行'
+                  aria-label={i18n.t('components.ab_test_panel.k11')}
                 >
                   <Play size={16} />
                 </IconButton>
               </Tooltip>
             )}
             {experiment.status === ExperimentStatus.RUNNING && (
-              <Tooltip title='暂停'>
+              <Tooltip title={i18n.t('components.ab_test_panel.k12')}>
                 <IconButton
                   size='small'
                   color='warning'
                   onClick={() => onAction('pause', experiment.id)}
-                  aria-label='暂停'
+                  aria-label={i18n.t('components.ab_test_panel.k13')}
                 >
                   <Pause size={16} />
                 </IconButton>
@@ -326,23 +327,23 @@ const ExperimentRow: React.FC<{
             )}
             {(experiment.status === ExperimentStatus.RUNNING ||
               experiment.status === ExperimentStatus.PAUSED) && (
-              <Tooltip title='完成'>
+              <Tooltip title={i18n.t('components.ab_test_panel.k14')}>
                 <IconButton
                   size='small'
                   color='success'
                   onClick={() => onAction('complete', experiment.id)}
-                  aria-label='完成'
+                  aria-label={i18n.t('components.ab_test_panel.k15')}
                 >
                   <CheckCircle size={16} />
                 </IconButton>
               </Tooltip>
             )}
-            <Tooltip title='删除'>
+            <Tooltip title={i18n.t('components.ab_test_panel.k16')}>
               <IconButton
                 size='small'
                 color='error'
                 onClick={() => onAction('delete', experiment.id)}
-                aria-label='删除'
+                aria-label={i18n.t('components.ab_test_panel.k17')}
               >
                 <Trash2 size={16} />
               </IconButton>
@@ -375,7 +376,7 @@ const ExperimentRow: React.FC<{
                   variant='subtitle2'
                   sx={{ fontWeight: 600 }}
                 >
-                  实验结果
+                  {i18n.t('components.ab_test_panel.k2')}
                 </Typography>
               </Stack>
               <ExperimentResultPanel experimentId={experiment.id} />
@@ -412,15 +413,15 @@ const CreateExperimentForm: React.FC<{
   const [description, setDescription] = useState('');
   const [traffic, setTraffic] = useState(100);
   const [variants, setVariants] = useState<VariantForm[]>([
-    { name: '对照组', weight: 50, is_control: true, config: {} },
-    { name: '实验组 A', weight: 50, is_control: false, config: {} },
+    { name: i18n.t('components.ab_test_panel.k18'), weight: 50, is_control: true, config: {} },
+    { name: i18n.t('components.ab_test_panel.a_19'), weight: 50, is_control: false, config: {} },
   ]);
 
   const handleAddVariant = () => {
     setVariants((prev) => [
       ...prev,
       {
-        name: `实验组 ${String.fromCharCode(65 + prev.length)}`,
+        name: `${i18n.t('components.ab_test_panel.k1')}${String.fromCharCode(65 + prev.length)}`,
         weight: 25,
         is_control: false,
         config: {},
@@ -460,7 +461,7 @@ const CreateExperimentForm: React.FC<{
     if (!variants.some((v) => v.is_control)) return;
     onCreate({
       name: name.trim(),
-      description: description.trim() || '无描述',
+      description: description.trim() || i18n.t('components.ab_test_panel.k20'),
       variants,
       traffic_allocation: traffic / 100,
     });
@@ -469,8 +470,8 @@ const CreateExperimentForm: React.FC<{
     setDescription('');
     setTraffic(100);
     setVariants([
-      { name: '对照组', weight: 50, is_control: true, config: {} },
-      { name: '实验组 A', weight: 50, is_control: false, config: {} },
+      { name: i18n.t('components.ab_test_panel.k21'), weight: 50, is_control: true, config: {} },
+      { name: i18n.t('components.ab_test_panel.a_22'), weight: 50, is_control: false, config: {} },
     ]);
     onClose();
   };
@@ -491,28 +492,28 @@ const CreateExperimentForm: React.FC<{
           sx={{ alignItems: 'center' }}
         >
           <FlaskConical size={18} />
-          <span>创建实验</span>
+          <span>{i18n.t('components.ab_test_panel.k23')}</span>
         </Stack>
       </DialogTitle>
       <DialogContent dividers>
         <Stack spacing={2}>
           <TextField
-            label='实验名称'
+            label={i18n.t('components.ab_test_panel.k24')}
             value={name}
             onChange={(e) => setName(e.target.value)}
             fullWidth
             size='small'
-            placeholder='如：结账按钮颜色实验'
+            placeholder={i18n.t('components.ab_test_panel.k25')}
           />
           <TextField
-            label='实验描述'
+            label={i18n.t('components.ab_test_panel.k26')}
             value={description}
             onChange={(e) => setDescription(e.target.value)}
             fullWidth
             size='small'
             multiline
             minRows={2}
-            placeholder='描述实验目的与假设'
+            placeholder={i18n.t('components.ab_test_panel.k27')}
           />
           <Box>
             <Stack
@@ -546,7 +547,7 @@ const CreateExperimentForm: React.FC<{
               startIcon={<Plus size={14} />}
               onClick={handleAddVariant}
             >
-              添加变体
+              {i18n.t('components.ab_test_panel.k3')}
             </Button>
           </Stack>
           {variants.map((v, idx) => (
@@ -557,14 +558,14 @@ const CreateExperimentForm: React.FC<{
               sx={{ alignItems: 'center' }}
             >
               <TextField
-                label='变体名称'
+                label={i18n.t('components.ab_test_panel.k28')}
                 value={v.name}
                 onChange={(e) => handleVariantChange(idx, 'name', e.target.value)}
                 size='small'
                 sx={{ flex: 1 }}
               />
               <TextField
-                label='权重'
+                label={i18n.t('components.ab_test_panel.k29')}
                 type='number'
                 value={v.weight}
                 onChange={(e) => handleVariantChange(idx, 'weight', Number(e.target.value) || 0)}
@@ -580,15 +581,15 @@ const CreateExperimentForm: React.FC<{
                   val && handleVariantChange(idx, 'is_control', val === 'control')
                 }
               >
-                <ToggleButton value='variant'>实验组</ToggleButton>
-                <ToggleButton value='control'>对照组</ToggleButton>
+                <ToggleButton value='variant'>{i18n.t('components.ab_test_panel.k30')}</ToggleButton>
+                <ToggleButton value='control'>{i18n.t('components.ab_test_panel.k31')}</ToggleButton>
               </ToggleButtonGroup>
               <IconButton
                 size='small'
                 color='error'
                 onClick={() => handleRemoveVariant(idx)}
                 disabled={v.is_control || variants.length <= 2}
-                aria-label='删除'
+                aria-label={i18n.t('components.ab_test_panel.k32')}
               >
                 <Trash2 size={16} />
               </IconButton>
@@ -599,7 +600,7 @@ const CreateExperimentForm: React.FC<{
               variant='caption'
               color='text.secondary'
             >
-              各变体实际占比：
+              {i18n.t('components.ab_test_panel.k4')}
               {variants
                 .map((v) => `${v.name}: ${((v.weight / totalWeight) * 100).toFixed(1)}%`)
                 .join('， ')}
@@ -608,13 +609,13 @@ const CreateExperimentForm: React.FC<{
         </Stack>
       </DialogContent>
       <DialogActions>
-        <Button onClick={onClose}>取消</Button>
+        <Button onClick={onClose}>{i18n.t('components.ab_test_panel.k33')}</Button>
         <Button
           variant='contained'
           onClick={handleSubmit}
           disabled={!name.trim() || variants.length < 2 || !variants.some((v) => v.is_control)}
         >
-          创建
+          {i18n.t('components.ab_test_panel.k5')}
         </Button>
       </DialogActions>
     </Dialog>
@@ -662,25 +663,25 @@ export const ABTestPanel: React.FC<ABTestPanelProps> = ({
       switch (action) {
         case 'start':
           startExperiment(id);
-          addNotification({ title: '实验已启动', message: id, type: 'success' });
+          addNotification({ title: i18n.t('components.ab_test_panel.k34'), message: id, type: 'success' });
           break;
         case 'pause':
           pauseExperiment(id);
-          addNotification({ title: '实验已暂停', message: id, type: 'warning' });
+          addNotification({ title: i18n.t('components.ab_test_panel.k35'), message: id, type: 'warning' });
           break;
         case 'complete':
           completeExperiment(id);
-          addNotification({ title: '实验已完成', message: id, type: 'success' });
+          addNotification({ title: i18n.t('components.ab_test_panel.k36'), message: id, type: 'success' });
           break;
         case 'delete':
           deleteExperiment(id);
-          addNotification({ title: '实验已删除', message: id, type: 'info' });
+          addNotification({ title: i18n.t('components.ab_test_panel.k37'), message: id, type: 'info' });
           break;
       }
       refresh();
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
-      addNotification({ title: '操作失败', message, type: 'error' });
+      addNotification({ title: i18n.t('components.ab_test_panel.k38'), message, type: 'error' });
     }
   };
 
@@ -692,11 +693,11 @@ export const ABTestPanel: React.FC<ABTestPanelProps> = ({
   }) => {
     try {
       createExperiment(input);
-      addNotification({ title: '实验创建成功', message: input.name, type: 'success' });
+      addNotification({ title: i18n.t('components.ab_test_panel.k39'), message: input.name, type: 'success' });
       refresh();
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
-      addNotification({ title: '创建失败', message, type: 'error' });
+      addNotification({ title: i18n.t('components.ab_test_panel.k40'), message, type: 'error' });
     }
   };
 
@@ -731,18 +732,18 @@ export const ABTestPanel: React.FC<ABTestPanelProps> = ({
             variant='subtitle2'
             sx={{ fontWeight: 600 }}
           >
-            A/B 测试面板
+            {i18n.t('components.ab_test_panel.ab_6')}
           </Typography>
           <Chip
             size='small'
-            label={`${allExperiments.length} 个实验`}
+            label={`${allExperiments.length}${i18n.t('components.ab_test_panel.k2')}`}
             variant='outlined'
           />
           {runningCount > 0 && (
             <Chip
               size='small'
               icon={<Activity size={12} />}
-              label={`${runningCount} 个运行中`}
+              label={`${runningCount}${i18n.t('components.ab_test_panel.k3')}`}
               color='primary'
             />
           )}
@@ -760,7 +761,7 @@ export const ABTestPanel: React.FC<ABTestPanelProps> = ({
               setCreateOpen(true);
             }}
           >
-            新建实验
+            {i18n.t('components.ab_test_panel.k7')}
           </Button>
           <IconButton
             size='small'
@@ -768,7 +769,7 @@ export const ABTestPanel: React.FC<ABTestPanelProps> = ({
               e.stopPropagation();
               setExpanded((v) => !v);
             }}
-            aria-label='展开'
+            aria-label={i18n.t('components.ab_test_panel.k41')}
           >
             {expanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
           </IconButton>
@@ -792,7 +793,7 @@ export const ABTestPanel: React.FC<ABTestPanelProps> = ({
                 color='text.secondary'
                 sx={{ mt: 1 }}
               >
-                暂无实验，点击"新建实验"开始
+                {i18n.t('components.ab_test_panel.i18n_8')}.t('components.ab_test_panel.k42')开始
               </Typography>
             </Box>
           ) : (
@@ -801,15 +802,15 @@ export const ABTestPanel: React.FC<ABTestPanelProps> = ({
                 <TableHead>
                   <TableRow>
                     <TableCell sx={{ width: 40 }} />
-                    <TableCell>实验</TableCell>
-                    <TableCell sx={{ width: 90 }}>状态</TableCell>
-                    <TableCell>变体</TableCell>
-                    <TableCell sx={{ width: 70 }}>流量</TableCell>
+                    <TableCell>{i18n.t('components.ab_test_panel.k43')}</TableCell>
+                    <TableCell sx={{ width: 90 }}>{i18n.t('components.ab_test_panel.k44')}</TableCell>
+                    <TableCell>{i18n.t('components.ab_test_panel.k45')}</TableCell>
+                    <TableCell sx={{ width: 70 }}>{i18n.t('components.ab_test_panel.k46')}</TableCell>
                     <TableCell
                       sx={{ width: 140 }}
                       align='right'
                     >
-                      操作
+                      {i18n.t('components.ab_test_panel.k10')}
                     </TableCell>
                   </TableRow>
                 </TableHead>

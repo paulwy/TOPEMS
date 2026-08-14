@@ -1,5 +1,6 @@
 import type { DashboardSchema, StatCardSchema, ChartSchema } from '@/schema';
 import type { HrmDashboardStats } from '@/api/hrm/dashboard';
+import i18n from '@/i18n';
 
 declare global {
   interface Window {
@@ -12,54 +13,54 @@ export function useHrmDashboardSchema(): DashboardSchema {
   const statCards: StatCardSchema[] = [
     {
       id: 'total-employees',
-      title: '在职员工数',
+      title: i18n.t('hrm.dashboard_schema.k0'),
       value: () => {
         const stats = window.__hrmStats;
         return (stats?.total_employees as number)?.toLocaleString() ?? '-';
       },
       icon: 'Users',
       color: 'primary',
-      trend: { value: 0, label: '上月' },
+      trend: { value: 0, label: i18n.t('hrm.dashboard_schema.k1') },
     },
     {
       id: 'new-hires',
-      title: '新增入职',
+      title: i18n.t('hrm.dashboard_schema.k2'),
       value: () => {
         const stats = window.__hrmStats;
         return (stats?.new_hires as number)?.toLocaleString() ?? '-';
       },
       icon: 'Users',
       color: 'success',
-      trend: { value: 0, label: '上月' },
+      trend: { value: 0, label: i18n.t('hrm.dashboard_schema.k3') },
     },
     {
       id: 'on-leave',
-      title: '请假中',
+      title: i18n.t('hrm.dashboard_schema.k4'),
       value: () => {
         const stats = window.__hrmStats;
         return (stats?.on_leave as number)?.toLocaleString() ?? '-';
       },
       icon: 'Clock',
       color: 'warning',
-      trend: { value: 0, label: '上月' },
+      trend: { value: 0, label: i18n.t('hrm.dashboard_schema.k5') },
     },
     {
       id: 'avg-salary',
-      title: '平均薪资',
+      title: i18n.t('hrm.dashboard_schema.k6'),
       value: () => {
         const stats = window.__hrmStats;
         return stats ? `¥${(stats?.avg_salary as number)?.toLocaleString() ?? 0}` : '-';
       },
       icon: 'DollarSign',
       color: 'info',
-      trend: { value: 0, label: '上月' },
+      trend: { value: 0, label: i18n.t('hrm.dashboard_schema.k7') },
     },
   ];
 
   const charts: ChartSchema[] = [
     {
       id: 'department-distribution',
-      title: '部门人员分布',
+      title: i18n.t('hrm.dashboard_schema.k8'),
       type: 'bar',
       data: () => {
         const stats = window.__hrmStats;
@@ -72,7 +73,7 @@ export function useHrmDashboardSchema(): DashboardSchema {
     },
     {
       id: 'hire-trend',
-      title: '入职趋势',
+      title: i18n.t('hrm.dashboard_schema.k9'),
       type: 'line',
       data: () => {
         const stats = window.__hrmStats;
@@ -84,7 +85,7 @@ export function useHrmDashboardSchema(): DashboardSchema {
     },
     {
       id: 'education-distribution',
-      title: '学历分布',
+      title: i18n.t('hrm.dashboard_schema.k10'),
       type: 'pie',
       data: () => {
         const stats = window.__hrmStats;
@@ -98,7 +99,7 @@ export function useHrmDashboardSchema(): DashboardSchema {
   ];
 
   return {
-    title: 'HRM 仪表盘',
+    title: i18n.t('shared.dashboard_schema.hrm_0'),
     loader: async () => {
       const api = await import('@/api/hrm/dashboard');
       const response = await api.hrmDashboardApi.getOverview();

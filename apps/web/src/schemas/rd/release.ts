@@ -2,6 +2,7 @@ import React from 'react';
 import { Chip, Box, Typography, Button } from '@mui/material';
 import { Tag, Calendar, User, Globe } from 'lucide-react';
 import type { EntitySchema } from '@/schema';
+import i18n from '@/i18n';
 
 const STATUS_COLOR_MAP: Record<string, 'success' | 'warning' | 'error' | 'default'> = {
   released: 'success',
@@ -10,9 +11,9 @@ const STATUS_COLOR_MAP: Record<string, 'success' | 'warning' | 'error' | 'defaul
 };
 
 const STATUS_LABEL_MAP: Record<string, string> = {
-  released: '已发布',
-  planning: '规划中',
-  rolled_back: '已回滚',
+  released: i18n.t('rd.release.k0'),
+  planning: i18n.t('rd.release.k1'),
+  rolled_back: i18n.t('rd.release.k2'),
 };
 
 const ENV_COLOR_MAP: Record<string, 'error' | 'warning' | 'success' | 'default'> = {
@@ -22,15 +23,15 @@ const ENV_COLOR_MAP: Record<string, 'error' | 'warning' | 'success' | 'default'>
 };
 
 const ENV_LABEL_MAP: Record<string, string> = {
-  production: '生产环境',
-  staging: '预发布环境',
-  development: '开发环境',
+  production: i18n.t('rd.release.k3'),
+  staging: i18n.t('rd.release.k4'),
+  development: i18n.t('rd.release.k5'),
 };
 
 export const releaseSchema: EntitySchema = {
   entity: 'rd_release',
-  title: '配方发布',
-  description: '管理配方发布流程，包括版本发布、环境部署、回滚操作等',
+  title: i18n.t('rd.release.k6'),
+  description: i18n.t('rd.release.k7'),
 
   api: {
     module: 'rd',
@@ -40,7 +41,7 @@ export const releaseSchema: EntitySchema = {
   fields: [
     {
       name: 'version',
-      label: '版本号',
+      label: i18n.t('rd.release.k8'),
       type: 'text',
       required: true,
       listWidth: 160,
@@ -60,7 +61,7 @@ export const releaseSchema: EntitySchema = {
     },
     {
       name: 'release_time',
-      label: '发布时间',
+      label: i18n.t('rd.release.k9'),
       type: 'datetime',
       listWidth: 160,
       renderCell: (row: Record<string, unknown>) => {
@@ -75,7 +76,7 @@ export const releaseSchema: EntitySchema = {
     },
     {
       name: 'release_note',
-      label: '发布说明',
+      label: i18n.t('rd.release.k10'),
       type: 'textarea',
       listWidth: 250,
       renderCell: (row: Record<string, unknown>) => {
@@ -96,15 +97,15 @@ export const releaseSchema: EntitySchema = {
     },
     {
       name: 'environment',
-      label: '发布环境',
+      label: i18n.t('rd.release.k11'),
       type: 'select',
       defaultValue: 'staging',
       options: {
         type: 'static',
         options: [
-          { value: 'production', label: '生产环境' },
-          { value: 'staging', label: '预发布环境' },
-          { value: 'development', label: '开发环境' },
+          { value: 'production', label: i18n.t('rd.release.k12') },
+          { value: 'staging', label: i18n.t('rd.release.k13') },
+          { value: 'development', label: i18n.t('rd.release.k14') },
         ],
       },
       listWidth: 120,
@@ -117,15 +118,15 @@ export const releaseSchema: EntitySchema = {
     },
     {
       name: 'status',
-      label: '状态',
+      label: i18n.t('rd.release.k15'),
       type: 'select',
       defaultValue: 'planning',
       options: {
         type: 'static',
         options: [
-          { value: 'planning', label: '规划中' },
-          { value: 'released', label: '已发布' },
-          { value: 'rolled_back', label: '已回滚' },
+          { value: 'planning', label: i18n.t('rd.release.k16') },
+          { value: 'released', label: i18n.t('rd.release.k17') },
+          { value: 'rolled_back', label: i18n.t('rd.release.k18') },
         ],
       },
       listWidth: 110,
@@ -140,7 +141,7 @@ export const releaseSchema: EntitySchema = {
     },
     {
       name: 'release_by',
-      label: '发布人',
+      label: i18n.t('rd.release.k19'),
       type: 'text',
       listWidth: 100,
       renderCell: (row: Record<string, unknown>) => {
@@ -155,49 +156,49 @@ export const releaseSchema: EntitySchema = {
     },
     {
       name: 'project_id',
-      label: '项目ID',
+      label: i18n.t('rd.release.id_20'),
       type: 'text',
       required: true,
       showInList: false,
     },
     {
       name: 'build_id',
-      label: '构建ID',
+      label: i18n.t('rd.release.id_21'),
       type: 'text',
       required: true,
       showInList: false,
     },
     {
       name: 'env',
-      label: '环境标识',
+      label: i18n.t('rd.release.k22'),
       type: 'text',
       showInList: false,
     },
     {
       name: 'deploy_type',
-      label: '部署方式',
+      label: i18n.t('rd.release.k23'),
       type: 'select',
       defaultValue: 'full',
       options: {
         type: 'static',
         options: [
-          { value: 'full', label: '全量部署' },
-          { value: 'rolling', label: '滚动部署' },
-          { value: 'blue-green', label: '蓝绿部署' },
-          { value: 'canary', label: '灰度发布' },
+          { value: 'full', label: i18n.t('rd.release.k24') },
+          { value: 'rolling', label: i18n.t('rd.release.k25') },
+          { value: 'blue-green', label: i18n.t('rd.release.k26') },
+          { value: 'canary', label: i18n.t('rd.release.k27') },
         ],
       },
       showInList: false,
     },
     {
       name: 'app_name',
-      label: '应用名称',
+      label: i18n.t('rd.release.k28'),
       type: 'text',
       showInList: false,
     },
     {
       name: 'target_url',
-      label: '访问地址',
+      label: i18n.t('rd.release.k29'),
       type: 'text',
       listWidth: 100,
       renderCell: (row: Record<string, unknown>) => {
@@ -212,20 +213,20 @@ export const releaseSchema: EntitySchema = {
             size: 'small',
             startIcon: React.createElement(Globe, { size: 14 }),
           } as React.ComponentProps<typeof Button>,
-          '访问'
+          i18n.t('rd.release.k30')
         );
       },
     },
     {
       name: 'logs',
-      label: '发布日志',
+      label: i18n.t('rd.release.k31'),
       type: 'textarea',
       showInList: false,
       hideInForm: true,
     },
     {
       name: 'created_at',
-      label: '创建时间',
+      label: i18n.t('rd.release.k32'),
       type: 'datetime',
       readonly: true,
       hideInForm: true,
@@ -240,25 +241,25 @@ export const releaseSchema: EntitySchema = {
     filters: [
       {
         id: 'env',
-        label: '环境',
+        label: i18n.t('rd.release.k33'),
         type: 'select',
         options: [
-          { label: '全部', value: 'all' },
-          { label: '生产环境', value: 'production' },
-          { label: '预发布环境', value: 'staging' },
-          { label: '开发环境', value: 'development' },
+          { label: i18n.t('rd.release.k34'), value: 'all' },
+          { label: i18n.t('rd.release.k35'), value: 'production' },
+          { label: i18n.t('rd.release.k36'), value: 'staging' },
+          { label: i18n.t('rd.release.k37'), value: 'development' },
         ],
         defaultValue: 'all',
       },
       {
         id: 'status',
-        label: '状态',
+        label: i18n.t('rd.release.k38'),
         type: 'select',
         options: [
-          { label: '全部', value: 'all' },
-          { label: '已发布', value: 'released' },
-          { label: '规划中', value: 'planning' },
-          { label: '已回滚', value: 'rolled_back' },
+          { label: i18n.t('rd.release.k39'), value: 'all' },
+          { label: i18n.t('rd.release.k40'), value: 'released' },
+          { label: i18n.t('rd.release.k41'), value: 'planning' },
+          { label: i18n.t('rd.release.k42'), value: 'rolled_back' },
         ],
         defaultValue: 'all',
       },
@@ -272,23 +273,23 @@ export const releaseSchema: EntitySchema = {
 
   formSections: [
     {
-      title: '发布信息',
+      title: i18n.t('rd.release.k43'),
       fields: ['version', 'environment', 'deploy_type'],
     },
     {
-      title: '应用信息',
+      title: i18n.t('rd.release.k44'),
       fields: ['project_id', 'build_id', 'app_name'],
     },
     {
-      title: '发布说明',
+      title: i18n.t('rd.release.k45'),
       fields: ['release_note'],
     },
   ],
 
   formColCount: 2,
-  createTitle: '新建发布',
-  editTitle: '编辑发布',
-  detailTitle: '发布详情',
+  createTitle: i18n.t('rd.release.k46'),
+  editTitle: i18n.t('rd.release.k47'),
+  detailTitle: i18n.t('rd.release.k48'),
 
   actions: ['create', 'detail'],
 };

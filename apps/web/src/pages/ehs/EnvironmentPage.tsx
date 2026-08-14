@@ -11,6 +11,7 @@ import type {
   CreateEnvironmentMonitorRequest,
   UpdateEnvironmentMonitorRequest,
 } from '@/api/ehs';
+import i18n from '@/i18n';
 import { PageContainer } from '@/components/common';
 import { designTokens } from '@/theme/tokens';
 import { useTranslation } from 'react-i18next';
@@ -90,7 +91,7 @@ const EnvironmentPage: React.FC = () => {
                   variant='body2'
                   sx={{ color: 'slate.600', fontSize: '0.875rem' }}
                 >
-                  {t('ehs.environment_page.list') || '监测点总数'}
+                  {t('ehs.environment_page.list') || i18n.t('pages.environment_page.k0')}
                 </Typography>
                 <Typography
                   variant='h5'
@@ -123,7 +124,7 @@ const EnvironmentPage: React.FC = () => {
                   variant='body2'
                   sx={{ color: 'slate.600', fontSize: '0.875rem' }}
                 >
-                  {t('ehs.environment_page.normal') || '正常运行'}
+                  {t('ehs.environment_page.normal') || i18n.t('pages.environment_page.k1')}
                 </Typography>
                 <Typography
                   variant='h5'
@@ -156,7 +157,7 @@ const EnvironmentPage: React.FC = () => {
                   variant='body2'
                   sx={{ color: 'slate.600', fontSize: '0.875rem' }}
                 >
-                  {t('ehs.environment_page.maintenance') || '维护中'}
+                  {t('ehs.environment_page.maintenance') || i18n.t('pages.environment_page.k2')}
                 </Typography>
                 <Typography
                   variant='h5'

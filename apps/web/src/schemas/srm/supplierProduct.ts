@@ -1,9 +1,10 @@
 import type { EntitySchema } from '@/schema';
+import i18n from '@/i18n';
 
 export const supplierProductSchema: EntitySchema = {
   entity: 'supplier_product',
-  title: '供应商产品',
-  description: '管理供应商提供的产品信息，包括产品编码、价格、分类、状态等',
+  title: i18n.t('srm.supplier_product.k0'),
+  description: i18n.t('srm.supplier_product.k1'),
 
   api: {
     module: 'srm',
@@ -13,7 +14,7 @@ export const supplierProductSchema: EntitySchema = {
   fields: [
     {
       name: 'product_code',
-      label: '产品编码',
+      label: i18n.t('srm.supplier_product.k2'),
       type: 'text',
       required: true,
       readonlyOnEdit: true,
@@ -22,7 +23,7 @@ export const supplierProductSchema: EntitySchema = {
     },
     {
       name: 'name',
-      label: '产品名称',
+      label: i18n.t('srm.supplier_product.k3'),
       type: 'text',
       required: true,
       sortable: true,
@@ -31,26 +32,26 @@ export const supplierProductSchema: EntitySchema = {
     },
     {
       name: 'supplier',
-      label: '供应商',
+      label: i18n.t('srm.supplier_product.k4'),
       type: 'text',
       required: true,
       listWidth: 140,
     },
     {
       name: 'category',
-      label: '分类',
+      label: i18n.t('srm.supplier_product.k5'),
       type: 'select',
       options: {
         type: 'static',
         options: [
-          { value: '原材料', label: '原材料' },
-          { value: '零部件', label: '零部件' },
-          { value: '设备配件', label: '设备配件' },
-          { value: '化工原料', label: '化工原料' },
-          { value: '电子元器件', label: '电子元器件' },
-          { value: '包装材料', label: '包装材料' },
-          { value: '服务类', label: '服务类' },
-          { value: '其他', label: '其他' },
+          { value: i18n.t('srm.supplier_product.k6'), label: i18n.t('srm.supplier_product.k7') },
+          { value: i18n.t('srm.supplier_product.k8'), label: i18n.t('srm.supplier_product.k9') },
+          { value: i18n.t('srm.supplier_product.k10'), label: i18n.t('srm.supplier_product.k11') },
+          { value: i18n.t('srm.supplier_product.k12'), label: i18n.t('srm.supplier_product.k13') },
+          { value: i18n.t('srm.supplier_product.k14'), label: i18n.t('srm.supplier_product.k15') },
+          { value: i18n.t('srm.supplier_product.k16'), label: i18n.t('srm.supplier_product.k17') },
+          { value: i18n.t('srm.supplier_product.k18'), label: i18n.t('srm.supplier_product.k19') },
+          { value: i18n.t('srm.supplier_product.k20'), label: i18n.t('srm.supplier_product.k21') },
         ],
       },
       listWidth: 120,
@@ -58,7 +59,7 @@ export const supplierProductSchema: EntitySchema = {
     },
     {
       name: 'price',
-      label: '价格',
+      label: i18n.t('srm.supplier_product.k22'),
       type: 'number',
       required: true,
       defaultValue: 0,
@@ -72,24 +73,24 @@ export const supplierProductSchema: EntitySchema = {
     },
     {
       name: 'unit',
-      label: '单位',
+      label: i18n.t('srm.supplier_product.k23'),
       type: 'text',
-      defaultValue: '个',
+      defaultValue: i18n.t('srm.supplier_product.k24'),
       listWidth: 80,
       validation: [{ type: 'maxLength', value: 20 }],
     },
     {
       name: 'status',
-      label: '状态',
+      label: i18n.t('srm.supplier_product.k25'),
       type: 'select',
       required: true,
       defaultValue: 'active',
       options: {
         type: 'static',
         options: [
-          { value: 'active', label: '在售' },
-          { value: 'inactive', label: '停售' },
-          { value: 'pending', label: '待审核' },
+          { value: 'active', label: i18n.t('srm.supplier_product.k26') },
+          { value: 'inactive', label: i18n.t('srm.supplier_product.k27') },
+          { value: 'pending', label: i18n.t('srm.supplier_product.k28') },
         ],
       },
       listWidth: 100,
@@ -97,7 +98,7 @@ export const supplierProductSchema: EntitySchema = {
     },
     {
       name: 'created_at',
-      label: '创建时间',
+      label: i18n.t('srm.supplier_product.k29'),
       type: 'datetime',
       readonly: true,
       hideInForm: true,
@@ -106,7 +107,7 @@ export const supplierProductSchema: EntitySchema = {
     },
     {
       name: 'updated_at',
-      label: '更新时间',
+      label: i18n.t('srm.supplier_product.k30'),
       type: 'datetime',
       readonly: true,
       hideInForm: true,
@@ -127,9 +128,9 @@ export const supplierProductSchema: EntitySchema = {
         pending: 'warning',
       },
       labelMap: {
-        active: '在售',
-        inactive: '停售',
-        pending: '待审核',
+        active: i18n.t('srm.supplier_product.k31'),
+        inactive: i18n.t('srm.supplier_product.k32'),
+        pending: i18n.t('srm.supplier_product.k33'),
       },
     },
   },
@@ -138,21 +139,21 @@ export const supplierProductSchema: EntitySchema = {
 
   formSections: [
     {
-      title: '基本信息',
+      title: i18n.t('srm.supplier_product.k34'),
       fields: ['product_code', 'name', 'supplier', 'category'],
     },
     {
-      title: '价格与单位',
+      title: i18n.t('srm.supplier_product.k35'),
       fields: ['price', 'unit'],
     },
     {
-      title: '状态',
+      title: i18n.t('srm.supplier_product.k36'),
       fields: ['status'],
     },
   ],
 
   formColCount: 2,
-  createTitle: '新增供应商产品',
-  editTitle: '编辑供应商产品',
-  detailTitle: '供应商产品详情',
+  createTitle: i18n.t('srm.supplier_product.k37'),
+  editTitle: i18n.t('srm.supplier_product.k38'),
+  detailTitle: i18n.t('srm.supplier_product.k39'),
 };

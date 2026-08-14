@@ -20,9 +20,11 @@ import {
 } from 'recharts';
 import { useQmsMock, type QmsMockShape } from '@/api/qms/_mock';
 import { designTokens, semanticTokens } from '@topems/tokens';
+import { useTranslation } from 'react-i18next';
 
 export default function QmsSpcControlChartPage() {
   const { data } = useQmsMock<QmsMockShape>();
+  const { t } = useTranslation('qms');
   const charts = data.spcCharts ?? [];
   const [chartId, setChartId] = useState<string>(charts[0]?.id ?? '');
 
@@ -57,7 +59,7 @@ export default function QmsSpcControlChartPage() {
           value={chartId}
           onChange={(e) => setChartId(e.target.value)}
           className='border rounded px-3 py-1.5 text-sm'
-          aria-label='控制图选择'
+          aria-label={t('qms.qms_spc_control_chart_page.k0')}
         >
           {charts.map((c) => (
             <option
@@ -73,11 +75,11 @@ export default function QmsSpcControlChartPage() {
       {selectedChart && (
         <div className='grid grid-cols-1 gap-4 md:grid-cols-4'>
           <div className='rounded-lg border p-4'>
-            <p className='text-sm text-gray-600'>控制特性</p>
+            <p className='text-sm text-gray-600'>{t('qms.qms_spc_control_chart_page.k1')}</p>
             <p className='mt-1 text-lg font-bold'>{selectedChart.characteristic}</p>
           </div>
           <div className='rounded-lg border p-4'>
-            <p className='text-sm text-gray-600'>中心线 CL</p>
+            <p className='text-sm text-gray-600'>{t('qms.qms_spc_control_chart_page.cl_2')}</p>
             <p className='mt-1 text-2xl font-bold text-blue-600'>{cl}</p>
           </div>
           <div className='rounded-lg border p-4'>
@@ -139,7 +141,7 @@ export default function QmsSpcControlChartPage() {
             <Line
               type='monotone'
               dataKey='mean'
-              name='样本均值'
+              name={t('qms.qms_spc_control_chart_page.k3')}
               stroke={designTokens.colors.secondary.dark}
               strokeWidth={2}
               dot={(props: { cx?: number; cy?: number; payload?: { isOOC?: boolean } }) => {
@@ -163,7 +165,7 @@ export default function QmsSpcControlChartPage() {
       </div>
 
       <div className='rounded-lg border p-4'>
-        <h3 className='mb-2 font-semibold'>极差控制图（R 图）</h3>
+        <h3 className='mb-2 font-semibold'>{t('qms.qms_spc_control_chart_page.r_4')}</h3>
         <ResponsiveContainer
           width='100%'
           height={240}
@@ -180,7 +182,7 @@ export default function QmsSpcControlChartPage() {
             <Line
               type='monotone'
               dataKey='range'
-              name='样本极差'
+              name={t('qms.qms_spc_control_chart_page.k5')}
               stroke={designTokens.colors.secondary.main}
               strokeWidth={2}
               dot={{ r: 3 }}

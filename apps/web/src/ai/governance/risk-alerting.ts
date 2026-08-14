@@ -1,3 +1,4 @@
+import i18n from '@/i18n';
 export type RiskCategory = 'Security' | 'Compliance' | 'Performance' | 'Financial';
 export type RiskLevel = 'critical' | 'high' | 'medium' | 'low';
 
@@ -52,112 +53,112 @@ export type AlertSubscriber = (alert: RiskAlert) => void;
 const DEFAULT_INDICATORS: RiskIndicator[] = [
   {
     id: 'sec-failed-logins',
-    name: '登录失败率',
+    name: i18n.t('ai.risk-alerting.k0'),
     category: 'Security',
     threshold: 10,
     current_value: 3,
     severity: 'high',
     unit: '%',
-    description: '每分钟登录失败尝试比例',
+    description: i18n.t('ai.risk-alerting.k1'),
     direction: 'above',
   },
   {
     id: 'sec-unusual-access',
-    name: '异常访问检测',
+    name: i18n.t('ai.risk-alerting.k2'),
     category: 'Security',
     threshold: 5,
     current_value: 1,
     severity: 'critical',
-    unit: '次/小时',
-    description: '检测到的异常访问行为数量',
+    unit: i18n.t('ai.risk-alerting.k3'),
+    description: i18n.t('ai.risk-alerting.k4'),
     direction: 'above',
   },
   {
     id: 'comp-pending-items',
-    name: '待处理合规项',
+    name: i18n.t('ai.risk-alerting.k5'),
     category: 'Compliance',
     threshold: 20,
     current_value: 12,
     severity: 'medium',
-    unit: '项',
-    description: '未完成的合规检查项数量',
+    unit: i18n.t('ai.risk-alerting.k6'),
+    description: i18n.t('ai.risk-alerting.k7'),
     direction: 'above',
   },
   {
     id: 'comp-regulation-gaps',
-    name: '法规差距',
+    name: i18n.t('ai.risk-alerting.k8'),
     category: 'Compliance',
     threshold: 3,
     current_value: 2,
     severity: 'high',
-    unit: '项',
-    description: '与法规要求的差距数量',
+    unit: i18n.t('ai.risk-alerting.k9'),
+    description: i18n.t('ai.risk-alerting.k10'),
     direction: 'above',
   },
   {
     id: 'perf-api-latency',
-    name: 'API 响应延迟',
+    name: i18n.t('ai.risk-alerting.api_0'),
     category: 'Performance',
     threshold: 500,
     current_value: 280,
     severity: 'medium',
     unit: 'ms',
-    description: 'API 平均响应时间',
+    description: i18n.t('ai.risk-alerting.api_1'),
     direction: 'above',
   },
   {
     id: 'perf-error-rate',
-    name: '错误发生率',
+    name: i18n.t('ai.risk-alerting.k11'),
     category: 'Performance',
     threshold: 1,
     current_value: 0.2,
     severity: 'high',
     unit: '%',
-    description: '请求错误响应比例',
+    description: i18n.t('ai.risk-alerting.k12'),
     direction: 'above',
   },
   {
     id: 'perf-resource-usage',
-    name: '资源使用率',
+    name: i18n.t('ai.risk-alerting.k13'),
     category: 'Performance',
     threshold: 85,
     current_value: 62,
     severity: 'high',
     unit: '%',
-    description: '系统资源平均使用率',
+    description: i18n.t('ai.risk-alerting.k14'),
     direction: 'above',
   },
   {
     id: 'fin-budget-utilization',
-    name: '预算使用率',
+    name: i18n.t('ai.risk-alerting.k15'),
     category: 'Financial',
     threshold: 90,
     current_value: 68,
     severity: 'medium',
     unit: '%',
-    description: '当前预算使用比例',
+    description: i18n.t('ai.risk-alerting.k16'),
     direction: 'above',
   },
   {
     id: 'fin-revenue-decline',
-    name: '收入下降',
+    name: i18n.t('ai.risk-alerting.k17'),
     category: 'Financial',
     threshold: 10,
     current_value: 3,
     severity: 'high',
     unit: '%',
-    description: '环比收入下降百分比',
+    description: i18n.t('ai.risk-alerting.k18'),
     direction: 'above',
   },
   {
     id: 'fin-cost-overrun',
-    name: '成本超支',
+    name: i18n.t('ai.risk-alerting.k19'),
     category: 'Financial',
     threshold: 15,
     current_value: 5,
     severity: 'medium',
     unit: '%',
-    description: '项目成本超支比例',
+    description: i18n.t('ai.risk-alerting.k20'),
     direction: 'above',
   },
 ];
@@ -383,12 +384,12 @@ export class RiskAlerter {
   }
 
   private generateAlertMessage(indicator: RiskIndicator): string {
-    const direction = indicator.direction === 'above' ? '超过' : '低于';
-    return `[${indicator.severity.toUpperCase()}] ${indicator.name} ${direction}阈值: 当前 ${indicator.current_value}${indicator.unit}，阈值 ${indicator.threshold}${indicator.unit}`;
+    const direction = indicator.direction === 'above' ? i18n.t('ai.risk-alerting.k22') : i18n.t('ai.risk-alerting.k21');
+    return `[${indicator.severity.toUpperCase()}] ${indicator.name} ${direction}${i18n.t('ai.risk-alerting.k2')}${indicator.current_value}${indicator.unit}${i18n.t('ai.risk-alerting.k3')}${indicator.threshold}${indicator.unit}`;
   }
 
   private generateEvidence(indicator: RiskIndicator): string {
-    return `指标 ${indicator.name}(ID: ${indicator.id}) 当前值 ${indicator.current_value}${indicator.unit} ${indicator.direction === 'above' ? '≥' : '≤'} 阈值 ${indicator.threshold}${indicator.unit}。分类: ${indicator.category}。`;
+    return `${i18n.t('ai.risk-alerting.k4')}${indicator.name}(ID: ${indicator.id}${i18n.t('ai.risk-alerting.k5')}${indicator.current_value}${indicator.unit} ${indicator.direction === 'above' ? '≥' : '≤'}${i18n.t('ai.risk-alerting.k6')}${indicator.threshold}${indicator.unit}${i18n.t('ai.risk-alerting.k7')}${indicator.category}。`;
   }
 
   private determineChannel(severity: RiskLevel): RiskAlert['channel'] {

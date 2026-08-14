@@ -3,11 +3,10 @@
  * @done V79 Phase 2 split
  */
 import React from 'react';
-import { useTranslation } from 'react-i18next';
 import { Card, CardContent, CardHeader, Typography } from '@mui/material';
 import GanttChart from '@/components/pm/GanttChart';
 import type { GanttPhase, GanttMilestone } from '@/api/pm';
-
+import i18n from '@/i18n';
 export interface PmProjectGanttProps {
   projectStartDate?: string;
   projectEndDate?: string;
@@ -15,7 +14,6 @@ export interface PmProjectGanttProps {
   ganttMilestones: GanttMilestone[];
   hasProject: boolean;
 }
-
 const PmProjectGantt: React.FC<PmProjectGanttProps> = ({
   projectStartDate,
   projectEndDate,
@@ -23,8 +21,6 @@ const PmProjectGantt: React.FC<PmProjectGanttProps> = ({
   ganttMilestones,
   hasProject,
 }) => {
-  const { t } = useTranslation();
-
   return (
     <Card>
       <CardHeader
@@ -34,7 +30,7 @@ const PmProjectGantt: React.FC<PmProjectGanttProps> = ({
             variant='h6'
             sx={{ fontSize: '1.125rem' }}
           >
-            {t('pm.projectdetail.project_gantt')}
+            {i18n.t('pm.projectdetail.project_gantt')}
           </Typography>
         }
       />
@@ -51,5 +47,4 @@ const PmProjectGantt: React.FC<PmProjectGanttProps> = ({
     </Card>
   );
 };
-
 export default PmProjectGantt;

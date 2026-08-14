@@ -10,29 +10,23 @@ import { DetailPageTemplate, type TabConfig, type SectionConfig } from '@/compon
 import { PageContainer } from '@/components/common';
 import { designTokens } from '@/theme/tokens';
 import { NOTIFICATION_PATHS } from '@/modules/notification/config';
-
 import {QUERY_KEYS, CACHE_DURATIONS} from '@/lib/reactQuery';
-
+import i18n from '@/i18n';
 const ct= designTokens.colors;
-
 const NotificationDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const { success, error } = useNotification();
   const queryClient = useQueryClient();
-
   const detailQuery = useQuery({
     queryKey: QUERY_KEYS.NOTIFICATION.NOTIFICATION(id ?? ''),
     queryFn: async () => {
       if (!id) {
-        throw new Error('通知ID为空');
+        throw new Error(i18n.t('notification.notification_detail_page.id_0'));
       }
-
       const res = await notificationApi.get(id);
-
       if (!res.success || !res.data) {
-        throw new Error('获取通知详情失败');
+        throw new Error(i18n.t('notification.notification_detail_page.k1'));
       }
-
       if (!res.data.is_read) {
         await notificationApi.markRead(id);
         queryClient.invalidateQueries({ queryKey: QUERY_KEYS.NOTIFICATION.NOTIFICATIONS ,
@@ -40,17 +34,14 @@ const NotificationDetailPage: React.FC = () => {
   refetchType: 'active',
 });
       }
-
       return res.data;
     },
     enabled: !!id,
   
       staleTime: CACHE_DURATIONS.SHORT,});
-
   const notification = detailQuery.data ?? null;
   const loading = detailQuery.isLoading;
-  const errorMessage = detailQuery.isError ? '加载通知详情失败' : undefined;
-
+  const errorMessage = detailQuery.isError ? i18n.t('notification.notification_detail_page.k2') : undefined;
   const markUnreadMutation = useMutation({
     mutationFn: async () => {
       if (!id) return;
@@ -67,43 +58,39 @@ const NotificationDetailPage: React.FC = () => {
   refetchType: 'active',
 });
       }
-      success('已标记为未读');
+      success(i18n.t('notification.notification_detail_page.k3'));
     },
     onError: (err: unknown) => {
-      apiLogger.error('标记未读失败:', err);
-      error('标记未读失败');
+      apiLogger.error(i18n.t('pages.notification_detail_page.k0'), err);
+      error(i18n.t('notification.notification_detail_page.k4'));
     },
   });
-
   const handleMarkUnread = () => {
     if (!id) return;
     markUnreadMutation.mutate();
   };
-
   const getStatusConfig = (status: string) => {
     const config: Record<
       string,
       { color: 'success' | 'error' | 'default' | 'warning'; label: string }
     > = {
-      unread: { color: 'error', label: '未读' },
-      read: { color: 'success', label: '已读' },
+      unread: { color: 'error', label: i18n.t('notification.notification_detail_page.k5') },
+      read: { color: 'success', label: i18n.t('notification.notification_detail_page.k6') },
     };
     return config[status] || config.unread;
   };
-
   const getTypeLabel = (type: string) => {
     const labels: Record<string, string> = {
-      system: '系统通知',
-      task: '任务通知',
-      approval: '审批通知',
-      message: '消息通知',
-      reminder: '提醒通知',
-      alert: '告警通知',
-      other: '其他',
+      system: i18n.t('notification.notification_detail_page.k7'),
+      task: i18n.t('notification.notification_detail_page.k8'),
+      approval: i18n.t('notification.notification_detail_page.k9'),
+      message: i18n.t('notification.notification_detail_page.k10'),
+      reminder: i18n.t('notification.notification_detail_page.k11'),
+      alert: i18n.t('notification.notification_detail_page.k12'),
+      other: i18n.t('notification.notification_detail_page.k13'),
     };
     return labels[type] || type;
   };
-
   const getLevelConfig = (level: string) => {
     const config: Record<
       string,
@@ -113,14 +100,13 @@ const NotificationDetailPage: React.FC = () => {
         icon: React.ReactElement;
       }
     > = {
-      info: { color: 'default', label: '信息', icon: <MessageSquare size={16} /> },
-      warning: { color: 'warning', label: '警告', icon: <AlertCircle size={16} /> },
-      error: { color: 'error', label: '错误', icon: <AlertCircle size={16} /> },
-      success: { color: 'success', label: '成功', icon: <CheckCircle2 size={16} /> },
+      info: { color: 'default', label: i18n.t('notification.notification_detail_page.k14'), icon: <MessageSquare size={16} /> },
+      warning: { color: 'warning', label: i18n.t('notification.notification_detail_page.k15'), icon: <AlertCircle size={16} /> },
+      error: { color: 'error', label: i18n.t('notification.notification_detail_page.k16'), icon: <AlertCircle size={16} /> },
+      success: { color: 'success', label: i18n.t('notification.notification_detail_page.k17'), icon: <CheckCircle2 size={16} /> },
     };
     return config[level] || config.info;
   };
-
   const formatDate = (date: string | undefined) => {
     if (!date) return '-';
     const d = new Date(date);
@@ -132,12 +118,10 @@ const NotificationDetailPage: React.FC = () => {
       minute: '2-digit',
     });
   };
-
   const basicInfoContent = useMemo(() => {
     if (!notification) return null;
     const statusConfig = getStatusConfig(notification.is_read ? 'read' : 'unread');
     const levelConfig = getLevelConfig(notification.level || 'info');
-
     return (
       <Box>
         <Box sx={{ mb: 4 }}>
@@ -154,7 +138,6 @@ const NotificationDetailPage: React.FC = () => {
             {notification.content}
           </Typography>
         </Box>
-
         <Box
           sx={{
             display: 'grid',
@@ -163,7 +146,7 @@ const NotificationDetailPage: React.FC = () => {
           }}
         >
           <Box>
-            <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>通知类型</InputLabel>
+            <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>{i18n.t('notification.notification_detail_page.k18')}</InputLabel>
             <Box sx={{ mt: 0.5 }}>
               <Chip
                 label={getTypeLabel(notification.type || 'other')}
@@ -173,7 +156,7 @@ const NotificationDetailPage: React.FC = () => {
             </Box>
           </Box>
           <Box>
-            <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>通知级别</InputLabel>
+            <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>{i18n.t('notification.notification_detail_page.k19')}</InputLabel>
             <Box sx={{ mt: 0.5 }}>
               <Chip
                 label={levelConfig.label}
@@ -184,7 +167,7 @@ const NotificationDetailPage: React.FC = () => {
             </Box>
           </Box>
           <Box>
-            <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>阅读状态</InputLabel>
+            <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>{i18n.t('notification.notification_detail_page.k20')}</InputLabel>
             <Box sx={{ mt: 0.5 }}>
               <Chip
                 label={statusConfig.label}
@@ -194,15 +177,15 @@ const NotificationDetailPage: React.FC = () => {
             </Box>
           </Box>
           <Box>
-            <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>发送时间</InputLabel>
+            <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>{i18n.t('notification.notification_detail_page.k21')}</InputLabel>
             <Typography sx={{ mt: 0.5 }}>{formatDate(notification.created_at)}</Typography>
           </Box>
           <Box>
-            <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>来源模块</InputLabel>
+            <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>{i18n.t('notification.notification_detail_page.k22')}</InputLabel>
             <Typography sx={{ mt: 0.5 }}>{notification.source_module || '-'}</Typography>
           </Box>
           <Box>
-            <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>关联ID</InputLabel>
+            <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>{i18n.t('notification.notification_detail_page.id_23')}</InputLabel>
             <Typography sx={{ mt: 0.5, fontFamily: 'monospace', fontSize: '0.875rem' }}>
               {notification.source_id || '-'}
             </Typography>
@@ -211,12 +194,9 @@ const NotificationDetailPage: React.FC = () => {
       </Box>
     );
   }, [notification]);
-
   const actionContent = useMemo(() => {
     if (!notification) return null;
-
     const actions = notification.actions || [];
-
     return (
       <Box>
         {actions.length > 0 ? (
@@ -240,16 +220,14 @@ const NotificationDetailPage: React.FC = () => {
             variant='body2'
             color='text.secondary'
           >
-            暂无操作按钮
+            {i18n.t('pages.notification_detail_page.k0')}
           </Typography>
         )}
       </Box>
     );
   }, [notification]);
-
   const extendedInfoContent = useMemo(() => {
     if (!notification) return null;
-
     return (
       <Box
         sx={{
@@ -259,44 +237,42 @@ const NotificationDetailPage: React.FC = () => {
         }}
       >
         <Box>
-          <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>通知ID</InputLabel>
+          <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>{i18n.t('notification.notification_detail_page.id_24')}</InputLabel>
           <Typography sx={{ mt: 0.5, fontFamily: 'monospace', fontSize: '0.875rem' }}>
             {notification.id.substring(0, 8)}...
           </Typography>
         </Box>
         <Box>
-          <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>发送人</InputLabel>
-          <Typography sx={{ mt: 0.5 }}>{notification.sender_name || '系统'}</Typography>
+          <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>{i18n.t('notification.notification_detail_page.k25')}</InputLabel>
+          <Typography sx={{ mt: 0.5 }}>{notification.sender_name || i18n.t('notification.notification_detail_page.k26')}</Typography>
         </Box>
         <Box>
-          <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>接收人</InputLabel>
+          <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>{i18n.t('notification.notification_detail_page.k27')}</InputLabel>
           <Typography sx={{ mt: 0.5 }}>{notification.recipient_name || '-'}</Typography>
         </Box>
         <Box>
-          <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>是否置顶</InputLabel>
-          <Typography sx={{ mt: 0.5 }}>{notification.is_top ? '是' : '否'}</Typography>
+          <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>{i18n.t('notification.notification_detail_page.k28')}</InputLabel>
+          <Typography sx={{ mt: 0.5 }}>{notification.is_top ? i18n.t('notification.notification_detail_page.k30') : i18n.t('notification.notification_detail_page.k29')}</Typography>
         </Box>
         <Box>
-          <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>是否已删除</InputLabel>
-          <Typography sx={{ mt: 0.5 }}>{notification.is_deleted ? '是' : '否'}</Typography>
+          <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>{i18n.t('notification.notification_detail_page.k31')}</InputLabel>
+          <Typography sx={{ mt: 0.5 }}>{notification.is_deleted ? i18n.t('notification.notification_detail_page.k33') : i18n.t('notification.notification_detail_page.k32')}</Typography>
         </Box>
         <Box>
-          <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>更新时间</InputLabel>
+          <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>{i18n.t('notification.notification_detail_page.k34')}</InputLabel>
           <Typography sx={{ mt: 0.5 }}>{formatDate(notification.updated_at)}</Typography>
         </Box>
       </Box>
     );
   }, [notification]);
-
   const tabs = useMemo<TabConfig[]>(
     () => [
-      { id: 'basic', label: '通知内容', content: basicInfoContent || <></> },
-      { id: 'action', label: '快捷操作', content: actionContent || <></> },
-      { id: 'extended', label: '扩展信息', content: extendedInfoContent || <></> },
+      { id: 'basic', label: i18n.t('notification.notification_detail_page.k35'), content: basicInfoContent || <></> },
+      { id: 'action', label: i18n.t('notification.notification_detail_page.k36'), content: actionContent || <></> },
+      { id: 'extended', label: i18n.t('notification.notification_detail_page.k37'), content: extendedInfoContent || <></> },
     ],
     [basicInfoContent, actionContent, extendedInfoContent]
   );
-
   const infoCard = useMemo(
     () => ({
       avatar: (
@@ -309,25 +285,24 @@ const NotificationDetailPage: React.FC = () => {
       subtitle: notification?.type ? getTypeLabel(notification.type) : undefined,
       tags: [getLevelConfig(notification?.level || '').label],
       stats: [
-        { label: '状态', value: getStatusConfig(notification?.is_read ? 'read' : 'unread').label },
+        { label: i18n.t('notification.notification_detail_page.k38'), value: getStatusConfig(notification?.is_read ? 'read' : 'unread').label },
         {
-          label: '时间',
+          label: i18n.t('notification.notification_detail_page.k39'),
           value: notification?.created_at ? formatDate(notification.created_at).split(' ')[0] : '-',
         },
       ],
     }),
     [notification]
   );
-
   return (
     <PageContainer
-      title='通知详情'
-      subtitle='查看通知详情'
+      title={i18n.t('notification.notification_detail_page.k40')}
+      subtitle={i18n.t('notification.notification_detail_page.k41')}
     >
       <DetailPageTemplate
         title=''
         subtitle=''
-        detailItemName={notification?.title || '通知详情'}
+        detailItemName={notification?.title || i18n.t('notification.notification_detail_page.k42')}
         backHref={NOTIFICATION_PATHS.root}
         loading={loading}
         error={errorMessage}
@@ -335,7 +310,7 @@ const NotificationDetailPage: React.FC = () => {
         tabs={tabs}
         actions={[
           {
-            label: '标记未读',
+            label: i18n.t('notification.notification_detail_page.k43'),
             icon: <Clock style={{ width: 18, height: 18 }} />,
             onClick: handleMarkUnread,
           },
@@ -344,5 +319,4 @@ const NotificationDetailPage: React.FC = () => {
     </PageContainer>
   );
 };
-
 export default NotificationDetailPage;

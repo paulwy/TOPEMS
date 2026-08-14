@@ -1,4 +1,5 @@
 import { moduleMarket, type MarketplaceModule } from '../marketplace/module-market';
+import i18n from '@/i18n';
 
 export interface ModuleDependency {
   module_id: string;
@@ -215,33 +216,33 @@ const UPGRADE_SUGGESTIONS: VersionUpgradeSuggestion[] = [
     module_name: 'bi-advanced',
     current_version: '3.0.2',
     suggested_version: '3.1.0',
-    reason: '新版本增加了更多图表类型和性能优化',
-    breaking_changes: ['部分高级API参数调整'],
-    benefits: ['性能提升30%', '新增5种图表类型', '修复12个已知问题'],
+    reason: i18n.t('microfrontend.dependency-governor.k0'),
+    breaking_changes: [i18n.t('microfrontend.dependency-governor.api_1')],
+    benefits: [i18n.t('microfrontend.dependency-governor.30_4'), i18n.t('microfrontend.dependency-governor.5_3'), i18n.t('microfrontend.dependency-governor.12_2')],
   },
   {
     module_name: 'dark-theme',
     current_version: '1.1.0',
     suggested_version: '1.2.0',
-    reason: '新增自动切换主题功能和更多配色方案',
+    reason: i18n.t('microfrontend.dependency-governor.k5'),
     breaking_changes: [],
-    benefits: ['自动切换主题', '新增3套配色', '优化对比度'],
+    benefits: [i18n.t('microfrontend.dependency-governor.k8'), i18n.t('microfrontend.dependency-governor.3_7'), i18n.t('microfrontend.dependency-governor.k6')],
   },
   {
     module_name: 'notification-center',
     current_version: '2.0.0',
     suggested_version: '2.1.0',
-    reason: '新增飞书推送通道和消息模板功能',
+    reason: i18n.t('microfrontend.dependency-governor.k9'),
     breaking_changes: [],
-    benefits: ['飞书推送', '消息模板', '推送统计'],
+    benefits: [i18n.t('microfrontend.dependency-governor.k12'), i18n.t('microfrontend.dependency-governor.k11'), i18n.t('microfrontend.dependency-governor.k10')],
   },
   {
     module_name: 'mes-dashboard',
     current_version: '1.8.0',
     suggested_version: '1.8.2',
-    reason: '修复多个生产数据计算bug',
+    reason: i18n.t('microfrontend.dependency-governor.bug_13'),
     breaking_changes: [],
-    benefits: ['修复OEE计算', '修复实时数据同步', '性能优化'],
+    benefits: [i18n.t('microfrontend.dependency-governor.oee_16'), i18n.t('microfrontend.dependency-governor.k15'), i18n.t('microfrontend.dependency-governor.k14')],
   },
 ];
 
@@ -581,7 +582,7 @@ export class DependencyGovernor {
         if (compatible && !compatible.includes(licenseInfo.license_type)) {
           issues.push({
             module_id: mod.id,
-            issue: `许可证 ${licenseInfo.license_type} 与主项目 ${mainLicense} 不兼容`,
+            issue: `${i18n.t('microfrontend.dependency-governor.k0')}${licenseInfo.license_type}${i18n.t('microfrontend.dependency-governor.k1')}${mainLicense}${i18n.t('microfrontend.dependency-governor.k2')}`,
             severity: 'high',
           });
         }
@@ -589,7 +590,7 @@ export class DependencyGovernor {
         if (licenseInfo.is_commercial) {
           issues.push({
             module_id: mod.id,
-            issue: '商业许可证，需确认授权合规',
+            issue: i18n.t('microfrontend.dependency-governor.k17'),
             severity: 'medium',
           });
         }

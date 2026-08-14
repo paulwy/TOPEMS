@@ -10,6 +10,7 @@ import {
   DialogActions,
   Button,
 } from '@mui/material';
+import i18n from '@/i18n';
 import { FlaskConical, AlertTriangle, Package, Clock, FileWarning } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import CrudPage from '@/components/templates/CrudPage';
@@ -239,7 +240,7 @@ const EhsHazardousMaterialPage: React.FC = () => {
       <CrudPage
         schema={hazardousMaterialSchema}
         apiAdapter={materialAdapter}
-        breadcrumbs={[{ label: t('ehs.title') }, { label: '危化品管理' }]}
+        breadcrumbs={[{ label: t('ehs.title') }, { label: i18n.t('pages.ehs_hazardous_material_page.k0') }]}
         headerContent={headerContent}
         customRowActions={customRowActions}
       />
@@ -270,14 +271,14 @@ const EhsHazardousMaterialPage: React.FC = () => {
                   mb: 2,
                 }}
               />
-              <Typography sx={{ color: 'slate.600' }}>加载MSDS数据中...</Typography>
+              <Typography sx={{ color: 'slate.600' }}>{i18n.t('pages.ehs_hazardous_material_page.msds_1')}</Typography>
             </Box>
           ) : msdsData ? (
             <Box sx={{ pt: 2 }}>
               <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2, mb: 3 }}>
                 <Box>
                   <Typography sx={{ color: 'text.secondary', fontSize: '0.875rem' }}>
-                    产品名称
+                    {i18n.t('pages.ehs_hazardous_material_page.k0')}
                   </Typography>
                   <Typography sx={{ fontWeight: 500 }}>
                     {msdsData.product_name || msdsData.material_name || '-'}
@@ -285,19 +286,19 @@ const EhsHazardousMaterialPage: React.FC = () => {
                 </Box>
                 <Box>
                   <Typography sx={{ color: 'text.secondary', fontSize: '0.875rem' }}>
-                    制造商
+                    {i18n.t('pages.ehs_hazardous_material_page.k1')}
                   </Typography>
                   <Typography>{msdsData.manufacturer || '-'}</Typography>
                 </Box>
                 <Box>
                   <Typography sx={{ color: 'text.secondary', fontSize: '0.875rem' }}>
-                    应急电话
+                    {i18n.t('pages.ehs_hazardous_material_page.k2')}
                   </Typography>
                   <Typography>{msdsData.emergency_phone || '-'}</Typography>
                 </Box>
                 <Box>
                   <Typography sx={{ color: 'text.secondary', fontSize: '0.875rem' }}>
-                    版本
+                    {i18n.t('pages.ehs_hazardous_material_page.k3')}
                   </Typography>
                   <Typography>{msdsData.version || '-'}</Typography>
                 </Box>
@@ -307,7 +308,7 @@ const EhsHazardousMaterialPage: React.FC = () => {
                   variant='subtitle2'
                   sx={{ fontWeight: 600, mb: 1 }}
                 >
-                  危险性概述
+                  {i18n.t('pages.ehs_hazardous_material_page.k4')}
                 </Typography>
                 <Typography>
                   {msdsData.hazard_identification || t('ehs.ehs_hazardous_material_page.info')}
@@ -318,7 +319,7 @@ const EhsHazardousMaterialPage: React.FC = () => {
                   variant='subtitle2'
                   sx={{ fontWeight: 600, mb: 1 }}
                 >
-                  急救措施
+                  {i18n.t('pages.ehs_hazardous_material_page.k5')}
                 </Typography>
                 <Typography>
                   {msdsData.first_aid_measures || t('ehs.ehs_hazardous_material_page.info')}
@@ -329,7 +330,7 @@ const EhsHazardousMaterialPage: React.FC = () => {
                   variant='subtitle2'
                   sx={{ fontWeight: 600, mb: 1 }}
                 >
-                  消防措施
+                  {i18n.t('pages.ehs_hazardous_material_page.k6')}
                 </Typography>
                 <Typography>
                   {msdsData.fire_fighting_measures || t('ehs.ehs_hazardous_material_page.info')}
@@ -340,7 +341,7 @@ const EhsHazardousMaterialPage: React.FC = () => {
                   variant='subtitle2'
                   sx={{ fontWeight: 600, mb: 1 }}
                 >
-                  泄漏应急处理
+                  {i18n.t('pages.ehs_hazardous_material_page.k7')}
                 </Typography>
                 <Typography>
                   {msdsData.accidental_release_measures ||
@@ -352,7 +353,7 @@ const EhsHazardousMaterialPage: React.FC = () => {
                   variant='subtitle2'
                   sx={{ fontWeight: 600, mb: 1 }}
                 >
-                  储存注意事项
+                  {i18n.t('pages.ehs_hazardous_material_page.k8')}
                 </Typography>
                 <Typography>
                   {msdsData.handling_and_storage || t('ehs.ehs_hazardous_material_page.info')}

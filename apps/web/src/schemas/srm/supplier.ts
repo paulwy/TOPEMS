@@ -1,9 +1,10 @@
 import type { EntitySchema } from '@/schema';
+import i18n from '@/i18n';
 
 export const supplierSchema: EntitySchema = {
   entity: 'supplier',
-  title: '供应商',
-  description: '管理供应商基础信息，包括编号、名称、分类、联系方式、风险等级等',
+  title: i18n.t('srm.supplier.k0'),
+  description: i18n.t('srm.supplier.k1'),
 
   api: {
     module: 'srm',
@@ -18,7 +19,7 @@ export const supplierSchema: EntitySchema = {
   fields: [
     {
       name: 'supplier_no',
-      label: '供应商编号',
+      label: i18n.t('srm.supplier.k2'),
       type: 'text',
       required: true,
       readonlyOnEdit: true,
@@ -28,7 +29,7 @@ export const supplierSchema: EntitySchema = {
     },
     {
       name: 'name',
-      label: '供应商名称',
+      label: i18n.t('srm.supplier.k3'),
       type: 'text',
       required: true,
       sortable: true,
@@ -37,7 +38,7 @@ export const supplierSchema: EntitySchema = {
     },
     {
       name: 'legal_name',
-      label: '法定名称',
+      label: i18n.t('srm.supplier.k4'),
       type: 'text',
       listWidth: 160,
       showInList: false,
@@ -45,19 +46,19 @@ export const supplierSchema: EntitySchema = {
     },
     {
       name: 'category',
-      label: '分类',
+      label: i18n.t('srm.supplier.k5'),
       type: 'select',
       required: true,
       options: {
         type: 'static',
         options: [
-          { value: 'raw_material', label: '原材料' },
-          { value: 'packaging', label: '包装辅料' },
-          { value: 'machinery', label: '机械设备' },
-          { value: 'electronics', label: '电子元器件' },
-          { value: 'chemicals', label: '化学用品' },
-          { value: 'services', label: '服务类' },
-          { value: 'other', label: '其他' },
+          { value: 'raw_material', label: i18n.t('srm.supplier.k6') },
+          { value: 'packaging', label: i18n.t('srm.supplier.k7') },
+          { value: 'machinery', label: i18n.t('srm.supplier.k8') },
+          { value: 'electronics', label: i18n.t('srm.supplier.k9') },
+          { value: 'chemicals', label: i18n.t('srm.supplier.k10') },
+          { value: 'services', label: i18n.t('srm.supplier.k11') },
+          { value: 'other', label: i18n.t('srm.supplier.k12') },
         ],
       },
       listWidth: 120,
@@ -65,15 +66,15 @@ export const supplierSchema: EntitySchema = {
     },
     {
       name: 'status',
-      label: '状态',
+      label: i18n.t('srm.supplier.k13'),
       type: 'select',
       required: true,
       defaultValue: 'active',
       options: {
         type: 'static',
         options: [
-          { value: 'active', label: '启用' },
-          { value: 'inactive', label: '禁用' },
+          { value: 'active', label: i18n.t('srm.supplier.k14') },
+          { value: 'inactive', label: i18n.t('srm.supplier.k15') },
         ],
       },
       listWidth: 100,
@@ -81,7 +82,7 @@ export const supplierSchema: EntitySchema = {
     },
     {
       name: 'tax_id',
-      label: '税号',
+      label: i18n.t('srm.supplier.k16'),
       type: 'text',
       listWidth: 140,
       showInList: false,
@@ -89,7 +90,7 @@ export const supplierSchema: EntitySchema = {
     },
     {
       name: 'address',
-      label: '地址',
+      label: i18n.t('srm.supplier.k17'),
       type: 'textarea',
       listWidth: 200,
       showInList: false,
@@ -97,21 +98,21 @@ export const supplierSchema: EntitySchema = {
     },
     {
       name: 'contact_person',
-      label: '联系人',
+      label: i18n.t('srm.supplier.k18'),
       type: 'text',
       listWidth: 100,
       validation: [{ type: 'maxLength', value: 100 }],
     },
     {
       name: 'phone',
-      label: '电话',
+      label: i18n.t('srm.supplier.k19'),
       type: 'text',
       listWidth: 120,
       validation: [{ type: 'maxLength', value: 20 }],
     },
     {
       name: 'email',
-      label: '邮箱',
+      label: i18n.t('srm.supplier.k20'),
       type: 'text',
       listWidth: 160,
       showInList: false,
@@ -119,7 +120,7 @@ export const supplierSchema: EntitySchema = {
     },
     {
       name: 'website',
-      label: '网站',
+      label: i18n.t('srm.supplier.k21'),
       type: 'text',
       listWidth: 160,
       showInList: false,
@@ -127,7 +128,7 @@ export const supplierSchema: EntitySchema = {
     },
     {
       name: 'credit_rating',
-      label: '信用评级',
+      label: i18n.t('srm.supplier.k22'),
       type: 'select',
       options: {
         type: 'static',
@@ -145,23 +146,23 @@ export const supplierSchema: EntitySchema = {
     },
     {
       name: 'risklevel',
-      label: '风险等级',
+      label: i18n.t('srm.supplier.k23'),
       type: 'select',
       required: true,
       defaultValue: 'medium',
       options: {
         type: 'static',
         options: [
-          { value: 'low', label: '低风险' },
-          { value: 'medium', label: '中风险' },
-          { value: 'high', label: '高风险' },
+          { value: 'low', label: i18n.t('srm.supplier.k24') },
+          { value: 'medium', label: i18n.t('srm.supplier.k25') },
+          { value: 'high', label: i18n.t('srm.supplier.k26') },
         ],
       },
       listWidth: 100,
     },
     {
       name: 'created_at',
-      label: '创建时间',
+      label: i18n.t('srm.supplier.k27'),
       type: 'datetime',
       readonly: true,
       hideInForm: true,
@@ -170,7 +171,7 @@ export const supplierSchema: EntitySchema = {
     },
     {
       name: 'updated_at',
-      label: '更新时间',
+      label: i18n.t('srm.supplier.k28'),
       type: 'datetime',
       readonly: true,
       hideInForm: true,
@@ -199,45 +200,45 @@ export const supplierSchema: EntitySchema = {
         inactive: 'error',
       },
       labelMap: {
-        active: '启用',
-        inactive: '禁用',
+        active: i18n.t('srm.supplier.k29'),
+        inactive: i18n.t('srm.supplier.k30'),
       },
     },
     filters: [
       {
         id: 'status',
-        label: '状态',
+        label: i18n.t('srm.supplier.k31'),
         type: 'select',
         options: [
-          { label: '全部状态', value: 'all' },
-          { label: '启用', value: 'active' },
-          { label: '禁用', value: 'inactive' },
+          { label: i18n.t('srm.supplier.k32'), value: 'all' },
+          { label: i18n.t('srm.supplier.k33'), value: 'active' },
+          { label: i18n.t('srm.supplier.k34'), value: 'inactive' },
         ],
       },
       {
         id: 'category',
-        label: '分类',
+        label: i18n.t('srm.supplier.k35'),
         type: 'select',
         options: [
-          { label: '全部分类', value: 'all' },
-          { label: '原材料', value: 'raw_material' },
-          { label: '包装辅料', value: 'packaging' },
-          { label: '机械设备', value: 'machinery' },
-          { label: '电子元器件', value: 'electronics' },
-          { label: '化学用品', value: 'chemicals' },
-          { label: '服务类', value: 'services' },
-          { label: '其他', value: 'other' },
+          { label: i18n.t('srm.supplier.k36'), value: 'all' },
+          { label: i18n.t('srm.supplier.k37'), value: 'raw_material' },
+          { label: i18n.t('srm.supplier.k38'), value: 'packaging' },
+          { label: i18n.t('srm.supplier.k39'), value: 'machinery' },
+          { label: i18n.t('srm.supplier.k40'), value: 'electronics' },
+          { label: i18n.t('srm.supplier.k41'), value: 'chemicals' },
+          { label: i18n.t('srm.supplier.k42'), value: 'services' },
+          { label: i18n.t('srm.supplier.k43'), value: 'other' },
         ],
       },
       {
         id: 'risklevel',
-        label: '风险等级',
+        label: i18n.t('srm.supplier.k44'),
         type: 'select',
         options: [
-          { label: '全部风险', value: 'all' },
-          { label: '低风险', value: 'low' },
-          { label: '中风险', value: 'medium' },
-          { label: '高风险', value: 'high' },
+          { label: i18n.t('srm.supplier.k45'), value: 'all' },
+          { label: i18n.t('srm.supplier.k46'), value: 'low' },
+          { label: i18n.t('srm.supplier.k47'), value: 'medium' },
+          { label: i18n.t('srm.supplier.k48'), value: 'high' },
         ],
       },
     ],
@@ -247,25 +248,25 @@ export const supplierSchema: EntitySchema = {
 
   formSections: [
     {
-      title: '基本信息',
+      title: i18n.t('srm.supplier.k49'),
       fields: ['supplier_no', 'name', 'legal_name', 'category', 'status'],
     },
     {
-      title: '联系信息',
+      title: i18n.t('srm.supplier.k50'),
       fields: ['contact_person', 'phone', 'email', 'address', 'website'],
     },
     {
-      title: '财务与税务',
+      title: i18n.t('srm.supplier.k51'),
       fields: ['tax_id', 'credit_rating'],
     },
     {
-      title: '风险与系统信息',
+      title: i18n.t('srm.supplier.k52'),
       fields: ['risklevel', 'created_at', 'updated_at'],
     },
   ],
 
   formColCount: 2,
-  createTitle: '新增供应商',
-  editTitle: '编辑供应商',
-  detailTitle: '供应商详情',
+  createTitle: i18n.t('srm.supplier.k53'),
+  editTitle: i18n.t('srm.supplier.k54'),
+  detailTitle: i18n.t('srm.supplier.k55'),
 };

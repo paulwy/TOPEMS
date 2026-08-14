@@ -4,7 +4,6 @@
  * @module pages/monitor
  * @path /monitor/metrics-dashboard
  */
-
 import React, { useState, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import {
@@ -18,6 +17,7 @@ import {
   Activity,
   Target,
 } from 'lucide-react';
+import i18n from '@/i18n';
 import {
   Box,
   Typography,
@@ -39,28 +39,24 @@ import {
   Skeleton,
   useTheme,
 } from '@mui/material';
-
 import { PageContainer } from '@/components/common';
 import { DashboardTemplate, type StatCard, type ChartCard } from '@/components/templates';
 import { useNotificationStore } from '@/store';
 import { metricsApi, type BusinessMetric, type BusinessMetricKpi } from '@/api/monitor/metrics';
 import { extractErrorMessage } from '@/utils/errors';
 import { MONITOR_PATHS } from '@/modules/monitor/config';
-
 import { CACHE_DURATIONS, QUERY_KEYS } from '@/lib/reactQuery';
 import { designTokens, semanticTokens } from '@topems/tokens';
-
 const CATEGORY_LABELS: Record<string, string> = {
-  all: '全部类别',
-  sales: '销售',
-  production: '生产',
-  inventory: '库存',
-  finance: '财务',
-  hr: '人力',
-  procurement: '采购',
-  quality: '质量',
+  all: i18n.t('monitor.metrics_dashboard_page.k0'),
+  sales: i18n.t('monitor.metrics_dashboard_page.k1'),
+  production: i18n.t('monitor.metrics_dashboard_page.k2'),
+  inventory: i18n.t('monitor.metrics_dashboard_page.k3'),
+  finance: i18n.t('monitor.metrics_dashboard_page.k4'),
+  hr: i18n.t('monitor.metrics_dashboard_page.k5'),
+  procurement: i18n.t('monitor.metrics_dashboard_page.k6'),
+  quality: i18n.t('monitor.metrics_dashboard_page.k7'),
 };
-
 const statusColor = (m: BusinessMetric): 'success' | 'warning' | 'error' => {
   if (!m.target_value) return 'success';
   if (m.unit === '%' || m.code.includes('rate')) {
@@ -70,7 +66,6 @@ const statusColor = (m: BusinessMetric): 'success' | 'warning' | 'error' => {
   }
   return 'success';
 };
-
 const MiniLineChart: React.FC<{
   data: number[];
   color?: string;
@@ -95,14 +90,12 @@ const MiniLineChart: React.FC<{
       return `${x},${y}`;
     })
     .join(' ');
-
   const targetY =
     targetValue !== undefined
       ? padding.top +
         (50 - padding.top - padding.bottom) -
         ((targetValue - min) / range) * (50 - padding.top - padding.bottom)
       : null;
-
   return (
     <Box sx={{ width: '100%', height }}>
       <svg
@@ -132,7 +125,6 @@ const MiniLineChart: React.FC<{
     </Box>
   );
 };
-
 const AchievementBar: React.FC<{ value: number; target: number; unit: string }> = ({
   value,
   target,
@@ -170,18 +162,15 @@ const AchievementBar: React.FC<{ value: number; target: number; unit: string }> 
     </Box>
   );
 };
-
 export const MetricsDashboardPage: React.FC = () => {
   const theme = useTheme();
   const addNotification = useNotificationStore((state) => state.addNotification);
-
   const [keyword, setKeyword] = useState('');
   const [category, setCategory] = useState('all');
   const [serviceFilter, setServiceFilter] = useState('all');
   const [statusFilter, setStatusFilter] = useState('all');
   const [trendMetricCode, setTrendMetricCode] = useState<string>('order_total');
   const [trendPeriod, setTrendPeriod] = useState('7d');
-
   const summaryQuery = useQuery({
     queryKey: QUERY_KEYS.AD_HOC.MONITOR_BUSINESS_METRICS_SUMMARY_BASE,
     queryFn: async () => {
@@ -190,7 +179,6 @@ export const MetricsDashboardPage: React.FC = () => {
     },
   
       staleTime: CACHE_DURATIONS.MEDIUM,});
-
   const listQuery = useQuery({
     queryKey: [...QUERY_KEYS.AD_HOC.MONITOR_BUSINESS_METRICS_LIST_BASE, category, serviceFilter, statusFilter, keyword],
     queryFn: async () => {
@@ -204,7 +192,6 @@ export const MetricsDashboardPage: React.FC = () => {
     },
   
       staleTime: CACHE_DURATIONS.MEDIUM,});
-
   const kpiQuery = useQuery({
     queryKey: QUERY_KEYS.AD_HOC.MONITOR_BUSINESS_METRICS_KPI_BASE,
     queryFn: async () => {
@@ -213,7 +200,6 @@ export const MetricsDashboardPage: React.FC = () => {
     },
   
       staleTime: CACHE_DURATIONS.MEDIUM,});
-
   const trendQuery = useQuery({
     queryKey: [...QUERY_KEYS.AD_HOC.MONITOR_BUSINESS_METRICS_TREND_BASE, trendMetricCode, trendPeriod],
     queryFn: async () => {
@@ -223,12 +209,10 @@ export const MetricsDashboardPage: React.FC = () => {
     enabled: Boolean(trendMetricCode),
   
       staleTime: CACHE_DURATIONS.MEDIUM,});
-
   const summary = summaryQuery.data;
   const metrics = listQuery.data ?? [];
   const kpis: BusinessMetricKpi[] = kpiQuery.data ?? [];
   const trendPoints = trendQuery.data ?? [];
-
   const stats: StatCard[] = useMemo(() => {
     const total = summary?.total_metrics ?? 0;
     const healthy = summary?.healthy_count ?? 0;
@@ -237,45 +221,44 @@ export const MetricsDashboardPage: React.FC = () => {
     return [
       {
         id: 'total',
-        title: '指标总数',
+        title: i18n.t('monitor.metrics_dashboard_page.k8'),
         value: total,
-        unit: '个',
+        unit: i18n.t('monitor.metrics_dashboard_page.k9'),
         icon: <BarChart3 size={20} />,
         color: 'primary',
       },
       {
         id: 'healthy',
-        title: '健康',
+        title: i18n.t('monitor.metrics_dashboard_page.k10'),
         value: healthy,
-        unit: '个',
+        unit: i18n.t('monitor.metrics_dashboard_page.k11'),
         icon: <Activity size={20} />,
         color: 'success',
       },
       {
         id: 'warning',
-        title: '需关注',
+        title: i18n.t('monitor.metrics_dashboard_page.k12'),
         value: warning,
-        unit: '个',
+        unit: i18n.t('monitor.metrics_dashboard_page.k13'),
         icon: <TrendingUp size={20} />,
         color: 'warning',
       },
       {
         id: 'critical',
-        title: '异常',
+        title: i18n.t('monitor.metrics_dashboard_page.k14'),
         value: critical,
-        unit: '个',
+        unit: i18n.t('monitor.metrics_dashboard_page.k15'),
         icon: <TrendingDown size={20} />,
         color: 'error',
       },
     ];
   }, [summary]);
-
   const kpiCharts: ChartCard[] = useMemo(
     () => [
       {
         id: 'kpi-progress',
-        title: 'KPI 达成率',
-        subtitle: '关键指标达成情况',
+        title: i18n.t('pages.metrics_dashboard_page.kpi_0'),
+        subtitle: i18n.t('monitor.metrics_dashboard_page.k16'),
         type: 'bar',
         chart: (
           <Box sx={{ height: 280, display: 'flex', flexDirection: 'column', gap: 1.5, py: 1 }}>
@@ -329,8 +312,8 @@ export const MetricsDashboardPage: React.FC = () => {
       },
       {
         id: 'trend',
-        title: '指标趋势',
-        subtitle: '选定指标随时间变化',
+        title: i18n.t('monitor.metrics_dashboard_page.k17'),
+        subtitle: i18n.t('monitor.metrics_dashboard_page.k18'),
         type: 'line',
         chart: (
           <Box>
@@ -343,10 +326,10 @@ export const MetricsDashboardPage: React.FC = () => {
                 size='small'
                 sx={{ minWidth: 160 }}
               >
-                <InputLabel>指标</InputLabel>
+                <InputLabel>{i18n.t('monitor.metrics_dashboard_page.k19')}</InputLabel>
                 <Select
                   value={trendMetricCode}
-                  label='指标'
+                  label={i18n.t('monitor.metrics_dashboard_page.k20')}
                   onChange={(e) => setTrendMetricCode(String(e.target.value))}
                 >
                   {metrics.map((m) => (
@@ -363,10 +346,10 @@ export const MetricsDashboardPage: React.FC = () => {
                 size='small'
                 sx={{ minWidth: 100 }}
               >
-                <InputLabel>周期</InputLabel>
+                <InputLabel>{i18n.t('monitor.metrics_dashboard_page.k21')}</InputLabel>
                 <Select
                   value={trendPeriod}
-                  label='周期'
+                  label={i18n.t('monitor.metrics_dashboard_page.k22')}
                   onChange={(e) => setTrendPeriod(String(e.target.value))}
                 >
                   <MenuItem value='1h'>1小时</MenuItem>
@@ -406,7 +389,6 @@ export const MetricsDashboardPage: React.FC = () => {
       theme,
     ]
   );
-
   const handleRefresh = async () => {
     try {
       await Promise.allSettled([
@@ -415,16 +397,15 @@ export const MetricsDashboardPage: React.FC = () => {
         kpiQuery.refetch(),
         trendQuery.refetch(),
       ]);
-      addNotification({ type: 'success', title: '已刷新', message: '业务指标已更新' });
+      addNotification({ type: 'success', title: i18n.t('monitor.metrics_dashboard_page.k24'), message: i18n.t('monitor.metrics_dashboard_page.k23') });
     } catch (err) {
       addNotification({
         type: 'error',
-        title: '刷新失败',
-        message: extractErrorMessage(err, '刷新失败'),
+        title: i18n.t('monitor.metrics_dashboard_page.k25'),
+        message: extractErrorMessage(err, i18n.t('monitor.metrics_dashboard_page.k26')),
       });
     }
   };
-
   const renderTrendIcon = (direction?: string) => {
     if (direction === 'up')
       return (
@@ -447,7 +428,6 @@ export const MetricsDashboardPage: React.FC = () => {
       />
     );
   };
-
   return (
     <PageContainer
       headerProps={{
@@ -464,16 +444,16 @@ export const MetricsDashboardPage: React.FC = () => {
         quickActions={[
           {
             id: 'refresh',
-            label: '刷新数据',
+            label: i18n.t('monitor.metrics_dashboard_page.k27'),
             icon: <RefreshCw size={18} />,
             color: 'primary.light',
-            description: '重新加载最新指标',
+            description: i18n.t('monitor.metrics_dashboard_page.k28'),
             onClick: handleRefresh,
           },
         ]}
-        quickActionsTitle='快捷操作'
+        quickActionsTitle={i18n.t('monitor.metrics_dashboard_page.k29')}
         onRefresh={handleRefresh}
-        recentTitle='业务指标列表'
+        recentTitle={i18n.t('monitor.metrics_dashboard_page.k30')}
       >
         {summary?.categories && summary.categories.length > 0 && (
           <Paper sx={{ mb: 3, p: 2, borderRadius: 2 }}>
@@ -481,13 +461,13 @@ export const MetricsDashboardPage: React.FC = () => {
               variant='subtitle2'
               sx={{ mb: 1.5, fontWeight: 600 }}
             >
-              分类概览
+              {i18n.t('pages.metrics_dashboard_page.k0')}
             </Typography>
             <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1.5 }}>
               {summary.categories.map((cat) => (
                 <Chip
                   key={cat.code}
-                  label={`${CATEGORY_LABELS[cat.code] ?? cat.code}: ${cat.metric_count}个`}
+                  label={`${CATEGORY_LABELS[cat.code] ?? cat.code}: ${cat.metric_count}${i18n.t('pages.metrics_dashboard_page.k1')}`}
                   size='small'
                   variant={category === cat.code ? 'filled' : 'outlined'}
                   color={
@@ -498,7 +478,7 @@ export const MetricsDashboardPage: React.FC = () => {
                 />
               ))}
               <Chip
-                label='全部'
+                label={i18n.t('monitor.metrics_dashboard_page.k31')}
                 size='small'
                 variant={category === 'all' ? 'filled' : 'outlined'}
                 onClick={() => setCategory('all')}
@@ -507,7 +487,6 @@ export const MetricsDashboardPage: React.FC = () => {
             </Box>
           </Paper>
         )}
-
         <Paper sx={{ mt: 3, p: 2, borderRadius: 2 }}>
           <Stack
             direction={{ xs: 'column', md: 'row' }}
@@ -516,7 +495,7 @@ export const MetricsDashboardPage: React.FC = () => {
           >
             <TextField
               size='small'
-              placeholder='搜索指标名或代码'
+              placeholder={i18n.t('monitor.metrics_dashboard_page.k32')}
               value={keyword}
               onChange={(e) => setKeyword(e.target.value)}
               slotProps={{
@@ -535,10 +514,10 @@ export const MetricsDashboardPage: React.FC = () => {
               size='small'
               sx={{ minWidth: 140 }}
             >
-              <InputLabel>类别</InputLabel>
+              <InputLabel>{i18n.t('monitor.metrics_dashboard_page.k33')}</InputLabel>
               <Select
                 value={category}
-                label='类别'
+                label={i18n.t('monitor.metrics_dashboard_page.k34')}
                 onChange={(e) => setCategory(String(e.target.value))}
               >
                 {Object.entries(CATEGORY_LABELS).map(([v, l]) => (
@@ -555,13 +534,13 @@ export const MetricsDashboardPage: React.FC = () => {
               size='small'
               sx={{ minWidth: 140 }}
             >
-              <InputLabel>服务</InputLabel>
+              <InputLabel>{i18n.t('monitor.metrics_dashboard_page.k35')}</InputLabel>
               <Select
                 value={serviceFilter}
-                label='服务'
+                label={i18n.t('monitor.metrics_dashboard_page.k36')}
                 onChange={(e) => setServiceFilter(String(e.target.value))}
               >
-                <MenuItem value='all'>全部服务</MenuItem>
+                <MenuItem value='all'>{i18n.t('monitor.metrics_dashboard_page.k37')}</MenuItem>
                 {Array.from(
                   new Set(metrics.map((m) => m.service_name).filter(Boolean) as string[])
                 ).map((s) => (
@@ -578,39 +557,38 @@ export const MetricsDashboardPage: React.FC = () => {
               size='small'
               sx={{ minWidth: 120 }}
             >
-              <InputLabel>状态</InputLabel>
+              <InputLabel>{i18n.t('monitor.metrics_dashboard_page.k38')}</InputLabel>
               <Select
                 value={statusFilter}
-                label='状态'
+                label={i18n.t('monitor.metrics_dashboard_page.k39')}
                 onChange={(e) => setStatusFilter(String(e.target.value))}
               >
-                <MenuItem value='all'>全部状态</MenuItem>
-                <MenuItem value='healthy'>健康</MenuItem>
-                <MenuItem value='warning'>需关注</MenuItem>
-                <MenuItem value='critical'>异常</MenuItem>
+                <MenuItem value='all'>{i18n.t('monitor.metrics_dashboard_page.k40')}</MenuItem>
+                <MenuItem value='healthy'>{i18n.t('monitor.metrics_dashboard_page.k41')}</MenuItem>
+                <MenuItem value='warning'>{i18n.t('monitor.metrics_dashboard_page.k42')}</MenuItem>
+                <MenuItem value='critical'>{i18n.t('monitor.metrics_dashboard_page.k43')}</MenuItem>
               </Select>
             </FormControl>
             <Box sx={{ flex: 1 }} />
             <Chip
               icon={<Filter size={14} />}
-              label={`共 ${metrics.length} 条`}
+              label={`${i18n.t('pages.metrics_dashboard_page.k2')}${metrics.length}${i18n.t('pages.metrics_dashboard_page.k3')}`}
               variant='outlined'
               size='small'
             />
           </Stack>
-
           <TableContainer>
             <Table size='small'>
               <TableHead>
                 <TableRow>
-                  <TableCell>指标</TableCell>
-                  <TableCell>类别</TableCell>
-                  <TableCell>服务</TableCell>
-                  <TableCell align='right'>当前值</TableCell>
-                  <TableCell align='right'>目标</TableCell>
-                  <TableCell>趋势</TableCell>
-                  <TableCell>状态</TableCell>
-                  <TableCell>更新时间</TableCell>
+                  <TableCell>{i18n.t('monitor.metrics_dashboard_page.k44')}</TableCell>
+                  <TableCell>{i18n.t('monitor.metrics_dashboard_page.k45')}</TableCell>
+                  <TableCell>{i18n.t('monitor.metrics_dashboard_page.k46')}</TableCell>
+                  <TableCell align='right'>{i18n.t('monitor.metrics_dashboard_page.k47')}</TableCell>
+                  <TableCell align='right'>{i18n.t('monitor.metrics_dashboard_page.k48')}</TableCell>
+                  <TableCell>{i18n.t('monitor.metrics_dashboard_page.k49')}</TableCell>
+                  <TableCell>{i18n.t('monitor.metrics_dashboard_page.k50')}</TableCell>
+                  <TableCell>{i18n.t('monitor.metrics_dashboard_page.k51')}</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
@@ -699,10 +677,10 @@ export const MetricsDashboardPage: React.FC = () => {
                             size='small'
                             label={
                               statusColor(m) === 'success'
-                                ? '健康'
+                                ? i18n.t('monitor.metrics_dashboard_page.k52')
                                 : statusColor(m) === 'warning'
-                                  ? '需关注'
-                                  : '异常'
+                                  ? i18n.t('monitor.metrics_dashboard_page.k53')
+                                  : i18n.t('monitor.metrics_dashboard_page.k54')
                             }
                             color={statusColor(m)}
                           />
@@ -733,7 +711,7 @@ export const MetricsDashboardPage: React.FC = () => {
                           color='text.secondary'
                           sx={{ mt: 1 }}
                         >
-                          暂无匹配的指标
+                          {i18n.t('pages.metrics_dashboard_page.k1')}
                         </Typography>
                       </Box>
                     </TableCell>
@@ -747,5 +725,4 @@ export const MetricsDashboardPage: React.FC = () => {
     </PageContainer>
   );
 };
-
 export default MetricsDashboardPage;

@@ -4,7 +4,6 @@
  */
 import React from 'react';
 import { Box, Typography, Chip, Paper, Avatar, TextField, useTheme } from '@mui/material';
-import { useTranslation } from 'react-i18next';
 import { Clock, User as UserIcon, Check, X } from 'lucide-react';
 import { MobileButton } from '@/components/mobile';
 import { sizeTokens } from '@/theme';
@@ -15,7 +14,7 @@ import {
   getPriorityColor,
   getPriorityLabel,
 } from '../hooks/useMobileApproval';
-
+import i18n from '@/i18n';
 interface ApprovalDetailProps {
   approval: ApprovalItem;
   approvalComment: string;
@@ -24,7 +23,6 @@ interface ApprovalDetailProps {
   onApprove: () => void;
   onReject: () => void;
 }
-
 export const ApprovalDetail: React.FC<ApprovalDetailProps> = ({
   approval,
   approvalComment,
@@ -33,9 +31,7 @@ export const ApprovalDetail: React.FC<ApprovalDetailProps> = ({
   onApprove,
   onReject,
 }) => {
-  const { t } = useTranslation();
   const theme = useTheme();
-
   return (
     <Box sx={{ p: 2, pb: 3 }}>
       <Paper
@@ -78,7 +74,7 @@ export const ApprovalDetail: React.FC<ApprovalDetailProps> = ({
                 sx={{ height: 20, fontSize: '0.7rem' }}
               />
               <Chip
-                label={getPriorityLabel(approval.priority, t)}
+                label={getPriorityLabel(approval.priority, i18n.t)}
                 size='small'
                 color={
                   getPriorityColor(approval.priority) as React.ComponentProps<typeof Chip>['color']
@@ -88,7 +84,6 @@ export const ApprovalDetail: React.FC<ApprovalDetailProps> = ({
             </Box>
           </Box>
         </Box>
-
         {approval.amount && (
           <Box
             sx={{
@@ -104,7 +99,7 @@ export const ApprovalDetail: React.FC<ApprovalDetailProps> = ({
               variant='body2'
               color='text.secondary'
             >
-              {t('mobile.approval.detail.amount')}
+              {i18n.t('mobile.approval.detail.amount')}
             </Typography>
             <Typography
               variant='h5'
@@ -115,7 +110,6 @@ export const ApprovalDetail: React.FC<ApprovalDetailProps> = ({
           </Box>
         )}
       </Paper>
-
       <Paper
         elevation={0}
         sx={{
@@ -130,7 +124,7 @@ export const ApprovalDetail: React.FC<ApprovalDetailProps> = ({
           variant='subtitle2'
           sx={{ fontWeight: 600, mb: 2 }}
         >
-          {t('mobile.approval.detail.applicant')}
+          {i18n.t('mobile.approval.detail.applicant')}
         </Typography>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
           <Avatar sx={{ width: 44, height: 44 }}>
@@ -158,12 +152,11 @@ export const ApprovalDetail: React.FC<ApprovalDetailProps> = ({
               variant='caption'
               color='text.secondary'
             >
-              {t('mobile.approval.detail.submit_time')}：{approval.submitTime}
+              {i18n.t('mobile.approval.detail.submit_time')}：{approval.submitTime}
             </Typography>
           </Box>
         </Box>
       </Paper>
-
       <Paper
         elevation={0}
         sx={{
@@ -178,7 +171,7 @@ export const ApprovalDetail: React.FC<ApprovalDetailProps> = ({
           variant='subtitle2'
           sx={{ fontWeight: 600, mb: 2 }}
         >
-          {t('mobile.approval.detail.description')}
+          {i18n.t('mobile.approval.detail.description')}
         </Typography>
         <Typography
           variant='body2'
@@ -187,7 +180,6 @@ export const ApprovalDetail: React.FC<ApprovalDetailProps> = ({
           {approval.description}
         </Typography>
       </Paper>
-
       <Paper
         elevation={0}
         sx={{
@@ -202,7 +194,7 @@ export const ApprovalDetail: React.FC<ApprovalDetailProps> = ({
           variant='subtitle2'
           sx={{ fontWeight: 600, mb: 2 }}
         >
-          {t('mobile.approval.detail.process')}
+          {i18n.t('mobile.approval.detail.process')}
         </Typography>
         <Box sx={{ position: 'relative', pl: 2 }}>
           {approval.steps.map((step, index) => (
@@ -279,7 +271,7 @@ export const ApprovalDetail: React.FC<ApprovalDetailProps> = ({
                 )}
                 {step.status === 'current' && (
                   <Chip
-                    label={t('mobile.approval.tab.pending')}
+                    label={i18n.t('mobile.approval.tab.pending')}
                     size='small'
                     color='primary'
                     sx={{ mt: 0.5, height: 20, fontSize: '0.7rem' }}
@@ -290,7 +282,6 @@ export const ApprovalDetail: React.FC<ApprovalDetailProps> = ({
           ))}
         </Box>
       </Paper>
-
       <Paper
         elevation={0}
         sx={{
@@ -305,13 +296,13 @@ export const ApprovalDetail: React.FC<ApprovalDetailProps> = ({
           variant='subtitle2'
           sx={{ fontWeight: 600, mb: 2 }}
         >
-          {t('mobile.approval.detail.opinion')}
+          {i18n.t('mobile.approval.detail.opinion')}
         </Typography>
         <TextField
           fullWidth
           multiline
           rows={3}
-          placeholder={t('mobile.approval.detail.opinion_placeholder')}
+          placeholder={i18n.t('mobile.approval.detail.opinion_placeholder')}
           value={approvalComment}
           onChange={(e) => onCommentChange(e.target.value)}
           sx={{
@@ -321,7 +312,6 @@ export const ApprovalDetail: React.FC<ApprovalDetailProps> = ({
           }}
         />
       </Paper>
-
       <Box sx={{ display: 'flex', gap: 2 }}>
         <MobileButton
           fullWidth
@@ -331,7 +321,7 @@ export const ApprovalDetail: React.FC<ApprovalDetailProps> = ({
           onClick={onReject}
           disabled={processing}
         >
-          {processing ? t('mobile.approval.status.loading') : t('mobile.approval.action.reject')}
+          {processing ? i18n.t('mobile.approval.status.loading') : i18n.t('mobile.approval.action.reject')}
         </MobileButton>
         <MobileButton
           fullWidth
@@ -341,7 +331,7 @@ export const ApprovalDetail: React.FC<ApprovalDetailProps> = ({
           onClick={onApprove}
           disabled={processing}
         >
-          {processing ? t('mobile.approval.status.loading') : t('mobile.approval.action.approve')}
+          {processing ? i18n.t('mobile.approval.status.loading') : i18n.t('mobile.approval.action.approve')}
         </MobileButton>
       </Box>
     </Box>

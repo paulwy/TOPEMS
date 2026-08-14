@@ -4,10 +4,9 @@
  */
 import React from 'react';
 import { Box, Typography, Paper, Chip, useTheme } from '@mui/material';
-import { useTranslation } from 'react-i18next';
 import { CalendarCheck, MapPin } from 'lucide-react';
 import type { AttendanceStats } from '@/api/mobile';
-
+import i18n from '@/i18n';
 interface AttendanceClockTabProps {
   attendanceStats: AttendanceStats | null;
   checkingIn: boolean;
@@ -15,7 +14,6 @@ interface AttendanceClockTabProps {
   onCheckIn: () => void;
   onCheckOut: () => void;
 }
-
 export const AttendanceClockTab: React.FC<AttendanceClockTabProps> = ({
   attendanceStats,
   checkingIn,
@@ -23,9 +21,7 @@ export const AttendanceClockTab: React.FC<AttendanceClockTabProps> = ({
   onCheckIn,
   onCheckOut,
 }) => {
-  const { t } = useTranslation();
   const theme = useTheme();
-
   const handleClockClick = () => {
     if (todayStatus === 'not_checked_in') {
       onCheckIn();
@@ -33,7 +29,6 @@ export const AttendanceClockTab: React.FC<AttendanceClockTabProps> = ({
       onCheckOut();
     }
   };
-
   return (
     <Box sx={{ p: 2, pb: 3 }}>
       <Paper
@@ -68,7 +63,6 @@ export const AttendanceClockTab: React.FC<AttendanceClockTabProps> = ({
             weekday: 'long',
           })}
         </Typography>
-
         <Box
           sx={{
             width: 120,
@@ -94,21 +88,20 @@ export const AttendanceClockTab: React.FC<AttendanceClockTabProps> = ({
               sx={{ fontWeight: 600 }}
             >
               {todayStatus === 'not_checked_in'
-                ? t('mobile.attendance.action.clock_in')
+                ? i18n.t('mobile.attendance.action.clock_in')
                 : todayStatus === 'checked_in'
-                  ? t('mobile.attendance.action.clock_out')
-                  : t('mobile.attendance.label.checked_in')}
+                  ? i18n.t('mobile.attendance.action.clock_out')
+                  : i18n.t('mobile.attendance.label.checked_in')}
             </Typography>
           </Box>
         </Box>
-
         <Box sx={{ display: 'flex', justifyContent: 'center', gap: 4 }}>
           <Box sx={{ textAlign: 'center' }}>
             <Typography
               variant='body2'
               sx={{ opacity: 0.7, mb: 0.5 }}
             >
-              {t('mobile.attendance.label.clock_in_time')}
+              {i18n.t('mobile.attendance.label.clock_in_time')}
             </Typography>
             <Typography
               variant='h6'
@@ -122,7 +115,7 @@ export const AttendanceClockTab: React.FC<AttendanceClockTabProps> = ({
               variant='body2'
               sx={{ opacity: 0.7, mb: 0.5 }}
             >
-              {t('mobile.attendance.label.clock_out_time')}
+              {i18n.t('mobile.attendance.label.clock_out_time')}
             </Typography>
             <Typography
               variant='h6'
@@ -133,7 +126,6 @@ export const AttendanceClockTab: React.FC<AttendanceClockTabProps> = ({
           </Box>
         </Box>
       </Paper>
-
       <Paper
         elevation={0}
         sx={{
@@ -153,23 +145,22 @@ export const AttendanceClockTab: React.FC<AttendanceClockTabProps> = ({
             variant='body2'
             sx={{ fontWeight: 500 }}
           >
-            {t('mobile.attendance.section.location')}
+            {i18n.t('mobile.attendance.section.location')}
           </Typography>
           <Typography
             variant='caption'
             color='text.secondary'
           >
-            {t('mobile.attendance.field.company_address')}
+            {i18n.t('mobile.attendance.field.company_address')}
           </Typography>
         </Box>
         <Chip
-          label={t('mobile.attendance.status.in_range')}
+          label={i18n.t('mobile.attendance.status.in_range')}
           size='small'
           color='success'
           sx={{ height: 20, fontSize: '0.7rem' }}
         />
       </Paper>
-
       <Paper
         elevation={0}
         sx={{
@@ -193,14 +184,14 @@ export const AttendanceClockTab: React.FC<AttendanceClockTabProps> = ({
             variant='subtitle2'
             sx={{ fontWeight: 600 }}
           >
-            {t('mobile.attendance.section.monthly_stats')}
+            {i18n.t('mobile.attendance.section.monthly_stats')}
           </Typography>
           <Typography
             variant='caption'
             color='primary'
             sx={{ cursor: 'pointer' }}
           >
-            {t('mobile.attendance.action.view_detail')}
+            {i18n.t('mobile.attendance.action.view_detail')}
           </Typography>
         </Box>
         <Box sx={{ p: 2 }}>
@@ -216,7 +207,7 @@ export const AttendanceClockTab: React.FC<AttendanceClockTabProps> = ({
                 variant='caption'
                 color='text.secondary'
               >
-                {t('mobile.attendance.stat.attendance_days')}
+                {i18n.t('mobile.attendance.stat.attendance_days')}
               </Typography>
             </Box>
             <Box sx={{ flex: 1, textAlign: 'center' }}>
@@ -230,7 +221,7 @@ export const AttendanceClockTab: React.FC<AttendanceClockTabProps> = ({
                 variant='caption'
                 color='text.secondary'
               >
-                {t('mobile.attendance.stat.late_count')}
+                {i18n.t('mobile.attendance.stat.late_count')}
               </Typography>
             </Box>
             <Box sx={{ flex: 1, textAlign: 'center' }}>
@@ -244,7 +235,7 @@ export const AttendanceClockTab: React.FC<AttendanceClockTabProps> = ({
                 variant='caption'
                 color='text.secondary'
               >
-                {t('mobile.attendance.stat.total_hours')}
+                {i18n.t('mobile.attendance.stat.total_hours')}
               </Typography>
             </Box>
           </Box>

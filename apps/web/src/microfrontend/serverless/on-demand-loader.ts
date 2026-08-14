@@ -1,3 +1,4 @@
+import i18n from '@/i18n';
 /**
  * V48.0 Track Serverless: 无服务器架构 — 按需加载引擎
  *
@@ -237,7 +238,7 @@ class OnDemandLoaderImpl {
         status: 'failed',
         loadTime: 0,
         fromPreload: false,
-        error: new Error(`[OnDemandLoader] 模块 ${id} 未注册`),
+        error: new Error(`${i18n.t('microfrontend.on-demand-loader.ondemandloader_0')}${id}${i18n.t('microfrontend.on-demand-loader.k1')}`),
       };
     }
 
@@ -247,7 +248,7 @@ class OnDemandLoaderImpl {
         status: 'failed',
         loadTime: 0,
         fromPreload: false,
-        error: new Error(`[OnDemandLoader] 模块 ${id} 条件不满足`),
+        error: new Error(`${i18n.t('microfrontend.on-demand-loader.ondemandloader_2')}${id}${i18n.t('microfrontend.on-demand-loader.k3')}`),
       };
     }
 
@@ -314,7 +315,7 @@ class OnDemandLoaderImpl {
 
   preload(id: string, priority?: LoadPriority): Promise<void> {
     const mod = this.modules.get(id);
-    if (!mod) return Promise.reject(new Error(`模块 ${id} 未注册`));
+    if (!mod) return Promise.reject(new Error(`${i18n.t('microfrontend.on-demand-loader.k4')}${id}${i18n.t('microfrontend.on-demand-loader.k5')}`));
 
     const req: LoadRequest = {
       id,
@@ -413,12 +414,12 @@ class OnDemandLoaderImpl {
 
   predictNextModules(currentPath: string): LoadPredictionResult {
     if (!this.config.enableSmartPrediction) {
-      return { nextLikelyModules: [], confidence: 0, reasoning: '智能预测未启用' };
+      return { nextLikelyModules: [], confidence: 0, reasoning: i18n.t('microfrontend.on-demand-loader.k0') };
     }
 
     const recent = this.history.slice(-50);
     if (recent.length < 3) {
-      return { nextLikelyModules: [], confidence: 0, reasoning: '访问历史不足' };
+      return { nextLikelyModules: [], confidence: 0, reasoning: i18n.t('microfrontend.on-demand-loader.k1') };
     }
 
     const transitions = this.buildTransitionMatrix(recent);
@@ -431,7 +432,7 @@ class OnDemandLoaderImpl {
       return {
         nextLikelyModules: fallback,
         confidence: 0.3,
-        reasoning: '无历史模式，使用频率最高的模块',
+        reasoning: i18n.t('microfrontend.on-demand-loader.k2'),
       };
     }
 
@@ -439,7 +440,7 @@ class OnDemandLoaderImpl {
     return {
       nextLikelyModules: candidates.slice(0, 5).map((c) => c.moduleId),
       confidence: Math.min(maxScore * 0.5, 1),
-      reasoning: `基于路径模式 "${currentPattern}" 的 ${candidates.length} 个关联模块`,
+      reasoning: `${i18n.t('microfrontend.on-demand-loader.k6')}${currentPattern}${i18n.t('microfrontend.on-demand-loader.k7')}${candidates.length}${i18n.t('microfrontend.on-demand-loader.k8')}`,
     };
   }
 
@@ -558,14 +559,14 @@ class OnDemandLoaderImpl {
       }
     }
 
-    throw lastError ?? new Error(`[OnDemandLoader] 模块 ${mod.id} 加载失败`);
+    throw lastError ?? new Error(`${i18n.t('microfrontend.on-demand-loader.ondemandloader_9')}${mod.id}${i18n.t('microfrontend.on-demand-loader.k10')}`);
   }
 
   private async doLoadWithTimeout(mod: OnDemandModule): Promise<any> {
     const timeoutMs = this.config.defaultTimeoutMs;
     return new Promise<any>((resolve, reject) => {
       const timer = setTimeout(() => {
-        reject(new Error(`[OnDemandLoader] 模块 ${mod.id} 加载超时（${timeoutMs}ms）`));
+        reject(new Error(`${i18n.t('microfrontend.on-demand-loader.ondemandloader_11')}${mod.id}${i18n.t('microfrontend.on-demand-loader.k12')}${timeoutMs}ms）`));
       }, timeoutMs);
 
       mod

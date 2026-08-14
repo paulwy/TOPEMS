@@ -1,17 +1,18 @@
 import type { EntitySchema } from '@/schema';
 import React from 'react';
 import { Box, Typography, Chip } from '@mui/material';
+import i18n from '@/i18n';
 
 const TYPE_LABELS: Record<string, string> = {
-  system: '系统通知',
-  workflow: '审批通知',
-  reminder: '提醒通知',
-  alert: '告警通知',
-  message: '消息通知',
-  info: '信息通知',
-  success: '成功通知',
-  warning: '警告通知',
-  error: '错误通知',
+  system: i18n.t('shared.archive.k0'),
+  workflow: i18n.t('shared.archive.k1'),
+  reminder: i18n.t('shared.archive.k2'),
+  alert: i18n.t('shared.archive.k3'),
+  message: i18n.t('shared.archive.k4'),
+  info: i18n.t('shared.archive.k5'),
+  success: i18n.t('shared.archive.k6'),
+  warning: i18n.t('shared.archive.k7'),
+  error: i18n.t('shared.archive.k8'),
 };
 
 const TYPE_COLORS: Record<
@@ -39,8 +40,8 @@ interface ArchivedNotificationRow {
 
 export const archiveNotificationSchema: EntitySchema = {
   entity: 'archivedNotification',
-  title: '归档通知',
-  description: '查看和管理已归档的通知',
+  title: i18n.t('shared.archive.k9'),
+  description: i18n.t('shared.archive.k10'),
 
   api: {
     module: 'notification',
@@ -50,7 +51,7 @@ export const archiveNotificationSchema: EntitySchema = {
   fields: [
     {
       name: 'title',
-      label: '通知标题',
+      label: i18n.t('shared.archive.k11'),
       type: 'text',
       listWidth: 280,
       renderCell: (row: Record<string, unknown>) => {
@@ -82,21 +83,21 @@ export const archiveNotificationSchema: EntitySchema = {
     },
     {
       name: 'notification_type',
-      label: '类型',
+      label: i18n.t('shared.archive.k12'),
       type: 'select',
       listWidth: 120,
       options: {
         type: 'static',
         options: [
-          { value: 'system', label: '系统通知' },
-          { value: 'workflow', label: '审批通知' },
-          { value: 'reminder', label: '提醒通知' },
-          { value: 'alert', label: '告警通知' },
-          { value: 'message', label: '消息通知' },
-          { value: 'info', label: '信息通知' },
-          { value: 'success', label: '成功通知' },
-          { value: 'warning', label: '警告通知' },
-          { value: 'error', label: '错误通知' },
+          { value: 'system', label: i18n.t('shared.archive.k13') },
+          { value: 'workflow', label: i18n.t('shared.archive.k14') },
+          { value: 'reminder', label: i18n.t('shared.archive.k15') },
+          { value: 'alert', label: i18n.t('shared.archive.k16') },
+          { value: 'message', label: i18n.t('shared.archive.k17') },
+          { value: 'info', label: i18n.t('shared.archive.k18') },
+          { value: 'success', label: i18n.t('shared.archive.k19') },
+          { value: 'warning', label: i18n.t('shared.archive.k20') },
+          { value: 'error', label: i18n.t('shared.archive.k21') },
         ],
       },
       renderCell: (row: Record<string, unknown>) => {
@@ -115,7 +116,7 @@ export const archiveNotificationSchema: EntitySchema = {
     },
     {
       name: 'created_at',
-      label: '原创建时间',
+      label: i18n.t('shared.archive.k22'),
       type: 'datetime',
       listWidth: 160,
       hideInForm: true,
@@ -130,7 +131,7 @@ export const archiveNotificationSchema: EntitySchema = {
     },
     {
       name: 'archived_at',
-      label: '归档时间',
+      label: i18n.t('shared.archive.k23'),
       type: 'datetime',
       listWidth: 160,
       hideInForm: true,
@@ -155,5 +156,5 @@ export const archiveNotificationSchema: EntitySchema = {
   actions: ['detail'],
 
   formColCount: 2,
-  detailTitle: '归档通知详情',
+  detailTitle: i18n.t('shared.archive.k24'),
 };

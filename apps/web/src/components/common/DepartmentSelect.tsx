@@ -8,6 +8,7 @@ import {
   Chip,
   CircularProgress,
 } from '@mui/material';
+import i18n from '@/i18n';
 import { Search, Building2, ChevronRight, ChevronDown, Check } from 'lucide-react';
 
 export interface Department {
@@ -45,7 +46,7 @@ export const DepartmentSelect: React.FC<DepartmentSelectProps> = ({
   value,
   onChange,
   multiple = false,
-  placeholder = '选择部门',
+  placeholder = i18n.t('components.department_select.k0'),
   disabled = false,
   loading = false,
   departments = [],
@@ -151,7 +152,7 @@ export const DepartmentSelect: React.FC<DepartmentSelectProps> = ({
                 {allowClear && value && (
                   <Chip
                     size='small'
-                    label='清除'
+                    label={i18n.t('components.department_select.k1')}
                     onDelete={handleClear}
                     sx={{ minWidth: 0, height: 24 }}
                   />
@@ -171,7 +172,7 @@ export const DepartmentSelect: React.FC<DepartmentSelectProps> = ({
         <Box sx={{ p: 2, borderBottom: 1, borderColor: 'divider' }}>
           <TextField
             size='small'
-            placeholder='搜索部门...'
+            placeholder={i18n.t('components.department_select.k0')}
             value={searchKeyword}
             onChange={(e) => setSearchKeyword(e.target.value)}
             slotProps={{
@@ -193,7 +194,7 @@ export const DepartmentSelect: React.FC<DepartmentSelectProps> = ({
           </Box>
         ) : flattenedDepartments.length === 0 ? (
           <MenuItem disabled>
-            <ListItemText primary='暂无部门' />
+            <ListItemText primary={i18n.t('components.department_select.k2')} />
           </MenuItem>
         ) : (
           flattenedDepartments.filter(isVisible).map((dept) => {

@@ -6,6 +6,7 @@ import type { Department } from '@/api/hrm';
 
 import { QUERY_KEYS } from '@/lib/reactQuery';
 import { designTokens } from '@topems/tokens';
+import i18n from '@/i18n';
 
 async function loadDepartments(): Promise<{ value: string; label: string }[]> {
   try {
@@ -22,18 +23,18 @@ async function loadDepartments(): Promise<{ value: string; label: string }[]> {
 }
 
 const BUDGET_TYPE_LABELS: Record<string, string> = {
-  office: '办公费',
-  marketing: '市场费',
-  development: '研发费',
-  travel: '差旅费',
-  training: '培训费',
-  other: '其他',
+  office: i18n.t('finance.budget.k0'),
+  marketing: i18n.t('finance.budget.k1'),
+  development: i18n.t('finance.budget.k2'),
+  travel: i18n.t('finance.budget.k3'),
+  training: i18n.t('finance.budget.k4'),
+  other: i18n.t('finance.budget.k5'),
 };
 
 const STATUS_LABELS: Record<string, string> = {
-  active: '执行中',
-  frozen: '已冻结',
-  exhausted: '已耗尽',
+  active: i18n.t('finance.budget.k6'),
+  frozen: i18n.t('finance.budget.k7'),
+  exhausted: i18n.t('finance.budget.k8'),
 };
 
 const STATUS_COLORS: Record<string, 'primary' | 'warning' | 'error' | 'default'> = {
@@ -55,7 +56,7 @@ const renderUsageBar = (row: Record<string, unknown>) => {
     rate >= 90
       ? `var(--color-error-main, ${designTokens.colors.error['800']})`
       : rate >= 70
-        ? 'var(--color-warning-main, #ed6c02)'
+        ? `var(--color-warning-main, ${designTokens.colors.warning[500]}`
         : `var(--color-primary-main, ${designTokens.colors.primary.dark})`;
 
   return React.createElement(
@@ -66,8 +67,8 @@ const renderUsageBar = (row: Record<string, unknown>) => {
       { style: { display: 'flex', justifyContent: 'space-between', marginBottom: 4 } },
       React.createElement(
         'span',
-        { style: { fontSize: '0.75rem', color: 'var(--color-text-secondary, rgba(0,0,0,0.6))' } },
-        `已用: ¥${used.toLocaleString('zh-CN')}`
+        { style: { fontSize: '0.75rem', color: `var(--color-text-secondary, ${designTokens.colors.cyber.metal.bottomShadow}` } },
+        `${i18n.t('shared.budget.k0')}${used.toLocaleString('zh-CN')}`
       ),
       React.createElement(
         'span',
@@ -87,7 +88,7 @@ const renderUsageBar = (row: Record<string, unknown>) => {
       {
         style: {
           width: '100%',
-          backgroundColor: 'var(--color-action-hover, rgba(0,0,0,0.08))',
+          backgroundColor: `var(--color-action-hover, ${designTokens.colors.action.selected}`,
           borderRadius: 4,
           height: 8,
         },
@@ -111,22 +112,22 @@ const renderStatusBadge = (row: Record<string, unknown>) => {
   const color = STATUS_COLORS[status] || 'default';
   const colorMap: Record<string, string> = {
     primary: `var(--color-primary-main, ${designTokens.colors.primary.dark})`,
-    warning: 'var(--color-warning-main, #ed6c02)',
+    warning: `var(--color-warning-main, ${designTokens.colors.warning[500]}`,
     error: `var(--color-error-main, ${designTokens.colors.error['800']})`,
-    default: 'var(--color-text-secondary, rgba(0,0,0,0.6))',
+    default: `var(--color-text-secondary, ${designTokens.colors.cyber.metal.bottomShadow}`,
   };
   const bgColorMap: Record<string, string> = {
     primary: `var(--color-primary-lighter, ${designTokens.colors.primary['50']})`,
-    warning: 'var(--color-warning-lighter, #fff3e0)',
-    error: 'var(--color-error-lighter, #ffebee)',
-    default: 'var(--color-action-hover, rgba(0,0,0,0.04))',
+    warning: `var(--color-warning-lighter, ${designTokens.colors.warning[50]}`,
+    error: `var(--color-error-lighter, ${designTokens.colors.error[50]}`,
+    default: `var(--color-action-hover, ${designTokens.colors.action.hover}`,
   };
   return React.createElement(
     'span',
     {
       style: {
         display: 'inline-block',
-        padding: '2px 8px',
+        padding: `${designTokens.spacing.xs} 8px`,
         borderRadius: 12,
         fontSize: 12,
         fontWeight: 500,
@@ -140,8 +141,8 @@ const renderStatusBadge = (row: Record<string, unknown>) => {
 
 export const budgetSchema: EntitySchema = {
   entity: 'finance_budget',
-  title: '预算管理',
-  description: '管理各部门预算，追踪预算使用情况',
+  title: i18n.t('finance.budget.k9'),
+  description: i18n.t('finance.budget.k10'),
 
   api: {
     module: 'erp',
@@ -151,7 +152,7 @@ export const budgetSchema: EntitySchema = {
   fields: [
     {
       name: 'department_id',
-      label: '部门',
+      label: i18n.t('finance.budget.k11'),
       type: 'select',
       listWidth: 160,
       options: {
@@ -169,18 +170,18 @@ export const budgetSchema: EntitySchema = {
     },
     {
       name: 'budget_type',
-      label: '预算类型',
+      label: i18n.t('finance.budget.k12'),
       type: 'select',
       defaultValue: 'office',
       options: {
         type: 'static',
         options: [
-          { value: 'office', label: '办公费' },
-          { value: 'marketing', label: '市场费' },
-          { value: 'development', label: '研发费' },
-          { value: 'travel', label: '差旅费' },
-          { value: 'training', label: '培训费' },
-          { value: 'other', label: '其他' },
+          { value: 'office', label: i18n.t('finance.budget.k13') },
+          { value: 'marketing', label: i18n.t('finance.budget.k14') },
+          { value: 'development', label: i18n.t('finance.budget.k15') },
+          { value: 'travel', label: i18n.t('finance.budget.k16') },
+          { value: 'training', label: i18n.t('finance.budget.k17') },
+          { value: 'other', label: i18n.t('finance.budget.k18') },
         ],
       },
       listWidth: 120,
@@ -194,17 +195,17 @@ export const budgetSchema: EntitySchema = {
     },
     {
       name: 'fiscal_year',
-      label: '财年',
+      label: i18n.t('finance.budget.k19'),
       type: 'text',
       defaultValue: new Date().getFullYear().toString(),
       listWidth: 100,
       renderCell: (row: Record<string, unknown>) =>
-        React.createElement('span', null, `${row.fiscal_year ?? ''}年`),
+        React.createElement('span', null, `${row.fiscal_year ?? ''}${i18n.t('shared.budget.k1')}`),
       validation: [{ type: 'maxLength', value: 20 }],
     },
     {
       name: 'total_budget',
-      label: '预算总额',
+      label: i18n.t('finance.budget.k20'),
       type: 'number',
       required: true,
       defaultValue: 0,
@@ -214,7 +215,7 @@ export const budgetSchema: EntitySchema = {
     },
     {
       name: 'used_amount',
-      label: '已使用',
+      label: i18n.t('finance.budget.k21'),
       type: 'number',
       defaultValue: 0,
       listWidth: 280,
@@ -223,7 +224,7 @@ export const budgetSchema: EntitySchema = {
     },
     {
       name: 'remaining_amount',
-      label: '剩余预算',
+      label: i18n.t('finance.budget.k22'),
       type: 'number',
       defaultValue: 0,
       listWidth: 140,
@@ -240,15 +241,15 @@ export const budgetSchema: EntitySchema = {
     },
     {
       name: 'status',
-      label: '状态',
+      label: i18n.t('finance.budget.k23'),
       type: 'select',
       defaultValue: 'active',
       options: {
         type: 'static',
         options: [
-          { value: 'active', label: '执行中' },
-          { value: 'frozen', label: '已冻结' },
-          { value: 'exhausted', label: '已耗尽' },
+          { value: 'active', label: i18n.t('finance.budget.k24') },
+          { value: 'frozen', label: i18n.t('finance.budget.k25') },
+          { value: 'exhausted', label: i18n.t('finance.budget.k26') },
         ],
       },
       listWidth: 100,
@@ -273,28 +274,28 @@ export const budgetSchema: EntitySchema = {
     filters: [
       {
         id: 'status',
-        label: '状态',
+        label: i18n.t('finance.budget.k27'),
         type: 'select',
         options: [
-          { label: '全部状态', value: 'all' },
-          { label: '执行中', value: 'active' },
-          { label: '已冻结', value: 'frozen' },
-          { label: '已耗尽', value: 'exhausted' },
+          { label: i18n.t('finance.budget.k28'), value: 'all' },
+          { label: i18n.t('finance.budget.k29'), value: 'active' },
+          { label: i18n.t('finance.budget.k30'), value: 'frozen' },
+          { label: i18n.t('finance.budget.k31'), value: 'exhausted' },
         ],
         defaultValue: 'all',
       },
       {
         id: 'budget_type',
-        label: '预算类型',
+        label: i18n.t('finance.budget.k32'),
         type: 'select',
         options: [
-          { label: '全部类型', value: 'all' },
-          { label: '办公费', value: 'office' },
-          { label: '市场费', value: 'marketing' },
-          { label: '研发费', value: 'development' },
-          { label: '差旅费', value: 'travel' },
-          { label: '培训费', value: 'training' },
-          { label: '其他', value: 'other' },
+          { label: i18n.t('finance.budget.k33'), value: 'all' },
+          { label: i18n.t('finance.budget.k34'), value: 'office' },
+          { label: i18n.t('finance.budget.k35'), value: 'marketing' },
+          { label: i18n.t('finance.budget.k36'), value: 'development' },
+          { label: i18n.t('finance.budget.k37'), value: 'travel' },
+          { label: i18n.t('finance.budget.k38'), value: 'training' },
+          { label: i18n.t('finance.budget.k39'), value: 'other' },
         ],
         defaultValue: 'all',
       },
@@ -305,19 +306,19 @@ export const budgetSchema: EntitySchema = {
 
   formSections: [
     {
-      title: '基本信息',
+      title: i18n.t('finance.budget.k40'),
       fields: ['department_id', 'budget_type', 'fiscal_year'],
     },
     {
-      title: '预算金额',
+      title: i18n.t('finance.budget.k41'),
       fields: ['total_budget', 'used_amount', 'status'],
     },
   ],
 
   formColCount: 2,
-  createTitle: '新增预算',
-  editTitle: '编辑预算',
-  detailTitle: '预算详情',
+  createTitle: i18n.t('finance.budget.k42'),
+  editTitle: i18n.t('finance.budget.k43'),
+  detailTitle: i18n.t('finance.budget.k44'),
 
   dynamicOptions: [
     {

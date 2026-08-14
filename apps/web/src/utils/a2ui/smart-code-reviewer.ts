@@ -1,3 +1,4 @@
+import i18n from '@/i18n';
 /**
  * V50.0 前端 A2UI — 智能代码审查器
  *
@@ -173,7 +174,7 @@ const REVIEW_RULES: ReviewRuleDef[] = [
     id: 'no-unused-vars',
     category: ReviewCategory.BUGRISK,
     severity: ReviewSeverity.WARNING,
-    message: '存在未使用的变量',
+    message: i18n.t('shared.smart-code-reviewer.k0'),
     pattern: /(?:const|let|var)\s+(\w+)\s*=[^;]+;(?!.*\1\b)/g,
     check: (code: string) => {
       const issues: ReviewIssue[] = [];
@@ -187,15 +188,15 @@ const REVIEW_RULES: ReviewRuleDef[] = [
             issues.push({
               id: `unused-var-${idx}`,
               rule_id: 'no-unused-vars',
-              message: `变量 '${varName}' 已声明但从未使用`,
-              description: '未使用的变量可能是遗留代码或错误',
+              message: `${i18n.t('shared.smart-code-reviewer.k0')}${varName}${i18n.t('shared.smart-code-reviewer.k1')}`,
+              description: i18n.t('shared.smart-code-reviewer.k1'),
               severity: ReviewSeverity.WARNING,
               category: ReviewCategory.BUGRISK,
               line: idx + 1,
               column: line.indexOf(varName) + 1,
               code_snippet: line.trim(),
               fix_suggestion: {
-                description: '移除未使用的变量',
+                description: i18n.t('shared.smart-code-reviewer.k2'),
                 difficulty: FixDifficulty.EASY,
                 auto_fixable: true,
               },
@@ -210,14 +211,14 @@ const REVIEW_RULES: ReviewRuleDef[] = [
     id: 'no-empty-function',
     category: ReviewCategory.BUGRISK,
     severity: ReviewSeverity.WARNING,
-    message: '空函数体',
+    message: i18n.t('shared.smart-code-reviewer.k3'),
     pattern: /function\s+\w+\s*\([^)]*\)\s*{\s*}/g,
   },
   {
     id: 'no-compare-literal',
     category: ReviewCategory.BUGRISK,
     severity: ReviewSeverity.WARNING,
-    message: '可能的条件判断错误',
+    message: i18n.t('shared.smart-code-reviewer.k4'),
     pattern: /if\s*\([^)]*(?:==|!=)\s*['"][^'"]*['"]\)/g,
   },
 
@@ -226,7 +227,7 @@ const REVIEW_RULES: ReviewRuleDef[] = [
     id: 'no-large-bundle',
     category: ReviewCategory.PERFORMANCE,
     severity: ReviewSeverity.INFO,
-    message: '大文件可能影响加载性能',
+    message: i18n.t('shared.smart-code-reviewer.k5'),
     check: (code: string) => {
       const lines = code.split('\n').length;
       if (lines > 500) {
@@ -234,15 +235,15 @@ const REVIEW_RULES: ReviewRuleDef[] = [
           {
             id: 'large-file',
             rule_id: 'no-large-bundle',
-            message: `文件超过 ${lines} 行，建议拆分`,
-            description: '大文件会增加初始加载时间和维护难度',
+            message: `${i18n.t('shared.smart-code-reviewer.k2')}${lines}${i18n.t('shared.smart-code-reviewer.k3')}`,
+            description: i18n.t('shared.smart-code-reviewer.k6'),
             severity: ReviewSeverity.INFO,
             category: ReviewCategory.PERFORMANCE,
             line: 1,
             column: 1,
-            code_snippet: `文件共 ${lines} 行`,
+            code_snippet: `${i18n.t('shared.smart-code-reviewer.k4')}${lines}${i18n.t('shared.smart-code-reviewer.k5')}`,
             fix_suggestion: {
-              description: '将文件拆分为更小的模块',
+              description: i18n.t('shared.smart-code-reviewer.k7'),
               difficulty: FixDifficulty.MEDIUM,
               auto_fixable: false,
             },
@@ -256,14 +257,14 @@ const REVIEW_RULES: ReviewRuleDef[] = [
     id: 'no-inline-function',
     category: ReviewCategory.PERFORMANCE,
     severity: ReviewSeverity.INFO,
-    message: '内联函数可能导致不必要的重渲染',
+    message: i18n.t('shared.smart-code-reviewer.k8'),
     pattern: /(?:onClick|onChange|on[A-Z]\w*)=\{?\s*(?:\(\)=>|function\s*\()/g,
   },
   {
     id: 'no-memo-oomission',
     category: ReviewCategory.PERFORMANCE,
     severity: ReviewSeverity.HINT,
-    message: '复杂计算可能需要 useMemo',
+    message: i18n.t('shared.smart-code-reviewer.usememo_9'),
     pattern: /(?:const|let)\s+\w+\s*=\s*(?:\w+\.\w+\(\)|\[[^\]]+\]\.map|JSON\.parse)/g,
   },
 
@@ -272,28 +273,28 @@ const REVIEW_RULES: ReviewRuleDef[] = [
     id: 'no-eval',
     category: ReviewCategory.SECURITY,
     severity: ReviewSeverity.CRITICAL,
-    message: '禁止使用 eval',
+    message: i18n.t('shared.smart-code-reviewer.eval_10'),
     pattern: /eval\s*\(/g,
   },
   {
     id: 'no-inner-html',
     category: ReviewCategory.SECURITY,
     severity: ReviewSeverity.CRITICAL,
-    message: 'innerHTML 存在 XSS 风险',
+    message: i18n.t('shared.smart-code-reviewer.innerhtmlxss_6'),
     pattern: /\.innerHTML\s*=/g,
   },
   {
     id: 'no-document-write',
     category: ReviewCategory.SECURITY,
     severity: ReviewSeverity.ERROR,
-    message: 'document.write 已废弃',
+    message: i18n.t('shared.smart-code-reviewer.documentwrite_7'),
     pattern: /document\.write\s*\(/g,
   },
   {
     id: 'no-hardcoded-secret',
     category: ReviewCategory.SECURITY,
     severity: ReviewSeverity.CRITICAL,
-    message: '硬编码的敏感信息',
+    message: i18n.t('shared.smart-code-reviewer.k11'),
     pattern: /(?:password|secret|api[_-]?key|token|auth)\s*[=:]\s*['"][^'"]+['"]/gi,
   },
 
@@ -302,14 +303,14 @@ const REVIEW_RULES: ReviewRuleDef[] = [
     id: 'no-magic-number',
     category: ReviewCategory.MAINTAINABILITY,
     severity: ReviewSeverity.INFO,
-    message: '魔法数字应提取为常量',
+    message: i18n.t('shared.smart-code-reviewer.k12'),
     pattern: /(?:==|!=|>=|<=|>|<)\s*(?![01])(\d{2,})\b/g,
   },
   {
     id: 'no-long-function',
     category: ReviewCategory.MAINTAINABILITY,
     severity: ReviewSeverity.WARNING,
-    message: '函数过长，建议拆分',
+    message: i18n.t('shared.smart-code-reviewer.k13'),
     check: (code: string) => {
       const issues: ReviewIssue[] = [];
       const lines = code.split('\n');
@@ -328,15 +329,15 @@ const REVIEW_RULES: ReviewRuleDef[] = [
               issues.push({
                 id: `long-func-${functionStart}`,
                 rule_id: 'no-long-function',
-                message: `函数超过 ${functionLines} 行`,
-                description: '长函数难以理解和维护，建议拆分为更小的函数',
+                message: `${i18n.t('shared.smart-code-reviewer.k8')}${functionLines}${i18n.t('shared.smart-code-reviewer.k9')}`,
+                description: i18n.t('shared.smart-code-reviewer.k14'),
                 severity: ReviewSeverity.WARNING,
                 category: ReviewCategory.MAINTAINABILITY,
                 line: functionStart + 1,
                 column: 1,
                 code_snippet: lines[functionStart].trim(),
                 fix_suggestion: {
-                  description: '拆分函数为多个职责单一的小函数',
+                  description: i18n.t('shared.smart-code-reviewer.k15'),
                   difficulty: FixDifficulty.MEDIUM,
                   auto_fixable: false,
                 },
@@ -353,7 +354,7 @@ const REVIEW_RULES: ReviewRuleDef[] = [
     id: 'no-deep-nesting',
     category: ReviewCategory.MAINTAINABILITY,
     severity: ReviewSeverity.WARNING,
-    message: '嵌套层级过深',
+    message: i18n.t('shared.smart-code-reviewer.k16'),
     check: (code: string) => {
       const issues: ReviewIssue[] = [];
       const lines = code.split('\n');
@@ -373,8 +374,8 @@ const REVIEW_RULES: ReviewRuleDef[] = [
         issues.push({
           id: `deep-nesting-${maxNestingLine}`,
           rule_id: 'no-deep-nesting',
-          message: `嵌套层级达到 ${Math.floor(maxNesting)} 层`,
-          description: '深层嵌套降低代码可读性，建议使用早返回或提取函数',
+          message: `${i18n.t('shared.smart-code-reviewer.k10')}${Math.floor(maxNesting)}${i18n.t('shared.smart-code-reviewer.k11')}`,
+          description: i18n.t('shared.smart-code-reviewer.k17'),
           severity: ReviewSeverity.WARNING,
           category: ReviewCategory.MAINTAINABILITY,
           line: maxNestingLine + 1,
@@ -392,21 +393,21 @@ const REVIEW_RULES: ReviewRuleDef[] = [
     id: 'prefer-const',
     category: ReviewCategory.BESTPRACTICE,
     severity: ReviewSeverity.HINT,
-    message: '不会被重新赋值的变量应使用 const',
+    message: i18n.t('shared.smart-code-reviewer.const_18'),
     pattern: /let\s+(\w+)\s*=[^;]+;(?!.*\1\s*=)/g,
   },
   {
     id: 'prefer-arrow-callback',
     category: ReviewCategory.BESTPRACTICE,
     severity: ReviewSeverity.HINT,
-    message: '优先使用箭头函数',
+    message: i18n.t('shared.smart-code-reviewer.k19'),
     pattern: /function\s*\([^)]*\)\s*{\s*return\s+/g,
   },
   {
     id: 'no-var',
     category: ReviewCategory.BESTPRACTICE,
     severity: ReviewSeverity.WARNING,
-    message: '避免使用 var，使用 const/let',
+    message: i18n.t('shared.smart-code-reviewer.k20'),
     pattern: /\bvar\s+/g,
   },
 
@@ -415,14 +416,14 @@ const REVIEW_RULES: ReviewRuleDef[] = [
     id: 'no-any-type',
     category: ReviewCategory.TYPESAFETY,
     severity: ReviewSeverity.WARNING,
-    message: '避免使用 any 类型',
+    message: i18n.t('shared.smart-code-reviewer.any_21'),
     pattern: /:\s*any\b/g,
   },
   {
     id: 'no-explicit-any',
     category: ReviewCategory.TYPESAFETY,
     severity: ReviewSeverity.WARNING,
-    message: '禁止显式 any',
+    message: i18n.t('shared.smart-code-reviewer.any_22'),
     pattern: /<any>|as\s+any\b/g,
   },
 
@@ -431,21 +432,21 @@ const REVIEW_RULES: ReviewRuleDef[] = [
     id: 'no-alt-missing',
     category: ReviewCategory.ACCESSIBILITY,
     severity: ReviewSeverity.ERROR,
-    message: '图片必须包含 alt 属性',
+    message: i18n.t('shared.smart-code-reviewer.alt_23'),
     pattern: /<img[^>]*(?<!alt=["'][^"']*["'])[^>]*>/g,
   },
   {
     id: 'no-empty-alt',
     category: ReviewCategory.ACCESSIBILITY,
     severity: ReviewSeverity.WARNING,
-    message: 'alt 属性不应为空（装饰性图片除外）',
+    message: i18n.t('shared.smart-code-reviewer.alt_12'),
     pattern: /<img[^>]*alt=["']["'][^>]*>/g,
   },
   {
     id: 'no-click-without-key',
     category: ReviewCategory.ACCESSIBILITY,
     severity: ReviewSeverity.WARNING,
-    message: '可点击元素需要键盘支持',
+    message: i18n.t('shared.smart-code-reviewer.k24'),
     pattern: /<(?:div|span)[^>]*onClick[^>]*(?!onKeyDown)[^>]*>/g,
   },
 
@@ -454,14 +455,14 @@ const REVIEW_RULES: ReviewRuleDef[] = [
     id: 'no-direct-dom',
     category: ReviewCategory.ARCHITECTURE,
     severity: ReviewSeverity.INFO,
-    message: '直接 DOM 操作应谨慎使用',
+    message: i18n.t('shared.smart-code-reviewer.dom_25'),
     pattern: /document\.(?:getElementById|querySelector|getElementsBy)/g,
   },
   {
     id: 'no-global-state',
     category: ReviewCategory.ARCHITECTURE,
     severity: ReviewSeverity.WARNING,
-    message: '全局状态可能导致难以追踪的问题',
+    message: i18n.t('shared.smart-code-reviewer.k26'),
     pattern: /(?:window\.|global\.|globalThis\.)\w+\s*=/g,
   },
 ];
@@ -593,35 +594,35 @@ export class SmartCodeReviewer {
     if (!issue.fix_suggestion) {
       return {
         can_auto_fix: false,
-        fix_steps: ['手动修复此问题'],
+        fix_steps: [i18n.t('shared.smart-code-reviewer.k27')],
       };
     }
 
     switch (issue.rule_id) {
       case 'no-unused-vars':
-        fixSteps.push('1. 检查变量是否确实不需要');
-        fixSteps.push('2. 如果不需要，删除变量声明');
-        fixSteps.push('3. 如果需要，补充使用该变量的代码');
+        fixSteps.push(i18n.t('shared.smart-code-reviewer.1_13'));
+        fixSteps.push(i18n.t('shared.smart-code-reviewer.2_14'));
+        fixSteps.push(i18n.t('shared.smart-code-reviewer.3_15'));
         break;
 
       case 'no-eval':
-        fixSteps.push('1. 移除 eval 调用');
-        fixSteps.push('2. 使用 JSON.parse 解析 JSON');
-        fixSteps.push('3. 使用 new Function 构建动态函数（更安全）');
+        fixSteps.push(i18n.t('shared.smart-code-reviewer.1eval_16'));
+        fixSteps.push(i18n.t('shared.smart-code-reviewer.k17'));
+        fixSteps.push(i18n.t('shared.smart-code-reviewer.k18'));
         break;
 
       case 'no-inner-html':
-        fixSteps.push('1. 使用 textContent 代替 innerHTML');
-        fixSteps.push('2. 或使用 DOM API 创建元素');
-        fixSteps.push('3. 如必须使用，先对内容进行转义');
+        fixSteps.push(i18n.t('shared.smart-code-reviewer.k19'));
+        fixSteps.push(i18n.t('shared.smart-code-reviewer.2domapi_20'));
+        fixSteps.push(i18n.t('shared.smart-code-reviewer.3_21'));
         break;
 
       case 'prefer-const':
-        fixSteps.push('将 let 改为 const');
+        fixSteps.push(i18n.t('shared.smart-code-reviewer.letconst_28'));
         break;
 
       case 'no-var':
-        fixSteps.push('将 var 改为 const 或 let');
+        fixSteps.push(i18n.t('shared.smart-code-reviewer.varconstlet_29'));
         break;
 
       default:
@@ -647,7 +648,7 @@ export class SmartCodeReviewer {
         pattern_type: 'React Hooks',
         locations: this.findPatternLocations(code, /use[A-Z]\w*/g),
         confidence: 0.95,
-        suggestion: '遵循 Hooks 最佳实践：依赖数组完整、避免循环中调用',
+        suggestion: i18n.t('shared.smart-code-reviewer.k30'),
       });
     }
 
@@ -657,7 +658,7 @@ export class SmartCodeReviewer {
         pattern_type: 'Higher-Order Component',
         locations: this.findPatternLocations(code, /with\w+/g),
         confidence: 0.85,
-        suggestion: '考虑使用 Hooks 替代 HOC',
+        suggestion: i18n.t('shared.smart-code-reviewer.hookshoc_31'),
       });
     }
 
@@ -676,7 +677,7 @@ export class SmartCodeReviewer {
         pattern_type: 'Context API',
         locations: this.findPatternLocations(code, /createContext|useContext/g),
         confidence: 0.9,
-        suggestion: '确保 Context 值稳定性，避免不必要的重渲染',
+        suggestion: i18n.t('shared.smart-code-reviewer.k32'),
       });
     }
 
@@ -687,7 +688,7 @@ export class SmartCodeReviewer {
         pattern_type: 'Custom Hooks',
         locations: this.findPatternLocations(code, /use[A-Z]\w*(?!\s*\()/g),
         confidence: 0.85,
-        suggestion: '确保自定义 Hook 遵循命名规范和返回值一致性',
+        suggestion: i18n.t('shared.smart-code-reviewer.k33'),
       });
     }
 
@@ -758,7 +759,7 @@ export class SmartCodeReviewer {
             id: `${rule.id}-${lineNum}-${match.index}`,
             rule_id: rule.id,
             message: rule.message,
-            description: `在 ${request.source_file} 第 ${lineNum} 行检测到问题`,
+            description: `${i18n.t('shared.smart-code-reviewer.k22')}${request.source_file}${i18n.t('shared.smart-code-reviewer.k23')}${lineNum}${i18n.t('shared.smart-code-reviewer.k24')}`,
             severity: rule.severity,
             category: rule.category,
             line: lineNum,
@@ -784,7 +785,7 @@ export class SmartCodeReviewer {
             id: `${custom.id}-${lineNum}`,
             rule_id: custom.id,
             message: custom.message,
-            description: `自定义规则 ${custom.name} 触发`,
+            description: `${i18n.t('shared.smart-code-reviewer.k25')}${custom.name}${i18n.t('shared.smart-code-reviewer.k26')}`,
             severity: custom.severity,
             category: custom.category,
             line: lineNum,
@@ -995,20 +996,20 @@ export class SmartCodeReviewer {
     if (issues.some((i) => i.category === ReviewCategory.SECURITY)) {
       suggestions.push({
         type: 'secure',
-        description: '优先修复安全问题，特别是 XSS 和敏感信息泄露风险',
+        description: i18n.t('shared.smart-code-reviewer.k34'),
         priority: 'high',
-        impact: '防止安全漏洞',
-        effort: '中等到高',
+        impact: i18n.t('shared.smart-code-reviewer.k35'),
+        effort: i18n.t('shared.smart-code-reviewer.k36'),
       });
     }
 
     if (issues.some((i) => i.category === ReviewCategory.PERFORMANCE)) {
       suggestions.push({
         type: 'optimize',
-        description: '优化性能瓶颈，特别是大文件和内联函数',
+        description: i18n.t('shared.smart-code-reviewer.k37'),
         priority: 'medium',
-        impact: '提升加载和运行性能',
-        effort: '低到中等',
+        impact: i18n.t('shared.smart-code-reviewer.k38'),
+        effort: i18n.t('shared.smart-code-reviewer.k39'),
       });
     }
 
@@ -1016,40 +1017,40 @@ export class SmartCodeReviewer {
     if (metrics.cyclomatic_complexity > 15) {
       suggestions.push({
         type: 'refactor',
-        description: '降低代码复杂度，拆分长函数和深层嵌套',
+        description: i18n.t('shared.smart-code-reviewer.k40'),
         priority: 'high',
-        impact: '提高可维护性和可测试性',
-        effort: '中等',
+        impact: i18n.t('shared.smart-code-reviewer.k41'),
+        effort: i18n.t('shared.smart-code-reviewer.k42'),
       });
     }
 
     if (metrics.test_coverage_estimate < 80) {
       suggestions.push({
         type: 'test',
-        description: '补充单元测试，提高覆盖率至 80% 以上',
+        description: i18n.t('shared.smart-code-reviewer.80_43'),
         priority: 'medium',
-        impact: '提高代码可靠性和回归测试能力',
-        effort: '中等到高',
+        impact: i18n.t('shared.smart-code-reviewer.k44'),
+        effort: i18n.t('shared.smart-code-reviewer.k45'),
       });
     }
 
     if (metrics.duplicated_lines > 20) {
       suggestions.push({
         type: 'refactor',
-        description: '消除重复代码，提取公共函数或组件',
+        description: i18n.t('shared.smart-code-reviewer.k46'),
         priority: 'medium',
-        impact: '减少维护成本',
-        effort: '低到中等',
+        impact: i18n.t('shared.smart-code-reviewer.k47'),
+        effort: i18n.t('shared.smart-code-reviewer.k48'),
       });
     }
 
     if (metrics.lines_of_comments < metrics.lines_of_code * 0.1) {
       suggestions.push({
         type: 'document',
-        description: '添加代码注释和文档，提高可读性',
+        description: i18n.t('shared.smart-code-reviewer.k49'),
         priority: 'low',
-        impact: '提高代码可读性',
-        effort: '低',
+        impact: i18n.t('shared.smart-code-reviewer.k50'),
+        effort: i18n.t('shared.smart-code-reviewer.k51'),
       });
     }
 
@@ -1065,17 +1066,17 @@ export class SmartCodeReviewer {
     const parts: string[] = [];
 
     if (added > 0) {
-      parts.push(`新增 ${added} 个问题`);
+      parts.push(`${i18n.t('shared.smart-code-reviewer.k27')}${added}${i18n.t('shared.smart-code-reviewer.k28')}`);
     }
     if (fixed > 0) {
-      parts.push(`修复 ${fixed} 个问题`);
+      parts.push(`${i18n.t('shared.smart-code-reviewer.k29')}${fixed}${i18n.t('shared.smart-code-reviewer.k30')}`);
     }
     if (added === 0 && fixed === 0) {
-      parts.push('问题数量无变化');
+      parts.push(i18n.t('shared.smart-code-reviewer.k52'));
     }
 
-    const trend = newTotal > oldTotal ? '增加' : newTotal < oldTotal ? '减少' : '持平';
-    parts.push(`总体问题数 ${trend}`);
+    const trend = newTotal > oldTotal ? i18n.t('shared.smart-code-reviewer.k55') : newTotal < oldTotal ? i18n.t('shared.smart-code-reviewer.k54') : i18n.t('shared.smart-code-reviewer.k53');
+    parts.push(`${i18n.t('shared.smart-code-reviewer.k31')}${trend}`);
 
     return parts.join('，');
   }

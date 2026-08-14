@@ -11,7 +11,7 @@ import {
   DialogContent,
   DialogActions,
 } from '@mui/material';
-
+import i18n from '@/i18n';
 import { archiveNotificationSchema } from '@/schemas/notification';
 import type { ArchiveConfig, ArchivedNotification } from '@/api/notification';
 import {
@@ -23,19 +23,15 @@ import {
 import { useNotification } from '@/hooks/useNotification';
 import { PageContainer } from '@/components/common';
 import CrudPage, { type CrudApiAdapter } from '@/components/templates/CrudPage';
-
-
 import { QUERY_KEYS } from '@/lib/reactQuery';
-
+import { designTokens } from '@topems/tokens';
 const NotificationArchivePage: React.FC = () => {
   const { success, error } = useNotification();
   const queryClient = useQueryClient();
-
   const [showConfigModal, setShowConfigModal] = useState(false);
   const [selectedNotification, setSelectedNotification] = useState<ArchivedNotification | null>(
     null
   );
-
   const configQuery = useQuery<ArchiveConfig>({
     queryKey: QUERY_KEYS.AD_HOC.NOTIFICATION_ARCHIVE_CONFIG_BASE,
     queryFn: async () => {
@@ -43,23 +39,21 @@ const NotificationArchivePage: React.FC = () => {
       if (res.success && res.data) {
         return res.data;
       }
-      throw new Error(res.message || '加载归档配置失败');
+      throw new Error(res.message || i18n.t('notification.notification_archive_page.k0'));
     },
     staleTime: 5 * 60 * 1000,
   });
-
   const archiveConfig = configQuery.data ?? null;
-
   const updateConfigMutation = useMutation({
     mutationFn: async (config: ArchiveConfig) => {
       const res = await updateArchiveConfig(config);
       if (!res.success) {
-        throw new Error(res.message || '更新失败');
+        throw new Error(res.message || i18n.t('notification.notification_archive_page.k1'));
       }
       return res;
     },
     onSuccess: () => {
-      success('归档配置更新成功');
+      success(i18n.t('notification.notification_archive_page.k2'));
       setShowConfigModal(false);
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.NOTIFICATION_ARCHIVE_CONFIG_BASE ,
   exact: false,
@@ -67,44 +61,39 @@ const NotificationArchivePage: React.FC = () => {
 });
     },
     onError: (err: unknown) => {
-      error((err as { message?: string }).message || '更新失败');
+      error((err as { message?: string }).message || i18n.t('notification.notification_archive_page.k3'));
     },
   });
-
   const runAutoArchiveMutation = useMutation({
     mutationFn: async () => {
       const res = await runAutoArchive();
       if (!res.success) {
-        throw new Error(res.message || '执行失败');
+        throw new Error(res.message || i18n.t('notification.notification_archive_page.k4'));
       }
       return res;
     },
     onSuccess: (res) => {
-      success(`自动归档执行成功，已归档 ${res.data?.archived_count || 0} 条通知`);
+      success(`${i18n.t('pages.notification_archive_page.k0')}${res.data?.archived_count || 0}${i18n.t('pages.notification_archive_page.k1')}`);
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.ARCHIVEDNOTIFICATION_BASE ,
   exact: false,
   refetchType: 'active',
 });
     },
     onError: (err: unknown) => {
-      error((err as { message?: string }).message || '执行失败');
+      error((err as { message?: string }).message || i18n.t('notification.notification_archive_page.k5'));
     },
   });
-
   const apiAdapter: CrudApiAdapter<ArchivedNotification> = {
     list: async (params) => {
       const page = params?.page || 1;
       const pageSize = params?.pageSize || 20;
       const search = params?.search as string | undefined;
-
       const res = await getArchivedNotifications(page, pageSize);
       let notifications: ArchivedNotification[] = [];
       let total = 0;
-
       if (res.success && res.data) {
         notifications = res.data.notifications || [];
         total = res.data.total || 0;
-
         if (search) {
           const query = search.toLowerCase();
           notifications = notifications.filter(
@@ -113,33 +102,29 @@ const NotificationArchivePage: React.FC = () => {
           total = notifications.length;
         }
       }
-
       return { data: notifications, total };
     },
     create: async () => ({}) as unknown as ArchivedNotification,
     update: async () => ({}) as unknown as ArchivedNotification,
     delete: async () => {},
   };
-
   const handleViewDetail = useCallback((row: Record<string, unknown>) => {
     setSelectedNotification(row as unknown as ArchivedNotification);
   }, []);
-
   const customRowActions = [
     {
-      label: '查看详情',
+      label: i18n.t('notification.notification_archive_page.k6'),
       icon: <Eye size={16} />,
       onClick: handleViewDetail,
     },
     {
-      label: '恢复通知',
+      label: i18n.t('notification.notification_archive_page.k7'),
       icon: <RotateCcw size={16} />,
       onClick: (row: Record<string, unknown>) => {
-        success(`恢复功能开发中 - ${String(row.title)}`);
+        success(`${i18n.t('pages.notification_archive_page.k2')}${String(row.title)}`);
       },
     },
   ];
-
   const headerContent = useMemo(() => {
     if (!archiveConfig) return null;
     return (
@@ -166,7 +151,7 @@ const NotificationArchivePage: React.FC = () => {
               variant='body2'
               sx={{ fontWeight: 500, color: 'warning.900' }}
             >
-              归档配置
+              {i18n.t('pages.notification_archive_page.k0')}
             </Typography>
           </Box>
           <Box
@@ -186,23 +171,21 @@ const NotificationArchivePage: React.FC = () => {
                 color: archiveConfig.enabled ? 'success.main' : 'error.main',
               }}
             >
-              {archiveConfig.enabled ? '已启用' : '已禁用'}
+              {archiveConfig.enabled ? i18n.t('notification.notification_archive_page.k9') : i18n.t('notification.notification_archive_page.k8')}
             </Typography>
           </Box>
         </Box>
       </Box>
     );
   }, [archiveConfig]);
-
   const schemaWithHeader = {
     ...archiveNotificationSchema,
     headerContent,
   };
-
   return (
     <PageContainer
-      title='通知归档管理'
-      subtitle='查看和管理已归档的通知'
+      title={i18n.t('notification.notification_archive_page.k10')}
+      subtitle={i18n.t('notification.notification_archive_page.k11')}
     >
       <CrudPage
         schema={schemaWithHeader}
@@ -210,7 +193,6 @@ const NotificationArchivePage: React.FC = () => {
         customRowActions={customRowActions}
         headerContent={headerContent}
       />
-
       {showConfigModal && archiveConfig && (
         <ArchiveConfigModal
           config={archiveConfig}
@@ -218,7 +200,6 @@ const NotificationArchivePage: React.FC = () => {
           onSubmit={(config) => updateConfigMutation.mutate(config)}
         />
       )}
-
       {selectedNotification && (
         <ArchivedNotificationDetailModal
           notification={selectedNotification}
@@ -228,21 +209,17 @@ const NotificationArchivePage: React.FC = () => {
     </PageContainer>
   );
 };
-
 interface ArchiveConfigModalProps {
   config: ArchiveConfig;
   onClose: () => void;
   onSubmit: (config: ArchiveConfig) => void;
 }
-
 const ArchiveConfigModal: React.FC<ArchiveConfigModalProps> = ({ config, onClose, onSubmit }) => {
   const theme = useTheme();
   const [formData, setFormData] = useState<ArchiveConfig>(config);
-
   const handleSubmit = () => {
     onSubmit(formData);
   };
-
   return (
     <Dialog
       open
@@ -250,7 +227,7 @@ const ArchiveConfigModal: React.FC<ArchiveConfigModalProps> = ({ config, onClose
       maxWidth='sm'
       fullWidth
     >
-      <DialogTitle>归档设置</DialogTitle>
+      <DialogTitle>{i18n.t('notification.notification_archive_page.k12')}</DialogTitle>
       <DialogContent>
         <Box sx={{ p: 1, display: 'flex', flexDirection: 'column', gap: 2 }}>
           <Box
@@ -264,7 +241,7 @@ const ArchiveConfigModal: React.FC<ArchiveConfigModalProps> = ({ config, onClose
               variant='body2'
               sx={{ fontWeight: 500, color: 'grey.700' }}
             >
-              启用自动归档
+              {i18n.t('pages.notification_archive_page.k1')}
             </Typography>
             <Box
               onClick={() => setFormData({ ...formData, enabled: !formData.enabled })}
@@ -293,13 +270,12 @@ const ArchiveConfigModal: React.FC<ArchiveConfigModalProps> = ({ config, onClose
               />
             </Box>
           </Box>
-
           <Box>
             <Typography
               variant='body2'
               sx={{ fontWeight: 500, color: 'grey.700', mb: 0.5 }}
             >
-              自动归档天数
+              {i18n.t('pages.notification_archive_page.k2')}
             </Typography>
             <input
               type='number'
@@ -313,7 +289,7 @@ const ArchiveConfigModal: React.FC<ArchiveConfigModalProps> = ({ config, onClose
               }
               style={{
                 width: '100%',
-                padding: '8px 12px',
+                padding: `${designTokens.spacing.sm} 12px`,
                 border: '1px solid',
                 borderColor: theme.palette.grey[300],
                 borderRadius: 8,
@@ -324,16 +300,15 @@ const ArchiveConfigModal: React.FC<ArchiveConfigModalProps> = ({ config, onClose
               variant='caption'
               sx={{ color: 'grey.500', mt: 0.5, display: 'block' }}
             >
-              超过此天数未读的通知将自动归档
+              {i18n.t('pages.notification_archive_page.k3')}
             </Typography>
           </Box>
-
           <Box>
             <Typography
               variant='body2'
               sx={{ fontWeight: 500, color: 'grey.700', mb: 0.5 }}
             >
-              保留天数
+              {i18n.t('pages.notification_archive_page.k4')}
             </Typography>
             <input
               type='number'
@@ -347,7 +322,7 @@ const ArchiveConfigModal: React.FC<ArchiveConfigModalProps> = ({ config, onClose
               }
               style={{
                 width: '100%',
-                padding: '8px 12px',
+                padding: `${designTokens.spacing.sm} 12px`,
                 border: '1px solid',
                 borderColor: theme.palette.grey[300],
                 borderRadius: 8,
@@ -358,48 +333,45 @@ const ArchiveConfigModal: React.FC<ArchiveConfigModalProps> = ({ config, onClose
               variant='caption'
               sx={{ color: 'grey.500', mt: 0.5, display: 'block' }}
             >
-              超过此天数的归档通知将被永久删除
+              {i18n.t('pages.notification_archive_page.k5')}
             </Typography>
           </Box>
         </Box>
       </DialogContent>
       <DialogActions>
-        <Button onClick={onClose}>取消</Button>
+        <Button onClick={onClose}>{i18n.t('notification.notification_archive_page.k13')}</Button>
         <Button
           onClick={handleSubmit}
           variant='contained'
         >
-          保存
+          {i18n.t('pages.notification_archive_page.k6')}
         </Button>
       </DialogActions>
     </Dialog>
   );
 };
-
 interface ArchivedNotificationDetailModalProps {
   notification: ArchivedNotification;
   onClose: () => void;
 }
-
 const ArchivedNotificationDetailModal: React.FC<ArchivedNotificationDetailModalProps> = ({
   notification,
   onClose,
 }) => {
   const getTypeLabel = (type: string) => {
     const labels: Record<string, string> = {
-      system: '系统通知',
-      workflow: '审批通知',
-      reminder: '提醒通知',
-      alert: '告警通知',
-      message: '消息通知',
-      info: '信息通知',
-      success: '成功通知',
-      warning: '警告通知',
-      error: '错误通知',
+      system: i18n.t('notification.notification_archive_page.k14'),
+      workflow: i18n.t('notification.notification_archive_page.k15'),
+      reminder: i18n.t('notification.notification_archive_page.k16'),
+      alert: i18n.t('notification.notification_archive_page.k17'),
+      message: i18n.t('notification.notification_archive_page.k18'),
+      info: i18n.t('notification.notification_archive_page.k19'),
+      success: i18n.t('notification.notification_archive_page.k20'),
+      warning: i18n.t('notification.notification_archive_page.k21'),
+      error: i18n.t('notification.notification_archive_page.k22'),
     };
     return labels[type] || type;
   };
-
   return (
     <Dialog
       open
@@ -407,7 +379,7 @@ const ArchivedNotificationDetailModal: React.FC<ArchivedNotificationDetailModalP
       maxWidth='md'
       fullWidth
     >
-      <DialogTitle>归档通知详情</DialogTitle>
+      <DialogTitle>{i18n.t('notification.notification_archive_page.k23')}</DialogTitle>
       <DialogContent>
         <Box sx={{ p: 1, display: 'flex', flexDirection: 'column', gap: 2 }}>
           <Box>
@@ -421,11 +393,10 @@ const ArchivedNotificationDetailModal: React.FC<ArchivedNotificationDetailModalP
                 display: 'block',
               }}
             >
-              标题
+              {i18n.t('pages.notification_archive_page.k7')}
             </Typography>
             <Typography sx={{ color: 'grey.900' }}>{notification.title}</Typography>
           </Box>
-
           <Box>
             <Typography
               variant='caption'
@@ -437,11 +408,10 @@ const ArchivedNotificationDetailModal: React.FC<ArchivedNotificationDetailModalP
                 display: 'block',
               }}
             >
-              内容
+              {i18n.t('pages.notification_archive_page.k8')}
             </Typography>
             <Typography sx={{ color: 'grey.700' }}>{notification.content}</Typography>
           </Box>
-
           <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2 }}>
             <Box>
               <Typography
@@ -454,7 +424,7 @@ const ArchivedNotificationDetailModal: React.FC<ArchivedNotificationDetailModalP
                   display: 'block',
                 }}
               >
-                类型
+                {i18n.t('pages.notification_archive_page.k9')}
               </Typography>
               <Typography sx={{ color: 'grey.700' }}>
                 {getTypeLabel(notification.notification_type)}
@@ -471,20 +441,19 @@ const ArchivedNotificationDetailModal: React.FC<ArchivedNotificationDetailModalP
                   display: 'block',
                 }}
               >
-                优先级
+                {i18n.t('pages.notification_archive_page.k10')}
               </Typography>
               <Typography sx={{ color: 'grey.700' }}>
                 {notification.priority >= 4
-                  ? '紧急'
+                  ? i18n.t('notification.notification_archive_page.k24')
                   : notification.priority >= 3
-                    ? '高'
+                    ? i18n.t('notification.notification_archive_page.k25')
                     : notification.priority >= 2
-                      ? '中'
-                      : '低'}
+                      ? i18n.t('notification.notification_archive_page.k26')
+                      : i18n.t('notification.notification_archive_page.k27')}
               </Typography>
             </Box>
           </Box>
-
           <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2 }}>
             <Box>
               <Typography
@@ -497,7 +466,7 @@ const ArchivedNotificationDetailModal: React.FC<ArchivedNotificationDetailModalP
                   display: 'block',
                 }}
               >
-                原创建时间
+                {i18n.t('pages.notification_archive_page.k11')}
               </Typography>
               <Typography sx={{ color: 'grey.700' }}>
                 {new Date(notification.created_at).toLocaleString('zh-CN')}
@@ -514,14 +483,13 @@ const ArchivedNotificationDetailModal: React.FC<ArchivedNotificationDetailModalP
                   display: 'block',
                 }}
               >
-                归档时间
+                {i18n.t('pages.notification_archive_page.k12')}
               </Typography>
               <Typography sx={{ color: 'grey.700' }}>
                 {new Date(notification.archived_at).toLocaleString('zh-CN')}
               </Typography>
             </Box>
           </Box>
-
           {notification.read_at && (
             <Box>
               <Typography
@@ -534,7 +502,7 @@ const ArchivedNotificationDetailModal: React.FC<ArchivedNotificationDetailModalP
                   display: 'block',
                 }}
               >
-                阅读时间
+                {i18n.t('pages.notification_archive_page.k13')}
               </Typography>
               <Typography sx={{ color: 'grey.700' }}>
                 {new Date(notification.read_at).toLocaleString('zh-CN')}
@@ -544,10 +512,9 @@ const ArchivedNotificationDetailModal: React.FC<ArchivedNotificationDetailModalP
         </Box>
       </DialogContent>
       <DialogActions>
-        <Button onClick={onClose}>关闭</Button>
+        <Button onClick={onClose}>{i18n.t('notification.notification_archive_page.k28')}</Button>
       </DialogActions>
     </Dialog>
   );
 };
-
 export default NotificationArchivePage;

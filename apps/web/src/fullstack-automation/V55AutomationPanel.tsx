@@ -36,6 +36,7 @@ import {
   Tabs,
   Tab,
 } from '@mui/material';
+import i18n from '@/i18n';
 import {
   X as XIcon,
   GitBranch,
@@ -279,25 +280,25 @@ export const V55AutomationPanel: React.FC<{ onClose: () => void }> = ({ onClose 
           >
             <Tab
               value='pipelines'
-              label='CI/CD 流水线'
+              label={i18n.t('fullstack_automation.v55_automation_panel.cicd_0')}
               icon={<GitBranch size={16} />}
               iconPosition='start'
             />
             <Tab
               value='deployments'
-              label='智能部署'
+              label={i18n.t('pages.v55_automation_panel.k0')}
               icon={<Rocket size={16} />}
               iconPosition='start'
             />
             <Tab
               value='rollbacks'
-              label='自动回滚'
+              label={i18n.t('pages.v55_automation_panel.k1')}
               icon={<RotateCcw size={16} />}
               iconPosition='start'
             />
             <Tab
               value='health'
-              label='健康监控'
+              label={i18n.t('pages.v55_automation_panel.k2')}
               icon={<Activity size={16} />}
               iconPosition='start'
             />
@@ -381,7 +382,7 @@ const V55PanelHeader: React.FC<{ onClose: () => void }> = ({ onClose }) => (
         variant='h6'
         sx={{ fontWeight: 600 }}
       >
-        V55.0 全栈自动化平台
+        {i18n.t('fullstack_automation.v55_automation_panel.v550_1')}
       </Typography>
       <Chip
         label={V55_BADGE}
@@ -392,7 +393,7 @@ const V55PanelHeader: React.FC<{ onClose: () => void }> = ({ onClose }) => (
         variant='caption'
         sx={{ opacity: 0.8 }}
       >
-        CI/CD · 智能部署 · 自动回滚 · 健康监控
+        {i18n.t('fullstack_automation.v55_automation_panel.k2')}
       </Typography>
     </Box>
     <IconButton
@@ -433,7 +434,7 @@ const PipelinesTab: React.FC<{
       <Grid size={{ xs: 6, md: 3 }}>
         <StatCard
           icon={<Layers size={20} />}
-          label='流水线总数'
+          label={i18n.t('pages.v55_automation_panel.k3')}
           value={stats.total}
           color={designTokens.colors.secondary.dark}
         />
@@ -441,7 +442,7 @@ const PipelinesTab: React.FC<{
       <Grid size={{ xs: 6, md: 3 }}>
         <StatCard
           icon={<Play size={20} />}
-          label='运行中'
+          label={i18n.t('pages.v55_automation_panel.k4')}
           value={stats.running}
           color={`${designTokens.colors.info.main}`}
         />
@@ -449,7 +450,7 @@ const PipelinesTab: React.FC<{
       <Grid size={{ xs: 6, md: 3 }}>
         <StatCard
           icon={<CheckCircle2 size={20} />}
-          label='成功'
+          label={i18n.t('pages.v55_automation_panel.k5')}
           value={stats.completed}
           color={designTokens.colors.success.dark}
         />
@@ -457,7 +458,7 @@ const PipelinesTab: React.FC<{
       <Grid size={{ xs: 6, md: 3 }}>
         <StatCard
           icon={<XCircle size={20} />}
-          label='失败'
+          label={i18n.t('pages.v55_automation_panel.k6')}
           value={stats.failed}
           color={designTokens.colors.error.main}
         />
@@ -466,8 +467,8 @@ const PipelinesTab: React.FC<{
 
     <Card variant='outlined'>
       <CardHeader
-        title='CI/CD 流水线'
-        subheader={`${pipelines.length} 个流水线`}
+        title={i18n.t('fullstack_automation.v55_automation_panel.cicd_3')}
+        subheader={`${pipelines.length} ${i18n.t('fullstack_automation.v55_automation_panel.k4')}`}
         action={
           <Button
             variant='contained'
@@ -475,7 +476,7 @@ const PipelinesTab: React.FC<{
             startIcon={<Plus size={14} />}
             onClick={onCreatePipeline}
           >
-            新建流水线
+            {i18n.t('fullstack_automation.v55_automation_panel.k5')}
           </Button>
         }
       />
@@ -485,12 +486,12 @@ const PipelinesTab: React.FC<{
             <TableHead>
               <TableRow>
                 <TableCell sx={{ fontWeight: 600 }}>ID</TableCell>
-                <TableCell sx={{ fontWeight: 600 }}>名称</TableCell>
-                <TableCell sx={{ fontWeight: 600 }}>环境</TableCell>
-                <TableCell sx={{ fontWeight: 600 }}>状态</TableCell>
-                <TableCell sx={{ fontWeight: 600 }}>阶段</TableCell>
-                <TableCell sx={{ fontWeight: 600 }}>创建时间</TableCell>
-                <TableCell sx={{ fontWeight: 600 }}>操作</TableCell>
+                <TableCell sx={{ fontWeight: 600 }}>{i18n.t('pages.v55_automation_panel.k7')}</TableCell>
+                <TableCell sx={{ fontWeight: 600 }}>{i18n.t('pages.v55_automation_panel.k8')}</TableCell>
+                <TableCell sx={{ fontWeight: 600 }}>{i18n.t('pages.v55_automation_panel.k9')}</TableCell>
+                <TableCell sx={{ fontWeight: 600 }}>{i18n.t('pages.v55_automation_panel.k10')}</TableCell>
+                <TableCell sx={{ fontWeight: 600 }}>{i18n.t('pages.v55_automation_panel.k11')}</TableCell>
+                <TableCell sx={{ fontWeight: 600 }}>{i18n.t('pages.v55_automation_panel.k12')}</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
@@ -505,7 +506,7 @@ const PipelinesTab: React.FC<{
                       variant='body2'
                       color='text.secondary'
                     >
-                      暂无流水线，点击右上角创建
+                      {i18n.t('fullstack_automation.v55_automation_panel.k6')}
                     </Typography>
                   </TableCell>
                 </TableRow>
@@ -554,7 +555,7 @@ const PipelinesTab: React.FC<{
                         direction='row'
                         spacing={1}
                       >
-                        <Tooltip title='运行'>
+                        <Tooltip title={i18n.t('pages.v55_automation_panel.k13')}>
                           <IconButton
                             size='small'
                             onClick={() => onRunPipeline(p.id)}
@@ -582,7 +583,7 @@ const PipelinesTab: React.FC<{
         sx={{ mt: 2 }}
       >
         <CardHeader
-          title={`流水线详情: ${selectedPipeline.name}`}
+          title={`${i18n.t('fullstack_automation.v55_automation_panel.k7')} ${selectedPipeline.name}`}
           subheader={selectedPipeline.description || selectedPipeline.id}
         />
         <CardContent>
@@ -590,7 +591,7 @@ const PipelinesTab: React.FC<{
             variant='subtitle2'
             sx={{ mb: 1, fontWeight: 600 }}
           >
-            阶段配置
+            {i18n.t('fullstack_automation.v55_automation_panel.k8')}
           </Typography>
           <Stack
             direction='row'
@@ -620,17 +621,17 @@ const PipelinesTab: React.FC<{
             variant='subtitle2'
             sx={{ mb: 1, fontWeight: 600 }}
           >
-            运行历史
+            {i18n.t('fullstack_automation.v55_automation_panel.k9')}
           </Typography>
           <TableContainer>
             <Table size='small'>
               <TableHead>
                 <TableRow>
-                  <TableCell sx={{ fontWeight: 600 }}>运行ID</TableCell>
-                  <TableCell sx={{ fontWeight: 600 }}>状态</TableCell>
-                  <TableCell sx={{ fontWeight: 600 }}>开始时间</TableCell>
-                  <TableCell sx={{ fontWeight: 600 }}>耗时</TableCell>
-                  <TableCell sx={{ fontWeight: 600 }}>操作</TableCell>
+                  <TableCell sx={{ fontWeight: 600 }}>{i18n.t('pages.v55_automation_panel.id_14')}</TableCell>
+                  <TableCell sx={{ fontWeight: 600 }}>{i18n.t('pages.v55_automation_panel.k15')}</TableCell>
+                  <TableCell sx={{ fontWeight: 600 }}>{i18n.t('pages.v55_automation_panel.k16')}</TableCell>
+                  <TableCell sx={{ fontWeight: 600 }}>{i18n.t('pages.v55_automation_panel.k17')}</TableCell>
+                  <TableCell sx={{ fontWeight: 600 }}>{i18n.t('pages.v55_automation_panel.k18')}</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
@@ -664,7 +665,7 @@ const PipelinesTab: React.FC<{
                       </TableCell>
                       <TableCell>
                         {run.status === 'running' && (
-                          <Tooltip title='取消'>
+                          <Tooltip title={i18n.t('pages.v55_automation_panel.k19')}>
                             <IconButton
                               size='small'
                               onClick={() => onCancelRun(run.id)}
@@ -689,7 +690,7 @@ const PipelinesTab: React.FC<{
                         variant='body2'
                         color='text.secondary'
                       >
-                        暂无运行记录
+                        {i18n.t('fullstack_automation.v55_automation_panel.k10')}
                       </Typography>
                     </TableCell>
                   </TableRow>
@@ -706,19 +707,19 @@ const PipelinesTab: React.FC<{
       sx={{ mt: 2 }}
     >
       <CardHeader
-        title='最近运行'
-        subheader='所有流水线的最近运行记录'
+        title={i18n.t('pages.v55_automation_panel.k20')}
+        subheader={i18n.t('pages.v55_automation_panel.k21')}
       />
       <CardContent>
         <TableContainer>
           <Table size='small'>
             <TableHead>
               <TableRow>
-                <TableCell sx={{ fontWeight: 600 }}>流水线</TableCell>
-                <TableCell sx={{ fontWeight: 600 }}>环境</TableCell>
-                <TableCell sx={{ fontWeight: 600 }}>状态</TableCell>
-                <TableCell sx={{ fontWeight: 600 }}>阶段进度</TableCell>
-                <TableCell sx={{ fontWeight: 600 }}>开始时间</TableCell>
+                <TableCell sx={{ fontWeight: 600 }}>{i18n.t('pages.v55_automation_panel.k22')}</TableCell>
+                <TableCell sx={{ fontWeight: 600 }}>{i18n.t('pages.v55_automation_panel.k23')}</TableCell>
+                <TableCell sx={{ fontWeight: 600 }}>{i18n.t('pages.v55_automation_panel.k24')}</TableCell>
+                <TableCell sx={{ fontWeight: 600 }}>{i18n.t('pages.v55_automation_panel.k25')}</TableCell>
+                <TableCell sx={{ fontWeight: 600 }}>{i18n.t('pages.v55_automation_panel.k26')}</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
@@ -775,7 +776,7 @@ const PipelinesTab: React.FC<{
                       variant='body2'
                       color='text.secondary'
                     >
-                      暂无运行记录
+                      {i18n.t('fullstack_automation.v55_automation_panel.k11')}
                     </Typography>
                   </TableCell>
                 </TableRow>
@@ -803,7 +804,7 @@ const DeploymentsTab: React.FC<{
       <Grid size={{ xs: 4, md: 4 }}>
         <StatCard
           icon={<Server size={20} />}
-          label='部署总数'
+          label={i18n.t('pages.v55_automation_panel.k27')}
           value={stats.total}
           color={designTokens.colors.secondary.dark}
         />
@@ -811,7 +812,7 @@ const DeploymentsTab: React.FC<{
       <Grid size={{ xs: 4, md: 4 }}>
         <StatCard
           icon={<Rocket size={20} />}
-          label='进行中'
+          label={i18n.t('pages.v55_automation_panel.k28')}
           value={stats.active}
           color={`${designTokens.colors.info.main}`}
         />
@@ -819,7 +820,7 @@ const DeploymentsTab: React.FC<{
       <Grid size={{ xs: 4, md: 4 }}>
         <StatCard
           icon={<RotateCcw size={20} />}
-          label='已回滚'
+          label={i18n.t('pages.v55_automation_panel.k29')}
           value={stats.rolled}
           color={designTokens.colors.warning.main}
         />
@@ -828,8 +829,8 @@ const DeploymentsTab: React.FC<{
 
     <Card variant='outlined'>
       <CardHeader
-        title='部署控制台'
-        subheader='智能部署管理'
+        title={i18n.t('pages.v55_automation_panel.k30')}
+        subheader={i18n.t('pages.v55_automation_panel.k31')}
         action={
           <Button
             variant='contained'
@@ -837,7 +838,7 @@ const DeploymentsTab: React.FC<{
             startIcon={<Rocket size={14} />}
             onClick={onDeploy}
           >
-            新建部署
+            {i18n.t('fullstack_automation.v55_automation_panel.k12')}
           </Button>
         }
       />
@@ -846,14 +847,14 @@ const DeploymentsTab: React.FC<{
           <Table size='small'>
             <TableHead>
               <TableRow>
-                <TableCell sx={{ fontWeight: 600 }}>服务</TableCell>
-                <TableCell sx={{ fontWeight: 600 }}>版本</TableCell>
-                <TableCell sx={{ fontWeight: 600 }}>策略</TableCell>
-                <TableCell sx={{ fontWeight: 600 }}>环境</TableCell>
-                <TableCell sx={{ fontWeight: 600 }}>状态</TableCell>
-                <TableCell sx={{ fontWeight: 600 }}>流量分配</TableCell>
-                <TableCell sx={{ fontWeight: 600 }}>回滚次数</TableCell>
-                <TableCell sx={{ fontWeight: 600 }}>操作</TableCell>
+                <TableCell sx={{ fontWeight: 600 }}>{i18n.t('pages.v55_automation_panel.k32')}</TableCell>
+                <TableCell sx={{ fontWeight: 600 }}>{i18n.t('pages.v55_automation_panel.k33')}</TableCell>
+                <TableCell sx={{ fontWeight: 600 }}>{i18n.t('pages.v55_automation_panel.k34')}</TableCell>
+                <TableCell sx={{ fontWeight: 600 }}>{i18n.t('pages.v55_automation_panel.k35')}</TableCell>
+                <TableCell sx={{ fontWeight: 600 }}>{i18n.t('pages.v55_automation_panel.k36')}</TableCell>
+                <TableCell sx={{ fontWeight: 600 }}>{i18n.t('pages.v55_automation_panel.k37')}</TableCell>
+                <TableCell sx={{ fontWeight: 600 }}>{i18n.t('pages.v55_automation_panel.k38')}</TableCell>
+                <TableCell sx={{ fontWeight: 600 }}>{i18n.t('pages.v55_automation_panel.k39')}</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
@@ -868,7 +869,7 @@ const DeploymentsTab: React.FC<{
                       variant='body2'
                       color='text.secondary'
                     >
-                      暂无部署记录
+                      {i18n.t('fullstack_automation.v55_automation_panel.k13')}
                     </Typography>
                   </TableCell>
                 </TableRow>
@@ -937,7 +938,7 @@ const DeploymentsTab: React.FC<{
                     <TableCell>
                       {d.rollback_count > 0 ? (
                         <Chip
-                          label={`${d.rollback_count}次`}
+                          label={`${d.rollback_count}${i18n.t('fullstack_automation.v55_automation_panel.k14')}`}
                           color='warning'
                           size='small'
                         />
@@ -956,7 +957,7 @@ const DeploymentsTab: React.FC<{
                         spacing={1}
                       >
                         {(d.status === 'deploying' || d.status === 'verifying') && (
-                          <Tooltip title='回滚'>
+                          <Tooltip title={i18n.t('pages.v55_automation_panel.k40')}>
                             <IconButton
                               size='small'
                               onClick={() => onRollback(d.id)}
@@ -970,7 +971,7 @@ const DeploymentsTab: React.FC<{
                         )}
                         {d.status === 'completed' &&
                           d.units.some((u) => u.status === 'deploying') && (
-                            <Tooltip title='提升候选'>
+                            <Tooltip title={i18n.t('pages.v55_automation_panel.k41')}>
                               <IconButton size='small'>
                                 <TrendingUp
                                   size={16}
@@ -994,7 +995,7 @@ const DeploymentsTab: React.FC<{
       variant='outlined'
       sx={{ mt: 2 }}
     >
-      <CardHeader title='部署策略说明' />
+      <CardHeader title={i18n.t('pages.v55_automation_panel.k42')} />
       <CardContent>
         <Grid
           container
@@ -1004,24 +1005,24 @@ const DeploymentsTab: React.FC<{
             <PolicyCard
               icon={<GitBranch size={24} />}
               color={designTokens.colors.secondary.dark}
-              title='蓝绿部署'
-              description='通过同时维护两套环境实现零停机切换，适用于生产环境重大变更'
+              title={i18n.t('pages.v55_automation_panel.k43')}
+              description={i18n.t('pages.v55_automation_panel.k44')}
             />
           </Grid>
           <Grid size={{ xs: 12, md: 4 }}>
             <PolicyCard
               icon={<Activity size={24} />}
               color={`${designTokens.colors.info.main}`}
-              title='金丝雀发布'
-              description='逐步将流量切换到新版本，小范围验证后全量发布，降低风险'
+              title={i18n.t('pages.v55_automation_panel.k45')}
+              description={i18n.t('pages.v55_automation_panel.k46')}
             />
           </Grid>
           <Grid size={{ xs: 12, md: 4 }}>
             <PolicyCard
               icon={<RefreshCw size={24} />}
               color={designTokens.colors.success.dark}
-              title='滚动更新'
-              description='逐个替换实例，保证服务持续可用，适用于开发/测试环境'
+              title={i18n.t('pages.v55_automation_panel.k47')}
+              description={i18n.t('pages.v55_automation_panel.k48')}
             />
           </Grid>
         </Grid>
@@ -1048,15 +1049,15 @@ const RollbacksTab: React.FC<{
         <Grid size={{ xs: 6, md: 3 }}>
           <StatCard
             icon={<Shield size={20} />}
-            label='自动回滚'
-            value={autoEnabled ? '启用' : '禁用'}
+            label={i18n.t('pages.v55_automation_panel.k49')}
+            value={autoEnabled ? i18n.t('pages.v55_automation_panel.k51') : i18n.t('pages.v55_automation_panel.k50')}
             color={autoEnabled ? designTokens.colors.success.dark : `${designTokens.colors.grey['400']}`}
           />
         </Grid>
         <Grid size={{ xs: 6, md: 3 }}>
           <StatCard
             icon={<AlertTriangle size={20} />}
-            label='触发条件'
+            label={i18n.t('pages.v55_automation_panel.k52')}
             value={conditions.length}
             color={designTokens.colors.warning.main}
           />
@@ -1064,7 +1065,7 @@ const RollbacksTab: React.FC<{
         <Grid size={{ xs: 6, md: 3 }}>
           <StatCard
             icon={<RotateCcw size={20} />}
-            label='回滚事件'
+            label={i18n.t('pages.v55_automation_panel.k53')}
             value={events.length}
             color={designTokens.colors.secondary.dark}
           />
@@ -1072,7 +1073,7 @@ const RollbacksTab: React.FC<{
         <Grid size={{ xs: 6, md: 3 }}>
           <StatCard
             icon={<Clock size={20} />}
-            label='最近回滚'
+            label={i18n.t('pages.v55_automation_panel.k54')}
             value={
               events[0]?.rollback_duration_ms
                 ? `${Math.round(events[0].rollback_duration_ms / 1000)}s`
@@ -1085,7 +1086,7 @@ const RollbacksTab: React.FC<{
 
       <Card variant='outlined'>
         <CardHeader
-          title='自动回滚配置'
+          title={i18n.t('pages.v55_automation_panel.k55')}
           action={
             <Stack
               direction='row'
@@ -1100,7 +1101,7 @@ const RollbacksTab: React.FC<{
                     size='small'
                   />
                 }
-                label={<Typography variant='body2'>自动回滚</Typography>}
+                label={<Typography variant='body2'>{i18n.t('pages.v55_automation_panel.k56')}</Typography>}
               />
               <Button
                 variant='outlined'
@@ -1108,7 +1109,7 @@ const RollbacksTab: React.FC<{
                 startIcon={<Settings size={14} />}
                 onClick={onConfigure}
               >
-                重置条件
+                {i18n.t('fullstack_automation.v55_automation_panel.k15')}
               </Button>
             </Stack>
           }
@@ -1118,17 +1119,17 @@ const RollbacksTab: React.FC<{
             variant='subtitle2'
             sx={{ mb: 2, fontWeight: 600 }}
           >
-            触发条件
+            {i18n.t('fullstack_automation.v55_automation_panel.k16')}
           </Typography>
           <TableContainer>
             <Table size='small'>
               <TableHead>
                 <TableRow>
-                  <TableCell sx={{ fontWeight: 600 }}>指标</TableCell>
-                  <TableCell sx={{ fontWeight: 600 }}>比较方式</TableCell>
-                  <TableCell sx={{ fontWeight: 600 }}>阈值</TableCell>
-                  <TableCell sx={{ fontWeight: 600 }}>持续时间(分钟)</TableCell>
-                  <TableCell sx={{ fontWeight: 600 }}>状态</TableCell>
+                  <TableCell sx={{ fontWeight: 600 }}>{i18n.t('pages.v55_automation_panel.k57')}</TableCell>
+                  <TableCell sx={{ fontWeight: 600 }}>{i18n.t('pages.v55_automation_panel.k58')}</TableCell>
+                  <TableCell sx={{ fontWeight: 600 }}>{i18n.t('pages.v55_automation_panel.k59')}</TableCell>
+                  <TableCell sx={{ fontWeight: 600 }}>{i18n.t('pages.v55_automation_panel.k60')}</TableCell>
+                  <TableCell sx={{ fontWeight: 600 }}>{i18n.t('pages.v55_automation_panel.k61')}</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
@@ -1142,7 +1143,7 @@ const RollbacksTab: React.FC<{
                         variant='body2'
                         color='text.secondary'
                       >
-                        暂无配置条件
+                        {i18n.t('fullstack_automation.v55_automation_panel.k17')}
                       </Typography>
                     </TableCell>
                   </TableRow>
@@ -1158,7 +1159,7 @@ const RollbacksTab: React.FC<{
                       </TableCell>
                       <TableCell>
                         <Typography variant='caption'>
-                          {c.comparison === 'gt' ? '大于' : c.comparison === 'lt' ? '小于' : '等于'}
+                          {c.comparison === 'gt' ? i18n.t('pages.v55_automation_panel.k64') : c.comparison === 'lt' ? i18n.t('pages.v55_automation_panel.k63') : i18n.t('pages.v55_automation_panel.k62')}
                         </Typography>
                       </TableCell>
                       <TableCell>
@@ -1172,7 +1173,7 @@ const RollbacksTab: React.FC<{
                       <TableCell>{c.duration_window}</TableCell>
                       <TableCell>
                         <Chip
-                          label={c.enabled ? '启用' : '禁用'}
+                          label={c.enabled ? i18n.t('pages.v55_automation_panel.k66') : i18n.t('pages.v55_automation_panel.k65')}
                           color={c.enabled ? 'success' : 'default'}
                           size='small'
                         />
@@ -1190,18 +1191,18 @@ const RollbacksTab: React.FC<{
         variant='outlined'
         sx={{ mt: 2 }}
       >
-        <CardHeader title='回滚事件历史' />
+        <CardHeader title={i18n.t('pages.v55_automation_panel.k67')} />
         <CardContent>
           <TableContainer>
             <Table size='small'>
               <TableHead>
                 <TableRow>
-                  <TableCell sx={{ fontWeight: 600 }}>事件ID</TableCell>
-                  <TableCell sx={{ fontWeight: 600 }}>部署ID</TableCell>
-                  <TableCell sx={{ fontWeight: 600 }}>触发原因</TableCell>
-                  <TableCell sx={{ fontWeight: 600 }}>状态</TableCell>
-                  <TableCell sx={{ fontWeight: 600 }}>耗时</TableCell>
-                  <TableCell sx={{ fontWeight: 600 }}>时间</TableCell>
+                  <TableCell sx={{ fontWeight: 600 }}>{i18n.t('pages.v55_automation_panel.id_68')}</TableCell>
+                  <TableCell sx={{ fontWeight: 600 }}>{i18n.t('pages.v55_automation_panel.id_69')}</TableCell>
+                  <TableCell sx={{ fontWeight: 600 }}>{i18n.t('pages.v55_automation_panel.k70')}</TableCell>
+                  <TableCell sx={{ fontWeight: 600 }}>{i18n.t('pages.v55_automation_panel.k71')}</TableCell>
+                  <TableCell sx={{ fontWeight: 600 }}>{i18n.t('pages.v55_automation_panel.k72')}</TableCell>
+                  <TableCell sx={{ fontWeight: 600 }}>{i18n.t('pages.v55_automation_panel.k73')}</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
@@ -1215,7 +1216,7 @@ const RollbacksTab: React.FC<{
                         variant='body2'
                         color='text.secondary'
                       >
-                        暂无回滚事件
+                        {i18n.t('fullstack_automation.v55_automation_panel.k18')}
                       </Typography>
                     </TableCell>
                   </TableRow>
@@ -1316,7 +1317,7 @@ const HealthTab: React.FC<{
   }> = [
     {
       key: 'error_rate',
-      label: '错误率',
+      label: i18n.t('pages.v55_automation_panel.k74'),
       unit: '%',
       icon: <XCircle size={18} />,
       color: 'error.500',
@@ -1324,7 +1325,7 @@ const HealthTab: React.FC<{
     },
     {
       key: 'latency_p99',
-      label: 'P99 延迟',
+      label: i18n.t('fullstack_automation.v55_automation_panel.p99_19'),
       unit: 'ms',
       icon: <Clock size={18} />,
       color: 'warning.500',
@@ -1332,7 +1333,7 @@ const HealthTab: React.FC<{
     },
     {
       key: 'cpu_usage',
-      label: 'CPU 使用率',
+      label: i18n.t('fullstack_automation.v55_automation_panel.cpu_20'),
       unit: '%',
       icon: <Cpu size={18} />,
       color: 'info.500',
@@ -1340,7 +1341,7 @@ const HealthTab: React.FC<{
     },
     {
       key: 'memory_usage',
-      label: '内存使用率',
+      label: i18n.t('pages.v55_automation_panel.k75'),
       unit: '%',
       icon: <HardDrive size={18} />,
       color: 'secondary.500',
@@ -1348,7 +1349,7 @@ const HealthTab: React.FC<{
     },
     {
       key: 'request_rate',
-      label: '请求速率',
+      label: i18n.t('pages.v55_automation_panel.k76'),
       unit: '/s',
       icon: <Zap size={18} />,
       color: 'teal.500',
@@ -1360,8 +1361,8 @@ const HealthTab: React.FC<{
     <Box sx={{ p: 3 }}>
       <Card variant='outlined'>
         <CardHeader
-          title='实时指标监控'
-          subheader='模拟和监控关键指标'
+          title={i18n.t('pages.v55_automation_panel.k77')}
+          subheader={i18n.t('pages.v55_automation_panel.k78')}
         />
         <CardContent>
           <Grid
@@ -1399,14 +1400,14 @@ const HealthTab: React.FC<{
                       </Typography>
                       {isCritical && (
                         <Chip
-                          label='危险'
+                          label={i18n.t('pages.v55_automation_panel.k79')}
                           color='error'
                           size='small'
                         />
                       )}
                       {isWarning && (
                         <Chip
-                          label='警告'
+                          label={i18n.t('pages.v55_automation_panel.k80')}
                           color='warning'
                           size='small'
                         />
@@ -1480,18 +1481,18 @@ const HealthTab: React.FC<{
         sx={{ mt: 2 }}
       >
         <CardHeader
-          title='服务健康状态'
-          subheader='部署实例的健康检查结果'
+          title={i18n.t('pages.v55_automation_panel.k81')}
+          subheader={i18n.t('pages.v55_automation_panel.k82')}
         />
         <CardContent>
           <TableContainer>
             <Table size='small'>
               <TableHead>
                 <TableRow>
-                  <TableCell sx={{ fontWeight: 600 }}>部署</TableCell>
-                  <TableCell sx={{ fontWeight: 600 }}>健康状态</TableCell>
-                  <TableCell sx={{ fontWeight: 600 }}>最近检查</TableCell>
-                  <TableCell sx={{ fontWeight: 600 }}>实例详情</TableCell>
+                  <TableCell sx={{ fontWeight: 600 }}>{i18n.t('pages.v55_automation_panel.k83')}</TableCell>
+                  <TableCell sx={{ fontWeight: 600 }}>{i18n.t('pages.v55_automation_panel.k84')}</TableCell>
+                  <TableCell sx={{ fontWeight: 600 }}>{i18n.t('pages.v55_automation_panel.k85')}</TableCell>
+                  <TableCell sx={{ fontWeight: 600 }}>{i18n.t('pages.v55_automation_panel.k86')}</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
@@ -1505,7 +1506,7 @@ const HealthTab: React.FC<{
                         variant='body2'
                         color='text.secondary'
                       >
-                        暂无部署
+                        {i18n.t('fullstack_automation.v55_automation_panel.k21')}
                       </Typography>
                     </TableCell>
                   </TableRow>
@@ -1570,7 +1571,7 @@ const HealthTab: React.FC<{
         variant='outlined'
         sx={{ mt: 2 }}
       >
-        <CardHeader title='健康监控说明' />
+        <CardHeader title={i18n.t('pages.v55_automation_panel.k87')} />
         <CardContent>
           <Grid
             container
@@ -1581,7 +1582,7 @@ const HealthTab: React.FC<{
                 severity='success'
                 variant='outlined'
               >
-                <strong>健康：</strong>所有指标在正常范围内
+                <strong>{i18n.t('pages.v55_automation_panel.k88')}</strong>所有指标在正常范围内
               </Alert>
             </Grid>
             <Grid size={{ xs: 12, md: 4 }}>
@@ -1589,7 +1590,7 @@ const HealthTab: React.FC<{
                 severity='warning'
                 variant='outlined'
               >
-                <strong>警告：</strong>部分指标接近阈值，需关注
+                <strong>{i18n.t('pages.v55_automation_panel.k89')}</strong>部分指标接近阈值，需关注
               </Alert>
             </Grid>
             <Grid size={{ xs: 12, md: 4 }}>
@@ -1597,7 +1598,7 @@ const HealthTab: React.FC<{
                 severity='error'
                 variant='outlined'
               >
-                <strong>危险：</strong>指标超过临界值，将触发自动回滚
+                <strong>{i18n.t('pages.v55_automation_panel.k90')}</strong>指标超过临界值，将触发自动回滚
               </Alert>
             </Grid>
           </Grid>
@@ -1676,36 +1677,36 @@ const CreatePipelineDialog: React.FC<{
       maxWidth='md'
       fullWidth
     >
-      <DialogTitle sx={{ fontWeight: 600 }}>创建新流水线</DialogTitle>
+      <DialogTitle sx={{ fontWeight: 600 }}>{i18n.t('pages.v55_automation_panel.k91')}</DialogTitle>
       <DialogContent sx={{ pt: 2 }}>
         <Stack spacing={2}>
           <TextField
-            label='流水线名称'
+            label={i18n.t('pages.v55_automation_panel.k92')}
             value={name}
             onChange={(e) => setName(e.target.value)}
             fullWidth
-            placeholder='如：生产环境部署流水线'
+            placeholder={i18n.t('pages.v55_automation_panel.k93')}
           />
           <FormControl fullWidth>
-            <InputLabel>环境</InputLabel>
+            <InputLabel>{i18n.t('pages.v55_automation_panel.k94')}</InputLabel>
             <Select
               value={environment}
-              label='环境'
+              label={i18n.t('pages.v55_automation_panel.k95')}
               onChange={(e) => setEnvironment(e.target.value as Environment)}
             >
-              <MenuItem value='dev'>开发 (dev)</MenuItem>
-              <MenuItem value='staging'>预发布 (staging)</MenuItem>
-              <MenuItem value='prod'>生产 (prod)</MenuItem>
+              <MenuItem value='dev'>{i18n.t('pages.v55_automation_panel.dev_96')}</MenuItem>
+              <MenuItem value='staging'>{i18n.t('pages.v55_automation_panel.staging_97')}</MenuItem>
+              <MenuItem value='prod'>{i18n.t('pages.v55_automation_panel.prod_98')}</MenuItem>
             </Select>
           </FormControl>
           <TextField
-            label='描述'
+            label={i18n.t('pages.v55_automation_panel.k99')}
             value={description}
             onChange={(e) => setDescription(e.target.value)}
             fullWidth
             multiline
             rows={2}
-            placeholder='流水线描述（可选）'
+            placeholder={i18n.t('pages.v55_automation_panel.k100')}
           />
 
           <Box>
@@ -1716,7 +1717,7 @@ const CreatePipelineDialog: React.FC<{
                 variant='subtitle2'
                 sx={{ fontWeight: 600 }}
               >
-                阶段配置
+                {i18n.t('fullstack_automation.v55_automation_panel.k22')}
               </Typography>
               <Button
                 variant='outlined'
@@ -1724,7 +1725,7 @@ const CreatePipelineDialog: React.FC<{
                 startIcon={<Plus size={14} />}
                 onClick={addStage}
               >
-                添加阶段
+                {i18n.t('fullstack_automation.v55_automation_panel.k23')}
               </Button>
             </Box>
             <Stack spacing={1}>
@@ -1741,7 +1742,7 @@ const CreatePipelineDialog: React.FC<{
                     <Grid size={{ xs: 12, md: 3 }}>
                       <TextField
                         size='small'
-                        label='名称'
+                        label={i18n.t('pages.v55_automation_panel.k101')}
                         value={stage.name}
                         onChange={(e) => {
                           const next = [...stageConfigs];
@@ -1756,10 +1757,10 @@ const CreatePipelineDialog: React.FC<{
                         size='small'
                         fullWidth
                       >
-                        <InputLabel>类型</InputLabel>
+                        <InputLabel>{i18n.t('pages.v55_automation_panel.k102')}</InputLabel>
                         <Select
                           value={stage.type}
-                          label='类型'
+                          label={i18n.t('pages.v55_automation_panel.k103')}
                           onChange={(e) => {
                             const next = [...stageConfigs];
                             next[idx] = {
@@ -1769,17 +1770,17 @@ const CreatePipelineDialog: React.FC<{
                             setStageConfigs(next);
                           }}
                         >
-                          <MenuItem value='build'>构建</MenuItem>
-                          <MenuItem value='test'>测试</MenuItem>
-                          <MenuItem value='deploy'>部署</MenuItem>
-                          <MenuItem value='notify'>通知</MenuItem>
+                          <MenuItem value='build'>{i18n.t('pages.v55_automation_panel.k104')}</MenuItem>
+                          <MenuItem value='test'>{i18n.t('pages.v55_automation_panel.k105')}</MenuItem>
+                          <MenuItem value='deploy'>{i18n.t('pages.v55_automation_panel.k106')}</MenuItem>
+                          <MenuItem value='notify'>{i18n.t('pages.v55_automation_panel.k107')}</MenuItem>
                         </Select>
                       </FormControl>
                     </Grid>
                     <Grid size={{ xs: 6, md: 2 }}>
                       <TextField
                         size='small'
-                        label='耗时(ms)'
+                        label={i18n.t('pages.v55_automation_panel.ms_108')}
                         type='number'
                         value={stage.duration}
                         onChange={(e) => {
@@ -1793,7 +1794,7 @@ const CreatePipelineDialog: React.FC<{
                     <Grid size={{ xs: 6, md: 2 }}>
                       <TextField
                         size='small'
-                        label='失败率'
+                        label={i18n.t('pages.v55_automation_panel.k109')}
                         type='number'
                         value={stage.failRate}
                         onChange={(e) => {
@@ -1808,7 +1809,7 @@ const CreatePipelineDialog: React.FC<{
                     <Grid size={{ xs: 12, md: 2 }}>
                       <TextField
                         size='small'
-                        label='依赖(逗号分隔)'
+                        label={i18n.t('pages.v55_automation_panel.k110')}
                         value={stage.dependsOn.join(',')}
                         onChange={(e) => {
                           const next = [...stageConfigs];
@@ -1822,7 +1823,7 @@ const CreatePipelineDialog: React.FC<{
                           setStageConfigs(next);
                         }}
                         fullWidth
-                        placeholder='如：build'
+                        placeholder={i18n.t('pages.v55_automation_panel.build_111')}
                       />
                     </Grid>
                     <Grid size={{ xs: 12, md: 1 }}>
@@ -1845,14 +1846,14 @@ const CreatePipelineDialog: React.FC<{
           variant='outlined'
           onClick={onClose}
         >
-          取消
+          {i18n.t('fullstack_automation.v55_automation_panel.k24')}
         </Button>
         <Button
           variant='contained'
           onClick={handleCreate}
           disabled={!canCreate}
         >
-          创建
+          {i18n.t('fullstack_automation.v55_automation_panel.k25')}
         </Button>
       </DialogActions>
     </Dialog>
@@ -1892,46 +1893,46 @@ const DeployDialog: React.FC<{
       maxWidth='sm'
       fullWidth
     >
-      <DialogTitle sx={{ fontWeight: 600 }}>新建部署</DialogTitle>
+      <DialogTitle sx={{ fontWeight: 600 }}>{i18n.t('pages.v55_automation_panel.k112')}</DialogTitle>
       <DialogContent sx={{ pt: 2 }}>
         <Stack spacing={2}>
           <TextField
-            label='服务名称'
+            label={i18n.t('pages.v55_automation_panel.k113')}
             value={name}
             onChange={(e) => setName(e.target.value)}
             fullWidth
-            placeholder='如：api-gateway'
+            placeholder={i18n.t('pages.v55_automation_panel.apigateway_114')}
           />
           <TextField
-            label='版本'
+            label={i18n.t('pages.v55_automation_panel.k115')}
             value={version}
             onChange={(e) => setVersion(e.target.value)}
             fullWidth
-            placeholder='如：v1.0.0'
+            placeholder={i18n.t('fullstack_automation.v55_automation_panel.v100_26')}
           />
           <FormControl fullWidth>
-            <InputLabel>环境</InputLabel>
+            <InputLabel>{i18n.t('pages.v55_automation_panel.k116')}</InputLabel>
             <Select
               value={environment}
-              label='环境'
+              label={i18n.t('pages.v55_automation_panel.k117')}
               onChange={(e) => setEnvironment(e.target.value as Environment)}
             >
-              <MenuItem value='dev'>开发 (dev)</MenuItem>
-              <MenuItem value='staging'>预发布 (staging)</MenuItem>
-              <MenuItem value='prod'>生产 (prod)</MenuItem>
+              <MenuItem value='dev'>{i18n.t('pages.v55_automation_panel.dev_118')}</MenuItem>
+              <MenuItem value='staging'>{i18n.t('pages.v55_automation_panel.staging_119')}</MenuItem>
+              <MenuItem value='prod'>{i18n.t('pages.v55_automation_panel.prod_120')}</MenuItem>
             </Select>
           </FormControl>
           <FormControl fullWidth>
-            <InputLabel>部署策略</InputLabel>
+            <InputLabel>{i18n.t('pages.v55_automation_panel.k121')}</InputLabel>
             <Select
               value={strategy}
-              label='部署策略'
+              label={i18n.t('pages.v55_automation_panel.k122')}
               onChange={(e) => setStrategy(e.target.value as DeploymentStrategyType)}
             >
-              <MenuItem value=''>自动选择</MenuItem>
-              <MenuItem value='blue-green'>蓝绿部署</MenuItem>
-              <MenuItem value='canary'>金丝雀发布</MenuItem>
-              <MenuItem value='rolling'>滚动更新</MenuItem>
+              <MenuItem value=''>{i18n.t('pages.v55_automation_panel.k123')}</MenuItem>
+              <MenuItem value='blue-green'>{i18n.t('pages.v55_automation_panel.k124')}</MenuItem>
+              <MenuItem value='canary'>{i18n.t('pages.v55_automation_panel.k125')}</MenuItem>
+              <MenuItem value='rolling'>{i18n.t('pages.v55_automation_panel.k126')}</MenuItem>
             </Select>
           </FormControl>
         </Stack>
@@ -1941,7 +1942,7 @@ const DeployDialog: React.FC<{
           variant='outlined'
           onClick={onClose}
         >
-          取消
+          {i18n.t('fullstack_automation.v55_automation_panel.k27')}
         </Button>
         <Button
           variant='contained'
@@ -1949,7 +1950,7 @@ const DeployDialog: React.FC<{
           onClick={handleDeploy}
           disabled={!canDeploy}
         >
-          开始部署
+          {i18n.t('fullstack_automation.v55_automation_panel.k28')}
         </Button>
       </DialogActions>
     </Dialog>

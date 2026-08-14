@@ -3,6 +3,7 @@ import { Check, RefreshCw } from 'lucide-react';
 import { Card, CardContent, Box, Typography, TextField, Button, useTheme } from '@mui/material';
 import { AIGenerateModal } from './AIGenerateModal';
 import type { CodeGenerateContext } from '@/types/ai';
+import i18n from '@/i18n';
 
 export interface AICodeGeneratorProps {
   isOpen: boolean;
@@ -13,140 +14,140 @@ export interface AICodeGeneratorProps {
 }
 
 const chineseToEnglish: Record<string, string> = {
-  研发: 'RD',
-  技术: 'Tech',
-  产品: 'PM',
-  产品经理: 'PM',
-  市场: 'Marketing',
-  营销: 'Marketing',
-  销售: 'Sales',
-  财务: 'Finance',
-  会计: 'Accounting',
-  人事: 'HR',
-  人力资源: 'HR',
-  行政: 'Admin',
-  法务: 'Legal',
-  运营: 'Operations',
-  运维: 'Operations',
-  客服: 'CustomerService',
-  客户服务: 'CustomerService',
-  采购: 'Purchasing',
-  供应链: 'SupplyChain',
-  质量: 'Quality',
-  品管: 'Quality',
-  物流: 'Logistics',
-  生产: 'Production',
-  总监: 'Director',
-  经理: 'Manager',
-  主管: 'Supervisor',
-  员工: 'Employee',
-  专员: 'Specialist',
-  副: 'Vice',
-  助理: 'Assistant',
-  总经理: 'GM',
-  首席执行官: 'CEO',
-  研: 'R',
-  发: 'D',
-  部: 'D',
-  门: 'M',
-  人: 'H',
-  力: 'R',
-  资: 'H',
-  源: 'R',
-  财: 'F',
-  务: 'F',
-  会: 'A',
-  计: 'C',
-  销: 'S',
-  售: 'S',
-  市: 'M',
-  场: 'K',
-  运: 'O',
-  维: 'O',
-  护: 'M',
-  技: 'T',
-  术: 'E',
-  开: 'D',
-  产: 'P',
-  品: 'P',
-  管: 'M',
-  理: 'M',
-  员: 'E',
-  工: 'E',
-  主: 'M',
-  经: 'M',
-  总: 'C',
-  裁: 'O',
-  助: 'A',
-  专: 'S',
-  采: 'P',
-  购: 'O',
-  库: 'I',
-  存: 'N',
-  物: 'W',
-  流: 'L',
-  生: 'P',
-  质: 'Q',
-  量: 'Q',
-  安: 'S',
-  全: 'S',
-  行: 'A',
-  政: 'D',
-  法: 'L',
-  风: 'R',
-  险: 'R',
+  [i18n.t('components.ai_code_generator.k0')]: 'RD',
+  [i18n.t('components.ai_code_generator.k1')]: 'Tech',
+  [i18n.t('components.ai_code_generator.k2')]: 'PM',
+  [i18n.t('components.ai_code_generator.k3')]: 'PM',
+  [i18n.t('components.ai_code_generator.k4')]: 'Marketing',
+  [i18n.t('components.ai_code_generator.k5')]: 'Marketing',
+  [i18n.t('components.ai_code_generator.k6')]: 'Sales',
+  [i18n.t('components.ai_code_generator.k7')]: 'Finance',
+  [i18n.t('components.ai_code_generator.k8')]: 'Accounting',
+  [i18n.t('components.ai_code_generator.k9')]: 'HR',
+  [i18n.t('components.ai_code_generator.k10')]: 'HR',
+  [i18n.t('components.ai_code_generator.k11')]: 'Admin',
+  [i18n.t('components.ai_code_generator.k12')]: 'Legal',
+  [i18n.t('components.ai_code_generator.k13')]: 'Operations',
+  [i18n.t('components.ai_code_generator.k14')]: 'Operations',
+  [i18n.t('components.ai_code_generator.k15')]: 'CustomerService',
+  [i18n.t('components.ai_code_generator.k16')]: 'CustomerService',
+  [i18n.t('components.ai_code_generator.k17')]: 'Purchasing',
+  [i18n.t('components.ai_code_generator.k18')]: 'SupplyChain',
+  [i18n.t('components.ai_code_generator.k19')]: 'Quality',
+  [i18n.t('components.ai_code_generator.k20')]: 'Quality',
+  [i18n.t('components.ai_code_generator.k21')]: 'Logistics',
+  [i18n.t('components.ai_code_generator.k22')]: 'Production',
+  [i18n.t('components.ai_code_generator.k23')]: 'Director',
+  [i18n.t('components.ai_code_generator.k24')]: 'Manager',
+  [i18n.t('components.ai_code_generator.k25')]: 'Supervisor',
+  [i18n.t('components.ai_code_generator.k26')]: 'Employee',
+  [i18n.t('components.ai_code_generator.k27')]: 'Specialist',
+  [i18n.t('components.ai_code_generator.k28')]: 'Vice',
+  [i18n.t('components.ai_code_generator.k29')]: 'Assistant',
+  [i18n.t('components.ai_code_generator.k30')]: 'GM',
+  [i18n.t('components.ai_code_generator.k31')]: 'CEO',
+  [i18n.t('components.ai_code_generator.k32')]: 'R',
+  [i18n.t('components.ai_code_generator.k33')]: 'D',
+  [i18n.t('components.ai_code_generator.k34')]: 'D',
+  [i18n.t('components.ai_code_generator.k35')]: 'M',
+  [i18n.t('components.ai_code_generator.k36')]: 'H',
+  [i18n.t('components.ai_code_generator.k37')]: 'R',
+  [i18n.t('components.ai_code_generator.k38')]: 'H',
+  [i18n.t('components.ai_code_generator.k39')]: 'R',
+  [i18n.t('components.ai_code_generator.k40')]: 'F',
+  [i18n.t('components.ai_code_generator.k41')]: 'F',
+  [i18n.t('components.ai_code_generator.k42')]: 'A',
+  [i18n.t('components.ai_code_generator.k43')]: 'C',
+  [i18n.t('components.ai_code_generator.k44')]: 'S',
+  [i18n.t('components.ai_code_generator.k45')]: 'S',
+  [i18n.t('components.ai_code_generator.k46')]: 'M',
+  [i18n.t('components.ai_code_generator.k47')]: 'K',
+  [i18n.t('components.ai_code_generator.k48')]: 'O',
+  [i18n.t('components.ai_code_generator.k49')]: 'O',
+  [i18n.t('components.ai_code_generator.k50')]: 'M',
+  [i18n.t('components.ai_code_generator.k51')]: 'T',
+  [i18n.t('components.ai_code_generator.k52')]: 'E',
+  [i18n.t('components.ai_code_generator.k53')]: 'D',
+  [i18n.t('components.ai_code_generator.k54')]: 'P',
+  [i18n.t('components.ai_code_generator.k55')]: 'P',
+  [i18n.t('components.ai_code_generator.k56')]: 'M',
+  [i18n.t('components.ai_code_generator.k57')]: 'M',
+  [i18n.t('components.ai_code_generator.k58')]: 'E',
+  [i18n.t('components.ai_code_generator.k59')]: 'E',
+  [i18n.t('components.ai_code_generator.k60')]: 'M',
+  [i18n.t('components.ai_code_generator.k61')]: 'M',
+  [i18n.t('components.ai_code_generator.k62')]: 'C',
+  [i18n.t('components.ai_code_generator.k63')]: 'O',
+  [i18n.t('components.ai_code_generator.k64')]: 'A',
+  [i18n.t('components.ai_code_generator.k65')]: 'S',
+  [i18n.t('components.ai_code_generator.k66')]: 'P',
+  [i18n.t('components.ai_code_generator.k67')]: 'O',
+  [i18n.t('components.ai_code_generator.k68')]: 'I',
+  [i18n.t('components.ai_code_generator.k69')]: 'N',
+  [i18n.t('components.ai_code_generator.k70')]: 'W',
+  [i18n.t('components.ai_code_generator.k71')]: 'L',
+  [i18n.t('components.ai_code_generator.k72')]: 'P',
+  [i18n.t('components.ai_code_generator.k73')]: 'Q',
+  [i18n.t('components.ai_code_generator.k74')]: 'Q',
+  [i18n.t('components.ai_code_generator.k75')]: 'S',
+  [i18n.t('components.ai_code_generator.k76')]: 'S',
+  [i18n.t('components.ai_code_generator.k77')]: 'A',
+  [i18n.t('components.ai_code_generator.k78')]: 'D',
+  [i18n.t('components.ai_code_generator.k79')]: 'L',
+  [i18n.t('components.ai_code_generator.k80')]: 'R',
+  [i18n.t('components.ai_code_generator.k81')]: 'R',
 };
 
 const pinyinInitials: Record<string, string> = {
-  研: 'Y',
-  发: 'F',
-  人: 'R',
-  力: 'L',
-  资: 'Z',
-  源: 'Y',
-  财: 'C',
-  务: 'W',
-  会: 'H',
-  计: 'J',
-  销: 'X',
-  售: 'S',
-  市: 'S',
-  场: 'C',
-  运: 'Y',
-  维: 'W',
-  护: 'H',
-  技: 'J',
-  术: 'S',
-  开: 'K',
-  产: 'C',
-  品: 'P',
-  管: 'G',
-  理: 'L',
-  员: 'Y',
-  工: 'G',
-  主: 'Z',
-  经: 'J',
-  总: 'Z',
-  裁: 'C',
-  副: 'F',
-  助: 'Z',
-  专: 'Z',
-  采: 'C',
-  购: 'G',
-  库: 'K',
-  存: 'C',
-  物: 'W',
-  流: 'L',
-  生: 'S',
-  质: 'Z',
-  量: 'L',
-  安: 'A',
-  全: 'Q',
-  行: 'X',
-  政: 'Z',
-  法: 'F',
-  风: 'F',
-  险: 'X',
+  [i18n.t('components.ai_code_generator.k82')]: 'Y',
+  [i18n.t('components.ai_code_generator.k83')]: 'F',
+  [i18n.t('components.ai_code_generator.k84')]: 'R',
+  [i18n.t('components.ai_code_generator.k85')]: 'L',
+  [i18n.t('components.ai_code_generator.k86')]: 'Z',
+  [i18n.t('components.ai_code_generator.k87')]: 'Y',
+  [i18n.t('components.ai_code_generator.k88')]: 'C',
+  [i18n.t('components.ai_code_generator.k89')]: 'W',
+  [i18n.t('components.ai_code_generator.k90')]: 'H',
+  [i18n.t('components.ai_code_generator.k91')]: 'J',
+  [i18n.t('components.ai_code_generator.k92')]: 'X',
+  [i18n.t('components.ai_code_generator.k93')]: 'S',
+  [i18n.t('components.ai_code_generator.k94')]: 'S',
+  [i18n.t('components.ai_code_generator.k95')]: 'C',
+  [i18n.t('components.ai_code_generator.k96')]: 'Y',
+  [i18n.t('components.ai_code_generator.k97')]: 'W',
+  [i18n.t('components.ai_code_generator.k98')]: 'H',
+  [i18n.t('components.ai_code_generator.k99')]: 'J',
+  [i18n.t('components.ai_code_generator.k100')]: 'S',
+  [i18n.t('components.ai_code_generator.k101')]: 'K',
+  [i18n.t('components.ai_code_generator.k102')]: 'C',
+  [i18n.t('components.ai_code_generator.k103')]: 'P',
+  [i18n.t('components.ai_code_generator.k104')]: 'G',
+  [i18n.t('components.ai_code_generator.k105')]: 'L',
+  [i18n.t('components.ai_code_generator.k106')]: 'Y',
+  [i18n.t('components.ai_code_generator.k107')]: 'G',
+  [i18n.t('components.ai_code_generator.k108')]: 'Z',
+  [i18n.t('components.ai_code_generator.k109')]: 'J',
+  [i18n.t('components.ai_code_generator.k110')]: 'Z',
+  [i18n.t('components.ai_code_generator.k111')]: 'C',
+  [i18n.t('components.ai_code_generator.k112')]: 'F',
+  [i18n.t('components.ai_code_generator.k113')]: 'Z',
+  [i18n.t('components.ai_code_generator.k114')]: 'Z',
+  [i18n.t('components.ai_code_generator.k115')]: 'C',
+  [i18n.t('components.ai_code_generator.k116')]: 'G',
+  [i18n.t('components.ai_code_generator.k117')]: 'K',
+  [i18n.t('components.ai_code_generator.k118')]: 'C',
+  [i18n.t('components.ai_code_generator.k119')]: 'W',
+  [i18n.t('components.ai_code_generator.k120')]: 'L',
+  [i18n.t('components.ai_code_generator.k121')]: 'S',
+  [i18n.t('components.ai_code_generator.k122')]: 'Z',
+  [i18n.t('components.ai_code_generator.k123')]: 'L',
+  [i18n.t('components.ai_code_generator.k124')]: 'A',
+  [i18n.t('components.ai_code_generator.k125')]: 'Q',
+  [i18n.t('components.ai_code_generator.k126')]: 'X',
+  [i18n.t('components.ai_code_generator.k127')]: 'Z',
+  [i18n.t('components.ai_code_generator.k128')]: 'F',
+  [i18n.t('components.ai_code_generator.k129')]: 'F',
+  [i18n.t('components.ai_code_generator.k130')]: 'X',
 };
 
 function translateToEnglish(name: string): string {
@@ -355,11 +356,11 @@ export function AICodeGenerator({
     <AIGenerateModal
       isOpen={isOpen}
       onClose={onClose}
-      title='AI 编码生成'
-      description='选择一个推荐的编码，或输入自定义编码后点击确认'
+      title={i18n.t('components.ai_code_generator.ai_131')}
+      description={i18n.t('components.ai_code_generator.k0')}
       isLoading={regenerating}
       onConfirm={customCode ? handleConfirm : undefined}
-      confirmText='使用自定义编码'
+      confirmText={i18n.t('components.ai_code_generator.k1')}
     >
       <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
         {!context.name && (
@@ -374,7 +375,7 @@ export function AICodeGenerator({
               color: 'warning.dark',
             }}
           >
-            💡 提示：请先在名称中输入内容，才能生成个性化编码
+            {i18n.t('components.ai_code_generator.k132')}
           </Box>
         )}
         <Box
@@ -388,7 +389,7 @@ export function AICodeGenerator({
             variant='subtitle2'
             sx={{ fontWeight: 500, color: 'text.secondary' }}
           >
-            推荐编码 (点击即选)
+            {i18n.t('components.ai_code_generator.k133')}
           </Typography>
           <Button
             variant='outlined'
@@ -397,7 +398,7 @@ export function AICodeGenerator({
             disabled={regenerating}
             startIcon={<RefreshCw style={{ width: 16, height: 16 }} />}
           >
-            重新生成
+            {i18n.t('components.ai_code_generator.k134')}
           </Button>
         </Box>
 
@@ -443,14 +444,14 @@ export function AICodeGenerator({
             variant='subtitle2'
             sx={{ fontWeight: 500, color: 'text.secondary', mb: 1.5 }}
           >
-            或自定义编码
+            {i18n.t('components.ai_code_generator.k135')}
           </Typography>
           <TextField
             fullWidth
             size='small'
             value={customCode}
             onChange={(e) => setCustomCode(e.target.value)}
-            placeholder='输入自定义编码...'
+            placeholder={i18n.t('components.ai_code_generator.k136')}
           />
         </Box>
       </Box>

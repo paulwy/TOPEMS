@@ -1,5 +1,7 @@
 import { X, User, Building, Users, Mail, Phone, Calendar } from 'lucide-react';
 import type { AddressbookDetail } from '../../types/addressbook';
+import { designTokens } from '@topems/tokens';
+import i18n from '@/i18n';
 
 interface ContactDetailModalProps {
   contact: AddressbookDetail | null;
@@ -38,13 +40,13 @@ export const ContactDetailModal: React.FC<ContactDetailModalProps> = ({ contact,
   const getTypeLabel = () => {
     switch (contact.contact_type) {
       case 'EMPLOYEE':
-        return '员工';
+        return i18n.t('shared.contact_detail_modal.k0');
       case 'DEPARTMENT':
-        return '部门';
+        return i18n.t('shared.contact_detail_modal.k1');
       case 'COMPANY':
-        return '公司';
+        return i18n.t('shared.contact_detail_modal.k2');
       default:
-        return '联系人';
+        return i18n.t('shared.contact_detail_modal.k3');
     }
   };
 
@@ -139,7 +141,7 @@ export const ContactDetailModal: React.FC<ContactDetailModalProps> = ({ contact,
                   marginBottom: 12,
                 }}
               >
-                基本信息
+                {i18n.t('components.contact_detail_modal.k0')}
               </h3>
               <div
                 style={{
@@ -160,7 +162,7 @@ export const ContactDetailModal: React.FC<ContactDetailModalProps> = ({ contact,
                     }}
                   >
                     <span style={{ fontSize: 14, color: 'var(--mui-palette-text-secondary)' }}>
-                      编号
+                      {i18n.t('components.contact_detail_modal.k1')}
                     </span>
                     <span style={{ fontSize: 14, color: 'var(--mui-palette-text-primary)' }}>
                       {contact.code}
@@ -176,7 +178,7 @@ export const ContactDetailModal: React.FC<ContactDetailModalProps> = ({ contact,
                     }}
                   >
                     <span style={{ fontSize: 14, color: 'var(--mui-palette-text-secondary)' }}>
-                      职位
+                      {i18n.t('components.contact_detail_modal.k2')}
                     </span>
                     <span style={{ fontSize: 14, color: 'var(--mui-palette-text-primary)' }}>
                       {contact.position}
@@ -192,7 +194,7 @@ export const ContactDetailModal: React.FC<ContactDetailModalProps> = ({ contact,
                     }}
                   >
                     <span style={{ fontSize: 14, color: 'var(--mui-palette-text-secondary)' }}>
-                      部门
+                      {i18n.t('components.contact_detail_modal.k3')}
                     </span>
                     <span style={{ fontSize: 14, color: 'var(--mui-palette-text-primary)' }}>
                       {contact.department_name}
@@ -207,7 +209,7 @@ export const ContactDetailModal: React.FC<ContactDetailModalProps> = ({ contact,
                   }}
                 >
                   <span style={{ fontSize: 14, color: 'var(--mui-palette-text-secondary)' }}>
-                    状态
+                    {i18n.t('components.contact_detail_modal.k4')}
                   </span>
                   <span
                     style={{
@@ -222,7 +224,7 @@ export const ContactDetailModal: React.FC<ContactDetailModalProps> = ({ contact,
                         : { backgroundColor: 'error.lighter', color: 'error.darker' }),
                     }}
                   >
-                    {contact.status === 'active' ? '在职' : '离职'}
+                    {contact.status === 'active' ? i18n.t('shared.contact_detail_modal.k5') : i18n.t('shared.contact_detail_modal.k4')}
                   </span>
                 </div>
               </div>
@@ -238,7 +240,7 @@ export const ContactDetailModal: React.FC<ContactDetailModalProps> = ({ contact,
                   marginBottom: 12,
                 }}
               >
-                联系方式
+                {i18n.t('components.contact_detail_modal.k5')}
               </h3>
               <div
                 style={{
@@ -306,7 +308,7 @@ export const ContactDetailModal: React.FC<ContactDetailModalProps> = ({ contact,
                     marginBottom: 12,
                   }}
                 >
-                  入职信息
+                  {i18n.t('components.contact_detail_modal.k6')}
                 </h3>
                 <div
                   style={{
@@ -318,7 +320,7 @@ export const ContactDetailModal: React.FC<ContactDetailModalProps> = ({ contact,
                   <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
                     <Calendar sx={{ width: 20, height: 20, color: 'grey.400' }} />
                     <span style={{ fontSize: 14, color: 'var(--mui-palette-text-primary)' }}>
-                      入职时间: {new Date(contact.hire_date).toLocaleDateString()}
+                      [i18n.t('components.contact_detail_modal.k7')]: {new Date(contact.hire_date).toLocaleDateString()}
                     </span>
                   </div>
                 </div>
@@ -335,7 +337,7 @@ export const ContactDetailModal: React.FC<ContactDetailModalProps> = ({ contact,
                   marginBottom: 12,
                 }}
               >
-                系统信息
+                {i18n.t('components.contact_detail_modal.k8')}
               </h3>
               <div
                 style={{
@@ -350,11 +352,11 @@ export const ContactDetailModal: React.FC<ContactDetailModalProps> = ({ contact,
                 }}
               >
                 <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                  <span>创建时间</span>
+                  <span>{i18n.t('shared.contact_detail_modal.k6')}</span>
                   <span>{new Date(contact.created_at).toLocaleString()}</span>
                 </div>
                 <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                  <span>更新时间</span>
+                  <span>{i18n.t('shared.contact_detail_modal.k7')}</span>
                   <span>{new Date(contact.updated_at).toLocaleString()}</span>
                 </div>
               </div>
@@ -371,7 +373,7 @@ export const ContactDetailModal: React.FC<ContactDetailModalProps> = ({ contact,
             <button
               onClick={onClose}
               style={{
-                padding: '8px 16px',
+                padding: `${designTokens.spacing.sm} 16px`,
                 backgroundColor: 'grey.100',
                 color: 'grey.700',
                 borderRadius: 8,
@@ -386,7 +388,7 @@ export const ContactDetailModal: React.FC<ContactDetailModalProps> = ({ contact,
                 e.currentTarget.style.backgroundColor = 'grey.100';
               }}
             >
-              关闭
+              {i18n.t('components.contact_detail_modal.k9')}
             </button>
           </div>
         </div>

@@ -1,6 +1,7 @@
 import React from 'react';
 import { TablePagination } from '@mui/material';
 import { useTranslation } from 'react-i18next';
+import i18n from '@/i18n';
 
 export interface ListPaginationProps {
   page: number;
@@ -33,7 +34,7 @@ export const ListPagination: React.FC<ListPaginationProps> = ({
       rowsPerPageOptions={[10, 20, 50, 100]}
       labelRowsPerPage={t('components.components.pagination.key_b6960b')}
       labelDisplayedRows={({ from, to, count }) =>
-        `${from}-${to} 共 ${count}${t('components.components.pagination.key_27cab0')}`
+        `${from}-${to}${i18n.t('components.pagination.k0')}${count}${t('components.components.pagination.key_27cab0')}`
       }
     />
   );

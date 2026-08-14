@@ -23,6 +23,7 @@ import {
   Tag,
   Type,
 } from 'lucide-react';
+import i18n from '@/i18n';
 import { useNavigate } from 'react-router-dom';
 import { docApi, type Folder as FolderType } from '@/api/doc';
 import { useNotificationStore } from '@/store';
@@ -189,23 +190,23 @@ const DocumentsPage: React.FC = () => {
 
       if (response.success && response.data) {
         addNotification({
-          title: '成功',
-          message: '文件上传成功！',
+          title: i18n.t('pages.index.k0'),
+          message: i18n.t('pages.index.k1'),
           type: 'success',
         });
       } else {
         addNotification({
-          title: '失败',
-          message: response.message || '文件上传失败',
+          title: i18n.t('pages.index.k2'),
+          message: response.message || i18n.t('pages.index.k3'),
           type: 'error',
         });
       }
     } catch (err: unknown) {
       clearInterval(progressInterval);
-      apiLogger.error('上传文件失败:', err);
+      apiLogger.error(i18n.t('pages.index.k0'), err);
       const error = err as { response?: { data?: { message?: string } }; message?: string };
-      const errorMessage = error.response?.data?.message || error.message || '文件上传失败';
-      addNotification({ title: '失败', message: errorMessage, type: 'error' });
+      const errorMessage = error.response?.data?.message || error.message || i18n.t('pages.index.k4');
+      addNotification({ title: i18n.t('pages.index.k5'), message: errorMessage, type: 'error' });
     } finally {
       setUploading(false);
       setUploadProgress(0);
@@ -217,21 +218,21 @@ const DocumentsPage: React.FC = () => {
 
   const handleDelete = (id: string) => {
     openConfirmDialog({
-      title: '确认删除',
-      message: '确定要删除这个文件吗？',
+      title: i18n.t('pages.index.k6'),
+      message: i18n.t('pages.index.k7'),
       onConfirm: async () => {
         try {
           await deleteMutation.mutateAsync(id);
           addNotification({
-            title: '成功',
-            message: '文件删除成功',
+            title: i18n.t('pages.index.k8'),
+            message: i18n.t('pages.index.k9'),
             type: 'success',
           });
         } catch (err: unknown) {
-          apiLogger.error('删除文件失败:', err);
+          apiLogger.error(i18n.t('pages.index.k1'), err);
           addNotification({
-            title: '失败',
-            message: '文件删除失败',
+            title: i18n.t('pages.index.k10'),
+            message: i18n.t('pages.index.k11'),
             type: 'error',
           });
         }
@@ -242,8 +243,8 @@ const DocumentsPage: React.FC = () => {
 
   const handleDeleteFolder = (id: string, name: string) => {
     openConfirmDialog({
-      title: '确认删除',
-      message: `确定要删除文件夹 "${name}" 吗？文件夹内的文件不会被删除。`,
+      title: i18n.t('pages.index.k12'),
+      message: `${i18n.t('pages.index.k2')}${name}${i18n.t('pages.index.k3')}`,
       onConfirm: async () => {
         try {
           await deleteFolderMutation.mutateAsync(id);
@@ -251,15 +252,15 @@ const DocumentsPage: React.FC = () => {
             setSelectedFolderId(null);
           }
           addNotification({
-            title: '成功',
-            message: '文件夹删除成功',
+            title: i18n.t('pages.index.k13'),
+            message: i18n.t('pages.index.k14'),
             type: 'success',
           });
         } catch (err: unknown) {
-          apiLogger.error('删除文件夹失败:', err);
+          apiLogger.error(i18n.t('pages.index.k4'), err);
           addNotification({
-            title: '失败',
-            message: '文件夹删除失败',
+            title: i18n.t('pages.index.k15'),
+            message: i18n.t('pages.index.k16'),
             type: 'error',
           });
         }
@@ -280,15 +281,15 @@ const DocumentsPage: React.FC = () => {
       a.remove();
       window.URL.revokeObjectURL(url);
       addNotification({
-        title: '成功',
-        message: '文件下载成功',
+        title: i18n.t('pages.index.k17'),
+        message: i18n.t('pages.index.k18'),
         type: 'success',
       });
     } catch (err: unknown) {
-      apiLogger.error('下载失败:', err);
+      apiLogger.error(i18n.t('pages.index.k5'), err);
       addNotification({
-        title: '失败',
-        message: '文件下载失败',
+        title: i18n.t('pages.index.k19'),
+        message: i18n.t('pages.index.k20'),
         type: 'error',
       });
     }
@@ -353,8 +354,8 @@ const DocumentsPage: React.FC = () => {
     if (selectedFiles.length === 0) return;
 
     openConfirmDialog({
-      title: '确认批量删除',
-      message: `确定要删除选中的 ${selectedFiles.length} 个文件吗？`,
+      title: i18n.t('pages.index.k21'),
+      message: `${i18n.t('pages.index.k6')} ${selectedFiles.length} ${i18n.t('pages.index.k7')}`,
       onConfirm: async () => {
         try {
           const deletePromises = selectedFiles.map((id) => deleteMutation.mutateAsync(id));
@@ -362,15 +363,15 @@ const DocumentsPage: React.FC = () => {
 
           setSelectedFiles([]);
           addNotification({
-            title: '成功',
-            message: `已删除 ${selectedFiles.length} 个文件`,
+            title: i18n.t('pages.index.k22'),
+            message: `${i18n.t('pages.index.k8')} ${selectedFiles.length} ${i18n.t('pages.index.k9')}`,
             type: 'success',
           });
         } catch (err: unknown) {
-          apiLogger.error('批量删除失败:', err);
+          apiLogger.error(i18n.t('pages.index.k10'), err);
           addNotification({
-            title: '失败',
-            message: '批量删除失败',
+            title: i18n.t('pages.index.k23'),
+            message: i18n.t('pages.index.k24'),
             type: 'error',
           });
         }
@@ -411,7 +412,7 @@ const DocumentsPage: React.FC = () => {
             uploadedCount++;
           }
         } catch (err: unknown) {
-          apiLogger.error(`上传文件 ${file.name} 失败:`, err);
+          apiLogger.error(`${i18n.t('pages.index.k11')} ${file.name} ${i18n.t('pages.index.k12')}`, err);
         }
         setUploadProgress(Math.round(((i + 1) / files.length) * 100));
       }
@@ -421,8 +422,8 @@ const DocumentsPage: React.FC = () => {
 
       if (uploadedCount > 0) {
         addNotification({
-          title: '成功',
-          message: `成功上传 ${uploadedCount} 个文件`,
+          title: i18n.t('pages.index.k25'),
+          message: `${i18n.t('pages.index.k13')} ${uploadedCount} ${i18n.t('pages.index.k14')}`,
           type: 'success',
         });
       }
@@ -507,7 +508,7 @@ const DocumentsPage: React.FC = () => {
 
   return (
     <PageContainer
-      title='文档管理'
+      title={i18n.t('pages.index.k26')}
       maxWidth={false}
       padding={false}
       bgcolor='grey.100'
@@ -547,7 +548,7 @@ const DocumentsPage: React.FC = () => {
                 variant='h5'
                 sx={{ fontWeight: 700, color: 'grey.900' }}
               >
-                文件管理
+                {i18n.t('pages.index.k15')}
               </Typography>
               {selectedFolder && (
                 <Typography sx={{ color: 'grey.500' }}>/ {selectedFolder.name}</Typography>
@@ -569,14 +570,14 @@ const DocumentsPage: React.FC = () => {
                 />
                 <TextField
                   type='text'
-                  placeholder='搜索文件...'
+                  placeholder={i18n.t('pages.index.k16')}
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   size='small'
                   sx={{ pl: 10, width: '100%' }}
                 />
               </Box>
-              <Tooltip title='筛选'>
+              <Tooltip title={i18n.t('pages.index.k27')}>
                 <span>
                   <Button
                     variant={showFilters ? 'contained' : 'text'}
@@ -619,7 +620,7 @@ const DocumentsPage: React.FC = () => {
                   <List sx={{ width: 16, height: 16 }} />
                 </Button>
               </Box>
-              <Tooltip title='新建文件夹'>
+              <Tooltip title={i18n.t('pages.index.k28')}>
                 <span>
                   <Button
                     variant='text'
@@ -634,7 +635,7 @@ const DocumentsPage: React.FC = () => {
                 disabled={uploading}
               >
                 <Upload sx={{ width: 16, height: 16, mr: 1 }} />
-                <span>{uploading ? '上传中...' : '上传'}</span>
+                <span>{uploading ? i18n.t('pages.index.k17') : i18n.t('pages.index.k29')}</span>
               </Button>
               <input
                 ref={fileInputRef}
@@ -670,14 +671,14 @@ const DocumentsPage: React.FC = () => {
                     fontSize: '0.875rem',
                   }}
                 >
-                  <option value='all'>全部类型</option>
+                  <option value='all'>{i18n.t('pages.index.k30')}</option>
                   <option value='pdf'>PDF</option>
                   <option value='doc'>Word</option>
                   <option value='xls'>Excel</option>
                   <option value='ppt'>PowerPoint</option>
-                  <option value='txt'>文本</option>
-                  <option value='jpg'>图片</option>
-                  <option value='zip'>压缩包</option>
+                  <option value='txt'>{i18n.t('pages.index.k31')}</option>
+                  <option value='jpg'>{i18n.t('pages.index.k32')}</option>
+                  <option value='zip'>{i18n.t('pages.index.k33')}</option>
                 </select>
               </Box>
               <Box sx={{ width: 1, height: 16, bgcolor: 'grey.300' }} />

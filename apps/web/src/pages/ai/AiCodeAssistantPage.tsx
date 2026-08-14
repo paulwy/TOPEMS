@@ -18,6 +18,7 @@ import {
   AccordionSummary,
   AccordionDetails,
 } from '@mui/material';
+import i18n from '@/i18n';
 import {
   Code2,
   Bug,
@@ -133,7 +134,7 @@ export const Counter: React.FC<CounterProps> = ({
         variant="outlined"
         onClick={handleReset}
       >
-        重置
+        {i18n.t('pages.ai_code_assistant_page.k0')}
       </Button>
     </Box>
   );
@@ -278,7 +279,7 @@ export const AiCodeAssistantPage: React.FC = () => {
 
     setTimeout(() => {
       setResult(
-        `// 修复后的代码\nfunction calculateTotal(items: Array<{ price: number; quantity: number }>): number {\n  if (!Array.isArray(items)) return 0;\n  return items.reduce((total, item) => {\n    return total + (item.price || 0) * (item.quantity || 0);\n  }, 0);\n}\n\n// 修复说明：\n// 1. 添加了 TypeScript 类型定义\n// 2. 添加了数组类型检查，防止运行时错误\n// 3. 使用 reduce 替代 for 循环，更函数式\n// 4. 添加了默认值，防止 undefined 导致 NaN`
+        i18n.t('pages.ai_code_assistant_page.k0')
       );
       setGenerating(false);
     }, 2000);
@@ -299,7 +300,7 @@ export const AiCodeAssistantPage: React.FC = () => {
 
     setTimeout(() => {
       setResult(
-        `// 优化后的代码\nfunction calculateTotal(items: Array<{ price: number; quantity: number }> = []): number {\n  return items.reduce((sum, { price = 0, quantity = 0 }) => sum + price * quantity, 0);\n}\n\n// 优化点：\n// 1. 使用 Array.reduce 替代 for 循环，更简洁\n// 2. 添加参数默认值，处理空值情况\n// 3. 使用解构赋值简化代码\n// 4. 添加类型定义，提升代码健壮性\n// 5. 函数式编程风格，易于维护`
+        i18n.t('pages.ai_code_assistant_page.k1')
       );
       setGenerating(false);
     }, 1800);

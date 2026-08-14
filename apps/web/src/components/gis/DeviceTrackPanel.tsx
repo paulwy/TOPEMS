@@ -13,6 +13,7 @@ import {
   ChevronDown,
   ChevronUp,
 } from 'lucide-react';
+import i18n from '@/i18n';
 import {
   Box,
   Typography,
@@ -133,9 +134,9 @@ const DeviceTrackPanel: React.FC<DeviceTrackPanelProps> = ({ devicePoints, onClo
 
   const formatDistance = (meters: number): string => {
     if (meters < 1000) {
-      return `${meters.toFixed(2)} 米`;
+      return `${meters.toFixed(2)}${i18n.t('components.device_track_panel.k0')}`;
     }
-    return `${(meters / 1000).toFixed(2)} 公里`;
+    return `${(meters / 1000).toFixed(2)}${i18n.t('components.device_track_panel.k1')}`;
   };
 
   const formatSpeed = (kmh: number): string => {
@@ -191,7 +192,7 @@ const DeviceTrackPanel: React.FC<DeviceTrackPanelProps> = ({ devicePoints, onClo
             }}
           >
             <Navigation size={20} />
-            设备轨迹追踪
+            {i18n.t('components.device_track_panel.k0')}
           </Typography>
           <IconButton
             onClick={onClose}
@@ -200,7 +201,7 @@ const DeviceTrackPanel: React.FC<DeviceTrackPanelProps> = ({ devicePoints, onClo
               color: 'common.white',
               '&:hover': { bgcolor: 'action.disabledBackground' },
             }}
-            aria-label='关闭'
+            aria-label={i18n.t('gis.device_track_panel.k0')}
           >
             <X size={20} />
           </IconButton>
@@ -217,13 +218,13 @@ const DeviceTrackPanel: React.FC<DeviceTrackPanelProps> = ({ devicePoints, onClo
                   fullWidth
                   size='small'
                 >
-                  <InputLabel>选择设备</InputLabel>
+                  <InputLabel>{i18n.t('gis.device_track_panel.k1')}</InputLabel>
                   <Select
                     value={selectedDevice}
                     onChange={(e) => setSelectedDevice(e.target.value)}
-                    label='选择设备'
+                    label={i18n.t('gis.device_track_panel.k2')}
                   >
-                    <MenuItem value=''>请选择设备</MenuItem>
+                    <MenuItem value=''>{i18n.t('gis.device_track_panel.k3')}</MenuItem>
                     {deviceWithTracks.map((device) => (
                       <MenuItem
                         key={device.id}
@@ -238,7 +239,7 @@ const DeviceTrackPanel: React.FC<DeviceTrackPanelProps> = ({ devicePoints, onClo
               <Grid size={3}>
                 <TextField
                   type='datetime-local'
-                  label='开始时间'
+                  label={i18n.t('gis.device_track_panel.k4')}
                   value={timeRange.start}
                   onChange={(e) => setTimeRange((prev) => ({ ...prev, start: e.target.value }))}
                   size='small'
@@ -248,7 +249,7 @@ const DeviceTrackPanel: React.FC<DeviceTrackPanelProps> = ({ devicePoints, onClo
               <Grid size={3}>
                 <TextField
                   type='datetime-local'
-                  label='结束时间'
+                  label={i18n.t('gis.device_track_panel.k5')}
                   value={timeRange.end}
                   onChange={(e) => setTimeRange((prev) => ({ ...prev, end: e.target.value }))}
                   size='small'
@@ -265,7 +266,7 @@ const DeviceTrackPanel: React.FC<DeviceTrackPanelProps> = ({ devicePoints, onClo
                 textTransform: 'none',
               }}
             >
-              清除时间筛选
+              {i18n.t('components.device_track_panel.k1')}
             </Button>
 
             <Button
@@ -284,7 +285,7 @@ const DeviceTrackPanel: React.FC<DeviceTrackPanelProps> = ({ devicePoints, onClo
                 color: 'grey.700',
               }}
             >
-              刷新数据
+              {i18n.t('components.device_track_panel.k2')}
             </Button>
 
             <Button
@@ -299,7 +300,7 @@ const DeviceTrackPanel: React.FC<DeviceTrackPanelProps> = ({ devicePoints, onClo
                 textTransform: 'none',
               }}
             >
-              {isPlaying ? '暂停' : '播放轨迹'}
+              {isPlaying ? i18n.t('gis.device_track_panel.k7') : i18n.t('gis.device_track_panel.k6')}
             </Button>
 
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 4 }}>
@@ -307,7 +308,7 @@ const DeviceTrackPanel: React.FC<DeviceTrackPanelProps> = ({ devicePoints, onClo
                 variant='body2'
                 sx={{ color: 'text.secondary' }}
               >
-                轨迹点:{' '}
+                [i18n.t('components.device_track_panel.k3')]:{' '}
                 <Box
                   component='span'
                   sx={{ fontWeight: 500 }}
@@ -341,7 +342,7 @@ const DeviceTrackPanel: React.FC<DeviceTrackPanelProps> = ({ devicePoints, onClo
                 variant='body2'
                 sx={{ fontWeight: 500, color: 'grey.700' }}
               >
-                轨迹统计
+                {i18n.t('components.device_track_panel.k4')}
               </Typography>
             </Button>
 
@@ -362,7 +363,7 @@ const DeviceTrackPanel: React.FC<DeviceTrackPanelProps> = ({ devicePoints, onClo
                       }}
                     >
                       <Navigation size={16} />
-                      <Typography variant='caption'>总距离</Typography>
+                      <Typography variant='caption'>{i18n.t('gis.device_track_panel.k8')}</Typography>
                     </Box>
                     <Typography
                       variant='h6'
@@ -384,7 +385,7 @@ const DeviceTrackPanel: React.FC<DeviceTrackPanelProps> = ({ devicePoints, onClo
                       }}
                     >
                       <Gauge size={16} />
-                      <Typography variant='caption'>平均速度</Typography>
+                      <Typography variant='caption'>{i18n.t('gis.device_track_panel.k9')}</Typography>
                     </Box>
                     <Typography
                       variant='h6'
@@ -406,7 +407,7 @@ const DeviceTrackPanel: React.FC<DeviceTrackPanelProps> = ({ devicePoints, onClo
                       }}
                     >
                       <Activity size={16} />
-                      <Typography variant='caption'>最大速度</Typography>
+                      <Typography variant='caption'>{i18n.t('gis.device_track_panel.k10')}</Typography>
                     </Box>
                     <Typography
                       variant='h6'
@@ -428,7 +429,7 @@ const DeviceTrackPanel: React.FC<DeviceTrackPanelProps> = ({ devicePoints, onClo
                       }}
                     >
                       <Activity size={16} />
-                      <Typography variant='caption'>轨迹点数</Typography>
+                      <Typography variant='caption'>{i18n.t('gis.device_track_panel.k11')}</Typography>
                     </Box>
                     <Typography
                       variant='h6'
@@ -450,7 +451,7 @@ const DeviceTrackPanel: React.FC<DeviceTrackPanelProps> = ({ devicePoints, onClo
                       }}
                     >
                       <Clock size={16} />
-                      <Typography variant='caption'>开始时间</Typography>
+                      <Typography variant='caption'>{i18n.t('gis.device_track_panel.k12')}</Typography>
                     </Box>
                     <Typography
                       variant='body2'
@@ -472,7 +473,7 @@ const DeviceTrackPanel: React.FC<DeviceTrackPanelProps> = ({ devicePoints, onClo
                       }}
                     >
                       <Clock size={16} />
-                      <Typography variant='caption'>结束时间</Typography>
+                      <Typography variant='caption'>{i18n.t('gis.device_track_panel.k13')}</Typography>
                     </Box>
                     <Typography
                       variant='body2'
@@ -490,7 +491,7 @@ const DeviceTrackPanel: React.FC<DeviceTrackPanelProps> = ({ devicePoints, onClo
                 variant='body2'
                 sx={{ fontWeight: 500, color: 'grey.700', mb: 2 }}
               >
-                当前位置详情
+                {i18n.t('components.device_track_panel.k5')}
               </Typography>
               <Grid
                 container
@@ -501,7 +502,7 @@ const DeviceTrackPanel: React.FC<DeviceTrackPanelProps> = ({ devicePoints, onClo
                     variant='body2'
                     sx={{ color: 'text.secondary' }}
                   >
-                    时间:
+                    [i18n.t('components.device_track_panel.k6')]:
                   </Typography>
                   <Typography
                     variant='body2'
@@ -515,7 +516,7 @@ const DeviceTrackPanel: React.FC<DeviceTrackPanelProps> = ({ devicePoints, onClo
                     variant='body2'
                     sx={{ color: 'text.secondary' }}
                   >
-                    坐标:
+                    [i18n.t('components.device_track_panel.k7')]:
                   </Typography>
                   <Typography
                     variant='body2'
@@ -535,7 +536,7 @@ const DeviceTrackPanel: React.FC<DeviceTrackPanelProps> = ({ devicePoints, onClo
                       variant='body2'
                       sx={{ color: 'text.secondary' }}
                     >
-                      精度:
+                      [i18n.t('components.device_track_panel.k8')]:
                     </Typography>
                     <Typography
                       variant='body2'
@@ -551,7 +552,7 @@ const DeviceTrackPanel: React.FC<DeviceTrackPanelProps> = ({ devicePoints, onClo
                       variant='body2'
                       sx={{ color: 'text.secondary' }}
                     >
-                      速度:
+                      [i18n.t('components.device_track_panel.k9')]:
                     </Typography>
                     <Typography
                       variant='body2'
@@ -567,7 +568,7 @@ const DeviceTrackPanel: React.FC<DeviceTrackPanelProps> = ({ devicePoints, onClo
                       variant='body2'
                       sx={{ color: 'text.secondary' }}
                     >
-                      方向:
+                      [i18n.t('components.device_track_panel.k10')]:
                     </Typography>
                     <Typography
                       variant='body2'
@@ -583,7 +584,7 @@ const DeviceTrackPanel: React.FC<DeviceTrackPanelProps> = ({ devicePoints, onClo
                       variant='body2'
                       sx={{ color: 'text.secondary' }}
                     >
-                      电量:
+                      [i18n.t('components.device_track_panel.k11')]:
                     </Typography>
                     <Typography
                       variant='body2'
@@ -651,7 +652,7 @@ const DeviceTrackPanel: React.FC<DeviceTrackPanelProps> = ({ devicePoints, onClo
                       })
                     }
                   >
-                    <Popup>起点</Popup>
+                    <Popup>{i18n.t('gis.device_track_panel.k14')}</Popup>
                   </Marker>
                 )}
                 <Marker
@@ -667,7 +668,7 @@ const DeviceTrackPanel: React.FC<DeviceTrackPanelProps> = ({ devicePoints, onClo
                 >
                   <Popup>
                     <Box sx={{ fontSize: '0.875rem' }}>
-                      <Typography sx={{ fontWeight: 500 }}>当前位置</Typography>
+                      <Typography sx={{ fontWeight: 500 }}>{i18n.t('gis.device_track_panel.k15')}</Typography>
                       <Typography>{formatTime(currentPoint.timestamp)}</Typography>
                     </Box>
                   </Popup>
@@ -685,7 +686,7 @@ const DeviceTrackPanel: React.FC<DeviceTrackPanelProps> = ({ devicePoints, onClo
                         })
                       }
                     >
-                      <Popup>终点</Popup>
+                      <Popup>{i18n.t('gis.device_track_panel.k16')}</Popup>
                     </Marker>
                   )}
               </MapContainer>
@@ -726,7 +727,7 @@ const DeviceTrackPanel: React.FC<DeviceTrackPanelProps> = ({ devicePoints, onClo
           }}
         >
           <Navigation size={20} />
-          设备轨迹追踪
+          {i18n.t('components.device_track_panel.k12')}
         </Typography>
         <IconButton
           onClick={onClose}
@@ -735,7 +736,7 @@ const DeviceTrackPanel: React.FC<DeviceTrackPanelProps> = ({ devicePoints, onClo
             color: 'common.white',
             '&:hover': { bgcolor: 'action.disabledBackground' },
           }}
-          aria-label='关闭'
+          aria-label={i18n.t('gis.device_track_panel.k17')}
         >
           <X size={20} />
         </IconButton>
@@ -755,18 +756,18 @@ const DeviceTrackPanel: React.FC<DeviceTrackPanelProps> = ({ devicePoints, onClo
             size={48}
             sx={{ color: 'action.disabled', margin: '0 auto 12px' }}
           />
-          <Typography sx={{ color: 'text.secondary' }}>请选择一个设备查看轨迹</Typography>
+          <Typography sx={{ color: 'text.secondary' }}>{i18n.t('gis.device_track_panel.k18')}</Typography>
           <FormControl
             sx={{ mt: 4, minWidth: 200 }}
             size='small'
           >
-            <InputLabel>请选择设备</InputLabel>
+            <InputLabel>{i18n.t('gis.device_track_panel.k19')}</InputLabel>
             <Select
               value={selectedDevice}
               onChange={(e) => setSelectedDevice(e.target.value)}
-              label='请选择设备'
+              label={i18n.t('gis.device_track_panel.k20')}
             >
-              <MenuItem value=''>请选择设备</MenuItem>
+              <MenuItem value=''>{i18n.t('gis.device_track_panel.k21')}</MenuItem>
               {deviceWithTracks.map((device) => (
                 <MenuItem
                   key={device.id}

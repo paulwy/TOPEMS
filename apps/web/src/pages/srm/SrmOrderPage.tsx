@@ -6,13 +6,14 @@ import { QUERY_KEYS } from '@/lib/reactQuery';
 import { useQuery } from '@tanstack/react-query';
 import { Box, Typography } from '@mui/material';
 import { ClipboardList, ShoppingCart } from 'lucide-react';
+import i18n from '@/i18n';
 
 const SrmOrderStats: React.FC = () => {
   const { data } = useQuery({
     queryKey: [QUERY_KEYS.SRM.ORDERS, 'stats'],
     queryFn: async () => {
       const response = await srmApi.listPurchaseOrders();
-      if (!response.success) throw new Error('加载订单统计失败');
+      if (!response.success) throw new Error(i18n.t('pages.srm_order_page.k0'));
       const items = (response.data || []) as Array<{
         id?: string;
         status?: string;
@@ -36,7 +37,7 @@ const SrmOrderStats: React.FC = () => {
 
   const statCards = [
     {
-      label: '订单总数',
+      label: i18n.t('pages.srm_order_page.k1'),
       value: total,
       color: 'primary.lighter',
       textColor: 'text.secondary',
@@ -48,7 +49,7 @@ const SrmOrderStats: React.FC = () => {
       ),
     },
     {
-      label: '待处理',
+      label: i18n.t('pages.srm_order_page.k2'),
       value: pending,
       color: 'warning.lighter',
       textColor: 'warning.dark',
@@ -60,7 +61,7 @@ const SrmOrderStats: React.FC = () => {
       ),
     },
     {
-      label: '处理中',
+      label: i18n.t('pages.srm_order_page.k3'),
       value: processing,
       color: 'primary.100',
       textColor: 'primary.dark',
@@ -72,7 +73,7 @@ const SrmOrderStats: React.FC = () => {
       ),
     },
     {
-      label: '已完成',
+      label: i18n.t('pages.srm_order_page.k4'),
       value: completed,
       color: 'success.lighter',
       textColor: 'success.dark',
@@ -84,7 +85,7 @@ const SrmOrderStats: React.FC = () => {
       ),
     },
     {
-      label: '订单总额',
+      label: i18n.t('pages.srm_order_page.k5'),
       value: `¥${totalAmount.toLocaleString()}`,
       color: 'secondary.light',
       textColor: 'primary.light',
@@ -154,7 +155,7 @@ const orderApiAdapter: CrudApiAdapter = {
   list: async (_params) => {
     const response = await srmApi.listPurchaseOrders();
     if (!response.success) {
-      throw new Error('加载订单失败');
+      throw new Error(i18n.t('pages.srm_order_page.k6'));
     }
     const items = (response.data || []) as unknown as Array<Record<string, unknown>>;
     const adapted = items.map((item) => ({
@@ -172,7 +173,7 @@ const orderApiAdapter: CrudApiAdapter = {
       data as unknown as Parameters<typeof srmApi.createPurchaseOrder>[0]
     );
     if (!response.success) {
-      throw new Error('创建订单失败');
+      throw new Error(i18n.t('pages.srm_order_page.k7'));
     }
     return response.data as unknown as Record<string, unknown>;
   },
@@ -183,7 +184,7 @@ const orderApiAdapter: CrudApiAdapter = {
       data as unknown as Parameters<typeof srmApi.updatePurchaseOrder>[1]
     );
     if (!response.success) {
-      throw new Error('更新订单失败');
+      throw new Error(i18n.t('pages.srm_order_page.k8'));
     }
     return response.data as unknown as Record<string, unknown>;
   },
@@ -191,7 +192,7 @@ const orderApiAdapter: CrudApiAdapter = {
   delete: async (id) => {
     const response = await srmApi.deletePurchaseOrder(id);
     if (!response.success) {
-      throw new Error('删除订单失败');
+      throw new Error(i18n.t('pages.srm_order_page.k9'));
     }
   },
 };
@@ -202,9 +203,9 @@ const SrmOrderPage: React.FC = () => {
       schema={orderSchema}
       apiAdapter={orderApiAdapter}
       breadcrumbs={[
-        { label: '首页', href: '/dashboard' },
+        { label: i18n.t('pages.srm_order_page.k10'), href: '/dashboard' },
         { label: 'SRM', href: '/srm' },
-        { label: '采购订单' },
+        { label: i18n.t('pages.srm_order_page.k11') },
       ]}
       headerContent={<SrmOrderStats />}
     />

@@ -14,6 +14,7 @@ import {
   Typography,
   Button,
 } from '@mui/material';
+import i18n from '@/i18n';
 import type {
   ReportType,
   ReportTypeInfo,
@@ -47,19 +48,19 @@ const TemplateFormDialog: React.FC<TemplateFormDialogProps> = ({
       maxWidth='lg'
       fullWidth
     >
-      <DialogTitle>{selectedTemplate ? '编辑模板' : '新增模板'}</DialogTitle>
+      <DialogTitle>{selectedTemplate ? i18n.t('pages.template_form_dialog.k1') : i18n.t('pages.template_form_dialog.k0')}</DialogTitle>
       <DialogContent sx={{ overflowY: 'auto', maxHeight: '80vh' }}>
         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3, mt: 2 }}>
           <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 3 }}>
             <TextField
-              label='模板名称 *'
+              label={i18n.t('pages.template_form_dialog.k0')}
               required
               value={templateFormData.name}
               onChange={(e) => onFormDataChange({ ...templateFormData, name: e.target.value })}
               fullWidth
             />
             <TextField
-              label='模板编码 *'
+              label={i18n.t('pages.template_form_dialog.k1')}
               required
               value={templateFormData.code}
               onChange={(e) => onFormDataChange({ ...templateFormData, code: e.target.value })}
@@ -73,7 +74,7 @@ const TemplateFormDialog: React.FC<TemplateFormDialogProps> = ({
               <Select
                 required
                 value={templateFormData.report_type}
-                label='报表类型 *'
+                label={i18n.t('pages.template_form_dialog.k2')}
                 onChange={(e) =>
                   onFormDataChange({
                     ...templateFormData,
@@ -93,7 +94,7 @@ const TemplateFormDialog: React.FC<TemplateFormDialogProps> = ({
               </Select>
             </FormControl>
             <TextField
-              label='分类'
+              label={i18n.t('pages.template_form_dialog.k2')}
               value={templateFormData.category}
               onChange={(e) => onFormDataChange({ ...templateFormData, category: e.target.value })}
               fullWidth
@@ -101,7 +102,7 @@ const TemplateFormDialog: React.FC<TemplateFormDialogProps> = ({
           </Box>
 
           <TextField
-            label='描述'
+            label={i18n.t('pages.template_form_dialog.k3')}
             value={templateFormData.description || ''}
             onChange={(e) => onFormDataChange({ ...templateFormData, description: e.target.value })}
             multiline
@@ -111,10 +112,10 @@ const TemplateFormDialog: React.FC<TemplateFormDialogProps> = ({
 
           <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 3 }}>
             <FormControl fullWidth>
-              <InputLabel>输出格式</InputLabel>
+              <InputLabel>{i18n.t('pages.template_form_dialog.k4')}</InputLabel>
               <Select
                 value={templateFormData.outputformat}
-                label='输出格式'
+                label={i18n.t('pages.template_form_dialog.k5')}
                 onChange={(e) =>
                   onFormDataChange({ ...templateFormData, outputformat: e.target.value })
                 }
@@ -126,7 +127,7 @@ const TemplateFormDialog: React.FC<TemplateFormDialogProps> = ({
               </Select>
             </FormControl>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mt: 2 }}>
-              <Typography>启用状态</Typography>
+              <Typography>{i18n.t('pages.template_form_dialog.k6')}</Typography>
               <Switch
                 checked={selectedTemplate?.isactive ?? true}
                 disabled={!!selectedTemplate}
@@ -135,7 +136,7 @@ const TemplateFormDialog: React.FC<TemplateFormDialogProps> = ({
           </Box>
 
           <TextField
-            label='数据源查询'
+            label={i18n.t('pages.template_form_dialog.k7')}
             value={templateFormData.data_source.query}
             onChange={(e) =>
               onFormDataChange({
@@ -146,12 +147,12 @@ const TemplateFormDialog: React.FC<TemplateFormDialogProps> = ({
             multiline
             rows={4}
             fullWidth
-            placeholder='输入SQL查询语句'
+            placeholder={i18n.t('pages.template_form_dialog.sql_8')}
             sx={{ fontFamily: 'monospace' }}
           />
 
           <TextField
-            label='列配置 (JSON)'
+            label={i18n.t('pages.template_form_dialog.json_9')}
             value={JSON.stringify(templateFormData.columns, null, 2)}
             onChange={(e) => {
               try {
@@ -171,13 +172,13 @@ const TemplateFormDialog: React.FC<TemplateFormDialogProps> = ({
           variant='outlined'
           onClick={onClose}
         >
-          取消
+          {i18n.t('pages.template_form_dialog.k3')}
         </Button>
         <Button
           variant='contained'
           onClick={onSubmit}
         >
-          {selectedTemplate ? '保存' : '创建'}
+          {selectedTemplate ? i18n.t('pages.template_form_dialog.k11') : i18n.t('pages.template_form_dialog.k10')}
         </Button>
       </DialogActions>
     </Dialog>

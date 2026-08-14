@@ -1,10 +1,11 @@
 import type React from 'react';
 import type { EntitySchema } from '@/schema';
+import i18n from '@/i18n';
 
 export const processRouteSchema: EntitySchema = {
   entity: 'mesProcessRoute',
-  title: '工艺路线',
-  description: '管理生产工艺路线，包括路线编号、名称、版本、标准工时和状态',
+  title: i18n.t('mes.process_route.k0'),
+  description: i18n.t('mes.process_route.k1'),
 
   api: {
     module: 'mes',
@@ -14,7 +15,7 @@ export const processRouteSchema: EntitySchema = {
   fields: [
     {
       name: 'code',
-      label: '路线编号',
+      label: i18n.t('mes.process_route.k2'),
       type: 'text',
       required: true,
       sortable: true,
@@ -23,7 +24,7 @@ export const processRouteSchema: EntitySchema = {
     },
     {
       name: 'name',
-      label: '路线名称',
+      label: i18n.t('mes.process_route.k3'),
       type: 'text',
       required: true,
       sortable: true,
@@ -32,14 +33,14 @@ export const processRouteSchema: EntitySchema = {
     },
     {
       name: 'version',
-      label: '版本',
+      label: i18n.t('mes.process_route.k4'),
       type: 'text',
       sortable: true,
       listWidth: 100,
     },
     {
       name: 'process_count',
-      label: '工序数量',
+      label: i18n.t('mes.process_route.k5'),
       type: 'number',
       sortable: true,
       listWidth: 100,
@@ -47,7 +48,7 @@ export const processRouteSchema: EntitySchema = {
     },
     {
       name: 'total_standard_time',
-      label: '总标准工时(分钟)',
+      label: i18n.t('mes.process_route.k6'),
       type: 'number',
       sortable: true,
       listWidth: 140,
@@ -59,22 +60,22 @@ export const processRouteSchema: EntitySchema = {
     },
     {
       name: 'standard_time',
-      label: '标准工时(分钟)',
+      label: i18n.t('mes.process_route.k7'),
       type: 'number',
       listWidth: 130,
       showInList: false,
     },
     {
       name: 'status',
-      label: '状态',
+      label: i18n.t('mes.process_route.k8'),
       type: 'select',
       defaultValue: 'active',
       options: {
         type: 'static',
         options: [
-          { value: 'active', label: '启用' },
-          { value: 'inactive', label: '禁用' },
-          { value: 'draft', label: '草稿' },
+          { value: 'active', label: i18n.t('mes.process_route.k9') },
+          { value: 'inactive', label: i18n.t('mes.process_route.k10') },
+          { value: 'draft', label: i18n.t('mes.process_route.k11') },
         ],
       },
       listWidth: 100,
@@ -82,13 +83,13 @@ export const processRouteSchema: EntitySchema = {
     },
     {
       name: 'description',
-      label: '描述',
+      label: i18n.t('mes.process_route.k12'),
       type: 'textarea',
       showInList: false,
     },
     {
       name: 'created_at',
-      label: '创建时间',
+      label: i18n.t('mes.process_route.k13'),
       type: 'datetime',
       sortable: true,
       listWidth: 160,
@@ -117,21 +118,21 @@ export const processRouteSchema: EntitySchema = {
         draft: 'warning',
       },
       labelMap: {
-        active: '启用',
-        inactive: '禁用',
-        draft: '草稿',
+        active: i18n.t('mes.process_route.k14'),
+        inactive: i18n.t('mes.process_route.k15'),
+        draft: i18n.t('mes.process_route.k16'),
       },
     },
     filters: [
       {
         id: 'status',
-        label: '状态',
+        label: i18n.t('mes.process_route.k17'),
         type: 'select',
         options: [
-          { label: '全部状态', value: 'all' },
-          { label: '启用', value: 'active' },
-          { label: '禁用', value: 'inactive' },
-          { label: '草稿', value: 'draft' },
+          { label: i18n.t('mes.process_route.k18'), value: 'all' },
+          { label: i18n.t('mes.process_route.k19'), value: 'active' },
+          { label: i18n.t('mes.process_route.k20'), value: 'inactive' },
+          { label: i18n.t('mes.process_route.k21'), value: 'draft' },
         ],
       },
     ],
@@ -141,21 +142,21 @@ export const processRouteSchema: EntitySchema = {
 
   formSections: [
     {
-      title: '基本信息',
+      title: i18n.t('mes.process_route.k22'),
       fields: ['code', 'name', 'version', 'status'],
     },
     {
-      title: '工时信息',
+      title: i18n.t('mes.process_route.k23'),
       fields: ['standard_time'],
     },
     {
-      title: '描述',
+      title: i18n.t('mes.process_route.k24'),
       fields: ['description'],
     },
   ],
 
   formColCount: 2,
-  createTitle: '新增工艺路线',
-  editTitle: '编辑工艺路线',
-  detailTitle: '工艺路线详情',
+  createTitle: i18n.t('mes.process_route.k25'),
+  editTitle: i18n.t('mes.process_route.k26'),
+  detailTitle: i18n.t('mes.process_route.k27'),
 };

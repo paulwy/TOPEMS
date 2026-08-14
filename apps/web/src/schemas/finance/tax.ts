@@ -1,22 +1,23 @@
 import React from 'react';
 import { Chip } from '@mui/material';
 import type { EntitySchema } from '@/schema';
+import i18n from '@/i18n';
 
 // ============ 标签映射 ============
 
 export const TAX_TYPE_LABELS: Record<string, string> = {
-  vat: '增值税',
-  output: '销项税',
-  input: '进项税',
-  income: '所得税',
-  other: '其他',
+  vat: i18n.t('finance.tax.k0'),
+  output: i18n.t('finance.tax.k1'),
+  input: i18n.t('finance.tax.k2'),
+  income: i18n.t('finance.tax.k3'),
+  other: i18n.t('finance.tax.k4'),
 };
 
 export const STATUS_LABELS: Record<string, string> = {
-  declared: '已申报',
-  paid: '已缴纳',
-  overdue: '待缴纳',
-  pending: '待申报',
+  declared: i18n.t('finance.tax.k5'),
+  paid: i18n.t('finance.tax.k6'),
+  overdue: i18n.t('finance.tax.k7'),
+  pending: i18n.t('finance.tax.k8'),
 };
 
 // ============ 格式化工具 ============
@@ -33,8 +34,8 @@ const formatMoney = (amount: number | undefined, style?: React.CSSProperties) =>
 
 export const taxSchema: EntitySchema = {
   entity: 'finance_tax',
-  title: '税务管理',
-  description: '管理企业税务申报、缴纳和分析（数据由销售发票与采购发票聚合）',
+  title: i18n.t('finance.tax.k9'),
+  description: i18n.t('finance.tax.k10'),
 
   api: {
     module: 'finance',
@@ -44,17 +45,17 @@ export const taxSchema: EntitySchema = {
   fields: [
     {
       name: 'tax_type',
-      label: '税种',
+      label: i18n.t('finance.tax.k11'),
       type: 'select',
       required: true,
       options: {
         type: 'static',
         options: [
-          { value: 'vat', label: '增值税' },
-          { value: 'output', label: '销项税' },
-          { value: 'input', label: '进项税' },
-          { value: 'income', label: '所得税' },
-          { value: 'other', label: '其他' },
+          { value: 'vat', label: i18n.t('finance.tax.k12') },
+          { value: 'output', label: i18n.t('finance.tax.k13') },
+          { value: 'input', label: i18n.t('finance.tax.k14') },
+          { value: 'income', label: i18n.t('finance.tax.k15') },
+          { value: 'other', label: i18n.t('finance.tax.k16') },
         ],
       },
       listWidth: 120,
@@ -69,7 +70,7 @@ export const taxSchema: EntitySchema = {
     },
     {
       name: 'declaration_period',
-      label: '申报期间',
+      label: i18n.t('finance.tax.k17'),
       type: 'text',
       listWidth: 120,
       renderCell: (row: Record<string, unknown>) =>
@@ -81,7 +82,7 @@ export const taxSchema: EntitySchema = {
     },
     {
       name: 'taxable_income',
-      label: '应税收入',
+      label: i18n.t('finance.tax.k18'),
       type: 'number',
       listWidth: 140,
       renderCell: (row: Record<string, unknown>) =>
@@ -89,7 +90,7 @@ export const taxSchema: EntitySchema = {
     },
     {
       name: 'tax_rate',
-      label: '税率',
+      label: i18n.t('finance.tax.k19'),
       type: 'number',
       listWidth: 100,
       renderCell: (row: Record<string, unknown>) =>
@@ -101,7 +102,7 @@ export const taxSchema: EntitySchema = {
     },
     {
       name: 'tax_amount',
-      label: '税额',
+      label: i18n.t('finance.tax.k20'),
       type: 'number',
       listWidth: 140,
       renderCell: (row: Record<string, unknown>) =>
@@ -112,7 +113,7 @@ export const taxSchema: EntitySchema = {
     },
     {
       name: 'paid_amount',
-      label: '已缴税额',
+      label: i18n.t('finance.tax.k21'),
       type: 'number',
       listWidth: 140,
       renderCell: (row: Record<string, unknown>) =>
@@ -120,7 +121,7 @@ export const taxSchema: EntitySchema = {
     },
     {
       name: 'owed_amount',
-      label: '欠缴金额',
+      label: i18n.t('finance.tax.k22'),
       type: 'number',
       listWidth: 140,
       renderCell: (row: Record<string, unknown>) => {
@@ -133,16 +134,16 @@ export const taxSchema: EntitySchema = {
     },
     {
       name: 'status',
-      label: '状态',
+      label: i18n.t('finance.tax.k23'),
       type: 'select',
       required: true,
       options: {
         type: 'static',
         options: [
-          { value: 'declared', label: '已申报' },
-          { value: 'paid', label: '已缴纳' },
-          { value: 'overdue', label: '待缴纳' },
-          { value: 'pending', label: '待申报' },
+          { value: 'declared', label: i18n.t('finance.tax.k24') },
+          { value: 'paid', label: i18n.t('finance.tax.k25') },
+          { value: 'overdue', label: i18n.t('finance.tax.k26') },
+          { value: 'pending', label: i18n.t('finance.tax.k27') },
         ],
       },
       listWidth: 120,
@@ -167,7 +168,7 @@ export const taxSchema: EntitySchema = {
     },
     {
       name: 'related_document',
-      label: '关联单据',
+      label: i18n.t('finance.tax.k28'),
       type: 'text',
       showInList: false,
     },
@@ -189,27 +190,27 @@ export const taxSchema: EntitySchema = {
     filters: [
       {
         id: 'tax_type',
-        label: '税种',
+        label: i18n.t('finance.tax.k29'),
         type: 'select',
         options: [
-          { label: '全部税种', value: 'all' },
-          { label: '增值税', value: 'vat' },
-          { label: '销项税', value: 'output' },
-          { label: '进项税', value: 'input' },
-          { label: '所得税', value: 'income' },
-          { label: '其他', value: 'other' },
+          { label: i18n.t('finance.tax.k30'), value: 'all' },
+          { label: i18n.t('finance.tax.k31'), value: 'vat' },
+          { label: i18n.t('finance.tax.k32'), value: 'output' },
+          { label: i18n.t('finance.tax.k33'), value: 'input' },
+          { label: i18n.t('finance.tax.k34'), value: 'income' },
+          { label: i18n.t('finance.tax.k35'), value: 'other' },
         ],
       },
       {
         id: 'status',
-        label: '状态',
+        label: i18n.t('finance.tax.k36'),
         type: 'select',
         options: [
-          { label: '全部状态', value: 'all' },
-          { label: '已申报', value: 'declared' },
-          { label: '已缴纳', value: 'paid' },
-          { label: '待缴纳', value: 'overdue' },
-          { label: '待申报', value: 'pending' },
+          { label: i18n.t('finance.tax.k37'), value: 'all' },
+          { label: i18n.t('finance.tax.k38'), value: 'declared' },
+          { label: i18n.t('finance.tax.k39'), value: 'paid' },
+          { label: i18n.t('finance.tax.k40'), value: 'overdue' },
+          { label: i18n.t('finance.tax.k41'), value: 'pending' },
         ],
       },
     ],

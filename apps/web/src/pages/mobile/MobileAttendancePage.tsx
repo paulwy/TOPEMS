@@ -18,6 +18,7 @@ import {
   DialogActions,
   MenuItem,
 } from '@mui/material';
+import i18n from '@/i18n';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   Home,
@@ -44,10 +45,7 @@ import { mobileApi, type AttendanceStats, type LeaveApplication } from '@/api/mo
 import { apiLogger } from '@/utils/logger';
 import { MOBILE_PATHS } from '@/modules/mobile/config';
 import { PageContainer } from '@/components/common';
-
-
 import { QUERY_KEYS } from '@/lib/reactQuery';
-
 const MobileAttendancePage: React.FC = () => {
   const theme = useTheme();
   const navigate = useNavigate();
@@ -60,10 +58,8 @@ const MobileAttendancePage: React.FC = () => {
     end_date: '',
     reason: '',
   });
-
   const queryClient = useQueryClient();
-  const tabs = ['打卡', '记录', '请假'];
-
+  const tabs = [i18n.t('mobile.mobile_attendance_page.k2'), i18n.t('mobile.mobile_attendance_page.k1'), i18n.t('mobile.mobile_attendance_page.k0')];
   const statsQuery = useQuery({
     queryKey: QUERY_KEYS.AD_HOC.MOBILE_ATTENDANCE_STATS_BASE,
     queryFn: async () => {
@@ -73,7 +69,6 @@ const MobileAttendancePage: React.FC = () => {
     staleTime: 5 * 60 * 1000,
     retry: 2,
   });
-
   const recordsQuery = useQuery({
     queryKey: QUERY_KEYS.AD_HOC.MOBILE_ATTENDANCE_RECORDS_BASE,
     queryFn: async () => {
@@ -83,7 +78,6 @@ const MobileAttendancePage: React.FC = () => {
     staleTime: 5 * 60 * 1000,
     retry: 2,
   });
-
   const leavesQuery = useQuery({
     queryKey: QUERY_KEYS.AD_HOC.MOBILE_LEAVE_APPLICATIONS_BASE,
     queryFn: async () => {
@@ -93,12 +87,10 @@ const MobileAttendancePage: React.FC = () => {
     staleTime: 5 * 60 * 1000,
     retry: 2,
   });
-
   const loading = statsQuery.isLoading || recordsQuery.isLoading || leavesQuery.isLoading;
   const attendanceStats = statsQuery.data ?? null;
   const records = recordsQuery.data || [];
   const leaves = leavesQuery.data || [];
-
   const checkInMutation = useMutation({
     mutationFn: async () => {
       const result = await mobileApi.checkIn({ lat: 0, lng: 0 });
@@ -127,8 +119,8 @@ const MobileAttendancePage: React.FC = () => {
         };
       });
       addNotification({
-        title: '打卡成功',
-        message: '上班打卡成功，祝您工作顺利！',
+        title: i18n.t('mobile.mobile_attendance_page.k3'),
+        message: i18n.t('mobile.mobile_attendance_page.k4'),
         type: 'success',
       });
     },
@@ -136,10 +128,10 @@ const MobileAttendancePage: React.FC = () => {
       if (context?.previousStats) {
         queryClient.setQueryData(['mobile-attendance-stats'], context.previousStats);
       }
-      apiLogger.error('打卡失败:', err);
+      apiLogger.error(i18n.t('pages.mobile_attendance_page.k0'), err);
       addNotification({
-        title: '打卡失败',
-        message: '打卡失败，请稍后重试',
+        title: i18n.t('mobile.mobile_attendance_page.k5'),
+        message: i18n.t('mobile.mobile_attendance_page.k6'),
         type: 'error',
       });
     },
@@ -154,7 +146,6 @@ const MobileAttendancePage: React.FC = () => {
 });
     },
   });
-
   const checkOutMutation = useMutation({
     mutationFn: async () => {
       const result = await mobileApi.checkOut({ lat: 0, lng: 0 });
@@ -183,8 +174,8 @@ const MobileAttendancePage: React.FC = () => {
         };
       });
       addNotification({
-        title: '打卡成功',
-        message: '下班打卡成功，辛苦了！',
+        title: i18n.t('mobile.mobile_attendance_page.k7'),
+        message: i18n.t('mobile.mobile_attendance_page.k8'),
         type: 'success',
       });
     },
@@ -192,10 +183,10 @@ const MobileAttendancePage: React.FC = () => {
       if (context?.previousStats) {
         queryClient.setQueryData(['mobile-attendance-stats'], context.previousStats);
       }
-      apiLogger.error('打卡失败:', err);
+      apiLogger.error(i18n.t('pages.mobile_attendance_page.k1'), err);
       addNotification({
-        title: '打卡失败',
-        message: '打卡失败，请稍后重试',
+        title: i18n.t('mobile.mobile_attendance_page.k9'),
+        message: i18n.t('mobile.mobile_attendance_page.k10'),
         type: 'error',
       });
     },
@@ -210,7 +201,6 @@ const MobileAttendancePage: React.FC = () => {
 });
     },
   });
-
   const applyLeaveMutation = useMutation({
     mutationFn: async (data: {
       leave_type: LeaveApplication['leave_type'];
@@ -220,7 +210,7 @@ const MobileAttendancePage: React.FC = () => {
     }) => {
       const res = await mobileApi.applyLeave(data);
       if (!res.success) {
-        throw new Error('提交失败');
+        throw new Error(i18n.t('mobile.mobile_attendance_page.k11'));
       }
       return res.data;
     },
@@ -233,8 +223,8 @@ const MobileAttendancePage: React.FC = () => {
         reason: '',
       });
       addNotification({
-        title: '提交成功',
-        message: '请假申请已提交，请等待审批',
+        title: i18n.t('mobile.mobile_attendance_page.k12'),
+        message: i18n.t('mobile.mobile_attendance_page.k13'),
         type: 'success',
       });
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.MOBILE_LEAVE_APPLICATIONS_BASE ,
@@ -243,59 +233,51 @@ const MobileAttendancePage: React.FC = () => {
 });
     },
     onError: (err) => {
-      apiLogger.error('提交请假申请失败:', err);
+      apiLogger.error(i18n.t('pages.mobile_attendance_page.k2'), err);
       addNotification({
-        title: '提交失败',
-        message: '提交失败，请稍后重试',
+        title: i18n.t('mobile.mobile_attendance_page.k14'),
+        message: i18n.t('mobile.mobile_attendance_page.k15'),
         type: 'error',
       });
     },
   });
-
   const handleRefresh = useCallback(async () => {
     await Promise.all([statsQuery.refetch(), recordsQuery.refetch(), leavesQuery.refetch()]);
   }, [statsQuery, recordsQuery, leavesQuery]);
-
   const handleTabChange = (_event: React.SyntheticEvent, newValue: number) => {
     setActiveTab(newValue);
   };
-
   const handleCheckIn = () => {
     if (attendanceStats?.today_status !== 'not_checked_in') return;
     checkInMutation.mutate();
   };
-
   const handleCheckOut = () => {
     if (attendanceStats?.today_status !== 'checked_in') return;
     checkOutMutation.mutate();
   };
-
   const handleSubmitLeave = () => {
     if (!leaveForm.start_date || !leaveForm.end_date || !leaveForm.reason) {
       addNotification({
-        title: '请填写完整',
-        message: '请填写完整的请假信息',
+        title: i18n.t('mobile.mobile_attendance_page.k16'),
+        message: i18n.t('mobile.mobile_attendance_page.k17'),
         type: 'warning',
       });
       return;
     }
     applyLeaveMutation.mutate(leaveForm);
   };
-
   const checkingIn = checkInMutation.isPending || checkOutMutation.isPending;
-
   const getStatusLabel = (status: string) => {
     const map: Record<string, string> = {
-      normal: '正常',
-      late: '迟到',
-      early_leave: '早退',
-      absent: '缺勤',
-      leave: '请假',
-      business_trip: '出差',
+      normal: i18n.t('mobile.mobile_attendance_page.k18'),
+      late: i18n.t('mobile.mobile_attendance_page.k19'),
+      early_leave: i18n.t('mobile.mobile_attendance_page.k20'),
+      absent: i18n.t('mobile.mobile_attendance_page.k21'),
+      leave: i18n.t('mobile.mobile_attendance_page.k22'),
+      business_trip: i18n.t('mobile.mobile_attendance_page.k23'),
     };
     return map[status] || status;
   };
-
   const getStatusColor = (status: string) => {
     const map: Record<string, 'success' | 'warning' | 'error' | 'info' | 'default'> = {
       normal: 'success',
@@ -307,20 +289,18 @@ const MobileAttendancePage: React.FC = () => {
     };
     return map[status] || 'default';
   };
-
   const getLeaveTypeLabel = (type: string) => {
     const map: Record<string, string> = {
-      annual: '年假',
-      sick: '病假',
-      personal: '事假',
-      maternity: '产假',
-      paternity: '陪产假',
-      funeral: '丧假',
-      other: '其他',
+      annual: i18n.t('mobile.mobile_attendance_page.k24'),
+      sick: i18n.t('mobile.mobile_attendance_page.k25'),
+      personal: i18n.t('mobile.mobile_attendance_page.k26'),
+      maternity: i18n.t('mobile.mobile_attendance_page.k27'),
+      paternity: i18n.t('mobile.mobile_attendance_page.k28'),
+      funeral: i18n.t('mobile.mobile_attendance_page.k29'),
+      other: i18n.t('mobile.mobile_attendance_page.k30'),
     };
     return map[type] || type;
   };
-
   const getLeaveStatusColor = (status: string) => {
     const map: Record<string, 'warning' | 'success' | 'error' | 'default'> = {
       pending: 'warning',
@@ -330,17 +310,15 @@ const MobileAttendancePage: React.FC = () => {
     };
     return map[status] || 'default';
   };
-
   const getLeaveStatusLabel = (status: string) => {
     const map: Record<string, string> = {
-      pending: '待审批',
-      approved: '已通过',
-      rejected: '已驳回',
-      cancelled: '已取消',
+      pending: i18n.t('mobile.mobile_attendance_page.k31'),
+      approved: i18n.t('mobile.mobile_attendance_page.k32'),
+      rejected: i18n.t('mobile.mobile_attendance_page.k33'),
+      cancelled: i18n.t('mobile.mobile_attendance_page.k34'),
     };
     return map[status] || status;
   };
-
   const handleBottomTabChange = (tabId: string) => {
     switch (tabId) {
       case 'home':
@@ -360,25 +338,22 @@ const MobileAttendancePage: React.FC = () => {
         break;
     }
   };
-
   const bottomTabs = [
-    { id: 'home', label: '工作台', icon: <Home style={{ width: 22, height: 22 }} /> },
-    { id: 'tasks', label: '任务', icon: <ListTodo style={{ width: 22, height: 22 }} /> },
-    { id: 'scan', label: '扫码', icon: <ScanLine style={{ width: 22, height: 22 }} /> },
+    { id: 'home', label: i18n.t('mobile.mobile_attendance_page.k35'), icon: <Home style={{ width: 22, height: 22 }} /> },
+    { id: 'tasks', label: i18n.t('mobile.mobile_attendance_page.k36'), icon: <ListTodo style={{ width: 22, height: 22 }} /> },
+    { id: 'scan', label: i18n.t('mobile.mobile_attendance_page.k37'), icon: <ScanLine style={{ width: 22, height: 22 }} /> },
     {
       id: 'approval',
-      label: '审批',
+      label: i18n.t('mobile.mobile_attendance_page.k38'),
       icon: <CheckSquare style={{ width: 22, height: 22 }} />,
       badge: 3,
     },
-    { id: 'profile', label: '我的', icon: <User style={{ width: 22, height: 22 }} /> },
+    { id: 'profile', label: i18n.t('mobile.mobile_attendance_page.k39'), icon: <User style={{ width: 22, height: 22 }} /> },
   ];
-
   const todayStatus = attendanceStats?.today_status;
-
   return (
     <MobileLayout
-      title='考勤打卡'
+      title={i18n.t('mobile.mobile_attendance_page.k40')}
       showBack
       onBackClick={() => navigate(MOBILE_PATHS.workbench)}
       showNotifications
@@ -421,7 +396,6 @@ const MobileAttendancePage: React.FC = () => {
             />
           ))}
         </Tabs>
-
         <PullToRefresh onRefresh={handleRefresh}>
           {loading ? (
             <MobileSkeleton
@@ -464,7 +438,6 @@ const MobileAttendancePage: React.FC = () => {
                         weekday: 'long',
                       })}
                     </Typography>
-
                     <Box
                       sx={{
                         width: 120,
@@ -496,21 +469,20 @@ const MobileAttendancePage: React.FC = () => {
                           sx={{ fontWeight: 600 }}
                         >
                           {todayStatus === 'not_checked_in'
-                            ? '上班打卡'
+                            ? i18n.t('mobile.mobile_attendance_page.k41')
                             : todayStatus === 'checked_in'
-                              ? '下班打卡'
-                              : '已打卡'}
+                              ? i18n.t('mobile.mobile_attendance_page.k42')
+                              : i18n.t('mobile.mobile_attendance_page.k43')}
                         </Typography>
                       </Box>
                     </Box>
-
                     <Box sx={{ display: 'flex', justifyContent: 'center', gap: 4 }}>
                       <Box sx={{ textAlign: 'center' }}>
                         <Typography
                           variant='body2'
                           sx={{ opacity: 0.7, mb: 0.5 }}
                         >
-                          上班时间
+                          {i18n.t('pages.mobile_attendance_page.k0')}
                         </Typography>
                         <Typography
                           variant='h6'
@@ -524,7 +496,7 @@ const MobileAttendancePage: React.FC = () => {
                           variant='body2'
                           sx={{ opacity: 0.7, mb: 0.5 }}
                         >
-                          下班时间
+                          {i18n.t('pages.mobile_attendance_page.k1')}
                         </Typography>
                         <Typography
                           variant='h6'
@@ -535,7 +507,6 @@ const MobileAttendancePage: React.FC = () => {
                       </Box>
                     </Box>
                   </Paper>
-
                   <Paper
                     elevation={0}
                     sx={{
@@ -555,23 +526,22 @@ const MobileAttendancePage: React.FC = () => {
                         variant='body2'
                         sx={{ fontWeight: 500 }}
                       >
-                        考勤位置
+                        {i18n.t('pages.mobile_attendance_page.k2')}
                       </Typography>
                       <Typography
                         variant='caption'
                         color='text.secondary'
                       >
-                        公司总部 · 北京市朝阳区xxx路xxx号
+                        {i18n.t('pages.mobile_attendance_page.k3')}
                       </Typography>
                     </Box>
                     <Chip
-                      label='范围内'
+                      label={i18n.t('mobile.mobile_attendance_page.k44')}
                       size='small'
                       color='success'
                       sx={{ height: 20, fontSize: '0.7rem' }}
                     />
                   </Paper>
-
                   <Paper
                     elevation={0}
                     sx={{
@@ -595,14 +565,14 @@ const MobileAttendancePage: React.FC = () => {
                         variant='subtitle2'
                         sx={{ fontWeight: 600 }}
                       >
-                        本月统计
+                        {i18n.t('pages.mobile_attendance_page.k4')}
                       </Typography>
                       <Typography
                         variant='caption'
                         color='primary'
                         sx={{ cursor: 'pointer' }}
                       >
-                        查看明细
+                        {i18n.t('pages.mobile_attendance_page.k5')}
                       </Typography>
                     </Box>
                     <Box sx={{ p: 2 }}>
@@ -618,7 +588,7 @@ const MobileAttendancePage: React.FC = () => {
                             variant='caption'
                             color='text.secondary'
                           >
-                            出勤天数
+                            {i18n.t('pages.mobile_attendance_page.k6')}
                           </Typography>
                         </Box>
                         <Box sx={{ flex: 1, textAlign: 'center' }}>
@@ -632,7 +602,7 @@ const MobileAttendancePage: React.FC = () => {
                             variant='caption'
                             color='text.secondary'
                           >
-                            迟到次数
+                            {i18n.t('pages.mobile_attendance_page.k7')}
                           </Typography>
                         </Box>
                         <Box sx={{ flex: 1, textAlign: 'center' }}>
@@ -646,7 +616,7 @@ const MobileAttendancePage: React.FC = () => {
                             variant='caption'
                             color='text.secondary'
                           >
-                            总工时
+                            {i18n.t('pages.mobile_attendance_page.k8')}
                           </Typography>
                         </Box>
                       </Box>
@@ -654,7 +624,6 @@ const MobileAttendancePage: React.FC = () => {
                   </Paper>
                 </Box>
               )}
-
               {activeTab === 1 && (
                 <List disablePadding>
                   {records.map((record, index) => (
@@ -710,7 +679,6 @@ const MobileAttendancePage: React.FC = () => {
                   ))}
                 </List>
               )}
-
               {activeTab === 2 && (
                 <Box sx={{ p: 2, pb: 3 }}>
                   {leaves.length === 0 ? (
@@ -743,14 +711,14 @@ const MobileAttendancePage: React.FC = () => {
                         variant='subtitle1'
                         sx={{ mb: 1, fontWeight: 500 }}
                       >
-                        暂无请假记录
+                        {i18n.t('pages.mobile_attendance_page.k9')}
                       </Typography>
                       <MobileButton
                         variant='contained'
                         startIcon={<Plus style={{ width: 18, height: 18 }} />}
                         onClick={() => setLeaveDialogOpen(true)}
                       >
-                        申请请假
+                        {i18n.t('pages.mobile_attendance_page.k10')}
                       </MobileButton>
                     </Box>
                   ) : (
@@ -825,20 +793,19 @@ const MobileAttendancePage: React.FC = () => {
             </>
           )}
         </PullToRefresh>
-
         <Dialog
           open={leaveDialogOpen}
           onClose={() => setLeaveDialogOpen(false)}
           fullWidth
           maxWidth='sm'
         >
-          <DialogTitle>申请请假</DialogTitle>
+          <DialogTitle>{i18n.t('mobile.mobile_attendance_page.k45')}</DialogTitle>
           <DialogContent>
             <Box sx={{ pt: 1, display: 'flex', flexDirection: 'column', gap: 2 }}>
               <TextField
                 select
                 fullWidth
-                label='请假类型'
+                label={i18n.t('mobile.mobile_attendance_page.k46')}
                 value={leaveForm.leave_type}
                 onChange={(e) =>
                   setLeaveForm((prev) => ({
@@ -847,16 +814,16 @@ const MobileAttendancePage: React.FC = () => {
                   }))
                 }
               >
-                <MenuItem value='annual'>年假</MenuItem>
-                <MenuItem value='sick'>病假</MenuItem>
-                <MenuItem value='personal'>事假</MenuItem>
-                <MenuItem value='maternity'>产假</MenuItem>
-                <MenuItem value='paternity'>陪产假</MenuItem>
-                <MenuItem value='other'>其他</MenuItem>
+                <MenuItem value='annual'>{i18n.t('mobile.mobile_attendance_page.k47')}</MenuItem>
+                <MenuItem value='sick'>{i18n.t('mobile.mobile_attendance_page.k48')}</MenuItem>
+                <MenuItem value='personal'>{i18n.t('mobile.mobile_attendance_page.k49')}</MenuItem>
+                <MenuItem value='maternity'>{i18n.t('mobile.mobile_attendance_page.k50')}</MenuItem>
+                <MenuItem value='paternity'>{i18n.t('mobile.mobile_attendance_page.k51')}</MenuItem>
+                <MenuItem value='other'>{i18n.t('mobile.mobile_attendance_page.k52')}</MenuItem>
               </TextField>
               <TextField
                 fullWidth
-                label='开始日期'
+                label={i18n.t('mobile.mobile_attendance_page.k53')}
                 type='date'
                 value={leaveForm.start_date}
                 onChange={(e) => setLeaveForm((prev) => ({ ...prev, start_date: e.target.value }))}
@@ -864,7 +831,7 @@ const MobileAttendancePage: React.FC = () => {
               />
               <TextField
                 fullWidth
-                label='结束日期'
+                label={i18n.t('mobile.mobile_attendance_page.k54')}
                 type='date'
                 value={leaveForm.end_date}
                 onChange={(e) => setLeaveForm((prev) => ({ ...prev, end_date: e.target.value }))}
@@ -874,21 +841,21 @@ const MobileAttendancePage: React.FC = () => {
                 fullWidth
                 multiline
                 rows={3}
-                label='请假原因'
+                label={i18n.t('mobile.mobile_attendance_page.k55')}
                 value={leaveForm.reason}
                 onChange={(e) => setLeaveForm((prev) => ({ ...prev, reason: e.target.value }))}
-                placeholder='请输入请假原因'
+                placeholder={i18n.t('mobile.mobile_attendance_page.k56')}
               />
             </Box>
           </DialogContent>
           <DialogActions sx={{ px: 3, pb: 2 }}>
-            <Button onClick={() => setLeaveDialogOpen(false)}>取消</Button>
+            <Button onClick={() => setLeaveDialogOpen(false)}>{i18n.t('mobile.mobile_attendance_page.k57')}</Button>
             <MobileButton
               variant='contained'
               onClick={handleSubmitLeave}
               disabled={applyLeaveMutation.isPending}
             >
-              提交申请
+              {i18n.t('pages.mobile_attendance_page.k11')}
             </MobileButton>
           </DialogActions>
         </Dialog>
@@ -896,5 +863,4 @@ const MobileAttendancePage: React.FC = () => {
     </MobileLayout>
   );
 };
-
 export default MobileAttendancePage;

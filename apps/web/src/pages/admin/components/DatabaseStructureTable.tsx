@@ -3,7 +3,6 @@
  * Database table structure detail table component - displays field list
  */
 import React from 'react';
-import { useTranslation } from 'react-i18next';
 import {
   Box,
   Button,
@@ -19,24 +18,21 @@ import {
   Tooltip,
   CircularProgress,
 } from '@mui/material';
+import i18n from '@/i18n';
 import { Plus, Trash2 } from 'lucide-react';
 import type { TableDetail, ColumnInfo } from '@/api/system';
-
 interface DatabaseStructureTableProps {
   selectedTable: TableDetail;
   detailLoading: boolean;
   onAddColumn: () => void;
   onDropColumn: (columnName: string) => void;
 }
-
 export const DatabaseStructureTable: React.FC<DatabaseStructureTableProps> = ({
   selectedTable,
   detailLoading,
   onAddColumn,
   onDropColumn,
 }) => {
-  const { t } = useTranslation();
-
   const getDataTypeDisplay = (col: ColumnInfo) => {
     let type = col.data_type.toUpperCase();
     if (col.character_maximum_length) {
@@ -48,7 +44,6 @@ export const DatabaseStructureTable: React.FC<DatabaseStructureTableProps> = ({
     }
     return type;
   };
-
   return (
     <Box>
       {/* Info */}
@@ -81,8 +76,8 @@ export const DatabaseStructureTable: React.FC<DatabaseStructureTableProps> = ({
             color='text.secondary'
             sx={{ mt: 0.5 }}
           >
-            {selectedTable.columns.length} {t('admin.database_structure.fields')} |{' '}
-            {selectedTable.row_count?.toLocaleString() || '-'} {t('admin.database_structure.rows')}
+            {selectedTable.columns.length} {i18n.t('admin.database_structure.fields')} |{' '}
+            {selectedTable.row_count?.toLocaleString() || '-'} {i18n.t('admin.database_structure.rows')}
           </Typography>
         </Box>
         <Button
@@ -97,10 +92,9 @@ export const DatabaseStructureTable: React.FC<DatabaseStructureTableProps> = ({
             borderRadius: 1.5,
           }}
         >
-          {t('admin.database_structure_page.text_4484fa')}
+          {i18n.t('admin.database_structure_page.text_4484fa')}
         </Button>
       </Box>
-
       {/* Field list */}
       <Box sx={{ p: 2 }}>
         {detailLoading ? (
@@ -136,7 +130,7 @@ export const DatabaseStructureTable: React.FC<DatabaseStructureTableProps> = ({
                       textTransform: 'uppercase',
                     }}
                   >
-                    {t('admin.database_structure_page.text_d31455')}
+                    {i18n.t('admin.database_structure_page.text_d31455')}
                   </TableCell>
                   <TableCell
                     sx={{
@@ -146,7 +140,7 @@ export const DatabaseStructureTable: React.FC<DatabaseStructureTableProps> = ({
                       textTransform: 'uppercase',
                     }}
                   >
-                    {t('admin.database_structure_page.text_226b09')}
+                    {i18n.t('admin.database_structure_page.text_226b09')}
                   </TableCell>
                   <TableCell
                     sx={{
@@ -156,7 +150,7 @@ export const DatabaseStructureTable: React.FC<DatabaseStructureTableProps> = ({
                       textTransform: 'uppercase',
                     }}
                   >
-                    {t('admin.database_structure_page.text_d9b464')}
+                    {i18n.t('admin.database_structure_page.text_d9b464')}
                   </TableCell>
                   <TableCell
                     sx={{
@@ -166,7 +160,7 @@ export const DatabaseStructureTable: React.FC<DatabaseStructureTableProps> = ({
                       textTransform: 'uppercase',
                     }}
                   >
-                    {t('admin.database_structure_page.text_225f3e')}
+                    {i18n.t('admin.database_structure_page.text_225f3e')}
                   </TableCell>
                   <TableCell
                     align='right'
@@ -177,7 +171,7 @@ export const DatabaseStructureTable: React.FC<DatabaseStructureTableProps> = ({
                       textTransform: 'uppercase',
                     }}
                   >
-                    {t('admin.database_structure_page.text_2b6bc0')}
+                    {i18n.t('admin.database_structure_page.text_2b6bc0')}
                   </TableCell>
                 </TableRow>
               </TableHead>
@@ -238,7 +232,7 @@ export const DatabaseStructureTable: React.FC<DatabaseStructureTableProps> = ({
                       {col.column_default || '-'}
                     </TableCell>
                     <TableCell align='right'>
-                      <Tooltip title={t('admin.database_structure.delete_field')}>
+                      <Tooltip title={i18n.t('admin.database_structure.delete_field')}>
                         <IconButton
                           size='small'
                           color='error'
@@ -246,7 +240,7 @@ export const DatabaseStructureTable: React.FC<DatabaseStructureTableProps> = ({
                           sx={{
                             '&:hover': { bgcolor: 'error.lighter' },
                           }}
-                          aria-label='删除'
+                          aria-label={i18n.t('admin.database_structure_table.k0')}
                         >
                           <Trash2 size={16} />
                         </IconButton>

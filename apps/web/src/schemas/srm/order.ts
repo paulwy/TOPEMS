@@ -1,10 +1,11 @@
 import React from 'react';
 import type { EntitySchema } from '@/schema';
+import i18n from '@/i18n';
 
 export const orderSchema: EntitySchema = {
   entity: 'srmOrder',
-  title: '采购订单',
-  description: '管理采购订单信息，包括订单号、供应商、金额、状态等',
+  title: i18n.t('srm.order.k0'),
+  description: i18n.t('srm.order.k1'),
 
   api: {
     module: 'srm',
@@ -14,7 +15,7 @@ export const orderSchema: EntitySchema = {
   fields: [
     {
       name: 'po_no',
-      label: '订单编号',
+      label: i18n.t('srm.order.k2'),
       type: 'text',
       required: true,
       readonlyOnEdit: true,
@@ -24,13 +25,13 @@ export const orderSchema: EntitySchema = {
     },
     {
       name: 'supplier_id',
-      label: '供应商ID',
+      label: i18n.t('srm.order.id_3'),
       type: 'text',
       listWidth: 120,
     },
     {
       name: 'total_amount',
-      label: '订单金额',
+      label: i18n.t('srm.order.k4'),
       type: 'number',
       defaultValue: 0,
       sortable: true,
@@ -43,15 +44,15 @@ export const orderSchema: EntitySchema = {
     },
     {
       name: 'currency',
-      label: '币种',
+      label: i18n.t('srm.order.k5'),
       type: 'select',
       defaultValue: 'CNY',
       options: {
         type: 'static',
         options: [
-          { value: 'CNY', label: '人民币 (CNY)' },
-          { value: 'USD', label: '美元 (USD)' },
-          { value: 'EUR', label: '欧元 (EUR)' },
+          { value: 'CNY', label: i18n.t('srm.order.cny_6') },
+          { value: 'USD', label: i18n.t('srm.order.usd_7') },
+          { value: 'EUR', label: i18n.t('srm.order.eur_8') },
         ],
       },
       listWidth: 80,
@@ -60,17 +61,17 @@ export const orderSchema: EntitySchema = {
     },
     {
       name: 'status',
-      label: '状态',
+      label: i18n.t('srm.order.k9'),
       type: 'select',
       defaultValue: 'pending',
       options: {
         type: 'static',
         options: [
-          { value: 'pending', label: '待处理' },
-          { value: 'processing', label: '处理中' },
-          { value: 'delivered', label: '已交付' },
-          { value: 'completed', label: '已完成' },
-          { value: 'cancelled', label: '已取消' },
+          { value: 'pending', label: i18n.t('srm.order.k10') },
+          { value: 'processing', label: i18n.t('srm.order.k11') },
+          { value: 'delivered', label: i18n.t('srm.order.k12') },
+          { value: 'completed', label: i18n.t('srm.order.k13') },
+          { value: 'cancelled', label: i18n.t('srm.order.k14') },
         ],
       },
       listWidth: 100,
@@ -78,7 +79,7 @@ export const orderSchema: EntitySchema = {
     },
     {
       name: 'order_date',
-      label: '下单日期',
+      label: i18n.t('srm.order.k15'),
       type: 'date',
       listWidth: 120,
       renderCell: (row: Record<string, unknown>) => {
@@ -88,7 +89,7 @@ export const orderSchema: EntitySchema = {
     },
     {
       name: 'remarks',
-      label: '备注',
+      label: i18n.t('srm.order.k16'),
       type: 'textarea',
       showInList: false,
     },
@@ -108,25 +109,25 @@ export const orderSchema: EntitySchema = {
         cancelled: 'error',
       },
       labelMap: {
-        pending: '待处理',
-        processing: '处理中',
-        delivered: '已交付',
-        completed: '已完成',
-        cancelled: '已取消',
+        pending: i18n.t('srm.order.k17'),
+        processing: i18n.t('srm.order.k18'),
+        delivered: i18n.t('srm.order.k19'),
+        completed: i18n.t('srm.order.k20'),
+        cancelled: i18n.t('srm.order.k21'),
       },
     },
     filters: [
       {
         id: 'status',
-        label: '状态',
+        label: i18n.t('srm.order.k22'),
         type: 'select',
         options: [
-          { label: '全部状态', value: 'all' },
-          { label: '待处理', value: 'pending' },
-          { label: '处理中', value: 'processing' },
-          { label: '已交付', value: 'delivered' },
-          { label: '已完成', value: 'completed' },
-          { label: '已取消', value: 'cancelled' },
+          { label: i18n.t('srm.order.k23'), value: 'all' },
+          { label: i18n.t('srm.order.k24'), value: 'pending' },
+          { label: i18n.t('srm.order.k25'), value: 'processing' },
+          { label: i18n.t('srm.order.k26'), value: 'delivered' },
+          { label: i18n.t('srm.order.k27'), value: 'completed' },
+          { label: i18n.t('srm.order.k28'), value: 'cancelled' },
         ],
       },
     ],
@@ -136,21 +137,21 @@ export const orderSchema: EntitySchema = {
 
   formSections: [
     {
-      title: '基本信息',
+      title: i18n.t('srm.order.k29'),
       fields: ['po_no', 'supplier_id', 'currency', 'status'],
     },
     {
-      title: '金额与日期',
+      title: i18n.t('srm.order.k30'),
       fields: ['total_amount', 'order_date'],
     },
     {
-      title: '备注',
+      title: i18n.t('srm.order.k31'),
       fields: ['remarks'],
     },
   ],
 
   formColCount: 2,
-  createTitle: '新增订单',
-  editTitle: '编辑订单',
-  detailTitle: '订单详情',
+  createTitle: i18n.t('srm.order.k32'),
+  editTitle: i18n.t('srm.order.k33'),
+  detailTitle: i18n.t('srm.order.k34'),
 };

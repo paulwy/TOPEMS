@@ -1,3 +1,4 @@
+import i18n from '@/i18n';
 /**
  * V53.0 前端 AI 增强 — UI 组件推荐
  *
@@ -67,9 +68,9 @@ const COMPONENT_REGISTRY: ComponentMeta[] = [
   {
     name: 'V51Button',
     category: 'action',
-    description: '可点击操作按钮，支持多种变体和尺寸',
-    keywords: ['button', 'btn', 'click', 'action', 'submit', '确认', '按钮'],
-    a11y_features: ['role="button"', 'aria-label 支持', '键盘操作'],
+    description: i18n.t('ai.ui-recommender.k0'),
+    keywords: ['button', 'btn', 'click', 'action', 'submit', i18n.t('ai.ui-recommender.k2'), i18n.t('ai.ui-recommender.k1')],
+    a11y_features: ['role="button"', i18n.t('ai.ui-recommender.arialabel_0'), i18n.t('ai.ui-recommender.k3')],
     responsive_support: 'full',
     theme_support: 'full',
     performance_impact: 'low',
@@ -80,9 +81,9 @@ const COMPONENT_REGISTRY: ComponentMeta[] = [
   {
     name: 'V51Card',
     category: 'display',
-    description: '内容卡片容器，展示相关信息',
-    keywords: ['card', 'container', 'panel', 'box', '卡片', '容器'],
-    a11y_features: ['语义化结构', 'aria-label 支持'],
+    description: i18n.t('ai.ui-recommender.k4'),
+    keywords: ['card', 'container', 'panel', 'box', i18n.t('ai.ui-recommender.k6'), i18n.t('ai.ui-recommender.k5')],
+    a11y_features: [i18n.t('ai.ui-recommender.k7'), i18n.t('ai.ui-recommender.arialabel_1')],
     responsive_support: 'full',
     theme_support: 'full',
     performance_impact: 'low',
@@ -93,9 +94,9 @@ const COMPONENT_REGISTRY: ComponentMeta[] = [
   {
     name: 'V51Input',
     category: 'data-entry',
-    description: '文本输入框，支持多种输入类型',
-    keywords: ['input', 'text', 'field', 'form', '输入', '表单'],
-    a11y_features: ['label 关联', 'aria-invalid', '错误提示关联'],
+    description: i18n.t('ai.ui-recommender.k8'),
+    keywords: ['input', 'text', 'field', 'form', i18n.t('ai.ui-recommender.k10'), i18n.t('ai.ui-recommender.k9')],
+    a11y_features: [i18n.t('ai.ui-recommender.label_2'), 'aria-invalid', i18n.t('ai.ui-recommender.k11')],
     responsive_support: 'full',
     theme_support: 'full',
     performance_impact: 'low',
@@ -106,9 +107,9 @@ const COMPONENT_REGISTRY: ComponentMeta[] = [
   {
     name: 'V51Select',
     category: 'data-entry',
-    description: '下拉选择组件，用于选择列表项',
-    keywords: ['select', 'dropdown', 'picker', '选择', '下拉'],
-    a11y_features: ['role="listbox"', '键盘导航', 'aria-expanded'],
+    description: i18n.t('ai.ui-recommender.k12'),
+    keywords: ['select', 'dropdown', 'picker', i18n.t('ai.ui-recommender.k14'), i18n.t('ai.ui-recommender.k13')],
+    a11y_features: ['role="listbox"', i18n.t('ai.ui-recommender.k15'), 'aria-expanded'],
     responsive_support: 'full',
     theme_support: 'full',
     performance_impact: 'low',
@@ -119,9 +120,9 @@ const COMPONENT_REGISTRY: ComponentMeta[] = [
   {
     name: 'V51Tabs',
     category: 'navigation',
-    description: '标签页切换组件',
-    keywords: ['tabs', 'tab', 'switch', 'navigation', '标签', '切换'],
-    a11y_features: ['role="tablist"', 'role="tab"', 'aria-selected', '键盘方向键导航'],
+    description: i18n.t('ai.ui-recommender.k16'),
+    keywords: ['tabs', 'tab', 'switch', 'navigation', i18n.t('ai.ui-recommender.k18'), i18n.t('ai.ui-recommender.k17')],
+    a11y_features: ['role="tablist"', 'role="tab"', 'aria-selected', i18n.t('ai.ui-recommender.k19')],
     responsive_support: 'partial',
     theme_support: 'full',
     performance_impact: 'low',
@@ -132,8 +133,8 @@ const COMPONENT_REGISTRY: ComponentMeta[] = [
   {
     name: 'V51Badge',
     category: 'display',
-    description: '徽章组件，用于状态标记或计数',
-    keywords: ['badge', 'tag', 'chip', 'label', '徽章', '标签'],
+    description: i18n.t('ai.ui-recommender.k20'),
+    keywords: ['badge', 'tag', 'chip', 'label', i18n.t('ai.ui-recommender.k22'), i18n.t('ai.ui-recommender.k21')],
     a11y_features: ['aria-label', 'role="status"'],
     responsive_support: 'full',
     theme_support: 'full',
@@ -145,8 +146,8 @@ const COMPONENT_REGISTRY: ComponentMeta[] = [
   {
     name: 'V51Skeleton',
     category: 'loading',
-    description: '骨架屏组件，加载状态占位',
-    keywords: ['skeleton', 'loading', 'placeholder', '骨架屏', '加载'],
+    description: i18n.t('ai.ui-recommender.k23'),
+    keywords: ['skeleton', 'loading', 'placeholder', i18n.t('ai.ui-recommender.k25'), i18n.t('ai.ui-recommender.k24')],
     a11y_features: ['aria-busy', 'aria-live'],
     responsive_support: 'full',
     theme_support: 'full',
@@ -158,9 +159,9 @@ const COMPONENT_REGISTRY: ComponentMeta[] = [
   {
     name: 'V51Avatar',
     category: 'display',
-    description: '头像组件，显示用户或资源图片',
-    keywords: ['avatar', 'user', 'image', '头像', '用户'],
-    a11y_features: ['aria-label', 'alt 文本支持'],
+    description: i18n.t('ai.ui-recommender.k26'),
+    keywords: ['avatar', 'user', 'image', i18n.t('ai.ui-recommender.k28'), i18n.t('ai.ui-recommender.k27')],
+    a11y_features: ['aria-label', i18n.t('ai.ui-recommender.alt_3')],
     responsive_support: 'full',
     theme_support: 'full',
     performance_impact: 'low',
@@ -171,21 +172,21 @@ const COMPONENT_REGISTRY: ComponentMeta[] = [
 ];
 
 const INTENT_KEYWORD_MAP: Record<string, string[]> = {
-  button: ['button', 'btn', 'click', 'submit', 'confirm', 'action', '按钮', '操作'],
-  card: ['card', 'panel', 'container', 'box', '卡片', '容器'],
-  input: ['input', 'text', 'field', 'form', '输入', '表单'],
-  select: ['select', 'dropdown', 'picker', '选择', '下拉'],
-  tabs: ['tab', 'switch', 'navigate', '标签', '切换'],
-  badge: ['badge', 'tag', 'chip', 'label', '徽章', '标签'],
-  skeleton: ['skeleton', 'loading', 'placeholder', '骨架屏', '加载'],
-  avatar: ['avatar', 'user', 'image', '头像', '用户'],
-  table: ['table', 'grid', 'list', 'row', 'column', '表格', '列表'],
-  dialog: ['dialog', 'modal', 'popup', 'overlay', '对话框', '弹窗'],
-  toast: ['toast', 'snackbar', 'notification', 'alert', '通知', '提示'],
-  toolbar: ['toolbar', 'appbar', 'header', '顶部栏', '工具栏'],
-  sidebar: ['sidebar', 'drawer', 'navigation', '侧边栏', '导航'],
-  form: ['form', 'input', 'field', 'submit', '表单', '输入框'],
-  chart: ['chart', 'graph', 'diagram', '可视化', '图表'],
+  button: ['button', 'btn', 'click', 'submit', 'confirm', 'action', i18n.t('ai.ui-recommender.k30'), i18n.t('ai.ui-recommender.k29')],
+  card: ['card', 'panel', 'container', 'box', i18n.t('ai.ui-recommender.k32'), i18n.t('ai.ui-recommender.k31')],
+  input: ['input', 'text', 'field', 'form', i18n.t('ai.ui-recommender.k34'), i18n.t('ai.ui-recommender.k33')],
+  select: ['select', 'dropdown', 'picker', i18n.t('ai.ui-recommender.k36'), i18n.t('ai.ui-recommender.k35')],
+  tabs: ['tab', 'switch', 'navigate', i18n.t('ai.ui-recommender.k38'), i18n.t('ai.ui-recommender.k37')],
+  badge: ['badge', 'tag', 'chip', 'label', i18n.t('ai.ui-recommender.k40'), i18n.t('ai.ui-recommender.k39')],
+  skeleton: ['skeleton', 'loading', 'placeholder', i18n.t('ai.ui-recommender.k42'), i18n.t('ai.ui-recommender.k41')],
+  avatar: ['avatar', 'user', 'image', i18n.t('ai.ui-recommender.k44'), i18n.t('ai.ui-recommender.k43')],
+  table: ['table', 'grid', 'list', 'row', 'column', i18n.t('ai.ui-recommender.k46'), i18n.t('ai.ui-recommender.k45')],
+  dialog: ['dialog', 'modal', 'popup', 'overlay', i18n.t('ai.ui-recommender.k48'), i18n.t('ai.ui-recommender.k47')],
+  toast: ['toast', 'snackbar', 'notification', 'alert', i18n.t('ai.ui-recommender.k50'), i18n.t('ai.ui-recommender.k49')],
+  toolbar: ['toolbar', 'appbar', 'header', i18n.t('ai.ui-recommender.k52'), i18n.t('ai.ui-recommender.k51')],
+  sidebar: ['sidebar', 'drawer', 'navigation', i18n.t('ai.ui-recommender.k54'), i18n.t('ai.ui-recommender.k53')],
+  form: ['form', 'input', 'field', 'submit', i18n.t('ai.ui-recommender.k56'), i18n.t('ai.ui-recommender.k55')],
+  chart: ['chart', 'graph', 'diagram', i18n.t('ai.ui-recommender.k58'), i18n.t('ai.ui-recommender.k57')],
 };
 
 const CATEGORY_INTENT_MAP: Record<IntentCategory, string[]> = {
@@ -274,12 +275,12 @@ export class UIComponentRecommender {
     if (!meta) return '';
 
     if (meta.responsive_support === 'none') {
-      return `⚠️ ${componentName} 不支持响应式布局，需要手动适配`;
+      return `⚠️ ${componentName}${i18n.t('ai.ui-recommender.k4')}`;
     }
     if (meta.responsive_support === 'partial') {
-      return `ℹ️ ${componentName} 部分支持响应式，建议在移动端测试`;
+      return `ℹ️ ${componentName}${i18n.t('ai.ui-recommender.k5')}`;
     }
-    return `✅ ${componentName} 完全支持响应式布局`;
+    return `✅ ${componentName}${i18n.t('ai.ui-recommender.k6')}`;
   }
 
   getThemeNote(componentName: string, themeMode?: ThemeMode): string {
@@ -287,12 +288,12 @@ export class UIComponentRecommender {
     if (!meta) return '';
 
     if (meta.theme_support === 'none') {
-      return `⚠️ ${componentName} 不支持主题切换`;
+      return `⚠️ ${componentName}${i18n.t('ai.ui-recommender.k7')}`;
     }
     if (meta.theme_support === 'partial') {
-      return `ℹ️ ${componentName} 部分支持主题，建议测试 ${themeMode ?? '所有'} 模式`;
+      return `ℹ️ ${componentName}${i18n.t('ai.ui-recommender.k8')}${themeMode ?? i18n.t('ai.ui-recommender.k59')}${i18n.t('ai.ui-recommender.k9')}`;
     }
-    return `✅ ${componentName} 完全支持主题切换`;
+    return `✅ ${componentName}${i18n.t('ai.ui-recommender.k10')}`;
   }
 
   private findCandidates(context: IntentContext): ComponentMeta[] {
@@ -448,25 +449,25 @@ export class UIComponentRecommender {
   private buildReason(comp: ComponentMeta, context: IntentContext, score: number): string {
     const reasons: string[] = [];
 
-    reasons.push(`匹配度评分: ${score}`);
-    reasons.push(`组件类别: ${this.translateCategory(comp.category)}`);
+    reasons.push(`${i18n.t('ai.ui-recommender.k11')}${score}`);
+    reasons.push(`${i18n.t('ai.ui-recommender.k12')}${this.translateCategory(comp.category)}`);
 
     const descriptionLower = context.description.toLowerCase();
     const matchedKeywords = comp.keywords.filter((k) => descriptionLower.includes(k.toLowerCase()));
     if (matchedKeywords.length > 0) {
-      reasons.push(`匹配关键词: ${matchedKeywords.join(', ')}`);
+      reasons.push(`${i18n.t('ai.ui-recommender.k13')}${matchedKeywords.join(', ')}`);
     }
 
     if (context.responsive && comp.responsive_support === 'full') {
-      reasons.push('完全支持响应式布局');
+      reasons.push(i18n.t('ai.ui-recommender.k60'));
     }
 
     if (context.a11yRequirements && context.a11yRequirements.length > 0) {
-      reasons.push(`支持 ${comp.a11y_features.length} 项无障碍特性`);
+      reasons.push(`${i18n.t('ai.ui-recommender.k14')}${comp.a11y_features.length}${i18n.t('ai.ui-recommender.k15')}`);
     }
 
     if (comp.usage_count > 100) {
-      reasons.push(`已在 ${comp.usage_count}+ 项目中使用`);
+      reasons.push(`${i18n.t('ai.ui-recommender.k16')}${comp.usage_count}${i18n.t('ai.ui-recommender.k17')}`);
     }
 
     return reasons.join(' | ');
@@ -482,8 +483,8 @@ export class UIComponentRecommender {
 
     return sameCategory.slice(0, 2).map((c) => ({
       name: c.name,
-      pros: c.performance_impact === 'low' ? '性能优秀' : '功能丰富',
-      cons: `${c.file_size_kb}KB 体积，${c.responsive_support !== 'full' ? '响应式有限' : '响应式良好'}`,
+      pros: c.performance_impact === 'low' ? i18n.t('ai.ui-recommender.k62') : i18n.t('ai.ui-recommender.k61'),
+      cons: `${c.file_size_kb}${i18n.t('ai.ui-recommender.kb_18')}${c.responsive_support !== 'full' ? i18n.t('ai.ui-recommender.k64') : i18n.t('ai.ui-recommender.k63')}`,
     }));
   }
 
@@ -496,13 +497,13 @@ export class UIComponentRecommender {
           f.toLowerCase().includes(req.toLowerCase())
         );
         if (!hasSupport) {
-          notes.push(`⚠️ 需要额外实现: ${req}`);
+          notes.push(`${i18n.t('ai.ui-recommender.k19')}${req}`);
         }
       }
     }
 
     if (comp.responsive_support !== 'full') {
-      notes.push('建议在移动端测试可访问性');
+      notes.push(i18n.t('ai.ui-recommender.k65'));
     }
 
     return notes;
@@ -518,18 +519,18 @@ export class UIComponentRecommender {
 
   private translateCategory(category: IntentCategory): string {
     const translations: Record<IntentCategory, string> = {
-      navigation: '导航',
-      layout: '布局',
-      form: '表单',
-      display: '展示',
-      feedback: '反馈',
-      overlay: '浮层',
-      'data-entry': '数据输入',
-      'data-display': '数据展示',
-      media: '媒体',
-      action: '操作',
-      loading: '加载',
-      notification: '通知',
+      navigation: i18n.t('ai.ui-recommender.k66'),
+      layout: i18n.t('ai.ui-recommender.k67'),
+      form: i18n.t('ai.ui-recommender.k68'),
+      display: i18n.t('ai.ui-recommender.k69'),
+      feedback: i18n.t('ai.ui-recommender.k70'),
+      overlay: i18n.t('ai.ui-recommender.k71'),
+      'data-entry': i18n.t('ai.ui-recommender.k72'),
+      'data-display': i18n.t('ai.ui-recommender.k73'),
+      media: i18n.t('ai.ui-recommender.k74'),
+      action: i18n.t('ai.ui-recommender.k75'),
+      loading: i18n.t('ai.ui-recommender.k76'),
+      notification: i18n.t('ai.ui-recommender.k77'),
     };
     return translations[category];
   }

@@ -6,6 +6,7 @@ import L from 'leaflet';
 import type { DevicePoint, Pipeline, StorageLocation } from '../../../../api/gis';
 import type { ToolMode, DrawFeature, VisibleLayers } from '../types';
 import { designTokens } from '@/theme/tokens';
+import i18n from '@/i18n';
 
 const ct= designTokens.colors;
 
@@ -24,9 +25,9 @@ const storageIcon = new L.Icon({
 const getStatusColor = (status: string) => {
   if (!status) return 'text.secondary';
   const s = status.toLowerCase();
-  if (s.includes('active') || s.includes('启用')) return ct.success.main;
-  if (s.includes('pending') || s.includes('待处理')) return 'warning.main';
-  if (s.includes('inactive') || s.includes('禁用')) return 'error.main';
+  if (s.includes('active') || s.includes(i18n.t('gis.map_layers.k0'))) return ct.success.main;
+  if (s.includes('pending') || s.includes(i18n.t('gis.map_layers.k1'))) return 'warning.main';
+  if (s.includes('inactive') || s.includes(i18n.t('gis.map_layers.k2'))) return 'error.main';
   return 'text.secondary';
 };
 
@@ -94,7 +95,7 @@ const MapLayers: React.FC<MapLayersProps> = ({
                 <Paper
                   sx={{
                     backgroundColor: 'common.white',
-                    padding: '8px 12px',
+                    padding: `${designTokens.spacing.sm} 12px`,
                     borderRadius: 2,
                     boxShadow: designTokens.shadows.lg,
                     minWidth: '120px',
@@ -155,7 +156,7 @@ const MapLayers: React.FC<MapLayersProps> = ({
                 <MuiBox sx={{ fontSize: '0.875rem', color: 'text.secondary' }}>
                   <Typography variant='body2'>类型: {point.device_type}</Typography>
                   <Typography variant='body2'>
-                    状态:{' '}
+                    [i18n.t('components.map_layers.k0')]:{' '}
                     <span style={{ color: getStatusColor(point.status) }}>{point.status}</span>
                   </Typography>
                   <MuiBox
@@ -196,10 +197,10 @@ const MapLayers: React.FC<MapLayersProps> = ({
                       backgroundColor: ct.info[50],
                     },
                     fontSize: '0.875rem',
-                    padding: '4px 8px',
+                    padding: `${designTokens.spacing.xs} 8px`,
                   }}
                 >
-                  查看详情
+                  {i18n.t('components.map_layers.k1')}
                 </Button>
               </MuiBox>
             </Popup>
@@ -268,10 +269,10 @@ const MapLayers: React.FC<MapLayersProps> = ({
                       backgroundColor: ct.info[50],
                     },
                     fontSize: '0.875rem',
-                    padding: '4px 8px',
+                    padding: `${designTokens.spacing.xs} 8px`,
                   }}
                 >
-                  查看详情
+                  {i18n.t('components.map_layers.k2')}
                 </Button>
               </MuiBox>
             </Popup>

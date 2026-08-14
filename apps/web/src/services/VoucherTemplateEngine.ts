@@ -4,6 +4,7 @@
  */
 
 import type { VoucherTemplate, VoucherTemplateEntry } from '../types/finance';
+import i18n from '@/i18n';
 
 // ============================================
 // 一、类型定义
@@ -227,7 +228,7 @@ export class VoucherTemplateEngine {
     if (template.condition) {
       const evaluator = new ExpressionEvaluator(context);
       if (!evaluator.evaluate(template.condition)) {
-        throw new Error('模板适用条件不满足');
+        throw new Error(i18n.t('shared.voucher_template_engine.k0'));
       }
     }
 
@@ -285,7 +286,7 @@ export class VoucherTemplateEngine {
     }
 
     if (!account) {
-      throw new Error(`无法找到科目: ${rule.account_code || rule.account_expression}`);
+      throw new Error(`${i18n.t('shared.voucher_template_engine.k0')}${rule.account_code || rule.account_expression}`);
     }
 
     // 计算金额
@@ -384,14 +385,14 @@ export class VoucherTemplateEngine {
   private generateSummary(template: VoucherTemplate, context: TemplateContext): string {
     // 默认摘要格式
     const summaryTemplates: Record<string, string> = {
-      payroll: '计提${period}月份工资',
-      sales_invoice: '确认${period}月份销售收入',
-      purchase_invoice: '结转${period}月份采购成本',
-      collection: '收到客户${customer?.name}款项',
-      payment: '支付供应商${supplier?.name}款项',
-      depreciation: '计提${period}月份固定资产折旧',
-      expense: '报销${employee?.name}费用',
-      cost_allocation: '结转${period}月份项目成本',
+      payroll: i18n.t('shared.voucher_template_engine.period_1'),
+      sales_invoice: i18n.t('shared.voucher_template_engine.period_2'),
+      purchase_invoice: i18n.t('shared.voucher_template_engine.period_3'),
+      collection: i18n.t('shared.voucher_template_engine.k4'),
+      payment: i18n.t('shared.voucher_template_engine.k5'),
+      depreciation: i18n.t('shared.voucher_template_engine.period_6'),
+      expense: i18n.t('shared.voucher_template_engine.k7'),
+      cost_allocation: i18n.t('shared.voucher_template_engine.period_8'),
     };
 
     const defaultTemplate = summaryTemplates[template.type] || `${template.name}`;
@@ -467,9 +468,9 @@ export class VoucherTemplateEngine {
 export const PAYROLL_ACCURAL_TEMPLATE: VoucherTemplate = {
   id: 'tpl-payroll-accrual',
   code: 'PAYROLL_ACCRUAL',
-  name: '工资计提凭证',
+  name: i18n.t('shared.voucher_template_engine.k1'),
   type: 'payroll',
-  description: '根据工资单自动生成工资计提凭证',
+  description: i18n.t('shared.voucher_template_engine.k2'),
 
   entries: [
     // 借: 应付职工薪酬-工资
@@ -490,7 +491,7 @@ export const PAYROLL_ACCURAL_TEMPLATE: VoucherTemplate = {
         },
       ],
       summary_rule_type: 'expression',
-      summary_expression: '计提${env.period}月份工资',
+      summary_expression: i18n.t('shared.voucher_template_engine.envperiod_9'),
     },
     // 贷: 应交税费-个人所得税
     {
@@ -503,7 +504,7 @@ export const PAYROLL_ACCURAL_TEMPLATE: VoucherTemplate = {
       direction_rule_type: 'fixed',
       fixed_direction: 'credit',
       summary_rule_type: 'expression',
-      summary_expression: '计提${env.period}月份代扣个人所得税',
+      summary_expression: i18n.t('shared.voucher_template_engine.k10'),
     },
     // 贷: 其他应付款-社保个人
     {
@@ -516,7 +517,7 @@ export const PAYROLL_ACCURAL_TEMPLATE: VoucherTemplate = {
       direction_rule_type: 'fixed',
       fixed_direction: 'credit',
       summary_rule_type: 'expression',
-      summary_expression: '计提${env.period}月份社保公积金代扣',
+      summary_expression: i18n.t('shared.voucher_template_engine.k11'),
     },
     // 贷: 应付职工薪酬-工资（实发）
     {
@@ -536,7 +537,7 @@ export const PAYROLL_ACCURAL_TEMPLATE: VoucherTemplate = {
         },
       ],
       summary_rule_type: 'expression',
-      summary_expression: '${env.period}月份应付工资',
+      summary_expression: i18n.t('shared.voucher_template_engine.envperiod_12'),
     },
   ],
   status: 'active',
@@ -551,9 +552,9 @@ export const PAYROLL_ACCURAL_TEMPLATE: VoucherTemplate = {
 export const SALES_INVOICE_TEMPLATE: VoucherTemplate = {
   id: 'tpl-sales-invoice',
   code: 'SALES_INVOICE',
-  name: '销售发票应收凭证',
+  name: i18n.t('shared.voucher_template_engine.k3'),
   type: 'sales_invoice',
-  description: '根据销售发票自动生成应收账款凭证',
+  description: i18n.t('shared.voucher_template_engine.k4'),
 
   entries: [
     // 借: 应收账款
@@ -579,7 +580,7 @@ export const SALES_INVOICE_TEMPLATE: VoucherTemplate = {
         },
       ],
       summary_rule_type: 'expression',
-      summary_expression: '销售商品/服务应收款项',
+      summary_expression: i18n.t('shared.voucher_template_engine.k5'),
     },
     // 贷: 主营业务收入
     {
@@ -599,7 +600,7 @@ export const SALES_INVOICE_TEMPLATE: VoucherTemplate = {
         },
       ],
       summary_rule_type: 'expression',
-      summary_expression: '确认销售收入',
+      summary_expression: i18n.t('shared.voucher_template_engine.k6'),
     },
     // 贷: 应交税费-销项税额
     {
@@ -612,7 +613,7 @@ export const SALES_INVOICE_TEMPLATE: VoucherTemplate = {
       direction_rule_type: 'fixed',
       fixed_direction: 'credit',
       summary_rule_type: 'expression',
-      summary_expression: '销项税额',
+      summary_expression: i18n.t('shared.voucher_template_engine.k7'),
     },
   ],
   status: 'active',
@@ -627,9 +628,9 @@ export const SALES_INVOICE_TEMPLATE: VoucherTemplate = {
 export const COLLECTION_TEMPLATE: VoucherTemplate = {
   id: 'tpl-collection',
   code: 'COLLECTION',
-  name: '收款凭证',
+  name: i18n.t('shared.voucher_template_engine.k8'),
   type: 'collection',
-  description: '根据收款记录自动生成收款凭证',
+  description: i18n.t('shared.voucher_template_engine.k9'),
 
   entries: [
     // 借: 银行存款
@@ -650,7 +651,7 @@ export const COLLECTION_TEMPLATE: VoucherTemplate = {
         },
       ],
       summary_rule_type: 'expression',
-      summary_expression: '收到客户款项',
+      summary_expression: i18n.t('shared.voucher_template_engine.k10'),
     },
     // 贷: 应收账款
     {
@@ -670,7 +671,7 @@ export const COLLECTION_TEMPLATE: VoucherTemplate = {
         },
       ],
       summary_rule_type: 'expression',
-      summary_expression: '收到客户${entities.customer?.name}款项',
+      summary_expression: i18n.t('shared.voucher_template_engine.k13'),
     },
   ],
   status: 'active',
@@ -685,9 +686,9 @@ export const COLLECTION_TEMPLATE: VoucherTemplate = {
 export const PURCHASE_INVOICE_TEMPLATE: VoucherTemplate = {
   id: 'tpl-purchase-invoice',
   code: 'PURCHASE_INVOICE',
-  name: '采购发票应付凭证',
+  name: i18n.t('shared.voucher_template_engine.k11'),
   type: 'purchase_invoice',
-  description: '根据采购发票自动生成应付账款凭证',
+  description: i18n.t('shared.voucher_template_engine.k12'),
 
   entries: [
     // 借: 在途物资/库存商品
@@ -713,7 +714,7 @@ export const PURCHASE_INVOICE_TEMPLATE: VoucherTemplate = {
         },
       ],
       summary_rule_type: 'expression',
-      summary_expression: '采购商品/服务',
+      summary_expression: i18n.t('shared.voucher_template_engine.k13'),
     },
     // 借: 应交税费-进项税额
     {
@@ -726,7 +727,7 @@ export const PURCHASE_INVOICE_TEMPLATE: VoucherTemplate = {
       direction_rule_type: 'fixed',
       fixed_direction: 'debit',
       summary_rule_type: 'expression',
-      summary_expression: '进项税额',
+      summary_expression: i18n.t('shared.voucher_template_engine.k14'),
     },
     // 贷: 应付账款
     {
@@ -746,7 +747,7 @@ export const PURCHASE_INVOICE_TEMPLATE: VoucherTemplate = {
         },
       ],
       summary_rule_type: 'expression',
-      summary_expression: '应付供应商${entities.supplier?.name}款项',
+      summary_expression: i18n.t('shared.voucher_template_engine.k14'),
     },
   ],
   status: 'active',
@@ -761,9 +762,9 @@ export const PURCHASE_INVOICE_TEMPLATE: VoucherTemplate = {
 export const PAYMENT_TEMPLATE: VoucherTemplate = {
   id: 'tpl-payment',
   code: 'PAYMENT',
-  name: '付款凭证',
+  name: i18n.t('shared.voucher_template_engine.k15'),
   type: 'payment',
-  description: '根据付款记录自动生成付款凭证',
+  description: i18n.t('shared.voucher_template_engine.k16'),
 
   entries: [
     // 借: 应付账款
@@ -784,7 +785,7 @@ export const PAYMENT_TEMPLATE: VoucherTemplate = {
         },
       ],
       summary_rule_type: 'expression',
-      summary_expression: '支付供应商${entities.supplier?.name}款项',
+      summary_expression: i18n.t('shared.voucher_template_engine.k15'),
     },
     // 贷: 银行存款
     {
@@ -804,7 +805,7 @@ export const PAYMENT_TEMPLATE: VoucherTemplate = {
         },
       ],
       summary_rule_type: 'expression',
-      summary_expression: '银行付款',
+      summary_expression: i18n.t('shared.voucher_template_engine.k17'),
     },
   ],
   status: 'active',
@@ -819,9 +820,9 @@ export const PAYMENT_TEMPLATE: VoucherTemplate = {
 export const DEPRECIATION_TEMPLATE: VoucherTemplate = {
   id: 'tpl-depreciation',
   code: 'DEPRECIATION',
-  name: '固定资产折旧凭证',
+  name: i18n.t('shared.voucher_template_engine.k18'),
   type: 'depreciation',
-  description: '根据固定资产折旧自动生成折旧凭证',
+  description: i18n.t('shared.voucher_template_engine.k19'),
 
   entries: [
     // 借: 管理费用-折旧费
@@ -842,7 +843,7 @@ export const DEPRECIATION_TEMPLATE: VoucherTemplate = {
         },
       ],
       summary_rule_type: 'expression',
-      summary_expression: '计提${env.period}月份固定资产折旧',
+      summary_expression: i18n.t('shared.voucher_template_engine.k16'),
     },
     // 贷: 累计折旧
     {
@@ -856,7 +857,7 @@ export const DEPRECIATION_TEMPLATE: VoucherTemplate = {
       fixed_direction: 'credit',
       dimension_rules: [{ dimension: 'project', source_type: 'field', field: 'data.asset_id' }],
       summary_rule_type: 'expression',
-      summary_expression: '${data.asset_name}折旧',
+      summary_expression: i18n.t('shared.voucher_template_engine.dataasset_name_17'),
     },
   ],
   status: 'active',

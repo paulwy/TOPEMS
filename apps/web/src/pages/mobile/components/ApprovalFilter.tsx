@@ -5,8 +5,7 @@
 import React from 'react';
 import { Box, Tabs, Tab, TextField, InputAdornment, Chip } from '@mui/material';
 import { Search } from 'lucide-react';
-import { useTranslation } from 'react-i18next';
-
+import i18n from '@/i18n';
 interface ApprovalFilterProps {
   searchQuery: string;
   onSearchChange: (value: string) => void;
@@ -15,7 +14,6 @@ interface ApprovalFilterProps {
   tabs: string[];
   pendingCount: number;
 }
-
 export const ApprovalFilter: React.FC<ApprovalFilterProps> = ({
   searchQuery,
   onSearchChange,
@@ -24,15 +22,13 @@ export const ApprovalFilter: React.FC<ApprovalFilterProps> = ({
   tabs,
   pendingCount,
 }) => {
-  const { t } = useTranslation();
-
   return (
     <>
       <Box sx={{ px: 2, pt: 2 }}>
         <TextField
           fullWidth
           size='small'
-          placeholder={t('mobile.approval.action.search')}
+          placeholder={i18n.t('mobile.approval.action.search')}
           value={searchQuery}
           onChange={(e) => onSearchChange(e.target.value)}
           sx={{
@@ -53,7 +49,6 @@ export const ApprovalFilter: React.FC<ApprovalFilterProps> = ({
           }}
         />
       </Box>
-
       <Tabs
         value={activeTab}
         onChange={onTabChange}

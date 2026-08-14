@@ -8,6 +8,7 @@ import React, {
   createContext,
   useContext,
 } from 'react';
+import i18n from '@/i18n';
 import { authApi } from '@/api/iam';
 import { tenantApi } from '@/api/tenant';
 import apiClient, { type ApiResponse } from '../api/client';
@@ -352,7 +353,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       const tokenAtEventTime = localStorage.getItem('token');
       const userAtEventTime = localStorage.getItem('user');
 
-      authLogger.warn('[日志4-收到未授权事件触发登出]', {
+      authLogger.warn(i18n.t('shared.use_auth.4_0'), {
         hasTokenAtEventTime: !!tokenAtEventTime,
         hasUserAtEventTime: !!userAtEventTime,
         currentPath: window.location.pathname,

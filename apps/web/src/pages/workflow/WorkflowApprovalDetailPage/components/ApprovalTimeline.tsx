@@ -4,15 +4,13 @@ import type { Theme } from '@mui/material/styles';
 import { FileText, CheckCircle2, XCircle, User, Clock, PlayCircle, GitBranch } from 'lucide-react';
 import type { Approval, ApprovalRecord } from '@/api/workflow';
 import { designTokens } from '@/theme/tokens';
-
+import i18n from '@/i18n';
 const ct= designTokens.colors;
-
 interface ApprovalTimelineProps {
   approval: Approval | null;
   records: ApprovalRecord[];
   theme: Theme;
 }
-
 export const RecordsTabContent: React.FC<{ records: ApprovalRecord[]; theme: Theme }> = ({
   records,
   theme,
@@ -33,12 +31,11 @@ export const RecordsTabContent: React.FC<{ records: ApprovalRecord[]; theme: The
           variant='body2'
           sx={{ color: 'grey.500' }}
         >
-          暂无审批记录
+          {i18n.t('pages.approval_timeline.k0')}
         </Typography>
       </Box>
     );
   }
-
   return (
     <Stack spacing={2}>
       {records.map((record, index) => (
@@ -66,7 +63,7 @@ export const RecordsTabContent: React.FC<{ records: ApprovalRecord[]; theme: The
               variant='body2'
               sx={{ fontWeight: 500 }}
             >
-              {record.action === 'approve' ? '通过' : '拒绝'}
+              {record.action === 'approve' ? i18n.t('workflow.approval_timeline.k1') : i18n.t('workflow.approval_timeline.k0')}
             </Typography>
           </Stack>
           <Stack
@@ -107,7 +104,7 @@ export const RecordsTabContent: React.FC<{ records: ApprovalRecord[]; theme: The
               variant='caption'
               sx={{ color: 'grey.400', display: 'block', mt: 1 }}
             >
-              状态变更: {record.previous_status} → {record.new_status}
+              [i18n.t('pages.approval_timeline.k1')]: {record.previous_status} → {record.new_status}
             </Typography>
           )}
         </Box>
@@ -115,7 +112,6 @@ export const RecordsTabContent: React.FC<{ records: ApprovalRecord[]; theme: The
     </Stack>
   );
 };
-
 export const TimelineTabContent: React.FC<{
   approval: Approval | null;
   records: ApprovalRecord[];
@@ -127,7 +123,7 @@ export const TimelineTabContent: React.FC<{
         variant='body2'
         sx={{ color: 'grey.500', mb: 2 }}
       >
-        完整流程审批轨迹追踪
+        {i18n.t('pages.approval_timeline.k2')}
       </Typography>
       {records.length === 0 ? (
         <Box sx={{ textAlign: 'center', py: 6 }}>
@@ -140,7 +136,7 @@ export const TimelineTabContent: React.FC<{
               marginBottom: 8,
             }}
           />
-          <Typography sx={{ color: 'grey.500' }}>流程尚未开始处理</Typography>
+          <Typography sx={{ color: 'grey.500' }}>{i18n.t('workflow.approval_timeline.k2')}</Typography>
         </Box>
       ) : (
         <Box sx={{ position: 'relative' }}>
@@ -179,13 +175,13 @@ export const TimelineTabContent: React.FC<{
                   variant='body2'
                   sx={{ fontWeight: 600 }}
                 >
-                  流程发起
+                  {i18n.t('pages.approval_timeline.k3')}
                 </Typography>
                 <Typography
                   variant='caption'
                   sx={{ color: 'grey.500' }}
                 >
-                  发起人: {approval?.assignee_id || '系统'}
+                  [i18n.t('pages.approval_timeline.k4')]: {approval?.assignee_id || i18n.t('workflow.approval_timeline.k3')}
                 </Typography>
                 <Typography
                   variant='caption'
@@ -195,7 +191,6 @@ export const TimelineTabContent: React.FC<{
                 </Typography>
               </Paper>
             </Box>
-
             {records.map((record, index) => {
               const isApproved = record.action === 'approve';
               return (
@@ -230,11 +225,11 @@ export const TimelineTabContent: React.FC<{
                         variant='body2'
                         sx={{ fontWeight: 600 }}
                       >
-                        {isApproved ? '审批通过' : '审批拒绝'}
+                        {isApproved ? i18n.t('workflow.approval_timeline.k5') : i18n.t('workflow.approval_timeline.k4')}
                       </Typography>
                       <Chip
                         size='small'
-                        label={`步骤 ${index + 1}`}
+                        label={`${i18n.t('pages.approval_timeline.k0')}${index + 1}`}
                         color={isApproved ? 'success' : 'error'}
                         variant='outlined'
                       />
@@ -294,7 +289,6 @@ export const TimelineTabContent: React.FC<{
                 </Box>
               );
             })}
-
             {approval?.status === 'pending' && (
               <Box sx={{ display: 'flex', gap: 2, position: 'relative' }}>
                 <Avatar
@@ -321,20 +315,20 @@ export const TimelineTabContent: React.FC<{
                     variant='body2'
                     sx={{ fontWeight: 600 }}
                   >
-                    当前待审批
+                    {i18n.t('pages.approval_timeline.k5')}
                   </Typography>
                   <Typography
                     variant='caption'
                     sx={{ color: 'grey.500' }}
                   >
-                    审批人: {approval.assignee_id || 'N/A'}
+                    [i18n.t('pages.approval_timeline.k6')]: {approval.assignee_id || 'N/A'}
                   </Typography>
                   {approval.timeout_at && (
                     <Typography
                       variant='caption'
                       sx={{ display: 'block', color: 'warning.main', mt: 0.5 }}
                     >
-                      超时时间: {new Date(approval.timeout_at).toLocaleString()}
+                      [i18n.t('pages.approval_timeline.k7')]: {new Date(approval.timeout_at).toLocaleString()}
                     </Typography>
                   )}
                 </Paper>
@@ -346,7 +340,6 @@ export const TimelineTabContent: React.FC<{
     </Box>
   );
 };
-
 export const FormDataTabContent: React.FC<{ approval: Approval | null; theme: Theme }> = ({
   approval,
   theme,
@@ -354,14 +347,13 @@ export const FormDataTabContent: React.FC<{ approval: Approval | null; theme: Th
   const formData = (approval as unknown as Record<string, unknown>)?.form_data as
     Record<string, unknown> | undefined;
   const hasFormData = formData && Object.keys(formData).length > 0;
-
   return (
     <Box>
       <Typography
         variant='body2'
         sx={{ color: 'grey.500', mb: 2 }}
       >
-        当前审批关联的表单数据
+        {i18n.t('pages.approval_timeline.k8')}
       </Typography>
       {hasFormData ? (
         <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 2 }}>
@@ -397,23 +389,20 @@ export const FormDataTabContent: React.FC<{ approval: Approval | null; theme: Th
               marginBottom: 8,
             }}
           />
-          <Typography sx={{ color: 'grey.500' }}>暂无关联表单数据</Typography>
+          <Typography sx={{ color: 'grey.500' }}>{i18n.t('workflow.approval_timeline.k6')}</Typography>
           <Typography
             variant='caption'
             sx={{ color: 'grey.400', display: 'block', mt: 0.5 }}
           >
-            表单数据将在流程发起后自动填充
+            {i18n.t('pages.approval_timeline.k9')}
           </Typography>
         </Box>
       )}
     </Box>
   );
 };
-
 export { GitBranch };
-
 const ApprovalTimeline: React.FC<ApprovalTimelineProps> = () => {
   return null;
 };
-
 export default ApprovalTimeline;

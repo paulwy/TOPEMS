@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { Box, Typography, Paper, IconButton } from '@mui/material';
 import { ChevronRight, ChevronLeft, ZoomIn, ZoomOut } from 'lucide-react';
 import type { GanttPhase, GanttMilestone } from '@/api/pm';
+import i18n from '@/i18n';
 
 interface GanttChartProps {
   phases: GanttPhase[];
@@ -126,7 +127,7 @@ const GanttChart: React.FC<GanttChartProps> = ({
               borderRadius: 1,
               '&:hover': { backgroundColor: 'grey.200' },
             }}
-            aria-label='展开'
+            aria-label={i18n.t('components.gantt_chart.k0')}
           >
             <ChevronLeft style={{ width: 16, height: 16 }} />
           </IconButton>
@@ -137,7 +138,7 @@ const GanttChart: React.FC<GanttChartProps> = ({
               borderRadius: 1,
               '&:hover': { backgroundColor: 'grey.200' },
             }}
-            aria-label='展开'
+            aria-label={i18n.t('components.gantt_chart.k1')}
           >
             <ChevronRight style={{ width: 16, height: 16 }} />
           </IconButton>
@@ -150,8 +151,8 @@ const GanttChart: React.FC<GanttChartProps> = ({
               borderRadius: 1,
               '&:hover': { backgroundColor: 'grey.200' },
             }}
-            aria-label='缩小'
-            title='缩小'
+            aria-label={i18n.t('components.gantt_chart.k2')}
+            title={i18n.t('components.gantt_chart.k3')}
           >
             <ZoomOut style={{ width: 16, height: 16 }} />
           </IconButton>
@@ -163,8 +164,8 @@ const GanttChart: React.FC<GanttChartProps> = ({
               borderRadius: 1,
               '&:hover': { backgroundColor: 'grey.200' },
             }}
-            aria-label='放大'
-            title='放大'
+            aria-label={i18n.t('components.gantt_chart.k4')}
+            title={i18n.t('components.gantt_chart.k5')}
           >
             <ZoomIn style={{ width: 16, height: 16 }} />
           </IconButton>
@@ -185,7 +186,7 @@ const GanttChart: React.FC<GanttChartProps> = ({
             }}
           >
             <Typography sx={{ fontSize: '0.875rem', fontWeight: 500, color: 'text.secondary' }}>
-              任务
+              {i18n.t('components.gantt_chart.k0')}
             </Typography>
           </Box>
           <Box sx={{ maxHeight: 384, overflowY: 'auto' }}>
@@ -381,7 +382,7 @@ const GanttChart: React.FC<GanttChartProps> = ({
               backgroundColor: 'primary.main',
             }}
           />
-          <Typography sx={{ fontSize: '0.75rem', color: 'text.secondary' }}>进行中</Typography>
+          <Typography sx={{ fontSize: '0.75rem', color: 'text.secondary' }}>{i18n.t('components.gantt_chart.k6')}</Typography>
         </Box>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
           <Box
@@ -392,7 +393,7 @@ const GanttChart: React.FC<GanttChartProps> = ({
               backgroundColor: 'success.dark',
             }}
           />
-          <Typography sx={{ fontSize: '0.75rem', color: 'text.secondary' }}>已完成</Typography>
+          <Typography sx={{ fontSize: '0.75rem', color: 'text.secondary' }}>{i18n.t('components.gantt_chart.k7')}</Typography>
         </Box>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
           <Box
@@ -404,7 +405,7 @@ const GanttChart: React.FC<GanttChartProps> = ({
               backgroundColor: 'warning.light',
             }}
           />
-          <Typography sx={{ fontSize: '0.75rem', color: 'text.secondary' }}>里程碑</Typography>
+          <Typography sx={{ fontSize: '0.75rem', color: 'text.secondary' }}>{i18n.t('components.gantt_chart.k8')}</Typography>
         </Box>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
           <Box
@@ -415,7 +416,7 @@ const GanttChart: React.FC<GanttChartProps> = ({
               backgroundColor: 'text.disabled',
             }}
           />
-          <Typography sx={{ fontSize: '0.75rem', color: 'text.secondary' }}>未开始</Typography>
+          <Typography sx={{ fontSize: '0.75rem', color: 'text.secondary' }}>{i18n.t('components.gantt_chart.k9')}</Typography>
         </Box>
       </Box>
     </Paper>

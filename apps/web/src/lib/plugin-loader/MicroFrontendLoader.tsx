@@ -4,6 +4,7 @@ import { AlertTriangle, RefreshCw } from 'lucide-react';
 import { logger } from '@/utils/logger';
 import { eventBus, ModuleEvents } from './EventBus';
 import { isDev, VITEDeploymentMode } from '@/config/env';
+import i18n from '@/i18n';
 
 export interface MicroFrontendLoaderProps {
   remoteName: string;
@@ -273,7 +274,7 @@ export const MicroFrontendLoader: React.FC<MicroFrontendLoaderProps> = ({
           size={48}
           color='error'
         />
-        <Typography variant='h6'>模块加载失败</Typography>
+        <Typography variant='h6'>{i18n.t('shared.micro_frontend_loader.k0')}</Typography>
         <Typography
           variant='body2'
           color='text.secondary'
@@ -286,7 +287,7 @@ export const MicroFrontendLoader: React.FC<MicroFrontendLoaderProps> = ({
           onClick={handleRetry}
           sx={{ mt: 2 }}
         >
-          重新加载
+          {i18n.t('lib.micro_frontend_loader.k0')}
         </Button>
       </Box>
     );

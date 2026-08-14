@@ -1,5 +1,4 @@
 import React from 'react';
-import { useTranslation } from 'react-i18next';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { RefreshCw, TestTube } from 'lucide-react';
 import { PageContainer } from '@/components/common';
@@ -8,14 +7,10 @@ import { dataSourceSchema } from '@/schemas/bi';
 import { dataSourceCrudApi, testDataSource, refreshDataSource } from '@/api/bi';
 import type { DataSource } from '@/api/bi';
 import { logger } from '@/utils/logger';
-
-
 import { QUERY_KEYS, queryClient } from '@/lib/reactQuery';
-
+import i18n from '@/i18n';
 const BIDataSourcePage: React.FC = () => {
-  const { t } = useTranslation();
   const queryClient = useQueryClient();
-
   const testConnectionMutation = useMutation({
     mutationFn: (id: string) => testDataSource(id),
     onSuccess: () => {
@@ -28,7 +23,6 @@ const BIDataSourcePage: React.FC = () => {
       logger.info('Connection test successful');
     },
   });
-
   const refreshMutation = useMutation({
     mutationFn: (id: string) => refreshDataSource(id),
     onSuccess: () => {
@@ -39,52 +33,49 @@ const BIDataSourcePage: React.FC = () => {
       logger.info('Sync successful');
     },
   });
-
   const apiAdapter: CrudApiAdapter<DataSource> = {
     list: async (params) => {
       const res = await dataSourceCrudApi.list(params);
       if (res.success && res.data) {
         return { data: res.data.items, total: res.data.total };
       }
-      throw new Error(res.message || '加载数据源失败');
+      throw new Error(res.message || i18n.t('bi.bi_data_source_page.k0'));
     },
     create: async (data) => {
       const res = await dataSourceCrudApi.create(data as Partial<DataSource>);
-      if (!res.success || !res.data) throw new Error(res.message || '创建失败');
+      if (!res.success || !res.data) throw new Error(res.message || i18n.t('bi.bi_data_source_page.k1'));
       return res.data;
     },
     update: async (id, data) => {
       const res = await dataSourceCrudApi.update(id, data as Partial<DataSource>);
-      if (!res.success || !res.data) throw new Error(res.message || '更新失败');
+      if (!res.success || !res.data) throw new Error(res.message || i18n.t('bi.bi_data_source_page.k2'));
       return res.data;
     },
     delete: async (id) => {
       const res = await dataSourceCrudApi.delete(id);
-      if (!res.success) throw new Error(res.message || '删除失败');
+      if (!res.success) throw new Error(res.message || i18n.t('bi.bi_data_source_page.k3'));
     },
   };
-
   const customRowActions = [
     {
-      label: t('bi.bi_data_source_page.text_6a620e', '同步'),
+      label: i18n.t('bi.bi_data_source_page.text_6a620e', i18n.t('pages.bi_data_source_page.k0')),
       icon: <RefreshCw size={16} />,
       onClick: (row: Record<string, unknown>) => {
         refreshMutation.mutate(String(row.id));
       },
     },
     {
-      label: t('bi.bi_data_source_page.test', '测试连接'),
+      label: i18n.t('bi.bi_data_source_page.test', i18n.t('pages.bi_data_source_page.k1')),
       icon: <TestTube size={16} />,
       onClick: (row: Record<string, unknown>) => {
         testConnectionMutation.mutate(String(row.id));
       },
     },
   ];
-
   return (
     <PageContainer
-      title={t('bi.bi_data_source_page.text_4feab2', 'BI 数据源')}
-      subtitle={t('bi.bi_data_source_page.text_b72c3a', '管理 BI 数据源连接')}
+      title={i18n.t('bi.bi_data_source_page.text_4feab2', i18n.t('pages.bi_data_source_page.bi_2'))}
+      subtitle={i18n.t('bi.bi_data_source_page.text_b72c3a', i18n.t('pages.bi_data_source_page.bi_3'))}
     >
       <CrudPage
         schema={dataSourceSchema}
@@ -94,5 +85,4 @@ const BIDataSourcePage: React.FC = () => {
     </PageContainer>
   );
 };
-
 export default BIDataSourcePage;

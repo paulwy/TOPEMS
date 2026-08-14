@@ -6,6 +6,7 @@ import { navigationRegistryV2 } from '@/lib/navigation';
 import type { ModuleCardConfig } from '@/lib/navigation/types';
 import { lucideIcons } from '@/lib/iconMapping';
 import { DASHBOARD_PATHS } from '@/routes/dashboard';
+import i18n from '@/i18n';
 
 const NotFoundPage: React.FC = () => {
   const navigate = useNavigate();
@@ -78,13 +79,13 @@ const NotFoundPage: React.FC = () => {
           variant='h5'
           sx={{ fontWeight: 700, color: 'grey.900', mb: 1 }}
         >
-          页面未找到
+          {i18n.t('pages.not_found_page.k0')}
         </Typography>
         <Typography
           variant='body1'
           sx={{ color: 'grey.600', mb: 4 }}
         >
-          抱歉，您访问的页面不存在，可能链接已失效或已被移除
+          {i18n.t('pages.not_found_page.k1')}
         </Typography>
 
         {/* 操作按钮组 */}
@@ -104,7 +105,7 @@ const NotFoundPage: React.FC = () => {
             onClick={() => navigate(DASHBOARD_PATHS.dashboard)}
             sx={{ borderRadius: 2, px: 3, py: 1.25 }}
           >
-            返回首页
+            {i18n.t('pages.not_found_page.k2')}
           </Button>
           <Button
             variant='outlined'
@@ -113,7 +114,7 @@ const NotFoundPage: React.FC = () => {
             onClick={() => navigate(DASHBOARD_PATHS.modules)}
             sx={{ borderRadius: 2, px: 3, py: 1.25 }}
           >
-            浏览模块
+            {i18n.t('pages.not_found_page.k3')}
           </Button>
           <Button
             variant='text'
@@ -121,7 +122,7 @@ const NotFoundPage: React.FC = () => {
             onClick={() => navigate(-1)}
             sx={{ borderRadius: 2, px: 3, py: 1.25 }}
           >
-            返回上一页
+            {i18n.t('pages.not_found_page.k4')}
           </Button>
         </Box>
 
@@ -132,7 +133,7 @@ const NotFoundPage: React.FC = () => {
               variant='subtitle2'
               sx={{ color: 'text.secondary', mb: 2, fontWeight: 500 }}
             >
-              也许您想访问：
+              {i18n.t('pages.not_found_page.k5')}
             </Typography>
             <Box
               sx={{

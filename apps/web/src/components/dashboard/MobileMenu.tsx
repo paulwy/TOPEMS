@@ -16,6 +16,7 @@ import {
   BarChart3,
   HelpCircle,
 } from 'lucide-react';
+import i18n from '@/i18n';
 import { useAuth } from '../../hooks/useAuth';
 import { BI_PATHS } from '@/modules/bi/config';
 
@@ -35,19 +36,19 @@ export const MobileMenu: React.FC<MobileMenuProps> = ({
   const { user, hasPermission } = useAuth();
 
   const menuItems = [
-    { id: 'dashboard', label: '首页', icon: Activity },
-    { id: 'pm', label: '项目管理', icon: FolderKanban, path: '/pm/projects' },
-    { id: 'addressbook', label: '通讯录', icon: Book },
-    { id: 'documents', label: '文档管理', icon: FileText },
-    { id: 'ai', label: 'AI 知识库', icon: Bot },
-    { id: 'workflows', label: '工作流', icon: GitBranch },
-    { id: 'system', label: '系统管理', icon: Settings, adminOnly: true },
-    { id: 'companies', label: '公司管理', icon: Building, adminOnly: true },
-    { id: 'departments', label: '部门管理', icon: Folder, adminOnly: true },
-    { id: 'employees', label: '员工管理', icon: Users, adminOnly: true },
-    { id: 'documents', label: '文档中心', icon: BookOpen },
-    { id: 'bi', label: '商业智能', icon: BarChart3, path: BI_PATHS.dashboard },
-    { id: 'help', label: '帮助中心', icon: HelpCircle },
+    { id: 'dashboard', label: i18n.t('shared.mobile_menu.k0'), icon: Activity },
+    { id: 'pm', label: i18n.t('shared.mobile_menu.k1'), icon: FolderKanban, path: '/pm/projects' },
+    { id: 'addressbook', label: i18n.t('shared.mobile_menu.k2'), icon: Book },
+    { id: 'documents', label: i18n.t('shared.mobile_menu.k3'), icon: FileText },
+    { id: 'ai', label: i18n.t('components.mobile_menu.ai_0'), icon: Bot },
+    { id: 'workflows', label: i18n.t('shared.mobile_menu.k4'), icon: GitBranch },
+    { id: 'system', label: i18n.t('shared.mobile_menu.k5'), icon: Settings, adminOnly: true },
+    { id: 'companies', label: i18n.t('shared.mobile_menu.k6'), icon: Building, adminOnly: true },
+    { id: 'departments', label: i18n.t('shared.mobile_menu.k7'), icon: Folder, adminOnly: true },
+    { id: 'employees', label: i18n.t('shared.mobile_menu.k8'), icon: Users, adminOnly: true },
+    { id: 'documents', label: i18n.t('shared.mobile_menu.k9'), icon: BookOpen },
+    { id: 'bi', label: i18n.t('shared.mobile_menu.k10'), icon: BarChart3, path: BI_PATHS.dashboard },
+    { id: 'help', label: i18n.t('shared.mobile_menu.k11'), icon: HelpCircle },
   ];
 
   const handleNavigate = (item: (typeof menuItems)[0]) => {
@@ -104,7 +105,7 @@ export const MobileMenu: React.FC<MobileMenuProps> = ({
               mb: 6,
             }}
           >
-            <Typography sx={{ fontSize: '1.125rem', fontWeight: 600 }}>菜单</Typography>
+            <Typography sx={{ fontSize: '1.125rem', fontWeight: 600 }}>{i18n.t('shared.mobile_menu.k12')}</Typography>
             <IconButton
               onClick={onClose}
               sx={{
@@ -112,7 +113,7 @@ export const MobileMenu: React.FC<MobileMenuProps> = ({
                 borderRadius: 3,
                 '&:hover': { backgroundColor: 'grey.100' },
               }}
-              aria-label='关闭'
+              aria-label={i18n.t('shared.mobile_menu.k13')}
             >
               <X size={20} />
             </IconButton>

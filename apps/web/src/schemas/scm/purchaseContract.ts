@@ -1,9 +1,10 @@
 import type { EntitySchema } from '@/schema';
+import i18n from '@/i18n';
 
 export const purchaseContractSchema: EntitySchema = {
   entity: 'purchaseContract',
-  title: '采购合同',
-  description: '管理采购合同，包括合同创建、审批、签订、执行等全生命周期',
+  title: i18n.t('scm.purchase_contract.k0'),
+  description: i18n.t('scm.purchase_contract.k1'),
 
   api: {
     module: 'scm',
@@ -13,7 +14,7 @@ export const purchaseContractSchema: EntitySchema = {
   fields: [
     {
       name: 'contractNo',
-      label: '合同编号',
+      label: i18n.t('scm.purchase_contract.k2'),
       type: 'text',
       required: true,
       readonlyOnEdit: true,
@@ -23,7 +24,7 @@ export const purchaseContractSchema: EntitySchema = {
     },
     {
       name: 'supplier_id',
-      label: '供应商',
+      label: i18n.t('scm.purchase_contract.k3'),
       type: 'text',
       required: true,
       listWidth: 160,
@@ -31,7 +32,7 @@ export const purchaseContractSchema: EntitySchema = {
     },
     {
       name: 'title',
-      label: '合同标题',
+      label: i18n.t('scm.purchase_contract.k4'),
       type: 'text',
       required: true,
       listWidth: 180,
@@ -39,7 +40,7 @@ export const purchaseContractSchema: EntitySchema = {
     },
     {
       name: 'amount',
-      label: '合同金额',
+      label: i18n.t('scm.purchase_contract.k5'),
       type: 'number',
       defaultValue: 0,
       sortable: true,
@@ -47,37 +48,37 @@ export const purchaseContractSchema: EntitySchema = {
     },
     {
       name: 'sign_date',
-      label: '签订日期',
+      label: i18n.t('scm.purchase_contract.k6'),
       type: 'date',
       listWidth: 120,
     },
     {
       name: 'start_date',
-      label: '生效日期',
+      label: i18n.t('scm.purchase_contract.k7'),
       type: 'date',
       listWidth: 120,
     },
     {
       name: 'end_date',
-      label: '到期日期',
+      label: i18n.t('scm.purchase_contract.k8'),
       type: 'date',
       listWidth: 120,
     },
     {
       name: 'status',
-      label: '状态',
+      label: i18n.t('scm.purchase_contract.k9'),
       type: 'select',
       defaultValue: 'draft',
       options: {
         type: 'static',
         options: [
-          { value: 'draft', label: '草稿' },
-          { value: 'pending', label: '待审批' },
-          { value: 'approved', label: '已审批' },
-          { value: 'active', label: '执行中' },
-          { value: 'expired', label: '已到期' },
-          { value: 'terminated', label: '已终止' },
-          { value: 'cancelled', label: '已取消' },
+          { value: 'draft', label: i18n.t('scm.purchase_contract.k10') },
+          { value: 'pending', label: i18n.t('scm.purchase_contract.k11') },
+          { value: 'approved', label: i18n.t('scm.purchase_contract.k12') },
+          { value: 'active', label: i18n.t('scm.purchase_contract.k13') },
+          { value: 'expired', label: i18n.t('scm.purchase_contract.k14') },
+          { value: 'terminated', label: i18n.t('scm.purchase_contract.k15') },
+          { value: 'cancelled', label: i18n.t('scm.purchase_contract.k16') },
         ],
       },
       listWidth: 100,
@@ -85,7 +86,7 @@ export const purchaseContractSchema: EntitySchema = {
     },
     {
       name: 'terms',
-      label: '合同条款',
+      label: i18n.t('scm.purchase_contract.k17'),
       type: 'textarea',
       showInList: false,
     },
@@ -116,29 +117,29 @@ export const purchaseContractSchema: EntitySchema = {
         cancelled: 'error',
       },
       labelMap: {
-        draft: '草稿',
-        pending: '待审批',
-        approved: '已审批',
-        active: '执行中',
-        expired: '已到期',
-        terminated: '已终止',
-        cancelled: '已取消',
+        draft: i18n.t('scm.purchase_contract.k18'),
+        pending: i18n.t('scm.purchase_contract.k19'),
+        approved: i18n.t('scm.purchase_contract.k20'),
+        active: i18n.t('scm.purchase_contract.k21'),
+        expired: i18n.t('scm.purchase_contract.k22'),
+        terminated: i18n.t('scm.purchase_contract.k23'),
+        cancelled: i18n.t('scm.purchase_contract.k24'),
       },
     },
     filters: [
       {
         id: 'status',
-        label: '状态',
+        label: i18n.t('scm.purchase_contract.k25'),
         type: 'select',
         options: [
-          { label: '全部状态', value: 'all' },
-          { label: '草稿', value: 'draft' },
-          { label: '待审批', value: 'pending' },
-          { label: '已审批', value: 'approved' },
-          { label: '执行中', value: 'active' },
-          { label: '已到期', value: 'expired' },
-          { label: '已终止', value: 'terminated' },
-          { label: '已取消', value: 'cancelled' },
+          { label: i18n.t('scm.purchase_contract.k26'), value: 'all' },
+          { label: i18n.t('scm.purchase_contract.k27'), value: 'draft' },
+          { label: i18n.t('scm.purchase_contract.k28'), value: 'pending' },
+          { label: i18n.t('scm.purchase_contract.k29'), value: 'approved' },
+          { label: i18n.t('scm.purchase_contract.k30'), value: 'active' },
+          { label: i18n.t('scm.purchase_contract.k31'), value: 'expired' },
+          { label: i18n.t('scm.purchase_contract.k32'), value: 'terminated' },
+          { label: i18n.t('scm.purchase_contract.k33'), value: 'cancelled' },
         ],
       },
     ],
@@ -148,21 +149,21 @@ export const purchaseContractSchema: EntitySchema = {
 
   formSections: [
     {
-      title: '基本信息',
+      title: i18n.t('scm.purchase_contract.k34'),
       fields: ['contractNo', 'supplier_id', 'title', 'status'],
     },
     {
-      title: '金额与日期',
+      title: i18n.t('scm.purchase_contract.k35'),
       fields: ['amount', 'sign_date', 'start_date', 'end_date'],
     },
     {
-      title: '合同条款',
+      title: i18n.t('scm.purchase_contract.k36'),
       fields: ['terms'],
     },
   ],
 
   formColCount: 2,
-  createTitle: '新增采购合同',
-  editTitle: '编辑采购合同',
-  detailTitle: '采购合同详情',
+  createTitle: i18n.t('scm.purchase_contract.k37'),
+  editTitle: i18n.t('scm.purchase_contract.k38'),
+  detailTitle: i18n.t('scm.purchase_contract.k39'),
 };

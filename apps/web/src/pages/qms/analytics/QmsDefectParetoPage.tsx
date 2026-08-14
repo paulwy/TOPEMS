@@ -19,6 +19,7 @@ import {
   Legend,
   ReferenceLine,
 } from 'recharts';
+import i18n from '@/i18n';
 import { useQmsMock, type QmsMockShape } from '@/api/qms/_mock';
 import { designTokens, semanticTokens } from '@topems/tokens';
 
@@ -49,23 +50,23 @@ export default function QmsDefectParetoPage() {
   return (
     <div className='space-y-4 p-4'>
       <div className='flex items-center justify-between'>
-        <h1 className='text-2xl font-bold'>缺陷帕累托分析</h1>
+        <h1 className='text-2xl font-bold'>{i18n.t('pages.qms_defect_pareto_page.k0')}</h1>
         <span className='text-sm text-gray-500'>80/20 关键少数：{vitalFew.length} 类</span>
       </div>
 
       <div className='grid grid-cols-1 gap-4 md:grid-cols-3'>
         <div className='rounded-lg border p-4'>
-          <p className='text-sm text-gray-600'>缺陷类别总数</p>
+          <p className='text-sm text-gray-600'>{i18n.t('pages.qms_defect_pareto_page.k1')}</p>
           <p className='mt-1 text-3xl font-bold text-blue-600'>{paretoData.length}</p>
         </div>
         <div className='rounded-lg border p-4'>
-          <p className='text-sm text-gray-600'>缺陷总数</p>
+          <p className='text-sm text-gray-600'>{i18n.t('pages.qms_defect_pareto_page.k2')}</p>
           <p className='mt-1 text-3xl font-bold text-red-600'>
             {paretoData.reduce((s, d) => s + d.count, 0)}
           </p>
         </div>
         <div className='rounded-lg border p-4'>
-          <p className='text-sm text-gray-600'>关键缺陷类别</p>
+          <p className='text-sm text-gray-600'>{i18n.t('pages.qms_defect_pareto_page.k3')}</p>
           <p className='mt-1 text-lg font-bold text-orange-600'>
             {vitalFew.map((v) => v.category).join('、') || '-'}
           </p>
@@ -93,7 +94,7 @@ export default function QmsDefectParetoPage() {
             <YAxis
               yAxisId='left'
               fontSize={11}
-              label={{ value: '缺陷数', angle: -90, position: 'insideLeft' }}
+              label={{ value: i18n.t('pages.qms_defect_pareto_page.k4'), angle: -90, position: 'insideLeft' }}
             />
             <YAxis
               yAxisId='right'
@@ -101,7 +102,7 @@ export default function QmsDefectParetoPage() {
               domain={[0, 100]}
               unit='%'
               fontSize={11}
-              label={{ value: '累积占比', angle: 90, position: 'insideRight' }}
+              label={{ value: i18n.t('pages.qms_defect_pareto_page.k5'), angle: 90, position: 'insideRight' }}
             />
             <Tooltip />
             <Legend />
@@ -110,12 +111,12 @@ export default function QmsDefectParetoPage() {
               y={80}
               stroke={designTokens.colors.error.main}
               strokeDasharray='4 4'
-              label='80% 基准'
+              label={i18n.t('pages.qms_defect_pareto_page.80_0')}
             />
             <Bar
               yAxisId='left'
               dataKey='count'
-              name='缺陷数'
+              name={i18n.t('pages.qms_defect_pareto_page.k6')}
               fill={designTokens.colors.secondary.dark}
               barSize={36}
             />
@@ -123,7 +124,7 @@ export default function QmsDefectParetoPage() {
               yAxisId='right'
               type='monotone'
               dataKey='cumulativePct'
-              name='累积占比'
+              name={i18n.t('pages.qms_defect_pareto_page.k7')}
               stroke={designTokens.colors.error.main}
               strokeWidth={2}
               dot={{ r: 3 }}
@@ -133,15 +134,15 @@ export default function QmsDefectParetoPage() {
       </div>
 
       <div className='rounded-lg border p-4'>
-        <h3 className='mb-2 font-semibold'>缺陷明细表</h3>
+        <h3 className='mb-2 font-semibold'>{i18n.t('pages.qms_defect_pareto_page.k8')}</h3>
         <table className='w-full text-sm'>
           <thead>
             <tr className='border-b text-left text-gray-600'>
-              <th className='py-2 pr-4'>类别</th>
-              <th className='py-2 pr-4'>数量</th>
-              <th className='py-2 pr-4'>占比</th>
-              <th className='py-2 pr-4'>累积占比</th>
-              <th className='py-2'>分类</th>
+              <th className='py-2 pr-4'>{i18n.t('pages.qms_defect_pareto_page.k9')}</th>
+              <th className='py-2 pr-4'>{i18n.t('pages.qms_defect_pareto_page.k10')}</th>
+              <th className='py-2 pr-4'>{i18n.t('pages.qms_defect_pareto_page.k11')}</th>
+              <th className='py-2 pr-4'>{i18n.t('pages.qms_defect_pareto_page.k12')}</th>
+              <th className='py-2'>{i18n.t('pages.qms_defect_pareto_page.k13')}</th>
             </tr>
           </thead>
           <tbody>
@@ -157,11 +158,11 @@ export default function QmsDefectParetoPage() {
                 <td className='py-2'>
                   {d.cumulativePct <= 80 ? (
                     <span className='inline-flex items-center rounded bg-red-100 px-2 py-0.5 text-xs text-red-700'>
-                      关键少数
+                      {i18n.t('pages.qms_defect_pareto_page.k1')}
                     </span>
                   ) : (
                     <span className='inline-flex items-center rounded bg-gray-100 px-2 py-0.5 text-xs text-gray-600'>
-                      有用多数
+                      {i18n.t('pages.qms_defect_pareto_page.k2')}
                     </span>
                   )}
                 </td>

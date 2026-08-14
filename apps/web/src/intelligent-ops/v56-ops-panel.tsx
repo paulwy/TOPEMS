@@ -31,6 +31,7 @@ import {
   DialogActions,
   Card,
 } from '@mui/material';
+import i18n from '@/i18n';
 import {
   X as XIcon,
   Cpu,
@@ -251,25 +252,25 @@ const V56OpsPanel: React.FC<{ onClose: () => void }> = ({ onClose }) => {
             <Tab
               icon={<Activity size={16} />}
               iconPosition='start'
-              label='自动扩缩容'
+              label={i18n.t('intelligent-ops.v56-ops-panel.k0')}
               value='scaling'
             />
             <Tab
               icon={<Search size={16} />}
               iconPosition='start'
-              label={`根因分析 (${incidents.length})`}
+              label={`${i18n.t('intelligent_ops.v56-ops-panel.k0')}${incidents.length})`}
               value='rca'
             />
             <Tab
               icon={<Wrench size={16} />}
               iconPosition='start'
-              label={`智能修复 (${playbooks.length})`}
+              label={`${i18n.t('intelligent_ops.v56-ops-panel.k1')}${playbooks.length})`}
               value='repair'
             />
             <Tab
               icon={<Clock size={16} />}
               iconPosition='start'
-              label='事件时间线'
+              label={i18n.t('intelligent-ops.v56-ops-panel.k1')}
               value='timeline'
             />
           </Tabs>
@@ -327,14 +328,14 @@ const V56OpsPanel: React.FC<{ onClose: () => void }> = ({ onClose }) => {
           maxWidth='sm'
           fullWidth
         >
-          <DialogTitle>创建事件</DialogTitle>
+          <DialogTitle>{i18n.t('intelligent-ops.v56-ops-panel.k2')}</DialogTitle>
           <DialogContent>
             <Box sx={{ mt: 2, display: 'flex', flexDirection: 'column', gap: 2 }}>
               <FormControl size='small'>
-                <InputLabel>严重程度</InputLabel>
+                <InputLabel>{i18n.t('intelligent-ops.v56-ops-panel.k3')}</InputLabel>
                 <Select
                   value={newIncident.severity}
-                  label='严重程度'
+                  label={i18n.t('intelligent-ops.v56-ops-panel.k4')}
                   onChange={(e) =>
                     setNewIncident((prev) => ({
                       ...prev,
@@ -350,33 +351,33 @@ const V56OpsPanel: React.FC<{ onClose: () => void }> = ({ onClose }) => {
                 </Select>
               </FormControl>
               <TextField
-                label='症状（逗号分隔）'
+                label={i18n.t('intelligent-ops.v56-ops-panel.k5')}
                 value={newIncident.symptoms}
                 onChange={(e) => setNewIncident((prev) => ({ ...prev, symptoms: e.target.value }))}
                 fullWidth
                 size='small'
-                placeholder='如: 500错误激增, 响应延迟升高'
+                placeholder={i18n.t('intelligent_ops.v56-ops-panel.k2')}
               />
               <TextField
-                label='受影响组件（逗号分隔）'
+                label={i18n.t('intelligent-ops.v56-ops-panel.k6')}
                 value={newIncident.components}
                 onChange={(e) =>
                   setNewIncident((prev) => ({ ...prev, components: e.target.value }))
                 }
                 fullWidth
                 size='small'
-                placeholder='如: api-gateway, order-service'
+                placeholder={i18n.t('intelligent_ops.v56-ops-panel.k3')}
               />
             </Box>
           </DialogContent>
           <DialogActions>
-            <Button onClick={() => setShowCreateIncident(false)}>取消</Button>
+            <Button onClick={() => setShowCreateIncident(false)}>{i18n.t('intelligent-ops.v56-ops-panel.k7')}</Button>
             <Button
               onClick={handleCreateIncident}
               variant='contained'
               sx={{ bgcolor: 'orange.500' }}
             >
-              创建并分析
+              {i18n.t('intelligent_ops.v56-ops-panel.k4')}
             </Button>
           </DialogActions>
         </Dialog>
@@ -389,57 +390,57 @@ const V56OpsPanel: React.FC<{ onClose: () => void }> = ({ onClose }) => {
           maxWidth='sm'
           fullWidth
         >
-          <DialogTitle>创建修复剧本</DialogTitle>
+          <DialogTitle>{i18n.t('intelligent-ops.v56-ops-panel.k8')}</DialogTitle>
           <DialogContent>
             <Box sx={{ mt: 2, display: 'flex', flexDirection: 'column', gap: 2 }}>
               <TextField
-                label='剧本名称'
+                label={i18n.t('intelligent-ops.v56-ops-panel.k9')}
                 value={newPlaybook.name}
                 onChange={(e) => setNewPlaybook((prev) => ({ ...prev, name: e.target.value }))}
                 fullWidth
                 size='small'
               />
               <TextField
-                label='触发条件'
+                label={i18n.t('intelligent-ops.v56-ops-panel.k10')}
                 value={newPlaybook.trigger}
                 onChange={(e) => setNewPlaybook((prev) => ({ ...prev, trigger: e.target.value }))}
                 fullWidth
                 size='small'
-                placeholder='如: CPU > 90% for 3 minutes'
+                placeholder={i18n.t('intelligent_ops.v56-ops-panel.k5')}
               />
               <FormControl size='small'>
-                <InputLabel>修复类型</InputLabel>
+                <InputLabel>{i18n.t('intelligent-ops.v56-ops-panel.k11')}</InputLabel>
                 <Select
                   value={newPlaybook.type}
-                  label='修复类型'
+                  label={i18n.t('intelligent-ops.v56-ops-panel.k12')}
                   onChange={(e) =>
                     setNewPlaybook((prev) => ({ ...prev, type: e.target.value as RepairType }))
                   }
                 >
-                  <MenuItem value='Restart'>重启服务</MenuItem>
-                  <MenuItem value='ScaleUp'>扩容</MenuItem>
-                  <MenuItem value='ConfigUpdate'>配置更新</MenuItem>
-                  <MenuItem value='Patched'>补丁修复</MenuItem>
+                  <MenuItem value='Restart'>{i18n.t('intelligent-ops.v56-ops-panel.k13')}</MenuItem>
+                  <MenuItem value='ScaleUp'>{i18n.t('intelligent-ops.v56-ops-panel.k14')}</MenuItem>
+                  <MenuItem value='ConfigUpdate'>{i18n.t('intelligent-ops.v56-ops-panel.k15')}</MenuItem>
+                  <MenuItem value='Patched'>{i18n.t('intelligent-ops.v56-ops-panel.k16')}</MenuItem>
                 </Select>
               </FormControl>
               <TextField
-                label='目标组件'
+                label={i18n.t('intelligent-ops.v56-ops-panel.k17')}
                 value={newPlaybook.target}
                 onChange={(e) => setNewPlaybook((prev) => ({ ...prev, target: e.target.value }))}
                 fullWidth
                 size='small'
-                placeholder='如: api-gateway'
+                placeholder={i18n.t('intelligent_ops.v56-ops-panel.apigateway_6')}
               />
             </Box>
           </DialogContent>
           <DialogActions>
-            <Button onClick={() => setShowCreatePlaybook(false)}>取消</Button>
+            <Button onClick={() => setShowCreatePlaybook(false)}>{i18n.t('intelligent-ops.v56-ops-panel.k18')}</Button>
             <Button
               onClick={handleCreatePlaybook}
               variant='contained'
               sx={{ bgcolor: 'orange.500' }}
             >
-              创建剧本
+              {i18n.t('intelligent_ops.v56-ops-panel.k7')}
             </Button>
           </DialogActions>
         </Dialog>
@@ -478,13 +479,13 @@ const V56PanelHeader: React.FC<{ onClose: () => void }> = ({ onClose }) => (
           variant='h6'
           sx={{ fontWeight: 700, fontSize: 18 }}
         >
-          V56.0 平台智能运维面板
+          {i18n.t('intelligent_ops.v56-ops-panel.v560_8')}
         </Typography>
         <Typography
           variant='caption'
           sx={{ opacity: 0.85, fontSize: 12 }}
         >
-          自动扩缩容 · 根因分析 · 智能修复 · 事件时间线
+          {i18n.t('intelligent_ops.v56-ops-panel.k9')}
         </Typography>
       </Box>
     </Box>
@@ -548,20 +549,20 @@ const ScalingTab: React.FC<{
             sx={{ fontWeight: 600, display: 'flex', alignItems: 'center', gap: 1 }}
           >
             <Server size={20} />
-            自动扩缩容引擎
+            {i18n.t('intelligent_ops.v56-ops-panel.k10')}
           </Typography>
           <Chip
-            label={`${policies.length} 策略`}
+            label={`${policies.length} ${i18n.t('intelligent_ops.v56-ops-panel.k11')}`}
             size='small'
             sx={{ bgcolor: 'orange.50', color: 'orange.800', fontWeight: 600 }}
           />
           <Chip
-            label={`当前容量: ${totalInstances} 实例`}
+            label={`${i18n.t('intelligent_ops.v56-ops-panel.k12')} ${totalInstances} ${i18n.t('intelligent_ops.v56-ops-panel.k13')}`}
             size='small'
             sx={{ bgcolor: 'warning.100', color: 'warning.800', fontWeight: 600 }}
           />
           <Chip
-            label={`${scalingHistory.length} 历史操作`}
+            label={`${scalingHistory.length} ${i18n.t('intelligent_ops.v56-ops-panel.k14')}`}
             size='small'
             sx={{ bgcolor: 'success.50', color: 'teal.900', fontWeight: 600 }}
           />
@@ -572,7 +573,7 @@ const ScalingTab: React.FC<{
           onClick={onRefresh}
           size='small'
         >
-          刷新
+          {i18n.t('intelligent_ops.v56-ops-panel.k15')}
         </Button>
       </Stack>
 
@@ -583,9 +584,9 @@ const ScalingTab: React.FC<{
             sx={{ fontWeight: 600, mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}
           >
             <Gauge size={16} />
-            扩缩容策略
+            {i18n.t('intelligent_ops.v56-ops-panel.k16')}
           </Typography>
-          {policies.length === 0 && <Alert severity='info'>暂无策略</Alert>}
+          {policies.length === 0 && <Alert severity='info'>{i18n.t('intelligent-ops.v56-ops-panel.k19')}</Alert>}
           {policies.map((policy) => {
             const currentValue = autoScaler.getMetricValue(policy.metric);
             const capacity = autoScaler.getCurrentCapacity(policy.id);
@@ -614,7 +615,7 @@ const ScalingTab: React.FC<{
                     {policy.metric} 策略
                   </Typography>
                   <Chip
-                    label={`${currentInstances} 实例`}
+                    label={`${currentInstances} ${i18n.t('intelligent_ops.v56-ops-panel.k17')}`}
                     size='small'
                     sx={{ fontSize: 10, height: 20 }}
                   />
@@ -625,13 +626,13 @@ const ScalingTab: React.FC<{
                       variant='caption'
                       color='text.secondary'
                     >
-                      当前: {currentValue.toFixed(1)}
+                      [i18n.t('intelligent_ops.v56-ops-panel.k18')]: {currentValue.toFixed(1)}
                     </Typography>
                     <Typography
                       variant='caption'
                       color='text.secondary'
                     >
-                      目标: {policy.target}
+                      [i18n.t('intelligent_ops.v56-ops-panel.k19')]: {policy.target}
                     </Typography>
                   </Box>
                   <LinearProgress
@@ -652,7 +653,7 @@ const ScalingTab: React.FC<{
                   color='text.secondary'
                   sx={{ display: 'block', mb: 1 }}
                 >
-                  范围: {policy.min_instances} - {policy.max_instances} | 冷却:{' '}
+                  [i18n.t('intelligent_ops.v56-ops-panel.k20')]: {policy.min_instances} - {policy.max_instances} | 冷却:{' '}
                   {policy.cooldown_ms / 60000}分钟
                 </Typography>
                 <Button
@@ -662,7 +663,7 @@ const ScalingTab: React.FC<{
                   onClick={() => onScale(policy.id)}
                   sx={{ bgcolor: 'orange.500', '&:hover': { bgcolor: 'orange.600' } }}
                 >
-                  执行扩缩容评估
+                  {i18n.t('intelligent_ops.v56-ops-panel.k21')}
                 </Button>
               </Paper>
             );
@@ -675,18 +676,18 @@ const ScalingTab: React.FC<{
             sx={{ fontWeight: 600, mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}
           >
             <Activity size={16} />
-            扩缩容历史
+            {i18n.t('intelligent_ops.v56-ops-panel.k22')}
           </Typography>
-          {scalingHistory.length === 0 && <Alert severity='info'>暂无扩缩容操作记录</Alert>}
+          {scalingHistory.length === 0 && <Alert severity='info'>{i18n.t('intelligent-ops.v56-ops-panel.k20')}</Alert>}
           {scalingHistory.length > 0 && (
             <Box sx={{ maxHeight: 400, overflow: 'auto' }}>
               <Table size='small'>
                 <TableHead>
                   <TableRow>
-                    <TableCell sx={{ fontWeight: 600, fontSize: 12 }}>时间</TableCell>
-                    <TableCell sx={{ fontWeight: 600, fontSize: 12 }}>策略</TableCell>
-                    <TableCell sx={{ fontWeight: 600, fontSize: 12 }}>方向</TableCell>
-                    <TableCell sx={{ fontWeight: 600, fontSize: 12 }}>实例</TableCell>
+                    <TableCell sx={{ fontWeight: 600, fontSize: 12 }}>{i18n.t('intelligent-ops.v56-ops-panel.k21')}</TableCell>
+                    <TableCell sx={{ fontWeight: 600, fontSize: 12 }}>{i18n.t('intelligent-ops.v56-ops-panel.k22')}</TableCell>
+                    <TableCell sx={{ fontWeight: 600, fontSize: 12 }}>{i18n.t('intelligent-ops.v56-ops-panel.k23')}</TableCell>
+                    <TableCell sx={{ fontWeight: 600, fontSize: 12 }}>{i18n.t('intelligent-ops.v56-ops-panel.k24')}</TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
@@ -733,7 +734,7 @@ const ScalingTab: React.FC<{
           sx={{ fontWeight: 600, mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}
         >
           <Sparkles size={16} />
-          需求预测（基于流量模式）
+          {i18n.t('intelligent_ops.v56-ops-panel.k23')}
         </Typography>
         <Box sx={{ display: 'flex', gap: 0.5, flexWrap: 'wrap' }}>
           {predictions.map((p, i) => (
@@ -851,10 +852,10 @@ const RCATab: React.FC<{
             sx={{ fontWeight: 600, display: 'flex', alignItems: 'center', gap: 1 }}
           >
             <Search size={20} />
-            根因定位引擎
+            {i18n.t('intelligent_ops.v56-ops-panel.k24')}
           </Typography>
           <Chip
-            label={`${incidents.length} 事件`}
+            label={`${incidents.length} ${i18n.t('intelligent_ops.v56-ops-panel.k25')}`}
             size='small'
             sx={{ bgcolor: 'orange.50', color: 'orange.800', fontWeight: 600 }}
           />
@@ -866,7 +867,7 @@ const RCATab: React.FC<{
           size='small'
           sx={{ bgcolor: 'orange.500', '&:hover': { bgcolor: 'orange.600' } }}
         >
-          创建事件
+          {i18n.t('intelligent_ops.v56-ops-panel.k26')}
         </Button>
       </Stack>
 
@@ -876,9 +877,9 @@ const RCATab: React.FC<{
             variant='subtitle2'
             sx={{ fontWeight: 600, mb: 2 }}
           >
-            事件列表
+            {i18n.t('intelligent_ops.v56-ops-panel.k27')}
           </Typography>
-          {incidents.length === 0 && <Alert severity='info'>暂无事件记录</Alert>}
+          {incidents.length === 0 && <Alert severity='info'>{i18n.t('intelligent-ops.v56-ops-panel.k25')}</Alert>}
           {incidents.length > 0 && (
             <List sx={{ maxHeight: 500, overflow: 'auto' }}>
               {incidents.map((incident) => (
@@ -903,7 +904,7 @@ const RCATab: React.FC<{
                           variant='body2'
                           sx={{ fontWeight: 600, flex: 1 }}
                         >
-                          {incident.symptoms[0] || '未知事件'}
+                          {incident.symptoms[0] || i18n.t('intelligent-ops.v56-ops-panel.k26')}
                         </Typography>
                         {getStatusChip(incident.status)}
                       </Box>
@@ -940,15 +941,15 @@ const RCATab: React.FC<{
             sx={{ fontWeight: 600, mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}
           >
             <Database size={16} />
-            根因分析结果
+            {i18n.t('intelligent_ops.v56-ops-panel.k28')}
           </Typography>
-          {!selectedIncident && <Alert severity='info'>请选择或创建一个事件进行分析</Alert>}
+          {!selectedIncident && <Alert severity='info'>{i18n.t('intelligent-ops.v56-ops-panel.k27')}</Alert>}
           {selectedIncident && !causes && (
             <Stack
               direction='column'
               spacing={2}
             >
-              <Alert severity='info'>尚未进行根因分析</Alert>
+              <Alert severity='info'>{i18n.t('intelligent-ops.v56-ops-panel.k28')}</Alert>
               <Button
                 variant='contained'
                 startIcon={<Search size={14} />}
@@ -956,7 +957,7 @@ const RCATab: React.FC<{
                 sx={{ bgcolor: 'orange.500', '&:hover': { bgcolor: 'orange.600' } }}
                 size='small'
               >
-                执行根因定位
+                {i18n.t('intelligent_ops.v56-ops-panel.k29')}
               </Button>
             </Stack>
           )}
@@ -973,14 +974,14 @@ const RCATab: React.FC<{
                   startIcon={<RefreshCw size={12} />}
                   onClick={() => onLocateRootCause(selectedIncident)}
                 >
-                  重新分析
+                  {i18n.t('intelligent_ops.v56-ops-panel.k30')}
                 </Button>
                 <Button
                   variant='outlined'
                   size='small'
                   onClick={() => onUpdateStatus(selectedIncident, 'Resolved')}
                 >
-                  标记已解决
+                  {i18n.t('intelligent_ops.v56-ops-panel.k31')}
                 </Button>
               </Stack>
               {causes.map((cause, i) => (
@@ -1015,7 +1016,7 @@ const RCATab: React.FC<{
                       {cause.component}
                     </Typography>
                     <Chip
-                      label={`置信度 ${(cause.confidence * 100).toFixed(0)}%`}
+                      label={`${i18n.t('intelligent_ops.v56-ops-panel.k32')} ${(cause.confidence * 100).toFixed(0)}%`}
                       size='small'
                       sx={{
                         fontSize: 10,
@@ -1030,7 +1031,7 @@ const RCATab: React.FC<{
                     color='text.secondary'
                     sx={{ display: 'block', mb: 0.5 }}
                   >
-                    传播深度: {cause.depth} 跳
+                    [i18n.t('intelligent_ops.v56-ops-panel.k33')]: {cause.depth} 跳
                   </Typography>
                   {cause.evidence.length > 0 && (
                     <Box sx={{ mt: 1 }}>
@@ -1038,7 +1039,7 @@ const RCATab: React.FC<{
                         variant='caption'
                         sx={{ fontWeight: 600, fontSize: 11, display: 'block', mb: 0.5 }}
                       >
-                        证据链:
+                        [i18n.t('intelligent_ops.v56-ops-panel.k34')]:
                       </Typography>
                       {cause.evidence.slice(0, 3).map((e, idx) => (
                         <Typography
@@ -1062,7 +1063,7 @@ const RCATab: React.FC<{
                   size={14}
                   style={{ display: 'inline', marginRight: 4 }}
                 />
-                分析报告
+                {i18n.t('intelligent_ops.v56-ops-panel.k35')}
               </Typography>
               <Paper
                 elevation={0}
@@ -1120,15 +1121,15 @@ const RepairTab: React.FC<{
             sx={{ fontWeight: 600, display: 'flex', alignItems: 'center', gap: 1 }}
           >
             <Wrench size={20} />
-            智能修复引擎
+            {i18n.t('intelligent_ops.v56-ops-panel.k36')}
           </Typography>
           <Chip
-            label={`${playbooks.length} 剧本`}
+            label={`${playbooks.length} ${i18n.t('intelligent_ops.v56-ops-panel.k37')}`}
             size='small'
             sx={{ bgcolor: 'purple.50', color: 'purple.800', fontWeight: 600 }}
           />
           <Chip
-            label={`${repairHistory.length} 操作记录`}
+            label={`${repairHistory.length} ${i18n.t('intelligent_ops.v56-ops-panel.k38')}`}
             size='small'
             sx={{ bgcolor: 'success.50', color: 'teal.900', fontWeight: 600 }}
           />
@@ -1140,7 +1141,7 @@ const RepairTab: React.FC<{
           size='small'
           sx={{ bgcolor: 'orange.500', '&:hover': { bgcolor: 'orange.600' } }}
         >
-          创建剧本
+          {i18n.t('intelligent_ops.v56-ops-panel.k39')}
         </Button>
       </Stack>
 
@@ -1151,9 +1152,9 @@ const RepairTab: React.FC<{
             sx={{ fontWeight: 600, mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}
           >
             <Workflow size={16} />
-            修复剧本
+            {i18n.t('intelligent_ops.v56-ops-panel.k40')}
           </Typography>
-          {playbooks.length === 0 && <Alert severity='info'>暂无剧本</Alert>}
+          {playbooks.length === 0 && <Alert severity='info'>{i18n.t('intelligent-ops.v56-ops-panel.k29')}</Alert>}
           {playbooks.map((playbook) => (
             <Paper
               key={playbook.id}
@@ -1191,7 +1192,7 @@ const RepairTab: React.FC<{
                 color='text.secondary'
                 sx={{ display: 'block', mb: 1 }}
               >
-                触发: {playbook.trigger_condition}
+                [i18n.t('intelligent_ops.v56-ops-panel.k41')]: {playbook.trigger_condition}
               </Typography>
               <Box sx={{ display: 'flex', gap: 0.5, flexWrap: 'wrap', mb: 1.5 }}>
                 {playbook.actions.map((a) => (
@@ -1219,7 +1220,7 @@ const RepairTab: React.FC<{
                   onClick={() => onRunPlaybook(playbook.id)}
                   sx={{ bgcolor: 'teal.500', minWidth: 'auto', px: 1.5 }}
                 >
-                  执行
+                  {i18n.t('intelligent_ops.v56-ops-panel.k42')}
                 </Button>
                 <Button
                   variant='outlined'
@@ -1230,7 +1231,7 @@ const RepairTab: React.FC<{
                   onClick={() => onToggleStatus(playbook.id)}
                   sx={{ minWidth: 'auto', px: 1.5 }}
                 >
-                  {playbook.status === 'Active' ? '暂停' : '激活'}
+                  {playbook.status === 'Active' ? i18n.t('intelligent-ops.v56-ops-panel.k31') : i18n.t('intelligent-ops.v56-ops-panel.k30')}
                 </Button>
               </Stack>
             </Paper>
@@ -1243,13 +1244,13 @@ const RepairTab: React.FC<{
             sx={{ fontWeight: 600, mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}
           >
             <Activity size={16} />
-            快速修复 & 操作记录
+            {i18n.t('intelligent_ops.v56-ops-panel.k43')}
           </Typography>
           <Typography
             variant='caption'
             sx={{ display: 'block', mb: 2, color: 'text.secondary' }}
           >
-            手动触发修复操作：
+            {i18n.t('intelligent_ops.v56-ops-panel.k44')}
           </Typography>
           <Stack
             direction='row'
@@ -1277,14 +1278,14 @@ const RepairTab: React.FC<{
             variant='subtitle2'
             sx={{ fontWeight: 600, mb: 1, fontSize: 12 }}
           >
-            操作历史
+            {i18n.t('intelligent_ops.v56-ops-panel.k45')}
           </Typography>
           {repairHistory.length === 0 && (
             <Alert
               severity='info'
               sx={{ py: 1 }}
             >
-              暂无操作记录
+              {i18n.t('intelligent_ops.v56-ops-panel.k46')}
             </Alert>
           )}
           {repairHistory.length > 0 && (
@@ -1292,10 +1293,10 @@ const RepairTab: React.FC<{
               <Table size='small'>
                 <TableHead>
                   <TableRow>
-                    <TableCell sx={{ fontWeight: 600, fontSize: 11 }}>时间</TableCell>
-                    <TableCell sx={{ fontWeight: 600, fontSize: 11 }}>类型</TableCell>
-                    <TableCell sx={{ fontWeight: 600, fontSize: 11 }}>目标</TableCell>
-                    <TableCell sx={{ fontWeight: 600, fontSize: 11 }}>状态</TableCell>
+                    <TableCell sx={{ fontWeight: 600, fontSize: 11 }}>{i18n.t('intelligent-ops.v56-ops-panel.k32')}</TableCell>
+                    <TableCell sx={{ fontWeight: 600, fontSize: 11 }}>{i18n.t('intelligent-ops.v56-ops-panel.k33')}</TableCell>
+                    <TableCell sx={{ fontWeight: 600, fontSize: 11 }}>{i18n.t('intelligent-ops.v56-ops-panel.k34')}</TableCell>
+                    <TableCell sx={{ fontWeight: 600, fontSize: 11 }}>{i18n.t('intelligent-ops.v56-ops-panel.k35')}</TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
@@ -1355,8 +1356,8 @@ const TimelineTab: React.FC<{
     incidents.forEach((i) => {
       all.push({
         time: i.detected_at,
-        category: '事件',
-        title: i.symptoms[0] || '未知事件',
+        category: i18n.t('intelligent-ops.v56-ops-panel.k36'),
+        title: i.symptoms[0] || i18n.t('intelligent-ops.v56-ops-panel.k37'),
         color: SEVERITY_COLORS[i.severity],
         details: `${i.severity} · ${i.status}`,
       });
@@ -1365,8 +1366,8 @@ const TimelineTab: React.FC<{
     scalingHistory.forEach((s) => {
       all.push({
         time: s.executed_at,
-        category: '扩缩容',
-        title: `${s.direction} → ${s.instances} 实例`,
+        category: i18n.t('intelligent-ops.v56-ops-panel.k38'),
+        title: `${s.direction} → ${s.instances} ${i18n.t('intelligent_ops.v56-ops-panel.k47')}`,
         color: s.direction === 'ScaleUp' ? designTokens.colors.success.dark : designTokens.colors.primary.main,
         details: s.reason,
       });
@@ -1375,7 +1376,7 @@ const TimelineTab: React.FC<{
     repairHistory.forEach((r) => {
       all.push({
         time: r.created_at,
-        category: '修复',
+        category: i18n.t('intelligent-ops.v56-ops-panel.k39'),
         title: `${r.type} on ${r.target}`,
         color: REPAIR_TYPE_COLORS[r.type],
         details: r.status,
@@ -1386,9 +1387,9 @@ const TimelineTab: React.FC<{
   }, [incidents, scalingHistory, repairHistory]);
 
   const categoryColors: Record<string, string> = {
-    事件: `${designTokens.colors.orange['500']}`,
-    扩缩容: designTokens.colors.success.dark,
-    修复: designTokens.colors.secondary.main,
+    [i18n.t('intelligent_ops.v56-ops-panel.k48')]: `${designTokens.colors.orange['500']}`,
+    [i18n.t('intelligent_ops.v56-ops-panel.k49')]: designTokens.colors.success.dark,
+    [i18n.t('intelligent_ops.v56-ops-panel.k50')]: designTokens.colors.secondary.main,
   };
 
   return (
@@ -1403,17 +1404,17 @@ const TimelineTab: React.FC<{
           sx={{ fontWeight: 600, display: 'flex', alignItems: 'center', gap: 1 }}
         >
           <Clock size={20} />
-          事件时间线
+          {i18n.t('intelligent_ops.v56-ops-panel.k51')}
         </Typography>
         <Chip
-          label={`${events.length} 事件`}
+          label={`${events.length} ${i18n.t('intelligent_ops.v56-ops-panel.k52')}`}
           size='small'
           sx={{ bgcolor: 'orange.50', color: 'orange.800', fontWeight: 600 }}
         />
       </Stack>
 
       {events.length === 0 && (
-        <Alert severity='info'>暂无事件记录。创建事件或执行操作以查看时间线。</Alert>
+        <Alert severity='info'>{i18n.t('intelligent-ops.v56-ops-panel.k40')}</Alert>
       )}
 
       {events.length > 0 && (

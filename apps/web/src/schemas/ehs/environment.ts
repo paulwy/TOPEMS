@@ -1,9 +1,10 @@
 import type { EntitySchema } from '@/schema';
+import i18n from '@/i18n';
 
 export const environmentMonitorSchema: EntitySchema = {
   entity: 'ehsEnvironmentMonitor',
-  title: '环境监测点',
-  description: '管理企业环境监测点信息，包括监测类型、位置、频率、阈值、状态等',
+  title: i18n.t('ehs.environment.k0'),
+  description: i18n.t('ehs.environment.k1'),
 
   api: {
     module: 'ehs',
@@ -13,7 +14,7 @@ export const environmentMonitorSchema: EntitySchema = {
   fields: [
     {
       name: 'monitor_no',
-      label: '监测点编号',
+      label: i18n.t('ehs.environment.k2'),
       type: 'text',
       readonlyOnEdit: true,
       listWidth: 140,
@@ -21,7 +22,7 @@ export const environmentMonitorSchema: EntitySchema = {
     },
     {
       name: 'name',
-      label: '监测点名称',
+      label: i18n.t('ehs.environment.k3'),
       type: 'text',
       required: true,
       sortable: true,
@@ -29,17 +30,17 @@ export const environmentMonitorSchema: EntitySchema = {
     },
     {
       name: 'monitor_type',
-      label: '监测类型',
+      label: i18n.t('ehs.environment.k4'),
       type: 'select',
       required: true,
-      defaultValue: '水质监测',
+      defaultValue: i18n.t('ehs.environment.k5'),
       options: {
         type: 'static',
         options: [
-          { value: '水质监测', label: '水质监测' },
-          { value: '空气质量', label: '空气质量' },
-          { value: '噪声监测', label: '噪声监测' },
-          { value: '土壤监测', label: '土壤监测' },
+          { value: i18n.t('ehs.environment.k6'), label: i18n.t('ehs.environment.k7') },
+          { value: i18n.t('ehs.environment.k8'), label: i18n.t('ehs.environment.k9') },
+          { value: i18n.t('ehs.environment.k10'), label: i18n.t('ehs.environment.k11') },
+          { value: i18n.t('ehs.environment.k12'), label: i18n.t('ehs.environment.k13') },
         ],
       },
       listWidth: 120,
@@ -47,7 +48,7 @@ export const environmentMonitorSchema: EntitySchema = {
     },
     {
       name: 'location',
-      label: '位置',
+      label: i18n.t('ehs.environment.k14'),
       type: 'text',
       listWidth: 140,
       renderCell: (row: Record<string, unknown>) => {
@@ -57,7 +58,7 @@ export const environmentMonitorSchema: EntitySchema = {
     },
     {
       name: 'monitor_frequency',
-      label: '监测频率',
+      label: i18n.t('ehs.environment.k15'),
       type: 'text',
       listWidth: 120,
       showInList: false,
@@ -68,7 +69,7 @@ export const environmentMonitorSchema: EntitySchema = {
     },
     {
       name: 'standard_value',
-      label: '标准值',
+      label: i18n.t('ehs.environment.k16'),
       type: 'text',
       listWidth: 100,
       showInList: false,
@@ -80,7 +81,7 @@ export const environmentMonitorSchema: EntitySchema = {
     },
     {
       name: 'unit',
-      label: '单位',
+      label: i18n.t('ehs.environment.k17'),
       type: 'text',
       listWidth: 80,
       showInList: false,
@@ -92,7 +93,7 @@ export const environmentMonitorSchema: EntitySchema = {
     },
     {
       name: 'warning_threshold',
-      label: '预警阈值',
+      label: i18n.t('ehs.environment.k18'),
       type: 'number',
       listWidth: 100,
       showInList: false,
@@ -103,7 +104,7 @@ export const environmentMonitorSchema: EntitySchema = {
     },
     {
       name: 'alarm_threshold',
-      label: '报警阈值',
+      label: i18n.t('ehs.environment.k19'),
       type: 'number',
       listWidth: 100,
       showInList: false,
@@ -114,15 +115,15 @@ export const environmentMonitorSchema: EntitySchema = {
     },
     {
       name: 'status',
-      label: '状态',
+      label: i18n.t('ehs.environment.k20'),
       type: 'select',
       defaultValue: 'active',
       options: {
         type: 'static',
         options: [
-          { value: 'active', label: '正常运行' },
-          { value: 'inactive', label: '停用' },
-          { value: 'maintenance', label: '维护中' },
+          { value: 'active', label: i18n.t('ehs.environment.k21') },
+          { value: 'inactive', label: i18n.t('ehs.environment.k22') },
+          { value: 'maintenance', label: i18n.t('ehs.environment.k23') },
         ],
       },
       listWidth: 100,
@@ -130,7 +131,7 @@ export const environmentMonitorSchema: EntitySchema = {
     },
     {
       name: 'description',
-      label: '描述',
+      label: i18n.t('ehs.environment.k24'),
       type: 'textarea',
       showInList: false,
       colSpan: 2,
@@ -149,33 +150,33 @@ export const environmentMonitorSchema: EntitySchema = {
         maintenance: 'warning',
       },
       labelMap: {
-        active: '正常运行',
-        inactive: '停用',
-        maintenance: '维护中',
+        active: i18n.t('ehs.environment.k25'),
+        inactive: i18n.t('ehs.environment.k26'),
+        maintenance: i18n.t('ehs.environment.k27'),
       },
     },
     filters: [
       {
         id: 'monitor_type',
-        label: '监测类型',
+        label: i18n.t('ehs.environment.k28'),
         type: 'select',
         options: [
-          { label: '全部', value: 'all' },
-          { label: '水质监测', value: '水质监测' },
-          { label: '空气质量', value: '空气质量' },
-          { label: '噪声监测', value: '噪声监测' },
-          { label: '土壤监测', value: '土壤监测' },
+          { label: i18n.t('ehs.environment.k29'), value: 'all' },
+          { label: i18n.t('ehs.environment.k30'), value: i18n.t('ehs.environment.k31') },
+          { label: i18n.t('ehs.environment.k32'), value: i18n.t('ehs.environment.k33') },
+          { label: i18n.t('ehs.environment.k34'), value: i18n.t('ehs.environment.k35') },
+          { label: i18n.t('ehs.environment.k36'), value: i18n.t('ehs.environment.k37') },
         ],
       },
       {
         id: 'status',
-        label: '状态',
+        label: i18n.t('ehs.environment.k38'),
         type: 'select',
         options: [
-          { label: '全部', value: 'all' },
-          { label: '正常运行', value: 'active' },
-          { label: '停用', value: 'inactive' },
-          { label: '维护中', value: 'maintenance' },
+          { label: i18n.t('ehs.environment.k39'), value: 'all' },
+          { label: i18n.t('ehs.environment.k40'), value: 'active' },
+          { label: i18n.t('ehs.environment.k41'), value: 'inactive' },
+          { label: i18n.t('ehs.environment.k42'), value: 'maintenance' },
         ],
       },
     ],
@@ -185,11 +186,11 @@ export const environmentMonitorSchema: EntitySchema = {
 
   formSections: [
     {
-      title: '基本信息',
+      title: i18n.t('ehs.environment.k43'),
       fields: ['name', 'monitor_type', 'location', 'status'],
     },
     {
-      title: '监测参数',
+      title: i18n.t('ehs.environment.k44'),
       fields: [
         'monitor_frequency',
         'standard_value',
@@ -199,13 +200,13 @@ export const environmentMonitorSchema: EntitySchema = {
       ],
     },
     {
-      title: '其他信息',
+      title: i18n.t('ehs.environment.k45'),
       fields: ['description'],
     },
   ],
 
   formColCount: 2,
-  createTitle: '新增环境监测点',
-  editTitle: '编辑环境监测点',
-  detailTitle: '环境监测点详情',
+  createTitle: i18n.t('ehs.environment.k46'),
+  editTitle: i18n.t('ehs.environment.k47'),
+  detailTitle: i18n.t('ehs.environment.k48'),
 };

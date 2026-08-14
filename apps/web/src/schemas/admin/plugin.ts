@@ -11,14 +11,14 @@ import i18n from '@/i18n';
 import { designTokens } from '@topems/tokens';
 
 const PLUGIN_TYPE_LABELS: Record<string, string> = {
-  core: '核心插件',
-  business: '业务插件',
+  core: i18n.t('admin.plugin.k0'),
+  business: i18n.t('admin.plugin.k1'),
 };
 
 const RUNTIME_STATUS_LABELS: Record<string, string> = {
-  running: '运行中',
-  stopped: '已停止',
-  unknown: '未知',
+  running: i18n.t('admin.plugin.k2'),
+  stopped: i18n.t('admin.plugin.k3'),
+  unknown: i18n.t('admin.plugin.k4'),
 };
 
 const RUNTIME_STATUS_COLORS: Record<string, 'success' | 'error' | 'warning'> = {
@@ -57,7 +57,7 @@ export const pluginSchema: EntitySchema = {
                 {
                   style: {
                     fontSize: '0.75rem',
-                    color: 'var(--color-text-secondary, rgba(0,0,0,0.6))',
+                    color: `var(--color-text-secondary, ${designTokens.colors.cyber.metal.bottomShadow}`,
                     maxWidth: 300,
                     overflow: 'hidden',
                     textOverflow: 'ellipsis',
@@ -98,7 +98,7 @@ export const pluginSchema: EntitySchema = {
                 'span',
                 {
                   style: {
-                    padding: '2px 6px',
+                    padding: `${designTokens.spacing.xs} 6px`,
                     borderRadius: 12,
                     fontSize: 11,
                     backgroundColor: `var(--color-success-lighter, ${designTokens.colors.success['50']})`,
@@ -132,11 +132,11 @@ export const pluginSchema: EntitySchema = {
           {
             style: {
               display: 'inline-block',
-              padding: '2px 8px',
+              padding: `${designTokens.spacing.xs} 8px`,
               borderRadius: 12,
               fontSize: 12,
               fontWeight: 500,
-              border: '1px solid var(--color-divider, rgba(0,0,0,0.12))',
+              border: `1px solid var(--color-divider, ${designTokens.colors.action.selected})`,
             },
           },
           PLUGIN_TYPE_LABELS[pluginType] || pluginType
@@ -156,12 +156,12 @@ export const pluginSchema: EntitySchema = {
         const colorMap: Record<string, string> = {
           success: `var(--color-success-main, ${designTokens.colors.success.dark})`,
           error: `var(--color-error-main, ${designTokens.colors.error['800']})`,
-          warning: 'var(--color-warning-main, #ed6c02)',
+          warning: `var(--color-warning-main, ${designTokens.colors.warning[500]}`,
         };
         const bgColorMap: Record<string, string> = {
           success: `var(--color-success-lighter, ${designTokens.colors.success['50']})`,
-          error: 'var(--color-error-lighter, #ffebee)',
-          warning: 'var(--color-warning-lighter, #fff3e0)',
+          error: `var(--color-error-lighter, ${designTokens.colors.error[50]}`,
+          warning: `var(--color-warning-lighter, ${designTokens.colors.warning[50]}`,
         };
         return React.createElement(
           'span',
@@ -170,7 +170,7 @@ export const pluginSchema: EntitySchema = {
               display: 'inline-flex',
               alignItems: 'center',
               gap: 4,
-              padding: '2px 8px',
+              padding: `${designTokens.spacing.xs} 8px`,
               borderRadius: 12,
               fontSize: 12,
               fontWeight: 500,
@@ -203,7 +203,7 @@ export const pluginSchema: EntitySchema = {
             style: {
               fontFamily: 'monospace',
               fontSize: '0.75rem',
-              color: 'var(--color-text-secondary, rgba(0,0,0,0.6))',
+              color: `var(--color-text-secondary, ${designTokens.colors.cyber.metal.bottomShadow}`,
             },
           },
           url

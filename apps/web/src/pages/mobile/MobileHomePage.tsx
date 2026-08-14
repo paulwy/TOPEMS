@@ -4,7 +4,6 @@
  * @module pages/mobile
  * @path /mobile/home
  */
-
 import React, { useState } from 'react';
 import {
   Home,
@@ -18,105 +17,97 @@ import {
   FileText,
   AlertTriangle,
 } from 'lucide-react';
+import i18n from '@/i18n';
 import { Box, Typography, Avatar, Paper, Badge, Chip, Divider } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
-
 import { PageContainer } from '@/components/common';
 import { useNotificationStore } from '../../store';
 import { designTokens } from '@/theme/tokens';
 import { MOBILE_PATHS } from '@/modules/mobile/config';
-
 const ct= designTokens.colors;
-
 const quickActions = [
   {
     id: 'attendance',
-    label: '考勤打卡',
+    label: i18n.t('mobile.mobile_home_page.k0'),
     icon: <Clock size={24} />,
     color: ct.success.main,
     path: MOBILE_PATHS.attendance,
   },
   {
     id: 'approval',
-    label: '审批任务',
+    label: i18n.t('mobile.mobile_home_page.k1'),
     icon: <CheckSquare size={24} />,
     color: ct.primary.main,
     path: MOBILE_PATHS.approvals,
   },
   {
     id: 'scan',
-    label: '扫码功能',
+    label: i18n.t('mobile.mobile_home_page.k2'),
     icon: <Scan size={24} />,
     color: ct.warning.main,
     path: MOBILE_PATHS.scan,
   },
   {
     id: 'workbench',
-    label: '工作台',
+    label: i18n.t('mobile.mobile_home_page.k3'),
     icon: <LayoutDashboard size={24} />,
     color: ct.secondary.main,
     path: MOBILE_PATHS.workbench,
   },
   {
     id: 'notification',
-    label: '消息通知',
+    label: i18n.t('mobile.mobile_home_page.k4'),
     icon: <Bell size={24} />,
     color: ct.error.main,
     path: MOBILE_PATHS.notifications,
   },
   {
     id: 'profile',
-    label: '个人中心',
+    label: i18n.t('mobile.mobile_home_page.k5'),
     icon: <User size={24} />,
     color: ct.text.secondary,
     path: MOBILE_PATHS.profile,
   },
 ];
-
 const mockTodos = [
   {
     id: '1',
-    title: '采购订单审批 - PO20240115',
+    title: i18n.t('mobile.mobile_home_page.po20240115_6'),
     type: 'approval',
     priority: 'high',
-    time: '2小时后到期',
+    time: i18n.t('pages.mobile_home_page.2_0'),
   },
-  { id: '2', title: '完成周报填写', type: 'task', priority: 'medium', time: '今天' },
-  { id: '3', title: '产品质量检验', type: 'task', priority: 'low', time: '明天' },
+  { id: '2', title: i18n.t('mobile.mobile_home_page.k8'), type: 'task', priority: 'medium', time: i18n.t('mobile.mobile_home_page.k7') },
+  { id: '3', title: i18n.t('mobile.mobile_home_page.k10'), type: 'task', priority: 'low', time: i18n.t('mobile.mobile_home_page.k9') },
 ];
-
 const mockActivities = [
-  { id: '1', title: '采购订单已通过', time: '10分钟前', icon: <CheckSquare size={16} /> },
-  { id: '2', title: '库存预警：原材料不足', time: '30分钟前', icon: <AlertTriangle size={16} /> },
-  { id: '3', title: '新任务分配：质量巡检', time: '1小时前', icon: <FileText size={16} /> },
+  { id: '1', title: i18n.t('mobile.mobile_home_page.k11'), time: i18n.t('pages.mobile_home_page.10_1'), icon: <CheckSquare size={16} /> },
+  { id: '2', title: i18n.t('mobile.mobile_home_page.k12'), time: i18n.t('pages.mobile_home_page.30_2'), icon: <AlertTriangle size={16} /> },
+  { id: '3', title: i18n.t('mobile.mobile_home_page.k13'), time: i18n.t('pages.mobile_home_page.1_3'), icon: <FileText size={16} /> },
 ];
-
 export const MobileHomePage: React.FC = () => {
   const navigate = useNavigate();
   const addNotification = useNotificationStore((state) => state.addNotification);
   const [checkedIn, setCheckedIn] = useState(false);
   const [checkInTime, setCheckInTime] = useState('');
-
   const handleCheckIn = () => {
     const now = new Date();
     setCheckInTime(now.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' }));
     setCheckedIn(true);
     addNotification({
-      title: '打卡成功',
-      message: `上班打卡 ${checkInTime || now.toLocaleTimeString()}`,
+      title: i18n.t('mobile.mobile_home_page.k14'),
+      message: `${i18n.t('pages.mobile_home_page.k4')}${checkInTime || now.toLocaleTimeString()}`,
       type: 'success',
     });
   };
-
   const today = new Date().toLocaleDateString('zh-CN', {
     weekday: 'long',
     month: 'long',
     day: 'numeric',
   });
-
   return (
     <PageContainer
-      title='首页'
+      title={i18n.t('mobile.mobile_home_page.k15')}
       headerProps={{ pageIcon: <Home size={20} /> }}
     >
       <Box sx={{ p: 2, bgcolor: 'background.default', minHeight: '100vh' }}>
@@ -138,15 +129,15 @@ export const MobileHomePage: React.FC = () => {
               />
             }
           >
-            <Avatar sx={{ width: 56, height: 56, bgcolor: 'primary.main' }}>陈</Avatar>
+            <Avatar sx={{ width: 56, height: 56, bgcolor: 'primary.main' }}>{i18n.t('pages.mobile_home_page.k0')}</Avatar>
           </Badge>
           <Box sx={{ flex: 1 }}>
-            <Typography variant='h6'>陈管理员</Typography>
+            <Typography variant='h6'>{i18n.t('mobile.mobile_home_page.k16')}</Typography>
             <Typography
               variant='body2'
               color='text.secondary'
             >
-              技术部 · 产品经理
+              {i18n.t('pages.mobile_home_page.k1')}
             </Typography>
           </Box>
           <Box sx={{ textAlign: 'right' }}>
@@ -158,7 +149,6 @@ export const MobileHomePage: React.FC = () => {
             </Typography>
           </Box>
         </Paper>
-
         {/* 打卡卡片 */}
         <Paper sx={{ p: 2, mb: 2, textAlign: 'center' }}>
           <Typography
@@ -178,7 +168,7 @@ export const MobileHomePage: React.FC = () => {
                 variant='caption'
                 color='text.secondary'
               >
-                上班
+                {i18n.t('pages.mobile_home_page.k2')}
               </Typography>
               <Typography
                 variant='body2'
@@ -193,7 +183,7 @@ export const MobileHomePage: React.FC = () => {
                 variant='caption'
                 color='text.secondary'
               >
-                下班
+                {i18n.t('pages.mobile_home_page.k3')}
               </Typography>
               <Typography
                 variant='body2'
@@ -205,20 +195,19 @@ export const MobileHomePage: React.FC = () => {
           </Box>
           <Box sx={{ mt: 2 }}>
             <Chip
-              label={checkedIn ? '已打卡' : '上班打卡'}
+              label={checkedIn ? i18n.t('mobile.mobile_home_page.k18') : i18n.t('mobile.mobile_home_page.k17')}
               color={checkedIn ? 'success' : 'primary'}
               onClick={handleCheckIn}
               sx={{ cursor: 'pointer' }}
             />
           </Box>
         </Paper>
-
         {/* 快捷入口 */}
         <Typography
           variant='subtitle1'
           sx={{ fontWeight: 500, mb: 1.5 }}
         >
-          快捷入口
+          {i18n.t('pages.mobile_home_page.k4')}
         </Typography>
         <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 1.5, mb: 2 }}>
           {quickActions.map((action) => (
@@ -257,7 +246,6 @@ export const MobileHomePage: React.FC = () => {
             </Paper>
           ))}
         </Box>
-
         {/* 待办事项 */}
         <Box
           sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1.5 }}
@@ -266,10 +254,10 @@ export const MobileHomePage: React.FC = () => {
             variant='subtitle1'
             sx={{ fontWeight: 500 }}
           >
-            待办事项
+            {i18n.t('pages.mobile_home_page.k5')}
           </Typography>
           <Chip
-            label='查看全部'
+            label={i18n.t('mobile.mobile_home_page.k19')}
             size='small'
             onClick={() => navigate(MOBILE_PATHS.tasks)}
           />
@@ -316,7 +304,7 @@ export const MobileHomePage: React.FC = () => {
                   </Typography>
                 </Box>
                 <Chip
-                  label={todo.type === 'approval' ? '审批' : '任务'}
+                  label={todo.type === 'approval' ? i18n.t('mobile.mobile_home_page.k21') : i18n.t('mobile.mobile_home_page.k20')}
                   size='small'
                   variant='outlined'
                 />
@@ -329,13 +317,12 @@ export const MobileHomePage: React.FC = () => {
             </Box>
           ))}
         </Paper>
-
         {/* 最近动态 */}
         <Typography
           variant='subtitle1'
           sx={{ fontWeight: 500, mb: 1.5 }}
         >
-          最近动态
+          {i18n.t('pages.mobile_home_page.k6')}
         </Typography>
         <Paper>
           {mockActivities.map((activity, index) => (
@@ -360,5 +347,4 @@ export const MobileHomePage: React.FC = () => {
     </PageContainer>
   );
 };
-
 export default MobileHomePage;

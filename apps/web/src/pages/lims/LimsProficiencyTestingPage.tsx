@@ -7,9 +7,8 @@ import { ptPlanSchema } from '@/schemas/lims';
 import { ptPlanApi } from '@/api/lims/proficiencyTesting';
 import type { PtPlan } from '@/api/lims/types';
 import { designTokens } from '@/theme/tokens';
-
+import i18n from '@/i18n';
 const ct= designTokens.colors;
-
 const ptPlanAdapter = {
   list: async (params?: {
     page?: number;
@@ -25,7 +24,6 @@ const ptPlanAdapter = {
     if (params?.search) queryParams.search = params.search;
     if (params?.status && params.status !== 'all') queryParams.status = params.status;
     if (params?.cycle && params.cycle !== 'all') queryParams.cycle = params.cycle;
-
     const response = await ptPlanApi.list(
       queryParams as unknown as Parameters<typeof ptPlanApi.list>[0]
     );
@@ -40,25 +38,24 @@ const ptPlanAdapter = {
   create: async (data: Partial<PtPlan>) => {
     const response = await ptPlanApi.create(data as Parameters<typeof ptPlanApi.create>[0]);
     if (!response.success || !response.data) {
-      throw new Error(response.message || '创建能力验证计划失败');
+      throw new Error(response.message || i18n.t('lims.lims_proficiency_testing_page.k0'));
     }
     return response.data;
   },
   update: async (id: string, data: Partial<PtPlan>) => {
     const response = await ptPlanApi.update(id, data as Parameters<typeof ptPlanApi.update>[1]);
     if (!response.success || !response.data) {
-      throw new Error(response.message || '更新能力验证计划失败');
+      throw new Error(response.message || i18n.t('lims.lims_proficiency_testing_page.k1'));
     }
     return response.data;
   },
   delete: async (id: string) => {
     const response = await ptPlanApi.delete(id);
     if (!response.success) {
-      throw new Error(response.message || '删除能力验证计划失败');
+      throw new Error(response.message || i18n.t('lims.lims_proficiency_testing_page.k2'));
     }
   },
 };
-
 const StatCard: React.FC<{
   label: string;
   value: number | string;
@@ -79,14 +76,12 @@ const StatCard: React.FC<{
     <Box sx={{ fontWeight: 700, fontSize: 24, color: iconColor }}>{value}</Box>
   </Box>
 );
-
 const LimsProficiencyTestingPage: React.FC = () => {
   const headerContent = (rows: Record<string, unknown>[], total: number) => {
     const plans = rows as unknown as PtPlan[];
     const ongoingCount = plans.filter((p) => p.status === 'ongoing').length;
     const completedCount = plans.filter((p) => p.status === 'completed').length;
     const failedCount = plans.filter((p) => p.status === 'failed').length;
-
     return (
       <Box
         sx={{
@@ -97,28 +92,28 @@ const LimsProficiencyTestingPage: React.FC = () => {
         }}
       >
         <StatCard
-          label='计划总数'
+          label={i18n.t('lims.lims_proficiency_testing_page.k3')}
           value={total}
           icon={<Target size={18} />}
           bgColor={ct.secondary[100]}
           iconColor='secondary.700'
         />
         <StatCard
-          label='进行中'
+          label={i18n.t('lims.lims_proficiency_testing_page.k4')}
           value={ongoingCount}
           icon={<Clock size={18} />}
           bgColor='warning.light'
           iconColor='warning.700'
         />
         <StatCard
-          label='已完成'
+          label={i18n.t('lims.lims_proficiency_testing_page.k5')}
           value={completedCount}
           icon={<CheckCircle size={18} />}
           bgColor='success.lighter'
           iconColor='success.700'
         />
         <StatCard
-          label='不满意'
+          label={i18n.t('lims.lims_proficiency_testing_page.k6')}
           value={failedCount}
           icon={<XCircle size={18} />}
           bgColor='error.lighter'
@@ -127,7 +122,6 @@ const LimsProficiencyTestingPage: React.FC = () => {
       </Box>
     );
   };
-
   return (
     <PageContainer
       autoTitle
@@ -145,5 +139,4 @@ const LimsProficiencyTestingPage: React.FC = () => {
     </PageContainer>
   );
 };
-
 export default LimsProficiencyTestingPage;

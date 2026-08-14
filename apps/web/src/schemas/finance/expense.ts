@@ -1,5 +1,6 @@
 import React from 'react';
 import type { EntitySchema } from '@/schema';
+import i18n from '@/i18n';
 
 const formatMoney = (amount: number | undefined, color?: string) => {
   const style: React.CSSProperties = { fontWeight: 'medium' };
@@ -13,7 +14,7 @@ const formatMoney = (amount: number | undefined, color?: string) => {
 
 export const expenseSchema: EntitySchema = {
   entity: 'financeExpense',
-  title: '费用管理',
+  title: i18n.t('finance.expense.k0'),
 
   api: {
     module: 'finance',
@@ -23,7 +24,7 @@ export const expenseSchema: EntitySchema = {
   fields: [
     {
       name: 'expense_no',
-      label: '费用单号',
+      label: i18n.t('finance.expense.k1'),
       type: 'text',
       required: true,
       readonlyOnEdit: true,
@@ -31,17 +32,17 @@ export const expenseSchema: EntitySchema = {
     },
     {
       name: 'expense_type',
-      label: '费用类型',
+      label: i18n.t('finance.expense.k2'),
       type: 'select',
       defaultValue: 'travel',
       options: {
         type: 'static',
         options: [
-          { value: 'travel', label: '差旅费' },
-          { value: 'office', label: '办公费' },
-          { value: 'meal', label: '餐饮费' },
-          { value: 'communication', label: '通讯费' },
-          { value: 'other', label: '其他' },
+          { value: 'travel', label: i18n.t('finance.expense.k3') },
+          { value: 'office', label: i18n.t('finance.expense.k4') },
+          { value: 'meal', label: i18n.t('finance.expense.k5') },
+          { value: 'communication', label: i18n.t('finance.expense.k6') },
+          { value: 'other', label: i18n.t('finance.expense.k7') },
         ],
       },
       listWidth: 100,
@@ -49,20 +50,20 @@ export const expenseSchema: EntitySchema = {
     },
     {
       name: 'department_id',
-      label: '部门ID',
+      label: i18n.t('finance.expense.id_8'),
       type: 'text',
       listWidth: 100,
       showInList: false,
     },
     {
       name: 'department_name',
-      label: '部门名称',
+      label: i18n.t('finance.expense.k9'),
       type: 'text',
       listWidth: 120,
     },
     {
       name: 'amount',
-      label: '金额',
+      label: i18n.t('finance.expense.k10'),
       type: 'number',
       required: true,
       defaultValue: 0,
@@ -71,23 +72,23 @@ export const expenseSchema: EntitySchema = {
     },
     {
       name: 'submit_date',
-      label: '提交日期',
+      label: i18n.t('finance.expense.k11'),
       type: 'date',
       listWidth: 120,
     },
     {
       name: 'status',
-      label: '状态',
+      label: i18n.t('finance.expense.k12'),
       type: 'select',
       defaultValue: 'draft',
       options: {
         type: 'static',
         options: [
-          { value: 'draft', label: '草稿' },
-          { value: 'submitted', label: '已提交' },
-          { value: 'approved', label: '已审批' },
-          { value: 'rejected', label: '已驳回' },
-          { value: 'paid', label: '已付款' },
+          { value: 'draft', label: i18n.t('finance.expense.k13') },
+          { value: 'submitted', label: i18n.t('finance.expense.k14') },
+          { value: 'approved', label: i18n.t('finance.expense.k15') },
+          { value: 'rejected', label: i18n.t('finance.expense.k16') },
+          { value: 'paid', label: i18n.t('finance.expense.k17') },
         ],
       },
       listWidth: 100,
@@ -95,13 +96,13 @@ export const expenseSchema: EntitySchema = {
     },
     {
       name: 'payee',
-      label: '收款人',
+      label: i18n.t('finance.expense.k18'),
       type: 'text',
       listWidth: 120,
     },
     {
       name: 'description',
-      label: '描述',
+      label: i18n.t('finance.expense.k19'),
       type: 'textarea',
       listWidth: 150,
       showInList: false,
@@ -122,38 +123,38 @@ export const expenseSchema: EntitySchema = {
         paid: 'primary',
       },
       labelMap: {
-        draft: '草稿',
-        submitted: '已提交',
-        approved: '已审批',
-        rejected: '已驳回',
-        paid: '已付款',
+        draft: i18n.t('finance.expense.k20'),
+        submitted: i18n.t('finance.expense.k21'),
+        approved: i18n.t('finance.expense.k22'),
+        rejected: i18n.t('finance.expense.k23'),
+        paid: i18n.t('finance.expense.k24'),
       },
     },
     filters: [
       {
         id: 'expense_type',
-        label: '费用类型',
+        label: i18n.t('finance.expense.k25'),
         type: 'select',
         options: [
-          { label: '全部类型', value: 'all' },
-          { label: '差旅费', value: 'travel' },
-          { label: '办公费', value: 'office' },
-          { label: '餐饮费', value: 'meal' },
-          { label: '通讯费', value: 'communication' },
-          { label: '其他', value: 'other' },
+          { label: i18n.t('finance.expense.k26'), value: 'all' },
+          { label: i18n.t('finance.expense.k27'), value: 'travel' },
+          { label: i18n.t('finance.expense.k28'), value: 'office' },
+          { label: i18n.t('finance.expense.k29'), value: 'meal' },
+          { label: i18n.t('finance.expense.k30'), value: 'communication' },
+          { label: i18n.t('finance.expense.k31'), value: 'other' },
         ],
       },
       {
         id: 'status',
-        label: '状态',
+        label: i18n.t('finance.expense.k32'),
         type: 'select',
         options: [
-          { label: '全部状态', value: 'all' },
-          { label: '草稿', value: 'draft' },
-          { label: '已提交', value: 'submitted' },
-          { label: '已审批', value: 'approved' },
-          { label: '已驳回', value: 'rejected' },
-          { label: '已付款', value: 'paid' },
+          { label: i18n.t('finance.expense.k33'), value: 'all' },
+          { label: i18n.t('finance.expense.k34'), value: 'draft' },
+          { label: i18n.t('finance.expense.k35'), value: 'submitted' },
+          { label: i18n.t('finance.expense.k36'), value: 'approved' },
+          { label: i18n.t('finance.expense.k37'), value: 'rejected' },
+          { label: i18n.t('finance.expense.k38'), value: 'paid' },
         ],
       },
     ],
@@ -163,21 +164,21 @@ export const expenseSchema: EntitySchema = {
 
   formSections: [
     {
-      title: '基本信息',
+      title: i18n.t('finance.expense.k39'),
       fields: ['expense_no', 'expense_type', 'department_id'],
     },
     {
-      title: '金额与日期',
+      title: i18n.t('finance.expense.k40'),
       fields: ['amount', 'submit_date', 'payee'],
     },
     {
-      title: '审批状态',
+      title: i18n.t('finance.expense.k41'),
       fields: ['status', 'description'],
     },
   ],
 
   formColCount: 2,
-  createTitle: '新增费用',
-  editTitle: '编辑费用',
-  detailTitle: '费用详情',
+  createTitle: i18n.t('finance.expense.k42'),
+  editTitle: i18n.t('finance.expense.k43'),
+  detailTitle: i18n.t('finance.expense.k44'),
 };

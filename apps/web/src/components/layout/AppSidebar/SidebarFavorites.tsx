@@ -11,6 +11,7 @@ import {
   ListItemText,
   useTheme,
 } from '@mui/material';
+import i18n from '@/i18n';
 import { useNavigate } from 'react-router-dom';
 import { Bookmark, BookmarkCheck, Star } from 'lucide-react';
 import { renderIcon } from '@/lib/iconMapping';
@@ -38,14 +39,14 @@ export const SidebarFavorites: React.FC<SidebarFavoritesProps> = ({
 
   return (
     <>
-      <Tooltip title={`收藏 (${favorites.size})`}>
+      <Tooltip title={`${i18n.t('components.sidebar_favorites.k0')}${favorites.size})`}>
         <IconButton
           size='small'
           onClick={(e) => setFavoritesAnchorEl(e.currentTarget)}
           sx={{
             color: favorites.size > 0 ? 'warning.main' : 'text.secondary',
           }}
-          aria-label='收藏'
+          aria-label={i18n.t('shared.sidebar_favorites.k0')}
         >
           {favorites.size > 0 ? (
             <BookmarkCheck style={{ width: 16, height: 16 }} />
@@ -77,7 +78,7 @@ export const SidebarFavorites: React.FC<SidebarFavoritesProps> = ({
         {favorites.size === 0 ? (
           <Box sx={{ p: 2, textAlign: 'center' }}>
             <Typography sx={{ fontSize: '0.8125rem', color: 'text.secondary' }}>
-              暂无收藏，点击导航项上的星标添加
+              {i18n.t('components.sidebar_favorites.k0')}
             </Typography>
           </Box>
         ) : (
@@ -112,7 +113,7 @@ export const SidebarFavorites: React.FC<SidebarFavoritesProps> = ({
                       onToggleFavorite(item);
                     }}
                     sx={{ ml: 'auto', flexShrink: 0 }}
-                    aria-label='收藏'
+                    aria-label={i18n.t('shared.sidebar_favorites.k1')}
                   >
                     <BookmarkCheck
                       style={{ width: 14, height: 14, color: theme.palette.warning.main }}

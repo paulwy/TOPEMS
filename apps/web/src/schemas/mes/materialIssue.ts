@@ -1,11 +1,12 @@
 import React from 'react';
 import { Chip } from '@mui/material';
 import type { EntitySchema } from '@/schema';
+import i18n from '@/i18n';
 
 export const materialIssueSchema: EntitySchema = {
   entity: 'mes_material_issue',
-  title: '物料发放',
-  description: '管理物料领用单，包括领用单号、工单、领用人、领用时间、状态等',
+  title: i18n.t('mes.material_issue.k0'),
+  description: i18n.t('mes.material_issue.k1'),
 
   api: {
     module: 'mes',
@@ -15,7 +16,7 @@ export const materialIssueSchema: EntitySchema = {
   fields: [
     {
       name: 'issue_no',
-      label: '领用单号',
+      label: i18n.t('mes.material_issue.k2'),
       type: 'text',
       required: true,
       readonlyOnEdit: true,
@@ -25,14 +26,14 @@ export const materialIssueSchema: EntitySchema = {
     },
     {
       name: 'order_number',
-      label: '工单号',
+      label: i18n.t('mes.material_issue.k3'),
       type: 'text',
       sortable: true,
       listWidth: 140,
     },
     {
       name: 'operator',
-      label: '领用人',
+      label: i18n.t('mes.material_issue.k4'),
       type: 'text',
       required: true,
       sortable: true,
@@ -40,13 +41,13 @@ export const materialIssueSchema: EntitySchema = {
     },
     {
       name: 'issue_time',
-      label: '领用时间',
+      label: i18n.t('mes.material_issue.k5'),
       type: 'datetime',
       listWidth: 160,
     },
     {
       name: 'items_count',
-      label: '物料数',
+      label: i18n.t('mes.material_issue.k6'),
       type: 'number',
       listWidth: 80,
       readonly: true,
@@ -55,25 +56,25 @@ export const materialIssueSchema: EntitySchema = {
     },
     {
       name: 'status',
-      label: '状态',
+      label: i18n.t('mes.material_issue.k7'),
       type: 'select',
       defaultValue: 'pending',
       options: {
         type: 'static',
         options: [
-          { value: 'pending', label: '待审核' },
-          { value: 'approved', label: '已审核' },
-          { value: 'issued', label: '已出库' },
-          { value: 'cancelled', label: '已取消' },
+          { value: 'pending', label: i18n.t('mes.material_issue.k8') },
+          { value: 'approved', label: i18n.t('mes.material_issue.k9') },
+          { value: 'issued', label: i18n.t('mes.material_issue.k10') },
+          { value: 'cancelled', label: i18n.t('mes.material_issue.k11') },
         ],
       },
       listWidth: 100,
       renderCell: (row: Record<string, unknown>) => {
         const statusMap: Record<string, { label: string; bg: string; color: string }> = {
-          pending: { label: '待审核', bg: 'warning.light', color: 'warning.700' },
-          approved: { label: '已审核', bg: 'secondary.100', color: 'secondary.700' },
-          issued: { label: '已出库', bg: 'success.lighter', color: 'success.700' },
-          cancelled: { label: '已取消', bg: 'error.lighter', color: 'error.dark' },
+          pending: { label: i18n.t('mes.material_issue.k12'), bg: 'warning.light', color: 'warning.700' },
+          approved: { label: i18n.t('mes.material_issue.k13'), bg: 'secondary.100', color: 'secondary.700' },
+          issued: { label: i18n.t('mes.material_issue.k14'), bg: 'success.lighter', color: 'success.700' },
+          cancelled: { label: i18n.t('mes.material_issue.k15'), bg: 'error.lighter', color: 'error.dark' },
         };
         const s = statusMap[(row.status as string) || 'pending'] || {
           label: row.status,
@@ -90,26 +91,26 @@ export const materialIssueSchema: EntitySchema = {
     },
     {
       name: 'work_station_id',
-      label: '工位ID',
+      label: i18n.t('mes.material_issue.id_16'),
       type: 'text',
       showInList: false,
     },
     {
       name: 'remark',
-      label: '备注',
+      label: i18n.t('mes.material_issue.k17'),
       type: 'textarea',
       showInList: false,
     },
     {
       name: 'items',
-      label: '物料明细',
+      label: i18n.t('mes.material_issue.k18'),
       type: 'textarea',
       showInList: false,
       showInForm: false,
     },
     {
       name: 'created_at',
-      label: '创建时间',
+      label: i18n.t('mes.material_issue.k19'),
       type: 'datetime',
       readonly: true,
       showInList: false,
@@ -124,14 +125,14 @@ export const materialIssueSchema: EntitySchema = {
     filters: [
       {
         id: 'status',
-        label: '状态',
+        label: i18n.t('mes.material_issue.k20'),
         type: 'select',
         options: [
-          { label: '全部状态', value: 'all' },
-          { label: '待审核', value: 'pending' },
-          { label: '已审核', value: 'approved' },
-          { label: '已出库', value: 'issued' },
-          { label: '已取消', value: 'cancelled' },
+          { label: i18n.t('mes.material_issue.k21'), value: 'all' },
+          { label: i18n.t('mes.material_issue.k22'), value: 'pending' },
+          { label: i18n.t('mes.material_issue.k23'), value: 'approved' },
+          { label: i18n.t('mes.material_issue.k24'), value: 'issued' },
+          { label: i18n.t('mes.material_issue.k25'), value: 'cancelled' },
         ],
       },
     ],
@@ -141,16 +142,16 @@ export const materialIssueSchema: EntitySchema = {
 
   formSections: [
     {
-      title: '基本信息',
+      title: i18n.t('mes.material_issue.k26'),
       fields: ['issue_no', 'order_number', 'operator', 'work_station_id'],
     },
     {
-      title: '状态与备注',
+      title: i18n.t('mes.material_issue.k27'),
       fields: ['status', 'remark'],
     },
   ],
 
   formColCount: 2,
-  createTitle: '新增物料领用',
-  detailTitle: '物料领用详情',
+  createTitle: i18n.t('mes.material_issue.k28'),
+  detailTitle: i18n.t('mes.material_issue.k29'),
 };

@@ -33,6 +33,7 @@ import {
   DialogActions,
   Card,
 } from '@mui/material';
+import i18n from '@/i18n';
 import {
   X as XIcon,
   Bot,
@@ -95,28 +96,28 @@ interface ChatMessage {
 }
 
 const SAMPLE_TASKS = [
-  '分析最近的销售数据并生成报告',
-  '导航到系统设置页面并检查配置',
-  '调用 API 获取用户列表并统计',
-  '执行代码转换：排序并过滤数据',
-  '读取文件内容并发送通知',
+  i18n.t('ai.v54-agent-panel.k0'),
+  i18n.t('ai.v54-agent-panel.k1'),
+  i18n.t('ai.v54-agent-panel.api_2'),
+  i18n.t('ai.v54-agent-panel.k3'),
+  i18n.t('ai.v54-agent-panel.k4'),
 ];
 
 const STEP_TYPE_LABELS: Record<StepType, string> = {
-  action: '动作',
-  condition: '条件',
-  loop: '循环',
-  parallel: '并行',
+  action: i18n.t('ai.v54-agent-panel.k5'),
+  condition: i18n.t('ai.v54-agent-panel.k6'),
+  loop: i18n.t('ai.v54-agent-panel.k7'),
+  parallel: i18n.t('ai.v54-agent-panel.k8'),
 };
 
 const INTENT_LABELS: Record<Intent, string> = {
-  query: '查询',
-  command: '命令',
-  exploration: '探索',
-  confirmation: '确认',
-  correction: '更正',
-  social: '社交',
-  unclear: '不明',
+  query: i18n.t('ai.v54-agent-panel.k9'),
+  command: i18n.t('ai.v54-agent-panel.k10'),
+  exploration: i18n.t('ai.v54-agent-panel.k11'),
+  confirmation: i18n.t('ai.v54-agent-panel.k12'),
+  correction: i18n.t('ai.v54-agent-panel.k13'),
+  social: i18n.t('ai.v54-agent-panel.k14'),
+  unclear: i18n.t('ai.v54-agent-panel.k15'),
 };
 
 const SENTIMENT_COLORS: Record<Sentiment, string> = {
@@ -203,31 +204,31 @@ const V54AgentPanel: React.FC<{ onClose: () => void }> = ({ onClose }) => {
             <Tab
               icon={<MessageSquare size={16} />}
               iconPosition='start'
-              label='Agent 对话'
+              label={i18n.t('ai.v54-agent-panel.agent_0')}
               value='conversation'
             />
             <Tab
               icon={<Clock size={16} />}
               iconPosition='start'
-              label={`任务时间线 (${tasks.length})`}
+              label={`${i18n.t('ai.v54-agent-panel.k1')}${tasks.length})`}
               value='tasks'
             />
             <Tab
               icon={<WorkflowIcon size={16} />}
               iconPosition='start'
-              label={`工作流 (${workflows.length})`}
+              label={`${i18n.t('ai.v54-agent-panel.k2')}${workflows.length})`}
               value='workflow'
             />
             <Tab
               icon={<Brain size={16} />}
               iconPosition='start'
-              label='上下文'
+              label={i18n.t('ai.v54-agent-panel.k16')}
               value='context'
             />
             <Tab
               icon={<Database size={16} />}
               iconPosition='start'
-              label={`记忆 (${memories.length})`}
+              label={`${i18n.t('ai.v54-agent-panel.k3')}${memories.length})`}
               value='memory'
             />
           </Tabs>
@@ -345,13 +346,13 @@ const V54PanelHeader: React.FC<{ onClose: () => void }> = ({ onClose }) => (
           variant='h6'
           sx={{ fontWeight: 700, fontSize: 18 }}
         >
-          V54.0 AI Agent 面板
+          {i18n.t('ai.v54-agent-panel.k4')}
         </Typography>
         <Typography
           variant='caption'
           sx={{ opacity: 0.85, fontSize: 12 }}
         >
-          自主任务 · 工作流 · 上下文理解 · 记忆系统
+          {i18n.t('ai.v54-agent-panel.k5')}
         </Typography>
       </Box>
     </Box>
@@ -391,7 +392,7 @@ const ConversationTab: React.FC<{
       id: 'welcome',
       role: 'assistant',
       content:
-        '你好！我是 V54 AI Agent。我可以：\n\n• 自主执行复杂任务（分解为子步骤）\n• 创建和管理多步骤工作流\n• 理解上下文、识别人物意图\n• 存储和检索记忆\n\n请输入指令或选择一个示例任务开始。',
+        i18n.t('ai.v54-agent-panel.k6'),
       timestamp: Date.now(),
     },
   ]);
@@ -412,26 +413,26 @@ const ConversationTab: React.FC<{
     const intent = ctx?.intent ?? 'unclear';
     const entities = ctx?.entities ?? [];
 
-    const intentLabel = INTENT_LABELS[intent] ?? '不明';
+    const intentLabel = INTENT_LABELS[intent] ?? i18n.t('ai.v54-agent-panel.k17');
     const entitySummary = entities
       .slice(0, 3)
       .map((e) => `${e.value}(${e.type})`)
       .join(', ');
 
     return [
-      `✅ 已收到你的消息。`,
+      i18n.t('ai.v54-agent-panel.k7'),
       ``,
-      `📊 **上下文分析**:`,
-      `• 意图: ${intentLabel}`,
-      `• 情感: ${ctx?.sentiment ?? 'neutral'}`,
-      `• 实体: ${entitySummary || '无'}`,
+      i18n.t('ai.v54-agent-panel.k8'),
+      `${i18n.t('ai.v54-agent-panel.k9')} ${intentLabel}`,
+      `${i18n.t('ai.v54-agent-panel.k10')} ${ctx?.sentiment ?? 'neutral'}`,
+      `${i18n.t('ai.v54-agent-panel.k11')} ${entitySummary || i18n.t('ai.v54-agent-panel.k18')}`,
       ``,
-      `🧠 **上下文摘要**: ${ctx?.summary ?? '暂无历史'}`,
+      `${i18n.t('ai.v54-agent-panel.k12')} ${ctx?.summary ?? i18n.t('ai.v54-agent-panel.k19')}`,
       ``,
-      `💡 你可以尝试：`,
-      `• 输入 "执行任务: 分析销售数据" 来触发自主任务`,
-      `• 切换到 "任务时间线" 查看执行进度`,
-      `• 切换到 "工作流" 创建多步骤流程`,
+      i18n.t('ai.v54-agent-panel.k13'),
+      i18n.t('ai.v54-agent-panel.k14'),
+      i18n.t('ai.v54-agent-panel.k15'),
+      i18n.t('ai.v54-agent-panel.k16'),
     ].join('\n');
   };
 
@@ -462,7 +463,7 @@ const ConversationTab: React.FC<{
       tools: autonomousAgent.getTools(),
     };
 
-    const taskKeywords = ['执行', '任务', '分析', '生成', '创建', '调用', '处理'];
+    const taskKeywords = [i18n.t('ai.v54-agent-panel.k28'), i18n.t('ai.v54-agent-panel.k27'), i18n.t('ai.v54-agent-panel.k26'), i18n.t('ai.v54-agent-panel.k25'), i18n.t('ai.v54-agent-panel.k24'), i18n.t('ai.v54-agent-panel.k23'), i18n.t('ai.v54-agent-panel.k22')];
     const shouldExecuteTask = taskKeywords.some((kw) => input.includes(kw));
 
     if (shouldExecuteTask) {
@@ -541,7 +542,7 @@ const ConversationTab: React.FC<{
                   variant='body2'
                   color='text.secondary'
                 >
-                  Agent 正在思考...
+                  {i18n.t('ai.v54-agent-panel.agent_17')}
                 </Typography>
               </Box>
             </Paper>
@@ -578,7 +579,7 @@ const ConversationTab: React.FC<{
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={handleKeyDown}
-            placeholder='输入指令，Enter 发送，Shift+Enter 换行...'
+            placeholder={i18n.t('ai.v54-agent-panel.k18')}
             variant='outlined'
             size='small'
             sx={{
@@ -681,25 +682,25 @@ const TasksTab: React.FC<{
             sx={{ fontWeight: 600, display: 'flex', alignItems: 'center', gap: 1 }}
           >
             <Terminal size={20} />
-            任务执行时间线
+            {i18n.t('ai.v54-agent-panel.k19')}
           </Typography>
           <Chip
-            label={`${tasks.length} 个任务`}
+            label={`${tasks.length} ${i18n.t('ai.v54-agent-panel.k20')}`}
             size='small'
             sx={{ bgcolor: 'success.100', color: 'teal.900', fontWeight: 600 }}
           />
           <Chip
-            label={`运行中: ${tasks.filter((t) => t.status === 'running').length}`}
+            label={`${i18n.t('ai.v54-agent-panel.k21')} ${tasks.filter((t) => t.status === 'running').length}`}
             size='small'
             sx={{ bgcolor: 'primary.100', color: 'primary.800' }}
           />
           <Chip
-            label={`已完成: ${tasks.filter((t) => t.status === 'completed').length}`}
+            label={`${i18n.t('ai.v54-agent-panel.k22')} ${tasks.filter((t) => t.status === 'completed').length}`}
             size='small'
             sx={{ bgcolor: 'success.100', color: 'teal.900' }}
           />
           <Chip
-            label={`失败: ${tasks.filter((t) => t.status === 'failed').length}`}
+            label={`${i18n.t('ai.v54-agent-panel.k23')} ${tasks.filter((t) => t.status === 'failed').length}`}
             size='small'
             sx={{ bgcolor: 'error.50', color: 'error.800' }}
           />
@@ -710,7 +711,7 @@ const TasksTab: React.FC<{
           onClick={onClear}
           size='small'
         >
-          清空任务
+          {i18n.t('ai.v54-agent-panel.k24')}
         </Button>
       </Stack>
 
@@ -721,10 +722,10 @@ const TasksTab: React.FC<{
             sx={{ fontWeight: 600, mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}
           >
             <Activity size={16} />
-            任务列表
+            {i18n.t('ai.v54-agent-panel.k25')}
           </Typography>
           {tasks.length === 0 && (
-            <Alert severity='info'>暂无任务，请到 Agent 对话标签页发送指令</Alert>
+            <Alert severity='info'>{i18n.t('ai.v54-agent-panel.k29')}</Alert>
           )}
           {tasks.length > 0 && (
             <List sx={{ maxHeight: 500, overflow: 'auto' }}>
@@ -796,7 +797,7 @@ const TasksTab: React.FC<{
                             }}
                             sx={{ minWidth: 'auto', px: 1, py: 0.5, fontSize: 11 }}
                           >
-                            取消
+                            {i18n.t('ai.v54-agent-panel.k26')}
                           </Button>
                         )}
                       </Box>
@@ -816,7 +817,7 @@ const TasksTab: React.FC<{
                         variant='subtitle2'
                         sx={{ fontWeight: 600, mb: 1, fontSize: 12 }}
                       >
-                        执行步骤:
+                        [i18n.t('ai.v54-agent-panel.k27')]:
                       </Typography>
                       <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
                         {task.steps.map((step, idx) => (
@@ -841,7 +842,7 @@ const TasksTab: React.FC<{
             sx={{ fontWeight: 600, mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}
           >
             <FileText size={16} />
-            Agent 事件日志
+            {i18n.t('ai.v54-agent-panel.agent_28')}
           </Typography>
           <EventLog events={events} />
         </Card>
@@ -935,15 +936,15 @@ const StepItem: React.FC<{ step: TaskStep; index: number }> = ({ step, index }) 
 
 const EventLog: React.FC<{ events: AgentEvent[] }> = ({ events }) => (
   <Box sx={{ maxHeight: 500, overflow: 'auto' }}>
-    {events.length === 0 && <Alert severity='info'>暂无事件日志</Alert>}
+    {events.length === 0 && <Alert severity='info'>{i18n.t('ai.v54-agent-panel.k30')}</Alert>}
     {events.length > 0 && (
       <TableContainer>
         <Table size='small'>
           <TableHead>
             <TableRow>
-              <TableCell sx={{ fontWeight: 600, fontSize: 12 }}>时间</TableCell>
-              <TableCell sx={{ fontWeight: 600, fontSize: 12 }}>类型</TableCell>
-              <TableCell sx={{ fontWeight: 600, fontSize: 12 }}>消息</TableCell>
+              <TableCell sx={{ fontWeight: 600, fontSize: 12 }}>{i18n.t('ai.v54-agent-panel.k31')}</TableCell>
+              <TableCell sx={{ fontWeight: 600, fontSize: 12 }}>{i18n.t('ai.v54-agent-panel.k32')}</TableCell>
+              <TableCell sx={{ fontWeight: 600, fontSize: 12 }}>{i18n.t('ai.v54-agent-panel.k33')}</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
@@ -1042,17 +1043,17 @@ const WorkflowTab: React.FC<{
   const handleCreateCustom = () => {
     if (!newWfName.trim()) return;
     onCreate(newWfName, [
-      { id: `s1-${Date.now()}`, type: 'action', config: { description: '开始', action: 'start' } },
+      { id: `s1-${Date.now()}`, type: 'action', config: { description: i18n.t('ai.v54-agent-panel.k34'), action: 'start' } },
       {
         id: `s2-${Date.now()}`,
         type: 'action',
-        config: { description: '处理数据', action: 'process' },
+        config: { description: i18n.t('ai.v54-agent-panel.k35'), action: 'process' },
         depends_on: [`s1-${Date.now()}`],
       } as WorkflowStep,
       {
         id: `s3-${Date.now()}`,
         type: 'action',
-        config: { description: '完成', action: 'complete' },
+        config: { description: i18n.t('ai.v54-agent-panel.k36'), action: 'complete' },
         depends_on: [`s2-${Date.now()}`],
       } as WorkflowStep,
     ]);
@@ -1072,7 +1073,7 @@ const WorkflowTab: React.FC<{
           sx={{ fontWeight: 600, display: 'flex', alignItems: 'center', gap: 1 }}
         >
           <GitBranch size={20} />
-          工作流引擎
+          {i18n.t('ai.v54-agent-panel.k29')}
         </Typography>
         <Stack
           direction='row'
@@ -1085,7 +1086,7 @@ const WorkflowTab: React.FC<{
             sx={{ bgcolor: 'teal.600', '&:hover': { bgcolor: 'teal.700' } }}
             size='small'
           >
-            创建工作流
+            {i18n.t('ai.v54-agent-panel.k30')}
           </Button>
         </Stack>
       </Stack>
@@ -1099,7 +1100,7 @@ const WorkflowTab: React.FC<{
             工作流列表 ({workflows.length})
           </Typography>
           {workflows.length === 0 && (
-            <Alert severity='info'>暂无工作流，点击"创建工作流"开始</Alert>
+            <Alert severity='info'>暂无工作流，点击"{i18n.t('ai.v54-agent-panel.k37')}"{i18n.t('ai.v54-agent-panel.k34')}</Alert>
           )}
           {workflows.length > 0 && (
             <List sx={{ maxHeight: 450, overflow: 'auto' }}>
@@ -1164,7 +1165,7 @@ const WorkflowTab: React.FC<{
             variant='subtitle2'
             sx={{ fontWeight: 600, mb: 2 }}
           >
-            工作流详情
+            {i18n.t('ai.v54-agent-panel.k33')}
           </Typography>
           {selectedWorkflow ? (
             <WorkflowDetail
@@ -1182,7 +1183,7 @@ const WorkflowTab: React.FC<{
               }}
             />
           ) : (
-            <Alert severity='info'>选择一个工作流查看详情</Alert>
+            <Alert severity='info'>{i18n.t('ai.v54-agent-panel.k38')}</Alert>
           )}
         </Card>
       </Box>
@@ -1192,7 +1193,7 @@ const WorkflowTab: React.FC<{
           variant='subtitle2'
           sx={{ fontWeight: 600, mb: 2 }}
         >
-          工作流事件日志
+          {i18n.t('ai.v54-agent-panel.k34')}
         </Typography>
         <EventLog events={events as unknown as AgentEvent[]} />
       </Card>
@@ -1203,21 +1204,21 @@ const WorkflowTab: React.FC<{
         maxWidth='sm'
         fullWidth
       >
-        <DialogTitle>创建工作流</DialogTitle>
+        <DialogTitle>{i18n.t('ai.v54-agent-panel.k39')}</DialogTitle>
         <DialogContent>
           <Box sx={{ mt: 2, display: 'flex', flexDirection: 'column', gap: 2 }}>
             <TextField
-              label='工作流名称'
+              label={i18n.t('ai.v54-agent-panel.k40')}
               value={newWfName}
               onChange={(e) => setNewWfName(e.target.value)}
               fullWidth
               size='small'
             />
             <FormControl size='small'>
-              <InputLabel>从模板创建</InputLabel>
+              <InputLabel>{i18n.t('ai.v54-agent-panel.k41')}</InputLabel>
               <Select
                 value={selectedTemplate}
-                label='从模板创建'
+                label={i18n.t('ai.v54-agent-panel.k42')}
                 onChange={(e) => setSelectedTemplate(e.target.value)}
               >
                 <MenuItem value=''>-- 选择模板 --</MenuItem>
@@ -1239,14 +1240,14 @@ const WorkflowTab: React.FC<{
           </Box>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setShowCreateDialog(false)}>取消</Button>
+          <Button onClick={() => setShowCreateDialog(false)}>{i18n.t('ai.v54-agent-panel.k43')}</Button>
           {selectedTemplate ? (
             <Button
               onClick={handleCreateFromTemplate}
               variant='contained'
               sx={{ bgcolor: 'teal.600' }}
             >
-              从模板创建
+              {i18n.t('ai.v54-agent-panel.k35')}
             </Button>
           ) : (
             <Button
@@ -1255,7 +1256,7 @@ const WorkflowTab: React.FC<{
               sx={{ bgcolor: 'teal.600' }}
               disabled={!newWfName.trim()}
             >
-              创建空白工作流
+              {i18n.t('ai.v54-agent-panel.k36')}
             </Button>
           )}
         </DialogActions>
@@ -1302,7 +1303,7 @@ const WorkflowDetail: React.FC<{
             onClick={onExecute}
             sx={{ bgcolor: 'teal.500' }}
           >
-            执行
+            {i18n.t('ai.v54-agent-panel.k37')}
           </Button>
         )}
         {workflow.status === 'running' && (
@@ -1313,7 +1314,7 @@ const WorkflowDetail: React.FC<{
             onClick={onPause}
             sx={{ bgcolor: 'warning.500' }}
           >
-            暂停
+            {i18n.t('ai.v54-agent-panel.k38')}
           </Button>
         )}
         {workflow.status === 'paused' && (
@@ -1324,7 +1325,7 @@ const WorkflowDetail: React.FC<{
             onClick={onResume}
             sx={{ bgcolor: 'primary.500' }}
           >
-            恢复
+            {i18n.t('ai.v54-agent-panel.k39')}
           </Button>
         )}
         {(workflow.status === 'running' || workflow.status === 'paused') && (
@@ -1334,7 +1335,7 @@ const WorkflowDetail: React.FC<{
             color='error'
             onClick={onCancel}
           >
-            取消
+            {i18n.t('ai.v54-agent-panel.k40')}
           </Button>
         )}
         <Button
@@ -1344,7 +1345,7 @@ const WorkflowDetail: React.FC<{
           startIcon={<Trash2 size={12} />}
           onClick={onDelete}
         >
-          删除
+          {i18n.t('ai.v54-agent-panel.k41')}
         </Button>
       </Stack>
 
@@ -1360,7 +1361,7 @@ const WorkflowDetail: React.FC<{
           variant='caption'
           color='text.secondary'
         >
-          进度: {workflow.completedSteps}/{workflow.totalSteps} 步骤
+          [i18n.t('ai.v54-agent-panel.k42')]: {workflow.completedSteps}/{workflow.totalSteps} {i18n.t('ai.v54-agent-panel.k43')}
         </Typography>
       </Box>
 
@@ -1368,7 +1369,7 @@ const WorkflowDetail: React.FC<{
         variant='subtitle2'
         sx={{ fontWeight: 600, mb: 1, fontSize: 13 }}
       >
-        步骤列表:
+        [i18n.t('ai.v54-agent-panel.k44')]:
       </Typography>
       <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
         {workflow.steps.map((step, idx) => (
@@ -1413,7 +1414,7 @@ const WorkflowDetail: React.FC<{
                 variant='caption'
                 sx={{ color: 'error.800', mt: 0.5, display: 'block' }}
               >
-                错误: {step.error}
+                [i18n.t('ai.v54-agent-panel.k45')]: {step.error}
               </Typography>
             )}
           </Paper>
@@ -1452,7 +1453,7 @@ const ContextTab: React.FC<{
           sx={{ fontWeight: 600, display: 'flex', alignItems: 'center', gap: 1 }}
         >
           <Brain size={20} />
-          上下文理解
+          {i18n.t('ai.v54-agent-panel.k46')}
         </Typography>
         <Button
           variant='outlined'
@@ -1460,7 +1461,7 @@ const ContextTab: React.FC<{
           onClick={onSummarize}
           size='small'
         >
-          总结上下文
+          {i18n.t('ai.v54-agent-panel.k47')}
         </Button>
       </Stack>
 
@@ -1470,7 +1471,7 @@ const ContextTab: React.FC<{
             variant='subtitle2'
             sx={{ fontWeight: 600, mb: 2 }}
           >
-            当前状态
+            {i18n.t('ai.v54-agent-panel.k48')}
           </Typography>
           <Stack
             direction='column'
@@ -1482,7 +1483,7 @@ const ContextTab: React.FC<{
                 color='text.secondary'
                 sx={{ minWidth: 80 }}
               >
-                意图:
+                [i18n.t('ai.v54-agent-panel.k49')]:
               </Typography>
               <Chip
                 label={INTENT_LABELS[context.intent]}
@@ -1496,7 +1497,7 @@ const ContextTab: React.FC<{
                 color='text.secondary'
                 sx={{ minWidth: 80 }}
               >
-                情感:
+                [i18n.t('ai.v54-agent-panel.k50')]:
               </Typography>
               <Chip
                 label={context.sentiment}
@@ -1514,7 +1515,7 @@ const ContextTab: React.FC<{
                 color='text.secondary'
                 sx={{ minWidth: 80 }}
               >
-                消息数:
+                [i18n.t('ai.v54-agent-panel.k51')]:
               </Typography>
               <Typography
                 variant='body2'
@@ -1529,7 +1530,7 @@ const ContextTab: React.FC<{
                 color='text.secondary'
                 sx={{ minWidth: 80 }}
               >
-                实体数:
+                [i18n.t('ai.v54-agent-panel.k52')]:
               </Typography>
               <Typography
                 variant='body2'
@@ -1544,7 +1545,7 @@ const ContextTab: React.FC<{
                 color='text.secondary'
                 sx={{ minWidth: 80 }}
               >
-                主题:
+                [i18n.t('ai.v54-agent-panel.k53')]:
               </Typography>
               <Stack
                 direction='row'
@@ -1572,7 +1573,7 @@ const ContextTab: React.FC<{
             实体提取 ({context.entities.length})
           </Typography>
           {context.entities.length === 0 ? (
-            <Alert severity='info'>暂无实体</Alert>
+            <Alert severity='info'>{i18n.t('ai.v54-agent-panel.k44')}</Alert>
           ) : (
             <List sx={{ maxHeight: 300, overflow: 'auto' }}>
               {context.entities.map((entity, idx) => (
@@ -1591,19 +1592,19 @@ const ContextTab: React.FC<{
           variant='subtitle2'
           sx={{ fontWeight: 600, mb: 2 }}
         >
-          消息历史
+          {i18n.t('ai.v54-agent-panel.k54')}
         </Typography>
         <Box sx={{ maxHeight: 300, overflow: 'auto' }}>
           {context.messages.length === 0 ? (
-            <Alert severity='info'>暂无消息</Alert>
+            <Alert severity='info'>{i18n.t('ai.v54-agent-panel.k45')}</Alert>
           ) : (
             <TableContainer>
               <Table size='small'>
                 <TableHead>
                   <TableRow>
-                    <TableCell sx={{ fontWeight: 600, fontSize: 12 }}>时间</TableCell>
-                    <TableCell sx={{ fontWeight: 600, fontSize: 12 }}>角色</TableCell>
-                    <TableCell sx={{ fontWeight: 600, fontSize: 12 }}>内容</TableCell>
+                    <TableCell sx={{ fontWeight: 600, fontSize: 12 }}>{i18n.t('ai.v54-agent-panel.k46')}</TableCell>
+                    <TableCell sx={{ fontWeight: 600, fontSize: 12 }}>{i18n.t('ai.v54-agent-panel.k47')}</TableCell>
+                    <TableCell sx={{ fontWeight: 600, fontSize: 12 }}>{i18n.t('ai.v54-agent-panel.k48')}</TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
@@ -1657,7 +1658,7 @@ const ContextTab: React.FC<{
             sx={{ fontWeight: 600, mb: 1, display: 'flex', alignItems: 'center', gap: 1 }}
           >
             <FileText size={14} />
-            上下文摘要
+            {i18n.t('ai.v54-agent-panel.k55')}
           </Typography>
           <Paper
             elevation={0}
@@ -1765,7 +1766,7 @@ const MemoryTab: React.FC<{
           sx={{ fontWeight: 600, display: 'flex', alignItems: 'center', gap: 1 }}
         >
           <HardDrive size={20} />
-          记忆系统
+          {i18n.t('ai.v54-agent-panel.k56')}
         </Typography>
         <Stack
           direction='row'
@@ -1777,7 +1778,7 @@ const MemoryTab: React.FC<{
             onClick={onRefresh}
             size='small'
           >
-            刷新
+            {i18n.t('ai.v54-agent-panel.k57')}
           </Button>
           <Button
             variant='outlined'
@@ -1786,7 +1787,7 @@ const MemoryTab: React.FC<{
             onClick={onClear}
             size='small'
           >
-            清空
+            {i18n.t('ai.v54-agent-panel.k58')}
           </Button>
         </Stack>
       </Stack>
@@ -1797,35 +1798,35 @@ const MemoryTab: React.FC<{
             variant='subtitle2'
             sx={{ fontWeight: 600, mb: 2 }}
           >
-            存储记忆
+            {i18n.t('ai.v54-agent-panel.k59')}
           </Typography>
           <Stack
             direction='column'
             spacing={2}
           >
             <FormControl size='small'>
-              <InputLabel>记忆类型</InputLabel>
+              <InputLabel>{i18n.t('ai.v54-agent-panel.k49')}</InputLabel>
               <Select
                 value={newType}
-                label='记忆类型'
+                label={i18n.t('ai.v54-agent-panel.k50')}
                 onChange={(e) =>
                   setNewType(e.target.value as 'user_query' | 'action_result' | 'system_event')
                 }
               >
-                <MenuItem value='user_query'>用户查询</MenuItem>
-                <MenuItem value='action_result'>动作结果</MenuItem>
-                <MenuItem value='system_event'>系统事件</MenuItem>
+                <MenuItem value='user_query'>{i18n.t('ai.v54-agent-panel.k51')}</MenuItem>
+                <MenuItem value='action_result'>{i18n.t('ai.v54-agent-panel.k52')}</MenuItem>
+                <MenuItem value='system_event'>{i18n.t('ai.v54-agent-panel.k53')}</MenuItem>
               </Select>
             </FormControl>
             <TextField
-              label='内容'
+              label={i18n.t('ai.v54-agent-panel.k54')}
               value={newContent}
               onChange={(e) => setNewContent(e.target.value)}
               fullWidth
               size='small'
               multiline
               rows={3}
-              placeholder='输入要存储的记忆内容...'
+              placeholder={i18n.t('ai.v54-agent-panel.k60')}
             />
             <Button
               variant='contained'
@@ -1835,7 +1836,7 @@ const MemoryTab: React.FC<{
               sx={{ bgcolor: 'teal.500', '&:hover': { bgcolor: 'teal.600' } }}
               size='small'
             >
-              存储记忆
+              {i18n.t('ai.v54-agent-panel.k61')}
             </Button>
           </Stack>
 
@@ -1845,7 +1846,7 @@ const MemoryTab: React.FC<{
             variant='subtitle2'
             sx={{ fontWeight: 600, mb: 1 }}
           >
-            统计
+            {i18n.t('ai.v54-agent-panel.k62')}
           </Typography>
           <Stack
             direction='column'
@@ -1856,7 +1857,7 @@ const MemoryTab: React.FC<{
                 variant='body2'
                 color='text.secondary'
               >
-                总记忆数
+                {i18n.t('ai.v54-agent-panel.k63')}
               </Typography>
               <Typography
                 variant='body2'
@@ -1870,7 +1871,7 @@ const MemoryTab: React.FC<{
                 variant='body2'
                 color='text.secondary'
               >
-                用户查询
+                {i18n.t('ai.v54-agent-panel.k64')}
               </Typography>
               <Typography
                 variant='body2'
@@ -1884,7 +1885,7 @@ const MemoryTab: React.FC<{
                 variant='body2'
                 color='text.secondary'
               >
-                动作结果
+                {i18n.t('ai.v54-agent-panel.k65')}
               </Typography>
               <Typography
                 variant='body2'
@@ -1898,7 +1899,7 @@ const MemoryTab: React.FC<{
                 variant='body2'
                 color='text.secondary'
               >
-                系统事件
+                {i18n.t('ai.v54-agent-panel.k66')}
               </Typography>
               <Typography
                 variant='body2'
@@ -1912,7 +1913,7 @@ const MemoryTab: React.FC<{
                 variant='body2'
                 color='text.secondary'
               >
-                平均重要性
+                {i18n.t('ai.v54-agent-panel.k67')}
               </Typography>
               <Typography
                 variant='body2'
@@ -1933,14 +1934,14 @@ const MemoryTab: React.FC<{
           </Typography>
           <TextField
             size='small'
-            placeholder='搜索记忆...'
+            placeholder={i18n.t('ai.v54-agent-panel.k68')}
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             fullWidth
             sx={{ mb: 2 }}
           />
           {filteredMemories.length === 0 ? (
-            <Alert severity='info'>暂无记忆</Alert>
+            <Alert severity='info'>{i18n.t('ai.v54-agent-panel.k55')}</Alert>
           ) : (
             <List sx={{ maxHeight: 450, overflow: 'auto' }}>
               {filteredMemories.map((memory) => (
@@ -1993,7 +1994,7 @@ const MemoryItem: React.FC<{ memory: MemoryEntry }> = ({ memory }) => {
           {new Date(memory.timestamp).toLocaleString()}
         </Typography>
         <Box sx={{ flex: 1 }} />
-        <Tooltip title='复制'>
+        <Tooltip title={i18n.t('ai.v54-agent-panel.k56')}>
           <IconButton
             size='small'
             onClick={() => copyToClipboard(memory.content)}
@@ -2019,7 +2020,7 @@ const MemoryItem: React.FC<{ memory: MemoryEntry }> = ({ memory }) => {
           color='text.secondary'
           sx={{ fontSize: 10 }}
         >
-          重要性: {memory.importance.toFixed(1)}
+          [i18n.t('ai.v54-agent-panel.k69')]: {memory.importance.toFixed(1)}
         </Typography>
       </Box>
     </Paper>

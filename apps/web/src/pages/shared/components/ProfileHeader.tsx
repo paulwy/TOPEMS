@@ -8,6 +8,7 @@ import { User, Shield, RefreshCw, Camera } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { Box, Card, CardContent, Typography, Avatar, IconButton } from '@mui/material';
 import type { UseProfileReturn } from '../hooks/useProfile';
+import i18n from '@/i18n';
 
 export interface ProfileHeaderProps {
   profile: UseProfileReturn;
@@ -56,7 +57,7 @@ export const ProfileHeader: React.FC<ProfileHeaderProps> = ({ profile }) => {
                 height: 32,
               }}
               size='small'
-              aria-label='拍照'
+              aria-label={i18n.t('pages.profile_header.k0')}
             >
               <Camera size={16} />
             </IconButton>

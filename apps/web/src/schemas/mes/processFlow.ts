@@ -1,8 +1,9 @@
 import type { EntitySchema } from '@/schema';
+import i18n from '@/i18n';
 
 export const processFlowSchema: EntitySchema = {
   entity: 'processFlow',
-  title: '工艺流程',
+  title: i18n.t('mes.process_flow.k0'),
   api: {
     module: 'mes',
     resource: 'processFlows',
@@ -10,7 +11,7 @@ export const processFlowSchema: EntitySchema = {
   fields: [
     {
       name: 'code',
-      label: '流程编号',
+      label: i18n.t('mes.process_flow.k1'),
       type: 'text',
       required: true,
       readonlyOnEdit: true,
@@ -20,7 +21,7 @@ export const processFlowSchema: EntitySchema = {
     },
     {
       name: 'name',
-      label: '流程名称',
+      label: i18n.t('mes.process_flow.k2'),
       type: 'text',
       required: true,
       listWidth: 180,
@@ -29,7 +30,7 @@ export const processFlowSchema: EntitySchema = {
     },
     {
       name: 'production_line',
-      label: '生产线',
+      label: i18n.t('mes.process_flow.k3'),
       type: 'text',
       listWidth: 140,
       sortable: true,
@@ -37,33 +38,33 @@ export const processFlowSchema: EntitySchema = {
     },
     {
       name: 'capacity',
-      label: '产能',
+      label: i18n.t('mes.process_flow.k4'),
       type: 'number',
       listWidth: 120,
       renderCell: (row: Record<string, unknown>): React.ReactNode => {
         const cap = row.capacity as number | undefined;
         const unit = row.unit as string | undefined;
-        return cap ? `${cap} ${unit || '件/小时'}` : '-';
+        return cap ? `${cap} ${unit || i18n.t('mes.process_flow.k5')}` : '-';
       },
     },
     {
       name: 'unit',
-      label: '单位',
+      label: i18n.t('mes.process_flow.k6'),
       type: 'select',
       showInList: false,
       options: {
         type: 'static',
         options: [
-          { value: '件/小时', label: '件/小时' },
-          { value: '台/小时', label: '台/小时' },
-          { value: '套/小时', label: '套/小时' },
+          { value: i18n.t('mes.process_flow.k7'), label: i18n.t('mes.process_flow.k8') },
+          { value: i18n.t('mes.process_flow.k9'), label: i18n.t('mes.process_flow.k10') },
+          { value: i18n.t('mes.process_flow.k11'), label: i18n.t('mes.process_flow.k12') },
         ],
       },
       validation: [{ type: 'maxLength', value: 32 }],
     },
     {
       name: 'version',
-      label: '版本',
+      label: i18n.t('mes.process_flow.k13'),
       type: 'text',
       listWidth: 80,
       showInList: false,
@@ -71,22 +72,22 @@ export const processFlowSchema: EntitySchema = {
     },
     {
       name: 'status',
-      label: '状态',
+      label: i18n.t('mes.process_flow.k14'),
       type: 'select',
       listWidth: 100,
       options: {
         type: 'static',
         options: [
-          { value: 'active', label: '启用' },
-          { value: 'inactive', label: '停用' },
-          { value: 'draft', label: '草稿' },
+          { value: 'active', label: i18n.t('mes.process_flow.k15') },
+          { value: 'inactive', label: i18n.t('mes.process_flow.k16') },
+          { value: 'draft', label: i18n.t('mes.process_flow.k17') },
         ],
       },
       validation: [{ type: 'maxLength', value: 32 }],
     },
     {
       name: 'description',
-      label: '描述',
+      label: i18n.t('mes.process_flow.k18'),
       type: 'textarea',
       colSpan: 2,
       showInList: false,
@@ -97,13 +98,13 @@ export const processFlowSchema: EntitySchema = {
     filters: [
       {
         id: 'status',
-        label: '状态',
+        label: i18n.t('mes.process_flow.k19'),
         type: 'select',
         options: [
-          { label: '全部状态', value: 'all' },
-          { label: '启用', value: 'active' },
-          { label: '停用', value: 'inactive' },
-          { label: '草稿', value: 'draft' },
+          { label: i18n.t('mes.process_flow.k20'), value: 'all' },
+          { label: i18n.t('mes.process_flow.k21'), value: 'active' },
+          { label: i18n.t('mes.process_flow.k22'), value: 'inactive' },
+          { label: i18n.t('mes.process_flow.k23'), value: 'draft' },
         ],
         defaultValue: 'all',
       },
@@ -116,24 +117,24 @@ export const processFlowSchema: EntitySchema = {
         draft: 'warning',
       },
       labelMap: {
-        active: '启用',
-        inactive: '停用',
-        draft: '草稿',
+        active: i18n.t('mes.process_flow.k24'),
+        inactive: i18n.t('mes.process_flow.k25'),
+        draft: i18n.t('mes.process_flow.k26'),
       },
     },
     pageSize: 10,
   },
   formSections: [
     {
-      title: '基本信息',
+      title: i18n.t('mes.process_flow.k27'),
       fields: ['code', 'name', 'version', 'status'],
     },
     {
-      title: '生产参数',
+      title: i18n.t('mes.process_flow.k28'),
       fields: ['production_line', 'capacity', 'unit'],
     },
     {
-      title: '描述',
+      title: i18n.t('mes.process_flow.k29'),
       fields: ['description'],
     },
   ],

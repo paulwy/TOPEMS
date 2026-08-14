@@ -8,6 +8,7 @@ import { Package, AlertTriangle, CheckCircle, XCircle } from 'lucide-react';
 import { designTokens } from '@/theme/tokens';
 
 import { QUERY_KEYS } from '@/lib/reactQuery';
+import i18n from '@/i18n';
 
 const ct= designTokens.colors;
 
@@ -38,7 +39,7 @@ const InventoryStats: React.FC = () => {
 
   const statCards = [
     {
-      label: '库存总数',
+      label: i18n.t('pages.inventory_page.k0'),
       value: stats?.total_alerts || inventory.length,
       color: ct.info.main,
       bgColor: 'grey.100',
@@ -50,7 +51,7 @@ const InventoryStats: React.FC = () => {
       ),
     },
     {
-      label: '低库存预警',
+      label: i18n.t('pages.inventory_page.k1'),
       value: stats?.low_stock_count || 0,
       color: 'warning.dark',
       bgColor: 'warning.light',
@@ -62,7 +63,7 @@ const InventoryStats: React.FC = () => {
       ),
     },
     {
-      label: '待处理预警',
+      label: i18n.t('pages.inventory_page.k2'),
       value: stats?.pending_alerts || 0,
       color: 'error.main',
       bgColor: ct.error[50],
@@ -74,7 +75,7 @@ const InventoryStats: React.FC = () => {
       ),
     },
     {
-      label: '预警总数',
+      label: i18n.t('pages.inventory_page.k3'),
       value: stats?.total_alerts || 0,
       color: 'success.dark',
       bgColor: 'success.lighter',
@@ -144,7 +145,7 @@ const inventoryApiAdapter: CrudApiAdapter = {
     const response = await wmsApi.inventory.list(
       params as Parameters<typeof wmsApi.inventory.list>[0]
     );
-    if (!response.success) throw new Error('加载库存列表失败');
+    if (!response.success) throw new Error(i18n.t('pages.inventory_page.k4'));
     const items = response.data?.items || [];
     const total = response.data?.total || 0;
     return { data: items as unknown as Record<string, unknown>[], total };
@@ -154,7 +155,7 @@ const inventoryApiAdapter: CrudApiAdapter = {
     const response = await wmsApi.inventory.create(
       data as unknown as Parameters<typeof wmsApi.inventory.create>[0]
     );
-    if (!response.success) throw new Error('创建库存记录失败');
+    if (!response.success) throw new Error(i18n.t('pages.inventory_page.k5'));
     return response.data as unknown as Record<string, unknown>;
   },
 
@@ -163,13 +164,13 @@ const inventoryApiAdapter: CrudApiAdapter = {
       id,
       data as Parameters<typeof wmsApi.inventory.update>[1]
     );
-    if (!response.success) throw new Error('更新库存记录失败');
+    if (!response.success) throw new Error(i18n.t('pages.inventory_page.k6'));
     return response.data as unknown as Record<string, unknown>;
   },
 
   delete: async (id) => {
     const response = await wmsApi.inventory.delete(id);
-    if (!response.success) throw new Error('删除库存记录失败');
+    if (!response.success) throw new Error(i18n.t('pages.inventory_page.k7'));
   },
 };
 
@@ -178,7 +179,7 @@ export default function InventoryPage() {
     <CrudPage
       schema={inventorySchema}
       apiAdapter={inventoryApiAdapter}
-      breadcrumbs={[{ label: 'WMS' }, { label: '库存管理' }]}
+      breadcrumbs={[{ label: 'WMS' }, { label: i18n.t('pages.inventory_page.k8') }]}
       headerContent={<InventoryStats />}
     />
   );

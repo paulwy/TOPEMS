@@ -26,10 +26,10 @@ function renderStatusCell(row: Record<string, unknown>) {
     string,
     { label: string; color: 'success' | 'warning' | 'error' | 'default' }
   > = {
-    paid: { label: '已支付', color: 'success' },
-    pending: { label: '待支付', color: 'warning' },
-    failed: { label: '支付失败', color: 'error' },
-    draft: { label: '草稿', color: 'default' },
+    paid: { label: i18n.t('admin.tenant_invoice.k0'), color: 'success' },
+    pending: { label: i18n.t('admin.tenant_invoice.k1'), color: 'warning' },
+    failed: { label: i18n.t('admin.tenant_invoice.k2'), color: 'error' },
+    draft: { label: i18n.t('admin.tenant_invoice.k3'), color: 'default' },
   };
   const item = statusMap[status] || statusMap.draft;
   return React.createElement(Chip, {

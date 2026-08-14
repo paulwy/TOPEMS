@@ -1,11 +1,10 @@
 import React from 'react';
 import { Box, Button, Dialog, DialogActions, DialogContent, DialogTitle } from '@mui/material';
 import { Store } from 'lucide-react';
-import { useTranslation } from 'react-i18next';
 import type { MarketplacePlugin } from '../hooks/usePluginManagement';
 import PluginInstallStepper from './PluginInstallStepper';
 import PluginMarketplaceList from './PluginMarketplaceList';
-
+import i18n from '@/i18n';
 interface PluginMarketplaceDialogProps {
   open: boolean;
   onClose: () => void;
@@ -25,7 +24,6 @@ interface PluginMarketplaceDialogProps {
   onInstallNext: () => void;
   onInstallBack: () => void;
 }
-
 const PluginMarketplaceDialog: React.FC<PluginMarketplaceDialogProps> = ({
   open,
   onClose,
@@ -43,8 +41,6 @@ const PluginMarketplaceDialog: React.FC<PluginMarketplaceDialogProps> = ({
   onInstallNext,
   onInstallBack,
 }) => {
-  const { t } = useTranslation();
-
   return (
     <Dialog
       open={open}
@@ -55,7 +51,7 @@ const PluginMarketplaceDialog: React.FC<PluginMarketplaceDialogProps> = ({
       <DialogTitle>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
           <Store size={24} />
-          {t('admin.plugin_management_page.text_a5fdeb')}
+          {i18n.t('admin.plugin_management_page.text_a5fdeb')}
         </Box>
       </DialogTitle>
       <DialogContent>
@@ -81,10 +77,9 @@ const PluginMarketplaceDialog: React.FC<PluginMarketplaceDialogProps> = ({
         )}
       </DialogContent>
       <DialogActions>
-        <Button onClick={onClose}>{t('admin.plugin_management.close')}</Button>
+        <Button onClick={onClose}>{i18n.t('admin.plugin_management.close')}</Button>
       </DialogActions>
     </Dialog>
   );
 };
-
 export default PluginMarketplaceDialog;

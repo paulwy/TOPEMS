@@ -3,6 +3,7 @@ import { Box, IconButton, Typography } from '@mui/material';
 import { Menu as MenuIcon } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { DASHBOARD_PATHS } from '@/routes/dashboard';
+import i18n from '@/i18n';
 
 export interface HeaderLogoProps {
   showBackButton?: boolean;
@@ -28,7 +29,7 @@ export const HeaderLogo: React.FC<HeaderLogoProps> = ({
           size='small'
           onClick={onBack}
           sx={{ display: { sm: 'none' } }}
-          aria-label='菜单'
+          aria-label={i18n.t('shared.header_logo.k0')}
         >
           <MenuIcon style={{ width: 20, height: 20 }} />
         </IconButton>
@@ -77,7 +78,7 @@ export const HeaderLogo: React.FC<HeaderLogoProps> = ({
       {isMobileNav && onMobileMenuOpen && (
         <IconButton
           onClick={onMobileMenuOpen}
-          aria-label='打开导航菜单'
+          aria-label={i18n.t('shared.header_logo.k1')}
           sx={{
             width: 36,
             height: 36,

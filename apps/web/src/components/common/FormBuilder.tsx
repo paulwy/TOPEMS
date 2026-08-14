@@ -16,6 +16,7 @@ import {
   Autocomplete,
   Typography,
 } from '@mui/material';
+import i18n from '@/i18n';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
@@ -146,8 +147,8 @@ export interface FormBuilderConfig<T extends Record<string, unknown> = Record<st
 export default function FormBuilder<T extends Record<string, unknown> = Record<string, unknown>>({
   fields,
   onSubmit,
-  submitLabel = '提交',
-  resetLabel = '重置',
+  submitLabel = i18n.t('shared.form_builder.k0'),
+  resetLabel = i18n.t('shared.form_builder.k1'),
   showReset = true,
   title,
   initialValues = {},
@@ -180,7 +181,7 @@ export default function FormBuilder<T extends Record<string, unknown> = Record<s
           : (field.required ?? false);
 
       if (isRequired && !value) {
-        return `${field.label}为必填项`;
+        return `${field.label}${i18n.t('components.form_builder.k0')}`;
       }
 
       if (field.validation) {
@@ -190,51 +191,51 @@ export default function FormBuilder<T extends Record<string, unknown> = Record<s
           switch (rule.type) {
             case 'required':
               if (!value) {
-                return rule.message || `${field.label}为必填项`;
+                return rule.message || `${field.label}${i18n.t('components.form_builder.k1')}`;
               }
               break;
             case 'minLength':
               if (stringValue.length < rule.value) {
-                return rule.message || `${field.label}长度不能少于${rule.value}个字符`;
+                return rule.message || `${field.label}${i18n.t('components.form_builder.k2')}${rule.value}${i18n.t('components.form_builder.k3')}`;
               }
               break;
             case 'maxLength':
               if (stringValue.length > rule.value) {
-                return rule.message || `${field.label}长度不能超过${rule.value}个字符`;
+                return rule.message || `${field.label}${i18n.t('components.form_builder.k4')}${rule.value}${i18n.t('components.form_builder.k5')}`;
               }
               break;
             case 'min':
               if (Number(value) < rule.value) {
-                return rule.message || `${field.label}不能小于${rule.value}`;
+                return rule.message || `${field.label}${i18n.t('components.form_builder.k6')}${rule.value}`;
               }
               break;
             case 'max':
               if (Number(value) > rule.value) {
-                return rule.message || `${field.label}不能大于${rule.value}`;
+                return rule.message || `${field.label}${i18n.t('components.form_builder.k7')}${rule.value}`;
               }
               break;
             case 'pattern':
               if (!rule.value.test(stringValue)) {
-                return rule.message || `${field.label}格式不正确`;
+                return rule.message || `${field.label}${i18n.t('components.form_builder.k8')}`;
               }
               break;
             case 'email':
               const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
               if (!emailRegex.test(stringValue)) {
-                return rule.message || `${field.label}邮箱格式不正确`;
+                return rule.message || `${field.label}${i18n.t('components.form_builder.k9')}`;
               }
               break;
             case 'url':
               try {
                 new URL(stringValue);
               } catch {
-                return rule.message || `${field.label}URL格式不正确`;
+                return rule.message || `${field.label}${i18n.t('components.form_builder.url_10')}`;
               }
               break;
             case 'phone':
               const phoneRegex = /^1[3-9]\d{9}$/;
               if (!phoneRegex.test(stringValue)) {
-                return rule.message || `${field.label}手机号格式不正确`;
+                return rule.message || `${field.label}${i18n.t('components.form_builder.k11')}`;
               }
               break;
             case 'custom':
@@ -415,7 +416,7 @@ export default function FormBuilder<T extends Record<string, unknown> = Record<s
                 onChange={(e) => handleChange(field.name, e.target.value)}
                 displayEmpty
               >
-                {!isRequired && <MenuItem value=''>请选择</MenuItem>}
+                {!isRequired && <MenuItem value=''>{i18n.t('shared.form_builder.k2')}</MenuItem>}
                 {(field.options || []).map((opt) => (
                   <MenuItem
                     key={opt.value}
@@ -743,7 +744,7 @@ export default function FormBuilder<T extends Record<string, unknown> = Record<s
                 type='reset'
                 variant='outlined'
               >
-                {mode === 'view' ? '关闭' : resetLabel}
+                {mode === 'view' ? i18n.t('shared.form_builder.k3') : resetLabel}
               </Button>
             )}
             {mode !== 'view' && (

@@ -24,7 +24,7 @@ export const CustomTooltipPolar: React.FC<CustomTooltipProps> = ({ active, paylo
       <div
         style={{
           backgroundColor: 'common.white',
-          padding: '12px 16px',
+          padding: `${designTokens.spacing.md} 16px`,
           borderRadius: 'md',
           boxShadow: designTokens.shadows.md,
           border: '1px solid border.default',
@@ -40,7 +40,7 @@ export const CustomTooltipPolar: React.FC<CustomTooltipProps> = ({ active, paylo
             style={{
               fontSize: '14px',
               color: 'var(--mui-palette-text-secondary)',
-              margin: '4px 0',
+              margin: `${designTokens.spacing.xs} 0`,
             }}
           >
             <span style={{ color: item.color || 'primary.light' }}>●</span>

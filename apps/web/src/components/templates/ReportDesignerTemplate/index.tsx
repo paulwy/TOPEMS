@@ -13,6 +13,7 @@ import {
   DialogContent,
   DialogActions,
 } from '@mui/material';
+import i18n from '@/i18n';
 import { Table, LayoutGrid, Eye, Save, Download } from 'lucide-react';
 import {
   DataSourcePanel,
@@ -38,22 +39,22 @@ import type {
 export * from './types';
 
 export const ReportDesignerTemplate: React.FC<ReportDesignerTemplateProps> = ({
-  title = '报表设计器',
-  subtitle = '可视化设计报表，灵活配置数据源、字段和布局',
+  title = i18n.t('templates.index.k0'),
+  subtitle = i18n.t('templates.index.k1'),
   initialDataSource,
   onSave,
   onExport,
   onPreview,
   loading = false,
   availableTables = [
-    { name: 'orders', label: '订单表' },
-    { name: 'users', label: '用户表' },
-    { name: 'projects', label: '项目表' },
+    { name: 'orders', label: i18n.t('templates.index.k2') },
+    { name: 'users', label: i18n.t('templates.index.k3') },
+    { name: 'projects', label: i18n.t('templates.index.k4') },
   ],
   availableApis = [
-    { name: 'sales_report', label: '销售报表API', url: '/api/reports/sales' },
-    { name: 'inventory_report', label: '库存报表API', url: '/api/reports/inventory' },
-    { name: 'performance_report', label: '绩效报表API', url: '/api/reports/performance' },
+    { name: 'sales_report', label: i18n.t('templates.index.api_5'), url: '/api/reports/sales' },
+    { name: 'inventory_report', label: i18n.t('templates.index.api_6'), url: '/api/reports/inventory' },
+    { name: 'performance_report', label: i18n.t('templates.index.api_7'), url: '/api/reports/performance' },
   ],
 }) => {
   const [activeTab, setActiveTab] = useState(0);
@@ -334,9 +335,9 @@ export const ReportDesignerTemplate: React.FC<ReportDesignerTemplateProps> = ({
   }, [state, onPreview]);
 
   const tabs = [
-    { label: '字段', icon: <Table sx={{ width: 16, height: 16 }} /> },
-    { label: '布局', icon: <LayoutGrid sx={{ width: 16, height: 16 }} /> },
-    { label: '预览', icon: <Eye sx={{ width: 16, height: 16 }} /> },
+    { label: i18n.t('templates.index.k8'), icon: <Table sx={{ width: 16, height: 16 }} /> },
+    { label: i18n.t('templates.index.k9'), icon: <LayoutGrid sx={{ width: 16, height: 16 }} /> },
+    { label: i18n.t('templates.index.k10'), icon: <Eye sx={{ width: 16, height: 16 }} /> },
   ];
 
   return (
@@ -361,14 +362,14 @@ export const ReportDesignerTemplate: React.FC<ReportDesignerTemplateProps> = ({
       <Paper sx={{ p: 2, mb: 3, borderRadius: 3 }}>
         <TextField
           fullWidth
-          label='报表标题'
+          label={i18n.t('templates.index.k11')}
           value={state.title}
           onChange={(e) => setState((prev) => ({ ...prev, title: e.target.value }))}
           sx={{ mb: 2 }}
         />
         <TextField
           fullWidth
-          label='报表描述'
+          label={i18n.t('templates.index.k12')}
           multiline
           rows={2}
           value={state.description}
@@ -455,7 +456,7 @@ export const ReportDesignerTemplate: React.FC<ReportDesignerTemplateProps> = ({
               variant='subtitle2'
               sx={{ fontWeight: 600, color: 'grey.600' }}
             >
-              预览效果
+              {i18n.t('components.index.k0')}
             </Typography>
             <PreviewContent
               layout={state.layout}
@@ -473,7 +474,7 @@ export const ReportDesignerTemplate: React.FC<ReportDesignerTemplateProps> = ({
           onClick={handlePreview}
           sx={{ borderRadius: 1 }}
         >
-          预览
+          {i18n.t('components.index.k1')}
         </Button>
         <Button
           variant='outlined'
@@ -481,7 +482,7 @@ export const ReportDesignerTemplate: React.FC<ReportDesignerTemplateProps> = ({
           onClick={() => handleExport('excel')}
           sx={{ borderRadius: 1 }}
         >
-          导出
+          {i18n.t('components.index.k2')}
         </Button>
         <Button
           variant='contained'
@@ -489,7 +490,7 @@ export const ReportDesignerTemplate: React.FC<ReportDesignerTemplateProps> = ({
           onClick={handleSave}
           sx={{ borderRadius: 1 }}
         >
-          保存
+          {i18n.t('components.index.k3')}
         </Button>
       </Box>
 
@@ -502,12 +503,12 @@ export const ReportDesignerTemplate: React.FC<ReportDesignerTemplateProps> = ({
         <DialogTitle
           sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}
         >
-          <Typography variant='h6'>报表预览</Typography>
+          <Typography variant='h6'>{i18n.t('templates.index.k13')}</Typography>
           <Typography
             variant='subtitle1'
             sx={{ color: 'grey.500' }}
           >
-            {state.title || '未命名报表'}
+            {state.title || i18n.t('templates.index.k14')}
           </Typography>
         </DialogTitle>
         <DialogContent>
@@ -518,9 +519,9 @@ export const ReportDesignerTemplate: React.FC<ReportDesignerTemplateProps> = ({
           />
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setPreviewOpen(false)}>关闭</Button>
-          <Button onClick={() => handleExport('excel')}>导出Excel</Button>
-          <Button onClick={() => handleExport('pdf')}>导出PDF</Button>
+          <Button onClick={() => setPreviewOpen(false)}>{i18n.t('templates.index.k15')}</Button>
+          <Button onClick={() => handleExport('excel')}>{i18n.t('templates.index.excel_16')}</Button>
+          <Button onClick={() => handleExport('pdf')}>{i18n.t('templates.index.pdf_17')}</Button>
         </DialogActions>
       </Dialog>
     </Box>

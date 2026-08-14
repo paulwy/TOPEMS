@@ -11,54 +11,47 @@ import { useQmsMock, type QmsMockShape } from '@/api/qms/_mock';
 import { StatusBadge } from '@/components/qms/StatusBadge';
 import { FSMActionButtons } from '@/components/qms/FSMActionButtons';
 import { QMS_PATHS } from '@/modules/qms/config';
-
+import i18n from '@/i18n';
 const TABS = [
-  { id: 'info', label: '基本信息' },
-  { id: 'tasks', label: '审核任务' },
-  { id: 'findings', label: '发现项' },
+  { id: 'info', label: i18n.t('qms.qms_audit_plan_detail_page.k0') },
+  { id: 'tasks', label: i18n.t('qms.qms_audit_plan_detail_page.k1') },
+  { id: 'findings', label: i18n.t('qms.qms_audit_plan_detail_page.k2') },
 ] as const;
-
 export default function QmsAuditPlanDetailPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { data } = useQmsMock<QmsMockShape>();
   const [activeTab, setActiveTab] = useState<(typeof TABS)[number]['id']>('info');
-
   const plan = useMemo(() => {
     const list = data.auditPlans ?? [];
     return list.find((p) => p.id === id) ?? list[0];
   }, [data.auditPlans, id]);
-
   const tasks = useMemo(() => {
     if (!plan) return [];
     return (data.auditTasks ?? []).filter((t) => t.plan_id === plan.id);
   }, [data.auditTasks, plan]);
-
   const findings = useMemo(() => {
     if (!plan) return [];
     const taskIds = new Set(tasks.map((t) => t.id));
     return (data.auditFindings ?? []).filter((f) => taskIds.has(f.task_id));
   }, [data.auditFindings, tasks, plan]);
-
   if (!plan) {
     return (
       <div className='p-4'>
-        <p className='text-gray-600'>未找到审核计划数据。</p>
+        <p className='text-gray-600'>{i18n.t('qms.qms_audit_plan_detail_page.k3')}</p>
         <button
           onClick={() => navigate(QMS_PATHS.auditManagement)}
           className='mt-2 text-blue-600 underline'
         >
-          返回列表
+          {i18n.t('pages.qms_audit_plan_detail_page.k0')}
         </button>
       </div>
     );
   }
-
   const handleAction = (targetStatus: string, requiresApproval: boolean) => {
     void targetStatus;
     void requiresApproval;
   };
-
   return (
     <div className='space-y-4 p-4'>
       <div className='flex items-center justify-between'>
@@ -67,7 +60,7 @@ export default function QmsAuditPlanDetailPage() {
             onClick={() => navigate(QMS_PATHS.auditManagement)}
             className='mb-2 text-sm text-blue-600 hover:underline'
           >
-            ← 返回审核管理
+            {i18n.t('pages.qms_audit_plan_detail_page.k1')}
           </button>
           <h1 className='text-2xl font-bold'>{plan.plan_no}</h1>
           <p className='mt-1 text-sm text-gray-500'>{plan.title}</p>
@@ -77,16 +70,14 @@ export default function QmsAuditPlanDetailPage() {
           status={plan.status}
         />
       </div>
-
       <div className='rounded-lg border p-4'>
-        <p className='mb-3 text-sm font-semibold text-gray-700'>状态机操作</p>
+        <p className='mb-3 text-sm font-semibold text-gray-700'>{i18n.t('qms.qms_audit_plan_detail_page.k4')}</p>
         <FSMActionButtons
           fsm='audit_plan'
           currentStatus={plan.status}
           onAction={handleAction}
         />
       </div>
-
       <div className='flex gap-2 border-b'>
         {TABS.map((t) => (
           <button
@@ -108,63 +99,61 @@ export default function QmsAuditPlanDetailPage() {
           </button>
         ))}
       </div>
-
       {activeTab === 'info' && (
         <div className='grid grid-cols-1 gap-4 md:grid-cols-2'>
           <Field
-            label='计划编号'
+            label={i18n.t('qms.qms_audit_plan_detail_page.k5')}
             value={plan.plan_no}
           />
           <Field
-            label='审核类型'
+            label={i18n.t('qms.qms_audit_plan_detail_page.k6')}
             value={plan.audit_type}
           />
           <Field
-            label='主审核员'
+            label={i18n.t('qms.qms_audit_plan_detail_page.k7')}
             value={plan.auditor}
           />
           <Field
-            label='审核范围'
+            label={i18n.t('qms.qms_audit_plan_detail_page.k8')}
             value={plan.scope ?? '-'}
           />
           <Field
-            label='涉及部门'
+            label={i18n.t('qms.qms_audit_plan_detail_page.k9')}
             value={plan.departments.join('、') || '-'}
           />
           <Field
-            label='审核组成员'
+            label={i18n.t('qms.qms_audit_plan_detail_page.k10')}
             value={plan.auditors.join('、') || '-'}
           />
           <Field
-            label='开始日期'
+            label={i18n.t('qms.qms_audit_plan_detail_page.k11')}
             value={plan.start_date ? new Date(plan.start_date).toLocaleDateString('zh-CN') : '-'}
           />
           <Field
-            label='结束日期'
+            label={i18n.t('qms.qms_audit_plan_detail_page.k12')}
             value={plan.end_date ? new Date(plan.end_date).toLocaleDateString('zh-CN') : '-'}
           />
           <div className='rounded-lg border p-3 md:col-span-2'>
-            <p className='text-xs text-gray-500'>计划描述</p>
+            <p className='text-xs text-gray-500'>{i18n.t('qms.qms_audit_plan_detail_page.k13')}</p>
             <p className='mt-1 text-sm leading-relaxed'>{plan.description ?? '-'}</p>
           </div>
         </div>
       )}
-
       {activeTab === 'tasks' && (
         <div className='rounded-lg border p-4'>
-          <h3 className='mb-3 font-semibold'>审核任务列表</h3>
+          <h3 className='mb-3 font-semibold'>{i18n.t('qms.qms_audit_plan_detail_page.k14')}</h3>
           {tasks.length === 0 ? (
-            <p className='text-sm text-gray-500'>暂无审核任务</p>
+            <p className='text-sm text-gray-500'>{i18n.t('qms.qms_audit_plan_detail_page.k15')}</p>
           ) : (
             <table className='w-full text-sm'>
               <thead>
                 <tr className='border-b text-left text-gray-600'>
-                  <th className='py-2 pr-4'>任务编号</th>
-                  <th className='py-2 pr-4'>标题</th>
-                  <th className='py-2 pr-4'>负责人</th>
-                  <th className='py-2 pr-4'>优先级</th>
-                  <th className='py-2 pr-4'>发现项数</th>
-                  <th className='py-2'>状态</th>
+                  <th className='py-2 pr-4'>{i18n.t('qms.qms_audit_plan_detail_page.k16')}</th>
+                  <th className='py-2 pr-4'>{i18n.t('qms.qms_audit_plan_detail_page.k17')}</th>
+                  <th className='py-2 pr-4'>{i18n.t('qms.qms_audit_plan_detail_page.k18')}</th>
+                  <th className='py-2 pr-4'>{i18n.t('qms.qms_audit_plan_detail_page.k19')}</th>
+                  <th className='py-2 pr-4'>{i18n.t('qms.qms_audit_plan_detail_page.k20')}</th>
+                  <th className='py-2'>{i18n.t('qms.qms_audit_plan_detail_page.k21')}</th>
                 </tr>
               </thead>
               <tbody>
@@ -186,21 +175,20 @@ export default function QmsAuditPlanDetailPage() {
           )}
         </div>
       )}
-
       {activeTab === 'findings' && (
         <div className='rounded-lg border p-4'>
-          <h3 className='mb-3 font-semibold'>审核发现项列表</h3>
+          <h3 className='mb-3 font-semibold'>{i18n.t('qms.qms_audit_plan_detail_page.k22')}</h3>
           {findings.length === 0 ? (
-            <p className='text-sm text-gray-500'>暂无发现项</p>
+            <p className='text-sm text-gray-500'>{i18n.t('qms.qms_audit_plan_detail_page.k23')}</p>
           ) : (
             <table className='w-full text-sm'>
               <thead>
                 <tr className='border-b text-left text-gray-600'>
-                  <th className='py-2 pr-4'>编号</th>
-                  <th className='py-2 pr-4'>标题</th>
-                  <th className='py-2 pr-4'>严重度</th>
-                  <th className='py-2 pr-4'>类别</th>
-                  <th className='py-2'>状态</th>
+                  <th className='py-2 pr-4'>{i18n.t('qms.qms_audit_plan_detail_page.k24')}</th>
+                  <th className='py-2 pr-4'>{i18n.t('qms.qms_audit_plan_detail_page.k25')}</th>
+                  <th className='py-2 pr-4'>{i18n.t('qms.qms_audit_plan_detail_page.k26')}</th>
+                  <th className='py-2 pr-4'>{i18n.t('qms.qms_audit_plan_detail_page.k27')}</th>
+                  <th className='py-2'>{i18n.t('qms.qms_audit_plan_detail_page.k28')}</th>
                 </tr>
               </thead>
               <tbody>
@@ -224,7 +212,6 @@ export default function QmsAuditPlanDetailPage() {
     </div>
   );
 }
-
 function Field({ label, value }: { label: string; value: string }) {
   return (
     <div className='rounded-lg border p-3'>

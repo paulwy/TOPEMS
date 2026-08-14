@@ -1,3 +1,4 @@
+import i18n from '@/i18n';
 /**
  * V48.0 智能路由推荐 — 基于用户行为、模块依赖、性能指标的智能路由推荐引擎
  *
@@ -224,7 +225,7 @@ export class SmartRouter {
 
     for (const pattern of fromPatterns) {
       let confidence = pattern.transition_probability;
-      let reason = `基于导航模式: ${pattern.frequency} 次转移`;
+      let reason = `${i18n.t('microfrontend.smart-router.k0')}${pattern.frequency}${i18n.t('microfrontend.smart-router.k1')}`;
 
       if (
         activeStrategy === RecommendationStrategy.HYBRID ||
@@ -234,7 +235,7 @@ export class SmartRouter {
         if (metrics) {
           const perfBoost = metrics.performance_score * 0.3;
           confidence = confidence * 0.7 + perfBoost;
-          reason += `，性能评分 ${metrics.performance_score.toFixed(2)}`;
+          reason += `${i18n.t('microfrontend.smart-router.k2')}${metrics.performance_score.toFixed(2)}`;
         }
       }
 
@@ -245,7 +246,7 @@ export class SmartRouter {
         this.matchesTimeOfDay(profile)
       ) {
         confidence += 0.1;
-        reason += '，符合当前时段习惯';
+        reason += i18n.t('microfrontend.smart-router.k3');
       }
 
       const metrics = this.routeMetrics.get(pattern.to_route);
@@ -514,7 +515,7 @@ export class SmartRouter {
         return {
           target_route: route,
           confidence: 0.4,
-          reason: '基于当前时段习惯',
+          reason: i18n.t('microfrontend.smart-router.k0'),
           estimated_load_time: metrics?.avg_load_time ?? 0,
           user_intent: this.inferIntent(currentRoute, route),
           alternative_routes: [],
@@ -533,13 +534,13 @@ export class SmartRouter {
   }
 
   private inferIntent(fromRoute: string, toRoute: string): string {
-    if (toRoute.includes('dashboard')) return '查看概览';
-    if (toRoute.includes('settings')) return '修改配置';
-    if (toRoute.includes('list') || toRoute.includes('manage')) return '管理数据';
-    if (toRoute.includes('detail') || toRoute.includes('view')) return '查看详情';
-    if (toRoute.includes('create') || toRoute.includes('new')) return '创建内容';
-    if (fromRoute.includes('list') && toRoute.includes('detail')) return '深入查看';
-    return '常规导航';
+    if (toRoute.includes('dashboard')) return i18n.t('microfrontend.smart-router.k1');
+    if (toRoute.includes('settings')) return i18n.t('microfrontend.smart-router.k2');
+    if (toRoute.includes('list') || toRoute.includes('manage')) return i18n.t('microfrontend.smart-router.k3');
+    if (toRoute.includes('detail') || toRoute.includes('view')) return i18n.t('microfrontend.smart-router.k4');
+    if (toRoute.includes('create') || toRoute.includes('new')) return i18n.t('microfrontend.smart-router.k5');
+    if (fromRoute.includes('list') && toRoute.includes('detail')) return i18n.t('microfrontend.smart-router.k6');
+    return i18n.t('microfrontend.smart-router.k7');
   }
 
   private matchesTimeOfDay(profile: UserBehaviorProfile): boolean {

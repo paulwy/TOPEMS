@@ -10,15 +10,14 @@ import {
   FormControl,
   InputLabel,
 } from '@mui/material';
+import i18n from '@/i18n';
 import React from 'react';
 import type { ApprovalSettings as ApprovalSettingsType } from '../types';
-
 interface ApprovalSettingsProps {
   settings: ApprovalSettingsType;
   onChange: (settings: ApprovalSettingsType) => void;
   markUnsaved: () => void;
 }
-
 export const ApprovalSettings: React.FC<ApprovalSettingsProps> = ({
   settings,
   onChange,
@@ -31,24 +30,24 @@ export const ApprovalSettings: React.FC<ApprovalSettingsProps> = ({
           variant='h6'
           sx={{ fontWeight: 600, mb: 1 }}
         >
-          审批策略
+          {i18n.t('pages.approval_settings.k0')}
         </Typography>
         <Typography
           variant='body2'
           color='text.secondary'
           sx={{ mb: 3 }}
         >
-          配置默认审批策略和规则
+          {i18n.t('pages.approval_settings.k1')}
         </Typography>
         <Stack spacing={2}>
           <FormControl
             fullWidth
             size='small'
           >
-            <InputLabel>默认审批策略</InputLabel>
+            <InputLabel>{i18n.t('workflow.approval_settings.k0')}</InputLabel>
             <Select
               value={settings.defaultApprovalStrategy}
-              label='默认审批策略'
+              label={i18n.t('workflow.approval_settings.k1')}
               onChange={(e) => {
                 onChange({
                   ...settings,
@@ -57,10 +56,10 @@ export const ApprovalSettings: React.FC<ApprovalSettingsProps> = ({
                 markUnsaved();
               }}
             >
-              <MenuItem value='sequential'>顺序审批</MenuItem>
-              <MenuItem value='parallel'>并行审批</MenuItem>
-              <MenuItem value='any'>任意一人审批</MenuItem>
-              <MenuItem value='majority'>多数通过</MenuItem>
+              <MenuItem value='sequential'>{i18n.t('workflow.approval_settings.k2')}</MenuItem>
+              <MenuItem value='parallel'>{i18n.t('workflow.approval_settings.k3')}</MenuItem>
+              <MenuItem value='any'>{i18n.t('workflow.approval_settings.k4')}</MenuItem>
+              <MenuItem value='majority'>{i18n.t('workflow.approval_settings.k5')}</MenuItem>
             </Select>
           </FormControl>
           <Box
@@ -78,13 +77,13 @@ export const ApprovalSettings: React.FC<ApprovalSettingsProps> = ({
                 variant='body2'
                 sx={{ fontWeight: 500 }}
               >
-                自动审批
+                {i18n.t('pages.approval_settings.k2')}
               </Typography>
               <Typography
                 variant='caption'
                 color='text.secondary'
               >
-                超时未处理自动通过
+                {i18n.t('pages.approval_settings.k3')}
               </Typography>
             </Box>
             <Switch
@@ -98,7 +97,7 @@ export const ApprovalSettings: React.FC<ApprovalSettingsProps> = ({
           <TextField
             fullWidth
             type='number'
-            label='自动审批天数'
+            label={i18n.t('workflow.approval_settings.k6')}
             value={settings.autoApproveDays}
             onChange={(e) => {
               onChange({
@@ -109,19 +108,17 @@ export const ApprovalSettings: React.FC<ApprovalSettingsProps> = ({
             }}
             size='small'
             disabled={!settings.enableAutoApprove}
-            helperText='超过此天数未处理则自动通过'
+            helperText={i18n.t('workflow.approval_settings.k7')}
           />
         </Stack>
       </Box>
-
       <Divider />
-
       <Box>
         <Typography
           variant='h6'
           sx={{ fontWeight: 600, mb: 2 }}
         >
-          超时设置
+          {i18n.t('pages.approval_settings.k4')}
         </Typography>
         <Stack spacing={2}>
           <Box
@@ -138,7 +135,7 @@ export const ApprovalSettings: React.FC<ApprovalSettingsProps> = ({
               variant='body2'
               sx={{ fontWeight: 500 }}
             >
-              启用超时处理
+              {i18n.t('pages.approval_settings.k5')}
             </Typography>
             <Switch
               checked={settings.timeoutEnabled}
@@ -151,7 +148,7 @@ export const ApprovalSettings: React.FC<ApprovalSettingsProps> = ({
           <TextField
             fullWidth
             type='number'
-            label='超时时限（天）'
+            label={i18n.t('workflow.approval_settings.k8')}
             value={settings.timeoutDays}
             onChange={(e) => {
               onChange({
@@ -168,32 +165,30 @@ export const ApprovalSettings: React.FC<ApprovalSettingsProps> = ({
             size='small'
             disabled={!settings.timeoutEnabled}
           >
-            <InputLabel>超时处理方式</InputLabel>
+            <InputLabel>{i18n.t('workflow.approval_settings.k9')}</InputLabel>
             <Select
               value={settings.timeoutAction}
-              label='超时处理方式'
+              label={i18n.t('workflow.approval_settings.k10')}
               onChange={(e) => {
                 onChange({ ...settings, timeoutAction: e.target.value });
                 markUnsaved();
               }}
             >
-              <MenuItem value='escalate'>升级到上级</MenuItem>
-              <MenuItem value='auto_approve'>自动通过</MenuItem>
-              <MenuItem value='auto_reject'>自动驳回</MenuItem>
-              <MenuItem value='notify'>仅通知提醒</MenuItem>
+              <MenuItem value='escalate'>{i18n.t('workflow.approval_settings.k11')}</MenuItem>
+              <MenuItem value='auto_approve'>{i18n.t('workflow.approval_settings.k12')}</MenuItem>
+              <MenuItem value='auto_reject'>{i18n.t('workflow.approval_settings.k13')}</MenuItem>
+              <MenuItem value='notify'>{i18n.t('workflow.approval_settings.k14')}</MenuItem>
             </Select>
           </FormControl>
         </Stack>
       </Box>
-
       <Divider />
-
       <Box>
         <Typography
           variant='h6'
           sx={{ fontWeight: 600, mb: 2 }}
         >
-          转交规则
+          {i18n.t('pages.approval_settings.k6')}
         </Typography>
         <Stack spacing={2}>
           <Box
@@ -211,13 +206,13 @@ export const ApprovalSettings: React.FC<ApprovalSettingsProps> = ({
                 variant='body2'
                 sx={{ fontWeight: 500 }}
               >
-                允许转交
+                {i18n.t('pages.approval_settings.k7')}
               </Typography>
               <Typography
                 variant='caption'
                 color='text.secondary'
               >
-                审批人可将任务转交给他人
+                {i18n.t('pages.approval_settings.k8')}
               </Typography>
             </Box>
             <Switch
@@ -231,7 +226,7 @@ export const ApprovalSettings: React.FC<ApprovalSettingsProps> = ({
           <TextField
             fullWidth
             type='number'
-            label='最大转交流数'
+            label={i18n.t('workflow.approval_settings.k15')}
             value={settings.maxTransferLevels}
             onChange={(e) => {
               onChange({
@@ -242,7 +237,7 @@ export const ApprovalSettings: React.FC<ApprovalSettingsProps> = ({
             }}
             size='small'
             disabled={!settings.enableTransfer}
-            helperText='最多可转交的层级数，0 表示不限制'
+            helperText={i18n.t('workflow.approval_settings.0_16')}
           />
           <Box
             sx={{
@@ -259,13 +254,13 @@ export const ApprovalSettings: React.FC<ApprovalSettingsProps> = ({
                 variant='body2'
                 sx={{ fontWeight: 500 }}
               >
-                允许委托
+                {i18n.t('pages.approval_settings.k9')}
               </Typography>
               <Typography
                 variant='caption'
                 color='text.secondary'
               >
-                审批人可委托他人代审批
+                {i18n.t('pages.approval_settings.k10')}
               </Typography>
             </Box>
             <Switch
@@ -286,7 +281,7 @@ export const ApprovalSettings: React.FC<ApprovalSettingsProps> = ({
               borderRadius: 1,
             }}
           >
-            <Typography variant='body2'>委托需审批人确认</Typography>
+            <Typography variant='body2'>{i18n.t('workflow.approval_settings.k17')}</Typography>
             <Switch
               checked={settings.delegateRequiresApproval}
               onChange={(e) => {

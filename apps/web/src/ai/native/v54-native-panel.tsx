@@ -31,6 +31,7 @@ import {
   TableRow,
   Card,
 } from '@mui/material';
+import i18n from '@/i18n';
 import {
   X as XIcon,
   Cpu,
@@ -205,24 +206,24 @@ const V54PanelHeader: React.FC<{ status: AIPlatformStatus; onClose: () => void }
           variant='h6'
           sx={{ fontWeight: 700, fontSize: 18 }}
         >
-          V54.0 AI 原生平台
+          {i18n.t('ai.v54-native-panel.v540ai_0')}
         </Typography>
         <Typography
           variant='caption'
           sx={{ opacity: 0.85, fontSize: 12 }}
         >
-          AI 优先架构 · 智能路由 · 自适应 UI · 原生集成
+          {i18n.t('ai.v54-native-panel.k1')}
         </Typography>
       </Box>
     </Box>
     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
       <Chip
-        label={`${status.capabilities.active}/${status.capabilities.total} 能力`}
+        label={`${status.capabilities.active}/${status.capabilities.total} ${i18n.t('ai.v54-native-panel.k2')}`}
         size='small'
         sx={{ bgcolor: 'action.disabledBackground', color: 'common.white', fontWeight: 600 }}
       />
       <Chip
-        label={`运行 ${status.uptime}s`}
+        label={`${i18n.t('ai.v54-native-panel.k3')} ${status.uptime}s`}
         size='small'
         sx={{ bgcolor: 'action.disabledBackground', color: 'common.white', fontWeight: 600 }}
       />
@@ -252,11 +253,11 @@ const V54PanelHeader: React.FC<{ status: AIPlatformStatus; onClose: () => void }
 );
 
 const TAB_CONFIG: Array<{ id: TabId; label: string; icon: React.ReactNode }> = [
-  { id: 'dashboard', label: '概览', icon: <Activity size={16} /> },
-  { id: 'capabilities', label: 'AI 能力', icon: <Cpu size={16} /> },
-  { id: 'router', label: '智能路由', icon: <Route size={16} /> },
-  { id: 'ui', label: '自适应 UI', icon: <LayoutDashboard size={16} /> },
-  { id: 'settings', label: '平台配置', icon: <Settings size={16} /> },
+  { id: 'dashboard', label: i18n.t('ai.v54-native-panel.k0'), icon: <Activity size={16} /> },
+  { id: 'capabilities', label: i18n.t('ai.v54-native-panel.ai_4'), icon: <Cpu size={16} /> },
+  { id: 'router', label: i18n.t('ai.v54-native-panel.k1'), icon: <Route size={16} /> },
+  { id: 'ui', label: i18n.t('ai.v54-native-panel.ui_2'), icon: <LayoutDashboard size={16} /> },
+  { id: 'settings', label: i18n.t('ai.v54-native-panel.k3'), icon: <Settings size={16} /> },
 ];
 
 const TabBar: React.FC<{ activeTab: TabId; onChange: (tab: TabId) => void }> = ({
@@ -309,9 +310,9 @@ const DashboardTab: React.FC<{
       >
         <Grid size={{ xs: 12, md: 6, lg: 3 }}>
           <MetricCard
-            title='AI 能力'
+            title={i18n.t('ai.v54-native-panel.ai_5')}
             value={`${activeCaps}/${caps.length}`}
-            subtitle='已激活'
+            subtitle={i18n.t('ai.v54-native-panel.k4')}
             icon={
               <Cpu
                 size={24}
@@ -324,9 +325,9 @@ const DashboardTab: React.FC<{
         </Grid>
         <Grid size={{ xs: 12, md: 6, lg: 3 }}>
           <MetricCard
-            title='路由推荐'
+            title={i18n.t('ai.v54-native-panel.k5')}
             value={routerStats.total_recommendations.toString()}
-            subtitle={`接受率 ${(routerStats.acceptance_rate * 100).toFixed(1)}%`}
+            subtitle={`${i18n.t('ai.v54-native-panel.k6')} ${(routerStats.acceptance_rate * 100).toFixed(1)}%`}
             icon={
               <Route
                 size={24}
@@ -339,9 +340,9 @@ const DashboardTab: React.FC<{
         </Grid>
         <Grid size={{ xs: 12, md: 6, lg: 3 }}>
           <MetricCard
-            title='布局自适应'
+            title={i18n.t('ai.v54-native-panel.k6')}
             value={adaptationStats.total_adaptations.toString()}
-            subtitle={`置信度 ${(adaptationStats.avg_layout_confidence * 100).toFixed(1)}%`}
+            subtitle={`${i18n.t('ai.v54-native-panel.k7')} ${(adaptationStats.avg_layout_confidence * 100).toFixed(1)}%`}
             icon={
               <LayoutDashboard
                 size={24}
@@ -354,9 +355,9 @@ const DashboardTab: React.FC<{
         </Grid>
         <Grid size={{ xs: 12, md: 6, lg: 3 }}>
           <MetricCard
-            title='平台状态'
-            value={status.initialized ? '运行中' : '未初始化'}
-            subtitle={`中间件 ${status.middleware.total} 个`}
+            title={i18n.t('ai.v54-native-panel.k7')}
+            value={status.initialized ? i18n.t('ai.v54-native-panel.k9') : i18n.t('ai.v54-native-panel.k8')}
+            subtitle={`${i18n.t('ai.v54-native-panel.k8')} ${status.middleware.total} ${i18n.t('ai.v54-native-panel.k9')}`}
             icon={
               <Activity
                 size={24}
@@ -381,18 +382,18 @@ const DashboardTab: React.FC<{
               sx={{ fontWeight: 600, mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}
             >
               <BarChart3 size={16} />
-              智能路由 Top 路径
+              {i18n.t('ai.v54-native-panel.top_10')}
             </Typography>
             {routerStats.top_routes.length === 0 ? (
-              <Alert severity='info'>暂无路由数据。使用"智能路由"标签页进行路由推荐。</Alert>
+              <Alert severity='info'>{i18n.t('ai.v54-native-panel.k11')}{i18n.t('ai.v54-native-panel.k10')}{i18n.t('ai.v54-native-panel.k12')}</Alert>
             ) : (
               <TableContainer>
                 <Table size='small'>
                   <TableHead>
                     <TableRow>
-                      <TableCell>路径</TableCell>
-                      <TableCell align='right'>推荐次数</TableCell>
-                      <TableCell align='right'>置信度</TableCell>
+                      <TableCell>{i18n.t('ai.v54-native-panel.k11')}</TableCell>
+                      <TableCell align='right'>{i18n.t('ai.v54-native-panel.k12')}</TableCell>
+                      <TableCell align='right'>{i18n.t('ai.v54-native-panel.k13')}</TableCell>
                     </TableRow>
                   </TableHead>
                   <TableBody>
@@ -429,7 +430,7 @@ const DashboardTab: React.FC<{
               sx={{ fontWeight: 600, mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}
             >
               <Sliders size={16} />
-              AI 能力分布
+              {i18n.t('ai.v54-native-panel.ai_13')}
             </Typography>
             <Stack
               direction='column'
@@ -445,7 +446,7 @@ const DashboardTab: React.FC<{
                       {cap.name}
                     </Typography>
                     <Chip
-                      label={cap.enabled ? '激活' : '停用'}
+                      label={cap.enabled ? i18n.t('ai.v54-native-panel.k15') : i18n.t('ai.v54-native-panel.k14')}
                       size='small'
                       sx={{
                         fontSize: 10,
@@ -549,8 +550,8 @@ const CapabilitiesTab: React.FC = () => {
   };
 
   const handleDiscover = () => {
-    const discovered = aiFirstPlatform.discoverCapabilities('推理');
-    alert(`发现 ${discovered.length} 个匹配能力`);
+    const discovered = aiFirstPlatform.discoverCapabilities(i18n.t('ai.v54-native-panel.k16'));
+    alert(`${i18n.t('ai.v54-native-panel.k14')} ${discovered.length} ${i18n.t('ai.v54-native-panel.k15')}`);
   };
 
   return (
@@ -564,15 +565,15 @@ const CapabilitiesTab: React.FC = () => {
           size='small'
           sx={{ minWidth: 120 }}
         >
-          <InputLabel>筛选</InputLabel>
+          <InputLabel>{i18n.t('ai.v54-native-panel.k17')}</InputLabel>
           <Select
             value={filter}
-            label='筛选'
+            label={i18n.t('ai.v54-native-panel.k18')}
             onChange={(e) => setFilter(e.target.value as 'all' | 'active' | 'inactive')}
           >
-            <MenuItem value='all'>全部</MenuItem>
-            <MenuItem value='active'>已激活</MenuItem>
-            <MenuItem value='inactive'>已停用</MenuItem>
+            <MenuItem value='all'>{i18n.t('ai.v54-native-panel.k19')}</MenuItem>
+            <MenuItem value='active'>{i18n.t('ai.v54-native-panel.k20')}</MenuItem>
+            <MenuItem value='inactive'>{i18n.t('ai.v54-native-panel.k21')}</MenuItem>
           </Select>
         </FormControl>
         <Button
@@ -582,7 +583,7 @@ const CapabilitiesTab: React.FC = () => {
           onClick={() => setCaps(aiFirstPlatform.getCapabilities())}
           sx={{ bgcolor: 'primary.500', '&:hover': { bgcolor: 'primary.600' } }}
         >
-          刷新
+          {i18n.t('ai.v54-native-panel.k16')}
         </Button>
         <Button
           variant='outlined'
@@ -591,7 +592,7 @@ const CapabilitiesTab: React.FC = () => {
           onClick={handleDiscover}
           sx={{ borderColor: 'secondary.500', color: 'secondary.500' }}
         >
-          发现能力
+          {i18n.t('ai.v54-native-panel.k17')}
         </Button>
         <Box sx={{ flex: 1 }} />
         <Button
@@ -601,7 +602,7 @@ const CapabilitiesTab: React.FC = () => {
           onClick={handleReset}
           color='error'
         >
-          重置平台
+          {i18n.t('ai.v54-native-panel.k18')}
         </Button>
       </Stack>
 
@@ -672,7 +673,7 @@ const CapabilitiesTab: React.FC = () => {
               </Box>
               <Box sx={{ mt: 1.5, display: 'flex', alignItems: 'center', gap: 0.5 }}>
                 <Chip
-                  label={cap.status === 'active' ? '运行中' : cap.status}
+                  label={cap.status === 'active' ? i18n.t('ai.v54-native-panel.k22') : cap.status}
                   size='small'
                   sx={{
                     fontSize: 10,
@@ -685,7 +686,7 @@ const CapabilitiesTab: React.FC = () => {
                   variant='caption'
                   color='text.secondary'
                 >
-                  更新: {new Date(cap.updatedAt).toLocaleTimeString()}
+                  [i18n.t('ai.v54-native-panel.k19')]: {new Date(cap.updatedAt).toLocaleTimeString()}
                 </Typography>
               </Box>
             </Card>
@@ -697,7 +698,7 @@ const CapabilitiesTab: React.FC = () => {
 };
 
 const RouterTab: React.FC = () => {
-  const [intent, setIntent] = React.useState('我想看销售数据分析');
+  const [intent, setIntent] = React.useState(i18n.t('ai.v54-native-panel.k23'));
   const [strategy, setStrategy] = React.useState<RoutingStrategy>('hybrid');
   const [recommendation, setRecommendation] = React.useState<RouteRecommendation | null>(null);
   const [stats, setStats] = React.useState<RouterStats>(intelligentRouter.getRouteStats());
@@ -736,15 +737,15 @@ const RouterTab: React.FC = () => {
           size='small'
           sx={{ minWidth: 140 }}
         >
-          <InputLabel>路由策略</InputLabel>
+          <InputLabel>{i18n.t('ai.v54-native-panel.k24')}</InputLabel>
           <Select
             value={strategy}
-            label='路由策略'
+            label={i18n.t('ai.v54-native-panel.k25')}
             onChange={(e) => setStrategy(e.target.value as RoutingStrategy)}
           >
-            <MenuItem value='hybrid'>混合策略</MenuItem>
-            <MenuItem value='intent-based'>意图优先</MenuItem>
-            <MenuItem value='performance-based'>性能优先</MenuItem>
+            <MenuItem value='hybrid'>{i18n.t('ai.v54-native-panel.k26')}</MenuItem>
+            <MenuItem value='intent-based'>{i18n.t('ai.v54-native-panel.k27')}</MenuItem>
+            <MenuItem value='performance-based'>{i18n.t('ai.v54-native-panel.k28')}</MenuItem>
             <MenuItem value='a/b-test'>A/B 测试</MenuItem>
           </Select>
         </FormControl>
@@ -755,7 +756,7 @@ const RouterTab: React.FC = () => {
               color='text.secondary'
               sx={{ mb: 0.5, display: 'block' }}
             >
-              描述你的意图
+              {i18n.t('ai.v54-native-panel.k20')}
             </Typography>
             <FormControl
               fullWidth
@@ -766,11 +767,11 @@ const RouterTab: React.FC = () => {
                 onChange={(e) => setIntent(e.target.value)}
                 sx={{ height: 36 }}
               >
-                <MenuItem value='我想看销售数据分析'>我想看销售数据分析</MenuItem>
-                <MenuItem value='我需要管理客户信息'>我需要管理客户信息</MenuItem>
-                <MenuItem value='查看库存状态'>查看库存状态</MenuItem>
-                <MenuItem value='审批工作流'>审批工作流</MenuItem>
-                <MenuItem value='查看财务报表'>查看财务报表</MenuItem>
+                <MenuItem value={i18n.t('ai.v54-native-panel.k29')}>{i18n.t('ai.v54-native-panel.k30')}</MenuItem>
+                <MenuItem value={i18n.t('ai.v54-native-panel.k31')}>{i18n.t('ai.v54-native-panel.k32')}</MenuItem>
+                <MenuItem value={i18n.t('ai.v54-native-panel.k33')}>{i18n.t('ai.v54-native-panel.k34')}</MenuItem>
+                <MenuItem value={i18n.t('ai.v54-native-panel.k35')}>{i18n.t('ai.v54-native-panel.k36')}</MenuItem>
+                <MenuItem value={i18n.t('ai.v54-native-panel.k37')}>{i18n.t('ai.v54-native-panel.k38')}</MenuItem>
               </Select>
             </FormControl>
           </Box>
@@ -781,7 +782,7 @@ const RouterTab: React.FC = () => {
           onClick={handleRecommend}
           sx={{ bgcolor: 'teal.500', height: 36, '&:hover': { bgcolor: 'teal.600' } }}
         >
-          推荐路由
+          {i18n.t('ai.v54-native-panel.k21')}
         </Button>
         <Button
           variant='outlined'
@@ -789,7 +790,7 @@ const RouterTab: React.FC = () => {
           onClick={handleLearn}
           sx={{ height: 36 }}
         >
-          学习行为
+          {i18n.t('ai.v54-native-panel.k22')}
         </Button>
       </Stack>
 
@@ -804,7 +805,7 @@ const RouterTab: React.FC = () => {
               sx={{ fontWeight: 600, mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}
             >
               <Route size={16} />
-              推荐结果
+              {i18n.t('ai.v54-native-panel.k23')}
             </Typography>
             {recommendation && (
               <>
@@ -826,7 +827,7 @@ const RouterTab: React.FC = () => {
                       {recommendation.path}
                     </Typography>
                     <Chip
-                      label={`置信度 ${(recommendation.confidence * 100).toFixed(0)}%`}
+                      label={`${i18n.t('ai.v54-native-panel.k24')} ${(recommendation.confidence * 100).toFixed(0)}%`}
                       size='small'
                       sx={{ bgcolor: 'teal.500', color: 'common.white', fontWeight: 700 }}
                     />
@@ -844,7 +845,7 @@ const RouterTab: React.FC = () => {
                     sx={{ flexWrap: 'wrap', gap: 0.5 }}
                   >
                     <Chip
-                      label={`预测延迟: ${recommendation.predicted_latency_ms}ms`}
+                      label={`${i18n.t('ai.v54-native-panel.k25')} ${recommendation.predicted_latency_ms}ms`}
                       size='small'
                       sx={{ fontSize: 11 }}
                     />
@@ -862,7 +863,7 @@ const RouterTab: React.FC = () => {
                   variant='subtitle2'
                   sx={{ fontWeight: 600, mb: 1 }}
                 >
-                  替代方案
+                  {i18n.t('ai.v54-native-panel.k26')}
                 </Typography>
                 {recommendation.alternatives.map((alt, idx) => (
                   <Paper
@@ -910,7 +911,7 @@ const RouterTab: React.FC = () => {
               sx={{ fontWeight: 600, mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}
             >
               <BarChart3 size={16} />
-              路由统计
+              {i18n.t('ai.v54-native-panel.k27')}
             </Typography>
             <Grid
               container
@@ -919,28 +920,28 @@ const RouterTab: React.FC = () => {
             >
               <Grid size={6}>
                 <StatBox
-                  label='总推荐'
+                  label={i18n.t('ai.v54-native-panel.k39')}
                   value={stats.total_recommendations}
                   color={designTokens.colors.primary.main}
                 />
               </Grid>
               <Grid size={6}>
                 <StatBox
-                  label='接受率'
+                  label={i18n.t('ai.v54-native-panel.k40')}
                   value={`${(stats.acceptance_rate * 100).toFixed(1)}%`}
                   color={designTokens.colors.success.dark}
                 />
               </Grid>
               <Grid size={6}>
                 <StatBox
-                  label='平均置信度'
+                  label={i18n.t('ai.v54-native-panel.k41')}
                   value={`${(stats.avg_confidence * 100).toFixed(1)}%`}
                   color={designTokens.colors.warning.main}
                 />
               </Grid>
               <Grid size={6}>
                 <StatBox
-                  label='策略数'
+                  label={i18n.t('ai.v54-native-panel.k42')}
                   value={Object.keys(stats.by_strategy).length}
                   color={designTokens.colors.secondary.main}
                 />
@@ -952,16 +953,16 @@ const RouterTab: React.FC = () => {
               variant='subtitle2'
               sx={{ fontWeight: 600, mb: 1 }}
             >
-              性能数据
+              {i18n.t('ai.v54-native-panel.k28')}
             </Typography>
             <TableContainer>
               <Table size='small'>
                 <TableHead>
                   <TableRow>
-                    <TableCell>路径</TableCell>
-                    <TableCell align='right'>延迟</TableCell>
-                    <TableCell align='right'>错误率</TableCell>
-                    <TableCell align='right'>缓存</TableCell>
+                    <TableCell>{i18n.t('ai.v54-native-panel.k43')}</TableCell>
+                    <TableCell align='right'>{i18n.t('ai.v54-native-panel.k44')}</TableCell>
+                    <TableCell align='right'>{i18n.t('ai.v54-native-panel.k45')}</TableCell>
+                    <TableCell align='right'>{i18n.t('ai.v54-native-panel.k46')}</TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
@@ -1033,9 +1034,9 @@ const AdaptiveUITab: React.FC<{
   const createDemoProfile = () => {
     const profile = adaptiveUIEngine.createProfile({
       id: 'demo-user',
-      name: '演示用户',
-      role: '管理员',
-      department: '研发中心',
+      name: i18n.t('ai.v54-native-panel.k47'),
+      role: i18n.t('ai.v54-native-panel.k48'),
+      department: i18n.t('ai.v54-native-panel.k49'),
       preferences: {
         theme: 'light',
         density: 'normal',
@@ -1099,7 +1100,7 @@ const AdaptiveUITab: React.FC<{
         timezone: 'Asia/Shanghai',
         is_online: true,
       },
-      segments: ['管理员', '高频用户', '数据分析'],
+      segments: [i18n.t('ai.v54-native-panel.k52'), i18n.t('ai.v54-native-panel.k51'), i18n.t('ai.v54-native-panel.k50')],
       lastActiveAt: Date.now(),
     });
     adaptiveUIEngine.setCurrentUser(profile.id);
@@ -1130,16 +1131,16 @@ const AdaptiveUITab: React.FC<{
     const profile = adaptiveUIEngine.getCurrentProfile();
     if (profile) {
       const items = [
-        { id: '销售报表', type: 'report', tags: ['analytics', 'dashboard'] },
-        { id: '客户列表', type: 'module', tags: ['customer', 'crm'] },
-        { id: '审批任务', type: 'action', tags: ['workflow', 'approval'] },
-        { id: '库存概览', type: 'dashboard', tags: ['inventory', 'stock'] },
-        { id: 'AI 助手', type: 'module', tags: ['ai', 'assistant'] },
+        { id: i18n.t('ai.v54-native-panel.k53'), type: 'report', tags: ['analytics', 'dashboard'] },
+        { id: i18n.t('ai.v54-native-panel.k54'), type: 'module', tags: ['customer', 'crm'] },
+        { id: i18n.t('ai.v54-native-panel.k55'), type: 'action', tags: ['workflow', 'approval'] },
+        { id: i18n.t('ai.v54-native-panel.k56'), type: 'dashboard', tags: ['inventory', 'stock'] },
+        { id: i18n.t('ai.v54-native-panel.ai_29'), type: 'module', tags: ['ai', 'assistant'] },
       ];
       const recs = adaptiveUIEngine.personalizeContent(profile.id, items);
       alert(
         `内容推荐结果:\n\n${recs
-          .map((r) => `${r.title} - ${r.reason} (置信度: ${(r.confidence * 100).toFixed(0)}%)`)
+          .map((r) => `${r.title} - ${r.reason} ${i18n.t('ai.v54-native-panel.k30')} ${(r.confidence * 100).toFixed(0)}%)`)
           .join('\n')}`
       );
     }
@@ -1163,7 +1164,7 @@ const AdaptiveUITab: React.FC<{
               sx={{ fontWeight: 600, mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}
             >
               <Eye size={16} />
-              用户画像
+              {i18n.t('ai.v54-native-panel.k31')}
             </Typography>
             <Stack
               direction='row'
@@ -1174,10 +1175,10 @@ const AdaptiveUITab: React.FC<{
                 size='small'
                 sx={{ minWidth: 100 }}
               >
-                <InputLabel>设备</InputLabel>
+                <InputLabel>{i18n.t('ai.v54-native-panel.k57')}</InputLabel>
                 <Select
                   value={device}
-                  label='设备'
+                  label={i18n.t('ai.v54-native-panel.k58')}
                   onChange={(e) => setDevice(e.target.value as DeviceType)}
                 >
                   <MenuItem value='desktop'>
@@ -1201,15 +1202,15 @@ const AdaptiveUITab: React.FC<{
                 size='small'
                 sx={{ minWidth: 100 }}
               >
-                <InputLabel>布局</InputLabel>
+                <InputLabel>{i18n.t('ai.v54-native-panel.k59')}</InputLabel>
                 <Select
                   value={layout}
-                  label='布局'
+                  label={i18n.t('ai.v54-native-panel.k60')}
                   onChange={(e) => setLayout(e.target.value as 'grid' | 'list' | 'mixed')}
                 >
-                  <MenuItem value='grid'>网格</MenuItem>
-                  <MenuItem value='list'>列表</MenuItem>
-                  <MenuItem value='mixed'>混合</MenuItem>
+                  <MenuItem value='grid'>{i18n.t('ai.v54-native-panel.k61')}</MenuItem>
+                  <MenuItem value='list'>{i18n.t('ai.v54-native-panel.k62')}</MenuItem>
+                  <MenuItem value='mixed'>{i18n.t('ai.v54-native-panel.k63')}</MenuItem>
                 </Select>
               </FormControl>
             </Stack>
@@ -1258,7 +1259,7 @@ const AdaptiveUITab: React.FC<{
                             {b.action}
                           </Typography>
                         }
-                        secondary={`频率: ${b.frequency} · 平均: ${(b.avg_duration_ms / 1000).toFixed(1)}s`}
+                        secondary={`${i18n.t('ai.v54-native-panel.k32')} ${b.frequency} ${i18n.t('ai.v54-native-panel.k33')} ${(b.avg_duration_ms / 1000).toFixed(1)}s`}
                       />
                     </ListItem>
                   ))}
@@ -1268,7 +1269,7 @@ const AdaptiveUITab: React.FC<{
                     variant='caption'
                     sx={{ fontWeight: 600, display: 'block', mb: 0.5 }}
                   >
-                    分群标签
+                    {i18n.t('ai.v54-native-panel.k34')}
                   </Typography>
                   <Stack
                     direction='row'
@@ -1300,7 +1301,7 @@ const AdaptiveUITab: React.FC<{
                 onClick={handleAdapt}
                 sx={{ bgcolor: 'warning.500', '&:hover': { bgcolor: 'warning.600' } }}
               >
-                适配布局
+                {i18n.t('ai.v54-native-panel.k35')}
               </Button>
               <Button
                 variant='outlined'
@@ -1308,7 +1309,7 @@ const AdaptiveUITab: React.FC<{
                 startIcon={<Star size={14} />}
                 onClick={handleContentRec}
               >
-                内容推荐
+                {i18n.t('ai.v54-native-panel.k36')}
               </Button>
               <Button
                 variant='outlined'
@@ -1316,7 +1317,7 @@ const AdaptiveUITab: React.FC<{
                 startIcon={<TrendingUp size={14} />}
                 onClick={handleOptimize}
               >
-                优化建议
+                {i18n.t('ai.v54-native-panel.k37')}
               </Button>
             </Stack>
           </Card>
@@ -1329,7 +1330,7 @@ const AdaptiveUITab: React.FC<{
               sx={{ fontWeight: 600, mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}
             >
               <LayoutDashboard size={16} />
-              自适应预览
+              {i18n.t('ai.v54-native-panel.k38')}
             </Typography>
             {adaptedLayout ? (
               <>
@@ -1344,34 +1345,34 @@ const AdaptiveUITab: React.FC<{
                 >
                   <Box sx={{ display: 'flex', gap: 2, mb: 1.5 }}>
                     <Chip
-                      label={`布局: ${adaptedLayout.layout}`}
+                      label={`${i18n.t('ai.v54-native-panel.k39')} ${adaptedLayout.layout}`}
                       size='small'
                       sx={{ bgcolor: 'common.white', fontWeight: 600 }}
                     />
                     <Chip
-                      label={`密度: ${adaptedLayout.density}`}
+                      label={`${i18n.t('ai.v54-native-panel.k40')} ${adaptedLayout.density}`}
                       size='small'
                       sx={{ bgcolor: 'common.white', fontWeight: 600 }}
                     />
                     <Chip
-                      label={`置信度: ${(adaptedLayout.layout_confidence * 100).toFixed(0)}%`}
+                      label={`${i18n.t('ai.v54-native-panel.k41')} ${(adaptedLayout.layout_confidence * 100).toFixed(0)}%`}
                       size='small'
                       sx={{ bgcolor: 'common.white', fontWeight: 600 }}
                     />
                   </Box>
                   <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap', mb: 1 }}>
                     <Chip
-                      label={`主题: ${adaptedLayout.theme}`}
+                      label={`${i18n.t('ai.v54-native-panel.k42')} ${adaptedLayout.theme}`}
                       size='small'
                       sx={{ fontSize: 10 }}
                     />
                     <Chip
-                      label={`字体缩放: ${adaptedLayout.font_scale.toFixed(2)}x`}
+                      label={`${i18n.t('ai.v54-native-panel.k43')} ${adaptedLayout.font_scale.toFixed(2)}x`}
                       size='small'
                       sx={{ fontSize: 10 }}
                     />
                     <Chip
-                      label={`侧边栏: ${adaptedLayout.sidebar_state}`}
+                      label={`${i18n.t('ai.v54-native-panel.k44')} ${adaptedLayout.sidebar_state}`}
                       size='small'
                       sx={{ fontSize: 10 }}
                     />
@@ -1382,7 +1383,7 @@ const AdaptiveUITab: React.FC<{
                   variant='subtitle2'
                   sx={{ fontWeight: 600, mb: 1 }}
                 >
-                  推荐模块
+                  {i18n.t('ai.v54-native-panel.k45')}
                 </Typography>
                 <List dense>
                   {adaptedLayout.recommended_modules.length === 0 && (
@@ -1390,7 +1391,7 @@ const AdaptiveUITab: React.FC<{
                       variant='caption'
                       color='text.secondary'
                     >
-                      暂无推荐
+                      {i18n.t('ai.v54-native-panel.k46')}
                     </Typography>
                   )}
                   {adaptedLayout.recommended_modules.map((mod, idx) => (
@@ -1452,7 +1453,7 @@ const AdaptiveUITab: React.FC<{
                 )}
               </>
             ) : (
-              <Alert severity='info'>点击"适配布局"生成自适应预览</Alert>
+              <Alert severity='info'>{i18n.t('ai.v54-native-panel.i18nt_47')}{i18n.t('ai.v54-native-panel.k64')}{i18n.t('ai.v54-native-panel.k48')}</Alert>
             )}
           </Card>
         </Grid>
@@ -1464,7 +1465,7 @@ const AdaptiveUITab: React.FC<{
               sx={{ fontWeight: 600, mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}
             >
               <BarChart3 size={16} />
-              适配统计
+              {i18n.t('ai.v54-native-panel.k49')}
             </Typography>
             <Grid
               container
@@ -1472,28 +1473,28 @@ const AdaptiveUITab: React.FC<{
             >
               <Grid size={6}>
                 <StatBox
-                  label='总适配'
+                  label={i18n.t('ai.v54-native-panel.k65')}
                   value={stats.total_adaptations}
                   color={designTokens.colors.primary.main}
                 />
               </Grid>
               <Grid size={6}>
                 <StatBox
-                  label='布局变更'
+                  label={i18n.t('ai.v54-native-panel.k66')}
                   value={stats.layout_changes}
                   color={designTokens.colors.success.dark}
                 />
               </Grid>
               <Grid size={6}>
                 <StatBox
-                  label='内容推荐'
+                  label={i18n.t('ai.v54-native-panel.k67')}
                   value={stats.content_recommendations}
                   color={designTokens.colors.warning.main}
                 />
               </Grid>
               <Grid size={6}>
                 <StatBox
-                  label='满意度'
+                  label={i18n.t('ai.v54-native-panel.k68')}
                   value={`${(stats.user_satisfaction_score * 100).toFixed(0)}%`}
                   color={designTokens.colors.secondary.main}
                 />
@@ -1506,7 +1507,7 @@ const AdaptiveUITab: React.FC<{
               variant='subtitle2'
               sx={{ fontWeight: 600, mb: 1 }}
             >
-              设备分布
+              {i18n.t('ai.v54-native-panel.k50')}
             </Typography>
             <Stack
               direction='column'
@@ -1519,7 +1520,7 @@ const AdaptiveUITab: React.FC<{
                       variant='body2'
                       sx={{ fontSize: 12 }}
                     >
-                      {dev === 'desktop' ? '桌面' : dev === 'tablet' ? '平板' : '移动端'}
+                      {dev === 'desktop' ? i18n.t('ai.v54-native-panel.k71') : dev === 'tablet' ? i18n.t('ai.v54-native-panel.k70') : i18n.t('ai.v54-native-panel.k69')}
                     </Typography>
                     <Typography
                       variant='body2'
@@ -1547,7 +1548,7 @@ const AdaptiveUITab: React.FC<{
               variant='subtitle2'
               sx={{ fontWeight: 600, mb: 1 }}
             >
-              平均延迟
+              {i18n.t('ai.v54-native-panel.k51')}
             </Typography>
             <Box sx={{ textAlign: 'center' }}>
               <Typography
@@ -1560,7 +1561,7 @@ const AdaptiveUITab: React.FC<{
                 variant='caption'
                 color='text.secondary'
               >
-                每次适配平均耗时
+                {i18n.t('ai.v54-native-panel.k52')}
               </Typography>
             </Box>
           </Card>
@@ -1604,10 +1605,10 @@ const SettingsTab: React.FC = () => {
       metadata: { test: true },
     });
     alert(
-      `中间件执行结果:\n\n` +
-        `成功: ${result.success}\n` +
-        `延迟: ${result.latency.toFixed(2)}ms\n` +
-        `数据: ${JSON.stringify(result.data, null, 2)}`
+      i18n.t('ai.v54-native-panel.nn_53') +
+        `${i18n.t('ai.v54-native-panel.k54')} ${result.success}\n` +
+        `${i18n.t('ai.v54-native-panel.k55')} ${result.latency.toFixed(2)}ms\n` +
+        `${i18n.t('ai.v54-native-panel.k56')} ${JSON.stringify(result.data, null, 2)}`
     );
   };
 
@@ -1624,7 +1625,7 @@ const SettingsTab: React.FC = () => {
               sx={{ fontWeight: 600, mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}
             >
               <Settings size={16} />
-              AI 平台配置
+              {i18n.t('ai.v54-native-panel.ai_57')}
             </Typography>
 
             <Stack
@@ -1638,7 +1639,7 @@ const SettingsTab: React.FC = () => {
                     onChange={(e) => handleChange('ai_enabled', e.target.checked)}
                   />
                 }
-                label='AI 功能总开关'
+                label={i18n.t('ai.v54-native-panel.ai_58')}
               />
               <FormControlLabel
                 control={
@@ -1647,7 +1648,7 @@ const SettingsTab: React.FC = () => {
                     onChange={(e) => handleChange('auto_optimize', e.target.checked)}
                   />
                 }
-                label='自动性能优化'
+                label={i18n.t('ai.v54-native-panel.k72')}
               />
               <FormControlLabel
                 control={
@@ -1656,7 +1657,7 @@ const SettingsTab: React.FC = () => {
                     onChange={(e) => handleChange('intelligent_routing', e.target.checked)}
                   />
                 }
-                label='智能路由'
+                label={i18n.t('ai.v54-native-panel.k73')}
               />
               <FormControlLabel
                 control={
@@ -1665,7 +1666,7 @@ const SettingsTab: React.FC = () => {
                     onChange={(e) => handleChange('adaptive_ui', e.target.checked)}
                   />
                 }
-                label='自适应 UI'
+                label={i18n.t('ai.v54-native-panel.ui_74')}
               />
               <FormControlLabel
                 control={
@@ -1674,7 +1675,7 @@ const SettingsTab: React.FC = () => {
                     onChange={(e) => handleChange('fallback_on_error', e.target.checked)}
                   />
                 }
-                label='错误回退'
+                label={i18n.t('ai.v54-native-panel.k75')}
               />
               <FormControlLabel
                 control={
@@ -1683,7 +1684,7 @@ const SettingsTab: React.FC = () => {
                     onChange={(e) => handleChange('telemetry_enabled', e.target.checked)}
                   />
                 }
-                label='遥测数据采集'
+                label={i18n.t('ai.v54-native-panel.k76')}
               />
             </Stack>
 
@@ -1693,7 +1694,7 @@ const SettingsTab: React.FC = () => {
               variant='subtitle2'
               sx={{ fontWeight: 600, mb: 2 }}
             >
-              参数配置
+              {i18n.t('ai.v54-native-panel.k59')}
             </Typography>
 
             <Box sx={{ mb: 2 }}>
@@ -1701,7 +1702,7 @@ const SettingsTab: React.FC = () => {
                 variant='body2'
                 gutterBottom
               >
-                学习率: {config.learning_rate}
+                [i18n.t('ai.v54-native-panel.k60')]: {config.learning_rate}
               </Typography>
               <Slider
                 value={config.learning_rate}
@@ -1718,7 +1719,7 @@ const SettingsTab: React.FC = () => {
                 variant='body2'
                 gutterBottom
               >
-                最大并发能力: {config.max_concurrent_capabilities}
+                [i18n.t('ai.v54-native-panel.k61')]: {config.max_concurrent_capabilities}
               </Typography>
               <Slider
                 value={config.max_concurrent_capabilities}
@@ -1737,10 +1738,10 @@ const SettingsTab: React.FC = () => {
                 variant='caption'
                 color='text.secondary'
               >
-                配置版本: {config.config_version}
+                [i18n.t('ai.v54-native-panel.k62')]: {config.config_version}
               </Typography>
               <Chip
-                label={status.initialized ? '已初始化' : '未初始化'}
+                label={status.initialized ? i18n.t('ai.v54-native-panel.k78') : i18n.t('ai.v54-native-panel.k77')}
                 size='small'
                 sx={{
                   bgcolor: status.initialized ? 'colors.success.100' : 'colors.error.50',
@@ -1759,14 +1760,14 @@ const SettingsTab: React.FC = () => {
               sx={{ fontWeight: 600, mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}
             >
               <Activity size={16} />
-              中间件链
+              {i18n.t('ai.v54-native-panel.k63')}
             </Typography>
 
             <Alert
               severity='info'
               sx={{ mb: 2 }}
             >
-              AI 中间件链用于处理所有 AI 请求的前置/后置处理。可添加日志、缓存、限流等中间件。
+              {i18n.t('ai.v54-native-panel.k64')}
             </Alert>
 
             <Grid
@@ -1775,14 +1776,14 @@ const SettingsTab: React.FC = () => {
             >
               <Grid size={6}>
                 <StatBox
-                  label='中间件数'
+                  label={i18n.t('ai.v54-native-panel.k79')}
                   value={status.middleware.total}
                   color={designTokens.colors.primary.main}
                 />
               </Grid>
               <Grid size={6}>
                 <StatBox
-                  label='健康数'
+                  label={i18n.t('ai.v54-native-panel.k80')}
                   value={status.middleware.healthy}
                   color={designTokens.colors.success.dark}
                 />
@@ -1801,7 +1802,7 @@ const SettingsTab: React.FC = () => {
                 onClick={handleAddMockMiddleware}
                 sx={{ bgcolor: 'secondary.500', '&:hover': { bgcolor: 'secondary.700' } }}
               >
-                添加示例中间件
+                {i18n.t('ai.v54-native-panel.k65')}
               </Button>
               <Button
                 variant='contained'
@@ -1810,7 +1811,7 @@ const SettingsTab: React.FC = () => {
                 onClick={handleExecuteMiddleware}
                 sx={{ bgcolor: 'teal.500', '&:hover': { bgcolor: 'teal.600' } }}
               >
-                执行中间件链
+                {i18n.t('ai.v54-native-panel.k66')}
               </Button>
             </Stack>
 
@@ -1820,7 +1821,7 @@ const SettingsTab: React.FC = () => {
               variant='subtitle2'
               sx={{ fontWeight: 600, mb: 2 }}
             >
-              平台状态
+              {i18n.t('ai.v54-native-panel.k67')}
             </Typography>
             <Grid
               container
@@ -1828,28 +1829,28 @@ const SettingsTab: React.FC = () => {
             >
               <Grid size={6}>
                 <StatBox
-                  label='运行时间'
+                  label={i18n.t('ai.v54-native-panel.k81')}
                   value={`${status.uptime}s`}
                   color={designTokens.colors.secondary.main}
                 />
               </Grid>
               <Grid size={6}>
                 <StatBox
-                  label='总能力'
+                  label={i18n.t('ai.v54-native-panel.k82')}
                   value={status.capabilities.total}
                   color={designTokens.colors.primary.main}
                 />
               </Grid>
               <Grid size={6}>
                 <StatBox
-                  label='已激活'
+                  label={i18n.t('ai.v54-native-panel.k83')}
                   value={status.capabilities.active}
                   color={designTokens.colors.success.dark}
                 />
               </Grid>
               <Grid size={6}>
                 <StatBox
-                  label='已降级'
+                  label={i18n.t('ai.v54-native-panel.k84')}
                   value={status.capabilities.degraded}
                   color={designTokens.colors.warning.main}
                 />
@@ -1862,18 +1863,18 @@ const SettingsTab: React.FC = () => {
               variant='subtitle2'
               sx={{ fontWeight: 600, mb: 1 }}
             >
-              AI 优先设计原则
+              {i18n.t('ai.v54-native-panel.ai_68')}
             </Typography>
             <Stack
               direction='column'
               spacing={1}
             >
               {[
-                { icon: <Brain size={14} />, text: 'AI 优先决策：所有模块集成 AI 能力' },
-                { icon: <Zap size={14} />, text: '智能路由：基于意图的动态路径选择' },
-                { icon: <Palette size={14} />, text: '自适应 UI：界面随用户行为进化' },
-                { icon: <Shield size={14} />, text: '安全回退：AI 失败时自动降级' },
-                { icon: <Monitor size={14} />, text: '可观测性：全链路 AI 监控与追踪' },
+                { icon: <Brain size={14} />, text: i18n.t('ai.v54-native-panel.k69') },
+                { icon: <Zap size={14} />, text: i18n.t('ai.v54-native-panel.k85') },
+                { icon: <Palette size={14} />, text: i18n.t('ai.v54-native-panel.ui_86') },
+                { icon: <Shield size={14} />, text: i18n.t('ai.v54-native-panel.ai_87') },
+                { icon: <Monitor size={14} />, text: i18n.t('ai.v54-native-panel.ai_88') },
               ].map((item, idx) => (
                 <Box
                   key={idx}

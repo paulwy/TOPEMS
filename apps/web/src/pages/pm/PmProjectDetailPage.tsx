@@ -2,6 +2,7 @@ import React, { useMemo } from 'react';
 import { Edit, DollarSign, FileText, TrendingUp } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import i18n from '@/i18n';
 import {
   Box,
   Typography,
@@ -30,12 +31,12 @@ import { QUERY_KEYS } from '@/lib/reactQuery';
 const ct= designTokens.colors;
 
 const STATUS_LABELS: Record<string, string> = {
-  active: '进行中',
-  completed: '已完成',
-  pending: '待审批',
-  approved: '已批准',
-  cancelled: '已取消',
-  draft: '草稿',
+  active: i18n.t('pm.pm_project_detail_page.k0'),
+  completed: i18n.t('pm.pm_project_detail_page.k1'),
+  pending: i18n.t('pm.pm_project_detail_page.k2'),
+  approved: i18n.t('pm.pm_project_detail_page.k3'),
+  cancelled: i18n.t('pm.pm_project_detail_page.k4'),
+  draft: i18n.t('pm.pm_project_detail_page.k5'),
 };
 
 const STATUS_COLORS: Record<string, { bgcolor: string; color: string }> = {
@@ -48,9 +49,9 @@ const STATUS_COLORS: Record<string, { bgcolor: string; color: string }> = {
 };
 
 const RISK_LABELS: Record<string, string> = {
-  high: '高风险',
-  medium: '中风险',
-  low: '低风险',
+  high: i18n.t('pm.pm_project_detail_page.k6'),
+  medium: i18n.t('pm.pm_project_detail_page.k7'),
+  low: i18n.t('pm.pm_project_detail_page.k8'),
 };
 
 const RISK_COLORS: Record<string, { bgcolor: string; color: string }> = {
@@ -146,7 +147,7 @@ const PmProjectDetailPage: React.FC = () => {
     return [
       {
         id: 'basic-info',
-        title: '基本信息',
+        title: t('pm.pm_project_detail_page.k9'),
         content: (
           <CardContent sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
             <Box
@@ -159,7 +160,7 @@ const PmProjectDetailPage: React.FC = () => {
                 borderColor: 'grey.100',
               }}
             >
-              <Typography sx={{ color: 'grey.500' }}>项目编号</Typography>
+              <Typography sx={{ color: 'grey.500' }}>{t('pm.pm_project_detail_page.k10')}</Typography>
               <Typography sx={{ fontWeight: 500, color: 'grey.900' }}>{project.code}</Typography>
             </Box>
             <Box
@@ -172,7 +173,7 @@ const PmProjectDetailPage: React.FC = () => {
                 borderColor: 'grey.100',
               }}
             >
-              <Typography sx={{ color: 'grey.500' }}>项目类型</Typography>
+              <Typography sx={{ color: 'grey.500' }}>{t('pm.pm_project_detail_page.k11')}</Typography>
               <Typography sx={{ fontWeight: 500, color: 'grey.900' }}>
                 {project.project_type}
               </Typography>
@@ -187,7 +188,7 @@ const PmProjectDetailPage: React.FC = () => {
                 borderColor: 'grey.100',
               }}
             >
-              <Typography sx={{ color: 'grey.500' }}>项目负责人</Typography>
+              <Typography sx={{ color: 'grey.500' }}>{t('pm.pm_project_detail_page.k12')}</Typography>
               <Typography sx={{ fontWeight: 500, color: 'grey.900' }}>
                 {project.leader || '-'}
               </Typography>
@@ -202,7 +203,7 @@ const PmProjectDetailPage: React.FC = () => {
                 borderColor: 'grey.100',
               }}
             >
-              <Typography sx={{ color: 'grey.500' }}>开始日期</Typography>
+              <Typography sx={{ color: 'grey.500' }}>{t('pm.pm_project_detail_page.k13')}</Typography>
               <Typography sx={{ fontWeight: 500, color: 'grey.900' }}>
                 {formatDate(project.start_date)}
               </Typography>
@@ -217,7 +218,7 @@ const PmProjectDetailPage: React.FC = () => {
                 borderColor: 'grey.100',
               }}
             >
-              <Typography sx={{ color: 'grey.500' }}>结束日期</Typography>
+              <Typography sx={{ color: 'grey.500' }}>{t('pm.pm_project_detail_page.k14')}</Typography>
               <Typography sx={{ fontWeight: 500, color: 'grey.900' }}>
                 {formatDate(project.end_date)}
               </Typography>
@@ -230,10 +231,10 @@ const PmProjectDetailPage: React.FC = () => {
                 py: 1,
               }}
             >
-              <Typography sx={{ color: 'grey.500' }}>风险等级</Typography>
+              <Typography sx={{ color: 'grey.500' }}>{t('pm.pm_project_detail_page.k15')}</Typography>
               <StatusBadge
                 status={project.risklevel || 'low'}
-                label={RISK_LABELS[project.risklevel || ''] || '未评估'}
+                label={RISK_LABELS[project.risklevel || ''] || t('pm.pm_project_detail_page.k16')}
                 color={
                   project.risklevel === 'high'
                     ? 'error'
@@ -248,7 +249,7 @@ const PmProjectDetailPage: React.FC = () => {
       },
       {
         id: 'key-indicators',
-        title: '关键指标',
+        title: t('pm.pm_project_detail_page.k17'),
         content: (
           <CardContent sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
             <Box>
@@ -264,7 +265,7 @@ const PmProjectDetailPage: React.FC = () => {
                   variant='body2'
                   sx={{ color: 'grey.600' }}
                 >
-                  整体进度
+                  {i18n.t('pages.pm_project_detail_page.k0')}
                 </Typography>
                 <Typography
                   variant='body2'
@@ -291,7 +292,7 @@ const PmProjectDetailPage: React.FC = () => {
                   variant='body2'
                   sx={{ color: 'grey.600' }}
                 >
-                  阶段进度
+                  {i18n.t('pages.pm_project_detail_page.k1')}
                 </Typography>
                 <Typography
                   variant='body2'
@@ -318,7 +319,7 @@ const PmProjectDetailPage: React.FC = () => {
                   variant='body2'
                   sx={{ color: 'grey.600' }}
                 >
-                  里程碑完成
+                  {i18n.t('pages.pm_project_detail_page.k2')}
                 </Typography>
                 <Typography
                   variant='body2'
@@ -361,10 +362,10 @@ const PmProjectDetailPage: React.FC = () => {
             variant='h6'
             sx={{ fontSize: '1.125rem' }}
           >
-            阶段列表
+            {i18n.t('pages.pm_project_detail_page.k3')}
           </Typography>
           <ActionButton
-            label='添加阶段'
+            label={t('pm.pm_project_detail_page.k18')}
             variant='secondary'
             size='small'
           />
@@ -374,11 +375,11 @@ const PmProjectDetailPage: React.FC = () => {
             <Table>
               <TableHead>
                 <TableRow>
-                  <TableCell sx={{ width: 200 }}>阶段名称</TableCell>
-                  <TableCell>状态</TableCell>
-                  <TableCell sx={{ width: 180 }}>进度</TableCell>
-                  <TableCell sx={{ width: 150 }}>时间</TableCell>
-                  <TableCell sx={{ width: 120 }}>操作</TableCell>
+                  <TableCell sx={{ width: 200 }}>{t('pm.pm_project_detail_page.k19')}</TableCell>
+                  <TableCell>{t('pm.pm_project_detail_page.k20')}</TableCell>
+                  <TableCell sx={{ width: 180 }}>{t('pm.pm_project_detail_page.k21')}</TableCell>
+                  <TableCell sx={{ width: 150 }}>{t('pm.pm_project_detail_page.k22')}</TableCell>
+                  <TableCell sx={{ width: 120 }}>{t('pm.pm_project_detail_page.k23')}</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
@@ -388,7 +389,7 @@ const PmProjectDetailPage: React.FC = () => {
                       colSpan={5}
                       sx={{ textAlign: 'center', py: 6, color: 'grey.500' }}
                     >
-                      暂无阶段数据
+                      {i18n.t('pages.pm_project_detail_page.k4')}
                     </TableCell>
                   </TableRow>
                 ) : (
@@ -422,10 +423,10 @@ const PmProjectDetailPage: React.FC = () => {
                           status={phase.status}
                           label={
                             phase.status === 'completed'
-                              ? '已完成'
+                              ? t('pm.pm_project_detail_page.k24')
                               : phase.status === 'active'
-                                ? '进行中'
-                                : '未开始'
+                                ? t('pm.pm_project_detail_page.k25')
+                                : t('pm.pm_project_detail_page.k26')
                           }
                           color={
                             phase.status === 'completed'
@@ -465,7 +466,7 @@ const PmProjectDetailPage: React.FC = () => {
                       </TableCell>
                       <TableCell>
                         <ActionButton
-                          label='编辑'
+                          label={t('pm.pm_project_detail_page.k27')}
                           icon={<Edit size={16} />}
                           variant='text'
                           size='small'
@@ -1198,7 +1199,7 @@ const PmProjectDetailPage: React.FC = () => {
       <DetailPageTemplate
         title=''
         subtitle=''
-        detailItemName={project?.name || project?.code || '项目详情'}
+        detailItemName={project?.name || project?.code || t('pm.pm_project_detail_page.k28')}
         breadcrumbs={[
           { label: t('pm.project_detail.home'), href: '/dashboard' },
           { label: t('pm.project_detail.project_management'), href: PM_PATHS.projects },

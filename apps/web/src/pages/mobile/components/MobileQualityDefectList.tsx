@@ -5,10 +5,9 @@
 import React from 'react';
 import { Box, Typography, Paper, Chip, List, Divider, useTheme } from '@mui/material';
 import { AlertTriangle } from 'lucide-react';
-import { useTranslation } from 'react-i18next';
 import type { DefectRecord } from '@/api/mobile';
 import type { ChipColor, SeverityChipColor } from '../hooks/useMobileQuality';
-
+import i18n from '@/i18n';
 interface MobileQualityDefectListProps {
   defectRecords: DefectRecord[];
   getSeverityLabel: (severity: string) => string;
@@ -16,7 +15,6 @@ interface MobileQualityDefectListProps {
   getStatusLabel: (status: string) => string;
   getStatusColor: (status: string) => ChipColor;
 }
-
 export const MobileQualityDefectList: React.FC<MobileQualityDefectListProps> = ({
   defectRecords,
   getSeverityLabel,
@@ -24,9 +22,7 @@ export const MobileQualityDefectList: React.FC<MobileQualityDefectListProps> = (
   getStatusLabel,
   getStatusColor,
 }) => {
-  const { t } = useTranslation();
   const theme = useTheme();
-
   return (
     <List disablePadding>
       {defectRecords.map((defect, index) => (
@@ -90,13 +86,13 @@ export const MobileQualityDefectList: React.FC<MobileQualityDefectListProps> = (
                 variant='caption'
                 color='text.secondary'
               >
-                {t('mobile.quality.label.batch_value', { batchNo: defect.batch_no })}
+                {i18n.t('mobile.quality.label.batch_value', { batchNo: defect.batch_no })}
               </Typography>
               <Typography
                 variant='caption'
                 color='text.secondary'
               >
-                {t('mobile.quality.label.quantity_value', { count: defect.quantity })}
+                {i18n.t('mobile.quality.label.quantity_value', { count: defect.quantity })}
               </Typography>
             </Box>
             <Typography

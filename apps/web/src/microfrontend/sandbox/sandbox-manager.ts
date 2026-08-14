@@ -24,6 +24,7 @@ import { JavaScriptSandbox, type SandboxOptions } from './js-sandbox';
 import { StyleIsolation, type StyleIsolationOptions } from './style-isolation';
 import { EventIsolation, type EventLeakReport } from './event-isolation';
 import { conflictDetector, type ConflictReport } from './conflict-detector';
+import i18n from '@/i18n';
 
 // ==================== 类型定义 ====================
 
@@ -99,7 +100,7 @@ class SandboxManagerImpl {
   createSandbox(moduleId: string, options: SandboxManagerOptions = {}): SandboxBundle {
     // 已存在则先销毁旧的
     if (this.sandboxes.has(moduleId)) {
-      console.warn(`[SandboxManager] 模块 ${moduleId} 沙箱已存在，将先销毁旧沙箱`);
+      console.warn(`${i18n.t('microfrontend.sandbox-manager.sandboxmanager_0')}${moduleId}${i18n.t('microfrontend.sandbox-manager.k1')}`);
       this.destroySandbox(moduleId);
     }
 
@@ -145,7 +146,7 @@ class SandboxManagerImpl {
       this.sandboxes.delete(moduleId);
       return true;
     } catch (err) {
-      console.error(`[SandboxManager] 销毁模块 ${moduleId} 沙箱失败:`, err);
+      console.error(`${i18n.t('microfrontend.sandbox-manager.k2')}${moduleId}${i18n.t('microfrontend.sandbox-manager.k3')}`, err);
       bundle.status = 'error';
       bundle.error = err instanceof Error ? err : new Error(String(err));
       return false;
@@ -210,16 +211,16 @@ class SandboxManagerImpl {
     const timerCount = bundle.eventIsolation.getTimerCount();
 
     if (bundle.status === 'error') {
-      issues.push(`沙箱状态错误: ${bundle.error?.message ?? '未知错误'}`);
+      issues.push(`${i18n.t('microfrontend.sandbox-manager.k4')}${bundle.error?.message ?? i18n.t('microfrontend.sandbox-manager.k0')}`);
     }
     if (jsActive && bundle.status !== 'active') {
-      issues.push('JS 沙箱已激活但 bundle 状态非 active');
+      issues.push(i18n.t('microfrontend.sandbox-manager.k5'));
     }
     if (eventCount > 0 && bundle.status === 'inactive') {
-      issues.push(`沙箱非活跃但有 ${eventCount} 个未清理的事件监听`);
+      issues.push(`${i18n.t('microfrontend.sandbox-manager.k6')}${eventCount}${i18n.t('microfrontend.sandbox-manager.k7')}`);
     }
     if (timerCount > 50) {
-      issues.push(`定时器数量过多 (${timerCount})，可能存在泄漏`);
+      issues.push(`${i18n.t('microfrontend.sandbox-manager.k8')}${timerCount}${i18n.t('microfrontend.sandbox-manager.k9')}`);
     }
 
     return {

@@ -1,5 +1,4 @@
 import React from 'react';
-import { useTranslation } from 'react-i18next';
 import { Eye, Edit, Check, Trash2, BookOpen, FileText } from 'lucide-react';
 import { StatusBadge } from '@/components/common';
 import {
@@ -17,12 +16,10 @@ import {
   Tooltip,
   TablePagination,
 } from '@mui/material';
+import i18n from '@/i18n';
 import type { VoucherManagementReturn } from '../hooks/useVoucherManagement';
-
 export type VoucherTableProps = VoucherManagementReturn;
-
 const VoucherTable: React.FC<VoucherTableProps> = (vm) => {
-  const { t } = useTranslation();
   const {
     loading,
     vouchers,
@@ -39,7 +36,6 @@ const VoucherTable: React.FC<VoucherTableProps> = (vm) => {
     getStatusBadgeConfig,
     getVoucherTypeConfig,
   } = vm;
-
   const renderStatusBadge = (status: string) => {
     const config = getStatusBadgeConfig(status);
     return (
@@ -50,7 +46,6 @@ const VoucherTable: React.FC<VoucherTableProps> = (vm) => {
       />
     );
   };
-
   const renderVoucherTypeBadge = (type: string) => {
     const config = getVoucherTypeConfig(type);
     return (
@@ -62,7 +57,6 @@ const VoucherTable: React.FC<VoucherTableProps> = (vm) => {
       />
     );
   };
-
   if (loading) {
     return (
       <Box sx={{ display: 'flex', justifyContent: 'center', py: 8 }}>
@@ -70,7 +64,6 @@ const VoucherTable: React.FC<VoucherTableProps> = (vm) => {
       </Box>
     );
   }
-
   return (
     <>
       <TableContainer>
@@ -78,37 +71,37 @@ const VoucherTable: React.FC<VoucherTableProps> = (vm) => {
           <TableHead>
             <TableRow sx={{ bgcolor: 'grey.50' }}>
               <TableCell sx={{ fontWeight: 'bold' }}>
-                {t('erp.voucher_mgmt.label.voucher_number')}
+                {i18n.t('erp.voucher_mgmt.label.voucher_number')}
               </TableCell>
-              <TableCell sx={{ fontWeight: 'bold' }}>{t('erp.voucher_mgmt.label.type')}</TableCell>
-              <TableCell sx={{ fontWeight: 'bold' }}>{t('erp.voucher_mgmt.label.date')}</TableCell>
+              <TableCell sx={{ fontWeight: 'bold' }}>{i18n.t('erp.voucher_mgmt.label.type')}</TableCell>
+              <TableCell sx={{ fontWeight: 'bold' }}>{i18n.t('erp.voucher_mgmt.label.date')}</TableCell>
               <TableCell sx={{ fontWeight: 'bold' }}>
-                {t('erp.voucher_mgmt.label.period')}
+                {i18n.t('erp.voucher_mgmt.label.period')}
               </TableCell>
               <TableCell sx={{ fontWeight: 'bold' }}>
-                {t('erp.voucher_mgmt.label.summary')}
+                {i18n.t('erp.voucher_mgmt.label.summary')}
               </TableCell>
               <TableCell
                 align='right'
                 sx={{ fontWeight: 'bold' }}
               >
-                {t('erp.voucher_mgmt.label.debit_amount')}
+                {i18n.t('erp.voucher_mgmt.label.debit_amount')}
               </TableCell>
               <TableCell
                 align='right'
                 sx={{ fontWeight: 'bold' }}
               >
-                {t('erp.voucher_mgmt.label.credit_amount')}
+                {i18n.t('erp.voucher_mgmt.label.credit_amount')}
               </TableCell>
-              <TableCell sx={{ fontWeight: 'bold' }}>{t('erp.voucher_mgmt.label.maker')}</TableCell>
+              <TableCell sx={{ fontWeight: 'bold' }}>{i18n.t('erp.voucher_mgmt.label.maker')}</TableCell>
               <TableCell sx={{ fontWeight: 'bold' }}>
-                {t('erp.voucher_mgmt.label.status')}
+                {i18n.t('erp.voucher_mgmt.label.status')}
               </TableCell>
               <TableCell
                 align='center'
                 sx={{ fontWeight: 'bold', width: 200 }}
               >
-                {t('erp.voucher_mgmt.label.operation')}
+                {i18n.t('erp.voucher_mgmt.label.operation')}
               </TableCell>
             </TableRow>
           </TableHead>
@@ -126,7 +119,7 @@ const VoucherTable: React.FC<VoucherTableProps> = (vm) => {
                     variant='body1'
                     sx={{ color: 'text.secondary' }}
                   >
-                    {t('erp.voucher_mgmt.message.no_voucher_data')}
+                    {i18n.t('erp.voucher_mgmt.message.no_voucher_data')}
                   </Typography>
                 </TableCell>
               </TableRow>
@@ -144,7 +137,7 @@ const VoucherTable: React.FC<VoucherTableProps> = (vm) => {
                   <TableCell>
                     {renderVoucherTypeBadge(
                       voucher.voucher_number?.split('-')[0] ||
-                        t('erp.voucher_mgmt.voucher_type_short.accounting')
+                        i18n.t('erp.voucher_mgmt.voucher_type_short.accounting')
                     )}
                   </TableCell>
                   <TableCell>{voucher.voucher_date?.split('T')[0] || '-'}</TableCell>
@@ -177,57 +170,57 @@ const VoucherTable: React.FC<VoucherTableProps> = (vm) => {
                   <TableCell>{renderStatusBadge(voucher.status)}</TableCell>
                   <TableCell align='center'>
                     <Box sx={{ display: 'flex', justifyContent: 'center', gap: 0.5 }}>
-                      <Tooltip title={t('erp.voucher_mgmt.label.view_detail')}>
+                      <Tooltip title={i18n.t('erp.voucher_mgmt.label.view_detail')}>
                         <IconButton
                           size='small'
                           onClick={() => handleViewDetail(voucher)}
-                          aria-label='查看'
+                          aria-label={i18n.t('erp.voucher_table.k0')}
                         >
                           <Eye size={16} />
                         </IconButton>
                       </Tooltip>
                       {voucher.status === 'draft' && (
-                        <Tooltip title={t('erp.voucher_mgmt.label.edit')}>
+                        <Tooltip title={i18n.t('erp.voucher_mgmt.label.edit')}>
                           <IconButton
                             size='small'
                             color='primary'
-                            aria-label='编辑'
+                            aria-label={i18n.t('erp.voucher_table.k1')}
                           >
                             <Edit size={16} />
                           </IconButton>
                         </Tooltip>
                       )}
                       {voucher.status === 'draft' || voucher.status === 'pending' ? (
-                        <Tooltip title={t('erp.voucher_mgmt.label.audit')}>
+                        <Tooltip title={i18n.t('erp.voucher_mgmt.label.audit')}>
                           <IconButton
                             size='small'
                             color='success'
                             onClick={() => handleAudit(voucher)}
-                            aria-label='确认'
+                            aria-label={i18n.t('erp.voucher_table.k2')}
                           >
                             <Check size={16} />
                           </IconButton>
                         </Tooltip>
                       ) : null}
                       {voucher.status === 'approved' && (
-                        <Tooltip title={t('erp.voucher_mgmt.label.post')}>
+                        <Tooltip title={i18n.t('erp.voucher_mgmt.label.post')}>
                           <IconButton
                             size='small'
                             color='primary'
                             onClick={() => handlePost(voucher)}
-                            aria-label='打开文档'
+                            aria-label={i18n.t('erp.voucher_table.k3')}
                           >
                             <BookOpen size={16} />
                           </IconButton>
                         </Tooltip>
                       )}
                       {(voucher.status === 'draft' || voucher.status === 'pending') && (
-                        <Tooltip title={t('erp.voucher_mgmt.label.delete')}>
+                        <Tooltip title={i18n.t('erp.voucher_mgmt.label.delete')}>
                           <IconButton
                             size='small'
                             color='error'
                             onClick={() => handleDelete(voucher.id)}
-                            aria-label='删除'
+                            aria-label={i18n.t('erp.voucher_table.k4')}
                           >
                             <Trash2 size={16} />
                           </IconButton>
@@ -252,10 +245,9 @@ const VoucherTable: React.FC<VoucherTableProps> = (vm) => {
           setPage(0);
         }}
         rowsPerPageOptions={[10, 25, 50, 100]}
-        labelRowsPerPage={t('erp.voucher_mgmt.label.rows_per_page')}
+        labelRowsPerPage={i18n.t('erp.voucher_mgmt.label.rows_per_page')}
       />
     </>
   );
 };
-
 export default VoucherTable;

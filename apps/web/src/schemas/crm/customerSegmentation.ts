@@ -6,11 +6,12 @@
  */
 
 import type { EntitySchema } from '@/schema';
+import i18n from '@/i18n';
 
 export const customerSegmentationSchema: EntitySchema = {
   entity: 'crm_customer_segmentation',
-  title: '客户分群',
-  description: '基于多维度条件对客户进行精细化分群运营',
+  title: i18n.t('shared.customer_segmentation.k0'),
+  description: i18n.t('shared.customer_segmentation.k1'),
 
   api: {
     module: 'crm',
@@ -20,20 +21,20 @@ export const customerSegmentationSchema: EntitySchema = {
   fields: [
     {
       name: 'name',
-      label: '分群名称',
+      label: i18n.t('shared.customer_segmentation.k2'),
       type: 'text',
       required: true,
       showInList: false,
     },
     {
       name: 'description',
-      label: '分群描述',
+      label: i18n.t('shared.customer_segmentation.k3'),
       type: 'textarea',
       showInList: false,
     },
     {
       name: 'criteria',
-      label: '分群条件 (JSON)',
+      label: i18n.t('shared.customer_segmentation.json_4'),
       type: 'textarea',
       required: true,
       placeholder: '例如：{"industries":["manufacturing"],"score_min":60,"statuses":["active"]}',
@@ -49,16 +50,16 @@ export const customerSegmentationSchema: EntitySchema = {
 
   formSections: [
     {
-      title: '基本信息',
+      title: i18n.t('shared.customer_segmentation.k5'),
       fields: ['name', 'description'],
     },
     {
-      title: '分群条件',
+      title: i18n.t('shared.customer_segmentation.k6'),
       fields: ['criteria'],
     },
   ],
 
   formColCount: 1,
-  createTitle: '新建分群',
-  detailTitle: '分群详情',
+  createTitle: i18n.t('shared.customer_segmentation.k7'),
+  detailTitle: i18n.t('shared.customer_segmentation.k8'),
 };

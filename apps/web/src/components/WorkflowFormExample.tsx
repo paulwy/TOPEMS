@@ -10,6 +10,7 @@ import {
   FormControlLabel,
   Button,
 } from '@mui/material';
+import i18n from '@/i18n';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useNotificationStore } from '@/store';
@@ -18,7 +19,7 @@ import { logger } from '@/utils/logger';
 // 定义表单验证 schema
 const workflowFormSchema = z.object({
   name: z.string().min(2, {
-    message: '工作流名称至少需要 2 个字符',
+    message: i18n.t('components.workflow_form_example.2_0'),
   }),
   description: z.string().optional(),
   isActive: z.boolean().default(true),
@@ -53,12 +54,12 @@ export function WorkflowFormExample({ onSubmit, initialValues }: WorkflowFormExa
   });
 
   function onFormSubmit(values: WorkflowFormValues) {
-    logger.info('表单提交:', values);
+    logger.info(i18n.t('components.workflow_form_example.k0'), values);
     onSubmit?.(values);
 
     addNotification({
-      title: '成功',
-      message: '工作流已保存',
+      title: i18n.t('components.workflow_form_example.k1'),
+      message: i18n.t('components.workflow_form_example.k2'),
       type: 'success',
     });
   }
@@ -70,13 +71,13 @@ export function WorkflowFormExample({ onSubmit, initialValues }: WorkflowFormExa
           variant='h6'
           sx={{ fontWeight: 600 }}
         >
-          工作流表单示例
+          {i18n.t('components.workflow_form_example.k1')}
         </Typography>
         <Typography
           variant='body2'
           sx={{ color: 'text.secondary', mb: 3 }}
         >
-          使用 React Hook Form + Zod + MUI 的示例
+          {i18n.t('components.workflow_form_example.k2')}
         </Typography>
 
         <Box
@@ -90,12 +91,12 @@ export function WorkflowFormExample({ onSubmit, initialValues }: WorkflowFormExa
             render={({ field }) => (
               <TextField
                 {...field}
-                label='工作流名称'
-                placeholder='请输入工作流名称'
+                label={i18n.t('components.workflow_form_example.k3')}
+                placeholder={i18n.t('components.workflow_form_example.k4')}
                 fullWidth
                 size='small'
                 error={!!errors.name}
-                helperText={errors.name?.message || '这是工作流的显示名称'}
+                helperText={errors.name?.message || i18n.t('components.workflow_form_example.k5')}
               />
             )}
           />
@@ -106,8 +107,8 @@ export function WorkflowFormExample({ onSubmit, initialValues }: WorkflowFormExa
             render={({ field }) => (
               <TextField
                 {...field}
-                label='描述'
-                placeholder='请输入工作流描述'
+                label={i18n.t('components.workflow_form_example.k6')}
+                placeholder={i18n.t('components.workflow_form_example.k7')}
                 fullWidth
                 size='small'
                 multiline
@@ -130,7 +131,7 @@ export function WorkflowFormExample({ onSubmit, initialValues }: WorkflowFormExa
                     checked={field.value}
                   />
                 }
-                label='启用状态'
+                label={i18n.t('components.workflow_form_example.k8')}
               />
             )}
           />
@@ -140,14 +141,14 @@ export function WorkflowFormExample({ onSubmit, initialValues }: WorkflowFormExa
               type='submit'
               variant='contained'
             >
-              保存
+              {i18n.t('components.workflow_form_example.k3')}
             </Button>
             <Button
               type='button'
               variant='outlined'
               onClick={() => reset()}
             >
-              重置
+              {i18n.t('components.workflow_form_example.k4')}
             </Button>
           </Box>
         </Box>
@@ -157,7 +158,7 @@ export function WorkflowFormExample({ onSubmit, initialValues }: WorkflowFormExa
           variant='caption'
           color='text.secondary'
         >
-          使用了 zodResolver 进行表单验证
+          {i18n.t('components.workflow_form_example.k5')}
         </Typography>
       </CardActions>
     </Card>

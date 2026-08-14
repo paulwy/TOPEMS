@@ -10,6 +10,7 @@ import {
   ListItemText,
   useTheme,
 } from '@mui/material';
+import i18n from '@/i18n';
 import { useNavigate } from 'react-router-dom';
 import { Search, X, Star } from 'lucide-react';
 import { renderIcon } from '@/lib/iconMapping';
@@ -44,7 +45,7 @@ export const SidebarSearch: React.FC<SidebarSearchProps> = ({ collapsed }) => {
     <>
       <TextField
         size='small'
-        placeholder='搜索菜单...'
+        placeholder={i18n.t('components.sidebar_search.k0')}
         value={searchQuery}
         onChange={(e) => setSearchQuery(e.target.value)}
         onFocus={(e) => setSearchAnchorEl(e.currentTarget)}
@@ -69,7 +70,7 @@ export const SidebarSearch: React.FC<SidebarSearchProps> = ({ collapsed }) => {
                   size='small'
                   onClick={() => setSearchQuery('')}
                   edge='end'
-                  aria-label='关闭'
+                  aria-label={i18n.t('components.sidebar_search.k0')}
                 >
                   <X style={{ width: 12, height: 12 }} />
                 </IconButton>

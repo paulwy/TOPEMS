@@ -2,11 +2,12 @@ import type { EntitySchema } from '@/schema';
 
 
 import { QUERY_KEYS } from '@/lib/reactQuery';
+import i18n from '@/i18n';
 
 export const suggestionSchema: EntitySchema = {
   entity: 'wms_replenishment_suggestion',
-  title: '补货建议',
-  description: '智能补货建议列表，基于库存和销量自动生成',
+  title: i18n.t('wms.suggestion.k0'),
+  description: i18n.t('wms.suggestion.k1'),
 
   api: {
     module: 'wms',
@@ -16,7 +17,7 @@ export const suggestionSchema: EntitySchema = {
   fields: [
     {
       name: 'suggestion_number',
-      label: '建议编号',
+      label: i18n.t('wms.suggestion.k2'),
       type: 'text',
       sortable: true,
       listWidth: 150,
@@ -24,13 +25,13 @@ export const suggestionSchema: EntitySchema = {
     },
     {
       name: 'sku',
-      label: '物料编码',
+      label: i18n.t('wms.suggestion.k3'),
       type: 'text',
       listWidth: 130,
     },
     {
       name: 'material_name',
-      label: '物料名称',
+      label: i18n.t('wms.suggestion.k4'),
       type: 'text',
       sortable: true,
       listWidth: 150,
@@ -38,7 +39,7 @@ export const suggestionSchema: EntitySchema = {
     },
     {
       name: 'warehouse_id',
-      label: '仓库',
+      label: i18n.t('wms.suggestion.k5'),
       type: 'select',
       listWidth: 120,
       options: {
@@ -51,28 +52,28 @@ export const suggestionSchema: EntitySchema = {
     },
     {
       name: 'current_quantity',
-      label: '当前库存',
+      label: i18n.t('wms.suggestion.k6'),
       type: 'number',
       listWidth: 100,
       hideInForm: true,
     },
     {
       name: 'available_quantity',
-      label: '可用库存',
+      label: i18n.t('wms.suggestion.k7'),
       type: 'number',
       listWidth: 100,
       hideInForm: true,
     },
     {
       name: 'safety_stock',
-      label: '安全库存',
+      label: i18n.t('wms.suggestion.k8'),
       type: 'number',
       listWidth: 100,
       hideInForm: true,
     },
     {
       name: 'suggested_quantity',
-      label: '建议补货量',
+      label: i18n.t('wms.suggestion.k9'),
       type: 'number',
       listWidth: 110,
       hideInForm: true,
@@ -84,41 +85,41 @@ export const suggestionSchema: EntitySchema = {
     },
     {
       name: 'priority',
-      label: '优先级',
+      label: i18n.t('wms.suggestion.k10'),
       type: 'select',
       listWidth: 100,
       hideInForm: true,
       options: {
         type: 'static',
         options: [
-          { value: 'urgent', label: '紧急' },
-          { value: 'high', label: '高' },
-          { value: 'normal', label: '普通' },
-          { value: 'low', label: '低' },
+          { value: 'urgent', label: i18n.t('wms.suggestion.k11') },
+          { value: 'high', label: i18n.t('wms.suggestion.k12') },
+          { value: 'normal', label: i18n.t('wms.suggestion.k13') },
+          { value: 'low', label: i18n.t('wms.suggestion.k14') },
         ],
       },
       validation: [{ type: 'maxLength', value: 20 }],
     },
     {
       name: 'status',
-      label: '状态',
+      label: i18n.t('wms.suggestion.k15'),
       type: 'select',
       listWidth: 100,
       hideInForm: true,
       options: {
         type: 'static',
         options: [
-          { value: 'pending', label: '待处理' },
-          { value: 'approved', label: '已批准' },
-          { value: 'rejected', label: '已拒绝' },
-          { value: 'converted', label: '已转单' },
+          { value: 'pending', label: i18n.t('wms.suggestion.k16') },
+          { value: 'approved', label: i18n.t('wms.suggestion.k17') },
+          { value: 'rejected', label: i18n.t('wms.suggestion.k18') },
+          { value: 'converted', label: i18n.t('wms.suggestion.k19') },
         ],
       },
       validation: [{ type: 'maxLength', value: 50 }],
     },
     {
       name: 'supplier_name',
-      label: '供应商',
+      label: i18n.t('wms.suggestion.k20'),
       type: 'text',
       listWidth: 140,
       hideInForm: true,
@@ -126,7 +127,7 @@ export const suggestionSchema: EntitySchema = {
     },
     {
       name: 'unit_price',
-      label: '单价',
+      label: i18n.t('wms.suggestion.k21'),
       type: 'number',
       listWidth: 100,
       hideInForm: true,
@@ -137,7 +138,7 @@ export const suggestionSchema: EntitySchema = {
     },
     {
       name: 'total_cost',
-      label: '预计总成本',
+      label: i18n.t('wms.suggestion.k22'),
       type: 'number',
       listWidth: 120,
       hideInForm: true,
@@ -148,7 +149,7 @@ export const suggestionSchema: EntitySchema = {
     },
     {
       name: 'generated_at',
-      label: '生成时间',
+      label: i18n.t('wms.suggestion.k23'),
       type: 'datetime',
       readonly: true,
       hideInForm: true,
@@ -179,41 +180,41 @@ export const suggestionSchema: EntitySchema = {
         converted: 'success',
       },
       labelMap: {
-        pending: '待处理',
-        approved: '已批准',
-        rejected: '已拒绝',
-        converted: '已转单',
+        pending: i18n.t('wms.suggestion.k24'),
+        approved: i18n.t('wms.suggestion.k25'),
+        rejected: i18n.t('wms.suggestion.k26'),
+        converted: i18n.t('wms.suggestion.k27'),
       },
     },
     filters: [
       {
         id: 'status',
-        label: '状态',
+        label: i18n.t('wms.suggestion.k28'),
         type: 'select',
         options: [
-          { label: '全部状态', value: 'all' },
-          { label: '待处理', value: 'pending' },
-          { label: '已批准', value: 'approved' },
-          { label: '已拒绝', value: 'rejected' },
-          { label: '已转单', value: 'converted' },
+          { label: i18n.t('wms.suggestion.k29'), value: 'all' },
+          { label: i18n.t('wms.suggestion.k30'), value: 'pending' },
+          { label: i18n.t('wms.suggestion.k31'), value: 'approved' },
+          { label: i18n.t('wms.suggestion.k32'), value: 'rejected' },
+          { label: i18n.t('wms.suggestion.k33'), value: 'converted' },
         ],
       },
       {
         id: 'warehouse_id',
-        label: '仓库',
+        label: i18n.t('wms.suggestion.k34'),
         type: 'select',
-        options: [{ label: '全部仓库', value: 'all' }],
+        options: [{ label: i18n.t('wms.suggestion.k35'), value: 'all' }],
       },
       {
         id: 'priority',
-        label: '优先级',
+        label: i18n.t('wms.suggestion.k36'),
         type: 'select',
         options: [
-          { label: '全部优先级', value: 'all' },
-          { label: '紧急', value: 'urgent' },
-          { label: '高', value: 'high' },
-          { label: '普通', value: 'normal' },
-          { label: '低', value: 'low' },
+          { label: i18n.t('wms.suggestion.k37'), value: 'all' },
+          { label: i18n.t('wms.suggestion.k38'), value: 'urgent' },
+          { label: i18n.t('wms.suggestion.k39'), value: 'high' },
+          { label: i18n.t('wms.suggestion.k40'), value: 'normal' },
+          { label: i18n.t('wms.suggestion.k41'), value: 'low' },
         ],
       },
     ],

@@ -15,6 +15,7 @@ import {
   Target,
   Table,
 } from 'lucide-react';
+import i18n from '@/i18n';
 import { BackButton } from '../common';
 import {
   Box,
@@ -71,40 +72,40 @@ export interface DashboardConfig {
 }
 
 const CHART_TYPES: { value: ChartType; label: string; icon: React.ReactNode }[] = [
-  { value: 'bar', label: '柱状图', icon: <BarChart3 size={20} /> },
-  { value: 'line', label: '折线图', icon: <LineChart size={20} /> },
-  { value: 'pie', label: '饼图', icon: <PieChart size={20} /> },
-  { value: 'area', label: '面积图', icon: <AreaChart size={20} /> },
-  { value: 'radar', label: '雷达图', icon: <Grid3X3 size={20} /> },
-  { value: 'scatter', label: '散点图', icon: <Grid3X3 size={20} /> },
-  { value: 'composed', label: '组合图', icon: <BarChart3 size={20} /> },
-  { value: 'gauge', label: '仪表盘', icon: <Target size={20} /> },
+  { value: 'bar', label: i18n.t('components.dashboard_editor.k0'), icon: <BarChart3 size={20} /> },
+  { value: 'line', label: i18n.t('components.dashboard_editor.k1'), icon: <LineChart size={20} /> },
+  { value: 'pie', label: i18n.t('components.dashboard_editor.k2'), icon: <PieChart size={20} /> },
+  { value: 'area', label: i18n.t('components.dashboard_editor.k3'), icon: <AreaChart size={20} /> },
+  { value: 'radar', label: i18n.t('components.dashboard_editor.k4'), icon: <Grid3X3 size={20} /> },
+  { value: 'scatter', label: i18n.t('components.dashboard_editor.k5'), icon: <Grid3X3 size={20} /> },
+  { value: 'composed', label: i18n.t('components.dashboard_editor.k6'), icon: <BarChart3 size={20} /> },
+  { value: 'gauge', label: i18n.t('components.dashboard_editor.k7'), icon: <Target size={20} /> },
 ];
 
 const WIDGET_TYPES = [
-  { value: 'chart', label: '图表', icon: <BarChart3 size={24} /> },
-  { value: 'pivot', label: '数据透视表', icon: <Table size={24} /> },
-  { value: 'metric', label: '指标卡片', icon: <Target size={24} /> },
+  { value: 'chart', label: i18n.t('components.dashboard_editor.k8'), icon: <BarChart3 size={24} /> },
+  { value: 'pivot', label: i18n.t('components.dashboard_editor.k9'), icon: <Table size={24} /> },
+  { value: 'metric', label: i18n.t('components.dashboard_editor.k10'), icon: <Target size={24} /> },
 ];
 
 const generateId = () => `widget-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
 
 const sampleChartData: ChartDataPoint[] = [
-  { name: '1月', value: 400, sales: 300, profit: 100 },
-  { name: '2月', value: 300, sales: 250, profit: 50 },
-  { name: '3月', value: 500, sales: 420, profit: 80 },
-  { name: '4月', value: 600, sales: 500, profit: 100 },
-  { name: '5月', value: 450, sales: 380, profit: 70 },
-  { name: '6月', value: 700, sales: 580, profit: 120 },
+  { name: i18n.t('components.dashboard_editor.1_0'), value: 400, sales: 300, profit: 100 },
+  { name: i18n.t('components.dashboard_editor.2_1'), value: 300, sales: 250, profit: 50 },
+  { name: i18n.t('components.dashboard_editor.3_2'), value: 500, sales: 420, profit: 80 },
+  { name: i18n.t('components.dashboard_editor.4_3'), value: 600, sales: 500, profit: 100 },
+  { name: i18n.t('components.dashboard_editor.5_4'), value: 450, sales: 380, profit: 70 },
+  { name: i18n.t('components.dashboard_editor.6_5'), value: 700, sales: 580, profit: 120 },
 ];
 
 const samplePivotData = [
-  { region: '华北', category: '电子产品', sales: 12000 },
-  { region: '华北', category: '服装', sales: 8000 },
-  { region: '华东', category: '电子产品', sales: 15000 },
-  { region: '华东', category: '服装', sales: 10000 },
-  { region: '华南', category: '电子产品', sales: 18000 },
-  { region: '华南', category: '服装', sales: 9000 },
+  { region: i18n.t('components.dashboard_editor.k12'), category: i18n.t('components.dashboard_editor.k11'), sales: 12000 },
+  { region: i18n.t('components.dashboard_editor.k14'), category: i18n.t('components.dashboard_editor.k13'), sales: 8000 },
+  { region: i18n.t('components.dashboard_editor.k16'), category: i18n.t('components.dashboard_editor.k15'), sales: 15000 },
+  { region: i18n.t('components.dashboard_editor.k18'), category: i18n.t('components.dashboard_editor.k17'), sales: 10000 },
+  { region: i18n.t('components.dashboard_editor.k20'), category: i18n.t('components.dashboard_editor.k19'), sales: 18000 },
+  { region: i18n.t('components.dashboard_editor.k22'), category: i18n.t('components.dashboard_editor.k21'), sales: 9000 },
 ];
 
 const GRID_COLS = 12;
@@ -120,7 +121,7 @@ export const DashboardEditor: React.FC<{
   const [widgets, setWidgets] = useState<DashboardWidget[]>(initialConfig?.widgets || []);
   const [selectedWidgetId, setSelectedWidgetId] = useState<string | null>(null);
   const theme = useTheme();
-  const [dashboardName, setDashboardName] = useState(initialConfig?.name || '未命名仪表盘');
+  const [dashboardName, setDashboardName] = useState(initialConfig?.name || i18n.t('components.dashboard_editor.k23'));
   const [dashboardDescription, _setDashboardDescription] = useState(
     initialConfig?.description || ''
   );
@@ -300,7 +301,7 @@ export const DashboardEditor: React.FC<{
       id: generateId(),
       type: newWidgetType,
       title:
-        newWidgetType === 'metric' ? '新指标' : newWidgetType === 'pivot' ? '新透视表' : '新图表',
+        newWidgetType === 'metric' ? i18n.t('components.dashboard_editor.k26') : newWidgetType === 'pivot' ? i18n.t('components.dashboard_editor.k25') : i18n.t('components.dashboard_editor.k24'),
       x,
       y,
       w: 2,
@@ -310,7 +311,7 @@ export const DashboardEditor: React.FC<{
           ? { chartType: newWidgetChartType, data: sampleChartData, xKey: 'name', yKey: 'value' }
           : newWidgetType === 'pivot'
             ? { rows: ['region'], cols: ['category'], values: ['sales'], data: samplePivotData }
-            : { metricValue: 0, metricLabel: '指标' },
+            : { metricValue: 0, metricLabel: i18n.t('components.dashboard_editor.k27') },
     };
 
     setWidgets((prev) => [...prev, newWidget]);
@@ -375,13 +376,13 @@ export const DashboardEditor: React.FC<{
               onChange={(e) => setDashboardName(e.target.value)}
               variant='standard'
               sx={{ fontSize: 24, fontWeight: 700, width: 300 }}
-              placeholder='仪表盘名称'
+              placeholder={i18n.t('components.dashboard_editor.k28')}
             />
             <Typography
               variant='body2'
               sx={{ color: 'text.secondary' }}
             >
-              {dashboardDescription || '添加描述'}
+              {dashboardDescription || i18n.t('components.dashboard_editor.k29')}
             </Typography>
           </Box>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
@@ -392,7 +393,7 @@ export const DashboardEditor: React.FC<{
               onClick={undo}
               disabled={historyIndex === 0}
             >
-              撤销
+              {i18n.t('components.dashboard_editor.k6')}
             </Button>
             <Button
               variant='outlined'
@@ -401,7 +402,7 @@ export const DashboardEditor: React.FC<{
               onClick={redo}
               disabled={historyIndex >= history.length - 1}
             >
-              重做
+              {i18n.t('components.dashboard_editor.k7')}
             </Button>
             <Button
               variant='outlined'
@@ -409,7 +410,7 @@ export const DashboardEditor: React.FC<{
               startIcon={isPreviewMode ? <EyeOff /> : <Eye />}
               onClick={() => setIsPreviewMode(!isPreviewMode)}
             >
-              {isPreviewMode ? '编辑' : '预览'}
+              {isPreviewMode ? i18n.t('components.dashboard_editor.k31') : i18n.t('components.dashboard_editor.k30')}
             </Button>
             <Button
               variant='contained'
@@ -418,7 +419,7 @@ export const DashboardEditor: React.FC<{
               onClick={() => setShowAddWidgetModal(true)}
               disabled={isPreviewMode}
             >
-              添加组件
+              {i18n.t('components.dashboard_editor.k8')}
             </Button>
             <Button
               variant='contained'
@@ -426,7 +427,7 @@ export const DashboardEditor: React.FC<{
               startIcon={<Save />}
               onClick={handleSave}
             >
-              保存
+              {i18n.t('components.dashboard_editor.k9')}
             </Button>
           </Box>
         </Box>
@@ -604,7 +605,7 @@ export const DashboardEditor: React.FC<{
                 size={48}
                 sx={{ mb: 2 }}
               />
-              <Typography variant='body1'>点击上方按钮添加组件</Typography>
+              <Typography variant='body1'>{i18n.t('components.dashboard_editor.k32')}</Typography>
             </Box>
           )}
         </Box>
@@ -623,13 +624,13 @@ export const DashboardEditor: React.FC<{
               variant='h6'
               sx={{ fontWeight: 600 }}
             >
-              组件配置
+              {i18n.t('components.dashboard_editor.k10')}
             </Typography>
           </Box>
 
           <Box sx={{ p: 3, overflow: 'auto' }}>
             <TextField
-              label='标题'
+              label={i18n.t('components.dashboard_editor.k33')}
               fullWidth
               value={selectedWidget.title}
               onChange={(e) => handleUpdateWidget(selectedWidget.id, { title: e.target.value })}
@@ -641,17 +642,17 @@ export const DashboardEditor: React.FC<{
                 variant='body2'
                 sx={{ fontWeight: 500, mb: 1.5 }}
               >
-                尺寸
+                {i18n.t('components.dashboard_editor.k11')}
               </Typography>
               <Box sx={{ display: 'flex', gap: 2 }}>
                 <FormControl
                   sx={{ flex: 1 }}
                   size='small'
                 >
-                  <InputLabel>宽度</InputLabel>
+                  <InputLabel>{i18n.t('components.dashboard_editor.k34')}</InputLabel>
                   <Select
                     value={selectedWidget.w}
-                    label='宽度'
+                    label={i18n.t('components.dashboard_editor.k35')}
                     onChange={(e) =>
                       handleUpdateWidget(selectedWidget.id, { w: e.target.value as number })
                     }
@@ -670,10 +671,10 @@ export const DashboardEditor: React.FC<{
                   sx={{ flex: 1 }}
                   size='small'
                 >
-                  <InputLabel>高度</InputLabel>
+                  <InputLabel>{i18n.t('components.dashboard_editor.k36')}</InputLabel>
                   <Select
                     value={selectedWidget.h}
-                    label='高度'
+                    label={i18n.t('components.dashboard_editor.k37')}
                     onChange={(e) =>
                       handleUpdateWidget(selectedWidget.id, { h: e.target.value as number })
                     }
@@ -696,7 +697,7 @@ export const DashboardEditor: React.FC<{
                 variant='body2'
                 sx={{ fontWeight: 500, mb: 1.5 }}
               >
-                位置
+                {i18n.t('components.dashboard_editor.k12')}
               </Typography>
               <Box sx={{ display: 'flex', gap: 2 }}>
                 <FormControl
@@ -754,10 +755,10 @@ export const DashboardEditor: React.FC<{
                   sx={{ mb: 3 }}
                   size='small'
                 >
-                  <InputLabel>图表类型</InputLabel>
+                  <InputLabel>{i18n.t('components.dashboard_editor.k38')}</InputLabel>
                   <Select
                     value={selectedWidget.config.chartType}
-                    label='图表类型'
+                    label={i18n.t('components.dashboard_editor.k39')}
                     onChange={(e) =>
                       handleUpdateWidget(selectedWidget.id, {
                         config: {
@@ -785,7 +786,7 @@ export const DashboardEditor: React.FC<{
               <>
                 <Divider sx={{ my: 2 }} />
                 <TextField
-                  label='指标值'
+                  label={i18n.t('components.dashboard_editor.k40')}
                   type='number'
                   fullWidth
                   value={selectedWidget.config.metricValue}
@@ -800,7 +801,7 @@ export const DashboardEditor: React.FC<{
                   sx={{ mb: 2 }}
                 />
                 <TextField
-                  label='前缀'
+                  label={i18n.t('components.dashboard_editor.k41')}
                   fullWidth
                   value={selectedWidget.config.metricPrefix || ''}
                   onChange={(e) =>
@@ -808,11 +809,11 @@ export const DashboardEditor: React.FC<{
                       config: { ...selectedWidget.config, metricPrefix: e.target.value },
                     })
                   }
-                  placeholder='如: ¥'
+                  placeholder={i18n.t('components.dashboard_editor.k13')}
                   sx={{ mb: 2 }}
                 />
                 <TextField
-                  label='后缀'
+                  label={i18n.t('components.dashboard_editor.k42')}
                   fullWidth
                   value={selectedWidget.config.metricSuffix || ''}
                   onChange={(e) =>
@@ -820,11 +821,11 @@ export const DashboardEditor: React.FC<{
                       config: { ...selectedWidget.config, metricSuffix: e.target.value },
                     })
                   }
-                  placeholder='如: %'
+                  placeholder={i18n.t('components.dashboard_editor.k14')}
                   sx={{ mb: 2 }}
                 />
                 <TextField
-                  label='标签'
+                  label={i18n.t('components.dashboard_editor.k43')}
                   fullWidth
                   value={selectedWidget.config.metricLabel || ''}
                   onChange={(e) =>
@@ -832,7 +833,7 @@ export const DashboardEditor: React.FC<{
                       config: { ...selectedWidget.config, metricLabel: e.target.value },
                     })
                   }
-                  placeholder='如: 本月'
+                  placeholder={i18n.t('components.dashboard_editor.k15')}
                 />
               </>
             )}
@@ -846,16 +847,16 @@ export const DashboardEditor: React.FC<{
         maxWidth='sm'
         fullWidth
       >
-        <DialogTitle>添加组件</DialogTitle>
+        <DialogTitle>{i18n.t('components.dashboard_editor.k44')}</DialogTitle>
         <DialogContent sx={{ mt: 2 }}>
           <FormControl
             fullWidth
             sx={{ mb: 3 }}
           >
-            <InputLabel>组件类型</InputLabel>
+            <InputLabel>{i18n.t('components.dashboard_editor.k45')}</InputLabel>
             <Select
               value={newWidgetType}
-              label='组件类型'
+              label={i18n.t('components.dashboard_editor.k46')}
               onChange={(e) => setNewWidgetType(e.target.value as 'chart' | 'pivot' | 'metric')}
             >
               {WIDGET_TYPES.map((type) => (
@@ -875,10 +876,10 @@ export const DashboardEditor: React.FC<{
               fullWidth
               sx={{ mb: 3 }}
             >
-              <InputLabel>图表类型</InputLabel>
+              <InputLabel>{i18n.t('components.dashboard_editor.k47')}</InputLabel>
               <Select
                 value={newWidgetChartType}
-                label='图表类型'
+                label={i18n.t('components.dashboard_editor.k48')}
                 onChange={(e) => setNewWidgetChartType(e.target.value as ChartType)}
               >
                 {CHART_TYPES.map((type) => (
@@ -895,12 +896,12 @@ export const DashboardEditor: React.FC<{
           )}
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setShowAddWidgetModal(false)}>取消</Button>
+          <Button onClick={() => setShowAddWidgetModal(false)}>{i18n.t('components.dashboard_editor.k49')}</Button>
           <Button
             variant='contained'
             onClick={handleAddWidget}
           >
-            添加
+            {i18n.t('components.dashboard_editor.k16')}
           </Button>
         </DialogActions>
       </Dialog>

@@ -28,6 +28,7 @@ import {
   DialogContent,
   DialogActions,
 } from '@mui/material';
+import i18n from '@/i18n';
 import { PageContainer } from '@/components/common';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { useNotificationStore } from '@/store';
@@ -54,10 +55,10 @@ const riskColorMap: Record<string, string> = {
 };
 
 const riskLabelMap: Record<string, string> = {
-  low: '低风险',
-  medium: '中风险',
-  high: '高风险',
-  critical: '严重',
+  low: i18n.t('pages.aps_scheduling_page.k0'),
+  medium: i18n.t('pages.aps_scheduling_page.k1'),
+  high: i18n.t('pages.aps_scheduling_page.k2'),
+  critical: i18n.t('pages.aps_scheduling_page.k3'),
 };
 
 const ApsSchedulingPage: React.FC = () => {
@@ -82,21 +83,21 @@ const ApsSchedulingPage: React.FC = () => {
         setScheduleResult(res.data);
         addNotification({
           type: 'success',
-          title: '排程完成',
-          message: `APS排程完成：${res.data.scheduled_orders}/${res.data.total_orders} 订单已排程`,
+          title: i18n.t('pages.aps_scheduling_page.k4'),
+          message: `${i18n.t('pages.aps_scheduling_page.aps_0')}${res.data.scheduled_orders}/${res.data.total_orders} ${i18n.t('pages.aps_scheduling_page.k1')}`,
         });
       } else {
         addNotification({
           type: 'error',
-          title: '排程失败',
-          message: res.message || '排程失败',
+          title: i18n.t('pages.aps_scheduling_page.k5'),
+          message: res.message || i18n.t('pages.aps_scheduling_page.k6'),
         });
       }
     },
     onError: (err: Error) =>
       addNotification({
         type: 'error',
-        title: '排程失败',
+        title: i18n.t('pages.aps_scheduling_page.k7'),
         message: err.message,
       }),
   });
@@ -123,8 +124,8 @@ const ApsSchedulingPage: React.FC = () => {
   const handleSimulate = () => {
     addNotification({
       type: 'info',
-      title: '功能提示',
-      message: '排程模拟功能开发中',
+      title: i18n.t('pages.aps_scheduling_page.k8'),
+      message: i18n.t('pages.aps_scheduling_page.k9'),
     });
   };
 
@@ -133,8 +134,8 @@ const ApsSchedulingPage: React.FC = () => {
 
   return (
     <PageContainer
-      title='APS 高级排程'
-      subtitle='智能计划排程与优化分析'
+      title={i18n.t('pages.aps_scheduling_page.aps_2')}
+      subtitle={i18n.t('pages.aps_scheduling_page.k10')}
     >
       <Box sx={{ mb: 3 }}>
         <Tabs
@@ -144,17 +145,17 @@ const ApsSchedulingPage: React.FC = () => {
           <Tab
             icon={<Brain size={16} />}
             iconPosition='start'
-            label='智能排程'
+            label={i18n.t('pages.aps_scheduling_page.k11')}
           />
           <Tab
             icon={<BarChart3 size={16} />}
             iconPosition='start'
-            label='优化报告'
+            label={i18n.t('pages.aps_scheduling_page.k12')}
           />
           <Tab
             icon={<Gauge size={16} />}
             iconPosition='start'
-            label='瓶颈分析'
+            label={i18n.t('pages.aps_scheduling_page.k13')}
           />
         </Tabs>
       </Box>
@@ -169,7 +170,7 @@ const ApsSchedulingPage: React.FC = () => {
                 sx={{ mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}
               >
                 <Brain size={20} />
-                排程策略配置
+                {i18n.t('pages.aps_scheduling_page.k3')}
               </Typography>
               <Grid
                 container
@@ -178,16 +179,16 @@ const ApsSchedulingPage: React.FC = () => {
               >
                 <Grid size={{ xs: 12, md: 4 }}>
                   <FormControl fullWidth>
-                    <InputLabel>排程策略</InputLabel>
+                    <InputLabel>{i18n.t('pages.aps_scheduling_page.k14')}</InputLabel>
                     <Select
                       value={strategy}
-                      label='排程策略'
+                      label={i18n.t('pages.aps_scheduling_page.k15')}
                       onChange={(e) => setStrategy(e.target.value as typeof strategy)}
                     >
-                      <MenuItem value='forward'>前向排程（最早开始）</MenuItem>
-                      <MenuItem value='backward'>后向排程（按期交付）</MenuItem>
-                      <MenuItem value='bidirectional'>双向排程（最优平衡）</MenuItem>
-                      <MenuItem value='bottleneck_driven'>瓶颈驱动（产能优先）</MenuItem>
+                      <MenuItem value='forward'>{i18n.t('pages.aps_scheduling_page.k16')}</MenuItem>
+                      <MenuItem value='backward'>{i18n.t('pages.aps_scheduling_page.k17')}</MenuItem>
+                      <MenuItem value='bidirectional'>{i18n.t('pages.aps_scheduling_page.k18')}</MenuItem>
+                      <MenuItem value='bottleneck_driven'>{i18n.t('pages.aps_scheduling_page.k19')}</MenuItem>
                     </Select>
                   </FormControl>
                 </Grid>
@@ -200,7 +201,7 @@ const ApsSchedulingPage: React.FC = () => {
                       disabled={scheduleMutation.isPending}
                       sx={{ flex: 1 }}
                     >
-                      {scheduleMutation.isPending ? '排程中...' : '执行智能排程'}
+                      {scheduleMutation.isPending ? i18n.t('pages.aps_scheduling_page.k4') : i18n.t('pages.aps_scheduling_page.k20')}
                     </Button>
                     <Button
                       variant='outlined'
@@ -208,7 +209,7 @@ const ApsSchedulingPage: React.FC = () => {
                       onClick={handleSimulate}
                       disabled={scheduleMutation.isPending}
                     >
-                      模拟
+                      {i18n.t('pages.aps_scheduling_page.k5')}
                     </Button>
                   </Box>
                 </Grid>
@@ -218,7 +219,7 @@ const ApsSchedulingPage: React.FC = () => {
                       severity='info'
                       sx={{ py: 0.5 }}
                     >
-                      从最早可开始时间往后排，最小化总完工时间
+                      {i18n.t('pages.aps_scheduling_page.k6')}
                     </Alert>
                   )}
                   {strategy === 'backward' && (
@@ -226,7 +227,7 @@ const ApsSchedulingPage: React.FC = () => {
                       severity='info'
                       sx={{ py: 0.5 }}
                     >
-                      从交付期限往前倒推，确保按期交付
+                      {i18n.t('pages.aps_scheduling_page.k7')}
                     </Alert>
                   )}
                   {strategy === 'bidirectional' && (
@@ -234,7 +235,7 @@ const ApsSchedulingPage: React.FC = () => {
                       severity='info'
                       sx={{ py: 0.5 }}
                     >
-                      先后向确定最晚开始，再前向微调优化
+                      {i18n.t('pages.aps_scheduling_page.k8')}
                     </Alert>
                   )}
                   {strategy === 'bottleneck_driven' && (
@@ -242,7 +243,7 @@ const ApsSchedulingPage: React.FC = () => {
                       severity='info'
                       sx={{ py: 0.5 }}
                     >
-                      优先安排瓶颈资源，最大化整体产能
+                      {i18n.t('pages.aps_scheduling_page.k9')}
                     </Alert>
                   )}
                 </Grid>
@@ -258,7 +259,7 @@ const ApsSchedulingPage: React.FC = () => {
                 variant='body2'
                 sx={{ mt: 1, textAlign: 'center' }}
               >
-                APS 正在计算最优排程方案...
+                {i18n.t('pages.aps_scheduling_page.k10')}
               </Typography>
             </Box>
           )}
@@ -284,7 +285,7 @@ const ApsSchedulingPage: React.FC = () => {
                         variant='body2'
                         color='text.secondary'
                       >
-                        已排程订单
+                        {i18n.t('pages.aps_scheduling_page.k11')}
                       </Typography>
                       <Typography variant='caption'>
                         / {scheduleResult.total_orders} 总计
@@ -305,7 +306,7 @@ const ApsSchedulingPage: React.FC = () => {
                         variant='body2'
                         color='text.secondary'
                       >
-                        平均利用率
+                        {i18n.t('pages.aps_scheduling_page.k12')}
                       </Typography>
                     </CardContent>
                   </Card>
@@ -323,7 +324,7 @@ const ApsSchedulingPage: React.FC = () => {
                         variant='body2'
                         color='text.secondary'
                       >
-                        总完工时间
+                        {i18n.t('pages.aps_scheduling_page.k13')}
                       </Typography>
                     </CardContent>
                   </Card>
@@ -341,7 +342,7 @@ const ApsSchedulingPage: React.FC = () => {
                         variant='body2'
                         color='text.secondary'
                       >
-                        延期订单
+                        {i18n.t('pages.aps_scheduling_page.k14')}
                       </Typography>
                     </CardContent>
                   </Card>
@@ -366,7 +367,7 @@ const ApsSchedulingPage: React.FC = () => {
                     variant='h6'
                     sx={{ mb: 2 }}
                   >
-                    排程明细
+                    {i18n.t('pages.aps_scheduling_page.k15')}
                   </Typography>
                   <TableContainer
                     component={Paper}
@@ -375,16 +376,16 @@ const ApsSchedulingPage: React.FC = () => {
                     <Table size='small'>
                       <TableHead>
                         <TableRow>
-                          <TableCell>订单号</TableCell>
-                          <TableCell>产品</TableCell>
-                          <TableCell>数量</TableCell>
-                          <TableCell>工位</TableCell>
-                          <TableCell>计划开始</TableCell>
-                          <TableCell>计划结束</TableCell>
-                          <TableCell>加工时间</TableCell>
-                          <TableCell>物料</TableCell>
-                          <TableCell>可行性</TableCell>
-                          <TableCell>风险</TableCell>
+                          <TableCell>{i18n.t('pages.aps_scheduling_page.k21')}</TableCell>
+                          <TableCell>{i18n.t('pages.aps_scheduling_page.k22')}</TableCell>
+                          <TableCell>{i18n.t('pages.aps_scheduling_page.k23')}</TableCell>
+                          <TableCell>{i18n.t('pages.aps_scheduling_page.k24')}</TableCell>
+                          <TableCell>{i18n.t('pages.aps_scheduling_page.k25')}</TableCell>
+                          <TableCell>{i18n.t('pages.aps_scheduling_page.k26')}</TableCell>
+                          <TableCell>{i18n.t('pages.aps_scheduling_page.k27')}</TableCell>
+                          <TableCell>{i18n.t('pages.aps_scheduling_page.k28')}</TableCell>
+                          <TableCell>{i18n.t('pages.aps_scheduling_page.k29')}</TableCell>
+                          <TableCell>{i18n.t('pages.aps_scheduling_page.k30')}</TableCell>
                         </TableRow>
                       </TableHead>
                       <TableBody>
@@ -421,14 +422,14 @@ const ApsSchedulingPage: React.FC = () => {
                                 <Chip
                                   size='small'
                                   icon={<CheckCircle size={14} />}
-                                  label='齐套'
+                                  label={i18n.t('pages.aps_scheduling_page.k31')}
                                   color='success'
                                 />
                               ) : (
                                 <Chip
                                   size='small'
                                   icon={<XCircle size={14} />}
-                                  label='缺料'
+                                  label={i18n.t('pages.aps_scheduling_page.k32')}
                                   color='error'
                                 />
                               )}
@@ -478,14 +479,14 @@ const ApsSchedulingPage: React.FC = () => {
                   variant='h6'
                   color='text.secondary'
                 >
-                  选择排程策略并点击"执行智能排程"
+                  {i18n.t('pages.aps_scheduling_page.i18n_16')}.t('pages.aps_scheduling_page.k33')
                 </Typography>
                 <Typography
                   variant='body2'
                   color='text.secondary'
                   sx={{ mt: 1 }}
                 >
-                  APS 将基于设备/工位/物料/人员约束自动生成最优排程方案
+                  {i18n.t('pages.aps_scheduling_page.k17')}
                 </Typography>
               </CardContent>
             </Card>
@@ -512,7 +513,7 @@ const ApsSchedulingPage: React.FC = () => {
                         variant='body2'
                         color='text.secondary'
                       >
-                        总订单数
+                        {i18n.t('pages.aps_scheduling_page.k18')}
                       </Typography>
                     </CardContent>
                   </Card>
@@ -530,7 +531,7 @@ const ApsSchedulingPage: React.FC = () => {
                         variant='body2'
                         color='text.secondary'
                       >
-                        准时交付率
+                        {i18n.t('pages.aps_scheduling_page.k19')}
                       </Typography>
                     </CardContent>
                   </Card>
@@ -545,7 +546,7 @@ const ApsSchedulingPage: React.FC = () => {
                         variant='body2'
                         color='text.secondary'
                       >
-                        平均交付周期
+                        {i18n.t('pages.aps_scheduling_page.k20')}
                       </Typography>
                     </CardContent>
                   </Card>
@@ -563,7 +564,7 @@ const ApsSchedulingPage: React.FC = () => {
                         variant='body2'
                         color='text.secondary'
                       >
-                        未排程订单
+                        {i18n.t('pages.aps_scheduling_page.k21')}
                       </Typography>
                     </CardContent>
                   </Card>
@@ -582,7 +583,7 @@ const ApsSchedulingPage: React.FC = () => {
                         sx={{ mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}
                       >
                         <Gauge size={18} />
-                        瓶颈资源
+                        {i18n.t('pages.aps_scheduling_page.k22')}
                       </Typography>
                       {report.bottleneck_resources.map((r, i) => (
                         <Box
@@ -595,7 +596,7 @@ const ApsSchedulingPage: React.FC = () => {
                               variant='caption'
                               color='text.secondary'
                             >
-                              队列: {r.queue_length} | 利用率: {r.utilization_rate.toFixed(1)}%
+                              [i18n.t('pages.aps_scheduling_page.k23')]: {r.queue_length} | {i18n.t('pages.aps_scheduling_page.k24')}{r.utilization_rate.toFixed(1)}%
                             </Typography>
                           </Box>
                           <LinearProgress
@@ -617,7 +618,7 @@ const ApsSchedulingPage: React.FC = () => {
                           variant='body2'
                           color='text.secondary'
                         >
-                          暂无瓶颈资源数据
+                          {i18n.t('pages.aps_scheduling_page.k25')}
                         </Typography>
                       )}
                     </CardContent>
@@ -631,7 +632,7 @@ const ApsSchedulingPage: React.FC = () => {
                         sx={{ mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}
                       >
                         <TrendingUp size={18} />
-                        优化建议
+                        {i18n.t('pages.aps_scheduling_page.k26')}
                       </Typography>
                       {report.improvement_suggestions.map((s, i) => (
                         <Box
@@ -658,7 +659,7 @@ const ApsSchedulingPage: React.FC = () => {
                             variant='caption'
                             color='success.main'
                           >
-                            预期效果: {s.estimated_impact}
+                            [i18n.t('pages.aps_scheduling_page.k27')]: {s.estimated_impact}
                           </Typography>
                         </Box>
                       ))}
@@ -667,7 +668,7 @@ const ApsSchedulingPage: React.FC = () => {
                           variant='body2'
                           color='text.secondary'
                         >
-                          暂无优化建议
+                          {i18n.t('pages.aps_scheduling_page.k28')}
                         </Typography>
                       )}
                     </CardContent>
@@ -676,7 +677,7 @@ const ApsSchedulingPage: React.FC = () => {
               </Grid>
             </>
           ) : (
-            <Alert severity='info'>暂无优化报告数据</Alert>
+            <Alert severity='info'>{i18n.t('pages.aps_scheduling_page.k34')}</Alert>
           )}
         </Box>
       )}
@@ -702,7 +703,7 @@ const ApsSchedulingPage: React.FC = () => {
                         variant='body2'
                         color='text.secondary'
                       >
-                        总订单
+                        {i18n.t('pages.aps_scheduling_page.k29')}
                       </Typography>
                     </CardContent>
                   </Card>
@@ -720,7 +721,7 @@ const ApsSchedulingPage: React.FC = () => {
                         variant='body2'
                         color='text.secondary'
                       >
-                        已完成
+                        {i18n.t('pages.aps_scheduling_page.k30')}
                       </Typography>
                     </CardContent>
                   </Card>
@@ -738,7 +739,7 @@ const ApsSchedulingPage: React.FC = () => {
                         variant='body2'
                         color='text.secondary'
                       >
-                        进行中
+                        {i18n.t('pages.aps_scheduling_page.k31')}
                       </Typography>
                     </CardContent>
                   </Card>
@@ -756,7 +757,7 @@ const ApsSchedulingPage: React.FC = () => {
                         variant='body2'
                         color='text.secondary'
                       >
-                        平均周期
+                        {i18n.t('pages.aps_scheduling_page.k32')}
                       </Typography>
                     </CardContent>
                   </Card>
@@ -774,11 +775,11 @@ const ApsSchedulingPage: React.FC = () => {
                         variant='h6'
                         sx={{ mb: 2 }}
                       >
-                        产能 vs 需求
+                        {i18n.t('pages.aps_scheduling_page.vs_33')}
                       </Typography>
                       <Box sx={{ mb: 2 }}>
                         <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 0.5 }}>
-                          <Typography variant='body2'>产能利用率</Typography>
+                          <Typography variant='body2'>{i18n.t('pages.aps_scheduling_page.k35')}</Typography>
                           <Typography variant='body2'>
                             {bottleneck.capacity_vs_demand.capacity_utilization.toFixed(1)}%
                           </Typography>
@@ -803,7 +804,7 @@ const ApsSchedulingPage: React.FC = () => {
                             variant='caption'
                             color='text.secondary'
                           >
-                            总产能
+                            {i18n.t('pages.aps_scheduling_page.k34')}
                           </Typography>
                           <Typography variant='h6'>
                             {bottleneck.capacity_vs_demand.total_capacity_hours.toFixed(0)}h
@@ -814,7 +815,7 @@ const ApsSchedulingPage: React.FC = () => {
                             variant='caption'
                             color='text.secondary'
                           >
-                            总需求
+                            {i18n.t('pages.aps_scheduling_page.k35')}
                           </Typography>
                           <Typography variant='h6'>
                             {bottleneck.capacity_vs_demand.total_demand_hours.toFixed(0)}h
@@ -826,8 +827,8 @@ const ApsSchedulingPage: React.FC = () => {
                           severity='error'
                           sx={{ mt: 2 }}
                         >
-                          产能缺口: {bottleneck.capacity_vs_demand.capacity_gap_hours.toFixed(1)}{' '}
-                          小时
+                          [i18n.t('pages.aps_scheduling_page.k36')]: {bottleneck.capacity_vs_demand.capacity_gap_hours.toFixed(1)}{' '}
+                          {i18n.t('pages.aps_scheduling_page.k37')}
                         </Alert>
                       )}
                     </CardContent>
@@ -840,7 +841,7 @@ const ApsSchedulingPage: React.FC = () => {
                         variant='h6'
                         sx={{ mb: 2 }}
                       >
-                        瓶颈资源排行
+                        {i18n.t('pages.aps_scheduling_page.k38')}
                       </Typography>
                       {bottleneck.bottleneck_resources.map((r, i) => (
                         <Box
@@ -875,7 +876,7 @@ const ApsSchedulingPage: React.FC = () => {
                           variant='body2'
                           color='text.secondary'
                         >
-                          暂无瓶颈数据
+                          {i18n.t('pages.aps_scheduling_page.k39')}
                         </Typography>
                       )}
                     </CardContent>
@@ -884,7 +885,7 @@ const ApsSchedulingPage: React.FC = () => {
               </Grid>
             </>
           ) : (
-            <Alert severity='info'>暂无瓶颈分析数据</Alert>
+            <Alert severity='info'>{i18n.t('pages.aps_scheduling_page.k36')}</Alert>
           )}
         </Box>
       )}
@@ -896,7 +897,7 @@ const ApsSchedulingPage: React.FC = () => {
         maxWidth='sm'
         fullWidth
       >
-        <DialogTitle>排程详情</DialogTitle>
+        <DialogTitle>{i18n.t('pages.aps_scheduling_page.k37')}</DialogTitle>
         <DialogContent>
           {selectedItem && (
             <Box sx={{ pt: 1 }}>
@@ -909,7 +910,7 @@ const ApsSchedulingPage: React.FC = () => {
                     variant='caption'
                     color='text.secondary'
                   >
-                    订单号
+                    {i18n.t('pages.aps_scheduling_page.k40')}
                   </Typography>
                   <Typography variant='body1'>{selectedItem.orderNo}</Typography>
                 </Grid>
@@ -918,7 +919,7 @@ const ApsSchedulingPage: React.FC = () => {
                     variant='caption'
                     color='text.secondary'
                   >
-                    产品
+                    {i18n.t('pages.aps_scheduling_page.k41')}
                   </Typography>
                   <Typography variant='body1'>{selectedItem.product_name}</Typography>
                 </Grid>
@@ -927,7 +928,7 @@ const ApsSchedulingPage: React.FC = () => {
                     variant='caption'
                     color='text.secondary'
                   >
-                    数量
+                    {i18n.t('pages.aps_scheduling_page.k42')}
                   </Typography>
                   <Typography variant='body1'>{selectedItem.quantity}</Typography>
                 </Grid>
@@ -936,7 +937,7 @@ const ApsSchedulingPage: React.FC = () => {
                     variant='caption'
                     color='text.secondary'
                   >
-                    优先级
+                    {i18n.t('pages.aps_scheduling_page.k43')}
                   </Typography>
                   <Typography variant='body1'>{selectedItem.priority}</Typography>
                 </Grid>
@@ -945,7 +946,7 @@ const ApsSchedulingPage: React.FC = () => {
                     variant='caption'
                     color='text.secondary'
                   >
-                    工位
+                    {i18n.t('pages.aps_scheduling_page.k44')}
                   </Typography>
                   <Typography variant='body1'>{selectedItem.work_station_name}</Typography>
                 </Grid>
@@ -954,7 +955,7 @@ const ApsSchedulingPage: React.FC = () => {
                     variant='caption'
                     color='text.secondary'
                   >
-                    设备
+                    {i18n.t('pages.aps_scheduling_page.k45')}
                   </Typography>
                   <Typography variant='body1'>{selectedItem.equipment_name || '-'}</Typography>
                 </Grid>
@@ -963,7 +964,7 @@ const ApsSchedulingPage: React.FC = () => {
                     variant='caption'
                     color='text.secondary'
                   >
-                    计划开始
+                    {i18n.t('pages.aps_scheduling_page.k46')}
                   </Typography>
                   <Typography variant='body1'>
                     {new Date(selectedItem.planned_start).toLocaleString('zh-CN')}
@@ -974,7 +975,7 @@ const ApsSchedulingPage: React.FC = () => {
                     variant='caption'
                     color='text.secondary'
                   >
-                    计划结束
+                    {i18n.t('pages.aps_scheduling_page.k47')}
                   </Typography>
                   <Typography variant='body1'>
                     {new Date(selectedItem.planned_end).toLocaleString('zh-CN')}
@@ -985,7 +986,7 @@ const ApsSchedulingPage: React.FC = () => {
                     variant='caption'
                     color='text.secondary'
                   >
-                    加工时间
+                    {i18n.t('pages.aps_scheduling_page.k48')}
                   </Typography>
                   <Typography variant='body1'>
                     {selectedItem.processing_time_hours.toFixed(2)} 小时
@@ -996,7 +997,7 @@ const ApsSchedulingPage: React.FC = () => {
                     variant='caption'
                     color='text.secondary'
                   >
-                    换型时间
+                    {i18n.t('pages.aps_scheduling_page.k49')}
                   </Typography>
                   <Typography variant='body1'>{selectedItem.setup_time_hours} 小时</Typography>
                 </Grid>
@@ -1005,19 +1006,19 @@ const ApsSchedulingPage: React.FC = () => {
                     variant='caption'
                     color='text.secondary'
                   >
-                    物料齐套
+                    {i18n.t('pages.aps_scheduling_page.k50')}
                   </Typography>
                   <Typography variant='body1'>
                     {selectedItem.material_ready ? (
                       <Chip
                         size='small'
-                        label='已齐套'
+                        label={i18n.t('pages.aps_scheduling_page.k38')}
                         color='success'
                       />
                     ) : (
                       <Chip
                         size='small'
-                        label='未齐套'
+                        label={i18n.t('pages.aps_scheduling_page.k39')}
                         color='error'
                       />
                     )}
@@ -1028,7 +1029,7 @@ const ApsSchedulingPage: React.FC = () => {
                     variant='caption'
                     color='text.secondary'
                   >
-                    可行性评分
+                    {i18n.t('pages.aps_scheduling_page.k51')}
                   </Typography>
                   <Typography variant='body1'>
                     {selectedItem.feasibility_score.toFixed(0)} / 100
@@ -1039,7 +1040,7 @@ const ApsSchedulingPage: React.FC = () => {
           )}
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setSelectedItem(null)}>关闭</Button>
+          <Button onClick={() => setSelectedItem(null)}>{i18n.t('pages.aps_scheduling_page.k40')}</Button>
         </DialogActions>
       </Dialog>
     </PageContainer>

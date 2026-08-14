@@ -35,6 +35,7 @@ import {
   Tab,
   LinearProgress,
 } from '@mui/material';
+import i18n from '@/i18n';
 import {
   ChevronUp,
   ChevronDown,
@@ -124,7 +125,7 @@ const PerformanceRankingTable: React.FC<{
         color='text.secondary'
         sx={{ py: 4, textAlign: 'center' }}
       >
-        暂无查询数据
+        {i18n.t('components.performance_panel.k0')}
       </Typography>
     );
   }
@@ -137,12 +138,12 @@ const PerformanceRankingTable: React.FC<{
       >
         <TableHead>
           <TableRow>
-            <TableCell>操作名</TableCell>
-            <TableCell align='right'>次数</TableCell>
-            <TableCell align='right'>平均耗时</TableCell>
+            <TableCell>{i18n.t('components.performance_panel.k0')}</TableCell>
+            <TableCell align='right'>{i18n.t('components.performance_panel.k1')}</TableCell>
+            <TableCell align='right'>{i18n.t('components.performance_panel.k2')}</TableCell>
             <TableCell align='right'>P95</TableCell>
-            <TableCell align='right'>成功率</TableCell>
-            <TableCell align='right'>缓存命中率</TableCell>
+            <TableCell align='right'>{i18n.t('components.performance_panel.k3')}</TableCell>
+            <TableCell align='right'>{i18n.t('components.performance_panel.k4')}</TableCell>
           </TableRow>
         </TableHead>
         <TableBody>
@@ -261,7 +262,7 @@ const SlowQueryList: React.FC<{
         color='text.secondary'
         sx={{ py: 4, textAlign: 'center' }}
       >
-        暂无慢查询
+        {i18n.t('components.performance_panel.k1')}
       </Typography>
     );
   }
@@ -307,13 +308,13 @@ const SlowQueryList: React.FC<{
               variant='caption'
               color='text.secondary'
             >
-              阈值: {formatDuration(threshold)}
+              [i18n.t('components.performance_panel.k2')]: {formatDuration(threshold)}
             </Typography>
             {!record.success && (
               <Chip
                 size='small'
                 color='error'
-                label='失败'
+                label={i18n.t('components.performance_panel.k5')}
                 variant='outlined'
               />
             )}
@@ -340,7 +341,7 @@ const RealtimeTimeline: React.FC<{
         color='text.secondary'
         sx={{ py: 4, textAlign: 'center' }}
       >
-        暂无查询记录
+        {i18n.t('components.performance_panel.k3')}
       </Typography>
     );
   }
@@ -401,25 +402,25 @@ const OverviewStats: React.FC<{
 
   const stats = [
     {
-      label: '总查询数',
+      label: i18n.t('components.performance_panel.k6'),
       value: totalQueries.toString(),
       icon: <TrendingUp size={18} />,
       color: 'primary.main',
     },
     {
-      label: '成功率',
+      label: i18n.t('components.performance_panel.k7'),
       value: `${successRate.toFixed(1)}%`,
       icon: <CheckCircle size={18} />,
       color: successRate >= 95 ? 'success.main' : successRate >= 80 ? 'warning.main' : 'error.main',
     },
     {
-      label: '缓存命中率',
+      label: i18n.t('components.performance_panel.k8'),
       value: `${cacheHitRate.toFixed(1)}%`,
       icon: <Database size={18} />,
       color: 'info.main',
     },
     {
-      label: '慢查询数',
+      label: i18n.t('components.performance_panel.k9'),
       value: slowQueryCount.toString(),
       icon: <Clock size={18} />,
       color: slowQueryCount > 0 ? 'error.main' : 'success.main',
@@ -505,7 +506,7 @@ const QueryCostPanel: React.FC<{ recentRecords: QueryPerformanceRecord[] }> = ({
         color='text.secondary'
         sx={{ py: 4, textAlign: 'center' }}
       >
-        暂无查询数据
+        {i18n.t('components.performance_panel.k4')}
       </Typography>
     );
   }
@@ -534,7 +535,7 @@ const QueryCostPanel: React.FC<{ recentRecords: QueryPerformanceRecord[] }> = ({
               variant='caption'
               color='text.secondary'
             >
-              总查询数
+              {i18n.t('components.performance_panel.k5')}
             </Typography>
           </Box>
           <Typography
@@ -566,7 +567,7 @@ const QueryCostPanel: React.FC<{ recentRecords: QueryPerformanceRecord[] }> = ({
               variant='caption'
               color='text.secondary'
             >
-              高成本查询
+              {i18n.t('components.performance_panel.k6')}
             </Typography>
           </Box>
           <Typography
@@ -630,7 +631,7 @@ const QueryCostPanel: React.FC<{ recentRecords: QueryPerformanceRecord[] }> = ({
                     variant='caption'
                     color='text.secondary'
                   >
-                    成本分
+                    {i18n.t('components.performance_panel.k7')}
                   </Typography>
                   <Typography
                     variant='body2'
@@ -644,7 +645,7 @@ const QueryCostPanel: React.FC<{ recentRecords: QueryPerformanceRecord[] }> = ({
                     variant='caption'
                     color='text.secondary'
                   >
-                    字段数
+                    {i18n.t('components.performance_panel.k8')}
                   </Typography>
                   <Typography
                     variant='body2'
@@ -658,7 +659,7 @@ const QueryCostPanel: React.FC<{ recentRecords: QueryPerformanceRecord[] }> = ({
                     variant='caption'
                     color='text.secondary'
                   >
-                    嵌套深度
+                    {i18n.t('components.performance_panel.k9')}
                   </Typography>
                   <Typography
                     variant='body2'
@@ -672,7 +673,7 @@ const QueryCostPanel: React.FC<{ recentRecords: QueryPerformanceRecord[] }> = ({
                     variant='caption'
                     color='text.secondary'
                   >
-                    预估大小
+                    {i18n.t('components.performance_panel.k10')}
                   </Typography>
                   <Typography
                     variant='body2'
@@ -684,7 +685,7 @@ const QueryCostPanel: React.FC<{ recentRecords: QueryPerformanceRecord[] }> = ({
               </Box>
 
               {analysis.suggestions.length > 0 &&
-                analysis.suggestions[0] !== '查询成本正常，无需优化' && (
+                analysis.suggestions[0] !== i18n.t('components.performance_panel.k10') && (
                   <Box sx={{ mt: 1 }}>
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mb: 0.5 }}>
                       <Lightbulb
@@ -695,7 +696,7 @@ const QueryCostPanel: React.FC<{ recentRecords: QueryPerformanceRecord[] }> = ({
                         variant='caption'
                         color='text.secondary'
                       >
-                        优化建议
+                        {i18n.t('components.performance_panel.k11')}
                       </Typography>
                     </Box>
                     {analysis.suggestions.map((suggestion, idx) => (
@@ -722,20 +723,20 @@ const SmartOptimizationPanel: React.FC = () => {
   const features = [
     {
       icon: <Layers size={20} />,
-      title: '自动分片',
-      description: '大数据量查询自动分页拆分',
+      title: i18n.t('components.performance_panel.k11'),
+      description: i18n.t('components.performance_panel.k12'),
       status: 'available',
     },
     {
       icon: <Zap size={20} />,
-      title: '智能预加载',
-      description: '基于用户行为预测预加载',
+      title: i18n.t('components.performance_panel.k13'),
+      description: i18n.t('components.performance_panel.k14'),
       status: 'available',
     },
     {
       icon: <Brain size={20} />,
-      title: '路由预测',
-      description: '马尔可夫链预测下一步导航',
+      title: i18n.t('components.performance_panel.k15'),
+      description: i18n.t('components.performance_panel.k16'),
       status: 'available',
     },
   ];
@@ -746,7 +747,7 @@ const SmartOptimizationPanel: React.FC = () => {
         variant='subtitle2'
         sx={{ mb: 2, fontWeight: 600 }}
       >
-        V41.0 智能优化功能
+        {i18n.t('components.performance_panel.v410_12')}
       </Typography>
 
       <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
@@ -791,7 +792,7 @@ const SmartOptimizationPanel: React.FC = () => {
             </Box>
             <Chip
               size='small'
-              label='可用'
+              label={i18n.t('components.performance_panel.k17')}
               color='success'
               variant='outlined'
             />
@@ -804,8 +805,8 @@ const SmartOptimizationPanel: React.FC = () => {
           variant='caption'
           color='info.dark'
         >
-          💡 使用 useQueryCost 分析查询成本，useAutoSharding 自动分片大查询，useSmartPrefetch
-          智能预加载下一页数据。
+          {i18n.t('components.performance_panel.k13')}
+          {i18n.t('components.performance_panel.k14')}
         </Typography>
       </Box>
     </Box>
@@ -853,27 +854,27 @@ const SuspenseStatsPanel: React.FC = () => {
 
   const overviewItems = [
     {
-      label: 'Suspense 边界',
+      label: i18n.t('components.performance_panel.suspense_0'),
       value: suspenseStats.totalMounts,
-      sub: `${suspenseStats.uniqueBoundaries} 个唯一`,
+      sub: `${suspenseStats.uniqueBoundaries}${i18n.t('components.performance_panel.k1')}`,
       color: 'primary.main',
     },
     {
       label: 'PPR Slot',
       value: pprStats.totalSlots,
-      sub: `${pprStats.loadedSlots}/${pprStats.totalSlots} 就绪`,
+      sub: `${pprStats.loadedSlots}/${pprStats.totalSlots}${i18n.t('components.performance_panel.k2')}`,
       color: pprStats.pendingSlots > 0 ? 'warning.main' : 'success.main',
     },
     {
-      label: '渐进式水合',
+      label: i18n.t('components.performance_panel.k18'),
       value: hydrationStats.totalComponents,
-      sub: `${hydrationStats.hydratedCount}/${hydrationStats.totalComponents} 已水合`,
+      sub: `${hydrationStats.hydratedCount}/${hydrationStats.totalComponents}${i18n.t('components.performance_panel.k3')}`,
       color: hydrationStats.pendingCount > 0 ? 'warning.main' : 'success.main',
     },
     {
-      label: '平均水合耗时',
+      label: i18n.t('components.performance_panel.k19'),
       value: `${hydrationStats.avgDuration.toFixed(0)}ms`,
-      sub: `Suspense 均 ${suspenseStats.avgDuration.toFixed(0)}ms`,
+      sub: `${i18n.t('components.performance_panel.suspense_4')}${suspenseStats.avgDuration.toFixed(0)}ms`,
       color: 'info.main',
     },
   ];
@@ -916,7 +917,7 @@ const SuspenseStatsPanel: React.FC = () => {
         variant='subtitle2'
         sx={{ mb: 1, fontWeight: 600 }}
       >
-        Suspense 边界挂载记录
+        {i18n.t('components.performance_panel.suspense_15')}
       </Typography>
       <Box sx={{ maxHeight: 150, overflow: 'auto', mb: 2 }}>
         {suspenseRecords.length === 0 ? (
@@ -925,7 +926,7 @@ const SuspenseStatsPanel: React.FC = () => {
             color='text.secondary'
             sx={{ py: 2, textAlign: 'center' }}
           >
-            暂无 Suspense 挂载记录
+            {i18n.t('components.performance_panel.k16')}
           </Typography>
         ) : (
           suspenseRecords.slice(0, 10).map((record, index) => (
@@ -945,7 +946,7 @@ const SuspenseStatsPanel: React.FC = () => {
                   size='small'
                   variant='outlined'
                   color={record.duration !== null ? 'success' : 'warning'}
-                  label={record.duration !== null ? `${record.duration}ms` : '加载中'}
+                  label={record.duration !== null ? `${record.duration}ms` : i18n.t('components.performance_panel.k20')}
                 />
                 <Typography
                   variant='caption'
@@ -964,7 +965,7 @@ const SuspenseStatsPanel: React.FC = () => {
         variant='subtitle2'
         sx={{ mb: 1, fontWeight: 600 }}
       >
-        PPR 流式 Slot 状态
+        {i18n.t('components.performance_panel.pprslot_17')}
       </Typography>
       <Box sx={{ maxHeight: 150, overflow: 'auto', mb: 2 }}>
         {pprRecords.length === 0 ? (
@@ -973,7 +974,7 @@ const SuspenseStatsPanel: React.FC = () => {
             color='text.secondary'
             sx={{ py: 2, textAlign: 'center' }}
           >
-            暂无 PPR Slot 记录
+            {i18n.t('components.performance_panel.pprslot_18')}
           </Typography>
         ) : (
           pprRecords.slice(0, 10).map((record, index) => (
@@ -1008,7 +1009,7 @@ const SuspenseStatsPanel: React.FC = () => {
               <Chip
                 size='small'
                 color={record.loaded ? 'success' : 'warning'}
-                label={record.loaded ? `就绪 ${record.duration ?? 0}ms` : '加载中'}
+                label={record.loaded ? `${i18n.t('components.performance_panel.k5')}${record.duration ?? 0}ms` : i18n.t('components.performance_panel.k21')}
                 variant='outlined'
               />
             </Paper>
@@ -1021,7 +1022,7 @@ const SuspenseStatsPanel: React.FC = () => {
         variant='subtitle2'
         sx={{ mb: 1, fontWeight: 600 }}
       >
-        渐进式水合状态
+        {i18n.t('components.performance_panel.k19')}
       </Typography>
       <Box sx={{ maxHeight: 150, overflow: 'auto' }}>
         {hydrationRecords.length === 0 ? (
@@ -1030,7 +1031,7 @@ const SuspenseStatsPanel: React.FC = () => {
             color='text.secondary'
             sx={{ py: 2, textAlign: 'center' }}
           >
-            暂无水合记录
+            {i18n.t('components.performance_panel.k20')}
           </Typography>
         ) : (
           hydrationRecords.slice(0, 10).map((record, index) => (
@@ -1079,8 +1080,8 @@ const SuspenseStatsPanel: React.FC = () => {
                   record.status === 'hydrated'
                     ? `${record.duration ?? 0}ms`
                     : record.status === 'hydrating'
-                      ? '水合中'
-                      : '待水合'
+                      ? i18n.t('components.performance_panel.k22')
+                      : i18n.t('components.performance_panel.k23')
                 }
                 variant='outlined'
               />
@@ -1179,7 +1180,7 @@ export const PerformancePanel: React.FC<PerformancePanelProps> = ({
             variant='subtitle2'
             sx={{ fontWeight: 600 }}
           >
-            BFF 性能监控
+            {i18n.t('components.performance_panel.bff_21')}
           </Typography>
           {!expanded && slowQueries.length > 0 && (
             <Chip
@@ -1193,7 +1194,7 @@ export const PerformancePanel: React.FC<PerformancePanelProps> = ({
         <IconButton
           size='small'
           sx={{ color: 'inherit' }}
-          aria-label='展开'
+          aria-label={i18n.t('components.performance_panel.k24')}
         >
           {expanded ? <ChevronDown size={18} /> : <ChevronUp size={18} />}
         </IconButton>
@@ -1224,10 +1225,10 @@ export const PerformancePanel: React.FC<PerformancePanelProps> = ({
               size='small'
               sx={{ minWidth: 120 }}
             >
-              <InputLabel>慢查询阈值</InputLabel>
+              <InputLabel>{i18n.t('components.performance_panel.k25')}</InputLabel>
               <Select
                 value={slowQueryThreshold}
-                label='慢查询阈值'
+                label={i18n.t('components.performance_panel.k26')}
                 onChange={(e) => setSlowQueryThreshold(e.target.value as number)}
               >
                 <MenuItem value={500}>500ms</MenuItem>
@@ -1240,21 +1241,21 @@ export const PerformancePanel: React.FC<PerformancePanelProps> = ({
 
             <Box sx={{ flex: 1 }} />
 
-            <Tooltip title='导出性能数据'>
+            <Tooltip title={i18n.t('components.performance_panel.k27')}>
               <IconButton
                 size='small'
                 onClick={handleExport}
-                aria-label='下载'
+                aria-label={i18n.t('components.performance_panel.k28')}
               >
                 <Download size={18} />
               </IconButton>
             </Tooltip>
-            <Tooltip title='清除统计数据'>
+            <Tooltip title={i18n.t('components.performance_panel.k29')}>
               <IconButton
                 size='small'
                 onClick={clearPerformanceStats}
                 color='error'
-                aria-label='删除'
+                aria-label={i18n.t('components.performance_panel.k30')}
               >
                 <Trash2 size={18} />
               </IconButton>
@@ -1269,11 +1270,11 @@ export const PerformancePanel: React.FC<PerformancePanelProps> = ({
             onChange={(_, v) => setActiveTab(v)}
             sx={{ px: 1 }}
           >
-            <Tab label='性能排名' />
-            <Tab label={`慢查询 (${slowQueries.length})`} />
-            <Tab label='实时时间线' />
-            <Tab label='查询成本' />
-            <Tab label='智能优化' />
+            <Tab label={i18n.t('components.performance_panel.k31')} />
+            <Tab label={`${i18n.t('components.performance_panel.k6')}${slowQueries.length})`} />
+            <Tab label={i18n.t('components.performance_panel.k32')} />
+            <Tab label={i18n.t('components.performance_panel.k33')} />
+            <Tab label={i18n.t('components.performance_panel.k34')} />
             <Tab label='Suspense' />
           </Tabs>
 

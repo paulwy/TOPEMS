@@ -14,6 +14,7 @@ import {
   Typography,
   Rating,
 } from '@mui/material';
+import i18n from '@/i18n';
 import { Send, Star } from 'lucide-react';
 import FileUpload from '@/components/common/FileUpload';
 
@@ -22,8 +23,8 @@ import { FEEDBACK_TYPE_LABELS } from '@/api/feedback/types';
 
 const schema = z.object({
   type: z.enum(['bug', 'feature', 'improvement', 'question', 'other']),
-  title: z.string().min(1, '请输入标题').max(100, '标题不能超过100个字符'),
-  description: z.string().min(1, '请输入描述').max(2000, '描述不能超过2000个字符'),
+  title: z.string().min(1, i18n.t('components.feedback_form.k1')).max(100, i18n.t('components.feedback_form.100_0')),
+  description: z.string().min(1, i18n.t('components.feedback_form.k3')).max(2000, i18n.t('components.feedback_form.2000_2')),
   screenshots: z.array(z.string()).optional(),
   satisfaction: z.number().min(1).max(5),
 });
@@ -77,14 +78,14 @@ const FeedbackForm: React.FC<FeedbackFormProps> = ({ onSubmit, loading }) => {
         required
         sx={{ mb: 3 }}
       >
-        <InputLabel>反馈类型</InputLabel>
+        <InputLabel>{i18n.t('components.feedback_form.k4')}</InputLabel>
         <Controller
           name='type'
           control={control}
           render={({ field }) => (
             <Select
               {...field}
-              label='反馈类型'
+              label={i18n.t('components.feedback_form.k5')}
             >
               {(Object.keys(FEEDBACK_TYPE_LABELS) as FeedbackType[]).map((type) => (
                 <MenuItem
@@ -108,7 +109,7 @@ const FeedbackForm: React.FC<FeedbackFormProps> = ({ onSubmit, loading }) => {
       </FormControl>
 
       <TextField
-        label='标题'
+        label={i18n.t('components.feedback_form.k6')}
         required
         fullWidth
         sx={{ mb: 3 }}
@@ -118,7 +119,7 @@ const FeedbackForm: React.FC<FeedbackFormProps> = ({ onSubmit, loading }) => {
       />
 
       <TextField
-        label='详细描述'
+        label={i18n.t('components.feedback_form.k7')}
         required
         fullWidth
         multiline
@@ -133,7 +134,7 @@ const FeedbackForm: React.FC<FeedbackFormProps> = ({ onSubmit, loading }) => {
         fullWidth
         sx={{ mb: 3 }}
       >
-        <FormLabel>截图上传</FormLabel>
+        <FormLabel>{i18n.t('components.feedback_form.k8')}</FormLabel>
         <FileUpload
           value={images}
           onChange={handleImageChange}
@@ -147,7 +148,7 @@ const FeedbackForm: React.FC<FeedbackFormProps> = ({ onSubmit, loading }) => {
         fullWidth
         sx={{ mb: 4 }}
       >
-        <FormLabel>满意度评分</FormLabel>
+        <FormLabel>{i18n.t('components.feedback_form.k9')}</FormLabel>
         <Controller
           name='satisfaction'
           control={control}
@@ -175,7 +176,7 @@ const FeedbackForm: React.FC<FeedbackFormProps> = ({ onSubmit, loading }) => {
           variant='contained'
           endIcon={<Send />}
         >
-          {loading ? '提交中...' : '提交反馈'}
+          {loading ? i18n.t('components.feedback_form.k0') : i18n.t('components.feedback_form.k10')}
         </Button>
       </Box>
     </Box>

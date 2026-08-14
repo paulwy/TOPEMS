@@ -10,10 +10,12 @@ import {
   useMediaQuery,
   Typography,
 } from '@mui/material';
+import i18n from '@/i18n';
 import { Pin, PinOff, X, GripVertical, ChevronLeft, ChevronRight, Home } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { navigationRegistryV2 } from '../../lib/navigation';
 import type { NavItem } from '../../lib/navigation/types';
+import { designTokens } from '@topems/tokens';
 
 // ─── Legacy Types (kept for backward compatibility) ─────────────────────────
 
@@ -71,7 +73,7 @@ const SimpleTabBar: React.FC<{
     const list: ModuleTabItem[] = [];
     if (showHomeTab) {
       list.push({
-        label: '首页',
+        label: i18n.t('shared.module_tabs.k0'),
         path: '/dashboard',
         icon: <Home style={{ width: 16, height: 16 }} />,
       });
@@ -361,7 +363,7 @@ const LegacyModuleTabs: React.FC<LegacyModuleTabsProps> = ({ tabs, pluginCode, o
           borderBottom: isActive ? 'none' : 'none',
           marginBottom: isActive ? 0 : 0,
           // 阴影效果
-          boxShadow: isActive ? '0 -2px 8px rgba(0,0,0,0.04)' : 'none',
+          boxShadow: isActive ? `0 -2px 8px ${designTokens.colors.action.hover}` : 'none',
           '&:hover': {
             backgroundColor: isActive ? 'background.paper' : 'action.hover',
             color: isActive ? 'primary.main' : 'text.primary',
@@ -404,7 +406,7 @@ const LegacyModuleTabs: React.FC<LegacyModuleTabsProps> = ({ tabs, pluginCode, o
                 backgroundColor: theme.palette.action.hover,
               },
             }}
-            aria-label='关闭'
+            aria-label={i18n.t('shared.module_tabs.k1')}
           >
             <X style={{ width: 12, height: 12 }} />
           </IconButton>
@@ -444,7 +446,7 @@ const LegacyModuleTabs: React.FC<LegacyModuleTabsProps> = ({ tabs, pluginCode, o
               backgroundColor: 'background.paper',
               boxShadow: 1,
             }}
-            aria-label='展开'
+            aria-label={i18n.t('shared.module_tabs.k2')}
           >
             <ChevronLeft style={{ width: 16, height: 16 }} />
           </IconButton>
@@ -460,7 +462,7 @@ const LegacyModuleTabs: React.FC<LegacyModuleTabsProps> = ({ tabs, pluginCode, o
               backgroundColor: 'background.paper',
               boxShadow: 1,
             }}
-            aria-label='展开'
+            aria-label={i18n.t('shared.module_tabs.k3')}
           >
             <ChevronRight style={{ width: 16, height: 16 }} />
           </IconButton>
@@ -502,20 +504,20 @@ const LegacyModuleTabs: React.FC<LegacyModuleTabsProps> = ({ tabs, pluginCode, o
               <Pin style={{ width: 18, height: 18 }} />
             )}
           </ListItemIcon>
-          <ListItemText>{contextMenu?.tab.pinned ? '取消固定' : '固定标签'}</ListItemText>
+          <ListItemText>{contextMenu?.tab.pinned ? i18n.t('shared.module_tabs.k5') : i18n.t('shared.module_tabs.k4')}</ListItemText>
         </MenuItem>
         {contextMenu?.tab.closable !== false && (
           <MenuItem onClick={() => contextMenu && handleCloseTab(contextMenu.tab)}>
             <ListItemIcon>
               <X style={{ width: 18, height: 18 }} />
             </ListItemIcon>
-            <ListItemText>关闭标签</ListItemText>
+            <ListItemText>{i18n.t('shared.module_tabs.k6')}</ListItemText>
           </MenuItem>
         )}
         <MenuItem onClick={() => contextMenu && handleCloseOthers(contextMenu.tab)}>
-          关闭其他标签
+          {i18n.t('components.module_tabs.k0')}
         </MenuItem>
-        <MenuItem onClick={handleCloseAll}>关闭所有标签</MenuItem>
+        <MenuItem onClick={handleCloseAll}>{i18n.t('shared.module_tabs.k7')}</MenuItem>
       </Menu>
     </Box>
   );

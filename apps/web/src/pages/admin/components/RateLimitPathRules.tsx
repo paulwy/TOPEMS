@@ -18,10 +18,9 @@ import {
   Tooltip,
   Typography,
 } from '@mui/material';
+import i18n from '@/i18n';
 import { Plus, Trash2 } from 'lucide-react';
-import { useTranslation } from 'react-i18next';
 import type { PathRule } from '../hooks/useRateLimitConfig';
-
 interface RateLimitPathRulesProps {
   path_rules: PathRule[];
   newPath: string;
@@ -33,7 +32,6 @@ interface RateLimitPathRulesProps {
   onAddPath: () => void;
   onRemovePath: (path: string) => void;
 }
-
 export const RateLimitPathRules: React.FC<RateLimitPathRulesProps> = ({
   path_rules,
   newPath,
@@ -45,8 +43,6 @@ export const RateLimitPathRules: React.FC<RateLimitPathRulesProps> = ({
   onAddPath,
   onRemovePath,
 }) => {
-  const { t } = useTranslation();
-
   return (
     <Grid size={{ xs: 12 }}>
       <Card>
@@ -55,11 +51,11 @@ export const RateLimitPathRules: React.FC<RateLimitPathRulesProps> = ({
             variant='subtitle1'
             sx={{ fontWeight: 600, mb: 2 }}
           >
-            {t('admin.rate_limit_config_page.text_d6bf27')}
+            {i18n.t('admin.rate_limit_config_page.text_d6bf27')}
           </Typography>
           <Box sx={{ display: 'flex', gap: 2, mb: 2, flexWrap: 'wrap' }}>
             <TextField
-              label={t('admin.rate_limit_config.path_prefix')}
+              label={i18n.t('admin.rate_limit_config.path_prefix')}
               size='small'
               value={newPath}
               onChange={(e) => setNewPath(e.target.value)}
@@ -67,14 +63,14 @@ export const RateLimitPathRules: React.FC<RateLimitPathRulesProps> = ({
               sx={{ minWidth: 240 }}
             />
             <TextField
-              label={t('admin.rate_limit_config.request_count')}
+              label={i18n.t('admin.rate_limit_config.request_count')}
               type='number'
               size='small'
               value={newPathRequests}
               onChange={(e) => setNewPathRequests(Number(e.target.value) || 0)}
             />
             <TextField
-              label={t('admin.rate_limit_config.window_seconds')}
+              label={i18n.t('admin.rate_limit_config.window_seconds')}
               type='number'
               size='small'
               value={newPathWindow}
@@ -85,7 +81,7 @@ export const RateLimitPathRules: React.FC<RateLimitPathRulesProps> = ({
               startIcon={<Plus size={16} />}
               onClick={onAddPath}
             >
-              {t('admin.rate_limit_config_page.text_49818f')}
+              {i18n.t('admin.rate_limit_config_page.text_49818f')}
             </Button>
           </Box>
           <TableContainer
@@ -95,10 +91,10 @@ export const RateLimitPathRules: React.FC<RateLimitPathRulesProps> = ({
             <Table size='small'>
               <TableHead>
                 <TableRow>
-                  <TableCell>{t('admin.rate_limit_config.path_prefix')}</TableCell>
-                  <TableCell>{t('admin.rate_limit_config.request_count')}</TableCell>
-                  <TableCell>{t('admin.rate_limit_config.window_seconds')}</TableCell>
-                  <TableCell align='right'>{t('admin.rate_limit_config.action')}</TableCell>
+                  <TableCell>{i18n.t('admin.rate_limit_config.path_prefix')}</TableCell>
+                  <TableCell>{i18n.t('admin.rate_limit_config.request_count')}</TableCell>
+                  <TableCell>{i18n.t('admin.rate_limit_config.window_seconds')}</TableCell>
+                  <TableCell align='right'>{i18n.t('admin.rate_limit_config.action')}</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
@@ -113,7 +109,7 @@ export const RateLimitPathRules: React.FC<RateLimitPathRulesProps> = ({
                         color='text.secondary'
                         sx={{ py: 2 }}
                       >
-                        {t('admin.rate_limit_config_page.text_4cb561')}
+                        {i18n.t('admin.rate_limit_config_page.text_4cb561')}
                       </Typography>
                     </TableCell>
                   </TableRow>
@@ -129,11 +125,11 @@ export const RateLimitPathRules: React.FC<RateLimitPathRulesProps> = ({
                       <TableCell>{rule.rule.requests}</TableCell>
                       <TableCell>{rule.rule.window_secs}</TableCell>
                       <TableCell align='right'>
-                        <Tooltip title={t('admin.rate_limit_config.delete')}>
+                        <Tooltip title={i18n.t('admin.rate_limit_config.delete')}>
                           <IconButton
                             size='small'
                             onClick={() => onRemovePath(rule.path)}
-                            aria-label='删除'
+                            aria-label={i18n.t('admin.rate_limit_path_rules.k0')}
                           >
                             <Trash2 size={16} />
                           </IconButton>
@@ -150,5 +146,4 @@ export const RateLimitPathRules: React.FC<RateLimitPathRulesProps> = ({
     </Grid>
   );
 };
-
 export default RateLimitPathRules;

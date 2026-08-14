@@ -20,6 +20,7 @@ import {
   CardHeader,
   CardContent,
 } from '@mui/material';
+import i18n from '@/i18n';
 import {
   X as XIcon,
   Search,
@@ -96,7 +97,7 @@ export const V51DevExPanel: React.FC<{ onClose: () => void }> = ({ onClose }) =>
               variant='h6'
               sx={{ fontWeight: 600 }}
             >
-              V51.0 DevEx — 微前端开发体验
+              {i18n.t('microfrontend.devtools-panel.k0')}
             </Typography>
             <Chip
               label='DevTools'
@@ -121,37 +122,37 @@ export const V51DevExPanel: React.FC<{ onClose: () => void }> = ({ onClose }) =>
           >
             <Tab
               value='modules'
-              label='模块检查'
+              label={i18n.t('microfrontend.devtools-panel.k0')}
               icon={<Layers size={16} />}
               iconPosition='start'
             />
             <Tab
               value='components'
-              label='组件树'
+              label={i18n.t('microfrontend.devtools-panel.k1')}
               icon={<FileCode size={16} />}
               iconPosition='start'
             />
             <Tab
               value='performance'
-              label='性能监控'
+              label={i18n.t('microfrontend.devtools-panel.k2')}
               icon={<Activity size={16} />}
               iconPosition='start'
             />
             <Tab
               value='network'
-              label='网络检查'
+              label={i18n.t('microfrontend.devtools-panel.k3')}
               icon={<Network size={16} />}
               iconPosition='start'
             />
             <Tab
               value='state'
-              label='状态浏览'
+              label={i18n.t('microfrontend.devtools-panel.k4')}
               icon={<Database size={16} />}
               iconPosition='start'
             />
             <Tab
               value='sessions'
-              label='调试会话'
+              label={i18n.t('microfrontend.devtools-panel.k5')}
               icon={<Bug size={16} />}
               iconPosition='start'
             />
@@ -196,7 +197,7 @@ const ModuleInspectorTab: React.FC = () => {
           startIcon={<RefreshCw size={16} />}
           onClick={refresh}
         >
-          刷新
+          {i18n.t('microfrontend.devtools-panel.k1')}
         </Button>
       </Box>
 
@@ -207,8 +208,8 @@ const ModuleInspectorTab: React.FC = () => {
         <Grid size={{ xs: 12, md: 8 }}>
           <Card variant='outlined'>
             <CardHeader
-              title='模块列表'
-              subheader='点击查看详情'
+              title={i18n.t('microfrontend.devtools-panel.k6')}
+              subheader={i18n.t('microfrontend.devtools-panel.k7')}
             />
             <CardContent>
               <TableContainer>
@@ -216,10 +217,10 @@ const ModuleInspectorTab: React.FC = () => {
                   <TableHead>
                     <TableRow>
                       <TableCell sx={{ fontWeight: 600 }}>ID</TableCell>
-                      <TableCell sx={{ fontWeight: 600 }}>名称</TableCell>
-                      <TableCell sx={{ fontWeight: 600 }}>版本</TableCell>
-                      <TableCell sx={{ fontWeight: 600 }}>状态</TableCell>
-                      <TableCell sx={{ fontWeight: 600 }}>依赖</TableCell>
+                      <TableCell sx={{ fontWeight: 600 }}>{i18n.t('microfrontend.devtools-panel.k8')}</TableCell>
+                      <TableCell sx={{ fontWeight: 600 }}>{i18n.t('microfrontend.devtools-panel.k9')}</TableCell>
+                      <TableCell sx={{ fontWeight: 600 }}>{i18n.t('microfrontend.devtools-panel.k10')}</TableCell>
+                      <TableCell sx={{ fontWeight: 600 }}>{i18n.t('microfrontend.devtools-panel.k11')}</TableCell>
                     </TableRow>
                   </TableHead>
                   <TableBody>
@@ -234,7 +235,7 @@ const ModuleInspectorTab: React.FC = () => {
                             variant='body2'
                             color='text.secondary'
                           >
-                            暂无已加载模块
+                            {i18n.t('microfrontend.devtools-panel.k2')}
                           </Typography>
                         </TableCell>
                       </TableRow>
@@ -290,8 +291,8 @@ const ModuleInspectorTab: React.FC = () => {
         <Grid size={{ xs: 12, md: 4 }}>
           <Card variant='outlined'>
             <CardHeader
-              title='依赖图'
-              subheader={`${graph.nodes.length} 节点 / ${graph.edges.length} 边`}
+              title={i18n.t('microfrontend.devtools-panel.k12')}
+              subheader={`${graph.nodes.length} ${i18n.t('microfrontend.devtools-panel.k3')} ${graph.edges.length} ${i18n.t('microfrontend.devtools-panel.k4')}`}
             />
             <CardContent>
               {selectedModule ? (
@@ -300,14 +301,14 @@ const ModuleInspectorTab: React.FC = () => {
                     variant='subtitle2'
                     sx={{ mb: 1 }}
                   >
-                    模块: {selectedModule}
+                    [i18n.t('microfrontend.devtools-panel.k5')]: {selectedModule}
                   </Typography>
                   <Typography
                     variant='caption'
                     color='text.secondary'
                     sx={{ mb: 1, display: 'block' }}
                   >
-                    依赖项:
+                    [i18n.t('microfrontend.devtools-panel.k6')]:
                   </Typography>
                   <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
                     {smartDebugger.getModuleDependencies(selectedModule).map((dep) => (
@@ -325,7 +326,7 @@ const ModuleInspectorTab: React.FC = () => {
                   variant='body2'
                   color='text.secondary'
                 >
-                  选择左侧模块查看依赖关系
+                  {i18n.t('microfrontend.devtools-panel.k7')}
                 </Typography>
               )}
             </CardContent>
@@ -437,7 +438,7 @@ const ComponentTreeTab: React.FC = () => {
           startIcon={<RefreshCw size={16} />}
           onClick={inspect}
         >
-          重新扫描
+          {i18n.t('microfrontend.devtools-panel.k8')}
         </Button>
       </Box>
 
@@ -448,8 +449,8 @@ const ComponentTreeTab: React.FC = () => {
         <Grid size={{ xs: 12, md: 8 }}>
           <Card variant='outlined'>
             <CardHeader
-              title='组件层级'
-              subheader='点击节点查看详情'
+              title={i18n.t('microfrontend.devtools-panel.k13')}
+              subheader={i18n.t('microfrontend.devtools-panel.k14')}
             />
             <CardContent>
               <Box sx={{ maxHeight: 500, overflow: 'auto' }}>
@@ -458,7 +459,7 @@ const ComponentTreeTab: React.FC = () => {
                     variant='body2'
                     color='text.secondary'
                   >
-                    未检测到 React 组件
+                    {i18n.t('microfrontend.devtools-panel.react_9')}
                   </Typography>
                 ) : (
                   tree.map((node) => renderNode(node, 0))
@@ -470,7 +471,7 @@ const ComponentTreeTab: React.FC = () => {
 
         <Grid size={{ xs: 12, md: 4 }}>
           <Card variant='outlined'>
-            <CardHeader title='组件详情' />
+            <CardHeader title={i18n.t('microfrontend.devtools-panel.k15')} />
             <CardContent>
               {selected ? (
                 <Box>
@@ -506,7 +507,7 @@ const ComponentTreeTab: React.FC = () => {
                   variant='body2'
                   color='text.secondary'
                 >
-                  选择组件查看详情
+                  {i18n.t('microfrontend.devtools-panel.k10')}
                 </Typography>
               )}
             </CardContent>
@@ -588,7 +589,7 @@ const PerformanceMonitorTab: React.FC = () => {
               startIcon={<Play size={16} />}
               onClick={startTracking}
             >
-              开始追踪
+              {i18n.t('microfrontend.devtools-panel.k11')}
             </Button>
           ) : (
             <Button
@@ -598,7 +599,7 @@ const PerformanceMonitorTab: React.FC = () => {
               startIcon={<Square size={16} />}
               onClick={stopTracking}
             >
-              停止追踪
+              {i18n.t('microfrontend.devtools-panel.k12')}
             </Button>
           )}
           <Button
@@ -606,7 +607,7 @@ const PerformanceMonitorTab: React.FC = () => {
             startIcon={<RefreshCw size={16} />}
             onClick={generateReport}
           >
-            生成报告
+            {i18n.t('microfrontend.devtools-panel.k13')}
           </Button>
         </Stack>
       </Box>
@@ -633,7 +634,7 @@ const PerformanceMonitorTab: React.FC = () => {
                   variant='caption'
                   color='text.secondary'
                 >
-                  综合得分
+                  {i18n.t('microfrontend.devtools-panel.k14')}
                 </Typography>
               </Paper>
             </Grid>
@@ -649,7 +650,7 @@ const PerformanceMonitorTab: React.FC = () => {
                   variant='caption'
                   color='text.secondary'
                 >
-                  预算通过
+                  {i18n.t('microfrontend.devtools-panel.k15')}
                 </Typography>
               </Paper>
             </Grid>
@@ -665,7 +666,7 @@ const PerformanceMonitorTab: React.FC = () => {
                   variant='caption'
                   color='text.secondary'
                 >
-                  模块加载
+                  {i18n.t('microfrontend.devtools-panel.k16')}
                 </Typography>
               </Paper>
             </Grid>
@@ -681,7 +682,7 @@ const PerformanceMonitorTab: React.FC = () => {
                   variant='caption'
                   color='text.secondary'
                 >
-                  渲染指标
+                  {i18n.t('microfrontend.devtools-panel.k17')}
                 </Typography>
               </Paper>
             </Grid>
@@ -690,7 +691,7 @@ const PerformanceMonitorTab: React.FC = () => {
           <Card variant='outlined'>
             <CardHeader
               title='Core Web Vitals'
-              subheader='核心性能指标'
+              subheader={i18n.t('microfrontend.devtools-panel.k16')}
             />
             <CardContent>
               <Grid
@@ -741,7 +742,7 @@ const PerformanceMonitorTab: React.FC = () => {
               variant='outlined'
               sx={{ mt: 2 }}
             >
-              <CardHeader title='优化建议' />
+              <CardHeader title={i18n.t('microfrontend.devtools-panel.k17')} />
               <CardContent>
                 <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
                   {report.recommendations.map((rec, idx) => (
@@ -765,7 +766,7 @@ const PerformanceMonitorTab: React.FC = () => {
           color='text.secondary'
           sx={{ textAlign: 'center', py: 4 }}
         >
-          点击"开始追踪"启动性能监控，然后点击"生成报告"查看详细分析
+          {i18n.t('microfrontend.devtools-panel.i18n_18')}.t('microfrontend.devtools-panel.k19')启动性能监控，然后点击i18n.t('microfrontend.devtools-panel.k18')查看详细分析
         </Typography>
       )}
     </Box>
@@ -833,7 +834,7 @@ const NetworkInspectorTab: React.FC = () => {
               startIcon={<Play size={16} />}
               onClick={start}
             >
-              开始拦截
+              {i18n.t('microfrontend.devtools-panel.k21')}
             </Button>
           ) : (
             <Button
@@ -843,7 +844,7 @@ const NetworkInspectorTab: React.FC = () => {
               startIcon={<Square size={16} />}
               onClick={stop}
             >
-              停止拦截
+              {i18n.t('microfrontend.devtools-panel.k22')}
             </Button>
           )}
           <Button
@@ -851,7 +852,7 @@ const NetworkInspectorTab: React.FC = () => {
             startIcon={<Trash2 size={16} />}
             onClick={clear}
           >
-            清空
+            {i18n.t('microfrontend.devtools-panel.k23')}
           </Button>
         </Stack>
       </Box>
@@ -862,7 +863,7 @@ const NetworkInspectorTab: React.FC = () => {
       >
         <Grid size={{ xs: 12, md: 8 }}>
           <Card variant='outlined'>
-            <CardHeader title='请求列表' />
+            <CardHeader title={i18n.t('microfrontend.devtools-panel.k20')} />
             <CardContent>
               <Box sx={{ mb: 2 }}>
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
@@ -871,7 +872,7 @@ const NetworkInspectorTab: React.FC = () => {
                     color='text.secondary'
                   />
                   <input
-                    placeholder='过滤请求 URL...'
+                    placeholder={i18n.t('microfrontend.devtools-panel.url_24')}
                     value={filter}
                     onChange={(e) => setFilter(e.target.value)}
                     style={{
@@ -891,11 +892,11 @@ const NetworkInspectorTab: React.FC = () => {
                 >
                   <TableHead>
                     <TableRow>
-                      <TableCell sx={{ fontWeight: 600 }}>方法</TableCell>
+                      <TableCell sx={{ fontWeight: 600 }}>{i18n.t('microfrontend.devtools-panel.k21')}</TableCell>
                       <TableCell sx={{ fontWeight: 600 }}>URL</TableCell>
-                      <TableCell sx={{ fontWeight: 600 }}>状态</TableCell>
-                      <TableCell sx={{ fontWeight: 600 }}>耗时</TableCell>
-                      <TableCell sx={{ fontWeight: 600 }}>大小</TableCell>
+                      <TableCell sx={{ fontWeight: 600 }}>{i18n.t('microfrontend.devtools-panel.k22')}</TableCell>
+                      <TableCell sx={{ fontWeight: 600 }}>{i18n.t('microfrontend.devtools-panel.k23')}</TableCell>
+                      <TableCell sx={{ fontWeight: 600 }}>{i18n.t('microfrontend.devtools-panel.k24')}</TableCell>
                     </TableRow>
                   </TableHead>
                   <TableBody>
@@ -909,7 +910,7 @@ const NetworkInspectorTab: React.FC = () => {
                             variant='body2'
                             color='text.secondary'
                           >
-                            {isIntercepting ? '等待请求...' : '尚未开始拦截'}
+                            {isIntercepting ? i18n.t('microfrontend.devtools-panel.k25') : i18n.t('microfrontend.devtools-panel.k25')}
                           </Typography>
                         </TableCell>
                       </TableRow>
@@ -985,7 +986,7 @@ const NetworkInspectorTab: React.FC = () => {
 
         <Grid size={{ xs: 12, md: 4 }}>
           <Card variant='outlined'>
-            <CardHeader title='请求详情' />
+            <CardHeader title={i18n.t('microfrontend.devtools-panel.k26')} />
             <CardContent>
               {selected ? (
                 <Box>
@@ -1037,7 +1038,7 @@ const NetworkInspectorTab: React.FC = () => {
                   variant='body2'
                   color='text.secondary'
                 >
-                  选择请求查看详情
+                  {i18n.t('microfrontend.devtools-panel.k26')}
                 </Typography>
               )}
             </CardContent>
@@ -1087,7 +1088,7 @@ const StateExplorerTab: React.FC = () => {
           startIcon={<RefreshCw size={16} />}
           onClick={inspect}
         >
-          刷新
+          {i18n.t('microfrontend.devtools-panel.k27')}
         </Button>
       </Box>
 
@@ -1097,15 +1098,15 @@ const StateExplorerTab: React.FC = () => {
       >
         <Grid size={{ xs: 12, md: 6 }}>
           <Card variant='outlined'>
-            <CardHeader title='状态存储列表' />
+            <CardHeader title={i18n.t('microfrontend.devtools-panel.k27')} />
             <CardContent>
               <TableContainer>
                 <Table size='small'>
                   <TableHead>
                     <TableRow>
-                      <TableCell sx={{ fontWeight: 600 }}>名称</TableCell>
-                      <TableCell sx={{ fontWeight: 600 }}>类型</TableCell>
-                      <TableCell sx={{ fontWeight: 600 }}>订阅数</TableCell>
+                      <TableCell sx={{ fontWeight: 600 }}>{i18n.t('microfrontend.devtools-panel.k28')}</TableCell>
+                      <TableCell sx={{ fontWeight: 600 }}>{i18n.t('microfrontend.devtools-panel.k29')}</TableCell>
+                      <TableCell sx={{ fontWeight: 600 }}>{i18n.t('microfrontend.devtools-panel.k30')}</TableCell>
                     </TableRow>
                   </TableHead>
                   <TableBody>
@@ -1119,7 +1120,7 @@ const StateExplorerTab: React.FC = () => {
                             variant='body2'
                             color='text.secondary'
                           >
-                            未检测到状态存储
+                            {i18n.t('microfrontend.devtools-panel.k28')}
                           </Typography>
                         </TableCell>
                       </TableRow>
@@ -1154,13 +1155,13 @@ const StateExplorerTab: React.FC = () => {
         <Grid size={{ xs: 12, md: 6 }}>
           <Card variant='outlined'>
             <CardHeader
-              title='状态详情'
+              title={i18n.t('microfrontend.devtools-panel.k31')}
               action={
                 selected ? (
                   <IconButton
                     size='small'
                     onClick={exportState}
-                    title='复制到剪贴板'
+                    title={i18n.t('microfrontend.devtools-panel.k32')}
                   >
                     <Download size={16} />
                   </IconButton>
@@ -1198,7 +1199,7 @@ const StateExplorerTab: React.FC = () => {
                   variant='body2'
                   color='text.secondary'
                 >
-                  选择状态存储查看详情
+                  {i18n.t('microfrontend.devtools-panel.k29')}
                 </Typography>
               )}
             </CardContent>
@@ -1280,7 +1281,7 @@ const DebugSessionsTab: React.FC = () => {
           <Bug size={20} /> 调试会话 ({sessions.length})
           {isRecording && (
             <Chip
-              label='录制中'
+              label={i18n.t('microfrontend.devtools-panel.k33')}
               color='error'
               size='small'
             />
@@ -1308,11 +1309,11 @@ const DebugSessionsTab: React.FC = () => {
                 startIcon={<Upload size={16} />}
                 onClick={() => document.getElementById('session-import')?.click()}
               >
-                导入
+                {i18n.t('microfrontend.devtools-panel.k30')}
               </Button>
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
                 <input
-                  placeholder='会话名称'
+                  placeholder={i18n.t('microfrontend.devtools-panel.k34')}
                   value={newSessionName}
                   onChange={(e) => setNewSessionName(e.target.value)}
                   style={{
@@ -1330,7 +1331,7 @@ const DebugSessionsTab: React.FC = () => {
                   startIcon={<Play size={16} />}
                   onClick={startRecording}
                 >
-                  开始录制
+                  {i18n.t('microfrontend.devtools-panel.k31')}
                 </Button>
               </Box>
             </>
@@ -1342,7 +1343,7 @@ const DebugSessionsTab: React.FC = () => {
               startIcon={<Square size={16} />}
               onClick={stopRecording}
             >
-              停止录制
+              {i18n.t('microfrontend.devtools-panel.k32')}
             </Button>
           )}
         </Stack>
@@ -1354,16 +1355,16 @@ const DebugSessionsTab: React.FC = () => {
       >
         <Grid size={{ xs: 12, md: 6 }}>
           <Card variant='outlined'>
-            <CardHeader title='会话列表' />
+            <CardHeader title={i18n.t('microfrontend.devtools-panel.k35')} />
             <CardContent>
               <TableContainer>
                 <Table size='small'>
                   <TableHead>
                     <TableRow>
-                      <TableCell sx={{ fontWeight: 600 }}>名称</TableCell>
-                      <TableCell sx={{ fontWeight: 600 }}>步骤</TableCell>
-                      <TableCell sx={{ fontWeight: 600 }}>时长</TableCell>
-                      <TableCell sx={{ fontWeight: 600 }}>操作</TableCell>
+                      <TableCell sx={{ fontWeight: 600 }}>{i18n.t('microfrontend.devtools-panel.k36')}</TableCell>
+                      <TableCell sx={{ fontWeight: 600 }}>{i18n.t('microfrontend.devtools-panel.k37')}</TableCell>
+                      <TableCell sx={{ fontWeight: 600 }}>{i18n.t('microfrontend.devtools-panel.k38')}</TableCell>
+                      <TableCell sx={{ fontWeight: 600 }}>{i18n.t('microfrontend.devtools-panel.k39')}</TableCell>
                     </TableRow>
                   </TableHead>
                   <TableBody>
@@ -1377,7 +1378,7 @@ const DebugSessionsTab: React.FC = () => {
                             variant='body2'
                             color='text.secondary'
                           >
-                            暂无会话记录
+                            {i18n.t('microfrontend.devtools-panel.k33')}
                           </Typography>
                         </TableCell>
                       </TableRow>
@@ -1404,7 +1405,7 @@ const DebugSessionsTab: React.FC = () => {
                                   e.stopPropagation();
                                   replay(session.id);
                                 }}
-                                title='回放'
+                                title={i18n.t('microfrontend.devtools-panel.k40')}
                               >
                                 <Play size={14} />
                               </IconButton>
@@ -1414,7 +1415,7 @@ const DebugSessionsTab: React.FC = () => {
                                   e.stopPropagation();
                                   exportSession(session.id);
                                 }}
-                                title='导出'
+                                title={i18n.t('microfrontend.devtools-panel.k41')}
                               >
                                 <Download size={14} />
                               </IconButton>
@@ -1424,7 +1425,7 @@ const DebugSessionsTab: React.FC = () => {
                                   e.stopPropagation();
                                   deleteSession(session.id);
                                 }}
-                                title='删除'
+                                title={i18n.t('microfrontend.devtools-panel.k42')}
                               >
                                 <Trash2 size={14} />
                               </IconButton>
@@ -1442,7 +1443,7 @@ const DebugSessionsTab: React.FC = () => {
 
         <Grid size={{ xs: 12, md: 6 }}>
           <Card variant='outlined'>
-            <CardHeader title='会话详情' />
+            <CardHeader title={i18n.t('microfrontend.devtools-panel.k43')} />
             <CardContent>
               {selected ? (
                 <Box>
@@ -1457,7 +1458,7 @@ const DebugSessionsTab: React.FC = () => {
                     color='text.secondary'
                     sx={{ mb: 1, display: 'block' }}
                   >
-                    创建: {new Date(selected.createdAt).toLocaleString()}
+                    [i18n.t('microfrontend.devtools-panel.k34')]: {new Date(selected.createdAt).toLocaleString()}
                   </Typography>
                   <Typography
                     variant='caption'
@@ -1471,7 +1472,7 @@ const DebugSessionsTab: React.FC = () => {
                     color='text.secondary'
                     sx={{ mb: 1, display: 'block' }}
                   >
-                    步骤数: {selected.steps.length}
+                    [i18n.t('microfrontend.devtools-panel.k35')]: {selected.steps.length}
                   </Typography>
                   <Paper sx={{ p: 1, maxHeight: 350, overflow: 'auto', bgcolor: 'grey.50' }}>
                     {selected.steps.map((step, idx) => (
@@ -1516,7 +1517,7 @@ const DebugSessionsTab: React.FC = () => {
                   variant='body2'
                   color='text.secondary'
                 >
-                  选择会话查看详情
+                  {i18n.t('microfrontend.devtools-panel.k36')}
                 </Typography>
               )}
             </CardContent>

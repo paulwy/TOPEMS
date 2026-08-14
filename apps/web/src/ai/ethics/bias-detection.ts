@@ -1,3 +1,4 @@
+import i18n from '@/i18n';
 export type BiasType = 'Gender' | 'Race' | 'Age' | 'Socioeconomic';
 
 export type BiasSeverity = 'critical' | 'high' | 'medium' | 'low' | 'info';
@@ -35,36 +36,36 @@ export interface BiasRule {
 const DEFAULT_RULES: BiasRule[] = [
   {
     id: 'rule-gender-parity',
-    name: '性别平等规则',
+    name: i18n.t('ai.bias-detection.k0'),
     biasType: 'Gender',
-    description: '检测不同性别群体在模型输出中的差异',
+    description: i18n.t('ai.bias-detection.k1'),
     threshold: 0.1,
     severity: 'high',
     enabled: true,
   },
   {
     id: 'rule-race-parity',
-    name: '种族平等规则',
+    name: i18n.t('ai.bias-detection.k2'),
     biasType: 'Race',
-    description: '检测不同种族群体在模型输出中的差异',
+    description: i18n.t('ai.bias-detection.k3'),
     threshold: 0.1,
     severity: 'high',
     enabled: true,
   },
   {
     id: 'rule-age-parity',
-    name: '年龄平等规则',
+    name: i18n.t('ai.bias-detection.k4'),
     biasType: 'Age',
-    description: '检测不同年龄群体在模型输出中的差异',
+    description: i18n.t('ai.bias-detection.k5'),
     threshold: 0.15,
     severity: 'medium',
     enabled: true,
   },
   {
     id: 'rule-socioeconomic-parity',
-    name: '社会经济地位平等规则',
+    name: i18n.t('ai.bias-detection.k6'),
     biasType: 'Socioeconomic',
-    description: '检测不同社会经济地位群体在模型输出中的差异',
+    description: i18n.t('ai.bias-detection.k7'),
     threshold: 0.15,
     severity: 'medium',
     enabled: true,
@@ -117,7 +118,7 @@ export class BiasDetector {
           affectedGroups: violations.map((v) => v.group),
           findings: violations.map(
             (v) =>
-              `指标 ${v.metric} 在群体 ${v.group} 中偏差 ${(v.deviation * 100).toFixed(2)}%，超过阈值 ${(threshold * 100).toFixed(1)}%`
+              `${i18n.t('ai.bias-detection.k0')}${v.metric}${i18n.t('ai.bias-detection.k1')}${v.group}${i18n.t('ai.bias-detection.k2')}${(v.deviation * 100).toFixed(2)}${i18n.t('ai.bias-detection.k3')}${(threshold * 100).toFixed(1)}%`
           ),
           timestamp: Date.now(),
         };
@@ -137,7 +138,7 @@ export class BiasDetector {
         biasType: biasTypes[0],
         severity: 'info',
         affectedGroups: [],
-        findings: ['未检测到显著偏见'],
+        findings: [i18n.t('ai.bias-detection.k8')],
         timestamp: Date.now(),
       };
       results.push(cleanReport);
@@ -215,7 +216,7 @@ export class BiasDetector {
       .filter((r) => r.severity !== 'info')
       .sort((a, b) => b.timestamp - a.timestamp)
       .slice(0, 5)
-      .map((r) => `[${r.biasType}] ${r.modelId}: ${r.findings[0] ?? '无详细发现'}`);
+      .map((r) => `[${r.biasType}] ${r.modelId}: ${r.findings[0] ?? i18n.t('ai.bias-detection.k9')}`);
 
     return {
       total_reports: total,

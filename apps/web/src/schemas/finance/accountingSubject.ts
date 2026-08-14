@@ -1,9 +1,10 @@
 import type { EntitySchema } from '@/schema';
+import i18n from '@/i18n';
 
 export const accountingSubjectSchema: EntitySchema = {
   entity: 'finance_accounting_subject',
-  title: '会计科目',
-  description: '管理会计科目编码、类别与层级关系',
+  title: i18n.t('finance.accounting_subject.k0'),
+  description: i18n.t('finance.accounting_subject.k1'),
 
   api: {
     module: 'finance',
@@ -13,7 +14,7 @@ export const accountingSubjectSchema: EntitySchema = {
   fields: [
     {
       name: 'code',
-      label: '科目编码',
+      label: i18n.t('finance.accounting_subject.k2'),
       type: 'text',
       required: true,
       readonlyOnEdit: true,
@@ -23,7 +24,7 @@ export const accountingSubjectSchema: EntitySchema = {
     },
     {
       name: 'name',
-      label: '科目名称',
+      label: i18n.t('finance.accounting_subject.k3'),
       type: 'text',
       required: true,
       sortable: true,
@@ -32,17 +33,17 @@ export const accountingSubjectSchema: EntitySchema = {
     },
     {
       name: 'category',
-      label: '科目类别',
+      label: i18n.t('finance.accounting_subject.k4'),
       type: 'select',
       options: {
         type: 'static',
         options: [
-          { value: 'asset', label: '资产类' },
-          { value: 'liability', label: '负债类' },
-          { value: 'equity', label: '权益类' },
-          { value: 'cost', label: '成本类' },
-          { value: 'expense', label: '费用类' },
-          { value: 'income', label: '收入类' },
+          { value: 'asset', label: i18n.t('finance.accounting_subject.k5') },
+          { value: 'liability', label: i18n.t('finance.accounting_subject.k6') },
+          { value: 'equity', label: i18n.t('finance.accounting_subject.k7') },
+          { value: 'cost', label: i18n.t('finance.accounting_subject.k8') },
+          { value: 'expense', label: i18n.t('finance.accounting_subject.k9') },
+          { value: 'income', label: i18n.t('finance.accounting_subject.k10') },
         ],
       },
       listWidth: 120,
@@ -50,24 +51,24 @@ export const accountingSubjectSchema: EntitySchema = {
     },
     {
       name: 'level',
-      label: '科目级别',
+      label: i18n.t('finance.accounting_subject.k11'),
       type: 'select',
       required: true,
       defaultValue: 1,
       options: {
         type: 'static',
         options: [
-          { value: 1, label: '一级' },
-          { value: 2, label: '二级' },
-          { value: 3, label: '三级' },
-          { value: 4, label: '四级' },
+          { value: 1, label: i18n.t('finance.accounting_subject.k12') },
+          { value: 2, label: i18n.t('finance.accounting_subject.k13') },
+          { value: 3, label: i18n.t('finance.accounting_subject.k14') },
+          { value: 4, label: i18n.t('finance.accounting_subject.k15') },
         ],
       },
       listWidth: 100,
     },
     {
       name: 'parent_code',
-      label: '上级科目编码',
+      label: i18n.t('finance.accounting_subject.k16'),
       type: 'text',
       listWidth: 140,
       showInList: false,
@@ -75,14 +76,14 @@ export const accountingSubjectSchema: EntitySchema = {
     },
     {
       name: 'is_cash_flow',
-      label: '现金流量科目',
+      label: i18n.t('finance.accounting_subject.k17'),
       type: 'select',
       defaultValue: false,
       options: {
         type: 'static',
         options: [
-          { value: true, label: '是' },
-          { value: false, label: '否' },
+          { value: true, label: i18n.t('finance.accounting_subject.k18') },
+          { value: false, label: i18n.t('finance.accounting_subject.k19') },
         ],
       },
       listWidth: 120,
@@ -90,15 +91,15 @@ export const accountingSubjectSchema: EntitySchema = {
     },
     {
       name: 'status',
-      label: '状态',
+      label: i18n.t('finance.accounting_subject.k20'),
       type: 'select',
       required: true,
       defaultValue: 'active',
       options: {
         type: 'static',
         options: [
-          { value: 'active', label: '启用' },
-          { value: 'disabled', label: '停用' },
+          { value: 'active', label: i18n.t('finance.accounting_subject.k21') },
+          { value: 'disabled', label: i18n.t('finance.accounting_subject.k22') },
         ],
       },
       listWidth: 100,
@@ -106,13 +107,13 @@ export const accountingSubjectSchema: EntitySchema = {
     },
     {
       name: 'description',
-      label: '备注',
+      label: i18n.t('finance.accounting_subject.k23'),
       type: 'textarea',
       showInList: false,
     },
     {
       name: 'created_at',
-      label: '创建时间',
+      label: i18n.t('finance.accounting_subject.k24'),
       type: 'datetime',
       readonly: true,
       hideInForm: true,
@@ -122,7 +123,7 @@ export const accountingSubjectSchema: EntitySchema = {
     },
     {
       name: 'updated_at',
-      label: '更新时间',
+      label: i18n.t('finance.accounting_subject.k25'),
       type: 'datetime',
       readonly: true,
       hideInForm: true,
@@ -143,33 +144,33 @@ export const accountingSubjectSchema: EntitySchema = {
         disabled: 'error',
       },
       labelMap: {
-        active: '启用',
-        disabled: '停用',
+        active: i18n.t('finance.accounting_subject.k26'),
+        disabled: i18n.t('finance.accounting_subject.k27'),
       },
     },
     filters: [
       {
         id: 'category',
-        label: '科目类别',
+        label: i18n.t('finance.accounting_subject.k28'),
         type: 'select',
         options: [
-          { label: '全部类别', value: 'all' },
-          { label: '资产类', value: 'asset' },
-          { label: '负债类', value: 'liability' },
-          { label: '权益类', value: 'equity' },
-          { label: '成本类', value: 'cost' },
-          { label: '费用类', value: 'expense' },
-          { label: '收入类', value: 'income' },
+          { label: i18n.t('finance.accounting_subject.k29'), value: 'all' },
+          { label: i18n.t('finance.accounting_subject.k30'), value: 'asset' },
+          { label: i18n.t('finance.accounting_subject.k31'), value: 'liability' },
+          { label: i18n.t('finance.accounting_subject.k32'), value: 'equity' },
+          { label: i18n.t('finance.accounting_subject.k33'), value: 'cost' },
+          { label: i18n.t('finance.accounting_subject.k34'), value: 'expense' },
+          { label: i18n.t('finance.accounting_subject.k35'), value: 'income' },
         ],
       },
       {
         id: 'status',
-        label: '状态',
+        label: i18n.t('finance.accounting_subject.k36'),
         type: 'select',
         options: [
-          { label: '全部状态', value: 'all' },
-          { label: '启用', value: 'active' },
-          { label: '停用', value: 'disabled' },
+          { label: i18n.t('finance.accounting_subject.k37'), value: 'all' },
+          { label: i18n.t('finance.accounting_subject.k38'), value: 'active' },
+          { label: i18n.t('finance.accounting_subject.k39'), value: 'disabled' },
         ],
       },
     ],
@@ -179,21 +180,21 @@ export const accountingSubjectSchema: EntitySchema = {
 
   formSections: [
     {
-      title: '基本信息',
+      title: i18n.t('finance.accounting_subject.k40'),
       fields: ['code', 'name', 'category', 'level', 'status'],
     },
     {
-      title: '科目关系',
+      title: i18n.t('finance.accounting_subject.k41'),
       fields: ['parent_code', 'is_cash_flow'],
     },
     {
-      title: '备注',
+      title: i18n.t('finance.accounting_subject.k42'),
       fields: ['description'],
     },
   ],
 
   formColCount: 2,
-  createTitle: '新增会计科目',
-  editTitle: '编辑会计科目',
-  detailTitle: '会计科目详情',
+  createTitle: i18n.t('finance.accounting_subject.k43'),
+  editTitle: i18n.t('finance.accounting_subject.k44'),
+  detailTitle: i18n.t('finance.accounting_subject.k45'),
 };

@@ -12,6 +12,7 @@ import {
   Typography,
   Button,
 } from '@mui/material';
+import i18n from '@/i18n';
 import type { SxProps, Theme } from '@mui/material/styles';
 import { X } from 'lucide-react';
 
@@ -160,7 +161,7 @@ export const Dialog: React.FC<DialogProps> = ({
           onClick={cancelButton.onClick || handleClose}
           disabled={cancelButton.disabled}
         >
-          {cancelButton.label || '取消'}
+          {cancelButton.label || i18n.t('shared.dialog.k0')}
         </Button>
       );
     }
@@ -175,7 +176,7 @@ export const Dialog: React.FC<DialogProps> = ({
           onClick={confirmButton.onClick}
           disabled={confirmButton.disabled || confirmButton.loading}
         >
-          {confirmButton.loading ? '处理中...' : confirmButton.label || '确认'}
+          {confirmButton.loading ? i18n.t('components.dialog.k0') : confirmButton.label || i18n.t('shared.dialog.k1')}
         </Button>
       );
     }
@@ -218,7 +219,7 @@ export const Dialog: React.FC<DialogProps> = ({
               size='small'
               onClick={handleClose}
               sx={{ ml: 'auto' }}
-              aria-label='关闭'
+              aria-label={i18n.t('shared.dialog.k2')}
             >
               <X size={20} />
             </IconButton>

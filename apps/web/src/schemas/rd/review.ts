@@ -2,6 +2,7 @@ import React from 'react';
 import { Box, Chip, Typography } from '@mui/material';
 import { GitPullRequest, User } from 'lucide-react';
 import type { EntitySchema } from '@/schema';
+import i18n from '@/i18n';
 
 const STATUS_COLOR_MAP: Record<string, 'default' | 'primary' | 'success' | 'error' | 'warning'> = {
   pending: 'warning',
@@ -11,16 +12,16 @@ const STATUS_COLOR_MAP: Record<string, 'default' | 'primary' | 'success' | 'erro
 };
 
 const STATUS_LABEL_MAP: Record<string, string> = {
-  pending: '待评审',
-  approved: '已通过',
-  rejected: '已拒绝',
-  in_progress: '评审中',
+  pending: i18n.t('rd.review.k0'),
+  approved: i18n.t('rd.review.k1'),
+  rejected: i18n.t('rd.review.k2'),
+  in_progress: i18n.t('rd.review.k3'),
 };
 
 export const reviewSchema: EntitySchema = {
   entity: 'rd_review',
-  title: '配方评审',
-  description: '管理配方评审流程，包括评审申请、评审意见、审批状态等',
+  title: i18n.t('rd.review.k4'),
+  description: i18n.t('rd.review.k5'),
 
   api: {
     module: 'rd',
@@ -30,7 +31,7 @@ export const reviewSchema: EntitySchema = {
   fields: [
     {
       name: 'title',
-      label: '评审标题',
+      label: i18n.t('rd.review.k6'),
       type: 'text',
       required: true,
       listWidth: 250,
@@ -49,11 +50,11 @@ export const reviewSchema: EntitySchema = {
     },
     {
       name: 'reviewer',
-      label: '评审人',
+      label: i18n.t('rd.review.k7'),
       type: 'text',
       listWidth: 120,
       renderCell: (row: Record<string, unknown>) => {
-        const val = String(row.reviewer ?? '系统自动');
+        const val = String(row.reviewer ?? i18n.t('rd.review.k8'));
         return React.createElement(
           Box,
           { sx: { display: 'flex', alignItems: 'center', gap: 1 } },
@@ -64,7 +65,7 @@ export const reviewSchema: EntitySchema = {
     },
     {
       name: 'author',
-      label: '作者',
+      label: i18n.t('rd.review.k9'),
       type: 'text',
       listWidth: 150,
       renderCell: (row: Record<string, unknown>) => {
@@ -73,16 +74,16 @@ export const reviewSchema: EntitySchema = {
     },
     {
       name: 'status',
-      label: '状态',
+      label: i18n.t('rd.review.k10'),
       type: 'select',
       defaultValue: 'pending',
       options: {
         type: 'static',
         options: [
-          { value: 'pending', label: '待评审' },
-          { value: 'in_progress', label: '评审中' },
-          { value: 'approved', label: '已通过' },
-          { value: 'rejected', label: '已拒绝' },
+          { value: 'pending', label: i18n.t('rd.review.k11') },
+          { value: 'in_progress', label: i18n.t('rd.review.k12') },
+          { value: 'approved', label: i18n.t('rd.review.k13') },
+          { value: 'rejected', label: i18n.t('rd.review.k14') },
         ],
       },
       listWidth: 110,
@@ -98,7 +99,7 @@ export const reviewSchema: EntitySchema = {
     },
     {
       name: 'create_time',
-      label: '创建时间',
+      label: i18n.t('rd.review.k15'),
       type: 'datetime',
       listWidth: 160,
       renderCell: (row: Record<string, unknown>) => {
@@ -108,7 +109,7 @@ export const reviewSchema: EntitySchema = {
     },
     {
       name: 'comment_count',
-      label: '评论数',
+      label: i18n.t('rd.review.k16'),
       type: 'number',
       listWidth: 80,
       renderCell: (row: Record<string, unknown>) => {
@@ -118,41 +119,41 @@ export const reviewSchema: EntitySchema = {
     },
     {
       name: 'project_id',
-      label: '项目ID',
+      label: i18n.t('rd.review.id_17'),
       type: 'text',
       required: true,
       showInList: false,
     },
     {
       name: 'branch',
-      label: '分支',
+      label: i18n.t('rd.review.k18'),
       type: 'text',
       showInList: false,
     },
     {
       name: 'commit_hash',
-      label: '提交',
+      label: i18n.t('rd.review.k19'),
       type: 'text',
       showInList: false,
     },
     {
       name: 'build_type',
-      label: '构建类型',
+      label: i18n.t('rd.review.k20'),
       type: 'select',
       defaultValue: 'manual',
       options: {
         type: 'static',
         options: [
-          { value: 'manual', label: '手动' },
-          { value: 'auto', label: '自动' },
-          { value: 'scheduled', label: '定时' },
+          { value: 'manual', label: i18n.t('rd.review.k21') },
+          { value: 'auto', label: i18n.t('rd.review.k22') },
+          { value: 'scheduled', label: i18n.t('rd.review.k23') },
         ],
       },
       showInList: false,
     },
     {
       name: 'logs',
-      label: '日志',
+      label: i18n.t('rd.review.k24'),
       type: 'textarea',
       showInList: false,
       hideInForm: true,
@@ -166,14 +167,14 @@ export const reviewSchema: EntitySchema = {
     filters: [
       {
         id: 'status',
-        label: '状态',
+        label: i18n.t('rd.review.k25'),
         type: 'select',
         options: [
-          { label: '全部', value: 'all' },
-          { label: '待评审', value: 'pending' },
-          { label: '评审中', value: 'in_progress' },
-          { label: '已通过', value: 'approved' },
-          { label: '已拒绝', value: 'rejected' },
+          { label: i18n.t('rd.review.k26'), value: 'all' },
+          { label: i18n.t('rd.review.k27'), value: 'pending' },
+          { label: i18n.t('rd.review.k28'), value: 'in_progress' },
+          { label: i18n.t('rd.review.k29'), value: 'approved' },
+          { label: i18n.t('rd.review.k30'), value: 'rejected' },
         ],
         defaultValue: 'all',
       },
@@ -187,15 +188,15 @@ export const reviewSchema: EntitySchema = {
 
   formSections: [
     {
-      title: '评审信息',
+      title: i18n.t('rd.review.k31'),
       fields: ['project_id', 'branch', 'commit_hash', 'build_type'],
     },
   ],
 
   formColCount: 2,
-  createTitle: '新建评审',
-  editTitle: '编辑评审',
-  detailTitle: '评审详情',
+  createTitle: i18n.t('rd.review.k32'),
+  editTitle: i18n.t('rd.review.k33'),
+  detailTitle: i18n.t('rd.review.k34'),
 
   actions: ['create', 'detail'],
 };

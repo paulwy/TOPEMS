@@ -10,6 +10,7 @@ import {
   Database,
   ChevronRight,
 } from 'lucide-react';
+import i18n from '@/i18n';
 import {
   Box,
   Typography,
@@ -58,7 +59,7 @@ const exportFormats: {
   {
     id: 'excel',
     label: 'Excel',
-    description: 'Microsoft Excel 格式，支持复杂表格和公式',
+    description: i18n.t('components.enhanced_export_modal.k0'),
     icon: <FileSpreadsheet sx={{ width: 24, height: 24 }} />,
     color: 'success.main',
     extension: '.xlsx',
@@ -66,7 +67,7 @@ const exportFormats: {
   {
     id: 'pdf',
     label: 'PDF',
-    description: '便携文档格式，适合打印和分享',
+    description: i18n.t('components.enhanced_export_modal.k0'),
     icon: <File sx={{ width: 24, height: 24 }} />,
     color: 'error.main',
     extension: '.pdf',
@@ -74,7 +75,7 @@ const exportFormats: {
   {
     id: 'csv',
     label: 'CSV',
-    description: '逗号分隔值，兼容各种电子表格软件',
+    description: i18n.t('components.enhanced_export_modal.k1'),
     icon: <FileText sx={{ width: 24, height: 24 }} />,
     color: 'info.main',
     extension: '.csv',
@@ -82,7 +83,7 @@ const exportFormats: {
   {
     id: 'json',
     label: 'JSON',
-    description: 'JavaScript对象表示法，适合程序处理',
+    description: i18n.t('components.enhanced_export_modal.k1'),
     icon: <FileJson sx={{ width: 24, height: 24 }} />,
     color: 'secondary.main',
     extension: '.json',
@@ -90,7 +91,7 @@ const exportFormats: {
   {
     id: 'html',
     label: 'HTML',
-    description: '网页格式，可直接在浏览器中查看',
+    description: i18n.t('components.enhanced_export_modal.k2'),
     icon: <FileText sx={{ width: 24, height: 24 }} />,
     color: 'warning.main',
     extension: '.html',
@@ -98,15 +99,15 @@ const exportFormats: {
   {
     id: 'markdown',
     label: 'Markdown',
-    description: '轻量级标记语言，适合文档编写',
+    description: i18n.t('components.enhanced_export_modal.k3'),
     icon: <FileText sx={{ width: 24, height: 24 }} />,
     color: 'grey.600',
     extension: '.md',
   },
   {
     id: 'image',
-    label: '图片',
-    description: 'PNG图片格式，适合嵌入文档或演示',
+    label: i18n.t('components.enhanced_export_modal.k4'),
+    description: i18n.t('components.enhanced_export_modal.k2'),
     icon: <Image sx={{ width: 24, height: 24 }} />,
     color: 'pink.main',
     extension: '.png',
@@ -114,7 +115,7 @@ const exportFormats: {
   {
     id: 'xml',
     label: 'XML',
-    description: '可扩展标记语言，适合数据交换',
+    description: i18n.t('components.enhanced_export_modal.k5'),
     icon: <Database sx={{ width: 24, height: 24 }} />,
     color: 'teal.main',
     extension: '.xml',
@@ -209,14 +210,14 @@ const EnhancedExportModal: React.FC<EnhancedExportModalProps> = ({
             variant='h6'
             sx={{ fontWeight: 700 }}
           >
-            导出数据
+            {i18n.t('components.enhanced_export_modal.k3')}
           </Typography>
         </Box>
         <IconButton
           onClick={onClose}
           size='small'
           sx={{ color: 'inherit' }}
-          aria-label='关闭'
+          aria-label={i18n.t('components.enhanced_export_modal.k6')}
         >
           <X sx={{ width: 24, height: 24 }} />
         </IconButton>
@@ -233,7 +234,7 @@ const EnhancedExportModal: React.FC<EnhancedExportModalProps> = ({
             variant='subtitle1'
             sx={{ fontWeight: 600, mb: 2 }}
           >
-            选择格式
+            {i18n.t('components.enhanced_export_modal.k4')}
           </Typography>
           <Box
             sx={{
@@ -303,7 +304,7 @@ const EnhancedExportModal: React.FC<EnhancedExportModalProps> = ({
             variant='subtitle1'
             sx={{ fontWeight: 600 }}
           >
-            基本选项
+            {i18n.t('components.enhanced_export_modal.k5')}
           </Typography>
 
           <Box
@@ -317,9 +318,9 @@ const EnhancedExportModal: React.FC<EnhancedExportModalProps> = ({
             }}
           >
             <Box>
-              <Typography sx={{ fontWeight: 500, color: 'text.primary' }}>包含表头</Typography>
+              <Typography sx={{ fontWeight: 500, color: 'text.primary' }}>{i18n.t('components.enhanced_export_modal.k7')}</Typography>
               <Typography sx={{ fontSize: '0.875rem', color: 'text.secondary' }}>
-                在文件开头包含列标题
+                {i18n.t('components.enhanced_export_modal.k6')}
               </Typography>
             </Box>
             <Switch
@@ -340,9 +341,9 @@ const EnhancedExportModal: React.FC<EnhancedExportModalProps> = ({
             }}
           >
             <Box>
-              <Typography sx={{ fontWeight: 500, color: 'text.primary' }}>包含摘要</Typography>
+              <Typography sx={{ fontWeight: 500, color: 'text.primary' }}>{i18n.t('components.enhanced_export_modal.k8')}</Typography>
               <Typography sx={{ fontSize: '0.875rem', color: 'text.secondary' }}>
-                在文件末尾添加统计摘要
+                {i18n.t('components.enhanced_export_modal.k7')}
               </Typography>
             </Box>
             <Switch
@@ -361,14 +362,14 @@ const EnhancedExportModal: React.FC<EnhancedExportModalProps> = ({
                 fontSize: '0.875rem',
               }}
             >
-              自定义文件名
+              {i18n.t('components.enhanced_export_modal.k8')}
             </Typography>
             <TextField
               size='small'
               fullWidth
               value={customFileName}
               onChange={(e) => setCustomFileName(e.target.value)}
-              placeholder='输入文件名（不含扩展名）'
+              placeholder={i18n.t('components.enhanced_export_modal.k9')}
               sx={{
                 '& .MuiOutlinedInput-root': {
                   borderRadius: 1.5,
@@ -392,7 +393,7 @@ const EnhancedExportModal: React.FC<EnhancedExportModalProps> = ({
             '&:hover': { bgcolor: 'action.selected' },
           }}
         >
-          <Typography sx={{ fontWeight: 500 }}>高级选项</Typography>
+          <Typography sx={{ fontWeight: 500 }}>{i18n.t('components.enhanced_export_modal.k10')}</Typography>
           <ChevronRight
             sx={{
               width: 20,
@@ -411,7 +412,7 @@ const EnhancedExportModal: React.FC<EnhancedExportModalProps> = ({
                 variant='subtitle1'
                 sx={{ fontWeight: 600 }}
               >
-                选择列
+                {i18n.t('components.enhanced_export_modal.k9')}
               </Typography>
 
               <Box
@@ -431,7 +432,7 @@ const EnhancedExportModal: React.FC<EnhancedExportModalProps> = ({
                     size='small'
                     sx={{ fontSize: '0.75rem', color: 'primary.main' }}
                   >
-                    全选
+                    {i18n.t('components.enhanced_export_modal.k10')}
                   </Button>
                   <Typography sx={{ color: 'divider' }}>|</Typography>
                   <Button
@@ -439,7 +440,7 @@ const EnhancedExportModal: React.FC<EnhancedExportModalProps> = ({
                     size='small'
                     sx={{ fontSize: '0.75rem', color: 'text.secondary' }}
                   >
-                    取消全选
+                    {i18n.t('components.enhanced_export_modal.k11')}
                   </Button>
                 </Box>
               </Box>
@@ -498,14 +499,14 @@ const EnhancedExportModal: React.FC<EnhancedExportModalProps> = ({
           }}
         >
           <Typography sx={{ fontSize: '0.875rem', color: 'text.secondary' }}>
-            {selectedFormat === 'excel' && '支持 .xlsx 格式'}
-            {selectedFormat === 'pdf' && '支持分页和打印'}
-            {selectedFormat === 'csv' && '兼容所有电子表格'}
-            {selectedFormat === 'json' && '结构化数据格式'}
-            {selectedFormat === 'html' && '浏览器友好'}
-            {selectedFormat === 'markdown' && '文档友好'}
-            {selectedFormat === 'image' && 'PNG 图片格式'}
-            {selectedFormat === 'xml' && '数据交换标准'}
+            {selectedFormat === 'excel' && i18n.t('components.enhanced_export_modal.xlsx_12')}
+            {selectedFormat === 'pdf' && i18n.t('components.enhanced_export_modal.k11')}
+            {selectedFormat === 'csv' && i18n.t('components.enhanced_export_modal.k12')}
+            {selectedFormat === 'json' && i18n.t('components.enhanced_export_modal.k13')}
+            {selectedFormat === 'html' && i18n.t('components.enhanced_export_modal.k14')}
+            {selectedFormat === 'markdown' && i18n.t('components.enhanced_export_modal.k15')}
+            {selectedFormat === 'image' && i18n.t('components.enhanced_export_modal.png_13')}
+            {selectedFormat === 'xml' && i18n.t('components.enhanced_export_modal.k16')}
           </Typography>
           <Box sx={{ display: 'flex', gap: 1.5 }}>
             <Button
@@ -514,7 +515,7 @@ const EnhancedExportModal: React.FC<EnhancedExportModalProps> = ({
               variant='outlined'
               sx={{ borderRadius: 1.5 }}
             >
-              取消
+              {i18n.t('components.enhanced_export_modal.k14')}
             </Button>
             <Button
               onClick={handleExport}
@@ -532,7 +533,7 @@ const EnhancedExportModal: React.FC<EnhancedExportModalProps> = ({
               }
               sx={{ borderRadius: 1.5 }}
             >
-              {isExporting ? '导出中...' : '导出'}
+              {isExporting ? i18n.t('components.enhanced_export_modal.k15') : i18n.t('components.enhanced_export_modal.k17')}
             </Button>
           </Box>
         </Box>

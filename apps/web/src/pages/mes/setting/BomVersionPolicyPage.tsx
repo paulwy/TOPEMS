@@ -2,18 +2,19 @@ import React from 'react';
 import { Settings } from 'lucide-react';
 import { PageContainer } from '@/components/common';
 import { SettingsPageTemplate } from '@/components/templates';
+import i18n from '@/i18n';
 
 export const BomVersionPolicyPage: React.FC = () => {
   return (
     <PageContainer
-      title='BOM版本策略'
-      subtitle='制造执行 · 系统设置'
+      title={i18n.t('pages.bom_version_policy_page.bom_0')}
+      subtitle={i18n.t('pages.bom_version_policy_page.k0')}
       padding={false}
       maxWidth={false}
     >
       <SettingsPageTemplate
-        title='BOM版本策略'
-        description='BOM版本策略相关配置参数（页面建设中…）'
+        title={i18n.t('pages.bom_version_policy_page.bom_1')}
+        description={i18n.t('pages.bom_version_policy_page.k2')}
         icon={<Settings size={24} />}
         sections={[]}
         actions={[]}

@@ -5,21 +5,21 @@ import i18n from '@/i18n';
 import { designTokens } from '@topems/tokens';
 
 const categoryLabels: Record<string, string> = {
-  system: '系统字典',
-  business: '业务字典',
-  basic: '基础数据',
-  custom: '自定义字典',
+  system: i18n.t('admin.dictionary.k0'),
+  business: i18n.t('admin.dictionary.k1'),
+  basic: i18n.t('admin.dictionary.k2'),
+  custom: i18n.t('admin.dictionary.k3'),
 };
 
 const statusLabels: Record<string, string> = {
-  active: '启用',
-  inactive: '禁用',
+  active: i18n.t('admin.dictionary.k4'),
+  inactive: i18n.t('admin.dictionary.k5'),
 };
 
 export const dictTypeFields: SchemaField[] = [
   {
     name: 'code',
-    label: '编码',
+    label: i18n.t('admin.dictionary.k6'),
     type: 'text',
     required: true,
     readonlyOnEdit: true,
@@ -37,7 +37,7 @@ export const dictTypeFields: SchemaField[] = [
   },
   {
     name: 'name',
-    label: '名称',
+    label: i18n.t('admin.dictionary.k7'),
     type: 'text',
     required: true,
     validation: [{ type: 'required' }],
@@ -49,17 +49,17 @@ export const dictTypeFields: SchemaField[] = [
   },
   {
     name: 'category',
-    label: '分类',
+    label: i18n.t('admin.dictionary.k8'),
     type: 'select',
     required: true,
     defaultValue: 'business',
     options: {
       type: 'static',
       options: [
-        { value: 'system', label: '系统字典' },
-        { value: 'business', label: '业务字典' },
-        { value: 'basic', label: '基础数据' },
-        { value: 'custom', label: '自定义字典' },
+        { value: 'system', label: i18n.t('admin.dictionary.k9') },
+        { value: 'business', label: i18n.t('admin.dictionary.k10') },
+        { value: 'basic', label: i18n.t('admin.dictionary.k11') },
+        { value: 'custom', label: i18n.t('admin.dictionary.k12') },
       ],
     },
     listWidth: 120,
@@ -71,7 +71,7 @@ export const dictTypeFields: SchemaField[] = [
         {
           style: {
             display: 'inline-block',
-            padding: '2px 8px',
+            padding: `${designTokens.spacing.xs} 8px`,
             borderRadius: 'lg',
             fontSize: '12px',
             fontWeight: 500,
@@ -85,14 +85,14 @@ export const dictTypeFields: SchemaField[] = [
   },
   {
     name: 'description',
-    label: '描述',
+    label: i18n.t('admin.dictionary.k13'),
     type: 'textarea',
     listWidth: 200,
     showInList: false,
   },
   {
     name: 'status',
-    label: '状态',
+    label: i18n.t('admin.dictionary.k14'),
     type: 'switch',
     defaultValue: 'active',
     listWidth: 80,
@@ -126,7 +126,7 @@ export const dictTypeFields: SchemaField[] = [
   },
   {
     name: 'created_at',
-    label: '创建时间',
+    label: i18n.t('admin.dictionary.k15'),
     type: 'text',
     listWidth: 160,
     sortable: true,
@@ -387,7 +387,7 @@ export const dictItemSchema: EntitySchema = {
         const successCount = results.filter((r) => r.success).length;
         if (successCount < selectedIds.length) {
           throw new Error(
-            `成功删除 ${successCount} 条，失败 ${selectedIds.length - successCount} 条`
+            `${i18n.t('shared.dictionary.k0')}${successCount}${i18n.t('shared.dictionary.k1')}${selectedIds.length - successCount}${i18n.t('shared.dictionary.k2')}`
           );
         }
       },
@@ -410,5 +410,5 @@ export const dictItemSchema: EntitySchema = {
 export async function toggleDictItemStatus(id: string, currentStatus: string): Promise<void> {
   const newStatus = currentStatus === 'active' ? 'inactive' : 'active';
   const res = await dictItemApi.update(id, { status: newStatus });
-  if (!res.success) throw new Error(res.message || '状态切换失败');
+  if (!res.success) throw new Error(res.message || i18n.t('admin.dictionary.k16'));
 }

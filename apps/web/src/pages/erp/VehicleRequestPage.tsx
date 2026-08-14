@@ -2,7 +2,7 @@ import React from 'react';
 import CrudPage, { type CrudApiAdapter } from '@/components/templates/CrudPage';
 import { vehicleRequestSchema } from '@/schemas/erp/vehicleRequest';
 import { vehicleRequestApi } from '@/api/erp';
-
+import i18n from '@/i18n';
 const vehicleRequestApiAdapter: CrudApiAdapter = {
   list: async (params) => {
     const response = await vehicleRequestApi.list({
@@ -12,7 +12,7 @@ const vehicleRequestApiAdapter: CrudApiAdapter = {
       status: params?.status as string | undefined,
     });
     if (!response.success) {
-      throw new Error('加载车辆申请列表失败');
+      throw new Error(i18n.t('erp.vehicle_request_page.k0'));
     }
     const data = response.data;
     return {
@@ -20,48 +20,43 @@ const vehicleRequestApiAdapter: CrudApiAdapter = {
       total: data?.total || 0,
     };
   },
-
   create: async (data) => {
     const response = await vehicleRequestApi.create(
       data as unknown as Parameters<typeof vehicleRequestApi.create>[0]
     );
     if (!response.success) {
-      throw new Error('创建车辆申请失败');
+      throw new Error(i18n.t('erp.vehicle_request_page.k1'));
     }
     return response.data as unknown as Record<string, unknown>;
   },
-
   update: async (id, data) => {
     const response = await vehicleRequestApi.update(
       id,
       data as unknown as Parameters<typeof vehicleRequestApi.update>[1]
     );
     if (!response.success) {
-      throw new Error('更新车辆申请失败');
+      throw new Error(i18n.t('erp.vehicle_request_page.k2'));
     }
     return response.data as unknown as Record<string, unknown>;
   },
-
   delete: async (id) => {
     const response = await vehicleRequestApi.delete(id);
     if (!response.success) {
-      throw new Error('删除车辆申请失败');
+      throw new Error(i18n.t('erp.vehicle_request_page.k3'));
     }
   },
 };
-
 const VehicleRequestPage: React.FC = () => {
   return (
     <CrudPage
       schema={vehicleRequestSchema}
       apiAdapter={vehicleRequestApiAdapter}
       breadcrumbs={[
-        { label: '首页', href: '/dashboard' },
+        { label: i18n.t('erp.vehicle_request_page.k4'), href: '/dashboard' },
         { label: 'ERP', href: '/erp' },
-        { label: '车辆申请' },
+        { label: i18n.t('erp.vehicle_request_page.k5') },
       ]}
     />
   );
 };
-
 export default VehicleRequestPage;

@@ -8,29 +8,30 @@
 import React from 'react';
 import { Chip, Typography } from '@mui/material';
 import type { EntitySchema, SchemaField } from '@/schema';
+import i18n from '@/i18n';
 
 export const EVENT_TYPE_CONFIG: Record<
   string,
   { label: string; color: 'success' | 'warning' | 'error' | 'info' }
 > = {
-  sync: { label: '同步', color: 'success' },
-  error: { label: '错误', color: 'error' },
-  warning: { label: '警告', color: 'warning' },
+  sync: { label: i18n.t('shared.event.k0'), color: 'success' },
+  error: { label: i18n.t('shared.event.k1'), color: 'error' },
+  warning: { label: i18n.t('shared.event.k2'), color: 'warning' },
 };
 
 export const EVENT_STATUS_CONFIG: Record<
   string,
   { label: string; color: 'success' | 'warning' | 'error' | 'default' }
 > = {
-  success: { label: '成功', color: 'success' },
-  failed: { label: '失败', color: 'error' },
-  pending: { label: '进行中', color: 'warning' },
+  success: { label: i18n.t('shared.event.k3'), color: 'success' },
+  failed: { label: i18n.t('shared.event.k4'), color: 'error' },
+  pending: { label: i18n.t('shared.event.k5'), color: 'warning' },
 };
 
 const eventFields: SchemaField[] = [
   {
     name: 'time',
-    label: '时间',
+    label: i18n.t('shared.event.k6'),
     type: 'datetime',
     sortable: true,
     listWidth: 180,
@@ -45,15 +46,15 @@ const eventFields: SchemaField[] = [
   },
   {
     name: 'event_type',
-    label: '事件类型',
+    label: i18n.t('shared.event.k7'),
     type: 'select',
     listWidth: 110,
     options: {
       type: 'static',
       options: [
-        { value: 'sync', label: '同步' },
-        { value: 'error', label: '错误' },
-        { value: 'warning', label: '警告' },
+        { value: 'sync', label: i18n.t('shared.event.k8') },
+        { value: 'error', label: i18n.t('shared.event.k9') },
+        { value: 'warning', label: i18n.t('shared.event.k10') },
       ],
     },
     renderCell: (row: Record<string, unknown>) => {
@@ -72,7 +73,7 @@ const eventFields: SchemaField[] = [
   },
   {
     name: 'connection_name',
-    label: '连接名称',
+    label: i18n.t('shared.event.k11'),
     type: 'text',
     listWidth: 160,
     renderCell: (row: Record<string, unknown>) => (
@@ -81,7 +82,7 @@ const eventFields: SchemaField[] = [
   },
   {
     name: 'description',
-    label: '描述',
+    label: i18n.t('shared.event.k12'),
     type: 'textarea',
     listWidth: 300,
     renderCell: (row: Record<string, unknown>) => (
@@ -101,7 +102,7 @@ const eventFields: SchemaField[] = [
   },
   {
     name: 'records_count',
-    label: '记录数',
+    label: i18n.t('shared.event.k13'),
     type: 'number',
     align: 'right',
     listWidth: 100,
@@ -119,15 +120,15 @@ const eventFields: SchemaField[] = [
   },
   {
     name: 'status',
-    label: '状态',
+    label: i18n.t('shared.event.k14'),
     type: 'select',
     listWidth: 100,
     options: {
       type: 'static',
       options: [
-        { value: 'success', label: '成功' },
-        { value: 'failed', label: '失败' },
-        { value: 'pending', label: '进行中' },
+        { value: 'success', label: i18n.t('shared.event.k15') },
+        { value: 'failed', label: i18n.t('shared.event.k16') },
+        { value: 'pending', label: i18n.t('shared.event.k17') },
       ],
     },
     renderCell: (row: Record<string, unknown>) => {
@@ -148,8 +149,8 @@ const eventFields: SchemaField[] = [
 
 export const integrationEventSchema: EntitySchema = {
   entity: 'integration_event',
-  title: '事件日志',
-  description: '查看集成同步事件日志，支持失败任务重试',
+  title: i18n.t('shared.event.k18'),
+  description: i18n.t('shared.event.k19'),
 
   api: {
     module: 'integration',
@@ -164,10 +165,10 @@ export const integrationEventSchema: EntitySchema = {
     filters: [
       {
         id: 'event_type',
-        label: '事件类型',
+        label: i18n.t('shared.event.k20'),
         type: 'select',
         options: [
-          { label: '全部类型', value: 'all' },
+          { label: i18n.t('shared.event.k21'), value: 'all' },
           ...Object.entries(EVENT_TYPE_CONFIG).map(([value, cfg]) => ({
             label: cfg.label,
             value,
@@ -176,10 +177,10 @@ export const integrationEventSchema: EntitySchema = {
       },
       {
         id: 'status',
-        label: '状态',
+        label: i18n.t('shared.event.k22'),
         type: 'select',
         options: [
-          { label: '全部状态', value: 'all' },
+          { label: i18n.t('shared.event.k23'), value: 'all' },
           ...Object.entries(EVENT_STATUS_CONFIG).map(([value, cfg]) => ({
             label: cfg.label,
             value,
@@ -192,5 +193,5 @@ export const integrationEventSchema: EntitySchema = {
   actions: ['detail'],
 
   formColCount: 2,
-  detailTitle: '事件详情',
+  detailTitle: i18n.t('shared.event.k24'),
 };

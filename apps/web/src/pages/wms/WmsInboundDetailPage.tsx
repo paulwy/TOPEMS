@@ -3,12 +3,13 @@ import { useParams } from 'react-router-dom';
 import { useWmsMock, type WmsMockShape } from '@/api/wms/_mock';
 import { WmsStatusBadge, WmsFSMActionButtons } from '@/components/wms';
 import type { InboundOrderDto } from '@/types/wms';
+import i18n from '@/i18n';
 
 function buildInboundItems(orderId: string, count: number) {
   const mats = [
-    { code: 'MAT-001', name: '精密轴承-A型', unit: '个' },
-    { code: 'MAT-002', name: '电机外壳-B型', unit: '件' },
-    { code: 'MAT-003', name: '传感器模块-C型', unit: '套' },
+    { code: 'MAT-001', name: i18n.t('pages.wms_inbound_detail_page.a_1'), unit: i18n.t('pages.wms_inbound_detail_page.k0') },
+    { code: 'MAT-002', name: i18n.t('pages.wms_inbound_detail_page.b_3'), unit: i18n.t('pages.wms_inbound_detail_page.k2') },
+    { code: 'MAT-003', name: i18n.t('pages.wms_inbound_detail_page.c_5'), unit: i18n.t('pages.wms_inbound_detail_page.k4') },
   ];
   return Array.from({ length: count }, (_, i) => {
     const m = mats[i % mats.length];
@@ -41,7 +42,7 @@ export default function WmsInboundDetailPage() {
 
   const items = useMemo(() => (order ? buildInboundItems(order.id, 4) : []), [order]);
 
-  if (!order) return <div className='p-8'>加载中...</div>;
+  if (!order) return <div className='p-8'>{i18n.t('pages.wms_inbound_detail_page.k0')}</div>;
 
   return (
     <div className='space-y-4 p-4'>
@@ -65,11 +66,11 @@ export default function WmsInboundDetailPage() {
 
       <div className='grid grid-cols-1 gap-4 md:grid-cols-4'>
         <div className='rounded-lg border p-4'>
-          <p className='text-sm text-gray-600'>仓库</p>
+          <p className='text-sm text-gray-600'>{i18n.t('pages.wms_inbound_detail_page.k6')}</p>
           <p className='mt-1 font-semibold'>{order.warehouse_name ?? '-'}</p>
         </div>
         <div className='rounded-lg border p-4'>
-          <p className='text-sm text-gray-600'>供应商</p>
+          <p className='text-sm text-gray-600'>{i18n.t('pages.wms_inbound_detail_page.k7')}</p>
           <p className='mt-1 font-semibold'>{order.supplier_name ?? '-'}</p>
         </div>
         <div className='rounded-lg border p-4'>
@@ -79,7 +80,7 @@ export default function WmsInboundDetailPage() {
           </p>
         </div>
         <div className='rounded-lg border p-4'>
-          <p className='text-sm text-gray-600'>总金额</p>
+          <p className='text-sm text-gray-600'>{i18n.t('pages.wms_inbound_detail_page.k8')}</p>
           <p className='mt-1 font-semibold text-green-700'>
             ¥{(order.total_amount ?? 0).toLocaleString()}
           </p>
@@ -87,18 +88,18 @@ export default function WmsInboundDetailPage() {
       </div>
 
       <div className='rounded-lg border p-4'>
-        <h3 className='mb-2 font-semibold'>入库单明细</h3>
+        <h3 className='mb-2 font-semibold'>{i18n.t('pages.wms_inbound_detail_page.k9')}</h3>
         <div className='overflow-x-auto'>
           <table className='w-full text-sm'>
             <thead className='bg-gray-50'>
               <tr>
-                <th className='px-3 py-2 text-left'>行号</th>
-                <th className='px-3 py-2 text-left'>物料编码</th>
-                <th className='px-3 py-2 text-left'>物料名称</th>
-                <th className='px-3 py-2 text-right'>预期数量</th>
-                <th className='px-3 py-2 text-right'>实收数量</th>
-                <th className='px-3 py-2 text-right'>单价</th>
-                <th className='px-3 py-2 text-left'>状态</th>
+                <th className='px-3 py-2 text-left'>{i18n.t('pages.wms_inbound_detail_page.k10')}</th>
+                <th className='px-3 py-2 text-left'>{i18n.t('pages.wms_inbound_detail_page.k11')}</th>
+                <th className='px-3 py-2 text-left'>{i18n.t('pages.wms_inbound_detail_page.k12')}</th>
+                <th className='px-3 py-2 text-right'>{i18n.t('pages.wms_inbound_detail_page.k13')}</th>
+                <th className='px-3 py-2 text-right'>{i18n.t('pages.wms_inbound_detail_page.k14')}</th>
+                <th className='px-3 py-2 text-right'>{i18n.t('pages.wms_inbound_detail_page.k15')}</th>
+                <th className='px-3 py-2 text-left'>{i18n.t('pages.wms_inbound_detail_page.k16')}</th>
               </tr>
             </thead>
             <tbody>
@@ -117,7 +118,7 @@ export default function WmsInboundDetailPage() {
                     <span
                       className={`text-xs ${it.status === 'received' ? 'text-green-600' : 'text-gray-500'}`}
                     >
-                      {it.status === 'received' ? '已收货' : '待收货'}
+                      {it.status === 'received' ? i18n.t('pages.wms_inbound_detail_page.k18') : i18n.t('pages.wms_inbound_detail_page.k17')}
                     </span>
                   </td>
                 </tr>
@@ -128,11 +129,11 @@ export default function WmsInboundDetailPage() {
       </div>
 
       <div className='rounded-lg border p-4'>
-        <h3 className='mb-2 font-semibold'>操作日志</h3>
+        <h3 className='mb-2 font-semibold'>{i18n.t('pages.wms_inbound_detail_page.k19')}</h3>
         <ol className='relative border-l border-gray-200 ml-3'>
           {[
-            { t: order.created_at, title: '创建入库单', who: order.created_by },
-            { t: order.approved_at, title: '审批通过', who: order.approved_by },
+            { t: order.created_at, title: i18n.t('pages.wms_inbound_detail_page.k20'), who: order.created_by },
+            { t: order.approved_at, title: i18n.t('pages.wms_inbound_detail_page.k21'), who: order.approved_by },
           ]
             .filter((x) => x.t)
             .map((e, i) => (

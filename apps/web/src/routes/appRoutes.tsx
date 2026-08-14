@@ -13,6 +13,7 @@ import { DASHBOARD_PATHS } from './dashboard';
 import { HRM_PATHS } from '../modules/hrm/config';
 import { CRM_PATHS } from '../modules/crm/config';
 import { VITEDeploymentMode } from '@/config/env';
+import i18n from '@/i18n';
 
 // 懒加载页面：避免影响首屏体积
 const TemplateDemoPage = createSafeLazy(() =>
@@ -131,21 +132,21 @@ const AppRoutes: React.FC = () => {
               <ProtectedRoute>
                 <GlobalLayout>
                   <div style={{ padding: 5 }}>
-                    <h2>核心模块</h2>
+                    <h2>{i18n.t('routes.app_routes.k0')}</h2>
                     <p>
-                      核心模块在静态模式下不可用。请设置 VITE_DEPLOYMENT_MODE=module-federation 启用
+                      {i18n.t('routes.app_routes.k1')}
                       Module Federation。
                     </p>
-                    <p>或者访问其他模块：</p>
+                    <p>{i18n.t('routes.app_routes.k2')}</p>
                     <ul>
                       <li>
-                        <a href={HRM_PATHS.root}>人力资源管理</a>
+                        <a href={HRM_PATHS.root}>{i18n.t('routes.app_routes.k3')}</a>
                       </li>
                       <li>
-                        <a href={CRM_PATHS.root}>客户关系管理</a>
+                        <a href={CRM_PATHS.root}>{i18n.t('routes.app_routes.k4')}</a>
                       </li>
                       <li>
-                        <a href={DASHBOARD_PATHS.dashboard}>仪表盘</a>
+                        <a href={DASHBOARD_PATHS.dashboard}>{i18n.t('routes.app_routes.k5')}</a>
                       </li>
                     </ul>
                   </div>

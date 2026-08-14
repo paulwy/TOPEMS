@@ -3,6 +3,7 @@ import { Box, Typography } from '@mui/material';
 import { FileText } from 'lucide-react';
 import type { ReportData, ReportTypeInfo } from '@/api/report';
 import { getModuleFromReportType } from '../utils';
+import i18n from '@/i18n';
 
 interface ReportStatsProps {
   reports: ReportData[];
@@ -39,7 +40,7 @@ const ReportStats: React.FC<ReportStatsProps> = ({ reports, reportTypes }) => {
               variant='body2'
               sx={{ color: 'grey.600', mb: 0.5 }}
             >
-              报表总数
+              {i18n.t('pages.report_stats.k0')}
             </Typography>
             <Typography
               variant='h4'
@@ -83,7 +84,7 @@ const ReportStats: React.FC<ReportStatsProps> = ({ reports, reportTypes }) => {
               variant='body2'
               sx={{ color: 'grey.600', mb: 0.5 }}
             >
-              RS 模块
+              {i18n.t('pages.report_stats.rs_1')}
             </Typography>
             <Typography
               variant='h4'
@@ -131,7 +132,7 @@ const ReportStats: React.FC<ReportStatsProps> = ({ reports, reportTypes }) => {
               variant='body2'
               sx={{ color: 'grey.600', mb: 0.5 }}
             >
-              LIMS 模块
+              {i18n.t('pages.report_stats.lims_2')}
             </Typography>
             <Typography
               variant='h4'
@@ -179,7 +180,7 @@ const ReportStats: React.FC<ReportStatsProps> = ({ reports, reportTypes }) => {
               variant='body2'
               sx={{ color: 'grey.600', mb: 0.5 }}
             >
-              QMS 模块
+              {i18n.t('pages.report_stats.qms_3')}
             </Typography>
             <Typography
               variant='h4'

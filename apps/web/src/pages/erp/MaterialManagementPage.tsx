@@ -4,7 +4,6 @@
  * 使用 materialSchema 配置 + CrudPage 组件，
  * 代码量从 ~700 行缩减到 ~120 行，减少约 83%。
  */
-
 import React from 'react';
 import CrudPage, { type CrudApiAdapter } from '@/components/templates/CrudPage';
 import { materialSchema } from '@/schemas/erp/material';
@@ -12,7 +11,7 @@ import { erpApi } from '@/api/erp';
 import { QUERY_KEYS } from '@/lib/reactQuery';
 import { useQuery } from '@tanstack/react-query';
 import { Box, Typography } from '@mui/material';
-
+import i18n from '@/i18n';
 /**
  * 物料统计卡片组件
  */
@@ -21,25 +20,22 @@ const MaterialStats: React.FC = () => {
     queryKey: [QUERY_KEYS.ERP.MATERIALS, 'stats'],
     queryFn: async () => {
       const response = await erpApi.materials.list({ page: 0, pageSize: 1000 });
-      if (!response.success) throw new Error('加载物料统计失败');
+      if (!response.success) throw new Error(i18n.t('erp.material_management_page.k0'));
       return response.data;
     },
     staleTime: 5 * 60 * 1000,
   });
-
   const materials = data?.materials || [];
   const total = materials.length;
   const active = materials.filter((m) => m.status === 'active').length;
   const inactive = materials.filter((m) => m.status === 'inactive').length;
   const obsolete = materials.filter((m) => m.status === 'obsolete').length;
-
   const statCards = [
-    { label: '物料总数', value: total, color: 'primary.lighter', textColor: 'text.secondary' },
-    { label: '启用中', value: active, color: 'success.lighter', textColor: 'success.dark' },
-    { label: '已停用', value: inactive, color: 'grey.100', textColor: 'text.secondary' },
-    { label: '已淘汰', value: obsolete, color: 'error.lighter', textColor: 'error.dark' },
+    { label: i18n.t('erp.material_management_page.k1'), value: total, color: 'primary.lighter', textColor: 'text.secondary' },
+    { label: i18n.t('erp.material_management_page.k2'), value: active, color: 'success.lighter', textColor: 'success.dark' },
+    { label: i18n.t('erp.material_management_page.k3'), value: inactive, color: 'grey.100', textColor: 'text.secondary' },
+    { label: i18n.t('erp.material_management_page.k4'), value: obsolete, color: 'error.lighter', textColor: 'error.dark' },
   ];
-
   return (
     <Box
       sx={{
@@ -71,7 +67,6 @@ const MaterialStats: React.FC = () => {
     </Box>
   );
 };
-
 /**
  * 物料管理 API 适配器
  */
@@ -85,7 +80,7 @@ const materialApiAdapter: CrudApiAdapter = {
       category: params?.category as string | undefined,
     } as Parameters<typeof erpApi.materials.list>[0]);
     if (!response.success) {
-      throw new Error('加载物料失败');
+      throw new Error(i18n.t('erp.material_management_page.k5'));
     }
     const data = response.data;
     return {
@@ -93,36 +88,32 @@ const materialApiAdapter: CrudApiAdapter = {
       total: data?.total || 0,
     };
   },
-
   create: async (data) => {
     const response = await erpApi.materials.create(
       data as unknown as Parameters<typeof erpApi.materials.create>[0]
     );
     if (!response.success) {
-      throw new Error('创建物料失败');
+      throw new Error(i18n.t('erp.material_management_page.k6'));
     }
     return response.data as unknown as Record<string, unknown>;
   },
-
   update: async (id, data) => {
     const response = await erpApi.materials.update(
       id,
       data as unknown as Parameters<typeof erpApi.materials.update>[1]
     );
     if (!response.success) {
-      throw new Error('更新物料失败');
+      throw new Error(i18n.t('erp.material_management_page.k7'));
     }
     return response.data as unknown as Record<string, unknown>;
   },
-
   delete: async (id) => {
     const response = await erpApi.materials.delete(id);
     if (!response.success) {
-      throw new Error('删除物料失败');
+      throw new Error(i18n.t('erp.material_management_page.k8'));
     }
   },
 };
-
 /**
  * 物料管理页面组件
  */
@@ -132,13 +123,12 @@ const MaterialManagementPage: React.FC = () => {
       schema={materialSchema}
       apiAdapter={materialApiAdapter}
       breadcrumbs={[
-        { label: '首页', href: '/dashboard' },
+        { label: i18n.t('erp.material_management_page.k9'), href: '/dashboard' },
         { label: 'ERP', href: '/erp' },
-        { label: '物料管理' },
+        { label: i18n.t('erp.material_management_page.k10') },
       ]}
       headerContent={<MaterialStats />}
     />
   );
 };
-
 export default MaterialManagementPage;

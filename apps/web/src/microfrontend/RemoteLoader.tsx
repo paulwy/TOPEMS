@@ -7,6 +7,7 @@ import { microFrontendPerf } from './performance';
 import { versionManager } from './version-manager';
 import { canaryRelease } from './canary-release';
 import { modulePerformanceMetrics, errorTracker, userBehaviorAnalytics } from './observability';
+import i18n from '@/i18n';
 // V42.0: 沙箱管理器（可选启用）
 import { sandboxManager, type SandboxBundle } from './sandbox/sandbox-manager';
 
@@ -36,7 +37,7 @@ class RemoteErrorBoundary extends Component<
   }
 
   componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
-    logger.error(`[RemoteErrorBoundary] 模块 ${this.props.moduleName} 加载失败:`, error, errorInfo);
+    logger.error(`${i18n.t('microfrontend.remote_loader.k0')}${this.props.moduleName}${i18n.t('microfrontend.remote_loader.k1')}`, error, errorInfo);
     errorTracker.captureError(error, {
       moduleId: this.props.moduleName,
       extra: { errorInfo },
@@ -83,7 +84,7 @@ class RemoteErrorBoundary extends Component<
             variant='contained'
             onClick={this.handleRetry}
           >
-            重试
+            {i18n.t('microfrontend.remote_loader.k0')}
           </Button>
         </Box>
       );
@@ -211,7 +212,7 @@ export const RemoteLoader: React.FC<RemoteLoaderProps> = ({
       if (opts.js) bundle.jsSandbox.activate();
       if (opts.events ?? true) bundle.eventIsolation.activate();
       bundle.status = 'active';
-      logger.info(`[RemoteLoader] 已为模块 ${moduleName} 启用沙箱隔离`);
+      logger.info(`${i18n.t('microfrontend.remote_loader.remoteloader_2')}${moduleName}${i18n.t('microfrontend.remote_loader.k3')}`);
     }
 
     return () => {
@@ -235,10 +236,10 @@ export const RemoteLoader: React.FC<RemoteLoaderProps> = ({
           // V39.0: 检查灰度状态（若启用则记录）
           const canaryConfig = canaryRelease.getCanaryConfig(moduleName);
           const canaryStatus = canaryConfig.enabled
-            ? `灰度 ${canaryConfig.percentage}% (${canaryConfig.canaryVersion})`
-            : '稳定版';
+            ? `${i18n.t('microfrontend.remote_loader.k4')}${canaryConfig.percentage}% (${canaryConfig.canaryVersion})`
+            : i18n.t('microfrontend.remote_loader.k0');
           logger.info(
-            `[RemoteLoader] 加载 ${moduleName}/${component} (版本: ${moduleVersion}, ${canaryStatus})`
+            `${i18n.t('microfrontend.remote_loader.remoteloader_5')}${moduleName}/${component}${i18n.t('microfrontend.remote_loader.k6')}${moduleVersion}, ${canaryStatus})`
           );
 
           const module = await loadRemoteModule(moduleName, component);
@@ -264,7 +265,7 @@ export const RemoteLoader: React.FC<RemoteLoaderProps> = ({
 
           return { default: module.default || module };
         } catch (err) {
-          console.error(`[RemoteLoader] 加载 ${moduleName}/${component} 失败:`, err);
+          console.error(`${i18n.t('microfrontend.remote_loader.remoteloader_7')}${moduleName}/${component}${i18n.t('microfrontend.remote_loader.k8')}`, err);
           microFrontendPerf.recordModuleLoad(moduleName, component, {
             success: false,
             error: err instanceof Error ? err.message : String(err),
@@ -348,7 +349,7 @@ export async function preloadRemoteModules(moduleNames: string[]): Promise<void>
       await loadRemoteModule(name, './preload');
     } catch {
       // 预加载失败不阻塞主流程
-      console.warn(`[preloadRemoteModules] 预加载 ${name} 失败`);
+      console.warn(`${i18n.t('microfrontend.remote_loader.k9')}${name}${i18n.t('microfrontend.remote_loader.k10')}`);
     }
   });
   await Promise.allSettled(promises);

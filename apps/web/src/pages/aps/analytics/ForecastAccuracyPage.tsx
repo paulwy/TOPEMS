@@ -1,4 +1,5 @@
 import { designTokens, semanticTokens } from '@topems/tokens';
+import i18n from '@/i18n';
 /**
  * 预测准确率分析页
  *
@@ -19,7 +20,6 @@ import {
   Legend,
   ReferenceLine,
 } from 'recharts';
-
 const mockData = [
   { period: '2025-01', forecast: 1000, actual: 980 },
   { period: '2025-02', forecast: 1100, actual: 1150 },
@@ -34,7 +34,6 @@ const mockData = [
   { period: '2025-11', forecast: 2000, actual: 2050 },
   { period: '2025-12', forecast: 2100, actual: 2080 },
 ];
-
 export default function ForecastAccuracyPage() {
   const data = useMemo(() => {
     return mockData.map((d) => ({
@@ -42,42 +41,37 @@ export default function ForecastAccuracyPage() {
       accuracy: Number((100 - (Math.abs(d.actual - d.forecast) / d.forecast) * 100).toFixed(1)),
     }));
   }, []);
-
   const avgAccuracy = useMemo(() => {
     const sum = data.reduce((s, d) => s + d.accuracy, 0);
     return Number((sum / data.length).toFixed(1));
   }, [data]);
-
   const bestAccuracy = useMemo(() => Math.max(...data.map((d) => d.accuracy)), [data]);
   const worstAccuracy = useMemo(() => Math.min(...data.map((d) => d.accuracy)), [data]);
-
   return (
     <div className='space-y-4 p-4'>
       <div className='flex items-center justify-between'>
-        <h1 className='text-2xl font-bold'>预测准确率分析</h1>
-        <span className='text-sm text-gray-500'>预测 vs 实际准确率趋势</span>
+        <h1 className='text-2xl font-bold'>{i18n.t('aps.forecast_accuracy_page.k0')}</h1>
+        <span className='text-sm text-gray-500'>{i18n.t('aps.forecast_accuracy_page.vs_1')}</span>
       </div>
       <p className='text-sm text-gray-600'>
-        展示各周期需求预测与实际销量的对比，以及预测准确率趋势，评估预测方法有效性并持续优化。
+        {i18n.t('pages.forecast_accuracy_page.k0')}
       </p>
-
       <div className='grid grid-cols-1 gap-4 md:grid-cols-3'>
         <div className='rounded-lg border p-4'>
-          <p className='text-sm text-gray-600'>平均准确率</p>
+          <p className='text-sm text-gray-600'>{i18n.t('aps.forecast_accuracy_page.k2')}</p>
           <p className='mt-1 text-3xl font-bold text-green-600'>{avgAccuracy}%</p>
         </div>
         <div className='rounded-lg border p-4'>
-          <p className='text-sm text-gray-600'>最佳准确率</p>
+          <p className='text-sm text-gray-600'>{i18n.t('aps.forecast_accuracy_page.k3')}</p>
           <p className='mt-1 text-3xl font-bold text-blue-600'>{bestAccuracy}%</p>
         </div>
         <div className='rounded-lg border p-4'>
-          <p className='text-sm text-gray-600'>最低准确率</p>
+          <p className='text-sm text-gray-600'>{i18n.t('aps.forecast_accuracy_page.k4')}</p>
           <p className='mt-1 text-3xl font-bold text-orange-600'>{worstAccuracy}%</p>
         </div>
       </div>
-
       <div className='rounded-lg border p-4'>
-        <h3 className='mb-2 font-semibold'>预测 vs 实际量趋势</h3>
+        <h3 className='mb-2 font-semibold'>{i18n.t('aps.forecast_accuracy_page.vs_5')}</h3>
         <ResponsiveContainer
           width='100%'
           height={340}
@@ -94,7 +88,7 @@ export default function ForecastAccuracyPage() {
             <YAxis
               yAxisId='left'
               fontSize={11}
-              label={{ value: '数量', angle: -90, position: 'insideLeft' }}
+              label={{ value: i18n.t('aps.forecast_accuracy_page.k6'), angle: -90, position: 'insideLeft' }}
             />
             <YAxis
               yAxisId='right'
@@ -102,7 +96,7 @@ export default function ForecastAccuracyPage() {
               domain={[80, 100]}
               unit='%'
               fontSize={11}
-              label={{ value: '准确率', angle: 90, position: 'insideRight' }}
+              label={{ value: i18n.t('aps.forecast_accuracy_page.k7'), angle: 90, position: 'insideRight' }}
             />
             <Tooltip />
             <Legend />
@@ -111,13 +105,13 @@ export default function ForecastAccuracyPage() {
               y={95}
               stroke={designTokens.colors.success.dark}
               strokeDasharray='4 4'
-              label='目标 95%'
+              label={i18n.t('aps.forecast_accuracy_page.95_8')}
             />
             <Line
               yAxisId='left'
               type='monotone'
               dataKey='forecast'
-              name='预测量'
+              name={i18n.t('aps.forecast_accuracy_page.k9')}
               stroke={designTokens.colors.secondary.dark}
               strokeWidth={2}
               dot={{ r: 3 }}
@@ -126,7 +120,7 @@ export default function ForecastAccuracyPage() {
               yAxisId='left'
               type='monotone'
               dataKey='actual'
-              name='实际量'
+              name={i18n.t('aps.forecast_accuracy_page.k10')}
               stroke={designTokens.colors.warning.main}
               strokeWidth={2}
               dot={{ r: 3 }}
@@ -135,7 +129,7 @@ export default function ForecastAccuracyPage() {
               yAxisId='right'
               type='monotone'
               dataKey='accuracy'
-              name='准确率'
+              name={i18n.t('aps.forecast_accuracy_page.k11')}
               stroke={designTokens.colors.success.dark}
               strokeWidth={2}
               dot={{ r: 3 }}

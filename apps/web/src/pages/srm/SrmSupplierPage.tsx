@@ -8,6 +8,7 @@ import { QUERY_KEYS } from '@/lib/reactQuery';
 import { Box, Card, CardContent, Typography } from '@mui/material';
 import { Users } from 'lucide-react';
 import { designTokens } from '@/theme/tokens';
+import i18n from '@/i18n';
 
 const ct= designTokens.colors;
 
@@ -40,7 +41,7 @@ const SupplierStats: React.FC = () => {
   const stats = React.useMemo(
     () => ({
       total: suppliers.length,
-      active: suppliers.filter((s) => s.status === '启用' || s.status === 'active').length,
+      active: suppliers.filter((s) => s.status === i18n.t('pages.srm_supplier_page.k0') || s.status === 'active').length,
       lowRisk: suppliers.filter((s) => s.risklevel === 'low').length,
       highRisk: suppliers.filter((s) => s.risklevel === 'high').length,
     }),
@@ -49,25 +50,25 @@ const SupplierStats: React.FC = () => {
 
   const statCards = [
     {
-      label: '供应商总数',
+      label: i18n.t('pages.srm_supplier_page.k1'),
       value: stats.total,
       color: ct.purple[500],
       bgColor: 'secondary.light',
     },
     {
-      label: '已启用',
+      label: i18n.t('pages.srm_supplier_page.k2'),
       value: stats.active,
       color: 'success.dark',
       bgColor: 'success.lighter',
     },
     {
-      label: '低风险',
+      label: i18n.t('pages.srm_supplier_page.k3'),
       value: stats.lowRisk,
       color: 'success.dark',
       bgColor: 'success.lighter',
     },
     {
-      label: '高风险',
+      label: i18n.t('pages.srm_supplier_page.k4'),
       value: stats.highRisk,
       color: 'error.dark',
       bgColor: 'error.lighter',
@@ -127,7 +128,7 @@ export default function SrmSupplierPage() {
     <CrudPage
       schema={supplierSchema}
       apiAdapter={apiAdapter}
-      breadcrumbs={[{ label: 'SRM' }, { label: '供应商管理' }]}
+      breadcrumbs={[{ label: 'SRM' }, { label: i18n.t('pages.srm_supplier_page.k5') }]}
       headerContent={<SupplierStats />}
     />
   );

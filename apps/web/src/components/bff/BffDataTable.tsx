@@ -26,6 +26,7 @@ import {
   LinearProgress,
   Chip,
 } from '@mui/material';
+import i18n from '@/i18n';
 import { Search, RefreshCw, Filter, ChevronUp, ChevronDown, Layers } from 'lucide-react';
 import useBffCrud from '@/hooks/bff/useBffCrud';
 import type { UseBffCrudOptions } from '@/hooks/bff/useBffCrud';
@@ -227,7 +228,7 @@ function BffDataTableInner<T extends { id?: string }>(props: BffDataTableProps<T
           <TextField
             variant='outlined'
             size='small'
-            placeholder='搜索...'
+            placeholder={i18n.t('components.bff_data_table.k0')}
             value={searchKeyword}
             onChange={handleSearchChange}
             slotProps={{
@@ -249,11 +250,11 @@ function BffDataTableInner<T extends { id?: string }>(props: BffDataTableProps<T
         <Box sx={{ flex: 1 }} />
 
         {enableFilter && (
-          <Tooltip title={showFilterBar ? '隐藏筛选' : '显示筛选'}>
+          <Tooltip title={showFilterBar ? i18n.t('components.bff_data_table.k1') : i18n.t('components.bff_data_table.k0')}>
             <IconButton
               onClick={() => setShowFilterBar(!showFilterBar)}
               size='small'
-              aria-label='筛选'
+              aria-label={i18n.t('components.bff_data_table.k2')}
             >
               <Filter size={18} />
             </IconButton>
@@ -261,22 +262,22 @@ function BffDataTableInner<T extends { id?: string }>(props: BffDataTableProps<T
         )}
 
         {enableSharding && (
-          <Tooltip title='自动分片'>
+          <Tooltip title={i18n.t('components.bff_data_table.k3')}>
             <Chip
               size='small'
               icon={<Layers size={14} />}
-              label={crud.total > shardThreshold ? '分片加载中' : '未分片'}
+              label={crud.total > shardThreshold ? i18n.t('components.bff_data_table.k5') : i18n.t('components.bff_data_table.k4')}
               color={crud.total > shardThreshold ? 'primary' : 'default'}
               variant='outlined'
             />
           </Tooltip>
         )}
 
-        <Tooltip title='刷新'>
+        <Tooltip title={i18n.t('components.bff_data_table.k6')}>
           <IconButton
             onClick={() => crud.refresh()}
             size='small'
-            aria-label='刷新'
+            aria-label={i18n.t('components.bff_data_table.k7')}
           >
             <RefreshCw size={18} />
           </IconButton>
@@ -388,7 +389,7 @@ function BffDataTableInner<T extends { id?: string }>(props: BffDataTableProps<T
                   align='center'
                   sx={{ py: 6 }}
                 >
-                  <Box sx={{ color: 'text.secondary' }}>暂无数据</Box>
+                  <Box sx={{ color: 'text.secondary' }}>{i18n.t('components.bff_data_table.k8')}</Box>
                 </TableCell>
               </TableRow>
             ) : (
@@ -450,8 +451,8 @@ function BffDataTableInner<T extends { id?: string }>(props: BffDataTableProps<T
         rowsPerPage={pageSize}
         onRowsPerPageChange={handlePageSizeChange}
         rowsPerPageOptions={[10, 25, 50, 100]}
-        labelRowsPerPage='每页行数'
-        labelDisplayedRows={({ from, to, count }) => `${from}-${to} 共 ${count} 条`}
+        labelRowsPerPage={i18n.t('components.bff_data_table.k9')}
+        labelDisplayedRows={({ from, to, count }) => `${from}-${to} ${i18n.t('components.bff_data_table.k1')} ${count} ${i18n.t('components.bff_data_table.k2')}`}
       />
     </Paper>
   );

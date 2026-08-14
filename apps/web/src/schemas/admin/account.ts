@@ -34,12 +34,12 @@ async function loadParentAccounts(): Promise<{ value: string; label: string }[]>
 }
 
 const ACCOUNT_TYPE_LABELS: Record<string, string> = {
-  asset: '资产',
-  liability: '负债',
-  equity: '权益',
-  revenue: '收入',
-  expense: '费用',
-  cost: '成本',
+  asset: i18n.t('admin.account.k0'),
+  liability: i18n.t('admin.account.k1'),
+  equity: i18n.t('admin.account.k2'),
+  revenue: i18n.t('admin.account.k3'),
+  expense: i18n.t('admin.account.k4'),
+  cost: i18n.t('admin.account.k5'),
 };
 
 const ACCOUNT_TYPE_COLORS: Record<
@@ -55,8 +55,8 @@ const ACCOUNT_TYPE_COLORS: Record<
 };
 
 const BALANCE_DIRECTION_LABELS: Record<string, string> = {
-  debit: '借',
-  credit: '贷',
+  debit: i18n.t('admin.account.k6'),
+  credit: i18n.t('admin.account.k7'),
 };
 
 const BALANCE_DIRECTION_COLORS: Record<string, 'primary' | 'error'> = {
@@ -72,24 +72,24 @@ const renderBadge = (
     primary: `var(--color-primary-main, ${designTokens.colors.primary.dark})`,
     success: `var(--color-success-main, ${designTokens.colors.success.dark})`,
     error: `var(--color-error-main, ${designTokens.colors.error['800']})`,
-    info: 'var(--color-info-main, #0288d1)',
-    warning: 'var(--color-warning-main, #ed6c02)',
-    default: 'var(--color-text-secondary, rgba(0,0,0,0.6))',
+    info: `var(--color-info-main, ${designTokens.colors.info[600]}`,
+    warning: `var(--color-warning-main, ${designTokens.colors.warning[500]}`,
+    default: `var(--color-text-secondary, ${designTokens.colors.cyber.metal.bottomShadow}`,
   };
   const bgColorMap: Record<string, string> = {
     primary: `var(--color-primary-lighter, ${designTokens.colors.primary['50']})`,
     success: `var(--color-success-lighter, ${designTokens.colors.success['50']})`,
-    error: 'var(--color-error-lighter, #ffebee)',
-    info: 'var(--color-info-lighter, #e1f5fe)',
-    warning: 'var(--color-warning-lighter, #fff3e0)',
-    default: 'var(--color-action-hover, rgba(0,0,0,0.04))',
+    error: `var(--color-error-lighter, ${designTokens.colors.error[50]}`,
+    info: `var(--color-info-lighter, ${designTokens.colors.info[50]}`,
+    warning: `var(--color-warning-lighter, ${designTokens.colors.warning[50]}`,
+    default: `var(--color-action-hover, ${designTokens.colors.action.hover}`,
   };
   return React.createElement(
     'span',
     {
       style: {
         display: 'inline-block',
-        padding: '2px 8px',
+        padding: `${designTokens.spacing.xs} 8px`,
         borderRadius: 12,
         fontSize: 12,
         fontWeight: 500,
@@ -204,18 +204,18 @@ export const accountSchema: EntitySchema = {
           {
             style: {
               display: 'inline-block',
-              padding: '2px 8px',
+              padding: `${designTokens.spacing.xs} 8px`,
               borderRadius: 12,
               fontSize: 12,
               fontWeight: 500,
-              border: `1px solid ${isDetail ? 'var(--color-primary-main, #1976d2)' : 'var(--color-divider, rgba(0,0,0,0.12))'}`,
+              border: `1px solid ${isDetail ? `var(--color-primary-main, ${designTokens.colors.primary[700]}` : `var(--color-divider, ${designTokens.colors.action.selected}`}`,
               backgroundColor: isDetail ? `var(--color-primary-lighter, ${designTokens.colors.primary['50']})` : 'transparent',
               color: isDetail
                 ? `var(--color-primary-main, ${designTokens.colors.primary.dark})`
-                : 'var(--color-text-secondary, rgba(0,0,0,0.6))',
+                : `var(--color-text-secondary, ${designTokens.colors.cyber.metal.bottomShadow}`,
             },
           },
-          isDetail ? '明细科目' : '总账科目'
+          isDetail ? i18n.t('admin.account.k9') : i18n.t('admin.account.k8')
         );
       },
     },
@@ -229,11 +229,11 @@ export const accountSchema: EntitySchema = {
         const isActive = row.isactive !== false;
         const colorMap: Record<string, string> = {
           success: `var(--color-success-main, ${designTokens.colors.success.dark})`,
-          default: 'var(--color-text-secondary, rgba(0,0,0,0.6))',
+          default: `var(--color-text-secondary, ${designTokens.colors.cyber.metal.bottomShadow}`,
         };
         const bgColorMap: Record<string, string> = {
           success: `var(--color-success-lighter, ${designTokens.colors.success['50']})`,
-          default: 'var(--color-action-hover, rgba(0,0,0,0.04))',
+          default: `var(--color-action-hover, ${designTokens.colors.action.hover}`,
         };
         return React.createElement(
           'span',
@@ -242,7 +242,7 @@ export const accountSchema: EntitySchema = {
               display: 'inline-flex',
               alignItems: 'center',
               gap: 4,
-              padding: '2px 8px',
+              padding: `${designTokens.spacing.xs} 8px`,
               borderRadius: 12,
               fontSize: 12,
               fontWeight: 500,
@@ -258,7 +258,7 @@ export const accountSchema: EntitySchema = {
               backgroundColor: colorMap[isActive ? 'success' : 'default'],
             },
           }),
-          isActive ? '启用' : '停用'
+          isActive ? i18n.t('admin.account.k11') : i18n.t('admin.account.k10')
         );
       },
     },

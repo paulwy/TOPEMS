@@ -9,6 +9,7 @@ import { NAV_GROUPS, SUITE_GROUPS } from '@/lib/navigation/types';
 import { DASHBOARD_PATHS } from '@/routes/dashboard';
 import { navItemSx, getNavigablePath } from './shared';
 import { SidebarServiceStatus } from './SidebarServiceStatus';
+import i18n from '@/i18n';
 
 export interface SidebarModuleTreeProps {
   collapsed: boolean;
@@ -125,7 +126,7 @@ export const SidebarModuleTree: React.FC<SidebarModuleTreeProps> = ({
                 {collapsedModule?.name || collapsedModuleCode}
               </Typography>
               <Typography sx={{ fontSize: '0.75rem', color: 'text.secondary' }}>
-                悬浮展开完整菜单
+                {i18n.t('components.sidebar_module_tree.k0')}
               </Typography>
             </Box>
           </Box>
@@ -274,7 +275,7 @@ export const SidebarModuleTree: React.FC<SidebarModuleTreeProps> = ({
             >
               <Home style={{ width: 18, height: 18, flexShrink: 0 }} />
               {!collapsed && (
-                <Typography sx={{ fontSize: 14, fontWeight: 500 }}>返回平台</Typography>
+                <Typography sx={{ fontSize: 14, fontWeight: 500 }}>{i18n.t('shared.sidebar_module_tree.k0')}</Typography>
               )}
             </Box>
 

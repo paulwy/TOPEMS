@@ -1,14 +1,12 @@
 import React from 'react';
 import { Box, Typography, Button, Paper, IconButton } from '@mui/material';
 import { Flashlight, Image, Barcode, Package, CheckSquare, ArrowRight } from 'lucide-react';
-import { useTranslation } from 'react-i18next';
 import { MobileButton } from '@/components/mobile';
 import { designTokens } from '@/theme/tokens';
 import { alpha } from '@mui/material/styles';
 import { sizeTokens } from '@/theme';
-
+import i18n from '@/i18n';
 const ct= designTokens.colors;
-
 interface ScannerViewProps {
   scanning: boolean;
   scanResult: string | null;
@@ -18,7 +16,6 @@ interface ScannerViewProps {
   onRescan: () => void;
   onCopyResult: () => void;
 }
-
 const ScannerView: React.FC<ScannerViewProps> = ({
   scanning,
   scanResult,
@@ -28,8 +25,6 @@ const ScannerView: React.FC<ScannerViewProps> = ({
   onRescan,
   onCopyResult,
 }) => {
-  const { t } = useTranslation();
-
   return (
     <Box sx={{ p: 2 }}>
       <Paper
@@ -113,7 +108,6 @@ const ScannerView: React.FC<ScannerViewProps> = ({
                 borderRadius: '0 0 4px 0',
               }}
             />
-
             {scanning && (
               <Box
                 sx={{
@@ -131,7 +125,6 @@ const ScannerView: React.FC<ScannerViewProps> = ({
               />
             )}
           </Box>
-
           <style>{`
             @keyframes scanLine {
               0%, 100% { top: 15%; }
@@ -139,7 +132,6 @@ const ScannerView: React.FC<ScannerViewProps> = ({
             }
           `}</style>
         </Box>
-
         {scanResult && (
           <Box
             sx={{
@@ -171,7 +163,7 @@ const ScannerView: React.FC<ScannerViewProps> = ({
               variant='h6'
               sx={{ color: 'common.white', mb: 1, fontWeight: 600 }}
             >
-              {t('mobile.scan.message.scan_success')}
+              {i18n.t('mobile.scan.message.scan_success')}
             </Typography>
             <Typography
               variant='body2'
@@ -192,20 +184,19 @@ const ScannerView: React.FC<ScannerViewProps> = ({
                 onClick={onRescan}
                 sx={{ color: 'common.white', borderColor: alpha(ct.background.paper, 0.5) }}
               >
-                {t('mobile.scan.action.rescan')}
+                {i18n.t('mobile.scan.action.rescan')}
               </MobileButton>
               <MobileButton
                 variant='contained'
                 size='small'
                 onClick={onCopyResult}
               >
-                {t('mobile.scan.action.copy_result')}
+                {i18n.t('mobile.scan.action.copy_result')}
               </MobileButton>
             </Box>
           </Box>
         )}
       </Paper>
-
       <Box sx={{ display: 'flex', justifyContent: 'center', gap: 4, mb: 3 }}>
         <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 1 }}>
           <IconButton
@@ -219,7 +210,7 @@ const ScannerView: React.FC<ScannerViewProps> = ({
               },
             }}
             onClick={onFlashToggle}
-            aria-label='手电筒'
+            aria-label={i18n.t('mobile.scanner_view.k0')}
           >
             <Flashlight style={{ width: 24, height: 24 }} />
           </IconButton>
@@ -227,10 +218,9 @@ const ScannerView: React.FC<ScannerViewProps> = ({
             variant='caption'
             color='text.secondary'
           >
-            {t('mobile.scan.action.flashlight')}
+            {i18n.t('mobile.scan.action.flashlight')}
           </Typography>
         </Box>
-
         <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 1 }}>
           <IconButton
             sx={{
@@ -242,7 +232,7 @@ const ScannerView: React.FC<ScannerViewProps> = ({
                 bgcolor: 'grey.200',
               },
             }}
-            aria-label='图片'
+            aria-label={i18n.t('mobile.scanner_view.k1')}
           >
             <Image style={{ width: 24, height: 24 }} />
           </IconButton>
@@ -250,10 +240,9 @@ const ScannerView: React.FC<ScannerViewProps> = ({
             variant='caption'
             color='text.secondary'
           >
-            {t('mobile.scan.action.album')}
+            {i18n.t('mobile.scan.action.album')}
           </Typography>
         </Box>
-
         <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 1 }}>
           <IconButton
             sx={{
@@ -266,7 +255,7 @@ const ScannerView: React.FC<ScannerViewProps> = ({
               },
             }}
             onClick={onManualTabClick}
-            aria-label='扫码'
+            aria-label={i18n.t('mobile.scanner_view.k2')}
           >
             <Barcode style={{ width: 24, height: 24 }} />
           </IconButton>
@@ -274,11 +263,10 @@ const ScannerView: React.FC<ScannerViewProps> = ({
             variant='caption'
             color='text.secondary'
           >
-            {t('mobile.scan.section.manual')}
+            {i18n.t('mobile.scan.section.manual')}
           </Typography>
         </Box>
       </Box>
-
       {scanResult && (
         <Paper
           elevation={0}
@@ -293,7 +281,7 @@ const ScannerView: React.FC<ScannerViewProps> = ({
             variant='subtitle2'
             sx={{ fontWeight: 600, mb: 2 }}
           >
-            {t('mobile.scan.label.related_info')}
+            {i18n.t('mobile.scan.label.related_info')}
           </Typography>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
             <Box
@@ -315,17 +303,17 @@ const ScannerView: React.FC<ScannerViewProps> = ({
                 variant='body2'
                 sx={{ fontWeight: 500 }}
               >
-                {t('mobile.scan.name.resistor_10k')}
+                {i18n.t('mobile.scan.name.resistor_10k')}
               </Typography>
               <Typography
                 variant='caption'
                 color='text.secondary'
               >
-                {t('mobile.scan.label.material_code')}: {scanResult}
+                {i18n.t('mobile.scan.label.material_code')}: {scanResult}
               </Typography>
             </Box>
             <Button endIcon={<ArrowRight style={{ width: 16, height: 16 }} />}>
-              {t('mobile.scan.action.view')}
+              {i18n.t('mobile.scan.action.view')}
             </Button>
           </Box>
         </Paper>
@@ -333,5 +321,4 @@ const ScannerView: React.FC<ScannerViewProps> = ({
     </Box>
   );
 };
-
 export default ScannerView;

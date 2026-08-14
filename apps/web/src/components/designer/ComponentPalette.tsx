@@ -18,6 +18,7 @@ import {
   Chip,
   Divider,
 } from '@mui/material';
+import i18n from '@/i18n';
 import { LazyIcon } from '@/components/icons/LazyIcon';
 import { BUILTIN_COMPONENTS, type DesignerComponent, type ComponentCategory } from './types';
 
@@ -29,12 +30,12 @@ interface ComponentPaletteProps {
 }
 
 const CATEGORY_LABELS: Record<ComponentCategory, string> = {
-  layout: '布局',
-  form: '表单',
-  display: '展示',
-  action: '操作',
-  chart: '图表',
-  custom: '自定义',
+  layout: i18n.t('components.component_palette.k0'),
+  form: i18n.t('components.component_palette.k1'),
+  display: i18n.t('components.component_palette.k2'),
+  action: i18n.t('components.component_palette.k3'),
+  chart: i18n.t('components.component_palette.k4'),
+  custom: i18n.t('components.component_palette.k5'),
 };
 
 const CATEGORY_ORDER: ComponentCategory[] = [
@@ -82,7 +83,7 @@ export function ComponentPalette({ onDragStart, onDragEnd }: ComponentPalettePro
         variant='subtitle2'
         sx={{ mb: 1.5, fontWeight: 600 }}
       >
-        组件库
+        {i18n.t('components.component_palette.k0')}
       </Typography>
 
       {CATEGORY_ORDER.map((category) => {
@@ -137,7 +138,7 @@ export function ComponentPalette({ onDragStart, onDragEnd }: ComponentPalettePro
                       {comp.isContainer && (
                         <Chip
                           size='small'
-                          label='容器'
+                          label={i18n.t('components.component_palette.k6')}
                           sx={{ fontSize: '0.6rem', height: 18 }}
                         />
                       )}
@@ -156,7 +157,7 @@ export function ComponentPalette({ onDragStart, onDragEnd }: ComponentPalettePro
         variant='caption'
         sx={{ color: 'text.secondary' }}
       >
-        拖拽组件到画布
+        {i18n.t('components.component_palette.k1')}
       </Typography>
     </Paper>
   );

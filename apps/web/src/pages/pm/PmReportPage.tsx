@@ -17,6 +17,7 @@ import {
   TableRow,
   Button,
 } from '@mui/material';
+import i18n from '@/i18n';
 import {
   BarChart,
   Bar,
@@ -32,16 +33,13 @@ import {
   Cell,
   Legend,
 } from 'recharts';
-
 import { pmApi } from '@/api/pm';
 import type { PmStatistics, ProjectBenefit } from '@/api/pm';
 import { StatsPageTemplate } from '@/components/templates/StatsPageTemplate';
 import type { StatCard, ChartConfig } from '@/components/templates/StatsPageTemplate';
 import { PageContainer } from '@/components/common';
 import { PM_PATHS } from '@/modules/pm/config';
-
 import {QUERY_KEYS, CACHE_DURATIONS} from '@/lib/reactQuery';
-
 const DEFAULT_STATS: PmStatistics = {
   total_projects: 0,
   draft_projects: 0,
@@ -70,12 +68,10 @@ const DEFAULT_STATS: PmStatistics = {
   medium_risk_projects: 0,
   low_risk_projects: 0,
 };
-
 const PmReportPage: React.FC = () => {
   const navigate = useNavigate();
   const params = useParams<{ projectId?: string }>();
   const [selectedPeriod, setSelectedPeriod] = useState('all');
-
   const statsQuery = useQuery({
     queryKey: [...QUERY_KEYS.PM.STATISTICS, selectedPeriod, params.projectId ?? ''],
     queryFn: async () => {
@@ -87,7 +83,6 @@ const PmReportPage: React.FC = () => {
     },
   
       staleTime: CACHE_DURATIONS.MEDIUM,});
-
   const benefitsQuery = useQuery({
     queryKey: [
       ...(params.projectId ? QUERY_KEYS.PM.BENEFITS(params.projectId) : QUERY_KEYS.PM.REPORTS),
@@ -103,16 +98,13 @@ const PmReportPage: React.FC = () => {
     },
   
       staleTime: CACHE_DURATIONS.MEDIUM,});
-
   const stats = statsQuery.data ?? DEFAULT_STATS;
   const benefits = benefitsQuery.data ?? [];
   const loading = statsQuery.isLoading || benefitsQuery.isLoading;
-
   const loadReportData = useCallback(() => {
     statsQuery.refetch();
     benefitsQuery.refetch();
   }, [statsQuery, benefitsQuery]);
-
   const handleExport = () => {
     const reportData = {
       generatedAt: new Date().toISOString(),
@@ -131,33 +123,32 @@ const PmReportPage: React.FC = () => {
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
   };
-
   const statCards: StatCard[] = useMemo(
     () => [
       {
         id: 'total-projects',
-        title: '项目总数',
+        title: i18n.t('pm.pm_report_page.k0'),
         value: stats.total_projects,
         icon: <Calendar size={20} />,
         color: 'primary',
       },
       {
         id: 'completed-projects',
-        title: '已完成',
+        title: i18n.t('pm.pm_report_page.k1'),
         value: stats.completed_projects,
         icon: <CheckCircle size={20} />,
         color: 'success',
       },
       {
         id: 'budget-usage',
-        title: '预算使用率',
+        title: i18n.t('pm.pm_report_page.k2'),
         value: `${stats.budget_usage_rate}%`,
         icon: <DollarSign size={20} />,
         color: 'warning',
       },
       {
         id: 'high-risk',
-        title: '高风险项目',
+        title: i18n.t('pm.pm_report_page.k3'),
         value: stats.high_risk_projects ?? 0,
         icon: <AlertTriangle size={20} />,
         color: 'error',
@@ -165,59 +156,53 @@ const PmReportPage: React.FC = () => {
     ],
     [stats]
   );
-
   const projectStatusData = useMemo(
     () =>
       [
-        { name: '草稿', value: stats.draft_projects, fill: 'grey.500' },
-        { name: '待审批', value: stats.pending_projects, fill: 'warning.main' },
-        { name: '进行中', value: stats.active_projects, fill: 'primary.main' },
-        { name: '已完成', value: stats.completed_projects, fill: 'success.main' },
-        { name: '已取消', value: stats.cancelled_projects, fill: 'error.main' },
+        { name: i18n.t('pm.pm_report_page.k4'), value: stats.draft_projects, fill: 'grey.500' },
+        { name: i18n.t('pm.pm_report_page.k5'), value: stats.pending_projects, fill: 'warning.main' },
+        { name: i18n.t('pm.pm_report_page.k6'), value: stats.active_projects, fill: 'primary.main' },
+        { name: i18n.t('pm.pm_report_page.k7'), value: stats.completed_projects, fill: 'success.main' },
+        { name: i18n.t('pm.pm_report_page.k8'), value: stats.cancelled_projects, fill: 'error.main' },
       ].filter((d) => (d.value ?? 0) > 0),
     [stats]
   );
-
   const riskData = useMemo(
     () =>
       [
-        { name: '高风险', value: stats.high_risk_projects ?? 0, fill: 'error.main' },
-        { name: '中风险', value: stats.medium_risk_projects ?? 0, fill: 'warning.main' },
-        { name: '低风险', value: stats.low_risk_projects ?? 0, fill: 'success.main' },
+        { name: i18n.t('pm.pm_report_page.k9'), value: stats.high_risk_projects ?? 0, fill: 'error.main' },
+        { name: i18n.t('pm.pm_report_page.k10'), value: stats.medium_risk_projects ?? 0, fill: 'warning.main' },
+        { name: i18n.t('pm.pm_report_page.k11'), value: stats.low_risk_projects ?? 0, fill: 'success.main' },
       ].filter((d) => (d.value ?? 0) > 0),
     [stats]
   );
-
   const trendData = useMemo(
     () =>
       benefits.slice(0, 6).map((b, index) => ({
-        month: `第${index + 1}期`,
+        month: `${i18n.t('pages.pm_report_page.k0')}${index + 1}${i18n.t('pages.pm_report_page.k1')}`,
         cpi: b.cpi,
         spi: b.spi,
       })),
     [benefits]
   );
-
   const budgetUtilization = useMemo(
     () => (stats.total_budget > 0 ? (stats.spent_budget / stats.total_budget) * 100 : 0),
     [stats]
   );
-
   const renderCustomCharts = () => (
     <Box sx={{ mb: 3 }}>
       <Typography
         variant='h6'
         sx={{ fontWeight: 600, mb: 2 }}
       >
-        数据图表
+        {i18n.t('pages.pm_report_page.k0')}
       </Typography>
-
       <Box
         sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', lg: '2fr 1fr' }, gap: 3, mb: 3 }}
       >
         <Card>
           <CardHeader>
-            <Typography variant='h6'>项目状态分布</Typography>
+            <Typography variant='h6'>{i18n.t('pm.pm_report_page.k12')}</Typography>
           </CardHeader>
           <CardContent>
             <Box sx={{ height: 256 }}>
@@ -244,17 +229,16 @@ const PmReportPage: React.FC = () => {
                       />
                     ))}
                   </Pie>
-                  <Tooltip formatter={(value) => [`${value} 个`, '数量']} />
+                  <Tooltip formatter={(value) => [`${value}${i18n.t('pages.pm_report_page.k2')}`, i18n.t('pm.pm_report_page.k13')]} />
                   <Legend />
                 </PieChart>
               </ResponsiveContainer>
             </Box>
           </CardContent>
         </Card>
-
         <Card>
           <CardHeader>
-            <Typography variant='h6'>风险分布</Typography>
+            <Typography variant='h6'>{i18n.t('pm.pm_report_page.k14')}</Typography>
           </CardHeader>
           <CardContent>
             <Box sx={{ height: 256 }}>
@@ -281,7 +265,7 @@ const PmReportPage: React.FC = () => {
                       />
                     ))}
                   </Pie>
-                  <Tooltip formatter={(value: unknown) => [`${value} 个项目`, '数量']} />
+                  <Tooltip formatter={(value: unknown) => [`${value}${i18n.t('pages.pm_report_page.k3')}`, i18n.t('pm.pm_report_page.k15')]} />
                   <Legend />
                 </PieChart>
               </ResponsiveContainer>
@@ -289,7 +273,6 @@ const PmReportPage: React.FC = () => {
           </CardContent>
         </Card>
       </Box>
-
       <Card sx={{ mb: 3 }}>
         <CardHeader>
           <Typography variant='h6'>CPI/SPI 趋势分析</Typography>
@@ -301,7 +284,7 @@ const PmReportPage: React.FC = () => {
               height='100%'
             >
               <LineChart
-                data={trendData.length > 0 ? trendData : [{ month: '暂无数据', cpi: 1, spi: 1 }]}
+                data={trendData.length > 0 ? trendData : [{ month: i18n.t('pm.pm_report_page.k16'), cpi: 1, spi: 1 }]}
               >
                 <CartesianGrid strokeDasharray='3 3' />
                 <XAxis dataKey='month' />
@@ -327,10 +310,9 @@ const PmReportPage: React.FC = () => {
           </Box>
         </CardContent>
       </Card>
-
       <Card sx={{ mb: 3 }}>
         <CardHeader>
-          <Typography variant='h6'>预算执行情况</Typography>
+          <Typography variant='h6'>{i18n.t('pm.pm_report_page.k17')}</Typography>
         </CardHeader>
         <CardContent sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
           <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
@@ -338,7 +320,7 @@ const PmReportPage: React.FC = () => {
               variant='body2'
               sx={{ color: 'grey.600' }}
             >
-              预算利用率
+              {i18n.t('pages.pm_report_page.k1')}
             </Typography>
             <Typography
               variant='body2'
@@ -358,7 +340,7 @@ const PmReportPage: React.FC = () => {
                 variant='body2'
                 sx={{ color: 'blue.600' }}
               >
-                总预算
+                {i18n.t('pages.pm_report_page.k2')}
               </Typography>
               <Typography
                 variant='h6'
@@ -372,7 +354,7 @@ const PmReportPage: React.FC = () => {
                 variant='body2'
                 sx={{ color: 'green.600' }}
               >
-                已使用
+                {i18n.t('pages.pm_report_page.k3')}
               </Typography>
               <Typography
                 variant='h6'
@@ -386,7 +368,7 @@ const PmReportPage: React.FC = () => {
                 variant='body2'
                 sx={{ color: 'grey.600' }}
               >
-                剩余
+                {i18n.t('pages.pm_report_page.k4')}
               </Typography>
               <Typography
                 variant='h6'
@@ -398,10 +380,9 @@ const PmReportPage: React.FC = () => {
           </Box>
         </CardContent>
       </Card>
-
       <Card sx={{ mb: 3 }}>
         <CardHeader>
-          <Typography variant='h6'>项目进度统计</Typography>
+          <Typography variant='h6'>{i18n.t('pm.pm_report_page.k18')}</Typography>
         </CardHeader>
         <CardContent>
           <Box sx={{ height: 256 }}>
@@ -411,8 +392,8 @@ const PmReportPage: React.FC = () => {
             >
               <BarChart
                 data={[
-                  { name: '准时', value: stats.on_time_projects ?? 0 },
-                  { name: '延迟', value: stats.delayed_projects ?? 0 },
+                  { name: i18n.t('pm.pm_report_page.k19'), value: stats.on_time_projects ?? 0 },
+                  { name: i18n.t('pm.pm_report_page.k20'), value: stats.delayed_projects ?? 0 },
                 ].filter((d) => (d.value ?? 0) > 0)}
               >
                 <CartesianGrid strokeDasharray='3 3' />
@@ -421,7 +402,7 @@ const PmReportPage: React.FC = () => {
                 <Tooltip />
                 <Bar
                   dataKey='value'
-                  name='项目数'
+                  name={i18n.t('pm.pm_report_page.k21')}
                 >
                   <Cell fill='success.main' />
                   <Cell fill='error.main' />
@@ -433,14 +414,13 @@ const PmReportPage: React.FC = () => {
       </Card>
     </Box>
   );
-
   const renderBenefitsTable = () => (
     <Box sx={{ mb: 3 }}>
       <Typography
         variant='h6'
         sx={{ fontWeight: 600, mb: 2 }}
       >
-        效益指标汇总
+        {i18n.t('pages.pm_report_page.k5')}
       </Typography>
       <Card>
         <CardContent>
@@ -449,7 +429,7 @@ const PmReportPage: React.FC = () => {
               <Table size='small'>
                 <TableHead>
                   <TableRow>
-                    <TableCell sx={{ fontWeight: 'medium', color: 'grey.600' }}>期间</TableCell>
+                    <TableCell sx={{ fontWeight: 'medium', color: 'grey.600' }}>{i18n.t('pm.pm_report_page.k22')}</TableCell>
                     <TableCell
                       align='right'
                       sx={{ fontWeight: 'medium', color: 'grey.600' }}
@@ -537,14 +517,13 @@ const PmReportPage: React.FC = () => {
           ) : (
             <Box sx={{ textAlign: 'center', py: 4, color: 'grey.500' }}>
               <TrendingUp sx={{ width: 48, height: 48, mx: 'auto', mb: 2, color: 'grey.300' }} />
-              <Typography>暂无效益数据</Typography>
+              <Typography>{i18n.t('pm.pm_report_page.k23')}</Typography>
             </Box>
           )}
         </CardContent>
       </Card>
     </Box>
   );
-
   const customToolbar = useMemo(
     () => (
       <Box>
@@ -555,25 +534,23 @@ const PmReportPage: React.FC = () => {
                 variant='outlined'
                 onClick={() => navigate(PM_PATHS.reports)}
               >
-                返回全局报表
+                {i18n.t('pages.pm_report_page.k6')}
               </Button>
             </CardContent>
           </Card>
         )}
-
         <Typography
           variant='h6'
           sx={{ fontWeight: 600, mb: 2 }}
         >
-          数据图表
+          {i18n.t('pages.pm_report_page.k7')}
         </Typography>
-
         <Box
           sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', lg: '2fr 1fr' }, gap: 3, mb: 3 }}
         >
           <Card>
             <CardHeader>
-              <Typography variant='h6'>项目状态分布</Typography>
+              <Typography variant='h6'>{i18n.t('pm.pm_report_page.k24')}</Typography>
             </CardHeader>
             <CardContent>
               <Box sx={{ height: 256 }}>
@@ -600,17 +577,16 @@ const PmReportPage: React.FC = () => {
                         />
                       ))}
                     </Pie>
-                    <Tooltip formatter={(value) => [`${value} 个`, '数量']} />
+                    <Tooltip formatter={(value) => [`${value}${i18n.t('pages.pm_report_page.k4')}`, i18n.t('pm.pm_report_page.k25')]} />
                     <Legend />
                   </PieChart>
                 </ResponsiveContainer>
               </Box>
             </CardContent>
           </Card>
-
           <Card>
             <CardHeader>
-              <Typography variant='h6'>风险分布</Typography>
+              <Typography variant='h6'>{i18n.t('pm.pm_report_page.k26')}</Typography>
             </CardHeader>
             <CardContent>
               <Box sx={{ height: 256 }}>
@@ -637,7 +613,7 @@ const PmReportPage: React.FC = () => {
                         />
                       ))}
                     </Pie>
-                    <Tooltip formatter={(value: unknown) => [`${value} 个项目`, '数量']} />
+                    <Tooltip formatter={(value: unknown) => [`${value}${i18n.t('pages.pm_report_page.k5')}`, i18n.t('pm.pm_report_page.k27')]} />
                     <Legend />
                   </PieChart>
                 </ResponsiveContainer>
@@ -645,7 +621,6 @@ const PmReportPage: React.FC = () => {
             </CardContent>
           </Card>
         </Box>
-
         <Card sx={{ mb: 3 }}>
           <CardHeader>
             <Typography variant='h6'>CPI/SPI 趋势分析</Typography>
@@ -657,7 +632,7 @@ const PmReportPage: React.FC = () => {
                 height='100%'
               >
                 <LineChart
-                  data={trendData.length > 0 ? trendData : [{ month: '暂无数据', cpi: 1, spi: 1 }]}
+                  data={trendData.length > 0 ? trendData : [{ month: i18n.t('pm.pm_report_page.k28'), cpi: 1, spi: 1 }]}
                 >
                   <CartesianGrid strokeDasharray='3 3' />
                   <XAxis dataKey='month' />
@@ -683,10 +658,9 @@ const PmReportPage: React.FC = () => {
             </Box>
           </CardContent>
         </Card>
-
         <Card sx={{ mb: 3 }}>
           <CardHeader>
-            <Typography variant='h6'>预算执行情况</Typography>
+            <Typography variant='h6'>{i18n.t('pm.pm_report_page.k29')}</Typography>
           </CardHeader>
           <CardContent sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
             <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
@@ -694,7 +668,7 @@ const PmReportPage: React.FC = () => {
                 variant='body2'
                 sx={{ color: 'grey.600' }}
               >
-                预算利用率
+                {i18n.t('pages.pm_report_page.k8')}
               </Typography>
               <Typography
                 variant='body2'
@@ -714,7 +688,7 @@ const PmReportPage: React.FC = () => {
                   variant='body2'
                   sx={{ color: 'blue.600' }}
                 >
-                  总预算
+                  {i18n.t('pages.pm_report_page.k9')}
                 </Typography>
                 <Typography
                   variant='h6'
@@ -728,7 +702,7 @@ const PmReportPage: React.FC = () => {
                   variant='body2'
                   sx={{ color: 'green.600' }}
                 >
-                  已使用
+                  {i18n.t('pages.pm_report_page.k10')}
                 </Typography>
                 <Typography
                   variant='h6'
@@ -742,7 +716,7 @@ const PmReportPage: React.FC = () => {
                   variant='body2'
                   sx={{ color: 'grey.600' }}
                 >
-                  剩余
+                  {i18n.t('pages.pm_report_page.k11')}
                 </Typography>
                 <Typography
                   variant='h6'
@@ -754,10 +728,9 @@ const PmReportPage: React.FC = () => {
             </Box>
           </CardContent>
         </Card>
-
         <Card sx={{ mb: 3 }}>
           <CardHeader>
-            <Typography variant='h6'>项目进度统计</Typography>
+            <Typography variant='h6'>{i18n.t('pm.pm_report_page.k30')}</Typography>
           </CardHeader>
           <CardContent>
             <Box sx={{ height: 256 }}>
@@ -767,8 +740,8 @@ const PmReportPage: React.FC = () => {
               >
                 <BarChart
                   data={[
-                    { name: '准时', value: stats.on_time_projects ?? 0 },
-                    { name: '延迟', value: stats.delayed_projects ?? 0 },
+                    { name: i18n.t('pm.pm_report_page.k31'), value: stats.on_time_projects ?? 0 },
+                    { name: i18n.t('pm.pm_report_page.k32'), value: stats.delayed_projects ?? 0 },
                   ].filter((d) => (d.value ?? 0) > 0)}
                 >
                   <CartesianGrid strokeDasharray='3 3' />
@@ -777,7 +750,7 @@ const PmReportPage: React.FC = () => {
                   <Tooltip />
                   <Bar
                     dataKey='value'
-                    name='项目数'
+                    name={i18n.t('pm.pm_report_page.k33')}
                   >
                     <Cell fill='success.main' />
                     <Cell fill='error.main' />
@@ -787,12 +760,11 @@ const PmReportPage: React.FC = () => {
             </Box>
           </CardContent>
         </Card>
-
         <Typography
           variant='h6'
           sx={{ fontWeight: 600, mb: 2 }}
         >
-          效益指标汇总
+          {i18n.t('pages.pm_report_page.k12')}
         </Typography>
         <Card>
           <CardContent>
@@ -801,7 +773,7 @@ const PmReportPage: React.FC = () => {
                 <Table size='small'>
                   <TableHead>
                     <TableRow>
-                      <TableCell sx={{ fontWeight: 'medium', color: 'grey.600' }}>期间</TableCell>
+                      <TableCell sx={{ fontWeight: 'medium', color: 'grey.600' }}>{i18n.t('pm.pm_report_page.k34')}</TableCell>
                       <TableCell
                         align='right'
                         sx={{ fontWeight: 'medium', color: 'grey.600' }}
@@ -889,7 +861,7 @@ const PmReportPage: React.FC = () => {
             ) : (
               <Box sx={{ textAlign: 'center', py: 4, color: 'grey.500' }}>
                 <TrendingUp sx={{ width: 48, height: 48, mx: 'auto', mb: 2, color: 'grey.300' }} />
-                <Typography>暂无效益数据</Typography>
+                <Typography>{i18n.t('pm.pm_report_page.k35')}</Typography>
               </Box>
             )}
           </CardContent>
@@ -907,29 +879,28 @@ const PmReportPage: React.FC = () => {
       benefits,
     ]
   );
-
   return (
     <PageContainer
       padding={false}
       maxWidth={false}
     >
       <StatsPageTemplate
-        title='项目报表'
-        subtitle={params.projectId ? '项目详情报表' : '全局项目统计报表'}
+        title={i18n.t('pm.pm_report_page.k36')}
+        subtitle={params.projectId ? i18n.t('pm.pm_report_page.k38') : i18n.t('pm.pm_report_page.k37')}
         statCards={statCards}
         loading={loading}
         timeRangeOptions={[
-          { label: '全部时间', value: 'all' },
-          { label: '本周', value: 'week' },
-          { label: '本月', value: 'month' },
-          { label: '本季度', value: 'quarter' },
-          { label: '本年', value: 'year' },
+          { label: i18n.t('pm.pm_report_page.k39'), value: 'all' },
+          { label: i18n.t('pm.pm_report_page.k40'), value: 'week' },
+          { label: i18n.t('pm.pm_report_page.k41'), value: 'month' },
+          { label: i18n.t('pm.pm_report_page.k42'), value: 'quarter' },
+          { label: i18n.t('pm.pm_report_page.k43'), value: 'year' },
         ]}
         timeRange={selectedPeriod}
         onTimeRangeChange={setSelectedPeriod}
         onRefresh={loadReportData}
         onExport={handleExport}
-        exportText='导出报表'
+        exportText={i18n.t('pm.pm_report_page.k44')}
         showSearch={false}
         customToolbar={customToolbar}
         showStatCards={true}
@@ -939,5 +910,4 @@ const PmReportPage: React.FC = () => {
     </PageContainer>
   );
 };
-
 export default PmReportPage;

@@ -2,11 +2,12 @@ import type { EntitySchema } from '@/schema';
 
 
 import { QUERY_KEYS } from '@/lib/reactQuery';
+import i18n from '@/i18n';
 
 export const batchSchema: EntitySchema = {
   entity: 'wms_batch',
-  title: '批次管理',
-  description: '管理仓库物料批次信息',
+  title: i18n.t('wms.batch.k0'),
+  description: i18n.t('wms.batch.k1'),
 
   api: {
     module: 'wms',
@@ -16,7 +17,7 @@ export const batchSchema: EntitySchema = {
   fields: [
     {
       name: 'batch_no',
-      label: '批次号',
+      label: i18n.t('wms.batch.k2'),
       type: 'text',
       required: true,
       sortable: true,
@@ -26,7 +27,7 @@ export const batchSchema: EntitySchema = {
     },
     {
       name: 'sku',
-      label: '物料编码',
+      label: i18n.t('wms.batch.k3'),
       type: 'text',
       required: true,
       sortable: true,
@@ -36,7 +37,7 @@ export const batchSchema: EntitySchema = {
     },
     {
       name: 'material_name',
-      label: '物料名称',
+      label: i18n.t('wms.batch.k4'),
       type: 'text',
       required: true,
       sortable: true,
@@ -46,20 +47,20 @@ export const batchSchema: EntitySchema = {
     },
     {
       name: 'specification',
-      label: '规格',
+      label: i18n.t('wms.batch.k5'),
       type: 'text',
       listWidth: 120,
     },
     {
       name: 'unit',
-      label: '单位',
+      label: i18n.t('wms.batch.k6'),
       type: 'text',
       listWidth: 80,
       validation: [{ type: 'maxLength', value: 50 }],
     },
     {
       name: 'quantity',
-      label: '数量',
+      label: i18n.t('wms.batch.k7'),
       type: 'number',
       required: true,
       sortable: true,
@@ -67,7 +68,7 @@ export const batchSchema: EntitySchema = {
     },
     {
       name: 'available_quantity',
-      label: '可用数量',
+      label: i18n.t('wms.batch.k8'),
       type: 'number',
       sortable: true,
       listWidth: 100,
@@ -75,7 +76,7 @@ export const batchSchema: EntitySchema = {
     },
     {
       name: 'warehouse_id',
-      label: '仓库',
+      label: i18n.t('wms.batch.k9'),
       type: 'select',
       required: true,
       listWidth: 120,
@@ -87,7 +88,7 @@ export const batchSchema: EntitySchema = {
     },
     {
       name: 'location_id',
-      label: '库位',
+      label: i18n.t('wms.batch.k10'),
       type: 'select',
       listWidth: 120,
       options: {
@@ -98,7 +99,7 @@ export const batchSchema: EntitySchema = {
     },
     {
       name: 'supplier_id',
-      label: '供应商',
+      label: i18n.t('wms.batch.k11'),
       type: 'select',
       listWidth: 140,
       options: {
@@ -109,26 +110,26 @@ export const batchSchema: EntitySchema = {
     },
     {
       name: 'production_date',
-      label: '生产日期',
+      label: i18n.t('wms.batch.k12'),
       type: 'date',
       listWidth: 120,
     },
     {
       name: 'expiry_date',
-      label: '有效期',
+      label: i18n.t('wms.batch.k13'),
       type: 'date',
       listWidth: 120,
     },
     {
       name: 'receipt_date',
-      label: '收货日期',
+      label: i18n.t('wms.batch.k14'),
       type: 'date',
       listWidth: 120,
       readonlyOnEdit: true,
     },
     {
       name: 'quality_status',
-      label: '质检状态',
+      label: i18n.t('wms.batch.k15'),
       type: 'select',
       required: true,
       defaultValue: 'qualified',
@@ -136,17 +137,17 @@ export const batchSchema: EntitySchema = {
       options: {
         type: 'static',
         options: [
-          { value: 'pending', label: '待检' },
-          { value: 'inspecting', label: '检验中' },
-          { value: 'qualified', label: '合格' },
-          { value: 'unqualified', label: '不合格' },
+          { value: 'pending', label: i18n.t('wms.batch.k16') },
+          { value: 'inspecting', label: i18n.t('wms.batch.k17') },
+          { value: 'qualified', label: i18n.t('wms.batch.k18') },
+          { value: 'unqualified', label: i18n.t('wms.batch.k19') },
         ],
       },
       validation: [{ type: 'maxLength', value: 50 }],
     },
     {
       name: 'status',
-      label: '库存状态',
+      label: i18n.t('wms.batch.k20'),
       type: 'select',
       defaultValue: 'in_stock',
       listWidth: 100,
@@ -154,50 +155,50 @@ export const batchSchema: EntitySchema = {
       options: {
         type: 'static',
         options: [
-          { value: 'in_stock', label: '在库' },
-          { value: 'out_stock', label: '出库' },
-          { value: 'reserved', label: '预留' },
-          { value: 'frozen', label: '冻结' },
-          { value: 'scrapped', label: '报废' },
+          { value: 'in_stock', label: i18n.t('wms.batch.k21') },
+          { value: 'out_stock', label: i18n.t('wms.batch.k22') },
+          { value: 'reserved', label: i18n.t('wms.batch.k23') },
+          { value: 'frozen', label: i18n.t('wms.batch.k24') },
+          { value: 'scrapped', label: i18n.t('wms.batch.k25') },
         ],
       },
       validation: [{ type: 'maxLength', value: 50 }],
     },
     {
       name: 'shelf_life_days',
-      label: '保质期(天)',
+      label: i18n.t('wms.batch.k26'),
       type: 'number',
       listWidth: 100,
     },
     {
       name: 'unit_price',
-      label: '单价',
+      label: i18n.t('wms.batch.k27'),
       type: 'number',
       listWidth: 100,
     },
     {
       name: 'total_value',
-      label: '总金额',
+      label: i18n.t('wms.batch.k28'),
       type: 'number',
       listWidth: 120,
       hideInForm: true,
     },
     {
       name: 'remaining_days',
-      label: '剩余天数',
+      label: i18n.t('wms.batch.k29'),
       type: 'number',
       listWidth: 100,
       hideInForm: true,
     },
     {
       name: 'remark',
-      label: '备注',
+      label: i18n.t('wms.batch.k30'),
       type: 'textarea',
       listWidth: 200,
     },
     {
       name: 'created_at',
-      label: '创建时间',
+      label: i18n.t('wms.batch.k31'),
       type: 'datetime',
       readonly: true,
       hideInForm: true,
@@ -206,7 +207,7 @@ export const batchSchema: EntitySchema = {
     },
     {
       name: 'updated_at',
-      label: '更新时间',
+      label: i18n.t('wms.batch.k32'),
       type: 'datetime',
       readonly: true,
       hideInForm: true,
@@ -243,52 +244,52 @@ export const batchSchema: EntitySchema = {
         unqualified: 'error',
       },
       labelMap: {
-        pending: '待检',
-        inspecting: '检验中',
-        qualified: '合格',
-        unqualified: '不合格',
+        pending: i18n.t('wms.batch.k33'),
+        inspecting: i18n.t('wms.batch.k34'),
+        qualified: i18n.t('wms.batch.k35'),
+        unqualified: i18n.t('wms.batch.k36'),
       },
     },
     filters: [
       {
         id: 'quality_status',
-        label: '质检状态',
+        label: i18n.t('wms.batch.k37'),
         type: 'select',
         options: [
-          { label: '全部状态', value: 'all' },
-          { label: '待检', value: 'pending' },
-          { label: '检验中', value: 'inspecting' },
-          { label: '合格', value: 'qualified' },
-          { label: '不合格', value: 'unqualified' },
+          { label: i18n.t('wms.batch.k38'), value: 'all' },
+          { label: i18n.t('wms.batch.k39'), value: 'pending' },
+          { label: i18n.t('wms.batch.k40'), value: 'inspecting' },
+          { label: i18n.t('wms.batch.k41'), value: 'qualified' },
+          { label: i18n.t('wms.batch.k42'), value: 'unqualified' },
         ],
       },
       {
         id: 'status',
-        label: '库存状态',
+        label: i18n.t('wms.batch.k43'),
         type: 'select',
         options: [
-          { label: '全部状态', value: 'all' },
-          { label: '在库', value: 'in_stock' },
-          { label: '出库', value: 'out_stock' },
-          { label: '预留', value: 'reserved' },
-          { label: '冻结', value: 'frozen' },
-          { label: '报废', value: 'scrapped' },
+          { label: i18n.t('wms.batch.k44'), value: 'all' },
+          { label: i18n.t('wms.batch.k45'), value: 'in_stock' },
+          { label: i18n.t('wms.batch.k46'), value: 'out_stock' },
+          { label: i18n.t('wms.batch.k47'), value: 'reserved' },
+          { label: i18n.t('wms.batch.k48'), value: 'frozen' },
+          { label: i18n.t('wms.batch.k49'), value: 'scrapped' },
         ],
       },
       {
         id: 'warehouse_id',
-        label: '仓库',
+        label: i18n.t('wms.batch.k50'),
         type: 'select',
-        options: [{ label: '全部仓库', value: 'all' }],
+        options: [{ label: i18n.t('wms.batch.k51'), value: 'all' }],
       },
       {
         id: 'expiry_warning',
-        label: '保质期预警',
+        label: i18n.t('wms.batch.k52'),
         type: 'select',
         options: [
-          { label: '全部', value: 'all' },
-          { label: '即将到期', value: 'true' },
-          { label: '已过期', value: 'expired' },
+          { label: i18n.t('wms.batch.k53'), value: 'all' },
+          { label: i18n.t('wms.batch.k54'), value: 'true' },
+          { label: i18n.t('wms.batch.k55'), value: 'expired' },
         ],
       },
     ],
@@ -298,31 +299,31 @@ export const batchSchema: EntitySchema = {
 
   formSections: [
     {
-      title: '基本信息',
+      title: i18n.t('wms.batch.k56'),
       fields: ['batch_no', 'sku', 'material_name', 'specification', 'unit'],
     },
     {
-      title: '库存信息',
+      title: i18n.t('wms.batch.k57'),
       fields: ['warehouse_id', 'location_id', 'supplier_id', 'quantity', 'quality_status'],
     },
     {
-      title: '日期信息',
+      title: i18n.t('wms.batch.k58'),
       fields: ['production_date', 'expiry_date', 'receipt_date', 'shelf_life_days'],
     },
     {
-      title: '财务信息',
+      title: i18n.t('wms.batch.k59'),
       fields: ['unit_price'],
     },
     {
-      title: '其他',
+      title: i18n.t('wms.batch.k60'),
       fields: ['remark'],
     },
   ],
 
   formColCount: 3,
-  createTitle: '新增批次',
-  editTitle: '编辑批次',
-  detailTitle: '批次详情',
+  createTitle: i18n.t('wms.batch.k61'),
+  editTitle: i18n.t('wms.batch.k62'),
+  detailTitle: i18n.t('wms.batch.k63'),
 
   dynamicOptions: [
     {

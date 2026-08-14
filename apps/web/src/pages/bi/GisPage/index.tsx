@@ -14,6 +14,7 @@ import {
   CheckCircle2,
   Loader2,
 } from 'lucide-react';
+import i18n from '@/i18n';
 import { useGis, GisProvider } from '../../../context/GisContext';
 import MapView from '@/components/gis/MapView';
 import MetricCard from '@/components/bi/MetricCard';
@@ -51,9 +52,7 @@ import { MapSection } from './components/MapSection';
 import { DataTableSection } from './components/DataTableSection';
 import { EntityFormModal } from './components/EntityFormModal';
 import { ImportModal } from './components/ImportModal';
-
 const ct= designTokens.colors;
-
 const GisContent: React.FC = () => {
   const {
     state,
@@ -76,7 +75,6 @@ const GisContent: React.FC = () => {
     updateBusinessLocation,
     deleteBusinessLocation,
   } = useGis();
-
   const [activeTab, setActiveTab] = useState<TabType>('map');
   const [showModal, setShowModal] = useState(false);
   const [modalType, setModalType] = useState<ModalType>(null);
@@ -93,7 +91,6 @@ const GisContent: React.FC = () => {
   const [importPreview, setImportPreview] = useState<string[][] | null>(null);
   const [importConfirm, setImportConfirm] = useState(false);
   const [, setSelectedItem] = useState<DevicePoint | StorageLocation | null>(null);
-
   const {
     devicePoints,
     pipelines,
@@ -105,11 +102,9 @@ const GisContent: React.FC = () => {
     loading,
     error,
   } = state;
-
   const showNotification = (type: 'success' | 'error', message: string) => {
     setNotification({ type, message });
   };
-
   const validateForm = useCallback((): boolean => {
     const errors: FormErrors = {};
     const requiredFields: { [tab: string]: string[] } = {
@@ -120,62 +115,55 @@ const GisContent: React.FC = () => {
       factoryMaps: ['name', 'code', 'map_type'],
       businessLocations: ['business_name', 'business_type', 'lat', 'lng'],
     };
-
     const fields = requiredFields[activeTab];
     if (!fields) return true;
-
     fields.forEach((field) => {
       const value = formData[field];
       if (value === undefined || value === null || value === '') {
-        errors[field] = '此字段为必填项';
+        errors[field] = i18n.t('bi.index.k0');
       }
     });
-
     if (activeTab === 'devicePoints' || activeTab === 'storageLocations') {
       const lat = parseFloat(formData.latitude as string);
       const lng = parseFloat(formData.longitude as string);
       if (isNaN(lat) || lat < -90 || lat > 90) {
-        errors.latitude = '纬度必须在 -90 到 90 之间';
+        errors.latitude = i18n.t('bi.index.9090_1');
       }
       if (isNaN(lng) || lng < -180 || lng > 180) {
-        errors.longitude = '经度必须在 -180 到 180 之间';
+        errors.longitude = i18n.t('bi.index.180180_2');
       }
     }
-
     if (activeTab === 'businessLocations') {
       const lat = parseFloat(formData.lat as string);
       const lng = parseFloat(formData.lng as string);
       if (isNaN(lat) || lat < -90 || lat > 90) {
-        errors.lat = '纬度必须在 -90 到 90 之间';
+        errors.lat = i18n.t('bi.index.9090_3');
       }
       if (isNaN(lng) || lng < -180 || lng > 180) {
-        errors.lng = '经度必须在 -180 到 180 之间';
+        errors.lng = i18n.t('bi.index.180180_4');
       }
     }
-
     if (activeTab === 'pipelines') {
       const startLat = parseFloat(formData.start_lat as string);
       const startLng = parseFloat(formData.start_lng as string);
       const endLat = parseFloat(formData.end_lat as string);
       const endLng = parseFloat(formData.end_lng as string);
       if (isNaN(startLat) || startLat < -90 || startLat > 90) {
-        errors.start_lat = '起点纬度无效';
+        errors.start_lat = i18n.t('bi.index.k5');
       }
       if (isNaN(startLng) || startLng < -180 || startLng > 180) {
-        errors.start_lng = '起点经度无效';
+        errors.start_lng = i18n.t('bi.index.k6');
       }
       if (isNaN(endLat) || endLat < -90 || endLat > 90) {
-        errors.end_lat = '终点纬度无效';
+        errors.end_lat = i18n.t('bi.index.k7');
       }
       if (isNaN(endLng) || endLng < -180 || endLng > 180) {
-        errors.end_lng = '终点经度无效';
+        errors.end_lng = i18n.t('bi.index.k8');
       }
     }
-
     setFormErrors(errors);
     return Object.keys(errors).length === 0;
   }, [activeTab, formData]);
-
   const resetModal = () => {
     setShowModal(false);
     setModalType(null);
@@ -183,7 +171,6 @@ const GisContent: React.FC = () => {
     setFormData({});
     setFormErrors({});
   };
-
   const handleCreate = async () => {
     if (!validateForm()) return;
     try {
@@ -272,19 +259,17 @@ const GisContent: React.FC = () => {
           });
           break;
       }
-      showNotification('success', '创建成功');
+      showNotification('success', i18n.t('bi.index.k9'));
       resetModal();
     } catch (err: unknown) {
-      showNotification('error', '创建失败');
-      apiLogger.error('创建失败:', err);
+      showNotification('error', i18n.t('bi.index.k10'));
+      apiLogger.error(i18n.t('pages.index.k0'), err);
     }
   };
-
   const handleEdit = async () => {
     if (!validateForm()) return;
     try {
       if (!editingItem) return;
-
       switch (activeTab) {
         case 'devicePoints':
           await updateDevicePoint(editingItem.id, {
@@ -402,14 +387,13 @@ const GisContent: React.FC = () => {
           });
           break;
       }
-      showNotification('success', '更新成功');
+      showNotification('success', i18n.t('bi.index.k11'));
       resetModal();
     } catch (err: unknown) {
-      showNotification('error', '更新失败');
-      apiLogger.error('更新失败:', err);
+      showNotification('error', i18n.t('bi.index.k12'));
+      apiLogger.error(i18n.t('pages.index.k1'), err);
     }
   };
-
   const handleDelete = async (id: string) => {
     try {
       switch (activeTab) {
@@ -432,20 +416,18 @@ const GisContent: React.FC = () => {
           await deleteBusinessLocation(id);
           break;
       }
-      showNotification('success', '删除成功');
+      showNotification('success', i18n.t('bi.index.k13'));
     } catch (err: unknown) {
-      showNotification('error', '删除失败');
-      apiLogger.error('删除失败:', err);
+      showNotification('error', i18n.t('bi.index.k14'));
+      apiLogger.error(i18n.t('pages.index.k2'), err);
     }
   };
-
   const openCreateModal = () => {
     setModalType('create');
     setFormData({});
     setFormErrors({});
     setShowModal(true);
   };
-
   const openEditModal = (item: GisEntity) => {
     setModalType('edit');
     setEditingItem(item);
@@ -474,33 +456,30 @@ const GisContent: React.FC = () => {
     setFormErrors({});
     setShowModal(true);
   };
-
   const tabs: Array<{ id: TabType; label: string; icon: React.ReactNode }> = [
-    { id: 'map', label: '地图视图', icon: <Layers size={18} /> },
-    { id: 'devicePoints', label: '设备点位', icon: <MapPin size={18} /> },
-    { id: 'pipelines', label: '管线管理', icon: <ArrowRight size={18} /> },
+    { id: 'map', label: i18n.t('bi.index.k15'), icon: <Layers size={18} /> },
+    { id: 'devicePoints', label: i18n.t('bi.index.k16'), icon: <MapPin size={18} /> },
+    { id: 'pipelines', label: i18n.t('bi.index.k17'), icon: <ArrowRight size={18} /> },
     {
       id: 'storageLocations',
-      label: '仓储位置',
+      label: i18n.t('bi.index.k18'),
       icon: <Warehouse size={18} />,
     },
-    { id: 'evidenceRecords', label: '现场取证', icon: <Camera size={18} /> },
-    { id: 'factoryMaps', label: '厂区地图', icon: <Map size={18} /> },
+    { id: 'evidenceRecords', label: i18n.t('bi.index.k19'), icon: <Camera size={18} /> },
+    { id: 'factoryMaps', label: i18n.t('bi.index.k20'), icon: <Map size={18} /> },
     {
       id: 'businessLocations',
-      label: '业务位置',
+      label: i18n.t('bi.index.k21'),
       icon: <Building2 size={18} />,
     },
   ];
-
   const downloadTemplate = () => {
     let headers: string[];
     let sampleRow: string[];
-
     switch (activeTab) {
       case 'devicePoints':
         headers = ['name', 'device_type', 'latitude', 'longitude', 'status', 'description'];
-        sampleRow = ['设备A', '传感器', '31.2304', '121.4737', 'active', '设备描述'];
+        sampleRow = [i18n.t('bi.index.a_24'), i18n.t('bi.index.k23'), '31.2304', '121.4737', 'active', i18n.t('bi.index.k22')];
         break;
       case 'pipelines':
         headers = [
@@ -512,11 +491,11 @@ const GisContent: React.FC = () => {
           'end_lng',
           'status',
         ];
-        sampleRow = ['管线A', '水管', '31.2304', '121.4737', '31.2305', '121.4738', 'active'];
+        sampleRow = [i18n.t('bi.index.a_26'), i18n.t('bi.index.k25'), '31.2304', '121.4737', '31.2305', '121.4738', 'active'];
         break;
       case 'storageLocations':
         headers = ['name', 'location_type', 'latitude', 'longitude', 'capacity', 'current_usage'];
-        sampleRow = ['仓库A', '原材料仓', '31.2304', '121.4737', '1000', '500'];
+        sampleRow = [i18n.t('bi.index.a_28'), i18n.t('bi.index.k27'), '31.2304', '121.4737', '1000', '500'];
         break;
       case 'evidenceRecords':
         headers = [
@@ -528,11 +507,11 @@ const GisContent: React.FC = () => {
           'file_url',
           'description',
         ];
-        sampleRow = ['现场照片1', '照片', '31.2304', '121.4737', '张三', '', '证据描述'];
+        sampleRow = [i18n.t('bi.index.1_32'), i18n.t('bi.index.k31'), '31.2304', '121.4737', i18n.t('bi.index.k30'), '', i18n.t('bi.index.k29')];
         break;
       case 'factoryMaps':
         headers = ['name', 'code', 'map_type', 'file_url', 'description'];
-        sampleRow = ['厂区平面图', 'F001', '平面图', '', '地图描述'];
+        sampleRow = [i18n.t('bi.index.k35'), 'F001', i18n.t('bi.index.k34'), '', i18n.t('bi.index.k33')];
         break;
       case 'businessLocations':
         headers = [
@@ -549,24 +528,23 @@ const GisContent: React.FC = () => {
           'description',
         ];
         sampleRow = [
-          '门店A',
-          '零售',
+          i18n.t('bi.index.a_36'),
+          i18n.t('bi.index.k37'),
           '31.2304',
           '121.4737',
-          '地址',
-          '张三',
+          i18n.t('bi.index.k38'),
+          i18n.t('bi.index.k39'),
           '13800138000',
           '100',
           '50',
           'active',
-          '描述',
+          i18n.t('bi.index.k40'),
         ];
         break;
       default:
         headers = ['name'];
-        sampleRow = ['示例数据'];
+        sampleRow = [i18n.t('bi.index.k41')];
     }
-
     const content = [headers, sampleRow].map((row) => row.join(',')).join('\n');
     const blob = new Blob([content], { type: 'text/csv' });
     const url = window.URL.createObjectURL(blob);
@@ -578,18 +556,16 @@ const GisContent: React.FC = () => {
     a.remove();
     window.URL.revokeObjectURL(url);
   };
-
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
       if (!file.name.endsWith('.csv')) {
-        showNotification('error', '请选择CSV文件');
+        showNotification('error', i18n.t('bi.index.csv_42'));
         return;
       }
       setImportFile(file);
       setImportPreview(null);
       setImportConfirm(false);
-
       const reader = new FileReader();
       reader.onload = (event) => {
         try {
@@ -598,35 +574,32 @@ const GisContent: React.FC = () => {
           const preview = lines.slice(0, 10).map((line) => line.split(','));
           setImportPreview(preview);
         } catch (err: unknown) {
-          showNotification('error', '文件解析失败');
+          showNotification('error', i18n.t('bi.index.k43'));
         }
       };
       reader.readAsText(file, 'UTF-8');
     }
   };
-
   const handleImport = async () => {
     if (!importFile || !importConfirm) return;
     try {
-      showNotification('success', '导入成功');
+      showNotification('success', i18n.t('bi.index.k44'));
       setShowImportModal(false);
       setImportFile(null);
       setImportPreview(null);
       setImportConfirm(false);
       await loadAllData(true);
     } catch (err: unknown) {
-      showNotification('error', '导入失败');
-      apiLogger.error('导入失败:', err);
+      showNotification('error', i18n.t('bi.index.k45'));
+      apiLogger.error(i18n.t('pages.index.k3'), err);
     }
   };
-
   const resetImportModal = () => {
     setShowImportModal(false);
     setImportFile(null);
     setImportPreview(null);
     setImportConfirm(false);
   };
-
   const filteredData = useMemo<GisEntity[]>(() => {
     if (!searchTerm.trim()) {
       switch (activeTab) {
@@ -692,11 +665,9 @@ const GisContent: React.FC = () => {
     factoryMaps,
     businessLocations,
   ]);
-
   const handleFormChange = (key: string, value: unknown) => {
     setFormData({ ...formData, [key]: value });
   };
-
   return (
     <PageContainer
       padding={false}
@@ -716,7 +687,6 @@ const GisContent: React.FC = () => {
             onCreate={openCreateModal}
             onImport={() => setShowImportModal(true)}
           />
-
           {error && (
             <Alert
               severity='error'
@@ -726,7 +696,6 @@ const GisContent: React.FC = () => {
               {error}
             </Alert>
           )}
-
           <Snackbar
             open={Boolean(notification)}
             autoHideDuration={3000}
@@ -747,9 +716,7 @@ const GisContent: React.FC = () => {
               {notification?.message}
             </Alert>
           </Snackbar>
-
           <StatsSection statistics={statistics} />
-
           <Paper
             elevation={0}
             sx={{
@@ -778,7 +745,6 @@ const GisContent: React.FC = () => {
               ))}
             </Tabs>
           </Paper>
-
           {activeTab === 'map' ? (
             <MapSection
               loading={loading}
@@ -799,7 +765,6 @@ const GisContent: React.FC = () => {
               onDelete={handleDelete}
             />
           )}
-
           <EntityFormModal
             open={showModal}
             modalType={modalType}
@@ -810,7 +775,6 @@ const GisContent: React.FC = () => {
             onSubmit={modalType === 'create' ? handleCreate : handleEdit}
             onFormChange={handleFormChange}
           />
-
           <ImportModal
             open={showImportModal}
             importFile={importFile}
@@ -826,7 +790,6 @@ const GisContent: React.FC = () => {
     </PageContainer>
   );
 };
-
 const GisPage: React.FC = () => {
   return (
     <GisProvider>
@@ -834,5 +797,4 @@ const GisPage: React.FC = () => {
     </GisProvider>
   );
 };
-
 export default GisPage;

@@ -4,6 +4,7 @@ import { Truck, ArrowLeftRight, MapPin, Package, CheckCircle2 } from 'lucide-rea
 import { useWmsMock, type WmsMockShape } from '@/api/wms/_mock';
 import { WmsStatusBadge, WmsFSMActionButtons } from '@/components/wms';
 import type { TransferOrderDto } from '@/types/wms';
+import i18n from '@/i18n';
 
 export default function WmsTransferDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -16,7 +17,7 @@ export default function WmsTransferDetailPage() {
     );
   }, [id, data.transferList]);
 
-  if (!transfer) return <div className='p-8'>加载中...</div>;
+  if (!transfer) return <div className='p-8'>{i18n.t('pages.wms_transfer_detail_page.k0')}</div>;
 
   return (
     <div className='space-y-4 p-4'>
@@ -45,7 +46,7 @@ export default function WmsTransferDetailPage() {
               <MapPin size={20} />
             </div>
             <div>
-              <p className='text-xs text-blue-600'>调出仓库（源）</p>
+              <p className='text-xs text-blue-600'>{i18n.t('pages.wms_transfer_detail_page.k0')}</p>
               <p className='text-lg font-bold text-blue-800'>
                 {transfer.from_warehouse_name ?? '-'}
               </p>
@@ -65,7 +66,7 @@ export default function WmsTransferDetailPage() {
               <CheckCircle2 size={20} />
             </div>
             <div>
-              <p className='text-xs text-green-600'>调入仓库（目）</p>
+              <p className='text-xs text-green-600'>{i18n.t('pages.wms_transfer_detail_page.k1')}</p>
               <p className='text-lg font-bold text-green-800'>
                 {transfer.to_warehouse_name ?? '-'}
               </p>
@@ -77,7 +78,7 @@ export default function WmsTransferDetailPage() {
       <div className='grid grid-cols-1 gap-4 md:grid-cols-3'>
         <div className='rounded-lg border p-4'>
           <p className='text-sm text-gray-600'>运输方式 / 类型</p>
-          <p className='mt-1 font-semibold'>{transfer.transfer_type ?? '标准调拨'}</p>
+          <p className='mt-1 font-semibold'>{transfer.transfer_type ?? i18n.t('pages.wms_transfer_detail_page.k2')}</p>
         </div>
         <div className='rounded-lg border p-4'>
           <p className='text-sm text-gray-600'>承运商 / 运单号</p>
@@ -94,19 +95,19 @@ export default function WmsTransferDetailPage() {
       </div>
 
       <div className='rounded-lg border p-4'>
-        <h3 className='mb-2 font-semibold'>运输信息与备注</h3>
+        <h3 className='mb-2 font-semibold'>{i18n.t('pages.wms_transfer_detail_page.k3')}</h3>
         <div className='grid grid-cols-1 md:grid-cols-2 gap-4 text-sm'>
           <div>
-            <span className='text-gray-600'>发运时间：</span>
+            <span className='text-gray-600'>{i18n.t('pages.wms_transfer_detail_page.k4')}</span>
             <span>{transfer.shipped_at?.slice(0, 19).replace('T', ' ') ?? '-'}</span>
           </div>
           <div>
-            <span className='text-gray-600'>收货时间：</span>
+            <span className='text-gray-600'>{i18n.t('pages.wms_transfer_detail_page.k5')}</span>
             <span>{transfer.received_at?.slice(0, 19).replace('T', ' ') ?? '-'}</span>
           </div>
           <div className='md:col-span-2'>
-            <span className='text-gray-600'>备注：</span>
-            <span>{transfer.remarks ?? '无'}</span>
+            <span className='text-gray-600'>{i18n.t('pages.wms_transfer_detail_page.k6')}</span>
+            <span>{transfer.remarks ?? i18n.t('pages.wms_transfer_detail_page.k7')}</span>
           </div>
         </div>
       </div>

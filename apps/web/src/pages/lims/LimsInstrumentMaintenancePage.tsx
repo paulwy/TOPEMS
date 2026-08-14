@@ -13,7 +13,7 @@ import {
   Button,
   useTheme,
 } from '@mui/material';
-
+import i18n from '@/i18n';
 import { limsApi } from '@/api/lims';
 import type { Instrument, MaintenanceRecord, CreateMaintenanceRecordRequest } from '@/api/lims';
 import CrudPage from '@/components/templates/CrudPage';
@@ -22,14 +22,11 @@ import { PageContainer } from '@/components/common';
 import { designTokens } from '@/theme/tokens';
 import { LIMS_PATHS } from '@/modules/lims/config';
 import { instrumentMaintenanceSchema } from '@/schemas/lims';
-
 const ct= designTokens.colors;
-
 const LimsInstrumentMaintenancePage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const theme = useTheme();
   const navigate = useNavigate();
-
   const { data: instrument, isPending: loadingInstrument} = useQuery({
     queryKey: QUERY_KEYS.LIMS.INSTRUMENT(id || ''),
     queryFn: async () => {
@@ -43,7 +40,6 @@ const LimsInstrumentMaintenancePage: React.FC = () => {
     enabled: !!id,
   
       staleTime: CACHE_DURATIONS.MEDIUM,});
-
   const apiAdapter: CrudApiAdapter<MaintenanceRecord> = useMemo(
     () => ({
       list: async () => {
@@ -58,13 +54,13 @@ const LimsInstrumentMaintenancePage: React.FC = () => {
         return { data: [], total: 0 };
       },
       create: async (data) => {
-        if (!id) throw new Error('仪器ID不存在');
+        if (!id) throw new Error(i18n.t('lims.lims_instrument_maintenance_page.id_0'));
         const res = await limsApi.createMaintenance({
           ...data,
           instrument_id: id,
         } as unknown as CreateMaintenanceRecordRequest);
         if (!res.success || !res.data) {
-          throw new Error(res.message || '创建失败');
+          throw new Error(res.message || i18n.t('lims.lims_instrument_maintenance_page.k1'));
         }
         return res.data as MaintenanceRecord;
       },
@@ -74,30 +70,29 @@ const LimsInstrumentMaintenancePage: React.FC = () => {
           data as unknown as Partial<CreateMaintenanceRecordRequest>,
         );
         if (!res.success || !res.data) {
-          throw new Error(res.message || '更新失败');
+          throw new Error(res.message || i18n.t('lims.lims_instrument_maintenance_page.k2'));
         }
         return res.data as MaintenanceRecord;
       },
       delete: async (recordId) => {
         const res = await limsApi.deleteMaintenance(recordId);
         if (!res.success) {
-          throw new Error(res.message || '删除失败');
+          throw new Error(res.message || i18n.t('lims.lims_instrument_maintenance_page.k3'));
         }
       },
     }),
     [id]
   );
-
   const getStatusBadge = (status: string) => {
     const statusMap: Record<string, { bg: string; color: string; label: string }> = {
-      normal: { bg: 'success.lighter', color: 'success.dark', label: '正常' },
-      in_use: { bg: 'success.lighter', color: 'success.dark', label: '使用中' },
-      calibration: { bg: 'warning.100', color: ct.yellow[600], label: '校准中' },
-      calibrated: { bg: 'info.100', color: 'info.dark', label: '已校准' },
-      maintenance: { bg: 'error.lighter', color: 'error.dark', label: '维修中' },
-      under_maintenance: { bg: 'warning.light', color: 'warning.dark', label: '维护中' },
-      disabled: { bg: 'grey.100', color: 'text.secondary', label: '停用' },
-      scrapped: { bg: 'grey.100', color: 'text.secondary', label: '已报废' },
+      normal: { bg: 'success.lighter', color: 'success.dark', label: i18n.t('lims.lims_instrument_maintenance_page.k4') },
+      in_use: { bg: 'success.lighter', color: 'success.dark', label: i18n.t('lims.lims_instrument_maintenance_page.k5') },
+      calibration: { bg: 'warning.100', color: ct.yellow[600], label: i18n.t('lims.lims_instrument_maintenance_page.k6') },
+      calibrated: { bg: 'info.100', color: 'info.dark', label: i18n.t('lims.lims_instrument_maintenance_page.k7') },
+      maintenance: { bg: 'error.lighter', color: 'error.dark', label: i18n.t('lims.lims_instrument_maintenance_page.k8') },
+      under_maintenance: { bg: 'warning.light', color: 'warning.dark', label: i18n.t('lims.lims_instrument_maintenance_page.k9') },
+      disabled: { bg: 'grey.100', color: 'text.secondary', label: i18n.t('lims.lims_instrument_maintenance_page.k10') },
+      scrapped: { bg: 'grey.100', color: 'text.secondary', label: i18n.t('lims.lims_instrument_maintenance_page.k11') },
     };
     const item = statusMap[status] || {
       bg: 'grey.100',
@@ -112,10 +107,8 @@ const LimsInstrumentMaintenancePage: React.FC = () => {
       />
     );
   };
-
   const headerContent = useMemo(() => {
     if (!instrument) return null;
-
     return (
       <Box sx={{ mb: 3 }}>
         <Card sx={{ mb: 3 }}>
@@ -128,7 +121,7 @@ const LimsInstrumentMaintenancePage: React.FC = () => {
                 component={Wrench}
                 sx={{ fontSize: 20, color: ct.teal[400] }}
               />
-              仪器信息
+              {i18n.t('pages.lims_instrument_maintenance_page.k0')}
             </Typography>
           </CardHeader>
           <CardContent>
@@ -138,7 +131,7 @@ const LimsInstrumentMaintenancePage: React.FC = () => {
                   variant='body2'
                   color='text.secondary'
                 >
-                  仪器编号
+                  {i18n.t('pages.lims_instrument_maintenance_page.k1')}
                 </Typography>
                 <Typography
                   variant='subtitle1'
@@ -152,7 +145,7 @@ const LimsInstrumentMaintenancePage: React.FC = () => {
                   variant='body2'
                   color='text.secondary'
                 >
-                  仪器名称
+                  {i18n.t('pages.lims_instrument_maintenance_page.k2')}
                 </Typography>
                 <Typography
                   variant='subtitle1'
@@ -166,7 +159,7 @@ const LimsInstrumentMaintenancePage: React.FC = () => {
                   variant='body2'
                   color='text.secondary'
                 >
-                  型号
+                  {i18n.t('pages.lims_instrument_maintenance_page.k3')}
                 </Typography>
                 <Typography variant='body1'>{instrument.model || '-'}</Typography>
               </Box>
@@ -178,7 +171,7 @@ const LimsInstrumentMaintenancePage: React.FC = () => {
                   variant='body2'
                   color='text.secondary'
                 >
-                  位置
+                  {i18n.t('pages.lims_instrument_maintenance_page.k4')}
                 </Typography>
                 <Typography variant='body1'>{instrument.location || '-'}</Typography>
               </Box>
@@ -187,7 +180,7 @@ const LimsInstrumentMaintenancePage: React.FC = () => {
                   variant='body2'
                   color='text.secondary'
                 >
-                  负责人
+                  {i18n.t('pages.lims_instrument_maintenance_page.k5')}
                 </Typography>
                 <Typography variant='body1'>{instrument.responsible_person || '-'}</Typography>
               </Box>
@@ -198,7 +191,7 @@ const LimsInstrumentMaintenancePage: React.FC = () => {
                   sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}
                 >
                   <Calendar sx={{ width: 14, height: 14 }} />
-                  采购日期
+                  {i18n.t('pages.lims_instrument_maintenance_page.k6')}
                 </Typography>
                 <Typography variant='body1'>
                   {instrument.purchase_date
@@ -213,7 +206,7 @@ const LimsInstrumentMaintenancePage: React.FC = () => {
                   sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}
                 >
                   <Clock sx={{ width: 14, height: 14 }} />
-                  下次校准
+                  {i18n.t('pages.lims_instrument_maintenance_page.k7')}
                 </Typography>
                 <Typography variant='body1'>
                   {instrument.next_calibration_date
@@ -224,12 +217,10 @@ const LimsInstrumentMaintenancePage: React.FC = () => {
             </Box>
           </CardContent>
         </Card>
-
         <MaintenanceStatsCard />
       </Box>
     );
   }, [instrument, theme]);
-
   if (loadingInstrument) {
     return (
       <Box
@@ -241,12 +232,11 @@ const LimsInstrumentMaintenancePage: React.FC = () => {
         }}
       >
         <Box sx={{ textAlign: 'center' }}>
-          <p style={{ color: ct.grey[600] }}>加载中...</p>
+          <p style={{ color: ct.grey[600] }}>{i18n.t('pages.lims_instrument_maintenance_page.k0')}</p>
         </Box>
       </Box>
     );
   }
-
   if (!instrument) {
     return (
       <Box
@@ -259,21 +249,20 @@ const LimsInstrumentMaintenancePage: React.FC = () => {
       >
         <Box sx={{ textAlign: 'center' }}>
           <AlertCircle sx={{ width: 64, height: 64, color: 'error.main', mb: 2 }} />
-          <p style={{ color: ct.grey[600] }}>仪器不存在或已被删除</p>
+          <p style={{ color: ct.grey[600] }}>{i18n.t('lims.lims_instrument_maintenance_page.k12')}</p>
           <Button
             onClick={() => navigate(LIMS_PATHS.root)}
             sx={{ mt: 2 }}
           >
-            返回列表
+            {i18n.t('pages.lims_instrument_maintenance_page.k8')}
           </Button>
         </Box>
       </Box>
     );
   }
-
   return (
     <PageContainer
-      title='仪器维护记录'
+      title={i18n.t('lims.lims_instrument_maintenance_page.k13')}
       subtitle='Instrument Maintenance'
       headerProps={{
         pageIcon: <Wrench style={{ width: 20, height: 20 }} />,
@@ -291,7 +280,6 @@ const LimsInstrumentMaintenancePage: React.FC = () => {
     </PageContainer>
   );
 };
-
 const MaintenanceStatsCard: React.FC = () => {
   return (
     <Card>
@@ -304,7 +292,7 @@ const MaintenanceStatsCard: React.FC = () => {
             component={DollarSign}
             sx={{ fontSize: 20, color: 'success.dark' }}
           />
-          维护统计
+          {i18n.t('pages.lims_instrument_maintenance_page.k9')}
         </Typography>
       </CardHeader>
       <CardContent>
@@ -321,7 +309,7 @@ const MaintenanceStatsCard: React.FC = () => {
               variant='body2'
               color='success.dark'
             >
-              维护次数
+              {i18n.t('pages.lims_instrument_maintenance_page.k10')}
             </Typography>
             <Typography
               variant='h4'
@@ -342,7 +330,7 @@ const MaintenanceStatsCard: React.FC = () => {
               variant='body2'
               color='primary.dark'
             >
-              累计费用
+              {i18n.t('pages.lims_instrument_maintenance_page.k11')}
             </Typography>
             <Typography
               variant='h4'
@@ -363,7 +351,7 @@ const MaintenanceStatsCard: React.FC = () => {
               variant='body2'
               color='info.dark'
             >
-              日常维护
+              {i18n.t('pages.lims_instrument_maintenance_page.k12')}
             </Typography>
             <Typography
               variant='h4'
@@ -384,7 +372,7 @@ const MaintenanceStatsCard: React.FC = () => {
               variant='body2'
               color='warning.dark'
             >
-              故障维修
+              {i18n.t('pages.lims_instrument_maintenance_page.k13')}
             </Typography>
             <Typography
               variant='h4'
@@ -398,5 +386,4 @@ const MaintenanceStatsCard: React.FC = () => {
     </Card>
   );
 };
-
 export default LimsInstrumentMaintenancePage;

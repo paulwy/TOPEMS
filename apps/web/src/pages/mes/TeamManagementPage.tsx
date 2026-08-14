@@ -11,10 +11,10 @@ import {
   TableRow,
   Paper,
 } from '@mui/material';
+import i18n from '@/i18n';
 import { useQuery } from '@tanstack/react-query';
 import { Users } from 'lucide-react';
 import { LoadingSpinner } from '@topems/shared-components';
-
 import CrudPage from '@/components/templates/CrudPage';
 import { createCrudPageAdapter } from '@/schema/crudPageAdapter';
 import { PageContainer } from '@/components/common';
@@ -23,9 +23,7 @@ import { mesApi } from '@/api/mes';
 import type { Team, TeamMember, CreateTeamRequest, UpdateTeamRequest } from '@/api/mes/types';
 import {QUERY_KEYS, CACHE_DURATIONS} from '@/lib/reactQuery';
 import { designTokens } from '@/theme/tokens';
-
 const ct= designTokens.colors;
-
 const apiAdapter = createCrudPageAdapter<Team, CreateTeamRequest, UpdateTeamRequest>(
   {
     list: mesApi.teams.list,
@@ -35,10 +33,8 @@ const apiAdapter = createCrudPageAdapter<Team, CreateTeamRequest, UpdateTeamRequ
   },
   { itemsField: 'teams' }
 );
-
 function TeamDetailContent({ row }: { row: Record<string, unknown> }) {
   const teamId = String(row.id);
-
   const { data: membersData, isPending} = useQuery({
     queryKey: [...QUERY_KEYS.MES.TEAMS, teamId, 'members'],
     queryFn: async () => {
@@ -50,22 +46,18 @@ function TeamDetailContent({ row }: { row: Record<string, unknown> }) {
     },
   
       staleTime: CACHE_DURATIONS.MEDIUM,});
-
   const members = (membersData as TeamMember[]) || [];
-
   const statusMap: Record<string, { label: string; bg: string; color: string }> = {
-    active: { label: '活跃', bg: 'success.lighter', color: 'success.700' },
-    inactive: { label: '停用', bg: 'grey.100', color: 'text.secondary' },
+    active: { label: i18n.t('mes.team_management_page.k0'), bg: 'success.lighter', color: 'success.700' },
+    inactive: { label: i18n.t('mes.team_management_page.k1'), bg: 'grey.100', color: 'text.secondary' },
   };
   const status = statusMap[String(row.status)] || statusMap.inactive;
-
   const typeMap: Record<string, string> = {
-    production: '生产班组',
-    maintenance: '维修班组',
-    quality: '质检班组',
-    logistics: '物流班组',
+    production: i18n.t('mes.team_management_page.k2'),
+    maintenance: i18n.t('mes.team_management_page.k3'),
+    quality: i18n.t('mes.team_management_page.k4'),
+    logistics: i18n.t('mes.team_management_page.k5'),
   };
-
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
       <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' }, gap: 2 }}>
@@ -74,7 +66,7 @@ function TeamDetailContent({ row }: { row: Record<string, unknown> }) {
             variant='caption'
             color='text.secondary'
           >
-            班组编码
+            {i18n.t('pages.team_management_page.k0')}
           </Typography>
           <Typography
             variant='body2'
@@ -88,7 +80,7 @@ function TeamDetailContent({ row }: { row: Record<string, unknown> }) {
             variant='caption'
             color='text.secondary'
           >
-            班组名称
+            {i18n.t('pages.team_management_page.k1')}
           </Typography>
           <Typography variant='body2'>{String(row.team_name || '-')}</Typography>
         </Box>
@@ -97,7 +89,7 @@ function TeamDetailContent({ row }: { row: Record<string, unknown> }) {
             variant='caption'
             color='text.secondary'
           >
-            班组类型
+            {i18n.t('pages.team_management_page.k2')}
           </Typography>
           <Typography variant='body2'>
             {typeMap[String(row.team_type)] || String(row.team_type || '-')}
@@ -108,7 +100,7 @@ function TeamDetailContent({ row }: { row: Record<string, unknown> }) {
             variant='caption'
             color='text.secondary'
           >
-            所属工作站
+            {i18n.t('pages.team_management_page.k3')}
           </Typography>
           <Typography variant='body2'>{String(row.work_station_name || '-')}</Typography>
         </Box>
@@ -117,7 +109,7 @@ function TeamDetailContent({ row }: { row: Record<string, unknown> }) {
             variant='caption'
             color='text.secondary'
           >
-            班组长
+            {i18n.t('pages.team_management_page.k4')}
           </Typography>
           <Typography variant='body2'>{String(row.leader_name || '-')}</Typography>
         </Box>
@@ -126,7 +118,7 @@ function TeamDetailContent({ row }: { row: Record<string, unknown> }) {
             variant='caption'
             color='text.secondary'
           >
-            成员数
+            {i18n.t('pages.team_management_page.k5')}
           </Typography>
           <Typography variant='body2'>{Number(row.member_count) || 0}</Typography>
         </Box>
@@ -135,7 +127,7 @@ function TeamDetailContent({ row }: { row: Record<string, unknown> }) {
             variant='caption'
             color='text.secondary'
           >
-            状态
+            {i18n.t('pages.team_management_page.k6')}
           </Typography>
           <Chip
             size='small'
@@ -148,18 +140,17 @@ function TeamDetailContent({ row }: { row: Record<string, unknown> }) {
             variant='caption'
             color='text.secondary'
           >
-            描述
+            {i18n.t('pages.team_management_page.k7')}
           </Typography>
           <Typography variant='body2'>{String(row.description || '-')}</Typography>
         </Box>
       </Box>
-
       <Box>
         <Typography
           variant='h6'
           sx={{ mb: 2 }}
         >
-          成员列表
+          {i18n.t('pages.team_management_page.k8')}
         </Typography>
         {isPending ? (
           <LoadingSpinner />
@@ -171,11 +162,11 @@ function TeamDetailContent({ row }: { row: Record<string, unknown> }) {
             <Table size='small'>
               <TableHead>
                 <TableRow>
-                  <TableCell>员工编码</TableCell>
-                  <TableCell>员工姓名</TableCell>
-                  <TableCell>职位</TableCell>
-                  <TableCell>加入日期</TableCell>
-                  <TableCell>状态</TableCell>
+                  <TableCell>{i18n.t('mes.team_management_page.k6')}</TableCell>
+                  <TableCell>{i18n.t('mes.team_management_page.k7')}</TableCell>
+                  <TableCell>{i18n.t('mes.team_management_page.k8')}</TableCell>
+                  <TableCell>{i18n.t('mes.team_management_page.k9')}</TableCell>
+                  <TableCell>{i18n.t('mes.team_management_page.k10')}</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
@@ -186,7 +177,7 @@ function TeamDetailContent({ row }: { row: Record<string, unknown> }) {
                       align='center'
                       sx={{ py: 3, color: 'text.secondary' }}
                     >
-                      暂无成员数据
+                      {i18n.t('pages.team_management_page.k9')}
                     </TableCell>
                   </TableRow>
                 ) : (
@@ -203,7 +194,7 @@ function TeamDetailContent({ row }: { row: Record<string, unknown> }) {
                       <TableCell>
                         <Chip
                           size='small'
-                          label={member.status === 'active' ? '活跃' : '停用'}
+                          label={member.status === 'active' ? i18n.t('mes.team_management_page.k12') : i18n.t('mes.team_management_page.k11')}
                           sx={{
                             backgroundColor:
                               member.status === 'active' ? 'success.lighter' : 'grey.100',
@@ -223,7 +214,6 @@ function TeamDetailContent({ row }: { row: Record<string, unknown> }) {
     </Box>
   );
 }
-
 function TeamManagementPage() {
   return (
     <PageContainer
@@ -257,7 +247,7 @@ function TeamManagementPage() {
                   variant='body2'
                   sx={{ color: 'text.secondary' }}
                 >
-                  总班组数
+                  {i18n.t('pages.team_management_page.k10')}
                 </Typography>
                 <Typography
                   variant='h5'
@@ -271,7 +261,7 @@ function TeamManagementPage() {
                   variant='body2'
                   sx={{ color: 'text.secondary' }}
                 >
-                  活跃班组
+                  {i18n.t('pages.team_management_page.k11')}
                 </Typography>
                 <Typography
                   variant='h5'
@@ -285,7 +275,7 @@ function TeamManagementPage() {
                   variant='body2'
                   sx={{ color: 'text.secondary' }}
                 >
-                  停用班组
+                  {i18n.t('pages.team_management_page.k12')}
                 </Typography>
                 <Typography
                   variant='h5'
@@ -299,7 +289,7 @@ function TeamManagementPage() {
                   variant='body2'
                   sx={{ color: 'text.secondary' }}
                 >
-                  总成员数
+                  {i18n.t('pages.team_management_page.k13')}
                 </Typography>
                 <Typography
                   variant='h5'
@@ -315,5 +305,4 @@ function TeamManagementPage() {
     </PageContainer>
   );
 }
-
 export default TeamManagementPage;

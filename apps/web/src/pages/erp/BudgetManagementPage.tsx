@@ -7,9 +7,8 @@ import { budgetSchema, expenseSchema } from '@/schemas/erp';
 import { budgetApi, expenseApi } from '@/api/erp';
 import type { Budget, Expense } from '@/api/erp';
 import { designTokens } from '@/theme/tokens';
-
+import i18n from '@/i18n';
 const ct= designTokens.colors;
-
 const budgetAdapter = {
   list: async (params?: { page?: number; pageSize?: number; search?: string; status?: string }) => {
     const response = await budgetApi.list({
@@ -29,25 +28,24 @@ const budgetAdapter = {
   create: async (data: Partial<Budget>) => {
     const response = await budgetApi.create(data);
     if (!response.success || !response.data) {
-      throw new Error(response.message || '创建预算失败');
+      throw new Error(response.message || i18n.t('erp.budget_management_page.k0'));
     }
     return response.data;
   },
   update: async (id: string, data: Partial<Budget>) => {
     const response = await budgetApi.update(id, data);
     if (!response.success || !response.data) {
-      throw new Error(response.message || '更新预算失败');
+      throw new Error(response.message || i18n.t('erp.budget_management_page.k1'));
     }
     return response.data;
   },
   delete: async (id: string) => {
     const response = await budgetApi.delete(id);
     if (!response.success) {
-      throw new Error(response.message || '删除预算失败');
+      throw new Error(response.message || i18n.t('erp.budget_management_page.k2'));
     }
   },
 };
-
 const expenseAdapter = {
   list: async (params?: { page?: number; pageSize?: number; search?: string; status?: string }) => {
     const response = await expenseApi.list({
@@ -67,25 +65,24 @@ const expenseAdapter = {
   create: async (data: Partial<Expense>) => {
     const response = await expenseApi.create(data);
     if (!response.success || !response.data) {
-      throw new Error(response.message || '创建费用报销失败');
+      throw new Error(response.message || i18n.t('erp.budget_management_page.k3'));
     }
     return response.data;
   },
   update: async (id: string, data: Partial<Expense>) => {
     const response = await expenseApi.update(id, data);
     if (!response.success || !response.data) {
-      throw new Error(response.message || '更新费用报销失败');
+      throw new Error(response.message || i18n.t('erp.budget_management_page.k4'));
     }
     return response.data;
   },
   delete: async (id: string) => {
     const response = await expenseApi.delete(id);
     if (!response.success) {
-      throw new Error(response.message || '删除费用报销失败');
+      throw new Error(response.message || i18n.t('erp.budget_management_page.k5'));
     }
   },
 };
-
 const StatCard: React.FC<{
   label: string;
   value: number | string;
@@ -106,10 +103,8 @@ const StatCard: React.FC<{
     <Box sx={{ fontWeight: 700, fontSize: 24, color: iconColor || 'secondary.700' }}>{value}</Box>
   </Box>
 );
-
 const BudgetManagementPage: React.FC = () => {
   const [activeTab, setActiveTab] = useState(0);
-
   const budgetHeaderContent = (rows: Record<string, unknown>[], total: number) => {
     const budgets = rows as unknown as Budget[];
     const totalAmount = budgets.reduce((sum, item) => sum + (item.total_budget || 0), 0);
@@ -117,7 +112,6 @@ const BudgetManagementPage: React.FC = () => {
     const exceededCount = budgets.filter(
       (b) => (b.used_amount || 0) > (b.total_budget || 0)
     ).length;
-
     return (
       <Box
         sx={{
@@ -128,28 +122,28 @@ const BudgetManagementPage: React.FC = () => {
         }}
       >
         <StatCard
-          label='预算总数'
+          label={i18n.t('erp.budget_management_page.k6')}
           value={total}
           icon={<Wallet size={18} />}
           bgColor={ct.secondary[100]}
           iconColor='secondary.700'
         />
         <StatCard
-          label='总预算'
+          label={i18n.t('erp.budget_management_page.k7')}
           value={`¥${totalAmount.toFixed(2)}`}
           icon={<Wallet size={18} />}
           bgColor='success.lighter'
           iconColor='success.700'
         />
         <StatCard
-          label='已使用'
+          label={i18n.t('erp.budget_management_page.k8')}
           value={`¥${spentAmount.toFixed(2)}`}
           icon={<Receipt size={18} />}
           bgColor='warning.light'
           iconColor='warning.700'
         />
         <StatCard
-          label='超支预算'
+          label={i18n.t('erp.budget_management_page.k9')}
           value={exceededCount}
           icon={<AlertTriangle size={18} />}
           bgColor='error.lighter'
@@ -158,13 +152,11 @@ const BudgetManagementPage: React.FC = () => {
       </Box>
     );
   };
-
   const expenseHeaderContent = (rows: Record<string, unknown>[], total: number) => {
     const expenses = rows as unknown as Expense[];
     const totalAmount = expenses.reduce((sum, item) => sum + (item.amount || 0), 0);
     const pendingCount = expenses.filter((e) => e.status === 'pending').length;
     const completedCount = expenses.filter((e) => e.status === 'completed').length;
-
     return (
       <Box
         sx={{
@@ -175,28 +167,28 @@ const BudgetManagementPage: React.FC = () => {
         }}
       >
         <StatCard
-          label='费用总数'
+          label={i18n.t('erp.budget_management_page.k10')}
           value={total}
           icon={<Receipt size={18} />}
           bgColor={ct.secondary[100]}
           iconColor='secondary.700'
         />
         <StatCard
-          label='总费用'
+          label={i18n.t('erp.budget_management_page.k11')}
           value={`¥${totalAmount.toFixed(2)}`}
           icon={<Receipt size={18} />}
           bgColor='success.lighter'
           iconColor='success.700'
         />
         <StatCard
-          label='待审批'
+          label={i18n.t('erp.budget_management_page.k12')}
           value={pendingCount}
           icon={<Clock size={18} />}
           bgColor='warning.light'
           iconColor='warning.700'
         />
         <StatCard
-          label='已完成'
+          label={i18n.t('erp.budget_management_page.k13')}
           value={completedCount}
           icon={<CheckCircle size={18} />}
           bgColor='error.lighter'
@@ -205,7 +197,6 @@ const BudgetManagementPage: React.FC = () => {
       </Box>
     );
   };
-
   return (
     <PageContainer
       autoTitle
@@ -226,15 +217,14 @@ const BudgetManagementPage: React.FC = () => {
         sx={{ mb: 3 }}
       >
         <Tab
-          label='预算管理'
+          label={i18n.t('erp.budget_management_page.k14')}
           icon={<Wallet size={16} />}
         />
         <Tab
-          label='费用报销'
+          label={i18n.t('erp.budget_management_page.k15')}
           icon={<Receipt size={16} />}
         />
       </Tabs>
-
       {activeTab === 0 && (
         <CrudPage
           schema={budgetSchema}
@@ -242,7 +232,6 @@ const BudgetManagementPage: React.FC = () => {
           headerContent={budgetHeaderContent}
         />
       )}
-
       {activeTab === 1 && (
         <CrudPage
           schema={expenseSchema}
@@ -253,5 +242,4 @@ const BudgetManagementPage: React.FC = () => {
     </PageContainer>
   );
 };
-
 export default BudgetManagementPage;

@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { Box, Typography, Paper, Chip } from '@mui/material';
 import { logger } from '@/utils/logger';
+import i18n from '@/i18n';
 
 interface PerformanceMetrics {
   pageLoadTime: number;
@@ -492,7 +493,7 @@ export function PerformanceWarnings() {
       {successRate < 95 && (
         <Box sx={{ mb: 2 }}>
           <Chip
-            label={`API 成功率: ${successRate.toFixed(1)}%`}
+            label={`${i18n.t('shared.use_performance_monitor.api_0')}${successRate.toFixed(1)}%`}
             color='error'
             size='small'
             sx={{ mr: 2 }}
@@ -503,7 +504,7 @@ export function PerformanceWarnings() {
       {memoryPercent >= 80 && (
         <Box sx={{ mb: 2 }}>
           <Chip
-            label={`内存使用率: ${memoryPercent.toFixed(1)}%`}
+            label={`${i18n.t('shared.use_performance_monitor.k1')}${memoryPercent.toFixed(1)}%`}
             color={memoryPercent >= 90 ? 'error' : 'warning'}
             size='small'
             sx={{ mr: 2 }}

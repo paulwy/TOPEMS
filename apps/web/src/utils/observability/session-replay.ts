@@ -1,4 +1,5 @@
 import { logger } from '../logger';
+import i18n from '@/i18n';
 
 export enum ReplayEventType {
   SNAPSHOT = 'snapshot',
@@ -194,7 +195,7 @@ export class SessionReplayer {
     }
 
     if (Math.random() > this.config.samplingRate) {
-      logger.debug('[SessionReplayer] 会话回放未采样');
+      logger.debug(i18n.t('shared.session-replay.k0'));
       return '';
     }
 
@@ -231,7 +232,7 @@ export class SessionReplayer {
       this.instrumentConsole();
     }
 
-    logger.info(`[SessionReplayer] 会话回放已启动: ${sessionId}`);
+    logger.info(`${i18n.t('shared.session-replay.k1')}${sessionId}`);
     return sessionId;
   }
 
@@ -249,7 +250,7 @@ export class SessionReplayer {
     }
 
     logger.info(
-      `[SessionReplayer] 会话回放已停止: ${this.session.sessionId} (${this.session.events.length} events)`
+      `${i18n.t('shared.session-replay.k2')}${this.session.sessionId} (${this.session.events.length} events)`
     );
 
     return this.session;

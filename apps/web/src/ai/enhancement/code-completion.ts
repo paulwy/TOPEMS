@@ -1,4 +1,5 @@
 import { CACHE_DURATIONS, QUERY_KEYS, queryClient } from '@/lib/reactQuery';
+import i18n from '@/i18n';
 
 /**
  * V53.0 前端 AI 增强 — 智能代码补全
@@ -87,7 +88,7 @@ const REACT_SNIPPETS: SnippetDefinition[] = [
   {
     id: 'v53-rfc',
     label: 'React Function Component',
-    description: '创建一个 React 函数组件',
+    description: i18n.t('shared.code-completion.react_0'),
     language: 'typescript',
     kind: CompletionKind.SNIPPET,
     template: `interface \${1:ComponentName}Props {
@@ -111,7 +112,7 @@ export function \${1:ComponentName}({ \${2:children} }: \${1:ComponentName}Props
   {
     id: 'v53-use-state',
     label: 'useState Hook',
-    description: '创建 useState 状态钩子',
+    description: i18n.t('shared.code-completion.usestate_1'),
     language: 'typescript',
     kind: CompletionKind.SNIPPET,
     template: `const [\${1:state}, set\${1:State}] = useState<\${2:type}>(\${3:initialValue});`,
@@ -122,7 +123,7 @@ export function \${1:ComponentName}({ \${2:children} }: \${1:ComponentName}Props
   {
     id: 'v53-use-effect',
     label: 'useEffect Hook',
-    description: '创建 useEffect 副作用钩子',
+    description: i18n.t('shared.code-completion.useeffect_2'),
     language: 'typescript',
     kind: CompletionKind.SNIPPET,
     template: `useEffect(() => {
@@ -138,7 +139,7 @@ export function \${1:ComponentName}({ \${2:children} }: \${1:ComponentName}Props
   {
     id: 'v53-use-callback',
     label: 'useCallback Hook',
-    description: '创建 useCallback 记忆化回调',
+    description: i18n.t('shared.code-completion.usecallback_3'),
     language: 'typescript',
     kind: CompletionKind.SNIPPET,
     template: `const \${1:callback} = useCallback((\${2:params}) => {
@@ -151,7 +152,7 @@ export function \${1:ComponentName}({ \${2:children} }: \${1:ComponentName}Props
   {
     id: 'v53-use-memo',
     label: 'useMemo Hook',
-    description: '创建 useMemo 记忆化值',
+    description: i18n.t('shared.code-completion.usememo_4'),
     language: 'typescript',
     kind: CompletionKind.SNIPPET,
     template: `const \${1:memoValue} = useMemo(() => {
@@ -164,7 +165,7 @@ export function \${1:ComponentName}({ \${2:children} }: \${1:ComponentName}Props
   {
     id: 'v53-use-ref',
     label: 'useRef Hook',
-    description: '创建 useRef 引用钩子',
+    description: i18n.t('shared.code-completion.useref_5'),
     language: 'typescript',
     kind: CompletionKind.SNIPPET,
     template: `const \${1:ref} = useRef<\${2:type}>(\${3:initialValue});`,
@@ -175,7 +176,7 @@ export function \${1:ComponentName}({ \${2:children} }: \${1:ComponentName}Props
   {
     id: 'v53-use-query',
     label: 'useQuery (TanStack Query)',
-    description: '创建 TanStack Query 数据查询钩子',
+    description: i18n.t('shared.code-completion.k6'),
     language: 'typescript',
     kind: CompletionKind.SNIPPET,
     template: `const { data, isPending, error } = useQuery({
@@ -190,7 +191,7 @@ export function \${1:ComponentName}({ \${2:children} }: \${1:ComponentName}Props
   {
     id: 'v53-use-mutation',
     label: 'useMutation (TanStack Query)',
-    description: '创建 TanStack Query 数据变更钩子',
+    description: i18n.t('shared.code-completion.k7'),
     language: 'typescript',
     kind: CompletionKind.SNIPPET,
     template: `const { mutate, isPending } = useMutation({
@@ -215,7 +216,7 @@ const TYPESCRIPT_SNIPPETS: SnippetDefinition[] = [
   {
     id: 'v53-interface',
     label: 'Interface',
-    description: '定义 TypeScript 接口',
+    description: i18n.t('shared.code-completion.typescript_8'),
     language: 'typescript',
     kind: CompletionKind.SNIPPET,
     template: `interface \${1:Name} {
@@ -229,7 +230,7 @@ const TYPESCRIPT_SNIPPETS: SnippetDefinition[] = [
   {
     id: 'v53-type-alias',
     label: 'Type Alias',
-    description: '定义 TypeScript 类型别名',
+    description: i18n.t('shared.code-completion.typescript_9'),
     language: 'typescript',
     kind: CompletionKind.SNIPPET,
     template: `type \${1:Name} = \${2:type};`,
@@ -240,7 +241,7 @@ const TYPESCRIPT_SNIPPETS: SnippetDefinition[] = [
   {
     id: 'v53-enum',
     label: 'Enum',
-    description: '定义 TypeScript 枚举',
+    description: i18n.t('shared.code-completion.typescript_10'),
     language: 'typescript',
     kind: CompletionKind.SNIPPET,
     template: `enum \${1:Name} {
@@ -254,7 +255,7 @@ const TYPESCRIPT_SNIPPETS: SnippetDefinition[] = [
   {
     id: 'v53-async-function',
     label: 'Async Function',
-    description: '定义异步函数',
+    description: i18n.t('shared.code-completion.k11'),
     language: 'typescript',
     kind: CompletionKind.SNIPPET,
     template: `async function \${1:name}(\${2:params}): Promise<\${3:type}> {
@@ -267,7 +268,7 @@ const TYPESCRIPT_SNIPPETS: SnippetDefinition[] = [
   {
     id: 'v53-generic-function',
     label: 'Generic Function',
-    description: '定义泛型函数',
+    description: i18n.t('shared.code-completion.k12'),
     language: 'typescript',
     kind: CompletionKind.SNIPPET,
     template: `function \${1:name}<\${2:T}>(\${3:arg}: \${2:T}): \${2:T} {
@@ -281,7 +282,7 @@ const TYPESCRIPT_SNIPPETS: SnippetDefinition[] = [
   {
     id: 'v53-import-type',
     label: 'Import Type',
-    description: '导入类型定义',
+    description: i18n.t('shared.code-completion.k13'),
     language: 'typescript',
     kind: CompletionKind.SNIPPET,
     template: `import type { \${1:Type} } from '\${2:path}';`,
@@ -292,7 +293,7 @@ const TYPESCRIPT_SNIPPETS: SnippetDefinition[] = [
   {
     id: 'v53-zod-schema',
     label: 'Zod Schema',
-    description: '定义 Zod 验证模式',
+    description: i18n.t('shared.code-completion.zod_14'),
     language: 'typescript',
     kind: CompletionKind.SNIPPET,
     template: `const \${1:schema} = z.object({
@@ -309,7 +310,7 @@ const CSS_SNIPPETS: SnippetDefinition[] = [
   {
     id: 'v53-css-flex',
     label: 'Flexbox Layout',
-    description: '创建 Flexbox 布局容器',
+    description: i18n.t('shared.code-completion.flexbox_15'),
     language: 'css',
     kind: CompletionKind.SNIPPET,
     template: `display: flex;
@@ -329,7 +330,7 @@ gap: \${4:8px};`,
   {
     id: 'v53-css-grid',
     label: 'Grid Layout',
-    description: '创建 Grid 网格布局',
+    description: i18n.t('shared.code-completion.grid_16'),
     language: 'css',
     kind: CompletionKind.SNIPPET,
     template: `display: grid;
@@ -343,7 +344,7 @@ grid-template-areas: \${3:header};`,
   {
     id: 'v53-css-responsive',
     label: 'Responsive Breakpoint',
-    description: '响应式断点媒体查询',
+    description: i18n.t('shared.code-completion.k17'),
     language: 'css',
     kind: CompletionKind.SNIPPET,
     template: `@media (max-width: \${1:768px}) {
@@ -359,7 +360,7 @@ const JSON_SNIPPETS: SnippetDefinition[] = [
   {
     id: 'v53-json-api-response',
     label: 'API Response Schema',
-    description: 'API 响应 JSON 结构',
+    description: i18n.t('ai.code-completion.apijson_0'),
     language: 'json',
     kind: CompletionKind.SNIPPET,
     template: `{
@@ -392,53 +393,53 @@ const COMMON_TYPESCRIPT_KEYWORDS: Array<{
   detail: string;
   insert_text: string;
 }> = [
-  { label: 'import', kind: CompletionKind.KEYWORD, detail: '导入模块', insert_text: 'import ' },
-  { label: 'export', kind: CompletionKind.KEYWORD, detail: '导出声明', insert_text: 'export ' },
+  { label: 'import', kind: CompletionKind.KEYWORD, detail: i18n.t('shared.code-completion.k18'), insert_text: 'import ' },
+  { label: 'export', kind: CompletionKind.KEYWORD, detail: i18n.t('shared.code-completion.k19'), insert_text: 'export ' },
   {
     label: 'interface',
     kind: CompletionKind.KEYWORD,
-    detail: '接口声明',
+    detail: i18n.t('shared.code-completion.k20'),
     insert_text: 'interface ',
   },
-  { label: 'type', kind: CompletionKind.KEYWORD, detail: '类型别名', insert_text: 'type ' },
-  { label: 'class', kind: CompletionKind.KEYWORD, detail: '类声明', insert_text: 'class ' },
-  { label: 'function', kind: CompletionKind.KEYWORD, detail: '函数声明', insert_text: 'function ' },
-  { label: 'const', kind: CompletionKind.KEYWORD, detail: '常量声明', insert_text: 'const ' },
-  { label: 'let', kind: CompletionKind.KEYWORD, detail: '变量声明', insert_text: 'let ' },
-  { label: 'var', kind: CompletionKind.KEYWORD, detail: '变量声明 (旧式)', insert_text: 'var ' },
-  { label: 'return', kind: CompletionKind.KEYWORD, detail: '返回值', insert_text: 'return ' },
-  { label: 'async', kind: CompletionKind.KEYWORD, detail: '异步修饰符', insert_text: 'async ' },
-  { label: 'await', kind: CompletionKind.KEYWORD, detail: '等待异步操作', insert_text: 'await ' },
-  { label: 'extends', kind: CompletionKind.KEYWORD, detail: '继承', insert_text: 'extends ' },
+  { label: 'type', kind: CompletionKind.KEYWORD, detail: i18n.t('shared.code-completion.k21'), insert_text: 'type ' },
+  { label: 'class', kind: CompletionKind.KEYWORD, detail: i18n.t('shared.code-completion.k22'), insert_text: 'class ' },
+  { label: 'function', kind: CompletionKind.KEYWORD, detail: i18n.t('shared.code-completion.k23'), insert_text: 'function ' },
+  { label: 'const', kind: CompletionKind.KEYWORD, detail: i18n.t('shared.code-completion.k24'), insert_text: 'const ' },
+  { label: 'let', kind: CompletionKind.KEYWORD, detail: i18n.t('shared.code-completion.k25'), insert_text: 'let ' },
+  { label: 'var', kind: CompletionKind.KEYWORD, detail: i18n.t('shared.code-completion.k26'), insert_text: 'var ' },
+  { label: 'return', kind: CompletionKind.KEYWORD, detail: i18n.t('shared.code-completion.k27'), insert_text: 'return ' },
+  { label: 'async', kind: CompletionKind.KEYWORD, detail: i18n.t('shared.code-completion.k28'), insert_text: 'async ' },
+  { label: 'await', kind: CompletionKind.KEYWORD, detail: i18n.t('shared.code-completion.k29'), insert_text: 'await ' },
+  { label: 'extends', kind: CompletionKind.KEYWORD, detail: i18n.t('shared.code-completion.k30'), insert_text: 'extends ' },
   {
     label: 'implements',
     kind: CompletionKind.KEYWORD,
-    detail: '实现接口',
+    detail: i18n.t('shared.code-completion.k31'),
     insert_text: 'implements ',
   },
   {
     label: 'namespace',
     kind: CompletionKind.KEYWORD,
-    detail: '命名空间',
+    detail: i18n.t('shared.code-completion.k32'),
     insert_text: 'namespace ',
   },
-  { label: 'declare', kind: CompletionKind.KEYWORD, detail: '声明', insert_text: 'declare ' },
+  { label: 'declare', kind: CompletionKind.KEYWORD, detail: i18n.t('shared.code-completion.k33'), insert_text: 'declare ' },
 ];
 
 const COMMON_REACT_HOOKS: Array<{ label: string; detail: string; insert_text: string }> = [
-  { label: 'useState', detail: '状态管理钩子', insert_text: 'useState' },
-  { label: 'useEffect', detail: '副作用钩子', insert_text: 'useEffect' },
-  { label: 'useCallback', detail: '记忆化回调', insert_text: 'useCallback' },
-  { label: 'useMemo', detail: '记忆化值', insert_text: 'useMemo' },
-  { label: 'useRef', detail: '引用钩子', insert_text: 'useRef' },
-  { label: 'useContext', detail: '上下文钩子', insert_text: 'useContext' },
-  { label: 'useReducer', detail: 'Reducer 钩子', insert_text: 'useReducer' },
-  { label: 'useImperativeHandle', detail: '命令式句柄', insert_text: 'useImperativeHandle' },
-  { label: 'useLayoutEffect', detail: '布局副作用', insert_text: 'useLayoutEffect' },
-  { label: 'useDebugValue', detail: '调试值', insert_text: 'useDebugValue' },
-  { label: 'useDeferredValue', detail: '延迟值', insert_text: 'useDeferredValue' },
-  { label: 'useTransition', detail: '过渡钩子', insert_text: 'useTransition' },
-  { label: 'useId', detail: '唯一 ID 钩子', insert_text: 'useId' },
+  { label: 'useState', detail: i18n.t('shared.code-completion.k34'), insert_text: 'useState' },
+  { label: 'useEffect', detail: i18n.t('shared.code-completion.k35'), insert_text: 'useEffect' },
+  { label: 'useCallback', detail: i18n.t('shared.code-completion.k36'), insert_text: 'useCallback' },
+  { label: 'useMemo', detail: i18n.t('shared.code-completion.k37'), insert_text: 'useMemo' },
+  { label: 'useRef', detail: i18n.t('shared.code-completion.k38'), insert_text: 'useRef' },
+  { label: 'useContext', detail: i18n.t('shared.code-completion.k39'), insert_text: 'useContext' },
+  { label: 'useReducer', detail: i18n.t('ai.code-completion.reducer_1'), insert_text: 'useReducer' },
+  { label: 'useImperativeHandle', detail: i18n.t('shared.code-completion.k40'), insert_text: 'useImperativeHandle' },
+  { label: 'useLayoutEffect', detail: i18n.t('shared.code-completion.k41'), insert_text: 'useLayoutEffect' },
+  { label: 'useDebugValue', detail: i18n.t('shared.code-completion.k42'), insert_text: 'useDebugValue' },
+  { label: 'useDeferredValue', detail: i18n.t('shared.code-completion.k43'), insert_text: 'useDeferredValue' },
+  { label: 'useTransition', detail: i18n.t('shared.code-completion.k44'), insert_text: 'useTransition' },
+  { label: 'useId', detail: i18n.t('shared.code-completion.id_45'), insert_text: 'useId' },
 ];
 
 const TYPE_PROPERTY_MAP: Record<string, Array<{ name: string; type: string }>> = {
@@ -642,7 +643,7 @@ export class IntelligentCodeCompletion {
           items.push({
             label: exp,
             kind: CompletionKind.IMPORT,
-            detail: `从 ${module} 导入`,
+            detail: `${i18n.t('ai.code-completion.k2')} ${module} ${i18n.t('ai.code-completion.k3')}`,
             insert_text: `import { ${exp} } from '${module}';`,
             sort_order: 80,
             filter_text: exp.toLowerCase(),
@@ -722,7 +723,7 @@ export class IntelligentCodeCompletion {
       .map((p) => ({
         label: p.name,
         kind: CompletionKind.PROPERTY,
-        detail: `${p.name}${p.required ? ' (必填)' : ''}: ${p.type}${p.description ? ` — ${p.description}` : ''}`,
+        detail: `${p.name}${p.required ? i18n.t('ai.code-completion.k4') : ''}: ${p.type}${p.description ? ` — ${p.description}` : ''}`,
         insert_text: `${p.name}={}`,
         sort_order: 40,
         documentation: p.description,
@@ -746,7 +747,7 @@ export class IntelligentCodeCompletion {
     return endpoints.map((ep) => ({
       label: `${ep.method} ${ep.path}`,
       kind: CompletionKind.FUNCTION,
-      detail: `${ep.description}${ep.request_type ? ` | 请求: ${ep.request_type}` : ''}${ep.response_type ? ` | 响应: ${ep.response_type}` : ''}`,
+      detail: `${ep.description}${ep.request_type ? ` ${i18n.t('ai.code-completion.k5')} ${ep.request_type}` : i18n.t('ai.code-completion.k7')}`,
       insert_text: `// ${ep.description}\n${ep.method} ${ep.path}`,
       sort_order: 60,
       documentation: ep.description,

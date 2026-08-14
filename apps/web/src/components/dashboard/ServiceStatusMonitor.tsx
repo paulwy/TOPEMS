@@ -18,6 +18,7 @@ import {
   FlaskConical,
   RefreshCw,
 } from 'lucide-react';
+import i18n from '@/i18n';
 import { ServiceStatusCard } from './ServiceStatusCard';
 import { designTokens, semanticTokens } from '@topems/tokens';
 
@@ -36,56 +37,56 @@ const groupColors: Record<
     iconColor: string;
   }
 > = {
-  核心服务: {
+  [i18n.t('components.service_status_monitor.k0')]: {
     bg: 'primary.light',
     border: 'primary.light',
     titleColor: 'primary.dark',
     iconBg: 'primary.100',
     iconColor: 'primary.dark',
   },
-  业务运营: {
+  [i18n.t('components.service_status_monitor.k1')]: {
     bg: 'success.light',
     border: 'success.light',
     titleColor: 'success.700',
     iconBg: 'success.lighter',
     iconColor: 'success.dark',
   },
-  研发管理: {
+  [i18n.t('components.service_status_monitor.k2')]: {
     bg: 'secondary.light',
     border: 'secondary.100',
     titleColor: 'secondary.700',
     iconBg: 'secondary.light',
     iconColor: 'secondary.main',
   },
-  生产管理: {
+  [i18n.t('components.service_status_monitor.k3')]: {
     bg: 'white7ed',
-    border: '#fed7aa',
+    border: designTokens.colors.warning[200],
     titleColor: 'orange.700',
-    iconBg: '#ffedd5',
+    iconBg: designTokens.colors.warning[100],
     iconColor: 'orange.500',
   },
-  质量管理: {
+  [i18n.t('components.service_status_monitor.k4')]: {
     bg: 'white1f2',
     border: '#fecdd3',
     titleColor: 'pink.700',
     iconBg: '#ffe4e6',
     iconColor: 'error.600',
   },
-  供应链: {
+  [i18n.t('components.service_status_monitor.k5')]: {
     bg: 'success.light',
-    border: '#a7f3d0',
+    border: designTokens.colors.success[200],
     titleColor: 'teal.900',
     iconBg: 'success.lighter',
     iconColor: 'success.main',
   },
-  专业服务: {
-    bg: '#eef2ff',
+  [i18n.t('components.service_status_monitor.k6')]: {
+    bg: designTokens.colors.secondary[50],
     border: 'secondary.main',
     titleColor: 'secondary.700',
     iconBg: 'secondary.100',
     iconColor: 'primary.light',
   },
-  '数据/门户': {
+  [i18n.t('shared.service_status_monitor.k0')]: {
     bg: '#fdf4ff',
     border: '#f5d0fe',
     titleColor: 'purple.700',
@@ -175,24 +176,24 @@ export const ServiceStatusMonitor: React.FC<ServiceStatusMonitorProps> = ({
 
   const serviceGroups: { title: string; services: ServiceItem[] }[] = [
     {
-      title: '核心服务',
+      title: i18n.t('shared.service_status_monitor.k1'),
       services: [
         {
-          name: '统一核心',
+          name: i18n.t('shared.service_status_monitor.k2'),
           service: 'CORE',
           port: 8000,
           key: 'unified-core',
           icon: CircleDot,
         },
         {
-          name: '项目管理',
+          name: i18n.t('shared.service_status_monitor.k3'),
           service: 'PM',
           port: 8023,
           key: 'pm',
           icon: FolderKanban,
         },
         {
-          name: '系统集成',
+          name: i18n.t('shared.service_status_monitor.k4'),
           service: 'INTEGRATION',
           port: 8072,
           key: 'integration',
@@ -201,24 +202,24 @@ export const ServiceStatusMonitor: React.FC<ServiceStatusMonitorProps> = ({
       ],
     },
     {
-      title: '业务运营',
+      title: i18n.t('shared.service_status_monitor.k5'),
       services: [
         {
-          name: '企业资源',
+          name: i18n.t('shared.service_status_monitor.k6'),
           service: 'ERP',
           port: 8010,
           key: 'erp',
           icon: Building,
         },
         {
-          name: '人力资源',
+          name: i18n.t('shared.service_status_monitor.k7'),
           service: 'HRM',
           port: 8020,
           key: 'hrm',
           icon: Users,
         },
         {
-          name: '客户关系',
+          name: i18n.t('shared.service_status_monitor.k8'),
           service: 'CRM',
           port: 8029,
           key: 'crm',
@@ -227,24 +228,24 @@ export const ServiceStatusMonitor: React.FC<ServiceStatusMonitorProps> = ({
       ],
     },
     {
-      title: '研发管理',
+      title: i18n.t('shared.service_status_monitor.k9'),
       services: [
         {
-          name: '研发管理',
+          name: i18n.t('shared.service_status_monitor.k10'),
           service: 'RD',
           port: 8053,
           key: 'rd',
           icon: FlaskConical,
         },
         {
-          name: '生产执行',
+          name: i18n.t('shared.service_status_monitor.k11'),
           service: 'MES',
           port: 8030,
           key: 'mes',
           icon: Factory,
         },
         {
-          name: '产品数据',
+          name: i18n.t('shared.service_status_monitor.k12'),
           service: 'PDM',
           port: 8031,
           key: 'pdm',
@@ -253,24 +254,24 @@ export const ServiceStatusMonitor: React.FC<ServiceStatusMonitorProps> = ({
       ],
     },
     {
-      title: '质量管理',
+      title: i18n.t('shared.service_status_monitor.k13'),
       services: [
         {
-          name: '质量管理',
+          name: i18n.t('shared.service_status_monitor.k14'),
           service: 'QMS',
           port: 8050,
           key: 'qms',
           icon: ClipboardList,
         },
         {
-          name: '实验室信息',
+          name: i18n.t('shared.service_status_monitor.k15'),
           service: 'LIMS',
           port: 8051,
           key: 'lims',
           icon: FlaskConical,
         },
         {
-          name: '环境安全',
+          name: i18n.t('shared.service_status_monitor.k16'),
           service: 'EHS',
           port: 8052,
           key: 'ehs',
@@ -279,24 +280,24 @@ export const ServiceStatusMonitor: React.FC<ServiceStatusMonitorProps> = ({
       ],
     },
     {
-      title: '供应链',
+      title: i18n.t('shared.service_status_monitor.k17'),
       services: [
         {
-          name: '供应链管理',
+          name: i18n.t('shared.service_status_monitor.k18'),
           service: 'SCM',
           port: 8040,
           key: 'scm',
           icon: Truck,
         },
         {
-          name: '仓储管理',
+          name: i18n.t('shared.service_status_monitor.k19'),
           service: 'WMS',
           port: 8041,
           key: 'wms',
           icon: Warehouse,
         },
         {
-          name: '供应商管理',
+          name: i18n.t('shared.service_status_monitor.k20'),
           service: 'SRM',
           port: 8042,
           key: 'srm',
@@ -305,18 +306,18 @@ export const ServiceStatusMonitor: React.FC<ServiceStatusMonitorProps> = ({
       ],
     },
     {
-      title: '数据/门户',
+      title: i18n.t('shared.service_status_monitor.k21'),
       services: [
-        { name: '商业智能', service: 'BI', port: 8060, key: 'bi', icon: BarChart2 },
-        { name: '企业门户', service: 'PORTAL', port: 8063, key: 'portal', icon: Building },
+        { name: i18n.t('shared.service_status_monitor.k22'), service: 'BI', port: 8060, key: 'bi', icon: BarChart2 },
+        { name: i18n.t('shared.service_status_monitor.k23'), service: 'PORTAL', port: 8063, key: 'portal', icon: Building },
       ],
     },
     {
-      title: '专业服务',
+      title: i18n.t('shared.service_status_monitor.k24'),
       services: [
-        { name: '地理信息', service: 'GIS', port: 8071, key: 'gis', icon: Map },
+        { name: i18n.t('shared.service_status_monitor.k25'), service: 'GIS', port: 8071, key: 'gis', icon: Map },
         {
-          name: '移动服务',
+          name: i18n.t('shared.service_status_monitor.k26'),
           service: 'MOBILE',
           port: 8070,
           key: 'mobile',
@@ -364,18 +365,18 @@ export const ServiceStatusMonitor: React.FC<ServiceStatusMonitorProps> = ({
           </Box>
           <Box>
             <Typography sx={{ fontSize: 18, fontWeight: 600, color: 'text.primary' }}>
-              服务状态监测
+              {i18n.t('components.service_status_monitor.k7')}
             </Typography>
-            <Typography sx={{ fontSize: 12, color: 'grey.600' }}>实时监控各服务运行状态</Typography>
+            <Typography sx={{ fontSize: 12, color: 'grey.600' }}>{i18n.t('shared.service_status_monitor.k27')}</Typography>
             <Typography sx={{ fontSize: 11, color: 'grey.400', mt: 0.5 }}>
-              最后更新: {lastUpdate.toLocaleTimeString('zh-CN')}
+              [i18n.t('components.service_status_monitor.k8')]: {lastUpdate.toLocaleTimeString('zh-CN')}
             </Typography>
           </Box>
         </Box>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
             <Chip
-              label={`在线 ${onlineCount}`}
+              label={`${i18n.t('components.service_status_monitor.k0')}${onlineCount}`}
               sx={{
                 backgroundColor: 'success.lighter',
                 color: 'success.800',
@@ -386,7 +387,7 @@ export const ServiceStatusMonitor: React.FC<ServiceStatusMonitorProps> = ({
             />
             {offlineCount > 0 && (
               <Chip
-                label={`离线 ${offlineCount}`}
+                label={`${i18n.t('components.service_status_monitor.k1')}${offlineCount}`}
                 sx={{
                   backgroundColor: 'error.lighter',
                   color: 'error.800',
@@ -421,7 +422,7 @@ export const ServiceStatusMonitor: React.FC<ServiceStatusMonitorProps> = ({
                 animation: isRefreshing ? 'spin 1s linear infinite' : 'none',
               }}
             />
-            <span>刷新</span>
+            <span>{i18n.t('shared.service_status_monitor.k28')}</span>
           </Button>
         </Box>
       </Box>

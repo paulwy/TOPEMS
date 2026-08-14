@@ -11,41 +11,42 @@
 import type { EntitySchema } from '@/schema';
 import { columnsFromFields } from '@/schema/schemaExtensions';
 import type { NestedTableConfig, WizardConfig } from '@/schema/schemaExtensions';
+import i18n from '@/i18n';
 
 // ============ 阶段任务子表通用字段 ============
 
 const phaseTaskFields: NestedTableConfig['fields'] = [
-  { name: 'task_name', label: '任务名称', type: 'text', required: true, listWidth: 200 },
+  { name: 'task_name', label: i18n.t('qms.apqp.k0'), type: 'text', required: true, listWidth: 200 },
   {
     name: 'task_type',
-    label: '任务类型',
+    label: i18n.t('qms.apqp.k1'),
     type: 'select',
     listWidth: 120,
     options: {
       type: 'static',
       options: [
-        { label: '核心任务', value: 'core' },
-        { label: '支持任务', value: 'support' },
-        { label: '评审任务', value: 'review' },
-        { label: '验证任务', value: 'validation' },
+        { label: i18n.t('qms.apqp.k2'), value: 'core' },
+        { label: i18n.t('qms.apqp.k3'), value: 'support' },
+        { label: i18n.t('qms.apqp.k4'), value: 'review' },
+        { label: i18n.t('qms.apqp.k5'), value: 'validation' },
       ],
     },
   },
-  { name: 'deliverable', label: '交付物', type: 'text', listWidth: 180 },
-  { name: 'assignee', label: '负责人', type: 'text', listWidth: 100 },
-  { name: 'due_date', label: '截止日期', type: 'date', listWidth: 130 },
+  { name: 'deliverable', label: i18n.t('qms.apqp.k6'), type: 'text', listWidth: 180 },
+  { name: 'assignee', label: i18n.t('qms.apqp.k7'), type: 'text', listWidth: 100 },
+  { name: 'due_date', label: i18n.t('qms.apqp.k8'), type: 'date', listWidth: 130 },
   {
     name: 'status',
-    label: '状态',
+    label: i18n.t('qms.apqp.k9'),
     type: 'select',
     listWidth: 100,
     options: {
       type: 'static',
       options: [
-        { label: '待开始', value: 'pending' },
-        { label: '进行中', value: 'in_progress' },
-        { label: '已完成', value: 'completed' },
-        { label: '已延期', value: 'delayed' },
+        { label: i18n.t('qms.apqp.k10'), value: 'pending' },
+        { label: i18n.t('qms.apqp.k11'), value: 'in_progress' },
+        { label: i18n.t('qms.apqp.k12'), value: 'completed' },
+        { label: i18n.t('qms.apqp.k13'), value: 'delayed' },
       ],
     },
   },
@@ -55,65 +56,65 @@ const phaseTaskFields: NestedTableConfig['fields'] = [
 
 const phase1TasksTable: NestedTableConfig = {
   field: 'phase1_tasks',
-  title: '阶段1 - 计划与立项任务',
+  title: i18n.t('qms.apqp.1_14'),
   columns: columnsFromFields(phaseTaskFields),
   fields: phaseTaskFields,
   allowAdd: true,
   allowEdit: true,
   allowDelete: true,
-  addButtonText: '添加任务',
+  addButtonText: i18n.t('qms.apqp.k15'),
   rowKeyField: 'id',
   minRows: 0,
 };
 
 const phase2TasksTable: NestedTableConfig = {
   field: 'phase2_tasks',
-  title: '阶段2 - 产品设计与开发任务',
+  title: i18n.t('qms.apqp.2_16'),
   columns: columnsFromFields(phaseTaskFields),
   fields: phaseTaskFields,
   allowAdd: true,
   allowEdit: true,
   allowDelete: true,
-  addButtonText: '添加任务',
+  addButtonText: i18n.t('qms.apqp.k17'),
   rowKeyField: 'id',
   minRows: 0,
 };
 
 const phase3TasksTable: NestedTableConfig = {
   field: 'phase3_tasks',
-  title: '阶段3 - 过程设计与开发任务',
+  title: i18n.t('qms.apqp.3_18'),
   columns: columnsFromFields(phaseTaskFields),
   fields: phaseTaskFields,
   allowAdd: true,
   allowEdit: true,
   allowDelete: true,
-  addButtonText: '添加任务',
+  addButtonText: i18n.t('qms.apqp.k19'),
   rowKeyField: 'id',
   minRows: 0,
 };
 
 const phase4TasksTable: NestedTableConfig = {
   field: 'phase4_tasks',
-  title: '阶段4 - 产品与过程确认任务',
+  title: i18n.t('qms.apqp.4_20'),
   columns: columnsFromFields(phaseTaskFields),
   fields: phaseTaskFields,
   allowAdd: true,
   allowEdit: true,
   allowDelete: true,
-  addButtonText: '添加任务',
+  addButtonText: i18n.t('qms.apqp.k21'),
   rowKeyField: 'id',
   minRows: 0,
 };
 
 const phase5TasksTable: NestedTableConfig = {
   field: 'phase5_tasks',
-  title: '阶段5 - 反馈、评价与改进任务',
+  title: i18n.t('qms.apqp.5_22'),
   columns: columnsFromFields(phaseTaskFields),
   fields: phaseTaskFields,
   allowAdd: true,
   allowEdit: true,
   allowDelete: true,
-  addButtonText: '添加任务',
+  addButtonText: i18n.t('qms.apqp.k23'),
   rowKeyField: 'id',
   minRows: 0,
 };
@@ -124,69 +125,69 @@ export const apqpWizard: WizardConfig = {
   steps: [
     {
       key: 'phase1',
-      title: '阶段1：计划与立项',
-      description: '制定项目计划，明确项目目标和资源需求',
+      title: i18n.t('qms.apqp.1_24'),
+      description: i18n.t('qms.apqp.k25'),
       fields: ['phase1_deliverables', 'phase1_owner', 'phase1_due_date', 'phase1_tasks'],
-      groupTitle: '计划与立项',
+      groupTitle: i18n.t('qms.apqp.k26'),
       validate: (values) => {
-        if (!values.phase1_deliverables) return '请填写阶段1交付物';
+        if (!values.phase1_deliverables) return i18n.t('qms.apqp.1_27');
         return null;
       },
     },
     {
       key: 'phase2',
-      title: '阶段2：产品设计与开发',
-      description: '完成产品设计、验证产品设计可行性',
+      title: i18n.t('qms.apqp.2_28'),
+      description: i18n.t('qms.apqp.k29'),
       fields: ['phase2_deliverables', 'phase2_owner', 'phase2_due_date', 'phase2_tasks'],
-      groupTitle: '产品设计与开发',
+      groupTitle: i18n.t('qms.apqp.k30'),
       validate: (values) => {
-        if (!values.phase2_deliverables) return '请填写阶段2交付物';
+        if (!values.phase2_deliverables) return i18n.t('qms.apqp.2_31');
         return null;
       },
     },
     {
       key: 'phase3',
-      title: '阶段3：过程设计与开发',
-      description: '完成制造过程设计、开发工装和设备',
+      title: i18n.t('qms.apqp.3_32'),
+      description: i18n.t('qms.apqp.k33'),
       fields: ['phase3_deliverables', 'phase3_owner', 'phase3_due_date', 'phase3_tasks'],
-      groupTitle: '过程设计与开发',
+      groupTitle: i18n.t('qms.apqp.k34'),
       validate: (values) => {
-        if (!values.phase3_deliverables) return '请填写阶段3交付物';
+        if (!values.phase3_deliverables) return i18n.t('qms.apqp.3_35');
         return null;
       },
     },
     {
       key: 'phase4',
-      title: '阶段4：产品与过程确认',
-      description: '进行产品和过程确认、通过生产件批准',
+      title: i18n.t('qms.apqp.4_36'),
+      description: i18n.t('qms.apqp.k37'),
       fields: ['phase4_deliverables', 'phase4_owner', 'phase4_due_date', 'phase4_tasks'],
-      groupTitle: '产品与过程确认',
+      groupTitle: i18n.t('qms.apqp.k38'),
       validate: (values) => {
-        if (!values.phase4_deliverables) return '请填写阶段4交付物';
+        if (!values.phase4_deliverables) return i18n.t('qms.apqp.4_39');
         return null;
       },
     },
     {
       key: 'phase5',
-      title: '阶段5：反馈、评价与改进',
-      description: '收集反馈、评价改进、持续优化',
+      title: i18n.t('qms.apqp.5_40'),
+      description: i18n.t('qms.apqp.k41'),
       fields: ['phase5_deliverables', 'phase5_owner', 'phase5_due_date', 'phase5_tasks'],
-      groupTitle: '反馈、评价与改进',
+      groupTitle: i18n.t('qms.apqp.k42'),
       isFinalStep: true,
       validate: (values) => {
-        if (!values.phase5_deliverables) return '请填写阶段5交付物';
+        if (!values.phase5_deliverables) return i18n.t('qms.apqp.5_43');
         return null;
       },
     },
   ],
-  title: 'APQP 5阶段质量策划',
+  title: i18n.t('shared.apqp.apqp5_0'),
   navigationPosition: 'top',
   showProgress: true,
   allowBack: true,
   showSummaryOnComplete: true,
-  finishButtonText: '提交APQP项目',
-  nextButtonText: '下一步',
-  prevButtonText: '上一步',
+  finishButtonText: i18n.t('qms.apqp.apqp_44'),
+  nextButtonText: i18n.t('qms.apqp.k45'),
+  prevButtonText: i18n.t('qms.apqp.k46'),
 };
 
 // ============ 主 Schema ============
@@ -196,8 +197,8 @@ export const apqpSchema: EntitySchema & {
   wizard: WizardConfig;
 } = {
   entity: 'apqp',
-  title: 'APQP 产品质量先期策划',
-  description: 'Advanced Product Quality Planning — 结构化的产品质量策划流程',
+  title: i18n.t('shared.apqp.apqp_1'),
+  description: i18n.t('shared.apqp.k2'),
 
   api: {
     module: 'qms',
@@ -207,7 +208,7 @@ export const apqpSchema: EntitySchema & {
   fields: [
     {
       name: 'project_no',
-      label: '项目编号',
+      label: i18n.t('qms.apqp.k47'),
       type: 'text',
       required: true,
       readonlyOnEdit: true,
@@ -217,7 +218,7 @@ export const apqpSchema: EntitySchema & {
     },
     {
       name: 'project_name',
-      label: '项目名称',
+      label: i18n.t('qms.apqp.k48'),
       type: 'text',
       required: true,
       sortable: true,
@@ -226,23 +227,23 @@ export const apqpSchema: EntitySchema & {
     },
     {
       name: 'customer',
-      label: '客户',
+      label: i18n.t('qms.apqp.k49'),
       type: 'text',
       showInList: true,
       listWidth: 140,
     },
     {
       name: 'status',
-      label: '状态',
+      label: i18n.t('qms.apqp.k50'),
       type: 'select',
       options: {
         type: 'static',
         options: [
-          { label: '策划中', value: 'planning' },
-          { label: '设计中', value: 'designing' },
-          { label: '验证中', value: 'validating' },
-          { label: '已确认', value: 'confirmed' },
-          { label: '已完成', value: 'completed' },
+          { label: i18n.t('qms.apqp.k51'), value: 'planning' },
+          { label: i18n.t('qms.apqp.k52'), value: 'designing' },
+          { label: i18n.t('qms.apqp.k53'), value: 'validating' },
+          { label: i18n.t('qms.apqp.k54'), value: 'confirmed' },
+          { label: i18n.t('qms.apqp.k55'), value: 'completed' },
         ],
       },
       defaultValue: 'planning',
@@ -251,16 +252,16 @@ export const apqpSchema: EntitySchema & {
     },
     {
       name: 'current_phase',
-      label: '当前阶段',
+      label: i18n.t('qms.apqp.k56'),
       type: 'select',
       options: {
         type: 'static',
         options: [
-          { label: '阶段1：计划与立项', value: 'phase1' },
-          { label: '阶段2：产品设计与开发', value: 'phase2' },
-          { label: '阶段3：过程设计与开发', value: 'phase3' },
-          { label: '阶段4：产品与过程确认', value: 'phase4' },
-          { label: '阶段5：反馈、评价与改进', value: 'phase5' },
+          { label: i18n.t('qms.apqp.1_57'), value: 'phase1' },
+          { label: i18n.t('qms.apqp.2_58'), value: 'phase2' },
+          { label: i18n.t('qms.apqp.3_59'), value: 'phase3' },
+          { label: i18n.t('qms.apqp.4_60'), value: 'phase4' },
+          { label: i18n.t('qms.apqp.5_61'), value: 'phase5' },
         ],
       },
       defaultValue: 'phase1',
@@ -269,50 +270,50 @@ export const apqpSchema: EntitySchema & {
     },
     {
       name: 'start_date',
-      label: '开始日期',
+      label: i18n.t('qms.apqp.k62'),
       type: 'date',
       showInList: true,
       listWidth: 120,
     },
     {
       name: 'target_date',
-      label: '目标日期',
+      label: i18n.t('qms.apqp.k63'),
       type: 'date',
       showInList: true,
       listWidth: 120,
     },
     {
       name: 'team',
-      label: '团队成员',
+      label: i18n.t('qms.apqp.k64'),
       type: 'text',
-      placeholder: '多人用逗号分隔',
+      placeholder: i18n.t('qms.apqp.k65'),
       showInList: false,
     },
     {
       name: 'description',
-      label: '项目描述',
+      label: i18n.t('qms.apqp.k66'),
       type: 'textarea',
-      placeholder: '请描述项目的目的和范围',
+      placeholder: i18n.t('qms.apqp.k67'),
       showInList: false,
     },
 
     // ── 阶段1：计划与立项 ──
     {
       name: 'phase1_deliverables',
-      label: '阶段1交付物',
+      label: i18n.t('qms.apqp.1_68'),
       type: 'textarea',
-      placeholder: '如：项目计划书、可行性分析报告等',
+      placeholder: i18n.t('qms.apqp.k69'),
       showInList: false,
     },
     {
       name: 'phase1_owner',
-      label: '阶段1负责人',
+      label: i18n.t('qms.apqp.1_70'),
       type: 'text',
       showInList: false,
     },
     {
       name: 'phase1_due_date',
-      label: '阶段1截止日期',
+      label: i18n.t('qms.apqp.1_71'),
       type: 'date',
       showInList: false,
     },
@@ -320,20 +321,20 @@ export const apqpSchema: EntitySchema & {
     // ── 阶段2：产品设计与开发 ──
     {
       name: 'phase2_deliverables',
-      label: '阶段2交付物',
+      label: i18n.t('qms.apqp.2_72'),
       type: 'textarea',
-      placeholder: '如：设计图纸、BOM、DFMEA等',
+      placeholder: i18n.t('qms.apqp.bomdfmea_73'),
       showInList: false,
     },
     {
       name: 'phase2_owner',
-      label: '阶段2负责人',
+      label: i18n.t('qms.apqp.2_74'),
       type: 'text',
       showInList: false,
     },
     {
       name: 'phase2_due_date',
-      label: '阶段2截止日期',
+      label: i18n.t('qms.apqp.2_75'),
       type: 'date',
       showInList: false,
     },
@@ -341,20 +342,20 @@ export const apqpSchema: EntitySchema & {
     // ── 阶段3：过程设计与开发 ──
     {
       name: 'phase3_deliverables',
-      label: '阶段3交付物',
+      label: i18n.t('qms.apqp.3_76'),
       type: 'textarea',
-      placeholder: '如：流程图、PFMEA、控制计划等',
+      placeholder: i18n.t('qms.apqp.pfmea_77'),
       showInList: false,
     },
     {
       name: 'phase3_owner',
-      label: '阶段3负责人',
+      label: i18n.t('qms.apqp.3_78'),
       type: 'text',
       showInList: false,
     },
     {
       name: 'phase3_due_date',
-      label: '阶段3截止日期',
+      label: i18n.t('qms.apqp.3_79'),
       type: 'date',
       showInList: false,
     },
@@ -362,20 +363,20 @@ export const apqpSchema: EntitySchema & {
     // ── 阶段4：产品与过程确认 ──
     {
       name: 'phase4_deliverables',
-      label: '阶段4交付物',
+      label: i18n.t('qms.apqp.4_80'),
       type: 'textarea',
-      placeholder: '如：试生产报告、尺寸测量报告、性能测试报告等',
+      placeholder: i18n.t('qms.apqp.k81'),
       showInList: false,
     },
     {
       name: 'phase4_owner',
-      label: '阶段4负责人',
+      label: i18n.t('qms.apqp.4_82'),
       type: 'text',
       showInList: false,
     },
     {
       name: 'phase4_due_date',
-      label: '阶段4截止日期',
+      label: i18n.t('qms.apqp.4_83'),
       type: 'date',
       showInList: false,
     },
@@ -383,20 +384,20 @@ export const apqpSchema: EntitySchema & {
     // ── 阶段5：反馈、评价与改进 ──
     {
       name: 'phase5_deliverables',
-      label: '阶段5交付物',
+      label: i18n.t('qms.apqp.5_84'),
       type: 'textarea',
-      placeholder: '如：PPAP文件包、经验教训报告、改进计划等',
+      placeholder: i18n.t('qms.apqp.k85'),
       showInList: false,
     },
     {
       name: 'phase5_owner',
-      label: '阶段5负责人',
+      label: i18n.t('qms.apqp.5_86'),
       type: 'text',
       showInList: false,
     },
     {
       name: 'phase5_due_date',
-      label: '阶段5截止日期',
+      label: i18n.t('qms.apqp.5_87'),
       type: 'date',
       showInList: false,
     },
@@ -408,29 +409,29 @@ export const apqpSchema: EntitySchema & {
     filters: [
       {
         id: 'status',
-        label: '状态',
+        label: i18n.t('qms.apqp.k88'),
         type: 'select',
         options: [
-          { label: '全部状态', value: 'all' },
-          { label: '策划中', value: 'planning' },
-          { label: '设计中', value: 'designing' },
-          { label: '验证中', value: 'validating' },
-          { label: '已确认', value: 'confirmed' },
-          { label: '已完成', value: 'completed' },
+          { label: i18n.t('qms.apqp.k89'), value: 'all' },
+          { label: i18n.t('qms.apqp.k90'), value: 'planning' },
+          { label: i18n.t('qms.apqp.k91'), value: 'designing' },
+          { label: i18n.t('qms.apqp.k92'), value: 'validating' },
+          { label: i18n.t('qms.apqp.k93'), value: 'confirmed' },
+          { label: i18n.t('qms.apqp.k94'), value: 'completed' },
         ],
         defaultValue: 'all',
       },
       {
         id: 'current_phase',
-        label: '当前阶段',
+        label: i18n.t('qms.apqp.k95'),
         type: 'select',
         options: [
-          { label: '全部阶段', value: 'all' },
-          { label: '阶段1', value: 'phase1' },
-          { label: '阶段2', value: 'phase2' },
-          { label: '阶段3', value: 'phase3' },
-          { label: '阶段4', value: 'phase4' },
-          { label: '阶段5', value: 'phase5' },
+          { label: i18n.t('qms.apqp.k96'), value: 'all' },
+          { label: i18n.t('qms.apqp.1_97'), value: 'phase1' },
+          { label: i18n.t('qms.apqp.2_98'), value: 'phase2' },
+          { label: i18n.t('qms.apqp.3_99'), value: 'phase3' },
+          { label: i18n.t('qms.apqp.4_100'), value: 'phase4' },
+          { label: i18n.t('qms.apqp.5_101'), value: 'phase5' },
         ],
         defaultValue: 'all',
       },
@@ -445,34 +446,34 @@ export const apqpSchema: EntitySchema & {
         completed: 'default',
       },
       labelMap: {
-        planning: '策划中',
-        designing: '设计中',
-        validating: '验证中',
-        confirmed: '已确认',
-        completed: '已完成',
+        planning: i18n.t('qms.apqp.k102'),
+        designing: i18n.t('qms.apqp.k103'),
+        validating: i18n.t('qms.apqp.k104'),
+        confirmed: i18n.t('qms.apqp.k105'),
+        completed: i18n.t('qms.apqp.k106'),
       },
     },
   },
 
   formSections: [
     {
-      title: '基础信息',
+      title: i18n.t('qms.apqp.k107'),
       fields: ['project_no', 'project_name', 'customer', 'status', 'current_phase'],
     },
     {
-      title: '时间与团队',
+      title: i18n.t('qms.apqp.k108'),
       fields: ['start_date', 'target_date', 'team'],
     },
     {
-      title: '项目描述',
+      title: i18n.t('qms.apqp.k109'),
       fields: ['description'],
     },
   ],
 
   formColCount: 2,
-  createTitle: '新建 APQP 项目',
-  editTitle: '编辑 APQP 项目',
-  detailTitle: 'APQP 项目详情',
+  createTitle: i18n.t('qms.apqp.apqp_110'),
+  editTitle: i18n.t('qms.apqp.apqp_111'),
+  detailTitle: i18n.t('shared.apqp.apqp_3'),
 
   actions: ['create', 'edit', 'detail', 'delete'],
 

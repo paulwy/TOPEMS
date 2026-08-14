@@ -90,7 +90,7 @@ export const GuidePage: React.FC = () => {
 
   React.useEffect(() => {
     if (guidesQuery.isError) {
-      apiLogger.error('获取指南列表失败:', guidesQuery.error);
+      apiLogger.error(i18n.t('pages.guide_page.k0'), guidesQuery.error);
       addNotification({
         type: 'error',
         title: i18n.t('help.guide_page.k3'),
@@ -101,7 +101,7 @@ export const GuidePage: React.FC = () => {
 
   React.useEffect(() => {
     if (categoriesQuery.isError) {
-      apiLogger.error('获取指南分类失败:', categoriesQuery.error);
+      apiLogger.error(i18n.t('pages.guide_page.k1'), categoriesQuery.error);
     }
   }, [categoriesQuery.isError, categoriesQuery.error, apiLogger]);
 
@@ -145,7 +145,7 @@ export const GuidePage: React.FC = () => {
             size={16}
             sx={{ mr: 1 }}
           />
-          返回帮助中心
+          {i18n.t('pages.guide_page.k2')}
         </Button>
       </Box>
 
@@ -170,7 +170,7 @@ export const GuidePage: React.FC = () => {
                 variant='h6'
                 sx={{ fontWeight: 600 }}
               >
-                学习进度
+                {i18n.t('pages.guide_page.k3')}
               </Typography>
               <Typography
                 variant='body2'
@@ -186,7 +186,7 @@ export const GuidePage: React.FC = () => {
                 variant='body2'
                 color='text.secondary'
               >
-                总体进度
+                {i18n.t('pages.guide_page.k4')}
               </Typography>
               <Typography
                 variant='body2'
@@ -218,7 +218,7 @@ export const GuidePage: React.FC = () => {
           sx={{ flexWrap: 'wrap' }}
         >
           <Chip
-            label='📋 全部'
+            label={i18n.t('pages.guide_page.k5')}
             onClick={() => setSelectedCategory('all')}
             color={selectedCategory === 'all' ? 'primary' : 'default'}
             sx={{ cursor: 'pointer', fontWeight: selectedCategory === 'all' ? 600 : 400 }}
@@ -347,7 +347,7 @@ export const GuidePage: React.FC = () => {
                             variant='body2'
                             color='text.secondary'
                           >
-                            学习进度
+                            {i18n.t('pages.guide_page.k6')}
                           </Typography>
                           <Typography
                             variant='body2'
@@ -415,7 +415,7 @@ export const GuidePage: React.FC = () => {
                 variant='h6'
                 sx={{ fontWeight: 600 }}
               >
-                学习小贴士
+                {i18n.t('pages.guide_page.k7')}
               </Typography>
             </Box>
             <Grid
@@ -427,7 +427,7 @@ export const GuidePage: React.FC = () => {
                   variant='body2'
                   color='text.secondary'
                 >
-                  📖 <strong>{i18n.t('help.guide_page.k8')}</strong>：建议按照入门→进阶→高级的顺序学习
+                  📖 <strong>{i18n.t('help.guide_page.k8')}</strong>：{i18n.t('pages.guide_page.k8')}→进阶→高级的顺序学习
                 </Typography>
               </Grid>
               <Grid size={{ xs: 12, sm: 4 }}>
@@ -435,7 +435,7 @@ export const GuidePage: React.FC = () => {
                   variant='body2'
                   color='text.secondary'
                 >
-                  👀 <strong>{i18n.t('help.guide_page.k9')}</strong>：跟随指南操作，加深理解和记忆
+                  👀 <strong>{i18n.t('help.guide_page.k9')}</strong>：{i18n.t('pages.guide_page.k11')}
                 </Typography>
               </Grid>
               <Grid size={{ xs: 12, sm: 4 }}>
@@ -443,7 +443,7 @@ export const GuidePage: React.FC = () => {
                   variant='body2'
                   color='text.secondary'
                 >
-                  💬 <strong>{i18n.t('help.guide_page.k10')}</strong>：参考FAQ或联系在线客服获取帮助
+                  💬 <strong>{i18n.t('help.guide_page.k10')}</strong>：{i18n.t('pages.guide_page.k12')}
                 </Typography>
               </Grid>
             </Grid>

@@ -2,6 +2,7 @@ import React from 'react';
 import { Card, CardContent, Box, Button, Tooltip } from '@mui/material';
 import { Folder, FolderOpen, Trash2 } from 'lucide-react';
 import type { Folder as FolderType } from '@/api/doc';
+import i18n from '@/i18n';
 
 interface DocumentTreeProps {
   folders: FolderType[];
@@ -31,7 +32,7 @@ const DocumentTree: React.FC<DocumentTreeProps> = ({
               ) : (
                 <Folder sx={{ width: 20, height: 20, mr: 1.5 }} />
               )}
-              <span style={{ fontWeight: 500 }}>全部文件</span>
+              <span style={{ fontWeight: 500 }}>{i18n.t('pages.document_tree.k0')}</span>
             </Button>
 
             {folders.map((folder) => (
@@ -61,7 +62,7 @@ const DocumentTree: React.FC<DocumentTreeProps> = ({
                       {folder.name}
                     </span>
                   </Button>
-                  <Tooltip title='删除文件夹'>
+                  <Tooltip title={i18n.t('pages.document_tree.k1')}>
                     <span>
                       <Button
                         variant='text'

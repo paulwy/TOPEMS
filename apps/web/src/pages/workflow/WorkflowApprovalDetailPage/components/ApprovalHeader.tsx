@@ -5,14 +5,12 @@ import { User, MessageSquare, CheckCircle, XCircle, Clock, AlertCircle } from 'l
 import type { Approval } from '@/api/workflow';
 import { designTokens } from '@/theme/tokens';
 import { getChipStatusColor } from '@/utils/status';
-
+import i18n from '@/i18n';
 const ct= designTokens.colors;
-
 interface ApprovalHeaderProps {
   approval: Approval;
   theme: Theme;
 }
-
 export const getStatusIcon = (status: string) => {
   switch (status) {
     case 'approved':
@@ -45,32 +43,28 @@ export const getStatusIcon = (status: string) => {
       );
   }
 };
-
 export const getStatusText = (status: string) => {
   const statusMap: Record<string, string> = {
-    approved: '已通过',
-    rejected: '已拒绝',
-    pending: '待审批',
+    approved: i18n.t('workflow.approval_header.k0'),
+    rejected: i18n.t('workflow.approval_header.k1'),
+    pending: i18n.t('workflow.approval_header.k2'),
   };
   return statusMap[status] || status;
 };
-
 export const getStatusColor = (status: string) => getChipStatusColor(status, 'workflow');
-
 const ApprovalHeader: React.FC<ApprovalHeaderProps> = ({ approval, theme }) => {
   const getApprovalTypeText = (type: string | undefined) => {
     switch (type) {
       case 'single':
-        return '单人审批';
+        return i18n.t('workflow.approval_header.k3');
       case 'counter':
-        return '会签审批';
+        return i18n.t('workflow.approval_header.k4');
       case 'or':
-        return '或签审批';
+        return i18n.t('workflow.approval_header.k5');
       default:
         return type || 'N/A';
     }
   };
-
   return (
     <Box>
       <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 2 }}>
@@ -79,7 +73,7 @@ const ApprovalHeader: React.FC<ApprovalHeaderProps> = ({ approval, theme }) => {
             variant='body2'
             sx={{ color: 'grey.500', mb: 0.5 }}
           >
-            审批ID
+            {i18n.t('pages.approval_header.id_0')}
           </Typography>
           <Typography
             variant='body2'
@@ -93,7 +87,7 @@ const ApprovalHeader: React.FC<ApprovalHeaderProps> = ({ approval, theme }) => {
             variant='body2'
             sx={{ color: 'grey.500', mb: 0.5 }}
           >
-            任务名称
+            {i18n.t('pages.approval_header.k1')}
           </Typography>
           <Typography variant='body2'>{approval.task_name}</Typography>
         </Box>
@@ -102,7 +96,7 @@ const ApprovalHeader: React.FC<ApprovalHeaderProps> = ({ approval, theme }) => {
             variant='body2'
             sx={{ color: 'grey.500', mb: 0.5 }}
           >
-            节点ID
+            {i18n.t('pages.approval_header.id_2')}
           </Typography>
           <Typography
             variant='body2'
@@ -116,7 +110,7 @@ const ApprovalHeader: React.FC<ApprovalHeaderProps> = ({ approval, theme }) => {
             variant='body2'
             sx={{ color: 'grey.500', mb: 0.5 }}
           >
-            审批类型
+            {i18n.t('pages.approval_header.k3')}
           </Typography>
           <Typography variant='body2'>{getApprovalTypeText(approval.approval_type)}</Typography>
         </Box>
@@ -125,7 +119,7 @@ const ApprovalHeader: React.FC<ApprovalHeaderProps> = ({ approval, theme }) => {
             variant='body2'
             sx={{ color: 'grey.500', mb: 0.5 }}
           >
-            审批人
+            {i18n.t('pages.approval_header.k4')}
           </Typography>
           <Stack
             direction='row'
@@ -141,7 +135,7 @@ const ApprovalHeader: React.FC<ApprovalHeaderProps> = ({ approval, theme }) => {
             variant='body2'
             sx={{ color: 'grey.500', mb: 0.5 }}
           >
-            创建时间
+            {i18n.t('pages.approval_header.k5')}
           </Typography>
           <Typography variant='body2'>{new Date(approval.created_at).toLocaleString()}</Typography>
         </Box>
@@ -152,7 +146,7 @@ const ApprovalHeader: React.FC<ApprovalHeaderProps> = ({ approval, theme }) => {
                 variant='body2'
                 sx={{ color: 'grey.500', mb: 0.5 }}
               >
-                审批人
+                {i18n.t('pages.approval_header.k6')}
               </Typography>
               <Typography variant='body2'>{approval.approved_by}</Typography>
             </Box>
@@ -161,7 +155,7 @@ const ApprovalHeader: React.FC<ApprovalHeaderProps> = ({ approval, theme }) => {
                 variant='body2'
                 sx={{ color: 'grey.500', mb: 0.5 }}
               >
-                审批时间
+                {i18n.t('pages.approval_header.k7')}
               </Typography>
               <Typography variant='body2'>
                 {approval.approved_at ? new Date(approval.approved_at).toLocaleString() : 'N/A'}
@@ -175,7 +169,7 @@ const ApprovalHeader: React.FC<ApprovalHeaderProps> = ({ approval, theme }) => {
               variant='body2'
               sx={{ color: 'grey.500', mb: 0.5 }}
             >
-              超时时间
+              {i18n.t('pages.approval_header.k8')}
             </Typography>
             <Typography variant='body2'>
               {new Date(approval.timeout_at).toLocaleString()}
@@ -189,7 +183,7 @@ const ApprovalHeader: React.FC<ApprovalHeaderProps> = ({ approval, theme }) => {
             variant='body2'
             sx={{ color: 'grey.500', mb: 1 }}
           >
-            审批意见
+            {i18n.t('pages.approval_header.k9')}
           </Typography>
           <Box sx={{ bgcolor: 'grey.50', p: 1.5, borderRadius: 1 }}>
             <Stack
@@ -209,5 +203,4 @@ const ApprovalHeader: React.FC<ApprovalHeaderProps> = ({ approval, theme }) => {
     </Box>
   );
 };
-
 export default ApprovalHeader;

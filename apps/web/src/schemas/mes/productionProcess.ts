@@ -1,10 +1,11 @@
 import type React from 'react';
 import type { EntitySchema } from '@/schema';
+import i18n from '@/i18n';
 
 export const productionProcessSchema: EntitySchema = {
   entity: 'productionProcess',
-  title: '工序管理',
-  description: '管理生产工序，包括工序名称、编码、顺序、标准工时、工作站等',
+  title: i18n.t('mes.production_process.k0'),
+  description: i18n.t('mes.production_process.k1'),
 
   api: {
     module: 'mes',
@@ -14,7 +15,7 @@ export const productionProcessSchema: EntitySchema = {
   fields: [
     {
       name: 'name',
-      label: '工序名称',
+      label: i18n.t('mes.production_process.k2'),
       type: 'text',
       required: true,
       sortable: true,
@@ -23,14 +24,14 @@ export const productionProcessSchema: EntitySchema = {
     },
     {
       name: 'code',
-      label: '工序编码',
+      label: i18n.t('mes.production_process.k3'),
       type: 'text',
       sortable: true,
       listWidth: 140,
     },
     {
       name: 'sequence',
-      label: '顺序',
+      label: i18n.t('mes.production_process.k4'),
       type: 'number',
       required: true,
       sortable: true,
@@ -38,7 +39,7 @@ export const productionProcessSchema: EntitySchema = {
     },
     {
       name: 'standard_time',
-      label: '标准工时(h)',
+      label: i18n.t('mes.production_process.h_5'),
       type: 'number',
       listWidth: 110,
       renderCell: (row: Record<string, unknown>): React.ReactNode => {
@@ -48,7 +49,7 @@ export const productionProcessSchema: EntitySchema = {
     },
     {
       name: 'work_station_id',
-      label: '工作站',
+      label: i18n.t('mes.production_process.k6'),
       type: 'text',
       listWidth: 140,
       renderCell: (row: Record<string, unknown>): React.ReactNode => {
@@ -58,14 +59,14 @@ export const productionProcessSchema: EntitySchema = {
     },
     {
       name: 'status',
-      label: '状态',
+      label: i18n.t('mes.production_process.k7'),
       type: 'select',
       defaultValue: 'active',
       options: {
         type: 'static',
         options: [
-          { value: 'active', label: '已启用' },
-          { value: 'inactive', label: '已禁用' },
+          { value: 'active', label: i18n.t('mes.production_process.k8') },
+          { value: 'inactive', label: i18n.t('mes.production_process.k9') },
         ],
       },
       listWidth: 100,
@@ -73,7 +74,7 @@ export const productionProcessSchema: EntitySchema = {
     },
     {
       name: 'description',
-      label: '描述',
+      label: i18n.t('mes.production_process.k10'),
       type: 'textarea',
       showInList: false,
     },
@@ -90,19 +91,19 @@ export const productionProcessSchema: EntitySchema = {
         inactive: 'error',
       },
       labelMap: {
-        active: '已启用',
-        inactive: '已禁用',
+        active: i18n.t('mes.production_process.k11'),
+        inactive: i18n.t('mes.production_process.k12'),
       },
     },
     filters: [
       {
         id: 'status',
-        label: '状态',
+        label: i18n.t('mes.production_process.k13'),
         type: 'select',
         options: [
-          { label: '全部', value: '' },
-          { label: '已启用', value: 'active' },
-          { label: '已禁用', value: 'inactive' },
+          { label: i18n.t('mes.production_process.k14'), value: '' },
+          { label: i18n.t('mes.production_process.k15'), value: 'active' },
+          { label: i18n.t('mes.production_process.k16'), value: 'inactive' },
         ],
       },
     ],
@@ -112,21 +113,21 @@ export const productionProcessSchema: EntitySchema = {
 
   formSections: [
     {
-      title: '基本信息',
+      title: i18n.t('mes.production_process.k17'),
       fields: ['name', 'code', 'sequence'],
     },
     {
-      title: '工时与工作站',
+      title: i18n.t('mes.production_process.k18'),
       fields: ['standard_time', 'work_station_id'],
     },
     {
-      title: '描述',
+      title: i18n.t('mes.production_process.k19'),
       fields: ['description'],
     },
   ],
 
   formColCount: 2,
-  createTitle: '新增工序',
-  editTitle: '编辑工序',
-  detailTitle: '工序详情',
+  createTitle: i18n.t('mes.production_process.k20'),
+  editTitle: i18n.t('mes.production_process.k21'),
+  detailTitle: i18n.t('mes.production_process.k22'),
 };

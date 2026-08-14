@@ -1,3 +1,4 @@
+import i18n from '@/i18n';
 export type DeviceType = 'mobile' | 'tablet' | 'desktop';
 export type LayoutDensity = 'compact' | 'normal' | 'relaxed';
 export type ThemeMode = 'light' | 'dark' | 'auto';
@@ -323,37 +324,37 @@ class AdaptiveUIEngineImpl {
       string,
       { keywords: string[]; name: string; priority: ContentPriority }
     > = {
-      dashboard: { keywords: ['dashboard', 'overview', 'home'], name: '仪表盘', priority: 'high' },
+      dashboard: { keywords: ['dashboard', 'overview', 'home'], name: i18n.t('ai.adaptive-ui.k0'), priority: 'high' },
       analytics: {
         keywords: ['analytics', 'report', 'bi', 'chart'],
-        name: '数据分析',
+        name: i18n.t('ai.adaptive-ui.k1'),
         priority: 'high',
       },
-      customer: { keywords: ['customer', 'crm', 'contact'], name: '客户管理', priority: 'medium' },
-      order: { keywords: ['order', 'purchase', 'scm'], name: '采购订单', priority: 'medium' },
-      product: { keywords: ['product', 'bom', 'pdm'], name: '产品数据', priority: 'medium' },
+      customer: { keywords: ['customer', 'crm', 'contact'], name: i18n.t('ai.adaptive-ui.k2'), priority: 'medium' },
+      order: { keywords: ['order', 'purchase', 'scm'], name: i18n.t('ai.adaptive-ui.k3'), priority: 'medium' },
+      product: { keywords: ['product', 'bom', 'pdm'], name: i18n.t('ai.adaptive-ui.k4'), priority: 'medium' },
       employee: {
         keywords: ['employee', 'hrm', 'attendance'],
-        name: '人力资源',
+        name: i18n.t('ai.adaptive-ui.k5'),
         priority: 'medium',
       },
       finance: {
         keywords: ['finance', 'accounting', 'voucher'],
-        name: '财务管理',
+        name: i18n.t('ai.adaptive-ui.k6'),
         priority: 'high',
       },
-      inventory: { keywords: ['inventory', 'stock', 'wms'], name: '库存管理', priority: 'medium' },
-      quality: { keywords: ['quality', 'qms', 'audit'], name: '质量管理', priority: 'medium' },
-      workflow: { keywords: ['workflow', 'approval', 'task'], name: '工作流', priority: 'medium' },
-      ai: { keywords: ['ai', 'chat', 'assistant'], name: 'AI 助手', priority: 'high' },
+      inventory: { keywords: ['inventory', 'stock', 'wms'], name: i18n.t('ai.adaptive-ui.k7'), priority: 'medium' },
+      quality: { keywords: ['quality', 'qms', 'audit'], name: i18n.t('ai.adaptive-ui.k8'), priority: 'medium' },
+      workflow: { keywords: ['workflow', 'approval', 'task'], name: i18n.t('ai.adaptive-ui.k9'), priority: 'medium' },
+      ai: { keywords: ['ai', 'chat', 'assistant'], name: i18n.t('ai.adaptive-ui.ai_0'), priority: 'high' },
     };
 
     const totalFreq = behavior.reduce((sum, b) => sum + b.frequency, 0);
     if (totalFreq === 0) {
       return [
-        { module: 'dashboard', priority: 'high', reason: '默认推荐' },
-        { module: 'analytics', priority: 'medium', reason: '常用模块' },
-        { module: 'ai', priority: 'medium', reason: 'AI 助手推荐' },
+        { module: 'dashboard', priority: 'high', reason: i18n.t('ai.adaptive-ui.k10') },
+        { module: 'analytics', priority: 'medium', reason: i18n.t('ai.adaptive-ui.k11') },
+        { module: 'ai', priority: 'medium', reason: i18n.t('ai.adaptive-ui.ai_1') },
       ];
     }
 
@@ -368,7 +369,7 @@ class AdaptiveUIEngineImpl {
         modules.push({
           module: config.name,
           priority,
-          reason: `基于 ${relatedBehavior.length} 种行为模式`,
+          reason: `${i18n.t('ai.adaptive-ui.k2')}${relatedBehavior.length}${i18n.t('ai.adaptive-ui.k3')}`,
         });
       }
     }
@@ -401,7 +402,7 @@ class AdaptiveUIEngineImpl {
         title: item.id,
         type: item.type as ContentRecommendation['type'],
         priority: 'medium',
-        reason: '默认推荐',
+        reason: i18n.t('ai.adaptive-ui.k12'),
         confidence: 0.5,
         estimated_engagement: 0.5,
       }));
@@ -425,7 +426,7 @@ class AdaptiveUIEngineImpl {
         title: item.id,
         type: item.type as ContentRecommendation['type'],
         priority,
-        reason: matchingTags.length > 0 ? `匹配行为偏好: ${matchingTags.join(', ')}` : '通用推荐',
+        reason: matchingTags.length > 0 ? `${i18n.t('ai.adaptive-ui.k4')}${matchingTags.join(', ')}` : i18n.t('ai.adaptive-ui.k13'),
         confidence,
         estimated_engagement: confidence * 0.8,
       };
@@ -476,25 +477,25 @@ class AdaptiveUIEngineImpl {
   optimizeLayout(userId: string): { improvements: string[]; score: number } {
     const profile = this.profiles.get(userId);
     if (!profile) {
-      return { improvements: ['创建用户档案以启用布局优化'], score: 0 };
+      return { improvements: [i18n.t('ai.adaptive-ui.k14')], score: 0 };
     }
 
     const improvements: string[] = [];
     let score = 0.5;
 
     if (profile.behavior_patterns.length < 3) {
-      improvements.push('收集更多用户行为数据以提升推荐精度');
+      improvements.push(i18n.t('ai.adaptive-ui.k15'));
     } else {
       score += 0.2;
     }
 
     if (profile.device === 'mobile' && profile.preferences.layout === 'grid') {
-      improvements.push('移动端建议使用列表布局以提升体验');
+      improvements.push(i18n.t('ai.adaptive-ui.k16'));
       score += 0.1;
     }
 
     if (profile.context.connection_quality < 0.5) {
-      improvements.push('网络质量较差，建议减少动画和重型组件');
+      improvements.push(i18n.t('ai.adaptive-ui.k17'));
     } else {
       score += 0.1;
     }
@@ -503,7 +504,7 @@ class AdaptiveUIEngineImpl {
       profile.preferences.density === 'normal' &&
       profile.behavior_patterns.some((b) => b.frequency > 20)
     ) {
-      improvements.push('高频用户可切换到紧凑密度以提升效率');
+      improvements.push(i18n.t('ai.adaptive-ui.k18'));
       score += 0.05;
     }
 

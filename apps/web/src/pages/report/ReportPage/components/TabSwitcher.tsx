@@ -4,6 +4,7 @@ import { FileText, LayoutTemplate } from 'lucide-react';
 import { useQueryClient } from '@tanstack/react-query';
 
 import { QUERY_KEYS } from '@/lib/reactQuery';
+import i18n from '@/i18n';
 
 interface TabSwitcherProps {
   activeTab: 'reports' | 'templates';
@@ -31,7 +32,7 @@ const TabSwitcher: React.FC<TabSwitcherProps> = ({ activeTab, onTabChange, templ
           sx={{ borderRadius: 1.5, textTransform: 'none' }}
         >
           <FileText sx={{ width: 16, height: 16, mr: 1 }} />
-          报表列表
+          {i18n.t('pages.tab_switcher.k0')}
         </Button>
         <Button
           variant={activeTab === 'templates' ? 'contained' : 'text'}

@@ -4,6 +4,7 @@ import { Edit2, Trash2, Archive, Star } from 'lucide-react';
 
 import { SwipeAction } from './SwipeAction';
 import type { SwipeActionItem } from './SwipeAction';
+import { designTokens } from '@topems/tokens';
 
 const meta = {
   title: 'Mobile/SwipeAction',
@@ -27,7 +28,7 @@ const deleteAndEditActions: SwipeActionItem[] = [
     id: 'edit',
     icon: <Edit2 style={{ width: 18, height: 18 }} />,
     label: '编辑',
-    color: '#1976d2',
+    color: designTokens.colors.primary[700],
     onClick: () => {},
   },
   {
@@ -44,7 +45,7 @@ const archiveAndStarActions: SwipeActionItem[] = [
     id: 'archive',
     icon: <Archive style={{ width: 18, height: 18 }} />,
     label: '归档',
-    color: '#7b1fa2',
+    color: designTokens.colors.secondary[700],
     onClick: () => {},
   },
   {
@@ -169,7 +170,7 @@ export const StaticPreview: Story = {
               flexDirection: 'column',
               alignItems: 'center',
               justifyContent: 'center',
-              backgroundColor: '#1976d2',
+              backgroundColor: designTokens.colors.primary[700],
               color: 'white',
             }}
           >

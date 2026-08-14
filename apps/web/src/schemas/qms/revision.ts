@@ -1,6 +1,7 @@
 import React from 'react';
 import { Chip } from '@mui/material';
 import type { EntitySchema } from '@/schema';
+import i18n from '@/i18n';
 
 function renderVersionCell(row: Record<string, unknown>) {
   const version = row.version as string | null | undefined;
@@ -19,8 +20,8 @@ function renderDateCell(row: Record<string, unknown>) {
 
 export const standardRevisionSchema: EntitySchema = {
   entity: 'qmsStandardRevision',
-  title: '版本历史',
-  description: '质量标准的版本变更记录',
+  title: i18n.t('qms.revision.k0'),
+  description: i18n.t('qms.revision.k1'),
 
   api: {
     module: 'qms',
@@ -38,7 +39,7 @@ export const standardRevisionSchema: EntitySchema = {
     },
     {
       name: 'version',
-      label: '版本号',
+      label: i18n.t('qms.revision.k2'),
       type: 'text',
       required: true,
       sortable: true,
@@ -47,13 +48,13 @@ export const standardRevisionSchema: EntitySchema = {
     },
     {
       name: 'description',
-      label: '变更说明',
+      label: i18n.t('qms.revision.k3'),
       type: 'text',
       listWidth: 300,
     },
     {
       name: 'created_at',
-      label: '创建时间',
+      label: i18n.t('qms.revision.k4'),
       type: 'datetime',
       readonly: true,
       sortable: true,
@@ -62,7 +63,7 @@ export const standardRevisionSchema: EntitySchema = {
     },
     {
       name: 'created_by',
-      label: '创建人',
+      label: i18n.t('qms.revision.k5'),
       type: 'text',
       readonly: true,
       listWidth: 120,
@@ -77,15 +78,15 @@ export const standardRevisionSchema: EntitySchema = {
 
   formSections: [
     {
-      title: '版本信息',
+      title: i18n.t('qms.revision.k6'),
       fields: ['version', 'description'],
     },
   ],
 
   formColCount: 1,
-  createTitle: '新建版本',
-  editTitle: '编辑版本',
-  detailTitle: '版本详情',
+  createTitle: i18n.t('qms.revision.k7'),
+  editTitle: i18n.t('qms.revision.k8'),
+  detailTitle: i18n.t('qms.revision.k9'),
 
   actions: ['detail'],
 };

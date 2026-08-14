@@ -2,18 +2,15 @@ import React, { useMemo } from 'react';
 import { Box, Card, CardContent, Typography } from '@mui/material';
 import { useQuery } from '@tanstack/react-query';
 import { AlertCircle, CheckCircle, FileText } from 'lucide-react';
-
 import CrudPage from '@/components/templates/CrudPage';
 import { createCrudPageAdapter } from '@/schema/crudPageAdapter';
 import { qualityIssueSchema, auditPlanSchema } from '@/schemas/qms';
 import { qmsApi } from '@/api/qms';
 import type { QualityIssue, AuditPlan, CreateQualityIssueRequest } from '@/api/qms';
 import { designTokens } from '@/theme/tokens';
-
 import { CACHE_DURATIONS, QUERY_KEYS } from '@/lib/reactQuery';
-
+import i18n from '@/i18n';
 const ct= designTokens.colors;
-
 function extractListData<T>(response: unknown): T[] {
   if (!response || typeof response !== 'object') return [];
   const obj = response as Record<string, unknown>;
@@ -27,7 +24,6 @@ function extractListData<T>(response: unknown): T[] {
   }
   return [];
 }
-
 interface QualityControlStats {
   totalNonconformances: number;
   openNonconformances: number;
@@ -36,47 +32,45 @@ interface QualityControlStats {
   completedAudits: number;
   inProgressAudits: number;
 }
-
 function StatsCards({ stats }: { stats: QualityControlStats }) {
   const cards = [
     {
       icon: <AlertCircle sx={{ width: 20, height: 20, color: 'error.dark' }} />,
       iconBg: 'error.lighter',
-      label: '不合格品总数',
+      label: i18n.t('qms.qms_quality_control_page.k0'),
       value: stats.totalNonconformances,
     },
     {
       icon: <AlertCircle sx={{ width: 20, height: 20, color: ct.warning[600] }} />,
       iconBg: 'warning.100',
-      label: '待处理',
+      label: i18n.t('qms.qms_quality_control_page.k1'),
       value: stats.openNonconformances,
     },
     {
       icon: <CheckCircle sx={{ width: 20, height: 20, color: 'success.dark' }} />,
       iconBg: 'success.lighter',
-      label: '已关闭',
+      label: i18n.t('qms.qms_quality_control_page.k2'),
       value: stats.closedNonconformances,
     },
     {
       icon: <FileText sx={{ width: 20, height: 20, color: 'primary.dark' }} />,
       iconBg: 'primary.100',
-      label: '审核总数',
+      label: i18n.t('qms.qms_quality_control_page.k3'),
       value: stats.totalAudits,
     },
     {
       icon: <FileText sx={{ width: 20, height: 20, color: 'secondary.dark' }} />,
       iconBg: 'secondary.100',
-      label: '进行中审核',
+      label: i18n.t('qms.qms_quality_control_page.k4'),
       value: stats.inProgressAudits,
     },
     {
       icon: <CheckCircle sx={{ width: 20, height: 20, color: 'success.dark' }} />,
       iconBg: 'success.lighter',
-      label: '已完成审核',
+      label: i18n.t('qms.qms_quality_control_page.k5'),
       value: stats.completedAudits,
     },
   ];
-
   return (
     <Box
       sx={{
@@ -128,7 +122,6 @@ function StatsCards({ stats }: { stats: QualityControlStats }) {
     </Box>
   );
 }
-
 const issueAdapter = createCrudPageAdapter({
   list: qmsApi.listIssues,
   create: qmsApi.createIssue,
@@ -136,68 +129,62 @@ const issueAdapter = createCrudPageAdapter({
     qmsApi.updateIssue(id, data as unknown as CreateQualityIssueRequest),
   delete: (id: string) => qmsApi.deleteIssue(id),
 });
-
 const auditAdapter = createCrudPageAdapter({
   list: qmsApi.listAuditPlans,
   create: async (_data: Record<string, unknown>) => {
-    throw new Error('审核计划不支持创建');
+    throw new Error(i18n.t('qms.qms_quality_control_page.k6'));
   },
   update: async (_id: string, _data: Record<string, unknown>) => {
-    throw new Error('审核计划不支持更新');
+    throw new Error(i18n.t('qms.qms_quality_control_page.k7'));
   },
   delete: async (_id: string) => {
-    throw new Error('审核计划不支持删除');
+    throw new Error(i18n.t('qms.qms_quality_control_page.k8'));
   },
 });
-
 const QmsQualityControlPage: React.FC = () => {
   const { data: issuesResp } = useQuery({
     queryKey: QUERY_KEYS.AD_HOC.QMS_QUALITY_CONTROL_STATS_ISSUES_BASE,
     queryFn: async () => qmsApi.listIssues(),
   
       staleTime: CACHE_DURATIONS.MEDIUM,});
-
   const { data: auditsResp } = useQuery({
     queryKey: QUERY_KEYS.AD_HOC.QMS_QUALITY_CONTROL_STATS_AUDITS_BASE,
     queryFn: async () => qmsApi.listAuditPlans(),
   
       staleTime: CACHE_DURATIONS.MEDIUM,});
-
   const stats: QualityControlStats = useMemo(() => {
     const issues = extractListData<QualityIssue>(issuesResp);
     const audits = extractListData<AuditPlan>(auditsResp);
-
     return {
       totalNonconformances: issues.length,
-      openNonconformances: issues.filter((n) => n.status === 'open' || n.status === '待处理')
+      openNonconformances: issues.filter((n) => n.status === 'open' || n.status === i18n.t('qms.qms_quality_control_page.k9'))
         .length,
       closedNonconformances: issues.filter(
-        (n) => n.status === 'closed' || n.status === 'resolved' || n.status === '已关闭'
+        (n) => n.status === 'closed' || n.status === 'resolved' || n.status === i18n.t('qms.qms_quality_control_page.k10')
       ).length,
       totalAudits: audits.length,
-      completedAudits: audits.filter((a) => a.status === 'completed' || a.status === '已完成')
+      completedAudits: audits.filter((a) => a.status === 'completed' || a.status === i18n.t('qms.qms_quality_control_page.k11'))
         .length,
-      inProgressAudits: audits.filter((a) => a.status === 'in_progress' || a.status === '进行中')
+      inProgressAudits: audits.filter((a) => a.status === 'in_progress' || a.status === i18n.t('qms.qms_quality_control_page.k12'))
         .length,
     };
   }, [issuesResp, auditsResp]);
-
   return (
     <CrudPage
       schema={qualityIssueSchema}
       apiAdapter={issueAdapter}
-      breadcrumbs={[{ label: 'QMS' }, { label: '质量管理' }]}
+      breadcrumbs={[{ label: 'QMS' }, { label: i18n.t('qms.qms_quality_control_page.k13') }]}
       defaultTab='issues'
       headerContent={() => <StatsCards stats={stats} />}
       tabs={[
         {
           id: 'issues',
-          label: '不合格品管理',
+          label: i18n.t('qms.qms_quality_control_page.k14'),
           content: <></>,
         },
         {
           id: 'audit',
-          label: '审核管理',
+          label: i18n.t('qms.qms_quality_control_page.k15'),
           content: (
             <CrudPage
               schema={auditPlanSchema}
@@ -209,5 +196,4 @@ const QmsQualityControlPage: React.FC = () => {
     />
   );
 };
-
 export default QmsQualityControlPage;

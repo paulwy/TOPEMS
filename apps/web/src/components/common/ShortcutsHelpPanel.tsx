@@ -11,6 +11,7 @@ import {
 } from '@mui/material';
 
 import { GLOBAL_SHORTCUTS, getShortcutsByCategory, getShortcutKeyLabel } from '@/hooks/shortcuts';
+import i18n from '@/i18n';
 
 interface ShortcutsHelpPanelProps {
   isOpen: boolean;
@@ -44,7 +45,7 @@ export const ShortcutsHelpPanel = ({ isOpen, onClose }: ShortcutsHelpPanelProps)
               color='primary.main'
             />
           </Box>
-          快捷键帮助
+          {i18n.t('components.shortcuts_help_panel.k0')}
         </DialogTitle>
         <Typography
           variant='body2'
@@ -56,7 +57,7 @@ export const ShortcutsHelpPanel = ({ isOpen, onClose }: ShortcutsHelpPanelProps)
             size='small'
             label='Ctrl + ?'
           />{' '}
-          可随时打开此面板
+          {i18n.t('components.shortcuts_help_panel.k1')}
         </Typography>
 
         <Box sx={{ mt: 3 }}>
@@ -119,7 +120,7 @@ export const ShortcutsHelpPanel = ({ isOpen, onClose }: ShortcutsHelpPanelProps)
             variant='caption'
             color='text.secondary'
           >
-            提示：在输入框中，编辑类快捷键（复制、粘贴等）仍然可用
+            {i18n.t('components.shortcuts_help_panel.k2')}
           </Typography>
         </DialogActions>
       </DialogContent>

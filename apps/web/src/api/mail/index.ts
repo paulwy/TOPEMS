@@ -1,5 +1,6 @@
 import apiClient from '../client';
 import type { ApiResponse } from '../client';
+import i18n from '@/i18n';
 
 export interface Email {
   id: string;
@@ -180,24 +181,24 @@ export const mailApi = {
 };
 
 export const TEMPLATE_CATEGORIES = [
-  { value: 'general', label: '通用' },
-  { value: 'workflow', label: '流程审批' },
-  { value: 'system', label: '系统通知' },
-  { value: 'contract', label: '合同管理' },
-  { value: 'user', label: '用户管理' },
+  { value: 'general', label: i18n.t('shared.index.k0') },
+  { value: 'workflow', label: i18n.t('shared.index.k1') },
+  { value: 'system', label: i18n.t('shared.index.k2') },
+  { value: 'contract', label: i18n.t('shared.index.k3') },
+  { value: 'user', label: i18n.t('shared.index.k4') },
 ];
 
 export const PRIORITY_OPTIONS = [
-  { value: 'low', label: '低' },
-  { value: 'normal', label: '普通' },
-  { value: 'high', label: '高' },
-  { value: 'urgent', label: '紧急' },
+  { value: 'low', label: i18n.t('shared.index.k5') },
+  { value: 'normal', label: i18n.t('shared.index.k6') },
+  { value: 'high', label: i18n.t('shared.index.k7') },
+  { value: 'urgent', label: i18n.t('shared.index.k8') },
 ];
 
 export const STATUS_OPTIONS = [
-  { value: 'pending', label: '待发送' },
-  { value: 'sent', label: '已发送' },
-  { value: 'failed', label: '发送失败' },
+  { value: 'pending', label: i18n.t('shared.index.k9') },
+  { value: 'sent', label: i18n.t('shared.index.k10') },
+  { value: 'failed', label: i18n.t('shared.index.k11') },
 ];
 
 export default mailApi;

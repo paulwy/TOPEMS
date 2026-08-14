@@ -10,9 +10,9 @@ import {
   Calendar,
   Timer,
 } from 'lucide-react';
+import i18n from '@/i18n';
 import { useNavigate } from 'react-router-dom';
 import { useQueryClient } from '@tanstack/react-query';
-
 import { useNotificationStore } from '../../store';
 import CrudPage, { type CrudApiAdapter } from '@/components/templates/CrudPage';
 import type { RowAction } from '@/components/templates/list/types';
@@ -23,14 +23,11 @@ import { WORKFLOW_PATHS } from '@/modules/workflow/config';
 import { instanceApi } from '@/api/workflow';
 import type { WorkflowInstance } from '@/api/workflow';
 import { workflowInstanceSchema } from '@/schemas/workflow';
-
 export const WorkflowInstancesPage: React.FC = () => {
   const navigate = useNavigate();
   const addNotification = useNotificationStore((state) => state.addNotification);
   const queryClient = useQueryClient();
-
   const { confirmOpen, confirmConfig, openConfirm, closeConfirm } = useConfirmDialog();
-
   const apiAdapter: CrudApiAdapter<WorkflowInstance> = {
     list: async (params) => {
       const page = params?.page ?? 1;
@@ -67,7 +64,6 @@ export const WorkflowInstancesPage: React.FC = () => {
       await instanceApi.delete(id);
     },
   };
-
   const handleViewDetail = useCallback(
     (row: Record<string, unknown>) => {
       const instance = row as unknown as WorkflowInstance;
@@ -75,7 +71,6 @@ export const WorkflowInstancesPage: React.FC = () => {
     },
     [navigate]
   );
-
   const handleViewDiagram = useCallback(
     (row: Record<string, unknown>) => {
       const instance = row as unknown as WorkflowInstance;
@@ -83,13 +78,12 @@ export const WorkflowInstancesPage: React.FC = () => {
     },
     [navigate]
   );
-
   const handleSuspend = useCallback(
     (row: Record<string, unknown>) => {
       const instance = row as unknown as WorkflowInstance;
       openConfirm({
-        title: '确认挂起',
-        message: `确定要挂起流程"${instance.workflow_name || instance.name || ''}"吗？`,
+        title: i18n.t('workflow.workflow_instances_page.k0'),
+        message: `${i18n.t('pages.workflow_instances_page.k0')}${instance.workflow_name || instance.name || ''}${i18n.t('pages.workflow_instances_page.k1')}`,
         onConfirm: async () => {
           try {
             await instanceApi.suspendInstance(instance.id);
@@ -98,14 +92,14 @@ export const WorkflowInstancesPage: React.FC = () => {
   refetchType: 'active',
 });
             addNotification({
-              title: '成功',
-              message: '流程已挂起',
+              title: i18n.t('workflow.workflow_instances_page.k1'),
+              message: i18n.t('workflow.workflow_instances_page.k2'),
               type: 'success',
             });
           } catch (err: unknown) {
             addNotification({
-              title: '失败',
-              message: extractErrorMessage(err, '挂起流程失败'),
+              title: i18n.t('workflow.workflow_instances_page.k3'),
+              message: extractErrorMessage(err, i18n.t('workflow.workflow_instances_page.k4')),
               type: 'error',
             });
           }
@@ -114,13 +108,12 @@ export const WorkflowInstancesPage: React.FC = () => {
     },
     [addNotification, openConfirm, queryClient]
   );
-
   const handleCancel = useCallback(
     (row: Record<string, unknown>) => {
       const instance = row as unknown as WorkflowInstance;
       openConfirm({
-        title: '确认取消',
-        message: `确定要取消流程"${instance.workflow_name || instance.name || ''}"吗？此操作不可撤销。`,
+        title: i18n.t('workflow.workflow_instances_page.k5'),
+        message: `${i18n.t('pages.workflow_instances_page.k2')}${instance.workflow_name || instance.name || ''}${i18n.t('pages.workflow_instances_page.k3')}`,
         danger: true,
         onConfirm: async () => {
           try {
@@ -130,14 +123,14 @@ export const WorkflowInstancesPage: React.FC = () => {
   refetchType: 'active',
 });
             addNotification({
-              title: '成功',
-              message: '流程已取消',
+              title: i18n.t('workflow.workflow_instances_page.k6'),
+              message: i18n.t('workflow.workflow_instances_page.k7'),
               type: 'success',
             });
           } catch (err: unknown) {
             addNotification({
-              title: '失败',
-              message: extractErrorMessage(err, '取消流程失败'),
+              title: i18n.t('workflow.workflow_instances_page.k8'),
+              message: extractErrorMessage(err, i18n.t('workflow.workflow_instances_page.k9')),
               type: 'error',
             });
           }
@@ -146,25 +139,24 @@ export const WorkflowInstancesPage: React.FC = () => {
     },
     [addNotification, openConfirm, queryClient]
   );
-
   const customRowActions: RowAction[] = [
     {
       key: 'viewDetail',
-      label: '查看详情',
+      label: i18n.t('workflow.workflow_instances_page.k10'),
       icon: <GitBranch size={16} />,
       color: 'secondary',
       onClick: handleViewDetail,
     },
     {
       key: 'viewDiagram',
-      label: '查看流程图',
+      label: i18n.t('workflow.workflow_instances_page.k11'),
       icon: <GitBranch size={16} />,
       color: 'secondary',
       onClick: handleViewDiagram,
     },
     {
       key: 'suspend',
-      label: '挂起',
+      label: i18n.t('workflow.workflow_instances_page.k12'),
       icon: <Pause size={16} />,
       color: 'warning',
       onClick: handleSuspend,
@@ -172,14 +164,13 @@ export const WorkflowInstancesPage: React.FC = () => {
     },
     {
       key: 'cancel',
-      label: '取消',
+      label: i18n.t('workflow.workflow_instances_page.k13'),
       icon: <XCircle size={16} />,
       color: 'error',
       onClick: handleCancel,
       show: (row) => row.status === 'running',
     },
   ];
-
   const renderHeaderContent = (rows: Record<string, unknown>[], _total: number) => {
     const instances = rows as unknown as WorkflowInstance[];
     const runningCount = instances.filter((i) => i.status === 'running').length;
@@ -189,13 +180,11 @@ export const WorkflowInstancesPage: React.FC = () => {
       const date = i.started_at || i.created_at;
       return date && new Date(date).toDateString() === today;
     }).length;
-
     const formatDuration = (seconds: number) => {
-      if (seconds < 60) return `${seconds}秒`;
-      if (seconds < 3600) return `${Math.round(seconds / 60)}分钟`;
-      return `${Math.round(seconds / 3600)}小时`;
+      if (seconds < 60) return `${seconds}${i18n.t('pages.workflow_instances_page.k4')}`;
+      if (seconds < 3600) return `${Math.round(seconds / 60)}${i18n.t('pages.workflow_instances_page.k5')}`;
+      return `${Math.round(seconds / 3600)}${i18n.t('pages.workflow_instances_page.k6')}`;
     };
-
     let totalDuration = 0;
     let completedWithDuration = 0;
     instances.forEach((i) => {
@@ -208,38 +197,36 @@ export const WorkflowInstancesPage: React.FC = () => {
     });
     const avgDuration =
       completedWithDuration > 0 ? Math.round(totalDuration / completedWithDuration) : 0;
-
     const stats = [
       {
         id: 'running',
-        title: '运行中',
+        title: i18n.t('workflow.workflow_instances_page.k14'),
         value: runningCount,
         icon: <Activity size={20} />,
         color: 'primary' as const,
       },
       {
         id: 'completed',
-        title: '已完成',
+        title: i18n.t('workflow.workflow_instances_page.k15'),
         value: completedCount,
         icon: <CheckCircle size={20} />,
         color: 'success' as const,
       },
       {
         id: 'today',
-        title: '今日发起',
+        title: i18n.t('workflow.workflow_instances_page.k16'),
         value: todayCount,
         icon: <Calendar size={20} />,
         color: 'info' as const,
       },
       {
         id: 'avgDuration',
-        title: '平均耗时',
+        title: i18n.t('workflow.workflow_instances_page.k17'),
         value: formatDuration(avgDuration),
         icon: <Timer size={20} />,
         color: 'warning' as const,
       },
     ];
-
     return (
       <Box
         sx={{
@@ -278,7 +265,6 @@ export const WorkflowInstancesPage: React.FC = () => {
       </Box>
     );
   };
-
   return (
     <PageContainer
       headerProps={{
@@ -295,7 +281,6 @@ export const WorkflowInstancesPage: React.FC = () => {
         headerContent={renderHeaderContent}
         idField='id'
       />
-
       <ConfirmDialog
         isOpen={confirmOpen}
         onClose={closeConfirm}
@@ -310,5 +295,4 @@ export const WorkflowInstancesPage: React.FC = () => {
     </PageContainer>
   );
 };
-
 export default WorkflowInstancesPage;

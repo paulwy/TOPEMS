@@ -4,6 +4,7 @@ import { AIHelperButton, AICodeGenerator, AIDataCompleter, AIFormValidator } fro
 import type { CompletionItem } from '@/types/ai';
 
 import { TextField, FormControl, InputLabel, Select, MenuItem, Box, Button } from '@mui/material';
+import i18n from '@/i18n';
 
 interface EmployeeFormProps {
   formData: Partial<Employee>;
@@ -63,22 +64,22 @@ export const EmployeeForm: React.FC<EmployeeFormProps> = ({
         <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2 }}>
           <TextField
             id={`${mode}-name`}
-            label='员工姓名 *'
+            label={i18n.t('components.employee_form.k0')}
             type='text'
             required
             value={(formData as Employee)?.name || ''}
             onChange={(e) => handleInputChange('name', e.target.value)}
-            placeholder='请输入员工姓名'
+            placeholder={i18n.t('components.employee_form.k0')}
             size='small'
             fullWidth
           />
           <TextField
             id={`${mode}-number`}
-            label='工号'
+            label={i18n.t('components.employee_form.k1')}
             type='text'
             value={(formData as Employee)?.employee_no || ''}
             onChange={(e) => handleInputChange('employee_no', e.target.value)}
-            placeholder='请输入工号'
+            placeholder={i18n.t('components.employee_form.k2')}
             size='small'
             fullWidth
           />
@@ -86,21 +87,21 @@ export const EmployeeForm: React.FC<EmployeeFormProps> = ({
         <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2 }}>
           <TextField
             id={`${mode}-email`}
-            label='邮箱'
+            label={i18n.t('components.employee_form.k3')}
             type='email'
             value={(formData as Employee)?.email || ''}
             onChange={(e) => handleInputChange('email', e.target.value)}
-            placeholder='请输入邮箱'
+            placeholder={i18n.t('components.employee_form.k4')}
             size='small'
             fullWidth
           />
           <TextField
             id={`${mode}-phone`}
-            label='电话'
+            label={i18n.t('components.employee_form.k5')}
             type='text'
             value={(formData as Employee)?.phone || ''}
             onChange={(e) => handleInputChange('phone', e.target.value)}
-            placeholder='请输入电话'
+            placeholder={i18n.t('components.employee_form.k6')}
             size='small'
             fullWidth
           />
@@ -109,17 +110,17 @@ export const EmployeeForm: React.FC<EmployeeFormProps> = ({
           size='small'
           fullWidth
         >
-          <InputLabel id={`${mode}-department-label`}>所属部门</InputLabel>
+          <InputLabel id={`${mode}-department-label`}>{i18n.t('components.employee_form.k7')}</InputLabel>
           <Select
             labelId={`${mode}-department-label`}
             id={`${mode}-department`}
             value={(formData as Employee)?.department_id || 'none'}
-            label='所属部门'
+            label={i18n.t('components.employee_form.k8')}
             onChange={(e) =>
               handleInputChange('department_id', e.target.value === 'none' ? '' : e.target.value)
             }
           >
-            <MenuItem value='none'>无</MenuItem>
+            <MenuItem value='none'>{i18n.t('components.employee_form.k1')}</MenuItem>
             {departments.map((d) => (
               <MenuItem
                 key={d.id}
@@ -132,18 +133,18 @@ export const EmployeeForm: React.FC<EmployeeFormProps> = ({
         </FormControl>
         <TextField
           id={`${mode}-position`}
-          label='职位'
+          label={i18n.t('components.employee_form.k9')}
           type='text'
           value={(formData as Employee)?.position || ''}
           onChange={(e) => handleInputChange('position', e.target.value)}
-          placeholder='请输入职位'
+          placeholder={i18n.t('components.employee_form.k10')}
           size='small'
           fullWidth
         />
         {mode === 'create' && (
           <TextField
             id={`${mode}-hire-date`}
-            label='入职日期'
+            label={i18n.t('components.employee_form.k11')}
             type='date'
             value={(formData as Employee)?.hire_date || ''}
             onChange={(e) => handleInputChange('hire_date', e.target.value)}
@@ -160,16 +161,16 @@ export const EmployeeForm: React.FC<EmployeeFormProps> = ({
           size='small'
           fullWidth
         >
-          <InputLabel id={`${mode}-status-label`}>状态</InputLabel>
+          <InputLabel id={`${mode}-status-label`}>{i18n.t('components.employee_form.k12')}</InputLabel>
           <Select
             labelId={`${mode}-status-label`}
             id={`${mode}-status`}
             value={(formData as Employee)?.status || 'active'}
-            label='状态'
+            label={i18n.t('components.employee_form.k13')}
             onChange={(e) => handleInputChange('status', e.target.value)}
           >
-            <MenuItem value='active'>在职</MenuItem>
-            <MenuItem value='inactive'>离职</MenuItem>
+            <MenuItem value='active'>{i18n.t('components.employee_form.k14')}</MenuItem>
+            <MenuItem value='inactive'>{i18n.t('components.employee_form.k15')}</MenuItem>
           </Select>
         </FormControl>
         <Box
@@ -184,32 +185,32 @@ export const EmployeeForm: React.FC<EmployeeFormProps> = ({
             variant='outlined'
             onClick={onCancel}
           >
-            取消
+            {i18n.t('components.employee_form.k2')}
           </Button>
           <Box sx={{ display: 'flex', gap: 1 }}>
             <AIHelperButton
               type='generate'
               onClick={() => setShowAICodeGenerator(true)}
               variant='outlined'
-              label='生成工号'
+              label={i18n.t('components.employee_form.k16')}
             />
             <AIHelperButton
               type='complete'
               onClick={() => setShowAIDataCompleter(true)}
               variant='outlined'
-              label='智能补全'
+              label={i18n.t('components.employee_form.k17')}
             />
             <AIHelperButton
               type='validate'
               onClick={() => setShowAIFormValidator(true)}
               variant='outlined'
-              label='AI 校验'
+              label={i18n.t('components.employee_form.ai_3')}
             />
             <Button
               type='submit'
               variant='contained'
             >
-              {mode === 'create' ? '创建' : '保存'}
+              {mode === 'create' ? i18n.t('components.employee_form.k19') : i18n.t('components.employee_form.k18')}
             </Button>
           </Box>
         </Box>

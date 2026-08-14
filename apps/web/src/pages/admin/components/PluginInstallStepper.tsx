@@ -14,10 +14,9 @@ import {
   StepLabel,
   Typography,
 } from '@mui/material';
+import i18n from '@/i18n';
 import { CheckCircle, Download, GitBranch, Shield } from 'lucide-react';
-import { useTranslation } from 'react-i18next';
 import type { MarketplacePlugin } from '../hooks/usePluginManagement';
-
 interface PluginInstallStepperProps {
   plugin: MarketplacePlugin;
   step: number;
@@ -26,7 +25,6 @@ interface PluginInstallStepperProps {
   onNext: () => void;
   onBack: () => void;
 }
-
 const PluginInstallStepper: React.FC<PluginInstallStepperProps> = ({
   plugin,
   step,
@@ -35,8 +33,6 @@ const PluginInstallStepper: React.FC<PluginInstallStepperProps> = ({
   onNext,
   onBack,
 }) => {
-  const { t } = useTranslation();
-
   return (
     <Box>
       <Stepper
@@ -44,29 +40,28 @@ const PluginInstallStepper: React.FC<PluginInstallStepperProps> = ({
         sx={{ mb: 3 }}
       >
         <Step>
-          <StepLabel>{t('admin.plugin_management.confirm')}</StepLabel>
+          <StepLabel>{i18n.t('admin.plugin_management.confirm')}</StepLabel>
         </Step>
         <Step>
-          <StepLabel>{t('admin.plugin_management.install')}</StepLabel>
+          <StepLabel>{i18n.t('admin.plugin_management.install')}</StepLabel>
         </Step>
         <Step>
-          <StepLabel>{t('admin.plugin_management.done')}</StepLabel>
+          <StepLabel>{i18n.t('admin.plugin_management.done')}</StepLabel>
         </Step>
       </Stepper>
-
       {step === 0 && (
         <Box>
           <Typography
             variant='h6'
             gutterBottom
           >
-            {t('admin.plugin_management_page.text_bc8cd3')}
+            {i18n.t('admin.plugin_management_page.text_bc8cd3')}
           </Typography>
           <Typography
             variant='body1'
             sx={{ mb: 2 }}
           >
-            {t('admin.plugin_management_page.text_bad7b0')}
+            {i18n.t('admin.plugin_management_page.text_bad7b0')}
           </Typography>
           <Box sx={{ p: 2, mb: 2, border: 1, borderColor: 'divider', borderRadius: 1 }}>
             <Typography
@@ -89,13 +84,13 @@ const PluginInstallStepper: React.FC<PluginInstallStepperProps> = ({
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
                 <GitBranch size={14} />
                 <Typography variant='caption'>
-                  {t('admin.plugin_management_page.text_e9685f')} {plugin.latest_version}
+                  {i18n.t('admin.plugin_management_page.text_e9685f')} {plugin.latest_version}
                 </Typography>
               </Box>
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
                 <Download size={14} />
                 <Typography variant='caption'>
-                  {t('admin.plugin_management_page.text_47bc83')} {plugin.downloads}
+                  {i18n.t('admin.plugin_management_page.text_47bc83')} {plugin.downloads}
                 </Typography>
               </Box>
             </Stack>
@@ -105,7 +100,7 @@ const PluginInstallStepper: React.FC<PluginInstallStepperProps> = ({
             color='text.secondary'
             sx={{ mb: 2 }}
           >
-            {t('admin.plugin_management_page.text_44d55a')}
+            {i18n.t('admin.plugin_management_page.text_44d55a')}
           </Typography>
           <List dense>
             {plugin.permissions.map((perm) => (
@@ -125,7 +120,6 @@ const PluginInstallStepper: React.FC<PluginInstallStepperProps> = ({
           </List>
         </Box>
       )}
-
       {step === 1 && (
         <Box sx={{ textAlign: 'center', py: 4 }}>
           {loading ? (
@@ -135,7 +129,7 @@ const PluginInstallStepper: React.FC<PluginInstallStepperProps> = ({
                 sx={{ mb: 2 }}
               />
               <Typography>
-                {t('admin.plugin_management_page.text_e94719')} {plugin.name}...
+                {i18n.t('admin.plugin_management_page.text_e94719')} {plugin.name}...
               </Typography>
             </>
           ) : error ? (
@@ -148,7 +142,6 @@ const PluginInstallStepper: React.FC<PluginInstallStepperProps> = ({
           ) : null}
         </Box>
       )}
-
       {step === 2 && (
         <Box sx={{ textAlign: 'center', py: 4 }}>
           <CheckCircle
@@ -160,14 +153,13 @@ const PluginInstallStepper: React.FC<PluginInstallStepperProps> = ({
             variant='h6'
             gutterBottom
           >
-            {t('admin.plugin_management_page.text_176e15')}
+            {i18n.t('admin.plugin_management_page.text_176e15')}
           </Typography>
           <Typography color='text.secondary'>
-            {plugin.name} {t('admin.plugin_management_page.text_45f0ab')}
+            {plugin.name} {i18n.t('admin.plugin_management_page.text_45f0ab')}
           </Typography>
         </Box>
       )}
-
       <Stack
         direction='row'
         spacing={2}
@@ -178,7 +170,7 @@ const PluginInstallStepper: React.FC<PluginInstallStepperProps> = ({
             onClick={onBack}
             disabled={loading}
           >
-            {t('admin.plugin_management_page.text_eeb690')}
+            {i18n.t('admin.plugin_management_page.text_eeb690')}
           </Button>
         )}
         {step < 2 ? (
@@ -187,19 +179,18 @@ const PluginInstallStepper: React.FC<PluginInstallStepperProps> = ({
             onClick={onNext}
             disabled={loading}
           >
-            {step === 0 ? t('admin.plugin_management.next') : t('admin.plugin_management.install')}
+            {step === 0 ? i18n.t('admin.plugin_management.next') : i18n.t('admin.plugin_management.install')}
           </Button>
         ) : (
           <Button
             variant='contained'
             onClick={onNext}
           >
-            {t('admin.plugin_management_page.text_769d88')}
+            {i18n.t('admin.plugin_management_page.text_769d88')}
           </Button>
         )}
       </Stack>
     </Box>
   );
 };
-
 export default PluginInstallStepper;

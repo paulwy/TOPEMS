@@ -1,5 +1,6 @@
 import { moduleRegistry, type ModuleRegistration } from '../registry/module-registry';
 import { smartDebugger, type ComponentTreeNode } from './smart-debugger';
+import i18n from '@/i18n';
 
 export type CompletionKind = 'module-api' | 'prop' | 'import' | 'snippet' | 'type';
 
@@ -33,8 +34,8 @@ export interface Snippet {
 const SNIPPET_LIBRARY: Snippet[] = [
   {
     id: 'mf-lazy-load',
-    title: '微前端懒加载模块',
-    description: '使用 React.lazy 和 Suspense 懒加载远程模块',
+    title: i18n.t('shared.code-completion.k0'),
+    description: i18n.t('microfrontend.code-completion.k0'),
     code: `const ModuleName = React.lazy(() => import('./microfrontend/module-name'));
 
 const ModuleNamePage: React.FC = () => (
@@ -46,8 +47,8 @@ const ModuleNamePage: React.FC = () => (
   },
   {
     id: 'mf-dynamic-import',
-    title: '动态导入远程模块',
-    description: '使用动态 import() 按需加载远程模块',
+    title: i18n.t('shared.code-completion.k1'),
+    description: i18n.t('shared.code-completion.k2'),
     code: `const loadModule = async () => {
   const module = await import('@/microfrontend/module-name');
   module.default.init();
@@ -57,8 +58,8 @@ const ModuleNamePage: React.FC = () => (
   },
   {
     id: 'mf-module-gate',
-    title: '模块权限门控',
-    description: '使用 ModuleGate 组件控制模块访问权限',
+    title: i18n.t('shared.code-completion.k3'),
+    description: i18n.t('shared.code-completion.k4'),
     code: `<ModuleGate module="moduleCode" action="view">
   <RemoteModule />
 </ModuleGate>`,
@@ -66,8 +67,8 @@ const ModuleNamePage: React.FC = () => (
   },
   {
     id: 'mf-version-check',
-    title: '版本检查与热更新',
-    description: '使用 versionManager 检查模块更新',
+    title: i18n.t('shared.code-completion.k5'),
+    description: i18n.t('shared.code-completion.k6'),
     code: `import { versionManager } from '@/microfrontend';
 
 versionManager.onVersionUpdate((event) => {
@@ -79,8 +80,8 @@ versionManager.startAutoCheck(5 * 60 * 1000);`,
   },
   {
     id: 'mf-sandbox-isolation',
-    title: '沙箱隔离加载模块',
-    description: '使用沙箱安全加载不可信的远程模块',
+    title: i18n.t('shared.code-completion.k7'),
+    description: i18n.t('shared.code-completion.k8'),
     code: `import { SandboxedRemoteLoader } from '@/microfrontend';
 
 <SandboxedRemoteLoader
@@ -92,8 +93,8 @@ versionManager.startAutoCheck(5 * 60 * 1000);`,
   },
   {
     id: 'mf-perf-monitor',
-    title: '性能监控埋点',
-    description: '记录组件渲染性能指标',
+    title: i18n.t('shared.code-completion.k9'),
+    description: i18n.t('shared.code-completion.k10'),
     code: `import { performanceAnalyzer } from '@/microfrontend/devex';
 
 performanceAnalyzer.recordRender('ComponentName', renderTime, propsChanged, stateChanged);`,
@@ -101,11 +102,11 @@ performanceAnalyzer.recordRender('ComponentName', renderTime, propsChanged, stat
   },
   {
     id: 'mf-debug-session',
-    title: '录制调试会话',
-    description: '开始/停止调试会话，记录可重放的操作序列',
+    title: i18n.t('shared.code-completion.k11'),
+    description: i18n.t('shared.code-completion.k12'),
     code: `import { smartDebugger } from '@/microfrontend/devex';
 
-const session = smartDebugger.startSession('用户流程测试');
+const session = smartDebugger.startSession(i18n.t('shared.code-completion.k13'));
 // ... 执行操作 ...
 smartDebugger.stopSession();
 smartDebugger.replaySession(session.id);`,
@@ -113,8 +114,8 @@ smartDebugger.replaySession(session.id);`,
   },
   {
     id: 'mf-error-boundary',
-    title: '错误边界包装',
-    description: '为微前端模块添加错误边界保护',
+    title: i18n.t('shared.code-completion.k14'),
+    description: i18n.t('shared.code-completion.k15'),
     code: `import ErrorBoundary from '@/components/ErrorBoundary';
 
 <ErrorBoundary
@@ -129,8 +130,8 @@ smartDebugger.replaySession(session.id);`,
   },
   {
     id: 'mf-smart-preload',
-    title: '智能预加载模块',
-    description: '用户空闲时预加载指定模块',
+    title: i18n.t('shared.code-completion.k16'),
+    description: i18n.t('shared.code-completion.k17'),
     code: `import { prefetchOnIdle } from '@/microfrontend';
 
 const preloadResult = await prefetchOnIdle(['/remote-module-entry.js']);`,
@@ -138,8 +139,8 @@ const preloadResult = await prefetchOnIdle(['/remote-module-entry.js']);`,
   },
   {
     id: 'mf-state-inspection',
-    title: '状态检查与导出',
-    description: '检查 Redux/Zustand 状态并导出快照',
+    title: i18n.t('shared.code-completion.k18'),
+    description: i18n.t('shared.code-completion.k19'),
     code: `import { smartDebugger } from '@/microfrontend/devex';
 
 const stores = smartDebugger.getAllStateStores();
@@ -158,59 +159,59 @@ const MICRO_FRONTEND_APIS: Array<{
   {
     name: 'RemoteLoader',
     path: '@/microfrontend',
-    description: '远程模块加载器，支持 Module Federation 动态加载',
+    description: i18n.t('shared.code-completion.k20'),
     props: [
-      { name: 'moduleId', type: 'string', required: true, description: '远程模块 ID' },
-      { name: 'entryUrl', type: 'string', required: true, description: '远程入口 URL' },
-      { name: 'fallback', type: 'ReactNode', required: false, description: '加载中占位组件' },
-      { name: 'errorBoundary', type: 'boolean', required: false, description: '是否启用错误边界' },
+      { name: 'moduleId', type: 'string', required: true, description: i18n.t('shared.code-completion.id_21') },
+      { name: 'entryUrl', type: 'string', required: true, description: i18n.t('shared.code-completion.url_22') },
+      { name: 'fallback', type: 'ReactNode', required: false, description: i18n.t('shared.code-completion.k23') },
+      { name: 'errorBoundary', type: 'boolean', required: false, description: i18n.t('shared.code-completion.k24') },
     ],
   },
   {
     name: 'SandboxedRemoteLoader',
     path: '@/microfrontend',
-    description: '沙箱化远程模块加载器，提供 JS/样式/事件隔离',
+    description: i18n.t('shared.code-completion.k25'),
     props: [
-      { name: 'moduleId', type: 'string', required: true, description: '远程模块 ID' },
-      { name: 'entryUrl', type: 'string', required: true, description: '远程入口 URL' },
+      { name: 'moduleId', type: 'string', required: true, description: i18n.t('shared.code-completion.id_26') },
+      { name: 'entryUrl', type: 'string', required: true, description: i18n.t('shared.code-completion.url_27') },
       {
         name: 'isolation',
         type: 'SandboxedRemoteLoaderIsolation',
         required: true,
-        description: '隔离配置',
+        description: i18n.t('shared.code-completion.k28'),
       },
-      { name: 'fallback', type: 'ReactNode', required: false, description: '加载中占位组件' },
+      { name: 'fallback', type: 'ReactNode', required: false, description: i18n.t('shared.code-completion.k29') },
     ],
   },
   {
     name: 'ModuleMarketplace',
     path: '@/microfrontend',
-    description: '模块市场浏览与管理面板',
-    props: [{ name: 'onClose', type: '() => void', required: true, description: '关闭回调' }],
+    description: i18n.t('shared.code-completion.k30'),
+    props: [{ name: 'onClose', type: '() => void', required: true, description: i18n.t('shared.code-completion.k31') }],
   },
   {
     name: 'DependencyGovernance',
     path: '@/microfrontend',
-    description: '依赖治理面板，展示依赖图与冲突检测',
-    props: [{ name: 'onClose', type: '() => void', required: true, description: '关闭回调' }],
+    description: i18n.t('shared.code-completion.k32'),
+    props: [{ name: 'onClose', type: '() => void', required: true, description: i18n.t('shared.code-completion.k33') }],
   },
   {
     name: 'SecurityCenter',
     path: '@/microfrontend',
-    description: '安全中心面板，扫描漏洞与权限审计',
-    props: [{ name: 'onClose', type: '() => void', required: true, description: '关闭回调' }],
+    description: i18n.t('shared.code-completion.k34'),
+    props: [{ name: 'onClose', type: '() => void', required: true, description: i18n.t('shared.code-completion.k35') }],
   },
   {
     name: 'RuntimeDashboard',
     path: '@/microfrontend',
-    description: '运行时控制台，展示模块生命周期状态',
-    props: [{ name: 'onClose', type: '() => void', required: true, description: '关闭回调' }],
+    description: i18n.t('shared.code-completion.k36'),
+    props: [{ name: 'onClose', type: '() => void', required: true, description: i18n.t('shared.code-completion.k37') }],
   },
   {
     name: 'AIOpsPanel',
     path: '@/microfrontend',
-    description: 'AI 运维面板，智能告警与异常检测',
-    props: [{ name: 'onClose', type: '() => void', required: true, description: '关闭回调' }],
+    description: i18n.t('microfrontend.code-completion.k1'),
+    props: [{ name: 'onClose', type: '() => void', required: true, description: i18n.t('shared.code-completion.k38') }],
   },
 ];
 

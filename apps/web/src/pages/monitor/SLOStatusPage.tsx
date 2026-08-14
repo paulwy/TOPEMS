@@ -21,6 +21,7 @@ import {
   Plus,
   Filter,
 } from 'lucide-react';
+import i18n from '@/i18n';
 import {
   Box,
   Typography,
@@ -58,11 +59,11 @@ import { CACHE_DURATIONS, QUERY_KEYS } from '@/lib/reactQuery';
 import { designTokens, semanticTokens } from '@topems/tokens';
 
 const SLO_TYPE_LABELS: Record<string, string> = {
-  all: '全部类型',
-  availability: '可用性',
-  latency: '延迟',
-  throughput: '吞吐',
-  error_rate: '错误率',
+  all: i18n.t('pages.slo_status_page.k0'),
+  availability: i18n.t('pages.slo_status_page.k1'),
+  latency: i18n.t('pages.slo_status_page.k2'),
+  throughput: i18n.t('pages.slo_status_page.k3'),
+  error_rate: i18n.t('pages.slo_status_page.k4'),
 };
 
 const statusColor = (s: string): 'success' | 'warning' | 'error' | 'default' => {
@@ -73,9 +74,9 @@ const statusColor = (s: string): 'success' | 'warning' | 'error' | 'default' => 
 };
 
 const statusLabel = (s: string): string => {
-  if (s === 'healthy') return '健康';
-  if (s === 'warning') return '风险';
-  if (s === 'critical') return '严重';
+  if (s === 'healthy') return i18n.t('pages.slo_status_page.k5');
+  if (s === 'warning') return i18n.t('pages.slo_status_page.k6');
+  if (s === 'critical') return i18n.t('pages.slo_status_page.k7');
   return s;
 };
 
@@ -206,7 +207,7 @@ export const SLOStatusPage: React.FC = () => {
   const resolveMutation = useMutation({
     mutationFn: (id: string) => metricsApi.resolveSloViolation(id),
     onSuccess: () => {
-      addNotification({ type: 'success', title: '已处理', message: '违规记录已标记为已处理' });
+      addNotification({ type: 'success', title: i18n.t('pages.slo_status_page.k9'), message: i18n.t('pages.slo_status_page.k8') });
       void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.MONITOR_SLO_BASE ,
   exact: false,
   refetchType: 'active',
@@ -215,8 +216,8 @@ export const SLOStatusPage: React.FC = () => {
     onError: (err: unknown) => {
       addNotification({
         type: 'error',
-        title: '处理失败',
-        message: extractErrorMessage(err, '处理失败'),
+        title: i18n.t('pages.slo_status_page.k10'),
+        message: extractErrorMessage(err, i18n.t('pages.slo_status_page.k11')),
       });
     },
   });
@@ -230,33 +231,33 @@ export const SLOStatusPage: React.FC = () => {
     () => [
       {
         id: 'total',
-        title: 'SLO 总数',
+        title: i18n.t('pages.slo_status_page.slo_0'),
         value: summary?.total_slos ?? 0,
-        unit: '个',
+        unit: i18n.t('pages.slo_status_page.k12'),
         icon: <Target size={20} />,
         color: 'primary',
       },
       {
         id: 'healthy',
-        title: '健康',
+        title: i18n.t('pages.slo_status_page.k13'),
         value: summary?.healthy_count ?? 0,
-        unit: '个',
+        unit: i18n.t('pages.slo_status_page.k14'),
         icon: <CheckCircle2 size={20} />,
         color: 'success',
       },
       {
         id: 'warning',
-        title: '风险',
+        title: i18n.t('pages.slo_status_page.k15'),
         value: summary?.warning_count ?? 0,
-        unit: '个',
+        unit: i18n.t('pages.slo_status_page.k16'),
         icon: <AlertTriangle size={20} />,
         color: 'warning',
       },
       {
         id: 'critical',
-        title: '严重',
+        title: i18n.t('pages.slo_status_page.k17'),
         value: summary?.critical_count ?? 0,
-        unit: '个',
+        unit: i18n.t('pages.slo_status_page.k18'),
         icon: <XCircle size={20} />,
         color: 'error',
       },
@@ -272,8 +273,8 @@ export const SLOStatusPage: React.FC = () => {
     () => [
       {
         id: 'compliance-overview',
-        title: '合规率总览',
-        subtitle: '所有 SLO 平均合规率',
+        title: i18n.t('pages.slo_status_page.k19'),
+        subtitle: i18n.t('pages.slo_status_page.slo_20'),
         type: 'bar',
         chart: (
           <Box sx={{ p: 2 }}>
@@ -288,7 +289,7 @@ export const SLOStatusPage: React.FC = () => {
                 variant='body2'
                 color='text.secondary'
               >
-                % 平均合规率
+                {i18n.t('pages.slo_status_page.k1')}
               </Typography>
             </Box>
             <LinearProgress
@@ -307,7 +308,7 @@ export const SLOStatusPage: React.FC = () => {
                   variant='caption'
                   color='text.secondary'
                 >
-                  24h 燃烧率
+                  {i18n.t('pages.slo_status_page.24h_2')}
                 </Typography>
                 <Typography
                   variant='h6'
@@ -321,7 +322,7 @@ export const SLOStatusPage: React.FC = () => {
                   variant='caption'
                   color='text.secondary'
                 >
-                  进行中违规
+                  {i18n.t('pages.slo_status_page.k3')}
                 </Typography>
                 <Typography
                   variant='h6'
@@ -336,8 +337,8 @@ export const SLOStatusPage: React.FC = () => {
       },
       {
         id: 'budget-trend',
-        title: '错误预算趋势',
-        subtitle: '所有 SLO 错误预算剩余',
+        title: i18n.t('pages.slo_status_page.k21'),
+        subtitle: i18n.t('pages.slo_status_page.slo_22'),
         type: 'line',
         chart: (
           <Box sx={{ height: 220, p: 1 }}>
@@ -367,12 +368,12 @@ export const SLOStatusPage: React.FC = () => {
         budgetQuery.refetch(),
         violationsQuery.refetch(),
       ]);
-      addNotification({ type: 'success', title: '已刷新', message: 'SLO 数据已更新' });
+      addNotification({ type: 'success', title: i18n.t('pages.slo_status_page.k23'), message: i18n.t('pages.slo_status_page.slo_4') });
     } catch (err) {
       addNotification({
         type: 'error',
-        title: '刷新失败',
-        message: extractErrorMessage(err, '刷新失败'),
+        title: i18n.t('pages.slo_status_page.k24'),
+        message: extractErrorMessage(err, i18n.t('pages.slo_status_page.k25')),
       });
     }
   };
@@ -391,14 +392,14 @@ export const SLOStatusPage: React.FC = () => {
         <TableHead>
           <TableRow>
             <TableCell>SLO 名称</TableCell>
-            <TableCell>服务</TableCell>
-            <TableCell>类型</TableCell>
-            <TableCell align='right'>目标</TableCell>
-            <TableCell align='right'>当前</TableCell>
-            <TableCell align='right'>合规率</TableCell>
-            <TableCell>错误预算</TableCell>
-            <TableCell align='right'>燃烧率</TableCell>
-            <TableCell>状态</TableCell>
+            <TableCell>{i18n.t('pages.slo_status_page.k26')}</TableCell>
+            <TableCell>{i18n.t('pages.slo_status_page.k27')}</TableCell>
+            <TableCell align='right'>{i18n.t('pages.slo_status_page.k28')}</TableCell>
+            <TableCell align='right'>{i18n.t('pages.slo_status_page.k29')}</TableCell>
+            <TableCell align='right'>{i18n.t('pages.slo_status_page.k30')}</TableCell>
+            <TableCell>{i18n.t('pages.slo_status_page.k31')}</TableCell>
+            <TableCell align='right'>{i18n.t('pages.slo_status_page.k32')}</TableCell>
+            <TableCell>{i18n.t('pages.slo_status_page.k33')}</TableCell>
           </TableRow>
         </TableHead>
         <TableBody>
@@ -536,7 +537,7 @@ export const SLOStatusPage: React.FC = () => {
                     color='text.secondary'
                     sx={{ mt: 1 }}
                   >
-                    暂无 SLO
+                    {i18n.t('pages.slo_status_page.slo_5')}
                   </Typography>
                 </Box>
               </TableCell>
@@ -553,14 +554,14 @@ export const SLOStatusPage: React.FC = () => {
         <TableHead>
           <TableRow>
             <TableCell>SLO</TableCell>
-            <TableCell>服务</TableCell>
-            <TableCell>周期</TableCell>
-            <TableCell>消耗进度</TableCell>
+            <TableCell>{i18n.t('pages.slo_status_page.k34')}</TableCell>
+            <TableCell>{i18n.t('pages.slo_status_page.k35')}</TableCell>
+            <TableCell>{i18n.t('pages.slo_status_page.k36')}</TableCell>
             <TableCell align='right'>1h 燃烧</TableCell>
             <TableCell align='right'>6h 燃烧</TableCell>
             <TableCell align='right'>24h 燃烧</TableCell>
-            <TableCell>预计耗尽</TableCell>
-            <TableCell>状态</TableCell>
+            <TableCell>{i18n.t('pages.slo_status_page.k37')}</TableCell>
+            <TableCell>{i18n.t('pages.slo_status_page.k38')}</TableCell>
           </TableRow>
         </TableHead>
         <TableBody>
@@ -628,14 +629,14 @@ export const SLOStatusPage: React.FC = () => {
         <TableHead>
           <TableRow>
             <TableCell>SLO</TableCell>
-            <TableCell>服务</TableCell>
-            <TableCell>类型</TableCell>
-            <TableCell>严重程度</TableCell>
-            <TableCell>开始时间</TableCell>
-            <TableCell>持续</TableCell>
+            <TableCell>{i18n.t('pages.slo_status_page.k39')}</TableCell>
+            <TableCell>{i18n.t('pages.slo_status_page.k40')}</TableCell>
+            <TableCell>{i18n.t('pages.slo_status_page.k41')}</TableCell>
+            <TableCell>{i18n.t('pages.slo_status_page.k42')}</TableCell>
+            <TableCell>{i18n.t('pages.slo_status_page.k43')}</TableCell>
             <TableCell align='right'>当前/目标</TableCell>
-            <TableCell>状态</TableCell>
-            <TableCell align='right'>操作</TableCell>
+            <TableCell>{i18n.t('pages.slo_status_page.k44')}</TableCell>
+            <TableCell align='right'>{i18n.t('pages.slo_status_page.k45')}</TableCell>
           </TableRow>
         </TableHead>
         <TableBody>
@@ -696,14 +697,14 @@ export const SLOStatusPage: React.FC = () => {
                     {v.resolved ? (
                       <Chip
                         size='small'
-                        label='已处理'
+                        label={i18n.t('pages.slo_status_page.k46')}
                         color='success'
                         variant='outlined'
                       />
                     ) : (
                       <Chip
                         size='small'
-                        label='未处理'
+                        label={i18n.t('pages.slo_status_page.k47')}
                         color='error'
                       />
                     )}
@@ -714,7 +715,7 @@ export const SLOStatusPage: React.FC = () => {
                         size='small'
                         onClick={() => openResolve(v)}
                       >
-                        处理
+                        {i18n.t('pages.slo_status_page.k6')}
                       </Button>
                     )}
                   </TableCell>
@@ -741,29 +742,29 @@ export const SLOStatusPage: React.FC = () => {
         quickActions={[
           {
             id: 'create',
-            label: '新建 SLO',
+            label: i18n.t('pages.slo_status_page.slo_48'),
             icon: <Plus size={18} />,
             color: 'primary.light',
-            description: '创建服务等级目标',
+            description: i18n.t('pages.slo_status_page.k49'),
             onClick: () =>
               addNotification({
                 type: 'info',
-                title: '提示',
-                message: 'SLO 创建向导开发中',
+                title: i18n.t('pages.slo_status_page.k50'),
+                message: i18n.t('pages.slo_status_page.slo_7'),
               }),
           },
           {
             id: 'refresh',
-            label: '刷新',
+            label: i18n.t('pages.slo_status_page.k51'),
             icon: <RefreshCw size={18} />,
             color: 'info.light',
-            description: '重新加载数据',
+            description: i18n.t('pages.slo_status_page.k52'),
             onClick: handleRefresh,
           },
         ]}
-        quickActionsTitle='快捷操作'
+        quickActionsTitle={i18n.t('pages.slo_status_page.k53')}
         onRefresh={handleRefresh}
-        recentTitle='SLO 详情'
+        recentTitle={i18n.t('pages.slo_status_page.slo_8')}
       >
         <Paper sx={{ mt: 3, p: 2, borderRadius: 2 }}>
           <Stack
@@ -773,7 +774,7 @@ export const SLOStatusPage: React.FC = () => {
           >
             <TextField
               size='small'
-              placeholder='搜索 SLO 名称或服务'
+              placeholder={i18n.t('pages.slo_status_page.slo_54')}
               value={keyword}
               onChange={(e) => setKeyword(e.target.value)}
               slotProps={{
@@ -792,10 +793,10 @@ export const SLOStatusPage: React.FC = () => {
               size='small'
               sx={{ minWidth: 140 }}
             >
-              <InputLabel>类型</InputLabel>
+              <InputLabel>{i18n.t('pages.slo_status_page.k55')}</InputLabel>
               <Select
                 value={sloType}
-                label='类型'
+                label={i18n.t('pages.slo_status_page.k56')}
                 onChange={(e) => setSloType(String(e.target.value))}
               >
                 {Object.entries(SLO_TYPE_LABELS).map(([v, l]) => (
@@ -812,22 +813,22 @@ export const SLOStatusPage: React.FC = () => {
               size='small'
               sx={{ minWidth: 120 }}
             >
-              <InputLabel>状态</InputLabel>
+              <InputLabel>{i18n.t('pages.slo_status_page.k57')}</InputLabel>
               <Select
                 value={statusFilter}
-                label='状态'
+                label={i18n.t('pages.slo_status_page.k58')}
                 onChange={(e) => setStatusFilter(String(e.target.value))}
               >
-                <MenuItem value='all'>全部</MenuItem>
-                <MenuItem value='healthy'>健康</MenuItem>
-                <MenuItem value='warning'>风险</MenuItem>
-                <MenuItem value='critical'>严重</MenuItem>
+                <MenuItem value='all'>{i18n.t('pages.slo_status_page.k59')}</MenuItem>
+                <MenuItem value='healthy'>{i18n.t('pages.slo_status_page.k60')}</MenuItem>
+                <MenuItem value='warning'>{i18n.t('pages.slo_status_page.k61')}</MenuItem>
+                <MenuItem value='critical'>{i18n.t('pages.slo_status_page.k62')}</MenuItem>
               </Select>
             </FormControl>
             <Box sx={{ flex: 1 }} />
             <Chip
               icon={<Filter size={14} />}
-              label={`共 ${slos.length} 条`}
+              label={`${i18n.t('pages.slo_status_page.k9')} ${slos.length} ${i18n.t('pages.slo_status_page.k10')}`}
               variant='outlined'
               size='small'
             />
@@ -840,19 +841,19 @@ export const SLOStatusPage: React.FC = () => {
           >
             <Tab
               value='slos'
-              label='SLO 列表'
+              label={i18n.t('pages.slo_status_page.slo_11')}
               icon={<Target size={14} />}
               iconPosition='start'
             />
             <Tab
               value='budget'
-              label='错误预算'
+              label={i18n.t('pages.slo_status_page.k63')}
               icon={<Activity size={14} />}
               iconPosition='start'
             />
             <Tab
               value='violations'
-              label={`违规记录 (${violations.length})`}
+              label={`${i18n.t('pages.slo_status_page.k12')}${violations.length})`}
               icon={<AlertTriangle size={14} />}
               iconPosition='start'
             />
@@ -873,8 +874,8 @@ export const SLOStatusPage: React.FC = () => {
           }
           closeResolve();
         }}
-        title='处理违规'
-        message={`确认将 SLO 违规 "${confirmDialog.violation?.slo_name}" 标记为已处理？`}
+        title={i18n.t('pages.slo_status_page.k64')}
+        message={`${i18n.t('pages.slo_status_page.slo_13')}${confirmDialog.violation?.slo_name}${i18n.t('pages.slo_status_page.k14')}`}
       />
     </PageContainer>
   );

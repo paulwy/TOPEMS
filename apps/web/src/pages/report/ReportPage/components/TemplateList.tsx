@@ -3,6 +3,7 @@ import { Box, Typography, Chip, Button } from '@mui/material';
 import { LayoutTemplate, Plus, Play, Edit, Trash2 } from 'lucide-react';
 import type { ReportTemplate, ReportTypeInfo } from '@/api/report';
 import { getReportTypeName } from '../utils';
+import i18n from '@/i18n';
 
 interface TemplateListProps {
   templates: ReportTemplate[];
@@ -35,7 +36,7 @@ const TemplateList: React.FC<TemplateListProps> = ({
           variant='h6'
           sx={{ fontWeight: 600, color: 'grey.900' }}
         >
-          报表模板列表
+          {i18n.t('pages.template_list.k0')}
         </Typography>
         <Button
           onClick={onShowCreateTemplateModal}
@@ -43,7 +44,7 @@ const TemplateList: React.FC<TemplateListProps> = ({
           startIcon={<Plus sx={{ width: 16, height: 16 }} />}
           sx={{ borderRadius: 3, textTransform: 'none' }}
         >
-          新增模板
+          {i18n.t('pages.template_list.k1')}
         </Button>
       </Box>
 
@@ -59,13 +60,13 @@ const TemplateList: React.FC<TemplateListProps> = ({
                 mb: 2,
               }}
             />
-            <Typography sx={{ color: 'grey.600' }}>暂无模板</Typography>
+            <Typography sx={{ color: 'grey.600' }}>{i18n.t('pages.template_list.k0')}</Typography>
             <Button
               onClick={onShowCreateTemplateModal}
               variant='contained'
               sx={{ mt: 2, borderRadius: 3 }}
             >
-              创建第一个模板
+              {i18n.t('pages.template_list.k2')}
             </Button>
           </Box>
         ) : (
@@ -114,7 +115,7 @@ const TemplateList: React.FC<TemplateListProps> = ({
                         }}
                       />
                       <Chip
-                        label={template.isactive ? '启用' : '禁用'}
+                        label={template.isactive ? i18n.t('pages.template_list.k2') : i18n.t('pages.template_list.k1')}
                         size='small'
                         sx={{
                           bgcolor: template.isactive ? 'success.light' : 'grey.100',
@@ -124,7 +125,7 @@ const TemplateList: React.FC<TemplateListProps> = ({
                       />
                     </Box>
                     <Typography sx={{ color: 'grey.600', mb: 2 }}>
-                      {template.description || '暂无描述'}
+                      {template.description || i18n.t('pages.template_list.k3')}
                     </Typography>
                     <Box
                       sx={{
@@ -152,7 +153,7 @@ const TemplateList: React.FC<TemplateListProps> = ({
                         borderRadius: 3,
                       }}
                     >
-                      创建报表
+                      {i18n.t('pages.template_list.k3')}
                     </Button>
                     <Button
                       onClick={() => onEditTemplateClick(template)}
@@ -164,7 +165,7 @@ const TemplateList: React.FC<TemplateListProps> = ({
                         borderRadius: 3,
                       }}
                     >
-                      编辑
+                      {i18n.t('pages.template_list.k4')}
                     </Button>
                     <Button
                       onClick={() => onDeleteTemplate(template.id)}

@@ -10,6 +10,7 @@ import {
   InputLabel,
   Tooltip,
 } from '@mui/material';
+import i18n from '@/i18n';
 import { PageContainer } from '@/components/common';
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -24,18 +25,13 @@ import { productionScheduleSchema } from '@/schemas/mes';
 import { Calendar, GanttChart, RefreshCw } from 'lucide-react';
 import { apiLogger } from '@/utils/logger';
 import { designTokens } from '@/theme/tokens';
-
 const ct= designTokens.colors;
-
 const apiAdapter = createCrudPageAdapter(mesApi.schedules, {
   itemsField: 'schedules',
 });
-
 // ============ 甘特图视图 ============
-
 function GanttView() {
   const queryClient = useQueryClient();
-
   const { data: ganttData, isPending} = useQuery<GanttData | null>({
     queryKey: QUERY_KEYS.MES.PRODUCTION_SCHEDULE_GANTT,
     queryFn: async () => {
@@ -47,9 +43,7 @@ function GanttView() {
     },
   
       staleTime: CACHE_DURATIONS.MEDIUM,});
-
   if (isPending) return <LoadingSpinner />;
-
   if (!ganttData || ganttData.tasks.length === 0) {
     return (
       <Box
@@ -66,15 +60,14 @@ function GanttView() {
           size={48}
           strokeWidth={1.5}
         />
-        <Typography sx={{ mt: 2 }}>暂无甘特图数据</Typography>
+        <Typography sx={{ mt: 2 }}>{i18n.t('mes.production_schedule_page.k0')}</Typography>
       </Box>
     );
   }
-
   return (
     <Box>
       <Box sx={{ mb: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <Typography variant='h6'>甘特图视图</Typography>
+        <Typography variant='h6'>{i18n.t('mes.production_schedule_page.k1')}</Typography>
         <Button
           startIcon={<RefreshCw size={16} />}
           onClick={() =>
@@ -87,7 +80,7 @@ function GanttView() {
           }
           size='small'
         >
-          刷新
+          {i18n.t('pages.production_schedule_page.k0')}
         </Button>
       </Box>
       <Box sx={{ overflow: 'auto' }}>
@@ -122,12 +115,10 @@ function GanttView() {
                     const totalDuration = totalEnd - totalStart;
                     const left = ((start - totalStart) / totalDuration) * 100;
                     const width = ((end - start) / totalDuration) * 100;
-
                     let bgColor = ct.secondary[400];
                     if (task.status === 'in_progress') bgColor = 'primary.main';
                     if (task.status === 'completed') bgColor = 'success.main';
                     if (task.status === 'cancelled') bgColor = 'error.main';
-
                     return (
                       <Tooltip
                         key={task.id}
@@ -166,9 +157,7 @@ function GanttView() {
     </Box>
   );
 }
-
 // ============ 生产排程页面 ============
-
 const ProductionSchedulePage: React.FC = () => {
   const queryClient = useQueryClient();
   const { addNotification } = useNotificationStore();
@@ -179,15 +168,14 @@ const ProductionSchedulePage: React.FC = () => {
     planned_end_time: '',
     reason: '',
   });
-
   const adjustMutation = useMutation({
     mutationFn: ({ id, data }: { id: string; data: AdjustScheduleRequest }) =>
       mesApi.schedules.adjust(id, data),
     onSuccess: () => {
       addNotification({
         type: 'success',
-        title: '成功',
-        message: '生产排程调整成功',
+        title: i18n.t('mes.production_schedule_page.k2'),
+        message: i18n.t('mes.production_schedule_page.k3'),
       });
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.MES.PRODUCTION_SCHEDULES ,
   exact: false,
@@ -201,15 +189,14 @@ const ProductionSchedulePage: React.FC = () => {
       resetAdjustForm();
     },
     onError: (error: unknown) => {
-      apiLogger.error('调整排程失败', error);
+      apiLogger.error(i18n.t('mes.production_schedule_page.k4'), error);
       addNotification({
         type: 'error',
-        title: '操作失败',
-        message: '调整排程失败',
+        title: i18n.t('mes.production_schedule_page.k5'),
+        message: i18n.t('mes.production_schedule_page.k6'),
       });
     },
   });
-
   const resetAdjustForm = () => {
     setSelectedSchedule(null);
     setAdjustData({
@@ -218,7 +205,6 @@ const ProductionSchedulePage: React.FC = () => {
       reason: '',
     });
   };
-
   const handleAdjust = (row: Record<string, unknown>) => {
     const schedule = row as unknown as ProductionSchedule;
     setSelectedSchedule(schedule);
@@ -230,32 +216,28 @@ const ProductionSchedulePage: React.FC = () => {
     });
     setShowAdjustDialog(true);
   };
-
   const handleAdjustSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (selectedSchedule) {
       adjustMutation.mutate({ id: selectedSchedule.id, data: adjustData });
     }
   };
-
   const customRowActions = [
     {
-      label: '调整排程',
+      label: i18n.t('mes.production_schedule_page.k7'),
       icon: <RefreshCw size={16} />,
       onClick: (row: Record<string, unknown>) => handleAdjust(row),
     },
   ];
-
   const tabs = [
-    { id: 'list', label: '排程列表', icon: <Calendar size={16} />, content: null },
+    { id: 'list', label: i18n.t('mes.production_schedule_page.k8'), icon: <Calendar size={16} />, content: null },
     {
       id: 'gantt',
-      label: '甘特图',
+      label: i18n.t('mes.production_schedule_page.k9'),
       icon: <GanttChart size={16} />,
       content: <GanttView />,
     },
   ];
-
   return (
     <PageContainer
       autoTitle
@@ -268,7 +250,7 @@ const ProductionSchedulePage: React.FC = () => {
       <CrudPage
         schema={productionScheduleSchema}
         apiAdapter={apiAdapter as CrudApiAdapter}
-        breadcrumbs={[{ label: 'MES' }, { label: '生产排程' }]}
+        breadcrumbs={[{ label: 'MES' }, { label: i18n.t('mes.production_schedule_page.k10') }]}
         customRowActions={customRowActions}
         tabs={tabs}
         headerContent={(rows) => {
@@ -277,7 +259,6 @@ const ProductionSchedulePage: React.FC = () => {
           const inProgress = rows.filter((o) => o.status === 'in_progress').length;
           const completed = rows.filter((o) => o.status === 'completed').length;
           const cancelled = rows.filter((o) => o.status === 'cancelled').length;
-
           return (
             <Box
               sx={{
@@ -292,7 +273,7 @@ const ProductionSchedulePage: React.FC = () => {
                   variant='body2'
                   sx={{ color: 'text.secondary' }}
                 >
-                  已排程
+                  {i18n.t('pages.production_schedule_page.k1')}
                 </Typography>
                 <Typography
                   variant='h5'
@@ -306,7 +287,7 @@ const ProductionSchedulePage: React.FC = () => {
                   variant='body2'
                   sx={{ color: 'text.secondary' }}
                 >
-                  执行中
+                  {i18n.t('pages.production_schedule_page.k2')}
                 </Typography>
                 <Typography
                   variant='h5'
@@ -320,7 +301,7 @@ const ProductionSchedulePage: React.FC = () => {
                   variant='body2'
                   sx={{ color: 'text.secondary' }}
                 >
-                  已完成
+                  {i18n.t('pages.production_schedule_page.k3')}
                 </Typography>
                 <Typography
                   variant='h5'
@@ -334,7 +315,7 @@ const ProductionSchedulePage: React.FC = () => {
                   variant='body2'
                   sx={{ color: 'text.secondary' }}
                 >
-                  已取消
+                  {i18n.t('pages.production_schedule_page.k4')}
                 </Typography>
                 <Typography
                   variant='h5'
@@ -348,7 +329,7 @@ const ProductionSchedulePage: React.FC = () => {
                   variant='body2'
                   sx={{ color: 'text.secondary' }}
                 >
-                  总数
+                  {i18n.t('pages.production_schedule_page.k5')}
                 </Typography>
                 <Typography
                   variant='h5'
@@ -361,7 +342,6 @@ const ProductionSchedulePage: React.FC = () => {
           );
         }}
       />
-
       {/* 调整排程对话框 */}
       <Dialog
         open={showAdjustDialog}
@@ -369,7 +349,7 @@ const ProductionSchedulePage: React.FC = () => {
         maxWidth='sm'
         fullWidth
       >
-        <DialogTitle>调整排程</DialogTitle>
+        <DialogTitle>{i18n.t('mes.production_schedule_page.k11')}</DialogTitle>
         <DialogContent>
           <Box
             component='span'
@@ -380,12 +360,12 @@ const ProductionSchedulePage: React.FC = () => {
               fontSize: 14,
             }}
           >
-            调整生产排程时间或工位
+            {i18n.t('pages.production_schedule_page.k6')}
           </Box>
           <form onSubmit={handleAdjustSubmit}>
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, py: 2 }}>
               <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-                <InputLabel htmlFor='adjust_start_time'>计划开始时间</InputLabel>
+                <InputLabel htmlFor='adjust_start_time'>{i18n.t('mes.production_schedule_page.k12')}</InputLabel>
                 <TextField
                   id='adjust_start_time'
                   type='datetime-local'
@@ -397,7 +377,7 @@ const ProductionSchedulePage: React.FC = () => {
                 />
               </Box>
               <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-                <InputLabel htmlFor='adjust_end_time'>计划结束时间</InputLabel>
+                <InputLabel htmlFor='adjust_end_time'>{i18n.t('mes.production_schedule_page.k13')}</InputLabel>
                 <TextField
                   id='adjust_end_time'
                   type='datetime-local'
@@ -409,7 +389,7 @@ const ProductionSchedulePage: React.FC = () => {
                 />
               </Box>
               <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-                <InputLabel htmlFor='adjust_workstation'>工位ID</InputLabel>
+                <InputLabel htmlFor='adjust_workstation'>{i18n.t('mes.production_schedule_page.id_14')}</InputLabel>
                 <TextField
                   id='adjust_workstation'
                   size='small'
@@ -420,7 +400,7 @@ const ProductionSchedulePage: React.FC = () => {
                 />
               </Box>
               <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-                <InputLabel htmlFor='adjust_reason'>调整原因</InputLabel>
+                <InputLabel htmlFor='adjust_reason'>{i18n.t('mes.production_schedule_page.k15')}</InputLabel>
                 <TextField
                   id='adjust_reason'
                   size='small'
@@ -437,14 +417,14 @@ const ProductionSchedulePage: React.FC = () => {
                 variant='outlined'
                 onClick={() => setShowAdjustDialog(false)}
               >
-                取消
+                {i18n.t('pages.production_schedule_page.k7')}
               </Button>
               <Button
                 type='submit'
                 variant='contained'
                 disabled={adjustMutation.isPending}
               >
-                {adjustMutation.isPending ? '调整中...' : '确认调整'}
+                {adjustMutation.isPending ? i18n.t('pages.production_schedule_page.k0') : i18n.t('mes.production_schedule_page.k16')}
               </Button>
             </DialogActions>
           </form>
@@ -453,5 +433,4 @@ const ProductionSchedulePage: React.FC = () => {
     </PageContainer>
   );
 };
-
 export default ProductionSchedulePage;

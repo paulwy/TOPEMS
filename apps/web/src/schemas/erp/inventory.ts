@@ -19,14 +19,14 @@ function renderStockStatusCell(row: Record<string, unknown>) {
   const quantity = Number(row.quantity) || 0;
   const safetyStock = Number(row.safety_stock) || 0;
 
-  let label = '正常';
+  let label = i18n.t('shared.inventory.k0');
   let color: 'success' | 'warning' | 'error' | 'default' = 'success';
 
   if (quantity <= 0) {
-    label = '缺货';
+    label = i18n.t('shared.inventory.k1');
     color = 'error';
   } else if (safetyStock > 0 && quantity < safetyStock) {
-    label = '低于安全库存';
+    label = i18n.t('shared.inventory.k2');
     color = 'warning';
   }
 
@@ -100,15 +100,15 @@ export const inventorySchema: EntitySchema = {
         type: 'static',
         options: [
           {
-            value: '原材料仓库',
+            value: i18n.t('shared.inventory.k3'),
             label: i18n.t('schema:erp.inventory.warehouse_name.option.原材料仓库'),
           },
           {
-            value: '成品仓库',
+            value: i18n.t('shared.inventory.k4'),
             label: i18n.t('schema:erp.inventory.warehouse_name.option.成品仓库'),
           },
           {
-            value: '半成品仓库',
+            value: i18n.t('shared.inventory.k5'),
             label: i18n.t('schema:erp.inventory.warehouse_name.option.半成品仓库'),
           },
         ],

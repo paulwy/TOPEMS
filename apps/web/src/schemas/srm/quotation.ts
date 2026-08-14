@@ -3,31 +3,32 @@ import type { EntitySchema } from '@/schema';
 import { columnsFromFields } from '@/schema/schemaExtensions';
 import type { NestedTableConfig } from '@/schema/schemaExtensions';
 import type { SchemaField } from '@/schema/types';
+import i18n from '@/i18n';
 
 const quotationItemFields: SchemaField[] = [
   {
     name: 'sku',
-    label: '产品编码',
+    label: i18n.t('srm.quotation.k0'),
     type: 'text',
     required: true,
     listWidth: 120,
   },
   {
     name: 'material_name',
-    label: '物料名称',
+    label: i18n.t('srm.quotation.k1'),
     type: 'text',
     required: true,
     listWidth: 160,
   },
   {
     name: 'specification',
-    label: '规格型号',
+    label: i18n.t('srm.quotation.k2'),
     type: 'text',
     listWidth: 140,
   },
   {
     name: 'quantity',
-    label: '数量',
+    label: i18n.t('srm.quotation.k3'),
     type: 'number',
     required: true,
     defaultValue: 1,
@@ -35,7 +36,7 @@ const quotationItemFields: SchemaField[] = [
   },
   {
     name: 'unit_price',
-    label: '单价',
+    label: i18n.t('srm.quotation.k4'),
     type: 'number',
     required: true,
     defaultValue: 0,
@@ -47,7 +48,7 @@ const quotationItemFields: SchemaField[] = [
   },
   {
     name: 'subtotal',
-    label: '小计',
+    label: i18n.t('srm.quotation.k5'),
     type: 'number',
     defaultValue: 0,
     listWidth: 100,
@@ -58,7 +59,7 @@ const quotationItemFields: SchemaField[] = [
   },
   {
     name: 'delivery_time',
-    label: '交付时间',
+    label: i18n.t('srm.quotation.k6'),
     type: 'text',
     listWidth: 120,
   },
@@ -66,14 +67,14 @@ const quotationItemFields: SchemaField[] = [
 
 const quotationItemNestedTable: NestedTableConfig = {
   field: 'items',
-  title: '报价明细',
+  title: i18n.t('srm.quotation.k7'),
   columns: columnsFromFields(quotationItemFields),
   fields: quotationItemFields,
   allowAdd: true,
   allowEdit: true,
   allowDelete: true,
   allowDuplicate: true,
-  addButtonText: '新增明细行',
+  addButtonText: i18n.t('srm.quotation.k8'),
   rowKeyField: 'id',
   minRows: 0,
   formColCount: 2,
@@ -83,8 +84,8 @@ const quotationItemNestedTable: NestedTableConfig = {
 
 export const quotationSchema: EntitySchema & { nestedTables: NestedTableConfig[] } = {
   entity: 'quotation',
-  title: '报价单管理',
-  description: '管理供应商报价单，包括报价明细、金额、交付时间等信息',
+  title: i18n.t('srm.quotation.k9'),
+  description: i18n.t('srm.quotation.k10'),
 
   api: {
     module: 'srm',
@@ -99,7 +100,7 @@ export const quotationSchema: EntitySchema & { nestedTables: NestedTableConfig[]
   fields: [
     {
       name: 'quotation_no',
-      label: '报价单号',
+      label: i18n.t('srm.quotation.k11'),
       type: 'text',
       required: true,
       readonlyOnEdit: true,
@@ -108,20 +109,20 @@ export const quotationSchema: EntitySchema & { nestedTables: NestedTableConfig[]
     },
     {
       name: 'supplier_id',
-      label: '供应商',
+      label: i18n.t('srm.quotation.k12'),
       type: 'text',
       required: true,
       listWidth: 140,
     },
     {
       name: 'title',
-      label: '报价标题',
+      label: i18n.t('srm.quotation.k13'),
       type: 'text',
       listWidth: 180,
     },
     {
       name: 'total_amount',
-      label: '报价总额',
+      label: i18n.t('srm.quotation.k14'),
       type: 'number',
       defaultValue: 0,
       sortable: true,
@@ -139,15 +140,15 @@ export const quotationSchema: EntitySchema & { nestedTables: NestedTableConfig[]
     },
     {
       name: 'currency',
-      label: '币种',
+      label: i18n.t('srm.quotation.k15'),
       type: 'select',
       defaultValue: 'CNY',
       options: {
         type: 'static',
         options: [
-          { value: 'CNY', label: '人民币 (CNY)' },
-          { value: 'USD', label: '美元 (USD)' },
-          { value: 'EUR', label: '欧元 (EUR)' },
+          { value: 'CNY', label: i18n.t('srm.quotation.cny_16') },
+          { value: 'USD', label: i18n.t('srm.quotation.usd_17') },
+          { value: 'EUR', label: i18n.t('srm.quotation.eur_18') },
         ],
       },
       listWidth: 90,
@@ -155,42 +156,42 @@ export const quotationSchema: EntitySchema & { nestedTables: NestedTableConfig[]
     },
     {
       name: 'status',
-      label: '状态',
+      label: i18n.t('srm.quotation.k19'),
       type: 'select',
       defaultValue: 'draft',
       options: {
         type: 'static',
         options: [
-          { value: 'draft', label: '草稿' },
-          { value: 'submitted', label: '已提交' },
-          { value: 'accepted', label: '已接受' },
-          { value: 'rejected', label: '已拒绝' },
-          { value: 'awarded', label: '已中标' },
+          { value: 'draft', label: i18n.t('srm.quotation.k20') },
+          { value: 'submitted', label: i18n.t('srm.quotation.k21') },
+          { value: 'accepted', label: i18n.t('srm.quotation.k22') },
+          { value: 'rejected', label: i18n.t('srm.quotation.k23') },
+          { value: 'awarded', label: i18n.t('srm.quotation.k24') },
         ],
       },
       listWidth: 100,
     },
     {
       name: 'valid_until',
-      label: '有效期至',
+      label: i18n.t('srm.quotation.k25'),
       type: 'date',
       listWidth: 120,
     },
     {
       name: 'delivery_time',
-      label: '交付周期',
+      label: i18n.t('srm.quotation.k26'),
       type: 'text',
       listWidth: 120,
     },
     {
       name: 'payment_terms',
-      label: '付款条款',
+      label: i18n.t('srm.quotation.k27'),
       type: 'text',
       showInList: false,
     },
     {
       name: 'remarks',
-      label: '备注',
+      label: i18n.t('srm.quotation.k28'),
       type: 'textarea',
       showInList: false,
     },
@@ -210,36 +211,36 @@ export const quotationSchema: EntitySchema & { nestedTables: NestedTableConfig[]
         awarded: 'success',
       },
       labelMap: {
-        draft: '草稿',
-        submitted: '已提交',
-        accepted: '已接受',
-        rejected: '已拒绝',
-        awarded: '已中标',
+        draft: i18n.t('srm.quotation.k29'),
+        submitted: i18n.t('srm.quotation.k30'),
+        accepted: i18n.t('srm.quotation.k31'),
+        rejected: i18n.t('srm.quotation.k32'),
+        awarded: i18n.t('srm.quotation.k33'),
       },
     },
     filters: [
       {
         id: 'status',
-        label: '状态',
+        label: i18n.t('srm.quotation.k34'),
         type: 'select',
         options: [
-          { label: '全部状态', value: 'all' },
-          { label: '草稿', value: 'draft' },
-          { label: '已提交', value: 'submitted' },
-          { label: '已接受', value: 'accepted' },
-          { label: '已拒绝', value: 'rejected' },
-          { label: '已中标', value: 'awarded' },
+          { label: i18n.t('srm.quotation.k35'), value: 'all' },
+          { label: i18n.t('srm.quotation.k36'), value: 'draft' },
+          { label: i18n.t('srm.quotation.k37'), value: 'submitted' },
+          { label: i18n.t('srm.quotation.k38'), value: 'accepted' },
+          { label: i18n.t('srm.quotation.k39'), value: 'rejected' },
+          { label: i18n.t('srm.quotation.k40'), value: 'awarded' },
         ],
       },
       {
         id: 'currency',
-        label: '币种',
+        label: i18n.t('srm.quotation.k41'),
         type: 'select',
         options: [
-          { label: '全部币种', value: 'all' },
-          { label: '人民币', value: 'CNY' },
-          { label: '美元', value: 'USD' },
-          { label: '欧元', value: 'EUR' },
+          { label: i18n.t('srm.quotation.k42'), value: 'all' },
+          { label: i18n.t('srm.quotation.k43'), value: 'CNY' },
+          { label: i18n.t('srm.quotation.k44'), value: 'USD' },
+          { label: i18n.t('srm.quotation.k45'), value: 'EUR' },
         ],
       },
     ],
@@ -249,23 +250,23 @@ export const quotationSchema: EntitySchema & { nestedTables: NestedTableConfig[]
 
   formSections: [
     {
-      title: '基本信息',
+      title: i18n.t('srm.quotation.k46'),
       fields: ['quotation_no', 'supplier_id', 'title', 'status'],
     },
     {
-      title: '金额与交付',
+      title: i18n.t('srm.quotation.k47'),
       fields: ['total_amount', 'currency', 'valid_until', 'delivery_time'],
     },
     {
-      title: '付款与备注',
+      title: i18n.t('srm.quotation.k48'),
       fields: ['payment_terms', 'remarks'],
     },
   ],
 
   formColCount: 2,
-  createTitle: '新增报价单',
-  editTitle: '编辑报价单',
-  detailTitle: '报价单详情',
+  createTitle: i18n.t('srm.quotation.k49'),
+  editTitle: i18n.t('srm.quotation.k50'),
+  detailTitle: i18n.t('srm.quotation.k51'),
 
   nestedTables: [quotationItemNestedTable],
 };

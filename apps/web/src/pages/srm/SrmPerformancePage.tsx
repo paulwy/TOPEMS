@@ -11,6 +11,7 @@ import { designTokens } from '@/theme/tokens';
 
 
 import { QUERY_KEYS } from '@/lib/reactQuery';
+import i18n from '@/i18n';
 
 const ct= designTokens.colors;
 
@@ -60,13 +61,13 @@ const performanceApiAdapter: CrudApiAdapter = {
     return { data: data as unknown as Record<string, unknown>[], total };
   },
   create: async () => {
-    throw new Error('绩效数据不可创建');
+    throw new Error(i18n.t('pages.srm_performance_page.k0'));
   },
   update: async () => {
-    throw new Error('绩效数据不可更新');
+    throw new Error(i18n.t('pages.srm_performance_page.k1'));
   },
   delete: async () => {
-    throw new Error('绩效数据不可删除');
+    throw new Error(i18n.t('pages.srm_performance_page.k2'));
   },
 };
 
@@ -80,16 +81,16 @@ const getScoreColor = (score?: number): 'success' | 'warning' | 'error' | 'defau
 const customColumns: ColumnDef[] = [
   {
     id: 'total_amount',
-    label: '订单金额',
+    label: i18n.t('pages.srm_performance_page.k3'),
     width: 120,
     render: (row) => {
       const r = row as unknown as SupplierPerformance;
-      return `${(r.total_amount / 10000).toFixed(2)}万`;
+      return `${(r.total_amount / 10000).toFixed(2)}${i18n.t('pages.srm_performance_page.k0')}`;
     },
   },
   {
     id: 'avg_overall_score',
-    label: '综合评分',
+    label: i18n.t('pages.srm_performance_page.k4'),
     width: 180,
     sortable: true,
     render: (row) => {
@@ -114,7 +115,7 @@ const customColumns: ColumnDef[] = [
   },
   {
     id: 'avg_quality_score',
-    label: '质量评分',
+    label: i18n.t('pages.srm_performance_page.k5'),
     width: 100,
     sortable: true,
     render: (row) => {
@@ -130,7 +131,7 @@ const customColumns: ColumnDef[] = [
   },
   {
     id: 'avg_delivery_score',
-    label: '交付评分',
+    label: i18n.t('pages.srm_performance_page.k6'),
     width: 100,
     sortable: true,
     render: (row) => {
@@ -146,7 +147,7 @@ const customColumns: ColumnDef[] = [
   },
   {
     id: 'on_time_delivery_rate',
-    label: '准时交付率',
+    label: i18n.t('pages.srm_performance_page.k7'),
     width: 140,
     sortable: true,
     render: (row) => {
@@ -173,7 +174,7 @@ const customColumns: ColumnDef[] = [
   },
   {
     id: 'defect_rate',
-    label: '缺陷率',
+    label: i18n.t('pages.srm_performance_page.k8'),
     width: 120,
     sortable: true,
     render: (row) => {
@@ -217,28 +218,28 @@ const PerformanceStats: React.FC = () => {
 
   const statCards = [
     {
-      label: '供应商总数',
+      label: i18n.t('pages.srm_performance_page.k9'),
       value: summary.total_suppliers,
       icon: <BarChart3 sx={{ width: 20, height: 20 }} />,
       color: 'primary.dark',
       bgColor: 'primary.lighter',
     },
     {
-      label: '已评估供应商',
+      label: i18n.t('pages.srm_performance_page.k10'),
       value: summary.evaluated_suppliers,
       icon: <Target sx={{ width: 20, height: 20 }} />,
       color: 'info.dark',
       bgColor: 'info.lighter',
     },
     {
-      label: '评估覆盖率',
+      label: i18n.t('pages.srm_performance_page.k11'),
       value: `${(summary.evaluation_rate * 100).toFixed(1)}%`,
       icon: <TrendingUp sx={{ width: 20, height: 20 }} />,
       color: 'success.dark',
       bgColor: 'success.lighter',
     },
     {
-      label: '平均综合评分',
+      label: i18n.t('pages.srm_performance_page.k12'),
       value: summary.avg_overall_score?.toFixed(1) || '-',
       icon: <Award sx={{ width: 20, height: 20 }} />,
       color:
@@ -262,7 +263,7 @@ const PerformanceStats: React.FC = () => {
         variant='h6'
         sx={{ mb: 2, fontWeight: 'bold' }}
       >
-        绩效概览
+        {i18n.t('pages.srm_performance_page.k0')}
       </Typography>
       <Box
         sx={{
@@ -321,7 +322,7 @@ const PerformanceStats: React.FC = () => {
                   variant='body2'
                   sx={{ color: 'text.secondary' }}
                 >
-                  最佳供应商
+                  {i18n.t('pages.srm_performance_page.k1')}
                 </Typography>
                 <Typography
                   variant='h6'
@@ -330,7 +331,7 @@ const PerformanceStats: React.FC = () => {
                   {summary.top_supplier.name}
                   <Chip
                     sx={{ ml: 2 }}
-                    label={`${summary.top_supplier.avg_score.toFixed(1)}分`}
+                    label={`${summary.top_supplier.avg_score.toFixed(1)}${i18n.t('pages.srm_performance_page.k1')}`}
                     color='success'
                     size='small'
                   />
@@ -351,7 +352,7 @@ const SrmPerformancePage: React.FC = () => {
       schema={performanceSchema}
       apiAdapter={performanceApiAdapter}
       customColumns={customColumns}
-      breadcrumbs={[{ label: 'SRM' }, { label: '供应商绩效' }]}
+      breadcrumbs={[{ label: 'SRM' }, { label: i18n.t('pages.srm_performance_page.k13') }]}
       headerContent={<PerformanceStats />}
     />
   );

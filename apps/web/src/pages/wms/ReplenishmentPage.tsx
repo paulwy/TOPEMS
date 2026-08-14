@@ -14,6 +14,7 @@ import type {
   ReplenishmentOrder,
   CreateReplenishmentOrderRequest,
 } from '@/api/wms';
+import i18n from '@/i18n';
 import { WMS_PATHS } from '@/modules/wms/config';
 import { replenishmentSchema } from '@/schemas/wms/replenishment';
 import { suggestionSchema } from '@/schemas/wms/suggestion';
@@ -161,8 +162,8 @@ const ReplenishmentPage: React.FC = () => {
         }
         addNotification({
           type: 'success',
-          title: t('common.update', '更新成功'),
-          message: '补货单已更新',
+          title: t('common.update', i18n.t('pages.replenishment_page.k0')),
+          message: i18n.t('pages.replenishment_page.k0'),
         });
         return response.data;
       },
@@ -187,7 +188,7 @@ const ReplenishmentPage: React.FC = () => {
       addNotification({
         type: 'success',
         title: t('wms.replenishment_page.success'),
-        message: `已生成 ${response.data?.count || 0} 条补货建议`,
+        message: `${i18n.t('pages.replenishment_page.k1')}${response.data?.count || 0}${i18n.t('pages.replenishment_page.k2')}`,
       });
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.CRUD_WMS_REPLENISHMENT_SUGGESTION_BASE ,
   exact: false,
@@ -252,7 +253,7 @@ const ReplenishmentPage: React.FC = () => {
             supplier_name: suggestion.supplier_name,
             expected_date: '',
             priority: suggestion.priority,
-            remarks: `根据建议 ${suggestion.suggestion_number} 创建`,
+            remarks: `${i18n.t('pages.replenishment_page.k3')}${suggestion.suggestion_number}${i18n.t('pages.replenishment_page.k4')}`,
             items: [
               {
                 sku: suggestion.sku,
@@ -299,13 +300,13 @@ const ReplenishmentPage: React.FC = () => {
         };
       },
       create: async () => {
-        throw new Error('补货建议不支持直接创建，请通过生成功能创建');
+        throw new Error(i18n.t('pages.replenishment_page.k1'));
       },
       update: async () => {
-        throw new Error('补货建议不支持修改');
+        throw new Error(i18n.t('pages.replenishment_page.k2'));
       },
       delete: async () => {
-        throw new Error('补货建议不支持删除');
+        throw new Error(i18n.t('pages.replenishment_page.k3'));
       },
     }),
     []
@@ -325,7 +326,7 @@ const ReplenishmentPage: React.FC = () => {
           variant='body2'
           sx={{ color: 'text.secondary' }}
         >
-          建议总数
+          {i18n.t('pages.replenishment_page.k0')}
         </Typography>
         <Typography
           variant='h5'
@@ -348,7 +349,7 @@ const ReplenishmentPage: React.FC = () => {
             variant='body2'
             sx={{ color: 'text.secondary' }}
           >
-            待处理建议
+            {i18n.t('pages.replenishment_page.k1')}
           </Typography>
         </Stack>
         <Typography
@@ -363,7 +364,7 @@ const ReplenishmentPage: React.FC = () => {
           variant='body2'
           sx={{ color: 'text.secondary' }}
         >
-          补货单总数
+          {i18n.t('pages.replenishment_page.k2')}
         </Typography>
         <Typography
           variant='h5'
@@ -377,7 +378,7 @@ const ReplenishmentPage: React.FC = () => {
           variant='body2'
           sx={{ color: 'text.secondary' }}
         >
-          已完成
+          {i18n.t('pages.replenishment_page.k3')}
         </Typography>
         <Typography
           variant='h5'
@@ -397,7 +398,7 @@ const ReplenishmentPage: React.FC = () => {
         onClick={() => generateSuggestionsMutation.mutateAsync()}
         disabled={generateSuggestionsMutation.isPending}
       >
-        生成补货建议
+        {i18n.t('pages.replenishment_page.k4')}
       </Button>
     </Box>
   );
@@ -421,14 +422,14 @@ const ReplenishmentPage: React.FC = () => {
             onClick={() => setActiveTab('suggestions')}
             startIcon={<AlertTriangle size={16} />}
           >
-            补货建议
+            {i18n.t('pages.replenishment_page.k5')}
           </Button>
           <Button
             variant={activeTab === 'orders' ? 'contained' : 'text'}
             onClick={() => setActiveTab('orders')}
             startIcon={<ShoppingCart size={16} />}
           >
-            补货单
+            {i18n.t('pages.replenishment_page.k6')}
           </Button>
         </Stack>
       </Box>
@@ -448,7 +449,7 @@ const ReplenishmentPage: React.FC = () => {
               label: t('wms.replenishment_page.breadcrumb_current'),
               href: WMS_PATHS.replenishment,
             },
-            { label: '补货建议' },
+            { label: i18n.t('pages.replenishment_page.k4') },
           ]}
           idField='id'
         />
@@ -464,7 +465,7 @@ const ReplenishmentPage: React.FC = () => {
               label: t('wms.replenishment_page.breadcrumb_current'),
               href: WMS_PATHS.replenishment,
             },
-            { label: '补货单' },
+            { label: i18n.t('pages.replenishment_page.k5') },
           ]}
           idField='id'
         />

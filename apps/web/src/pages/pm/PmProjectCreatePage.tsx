@@ -10,36 +10,31 @@ import { pmApi } from '@/api/pm';
 import { useNotification } from '@/hooks/useNotification';
 import { logger } from '@/utils/logger';
 import { PM_PATHS } from '@/modules/pm/config';
-
 import { QUERY_KEYS } from '@/lib/reactQuery';
-
+import i18n from '@/i18n';
 const projectSchema = z.object({
-  name: z.string().min(1, '项目名称不能为空'),
-  code: z.string().min(1, '项目编号不能为空'),
+  name: z.string().min(1, i18n.t('pm.pm_project_create_page.k0')),
+  code: z.string().min(1, i18n.t('pm.pm_project_create_page.k1')),
   project_type: z.enum(['RESEARCH', 'PRODUCTION', 'CONSTRUCTION', 'DESIGN', 'SERVICE']),
   description: z.string().optional(),
-  budget: z.string().refine((val) => !val || parseFloat(val) >= 0, '预算金额必须为非负数'),
+  budget: z.string().refine((val) => !val || parseFloat(val) >= 0, i18n.t('pm.pm_project_create_page.k2')),
   leader: z.string().optional(),
-  start_date: z.string().min(1, '开始日期不能为空'),
-  end_date: z.string().min(1, '结束日期不能为空'),
+  start_date: z.string().min(1, i18n.t('pm.pm_project_create_page.k3')),
+  end_date: z.string().min(1, i18n.t('pm.pm_project_create_page.k4')),
   tags: z.string().optional(),
 });
-
 type ProjectFormData = z.infer<typeof projectSchema>;
-
 const PROJECT_TYPES = [
-  { value: 'RESEARCH', label: '科研项目', description: '实验驱动、创新研究、专利申请' },
-  { value: 'PRODUCTION', label: '生产项目', description: '标准化生产、质量控制、量产' },
-  { value: 'CONSTRUCTION', label: '施工项目', description: '资源密集、周期长、工程建设' },
-  { value: 'DESIGN', label: '设计项目', description: '迭代设计、版本管理、产品设计' },
-  { value: 'SERVICE', label: '服务项目', description: '客户导向、灵活交付、咨询服务' },
+  { value: 'RESEARCH', label: i18n.t('pm.pm_project_create_page.k6'), description: i18n.t('pm.pm_project_create_page.k5') },
+  { value: 'PRODUCTION', label: i18n.t('pm.pm_project_create_page.k8'), description: i18n.t('pm.pm_project_create_page.k7') },
+  { value: 'CONSTRUCTION', label: i18n.t('pm.pm_project_create_page.k10'), description: i18n.t('pm.pm_project_create_page.k9') },
+  { value: 'DESIGN', label: i18n.t('pm.pm_project_create_page.k12'), description: i18n.t('pm.pm_project_create_page.k11') },
+  { value: 'SERVICE', label: i18n.t('pm.pm_project_create_page.k14'), description: i18n.t('pm.pm_project_create_page.k13') },
 ];
-
 const PmProjectCreatePage: React.FC = () => {
   const navigate = useNavigate();
   const { success, error } = useNotification();
   const queryClient = useQueryClient();
-
   const createMutation = useMutation({
     mutationFn: async (data: ProjectFormData) => {
       return pmApi.projects.create({
@@ -60,54 +55,51 @@ const PmProjectCreatePage: React.FC = () => {
   refetchType: 'active',
 });
       if (response.code === 200 || response.code === 201) {
-        success('项目创建成功');
+        success(i18n.t('pm.pm_project_create_page.k15'));
         navigate(`${PM_PATHS.projects}/${response.data?.id}`);
       } else {
-        error(response.message || '创建失败');
+        error(response.message || i18n.t('pm.pm_project_create_page.k16'));
       }
     },
     onError: (err: unknown) => {
       logger.error('Failed to create project:', err);
-      error('创建项目失败');
+      error(i18n.t('pm.pm_project_create_page.k17'));
     },
   });
-
   const handleSubmit = useCallback(
     (data: unknown) => {
       createMutation.mutate(data as ProjectFormData);
     },
     [createMutation]
   );
-
   const handleCancel = () => {
     navigate(PM_PATHS.projects);
   };
-
   const sections: FormSection[] = [
     {
       id: 'basic',
-      title: '基本信息',
-      description: '项目基本信息',
+      title: i18n.t('pm.pm_project_create_page.k18'),
+      description: i18n.t('pm.pm_project_create_page.k19'),
       icon: <FolderOpen style={{ width: 18, height: 18 }} />,
       collapsible: false,
       fields: [
         {
           name: 'name',
-          label: '项目名称',
+          label: i18n.t('pm.pm_project_create_page.k20'),
           type: 'text',
           required: true,
-          placeholder: '请输入项目名称',
+          placeholder: i18n.t('pm.pm_project_create_page.k21'),
         },
         {
           name: 'code',
-          label: '项目编号',
+          label: i18n.t('pm.pm_project_create_page.k22'),
           type: 'text',
           required: true,
-          placeholder: '请输入项目编号',
+          placeholder: i18n.t('pm.pm_project_create_page.k23'),
         },
         {
           name: 'project_type',
-          label: '项目类型',
+          label: i18n.t('pm.pm_project_create_page.k24'),
           type: 'select',
           required: true,
           options: PROJECT_TYPES.map((type) => ({
@@ -120,109 +112,107 @@ const PmProjectCreatePage: React.FC = () => {
     },
     {
       id: 'description',
-      title: '项目描述',
-      description: '项目详细描述',
+      title: i18n.t('pm.pm_project_create_page.k25'),
+      description: i18n.t('pm.pm_project_create_page.k26'),
       icon: <FileText style={{ width: 18, height: 18 }} />,
       collapsible: false,
       fields: [
         {
           name: 'description',
-          label: '描述',
+          label: i18n.t('pm.pm_project_create_page.k27'),
           type: 'textarea',
           rows: 3,
-          placeholder: '请输入项目描述...',
+          placeholder: i18n.t('pages.pm_project_create_page.k0'),
         },
       ],
     },
     {
       id: 'budget',
-      title: '预算与负责人',
-      description: '项目预算和负责人信息',
+      title: i18n.t('pm.pm_project_create_page.k28'),
+      description: i18n.t('pm.pm_project_create_page.k29'),
       icon: <DollarSign style={{ width: 18, height: 18 }} />,
       collapsible: false,
       fields: [
         {
           name: 'budget',
-          label: '项目预算',
+          label: i18n.t('pm.pm_project_create_page.k30'),
           type: 'number',
           required: true,
-          placeholder: '请输入预算金额',
+          placeholder: i18n.t('pm.pm_project_create_page.k31'),
         },
         {
           name: 'leader',
-          label: '项目负责人',
+          label: i18n.t('pm.pm_project_create_page.k32'),
           type: 'text',
-          placeholder: '请输入负责人姓名',
+          placeholder: i18n.t('pm.pm_project_create_page.k33'),
         },
       ],
     },
     {
       id: 'dates',
-      title: '时间安排',
-      description: '项目开始和结束时间',
+      title: i18n.t('pm.pm_project_create_page.k34'),
+      description: i18n.t('pm.pm_project_create_page.k35'),
       icon: <Calendar style={{ width: 18, height: 18 }} />,
       collapsible: false,
       fields: [
         {
           name: 'start_date',
-          label: '开始日期',
+          label: i18n.t('pm.pm_project_create_page.k36'),
           type: 'date',
           required: true,
-          placeholder: '请选择开始日期',
+          placeholder: i18n.t('pm.pm_project_create_page.k37'),
         },
         {
           name: 'end_date',
-          label: '结束日期',
+          label: i18n.t('pm.pm_project_create_page.k38'),
           type: 'date',
           required: true,
-          placeholder: '请选择结束日期',
+          placeholder: i18n.t('pm.pm_project_create_page.k39'),
         },
       ],
     },
     {
       id: 'tags',
-      title: '标签',
-      description: '项目标签',
+      title: i18n.t('pm.pm_project_create_page.k40'),
+      description: i18n.t('pm.pm_project_create_page.k41'),
       icon: <Tag style={{ width: 18, height: 18 }} />,
       collapsible: false,
       fields: [
         {
           name: 'tags',
-          label: '标签',
+          label: i18n.t('pm.pm_project_create_page.k42'),
           type: 'text',
-          placeholder: '多个标签用逗号分隔',
+          placeholder: i18n.t('pm.pm_project_create_page.k43'),
         },
       ],
     },
   ];
-
   return (
     <PageContainer
-      title='创建项目'
-      subtitle='填写项目基本信息'
+      title={i18n.t('pm.pm_project_create_page.k44')}
+      subtitle={i18n.t('pm.pm_project_create_page.k45')}
     >
       <FormPageTemplate
         title=''
         subtitle=''
         backHref={PM_PATHS.projects}
         breadcrumbs={[
-          { label: '首页', href: '/dashboard' },
-          { label: '项目管理', href: PM_PATHS.root },
-          { label: '项目列表', href: PM_PATHS.projects },
-          { label: '创建项目' },
+          { label: i18n.t('pm.pm_project_create_page.k46'), href: '/dashboard' },
+          { label: i18n.t('pm.pm_project_create_page.k47'), href: PM_PATHS.root },
+          { label: i18n.t('pm.pm_project_create_page.k48'), href: PM_PATHS.projects },
+          { label: i18n.t('pm.pm_project_create_page.k49') },
         ]}
         sections={sections}
         schema={projectSchema}
         submitting={createMutation.isPending}
         onSubmit={handleSubmit}
         onCancel={handleCancel}
-        submitText='保存项目'
-        cancelText='取消'
+        submitText={i18n.t('pm.pm_project_create_page.k50')}
+        cancelText={i18n.t('pm.pm_project_create_page.k51')}
         columns={2}
         stickyFooter={true}
       />
     </PageContainer>
   );
 };
-
 export default PmProjectCreatePage;

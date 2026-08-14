@@ -1,4 +1,5 @@
 import React from 'react';
+import i18n from '@/i18n';
 import {
   Dialog,
   DialogTitle,
@@ -20,9 +21,6 @@ import {
   FormControlLabel,
 } from '@mui/material';
 import { X, Upload, FileText } from 'lucide-react';
-
-import { useTranslation } from 'react-i18next';
-
 interface ImportModalProps {
   open: boolean;
   importFile: File | null;
@@ -33,7 +31,6 @@ interface ImportModalProps {
   onConfirmChange: (checked: boolean) => void;
   onImport: () => void;
 }
-
 export const ImportModal: React.FC<ImportModalProps> = ({
   open,
   importFile,
@@ -44,7 +41,6 @@ export const ImportModal: React.FC<ImportModalProps> = ({
   onConfirmChange,
   onImport,
 }) => {
-  const { t } = useTranslation();
   return (
     <Dialog
       open={open}
@@ -62,12 +58,12 @@ export const ImportModal: React.FC<ImportModalProps> = ({
             variant='h6'
             sx={{ fontWeight: 600 }}
           >
-            导入数据
+            {i18n.t('pages.import_modal.k0')}
           </Typography>
           <IconButton
             onClick={onClose}
             size='small'
-            aria-label='关闭'
+            aria-label={i18n.t('bi.import_modal.k0')}
           >
             <X size={20} />
           </IconButton>
@@ -83,7 +79,7 @@ export const ImportModal: React.FC<ImportModalProps> = ({
               variant='body2'
               sx={{ fontWeight: 500, mb: 1 }}
             >
-              选择CSV文件
+              {i18n.t('pages.import_modal.csv_1')}
             </Typography>
             <Box
               sx={{
@@ -111,13 +107,13 @@ export const ImportModal: React.FC<ImportModalProps> = ({
                 color='text.disabled'
                 style={{ marginBottom: 8 }}
               />
-              <Typography color='text.secondary'>点击或拖拽文件到此处</Typography>
+              <Typography color='text.secondary'>{i18n.t('bi.import_modal.k1')}</Typography>
               <Typography
                 variant='caption'
                 color='text.disabled'
                 sx={{ mt: 1 }}
               >
-                支持CSV格式文件
+                {i18n.t('pages.import_modal.csv_2')}
               </Typography>
             </Box>
           </Box>
@@ -154,7 +150,7 @@ export const ImportModal: React.FC<ImportModalProps> = ({
                 <IconButton
                   size='small'
                   onClick={onClose}
-                  aria-label='关闭'
+                  aria-label={i18n.t('bi.import_modal.k2')}
                 >
                   <X size={20} />
                 </IconButton>
@@ -167,7 +163,7 @@ export const ImportModal: React.FC<ImportModalProps> = ({
                 variant='body2'
                 sx={{ fontWeight: 500, mb: 1 }}
               >
-                文件预览（前10行）
+                {i18n.t('pages.import_modal.10_3')}
               </Typography>
               <TableContainer
                 component={Paper}
@@ -212,7 +208,7 @@ export const ImportModal: React.FC<ImportModalProps> = ({
                     onChange={(e) => onConfirmChange(e.target.checked)}
                   />
                 }
-                label={t('bi.gis_page_components__import_modal.import')}
+                label={i18n.t('bi.gis_page_components__import_modal.import')}
               />
             </Box>
           )}
@@ -223,7 +219,7 @@ export const ImportModal: React.FC<ImportModalProps> = ({
           onClick={onClose}
           variant='outlined'
         >
-          取消
+          {i18n.t('pages.import_modal.k4')}
         </Button>
         <Button
           onClick={onImport}
@@ -231,7 +227,7 @@ export const ImportModal: React.FC<ImportModalProps> = ({
           color='success'
           disabled={!importFile || !importConfirm}
         >
-          确认导入
+          {i18n.t('pages.import_modal.k5')}
         </Button>
       </DialogActions>
     </Dialog>

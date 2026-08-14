@@ -13,6 +13,7 @@ import {
   Skeleton,
   useTheme,
 } from '@mui/material';
+import i18n from '@/i18n';
 import {
   Calendar,
   Filter,
@@ -131,20 +132,20 @@ export const TimelinePageTemplate: React.FC<TimelinePageTemplateProps> = ({
   filters,
   onFilterChange,
   timeRanges = [
-    { id: 'today', label: '今天', start: new Date(), end: new Date() },
+    { id: 'today', label: i18n.t('components.timeline_page_template.k0'), start: new Date(), end: new Date() },
     {
       id: 'week',
-      label: '本周',
+      label: i18n.t('components.timeline_page_template.k1'),
       start: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000),
       end: new Date(),
     },
     {
       id: 'month',
-      label: '本月',
+      label: i18n.t('components.timeline_page_template.k2'),
       start: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000),
       end: new Date(),
     },
-    { id: 'all', label: '全部', start: new Date(0), end: new Date() },
+    { id: 'all', label: i18n.t('components.timeline_page_template.k3'), start: new Date(0), end: new Date() },
   ],
   selectedTimeRange = 'week',
   onTimeRangeChange,
@@ -260,7 +261,7 @@ export const TimelinePageTemplate: React.FC<TimelinePageTemplateProps> = ({
               type='text'
               value={searchInput}
               onChange={handleSearch}
-              placeholder='搜索时间线...'
+              placeholder={i18n.t('components.timeline_page_template.k0')}
               style={
                 {
                   width: '100%',
@@ -292,20 +293,20 @@ export const TimelinePageTemplate: React.FC<TimelinePageTemplateProps> = ({
         )}
 
         {showFilter && (
-          <Tooltip title='筛选'>
+          <Tooltip title={i18n.t('components.timeline_page_template.k4')}>
             <IconButton
               size='small'
-              aria-label='筛选'
+              aria-label={i18n.t('components.timeline_page_template.k5')}
             >
               <Filter style={{ width: 18, height: 18 }} />
             </IconButton>
           </Tooltip>
         )}
 
-        <Tooltip title='刷新'>
+        <Tooltip title={i18n.t('components.timeline_page_template.k6')}>
           <IconButton
             size='small'
-            aria-label='刷新'
+            aria-label={i18n.t('components.timeline_page_template.k7')}
           >
             <RefreshCw style={{ width: 18, height: 18 }} />
           </IconButton>
@@ -500,7 +501,7 @@ export const TimelinePageTemplate: React.FC<TimelinePageTemplateProps> = ({
                     e.stopPropagation();
                     toggleGroup(node.id);
                   }}
-                  aria-label='展开'
+                  aria-label={i18n.t('components.timeline_page_template.k8')}
                 >
                   {isExpanded ? (
                     <ChevronUp style={{ width: 16, height: 16 }} />
@@ -576,7 +577,7 @@ export const TimelinePageTemplate: React.FC<TimelinePageTemplateProps> = ({
           {group.collapsible && (
             <IconButton
               size='small'
-              aria-label='展开'
+              aria-label={i18n.t('components.timeline_page_template.k9')}
             >
               {isExpanded ? (
                 <ChevronUp style={{ width: 18, height: 18 }} />
@@ -603,7 +604,7 @@ export const TimelinePageTemplate: React.FC<TimelinePageTemplateProps> = ({
                 variant='caption'
                 color='text.secondary'
               >
-                暂无事件
+                {i18n.t('components.timeline_page_template.k1')}
               </Typography>
             </Box>
           ) : isExpanded ? (
@@ -667,7 +668,7 @@ export const TimelinePageTemplate: React.FC<TimelinePageTemplateProps> = ({
                 variant='body1'
                 color='text.secondary'
               >
-                暂无时间线事件
+                {i18n.t('components.timeline_page_template.k2')}
               </Typography>
             </Box>
           ) : (

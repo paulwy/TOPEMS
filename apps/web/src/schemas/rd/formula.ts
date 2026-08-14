@@ -2,6 +2,7 @@ import React from 'react';
 import { Chip, Box, Typography } from '@mui/material';
 import { FlaskConical } from 'lucide-react';
 import type { EntitySchema } from '@/schema';
+import i18n from '@/i18n';
 
 const STATUS_COLOR_MAP: Record<string, 'default' | 'primary' | 'success' | 'warning' | 'error'> = {
   draft: 'default',
@@ -10,15 +11,15 @@ const STATUS_COLOR_MAP: Record<string, 'default' | 'primary' | 'success' | 'warn
 };
 
 const STATUS_LABEL_MAP: Record<string, string> = {
-  draft: '草稿',
-  testing: '测试中',
-  approved: '已发布',
+  draft: i18n.t('rd.formula.k0'),
+  testing: i18n.t('rd.formula.k1'),
+  approved: i18n.t('rd.formula.k2'),
 };
 
 export const formulaSchema: EntitySchema = {
   entity: 'rd_formula',
-  title: '配方管理',
-  description: '管理研发配方、版本控制、配方发布',
+  title: i18n.t('rd.formula.k3'),
+  description: i18n.t('rd.formula.k4'),
 
   api: {
     module: 'rd',
@@ -28,7 +29,7 @@ export const formulaSchema: EntitySchema = {
   fields: [
     {
       name: 'code',
-      label: '配方编码',
+      label: i18n.t('rd.formula.k5'),
       type: 'text',
       required: true,
       readonlyOnEdit: true,
@@ -49,7 +50,7 @@ export const formulaSchema: EntitySchema = {
     },
     {
       name: 'name',
-      label: '配方名称',
+      label: i18n.t('rd.formula.k6'),
       type: 'text',
       required: true,
       sortable: true,
@@ -57,7 +58,7 @@ export const formulaSchema: EntitySchema = {
     },
     {
       name: 'version',
-      label: '版本',
+      label: i18n.t('rd.formula.k7'),
       type: 'text',
       required: true,
       listWidth: 100,
@@ -69,7 +70,7 @@ export const formulaSchema: EntitySchema = {
     },
     {
       name: 'project_id',
-      label: '所属项目',
+      label: i18n.t('rd.formula.k8'),
       type: 'text',
       listWidth: 150,
       renderCell: (row: Record<string, unknown>) => {
@@ -79,22 +80,22 @@ export const formulaSchema: EntitySchema = {
     },
     {
       name: 'category',
-      label: '分类',
+      label: i18n.t('rd.formula.k9'),
       type: 'text',
       listWidth: 120,
       showInList: false,
     },
     {
       name: 'status',
-      label: '状态',
+      label: i18n.t('rd.formula.k10'),
       type: 'select',
       defaultValue: 'draft',
       options: {
         type: 'static',
         options: [
-          { value: 'draft', label: '草稿' },
-          { value: 'testing', label: '测试中' },
-          { value: 'approved', label: '已发布' },
+          { value: 'draft', label: i18n.t('rd.formula.k11') },
+          { value: 'testing', label: i18n.t('rd.formula.k12') },
+          { value: 'approved', label: i18n.t('rd.formula.k13') },
         ],
       },
       sortable: true,
@@ -102,51 +103,51 @@ export const formulaSchema: EntitySchema = {
     },
     {
       name: 'approval_status',
-      label: '审批状态',
+      label: i18n.t('rd.formula.k14'),
       type: 'text',
       showInList: false,
     },
     {
       name: 'approved_by',
-      label: '审批人',
+      label: i18n.t('rd.formula.k15'),
       type: 'text',
       showInList: false,
     },
     {
       name: 'approved_at',
-      label: '审批时间',
+      label: i18n.t('rd.formula.k16'),
       type: 'datetime',
       showInList: false,
     },
     {
       name: 'effective_date',
-      label: '生效日期',
+      label: i18n.t('rd.formula.k17'),
       type: 'date',
       showInList: false,
     },
     {
       name: 'expiration_date',
-      label: '失效日期',
+      label: i18n.t('rd.formula.k18'),
       type: 'date',
       showInList: false,
     },
     {
       name: 'description',
-      label: '描述',
+      label: i18n.t('rd.formula.k19'),
       type: 'textarea',
       showInList: false,
       colSpan: 2,
     },
     {
       name: 'process_steps',
-      label: '工艺步骤',
+      label: i18n.t('rd.formula.k20'),
       type: 'textarea',
       showInList: false,
       colSpan: 2,
     },
     {
       name: 'created_by',
-      label: '创建人',
+      label: i18n.t('rd.formula.k21'),
       type: 'text',
       readonly: true,
       listWidth: 100,
@@ -154,7 +155,7 @@ export const formulaSchema: EntitySchema = {
     },
     {
       name: 'created_at',
-      label: '创建日期',
+      label: i18n.t('rd.formula.k22'),
       type: 'datetime',
       readonly: true,
       sortable: true,
@@ -163,7 +164,7 @@ export const formulaSchema: EntitySchema = {
     },
     {
       name: 'updated_at',
-      label: '更新时间',
+      label: i18n.t('rd.formula.k23'),
       type: 'datetime',
       readonly: true,
       hideInForm: true,
@@ -178,13 +179,13 @@ export const formulaSchema: EntitySchema = {
     filters: [
       {
         id: 'status',
-        label: '状态筛选',
+        label: i18n.t('rd.formula.k24'),
         type: 'select',
         options: [
-          { label: '全部', value: 'all' },
-          { label: '草稿', value: 'draft' },
-          { label: '测试中', value: 'testing' },
-          { label: '已发布', value: 'approved' },
+          { label: i18n.t('rd.formula.k25'), value: 'all' },
+          { label: i18n.t('rd.formula.k26'), value: 'draft' },
+          { label: i18n.t('rd.formula.k27'), value: 'testing' },
+          { label: i18n.t('rd.formula.k28'), value: 'approved' },
         ],
         defaultValue: 'all',
       },
@@ -198,23 +199,23 @@ export const formulaSchema: EntitySchema = {
 
   formSections: [
     {
-      title: '基本信息',
+      title: i18n.t('rd.formula.k29'),
       fields: ['code', 'name', 'version', 'project_id', 'category', 'status'],
     },
     {
-      title: '有效期',
+      title: i18n.t('rd.formula.k30'),
       fields: ['effective_date', 'expiration_date'],
     },
     {
-      title: '描述信息',
+      title: i18n.t('rd.formula.k31'),
       fields: ['description', 'process_steps'],
     },
   ],
 
   formColCount: 2,
-  createTitle: '新增配方',
-  editTitle: '编辑配方',
-  detailTitle: '配方详情',
+  createTitle: i18n.t('rd.formula.k32'),
+  editTitle: i18n.t('rd.formula.k33'),
+  detailTitle: i18n.t('rd.formula.k34'),
 
   actions: ['create', 'edit', 'detail', 'delete'],
 };

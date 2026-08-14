@@ -1,94 +1,95 @@
 import type { EntitySchema } from '@/schema';
 import { columnsFromFields } from '@/schema/schemaExtensions';
 import type { NestedTableConfig, WizardConfig } from '@/schema/schemaExtensions';
+import i18n from '@/i18n';
 
 const fmeaItemFields: NestedTableConfig['fields'] = [
-  { name: 'itemNo', label: '编号', type: 'text', listWidth: 80 },
-  { name: 'functionDescription', label: '功能描述', type: 'text', listWidth: 150 },
-  { name: 'failureMode', label: '失效模式', type: 'text', required: true, listWidth: 180 },
-  { name: 'failureEffect', label: '失效影响', type: 'text', required: true, listWidth: 200 },
-  { name: 'failureCause', label: '失效原因', type: 'text', required: true, listWidth: 200 },
+  { name: 'itemNo', label: i18n.t('qms.fmea.k0'), type: 'text', listWidth: 80 },
+  { name: 'functionDescription', label: i18n.t('qms.fmea.k1'), type: 'text', listWidth: 150 },
+  { name: 'failureMode', label: i18n.t('qms.fmea.k2'), type: 'text', required: true, listWidth: 180 },
+  { name: 'failureEffect', label: i18n.t('qms.fmea.k3'), type: 'text', required: true, listWidth: 200 },
+  { name: 'failureCause', label: i18n.t('qms.fmea.k4'), type: 'text', required: true, listWidth: 200 },
   {
     name: 'severity',
-    label: '严重度 (S)',
+    label: i18n.t('qms.fmea.s_5'),
     type: 'select',
     required: true,
     listWidth: 100,
     options: {
       type: 'static',
       options: [
-        { label: '1 - 无影响', value: '1' },
-        { label: '2 - 轻微', value: '2' },
-        { label: '3 - 中等', value: '3' },
-        { label: '4 - 较高', value: '4' },
-        { label: '5 - 高', value: '5' },
-        { label: '6 - 严重', value: '6' },
-        { label: '7 - 重大', value: '7' },
-        { label: '8 - 严重', value: '8' },
-        { label: '9 - 灾难性', value: '9' },
-        { label: '10 - 极严重', value: '10' },
+        { label: i18n.t('shared.fmea.1_0'), value: '1' },
+        { label: i18n.t('shared.fmea.2_1'), value: '2' },
+        { label: i18n.t('shared.fmea.3_2'), value: '3' },
+        { label: i18n.t('shared.fmea.4_3'), value: '4' },
+        { label: i18n.t('shared.fmea.5_4'), value: '5' },
+        { label: i18n.t('shared.fmea.6_5'), value: '6' },
+        { label: i18n.t('shared.fmea.7_6'), value: '7' },
+        { label: i18n.t('shared.fmea.8_7'), value: '8' },
+        { label: i18n.t('shared.fmea.9_8'), value: '9' },
+        { label: i18n.t('shared.fmea.10_9'), value: '10' },
       ],
     },
   },
   {
     name: 'occurrence',
-    label: '频度 (O)',
+    label: i18n.t('qms.fmea.o_6'),
     type: 'select',
     required: true,
     listWidth: 100,
     options: {
       type: 'static',
       options: [
-        { label: '1 - 极少', value: '1' },
-        { label: '2 - 很少', value: '2' },
-        { label: '3 - 偶尔', value: '3' },
-        { label: '4 - 较少', value: '4' },
-        { label: '5 - 中等', value: '5' },
-        { label: '6 - 较多', value: '6' },
-        { label: '7 - 频繁', value: '7' },
-        { label: '8 - 经常', value: '8' },
-        { label: '9 - 很高', value: '9' },
-        { label: '10 - 极高', value: '10' },
+        { label: i18n.t('shared.fmea.1_10'), value: '1' },
+        { label: i18n.t('shared.fmea.2_11'), value: '2' },
+        { label: i18n.t('shared.fmea.3_12'), value: '3' },
+        { label: i18n.t('shared.fmea.4_13'), value: '4' },
+        { label: i18n.t('shared.fmea.5_14'), value: '5' },
+        { label: i18n.t('shared.fmea.6_15'), value: '6' },
+        { label: i18n.t('shared.fmea.7_16'), value: '7' },
+        { label: i18n.t('shared.fmea.8_17'), value: '8' },
+        { label: i18n.t('shared.fmea.9_18'), value: '9' },
+        { label: i18n.t('shared.fmea.10_19'), value: '10' },
       ],
     },
   },
   {
     name: 'detection',
-    label: '探测度 (D)',
+    label: i18n.t('qms.fmea.d_7'),
     type: 'select',
     required: true,
     listWidth: 100,
     options: {
       type: 'static',
       options: [
-        { label: '1 - 几乎确定', value: '1' },
-        { label: '2 - 很可能', value: '2' },
-        { label: '3 - 可能', value: '3' },
-        { label: '4 - 偶尔', value: '4' },
-        { label: '5 - 较少', value: '5' },
-        { label: '6 - 中等', value: '6' },
-        { label: '7 - 较多', value: '7' },
-        { label: '8 - 频繁', value: '8' },
-        { label: '9 - 经常', value: '9' },
-        { label: '10 - 无法探测', value: '10' },
+        { label: i18n.t('shared.fmea.1_20'), value: '1' },
+        { label: i18n.t('shared.fmea.2_21'), value: '2' },
+        { label: i18n.t('shared.fmea.3_22'), value: '3' },
+        { label: i18n.t('shared.fmea.4_23'), value: '4' },
+        { label: i18n.t('shared.fmea.5_24'), value: '5' },
+        { label: i18n.t('shared.fmea.6_25'), value: '6' },
+        { label: i18n.t('shared.fmea.7_26'), value: '7' },
+        { label: i18n.t('shared.fmea.8_27'), value: '8' },
+        { label: i18n.t('shared.fmea.9_28'), value: '9' },
+        { label: i18n.t('shared.fmea.10_29'), value: '10' },
       ],
     },
   },
   { name: 'rpn', label: 'RPN', type: 'number', listWidth: 80, readonly: true },
-  { name: 'recommendedActions', label: '建议措施', type: 'text', listWidth: 200 },
-  { name: 'responsibility', label: '责任人', type: 'text', listWidth: 100 },
-  { name: 'targetDate', label: '完成日期', type: 'date', listWidth: 120 },
+  { name: 'recommendedActions', label: i18n.t('qms.fmea.k8'), type: 'text', listWidth: 200 },
+  { name: 'responsibility', label: i18n.t('qms.fmea.k9'), type: 'text', listWidth: 100 },
+  { name: 'targetDate', label: i18n.t('qms.fmea.k10'), type: 'date', listWidth: 120 },
   {
     name: 'status',
-    label: '状态',
+    label: i18n.t('qms.fmea.k11'),
     type: 'select',
     listWidth: 100,
     options: {
       type: 'static',
       options: [
-        { label: '待处理', value: 'pending' },
-        { label: '进行中', value: 'in_progress' },
-        { label: '已完成', value: 'completed' },
+        { label: i18n.t('qms.fmea.k12'), value: 'pending' },
+        { label: i18n.t('qms.fmea.k13'), value: 'in_progress' },
+        { label: i18n.t('qms.fmea.k14'), value: 'completed' },
       ],
     },
   },
@@ -96,32 +97,32 @@ const fmeaItemFields: NestedTableConfig['fields'] = [
 
 const fmeaItemsTable: NestedTableConfig = {
   field: 'items',
-  title: '失效模式分析项',
+  title: i18n.t('qms.fmea.k15'),
   columns: columnsFromFields(fmeaItemFields),
   fields: fmeaItemFields,
   allowAdd: true,
   allowEdit: true,
   allowDelete: true,
-  addButtonText: '添加失效模式',
+  addButtonText: i18n.t('qms.fmea.k16'),
   rowKeyField: 'id',
   minRows: 0,
 };
 
 const improvementActionsFields: NestedTableConfig['fields'] = [
-  { name: 'action', label: '改进措施', type: 'text', required: true, listWidth: 250 },
-  { name: 'owner', label: '责任人', type: 'text', listWidth: 100 },
-  { name: 'dueDate', label: '完成日期', type: 'date', listWidth: 120 },
+  { name: 'action', label: i18n.t('qms.fmea.k17'), type: 'text', required: true, listWidth: 250 },
+  { name: 'owner', label: i18n.t('qms.fmea.k18'), type: 'text', listWidth: 100 },
+  { name: 'dueDate', label: i18n.t('qms.fmea.k19'), type: 'date', listWidth: 120 },
   {
     name: 'status',
-    label: '状态',
+    label: i18n.t('qms.fmea.k20'),
     type: 'select',
     listWidth: 100,
     options: {
       type: 'static',
       options: [
-        { label: '计划中', value: 'planned' },
-        { label: '进行中', value: 'in_progress' },
-        { label: '已完成', value: 'completed' },
+        { label: i18n.t('qms.fmea.k21'), value: 'planned' },
+        { label: i18n.t('qms.fmea.k22'), value: 'in_progress' },
+        { label: i18n.t('qms.fmea.k23'), value: 'completed' },
       ],
     },
   },
@@ -129,13 +130,13 @@ const improvementActionsFields: NestedTableConfig['fields'] = [
 
 const improvementActionsTable: NestedTableConfig = {
   field: 'improvementActions',
-  title: '改进措施',
+  title: i18n.t('qms.fmea.k24'),
   columns: columnsFromFields(improvementActionsFields),
   fields: improvementActionsFields,
   allowAdd: true,
   allowEdit: true,
   allowDelete: true,
-  addButtonText: '添加改进措施',
+  addButtonText: i18n.t('qms.fmea.k25'),
   rowKeyField: 'id',
   minRows: 0,
 };
@@ -144,8 +145,8 @@ const fmeaWizard: WizardConfig = {
   steps: [
     {
       key: 'basic',
-      title: '基本信息',
-      description: '填写 FMEA 分析的基础信息',
+      title: i18n.t('qms.fmea.k26'),
+      description: i18n.t('qms.fmea.fmea_27'),
       fields: [
         'fmeaName',
         'fmeaType',
@@ -157,57 +158,57 @@ const fmeaWizard: WizardConfig = {
         'status',
         'description',
       ],
-      groupTitle: '基础信息',
+      groupTitle: i18n.t('qms.fmea.k28'),
       validate: (values) => {
-        if (!values.fmeaName) return '请填写 FMEA 名称';
-        if (!values.fmeaType) return '请选择 FMEA 类型';
+        if (!values.fmeaName) return i18n.t('qms.fmea.fmea_29');
+        if (!values.fmeaType) return i18n.t('qms.fmea.fmea_30');
         return null;
       },
     },
     {
       key: 'failureModes',
-      title: '失效模式分析',
-      description: '录入所有可能的失效模式及其影响、原因和风险评估',
+      title: i18n.t('qms.fmea.k31'),
+      description: i18n.t('qms.fmea.k32'),
       fields: ['items'],
-      groupTitle: '失效模式与影响分析',
+      groupTitle: i18n.t('qms.fmea.k33'),
       validate: (values) => {
         const items = (values.items as Record<string, unknown>[]) || [];
-        if (items.length === 0) return '请至少添加一项失效模式';
+        if (items.length === 0) return i18n.t('qms.fmea.k34');
         return null;
       },
     },
     {
       key: 'improvement',
-      title: '改进措施',
-      description: '针对高风险项制定改进措施和责任人',
+      title: i18n.t('qms.fmea.k35'),
+      description: i18n.t('qms.fmea.k36'),
       fields: ['improvementActions'],
-      groupTitle: '改进措施规划',
+      groupTitle: i18n.t('qms.fmea.k37'),
       validate: (_values) => {
         return null;
       },
     },
     {
       key: 'review',
-      title: '评审确认',
-      description: '由评审人确认 FMEA 分析结果',
+      title: i18n.t('qms.fmea.k38'),
+      description: i18n.t('qms.fmea.fmea_39'),
       fields: ['reviewer', 'reviewDate', 'status'],
-      groupTitle: '评审与确认',
+      groupTitle: i18n.t('qms.fmea.k40'),
       isFinalStep: true,
       validate: (values) => {
-        if (!values.reviewer) return '请填写评审人';
-        if (!values.reviewDate) return '请选择评审日期';
+        if (!values.reviewer) return i18n.t('qms.fmea.k41');
+        if (!values.reviewDate) return i18n.t('qms.fmea.k42');
         return null;
       },
     },
   ],
-  title: 'FMEA 失效模式与影响分析',
+  title: i18n.t('shared.fmea.fmea_30'),
   navigationPosition: 'top',
   showProgress: true,
   allowBack: true,
   showSummaryOnComplete: true,
-  finishButtonText: '提交 FMEA 分析',
-  nextButtonText: '下一步',
-  prevButtonText: '上一步',
+  finishButtonText: i18n.t('qms.fmea.fmea_43'),
+  nextButtonText: i18n.t('qms.fmea.k44'),
+  prevButtonText: i18n.t('qms.fmea.k45'),
 };
 
 export const fmeaSchema: EntitySchema & {
@@ -215,8 +216,8 @@ export const fmeaSchema: EntitySchema & {
   wizard: WizardConfig;
 } = {
   entity: 'fmea',
-  title: 'FMEA 失效模式与影响分析',
-  description: 'Failure Mode and Effects Analysis — 结构化的风险分析工具',
+  title: i18n.t('shared.fmea.fmea_31'),
+  description: i18n.t('shared.fmea.k32'),
 
   api: {
     module: 'qms',
@@ -226,7 +227,7 @@ export const fmeaSchema: EntitySchema & {
   fields: [
     {
       name: 'fmeaNo',
-      label: 'FMEA 编号',
+      label: i18n.t('shared.fmea.fmea_33'),
       type: 'text',
       readonlyOnEdit: true,
       sortable: true,
@@ -235,7 +236,7 @@ export const fmeaSchema: EntitySchema & {
     },
     {
       name: 'fmeaName',
-      label: 'FMEA 名称',
+      label: i18n.t('shared.fmea.fmea_34'),
       type: 'text',
       required: true,
       sortable: true,
@@ -244,15 +245,15 @@ export const fmeaSchema: EntitySchema & {
     },
     {
       name: 'fmeaType',
-      label: 'FMEA 类型',
+      label: i18n.t('shared.fmea.fmea_35'),
       type: 'select',
       required: true,
       options: {
         type: 'static',
         options: [
-          { label: '设计 FMEA (DFMEA)', value: 'design' },
-          { label: '过程 FMEA (PFMEA)', value: 'process' },
-          { label: '系统 FMEA (SFMEA)', value: 'system' },
+          { label: i18n.t('qms.fmea.fmeadfmea_46'), value: 'design' },
+          { label: i18n.t('qms.fmea.fmeapfmea_47'), value: 'process' },
+          { label: i18n.t('qms.fmea.fmeasfmea_48'), value: 'system' },
         ],
       },
       showInList: true,
@@ -261,33 +262,33 @@ export const fmeaSchema: EntitySchema & {
     },
     {
       name: 'productId',
-      label: '产品 ID',
+      label: i18n.t('qms.fmea.id_49'),
       type: 'text',
       showInList: false,
     },
     {
       name: 'productName',
-      label: '产品名称',
+      label: i18n.t('qms.fmea.k50'),
       type: 'text',
       showInList: true,
       listWidth: 140,
     },
     {
       name: 'processId',
-      label: '过程 ID',
+      label: i18n.t('qms.fmea.id_51'),
       type: 'text',
       showInList: false,
     },
     {
       name: 'processName',
-      label: '过程名称',
+      label: i18n.t('qms.fmea.k52'),
       type: 'text',
       showInList: true,
       listWidth: 140,
     },
     {
       name: 'version',
-      label: '版本',
+      label: i18n.t('qms.fmea.k53'),
       type: 'text',
       defaultValue: '1.0',
       showInList: true,
@@ -295,15 +296,15 @@ export const fmeaSchema: EntitySchema & {
     },
     {
       name: 'status',
-      label: '状态',
+      label: i18n.t('qms.fmea.k54'),
       type: 'select',
       options: {
         type: 'static',
         options: [
-          { label: '草稿', value: 'draft' },
-          { label: '进行中', value: 'in_progress' },
-          { label: '已评审', value: 'reviewed' },
-          { label: '已批准', value: 'approved' },
+          { label: i18n.t('qms.fmea.k55'), value: 'draft' },
+          { label: i18n.t('qms.fmea.k56'), value: 'in_progress' },
+          { label: i18n.t('qms.fmea.k57'), value: 'reviewed' },
+          { label: i18n.t('qms.fmea.k58'), value: 'approved' },
         ],
       },
       defaultValue: 'draft',
@@ -312,46 +313,46 @@ export const fmeaSchema: EntitySchema & {
     },
     {
       name: 'scope',
-      label: '范围',
+      label: i18n.t('qms.fmea.k59'),
       type: 'textarea',
-      placeholder: '描述 FMEA 分析的范围',
+      placeholder: i18n.t('qms.fmea.fmea_60'),
       showInList: false,
     },
     {
       name: 'teamLeader',
-      label: '团队负责人',
+      label: i18n.t('qms.fmea.k61'),
       type: 'text',
       showInList: true,
     },
     {
       name: 'teamMembers',
-      label: '团队成员',
+      label: i18n.t('qms.fmea.k62'),
       type: 'text',
-      placeholder: '多人用逗号分隔',
+      placeholder: i18n.t('qms.fmea.k63'),
       showInList: false,
     },
     {
       name: 'description',
-      label: '描述',
+      label: i18n.t('qms.fmea.k64'),
       type: 'textarea',
-      placeholder: '请描述 FMEA 分析的目的和背景',
+      placeholder: i18n.t('qms.fmea.fmea_65'),
       showInList: false,
     },
     {
       name: 'reviewer',
-      label: '评审人',
+      label: i18n.t('qms.fmea.k66'),
       type: 'text',
       showInList: false,
     },
     {
       name: 'reviewDate',
-      label: '评审日期',
+      label: i18n.t('qms.fmea.k67'),
       type: 'date',
       showInList: false,
     },
     {
       name: 'createdAt',
-      label: '创建日期',
+      label: i18n.t('qms.fmea.k68'),
       type: 'date',
       readonly: true,
       showInList: true,
@@ -365,26 +366,26 @@ export const fmeaSchema: EntitySchema & {
     filters: [
       {
         id: 'fmeaType',
-        label: 'FMEA 类型',
+        label: i18n.t('shared.fmea.fmea_36'),
         type: 'select',
         options: [
-          { label: '全部类型', value: 'all' },
-          { label: '设计 FMEA', value: 'design' },
-          { label: '过程 FMEA', value: 'process' },
-          { label: '系统 FMEA', value: 'system' },
+          { label: i18n.t('qms.fmea.k69'), value: 'all' },
+          { label: i18n.t('qms.fmea.fmea_70'), value: 'design' },
+          { label: i18n.t('qms.fmea.fmea_71'), value: 'process' },
+          { label: i18n.t('qms.fmea.fmea_72'), value: 'system' },
         ],
         defaultValue: 'all',
       },
       {
         id: 'status',
-        label: '状态',
+        label: i18n.t('qms.fmea.k73'),
         type: 'select',
         options: [
-          { label: '全部状态', value: 'all' },
-          { label: '草稿', value: 'draft' },
-          { label: '进行中', value: 'in_progress' },
-          { label: '已评审', value: 'reviewed' },
-          { label: '已批准', value: 'approved' },
+          { label: i18n.t('qms.fmea.k74'), value: 'all' },
+          { label: i18n.t('qms.fmea.k75'), value: 'draft' },
+          { label: i18n.t('qms.fmea.k76'), value: 'in_progress' },
+          { label: i18n.t('qms.fmea.k77'), value: 'reviewed' },
+          { label: i18n.t('qms.fmea.k78'), value: 'approved' },
         ],
         defaultValue: 'all',
       },
@@ -398,33 +399,33 @@ export const fmeaSchema: EntitySchema & {
         approved: 'success',
       },
       labelMap: {
-        draft: '草稿',
-        in_progress: '进行中',
-        reviewed: '已评审',
-        approved: '已批准',
+        draft: i18n.t('qms.fmea.k79'),
+        in_progress: i18n.t('qms.fmea.k80'),
+        reviewed: i18n.t('qms.fmea.k81'),
+        approved: i18n.t('qms.fmea.k82'),
       },
     },
   },
 
   formSections: [
     {
-      title: '基础信息',
+      title: i18n.t('qms.fmea.k83'),
       fields: ['fmeaNo', 'fmeaName', 'fmeaType', 'productName', 'processName', 'version', 'status'],
     },
     {
-      title: '团队与范围',
+      title: i18n.t('qms.fmea.k84'),
       fields: ['teamLeader', 'teamMembers', 'scope'],
     },
     {
-      title: '描述',
+      title: i18n.t('qms.fmea.k85'),
       fields: ['description'],
     },
   ],
 
   formColCount: 2,
-  createTitle: '新建 FMEA 分析',
-  editTitle: '编辑 FMEA 分析',
-  detailTitle: 'FMEA 分析详情',
+  createTitle: i18n.t('qms.fmea.fmea_86'),
+  editTitle: i18n.t('qms.fmea.fmea_87'),
+  detailTitle: i18n.t('shared.fmea.fmea_37'),
 
   actions: ['create', 'edit', 'detail', 'delete'],
 

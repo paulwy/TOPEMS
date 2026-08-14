@@ -23,6 +23,7 @@ import {
   Tab,
   Chip,
 } from '@mui/material';
+import i18n from '@/i18n';
 import {
   Save,
   RotateCcw,
@@ -141,8 +142,8 @@ export const SettingsPageTemplate: React.FC<SettingsPageTemplateProps> = ({
   onReset,
   showSaveButton = true,
   showResetButton = true,
-  saveButtonText = '保存设置',
-  resetButtonText = '重置',
+  saveButtonText = i18n.t('templates.settings_page_template.k0'),
+  resetButtonText = i18n.t('templates.settings_page_template.k1'),
   stickyFooter = true,
   headerContent,
   footerContent,
@@ -209,7 +210,7 @@ export const SettingsPageTemplate: React.FC<SettingsPageTemplateProps> = ({
         }
         if (field.required && !values[field.id]) {
           isValid = false;
-          newErrors[field.id] = `${field.label}不能为空`;
+          newErrors[field.id] = `${field.label}${i18n.t('components.settings_page_template.k0')}`;
         }
       });
     });
@@ -223,7 +224,7 @@ export const SettingsPageTemplate: React.FC<SettingsPageTemplateProps> = ({
       await onSave?.(values);
       setHasChanges(false);
     } catch (err) {
-      setErrors({ __global: err instanceof Error ? err.message : '保存失败' });
+      setErrors({ __global: err instanceof Error ? err.message : i18n.t('templates.settings_page_template.k2') });
     }
   }, [allSections, values, onSave]);
 
@@ -284,7 +285,7 @@ export const SettingsPageTemplate: React.FC<SettingsPageTemplateProps> = ({
             <Tooltip title={field.description}>
               <IconButton
                 size='small'
-                aria-label='信息'
+                aria-label={i18n.t('templates.settings_page_template.k3')}
               >
                 <Info style={{ width: 16, height: 16, color: theme.palette.text.secondary }} />
               </IconButton>
@@ -303,7 +304,7 @@ export const SettingsPageTemplate: React.FC<SettingsPageTemplateProps> = ({
               variant='body2'
               color='text.secondary'
             >
-              {value ? '开启' : '关闭'}
+              {value ? i18n.t('templates.settings_page_template.k5') : i18n.t('templates.settings_page_template.k4')}
             </Typography>
           </Box>
         )}
@@ -485,7 +486,7 @@ export const SettingsPageTemplate: React.FC<SettingsPageTemplateProps> = ({
           {section.collapsible && (
             <IconButton
               size='small'
-              aria-label='展开'
+              aria-label={i18n.t('templates.settings_page_template.k6')}
             >
               <ChevronRight
                 style={{
@@ -570,7 +571,7 @@ export const SettingsPageTemplate: React.FC<SettingsPageTemplateProps> = ({
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
           {hasChanges && (
             <Chip
-              label='有未保存的更改'
+              label={i18n.t('templates.settings_page_template.k7')}
               size='small'
               color='primary'
               sx={{ height: 24 }}
@@ -616,7 +617,7 @@ export const SettingsPageTemplate: React.FC<SettingsPageTemplateProps> = ({
                 )
               }
             >
-              {saving ? '保存中...' : saveButtonText}
+              {saving ? i18n.t('components.settings_page_template.k1') : saveButtonText}
             </Button>
           )}
         </Box>
@@ -647,7 +648,7 @@ export const SettingsPageTemplate: React.FC<SettingsPageTemplateProps> = ({
             <IconButton
               size='small'
               onClick={() => setErrors({})}
-              aria-label='关闭'
+              aria-label={i18n.t('templates.settings_page_template.k8')}
             >
               <X style={{ width: 16, height: 16 }} />
             </IconButton>
@@ -666,7 +667,7 @@ export const SettingsPageTemplate: React.FC<SettingsPageTemplateProps> = ({
             <IconButton
               size='small'
               onClick={() => {}}
-              aria-label='关闭'
+              aria-label={i18n.t('templates.settings_page_template.k9')}
             >
               <X style={{ width: 16, height: 16 }} />
             </IconButton>

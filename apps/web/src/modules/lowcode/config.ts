@@ -1,6 +1,7 @@
 import { lazyWithRetry } from '@/routes/utils';
 import type { RouteModuleConfig } from '@/routes/v2/types';
 import type { ModuleNavConfig } from '@/lib/navigation/types';
+import i18n from '@/i18n';
 
 export const LOWCODE_PATHS = {
   root: '/lowcode',
@@ -13,21 +14,21 @@ export const LOWCODE_PATHS = {
 
 export const lowcodeModuleConfig: RouteModuleConfig = {
   code: 'lowcode',
-  name: '低代码平台',
+  name: i18n.t('shared.config.k0'),
   icon: 'Blocks',
   path: LOWCODE_PATHS.root,
   source: 'plugin',
   suite: 'platform',
   status: 'online',
   order: 90,
-  description: '低代码应用构建平台',
+  description: i18n.t('shared.config.k1'),
   permission: 'lowcode:apps:read',
   routes: [
     {
       path: LOWCODE_PATHS.dashboard,
       element: lazyWithRetry(() => import('@/pages/lowcode/DashboardPage'), 'DashboardPage'),
       module: 'lowcode',
-      title: '低代码平台概览',
+      title: i18n.t('shared.config.k2'),
       code: 'lowcode-dashboard',
       requiredPermissions: ['lowcode:dashboard:read'],
       action: 'read',
@@ -39,7 +40,7 @@ export const lowcodeModuleConfig: RouteModuleConfig = {
       element: lazyWithRetry(() => import('@/pages/lowcode/AppListPage'), 'AppListPage'),
       module: 'lowcode',
       code: 'lowcode-apps',
-      title: '应用档案',
+      title: i18n.t('shared.config.k3'),
       template: 'list',
       group: 'master',
       requiredPermissions: ['lowcode:apps:read'],
@@ -50,7 +51,7 @@ export const lowcodeModuleConfig: RouteModuleConfig = {
       element: lazyWithRetry(() => import('@/pages/lowcode/FormDesignPage'), 'FormDesignPage'),
       module: 'lowcode',
       code: 'lowcode-forms',
-      title: '表单设计',
+      title: i18n.t('shared.config.k4'),
       template: 'form',
       group: 'process',
       requiredPermissions: ['lowcode:form:read'],
@@ -61,7 +62,7 @@ export const lowcodeModuleConfig: RouteModuleConfig = {
       element: lazyWithRetry(() => import('@/pages/lowcode/PageDesignPage'), 'PageDesignPage'),
       module: 'lowcode',
       code: 'lowcode-pages',
-      title: '页面设计',
+      title: i18n.t('shared.config.k5'),
       template: 'form',
       group: 'process',
       requiredPermissions: ['lowcode:page:read'],
@@ -75,7 +76,7 @@ export const lowcodeModuleConfig: RouteModuleConfig = {
       ),
       module: 'lowcode',
       code: 'lowcode-workflows',
-      title: '流程配置',
+      title: i18n.t('shared.config.k6'),
       template: 'form',
       group: 'setting',
       requiredPermissions: ['lowcode:workflow:read'],
@@ -86,7 +87,7 @@ export const lowcodeModuleConfig: RouteModuleConfig = {
 
 export const lowcodeNavConfig: ModuleNavConfig = {
   code: 'lowcode',
-  name: '低代码平台',
+  name: i18n.t('shared.config.k7'),
   icon: 'Blocks',
   path: LOWCODE_PATHS.root,
   source: 'plugin' as const,
@@ -95,18 +96,18 @@ export const lowcodeNavConfig: ModuleNavConfig = {
   navItems: [
     {
       code: 'lowcode-dashboard',
-      label: '低代码平台概览',
+      label: i18n.t('shared.config.k8'),
       icon: 'LayoutDashboard',
       path: LOWCODE_PATHS.dashboard,
       permission: 'lowcode:dashboard:read',
       order: 0,
       group: 'overview',
       showInTabs: true,
-      description: '低代码平台数据概览',
+      description: i18n.t('shared.config.k9'),
     },
     {
       code: 'lowcode-apps',
-      label: '应用档案',
+      label: i18n.t('shared.config.k10'),
       path: LOWCODE_PATHS.apps,
       permission: 'lowcode:apps:read',
       group: 'master',
@@ -114,7 +115,7 @@ export const lowcodeNavConfig: ModuleNavConfig = {
     },
     {
       code: 'lowcode-forms',
-      label: '表单设计',
+      label: i18n.t('shared.config.k11'),
       path: LOWCODE_PATHS.forms,
       permission: 'lowcode:form:read',
       group: 'process',
@@ -122,7 +123,7 @@ export const lowcodeNavConfig: ModuleNavConfig = {
     },
     {
       code: 'lowcode-pages',
-      label: '页面设计',
+      label: i18n.t('shared.config.k12'),
       path: LOWCODE_PATHS.pages,
       permission: 'lowcode:page:read',
       group: 'process',
@@ -130,7 +131,7 @@ export const lowcodeNavConfig: ModuleNavConfig = {
     },
     {
       code: 'lowcode-workflows',
-      label: '流程配置',
+      label: i18n.t('shared.config.k13'),
       path: LOWCODE_PATHS.workflows,
       permission: 'lowcode:workflow:read',
       group: 'setting',

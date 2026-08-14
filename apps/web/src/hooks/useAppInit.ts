@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import { useAuth } from './useAuth';
 import { logger } from '@/utils/logger';
 import { eventBus, ModuleEvents } from '@/lib/plugin-loader/EventBus';
+import i18n from '@/i18n';
 // V35.0 Phase 7: 微前端智能预加载
 import { prefetchOnIdle } from '@/microfrontend/RemoteLoader';
 import { REMOTE_MODULES } from '@/microfrontend/config';
@@ -84,7 +85,7 @@ export const useAppInit = (): void => {
     // 注册版本更新回调：当检测到新版本（prompt 策略）时记录日志
     const unsubscribeVersion = versionManager.onVersionUpdate((event) => {
       logger.info(
-        `[App] 版本更新通知: ${event.moduleId} ${event.oldVersion} → ${event.newVersion} (策略: ${event.strategy})`
+        `${i18n.t('shared.use_app_init.app_0')}${event.moduleId} ${event.oldVersion} → ${event.newVersion}${i18n.t('shared.use_app_init.k1')}${event.strategy})`
       );
     });
 

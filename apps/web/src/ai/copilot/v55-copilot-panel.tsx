@@ -34,6 +34,7 @@ import {
   Grid,
   Card,
 } from '@mui/material';
+import i18n from '@/i18n';
 import {
   X as XIcon,
   Code,
@@ -222,32 +223,32 @@ const V55CopilotPanel: React.FC<{ onClose: () => void }> = ({ onClose }) => {
     setRecentActivity((prev) => [
       {
         type: 'index',
-        description: `代码索引进阶完成：${stats.totalFiles} 个文件，${stats.totalSymbols} 个符号`,
+        description: `${i18n.t('ai.v55-copilot-panel.k0')}${stats.totalFiles} ${i18n.t('ai.v55-copilot-panel.k1')}${stats.totalSymbols} ${i18n.t('ai.v55-copilot-panel.k2')}`,
         timestamp: Date.now(),
       },
       ...prev,
     ]);
 
     knowledgeQA.addDocument({
-      title: 'React Hooks 使用指南',
+      title: i18n.t('ai.v55-copilot-panel.k3'),
       content:
-        'React Hooks 是 React 16.8 引入的新特性。useState 用于管理组件状态，useEffect 用于处理副作用，useContext 用于访问 Context，useReducer 用于复杂状态管理。自定义 Hooks 可以将组件逻辑提取为可复用函数。使用规则：只能在函数组件顶层调用，不能在条件或循环内调用。',
-      source: 'React 官方文档',
+        i18n.t('ai.v55-copilot-panel.k4'),
+      source: i18n.t('ai.v55-copilot-panel.react_5'),
       tags: ['react', 'hooks', 'frontend'],
     });
 
     knowledgeQA.addDocument({
-      title: 'TypeScript 高级类型',
+      title: i18n.t('ai.v55-copilot-panel.typescript_6'),
       content:
-        'TypeScript 高级类型包括：条件类型（T extends U ? X : Y）、映射类型（{ [K in keyof T]: ... }）、模板字面量类型、推断类型（infer）。实用类型（Utility Types）包括 Partial、Required、Pick、Omit、Record、ReturnType 等。掌握这些类型工具可以编写类型安全的代码。',
+        i18n.t('ai.v55-copilot-panel.k7'),
       source: 'TypeScript Handbook',
       tags: ['typescript', 'types', 'programming'],
     });
 
     knowledgeQA.addDocument({
-      title: 'MUI Material Design 组件库',
+      title: i18n.t('ai.v55-copilot-panel.k8'),
       content:
-        'MUI（原 Material-UI）是基于 Material Design 规范的 React 组件库。核心组件包括：Layout（Box, Container, Grid, Stack）、Data Display（Typography, Avatar, Badge, Table）、Feedback（Dialog, Snackbar, Alert）、Input（TextField, Select, Checkbox）、Navigation（Tabs, Menu, Pagination）。使用 ThemeProvider 进行主题定制。',
+        i18n.t('ai.v55-copilot-panel.k9'),
       source: 'MUI Documentation',
       tags: ['mui', 'react', 'ui', 'components'],
     });
@@ -257,7 +258,7 @@ const V55CopilotPanel: React.FC<{ onClose: () => void }> = ({ onClose }) => {
       setRecentActivity((prev) => [
         {
           type: 'qa',
-          description: `问答: ${entry.question.substring(0, 30)}...`,
+          description: `${i18n.t('ai.v55-copilot-panel.k10')} ${entry.question.substring(0, 30)}...`,
           timestamp: Date.now(),
         },
         ...prev,
@@ -289,7 +290,7 @@ const V55CopilotPanel: React.FC<{ onClose: () => void }> = ({ onClose }) => {
     setRecentActivity((prev) => [
       {
         type: 'search',
-        description: `搜索代码: "${searchQuery}" - ${results.length} 个结果`,
+        description: `${i18n.t('ai.v55-copilot-panel.k11')}${searchQuery}" - ${results.length} ${i18n.t('ai.v55-copilot-panel.k12')}`,
         timestamp: Date.now(),
       },
       ...prev,
@@ -311,10 +312,10 @@ const V55CopilotPanel: React.FC<{ onClose: () => void }> = ({ onClose }) => {
   const handleGenerateDoc = () => {
     if (!genName.trim()) return;
     const result = docGenerator.generateDoc(genKind, genName, {
-      description: genDesc || `${genName} 的文档说明`,
+      description: genDesc || `${genName} ${i18n.t('ai.v55-copilot-panel.k13')}`,
       params:
         genKind === 'function' || genKind === 'method'
-          ? [{ name: 'param1', type: 'string', description: '参数说明' }]
+          ? [{ name: 'param1', type: 'string', description: i18n.t('ai.v55-copilot-panel.k0') }]
           : undefined,
       returns: genKind === 'function' || genKind === 'method' ? 'Promise<void>' : undefined,
       examples: [`const result = ${genName}();`],
@@ -323,7 +324,7 @@ const V55CopilotPanel: React.FC<{ onClose: () => void }> = ({ onClose }) => {
     setGeneratedDocs((prev) => [{ kind: genKind, name: genName, content: result }, ...prev]);
 
     setRecentActivity((prev) => [
-      { type: 'doc', description: `生成文档: ${genKind} ${genName}`, timestamp: Date.now() },
+      { type: 'doc', description: `${i18n.t('ai.v55-copilot-panel.k14')} ${genKind} ${genName}`, timestamp: Date.now() },
       ...prev,
     ]);
   };
@@ -335,7 +336,7 @@ const V55CopilotPanel: React.FC<{ onClose: () => void }> = ({ onClose }) => {
     setRecentActivity((prev) => [
       {
         type: 'changelog',
-        description: `生成 Changelog ${changelogVersion}`,
+        description: `${i18n.t('ai.v55-copilot-panel.changelog_15')} ${changelogVersion}`,
         timestamp: Date.now(),
       },
       ...prev,
@@ -344,39 +345,39 @@ const V55CopilotPanel: React.FC<{ onClose: () => void }> = ({ onClose }) => {
 
   const handleGenerateReadme = () => {
     const result = docGenerator.generateReadme('ai-copilot', {
-      description: 'AI Copilot 是 V55.0 前端智能助手，提供代码导航、文档生成和知识问答功能。',
+      description: i18n.t('ai.v55-copilot-panel.k16'),
       features: [
-        '智能代码索引和搜索',
-        '符号查找与引用导航',
-        '自动 JSDoc/TSDoc 生成',
-        'API 文档和 README 生成',
-        '基于知识库的问答系统',
+        i18n.t('ai.v55-copilot-panel.k1'),
+        i18n.t('ai.v55-copilot-panel.k2'),
+        i18n.t('ai.v55-copilot-panel.jsdoctsdoc_3'),
+        i18n.t('ai.v55-copilot-panel.k17'),
+        i18n.t('ai.v55-copilot-panel.k4'),
       ],
       installation: 'npm install',
       usage: `import { codeNavigator, docGenerator, knowledgeQA } from '@/ai/copilot';`,
       api: [
         {
           name: 'searchCode',
-          description: '搜索代码库',
+          description: i18n.t('ai.v55-copilot-panel.k5'),
           signature: 'searchCode(query: string): SearchResult[]',
         },
         {
           name: 'findSymbol',
-          description: '查找符号定义',
+          description: i18n.t('ai.v55-copilot-panel.k6'),
           signature: 'findSymbol(name: string): SymbolInfo | null',
         },
         {
           name: 'generateDoc',
-          description: '生成文档注释',
+          description: i18n.t('ai.v55-copilot-panel.k7'),
           signature: 'generateDoc(kind, name, options): string',
         },
-        { name: 'ask', description: '知识问答', signature: 'ask(question: string): QAResult' },
+        { name: 'ask', description: i18n.t('ai.v55-copilot-panel.k8'), signature: 'ask(question: string): QAResult' },
       ],
     });
     setReadmeResult(result);
 
     setRecentActivity((prev) => [
-      { type: 'readme', description: '生成 README 文档', timestamp: Date.now() },
+      { type: 'readme', description: i18n.t('ai.v55-copilot-panel.readme_9'), timestamp: Date.now() },
       ...prev,
     ]);
   };
@@ -422,7 +423,7 @@ const V55CopilotPanel: React.FC<{ onClose: () => void }> = ({ onClose }) => {
     knowledgeQA.addDocument({
       title: newDocTitle,
       content: newDocContent,
-      source: '用户上传',
+      source: i18n.t('ai.v55-copilot-panel.k10'),
       tags,
     });
 
@@ -433,7 +434,7 @@ const V55CopilotPanel: React.FC<{ onClose: () => void }> = ({ onClose }) => {
     setQaStats(knowledgeQA.getStats());
 
     setRecentActivity((prev) => [
-      { type: 'doc', description: `添加文档: ${newDocTitle}`, timestamp: Date.now() },
+      { type: 'doc', description: `${i18n.t('ai.v55-copilot-panel.k18')} ${newDocTitle}`, timestamp: Date.now() },
       ...prev,
     ]);
   };
@@ -449,12 +450,12 @@ const V55CopilotPanel: React.FC<{ onClose: () => void }> = ({ onClose }) => {
     ];
     const type = types[Math.floor(Math.random() * types.length)];
     const descriptions: Record<string, string> = {
-      added: '新增 AI 代码导航功能',
-      changed: '优化文档生成模板',
-      fixed: '修复知识问答匹配算法',
-      removed: '移除废弃 API',
-      deprecated: '标记旧接口为废弃',
-      security: '修复安全漏洞',
+      added: i18n.t('ai.v55-copilot-panel.ai_11'),
+      changed: i18n.t('ai.v55-copilot-panel.k12'),
+      fixed: i18n.t('ai.v55-copilot-panel.k13'),
+      removed: i18n.t('ai.v55-copilot-panel.api_14'),
+      deprecated: i18n.t('ai.v55-copilot-panel.k15'),
+      security: i18n.t('ai.v55-copilot-panel.k16'),
     };
 
     setChangelogEntries((prev) => [
@@ -464,7 +465,7 @@ const V55CopilotPanel: React.FC<{ onClose: () => void }> = ({ onClose }) => {
         date: new Date().toISOString().split('T')[0],
         type,
         description: descriptions[type],
-        author: '开发团队',
+        author: i18n.t('ai.v55-copilot-panel.k17'),
       },
     ]);
   };
@@ -534,25 +535,25 @@ const V55CopilotPanel: React.FC<{ onClose: () => void }> = ({ onClose }) => {
             <Tab
               icon={<Code size={16} />}
               iconPosition='start'
-              label='代码导航'
+              label={i18n.t('ai.v55-copilot-panel.k18')}
               value='navigator'
             />
             <Tab
               icon={<FileText size={16} />}
               iconPosition='start'
-              label='文档生成'
+              label={i18n.t('ai.v55-copilot-panel.k19')}
               value='generator'
             />
             <Tab
               icon={<MessageSquare size={16} />}
               iconPosition='start'
-              label={`知识问答 (${qaHistory.length})`}
+              label={`${i18n.t('ai.v55-copilot-panel.k19')}${qaHistory.length})`}
               value='qa'
             />
             <Tab
               icon={<History size={16} />}
               iconPosition='start'
-              label={`最近活动 (${recentActivity.length})`}
+              label={`${i18n.t('ai.v55-copilot-panel.k20')}${recentActivity.length})`}
               value='activity'
             />
           </Tabs>
@@ -670,7 +671,7 @@ const V55PanelHeader: React.FC<{ onClose: () => void; indexed: boolean }> = ({
           variant='caption'
           sx={{ opacity: 0.85, fontSize: 12 }}
         >
-          代码导航 · 文档生成 · 知识问答
+          {i18n.t('ai.v55-copilot-panel.k21')}
         </Typography>
       </Box>
     </Box>
@@ -738,7 +739,7 @@ const NavigatorTab: React.FC<{
         sx={{ fontWeight: 600, display: 'flex', alignItems: 'center', gap: 1 }}
       >
         <Search size={20} />
-        代码导航
+        {i18n.t('ai.v55-copilot-panel.k22')}
       </Typography>
       {indexed && (
         <Stack
@@ -746,17 +747,17 @@ const NavigatorTab: React.FC<{
           spacing={1}
         >
           <Chip
-            label={`${stats.totalFiles} 文件`}
+            label={`${stats.totalFiles} ${i18n.t('ai.v55-copilot-panel.k23')}`}
             size='small'
             sx={{ fontSize: 10 }}
           />
           <Chip
-            label={`${stats.totalSymbols} 符号`}
+            label={`${stats.totalSymbols} ${i18n.t('ai.v55-copilot-panel.k24')}`}
             size='small'
             sx={{ fontSize: 10 }}
           />
           <Chip
-            label={`${stats.totalImports} 导入`}
+            label={`${stats.totalImports} ${i18n.t('ai.v55-copilot-panel.k25')}`}
             size='small'
             sx={{ fontSize: 10 }}
           />
@@ -773,7 +774,7 @@ const NavigatorTab: React.FC<{
         size='small'
         value={searchQuery}
         onChange={(e) => onSearchQueryChange(e.target.value)}
-        placeholder='搜索符号、函数、类、接口...'
+        placeholder={i18n.t('ai.v55-copilot-panel.k26')}
         sx={{
           '& .MuiOutlinedInput-root': {
             borderRadius: 2,
@@ -791,7 +792,7 @@ const NavigatorTab: React.FC<{
         sx={{ bgcolor: 'secondary.500', '&:hover': { bgcolor: 'secondary.600' } }}
         size='small'
       >
-        搜索
+        {i18n.t('ai.v55-copilot-panel.k27')}
       </Button>
       <Button
         variant='outlined'
@@ -799,7 +800,7 @@ const NavigatorTab: React.FC<{
         onClick={onFindDefinition}
         size='small'
       >
-        跳转到定义
+        {i18n.t('ai.v55-copilot-panel.k28')}
       </Button>
     </Stack>
 
@@ -877,7 +878,7 @@ const NavigatorTab: React.FC<{
           sx={{ fontWeight: 600, mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}
         >
           <BookOpen size={16} />
-          符号详情
+          {i18n.t('ai.v55-copilot-panel.k29')}
         </Typography>
 
         {symbolLookup ? (
@@ -951,7 +952,7 @@ const NavigatorTab: React.FC<{
                   variant='caption'
                   color='text.secondary'
                 >
-                  无引用
+                  {i18n.t('ai.v55-copilot-panel.k30')}
                 </Typography>
               ) : (
                 refs.slice(0, 10).map((ref, idx) => (
@@ -978,7 +979,7 @@ const NavigatorTab: React.FC<{
             </Box>
           </Box>
         ) : (
-          <Alert severity='info'>搜索符号后，此处将显示符号详情和引用关系。</Alert>
+          <Alert severity='info'>{i18n.t('ai.v55-copilot-panel.k20')}</Alert>
         )}
       </Card>
     </Box>
@@ -990,7 +991,7 @@ const NavigatorTab: React.FC<{
           sx={{ fontWeight: 600, mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}
         >
           <FolderOpen size={16} />
-          文件结构: {selectedFile.path}
+          [i18n.t('ai.v55-copilot-panel.k31')]: {selectedFile.path}
         </Typography>
         <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2 }}>
           <Box>
@@ -1010,7 +1011,7 @@ const NavigatorTab: React.FC<{
                   variant='caption'
                   color='text.secondary'
                 >
-                  无依赖
+                  {i18n.t('ai.v55-copilot-panel.k32')}
                 </Typography>
               ) : (
                 graphData.dependencies.slice(0, 10).map((dep, idx) => (
@@ -1042,7 +1043,7 @@ const NavigatorTab: React.FC<{
                   variant='caption'
                   color='text.secondary'
                 >
-                  无被依赖
+                  {i18n.t('ai.v55-copilot-panel.k33')}
                 </Typography>
               ) : (
                 graphData.dependents.slice(0, 10).map((dep, idx) => (
@@ -1071,10 +1072,10 @@ const NavigatorTab: React.FC<{
           <Table size='small'>
             <TableHead>
               <TableRow>
-                <TableCell sx={{ fontSize: 11, fontWeight: 600 }}>符号</TableCell>
-                <TableCell sx={{ fontSize: 11, fontWeight: 600 }}>类型</TableCell>
-                <TableCell sx={{ fontSize: 11, fontWeight: 600 }}>行号</TableCell>
-                <TableCell sx={{ fontSize: 11, fontWeight: 600 }}>导出</TableCell>
+                <TableCell sx={{ fontSize: 11, fontWeight: 600 }}>{i18n.t('ai.v55-copilot-panel.k21')}</TableCell>
+                <TableCell sx={{ fontSize: 11, fontWeight: 600 }}>{i18n.t('ai.v55-copilot-panel.k22')}</TableCell>
+                <TableCell sx={{ fontSize: 11, fontWeight: 600 }}>{i18n.t('ai.v55-copilot-panel.k23')}</TableCell>
+                <TableCell sx={{ fontSize: 11, fontWeight: 600 }}>{i18n.t('ai.v55-copilot-panel.k24')}</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
@@ -1182,7 +1183,7 @@ const GeneratorTab: React.FC<{
           sx={{ fontWeight: 600, display: 'flex', alignItems: 'center', gap: 1 }}
         >
           <FileText size={20} />
-          文档生成
+          {i18n.t('ai.v55-copilot-panel.k34')}
         </Typography>
       </Stack>
 
@@ -1213,42 +1214,42 @@ const GeneratorTab: React.FC<{
               variant='subtitle2'
               sx={{ fontWeight: 600, mb: 2 }}
             >
-              文档配置
+              {i18n.t('ai.v55-copilot-panel.k35')}
             </Typography>
             <Stack
               direction='column'
               spacing={2}
             >
               <FormControl size='small'>
-                <InputLabel>符号类型</InputLabel>
+                <InputLabel>{i18n.t('ai.v55-copilot-panel.k25')}</InputLabel>
                 <Select
                   value={genKind}
-                  label='符号类型'
+                  label={i18n.t('ai.v55-copilot-panel.k26')}
                   onChange={(e) => onGenKindChange(e.target.value as typeof genKind)}
                 >
-                  <MenuItem value='function'>函数 (function)</MenuItem>
-                  <MenuItem value='class'>类 (class)</MenuItem>
-                  <MenuItem value='interface'>接口 (interface)</MenuItem>
-                  <MenuItem value='type'>类型 (type)</MenuItem>
-                  <MenuItem value='method'>方法 (method)</MenuItem>
+                  <MenuItem value='function'>{i18n.t('ai.v55-copilot-panel.function_27')}</MenuItem>
+                  <MenuItem value='class'>{i18n.t('ai.v55-copilot-panel.class_28')}</MenuItem>
+                  <MenuItem value='interface'>{i18n.t('ai.v55-copilot-panel.interface_29')}</MenuItem>
+                  <MenuItem value='type'>{i18n.t('ai.v55-copilot-panel.type_30')}</MenuItem>
+                  <MenuItem value='method'>{i18n.t('ai.v55-copilot-panel.method_31')}</MenuItem>
                 </Select>
               </FormControl>
 
               <TextField
                 size='small'
-                label='符号名称'
+                label={i18n.t('ai.v55-copilot-panel.k32')}
                 value={genName}
                 onChange={(e) => onGenNameChange(e.target.value)}
-                placeholder='例如: handleClick'
+                placeholder={i18n.t('ai.v55-copilot-panel.handleclick_36')}
                 fullWidth
               />
 
               <TextField
                 size='small'
-                label='描述'
+                label={i18n.t('ai.v55-copilot-panel.k33')}
                 value={genDesc}
                 onChange={(e) => onGenDescChange(e.target.value)}
-                placeholder='函数的功能描述'
+                placeholder={i18n.t('ai.v55-copilot-panel.k34')}
                 fullWidth
                 multiline
                 rows={2}
@@ -1262,7 +1263,7 @@ const GeneratorTab: React.FC<{
                 sx={{ bgcolor: 'secondary.500', '&:hover': { bgcolor: 'secondary.600' } }}
                 size='small'
               >
-                生成文档
+                {i18n.t('ai.v55-copilot-panel.k37')}
               </Button>
             </Stack>
           </Card>
@@ -1273,7 +1274,7 @@ const GeneratorTab: React.FC<{
               sx={{ fontWeight: 600, mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}
             >
               <Code size={16} />
-              生成结果
+              {i18n.t('ai.v55-copilot-panel.k38')}
             </Typography>
             {genResult ? (
               <Paper
@@ -1296,7 +1297,7 @@ const GeneratorTab: React.FC<{
                 <pre>{genResult}</pre>
               </Paper>
             ) : (
-              <Alert severity='info'>填写左侧表单并点击"生成文档"查看结果</Alert>
+              <Alert severity='info'>填写左侧表单并点击"{i18n.t('ai.v55-copilot-panel.k35')}"{i18n.t('ai.v55-copilot-panel.k47')}</Alert>
             )}
 
             {generatedDocs.length > 0 && (
@@ -1306,7 +1307,7 @@ const GeneratorTab: React.FC<{
                   variant='subtitle2'
                   sx={{ fontWeight: 600, mb: 1, fontSize: 12 }}
                 >
-                  生成历史
+                  {i18n.t('ai.v55-copilot-panel.k41')}
                 </Typography>
                 <Box sx={{ maxHeight: 100, overflow: 'auto' }}>
                   {generatedDocs.map((doc, idx) => (
@@ -1331,7 +1332,7 @@ const GeneratorTab: React.FC<{
               variant='subtitle2'
               sx={{ fontWeight: 600, mb: 2 }}
             >
-              Changelog 配置
+              {i18n.t('ai.v55-copilot-panel.changelog_42')}
             </Typography>
             <Stack
               direction='column'
@@ -1339,7 +1340,7 @@ const GeneratorTab: React.FC<{
             >
               <TextField
                 size='small'
-                label='版本号'
+                label={i18n.t('ai.v55-copilot-panel.k36')}
                 value={changelogVersion}
                 onChange={(e) => onChangelogVersionChange(e.target.value)}
                 fullWidth
@@ -1350,7 +1351,7 @@ const GeneratorTab: React.FC<{
                 onClick={onAddChangelogEntry}
                 size='small'
               >
-                添加变更条目
+                {i18n.t('ai.v55-copilot-panel.k43')}
               </Button>
               <Typography
                 variant='subtitle2'
@@ -1360,7 +1361,7 @@ const GeneratorTab: React.FC<{
               </Typography>
               <Box sx={{ maxHeight: 200, overflow: 'auto' }}>
                 {changelogEntries.length === 0 ? (
-                  <Alert severity='info'>暂无变更条目，点击上方按钮添加</Alert>
+                  <Alert severity='info'>{i18n.t('ai.v55-copilot-panel.k37')}</Alert>
                 ) : (
                   changelogEntries.map((entry, idx) => (
                     <Paper
@@ -1398,7 +1399,7 @@ const GeneratorTab: React.FC<{
                 sx={{ bgcolor: 'teal.600', '&:hover': { bgcolor: 'teal.700' } }}
                 size='small'
               >
-                生成 Changelog
+                {i18n.t('ai.v55-copilot-panel.changelog_44')}
               </Button>
             </Stack>
           </Card>
@@ -1408,7 +1409,7 @@ const GeneratorTab: React.FC<{
               variant='subtitle2'
               sx={{ fontWeight: 600, mb: 2 }}
             >
-              Changelog 预览
+              {i18n.t('ai.v55-copilot-panel.changelog_45')}
             </Typography>
             {readmeResult ? (
               <Paper
@@ -1430,7 +1431,7 @@ const GeneratorTab: React.FC<{
                 <pre>{readmeResult}</pre>
               </Paper>
             ) : (
-              <Alert severity='info'>点击"生成 Changelog"查看结果</Alert>
+              <Alert severity='info'>点击"{i18n.t('ai.prompt.action.generate')} Changelog"{i18n.t('ai.v55-copilot-panel.k47')}</Alert>
             )}
           </Card>
         </Box>
@@ -1442,7 +1443,7 @@ const GeneratorTab: React.FC<{
             variant='subtitle2'
             sx={{ fontWeight: 600, mb: 2 }}
           >
-            README 生成
+            {i18n.t('ai.v55-copilot-panel.readme_48')}
           </Typography>
           <Stack
             direction='row'
@@ -1456,7 +1457,7 @@ const GeneratorTab: React.FC<{
               sx={{ bgcolor: 'secondary.500', '&:hover': { bgcolor: 'secondary.600' } }}
               size='small'
             >
-              生成 README 模板
+              {i18n.t('ai.v55-copilot-panel.readme_49')}
             </Button>
           </Stack>
           {readmeResult ? (
@@ -1486,7 +1487,7 @@ const GeneratorTab: React.FC<{
               }}
             />
           ) : (
-            <Alert severity='info'>点击按钮生成 README 模板</Alert>
+            <Alert severity='info'>{i18n.t('ai.v55-copilot-panel.readme_39')}</Alert>
           )}
         </Card>
       )}
@@ -1542,9 +1543,9 @@ const QATab: React.FC<{
   }, [messages]);
 
   const quickQuestions = [
-    'React Hooks 怎么使用？',
-    'TypeScript 条件类型是什么？',
-    'MUI 有哪些常用组件？',
+    i18n.t('ai.v55-copilot-panel.k50'),
+    i18n.t('ai.v55-copilot-panel.k51'),
+    i18n.t('ai.v55-copilot-panel.mui_52'),
   ];
 
   return (
@@ -1559,20 +1560,20 @@ const QATab: React.FC<{
           sx={{ fontWeight: 600, display: 'flex', alignItems: 'center', gap: 1 }}
         >
           <Database size={16} />
-          知识库问答
+          {i18n.t('ai.v55-copilot-panel.k53')}
         </Typography>
         <Chip
-          label={`${qaStats.totalQA} 问答`}
+          label={`${qaStats.totalQA} ${i18n.t('ai.v55-copilot-panel.k54')}`}
           size='small'
           sx={{ fontSize: 10 }}
         />
         <Chip
-          label={`${qaStats.totalDocs} 文档`}
+          label={`${qaStats.totalDocs} ${i18n.t('ai.v55-copilot-panel.k55')}`}
           size='small'
           sx={{ fontSize: 10, bgcolor: 'success.100', color: 'teal.900' }}
         />
         <Chip
-          label={`${qaStats.totalTags} 标签`}
+          label={`${qaStats.totalTags} ${i18n.t('ai.v55-copilot-panel.k56')}`}
           size='small'
           sx={{ fontSize: 10, bgcolor: 'warning.100', color: 'warning.800' }}
         />
@@ -1582,7 +1583,7 @@ const QATab: React.FC<{
           startIcon={<Plus size={12} />}
           onClick={() => onShowAddDocChange(!showAddDoc)}
         >
-          添加文档
+          {i18n.t('ai.v55-copilot-panel.k57')}
         </Button>
         <Button
           size='small'
@@ -1590,7 +1591,7 @@ const QATab: React.FC<{
           onClick={onClearHistory}
           color='error'
         >
-          清空历史
+          {i18n.t('ai.v55-copilot-panel.k58')}
         </Button>
       </Stack>
 
@@ -1603,7 +1604,7 @@ const QATab: React.FC<{
             variant='subtitle2'
             sx={{ fontWeight: 600, mb: 1, fontSize: 12 }}
           >
-            添加知识文档
+            {i18n.t('ai.v55-copilot-panel.k59')}
           </Typography>
           <Stack
             direction='column'
@@ -1611,14 +1612,14 @@ const QATab: React.FC<{
           >
             <TextField
               size='small'
-              label='文档标题'
+              label={i18n.t('ai.v55-copilot-panel.k40')}
               value={newDocTitle}
               onChange={(e) => onNewDocTitleChange(e.target.value)}
               fullWidth
             />
             <TextField
               size='small'
-              label='文档内容'
+              label={i18n.t('ai.v55-copilot-panel.k41')}
               value={newDocContent}
               onChange={(e) => onNewDocContentChange(e.target.value)}
               fullWidth
@@ -1627,7 +1628,7 @@ const QATab: React.FC<{
             />
             <TextField
               size='small'
-              label='标签 (逗号分隔)'
+              label={i18n.t('ai.v55-copilot-panel.k42')}
               value={newDocTags}
               onChange={(e) => onNewDocTagsChange(e.target.value)}
               fullWidth
@@ -1645,13 +1646,13 @@ const QATab: React.FC<{
                 disabled={!newDocTitle.trim() || !newDocContent.trim()}
                 sx={{ bgcolor: 'teal.600', '&:hover': { bgcolor: 'teal.700' } }}
               >
-                添加
+                {i18n.t('ai.v55-copilot-panel.k60')}
               </Button>
               <Button
                 size='small'
                 onClick={() => onShowAddDocChange(false)}
               >
-                取消
+                {i18n.t('ai.v55-copilot-panel.k61')}
               </Button>
             </Stack>
           </Stack>
@@ -1679,7 +1680,7 @@ const QATab: React.FC<{
               variant='body2'
               color='text.secondary'
             >
-              AI Copilot 知识库已就绪，向它提问吧！
+              {i18n.t('ai.v55-copilot-panel.k62')}
             </Typography>
             <Stack
               direction='row'
@@ -1746,7 +1747,7 @@ const QATab: React.FC<{
                   variant='body2'
                   color='text.secondary'
                 >
-                  AI Copilot 思考中...
+                  {i18n.t('ai.v55-copilot-panel.k63')}
                 </Typography>
               </Box>
             </Paper>
@@ -1768,7 +1769,7 @@ const QATab: React.FC<{
             value={input}
             onChange={(e) => onInputChange(e.target.value)}
             onKeyDown={onKeyDown}
-            placeholder='向 AI Copilot 提问，Enter 发送，Shift+Enter 换行...'
+            placeholder={i18n.t('ai.v55-copilot-panel.k64')}
             variant='outlined'
             size='small'
             sx={{
@@ -1801,7 +1802,7 @@ const QATab: React.FC<{
               color='text.secondary'
               sx={{ fontSize: 11 }}
             >
-              最近问答:
+              [i18n.t('ai.v55-copilot-panel.k65')]:
             </Typography>
             <Box sx={{ display: 'flex', gap: 0.5, flexWrap: 'wrap' }}>
               {qaHistory.slice(-5).map((qa) => (
@@ -1869,12 +1870,12 @@ const ActivityTab: React.FC<{
         sx={{ fontWeight: 600, mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}
       >
         <History size={20} />
-        最近活动
+        {i18n.t('ai.v55-copilot-panel.k66')}
       </Typography>
 
       <Card variant='outlined' sx={{ p: 2 }}>
         {activity.length === 0 ? (
-          <Alert severity='info'>暂无活动记录</Alert>
+          <Alert severity='info'>{i18n.t('ai.v55-copilot-panel.k43')}</Alert>
         ) : (
           <List>
             {activity.map((item, idx) => (
@@ -1943,7 +1944,7 @@ const ActivityTab: React.FC<{
               variant='caption'
               color='text.secondary'
             >
-              搜索次数
+              {i18n.t('ai.v55-copilot-panel.k67')}
             </Typography>
             <Typography
               variant='h5'
@@ -1959,7 +1960,7 @@ const ActivityTab: React.FC<{
               variant='caption'
               color='text.secondary'
             >
-              文档生成
+              {i18n.t('ai.v55-copilot-panel.k68')}
             </Typography>
             <Typography
               variant='h5'
@@ -1975,7 +1976,7 @@ const ActivityTab: React.FC<{
               variant='caption'
               color='text.secondary'
             >
-              知识问答
+              {i18n.t('ai.v55-copilot-panel.k69')}
             </Typography>
             <Typography
               variant='h5'
@@ -1991,7 +1992,7 @@ const ActivityTab: React.FC<{
               variant='caption'
               color='text.secondary'
             >
-              文档索引
+              {i18n.t('ai.v55-copilot-panel.k70')}
             </Typography>
             <Typography
               variant='h5'

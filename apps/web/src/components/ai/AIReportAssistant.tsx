@@ -10,6 +10,7 @@ import {
   Typography,
   Alert,
 } from '@mui/material';
+import i18n from '@/i18n';
 import {
   BarChart3,
   LineChart,
@@ -45,7 +46,7 @@ export const AIReportAssistant: React.FC<AIReportAssistantProps> = ({ initialQue
 
   const handleGenerateReport = async () => {
     if (!query.trim()) {
-      addNotification({ title: '警告', message: '请输入查询内容', type: 'warning' });
+      addNotification({ title: i18n.t('components.ai_report_assistant.k1'), message: i18n.t('components.ai_report_assistant.k0'), type: 'warning' });
       return;
     }
 
@@ -66,14 +67,14 @@ export const AIReportAssistant: React.FC<AIReportAssistantProps> = ({ initialQue
           data: response.data.data as Record<string, unknown>[],
           metrics: (response.data.metrics ?? []) as unknown as Record<string, unknown>[],
         });
-        addNotification({ title: '成功', message: '报表生成成功', type: 'success' });
+        addNotification({ title: i18n.t('components.ai_report_assistant.k3'), message: i18n.t('components.ai_report_assistant.k2'), type: 'success' });
       } else {
-        setError(response.message || '生成报表失败');
+        setError(response.message || i18n.t('components.ai_report_assistant.k4'));
       }
     } catch (err: unknown) {
-      logger.error('报表助手调用失败:', err);
-      setError('报表助手服务暂不可用');
-      addNotification({ title: '错误', message: '报表助手服务暂不可用', type: 'error' });
+      logger.error(i18n.t('components.ai_report_assistant.k0'), err);
+      setError(i18n.t('components.ai_report_assistant.k5'));
+      addNotification({ title: i18n.t('components.ai_report_assistant.k7'), message: i18n.t('components.ai_report_assistant.k6'), type: 'error' });
     } finally {
       setIsLoading(false);
     }
@@ -109,7 +110,7 @@ export const AIReportAssistant: React.FC<AIReportAssistantProps> = ({ initialQue
           variant='subtitle2'
           sx={{ mb: 2 }}
         >
-          趋势图
+          {i18n.t('components.ai_report_assistant.k1')}
         </Typography>
         <Box sx={{ display: 'flex', alignItems: 'flex-end', height: 200, gap: 4 }}>
           {result.data.map((item: Record<string, unknown>, idx: number) => (
@@ -150,7 +151,7 @@ export const AIReportAssistant: React.FC<AIReportAssistantProps> = ({ initialQue
           variant='subtitle2'
           sx={{ mb: 2 }}
         >
-          柱状图
+          {i18n.t('components.ai_report_assistant.k2')}
         </Typography>
         <Box sx={{ display: 'flex', alignItems: 'flex-end', height: 200, gap: 4 }}>
           {result.data.map((item: Record<string, unknown>, idx: number) => (
@@ -232,7 +233,7 @@ export const AIReportAssistant: React.FC<AIReportAssistantProps> = ({ initialQue
             }}
           >
             <Typography variant='h4'>{result.data.length}</Typography>
-            <Typography variant='caption'>类别</Typography>
+            <Typography variant='caption'>{i18n.t('components.ai_report_assistant.k8')}</Typography>
           </Box>
         </Box>
         <Box sx={{ flex: 1 }}>
@@ -272,7 +273,7 @@ export const AIReportAssistant: React.FC<AIReportAssistantProps> = ({ initialQue
           variant='body2'
           sx={{ mt: 3, color: 'text.secondary' }}
         >
-          暂无数据
+          {i18n.t('components.ai_report_assistant.k3')}
         </Typography>
       );
     }
@@ -385,18 +386,18 @@ export const AIReportAssistant: React.FC<AIReportAssistantProps> = ({ initialQue
   };
 
   const examples = [
-    '本月销售额趋势',
-    '各部门成本对比',
-    '库存周转率分析',
-    '客户满意度统计',
-    '生产效率报表',
+    i18n.t('components.ai_report_assistant.k9'),
+    i18n.t('components.ai_report_assistant.k10'),
+    i18n.t('components.ai_report_assistant.k11'),
+    i18n.t('components.ai_report_assistant.k12'),
+    i18n.t('components.ai_report_assistant.k13'),
   ];
 
   return (
     <Card>
       <CardHeader
-        title='AI 报表助手'
-        subheader='用自然语言描述您想要的报表，AI 将为您自动生成'
+        title={i18n.t('components.ai_report_assistant.ai_4')}
+        subheader={i18n.t('components.ai_report_assistant.k14')}
       />
       <CardContent>
         <Box sx={{ mb: 3 }}>
@@ -404,7 +405,7 @@ export const AIReportAssistant: React.FC<AIReportAssistantProps> = ({ initialQue
             variant='subtitle2'
             sx={{ mb: 2, color: 'text.secondary' }}
           >
-            快速示例:
+            [i18n.t('components.ai_report_assistant.k5')]:
           </Typography>
           <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1.5 }}>
             {examples.map((example, idx) => (
@@ -421,8 +422,8 @@ export const AIReportAssistant: React.FC<AIReportAssistantProps> = ({ initialQue
 
         <TextField
           fullWidth
-          label='输入报表需求'
-          placeholder='例如：显示本月各产品的销售对比柱状图'
+          label={i18n.t('components.ai_report_assistant.k15')}
+          placeholder={i18n.t('components.ai_report_assistant.k16')}
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           size='small'
@@ -445,7 +446,7 @@ export const AIReportAssistant: React.FC<AIReportAssistantProps> = ({ initialQue
           }
           fullWidth
         >
-          {isLoading ? '生成中...' : '生成报表'}
+          {isLoading ? i18n.t('components.ai_report_assistant.k6') : i18n.t('components.ai_report_assistant.k17')}
         </Button>
 
         {error && (

@@ -1,9 +1,10 @@
 import type { EntitySchema } from '@/schema';
+import i18n from '@/i18n';
 
 export const emergencyDrillSchema: EntitySchema = {
   entity: 'ehsEmergencyDrill',
-  title: '应急演练',
-  description: '管理企业应急演练记录，包括演练编号、名称、日期、参与人员、地点、状态等',
+  title: i18n.t('ehs.emergency.k0'),
+  description: i18n.t('ehs.emergency.k1'),
 
   api: {
     module: 'ehs',
@@ -13,7 +14,7 @@ export const emergencyDrillSchema: EntitySchema = {
   fields: [
     {
       name: 'drill_no',
-      label: '演练编号',
+      label: i18n.t('ehs.emergency.k2'),
       type: 'text',
       required: true,
       readonlyOnEdit: true,
@@ -21,7 +22,7 @@ export const emergencyDrillSchema: EntitySchema = {
     },
     {
       name: 'drill_name',
-      label: '演练名称',
+      label: i18n.t('ehs.emergency.k3'),
       type: 'text',
       required: true,
       sortable: true,
@@ -29,7 +30,7 @@ export const emergencyDrillSchema: EntitySchema = {
     },
     {
       name: 'drill_date',
-      label: '演练日期',
+      label: i18n.t('ehs.emergency.k4'),
       type: 'date',
       listWidth: 120,
       renderCell: (row: Record<string, unknown>) => {
@@ -39,7 +40,7 @@ export const emergencyDrillSchema: EntitySchema = {
     },
     {
       name: 'duration_hours',
-      label: '时长(小时)',
+      label: i18n.t('ehs.emergency.k5'),
       type: 'number',
       defaultValue: 0,
       listWidth: 100,
@@ -50,7 +51,7 @@ export const emergencyDrillSchema: EntitySchema = {
     },
     {
       name: 'location',
-      label: '地点',
+      label: i18n.t('ehs.emergency.k6'),
       type: 'text',
       listWidth: 140,
       renderCell: (row: Record<string, unknown>) => {
@@ -61,10 +62,10 @@ export const emergencyDrillSchema: EntitySchema = {
     },
     {
       name: 'participants',
-      label: '参与人员',
+      label: i18n.t('ehs.emergency.k7'),
       type: 'textarea',
       showInList: false,
-      placeholder: '多个人员用逗号分隔',
+      placeholder: i18n.t('ehs.emergency.k8'),
       colSpan: 2,
       renderCell: (row: Record<string, unknown>) => {
         const v = row.participants;
@@ -75,38 +76,38 @@ export const emergencyDrillSchema: EntitySchema = {
     },
     {
       name: 'summary',
-      label: '演练概要',
+      label: i18n.t('ehs.emergency.k9'),
       type: 'textarea',
       showInList: false,
       colSpan: 2,
     },
     {
       name: 'issues_found',
-      label: '发现问题',
+      label: i18n.t('ehs.emergency.k10'),
       type: 'textarea',
       showInList: false,
       colSpan: 2,
     },
     {
       name: 'improvements',
-      label: '改进措施',
+      label: i18n.t('ehs.emergency.k11'),
       type: 'textarea',
       showInList: false,
       colSpan: 2,
     },
     {
       name: 'status',
-      label: '状态',
+      label: i18n.t('ehs.emergency.k12'),
       type: 'select',
       defaultValue: 'draft',
       options: {
         type: 'static',
         options: [
-          { value: 'draft', label: '草稿' },
-          { value: 'planned', label: '已计划' },
-          { value: 'ongoing', label: '进行中' },
-          { value: 'completed', label: '已完成' },
-          { value: 'cancelled', label: '已取消' },
+          { value: 'draft', label: i18n.t('ehs.emergency.k13') },
+          { value: 'planned', label: i18n.t('ehs.emergency.k14') },
+          { value: 'ongoing', label: i18n.t('ehs.emergency.k15') },
+          { value: 'completed', label: i18n.t('ehs.emergency.k16') },
+          { value: 'cancelled', label: i18n.t('ehs.emergency.k17') },
         ],
       },
       listWidth: 100,
@@ -128,25 +129,25 @@ export const emergencyDrillSchema: EntitySchema = {
         cancelled: 'error',
       },
       labelMap: {
-        draft: '草稿',
-        planned: '已计划',
-        ongoing: '进行中',
-        completed: '已完成',
-        cancelled: '已取消',
+        draft: i18n.t('ehs.emergency.k18'),
+        planned: i18n.t('ehs.emergency.k19'),
+        ongoing: i18n.t('ehs.emergency.k20'),
+        completed: i18n.t('ehs.emergency.k21'),
+        cancelled: i18n.t('ehs.emergency.k22'),
       },
     },
     filters: [
       {
         id: 'status',
-        label: '状态',
+        label: i18n.t('ehs.emergency.k23'),
         type: 'select',
         options: [
-          { label: '全部', value: 'all' },
-          { label: '草稿', value: 'draft' },
-          { label: '已计划', value: 'planned' },
-          { label: '进行中', value: 'ongoing' },
-          { label: '已完成', value: 'completed' },
-          { label: '已取消', value: 'cancelled' },
+          { label: i18n.t('ehs.emergency.k24'), value: 'all' },
+          { label: i18n.t('ehs.emergency.k25'), value: 'draft' },
+          { label: i18n.t('ehs.emergency.k26'), value: 'planned' },
+          { label: i18n.t('ehs.emergency.k27'), value: 'ongoing' },
+          { label: i18n.t('ehs.emergency.k28'), value: 'completed' },
+          { label: i18n.t('ehs.emergency.k29'), value: 'cancelled' },
         ],
       },
     ],
@@ -156,21 +157,21 @@ export const emergencyDrillSchema: EntitySchema = {
 
   formSections: [
     {
-      title: '基本信息',
+      title: i18n.t('ehs.emergency.k30'),
       fields: ['drill_no', 'drill_name', 'drill_date', 'duration_hours'],
     },
     {
-      title: '演练详情',
+      title: i18n.t('ehs.emergency.k31'),
       fields: ['location', 'status'],
     },
     {
-      title: '演练内容',
+      title: i18n.t('ehs.emergency.k32'),
       fields: ['participants', 'summary', 'issues_found', 'improvements'],
     },
   ],
 
   formColCount: 2,
-  createTitle: '新建应急演练',
-  editTitle: '编辑应急演练',
-  detailTitle: '应急演练详情',
+  createTitle: i18n.t('ehs.emergency.k33'),
+  editTitle: i18n.t('ehs.emergency.k34'),
+  detailTitle: i18n.t('ehs.emergency.k35'),
 };

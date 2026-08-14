@@ -9,6 +9,7 @@ import {
   Typography,
   useTheme,
 } from '@mui/material';
+import i18n from '@/i18n';
 import { ChevronRight, MessageSquare, Sparkles, X, Zap } from 'lucide-react';
 import { AICopilotSearchBox } from './AICopilotSearchBox';
 import { AICopilotRecommendations } from './AICopilotRecommendations';
@@ -87,7 +88,7 @@ export const AICopilotPanel: React.FC<AICopilotPanelProps> = ({
                 variant='caption'
                 sx={{ opacity: 0.82 }}
               >
-                当前页面上下文已带入
+                {i18n.t('components.ai_copilot_panel.k0')}
               </Typography>
             </Box>
           </Box>
@@ -95,7 +96,7 @@ export const AICopilotPanel: React.FC<AICopilotPanelProps> = ({
             size='small'
             onClick={onClose}
             sx={{ color: 'common.white' }}
-            aria-label='关闭'
+            aria-label={i18n.t('ai.ai_copilot_panel.k0')}
           >
             <X style={{ width: 16, height: 16 }} />
           </IconButton>
@@ -109,7 +110,7 @@ export const AICopilotPanel: React.FC<AICopilotPanelProps> = ({
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75, mb: 1 }}>
             <Chip
               icon={<MessageSquare style={{ width: 13, height: 13 }} />}
-              label='推荐'
+              label={i18n.t('ai.ai_copilot_panel.k1')}
               size='small'
               color='primary'
             />
@@ -131,7 +132,7 @@ export const AICopilotPanel: React.FC<AICopilotPanelProps> = ({
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75, mb: 1 }}>
             <Chip
               icon={<Zap style={{ width: 13, height: 13 }} />}
-              label='快捷命令'
+              label={i18n.t('ai.ai_copilot_panel.k2')}
               size='small'
               variant='outlined'
             />
@@ -149,7 +150,7 @@ export const AICopilotPanel: React.FC<AICopilotPanelProps> = ({
             endIcon={<ChevronRight style={{ width: 16, height: 16 }} />}
             onClick={onOpenFull}
           >
-            打开完整 AI 助手
+            {i18n.t('components.ai_copilot_panel.ai_1')}
           </Button>
         </Box>
       </Box>

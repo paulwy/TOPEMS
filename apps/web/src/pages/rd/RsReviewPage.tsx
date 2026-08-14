@@ -11,9 +11,8 @@ import { buildApi } from '@/api/rd';
 import type { Build, CreateBuildRequest } from '@/api/rd';
 import { PageContainer } from '@/components/common';
 import { useNotificationStore } from '@/store';
-
 import { QUERY_KEYS } from '@/lib/reactQuery';
-
+import i18n from '@/i18n';
 const baseAdapter = createCrudPageAdapter<Build, CreateBuildRequest>({
   list: buildApi.listBuilds,
   create: buildApi.createBuild,
@@ -24,34 +23,28 @@ const baseAdapter = createCrudPageAdapter<Build, CreateBuildRequest>({
     throw new Error('Build delete not supported');
   },
 });
-
 const reviewAdapter = baseAdapter as unknown as CrudApiAdapter<Build>;
-
 const STATUS_COLOR_MAP: Record<string, 'default' | 'primary' | 'success' | 'error' | 'warning'> = {
   pending: 'warning',
   approved: 'success',
   rejected: 'error',
   in_progress: 'primary',
 };
-
 const STATUS_LABEL_MAP: Record<string, string> = {
-  pending: '待评审',
-  approved: '已通过',
-  rejected: '已拒绝',
-  in_progress: '评审中',
+  pending: i18n.t('rd.rs_review_page.k0'),
+  approved: i18n.t('rd.rs_review_page.k1'),
+  rejected: i18n.t('rd.rs_review_page.k2'),
+  in_progress: i18n.t('rd.rs_review_page.k3'),
 };
-
 function transformStatus(status: string): string {
   if (status === 'success') return 'approved';
   if (status === 'failed') return 'rejected';
   if (status === 'running') return 'in_progress';
   return status;
 }
-
 const RsReviewPage: React.FC = () => {
   const queryClient = useQueryClient();
   const { addNotification } = useNotificationStore();
-
   const handleApprove = async (row: Record<string, unknown>) => {
     try {
       queryClient.setQueryData(
@@ -68,14 +61,13 @@ const RsReviewPage: React.FC = () => {
       );
       addNotification({
         type: 'success',
-        title: '操作成功',
-        message: '评审已通过',
+        title: i18n.t('rd.rs_review_page.k4'),
+        message: i18n.t('rd.rs_review_page.k5'),
       });
     } catch (error) {
-      console.error('评审操作失败:', error);
+      console.error(i18n.t('pages.rs_review_page.k0'), error);
     }
   };
-
   const handleReject = async (row: Record<string, unknown>) => {
     try {
       queryClient.setQueryData(
@@ -90,22 +82,21 @@ const RsReviewPage: React.FC = () => {
       );
       addNotification({
         type: 'success',
-        title: '操作成功',
-        message: '评审已拒绝',
+        title: i18n.t('rd.rs_review_page.k6'),
+        message: i18n.t('rd.rs_review_page.k7'),
       });
     } catch (error) {
-      console.error('评审操作失败:', error);
+      console.error(i18n.t('pages.rs_review_page.k1'), error);
     }
   };
-
   const customRowActions: RowAction<Record<string, unknown>>[] = [
     {
-      label: '查看评审',
+      label: i18n.t('rd.rs_review_page.k8'),
       icon: <Eye size={16} />,
       onClick: () => {},
     },
     {
-      label: '通过',
+      label: i18n.t('rd.rs_review_page.k9'),
       icon: (
         <Check
           size={16}
@@ -116,7 +107,7 @@ const RsReviewPage: React.FC = () => {
       show: (row) => transformStatus(String(row.status ?? '')) === 'pending',
     },
     {
-      label: '拒绝',
+      label: i18n.t('rd.rs_review_page.k10'),
       icon: (
         <X
           size={16}
@@ -127,12 +118,10 @@ const RsReviewPage: React.FC = () => {
       show: (row) => transformStatus(String(row.status ?? '')) === 'pending',
     },
   ];
-
   const detailContent = (row: Record<string, unknown>) => {
     const status = transformStatus(String(row.status ?? ''));
     const statusLabel = STATUS_LABEL_MAP[status] || status;
     const statusColor = STATUS_COLOR_MAP[status] || 'default';
-
     return (
       <Box sx={{ py: 2 }}>
         <Typography
@@ -154,35 +143,34 @@ const RsReviewPage: React.FC = () => {
             variant='body2'
             color='text.secondary'
           >
-            作者: {String(row.project_name ?? '')}
+            [i18n.t('pages.rs_review_page.k0')]: {String(row.project_name ?? '')}
           </Typography>
           <Typography
             variant='body2'
             color='text.secondary'
           >
-            评审人: 系统自动
+            [i18n.t('pages.rs_review_page.k1')]: {i18n.t('pages.rs_review_page.k2')}
           </Typography>
         </Stack>
         <Paper sx={{ p: 2, mt: 3, bgcolor: 'grey.100' }}>
-          <Typography variant='body2'>评审内容区域 - 待实现</Typography>
+          <Typography variant='body2'>{i18n.t('rd.rs_review_page.k11')}</Typography>
         </Paper>
       </Box>
     );
   };
-
   return (
     <PageContainer
-      title='配方评审'
-      subtitle='管理配方评审流程'
+      title={i18n.t('rd.rs_review_page.k12')}
+      subtitle={i18n.t('rd.rs_review_page.k13')}
       maxWidth='xl'
     >
       <CrudPage
         schema={reviewSchema}
         apiAdapter={reviewAdapter}
         breadcrumbs={[
-          { label: '首页', href: '/dashboard' },
-          { label: '研发', href: '/rs' },
-          { label: '配方评审' },
+          { label: i18n.t('rd.rs_review_page.k14'), href: '/dashboard' },
+          { label: i18n.t('rd.rs_review_page.k15'), href: '/rs' },
+          { label: i18n.t('rd.rs_review_page.k16') },
         ]}
         customRowActions={customRowActions}
         detailContent={detailContent}
@@ -191,5 +179,4 @@ const RsReviewPage: React.FC = () => {
     </PageContainer>
   );
 };
-
 export default RsReviewPage;

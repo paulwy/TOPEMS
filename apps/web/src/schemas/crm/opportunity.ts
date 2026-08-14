@@ -2,6 +2,7 @@ import React from 'react';
 import { z } from 'zod';
 import type { EntitySchema } from '@/schema';
 import { commonAuditSchema } from './_shared';
+import i18n from '@/i18n';
 
 export const oppStage = z.enum(['draft', 'lead', 'qualified', 'proposal', 'negotiation', 'won', 'lost', 'closed']);
 export const oppPriority = z.enum(['high', 'medium', 'low']);
@@ -37,8 +38,8 @@ export type UpdateOpportunityRequest = z.infer<typeof updateOpportunitySchema>;
 
 export const opportunitySchema: EntitySchema<Opportunity> = {
   entity: 'crm_opportunity',
-  title: '商机管理',
-  description: '管理商机全生命周期，含阶段推进与赢率追踪',
+  title: i18n.t('shared.opportunity.k0'),
+  description: i18n.t('shared.opportunity.k1'),
   softDelete: true,
   actions: ['create', 'edit', 'detail', 'delete'],
 
@@ -50,7 +51,7 @@ export const opportunitySchema: EntitySchema<Opportunity> = {
   fields: [
     {
       name: 'oppNo',
-      label: '商机编号',
+      label: i18n.t('shared.opportunity.k2'),
       type: 'text',
       required: true,
       readonlyOnEdit: true,
@@ -58,7 +59,7 @@ export const opportunitySchema: EntitySchema<Opportunity> = {
     },
     {
       name: 'title',
-      label: '商机标题',
+      label: i18n.t('shared.opportunity.k3'),
       type: 'text',
       required: true,
       listWidth: 180,
@@ -66,33 +67,33 @@ export const opportunitySchema: EntitySchema<Opportunity> = {
     },
     {
       name: 'customerId',
-      label: '客户ID',
+      label: i18n.t('shared.opportunity.id_4'),
       type: 'text',
       showInList: false,
       showInDetail: false,
     },
     {
       name: 'customerName',
-      label: '客户名称',
+      label: i18n.t('shared.opportunity.k5'),
       type: 'text',
       listWidth: 160,
     },
     {
       name: 'stage',
-      label: '商机阶段',
+      label: i18n.t('shared.opportunity.k6'),
       type: 'select',
       defaultValue: 'draft',
       options: {
         type: 'static',
         options: [
-          { value: 'draft', label: '草稿' },
-          { value: 'lead', label: '线索' },
-          { value: 'qualified', label: '已确认' },
-          { value: 'proposal', label: '方案阶段' },
-          { value: 'negotiation', label: '谈判阶段' },
-          { value: 'won', label: '已赢单' },
-          { value: 'lost', label: '已输单' },
-          { value: 'closed', label: '已关闭' },
+          { value: 'draft', label: i18n.t('shared.opportunity.k7') },
+          { value: 'lead', label: i18n.t('shared.opportunity.k8') },
+          { value: 'qualified', label: i18n.t('shared.opportunity.k9') },
+          { value: 'proposal', label: i18n.t('shared.opportunity.k10') },
+          { value: 'negotiation', label: i18n.t('shared.opportunity.k11') },
+          { value: 'won', label: i18n.t('shared.opportunity.k12') },
+          { value: 'lost', label: i18n.t('shared.opportunity.k13') },
+          { value: 'closed', label: i18n.t('shared.opportunity.k14') },
         ],
       },
       listWidth: 120,
@@ -100,15 +101,15 @@ export const opportunitySchema: EntitySchema<Opportunity> = {
     },
     {
       name: 'priority',
-      label: '优先级',
+      label: i18n.t('shared.opportunity.k15'),
       type: 'select',
       defaultValue: 'medium',
       options: {
         type: 'static',
         options: [
-          { value: 'high', label: '高' },
-          { value: 'medium', label: '中' },
-          { value: 'low', label: '低' },
+          { value: 'high', label: i18n.t('shared.opportunity.k16') },
+          { value: 'medium', label: i18n.t('shared.opportunity.k17') },
+          { value: 'low', label: i18n.t('shared.opportunity.k18') },
         ],
       },
       showInList: false,
@@ -116,7 +117,7 @@ export const opportunitySchema: EntitySchema<Opportunity> = {
     },
     {
       name: 'amount',
-      label: '金额',
+      label: i18n.t('shared.opportunity.k19'),
       type: 'number',
       listWidth: 140,
       renderCell: (row: Record<string, unknown>) =>
@@ -128,34 +129,34 @@ export const opportunitySchema: EntitySchema<Opportunity> = {
     },
     {
       name: 'winRate',
-      label: '赢率(%)',
+      label: i18n.t('shared.opportunity.k20'),
       type: 'number',
       listWidth: 100,
     },
     {
       name: 'closeDate',
-      label: '预计成交日期',
+      label: i18n.t('shared.opportunity.k21'),
       type: 'date',
       listWidth: 120,
     },
     {
       name: 'ownerId',
-      label: '负责人ID',
+      label: i18n.t('shared.opportunity.id_22'),
       type: 'text',
       showInList: false,
     },
     {
       name: 'status',
-      label: '状态',
+      label: i18n.t('shared.opportunity.k23'),
       type: 'select',
       defaultValue: 'open',
       options: {
         type: 'static',
         options: [
-          { value: 'open', label: '进行中' },
-          { value: 'won', label: '已赢单' },
-          { value: 'lost', label: '已输单' },
-          { value: 'archived', label: '已归档' },
+          { value: 'open', label: i18n.t('shared.opportunity.k24') },
+          { value: 'won', label: i18n.t('shared.opportunity.k25') },
+          { value: 'lost', label: i18n.t('shared.opportunity.k26') },
+          { value: 'archived', label: i18n.t('shared.opportunity.k27') },
         ],
       },
       listWidth: 100,
@@ -163,13 +164,13 @@ export const opportunitySchema: EntitySchema<Opportunity> = {
     },
     {
       name: 'description',
-      label: '描述',
+      label: i18n.t('shared.opportunity.k28'),
       type: 'textarea',
       showInList: false,
     },
     {
       name: 'createdAt',
-      label: '创建时间',
+      label: i18n.t('shared.opportunity.k29'),
       type: 'datetime',
       readonly: true,
       listWidth: 160,
@@ -189,39 +190,39 @@ export const opportunitySchema: EntitySchema<Opportunity> = {
         archived: 'default',
       },
       labelMap: {
-        open: '进行中',
-        won: '已赢单',
-        lost: '已输单',
-        archived: '已归档',
+        open: i18n.t('shared.opportunity.k30'),
+        won: i18n.t('shared.opportunity.k31'),
+        lost: i18n.t('shared.opportunity.k32'),
+        archived: i18n.t('shared.opportunity.k33'),
       },
     },
     filters: [
       {
         id: 'stage',
-        label: '商机阶段',
+        label: i18n.t('shared.opportunity.k34'),
         type: 'select',
         options: [
-          { label: '全部', value: 'all' },
-          { label: '草稿', value: 'draft' },
-          { label: '线索', value: 'lead' },
-          { label: '已确认', value: 'qualified' },
-          { label: '方案阶段', value: 'proposal' },
-          { label: '谈判阶段', value: 'negotiation' },
-          { label: '已赢单', value: 'won' },
-          { label: '已输单', value: 'lost' },
-          { label: '已关闭', value: 'closed' },
+          { label: i18n.t('shared.opportunity.k35'), value: 'all' },
+          { label: i18n.t('shared.opportunity.k36'), value: 'draft' },
+          { label: i18n.t('shared.opportunity.k37'), value: 'lead' },
+          { label: i18n.t('shared.opportunity.k38'), value: 'qualified' },
+          { label: i18n.t('shared.opportunity.k39'), value: 'proposal' },
+          { label: i18n.t('shared.opportunity.k40'), value: 'negotiation' },
+          { label: i18n.t('shared.opportunity.k41'), value: 'won' },
+          { label: i18n.t('shared.opportunity.k42'), value: 'lost' },
+          { label: i18n.t('shared.opportunity.k43'), value: 'closed' },
         ],
       },
       {
         id: 'status',
-        label: '状态',
+        label: i18n.t('shared.opportunity.k44'),
         type: 'select',
         options: [
-          { label: '全部', value: 'all' },
-          { label: '进行中', value: 'open' },
-          { label: '已赢单', value: 'won' },
-          { label: '已输单', value: 'lost' },
-          { label: '已归档', value: 'archived' },
+          { label: i18n.t('shared.opportunity.k45'), value: 'all' },
+          { label: i18n.t('shared.opportunity.k46'), value: 'open' },
+          { label: i18n.t('shared.opportunity.k47'), value: 'won' },
+          { label: i18n.t('shared.opportunity.k48'), value: 'lost' },
+          { label: i18n.t('shared.opportunity.k49'), value: 'archived' },
         ],
       },
     ],
@@ -229,21 +230,21 @@ export const opportunitySchema: EntitySchema<Opportunity> = {
 
   formSections: [
     {
-      title: '基本信息',
+      title: i18n.t('shared.opportunity.k50'),
       fields: ['oppNo', 'title', 'customerId', 'customerName'],
     },
     {
-      title: '阶段与金额',
+      title: i18n.t('shared.opportunity.k51'),
       fields: ['stage', 'priority', 'amount', 'winRate', 'closeDate'],
     },
     {
-      title: '其他',
+      title: i18n.t('shared.opportunity.k52'),
       fields: ['ownerId', 'status', 'description'],
     },
   ],
 
   formColCount: 2,
-  createTitle: '新增商机',
-  editTitle: '编辑商机',
-  detailTitle: '商机详情',
+  createTitle: i18n.t('shared.opportunity.k53'),
+  editTitle: i18n.t('shared.opportunity.k54'),
+  detailTitle: i18n.t('shared.opportunity.k55'),
 };

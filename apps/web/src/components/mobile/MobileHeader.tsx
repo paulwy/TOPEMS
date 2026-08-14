@@ -2,6 +2,7 @@ import React from 'react';
 import { AppBar, Toolbar, Typography, IconButton, Box, Badge, useTheme } from '@mui/material';
 import { Menu, ArrowLeft, Bell, Search, MoreVertical } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import i18n from '@/i18n';
 
 export interface MobileHeaderProps {
   title: string;
@@ -71,7 +72,7 @@ export const MobileHeader: React.FC<MobileHeaderProps> = ({
               minWidth: 44,
               minHeight: 44,
             }}
-            aria-label='返回'
+            aria-label={i18n.t('shared.mobile_header.k0')}
           >
             <ArrowLeft style={{ width: 22, height: 22 }} />
           </IconButton>
@@ -83,7 +84,7 @@ export const MobileHeader: React.FC<MobileHeaderProps> = ({
               minWidth: 44,
               minHeight: 44,
             }}
-            aria-label='菜单'
+            aria-label={i18n.t('shared.mobile_header.k1')}
           >
             <Menu style={{ width: 22, height: 22 }} />
           </IconButton>
@@ -118,7 +119,7 @@ export const MobileHeader: React.FC<MobileHeaderProps> = ({
                 minWidth: 44,
                 minHeight: 44,
               }}
-              aria-label='搜索'
+              aria-label={i18n.t('shared.mobile_header.k2')}
             >
               <Search style={{ width: 22, height: 22 }} />
             </IconButton>
@@ -132,7 +133,7 @@ export const MobileHeader: React.FC<MobileHeaderProps> = ({
                 minWidth: 44,
                 minHeight: 44,
               }}
-              aria-label='徽章'
+              aria-label={i18n.t('shared.mobile_header.k3')}
             >
               <Badge
                 badgeContent={notificationCount}
@@ -159,7 +160,7 @@ export const MobileHeader: React.FC<MobileHeaderProps> = ({
                 minWidth: 44,
                 minHeight: 44,
               }}
-              aria-label='更多'
+              aria-label={i18n.t('shared.mobile_header.k4')}
             >
               <MoreVertical style={{ width: 22, height: 22 }} />
             </IconButton>

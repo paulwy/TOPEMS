@@ -7,6 +7,7 @@ import {
   CardContent,
   type ChipProps,
 } from '@mui/material';
+import i18n from '@/i18n';
 import React, { useMemo } from 'react';
 import { useParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
@@ -19,15 +20,9 @@ import type { ProductionOrder, ProductionRecord, QualityRecord } from '@/api/mes
 import { designTokens } from '@/theme/tokens';
 import { MES_PATHS } from '@/modules/mes/config';
 import { getChipStatusColor } from '@/utils/status';
-
-import { useTranslation } from 'react-i18next';
-
 const ct= designTokens.colors;
-
 const ProductionOrderDetailPage: React.FC = () => {
-  const { t } = useTranslation();
   const { id } = useParams<{ id: string }>();
-
   const {
     data: order,
     isPending: orderLoading,
@@ -40,12 +35,11 @@ const ProductionOrderDetailPage: React.FC = () => {
       if (res.success && res.data) {
         return res.data;
       }
-      throw new Error(res.message || t('mes.production_order_detail_page.fail'));
+      throw new Error(res.message || i18n.t('mes.production_order_detail_page.fail'));
     },
     enabled: !!id,
   
       staleTime: CACHE_DURATIONS.MEDIUM,});
-
   const { data: recordsData } = useQuery({
     queryKey: [...QUERY_KEYS.MES.PRODUCTION_RECORDS, { order_id: id }],
     queryFn: async () => {
@@ -58,7 +52,6 @@ const ProductionOrderDetailPage: React.FC = () => {
     enabled: !!id,
   
       staleTime: CACHE_DURATIONS.MEDIUM,});
-
   const { data: qualityRecordsData } = useQuery<QualityRecord[]>({
     queryKey: id
       ? QUERY_KEYS.MES.TRACEABILITY_QUALITY_RECORDS(id)
@@ -73,34 +66,29 @@ const ProductionOrderDetailPage: React.FC = () => {
     enabled: !!id,
   
       staleTime: CACHE_DURATIONS.MEDIUM,});
-
   const records = recordsData || [];
   const qualityRecords = qualityRecordsData || [];
   const loading = orderLoading;
   const errorMessage = orderError
-    ? (orderError as Error).message || t('mes.production_order_detail_page.detail')
+    ? (orderError as Error).message || i18n.t('mes.production_order_detail_page.detail')
     : undefined;
-
   const getOrderStatusColor = (status: string): ChipProps['color'] =>
     getChipStatusColor(status, 'mes');
-
   const getStatusLabel = (status: string) => {
     const statusMap: Record<string, string> = {
-      pending: t('mes.production_order_detail_page.text_e0468e'),
-      released: t('mes.production_order_detail_page.status_released'),
-      in_progress: t('mes.production_order_detail_page.status_in_progress'),
-      completed: t('mes.production_order_detail_page.completed'),
-      cancelled: t('mes.production_order_detail_page.status_cancelled'),
-      paused: t('mes.production_order_detail_page.status_paused'),
+      pending: i18n.t('mes.production_order_detail_page.text_e0468e'),
+      released: i18n.t('mes.production_order_detail_page.status_released'),
+      in_progress: i18n.t('mes.production_order_detail_page.status_in_progress'),
+      completed: i18n.t('mes.production_order_detail_page.completed'),
+      cancelled: i18n.t('mes.production_order_detail_page.status_cancelled'),
+      paused: i18n.t('mes.production_order_detail_page.status_paused'),
     };
     return statusMap[status] || status;
   };
-
   const formatDate = (date: string | undefined) => {
     if (!date) return '-';
     return new Date(date).toLocaleString('zh-CN');
   };
-
   // 基本信息内容
   const basicInfoContent = useMemo(() => {
     if (!order) return null;
@@ -113,31 +101,31 @@ const ProductionOrderDetailPage: React.FC = () => {
         }}
       >
         <Box>
-          <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>工单号</InputLabel>
+          <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>{i18n.t('mes.production_order_detail_page.k0')}</InputLabel>
           <Typography sx={{ fontWeight: 'medium', mt: 0.5 }}>
             {order.order_number || '-'}
           </Typography>
         </Box>
         <Box>
-          <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>产品名称</InputLabel>
+          <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>{i18n.t('mes.production_order_detail_page.k1')}</InputLabel>
           <Typography sx={{ mt: 0.5 }}>{order.product_name || '-'}</Typography>
         </Box>
         <Box>
-          <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>产品编码</InputLabel>
+          <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>{i18n.t('mes.production_order_detail_page.k2')}</InputLabel>
           <Typography sx={{ mt: 0.5 }}>{order.product_code || '-'}</Typography>
         </Box>
         <Box>
-          <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>数量</InputLabel>
+          <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>{i18n.t('mes.production_order_detail_page.k3')}</InputLabel>
           <Typography sx={{ mt: 0.5 }}>
-            {order.quantity} {order.unit || t('mes.production_order_detail_page.text_f7edf5')}
+            {order.quantity} {order.unit || i18n.t('mes.production_order_detail_page.text_f7edf5')}
           </Typography>
         </Box>
         <Box>
-          <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>优先级</InputLabel>
+          <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>{i18n.t('mes.production_order_detail_page.k4')}</InputLabel>
           <Typography sx={{ mt: 0.5 }}>{order.priority || '-'}</Typography>
         </Box>
         <Box>
-          <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>状态</InputLabel>
+          <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>{i18n.t('mes.production_order_detail_page.k5')}</InputLabel>
           <Box sx={{ mt: 0.5 }}>
             <Chip
               label={getStatusLabel(order.status)}
@@ -149,7 +137,6 @@ const ProductionOrderDetailPage: React.FC = () => {
       </Box>
     );
   }, [order]);
-
   // 计划信息内容
   const scheduleInfoContent = useMemo(() => {
     if (!order) return null;
@@ -162,31 +149,29 @@ const ProductionOrderDetailPage: React.FC = () => {
         }}
       >
         <Box>
-          <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>计划开始时间</InputLabel>
+          <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>{i18n.t('mes.production_order_detail_page.k6')}</InputLabel>
           <Typography sx={{ mt: 0.5 }}>{formatDate(order.scheduled_start_date)}</Typography>
         </Box>
         <Box>
-          <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>计划结束时间</InputLabel>
+          <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>{i18n.t('mes.production_order_detail_page.k7')}</InputLabel>
           <Typography sx={{ mt: 0.5 }}>{formatDate(order.scheduled_end_date)}</Typography>
         </Box>
         <Box>
-          <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>实际开始时间</InputLabel>
+          <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>{i18n.t('mes.production_order_detail_page.k8')}</InputLabel>
           <Typography sx={{ mt: 0.5 }}>{formatDate(order.actualStartDate)}</Typography>
         </Box>
         <Box>
-          <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>实际结束时间</InputLabel>
+          <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>{i18n.t('mes.production_order_detail_page.k9')}</InputLabel>
           <Typography sx={{ mt: 0.5 }}>{formatDate(order.actualEndDate)}</Typography>
         </Box>
       </Box>
     );
   }, [order]);
-
   // 报工记录内容
   const recordsContent = useMemo(() => {
     if (records.length === 0) {
-      return <Box sx={{ textAlign: 'center', py: 4, color: 'text.secondary' }}>暂无报工记录</Box>;
+      return <Box sx={{ textAlign: 'center', py: 4, color: 'text.secondary' }}>{i18n.t('mes.production_order_detail_page.k10')}</Box>;
     }
-
     return (
       <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
         {records.map((record) => (
@@ -221,8 +206,8 @@ const ProductionOrderDetailPage: React.FC = () => {
                 <Chip
                   label={
                     record.status === 'completed'
-                      ? t('mes.production_order_detail_page.completed')
-                      : t('mes.production_order_detail_page.in_progress')
+                      ? i18n.t('mes.production_order_detail_page.completed')
+                      : i18n.t('mes.production_order_detail_page.in_progress')
                   }
                   color={record.status === 'completed' ? 'success' : 'primary'}
                   size='small'
@@ -236,7 +221,7 @@ const ProductionOrderDetailPage: React.FC = () => {
                 }}
               >
                 <Box>
-                  <InputLabel sx={{ fontSize: 11, color: 'text.secondary' }}>完成数量</InputLabel>
+                  <InputLabel sx={{ fontSize: 11, color: 'text.secondary' }}>{i18n.t('mes.production_order_detail_page.k11')}</InputLabel>
                   <Typography
                     variant='body2'
                     sx={{ fontWeight: 500 }}
@@ -245,7 +230,7 @@ const ProductionOrderDetailPage: React.FC = () => {
                   </Typography>
                 </Box>
                 <Box>
-                  <InputLabel sx={{ fontSize: 11, color: 'text.secondary' }}>不合格数量</InputLabel>
+                  <InputLabel sx={{ fontSize: 11, color: 'text.secondary' }}>{i18n.t('mes.production_order_detail_page.k12')}</InputLabel>
                   <Typography
                     variant='body2'
                     sx={{ fontWeight: 500, color: 'error.main' }}
@@ -254,17 +239,17 @@ const ProductionOrderDetailPage: React.FC = () => {
                   </Typography>
                 </Box>
                 <Box>
-                  <InputLabel sx={{ fontSize: 11, color: 'text.secondary' }}>工序</InputLabel>
+                  <InputLabel sx={{ fontSize: 11, color: 'text.secondary' }}>{i18n.t('mes.production_order_detail_page.k13')}</InputLabel>
                   <Typography variant='body2'>{record.process_id || '-'}</Typography>
                 </Box>
                 <Box>
-                  <InputLabel sx={{ fontSize: 11, color: 'text.secondary' }}>工位</InputLabel>
+                  <InputLabel sx={{ fontSize: 11, color: 'text.secondary' }}>{i18n.t('mes.production_order_detail_page.k14')}</InputLabel>
                   <Typography variant='body2'>{record.work_station_id || '-'}</Typography>
                 </Box>
               </Box>
               {record.notes && (
                 <Box sx={{ mt: 2, pt: 2, borderTop: '1px solid', borderColor: 'divider' }}>
-                  <InputLabel sx={{ fontSize: 11, color: 'text.secondary' }}>备注</InputLabel>
+                  <InputLabel sx={{ fontSize: 11, color: 'text.secondary' }}>{i18n.t('mes.production_order_detail_page.k15')}</InputLabel>
                   <Typography variant='body2'>{record.notes}</Typography>
                 </Box>
               )}
@@ -274,15 +259,13 @@ const ProductionOrderDetailPage: React.FC = () => {
       </Box>
     );
   }, [records]);
-
   // 质量检验内容
   const qualityContent = useMemo(() => {
     if (qualityRecords.length === 0) {
       return (
-        <Box sx={{ textAlign: 'center', py: 4, color: 'text.secondary' }}>暂无质量检验记录</Box>
+        <Box sx={{ textAlign: 'center', py: 4, color: 'text.secondary' }}>{i18n.t('mes.production_order_detail_page.k16')}</Box>
       );
     }
-
     return (
       <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
         {qualityRecords.map((record) => (
@@ -317,8 +300,8 @@ const ProductionOrderDetailPage: React.FC = () => {
                 <Chip
                   label={
                     record.status === 'qualified'
-                      ? t('mes.production_order_detail_page.qualified')
-                      : t('mes.production_order_detail_page.unqualified')
+                      ? i18n.t('mes.production_order_detail_page.qualified')
+                      : i18n.t('mes.production_order_detail_page.unqualified')
                   }
                   color={record.status === 'qualified' ? 'success' : 'error'}
                   size='small'
@@ -332,7 +315,7 @@ const ProductionOrderDetailPage: React.FC = () => {
                 }}
               >
                 <Box>
-                  <InputLabel sx={{ fontSize: 11, color: 'text.secondary' }}>检验数量</InputLabel>
+                  <InputLabel sx={{ fontSize: 11, color: 'text.secondary' }}>{i18n.t('mes.production_order_detail_page.k17')}</InputLabel>
                   <Typography
                     variant='body2'
                     sx={{ fontWeight: 500 }}
@@ -341,7 +324,7 @@ const ProductionOrderDetailPage: React.FC = () => {
                   </Typography>
                 </Box>
                 <Box>
-                  <InputLabel sx={{ fontSize: 11, color: 'text.secondary' }}>合格数量</InputLabel>
+                  <InputLabel sx={{ fontSize: 11, color: 'text.secondary' }}>{i18n.t('mes.production_order_detail_page.k18')}</InputLabel>
                   <Typography
                     variant='body2'
                     sx={{ fontWeight: 500, color: 'success.main' }}
@@ -350,7 +333,7 @@ const ProductionOrderDetailPage: React.FC = () => {
                   </Typography>
                 </Box>
                 <Box>
-                  <InputLabel sx={{ fontSize: 11, color: 'text.secondary' }}>不合格数量</InputLabel>
+                  <InputLabel sx={{ fontSize: 11, color: 'text.secondary' }}>{i18n.t('mes.production_order_detail_page.k19')}</InputLabel>
                   <Typography
                     variant='body2'
                     sx={{ fontWeight: 500, color: 'error.main' }}
@@ -359,7 +342,7 @@ const ProductionOrderDetailPage: React.FC = () => {
                   </Typography>
                 </Box>
                 <Box>
-                  <InputLabel sx={{ fontSize: 11, color: 'text.secondary' }}>合格率</InputLabel>
+                  <InputLabel sx={{ fontSize: 11, color: 'text.secondary' }}>{i18n.t('mes.production_order_detail_page.k20')}</InputLabel>
                   <Typography
                     variant='body2'
                     sx={{ fontWeight: 500 }}
@@ -370,7 +353,7 @@ const ProductionOrderDetailPage: React.FC = () => {
               </Box>
               {record.result && (
                 <Box sx={{ mt: 2, pt: 2, borderTop: '1px solid', borderColor: 'divider' }}>
-                  <InputLabel sx={{ fontSize: 11, color: 'text.secondary' }}>检验结果</InputLabel>
+                  <InputLabel sx={{ fontSize: 11, color: 'text.secondary' }}>{i18n.t('mes.production_order_detail_page.k21')}</InputLabel>
                   <Typography variant='body2'>{record.result}</Typography>
                 </Box>
               )}
@@ -380,14 +363,12 @@ const ProductionOrderDetailPage: React.FC = () => {
       </Box>
     );
   }, [qualityRecords]);
-
   // 投入产出统计
   const statisticsContent = useMemo(() => {
     const totalCompleted = records.reduce((sum, r) => sum + r.quantity_completed, 0);
     const totalRejected = records.reduce((sum, r) => sum + (r.quantity_rejected || 0), 0);
     const completionRate =
       order && order.quantity > 0 ? (totalCompleted / order.quantity) * 100 : 0;
-
     return (
       <Box
         sx={{
@@ -406,7 +387,7 @@ const ProductionOrderDetailPage: React.FC = () => {
                 size={18}
                 color={ct.primary.dark}
               />
-              <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>计划数量</InputLabel>
+              <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>{i18n.t('mes.production_order_detail_page.k22')}</InputLabel>
             </Box>
             <Typography
               variant='h5'
@@ -426,7 +407,7 @@ const ProductionOrderDetailPage: React.FC = () => {
                 size={18}
                 color='success.700'
               />
-              <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>已完成</InputLabel>
+              <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>{i18n.t('mes.production_order_detail_page.k23')}</InputLabel>
             </Box>
             <Typography
               variant='h5'
@@ -446,7 +427,7 @@ const ProductionOrderDetailPage: React.FC = () => {
                 size={18}
                 color={ct.error[700]}
               />
-              <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>不合格</InputLabel>
+              <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>{i18n.t('mes.production_order_detail_page.k24')}</InputLabel>
             </Box>
             <Typography
               variant='h5'
@@ -466,7 +447,7 @@ const ProductionOrderDetailPage: React.FC = () => {
                 size={18}
                 color='warning.700'
               />
-              <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>完成率</InputLabel>
+              <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>{i18n.t('mes.production_order_detail_page.k25')}</InputLabel>
             </Box>
             <Typography
               variant='h5'
@@ -479,38 +460,36 @@ const ProductionOrderDetailPage: React.FC = () => {
       </Box>
     );
   }, [order, records]);
-
   const tabs = useMemo<TabConfig[]>(
     () => [
       {
         id: 'basic',
-        label: t('mes.production_order_detail_page.tab_basic'),
+        label: i18n.t('mes.production_order_detail_page.tab_basic'),
         content: basicInfoContent || <></>,
       },
       {
         id: 'schedule',
-        label: t('mes.production_order_detail_page.info'),
+        label: i18n.t('mes.production_order_detail_page.info'),
         content: scheduleInfoContent || <></>,
       },
       {
         id: 'statistics',
-        label: t('mes.production_order_detail_page.text_93466b'),
+        label: i18n.t('mes.production_order_detail_page.text_93466b'),
         content: statisticsContent || <></>,
       },
       {
         id: 'records',
-        label: t('mes.production_order_detail_page.work_report'),
+        label: i18n.t('mes.production_order_detail_page.work_report'),
         content: recordsContent || <></>,
       },
       {
         id: 'quality',
-        label: t('mes.production_order_detail_page.inspection'),
+        label: i18n.t('mes.production_order_detail_page.inspection'),
         content: qualityContent || <></>,
       },
     ],
     [basicInfoContent, scheduleInfoContent, statisticsContent, recordsContent, qualityContent]
   );
-
   const infoCard = useMemo(
     () => ({
       avatar: (
@@ -524,18 +503,17 @@ const ProductionOrderDetailPage: React.FC = () => {
       tags: [getStatusLabel(order?.status || '')],
       stats: [
         {
-          label: t('mes.production_order_detail_page.field_planned_quantity'),
-          value: `${order?.quantity || 0} ${order?.unit || '件'}`,
+          label: i18n.t('mes.production_order_detail_page.field_planned_quantity'),
+          value: `${order?.quantity || 0} ${order?.unit || i18n.t('mes.production_order_detail_page.k26')}`,
         },
         {
-          label: t('mes.production_order_detail_page.field_status'),
+          label: i18n.t('mes.production_order_detail_page.field_status'),
           value: getStatusLabel(order?.status || ''),
         },
       ],
     }),
     [order]
   );
-
   return (
     <PageContainer
       backButton={{ href: MES_PATHS.productionOrders }}
@@ -549,7 +527,7 @@ const ProductionOrderDetailPage: React.FC = () => {
       <DetailPageTemplate
         title=''
         subtitle=''
-        detailItemName={order?.product_name || order?.order_number || order?.id || '工单详情'}
+        detailItemName={order?.product_name || order?.order_number || order?.id || i18n.t('mes.production_order_detail_page.k27')}
         backHref={MES_PATHS.productionOrders}
         loading={loading}
         error={errorMessage}
@@ -559,5 +537,4 @@ const ProductionOrderDetailPage: React.FC = () => {
     </PageContainer>
   );
 };
-
 export default ProductionOrderDetailPage;

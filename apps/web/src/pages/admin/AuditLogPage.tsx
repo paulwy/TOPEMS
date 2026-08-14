@@ -12,6 +12,7 @@ import {
   InputLabel,
   Select,
 } from '@mui/material';
+import i18n from '@/i18n';
 import { queryClient, QUERY_KEYS } from '@/lib/reactQuery';
 import { User, FileText, FlaskConical, Database, Download, Calendar, X } from 'lucide-react';
 import { useMutation } from '@tanstack/react-query';
@@ -25,10 +26,8 @@ import { useNotificationStore } from '@/store';
 import { extractErrorMessage } from '@/utils/errors';
 import { apiLogger } from '@/utils/logger';
 import { designTokens } from '@/theme/tokens';
-
 const ct= designTokens.colors;
 type AuditLogSource = 'lims' | 'rd' | 'core';
-
 const formatDateTimeForApi = (dateTimeString: string): string => {
   if (!dateTimeString) return '';
   try {
@@ -37,21 +36,19 @@ const formatDateTimeForApi = (dateTimeString: string): string => {
     return dateTimeString;
   }
 };
-
 const formatAction = (action: string): string => {
   const map: Record<string, string> = {
-    batch_create: '批量创建',
-    batch_delete: '批量删除',
-    export: '导出',
-    import: '导入',
-    create: '创建',
-    update: '更新',
-    delete: '删除',
-    read: '读取',
+    batch_create: i18n.t('admin.audit_log_page.k0'),
+    batch_delete: i18n.t('admin.audit_log_page.k1'),
+    export: i18n.t('admin.audit_log_page.k2'),
+    import: i18n.t('admin.audit_log_page.k3'),
+    create: i18n.t('admin.audit_log_page.k4'),
+    update: i18n.t('admin.audit_log_page.k5'),
+    delete: i18n.t('admin.audit_log_page.k6'),
+    read: i18n.t('admin.audit_log_page.k7'),
   };
   return map[action] || action;
 };
-
 const getStatusChip = (status: string | null | undefined): React.ReactNode => {
   const configs: Record<
     string,
@@ -60,9 +57,9 @@ const getStatusChip = (status: string | null | undefined): React.ReactNode => {
       label: string;
     }
   > = {
-    success: { color: 'success', label: '成功' },
-    partial: { color: 'warning', label: '部分成功' },
-    error: { color: 'error', label: '失败' },
+    success: { color: 'success', label: i18n.t('admin.audit_log_page.k8') },
+    partial: { color: 'warning', label: i18n.t('admin.audit_log_page.k9') },
+    error: { color: 'error', label: i18n.t('admin.audit_log_page.k10') },
   };
   const config = configs[status ?? ''] || {
     color: 'default' as const,
@@ -76,17 +73,14 @@ const getStatusChip = (status: string | null | undefined): React.ReactNode => {
     />
   );
 };
-
 const DetailContent: React.FC<{ row: Record<string, unknown> }> = ({ row }) => {
   const formatDate = (val: unknown) =>
     val ? new Date(val as string).toLocaleString('zh-CN') : '-';
-
   const renderJson = (val: unknown) => {
     if (!val) return '-';
     if (typeof val === 'string') return val;
     return JSON.stringify(val, null, 2);
   };
-
   return (
     <Grid
       container
@@ -99,7 +93,7 @@ const DetailContent: React.FC<{ row: Record<string, unknown> }> = ({ row }) => {
             color='text.secondary'
             gutterBottom
           >
-            基本信息
+            {i18n.t('pages.audit_log_page.k0')}
           </Typography>
           <Grid
             container
@@ -127,7 +121,7 @@ const DetailContent: React.FC<{ row: Record<string, unknown> }> = ({ row }) => {
                   variant='body2'
                   color='text.secondary'
                 >
-                  操作:
+                  [i18n.t('pages.audit_log_page.k1')]:
                 </Typography>
                 <Typography
                   variant='body2'
@@ -143,7 +137,7 @@ const DetailContent: React.FC<{ row: Record<string, unknown> }> = ({ row }) => {
                   variant='body2'
                   color='text.secondary'
                 >
-                  实体类型:
+                  [i18n.t('pages.audit_log_page.k2')]:
                 </Typography>
                 <Typography
                   variant='body2'
@@ -159,7 +153,7 @@ const DetailContent: React.FC<{ row: Record<string, unknown> }> = ({ row }) => {
                   variant='body2'
                   color='text.secondary'
                 >
-                  实体ID:
+                  [i18n.t('pages.audit_log_page.id_3')]:
                 </Typography>
                 <Typography
                   variant='body2'
@@ -175,7 +169,7 @@ const DetailContent: React.FC<{ row: Record<string, unknown> }> = ({ row }) => {
                   variant='body2'
                   color='text.secondary'
                 >
-                  状态:
+                  [i18n.t('pages.audit_log_page.k4')]:
                 </Typography>
                 {getStatusChip(row.status as string)}
               </Box>
@@ -190,7 +184,7 @@ const DetailContent: React.FC<{ row: Record<string, unknown> }> = ({ row }) => {
             color='text.secondary'
             gutterBottom
           >
-            用户信息
+            {i18n.t('pages.audit_log_page.k5')}
           </Typography>
           <Grid
             container
@@ -202,7 +196,7 @@ const DetailContent: React.FC<{ row: Record<string, unknown> }> = ({ row }) => {
                   variant='body2'
                   color='text.secondary'
                 >
-                  用户ID:
+                  [i18n.t('pages.audit_log_page.id_6')]:
                 </Typography>
                 <Typography
                   variant='body2'
@@ -218,7 +212,7 @@ const DetailContent: React.FC<{ row: Record<string, unknown> }> = ({ row }) => {
                   variant='body2'
                   color='text.secondary'
                 >
-                  用户名:
+                  [i18n.t('pages.audit_log_page.k7')]:
                 </Typography>
                 <Typography
                   variant='body2'
@@ -234,7 +228,7 @@ const DetailContent: React.FC<{ row: Record<string, unknown> }> = ({ row }) => {
                   variant='body2'
                   color='text.secondary'
                 >
-                  IP地址:
+                  {i18n.t('pages.audit_log_page.ip_8')}
                 </Typography>
                 <Typography
                   variant='body2'
@@ -250,7 +244,7 @@ const DetailContent: React.FC<{ row: Record<string, unknown> }> = ({ row }) => {
                   variant='body2'
                   color='text.secondary'
                 >
-                  创建时间:
+                  [i18n.t('pages.audit_log_page.k9')]:
                 </Typography>
                 <Typography
                   variant='body2'
@@ -271,7 +265,7 @@ const DetailContent: React.FC<{ row: Record<string, unknown> }> = ({ row }) => {
               color='error.main'
               gutterBottom
             >
-              错误信息
+              {i18n.t('pages.audit_log_page.k10')}
             </Typography>
             <Typography
               variant='body2'
@@ -290,7 +284,7 @@ const DetailContent: React.FC<{ row: Record<string, unknown> }> = ({ row }) => {
               color='text.secondary'
               gutterBottom
             >
-              请求详情
+              {i18n.t('pages.audit_log_page.k11')}
             </Typography>
             <pre
               style={{
@@ -314,7 +308,7 @@ const DetailContent: React.FC<{ row: Record<string, unknown> }> = ({ row }) => {
               color='text.secondary'
               gutterBottom
             >
-              响应详情
+              {i18n.t('pages.audit_log_page.k12')}
             </Typography>
             <pre
               style={{
@@ -333,7 +327,6 @@ const DetailContent: React.FC<{ row: Record<string, unknown> }> = ({ row }) => {
     </Grid>
   );
 };
-
 const AuditLogPage: React.FC = () => {
   const addNotification = useNotificationStore((state) => state.addNotification);
   const [source, setSource] = useState<AuditLogSource>('core');
@@ -341,26 +334,22 @@ const AuditLogPage: React.FC = () => {
   const [endDate, setEndDate] = useState('');
   const [entityTypeFilter, setEntityTypeFilter] = useState<string>('all');
   const [currentSearch, setCurrentSearch] = useState('');
-
   const handleClearDateFilters = useCallback(() => {
     setStartDate('');
     setEndDate('');
   }, []);
-
   const dateRangeError = useMemo(() => {
     if (startDate && endDate && new Date(startDate) > new Date(endDate)) {
-      return '开始时间不能晚于结束时间';
+      return i18n.t('admin.audit_log_page.k11');
     }
     return '';
   }, [startDate, endDate]);
-
   const switchSource = useCallback((newSource: AuditLogSource) => {
     setSource(newSource);
     setEntityTypeFilter('all');
     setStartDate('');
     setEndDate('');
   }, []);
-
   const apiAdapter: CrudApiAdapter = useMemo(
     () => ({
       list: async (params?: Record<string, unknown>) => {
@@ -368,7 +357,6 @@ const AuditLogPage: React.FC = () => {
           page: params?.page ?? 1,
           pagesize: Math.min(200, Math.max(1, (params?.pageSize as number) ?? 20)),
         };
-
         if (params?.status && params.status !== 'all') {
           queryParams.status = params.status;
         }
@@ -387,9 +375,7 @@ const AuditLogPage: React.FC = () => {
         if (params?.search) {
           queryParams.search = params.search;
         }
-
-        apiLogger.debug('加载审计日志参数:', { source, queryParams });
-
+        apiLogger.debug(i18n.t('pages.audit_log_page.k0'), { source, queryParams });
         if (source === 'core') {
           queryParams.source = 'audit_logs';
           try {
@@ -406,15 +392,14 @@ const AuditLogPage: React.FC = () => {
             }
             return { data: [], total: 0 };
           } catch (error) {
-            apiLogger.error('加载核心审计日志失败:', error);
-            throw new Error(extractErrorMessage(error, '加载审计日志失败'));
+            apiLogger.error(i18n.t('pages.audit_log_page.k1'), error);
+            throw new Error(extractErrorMessage(error, i18n.t('admin.audit_log_page.k12')));
           }
         }
-
         const api = source === 'lims' ? auditLimsApi : auditRdApi;
         try {
           const response = await api.listAuditLogs(queryParams);
-          apiLogger.debug('审计日志响应:', response);
+          apiLogger.debug(i18n.t('pages.audit_log_page.k2'), response);
           if (response.success && response.data) {
             const items = (response.data.audit_logs || []).map((item) => ({
               ...item,
@@ -424,30 +409,29 @@ const AuditLogPage: React.FC = () => {
           }
           if (response.message) {
             addNotification({
-              title: '提示',
+              title: i18n.t('admin.audit_log_page.k13'),
               message: response.message,
               type: 'info',
             });
           }
           return { data: [], total: 0 };
         } catch (error) {
-          apiLogger.error(`加载${source}审计日志失败:`, error);
-          throw new Error(extractErrorMessage(error, '加载审计日志失败'));
+          apiLogger.error(`${i18n.t('pages.audit_log_page.k3')}${source}${i18n.t('pages.audit_log_page.k4')}`, error);
+          throw new Error(extractErrorMessage(error, i18n.t('admin.audit_log_page.k14')));
         }
       },
       create: async () => {
-        throw new Error('审计日志为只读数据，不支持创建');
+        throw new Error(i18n.t('admin.audit_log_page.k15'));
       },
       update: async () => {
-        throw new Error('审计日志为只读数据，不支持更新');
+        throw new Error(i18n.t('admin.audit_log_page.k16'));
       },
       delete: async () => {
-        throw new Error('审计日志为只读数据，不支持删除');
+        throw new Error(i18n.t('admin.audit_log_page.k17'));
       },
     }),
     [source, addNotification]
   );
-
   const exportMutation = useMutation({
     mutationFn: async () => {
       const params: Record<string, unknown> = {};
@@ -455,7 +439,6 @@ const AuditLogPage: React.FC = () => {
       if (endDate) params.end_date = formatDateTimeForApi(endDate);
       if (entityTypeFilter !== 'all') params.entity_type = entityTypeFilter;
       if (currentSearch) params.search = currentSearch;
-
       if (source === 'core') {
         params.format = 'csv';
         params.source = 'audit_logs';
@@ -475,7 +458,7 @@ const AuditLogPage: React.FC = () => {
           exact: false,
           refetchType: 'active',
         });
-      apiLogger.debug('导出审计日志成功，blob size:', (blob as Blob)?.size);
+      apiLogger.debug(i18n.t('pages.audit_log_page.blobsize_5'), (blob as Blob)?.size);
       const url = window.URL.createObjectURL(blob as Blob);
       const a = document.createElement('a');
       a.href = url;
@@ -485,39 +468,37 @@ const AuditLogPage: React.FC = () => {
       document.body.removeChild(a);
       window.URL.revokeObjectURL(url);
       addNotification({
-        title: '导出成功',
-        message: '审计日志已导出',
+        title: i18n.t('admin.audit_log_page.k18'),
+        message: i18n.t('admin.audit_log_page.k19'),
         type: 'success',
       });
     },
     onError: (error: unknown) => {
-      apiLogger.error('导出审计日志失败:', error);
-      const errorMsg = extractErrorMessage(error, '导出审计日志失败');
-      if (errorMsg.includes('401') || errorMsg.includes('未授权')) {
+      apiLogger.error(i18n.t('pages.audit_log_page.k6'), error);
+      const errorMsg = extractErrorMessage(error, i18n.t('admin.audit_log_page.k20'));
+      if (errorMsg.includes('401') || errorMsg.includes(i18n.t('admin.audit_log_page.k21'))) {
         addNotification({
-          title: '登录失效',
-          message: '登录已过期，请重新登录',
+          title: i18n.t('admin.audit_log_page.k22'),
+          message: i18n.t('admin.audit_log_page.k23'),
           type: 'error',
         });
       } else {
         addNotification({
-          title: '导出失败',
+          title: i18n.t('admin.audit_log_page.k24'),
           message: errorMsg,
           type: 'error',
         });
       }
     },
   });
-
   const handleExport = useCallback(() => {
     exportMutation.mutate();
   }, [exportMutation]);
-
   const customColumns: ColumnDef[] = useMemo(
     () => [
       {
         id: 'created_at',
-        label: '时间',
+        label: i18n.t('admin.audit_log_page.k25'),
         width: 180,
         sortable: true,
         render: (row) => (
@@ -531,7 +512,7 @@ const AuditLogPage: React.FC = () => {
       },
       {
         id: 'user',
-        label: '用户',
+        label: i18n.t('admin.audit_log_page.k26'),
         width: 160,
         render: (row) => {
           const name = (row.user_name || row.username || row.user_id || '-') as string;
@@ -565,7 +546,7 @@ const AuditLogPage: React.FC = () => {
       },
       {
         id: 'action',
-        label: '操作',
+        label: i18n.t('admin.audit_log_page.k27'),
         width: 110,
         render: (row) => (
           <Typography variant='body2'>{formatAction(row.action as string)}</Typography>
@@ -573,7 +554,7 @@ const AuditLogPage: React.FC = () => {
       },
       {
         id: 'entity_type',
-        label: '实体类型',
+        label: i18n.t('admin.audit_log_page.k28'),
         width: 120,
         render: (row) => (
           <Typography
@@ -586,7 +567,7 @@ const AuditLogPage: React.FC = () => {
       },
       {
         id: 'ip_address',
-        label: 'IP地址',
+        label: i18n.t('pages.audit_log_page.ip_7'),
         width: 130,
         render: (row) => (
           <Typography
@@ -599,7 +580,7 @@ const AuditLogPage: React.FC = () => {
       },
       {
         id: 'status',
-        label: '状态',
+        label: i18n.t('admin.audit_log_page.k29'),
         width: 100,
         render: (row) => {
           const status =
@@ -610,7 +591,7 @@ const AuditLogPage: React.FC = () => {
       },
       {
         id: '_detail_summary',
-        label: '详情',
+        label: i18n.t('admin.audit_log_page.k30'),
         width: 200,
         render: (row) => (
           <Box sx={{ maxWidth: 200 }}>
@@ -644,7 +625,6 @@ const AuditLogPage: React.FC = () => {
     ],
     []
   );
-
   const headerContent = useCallback(
     (rows: Record<string, unknown>[], _total: number, search: string) => {
       // 同步 CrudPage 内部搜索状态，供导出使用
@@ -656,7 +636,6 @@ const AuditLogPage: React.FC = () => {
             .filter((v): v is string => Boolean(v))
         )
       ).sort();
-
       return (
         <Box sx={{ mb: 2 }}>
           <Paper sx={{ p: 2 }}>
@@ -675,7 +654,7 @@ const AuditLogPage: React.FC = () => {
                   onClick={() => switchSource('core')}
                   startIcon={<Database size={16} />}
                 >
-                  统一审计
+                  {i18n.t('pages.audit_log_page.k13')}
                 </Button>
                 <Button
                   size='small'
@@ -694,7 +673,6 @@ const AuditLogPage: React.FC = () => {
                   RD
                 </Button>
               </Box>
-
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                 <Calendar
                   size={18}
@@ -704,11 +682,11 @@ const AuditLogPage: React.FC = () => {
                   variant='body2'
                   color='text.secondary'
                 >
-                  时间范围:
+                  [i18n.t('pages.audit_log_page.k14')]:
                 </Typography>
               </Box>
               <TextField
-                label='开始时间'
+                label={i18n.t('admin.audit_log_page.k31')}
                 type='datetime-local'
                 value={startDate}
                 onChange={(e) => setStartDate(e.target.value)}
@@ -720,10 +698,10 @@ const AuditLogPage: React.FC = () => {
                 variant='body2'
                 color='text.secondary'
               >
-                至
+                {i18n.t('pages.audit_log_page.k15')}
               </Typography>
               <TextField
-                label='结束时间'
+                label={i18n.t('admin.audit_log_page.k32')}
                 type='datetime-local'
                 value={endDate}
                 onChange={(e) => setEndDate(e.target.value)}
@@ -739,7 +717,7 @@ const AuditLogPage: React.FC = () => {
                   startIcon={<X size={14} />}
                   size='small'
                 >
-                  清除
+                  {i18n.t('pages.audit_log_page.k16')}
                 </Button>
               )}
               {dateRangeError && (
@@ -750,18 +728,17 @@ const AuditLogPage: React.FC = () => {
                   {dateRangeError}
                 </Typography>
               )}
-
               <FormControl
                 size='small'
                 sx={{ minWidth: 140 }}
               >
-                <InputLabel>实体类型</InputLabel>
+                <InputLabel>{i18n.t('admin.audit_log_page.k33')}</InputLabel>
                 <Select
                   value={entityTypeFilter}
-                  label='实体类型'
+                  label={i18n.t('admin.audit_log_page.k34')}
                   onChange={(e) => setEntityTypeFilter(e.target.value)}
                 >
-                  <MenuItem value='all'>全部实体</MenuItem>
+                  <MenuItem value='all'>{i18n.t('admin.audit_log_page.k35')}</MenuItem>
                   {uniqueEntityTypes.map((type) => (
                     <MenuItem
                       key={type}
@@ -772,9 +749,7 @@ const AuditLogPage: React.FC = () => {
                   ))}
                 </Select>
               </FormControl>
-
               <Box sx={{ flexGrow: 1 }} />
-
               <Button
                 variant='contained'
                 startIcon={<Download size={16} />}
@@ -782,7 +757,7 @@ const AuditLogPage: React.FC = () => {
                 disabled={exportMutation.isPending}
                 size='small'
               >
-                {exportMutation.isPending ? '导出中...' : '导出'}
+                {exportMutation.isPending ? i18n.t('pages.audit_log_page.k8') : i18n.t('admin.audit_log_page.k36')}
               </Button>
             </Box>
           </Paper>
@@ -802,7 +777,6 @@ const AuditLogPage: React.FC = () => {
       exportMutation.isPending,
     ]
   );
-
   const extraQueryParams = useMemo(
     () => ({
       source,
@@ -812,7 +786,6 @@ const AuditLogPage: React.FC = () => {
     }),
     [source, startDate, endDate, entityTypeFilter]
   );
-
   return (
     <CrudPage
       key={source}
@@ -824,12 +797,11 @@ const AuditLogPage: React.FC = () => {
       detailMaxWidth='lg'
       headerContent={headerContent}
       breadcrumbs={[
-        { label: '首页', href: '/dashboard' },
-        { label: '系统管理' },
-        { label: '审计日志' },
+        { label: i18n.t('admin.audit_log_page.k37'), href: '/dashboard' },
+        { label: i18n.t('admin.audit_log_page.k38') },
+        { label: i18n.t('admin.audit_log_page.k39') },
       ]}
     />
   );
 };
-
 export default AuditLogPage;

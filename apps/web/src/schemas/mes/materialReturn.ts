@@ -1,11 +1,12 @@
 import React from 'react';
 import { Chip, Box } from '@mui/material';
 import type { EntitySchema } from '@/schema';
+import i18n from '@/i18n';
 
 export const materialReturnSchema: EntitySchema = {
   entity: 'mes_material_return',
-  title: '物料退回',
-  description: '管理物料退库单，包括退库单号、工单、退库人、退库时间、原因、状态等',
+  title: i18n.t('mes.material_return.k0'),
+  description: i18n.t('mes.material_return.k1'),
 
   api: {
     module: 'mes',
@@ -15,7 +16,7 @@ export const materialReturnSchema: EntitySchema = {
   fields: [
     {
       name: 'return_no',
-      label: '退库单号',
+      label: i18n.t('mes.material_return.k2'),
       type: 'text',
       required: true,
       readonlyOnEdit: true,
@@ -25,14 +26,14 @@ export const materialReturnSchema: EntitySchema = {
     },
     {
       name: 'order_number',
-      label: '工单号',
+      label: i18n.t('mes.material_return.k3'),
       type: 'text',
       sortable: true,
       listWidth: 140,
     },
     {
       name: 'operator',
-      label: '退库人',
+      label: i18n.t('mes.material_return.k4'),
       type: 'text',
       required: true,
       sortable: true,
@@ -40,13 +41,13 @@ export const materialReturnSchema: EntitySchema = {
     },
     {
       name: 'return_time',
-      label: '退库时间',
+      label: i18n.t('mes.material_return.k5'),
       type: 'datetime',
       listWidth: 160,
     },
     {
       name: 'items_count',
-      label: '物料数',
+      label: i18n.t('mes.material_return.k6'),
       type: 'number',
       listWidth: 80,
       readonly: true,
@@ -55,7 +56,7 @@ export const materialReturnSchema: EntitySchema = {
     },
     {
       name: 'reason',
-      label: '退库原因',
+      label: i18n.t('mes.material_return.k7'),
       type: 'text',
       listWidth: 180,
       renderCell: (row: Record<string, unknown>) =>
@@ -74,25 +75,25 @@ export const materialReturnSchema: EntitySchema = {
     },
     {
       name: 'status',
-      label: '状态',
+      label: i18n.t('mes.material_return.k8'),
       type: 'select',
       defaultValue: 'pending',
       options: {
         type: 'static',
         options: [
-          { value: 'pending', label: '待审核' },
-          { value: 'approved', label: '已审核' },
-          { value: 'returned', label: '已退库' },
-          { value: 'cancelled', label: '已取消' },
+          { value: 'pending', label: i18n.t('mes.material_return.k9') },
+          { value: 'approved', label: i18n.t('mes.material_return.k10') },
+          { value: 'returned', label: i18n.t('mes.material_return.k11') },
+          { value: 'cancelled', label: i18n.t('mes.material_return.k12') },
         ],
       },
       listWidth: 100,
       renderCell: (row: Record<string, unknown>) => {
         const statusMap: Record<string, { label: string; bg: string; color: string }> = {
-          pending: { label: '待审核', bg: 'warning.light', color: 'warning.700' },
-          approved: { label: '已审核', bg: 'secondary.100', color: 'secondary.700' },
-          returned: { label: '已退库', bg: 'success.lighter', color: 'success.700' },
-          cancelled: { label: '已取消', bg: 'error.lighter', color: 'error.dark' },
+          pending: { label: i18n.t('mes.material_return.k13'), bg: 'warning.light', color: 'warning.700' },
+          approved: { label: i18n.t('mes.material_return.k14'), bg: 'secondary.100', color: 'secondary.700' },
+          returned: { label: i18n.t('mes.material_return.k15'), bg: 'success.lighter', color: 'success.700' },
+          cancelled: { label: i18n.t('mes.material_return.k16'), bg: 'error.lighter', color: 'error.dark' },
         };
         const s = statusMap[(row.status as string) || 'pending'] || {
           label: row.status,
@@ -109,20 +110,20 @@ export const materialReturnSchema: EntitySchema = {
     },
     {
       name: 'work_station_id',
-      label: '工位ID',
+      label: i18n.t('mes.material_return.id_17'),
       type: 'text',
       showInList: false,
     },
     {
       name: 'items',
-      label: '物料明细',
+      label: i18n.t('mes.material_return.k18'),
       type: 'textarea',
       showInList: false,
       showInForm: false,
     },
     {
       name: 'created_at',
-      label: '创建时间',
+      label: i18n.t('mes.material_return.k19'),
       type: 'datetime',
       readonly: true,
       showInList: false,
@@ -145,14 +146,14 @@ export const materialReturnSchema: EntitySchema = {
     filters: [
       {
         id: 'status',
-        label: '状态',
+        label: i18n.t('mes.material_return.k20'),
         type: 'select',
         options: [
-          { label: '全部状态', value: 'all' },
-          { label: '待审核', value: 'pending' },
-          { label: '已审核', value: 'approved' },
-          { label: '已退库', value: 'returned' },
-          { label: '已取消', value: 'cancelled' },
+          { label: i18n.t('mes.material_return.k21'), value: 'all' },
+          { label: i18n.t('mes.material_return.k22'), value: 'pending' },
+          { label: i18n.t('mes.material_return.k23'), value: 'approved' },
+          { label: i18n.t('mes.material_return.k24'), value: 'returned' },
+          { label: i18n.t('mes.material_return.k25'), value: 'cancelled' },
         ],
       },
     ],
@@ -162,16 +163,16 @@ export const materialReturnSchema: EntitySchema = {
 
   formSections: [
     {
-      title: '基本信息',
+      title: i18n.t('mes.material_return.k26'),
       fields: ['return_no', 'order_number', 'operator', 'work_station_id'],
     },
     {
-      title: '原因与状态',
+      title: i18n.t('mes.material_return.k27'),
       fields: ['reason', 'status'],
     },
   ],
 
   formColCount: 2,
-  createTitle: '新增物料退库',
-  detailTitle: '物料退库详情',
+  createTitle: i18n.t('mes.material_return.k28'),
+  detailTitle: i18n.t('mes.material_return.k29'),
 };

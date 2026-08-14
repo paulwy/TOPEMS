@@ -9,8 +9,8 @@ import {
   Eye,
   ArrowRightLeft,
 } from 'lucide-react';
+import i18n from '@/i18n';
 import { useQueryClient } from '@tanstack/react-query';
-
 import { useNotificationStore } from '../../store';
 import CrudPage, { type CrudApiAdapter } from '@/components/templates/CrudPage';
 import type { RowAction } from '@/components/templates/list/types';
@@ -21,9 +21,7 @@ import { WORKFLOW_PATHS } from '@/modules/workflow/config';
 import { approvalTaskApi } from '@/api/workflow/approval';
 import type { ApiResponse } from '@/api/client';
 import { workflowApprovalSchema } from '@/schemas/workflow';
-
 type TabType = 'pending' | 'approved' | 'initiated' | 'cc';
-
 interface ApprovalTask {
   id: string;
   title: string;
@@ -37,7 +35,6 @@ interface ApprovalTask {
   instanceId: string;
   nodeName: string;
 }
-
 interface ApprovalTaskApiItem {
   id: string;
   task_name: string;
@@ -48,31 +45,26 @@ interface ApprovalTaskApiItem {
   created_at: string;
   priority?: string;
 }
-
 const mapApiItemToTask = (item: ApprovalTaskApiItem): ApprovalTask => ({
   id: item.id,
   title: item.task_name,
-  workflowName: item.workflow_name || '工作流',
-  workflowType: '工作流管理',
-  initiator: item.initiator_id || '未知用户',
+  workflowName: item.workflow_name || i18n.t('workflow.workflow_approvals_page.k0'),
+  workflowType: i18n.t('workflow.workflow_approvals_page.k1'),
+  initiator: item.initiator_id || i18n.t('workflow.workflow_approvals_page.k2'),
   receivedAt: item.created_at || '',
   priority: (item.priority as 'high' | 'medium' | 'low') || 'medium',
   status: (item.status as 'pending' | 'approved' | 'rejected' | 'claimed') || 'pending',
   instanceId: item.id,
-  nodeName: item.node_name || '审批节点',
+  nodeName: item.node_name || i18n.t('workflow.workflow_approvals_page.k3'),
 });
-
 export const WorkflowApprovalsPage: React.FC = () => {
   const addNotification = useNotificationStore((state) => state.addNotification);
   const queryClient = useQueryClient();
-
   const [activeTab, setActiveTab] = useState<TabType>('pending');
   const [rejectDialogOpen, setRejectDialogOpen] = useState(false);
   const [rejectReason, setRejectReason] = useState('');
   const [selectedTask, setSelectedTask] = useState<ApprovalTask | null>(null);
-
   const { confirmOpen, confirmConfig, closeConfirm } = useConfirmDialog();
-
   const getStatusParam = (tab: TabType): string | undefined => {
     switch (tab) {
       case 'pending':
@@ -83,7 +75,6 @@ export const WorkflowApprovalsPage: React.FC = () => {
         return undefined;
     }
   };
-
   const filterByTab = (tasks: ApprovalTask[], tab: TabType): ApprovalTask[] => {
     switch (tab) {
       case 'pending':
@@ -91,20 +82,18 @@ export const WorkflowApprovalsPage: React.FC = () => {
       case 'approved':
         return tasks.filter((t) => t.status === 'approved' || t.status === 'rejected');
       case 'initiated':
-        return tasks.filter((t) => t.initiator === '当前用户');
+        return tasks.filter((t) => t.initiator === i18n.t('workflow.workflow_approvals_page.k4'));
       case 'cc':
         return tasks.filter((t) => t.status === 'approved');
       default:
         return tasks;
     }
   };
-
   const createApiAdapter = (tab: TabType): CrudApiAdapter<ApprovalTask> => ({
     list: async (params) => {
       const page = params?.page ?? 1;
       const pageSize = params?.pageSize ?? 10;
       const statusParam = getStatusParam(tab);
-
       const res = await approvalTaskApi.listApprovalTasks({
         page,
         page_size: pageSize,
@@ -114,16 +103,13 @@ export const WorkflowApprovalsPage: React.FC = () => {
         items: ApprovalTaskApiItem[];
         total: number;
       }>;
-
       let tasks: ApprovalTask[] = [];
       let total = 0;
       if (apiRes.success && apiRes.data) {
         tasks = apiRes.data.items.map(mapApiItemToTask);
         total = apiRes.data.total || tasks.length;
       }
-
       tasks = filterByTab(tasks, tab);
-
       if (params?.search) {
         const q = (params.search as string).toLowerCase();
         tasks = tasks.filter(
@@ -133,26 +119,21 @@ export const WorkflowApprovalsPage: React.FC = () => {
             t.initiator.toLowerCase().includes(q)
         );
       }
-
       if (typeof params?.status === 'string' && params.status !== 'all') {
         tasks = tasks.filter((t) => t.status === params.status);
       }
-
       if (typeof params?.priority === 'string' && params.priority !== 'all') {
         tasks = tasks.filter((t) => t.priority === params.priority);
       }
-
       total = tasks.length;
       const start = (page - 1) * pageSize;
       const paged = tasks.slice(start, start + pageSize);
-
       return { data: paged, total };
     },
     create: async () => ({}) as ApprovalTask,
     update: async (_id, _data) => ({}) as ApprovalTask,
     delete: async () => {},
   });
-
   const handleApprove = useCallback(
     async (row: Record<string, unknown>) => {
       const task = row as unknown as ApprovalTask;
@@ -163,28 +144,26 @@ export const WorkflowApprovalsPage: React.FC = () => {
   refetchType: 'active',
 });
         addNotification({
-          title: '审批成功',
-          message: `已通过「${task.title}」的审批`,
+          title: i18n.t('workflow.workflow_approvals_page.k5'),
+          message: `${i18n.t('pages.workflow_approvals_page.k0')}${task.title}${i18n.t('pages.workflow_approvals_page.k1')}`,
           type: 'success',
         });
       } catch (err) {
         addNotification({
-          title: '操作失败',
-          message: extractErrorMessage(err, '审批操作失败'),
+          title: i18n.t('workflow.workflow_approvals_page.k6'),
+          message: extractErrorMessage(err, i18n.t('workflow.workflow_approvals_page.k7')),
           type: 'error',
         });
       }
     },
     [queryClient, addNotification]
   );
-
   const handleRejectClick = useCallback((row: Record<string, unknown>) => {
     const task = row as unknown as ApprovalTask;
     setSelectedTask(task);
     setRejectReason('');
     setRejectDialogOpen(true);
   }, []);
-
   const handleRejectConfirm = useCallback(async () => {
     if (!selectedTask) return;
     try {
@@ -196,47 +175,44 @@ export const WorkflowApprovalsPage: React.FC = () => {
       setRejectDialogOpen(false);
       setSelectedTask(null);
       addNotification({
-        title: '已驳回',
-        message: `已驳回「${selectedTask.title}」的审批`,
+        title: i18n.t('workflow.workflow_approvals_page.k8'),
+        message: `${i18n.t('pages.workflow_approvals_page.k2')}${selectedTask.title}${i18n.t('pages.workflow_approvals_page.k3')}`,
         type: 'warning',
       });
     } catch (err) {
       addNotification({
-        title: '操作失败',
-        message: extractErrorMessage(err, '驳回操作失败'),
+        title: i18n.t('workflow.workflow_approvals_page.k9'),
+        message: extractErrorMessage(err, i18n.t('workflow.workflow_approvals_page.k10')),
         type: 'error',
       });
     }
   }, [selectedTask, rejectReason, queryClient, addNotification]);
-
   const handleViewDetail = useCallback(
     (row: Record<string, unknown>) => {
       const task = row as unknown as ApprovalTask;
       addNotification({
-        title: '查看详情',
-        message: `查看「${task.title}」的详情`,
+        title: i18n.t('workflow.workflow_approvals_page.k11'),
+        message: `${i18n.t('pages.workflow_approvals_page.k4')}${task.title}${i18n.t('pages.workflow_approvals_page.k5')}`,
         type: 'info',
       });
     },
     [addNotification]
   );
-
   const handleTransfer = useCallback(
     (row: Record<string, unknown>) => {
       const task = row as unknown as ApprovalTask;
       addNotification({
-        title: '转交审批',
-        message: `转交「${task.title}」的审批`,
+        title: i18n.t('workflow.workflow_approvals_page.k12'),
+        message: `${i18n.t('pages.workflow_approvals_page.k6')}${task.title}${i18n.t('pages.workflow_approvals_page.k7')}`,
         type: 'info',
       });
     },
     [addNotification]
   );
-
   const customRowActions: RowAction[] = [
     {
       key: 'approve',
-      label: '审批',
+      label: i18n.t('workflow.workflow_approvals_page.k13'),
       icon: <CheckCircle size={16} />,
       color: 'success',
       onClick: handleApprove,
@@ -244,7 +220,7 @@ export const WorkflowApprovalsPage: React.FC = () => {
     },
     {
       key: 'reject',
-      label: '驳回',
+      label: i18n.t('workflow.workflow_approvals_page.k14'),
       icon: <XCircle size={16} />,
       color: 'error',
       onClick: handleRejectClick,
@@ -252,53 +228,51 @@ export const WorkflowApprovalsPage: React.FC = () => {
     },
     {
       key: 'view',
-      label: '查看详情',
+      label: i18n.t('workflow.workflow_approvals_page.k15'),
       icon: <Eye size={16} />,
       color: 'secondary',
       onClick: handleViewDetail,
     },
     {
       key: 'transfer',
-      label: '转交',
+      label: i18n.t('workflow.workflow_approvals_page.k16'),
       icon: <ArrowRightLeft size={16} />,
       color: 'secondary',
       onClick: handleTransfer,
       show: (row) => row.status === 'pending' || row.status === 'claimed',
     },
   ];
-
   const renderStatsCards = (_tab: TabType) => {
     const stats = [
       {
         id: 'pending',
-        title: '待审批',
+        title: i18n.t('workflow.workflow_approvals_page.k17'),
         value: 0,
         icon: <Clock size={20} />,
         color: 'warning' as const,
       },
       {
         id: 'approved',
-        title: '已通过',
+        title: i18n.t('workflow.workflow_approvals_page.k18'),
         value: 0,
         icon: <CheckCircle size={20} />,
         color: 'success' as const,
       },
       {
         id: 'rejected',
-        title: '已驳回',
+        title: i18n.t('workflow.workflow_approvals_page.k19'),
         value: 0,
         icon: <XCircle size={20} />,
         color: 'error' as const,
       },
       {
         id: 'timeout',
-        title: '超时预警',
+        title: i18n.t('workflow.workflow_approvals_page.k20'),
         value: 0,
         icon: <AlertTriangle size={20} />,
         color: 'error' as const,
       },
     ];
-
     return (
       <Box
         sx={{
@@ -357,7 +331,6 @@ export const WorkflowApprovalsPage: React.FC = () => {
       </Box>
     );
   };
-
   const tabHeaders = (
     <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 3 }}>
       <Tabs
@@ -374,25 +347,24 @@ export const WorkflowApprovalsPage: React.FC = () => {
         }}
       >
         <Tab
-          label='待我审批'
+          label={i18n.t('workflow.workflow_approvals_page.k21')}
           value='pending'
         />
         <Tab
-          label='我已审批'
+          label={i18n.t('workflow.workflow_approvals_page.k22')}
           value='approved'
         />
         <Tab
-          label='我发起的'
+          label={i18n.t('workflow.workflow_approvals_page.k23')}
           value='initiated'
         />
         <Tab
-          label='抄送我的'
+          label={i18n.t('workflow.workflow_approvals_page.k24')}
           value='cc'
         />
       </Tabs>
     </Box>
   );
-
   return (
     <PageContainer
       headerProps={{
@@ -404,7 +376,6 @@ export const WorkflowApprovalsPage: React.FC = () => {
     >
       {tabHeaders}
       {renderStatsCards(activeTab)}
-
       <CrudPage
         key={activeTab}
         schema={workflowApprovalSchema}
@@ -412,7 +383,6 @@ export const WorkflowApprovalsPage: React.FC = () => {
         customRowActions={customRowActions}
         idField='id'
       />
-
       <ConfirmDialog
         isOpen={confirmOpen}
         onClose={closeConfirm}
@@ -424,15 +394,14 @@ export const WorkflowApprovalsPage: React.FC = () => {
         message={confirmConfig?.message || ''}
         danger={confirmConfig?.danger}
       />
-
       <ConfirmDialog
         isOpen={rejectDialogOpen}
         onClose={() => !rejectReason && setRejectDialogOpen(false)}
         onConfirm={handleRejectConfirm}
-        title='驳回审批'
-        message={`确定要驳回「${selectedTask?.title}」的审批吗？`}
-        confirmLabel='确认驳回'
-        cancelLabel='取消'
+        title={i18n.t('workflow.workflow_approvals_page.k25')}
+        message={`${i18n.t('pages.workflow_approvals_page.k8')}${selectedTask?.title}${i18n.t('pages.workflow_approvals_page.k9')}`}
+        confirmLabel={i18n.t('workflow.workflow_approvals_page.k26')}
+        cancelLabel={i18n.t('workflow.workflow_approvals_page.k27')}
         danger
         type='warning'
       >
@@ -448,10 +417,10 @@ export const WorkflowApprovalsPage: React.FC = () => {
           </Typography>
           <TextField
             size='small'
-            label='驳回原因'
+            label={i18n.t('workflow.workflow_approvals_page.k28')}
             value={rejectReason}
             onChange={(e) => setRejectReason(e.target.value)}
-            placeholder='请输入驳回原因'
+            placeholder={i18n.t('workflow.workflow_approvals_page.k29')}
             multiline
             rows={3}
             fullWidth
@@ -461,5 +430,4 @@ export const WorkflowApprovalsPage: React.FC = () => {
     </PageContainer>
   );
 };
-
 export default WorkflowApprovalsPage;

@@ -3,6 +3,7 @@ import { Box, TextField, Button } from '@mui/material';
 import { Save } from 'lucide-react';
 import type { User as UserType } from '@/api/iam';
 import type { UseFormReturn } from 'react-hook-form';
+import i18n from '@/i18n';
 
 export interface ProfileFormData {
   full_name: string;
@@ -24,24 +25,24 @@ const ProfileInfoPanel: React.FC<ProfileInfoPanelProps> = ({ user, profileForm, 
     >
       <TextField
         fullWidth
-        label='姓名'
+        label={i18n.t('pages.profile_info_panel.k0')}
         {...profileForm.register('full_name')}
-        placeholder='请输入姓名'
+        placeholder={i18n.t('pages.profile_info_panel.k1')}
         size='small'
       />
       <Box>
         <TextField
           fullWidth
-          label='邮箱 *'
+          label={i18n.t('pages.profile_info_panel.k0')}
           type='email'
           {...profileForm.register('email', {
-            required: '邮箱是必填项',
+            required: i18n.t('pages.profile_info_panel.k2'),
             pattern: {
               value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
-              message: '请输入有效的邮箱地址',
+              message: i18n.t('pages.profile_info_panel.k3'),
             },
           })}
-          placeholder='请输入邮箱'
+          placeholder={i18n.t('pages.profile_info_panel.k4')}
           error={!!profileForm.formState.errors.email}
           helperText={profileForm.formState.errors.email?.message}
           size='small'
@@ -49,7 +50,7 @@ const ProfileInfoPanel: React.FC<ProfileInfoPanelProps> = ({ user, profileForm, 
       </Box>
       <TextField
         fullWidth
-        label='用户名'
+        label={i18n.t('pages.profile_info_panel.k5')}
         value={user.username}
         disabled
         size='small'
@@ -60,14 +61,14 @@ const ProfileInfoPanel: React.FC<ProfileInfoPanelProps> = ({ user, profileForm, 
           variant='contained'
           startIcon={<Save size={16} />}
         >
-          保存更改
+          {i18n.t('pages.profile_info_panel.k1')}
         </Button>
         <Button
           type='button'
           variant='outlined'
           onClick={() => profileForm.reset()}
         >
-          重置
+          {i18n.t('pages.profile_info_panel.k2')}
         </Button>
       </Box>
     </Box>

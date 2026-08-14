@@ -4,7 +4,7 @@ import { milestoneSchema } from '@/schemas/rd';
 import { rdApi } from '@/api/rd';
 import type { Build, CreateBuildRequest } from '@/api/rd';
 import { RD_PATHS } from '@/modules/rd/config';
-
+import i18n from '@/i18n';
 interface Milestone {
   id: string;
   name: string;
@@ -14,7 +14,6 @@ interface Milestone {
   related_project: string;
   status: string;
 }
-
 const transformBuildToMilestone = (b: Build): Milestone => ({
   id: b.id,
   name: `${b.build_no} - ${b.project_name}`,
@@ -25,12 +24,10 @@ const transformBuildToMilestone = (b: Build): Milestone => ({
   related_project: b.project_name,
   status: b.status === 'success' ? 'completed' : b.status === 'running' ? 'active' : 'planning',
 });
-
 const STATUS_FILTER_TO_BUILD_STATUS: Record<string, string> = {
   active: 'running',
   completed: 'success',
 };
-
 const milestoneApiAdapter: CrudApiAdapter<Milestone> = {
   list: async (params) => {
     const queryParams: Record<string, unknown> = {
@@ -42,10 +39,9 @@ const milestoneApiAdapter: CrudApiAdapter<Milestone> = {
       const buildStatus = STATUS_FILTER_TO_BUILD_STATUS[params.status as string];
       if (buildStatus) queryParams.status = buildStatus;
     }
-
     const response = await rdApi.listBuilds(queryParams);
     if (!response.success || !response.data) {
-      throw new Error(response.message || '加载里程碑数据失败');
+      throw new Error(response.message || i18n.t('rd.rs_milestone_page.k0'));
     }
     const builds = response.data.builds || [];
     return {
@@ -53,7 +49,6 @@ const milestoneApiAdapter: CrudApiAdapter<Milestone> = {
       total: response.data.total || 0,
     };
   },
-
   create: async () => {
     const createData: CreateBuildRequest = {
       project_id: 'default',
@@ -63,28 +58,24 @@ const milestoneApiAdapter: CrudApiAdapter<Milestone> = {
     };
     const response = await rdApi.createBuild(createData);
     if (!response.success || !response.data) {
-      throw new Error(response.message || '创建里程碑失败');
+      throw new Error(response.message || i18n.t('rd.rs_milestone_page.k1'));
     }
     return transformBuildToMilestone(response.data);
   },
-
   update: async () => {
-    throw new Error('里程碑不支持编辑');
+    throw new Error(i18n.t('rd.rs_milestone_page.k2'));
   },
-
   delete: async () => {
-    throw new Error('里程碑不支持删除');
+    throw new Error(i18n.t('rd.rs_milestone_page.k3'));
   },
 };
-
 const RsMilestonePage: React.FC = () => {
   return (
     <CrudPage
       schema={milestoneSchema}
       apiAdapter={milestoneApiAdapter}
-      breadcrumbs={[{ label: '研发管理', href: RD_PATHS.root }, { label: '里程碑' }]}
+      breadcrumbs={[{ label: i18n.t('rd.rs_milestone_page.k5'), href: RD_PATHS.root }, { label: i18n.t('rd.rs_milestone_page.k4') }]}
     />
   );
 };
-
 export default RsMilestonePage;

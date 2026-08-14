@@ -8,6 +8,7 @@ import {
   Box,
   Button,
 } from '@mui/material';
+import i18n from '@/i18n';
 import { useState, useEffect } from 'react';
 import { Sparkles, RefreshCw, Copy, Check, Quote } from 'lucide-react';
 
@@ -24,16 +25,16 @@ export interface AISummarizerProps {
 
 const summaryTypeConfig = {
   short: {
-    label: '简短摘要',
-    description: '100字以内，核心要点',
+    label: i18n.t('components.ai_summarizer.k0'),
+    description: i18n.t('components.ai_summarizer.100_0'),
   },
   medium: {
-    label: '标准摘要',
-    description: '200-300字，全面概述',
+    label: i18n.t('components.ai_summarizer.k1'),
+    description: i18n.t('components.ai_summarizer.200300_1'),
   },
   detailed: {
-    label: '详细摘要',
-    description: '400字以上，细节丰富',
+    label: i18n.t('components.ai_summarizer.k2'),
+    description: i18n.t('components.ai_summarizer.400_2'),
   },
 };
 
@@ -96,11 +97,11 @@ export function AISummarizer({
     <AIGenerateModal
       isOpen={isOpen}
       onClose={onClose}
-      title='AI 智能摘要'
-      description='根据内容自动生成专业摘要'
+      title={i18n.t('components.ai_summarizer.ai_3')}
+      description={i18n.t('components.ai_summarizer.k3')}
       isLoading={isLoading}
       onConfirm={hasSummary ? handleApply : undefined}
-      confirmText='应用'
+      confirmText={i18n.t('components.ai_summarizer.k4')}
       extraActions={
         hasSummary ? (
           <Button
@@ -114,14 +115,14 @@ export function AISummarizer({
             ) : (
               <Copy style={{ width: 16, height: 16 }} />
             )}
-            {copied ? '已复制' : '复制'}
+            {copied ? i18n.t('components.ai_summarizer.k6') : i18n.t('components.ai_summarizer.k5')}
           </Button>
         ) : null
       }
     >
       <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-          <FormLabel>摘要类型</FormLabel>
+          <FormLabel>{i18n.t('components.ai_summarizer.k7')}</FormLabel>
           <Select
             value={summaryType}
             onChange={(e) => handleTypeChange(e.target.value as 'short' | 'medium' | 'detailed')}
@@ -148,7 +149,7 @@ export function AISummarizer({
             <CardContent sx={{ p: 2 }}>
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1.5 }}>
                 <Quote style={{ width: 20, height: 20, color: 'purple.600' }} />
-                <FormLabel sx={{ color: 'secondary.dark', fontWeight: 500 }}>生成的摘要</FormLabel>
+                <FormLabel sx={{ color: 'secondary.dark', fontWeight: 500 }}>{i18n.t('components.ai_summarizer.k8')}</FormLabel>
               </Box>
               <Box
                 sx={{
@@ -175,7 +176,7 @@ export function AISummarizer({
                 onClick={handleSummarize}
               >
                 <RefreshCw style={{ width: 16, height: 16, marginRight: 8 }} />
-                重新生成
+                {i18n.t('components.ai_summarizer.k4')}
               </Button>
             </CardContent>
           </Card>
@@ -190,7 +191,7 @@ export function AISummarizer({
                   opacity: 0.5,
                 }}
               />
-              <Typography>正在生成摘要...</Typography>
+              <Typography>{i18n.t('components.ai_summarizer.k5')}</Typography>
             </CardContent>
           </Card>
         )}

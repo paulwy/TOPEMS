@@ -11,13 +11,11 @@ import {
   TextField,
   Typography,
 } from '@mui/material';
+import i18n from '@/i18n';
 import { AlertCircle, Save } from 'lucide-react';
-import { useTranslation } from 'react-i18next';
 import { designTokens } from '@/theme/tokens';
 import type { AntiReplayConfig } from '../hooks/useRateLimitConfig';
-
 const ct= designTokens.colors;
-
 interface AntiReplayConfigPanelProps {
   antiReplay: AntiReplayConfig;
   setAntiReplay: React.Dispatch<React.SetStateAction<AntiReplayConfig>>;
@@ -28,7 +26,6 @@ interface AntiReplayConfigPanelProps {
   onSave: () => void;
   isSaving: boolean;
 }
-
 export const AntiReplayConfigPanel: React.FC<AntiReplayConfigPanelProps> = ({
   antiReplay,
   setAntiReplay,
@@ -39,8 +36,6 @@ export const AntiReplayConfigPanel: React.FC<AntiReplayConfigPanelProps> = ({
   onSave,
   isSaving,
 }) => {
-  const { t } = useTranslation();
-
   return (
     <Grid size={{ xs: 12, md: 6 }}>
       <Card>
@@ -54,7 +49,7 @@ export const AntiReplayConfigPanel: React.FC<AntiReplayConfigPanelProps> = ({
               variant='subtitle1'
               sx={{ fontWeight: 600 }}
             >
-              {t('admin.rate_limit_config_page.text_209207')}
+              {i18n.t('admin.rate_limit_config_page.text_209207')}
             </Typography>
             <Box sx={{ flex: 1 }} />
             <Switch
@@ -68,7 +63,7 @@ export const AntiReplayConfigPanel: React.FC<AntiReplayConfigPanelProps> = ({
           >
             <Grid size={{ xs: 6 }}>
               <TextField
-                label={t('admin.rate_limit_config_page.attr_3d3dbd')}
+                label={i18n.t('admin.rate_limit_config_page.attr_3d3dbd')}
                 type='number'
                 fullWidth
                 size='small'
@@ -83,7 +78,7 @@ export const AntiReplayConfigPanel: React.FC<AntiReplayConfigPanelProps> = ({
             </Grid>
             <Grid size={{ xs: 6 }}>
               <TextField
-                label={t('admin.rate_limit_config_page.attr_cbecae')}
+                label={i18n.t('admin.rate_limit_config_page.attr_cbecae')}
                 type='number'
                 fullWidth
                 size='small'
@@ -98,7 +93,7 @@ export const AntiReplayConfigPanel: React.FC<AntiReplayConfigPanelProps> = ({
             </Grid>
             <Grid size={{ xs: 6 }}>
               <TextField
-                label={t('admin.rate_limit_config_page.attr_bfe154')}
+                label={i18n.t('admin.rate_limit_config_page.attr_bfe154')}
                 fullWidth
                 size='small'
                 value={antiReplay.timestamp_header}
@@ -130,7 +125,7 @@ export const AntiReplayConfigPanel: React.FC<AntiReplayConfigPanelProps> = ({
                 variant='body2'
                 sx={{ mb: 1, fontWeight: 500 }}
               >
-                {t('admin.rate_limit_config_page.text_778582')}
+                {i18n.t('admin.rate_limit_config_page.text_778582')}
               </Typography>
               <Box sx={{ display: 'flex', gap: 1, mb: 1 }}>
                 <TextField
@@ -144,7 +139,7 @@ export const AntiReplayConfigPanel: React.FC<AntiReplayConfigPanelProps> = ({
                   variant='outlined'
                   onClick={onAddEnforcePath}
                 >
-                  {t('admin.rate_limit_config_page.text_b58c75')}
+                  {i18n.t('admin.rate_limit_config_page.text_b58c75')}
                 </Button>
               </Box>
               <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
@@ -165,7 +160,7 @@ export const AntiReplayConfigPanel: React.FC<AntiReplayConfigPanelProps> = ({
                 onClick={onSave}
                 disabled={isSaving}
               >
-                {t('admin.rate_limit_config_page.text_f699f0')}
+                {i18n.t('admin.rate_limit_config_page.text_f699f0')}
               </Button>
             </Grid>
           </Grid>
@@ -174,5 +169,4 @@ export const AntiReplayConfigPanel: React.FC<AntiReplayConfigPanelProps> = ({
     </Grid>
   );
 };
-
 export default AntiReplayConfigPanel;

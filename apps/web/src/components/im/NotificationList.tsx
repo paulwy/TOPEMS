@@ -5,6 +5,8 @@ import { Bell, Check, CheckCheck, Clock } from 'lucide-react';
 import { imApi, type Notification } from '../../api/im';
 import { useNotificationStore } from '@/store';
 import { logger } from '@/utils/logger';
+import { designTokens } from '@topems/tokens';
+import i18n from '@/i18n';
 
 interface NotificationListProps {
   userId?: string;
@@ -57,7 +59,7 @@ export const NotificationList: React.FC<NotificationListProps> = ({ userId = 'cu
         setNotifications((prev) => prev.map((n) => ({ ...n, is_read: true })));
         addNotification({
           title: 'Success',
-          message: '所有通知已标记为已读',
+          message: i18n.t('im.notification_list.k0'),
           type: 'success',
         });
       }
@@ -74,10 +76,10 @@ export const NotificationList: React.FC<NotificationListProps> = ({ userId = 'cu
     const hours = Math.floor(diff / 3600000);
     const days = Math.floor(diff / 86400000);
 
-    if (minutes < 1) return '刚刚';
-    if (minutes < 60) return `${minutes}分钟前`;
-    if (hours < 24) return `${hours}小时前`;
-    if (days < 7) return `${days}天前`;
+    if (minutes < 1) return i18n.t('im.notification_list.k1');
+    if (minutes < 60) return `${minutes}${i18n.t('components.notification_list.k0')}`;
+    if (hours < 24) return `${hours}${i18n.t('components.notification_list.k1')}`;
+    if (days < 7) return `${days}${i18n.t('components.notification_list.k2')}`;
     return date.toLocaleDateString('zh-CN');
   };
 
@@ -120,14 +122,14 @@ export const NotificationList: React.FC<NotificationListProps> = ({ userId = 'cu
             }}
           >
             <Bell sx={{ width: 20, height: 20 }} />
-            通知
+            {i18n.t('components.notification_list.k0')}
             {unreadCount > 0 && (
               <span
                 style={{
                   backgroundColor: theme.palette.error.main,
                   color: 'common.white',
                   fontSize: 12,
-                  padding: '2px 8px',
+                  padding: `${designTokens.spacing.xs} 8px`,
                   borderRadius: 9999,
                 }}
               >
@@ -143,7 +145,7 @@ export const NotificationList: React.FC<NotificationListProps> = ({ userId = 'cu
               sx={{ fontSize: 14 }}
             >
               <CheckCheck sx={{ width: 16, height: 16, mr: 1 }} />
-              全部已读
+              {i18n.t('components.notification_list.k1')}
             </Button>
           )}
         </div>
@@ -181,7 +183,7 @@ export const NotificationList: React.FC<NotificationListProps> = ({ userId = 'cu
                 color: 'grey.300',
               }}
             />
-            <p>暂无通知</p>
+            <p>{i18n.t('im.notification_list.k2')}</p>
           </div>
         ) : (
           <div style={{ borderTop: '1px solid var(--mui-palette-grey-100)' }}>

@@ -6,6 +6,8 @@ import { usePermission } from '../../hooks/usePermission';
 import { useRole } from '../../hooks/useRole';
 import { Button, Box, Typography } from '@mui/material';
 import { AUTH_PATHS } from '../../routes/auth';
+import { designTokens } from '@topems/tokens';
+import i18n from '@/i18n';
 
 interface ProtectedRouteProps {
   children: ReactNode;
@@ -40,8 +42,8 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
         <Box sx={{ textAlign: 'center' }}>
           <Box
             sx={{
-              width: '48px',
-              height: '48px',
+              width: designTokens.spacing['2xl'],
+              height: designTokens.spacing['2xl'],
               border: '4px solid',
               borderColor: 'primary.main',
               borderBottom: '4px solid transparent',
@@ -51,7 +53,7 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
               marginBottom: 2,
             }}
           ></Box>
-          <Typography sx={{ color: 'text.secondary' }}>加载中...</Typography>
+          <Typography sx={{ color: 'text.secondary' }}>{i18n.t('components.protected_route.k0')}</Typography>
         </Box>
       </Box>
     );
@@ -88,20 +90,20 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
               variant='h5'
               sx={{ fontWeight: 700, color: 'grey.900', mb: 1 }}
             >
-              权限不足
+              {i18n.t('components.protected_route.k0')}
             </Typography>
             <Typography
               variant='body2'
               sx={{ color: 'var(--mui-palette-text-secondary)', mb: 3 }}
             >
-              您没有访问此页面的权限。请联系管理员获取相应权限。
+              {i18n.t('components.protected_route.k1')}
             </Typography>
             <Box sx={{ display: 'flex', gap: 2, justifyContent: 'center' }}>
               <Button
                 onClick={() => window.history.back()}
                 variant='outlined'
               >
-                返回上一页
+                {i18n.t('components.protected_route.k2')}
               </Button>
               <Button
                 onClick={() => {
@@ -111,7 +113,7 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
                 variant='contained'
                 color='primary'
               >
-                退出登录
+                {i18n.t('components.protected_route.k3')}
               </Button>
             </Box>
           </Box>
@@ -139,20 +141,20 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
               variant='h5'
               sx={{ fontWeight: 700, color: 'grey.900', mb: 1 }}
             >
-              角色权限不足
+              {i18n.t('components.protected_route.k4')}
             </Typography>
             <Typography
               variant='body2'
               sx={{ color: 'var(--mui-palette-text-secondary)', mb: 3 }}
             >
-              您没有访问此页面的角色权限。请联系管理员分配相应角色。
+              {i18n.t('components.protected_route.k5')}
             </Typography>
             <Box sx={{ display: 'flex', gap: 2, justifyContent: 'center' }}>
               <Button
                 onClick={() => window.history.back()}
                 variant='outlined'
               >
-                返回上一页
+                {i18n.t('components.protected_route.k6')}
               </Button>
               <Button
                 onClick={() => {
@@ -162,7 +164,7 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
                 variant='contained'
                 color='primary'
               >
-                退出登录
+                {i18n.t('components.protected_route.k7')}
               </Button>
             </Box>
           </Box>
@@ -236,7 +238,7 @@ export const PermissionRoute: React.FC<PermissionRouteProps> = ({
             </Box>
             <Box sx={{ marginLeft: 1.5 }}>
               <Typography sx={{ fontSize: '14px', fontWeight: 500, color: 'warning.700' }}>
-                权限提示
+                {i18n.t('components.protected_route.k8')}
               </Typography>
               <Box sx={{ marginTop: 1, fontSize: '14px', color: 'warning.700' }}>
                 <p>

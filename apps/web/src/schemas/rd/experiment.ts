@@ -1,24 +1,25 @@
 import React from 'react';
 import { Chip } from '@mui/material';
 import type { EntitySchema } from '@/schema';
+import i18n from '@/i18n';
 
 const PHASE_COLOR_MAP: Record<string, 'info' | 'warning' | 'error' | 'default'> = {
-  小试: 'info',
-  中试: 'warning',
-  放大: 'error',
+  [i18n.t('schemas.experiment.k0')]: 'info',
+  [i18n.t('schemas.experiment.k1')]: 'warning',
+  [i18n.t('schemas.experiment.k2')]: 'error',
 };
 
 const STATUS_COLOR_MAP: Record<string, 'default' | 'primary' | 'success' | 'warning' | 'error'> = {
-  进行中: 'primary',
-  已完成: 'success',
-  暂停: 'warning',
-  失败: 'error',
+  [i18n.t('schemas.experiment.k3')]: 'primary',
+  [i18n.t('schemas.experiment.k4')]: 'success',
+  [i18n.t('schemas.experiment.k5')]: 'warning',
+  [i18n.t('schemas.experiment.k6')]: 'error',
 };
 
 export const experimentSchema: EntitySchema = {
   entity: 'rd_experiment',
-  title: '试验管理',
-  description: '管理研发试验、记录数据、追踪批次',
+  title: i18n.t('rd.experiment.k0'),
+  description: i18n.t('rd.experiment.k1'),
 
   api: {
     module: 'rd',
@@ -28,7 +29,7 @@ export const experimentSchema: EntitySchema = {
   fields: [
     {
       name: 'code',
-      label: '试验编码',
+      label: i18n.t('rd.experiment.k2'),
       type: 'text',
       required: true,
       readonlyOnEdit: true,
@@ -37,7 +38,7 @@ export const experimentSchema: EntitySchema = {
     },
     {
       name: 'name',
-      label: '试验名称',
+      label: i18n.t('rd.experiment.k3'),
       type: 'text',
       required: true,
       sortable: true,
@@ -45,7 +46,7 @@ export const experimentSchema: EntitySchema = {
     },
     {
       name: 'project_id',
-      label: '所属项目',
+      label: i18n.t('rd.experiment.k4'),
       type: 'text',
       listWidth: 140,
       renderCell: (row: Record<string, unknown>) => {
@@ -55,15 +56,15 @@ export const experimentSchema: EntitySchema = {
     },
     {
       name: 'phase',
-      label: '阶段',
+      label: i18n.t('rd.experiment.k5'),
       type: 'select',
-      defaultValue: '小试',
+      defaultValue: i18n.t('rd.experiment.k6'),
       options: {
         type: 'static',
         options: [
-          { value: '小试', label: '小试' },
-          { value: '中试', label: '中试' },
-          { value: '放大', label: '放大' },
+          { value: i18n.t('rd.experiment.k7'), label: i18n.t('rd.experiment.k8') },
+          { value: i18n.t('rd.experiment.k9'), label: i18n.t('rd.experiment.k10') },
+          { value: i18n.t('rd.experiment.k11'), label: i18n.t('rd.experiment.k12') },
         ],
       },
       listWidth: 100,
@@ -75,16 +76,16 @@ export const experimentSchema: EntitySchema = {
     },
     {
       name: 'status',
-      label: '状态',
+      label: i18n.t('rd.experiment.k13'),
       type: 'select',
-      defaultValue: '进行中',
+      defaultValue: i18n.t('rd.experiment.k14'),
       options: {
         type: 'static',
         options: [
-          { value: '进行中', label: '进行中' },
-          { value: '已完成', label: '已完成' },
-          { value: '暂停', label: '暂停' },
-          { value: '失败', label: '失败' },
+          { value: i18n.t('rd.experiment.k15'), label: i18n.t('rd.experiment.k16') },
+          { value: i18n.t('rd.experiment.k17'), label: i18n.t('rd.experiment.k18') },
+          { value: i18n.t('rd.experiment.k19'), label: i18n.t('rd.experiment.k20') },
+          { value: i18n.t('rd.experiment.k21'), label: i18n.t('rd.experiment.k22') },
         ],
       },
       listWidth: 110,
@@ -96,19 +97,19 @@ export const experimentSchema: EntitySchema = {
     },
     {
       name: 'experimenter',
-      label: '实验员',
+      label: i18n.t('rd.experiment.k23'),
       type: 'text',
       listWidth: 100,
     },
     {
       name: 'started_at',
-      label: '开始日期',
+      label: i18n.t('rd.experiment.k24'),
       type: 'date',
       listWidth: 120,
     },
     {
       name: 'batch_number',
-      label: '批次号',
+      label: i18n.t('rd.experiment.k25'),
       type: 'text',
       listWidth: 120,
       renderCell: (row: Record<string, unknown>) => {
@@ -118,55 +119,55 @@ export const experimentSchema: EntitySchema = {
     },
     {
       name: 'experiment_type',
-      label: '试验类型',
+      label: i18n.t('rd.experiment.k26'),
       type: 'text',
       showInList: false,
     },
     {
       name: 'objective',
-      label: '试验目标',
+      label: i18n.t('rd.experiment.k27'),
       type: 'textarea',
       showInList: false,
     },
     {
       name: 'method',
-      label: '试验方法',
+      label: i18n.t('rd.experiment.k28'),
       type: 'textarea',
       showInList: false,
     },
     {
       name: 'results',
-      label: '试验结果',
+      label: i18n.t('rd.experiment.k29'),
       type: 'textarea',
       showInList: false,
     },
     {
       name: 'conclusions',
-      label: '结论',
+      label: i18n.t('rd.experiment.k30'),
       type: 'textarea',
       showInList: false,
     },
     {
       name: 'scale',
-      label: '规模',
+      label: i18n.t('rd.experiment.k31'),
       type: 'number',
       showInList: false,
     },
     {
       name: 'scale_unit',
-      label: '单位',
+      label: i18n.t('rd.experiment.k32'),
       type: 'text',
       showInList: false,
     },
     {
       name: 'completed_at',
-      label: '完成日期',
+      label: i18n.t('rd.experiment.k33'),
       type: 'date',
       showInList: false,
     },
     {
       name: 'created_at',
-      label: '创建时间',
+      label: i18n.t('rd.experiment.k34'),
       type: 'datetime',
       readonly: true,
       sortable: true,
@@ -175,7 +176,7 @@ export const experimentSchema: EntitySchema = {
     },
     {
       name: 'updated_at',
-      label: '更新时间',
+      label: i18n.t('rd.experiment.k35'),
       type: 'datetime',
       readonly: true,
       hideInForm: true,
@@ -199,14 +200,14 @@ export const experimentSchema: EntitySchema = {
     filters: [
       {
         id: 'status',
-        label: '状态',
+        label: i18n.t('rd.experiment.k36'),
         type: 'select',
         options: [
-          { label: '全部', value: 'all' },
-          { label: '进行中', value: '进行中' },
-          { label: '已完成', value: '已完成' },
-          { label: '暂停', value: '暂停' },
-          { label: '失败', value: '失败' },
+          { label: i18n.t('rd.experiment.k37'), value: 'all' },
+          { label: i18n.t('rd.experiment.k38'), value: i18n.t('rd.experiment.k39') },
+          { label: i18n.t('rd.experiment.k40'), value: i18n.t('rd.experiment.k41') },
+          { label: i18n.t('rd.experiment.k42'), value: i18n.t('rd.experiment.k43') },
+          { label: i18n.t('rd.experiment.k44'), value: i18n.t('rd.experiment.k45') },
         ],
         defaultValue: 'all',
       },
@@ -215,11 +216,11 @@ export const experimentSchema: EntitySchema = {
 
   formSections: [
     {
-      title: '基本信息',
+      title: i18n.t('rd.experiment.k46'),
       fields: ['code', 'name', 'project_id', 'phase', 'status'],
     },
     {
-      title: '试验详情',
+      title: i18n.t('rd.experiment.k47'),
       fields: [
         'experiment_type',
         'objective',
@@ -230,15 +231,15 @@ export const experimentSchema: EntitySchema = {
       ],
     },
     {
-      title: '结果与结论',
+      title: i18n.t('rd.experiment.k48'),
       fields: ['scale', 'scale_unit', 'results', 'conclusions', 'completed_at'],
     },
   ],
 
   formColCount: 2,
-  createTitle: '新建试验',
-  editTitle: '编辑试验',
-  detailTitle: '试验详情',
+  createTitle: i18n.t('rd.experiment.k49'),
+  editTitle: i18n.t('rd.experiment.k50'),
+  detailTitle: i18n.t('rd.experiment.k51'),
 
   actions: ['create', 'edit', 'detail', 'delete'],
 };

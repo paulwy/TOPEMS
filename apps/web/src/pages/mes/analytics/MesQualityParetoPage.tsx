@@ -16,22 +16,21 @@ import {
   Scatter,
   ZAxis,
 } from 'recharts';
+import i18n from '@/i18n';
 import type { QualityParetoData } from '@/api/mes/types';
 import { designTokens, semanticTokens } from '@topems/tokens';
-
 const DISPOSITION_COLORS = [designTokens.colors.secondary.dark, designTokens.colors.success.dark, designTokens.colors.warning.main, designTokens.colors.error.main, designTokens.colors.secondary.main];
-
 function useQualityParetoMock(): QualityParetoData {
   return useMemo(() => {
     const types = [
-      '划痕',
-      '尺寸偏差',
-      '色差',
-      '气泡',
-      '变形',
-      '毛刺',
-      '杂质',
-      '虚焊',
+      i18n.t('mes.mes_quality_pareto_page.k0'),
+      i18n.t('mes.mes_quality_pareto_page.k1'),
+      i18n.t('mes.mes_quality_pareto_page.k2'),
+      i18n.t('mes.mes_quality_pareto_page.k3'),
+      i18n.t('mes.mes_quality_pareto_page.k4'),
+      i18n.t('mes.mes_quality_pareto_page.k5'),
+      i18n.t('mes.mes_quality_pareto_page.k6'),
+      i18n.t('mes.mes_quality_pareto_page.k7'),
     ];
     const counts = types.map((t, i) => ({
       type: t,
@@ -45,45 +44,41 @@ function useQualityParetoMock(): QualityParetoData {
         acc += c.count;
         return { ...c, cumulative_pct: Number(((acc / total) * 100).toFixed(1)) };
       });
-
     return {
       defect_types: withCumulative,
       heatmap: Array.from({ length: 24 }, (_, i) => ({
-        process: `工序 ${(i % 6) + 1}`,
-        defect_type: types[i % types.length] ?? '其他',
+        process: `${i18n.t('pages.mes_quality_pareto_page.k0')}${(i % 6) + 1}`,
+        defect_type: types[i % types.length] ?? i18n.t('mes.mes_quality_pareto_page.k8'),
         count: 2 + ((i * 5) % 18),
       })),
       disposition: [
-        { category: '返工', count: 86 },
-        { category: '让步接收', count: 32 },
-        { category: '报废', count: 24 },
-        { category: '降级', count: 18 },
-        { category: '复检', count: 12 },
+        { category: i18n.t('mes.mes_quality_pareto_page.k9'), count: 86 },
+        { category: i18n.t('mes.mes_quality_pareto_page.k10'), count: 32 },
+        { category: i18n.t('mes.mes_quality_pareto_page.k11'), count: 24 },
+        { category: i18n.t('mes.mes_quality_pareto_page.k12'), count: 18 },
+        { category: i18n.t('mes.mes_quality_pareto_page.k13'), count: 12 },
       ],
     };
   }, []);
 }
-
 export default function MesQualityParetoPage() {
   const data = useQualityParetoMock();
   const [line, setLine] = useState('all');
-
   return (
     <div className="space-y-4 p-4">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">质量缺陷 Pareto 分析</h1>
+        <h1 className="text-2xl font-bold">{i18n.t('mes.mes_quality_pareto_page.pareto_14')}</h1>
         <select
           value={line}
           onChange={(e) => setLine(e.target.value)}
           className="border rounded px-3 py-1.5 text-sm"
-          aria-label="产线筛选"
+          aria-label={i18n.t('mes.mes_quality_pareto_page.k15')}
         >
-          <option value="all">全部产线</option>
-          <option value="l1">产线 1</option>
-          <option value="l2">产线 2</option>
+          <option value="all">{i18n.t('mes.mes_quality_pareto_page.k16')}</option>
+          <option value="l1">{i18n.t('mes.mes_quality_pareto_page.1_17')}</option>
+          <option value="l2">{i18n.t('mes.mes_quality_pareto_page.2_18')}</option>
         </select>
       </div>
-
       <div className="rounded-lg border p-4">
         <h3 className="mb-2 font-semibold">缺陷类型 Pareto（柱+累积线）</h3>
         <ResponsiveContainer width="100%" height={320}>
@@ -94,12 +89,12 @@ export default function MesQualityParetoPage() {
             <YAxis yAxisId="right" orientation="right" domain={[0, 100]} unit="%" />
             <Tooltip />
             <Legend />
-            <Bar yAxisId="left" dataKey="count" name="缺陷数" fill={designTokens.colors.secondary.dark} barSize={32} />
+            <Bar yAxisId="left" dataKey="count" name={i18n.t('mes.mes_quality_pareto_page.k19')} fill={designTokens.colors.secondary.dark} barSize={32} />
             <Line
               yAxisId="right"
               type="monotone"
               dataKey="cumulative_pct"
-              name="累积占比"
+              name={i18n.t('mes.mes_quality_pareto_page.k20')}
               stroke={designTokens.colors.error.main}
               strokeWidth={2}
               dot={{ r: 3 }}
@@ -107,24 +102,22 @@ export default function MesQualityParetoPage() {
           </ComposedChart>
         </ResponsiveContainer>
       </div>
-
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
         <div className="rounded-lg border p-4">
           <h3 className="mb-2 font-semibold">工序 × 缺陷 热力图</h3>
           <ResponsiveContainer width="100%" height={280}>
             <ScatterChart>
               <CartesianGrid />
-              <XAxis dataKey="defect_type" name="缺陷类型" type="category" fontSize={10} />
-              <YAxis dataKey="process" name="工序" type="category" fontSize={10} />
-              <ZAxis dataKey="count" range={[40, 360]} name="次数" />
+              <XAxis dataKey="defect_type" name={i18n.t('mes.mes_quality_pareto_page.k21')} type="category" fontSize={10} />
+              <YAxis dataKey="process" name={i18n.t('mes.mes_quality_pareto_page.k22')} type="category" fontSize={10} />
+              <ZAxis dataKey="count" range={[40, 360]} name={i18n.t('mes.mes_quality_pareto_page.k23')} />
               <Tooltip cursor={{ strokeDasharray: '3 3' }} />
               <Scatter data={data.heatmap} fill={designTokens.colors.warning.main} />
             </ScatterChart>
           </ResponsiveContainer>
         </div>
-
         <div className="rounded-lg border p-4">
-          <h3 className="mb-2 font-semibold">处置分布</h3>
+          <h3 className="mb-2 font-semibold">{i18n.t('mes.mes_quality_pareto_page.k24')}</h3>
           <ResponsiveContainer width="100%" height={280}>
             <PieChart>
               <Pie

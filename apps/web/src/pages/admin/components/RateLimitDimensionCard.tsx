@@ -1,8 +1,7 @@
 import React from 'react';
 import { Box, Card, CardContent, Grid, InputAdornment, TextField, Typography } from '@mui/material';
-import { useTranslation } from 'react-i18next';
 import type { RateLimitRule } from '../hooks/useRateLimitConfig';
-
+import i18n from '@/i18n';
 interface RateLimitDimensionCardProps {
   dimKey: 'tenant_default' | 'user_default' | 'ip_default' | 'global_default';
   title: string;
@@ -16,7 +15,6 @@ interface RateLimitDimensionCardProps {
     value: number
   ) => void;
 }
-
 export const RateLimitDimensionCard: React.FC<RateLimitDimensionCardProps> = ({
   dimKey,
   title,
@@ -26,8 +24,6 @@ export const RateLimitDimensionCard: React.FC<RateLimitDimensionCardProps> = ({
   rule,
   onUpdateRule,
 }) => {
-  const { t } = useTranslation();
-
   return (
     <Grid size={{ xs: 12, md: 6 }}>
       <Card>
@@ -68,7 +64,7 @@ export const RateLimitDimensionCard: React.FC<RateLimitDimensionCardProps> = ({
           >
             <Grid size={{ xs: 6 }}>
               <TextField
-                label={t('admin.rate_limit_config.allowed_requests')}
+                label={i18n.t('admin.rate_limit_config.allowed_requests')}
                 type='number'
                 fullWidth
                 value={rule.requests}
@@ -77,7 +73,7 @@ export const RateLimitDimensionCard: React.FC<RateLimitDimensionCardProps> = ({
                   input: {
                     endAdornment: (
                       <InputAdornment position='end'>
-                        {t('admin.rate_limit_config.times')}
+                        {i18n.t('admin.rate_limit_config.times')}
                       </InputAdornment>
                     ),
                   },
@@ -86,7 +82,7 @@ export const RateLimitDimensionCard: React.FC<RateLimitDimensionCardProps> = ({
             </Grid>
             <Grid size={{ xs: 6 }}>
               <TextField
-                label={t('admin.rate_limit_config.time_window')}
+                label={i18n.t('admin.rate_limit_config.time_window')}
                 type='number'
                 fullWidth
                 value={rule.window_secs}
@@ -95,7 +91,7 @@ export const RateLimitDimensionCard: React.FC<RateLimitDimensionCardProps> = ({
                   input: {
                     endAdornment: (
                       <InputAdornment position='end'>
-                        {t('admin.rate_limit_config.seconds')}
+                        {i18n.t('admin.rate_limit_config.seconds')}
                       </InputAdornment>
                     ),
                   },
@@ -104,12 +100,12 @@ export const RateLimitDimensionCard: React.FC<RateLimitDimensionCardProps> = ({
             </Grid>
             <Grid size={{ xs: 12 }}>
               <TextField
-                label={t('admin.rate_limit_config.priority')}
+                label={i18n.t('admin.rate_limit_config.priority')}
                 type='number'
                 fullWidth
                 value={rule.priority}
                 onChange={(e) => onUpdateRule(dimKey, 'priority', Number(e.target.value) || 0)}
-                helperText={t('admin.rate_limit_config.higher_value_means_higher_priority')}
+                helperText={i18n.t('admin.rate_limit_config.higher_value_means_higher_priority')}
               />
             </Grid>
           </Grid>
@@ -118,5 +114,4 @@ export const RateLimitDimensionCard: React.FC<RateLimitDimensionCardProps> = ({
     </Grid>
   );
 };
-
 export default RateLimitDimensionCard;

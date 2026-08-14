@@ -3,6 +3,7 @@ import { Box, Paper, Typography, IconButton, Tabs, Tab, Grid } from '@mui/materi
 import { ChevronDown } from 'lucide-react';
 import type { CardGroup } from './types';
 import { StatCardComponent } from './StatCardComponent';
+import i18n from '@/i18n';
 
 export const CardGroupComponent: React.FC<CardGroup & { loading?: boolean }> = ({
   title,
@@ -41,7 +42,7 @@ export const CardGroupComponent: React.FC<CardGroup & { loading?: boolean }> = (
             <IconButton
               size='small'
               onClick={() => setExpanded(!expanded)}
-              aria-label='展开'
+              aria-label={i18n.t('templates.card_group_component.k0')}
             >
               <ChevronDown
                 style={{

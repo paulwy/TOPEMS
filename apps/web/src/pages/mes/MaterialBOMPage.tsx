@@ -11,6 +11,7 @@ import {
   Paper,
   InputLabel,
 } from '@mui/material';
+import i18n from '@/i18n';
 import { PageContainer } from '@/components/common';
 import CrudPage, { type CrudApiAdapter } from '@/components/templates/CrudPage';
 import { createCrudPageAdapter } from '@/schema/crudPageAdapter';
@@ -19,13 +20,10 @@ import { mesApi } from '@/api/mes';
 import type { MaterialBom, MaterialBomItem } from '@/api/mes';
 import { Package } from 'lucide-react';
 import { designTokens } from '@/theme/tokens';
-
 const ct= designTokens.colors;
-
 const apiAdapter = createCrudPageAdapter(mesApi.boms, {
   itemsField: 'boms',
 });
-
 const MaterialBOMPage: React.FC = () => {
   const renderDetailContent = (row: Record<string, unknown>) => {
     const bom = row as unknown as MaterialBom;
@@ -39,7 +37,7 @@ const MaterialBOMPage: React.FC = () => {
           }}
         >
           <Box>
-            <InputLabel sx={{ color: 'text.secondary', fontSize: 12 }}>产品编码</InputLabel>
+            <InputLabel sx={{ color: 'text.secondary', fontSize: 12 }}>{i18n.t('mes.material_bom_page.k0')}</InputLabel>
             <Box
               component='span'
               sx={{ fontWeight: 500 }}
@@ -48,23 +46,22 @@ const MaterialBOMPage: React.FC = () => {
             </Box>
           </Box>
           <Box>
-            <InputLabel sx={{ color: 'text.secondary', fontSize: 12 }}>产品名称</InputLabel>
+            <InputLabel sx={{ color: 'text.secondary', fontSize: 12 }}>{i18n.t('mes.material_bom_page.k1')}</InputLabel>
             <Box component='span'>{bom.product_name}</Box>
           </Box>
           <Box>
-            <InputLabel sx={{ color: 'text.secondary', fontSize: 12 }}>版本</InputLabel>
+            <InputLabel sx={{ color: 'text.secondary', fontSize: 12 }}>{i18n.t('mes.material_bom_page.k2')}</InputLabel>
             <Box component='span'>{bom.version || '-'}</Box>
           </Box>
           <Box>
-            <InputLabel sx={{ color: 'text.secondary', fontSize: 12 }}>状态</InputLabel>
+            <InputLabel sx={{ color: 'text.secondary', fontSize: 12 }}>{i18n.t('mes.material_bom_page.k3')}</InputLabel>
             <Box component='span'>{bom.status}</Box>
           </Box>
           <Box sx={{ gridColumn: '1 / -1' }}>
-            <InputLabel sx={{ color: 'text.secondary', fontSize: 12 }}>描述</InputLabel>
+            <InputLabel sx={{ color: 'text.secondary', fontSize: 12 }}>{i18n.t('mes.material_bom_page.k4')}</InputLabel>
             <Box component='span'>{bom.description || '-'}</Box>
           </Box>
         </Box>
-
         <Box>
           <Typography
             variant='subtitle2'
@@ -79,12 +76,12 @@ const MaterialBOMPage: React.FC = () => {
             <Table size='small'>
               <TableHead>
                 <TableRow>
-                  <TableCell>序号</TableCell>
-                  <TableCell>物料编码</TableCell>
-                  <TableCell>物料名称</TableCell>
-                  <TableCell>数量</TableCell>
-                  <TableCell>单位</TableCell>
-                  <TableCell>备注</TableCell>
+                  <TableCell>{i18n.t('mes.material_bom_page.k5')}</TableCell>
+                  <TableCell>{i18n.t('mes.material_bom_page.k6')}</TableCell>
+                  <TableCell>{i18n.t('mes.material_bom_page.k7')}</TableCell>
+                  <TableCell>{i18n.t('mes.material_bom_page.k8')}</TableCell>
+                  <TableCell>{i18n.t('mes.material_bom_page.k9')}</TableCell>
+                  <TableCell>{i18n.t('mes.material_bom_page.k10')}</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
@@ -95,7 +92,7 @@ const MaterialBOMPage: React.FC = () => {
                       align='center'
                       sx={{ color: 'text.secondary', py: 3 }}
                     >
-                      暂无子项
+                      {i18n.t('pages.material_bom_page.k0')}
                     </TableCell>
                   </TableRow>
                 ) : (
@@ -114,7 +111,6 @@ const MaterialBOMPage: React.FC = () => {
             </Table>
           </TableContainer>
         </Box>
-
         <Box
           sx={{
             display: 'grid',
@@ -123,18 +119,17 @@ const MaterialBOMPage: React.FC = () => {
           }}
         >
           <Box>
-            <InputLabel sx={{ color: 'text.secondary', fontSize: 12 }}>创建时间</InputLabel>
+            <InputLabel sx={{ color: 'text.secondary', fontSize: 12 }}>{i18n.t('mes.material_bom_page.k11')}</InputLabel>
             <Box component='span'>{new Date(bom.created_at).toLocaleString('zh-CN')}</Box>
           </Box>
           <Box>
-            <InputLabel sx={{ color: 'text.secondary', fontSize: 12 }}>更新时间</InputLabel>
+            <InputLabel sx={{ color: 'text.secondary', fontSize: 12 }}>{i18n.t('mes.material_bom_page.k12')}</InputLabel>
             <Box component='span'>{new Date(bom.updated_at).toLocaleString('zh-CN')}</Box>
           </Box>
         </Box>
       </Box>
     );
   };
-
   const headerContent = (rows: Record<string, unknown>[]) => {
     const boms = rows as unknown as MaterialBom[];
     return (
@@ -156,7 +151,7 @@ const MaterialBOMPage: React.FC = () => {
               variant='body2'
               sx={{ color: 'text.secondary' }}
             >
-              BOM总数
+              {i18n.t('pages.material_bom_page.bom_1')}
             </Typography>
           </Box>
           <Typography
@@ -171,7 +166,7 @@ const MaterialBOMPage: React.FC = () => {
             variant='body2'
             sx={{ color: 'text.secondary', mb: 1 }}
           >
-            启用
+            {i18n.t('pages.material_bom_page.k2')}
           </Typography>
           <Typography
             variant='h5'
@@ -185,7 +180,7 @@ const MaterialBOMPage: React.FC = () => {
             variant='body2'
             sx={{ color: 'text.secondary', mb: 1 }}
           >
-            停用
+            {i18n.t('pages.material_bom_page.k3')}
           </Typography>
           <Typography
             variant='h5'
@@ -199,7 +194,7 @@ const MaterialBOMPage: React.FC = () => {
             variant='body2'
             sx={{ color: 'text.secondary', mb: 1 }}
           >
-            草稿
+            {i18n.t('pages.material_bom_page.k4')}
           </Typography>
           <Typography
             variant='h5'
@@ -211,7 +206,6 @@ const MaterialBOMPage: React.FC = () => {
       </Box>
     );
   };
-
   return (
     <PageContainer
       autoTitle
@@ -224,7 +218,7 @@ const MaterialBOMPage: React.FC = () => {
       <CrudPage
         schema={materialBomSchema}
         apiAdapter={apiAdapter as CrudApiAdapter}
-        breadcrumbs={[{ label: 'MES' }, { label: '物料BOM' }]}
+        breadcrumbs={[{ label: 'MES' }, { label: i18n.t('mes.material_bom_page.bom_13') }]}
         detailMaxWidth='lg'
         detailContent={renderDetailContent}
         headerContent={headerContent}
@@ -232,5 +226,4 @@ const MaterialBOMPage: React.FC = () => {
     </PageContainer>
   );
 };
-
 export default MaterialBOMPage;

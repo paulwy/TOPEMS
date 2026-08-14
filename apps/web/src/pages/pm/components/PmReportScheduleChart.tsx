@@ -1,5 +1,4 @@
 import React from 'react';
-import { useTranslation } from 'react-i18next';
 import { Box, Card, CardContent, CardHeader, Typography } from '@mui/material';
 import {
   BarChart,
@@ -11,24 +10,20 @@ import {
   ResponsiveContainer,
   Cell,
 } from 'recharts';
+import i18n from '@/i18n';
 import type { PmStatistics } from '@/api/pm';
-
 export interface PmReportScheduleChartProps {
   stats: PmStatistics;
 }
-
 const PmReportScheduleChart: React.FC<PmReportScheduleChartProps> = ({ stats }) => {
-  const { t } = useTranslation();
-
   const data = [
-    { name: t('pm.pm_report_page.name_27ff5f'), value: stats.on_time_projects ?? 0 },
-    { name: t('pm.pm_report_page.name_db732e'), value: stats.delayed_projects ?? 0 },
+    { name: i18n.t('pm.pm_report_page.name_27ff5f'), value: stats.on_time_projects ?? 0 },
+    { name: i18n.t('pm.pm_report_page.name_db732e'), value: stats.delayed_projects ?? 0 },
   ].filter((d) => (d.value ?? 0) > 0);
-
   return (
     <Card sx={{ mb: 3 }}>
       <CardHeader
-        title={<Typography variant='h6'>{t('pm.pm_report_page.text_22fd66')}</Typography>}
+        title={<Typography variant='h6'>{i18n.t('pm.pm_report_page.text_22fd66')}</Typography>}
       />
       <CardContent>
         <Box sx={{ height: 256 }}>
@@ -43,7 +38,7 @@ const PmReportScheduleChart: React.FC<PmReportScheduleChartProps> = ({ stats }) 
               <Tooltip />
               <Bar
                 dataKey='value'
-                name={t('pm.pm_report_page.attr_607558')}
+                name={i18n.t('pm.pm_report_page.attr_607558')}
               >
                 <Cell fill='success.main' />
                 <Cell fill='error.main' />
@@ -55,5 +50,4 @@ const PmReportScheduleChart: React.FC<PmReportScheduleChartProps> = ({ stats }) 
     </Card>
   );
 };
-
 export default PmReportScheduleChart;

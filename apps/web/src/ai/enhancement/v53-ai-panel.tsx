@@ -25,6 +25,7 @@ import {
   Tab,
   Card,
 } from '@mui/material';
+import i18n from '@/i18n';
 import {
   X as XIcon,
   Sparkles,
@@ -72,28 +73,28 @@ interface ChatMessage {
 }
 
 const COMPLETION_KIND_LABELS: Record<CompletionKind, string> = {
-  snippet: '代码片段',
-  property: '属性',
-  function: '函数',
-  import: '导入',
-  keyword: '关键字',
-  variable: '变量',
-  type: '类型',
-  'snippet-placeholder': '占位符',
+  snippet: i18n.t('ai.v53-ai-panel.k0'),
+  property: i18n.t('ai.v53-ai-panel.k1'),
+  function: i18n.t('ai.v53-ai-panel.k2'),
+  import: i18n.t('ai.v53-ai-panel.k3'),
+  keyword: i18n.t('ai.v53-ai-panel.k4'),
+  variable: i18n.t('ai.v53-ai-panel.k5'),
+  type: i18n.t('ai.v53-ai-panel.k6'),
+  'snippet-placeholder': i18n.t('ai.v53-ai-panel.k7'),
 };
 
 const CATEGORY_OPTIONS: Array<{ value: IntentCategory; label: string }> = [
-  { value: 'action', label: '操作' },
-  { value: 'navigation', label: '导航' },
-  { value: 'form', label: '表单' },
-  { value: 'display', label: '展示' },
-  { value: 'feedback', label: '反馈' },
-  { value: 'overlay', label: '浮层' },
-  { value: 'data-entry', label: '数据输入' },
-  { value: 'data-display', label: '数据展示' },
-  { value: 'media', label: '媒体' },
-  { value: 'loading', label: '加载' },
-  { value: 'notification', label: '通知' },
+  { value: 'action', label: i18n.t('ai.v53-ai-panel.k8') },
+  { value: 'navigation', label: i18n.t('ai.v53-ai-panel.k9') },
+  { value: 'form', label: i18n.t('ai.v53-ai-panel.k10') },
+  { value: 'display', label: i18n.t('ai.v53-ai-panel.k11') },
+  { value: 'feedback', label: i18n.t('ai.v53-ai-panel.k12') },
+  { value: 'overlay', label: i18n.t('ai.v53-ai-panel.k13') },
+  { value: 'data-entry', label: i18n.t('ai.v53-ai-panel.k14') },
+  { value: 'data-display', label: i18n.t('ai.v53-ai-panel.k15') },
+  { value: 'media', label: i18n.t('ai.v53-ai-panel.k16') },
+  { value: 'loading', label: i18n.t('ai.v53-ai-panel.k17') },
+  { value: 'notification', label: i18n.t('ai.v53-ai-panel.k18') },
 ];
 
 const DEFAULT_SOURCE = `import React, { useState } from 'react';
@@ -180,10 +181,10 @@ const V53AIPanel: React.FC<{ onClose: () => void }> = ({ onClose }) => {
             onChange={(_, id) => setActiveTab(id as TabId)}
             variant='fullWidth'
           >
-            <Tab value='completion' label='代码补全' icon={<Code2 size={16} />} iconPosition='start' />
-            <Tab value='test' label='测试生成' icon={<TestTube2 size={16} />} iconPosition='start' />
-            <Tab value='ui' label='组件推荐' icon={<LayoutGrid size={16} />} iconPosition='start' />
-            <Tab value='chat' label='AI 对话' icon={<MessageCircle size={16} />} iconPosition='start' />
+            <Tab value='completion' label={i18n.t('ai.v53-ai-panel.k19')} icon={<Code2 size={16} />} iconPosition='start' />
+            <Tab value='test' label={i18n.t('ai.v53-ai-panel.k20')} icon={<TestTube2 size={16} />} iconPosition='start' />
+            <Tab value='ui' label={i18n.t('ai.v53-ai-panel.k21')} icon={<LayoutGrid size={16} />} iconPosition='start' />
+            <Tab value='chat' label={i18n.t('ai.v53-ai-panel.ai_0')} icon={<MessageCircle size={16} />} iconPosition='start' />
           </Tabs>
         </Box>
         <Box sx={{ flex: 1, overflow: 'auto', bgcolor: 'grey.50' }}>
@@ -227,13 +228,13 @@ const V53PanelHeader: React.FC<{ onClose: () => void }> = ({ onClose }) => (
           variant='h6'
           sx={{ fontWeight: 700, fontSize: 18 }}
         >
-          V53.0 AI 增强面板
+          {i18n.t('ai.v53-ai-panel.v530ai_1')}
         </Typography>
         <Typography
           variant='caption'
           sx={{ opacity: 0.85, fontSize: 12 }}
         >
-          智能代码补全 · 自动化测试 · UI 推荐 · AI 对话
+          {i18n.t('ai.v53-ai-panel.k2')}
         </Typography>
       </Box>
     </Box>
@@ -308,33 +309,33 @@ const CodeCompletionTab: React.FC = () => {
         name: 'user',
         type: '{ id: string; name: string; email: string; avatar?: string }',
         required: true,
-        description: '用户信息对象',
+        description: i18n.t('ai.v53-ai-panel.k22'),
       },
       {
         name: 'onSelect',
         type: '(user: User) => void',
         required: false,
-        description: '用户选中回调',
+        description: i18n.t('ai.v53-ai-panel.k23'),
       },
       {
         name: 'variant',
         type: "'default' | 'compact'",
         required: false,
-        description: '卡片变体',
+        description: i18n.t('ai.v53-ai-panel.k24'),
         default_value: 'default',
       },
     ]);
 
     intelligentCodeCompletion.registerAPIEndpoints('users', [
-      { method: 'GET', path: '/api/users', description: '获取用户列表', response_type: 'User[]' },
+      { method: 'GET', path: '/api/users', description: i18n.t('ai.v53-ai-panel.k25'), response_type: 'User[]' },
       {
         method: 'POST',
         path: '/api/users',
-        description: '创建用户',
+        description: i18n.t('ai.v53-ai-panel.k26'),
         request_type: 'CreateUserDTO',
         response_type: 'User',
       },
-      { method: 'GET', path: '/api/users/:id', description: '获取用户详情', response_type: 'User' },
+      { method: 'GET', path: '/api/users/:id', description: i18n.t('ai.v53-ai-panel.k27'), response_type: 'User' },
     ]);
 
     intelligentCodeCompletion.registerProjectImport('react', [
@@ -370,7 +371,7 @@ const CodeCompletionTab: React.FC = () => {
           disabled={loading}
           sx={{ bgcolor: 'secondary.500', '&:hover': { bgcolor: 'secondary.600' } }}
         >
-          {loading ? '分析中...' : '获取智能补全'}
+          {loading ? i18n.t('ai.v53-ai-panel.k3') : i18n.t('ai.v53-ai-panel.k28')}
         </Button>
         <Button
           variant='outlined'
@@ -378,16 +379,16 @@ const CodeCompletionTab: React.FC = () => {
           onClick={registerSampleData}
           sx={{ borderColor: 'secondary.500', color: 'secondary.500' }}
         >
-          注册示例数据
+          {i18n.t('ai.v53-ai-panel.k4')}
         </Button>
         <Box sx={{ flex: 1 }} />
         <Chip
-          label={`代码片段: ${stats.totalSnippets}`}
+          label={`${i18n.t('ai.v53-ai-panel.k5')} ${stats.totalSnippets}`}
           size='small'
           sx={{ bgcolor: 'secondary.100', color: 'purple.800', fontWeight: 600 }}
         />
         <Chip
-          label={`组件: ${stats.registeredComponents}`}
+          label={`${i18n.t('ai.v53-ai-panel.k6')} ${stats.registeredComponents}`}
           size='small'
           sx={{ bgcolor: 'primary.100', color: 'primary.800', fontWeight: 600 }}
         />
@@ -405,17 +406,17 @@ const CodeCompletionTab: React.FC = () => {
             sx={{ fontWeight: 600, mb: 1.5, display: 'flex', alignItems: 'center', gap: 1 }}
           >
             <FileCode size={16} />
-            源代码编辑器
+            {i18n.t('ai.v53-ai-panel.k7')}
           </Typography>
           <Box sx={{ display: 'flex', gap: 1, mb: 1 }}>
             <FormControl
               size='small'
               sx={{ minWidth: 120 }}
             >
-              <InputLabel>语言</InputLabel>
+              <InputLabel>{i18n.t('ai.v53-ai-panel.k29')}</InputLabel>
               <Select
                 value={context.language}
-                label='语言'
+                label={i18n.t('ai.v53-ai-panel.k30')}
                 onChange={(e) =>
                   setContext({
                     ...context,
@@ -430,7 +431,7 @@ const CodeCompletionTab: React.FC = () => {
             </FormControl>
             <TextField
               size='small'
-              label='文件名'
+              label={i18n.t('ai.v53-ai-panel.k31')}
               value={context.file}
               onChange={(e) => setContext({ ...context, file: e.target.value })}
               sx={{ flex: 1 }}
@@ -476,7 +477,7 @@ const CodeCompletionTab: React.FC = () => {
               severity='info'
               sx={{ mb: 2 }}
             >
-              暂无建议，请点击"获取智能补全"或注册示例数据
+              {i18n.t('ai.v53-ai-panel.i18n_8')}.t('ai.v53-ai-panel.k32')或注册示例数据
             </Alert>
           )}
           {!loading && completions.length > 0 && (
@@ -522,7 +523,7 @@ const CodeCompletionTab: React.FC = () => {
                     >
                       {item.label}
                     </Typography>
-                    <Tooltip title='复制'>
+                    <Tooltip title={i18n.t('ai.v53-ai-panel.k33')}>
                       <IconButton
                         size='small'
                         onClick={(e) => {
@@ -622,7 +623,7 @@ const TestGeneratorTab: React.FC = () => {
       >
         <TextField
           size='small'
-          label='组件名称'
+          label={i18n.t('ai.v53-ai-panel.k34')}
           value={componentName}
           onChange={(e) => setComponentName(e.target.value)}
           sx={{ minWidth: 200 }}
@@ -631,10 +632,10 @@ const TestGeneratorTab: React.FC = () => {
           size='small'
           sx={{ minWidth: 120 }}
         >
-          <InputLabel>测试框架</InputLabel>
+          <InputLabel>{i18n.t('ai.v53-ai-panel.k35')}</InputLabel>
           <Select
             value={framework}
-            label='测试框架'
+            label={i18n.t('ai.v53-ai-panel.k36')}
             onChange={(e) => {
               const fw = e.target.value as TestFramework;
               setFramework(fw);
@@ -658,13 +659,13 @@ const TestGeneratorTab: React.FC = () => {
               sx={{ color: 'common.white' }}
             />
           ) : (
-            '分析并生成测试'
+            i18n.t('ai.v53-ai-panel.k37')
           )}
         </Button>
         <Box sx={{ flex: 1 }} />
         {testSuite && (
           <Chip
-            label={`${testSuite.tests.length} 个测试用例`}
+            label={`${testSuite.tests.length} ${i18n.t('ai.v53-ai-panel.k10')}`}
             sx={{ bgcolor: 'success.100', color: 'teal.900', fontWeight: 600 }}
           />
         )}
@@ -676,7 +677,7 @@ const TestGeneratorTab: React.FC = () => {
             variant='subtitle2'
             sx={{ fontWeight: 600, mb: 1.5 }}
           >
-            源代码
+            {i18n.t('ai.v53-ai-panel.k11')}
           </Typography>
           <TextField
             multiline
@@ -705,7 +706,7 @@ const TestGeneratorTab: React.FC = () => {
                 variant='subtitle2'
                 sx={{ fontWeight: 600, mb: 1 }}
               >
-                📊 分析结果
+                {i18n.t('ai.v53-ai-panel.k12')}
               </Typography>
               <Stack
                 direction='row'
@@ -742,7 +743,7 @@ const TestGeneratorTab: React.FC = () => {
                   sx={{ bgcolor: 'primary.100', color: 'primary.800' }}
                 />
                 <Chip
-                  label={`事件: ${analysis.eventHandlers.length}`}
+                  label={`${i18n.t('ai.v53-ai-panel.k13')} ${analysis.eventHandlers.length}`}
                   size='small'
                   sx={{ bgcolor: 'success.100', color: 'teal.900' }}
                 />
@@ -763,7 +764,7 @@ const TestGeneratorTab: React.FC = () => {
                   variant='caption'
                   sx={{ color: 'text.secondary', mt: 0.5, display: 'block' }}
                 >
-                  估算覆盖率: 分支 {analysis.coverage.branches} · 语句{' '}
+                  [i18n.t('ai.v53-ai-panel.k14')]: {i18n.t('ai.v53-ai-panel.k15')}{analysis.coverage.branches} · 语句{' '}
                   {analysis.coverage.statements} · 函数 {analysis.coverage.functions}
                 </Typography>
               </Box>
@@ -779,7 +780,7 @@ const TestGeneratorTab: React.FC = () => {
               variant='subtitle2'
               sx={{ fontWeight: 600 }}
             >
-              生成的测试代码
+              {i18n.t('ai.v53-ai-panel.k17')}
             </Typography>
             <Button
               size='small'
@@ -787,7 +788,7 @@ const TestGeneratorTab: React.FC = () => {
               onClick={handleCopyCode}
               sx={{ textTransform: 'none' }}
             >
-              复制
+              {i18n.t('ai.v53-ai-panel.k18')}
             </Button>
           </Box>
           {generatedCode && (
@@ -815,7 +816,7 @@ const TestGeneratorTab: React.FC = () => {
                 variant='subtitle2'
                 sx={{ fontWeight: 600, mb: 1 }}
               >
-                测试用例列表
+                {i18n.t('ai.v53-ai-panel.k19')}
               </Typography>
               <List sx={{ maxHeight: 160, overflow: 'auto' }}>
                 {testSuite.tests.map((test, idx) => (
@@ -903,9 +904,9 @@ const TestSuiteItem: React.FC<{ test: TestMethod }> = ({ test }) => {
 };
 
 const UIRecommenderTab: React.FC = () => {
-  const [description, setDescription] = React.useState('我需要一个显示用户信息的卡片组件');
+  const [description, setDescription] = React.useState(i18n.t('ai.v53-ai-panel.k38'));
   const [category, setCategory] = React.useState<IntentCategory | ''>('');
-  const [keywords, setKeywords] = React.useState('用户, 卡片, 头像');
+  const [keywords, setKeywords] = React.useState(i18n.t('ai.v53-ai-panel.k20'));
   const [responsive, setResponsive] = React.useState(true);
   const [recommendations, setRecommendations] = React.useState<ComponentRecommendation[]>([]);
   const [loading, setLoading] = React.useState(false);
@@ -943,23 +944,23 @@ const UIRecommenderTab: React.FC = () => {
       >
         <TextField
           size='small'
-          label='描述你的需求'
+          label={i18n.t('ai.v53-ai-panel.k39')}
           value={description}
           onChange={(e) => setDescription(e.target.value)}
           sx={{ flex: 2 }}
-          placeholder='例如：我需要一个显示用户信息的卡片组件'
+          placeholder={i18n.t('ai.v53-ai-panel.k40')}
         />
         <FormControl
           size='small'
           sx={{ minWidth: 140 }}
         >
-          <InputLabel>类别</InputLabel>
+          <InputLabel>{i18n.t('ai.v53-ai-panel.k41')}</InputLabel>
           <Select
             value={category}
-            label='类别'
+            label={i18n.t('ai.v53-ai-panel.k42')}
             onChange={(e) => setCategory(e.target.value as IntentCategory | '')}
           >
-            <MenuItem value=''>自动检测</MenuItem>
+            <MenuItem value=''>{i18n.t('ai.v53-ai-panel.k43')}</MenuItem>
             {CATEGORY_OPTIONS.map((opt) => (
               <MenuItem
                 key={opt.value}
@@ -977,7 +978,7 @@ const UIRecommenderTab: React.FC = () => {
           disabled={loading}
           sx={{ bgcolor: 'warning.500', '&:hover': { bgcolor: 'warning.600' } }}
         >
-          {loading ? '分析中...' : '智能推荐'}
+          {loading ? i18n.t('ai.v53-ai-panel.k21') : i18n.t('ai.v53-ai-panel.k44')}
         </Button>
       </Stack>
 
@@ -987,7 +988,7 @@ const UIRecommenderTab: React.FC = () => {
             variant='subtitle2'
             sx={{ fontWeight: 600, mb: 1.5 }}
           >
-            推荐结果
+            {i18n.t('ai.v53-ai-panel.k22')}
           </Typography>
           {loading && (
             <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
@@ -995,7 +996,7 @@ const UIRecommenderTab: React.FC = () => {
             </Box>
           )}
           {!loading && recommendations.length === 0 && (
-            <Alert severity='info'>暂无推荐，请点击"智能推荐"</Alert>
+            <Alert severity='info'>暂无推荐，请点击"{i18n.t('ai.v53-ai-panel.k44')}"</Alert>
           )}
           {!loading &&
             recommendations.length > 0 &&
@@ -1015,7 +1016,7 @@ const UIRecommenderTab: React.FC = () => {
               >
                 {idx === 0 && (
                   <Chip
-                    label='最佳匹配'
+                    label={i18n.t('ai.v53-ai-panel.k46')}
                     size='small'
                     sx={{
                       position: 'absolute',
@@ -1054,7 +1055,7 @@ const UIRecommenderTab: React.FC = () => {
                       variant='caption'
                       sx={{ fontWeight: 600, display: 'block', mb: 0.5 }}
                     >
-                      ♿ 无障碍特性
+                      {i18n.t('ai.v53-ai-panel.k24')}
                     </Typography>
                     <Stack
                       direction='row'
@@ -1084,7 +1085,7 @@ const UIRecommenderTab: React.FC = () => {
                       variant='caption'
                       sx={{ fontWeight: 600, display: 'block', mb: 0.5 }}
                     >
-                      🔄 替代方案
+                      {i18n.t('ai.v53-ai-panel.k25')}
                     </Typography>
                     {rec.alternatives.map((alt, aIdx) => (
                       <Paper
@@ -1172,12 +1173,12 @@ const UIRecommenderTab: React.FC = () => {
                     sx={{ flexWrap: 'wrap', gap: 0.5 }}
                   >
                     <Chip
-                      label={`响应式: ${comp.responsive_support === 'full' ? '✅' : comp.responsive_support === 'partial' ? '⚠️' : '❌'}`}
+                      label={`${i18n.t('ai.v53-ai-panel.k26')} ${comp.responsive_support === 'full' ? '✅' : comp.responsive_support === 'partial' ? '⚠️' : '❌'}`}
                       size='small'
                       sx={{ fontSize: 10, height: 18 }}
                     />
                     <Chip
-                      label={`主题: ${comp.theme_support === 'full' ? '✅' : comp.theme_support === 'partial' ? '⚠️' : '❌'}`}
+                      label={`${i18n.t('ai.v53-ai-panel.k27')} ${comp.theme_support === 'full' ? '✅' : comp.theme_support === 'partial' ? '⚠️' : '❌'}`}
                       size='small'
                       sx={{ fontSize: 10, height: 18 }}
                     />
@@ -1203,7 +1204,7 @@ const AIChatTab: React.FC = () => {
       id: 'welcome',
       role: 'assistant',
       content:
-        '你好！我是 V53 AI 助手。我可以帮你：\n\n• 💡 生成代码片段和组件\n• 🐛 分析错误和调试建议\n• 📝 生成测试用例\n• 🎨 推荐 UI 组件\n• 🔧 代码重构建议\n\n请输入你的问题或需求。',
+        i18n.t('ai.v53-ai-panel.k28'),
       timestamp: Date.now(),
     },
   ]);
@@ -1222,22 +1223,22 @@ const AIChatTab: React.FC = () => {
   const generateResponse = (userMessage: string): string => {
     const lower = userMessage.toLowerCase();
 
-    if (lower.includes('test') || lower.includes('测试')) {
+    if (lower.includes('test') || lower.includes(i18n.t('ai.v53-ai-panel.k47'))) {
       return autoTestGenerator.generateComponentTest('MyComponent');
     }
-    if (lower.includes('completion') || lower.includes('补全') || lower.includes('代码')) {
+    if (lower.includes('completion') || lower.includes(i18n.t('ai.v53-ai-panel.k49')) || lower.includes(i18n.t('ai.v53-ai-panel.k48'))) {
       return intelligentCodeCompletion.getStats()
-        ? `智能补全系统状态：\n\n${JSON.stringify(intelligentCodeCompletion.getStats(), null, 2)}`
-        : '请先注册示例数据以启用智能补全功能。';
+        ? `${i18n.t('ai.v53-ai-panel.nn_29')}${JSON.stringify(intelligentCodeCompletion.getStats(), null, 2)}`
+        : i18n.t('ai.v53-ai-panel.k50');
     }
-    if (lower.includes('ui') || lower.includes('组件') || lower.includes('界面')) {
-      return '我可以根据你的需求推荐 UI 组件。请描述你想要实现的功能，例如："我需要一个用户信息卡片"。';
+    if (lower.includes('ui') || lower.includes(i18n.t('ai.v53-ai-panel.k52')) || lower.includes(i18n.t('ai.v53-ai-panel.k51'))) {
+      return `${i18n.t('ai.v53-ai-panel.k30')}${i18n.t('ai.v53-ai-panel.k53')}。`;
     }
-    if (lower.includes('help') || lower.includes('帮助')) {
-      return '可用命令：\n\n• /code - 获取代码补全建议\n• /test - 生成测试用例\n• /ui - 推荐 UI 组件\n• /stats - 查看系统状态\n\n或者直接描述你的需求，我会提供相应的建议。';
+    if (lower.includes('help') || lower.includes(i18n.t('ai.v53-ai-panel.k54'))) {
+      return i18n.t('ai.v53-ai-panel.k31');
     }
 
-    return `收到你的消息："${userMessage}"\n\n这是一个功能演示面板，AI 对话功能将在接入后端 LLM 服务后提供完整的智能对话能力。目前你可以：\n\n• 切换到其他标签页体验代码补全、测试生成和 UI 推荐\n• 使用 "/help" 查看可用命令\n• 在代码编辑器中尝试输入以体验智能补全`;
+    return `${i18n.t('ai.v53-ai-panel.k32')}${userMessage}${i18n.t('ai.v53-ai-panel.k33')}`;
   };
 
   const handleSend = async () => {
@@ -1275,10 +1276,10 @@ const AIChatTab: React.FC = () => {
   };
 
   const quickPrompts = [
-    '生成一个用户卡片组件',
-    '如何测试 React Hooks?',
-    '推荐一个表单输入组件',
-    '分析这个组件的测试覆盖率',
+    i18n.t('ai.v53-ai-panel.k55'),
+    i18n.t('ai.v53-ai-panel.k34'),
+    i18n.t('ai.v53-ai-panel.k56'),
+    i18n.t('ai.v53-ai-panel.k57'),
   ];
 
   return (
@@ -1340,7 +1341,7 @@ const AIChatTab: React.FC = () => {
                   variant='body2'
                   color='text.secondary'
                 >
-                  AI 正在思考...
+                  {i18n.t('ai.v53-ai-panel.ai_35')}
                 </Typography>
               </Box>
             </Paper>
@@ -1378,7 +1379,7 @@ const AIChatTab: React.FC = () => {
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={handleKeyDown}
-            placeholder='输入消息，Enter 发送，Shift+Enter 换行...'
+            placeholder={i18n.t('ai.v53-ai-panel.k36')}
             variant='outlined'
             size='small'
             sx={{

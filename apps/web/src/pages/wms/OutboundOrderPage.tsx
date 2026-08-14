@@ -9,6 +9,7 @@ import { WMS_PATHS } from '@/modules/wms/config';
 import CrudPage from '@/components/templates/CrudPage';
 import type { CrudApiAdapter } from '@/components/templates/CrudPage';
 import { outboundOrderSchema } from '@/schemas/wms';
+import i18n from '@/i18n';
 
 const outboundOrderApiAdapter: CrudApiAdapter = {
   list: async (params) => {
@@ -52,9 +53,9 @@ const OutboundOrderPage: React.FC = () => {
       schema={outboundOrderSchema}
       apiAdapter={outboundOrderApiAdapter}
       breadcrumbs={[
-        { label: '首页', href: '/dashboard' },
-        { label: '仓储管理', href: WMS_PATHS.root },
-        { label: '出库订单' },
+        { label: i18n.t('pages.outbound_order_page.k0'), href: '/dashboard' },
+        { label: i18n.t('pages.outbound_order_page.k1'), href: WMS_PATHS.root },
+        { label: i18n.t('pages.outbound_order_page.k2') },
       ]}
     />
   );

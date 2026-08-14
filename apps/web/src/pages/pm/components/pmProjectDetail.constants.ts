@@ -3,18 +3,16 @@
  * @done V79 Phase 2 split
  */
 import { designTokens } from '@/theme/tokens';
-
+import i18n from '@/i18n';
 const ct = designTokens.colors;
-
 export const getStatusLabels = (t: (key: string) => string): Record<string, string> => ({
-  active: t('pm.project_detail.status.active'),
-  completed: t('pm.project_detail.status.completed'),
-  pending: t('pm.project_detail.status.pending'),
-  approved: t('pm.project_detail.status.approved'),
-  cancelled: t('pm.project_detail.status.cancelled'),
-  draft: t('pm.project_detail.status.draft'),
+  active: i18n.t('pm.project_detail.status.active'),
+  completed: i18n.t('pm.project_detail.status.completed'),
+  pending: i18n.t('pm.project_detail.status.pending'),
+  approved: i18n.t('pm.project_detail.status.approved'),
+  cancelled: i18n.t('pm.project_detail.status.cancelled'),
+  draft: i18n.t('pm.project_detail.status.draft'),
 });
-
 export const STATUS_COLORS: Record<string, { bgcolor: string; color: string }> = {
   active: { bgcolor: 'success.lighter', color: ct.success[800] },
   completed: { bgcolor: 'primary.100', color: 'primary.800' },
@@ -23,13 +21,11 @@ export const STATUS_COLORS: Record<string, { bgcolor: string; color: string }> =
   cancelled: { bgcolor: 'grey.100', color: 'grey.700' },
   draft: { bgcolor: 'grey.100', color: 'text.secondary' },
 };
-
 export const getRiskLabels = (t: (key: string) => string): Record<string, string> => ({
-  high: t('pm.project_detail.risk.high'),
-  medium: t('pm.project_detail.risk.medium'),
-  low: t('pm.project_detail.risk.low'),
+  high: i18n.t('pm.project_detail.risk.high'),
+  medium: i18n.t('pm.project_detail.risk.medium'),
+  low: i18n.t('pm.project_detail.risk.low'),
 });
-
 export const RISK_COLORS: Record<string, { bgcolor: string; color: string }> = {
   high: { bgcolor: 'error.lighter', color: ct.error[800] },
   medium: { bgcolor: 'warning.100', color: ct.yellow[700] },

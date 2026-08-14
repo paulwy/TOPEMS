@@ -25,6 +25,7 @@ import {
   Slider,
   Badge,
 } from '@mui/material';
+import i18n from '@/i18n';
 import {
   X as XIcon,
   Shield,
@@ -73,16 +74,16 @@ const SEVERITY_COLORS: Record<BiasSeverity, string> = {
 };
 
 const BIAS_TYPE_LABELS: Record<BiasType, string> = {
-  Gender: '性别',
-  Race: '种族',
-  Age: '年龄',
-  Socioeconomic: '社会经济地位',
+  Gender: i18n.t('ai.v60-ethics-panel.k0'),
+  Race: i18n.t('ai.v60-ethics-panel.k1'),
+  Age: i18n.t('ai.v60-ethics-panel.k2'),
+  Socioeconomic: i18n.t('ai.v60-ethics-panel.k3'),
 };
 
 const FAIRNESS_TYPE_LABELS: Record<FairnessType, string> = {
-  Demographic: '人口统计学平等',
-  Equalized: '均衡赔率',
-  Calibrated: '校准公平',
+  Demographic: i18n.t('ai.v60-ethics-panel.k4'),
+  Equalized: i18n.t('ai.v60-ethics-panel.k5'),
+  Calibrated: i18n.t('ai.v60-ethics-panel.k6'),
 };
 
 const METHOD_LABELS: Record<ExplainabilityMethod, string> = {
@@ -170,7 +171,7 @@ export const V60EthicsPanel: React.FC<{ onClose: () => void }> = ({ onClose }) =
           type: 'bias',
           status: 'info',
           timestamp: now,
-          summary: 'AI 伦理全量分析完成',
+          summary: i18n.t('ai.v60-ethics-panel.ai_0'),
         },
         ...prev,
       ]);
@@ -190,7 +191,7 @@ export const V60EthicsPanel: React.FC<{ onClose: () => void }> = ({ onClose }) =
         type: 'bias',
         status: 'passed',
         timestamp: Date.now(),
-        summary: 'V60 AI 伦理面板初始化完成',
+        summary: i18n.t('ai.v60-ethics-panel.k1'),
       },
     ]);
   }, [loadBiasData, loadFairnessData, loadExplainabilityData]);
@@ -248,7 +249,7 @@ export const V60EthicsPanel: React.FC<{ onClose: () => void }> = ({ onClose }) =
               variant='h6'
               sx={{ fontWeight: 600 }}
             >
-              V60.0 AI 伦理 — 偏见检测 · 公平性保障 · 可解释性
+              {i18n.t('ai.v60-ethics-panel.k2')}
             </Typography>
           </Box>
           <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
@@ -263,7 +264,7 @@ export const V60EthicsPanel: React.FC<{ onClose: () => void }> = ({ onClose }) =
                 size={14}
                 style={{ marginRight: 4 }}
               />
-              {isAnalyzing ? '分析中...' : '全量分析'}
+              {isAnalyzing ? i18n.t('ai.v60-ethics-panel.k3') : i18n.t('ai.v60-ethics-panel.k7')}
             </Button>
             <IconButton
               size='small'
@@ -285,25 +286,25 @@ export const V60EthicsPanel: React.FC<{ onClose: () => void }> = ({ onClose }) =
             <Tab
               icon={<Users size={16} />}
               iconPosition='start'
-              label='偏见检测'
+              label={i18n.t('ai.v60-ethics-panel.k8')}
               value='bias'
             />
             <Tab
               icon={<Scale size={16} />}
               iconPosition='start'
-              label='公平性保障'
+              label={i18n.t('ai.v60-ethics-panel.k9')}
               value='fairness'
             />
             <Tab
               icon={<Eye size={16} />}
               iconPosition='start'
-              label='可解释性'
+              label={i18n.t('ai.v60-ethics-panel.k10')}
               value='explainability'
             />
             <Tab
               icon={<History size={16} />}
               iconPosition='start'
-              label='审计历史'
+              label={i18n.t('ai.v60-ethics-panel.k11')}
               value='audit'
             />
           </Tabs>
@@ -396,12 +397,12 @@ const BiasTab: React.FC<{
               variant='subtitle2'
               sx={{ fontWeight: 600 }}
             >
-              偏见检测结果
+              {i18n.t('ai.v60-ethics-panel.k4')}
             </Typography>
             {summary && (
               <Chip
                 size='small'
-                label={`${summary.total_reports} 份报告`}
+                label={`${summary.total_reports} ${i18n.t('ai.v60-ethics-panel.k5')}`}
                 color='primary'
                 variant='outlined'
               />
@@ -434,7 +435,7 @@ const BiasTab: React.FC<{
                 size={14}
                 style={{ marginRight: 4 }}
               />
-              重新分析
+              {i18n.t('ai.v60-ethics-panel.k6')}
             </Button>
           </Stack>
 
@@ -443,7 +444,7 @@ const BiasTab: React.FC<{
               severity='info'
               variant='outlined'
             >
-              暂无偏见报告。点击"重新分析"开始检测。
+              {i18n.t('ai.v60-ethics-panel.i18n_7')}.t('ai.v60-ethics-panel.k12')开始检测。
             </Alert>
           ) : (
             <List dense>
@@ -539,7 +540,7 @@ const BiasTab: React.FC<{
                   variant='subtitle2'
                   sx={{ fontWeight: 600 }}
                 >
-                  统计概况
+                  {i18n.t('ai.v60-ethics-panel.k9')}
                 </Typography>
               </Stack>
               <Grid
@@ -548,13 +549,13 @@ const BiasTab: React.FC<{
               >
                 <Grid size={6}>
                   <StatItem
-                    label='总报告'
+                    label={i18n.t('ai.v60-ethics-panel.k13')}
                     value={summary.total_reports}
                   />
                 </Grid>
                 <Grid size={6}>
                   <StatItem
-                    label='受影响模型'
+                    label={i18n.t('ai.v60-ethics-panel.k14')}
                     value={summary.affected_models}
                   />
                 </Grid>
@@ -564,7 +565,7 @@ const BiasTab: React.FC<{
                 variant='caption'
                 sx={{ color: 'text.secondary', mb: 0.5 }}
               >
-                按严重程度
+                {i18n.t('ai.v60-ethics-panel.k10')}
               </Typography>
               <Stack
                 direction='row'
@@ -585,7 +586,7 @@ const BiasTab: React.FC<{
                 variant='caption'
                 sx={{ color: 'text.secondary', mb: 0.5 }}
               >
-                按偏见类型
+                {i18n.t('ai.v60-ethics-panel.k11')}
               </Typography>
               <Stack
                 direction='row'
@@ -621,7 +622,7 @@ const BiasTab: React.FC<{
                 variant='subtitle2'
                 sx={{ fontWeight: 600 }}
               >
-                偏见规则配置
+                {i18n.t('ai.v60-ethics-panel.k12')}
               </Typography>
             </Stack>
             <List dense>
@@ -668,7 +669,7 @@ const BiasTab: React.FC<{
                       variant='caption'
                       sx={{ color: 'text.secondary' }}
                     >
-                      阈值: {rule.threshold.toFixed(2)}
+                      [i18n.t('ai.v60-ethics-panel.k13')]: {rule.threshold.toFixed(2)}
                     </Typography>
                     <Slider
                       size='small'
@@ -717,7 +718,7 @@ const FairnessTab: React.FC<{
               variant='subtitle2'
               sx={{ fontWeight: 600 }}
             >
-              公平性评分仪表盘
+              {i18n.t('ai.v60-ethics-panel.k14')}
             </Typography>
             <Button
               size='small'
@@ -729,7 +730,7 @@ const FairnessTab: React.FC<{
                 size={14}
                 style={{ marginRight: 4 }}
               />
-              重新审计
+              {i18n.t('ai.v60-ethics-panel.k15')}
             </Button>
           </Stack>
 
@@ -739,7 +740,7 @@ const FairnessTab: React.FC<{
           >
             <Grid size={{ xs: 12, md: 4 }}>
               <ScoreCard
-                label='公平性总分'
+                label={i18n.t('ai.v60-ethics-panel.k15')}
                 value={audit.summary.avg_score}
                 color={
                   audit.status === 'passed'
@@ -753,7 +754,7 @@ const FairnessTab: React.FC<{
             </Grid>
             <Grid size={{ xs: 12, md: 4 }}>
               <ScoreCard
-                label='通过率'
+                label={i18n.t('ai.v60-ethics-panel.k16')}
                 value={`${audit.summary.passed}/${audit.summary.total_checks}`}
                 color={audit.status === 'passed' ? designTokens.colors.success.dark : designTokens.colors.error.main}
                 icon={<CheckCircle size={24} />}
@@ -761,7 +762,7 @@ const FairnessTab: React.FC<{
             </Grid>
             <Grid size={{ xs: 12, md: 4 }}>
               <ScoreCard
-                label='行业排名'
+                label={i18n.t('ai.v60-ethics-panel.k17')}
                 value={benchmark.ranking}
                 color={benchmark.yourScore >= benchmark.industryAverage ? designTokens.colors.success.dark : designTokens.colors.warning.main}
                 icon={<TrendingUp size={24} />}
@@ -775,7 +776,7 @@ const FairnessTab: React.FC<{
             variant='subtitle2'
             sx={{ fontWeight: 600, mb: 1 }}
           >
-            公平性审计详情
+            {i18n.t('ai.v60-ethics-panel.k16')}
           </Typography>
 
           {audit.results.length === 0 ? (
@@ -783,7 +784,7 @@ const FairnessTab: React.FC<{
               severity='info'
               variant='outlined'
             >
-              暂无审计结果。
+              {i18n.t('ai.v60-ethics-panel.k17')}
             </Alert>
           ) : (
             <List dense>
@@ -819,7 +820,7 @@ const FairnessTab: React.FC<{
                         variant='body2'
                         sx={{ fontWeight: 500 }}
                       >
-                        {result.passed ? '通过' : '未通过'}
+                        {result.passed ? i18n.t('ai.v60-ethics-panel.k19') : i18n.t('ai.v60-ethics-panel.k18')}
                       </Typography>
                       <Typography
                         variant='caption'
@@ -834,25 +835,25 @@ const FairnessTab: React.FC<{
                     >
                       <Grid size={3}>
                         <MetricBox
-                          label='公平分'
+                          label={i18n.t('ai.v60-ethics-panel.k20')}
                           value={result.fairnessScore.toFixed(3)}
                         />
                       </Grid>
                       <Grid size={3}>
                         <MetricBox
-                          label=' parity差'
+                          label={i18n.t('ai.v60-ethics-panel.parity_18')}
                           value={result.parityDifference.toFixed(3)}
                         />
                       </Grid>
                       <Grid size={3}>
                         <MetricBox
-                          label='校准分'
+                          label={i18n.t('ai.v60-ethics-panel.k21')}
                           value={result.calibrationScore.toFixed(3)}
                         />
                       </Grid>
                       <Grid size={3}>
                         <MetricBox
-                          label='运行时'
+                          label={i18n.t('ai.v60-ethics-panel.k22')}
                           value={`${result.duration_ms}ms`}
                         />
                       </Grid>
@@ -883,7 +884,7 @@ const FairnessTab: React.FC<{
                 variant='subtitle2'
                 sx={{ fontWeight: 600 }}
               >
-                公平性趋势
+                {i18n.t('ai.v60-ethics-panel.k19')}
               </Typography>
             </Stack>
             {trends.length === 0 ? (
@@ -891,7 +892,7 @@ const FairnessTab: React.FC<{
                 variant='body2'
                 sx={{ color: 'text.secondary' }}
               >
-                暂无趋势数据
+                {i18n.t('ai.v60-ethics-panel.k20')}
               </Typography>
             ) : (
               <Stack spacing={1}>
@@ -939,7 +940,7 @@ const FairnessTab: React.FC<{
                 variant='subtitle2'
                 sx={{ fontWeight: 600 }}
               >
-                行业基准
+                {i18n.t('ai.v60-ethics-panel.k21')}
               </Typography>
             </Stack>
             <Box sx={{ textAlign: 'center', py: 1 }}>
@@ -953,7 +954,7 @@ const FairnessTab: React.FC<{
                 variant='caption'
                 sx={{ color: 'text.secondary' }}
               >
-                你的公平性得分
+                {i18n.t('ai.v60-ethics-panel.k22')}
               </Typography>
             </Box>
             <Divider sx={{ my: 1 }} />
@@ -963,25 +964,25 @@ const FairnessTab: React.FC<{
             >
               <Grid size={6}>
                 <InfoItem
-                  label='行业平均'
+                  label={i18n.t('ai.v60-ethics-panel.k23')}
                   value={benchmark.industryAverage.toFixed(2)}
                 />
               </Grid>
               <Grid size={6}>
                 <InfoItem
-                  label='顶尖25%'
+                  label={i18n.t('ai.v60-ethics-panel.25_24')}
                   value={benchmark.topQuartile.toFixed(2)}
                 />
               </Grid>
               <Grid size={6}>
                 <InfoItem
-                  label='百分位'
+                  label={i18n.t('ai.v60-ethics-panel.k25')}
                   value={`${benchmark.percentile}%`}
                 />
               </Grid>
               <Grid size={6}>
                 <InfoItem
-                  label='排名'
+                  label={i18n.t('ai.v60-ethics-panel.k26')}
                   value={benchmark.ranking}
                 />
               </Grid>
@@ -1005,7 +1006,7 @@ const FairnessTab: React.FC<{
                   variant='subtitle2'
                   sx={{ fontWeight: 600 }}
                 >
-                  公平性类型详情
+                  {i18n.t('ai.v60-ethics-panel.k23')}
                 </Typography>
               </Stack>
               <List dense>
@@ -1039,19 +1040,19 @@ const FairnessTab: React.FC<{
                       >
                         <Grid size={4}>
                           <InfoItem
-                            label='公平分'
+                            label={i18n.t('ai.v60-ethics-panel.k27')}
                             value={String((d.fairnessScore as number)?.toFixed(3) ?? 'N/A')}
                           />
                         </Grid>
                         <Grid size={4}>
                           <InfoItem
-                            label='Parity差'
+                            label={i18n.t('ai.v60-ethics-panel.parity_24')}
                             value={String((d.parityDifference as number)?.toFixed(3) ?? 'N/A')}
                           />
                         </Grid>
                         <Grid size={4}>
                           <InfoItem
-                            label='校准分'
+                            label={i18n.t('ai.v60-ethics-panel.k28')}
                             value={String((d.calibrationScore as number)?.toFixed(3) ?? 'N/A')}
                           />
                         </Grid>
@@ -1108,17 +1109,17 @@ const ExplainabilityTab: React.FC<{
                 variant='subtitle2'
                 sx={{ fontWeight: 600 }}
               >
-                局部可解释性
+                {i18n.t('ai.v60-ethics-panel.k25')}
               </Typography>
               <Box sx={{ ml: 'auto', display: 'flex', gap: 1 }}>
                 <FormControl
                   size='small'
                   sx={{ minWidth: 120 }}
                 >
-                  <InputLabel>方法</InputLabel>
+                  <InputLabel>{i18n.t('ai.v60-ethics-panel.k29')}</InputLabel>
                   <Select
                     value={selectedMethod}
-                    label='方法'
+                    label={i18n.t('ai.v60-ethics-panel.k30')}
                     onChange={(e) => onMethodChange(e.target.value as ExplainabilityMethod)}
                   >
                     <MenuItem value='SHAP'>SHAP</MenuItem>
@@ -1136,7 +1137,7 @@ const ExplainabilityTab: React.FC<{
             >
               <TextField
                 size='small'
-                label='预测 ID'
+                label={i18n.t('ai.v60-ethics-panel.id_31')}
                 value={newPredictionId}
                 onChange={(e) => setNewPredictionId(e.target.value)}
                 placeholder='pred-xxx'
@@ -1157,7 +1158,7 @@ const ExplainabilityTab: React.FC<{
                   size={14}
                   style={{ marginRight: 4 }}
                 />
-                生成解释
+                {i18n.t('ai.v60-ethics-panel.k26')}
               </Button>
               <Button
                 size='small'
@@ -1173,7 +1174,7 @@ const ExplainabilityTab: React.FC<{
                 severity='info'
                 variant='outlined'
               >
-                暂无解释数据。
+                {i18n.t('ai.v60-ethics-panel.k27')}
               </Alert>
             ) : (
               <List dense>
@@ -1204,11 +1205,11 @@ const ExplainabilityTab: React.FC<{
                           variant='caption'
                           sx={{ color: 'text.secondary' }}
                         >
-                          预测ID: {exp.predictionId}
+                          [i18n.t('ai.v60-ethics-panel.id_28')]: {exp.predictionId}
                         </Typography>
                         <Chip
                           size='small'
-                          label={`置信度: ${(exp.confidence * 100).toFixed(1)}%`}
+                          label={`${i18n.t('ai.v60-ethics-panel.k29')} ${(exp.confidence * 100).toFixed(1)}%`}
                           color={exp.confidence > 0.8 ? 'success' : 'warning'}
                           variant='outlined'
                           sx={{ ml: 'auto', height: 20 }}
@@ -1224,7 +1225,7 @@ const ExplainabilityTab: React.FC<{
                         variant='caption'
                         sx={{ color: 'text.secondary' }}
                       >
-                        特征贡献 (Top 5):
+                        {i18n.t('ai.v60-ethics-panel.top5_30')}
                       </Typography>
                       <Stack
                         direction='row'
@@ -1278,7 +1279,7 @@ const ExplainabilityTab: React.FC<{
                   variant='subtitle2'
                   sx={{ fontWeight: 600 }}
                 >
-                  全局特征重要性
+                  {i18n.t('ai.v60-ethics-panel.k31')}
                 </Typography>
               </Stack>
               <List dense>
@@ -1343,7 +1344,7 @@ const ExplainabilityTab: React.FC<{
                   variant='subtitle2'
                   sx={{ fontWeight: 600 }}
                 >
-                  反事实分析
+                  {i18n.t('ai.v60-ethics-panel.k32')}
                 </Typography>
               </Stack>
               <List dense>
@@ -1364,13 +1365,13 @@ const ExplainabilityTab: React.FC<{
                     >
                       <Grid size={6}>
                         <InfoItem
-                          label='原始预测'
+                          label={i18n.t('ai.v60-ethics-panel.k32')}
                           value={cf.originalPrediction.toFixed(3)}
                         />
                       </Grid>
                       <Grid size={6}>
                         <InfoItem
-                          label='反事实预测'
+                          label={i18n.t('ai.v60-ethics-panel.k33')}
                           value={cf.counterfactualPrediction.toFixed(3)}
                         />
                       </Grid>
@@ -1379,7 +1380,7 @@ const ExplainabilityTab: React.FC<{
                           variant='caption'
                           sx={{ color: 'text.secondary', display: 'block', mb: 0.5 }}
                         >
-                          改变的特征
+                          {i18n.t('ai.v60-ethics-panel.k33')}
                         </Typography>
                         <Stack
                           direction='row'
@@ -1407,7 +1408,7 @@ const ExplainabilityTab: React.FC<{
                           variant='caption'
                           sx={{ color: 'text.secondary' }}
                         >
-                          距离: {cf.distance.toFixed(3)}
+                          [i18n.t('ai.v60-ethics-panel.k34')]: {cf.distance.toFixed(3)}
                         </Typography>
                       </Grid>
                     </Grid>
@@ -1432,7 +1433,7 @@ const ExplainabilityTab: React.FC<{
                   variant='subtitle2'
                   sx={{ fontWeight: 600 }}
                 >
-                  可解释性覆盖
+                  {i18n.t('ai.v60-ethics-panel.k35')}
                 </Typography>
               </Stack>
               <Box sx={{ textAlign: 'center', py: 1 }}>
@@ -1446,7 +1447,7 @@ const ExplainabilityTab: React.FC<{
                   variant='caption'
                   sx={{ color: 'text.secondary' }}
                 >
-                  覆盖率
+                  {i18n.t('ai.v60-ethics-panel.k36')}
                 </Typography>
               </Box>
               <Grid
@@ -1455,13 +1456,13 @@ const ExplainabilityTab: React.FC<{
               >
                 <Grid size={6}>
                   <InfoItem
-                    label='总预测'
+                    label={i18n.t('ai.v60-ethics-panel.k34')}
                     value={String(coverage.total_predictions)}
                   />
                 </Grid>
                 <Grid size={6}>
                   <InfoItem
-                    label='已解释'
+                    label={i18n.t('ai.v60-ethics-panel.k35')}
                     value={String(coverage.explained_predictions)}
                   />
                 </Grid>
@@ -1471,7 +1472,7 @@ const ExplainabilityTab: React.FC<{
                 variant='caption'
                 sx={{ color: 'text.secondary', mb: 0.5 }}
               >
-                方法分布
+                {i18n.t('ai.v60-ethics-panel.k37')}
               </Typography>
               <Grid
                 container
@@ -1507,7 +1508,7 @@ const ExplainabilityTab: React.FC<{
                   variant='subtitle2'
                   sx={{ fontWeight: 600 }}
                 >
-                  局限性说明
+                  {i18n.t('ai.v60-ethics-panel.k38')}
                 </Typography>
               </Stack>
               <List dense>
@@ -1554,14 +1555,14 @@ const AuditTab: React.FC<{
       type: 'fairness' as const,
       status: 'passed' as const,
       timestamp: Date.now(),
-      summary: `模型 ${modelId} 公平性审计通过`,
+      summary: `${i18n.t('ai.v60-ethics-panel.k39')} ${modelId} ${i18n.t('ai.v60-ethics-panel.k40')}`,
     },
     {
       id: `rec-${Date.now()}-2`,
       type: 'bias' as const,
       status: 'low' as const,
       timestamp: Date.now() - 3600000,
-      summary: `模型 ${modelId} 检测到低级别偏见`,
+      summary: `${i18n.t('ai.v60-ethics-panel.k41')} ${modelId} ${i18n.t('ai.v60-ethics-panel.k42')}`,
     },
   ].sort((a, b) => b.timestamp - a.timestamp);
 
@@ -1586,7 +1587,7 @@ const AuditTab: React.FC<{
                 variant='subtitle2'
                 sx={{ fontWeight: 600 }}
               >
-                AI 伦理审计历史
+                {i18n.t('ai.v60-ethics-panel.ai_43')}
               </Typography>
               <Badge
                 badgeContent={auditHistory.length}
@@ -1600,7 +1601,7 @@ const AuditTab: React.FC<{
                 severity='info'
                 variant='outlined'
               >
-                暂无审计记录。
+                {i18n.t('ai.v60-ethics-panel.k44')}
               </Alert>
             ) : (
               <List dense>
@@ -1624,7 +1625,7 @@ const AuditTab: React.FC<{
                         {entry.type === 'bias' && (
                           <Chip
                             size='small'
-                            label='偏见检测'
+                            label={i18n.t('ai.v60-ethics-panel.k36')}
                             color='warning'
                             sx={{ height: 20 }}
                           />
@@ -1632,7 +1633,7 @@ const AuditTab: React.FC<{
                         {entry.type === 'fairness' && (
                           <Chip
                             size='small'
-                            label='公平性'
+                            label={i18n.t('ai.v60-ethics-panel.k37')}
                             color='success'
                             sx={{ height: 20 }}
                           />
@@ -1640,7 +1641,7 @@ const AuditTab: React.FC<{
                         {entry.type === 'explainability' && (
                           <Chip
                             size='small'
-                            label='可解释性'
+                            label={i18n.t('ai.v60-ethics-panel.k38')}
                             color='info'
                             sx={{ height: 20 }}
                           />

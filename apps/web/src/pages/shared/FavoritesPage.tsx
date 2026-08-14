@@ -29,6 +29,7 @@ import {
   Select,
   MenuItem,
 } from '@mui/material';
+import i18n from '@/i18n';
 import { Star, Trash2, Search, Clock, FileText, Users, Package, Plus } from 'lucide-react';
 import { PageContainer } from '@/components/common';
 import { favoriteApi, searchApi, type Favorite, type SearchResult } from '@/api/shared';
@@ -104,7 +105,7 @@ const FavoritesPage: React.FC = () => {
   const removeMutation = useMutation({
     mutationFn: (id: string) => favoriteApi.remove(id),
     onSuccess: () => {
-      addNotification({ type: 'success', title: '已移除', message: '收藏已删除' });
+      addNotification({ type: 'success', title: i18n.t('pages.favorites_page.k1'), message: i18n.t('pages.favorites_page.k0') });
       queryClient.invalidateQueries({
         queryKey: QUERY_KEYS.SEARCH.FAVORITES,
         exact: false,
@@ -112,8 +113,8 @@ const FavoritesPage: React.FC = () => {
       });
     },
     onError: (error: unknown) => {
-      apiLogger.error('删除收藏失败:', error);
-      addNotification({ type: 'error', title: '操作失败', message: '无法删除收藏' });
+      apiLogger.error(i18n.t('pages.favorites_page.k0'), error);
+      addNotification({ type: 'error', title: i18n.t('pages.favorites_page.k3'), message: i18n.t('pages.favorites_page.k2') });
     },
   });
 
@@ -121,7 +122,7 @@ const FavoritesPage: React.FC = () => {
   const clearHistoryMutation = useMutation({
     mutationFn: () => searchApi.clearRecentSearches(),
     onSuccess: () => {
-      addNotification({ type: 'success', title: '已清除', message: '搜索历史已清空' });
+      addNotification({ type: 'success', title: i18n.t('pages.favorites_page.k5'), message: i18n.t('pages.favorites_page.k4') });
       queryClient.invalidateQueries({
         queryKey: QUERY_KEYS.SEARCH.HISTORY,
         exact: false,
@@ -139,7 +140,7 @@ const FavoritesPage: React.FC = () => {
         entity_name: newFavName,
       }),
     onSuccess: () => {
-      addNotification({ type: 'success', title: '已收藏', message: '收藏添加成功' });
+      addNotification({ type: 'success', title: i18n.t('pages.favorites_page.k7'), message: i18n.t('pages.favorites_page.k6') });
       queryClient.invalidateQueries({
         queryKey: QUERY_KEYS.SEARCH.FAVORITES,
         exact: false,
@@ -150,8 +151,8 @@ const FavoritesPage: React.FC = () => {
       setNewFavName('');
     },
     onError: (error: unknown) => {
-      apiLogger.error('添加收藏失败:', error);
-      addNotification({ type: 'error', title: '操作失败', message: '无法添加收藏' });
+      apiLogger.error(i18n.t('pages.favorites_page.k1'), error);
+      addNotification({ type: 'error', title: i18n.t('pages.favorites_page.k9'), message: i18n.t('pages.favorites_page.k8') });
     },
   });
 
@@ -162,12 +163,12 @@ const FavoritesPage: React.FC = () => {
       if (response.success && response.data) {
         addNotification({
           type: 'info',
-          title: '收藏状态',
-          message: response.data ? '该实体已收藏' : '该实体未收藏',
+          title: i18n.t('pages.favorites_page.k10'),
+          message: response.data ? i18n.t('pages.favorites_page.k12') : i18n.t('pages.favorites_page.k11'),
         });
       }
     } catch (error) {
-      apiLogger.error('检查收藏状态失败:', error);
+      apiLogger.error(i18n.t('pages.favorites_page.k2'), error);
     }
   };
 
@@ -183,7 +184,7 @@ const FavoritesPage: React.FC = () => {
         setSuggestions(response.data);
       }
     } catch (error) {
-      apiLogger.error('获取搜索建议失败:', error);
+      apiLogger.error(i18n.t('pages.favorites_page.k3'), error);
     }
   };
 
@@ -225,15 +226,15 @@ const FavoritesPage: React.FC = () => {
       >
         <Tab
           icon={<Star size={16} />}
-          label={`收藏 (${favorites.length})`}
+          label={`${i18n.t('pages.favorites_page.k4')}${favorites.length})`}
         />
         <Tab
           icon={<Clock size={16} />}
-          label={`搜索历史 (${recentSearches.length})`}
+          label={`${i18n.t('pages.favorites_page.k5')}${recentSearches.length})`}
         />
         <Tab
           icon={<Search size={16} />}
-          label='全局搜索'
+          label={i18n.t('pages.favorites_page.k13')}
         />
       </Tabs>
 
@@ -248,7 +249,7 @@ const FavoritesPage: React.FC = () => {
                 startIcon={<Plus size={16} />}
                 onClick={() => setAddDialogOpen(true)}
               >
-                添加收藏
+                {i18n.t('pages.favorites_page.k6')}
               </Button>
             </Box>
             {favoritesLoading ? (
@@ -256,7 +257,7 @@ const FavoritesPage: React.FC = () => {
                 <CircularProgress />
               </Box>
             ) : favorites.length === 0 ? (
-              <Alert severity='info'>暂无收藏内容</Alert>
+              <Alert severity='info'>{i18n.t('pages.favorites_page.k14')}</Alert>
             ) : (
               <List>
                 {favorites.map((fav: Favorite) => (
@@ -293,8 +294,8 @@ const FavoritesPage: React.FC = () => {
                         edge='end'
                         color='primary'
                         onClick={() => checkFavorite(fav.entity_type, fav.entity_id)}
-                        aria-label='检查收藏状态'
-                        title='检查收藏状态'
+                        aria-label={i18n.t('pages.favorites_page.k15')}
+                        title={i18n.t('pages.favorites_page.k16')}
                       >
                         <Star size={18} />
                       </IconButton>
@@ -302,7 +303,7 @@ const FavoritesPage: React.FC = () => {
                         edge='end'
                         color='error'
                         onClick={() => removeMutation.mutate(fav.id)}
-                        aria-label='删除'
+                        aria-label={i18n.t('pages.favorites_page.k17')}
                       >
                         <Trash2 size={18} />
                       </IconButton>
@@ -320,7 +321,7 @@ const FavoritesPage: React.FC = () => {
         <Card>
           <CardContent>
             <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 2 }}>
-              <Typography variant='h6'>最近搜索</Typography>
+              <Typography variant='h6'>{i18n.t('pages.favorites_page.k18')}</Typography>
               {recentSearches.length > 0 && (
                 <Button
                   size='small'
@@ -328,14 +329,14 @@ const FavoritesPage: React.FC = () => {
                   startIcon={<Trash2 size={16} />}
                   onClick={() => clearHistoryMutation.mutate()}
                 >
-                  清除历史
+                  {i18n.t('pages.favorites_page.k7')}
                 </Button>
               )}
             </Box>
             {searchesLoading ? (
               <CircularProgress />
             ) : recentSearches.length === 0 ? (
-              <Alert severity='info'>暂无搜索历史</Alert>
+              <Alert severity='info'>{i18n.t('pages.favorites_page.k19')}</Alert>
             ) : (
               <List>
                 {recentSearches.map((term: string, idx: number) => (
@@ -368,7 +369,7 @@ const FavoritesPage: React.FC = () => {
             <TextField
               fullWidth
               size='small'
-              placeholder='输入关键词搜索...'
+              placeholder={i18n.t('pages.favorites_page.k8')}
               value={searchQuery}
               onChange={(e) => handleSearch(e.target.value)}
               sx={{ mb: 2 }}
@@ -395,7 +396,7 @@ const FavoritesPage: React.FC = () => {
                   color='text.secondary'
                   sx={{ mb: 0.5, display: 'block' }}
                 >
-                  搜索建议
+                  {i18n.t('pages.favorites_page.k9')}
                 </Typography>
                 <Stack
                   direction='row'
@@ -416,7 +417,7 @@ const FavoritesPage: React.FC = () => {
               </Box>
             )}
             {searchQuery.trim() && results.length === 0 && !searching && (
-              <Alert severity='info'>未找到匹配结果</Alert>
+              <Alert severity='info'>{i18n.t('pages.favorites_page.k20')}</Alert>
             )}
             {results.length > 0 && (
               <List>
@@ -476,7 +477,7 @@ const FavoritesPage: React.FC = () => {
         maxWidth='sm'
         fullWidth
       >
-        <DialogTitle>添加收藏</DialogTitle>
+        <DialogTitle>{i18n.t('pages.favorites_page.k21')}</DialogTitle>
         <DialogContent>
           <Stack
             spacing={2}
@@ -486,10 +487,10 @@ const FavoritesPage: React.FC = () => {
               size='small'
               fullWidth
             >
-              <InputLabel>实体类型</InputLabel>
+              <InputLabel>{i18n.t('pages.favorites_page.k22')}</InputLabel>
               <Select
                 value={newFavType}
-                label='实体类型'
+                label={i18n.t('pages.favorites_page.k23')}
                 onChange={(e) => setNewFavType(e.target.value)}
               >
                 {ENTITY_TYPES.map((t) => (
@@ -504,14 +505,14 @@ const FavoritesPage: React.FC = () => {
             </FormControl>
             <TextField
               size='small'
-              label='实体 ID'
+              label={i18n.t('pages.favorites_page.id_24')}
               value={newFavId}
               onChange={(e) => setNewFavId(e.target.value)}
               fullWidth
             />
             <TextField
               size='small'
-              label='实体名称'
+              label={i18n.t('pages.favorites_page.k25')}
               value={newFavName}
               onChange={(e) => setNewFavName(e.target.value)}
               fullWidth
@@ -519,13 +520,13 @@ const FavoritesPage: React.FC = () => {
           </Stack>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setAddDialogOpen(false)}>取消</Button>
+          <Button onClick={() => setAddDialogOpen(false)}>{i18n.t('pages.favorites_page.k26')}</Button>
           <Button
             variant='contained'
             onClick={() => addFavoriteMutation.mutate()}
             disabled={!newFavId.trim() || !newFavName.trim() || addFavoriteMutation.isPending}
           >
-            添加
+            {i18n.t('pages.favorites_page.k10')}
           </Button>
         </DialogActions>
       </Dialog>

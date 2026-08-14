@@ -21,6 +21,7 @@ import {
   Button,
   Chip,
 } from '@mui/material';
+import i18n from '@/i18n';
 import { Search, Plus, X, PanelLeftClose, PanelLeftOpen, ChevronsRight } from 'lucide-react';
 import type { BreadcrumbItem, PageAction } from './PageHeader';
 import { PageHeader } from './PageHeader';
@@ -205,17 +206,17 @@ export function MasterDetailPageTemplate<T>({
   items,
   columns,
   getRowId,
-  searchPlaceholder = '搜索...',
+  searchPlaceholder = i18n.t('components.master_detail_page_template.k0'),
   sort,
   onSortChange,
   pagination,
   loading,
   error,
   renderDetail,
-  detailEmptyTitle = '选择项目查看详情',
-  detailEmptyDescription = '从左侧列表中选择一个项目，查看详细信息',
+  detailEmptyTitle = i18n.t('templates.master_detail_page_template.k0'),
+  detailEmptyDescription = i18n.t('templates.master_detail_page_template.k1'),
   onAdd,
-  addButtonText = '新增',
+  addButtonText = i18n.t('templates.master_detail_page_template.k2'),
   addButtonIcon,
   rowActions = [],
   actions,
@@ -230,7 +231,7 @@ export function MasterDetailPageTemplate<T>({
   masterFooterContent,
   onSelectionChange,
   selectedId: controlledSelectedId,
-  emptyMessage = '暂无数据',
+  emptyMessage = i18n.t('templates.master_detail_page_template.k3'),
   emptyIcon,
   enableEditMode = false,
   onEditSave,
@@ -349,7 +350,7 @@ export function MasterDetailPageTemplate<T>({
           variant='subtitle2'
           sx={{ fontWeight: 600 }}
         >
-          {description || '列表'}
+          {description || i18n.t('templates.master_detail_page_template.k4')}
           {!loading && (
             <Chip
               label={pagination ? pagination.total : filteredItems.length}
@@ -359,11 +360,11 @@ export function MasterDetailPageTemplate<T>({
           )}
         </Typography>
         {collapsible && !isMobile && (
-          <Tooltip title={collapsed ? '展开面板' : '收起面板'}>
+          <Tooltip title={collapsed ? i18n.t('templates.master_detail_page_template.k6') : i18n.t('templates.master_detail_page_template.k5')}>
             <IconButton
               size='small'
               onClick={() => setCollapsed(!collapsed)}
-              aria-label='展开侧栏'
+              aria-label={i18n.t('templates.master_detail_page_template.k7')}
             >
               {collapsed ? (
                 <PanelLeftOpen style={{ width: 16, height: 16 }} />
@@ -404,7 +405,7 @@ export function MasterDetailPageTemplate<T>({
                     if (controlledSearchValue === undefined) setInternalSearchValue('');
                     onSearchChange?.('');
                   }}
-                  aria-label='关闭'
+                  aria-label={i18n.t('templates.master_detail_page_template.k8')}
                 >
                   <X style={{ width: 14, height: 14 }} />
                 </IconButton>
@@ -528,7 +529,7 @@ export function MasterDetailPageTemplate<T>({
                             color: isSelected ? designTokens.colors.background.paper : `${action.color || 'primary'}.dark`,
                           },
                         }}
-                        aria-label='前进'
+                        aria-label={i18n.t('templates.master_detail_page_template.k9')}
                       >
                         {action.icon || <ChevronsRight style={{ width: 14, height: 14 }} />}
                       </IconButton>
@@ -737,7 +738,7 @@ export function MasterDetailPageTemplate<T>({
               disabled={pagination.page <= 0}
               onClick={() => pagination.onPageChange(pagination.page - 1)}
             >
-              上一页
+              {i18n.t('components.master_detail_page_template.k0')}
             </Button>
             <Typography
               variant='body2'
@@ -751,7 +752,7 @@ export function MasterDetailPageTemplate<T>({
               disabled={pagination.page >= Math.ceil(pagination.total / pagination.pageSize) - 1}
               onClick={() => pagination.onPageChange(pagination.page + 1)}
             >
-              下一页
+              {i18n.t('components.master_detail_page_template.k1')}
             </Button>
           </Box>
         </Box>
@@ -789,8 +790,8 @@ export function MasterDetailPageTemplate<T>({
           sx={{ fontWeight: 600 }}
         >
           {selectedItem
-            ? detailEmptyTitle.includes('选择')
-              ? '详情'
+            ? detailEmptyTitle.includes(i18n.t('templates.master_detail_page_template.k10'))
+              ? i18n.t('templates.master_detail_page_template.k11')
               : detailEmptyTitle
             : detailEmptyTitle}
         </Typography>
@@ -801,15 +802,15 @@ export function MasterDetailPageTemplate<T>({
               variant='outlined'
               onClick={handleEditStart}
             >
-              编辑
+              {i18n.t('components.master_detail_page_template.k2')}
             </Button>
           )}
           {(selectedItem || (isMobile && useDrawerOnMobile)) && (
-            <Tooltip title='关闭'>
+            <Tooltip title={i18n.t('templates.master_detail_page_template.k12')}>
               <IconButton
                 size='small'
                 onClick={handleCloseDetail}
-                aria-label='关闭'
+                aria-label={i18n.t('templates.master_detail_page_template.k13')}
               >
                 <X style={{ width: 18, height: 18 }} />
               </IconButton>
@@ -1004,13 +1005,13 @@ export function MasterDetailPageTemplate<T>({
             }}
           >
             <Tooltip
-              title='展开面板'
+              title={i18n.t('templates.master_detail_page_template.k14')}
               placement='right'
             >
               <IconButton
                 size='small'
                 onClick={() => setCollapsed(false)}
-                aria-label='展开侧栏'
+                aria-label={i18n.t('templates.master_detail_page_template.k15')}
               >
                 <PanelLeftOpen style={{ width: 18, height: 18 }} />
               </IconButton>

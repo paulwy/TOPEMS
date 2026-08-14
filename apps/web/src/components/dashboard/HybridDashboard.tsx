@@ -6,69 +6,70 @@ import { MessageSquare, Phone } from 'lucide-react';
 import { useAuth } from '@/hooks';
 import { DASHBOARD_PATHS } from '@/routes/dashboard';
 import { designTokens } from '@topems/tokens';
+import i18n from '@/i18n';
 
 // ── Mock Data ──────────────────────────────────────────────
 
 const todoData = [
-  { id: 1, title: '审批采购订单 PO-2024-0087', time: '10:30', priority: 'urgent' as const },
-  { id: 2, title: '完成Q3生产计划排程', time: '09:15', priority: 'warning' as const },
-  { id: 3, title: '客户样品发货确认', time: '昨天 16:42', priority: 'normal' as const },
-  { id: 4, title: '月度财务报表审核', time: '昨天 14:20', priority: 'urgent' as const },
-  { id: 5, title: '新员工入职培训安排', time: '昨天 11:05', priority: 'normal' as const },
+  { id: 1, title: i18n.t('shared.hybrid_dashboard.po20240087_0'), time: '10:30', priority: 'urgent' as const },
+  { id: 2, title: i18n.t('shared.hybrid_dashboard.q3_1'), time: '09:15', priority: 'warning' as const },
+  { id: 3, title: i18n.t('shared.hybrid_dashboard.k2'), time: i18n.t('components.hybrid_dashboard.1642_0'), priority: 'normal' as const },
+  { id: 4, title: i18n.t('shared.hybrid_dashboard.k3'), time: i18n.t('components.hybrid_dashboard.1420_1'), priority: 'urgent' as const },
+  { id: 5, title: i18n.t('shared.hybrid_dashboard.k4'), time: i18n.t('components.hybrid_dashboard.1105_2'), priority: 'normal' as const },
 ];
 
 const activityData = [
   {
-    name: '李四',
-    initial: '李',
-    action: '提交了采购订单',
-    time: '5分钟前',
+    name: i18n.t('shared.hybrid_dashboard.k5'),
+    initial: i18n.t('shared.hybrid_dashboard.k6'),
+    action: i18n.t('shared.hybrid_dashboard.k7'),
+    time: i18n.t('components.hybrid_dashboard.5_3'),
     gradient: 'primary' as const,
   },
   {
-    name: '王五',
-    initial: '王',
-    action: '完成了生产批次 B-2024-156',
-    time: '23分钟前',
+    name: i18n.t('shared.hybrid_dashboard.k8'),
+    initial: i18n.t('shared.hybrid_dashboard.k9'),
+    action: i18n.t('shared.hybrid_dashboard.b2024156_10'),
+    time: i18n.t('components.hybrid_dashboard.23_4'),
     gradient: 'success' as const,
   },
   {
-    name: '赵六',
-    initial: '赵',
-    action: '新增了客户"恒达化工"',
-    time: '1小时前',
+    name: i18n.t('shared.hybrid_dashboard.k11'),
+    initial: i18n.t('shared.hybrid_dashboard.k12'),
+    action: i18n.t('components.hybrid_dashboard.k5') + i18n.t('shared.hybrid_dashboard.k13'),
+    time: i18n.t('components.hybrid_dashboard.1_6'),
     gradient: 'warning' as const,
   },
   {
-    name: '陈七',
-    initial: '陈',
-    action: '更新了项目进度至78%',
-    time: '2小时前',
+    name: i18n.t('shared.hybrid_dashboard.k14'),
+    initial: i18n.t('shared.hybrid_dashboard.k15'),
+    action: i18n.t('shared.hybrid_dashboard.78_16'),
+    time: i18n.t('components.hybrid_dashboard.2_7'),
     gradient: 'info' as const,
   },
   {
-    name: '孙八',
-    initial: '孙',
-    action: '上传了质检报告',
-    time: '3小时前',
+    name: i18n.t('shared.hybrid_dashboard.k17'),
+    initial: i18n.t('shared.hybrid_dashboard.k18'),
+    action: i18n.t('shared.hybrid_dashboard.k19'),
+    time: i18n.t('components.hybrid_dashboard.3_8'),
     gradient: 'secondary' as const,
   },
 ];
 
 const contactData = [
-  { name: '王经理', initial: '王', role: '采购部经理', color: 'primary' as const },
-  { name: '刘工程师', initial: '刘', role: '技术部工程师', color: 'success' as const },
-  { name: '张会计', initial: '张', role: '财务部会计', color: 'info' as const },
-  { name: '陈主管', initial: '陈', role: '生产部主管', color: 'warning' as const },
+  { name: i18n.t('shared.hybrid_dashboard.k22'), initial: i18n.t('shared.hybrid_dashboard.k21'), role: i18n.t('shared.hybrid_dashboard.k20'), color: 'primary' as const },
+  { name: i18n.t('shared.hybrid_dashboard.k25'), initial: i18n.t('shared.hybrid_dashboard.k24'), role: i18n.t('shared.hybrid_dashboard.k23'), color: 'success' as const },
+  { name: i18n.t('shared.hybrid_dashboard.k28'), initial: i18n.t('shared.hybrid_dashboard.k27'), role: i18n.t('shared.hybrid_dashboard.k26'), color: 'info' as const },
+  { name: i18n.t('shared.hybrid_dashboard.k31'), initial: i18n.t('shared.hybrid_dashboard.k30'), role: i18n.t('shared.hybrid_dashboard.k29'), color: 'warning' as const },
 ];
 
 // ── Helper: get greeting based on time of day ──────────────
 
 const getGreeting = (): string => {
   const hour = new Date().getHours();
-  if (hour < 12) return '上午好';
-  if (hour < 18) return '下午好';
-  return '晚上好';
+  if (hour < 12) return i18n.t('shared.hybrid_dashboard.k32');
+  if (hour < 18) return i18n.t('shared.hybrid_dashboard.k33');
+  return i18n.t('shared.hybrid_dashboard.k34');
 };
 
 // ── Helper: priority color mapping ─────────────────────────
@@ -94,7 +95,7 @@ const gradientMap: Record<string, string> = {
 /** Personal Info Card */
 const PersonalInfoCard: React.FC = () => {
   const { user } = useAuth();
-  const name = user?.realName || '张三';
+  const name = user?.realName || i18n.t('shared.hybrid_dashboard.k35');
   const greeting = getGreeting();
 
   return (
@@ -136,14 +137,14 @@ const PersonalInfoCard: React.FC = () => {
             variant='body2'
             color='text.secondary'
           >
-            系统管理员 · 技术部
+            {i18n.t('components.hybrid_dashboard.k0')}
           </Typography>
         </Box>
       </Box>
 
       {/* Right: mini stats */}
       <Box sx={{ display: 'flex', gap: 1 }}>
-        {['5 条待办', '3 条消息', '2 个日程'].map((label) => (
+        {[i18n.t('components.hybrid_dashboard.5_11'), i18n.t('components.hybrid_dashboard.3_10'), i18n.t('components.hybrid_dashboard.2_9')].map((label) => (
           <Box
             key={label}
             sx={{
@@ -204,13 +205,13 @@ const CompactHero: React.FC = () => {
           variant='subtitle1'
           sx={{ fontWeight: 700, mb: 0.5 }}
         >
-          TOPEMS 企业数字化平台
+          {i18n.t('components.hybrid_dashboard.topems_1')}
         </Typography>
         <Typography
           variant='body2'
           sx={{ opacity: 0.85, mb: 2 }}
         >
-          化工新材料行业一站式数字化管理解决方案
+          {i18n.t('components.hybrid_dashboard.k2')}
         </Typography>
         <Button
           size='small'
@@ -224,7 +225,7 @@ const CompactHero: React.FC = () => {
           }}
           onClick={() => navigate(DASHBOARD_PATHS.dashboard)}
         >
-          进入工作台
+          {i18n.t('components.hybrid_dashboard.k3')}
         </Button>
       </Box>
     </Box>
@@ -242,7 +243,7 @@ const TodoList: React.FC = () => {
           variant='subtitle2'
           sx={{ fontWeight: 600 }}
         >
-          待办事项
+          {i18n.t('components.hybrid_dashboard.k4')}
         </Typography>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
           <Badge
@@ -262,7 +263,7 @@ const TodoList: React.FC = () => {
             sx={{ fontSize: 13, color: 'primary.main', cursor: 'pointer' }}
             onClick={() => navigate(DASHBOARD_PATHS.dashboard)}
           >
-            查看全部
+            {i18n.t('components.hybrid_dashboard.k5')}
           </Typography>
         </Box>
       </Box>
@@ -319,13 +320,13 @@ const RecentActivities: React.FC = () => {
           variant='subtitle2'
           sx={{ fontWeight: 600 }}
         >
-          最近动态
+          {i18n.t('components.hybrid_dashboard.k6')}
         </Typography>
         <Typography
           sx={{ fontSize: 13, color: 'primary.main', cursor: 'pointer' }}
           onClick={() => navigate(DASHBOARD_PATHS.dashboard)}
         >
-          查看全部
+          {i18n.t('components.hybrid_dashboard.k7')}
         </Typography>
       </Box>
       {activityData.map((item, index) => (
@@ -387,13 +388,13 @@ const FrequentContacts: React.FC = () => {
           variant='subtitle2'
           sx={{ fontWeight: 600 }}
         >
-          常用联系人
+          {i18n.t('components.hybrid_dashboard.k8')}
         </Typography>
         <Typography
           sx={{ fontSize: 13, color: 'primary.main', cursor: 'pointer' }}
           onClick={() => navigate(DASHBOARD_PATHS.addressbook)}
         >
-          查看通讯录
+          {i18n.t('components.hybrid_dashboard.k9')}
         </Typography>
       </Box>
       {contactData.map((item, index) => (
@@ -439,14 +440,14 @@ const FrequentContacts: React.FC = () => {
             <IconButton
               size='small'
               sx={{ color: 'text.secondary' }}
-              aria-label='消息'
+              aria-label={i18n.t('shared.hybrid_dashboard.k36')}
             >
               <MessageSquare size={16} />
             </IconButton>
             <IconButton
               size='small'
               sx={{ color: 'text.secondary' }}
-              aria-label='电话'
+              aria-label={i18n.t('shared.hybrid_dashboard.k37')}
             >
               <Phone size={16} />
             </IconButton>

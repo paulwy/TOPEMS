@@ -1,6 +1,8 @@
 import React from 'react';
 import { Box, Typography, Button, useTheme } from '@mui/material';
 import { Inbox } from 'lucide-react';
+import { designTokens } from '@topems/tokens';
+import i18n from '@/i18n';
 
 export interface EmptyStateProps {
   icon?: React.ReactNode;
@@ -19,7 +21,7 @@ export interface EmptyStateProps {
 export const EmptyState: React.FC<EmptyStateProps> = ({
   icon,
   emoji,
-  title = '暂无数据',
+  title = i18n.t('shared.empty_state.k0'),
   description,
   action,
   actionLabel,
@@ -57,7 +59,7 @@ export const EmptyState: React.FC<EmptyStateProps> = ({
         border: '1px dashed',
         borderColor: isDark ? 'glass.topLight' : 'colors.cyber.glass.bgLight',
         borderRadius: 2,
-        bgcolor: isDark ? 'rgba(255,255,255,0.02)' : 'rgba(0,0,0,0.01)',
+        bgcolor: isDark ? designTokens.colors.cyber.glass.bgLight : 'rgba(0,0,0,0.01)',
         px: compact ? 2 : 3,
         py: compact ? 3 : 4,
         textAlign: align === 'center' ? 'center' : 'left',

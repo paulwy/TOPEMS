@@ -4,7 +4,7 @@ import { createCrudPageAdapter, type CrudApi } from '@/schema/crudPageAdapter';
 import { productionProcessSchema } from '@/schemas/mes';
 import { mesApi } from '@/api/mes';
 import type { ProductionProcess } from '@/api/mes/types';
-
+import i18n from '@/i18n';
 const apiAdapter = createCrudPageAdapter<ProductionProcess>(
   {
     list: mesApi.processes.list as unknown as CrudApi<ProductionProcess>['list'],
@@ -14,13 +14,11 @@ const apiAdapter = createCrudPageAdapter<ProductionProcess>(
   },
   { itemsField: 'processes' }
 );
-
 export default function ProductionProcessPage() {
   const renderStats = (rows: ProductionProcess[]) => {
     const total = rows.length;
     const active = rows.filter((p) => p.status === 'active').length;
     const inactive = rows.filter((p) => p.status === 'inactive').length;
-
     return (
       <Box
         sx={{
@@ -35,7 +33,7 @@ export default function ProductionProcessPage() {
             variant='body2'
             sx={{ color: 'text.secondary' }}
           >
-            工序总数
+            {i18n.t('pages.production_process_page.k0')}
           </Typography>
           <Typography
             variant='h5'
@@ -49,7 +47,7 @@ export default function ProductionProcessPage() {
             variant='body2'
             sx={{ color: 'text.secondary' }}
           >
-            已启用
+            {i18n.t('pages.production_process_page.k1')}
           </Typography>
           <Typography
             variant='h5'
@@ -63,7 +61,7 @@ export default function ProductionProcessPage() {
             variant='body2'
             sx={{ color: 'text.secondary' }}
           >
-            已禁用
+            {i18n.t('pages.production_process_page.k2')}
           </Typography>
           <Typography
             variant='h5'
@@ -75,12 +73,11 @@ export default function ProductionProcessPage() {
       </Box>
     );
   };
-
   return (
     <CrudPage
       schema={productionProcessSchema}
       apiAdapter={apiAdapter}
-      breadcrumbs={[{ label: 'MES' }, { label: '工序管理' }]}
+      breadcrumbs={[{ label: 'MES' }, { label: i18n.t('mes.production_process_page.k0') }]}
       headerContent={(rows) => renderStats(rows as ProductionProcess[])}
     />
   );

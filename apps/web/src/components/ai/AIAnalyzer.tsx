@@ -11,6 +11,7 @@ import {
   Users,
   Tag,
 } from 'lucide-react';
+import i18n from '@/i18n';
 import {
   Card,
   CardContent,
@@ -70,9 +71,9 @@ export interface Keyword {
 }
 
 const sentimentColors: Record<string, { bg: string; text: string; label: string }> = {
-  positive: { bg: 'success.lighter', text: 'success.700', label: '积极' },
-  negative: { bg: 'error.lighter', text: 'error.dark', label: '消极' },
-  neutral: { bg: 'grey.100', text: 'grey.700', label: '中性' },
+  positive: { bg: 'success.lighter', text: 'success.700', label: i18n.t('components.ai_analyzer.k0') },
+  negative: { bg: 'error.lighter', text: 'error.dark', label: i18n.t('components.ai_analyzer.k1') },
+  neutral: { bg: 'grey.100', text: 'grey.700', label: i18n.t('components.ai_analyzer.k2') },
 };
 
 export function AIAnalyzer({
@@ -132,7 +133,7 @@ export function AIAnalyzer({
         keywords: keywordsResult.length > 0 ? keywordsResult : undefined,
       });
     } catch (error: unknown) {
-      logger.error('分析失败:', error);
+      logger.error(i18n.t('components.ai_analyzer.k0'), error);
     } finally {
       setIsLoading(false);
     }
@@ -149,7 +150,7 @@ export function AIAnalyzer({
         });
       }
     } catch (error: unknown) {
-      logger.error('情感分析失败:', error);
+      logger.error(i18n.t('components.ai_analyzer.k1'), error);
     }
   };
 
@@ -164,7 +165,7 @@ export function AIAnalyzer({
         });
       }
     } catch (error: unknown) {
-      logger.error('文本分类失败:', error);
+      logger.error(i18n.t('components.ai_analyzer.k2'), error);
     }
   };
 
@@ -175,7 +176,7 @@ export function AIAnalyzer({
         setEntitiesResult(response.data.entities);
       }
     } catch (error: unknown) {
-      logger.error('实体提取失败:', error);
+      logger.error(i18n.t('components.ai_analyzer.k3'), error);
     }
   };
 
@@ -186,7 +187,7 @@ export function AIAnalyzer({
         setKeywordsResult(response.data.keywords);
       }
     } catch (error: unknown) {
-      logger.error('关键词提取失败:', error);
+      logger.error(i18n.t('components.ai_analyzer.k4'), error);
     }
   };
 
@@ -202,7 +203,7 @@ export function AIAnalyzer({
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     } catch (error: unknown) {
-      logger.error('复制失败:', error);
+      logger.error(i18n.t('components.ai_analyzer.k5'), error);
     }
   };
 
@@ -228,8 +229,8 @@ export function AIAnalyzer({
     <AIGenerateModal
       isOpen={isOpen}
       onClose={onClose}
-      title='AI 文本分析'
-      description='分析文本的情感、分类、实体和关键词'
+      title={i18n.t('components.ai_analyzer.ai_6')}
+      description={i18n.t('components.ai_analyzer.k3')}
       isLoading={isLoading}
       onConfirm={undefined}
       confirmText=''
@@ -250,7 +251,7 @@ export function AIAnalyzer({
               )
             }
           >
-            {copied ? '已复制' : '复制结果'}
+            {copied ? i18n.t('components.ai_analyzer.k5') : i18n.t('components.ai_analyzer.k4')}
           </Button>
         ) : null
       }
@@ -260,8 +261,8 @@ export function AIAnalyzer({
           multiline
           rows={4}
           fullWidth
-          label='输入文本'
-          placeholder='请输入需要分析的文本...'
+          label={i18n.t('components.ai_analyzer.k6')}
+          placeholder={i18n.t('components.ai_analyzer.k7')}
           value={text}
           onChange={(e) => setText(e.target.value)}
           size='small'
@@ -276,12 +277,12 @@ export function AIAnalyzer({
           {isLoading ? (
             <>
               {renderSpinner()}
-              分析中...
+              {i18n.t('components.ai_analyzer.k8')}
             </>
           ) : (
             <>
               <Sparkles style={{ width: 16, height: 16, marginRight: 8 }} />
-              执行分析
+              {i18n.t('components.ai_analyzer.k9')}
             </>
           )}
         </Button>
@@ -310,7 +311,7 @@ export function AIAnalyzer({
                         component='h4'
                         sx={{ fontWeight: 500 }}
                       >
-                        情感分析
+                        {i18n.t('components.ai_analyzer.k10')}
                       </Typography>
                       <Box
                         sx={{
@@ -332,7 +333,7 @@ export function AIAnalyzer({
                           variant='caption'
                           sx={{ color: 'text.secondary' }}
                         >
-                          置信度: {Math.round(sentimentResult.confidence * 100)}%
+                          [i18n.t('components.ai_analyzer.k11')]: {Math.round(sentimentResult.confidence * 100)}%
                         </Typography>
                       </Box>
                     </Box>
@@ -368,7 +369,7 @@ export function AIAnalyzer({
                               mb: 0.5,
                             }}
                           >
-                            积极词汇
+                            {i18n.t('components.ai_analyzer.k12')}
                           </Typography>
                           <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
                             {sentimentResult.details.positive_words.map((word, idx) => (
@@ -399,7 +400,7 @@ export function AIAnalyzer({
                               mb: 0.5,
                             }}
                           >
-                            消极词汇
+                            {i18n.t('components.ai_analyzer.k13')}
                           </Typography>
                           <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
                             {sentimentResult.details.negative_words.map((word, idx) => (
@@ -429,7 +430,7 @@ export function AIAnalyzer({
                             mb: 0.5,
                           }}
                         >
-                          情感强度
+                          {i18n.t('components.ai_analyzer.k14')}
                         </Typography>
                         <Box
                           sx={{
@@ -481,7 +482,7 @@ export function AIAnalyzer({
                         component='h4'
                         sx={{ fontWeight: 500 }}
                       >
-                        文本分类
+                        {i18n.t('components.ai_analyzer.k15')}
                       </Typography>
                       <Box
                         sx={{
@@ -500,7 +501,7 @@ export function AIAnalyzer({
                           variant='caption'
                           sx={{ color: 'text.secondary' }}
                         >
-                          置信度: {Math.round(classificationResult.confidence * 100)}%
+                          [i18n.t('components.ai_analyzer.k16')]: {Math.round(classificationResult.confidence * 100)}%
                         </Typography>
                       </Box>
                     </Box>
@@ -528,7 +529,7 @@ export function AIAnalyzer({
                           mb: 1,
                         }}
                       >
-                        各类别得分
+                        {i18n.t('components.ai_analyzer.k17')}
                       </Typography>
                       <Box
                         sx={{
@@ -612,7 +613,7 @@ export function AIAnalyzer({
                         component='h4'
                         sx={{ fontWeight: 500 }}
                       >
-                        实体提取
+                        {i18n.t('components.ai_analyzer.k18')}
                       </Typography>
                       <Typography
                         variant='body2'
@@ -701,7 +702,7 @@ export function AIAnalyzer({
                         component='h4'
                         sx={{ fontWeight: 500 }}
                       >
-                        关键词提取
+                        {i18n.t('components.ai_analyzer.k19')}
                       </Typography>
                       <Typography
                         variant='body2'
@@ -789,7 +790,7 @@ export function AIAnalyzer({
                             variant='caption'
                             sx={{ color: 'text.secondary' }}
                           >
-                            频率: {keyword.frequency}
+                            [i18n.t('components.ai_analyzer.k20')]: {keyword.frequency}
                           </Typography>
                         </Box>
                       ))}

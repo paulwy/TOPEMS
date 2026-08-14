@@ -26,6 +26,7 @@ import type { QueryKey } from '@tanstack/react-query';
 import { useNotificationStore } from '@/store';
 import { extractErrorMessage } from '@/utils/errors';
 import { apiLogger } from '@/utils/logger';
+import i18n from '@/i18n';
 
 export interface UseCrudMutationsOptions<TCreate, TUpdate, TDelete> {
   /** 创建成功后需要 invalidate 的 query key */
@@ -85,7 +86,7 @@ export function useCrudMutations<TCreate, TUpdate, TDelete>(
   const notifySuccess = useCallback(
     (message: string) => {
       if (showNotifications) {
-        addNotification({ title: '成功', message, type: 'success' });
+        addNotification({ title: i18n.t('shared.use_crud_mutations.k0'), message, type: 'success' });
       }
     },
     [addNotification, showNotifications]
@@ -93,11 +94,11 @@ export function useCrudMutations<TCreate, TUpdate, TDelete>(
 
   const notifyError = useCallback(
     (action: string, err: unknown) => {
-      apiLogger.error(`${entityName}${action}失败:`, err);
+      apiLogger.error(`${entityName}${action}${i18n.t('shared.use_crud_mutations.k0')}`, err);
       if (showNotifications) {
         addNotification({
-          title: '失败',
-          message: extractErrorMessage(err, `${entityName}${action}失败`),
+          title: i18n.t('shared.use_crud_mutations.k1'),
+          message: extractErrorMessage(err, `${entityName}${action}${i18n.t('shared.use_crud_mutations.k1')}`),
           type: 'error',
         });
       }
@@ -112,10 +113,10 @@ export function useCrudMutations<TCreate, TUpdate, TDelete>(
   exact: false,
   refetchType: 'active',
 });
-      notifySuccess(`${entityName}创建成功`);
+      notifySuccess(`${entityName}${i18n.t('shared.use_crud_mutations.k2')}`);
       onCreateSuccess?.(data);
     },
-    onError: (err) => notifyError('创建', err),
+    onError: (err) => notifyError(i18n.t('shared.use_crud_mutations.k2'), err),
   });
 
   const updateMutation = useMutation({
@@ -125,10 +126,10 @@ export function useCrudMutations<TCreate, TUpdate, TDelete>(
   exact: false,
   refetchType: 'active',
 });
-      notifySuccess(`${entityName}更新成功`);
+      notifySuccess(`${entityName}${i18n.t('shared.use_crud_mutations.k3')}`);
       onUpdateSuccess?.(data);
     },
-    onError: (err) => notifyError('更新', err),
+    onError: (err) => notifyError(i18n.t('shared.use_crud_mutations.k3'), err),
   });
 
   const deleteMutation = useMutation({
@@ -138,10 +139,10 @@ export function useCrudMutations<TCreate, TUpdate, TDelete>(
   exact: false,
   refetchType: 'active',
 });
-      notifySuccess(`${entityName}删除成功`);
+      notifySuccess(`${entityName}${i18n.t('shared.use_crud_mutations.k4')}`);
       onDeleteSuccess?.(data);
     },
-    onError: (err) => notifyError('删除', err),
+    onError: (err) => notifyError(i18n.t('shared.use_crud_mutations.k4'), err),
   });
 
   return {

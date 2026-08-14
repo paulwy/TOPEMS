@@ -1,5 +1,4 @@
 import React from 'react';
-import { useTranslation } from 'react-i18next';
 import { Plus, X, Check } from 'lucide-react';
 import {
   Box,
@@ -24,12 +23,10 @@ import {
   DialogActions,
   IconButton,
 } from '@mui/material';
+import i18n from '@/i18n';
 import type { VoucherManagementReturn } from '../hooks/useVoucherManagement';
-
 export type VoucherFormDialogProps = VoucherManagementReturn;
-
 const VoucherFormDialog: React.FC<VoucherFormDialogProps> = (vm) => {
-  const { t } = useTranslation();
   const {
     showCreateModal,
     setShowCreateModal,
@@ -46,7 +43,6 @@ const VoucherFormDialog: React.FC<VoucherFormDialogProps> = (vm) => {
     isBalanced,
     formatCurrency,
   } = vm;
-
   return (
     <Dialog
       open={showCreateModal}
@@ -60,7 +56,7 @@ const VoucherFormDialog: React.FC<VoucherFormDialogProps> = (vm) => {
       <DialogTitle>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
           <Plus size={20} />
-          {t('erp.voucher_mgmt.label.add_accounting_voucher')}
+          {i18n.t('erp.voucher_mgmt.label.add_accounting_voucher')}
         </Box>
       </DialogTitle>
       <DialogContent dividers>
@@ -73,40 +69,40 @@ const VoucherFormDialog: React.FC<VoucherFormDialogProps> = (vm) => {
             }}
           >
             <FormControl size='small'>
-              <InputLabel>{t('erp.voucher_mgmt.label.voucher_prefix')}</InputLabel>
+              <InputLabel>{i18n.t('erp.voucher_mgmt.label.voucher_prefix')}</InputLabel>
               <Select
                 value={newVoucher.voucher_type}
-                label={t('erp.voucher_mgmt.label.voucher_prefix')}
+                label={i18n.t('erp.voucher_mgmt.label.voucher_prefix')}
                 onChange={(e) =>
                   setNewVoucher((prev) => ({ ...prev, voucher_type: e.target.value }))
                 }
               >
-                <MenuItem value={t('erp.voucher_mgmt.voucher_type_short.receipt')}>
-                  {t('erp.voucher_mgmt.label.receipt_short_label')}
+                <MenuItem value={i18n.t('erp.voucher_mgmt.voucher_type_short.receipt')}>
+                  {i18n.t('erp.voucher_mgmt.label.receipt_short_label')}
                 </MenuItem>
-                <MenuItem value={t('erp.voucher_mgmt.voucher_type_short.payment')}>
-                  {t('erp.voucher_mgmt.label.payment_short_label')}
+                <MenuItem value={i18n.t('erp.voucher_mgmt.voucher_type_short.payment')}>
+                  {i18n.t('erp.voucher_mgmt.label.payment_short_label')}
                 </MenuItem>
-                <MenuItem value={t('erp.voucher_mgmt.voucher_type_short.transfer')}>
-                  {t('erp.voucher_mgmt.label.transfer_short_label')}
+                <MenuItem value={i18n.t('erp.voucher_mgmt.voucher_type_short.transfer')}>
+                  {i18n.t('erp.voucher_mgmt.label.transfer_short_label')}
                 </MenuItem>
-                <MenuItem value={t('erp.voucher_mgmt.voucher_type_short.accounting')}>
-                  {t('erp.voucher_mgmt.label.accounting_short_label')}
+                <MenuItem value={i18n.t('erp.voucher_mgmt.voucher_type_short.accounting')}>
+                  {i18n.t('erp.voucher_mgmt.label.accounting_short_label')}
                 </MenuItem>
               </Select>
             </FormControl>
             <TextField
               size='small'
-              label={t('erp.voucher_mgmt.label.voucher_number_required')}
+              label={i18n.t('erp.voucher_mgmt.label.voucher_number_required')}
               value={newVoucher.voucher_number}
               onChange={(e) =>
                 setNewVoucher((prev) => ({ ...prev, voucher_number: e.target.value }))
               }
-              placeholder={t('erp.voucher_mgmt.label.voucher_number_placeholder')}
+              placeholder={i18n.t('erp.voucher_mgmt.label.voucher_number_placeholder')}
             />
             <TextField
               size='small'
-              label={t('erp.voucher_mgmt.label.voucher_date_required')}
+              label={i18n.t('erp.voucher_mgmt.label.voucher_date_required')}
               type='date'
               value={newVoucher.voucher_date}
               onChange={(e) => setNewVoucher((prev) => ({ ...prev, voucher_date: e.target.value }))}
@@ -114,10 +110,10 @@ const VoucherFormDialog: React.FC<VoucherFormDialogProps> = (vm) => {
             />
             <TextField
               size='small'
-              label={t('erp.voucher_mgmt.label.period_required')}
+              label={i18n.t('erp.voucher_mgmt.label.period_required')}
               value={newVoucher.period}
               onChange={(e) => setNewVoucher((prev) => ({ ...prev, period: e.target.value }))}
-              placeholder={t('erp.voucher_mgmt.label.period_placeholder')}
+              placeholder={i18n.t('erp.voucher_mgmt.label.period_placeholder')}
             />
           </Box>
           <Box
@@ -129,7 +125,7 @@ const VoucherFormDialog: React.FC<VoucherFormDialogProps> = (vm) => {
           >
             <TextField
               size='small'
-              label={t('erp.voucher_mgmt.label.attachment_count')}
+              label={i18n.t('erp.voucher_mgmt.label.attachment_count')}
               type='number'
               value={newVoucher.attachment_count}
               onChange={(e) =>
@@ -142,14 +138,13 @@ const VoucherFormDialog: React.FC<VoucherFormDialogProps> = (vm) => {
           </Box>
           <TextField
             size='small'
-            label={t('erp.voucher_mgmt.label.summary')}
+            label={i18n.t('erp.voucher_mgmt.label.summary')}
             multiline
             rows={2}
             value={newVoucher.summary}
             onChange={(e) => setNewVoucher((prev) => ({ ...prev, summary: e.target.value }))}
-            placeholder={t('erp.voucher_mgmt.label.voucher_summary')}
+            placeholder={i18n.t('erp.voucher_mgmt.label.voucher_summary')}
           />
-
           <Box sx={{ borderTop: 1, borderColor: 'divider', pt: 2 }}>
             <Box
               sx={{
@@ -163,17 +158,16 @@ const VoucherFormDialog: React.FC<VoucherFormDialogProps> = (vm) => {
                 variant='subtitle1'
                 sx={{ fontWeight: 600 }}
               >
-                {t('erp.voucher_mgmt.label.voucher_items')}
+                {i18n.t('erp.voucher_mgmt.label.voucher_items')}
               </Typography>
               <Button
                 size='small'
                 startIcon={<Plus size={16} />}
                 onClick={addVoucherItem}
               >
-                {t('erp.voucher_mgmt.label.add_entry')}
+                {i18n.t('erp.voucher_mgmt.label.add_entry')}
               </Button>
             </Box>
-
             <TableContainer
               component={Paper}
               variant='outlined'
@@ -182,25 +176,25 @@ const VoucherFormDialog: React.FC<VoucherFormDialogProps> = (vm) => {
                 <TableHead>
                   <TableRow sx={{ bgcolor: 'grey.50' }}>
                     <TableCell sx={{ width: 60, fontWeight: 'bold' }}>
-                      {t('erp.voucher_mgmt.label.line_number')}
+                      {i18n.t('erp.voucher_mgmt.label.line_number')}
                     </TableCell>
                     <TableCell sx={{ fontWeight: 'bold' }}>
-                      {t('erp.voucher_mgmt.label.subject')}
+                      {i18n.t('erp.voucher_mgmt.label.subject')}
                     </TableCell>
                     <TableCell sx={{ fontWeight: 'bold' }}>
-                      {t('erp.voucher_mgmt.label.summary')}
+                      {i18n.t('erp.voucher_mgmt.label.summary')}
                     </TableCell>
                     <TableCell
                       align='right'
                       sx={{ width: 140, fontWeight: 'bold' }}
                     >
-                      {t('erp.voucher_mgmt.label.debit_amount')}
+                      {i18n.t('erp.voucher_mgmt.label.debit_amount')}
                     </TableCell>
                     <TableCell
                       align='right'
                       sx={{ width: 140, fontWeight: 'bold' }}
                     >
-                      {t('erp.voucher_mgmt.label.credit_amount')}
+                      {i18n.t('erp.voucher_mgmt.label.credit_amount')}
                     </TableCell>
                     <TableCell sx={{ width: 60 }} />
                   </TableRow>
@@ -212,7 +206,7 @@ const VoucherFormDialog: React.FC<VoucherFormDialogProps> = (vm) => {
                         colSpan={6}
                         sx={{ py: 4, textAlign: 'center', color: 'text.disabled' }}
                       >
-                        {t('erp.voucher_mgmt.message.click_to_add_items')}
+                        {i18n.t('erp.voucher_mgmt.message.click_to_add_items')}
                       </TableCell>
                     </TableRow>
                   ) : (
@@ -235,7 +229,7 @@ const VoucherFormDialog: React.FC<VoucherFormDialogProps> = (vm) => {
                                 value=''
                                 disabled
                               >
-                                {t('erp.voucher_mgmt.label.select_subject')}
+                                {i18n.t('erp.voucher_mgmt.label.select_subject')}
                               </MenuItem>
                               {subjects.map((s) => (
                                 <MenuItem
@@ -254,7 +248,7 @@ const VoucherFormDialog: React.FC<VoucherFormDialogProps> = (vm) => {
                             fullWidth
                             value={item.summary}
                             onChange={(e) => updateVoucherItem(index, 'summary', e.target.value)}
-                            placeholder={t('erp.voucher_mgmt.label.summary')}
+                            placeholder={i18n.t('erp.voucher_mgmt.label.summary')}
                           />
                         </TableCell>
                         <TableCell align='right'>
@@ -294,7 +288,7 @@ const VoucherFormDialog: React.FC<VoucherFormDialogProps> = (vm) => {
                             size='small'
                             color='error'
                             onClick={() => removeVoucherItem(index)}
-                            aria-label='关闭'
+                            aria-label={i18n.t('erp.voucher_form_dialog.k0')}
                           >
                             <X size={16} />
                           </IconButton>
@@ -305,7 +299,6 @@ const VoucherFormDialog: React.FC<VoucherFormDialogProps> = (vm) => {
                 </TableBody>
               </Table>
             </TableContainer>
-
             <Box
               sx={{
                 display: 'flex',
@@ -322,7 +315,7 @@ const VoucherFormDialog: React.FC<VoucherFormDialogProps> = (vm) => {
                   variant='body2'
                   sx={{ color: 'text.secondary' }}
                 >
-                  {t('erp.voucher_mgmt.label.debit_total')}
+                  {i18n.t('erp.voucher_mgmt.label.debit_total')}
                 </Typography>
                 <Typography
                   variant='h6'
@@ -336,7 +329,7 @@ const VoucherFormDialog: React.FC<VoucherFormDialogProps> = (vm) => {
                   variant='body2'
                   sx={{ color: 'text.secondary' }}
                 >
-                  {t('erp.voucher_mgmt.label.credit_total')}
+                  {i18n.t('erp.voucher_mgmt.label.credit_total')}
                 </Typography>
                 <Typography
                   variant='h6'
@@ -350,13 +343,13 @@ const VoucherFormDialog: React.FC<VoucherFormDialogProps> = (vm) => {
                   variant='body2'
                   sx={{ color: 'text.secondary' }}
                 >
-                  {t('erp.voucher_mgmt.label.balance_status')}
+                  {i18n.t('erp.voucher_mgmt.label.balance_status')}
                 </Typography>
                 <Chip
                   label={
                     isBalanced
-                      ? t('erp.voucher_mgmt.label.balanced')
-                      : t('erp.voucher_mgmt.label.unbalanced')
+                      ? i18n.t('erp.voucher_mgmt.label.balanced')
+                      : i18n.t('erp.voucher_mgmt.label.unbalanced')
                   }
                   color={isBalanced ? 'success' : 'error'}
                   size='small'
@@ -374,18 +367,17 @@ const VoucherFormDialog: React.FC<VoucherFormDialogProps> = (vm) => {
             resetForm();
           }}
         >
-          {t('erp.voucher_mgmt.label.cancel')}
+          {i18n.t('erp.voucher_mgmt.label.cancel')}
         </Button>
         <Button
           variant='contained'
           onClick={handleCreate}
           disabled={!isBalanced}
         >
-          {t('erp.voucher_mgmt.label.save_voucher')}
+          {i18n.t('erp.voucher_mgmt.label.save_voucher')}
         </Button>
       </DialogActions>
     </Dialog>
   );
 };
-
 export default VoucherFormDialog;

@@ -10,6 +10,7 @@ import {
   Tooltip,
   Rectangle,
 } from 'react-leaflet';
+import i18n from '@/i18n';
 import { MapPin, Info, Navigation, X } from 'lucide-react';
 import type { DevicePoint, Pipeline, StorageLocation, GeoJSONFeature } from '../../../../api/gis';
 import type { DrawFeature } from '../shared/types';
@@ -79,24 +80,24 @@ const calculateArea = (points: [number, number][]): number => {
 
 const formatDistance = (meters: number): string => {
   if (meters < EARTH.METERS_PER_KILOMETER) {
-    return `${meters.toFixed(2)} 米`;
+    return `${meters.toFixed(2)}${i18n.t('components.map_view.k0')}`;
   }
-  return `${(meters / EARTH.METERS_PER_KILOMETER).toFixed(2)} 公里`;
+  return `${(meters / EARTH.METERS_PER_KILOMETER).toFixed(2)}${i18n.t('components.map_view.k1')}`;
 };
 
 const formatArea = (squareMeters: number): string => {
   if (squareMeters < EARTH.SQUARE_METERS_PER_HECTARE) {
-    return `${squareMeters.toFixed(2)} 平方米`;
+    return `${squareMeters.toFixed(2)}${i18n.t('components.map_view.k2')}`;
   }
-  return `${(squareMeters / EARTH.SQUARE_METERS_PER_HECTARE).toFixed(2)} 公顷`;
+  return `${(squareMeters / EARTH.SQUARE_METERS_PER_HECTARE).toFixed(2)}${i18n.t('components.map_view.k3')}`;
 };
 
 const getStatusColor = (status: string) => {
   if (!status) return 'text.secondary';
   const s = status.toLowerCase();
-  if (s.includes('active') || s.includes('启用')) return '#00C897';
-  if (s.includes('pending') || s.includes('待处理')) return 'warning.main';
-  if (s.includes('inactive') || s.includes('禁用')) return 'error.main';
+  if (s.includes('active') || s.includes(i18n.t('gis.map_view.k0'))) return '#00C897';
+  if (s.includes('pending') || s.includes(i18n.t('gis.map_view.k1'))) return 'warning.main';
+  if (s.includes('inactive') || s.includes(i18n.t('gis.map_view.k2'))) return 'error.main';
   return 'text.secondary';
 };
 
@@ -130,7 +131,7 @@ const MeasureTooltip: React.FC<{
       fontSize: '0.75rem',
       padding: '0.25rem 0.5rem',
       borderRadius: '0.25rem',
-      boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)',
+      boxShadow: `0 10px 15px -3px ${designTokens.colors.action.selected}, 0 4px 6px -2px ${designTokens.colors.action.hover}`,
       pointerEvents: 'none',
       zIndex: 50,
       left: position[1] + 10,
@@ -154,13 +155,13 @@ const DetailsPanel: React.FC<{
 
   const getStatusStyles = (status: string) => {
     const s = status.toLowerCase();
-    if (s.includes('active') || s.includes('启用')) {
+    if (s.includes('active') || s.includes(i18n.t('gis.map_view.k3'))) {
       return {
         backgroundColor: 'success.lighter',
         color: 'success.800',
       };
     }
-    if (s.includes('pending') || s.includes('待处理')) {
+    if (s.includes('pending') || s.includes(i18n.t('gis.map_view.k4'))) {
       return {
         backgroundColor: 'warning.light',
         color: 'warning.800',
@@ -181,7 +182,7 @@ const DetailsPanel: React.FC<{
         width: '20rem',
         backgroundColor: 'common.white',
         borderRadius: '0.75rem',
-        boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)',
+        boxShadow: `0 20px 25px -5px ${designTokens.colors.action.selected}, 0 10px 10px -5px ${designTokens.colors.action.hover}`,
         overflow: 'hidden',
         border: '1px solid grey.200',
       }}
@@ -195,7 +196,7 @@ const DetailsPanel: React.FC<{
           background: `linear-gradient(to right, ${designTokens.colors.cyan['500']}, primary.main)`,
         }}
       >
-        <h3 style={{ fontWeight: 600, color: 'common.white', margin: 0 }}>详情信息</h3>
+        <h3 style={{ fontWeight: 600, color: 'common.white', margin: 0 }}>{i18n.t('gis.map_view.k5')}</h3>
         <button
           onClick={onClose}
           style={{
@@ -225,7 +226,7 @@ const DetailsPanel: React.FC<{
               marginBottom: '0.25rem',
             }}
           >
-            名称
+            {i18n.t('components.map_view.k0')}
           </div>
           <div style={{ fontWeight: 500, color: theme.palette.text.primary }}>
             {selectedItem.name}
@@ -240,7 +241,7 @@ const DetailsPanel: React.FC<{
                 marginBottom: '0.25rem',
               }}
             >
-              设备类型
+              {i18n.t('components.map_view.k1')}
             </div>
             <div style={{ color: 'var(--mui-palette-text-secondary)' }}>
               {selectedItem.device_type}
@@ -256,7 +257,7 @@ const DetailsPanel: React.FC<{
                 marginBottom: '0.25rem',
               }}
             >
-              位置类型
+              {i18n.t('components.map_view.k2')}
             </div>
             <div style={{ color: 'var(--mui-palette-text-secondary)' }}>
               {selectedItem.location_type}
@@ -272,7 +273,7 @@ const DetailsPanel: React.FC<{
                 marginBottom: '0.25rem',
               }}
             >
-              状态
+              {i18n.t('components.map_view.k3')}
             </div>
             <span
               style={{
@@ -296,7 +297,7 @@ const DetailsPanel: React.FC<{
                 marginBottom: '0.25rem',
               }}
             >
-              容量
+              {i18n.t('components.map_view.k4')}
             </div>
             <div style={{ color: 'var(--mui-palette-text-secondary)' }}>
               {selectedItem.capacity}
@@ -312,7 +313,7 @@ const DetailsPanel: React.FC<{
                 marginBottom: '0.25rem',
               }}
             >
-              当前用量
+              {i18n.t('components.map_view.k5')}
             </div>
             <div style={{ color: 'var(--mui-palette-text-secondary)' }}>
               {selectedItem.current_usage}
@@ -328,7 +329,7 @@ const DetailsPanel: React.FC<{
                 marginBottom: '0.25rem',
               }}
             >
-              描述
+              {i18n.t('components.map_view.k6')}
             </div>
             <div style={{ color: theme.palette.text.secondary, fontSize: '0.875rem' }}>
               {selectedItem.description}
@@ -348,7 +349,7 @@ const DetailsPanel: React.FC<{
               marginBottom: '0.25rem',
             }}
           >
-            坐标
+            {i18n.t('components.map_view.k7')}
           </div>
           <div
             style={{
@@ -710,7 +711,7 @@ const MapView: React.FC<MapViewProps> = ({
                         padding: '0.5rem 0.75rem',
                         borderRadius: '0.5rem',
                         boxShadow:
-                          '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)',
+                          `0 10px 15px -3px ${designTokens.colors.action.selected}, 0 4px 6px -2px ${designTokens.colors.action.hover}`,
                         minWidth: '120px',
                       }}
                     >
@@ -765,7 +766,7 @@ const MapView: React.FC<MapViewProps> = ({
                     <div style={{ fontSize: '0.875rem', color: theme.palette.text.secondary }}>
                       <div>类型: {point.device_type}</div>
                       <div>
-                        状态:{' '}
+                        [i18n.t('components.map_view.k8')]:{' '}
                         <span style={{ color: getStatusColor(point.status) }}>{point.status}</span>
                       </div>
                       <div
@@ -808,13 +809,13 @@ const MapView: React.FC<MapViewProps> = ({
                         transition: 'background-color 0.2s',
                       }}
                       onMouseEnter={(e) => {
-                        e.currentTarget.style.backgroundColor = '#cffafe';
+                        e.currentTarget.style.backgroundColor = designTokens.colors.cyan[100];
                       }}
                       onMouseLeave={(e) => {
-                        e.currentTarget.style.backgroundColor = '#ecfeff';
+                        e.currentTarget.style.backgroundColor = designTokens.colors.cyan[50];
                       }}
                     >
-                      查看详情
+                      {i18n.t('components.map_view.k9')}
                     </button>
                   </div>
                 </Popup>
@@ -890,13 +891,13 @@ const MapView: React.FC<MapViewProps> = ({
                         transition: 'background-color 0.2s',
                       }}
                       onMouseEnter={(e) => {
-                        e.currentTarget.style.backgroundColor = '#cffafe';
+                        e.currentTarget.style.backgroundColor = designTokens.colors.cyan[100];
                       }}
                       onMouseLeave={(e) => {
-                        e.currentTarget.style.backgroundColor = '#ecfeff';
+                        e.currentTarget.style.backgroundColor = designTokens.colors.cyan[50];
                       }}
                     >
-                      查看详情
+                      {i18n.t('components.map_view.k10')}
                     </button>
                   </div>
                 </Popup>
@@ -1060,7 +1061,7 @@ const MapView: React.FC<MapViewProps> = ({
             left: '8rem',
             backgroundColor: 'common.white',
             borderRadius: '0.5rem',
-            boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
+            boxShadow: `0 4px 6px -1px ${designTokens.colors.action.selected}, 0 2px 4px -1px ${designTokens.colors.action.hover}`,
             padding: '0.5rem 1rem',
           }}
         >
@@ -1084,13 +1085,13 @@ const MapView: React.FC<MapViewProps> = ({
             bottom: '1rem',
             left: '1rem',
             backgroundColor: 'warning.lighter',
-            border: '1px solid #fde047',
+            border: `1px solid ${designTokens.colors.warning[200]}`,
             borderRadius: '0.5rem',
             padding: '0.5rem 1rem',
           }}
         >
           <span style={{ fontSize: '0.75rem', color: 'yellow.700' }}>
-            按 ESC 退出工具模式 | 按 Enter 完成绘制
+            {i18n.t('components.map_view.k11')}
           </span>
         </div>
       )}

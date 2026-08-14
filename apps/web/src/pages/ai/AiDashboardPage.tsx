@@ -31,6 +31,7 @@ import { useNotificationStore } from '@/store';
 import { useAIContext } from '@/hooks';
 import { writeAICopilotContext } from '@/lib/ai/copilotContext';
 import type { AIRecommendation } from '@/lib/ai/recommendations';
+import i18n from '@/i18n';
 
 interface StatCardProps {
   id: string;
@@ -752,13 +753,13 @@ export const AiDashboardPage: React.FC = () => {
                 variant='h6'
                 sx={{ fontWeight: 600 }}
               >
-                AI 推荐入口 TopN
+                {i18n.t('pages.ai_dashboard_page.aitopn_0')}
               </Typography>
               <Typography
                 variant='body2'
                 color='text.secondary'
               >
-                根据当前页面上下文推荐最适合的 AI 能力入口
+                {i18n.t('pages.ai_dashboard_page.k1')}
               </Typography>
             </Box>
             <Chip

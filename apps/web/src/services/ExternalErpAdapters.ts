@@ -6,6 +6,7 @@
 import type { AxiosInstance } from 'axios';
 import axios from 'axios';
 import type { CreateVoucherRequest } from '../types/finance';
+import i18n from '@/i18n';
 
 // ============================================
 // 一、类型定义
@@ -21,7 +22,7 @@ export type ExternalErpType =
   | 'yonyou_u8' // 用友U8
   | 'yonyou_nc' // 用友NC
   | 'sap_s4' // SAP S/4HANA
-  | '浪潮gs' // 浪潮GS
+  | '浪潮GS' // 浪潮GS
   | 'custom'; // 自定义
 
 /**
@@ -381,7 +382,7 @@ export class KingdeeAdapter extends BaseAdapter {
         result.failed += batch.length;
         result.errors.push({
           id: `batch-${i}`,
-          error: msg || '批量创建失败',
+          error: msg || i18n.t('shared.external_erp_adapters.k1'),
         });
       }
     }
@@ -599,7 +600,7 @@ export class YonyouAdapter extends BaseAdapter {
         result.failed++;
         result.errors.push({
           id: voucher.entries[0]?.account_id || 'unknown',
-          error: msg || '创建失败',
+          error: msg || i18n.t('shared.external_erp_adapters.k2'),
         });
       }
     }
@@ -614,7 +615,7 @@ export class YonyouAdapter extends BaseAdapter {
    */
   private transformToYonyouFormat(voucher: CreateVoucherRequest): Record<string, unknown> {
     return {
-      vouch_type: '记',
+      vouch_type: i18n.t('shared.external_erp_adapters.k3'),
       date: voucher.voucher_date,
       period: voucher.period,
       explanation: voucher.summary,
@@ -827,7 +828,7 @@ export class SapAdapter extends BaseAdapter {
         result.failed++;
         result.errors.push({
           id: voucher.entries[0]?.account_id || 'unknown',
-          error: msg || '创建失败',
+          error: msg || i18n.t('shared.external_erp_adapters.k4'),
         });
       }
     }
@@ -898,7 +899,7 @@ export function createAdapter(config: AdapterConfig): ErpAdapter {
     case 'sap_s4':
       return new SapAdapter(config);
     default:
-      throw new Error(`不支持的ERP类型: ${config.type}`);
+      throw new Error(`${i18n.t('services.external_erp_adapters.erp_1')} ${config.type}`);
   }
 }
 

@@ -9,6 +9,7 @@ import {
   CardActionArea,
   Stack,
 } from '@mui/material';
+import i18n from '@/i18n';
 import type { SxProps, Theme } from '@mui/material/styles';
 import { Palette } from 'lucide-react';
 import { themePresets, getPresetById, type ThemePreset } from '@/theme/presets';
@@ -96,11 +97,11 @@ export function ThemePresetSwitcher({ sx }: ThemePresetSwitcherProps) {
 
   return (
     <Box sx={sx}>
-      <Tooltip title='切换主题配色'>
+      <Tooltip title={i18n.t('shared.theme_preset_switcher.k0')}>
         <IconButton
           size='small'
           onClick={(e) => setAnchorEl(e.currentTarget)}
-          aria-label='调色板'
+          aria-label={i18n.t('shared.theme_preset_switcher.k1')}
         >
           <Palette size={18} />
         </IconButton>
@@ -117,7 +118,7 @@ export function ThemePresetSwitcher({ sx }: ThemePresetSwitcherProps) {
           variant='subtitle2'
           sx={{ mb: 1.5 }}
         >
-          选择主题配色
+          {i18n.t('components.theme_preset_switcher.k0')}
         </Typography>
         <Stack spacing={1}>
           {themePresets.map((preset) => (
@@ -178,7 +179,7 @@ export function ThemePresetSwitcher({ sx }: ThemePresetSwitcherProps) {
                       color='primary.main'
                       sx={{ fontWeight: 600 }}
                     >
-                      当前
+                      {i18n.t('components.theme_preset_switcher.k1')}
                     </Typography>
                   )}
                 </Box>

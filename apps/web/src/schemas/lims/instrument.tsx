@@ -4,11 +4,12 @@
 
 import React from 'react';
 import type { EntitySchema } from '@/schema';
+import i18n from '@/i18n';
 
 export const instrumentSchema: EntitySchema = {
   entity: 'limsInstrument',
-  title: '仪器管理',
-  description: '管理仪器基础信息，包括仪器编号、名称、型号、厂商、位置、状态、校准日期等',
+  title: i18n.t('shared.instrument.k0'),
+  description: i18n.t('shared.instrument.k1'),
 
   api: {
     module: 'lims',
@@ -18,7 +19,7 @@ export const instrumentSchema: EntitySchema = {
   fields: [
     {
       name: 'code',
-      label: '仪器编号',
+      label: i18n.t('shared.instrument.k2'),
       type: 'text',
       required: true,
       readonlyOnEdit: true,
@@ -27,7 +28,7 @@ export const instrumentSchema: EntitySchema = {
     },
     {
       name: 'name',
-      label: '仪器名称',
+      label: i18n.t('shared.instrument.k3'),
       type: 'text',
       required: true,
       sortable: true,
@@ -35,49 +36,49 @@ export const instrumentSchema: EntitySchema = {
     },
     {
       name: 'type',
-      label: '类型',
+      label: i18n.t('shared.instrument.k4'),
       type: 'text',
       listWidth: 100,
     },
     {
       name: 'model',
-      label: '型号',
+      label: i18n.t('shared.instrument.k5'),
       type: 'text',
       listWidth: 120,
       validation: [{ type: 'maxLength', value: 100 }],
     },
     {
       name: 'manufacturer',
-      label: '生产厂家',
+      label: i18n.t('shared.instrument.k6'),
       type: 'text',
       listWidth: 140,
       validation: [{ type: 'maxLength', value: 100 }],
     },
     {
       name: 'serial_number',
-      label: '序列号',
+      label: i18n.t('shared.instrument.k7'),
       type: 'text',
       listWidth: 130,
     },
     {
       name: 'location',
-      label: '存放位置',
+      label: i18n.t('shared.instrument.k8'),
       type: 'text',
       listWidth: 120,
       validation: [{ type: 'maxLength', value: 200 }],
     },
     {
       name: 'status',
-      label: '状态',
+      label: i18n.t('shared.instrument.k9'),
       type: 'select',
-      defaultValue: '正常',
+      defaultValue: i18n.t('shared.instrument.k10'),
       options: {
         type: 'static',
         options: [
-          { value: '正常', label: '正常' },
-          { value: '校准中', label: '校准中' },
-          { value: '维修中', label: '维修中' },
-          { value: '停用', label: '停用' },
+          { value: i18n.t('shared.instrument.k11'), label: i18n.t('shared.instrument.k12') },
+          { value: i18n.t('shared.instrument.k13'), label: i18n.t('shared.instrument.k14') },
+          { value: i18n.t('shared.instrument.k15'), label: i18n.t('shared.instrument.k16') },
+          { value: i18n.t('shared.instrument.k17'), label: i18n.t('shared.instrument.k18') },
         ],
       },
       listWidth: 100,
@@ -85,19 +86,19 @@ export const instrumentSchema: EntitySchema = {
     },
     {
       name: 'purchase_date',
-      label: '购买日期',
+      label: i18n.t('shared.instrument.k19'),
       type: 'date',
       listWidth: 120,
     },
     {
       name: 'calibration_date',
-      label: '最近校准日期',
+      label: i18n.t('shared.instrument.k20'),
       type: 'date',
       listWidth: 130,
     },
     {
       name: 'next_calibration_date',
-      label: '下次校准日期',
+      label: i18n.t('shared.instrument.k21'),
       type: 'date',
       listWidth: 130,
       renderCell: (row: Record<string, unknown>) => {
@@ -119,14 +120,14 @@ export const instrumentSchema: EntitySchema = {
     },
     {
       name: 'responsible_person',
-      label: '负责人',
+      label: i18n.t('shared.instrument.k22'),
       type: 'text',
       listWidth: 100,
       validation: [{ type: 'maxLength', value: 100 }],
     },
     {
       name: 'description',
-      label: '备注',
+      label: i18n.t('shared.instrument.k23'),
       type: 'textarea',
       showInList: false,
     },
@@ -147,29 +148,29 @@ export const instrumentSchema: EntitySchema = {
     statusBadge: {
       field: 'status',
       colorMap: {
-        正常: 'success',
-        校准中: 'info',
-        维修中: 'warning',
-        停用: 'default',
+        [i18n.t('schemas.instrument.k0')]: 'success',
+        [i18n.t('schemas.instrument.k1')]: 'info',
+        [i18n.t('schemas.instrument.k2')]: 'warning',
+        [i18n.t('schemas.instrument.k3')]: 'default',
       },
       labelMap: {
-        正常: '正常',
-        校准中: '校准中',
-        维修中: '维修中',
-        停用: '停用',
+        [i18n.t('schemas.instrument.k4')]: i18n.t('shared.instrument.k24'),
+        [i18n.t('schemas.instrument.k5')]: i18n.t('shared.instrument.k25'),
+        [i18n.t('schemas.instrument.k6')]: i18n.t('shared.instrument.k26'),
+        [i18n.t('schemas.instrument.k7')]: i18n.t('shared.instrument.k27'),
       },
     },
     filters: [
       {
         id: 'status',
-        label: '状态',
+        label: i18n.t('shared.instrument.k28'),
         type: 'select',
         options: [
-          { label: '全部状态', value: 'all' },
-          { label: '正常', value: '正常' },
-          { label: '校准中', value: '校准中' },
-          { label: '维修中', value: '维修中' },
-          { label: '停用', value: '停用' },
+          { label: i18n.t('shared.instrument.k29'), value: 'all' },
+          { label: i18n.t('shared.instrument.k30'), value: i18n.t('shared.instrument.k31') },
+          { label: i18n.t('shared.instrument.k32'), value: i18n.t('shared.instrument.k33') },
+          { label: i18n.t('shared.instrument.k34'), value: i18n.t('shared.instrument.k35') },
+          { label: i18n.t('shared.instrument.k36'), value: i18n.t('shared.instrument.k37') },
         ],
       },
     ],
@@ -179,25 +180,25 @@ export const instrumentSchema: EntitySchema = {
 
   formSections: [
     {
-      title: '基本信息',
+      title: i18n.t('shared.instrument.k38'),
       fields: ['code', 'name', 'type', 'model'],
     },
     {
-      title: '生产与存放',
+      title: i18n.t('shared.instrument.k39'),
       fields: ['manufacturer', 'serial_number', 'location', 'responsible_person'],
     },
     {
-      title: '状态与日期',
+      title: i18n.t('shared.instrument.k40'),
       fields: ['status', 'purchase_date', 'calibration_date', 'next_calibration_date'],
     },
     {
-      title: '其他',
+      title: i18n.t('shared.instrument.k41'),
       fields: ['description'],
     },
   ],
 
   formColCount: 2,
-  createTitle: '新增仪器',
-  editTitle: '编辑仪器',
-  detailTitle: '仪器详情',
+  createTitle: i18n.t('shared.instrument.k42'),
+  editTitle: i18n.t('shared.instrument.k43'),
+  detailTitle: i18n.t('shared.instrument.k44'),
 };

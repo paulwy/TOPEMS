@@ -2,6 +2,7 @@ import React, { useRef } from 'react';
 import { Card, CardContent, Tabs, Tab, Avatar, IconButton, Box, Typography } from '@mui/material';
 import { User, Shield, Activity, Bell, Star, Camera, RefreshCw } from 'lucide-react';
 import type { User as UserType } from '@/api/iam';
+import i18n from '@/i18n';
 
 interface UserCardProps {
   user: UserType;
@@ -49,7 +50,7 @@ const UserCard: React.FC<UserCardProps> = ({ user, avatarUrl, onAvatarUpload }) 
                 height: 32,
               }}
               size='small'
-              aria-label='拍照'
+              aria-label={i18n.t('pages.profile_tab_bar.k0')}
             >
               <Camera size={16} />
             </IconButton>
@@ -89,7 +90,7 @@ const UserCard: React.FC<UserCardProps> = ({ user, avatarUrl, onAvatarUpload }) 
                 variant='body2'
                 color='text.secondary'
               >
-                用户名: {user.username}
+                [i18n.t('pages.profile_tab_bar.k0')]: {user.username}
               </Typography>
             </Box>
             <Box
@@ -106,7 +107,7 @@ const UserCard: React.FC<UserCardProps> = ({ user, avatarUrl, onAvatarUpload }) 
                 variant='body2'
                 color='text.secondary'
               >
-                角色: {user.role || '普通用户'}
+                [i18n.t('pages.profile_tab_bar.k1')]: {user.role || i18n.t('pages.profile_tab_bar.k1')}
               </Typography>
             </Box>
             <Box
@@ -122,7 +123,7 @@ const UserCard: React.FC<UserCardProps> = ({ user, avatarUrl, onAvatarUpload }) 
                 variant='body2'
                 color='text.secondary'
               >
-                创建于: {new Date(user.created_at).toLocaleDateString('zh-CN')}
+                [i18n.t('pages.profile_tab_bar.k2')]: {new Date(user.created_at).toLocaleDateString('zh-CN')}
               </Typography>
             </Box>
           </Box>
@@ -146,27 +147,27 @@ const TabBar: React.FC<TabBarProps> = ({ activeTab, onTabChange }) => {
       <Tab
         icon={<User size={16} />}
         iconPosition='start'
-        label='个人信息'
+        label={i18n.t('pages.profile_tab_bar.k2')}
       />
       <Tab
         icon={<Shield size={16} />}
         iconPosition='start'
-        label='账户安全'
+        label={i18n.t('pages.profile_tab_bar.k3')}
       />
       <Tab
         icon={<Activity size={16} />}
         iconPosition='start'
-        label='最近活动'
+        label={i18n.t('pages.profile_tab_bar.k4')}
       />
       <Tab
         icon={<Bell size={16} />}
         iconPosition='start'
-        label='通知设置'
+        label={i18n.t('pages.profile_tab_bar.k5')}
       />
       <Tab
         icon={<Star size={16} />}
         iconPosition='start'
-        label='快捷方式'
+        label={i18n.t('pages.profile_tab_bar.k6')}
       />
     </Tabs>
   );

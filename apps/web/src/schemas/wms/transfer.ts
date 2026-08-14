@@ -2,11 +2,12 @@ import type { EntitySchema } from '@/schema';
 
 
 import { QUERY_KEYS } from '@/lib/reactQuery';
+import i18n from '@/i18n';
 
 export const transferSchema: EntitySchema = {
   entity: 'wms_transfer',
-  title: '调拨管理',
-  description: '管理仓库间调拨订单，支持调拨创建、确认、发货、收货和完成全流程',
+  title: i18n.t('wms.transfer.k0'),
+  description: i18n.t('wms.transfer.k1'),
 
   api: {
     module: 'wms',
@@ -16,7 +17,7 @@ export const transferSchema: EntitySchema = {
   fields: [
     {
       name: 'order_number',
-      label: '调拨单号',
+      label: i18n.t('wms.transfer.k2'),
       type: 'text',
       readonly: true,
       sortable: true,
@@ -24,7 +25,7 @@ export const transferSchema: EntitySchema = {
     },
     {
       name: 'transfer_type',
-      label: '调拨类型',
+      label: i18n.t('wms.transfer.k3'),
       type: 'select',
       required: true,
       defaultValue: 'internal',
@@ -32,16 +33,16 @@ export const transferSchema: EntitySchema = {
       options: {
         type: 'static',
         options: [
-          { value: 'internal', label: '内部调拨' },
-          { value: 'external', label: '外部调拨' },
-          { value: 'return', label: '退回复检' },
+          { value: 'internal', label: i18n.t('wms.transfer.k4') },
+          { value: 'external', label: i18n.t('wms.transfer.k5') },
+          { value: 'return', label: i18n.t('wms.transfer.k6') },
         ],
       },
       validation: [{ type: 'maxLength', value: 50 }],
     },
     {
       name: 'from_warehouse_id',
-      label: '源仓库',
+      label: i18n.t('wms.transfer.k7'),
       type: 'select',
       required: true,
       listWidth: 140,
@@ -52,14 +53,14 @@ export const transferSchema: EntitySchema = {
     },
     {
       name: 'from_location_id',
-      label: '源库位',
+      label: i18n.t('wms.transfer.k8'),
       type: 'select',
       listWidth: 120,
       hideInForm: false,
     },
     {
       name: 'to_warehouse_id',
-      label: '目标仓库',
+      label: i18n.t('wms.transfer.k9'),
       type: 'select',
       required: true,
       listWidth: 140,
@@ -70,21 +71,21 @@ export const transferSchema: EntitySchema = {
     },
     {
       name: 'to_location_id',
-      label: '目标库位',
+      label: i18n.t('wms.transfer.k10'),
       type: 'select',
       listWidth: 120,
       hideInForm: false,
     },
     {
       name: 'total_quantity',
-      label: '总数量',
+      label: i18n.t('wms.transfer.k11'),
       type: 'number',
       listWidth: 100,
       hideInForm: true,
     },
     {
       name: 'priority',
-      label: '优先级',
+      label: i18n.t('wms.transfer.k12'),
       type: 'select',
       required: true,
       defaultValue: 'normal',
@@ -92,17 +93,17 @@ export const transferSchema: EntitySchema = {
       options: {
         type: 'static',
         options: [
-          { value: 'urgent', label: '紧急' },
-          { value: 'high', label: '高' },
-          { value: 'normal', label: '普通' },
-          { value: 'low', label: '低' },
+          { value: 'urgent', label: i18n.t('wms.transfer.k13') },
+          { value: 'high', label: i18n.t('wms.transfer.k14') },
+          { value: 'normal', label: i18n.t('wms.transfer.k15') },
+          { value: 'low', label: i18n.t('wms.transfer.k16') },
         ],
       },
       validation: [{ type: 'maxLength', value: 20 }],
     },
     {
       name: 'status',
-      label: '状态',
+      label: i18n.t('wms.transfer.k17'),
       type: 'select',
       defaultValue: 'pending',
       listWidth: 100,
@@ -110,44 +111,44 @@ export const transferSchema: EntitySchema = {
       options: {
         type: 'static',
         options: [
-          { value: 'pending', label: '待处理' },
-          { value: 'confirmed', label: '已确认' },
-          { value: 'shipped', label: '已发货' },
-          { value: 'received', label: '已收货' },
-          { value: 'completed', label: '已完成' },
-          { value: 'cancelled', label: '已取消' },
+          { value: 'pending', label: i18n.t('wms.transfer.k18') },
+          { value: 'confirmed', label: i18n.t('wms.transfer.k19') },
+          { value: 'shipped', label: i18n.t('wms.transfer.k20') },
+          { value: 'received', label: i18n.t('wms.transfer.k21') },
+          { value: 'completed', label: i18n.t('wms.transfer.k22') },
+          { value: 'cancelled', label: i18n.t('wms.transfer.k23') },
         ],
       },
       validation: [{ type: 'maxLength', value: 20 }],
     },
     {
       name: 'planned_date',
-      label: '计划日期',
+      label: i18n.t('wms.transfer.k24'),
       type: 'date',
       listWidth: 120,
     },
     {
       name: 'transporter',
-      label: '承运人',
+      label: i18n.t('wms.transfer.k25'),
       type: 'text',
       listWidth: 120,
     },
     {
       name: 'tracking_number',
-      label: '物流单号',
+      label: i18n.t('wms.transfer.k26'),
       type: 'text',
       listWidth: 140,
       hideInForm: true,
     },
     {
       name: 'remarks',
-      label: '备注',
+      label: i18n.t('wms.transfer.k27'),
       type: 'textarea',
       listWidth: 200,
     },
     {
       name: 'created_at',
-      label: '创建时间',
+      label: i18n.t('wms.transfer.k28'),
       type: 'datetime',
       readonly: true,
       hideInForm: true,
@@ -156,7 +157,7 @@ export const transferSchema: EntitySchema = {
     },
     {
       name: 'updated_at',
-      label: '更新时间',
+      label: i18n.t('wms.transfer.k29'),
       type: 'datetime',
       readonly: true,
       hideInForm: true,
@@ -189,34 +190,34 @@ export const transferSchema: EntitySchema = {
         cancelled: 'error',
       },
       labelMap: {
-        pending: '待处理',
-        confirmed: '已确认',
-        shipped: '已发货',
-        received: '已收货',
-        completed: '已完成',
-        cancelled: '已取消',
+        pending: i18n.t('wms.transfer.k30'),
+        confirmed: i18n.t('wms.transfer.k31'),
+        shipped: i18n.t('wms.transfer.k32'),
+        received: i18n.t('wms.transfer.k33'),
+        completed: i18n.t('wms.transfer.k34'),
+        cancelled: i18n.t('wms.transfer.k35'),
       },
     },
     filters: [
       {
         id: 'status',
-        label: '状态',
+        label: i18n.t('wms.transfer.k36'),
         type: 'select',
         options: [
-          { label: '全部状态', value: 'all' },
-          { label: '待处理', value: 'pending' },
-          { label: '已确认', value: 'confirmed' },
-          { label: '已发货', value: 'shipped' },
-          { label: '已收货', value: 'received' },
-          { label: '已完成', value: 'completed' },
-          { label: '已取消', value: 'cancelled' },
+          { label: i18n.t('wms.transfer.k37'), value: 'all' },
+          { label: i18n.t('wms.transfer.k38'), value: 'pending' },
+          { label: i18n.t('wms.transfer.k39'), value: 'confirmed' },
+          { label: i18n.t('wms.transfer.k40'), value: 'shipped' },
+          { label: i18n.t('wms.transfer.k41'), value: 'received' },
+          { label: i18n.t('wms.transfer.k42'), value: 'completed' },
+          { label: i18n.t('wms.transfer.k43'), value: 'cancelled' },
         ],
       },
       {
         id: 'warehouse_id',
-        label: '仓库',
+        label: i18n.t('wms.transfer.k44'),
         type: 'select',
-        options: [{ label: '全部仓库', value: 'all' }],
+        options: [{ label: i18n.t('wms.transfer.k45'), value: 'all' }],
       },
     ],
   },
@@ -225,27 +226,27 @@ export const transferSchema: EntitySchema = {
 
   formSections: [
     {
-      title: '基本信息',
+      title: i18n.t('wms.transfer.k46'),
       fields: ['order_number', 'transfer_type', 'priority'],
     },
     {
-      title: '仓库信息',
+      title: i18n.t('wms.transfer.k47'),
       fields: ['from_warehouse_id', 'from_location_id', 'to_warehouse_id', 'to_location_id'],
     },
     {
-      title: '物流信息',
+      title: i18n.t('wms.transfer.k48'),
       fields: ['planned_date', 'transporter', 'tracking_number'],
     },
     {
-      title: '其他',
+      title: i18n.t('wms.transfer.k49'),
       fields: ['remarks'],
     },
   ],
 
   formColCount: 2,
-  createTitle: '新增调拨单',
-  editTitle: '编辑调拨单',
-  detailTitle: '调拨单详情',
+  createTitle: i18n.t('wms.transfer.k50'),
+  editTitle: i18n.t('wms.transfer.k51'),
+  detailTitle: i18n.t('wms.transfer.k52'),
 
   dynamicOptions: [
     {

@@ -1,3 +1,4 @@
+import i18n from '@/i18n';
 const TRANSITIONS: Record<string, string[]> = {
   // ProductionOrder
   draft: ['released', 'cancelled'],
@@ -74,7 +75,7 @@ export function FSMActionButtons({ status, onTransition, disabled }: FSMActionBu
             }
           >
             {to.replace(/_/g, ' ')}
-            {requiresApproval && ' (审批)'}
+            {requiresApproval && i18n.t('components.fsm_action_buttons.k0')}
           </button>
         );
       })}

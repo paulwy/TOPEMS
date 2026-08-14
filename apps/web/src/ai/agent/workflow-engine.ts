@@ -1,3 +1,4 @@
+import i18n from '@/i18n';
 export type WorkflowStatus = 'draft' | 'running' | 'paused' | 'completed' | 'failed' | 'cancelled';
 export type StepType = 'action' | 'condition' | 'loop' | 'parallel';
 export type TriggerType = 'event' | 'schedule' | 'manual';
@@ -115,7 +116,7 @@ export class WorkflowEngine {
 
   async executeWorkflow(workflowId: string): Promise<Workflow> {
     const workflow = this.workflows.get(workflowId);
-    if (!workflow) throw new Error(`工作流不存在: ${workflowId}`);
+    if (!workflow) throw new Error(`${i18n.t('ai.workflow-engine.k0')}${workflowId}`);
 
     workflow.status = 'running';
     workflow.updatedAt = Date.now();
@@ -123,7 +124,7 @@ export class WorkflowEngine {
     this.emit({
       type: 'workflow_started',
       workflowId,
-      message: `工作流已启动: ${workflow.name}`,
+      message: `${i18n.t('ai.workflow-engine.k1')}${workflow.name}`,
       timestamp: Date.now(),
     });
 
@@ -135,7 +136,7 @@ export class WorkflowEngine {
           this.emit({
             type: 'workflow_paused',
             workflowId,
-            message: '工作流已暂停',
+            message: i18n.t('ai.workflow-engine.k0'),
             timestamp: Date.now(),
           });
           return workflow;
@@ -150,7 +151,7 @@ export class WorkflowEngine {
         this.emit({
           type: 'workflow_completed',
           workflowId,
-          message: `进度: ${workflow.completedSteps}/${workflow.totalSteps}`,
+          message: `${i18n.t('ai.workflow-engine.k2')}${workflow.completedSteps}/${workflow.totalSteps}`,
           timestamp: Date.now(),
           progress: (workflow.completedSteps / workflow.totalSteps) * 100,
         });
@@ -162,7 +163,7 @@ export class WorkflowEngine {
       this.emit({
         type: 'workflow_completed',
         workflowId,
-        message: `工作流已完成: ${workflow.name}`,
+        message: `${i18n.t('ai.workflow-engine.k3')}${workflow.name}`,
         timestamp: Date.now(),
         progress: 100,
       });
@@ -173,7 +174,7 @@ export class WorkflowEngine {
       this.emit({
         type: 'workflow_failed',
         workflowId,
-        message: `工作流失败: ${(error as Error).message}`,
+        message: `${i18n.t('ai.workflow-engine.k4')}${(error as Error).message}`,
         timestamp: Date.now(),
       });
     }
@@ -199,7 +200,7 @@ export class WorkflowEngine {
     this.emit({
       type: 'workflow_paused',
       workflowId,
-      message: `工作流已暂停: ${workflow.name}`,
+      message: `${i18n.t('ai.workflow-engine.k5')}${workflow.name}`,
       timestamp: Date.now(),
     });
     return true;
@@ -215,7 +216,7 @@ export class WorkflowEngine {
     this.emit({
       type: 'workflow_resumed',
       workflowId,
-      message: `工作流已恢复: ${workflow.name}`,
+      message: `${i18n.t('ai.workflow-engine.k6')}${workflow.name}`,
       timestamp: Date.now(),
     });
 
@@ -233,7 +234,7 @@ export class WorkflowEngine {
     this.emit({
       type: 'workflow_cancelled',
       workflowId,
-      message: `工作流已取消: ${workflow.name}`,
+      message: `${i18n.t('ai.workflow-engine.k7')}${workflow.name}`,
       timestamp: Date.now(),
     });
     return true;
@@ -249,7 +250,7 @@ export class WorkflowEngine {
     variables?: Record<string, unknown>
   ): Workflow {
     const template = this.templates.find((t) => t.id === templateId);
-    if (!template) throw new Error(`模板不存在: ${templateId}`);
+    if (!template) throw new Error(`${i18n.t('ai.workflow-engine.k8')}${templateId}`);
 
     return this.createWorkflow(
       name ?? template.name,
@@ -301,7 +302,7 @@ export class WorkflowEngine {
       type: 'step_started',
       workflowId: workflow.id,
       stepId: step.id,
-      message: `执行步骤: ${step.config.description ?? step.id}`,
+      message: `${i18n.t('ai.workflow-engine.k9')}${step.config.description ?? step.id}`,
       timestamp: Date.now(),
     });
 
@@ -329,7 +330,7 @@ export class WorkflowEngine {
         type: 'step_completed',
         workflowId: workflow.id,
         stepId: step.id,
-        message: `步骤完成: ${step.config.description ?? step.id}`,
+        message: `${i18n.t('ai.workflow-engine.k10')}${step.config.description ?? step.id}`,
         timestamp: Date.now(),
       });
     } catch (error) {
@@ -344,7 +345,7 @@ export class WorkflowEngine {
           type: 'step_started',
           workflowId: workflow.id,
           stepId: step.id,
-          message: `重试步骤 (${retryCount + 1}/${DEFAULT_RETRY_COUNT}): ${step.config.description ?? step.id}`,
+          message: `${i18n.t('ai.workflow-engine.k11')}${retryCount + 1}/${DEFAULT_RETRY_COUNT}): ${step.config.description ?? step.id}`,
           timestamp: Date.now(),
         });
         await this.delay(100);
@@ -354,7 +355,7 @@ export class WorkflowEngine {
           type: 'step_failed',
           workflowId: workflow.id,
           stepId: step.id,
-          message: `步骤失败: ${step.error}`,
+          message: `${i18n.t('ai.workflow-engine.k12')}${step.error}`,
           timestamp: Date.now(),
         });
         throw error;
@@ -472,21 +473,21 @@ export class WorkflowEngine {
     this.templates = [
       {
         id: 'tpl_data_processing',
-        name: '数据处理流程',
-        description: '从数据源获取数据，进行清洗、转换和存储',
+        name: i18n.t('ai.workflow-engine.k1'),
+        description: i18n.t('ai.workflow-engine.k2'),
         steps: [
-          { id: 's1', type: 'action', config: { description: '获取数据', action: 'fetch_data' } },
+          { id: 's1', type: 'action', config: { description: i18n.t('ai.workflow-engine.k3'), action: 'fetch_data' } },
           {
             id: 's2',
             type: 'action',
-            config: { description: '数据清洗', action: 'clean_data' },
+            config: { description: i18n.t('ai.workflow-engine.k4'), action: 'clean_data' },
             depends_on: ['s1'],
           },
           {
             id: 's3',
             type: 'condition',
             config: {
-              description: '数据质量检查',
+              description: i18n.t('ai.workflow-engine.k5'),
               expression: 'quality_score > 0.8',
               trueStep: 's4',
               falseStep: 's5',
@@ -496,19 +497,19 @@ export class WorkflowEngine {
           {
             id: 's4',
             type: 'action',
-            config: { description: '数据转换', action: 'transform_data' },
+            config: { description: i18n.t('ai.workflow-engine.k6'), action: 'transform_data' },
             depends_on: ['s3'],
           },
           {
             id: 's5',
             type: 'action',
-            config: { description: '数据修复', action: 'repair_data' },
+            config: { description: i18n.t('ai.workflow-engine.k7'), action: 'repair_data' },
             depends_on: ['s3'],
           },
           {
             id: 's6',
             type: 'action',
-            config: { description: '存储数据', action: 'store_data' },
+            config: { description: i18n.t('ai.workflow-engine.k8'), action: 'store_data' },
             depends_on: ['s4', 's5'],
           },
         ],
@@ -517,25 +518,25 @@ export class WorkflowEngine {
       },
       {
         id: 'tpl_approval_flow',
-        name: '审批流程',
-        description: '多级审批工作流，支持条件分支和会签',
+        name: i18n.t('ai.workflow-engine.k9'),
+        description: i18n.t('ai.workflow-engine.k10'),
         steps: [
           {
             id: 's1',
             type: 'action',
-            config: { description: '提交申请', action: 'submit_request' },
+            config: { description: i18n.t('ai.workflow-engine.k11'), action: 'submit_request' },
           },
           {
             id: 's2',
             type: 'action',
-            config: { description: '一级审批', action: 'level1_approval' },
+            config: { description: i18n.t('ai.workflow-engine.k12'), action: 'level1_approval' },
             depends_on: ['s1'],
           },
           {
             id: 's3',
             type: 'condition',
             config: {
-              description: '金额大于10000?',
+              description: i18n.t('ai.workflow-engine.10000_13'),
               expression: 'amount > 10000',
               trueStep: 's4',
               falseStep: 's6',
@@ -545,19 +546,19 @@ export class WorkflowEngine {
           {
             id: 's4',
             type: 'action',
-            config: { description: '二级审批', action: 'level2_approval' },
+            config: { description: i18n.t('ai.workflow-engine.k13'), action: 'level2_approval' },
             depends_on: ['s3'],
           },
           {
             id: 's5',
             type: 'action',
-            config: { description: '总经理审批', action: 'gm_approval' },
+            config: { description: i18n.t('ai.workflow-engine.k14'), action: 'gm_approval' },
             depends_on: ['s4'],
           },
           {
             id: 's6',
             type: 'action',
-            config: { description: '完成审批', action: 'complete_approval' },
+            config: { description: i18n.t('ai.workflow-engine.k15'), action: 'complete_approval' },
             depends_on: ['s3', 's5'],
           },
         ],
@@ -566,42 +567,42 @@ export class WorkflowEngine {
       },
       {
         id: 'tpl_notification_flow',
-        name: '通知推送流程',
-        description: '多渠道通知推送，支持并行和重试',
+        name: i18n.t('ai.workflow-engine.k16'),
+        description: i18n.t('ai.workflow-engine.k17'),
         steps: [
           {
             id: 's1',
             type: 'action',
-            config: { description: '获取通知内容', action: 'get_content' },
+            config: { description: i18n.t('ai.workflow-engine.k18'), action: 'get_content' },
           },
           {
             id: 's2',
             type: 'parallel',
-            config: { description: '多渠道推送', parallelSteps: ['s2a', 's2b', 's2c'] },
+            config: { description: i18n.t('ai.workflow-engine.k19'), parallelSteps: ['s2a', 's2b', 's2c'] },
             depends_on: ['s1'],
           },
           {
             id: 's2a',
             type: 'action',
-            config: { description: '邮件通知', action: 'send_email' },
+            config: { description: i18n.t('ai.workflow-engine.k20'), action: 'send_email' },
             retry_count: 0,
           },
           {
             id: 's2b',
             type: 'action',
-            config: { description: '短信通知', action: 'send_sms' },
+            config: { description: i18n.t('ai.workflow-engine.k21'), action: 'send_sms' },
             retry_count: 0,
           },
           {
             id: 's2c',
             type: 'action',
-            config: { description: '站内通知', action: 'send_inapp' },
+            config: { description: i18n.t('ai.workflow-engine.k22'), action: 'send_inapp' },
             retry_count: 0,
           },
           {
             id: 's3',
             type: 'action',
-            config: { description: '确认送达', action: 'confirm_delivery' },
+            config: { description: i18n.t('ai.workflow-engine.k23'), action: 'confirm_delivery' },
             depends_on: ['s2'],
           },
         ],
@@ -609,21 +610,21 @@ export class WorkflowEngine {
       },
       {
         id: 'tpl_report_generation',
-        name: '报告生成流程',
-        description: '自动生成和分发报告',
+        name: i18n.t('ai.workflow-engine.k24'),
+        description: i18n.t('ai.workflow-engine.k25'),
         steps: [
-          { id: 's1', type: 'action', config: { description: '收集数据', action: 'collect_data' } },
+          { id: 's1', type: 'action', config: { description: i18n.t('ai.workflow-engine.k26'), action: 'collect_data' } },
           {
             id: 's2',
             type: 'action',
-            config: { description: '数据分析', action: 'analyze_data' },
+            config: { description: i18n.t('ai.workflow-engine.k27'), action: 'analyze_data' },
             depends_on: ['s1'],
           },
           {
             id: 's3',
             type: 'loop',
             config: {
-              description: '生成图表',
+              description: i18n.t('ai.workflow-engine.k28'),
               items: ['chart1', 'chart2', 'chart3'],
               itemStep: 's3a',
             },
@@ -632,18 +633,18 @@ export class WorkflowEngine {
           {
             id: 's3a',
             type: 'action',
-            config: { description: '创建图表', action: 'create_chart' },
+            config: { description: i18n.t('ai.workflow-engine.k29'), action: 'create_chart' },
           },
           {
             id: 's4',
             type: 'action',
-            config: { description: '生成报告', action: 'generateReport' },
+            config: { description: i18n.t('ai.workflow-engine.k30'), action: 'generateReport' },
             depends_on: ['s3'],
           },
           {
             id: 's5',
             type: 'action',
-            config: { description: '分发报告', action: 'distribute_report' },
+            config: { description: i18n.t('ai.workflow-engine.k31'), action: 'distribute_report' },
             depends_on: ['s4'],
           },
         ],

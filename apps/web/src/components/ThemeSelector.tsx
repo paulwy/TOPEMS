@@ -17,6 +17,7 @@ import {
   ListItemText,
   Divider,
 } from '@mui/material';
+import i18n from '@/i18n';
 import { Sun, Moon, Sparkles, Monitor, Check } from 'lucide-react';
 import { useThemeStore, themeList, type Theme } from '@/store';
 
@@ -28,10 +29,10 @@ const themeIcons: Record<Theme, React.ReactNode> = {
 };
 
 const themeLabels: Record<Theme, string> = {
-  light: '亮色',
-  dark: '暗色',
-  cyberpunk: '赛博朋克',
-  system: '跟随系统',
+  light: i18n.t('components.theme_selector.k0'),
+  dark: i18n.t('components.theme_selector.k1'),
+  cyberpunk: i18n.t('components.theme_selector.k2'),
+  system: i18n.t('components.theme_selector.k3'),
 };
 
 export interface ThemeSelectorProps {
@@ -63,13 +64,13 @@ export const ThemeSelector: React.FC<ThemeSelectorProps> = ({ showMenu = true })
     handleClose();
   };
 
-  const tooltipText = `当前: ${themeLabels[theme]}${showMenu ? '（点击切换）' : ''}`;
+  const tooltipText = `${i18n.t('components.theme_selector.k0')} ${themeLabels[theme]}${showMenu ? i18n.t('components.theme_selector.k1') : ''}`;
 
   return (
     <>
       <Tooltip title={tooltipText}>
         <IconButton
-          aria-label='切换主题'
+          aria-label={i18n.t('components.theme_selector.k4')}
           onClick={handleClick}
           sx={{
             width: 36,
@@ -106,7 +107,7 @@ export const ThemeSelector: React.FC<ThemeSelectorProps> = ({ showMenu = true })
               color='text.secondary'
               sx={{ fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px' }}
             >
-              主题模式
+              {i18n.t('components.theme_selector.k2')}
             </Typography>
           </Box>
           <Divider />

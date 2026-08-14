@@ -1,11 +1,12 @@
 import type { EntitySchema, BadgeColor } from '@/schema';
+import i18n from '@/i18n';
 
 const STATUS_OPTIONS = [
-  { value: 'planning', label: '规划中' },
-  { value: 'active', label: '进行中' },
-  { value: 'on_hold', label: '暂停' },
-  { value: 'completed', label: '已完成' },
-  { value: 'cancelled', label: '已取消' },
+  { value: 'planning', label: i18n.t('pdm.project.k0') },
+  { value: 'active', label: i18n.t('pdm.project.k1') },
+  { value: 'on_hold', label: i18n.t('pdm.project.k2') },
+  { value: 'completed', label: i18n.t('pdm.project.k3') },
+  { value: 'cancelled', label: i18n.t('pdm.project.k4') },
 ];
 
 const STATUS_COLOR_MAP: Record<string, BadgeColor> = {
@@ -17,19 +18,19 @@ const STATUS_COLOR_MAP: Record<string, BadgeColor> = {
 };
 
 const STATUS_LABEL_MAP: Record<string, string> = {
-  planning: '规划中',
-  active: '进行中',
-  on_hold: '暂停',
-  completed: '已完成',
-  cancelled: '已取消',
+  planning: i18n.t('pdm.project.k5'),
+  active: i18n.t('pdm.project.k6'),
+  on_hold: i18n.t('pdm.project.k7'),
+  completed: i18n.t('pdm.project.k8'),
+  cancelled: i18n.t('pdm.project.k9'),
 };
 
 const PHASE_OPTIONS = [
-  { value: 'initiation', label: '启动' },
-  { value: 'planning', label: '规划' },
-  { value: 'execution', label: '执行' },
-  { value: 'monitoring', label: '监控' },
-  { value: 'closing', label: '收尾' },
+  { value: 'initiation', label: i18n.t('pdm.project.k10') },
+  { value: 'planning', label: i18n.t('pdm.project.k11') },
+  { value: 'execution', label: i18n.t('pdm.project.k12') },
+  { value: 'monitoring', label: i18n.t('pdm.project.k13') },
+  { value: 'closing', label: i18n.t('pdm.project.k14') },
 ];
 
 const PHASE_COLOR_MAP: Record<string, string> = {
@@ -41,17 +42,17 @@ const PHASE_COLOR_MAP: Record<string, string> = {
 };
 
 const PHASE_LABEL_MAP: Record<string, string> = {
-  initiation: '启动',
-  planning: '规划',
-  execution: '执行',
-  monitoring: '监控',
-  closing: '收尾',
+  initiation: i18n.t('pdm.project.k15'),
+  planning: i18n.t('pdm.project.k16'),
+  execution: i18n.t('pdm.project.k17'),
+  monitoring: i18n.t('pdm.project.k18'),
+  closing: i18n.t('pdm.project.k19'),
 };
 
 export const pdmProjectSchema: EntitySchema = {
   entity: 'pdm_project',
-  title: 'PDM项目',
-  description: '管理产品开发项目，包括状态、阶段、成员和进度',
+  title: i18n.t('shared.project.pdm_0'),
+  description: i18n.t('pdm.project.k20'),
 
   api: {
     module: 'pdm',
@@ -61,7 +62,7 @@ export const pdmProjectSchema: EntitySchema = {
   fields: [
     {
       name: 'project_no',
-      label: '项目编号',
+      label: i18n.t('pdm.project.k21'),
       type: 'text',
       required: true,
       readonlyOnEdit: true,
@@ -70,7 +71,7 @@ export const pdmProjectSchema: EntitySchema = {
     },
     {
       name: 'name',
-      label: '项目名称',
+      label: i18n.t('pdm.project.k22'),
       type: 'text',
       required: true,
       sortable: true,
@@ -79,14 +80,14 @@ export const pdmProjectSchema: EntitySchema = {
     },
     {
       name: 'description',
-      label: '项目描述',
+      label: i18n.t('pdm.project.k23'),
       type: 'textarea',
       listWidth: 200,
       hideInList: true,
     },
     {
       name: 'status',
-      label: '状态',
+      label: i18n.t('pdm.project.k24'),
       type: 'select',
       defaultValue: 'planning',
       listWidth: 100,
@@ -98,7 +99,7 @@ export const pdmProjectSchema: EntitySchema = {
     },
     {
       name: 'phase',
-      label: '阶段',
+      label: i18n.t('pdm.project.k25'),
       type: 'select',
       defaultValue: 'initiation',
       listWidth: 100,
@@ -109,19 +110,19 @@ export const pdmProjectSchema: EntitySchema = {
     },
     {
       name: 'start_date',
-      label: '开始日期',
+      label: i18n.t('pdm.project.k26'),
       type: 'date',
       listWidth: 120,
     },
     {
       name: 'end_date',
-      label: '结束日期',
+      label: i18n.t('pdm.project.k27'),
       type: 'date',
       listWidth: 120,
     },
     {
       name: 'budget',
-      label: '预算',
+      label: i18n.t('pdm.project.k28'),
       type: 'number',
       listWidth: 120,
       align: 'right',
@@ -132,14 +133,14 @@ export const pdmProjectSchema: EntitySchema = {
     },
     {
       name: 'progress',
-      label: '进度',
+      label: i18n.t('pdm.project.k29'),
       type: 'number',
       listWidth: 100,
       renderCell: (row: Record<string, unknown>) => `${(row.progress as number) || 0}%`,
     },
     {
       name: 'member_count',
-      label: '成员',
+      label: i18n.t('pdm.project.k30'),
       type: 'number',
       listWidth: 80,
       align: 'center',
@@ -167,38 +168,38 @@ export const pdmProjectSchema: EntitySchema = {
     filters: [
       {
         id: 'status',
-        label: '状态',
+        label: i18n.t('pdm.project.k31'),
         type: 'select',
-        options: [{ label: '全部状态', value: 'all' }, ...STATUS_OPTIONS],
+        options: [{ label: i18n.t('pdm.project.k32'), value: 'all' }, ...STATUS_OPTIONS],
       },
       {
         id: 'phase',
-        label: '阶段',
+        label: i18n.t('pdm.project.k33'),
         type: 'select',
-        options: [{ label: '全部阶段', value: 'all' }, ...PHASE_OPTIONS],
+        options: [{ label: i18n.t('pdm.project.k34'), value: 'all' }, ...PHASE_OPTIONS],
       },
     ],
   },
 
   formSections: [
     {
-      title: '基本信息',
+      title: i18n.t('pdm.project.k35'),
       fields: ['project_no', 'name', 'description'],
     },
     {
-      title: '项目状态',
+      title: i18n.t('pdm.project.k36'),
       fields: ['status', 'phase', 'start_date', 'end_date'],
     },
     {
-      title: '预算与进度',
+      title: i18n.t('pdm.project.k37'),
       fields: ['budget', 'progress'],
     },
   ],
 
   formColCount: 2,
-  createTitle: '添加项目',
-  editTitle: '编辑项目',
-  detailTitle: '项目详情',
+  createTitle: i18n.t('pdm.project.k38'),
+  editTitle: i18n.t('pdm.project.k39'),
+  detailTitle: i18n.t('pdm.project.k40'),
 
   actions: ['create', 'edit', 'detail', 'delete'],
 };

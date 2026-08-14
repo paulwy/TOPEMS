@@ -14,10 +14,9 @@ import {
   TextField,
   Typography,
 } from '@mui/material';
+import i18n from '@/i18n';
 import { Calendar, Download, Package, Search } from 'lucide-react';
-import { useTranslation } from 'react-i18next';
 import type { MarketplacePlugin } from '../hooks/usePluginManagement';
-
 interface PluginMarketplaceListProps {
   search: string;
   onSearchChange: (value: string) => void;
@@ -27,7 +26,6 @@ interface PluginMarketplaceListProps {
   installedCodes: string[];
   onSelectPlugin: (plugin: MarketplacePlugin) => void;
 }
-
 const PluginMarketplaceList: React.FC<PluginMarketplaceListProps> = ({
   search,
   onSearchChange,
@@ -37,20 +35,17 @@ const PluginMarketplaceList: React.FC<PluginMarketplaceListProps> = ({
   installedCodes,
   onSelectPlugin,
 }) => {
-  const { t } = useTranslation();
-
   const visiblePlugins = plugins.filter((p) => {
     if (tab === 1) return p.category === 'Business';
     if (tab === 2) return p.category === 'Analytics';
     if (tab === 3) return p.category === 'System';
     return true;
   });
-
   return (
     <Box>
       <TextField
         fullWidth
-        placeholder={t('admin.plugin_management_page.attr_d40b53')}
+        placeholder={i18n.t('admin.plugin_management_page.attr_d40b53')}
         value={search}
         onChange={(e) => onSearchChange(e.target.value)}
         sx={{ mb: 2 }}
@@ -69,10 +64,10 @@ const PluginMarketplaceList: React.FC<PluginMarketplaceListProps> = ({
         onChange={(_, v) => onTabChange(v)}
         sx={{ mb: 2 }}
       >
-        <Tab label={t('admin.plugin_management.all_plugins')} />
-        <Tab label={t('admin.plugin_management.business_plugin')} />
-        <Tab label={t('admin.plugin_management.analytics_plugin')} />
-        <Tab label={t('admin.plugin_management.system_plugin')} />
+        <Tab label={i18n.t('admin.plugin_management.all_plugins')} />
+        <Tab label={i18n.t('admin.plugin_management.business_plugin')} />
+        <Tab label={i18n.t('admin.plugin_management.analytics_plugin')} />
+        <Tab label={i18n.t('admin.plugin_management.system_plugin')} />
       </Tabs>
       <List>
         {visiblePlugins.map((plugin) => {
@@ -84,7 +79,7 @@ const PluginMarketplaceList: React.FC<PluginMarketplaceListProps> = ({
               secondaryAction={
                 isInstalled ? (
                   <Chip
-                    label={t('admin.plugin_management.installed')}
+                    label={i18n.t('admin.plugin_management.installed')}
                     color='success'
                     size='small'
                   />
@@ -95,7 +90,7 @@ const PluginMarketplaceList: React.FC<PluginMarketplaceListProps> = ({
                     startIcon={<Download size={14} />}
                     onClick={() => onSelectPlugin(plugin)}
                   >
-                    {t('admin.plugin_management_page.text_e655a4')}
+                    {i18n.t('admin.plugin_management_page.text_e655a4')}
                   </Button>
                 )
               }
@@ -151,5 +146,4 @@ const PluginMarketplaceList: React.FC<PluginMarketplaceListProps> = ({
     </Box>
   );
 };
-
 export default PluginMarketplaceList;

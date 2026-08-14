@@ -9,6 +9,7 @@ import type { HealthRecord, CreateHealthRecordRequest } from '@/api/ehs';
 import { PageContainer } from '@/components/common';
 import { designTokens } from '@/theme/tokens';
 import { useTranslation } from 'react-i18next';
+import i18n from '@/i18n';
 
 const ct= designTokens.colors;
 
@@ -212,7 +213,7 @@ const HealthManagementPage: React.FC = () => {
         </Box>
         <Box sx={{ gridColumn: '1 / -1' }}>
           {fieldValue(
-            t('ehs.health_management_page.text_9c1b2a', '危害因素'),
+            t('ehs.health_management_page.text_9c1b2a', i18n.t('pages.health_management_page.k0')),
             Array.isArray(record.hazard_factors) ? record.hazard_factors.join(', ') : '-'
           )}
         </Box>

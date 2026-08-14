@@ -9,20 +9,15 @@ import { useNotificationStore } from '@/store';
 import { FileText, CheckCircle, XCircle } from 'lucide-react';
 import { designTokens } from '@/theme/tokens';
 import { PageContainer } from '@/components/common';
-
-
 import { QUERY_KEYS } from '@/lib/reactQuery';
-
+import i18n from '@/i18n';
 const ct= designTokens.colors;
-
 const apiAdapter = createCrudPageAdapter(mesApi.workReports, {
   itemsField: 'reports',
 });
-
 const WorkReportPage: React.FC = () => {
   const { addNotification } = useNotificationStore();
   const queryClient = useQueryClient();
-
   const handleApprove = useCallback(
     async (id: string) => {
       try {
@@ -30,8 +25,8 @@ const WorkReportPage: React.FC = () => {
         if (response.success) {
           addNotification({
             type: 'success',
-            title: '审核成功',
-            message: '工作报告已审核通过',
+            title: i18n.t('mes.work_report_page.k0'),
+            message: i18n.t('mes.work_report_page.k1'),
           });
           queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.MES_WORK_REPORT_BASE ,
   exact: false,
@@ -40,21 +35,20 @@ const WorkReportPage: React.FC = () => {
         } else {
           addNotification({
             type: 'error',
-            title: '操作失败',
-            message: response.message || '未知错误',
+            title: i18n.t('mes.work_report_page.k2'),
+            message: response.message || i18n.t('mes.work_report_page.k3'),
           });
         }
       } catch (err) {
         addNotification({
           type: 'error',
-          title: '操作失败',
-          message: err instanceof Error ? err.message : '未知错误',
+          title: i18n.t('mes.work_report_page.k4'),
+          message: err instanceof Error ? err.message : i18n.t('mes.work_report_page.k5'),
         });
       }
     },
     [addNotification, queryClient]
   );
-
   const handleReject = useCallback(
     async (id: string) => {
       try {
@@ -62,8 +56,8 @@ const WorkReportPage: React.FC = () => {
         if (response.success) {
           addNotification({
             type: 'success',
-            title: '驳回成功',
-            message: '工作报告已驳回',
+            title: i18n.t('mes.work_report_page.k6'),
+            message: i18n.t('mes.work_report_page.k7'),
           });
           queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.MES_WORK_REPORT_BASE ,
   exact: false,
@@ -72,38 +66,36 @@ const WorkReportPage: React.FC = () => {
         } else {
           addNotification({
             type: 'error',
-            title: '操作失败',
-            message: response.message || '未知错误',
+            title: i18n.t('mes.work_report_page.k8'),
+            message: response.message || i18n.t('mes.work_report_page.k9'),
           });
         }
       } catch (err) {
         addNotification({
           type: 'error',
-          title: '操作失败',
-          message: err instanceof Error ? err.message : '未知错误',
+          title: i18n.t('mes.work_report_page.k10'),
+          message: err instanceof Error ? err.message : i18n.t('mes.work_report_page.k11'),
         });
       }
     },
     [addNotification, queryClient]
   );
-
   const customRowActions: RowAction[] = [
     {
-      label: '审核通过',
+      label: i18n.t('mes.work_report_page.k12'),
       icon: <CheckCircle size={16} />,
       color: 'success',
       onClick: (row: Record<string, unknown>) => handleApprove(String(row.id)),
       show: (row: Record<string, unknown>) => row.status === 'submitted',
     },
     {
-      label: '审核驳回',
+      label: i18n.t('mes.work_report_page.k13'),
       icon: <XCircle size={16} />,
       color: 'error',
       onClick: (row: Record<string, unknown>) => handleReject(String(row.id)),
       show: (row: Record<string, unknown>) => row.status === 'submitted',
     },
   ];
-
   return (
     <PageContainer
       autoTitle
@@ -116,7 +108,7 @@ const WorkReportPage: React.FC = () => {
       <CrudPage
         schema={workReportSchema}
         apiAdapter={apiAdapter as CrudApiAdapter}
-        breadcrumbs={[{ label: 'MES' }, { label: '工作报告' }]}
+        breadcrumbs={[{ label: 'MES' }, { label: i18n.t('mes.work_report_page.k14') }]}
         customRowActions={customRowActions}
         headerContent={(rows) => {
           const total = rows.length;
@@ -124,7 +116,6 @@ const WorkReportPage: React.FC = () => {
           const submitted = rows.filter((r) => r.status === 'submitted').length;
           const approved = rows.filter((r) => r.status === 'approved').length;
           const totalGood = rows.reduce((sum, r) => sum + (Number(r.quantity_good) || 0), 0);
-
           return (
             <Box
               sx={{
@@ -139,7 +130,7 @@ const WorkReportPage: React.FC = () => {
                   variant='body2'
                   sx={{ color: 'text.secondary' }}
                 >
-                  总记录数
+                  {i18n.t('pages.work_report_page.k0')}
                 </Typography>
                 <Typography
                   variant='h5'
@@ -153,7 +144,7 @@ const WorkReportPage: React.FC = () => {
                   variant='body2'
                   sx={{ color: 'text.secondary' }}
                 >
-                  草稿
+                  {i18n.t('pages.work_report_page.k1')}
                 </Typography>
                 <Typography
                   variant='h5'
@@ -167,7 +158,7 @@ const WorkReportPage: React.FC = () => {
                   variant='body2'
                   sx={{ color: 'text.secondary' }}
                 >
-                  待审核
+                  {i18n.t('pages.work_report_page.k2')}
                 </Typography>
                 <Typography
                   variant='h5'
@@ -181,7 +172,7 @@ const WorkReportPage: React.FC = () => {
                   variant='body2'
                   sx={{ color: 'text.secondary' }}
                 >
-                  已审核
+                  {i18n.t('pages.work_report_page.k3')}
                 </Typography>
                 <Typography
                   variant='h5'
@@ -195,7 +186,7 @@ const WorkReportPage: React.FC = () => {
                   variant='body2'
                   sx={{ color: 'text.secondary' }}
                 >
-                  合格总数
+                  {i18n.t('pages.work_report_page.k4')}
                 </Typography>
                 <Typography
                   variant='h5'
@@ -211,5 +202,4 @@ const WorkReportPage: React.FC = () => {
     </PageContainer>
   );
 };
-
 export default WorkReportPage;

@@ -7,9 +7,8 @@ import { inventorySchema } from '@/schemas/erp';
 import { erpApi } from '@/api/erp';
 import type { Inventory } from '@/api/erp';
 import { designTokens } from '@/theme/tokens';
-
+import i18n from '@/i18n';
 const ct= designTokens.colors;
-
 const inventoryAdapter = {
   list: async (params?: {
     page?: number;
@@ -25,7 +24,6 @@ const inventoryAdapter = {
     if (params?.warehouse && params.warehouse !== 'all') {
       queryParams.warehouse = params.warehouse;
     }
-
     const response = await erpApi.inventory.list(queryParams);
     if (response.success && response.data) {
       return {
@@ -40,7 +38,7 @@ const inventoryAdapter = {
       data as Parameters<typeof erpApi.inventory.create>[0]
     );
     if (!response.success || !response.data) {
-      throw new Error(response.message || '创建库存失败');
+      throw new Error(response.message || i18n.t('erp.inventory_management_page.k0'));
     }
     return response.data;
   },
@@ -50,18 +48,17 @@ const inventoryAdapter = {
       data as Parameters<typeof erpApi.inventory.update>[1]
     );
     if (!response.success || !response.data) {
-      throw new Error(response.message || '更新库存失败');
+      throw new Error(response.message || i18n.t('erp.inventory_management_page.k1'));
     }
     return response.data;
   },
   delete: async (id: string) => {
     const response = await erpApi.inventory.delete(id);
     if (!response.success) {
-      throw new Error(response.message || '删除库存失败');
+      throw new Error(response.message || i18n.t('erp.inventory_management_page.k2'));
     }
   },
 };
-
 const StatCard: React.FC<{
   label: string;
   value: number | string;
@@ -105,7 +102,6 @@ const StatCard: React.FC<{
     </Typography>
   </Box>
 );
-
 const InventoryManagementPage: React.FC = () => {
   const headerContent = (rows: Record<string, unknown>[], total: number) => {
     const items = rows as unknown as Inventory[];
@@ -117,7 +113,6 @@ const InventoryManagementPage: React.FC = () => {
       (i: Inventory) => i.safety_stock && i.quantity < i.safety_stock
     ).length;
     const inStock = items.filter((i: Inventory) => i.quantity > 0).length;
-
     return (
       <Box
         sx={{
@@ -128,14 +123,14 @@ const InventoryManagementPage: React.FC = () => {
         }}
       >
         <StatCard
-          label='物料总数'
+          label={i18n.t('erp.inventory_management_page.k3')}
           value={total}
           icon={<Package size={18} />}
           bgColor='primary.lighter'
           iconColor='primary.main'
         />
         <StatCard
-          label='库存总金额'
+          label={i18n.t('erp.inventory_management_page.k4')}
           value={`¥${totalValue.toLocaleString('zh-CN', { minimumFractionDigits: 2 })}`}
           icon={<DollarSign size={18} />}
           bgColor='success.lighter'
@@ -143,14 +138,14 @@ const InventoryManagementPage: React.FC = () => {
           gradient
         />
         <StatCard
-          label='低于安全库存'
+          label={i18n.t('erp.inventory_management_page.k5')}
           value={lowStock}
           icon={<AlertTriangle size={18} />}
           bgColor='warning.light'
           iconColor='warning.main'
         />
         <StatCard
-          label='有库存物料'
+          label={i18n.t('erp.inventory_management_page.k6')}
           value={inStock}
           icon={<CheckCircle size={18} />}
           bgColor={ct.secondary[100]}
@@ -159,11 +154,10 @@ const InventoryManagementPage: React.FC = () => {
       </Box>
     );
   };
-
   return (
     <PageContainer
-      title='库存管理'
-      subtitle='管理库存信息，包括物料、数量、仓库、库位等'
+      title={i18n.t('erp.inventory_management_page.k7')}
+      subtitle={i18n.t('erp.inventory_management_page.k8')}
     >
       <CrudPage
         schema={inventorySchema}
@@ -173,5 +167,4 @@ const InventoryManagementPage: React.FC = () => {
     </PageContainer>
   );
 };
-
 export default InventoryManagementPage;

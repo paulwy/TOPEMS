@@ -1,10 +1,11 @@
 import React from 'react';
+import i18n from '@/i18n';
 
 const OpeningBalancePage: React.FC = () => {
   return React.createElement(
     'div',
     { className: 'page-placeholder' },
-    'OpeningBalancePage 页面开发中'
+    i18n.t('finance.opening_balance_page.k0')
   );
 };
 

@@ -1,3 +1,4 @@
+import i18n from '@/i18n';
 export type DeviceType = 'mobile' | 'tablet' | 'desktop';
 export type ProficiencyLevel = 'beginner' | 'intermediate' | 'expert';
 export type LayoutDensity = 'compact' | 'normal' | 'relaxed';
@@ -308,16 +309,16 @@ export class AdaptiveInteraction {
   private buildReason(profile: InteractionProfile, signals: Map<string, number>): string {
     const reasons: string[] = [];
 
-    if (signals.get('mobile')) reasons.push('检测到移动端设备');
-    if (signals.get('touch')) reasons.push('支持触控交互');
-    if (signals.get('low_vision')) reasons.push('已适配低视力模式');
-    if (signals.get('beginner')) reasons.push('初学者模式：简化操作流程');
-    if (signals.get('expert')) reasons.push('专家模式：显示高级选项');
-    if (signals.get('poor_network')) reasons.push('网络较差：优化加载策略');
-    if (profile.preferences.largeText) reasons.push('已启用大字体');
-    if (profile.preferences.reducedMotion) reasons.push('已减少动画效果');
+    if (signals.get('mobile')) reasons.push(i18n.t('ai.adaptive-interaction.k0'));
+    if (signals.get('touch')) reasons.push(i18n.t('ai.adaptive-interaction.k1'));
+    if (signals.get('low_vision')) reasons.push(i18n.t('ai.adaptive-interaction.k2'));
+    if (signals.get('beginner')) reasons.push(i18n.t('ai.adaptive-interaction.k3'));
+    if (signals.get('expert')) reasons.push(i18n.t('ai.adaptive-interaction.k4'));
+    if (signals.get('poor_network')) reasons.push(i18n.t('ai.adaptive-interaction.k5'));
+    if (profile.preferences.largeText) reasons.push(i18n.t('ai.adaptive-interaction.k6'));
+    if (profile.preferences.reducedMotion) reasons.push(i18n.t('ai.adaptive-interaction.k7'));
 
-    return reasons.length > 0 ? reasons.join('；') : '使用默认适配配置';
+    return reasons.length > 0 ? reasons.join('；') : i18n.t('ai.adaptive-interaction.k8');
   }
 
   private recordAdaptation(

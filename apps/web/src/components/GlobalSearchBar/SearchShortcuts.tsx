@@ -1,5 +1,6 @@
 import React from 'react';
 import { Box, Typography, Chip } from '@mui/material';
+import i18n from '@/i18n';
 
 interface SearchShortcutsProps {
   onSelect: (text: string) => void;
@@ -7,10 +8,10 @@ interface SearchShortcutsProps {
 
 export const SearchShortcuts: React.FC<SearchShortcutsProps> = ({ onSelect }) => {
   const shortcuts = [
-    { text: '我的任务', hint: '查看待办任务' },
-    { text: '客户管理', hint: '进入客户列表' },
-    { text: '订单列表', hint: '查看销售订单' },
-    { text: '系统设置', hint: '配置系统参数' },
+    { text: i18n.t('components.search_shortcuts.k1'), hint: i18n.t('components.search_shortcuts.k0') },
+    { text: i18n.t('components.search_shortcuts.k3'), hint: i18n.t('components.search_shortcuts.k2') },
+    { text: i18n.t('components.search_shortcuts.k5'), hint: i18n.t('components.search_shortcuts.k4') },
+    { text: i18n.t('components.search_shortcuts.k7'), hint: i18n.t('components.search_shortcuts.k6') },
   ];
 
   return (
@@ -20,7 +21,7 @@ export const SearchShortcuts: React.FC<SearchShortcutsProps> = ({ onSelect }) =>
         color='text.secondary'
         sx={{ mb: 1, display: 'block' }}
       >
-        快捷搜索
+        {i18n.t('components.search_shortcuts.k0')}
       </Typography>
       <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
         {shortcuts.map((s) => (

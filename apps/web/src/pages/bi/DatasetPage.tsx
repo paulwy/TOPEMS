@@ -26,6 +26,7 @@ import {
   Divider,
   CircularProgress,
 } from '@mui/material';
+import i18n from '@/i18n';
 import { PageContainer } from '@/components/common';
 import { DashboardTemplate } from '@/components/templates';
 import { useCrudOperations } from '@/hooks/useCrudQueries';
@@ -40,18 +41,10 @@ import {
 } from '@/api/bi';
 import { logger } from '@/utils/logger';
 import { designTokens } from '@/theme/tokens';
-
-import { useTranslation } from 'react-i18next';
-
-
 import { QUERY_KEYS } from '@/lib/reactQuery';
-
 const ct= designTokens.colors;
-
 type ViewMode = 'list' | 'editor';
-
 const DatasetPage = () => {
-  const { t } = useTranslation();
   const queryClient = useQueryClient();
   const [viewMode, setViewMode] = useState<ViewMode>('list');
   const [searchTerm, setSearchTerm] = useState('');
@@ -64,7 +57,6 @@ const DatasetPage = () => {
     status: 'draft',
     fields: [],
   });
-
   const {
     data: datasets,
     loading,
@@ -82,7 +74,6 @@ const DatasetPage = () => {
     pageParamName: 'page',
     pageSizeParamName: 'pageSize',
   });
-
   const publishMutation = useMutation({
     mutationFn: (id: string) => publishDataset(id),
     onSuccess: () => {
@@ -93,7 +84,6 @@ const DatasetPage = () => {
       logger.info('Dataset published successfully');
     },
   });
-
   const refreshMutation = useMutation({
     mutationFn: (id: string) => refreshDataset(id),
     onSuccess: () => {
@@ -104,7 +94,6 @@ const DatasetPage = () => {
       logger.info('Dataset refreshed successfully');
     },
   });
-
   const testSqlMutation = useMutation({
     mutationFn: ({ dataSourceId, sql }: { dataSourceId: string; sql: string }) =>
       testSqlQuery(dataSourceId, sql),
@@ -117,9 +106,7 @@ const DatasetPage = () => {
         });
       },
   });
-
   const displayDatasets = datasets;
-
   const filteredDatasets = useMemo(() => {
     return displayDatasets.filter(
       (d) =>
@@ -127,7 +114,6 @@ const DatasetPage = () => {
         d.description?.toLowerCase().includes(searchTerm.toLowerCase())
     );
   }, [displayDatasets, searchTerm]);
-
   const handleSearch = useCallback(
     (value: string) => {
       setSearchTerm(value);
@@ -139,7 +125,6 @@ const DatasetPage = () => {
     },
     [fetch]
   );
-
   const handleCreate = useCallback(() => {
     setSelectedDataset(null);
     setFormData({
@@ -151,18 +136,16 @@ const DatasetPage = () => {
     });
     setViewMode('editor');
     setEditorTab(0);
-  }, [t]);
-
+  }, [i18n.t]);
   const handleEdit = useCallback((dataset: Dataset) => {
     setSelectedDataset(dataset);
     setFormData(dataset);
     setViewMode('editor');
     setEditorTab(0);
   }, []);
-
   const handleDelete = useCallback(
     async (id: string) => {
-      if (!confirm(t('bi.dataset_page.confirm'))) return;
+      if (!confirm(i18n.t('bi.dataset_page.confirm'))) return;
       try {
         await deleteItem(id);
       } catch (e: unknown) {
@@ -171,7 +154,6 @@ const DatasetPage = () => {
     },
     [deleteItem]
   );
-
   const handleSave = useCallback(async () => {
     try {
       if (selectedDataset) {
@@ -185,7 +167,6 @@ const DatasetPage = () => {
       setViewMode('list');
     }
   }, [selectedDataset, formData, createItem, updateItem]);
-
   const handlePublish = useCallback(
     async (id: string) => {
       try {
@@ -196,7 +177,6 @@ const DatasetPage = () => {
     },
     [publishMutation]
   );
-
   const handleRefreshDataset = useCallback(
     async (id: string) => {
       try {
@@ -207,7 +187,6 @@ const DatasetPage = () => {
     },
     [refreshMutation]
   );
-
   const handleTestSql = useCallback(async () => {
     if (!formData.data_source_id || !formData.sql_query) return;
     try {
@@ -219,12 +198,11 @@ const DatasetPage = () => {
       logger.error('SQL test failed:', e);
     }
   }, [formData.data_source_id, formData.sql_query, testSqlMutation]);
-
   const getStatusChip = (status: string) => {
     const configs: Record<string, { color: 'success' | 'warning' | 'primary'; label: string }> = {
-      published: { color: 'success', label: t('bi.dataset_page.text_dca0c1') },
-      draft: { color: 'warning', label: t('bi.dataset_page.text_22b433') },
-      archived: { color: 'primary', label: t('bi.dataset_page.text_c3ba16') },
+      published: { color: 'success', label: i18n.t('bi.dataset_page.text_dca0c1') },
+      draft: { color: 'warning', label: i18n.t('bi.dataset_page.text_22b433') },
+      archived: { color: 'primary', label: i18n.t('bi.dataset_page.text_c3ba16') },
     };
     const config = configs[status] || configs.draft;
     return (
@@ -236,12 +214,11 @@ const DatasetPage = () => {
       />
     );
   };
-
   const addField = () => {
     const newField: DatasetField = {
       id: `field-${Date.now()}`,
       name: `field_${(formData.fields?.length || 0) + 1}`,
-      label: `字段${(formData.fields?.length || 0) + 1}`,
+      label: `${i18n.t('pages.dataset_page.k0')}${(formData.fields?.length || 0) + 1}`,
       type: 'string',
     };
     setFormData({
@@ -249,24 +226,20 @@ const DatasetPage = () => {
       fields: [...(formData.fields || []), newField],
     });
   };
-
   const removeField = (fieldId: string) => {
     setFormData({
       ...formData,
       fields: formData.fields?.filter((f) => f.id !== fieldId) || [],
     });
   };
-
   const updateField = (fieldId: string, updates: Partial<DatasetField>) => {
     setFormData({
       ...formData,
       fields: formData.fields?.map((f) => (f.id === fieldId ? { ...f, ...updates } : f)) || [],
     });
   };
-
   const actionLoading =
     loading || publishMutation.isPending || refreshMutation.isPending || testSqlMutation.isPending;
-
   const renderListView = () => (
     <Box sx={{ p: 3 }}>
       <Box
@@ -281,20 +254,19 @@ const DatasetPage = () => {
           variant='h4'
           sx={{ fontWeight: 700 }}
         >
-          数据集管理
+          {i18n.t('pages.dataset_page.k0')}
         </Typography>
         <Button
           variant='contained'
           startIcon={<Plus />}
           onClick={handleCreate}
         >
-          创建数据集
+          {i18n.t('pages.dataset_page.k1')}
         </Button>
       </Box>
-
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 3 }}>
         <TextField
-          placeholder={t('bi.dataset_page.search')}
+          placeholder={i18n.t('bi.dataset_page.search')}
           value={searchTerm}
           onChange={(e) => handleSearch(e.target.value)}
           size='small'
@@ -306,10 +278,9 @@ const DatasetPage = () => {
           startIcon={<RefreshCw size={16} />}
           onClick={refresh}
         >
-          刷新
+          {i18n.t('pages.dataset_page.k2')}
         </Button>
       </Box>
-
       {actionLoading ? (
         <Box sx={{ display: 'flex', justifyContent: 'center', py: 8 }}>
           <CircularProgress />
@@ -326,15 +297,15 @@ const DatasetPage = () => {
           }}
         >
           <Database sx={{ width: 64, height: 64, mb: 3, opacity: 0.5 }} />
-          <Typography variant='h6'>暂无数据集</Typography>
-          <Typography variant='body2'>点击上方按钮创建您的第一个数据集</Typography>
+          <Typography variant='h6'>{i18n.t('bi.dataset_page.k0')}</Typography>
+          <Typography variant='body2'>{i18n.t('bi.dataset_page.k1')}</Typography>
           <Button
             variant='contained'
             startIcon={<Plus />}
             sx={{ mt: 3 }}
             onClick={handleCreate}
           >
-            创建数据集
+            {i18n.t('pages.dataset_page.k3')}
           </Button>
         </Box>
       ) : (
@@ -346,12 +317,12 @@ const DatasetPage = () => {
           <Table>
             <TableHead>
               <TableRow>
-                <TableCell>数据集名称</TableCell>
-                <TableCell>数据源</TableCell>
-                <TableCell>状态</TableCell>
-                <TableCell>行数</TableCell>
-                <TableCell>更新时间</TableCell>
-                <TableCell align='right'>操作</TableCell>
+                <TableCell>{i18n.t('bi.dataset_page.k2')}</TableCell>
+                <TableCell>{i18n.t('bi.dataset_page.k3')}</TableCell>
+                <TableCell>{i18n.t('bi.dataset_page.k4')}</TableCell>
+                <TableCell>{i18n.t('bi.dataset_page.k5')}</TableCell>
+                <TableCell>{i18n.t('bi.dataset_page.k6')}</TableCell>
+                <TableCell align='right'>{i18n.t('bi.dataset_page.k7')}</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
@@ -398,50 +369,50 @@ const DatasetPage = () => {
                     {dataset.updated_at ? new Date(dataset.updated_at).toLocaleDateString() : '-'}
                   </TableCell>
                   <TableCell align='right'>
-                    <Tooltip title={t('bi.dataset_page.edit')}>
+                    <Tooltip title={i18n.t('bi.dataset_page.edit')}>
                       <IconButton
                         size='small'
                         onClick={() => handleEdit(dataset)}
-                        aria-label={t('bi.dataset_page.edit_1')}
+                        aria-label={i18n.t('bi.dataset_page.edit_1')}
                       >
                         <Edit2 size={16} />
                       </IconButton>
                     </Tooltip>
-                    <Tooltip title={t('bi.dataset_page.view')}>
+                    <Tooltip title={i18n.t('bi.dataset_page.view')}>
                       <IconButton
                         size='small'
-                        aria-label={t('bi.dataset_page.view_1')}
+                        aria-label={i18n.t('bi.dataset_page.view_1')}
                       >
                         <Eye size={16} />
                       </IconButton>
                     </Tooltip>
                     {dataset.status === 'draft' && (
-                      <Tooltip title={t('bi.dataset_page.text_83611a')}>
+                      <Tooltip title={i18n.t('bi.dataset_page.text_83611a')}>
                         <IconButton
                           size='small'
                           onClick={() => handlePublish(dataset.id)}
-                          aria-label={t('bi.dataset_page.text_490e76')}
+                          aria-label={i18n.t('bi.dataset_page.text_490e76')}
                         >
                           <FileText size={16} />
                         </IconButton>
                       </Tooltip>
                     )}
                     {dataset.status === 'published' && (
-                      <Tooltip title={t('bi.dataset_page.refresh')}>
+                      <Tooltip title={i18n.t('bi.dataset_page.refresh')}>
                         <IconButton
                           size='small'
                           onClick={() => handleRefreshDataset(dataset.id)}
-                          aria-label={t('bi.dataset_page.refresh_1')}
+                          aria-label={i18n.t('bi.dataset_page.refresh_1')}
                         >
                           <RefreshCw size={16} />
                         </IconButton>
                       </Tooltip>
                     )}
-                    <Tooltip title={t('bi.dataset_page.delete')}>
+                    <Tooltip title={i18n.t('bi.dataset_page.delete')}>
                       <IconButton
                         size='small'
                         onClick={() => handleDelete(dataset.id)}
-                        aria-label={t('bi.dataset_page.delete_1')}
+                        aria-label={i18n.t('bi.dataset_page.delete_1')}
                       >
                         <Trash2 size={16} />
                       </IconButton>
@@ -455,7 +426,6 @@ const DatasetPage = () => {
       )}
     </Box>
   );
-
   const renderEditorView = () => (
     <Box sx={{ p: 3 }}>
       <Box
@@ -472,13 +442,13 @@ const DatasetPage = () => {
             size='small'
             onClick={() => setViewMode('list')}
           >
-            返回列表
+            {i18n.t('pages.dataset_page.k4')}
           </Button>
           <Typography
             variant='h5'
             sx={{ fontWeight: 600 }}
           >
-            {selectedDataset ? t('bi.dataset_page.edit_1') : t('bi.dataset_page.create')}
+            {selectedDataset ? i18n.t('bi.dataset_page.edit_1') : i18n.t('bi.dataset_page.create')}
           </Typography>
         </Box>
         <Box sx={{ display: 'flex', gap: 2 }}>
@@ -486,17 +456,16 @@ const DatasetPage = () => {
             variant='outlined'
             onClick={() => setViewMode('list')}
           >
-            取消
+            {i18n.t('pages.dataset_page.k5')}
           </Button>
           <Button
             variant='contained'
             onClick={handleSave}
           >
-            保存
+            {i18n.t('pages.dataset_page.k6')}
           </Button>
         </Box>
       </Box>
-
       <Card
         elevation={0}
         sx={{ border: '1px solid', borderColor: 'divider' }}
@@ -507,23 +476,22 @@ const DatasetPage = () => {
             onChange={(_, v) => setEditorTab(v)}
             sx={{ mb: 3 }}
           >
-            <Tab label={t('bi.dataset_page.info')} />
-            <Tab label={t('bi.dataset_page.text_5656f1')} />
-            <Tab label={t('bi.dataset_page.search_1')} />
+            <Tab label={i18n.t('bi.dataset_page.info')} />
+            <Tab label={i18n.t('bi.dataset_page.text_5656f1')} />
+            <Tab label={i18n.t('bi.dataset_page.search_1')} />
           </Tabs>
-
           {editorTab === 0 && (
             <Box sx={{ maxWidth: 600 }}>
               <TextField
                 fullWidth
-                label={t('bi.dataset_page.name')}
+                label={i18n.t('bi.dataset_page.name')}
                 value={formData.name || ''}
                 onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                 sx={{ mb: 3 }}
               />
               <TextField
                 fullWidth
-                label={t('bi.dataset_page.description')}
+                label={i18n.t('bi.dataset_page.description')}
                 multiline
                 rows={3}
                 value={formData.description || ''}
@@ -534,22 +502,22 @@ const DatasetPage = () => {
                 fullWidth
                 sx={{ mb: 3 }}
               >
-                <InputLabel>数据源</InputLabel>
+                <InputLabel>{i18n.t('bi.dataset_page.k8')}</InputLabel>
                 <Select
                   value={formData.data_source_id || ''}
-                  label={t('bi.dataset_page.text_c11322')}
+                  label={i18n.t('bi.dataset_page.text_c11322')}
                   onChange={(e) => setFormData({ ...formData, data_source_id: e.target.value })}
                 >
-                  <MenuItem value='ds-mysql-001'>业务主数据库</MenuItem>
+                  <MenuItem value='ds-mysql-001'>{i18n.t('bi.dataset_page.k9')}</MenuItem>
                   <MenuItem value='ds-mysql-002'>MES生产数据库</MenuItem>
-                  <MenuItem value='ds-postgres-001'>数据仓库</MenuItem>
+                  <MenuItem value='ds-postgres-001'>{i18n.t('bi.dataset_page.k10')}</MenuItem>
                 </Select>
               </FormControl>
               <FormControl fullWidth>
-                <InputLabel>状态</InputLabel>
+                <InputLabel>{i18n.t('bi.dataset_page.k11')}</InputLabel>
                 <Select
                   value={formData.status || 'draft'}
-                  label={t('bi.dataset_page.status')}
+                  label={i18n.t('bi.dataset_page.status')}
                   onChange={(e) =>
                     setFormData({
                       ...formData,
@@ -557,14 +525,13 @@ const DatasetPage = () => {
                     })
                   }
                 >
-                  <MenuItem value='draft'>草稿</MenuItem>
-                  <MenuItem value='published'>已发布</MenuItem>
-                  <MenuItem value='archived'>已归档</MenuItem>
+                  <MenuItem value='draft'>{i18n.t('bi.dataset_page.k12')}</MenuItem>
+                  <MenuItem value='published'>{i18n.t('bi.dataset_page.k13')}</MenuItem>
+                  <MenuItem value='archived'>{i18n.t('bi.dataset_page.k14')}</MenuItem>
                 </Select>
               </FormControl>
             </Box>
           )}
-
           {editorTab === 1 && (
             <Box>
               <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 2 }}>
@@ -574,18 +541,18 @@ const DatasetPage = () => {
                   startIcon={<Plus size={16} />}
                   onClick={addField}
                 >
-                  添加字段
+                  {i18n.t('pages.dataset_page.k7')}
                 </Button>
               </Box>
               <TableContainer>
                 <Table size='small'>
                   <TableHead>
                     <TableRow>
-                      <TableCell>字段名</TableCell>
-                      <TableCell>显示名称</TableCell>
-                      <TableCell>类型</TableCell>
+                      <TableCell>{i18n.t('bi.dataset_page.k15')}</TableCell>
+                      <TableCell>{i18n.t('bi.dataset_page.k16')}</TableCell>
+                      <TableCell>{i18n.t('bi.dataset_page.k17')}</TableCell>
                       <TableCell>维度/度量</TableCell>
-                      <TableCell align='right'>操作</TableCell>
+                      <TableCell align='right'>{i18n.t('bi.dataset_page.k18')}</TableCell>
                     </TableRow>
                   </TableHead>
                   <TableBody>
@@ -618,11 +585,11 @@ const DatasetPage = () => {
                                 })
                               }
                             >
-                              <MenuItem value='string'>字符串</MenuItem>
-                              <MenuItem value='number'>数字</MenuItem>
-                              <MenuItem value='date'>日期</MenuItem>
-                              <MenuItem value='datetime'>日期时间</MenuItem>
-                              <MenuItem value='boolean'>布尔</MenuItem>
+                              <MenuItem value='string'>{i18n.t('bi.dataset_page.k19')}</MenuItem>
+                              <MenuItem value='number'>{i18n.t('bi.dataset_page.k20')}</MenuItem>
+                              <MenuItem value='date'>{i18n.t('bi.dataset_page.k21')}</MenuItem>
+                              <MenuItem value='datetime'>{i18n.t('bi.dataset_page.k22')}</MenuItem>
+                              <MenuItem value='boolean'>{i18n.t('bi.dataset_page.k23')}</MenuItem>
                             </Select>
                           </FormControl>
                         </TableCell>
@@ -640,8 +607,8 @@ const DatasetPage = () => {
                                 })
                               }
                             >
-                              <MenuItem value='dimension'>维度</MenuItem>
-                              <MenuItem value='measure'>度量</MenuItem>
+                              <MenuItem value='dimension'>{i18n.t('bi.dataset_page.k24')}</MenuItem>
+                              <MenuItem value='measure'>{i18n.t('bi.dataset_page.k25')}</MenuItem>
                             </Select>
                           </FormControl>
                         </TableCell>
@@ -649,7 +616,7 @@ const DatasetPage = () => {
                           <IconButton
                             size='small'
                             onClick={() => removeField(field.id)}
-                            aria-label={t('bi.dataset_page.delete_2')}
+                            aria-label={i18n.t('bi.dataset_page.delete_2')}
                           >
                             <Trash2 size={14} />
                           </IconButton>
@@ -661,7 +628,6 @@ const DatasetPage = () => {
               </TableContainer>
             </Box>
           )}
-
           {editorTab === 2 && (
             <Box>
               <Box
@@ -680,7 +646,7 @@ const DatasetPage = () => {
                   onClick={handleTestSql}
                   disabled={testSqlMutation.isPending}
                 >
-                  运行查询
+                  {i18n.t('pages.dataset_page.k8')}
                 </Button>
               </Box>
               <TextField
@@ -702,11 +668,10 @@ const DatasetPage = () => {
       </Card>
     </Box>
   );
-
   return (
     <PageContainer
-      title={t('bi.dataset_page.text_db302a')}
-      subtitle={t('bi.dataset_page.text_3392ac')}
+      title={i18n.t('bi.dataset_page.text_db302a')}
+      subtitle={i18n.t('bi.dataset_page.text_3392ac')}
       headerProps={{
         pageIcon: <Database style={{ width: 20, height: 20 }} />,
         pageGradient: `linear-gradient(135deg, ${ct.success.main} 0%, ${ct.success.dark} 100%)`,
@@ -718,9 +683,9 @@ const DatasetPage = () => {
         title=''
         subtitle=''
         breadcrumbs={[
-          { label: t('bi.dataset_page.home'), href: '/dashboard' },
+          { label: i18n.t('bi.dataset_page.home'), href: '/dashboard' },
           { label: 'BI' },
-          { label: t('bi.dataset_page.text_e20804') },
+          { label: i18n.t('bi.dataset_page.text_e20804') },
         ]}
       >
         {viewMode === 'list' ? renderListView() : renderEditorView()}
@@ -728,5 +693,4 @@ const DatasetPage = () => {
     </PageContainer>
   );
 };
-
 export default DatasetPage;

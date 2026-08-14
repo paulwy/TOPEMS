@@ -6,6 +6,7 @@ import { imApi } from '../../api/im';
 import { useNotificationStore } from '@/store';
 import { logger } from '@/utils/logger';
 import { designTokens, semanticTokens } from '@topems/tokens';
+import i18n from '@/i18n';
 
 interface ContactListProps {
   onSelectContact?: (friend: Friend) => void;
@@ -62,8 +63,8 @@ export const ContactList: React.FC<ContactListProps> = ({ onSelectContact }) => 
       });
       if (response.success) {
         addNotification({
-          title: '成功',
-          message: '分组创建成功',
+          title: i18n.t('components.contact_list.k0'),
+          message: i18n.t('components.contact_list.k1'),
           type: 'success',
         });
         setNewGroupName('');
@@ -73,8 +74,8 @@ export const ContactList: React.FC<ContactListProps> = ({ onSelectContact }) => 
     } catch (error: unknown) {
       logger.error('Failed to create group:', error);
       addNotification({
-        title: '失败',
-        message: '分组创建失败',
+        title: i18n.t('components.contact_list.k2'),
+        message: i18n.t('components.contact_list.k3'),
         type: 'error',
       });
     }
@@ -86,8 +87,8 @@ export const ContactList: React.FC<ContactListProps> = ({ onSelectContact }) => 
       const response = await imApi.acceptFriendRequest(userId, friend.friend_id);
       if (response.success) {
         addNotification({
-          title: '成功',
-          message: '已接受好友请求',
+          title: i18n.t('components.contact_list.k4'),
+          message: i18n.t('components.contact_list.k5'),
           type: 'success',
         });
         loadFriends();
@@ -103,8 +104,8 @@ export const ContactList: React.FC<ContactListProps> = ({ onSelectContact }) => 
       const response = await imApi.rejectFriendRequest(userId, friend.friend_id);
       if (response.success) {
         addNotification({
-          title: '成功',
-          message: '已拒绝好友请求',
+          title: i18n.t('components.contact_list.k6'),
+          message: i18n.t('components.contact_list.k7'),
           type: 'success',
         });
         loadFriends();
@@ -115,15 +116,15 @@ export const ContactList: React.FC<ContactListProps> = ({ onSelectContact }) => 
   };
 
   const handleRemoveFriend = async (friendId: string) => {
-    if (!confirm('确定要删除这个好友吗？')) return;
+    if (!confirm(i18n.t('components.contact_list.k8'))) return;
 
     try {
       const userId = 'current-user';
       const response = await imApi.removeFriend(userId, friendId);
       if (response.success) {
         addNotification({
-          title: '成功',
-          message: '好友已删除',
+          title: i18n.t('components.contact_list.k9'),
+          message: i18n.t('components.contact_list.k10'),
           type: 'success',
         });
         setShowFriendMenu(false);
@@ -166,7 +167,7 @@ export const ContactList: React.FC<ContactListProps> = ({ onSelectContact }) => 
           />
           <input
             type='text'
-            placeholder='搜索联系人...'
+            placeholder={i18n.t('components.contact_list.k0')}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             style={{
@@ -250,7 +251,7 @@ export const ContactList: React.FC<ContactListProps> = ({ onSelectContact }) => 
         {activeTab !== 'groups' && pendingRequests.length > 0 && (
           <div style={{ padding: 8 }}>
             <div style={{ fontSize: 12, color: theme.palette.text.secondary, padding: '4px 8px' }}>
-              待处理请求
+              {i18n.t('components.contact_list.k1')}
             </div>
             {pendingRequests.map((friend) => (
               <div
@@ -300,7 +301,7 @@ export const ContactList: React.FC<ContactListProps> = ({ onSelectContact }) => 
                       {friend.friend_name}
                     </div>
                     <div style={{ fontSize: 12, color: theme.palette.text.secondary }}>
-                      等待通过
+                      {i18n.t('components.contact_list.k2')}
                     </div>
                   </div>
                 </div>
@@ -315,7 +316,7 @@ export const ContactList: React.FC<ContactListProps> = ({ onSelectContact }) => 
                       border: 'none',
                       cursor: 'pointer',
                     }}
-                    title='接受'
+                    title={i18n.t('components.contact_list.k11')}
                   >
                     <Check style={{ width: 16, height: 16 }} />
                   </button>
@@ -329,7 +330,7 @@ export const ContactList: React.FC<ContactListProps> = ({ onSelectContact }) => 
                       border: 'none',
                       cursor: 'pointer',
                     }}
-                    title='拒绝'
+                    title={i18n.t('components.contact_list.k12')}
                   >
                     <X style={{ width: 16, height: 16 }} />
                   </button>
@@ -342,7 +343,7 @@ export const ContactList: React.FC<ContactListProps> = ({ onSelectContact }) => 
         {activeTab !== 'groups' && filteredFriends.length > 0 && (
           <div style={{ padding: 8 }}>
             <div style={{ fontSize: 12, color: theme.palette.text.secondary, padding: '4px 8px' }}>
-              好友
+              {i18n.t('components.contact_list.k3')}
             </div>
             {filteredFriends
               .filter((f) => f.status === 'accepted')
@@ -415,10 +416,10 @@ export const ContactList: React.FC<ContactListProps> = ({ onSelectContact }) => 
                       </div>
                       <div style={{ fontSize: 12, color: theme.palette.text.secondary }}>
                         {friend.is_online
-                          ? '在线'
+                          ? i18n.t('components.contact_list.k13')
                           : friend.last_seen
-                            ? `最后活跃: ${new Date(friend.last_seen).toLocaleString()}`
-                            : '离线'}
+                            ? `${i18n.t('components.contact_list.k4')} ${new Date(friend.last_seen).toLocaleString()}`
+                            : i18n.t('components.contact_list.k14')}
                       </div>
                     </div>
                   </div>
@@ -469,7 +470,7 @@ export const ContactList: React.FC<ContactListProps> = ({ onSelectContact }) => 
                           cursor: 'pointer',
                         }}
                       >
-                        删除好友
+                        {i18n.t('components.contact_list.k5')}
                       </button>
                     </div>
                   )}
@@ -493,7 +494,7 @@ export const ContactList: React.FC<ContactListProps> = ({ onSelectContact }) => 
                     color: theme.palette.grey[300],
                   }}
                 />
-                <p style={{ fontSize: 14 }}>暂无分组</p>
+                <p style={{ fontSize: 14 }}>{i18n.t('components.contact_list.k15')}</p>
                 <button
                   onClick={() => setShowAddModal(true)}
                   style={{
@@ -505,7 +506,7 @@ export const ContactList: React.FC<ContactListProps> = ({ onSelectContact }) => 
                     cursor: 'pointer',
                   }}
                 >
-                  创建分组
+                  {i18n.t('components.contact_list.k6')}
                 </button>
               </div>
             ) : (
@@ -549,7 +550,7 @@ export const ContactList: React.FC<ContactListProps> = ({ onSelectContact }) => 
                         {group.name}
                       </div>
                       <div style={{ fontSize: 12, color: theme.palette.text.secondary }}>
-                        0 位联系人
+                        {i18n.t('components.contact_list.0_7')}
                       </div>
                     </div>
                   </div>
@@ -581,7 +582,7 @@ export const ContactList: React.FC<ContactListProps> = ({ onSelectContact }) => 
                 marginBottom: 16,
               }}
             />
-            <p style={{ fontSize: 14 }}>暂无联系人</p>
+            <p style={{ fontSize: 14 }}>{i18n.t('components.contact_list.k16')}</p>
           </div>
         )}
       </div>
@@ -606,7 +607,7 @@ export const ContactList: React.FC<ContactListProps> = ({ onSelectContact }) => 
             }}
           >
             <Plus style={{ width: 16, height: 16 }} />
-            <span style={{ fontSize: 14, fontWeight: 500 }}>创建分组</span>
+            <span style={{ fontSize: 14, fontWeight: 500 }}>{i18n.t('components.contact_list.k17')}</span>
           </button>
         </div>
       )}
@@ -634,11 +635,11 @@ export const ContactList: React.FC<ContactListProps> = ({ onSelectContact }) => 
             }}
           >
             <h3 style={{ fontWeight: 500, color: theme.palette.text.primary, marginBottom: 16 }}>
-              创建分组
+              {i18n.t('components.contact_list.k8')}
             </h3>
             <input
               type='text'
-              placeholder='分组名称'
+              placeholder={i18n.t('components.contact_list.k18')}
               value={newGroupName}
               onChange={(e) => setNewGroupName(e.target.value)}
               style={{
@@ -664,7 +665,7 @@ export const ContactList: React.FC<ContactListProps> = ({ onSelectContact }) => 
                   cursor: 'pointer',
                 }}
               >
-                取消
+                {i18n.t('components.contact_list.k9')}
               </button>
               <button
                 onClick={handleCreateGroup}
@@ -680,7 +681,7 @@ export const ContactList: React.FC<ContactListProps> = ({ onSelectContact }) => 
                   cursor: 'pointer',
                 }}
               >
-                创建
+                {i18n.t('components.contact_list.k10')}
               </button>
             </div>
           </div>

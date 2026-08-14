@@ -13,6 +13,7 @@ import { designTokens } from '@/theme/tokens';
 import { DOC_PATHS } from '@/modules/doc/config';
 
 import {QUERY_KEYS, CACHE_DURATIONS} from '@/lib/reactQuery';
+import i18n from '@/i18n';
 
 const ct= designTokens.colors;
 
@@ -30,12 +31,12 @@ const DocsFileDetailPage: React.FC = () => {
   } = useQuery<FileMetadata>({
     queryKey: id ? QUERY_KEYS.DOC.DOCUMENT(id) : ['doc', 'document', 'none'],
     queryFn: async () => {
-      if (!id) throw new Error('缺少文件 ID');
+      if (!id) throw new Error(i18n.t('pages.file_detail_page.id_0'));
       const res = await docApi.get(id);
       if (res.code === 200 && res.data) {
         return res.data;
       }
-      throw new Error(res.message || '加载文件信息失败');
+      throw new Error(res.message || i18n.t('pages.file_detail_page.k1'));
     },
     enabled: !!id,
   
@@ -44,19 +45,19 @@ const DocsFileDetailPage: React.FC = () => {
   const errorMessage = queryError
     ? queryError instanceof Error
       ? queryError.message
-      : '加载文件信息失败'
+      : i18n.t('pages.file_detail_page.k2')
     : undefined;
 
   const deleteMutation = useMutation({
     mutationFn: async (fileId: string) => {
       const res = await docApi.delete(fileId);
       if (res.code !== 200) {
-        throw new Error(res.message || '删除失败');
+        throw new Error(res.message || i18n.t('pages.file_detail_page.k3'));
       }
       return res;
     },
     onSuccess: () => {
-      success('文件删除成功');
+      success(i18n.t('pages.file_detail_page.k4'));
       if (id) {
         queryClient.invalidateQueries({ queryKey: QUERY_KEYS.DOC.DOCUMENTS ,
   exact: false,
@@ -67,7 +68,7 @@ const DocsFileDetailPage: React.FC = () => {
     },
     onError: (err: unknown) => {
       apiLogger.error('Failed to delete file:', err);
-      error(err instanceof Error ? err.message : '删除文件失败');
+      error(err instanceof Error ? err.message : i18n.t('pages.file_detail_page.k5'));
     },
   });
 
@@ -100,27 +101,27 @@ const DocsFileDetailPage: React.FC = () => {
         }}
       >
         <Box>
-          <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>文件名称</InputLabel>
+          <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>{i18n.t('pages.file_detail_page.k6')}</InputLabel>
           <Typography sx={{ fontWeight: 'medium', mt: 0.5 }}>{file.name}</Typography>
         </Box>
         <Box>
-          <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>文件类型</InputLabel>
+          <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>{i18n.t('pages.file_detail_page.k7')}</InputLabel>
           <Typography sx={{ mt: 0.5 }}>{file.content_type || '-'}</Typography>
         </Box>
         <Box>
-          <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>文件大小</InputLabel>
+          <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>{i18n.t('pages.file_detail_page.k8')}</InputLabel>
           <Typography sx={{ mt: 0.5 }}>{formatFileSize(file.size)}</Typography>
         </Box>
         <Box>
-          <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>所属文件夹</InputLabel>
-          <Typography sx={{ mt: 0.5 }}>{file.folder_id || '根目录'}</Typography>
+          <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>{i18n.t('pages.file_detail_page.k9')}</InputLabel>
+          <Typography sx={{ mt: 0.5 }}>{file.folder_id || i18n.t('pages.file_detail_page.k10')}</Typography>
         </Box>
         <Box>
-          <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>创建者</InputLabel>
+          <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>{i18n.t('pages.file_detail_page.k11')}</InputLabel>
           <Typography sx={{ mt: 0.5 }}>{file.created_by || '-'}</Typography>
         </Box>
         <Box>
-          <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>文件ID</InputLabel>
+          <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>{i18n.t('pages.file_detail_page.id_12')}</InputLabel>
           <Typography sx={{ mt: 0.5, fontFamily: 'monospace', fontSize: '0.875rem' }}>
             {file.id.substring(0, 8)}...
           </Typography>
@@ -140,11 +141,11 @@ const DocsFileDetailPage: React.FC = () => {
         }}
       >
         <Box>
-          <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>创建时间</InputLabel>
+          <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>{i18n.t('pages.file_detail_page.k13')}</InputLabel>
           <Typography sx={{ mt: 0.5 }}>{formatDate(file.created_at)}</Typography>
         </Box>
         <Box>
-          <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>更新时间</InputLabel>
+          <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>{i18n.t('pages.file_detail_page.k14')}</InputLabel>
           <Typography sx={{ mt: 0.5 }}>{formatDate(file.updated_at)}</Typography>
         </Box>
       </Box>
@@ -155,7 +156,7 @@ const DocsFileDetailPage: React.FC = () => {
     if (!file) return { id: 'footer', content: null };
     return {
       id: 'footer',
-      title: '其他信息',
+      title: i18n.t('pages.file_detail_page.k15'),
       content: (
         <Box
           sx={{
@@ -169,7 +170,7 @@ const DocsFileDetailPage: React.FC = () => {
               variant='body2'
               color='text.secondary'
             >
-              文件ID
+              {i18n.t('pages.file_detail_page.id_0')}
             </Typography>
             <Typography sx={{ fontWeight: 'medium', mt: 0.5, fontFamily: 'monospace' }}>
               {file.id.substring(0, 8)}...
@@ -180,7 +181,7 @@ const DocsFileDetailPage: React.FC = () => {
               variant='body2'
               color='text.secondary'
             >
-              文件类型
+              {i18n.t('pages.file_detail_page.k1')}
             </Typography>
             <Typography sx={{ fontWeight: 'medium', mt: 0.5 }}>
               {file.content_type || '-'}
@@ -191,7 +192,7 @@ const DocsFileDetailPage: React.FC = () => {
               variant='body2'
               color='text.secondary'
             >
-              文件大小
+              {i18n.t('pages.file_detail_page.k2')}
             </Typography>
             <Typography sx={{ fontWeight: 'medium', mt: 0.5 }}>
               {formatFileSize(file.size)}
@@ -204,8 +205,8 @@ const DocsFileDetailPage: React.FC = () => {
 
   const tabs = useMemo<TabConfig[]>(
     () => [
-      { id: 'basic', label: '基本信息', content: basicInfoContent || <></> },
-      { id: 'time', label: '时间信息', content: timeInfoContent || <></> },
+      { id: 'basic', label: i18n.t('pages.file_detail_page.k16'), content: basicInfoContent || <></> },
+      { id: 'time', label: i18n.t('pages.file_detail_page.k17'), content: timeInfoContent || <></> },
     ],
     [basicInfoContent, timeInfoContent]
   );
@@ -227,20 +228,20 @@ const DocsFileDetailPage: React.FC = () => {
 
   return (
     <PageContainer
-      title='文件详情'
-      subtitle='查看文件详细信息'
+      title={i18n.t('pages.file_detail_page.k18')}
+      subtitle={i18n.t('pages.file_detail_page.k19')}
     >
       <DetailPageTemplate
         title=''
         subtitle=''
-        detailItemName={file?.name || '文件详情'}
+        detailItemName={file?.name || i18n.t('pages.file_detail_page.k20')}
         backHref={DOC_PATHS.documents}
         loading={loading}
         error={errorMessage}
         onEdit={() => id && navigate(DOC_PATHS.documentDetail.replace(':id', id))}
         onDelete={() => setDeleteDialogOpen(true)}
         onDownload={() => {
-          success('文件下载功能开发中');
+          success(i18n.t('pages.file_detail_page.k21'));
         }}
         infoCard={infoCard}
         tabs={tabs}
@@ -250,8 +251,8 @@ const DocsFileDetailPage: React.FC = () => {
         isOpen={deleteDialogOpen}
         onClose={() => setDeleteDialogOpen(false)}
         onConfirm={handleDelete}
-        title='确认删除'
-        message='确定要删除此文件吗？'
+        title={i18n.t('pages.file_detail_page.k22')}
+        message={i18n.t('pages.file_detail_page.k23')}
         danger
       />
     </PageContainer>

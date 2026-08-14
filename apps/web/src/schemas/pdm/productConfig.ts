@@ -1,9 +1,10 @@
 import type { EntitySchema } from '@/schema';
+import i18n from '@/i18n';
 
 export const productConfigSchema: EntitySchema = {
   entity: 'pdm_product_config',
-  title: '产品配置',
-  description: '管理产品配置信息，包括名称、编码、状态、属性、选项等',
+  title: i18n.t('pdm.product_config.k0'),
+  description: i18n.t('pdm.product_config.k1'),
 
   api: {
     module: 'pdm',
@@ -13,7 +14,7 @@ export const productConfigSchema: EntitySchema = {
   fields: [
     {
       name: 'name',
-      label: '配置名称',
+      label: i18n.t('pdm.product_config.k2'),
       type: 'text',
       required: true,
       sortable: true,
@@ -21,7 +22,7 @@ export const productConfigSchema: EntitySchema = {
     },
     {
       name: 'code',
-      label: '配置编码',
+      label: i18n.t('pdm.product_config.k3'),
       type: 'text',
       required: true,
       readonlyOnEdit: true,
@@ -30,38 +31,38 @@ export const productConfigSchema: EntitySchema = {
     },
     {
       name: 'status',
-      label: '状态',
+      label: i18n.t('pdm.product_config.k4'),
       type: 'select',
       defaultValue: 'draft',
       options: {
         type: 'static',
         options: [
-          { value: 'draft', label: '草稿' },
-          { value: 'active', label: '启用' },
-          { value: 'archived', label: '归档' },
+          { value: 'draft', label: i18n.t('pdm.product_config.k5') },
+          { value: 'active', label: i18n.t('pdm.product_config.k6') },
+          { value: 'archived', label: i18n.t('pdm.product_config.k7') },
         ],
       },
       listWidth: 100,
     },
     {
       name: 'color',
-      label: '颜色',
+      label: i18n.t('pdm.product_config.k8'),
       type: 'select',
       options: {
         type: 'static',
         options: [
-          { value: '红色', label: '红色' },
-          { value: '蓝色', label: '蓝色' },
-          { value: '绿色', label: '绿色' },
-          { value: '黑色', label: '黑色' },
-          { value: '白色', label: '白色' },
+          { value: i18n.t('pdm.product_config.k9'), label: i18n.t('pdm.product_config.k10') },
+          { value: i18n.t('pdm.product_config.k11'), label: i18n.t('pdm.product_config.k12') },
+          { value: i18n.t('pdm.product_config.k13'), label: i18n.t('pdm.product_config.k14') },
+          { value: i18n.t('pdm.product_config.k15'), label: i18n.t('pdm.product_config.k16') },
+          { value: i18n.t('pdm.product_config.k17'), label: i18n.t('pdm.product_config.k18') },
         ],
       },
       listWidth: 80,
     },
     {
       name: 'size',
-      label: '尺寸',
+      label: i18n.t('pdm.product_config.k19'),
       type: 'select',
       options: {
         type: 'static',
@@ -77,44 +78,44 @@ export const productConfigSchema: EntitySchema = {
     },
     {
       name: 'material',
-      label: '材质',
+      label: i18n.t('pdm.product_config.k20'),
       type: 'select',
       options: {
         type: 'static',
         options: [
-          { value: '塑料', label: '塑料' },
-          { value: '金属', label: '金属' },
-          { value: '玻璃', label: '玻璃' },
-          { value: '木材', label: '木材' },
+          { value: i18n.t('pdm.product_config.k21'), label: i18n.t('pdm.product_config.k22') },
+          { value: i18n.t('pdm.product_config.k23'), label: i18n.t('pdm.product_config.k24') },
+          { value: i18n.t('pdm.product_config.k25'), label: i18n.t('pdm.product_config.k26') },
+          { value: i18n.t('pdm.product_config.k27'), label: i18n.t('pdm.product_config.k28') },
         ],
       },
       listWidth: 80,
     },
     {
       name: 'grade',
-      label: '等级',
+      label: i18n.t('pdm.product_config.k29'),
       type: 'select',
       options: {
         type: 'static',
         options: [
-          { value: 'A级', label: 'A级' },
-          { value: 'B级', label: 'B级' },
-          { value: 'C级', label: 'C级' },
+          { value: i18n.t('shared.product_config.a_0'), label: i18n.t('shared.product_config.a_1') },
+          { value: i18n.t('shared.product_config.b_2'), label: i18n.t('shared.product_config.b_3') },
+          { value: i18n.t('shared.product_config.c_4'), label: i18n.t('shared.product_config.c_5') },
         ],
       },
       listWidth: 80,
     },
     {
       name: 'options',
-      label: '可选服务',
+      label: i18n.t('pdm.product_config.k30'),
       type: 'checkbox-group',
       options: {
         type: 'static',
         options: [
-          { value: '快速发货', label: '快速发货' },
-          { value: '免费配送', label: '免费配送' },
-          { value: '质量保证', label: '质量保证' },
-          { value: '专属客服', label: '专属客服' },
+          { value: i18n.t('pdm.product_config.k31'), label: i18n.t('pdm.product_config.k32') },
+          { value: i18n.t('pdm.product_config.k33'), label: i18n.t('pdm.product_config.k34') },
+          { value: i18n.t('pdm.product_config.k35'), label: i18n.t('pdm.product_config.k36') },
+          { value: i18n.t('pdm.product_config.k37'), label: i18n.t('pdm.product_config.k38') },
         ],
       },
       showInList: false,
@@ -133,21 +134,21 @@ export const productConfigSchema: EntitySchema = {
         archived: 'error',
       },
       labelMap: {
-        active: '启用',
-        draft: '草稿',
-        archived: '归档',
+        active: i18n.t('pdm.product_config.k39'),
+        draft: i18n.t('pdm.product_config.k40'),
+        archived: i18n.t('pdm.product_config.k41'),
       },
     },
     filters: [
       {
         id: 'status',
-        label: '状态',
+        label: i18n.t('pdm.product_config.k42'),
         type: 'select',
         options: [
-          { label: '全部状态', value: 'all' },
-          { label: '草稿', value: 'draft' },
-          { label: '启用', value: 'active' },
-          { label: '归档', value: 'archived' },
+          { label: i18n.t('pdm.product_config.k43'), value: 'all' },
+          { label: i18n.t('pdm.product_config.k44'), value: 'draft' },
+          { label: i18n.t('pdm.product_config.k45'), value: 'active' },
+          { label: i18n.t('pdm.product_config.k46'), value: 'archived' },
         ],
       },
     ],
@@ -157,21 +158,21 @@ export const productConfigSchema: EntitySchema = {
 
   formSections: [
     {
-      title: '基本信息',
+      title: i18n.t('pdm.product_config.k47'),
       fields: ['name', 'code', 'status'],
     },
     {
-      title: '属性配置',
+      title: i18n.t('pdm.product_config.k48'),
       fields: ['color', 'size', 'material', 'grade'],
     },
     {
-      title: '可选服务',
+      title: i18n.t('pdm.product_config.k49'),
       fields: ['options'],
     },
   ],
 
   formColCount: 2,
-  createTitle: '创建产品配置',
-  editTitle: '编辑产品配置',
-  detailTitle: '产品配置详情',
+  createTitle: i18n.t('pdm.product_config.k50'),
+  editTitle: i18n.t('pdm.product_config.k51'),
+  detailTitle: i18n.t('pdm.product_config.k52'),
 };

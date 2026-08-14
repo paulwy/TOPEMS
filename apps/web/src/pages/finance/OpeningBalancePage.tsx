@@ -50,6 +50,7 @@ import { PageContainer } from '@/components/common';
 
 import { useTranslation } from 'react-i18next';
 import i18n from '@/i18n';
+import { designTokens } from '@topems/tokens';
 // 科目类别配置
 const CATEGORY_CONFIG: Record<
   AccountCategory,
@@ -610,7 +611,7 @@ export default function OpeningBalancePage() {
                   </Typography>
                   <ul
                     style={{
-                      margin: '8px 0 0 0',
+                      margin: `${designTokens.spacing.sm} 0 0 0`,
                       paddingLeft: 16,
                       fontSize: '0.875rem',
                       color: theme.palette.warning.dark,

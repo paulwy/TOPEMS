@@ -1,5 +1,6 @@
 import { Dialog, DialogContent, DialogTitle, Button } from '@mui/material';
 import { Sparkles } from 'lucide-react';
+import i18n from '@/i18n';
 
 export interface AIGenerateModalProps {
   isOpen: boolean;
@@ -22,8 +23,8 @@ export function AIGenerateModal({
   children,
   isLoading = false,
   onConfirm,
-  confirmText = '确认',
-  cancelText = '取消',
+  confirmText = i18n.t('ai.ai_generate_modal.k0'),
+  cancelText = i18n.t('ai.ai_generate_modal.k1'),
   extraActions,
 }: AIGenerateModalProps) {
   const handleClose = () => {

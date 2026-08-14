@@ -126,7 +126,7 @@ const RoleManagementPage: React.FC = () => {
 });
     },
     onError: (err: unknown) => {
-      apiLogger.error('添加权限失败:', err);
+      apiLogger.error(i18n.t('pages.role_management_page.k0'), err);
       addNotification({
         title: i18n.t('iam.role_management_page.k9'),
         message: extractErrorMessage(err, i18n.t('iam.role_management_page.k10')),
@@ -155,7 +155,7 @@ const RoleManagementPage: React.FC = () => {
 });
     },
     onError: (err: unknown) => {
-      apiLogger.error('移除权限失败:', err);
+      apiLogger.error(i18n.t('pages.role_management_page.k1'), err);
       addNotification({
         title: i18n.t('iam.role_management_page.k14'),
         message: extractErrorMessage(err, i18n.t('iam.role_management_page.k15')),
@@ -206,7 +206,7 @@ const RoleManagementPage: React.FC = () => {
             variant='subtitle2'
             sx={{ mb: 2, fontWeight: 600 }}
           >
-            可选权限
+            {i18n.t('pages.role_management_page.k0')}
           </Typography>
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
             {allPermissions.map((perm) => {
@@ -244,7 +244,7 @@ const RoleManagementPage: React.FC = () => {
                       variant='caption'
                       color='text.disabled'
                     >
-                      分类: {perm.category} | 权限码: {perm.code}
+                      [i18n.t('pages.role_management_page.k1')]: {perm.category} | {i18n.t('pages.role_management_page.k2')}{perm.code}
                     </Typography>
                   </Box>
                   {hasPermission ? (
@@ -256,7 +256,7 @@ const RoleManagementPage: React.FC = () => {
                         selectedRole && handleRemovePermission(selectedRole.id, perm.id)
                       }
                     >
-                      移除
+                      {i18n.t('pages.role_management_page.k3')}
                     </Button>
                   ) : (
                     <Button
@@ -264,7 +264,7 @@ const RoleManagementPage: React.FC = () => {
                       size='small'
                       onClick={() => selectedRole && handleAddPermission(selectedRole.id, perm.id)}
                     >
-                      添加
+                      {i18n.t('pages.role_management_page.k4')}
                     </Button>
                   )}
                 </Box>

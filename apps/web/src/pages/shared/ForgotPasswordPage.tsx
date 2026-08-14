@@ -18,6 +18,7 @@ import {
   TextField,
   Button,
 } from '@mui/material';
+import i18n from '@/i18n';
 
 import { ModeToggle } from '@/components/theme/ModeToggle';
 import { designTokens } from '@/theme/tokens';
@@ -28,17 +29,17 @@ import { queryClient, QUERY_KEYS } from '@/lib/reactQuery';
 const ct= designTokens.colors;
 
 const requestResetSchema = z.object({
-  email: z.string().email({ message: '请输入有效的邮箱地址' }),
+  email: z.string().email({ message: i18n.t('pages.forgot_password_page.k0') }),
 });
 
 const resetPasswordSchema = z
   .object({
-    token: z.string().min(1, { message: '重置令牌无效' }),
-    password: z.string().min(6, { message: '密码至少需要6个字符' }),
-    confirmPassword: z.string().min(6, { message: '请确认密码' }),
+    token: z.string().min(1, { message: i18n.t('pages.forgot_password_page.k1') }),
+    password: z.string().min(6, { message: i18n.t('pages.forgot_password_page.6_2') }),
+    confirmPassword: z.string().min(6, { message: i18n.t('pages.forgot_password_page.k3') }),
   })
   .refine((data) => data.password === data.confirmPassword, {
-    message: '两次输入的密码不一致',
+    message: i18n.t('pages.forgot_password_page.k4'),
     path: ['confirmPassword'],
   });
 
@@ -83,27 +84,27 @@ const ForgotPasswordPage: React.FC = () => {
         exact: false,
         refetchType: 'active',
       });
-      apiLogger.info('密码重置请求响应:', response);
+      apiLogger.info(i18n.t('pages.forgot_password_page.k0'), response);
       if (response.success) {
         setEmailSent(true);
         addNotification({
-          title: '邮件已发送',
-          message: '请查收邮箱中的重置密码链接',
+          title: i18n.t('pages.forgot_password_page.k5'),
+          message: i18n.t('pages.forgot_password_page.k6'),
           type: 'success',
         });
       } else {
         addNotification({
-          title: '请求失败',
-          message: response.message || '操作失败',
+          title: i18n.t('pages.forgot_password_page.k7'),
+          message: response.message || i18n.t('pages.forgot_password_page.k8'),
           type: 'error',
         });
       }
     },
     onError: (err: unknown) => {
-      apiLogger.error('密码重置请求错误:', err);
+      apiLogger.error(i18n.t('pages.forgot_password_page.k1'), err);
       addNotification({
-        title: '错误',
-        message: (err as { message?: string }).message || '请求失败',
+        title: i18n.t('pages.forgot_password_page.k9'),
+        message: (err as { message?: string }).message || i18n.t('pages.forgot_password_page.k10'),
         type: 'error',
       });
     },
@@ -122,27 +123,27 @@ const ForgotPasswordPage: React.FC = () => {
         exact: false,
         refetchType: 'active',
       });
-      apiLogger.info('密码重置响应:', response);
+      apiLogger.info(i18n.t('pages.forgot_password_page.k2'), response);
       if (response.success) {
         setResetSuccess(true);
         addNotification({
-          title: '密码重置成功',
-          message: '请使用新密码登录',
+          title: i18n.t('pages.forgot_password_page.k11'),
+          message: i18n.t('pages.forgot_password_page.k12'),
           type: 'success',
         });
       } else {
         addNotification({
-          title: '重置失败',
-          message: response.message || '操作失败',
+          title: i18n.t('pages.forgot_password_page.k13'),
+          message: response.message || i18n.t('pages.forgot_password_page.k14'),
           type: 'error',
         });
       }
     },
     onError: (err: unknown) => {
-      apiLogger.error('密码重置错误:', err);
+      apiLogger.error(i18n.t('pages.forgot_password_page.k3'), err);
       addNotification({
-        title: '错误',
-        message: (err as { message?: string }).message || '请求失败',
+        title: i18n.t('pages.forgot_password_page.k15'),
+        message: (err as { message?: string }).message || i18n.t('pages.forgot_password_page.k16'),
         type: 'error',
       });
     },
@@ -281,19 +282,19 @@ const ForgotPasswordPage: React.FC = () => {
             variant='h4'
             sx={{ fontWeight: 700, color: 'common.white' }}
           >
-            {isResetMode ? '重置密码' : '忘记密码'}
+            {isResetMode ? i18n.t('pages.forgot_password_page.k18') : i18n.t('pages.forgot_password_page.k17')}
           </Typography>
           <Typography
             variant='body2'
             sx={{ color: 'common.white', mt: 1 }}
           >
             {emailSent
-              ? '重置邮件已发送'
+              ? i18n.t('pages.forgot_password_page.k19')
               : resetSuccess
-                ? '密码已重置'
+                ? i18n.t('pages.forgot_password_page.k20')
                 : isResetMode
-                  ? '请设置新密码'
-                  : '输入邮箱以重置密码'}
+                  ? i18n.t('pages.forgot_password_page.k21')
+                  : i18n.t('pages.forgot_password_page.k22')}
           </Typography>
         </Box>
 
@@ -304,7 +305,7 @@ const ForgotPasswordPage: React.FC = () => {
                 variant='body2'
                 sx={{ color: 'grey.600', mb: 3 }}
               >
-                我们已向您的邮箱发送了密码重置链接，请查收并点击链接完成重置。
+                {i18n.t('pages.forgot_password_page.k0')}
               </Typography>
               <Button
                 onClick={() => navigate(AUTH_PATHS.login)}
@@ -320,7 +321,7 @@ const ForgotPasswordPage: React.FC = () => {
                   },
                 }}
               >
-                返回登录
+                {i18n.t('pages.forgot_password_page.k1')}
               </Button>
             </Box>
           )}
@@ -331,7 +332,7 @@ const ForgotPasswordPage: React.FC = () => {
                 variant='body2'
                 sx={{ color: 'grey.600', mb: 3 }}
               >
-                您的密码已成功重置，请使用新密码登录。
+                {i18n.t('pages.forgot_password_page.k2')}
               </Typography>
               <Button
                 onClick={() => navigate(AUTH_PATHS.login)}
@@ -347,7 +348,7 @@ const ForgotPasswordPage: React.FC = () => {
                   },
                 }}
               >
-                去登录
+                {i18n.t('pages.forgot_password_page.k3')}
               </Button>
             </Box>
           )}
@@ -356,9 +357,9 @@ const ForgotPasswordPage: React.FC = () => {
             <form onSubmit={requestForm.handleSubmit(handleRequestReset)}>
               <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
                 <TextField
-                  label='邮箱地址'
+                  label={i18n.t('pages.forgot_password_page.k23')}
                   type='email'
-                  placeholder='请输入注册时使用的邮箱'
+                  placeholder={i18n.t('pages.forgot_password_page.k24')}
                   value={requestForm.watch('email')}
                   onChange={(e) => requestForm.setValue('email', e.target.value)}
                   error={!!requestForm.formState.errors.email}
@@ -408,7 +409,7 @@ const ForgotPasswordPage: React.FC = () => {
                   }}
                   disabled={loading}
                 >
-                  {loading ? '处理中...' : '发送重置邮件'}
+                  {loading ? i18n.t('pages.forgot_password_page.k4') : i18n.t('pages.forgot_password_page.k25')}
                 </Button>
               </Box>
             </form>
@@ -418,9 +419,9 @@ const ForgotPasswordPage: React.FC = () => {
             <form onSubmit={resetForm.handleSubmit(handleResetPassword)}>
               <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
                 <TextField
-                  label='新密码'
+                  label={i18n.t('pages.forgot_password_page.k26')}
                   type={showPassword ? 'text' : 'password'}
-                  placeholder='请输入新密码'
+                  placeholder={i18n.t('pages.forgot_password_page.k27')}
                   value={resetForm.watch('password')}
                   onChange={(e) => resetForm.setValue('password', e.target.value)}
                   error={!!resetForm.formState.errors.password}
@@ -440,7 +441,7 @@ const ForgotPasswordPage: React.FC = () => {
                         <IconButton
                           onClick={() => setShowPassword(!showPassword)}
                           sx={{ color: 'grey.400' }}
-                          aria-label='隐藏'
+                          aria-label={i18n.t('pages.forgot_password_page.k28')}
                         >
                           {showPassword ? (
                             <EyeOff sx={{ width: 20, height: 20 }} />
@@ -466,9 +467,9 @@ const ForgotPasswordPage: React.FC = () => {
                 />
 
                 <TextField
-                  label='确认新密码'
+                  label={i18n.t('pages.forgot_password_page.k29')}
                   type={showPassword ? 'text' : 'password'}
-                  placeholder='请再次输入新密码'
+                  placeholder={i18n.t('pages.forgot_password_page.k30')}
                   value={resetForm.watch('confirmPassword')}
                   onChange={(e) => resetForm.setValue('confirmPassword', e.target.value)}
                   error={!!resetForm.formState.errors.confirmPassword}
@@ -518,7 +519,7 @@ const ForgotPasswordPage: React.FC = () => {
                   }}
                   disabled={loading}
                 >
-                  {loading ? '处理中...' : '重置密码'}
+                  {loading ? i18n.t('pages.forgot_password_page.k5') : i18n.t('pages.forgot_password_page.k31')}
                 </Button>
               </Box>
             </form>
@@ -537,7 +538,7 @@ const ForgotPasswordPage: React.FC = () => {
                 fontWeight: 500,
               }}
             >
-              返回登录
+              {i18n.t('pages.forgot_password_page.k4')}
             </Button>
           </Box>
         </CardContent>

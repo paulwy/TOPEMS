@@ -3,12 +3,11 @@
  * @done V79 Phase 2 split
  */
 import React from 'react';
-import { useTranslation } from 'react-i18next';
 import { Box, Typography, Card, CardContent, CardHeader, LinearProgress } from '@mui/material';
 import type { Project, ProjectPhase, ProjectMilestone } from '@/api/pm';
 import { StatusBadge } from '@/components/common';
 import { getRiskLabels } from './pmProjectDetail.constants';
-
+import i18n from '@/i18n';
 export interface PmProjectOverviewProps {
   project: Project | null;
   phases: ProjectPhase[];
@@ -17,7 +16,6 @@ export interface PmProjectOverviewProps {
   completedMilestones: number;
   formatDate: (dateStr?: string) => string;
 }
-
 const PmProjectOverview: React.FC<PmProjectOverviewProps> = ({
   project,
   phases,
@@ -26,10 +24,7 @@ const PmProjectOverview: React.FC<PmProjectOverviewProps> = ({
   completedMilestones,
   formatDate,
 }) => {
-  const { t } = useTranslation();
-
   if (!project) return null;
-
   return (
     <Box
       sx={{
@@ -46,7 +41,7 @@ const PmProjectOverview: React.FC<PmProjectOverviewProps> = ({
               variant='h6'
               sx={{ fontSize: '1.125rem' }}
             >
-              {t('pm.project_detail.basic_info')}
+              {i18n.t('pm.project_detail.basic_info')}
             </Typography>
           }
         />
@@ -62,7 +57,7 @@ const PmProjectOverview: React.FC<PmProjectOverviewProps> = ({
             }}
           >
             <Typography sx={{ color: 'grey.500' }}>
-              {t('pm.project_detail.project_code')}
+              {i18n.t('pm.project_detail.project_code')}
             </Typography>
             <Typography sx={{ fontWeight: 500, color: 'grey.900' }}>{project.code}</Typography>
           </Box>
@@ -77,7 +72,7 @@ const PmProjectOverview: React.FC<PmProjectOverviewProps> = ({
             }}
           >
             <Typography sx={{ color: 'grey.500' }}>
-              {t('pm.project_detail.project_type')}
+              {i18n.t('pm.project_detail.project_type')}
             </Typography>
             <Typography sx={{ fontWeight: 500, color: 'grey.900' }}>
               {project.project_type}
@@ -94,7 +89,7 @@ const PmProjectOverview: React.FC<PmProjectOverviewProps> = ({
             }}
           >
             <Typography sx={{ color: 'grey.500' }}>
-              {t('pm.project_detail.project_leader')}
+              {i18n.t('pm.project_detail.project_leader')}
             </Typography>
             <Typography sx={{ fontWeight: 500, color: 'grey.900' }}>
               {project.leader || '-'}
@@ -110,7 +105,7 @@ const PmProjectOverview: React.FC<PmProjectOverviewProps> = ({
               borderColor: 'grey.100',
             }}
           >
-            <Typography sx={{ color: 'grey.500' }}>{t('pm.project_detail.start_date')}</Typography>
+            <Typography sx={{ color: 'grey.500' }}>{i18n.t('pm.project_detail.start_date')}</Typography>
             <Typography sx={{ fontWeight: 500, color: 'grey.900' }}>
               {formatDate(project.start_date)}
             </Typography>
@@ -125,7 +120,7 @@ const PmProjectOverview: React.FC<PmProjectOverviewProps> = ({
               borderColor: 'grey.100',
             }}
           >
-            <Typography sx={{ color: 'grey.500' }}>{t('pm.project_detail.end_date')}</Typography>
+            <Typography sx={{ color: 'grey.500' }}>{i18n.t('pm.project_detail.end_date')}</Typography>
             <Typography sx={{ fontWeight: 500, color: 'grey.900' }}>
               {formatDate(project.end_date)}
             </Typography>
@@ -138,11 +133,11 @@ const PmProjectOverview: React.FC<PmProjectOverviewProps> = ({
               py: 1,
             }}
           >
-            <Typography sx={{ color: 'grey.500' }}>{t('pm.project_detail.risk_level')}</Typography>
+            <Typography sx={{ color: 'grey.500' }}>{i18n.t('pm.project_detail.risk_level')}</Typography>
             <StatusBadge
               status={project.risklevel || 'low'}
               label={
-                getRiskLabels(t)[project.risklevel || ''] || t('pm.project_detail.not_evaluated')
+                getRiskLabels(i18n.t)[project.risklevel || ''] || i18n.t('pm.project_detail.not_evaluated')
               }
               color={
                 project.risklevel === 'high'
@@ -155,7 +150,6 @@ const PmProjectOverview: React.FC<PmProjectOverviewProps> = ({
           </Box>
         </CardContent>
       </Card>
-
       <Card>
         <CardHeader
           sx={{ pb: 2 }}
@@ -164,7 +158,7 @@ const PmProjectOverview: React.FC<PmProjectOverviewProps> = ({
               variant='h6'
               sx={{ fontSize: '1.125rem' }}
             >
-              {t('pm.project_detail.key_indicators')}
+              {i18n.t('pm.project_detail.key_indicators')}
             </Typography>
           }
         />
@@ -182,7 +176,7 @@ const PmProjectOverview: React.FC<PmProjectOverviewProps> = ({
                 variant='body2'
                 sx={{ color: 'grey.600' }}
               >
-                {t('pm.project_detail.overall_progress')}
+                {i18n.t('pm.project_detail.overall_progress')}
               </Typography>
               <Typography
                 variant='body2'
@@ -209,7 +203,7 @@ const PmProjectOverview: React.FC<PmProjectOverviewProps> = ({
                 variant='body2'
                 sx={{ color: 'grey.600' }}
               >
-                {t('pm.project_detail.phase_progress')}
+                {i18n.t('pm.project_detail.phase_progress')}
               </Typography>
               <Typography
                 variant='body2'
@@ -236,7 +230,7 @@ const PmProjectOverview: React.FC<PmProjectOverviewProps> = ({
                 variant='body2'
                 sx={{ color: 'grey.600' }}
               >
-                {t('pm.project_detail.milestone_completion')}
+                {i18n.t('pm.project_detail.milestone_completion')}
               </Typography>
               <Typography
                 variant='body2'
@@ -262,5 +256,4 @@ const PmProjectOverview: React.FC<PmProjectOverviewProps> = ({
     </Box>
   );
 };
-
 export default PmProjectOverview;

@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useTranslation } from 'react-i18next';
 import { useNotificationStore } from '@/store';
 import {
   Activity,
@@ -12,6 +11,7 @@ import {
   Download,
   Trash2,
 } from 'lucide-react';
+import i18n from '@/i18n';
 import { usePerformanceMonitor } from '@/hooks/usePerformanceMonitor';
 import {
   StatsPageTemplate,
@@ -21,11 +21,8 @@ import {
 import { PageContainer } from '@/components/common';
 import { designTokens } from '@/theme/tokens';
 import { DASHBOARD_PATHS } from '@/routes/dashboard';
-
 const ct= designTokens.colors;
-
 const PerformanceMonitorPage: React.FC = () => {
-  const { t } = useTranslation();
   const navigate = useNavigate();
   const addNotification = useNotificationStore((state) => state.addNotification);
   const {
@@ -37,26 +34,20 @@ const PerformanceMonitorPage: React.FC = () => {
     exportReport,
     clear,
   } = usePerformanceMonitor();
-
   const [autoRefresh, setAutoRefresh] = useState(true);
   const [slowCallThreshold, setSlowCallThreshold] = useState(1000);
   const [_trigger, _setTrigger] = useState(0);
-
   useEffect(() => {
     if (!autoRefresh) return;
-
     const interval = setInterval(() => {
       _setTrigger((prev) => prev + 1);
     }, 5000);
-
     return () => clearInterval(interval);
   }, [autoRefresh]);
-
   const slowCalls = getSlowApiCalls(slowCallThreshold);
   const successRate = getApiSuccessRate();
   const avgResponseTime = getAverageApiResponseTime();
   const apiHistory = getApiCallHistory();
-
   const handleExport = () => {
     const report = exportReport();
     const blob = new Blob([report], { type: 'application/json' });
@@ -67,81 +58,77 @@ const PerformanceMonitorPage: React.FC = () => {
     a.click();
     URL.revokeObjectURL(url);
     addNotification({
-      title: t('admin:performance_monitor_page.notification_success'),
-      message: t('admin:performance_monitor_page.export_success_message'),
+      title: i18n.t('admin:performance_monitor_page.notification_success'),
+      message: i18n.t('admin:performance_monitor_page.export_success_message'),
       type: 'success',
     });
   };
-
   const handleClear = () => {
     clear();
     addNotification({
-      title: t('admin:performance_monitor_page.notification_success'),
-      message: t('admin:performance_monitor_page.clear_success_message'),
+      title: i18n.t('admin:performance_monitor_page.notification_success'),
+      message: i18n.t('admin:performance_monitor_page.clear_success_message'),
       type: 'success',
     });
   };
-
   const statCards: StatCard[] = [
     {
       id: 'page-load-time',
-      title: t('admin:performance_monitor_page.page_load_time'),
+      title: i18n.t('admin:performance_monitor_page.page_load_time'),
       value: `${(metrics.pageLoadTime / 1000).toFixed(2)}s`,
       icon: <Clock size={24} />,
       color: metrics.pageLoadTime < 2000 ? 'success' : 'warning',
     },
     {
       id: 'api-avg-response',
-      title: t('admin:performance_monitor_page.api_avg_response'),
+      title: i18n.t('admin:performance_monitor_page.api_avg_response'),
       value: `${avgResponseTime.toFixed(0)}ms`,
       icon: <TrendingUp size={24} />,
       color: avgResponseTime < 500 ? 'success' : avgResponseTime < 1000 ? 'warning' : 'error',
     },
     {
       id: 'api-success-rate',
-      title: t('admin:performance_monitor_page.api_success_rate'),
+      title: i18n.t('admin:performance_monitor_page.api_success_rate'),
       value: `${successRate.toFixed(1)}%`,
       icon: successRate >= 95 ? <CheckCircle size={24} /> : <XCircle size={24} />,
       color: successRate >= 95 ? 'success' : successRate >= 80 ? 'warning' : 'error',
     },
     {
       id: 'slow-api-calls',
-      title: t('admin:performance_monitor_page.slow_api_calls'),
+      title: i18n.t('admin:performance_monitor_page.slow_api_calls'),
       value: slowCalls.length,
       icon: <AlertTriangle size={24} />,
       color: slowCalls.length === 0 ? 'success' : 'warning',
     },
   ];
-
   const charts: ChartConfig[] = [];
-
   const tables = [
     {
       id: 'api-call-history',
-      title: t('admin:performance_monitor_page.api_call_history'),
+      title: i18n.t('admin:performance_monitor_page.api_call_history'),
       columns: [
         {
           id: 'timestamp',
-          label: t('admin:performance_monitor_page.column_time'),
+          label: i18n.t('admin:performance_monitor_page.column_time'),
           render: (value: unknown) => new Date(value as number).toLocaleTimeString(),
         },
-        { id: 'endpoint', label: t('admin:performance_monitor_page.column_endpoint') },
+        { id: 'endpoint', label: i18n.t('admin:performance_monitor_page.column_endpoint') },
         {
           id: 'duration',
-          label: t('admin:performance_monitor_page.column_response_time'),
+          label: i18n.t('admin:performance_monitor_page.column_response_time'),
           render: (value: unknown) => `${(value as number).toFixed(0)}ms`,
         },
         {
           id: 'status',
-          label: t('admin:performance_monitor_page.column_status'),
+          label: i18n.t('admin:performance_monitor_page.column_status'),
           render: (value: unknown) =>
             value === 'success' ? (
               <span style={{ color: ct.success[500], fontWeight: 500 }}>
-                {t('admin:performance_monitor_page.status_success')}
+                {i18n.t('admin:performance_monitor_page.status_success')}
               </span>
             ) : (
               <span style={{ color: ct.error.main, fontWeight: 500 }}>
-                {t('admin:performance_monitor_page.status_fail')}
+                {i18n.t('admin:performance_monitor_page.status_fail')}
               </span>
             ),
         },
@@ -149,19 +136,16 @@ const PerformanceMonitorPage: React.FC = () => {
       data: apiHistory.slice(-20).reverse() as unknown as Record<string, unknown>[],
     },
   ];
-
   const timeRangeOptions = [
-    { label: t('admin:performance_monitor_page.time_range_1h'), value: '1h' },
-    { label: t('admin:performance_monitor_page.time_range_6h'), value: '6h' },
-    { label: t('admin:performance_monitor_page.time_range_24h'), value: '24h' },
+    { label: i18n.t('admin:performance_monitor_page.time_range_1h'), value: '1h' },
+    { label: i18n.t('admin:performance_monitor_page.time_range_6h'), value: '6h' },
+    { label: i18n.t('admin:performance_monitor_page.time_range_24h'), value: '24h' },
   ];
-
   const [timeRange, setTimeRange] = useState('1h');
-
   return (
     <PageContainer
-      title={t('admin:performance_monitor_page.title')}
-      subtitle={t('admin:performance_monitor_page.subtitle')}
+      title={i18n.t('admin:performance_monitor_page.title')}
+      subtitle={i18n.t('admin:performance_monitor_page.subtitle')}
       headerProps={{
         backButton: {
           onClick: () => navigate(DASHBOARD_PATHS.dashboard),
@@ -170,13 +154,13 @@ const PerformanceMonitorPage: React.FC = () => {
         pageGradient: `linear-gradient(135deg, ${ct.secondary[400]}, ${ct.secondary.main})`,
         actions: [
           {
-            label: t('admin:performance_monitor_page.action_export'),
+            label: i18n.t('admin:performance_monitor_page.action_export'),
             icon: <Download style={{ width: 16, height: 16 }} />,
             onClick: handleExport,
             variant: 'outlined',
           },
           {
-            label: t('admin:performance_monitor_page.action_clear'),
+            label: i18n.t('admin:performance_monitor_page.action_clear'),
             icon: <Trash2 style={{ width: 16, height: 16 }} />,
             onClick: handleClear,
             variant: 'contained',
@@ -196,36 +180,35 @@ const PerformanceMonitorPage: React.FC = () => {
         }}
       >
         <h3 style={{ fontSize: '1.125rem', fontWeight: 600, marginBottom: 16 }}>
-          {t('admin:performance_monitor_page.section_page_metrics')}
+          {i18n.t('admin:performance_monitor_page.section_page_metrics')}
         </h3>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <span style={{ color: ct.grey[500], fontSize: '0.875rem' }}>
-              {t('admin:performance_monitor_page.first_paint')}
+              {i18n.t('admin:performance_monitor_page.first_paint')}
             </span>
             <span style={{ fontWeight: 500 }}>{metrics.firstPaint.toFixed(0)}ms</span>
           </div>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <span style={{ color: ct.grey[500], fontSize: '0.875rem' }}>
-              {t('admin:performance_monitor_page.first_contentful_paint')}
+              {i18n.t('admin:performance_monitor_page.first_contentful_paint')}
             </span>
             <span style={{ fontWeight: 500 }}>{metrics.firstContentfulPaint.toFixed(0)}ms</span>
           </div>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <span style={{ color: ct.grey[500], fontSize: '0.875rem' }}>
-              {t('admin:performance_monitor_page.dom_content_loaded')}
+              {i18n.t('admin:performance_monitor_page.dom_content_loaded')}
             </span>
             <span style={{ fontWeight: 500 }}>{metrics.domContentLoaded.toFixed(0)}ms</span>
           </div>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <span style={{ color: ct.grey[500], fontSize: '0.875rem' }}>
-              {t('admin:performance_monitor_page.page_fully_loaded')}
+              {i18n.t('admin:performance_monitor_page.page_fully_loaded')}
             </span>
             <span style={{ fontWeight: 500 }}>{metrics.pageLoadTime.toFixed(0)}ms</span>
           </div>
         </div>
       </div>
-
       {/* 慢 API 调用 */}
       <div
         style={{
@@ -238,11 +221,11 @@ const PerformanceMonitorPage: React.FC = () => {
       >
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <h3 style={{ fontSize: '1.125rem', fontWeight: 600, margin: 0 }}>
-            {t('admin:performance_monitor_page.section_slow_api')}
+            {i18n.t('admin:performance_monitor_page.section_slow_api')}
           </h3>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
             <span style={{ color: ct.grey[500], fontSize: '0.875rem' }}>
-              {t('admin:performance_monitor_page.threshold')}
+              {i18n.t('admin:performance_monitor_page.threshold')}
             </span>
             <input
               type='number'
@@ -264,7 +247,7 @@ const PerformanceMonitorPage: React.FC = () => {
             <CheckCircle
               style={{ width: 48, height: 48, color: ct.success[500], marginBottom: 8 }}
             />
-            <p style={{ color: ct.grey[500] }}>{t('admin:performance_monitor_page.no_slow_api')}</p>
+            <p style={{ color: ct.grey[500] }}>{i18n.t('admin:performance_monitor_page.no_slow_api')}</p>
           </div>
         ) : (
           <div
@@ -291,7 +274,7 @@ const PerformanceMonitorPage: React.FC = () => {
               >
                 <div>
                   <p style={{ fontWeight: 500, margin: 0 }}>{call.endpoint}</p>
-                  <p style={{ fontSize: '0.75rem', color: ct.grey[500], margin: '4px 0 0' }}>
+                  <p style={{ fontSize: '0.75rem', color: ct.grey[500], margin: `${designTokens.spacing.xs} 0 0` }}>
                     {new Date(call.timestamp).toLocaleString()}
                   </p>
                 </div>
@@ -302,13 +285,13 @@ const PerformanceMonitorPage: React.FC = () => {
                   <p
                     style={{
                       fontSize: '0.75rem',
-                      margin: '4px 0 0',
+                      margin: `${designTokens.spacing.xs} 0 0`,
                       color: call.status === 'success' ? 'success.main' : 'error.main',
                     }}
                   >
                     {call.status === 'success'
-                      ? t('admin:performance_monitor_page.status_success')
-                      : t('admin:performance_monitor_page.status_fail')}
+                      ? i18n.t('admin:performance_monitor_page.status_success')
+                      : i18n.t('admin:performance_monitor_page.status_fail')}
                   </p>
                 </div>
               </div>
@@ -316,7 +299,6 @@ const PerformanceMonitorPage: React.FC = () => {
           </div>
         )}
       </div>
-
       <StatsPageTemplate
         title=''
         subtitle=''
@@ -334,7 +316,7 @@ const PerformanceMonitorPage: React.FC = () => {
         showSearch={false}
         showStatCards={false}
         showCharts={false}
-        tableSectionTitle={t('admin:performance_monitor_page.api_call_history')}
+        tableSectionTitle={i18n.t('admin:performance_monitor_page.api_call_history')}
         customToolbar={
           <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 12 }}>
             <label
@@ -352,7 +334,7 @@ const PerformanceMonitorPage: React.FC = () => {
                 onChange={(e) => setAutoRefresh(e.target.checked)}
                 style={{ width: 18, height: 18 }}
               />
-              {t('admin:performance_monitor_page.auto_refresh')}
+              {i18n.t('admin:performance_monitor_page.auto_refresh')}
             </label>
           </div>
         }
@@ -360,5 +342,4 @@ const PerformanceMonitorPage: React.FC = () => {
     </PageContainer>
   );
 };
-
 export default PerformanceMonitorPage;

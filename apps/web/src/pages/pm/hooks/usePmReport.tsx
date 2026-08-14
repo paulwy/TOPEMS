@@ -2,8 +2,6 @@ import { useState, useMemo, useCallback } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Calendar, CheckCircle, AlertTriangle, DollarSign } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
-import { useTranslation } from 'react-i18next';
-
 import { pmApi, pmStatisticsApi, dashboardApi } from '@/api/pm';
 import type {
   PmStatistics,
@@ -15,10 +13,9 @@ import type {
   DashboardOverview,
   ProjectBenefit,
 } from '@/api/pm';
+import i18n from '@/i18n';
 import type { StatCard } from '@/components/templates/StatsPageTemplate';
-
 import {QUERY_KEYS, CACHE_DURATIONS} from '@/lib/reactQuery';
-
 export const DEFAULT_STATS: PmStatistics = {
   total_projects: 0,
   draft_projects: 0,
@@ -47,24 +44,20 @@ export const DEFAULT_STATS: PmStatistics = {
   medium_risk_projects: 0,
   low_risk_projects: 0,
 };
-
 export interface ChartDatum {
   name: string;
   value: number;
   fill: string;
 }
-
 export interface TrendDatum {
   month: string;
   cpi: number;
   spi: number;
 }
-
 export interface TimeRangeOption {
   label: string;
   value: string;
 }
-
 export interface UsePmReportReturn {
   selectedPeriod: string;
   setSelectedPeriod: (period: string) => void;
@@ -93,13 +86,10 @@ export interface UsePmReportReturn {
   taskStatistics: TaskStatistics | null;
   dashboard: DashboardOverview | null;
 }
-
 export const usePmReport = (): UsePmReportReturn => {
-  const { t } = useTranslation();
   const navigate = useNavigate();
   const params = useParams<{ projectId?: string }>();
   const [selectedPeriod, setSelectedPeriod] = useState('all');
-
   const statsQuery = useQuery({
     queryKey: [...QUERY_KEYS.PM.STATISTICS, selectedPeriod, params.projectId ?? ''],
     queryFn: async () => {
@@ -111,7 +101,6 @@ export const usePmReport = (): UsePmReportReturn => {
     },
   
       staleTime: CACHE_DURATIONS.MEDIUM,});
-
   const benefitsQuery = useQuery({
     queryKey: [
       ...(params.projectId ? QUERY_KEYS.PM.BENEFITS(params.projectId) : QUERY_KEYS.PM.REPORTS),
@@ -127,13 +116,11 @@ export const usePmReport = (): UsePmReportReturn => {
     },
   
       staleTime: CACHE_DURATIONS.MEDIUM,});
-
   const stats = statsQuery.data ?? DEFAULT_STATS;
   const benefits = benefitsQuery.data ?? [];
   const loading = statsQuery.isLoading || benefitsQuery.isLoading;
   const error =
-    statsQuery.isError || benefitsQuery.isError ? t('pm.pm_report_page.text_ca2c36') : '';
-
+    statsQuery.isError || benefitsQuery.isError ? i18n.t('pm.pm_report_page.text_ca2c36') : '';
   const projectStatsQuery = useQuery({
     queryKey: [...QUERY_KEYS.PM.STATISTICS_PROJECTS, selectedPeriod],
     queryFn: async () => {
@@ -146,7 +133,6 @@ export const usePmReport = (): UsePmReportReturn => {
     enabled: true,
   
       staleTime: CACHE_DURATIONS.MEDIUM,});
-
   const contractStatsQuery = useQuery({
     queryKey: [...QUERY_KEYS.PM.STATISTICS_CONTRACTS, selectedPeriod],
     queryFn: async () => {
@@ -159,7 +145,6 @@ export const usePmReport = (): UsePmReportReturn => {
     enabled: true,
   
       staleTime: CACHE_DURATIONS.MEDIUM,});
-
   const budgetStatsQuery = useQuery({
     queryKey: [...QUERY_KEYS.PM.STATISTICS_BUDGET, selectedPeriod],
     queryFn: async () => {
@@ -172,7 +157,6 @@ export const usePmReport = (): UsePmReportReturn => {
     enabled: true,
   
       staleTime: CACHE_DURATIONS.MEDIUM,});
-
   const riskStatsQuery = useQuery({
     queryKey: [...QUERY_KEYS.PM.STATISTICS_RISKS, selectedPeriod],
     queryFn: async () => {
@@ -185,7 +169,6 @@ export const usePmReport = (): UsePmReportReturn => {
     enabled: true,
   
       staleTime: CACHE_DURATIONS.MEDIUM,});
-
   const taskStatsQuery = useQuery({
     queryKey: [...QUERY_KEYS.PM.STATISTICS_TASKS, selectedPeriod],
     queryFn: async () => {
@@ -198,7 +181,6 @@ export const usePmReport = (): UsePmReportReturn => {
     enabled: true,
   
       staleTime: CACHE_DURATIONS.MEDIUM,});
-
   const dashboardQuery = useQuery({
     queryKey: [...QUERY_KEYS.PM.STATISTICS_DASHBOARD],
     queryFn: async () => {
@@ -211,14 +193,12 @@ export const usePmReport = (): UsePmReportReturn => {
     enabled: true,
   
       staleTime: CACHE_DURATIONS.MEDIUM,});
-
   const projectStatistics = projectStatsQuery.data ?? null;
   const contractStatistics = contractStatsQuery.data ?? null;
   const budgetStatistics = budgetStatsQuery.data ?? null;
   const riskStatistics = riskStatsQuery.data ?? null;
   const taskStatistics = taskStatsQuery.data ?? null;
   const dashboard = dashboardQuery.data ?? null;
-
   const loadReportData = useCallback(() => {
     statsQuery.refetch();
     benefitsQuery.refetch();
@@ -238,7 +218,6 @@ export const usePmReport = (): UsePmReportReturn => {
     taskStatsQuery,
     dashboardQuery,
   ]);
-
   const handleExport = useCallback(() => {
     const reportData = {
       generatedAt: new Date().toISOString(),
@@ -272,123 +251,115 @@ export const usePmReport = (): UsePmReportReturn => {
     taskStatistics,
     dashboard,
   ]);
-
   const statCards: StatCard[] = useMemo(
     () => [
       {
         id: 'total-projects',
-        title: t('pm.pm_report_page.title_3ea3ec'),
+        title: i18n.t('pm.pm_report_page.title_3ea3ec'),
         value: stats.total_projects,
         icon: <Calendar size={20} />,
         color: 'primary',
       },
       {
         id: 'completed-projects',
-        title: t('pm.pm_report_page.title_fad522'),
+        title: i18n.t('pm.pm_report_page.title_fad522'),
         value: stats.completed_projects,
         icon: <CheckCircle size={20} />,
         color: 'success',
       },
       {
         id: 'budget-usage',
-        title: t('pm.pm_report_page.title_dcd3c8'),
+        title: i18n.t('pm.pm_report_page.title_dcd3c8'),
         value: `${stats.budget_usage_rate}%`,
         icon: <DollarSign size={20} />,
         color: 'warning',
       },
       {
         id: 'high-risk',
-        title: t('pm.pm_report_page.title_271379'),
+        title: i18n.t('pm.pm_report_page.title_271379'),
         value: stats.high_risk_projects ?? 0,
         icon: <AlertTriangle size={20} />,
         color: 'error',
       },
     ],
-    [stats, t]
+    [stats, i18n.t]
   );
-
   const projectStatusData: ChartDatum[] = useMemo(
     () =>
       [
-        { name: t('pm.pm_report_page.name_22b433'), value: stats.draft_projects, fill: 'grey.500' },
+        { name: i18n.t('pm.pm_report_page.name_22b433'), value: stats.draft_projects, fill: 'grey.500' },
         {
-          name: t('pm.pm_report_page.name_b0bf01'),
+          name: i18n.t('pm.pm_report_page.name_b0bf01'),
           value: stats.pending_projects,
           fill: 'warning.main',
         },
         {
-          name: t('pm.pm_report_page.name_fb852f'),
+          name: i18n.t('pm.pm_report_page.name_fb852f'),
           value: stats.active_projects,
           fill: 'primary.main',
         },
         {
-          name: t('pm.pm_report_page.name_fad522'),
+          name: i18n.t('pm.pm_report_page.name_fad522'),
           value: stats.completed_projects,
           fill: 'success.main',
         },
         {
-          name: t('pm.pm_report_page.name_2111cc'),
+          name: i18n.t('pm.pm_report_page.name_2111cc'),
           value: stats.cancelled_projects,
           fill: 'error.main',
         },
       ].filter((d) => d.value > 0),
-    [stats, t]
+    [stats, i18n.t]
   );
-
   const riskData: ChartDatum[] = useMemo(
     () =>
       [
         {
-          name: t('pm.pm_report_page.name_4433e7'),
+          name: i18n.t('pm.pm_report_page.name_4433e7'),
           value: stats.high_risk_projects ?? 0,
           fill: 'error.main',
         },
         {
-          name: t('pm.pm_report_page.name_8a8992'),
+          name: i18n.t('pm.pm_report_page.name_8a8992'),
           value: stats.medium_risk_projects ?? 0,
           fill: 'warning.main',
         },
         {
-          name: t('pm.pm_report_page.name_b56976'),
+          name: i18n.t('pm.pm_report_page.name_b56976'),
           value: stats.low_risk_projects ?? 0,
           fill: 'success.main',
         },
       ].filter((d) => (d.value ?? 0) > 0),
-    [stats, t]
+    [stats, i18n.t]
   );
-
   const trendData: TrendDatum[] = useMemo(
     () =>
       benefits.slice(0, 6).map((b, index) => ({
-        month: t(`pm.pm_report_page.text_31f4ca${{ index_1: index + 1 }}`),
+        month: i18n.t(`pm.pm_report_page.text_31f4ca${{ index_1: index + 1 }}`),
         cpi: b.cpi,
         spi: b.spi,
       })),
-    [benefits, t]
+    [benefits, i18n.t]
   );
-
   const budgetUtilization = useMemo(
     () => (stats.total_budget > 0 ? (stats.spent_budget / stats.total_budget) * 100 : 0),
     [stats]
   );
-
   const timeRangeOptions: TimeRangeOption[] = useMemo(
     () => [
-      { label: t('pm.pm_report_page.label_98c99f'), value: 'all' },
-      { label: t('pm.pm_report_page.label_725205'), value: 'week' },
-      { label: t('pm.pm_report_page.label_0ec94a'), value: 'month' },
-      { label: t('pm.pm_report_page.label_0477ce'), value: 'quarter' },
-      { label: t('pm.pm_report_page.label_04ab9d'), value: 'year' },
+      { label: i18n.t('pm.pm_report_page.label_98c99f'), value: 'all' },
+      { label: i18n.t('pm.pm_report_page.label_725205'), value: 'week' },
+      { label: i18n.t('pm.pm_report_page.label_0ec94a'), value: 'month' },
+      { label: i18n.t('pm.pm_report_page.label_0477ce'), value: 'quarter' },
+      { label: i18n.t('pm.pm_report_page.label_04ab9d'), value: 'year' },
     ],
-    [t]
+    [i18n.t]
   );
-
-  const pageTitle = t('pm.pm_report_page.attr_d5179b');
+  const pageTitle = i18n.t('pm.pm_report_page.attr_d5179b');
   const pageSubtitle = params.projectId
-    ? t('pm.pm_report_page.text_fd2114')
-    : t('pm.pm_report_page.text_939d8c');
-  const exportText = t('pm.pm_report_page.attr_4fcf74');
-
+    ? i18n.t('pm.pm_report_page.text_fd2114')
+    : i18n.t('pm.pm_report_page.text_939d8c');
+  const exportText = i18n.t('pm.pm_report_page.attr_4fcf74');
   return {
     selectedPeriod,
     setSelectedPeriod,
@@ -409,7 +380,7 @@ export const usePmReport = (): UsePmReportReturn => {
     exportText,
     navigate,
     params,
-    t,
+    t: i18n.t,
     projectStatistics,
     contractStatistics,
     budgetStatistics,
@@ -418,5 +389,4 @@ export const usePmReport = (): UsePmReportReturn => {
     dashboard,
   };
 };
-
 export default usePmReport;

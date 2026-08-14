@@ -1,6 +1,7 @@
 import React from 'react';
 import { Chip } from '@mui/material';
 import type { EntitySchema } from '@/schema';
+import i18n from '@/i18n';
 
 const severityColorMap: Record<string, 'error' | 'warning' | 'success'> = {
   high: 'error',
@@ -10,16 +11,16 @@ const severityColorMap: Record<string, 'error' | 'warning' | 'success'> = {
 };
 
 const severityLabelMap: Record<string, string> = {
-  high: '严重',
-  critical: '严重',
-  medium: '中等',
-  low: '轻微',
+  high: i18n.t('qms.nonconformance.k0'),
+  critical: i18n.t('qms.nonconformance.k1'),
+  medium: i18n.t('qms.nonconformance.k2'),
+  low: i18n.t('qms.nonconformance.k3'),
 };
 
 export const nonconformanceSchema: EntitySchema = {
   entity: 'quality_issue',
-  title: '不合格品',
-  description: '管理不合格品记录，跟踪问题描述、严重程度、处理状态和责任人',
+  title: i18n.t('qms.nonconformance.k4'),
+  description: i18n.t('qms.nonconformance.k5'),
 
   api: {
     module: 'qms',
@@ -33,7 +34,7 @@ export const nonconformanceSchema: EntitySchema = {
   fields: [
     {
       name: 'issue_no',
-      label: '编号',
+      label: i18n.t('qms.nonconformance.k6'),
       type: 'text',
       readonlyOnEdit: true,
       sortable: true,
@@ -42,32 +43,32 @@ export const nonconformanceSchema: EntitySchema = {
     },
     {
       name: 'title',
-      label: '问题标题',
+      label: i18n.t('qms.nonconformance.k7'),
       type: 'text',
       required: true,
       sortable: true,
       listWidth: 200,
-      placeholder: '请输入问题标题',
+      placeholder: i18n.t('qms.nonconformance.k8'),
     },
     {
       name: 'category',
-      label: '类别',
+      label: i18n.t('qms.nonconformance.k9'),
       type: 'text',
       listWidth: 120,
-      placeholder: '外观缺陷、尺寸问题、包装问题等',
+      placeholder: i18n.t('qms.nonconformance.k10'),
     },
     {
       name: 'severity',
-      label: '严重程度',
+      label: i18n.t('qms.nonconformance.k11'),
       type: 'select',
       required: true,
       defaultValue: 'medium',
       options: {
         type: 'static',
         options: [
-          { value: 'high', label: '严重' },
-          { value: 'medium', label: '中等' },
-          { value: 'low', label: '轻微' },
+          { value: 'high', label: i18n.t('qms.nonconformance.k12') },
+          { value: 'medium', label: i18n.t('qms.nonconformance.k13') },
+          { value: 'low', label: i18n.t('qms.nonconformance.k14') },
         ],
       },
       listWidth: 110,
@@ -86,36 +87,36 @@ export const nonconformanceSchema: EntitySchema = {
     },
     {
       name: 'status',
-      label: '状态',
+      label: i18n.t('qms.nonconformance.k15'),
       type: 'select',
       defaultValue: 'open',
       options: {
         type: 'static',
         options: [
-          { value: 'open', label: '待处理' },
-          { value: 'in_progress', label: '处理中' },
-          { value: 'closed', label: '已关闭' },
-          { value: 'resolved', label: '已解决' },
+          { value: 'open', label: i18n.t('qms.nonconformance.k16') },
+          { value: 'in_progress', label: i18n.t('qms.nonconformance.k17') },
+          { value: 'closed', label: i18n.t('qms.nonconformance.k18') },
+          { value: 'resolved', label: i18n.t('qms.nonconformance.k19') },
         ],
       },
       listWidth: 110,
     },
     {
       name: 'assignee',
-      label: '负责人',
+      label: i18n.t('qms.nonconformance.k20'),
       type: 'text',
       listWidth: 120,
     },
     {
       name: 'description',
-      label: '问题描述',
+      label: i18n.t('qms.nonconformance.k21'),
       type: 'textarea',
-      placeholder: '请详细描述问题...',
+      placeholder: i18n.t('shared.nonconformance.k0'),
       showInList: false,
     },
     {
       name: 'created_at',
-      label: '创建日期',
+      label: i18n.t('qms.nonconformance.k22'),
       type: 'date',
       readonly: true,
       sortable: true,
@@ -123,20 +124,20 @@ export const nonconformanceSchema: EntitySchema = {
     },
     {
       name: 'updated_at',
-      label: '更新日期',
+      label: i18n.t('qms.nonconformance.k23'),
       type: 'date',
       readonly: true,
       showInList: false,
     },
     {
       name: 'due_date',
-      label: '截止日期',
+      label: i18n.t('qms.nonconformance.k24'),
       type: 'date',
       showInList: false,
     },
     {
       name: 'resolution',
-      label: '解决方案',
+      label: i18n.t('qms.nonconformance.k25'),
       type: 'textarea',
       showInList: false,
     },
@@ -148,26 +149,26 @@ export const nonconformanceSchema: EntitySchema = {
     filters: [
       {
         id: 'severity',
-        label: '严重程度',
+        label: i18n.t('qms.nonconformance.k26'),
         type: 'select',
         options: [
-          { label: '全部等级', value: 'all' },
-          { label: '严重', value: 'high' },
-          { label: '中等', value: 'medium' },
-          { label: '轻微', value: 'low' },
+          { label: i18n.t('qms.nonconformance.k27'), value: 'all' },
+          { label: i18n.t('qms.nonconformance.k28'), value: 'high' },
+          { label: i18n.t('qms.nonconformance.k29'), value: 'medium' },
+          { label: i18n.t('qms.nonconformance.k30'), value: 'low' },
         ],
         defaultValue: 'all',
       },
       {
         id: 'status',
-        label: '状态',
+        label: i18n.t('qms.nonconformance.k31'),
         type: 'select',
         options: [
-          { label: '全部状态', value: 'all' },
-          { label: '待处理', value: 'open' },
-          { label: '处理中', value: 'in_progress' },
-          { label: '已关闭', value: 'closed' },
-          { label: '已解决', value: 'resolved' },
+          { label: i18n.t('qms.nonconformance.k32'), value: 'all' },
+          { label: i18n.t('qms.nonconformance.k33'), value: 'open' },
+          { label: i18n.t('qms.nonconformance.k34'), value: 'in_progress' },
+          { label: i18n.t('qms.nonconformance.k35'), value: 'closed' },
+          { label: i18n.t('qms.nonconformance.k36'), value: 'resolved' },
         ],
         defaultValue: 'all',
       },
@@ -181,29 +182,29 @@ export const nonconformanceSchema: EntitySchema = {
         resolved: 'success',
       },
       labelMap: {
-        open: '待处理',
-        in_progress: '处理中',
-        closed: '已关闭',
-        resolved: '已解决',
+        open: i18n.t('qms.nonconformance.k37'),
+        in_progress: i18n.t('qms.nonconformance.k38'),
+        closed: i18n.t('qms.nonconformance.k39'),
+        resolved: i18n.t('qms.nonconformance.k40'),
       },
     },
   },
 
   formSections: [
     {
-      title: '基本信息',
+      title: i18n.t('qms.nonconformance.k41'),
       fields: ['issue_no', 'title', 'category', 'severity', 'status'],
     },
     {
-      title: '问题描述',
+      title: i18n.t('qms.nonconformance.k42'),
       fields: ['description', 'assignee', 'due_date'],
     },
   ],
 
   formColCount: 2,
-  createTitle: '新增不合格品',
-  editTitle: '编辑不合格品',
-  detailTitle: '不合格品详情',
+  createTitle: i18n.t('qms.nonconformance.k43'),
+  editTitle: i18n.t('qms.nonconformance.k44'),
+  detailTitle: i18n.t('qms.nonconformance.k45'),
 
   actions: ['create', 'edit', 'detail', 'delete'],
 };

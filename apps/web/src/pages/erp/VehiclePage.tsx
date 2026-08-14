@@ -1,7 +1,6 @@
 /**
  * 车辆管理页面 — Schema 驱动的 CRUD 页面
  */
-
 import React from 'react';
 import CrudPage, { type CrudApiAdapter } from '@/components/templates/CrudPage';
 import { vehicleSchema } from '@/schemas/erp/vehicle';
@@ -10,31 +9,28 @@ import { QUERY_KEYS } from '@/lib/reactQuery';
 import { useQuery } from '@tanstack/react-query';
 import { Box, Typography } from '@mui/material';
 import { Car } from 'lucide-react';
-
+import i18n from '@/i18n';
 const VehicleStats: React.FC = () => {
   const { data } = useQuery({
     queryKey: [QUERY_KEYS.ERP.VEHICLES, 'stats'],
     queryFn: async () => {
       const response = await vehicleApi.list({ page: 0, pagesize: 1000 });
-      if (!response.success) throw new Error('加载车辆统计失败');
+      if (!response.success) throw new Error(i18n.t('erp.vehicle_page.k0'));
       return response.data;
     },
     staleTime: 5 * 60 * 1000,
   });
-
   const vehicles = data?.items || [];
   const total = vehicles.length;
   const available = vehicles.filter((v) => v.status === 'available').length;
   const inUse = vehicles.filter((v) => v.status === 'in_use').length;
   const maintenance = vehicles.filter((v) => v.status === 'maintenance').length;
-
   const stats = [
-    { label: '车辆总数', value: total, color: 'secondary[100]', textColor: 'secondary.700' },
-    { label: '可用', value: available, color: 'success.lighter', textColor: 'success.700' },
-    { label: '使用中', value: inUse, color: 'info.lighter', textColor: 'info.700' },
-    { label: '维护中', value: maintenance, color: 'warning.light', textColor: 'warning.700' },
+    { label: i18n.t('erp.vehicle_page.k1'), value: total, color: 'secondary[100]', textColor: 'secondary.700' },
+    { label: i18n.t('erp.vehicle_page.k2'), value: available, color: 'success.lighter', textColor: 'success.700' },
+    { label: i18n.t('erp.vehicle_page.k3'), value: inUse, color: 'info.lighter', textColor: 'info.700' },
+    { label: i18n.t('erp.vehicle_page.k4'), value: maintenance, color: 'warning.light', textColor: 'warning.700' },
   ];
-
   return (
     <Box
       sx={{
@@ -72,7 +68,6 @@ const VehicleStats: React.FC = () => {
     </Box>
   );
 };
-
 const vehicleApiAdapter: CrudApiAdapter = {
   list: async (params) => {
     const response = await vehicleApi.list({
@@ -83,7 +78,7 @@ const vehicleApiAdapter: CrudApiAdapter = {
       vehicle_type: params?.vehicle_type as string | undefined,
     });
     if (!response.success) {
-      throw new Error('加载车辆失败');
+      throw new Error(i18n.t('erp.vehicle_page.k5'));
     }
     const data = response.data;
     return {
@@ -91,44 +86,39 @@ const vehicleApiAdapter: CrudApiAdapter = {
       total: data?.total || 0,
     };
   },
-
   create: async (data) => {
     const response = await vehicleApi.create(data as Parameters<typeof vehicleApi.create>[0]);
     if (!response.success) {
-      throw new Error('创建车辆失败');
+      throw new Error(i18n.t('erp.vehicle_page.k6'));
     }
     return response.data as unknown as Record<string, unknown>;
   },
-
   update: async (id, data) => {
     const response = await vehicleApi.update(id, data as Parameters<typeof vehicleApi.update>[1]);
     if (!response.success) {
-      throw new Error('更新车辆失败');
+      throw new Error(i18n.t('erp.vehicle_page.k7'));
     }
     return response.data as unknown as Record<string, unknown>;
   },
-
   delete: async (id) => {
     const response = await vehicleApi.delete(id);
     if (!response.success) {
-      throw new Error('删除车辆失败');
+      throw new Error(i18n.t('erp.vehicle_page.k8'));
     }
   },
 };
-
 const VehiclePage: React.FC = () => {
   return (
     <CrudPage
       schema={vehicleSchema}
       apiAdapter={vehicleApiAdapter}
       breadcrumbs={[
-        { label: '首页', href: '/dashboard' },
+        { label: i18n.t('erp.vehicle_page.k9'), href: '/dashboard' },
         { label: 'ERP', href: '/erp' },
-        { label: '车辆管理' },
+        { label: i18n.t('erp.vehicle_page.k10') },
       ]}
       headerContent={<VehicleStats />}
     />
   );
 };
-
 export default VehiclePage;

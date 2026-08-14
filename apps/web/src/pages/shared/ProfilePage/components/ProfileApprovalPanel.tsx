@@ -12,6 +12,7 @@ import {
   Bot,
   MessageSquare,
 } from 'lucide-react';
+import i18n from '@/i18n';
 import { designTokens } from '@/theme/tokens';
 import { IM_PATHS } from '@/modules/im/config';
 
@@ -80,7 +81,7 @@ const ProfileApprovalPanel: React.FC<ProfileApprovalPanelProps> = ({
             variant='subtitle1'
             sx={{ fontWeight: 500 }}
           >
-            最近活动记录
+            {i18n.t('pages.profile_approval_panel.k0')}
           </Typography>
           <Button
             variant='text'
@@ -88,7 +89,7 @@ const ProfileApprovalPanel: React.FC<ProfileApprovalPanelProps> = ({
             startIcon={<RefreshCw size={16} />}
             onClick={onRefreshActivities}
           >
-            刷新
+            {i18n.t('pages.profile_approval_panel.k1')}
           </Button>
         </Box>
         {loadingActivities ? (
@@ -99,7 +100,7 @@ const ProfileApprovalPanel: React.FC<ProfileApprovalPanelProps> = ({
               color='text.secondary'
               sx={{ mt: 1 }}
             >
-              加载中...
+              {i18n.t('pages.profile_approval_panel.k2')}
             </Typography>
           </Box>
         ) : activities.length === 0 ? (
@@ -108,7 +109,7 @@ const ProfileApprovalPanel: React.FC<ProfileApprovalPanelProps> = ({
               size={48}
               style={{ color: theme.palette.text.disabled, marginBottom: 12 }}
             />
-            <Typography color='text.secondary'>暂无活动记录</Typography>
+            <Typography color='text.secondary'>{i18n.t('pages.profile_approval_panel.k0')}</Typography>
           </Box>
         ) : (
           <Box
@@ -191,43 +192,43 @@ const ProfileApprovalPanel: React.FC<ProfileApprovalPanelProps> = ({
           variant='subtitle1'
           sx={{ fontWeight: 500, mb: 2 }}
         >
-          通知偏好设置
+          {i18n.t('pages.profile_approval_panel.k3')}
         </Typography>
         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
           {[
             {
               key: 'email_enabled' as const,
               icon: Mail,
-              label: '邮件通知',
-              desc: '接收重要信息的邮件通知',
+              label: i18n.t('pages.profile_approval_panel.k1'),
+              desc: i18n.t('pages.profile_approval_panel.k2'),
               color: 'primary.dark',
             },
             {
               key: 'system_enabled' as const,
               icon: Bell,
-              label: '系统通知',
-              desc: '接收系统消息和公告',
+              label: i18n.t('pages.profile_approval_panel.k3'),
+              desc: i18n.t('pages.profile_approval_panel.k4'),
               color: ct.yellow[600],
             },
             {
               key: 'workflow_enabled' as const,
               icon: Activity,
-              label: '工作流通知',
-              desc: '接收工作流审批和任务提醒',
+              label: i18n.t('pages.profile_approval_panel.k5'),
+              desc: i18n.t('pages.profile_approval_panel.k6'),
               color: 'success.dark',
             },
             {
               key: 'document_enabled' as const,
               icon: FileText,
-              label: '文档通知',
-              desc: '接收文档更新和评论提醒',
+              label: i18n.t('pages.profile_approval_panel.k7'),
+              desc: i18n.t('pages.profile_approval_panel.k8'),
               color: ct.purple[600],
             },
             {
               key: 'security_enabled' as const,
               icon: Shield,
-              label: '安全通知',
-              desc: '接收登录和账户安全提醒',
+              label: i18n.t('pages.profile_approval_panel.k9'),
+              desc: i18n.t('pages.profile_approval_panel.k10'),
               color: 'error.dark',
             },
           ].map(({ key, icon: Icon, label, desc, color }) => (
@@ -286,14 +287,14 @@ const ProfileApprovalPanel: React.FC<ProfileApprovalPanelProps> = ({
           variant='subtitle1'
           sx={{ fontWeight: 500, mb: 2 }}
         >
-          我的快捷方式
+          {i18n.t('pages.profile_approval_panel.k4')}
         </Typography>
         <Typography
           variant='body2'
           color='text.secondary'
           sx={{ mb: 2 }}
         >
-          选择您常用的功能添加到快捷方式
+          {i18n.t('pages.profile_approval_panel.k5')}
         </Typography>
         <Box
           sx={{
@@ -308,7 +309,7 @@ const ProfileApprovalPanel: React.FC<ProfileApprovalPanelProps> = ({
           {[
             {
               id: '1',
-              title: '仪表盘',
+              title: i18n.t('pages.profile_approval_panel.k11'),
               icon: Activity,
               iconName: 'Activity',
               path: '/dashboard',
@@ -316,7 +317,7 @@ const ProfileApprovalPanel: React.FC<ProfileApprovalPanelProps> = ({
             },
             {
               id: '2',
-              title: '文档中心',
+              title: i18n.t('pages.profile_approval_panel.k12'),
               icon: FileText,
               iconName: 'FileText',
               path: '/documents',
@@ -324,7 +325,7 @@ const ProfileApprovalPanel: React.FC<ProfileApprovalPanelProps> = ({
             },
             {
               id: '3',
-              title: '工作流',
+              title: i18n.t('pages.profile_approval_panel.k13'),
               icon: GitBranch,
               iconName: 'GitBranch',
               path: '/flow/definitions',
@@ -332,7 +333,7 @@ const ProfileApprovalPanel: React.FC<ProfileApprovalPanelProps> = ({
             },
             {
               id: '4',
-              title: '通知中心',
+              title: i18n.t('pages.profile_approval_panel.k14'),
               icon: Bell,
               iconName: 'Bell',
               path: '/notifications',
@@ -340,7 +341,7 @@ const ProfileApprovalPanel: React.FC<ProfileApprovalPanelProps> = ({
             },
             {
               id: '5',
-              title: 'AI助手',
+              title: i18n.t('pages.profile_approval_panel.ai_0'),
               icon: Bot,
               iconName: 'Bot',
               path: '/ai',
@@ -348,7 +349,7 @@ const ProfileApprovalPanel: React.FC<ProfileApprovalPanelProps> = ({
             },
             {
               id: '6',
-              title: '消息中心',
+              title: i18n.t('pages.profile_approval_panel.k15'),
               icon: MessageSquare,
               iconName: 'MessageSquare',
               path: IM_PATHS.root,
@@ -414,7 +415,7 @@ const ProfileApprovalPanel: React.FC<ProfileApprovalPanelProps> = ({
                   </Typography>
                   {isSelected && (
                     <Chip
-                      label='已添加'
+                      label={i18n.t('pages.profile_approval_panel.k16')}
                       size='small'
                       sx={{ mt: 1 }}
                     />
@@ -431,7 +432,7 @@ const ProfileApprovalPanel: React.FC<ProfileApprovalPanelProps> = ({
               variant='subtitle1'
               sx={{ fontWeight: 500, mb: 2 }}
             >
-              当前快捷方式
+              {i18n.t('pages.profile_approval_panel.k6')}
             </Typography>
             <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
               {shortcuts.map((shortcut) => (

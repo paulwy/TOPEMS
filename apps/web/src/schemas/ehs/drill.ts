@@ -1,9 +1,10 @@
 import type { EntitySchema } from '@/schema';
+import i18n from '@/i18n';
 
 export const drillSchema: EntitySchema = {
   entity: 'ehsDrill',
-  title: '应急演练',
-  description: '管理企业应急演练记录，包括演练编号、名称、日期、参与人员、地点、状态等',
+  title: i18n.t('ehs.drill.k0'),
+  description: i18n.t('ehs.drill.k1'),
 
   api: {
     module: 'ehs',
@@ -13,7 +14,7 @@ export const drillSchema: EntitySchema = {
   fields: [
     {
       name: 'drill_no',
-      label: '演练编号',
+      label: i18n.t('ehs.drill.k2'),
       type: 'text',
       required: true,
       readonlyOnEdit: true,
@@ -21,7 +22,7 @@ export const drillSchema: EntitySchema = {
     },
     {
       name: 'drill_name',
-      label: '演练名称',
+      label: i18n.t('ehs.drill.k3'),
       type: 'text',
       required: true,
       sortable: true,
@@ -29,7 +30,7 @@ export const drillSchema: EntitySchema = {
     },
     {
       name: 'drill_date',
-      label: '演练日期',
+      label: i18n.t('ehs.drill.k4'),
       type: 'date',
       listWidth: 120,
       renderCell: (row: Record<string, unknown>) => {
@@ -39,7 +40,7 @@ export const drillSchema: EntitySchema = {
     },
     {
       name: 'duration_hours',
-      label: '时长(小时)',
+      label: i18n.t('ehs.drill.k5'),
       type: 'number',
       defaultValue: 0,
       listWidth: 100,
@@ -50,7 +51,7 @@ export const drillSchema: EntitySchema = {
     },
     {
       name: 'location',
-      label: '地点',
+      label: i18n.t('ehs.drill.k6'),
       type: 'text',
       listWidth: 140,
       renderCell: (row: Record<string, unknown>) => {
@@ -61,10 +62,10 @@ export const drillSchema: EntitySchema = {
     },
     {
       name: 'participants',
-      label: '参与人员',
+      label: i18n.t('ehs.drill.k7'),
       type: 'textarea',
       showInList: false,
-      placeholder: '多个人员用逗号分隔',
+      placeholder: i18n.t('ehs.drill.k8'),
       colSpan: 2,
       renderCell: (row: Record<string, unknown>) => {
         const v = row.participants;
@@ -75,36 +76,36 @@ export const drillSchema: EntitySchema = {
     },
     {
       name: 'summary',
-      label: '演练评估',
+      label: i18n.t('ehs.drill.k9'),
       type: 'textarea',
       showInList: false,
       colSpan: 2,
     },
     {
       name: 'issues_found',
-      label: '发现问题',
+      label: i18n.t('ehs.drill.k10'),
       type: 'textarea',
       showInList: false,
       colSpan: 2,
     },
     {
       name: 'improvements',
-      label: '改进措施',
+      label: i18n.t('ehs.drill.k11'),
       type: 'textarea',
       showInList: false,
       colSpan: 2,
     },
     {
       name: 'status',
-      label: '状态',
+      label: i18n.t('ehs.drill.k12'),
       type: 'select',
       defaultValue: 'scheduled',
       options: {
         type: 'static',
         options: [
-          { value: 'scheduled', label: '已计划' },
-          { value: 'in_progress', label: '进行中' },
-          { value: 'completed', label: '已完成' },
+          { value: 'scheduled', label: i18n.t('ehs.drill.k13') },
+          { value: 'in_progress', label: i18n.t('ehs.drill.k14') },
+          { value: 'completed', label: i18n.t('ehs.drill.k15') },
         ],
       },
       listWidth: 100,
@@ -124,21 +125,21 @@ export const drillSchema: EntitySchema = {
         completed: 'success',
       },
       labelMap: {
-        scheduled: '已计划',
-        in_progress: '进行中',
-        completed: '已完成',
+        scheduled: i18n.t('ehs.drill.k16'),
+        in_progress: i18n.t('ehs.drill.k17'),
+        completed: i18n.t('ehs.drill.k18'),
       },
     },
     filters: [
       {
         id: 'status',
-        label: '状态',
+        label: i18n.t('ehs.drill.k19'),
         type: 'select',
         options: [
-          { label: '全部', value: 'all' },
-          { label: '已计划', value: 'scheduled' },
-          { label: '进行中', value: 'in_progress' },
-          { label: '已完成', value: 'completed' },
+          { label: i18n.t('ehs.drill.k20'), value: 'all' },
+          { label: i18n.t('ehs.drill.k21'), value: 'scheduled' },
+          { label: i18n.t('ehs.drill.k22'), value: 'in_progress' },
+          { label: i18n.t('ehs.drill.k23'), value: 'completed' },
         ],
       },
     ],
@@ -148,21 +149,21 @@ export const drillSchema: EntitySchema = {
 
   formSections: [
     {
-      title: '基本信息',
+      title: i18n.t('ehs.drill.k24'),
       fields: ['drill_no', 'drill_name', 'drill_date', 'duration_hours'],
     },
     {
-      title: '演练详情',
+      title: i18n.t('ehs.drill.k25'),
       fields: ['location', 'status'],
     },
     {
-      title: '演练内容',
+      title: i18n.t('ehs.drill.k26'),
       fields: ['participants', 'summary', 'issues_found', 'improvements'],
     },
   ],
 
   formColCount: 2,
-  createTitle: '新建演练记录',
-  editTitle: '编辑演练记录',
-  detailTitle: '演练记录详情',
+  createTitle: i18n.t('ehs.drill.k27'),
+  editTitle: i18n.t('ehs.drill.k28'),
+  detailTitle: i18n.t('ehs.drill.k29'),
 };

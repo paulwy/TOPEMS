@@ -434,6 +434,7 @@ export function generateListPageTemplate(entityName: string): string {
 // 使用 BffDataTable + useBffListPage 快速构建
 
 import { BffDataTable, useBffListPage } from '@/components/bff';
+import i18n from '@/i18n';
 
 export function ${pascalName}ListPage() {
   const { pageState, actions } = useBffListPage({
@@ -443,9 +444,9 @@ export function ${pascalName}ListPage() {
   });
 
   const columns = [
-    { field: 'name', headerName: '名称', width: 200 },
-    { field: 'status', headerName: '状态', width: 120 },
-    { field: 'created_at', headerName: '创建时间', width: 180 },
+    { field: 'name', headerName: i18n.t('shared.codegen.k0'), width: 200 },
+    { field: 'status', headerName: i18n.t('shared.codegen.k1'), width: 120 },
+    { field: 'created_at', headerName: i18n.t('shared.codegen.k2'), width: 180 },
   ];
 
   return (

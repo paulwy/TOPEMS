@@ -1,4 +1,5 @@
 import { v51DesignTokens } from './tokens/v51-tokens';
+import i18n from '@/i18n';
 
 // ============================================================
 // V51.0 Design Compliance Linting
@@ -170,8 +171,8 @@ export function lintColorContrast(): LintIssue[] {
         id: `color-contrast-${check.label.replace(/\s+/g, '-').toLowerCase()}`,
         category: 'color',
         severity: 'error',
-        message: `对比度不足: "${check.label}" 对比度 ${check.actualRatio}:1 低于要求的 ${check.minRatio}:1`,
-        suggestion: `调整前景色 ${check.foreground} 或背景色 ${check.background} 以提高对比度`,
+        message: `${i18n.t('components.design-lint.k0')}${check.label}${i18n.t('components.design-lint.k1')}${check.actualRatio}${i18n.t('components.design-lint.1_2')}${check.minRatio}:1`,
+        suggestion: `${i18n.t('components.design-lint.k3')}${check.foreground}${i18n.t('components.design-lint.k4')}${check.background}${i18n.t('components.design-lint.k5')}`,
       });
     }
   }
@@ -228,8 +229,8 @@ export function lintSpacing(
           id: `spacing-${component.name}-${normalizedValue.replace(/[^a-z0-9]/gi, '')}`,
           category: 'spacing',
           severity: 'warning',
-          message: `组件 "${component.name}" 使用了非标准间距值: ${value}`,
-          suggestion: `使用 V51 间距令牌 (4px, 8px, 12px, 16px, 24px, 32px, 48px, 64px)`,
+          message: `${i18n.t('components.design-lint.k6')}${component.name}${i18n.t('components.design-lint.k7')}${value}`,
+          suggestion: i18n.t('design_system.design-lint.k0'),
         });
       }
     }
@@ -262,8 +263,8 @@ export function lintTypography(
         id: `typography-size-${component.name}`,
         category: 'typography',
         severity: 'warning',
-        message: `组件 "${component.name}" 使用了非标准字号: ${component.fontSize}`,
-        suggestion: `使用 V51 字号令牌: ${Object.values(v51DesignTokens.typography.fontSize).join(', ')}`,
+        message: `${i18n.t('components.design-lint.k8')}${component.name}${i18n.t('components.design-lint.k9')}${component.fontSize}`,
+        suggestion: `${i18n.t('components.design-lint.v51_10')}${Object.values(v51DesignTokens.typography.fontSize).join(', ')}`,
       });
     }
 
@@ -272,8 +273,8 @@ export function lintTypography(
         id: `typography-weight-${component.name}`,
         category: 'typography',
         severity: 'warning',
-        message: `组件 "${component.name}" 使用了非标准字重: ${component.fontWeight}`,
-        suggestion: `使用 V51 字重令牌: ${Array.from(validFontWeights).join(', ')}`,
+        message: `${i18n.t('components.design-lint.k11')}${component.name}${i18n.t('components.design-lint.k12')}${component.fontWeight}`,
+        suggestion: `${i18n.t('components.design-lint.v51_13')}${Array.from(validFontWeights).join(', ')}`,
       });
     }
 
@@ -282,8 +283,8 @@ export function lintTypography(
         id: `typography-lineheight-${component.name}`,
         category: 'typography',
         severity: 'info',
-        message: `组件 "${component.name}" 使用了非标准行高: ${component.lineHeight}`,
-        suggestion: `使用 V51 行高令牌: ${Array.from(validLineHeights).join(', ')}`,
+        message: `${i18n.t('components.design-lint.k14')}${component.name}${i18n.t('components.design-lint.k15')}${component.lineHeight}`,
+        suggestion: `${i18n.t('components.design-lint.v51_16')}${Array.from(validLineHeights).join(', ')}`,
       });
     }
   }
@@ -328,8 +329,8 @@ export function lintComponentUsage(
         id: `component-unknown-${usage.component}`,
         category: 'component',
         severity: 'warning',
-        message: `使用了未知的 V51 组件: ${usage.component}`,
-        suggestion: `可用的 V51 组件: ${v51Components.join(', ')}`,
+        message: `${i18n.t('components.design-lint.v51_17')}${usage.component}`,
+        suggestion: `${i18n.t('components.design-lint.v51_18')}${v51Components.join(', ')}`,
       });
     }
 
@@ -338,8 +339,8 @@ export function lintComponentUsage(
         id: `component-sx-${usage.component}`,
         category: 'component',
         severity: 'info',
-        message: `组件 ${usage.component} 未提供 sx prop`,
-        suggestion: '所有 V51 组件应支持 sx prop 以保持样式一致性',
+        message: `${i18n.t('components.design-lint.k19')}${usage.component}${i18n.t('components.design-lint.sxprop_20')}`,
+        suggestion: i18n.t('shared.design-lint.k0'),
       });
     }
 
@@ -348,8 +349,8 @@ export function lintComponentUsage(
         id: `component-a11y-${usage.component}`,
         category: 'component',
         severity: 'warning',
-        message: `交互组件 ${usage.component} 缺少 aria-label`,
-        suggestion: '为交互组件提供 aria-label 以支持无障碍访问',
+        message: `${i18n.t('components.design-lint.k21')}${usage.component}${i18n.t('components.design-lint.arialabel_22')}`,
+        suggestion: i18n.t('shared.design-lint.k1'),
       });
     }
   }
@@ -441,25 +442,25 @@ export function formatReport(report: LintReport): string {
   const lines: string[] = [];
 
   lines.push('========================================');
-  lines.push('  V51.0 Design System 合规报告');
+  lines.push(i18n.t('components.design-lint.k23'));
   lines.push('========================================');
   lines.push('');
-  lines.push(`生成时间: ${report.timestamp}`);
-  lines.push(`合规分数: ${report.score}/100 ${report.passed ? '✅' : '❌'}`);
-  lines.push(`总问题数: ${report.total}`);
-  lines.push(`  错误: ${report.errors}`);
-  lines.push(`  警告: ${report.warnings}`);
-  lines.push(`  信息: ${report.info}`);
+  lines.push(`${i18n.t('components.design-lint.k24')}${report.timestamp}`);
+  lines.push(`${i18n.t('components.design-lint.k25')}${report.score}/100 ${report.passed ? '✅' : '❌'}`);
+  lines.push(`${i18n.t('components.design-lint.k26')}${report.total}`);
+  lines.push(`${i18n.t('components.design-lint.k27')}${report.errors}`);
+  lines.push(`${i18n.t('components.design-lint.k28')}${report.warnings}`);
+  lines.push(`${i18n.t('components.design-lint.k29')}${report.info}`);
   lines.push('');
-  lines.push('检查结果:');
-  lines.push(`  颜色对比度: ${report.checks.colorContrast ? '✅ 通过' : '❌ 未通过'}`);
-  lines.push(`  间距一致性: ${report.checks.spacingConsistency ? '✅ 通过' : '❌ 未通过'}`);
-  lines.push(`  排版规范: ${report.checks.typographyScale ? '✅ 通过' : '❌ 未通过'}`);
-  lines.push(`  组件使用: ${report.checks.componentUsage ? '✅ 通过' : '❌ 未通过'}`);
+  lines.push(i18n.t('components.design-lint.k30'));
+  lines.push(`${i18n.t('components.design-lint.k31')}${report.checks.colorContrast ? i18n.t('design_system.design-lint.k1') : i18n.t('design_system.design-lint.k2')}`);
+  lines.push(`${i18n.t('components.design-lint.k32')}${report.checks.spacingConsistency ? i18n.t('design_system.design-lint.k3') : i18n.t('design_system.design-lint.k4')}`);
+  lines.push(`${i18n.t('components.design-lint.k33')}${report.checks.typographyScale ? i18n.t('design_system.design-lint.k5') : i18n.t('design_system.design-lint.k6')}`);
+  lines.push(`${i18n.t('components.design-lint.k34')}${report.checks.componentUsage ? i18n.t('design_system.design-lint.k7') : i18n.t('design_system.design-lint.k8')}`);
   lines.push('');
 
   if (report.issues.length > 0) {
-    lines.push('问题详情:');
+    lines.push(i18n.t('components.design-lint.k35'));
     lines.push('----------');
     for (const issue of report.issues) {
       const severityIcon =
@@ -470,7 +471,7 @@ export function formatReport(report: LintReport): string {
       }
     }
   } else {
-    lines.push('🎉 所有检查通过！');
+    lines.push(i18n.t('components.design-lint.k36'));
   }
 
   lines.push('');

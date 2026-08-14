@@ -1,9 +1,10 @@
 import type { EntitySchema } from '@/schema';
+import i18n from '@/i18n';
 
 export const categorySchema: EntitySchema = {
   entity: 'srm_category',
-  title: '供应商分类',
-  description: '管理供应商分类，包括分类编码、名称、层级、状态等',
+  title: i18n.t('srm.category.k0'),
+  description: i18n.t('srm.category.k1'),
 
   api: {
     module: 'srm',
@@ -13,7 +14,7 @@ export const categorySchema: EntitySchema = {
   fields: [
     {
       name: 'code',
-      label: '分类编码',
+      label: i18n.t('srm.category.k2'),
       type: 'text',
       required: true,
       readonlyOnEdit: true,
@@ -22,7 +23,7 @@ export const categorySchema: EntitySchema = {
     },
     {
       name: 'name',
-      label: '分类名称',
+      label: i18n.t('srm.category.k3'),
       type: 'text',
       required: true,
       sortable: true,
@@ -31,13 +32,13 @@ export const categorySchema: EntitySchema = {
     },
     {
       name: 'description',
-      label: '描述',
+      label: i18n.t('srm.category.k4'),
       type: 'textarea',
       listWidth: 200,
     },
     {
       name: 'supplier_count',
-      label: '供应商数量',
+      label: i18n.t('srm.category.k5'),
       type: 'number',
       defaultValue: 0,
       listWidth: 120,
@@ -46,38 +47,38 @@ export const categorySchema: EntitySchema = {
     },
     {
       name: 'level',
-      label: '层级',
+      label: i18n.t('srm.category.k6'),
       type: 'select',
       required: true,
       defaultValue: '1',
       options: {
         type: 'static',
         options: [
-          { value: '1', label: '一级' },
-          { value: '2', label: '二级' },
-          { value: '3', label: '三级' },
+          { value: '1', label: i18n.t('srm.category.k7') },
+          { value: '2', label: i18n.t('srm.category.k8') },
+          { value: '3', label: i18n.t('srm.category.k9') },
         ],
       },
       listWidth: 100,
     },
     {
       name: 'status',
-      label: '状态',
+      label: i18n.t('srm.category.k10'),
       type: 'select',
       required: true,
       defaultValue: 'active',
       options: {
         type: 'static',
         options: [
-          { value: 'active', label: '启用' },
-          { value: 'inactive', label: '禁用' },
+          { value: 'active', label: i18n.t('srm.category.k11') },
+          { value: 'inactive', label: i18n.t('srm.category.k12') },
         ],
       },
       listWidth: 100,
     },
     {
       name: 'created_at',
-      label: '创建时间',
+      label: i18n.t('srm.category.k13'),
       type: 'datetime',
       readonly: true,
       hideInForm: true,
@@ -86,7 +87,7 @@ export const categorySchema: EntitySchema = {
     },
     {
       name: 'updated_at',
-      label: '更新时间',
+      label: i18n.t('srm.category.k14'),
       type: 'datetime',
       readonly: true,
       hideInForm: true,
@@ -106,8 +107,8 @@ export const categorySchema: EntitySchema = {
         inactive: 'error',
       },
       labelMap: {
-        active: '启用',
-        inactive: '禁用',
+        active: i18n.t('srm.category.k15'),
+        inactive: i18n.t('srm.category.k16'),
       },
     },
   },
@@ -116,17 +117,17 @@ export const categorySchema: EntitySchema = {
 
   formSections: [
     {
-      title: '基本信息',
+      title: i18n.t('srm.category.k17'),
       fields: ['code', 'name', 'description'],
     },
     {
-      title: '层级与状态',
+      title: i18n.t('srm.category.k18'),
       fields: ['level', 'status'],
     },
   ],
 
   formColCount: 2,
-  createTitle: '新增供应商分类',
-  editTitle: '编辑供应商分类',
-  detailTitle: '供应商分类详情',
+  createTitle: i18n.t('srm.category.k19'),
+  editTitle: i18n.t('srm.category.k20'),
+  detailTitle: i18n.t('srm.category.k21'),
 };

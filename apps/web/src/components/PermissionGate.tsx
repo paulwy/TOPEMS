@@ -4,6 +4,7 @@ import React from 'react';
 import { usePermission } from '../hooks/usePermission';
 import { useRole } from '../hooks/useRole';
 import { Shield, User, Users, Crown, Eye, Loader2 } from 'lucide-react';
+import i18n from '@/i18n';
 
 interface PermissionGateProps {
   children: ReactNode;
@@ -66,7 +67,7 @@ export const PermissionGate: React.FC<PermissionGateProps> = ({
     return (
       <div
         style={{ opacity: 0.5, cursor: 'not-allowed' }}
-        title='您没有此操作的权限'
+        title={i18n.t('components.permission_gate.k0')}
       >
         {children}
       </div>
@@ -137,7 +138,7 @@ export const RoleGate: React.FC<RoleGateProps> = ({
     return (
       <div
         style={{ opacity: 0.5, cursor: 'not-allowed' }}
-        title='您没有此角色权限'
+        title={i18n.t('components.permission_gate.k1')}
       >
         {children}
       </div>
@@ -215,7 +216,7 @@ export const ModuleGate: React.FC<ModuleGateProps> = ({
     return (
       <div
         style={{ opacity: 0.5, cursor: 'not-allowed' }}
-        title={`您没有${module}模块的${action}权限`}
+        title={`${i18n.t('components.permission_gate.k0')}${module}${i18n.t('components.permission_gate.k1')}${action}${i18n.t('components.permission_gate.k2')}`}
       >
         {children}
       </div>
@@ -271,7 +272,7 @@ export const AdminGate: React.FC<AdminGateProps> = ({
     return (
       <div
         style={{ opacity: 0.5, cursor: 'not-allowed' }}
-        title='需要管理员权限'
+        title={i18n.t('components.permission_gate.k2')}
       >
         {children}
       </div>
@@ -327,7 +328,7 @@ export const SuperuserGate: React.FC<SuperuserGateProps> = ({
     return (
       <div
         style={{ opacity: 0.5, cursor: 'not-allowed' }}
-        title='需要超级管理员权限'
+        title={i18n.t('components.permission_gate.k3')}
       >
         {children}
       </div>
@@ -354,14 +355,14 @@ const roleConfig: Record<
     label: string;
   }
 > = {
-  admin: { variant: 'destructive', icon: Crown, label: '管理员' },
-  Admin: { variant: 'destructive', icon: Crown, label: '管理员' },
-  manager: { variant: 'secondary', icon: Users, label: '经理' },
-  Manager: { variant: 'secondary', icon: Users, label: '经理' },
-  user: { variant: 'default', icon: User, label: '用户' },
-  User: { variant: 'default', icon: User, label: '用户' },
-  guest: { variant: 'outline', icon: Eye, label: '访客' },
-  Guest: { variant: 'outline', icon: Eye, label: '访客' },
+  admin: { variant: 'destructive', icon: Crown, label: i18n.t('components.permission_gate.k4') },
+  Admin: { variant: 'destructive', icon: Crown, label: i18n.t('components.permission_gate.k5') },
+  manager: { variant: 'secondary', icon: Users, label: i18n.t('components.permission_gate.k6') },
+  Manager: { variant: 'secondary', icon: Users, label: i18n.t('components.permission_gate.k7') },
+  user: { variant: 'default', icon: User, label: i18n.t('components.permission_gate.k8') },
+  User: { variant: 'default', icon: User, label: i18n.t('components.permission_gate.k9') },
+  guest: { variant: 'outline', icon: Eye, label: i18n.t('components.permission_gate.k10') },
+  Guest: { variant: 'outline', icon: Eye, label: i18n.t('components.permission_gate.k11') },
 };
 
 export const RoleBadge: React.FC<RoleBadgeProps> = ({ role }) => {

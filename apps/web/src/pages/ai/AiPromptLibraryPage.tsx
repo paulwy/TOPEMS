@@ -78,7 +78,7 @@ const mockPrompts: PromptTemplate[] = [
     description: i18n.t('ai.ai_prompt_library_page.k1'),
     category: 'writing',
     content:
-      '你是一位专业的商务助理。请根据以下信息撰写一封专业的邮件：\n\n主题：{subject}\n收件人：{recipient}\n要点：{key_points}\n\n要求：\n1. 语气专业、礼貌\n2. 结构清晰，重点突出\n3. 结尾包含行动号召',
+      i18n.t('pages.ai_prompt_library_page.k0'),
     variables: ['subject', 'recipient', 'key_points'],
     usage_count: 234,
     is_favorite: true,
@@ -92,7 +92,7 @@ const mockPrompts: PromptTemplate[] = [
     description: i18n.t('ai.ai_prompt_library_page.k4'),
     category: 'code',
     content:
-      '你是一位资深代码审查专家。请审查以下代码：\n\n```{language}\n{code}\n```\n\n请从以下方面进行审查：\n1. 代码质量和可读性\n2. 潜在的Bug和安全问题\n3. 性能优化建议\n4. 最佳实践建议\n\n请按优先级排序你的建议。',
+      i18n.t('pages.ai_prompt_library_page.k1'),
     variables: ['language', 'code'],
     usage_count: 189,
     is_favorite: true,
@@ -106,7 +106,7 @@ const mockPrompts: PromptTemplate[] = [
     description: i18n.t('ai.ai_prompt_library_page.k7'),
     category: 'analysis',
     content:
-      '你是一位数据分析师。请根据以下数据分析并生成报告：\n\n数据：{data}\n\n分析维度：\n1. 总体趋势\n2. 关键指标\n3. 异常发现\n4. 建议措施\n\n请以清晰、专业的方式呈现你的分析。',
+      i18n.t('pages.ai_prompt_library_page.k2'),
     variables: ['data'],
     usage_count: 156,
     is_favorite: false,
@@ -120,7 +120,7 @@ const mockPrompts: PromptTemplate[] = [
     description: i18n.t('ai.ai_prompt_library_page.k10'),
     category: 'business',
     content:
-      '请根据以下会议内容生成结构化的会议纪要：\n\n会议内容：{meeting_content}\n\n请包含以下部分：\n1. 会议基本信息\n2. 讨论要点\n3. 决议事项\n4. 行动项（含负责人和截止时间）\n5. 待跟进问题',
+      i18n.t('pages.ai_prompt_library_page.k3'),
     variables: ['meeting_content'],
     usage_count: 312,
     is_favorite: false,
@@ -134,7 +134,7 @@ const mockPrompts: PromptTemplate[] = [
     description: i18n.t('ai.ai_prompt_library_page.k13'),
     category: 'creative',
     content:
-      '你是一位创意营销专家。请为以下产品/活动创作营销文案：\n\n产品/活动：{product}\n目标受众：{target_audience}\n核心卖点：{selling_points}\n\n要求：\n1. 标题吸引人\n2. 突出核心价值\n3. 有号召力的行动号召\n4. 字数控制在200字以内',
+      i18n.t('pages.ai_prompt_library_page.k4'),
     variables: ['product', 'target_audience', 'selling_points'],
     usage_count: 278,
     is_favorite: true,
@@ -144,11 +144,11 @@ const mockPrompts: PromptTemplate[] = [
   },
   {
     id: '6',
-    name: 'SQL查询生成',
+    name: i18n.t('pages.ai_prompt_library_page.sql_5'),
     description: i18n.t('ai.ai_prompt_library_page.sql_15'),
     category: 'code',
     content:
-      '你是一位SQL专家。请根据以下需求生成SQL查询：\n\n需求：{requirement}\n表结构：{table_structure}\n\n请提供：\n1. 优化后的SQL语句\n2. 查询说明\n3. 性能优化建议（如果有）',
+      i18n.t('pages.ai_prompt_library_page.k6'),
     variables: ['requirement', 'table_structure'],
     usage_count: 145,
     is_favorite: false,

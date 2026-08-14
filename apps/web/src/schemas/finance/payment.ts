@@ -1,5 +1,6 @@
 import React from 'react';
 import type { EntitySchema } from '@/schema';
+import i18n from '@/i18n';
 
 const formatMoney = (amount: number | undefined, color?: string) => {
   const style: React.CSSProperties = { fontWeight: 'medium' };
@@ -13,7 +14,7 @@ const formatMoney = (amount: number | undefined, color?: string) => {
 
 export const paymentSchema: EntitySchema = {
   entity: 'financePayment',
-  title: '付款管理',
+  title: i18n.t('finance.payment.k0'),
 
   api: {
     module: 'finance',
@@ -23,7 +24,7 @@ export const paymentSchema: EntitySchema = {
   fields: [
     {
       name: 'payment_no',
-      label: '付款单号',
+      label: i18n.t('finance.payment.k1'),
       type: 'text',
       required: true,
       readonlyOnEdit: true,
@@ -32,36 +33,36 @@ export const paymentSchema: EntitySchema = {
     },
     {
       name: 'payment_type',
-      label: '付款方式',
+      label: i18n.t('finance.payment.k2'),
       type: 'select',
       defaultValue: 'bank_transfer',
       options: {
         type: 'static',
         options: [
-          { value: 'bank_transfer', label: '银行转账' },
-          { value: 'cash', label: '现金' },
-          { value: 'check', label: '支票' },
-          { value: 'online', label: '在线支付' },
+          { value: 'bank_transfer', label: i18n.t('finance.payment.k3') },
+          { value: 'cash', label: i18n.t('finance.payment.k4') },
+          { value: 'check', label: i18n.t('finance.payment.k5') },
+          { value: 'online', label: i18n.t('finance.payment.k6') },
         ],
       },
       listWidth: 100,
     },
     {
       name: 'counterparty_id',
-      label: '交易对方ID',
+      label: i18n.t('finance.payment.id_7'),
       type: 'text',
       listWidth: 100,
       showInList: false,
     },
     {
       name: 'counterparty_name',
-      label: '交易对方',
+      label: i18n.t('finance.payment.k8'),
       type: 'text',
       listWidth: 140,
     },
     {
       name: 'amount',
-      label: '金额',
+      label: i18n.t('finance.payment.k9'),
       type: 'number',
       required: true,
       defaultValue: 0,
@@ -77,36 +78,36 @@ export const paymentSchema: EntitySchema = {
     },
     {
       name: 'payment_date',
-      label: '付款日期',
+      label: i18n.t('finance.payment.k10'),
       type: 'date',
       listWidth: 120,
     },
     {
       name: 'status',
-      label: '状态',
+      label: i18n.t('finance.payment.k11'),
       type: 'select',
       defaultValue: 'pending',
       options: {
         type: 'static',
         options: [
-          { value: 'pending', label: '待处理' },
-          { value: 'processing', label: '处理中' },
-          { value: 'completed', label: '已完成' },
-          { value: 'failed', label: '失败' },
-          { value: 'cancelled', label: '已取消' },
+          { value: 'pending', label: i18n.t('finance.payment.k12') },
+          { value: 'processing', label: i18n.t('finance.payment.k13') },
+          { value: 'completed', label: i18n.t('finance.payment.k14') },
+          { value: 'failed', label: i18n.t('finance.payment.k15') },
+          { value: 'cancelled', label: i18n.t('finance.payment.k16') },
         ],
       },
       listWidth: 100,
     },
     {
       name: 'bank_account',
-      label: '银行账户',
+      label: i18n.t('finance.payment.k17'),
       type: 'text',
       listWidth: 140,
     },
     {
       name: 'description',
-      label: '描述',
+      label: i18n.t('finance.payment.k18'),
       type: 'textarea',
       listWidth: 150,
       showInList: false,
@@ -134,37 +135,37 @@ export const paymentSchema: EntitySchema = {
         cancelled: 'default',
       },
       labelMap: {
-        pending: '待处理',
-        processing: '处理中',
-        completed: '已完成',
-        failed: '失败',
-        cancelled: '已取消',
+        pending: i18n.t('finance.payment.k19'),
+        processing: i18n.t('finance.payment.k20'),
+        completed: i18n.t('finance.payment.k21'),
+        failed: i18n.t('finance.payment.k22'),
+        cancelled: i18n.t('finance.payment.k23'),
       },
     },
     filters: [
       {
         id: 'payment_type',
-        label: '付款方式',
+        label: i18n.t('finance.payment.k24'),
         type: 'select',
         options: [
-          { label: '全部方式', value: 'all' },
-          { label: '银行转账', value: 'bank_transfer' },
-          { label: '现金', value: 'cash' },
-          { label: '支票', value: 'check' },
-          { label: '在线支付', value: 'online' },
+          { label: i18n.t('finance.payment.k25'), value: 'all' },
+          { label: i18n.t('finance.payment.k26'), value: 'bank_transfer' },
+          { label: i18n.t('finance.payment.k27'), value: 'cash' },
+          { label: i18n.t('finance.payment.k28'), value: 'check' },
+          { label: i18n.t('finance.payment.k29'), value: 'online' },
         ],
       },
       {
         id: 'status',
-        label: '状态',
+        label: i18n.t('finance.payment.k30'),
         type: 'select',
         options: [
-          { label: '全部状态', value: 'all' },
-          { label: '待处理', value: 'pending' },
-          { label: '处理中', value: 'processing' },
-          { label: '已完成', value: 'completed' },
-          { label: '失败', value: 'failed' },
-          { label: '已取消', value: 'cancelled' },
+          { label: i18n.t('finance.payment.k31'), value: 'all' },
+          { label: i18n.t('finance.payment.k32'), value: 'pending' },
+          { label: i18n.t('finance.payment.k33'), value: 'processing' },
+          { label: i18n.t('finance.payment.k34'), value: 'completed' },
+          { label: i18n.t('finance.payment.k35'), value: 'failed' },
+          { label: i18n.t('finance.payment.k36'), value: 'cancelled' },
         ],
       },
     ],
@@ -174,21 +175,21 @@ export const paymentSchema: EntitySchema = {
 
   formSections: [
     {
-      title: '基本信息',
+      title: i18n.t('finance.payment.k37'),
       fields: ['payment_no', 'payment_type', 'counterparty_id'],
     },
     {
-      title: '金额与日期',
+      title: i18n.t('finance.payment.k38'),
       fields: ['amount', 'payment_date', 'bank_account'],
     },
     {
-      title: '状态与备注',
+      title: i18n.t('finance.payment.k39'),
       fields: ['status', 'description'],
     },
   ],
 
   formColCount: 2,
-  createTitle: '新增付款',
-  editTitle: '编辑付款',
-  detailTitle: '付款详情',
+  createTitle: i18n.t('finance.payment.k40'),
+  editTitle: i18n.t('finance.payment.k41'),
+  detailTitle: i18n.t('finance.payment.k42'),
 };

@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { Box, Button, Paper } from '@mui/material';
 import { CheckSquare, FileEdit, FileText, Sparkles } from 'lucide-react';
 import type { AICopilotIntent } from '@/lib/ai/copilotContext';
+import i18n from '@/i18n';
 
 interface SelectionState {
   text: string;
@@ -18,10 +19,10 @@ const selectionActions: Array<{
   label: string;
   icon: React.ReactNode;
 }> = [
-  { intent: 'explain', label: '解释', icon: <Sparkles style={{ width: 14, height: 14 }} /> },
-  { intent: 'summarize', label: '总结', icon: <FileText style={{ width: 14, height: 14 }} /> },
-  { intent: 'rewrite', label: '改写', icon: <FileEdit style={{ width: 14, height: 14 }} /> },
-  { intent: 'todo', label: '生成待办', icon: <CheckSquare style={{ width: 14, height: 14 }} /> },
+  { intent: 'explain', label: i18n.t('ai.ai_selection_bubble.k0'), icon: <Sparkles style={{ width: 14, height: 14 }} /> },
+  { intent: 'summarize', label: i18n.t('ai.ai_selection_bubble.k1'), icon: <FileText style={{ width: 14, height: 14 }} /> },
+  { intent: 'rewrite', label: i18n.t('ai.ai_selection_bubble.k2'), icon: <FileEdit style={{ width: 14, height: 14 }} /> },
+  { intent: 'todo', label: i18n.t('ai.ai_selection_bubble.k3'), icon: <CheckSquare style={{ width: 14, height: 14 }} /> },
 ];
 
 function isEditableElement(node: Node | null): boolean {
@@ -109,7 +110,7 @@ export const AISelectionBubble: React.FC<AISelectionBubbleProps> = ({ onAction }
         onClick={() => setSelection(null)}
         sx={{ minWidth: 0, px: 1 }}
       >
-        关闭
+        {i18n.t('components.ai_selection_bubble.k0')}
       </Button>
     </Paper>
   );

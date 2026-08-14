@@ -17,6 +17,7 @@ import {
   type QueryCostAnalysis,
   type CostLevel,
 } from '@/utils/query-cost-analyzer';
+import i18n from '@/i18n';
 import { parseQueryName } from '@/utils/graphql-performance';
 import { logger } from '@/utils/logger';
 
@@ -81,7 +82,7 @@ export function useQueryCost(
         fieldCount: 0,
         depth: 0,
         estimatedSizeKB: 0,
-        suggestions: ['暂无查询数据'],
+        suggestions: [i18n.t('shared.use_query_cost.k0')],
       };
     }
 
@@ -124,7 +125,7 @@ export function useQueryCost(
 
     if (!warnedQueries.has(queryName)) {
       warnedQueries.add(queryName);
-      costLogger.warn(`高成本查询检测: ${queryName} - 分数: ${cost.score} - 等级: ${costLabel}`);
+      costLogger.warn(`${i18n.t('shared.use_query_cost.k0')}${queryName}${i18n.t('shared.use_query_cost.k1')}${cost.score}${i18n.t('shared.use_query_cost.k2')}${costLabel}`);
     }
 
     onHighCost?.(cost, queryName);

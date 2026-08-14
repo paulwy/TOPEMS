@@ -18,6 +18,7 @@ import {
   LinearProgress,
   TextField,
 } from '@mui/material';
+import i18n from '@/i18n';
 import {
   X as XIcon,
   Bug,
@@ -109,7 +110,7 @@ export const V59DevExPanel: React.FC<{ onClose: () => void }> = ({ onClose }) =>
               variant='h6'
               sx={{ fontWeight: 600 }}
             >
-              V59.0 AI DevEx — 智能开发体验
+              {i18n.t('ai.v59-devex-panel.k0')}
             </Typography>
             <Chip
               label='AI-Powered'
@@ -131,9 +132,9 @@ export const V59DevExPanel: React.FC<{ onClose: () => void }> = ({ onClose }) =>
         <Box sx={{ flex: 1, overflow: 'auto' }}>
           <Box sx={{ display: 'flex', borderBottom: 1, borderColor: 'divider', px: 2 }}>
             {[
-              { id: 'debug', label: '智能调试', icon: <Bug size={16} /> },
-              { id: 'performance', label: '性能分析', icon: <Activity size={16} /> },
-              { id: 'refactor', label: '代码重构', icon: <Code2 size={16} /> },
+              { id: 'debug', label: i18n.t('ai.v59-devex-panel.k0'), icon: <Bug size={16} /> },
+              { id: 'performance', label: i18n.t('ai.v59-devex-panel.k1'), icon: <Activity size={16} /> },
+              { id: 'refactor', label: i18n.t('ai.v59-devex-panel.k2'), icon: <Code2 size={16} /> },
             ].map((tab) => (
               <Button
                 key={tab.id}
@@ -215,7 +216,7 @@ const QuickActionsToolbar: React.FC = () => {
         variant='caption'
         sx={{ fontWeight: 600, color: 'text.secondary', mr: 1 }}
       >
-        快捷操作:
+        [i18n.t('ai.v59-devex-panel.k1')]:
       </Typography>
       <Button
         size='small'
@@ -223,7 +224,7 @@ const QuickActionsToolbar: React.FC = () => {
         onClick={handleQuickDebug}
         sx={{ textTransform: 'none', fontSize: 12 }}
       >
-        新建调试会话
+        {i18n.t('ai.v59-devex-panel.k2')}
       </Button>
       <Button
         size='small'
@@ -232,7 +233,7 @@ const QuickActionsToolbar: React.FC = () => {
         sx={{ textTransform: 'none', fontSize: 12 }}
         color={profiling ? 'error' : 'primary'}
       >
-        {profiling ? '停止性能分析' : '启动性能分析'}
+        {profiling ? i18n.t('ai.v59-devex-panel.k4') : i18n.t('ai.v59-devex-panel.k3')}
       </Button>
       <Button
         size='small'
@@ -240,12 +241,12 @@ const QuickActionsToolbar: React.FC = () => {
         onClick={handleQuickScan}
         sx={{ textTransform: 'none', fontSize: 12 }}
       >
-        扫描代码问题
+        {i18n.t('ai.v59-devex-panel.k3')}
       </Button>
       <Box sx={{ flex: 1 }} />
-      <Tooltip title='AI 建议'>
+      <Tooltip title={i18n.t('ai.v59-devex-panel.ai_4')}>
         <Chip
-          label={`${smartDebugger.getDebugSuggestions('global', 0).length} 条建议`}
+          label={`${smartDebugger.getDebugSuggestions('global', 0).length} ${i18n.t('ai.v59-devex-panel.k5')}`}
           size='small'
           icon={<Sparkles size={12} />}
           variant='outlined'
@@ -304,7 +305,7 @@ const DebugSessionView: React.FC = () => {
         type: 'logic' as const,
         severity: 'medium' as const,
         message: issue,
-        suggestion: '优化状态管理以提升性能',
+        suggestion: i18n.t('ai.v59-devex-panel.k5'),
         location: { file: session.file, line: session.line },
       })),
     ]);
@@ -367,7 +368,7 @@ const DebugSessionView: React.FC = () => {
                 startIcon={<Play size={14} />}
                 onClick={handleCreateSession}
               >
-                新建会话
+                {i18n.t('ai.v59-devex-panel.k6')}
               </Button>
             </Box>
 
@@ -375,10 +376,10 @@ const DebugSessionView: React.FC = () => {
               <Table size='small'>
                 <TableHead>
                   <TableRow>
-                    <TableCell sx={{ fontWeight: 600 }}>文件</TableCell>
-                    <TableCell sx={{ fontWeight: 600 }}>行号</TableCell>
-                    <TableCell sx={{ fontWeight: 600 }}>状态</TableCell>
-                    <TableCell sx={{ fontWeight: 600 }}>操作</TableCell>
+                    <TableCell sx={{ fontWeight: 600 }}>{i18n.t('ai.v59-devex-panel.k6')}</TableCell>
+                    <TableCell sx={{ fontWeight: 600 }}>{i18n.t('ai.v59-devex-panel.k7')}</TableCell>
+                    <TableCell sx={{ fontWeight: 600 }}>{i18n.t('ai.v59-devex-panel.k8')}</TableCell>
+                    <TableCell sx={{ fontWeight: 600 }}>{i18n.t('ai.v59-devex-panel.k9')}</TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
@@ -393,7 +394,7 @@ const DebugSessionView: React.FC = () => {
                           variant='body2'
                           color='text.secondary'
                         >
-                          暂无调试会话
+                          {i18n.t('ai.v59-devex-panel.k7')}
                         </Typography>
                       </TableCell>
                     </TableRow>
@@ -428,7 +429,7 @@ const DebugSessionView: React.FC = () => {
                                 e.stopPropagation();
                                 handleAnalyzeState(session);
                               }}
-                              title='分析状态'
+                              title={i18n.t('ai.v59-devex-panel.k10')}
                             >
                               <Activity size={14} />
                             </IconButton>
@@ -438,7 +439,7 @@ const DebugSessionView: React.FC = () => {
                                 e.stopPropagation();
                                 handleGetSuggestions(session);
                               }}
-                              title='AI 建议'
+                              title={i18n.t('ai.v59-devex-panel.ai_8')}
                             >
                               <Sparkles size={14} />
                             </IconButton>
@@ -448,7 +449,7 @@ const DebugSessionView: React.FC = () => {
                                 e.stopPropagation();
                                 handleRemoveSession(session.id);
                               }}
-                              title='删除'
+                              title={i18n.t('ai.v59-devex-panel.k11')}
                             >
                               <Trash2 size={14} />
                             </IconButton>
@@ -479,7 +480,7 @@ const DebugSessionView: React.FC = () => {
             <Box sx={{ display: 'flex', gap: 1, mb: 2 }}>
               <TextField
                 size='small'
-                placeholder='文件路径'
+                placeholder={i18n.t('ai.v59-devex-panel.k12')}
                 value={newBpFile}
                 onChange={(e) => setNewBpFile(e.target.value)}
                 sx={{ flex: 1 }}
@@ -487,7 +488,7 @@ const DebugSessionView: React.FC = () => {
               <TextField
                 size='small'
                 type='number'
-                placeholder='行号'
+                placeholder={i18n.t('ai.v59-devex-panel.k13')}
                 value={newBpLine}
                 onChange={(e) => setNewBpLine(Number(e.target.value))}
                 sx={{ width: 80 }}
@@ -498,7 +499,7 @@ const DebugSessionView: React.FC = () => {
                 onClick={handleSetBreakpoint}
                 startIcon={<Bug size={14} />}
               >
-                设置
+                {i18n.t('ai.v59-devex-panel.k9')}
               </Button>
             </Box>
 
@@ -506,10 +507,10 @@ const DebugSessionView: React.FC = () => {
               <Table size='small'>
                 <TableHead>
                   <TableRow>
-                    <TableCell sx={{ fontWeight: 600 }}>文件</TableCell>
-                    <TableCell sx={{ fontWeight: 600 }}>行</TableCell>
-                    <TableCell sx={{ fontWeight: 600 }}>状态</TableCell>
-                    <TableCell sx={{ fontWeight: 600 }}>操作</TableCell>
+                    <TableCell sx={{ fontWeight: 600 }}>{i18n.t('ai.v59-devex-panel.k14')}</TableCell>
+                    <TableCell sx={{ fontWeight: 600 }}>{i18n.t('ai.v59-devex-panel.k10')}</TableCell>
+                    <TableCell sx={{ fontWeight: 600 }}>{i18n.t('ai.v59-devex-panel.k15')}</TableCell>
+                    <TableCell sx={{ fontWeight: 600 }}>{i18n.t('ai.v59-devex-panel.k16')}</TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
@@ -524,7 +525,7 @@ const DebugSessionView: React.FC = () => {
                           variant='body2'
                           color='text.secondary'
                         >
-                          暂无断点
+                          {i18n.t('ai.v59-devex-panel.k11')}
                         </Typography>
                       </TableCell>
                     </TableRow>
@@ -537,7 +538,7 @@ const DebugSessionView: React.FC = () => {
                         <TableCell>{bp.line}</TableCell>
                         <TableCell>
                           <Chip
-                            label={bp.enabled ? '启用' : '禁用'}
+                            label={bp.enabled ? i18n.t('ai.v59-devex-panel.k18') : i18n.t('ai.v59-devex-panel.k17')}
                             size='small'
                             color={bp.enabled ? 'success' : 'default'}
                             onClick={() => handleToggleBreakpoint(bp)}
@@ -581,12 +582,12 @@ const DebugSessionView: React.FC = () => {
                     color='text.secondary'
                     sx={{ mb: 0.5 }}
                   >
-                    表达式求值
+                    {i18n.t('ai.v59-devex-panel.k12')}
                   </Typography>
                   <Box sx={{ display: 'flex', gap: 1, mb: 1 }}>
                     <TextField
                       size='small'
-                      placeholder='输入表达式...'
+                      placeholder={i18n.t('ai.v59-devex-panel.k13')}
                       value={evalExpr}
                       onChange={(e) => setEvalExpr(e.target.value)}
                       onKeyDown={(e) => e.key === 'Enter' && handleEvaluate()}
@@ -596,13 +597,13 @@ const DebugSessionView: React.FC = () => {
                       size='small'
                       onClick={handleEvaluate}
                     >
-                      求值
+                      {i18n.t('ai.v59-devex-panel.k14')}
                     </Button>
                     <Button
                       size='small'
                       onClick={() => handleGetCallStack(selectedSession)}
                     >
-                      调用栈
+                      {i18n.t('ai.v59-devex-panel.k15')}
                     </Button>
                   </Box>
                   {evalResult && (
@@ -654,7 +655,7 @@ const DebugSessionView: React.FC = () => {
                 color='text.secondary'
                 sx={{ textAlign: 'center', py: 2 }}
               >
-                选择会话并点击 "AI 建议" 或 "分析状态" 获取智能建议
+                {i18n.t('ai.v59-devex-panel.i18n_17')}.t('ai.v59-devex-panel.ai_16') 或 i18n.t('ai.v59-devex-panel.k19') 获取智能建议
               </Typography>
             ) : (
               <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
@@ -790,7 +791,7 @@ const PerformanceLiveGraph: React.FC = () => {
                 <Activity size={16} /> 实时性能监控
                 {isProfiling && (
                   <Chip
-                    label='采集中'
+                    label={i18n.t('ai.v59-devex-panel.k20')}
                     size='small'
                     color='success'
                     sx={{ ml: 1, fontSize: 10 }}
@@ -808,14 +809,14 @@ const PerformanceLiveGraph: React.FC = () => {
                   startIcon={isProfiling ? <Square size={14} /> : <Play size={14} />}
                   onClick={handleToggleProfiling}
                 >
-                  {isProfiling ? '停止' : '开始分析'}
+                  {isProfiling ? i18n.t('ai.v59-devex-panel.k22') : i18n.t('ai.v59-devex-panel.k21')}
                 </Button>
                 <Button
                   size='small'
                   startIcon={<Trash2 size={14} />}
                   onClick={handleClear}
                 >
-                  清空
+                  {i18n.t('ai.v59-devex-panel.k20')}
                 </Button>
               </Stack>
             </Box>
@@ -846,7 +847,7 @@ const PerformanceLiveGraph: React.FC = () => {
                       variant='caption'
                       color='text.secondary'
                     >
-                      综合得分
+                      {i18n.t('ai.v59-devex-panel.k21')}
                     </Typography>
                   </Paper>
                 </Grid>
@@ -878,7 +879,7 @@ const PerformanceLiveGraph: React.FC = () => {
                       variant='caption'
                       color='text.secondary'
                     >
-                      内存 (MB)
+                      {i18n.t('ai.v59-devex-panel.mb_22')}
                     </Typography>
                   </Paper>
                 </Grid>
@@ -961,7 +962,7 @@ const PerformanceLiveGraph: React.FC = () => {
                     color: 'grey.400',
                   }}
                 >
-                  等待数据...
+                  {i18n.t('ai.v59-devex-panel.k23')}
                 </Typography>
               )}
             </Box>
@@ -970,7 +971,7 @@ const PerformanceLiveGraph: React.FC = () => {
               variant='caption'
               sx={{ fontWeight: 600, mb: 1, display: 'block' }}
             >
-              内存趋势
+              {i18n.t('ai.v59-devex-panel.k24')}
             </Typography>
             <Box
               sx={{
@@ -1068,7 +1069,7 @@ const PerformanceLiveGraph: React.FC = () => {
                 variant='caption'
                 color='text.secondary'
               >
-                未检测到性能问题
+                {i18n.t('ai.v59-devex-panel.k25')}
               </Typography>
             ) : (
               <Box
@@ -1130,7 +1131,7 @@ const PerformanceLiveGraph: React.FC = () => {
             variant='subtitle2'
             sx={{ fontWeight: 600, mb: 2 }}
           >
-            最新快照详情
+            {i18n.t('ai.v59-devex-panel.k26')}
           </Typography>
           <Grid
             container
@@ -1155,7 +1156,7 @@ const PerformanceLiveGraph: React.FC = () => {
                 variant='caption'
                 color='text.secondary'
               >
-                内存 (MB)
+                {i18n.t('ai.v59-devex-panel.mb_27')}
               </Typography>
               <Typography
                 variant='body2'
@@ -1183,7 +1184,7 @@ const PerformanceLiveGraph: React.FC = () => {
                 variant='caption'
                 color='text.secondary'
               >
-                渲染 (ms)
+                {i18n.t('ai.v59-devex-panel.ms_28')}
               </Typography>
               <Typography
                 variant='body2'
@@ -1197,7 +1198,7 @@ const PerformanceLiveGraph: React.FC = () => {
                 variant='caption'
                 color='text.secondary'
               >
-                脚本 (ms)
+                {i18n.t('ai.v59-devex-panel.ms_29')}
               </Typography>
               <Typography
                 variant='body2'
@@ -1211,7 +1212,7 @@ const PerformanceLiveGraph: React.FC = () => {
                 variant='caption'
                 color='text.secondary'
               >
-                绘制 (ms)
+                {i18n.t('ai.v59-devex-panel.ms_30')}
               </Typography>
               <Typography
                 variant='body2'
@@ -1340,7 +1341,7 @@ const RefactoringSuggestions: React.FC = () => {
 
             <TextField
               size='small'
-              placeholder='文件路径'
+              placeholder={i18n.t('ai.v59-devex-panel.k23')}
               value={scanFile}
               onChange={(e) => setScanFile(e.target.value)}
               fullWidth
@@ -1348,7 +1349,7 @@ const RefactoringSuggestions: React.FC = () => {
             />
             <TextField
               size='small'
-              placeholder='代码内容 (可选)'
+              placeholder={i18n.t('ai.v59-devex-panel.k24')}
               value={scanCode}
               onChange={(e) => setScanCode(e.target.value)}
               fullWidth
@@ -1364,7 +1365,7 @@ const RefactoringSuggestions: React.FC = () => {
               fullWidth
               disabled={!scanFile}
             >
-              扫描代码
+              {i18n.t('ai.v59-devex-panel.k31')}
             </Button>
           </Paper>
 
@@ -1381,7 +1382,7 @@ const RefactoringSuggestions: React.FC = () => {
                 variant='caption'
                 color='text.secondary'
               >
-                暂无代码问题，扫描文件以查找
+                {i18n.t('ai.v59-devex-panel.k32')}
               </Typography>
             ) : (
               <Box
@@ -1502,7 +1503,7 @@ const RefactoringSuggestions: React.FC = () => {
                 variant='caption'
                 color='text.secondary'
               >
-                选择问题并点击重构类型创建计划
+                {i18n.t('ai.v59-devex-panel.k33')}
               </Typography>
             ) : (
               <Box
@@ -1546,7 +1547,7 @@ const RefactoringSuggestions: React.FC = () => {
                         variant='caption'
                         sx={{ fontSize: 10 }}
                       >
-                        风险: {plan.risk}
+                        [i18n.t('ai.v59-devex-panel.k34')]: {plan.risk}
                       </Typography>
                     </Box>
                     <Typography
@@ -1580,7 +1581,7 @@ const RefactoringSuggestions: React.FC = () => {
                 variant='caption'
                 color='text.secondary'
               >
-                暂无重构历史
+                {i18n.t('ai.v59-devex-panel.k35')}
               </Typography>
             ) : (
               <Box
@@ -1679,7 +1680,7 @@ const RefactoringSuggestions: React.FC = () => {
                     variant='caption'
                     sx={{ fontWeight: 600, mb: 0.5, display: 'block' }}
                   >
-                    影响评估
+                    {i18n.t('ai.v59-devex-panel.k36')}
                   </Typography>
                   <Grid
                     container
@@ -1690,7 +1691,7 @@ const RefactoringSuggestions: React.FC = () => {
                         variant='caption'
                         color='text.secondary'
                       >
-                        变更文件
+                        {i18n.t('ai.v59-devex-panel.k37')}
                       </Typography>
                       <Typography
                         variant='caption'
@@ -1704,7 +1705,7 @@ const RefactoringSuggestions: React.FC = () => {
                         variant='caption'
                         color='text.secondary'
                       >
-                        新增行
+                        {i18n.t('ai.v59-devex-panel.k38')}
                       </Typography>
                       <Typography
                         variant='caption'
@@ -1718,7 +1719,7 @@ const RefactoringSuggestions: React.FC = () => {
                         variant='caption'
                         color='text.secondary'
                       >
-                        删除行
+                        {i18n.t('ai.v59-devex-panel.k39')}
                       </Typography>
                       <Typography
                         variant='caption'
@@ -1732,7 +1733,7 @@ const RefactoringSuggestions: React.FC = () => {
                         variant='caption'
                         color='text.secondary'
                       >
-                        风险等级
+                        {i18n.t('ai.v59-devex-panel.k40')}
                       </Typography>
                       <Chip
                         label={impact.risk}
@@ -1768,7 +1769,7 @@ const RefactoringSuggestions: React.FC = () => {
                   onClick={() => handleApply(selectedPlan.id)}
                   color='success'
                 >
-                  应用重构
+                  {i18n.t('ai.v59-devex-panel.k41')}
                 </Button>
                 <Button
                   size='small'
@@ -1776,7 +1777,7 @@ const RefactoringSuggestions: React.FC = () => {
                   onClick={() => handleReject(selectedPlan.id)}
                   color='inherit'
                 >
-                  拒绝
+                  {i18n.t('ai.v59-devex-panel.k42')}
                 </Button>
               </Stack>
             </Paper>
@@ -1792,10 +1793,10 @@ const RefactoringSuggestions: React.FC = () => {
 
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
               {[
-                { icon: <Zap size={14} />, text: '使用 React.memo 包装频繁渲染的组件' },
-                { icon: <Wrench size={14} />, text: '将复杂条件逻辑提取为纯函数' },
-                { icon: <Code2 size={14} />, text: '拆分超过 200 行的文件为多个模块' },
-                { icon: <AlertTriangle size={14} />, text: '避免在渲染函数中创建新的对象引用' },
+                { icon: <Zap size={14} />, text: i18n.t('ai.v59-devex-panel.k43') },
+                { icon: <Wrench size={14} />, text: i18n.t('ai.v59-devex-panel.k25') },
+                { icon: <Code2 size={14} />, text: i18n.t('ai.v59-devex-panel.200_26') },
+                { icon: <AlertTriangle size={14} />, text: i18n.t('ai.v59-devex-panel.k27') },
               ].map((tip, idx) => (
                 <Paper
                   key={idx}

@@ -5,25 +5,21 @@
 import React from 'react';
 import { Box, TextField, InputAdornment } from '@mui/material';
 import { Search } from 'lucide-react';
-import { useTranslation } from 'react-i18next';
-
+import i18n from '@/i18n';
 interface MobileQualitySearchBarProps {
   searchQuery: string;
   onSearchChange: (value: string) => void;
 }
-
 export const MobileQualitySearchBar: React.FC<MobileQualitySearchBarProps> = ({
   searchQuery,
   onSearchChange,
 }) => {
-  const { t } = useTranslation();
-
   return (
     <Box sx={{ px: 2, pt: 2 }}>
       <TextField
         fullWidth
         size='small'
-        placeholder={t('mobile.quality.search_placeholder')}
+        placeholder={i18n.t('mobile.quality.search_placeholder')}
         value={searchQuery}
         onChange={(e) => onSearchChange(e.target.value)}
         sx={{

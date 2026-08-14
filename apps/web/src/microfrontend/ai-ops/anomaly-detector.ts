@@ -1,3 +1,4 @@
+import i18n from '@/i18n';
 export interface MetricBaseline {
   metricName: string;
   moduleId?: string;
@@ -292,7 +293,7 @@ export class AnomalyDetector {
         detectionMethod: method,
         acknowledged: false,
         resolved: false,
-        description: `${metricName} 异常: ${value.toFixed(2)}, 偏离 ${deviationPercent.toFixed(1)}%`,
+        description: `${metricName}${i18n.t('microfrontend.anomaly-detector.k0')}${value.toFixed(2)}${i18n.t('microfrontend.anomaly-detector.k1')}${deviationPercent.toFixed(1)}%`,
       };
       this.addAnomalyEvent(event);
     }

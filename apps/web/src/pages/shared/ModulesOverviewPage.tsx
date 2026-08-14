@@ -7,6 +7,7 @@ import { gradients } from '@/theme';
 import { PageContainer } from '@/components';
 import { lucideIcons } from '@/lib/iconMapping';
 import { designTokens } from '@/theme/tokens';
+import i18n from '@/i18n';
 
 const ct= designTokens.colors;
 
@@ -199,50 +200,50 @@ interface SuiteInfo {
 const suiteInfo: Record<string, SuiteInfo> = {
   finance: {
     key: 'finance',
-    title: '财务套件',
-    subtitle: '完整的财务管理解决方案',
+    title: i18n.t('pages.modules_overview_page.k0'),
+    subtitle: i18n.t('pages.modules_overview_page.k1'),
     icon: 'DollarSign',
   },
   hr: {
     key: 'hr',
-    title: '人力套件',
-    subtitle: '人力资源全生命周期管理',
+    title: i18n.t('pages.modules_overview_page.k2'),
+    subtitle: i18n.t('pages.modules_overview_page.k3'),
     icon: 'Users',
   },
   manufacturing: {
     key: 'manufacturing',
-    title: '制造套件',
-    subtitle: '智能制造执行系统',
+    title: i18n.t('pages.modules_overview_page.k4'),
+    subtitle: i18n.t('pages.modules_overview_page.k5'),
     icon: 'Factory',
   },
   supply: {
     key: 'supply',
-    title: '供应链套件',
-    subtitle: '采购与供应商管理',
+    title: i18n.t('pages.modules_overview_page.k6'),
+    subtitle: i18n.t('pages.modules_overview_page.k7'),
     icon: 'Truck',
   },
   crm: {
     key: 'crm',
-    title: '客户套件',
-    subtitle: '客户关系与销售管理',
+    title: i18n.t('pages.modules_overview_page.k8'),
+    subtitle: i18n.t('pages.modules_overview_page.k9'),
     icon: 'Target',
   },
   quality: {
     key: 'quality',
-    title: '质量套件',
-    subtitle: '质量管控与实验室管理',
+    title: i18n.t('pages.modules_overview_page.k10'),
+    subtitle: i18n.t('pages.modules_overview_page.k11'),
     icon: 'ClipboardCheck',
   },
   project: {
     key: 'project',
-    title: '项目套件',
-    subtitle: '项目与研发过程管理',
+    title: i18n.t('pages.modules_overview_page.k12'),
+    subtitle: i18n.t('pages.modules_overview_page.k13'),
     icon: 'FolderKanban',
   },
   gis: {
     key: 'gis',
-    title: '地理套件',
-    subtitle: '地理信息与空间分析',
+    title: i18n.t('pages.modules_overview_page.k14'),
+    subtitle: i18n.t('pages.modules_overview_page.k15'),
     icon: 'Map',
   },
 };
@@ -313,8 +314,8 @@ const ModulesOverviewPage: React.FC = () => {
 
   return (
     <PageContainer
-      title='模块总览'
-      subtitle='浏览所有可用的功能模块，快速进入目标系统'
+      title={i18n.t('pages.modules_overview_page.k16')}
+      subtitle={i18n.t('pages.modules_overview_page.k17')}
       headerProps={{
         pageIcon: <Layers sx={{ width: 24, height: 24 }} />,
         pageColor: 'primary.main',
@@ -326,7 +327,7 @@ const ModulesOverviewPage: React.FC = () => {
       <TextField
         fullWidth
         size='small'
-        placeholder='搜索模块...'
+        placeholder={i18n.t('pages.modules_overview_page.k0')}
         value={searchQuery}
         onChange={(e) => setSearchQuery(e.target.value)}
         slotProps={{
@@ -343,8 +344,8 @@ const ModulesOverviewPage: React.FC = () => {
 
       {/* Core modules */}
       <ModuleSection
-        title='核心平台'
-        subtitle='企业管理基础能力，开箱即用'
+        title={i18n.t('pages.modules_overview_page.k18')}
+        subtitle={i18n.t('pages.modules_overview_page.k19')}
         cards={coreCards}
         onCardClick={handleCardClick}
       />
@@ -366,8 +367,8 @@ const ModulesOverviewPage: React.FC = () => {
       {/* Other / ungrouped plugin modules */}
       {suiteCards['other'] && suiteCards['other'].length > 0 && (
         <ModuleSection
-          title='更多应用'
-          subtitle='其他业务模块'
+          title={i18n.t('pages.modules_overview_page.k20')}
+          subtitle={i18n.t('pages.modules_overview_page.k21')}
           cards={suiteCards['other']}
           onCardClick={handleCardClick}
         />

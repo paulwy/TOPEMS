@@ -1,5 +1,4 @@
 import React from 'react';
-import { useTranslation } from 'react-i18next';
 import { Box, Typography, Stack, Paper, Avatar, Chip } from '@mui/material';
 import {
   User,
@@ -11,30 +10,25 @@ import {
   PlayCircle,
   GitBranch,
 } from 'lucide-react';
+import i18n from '@/i18n';
 import type { Approval, ApprovalRecord } from '@/api/workflow';
 import type { TabConfig } from '@/components/templates/DetailPageTemplate';
 import { designTokens } from '@/theme/tokens';
-
 const ct= designTokens.colors;
-
 interface WorkflowApprovalDetailTabsProps {
   approval: Approval | null;
   records: ApprovalRecord[];
 }
-
 export function WorkflowApprovalDetailTabs({
   approval,
   records,
 }: WorkflowApprovalDetailTabsProps): TabConfig[] {
-  const { t } = useTranslation();
-
   const tabs: TabConfig[] = React.useMemo(() => {
     if (!approval) return [];
-
     return [
       {
         id: 'info',
-        label: t('workflow.approval_detail.tab.approval_info'),
+        label: i18n.t('workflow.approval_detail.tab.approval_info'),
         content: (
           <Box>
             <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 2 }}>
@@ -43,7 +37,7 @@ export function WorkflowApprovalDetailTabs({
                   variant='body2'
                   sx={{ color: 'grey.500', mb: 0.5 }}
                 >
-                  {t('workflow.approval_detail.field.approval_id')}
+                  {i18n.t('workflow.approval_detail.field.approval_id')}
                 </Typography>
                 <Typography
                   variant='body2'
@@ -57,7 +51,7 @@ export function WorkflowApprovalDetailTabs({
                   variant='body2'
                   sx={{ color: 'grey.500', mb: 0.5 }}
                 >
-                  {t('workflow.approval_detail.field.task_name')}
+                  {i18n.t('workflow.approval_detail.field.task_name')}
                 </Typography>
                 <Typography variant='body2'>{approval.task_name}</Typography>
               </Box>
@@ -66,7 +60,7 @@ export function WorkflowApprovalDetailTabs({
                   variant='body2'
                   sx={{ color: 'grey.500', mb: 0.5 }}
                 >
-                  {t('workflow.approval_detail.field.node_id')}
+                  {i18n.t('workflow.approval_detail.field.node_id')}
                 </Typography>
                 <Typography
                   variant='body2'
@@ -80,15 +74,15 @@ export function WorkflowApprovalDetailTabs({
                   variant='body2'
                   sx={{ color: 'grey.500', mb: 0.5 }}
                 >
-                  {t('workflow.approval_detail.field.approval_type')}
+                  {i18n.t('workflow.approval_detail.field.approval_type')}
                 </Typography>
                 <Typography variant='body2'>
                   {approval.approval_type === 'single'
-                    ? t('workflow.approval_detail.type.single_approval')
+                    ? i18n.t('workflow.approval_detail.type.single_approval')
                     : approval.approval_type === 'counter'
-                      ? t('workflow.approval_detail.type.counter_approval')
+                      ? i18n.t('workflow.approval_detail.type.counter_approval')
                       : approval.approval_type === 'or'
-                        ? t('workflow.approval_detail.type.or_approval')
+                        ? i18n.t('workflow.approval_detail.type.or_approval')
                         : approval.approval_type || 'N/A'}
                 </Typography>
               </Box>
@@ -97,7 +91,7 @@ export function WorkflowApprovalDetailTabs({
                   variant='body2'
                   sx={{ color: 'grey.500', mb: 0.5 }}
                 >
-                  {t('workflow.approval_detail.field.approver')}
+                  {i18n.t('workflow.approval_detail.field.approver')}
                 </Typography>
                 <Stack
                   direction='row'
@@ -113,7 +107,7 @@ export function WorkflowApprovalDetailTabs({
                   variant='body2'
                   sx={{ color: 'grey.500', mb: 0.5 }}
                 >
-                  {t('workflow.approval_detail.field.created_at')}
+                  {i18n.t('workflow.approval_detail.field.created_at')}
                 </Typography>
                 <Typography variant='body2'>
                   {new Date(approval.created_at).toLocaleString()}
@@ -126,7 +120,7 @@ export function WorkflowApprovalDetailTabs({
                       variant='body2'
                       sx={{ color: 'grey.500', mb: 0.5 }}
                     >
-                      {t('workflow.approval_detail.field.approver')}
+                      {i18n.t('workflow.approval_detail.field.approver')}
                     </Typography>
                     <Typography variant='body2'>{approval.approved_by}</Typography>
                   </Box>
@@ -135,7 +129,7 @@ export function WorkflowApprovalDetailTabs({
                       variant='body2'
                       sx={{ color: 'grey.500', mb: 0.5 }}
                     >
-                      {t('workflow.approval_detail.field.approved_at')}
+                      {i18n.t('workflow.approval_detail.field.approved_at')}
                     </Typography>
                     <Typography variant='body2'>
                       {approval.approved_at
@@ -151,7 +145,7 @@ export function WorkflowApprovalDetailTabs({
                     variant='body2'
                     sx={{ color: 'grey.500', mb: 0.5 }}
                   >
-                    {t('workflow.approval_detail.field.timeout_at')}
+                    {i18n.t('workflow.approval_detail.field.timeout_at')}
                   </Typography>
                   <Typography variant='body2'>
                     {new Date(approval.timeout_at).toLocaleString()}
@@ -165,7 +159,7 @@ export function WorkflowApprovalDetailTabs({
                   variant='body2'
                   sx={{ color: 'grey.500', mb: 1 }}
                 >
-                  {t('workflow.approval_detail.field.approval_comment')}
+                  {i18n.t('workflow.approval_detail.field.approval_comment')}
                 </Typography>
                 <Box sx={{ bgcolor: 'grey.50', p: 1.5, borderRadius: 1 }}>
                   <Stack
@@ -187,7 +181,7 @@ export function WorkflowApprovalDetailTabs({
       },
       {
         id: 'records',
-        label: t('workflow.approval_detail.tab.approval_records'),
+        label: i18n.t('workflow.approval_detail.tab.approval_records'),
         badge: records.length,
         content: (
           <Box>
@@ -206,7 +200,7 @@ export function WorkflowApprovalDetailTabs({
                   variant='body2'
                   sx={{ color: 'grey.500' }}
                 >
-                  {t('workflow.approval_detail.label.no_records')}
+                  {i18n.t('workflow.approval_detail.label.no_records')}
                 </Typography>
               </Box>
             ) : (
@@ -237,8 +231,8 @@ export function WorkflowApprovalDetailTabs({
                         sx={{ fontWeight: 500 }}
                       >
                         {record.action === 'approve'
-                          ? ` + ${t('workflow.approval_detail.label.approve')} + `
-                          : t('workflow.approval_detail.label.reject')}
+                          ? ` + ${i18n.t('workflow.approval_detail.label.approve')} + `
+                          : i18n.t('workflow.approval_detail.label.reject')}
                       </Typography>
                     </Stack>
                     <Stack
@@ -279,7 +273,7 @@ export function WorkflowApprovalDetailTabs({
                         variant='caption'
                         sx={{ color: 'grey.400', display: 'block', mt: 1 }}
                       >
-                        {t('workflow.approval_detail.label.status_change', {
+                        {i18n.t('workflow.approval_detail.label.status_change', {
                           from: record.previous_status,
                           to: record.new_status,
                         })}
@@ -294,7 +288,7 @@ export function WorkflowApprovalDetailTabs({
       },
       {
         id: 'timeline',
-        label: t('workflow.approval_detail.tab.process_timeline'),
+        label: i18n.t('workflow.approval_detail.tab.process_timeline'),
         icon: <GitBranch size={16} />,
         content: (
           <Box>
@@ -302,7 +296,7 @@ export function WorkflowApprovalDetailTabs({
               variant='body2'
               sx={{ color: 'grey.500', mb: 2 }}
             >
-              {t('workflow.approval_detail.label.full_timeline_desc')}
+              {i18n.t('workflow.approval_detail.label.full_timeline_desc')}
             </Typography>
             {records.length === 0 ? (
               <Box sx={{ textAlign: 'center', py: 6 }}>
@@ -316,7 +310,7 @@ export function WorkflowApprovalDetailTabs({
                   }}
                 />
                 <Typography sx={{ color: 'grey.500' }}>
-                  {t('workflow.approval_detail.label.process_not_started')}
+                  {i18n.t('workflow.approval_detail.label.process_not_started')}
                 </Typography>
               </Box>
             ) : (
@@ -349,17 +343,17 @@ export function WorkflowApprovalDetailTabs({
                         variant='body2'
                         sx={{ fontWeight: 600 }}
                       >
-                        {t('workflow.approval_detail.label.process_start')}
+                        {i18n.t('workflow.approval_detail.label.process_start')}
                       </Typography>
                       <Typography
                         variant='caption'
                         sx={{ color: 'grey.500' }}
                       >
-                        {t(
+                        {i18n.t(
                           `workflow.approval_detail.label.initiator${{
                             name:
                               approval?.assignee_id ||
-                              ` + ${t('workflow.approval_detail.label.system')}`,
+                              ` + ${i18n.t('workflow.approval_detail.label.system')}`,
                           }}`
                         )}
                       </Typography>
@@ -371,7 +365,6 @@ export function WorkflowApprovalDetailTabs({
                       </Typography>
                     </Paper>
                   </Box>
-
                   {records.map((record, index) => {
                     const isApproved = record.action === 'approve';
                     return (
@@ -407,12 +400,12 @@ export function WorkflowApprovalDetailTabs({
                               sx={{ fontWeight: 600 }}
                             >
                               {isApproved
-                                ? t('workflow.approval_detail.label.approval_approved')
-                                : t('workflow.approval_detail.label.approval_rejected')}
+                                ? i18n.t('workflow.approval_detail.label.approval_approved')
+                                : i18n.t('workflow.approval_detail.label.approval_rejected')}
                             </Typography>
                             <Chip
                               size='small'
-                              label={t('workflow.approval_detail.label.step', { num: index })}
+                              label={i18n.t('workflow.approval_detail.label.step', { num: index })}
                               color={isApproved ? 'success' : 'error'}
                               variant='outlined'
                             />
@@ -472,7 +465,6 @@ export function WorkflowApprovalDetailTabs({
                       </Box>
                     );
                   })}
-
                   {approval?.status === 'pending' && (
                     <Box sx={{ display: 'flex', gap: 2, position: 'relative' }}>
                       <Avatar sx={{ width: 40, height: 40, bgcolor: 'warning.main', zIndex: 1 }}>
@@ -492,13 +484,13 @@ export function WorkflowApprovalDetailTabs({
                           variant='body2'
                           sx={{ fontWeight: 600 }}
                         >
-                          {t('workflow.approval_detail.label.current_pending')}
+                          {i18n.t('workflow.approval_detail.label.current_pending')}
                         </Typography>
                         <Typography
                           variant='caption'
                           sx={{ color: 'grey.500' }}
                         >
-                          {t('workflow.approval_detail.label.approver_with_val', {
+                          {i18n.t('workflow.approval_detail.label.approver_with_val', {
                             name: approval.assignee_id || 'N/A',
                           })}
                         </Typography>
@@ -507,7 +499,7 @@ export function WorkflowApprovalDetailTabs({
                             variant='caption'
                             sx={{ display: 'block', color: 'warning.main', mt: 0.5 }}
                           >
-                            {t('workflow.approval_detail.label.timeout_with_val', {
+                            {i18n.t('workflow.approval_detail.label.timeout_with_val', {
                               time: new Date(approval.timeout_at).toLocaleString(),
                             })}
                           </Typography>
@@ -523,7 +515,7 @@ export function WorkflowApprovalDetailTabs({
       },
       {
         id: 'formData',
-        label: t('workflow.approval_detail.tab.form_data'),
+        label: i18n.t('workflow.approval_detail.tab.form_data'),
         icon: <FileText size={16} />,
         content: (
           <Box>
@@ -531,7 +523,7 @@ export function WorkflowApprovalDetailTabs({
               variant='body2'
               sx={{ color: 'grey.500', mb: 2 }}
             >
-              {t('workflow.approval_detail.label.form_data_desc')}
+              {i18n.t('workflow.approval_detail.label.form_data_desc')}
             </Typography>
             {(approval as unknown as Record<string, unknown>)?.form_data &&
             Object.keys(
@@ -579,13 +571,13 @@ export function WorkflowApprovalDetailTabs({
                   }}
                 />
                 <Typography sx={{ color: 'grey.500' }}>
-                  {t('workflow.approval_detail.label.no_form_data')}
+                  {i18n.t('workflow.approval_detail.label.no_form_data')}
                 </Typography>
                 <Typography
                   variant='caption'
                   sx={{ color: 'grey.400', display: 'block', mt: 0.5 }}
                 >
-                  {t('workflow.approval_detail.label.form_data_auto_fill')}
+                  {i18n.t('workflow.approval_detail.label.form_data_auto_fill')}
                 </Typography>
               </Box>
             )}
@@ -593,7 +585,6 @@ export function WorkflowApprovalDetailTabs({
         ),
       },
     ];
-  }, [approval, records, t]);
-
+  }, [approval, records, i18n.t]);
   return tabs;
 }

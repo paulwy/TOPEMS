@@ -4,6 +4,7 @@ import { FileText } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { designTokens } from '@/theme/tokens';
 import { DASHBOARD_PATHS } from '@/routes/dashboard';
+import i18n from '@/i18n';
 
 const ct= designTokens.colors;
 
@@ -50,17 +51,17 @@ const ServiceDownState: React.FC = () => {
           variant='h5'
           sx={{ fontWeight: 700, mb: 2, color: 'grey.900' }}
         >
-          报表服务未启动
+          {i18n.t('pages.service_down_state.k0')}
         </Typography>
         <Typography sx={{ mb: 3, color: 'grey.700' }}>
-          Report服务正在启动中，请稍后刷新页面，或者联系管理员启动服务。
+          {i18n.t('pages.service_down_state.k1')}
         </Typography>
         <Button
           onClick={() => navigate(DASHBOARD_PATHS.dashboard)}
           variant='contained'
           sx={{ px: 3, py: 1, borderRadius: 3 }}
         >
-          返回首页
+          {i18n.t('pages.service_down_state.k2')}
         </Button>
       </Box>
     </Box>

@@ -8,6 +8,7 @@ import CrudPage, { type CrudApiAdapter } from '@/components/templates/CrudPage';
 import { PageContainer } from '@/components/common';
 import { documentSchema } from '@/schemas/doc';
 import { designTokens } from '@/theme/tokens';
+import i18n from '@/i18n';
 
 const ct= designTokens.colors;
 
@@ -32,46 +33,46 @@ interface KnowledgeCategory {
 const CATEGORIES: KnowledgeCategory[] = [
   {
     id: 'product-manual',
-    name: '产品手册',
+    name: i18n.t('pages.knowledge_base_page.k0'),
     icon: 'book',
     color: 'primary.main',
-    description: '产品功能介绍和使用指南',
+    description: i18n.t('pages.knowledge_base_page.k1'),
   },
   {
     id: 'tech-doc',
-    name: '技术文档',
+    name: i18n.t('pages.knowledge_base_page.k2'),
     icon: 'code',
     color: 'success.main',
-    description: '技术架构、API文档和开发指南',
+    description: i18n.t('pages.knowledge_base_page.api_3'),
   },
   {
     id: 'training',
-    name: '培训资料',
+    name: i18n.t('pages.knowledge_base_page.k4'),
     icon: 'graduation',
     color: 'warning.main',
-    description: '新员工培训和技能提升资料',
+    description: i18n.t('pages.knowledge_base_page.k5'),
   },
   {
     id: 'rules',
-    name: '规章制度',
+    name: i18n.t('pages.knowledge_base_page.k6'),
     icon: 'scale',
     color: 'error.main',
-    description: '公司制度和管理规范',
+    description: i18n.t('pages.knowledge_base_page.k7'),
   },
   {
     id: 'faq',
-    name: '常见问题',
+    name: i18n.t('pages.knowledge_base_page.k8'),
     icon: 'help',
     color: 'secondary.main',
-    description: '常见问题解答和故障排除',
+    description: i18n.t('pages.knowledge_base_page.k9'),
   },
 ];
 
 const MOCK_DOCS: KnowledgeDoc[] = [
   {
     id: '1',
-    title: '产品快速入门指南',
-    author: '张三',
+    title: i18n.t('pages.knowledge_base_page.k10'),
+    author: i18n.t('pages.knowledge_base_page.k11'),
     updatedAt: '2024-12-15',
     views: 1256,
     status: 'published',
@@ -79,8 +80,8 @@ const MOCK_DOCS: KnowledgeDoc[] = [
   },
   {
     id: '2',
-    title: '核心功能详解',
-    author: '李四',
+    title: i18n.t('pages.knowledge_base_page.k12'),
+    author: i18n.t('pages.knowledge_base_page.k13'),
     updatedAt: '2024-12-14',
     views: 892,
     status: 'published',
@@ -88,8 +89,8 @@ const MOCK_DOCS: KnowledgeDoc[] = [
   },
   {
     id: '3',
-    title: '系统架构设计文档',
-    author: '王五',
+    title: i18n.t('pages.knowledge_base_page.k14'),
+    author: i18n.t('pages.knowledge_base_page.k15'),
     updatedAt: '2024-12-13',
     views: 678,
     status: 'published',
@@ -97,8 +98,8 @@ const MOCK_DOCS: KnowledgeDoc[] = [
   },
   {
     id: '4',
-    title: 'API接口文档 v2.0',
-    author: '赵六',
+    title: i18n.t('pages.knowledge_base_page.apiv20_0'),
+    author: i18n.t('pages.knowledge_base_page.k16'),
     updatedAt: '2024-12-12',
     views: 1534,
     status: 'published',
@@ -106,8 +107,8 @@ const MOCK_DOCS: KnowledgeDoc[] = [
   },
   {
     id: '5',
-    title: '新员工入职培训手册',
-    author: '钱七',
+    title: i18n.t('pages.knowledge_base_page.k17'),
+    author: i18n.t('pages.knowledge_base_page.k18'),
     updatedAt: '2024-12-11',
     views: 456,
     status: 'published',
@@ -115,8 +116,8 @@ const MOCK_DOCS: KnowledgeDoc[] = [
   },
   {
     id: '6',
-    title: '员工行为规范',
-    author: '孙八',
+    title: i18n.t('pages.knowledge_base_page.k19'),
+    author: i18n.t('pages.knowledge_base_page.k20'),
     updatedAt: '2024-12-10',
     views: 2034,
     status: 'published',
@@ -124,8 +125,8 @@ const MOCK_DOCS: KnowledgeDoc[] = [
   },
   {
     id: '7',
-    title: '考勤管理制度',
-    author: '周九',
+    title: i18n.t('pages.knowledge_base_page.k21'),
+    author: i18n.t('pages.knowledge_base_page.k22'),
     updatedAt: '2024-12-09',
     views: 1876,
     status: 'published',
@@ -133,8 +134,8 @@ const MOCK_DOCS: KnowledgeDoc[] = [
   },
   {
     id: '8',
-    title: '常见问题FAQ',
-    author: '吴十',
+    title: i18n.t('pages.knowledge_base_page.faq_23'),
+    author: i18n.t('pages.knowledge_base_page.k24'),
     updatedAt: '2024-12-08',
     views: 3421,
     status: 'published',
@@ -142,8 +143,8 @@ const MOCK_DOCS: KnowledgeDoc[] = [
   },
   {
     id: '9',
-    title: '产品高级功能使用技巧',
-    author: '张三',
+    title: i18n.t('pages.knowledge_base_page.k25'),
+    author: i18n.t('pages.knowledge_base_page.k26'),
     updatedAt: '2024-12-07',
     views: 567,
     status: 'draft',
@@ -151,8 +152,8 @@ const MOCK_DOCS: KnowledgeDoc[] = [
   },
   {
     id: '10',
-    title: '数据库设计规范',
-    author: '王五',
+    title: i18n.t('pages.knowledge_base_page.k27'),
+    author: i18n.t('pages.knowledge_base_page.k28'),
     updatedAt: '2024-12-06',
     views: 345,
     status: 'archived',
@@ -160,8 +161,8 @@ const MOCK_DOCS: KnowledgeDoc[] = [
   },
   {
     id: '11',
-    title: '销售技巧培训',
-    author: '郑十一',
+    title: i18n.t('pages.knowledge_base_page.k29'),
+    author: i18n.t('pages.knowledge_base_page.k30'),
     updatedAt: '2024-12-05',
     views: 234,
     status: 'published',
@@ -169,8 +170,8 @@ const MOCK_DOCS: KnowledgeDoc[] = [
   },
   {
     id: '12',
-    title: '登录问题排查指南',
-    author: '吴十',
+    title: i18n.t('pages.knowledge_base_page.k31'),
+    author: i18n.t('pages.knowledge_base_page.k32'),
     updatedAt: '2024-12-04',
     views: 2156,
     status: 'published',
@@ -179,9 +180,9 @@ const MOCK_DOCS: KnowledgeDoc[] = [
 ];
 
 const STATUS_LABELS: Record<string, string> = {
-  published: '已发布',
-  draft: '草稿',
-  archived: '已归档',
+  published: i18n.t('pages.knowledge_base_page.k33'),
+  draft: i18n.t('pages.knowledge_base_page.k34'),
+  archived: i18n.t('pages.knowledge_base_page.k35'),
 };
 
 const STATUS_COLORS: Record<string, string> = {
@@ -280,8 +281,8 @@ export const DocumentKnowledgeBasePage: React.FC = () => {
           const category = CATEGORIES.find((c) => c.id === doc.categoryId);
           setSelectedCategory(category || null);
           addNotification({
-            title: '打开文档',
-            message: `正在打开"${doc.title}"...`,
+            title: i18n.t('pages.knowledge_base_page.k36'),
+            message: `${i18n.t('pages.knowledge_base_page.k1')}${doc.title}"...`,
             type: 'info',
           });
         }
@@ -349,7 +350,7 @@ export const DocumentKnowledgeBasePage: React.FC = () => {
               size={48}
               style={{ color: theme.palette.text.disabled, margin: '0 auto 16px' }}
             />
-            <Typography color='text.secondary'>选择一个分类查看知识库文档</Typography>
+            <Typography color='text.secondary'>{i18n.t('pages.knowledge_base_page.k37')}</Typography>
           </Box>
         );
       }
@@ -399,17 +400,17 @@ export const DocumentKnowledgeBasePage: React.FC = () => {
             >
               <Chip
                 size='small'
-                label={`文档总数: ${categoryDocs.length}`}
+                label={`${i18n.t('pages.knowledge_base_page.k2')} ${categoryDocs.length}`}
                 sx={{ bgcolor: 'primary.50', color: 'primary.main' }}
               />
               <Chip
                 size='small'
-                label={`已发布: ${categoryDocs.filter((d) => d.status === 'published').length}`}
+                label={`${i18n.t('pages.knowledge_base_page.k3')} ${categoryDocs.filter((d) => d.status === 'published').length}`}
                 sx={{ bgcolor: 'success.50', color: 'success.main' }}
               />
               <Chip
                 size='small'
-                label={`总阅读量: ${categoryDocs.reduce((sum, d) => sum + d.views, 0).toLocaleString()}`}
+                label={`${i18n.t('pages.knowledge_base_page.k4')} ${categoryDocs.reduce((sum, d) => sum + d.views, 0).toLocaleString()}`}
                 sx={{ bgcolor: 'info.50', color: 'info.main' }}
               />
             </Stack>
@@ -440,24 +441,24 @@ export const DocumentKnowledgeBasePage: React.FC = () => {
         subtitle=''
         data={filteredTreeData}
         loading={false}
-        searchPlaceholder='搜索知识库分类、文档...'
+        searchPlaceholder={i18n.t('pages.knowledge_base_page.k5')}
         onSearch={setSearchQuery}
         onSelect={handleSelectNode}
         selectedId={selectedNode?.id}
         detailPanel={detailPanel}
-        detailPanelTitle={selectedCategory ? '文档列表' : undefined}
+        detailPanelTitle={selectedCategory ? i18n.t('pages.knowledge_base_page.k38') : undefined}
         onRefresh={() => {
           addNotification({
-            title: '成功',
-            message: '刷新成功',
+            title: i18n.t('pages.knowledge_base_page.k39'),
+            message: i18n.t('pages.knowledge_base_page.k40'),
             type: 'success',
           });
         }}
         showRefresh={true}
         emptyState={{
           emoji: '📚',
-          title: '暂无知识库分类',
-          description: '知识库分类还在建设中',
+          title: i18n.t('pages.knowledge_base_page.k41'),
+          description: i18n.t('pages.knowledge_base_page.k42'),
         }}
       />
     </PageContainer>

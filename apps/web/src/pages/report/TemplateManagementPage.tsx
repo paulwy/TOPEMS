@@ -13,6 +13,7 @@ import {
   ToggleLeft,
   ToggleRight,
 } from 'lucide-react';
+import i18n from '@/i18n';
 import {
   templateApi,
   type Template,
@@ -63,7 +64,7 @@ const TemplateManagementPage: React.FC = () => {
     queryFn: async () => {
       const response = await templateApi.list({ search: searchQuery, category: selectedCategory });
       if (!response.success || !response.data) {
-        throw new Error(response.message || '加载模板数据失败');
+        throw new Error(response.message || i18n.t('pages.template_management_page.k0'));
       }
       return response.data.items || [];
     },
@@ -75,7 +76,7 @@ const TemplateManagementPage: React.FC = () => {
     queryFn: async () => {
       const response = await templateApi.listCategories();
       if (!response.success || !response.data) {
-        throw new Error(response.message || '加载模板分类失败');
+        throw new Error(response.message || i18n.t('pages.template_management_page.k1'));
       }
       return response.data;
     },
@@ -95,25 +96,25 @@ const TemplateManagementPage: React.FC = () => {
     createFn: async (data) => {
       const response = await templateApi.create(data);
       if (!response.success) {
-        throw new Error(response.message || '创建失败');
+        throw new Error(response.message || i18n.t('pages.template_management_page.k2'));
       }
       return response.data;
     },
     updateFn: async ({ id, data }) => {
       const response = await templateApi.update(String(id), data);
       if (!response.success) {
-        throw new Error(response.message || '更新失败');
+        throw new Error(response.message || i18n.t('pages.template_management_page.k3'));
       }
       return response.data;
     },
     deleteFn: async (id) => {
       const response = await templateApi.delete(String(id));
       if (!response.success) {
-        throw new Error(response.message || '删除失败');
+        throw new Error(response.message || i18n.t('pages.template_management_page.k4'));
       }
       return id;
     },
-    entityName: '模板',
+    entityName: i18n.t('pages.template_management_page.k5'),
     onCreateSuccess: () => {
       setShowCreateModal(false);
     },
@@ -127,7 +128,7 @@ const TemplateManagementPage: React.FC = () => {
     mutationFn: async (id: string) => {
       const response = await templateApi.duplicate(id);
       if (!response.success) {
-        throw new Error(response.message || '复制失败');
+        throw new Error(response.message || i18n.t('pages.template_management_page.k6'));
       }
       return response.data;
     },
@@ -136,14 +137,14 @@ const TemplateManagementPage: React.FC = () => {
   exact: false,
   refetchType: 'active',
 });
-      addNotification({ type: 'success', title: '成功', message: '模板复制成功' });
+      addNotification({ type: 'success', title: i18n.t('pages.template_management_page.k8'), message: i18n.t('pages.template_management_page.k7') });
     },
     onError: (err: unknown) => {
-      apiLogger.error('复制模板失败:', err);
+      apiLogger.error(i18n.t('pages.template_management_page.k0'), err);
       addNotification({
         type: 'error',
-        title: '失败',
-        message: (err as Error).message || '复制失败',
+        title: i18n.t('pages.template_management_page.k9'),
+        message: (err as Error).message || i18n.t('pages.template_management_page.k10'),
       });
     },
   });
@@ -152,7 +153,7 @@ const TemplateManagementPage: React.FC = () => {
     mutationFn: async (id: string) => {
       const response = await templateApi.toggleStatus(id);
       if (!response.success) {
-        throw new Error(response.message || '更新失败');
+        throw new Error(response.message || i18n.t('pages.template_management_page.k11'));
       }
       return response.data;
     },
@@ -161,14 +162,14 @@ const TemplateManagementPage: React.FC = () => {
   exact: false,
   refetchType: 'active',
 });
-      addNotification({ type: 'success', title: '成功', message: '状态更新成功' });
+      addNotification({ type: 'success', title: i18n.t('pages.template_management_page.k13'), message: i18n.t('pages.template_management_page.k12') });
     },
     onError: (err: unknown) => {
-      apiLogger.error('切换模板状态失败:', err);
+      apiLogger.error(i18n.t('pages.template_management_page.k1'), err);
       addNotification({
         type: 'error',
-        title: '失败',
-        message: (err as Error).message || '更新失败',
+        title: i18n.t('pages.template_management_page.k14'),
+        message: (err as Error).message || i18n.t('pages.template_management_page.k15'),
       });
     },
   });
@@ -182,7 +183,7 @@ const TemplateManagementPage: React.FC = () => {
   };
 
   const handleDeleteTemplate = async (id: string) => {
-    if (!confirm('确定要删除这个模板吗？')) return;
+    if (!confirm(i18n.t('pages.template_management_page.k16'))) return;
     await deleteMutation.mutateAsync(id);
   };
 
@@ -203,14 +204,14 @@ const TemplateManagementPage: React.FC = () => {
 
   return (
     <PageContainer
-      title='模板管理'
-      subtitle='管理和配置系统中的各类模板'
+      title={i18n.t('pages.template_management_page.k17')}
+      subtitle={i18n.t('pages.template_management_page.k18')}
       headerProps={{
         pageIcon: <FileText sx={{ width: 24, height: 24 }} />,
         pageColor: 'primary.main',
         actions: [
           {
-            label: '新增模板',
+            label: i18n.t('pages.template_management_page.k19'),
             onClick: () => setShowCreateModal(true),
             icon: <Plus sx={{ width: 16, height: 16 }} />,
             variant: 'contained',
@@ -235,7 +236,7 @@ const TemplateManagementPage: React.FC = () => {
               }}
             />
             <TextField
-              placeholder='搜索模板名称、编码...'
+              placeholder={i18n.t('pages.template_management_page.k2')}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               sx={{ pl: 5, width: '100%' }}
@@ -247,13 +248,13 @@ const TemplateManagementPage: React.FC = () => {
             size='small'
             sx={{ minWidth: 150 }}
           >
-            <InputLabel>全部分类</InputLabel>
+            <InputLabel>{i18n.t('pages.template_management_page.k20')}</InputLabel>
             <Select
               value={selectedCategory}
-              label='全部分类'
+              label={i18n.t('pages.template_management_page.k21')}
               onChange={(e) => setSelectedCategory(e.target.value)}
             >
-              <MenuItem value=''>全部分类</MenuItem>
+              <MenuItem value=''>{i18n.t('pages.template_management_page.k22')}</MenuItem>
               {categories.map((cat) => (
                 <MenuItem
                   key={cat.id}
@@ -295,7 +296,7 @@ const TemplateManagementPage: React.FC = () => {
 });
             }}
           >
-            刷新
+            {i18n.t('pages.template_management_page.k3')}
           </Button>
         </Box>
       </Card>
@@ -320,13 +321,13 @@ const TemplateManagementPage: React.FC = () => {
               color='text.secondary'
               sx={{ mt: 2 }}
             >
-              加载中...
+              {i18n.t('pages.template_management_page.k4')}
             </Typography>
           </Box>
         ) : filteredTemplates.length === 0 ? (
           <Box sx={{ p: 4, textAlign: 'center' }}>
             <FileText sx={{ width: 48, height: 48, color: 'grey.400', mb: 1.5 }} />
-            <Typography color='text.secondary'>暂无模板数据</Typography>
+            <Typography color='text.secondary'>{i18n.t('pages.template_management_page.k23')}</Typography>
           </Box>
         ) : viewMode === 'grid' ? (
           <Box
@@ -379,8 +380,8 @@ const TemplateManagementPage: React.FC = () => {
                           bgcolor: template.isactive ? 'success.light' : 'grey.200',
                         },
                       }}
-                      aria-label={template.isactive ? '已启用' : '已禁用'}
-                      title={template.isactive ? '已启用' : '已禁用'}
+                      aria-label={template.isactive ? i18n.t('pages.template_management_page.k25') : i18n.t('pages.template_management_page.k24')}
+                      title={template.isactive ? i18n.t('pages.template_management_page.k27') : i18n.t('pages.template_management_page.k26')}
                     >
                       {template.isactive ? (
                         <ToggleRight sx={{ width: 20, height: 20 }} />
@@ -416,10 +417,10 @@ const TemplateManagementPage: React.FC = () => {
                       variant='body2'
                       color='text.secondary'
                     >
-                      分类：
+                      {i18n.t('pages.template_management_page.k5')}
                       {categories.find((c) => c.id === template.category_id)?.name ||
                         template.category_name ||
-                        '未分类'}
+                        i18n.t('pages.template_management_page.k28')}
                     </Typography>
                     <Typography
                       variant='body2'
@@ -451,16 +452,16 @@ const TemplateManagementPage: React.FC = () => {
                         setShowPreviewModal(true);
                       }}
                       sx={{ color: 'primary.main' }}
-                      aria-label='预览'
-                      title='预览'
+                      aria-label={i18n.t('pages.template_management_page.k29')}
+                      title={i18n.t('pages.template_management_page.k30')}
                     >
                       <Eye sx={{ width: 16, height: 16 }} />
                     </IconButton>
                     <IconButton
                       onClick={() => handleDuplicateTemplate(template.id)}
                       sx={{ color: 'success.main' }}
-                      aria-label='复制'
-                      title='复制'
+                      aria-label={i18n.t('pages.template_management_page.k31')}
+                      title={i18n.t('pages.template_management_page.k32')}
                     >
                       <Copy sx={{ width: 16, height: 16 }} />
                     </IconButton>
@@ -470,16 +471,16 @@ const TemplateManagementPage: React.FC = () => {
                         setShowEditModal(true);
                       }}
                       sx={{ color: 'primary.main' }}
-                      aria-label='编辑'
-                      title='编辑'
+                      aria-label={i18n.t('pages.template_management_page.k33')}
+                      title={i18n.t('pages.template_management_page.k34')}
                     >
                       <Edit sx={{ width: 16, height: 16 }} />
                     </IconButton>
                     <IconButton
                       onClick={() => handleDeleteTemplate(template.id)}
                       sx={{ color: 'error.main' }}
-                      aria-label='删除'
-                      title='删除'
+                      aria-label={i18n.t('pages.template_management_page.k35')}
+                      title={i18n.t('pages.template_management_page.k36')}
                     >
                       <Trash2 sx={{ width: 16, height: 16 }} />
                     </IconButton>
@@ -528,7 +529,7 @@ const TemplateManagementPage: React.FC = () => {
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                       <Typography sx={{ fontWeight: 500 }}>{template.name}</Typography>
                       <Chip
-                        label={template.isactive ? '已启用' : '已禁用'}
+                        label={template.isactive ? i18n.t('pages.template_management_page.k38') : i18n.t('pages.template_management_page.k37')}
                         size='small'
                         sx={{
                           bgcolor: template.isactive ? 'success.100' : 'grey.100',
@@ -543,7 +544,7 @@ const TemplateManagementPage: React.FC = () => {
                       {template.code} ·{' '}
                       {categories.find((c) => c.id === template.category_id)?.name ||
                         template.category_name ||
-                        '未分类'}
+                        i18n.t('pages.template_management_page.k39')}
                     </Typography>
                   </Box>
                 </Box>
@@ -553,7 +554,7 @@ const TemplateManagementPage: React.FC = () => {
                     sx={{
                       color: template.isactive ? 'success.main' : 'grey.400',
                     }}
-                    aria-label='切换'
+                    aria-label={i18n.t('pages.template_management_page.k40')}
                   >
                     {template.isactive ? (
                       <ToggleRight sx={{ width: 20, height: 20 }} />
@@ -567,14 +568,14 @@ const TemplateManagementPage: React.FC = () => {
                       setShowPreviewModal(true);
                     }}
                     sx={{ color: 'primary.main' }}
-                    aria-label='查看'
+                    aria-label={i18n.t('pages.template_management_page.k41')}
                   >
                     <Eye sx={{ width: 16, height: 16 }} />
                   </IconButton>
                   <IconButton
                     onClick={() => handleDuplicateTemplate(template.id)}
                     sx={{ color: 'success.main' }}
-                    aria-label='复制'
+                    aria-label={i18n.t('pages.template_management_page.k42')}
                   >
                     <Copy sx={{ width: 16, height: 16 }} />
                   </IconButton>
@@ -584,14 +585,14 @@ const TemplateManagementPage: React.FC = () => {
                       setShowEditModal(true);
                     }}
                     sx={{ color: 'primary.main' }}
-                    aria-label='编辑'
+                    aria-label={i18n.t('pages.template_management_page.k43')}
                   >
                     <Edit sx={{ width: 16, height: 16 }} />
                   </IconButton>
                   <IconButton
                     onClick={() => handleDeleteTemplate(template.id)}
                     sx={{ color: 'error.main' }}
-                    aria-label='删除'
+                    aria-label={i18n.t('pages.template_management_page.k44')}
                   >
                     <Trash2 sx={{ width: 16, height: 16 }} />
                   </IconButton>
@@ -677,7 +678,7 @@ const TemplateFormModal: React.FC<TemplateFormModalProps> = ({
         paper: { sx: { maxHeight: '90vh' } },
       }}
     >
-      <DialogTitle>{template ? '编辑模板' : '新增模板'}</DialogTitle>
+      <DialogTitle>{template ? i18n.t('pages.template_management_page.k46') : i18n.t('pages.template_management_page.k45')}</DialogTitle>
       <DialogContent sx={{ overflowY: 'auto' }}>
         <Box
           component='form'
@@ -686,19 +687,19 @@ const TemplateFormModal: React.FC<TemplateFormModalProps> = ({
         >
           <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2 }}>
             <TextField
-              label='模板名称 *'
+              label={i18n.t('pages.template_management_page.k6')}
               value={formData.name}
               onChange={(e) => setFormData({ ...formData, name: e.target.value })}
               required
-              placeholder='请输入模板名称'
+              placeholder={i18n.t('pages.template_management_page.k47')}
               size='small'
             />
             <TextField
-              label='模板编码 *'
+              label={i18n.t('pages.template_management_page.k7')}
               value={formData.code}
               onChange={(e) => setFormData({ ...formData, code: e.target.value })}
               required
-              placeholder='请输入模板编码'
+              placeholder={i18n.t('pages.template_management_page.k48')}
               size='small'
             />
           </Box>
@@ -711,10 +712,10 @@ const TemplateFormModal: React.FC<TemplateFormModalProps> = ({
               <InputLabel>分类 *</InputLabel>
               <Select
                 value={formData.category_id || ''}
-                label='分类 *'
+                label={i18n.t('pages.template_management_page.k8')}
                 onChange={(e) => setFormData({ ...formData, category_id: e.target.value })}
               >
-                <MenuItem value=''>请选择分类</MenuItem>
+                <MenuItem value=''>{i18n.t('pages.template_management_page.k49')}</MenuItem>
                 {categories.map((cat) => (
                   <MenuItem
                     key={cat.id}
@@ -732,38 +733,38 @@ const TemplateFormModal: React.FC<TemplateFormModalProps> = ({
               <InputLabel>所属模块 *</InputLabel>
               <Select
                 value={formData.module}
-                label='所属模块 *'
+                label={i18n.t('pages.template_management_page.k9')}
                 onChange={(e) => setFormData({ ...formData, module: e.target.value })}
               >
-                <MenuItem value=''>请选择模块</MenuItem>
+                <MenuItem value=''>{i18n.t('pages.template_management_page.k50')}</MenuItem>
                 <MenuItem value='ERP'>ERP</MenuItem>
                 <MenuItem value='HRM'>HRM</MenuItem>
                 <MenuItem value='CRM'>CRM</MenuItem>
                 <MenuItem value='QMS'>QMS</MenuItem>
                 <MenuItem value='LIMS'>LIMS</MenuItem>
-                <MenuItem value='其他'>其他</MenuItem>
+                <MenuItem value={i18n.t('pages.template_management_page.k51')}>{i18n.t('pages.template_management_page.k52')}</MenuItem>
               </Select>
             </FormControl>
           </Box>
 
           <TextField
-            label='描述'
+            label={i18n.t('pages.template_management_page.k53')}
             value={formData.description || ''}
             onChange={(e) => setFormData({ ...formData, description: e.target.value })}
             multiline
             rows={2}
-            placeholder='请输入模板描述'
+            placeholder={i18n.t('pages.template_management_page.k54')}
             size='small'
           />
 
           <TextField
-            label='模板内容 *'
+            label={i18n.t('pages.template_management_page.k10')}
             value={formData.content}
             onChange={(e) => setFormData({ ...formData, content: e.target.value })}
             required
             multiline
             rows={10}
-            placeholder='请输入模板内容，使用 {{variable_name}} 格式定义变量'
+            placeholder={i18n.t('pages.template_management_page.k11')}
             size='small'
             sx={{ fontFamily: 'monospace' }}
           />
@@ -780,13 +781,13 @@ const TemplateFormModal: React.FC<TemplateFormModalProps> = ({
           variant='outlined'
           onClick={onClose}
         >
-          取消
+          {i18n.t('pages.template_management_page.k12')}
         </Button>
         <Button
           variant='contained'
           onClick={handleSubmit}
         >
-          {template ? '保存' : '创建'}
+          {template ? i18n.t('pages.template_management_page.k56') : i18n.t('pages.template_management_page.k55')}
         </Button>
       </DialogActions>
     </Dialog>
@@ -810,7 +811,7 @@ const TemplatePreviewModal: React.FC<TemplatePreviewModalProps> = ({ template, o
         paper: { sx: { maxHeight: '90vh' } },
       }}
     >
-      <DialogTitle>模板预览</DialogTitle>
+      <DialogTitle>{i18n.t('pages.template_management_page.k57')}</DialogTitle>
       <DialogContent sx={{ overflowY: 'auto' }}>
         <Box sx={{ mb: 3 }}>
           <Typography
@@ -842,7 +843,7 @@ const TemplatePreviewModal: React.FC<TemplatePreviewModalProps> = ({ template, o
         </Box>
 
         <Card sx={{ bgcolor: 'grey.50', p: 2, mb: 3 }}>
-          <Typography sx={{ fontWeight: 'semibold', mb: 1 }}>模板内容：</Typography>
+          <Typography sx={{ fontWeight: 'semibold', mb: 1 }}>{i18n.t('pages.template_management_page.k59')}</Typography>
           <Box
             component='pre'
             sx={{
@@ -858,7 +859,7 @@ const TemplatePreviewModal: React.FC<TemplatePreviewModalProps> = ({ template, o
 
         {template.variables && template.variables.length > 0 && (
           <Box sx={{ mt: 2 }}>
-            <Typography sx={{ fontWeight: 'semibold', mb: 1 }}>变量定义：</Typography>
+            <Typography sx={{ fontWeight: 'semibold', mb: 1 }}>{i18n.t('pages.template_management_page.k60')}</Typography>
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
               {template.variables.map((variable, idx) => (
                 <Box
@@ -889,7 +890,7 @@ const TemplatePreviewModal: React.FC<TemplatePreviewModalProps> = ({ template, o
                     sx={{ fontSize: '0.75rem' }}
                   />
                   {variable.required && (
-                    <Typography sx={{ color: 'error.main', fontSize: '0.75rem' }}>必填</Typography>
+                    <Typography sx={{ color: 'error.main', fontSize: '0.75rem' }}>{i18n.t('pages.template_management_page.k61')}</Typography>
                   )}
                 </Box>
               ))}
@@ -902,7 +903,7 @@ const TemplatePreviewModal: React.FC<TemplatePreviewModalProps> = ({ template, o
           variant='outlined'
           onClick={onClose}
         >
-          关闭
+          {i18n.t('pages.template_management_page.k14')}
         </Button>
       </DialogActions>
     </Dialog>

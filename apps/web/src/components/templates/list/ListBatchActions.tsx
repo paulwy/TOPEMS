@@ -2,6 +2,7 @@ import React from 'react';
 import { Box, Typography, Button, ButtonGroup, useTheme } from '@mui/material';
 import { X } from 'lucide-react';
 import type { BatchAction } from './types';
+import i18n from '@/i18n';
 
 interface ListBatchActionsProps<T = any> {
   show: boolean;
@@ -74,7 +75,7 @@ export const ListBatchActions = <T,>({
         onClick={onClearSelection}
         startIcon={<X size={16} />}
       >
-        取消选择
+        {i18n.t('components.list_batch_actions.k0')}
       </Button>
 
       {availableActions.length > 0 && (

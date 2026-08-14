@@ -10,12 +10,10 @@ import {
   Typography,
   Grid,
 } from '@mui/material';
+import i18n from '@/i18n';
 import { X } from 'lucide-react';
 import type { TabType, ModalType, FormErrors, GisEntity } from '../types';
 import { InputField, TextAreaField } from './TableUtils';
-
-import { useTranslation } from 'react-i18next';
-
 interface EntityFormModalProps {
   open: boolean;
   modalType: ModalType;
@@ -26,7 +24,6 @@ interface EntityFormModalProps {
   onSubmit: () => void;
   onFormChange: (key: string, value: unknown) => void;
 }
-
 export const EntityFormModal: React.FC<EntityFormModalProps> = ({
   open,
   modalType,
@@ -37,14 +34,13 @@ export const EntityFormModal: React.FC<EntityFormModalProps> = ({
   onSubmit,
   onFormChange,
 }) => {
-  const { t } = useTranslation();
   const renderFormFields = () => {
     switch (activeTab) {
       case 'devicePoints':
         return (
           <Stack spacing={3}>
             <InputField
-              label={t('bi.gis_page_components__entity_form_modal.name')}
+              label={i18n.t('bi.gis_page_components__entity_form_modal.name')}
               name='name'
               value={formData.name}
               onChange={(v) => onFormChange('name', v)}
@@ -52,7 +48,7 @@ export const EntityFormModal: React.FC<EntityFormModalProps> = ({
               required
             />
             <InputField
-              label={t('bi.gis_page_components__entity_form_modal.equipment_type')}
+              label={i18n.t('bi.gis_page_components__entity_form_modal.equipment_type')}
               name='device_type'
               value={formData.device_type}
               onChange={(v) => onFormChange('device_type', v)}
@@ -65,7 +61,7 @@ export const EntityFormModal: React.FC<EntityFormModalProps> = ({
             >
               <Grid size={6}>
                 <InputField
-                  label={t('bi.gis_page_components__entity_form_modal.text_6acaee')}
+                  label={i18n.t('bi.gis_page_components__entity_form_modal.text_6acaee')}
                   name='latitude'
                   type='number'
                   value={formData.latitude}
@@ -76,7 +72,7 @@ export const EntityFormModal: React.FC<EntityFormModalProps> = ({
               </Grid>
               <Grid size={6}>
                 <InputField
-                  label={t('bi.gis_page_components__entity_form_modal.text_3d18ca')}
+                  label={i18n.t('bi.gis_page_components__entity_form_modal.text_3d18ca')}
                   name='longitude'
                   type='number'
                   value={formData.longitude}
@@ -87,7 +83,7 @@ export const EntityFormModal: React.FC<EntityFormModalProps> = ({
               </Grid>
             </Grid>
             <TextAreaField
-              label={t('bi.gis_page_components__entity_form_modal.description')}
+              label={i18n.t('bi.gis_page_components__entity_form_modal.description')}
               value={formData.description}
               onChange={(v) => onFormChange('description', v)}
             />
@@ -97,7 +93,7 @@ export const EntityFormModal: React.FC<EntityFormModalProps> = ({
         return (
           <Stack spacing={3}>
             <InputField
-              label={t('bi.gis_page_components__entity_form_modal.name')}
+              label={i18n.t('bi.gis_page_components__entity_form_modal.name')}
               name='name'
               value={formData.name}
               onChange={(v) => onFormChange('name', v)}
@@ -105,7 +101,7 @@ export const EntityFormModal: React.FC<EntityFormModalProps> = ({
               required
             />
             <InputField
-              label={t('bi.gis_page_components__entity_form_modal.type')}
+              label={i18n.t('bi.gis_page_components__entity_form_modal.type')}
               name='pipeline_type'
               value={formData.pipeline_type}
               onChange={(v) => onFormChange('pipeline_type', v)}
@@ -118,7 +114,7 @@ export const EntityFormModal: React.FC<EntityFormModalProps> = ({
             >
               <Grid size={6}>
                 <InputField
-                  label={t('bi.gis_page_components__entity_form_modal.text_981a2b')}
+                  label={i18n.t('bi.gis_page_components__entity_form_modal.text_981a2b')}
                   name='start_lat'
                   type='number'
                   value={formData.start_lat}
@@ -129,7 +125,7 @@ export const EntityFormModal: React.FC<EntityFormModalProps> = ({
               </Grid>
               <Grid size={6}>
                 <InputField
-                  label={t('bi.gis_page_components__entity_form_modal.text_777f6f')}
+                  label={i18n.t('bi.gis_page_components__entity_form_modal.text_777f6f')}
                   name='start_lng'
                   type='number'
                   value={formData.start_lng}
@@ -145,7 +141,7 @@ export const EntityFormModal: React.FC<EntityFormModalProps> = ({
             >
               <Grid size={6}>
                 <InputField
-                  label={t('bi.gis_page_components__entity_form_modal.text_60619a')}
+                  label={i18n.t('bi.gis_page_components__entity_form_modal.text_60619a')}
                   name='end_lat'
                   type='number'
                   value={formData.end_lat}
@@ -156,7 +152,7 @@ export const EntityFormModal: React.FC<EntityFormModalProps> = ({
               </Grid>
               <Grid size={6}>
                 <InputField
-                  label={t('bi.gis_page_components__entity_form_modal.text_0ead9c')}
+                  label={i18n.t('bi.gis_page_components__entity_form_modal.text_0ead9c')}
                   name='end_lng'
                   type='number'
                   value={formData.end_lng}
@@ -172,7 +168,7 @@ export const EntityFormModal: React.FC<EntityFormModalProps> = ({
         return (
           <Stack spacing={3}>
             <InputField
-              label={t('bi.gis_page_components__entity_form_modal.name')}
+              label={i18n.t('bi.gis_page_components__entity_form_modal.name')}
               name='name'
               value={formData.name}
               onChange={(v) => onFormChange('name', v)}
@@ -180,7 +176,7 @@ export const EntityFormModal: React.FC<EntityFormModalProps> = ({
               required
             />
             <InputField
-              label={t('bi.gis_page_components__entity_form_modal.type_1')}
+              label={i18n.t('bi.gis_page_components__entity_form_modal.type_1')}
               name='location_type'
               value={formData.location_type}
               onChange={(v) => onFormChange('location_type', v)}
@@ -193,7 +189,7 @@ export const EntityFormModal: React.FC<EntityFormModalProps> = ({
             >
               <Grid size={6}>
                 <InputField
-                  label={t('bi.gis_page_components__entity_form_modal.text_6acaee')}
+                  label={i18n.t('bi.gis_page_components__entity_form_modal.text_6acaee')}
                   name='latitude'
                   type='number'
                   value={formData.latitude}
@@ -204,7 +200,7 @@ export const EntityFormModal: React.FC<EntityFormModalProps> = ({
               </Grid>
               <Grid size={6}>
                 <InputField
-                  label={t('bi.gis_page_components__entity_form_modal.text_3d18ca')}
+                  label={i18n.t('bi.gis_page_components__entity_form_modal.text_3d18ca')}
                   name='longitude'
                   type='number'
                   value={formData.longitude}
@@ -220,7 +216,7 @@ export const EntityFormModal: React.FC<EntityFormModalProps> = ({
             >
               <Grid size={6}>
                 <InputField
-                  label={t('bi.gis_page_components__entity_form_modal.text_fe7d74')}
+                  label={i18n.t('bi.gis_page_components__entity_form_modal.text_fe7d74')}
                   name='capacity'
                   type='number'
                   value={formData.capacity}
@@ -229,7 +225,7 @@ export const EntityFormModal: React.FC<EntityFormModalProps> = ({
               </Grid>
               <Grid size={6}>
                 <InputField
-                  label={t('bi.gis_page_components__entity_form_modal.text_de3b57')}
+                  label={i18n.t('bi.gis_page_components__entity_form_modal.text_de3b57')}
                   name='current_usage'
                   type='number'
                   value={formData.current_usage}
@@ -243,7 +239,7 @@ export const EntityFormModal: React.FC<EntityFormModalProps> = ({
         return (
           <Stack spacing={3}>
             <InputField
-              label={t('bi.gis_page_components__entity_form_modal.title')}
+              label={i18n.t('bi.gis_page_components__entity_form_modal.title')}
               name='title'
               value={formData.title}
               onChange={(v) => onFormChange('title', v)}
@@ -251,7 +247,7 @@ export const EntityFormModal: React.FC<EntityFormModalProps> = ({
               required
             />
             <InputField
-              label={t('bi.gis_page_components__entity_form_modal.type_1')}
+              label={i18n.t('bi.gis_page_components__entity_form_modal.type_1')}
               name='evidence_type'
               value={formData.evidence_type}
               onChange={(v) => onFormChange('evidence_type', v)}
@@ -264,7 +260,7 @@ export const EntityFormModal: React.FC<EntityFormModalProps> = ({
             >
               <Grid size={6}>
                 <InputField
-                  label={t('bi.gis_page_components__entity_form_modal.text_6acaee')}
+                  label={i18n.t('bi.gis_page_components__entity_form_modal.text_6acaee')}
                   name='latitude'
                   type='number'
                   value={formData.latitude}
@@ -275,7 +271,7 @@ export const EntityFormModal: React.FC<EntityFormModalProps> = ({
               </Grid>
               <Grid size={6}>
                 <InputField
-                  label={t('bi.gis_page_components__entity_form_modal.text_3d18ca')}
+                  label={i18n.t('bi.gis_page_components__entity_form_modal.text_3d18ca')}
                   name='longitude'
                   type='number'
                   value={formData.longitude}
@@ -286,7 +282,7 @@ export const EntityFormModal: React.FC<EntityFormModalProps> = ({
               </Grid>
             </Grid>
             <InputField
-              label={t('bi.gis_page_components__entity_form_modal.text_bf425d')}
+              label={i18n.t('bi.gis_page_components__entity_form_modal.text_bf425d')}
               name='recorded_by'
               value={formData.recorded_by}
               onChange={(v) => onFormChange('recorded_by', v)}
@@ -299,7 +295,7 @@ export const EntityFormModal: React.FC<EntityFormModalProps> = ({
         return (
           <Stack spacing={3}>
             <InputField
-              label={t('bi.gis_page_components__entity_form_modal.name')}
+              label={i18n.t('bi.gis_page_components__entity_form_modal.name')}
               name='name'
               value={formData.name}
               onChange={(v) => onFormChange('name', v)}
@@ -307,7 +303,7 @@ export const EntityFormModal: React.FC<EntityFormModalProps> = ({
               required
             />
             <InputField
-              label={t('bi.gis_page_components__entity_form_modal.text_c515f3')}
+              label={i18n.t('bi.gis_page_components__entity_form_modal.text_c515f3')}
               name='code'
               value={formData.code}
               onChange={(v) => onFormChange('code', v)}
@@ -315,7 +311,7 @@ export const EntityFormModal: React.FC<EntityFormModalProps> = ({
               required
             />
             <InputField
-              label={t('bi.gis_page_components__entity_form_modal.type_2')}
+              label={i18n.t('bi.gis_page_components__entity_form_modal.type_2')}
               name='map_type'
               value={formData.map_type}
               onChange={(v) => onFormChange('map_type', v)}
@@ -323,7 +319,7 @@ export const EntityFormModal: React.FC<EntityFormModalProps> = ({
               required
             />
             <InputField
-              label={t('bi.gis_page_components__entity_form_modal.text_c2ef90')}
+              label={i18n.t('bi.gis_page_components__entity_form_modal.text_c2ef90')}
               name='file_url'
               value={formData.file_url}
               onChange={(v) => onFormChange('file_url', v)}
@@ -334,7 +330,7 @@ export const EntityFormModal: React.FC<EntityFormModalProps> = ({
         return (
           <Stack spacing={3}>
             <InputField
-              label={t('bi.gis_page_components__entity_form_modal.name_1')}
+              label={i18n.t('bi.gis_page_components__entity_form_modal.name_1')}
               name='business_name'
               value={formData.business_name}
               onChange={(v) => onFormChange('business_name', v)}
@@ -342,7 +338,7 @@ export const EntityFormModal: React.FC<EntityFormModalProps> = ({
               required
             />
             <InputField
-              label={t('bi.gis_page_components__entity_form_modal.type_3')}
+              label={i18n.t('bi.gis_page_components__entity_form_modal.type_3')}
               name='business_type'
               value={formData.business_type}
               onChange={(v) => onFormChange('business_type', v)}
@@ -355,7 +351,7 @@ export const EntityFormModal: React.FC<EntityFormModalProps> = ({
             >
               <Grid size={6}>
                 <InputField
-                  label={t('bi.gis_page_components__entity_form_modal.text_6acaee')}
+                  label={i18n.t('bi.gis_page_components__entity_form_modal.text_6acaee')}
                   name='lat'
                   type='number'
                   value={formData.lat}
@@ -366,7 +362,7 @@ export const EntityFormModal: React.FC<EntityFormModalProps> = ({
               </Grid>
               <Grid size={6}>
                 <InputField
-                  label={t('bi.gis_page_components__entity_form_modal.text_3d18ca')}
+                  label={i18n.t('bi.gis_page_components__entity_form_modal.text_3d18ca')}
                   name='lng'
                   type='number'
                   value={formData.lng}
@@ -377,7 +373,7 @@ export const EntityFormModal: React.FC<EntityFormModalProps> = ({
               </Grid>
             </Grid>
             <InputField
-              label={t('bi.gis_page_components__entity_form_modal.address')}
+              label={i18n.t('bi.gis_page_components__entity_form_modal.address')}
               name='address'
               value={formData.address}
               onChange={(v) => onFormChange('address', v)}
@@ -388,7 +384,7 @@ export const EntityFormModal: React.FC<EntityFormModalProps> = ({
             >
               <Grid size={6}>
                 <InputField
-                  label={t('bi.gis_page_components__entity_form_modal.contact')}
+                  label={i18n.t('bi.gis_page_components__entity_form_modal.contact')}
                   name='contact_person'
                   value={formData.contact_person}
                   onChange={(v) => onFormChange('contact_person', v)}
@@ -396,7 +392,7 @@ export const EntityFormModal: React.FC<EntityFormModalProps> = ({
               </Grid>
               <Grid size={6}>
                 <InputField
-                  label={t('bi.gis_page_components__entity_form_modal.phone')}
+                  label={i18n.t('bi.gis_page_components__entity_form_modal.phone')}
                   name='contact_phone'
                   value={formData.contact_phone}
                   onChange={(v) => onFormChange('contact_phone', v)}
@@ -409,7 +405,6 @@ export const EntityFormModal: React.FC<EntityFormModalProps> = ({
         return null;
     }
   };
-
   return (
     <Dialog
       open={open}
@@ -428,13 +423,13 @@ export const EntityFormModal: React.FC<EntityFormModalProps> = ({
             sx={{ fontWeight: 600 }}
           >
             {modalType === 'create'
-              ? t('bi.gis_page_components__entity_form_modal.text_26bb84')
-              : t('bi.gis_page_components__entity_form_modal.edit')}
+              ? i18n.t('bi.gis_page_components__entity_form_modal.text_26bb84')
+              : i18n.t('bi.gis_page_components__entity_form_modal.edit')}
           </Typography>
           <IconButton
             onClick={onClose}
             size='small'
-            aria-label={t('bi.gis_page_components__entity_form_modal.close')}
+            aria-label={i18n.t('bi.gis_page_components__entity_form_modal.close')}
           >
             <X size={20} />
           </IconButton>
@@ -453,7 +448,7 @@ export const EntityFormModal: React.FC<EntityFormModalProps> = ({
           onClick={onClose}
           variant='outlined'
         >
-          取消
+          {i18n.t('pages.entity_form_modal.k0')}
         </Button>
         <Button
           onClick={onSubmit}
@@ -464,8 +459,8 @@ export const EntityFormModal: React.FC<EntityFormModalProps> = ({
           }}
         >
           {modalType === 'create'
-            ? t('bi.gis_page_components__entity_form_modal.create')
-            : t('bi.gis_page_components__entity_form_modal.save')}
+            ? i18n.t('bi.gis_page_components__entity_form_modal.create')
+            : i18n.t('bi.gis_page_components__entity_form_modal.save')}
         </Button>
       </DialogActions>
     </Dialog>

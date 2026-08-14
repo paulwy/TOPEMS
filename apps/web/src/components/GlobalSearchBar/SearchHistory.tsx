@@ -2,6 +2,7 @@ import React from 'react';
 import { Box, Typography, Chip } from '@mui/material';
 import { History, XCircle } from 'lucide-react';
 import type { SearchHistoryProps } from './types';
+import i18n from '@/i18n';
 
 export const SearchHistory: React.FC<SearchHistoryProps> = ({
   history,
@@ -18,7 +19,7 @@ export const SearchHistory: React.FC<SearchHistoryProps> = ({
           variant='caption'
           color='text.secondary'
         >
-          搜索历史
+          {i18n.t('components.search_history.k0')}
         </Typography>
         <Typography
           variant='caption'
@@ -26,7 +27,7 @@ export const SearchHistory: React.FC<SearchHistoryProps> = ({
           sx={{ cursor: 'pointer', '&:hover': { textDecoration: 'underline' } }}
           onClick={onClear}
         >
-          清空
+          {i18n.t('components.search_history.k1')}
         </Typography>
       </Box>
       <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>

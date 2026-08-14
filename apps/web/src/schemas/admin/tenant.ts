@@ -11,17 +11,17 @@ const tenantStatusColorMap: Record<string, 'success' | 'warning' | 'error' | 'de
 };
 
 const tenantStatusLabelMap: Record<string, string> = {
-  active: '已激活',
-  trial: '试用中',
-  suspended: '已停用',
-  deleted: '已删除',
+  active: i18n.t('admin.tenant.k0'),
+  trial: i18n.t('admin.tenant.k1'),
+  suspended: i18n.t('admin.tenant.k2'),
+  deleted: i18n.t('admin.tenant.k3'),
 };
 
 const tenantPlanLabelMap: Record<string, string> = {
-  free: '免费版',
-  basic: '基础版',
-  professional: '专业版',
-  enterprise: '企业版',
+  free: i18n.t('admin.tenant.k4'),
+  basic: i18n.t('admin.tenant.k5'),
+  professional: i18n.t('admin.tenant.k6'),
+  enterprise: i18n.t('admin.tenant.k7'),
 };
 
 const tenantPlanColorMap: Record<string, 'default' | 'primary' | 'secondary' | 'success'> = {

@@ -1,4 +1,5 @@
 import { designTokens, semanticTokens } from '@topems/tokens';
+import i18n from '@/i18n';
 /**
  * V53.0 微前端平台终局 — 低代码搭建引擎
  *
@@ -243,20 +244,20 @@ export type BuilderChangeListener = (pages: CanvasPage[]) => void;
 
 const DEFAULT_THEME: ThemeConfig = {
   id: 'default-light',
-  name: '默认浅色主题',
+  name: i18n.t('pages.lowcode-builder.k0'),
   colors: {
     primary: designTokens.colors.primary.dark,
     secondary: designTokens.colors.purple['500'],
     accent: designTokens.colors.warning.main,
     background: 'primary.contrastText',
-    surface: '#f5f5f5',
+    surface: designTokens.colors.grey[100],
     text: '#212121',
     textSecondary: designTokens.colors.grey['600'],
     border: 'colors.grey.300',
     success: designTokens.colors.success.main,
     warning: designTokens.colors.warning.main,
     error: 'colors.error.main',
-    info: '#2196f3',
+    info: designTokens.colors.primary[500],
   },
   typography: {
     fontFamily: '"Roboto", "Helvetica", "Arial", sans-serif',
@@ -275,21 +276,21 @@ const DEFAULT_THEME: ThemeConfig = {
     xxl: '48px',
   },
   borderRadius: 'md',
-  shadows: ['none', '0 1px 3px rgba(0,0,0,0.12)', '0 4px 12px rgba(0,0,0,0.15)'],
+  shadows: ['none', `0 1px 3px ${designTokens.colors.action.selected}`, `0 4px 12px ${designTokens.colors.action.selected}`],
   mode: 'light',
 };
 
 const DARK_THEME: ThemeConfig = {
   ...DEFAULT_THEME,
   id: 'default-dark',
-  name: '默认深色主题',
+  name: i18n.t('pages.lowcode-builder.k1'),
   colors: {
     ...DEFAULT_THEME.colors,
     background: 'grey.950',
-    surface: '#1e1e1e',
+    surface: designTokens.colors.grey[900],
     text: 'colors.grey.300',
     textSecondary: 'colors.grey.500',
-    border: '#424242',
+    border: designTokens.colors.grey[800],
   },
   mode: 'dark',
 };
@@ -297,15 +298,15 @@ const DARK_THEME: ThemeConfig = {
 const PRESET_TEMPLATES: TemplateDefinition[] = [
   {
     id: 'tpl-dashboard',
-    name: '数据仪表盘',
-    description: '带图表和指标卡的数据可视化仪表盘模板',
+    name: i18n.t('pages.lowcode-builder.k2'),
+    description: i18n.t('pages.lowcode-builder.k3'),
     category: 'dashboard',
     preview: 'dashboard-preview',
     components: [
       {
         id: 'root',
         type: 'container',
-        name: '根容器',
+        name: i18n.t('pages.lowcode-builder.k4'),
         props: { direction: 'column', gap: 16 },
         position: { x: 0, y: 0, width: 1200, height: 800 },
         children: [],
@@ -316,7 +317,7 @@ const PRESET_TEMPLATES: TemplateDefinition[] = [
     theme: DEFAULT_THEME,
     dataSources: [],
     flows: [],
-    tags: ['仪表盘', '数据', '图表'],
+    tags: [i18n.t('pages.lowcode-builder.k7'), i18n.t('pages.lowcode-builder.k6'), i18n.t('pages.lowcode-builder.k5')],
     author: 'TOPEMS Team',
     version: '1.0.0',
     popularity: 9500,
@@ -325,15 +326,15 @@ const PRESET_TEMPLATES: TemplateDefinition[] = [
   },
   {
     id: 'tpl-form',
-    name: '业务表单',
-    description: '完整的数据录入表单，带校验和提交流程',
+    name: i18n.t('pages.lowcode-builder.k8'),
+    description: i18n.t('pages.lowcode-builder.k9'),
     category: 'form',
     preview: 'form-preview',
     components: [],
     theme: DEFAULT_THEME,
     dataSources: [],
     flows: [],
-    tags: ['表单', '校验', 'CRUD'],
+    tags: [i18n.t('pages.lowcode-builder.k11'), i18n.t('pages.lowcode-builder.k10'), 'CRUD'],
     author: 'TOPEMS Team',
     version: '1.0.0',
     popularity: 8700,
@@ -342,15 +343,15 @@ const PRESET_TEMPLATES: TemplateDefinition[] = [
   },
   {
     id: 'tpl-list-detail',
-    name: '列表详情页',
-    description: '主从布局的列表 + 详情页模板',
+    name: i18n.t('pages.lowcode-builder.k12'),
+    description: i18n.t('pages.lowcode-builder.k13'),
     category: 'crud',
     preview: 'list-detail-preview',
     components: [],
     theme: DEFAULT_THEME,
     dataSources: [],
     flows: [],
-    tags: ['列表', '详情', '管理'],
+    tags: [i18n.t('pages.lowcode-builder.k16'), i18n.t('pages.lowcode-builder.k15'), i18n.t('pages.lowcode-builder.k14')],
     author: 'TOPEMS Team',
     version: '1.0.0',
     popularity: 7200,
@@ -384,7 +385,7 @@ export class LowCodeBuilder {
     const page: CanvasPage = {
       id: pageId,
       name,
-      description: description || `${name} - V53 低代码页面`,
+      description: description || `${name}${i18n.t('pages.lowcode-builder.v53_17')}`,
       components: [],
       theme: { ...DEFAULT_THEME },
       dataSources: [],
@@ -686,7 +687,7 @@ export class LowCodeBuilder {
     const flow: FlowDefinition = {
       id: flowId,
       name,
-      description: description || `${name} - V53 业务流程`,
+      description: description || `${name}${i18n.t('pages.lowcode-builder.v53_18')}`,
       nodes: [],
       edges: [],
       triggers: [],
@@ -762,14 +763,14 @@ export class LowCodeBuilder {
 
     const hasTrigger = flow.triggers.length > 0 || flow.nodes.some((n) => n.type === 'trigger');
     if (!hasTrigger) {
-      issues.push('流程必须至少包含一个触发器');
+      issues.push(i18n.t('pages.lowcode-builder.k19'));
     }
 
     const orphanNodes = flow.nodes.filter(
       (n) => n.type !== 'trigger' && !flow.edges.some((e) => e.target === n.id)
     );
     if (orphanNodes.length > 0) {
-      issues.push(`存在 ${orphanNodes.length} 个孤立节点`);
+      issues.push(`${i18n.t('pages.lowcode-builder.k20')}${orphanNodes.length}${i18n.t('pages.lowcode-builder.k21')}`);
     }
 
     return { valid: issues.length === 0, issues };
@@ -787,8 +788,8 @@ export class LowCodeBuilder {
 
   listThemePresets(): Array<{ id: string; name: string; mode: string; theme: ThemeConfig }> {
     return [
-      { id: 'light', name: '浅色主题', mode: 'light', theme: { ...DEFAULT_THEME } },
-      { id: 'dark', name: '深色主题', mode: 'dark', theme: { ...DARK_THEME } },
+      { id: 'light', name: i18n.t('pages.lowcode-builder.k22'), mode: 'light', theme: { ...DEFAULT_THEME } },
+      { id: 'dark', name: i18n.t('pages.lowcode-builder.k23'), mode: 'dark', theme: { ...DARK_THEME } },
     ];
   }
 
@@ -935,46 +936,46 @@ export class LowCodeBuilder {
 
   private getDefaultName(type: ComponentType): string {
     const names: Partial<Record<ComponentType, string>> = {
-      container: '容器',
-      text: '文本',
-      heading: '标题',
-      button: '按钮',
-      input: '输入框',
-      textarea: '文本域',
-      select: '下拉选择',
-      checkbox: '复选框',
-      radio: '单选框',
-      datepicker: '日期选择',
-      table: '表格',
-      card: '卡片',
-      tabs: '标签页',
-      form: '表单',
-      dialog: '对话框',
-      alert: '警告提示',
-      chart: '图表',
-      image: '图片',
-      video: '视频',
-      icon: '图标',
-      breadcrumb: '面包屑',
-      menu: '菜单',
-      divider: '分割线',
-      spacer: '空白',
-      custom: '自定义',
+      container: i18n.t('pages.lowcode-builder.k24'),
+      text: i18n.t('pages.lowcode-builder.k25'),
+      heading: i18n.t('pages.lowcode-builder.k26'),
+      button: i18n.t('pages.lowcode-builder.k27'),
+      input: i18n.t('pages.lowcode-builder.k28'),
+      textarea: i18n.t('pages.lowcode-builder.k29'),
+      select: i18n.t('pages.lowcode-builder.k30'),
+      checkbox: i18n.t('pages.lowcode-builder.k31'),
+      radio: i18n.t('pages.lowcode-builder.k32'),
+      datepicker: i18n.t('pages.lowcode-builder.k33'),
+      table: i18n.t('pages.lowcode-builder.k34'),
+      card: i18n.t('pages.lowcode-builder.k35'),
+      tabs: i18n.t('pages.lowcode-builder.k36'),
+      form: i18n.t('pages.lowcode-builder.k37'),
+      dialog: i18n.t('pages.lowcode-builder.k38'),
+      alert: i18n.t('pages.lowcode-builder.k39'),
+      chart: i18n.t('pages.lowcode-builder.k40'),
+      image: i18n.t('pages.lowcode-builder.k41'),
+      video: i18n.t('pages.lowcode-builder.k42'),
+      icon: i18n.t('pages.lowcode-builder.k43'),
+      breadcrumb: i18n.t('pages.lowcode-builder.k44'),
+      menu: i18n.t('pages.lowcode-builder.k45'),
+      divider: i18n.t('pages.lowcode-builder.k46'),
+      spacer: i18n.t('pages.lowcode-builder.k47'),
+      custom: i18n.t('pages.lowcode-builder.k48'),
     };
-    return names[type] || '组件';
+    return names[type] || i18n.t('pages.lowcode-builder.k49');
   }
 
   private getDefaultProps(type: ComponentType): Record<string, unknown> {
     const defaults: Partial<Record<ComponentType, Record<string, unknown>>> = {
-      button: { label: '按钮', variant: 'primary', size: 'medium' },
-      input: { placeholder: '请输入...', type: 'text' },
-      text: { content: '文本内容', align: 'left' },
-      heading: { content: '标题', level: 'h2' },
+      button: { label: i18n.t('pages.lowcode-builder.k50'), variant: 'primary', size: 'medium' },
+      input: { placeholder: i18n.t('pages.lowcode-builder.k51'), type: 'text' },
+      text: { content: i18n.t('pages.lowcode-builder.k52'), align: 'left' },
+      heading: { content: i18n.t('pages.lowcode-builder.k53'), level: 'h2' },
       container: { direction: 'column', gap: 16 },
-      card: { title: '卡片标题', bordered: true },
+      card: { title: i18n.t('pages.lowcode-builder.k54'), bordered: true },
       table: { columns: [], dataSource: [], pagination: true },
       form: { layout: 'horizontal', labelWidth: 100 },
-      dialog: { title: '对话框', visible: false, width: 520 },
+      dialog: { title: i18n.t('pages.lowcode-builder.k55'), visible: false, width: 520 },
     };
     return defaults[type] || {};
   }

@@ -2,17 +2,19 @@ import type { EntitySchema } from '@/schema';
 import { Settings, CheckSquare, Calendar, MessageSquare } from 'lucide-react';
 import React from 'react';
 import { Box, Typography, Chip } from '@mui/material';
+import { designTokens } from '@topems/tokens';
+import i18n from '@/i18n';
 
 const TYPE_LABELS: Record<string, string> = {
-  system: '系统通知',
-  workflow: '审批通知',
-  reminder: '提醒通知',
-  alert: '告警通知',
-  message: '消息通知',
-  info: '信息通知',
-  success: '成功通知',
-  warning: '警告通知',
-  error: '错误通知',
+  system: i18n.t('shared.notification.k0'),
+  workflow: i18n.t('shared.notification.k1'),
+  reminder: i18n.t('shared.notification.k2'),
+  alert: i18n.t('shared.notification.k3'),
+  message: i18n.t('shared.notification.k4'),
+  info: i18n.t('shared.notification.k5'),
+  success: i18n.t('shared.notification.k6'),
+  warning: i18n.t('shared.notification.k7'),
+  error: i18n.t('shared.notification.k8'),
 };
 
 const TYPE_COLORS: Record<
@@ -32,14 +34,14 @@ const TYPE_COLORS: Record<
 
 const TYPE_BG_COLORS: Record<string, { bg: string; color: string }> = {
   system: { bg: 'glass.line', color: 'primary.main' },
-  workflow: { bg: 'rgba(245, 158, 11, 0.1)', color: 'warning.main' },
-  reminder: { bg: 'rgba(245, 158, 11, 0.1)', color: 'warning.main' },
-  alert: { bg: 'rgba(239, 68, 68, 0.1)', color: 'error.main' },
-  message: { bg: 'rgba(14, 165, 233, 0.1)', color: 'info.main' },
-  info: { bg: 'rgba(14, 165, 233, 0.1)', color: 'info.main' },
+  workflow: { bg: designTokens.colors.warning[100], color: 'warning.main' },
+  reminder: { bg: designTokens.colors.warning[100], color: 'warning.main' },
+  alert: { bg: designTokens.colors.error[100], color: 'error.main' },
+  message: { bg: designTokens.colors.info[100], color: 'info.main' },
+  info: { bg: designTokens.colors.info[100], color: 'info.main' },
   success: { bg: 'rgba(34, 197, 94, 0.1)', color: 'success.main' },
-  warning: { bg: 'rgba(245, 158, 11, 0.1)', color: 'warning.main' },
-  error: { bg: 'rgba(239, 68, 68, 0.1)', color: 'error.main' },
+  warning: { bg: designTokens.colors.warning[100], color: 'warning.main' },
+  error: { bg: designTokens.colors.error[100], color: 'error.main' },
 };
 
 const TYPE_ICONS: Record<string, React.ReactNode> = {
@@ -64,8 +66,8 @@ interface NotificationRow {
 
 export const notificationSchema: EntitySchema = {
   entity: 'notification',
-  title: '通知',
-  description: '查看和管理您的所有通知',
+  title: i18n.t('shared.notification.k9'),
+  description: i18n.t('shared.notification.k10'),
 
   api: {
     module: 'notification',
@@ -75,13 +77,13 @@ export const notificationSchema: EntitySchema = {
   fields: [
     {
       name: 'title',
-      label: '通知标题',
+      label: i18n.t('shared.notification.k11'),
       type: 'text',
       listWidth: 280,
       renderCell: (row: Record<string, unknown>) => {
         const n = row as unknown as NotificationRow;
         const type = n.notification_type || 'info';
-        const bgColor = TYPE_BG_COLORS[type]?.bg || 'rgba(14, 165, 233, 0.1)';
+        const bgColor = TYPE_BG_COLORS[type]?.bg || designTokens.colors.info[100];
         const iconColor = TYPE_BG_COLORS[type]?.color || 'info.main';
         const icon = TYPE_ICONS[type] || <MessageSquare size={16} />;
 
@@ -135,21 +137,21 @@ export const notificationSchema: EntitySchema = {
     },
     {
       name: 'notification_type',
-      label: '类型',
+      label: i18n.t('shared.notification.k12'),
       type: 'select',
       listWidth: 120,
       options: {
         type: 'static',
         options: [
-          { value: 'system', label: '系统通知' },
-          { value: 'workflow', label: '审批通知' },
-          { value: 'reminder', label: '提醒通知' },
-          { value: 'alert', label: '告警通知' },
-          { value: 'message', label: '消息通知' },
-          { value: 'info', label: '信息通知' },
-          { value: 'success', label: '成功通知' },
-          { value: 'warning', label: '警告通知' },
-          { value: 'error', label: '错误通知' },
+          { value: 'system', label: i18n.t('shared.notification.k13') },
+          { value: 'workflow', label: i18n.t('shared.notification.k14') },
+          { value: 'reminder', label: i18n.t('shared.notification.k15') },
+          { value: 'alert', label: i18n.t('shared.notification.k16') },
+          { value: 'message', label: i18n.t('shared.notification.k17') },
+          { value: 'info', label: i18n.t('shared.notification.k18') },
+          { value: 'success', label: i18n.t('shared.notification.k19') },
+          { value: 'warning', label: i18n.t('shared.notification.k20') },
+          { value: 'error', label: i18n.t('shared.notification.k21') },
         ],
       },
       renderCell: (row: Record<string, unknown>) => {
@@ -169,13 +171,13 @@ export const notificationSchema: EntitySchema = {
     },
     {
       name: 'is_read',
-      label: '状态',
+      label: i18n.t('shared.notification.k22'),
       type: 'switch',
       listWidth: 100,
       renderCell: (row: Record<string, unknown>) => (
         <Chip
           size='small'
-          label={(row as unknown as NotificationRow).is_read ? '已读' : '未读'}
+          label={(row as unknown as NotificationRow).is_read ? i18n.t('shared.notification.k24') : i18n.t('shared.notification.k23')}
           color={(row as unknown as NotificationRow).is_read ? 'default' : 'primary'}
           variant='outlined'
         />
@@ -183,14 +185,14 @@ export const notificationSchema: EntitySchema = {
     },
     {
       name: 'priority',
-      label: '优先级',
+      label: i18n.t('shared.notification.k25'),
       type: 'number',
       listWidth: 80,
       showInList: false,
     },
     {
       name: 'created_at',
-      label: '发送时间',
+      label: i18n.t('shared.notification.k26'),
       type: 'datetime',
       listWidth: 160,
       hideInForm: true,
@@ -212,19 +214,19 @@ export const notificationSchema: EntitySchema = {
     filters: [
       {
         id: 'notification_type',
-        label: '通知类型',
+        label: i18n.t('shared.notification.k27'),
         type: 'select',
         options: [
-          { label: '全部类型', value: 'all' },
-          { label: '系统通知', value: 'system' },
-          { label: '审批通知', value: 'workflow' },
-          { label: '提醒通知', value: 'reminder' },
-          { label: '告警通知', value: 'alert' },
-          { label: '消息通知', value: 'message' },
-          { label: '信息通知', value: 'info' },
-          { label: '成功通知', value: 'success' },
-          { label: '警告通知', value: 'warning' },
-          { label: '错误通知', value: 'error' },
+          { label: i18n.t('shared.notification.k28'), value: 'all' },
+          { label: i18n.t('shared.notification.k29'), value: 'system' },
+          { label: i18n.t('shared.notification.k30'), value: 'workflow' },
+          { label: i18n.t('shared.notification.k31'), value: 'reminder' },
+          { label: i18n.t('shared.notification.k32'), value: 'alert' },
+          { label: i18n.t('shared.notification.k33'), value: 'message' },
+          { label: i18n.t('shared.notification.k34'), value: 'info' },
+          { label: i18n.t('shared.notification.k35'), value: 'success' },
+          { label: i18n.t('shared.notification.k36'), value: 'warning' },
+          { label: i18n.t('shared.notification.k37'), value: 'error' },
         ],
       },
     ],
@@ -233,5 +235,5 @@ export const notificationSchema: EntitySchema = {
   actions: ['detail', 'delete'],
 
   formColCount: 2,
-  detailTitle: '通知详情',
+  detailTitle: i18n.t('shared.notification.k38'),
 };

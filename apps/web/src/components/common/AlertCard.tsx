@@ -15,8 +15,10 @@ import {
   AlertTitle,
   Button,
 } from '@mui/material';
+import i18n from '@/i18n';
 import type { SxProps, Theme } from '@mui/material/styles';
 import { AlertTriangle, AlertCircle, CheckCircle, Info, X, RefreshCw } from 'lucide-react';
+import { designTokens } from '@topems/tokens';
 
 // ============ 类型定义 ============
 
@@ -182,21 +184,21 @@ const LEVEL_CONFIG = {
  */
 const SIZE_STYLES = {
   sm: {
-    padding: '8px 12px',
+    padding: `${designTokens.spacing.sm} 12px`,
     iconSize: 16,
     titleSize: '0.875rem',
     messageSize: '0.75rem',
     gap: 2,
   },
   md: {
-    padding: '12px 16px',
+    padding: `${designTokens.spacing.md} 16px`,
     iconSize: 20,
     titleSize: '0.875rem',
     messageSize: '0.875rem',
     gap: 3,
   },
   lg: {
-    padding: '16px 20px',
+    padding: `${designTokens.spacing.md} 20px`,
     iconSize: 24,
     titleSize: '1rem',
     messageSize: '1rem',
@@ -347,7 +349,7 @@ export const AlertCard: React.FC<AlertCardProps> = ({
               size='small'
               onClick={onClose}
               sx={{ color: 'inherit' }}
-              aria-label='关闭'
+              aria-label={i18n.t('shared.alert_card.k0')}
             >
               {closeIcon || <X size={16} />}
             </IconButton>
@@ -478,7 +480,7 @@ export const AlertCard: React.FC<AlertCardProps> = ({
                     textTransform: 'none',
                   }}
                 >
-                  {isExpanded ? '收起' : '展开详情'}
+                  {isExpanded ? i18n.t('shared.alert_card.k2') : i18n.t('shared.alert_card.k1')}
                 </Button>
               )}
               {actions && actions.length > 0 && (!expandable || isExpanded) && showDivider && (
@@ -527,7 +529,7 @@ export const AlertCard: React.FC<AlertCardProps> = ({
                   flexShrink: 0,
                   p: 0.5,
                 }}
-                aria-label='关闭'
+                aria-label={i18n.t('shared.alert_card.k3')}
               >
                 {closeIcon || <X size={16} />}
               </IconButton>
@@ -613,7 +615,7 @@ export const AlertCard: React.FC<AlertCardProps> = ({
               textTransform: 'none',
             }}
           >
-            {isExpanded ? '收起' : '展开详情'}
+            {isExpanded ? i18n.t('shared.alert_card.k5') : i18n.t('shared.alert_card.k4')}
           </Button>
         )}
         {actions && actions.length > 0 && (!expandable || isExpanded) && showDivider && (
@@ -662,7 +664,7 @@ export const AlertCard: React.FC<AlertCardProps> = ({
             flexShrink: 0,
             p: 0.5,
           }}
-          aria-label='关闭'
+          aria-label={i18n.t('shared.alert_card.k6')}
         >
           {closeIcon || <X size={16} />}
         </IconButton>

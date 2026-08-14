@@ -6,6 +6,7 @@
 import React from 'react';
 import { Box, Typography, Card, CardContent, Skeleton, Tooltip, useTheme } from '@mui/material';
 import { TrendingUp, TrendingDown, Minus } from 'lucide-react';
+import { designTokens } from '@topems/tokens';
 
 // ============ 类型定义 ============
 
@@ -199,7 +200,7 @@ export const StatCard: React.FC<StatCardProps> = ({
                     <Typography
                       variant='caption'
                       sx={{
-                        color: gradient ? 'rgba(255,255,255,0.9)' : trendColor,
+                        color: gradient ? designTokens.colors.cyber.metal.topLight : trendColor,
                         fontWeight: 500,
                       }}
                     >

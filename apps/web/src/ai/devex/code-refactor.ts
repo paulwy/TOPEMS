@@ -1,3 +1,4 @@
+import i18n from '@/i18n';
 export type RefactoringType = 'ExtractFunction' | 'ExtractVariable' | 'Rename' | 'Inline' | 'Move';
 
 export interface RefactoringPlan {
@@ -80,8 +81,8 @@ export class CodeRefactorer {
         line: 0,
         type: 'Complexity',
         severity: 'low',
-        description: '无法获取文件内容进行扫描',
-        suggestion: '确保文件可访问后重试',
+        description: i18n.t('ai.code-refactor.k0'),
+        suggestion: i18n.t('ai.code-refactor.k1'),
       });
       this.issues.set(issues[0].id, issues[0]);
       return issues;
@@ -99,8 +100,8 @@ export class CodeRefactorer {
         line: 1,
         type: 'LongMethod',
         severity: 'medium',
-        description: `文件 ${filePath} 有 ${lineCount} 行，超出推荐的 200 行限制`,
-        suggestion: '将文件拆分为更小的模块或组件',
+        description: `${i18n.t('ai.code-refactor.k0')}${filePath}${i18n.t('ai.code-refactor.k1')}${lineCount}${i18n.t('ai.code-refactor.200_2')}`,
+        suggestion: i18n.t('ai.code-refactor.k2'),
         metric: { length: lineCount },
       });
     }
@@ -131,8 +132,8 @@ export class CodeRefactorer {
           line: i + 1,
           type: 'Complexity',
           severity: complexity > 20 ? 'high' : 'medium',
-          description: `第 ${i + 1} 行圈复杂度 ${complexity}，超过阈值 10`,
-          suggestion: '拆分复杂条件为独立函数，使用卫语句减少嵌套',
+          description: `${i18n.t('ai.code-refactor.k3')}${i + 1}${i18n.t('ai.code-refactor.k4')}${complexity}${i18n.t('ai.code-refactor.10_5')}`,
+          suggestion: i18n.t('ai.code-refactor.k3'),
           metric: { complexity },
         });
       }
@@ -145,8 +146,8 @@ export class CodeRefactorer {
           line: i + 1,
           type: 'LongMethod',
           severity: 'medium',
-          description: `第 ${i + 1} 行过长 (${line.length} 字符)`,
-          suggestion: '将长行拆分为多行或提取变量',
+          description: `${i18n.t('ai.code-refactor.k6')}${i + 1}${i18n.t('ai.code-refactor.k7')}${line.length}${i18n.t('ai.code-refactor.k8')}`,
+          suggestion: i18n.t('ai.code-refactor.k4'),
           metric: { length: line.length },
         });
       }
@@ -177,8 +178,8 @@ export class CodeRefactorer {
           line: lineNumbers[0],
           type: 'Duplication',
           severity: 'medium',
-          description: `重复代码出现 ${lineNumbers.length} 次: "${line.substring(0, 50)}..."`,
-          suggestion: '提取重复代码为公共函数或常量',
+          description: `${i18n.t('ai.code-refactor.k9')}${lineNumbers.length}${i18n.t('ai.code-refactor.k10')}${line.substring(0, 50)}..."`,
+          suggestion: i18n.t('ai.code-refactor.k5'),
           metric: { duplicates: lineNumbers.length },
         });
       }
@@ -210,8 +211,8 @@ export class CodeRefactorer {
             line: code.substring(0, classStart).split('\n').length,
             type: 'GodClass',
             severity: 'high',
-            description: `类 ${className} 有 ${classLineCount} 行，可能是 God Class`,
-            suggestion: '将大类拆分为多个职责单一的小类，遵循单一职责原则',
+            description: `${i18n.t('ai.code-refactor.k11')}${className}${i18n.t('ai.code-refactor.k12')}${classLineCount}${i18n.t('ai.code-refactor.godclass_13')}`,
+            suggestion: i18n.t('ai.code-refactor.k6'),
             metric: { classSize: classLineCount },
           });
         }
@@ -358,11 +359,11 @@ export class CodeRefactorer {
     const risk = this.assessRisk(plan.type, plan.oldCode, plan.newCode);
 
     const descriptions: Record<RefactoringType, string> = {
-      ExtractFunction: '提取函数：将代码块提取为独立函数，提高复用性',
-      ExtractVariable: '提取变量：将表达式提取为变量，提高可读性',
-      Rename: '重命名：修改标识符名称，提高语义清晰度',
-      Inline: '内联：将函数调用替换为函数体，减少间接层',
-      Move: '移动：将代码移动到新位置或模块，改善组织结构',
+      ExtractFunction: i18n.t('ai.code-refactor.k7'),
+      ExtractVariable: i18n.t('ai.code-refactor.k8'),
+      Rename: i18n.t('ai.code-refactor.k9'),
+      Inline: i18n.t('ai.code-refactor.k10'),
+      Move: i18n.t('ai.code-refactor.k11'),
     };
 
     return {

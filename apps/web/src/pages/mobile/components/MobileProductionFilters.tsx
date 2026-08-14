@@ -5,8 +5,7 @@
 import React from 'react';
 import { Box, TextField, InputAdornment, Tabs, Tab } from '@mui/material';
 import { Search } from 'lucide-react';
-import { useTranslation } from 'react-i18next';
-
+import i18n from '@/i18n';
 interface MobileProductionFiltersProps {
   activeTab: number;
   onTabChange: (event: React.SyntheticEvent, newValue: number) => void;
@@ -14,7 +13,6 @@ interface MobileProductionFiltersProps {
   onSearchChange: (value: string) => void;
   showSearch?: boolean;
 }
-
 export const MobileProductionFilters: React.FC<MobileProductionFiltersProps> = ({
   activeTab,
   onTabChange,
@@ -22,13 +20,11 @@ export const MobileProductionFilters: React.FC<MobileProductionFiltersProps> = (
   onSearchChange,
   showSearch = true,
 }) => {
-  const { t } = useTranslation();
   const tabs = [
-    t('mobile.production.tabs.orders'),
-    t('mobile.production.tabs.reports'),
-    t('mobile.production.tabs.equipment'),
+    i18n.t('mobile.production.tabs.orders'),
+    i18n.t('mobile.production.tabs.reports'),
+    i18n.t('mobile.production.tabs.equipment'),
   ];
-
   return (
     <>
       <Tabs
@@ -49,13 +45,12 @@ export const MobileProductionFilters: React.FC<MobileProductionFiltersProps> = (
           />
         ))}
       </Tabs>
-
       {showSearch && activeTab === 0 && (
         <Box sx={{ px: 2, pt: 2 }}>
           <TextField
             fullWidth
             size='small'
-            placeholder={t('mobile.production.search_placeholder')}
+            placeholder={i18n.t('mobile.production.search_placeholder')}
             value={searchQuery}
             onChange={(e) => onSearchChange(e.target.value)}
             sx={{

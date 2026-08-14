@@ -356,7 +356,7 @@ export default function CompanyStructurePage() {
               />
               <TextField
                 size='small'
-                placeholder='搜索公司名称或编码...'
+                placeholder={i18n.t('pages.company_structure_page.k0')}
                 value={searchKeyword}
                 onChange={(e) => setSearchKeyword(e.target.value)}
                 sx={{ pl: 4, width: '100%' }}
@@ -394,7 +394,7 @@ export default function CompanyStructurePage() {
                   sx={{ textAlign: 'center', py: 4 }}
                   color='text.secondary'
                 >
-                  加载中...
+                  {i18n.t('pages.company_structure_page.k1')}
                 </Typography>
               ) : treeData?.data ? (
                 <Box sx={{ border: 1, borderColor: 'divider', borderRadius: 1 }}>
@@ -410,7 +410,7 @@ export default function CompanyStructurePage() {
                   sx={{ textAlign: 'center', py: 4 }}
                   color='text.secondary'
                 >
-                  暂无公司架构数据
+                  {i18n.t('pages.company_structure_page.k2')}
                 </Typography>
               )}
             </Box>

@@ -11,17 +11,15 @@ import { qmsApi } from '@/api/qms';
 import type { QualityStandard } from '@/api/qms';
 import { designTokens } from '@/theme/tokens';
 import { QMS_PATHS } from '@/modules/qms/config';
-
+import i18n from '@/i18n';
 const ct= designTokens.colors;
-
 const standardAdapter = {
   list: async (params?: { page?: number; pageSize?: number; search?: string; status?: string }) => {
     const response = await qmsApi.listStandards();
     if (!response.success || !response.data) {
-      throw new Error(response.message || '加载质量标准数据失败');
+      throw new Error(response.message || i18n.t('qms.qms_standard_list_page.k0'));
     }
     let data = response.data as QualityStandard[];
-
     if (params?.search) {
       const search = params.search.toLowerCase();
       data = data.filter(
@@ -29,42 +27,38 @@ const standardAdapter = {
           item.name.toLowerCase().includes(search) || item.code.toLowerCase().includes(search)
       );
     }
-
     if (params?.status && params.status !== 'all') {
       data = data.filter((item) => item.status === params.status);
     }
-
     const total = data.length;
     const page = params?.page || 1;
     const pageSize = params?.pageSize || 10;
     const start = (page - 1) * pageSize;
     const end = start + pageSize;
     const paginatedData = data.slice(start, end);
-
     return { data: paginatedData, total };
   },
   create: async (data: Partial<QualityStandard>) => {
     const response = await qmsApi.createStandard(data as QualityStandard);
     if (!response.success || !response.data) {
-      throw new Error(response.message || '创建失败');
+      throw new Error(response.message || i18n.t('qms.qms_standard_list_page.k1'));
     }
     return response.data;
   },
   update: async (id: string, data: Partial<QualityStandard>) => {
     const response = await qmsApi.updateStandard(id, data as QualityStandard);
     if (!response.success || !response.data) {
-      throw new Error(response.message || '更新失败');
+      throw new Error(response.message || i18n.t('qms.qms_standard_list_page.k2'));
     }
     return response.data;
   },
   delete: async (id: string) => {
     const response = await qmsApi.deleteStandard(id);
     if (!response.success) {
-      throw new Error(response.message || '删除失败');
+      throw new Error(response.message || i18n.t('qms.qms_standard_list_page.k3'));
     }
   },
 };
-
 const StatCard: React.FC<{
   label: string;
   value: number;
@@ -106,10 +100,8 @@ const StatCard: React.FC<{
     </CardContent>
   </Card>
 );
-
 const QmsStandardListPage: React.FC = () => {
   const navigate = useNavigate();
-
   const { data: allStandards } = useQuery({
     queryKey: [qualityStandardSchema.entity, 'stats'],
     queryFn: async () => {
@@ -121,27 +113,23 @@ const QmsStandardListPage: React.FC = () => {
     },
     staleTime: 5 * 60 * 1000,
   });
-
   const standards = allStandards || [];
-
   const stats = useMemo(() => {
     return {
       totalStandards: standards.length,
-      activeStandards: standards.filter((s) => s.status === 'active' || s.status === '有效').length,
-      draftStandards: standards.filter((s) => s.status === 'draft' || s.status === '草稿').length,
+      activeStandards: standards.filter((s) => s.status === 'active' || s.status === i18n.t('qms.qms_standard_list_page.k4')).length,
+      draftStandards: standards.filter((s) => s.status === 'draft' || s.status === i18n.t('qms.qms_standard_list_page.k5')).length,
     };
   }, [standards]);
-
   const customRowActions: RowAction[] = [
     {
-      label: '查看',
+      label: i18n.t('qms.qms_standard_list_page.k6'),
       icon: <Eye size={16} />,
       onClick: (row) => {
         navigate(QMS_PATHS.standardDetail.replace(':id', (row as unknown as QualityStandard).id));
       },
     },
   ];
-
   const headerContent = () => (
     <Box
       sx={{
@@ -155,21 +143,21 @@ const QmsStandardListPage: React.FC = () => {
       }}
     >
       <StatCard
-        label='标准总数'
+        label={i18n.t('qms.qms_standard_list_page.k7')}
         value={stats.totalStandards}
         icon={<FileText size={20} />}
         iconBgColor='primary.lighter'
         iconColor='primary.dark'
       />
       <StatCard
-        label='有效标准'
+        label={i18n.t('qms.qms_standard_list_page.k8')}
         value={stats.activeStandards}
         icon={<FileCheck size={20} />}
         iconBgColor='success.lighter'
         iconColor='success.dark'
       />
       <StatCard
-        label='草稿状态'
+        label={i18n.t('qms.qms_standard_list_page.k9')}
         value={stats.draftStandards}
         icon={<FileText size={20} />}
         iconBgColor='warning.100'
@@ -177,10 +165,9 @@ const QmsStandardListPage: React.FC = () => {
       />
     </Box>
   );
-
   return (
     <PageContainer
-      title='质量标准'
+      title={i18n.t('qms.qms_standard_list_page.k10')}
       subtitle='Quality Standards'
       headerProps={{
         pageIcon: <ClipboardCheck style={{ width: 20, height: 20 }} />,
@@ -192,9 +179,9 @@ const QmsStandardListPage: React.FC = () => {
         schema={qualityStandardSchema}
         apiAdapter={standardAdapter}
         breadcrumbs={[
-          { label: '首页', href: '/dashboard' },
+          { label: i18n.t('qms.qms_standard_list_page.k11'), href: '/dashboard' },
           { label: 'QMS' },
-          { label: '质量标准' },
+          { label: i18n.t('qms.qms_standard_list_page.k12') },
         ]}
         headerContent={headerContent}
         customRowActions={customRowActions}
@@ -202,5 +189,4 @@ const QmsStandardListPage: React.FC = () => {
     </PageContainer>
   );
 };
-
 export default QmsStandardListPage;

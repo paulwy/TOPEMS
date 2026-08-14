@@ -5,6 +5,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { PLUGIN_PATHS } from '@/modules/plugin/config';
 import { AI_PATHS } from '@/modules/ai/config';
 import { writeAICopilotContext } from '@/lib/ai/copilotContext';
+import i18n from '@/i18n';
 
 export interface GlobalActionsProps {
   onSearchClick?: () => void;
@@ -25,10 +26,10 @@ export const GlobalActions: React.FC<GlobalActionsProps> = ({ onSearchClick }) =
       direction='row'
       spacing={0.25}
     >
-      <Tooltip title='搜索 (⌘K / Ctrl+K)'>
+      <Tooltip title={i18n.t('layouts.global_actions.k0')}>
         <IconButton
           size='small'
-          aria-label='搜索 (⌘K / Ctrl+K)'
+          aria-label={i18n.t('layouts.global_actions.k1')}
           onClick={onSearchClick}
           sx={buttonSx}
         >
@@ -54,10 +55,10 @@ export const GlobalActions: React.FC<GlobalActionsProps> = ({ onSearchClick }) =
         </IconButton>
       </Tooltip>
 
-      <Tooltip title='工具箱'>
+      <Tooltip title={i18n.t('layouts.global_actions.k0')}>
         <IconButton
           size='small'
-          aria-label='工具箱'
+          aria-label={i18n.t('layouts.global_actions.k1')}
           onClick={() => navigate(PLUGIN_PATHS.marketplace)}
           sx={buttonSx}
         >

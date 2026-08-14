@@ -1,6 +1,7 @@
 import React, { useState, useCallback } from 'react';
 import { Box, Typography, Avatar, TextField, Paper, Button } from '@mui/material';
 import { Send, ThumbsUp, Reply, User } from 'lucide-react';
+import i18n from '@/i18n';
 
 export interface Comment {
   id: string;
@@ -112,7 +113,7 @@ const CommentItem: React.FC<{
                   variant='caption'
                   sx={{ color: 'text.secondary' }}
                 >
-                  回复
+                  {i18n.t('components.comment_list.k0')}
                 </Typography>
               </Button>
             )}
@@ -122,7 +123,7 @@ const CommentItem: React.FC<{
             <Box sx={{ mt: 2, display: 'flex', gap: 1 }}>
               <TextField
                 size='small'
-                placeholder='写下你的回复...'
+                placeholder={i18n.t('components.comment_list.k1')}
                 value={replyText}
                 onChange={(e) => setReplyText(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && handleReply()}
@@ -135,7 +136,7 @@ const CommentItem: React.FC<{
                 disabled={!replyText.trim()}
                 startIcon={<Send size={14} />}
               >
-                发送
+                {i18n.t('components.comment_list.k2')}
               </Button>
             </Box>
           )}
@@ -187,7 +188,7 @@ export const CommentList: React.FC<CommentListProps> = ({
             variant='subtitle1'
             sx={{ fontWeight: 600, mb: 2 }}
           >
-            添加评论
+            {i18n.t('components.comment_list.k3')}
           </Typography>
           <Box sx={{ display: 'flex', gap: 2 }}>
             <Avatar sx={{ width: 40, height: 40, flexShrink: 0 }}>
@@ -196,7 +197,7 @@ export const CommentList: React.FC<CommentListProps> = ({
             <Box sx={{ flex: 1, display: 'flex', gap: 1 }}>
               <TextField
                 size='small'
-                placeholder='写下你的评论...'
+                placeholder={i18n.t('components.comment_list.k4')}
                 value={newComment}
                 onChange={(e) => setNewComment(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && handleAddComment()}
@@ -209,7 +210,7 @@ export const CommentList: React.FC<CommentListProps> = ({
                 disabled={!newComment.trim()}
                 startIcon={<Send size={14} />}
               >
-                发送
+                {i18n.t('components.comment_list.k5')}
               </Button>
             </Box>
           </Box>
@@ -223,7 +224,7 @@ export const CommentList: React.FC<CommentListProps> = ({
               variant='body2'
               color='text.secondary'
             >
-              暂无评论，快来发表第一条评论吧
+              {i18n.t('components.comment_list.k6')}
             </Typography>
           </Box>
         ) : (

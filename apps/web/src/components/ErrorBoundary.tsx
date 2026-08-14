@@ -12,6 +12,7 @@ import {
   FileX,
   Layers,
 } from 'lucide-react';
+import i18n from '@/i18n';
 import createLogger from '../utils/logger';
 import { designTokens, semanticTokens } from '@topems/tokens';
 
@@ -165,38 +166,38 @@ const getErrorFriendlyMessage = (
 
   if (errorType === 'network') {
     return {
-      title: '网络连接失败',
-      description: '请检查您的网络连接后重试',
+      title: i18n.t('components.error_boundary.k0'),
+      description: i18n.t('components.error_boundary.k1'),
     };
   }
 
   if (errorType === 'not_found') {
     return {
-      title: '内容未找到',
-      description: '您访问的内容可能已被删除或移动',
+      title: i18n.t('components.error_boundary.k2'),
+      description: i18n.t('components.error_boundary.k3'),
     };
   }
 
   switch (level) {
     case 'page':
       return {
-        title: '页面加载失败',
-        description: '抱歉，页面出现了问题，请尝试刷新或返回首页',
+        title: i18n.t('components.error_boundary.k4'),
+        description: i18n.t('components.error_boundary.k5'),
       };
     case 'module':
       return {
-        title: '模块加载失败',
-        description: '部分内容加载失败，请尝试刷新页面',
+        title: i18n.t('components.error_boundary.k6'),
+        description: i18n.t('components.error_boundary.k7'),
       };
     case 'component':
       return {
-        title: '组件渲染失败',
-        description: '部分内容显示异常，请尝试刷新页面',
+        title: i18n.t('components.error_boundary.k8'),
+        description: i18n.t('components.error_boundary.k9'),
       };
     default:
       return {
-        title: '发生错误',
-        description: '抱歉，出现了一些问题，请重试',
+        title: i18n.t('components.error_boundary.k10'),
+        description: i18n.t('components.error_boundary.k11'),
       };
   }
 };
@@ -363,7 +364,7 @@ export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoun
       const enableRetry = this.props.enableRetry ?? true;
       const friendlyMessage = error
         ? getErrorFriendlyMessage(error, level)
-        : { title: '发生错误', description: '请重试' };
+        : { title: i18n.t('components.error_boundary.k13'), description: i18n.t('components.error_boundary.k12') };
 
       return (
         <div
@@ -446,7 +447,7 @@ export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoun
                   }}
                 >
                   {showDetails ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
-                  技术详情
+                  {i18n.t('components.error_boundary.k0')}
                 </button>
 
                 {showDetails && (
@@ -470,7 +471,7 @@ export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoun
                       }}
                     >
                       <Code2 style={{ width: 16, height: 16 }} />
-                      <span style={{ fontWeight: 600, fontSize: '14px' }}>错误详情</span>
+                      <span style={{ fontWeight: 600, fontSize: '14px' }}>{i18n.t('components.error_boundary.k14')}</span>
                     </div>
 
                     {/* 错误信息 */}
@@ -482,7 +483,7 @@ export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoun
                           marginBottom: 1,
                         }}
                       >
-                        错误信息
+                        {i18n.t('components.error_boundary.k1')}
                       </div>
                       <div style={{ fontSize: '13px', fontFamily: 'monospace' }}>
                         {error.message}
@@ -498,7 +499,7 @@ export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoun
                           marginBottom: 1,
                         }}
                       >
-                        错误类型
+                        {i18n.t('components.error_boundary.k2')}
                       </div>
                       <div style={{ fontSize: '13px', fontFamily: 'monospace' }}>
                         {getErrorType(error)}
@@ -514,7 +515,7 @@ export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoun
                           marginBottom: 1,
                         }}
                       >
-                        错误级别
+                        {i18n.t('components.error_boundary.k3')}
                       </div>
                       <div style={{ fontSize: '13px', fontFamily: 'monospace' }}>{level}</div>
                     </div>
@@ -529,7 +530,7 @@ export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoun
                             marginBottom: 1,
                           }}
                         >
-                          发生时间
+                          {i18n.t('components.error_boundary.k4')}
                         </div>
                         <div style={{ fontSize: '13px', fontFamily: 'monospace' }}>
                           {new Date(errorReport.timestamp).toLocaleString('zh-CN')}
@@ -547,7 +548,7 @@ export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoun
                             marginBottom: 1,
                           }}
                         >
-                          浏览器信息
+                          {i18n.t('components.error_boundary.k5')}
                         </div>
                         <div
                           style={{
@@ -571,7 +572,7 @@ export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoun
                             marginBottom: 1,
                           }}
                         >
-                          React 版本
+                          {i18n.t('components.error_boundary.react_6')}
                         </div>
                         <div style={{ fontSize: '13px', fontFamily: 'monospace' }}>
                           {errorReport.reactVersion}
@@ -588,7 +589,7 @@ export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoun
                           marginBottom: 1,
                         }}
                       >
-                        组件栈
+                        {i18n.t('components.error_boundary.k7')}
                       </div>
                       <div
                         style={{
@@ -622,7 +623,7 @@ export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoun
                   style={{
                     display: 'inline-flex',
                     alignItems: 'center',
-                    padding: '12px 20px',
+                    padding: `${designTokens.spacing.md} 20px`,
                     backgroundColor: 'primary.dark',
                     color: 'common.white',
                     borderRadius: 'md',
@@ -634,7 +635,7 @@ export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoun
                   }}
                 >
                   <RefreshCw style={{ width: 18, height: 18, marginRight: 8 }} />
-                  重试
+                  {i18n.t('components.error_boundary.k8')}
                 </button>
               )}
 
@@ -644,7 +645,7 @@ export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoun
                 style={{
                   display: 'inline-flex',
                   alignItems: 'center',
-                  padding: '12px 20px',
+                  padding: `${designTokens.spacing.md} 20px`,
                   backgroundColor: 'grey.200',
                   color: 'text.primary',
                   borderRadius: 'md',
@@ -656,7 +657,7 @@ export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoun
                 }}
               >
                 <ArrowLeft style={{ width: 18, height: 18, marginRight: 8 }} />
-                返回
+                {i18n.t('components.error_boundary.k9')}
               </button>
 
               {/* 返回首页 */}
@@ -665,7 +666,7 @@ export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoun
                 style={{
                   display: 'inline-flex',
                   alignItems: 'center',
-                  padding: '12px 20px',
+                  padding: `${designTokens.spacing.md} 20px`,
                   backgroundColor: 'grey.200',
                   color: 'text.primary',
                   borderRadius: 'md',
@@ -677,7 +678,7 @@ export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoun
                 }}
               >
                 <Home style={{ width: 18, height: 18, marginRight: 8 }} />
-                首页
+                {i18n.t('components.error_boundary.k10')}
               </button>
 
               {/* 复制错误信息 */}
@@ -686,7 +687,7 @@ export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoun
                 style={{
                   display: 'inline-flex',
                   alignItems: 'center',
-                  padding: '12px 20px',
+                  padding: `${designTokens.spacing.md} 20px`,
                   backgroundColor: 'grey.200',
                   color: 'text.primary',
                   borderRadius: 'md',
@@ -698,7 +699,7 @@ export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoun
                 }}
               >
                 <Copy style={{ width: 18, height: 18, marginRight: 8 }} />
-                复制
+                {i18n.t('components.error_boundary.k11')}
               </button>
 
               {/* 上报错误 */}
@@ -709,7 +710,7 @@ export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoun
                   style={{
                     display: 'inline-flex',
                     alignItems: 'center',
-                    padding: '12px 20px',
+                    padding: `${designTokens.spacing.md} 20px`,
                     backgroundColor: this.state.isReporting ? 'grey.400' : 'warning.main',
                     color: 'common.white',
                     borderRadius: 'md',
@@ -721,7 +722,7 @@ export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoun
                   }}
                 >
                   <Bug style={{ width: 18, height: 18, marginRight: 8 }} />
-                  {this.state.isReporting ? '上报中...' : '报告问题'}
+                  {this.state.isReporting ? i18n.t('components.error_boundary.k16') : i18n.t('components.error_boundary.k15')}
                 </button>
               )}
 
@@ -731,7 +732,7 @@ export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoun
                   style={{
                     display: 'inline-flex',
                     alignItems: 'center',
-                    padding: '12px 20px',
+                    padding: `${designTokens.spacing.md} 20px`,
                     backgroundColor: 'success.light',
                     color: 'success.main',
                     borderRadius: 'md',
@@ -739,7 +740,7 @@ export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoun
                     fontSize: '14px',
                   }}
                 >
-                  已上报
+                  {i18n.t('components.error_boundary.k12')}
                 </span>
               )}
             </div>
@@ -866,7 +867,7 @@ const DefaultLoading: React.FC = () => (
     <RefreshCw
       style={{ width: 24, height: 24, marginRight: 8, animation: 'spin 1s linear infinite' }}
     />
-    加载中...
+    {i18n.t('components.error_boundary.k13')}
   </div>
 );
 

@@ -1,5 +1,4 @@
 import React, { useMemo, useCallback } from 'react';
-import { useTranslation } from 'react-i18next';
 import { Box, Card, CardContent, Typography } from '@mui/material';
 import { Package, Edit, Trash2 } from 'lucide-react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -14,22 +13,18 @@ import { PageContainer } from '@/components/common';
 import { useNotificationStore } from '@/store';
 import { logger } from '@/utils/logger';
 import { extractErrorMessage } from '@/utils/errors';
-
 import { CACHE_DURATIONS, QUERY_KEYS } from '@/lib/reactQuery';
-
+import i18n from '@/i18n';
 const baseAdapter = createCrudPageAdapter<Material, CreateMaterialRequest, UpdateMaterialRequest>({
   list: materialApi.listMaterials,
   create: materialApi.createMaterial,
   update: materialApi.updateMaterial,
   delete: materialApi.deleteMaterial,
 });
-
 const materialAdapter = baseAdapter as unknown as CrudApiAdapter<Material>;
-
 function getStockStatus(material: Material): string {
   const stock = material.stock_quantity || 0;
   const max = material.max_stock || 0;
-
   if (max > 0) {
     const ratio = stock / max;
     if (ratio >= 0.7) return 'sufficient';
@@ -37,26 +32,21 @@ function getStockStatus(material: Material): string {
     if (ratio >= 0.2) return 'low';
     return 'insufficient';
   }
-
   return 'normal';
 }
-
 const RsMaterialListPage: React.FC = () => {
-  const { t } = useTranslation();
   const { addNotification } = useNotificationStore();
   const queryClient = useQueryClient();
-
   const { data: materialsResp } = useQuery({
     queryKey: QUERY_KEYS.AD_HOC.RD_MATERIALS_STATS_BASE,
     queryFn: async () => materialApi.listMaterials({ pagesize: 500 }),
   
       staleTime: CACHE_DURATIONS.MEDIUM,});
-
   const importMaterialMutation = useMutation({
     mutationFn: async (file: File) => {
       const response = await materialApi.importMaterials(file);
       if (!response.success || !response.data) {
-        throw new Error(response.message || t('rd.material_list_page.error.import_failed'));
+        throw new Error(response.message || i18n.t('rd.material_list_page.error.import_failed'));
       }
       return response.data;
     },
@@ -69,14 +59,14 @@ const RsMaterialListPage: React.FC = () => {
       if (failed === 0) {
         addNotification({
           type: 'success',
-          title: t('rd.material_list_page.notification.import_success_title'),
-          message: t('rd.material_list_page.notification.import_success_message', { success }),
+          title: i18n.t('rd.material_list_page.notification.import_success_title'),
+          message: i18n.t('rd.material_list_page.notification.import_success_message', { success }),
         });
       } else {
         addNotification({
           type: 'warning',
-          title: t('rd.material_list_page.notification.import_partial_title'),
-          message: t('rd.material_list_page.notification.import_partial_message', {
+          title: i18n.t('rd.material_list_page.notification.import_partial_title'),
+          message: i18n.t('rd.material_list_page.notification.import_partial_message', {
             success,
             failed,
           }),
@@ -84,20 +74,18 @@ const RsMaterialListPage: React.FC = () => {
       }
     },
     onError: (error: unknown) => {
-      logger.error('导入物料失败:', error);
+      logger.error(i18n.t('pages.rs_material_list_page.k0'), error);
       addNotification({
         type: 'error',
-        title: t('rd.material_list_page.notification.import_failed_title'),
-        message: extractErrorMessage(error, t('rd.material_list_page.notification.import_failed_message')),
+        title: i18n.t('rd.material_list_page.notification.import_failed_title'),
+        message: extractErrorMessage(error, i18n.t('rd.material_list_page.notification.import_failed_message')),
       });
     },
   });
-
   const handleImport = useCallback(
     async (event: React.ChangeEvent<HTMLInputElement>) => {
       const file = event.target.files?.[0];
       if (!file) return;
-
       try {
         await importMaterialMutation.mutateAsync(file);
       } catch {
@@ -107,7 +95,6 @@ const RsMaterialListPage: React.FC = () => {
     },
     [importMaterialMutation]
   );
-
   const handleExport = useCallback(async () => {
     try {
       const blob = await materialApi.exportMaterials();
@@ -121,19 +108,18 @@ const RsMaterialListPage: React.FC = () => {
       window.URL.revokeObjectURL(url);
       addNotification({
         type: 'success',
-        title: t('rd.material_list_page.notification.export_success_title'),
-        message: t('rd.material_list_page.notification.export_success_message'),
+        title: i18n.t('rd.material_list_page.notification.export_success_title'),
+        message: i18n.t('rd.material_list_page.notification.export_success_message'),
       });
     } catch (err: unknown) {
-      logger.error('导出物料失败:', err);
+      logger.error(i18n.t('pages.rs_material_list_page.k1'), err);
       addNotification({
         type: 'error',
-        title: t('rd.material_list_page.notification.export_failed_title'),
-        message: t('rd.material_list_page.notification.export_failed_message'),
+        title: i18n.t('rd.material_list_page.notification.export_failed_title'),
+        message: i18n.t('rd.material_list_page.notification.export_failed_message'),
       });
     }
-  }, [addNotification, t]);
-
+  }, [addNotification, i18n.t]);
   const stats = useMemo(() => {
     const materials = materialsResp?.data?.materials || [];
     const total = materialsResp?.data?.total || materials.length;
@@ -143,37 +129,35 @@ const RsMaterialListPage: React.FC = () => {
       low: materials.filter((m) => ['low', 'insufficient'].includes(getStockStatus(m))).length,
     };
   }, [materialsResp]);
-
   const customRowActions: RowAction<Record<string, unknown>>[] = [
     {
-      label: t('rd.material_list_page.row_action.apply'),
+      label: i18n.t('rd.material_list_page.row_action.apply'),
       onClick: () => {
         addNotification({
           type: 'info',
-          title: t('rd.material_list_page.notification.tip_title'),
-          message: t('rd.material_list_page.notification.apply_in_development'),
+          title: i18n.t('rd.material_list_page.notification.tip_title'),
+          message: i18n.t('rd.material_list_page.notification.apply_in_development'),
         });
       },
     },
     {
-      label: t('rd.material_list_page.row_action.edit'),
+      label: i18n.t('rd.material_list_page.row_action.edit'),
       icon: <Edit size={16} />,
       onClick: () => {
         addNotification({
           type: 'info',
-          title: t('rd.material_list_page.notification.tip_title'),
-          message: t('rd.material_list_page.notification.edit_in_development'),
+          title: i18n.t('rd.material_list_page.notification.tip_title'),
+          message: i18n.t('rd.material_list_page.notification.edit_in_development'),
         });
       },
     },
     {
-      label: t('rd.material_list_page.row_action.delete'),
+      label: i18n.t('rd.material_list_page.row_action.delete'),
       icon: <Trash2 size={16} />,
       color: 'error',
       onClick: () => {},
     },
   ];
-
   const headerContent = () => (
     <Box>
       <Box
@@ -192,7 +176,7 @@ const RsMaterialListPage: React.FC = () => {
                   color='text.secondary'
                   variant='body2'
                 >
-                  {t('rd.material_list_page.stat_card.total')}
+                  {i18n.t('rd.material_list_page.stat_card.total')}
                 </Typography>
                 <Typography
                   variant='h4'
@@ -216,7 +200,7 @@ const RsMaterialListPage: React.FC = () => {
                   color='text.secondary'
                   variant='body2'
                 >
-                  {t('rd.material_list_page.stat_card.sufficient')}
+                  {i18n.t('rd.material_list_page.stat_card.sufficient')}
                 </Typography>
                 <Typography
                   variant='h4'
@@ -240,7 +224,7 @@ const RsMaterialListPage: React.FC = () => {
                   color='text.secondary'
                   variant='body2'
                 >
-                  {t('rd.material_list_page.stat_card.insufficient')}
+                  {i18n.t('rd.material_list_page.stat_card.insufficient')}
                 </Typography>
                 <Typography
                   variant='h4'
@@ -266,20 +250,19 @@ const RsMaterialListPage: React.FC = () => {
       />
     </Box>
   );
-
   return (
     <PageContainer
-      title={t('rd.material_list_page.title')}
-      subtitle={t('rd.material_list_page.subtitle')}
+      title={i18n.t('rd.material_list_page.title')}
+      subtitle={i18n.t('rd.material_list_page.subtitle')}
       maxWidth='xl'
     >
       <CrudPage
         schema={materialSchema}
         apiAdapter={materialAdapter}
         breadcrumbs={[
-          { label: t('rd.material_list_page.breadcrumb.home'), href: '/dashboard' },
-          { label: t('rd.material_list_page.breadcrumb.rd'), href: '/rs' },
-          { label: t('rd.material_list_page.breadcrumb.material') },
+          { label: i18n.t('rd.material_list_page.breadcrumb.home'), href: '/dashboard' },
+          { label: i18n.t('rd.material_list_page.breadcrumb.rd'), href: '/rs' },
+          { label: i18n.t('rd.material_list_page.breadcrumb.material') },
         ]}
         headerContent={headerContent}
         customRowActions={customRowActions}
@@ -287,5 +270,4 @@ const RsMaterialListPage: React.FC = () => {
     </PageContainer>
   );
 };
-
 export default RsMaterialListPage;

@@ -9,10 +9,12 @@ import {
   Box,
   Typography,
 } from '@mui/material';
+import i18n from '@/i18n';
 import { CheckCircle2, User, Settings, Calendar, FolderKanban } from 'lucide-react';
 import { pmApi, type CreateProjectRequest } from '@/api/pm';
 import { useNotificationStore } from '@/store';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 
 const PaperInfo: React.FC<{ title: string; value: string }> = ({ title, value }) => (
   <Box sx={{ p: 2, bgcolor: 'background.default', borderRadius: 1 }}>
@@ -34,6 +36,7 @@ const PaperInfo: React.FC<{ title: string; value: string }> = ({ title, value })
 export const ProjectCreateWizardPage: React.FC = () => {
   const { addNotification } = useNotificationStore();
   const navigate = useNavigate();
+  const { t } = useTranslation('pm');
   const [formData, setFormData] = useState<{
     name: string;
     description: string;
@@ -55,20 +58,20 @@ export const ProjectCreateWizardPage: React.FC = () => {
   const steps: WizardStep[] = [
     {
       id: 'basic',
-      label: '基本信息',
-      description: '填写项目名称和描述',
+      label: t('pm.project_create_wizard_page.k0'),
+      description: t('pm.project_create_wizard_page.k1'),
       icon: <FolderKanban style={{ width: 18, height: 18 }} />,
       component: (
         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
           <TextField
-            label='项目名称'
+            label={t('pm.project_create_wizard_page.k2')}
             fullWidth
             required
             value={formData.name}
             onChange={(e) => setFormData({ ...formData, name: e.target.value })}
           />
           <TextField
-            label='项目描述'
+            label={t('pm.project_create_wizard_page.k3')}
             multiline
             rows={3}
             fullWidth
@@ -83,8 +86,8 @@ export const ProjectCreateWizardPage: React.FC = () => {
     },
     {
       id: 'manager',
-      label: '负责人配置',
-      description: '选择项目负责人和团队',
+      label: t('pm.project_create_wizard_page.k4'),
+      description: t('pm.project_create_wizard_page.k5'),
       icon: <User style={{ width: 18, height: 18 }} />,
       optional: false,
       component: (
@@ -93,21 +96,21 @@ export const ProjectCreateWizardPage: React.FC = () => {
             fullWidth
             required
           >
-            <InputLabel>项目负责人</InputLabel>
+            <InputLabel>{t('pm.project_create_wizard_page.k6')}</InputLabel>
             <Select
-              label='项目负责人'
+              label={t('pm.project_create_wizard_page.k7')}
               value={formData.manager}
               onChange={(e) => setFormData({ ...formData, manager: e.target.value })}
             >
-              <MenuItem value='zhang'>张三</MenuItem>
-              <MenuItem value='li'>李四</MenuItem>
-              <MenuItem value='wang'>王五</MenuItem>
+              <MenuItem value='zhang'>{t('pm.project_create_wizard_page.k8')}</MenuItem>
+              <MenuItem value='li'>{t('pm.project_create_wizard_page.k9')}</MenuItem>
+              <MenuItem value='wang'>{t('pm.project_create_wizard_page.k10')}</MenuItem>
             </Select>
           </FormControl>
           <FormControl fullWidth>
-            <InputLabel>优先级</InputLabel>
+            <InputLabel>{t('pm.project_create_wizard_page.k11')}</InputLabel>
             <Select
-              label='优先级'
+              label={t('pm.project_create_wizard_page.k12')}
               value={formData.priority}
               onChange={(e) =>
                 setFormData({
@@ -116,10 +119,10 @@ export const ProjectCreateWizardPage: React.FC = () => {
                 })
               }
             >
-              <MenuItem value='low'>低</MenuItem>
-              <MenuItem value='medium'>中</MenuItem>
-              <MenuItem value='high'>高</MenuItem>
-              <MenuItem value='urgent'>紧急</MenuItem>
+              <MenuItem value='low'>{i18n.t('pages.project_create_wizard_page.k0')}</MenuItem>
+              <MenuItem value='medium'>{i18n.t('pages.project_create_wizard_page.k1')}</MenuItem>
+              <MenuItem value='high'>{i18n.t('pages.project_create_wizard_page.k2')}</MenuItem>
+              <MenuItem value='urgent'>{t('pm.project_create_wizard_page.k13')}</MenuItem>
             </Select>
           </FormControl>
         </Box>
@@ -127,21 +130,21 @@ export const ProjectCreateWizardPage: React.FC = () => {
     },
     {
       id: 'timeline',
-      label: '时间计划',
-      description: '设置项目起止日期',
+      label: t('pm.project_create_wizard_page.k14'),
+      description: t('pm.project_create_wizard_page.k15'),
       icon: <Calendar style={{ width: 18, height: 18 }} />,
       skipable: true,
       component: (
         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
           <TextField
-            label='开始日期'
+            label={t('pm.project_create_wizard_page.k16')}
             type='date'
             fullWidth
             value={formData.startDate}
             onChange={(e) => setFormData({ ...formData, startDate: e.target.value })}
           />
           <TextField
-            label='预计结束日期'
+            label={t('pm.project_create_wizard_page.k17')}
             type='date'
             fullWidth
             value={formData.endDate}
@@ -152,14 +155,14 @@ export const ProjectCreateWizardPage: React.FC = () => {
     },
     {
       id: 'budget',
-      label: '预算配置',
-      description: '设置项目预算',
+      label: t('pm.project_create_wizard_page.k18'),
+      description: t('pm.project_create_wizard_page.k19'),
       icon: <Settings style={{ width: 18, height: 18 }} />,
       skipable: true,
       component: (
         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
           <TextField
-            label='项目预算（元）'
+            label={t('pm.project_create_wizard_page.k20')}
             type='number'
             fullWidth
             value={formData.budget}
@@ -169,55 +172,55 @@ export const ProjectCreateWizardPage: React.FC = () => {
             variant='body2'
             color='text.secondary'
           >
-            预算设置为可选，后续可以在项目详情中修改
+            {i18n.t('pages.project_create_wizard_page.k3')}
           </Typography>
         </Box>
       ),
     },
     {
       id: 'summary',
-      label: '确认信息',
-      description: '确认项目信息无误后提交',
+      label: t('pm.project_create_wizard_page.k21'),
+      description: t('pm.project_create_wizard_page.k22'),
       icon: <CheckCircle2 style={{ width: 18, height: 18 }} />,
       component: (
         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
           <PaperInfo
-            title='项目名称'
-            value={formData.name || '未填写'}
+            title={t('pm.project_create_wizard_page.k23')}
+            value={formData.name || t('pm.project_create_wizard_page.k24')}
           />
           <PaperInfo
-            title='项目描述'
-            value={formData.description || '未填写'}
+            title={t('pm.project_create_wizard_page.k25')}
+            value={formData.description || t('pm.project_create_wizard_page.k26')}
           />
           <PaperInfo
-            title='负责人'
+            title={t('pm.project_create_wizard_page.k27')}
             value={
               formData.manager
                 ? formData.manager === 'zhang'
-                  ? '张三'
+                  ? t('pm.project_create_wizard_page.k28')
                   : formData.manager === 'li'
-                    ? '李四'
-                    : '王五'
-                : '未填写'
+                    ? t('pm.project_create_wizard_page.k29')
+                    : t('pm.project_create_wizard_page.k30')
+                : t('pm.project_create_wizard_page.k31')
             }
           />
           <PaperInfo
-            title='优先级'
+            title={t('pm.project_create_wizard_page.k32')}
             value={
-              { low: '低', medium: '中', high: '高', urgent: '紧急' }[formData.priority] || '中'
+              { low: t('pm.project_create_wizard_page.k37'), medium: t('pm.project_create_wizard_page.k33'), high: t('pm.project_create_wizard_page.k35'), urgent: t('pm.project_create_wizard_page.k34') }[formData.priority] || t('pm.project_create_wizard_page.k36')
             }
           />
           <PaperInfo
-            title='开始日期'
-            value={formData.startDate || '未填写'}
+            title={t('pm.project_create_wizard_page.k38')}
+            value={formData.startDate || t('pm.project_create_wizard_page.k39')}
           />
           <PaperInfo
-            title='结束日期'
-            value={formData.endDate || '未填写'}
+            title={t('pm.project_create_wizard_page.k40')}
+            value={formData.endDate || t('pm.project_create_wizard_page.k41')}
           />
           <PaperInfo
-            title='预算'
-            value={formData.budget ? `${formData.budget} 元` : '未设置'}
+            title={t('pm.project_create_wizard_page.k42')}
+            value={formData.budget ? `${formData.budget}${i18n.t('pages.project_create_wizard_page.k0')}` : t('pm.project_create_wizard_page.k43')}
           />
         </Box>
       ),
@@ -241,17 +244,17 @@ export const ProjectCreateWizardPage: React.FC = () => {
 
       const response = await pmApi.projects.create(requestData);
       if (response.success) {
-        addNotification({ type: 'success', title: '成功', message: '项目创建成功' });
+        addNotification({ type: 'success', title: t('pm.project_create_wizard_page.k45'), message: t('pm.project_create_wizard_page.k44') });
         navigate('/pm/projects');
       } else {
         addNotification({
           type: 'error',
-          title: '失败',
-          message: response.message || '项目创建失败',
+          title: t('pm.project_create_wizard_page.k46'),
+          message: response.message || t('pm.project_create_wizard_page.k47'),
         });
       }
     } catch (error) {
-      addNotification({ type: 'error', title: '失败', message: '项目创建失败' });
+      addNotification({ type: 'error', title: t('pm.project_create_wizard_page.k49'), message: t('pm.project_create_wizard_page.k48') });
     }
   };
 
@@ -261,15 +264,15 @@ export const ProjectCreateWizardPage: React.FC = () => {
 
   return (
     <WizardPageTemplate
-      title='新建项目向导'
-      subtitle='引导式创建项目，逐步完善项目信息'
+      title={t('pm.project_create_wizard_page.k50')}
+      subtitle={t('pm.project_create_wizard_page.k51')}
       steps={steps}
       onComplete={handleComplete}
       onCancel={handleCancel}
       showStepNumbers
       showProgress
       showNavigation
-      finishButtonText='创建项目'
+      finishButtonText={t('pm.project_create_wizard_page.k52')}
     />
   );
 };

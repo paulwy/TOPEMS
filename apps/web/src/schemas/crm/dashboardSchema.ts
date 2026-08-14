@@ -1,5 +1,6 @@
 import type { DashboardSchema, StatCardSchema, ChartSchema } from '@/schema';
 import type { CrmDashboardStats } from '@/api/crm/dashboard';
+import i18n from '@/i18n';
 
 declare global {
   interface Window {
@@ -12,54 +13,54 @@ export function useCrmDashboardSchema(): DashboardSchema {
   const statCards: StatCardSchema[] = [
     {
       id: 'total-opportunities',
-      title: '总商机数',
+      title: i18n.t('shared.dashboard_schema.k0'),
       value: () => {
         const stats = window.__crmStats;
         return (stats?.total_opportunities as number)?.toLocaleString() ?? '-';
       },
       icon: 'Target',
       color: 'primary',
-      trend: { value: 0, label: '上月' },
+      trend: { value: 0, label: i18n.t('shared.dashboard_schema.k1') },
     },
     {
       id: 'won-amount',
-      title: '赢单金额',
+      title: i18n.t('shared.dashboard_schema.k2'),
       value: () => {
         const stats = window.__crmStats;
         return stats ? `¥${(stats?.won_amount as number)?.toLocaleString() ?? 0}` : '-';
       },
       icon: 'TrendingUp',
       color: 'success',
-      trend: { value: 0, label: '上月' },
+      trend: { value: 0, label: i18n.t('shared.dashboard_schema.k3') },
     },
     {
       id: 'conversion-rate',
-      title: '转化率',
+      title: i18n.t('shared.dashboard_schema.k4'),
       value: () => {
         const stats = window.__crmStats;
         return stats ? `${stats?.conversion_rate ?? 0}%` : '-';
       },
       icon: 'Users',
       color: 'info',
-      trend: { value: 0, label: '上月' },
+      trend: { value: 0, label: i18n.t('shared.dashboard_schema.k5') },
     },
     {
       id: 'average-cycle',
-      title: '平均周期',
+      title: i18n.t('shared.dashboard_schema.k6'),
       value: () => {
         const stats = window.__crmStats;
-        return stats ? `${stats?.average_cycle ?? 0}天` : '-';
+        return stats ? `${stats?.average_cycle ?? 0}${i18n.t('shared.dashboard_schema.k0')}` : '-';
       },
       icon: 'Clock',
       color: 'warning',
-      trend: { value: 0, label: '上月' },
+      trend: { value: 0, label: i18n.t('shared.dashboard_schema.k7') },
     },
   ];
 
   const charts: ChartSchema[] = [
     {
       id: 'opportunity-stage-distribution',
-      title: '商机阶段分布',
+      title: i18n.t('shared.dashboard_schema.k8'),
       type: 'bar',
       data: () => {
         const stats = window.__crmStats;
@@ -72,7 +73,7 @@ export function useCrmDashboardSchema(): DashboardSchema {
     },
     {
       id: 'monthly-performance',
-      title: '月度业绩趋势',
+      title: i18n.t('shared.dashboard_schema.k9'),
       type: 'line',
       data: () => {
         const stats = window.__crmStats;
@@ -85,7 +86,7 @@ export function useCrmDashboardSchema(): DashboardSchema {
     },
     {
       id: 'industry-distribution',
-      title: '行业分布',
+      title: i18n.t('shared.dashboard_schema.k10'),
       type: 'pie',
       data: () => {
         const stats = window.__crmStats;
@@ -98,7 +99,7 @@ export function useCrmDashboardSchema(): DashboardSchema {
   ];
 
   return {
-    title: 'CRM 仪表盘',
+    title: i18n.t('shared.dashboard_schema.crm_1'),
     loader: async () => {
       const api = await import('@/api/crm/dashboard');
       const response = await api.crmDashboardApi.getOverview();

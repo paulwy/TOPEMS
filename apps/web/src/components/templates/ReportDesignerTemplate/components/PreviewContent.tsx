@@ -3,6 +3,7 @@ import { Box, Typography, Paper } from '@mui/material';
 import { BarChart3 } from 'lucide-react';
 import type { LayoutConfig, SelectedField } from '../types';
 import { designTokens, semanticTokens } from '@topems/tokens';
+import i18n from '@/i18n';
 
 interface PreviewContentProps {
   layout: LayoutConfig;
@@ -98,7 +99,7 @@ export const PreviewContent: React.FC<PreviewContentProps> = ({
             variant='body1'
             sx={{ color: 'grey.400' }}
           >
-            请配置图表字段
+            {i18n.t('components.preview_content.k0')}
           </Typography>
         </Box>
       );

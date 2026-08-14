@@ -51,6 +51,7 @@ import { extractErrorMessage } from '@/utils/errors';
 import { apiLogger } from '@/utils/logger';
 
 import { QUERY_KEYS } from '@/lib/reactQuery';
+import i18n from '@/i18n';
 
 // ============ 从 shared-types 导入统一 CRUD 类型（并重新导出以保持兼容） ============
 import type {
@@ -197,7 +198,7 @@ export function createCrudOperationsAdapter<T, TCreate = Partial<T>, TUpdate = P
         ...params,
       });
       if (!response.success || !response.data) {
-        throw new Error(response.message || '加载数据失败');
+        throw new Error(response.message || i18n.t('shared.use_crud_unified.k0'));
       }
       return { items: response.data.items, total: response.data.total };
     },
@@ -205,7 +206,7 @@ export function createCrudOperationsAdapter<T, TCreate = Partial<T>, TUpdate = P
       ? async (id) => {
           const response = await api.get!(id);
           if (!response.success || !response.data) {
-            throw new Error(response.message || '获取数据失败');
+            throw new Error(response.message || i18n.t('shared.use_crud_unified.k1'));
           }
           return response.data;
         }
@@ -213,21 +214,21 @@ export function createCrudOperationsAdapter<T, TCreate = Partial<T>, TUpdate = P
     create: async (data) => {
       const response = await api.create(data);
       if (!response.success) {
-        throw new Error(response.message || '创建失败');
+        throw new Error(response.message || i18n.t('shared.use_crud_unified.k2'));
       }
       return response.data as T;
     },
     update: async ({ id, data }) => {
       const response = await api.update(id, data);
       if (!response.success) {
-        throw new Error(response.message || '更新失败');
+        throw new Error(response.message || i18n.t('shared.use_crud_unified.k3'));
       }
       return response.data as T;
     },
     delete: async (id) => {
       const response = await api.delete(id);
       if (!response.success) {
-        throw new Error(response.message || '删除失败');
+        throw new Error(response.message || i18n.t('shared.use_crud_unified.k4'));
       }
     },
   };
@@ -252,7 +253,7 @@ export function createModuleAdapter<T, TCreate = Partial<T>, TUpdate = Partial<T
     list: async (params) => {
       const response = await api.list(params);
       if (!response.success || !response.data) {
-        throw new Error('加载数据失败');
+        throw new Error(i18n.t('shared.use_crud_unified.k5'));
       }
       return response.data;
     },
@@ -260,7 +261,7 @@ export function createModuleAdapter<T, TCreate = Partial<T>, TUpdate = Partial<T
       ? async (id) => {
           const response = await api.get!(id);
           if (!response.success || !response.data) {
-            throw new Error('获取数据失败');
+            throw new Error(i18n.t('shared.use_crud_unified.k6'));
           }
           return response.data;
         }
@@ -268,21 +269,21 @@ export function createModuleAdapter<T, TCreate = Partial<T>, TUpdate = Partial<T
     create: async (data) => {
       const response = await api.create(data);
       if (!response.success) {
-        throw new Error('创建失败');
+        throw new Error(i18n.t('shared.use_crud_unified.k7'));
       }
       return response.data as T;
     },
     update: async ({ id, data }) => {
       const response = await api.update(id, data);
       if (!response.success) {
-        throw new Error('更新失败');
+        throw new Error(i18n.t('shared.use_crud_unified.k8'));
       }
       return response.data as T;
     },
     delete: async (id) => {
       const response = await api.delete(id);
       if (!response.success) {
-        throw new Error('删除失败');
+        throw new Error(i18n.t('shared.use_crud_unified.k9'));
       }
     },
   };
@@ -439,9 +440,9 @@ export function useCrudUnified<
         }
         return item;
       } catch (err) {
-        const message = extractErrorMessage(err, '获取数据失败');
+        const message = extractErrorMessage(err, i18n.t('shared.use_crud_unified.k10'));
         if (showErrorNotification) {
-          addNotification({ title: '错误', message, type: 'error' });
+          addNotification({ title: i18n.t('shared.use_crud_unified.k11'), message, type: 'error' });
         }
         return null;
       }
@@ -461,7 +462,7 @@ export function useCrudUnified<
   const notifySuccess = useCallback(
     (message: string) => {
       if (showSuccessNotification) {
-        addNotification({ title: '成功', message, type: 'success' });
+        addNotification({ title: i18n.t('shared.use_crud_unified.k12'), message, type: 'success' });
       }
     },
     [addNotification, showSuccessNotification]
@@ -469,20 +470,20 @@ export function useCrudUnified<
 
   const notifyError = useCallback(
     (err: unknown, defaultMessage: string) => {
-      apiLogger.error(`${entityName ?? '记录'}${defaultMessage}:`, err);
+      apiLogger.error(`${entityName ?? i18n.t('shared.use_crud_unified.k13')}${defaultMessage}:`, err);
       if (showErrorNotification) {
-        const message = extractErrorMessage(err, `${entityName ?? '记录'}${defaultMessage}`);
-        addNotification({ title: '错误', message, type: 'error' });
+        const message = extractErrorMessage(err, `${entityName ?? i18n.t('shared.use_crud_unified.k14')}${defaultMessage}`);
+        addNotification({ title: i18n.t('shared.use_crud_unified.k15'), message, type: 'error' });
       }
     },
     [entityName, addNotification, showErrorNotification]
   );
 
   // 语义化通知文案
-  const label = entityName ?? '记录';
-  const msgCreate = `${label}创建成功`;
-  const msgUpdate = `${label}更新成功`;
-  const msgDelete = `${label}删除成功`;
+  const label = entityName ?? i18n.t('shared.use_crud_unified.k16');
+  const msgCreate = `${label}${i18n.t('shared.use_crud_unified.k0')}`;
+  const msgUpdate = `${label}${i18n.t('shared.use_crud_unified.k1')}`;
+  const msgDelete = `${label}${i18n.t('shared.use_crud_unified.k2')}`;
 
   // ---- create ----
   const createMutation = useMutation<T | null, Error, TCreate, unknown>({
@@ -497,7 +498,7 @@ export function useCrudUnified<
       notifySuccess(msgCreate);
       if (newItem) onCreateSuccess?.(newItem);
     },
-    onError: (err) => notifyError(err, '创建'),
+    onError: (err) => notifyError(err, i18n.t('shared.use_crud_unified.k17')),
   });
 
   // ---- update ----
@@ -517,7 +518,7 @@ export function useCrudUnified<
       notifySuccess(msgUpdate);
       if (updatedItem) onUpdateSuccess?.(updatedItem, variables.id);
     },
-    onError: (err) => notifyError(err, '更新'),
+    onError: (err) => notifyError(err, i18n.t('shared.use_crud_unified.k18')),
   });
 
   // ---- delete ----
@@ -533,7 +534,7 @@ export function useCrudUnified<
       notifySuccess(msgDelete);
       onDeleteSuccess?.(id);
     },
-    onError: (err) => notifyError(err, '删除'),
+    onError: (err) => notifyError(err, i18n.t('shared.use_crud_unified.k19')),
   });
 
   // ---- bulkDelete（串行调用 adapter.delete） ----
@@ -548,11 +549,11 @@ export function useCrudUnified<
 });
       notifySuccess(
         entityName
-          ? `已删除 ${variables.length} 个${entityName}`
-          : `已删除 ${variables.length} 条记录`
+          ? `${i18n.t('shared.use_crud_unified.k3')}${variables.length}${i18n.t('shared.use_crud_unified.k4')}${entityName}`
+          : `${i18n.t('shared.use_crud_unified.k5')}${variables.length}${i18n.t('shared.use_crud_unified.k6')}`
       );
     },
-    onError: (err) => notifyError(err, '批量删除'),
+    onError: (err) => notifyError(err, i18n.t('shared.use_crud_unified.k20')),
   });
 
   // ---- 便捷方法 ----

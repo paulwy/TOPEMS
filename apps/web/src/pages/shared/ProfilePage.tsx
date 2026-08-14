@@ -21,6 +21,7 @@ import {
   GitBranch,
   Bot,
 } from 'lucide-react';
+import i18n from '@/i18n';
 import { useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { authApi, type User as UserType, type AccessLog } from '@/api/iam';
@@ -134,7 +135,7 @@ const ProfilePage: React.FC = () => {
       if (res.success && res.data) {
         return res.data;
       }
-      throw new Error(res.message || '获取用户信息失败');
+      throw new Error(res.message || i18n.t('pages.profile_page.k0'));
     },
     staleTime: 5 * 60 * 1000,
   });
@@ -144,7 +145,7 @@ const ProfilePage: React.FC = () => {
   const error = userProfileQuery.isError
     ? userProfileQuery.error instanceof Error
       ? userProfileQuery.error.message
-      : '获取用户信息失败'
+      : i18n.t('pages.profile_page.k1')
     : null;
 
   const activitiesQuery = useQuery<ActivityItem[]>({
@@ -198,8 +199,8 @@ const ProfilePage: React.FC = () => {
       const errorMsg =
         userProfileQuery.error instanceof Error
           ? userProfileQuery.error.message
-          : '获取用户信息失败';
-      addNotification({ title: '加载失败', message: errorMsg, type: 'error' });
+          : i18n.t('pages.profile_page.k2');
+      addNotification({ title: i18n.t('pages.profile_page.k3'), message: errorMsg, type: 'error' });
     }
   }, [userProfileQuery.isError, userProfileQuery.error, addNotification]);
 
@@ -229,7 +230,7 @@ const ProfilePage: React.FC = () => {
         email: data.email,
       });
       if (!res.success || !res.data) {
-        throw new Error(res.message || '更新失败');
+        throw new Error(res.message || i18n.t('pages.profile_page.k4'));
       }
       return res.data;
     },
@@ -240,15 +241,15 @@ const ProfilePage: React.FC = () => {
         refetchType: 'active',
       });
       addNotification({
-        title: '成功',
-        message: '个人信息更新成功',
+        title: i18n.t('pages.profile_page.k5'),
+        message: i18n.t('pages.profile_page.k6'),
         type: 'success',
       });
     },
     onError: (err: unknown) => {
       const error = err as { response?: { data?: { message?: string } }; message?: string };
-      const errorMsg = error.response?.data?.message || error.message || '更新失败';
-      addNotification({ title: '失败', message: errorMsg, type: 'error' });
+      const errorMsg = error.response?.data?.message || error.message || i18n.t('pages.profile_page.k7');
+      addNotification({ title: i18n.t('pages.profile_page.k8'), message: errorMsg, type: 'error' });
     },
   });
 
@@ -256,7 +257,7 @@ const ProfilePage: React.FC = () => {
     mutationFn: async (data: { current_password: string; new_password: string }) => {
       const res = await authApi.changePassword(data);
       if (!res.success) {
-        throw new Error(res.message || '修改密码失败');
+        throw new Error(res.message || i18n.t('pages.profile_page.k9'));
       }
       return res;
     },
@@ -267,8 +268,8 @@ const ProfilePage: React.FC = () => {
         refetchType: 'active',
       });
       addNotification({
-        title: '成功',
-        message: '密码修改成功，请重新登录',
+        title: i18n.t('pages.profile_page.k10'),
+        message: i18n.t('pages.profile_page.k11'),
         type: 'success',
       });
       setShowPasswordDialog(false);
@@ -280,8 +281,8 @@ const ProfilePage: React.FC = () => {
     },
     onError: (err: unknown) => {
       const error = err as { response?: { data?: { message?: string } }; message?: string };
-      const errorMsg = error.response?.data?.message || error.message || '修改密码失败';
-      addNotification({ title: '失败', message: errorMsg, type: 'error' });
+      const errorMsg = error.response?.data?.message || error.message || i18n.t('pages.profile_page.k12');
+      addNotification({ title: i18n.t('pages.profile_page.k13'), message: errorMsg, type: 'error' });
     },
   });
 
@@ -289,7 +290,7 @@ const ProfilePage: React.FC = () => {
     mutationFn: async (params: { avatar_url: string }) => {
       const res = await authApi.updateAvatar(params);
       if (!res.success || !res.data) {
-        throw new Error('头像更新失败');
+        throw new Error(i18n.t('pages.profile_page.k14'));
       }
       return res.data;
     },
@@ -300,15 +301,15 @@ const ProfilePage: React.FC = () => {
         refetchType: 'active',
       });
       addNotification({
-        title: '成功',
-        message: '头像已更新',
+        title: i18n.t('pages.profile_page.k15'),
+        message: i18n.t('pages.profile_page.k16'),
         type: 'success',
       });
     },
     onError: () => {
       addNotification({
-        title: '错误',
-        message: '头像更新失败',
+        title: i18n.t('pages.profile_page.k17'),
+        message: i18n.t('pages.profile_page.k18'),
         type: 'error',
       });
     },
@@ -319,7 +320,7 @@ const ProfilePage: React.FC = () => {
       await authApi.updatePreferences(params);
     },
     onError: (err: unknown) => {
-      apiLogger.error('保存偏好设置失败', err);
+      apiLogger.error(i18n.t('pages.profile_page.k19'), err);
     },
 
     onSuccess: () => {
@@ -337,8 +338,8 @@ const ProfilePage: React.FC = () => {
 
     if (!file.type.startsWith('image/')) {
       addNotification({
-        title: '错误',
-        message: '请选择图片文件',
+        title: i18n.t('pages.profile_page.k20'),
+        message: i18n.t('pages.profile_page.k21'),
         type: 'error',
       });
       return;
@@ -346,8 +347,8 @@ const ProfilePage: React.FC = () => {
 
     if (file.size > 2 * 1024 * 1024) {
       addNotification({
-        title: '错误',
-        message: '图片大小不能超过2MB',
+        title: i18n.t('pages.profile_page.k22'),
+        message: i18n.t('pages.profile_page.2mb_23'),
         type: 'error',
       });
       return;
@@ -370,23 +371,23 @@ const ProfilePage: React.FC = () => {
   const handlePasswordChange = (data: PasswordFormData) => {
     if (data.new_password !== data.confirm_password) {
       addNotification({
-        title: '错误',
-        message: '两次输入的密码不一致',
+        title: i18n.t('pages.profile_page.k24'),
+        message: i18n.t('pages.profile_page.k25'),
         type: 'error',
       });
       passwordForm.setError('confirm_password', {
-        message: '两次输入的密码不一致',
+        message: i18n.t('pages.profile_page.k26'),
       });
       return;
     }
 
     if (data.new_password.length < 6) {
       addNotification({
-        title: '错误',
-        message: '密码长度至少为6位',
+        title: i18n.t('pages.profile_page.k27'),
+        message: i18n.t('pages.profile_page.6_28'),
         type: 'error',
       });
-      passwordForm.setError('new_password', { message: '密码长度至少为6位' });
+      passwordForm.setError('new_password', { message: i18n.t('pages.profile_page.6_29') });
       return;
     }
 
@@ -407,15 +408,15 @@ const ProfilePage: React.FC = () => {
       {
         onSuccess: () => {
           addNotification({
-            title: '成功',
-            message: `${key}通知设置已更新`,
+            title: i18n.t('pages.profile_page.k30'),
+            message: `${key}${i18n.t('pages.profile_page.k0')}`,
             type: 'success',
           });
         },
         onError: () => {
           addNotification({
-            title: '错误',
-            message: '保存通知设置失败',
+            title: i18n.t('pages.profile_page.k31'),
+            message: i18n.t('pages.profile_page.k32'),
             type: 'error',
           });
         },
@@ -438,15 +439,15 @@ const ProfilePage: React.FC = () => {
     if (shortcuts.some((s) => s.id === shortcut.id)) {
       newShortcuts = shortcuts.filter((s) => s.id !== shortcut.id);
       addNotification({
-        title: '提示',
-        message: `${shortcut.title}已从快捷方式移除`,
+        title: i18n.t('pages.profile_page.k33'),
+        message: `${shortcut.title}${i18n.t('pages.profile_page.k1')}`,
         type: 'info',
       });
     } else {
       newShortcuts = [...shortcuts, shortcut];
       addNotification({
-        title: '提示',
-        message: `${shortcut.title}已添加到快捷方式`,
+        title: i18n.t('pages.profile_page.k34'),
+        message: `${shortcut.title}${i18n.t('pages.profile_page.k2')}`,
         type: 'success',
       });
     }
@@ -494,13 +495,13 @@ const ProfilePage: React.FC = () => {
             size={48}
             style={{ color: theme.palette.error.main, marginBottom: 12 }}
           />
-          <Typography color='error'>{error || '无法获取用户信息'}</Typography>
+          <Typography color='error'>{error || i18n.t('pages.profile_page.k35')}</Typography>
           <Button
             sx={{ mt: 2 }}
             variant='contained'
             onClick={handleRetryProfile}
           >
-            重试
+            {i18n.t('pages.profile_page.k0')}
           </Button>
         </Box>
       </Box>
@@ -509,8 +510,8 @@ const ProfilePage: React.FC = () => {
 
   return (
     <PageContainer
-      title='个人中心'
-      subtitle='管理您的个人信息和账户安全'
+      title={i18n.t('pages.profile_page.k36')}
+      subtitle={i18n.t('pages.profile_page.k37')}
       maxWidth='lg'
       headerProps={{
         backButton: { href: '/dashboard', visible: true },

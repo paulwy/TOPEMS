@@ -1,3 +1,4 @@
+import i18n from '@/i18n';
 export type Regulation = 'GDPR' | 'SOX' | 'HIPAA' | 'PCI';
 export type Severity = 'critical' | 'high' | 'medium' | 'low';
 
@@ -50,122 +51,122 @@ export interface ComplianceReport {
 const DEFAULT_RULES: ComplianceRule[] = [
   {
     id: 'gdpr-data-access',
-    name: 'GDPR 数据访问控制',
+    name: i18n.t('ai.compliance-automation.gdpr_0'),
     regulation: 'GDPR',
     check_type: 'data_access',
     severity: 'high',
-    action: '限制个人数据访问权限',
-    description: '确保只有授权人员可以访问个人数据',
+    action: i18n.t('ai.compliance-automation.k0'),
+    description: i18n.t('ai.compliance-automation.k1'),
     enabled: true,
   },
   {
     id: 'gdpr-encryption',
-    name: 'GDPR 数据加密传输',
+    name: i18n.t('ai.compliance-automation.gdpr_1'),
     regulation: 'GDPR',
     check_type: 'data_encryption',
     severity: 'high',
-    action: '强制 TLS 加密传输',
-    description: '确保所有个人数据传输使用加密通道',
+    action: i18n.t('ai.compliance-automation.tls_2'),
+    description: i18n.t('ai.compliance-automation.k3'),
     enabled: true,
   },
   {
     id: 'gdpr-consent',
-    name: 'GDPR 用户同意管理',
+    name: i18n.t('ai.compliance-automation.gdpr_2'),
     regulation: 'GDPR',
     check_type: 'user_consent',
     severity: 'medium',
-    action: '获取明确同意',
-    description: '确保处理个人数据前获取用户明确同意',
+    action: i18n.t('ai.compliance-automation.k4'),
+    description: i18n.t('ai.compliance-automation.k5'),
     enabled: true,
   },
   {
     id: 'gdpr-retention',
-    name: 'GDPR 数据保留策略',
+    name: i18n.t('ai.compliance-automation.gdpr_3'),
     regulation: 'GDPR',
     check_type: 'data_retention',
     severity: 'medium',
-    action: '设置数据过期策略',
-    description: '确保个人数据不会保留超过必要时间',
+    action: i18n.t('ai.compliance-automation.k6'),
+    description: i18n.t('ai.compliance-automation.k7'),
     enabled: true,
   },
   {
     id: 'sox-audit',
-    name: 'SOX 审计日志完整性',
+    name: i18n.t('ai.compliance-automation.sox_4'),
     regulation: 'SOX',
     check_type: 'audit_logging',
     severity: 'critical',
-    action: '保留完整审计轨迹',
-    description: '确保所有财务交易有完整的不可篡改审计日志',
+    action: i18n.t('ai.compliance-automation.k8'),
+    description: i18n.t('ai.compliance-automation.k9'),
     enabled: true,
   },
   {
     id: 'sox-access',
-    name: 'SOX 职责分离',
+    name: i18n.t('ai.compliance-automation.sox_5'),
     regulation: 'SOX',
     check_type: 'authorization',
     severity: 'high',
-    action: '实施职责分离',
-    description: '确保财务操作的职责分离，防止舞弊',
+    action: i18n.t('ai.compliance-automation.k10'),
+    description: i18n.t('ai.compliance-automation.k11'),
     enabled: true,
   },
   {
     id: 'hipaa-phi',
-    name: 'HIPAA PHI 保护',
+    name: i18n.t('ai.compliance-automation.hipaaphi_6'),
     regulation: 'HIPAA',
     check_type: 'data_access',
     severity: 'critical',
-    action: '保护受保护健康信息',
-    description: '确保受保护健康信息(PHI)的访问受到严格控制',
+    action: i18n.t('ai.compliance-automation.k12'),
+    description: i18n.t('ai.compliance-automation.k13'),
     enabled: true,
   },
   {
     id: 'hipaa-baa',
-    name: 'HIPAA 业务 Associate 协议',
+    name: i18n.t('ai.compliance-automation.k7'),
     regulation: 'HIPAA',
     check_type: 'authorization',
     severity: 'high',
-    action: '执行 BAA 协议',
-    description: '确保所有处理 PHI 的第三方签署 BAA',
+    action: i18n.t('ai.compliance-automation.baa_14'),
+    description: i18n.t('ai.compliance-automation.k15'),
     enabled: true,
   },
   {
     id: 'pci-encryption',
-    name: 'PCI DSS 数据加密',
+    name: i18n.t('ai.compliance-automation.pcidss_8'),
     regulation: 'PCI',
     check_type: 'data_encryption',
     severity: 'critical',
-    action: '加密持卡人数据',
-    description: '确保持卡人数据在传输和存储时均被加密',
+    action: i18n.t('ai.compliance-automation.k16'),
+    description: i18n.t('ai.compliance-automation.k17'),
     enabled: true,
   },
   {
     id: 'pci-network',
-    name: 'PCI DSS 网络安全',
+    name: i18n.t('ai.compliance-automation.pcidss_9'),
     regulation: 'PCI',
     check_type: 'network_security',
     severity: 'high',
-    action: '实施网络分段',
-    description: '确保支付处理环境与其他网络环境隔离',
+    action: i18n.t('ai.compliance-automation.k18'),
+    description: i18n.t('ai.compliance-automation.k19'),
     enabled: true,
   },
   {
     id: 'pci-auth',
-    name: 'PCI DSS 多因素认证',
+    name: i18n.t('ai.compliance-automation.pcidss_10'),
     regulation: 'PCI',
     check_type: 'authentication',
     severity: 'high',
-    action: '强制多因素认证',
-    description: '确保对持卡人数据的访问需要多因素认证',
+    action: i18n.t('ai.compliance-automation.k20'),
+    description: i18n.t('ai.compliance-automation.k21'),
     enabled: true,
   },
   {
     id: 'pci-audit',
-    name: 'PCI DSS 审计追踪',
+    name: i18n.t('ai.compliance-automation.pcidss_11'),
     regulation: 'PCI',
     check_type: 'audit_logging',
     severity: 'high',
-    action: '记录所有访问',
-    description: '确保所有访问持卡人数据的操作都被记录',
+    action: i18n.t('ai.compliance-automation.k22'),
+    description: i18n.t('ai.compliance-automation.k23'),
     enabled: true,
   },
 ];
@@ -364,9 +365,9 @@ export class ComplianceAutomator {
 
   private generateEvidence(rule: ComplianceRule, entity: string, passed: boolean): string {
     if (passed) {
-      return `实体 ${entity} 通过规则 ${rule.name} 检查。${rule.action} 已正确实施。`;
+      return `${i18n.t('ai.compliance-automation.k12')}${entity}${i18n.t('ai.compliance-automation.k13')}${rule.name}${i18n.t('ai.compliance-automation.k14')}${rule.action}${i18n.t('ai.compliance-automation.k15')}`;
     }
-    return `实体 ${entity} 未通过规则 ${rule.name} 检查。需要: ${rule.action}。`;
+    return `${i18n.t('ai.compliance-automation.k16')}${entity}${i18n.t('ai.compliance-automation.k17')}${rule.name}${i18n.t('ai.compliance-automation.k18')}${rule.action}。`;
   }
 
   private generateRecommendations(checks: ComplianceCheck[]): string[] {
@@ -383,27 +384,27 @@ export class ComplianceAutomator {
 
     if (bySeverity['critical']?.length) {
       recommendations.push(
-        `紧急：${bySeverity['critical'].length} 个严重合规检查未通过，需立即处理`
+        `${i18n.t('ai.compliance-automation.k19')}${bySeverity['critical'].length}${i18n.t('ai.compliance-automation.k20')}`
       );
     }
     if (bySeverity['high']?.length) {
       recommendations.push(
-        `重要：${bySeverity['high'].length} 个高危合规检查未通过，需在 7 天内修复`
+        `${i18n.t('ai.compliance-automation.k21')}${bySeverity['high'].length}${i18n.t('ai.compliance-automation.7_22')}`
       );
     }
     if (bySeverity['medium']?.length) {
       recommendations.push(
-        `建议：${bySeverity['medium'].length} 个中等合规检查未通过，建议在下一迭代中处理`
+        `${i18n.t('ai.compliance-automation.k23')}${bySeverity['medium'].length}${i18n.t('ai.compliance-automation.k24')}`
       );
     }
 
     const regulationsWithFailures = new Set(failed.map((c) => c.regulation));
     for (const reg of regulationsWithFailures) {
-      recommendations.push(`法规 ${reg} 存在合规差距，建议进行专项评估`);
+      recommendations.push(`${i18n.t('ai.compliance-automation.k25')}${reg}${i18n.t('ai.compliance-automation.k26')}`);
     }
 
     if (recommendations.length === 0) {
-      recommendations.push('所有合规检查已通过，系统状态良好');
+      recommendations.push(i18n.t('ai.compliance-automation.k24'));
     }
 
     return recommendations;

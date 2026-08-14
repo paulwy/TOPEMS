@@ -1,6 +1,7 @@
 import React from 'react';
 import { Chip, Typography } from '@mui/material';
 import type { EntitySchema } from '@/schema';
+import i18n from '@/i18n';
 
 const STATUS_COLOR_MAP: Record<string, 'success' | 'info' | 'warning' | 'error' | 'default'> = {
   sufficient: 'success',
@@ -10,10 +11,10 @@ const STATUS_COLOR_MAP: Record<string, 'success' | 'info' | 'warning' | 'error' 
 };
 
 const STATUS_LABEL_MAP: Record<string, string> = {
-  sufficient: '充足',
-  normal: '正常',
-  low: '偏低',
-  insufficient: '不足',
+  sufficient: i18n.t('rd.material.k0'),
+  normal: i18n.t('rd.material.k1'),
+  low: i18n.t('rd.material.k2'),
+  insufficient: i18n.t('rd.material.k3'),
 };
 
 function getStockStatus(row: Record<string, unknown>): string {
@@ -33,8 +34,8 @@ function getStockStatus(row: Record<string, unknown>): string {
 
 export const materialSchema: EntitySchema = {
   entity: 'rd_material',
-  title: '研发物料',
-  description: '管理研发物料库存，包括物料编码、名称、分类、库存数量等',
+  title: i18n.t('rd.material.k4'),
+  description: i18n.t('rd.material.k5'),
 
   api: {
     module: 'rd',
@@ -44,7 +45,7 @@ export const materialSchema: EntitySchema = {
   fields: [
     {
       name: 'code',
-      label: '物料编码',
+      label: i18n.t('rd.material.k6'),
       type: 'text',
       required: true,
       readonlyOnEdit: true,
@@ -61,7 +62,7 @@ export const materialSchema: EntitySchema = {
     },
     {
       name: 'name',
-      label: '物料名称',
+      label: i18n.t('rd.material.k7'),
       type: 'text',
       required: true,
       sortable: true,
@@ -70,7 +71,7 @@ export const materialSchema: EntitySchema = {
     },
     {
       name: 'category',
-      label: '分类',
+      label: i18n.t('rd.material.k8'),
       type: 'text',
       listWidth: 120,
       renderCell: (row: Record<string, unknown>) => {
@@ -82,29 +83,29 @@ export const materialSchema: EntitySchema = {
     },
     {
       name: 'stock_quantity',
-      label: '库存数量',
+      label: i18n.t('rd.material.k9'),
       type: 'number',
       sortable: true,
       listWidth: 100,
     },
     {
       name: 'unit',
-      label: '单位',
+      label: i18n.t('rd.material.k10'),
       type: 'text',
       listWidth: 80,
       validation: [{ type: 'maxLength', value: 20 }],
     },
     {
       name: 'status',
-      label: '库存状态',
+      label: i18n.t('rd.material.k11'),
       type: 'select',
       options: {
         type: 'static',
         options: [
-          { value: 'sufficient', label: '充足' },
-          { value: 'normal', label: '正常' },
-          { value: 'low', label: '偏低' },
-          { value: 'insufficient', label: '不足' },
+          { value: 'sufficient', label: i18n.t('rd.material.k12') },
+          { value: 'normal', label: i18n.t('rd.material.k13') },
+          { value: 'low', label: i18n.t('rd.material.k14') },
+          { value: 'insufficient', label: i18n.t('rd.material.k15') },
         ],
       },
       sortable: true,
@@ -119,7 +120,7 @@ export const materialSchema: EntitySchema = {
     },
     {
       name: 'specification',
-      label: '规格',
+      label: i18n.t('rd.material.k16'),
       type: 'text',
       listWidth: 120,
       showInList: false,
@@ -127,40 +128,40 @@ export const materialSchema: EntitySchema = {
     },
     {
       name: 'supplier',
-      label: '供应商',
+      label: i18n.t('rd.material.k17'),
       type: 'text',
       listWidth: 120,
       showInList: false,
     },
     {
       name: 'min_stock',
-      label: '最小库存',
+      label: i18n.t('rd.material.k18'),
       type: 'number',
       showInList: false,
     },
     {
       name: 'max_stock',
-      label: '最大库存',
+      label: i18n.t('rd.material.k19'),
       type: 'number',
       showInList: false,
     },
     {
       name: 'location',
-      label: '存放位置',
+      label: i18n.t('rd.material.k20'),
       type: 'text',
       listWidth: 120,
       renderCell: () => '-',
     },
     {
       name: 'description',
-      label: '描述',
+      label: i18n.t('rd.material.k21'),
       type: 'textarea',
       showInList: false,
       colSpan: 2,
     },
     {
       name: 'created_by',
-      label: '创建人',
+      label: i18n.t('rd.material.k22'),
       type: 'text',
       readonly: true,
       hideInForm: true,
@@ -168,7 +169,7 @@ export const materialSchema: EntitySchema = {
     },
     {
       name: 'created_at',
-      label: '创建时间',
+      label: i18n.t('rd.material.k23'),
       type: 'datetime',
       readonly: true,
       hideInForm: true,
@@ -176,7 +177,7 @@ export const materialSchema: EntitySchema = {
     },
     {
       name: 'updated_at',
-      label: '更新时间',
+      label: i18n.t('rd.material.k24'),
       type: 'datetime',
       readonly: true,
       hideInForm: true,
@@ -191,21 +192,21 @@ export const materialSchema: EntitySchema = {
     filters: [
       {
         id: 'category',
-        label: '分类',
+        label: i18n.t('rd.material.k25'),
         type: 'select',
-        options: [{ label: '全部', value: 'all' }],
+        options: [{ label: i18n.t('rd.material.k26'), value: 'all' }],
         defaultValue: 'all',
       },
       {
         id: 'status',
-        label: '状态',
+        label: i18n.t('rd.material.k27'),
         type: 'select',
         options: [
-          { label: '全部', value: 'all' },
-          { label: '充足', value: 'sufficient' },
-          { label: '正常', value: 'normal' },
-          { label: '偏低', value: 'low' },
-          { label: '不足', value: 'insufficient' },
+          { label: i18n.t('rd.material.k28'), value: 'all' },
+          { label: i18n.t('rd.material.k29'), value: 'sufficient' },
+          { label: i18n.t('rd.material.k30'), value: 'normal' },
+          { label: i18n.t('rd.material.k31'), value: 'low' },
+          { label: i18n.t('rd.material.k32'), value: 'insufficient' },
         ],
         defaultValue: 'all',
       },
@@ -219,23 +220,23 @@ export const materialSchema: EntitySchema = {
 
   formSections: [
     {
-      title: '基本信息',
+      title: i18n.t('rd.material.k33'),
       fields: ['code', 'name', 'category', 'unit', 'specification', 'supplier'],
     },
     {
-      title: '库存信息',
+      title: i18n.t('rd.material.k34'),
       fields: ['stock_quantity', 'min_stock', 'max_stock'],
     },
     {
-      title: '描述',
+      title: i18n.t('rd.material.k35'),
       fields: ['description'],
     },
   ],
 
   formColCount: 2,
-  createTitle: '新增物料',
-  editTitle: '编辑物料',
-  detailTitle: '物料详情',
+  createTitle: i18n.t('rd.material.k36'),
+  editTitle: i18n.t('rd.material.k37'),
+  detailTitle: i18n.t('rd.material.k38'),
 
   actions: ['create', 'edit', 'detail', 'delete'],
 };

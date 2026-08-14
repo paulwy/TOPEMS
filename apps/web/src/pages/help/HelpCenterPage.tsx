@@ -88,12 +88,12 @@ const HELP_CATEGORIES = [
   },
   {
     id: 'ai',
-    title: 'AI智能助手',
-    description: 'AI辅助功能使用指南',
+    title: i18n.t('pages.help_center_page.ai_0'),
+    description: i18n.t('pages.help_center_page.ai_1'),
     icon: MessageCircle,
     color: 'secondary',
     count: 3,
-    items: ['AI问答使用', i18n.t('help.help_center_page.k35'), i18n.t('help.help_center_page.k34')],
+    items: [i18n.t('pages.help_center_page.ai_2'), i18n.t('help.help_center_page.k35'), i18n.t('help.help_center_page.k34')],
   },
 ];
 
@@ -138,7 +138,7 @@ export const HelpCenterPage: React.FC = () => {
 
   React.useEffect(() => {
     if (faqsQuery.isError) {
-      apiLogger.error('获取FAQ列表失败:', faqsQuery.error);
+      apiLogger.error(i18n.t('pages.help_center_page.faq_3'), faqsQuery.error);
       addNotification({
         type: 'error',
         title: i18n.t('help.help_center_page.k39'),
@@ -149,7 +149,7 @@ export const HelpCenterPage: React.FC = () => {
 
   React.useEffect(() => {
     if (guidesQuery.isError) {
-      apiLogger.error('获取指南列表失败:', guidesQuery.error);
+      apiLogger.error(i18n.t('pages.help_center_page.k4'), guidesQuery.error);
       addNotification({
         type: 'error',
         title: i18n.t('help.help_center_page.k41'),
@@ -371,7 +371,7 @@ export const HelpCenterPage: React.FC = () => {
                   sx={{ textTransform: 'none' }}
                   onClick={() => navigate(DASHBOARD_PATHS.helpFaq)}
                 >
-                  查看全部FAQ
+                  {i18n.t('pages.help_center_page.faq_0')}
                   <ChevronRight size={16} />
                 </Button>
               </Box>
@@ -436,13 +436,13 @@ export const HelpCenterPage: React.FC = () => {
                     variant='h6'
                     sx={{ fontWeight: 600 }}
                   >
-                    在线客服
+                    {i18n.t('pages.help_center_page.k1')}
                   </Typography>
                   <Typography
                     variant='body2'
                     color='text.secondary'
                   >
-                    遇到问题？联系我们的技术支持团队
+                    {i18n.t('pages.help_center_page.k2')}
                   </Typography>
                 </Box>
               </Box>
@@ -451,14 +451,14 @@ export const HelpCenterPage: React.FC = () => {
                 variant='contained'
                 sx={{ textTransform: 'none', borderRadius: 1 }}
               >
-                联系客服
+                {i18n.t('pages.help_center_page.k3')}
               </Button>
               <Typography
                 variant='body2'
                 color='text.secondary'
                 sx={{ mt: 2, textAlign: 'center' }}
               >
-                工作时间：周一至周五 9:00-18:00
+                {i18n.t('pages.help_center_page.k4')}
               </Typography>
             </CardContent>
           </Card>
@@ -486,13 +486,13 @@ export const HelpCenterPage: React.FC = () => {
                     variant='body1'
                     sx={{ fontWeight: 600, mb: 1 }}
                   >
-                    操作指南
+                    {i18n.t('pages.help_center_page.k5')}
                   </Typography>
                   <Typography
                     variant='body2'
                     color='text.secondary'
                   >
-                    完整的用户手册和操作教程
+                    {i18n.t('pages.help_center_page.k6')}
                   </Typography>
                 </Box>
               </Grid>
@@ -506,13 +506,13 @@ export const HelpCenterPage: React.FC = () => {
                     variant='body1'
                     sx={{ fontWeight: 600, mb: 1 }}
                   >
-                    视频教程
+                    {i18n.t('pages.help_center_page.k7')}
                   </Typography>
                   <Typography
                     variant='body2'
                     color='text.secondary'
                   >
-                    直观的操作演示视频
+                    {i18n.t('pages.help_center_page.k8')}
                   </Typography>
                 </Box>
               </Grid>
@@ -526,13 +526,13 @@ export const HelpCenterPage: React.FC = () => {
                     variant='body1'
                     sx={{ fontWeight: 600, mb: 1 }}
                   >
-                    社区论坛
+                    {i18n.t('pages.help_center_page.k9')}
                   </Typography>
                   <Typography
                     variant='body2'
                     color='text.secondary'
                   >
-                    与其他用户交流经验
+                    {i18n.t('pages.help_center_page.k10')}
                   </Typography>
                 </Box>
               </Grid>

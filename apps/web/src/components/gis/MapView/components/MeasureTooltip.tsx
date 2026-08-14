@@ -13,7 +13,7 @@ const MeasureTooltip: React.FC<{
         backgroundColor: 'text.primary',
         color: 'common.white',
         fontSize: '0.75rem',
-        padding: '4px 8px',
+        padding: `${designTokens.spacing.xs} 8px`,
         borderRadius: 1,
         boxShadow: designTokens.shadows.lg,
         pointerEvents: 'none',

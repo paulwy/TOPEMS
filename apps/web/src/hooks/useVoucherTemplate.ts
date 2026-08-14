@@ -10,6 +10,7 @@ import type { VoucherTemplate, VoucherTemplateType, VoucherTemplateEntry } from 
 
 
 import { queryClient, QUERY_KEYS } from '@/lib/reactQuery';
+import i18n from '@/i18n';
 
 // ============================================
 // 一、模板管理
@@ -67,10 +68,10 @@ export function useCreateVoucherTemplate() {
   exact: false,
   refetchType: 'active',
 });
-      success('凭证模板创建成功');
+      success(i18n.t('shared.use_voucher_template.k0'));
     },
     onError: (err) => {
-      error(err.message || '凭证模板创建失败');
+      error(err.message || i18n.t('shared.use_voucher_template.k1'));
     },
   });
 }
@@ -90,10 +91,10 @@ export function useUpdateVoucherTemplate() {
   exact: false,
   refetchType: 'active',
 });
-      success('凭证模板更新成功');
+      success(i18n.t('shared.use_voucher_template.k2'));
     },
     onError: (err) => {
-      error(err.message || '凭证模板更新失败');
+      error(err.message || i18n.t('shared.use_voucher_template.k3'));
     },
   });
 }
@@ -112,10 +113,10 @@ export function useDeleteVoucherTemplate() {
   exact: false,
   refetchType: 'active',
 });
-      success('凭证模板删除成功');
+      success(i18n.t('shared.use_voucher_template.k4'));
     },
     onError: (err) => {
-      error(err.message || '凭证模板删除失败');
+      error(err.message || i18n.t('shared.use_voucher_template.k5'));
     },
   });
 }
@@ -142,10 +143,10 @@ export function useCopyVoucherTemplate() {
   exact: false,
   refetchType: 'active',
 });
-      success('凭证模板复制成功');
+      success(i18n.t('shared.use_voucher_template.k6'));
     },
     onError: (err) => {
-      error(err.message || '凭证模板复制失败');
+      error(err.message || i18n.t('shared.use_voucher_template.k7'));
     },
   });
 }
@@ -165,10 +166,10 @@ export function useSetDefaultVoucherTemplate() {
   exact: false,
   refetchType: 'active',
 });
-      success('默认模板设置成功');
+      success(i18n.t('shared.use_voucher_template.k8'));
     },
     onError: (err) => {
-      error(err.message || '默认模板设置失败');
+      error(err.message || i18n.t('shared.use_voucher_template.k9'));
     },
   });
 }
@@ -188,10 +189,10 @@ export function useToggleVoucherTemplate() {
   exact: false,
   refetchType: 'active',
 });
-      success('模板状态更新成功');
+      success(i18n.t('shared.use_voucher_template.k10'));
     },
     onError: (err) => {
-      error(err.message || '模板状态更新失败');
+      error(err.message || i18n.t('shared.use_voucher_template.k11'));
     },
   });
 }
@@ -221,10 +222,10 @@ export function usePreviewGeneratedVouchers() {
           exact: false,
           refetchType: 'active',
         });
-      success('凭证预览生成成功');
+      success(i18n.t('shared.use_voucher_template.k12'));
     },
     onError: (err) => {
-      error(err.message || '凭证预览生成失败');
+      error(err.message || i18n.t('shared.use_voucher_template.k13'));
     },
   });
 }
@@ -254,10 +255,10 @@ export function useGenerateVoucherFromSource() {
   exact: false,
   refetchType: 'active',
 });
-      success(`凭证 ${result.data.voucher_no} 生成成功`);
+      success(`${i18n.t('shared.use_voucher_template.k0')}${result.data.voucher_no}${i18n.t('shared.use_voucher_template.k1')}`);
     },
     onError: (err) => {
-      error(err.message || '凭证生成失败');
+      error(err.message || i18n.t('shared.use_voucher_template.k14'));
     },
   });
 }
@@ -286,10 +287,10 @@ export function useBatchGenerateVouchers() {
   exact: false,
   refetchType: 'active',
 });
-      success(`成功生成 ${result.data?.success || 0} 张凭证`);
+      success(`${i18n.t('shared.use_voucher_template.k2')}${result.data?.success || 0}${i18n.t('shared.use_voucher_template.k3')}`);
     },
     onError: (err) => {
-      error(err.message || '批量生成凭证失败');
+      error(err.message || i18n.t('shared.use_voucher_template.k15'));
     },
   });
 }
@@ -315,13 +316,13 @@ export function useAutoGenerateVouchers() {
   refetchType: 'active',
 });
       if (variables.dry_run) {
-        success('试算完成，请查看预览结果');
+        success(i18n.t('shared.use_voucher_template.k16'));
       } else {
-        success('凭证自动生成成功');
+        success(i18n.t('shared.use_voucher_template.k17'));
       }
     },
     onError: (err) => {
-      error(err.message || '凭证自动生成失败');
+      error(err.message || i18n.t('shared.use_voucher_template.k18'));
     },
   });
 }
@@ -346,10 +347,10 @@ export function useRegenerateReversedVoucher() {
   exact: false,
   refetchType: 'active',
 });
-      success(`凭证 ${result.data.voucher_no} 重新生成成功`);
+      success(`${i18n.t('shared.use_voucher_template.k4')}${result.data.voucher_no}${i18n.t('shared.use_voucher_template.k5')}`);
     },
     onError: (err) => {
-      error(err.message || '凭证重新生成失败');
+      error(err.message || i18n.t('shared.use_voucher_template.k19'));
     },
   });
 }
@@ -441,10 +442,10 @@ export function useCreateGenerationRule() {
   exact: false,
   refetchType: 'active',
 });
-      success('生成规则创建成功');
+      success(i18n.t('shared.use_voucher_template.k20'));
     },
     onError: (err) => {
-      error(err.message || '生成规则创建失败');
+      error(err.message || i18n.t('shared.use_voucher_template.k21'));
     },
   });
 }
@@ -477,10 +478,10 @@ export function useUpdateGenerationRule() {
   exact: false,
   refetchType: 'active',
 });
-      success('生成规则更新成功');
+      success(i18n.t('shared.use_voucher_template.k22'));
     },
     onError: (err) => {
-      error(err.message || '生成规则更新失败');
+      error(err.message || i18n.t('shared.use_voucher_template.k23'));
     },
   });
 }
@@ -499,10 +500,10 @@ export function useDeleteGenerationRule() {
   exact: false,
   refetchType: 'active',
 });
-      success('生成规则删除成功');
+      success(i18n.t('shared.use_voucher_template.k24'));
     },
     onError: (err) => {
-      error(err.message || '生成规则删除失败');
+      error(err.message || i18n.t('shared.use_voucher_template.k25'));
     },
   });
 }
@@ -522,10 +523,10 @@ export function useToggleGenerationRule() {
   exact: false,
   refetchType: 'active',
 });
-      success('生成规则状态更新成功');
+      success(i18n.t('shared.use_voucher_template.k26'));
     },
     onError: (err) => {
-      error(err.message || '生成规则状态更新失败');
+      error(err.message || i18n.t('shared.use_voucher_template.k27'));
     },
   });
 }

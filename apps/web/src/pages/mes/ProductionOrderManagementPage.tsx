@@ -2,7 +2,6 @@ import React, { useCallback, useMemo } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { Box, Typography } from '@mui/material';
 import { Play, CheckCircle, XCircle } from 'lucide-react';
-
 import CrudPage, { type CrudApiAdapter } from '@/components/templates/CrudPage';
 import type { RowAction } from '@/components/templates/list/types';
 import { PageContainer } from '@/components/common';
@@ -10,19 +9,13 @@ import { useNotificationStore } from '@/store';
 import { productionOrderSchema } from '@/schemas/mes';
 import { mesApi } from '@/api/mes';
 import type { ProductionOrder } from '@/api/mes/types';
-import { useTranslation } from 'react-i18next';
 import { designTokens } from '@/theme/tokens';
-
-
 import { QUERY_KEYS } from '@/lib/reactQuery';
-
+import i18n from '@/i18n';
 const ct= designTokens.colors;
-
 const ProductionOrderManagementPage: React.FC = () => {
-  const { t } = useTranslation();
   const queryClient = useQueryClient();
   const { addNotification } = useNotificationStore();
-
   const handleStatusChange = useCallback(
     async (id: string, action: string) => {
       try {
@@ -41,13 +34,13 @@ const ProductionOrderManagementPage: React.FC = () => {
             response = await mesApi.orders.cancel(id);
             break;
           default:
-            throw new Error('无效操作');
+            throw new Error(i18n.t('mes.production_order_management_page.k0'));
         }
         if (response.success && response.data) {
           addNotification({
             type: 'success',
-            title: t('mes.production_order_management_page.update_4'),
-            message: `订单状态已更新为"${response.data.status}"`,
+            title: i18n.t('mes.production_order_management_page.update_4'),
+            message: `${i18n.t('pages.production_order_management_page.k0')}${response.data.status}"`,
           });
           queryClient.invalidateQueries({
             queryKey: QUERY_KEYS.AD_HOC.MES_PRODUCTION_ORDERS_BASE,
@@ -59,14 +52,13 @@ const ProductionOrderManagementPage: React.FC = () => {
       } catch (error: unknown) {
         addNotification({
           type: 'error',
-          title: t('mes.production_order_management_page.update_3'),
-          message: t('mes.production_order_management_page.order_status'),
+          title: i18n.t('mes.production_order_management_page.update_3'),
+          message: i18n.t('mes.production_order_management_page.order_status'),
         });
       }
     },
-    [addNotification, queryClient, t]
+    [addNotification, queryClient, i18n.t]
   );
-
   const productionOrderApiAdapter: CrudApiAdapter<ProductionOrder> = {
     list: async (params) => {
       const response = await mesApi.orders.list({
@@ -76,48 +68,44 @@ const ProductionOrderManagementPage: React.FC = () => {
         status: params?.status && params.status !== 'all' ? (params.status as string) : undefined,
       });
       if (!response.success || !response.data) {
-        throw new Error('加载生产订单失败');
+        throw new Error(i18n.t('mes.production_order_management_page.k1'));
       }
       return {
         data: response.data.orders,
         total: response.data.total,
       };
     },
-
     create: async (data) => {
       const response = await mesApi.orders.create(
         data as Parameters<typeof mesApi.orders.create>[0]
       );
       if (!response.success) {
-        throw new Error(response.message || '创建生产订单失败');
+        throw new Error(response.message || i18n.t('mes.production_order_management_page.k2'));
       }
       return response.data as unknown as ProductionOrder;
     },
-
     update: async (id, data) => {
       const response = await mesApi.orders.update(
         id,
         data as Parameters<typeof mesApi.orders.update>[1]
       );
       if (!response.success) {
-        throw new Error(response.message || '更新生产订单失败');
+        throw new Error(response.message || i18n.t('mes.production_order_management_page.k3'));
       }
       return response.data as unknown as ProductionOrder;
     },
-
     delete: async (id) => {
       const response = await mesApi.orders.delete(id);
       if (!response.success) {
-        throw new Error(response.message || '删除生产订单失败');
+        throw new Error(response.message || i18n.t('mes.production_order_management_page.k4'));
       }
     },
   };
-
   const customRowActions: RowAction[] = useMemo(
     () => [
       {
         key: 'release',
-        label: t('mes.production_order_management_page.order_1'),
+        label: i18n.t('mes.production_order_management_page.order_1'),
         icon: <Play size={14} />,
         color: 'success',
         onClick: (row: Record<string, unknown>) => handleStatusChange(String(row.id), 'release'),
@@ -125,7 +113,7 @@ const ProductionOrderManagementPage: React.FC = () => {
       },
       {
         key: 'start',
-        label: t('mes.production_order_management_page.production_1'),
+        label: i18n.t('mes.production_order_management_page.production_1'),
         icon: <Play size={14} />,
         color: 'success',
         onClick: (row: Record<string, unknown>) => handleStatusChange(String(row.id), 'start'),
@@ -134,7 +122,7 @@ const ProductionOrderManagementPage: React.FC = () => {
       },
       {
         key: 'complete',
-        label: t('mes.production_order_management_page.completed_4'),
+        label: i18n.t('mes.production_order_management_page.completed_4'),
         icon: <CheckCircle size={14} />,
         color: 'success',
         onClick: (row: Record<string, unknown>) => handleStatusChange(String(row.id), 'complete'),
@@ -143,20 +131,19 @@ const ProductionOrderManagementPage: React.FC = () => {
       },
       {
         key: 'cancel',
-        label: t('mes.production_order_management_page.action_cancel'),
+        label: i18n.t('mes.production_order_management_page.action_cancel'),
         icon: <XCircle size={14} />,
         color: 'error',
         onClick: (row: Record<string, unknown>) => handleStatusChange(String(row.id), 'cancel'),
         show: (row: Record<string, unknown>) => row.status === 'pending' || row.status === 'paused',
       },
     ],
-    [handleStatusChange, t]
+    [handleStatusChange, i18n.t]
   );
-
   return (
     <PageContainer
-      title={t('mes.production_order_management_page.production_2')}
-      subtitle={t('mes.production_order_management_page.order_number_1')}
+      title={i18n.t('mes.production_order_management_page.production_2')}
+      subtitle={i18n.t('mes.production_order_management_page.order_number_1')}
       headerProps={{
         pageIcon: <Play style={{ width: 20, height: 20 }} />,
         pageGradient: `linear-gradient(135deg, ${ct.primary.main} 0%, ${ct.primary.dark} 100%)`,
@@ -168,7 +155,7 @@ const ProductionOrderManagementPage: React.FC = () => {
         customRowActions={customRowActions}
         breadcrumbs={[
           {
-            label: t('mes.production_order_management_page.breadcrumb_home', '首页'),
+            label: i18n.t('mes.production_order_management_page.breadcrumb_home', i18n.t('pages.production_order_management_page.k1')),
             href: '/dashboard',
           },
           {
@@ -176,7 +163,7 @@ const ProductionOrderManagementPage: React.FC = () => {
             href: '/mes',
           },
           {
-            label: t('mes.production_order_management_page.production_2'),
+            label: i18n.t('mes.production_order_management_page.production_2'),
           },
         ]}
         headerContent={(rows) => {
@@ -188,7 +175,6 @@ const ProductionOrderManagementPage: React.FC = () => {
             in_progress: items.filter((o) => o.status === 'in_progress').length,
             completed: items.filter((o) => o.status === 'completed').length,
           };
-
           return (
             <Box
               sx={{
@@ -206,7 +192,7 @@ const ProductionOrderManagementPage: React.FC = () => {
                   variant='body2'
                   sx={{ color: 'text.secondary' }}
                 >
-                  待下达
+                  {i18n.t('pages.production_order_management_page.k0')}
                 </Typography>
                 <Typography
                   variant='h5'
@@ -226,7 +212,7 @@ const ProductionOrderManagementPage: React.FC = () => {
                   variant='body2'
                   sx={{ color: 'text.secondary' }}
                 >
-                  已下达
+                  {i18n.t('pages.production_order_management_page.k1')}
                 </Typography>
                 <Typography
                   variant='h5'
@@ -240,7 +226,7 @@ const ProductionOrderManagementPage: React.FC = () => {
                   variant='body2'
                   sx={{ color: 'text.secondary' }}
                 >
-                  生产中
+                  {i18n.t('pages.production_order_management_page.k2')}
                 </Typography>
                 <Typography
                   variant='h5'
@@ -254,7 +240,7 @@ const ProductionOrderManagementPage: React.FC = () => {
                   variant='body2'
                   sx={{ color: 'text.secondary' }}
                 >
-                  已完成
+                  {i18n.t('pages.production_order_management_page.k3')}
                 </Typography>
                 <Typography
                   variant='h5'
@@ -268,7 +254,7 @@ const ProductionOrderManagementPage: React.FC = () => {
                   variant='body2'
                   sx={{ color: 'text.secondary' }}
                 >
-                  总数
+                  {i18n.t('pages.production_order_management_page.k4')}
                 </Typography>
                 <Typography
                   variant='h5'
@@ -285,5 +271,4 @@ const ProductionOrderManagementPage: React.FC = () => {
     </PageContainer>
   );
 };
-
 export default ProductionOrderManagementPage;

@@ -18,6 +18,7 @@ import {
   ResponsiveContainer,
   Cell,
 } from '../charts/_vendors/recharts-cartesian';
+import i18n from '@/i18n';
 import { designTokens, semanticTokens } from '@topems/tokens';
 
 const PolarCasesLazy = lazy(() => import('./ChartLibrary.polar').then(m => ({ default: m.PolarCases })));
@@ -56,9 +57,9 @@ const defaultColors = [
   'primary.light',
   'secondary.main',
   'colors.purple.500',
-  '#d946ef',
+  designTokens.colors.pink[500],
   designTokens.colors.pink.main,
-  '#f43f5e',
+  designTokens.colors.error[500],
   'colors.orange.500',
   'warning.main',
   'success.dark',
@@ -81,7 +82,7 @@ const CustomTooltip = ({ active, payload }: { active?: boolean; payload?: Toolti
       <div
         style={{
           backgroundColor: 'common.white',
-          padding: '12px 16px',
+          padding: `${designTokens.spacing.md} 16px`,
           borderRadius: 'md',
           boxShadow: designTokens.shadows.md,
           border: '1px solid border.default',
@@ -99,7 +100,7 @@ const CustomTooltip = ({ active, payload }: { active?: boolean; payload?: Toolti
             style={{
               fontSize: '14px',
               color: 'var(--mui-palette-text-secondary)',
-              margin: '4px 0',
+              margin: `${designTokens.spacing.xs} 0`,
             }}
           >
             <span style={{ color: item.color || 'primary.light' }}>●</span>
@@ -326,7 +327,7 @@ export const ChartComponent: React.FC<ChartConfig> = ({
               y2='16'
             />
           </svg>
-          <p style={{ marginTop: 2 }}>暂无数据</p>
+          <p style={{ marginTop: 2 }}>{i18n.t('shared.chart_library.k0')}</p>
         </div>
       </div>
     );

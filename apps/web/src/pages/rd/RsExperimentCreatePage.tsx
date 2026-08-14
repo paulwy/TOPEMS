@@ -9,55 +9,50 @@ import type { Project, Formula, CreateExperimentRequest, UpdateExperimentRequest
 import { RD_PATHS } from '@/modules/rd/config';
 import {QUERY_KEYS, CACHE_DURATIONS} from '@/lib/reactQuery';
 import { logger } from '@/utils/logger';
-
-const experimentTypes = ['活性测试', '稳定性测试', '配方优化', '工艺验证', '性能评估', '其他'];
-const phases = ['小试', '中试', '放大', '生产验证'];
+import i18n from '@/i18n';
+const experimentTypes = [i18n.t('rd.rs_experiment_create_page.k5'), i18n.t('rd.rs_experiment_create_page.k4'), i18n.t('rd.rs_experiment_create_page.k3'), i18n.t('rd.rs_experiment_create_page.k2'), i18n.t('rd.rs_experiment_create_page.k1'), i18n.t('rd.rs_experiment_create_page.k0')];
+const phases = [i18n.t('rd.rs_experiment_create_page.k9'), i18n.t('rd.rs_experiment_create_page.k8'), i18n.t('rd.rs_experiment_create_page.k7'), i18n.t('rd.rs_experiment_create_page.k6')];
 const scaleUnits = ['g', 'kg', 't', 'mL', 'L'];
-
 const RsExperimentCreatePage: React.FC = () => {
   const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
   const isEdit = Boolean(id);
   const queryClient = useQueryClient();
   const { addNotification } = useNotificationStore();
-
   const projectsQuery = useQuery({
     queryKey: QUERY_KEYS.RD.PROJECTS,
     queryFn: async () => {
       const response = await rdApi.listProjects();
       if (!response.success || !response.data) {
-        throw new Error(response.message || '加载项目列表失败');
+        throw new Error(response.message || i18n.t('rd.rs_experiment_create_page.k10'));
       }
       return response.data.projects || [];
     },
   
       staleTime: CACHE_DURATIONS.MEDIUM,});
-
   const formulasQuery = useQuery({
     queryKey: QUERY_KEYS.RD.FORMULAS,
     queryFn: async () => {
       const response = await formulaApi.listFormulas();
       if (!response.success || !response.data) {
-        throw new Error(response.message || '加载配方列表失败');
+        throw new Error(response.message || i18n.t('rd.rs_experiment_create_page.k11'));
       }
       return response.data || [];
     },
   
       staleTime: CACHE_DURATIONS.MEDIUM,});
-
   const experimentQuery = useQuery({
     queryKey: QUERY_KEYS.RD.EXPERIMENT(id || ''),
     queryFn: async () => {
       const response = await rdApi.getExperiment(id || '');
       if (!response.success || !response.data) {
-        throw new Error(response.message || '加载试验数据失败');
+        throw new Error(response.message || i18n.t('rd.rs_experiment_create_page.k12'));
       }
       return response.data;
     },
     enabled: isEdit && !!id,
   
       staleTime: CACHE_DURATIONS.MEDIUM,});
-
   const submitMutation = useMutation({
     mutationFn: async (params: {
       isEdit: boolean;
@@ -70,7 +65,7 @@ const RsExperimentCreatePage: React.FC = () => {
           params.requestData as unknown as UpdateExperimentRequest
         );
         if (!response.success) {
-          throw new Error(response.message || '更新试验失败');
+          throw new Error(response.message || i18n.t('rd.rs_experiment_create_page.k13'));
         }
         return response;
       } else {
@@ -78,7 +73,7 @@ const RsExperimentCreatePage: React.FC = () => {
           params.requestData as unknown as CreateExperimentRequest
         );
         if (!response.success) {
-          throw new Error(response.message || '创建试验失败');
+          throw new Error(response.message || i18n.t('rd.rs_experiment_create_page.k14'));
         }
         return response;
       }
@@ -90,36 +85,34 @@ const RsExperimentCreatePage: React.FC = () => {
 });
       addNotification({
         type: 'success',
-        title: isEdit ? '更新成功' : '创建成功',
-        message: isEdit ? '试验信息已更新' : '试验已创建',
+        title: isEdit ? i18n.t('rd.rs_experiment_create_page.k16') : i18n.t('rd.rs_experiment_create_page.k15'),
+        message: isEdit ? i18n.t('rd.rs_experiment_create_page.k18') : i18n.t('rd.rs_experiment_create_page.k17'),
       });
       navigate(RD_PATHS.experiment);
     },
     onError: (error: unknown) => {
-      logger.error('提交试验数据失败:', error);
+      logger.error(i18n.t('pages.rs_experiment_create_page.k0'), error);
       addNotification({
         type: 'error',
-        title: '提交失败',
-        message: error instanceof Error ? error.message : '无法提交试验数据',
+        title: i18n.t('rd.rs_experiment_create_page.k19'),
+        message: error instanceof Error ? error.message : i18n.t('rd.rs_experiment_create_page.k20'),
       });
     },
   });
-
   const projects = projectsQuery.data || [];
   const formulas = formulasQuery.data || [];
   const projectsLoading = projectsQuery.isLoading;
   const formulasLoading = formulasQuery.isLoading;
   const loading = experimentQuery.isLoading;
   const submitting = submitMutation.isPending;
-  const error = experimentQuery.error ? '加载试验数据失败' : undefined;
-
+  const error = experimentQuery.error ? i18n.t('rd.rs_experiment_create_page.k21') : undefined;
   const defaultValues = {
     name: '',
     code: '',
     project_id: '',
     formula_id: '',
-    experiment_type: '活性测试',
-    phase: '小试',
+    experiment_type: i18n.t('rd.rs_experiment_create_page.k22'),
+    phase: i18n.t('rd.rs_experiment_create_page.k23'),
     objective: '',
     method: '',
     experimenter: '',
@@ -127,39 +120,38 @@ const RsExperimentCreatePage: React.FC = () => {
     scale: '',
     scale_unit: 'kg',
   };
-
   const sections: FormSection[] = useMemo(
     () => [
       {
         id: 'basic',
-        title: '基本信息',
-        description: '试验核心信息',
+        title: i18n.t('rd.rs_experiment_create_page.k24'),
+        description: i18n.t('rd.rs_experiment_create_page.k25'),
         collapsible: true,
         defaultExpanded: true,
         fields: [
           {
             name: 'name',
-            label: '试验名称',
+            label: i18n.t('rd.rs_experiment_create_page.k26'),
             type: 'text',
             required: true,
-            placeholder: '请输入试验名称',
+            placeholder: i18n.t('rd.rs_experiment_create_page.k27'),
           },
           {
             name: 'code',
-            label: '试验编码',
+            label: i18n.t('rd.rs_experiment_create_page.k28'),
             type: 'text',
             required: true,
             disabled: isEdit,
-            placeholder: '例如: EXP-2024-001',
-            helperText: '编辑时编码不可修改',
+            placeholder: i18n.t('pages.rs_experiment_create_page.exp2024001_1'),
+            helperText: i18n.t('rd.rs_experiment_create_page.k29'),
           },
           {
             name: 'project_id',
-            label: '所属项目',
+            label: i18n.t('rd.rs_experiment_create_page.k30'),
             type: 'select',
             required: true,
             options: projectsLoading
-              ? [{ label: '加载中...', value: '' }]
+              ? [{ label: i18n.t('pages.rs_experiment_create_page.k2'), value: '' }]
               : projects.map((p) => ({
                   label: p.name || p.project_name || p.code,
                   value: p.id,
@@ -167,12 +159,12 @@ const RsExperimentCreatePage: React.FC = () => {
           },
           {
             name: 'formula_id',
-            label: '关联配方',
+            label: i18n.t('rd.rs_experiment_create_page.k31'),
             type: 'select',
             options: formulasLoading
-              ? [{ label: '加载中...', value: '' }]
+              ? [{ label: i18n.t('pages.rs_experiment_create_page.k3'), value: '' }]
               : [
-                  { label: '无', value: '' },
+                  { label: i18n.t('rd.rs_experiment_create_page.k32'), value: '' },
                   ...formulas.map((f) => ({
                     label: `${f.name} (${f.version})`,
                     value: f.id,
@@ -181,13 +173,13 @@ const RsExperimentCreatePage: React.FC = () => {
           },
           {
             name: 'experiment_type',
-            label: '试验类型',
+            label: i18n.t('rd.rs_experiment_create_page.k33'),
             type: 'select',
             options: experimentTypes.map((type) => ({ label: type, value: type })),
           },
           {
             name: 'phase',
-            label: '试验阶段',
+            label: i18n.t('rd.rs_experiment_create_page.k34'),
             type: 'select',
             options: phases.map((phase) => ({ label: phase, value: phase })),
           },
@@ -195,55 +187,55 @@ const RsExperimentCreatePage: React.FC = () => {
       },
       {
         id: 'content',
-        title: '试验内容',
-        description: '试验目标和方法',
+        title: i18n.t('rd.rs_experiment_create_page.k35'),
+        description: i18n.t('rd.rs_experiment_create_page.k36'),
         collapsible: true,
         defaultExpanded: true,
         fields: [
           {
             name: 'objective',
-            label: '试验目标',
+            label: i18n.t('rd.rs_experiment_create_page.k37'),
             type: 'textarea',
             rows: 3,
-            placeholder: '请输入试验目标',
+            placeholder: i18n.t('rd.rs_experiment_create_page.k38'),
           },
           {
             name: 'method',
-            label: '实验方法',
+            label: i18n.t('rd.rs_experiment_create_page.k39'),
             type: 'textarea',
             rows: 4,
-            placeholder: '请输入实验方法描述',
+            placeholder: i18n.t('rd.rs_experiment_create_page.k40'),
           },
         ],
       },
       {
         id: 'execution',
-        title: '执行信息',
-        description: '实验员和批次信息',
+        title: i18n.t('rd.rs_experiment_create_page.k41'),
+        description: i18n.t('rd.rs_experiment_create_page.k42'),
         collapsible: true,
         defaultExpanded: true,
         fields: [
           {
             name: 'experimenter',
-            label: '实验员',
+            label: i18n.t('rd.rs_experiment_create_page.k43'),
             type: 'text',
-            placeholder: '请输入实验员姓名',
+            placeholder: i18n.t('rd.rs_experiment_create_page.k44'),
           },
           {
             name: 'batch_number',
-            label: '批次号',
+            label: i18n.t('rd.rs_experiment_create_page.k45'),
             type: 'text',
-            placeholder: '例如: B-2024-001',
+            placeholder: i18n.t('pages.rs_experiment_create_page.b2024001_4'),
           },
           {
             name: 'scale',
-            label: '试验规模',
+            label: i18n.t('rd.rs_experiment_create_page.k46'),
             type: 'number',
-            placeholder: '请输入规模数值',
+            placeholder: i18n.t('rd.rs_experiment_create_page.k47'),
           },
           {
             name: 'scale_unit',
-            label: '规模单位',
+            label: i18n.t('rd.rs_experiment_create_page.k48'),
             type: 'select',
             options: scaleUnits.map((unit) => ({ label: unit, value: unit })),
           },
@@ -252,10 +244,8 @@ const RsExperimentCreatePage: React.FC = () => {
     ],
     [projects, formulas, projectsLoading, formulasLoading, isEdit]
   );
-
   const handleSubmit = async (data: unknown) => {
     const formData = data as unknown as Record<string, unknown>;
-
     const requestData = {
       name: formData.name as string,
       code: formData.code as string,
@@ -270,18 +260,15 @@ const RsExperimentCreatePage: React.FC = () => {
       scale: formData.scale ? Number(formData.scale) : undefined,
       scale_unit: formData.scale_unit as string,
     };
-
     await submitMutation.mutateAsync({ isEdit, id, requestData });
   };
-
   const handleCancel = () => {
     navigate(RD_PATHS.experiment);
   };
-
   return (
     <PageContainer
-      title={isEdit ? '编辑试验' : '新建试验'}
-      subtitle={isEdit ? '修改试验信息' : '创建新的研发试验记录'}
+      title={isEdit ? i18n.t('rd.rs_experiment_create_page.k50') : i18n.t('rd.rs_experiment_create_page.k49')}
+      subtitle={isEdit ? i18n.t('rd.rs_experiment_create_page.k52') : i18n.t('rd.rs_experiment_create_page.k51')}
     >
       <FormPageTemplate
         title=''
@@ -294,16 +281,15 @@ const RsExperimentCreatePage: React.FC = () => {
         error={error}
         onSubmit={handleSubmit}
         onCancel={handleCancel}
-        submitText={isEdit ? '保存修改' : '创建试验'}
+        submitText={isEdit ? i18n.t('rd.rs_experiment_create_page.k54') : i18n.t('rd.rs_experiment_create_page.k53')}
         columns={2}
         showValidationHints
         validationToasts={[
-          { message: '提交成功', type: 'success' },
-          { message: '提交失败，请检查表单', type: 'error' },
+          { message: i18n.t('rd.rs_experiment_create_page.k55'), type: 'success' },
+          { message: i18n.t('rd.rs_experiment_create_page.k56'), type: 'error' },
         ]}
       />
     </PageContainer>
   );
 };
-
 export default RsExperimentCreatePage;

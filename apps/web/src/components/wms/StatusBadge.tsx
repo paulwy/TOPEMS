@@ -1,3 +1,4 @@
+import i18n from '@/i18n';
 /**
  * WMS 状态徽章组件
  *
@@ -84,23 +85,23 @@ const FSM_STATUS_COLORS: Record<WmsFsm, Record<string, string>> = {
 };
 
 const STATUS_LABELS: Record<string, string> = {
-  created: '已创建',
-  draft: '草稿',
-  planned: '已计划',
-  pending: '待处理',
-  confirmed: '已确认',
-  assigned: '已分配',
-  picking: '拣货中',
-  packing: '包装中',
-  shipping: '运输中',
-  shipped: '已发运',
-  received: '已收货',
-  in_progress: '进行中',
-  posted: '已过账',
-  used: '已使用',
-  completed: '已完成',
-  archived: '已归档',
-  cancelled: '已取消',
+  created: i18n.t('components.status_badge.k0'),
+  draft: i18n.t('components.status_badge.k1'),
+  planned: i18n.t('components.status_badge.k2'),
+  pending: i18n.t('components.status_badge.k3'),
+  confirmed: i18n.t('components.status_badge.k4'),
+  assigned: i18n.t('components.status_badge.k5'),
+  picking: i18n.t('components.status_badge.k6'),
+  packing: i18n.t('components.status_badge.k7'),
+  shipping: i18n.t('components.status_badge.k8'),
+  shipped: i18n.t('components.status_badge.k9'),
+  received: i18n.t('components.status_badge.k10'),
+  in_progress: i18n.t('components.status_badge.k11'),
+  posted: i18n.t('components.status_badge.k12'),
+  used: i18n.t('components.status_badge.k13'),
+  completed: i18n.t('components.status_badge.k14'),
+  archived: i18n.t('components.status_badge.k15'),
+  cancelled: i18n.t('components.status_badge.k16'),
 };
 
 interface WmsStatusBadgeProps {

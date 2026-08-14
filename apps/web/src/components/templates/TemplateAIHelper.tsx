@@ -9,9 +9,11 @@ import {
   Button,
   useTheme,
 } from '@mui/material';
+import i18n from '@/i18n';
 import React, { useState } from 'react';
 
 import { Sparkles, Wand2, Lightbulb, TrendingUp, Send } from 'lucide-react';
+import { designTokens } from '@topems/tokens';
 
 interface TemplateAIHelperProps {
   content: string;
@@ -54,13 +56,13 @@ const TemplateAIHelper: React.FC<TemplateAIHelperProps> = ({
 报告人：{{reporter}}
 报告日期：{{today}}`,
     variables: [
-      { key: 'report_title', label: '报告标题', type: 'string' },
-      { key: 'summary', label: '概述', type: 'string' },
-      { key: 'details', label: '详细内容', type: 'string' },
-      { key: 'conclusion', label: '结论', type: 'string' },
-      { key: 'reporter', label: '报告人', type: 'user' },
+      { key: 'report_title', label: i18n.t('templates.template_ai_helper.k0'), type: 'string' },
+      { key: 'summary', label: i18n.t('templates.template_ai_helper.k1'), type: 'string' },
+      { key: 'details', label: i18n.t('templates.template_ai_helper.k2'), type: 'string' },
+      { key: 'conclusion', label: i18n.t('templates.template_ai_helper.k3'), type: 'string' },
+      { key: 'reporter', label: i18n.t('templates.template_ai_helper.k4'), type: 'user' },
     ],
-    suggestions: ['已根据描述生成模板框架', '建议根据实际需求调整变量'],
+    suggestions: [i18n.t('templates.template_ai_helper.k6'), i18n.t('templates.template_ai_helper.k5')],
   };
 
   const handleGenerate = async () => {
@@ -110,7 +112,7 @@ const TemplateAIHelper: React.FC<TemplateAIHelperProps> = ({
     });
 
     onVariablesChange(newVariables);
-    setSuggestions([`检测到 ${detectedVars.length} 个变量引用，已添加到变量列表`]);
+    setSuggestions([`${i18n.t('components.template_ai_helper.k0')}${detectedVars.length}${i18n.t('components.template_ai_helper.k1')}`]);
     setIsAnalyzing(false);
   };
 
@@ -127,7 +129,7 @@ const TemplateAIHelper: React.FC<TemplateAIHelperProps> = ({
       .replace(/{{\s*(\w+)\s*}}/g, '{{$1}}');
 
     onContentChange(optimized);
-    setSuggestions(['内容已优化，移除多余空行和空格']);
+    setSuggestions([i18n.t('templates.template_ai_helper.k7')]);
     setIsGenerating(false);
   };
 
@@ -156,15 +158,15 @@ const TemplateAIHelper: React.FC<TemplateAIHelperProps> = ({
     };
 
     if (unusedVars.length > 0) {
-      result.suggestions.push(`以下变量定义了但未使用：${unusedVars.map((v) => v.key).join(', ')}`);
+      result.suggestions.push(`${i18n.t('components.template_ai_helper.k2')}${unusedVars.map((v) => v.key).join(', ')}`);
     }
 
     if (undefinedVars.length > 0) {
-      result.suggestions.push(`以下变量使用了但未定义：${undefinedVars.join(', ')}`);
+      result.suggestions.push(`${i18n.t('components.template_ai_helper.k3')}${undefinedVars.join(', ')}`);
     }
 
     if (result.suggestions.length === 0) {
-      result.suggestions.push('模板检查通过，变量使用正常');
+      result.suggestions.push(i18n.t('templates.template_ai_helper.k8'));
     }
 
     setAnalysisResult(result);
@@ -174,26 +176,26 @@ const TemplateAIHelper: React.FC<TemplateAIHelperProps> = ({
 
   const generateLabel = (key: string): string => {
     const replacements: Record<string, string> = {
-      name: '名称',
-      title: '标题',
-      code: '编码',
-      description: '描述',
-      content: '内容',
-      date: '日期',
-      time: '时间',
-      user: '用户',
-      author: '作者',
-      department: '部门',
-      company: '公司',
-      project: '项目',
-      amount: '金额',
-      number: '编号',
-      status: '状态',
-      type: '类型',
-      category: '分类',
-      subject: '主题',
-      summary: '摘要',
-      body: '正文',
+      name: i18n.t('templates.template_ai_helper.k9'),
+      title: i18n.t('templates.template_ai_helper.k10'),
+      code: i18n.t('templates.template_ai_helper.k11'),
+      description: i18n.t('templates.template_ai_helper.k12'),
+      content: i18n.t('templates.template_ai_helper.k13'),
+      date: i18n.t('templates.template_ai_helper.k14'),
+      time: i18n.t('templates.template_ai_helper.k15'),
+      user: i18n.t('templates.template_ai_helper.k16'),
+      author: i18n.t('templates.template_ai_helper.k17'),
+      department: i18n.t('templates.template_ai_helper.k18'),
+      company: i18n.t('templates.template_ai_helper.k19'),
+      project: i18n.t('templates.template_ai_helper.k20'),
+      amount: i18n.t('templates.template_ai_helper.k21'),
+      number: i18n.t('templates.template_ai_helper.k22'),
+      status: i18n.t('templates.template_ai_helper.k23'),
+      type: i18n.t('templates.template_ai_helper.k24'),
+      category: i18n.t('templates.template_ai_helper.k25'),
+      subject: i18n.t('templates.template_ai_helper.k26'),
+      summary: i18n.t('templates.template_ai_helper.k27'),
+      body: i18n.t('templates.template_ai_helper.k28'),
     };
 
     for (const [k, v] of Object.entries(replacements)) {
@@ -226,7 +228,7 @@ const TemplateAIHelper: React.FC<TemplateAIHelperProps> = ({
   return (
     <Card
       sx={{
-        background: 'linear-gradient(to bottom right, warning.light, #ffedd5)',
+        background: `linear-gradient(to bottom right, warning.light, ${designTokens.colors.warning[100]})`,
         border: '1px solid #fcd34d',
       }}
     >
@@ -242,22 +244,22 @@ const TemplateAIHelper: React.FC<TemplateAIHelperProps> = ({
           }}
         >
           <Sparkles style={{ width: 20, height: 20 }} />
-          AI 辅助助手
+          {i18n.t('components.template_ai_helper.ai_0')}
         </Typography>
         <Typography
           variant='body2'
           sx={{ color: 'warning.dark', mt: 0.5 }}
         >
-          智能生成和优化模板内容
+          {i18n.t('components.template_ai_helper.k1')}
         </Typography>
       </CardHeader>
       <CardContent sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
         <div>
           <FormLabel sx={{ fontSize: 14, fontWeight: 500, color: 'warning.700' }}>
-            描述模板用途
+            {i18n.t('components.template_ai_helper.k2')}
           </FormLabel>
           <TextField
-            placeholder='例如：生成一份项目周报模板'
+            placeholder={i18n.t('templates.template_ai_helper.k29')}
             value={description}
             onChange={(e) => setDescription(e.target.value)}
             size='small'
@@ -286,7 +288,7 @@ const TemplateAIHelper: React.FC<TemplateAIHelperProps> = ({
               )
             }
           >
-            {isGenerating ? '生成中...' : 'AI 生成模板'}
+            {isGenerating ? i18n.t('components.template_ai_helper.k5') : i18n.t('components.template_ai_helper.ai_4')}
           </Button>
         </div>
 
@@ -302,7 +304,7 @@ const TemplateAIHelper: React.FC<TemplateAIHelperProps> = ({
             }}
             startIcon={<Lightbulb style={{ width: 16, height: 16 }} />}
           >
-            建议变量
+            {i18n.t('components.template_ai_helper.k3')}
           </Button>
           <Button
             variant='outlined'
@@ -315,7 +317,7 @@ const TemplateAIHelper: React.FC<TemplateAIHelperProps> = ({
             }}
             startIcon={<TrendingUp style={{ width: 16, height: 16 }} />}
           >
-            优化内容
+            {i18n.t('components.template_ai_helper.k4')}
           </Button>
         </div>
 
@@ -340,13 +342,13 @@ const TemplateAIHelper: React.FC<TemplateAIHelperProps> = ({
             )
           }
         >
-          {isAnalyzing ? '分析中...' : '分析变量使用'}
+          {isAnalyzing ? i18n.t('components.template_ai_helper.k6') : i18n.t('templates.template_ai_helper.k30')}
         </Button>
 
         {suggestions.length > 0 && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
             <FormLabel sx={{ fontSize: 12, fontWeight: 500, color: 'warning.700' }}>
-              AI 建议
+              {i18n.t('components.template_ai_helper.ai_5')}
             </FormLabel>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
               {suggestions.map((suggestion, index) => (
@@ -357,7 +359,7 @@ const TemplateAIHelper: React.FC<TemplateAIHelperProps> = ({
                     color: 'warning.800',
                     backgroundColor: theme.palette.warning.light,
                     borderRadius: 8,
-                    padding: '8px 12px',
+                    padding: `${designTokens.spacing.sm} 12px`,
                   }}
                 >
                   {suggestion}
@@ -370,7 +372,7 @@ const TemplateAIHelper: React.FC<TemplateAIHelperProps> = ({
         {analysisResult && analysisResult.suggestions.length > 0 && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
             <FormLabel sx={{ fontSize: 12, fontWeight: 500, color: 'warning.700' }}>
-              分析结果
+              {i18n.t('components.template_ai_helper.k6')}
             </FormLabel>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
               {analysisResult.suggestions.map((suggestion, index) => (
@@ -379,13 +381,13 @@ const TemplateAIHelper: React.FC<TemplateAIHelperProps> = ({
                   style={{
                     fontSize: 14,
                     borderRadius: 8,
-                    padding: '8px 12px',
+                    padding: `${designTokens.spacing.sm} 12px`,
                     backgroundColor:
-                      suggestion.includes('未使用') || suggestion.includes('未定义')
+                      suggestion.includes(i18n.t('templates.template_ai_helper.k32')) || suggestion.includes(i18n.t('templates.template_ai_helper.k31'))
                         ? theme.palette.error.light
                         : theme.palette.success.light,
                     color:
-                      suggestion.includes('未使用') || suggestion.includes('未定义')
+                      suggestion.includes(i18n.t('templates.template_ai_helper.k34')) || suggestion.includes(i18n.t('templates.template_ai_helper.k33'))
                         ? 'error.darker'
                         : 'success.700',
                   }}

@@ -3,6 +3,7 @@ import React from 'react';
 import { usePermission } from '../hooks/usePermission';
 import { useAuth } from '../hooks/useAuth';
 import { designTokens } from '@topems/tokens';
+import i18n from '@/i18n';
 
 export interface WithPermissionOptions {
   requiredPermission?: string;
@@ -131,7 +132,7 @@ export const RequirePermission: React.FC<RequirePermissionProps> = ({
     return (
       <div
         style={{ opacity: 0.5, cursor: 'not-allowed' }}
-        title='您没有此操作的权限'
+        title={i18n.t('components.permission_components.k0')}
       >
         {children}
       </div>
@@ -182,7 +183,7 @@ export const PermissionGuard: React.FC<PermissionGuardProps> = ({
               marginBottom: 4,
             }}
           ></div>
-          <p style={{ color: 'grey.500' }}>加载中...</p>
+          <p style={{ color: 'grey.500' }}>{i18n.t('components.permission_components.k0')}</p>
         </div>
       </div>
     );
@@ -242,10 +243,10 @@ export const PermissionGuard: React.FC<PermissionGuardProps> = ({
       >
         <div style={{ fontSize: '64px', marginBottom: 4 }}>🔒</div>
         <h2 style={{ fontSize: '24px', fontWeight: 700, color: 'grey.800', marginBottom: 2 }}>
-          权限不足
+          {i18n.t('components.permission_components.k1')}
         </h2>
         <p style={{ color: 'grey.500', marginBottom: 4 }}>
-          您没有访问此页面的权限。请联系管理员获取相应权限。
+          {i18n.t('components.permission_components.k2')}
         </p>
         <button
           onClick={() => window.history.back()}
@@ -260,7 +261,7 @@ export const PermissionGuard: React.FC<PermissionGuardProps> = ({
             fontWeight: 500,
           }}
         >
-          返回上一页
+          {i18n.t('components.permission_components.k3')}
         </button>
       </div>
     </div>
@@ -328,7 +329,7 @@ export const ModulePermissionGuard: React.FC<ModulePermissionGuardProps> = ({
               </svg>
             </div>
             <div>
-              <h3 style={{ fontSize: '14px', fontWeight: 500, color: 'warning.800' }}>权限提示</h3>
+              <h3 style={{ fontSize: '14px', fontWeight: 500, color: 'warning.800' }}>{i18n.t('components.permission_components.k1')}</h3>
               <div style={{ marginTop: 2, fontSize: '14px', color: 'warning.800' }}>
                 <p>
                   您没有访问 {module} 模块的 {action} 权限。

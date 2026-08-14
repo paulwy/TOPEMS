@@ -4,11 +4,12 @@
 
 import React from 'react';
 import type { EntitySchema } from '@/schema';
+import i18n from '@/i18n';
 
 export const taskSchema: EntitySchema = {
   entity: 'limsTask',
-  title: '检测任务',
-  description: '管理检测任务基础信息，包括任务编号、样品、方法、执行人、优先级、状态、截止日期等',
+  title: i18n.t('lims.task.k0'),
+  description: i18n.t('lims.task.k1'),
 
   api: {
     module: 'lims',
@@ -18,7 +19,7 @@ export const taskSchema: EntitySchema = {
   fields: [
     {
       name: 'task_code',
-      label: '任务编号',
+      label: i18n.t('lims.task.k2'),
       type: 'text',
       required: true,
       readonlyOnEdit: true,
@@ -27,7 +28,7 @@ export const taskSchema: EntitySchema = {
     },
     {
       name: 'task_name',
-      label: '任务名称',
+      label: i18n.t('lims.task.k3'),
       type: 'text',
       required: true,
       sortable: true,
@@ -35,72 +36,72 @@ export const taskSchema: EntitySchema = {
     },
     {
       name: 'sample_id',
-      label: '样品编号',
+      label: i18n.t('lims.task.k4'),
       type: 'text',
       listWidth: 120,
     },
     {
       name: 'sample_name',
-      label: '样品名称',
+      label: i18n.t('lims.task.k5'),
       type: 'text',
       listWidth: 140,
     },
     {
       name: 'method_id',
-      label: '方法编号',
+      label: i18n.t('lims.task.k6'),
       type: 'text',
       listWidth: 120,
     },
     {
       name: 'method_name',
-      label: '方法名称',
+      label: i18n.t('lims.task.k7'),
       type: 'text',
       listWidth: 140,
     },
     {
       name: 'assignee',
-      label: '执行人',
+      label: i18n.t('lims.task.k8'),
       type: 'text',
       listWidth: 100,
     },
     {
       name: 'priority',
-      label: '优先级',
+      label: i18n.t('lims.task.k9'),
       type: 'select',
       defaultValue: 'medium',
       options: {
         type: 'static',
         options: [
-          { value: 'high', label: '高' },
-          { value: 'medium', label: '中' },
-          { value: 'low', label: '低' },
-          { value: 'urgent', label: '紧急' },
+          { value: 'high', label: i18n.t('lims.task.k10') },
+          { value: 'medium', label: i18n.t('lims.task.k11') },
+          { value: 'low', label: i18n.t('lims.task.k12') },
+          { value: 'urgent', label: i18n.t('lims.task.k13') },
         ],
       },
       listWidth: 90,
       renderCell: (row: Record<string, unknown>) => {
         const map: Record<string, string> = {
-          high: '高',
-          medium: '中',
-          low: '低',
-          urgent: '紧急',
+          high: i18n.t('lims.task.k14'),
+          medium: i18n.t('lims.task.k15'),
+          low: i18n.t('lims.task.k16'),
+          urgent: i18n.t('lims.task.k17'),
         };
         return map[String(row.priority || '')] || String(row.priority || '-');
       },
     },
     {
       name: 'status',
-      label: '状态',
+      label: i18n.t('lims.task.k18'),
       type: 'select',
       defaultValue: 'pending',
       options: {
         type: 'static',
         options: [
-          { value: 'pending', label: '待处理' },
-          { value: 'in_progress', label: '进行中' },
-          { value: 'paused', label: '已暂停' },
-          { value: 'completed', label: '已完成' },
-          { value: 'cancelled', label: '已取消' },
+          { value: 'pending', label: i18n.t('lims.task.k19') },
+          { value: 'in_progress', label: i18n.t('lims.task.k20') },
+          { value: 'paused', label: i18n.t('lims.task.k21') },
+          { value: 'completed', label: i18n.t('lims.task.k22') },
+          { value: 'cancelled', label: i18n.t('lims.task.k23') },
         ],
       },
       listWidth: 100,
@@ -108,13 +109,13 @@ export const taskSchema: EntitySchema = {
     },
     {
       name: 'due_date',
-      label: '截止日期',
+      label: i18n.t('lims.task.k24'),
       type: 'date',
       listWidth: 120,
     },
     {
       name: 'description',
-      label: '描述',
+      label: i18n.t('lims.task.k25'),
       type: 'textarea',
       showInList: false,
     },
@@ -142,37 +143,37 @@ export const taskSchema: EntitySchema = {
         cancelled: 'error',
       },
       labelMap: {
-        pending: '待处理',
-        in_progress: '进行中',
-        paused: '已暂停',
-        completed: '已完成',
-        cancelled: '已取消',
+        pending: i18n.t('lims.task.k26'),
+        in_progress: i18n.t('lims.task.k27'),
+        paused: i18n.t('lims.task.k28'),
+        completed: i18n.t('lims.task.k29'),
+        cancelled: i18n.t('lims.task.k30'),
       },
     },
     filters: [
       {
         id: 'priority',
-        label: '优先级',
+        label: i18n.t('lims.task.k31'),
         type: 'select',
         options: [
-          { label: '全部优先级', value: 'all' },
-          { label: '高', value: 'high' },
-          { label: '中', value: 'medium' },
-          { label: '低', value: 'low' },
-          { label: '紧急', value: 'urgent' },
+          { label: i18n.t('lims.task.k32'), value: 'all' },
+          { label: i18n.t('lims.task.k33'), value: 'high' },
+          { label: i18n.t('lims.task.k34'), value: 'medium' },
+          { label: i18n.t('lims.task.k35'), value: 'low' },
+          { label: i18n.t('lims.task.k36'), value: 'urgent' },
         ],
       },
       {
         id: 'status',
-        label: '状态',
+        label: i18n.t('lims.task.k37'),
         type: 'select',
         options: [
-          { label: '全部状态', value: 'all' },
-          { label: '待处理', value: 'pending' },
-          { label: '进行中', value: 'in_progress' },
-          { label: '已暂停', value: 'paused' },
-          { label: '已完成', value: 'completed' },
-          { label: '已取消', value: 'cancelled' },
+          { label: i18n.t('lims.task.k38'), value: 'all' },
+          { label: i18n.t('lims.task.k39'), value: 'pending' },
+          { label: i18n.t('lims.task.k40'), value: 'in_progress' },
+          { label: i18n.t('lims.task.k41'), value: 'paused' },
+          { label: i18n.t('lims.task.k42'), value: 'completed' },
+          { label: i18n.t('lims.task.k43'), value: 'cancelled' },
         ],
       },
     ],
@@ -182,21 +183,21 @@ export const taskSchema: EntitySchema = {
 
   formSections: [
     {
-      title: '基本信息',
+      title: i18n.t('lims.task.k44'),
       fields: ['task_code', 'task_name', 'sample_id', 'method_id'],
     },
     {
-      title: '分配与时间',
+      title: i18n.t('lims.task.k45'),
       fields: ['assignee', 'priority', 'due_date'],
     },
     {
-      title: '状态与描述',
+      title: i18n.t('lims.task.k46'),
       fields: ['status', 'description'],
     },
   ],
 
   formColCount: 2,
-  createTitle: '新增检测任务',
-  editTitle: '编辑检测任务',
-  detailTitle: '检测任务详情',
+  createTitle: i18n.t('lims.task.k47'),
+  editTitle: i18n.t('lims.task.k48'),
+  detailTitle: i18n.t('lims.task.k49'),
 };

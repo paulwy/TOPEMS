@@ -10,6 +10,7 @@ import type { SxProps, Theme } from '@mui/material/styles';
 import { ExternalLink, TrendingUp, ArrowRight } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { usePlugins } from '@/context/PluginContext';
+import i18n from '@/i18n';
 
 export interface RelatedModuleItem {
   /** 数据标签 */
@@ -47,7 +48,7 @@ const RelatedModuleCardInner: React.FC<RelatedModuleCardProps> = ({
   moduleIcon,
   items,
   detailPath,
-  linkText = '查看详情',
+  linkText = i18n.t('shared.related_module_card.k0'),
   loading = false,
   sx,
 }) => {
@@ -143,7 +144,7 @@ const RelatedModuleCardInner: React.FC<RelatedModuleCardProps> = ({
             color='text.secondary'
             sx={{ fontSize: 13, textAlign: 'center', py: 1 }}
           >
-            暂无关联数据
+            {i18n.t('components.related_module_card.k0')}
           </Typography>
         )}
       </CardContent>

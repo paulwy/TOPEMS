@@ -1,6 +1,7 @@
 import React from 'react';
 import { Chip, LinearProgress, Stack, Typography } from '@mui/material';
 import type { EntitySchema } from '@/schema';
+import i18n from '@/i18n';
 
 const STATUS_COLOR_MAP: Record<string, 'default' | 'primary' | 'success' | 'warning' | 'error'> = {
   pending: 'default',
@@ -11,17 +12,17 @@ const STATUS_COLOR_MAP: Record<string, 'default' | 'primary' | 'success' | 'warn
 };
 
 const STATUS_LABEL_MAP: Record<string, string> = {
-  pending: '待开始',
-  in_progress: '进行中',
-  completed: '已完成',
-  paused: '暂停',
-  cancelled: '已取消',
+  pending: i18n.t('rd.project.k0'),
+  in_progress: i18n.t('rd.project.k1'),
+  completed: i18n.t('rd.project.k2'),
+  paused: i18n.t('rd.project.k3'),
+  cancelled: i18n.t('rd.project.k4'),
 };
 
 export const projectSchema: EntitySchema = {
   entity: 'rd_project',
-  title: '研发项目',
-  description: '管理研发项目，包括项目编号、名称、类型、状态、进度、预算等',
+  title: i18n.t('rd.project.k5'),
+  description: i18n.t('rd.project.k6'),
 
   api: {
     module: 'rd',
@@ -31,7 +32,7 @@ export const projectSchema: EntitySchema = {
   fields: [
     {
       name: 'code',
-      label: '项目编号',
+      label: i18n.t('rd.project.k7'),
       type: 'text',
       required: true,
       readonlyOnEdit: true,
@@ -41,7 +42,7 @@ export const projectSchema: EntitySchema = {
     },
     {
       name: 'name',
-      label: '项目名称',
+      label: i18n.t('rd.project.k8'),
       type: 'text',
       required: true,
       sortable: true,
@@ -50,16 +51,16 @@ export const projectSchema: EntitySchema = {
     },
     {
       name: 'project_type',
-      label: '项目类型',
+      label: i18n.t('rd.project.k9'),
       type: 'select',
       options: {
         type: 'static',
         options: [
-          { value: '新产品研发', label: '新产品研发' },
-          { value: '技术改进', label: '技术改进' },
-          { value: '基础研究', label: '基础研究' },
-          { value: '应用研究', label: '应用研究' },
-          { value: '工艺优化', label: '工艺优化' },
+          { value: i18n.t('rd.project.k10'), label: i18n.t('rd.project.k11') },
+          { value: i18n.t('rd.project.k12'), label: i18n.t('rd.project.k13') },
+          { value: i18n.t('rd.project.k14'), label: i18n.t('rd.project.k15') },
+          { value: i18n.t('rd.project.k16'), label: i18n.t('rd.project.k17') },
+          { value: i18n.t('rd.project.k18'), label: i18n.t('rd.project.k19') },
         ],
       },
       listWidth: 120,
@@ -76,24 +77,24 @@ export const projectSchema: EntitySchema = {
     },
     {
       name: 'leader',
-      label: '负责人',
+      label: i18n.t('rd.project.k20'),
       type: 'text',
       listWidth: 100,
       validation: [{ type: 'maxLength', value: 255 }],
     },
     {
       name: 'status',
-      label: '状态',
+      label: i18n.t('rd.project.k21'),
       type: 'select',
       defaultValue: 'pending',
       options: {
         type: 'static',
         options: [
-          { value: 'pending', label: '待开始' },
-          { value: 'in_progress', label: '进行中' },
-          { value: 'completed', label: '已完成' },
-          { value: 'paused', label: '暂停' },
-          { value: 'cancelled', label: '已取消' },
+          { value: 'pending', label: i18n.t('rd.project.k22') },
+          { value: 'in_progress', label: i18n.t('rd.project.k23') },
+          { value: 'completed', label: i18n.t('rd.project.k24') },
+          { value: 'paused', label: i18n.t('rd.project.k25') },
+          { value: 'cancelled', label: i18n.t('rd.project.k26') },
         ],
       },
       listWidth: 110,
@@ -101,7 +102,7 @@ export const projectSchema: EntitySchema = {
     },
     {
       name: 'progress',
-      label: '进度',
+      label: i18n.t('rd.project.k27'),
       type: 'number',
       defaultValue: 0,
       listWidth: 160,
@@ -121,20 +122,20 @@ export const projectSchema: EntitySchema = {
     },
     {
       name: 'start_date',
-      label: '开始日期',
+      label: i18n.t('rd.project.k28'),
       type: 'date',
       listWidth: 120,
     },
     {
       name: 'end_date',
-      label: '结束日期',
+      label: i18n.t('rd.project.k29'),
       type: 'date',
       listWidth: 120,
       showInList: false,
     },
     {
       name: 'budget',
-      label: '预算(万元)',
+      label: i18n.t('rd.project.k30'),
       type: 'number',
       listWidth: 110,
       renderCell: (row: Record<string, unknown>) => {
@@ -145,13 +146,13 @@ export const projectSchema: EntitySchema = {
     },
     {
       name: 'description',
-      label: '描述',
+      label: i18n.t('rd.project.k31'),
       type: 'textarea',
       showInList: false,
     },
     {
       name: 'created_at',
-      label: '创建时间',
+      label: i18n.t('rd.project.k32'),
       type: 'datetime',
       readonly: true,
       sortable: true,
@@ -160,7 +161,7 @@ export const projectSchema: EntitySchema = {
     },
     {
       name: 'updated_at',
-      label: '更新时间',
+      label: i18n.t('rd.project.k33'),
       type: 'datetime',
       readonly: true,
       hideInForm: true,
@@ -184,15 +185,15 @@ export const projectSchema: EntitySchema = {
     filters: [
       {
         id: 'status',
-        label: '状态',
+        label: i18n.t('rd.project.k34'),
         type: 'select',
         options: [
-          { label: '全部状态', value: 'all' },
-          { label: '待开始', value: 'pending' },
-          { label: '进行中', value: 'in_progress' },
-          { label: '已完成', value: 'completed' },
-          { label: '暂停', value: 'paused' },
-          { label: '已取消', value: 'cancelled' },
+          { label: i18n.t('rd.project.k35'), value: 'all' },
+          { label: i18n.t('rd.project.k36'), value: 'pending' },
+          { label: i18n.t('rd.project.k37'), value: 'in_progress' },
+          { label: i18n.t('rd.project.k38'), value: 'completed' },
+          { label: i18n.t('rd.project.k39'), value: 'paused' },
+          { label: i18n.t('rd.project.k40'), value: 'cancelled' },
         ],
         defaultValue: 'all',
       },
@@ -206,23 +207,23 @@ export const projectSchema: EntitySchema = {
 
   formSections: [
     {
-      title: '基本信息',
+      title: i18n.t('rd.project.k41'),
       fields: ['code', 'name', 'project_type', 'leader', 'status'],
     },
     {
-      title: '计划与预算',
+      title: i18n.t('rd.project.k42'),
       fields: ['start_date', 'end_date', 'budget', 'progress'],
     },
     {
-      title: '描述',
+      title: i18n.t('rd.project.k43'),
       fields: ['description'],
     },
   ],
 
   formColCount: 2,
-  createTitle: '创建研发项目',
-  editTitle: '编辑研发项目',
-  detailTitle: '项目详情',
+  createTitle: i18n.t('rd.project.k44'),
+  editTitle: i18n.t('rd.project.k45'),
+  detailTitle: i18n.t('rd.project.k46'),
 
   actions: ['create', 'edit', 'detail', 'delete'],
 };

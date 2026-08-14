@@ -17,6 +17,7 @@ import {
   ListItemText,
   Checkbox,
 } from '@mui/material';
+import i18n from '@/i18n';
 import {
   User,
   Activity,
@@ -255,21 +256,21 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onLogout }) => {
         const logs = logsRes.value.data.items;
         return logs.map((log: AuditLog) => {
           let icon = <User size={16} />;
-          let type = '系统';
+          let type = i18n.t('pages.dashboard_page.k0');
 
           if (log.module?.includes('doc') || log.module?.includes('file')) {
             icon = <FileText size={16} />;
-            type = '文档';
+            type = i18n.t('pages.dashboard_page.k0');
           } else if (
             log.module?.includes('flow') ||
             log.module?.includes('workflow') ||
             log.module?.includes('approval')
           ) {
             icon = <GitBranch size={16} />;
-            type = '工作流';
+            type = i18n.t('pages.dashboard_page.k1');
           } else if (log.module?.includes('folder')) {
             icon = <Folder size={16} />;
-            type = '文档';
+            type = i18n.t('pages.dashboard_page.k2');
           }
 
           const timeDiff = Date.now() - new Date(log.created_at).getTime();
@@ -277,18 +278,18 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onLogout }) => {
           const hours = Math.floor(minutes / 60);
           const days = Math.floor(hours / 24);
 
-          let time = '刚刚';
+          let time = i18n.t('pages.dashboard_page.k1');
           if (days > 0) {
-            time = `${days}天前`;
+            time = `${days}${i18n.t('pages.dashboard_page.k3')}`;
           } else if (hours > 0) {
-            time = `${hours}小时前`;
+            time = `${hours}${i18n.t('pages.dashboard_page.k4')}`;
           } else if (minutes > 0) {
-            time = `${minutes}分钟前`;
+            time = `${minutes}${i18n.t('pages.dashboard_page.k5')}`;
           }
 
           return {
             id: log.id,
-            title: log.action || '系统操作',
+            title: log.action || i18n.t('pages.dashboard_page.k2'),
             type,
             time,
             icon,
@@ -341,31 +342,31 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onLogout }) => {
 
   useEffect(() => {
     if (statsQuery.isError) {
-      apiLogger[logLvl]('加载统计失败:', statsQuery.error);
+      apiLogger[logLvl](i18n.t('pages.dashboard_page.k6'), statsQuery.error);
     }
   }, [statsQuery.isError, statsQuery.error, logLvl]);
 
   useEffect(() => {
     if (moduleStatsQuery.isError) {
-      apiLogger[logLvl]('加载模块统计失败:', moduleStatsQuery.error);
+      apiLogger[logLvl](i18n.t('pages.dashboard_page.k7'), moduleStatsQuery.error);
     }
   }, [moduleStatsQuery.isError, moduleStatsQuery.error, logLvl]);
 
   useEffect(() => {
     if (chartDataQuery.isError) {
-      apiLogger[logLvl]('加载图表数据失败:', chartDataQuery.error);
+      apiLogger[logLvl](i18n.t('pages.dashboard_page.k8'), chartDataQuery.error);
     }
   }, [chartDataQuery.isError, chartDataQuery.error, logLvl]);
 
   useEffect(() => {
     if (bffDashboardQuery.isError) {
-      apiLogger[logLvl]('BFF GraphQL 加载失败:', bffDashboardQuery.error);
+      apiLogger[logLvl](i18n.t('pages.dashboard_page.bffgraphql_9'), bffDashboardQuery.error);
     }
   }, [bffDashboardQuery.isError, bffDashboardQuery.error, logLvl]);
 
   useEffect(() => {
     if (activitiesQuery.isError) {
-      apiLogger[logLvl]('加载最近活动失败:', activitiesQuery.error);
+      apiLogger[logLvl](i18n.t('pages.dashboard_page.k10'), activitiesQuery.error);
     }
   }, [activitiesQuery.isError, activitiesQuery.error, logLvl]);
 
@@ -419,7 +420,7 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onLogout }) => {
         });
       } catch (err) {
         // V64 降级：开发环境 portal 服务未启动是常态
-        apiLogger[logLvl]('BFF Mutation 完成待办失败:', err);
+        apiLogger[logLvl](i18n.t('pages.dashboard_page.bffmutation_11'), err);
       }
     },
     [queryClient]
@@ -435,7 +436,7 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onLogout }) => {
           justifyContent: 'center',
         }}
       >
-        <Typography sx={{ fontSize: '1.125rem', color: 'text.secondary' }}>加载中...</Typography>
+        <Typography sx={{ fontSize: '1.125rem', color: 'text.secondary' }}>{i18n.t('pages.dashboard_page.k12')}</Typography>
       </Box>
     );
   }
@@ -444,9 +445,9 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onLogout }) => {
 
   const getGreeting = (): string => {
     const hour = new Date().getHours();
-    if (hour < 12) return '上午好';
-    if (hour < 18) return '下午好';
-    return '晚上好';
+    if (hour < 12) return i18n.t('pages.dashboard_page.k3');
+    if (hour < 18) return i18n.t('pages.dashboard_page.k4');
+    return i18n.t('pages.dashboard_page.k5');
   };
 
   const pendingTodos = todos.filter((t) => !t.done);
@@ -482,7 +483,7 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onLogout }) => {
               mb: 1,
             }}
           >
-            👋 欢迎回来，{user?.full_name || user?.username || '用户'}！
+            👋 {i18n.t('pages.dashboard_page.k0')}{user?.full_name || user?.username || i18n.t('pages.dashboard_page.k6')}！
           </Typography>
           <Typography sx={{ color: 'text.secondary', fontSize: { xs: '0.875rem', md: '1rem' } }}>
             {getGreeting()}，今天有 {pendingTodos.length} 个待处理事项
@@ -491,7 +492,7 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onLogout }) => {
 
         {/* 今日概览分区 */}
         <DashboardSection
-          title='今日概览'
+          title={i18n.t('pages.dashboard_page.k7')}
           sx={{ mb: 3 }}
         >
           <Box
@@ -502,28 +503,28 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onLogout }) => {
             }}
           >
             <MetricCard
-              title='在线服务'
+              title={i18n.t('pages.dashboard_page.k8')}
               value={String(onlineServices)}
               icon={<Activity size={24} />}
               color='green'
               change={onlineServices > 5 ? 10 : -5}
             />
             <MetricCard
-              title='文件数量'
+              title={i18n.t('pages.dashboard_page.k9')}
               value={String(stats.fileCount)}
               icon={<FileText size={24} />}
               color='purple'
               change={8}
             />
             <MetricCard
-              title='工作流'
+              title={i18n.t('pages.dashboard_page.k10')}
               value={String(stats.workflowCount)}
               icon={<GitBranch size={24} />}
               color='orange'
               change={-3}
             />
             <MetricCard
-              title='待处理'
+              title={i18n.t('pages.dashboard_page.k11')}
               value={String(pendingTodos.length)}
               icon={<Clock size={24} />}
               color='blue'
@@ -557,7 +558,7 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onLogout }) => {
                 label={
                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                     <ListTodo size={16} />
-                    <Typography sx={{ fontSize: '0.875rem' }}>待处理</Typography>
+                    <Typography sx={{ fontSize: '0.875rem' }}>{i18n.t('pages.dashboard_page.k12')}</Typography>
                     <Badge
                       badgeContent={pendingTodos.length}
                       color='primary'
@@ -571,7 +572,7 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onLogout }) => {
                 label={
                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                     <CheckCircle size={16} />
-                    <Typography sx={{ fontSize: '0.875rem' }}>已完成</Typography>
+                    <Typography sx={{ fontSize: '0.875rem' }}>{i18n.t('pages.dashboard_page.k13')}</Typography>
                     <Badge
                       badgeContent={completedTodos.length}
                       color='success'
@@ -644,8 +645,8 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onLogout }) => {
             ) : (
               <EmptyState
                 height={180}
-                title={todoTab === 0 ? '暂无待处理事项' : '暂无已完成事项'}
-                description={todoTab === 0 ? '所有任务已完成，继续保持！' : '还没有完成任何事项'}
+                title={todoTab === 0 ? i18n.t('pages.dashboard_page.k15') : i18n.t('pages.dashboard_page.k14')}
+                description={todoTab === 0 ? i18n.t('pages.dashboard_page.k17') : i18n.t('pages.dashboard_page.k16')}
                 sx={{ border: 'none', bgcolor: 'transparent' }}
               />
             )}
@@ -674,7 +675,7 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onLogout }) => {
                 '&:hover': { color: 'primary.dark' },
               }}
             >
-              查看全部
+              {i18n.t('pages.dashboard_page.k1')}
             </Typography>
           }
         >

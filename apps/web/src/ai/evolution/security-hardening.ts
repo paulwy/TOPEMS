@@ -1,3 +1,4 @@
+import i18n from '@/i18n';
 // V58.0 平台 AI 演进 - 安全加固
 
 export type SecurityCheckType =
@@ -49,62 +50,62 @@ const CHECK_TEMPLATES: Omit<SecurityCheckV58, 'id' | 'checkedAt' | 'status'>[] =
   {
     type: 'InputValidation',
     severity: 'Critical',
-    description: 'Prompt injection 防护：检查用户输入是否包含注入攻击模式',
-    recommendation: '实施输入白名单 + 指令分离机制，对 LLM prompt 进行结构化处理',
+    description: i18n.t('ai.security-hardening.k0'),
+    recommendation: i18n.t('ai.security-hardening.k1'),
   },
   {
     type: 'InputValidation',
     severity: 'High',
-    description: 'SQL 注入防护：检查 AI 生成的 SQL 查询是否存在注入风险',
-    recommendation: '使用参数化查询，对 AI 输出进行 SQL 语法安全审计',
+    description: i18n.t('ai.security-hardening.k2'),
+    recommendation: i18n.t('ai.security-hardening.k0'),
   },
   {
     type: 'Sanitization',
     severity: 'High',
-    description: '输出净化：检查 AI 响应是否包含 XSS 或恶意脚本',
-    recommendation: '对 AI 生成内容进行 HTML 转义，使用 DOMPurify 等库进行净化',
+    description: i18n.t('ai.security-hardening.k1'),
+    recommendation: i18n.t('ai.security-hardening.k2'),
   },
   {
     type: 'Sanitization',
     severity: 'Critical',
-    description: '数据泄露防护：检查 AI 是否可能输出敏感数据（PII/密钥）',
-    recommendation: '部署 PII 检测器，对 AI 输出进行敏感信息扫描和遮盖',
+    description: i18n.t('ai.security-hardening.k3'),
+    recommendation: i18n.t('ai.security-hardening.k4'),
   },
   {
     type: 'RateLimit',
     severity: 'Medium',
-    description: 'API 速率限制：检查 AI API 调用是否有速率限制',
-    recommendation: '实施令牌桶速率限制，单用户每分钟不超过 60 次请求',
+    description: i18n.t('ai.security-hardening.k3'),
+    recommendation: i18n.t('ai.security-hardening.k5'),
   },
   {
     type: 'RateLimit',
     severity: 'High',
-    description: 'Token 消耗上限：检查单次对话 Token 使用是否超限',
-    recommendation: '设置单次请求 Token 上限（建议 4096），防止滥用',
+    description: i18n.t('ai.security-hardening.k4'),
+    recommendation: i18n.t('ai.security-hardening.k6'),
   },
   {
     type: 'Encryption',
     severity: 'High',
-    description: '传输加密：检查 AI 请求/响应是否通过 HTTPS 加密',
-    recommendation: '强制使用 TLS 1.3，禁用所有不安全的加密套件',
+    description: i18n.t('ai.security-hardening.k7'),
+    recommendation: i18n.t('ai.security-hardening.k5'),
   },
   {
     type: 'Encryption',
     severity: 'High',
-    description: '静态加密：检查 AI 对话历史和模型数据是否加密存储',
-    recommendation: '使用 AES-256 加密静态数据，密钥通过 KMS 管理',
+    description: i18n.t('ai.security-hardening.k8'),
+    recommendation: i18n.t('ai.security-hardening.k9'),
   },
   {
     type: 'Audit',
     severity: 'Medium',
-    description: '操作审计：检查 AI 模型调用是否记录完整审计日志',
-    recommendation: '记录每次 AI 调用的输入摘要、输出摘要、耗时、Token 消耗',
+    description: i18n.t('ai.security-hardening.k10'),
+    recommendation: i18n.t('ai.security-hardening.k11'),
   },
   {
     type: 'Audit',
     severity: 'High',
-    description: '模型行为审计：检查 AI 决策路径是否可追溯',
-    recommendation: '保留 AI 推理链记录，支持事后审计和合规检查',
+    description: i18n.t('ai.security-hardening.k12'),
+    recommendation: i18n.t('ai.security-hardening.k13'),
   },
 ];
 
@@ -114,7 +115,7 @@ const DEFAULT_THREATS: Omit<ThreatModel, 'id'>[] = [
     severity: 'Critical',
     likelihood: 'VeryLikely',
     impact: 'VeryHigh',
-    mitigation: '实施输入验证 + Prompt 分离 + 输出过滤',
+    mitigation: i18n.t('ai.security-hardening.k6'),
     status: 'Identified',
   },
   {
@@ -122,7 +123,7 @@ const DEFAULT_THREATS: Omit<ThreatModel, 'id'>[] = [
     severity: 'Critical',
     likelihood: 'Likely',
     impact: 'VeryHigh',
-    mitigation: 'PII 检测 + 输出遮盖 + DLP 策略',
+    mitigation: i18n.t('ai.security-hardening.k7'),
     status: 'Mitigated',
   },
   {
@@ -130,7 +131,7 @@ const DEFAULT_THREATS: Omit<ThreatModel, 'id'>[] = [
     severity: 'High',
     likelihood: 'Unlikely',
     impact: 'VeryHigh',
-    mitigation: '模型版本校验 + 供应链安全 + 数据完整性检查',
+    mitigation: i18n.t('ai.security-hardening.k8'),
     status: 'Identified',
   },
   {
@@ -138,7 +139,7 @@ const DEFAULT_THREATS: Omit<ThreatModel, 'id'>[] = [
     severity: 'High',
     likelihood: 'Likely',
     impact: 'High',
-    mitigation: '对抗训练 + 输入异常检测 + 置信度阈值',
+    mitigation: i18n.t('ai.security-hardening.k9'),
     status: 'Mitigated',
   },
   {
@@ -146,7 +147,7 @@ const DEFAULT_THREATS: Omit<ThreatModel, 'id'>[] = [
     severity: 'Medium',
     likelihood: 'VeryLikely',
     impact: 'Medium',
-    mitigation: '速率限制 + Token 配额 + 异常使用检测',
+    mitigation: i18n.t('ai.security-hardening.k10'),
     status: 'Mitigated',
   },
   {
@@ -154,7 +155,7 @@ const DEFAULT_THREATS: Omit<ThreatModel, 'id'>[] = [
     severity: 'High',
     likelihood: 'Likely',
     impact: 'High',
-    mitigation: '字段级权限控制 + 输出脱敏 + 数据分类',
+    mitigation: i18n.t('ai.security-hardening.k11'),
     status: 'Mitigated',
   },
   {
@@ -162,7 +163,7 @@ const DEFAULT_THREATS: Omit<ThreatModel, 'id'>[] = [
     severity: 'High',
     likelihood: 'Unlikely',
     impact: 'High',
-    mitigation: '模型访问控制 + 身份验证 + 审计日志',
+    mitigation: i18n.t('ai.security-hardening.k12'),
     status: 'Identified',
   },
 ];
@@ -281,13 +282,13 @@ class SecurityHardenerImpl {
         const mitigationApplied = Math.random() > 0.3;
         if (mitigationApplied) {
           this.updateThreatModel(threat.id, { status: 'Mitigated' });
-          details.push(`已应用缓解措施: ${threat.threat_type} - ${threat.mitigation}`);
+          details.push(`${i18n.t('ai.security-hardening.k13')}${threat.threat_type} - ${threat.mitigation}`);
           applied++;
         }
       }
     });
 
-    details.push(`共应用 ${applied} 项安全加固措施`);
+    details.push(`${i18n.t('ai.security-hardening.k14')}${applied}${i18n.t('ai.security-hardening.k15')}`);
     return { applied, details };
   }
 

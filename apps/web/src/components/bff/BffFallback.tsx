@@ -26,6 +26,7 @@ import {
   Alert,
   AlertTitle,
 } from '@mui/material';
+import i18n from '@/i18n';
 import { RefreshCw, WifiOff, Database, AlertCircle, CloudOff, History } from 'lucide-react';
 import { FallbackLevel } from '@/utils/bff/fallback-strategy';
 import { designTokens, semanticTokens } from '@topems/tokens';
@@ -66,7 +67,7 @@ export interface BffLoadingFallbackProps extends BffFallbackBaseProps {
  * ```
  */
 export const BffLoadingFallback: React.FC<BffLoadingFallbackProps> = ({
-  message = '加载中...',
+  message = i18n.t('components.bff_fallback.k0'),
   fullScreen = false,
   minHeight = 200,
   skeletonRows = 0,
@@ -161,7 +162,7 @@ export interface BffErrorFallbackProps extends BffFallbackBaseProps {
 export const BffErrorFallback: React.FC<BffErrorFallbackProps> = ({
   error,
   message,
-  title = '数据加载失败',
+  title = i18n.t('components.bff_fallback.k0'),
   showDetails = true,
   fullScreen = false,
   minHeight = 200,
@@ -171,7 +172,7 @@ export const BffErrorFallback: React.FC<BffErrorFallbackProps> = ({
   retryCount = 0,
 }) => {
   const handleAction = onRetry ?? onRefresh;
-  const actionLabel = onRetry ? '重试' : onRefresh ? '刷新' : null;
+  const actionLabel = onRetry ? i18n.t('components.bff_fallback.k2') : onRefresh ? i18n.t('components.bff_fallback.k1') : null;
   const canRetry = maxRetries === undefined || retryCount < maxRetries;
 
   const content = (
@@ -300,7 +301,7 @@ export interface BffOfflineFallbackProps extends BffFallbackBaseProps {
  * ```
  */
 export const BffOfflineFallback: React.FC<BffOfflineFallbackProps> = ({
-  message = '您当前处于离线状态',
+  message = i18n.t('components.bff_fallback.k3'),
   fullScreen = false,
   minHeight = 200,
   showLocalHint = true,
@@ -333,7 +334,7 @@ export const BffOfflineFallback: React.FC<BffOfflineFallbackProps> = ({
             color='warning.main'
             sx={{ fontWeight: 600 }}
           >
-            离线模式
+            {i18n.t('components.bff_fallback.k1')}
           </Typography>
           <Chip
             size='small'
@@ -356,8 +357,8 @@ export const BffOfflineFallback: React.FC<BffOfflineFallbackProps> = ({
             icon={<History size={18} />}
             sx={{ py: 0.5 }}
           >
-            <AlertTitle sx={{ mb: 0 }}>本地数据可用</AlertTitle>
-            您可以查看最近缓存的本地数据，待网络恢复后自动同步。
+            <AlertTitle sx={{ mb: 0 }}>{i18n.t('components.bff_fallback.k4')}</AlertTitle>
+            {i18n.t('components.bff_fallback.k2')}
           </Alert>
         )}
 
@@ -373,7 +374,7 @@ export const BffOfflineFallback: React.FC<BffOfflineFallbackProps> = ({
               startIcon={<Database size={16} />}
               onClick={onShowLocalData}
             >
-              查看本地数据
+              {i18n.t('components.bff_fallback.k3')}
             </Button>
           )}
           {onRefresh && (
@@ -383,7 +384,7 @@ export const BffOfflineFallback: React.FC<BffOfflineFallbackProps> = ({
               startIcon={<RefreshCw size={16} />}
               onClick={onRefresh}
             >
-              重试连接
+              {i18n.t('components.bff_fallback.k4')}
             </Button>
           )}
         </Stack>
@@ -440,7 +441,7 @@ export interface BffCacheFallbackProps extends BffFallbackBaseProps {
  * ```
  */
 export const BffCacheFallback: React.FC<BffCacheFallbackProps> = ({
-  message = '当前展示的是缓存数据',
+  message = i18n.t('components.bff_fallback.k5'),
   cachedAt,
   showCachePreview = false,
   cachePreview,
@@ -466,14 +467,14 @@ export const BffCacheFallback: React.FC<BffCacheFallbackProps> = ({
               startIcon={<RefreshCw size={14} />}
               onClick={onRefresh}
             >
-              刷新
+              {i18n.t('components.bff_fallback.k5')}
             </Button>
           ) : undefined
         }
       >
         <AlertTitle sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0 }}>
           <CloudOff size={16} />
-          <span>降级到缓存数据</span>
+          <span>{i18n.t('components.bff_fallback.k6')}</span>
           <Chip
             size='small'
             label={FallbackLevel.TERTIARY}
@@ -572,7 +573,7 @@ export const BffFallbackContainer: React.FC<BffFallbackContainerProps> = ({
     default:
       return (
         <BffLoadingFallback
-          message='加载中...'
+          message={i18n.t('components.bff_fallback.k6')}
           minHeight={minHeight}
         />
       );

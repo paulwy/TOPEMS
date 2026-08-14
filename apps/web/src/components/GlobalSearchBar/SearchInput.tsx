@@ -12,6 +12,7 @@ import {
   Checkbox,
   FormControlLabel,
 } from '@mui/material';
+import i18n from '@/i18n';
 import { Search, X, Filter } from 'lucide-react';
 import { SEARCH_SHORTCUTS, getShortcutKeyLabel } from '@/hooks/shortcuts';
 import type { SearchInputProps } from './types';
@@ -99,7 +100,7 @@ export const SearchInput: React.FC<SearchInputProps> = ({
           onChange={(e) => onChange(e.target.value)}
           onFocus={onFocus}
           onKeyDown={onKeyDown}
-          placeholder='搜索...'
+          placeholder={i18n.t('components.search_input.k0')}
           size='small'
           sx={{
             flex: 1,
@@ -110,7 +111,7 @@ export const SearchInput: React.FC<SearchInputProps> = ({
             },
           }}
           autoFocus={autoFocus}
-          aria-label='全局搜索'
+          aria-label={i18n.t('components.search_input.k0')}
           aria-autocomplete='list'
           aria-expanded={!!query}
           role='combobox'
@@ -120,7 +121,7 @@ export const SearchInput: React.FC<SearchInputProps> = ({
             size='small'
             onClick={handleClear}
             sx={{ p: 0.5 }}
-            aria-label='关闭'
+            aria-label={i18n.t('components.search_input.k1')}
           >
             <X size={14} />
           </IconButton>
@@ -130,7 +131,7 @@ export const SearchInput: React.FC<SearchInputProps> = ({
           onClick={handleFilterClick}
           sx={{ p: 0.5, opacity: availableServices?.length || availableTypes?.length ? 0.6 : 0.3 }}
           disabled={!availableServices?.length && !availableTypes?.length}
-          aria-label='筛选'
+          aria-label={i18n.t('components.search_input.k2')}
         >
           <Filter size={14} />
         </IconButton>
@@ -138,8 +139,8 @@ export const SearchInput: React.FC<SearchInputProps> = ({
           <Chip
             label={
               filter?.service
-                ? `服务: ${availableServices?.find((m) => m.value === filter.service)?.label || filter.service}`
-                : `类型: ${availableTypes?.find((t) => t.value === filter.type)?.label || filter.type}`
+                ? `${i18n.t('components.search_input.k1')} ${availableServices?.find((m) => m.value === filter.service)?.label || filter.service}`
+                : `${i18n.t('components.search_input.k2')} ${availableTypes?.find((t) => t.value === filter.type)?.label || filter.type}`
             }
             size='small'
             onDelete={handleClearFilter}
@@ -186,7 +187,7 @@ export const SearchInput: React.FC<SearchInputProps> = ({
               variant='subtitle2'
               sx={{ fontWeight: 600 }}
             >
-              高级筛选
+              {i18n.t('components.search_input.k3')}
             </Typography>
             <Typography
               variant='caption'
@@ -194,7 +195,7 @@ export const SearchInput: React.FC<SearchInputProps> = ({
               sx={{ cursor: 'pointer' }}
               onClick={handleClearFilter}
             >
-              清除筛选
+              {i18n.t('components.search_input.k4')}
             </Typography>
           </Box>
 
@@ -222,7 +223,7 @@ export const SearchInput: React.FC<SearchInputProps> = ({
                 },
               }}
             >
-              模块
+              {i18n.t('components.search_input.k5')}
             </Box>
             <Box
               component='button'
@@ -245,7 +246,7 @@ export const SearchInput: React.FC<SearchInputProps> = ({
                 },
               }}
             >
-              类型
+              {i18n.t('components.search_input.k6')}
             </Box>
           </Box>
 

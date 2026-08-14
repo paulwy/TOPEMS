@@ -1,20 +1,21 @@
 import React from 'react';
 import { Box, Chip, Typography } from '@mui/material';
 import type { EntitySchema, SchemaField } from '@/schema';
+import i18n from '@/i18n';
 
 export const WMS_SCM_STATUS_CONFIG: Record<
   string,
   { label: string; color: 'success' | 'warning' | 'error' | 'default' }
 > = {
-  synced: { label: '已同步', color: 'success' },
-  pending: { label: '待同步', color: 'warning' },
-  failed: { label: '失败', color: 'error' },
+  synced: { label: i18n.t('shared.wms_scm.k0'), color: 'success' },
+  pending: { label: i18n.t('shared.wms_scm.k1'), color: 'warning' },
+  failed: { label: i18n.t('shared.wms_scm.k2'), color: 'error' },
 };
 
 const wmsScmFields: SchemaField[] = [
   {
     name: 'item_name',
-    label: '物品名称',
+    label: i18n.t('shared.wms_scm.k3'),
     type: 'text',
     required: true,
     sortable: true,
@@ -38,19 +39,19 @@ const wmsScmFields: SchemaField[] = [
   },
   {
     name: 'wms_inventory_id',
-    label: 'WMS 库存 ID',
+    label: i18n.t('shared.wms_scm.wmsid_4'),
     type: 'text',
     required: true,
     showInList: false,
-    placeholder: '输入 WMS 库存 UUID',
+    placeholder: i18n.t('shared.wms_scm.wmsuuid_5'),
   },
   {
     name: 'quantity',
-    label: '数量',
+    label: i18n.t('shared.wms_scm.k6'),
     type: 'number',
     sortable: true,
     listWidth: 120,
-    placeholder: '输入数量（可选）',
+    placeholder: i18n.t('shared.wms_scm.k7'),
     renderCell: (row: Record<string, unknown>) => (
       <Typography variant='body2'>
         {String(row.quantity ?? '-')} {String(row.unit ?? '')}
@@ -59,14 +60,14 @@ const wmsScmFields: SchemaField[] = [
   },
   {
     name: 'unit',
-    label: '单位',
+    label: i18n.t('shared.wms_scm.k8'),
     type: 'text',
     showInList: false,
-    placeholder: '输入单位（可选）',
+    placeholder: i18n.t('shared.wms_scm.k9'),
   },
   {
     name: 'sync_status',
-    label: '状态',
+    label: i18n.t('shared.wms_scm.k10'),
     type: 'select',
     sortable: true,
     listWidth: 100,
@@ -90,7 +91,7 @@ const wmsScmFields: SchemaField[] = [
   },
   {
     name: 'last_synced_at',
-    label: '最后同步',
+    label: i18n.t('shared.wms_scm.k11'),
     type: 'datetime',
     sortable: true,
     listWidth: 160,
@@ -101,13 +102,13 @@ const wmsScmFields: SchemaField[] = [
       >
         {row.last_synced_at
           ? new Date(String(row.last_synced_at)).toLocaleString('zh-CN')
-          : '从未同步'}
+          : i18n.t('shared.wms_scm.k12')}
       </Typography>
     ),
   },
   {
     name: 'created_at',
-    label: '创建时间',
+    label: i18n.t('shared.wms_scm.k13'),
     type: 'datetime',
     sortable: true,
     listWidth: 160,
@@ -125,8 +126,8 @@ const wmsScmFields: SchemaField[] = [
 
 export const wmsScmSyncSchema: EntitySchema = {
   entity: 'integration_wms_scm_sync',
-  title: 'WMS-SCM 同步',
-  description: '管理 WMS 库存与 SCM 供应的同步',
+  title: i18n.t('shared.wms_scm.wmsscm_14'),
+  description: i18n.t('shared.wms_scm.wmsscm_15'),
 
   api: {
     module: 'integration',
@@ -144,12 +145,12 @@ export const wmsScmSyncSchema: EntitySchema = {
 
   formSections: [
     {
-      title: '基本信息',
+      title: i18n.t('shared.wms_scm.k16'),
       fields: ['wms_inventory_id', 'item_name', 'quantity', 'unit'],
     },
   ],
 
   formColCount: 1,
-  createTitle: '创建 WMS-SCM 同步',
-  detailTitle: '同步详情',
+  createTitle: i18n.t('shared.wms_scm.wmsscm_17'),
+  detailTitle: i18n.t('shared.wms_scm.k18'),
 };

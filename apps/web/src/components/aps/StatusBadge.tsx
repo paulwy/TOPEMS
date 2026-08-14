@@ -1,3 +1,4 @@
+import i18n from '@/i18n';
 /**
  * APS 状态徽章组件
  *
@@ -76,27 +77,27 @@ const FSM_STATUS_COLORS: Record<ApsFsmType, Record<string, string>> = {
 
 // 状态中文标签映射（跨 FSM 通用，状态值相同时取同一标签）
 const STATUS_LABELS: Record<string, string> = {
-  draft: '草稿',
-  pending_approval: '待审批',
-  approved: '已审批',
-  in_progress: '进行中',
-  completed: '已完成',
-  cancelled: '已取消',
-  pending: '待处理',
-  released: '已发布',
-  running: '运行中',
-  available: '可用',
-  allocated: '已分配',
-  consumed: '已消耗',
-  maintenance: '维护中',
-  requisitioned: '已请购',
-  sourced: '已采购',
-  satisfied: '已满足',
-  shortage: '短缺',
-  calculated: '已计算',
-  validated: '已验证',
-  adopted: '已采纳',
-  superseded: '已替代',
+  draft: i18n.t('components.status_badge.k0'),
+  pending_approval: i18n.t('components.status_badge.k1'),
+  approved: i18n.t('components.status_badge.k2'),
+  in_progress: i18n.t('components.status_badge.k3'),
+  completed: i18n.t('components.status_badge.k4'),
+  cancelled: i18n.t('components.status_badge.k5'),
+  pending: i18n.t('components.status_badge.k6'),
+  released: i18n.t('components.status_badge.k7'),
+  running: i18n.t('components.status_badge.k8'),
+  available: i18n.t('components.status_badge.k9'),
+  allocated: i18n.t('components.status_badge.k10'),
+  consumed: i18n.t('components.status_badge.k11'),
+  maintenance: i18n.t('components.status_badge.k12'),
+  requisitioned: i18n.t('components.status_badge.k13'),
+  sourced: i18n.t('components.status_badge.k14'),
+  satisfied: i18n.t('components.status_badge.k15'),
+  shortage: i18n.t('components.status_badge.k16'),
+  calculated: i18n.t('components.status_badge.k17'),
+  validated: i18n.t('components.status_badge.k18'),
+  adopted: i18n.t('components.status_badge.k19'),
+  superseded: i18n.t('components.status_badge.k20'),
 };
 
 interface StatusBadgeProps {

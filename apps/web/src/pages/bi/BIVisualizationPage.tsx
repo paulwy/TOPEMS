@@ -20,6 +20,7 @@ import {
   Play,
   RefreshCw,
 } from 'lucide-react';
+import i18n from '@/i18n';
 import {
   Card,
   CardContent,
@@ -42,12 +43,7 @@ import { DashboardTemplate, type StatCard } from '@/components/templates';
 import { PageContainer } from '@/components/common';
 import { fetchWidgets, createWidget, updateWidget, deleteWidget, type Widget } from '@/api/bi';
 import { logger } from '@/utils/logger';
-
-import { useTranslation } from 'react-i18next';
-
-
 import { QUERY_KEYS } from '@/lib/reactQuery';
-
 interface VisualizationComponent {
   id: string;
   type: 'bar' | 'line' | 'pie' | 'gauge' | 'table' | 'text' | 'image' | 'metric';
@@ -55,7 +51,6 @@ interface VisualizationComponent {
   icon: React.ReactNode;
   description: string;
 }
-
 interface CanvasComponent {
   id: string;
   type: string;
@@ -65,66 +60,64 @@ interface CanvasComponent {
   height: number;
   config: Record<string, unknown>;
 }
-
 const componentList: VisualizationComponent[] = [
   {
     id: 'bar',
     type: 'bar',
-    name: '柱状图',
+    name: i18n.t('bi.bi_visualization_page.k0'),
     icon: <BarChart3 size={20} />,
-    description: '展示分类数据的对比',
+    description: i18n.t('bi.bi_visualization_page.k1'),
   },
   {
     id: 'line',
     type: 'line',
-    name: '折线图',
+    name: i18n.t('bi.bi_visualization_page.k2'),
     icon: <LineChart size={20} />,
-    description: '展示数据趋势变化',
+    description: i18n.t('bi.bi_visualization_page.k3'),
   },
   {
     id: 'pie',
     type: 'pie',
-    name: '饼图',
+    name: i18n.t('bi.bi_visualization_page.k4'),
     icon: <PieChart size={20} />,
-    description: '展示数据占比分布',
+    description: i18n.t('bi.bi_visualization_page.k5'),
   },
   {
     id: 'gauge',
     type: 'gauge',
-    name: '仪表盘',
+    name: i18n.t('bi.bi_visualization_page.k6'),
     icon: <TrendingUp size={20} />,
-    description: '展示指标完成进度',
+    description: i18n.t('bi.bi_visualization_page.k7'),
   },
   {
     id: 'table',
     type: 'table',
-    name: '数据表格',
+    name: i18n.t('bi.bi_visualization_page.k8'),
     icon: <Table size={20} />,
-    description: '展示结构化数据',
+    description: i18n.t('bi.bi_visualization_page.k9'),
   },
   {
     id: 'text',
     type: 'text',
-    name: '文本框',
+    name: i18n.t('bi.bi_visualization_page.k10'),
     icon: <Type size={20} />,
-    description: '添加标题或说明文字',
+    description: i18n.t('bi.bi_visualization_page.k11'),
   },
   {
     id: 'image',
     type: 'image',
-    name: '图片',
+    name: i18n.t('bi.bi_visualization_page.k12'),
     icon: <Image size={20} />,
-    description: '添加图片元素',
+    description: i18n.t('bi.bi_visualization_page.k13'),
   },
   {
     id: 'metric',
     type: 'metric',
-    name: '指标卡',
+    name: i18n.t('bi.bi_visualization_page.k14'),
     icon: <TrendingDown size={20} />,
-    description: '展示单个关键指标',
+    description: i18n.t('bi.bi_visualization_page.k15'),
   },
 ];
-
 const widgetToCanvasComponent = (widget: Widget): CanvasComponent => ({
   id: widget.id,
   type: widget.widget_type,
@@ -134,7 +127,6 @@ const widgetToCanvasComponent = (widget: Widget): CanvasComponent => ({
   height: widget.position?.h || 150,
   config: widget.config || {},
 });
-
 const canvasComponentToWidgetData = (comp: CanvasComponent): Partial<Widget> => ({
   name: (comp.config.title as string) || comp.type,
   widget_type: comp.type,
@@ -146,9 +138,7 @@ const canvasComponentToWidgetData = (comp: CanvasComponent): Partial<Widget> => 
     h: comp.height,
   },
 });
-
 const BIVisualizationPage = () => {
-  const { t } = useTranslation();
   const queryClient = useQueryClient();
   const [searchTerm, setSearchTerm] = useState('');
   const [filterType, setFilterType] = useState<string>('all');
@@ -157,7 +147,6 @@ const BIVisualizationPage = () => {
   const [selectedComponent, setSelectedComponent] = useState<string | null>(null);
   const [, setError] = useState<string | null>(null);
   const [, setIsDragging] = useState(false);
-
   const widgetsQuery = useQuery<CanvasComponent[]>({
     queryKey: QUERY_KEYS.AD_HOC.BI_WIDGETS_BASE,
     queryFn: async () => {
@@ -170,28 +159,23 @@ const BIVisualizationPage = () => {
     },
     staleTime: 5 * 60 * 1000,
   });
-
   useEffect(() => {
     if (widgetsQuery.data) {
       setCanvasComponents(widgetsQuery.data);
     }
   }, [widgetsQuery.data]);
-
   const loading = widgetsQuery.isLoading;
-
   useEffect(() => {
     if (widgetsQuery.isError) {
       logger.error('Failed to load widgets:', widgetsQuery.error);
-      setError(t('bi.bi_visualization_page.fail'));
+      setError(i18n.t('bi.bi_visualization_page.fail'));
     } else {
       setError(null);
     }
   }, [widgetsQuery.isError, widgetsQuery.error]);
-
   const handleRefresh = () => {
     widgetsQuery.refetch();
   };
-
   const createMutation = useMutation({
     mutationFn: (data: Partial<Widget>) => createWidget(data),
     onSuccess: () => {
@@ -204,7 +188,6 @@ const BIVisualizationPage = () => {
       logger.error('Failed to create widget:', e);
     },
   });
-
   const deleteMutation = useMutation({
     mutationFn: (id: string) => deleteWidget(id),
     onSuccess: () => {
@@ -217,7 +200,6 @@ const BIVisualizationPage = () => {
       logger.error('Failed to delete widget:', e);
     },
   });
-
   const updateMutation = useMutation({
     mutationFn: ({ id, widgetData }: { id: string; widgetData: Partial<Widget> }) =>
       updateWidget(id, widgetData),
@@ -231,33 +213,28 @@ const BIVisualizationPage = () => {
       logger.error('Failed to update widget:', e);
     },
   });
-
   const actionLoading =
     createMutation.isPending || deleteMutation.isPending || updateMutation.isPending;
-
   const filteredComponents = componentList.filter((comp) => {
     const matchesSearch = comp.name.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesType = filterType === 'all' || comp.type === filterType;
     return matchesSearch && matchesType;
   });
-
   const handleDragStart = (e: React.DragEvent, component: VisualizationComponent) => {
     e.dataTransfer.setData('componentType', component.type);
     setIsDragging(true);
   };
-
   const handleDragEnd = () => {
     setIsDragging(false);
   };
-
   const handleDrop = (e: React.DragEvent) => {
     e.preventDefault();
     const componentType = e.dataTransfer.getData('componentType');
     if (componentType) {
       const newComponentData: Partial<Widget> = {
-        name: t('bi.bi_visualization_page.text_e798a0'),
+        name: i18n.t('bi.bi_visualization_page.text_e798a0'),
         widget_type: componentType,
-        config: { title: t('bi.bi_visualization_page.text_e798a0') },
+        config: { title: i18n.t('bi.bi_visualization_page.text_e798a0') },
         position: {
           x: 50,
           y: 50,
@@ -269,14 +246,12 @@ const BIVisualizationPage = () => {
     }
     setIsDragging(false);
   };
-
   const handleDeleteComponent = (id: string) => {
     deleteMutation.mutate(id);
     if (selectedComponent === id) {
       setSelectedComponent(null);
     }
   };
-
   const handleUpdateComponent = (id: string, updates: Partial<CanvasComponent>) => {
     const comp = canvasComponents.find((c) => c.id === id);
     if (!comp) return;
@@ -284,35 +259,32 @@ const BIVisualizationPage = () => {
     const widgetData = canvasComponentToWidgetData(updatedComp);
     updateMutation.mutate({ id, widgetData });
   };
-
   const getComponentIcon = (type: string) => {
     const comp = componentList.find((c) => c.type === type);
     return comp?.icon || <BoxIcon size={20} />;
   };
-
   // 构建统计数据卡片
   const statsCards: StatCard[] = [
     {
       id: 'total-components',
-      title: t('bi.bi_visualization_page.text_c95a1a'),
+      title: i18n.t('bi.bi_visualization_page.text_c95a1a'),
       value: canvasComponents.length,
       icon: <BoxIcon size={24} />,
       color: 'primary',
     },
     {
       id: 'component-types',
-      title: t('bi.bi_visualization_page.type'),
+      title: i18n.t('bi.bi_visualization_page.type'),
       value: new Set(canvasComponents.map((c) => c.type)).size,
       icon: <Settings size={24} />,
       color: 'info',
     },
   ];
-
   if (loading) {
     return (
       <PageContainer
-        title={t('bi.bi_visualization_page.edit')}
-        subtitle={t('bi.bi_visualization_page.create')}
+        title={i18n.t('bi.bi_visualization_page.edit')}
+        subtitle={i18n.t('bi.bi_visualization_page.create')}
         padding={false}
         maxWidth={false}
       >
@@ -320,9 +292,9 @@ const BIVisualizationPage = () => {
           title=''
           subtitle=''
           breadcrumbs={[
-            { label: t('bi.bi_visualization_page.home'), href: '/dashboard' },
+            { label: i18n.t('bi.bi_visualization_page.home'), href: '/dashboard' },
             { label: 'BI' },
-            { label: t('bi.bi_visualization_page.edit_1') },
+            { label: i18n.t('bi.bi_visualization_page.edit_1') },
           ]}
           loading={true}
         >
@@ -361,11 +333,10 @@ const BIVisualizationPage = () => {
       </PageContainer>
     );
   }
-
   return (
     <PageContainer
-      title={t('bi.bi_visualization_page.edit')}
-      subtitle={t('bi.bi_visualization_page.create')}
+      title={i18n.t('bi.bi_visualization_page.edit')}
+      subtitle={i18n.t('bi.bi_visualization_page.create')}
       padding={false}
       maxWidth={false}
     >
@@ -373,9 +344,9 @@ const BIVisualizationPage = () => {
         title=''
         subtitle=''
         breadcrumbs={[
-          { label: t('bi.bi_visualization_page.home'), href: '/dashboard' },
+          { label: i18n.t('bi.bi_visualization_page.home'), href: '/dashboard' },
           { label: 'BI' },
-          { label: t('bi.bi_visualization_page.edit_1') },
+          { label: i18n.t('bi.bi_visualization_page.edit_1') },
         ]}
         stats={statsCards}
         loading={loading}
@@ -384,26 +355,26 @@ const BIVisualizationPage = () => {
         <Box sx={{ display: 'flex', gap: 3, height: 'calc(100vh - 280px)' }}>
           <Card sx={{ width: 280, display: 'flex', flexDirection: 'column' }}>
             <CardHeader
-              title={t('bi.bi_visualization_page.list')}
+              title={i18n.t('bi.bi_visualization_page.list')}
               avatar={<Settings size={20} />}
               action={
                 <Box sx={{ display: 'flex', gap: 0.5, pr: 1 }}>
-                  <Tooltip title={t('bi.bi_visualization_page.text_90581a')}>
+                  <Tooltip title={i18n.t('bi.bi_visualization_page.text_90581a')}>
                     <IconButton
                       size='small'
                       onClick={() => setViewMode('grid')}
                       color={viewMode === 'grid' ? 'primary' : 'default'}
-                      aria-label='网格'
+                      aria-label={i18n.t('bi.bi_visualization_page.k16')}
                     >
                       <Grid3X3 size={16} />
                     </IconButton>
                   </Tooltip>
-                  <Tooltip title={t('bi.bi_visualization_page.list_1')}>
+                  <Tooltip title={i18n.t('bi.bi_visualization_page.list_1')}>
                     <IconButton
                       size='small'
                       onClick={() => setViewMode('list')}
                       color={viewMode === 'list' ? 'primary' : 'default'}
-                      aria-label='列表'
+                      aria-label={i18n.t('bi.bi_visualization_page.k17')}
                     >
                       <List size={16} />
                     </IconButton>
@@ -413,7 +384,7 @@ const BIVisualizationPage = () => {
             />
             <CardContent sx={{ flex: 1, overflow: 'auto' }}>
               <TextField
-                placeholder={t('bi.bi_visualization_page.search')}
+                placeholder={i18n.t('bi.bi_visualization_page.search')}
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 size='small'
@@ -436,33 +407,30 @@ const BIVisualizationPage = () => {
                 fullWidth
                 sx={{ mb: 2 }}
               >
-                <InputLabel>组件类型</InputLabel>
+                <InputLabel>{i18n.t('bi.bi_visualization_page.k18')}</InputLabel>
                 <Select
                   value={filterType}
-                  label={t('bi.bi_visualization_page.type')}
+                  label={i18n.t('bi.bi_visualization_page.type')}
                   onChange={(e) => setFilterType(e.target.value)}
                 >
-                  <MenuItem value='all'>全部类型</MenuItem>
-                  <MenuItem value='bar'>柱状图</MenuItem>
-                  <MenuItem value='line'>折线图</MenuItem>
-                  <MenuItem value='pie'>饼图</MenuItem>
-                  <MenuItem value='gauge'>仪表盘</MenuItem>
-                  <MenuItem value='table'>表格</MenuItem>
-                  <MenuItem value='text'>文本</MenuItem>
-                  <MenuItem value='metric'>指标卡</MenuItem>
+                  <MenuItem value='all'>{i18n.t('bi.bi_visualization_page.k19')}</MenuItem>
+                  <MenuItem value='bar'>{i18n.t('bi.bi_visualization_page.k20')}</MenuItem>
+                  <MenuItem value='line'>{i18n.t('bi.bi_visualization_page.k21')}</MenuItem>
+                  <MenuItem value='pie'>{i18n.t('bi.bi_visualization_page.k22')}</MenuItem>
+                  <MenuItem value='gauge'>{i18n.t('bi.bi_visualization_page.k23')}</MenuItem>
+                  <MenuItem value='table'>{i18n.t('bi.bi_visualization_page.k24')}</MenuItem>
+                  <MenuItem value='text'>{i18n.t('bi.bi_visualization_page.k25')}</MenuItem>
+                  <MenuItem value='metric'>{i18n.t('bi.bi_visualization_page.k26')}</MenuItem>
                 </Select>
               </FormControl>
-
               <Divider sx={{ my: 2 }} />
-
               <Typography
                 variant='caption'
                 color='text.secondary'
                 sx={{ mb: 1, display: 'block' }}
               >
-                拖拽组件到画布
+                {i18n.t('pages.bi_visualization_page.k0')}
               </Typography>
-
               <Box
                 sx={{
                   display: viewMode === 'grid' ? 'grid' : 'flex',
@@ -522,11 +490,10 @@ const BIVisualizationPage = () => {
               </Box>
             </CardContent>
           </Card>
-
           <Card sx={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
             <CardHeader
-              title={t('bi.bi_visualization_page.text_6cfd0e')}
-              subheader={t('bi.bi_visualization_page.edit_2')}
+              title={i18n.t('bi.bi_visualization_page.text_6cfd0e')}
+              subheader={i18n.t('bi.bi_visualization_page.edit_2')}
               action={
                 <Box sx={{ display: 'flex', gap: 1, pr: 2 }}>
                   <Button
@@ -534,14 +501,14 @@ const BIVisualizationPage = () => {
                     size='small'
                     startIcon={<Play size={16} />}
                   >
-                    预览
+                    {i18n.t('pages.bi_visualization_page.k1')}
                   </Button>
                   <Button
                     variant='contained'
                     size='small'
                     startIcon={<Save size={16} />}
                   >
-                    保存
+                    {i18n.t('pages.bi_visualization_page.k2')}
                   </Button>
                 </Box>
               }
@@ -575,12 +542,12 @@ const BIVisualizationPage = () => {
                     size={48}
                     sx={{ mb: 2, opacity: 0.5 }}
                   />
-                  <Typography variant='body1'>将组件拖拽到此处</Typography>
+                  <Typography variant='body1'>{i18n.t('bi.bi_visualization_page.k27')}</Typography>
                   <Typography
                     variant='body2'
                     color='text.secondary'
                   >
-                    从左侧组件列表拖拽组件到画布上进行编辑
+                    {i18n.t('pages.bi_visualization_page.k3')}
                   </Typography>
                 </Box>
               ) : (
@@ -630,7 +597,7 @@ const BIVisualizationPage = () => {
                             e.stopPropagation();
                             handleDeleteComponent(comp.id);
                           }}
-                          aria-label='删除'
+                          aria-label={i18n.t('bi.bi_visualization_page.k28')}
                         >
                           <Trash2 size={14} />
                         </IconButton>
@@ -648,14 +615,14 @@ const BIVisualizationPage = () => {
                           variant='caption'
                           color='text.secondary'
                         >
-                          {comp.type === 'bar' && t('bi.bi_visualization_page.text_7c8ee6')}
-                          {comp.type === 'line' && t('bi.bi_visualization_page.text_c9c9bd')}
-                          {comp.type === 'pie' && t('bi.bi_visualization_page.text_d5e33d')}
-                          {comp.type === 'gauge' && t('bi.bi_visualization_page.text_3fa8b3')}
-                          {comp.type === 'table' && t('bi.bi_visualization_page.text_01c85e')}
-                          {comp.type === 'text' && t('bi.bi_visualization_page.content')}
-                          {comp.type === 'image' && t('bi.bi_visualization_page.text_20def7')}
-                          {comp.type === 'metric' && `数值: ${comp.config.value || 0}`}
+                          {comp.type === 'bar' && i18n.t('bi.bi_visualization_page.text_7c8ee6')}
+                          {comp.type === 'line' && i18n.t('bi.bi_visualization_page.text_c9c9bd')}
+                          {comp.type === 'pie' && i18n.t('bi.bi_visualization_page.text_d5e33d')}
+                          {comp.type === 'gauge' && i18n.t('bi.bi_visualization_page.text_3fa8b3')}
+                          {comp.type === 'table' && i18n.t('bi.bi_visualization_page.text_01c85e')}
+                          {comp.type === 'text' && i18n.t('bi.bi_visualization_page.content')}
+                          {comp.type === 'image' && i18n.t('bi.bi_visualization_page.text_20def7')}
+                          {comp.type === 'metric' && `${i18n.t('pages.bi_visualization_page.k0')}${comp.config.value || 0}`}
                         </Typography>
                       </Box>
                     </Box>
@@ -664,9 +631,8 @@ const BIVisualizationPage = () => {
               )}
             </CardContent>
           </Card>
-
           <Card sx={{ width: 300, display: 'flex', flexDirection: 'column' }}>
-            <CardHeader title={t('bi.bi_visualization_page.text_6aab38')} />
+            <CardHeader title={i18n.t('bi.bi_visualization_page.text_6aab38')} />
             <CardContent sx={{ flex: 1, overflow: 'auto' }}>
               {selectedComponent ? (
                 <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
@@ -680,7 +646,7 @@ const BIVisualizationPage = () => {
                             variant='caption'
                             color='text.secondary'
                           >
-                            组件类型
+                            {i18n.t('pages.bi_visualization_page.k4')}
                           </Typography>
                           <Typography
                             variant='body2'
@@ -690,7 +656,7 @@ const BIVisualizationPage = () => {
                           </Typography>
                         </Box>
                         <TextField
-                          label={t('bi.bi_visualization_page.title')}
+                          label={i18n.t('bi.bi_visualization_page.title')}
                           size='small'
                           fullWidth
                           value={comp.config.title || ''}
@@ -717,7 +683,7 @@ const BIVisualizationPage = () => {
                             color='text.secondary'
                             sx={{ mb: 1, display: 'block' }}
                           >
-                            位置与尺寸
+                            {i18n.t('pages.bi_visualization_page.k5')}
                           </Typography>
                           <Box
                             sx={{
@@ -757,7 +723,7 @@ const BIVisualizationPage = () => {
                               }}
                             />
                             <TextField
-                              label={t('bi.bi_visualization_page.text_c28479')}
+                              label={i18n.t('bi.bi_visualization_page.text_c28479')}
                               size='small'
                               type='number'
                               value={comp.width}
@@ -772,7 +738,7 @@ const BIVisualizationPage = () => {
                               }}
                             />
                             <TextField
-                              label={t('bi.bi_visualization_page.text_c1df04')}
+                              label={i18n.t('bi.bi_visualization_page.text_c1df04')}
                               size='small'
                               type='number'
                               value={comp.height}
@@ -807,7 +773,7 @@ const BIVisualizationPage = () => {
                     size={32}
                     sx={{ mb: 1, opacity: 0.5 }}
                   />
-                  <Typography variant='body2'>选择组件以编辑属性</Typography>
+                  <Typography variant='body2'>{i18n.t('bi.bi_visualization_page.k29')}</Typography>
                 </Box>
               )}
             </CardContent>
@@ -817,5 +783,4 @@ const BIVisualizationPage = () => {
     </PageContainer>
   );
 };
-
 export default BIVisualizationPage;

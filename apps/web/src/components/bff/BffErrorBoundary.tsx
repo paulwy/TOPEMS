@@ -33,6 +33,7 @@ import {
   Alert,
   AlertTitle,
 } from '@mui/material';
+import i18n from '@/i18n';
 import {
   AlertCircle,
   RefreshCw,
@@ -223,7 +224,7 @@ export function reportError(classified: ClassifiedError, retryCount = 0, resolve
       const trimmed = records.slice(0, MAX_ERROR_RECORDS);
       localStorage.setItem(ERROR_STORAGE_KEY, JSON.stringify(trimmed));
     } catch (err) {
-      boundaryLogger.warn('写入错误记录失败:', err);
+      boundaryLogger.warn(i18n.t('components.bff_error_boundary.k0'), err);
     }
   }
 
@@ -232,7 +233,7 @@ export function reportError(classified: ClassifiedError, retryCount = 0, resolve
     try {
       listener(record);
     } catch (err) {
-      boundaryLogger.error('错误监听器执行失败:', err);
+      boundaryLogger.error(i18n.t('components.bff_error_boundary.k1'), err);
     }
   });
 
@@ -278,13 +279,13 @@ const ERROR_ICONS: Record<BffErrorType, React.ElementType> = {
 };
 
 const ERROR_LABELS: Record<BffErrorType, string> = {
-  [BffErrorType.NETWORKERROR]: '网络错误',
-  [BffErrorType.GRAPHQLERROR]: 'GraphQL 错误',
-  [BffErrorType.TIMEOUTERROR]: '请求超时',
-  [BffErrorType.AUTHERROR]: '认证失败',
-  [BffErrorType.SERVERERROR]: '服务器错误',
-  [BffErrorType.VALIDATIONERROR]: '数据校验错误',
-  [BffErrorType.UNKNOWNERROR]: '未知错误',
+  [BffErrorType.NETWORKERROR]: i18n.t('components.bff_error_boundary.k0'),
+  [BffErrorType.GRAPHQLERROR]: i18n.t('components.bff_error_boundary.graphql_2'),
+  [BffErrorType.TIMEOUTERROR]: i18n.t('components.bff_error_boundary.k1'),
+  [BffErrorType.AUTHERROR]: i18n.t('components.bff_error_boundary.k2'),
+  [BffErrorType.SERVERERROR]: i18n.t('components.bff_error_boundary.k3'),
+  [BffErrorType.VALIDATIONERROR]: i18n.t('components.bff_error_boundary.k4'),
+  [BffErrorType.UNKNOWNERROR]: i18n.t('components.bff_error_boundary.k5'),
 };
 
 const ERROR_COLORS: Record<BffErrorType, 'error' | 'warning' | 'info'> = {
@@ -396,7 +397,7 @@ export const DefaultBffErrorFallback: React.FC<BffErrorBoundaryFallbackProps> = 
             icon={false}
             sx={{ py: 0.5 }}
           >
-            系统正在尝试降级方案，可能展示缓存数据或精简功能。
+            {i18n.t('components.bff_error_boundary.k3')}
           </Alert>
         )}
 
@@ -413,7 +414,7 @@ export const DefaultBffErrorFallback: React.FC<BffErrorBoundaryFallbackProps> = 
               startIcon={<RefreshCw size={16} />}
               onClick={onRetry}
             >
-              重试
+              {i18n.t('components.bff_error_boundary.k4')}
             </Button>
           )}
           <Button
@@ -422,12 +423,12 @@ export const DefaultBffErrorFallback: React.FC<BffErrorBoundaryFallbackProps> = 
             startIcon={<Home size={16} />}
             onClick={onReset}
           >
-            重置
+            {i18n.t('components.bff_error_boundary.k5')}
           </Button>
           <IconButton
             size='small'
             onClick={() => setShowDetails((v) => !v)}
-            aria-label='切换错误详情'
+            aria-label={i18n.t('components.bff_error_boundary.k6')}
           >
             {showDetails ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
           </IconButton>
@@ -455,7 +456,7 @@ export const DefaultBffErrorFallback: React.FC<BffErrorBoundaryFallbackProps> = 
               }}
             >
               {classified.error.stack ?? classified.message}
-              {classified.componentStack ? `\n\n组件栈:\n${classified.componentStack}` : ''}
+              {classified.componentStack ? `${i18n.t('components.bff_error_boundary.nnn_6')}${classified.componentStack}` : ''}
             </Typography>
           </Box>
         </Collapse>
@@ -515,7 +516,7 @@ export class BffErrorBoundary extends Component<BffErrorBoundaryProps, BffErrorB
     const classified = classifyError(error, info.componentStack ?? undefined);
 
     boundaryLogger.error(
-      `错误边界${name ? ` [${name}]` : ''} 捕获错误 [${classified.type}]:`,
+      `错误边界${name ? ` [${name}]` : ''} ${i18n.t('components.bff_error_boundary.k9')} [${classified.type}]:`,
       error,
       info.componentStack
     );
@@ -599,7 +600,7 @@ export class BffErrorBoundary extends Component<BffErrorBoundaryProps, BffErrorB
               variant='body2'
               color='text.secondary'
             >
-              认证失败，正在跳转登录页...
+              {i18n.t('components.bff_error_boundary.k10')}
             </Typography>
           </Stack>
         </Box>

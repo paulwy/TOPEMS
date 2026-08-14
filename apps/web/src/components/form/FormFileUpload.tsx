@@ -2,6 +2,7 @@ import React from 'react';
 import { Controller, type Control, type FieldValues, type Path } from 'react-hook-form';
 import { FormControl, FormHelperText } from '@mui/material';
 import { FileUpload, type UploadFile, type FileUploadLocale } from '@topems/shared-components';
+import i18n from '@/i18n';
 
 interface FormFileUploadProps<T extends FieldValues> {
   name: Path<T>;
@@ -36,19 +37,19 @@ export function FormFileUpload<T extends FieldValues>({
       name={name}
       control={control}
       rules={{
-        required: required ? '请上传至少一个文件' : false,
+        required: required ? i18n.t('components.form_file_upload.k0') : false,
         validate: (value: UploadFile[] | undefined) => {
           if (!required) return true;
           if (!value || value.length === 0) {
-            return '请上传至少一个文件';
+            return i18n.t('components.form_file_upload.k1');
           }
           const hasError = value.some((f) => f.status === 'error');
           if (hasError) {
-            return '存在上传失败的文件，请检查';
+            return i18n.t('components.form_file_upload.k2');
           }
           const allCompleted = value.every((f) => f.status === 'completed');
           if (!allCompleted) {
-            return '请等待所有文件上传完成';
+            return i18n.t('components.form_file_upload.k3');
           }
           return true;
         },

@@ -11,52 +11,45 @@ import { useQmsMock, type QmsMockShape } from '@/api/qms/_mock';
 import { StatusBadge } from '@/components/qms/StatusBadge';
 import { FSMActionButtons } from '@/components/qms/FSMActionButtons';
 import { QMS_PATHS } from '@/modules/qms/config';
-
+import i18n from '@/i18n';
 const SEVERITY_LABELS: Record<string, string> = {
-  critical: '严重',
-  major: '重大',
-  minor: '一般',
-  low: '轻微',
+  critical: i18n.t('qms.qms_issue_detail_page.k0'),
+  major: i18n.t('qms.qms_issue_detail_page.k1'),
+  minor: i18n.t('qms.qms_issue_detail_page.k2'),
+  low: i18n.t('qms.qms_issue_detail_page.k3'),
 };
-
 const TABS = [
-  { id: 'info', label: '基本信息' },
-  { id: 'actions', label: '纠正措施' },
+  { id: 'info', label: i18n.t('qms.qms_issue_detail_page.k4') },
+  { id: 'actions', label: i18n.t('qms.qms_issue_detail_page.k5') },
 ] as const;
-
 export default function QmsIssueDetailPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { data } = useQmsMock<QmsMockShape>();
   const [activeTab, setActiveTab] = useState<(typeof TABS)[number]['id']>('info');
-
   const issue = useMemo(() => {
     const list = data.issues ?? [];
     return list.find((i) => i.id === id) ?? list[0];
   }, [data.issues, id]);
-
   const improvements = useMemo(() => data.improvements ?? [], [data.improvements]);
   const eightDReports = useMemo(() => data.eightDReports ?? [], [data.eightDReports]);
-
   if (!issue) {
     return (
       <div className='p-4'>
-        <p className='text-gray-600'>未找到质量问题数据。</p>
+        <p className='text-gray-600'>{i18n.t('qms.qms_issue_detail_page.k6')}</p>
         <button
           onClick={() => navigate(QMS_PATHS.nonconformance)}
           className='mt-2 text-blue-600 underline'
         >
-          返回列表
+          {i18n.t('pages.qms_issue_detail_page.k0')}
         </button>
       </div>
     );
   }
-
   const handleAction = (targetStatus: string, requiresApproval: boolean) => {
     void targetStatus;
     void requiresApproval;
   };
-
   return (
     <div className='space-y-4 p-4'>
       <div className='flex items-center justify-between'>
@@ -65,7 +58,7 @@ export default function QmsIssueDetailPage() {
             onClick={() => navigate(QMS_PATHS.nonconformance)}
             className='mb-2 text-sm text-blue-600 hover:underline'
           >
-            ← 返回质量问题列表
+            {i18n.t('pages.qms_issue_detail_page.k1')}
           </button>
           <h1 className='text-2xl font-bold'>{issue.issue_no}</h1>
           <p className='mt-1 text-sm text-gray-500'>{issue.title}</p>
@@ -75,16 +68,14 @@ export default function QmsIssueDetailPage() {
           status={issue.status}
         />
       </div>
-
       <div className='rounded-lg border p-4'>
-        <p className='mb-3 text-sm font-semibold text-gray-700'>状态机操作</p>
+        <p className='mb-3 text-sm font-semibold text-gray-700'>{i18n.t('qms.qms_issue_detail_page.k7')}</p>
         <FSMActionButtons
           fsm='issue'
           currentStatus={issue.status}
           onAction={handleAction}
         />
       </div>
-
       <div className='flex gap-2 border-b'>
         {TABS.map((t) => (
           <button
@@ -100,48 +91,47 @@ export default function QmsIssueDetailPage() {
           </button>
         ))}
       </div>
-
       {activeTab === 'info' && (
         <div className='space-y-4'>
           <div className='grid grid-cols-1 gap-4 md:grid-cols-2'>
             <Field
-              label='问题编号'
+              label={i18n.t('qms.qms_issue_detail_page.k8')}
               value={issue.issue_no}
             />
             <Field
-              label='严重度'
+              label={i18n.t('qms.qms_issue_detail_page.k9')}
               value={SEVERITY_LABELS[issue.severity] ?? issue.severity}
             />
             <Field
-              label='分类'
+              label={i18n.t('qms.qms_issue_detail_page.k10')}
               value={issue.category}
             />
             <Field
-              label='负责人'
+              label={i18n.t('qms.qms_issue_detail_page.k11')}
               value={issue.assignee}
             />
             <Field
-              label='截止日期'
+              label={i18n.t('qms.qms_issue_detail_page.k12')}
               value={issue.due_date ? new Date(issue.due_date).toLocaleDateString('zh-CN') : '-'}
             />
             <Field
-              label='关闭时间'
+              label={i18n.t('qms.qms_issue_detail_page.k13')}
               value={issue.closed_at ? new Date(issue.closed_at).toLocaleString('zh-CN') : '-'}
             />
           </div>
           <div className='rounded-lg border p-4'>
-            <p className='text-xs text-gray-500'>问题描述</p>
+            <p className='text-xs text-gray-500'>{i18n.t('qms.qms_issue_detail_page.k14')}</p>
             <p className='mt-1 text-sm leading-relaxed'>{issue.description}</p>
           </div>
           {issue.resolution && (
             <div className='rounded-lg border border-green-200 bg-green-50 p-4'>
-              <p className='text-xs text-green-700'>解决方案</p>
+              <p className='text-xs text-green-700'>{i18n.t('qms.qms_issue_detail_page.k15')}</p>
               <p className='mt-1 text-sm leading-relaxed text-green-800'>{issue.resolution}</p>
             </div>
           )}
           {eightDReports.length > 0 && (
             <div className='rounded-lg border p-4'>
-              <p className='mb-2 text-sm font-semibold text-gray-700'>关联 8D 报告</p>
+              <p className='mb-2 text-sm font-semibold text-gray-700'>{i18n.t('qms.qms_issue_detail_page.8d_16')}</p>
               <p className='text-sm text-gray-600'>
                 共 {eightDReports.length} 个 8D 报告，可在 8D 报告列表中查看详情。
               </p>
@@ -149,20 +139,19 @@ export default function QmsIssueDetailPage() {
           )}
         </div>
       )}
-
       {activeTab === 'actions' && (
         <div className='rounded-lg border p-4'>
-          <h3 className='mb-3 font-semibold'>纠正措施列表</h3>
+          <h3 className='mb-3 font-semibold'>{i18n.t('qms.qms_issue_detail_page.k17')}</h3>
           {improvements.length === 0 ? (
-            <p className='text-sm text-gray-500'>暂无纠正措施</p>
+            <p className='text-sm text-gray-500'>{i18n.t('qms.qms_issue_detail_page.k18')}</p>
           ) : (
             <table className='w-full text-sm'>
               <thead>
                 <tr className='border-b text-left text-gray-600'>
-                  <th className='py-2 pr-4'>编号</th>
-                  <th className='py-2 pr-4'>标题</th>
-                  <th className='py-2 pr-4'>负责人</th>
-                  <th className='py-2 pr-4'>状态</th>
+                  <th className='py-2 pr-4'>{i18n.t('qms.qms_issue_detail_page.k19')}</th>
+                  <th className='py-2 pr-4'>{i18n.t('qms.qms_issue_detail_page.k20')}</th>
+                  <th className='py-2 pr-4'>{i18n.t('qms.qms_issue_detail_page.k21')}</th>
+                  <th className='py-2 pr-4'>{i18n.t('qms.qms_issue_detail_page.k22')}</th>
                 </tr>
               </thead>
               <tbody>
@@ -185,7 +174,6 @@ export default function QmsIssueDetailPage() {
     </div>
   );
 }
-
 function Field({ label, value }: { label: string; value: string }) {
   return (
     <div className='rounded-lg border p-3'>

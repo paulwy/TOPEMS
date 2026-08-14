@@ -126,7 +126,7 @@ const EhsDrillPage: React.FC = () => {
                 variant='body2'
                 sx={{ color: 'slate.600', fontSize: '0.875rem' }}
               >
-                演练总数
+                {i18n.t('pages.ehs_drill_page.k0')}
               </Typography>
               <Typography
                 variant='h5'
@@ -159,7 +159,7 @@ const EhsDrillPage: React.FC = () => {
                 variant='body2'
                 sx={{ color: 'slate.600', fontSize: '0.875rem' }}
               >
-                已完成
+                {i18n.t('pages.ehs_drill_page.k1')}
               </Typography>
               <Typography
                 variant='h5'
@@ -192,7 +192,7 @@ const EhsDrillPage: React.FC = () => {
                 variant='body2'
                 sx={{ color: 'slate.600', fontSize: '0.875rem' }}
               >
-                计划/进行中
+                {i18n.t('pages.ehs_drill_page.k2')}
               </Typography>
               <Typography
                 variant='h5'
@@ -232,7 +232,7 @@ const EhsDrillPage: React.FC = () => {
             component='span'
             sx={{ color: 'text.secondary', fontSize: '0.875rem' }}
           >
-            演练编号
+            {i18n.t('pages.ehs_drill_page.k3')}
           </Box>
           <Box sx={{ fontWeight: 500 }}>{drill.drill_no}</Box>
         </Box>
@@ -241,7 +241,7 @@ const EhsDrillPage: React.FC = () => {
             component='span'
             sx={{ color: 'text.secondary', fontSize: '0.875rem' }}
           >
-            演练名称
+            {i18n.t('pages.ehs_drill_page.k4')}
           </Box>
           <Box>{drill.drill_name}</Box>
         </Box>
@@ -250,7 +250,7 @@ const EhsDrillPage: React.FC = () => {
             component='span'
             sx={{ color: 'text.secondary', fontSize: '0.875rem' }}
           >
-            演练日期
+            {i18n.t('pages.ehs_drill_page.k5')}
           </Box>
           <Box>{drill.drill_date || '-'}</Box>
         </Box>
@@ -259,7 +259,7 @@ const EhsDrillPage: React.FC = () => {
             component='span'
             sx={{ color: 'text.secondary', fontSize: '0.875rem' }}
           >
-            时长(小时)
+            {i18n.t('pages.ehs_drill_page.k6')}
           </Box>
           <Box>{drill.duration_hours ?? '-'}</Box>
         </Box>
@@ -268,7 +268,7 @@ const EhsDrillPage: React.FC = () => {
             component='span'
             sx={{ color: 'text.secondary', fontSize: '0.875rem' }}
           >
-            地点
+            {i18n.t('pages.ehs_drill_page.k7')}
           </Box>
           <Box>{drill.location || '-'}</Box>
         </Box>
@@ -277,7 +277,7 @@ const EhsDrillPage: React.FC = () => {
             component='span'
             sx={{ color: 'text.secondary', fontSize: '0.875rem' }}
           >
-            状态
+            {i18n.t('pages.ehs_drill_page.k8')}
           </Box>
           <Box sx={{ mt: 0.5 }}>
             <Chip
@@ -296,7 +296,7 @@ const EhsDrillPage: React.FC = () => {
             component='span'
             sx={{ color: 'text.secondary', fontSize: '0.875rem' }}
           >
-            参与人员
+            {i18n.t('pages.ehs_drill_page.k9')}
           </Box>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
             <Users style={{ width: 16, height: 16 }} />
@@ -308,7 +308,7 @@ const EhsDrillPage: React.FC = () => {
             component='span'
             sx={{ color: 'text.secondary', fontSize: '0.875rem' }}
           >
-            演练评估
+            {i18n.t('pages.ehs_drill_page.k10')}
           </Box>
           <Box>{drill.summary || '-'}</Box>
         </Box>
@@ -317,7 +317,7 @@ const EhsDrillPage: React.FC = () => {
             component='span'
             sx={{ color: 'text.secondary', fontSize: '0.875rem' }}
           >
-            发现问题
+            {i18n.t('pages.ehs_drill_page.k11')}
           </Box>
           <Box>{drill.issues_found || '-'}</Box>
         </Box>
@@ -326,7 +326,7 @@ const EhsDrillPage: React.FC = () => {
             component='span'
             sx={{ color: 'text.secondary', fontSize: '0.875rem' }}
           >
-            改进措施
+            {i18n.t('pages.ehs_drill_page.k12')}
           </Box>
           <Box>{drill.improvements || '-'}</Box>
         </Box>

@@ -1,6 +1,8 @@
 import React, { useState, useRef, type ChangeEvent } from 'react';
 import { Box, TextField, FormLabel, Divider, Typography, Button } from '@mui/material';
 import { Plus, Trash2, Save, ZoomIn, ZoomOut, Move } from 'lucide-react';
+import { designTokens } from '@topems/tokens';
+import i18n from '@/i18n';
 
 type NodeType = 'start' | 'task' | 'approval' | 'condition' | 'end';
 
@@ -37,9 +39,9 @@ interface WorkflowDesignerProps {
 
 export const WorkflowDesigner: React.FC<WorkflowDesignerProps> = ({
   initialNodes = [
-    { id: 'node-1', type: 'start', x: 100, y: 200, label: '开始' },
-    { id: 'node-2', type: 'task', x: 300, y: 200, label: '任务' },
-    { id: 'node-3', type: 'end', x: 500, y: 200, label: '结束' },
+    { id: 'node-1', type: 'start', x: 100, y: 200, label: i18n.t('components.workflow_designer.k0') },
+    { id: 'node-2', type: 'task', x: 300, y: 200, label: i18n.t('components.workflow_designer.k1') },
+    { id: 'node-3', type: 'end', x: 500, y: 200, label: i18n.t('components.workflow_designer.k2') },
   ],
   initialEdges = [
     { id: 'edge-1', source: 'node-1', target: 'node-2' },
@@ -95,7 +97,7 @@ export const WorkflowDesigner: React.FC<WorkflowDesignerProps> = ({
       type,
       x: pan.x + 200,
       y: pan.y + 200,
-      label: type === 'start' ? '开始' : type === 'end' ? '结束' : '新节点',
+      label: type === 'start' ? i18n.t('components.workflow_designer.k5') : type === 'end' ? i18n.t('components.workflow_designer.k4') : i18n.t('components.workflow_designer.k3'),
     };
     setNodes([...nodes, newNode]);
     setSelectedNode(newNode);
@@ -184,7 +186,7 @@ export const WorkflowDesigner: React.FC<WorkflowDesignerProps> = ({
           padding: 2,
           backgroundColor: 'common.white',
           borderBottom: '1px solid grey.200',
-          boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)',
+          boxShadow: `0 1px 3px ${designTokens.colors.action.selected}`,
           zIndex: 10,
         }}
       >
@@ -196,7 +198,7 @@ export const WorkflowDesigner: React.FC<WorkflowDesignerProps> = ({
             marginRight: 2,
           }}
         >
-          流程设计器
+          {i18n.t('components.workflow_designer.k0')}
         </Typography>
 
         <Divider
@@ -214,14 +216,14 @@ export const WorkflowDesigner: React.FC<WorkflowDesignerProps> = ({
               startIcon={<Plus sx={{ width: 16, height: 16 }} />}
             >
               {type === 'start'
-                ? '开始'
+                ? i18n.t('components.workflow_designer.k6')
                 : type === 'task'
-                  ? '任务'
+                  ? i18n.t('components.workflow_designer.k7')
                   : type === 'approval'
-                    ? '审批'
+                    ? i18n.t('components.workflow_designer.k8')
                     : type === 'condition'
-                      ? '条件'
-                      : '结束'}
+                      ? i18n.t('components.workflow_designer.k9')
+                      : i18n.t('components.workflow_designer.k10')}
             </Button>
           ))}
         </Box>
@@ -370,7 +372,7 @@ export const WorkflowDesigner: React.FC<WorkflowDesignerProps> = ({
                     style={{
                       boxShadow:
                         selectedNode?.id === node.id
-                          ? '0 10px 15px -3px rgba(0, 0, 0, 0.1)'
+                          ? `0 10px 15px -3px ${designTokens.colors.action.selected}`
                           : 'none',
                       transition: 'all 0.2s',
                     }}
@@ -457,13 +459,13 @@ export const WorkflowDesigner: React.FC<WorkflowDesignerProps> = ({
           }}
         >
           <Box sx={{ padding: 2, borderBottom: '1px solid grey.200' }}>
-            <Typography sx={{ fontWeight: 'semibold', color: 'grey.800' }}>属性</Typography>
+            <Typography sx={{ fontWeight: 'semibold', color: 'grey.800' }}>{i18n.t('components.workflow_designer.k11')}</Typography>
           </Box>
           <Box sx={{ padding: 2, flex: 1, overflowY: 'auto' }}>
             {selectedNode ? (
               <Box sx={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
                 <Box>
-                  <FormLabel sx={{ color: 'text.secondary' }}>节点 ID</FormLabel>
+                  <FormLabel sx={{ color: 'text.secondary' }}>{i18n.t('components.workflow_designer.id_12')}</FormLabel>
                   <TextField
                     value={selectedNode.id}
                     disabled
@@ -475,12 +477,12 @@ export const WorkflowDesigner: React.FC<WorkflowDesignerProps> = ({
                   />
                 </Box>
                 <Box>
-                  <FormLabel sx={{ color: 'text.secondary' }}>类型</FormLabel>
+                  <FormLabel sx={{ color: 'text.secondary' }}>{i18n.t('components.workflow_designer.k13')}</FormLabel>
                   <Box
                     sx={{
                       marginTop: 1,
                       fontSize: 14,
-                      padding: '4px 8px',
+                      padding: `${designTokens.spacing.xs} 8px`,
                       borderRadius: 1,
                       backgroundColor: 'grey.100',
                     }}
@@ -489,7 +491,7 @@ export const WorkflowDesigner: React.FC<WorkflowDesignerProps> = ({
                   </Box>
                 </Box>
                 <Box>
-                  <FormLabel sx={{ color: 'text.secondary' }}>标签</FormLabel>
+                  <FormLabel sx={{ color: 'text.secondary' }}>{i18n.t('components.workflow_designer.k14')}</FormLabel>
                   <TextField
                     value={selectedNode.label}
                     onChange={(e: ChangeEvent<HTMLInputElement>) =>
@@ -500,7 +502,7 @@ export const WorkflowDesigner: React.FC<WorkflowDesignerProps> = ({
                   />
                 </Box>
                 <Box>
-                  <FormLabel sx={{ color: 'text.secondary' }}>描述</FormLabel>
+                  <FormLabel sx={{ color: 'text.secondary' }}>{i18n.t('components.workflow_designer.k15')}</FormLabel>
                   <TextField
                     value={selectedNode.description || ''}
                     onChange={(e: ChangeEvent<HTMLInputElement>) =>
@@ -532,7 +534,7 @@ export const WorkflowDesigner: React.FC<WorkflowDesignerProps> = ({
                     opacity: 0.5,
                   }}
                 />
-                <Typography sx={{ fontSize: '0.875rem' }}>选择一个节点来编辑属性</Typography>
+                <Typography sx={{ fontSize: '0.875rem' }}>{i18n.t('components.workflow_designer.k16')}</Typography>
               </Box>
             )}
           </Box>

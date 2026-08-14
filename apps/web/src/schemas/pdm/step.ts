@@ -1,9 +1,10 @@
 import type { EntitySchema } from '@/schema';
+import i18n from '@/i18n';
 
 export const stepSchema: EntitySchema = {
   entity: 'pdm_step',
-  title: '工序步骤',
-  description: '管理生产工序步骤，包括步骤编号、名称、排序、耗时、所需设备、状态等',
+  title: i18n.t('pdm.step.k0'),
+  description: i18n.t('pdm.step.k1'),
 
   api: {
     module: 'pdm',
@@ -13,7 +14,7 @@ export const stepSchema: EntitySchema = {
   fields: [
     {
       name: 'step_no',
-      label: '步骤编号',
+      label: i18n.t('pdm.step.k2'),
       type: 'text',
       required: true,
       readonlyOnEdit: true,
@@ -22,7 +23,7 @@ export const stepSchema: EntitySchema = {
     },
     {
       name: 'name',
-      label: '步骤名称',
+      label: i18n.t('pdm.step.k3'),
       type: 'text',
       required: true,
       sortable: true,
@@ -30,15 +31,15 @@ export const stepSchema: EntitySchema = {
     },
     {
       name: 'process_id',
-      label: '所属工艺',
+      label: i18n.t('pdm.step.k4'),
       type: 'text',
       required: true,
       showInList: false,
-      placeholder: '请输入工艺ID',
+      placeholder: i18n.t('pdm.step.id_5'),
     },
     {
       name: 'sort_order',
-      label: '排序序号',
+      label: i18n.t('pdm.step.k6'),
       type: 'number',
       defaultValue: 1,
       sortable: true,
@@ -46,39 +47,39 @@ export const stepSchema: EntitySchema = {
     },
     {
       name: 'duration_hours',
-      label: '耗时(小时)',
+      label: i18n.t('pdm.step.k7'),
       type: 'number',
       listWidth: 120,
     },
     {
       name: 'equipment_required',
-      label: '所需设备',
+      label: i18n.t('pdm.step.k8'),
       type: 'text',
       listWidth: 160,
     },
     {
       name: 'status',
-      label: '状态',
+      label: i18n.t('pdm.step.k9'),
       type: 'select',
       defaultValue: 'active',
       options: {
         type: 'static',
         options: [
-          { value: 'active', label: '启用' },
-          { value: 'inactive', label: '禁用' },
+          { value: 'active', label: i18n.t('pdm.step.k10') },
+          { value: 'inactive', label: i18n.t('pdm.step.k11') },
         ],
       },
       listWidth: 100,
     },
     {
       name: 'description',
-      label: '描述',
+      label: i18n.t('pdm.step.k12'),
       type: 'textarea',
       showInList: false,
     },
     {
       name: 'created_at',
-      label: '创建时间',
+      label: i18n.t('pdm.step.k13'),
       type: 'datetime',
       readonly: true,
       sortable: true,
@@ -98,19 +99,19 @@ export const stepSchema: EntitySchema = {
         inactive: 'error',
       },
       labelMap: {
-        active: '启用',
-        inactive: '禁用',
+        active: i18n.t('pdm.step.k14'),
+        inactive: i18n.t('pdm.step.k15'),
       },
     },
     filters: [
       {
         id: 'status',
-        label: '状态',
+        label: i18n.t('pdm.step.k16'),
         type: 'select',
         options: [
-          { label: '全部状态', value: 'all' },
-          { label: '启用', value: 'active' },
-          { label: '禁用', value: 'inactive' },
+          { label: i18n.t('pdm.step.k17'), value: 'all' },
+          { label: i18n.t('pdm.step.k18'), value: 'active' },
+          { label: i18n.t('pdm.step.k19'), value: 'inactive' },
         ],
       },
     ],
@@ -120,21 +121,21 @@ export const stepSchema: EntitySchema = {
 
   formSections: [
     {
-      title: '基本信息',
+      title: i18n.t('pdm.step.k20'),
       fields: ['step_no', 'name', 'process_id', 'sort_order'],
     },
     {
-      title: '生产信息',
+      title: i18n.t('pdm.step.k21'),
       fields: ['duration_hours', 'equipment_required', 'status'],
     },
     {
-      title: '其他',
+      title: i18n.t('pdm.step.k22'),
       fields: ['description'],
     },
   ],
 
   formColCount: 2,
-  createTitle: '新增工序步骤',
-  editTitle: '编辑工序步骤',
-  detailTitle: '工序步骤详情',
+  createTitle: i18n.t('pdm.step.k23'),
+  editTitle: i18n.t('pdm.step.k24'),
+  detailTitle: i18n.t('pdm.step.k25'),
 };

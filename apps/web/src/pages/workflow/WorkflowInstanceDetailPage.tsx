@@ -12,6 +12,7 @@ import {
   CheckCircle2,
   MessageSquare,
 } from 'lucide-react';
+import i18n from '@/i18n';
 import { useParams } from 'react-router-dom';
 import type { WorkflowInstance, Approval, ApprovalRecord } from '@/api/workflow';
 import { workflowApi } from '@/api/workflow';
@@ -23,23 +24,17 @@ import { PageContainer } from '@/components/common';
 import { designTokens } from '@/theme/tokens';
 import { WORKFLOW_PATHS } from '@/modules/workflow/config';
 import { useQuery } from '@tanstack/react-query';
-
-
 import { QUERY_KEYS } from '@/lib/reactQuery';
-
 const ct= designTokens.colors;
-
 interface InstanceDetails {
   instance: WorkflowInstance;
   approvals: Approval[];
   records: ApprovalRecord[];
 }
-
 const FlowInstanceDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const addNotification = useNotificationStore((state) => state.addNotification);
   const theme = useTheme();
-
   const detailsQuery = useQuery<InstanceDetails | null>({
     queryKey: [...QUERY_KEYS.AD_HOC.WORKFLOW_INSTANCE_DETAILS_BASE, id],
     queryFn: async (): Promise<InstanceDetails | null> => {
@@ -53,22 +48,19 @@ const FlowInstanceDetailPage: React.FC = () => {
     enabled: !!id,
     staleTime: 5 * 60 * 1000,
   });
-
   const details = detailsQuery.data ?? null;
   const loading = detailsQuery.isLoading;
-  const error = detailsQuery.isError ? '加载实例详情失败' : undefined;
-
+  const error = detailsQuery.isError ? i18n.t('workflow.workflow_instance_detail_page.k0') : undefined;
   useEffect(() => {
     if (detailsQuery.isError) {
-      apiLogger.error('加载实例详情失败:', detailsQuery.error);
+      apiLogger.error(i18n.t('pages.workflow_instance_detail_page.k0'), detailsQuery.error);
       addNotification({
-        title: '错误',
-        message: '加载实例详情失败',
+        title: i18n.t('workflow.workflow_instance_detail_page.k1'),
+        message: i18n.t('workflow.workflow_instance_detail_page.k2'),
         type: 'error',
       });
     }
   }, [detailsQuery.isError, detailsQuery.error, addNotification]);
-
   const getStatusIcon = (status: string) => {
     switch (status) {
       case 'completed':
@@ -109,18 +101,16 @@ const FlowInstanceDetailPage: React.FC = () => {
         );
     }
   };
-
   const getStatusText = (status: string) => {
     const statusMap: Record<string, string> = {
-      completed: '已完成',
-      rejected: '已拒绝',
-      running: '进行中',
-      pending: '待处理',
-      approved: '已通过',
+      completed: i18n.t('workflow.workflow_instance_detail_page.k3'),
+      rejected: i18n.t('workflow.workflow_instance_detail_page.k4'),
+      running: i18n.t('workflow.workflow_instance_detail_page.k5'),
+      pending: i18n.t('workflow.workflow_instance_detail_page.k6'),
+      approved: i18n.t('workflow.workflow_instance_detail_page.k7'),
     };
     return statusMap[status] || status;
   };
-
   const getStatusColor = (status: string): 'success' | 'error' | 'info' | 'warning' | 'default' => {
     switch (status) {
       case 'completed':
@@ -136,16 +126,13 @@ const FlowInstanceDetailPage: React.FC = () => {
         return 'default';
     }
   };
-
   const tabs = useMemo<TabConfig[]>(() => {
     if (!details) return [];
-
     const { instance, approvals, records } = details;
-
     return [
       {
         id: 'info',
-        label: '基本信息',
+        label: i18n.t('workflow.workflow_instance_detail_page.k8'),
         content: (
           <Box>
             <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 2 }}>
@@ -154,7 +141,7 @@ const FlowInstanceDetailPage: React.FC = () => {
                   variant='body2'
                   sx={{ color: 'grey.500', mb: 0.5 }}
                 >
-                  实例ID
+                  {i18n.t('pages.workflow_instance_detail_page.id_0')}
                 </Typography>
                 <Typography
                   variant='body2'
@@ -168,7 +155,7 @@ const FlowInstanceDetailPage: React.FC = () => {
                   variant='body2'
                   sx={{ color: 'grey.500', mb: 0.5 }}
                 >
-                  工作流ID
+                  {i18n.t('pages.workflow_instance_detail_page.id_1')}
                 </Typography>
                 <Typography
                   variant='body2'
@@ -182,7 +169,7 @@ const FlowInstanceDetailPage: React.FC = () => {
                   variant='body2'
                   sx={{ color: 'grey.500', mb: 0.5 }}
                 >
-                  当前节点
+                  {i18n.t('pages.workflow_instance_detail_page.k2')}
                 </Typography>
                 <Typography variant='body2'>{instance.currentnode || 'N/A'}</Typography>
               </Box>
@@ -191,7 +178,7 @@ const FlowInstanceDetailPage: React.FC = () => {
                   variant='body2'
                   sx={{ color: 'grey.500', mb: 0.5 }}
                 >
-                  发起人
+                  {i18n.t('pages.workflow_instance_detail_page.k3')}
                 </Typography>
                 <Stack
                   direction='row'
@@ -199,7 +186,7 @@ const FlowInstanceDetailPage: React.FC = () => {
                   sx={{ alignItems: 'center' }}
                 >
                   <User size={14} />
-                  <Typography variant='body2'>{instance.initiator_id || '系统'}</Typography>
+                  <Typography variant='body2'>{instance.initiator_id || i18n.t('workflow.workflow_instance_detail_page.k9')}</Typography>
                 </Stack>
               </Box>
               <Box>
@@ -207,7 +194,7 @@ const FlowInstanceDetailPage: React.FC = () => {
                   variant='body2'
                   sx={{ color: 'grey.500', mb: 0.5 }}
                 >
-                  创建时间
+                  {i18n.t('pages.workflow_instance_detail_page.k4')}
                 </Typography>
                 <Typography variant='body2'>
                   {new Date(instance.created_at).toLocaleString()}
@@ -218,7 +205,7 @@ const FlowInstanceDetailPage: React.FC = () => {
                   variant='body2'
                   sx={{ color: 'grey.500', mb: 0.5 }}
                 >
-                  启动时间
+                  {i18n.t('pages.workflow_instance_detail_page.k5')}
                 </Typography>
                 <Typography variant='body2'>
                   {instance.started_at ? new Date(instance.started_at).toLocaleString() : 'N/A'}
@@ -230,7 +217,7 @@ const FlowInstanceDetailPage: React.FC = () => {
                     variant='body2'
                     sx={{ color: 'grey.500', mb: 0.5 }}
                   >
-                    完成时间
+                    {i18n.t('pages.workflow_instance_detail_page.k6')}
                   </Typography>
                   <Typography variant='body2'>
                     {new Date(instance.completed_at).toLocaleString()}
@@ -244,7 +231,7 @@ const FlowInstanceDetailPage: React.FC = () => {
                   variant='body2'
                   sx={{ color: 'grey.500', mb: 1 }}
                 >
-                  实例数据
+                  {i18n.t('pages.workflow_instance_detail_page.k7')}
                 </Typography>
                 <Box
                   component='pre'
@@ -265,7 +252,7 @@ const FlowInstanceDetailPage: React.FC = () => {
       },
       {
         id: 'steps',
-        label: '流程步骤',
+        label: i18n.t('workflow.workflow_instance_detail_page.k10'),
         badge: approvals.length,
         content: (
           <Box>
@@ -280,7 +267,7 @@ const FlowInstanceDetailPage: React.FC = () => {
                     marginBottom: 8,
                   }}
                 />
-                <Typography sx={{ color: 'grey.500' }}>暂无审批节点</Typography>
+                <Typography sx={{ color: 'grey.500' }}>{i18n.t('workflow.workflow_instance_detail_page.k11')}</Typography>
               </Box>
             ) : (
               <Stack spacing={2}>
@@ -324,7 +311,7 @@ const FlowInstanceDetailPage: React.FC = () => {
                               variant='caption'
                               color='text.secondary'
                             >
-                              节点: {approval.node_id}
+                              [i18n.t('pages.workflow_instance_detail_page.k8')]: {approval.node_id}
                             </Typography>
                           )}
                         </Box>
@@ -351,7 +338,7 @@ const FlowInstanceDetailPage: React.FC = () => {
                           variant='caption'
                           color='text.secondary'
                         >
-                          审批人: {approval.assignee_id || 'N/A'}
+                          [i18n.t('pages.workflow_instance_detail_page.k9')]: {approval.assignee_id || 'N/A'}
                         </Typography>
                       </Stack>
                       <Stack
@@ -364,7 +351,7 @@ const FlowInstanceDetailPage: React.FC = () => {
                           variant='caption'
                           color='text.secondary'
                         >
-                          创建: {new Date(approval.created_at).toLocaleString()}
+                          [i18n.t('pages.workflow_instance_detail_page.k10')]: {new Date(approval.created_at).toLocaleString()}
                         </Typography>
                       </Stack>
                       {approval.approved_at && (
@@ -378,7 +365,7 @@ const FlowInstanceDetailPage: React.FC = () => {
                             variant='caption'
                             color='text.secondary'
                           >
-                            处理: {new Date(approval.approved_at).toLocaleString()}
+                            [i18n.t('pages.workflow_instance_detail_page.k11')]: {new Date(approval.approved_at).toLocaleString()}
                           </Typography>
                         </Stack>
                       )}
@@ -410,7 +397,7 @@ const FlowInstanceDetailPage: React.FC = () => {
       },
       {
         id: 'records',
-        label: '审批记录',
+        label: i18n.t('workflow.workflow_instance_detail_page.k12'),
         badge: records.length,
         content: (
           <Box>
@@ -425,7 +412,7 @@ const FlowInstanceDetailPage: React.FC = () => {
                     marginBottom: 8,
                   }}
                 />
-                <Typography sx={{ color: 'grey.500' }}>暂无审批记录</Typography>
+                <Typography sx={{ color: 'grey.500' }}>{i18n.t('workflow.workflow_instance_detail_page.k13')}</Typography>
               </Box>
             ) : (
               <Stack spacing={2}>
@@ -454,7 +441,7 @@ const FlowInstanceDetailPage: React.FC = () => {
                         variant='body2'
                         sx={{ fontWeight: 500 }}
                       >
-                        {record.action === 'approve' ? '通过' : '拒绝'}
+                        {record.action === 'approve' ? i18n.t('workflow.workflow_instance_detail_page.k15') : i18n.t('workflow.workflow_instance_detail_page.k14')}
                       </Typography>
                     </Stack>
                     <Typography
@@ -489,16 +476,15 @@ const FlowInstanceDetailPage: React.FC = () => {
       },
     ];
   }, [details]);
-
   return (
     <PageContainer
       padding={false}
       maxWidth={false}
     >
       <DetailPageTemplate
-        title='实例详情'
+        title={i18n.t('workflow.workflow_instance_detail_page.k16')}
         subtitle={details?.instance.id}
-        detailItemName={details?.instance?.name || details?.instance?.id || '实例详情'}
+        detailItemName={details?.instance?.name || details?.instance?.id || i18n.t('workflow.workflow_instance_detail_page.k17')}
         loading={loading}
         error={error}
         backHref={WORKFLOW_PATHS.instances}
@@ -506,7 +492,7 @@ const FlowInstanceDetailPage: React.FC = () => {
         infoCard={
           details?.instance
             ? {
-                title: `实例 ${details.instance.id.substring(0, 8)}...`,
+                title: `${i18n.t('pages.workflow_instance_detail_page.k1')}${details.instance.id.substring(0, 8)}...`,
                 subtitle: getStatusText(details.instance.status),
                 tags: [getStatusText(details.instance.status)],
               }
@@ -516,5 +502,4 @@ const FlowInstanceDetailPage: React.FC = () => {
     </PageContainer>
   );
 };
-
 export default FlowInstanceDetailPage;

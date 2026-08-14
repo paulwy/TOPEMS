@@ -17,6 +17,7 @@ import {
   Tab,
   Button,
 } from '@mui/material';
+import i18n from '@/i18n';
 import { Download, AlertCircle } from 'lucide-react';
 import {
   BarChart,
@@ -168,20 +169,20 @@ export function BalanceSheetViewer({ data, loading }: BalanceSheetViewerProps) {
         }}
       >
         <AlertCircle style={{ width: 48, height: 48, marginBottom: 16 }} />
-        <Typography>暂无资产负债表数据</Typography>
+        <Typography>{i18n.t('components.financial_reports.k0')}</Typography>
       </Box>
     );
   }
 
   // 转换为图表数据
   const chartData = [
-    { name: '流动资产', value: data.assets.current.total },
-    { name: '非流动资产', value: data.assets.non_current.total },
-    { name: '流动负债', value: data.liabilities.current.total },
-    { name: '非流动负债', value: data.liabilities.non_current.total },
-    { name: '实收资本', value: data.equity.paid_in.total },
-    { name: '储备', value: data.equity.reserves.total },
-    { name: '未分配利润', value: data.equity.retained_earnings.total },
+    { name: i18n.t('components.financial_reports.k1'), value: data.assets.current.total },
+    { name: i18n.t('components.financial_reports.k2'), value: data.assets.non_current.total },
+    { name: i18n.t('components.financial_reports.k3'), value: data.liabilities.current.total },
+    { name: i18n.t('components.financial_reports.k4'), value: data.liabilities.non_current.total },
+    { name: i18n.t('components.financial_reports.k5'), value: data.equity.paid_in.total },
+    { name: i18n.t('components.financial_reports.k6'), value: data.equity.reserves.total },
+    { name: i18n.t('components.financial_reports.k7'), value: data.equity.retained_earnings.total },
   ];
 
   const COLORS = [
@@ -210,7 +211,7 @@ export function BalanceSheetViewer({ data, loading }: BalanceSheetViewerProps) {
               variant='body2'
               sx={{ color: 'text.secondary' }}
             >
-              资产总计
+              {i18n.t('components.financial_reports.k0')}
             </Typography>
           </CardContent>
         </Card>
@@ -226,7 +227,7 @@ export function BalanceSheetViewer({ data, loading }: BalanceSheetViewerProps) {
               variant='body2'
               sx={{ color: 'text.secondary' }}
             >
-              负债合计
+              {i18n.t('components.financial_reports.k1')}
             </Typography>
           </CardContent>
         </Card>
@@ -242,10 +243,10 @@ export function BalanceSheetViewer({ data, loading }: BalanceSheetViewerProps) {
               variant='body2'
               sx={{ color: 'text.secondary' }}
             >
-              所有者权益合计
+              {i18n.t('components.financial_reports.k2')}
             </Typography>
             <Chip
-              label={data.balance_check ? '平衡' : '不平衡'}
+              label={data.balance_check ? i18n.t('components.financial_reports.k9') : i18n.t('components.financial_reports.k8')}
               color={data.balance_check ? 'success' : 'error'}
               size='small'
               sx={{ mt: 1 }}
@@ -257,7 +258,7 @@ export function BalanceSheetViewer({ data, loading }: BalanceSheetViewerProps) {
       {/* 图表 */}
       <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 2 }}>
         <Card>
-          <CardHeader title={<Typography variant='subtitle1'>资产构成</Typography>} />
+          <CardHeader title={<Typography variant='subtitle1'>{i18n.t('components.financial_reports.k10')}</Typography>} />
           <CardContent>
             <ResponsiveContainer
               width='100%'
@@ -288,7 +289,7 @@ export function BalanceSheetViewer({ data, loading }: BalanceSheetViewerProps) {
         </Card>
 
         <Card>
-          <CardHeader title={<Typography variant='subtitle1'>负债与权益构成</Typography>} />
+          <CardHeader title={<Typography variant='subtitle1'>{i18n.t('components.financial_reports.k11')}</Typography>} />
           <CardContent>
             <ResponsiveContainer
               width='100%'
@@ -296,12 +297,12 @@ export function BalanceSheetViewer({ data, loading }: BalanceSheetViewerProps) {
             >
               <BarChart
                 data={[
-                  { name: '流动负债', value: data.liabilities.current.total },
+                  { name: i18n.t('components.financial_reports.k12'), value: data.liabilities.current.total },
                   {
-                    name: '非流动负债',
+                    name: i18n.t('components.financial_reports.k13'),
                     value: data.liabilities.non_current.total,
                   },
-                  { name: '所有者权益', value: data.equity.total },
+                  { name: i18n.t('components.financial_reports.k14'), value: data.equity.total },
                 ]}
               >
                 <CartesianGrid strokeDasharray='3 3' />
@@ -322,30 +323,30 @@ export function BalanceSheetViewer({ data, loading }: BalanceSheetViewerProps) {
       <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 3 }}>
         {/* 资产 */}
         <Card>
-          <CardHeader title={<Typography variant='subtitle1'>资产</Typography>} />
+          <CardHeader title={<Typography variant='subtitle1'>{i18n.t('components.financial_reports.k15')}</Typography>} />
           <CardContent>
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
               <Box>
-                <Typography sx={{ fontWeight: 500, mb: 1 }}>流动资产</Typography>
+                <Typography sx={{ fontWeight: 500, mb: 1 }}>{i18n.t('components.financial_reports.k16')}</Typography>
                 <ReportTable
                   items={data.assets.current.items.map((item) => ({
                     label: item.account_name,
                     amount: item.amount,
                     indent: 1,
                   }))}
-                  totalLabel='流动资产合计'
+                  totalLabel={i18n.t('components.financial_reports.k17')}
                   totalAmount={data.assets.current.total}
                 />
               </Box>
               <Box>
-                <Typography sx={{ fontWeight: 500, mb: 1 }}>非流动资产</Typography>
+                <Typography sx={{ fontWeight: 500, mb: 1 }}>{i18n.t('components.financial_reports.k18')}</Typography>
                 <ReportTable
                   items={data.assets.non_current.items.map((item) => ({
                     label: item.account_name,
                     amount: item.amount,
                     indent: 1,
                   }))}
-                  totalLabel='非流动资产合计'
+                  totalLabel={i18n.t('components.financial_reports.k19')}
                   totalAmount={data.assets.non_current.total}
                 />
               </Box>
@@ -355,35 +356,35 @@ export function BalanceSheetViewer({ data, loading }: BalanceSheetViewerProps) {
 
         {/* 负债和所有者权益 */}
         <Card>
-          <CardHeader title={<Typography variant='subtitle1'>负债及所有者权益</Typography>} />
+          <CardHeader title={<Typography variant='subtitle1'>{i18n.t('components.financial_reports.k20')}</Typography>} />
           <CardContent>
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
               <Box>
-                <Typography sx={{ fontWeight: 500, mb: 1 }}>流动负债</Typography>
+                <Typography sx={{ fontWeight: 500, mb: 1 }}>{i18n.t('components.financial_reports.k21')}</Typography>
                 <ReportTable
                   items={data.liabilities.current.items.map((item) => ({
                     label: item.account_name,
                     amount: item.amount,
                     indent: 1,
                   }))}
-                  totalLabel='流动负债合计'
+                  totalLabel={i18n.t('components.financial_reports.k22')}
                   totalAmount={data.liabilities.current.total}
                 />
               </Box>
               <Box>
-                <Typography sx={{ fontWeight: 500, mb: 1 }}>非流动负债</Typography>
+                <Typography sx={{ fontWeight: 500, mb: 1 }}>{i18n.t('components.financial_reports.k23')}</Typography>
                 <ReportTable
                   items={data.liabilities.non_current.items.map((item) => ({
                     label: item.account_name,
                     amount: item.amount,
                     indent: 1,
                   }))}
-                  totalLabel='非流动负债合计'
+                  totalLabel={i18n.t('components.financial_reports.k24')}
                   totalAmount={data.liabilities.non_current.total}
                 />
               </Box>
               <Box>
-                <Typography sx={{ fontWeight: 500, mb: 1 }}>所有者权益</Typography>
+                <Typography sx={{ fontWeight: 500, mb: 1 }}>{i18n.t('components.financial_reports.k25')}</Typography>
                 <ReportTable
                   items={[
                     ...data.equity.paid_in.items.map((item) => ({
@@ -402,7 +403,7 @@ export function BalanceSheetViewer({ data, loading }: BalanceSheetViewerProps) {
                       indent: 1,
                     })),
                   ]}
-                  totalLabel='所有者权益合计'
+                  totalLabel={i18n.t('components.financial_reports.k26')}
                   totalAmount={data.equity.total}
                 />
               </Box>
@@ -466,29 +467,29 @@ export function IncomeStatementViewer({ data, loading }: IncomeStatementViewerPr
         }}
       >
         <AlertCircle style={{ width: 48, height: 48, marginBottom: 16 }} />
-        <Typography>暂无利润表数据</Typography>
+        <Typography>{i18n.t('components.financial_reports.k27')}</Typography>
       </Box>
     );
   }
 
   // 图表数据
   const trendData = [
-    { name: '营业收入', value: data.revenue.total },
-    { name: '营业成本', value: data.cost_of_sales.total },
-    { name: '毛利润', value: data.gross_profit },
-    { name: '营业利润', value: data.operating_profit },
-    { name: '净利润', value: data.net_profit },
+    { name: i18n.t('components.financial_reports.k28'), value: data.revenue.total },
+    { name: i18n.t('components.financial_reports.k29'), value: data.cost_of_sales.total },
+    { name: i18n.t('components.financial_reports.k30'), value: data.gross_profit },
+    { name: i18n.t('components.financial_reports.k31'), value: data.operating_profit },
+    { name: i18n.t('components.financial_reports.k32'), value: data.net_profit },
   ];
 
   const costBreakdown = [
-    { name: '销售费用', value: data.operating_expenses.selling_expense.total },
+    { name: i18n.t('components.financial_reports.k33'), value: data.operating_expenses.selling_expense.total },
     {
-      name: '管理费用',
+      name: i18n.t('components.financial_reports.k34'),
       value: data.operating_expenses.administrative_expense.total,
     },
-    { name: '研发费用', value: data.operating_expenses.rd_expense.total },
+    { name: i18n.t('components.financial_reports.k35'), value: data.operating_expenses.rd_expense.total },
     {
-      name: '财务费用',
+      name: i18n.t('components.financial_reports.k36'),
       value: data.operating_expenses.financial_expense.total,
     },
   ];
@@ -509,7 +510,7 @@ export function IncomeStatementViewer({ data, loading }: IncomeStatementViewerPr
               variant='body2'
               sx={{ color: 'text.secondary' }}
             >
-              营业收入
+              {i18n.t('components.financial_reports.k3')}
             </Typography>
             <Box sx={{ display: 'flex', alignItems: 'center', mt: 1 }}>
               <Typography
@@ -533,7 +534,7 @@ export function IncomeStatementViewer({ data, loading }: IncomeStatementViewerPr
               variant='body2'
               sx={{ color: 'text.secondary' }}
             >
-              营业利润
+              {i18n.t('components.financial_reports.k4')}
             </Typography>
             <Box sx={{ display: 'flex', alignItems: 'center', mt: 1 }}>
               <Typography
@@ -557,7 +558,7 @@ export function IncomeStatementViewer({ data, loading }: IncomeStatementViewerPr
               variant='body2'
               sx={{ color: 'text.secondary' }}
             >
-              利润总额
+              {i18n.t('components.financial_reports.k5')}
             </Typography>
           </CardContent>
         </Card>
@@ -573,7 +574,7 @@ export function IncomeStatementViewer({ data, loading }: IncomeStatementViewerPr
               variant='body2'
               sx={{ color: 'text.secondary' }}
             >
-              净利润
+              {i18n.t('components.financial_reports.k6')}
             </Typography>
             <Box sx={{ display: 'flex', alignItems: 'center', mt: 1 }}>
               <Typography
@@ -590,7 +591,7 @@ export function IncomeStatementViewer({ data, loading }: IncomeStatementViewerPr
       {/* 图表 */}
       <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 2 }}>
         <Card>
-          <CardHeader title={<Typography variant='subtitle1'>利润构成</Typography>} />
+          <CardHeader title={<Typography variant='subtitle1'>{i18n.t('components.financial_reports.k37')}</Typography>} />
           <CardContent>
             <ResponsiveContainer
               width='100%'
@@ -611,7 +612,7 @@ export function IncomeStatementViewer({ data, loading }: IncomeStatementViewerPr
         </Card>
 
         <Card>
-          <CardHeader title={<Typography variant='subtitle1'>费用构成</Typography>} />
+          <CardHeader title={<Typography variant='subtitle1'>{i18n.t('components.financial_reports.k38')}</Typography>} />
           <CardContent>
             <ResponsiveContainer
               width='100%'
@@ -646,11 +647,11 @@ export function IncomeStatementViewer({ data, loading }: IncomeStatementViewerPr
 
       {/* 详细表格 */}
       <Card>
-        <CardHeader title={<Typography variant='subtitle1'>利润明细</Typography>} />
+        <CardHeader title={<Typography variant='subtitle1'>{i18n.t('components.financial_reports.k39')}</Typography>} />
         <CardContent>
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
             <Box>
-              <Typography sx={{ fontWeight: 500, mb: 1 }}>一、营业收入</Typography>
+              <Typography sx={{ fontWeight: 500, mb: 1 }}>{i18n.t('components.financial_reports.k40')}</Typography>
               <ReportTable
                 items={[
                   ...data.revenue.main_revenue.items.map((item) => ({
@@ -664,13 +665,13 @@ export function IncomeStatementViewer({ data, loading }: IncomeStatementViewerPr
                     indent: 1,
                   })),
                 ]}
-                totalLabel='营业收入合计'
+                totalLabel={i18n.t('components.financial_reports.k41')}
                 totalAmount={data.revenue.total}
               />
             </Box>
 
             <Box>
-              <Typography sx={{ fontWeight: 500, mb: 1 }}>二、营业成本</Typography>
+              <Typography sx={{ fontWeight: 500, mb: 1 }}>{i18n.t('components.financial_reports.k42')}</Typography>
               <ReportTable
                 items={[
                   ...data.cost_of_sales.main_cost.items.map((item) => ({
@@ -679,7 +680,7 @@ export function IncomeStatementViewer({ data, loading }: IncomeStatementViewerPr
                     indent: 1,
                   })),
                 ]}
-                totalLabel='营业成本合计'
+                totalLabel={i18n.t('components.financial_reports.k43')}
                 totalAmount={data.cost_of_sales.total}
               />
             </Box>
@@ -692,14 +693,14 @@ export function IncomeStatementViewer({ data, loading }: IncomeStatementViewerPr
                 borderTop: 2,
               }}
             >
-              <Typography sx={{ fontWeight: 600 }}>三、毛利润</Typography>
+              <Typography sx={{ fontWeight: 600 }}>{i18n.t('components.financial_reports.k44')}</Typography>
               <Typography sx={{ fontWeight: 600, fontFamily: 'monospace' }}>
                 {data.gross_profit.toLocaleString()} ({(data.gross_margin * 100).toFixed(2)}%)
               </Typography>
             </Box>
 
             <Box>
-              <Typography sx={{ fontWeight: 500, mb: 1 }}>四、期间费用</Typography>
+              <Typography sx={{ fontWeight: 500, mb: 1 }}>{i18n.t('components.financial_reports.k45')}</Typography>
               <ReportTable
                 items={[
                   ...data.operating_expenses.selling_expense.items.map((item) => ({
@@ -723,7 +724,7 @@ export function IncomeStatementViewer({ data, loading }: IncomeStatementViewerPr
                     indent: 1,
                   })),
                 ]}
-                totalLabel='期间费用合计'
+                totalLabel={i18n.t('components.financial_reports.k46')}
                 totalAmount={data.operating_expenses.total}
               />
             </Box>
@@ -736,7 +737,7 @@ export function IncomeStatementViewer({ data, loading }: IncomeStatementViewerPr
                 borderTop: 1,
               }}
             >
-              <Typography sx={{ fontWeight: 600 }}>五、营业利润</Typography>
+              <Typography sx={{ fontWeight: 600 }}>{i18n.t('components.financial_reports.k47')}</Typography>
               <Typography sx={{ fontWeight: 600, fontFamily: 'monospace' }}>
                 {data.operating_profit.toLocaleString()} ({(data.operating_margin * 100).toFixed(2)}
                 %)
@@ -751,7 +752,7 @@ export function IncomeStatementViewer({ data, loading }: IncomeStatementViewerPr
                 borderTop: 1,
               }}
             >
-              <Typography sx={{ fontWeight: 600 }}>六、净利润</Typography>
+              <Typography sx={{ fontWeight: 600 }}>{i18n.t('components.financial_reports.k48')}</Typography>
               <Typography
                 sx={{
                   fontWeight: 600,
@@ -821,17 +822,17 @@ export function CashFlowStatementViewer({ data, loading }: CashFlowStatementView
         }}
       >
         <AlertCircle style={{ width: 48, height: 48, marginBottom: 16 }} />
-        <Typography>暂无现金流量表数据</Typography>
+        <Typography>{i18n.t('components.financial_reports.k49')}</Typography>
       </Box>
     );
   }
 
   // 图表数据
   const flowData = [
-    { name: '经营活动', value: data.operating.net_flow },
-    { name: '投资活动', value: data.investing.net_flow },
-    { name: '筹资活动', value: data.financing.net_flow },
-    { name: '净现金流', value: data.net_cash_flow },
+    { name: i18n.t('components.financial_reports.k50'), value: data.operating.net_flow },
+    { name: i18n.t('components.financial_reports.k51'), value: data.investing.net_flow },
+    { name: i18n.t('components.financial_reports.k52'), value: data.financing.net_flow },
+    { name: i18n.t('components.financial_reports.k53'), value: data.net_cash_flow },
   ];
 
   return (
@@ -850,7 +851,7 @@ export function CashFlowStatementViewer({ data, loading }: CashFlowStatementView
               variant='body2'
               sx={{ color: 'text.secondary' }}
             >
-              经营活动现金流
+              {i18n.t('components.financial_reports.k7')}
             </Typography>
           </CardContent>
         </Card>
@@ -866,7 +867,7 @@ export function CashFlowStatementViewer({ data, loading }: CashFlowStatementView
               variant='body2'
               sx={{ color: 'text.secondary' }}
             >
-              投资活动现金流
+              {i18n.t('components.financial_reports.k8')}
             </Typography>
           </CardContent>
         </Card>
@@ -882,7 +883,7 @@ export function CashFlowStatementViewer({ data, loading }: CashFlowStatementView
               variant='body2'
               sx={{ color: 'text.secondary' }}
             >
-              筹资活动现金流
+              {i18n.t('components.financial_reports.k9')}
             </Typography>
           </CardContent>
         </Card>
@@ -901,7 +902,7 @@ export function CashFlowStatementViewer({ data, loading }: CashFlowStatementView
               variant='body2'
               sx={{ color: 'text.secondary' }}
             >
-              净现金流
+              {i18n.t('components.financial_reports.k10')}
             </Typography>
           </CardContent>
         </Card>
@@ -909,7 +910,7 @@ export function CashFlowStatementViewer({ data, loading }: CashFlowStatementView
 
       {/* 图表 */}
       <Card>
-        <CardHeader title={<Typography variant='subtitle1'>现金流量构成</Typography>} />
+        <CardHeader title={<Typography variant='subtitle1'>{i18n.t('components.financial_reports.k54')}</Typography>} />
         <CardContent>
           <ResponsiveContainer
             width='100%'
@@ -937,7 +938,7 @@ export function CashFlowStatementViewer({ data, loading }: CashFlowStatementView
       <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 3 }}>
         {/* 经营活动 */}
         <Card>
-          <CardHeader title={<Typography variant='subtitle1'>经营活动</Typography>} />
+          <CardHeader title={<Typography variant='subtitle1'>{i18n.t('components.financial_reports.k55')}</Typography>} />
           <CardContent>
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
               <Box>
@@ -945,7 +946,7 @@ export function CashFlowStatementViewer({ data, loading }: CashFlowStatementView
                   variant='body2'
                   sx={{ color: 'text.secondary', mb: 0.5 }}
                 >
-                  现金流入
+                  {i18n.t('components.financial_reports.k11')}
                 </Typography>
                 {data.operating.inflows.items.map((item, i) => (
                   <Box
@@ -971,7 +972,7 @@ export function CashFlowStatementViewer({ data, loading }: CashFlowStatementView
                   variant='body2'
                   sx={{ color: 'text.secondary', mb: 0.5 }}
                 >
-                  现金流出
+                  {i18n.t('components.financial_reports.k12')}
                 </Typography>
                 {data.operating.outflows.items.map((item, i) => (
                   <Box
@@ -1001,7 +1002,7 @@ export function CashFlowStatementViewer({ data, loading }: CashFlowStatementView
                   fontWeight: 600,
                 }}
               >
-                <Typography sx={{ fontWeight: 600 }}>净额</Typography>
+                <Typography sx={{ fontWeight: 600 }}>{i18n.t('components.financial_reports.k56')}</Typography>
                 <Typography
                   sx={{
                     fontFamily: 'monospace',
@@ -1018,7 +1019,7 @@ export function CashFlowStatementViewer({ data, loading }: CashFlowStatementView
 
         {/* 投资活动 */}
         <Card>
-          <CardHeader title={<Typography variant='subtitle1'>投资活动</Typography>} />
+          <CardHeader title={<Typography variant='subtitle1'>{i18n.t('components.financial_reports.k57')}</Typography>} />
           <CardContent>
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
               <Box>
@@ -1026,7 +1027,7 @@ export function CashFlowStatementViewer({ data, loading }: CashFlowStatementView
                   variant='body2'
                   sx={{ color: 'text.secondary', mb: 0.5 }}
                 >
-                  现金流入
+                  {i18n.t('components.financial_reports.k13')}
                 </Typography>
                 {data.investing.inflows.items.map((item, i) => (
                   <Box
@@ -1052,7 +1053,7 @@ export function CashFlowStatementViewer({ data, loading }: CashFlowStatementView
                   variant='body2'
                   sx={{ color: 'text.secondary', mb: 0.5 }}
                 >
-                  现金流出
+                  {i18n.t('components.financial_reports.k14')}
                 </Typography>
                 {data.investing.outflows.items.map((item, i) => (
                   <Box
@@ -1082,7 +1083,7 @@ export function CashFlowStatementViewer({ data, loading }: CashFlowStatementView
                   fontWeight: 600,
                 }}
               >
-                <Typography sx={{ fontWeight: 600 }}>净额</Typography>
+                <Typography sx={{ fontWeight: 600 }}>{i18n.t('components.financial_reports.k58')}</Typography>
                 <Typography
                   sx={{
                     fontFamily: 'monospace',
@@ -1099,7 +1100,7 @@ export function CashFlowStatementViewer({ data, loading }: CashFlowStatementView
 
         {/* 筹资活动 */}
         <Card>
-          <CardHeader title={<Typography variant='subtitle1'>筹资活动</Typography>} />
+          <CardHeader title={<Typography variant='subtitle1'>{i18n.t('components.financial_reports.k59')}</Typography>} />
           <CardContent>
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
               <Box>
@@ -1107,7 +1108,7 @@ export function CashFlowStatementViewer({ data, loading }: CashFlowStatementView
                   variant='body2'
                   sx={{ color: 'text.secondary', mb: 0.5 }}
                 >
-                  现金流入
+                  {i18n.t('components.financial_reports.k15')}
                 </Typography>
                 {data.financing.inflows.items.map((item, i) => (
                   <Box
@@ -1133,7 +1134,7 @@ export function CashFlowStatementViewer({ data, loading }: CashFlowStatementView
                   variant='body2'
                   sx={{ color: 'text.secondary', mb: 0.5 }}
                 >
-                  现金流出
+                  {i18n.t('components.financial_reports.k16')}
                 </Typography>
                 {data.financing.outflows.items.map((item, i) => (
                   <Box
@@ -1163,7 +1164,7 @@ export function CashFlowStatementViewer({ data, loading }: CashFlowStatementView
                   fontWeight: 600,
                 }}
               >
-                <Typography sx={{ fontWeight: 600 }}>净额</Typography>
+                <Typography sx={{ fontWeight: 600 }}>{i18n.t('components.financial_reports.k60')}</Typography>
                 <Typography
                   sx={{
                     fontFamily: 'monospace',
@@ -1181,7 +1182,7 @@ export function CashFlowStatementViewer({ data, loading }: CashFlowStatementView
 
       {/* 现金变动汇总 */}
       <Card>
-        <CardHeader title={<Typography variant='subtitle1'>现金变动汇总</Typography>} />
+        <CardHeader title={<Typography variant='subtitle1'>{i18n.t('components.financial_reports.k61')}</Typography>} />
         <CardContent>
           <Box
             sx={{
@@ -1201,7 +1202,7 @@ export function CashFlowStatementViewer({ data, loading }: CashFlowStatementView
                 variant='body2'
                 sx={{ color: 'text.secondary' }}
               >
-                期初现金
+                {i18n.t('components.financial_reports.k17')}
               </Typography>
             </Box>
             <Box sx={{ textAlign: 'center' }}>
@@ -1215,7 +1216,7 @@ export function CashFlowStatementViewer({ data, loading }: CashFlowStatementView
                 variant='body2'
                 sx={{ color: 'text.secondary' }}
               >
-                净现金流
+                {i18n.t('components.financial_reports.k18')}
               </Typography>
             </Box>
             <Box sx={{ textAlign: 'center' }}>
@@ -1229,7 +1230,7 @@ export function CashFlowStatementViewer({ data, loading }: CashFlowStatementView
                 variant='body2'
                 sx={{ color: 'text.secondary' }}
               >
-                期末现金
+                {i18n.t('components.financial_reports.k19')}
               </Typography>
             </Box>
             <Box sx={{ textAlign: 'center' }}>
@@ -1247,7 +1248,7 @@ export function CashFlowStatementViewer({ data, loading }: CashFlowStatementView
                 variant='body2'
                 sx={{ color: 'text.secondary' }}
               >
-                现金净增加额
+                {i18n.t('components.financial_reports.k20')}
               </Typography>
             </Box>
           </Box>
@@ -1300,15 +1301,15 @@ export function FinancialReportsViewer({ orgId, period }: FinancialReportsViewer
       switch (activeReport) {
         case 'balance':
           blob = await reportApi.exportBalanceSheet(params);
-          filename = `资产负债表_${period}.xlsx`;
+          filename = `${i18n.t('components.financial_reports.__21')}${period}.xlsx`;
           break;
         case 'income':
           blob = await reportApi.exportIncomeStatement(params);
-          filename = `利润表_${period}.xlsx`;
+          filename = `${i18n.t('components.financial_reports.__22')}${period}.xlsx`;
           break;
         case 'cash':
           blob = await reportApi.exportCashFlowStatement(params);
-          filename = `现金流量表_${period}.xlsx`;
+          filename = `${i18n.t('components.financial_reports.__23')}${period}.xlsx`;
           break;
         default:
           return;
@@ -1341,15 +1342,15 @@ export function FinancialReportsViewer({ orgId, period }: FinancialReportsViewer
           onChange={(_, newValue) => setActiveReport(newValue)}
         >
           <Tab
-            label='资产负债表'
+            label={i18n.t('components.financial_reports.k62')}
             value='balance'
           />
           <Tab
-            label='利润表'
+            label={i18n.t('components.financial_reports.k63')}
             value='income'
           />
           <Tab
-            label='现金流量表'
+            label={i18n.t('components.financial_reports.k64')}
             value='cash'
           />
         </Tabs>
@@ -1360,7 +1361,7 @@ export function FinancialReportsViewer({ orgId, period }: FinancialReportsViewer
           onClick={handleExport}
         >
           <Download style={{ width: 16, height: 16, marginRight: 4 }} />
-          导出
+          {i18n.t('components.financial_reports.k24')}
         </Button>
       </Box>
 

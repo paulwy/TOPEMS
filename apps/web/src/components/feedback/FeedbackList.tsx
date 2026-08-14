@@ -15,6 +15,7 @@ import {
   TextField,
   Typography,
 } from '@mui/material';
+import i18n from '@/i18n';
 import {
   Bug,
   Plus,
@@ -107,7 +108,7 @@ const FeedbackList: React.FC<FeedbackListProps> = ({ onAddFeedback }) => {
   const deleteMutation = useMutation({
     mutationFn: (id: string) => feedbackApi.deleteFeedback(id),
     onSuccess: () => {
-      toast.success('反馈删除成功');
+      toast.success(i18n.t('components.feedback_list.k0'));
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.FEEDBACKS_BASE ,
   exact: false,
   refetchType: 'active',
@@ -115,7 +116,7 @@ const FeedbackList: React.FC<FeedbackListProps> = ({ onAddFeedback }) => {
       setAnchorEl(null);
     },
     onError: () => {
-      toast.error('删除失败，请重试');
+      toast.error(i18n.t('components.feedback_list.k1'));
       setAnchorEl(null);
     },
   });
@@ -149,7 +150,7 @@ const FeedbackList: React.FC<FeedbackListProps> = ({ onAddFeedback }) => {
   const columns: ColumnDef<Feedback>[] = [
     {
       accessorKey: 'type',
-      header: '类型',
+      header: i18n.t('components.feedback_list.k2'),
       cell: ({ row }) => {
         const type = row.getValue<FeedbackType>('type');
         return (
@@ -164,7 +165,7 @@ const FeedbackList: React.FC<FeedbackListProps> = ({ onAddFeedback }) => {
     },
     {
       accessorKey: 'title',
-      header: '标题',
+      header: i18n.t('components.feedback_list.k3'),
       cell: ({ row }) => (
         <Typography
           variant='body1'
@@ -176,7 +177,7 @@ const FeedbackList: React.FC<FeedbackListProps> = ({ onAddFeedback }) => {
     },
     {
       accessorKey: 'description',
-      header: '描述',
+      header: i18n.t('components.feedback_list.k4'),
       cell: ({ row }) => (
         <Typography
           variant='body2'
@@ -189,7 +190,7 @@ const FeedbackList: React.FC<FeedbackListProps> = ({ onAddFeedback }) => {
     },
     {
       accessorKey: 'satisfaction',
-      header: '满意度',
+      header: i18n.t('components.feedback_list.k5'),
       cell: ({ row }) => (
         <Rating
           value={row.getValue('satisfaction')}
@@ -201,7 +202,7 @@ const FeedbackList: React.FC<FeedbackListProps> = ({ onAddFeedback }) => {
     },
     {
       accessorKey: 'status',
-      header: '状态',
+      header: i18n.t('components.feedback_list.k6'),
       cell: ({ row }) => {
         const status = row.getValue<FeedbackStatus>('status');
         return (
@@ -215,7 +216,7 @@ const FeedbackList: React.FC<FeedbackListProps> = ({ onAddFeedback }) => {
     },
     {
       accessorKey: 'created_at',
-      header: '创建时间',
+      header: i18n.t('components.feedback_list.k7'),
       cell: ({ row }) => (
         <Typography
           variant='body2'
@@ -227,12 +228,12 @@ const FeedbackList: React.FC<FeedbackListProps> = ({ onAddFeedback }) => {
     },
     {
       id: 'actions',
-      header: '操作',
+      header: i18n.t('components.feedback_list.k8'),
       cell: ({ row }) => (
         <IconButton
           onClick={(e) => handleMenuOpen(e, row.id)}
           sx={{ p: 1 }}
-          aria-label='更多'
+          aria-label={i18n.t('components.feedback_list.k9')}
         >
           <MoreVertical size={20} />
         </IconButton>
@@ -246,7 +247,7 @@ const FeedbackList: React.FC<FeedbackListProps> = ({ onAddFeedback }) => {
         <Box sx={{ width: { xs: '100%', md: 'calc(33.333% - 8px)' } }}>
           <TextField
             fullWidth
-            label='搜索'
+            label={i18n.t('components.feedback_list.k10')}
             value={searchTerm}
             onChange={(e) => handleSearch(e.target.value)}
             slotProps={{
@@ -265,11 +266,11 @@ const FeedbackList: React.FC<FeedbackListProps> = ({ onAddFeedback }) => {
           <TextField
             select
             fullWidth
-            label='反馈类型'
+            label={i18n.t('components.feedback_list.k11')}
             value={filters.type || ''}
             onChange={(e) => handleFilterChange('type', e.target.value)}
           >
-            <MenuItem value=''>全部</MenuItem>
+            <MenuItem value=''>{i18n.t('components.feedback_list.k12')}</MenuItem>
             {(Object.keys(FEEDBACK_TYPE_LABELS) as FeedbackType[]).map((type) => (
               <MenuItem
                 key={type}
@@ -284,11 +285,11 @@ const FeedbackList: React.FC<FeedbackListProps> = ({ onAddFeedback }) => {
           <TextField
             select
             fullWidth
-            label='状态'
+            label={i18n.t('components.feedback_list.k13')}
             value={filters.status || ''}
             onChange={(e) => handleFilterChange('status', e.target.value)}
           >
-            <MenuItem value=''>全部</MenuItem>
+            <MenuItem value=''>{i18n.t('components.feedback_list.k14')}</MenuItem>
             {(Object.keys(FEEDBACK_STATUS_LABELS) as FeedbackStatus[]).map((status) => (
               <MenuItem
                 key={status}
@@ -306,7 +307,7 @@ const FeedbackList: React.FC<FeedbackListProps> = ({ onAddFeedback }) => {
             startIcon={<Plus />}
             onClick={onAddFeedback}
           >
-            提交反馈
+            {i18n.t('components.feedback_list.k0')}
           </Button>
         </Box>
       </Box>
@@ -336,7 +337,7 @@ const FeedbackList: React.FC<FeedbackListProps> = ({ onAddFeedback }) => {
             size={16}
             sx={{ mr: 2 }}
           />
-          删除
+          {i18n.t('components.feedback_list.k1')}
         </MenuItem>
       </Menu>
     </Box>

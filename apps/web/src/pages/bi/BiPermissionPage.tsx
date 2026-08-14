@@ -12,6 +12,7 @@ import {
   CheckCircle2,
   AlertTriangle,
 } from 'lucide-react';
+import i18n from '@/i18n';
 import {
   Box,
   Typography,
@@ -60,16 +61,9 @@ import {
 } from '@/api/bi';
 import { logger } from '@/utils/logger';
 import { designTokens } from '@/theme/tokens';
-
-import { useTranslation } from 'react-i18next';
-
-
 import { QUERY_KEYS } from '@/lib/reactQuery';
-
 const ct= designTokens.colors;
-
 const BiPermissionPage = () => {
-  const { t } = useTranslation();
   const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = useState<'row-level' | 'data'>('row-level');
   const [searchTerm, setSearchTerm] = useState('');
@@ -87,7 +81,6 @@ const BiPermissionPage = () => {
     priority: 1,
   });
   const [testResult, setTestResult] = useState<{ success: boolean; message: string } | null>(null);
-
   const rowPermissionsQuery = useQuery<RowLevelPermission[]>({
     queryKey: QUERY_KEYS.AD_HOC.BI_ROW_PERMISSIONS_BASE,
     queryFn: async () => {
@@ -99,7 +92,6 @@ const BiPermissionPage = () => {
     },
     staleTime: 5 * 60 * 1000,
   });
-
   const dataPermissionsQuery = useQuery<DataPermissionRule[]>({
     queryKey: QUERY_KEYS.AD_HOC.BI_DATA_PERMISSIONS_BASE,
     queryFn: async () => {
@@ -111,11 +103,9 @@ const BiPermissionPage = () => {
     },
     staleTime: 5 * 60 * 1000,
   });
-
   const rowPermissions = rowPermissionsQuery.data ?? [];
   const dataPermissions = dataPermissionsQuery.data ?? [];
   const loading = rowPermissionsQuery.isLoading;
-
   useEffect(() => {
     if (rowPermissionsQuery.isError) {
       logger.error('Failed to load row level permissions:', rowPermissionsQuery.error);
@@ -129,7 +119,6 @@ const BiPermissionPage = () => {
     dataPermissionsQuery.isError,
     dataPermissionsQuery.error,
   ]);
-
   const saveMutation = useMutation({
     mutationFn: async () => {
       if (editingItem) {
@@ -150,7 +139,6 @@ const BiPermissionPage = () => {
       setDialogOpen(false);
     },
   });
-
   const deleteMutation = useMutation({
     mutationFn: (id: string) => deleteRowLevelPermission(id),
     onSuccess: () => {
@@ -163,7 +151,6 @@ const BiPermissionPage = () => {
       logger.error('Failed to delete permission:', error);
     },
   });
-
   const toggleMutation = useMutation({
     mutationFn: (item: RowLevelPermission) =>
       updateRowLevelPermission(item.id, { isEnabled: !item.isEnabled }),
@@ -177,10 +164,8 @@ const BiPermissionPage = () => {
       logger.error('Failed to toggle permission:', error);
     },
   });
-
   const actionLoading =
     saveMutation.isPending || deleteMutation.isPending || toggleMutation.isPending;
-
   const handleOpenDialog = (item?: RowLevelPermission) => {
     if (item) {
       setEditingItem(item);
@@ -202,64 +187,55 @@ const BiPermissionPage = () => {
     setTestResult(null);
     setDialogOpen(true);
   };
-
   const handleSave = () => {
     saveMutation.mutate();
   };
-
   const handleDelete = (id: string) => {
-    if (!confirm(t('bi.bi_permission_page.confirm'))) return;
+    if (!confirm(i18n.t('bi.bi_permission_page.confirm'))) return;
     deleteMutation.mutate(id);
   };
-
   const handleToggle = (item: RowLevelPermission) => {
     toggleMutation.mutate(item);
   };
-
   const handleTest = async (item: RowLevelPermission) => {
     try {
       const res = await testRowLevelPermission(item.id);
       if (res.success) {
-        setTestResult({ success: true, message: '权限规则验证通过，SQL条件语法正确' });
+        setTestResult({ success: true, message: i18n.t('bi.bi_permission_page.sql_0') });
       } else {
-        setTestResult({ success: false, message: '权限规则验证失败，请检查条件语法' });
+        setTestResult({ success: false, message: i18n.t('bi.bi_permission_page.k1') });
       }
     } catch (error: unknown) {
       logger.error('Failed to test permission:', error);
-      setTestResult({ success: true, message: '模拟测试通过，条件语法正确' });
+      setTestResult({ success: true, message: i18n.t('bi.bi_permission_page.k2') });
     }
   };
-
   const filteredRowPermissions = rowPermissions.filter(
     (p) =>
       p.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       p.description?.toLowerCase().includes(searchTerm.toLowerCase())
   );
-
   const filteredDataPermissions = dataPermissions.filter((p) =>
     p.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
-
   const getResourceTypeLabel = (type: string) => {
     const labels: Record<string, string> = {
-      dashboard: t('bi.bi_permission_page.text_3fa8b3'),
-      dataset: t('bi.bi_permission_page.text_e20804'),
-      datasource: t('bi.bi_permission_page.text_c11322'),
-      report: t('bi.bi_permission_page.text_fc00f3'),
+      dashboard: i18n.t('bi.bi_permission_page.text_3fa8b3'),
+      dataset: i18n.t('bi.bi_permission_page.text_e20804'),
+      datasource: i18n.t('bi.bi_permission_page.text_c11322'),
+      report: i18n.t('bi.bi_permission_page.text_fc00f3'),
     };
     return labels[type] || type;
   };
-
   const getPermissionTypeLabel = (type: string) => {
     const labels: Record<string, string> = {
-      view: t('bi.bi_permission_page.view'),
-      edit: t('bi.bi_permission_page.edit'),
-      admin: t('bi.bi_permission_page.text_08b55f'),
-      export: t('bi.bi_permission_page.export'),
+      view: i18n.t('bi.bi_permission_page.view'),
+      edit: i18n.t('bi.bi_permission_page.edit'),
+      admin: i18n.t('bi.bi_permission_page.text_08b55f'),
+      export: i18n.t('bi.bi_permission_page.export'),
     };
     return labels[type] || type;
   };
-
   const getPermissionTypeColor = (type: string) => {
     const colors: Record<string, 'primary' | 'success' | 'warning' | 'error'> = {
       view: 'primary',
@@ -269,11 +245,10 @@ const BiPermissionPage = () => {
     };
     return colors[type] || 'primary';
   };
-
   return (
     <PageContainer
-      title={t('bi.bi_permission_page.text_c62b5d')}
-      subtitle={t('bi.bi_permission_page.text_6a9997')}
+      title={i18n.t('bi.bi_permission_page.text_c62b5d')}
+      subtitle={i18n.t('bi.bi_permission_page.text_6a9997')}
       headerProps={{
         pageIcon: <Shield style={{ width: 20, height: 20 }} />,
         pageGradient: `linear-gradient(135deg, ${ct.error.main} 0%, ${ct.error[600]} 100%)`,
@@ -285,9 +260,9 @@ const BiPermissionPage = () => {
         title=''
         subtitle=''
         breadcrumbs={[
-          { label: t('bi.bi_permission_page.home'), href: '/dashboard' },
+          { label: i18n.t('bi.bi_permission_page.home'), href: '/dashboard' },
           { label: 'BI' },
-          { label: t('bi.bi_permission_page.text_23bbdd') },
+          { label: i18n.t('bi.bi_permission_page.text_23bbdd') },
         ]}
       >
         <Box sx={{ p: 3 }}>
@@ -327,7 +302,7 @@ const BiPermissionPage = () => {
                         variant='body2'
                         color='text.secondary'
                       >
-                        行级权限规则
+                        {i18n.t('pages.bi_permission_page.k0')}
                       </Typography>
                     </Box>
                   </Box>
@@ -365,7 +340,7 @@ const BiPermissionPage = () => {
                         variant='body2'
                         color='text.secondary'
                       >
-                        数据权限规则
+                        {i18n.t('pages.bi_permission_page.k1')}
                       </Typography>
                     </Box>
                   </Box>
@@ -403,7 +378,7 @@ const BiPermissionPage = () => {
                         variant='body2'
                         color='text.secondary'
                       >
-                        已启用规则
+                        {i18n.t('pages.bi_permission_page.k2')}
                       </Typography>
                     </Box>
                   </Box>
@@ -441,7 +416,7 @@ const BiPermissionPage = () => {
                         variant='body2'
                         color='text.secondary'
                       >
-                        关联角色数
+                        {i18n.t('pages.bi_permission_page.k3')}
                       </Typography>
                     </Box>
                   </Box>
@@ -449,7 +424,6 @@ const BiPermissionPage = () => {
               </Card>
             </Grid>
           </Grid>
-
           <Paper
             elevation={0}
             sx={{ border: '1px solid', borderColor: 'divider', borderRadius: 3 }}
@@ -470,20 +444,20 @@ const BiPermissionPage = () => {
               >
                 <Tab
                   value='row-level'
-                  label={t('bi.bi_permission_page.text_578248')}
+                  label={i18n.t('bi.bi_permission_page.text_578248')}
                   icon={<KeyRound size={16} />}
                   iconPosition='start'
                 />
                 <Tab
                   value='data'
-                  label={t('bi.bi_permission_page.text_679f4e')}
+                  label={i18n.t('bi.bi_permission_page.text_679f4e')}
                   icon={<Database size={16} />}
                   iconPosition='start'
                 />
               </Tabs>
               <Box sx={{ display: 'flex', gap: 2 }}>
                 <TextField
-                  placeholder={t('bi.bi_permission_page.search')}
+                  placeholder={i18n.t('bi.bi_permission_page.search')}
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   size='small'
@@ -505,12 +479,11 @@ const BiPermissionPage = () => {
                     startIcon={<Plus />}
                     onClick={() => handleOpenDialog()}
                   >
-                    新建规则
+                    {i18n.t('pages.bi_permission_page.k4')}
                   </Button>
                 )}
               </Box>
             </Box>
-
             <Box sx={{ p: 3 }}>
               {activeTab === 'row-level' && (
                 <>
@@ -530,21 +503,21 @@ const BiPermissionPage = () => {
                       }}
                     >
                       <Shield sx={{ width: 64, height: 64, mb: 3, opacity: 0.5 }} />
-                      <Typography variant='h6'>暂无行级权限规则</Typography>
-                      <Typography variant='body2'>点击上方按钮创建第一条权限规则</Typography>
+                      <Typography variant='h6'>{i18n.t('bi.bi_permission_page.k3')}</Typography>
+                      <Typography variant='body2'>{i18n.t('bi.bi_permission_page.k4')}</Typography>
                     </Box>
                   ) : (
                     <TableContainer>
                       <Table>
                         <TableHead>
                           <TableRow>
-                            <TableCell sx={{ fontWeight: 600 }}>规则名称</TableCell>
-                            <TableCell sx={{ fontWeight: 600 }}>数据表</TableCell>
-                            <TableCell sx={{ fontWeight: 600 }}>权限条件</TableCell>
-                            <TableCell sx={{ fontWeight: 600 }}>适用角色</TableCell>
-                            <TableCell sx={{ fontWeight: 600 }}>优先级</TableCell>
-                            <TableCell sx={{ fontWeight: 600 }}>状态</TableCell>
-                            <TableCell sx={{ fontWeight: 600 }}>操作</TableCell>
+                            <TableCell sx={{ fontWeight: 600 }}>{i18n.t('bi.bi_permission_page.k5')}</TableCell>
+                            <TableCell sx={{ fontWeight: 600 }}>{i18n.t('bi.bi_permission_page.k6')}</TableCell>
+                            <TableCell sx={{ fontWeight: 600 }}>{i18n.t('bi.bi_permission_page.k7')}</TableCell>
+                            <TableCell sx={{ fontWeight: 600 }}>{i18n.t('bi.bi_permission_page.k8')}</TableCell>
+                            <TableCell sx={{ fontWeight: 600 }}>{i18n.t('bi.bi_permission_page.k9')}</TableCell>
+                            <TableCell sx={{ fontWeight: 600 }}>{i18n.t('bi.bi_permission_page.k10')}</TableCell>
+                            <TableCell sx={{ fontWeight: 600 }}>{i18n.t('bi.bi_permission_page.k11')}</TableCell>
                           </TableRow>
                         </TableHead>
                         <TableBody>
@@ -643,37 +616,37 @@ const BiPermissionPage = () => {
                                   }
                                   label={
                                     perm.isEnabled
-                                      ? t('bi.bi_permission_page.active')
-                                      : t('bi.bi_permission_page.inactive')
+                                      ? i18n.t('bi.bi_permission_page.active')
+                                      : i18n.t('bi.bi_permission_page.inactive')
                                   }
                                   sx={{ m: 0 }}
                                 />
                               </TableCell>
                               <TableCell>
-                                <Tooltip title={t('bi.bi_permission_page.test')}>
+                                <Tooltip title={i18n.t('bi.bi_permission_page.test')}>
                                   <IconButton
                                     size='small'
                                     onClick={() => handleTest(perm)}
-                                    aria-label={t('bi.bi_permission_page.test')}
+                                    aria-label={i18n.t('bi.bi_permission_page.test')}
                                   >
                                     <CheckCircle2 size={16} />
                                   </IconButton>
                                 </Tooltip>
-                                <Tooltip title={t('bi.bi_permission_page.edit')}>
+                                <Tooltip title={i18n.t('bi.bi_permission_page.edit')}>
                                   <IconButton
                                     size='small'
                                     onClick={() => handleOpenDialog(perm)}
-                                    aria-label={t('bi.bi_permission_page.edit_1')}
+                                    aria-label={i18n.t('bi.bi_permission_page.edit_1')}
                                   >
                                     <Edit2 size={16} />
                                   </IconButton>
                                 </Tooltip>
-                                <Tooltip title={t('bi.bi_permission_page.delete')}>
+                                <Tooltip title={i18n.t('bi.bi_permission_page.delete')}>
                                   <IconButton
                                     size='small'
                                     color='error'
                                     onClick={() => handleDelete(perm.id)}
-                                    aria-label={t('bi.bi_permission_page.delete_1')}
+                                    aria-label={i18n.t('bi.bi_permission_page.delete_1')}
                                   >
                                     <Trash2 size={16} />
                                   </IconButton>
@@ -687,7 +660,6 @@ const BiPermissionPage = () => {
                   )}
                 </>
               )}
-
               {activeTab === 'data' && (
                 <>
                   {filteredDataPermissions.length === 0 ? (
@@ -702,20 +674,20 @@ const BiPermissionPage = () => {
                       }}
                     >
                       <Database sx={{ width: 64, height: 64, mb: 3, opacity: 0.5 }} />
-                      <Typography variant='h6'>暂无数据权限规则</Typography>
+                      <Typography variant='h6'>{i18n.t('bi.bi_permission_page.k12')}</Typography>
                     </Box>
                   ) : (
                     <TableContainer>
                       <Table>
                         <TableHead>
                           <TableRow>
-                            <TableCell sx={{ fontWeight: 600 }}>规则名称</TableCell>
-                            <TableCell sx={{ fontWeight: 600 }}>资源类型</TableCell>
-                            <TableCell sx={{ fontWeight: 600 }}>权限类型</TableCell>
-                            <TableCell sx={{ fontWeight: 600 }}>角色</TableCell>
-                            <TableCell sx={{ fontWeight: 600 }}>用户</TableCell>
-                            <TableCell sx={{ fontWeight: 600 }}>创建时间</TableCell>
-                            <TableCell sx={{ fontWeight: 600 }}>操作</TableCell>
+                            <TableCell sx={{ fontWeight: 600 }}>{i18n.t('bi.bi_permission_page.k13')}</TableCell>
+                            <TableCell sx={{ fontWeight: 600 }}>{i18n.t('bi.bi_permission_page.k14')}</TableCell>
+                            <TableCell sx={{ fontWeight: 600 }}>{i18n.t('bi.bi_permission_page.k15')}</TableCell>
+                            <TableCell sx={{ fontWeight: 600 }}>{i18n.t('bi.bi_permission_page.k16')}</TableCell>
+                            <TableCell sx={{ fontWeight: 600 }}>{i18n.t('bi.bi_permission_page.k17')}</TableCell>
+                            <TableCell sx={{ fontWeight: 600 }}>{i18n.t('bi.bi_permission_page.k18')}</TableCell>
+                            <TableCell sx={{ fontWeight: 600 }}>{i18n.t('bi.bi_permission_page.k19')}</TableCell>
                           </TableRow>
                         </TableHead>
                         <TableBody>
@@ -781,7 +753,7 @@ const BiPermissionPage = () => {
                               </TableCell>
                               <TableCell>
                                 {perm.user_ids.length > 0 ? (
-                                  `${perm.user_ids.length} 人`
+                                  `${perm.user_ids.length}${i18n.t('pages.bi_permission_page.k0')}`
                                 ) : (
                                   <Typography
                                     variant='caption'
@@ -795,19 +767,19 @@ const BiPermissionPage = () => {
                                 {new Date(perm.created_at).toLocaleDateString()}
                               </TableCell>
                               <TableCell>
-                                <Tooltip title={t('bi.bi_permission_page.edit')}>
+                                <Tooltip title={i18n.t('bi.bi_permission_page.edit')}>
                                   <IconButton
                                     size='small'
-                                    aria-label={t('bi.bi_permission_page.edit_2')}
+                                    aria-label={i18n.t('bi.bi_permission_page.edit_2')}
                                   >
                                     <Edit2 size={16} />
                                   </IconButton>
                                 </Tooltip>
-                                <Tooltip title={t('bi.bi_permission_page.delete')}>
+                                <Tooltip title={i18n.t('bi.bi_permission_page.delete')}>
                                   <IconButton
                                     size='small'
                                     color='error'
-                                    aria-label={t('bi.bi_permission_page.delete_2')}
+                                    aria-label={i18n.t('bi.bi_permission_page.delete_2')}
                                   >
                                     <Trash2 size={16} />
                                   </IconButton>
@@ -823,7 +795,6 @@ const BiPermissionPage = () => {
               )}
             </Box>
           </Paper>
-
           <Dialog
             open={dialogOpen}
             onClose={() => setDialogOpen(false)}
@@ -832,8 +803,8 @@ const BiPermissionPage = () => {
           >
             <DialogTitle>
               {editingItem
-                ? t('bi.bi_permission_page.edit_3')
-                : t('bi.bi_permission_page.text_f36bf2')}
+                ? i18n.t('bi.bi_permission_page.edit_3')
+                : i18n.t('bi.bi_permission_page.text_f36bf2')}
             </DialogTitle>
             <DialogContent sx={{ mt: 2 }}>
               <Grid
@@ -842,7 +813,7 @@ const BiPermissionPage = () => {
               >
                 <Grid size={{ xs: 12 }}>
                   <TextField
-                    label={t('bi.bi_permission_page.name')}
+                    label={i18n.t('bi.bi_permission_page.name')}
                     fullWidth
                     value={formData.name}
                     onChange={(e) => setFormData({ ...formData, name: e.target.value })}
@@ -850,7 +821,7 @@ const BiPermissionPage = () => {
                 </Grid>
                 <Grid size={{ xs: 12 }}>
                   <TextField
-                    label={t('bi.bi_permission_page.description')}
+                    label={i18n.t('bi.bi_permission_page.description')}
                     multiline
                     rows={2}
                     fullWidth
@@ -860,13 +831,13 @@ const BiPermissionPage = () => {
                 </Grid>
                 <Grid size={{ xs: 12, sm: 6 }}>
                   <FormControl fullWidth>
-                    <InputLabel>数据源</InputLabel>
+                    <InputLabel>{i18n.t('bi.bi_permission_page.k20')}</InputLabel>
                     <Select
                       value={formData.data_source_id}
-                      label={t('bi.bi_permission_page.text_c11322')}
+                      label={i18n.t('bi.bi_permission_page.text_c11322')}
                       onChange={(e) => setFormData({ ...formData, data_source_id: e.target.value })}
                     >
-                      <MenuItem value='ds-001'>业务主数据库</MenuItem>
+                      <MenuItem value='ds-001'>{i18n.t('bi.bi_permission_page.k21')}</MenuItem>
                       <MenuItem value='ds-002'>MES生产数据库</MenuItem>
                       <MenuItem value='ds-003'>WMS仓储数据库</MenuItem>
                       <MenuItem value='ds-004'>HR人力资源库</MenuItem>
@@ -875,7 +846,7 @@ const BiPermissionPage = () => {
                 </Grid>
                 <Grid size={{ xs: 12, sm: 6 }}>
                   <TextField
-                    label={t('bi.bi_permission_page.text_099652')}
+                    label={i18n.t('bi.bi_permission_page.text_099652')}
                     fullWidth
                     value={formData.table_name}
                     onChange={(e) => setFormData({ ...formData, table_name: e.target.value })}
@@ -883,7 +854,7 @@ const BiPermissionPage = () => {
                 </Grid>
                 <Grid size={{ xs: 12 }}>
                   <TextField
-                    label={t('bi.bi_permission_page.text_924fa0')}
+                    label={i18n.t('bi.bi_permission_page.text_924fa0')}
                     multiline
                     rows={4}
                     fullWidth
@@ -895,12 +866,12 @@ const BiPermissionPage = () => {
                         fontSize: 14,
                       },
                     }}
-                    helperText={t('bi.bi_permission_page.text_848c70')}
+                    helperText={i18n.t('bi.bi_permission_page.text_848c70')}
                   />
                 </Grid>
                 <Grid size={{ xs: 12, sm: 6 }}>
                   <TextField
-                    label={t('bi.bi_permission_page.text_5885b5')}
+                    label={i18n.t('bi.bi_permission_page.text_5885b5')}
                     fullWidth
                     value={(formData.roles || []).join(', ')}
                     onChange={(e) =>
@@ -916,7 +887,7 @@ const BiPermissionPage = () => {
                 </Grid>
                 <Grid size={{ xs: 12, sm: 6 }}>
                   <TextField
-                    label={t('bi.bi_permission_page.text_d0959e')}
+                    label={i18n.t('bi.bi_permission_page.text_d0959e')}
                     fullWidth
                     value={(formData.users || []).join(', ')}
                     onChange={(e) =>
@@ -933,13 +904,13 @@ const BiPermissionPage = () => {
                 <Grid size={{ xs: 12, sm: 6 }}>
                   <TextField
                     type='number'
-                    label={t('bi.bi_permission_page.text_ee8ecb')}
+                    label={i18n.t('bi.bi_permission_page.text_ee8ecb')}
                     fullWidth
                     value={formData.priority}
                     onChange={(e) =>
                       setFormData({ ...formData, priority: parseInt(e.target.value) || 1 })
                     }
-                    helperText={t('bi.bi_permission_page.text_3446e5')}
+                    helperText={i18n.t('bi.bi_permission_page.text_3446e5')}
                   />
                 </Grid>
                 <Grid size={{ xs: 12, sm: 6 }}>
@@ -950,12 +921,11 @@ const BiPermissionPage = () => {
                         onChange={(e) => setFormData({ ...formData, isEnabled: e.target.checked })}
                       />
                     }
-                    label={t('bi.bi_permission_page.active_1')}
+                    label={i18n.t('bi.bi_permission_page.active_1')}
                     sx={{ mt: 2 }}
                   />
                 </Grid>
               </Grid>
-
               {testResult && (
                 <Box sx={{ mt: 3 }}>
                   <Alert
@@ -968,13 +938,13 @@ const BiPermissionPage = () => {
               )}
             </DialogContent>
             <DialogActions>
-              <Button onClick={() => setDialogOpen(false)}>取消</Button>
+              <Button onClick={() => setDialogOpen(false)}>{i18n.t('bi.bi_permission_page.k22')}</Button>
               {editingItem && (
                 <Button
                   variant='outlined'
                   onClick={() => handleTest(editingItem)}
                 >
-                  测试规则
+                  {i18n.t('pages.bi_permission_page.k5')}
                 </Button>
               )}
               <Button
@@ -982,7 +952,7 @@ const BiPermissionPage = () => {
                 onClick={handleSave}
                 disabled={!formData.name || !formData.condition}
               >
-                保存
+                {i18n.t('pages.bi_permission_page.k6')}
               </Button>
             </DialogActions>
           </Dialog>
@@ -991,5 +961,4 @@ const BiPermissionPage = () => {
     </PageContainer>
   );
 };
-
 export default BiPermissionPage;

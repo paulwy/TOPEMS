@@ -1,22 +1,23 @@
 import React from 'react';
 import { Chip } from '@mui/material';
 import type { EntitySchema } from '@/schema';
+import i18n from '@/i18n';
 
 const statusConfig: Record<
   string,
   { label: string; color: 'default' | 'primary' | 'success' | 'warning' | 'error' | 'info' }
 > = {
-  pending: { label: '询价中', color: 'warning' },
-  quoted: { label: '已报价', color: 'primary' },
-  comparing: { label: '比价中', color: 'info' },
-  completed: { label: '已完成', color: 'success' },
-  cancelled: { label: '已取消', color: 'default' },
+  pending: { label: i18n.t('scm.price_comparison.k0'), color: 'warning' },
+  quoted: { label: i18n.t('scm.price_comparison.k1'), color: 'primary' },
+  comparing: { label: i18n.t('scm.price_comparison.k2'), color: 'info' },
+  completed: { label: i18n.t('scm.price_comparison.k3'), color: 'success' },
+  cancelled: { label: i18n.t('scm.price_comparison.k4'), color: 'default' },
 };
 
 export const priceComparisonSchema: EntitySchema = {
   entity: 'priceComparison',
-  title: '询价比价',
-  description: '采购询价比价管理',
+  title: i18n.t('scm.price_comparison.k5'),
+  description: i18n.t('scm.price_comparison.k6'),
 
   api: {
     module: 'scm',
@@ -26,7 +27,7 @@ export const priceComparisonSchema: EntitySchema = {
   fields: [
     {
       name: 'comparison_no',
-      label: '询价单号',
+      label: i18n.t('scm.price_comparison.k7'),
       type: 'text',
       required: true,
       readonlyOnEdit: true,
@@ -36,28 +37,28 @@ export const priceComparisonSchema: EntitySchema = {
     },
     {
       name: 'title',
-      label: '标题',
+      label: i18n.t('scm.price_comparison.k8'),
       type: 'text',
       required: true,
       listWidth: 180,
     },
     {
       name: 'product_name',
-      label: '物料',
+      label: i18n.t('scm.price_comparison.k9'),
       type: 'text',
       required: true,
       listWidth: 160,
     },
     {
       name: 'quantity',
-      label: '数量',
+      label: i18n.t('scm.price_comparison.k10'),
       type: 'number',
       required: true,
       listWidth: 100,
     },
     {
       name: 'result_supplier_name',
-      label: '供应商',
+      label: i18n.t('scm.price_comparison.k11'),
       type: 'text',
       hideInForm: true,
       listWidth: 140,
@@ -65,7 +66,7 @@ export const priceComparisonSchema: EntitySchema = {
     },
     {
       name: 'result_price',
-      label: '报价',
+      label: i18n.t('scm.price_comparison.k12'),
       type: 'number',
       hideInForm: true,
       align: 'right',
@@ -77,7 +78,7 @@ export const priceComparisonSchema: EntitySchema = {
     },
     {
       name: 'result_amount',
-      label: '最低价',
+      label: i18n.t('scm.price_comparison.k13'),
       type: 'number',
       hideInForm: true,
       align: 'right',
@@ -89,18 +90,18 @@ export const priceComparisonSchema: EntitySchema = {
     },
     {
       name: 'status',
-      label: '状态',
+      label: i18n.t('scm.price_comparison.k14'),
       type: 'select',
       hideInForm: true,
       defaultValue: 'pending',
       options: {
         type: 'static',
         options: [
-          { value: 'pending', label: '询价中' },
-          { value: 'quoted', label: '已报价' },
-          { value: 'comparing', label: '比价中' },
-          { value: 'completed', label: '已完成' },
-          { value: 'cancelled', label: '已取消' },
+          { value: 'pending', label: i18n.t('scm.price_comparison.k15') },
+          { value: 'quoted', label: i18n.t('scm.price_comparison.k16') },
+          { value: 'comparing', label: i18n.t('scm.price_comparison.k17') },
+          { value: 'completed', label: i18n.t('scm.price_comparison.k18') },
+          { value: 'cancelled', label: i18n.t('scm.price_comparison.k19') },
         ],
       },
       listWidth: 100,
@@ -117,7 +118,7 @@ export const priceComparisonSchema: EntitySchema = {
     },
     {
       name: 'deadline',
-      label: '截止日期',
+      label: i18n.t('scm.price_comparison.k20'),
       type: 'date',
       sortable: true,
       listWidth: 120,
@@ -151,25 +152,25 @@ export const priceComparisonSchema: EntitySchema = {
         cancelled: 'default',
       },
       labelMap: {
-        pending: '询价中',
-        quoted: '已报价',
-        comparing: '比价中',
-        completed: '已完成',
-        cancelled: '已取消',
+        pending: i18n.t('scm.price_comparison.k21'),
+        quoted: i18n.t('scm.price_comparison.k22'),
+        comparing: i18n.t('scm.price_comparison.k23'),
+        completed: i18n.t('scm.price_comparison.k24'),
+        cancelled: i18n.t('scm.price_comparison.k25'),
       },
     },
     filters: [
       {
         id: 'status',
-        label: '状态',
+        label: i18n.t('scm.price_comparison.k26'),
         type: 'select',
         options: [
-          { label: '全部状态', value: 'all' },
-          { label: '询价中', value: 'pending' },
-          { label: '已报价', value: 'quoted' },
-          { label: '比价中', value: 'comparing' },
-          { label: '已完成', value: 'completed' },
-          { label: '已取消', value: 'cancelled' },
+          { label: i18n.t('scm.price_comparison.k27'), value: 'all' },
+          { label: i18n.t('scm.price_comparison.k28'), value: 'pending' },
+          { label: i18n.t('scm.price_comparison.k29'), value: 'quoted' },
+          { label: i18n.t('scm.price_comparison.k30'), value: 'comparing' },
+          { label: i18n.t('scm.price_comparison.k31'), value: 'completed' },
+          { label: i18n.t('scm.price_comparison.k32'), value: 'cancelled' },
         ],
       },
     ],
@@ -179,13 +180,13 @@ export const priceComparisonSchema: EntitySchema = {
 
   formSections: [
     {
-      title: '基本信息',
+      title: i18n.t('scm.price_comparison.k33'),
       fields: ['comparison_no', 'title', 'product_name', 'quantity', 'deadline'],
     },
   ],
 
   formColCount: 2,
-  createTitle: '新建询价单',
-  editTitle: '编辑询价单',
-  detailTitle: '询价单详情',
+  createTitle: i18n.t('scm.price_comparison.k34'),
+  editTitle: i18n.t('scm.price_comparison.k35'),
+  detailTitle: i18n.t('scm.price_comparison.k36'),
 };

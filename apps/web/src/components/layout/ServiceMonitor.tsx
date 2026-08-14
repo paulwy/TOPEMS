@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { Paper, Box, Typography, IconButton, Card, CardContent, Chip } from '@mui/material';
 import { Grid } from '@/components';
 import { CheckCircle, AlertTriangle, XCircle, RefreshCw } from 'lucide-react';
+import i18n from '@/i18n';
 
 interface ServiceStatus {
   name: string;
@@ -21,17 +22,17 @@ const statusConfig = {
   online: {
     icon: CheckCircle,
     color: 'success.dark',
-    label: '在线',
+    label: i18n.t('shared.service_monitor.k0'),
   },
   warning: {
     icon: AlertTriangle,
     color: 'warning.main',
-    label: '异常',
+    label: i18n.t('shared.service_monitor.k1'),
   },
   offline: {
     icon: XCircle,
     color: 'error.main',
-    label: '离线',
+    label: i18n.t('shared.service_monitor.k2'),
   },
 };
 
@@ -93,12 +94,12 @@ export default function ServiceMonitor({
             variant='h6'
             sx={{ fontWeight: 600, mb: 0.5 }}
           >
-            服务状态监测
+            {i18n.t('components.service_monitor.k0')}
           </Typography>
           <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
             <Chip
               size='small'
-              label={`在线 ${onlineCount}`}
+              label={`${i18n.t('components.service_monitor.k0')}${onlineCount}`}
               sx={{
                 bgcolor: 'success.500',
                 color: 'success.dark',
@@ -108,7 +109,7 @@ export default function ServiceMonitor({
             {warningCount > 0 && (
               <Chip
                 size='small'
-                label={`异常 ${warningCount}`}
+                label={`${i18n.t('components.service_monitor.k1')}${warningCount}`}
                 sx={{
                   bgcolor: 'warning.main20',
                   color: 'warning.main',
@@ -119,7 +120,7 @@ export default function ServiceMonitor({
             {offlineCount > 0 && (
               <Chip
                 size='small'
-                label={`离线 ${offlineCount}`}
+                label={`${i18n.t('components.service_monitor.k2')}${offlineCount}`}
                 sx={{
                   bgcolor: 'error.main20',
                   color: 'error.main',
@@ -137,7 +138,7 @@ export default function ServiceMonitor({
               bgcolor: 'action.hover',
             },
           }}
-          aria-label='刷新'
+          aria-label={i18n.t('shared.service_monitor.k3')}
         >
           <RefreshCw
             size={20}

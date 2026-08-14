@@ -15,6 +15,7 @@
  */
 
 import { conflictDetector } from './conflict-detector';
+import i18n from '@/i18n';
 
 // ==================== 类型定义 ====================
 
@@ -171,7 +172,7 @@ export class EventIsolation {
     }
 
     if (!target) {
-      console.warn(`[EventIsolation] 模块 ${this.moduleId} 注册事件 ${type} 缺少 target`);
+      console.warn(`${i18n.t('microfrontend.event-isolation.eventisolation_0')}${this.moduleId}${i18n.t('microfrontend.event-isolation.k1')}${type}${i18n.t('microfrontend.event-isolation.target_2')}`);
       return;
     }
 

@@ -1,5 +1,4 @@
 import React from 'react';
-import { useTranslation } from 'react-i18next';
 import { Search, Calendar, X } from 'lucide-react';
 import {
   Box,
@@ -12,12 +11,11 @@ import {
   InputAdornment,
   Typography,
 } from '@mui/material';
-
+import i18n from '@/i18n';
 interface OptionItem {
   value: string;
   label: string;
 }
-
 interface OperationAuditLogFilterProps {
   userFilter: string;
   setUserFilter: (v: string) => void;
@@ -40,7 +38,6 @@ interface OperationAuditLogFilterProps {
   operationOptions: OptionItem[];
   clearFilters: () => void;
 }
-
 const OperationAuditLogFilter: React.FC<OperationAuditLogFilterProps> = ({
   userFilter,
   setUserFilter,
@@ -63,8 +60,6 @@ const OperationAuditLogFilter: React.FC<OperationAuditLogFilterProps> = ({
   operationOptions,
   clearFilters,
 }) => {
-  const { t } = useTranslation();
-
   const hasActiveFilters =
     startDate ||
     endDate ||
@@ -74,7 +69,6 @@ const OperationAuditLogFilter: React.FC<OperationAuditLogFilterProps> = ({
     resourceTypeFilter ||
     traceIdFilter ||
     successFilter;
-
   return (
     <Box
       sx={{
@@ -87,7 +81,7 @@ const OperationAuditLogFilter: React.FC<OperationAuditLogFilterProps> = ({
     >
       <TextField
         size='small'
-        placeholder={t('admin.operation_audit_log.filter_by_username')}
+        placeholder={i18n.t('admin.operation_audit_log.filter_by_username')}
         value={userFilter}
         onChange={(e) => {
           setUserFilter(e.target.value);
@@ -107,21 +101,20 @@ const OperationAuditLogFilter: React.FC<OperationAuditLogFilterProps> = ({
         }}
         sx={{ minWidth: 180 }}
       />
-
       <FormControl
         size='small'
         sx={{ minWidth: 140 }}
       >
-        <InputLabel>{t('admin.operation_audit_log.module')}</InputLabel>
+        <InputLabel>{i18n.t('admin.operation_audit_log.module')}</InputLabel>
         <Select
           value={moduleFilter}
-          label={t('admin.operation_audit_log.module')}
+          label={i18n.t('admin.operation_audit_log.module')}
           onChange={(e) => {
             setModuleFilter(e.target.value);
             setPage(0);
           }}
         >
-          <MenuItem value=''>{t('admin.operation_audit_log.all_modules')}</MenuItem>
+          <MenuItem value=''>{i18n.t('admin.operation_audit_log.all_modules')}</MenuItem>
           {moduleOptions.map((m) => (
             <MenuItem
               key={m.value}
@@ -132,21 +125,20 @@ const OperationAuditLogFilter: React.FC<OperationAuditLogFilterProps> = ({
           ))}
         </Select>
       </FormControl>
-
       <FormControl
         size='small'
         sx={{ minWidth: 140 }}
       >
-        <InputLabel>{t('admin.operation_audit_log.action_type')}</InputLabel>
+        <InputLabel>{i18n.t('admin.operation_audit_log.action_type')}</InputLabel>
         <Select
           value={operationFilter}
-          label={t('admin.operation_audit_log.action_type')}
+          label={i18n.t('admin.operation_audit_log.action_type')}
           onChange={(e) => {
             setOperationFilter(e.target.value);
             setPage(0);
           }}
         >
-          <MenuItem value=''>{t('admin.operation_audit_log.all_actions')}</MenuItem>
+          <MenuItem value=''>{i18n.t('admin.operation_audit_log.all_actions')}</MenuItem>
           {operationOptions.map((m) => (
             <MenuItem
               key={m.value}
@@ -157,10 +149,9 @@ const OperationAuditLogFilter: React.FC<OperationAuditLogFilterProps> = ({
           ))}
         </Select>
       </FormControl>
-
       <TextField
         size='small'
-        placeholder={t('admin.operation_audit_log.resource_type')}
+        placeholder={i18n.t('admin.operation_audit_log.resource_type')}
         value={resourceTypeFilter}
         onChange={(e) => {
           setResourceTypeFilter(e.target.value);
@@ -168,10 +159,9 @@ const OperationAuditLogFilter: React.FC<OperationAuditLogFilterProps> = ({
         }}
         sx={{ minWidth: 160 }}
       />
-
       <TextField
         size='small'
-        placeholder={t('admin.operation_audit_log_page.attr_22c443')}
+        placeholder={i18n.t('admin.operation_audit_log_page.attr_22c443')}
         value={traceIdFilter}
         onChange={(e) => {
           setTraceIdFilter(e.target.value);
@@ -179,28 +169,25 @@ const OperationAuditLogFilter: React.FC<OperationAuditLogFilterProps> = ({
         }}
         sx={{ minWidth: 220 }}
       />
-
       <FormControl
         size='small'
         sx={{ minWidth: 120 }}
       >
-        <InputLabel>{t('admin.operation_audit_log.status')}</InputLabel>
+        <InputLabel>{i18n.t('admin.operation_audit_log.status')}</InputLabel>
         <Select
           value={successFilter}
-          label={t('admin.operation_audit_log.status')}
+          label={i18n.t('admin.operation_audit_log.status')}
           onChange={(e) => {
             setSuccessFilter(e.target.value as '' | 'true' | 'false');
             setPage(0);
           }}
         >
-          <MenuItem value=''>{t('admin.operation_audit_log.all_status')}</MenuItem>
-          <MenuItem value='true'>{t('admin.operation_audit_log.success')}</MenuItem>
-          <MenuItem value='false'>{t('admin.operation_audit_log.failed')}</MenuItem>
+          <MenuItem value=''>{i18n.t('admin.operation_audit_log.all_status')}</MenuItem>
+          <MenuItem value='true'>{i18n.t('admin.operation_audit_log.success')}</MenuItem>
+          <MenuItem value='false'>{i18n.t('admin.operation_audit_log.failed')}</MenuItem>
         </Select>
       </FormControl>
-
       <Box sx={{ flexGrow: 1 }} />
-
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
         <Calendar
           size={18}
@@ -210,13 +197,12 @@ const OperationAuditLogFilter: React.FC<OperationAuditLogFilterProps> = ({
           variant='body2'
           color='text.secondary'
         >
-          {t('admin.operation_audit_log_page.text_cd649f')}
+          {i18n.t('admin.operation_audit_log_page.text_cd649f')}
         </Typography>
       </Box>
-
       <TextField
         size='small'
-        label={t('admin.operation_audit_log.start_time')}
+        label={i18n.t('admin.operation_audit_log.start_time')}
         type='datetime-local'
         value={startDate}
         onChange={(e) => {
@@ -230,11 +216,11 @@ const OperationAuditLogFilter: React.FC<OperationAuditLogFilterProps> = ({
         variant='body2'
         color='text.secondary'
       >
-        {t('admin.operation_audit_log.to')}
+        {i18n.t('admin.operation_audit_log.to')}
       </Typography>
       <TextField
         size='small'
-        label={t('admin.operation_audit_log.end_time')}
+        label={i18n.t('admin.operation_audit_log.end_time')}
         type='datetime-local'
         value={endDate}
         onChange={(e) => {
@@ -244,7 +230,6 @@ const OperationAuditLogFilter: React.FC<OperationAuditLogFilterProps> = ({
         sx={{ width: 200 }}
         slotProps={{ inputLabel: { shrink: true } } as const}
       />
-
       {hasActiveFilters && (
         <Button
           variant='text'
@@ -252,11 +237,10 @@ const OperationAuditLogFilter: React.FC<OperationAuditLogFilterProps> = ({
           onClick={clearFilters}
           startIcon={<X size={14} />}
         >
-          {t('admin.operation_audit_log_page.text_a95500')}
+          {i18n.t('admin.operation_audit_log_page.text_a95500')}
         </Button>
       )}
     </Box>
   );
 };
-
 export default OperationAuditLogFilter;

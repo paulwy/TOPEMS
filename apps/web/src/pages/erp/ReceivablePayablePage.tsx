@@ -6,12 +6,10 @@ import CrudPage, { type CrudApiAdapter } from '@/components/templates/CrudPage';
 import { receivableSchema, payableSchema } from '@/schemas/finance';
 import { receivableApi, payableApi, type Receivable, type Payable } from '@/api/erp';
 import { designTokens } from '@/theme/tokens';
-
+import i18n from '@/i18n';
 const ct= designTokens.colors;
-
 const ReceivablePayablePage: React.FC = () => {
   const [activeTab, setActiveTab] = useState(0);
-
   const receivableAdapter: CrudApiAdapter<Receivable> = useMemo(
     () => ({
       list: async (params) => {
@@ -31,14 +29,14 @@ const ReceivablePayablePage: React.FC = () => {
         if (res.success && res.data) {
           return res.data;
         }
-        throw new Error(res.message || '创建失败');
+        throw new Error(res.message || i18n.t('erp.receivable_payable_page.k0'));
       },
       update: async (id, data) => {
         const res = await receivableApi.update(id, data);
         if (res.success && res.data) {
           return res.data;
         }
-        throw new Error(res.message || '更新失败');
+        throw new Error(res.message || i18n.t('erp.receivable_payable_page.k1'));
       },
       delete: async (id) => {
         await receivableApi.delete(id);
@@ -46,7 +44,6 @@ const ReceivablePayablePage: React.FC = () => {
     }),
     []
   );
-
   const payableAdapter: CrudApiAdapter<Payable> = useMemo(
     () => ({
       list: async (params) => {
@@ -66,14 +63,14 @@ const ReceivablePayablePage: React.FC = () => {
         if (res.success && res.data) {
           return res.data;
         }
-        throw new Error(res.message || '创建失败');
+        throw new Error(res.message || i18n.t('erp.receivable_payable_page.k2'));
       },
       update: async (id, data) => {
         const res = await payableApi.update(id, data);
         if (res.success && res.data) {
           return res.data;
         }
-        throw new Error(res.message || '更新失败');
+        throw new Error(res.message || i18n.t('erp.receivable_payable_page.k3'));
       },
       delete: async (id) => {
         await payableApi.delete(id);
@@ -81,14 +78,12 @@ const ReceivablePayablePage: React.FC = () => {
     }),
     []
   );
-
   const renderStatsContent = (rows: Array<{ original_value?: number; amount?: number; balance?: number; status?: string }>, total: number) => {
     const totalAmount = rows.reduce((sum, item) => sum + (item.amount || 0), 0);
     const pendingAmount = rows
       .filter((item) => item.status === 'pending' || item.status === 'draft')
       .reduce((sum, item) => sum + (item.amount || 0), 0);
     const overdueCount = rows.filter((item) => item.status === 'overdue').length;
-
     return (
       <Box
         sx={{
@@ -115,31 +110,30 @@ const ReceivablePayablePage: React.FC = () => {
               component='span'
               sx={{ color: 'text.secondary', fontSize: 14 }}
             >
-              记录总数
+              {i18n.t('pages.receivable_payable_page.k0')}
             </Box>
           </Box>
           <Box sx={{ fontWeight: 700, fontSize: 24, color: 'secondary.700' }}>{total}</Box>
         </Box>
         <Box sx={{ p: 2, bgcolor: 'success.lighter', borderRadius: 3 }}>
-          <Box sx={{ color: 'text.secondary', fontSize: 14, mb: 1 }}>总金额</Box>
+          <Box sx={{ color: 'text.secondary', fontSize: 14, mb: 1 }}>{i18n.t('erp.receivable_payable_page.k4')}</Box>
           <Box sx={{ fontWeight: 700, fontSize: 24, color: 'success.700' }}>
             {totalAmount.toFixed(2)}
           </Box>
         </Box>
         <Box sx={{ p: 2, bgcolor: 'warning.light', borderRadius: 3 }}>
-          <Box sx={{ color: 'text.secondary', fontSize: 14, mb: 1 }}>待处理金额</Box>
+          <Box sx={{ color: 'text.secondary', fontSize: 14, mb: 1 }}>{i18n.t('erp.receivable_payable_page.k5')}</Box>
           <Box sx={{ fontWeight: 700, fontSize: 24, color: 'warning.700' }}>
             {pendingAmount.toFixed(2)}
           </Box>
         </Box>
         <Box sx={{ p: 2, bgcolor: 'error.lighter', borderRadius: 3 }}>
-          <Box sx={{ color: 'text.secondary', fontSize: 14, mb: 1 }}>逾期数量</Box>
+          <Box sx={{ color: 'text.secondary', fontSize: 14, mb: 1 }}>{i18n.t('erp.receivable_payable_page.k6')}</Box>
           <Box sx={{ fontWeight: 700, fontSize: 24, color: 'error.dark' }}>{overdueCount}</Box>
         </Box>
       </Box>
     );
   };
-
   return (
     <PageContainer
       autoTitle
@@ -160,15 +154,14 @@ const ReceivablePayablePage: React.FC = () => {
         sx={{ mb: 3 }}
       >
         <Tab
-          label='应收账款'
+          label={i18n.t('erp.receivable_payable_page.k7')}
           icon={<ArrowUpRight size={16} />}
         />
         <Tab
-          label='应付账款'
+          label={i18n.t('erp.receivable_payable_page.k8')}
           icon={<ArrowDownRight size={16} />}
         />
       </Tabs>
-
       {activeTab === 0 && (
         <CrudPage
           schema={receivableSchema}
@@ -176,7 +169,6 @@ const ReceivablePayablePage: React.FC = () => {
           headerContent={renderStatsContent}
         />
       )}
-
       {activeTab === 1 && (
         <CrudPage
           schema={payableSchema}
@@ -187,5 +179,4 @@ const ReceivablePayablePage: React.FC = () => {
     </PageContainer>
   );
 };
-
 export default ReceivablePayablePage;

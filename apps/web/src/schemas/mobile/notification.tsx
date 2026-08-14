@@ -1,14 +1,15 @@
 import React from 'react';
 import type { EntitySchema } from '@/schema';
+import i18n from '@/i18n';
 
 type NotificationType = 'system' | 'approval' | 'task' | 'message';
 type NotificationPriority = 'high' | 'medium' | 'low';
 
 const TYPE_LABELS: Record<NotificationType, string> = {
-  system: '系统',
-  approval: '审批',
-  task: '任务',
-  message: '消息',
+  system: i18n.t('shared.notification.k0'),
+  approval: i18n.t('shared.notification.k1'),
+  task: i18n.t('shared.notification.k2'),
+  message: i18n.t('shared.notification.k3'),
 };
 
 const PRIORITY_COLORS: Record<NotificationPriority, 'error' | 'warning' | 'info'> = {
@@ -19,8 +20,8 @@ const PRIORITY_COLORS: Record<NotificationPriority, 'error' | 'warning' | 'info'
 
 export const notificationSchema: EntitySchema = {
   entity: 'mobile_notification',
-  title: '消息通知',
-  description: '查看和管理移动端消息通知',
+  title: i18n.t('shared.notification.k4'),
+  description: i18n.t('shared.notification.k5'),
 
   api: {
     module: 'mobile',
@@ -30,7 +31,7 @@ export const notificationSchema: EntitySchema = {
   fields: [
     {
       name: 'title',
-      label: '通知标题',
+      label: i18n.t('shared.notification.k6'),
       type: 'text',
       readonly: true,
       sortable: true,
@@ -39,24 +40,24 @@ export const notificationSchema: EntitySchema = {
     },
     {
       name: 'content',
-      label: '通知内容',
+      label: i18n.t('shared.notification.k7'),
       type: 'textarea',
       readonly: true,
       listWidth: 300,
     },
     {
       name: 'type',
-      label: '类型',
+      label: i18n.t('shared.notification.k8'),
       type: 'select',
       readonly: true,
       options: {
         type: 'static',
         options: [
-          { value: 'system', label: '系统' },
-          { value: 'approval', label: '审批' },
-          { value: 'task', label: '任务' },
-          { value: 'alert', label: '告警' },
-          { value: 'message', label: '消息' },
+          { value: 'system', label: i18n.t('shared.notification.k9') },
+          { value: 'approval', label: i18n.t('shared.notification.k10') },
+          { value: 'task', label: i18n.t('shared.notification.k11') },
+          { value: 'alert', label: i18n.t('shared.notification.k12') },
+          { value: 'message', label: i18n.t('shared.notification.k13') },
         ],
       },
       listWidth: 100,
@@ -65,15 +66,15 @@ export const notificationSchema: EntitySchema = {
     },
     {
       name: 'priority',
-      label: '优先级',
+      label: i18n.t('shared.notification.k14'),
       type: 'select',
       readonly: true,
       options: {
         type: 'static',
         options: [
-          { value: 'high', label: '高' },
-          { value: 'medium', label: '中' },
-          { value: 'low', label: '低' },
+          { value: 'high', label: i18n.t('shared.notification.k15') },
+          { value: 'medium', label: i18n.t('shared.notification.k16') },
+          { value: 'low', label: i18n.t('shared.notification.k17') },
         ],
       },
       listWidth: 100,
@@ -81,7 +82,7 @@ export const notificationSchema: EntitySchema = {
     },
     {
       name: 'read',
-      label: '已读',
+      label: i18n.t('shared.notification.k18'),
       type: 'switch',
       readonly: true,
       defaultValue: false,
@@ -89,7 +90,7 @@ export const notificationSchema: EntitySchema = {
     },
     {
       name: 'created_at',
-      label: '创建时间',
+      label: i18n.t('shared.notification.k19'),
       type: 'datetime',
       readonly: true,
       sortable: true,
@@ -108,31 +109,31 @@ export const notificationSchema: EntitySchema = {
         false: 'primary',
       },
       labelMap: {
-        true: '已读',
-        false: '未读',
+        true: i18n.t('shared.notification.k20'),
+        false: i18n.t('shared.notification.k21'),
       },
     },
     filters: [
       {
         id: 'type',
-        label: '类型',
+        label: i18n.t('shared.notification.k22'),
         type: 'select',
         options: [
-          { label: '全部类型', value: 'all' },
-          { label: '系统', value: 'system' },
-          { label: '审批', value: 'approval' },
-          { label: '任务', value: 'task' },
-          { label: '消息', value: 'message' },
+          { label: i18n.t('shared.notification.k23'), value: 'all' },
+          { label: i18n.t('shared.notification.k24'), value: 'system' },
+          { label: i18n.t('shared.notification.k25'), value: 'approval' },
+          { label: i18n.t('shared.notification.k26'), value: 'task' },
+          { label: i18n.t('shared.notification.k27'), value: 'message' },
         ],
       },
       {
         id: 'read',
-        label: '状态',
+        label: i18n.t('shared.notification.k28'),
         type: 'select',
         options: [
-          { label: '全部', value: 'all' },
-          { label: '未读', value: 'unread' },
-          { label: '已读', value: 'read' },
+          { label: i18n.t('shared.notification.k29'), value: 'all' },
+          { label: i18n.t('shared.notification.k30'), value: 'unread' },
+          { label: i18n.t('shared.notification.k31'), value: 'read' },
         ],
       },
     ],
@@ -141,5 +142,5 @@ export const notificationSchema: EntitySchema = {
   actions: ['detail', 'delete'],
 
   formColCount: 2,
-  detailTitle: '通知详情',
+  detailTitle: i18n.t('shared.notification.k32'),
 };

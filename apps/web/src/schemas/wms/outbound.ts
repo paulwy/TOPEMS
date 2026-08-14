@@ -2,11 +2,12 @@ import type { EntitySchema } from '@/schema';
 
 
 import { QUERY_KEYS } from '@/lib/reactQuery';
+import i18n from '@/i18n';
 
 export const outboundOrderSchema: EntitySchema = {
   entity: 'wms_outbound_order',
-  title: '出库管理',
-  description: '管理出库订单信息',
+  title: i18n.t('wms.outbound.k0'),
+  description: i18n.t('wms.outbound.k1'),
 
   api: {
     module: 'wms',
@@ -16,7 +17,7 @@ export const outboundOrderSchema: EntitySchema = {
   fields: [
     {
       name: 'order_number',
-      label: '出库单号',
+      label: i18n.t('wms.outbound.k2'),
       type: 'text',
       required: true,
       readonlyOnEdit: true,
@@ -26,18 +27,18 @@ export const outboundOrderSchema: EntitySchema = {
     },
     {
       name: 'order_type',
-      label: '出库类型',
+      label: i18n.t('wms.outbound.k3'),
       type: 'select',
       required: true,
       defaultValue: 'sale',
       options: {
         type: 'static',
         options: [
-          { value: 'sale', label: '销售出库' },
-          { value: 'return', label: '退货出库' },
-          { value: 'transfer', label: '调拨出库' },
-          { value: 'production', label: '生产出库' },
-          { value: 'other', label: '其他出库' },
+          { value: 'sale', label: i18n.t('wms.outbound.k4') },
+          { value: 'return', label: i18n.t('wms.outbound.k5') },
+          { value: 'transfer', label: i18n.t('wms.outbound.k6') },
+          { value: 'production', label: i18n.t('wms.outbound.k7') },
+          { value: 'other', label: i18n.t('wms.outbound.k8') },
         ],
       },
       listWidth: 100,
@@ -45,7 +46,7 @@ export const outboundOrderSchema: EntitySchema = {
     },
     {
       name: 'warehouse_id',
-      label: '仓库',
+      label: i18n.t('wms.outbound.k9'),
       type: 'select',
       required: true,
       listWidth: 120,
@@ -56,39 +57,39 @@ export const outboundOrderSchema: EntitySchema = {
     },
     {
       name: 'customer_name',
-      label: '客户',
+      label: i18n.t('wms.outbound.k10'),
       type: 'text',
       listWidth: 140,
       validation: [{ type: 'maxLength', value: 255 }],
     },
     {
       name: 'shipping_address',
-      label: '收货地址',
+      label: i18n.t('wms.outbound.k11'),
       type: 'text',
       showInList: false,
     },
     {
       name: 'expected_date',
-      label: '预计日期',
+      label: i18n.t('wms.outbound.k12'),
       type: 'date',
       listWidth: 120,
     },
     {
       name: 'status',
-      label: '状态',
+      label: i18n.t('wms.outbound.k13'),
       type: 'select',
       defaultValue: 'pending',
       options: {
         type: 'static',
         options: [
-          { value: 'pending', label: '待确认' },
-          { value: 'confirmed', label: '已确认' },
-          { value: 'picking', label: '拣货中' },
-          { value: 'picked', label: '已拣货' },
-          { value: 'packing', label: '打包中' },
-          { value: 'shipped', label: '已发货' },
-          { value: 'completed', label: '已完成' },
-          { value: 'cancelled', label: '已取消' },
+          { value: 'pending', label: i18n.t('wms.outbound.k14') },
+          { value: 'confirmed', label: i18n.t('wms.outbound.k15') },
+          { value: 'picking', label: i18n.t('wms.outbound.k16') },
+          { value: 'picked', label: i18n.t('wms.outbound.k17') },
+          { value: 'packing', label: i18n.t('wms.outbound.k18') },
+          { value: 'shipped', label: i18n.t('wms.outbound.k19') },
+          { value: 'completed', label: i18n.t('wms.outbound.k20') },
+          { value: 'cancelled', label: i18n.t('wms.outbound.k21') },
         ],
       },
       listWidth: 100,
@@ -96,25 +97,25 @@ export const outboundOrderSchema: EntitySchema = {
     },
     {
       name: 'total_quantity',
-      label: '总数量',
+      label: i18n.t('wms.outbound.k22'),
       type: 'number',
       listWidth: 100,
     },
     {
       name: 'total_amount',
-      label: '总金额',
+      label: i18n.t('wms.outbound.k23'),
       type: 'number',
       listWidth: 100,
     },
     {
       name: 'remarks',
-      label: '备注',
+      label: i18n.t('wms.outbound.k24'),
       type: 'textarea',
       showInList: false,
     },
     {
       name: 'created_at',
-      label: '创建时间',
+      label: i18n.t('wms.outbound.k25'),
       type: 'datetime',
       readonly: true,
       hideInForm: true,
@@ -123,7 +124,7 @@ export const outboundOrderSchema: EntitySchema = {
     },
     {
       name: 'updated_at',
-      label: '更新时间',
+      label: i18n.t('wms.outbound.k26'),
       type: 'datetime',
       readonly: true,
       hideInForm: true,
@@ -158,38 +159,38 @@ export const outboundOrderSchema: EntitySchema = {
         cancelled: 'error',
       },
       labelMap: {
-        pending: '待确认',
-        confirmed: '已确认',
-        picking: '拣货中',
-        picked: '已拣货',
-        packing: '打包中',
-        shipped: '已发货',
-        completed: '已完成',
-        cancelled: '已取消',
+        pending: i18n.t('wms.outbound.k27'),
+        confirmed: i18n.t('wms.outbound.k28'),
+        picking: i18n.t('wms.outbound.k29'),
+        picked: i18n.t('wms.outbound.k30'),
+        packing: i18n.t('wms.outbound.k31'),
+        shipped: i18n.t('wms.outbound.k32'),
+        completed: i18n.t('wms.outbound.k33'),
+        cancelled: i18n.t('wms.outbound.k34'),
       },
     },
     filters: [
       {
         id: 'status',
-        label: '状态',
+        label: i18n.t('wms.outbound.k35'),
         type: 'select',
         options: [
-          { label: '全部状态', value: 'all' },
-          { label: '待确认', value: 'pending' },
-          { label: '已确认', value: 'confirmed' },
-          { label: '拣货中', value: 'picking' },
-          { label: '已拣货', value: 'picked' },
-          { label: '打包中', value: 'packing' },
-          { label: '已发货', value: 'shipped' },
-          { label: '已完成', value: 'completed' },
-          { label: '已取消', value: 'cancelled' },
+          { label: i18n.t('wms.outbound.k36'), value: 'all' },
+          { label: i18n.t('wms.outbound.k37'), value: 'pending' },
+          { label: i18n.t('wms.outbound.k38'), value: 'confirmed' },
+          { label: i18n.t('wms.outbound.k39'), value: 'picking' },
+          { label: i18n.t('wms.outbound.k40'), value: 'picked' },
+          { label: i18n.t('wms.outbound.k41'), value: 'packing' },
+          { label: i18n.t('wms.outbound.k42'), value: 'shipped' },
+          { label: i18n.t('wms.outbound.k43'), value: 'completed' },
+          { label: i18n.t('wms.outbound.k44'), value: 'cancelled' },
         ],
       },
       {
         id: 'warehouse_id',
-        label: '仓库',
+        label: i18n.t('wms.outbound.k45'),
         type: 'select',
-        options: [{ label: '全部仓库', value: 'all' }],
+        options: [{ label: i18n.t('wms.outbound.k46'), value: 'all' }],
       },
     ],
   },
@@ -198,23 +199,23 @@ export const outboundOrderSchema: EntitySchema = {
 
   formSections: [
     {
-      title: '基本信息',
+      title: i18n.t('wms.outbound.k47'),
       fields: ['order_number', 'order_type', 'warehouse_id', 'customer_name'],
     },
     {
-      title: '物流信息',
+      title: i18n.t('wms.outbound.k48'),
       fields: ['shipping_address', 'expected_date'],
     },
     {
-      title: '备注',
+      title: i18n.t('wms.outbound.k49'),
       fields: ['remarks'],
     },
   ],
 
   formColCount: 2,
-  createTitle: '新增出库单',
-  editTitle: '编辑出库单',
-  detailTitle: '出库单详情',
+  createTitle: i18n.t('wms.outbound.k50'),
+  editTitle: i18n.t('wms.outbound.k51'),
+  detailTitle: i18n.t('wms.outbound.k52'),
 
   dynamicOptions: [
     {

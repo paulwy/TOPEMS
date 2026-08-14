@@ -2,6 +2,7 @@ import type React from 'react';
 import { useEffect } from 'react';
 import { useMap, useMapEvents } from 'react-leaflet';
 import type { ToolMode, DrawFeature } from '../types';
+import i18n from '@/i18n';
 
 interface MapEventHandlerProps {
   toolMode: ToolMode;
@@ -56,14 +57,14 @@ const MapEventHandler: React.FC<MapEventHandlerProps> = ({
         setMeasurePoints(newPoints);
         if (newPoints.length >= 2) {
           const totalDistance = calculateTotalDistance(newPoints);
-          setMeasureResult(`距离: ${formatDistance(totalDistance)}`);
+          setMeasureResult(`${i18n.t('components.map_event_handler.k0')}${formatDistance(totalDistance)}`);
         }
       } else if (toolMode === 'measure-area') {
         const newPoints = [...measurePoints, point];
         setMeasurePoints(newPoints);
         if (newPoints.length >= 3) {
           const area = calculateArea(newPoints);
-          setMeasureResult(`面积: ${formatArea(area)}`);
+          setMeasureResult(`${i18n.t('components.map_event_handler.k1')}${formatArea(area)}`);
         }
       } else if (toolMode === 'draw-point') {
         const newFeature: DrawFeature = {
@@ -117,10 +118,10 @@ const MapEventHandler: React.FC<MapEventHandlerProps> = ({
         const tempPoints: [number, number][] = [...measurePoints, [latlng.lat, latlng.lng]];
         if (toolMode === 'measure-distance') {
           const totalDistance = calculateTotalDistance(tempPoints);
-          setMeasureResult(`距离: ${formatDistance(totalDistance)}`);
+          setMeasureResult(`${i18n.t('components.map_event_handler.k2')}${formatDistance(totalDistance)}`);
         } else if (toolMode === 'measure-area' && tempPoints.length >= 3) {
           const area = calculateArea(tempPoints);
-          setMeasureResult(`面积: ${formatArea(area)}`);
+          setMeasureResult(`${i18n.t('components.map_event_handler.k3')}${formatArea(area)}`);
         }
       } else {
         setShowMeasureTooltip(false);

@@ -4,6 +4,7 @@
 import React from 'react';
 import * as IconExports from '@/components/icons';
 import type { LucideProps } from '@/components/icons';
+import i18n from '@/i18n';
 
 // 构建 PascalCase → Component 映射
 const iconMap: Record<string, React.ComponentType<LucideProps>> = {};
@@ -42,7 +43,7 @@ export const LazyIcon: React.FC<LazyIconProps> = ({ name, ...props }) => {
   const IconComp = iconMap[pascalName];
   if (!IconComp) {
     if (import.meta.env.DEV) {
-      console.warn(`[LazyIcon] 图标 "${name}" (PascalCase: "${pascalName}") 未在 barrel 中注册`);
+      console.warn(`${i18n.t('components.lazy_icon.lazyicon_0')}${name}" (PascalCase: "${pascalName}${i18n.t('components.lazy_icon.barrel_1')}`);
     }
     return null;
   }

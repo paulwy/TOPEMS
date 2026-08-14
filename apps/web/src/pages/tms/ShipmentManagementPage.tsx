@@ -1,6 +1,5 @@
 import React, { useMemo, useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { useTranslation } from 'react-i18next';
 import {
   Box,
   Typography,
@@ -20,116 +19,99 @@ import {
   CircularProgress,
   IconButton,
 } from '@mui/material';
+import i18n from '@/i18n';
 import { Search, RefreshCw, Send, MapPin, XCircle } from 'lucide-react';
 import { PageContainer } from '@/components/common';
 import { useNotificationStore } from '@/store/notificationStore';
 import { shipmentApi } from '@/api/tms';
 import type { Shipment } from '@/api/tms';
-
 const QUERY_KEY = 'tms-shipments';
-
 type ShipmentStatus = 'pending' | 'in_transit' | 'delivered' | 'cancelled';
-
 const statusMeta: Record<ShipmentStatus, { label: string; color: 'warning' | 'info' | 'success' | 'default' }> = {
-  pending: { label: '待发车', color: 'warning' },
-  in_transit: { label: '运输中', color: 'info' },
-  delivered: { label: '已送达', color: 'success' },
-  cancelled: { label: '已取消', color: 'default' },
+  pending: { label: i18n.t('tms.shipment_management_page.k0'), color: 'warning' },
+  in_transit: { label: i18n.t('tms.shipment_management_page.k1'), color: 'info' },
+  delivered: { label: i18n.t('tms.shipment_management_page.k2'), color: 'success' },
+  cancelled: { label: i18n.t('tms.shipment_management_page.k3'), color: 'default' },
 };
-
 const renderStatusChip = (status?: string) => {
   const key = (status as ShipmentStatus) || 'pending';
   const meta = statusMeta[key] || { label: status || '-', color: 'default' as const };
   return <Chip size='small' color={meta.color} label={meta.label} />;
 };
-
 const ShipmentManagementPage: React.FC = () => {
-  const { t: _t } = useTranslation();
   const queryClient = useQueryClient();
   const { addNotification } = useNotificationStore();
-
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
   const [search, setSearch] = useState('');
   const [searchInput, setSearchInput] = useState('');
-
   const queryKey = useMemo(() => [QUERY_KEY, page, pageSize, search], [page, pageSize, search]);
-
   const { data, isLoading } = useQuery({
     queryKey,
     queryFn: async () => {
       const res = await shipmentApi.list({ page, pageSize, search: search || undefined });
-      if (!res.success) throw new Error('加载运单列表失败');
+      if (!res.success) throw new Error(i18n.t('tms.shipment_management_page.k4'));
       return { items: res.data?.items || [], total: res.data?.total || 0 };
     },
   });
-
   const invalidateList = () => {
     queryClient.invalidateQueries({ queryKey: [QUERY_KEY] });
   };
-
   const dispatchMutation = useMutation({
     mutationFn: (id: string) => shipmentApi.dispatch(id),
     onSuccess: () => {
       invalidateList();
-      addNotification({ type: 'success', title: '发车成功', message: '运单已发车' });
+      addNotification({ type: 'success', title: i18n.t('tms.shipment_management_page.k6'), message: i18n.t('tms.shipment_management_page.k5') });
     },
     onError: (err: unknown) => {
       addNotification({
         type: 'error',
-        title: '发车失败',
+        title: i18n.t('tms.shipment_management_page.k7'),
         message: err instanceof Error ? err.message : '',
       });
     },
   });
-
   const arriveMutation = useMutation({
     mutationFn: (id: string) => shipmentApi.arrive(id),
     onSuccess: () => {
       invalidateList();
-      addNotification({ type: 'success', title: '到达成功', message: '运单已到达' });
+      addNotification({ type: 'success', title: i18n.t('tms.shipment_management_page.k9'), message: i18n.t('tms.shipment_management_page.k8') });
     },
     onError: (err: unknown) => {
       addNotification({
         type: 'error',
-        title: '到达操作失败',
+        title: i18n.t('tms.shipment_management_page.k10'),
         message: err instanceof Error ? err.message : '',
       });
     },
   });
-
   const cancelMutation = useMutation({
     mutationFn: (id: string) => shipmentApi.cancel(id),
     onSuccess: () => {
       invalidateList();
-      addNotification({ type: 'success', title: '取消成功', message: '运单已取消' });
+      addNotification({ type: 'success', title: i18n.t('tms.shipment_management_page.k12'), message: i18n.t('tms.shipment_management_page.k11') });
     },
     onError: (err: unknown) => {
       addNotification({
         type: 'error',
-        title: '取消失败',
+        title: i18n.t('tms.shipment_management_page.k13'),
         message: err instanceof Error ? err.message : '',
       });
     },
   });
-
   const handleSearchSubmit = () => {
     setSearch(searchInput);
     setPage(1);
   };
-
   const handleRefresh = () => {
     invalidateList();
   };
-
   const rows = data?.items || [];
   const total = data?.total || 0;
-
   const renderActions = (row: Shipment) => {
     const status = row.status as ShipmentStatus;
     const acting =
       dispatchMutation.isPending || arriveMutation.isPending || cancelMutation.isPending;
-
     if (status === 'pending') {
       return (
         <Stack
@@ -137,7 +119,7 @@ const ShipmentManagementPage: React.FC = () => {
           spacing={0.5}
           sx={{ justifyContent: 'center' }}
         >
-          <Tooltip title='发车'>
+          <Tooltip title={i18n.t('tms.shipment_management_page.k14')}>
             <IconButton
               size='small'
               color='primary'
@@ -147,7 +129,7 @@ const ShipmentManagementPage: React.FC = () => {
               <Send size={16} />
             </IconButton>
           </Tooltip>
-          <Tooltip title='取消'>
+          <Tooltip title={i18n.t('tms.shipment_management_page.k15')}>
             <IconButton
               size='small'
               color='error'
@@ -167,7 +149,7 @@ const ShipmentManagementPage: React.FC = () => {
           spacing={0.5}
           sx={{ justifyContent: 'center' }}
         >
-          <Tooltip title='到达'>
+          <Tooltip title={i18n.t('tms.shipment_management_page.k16')}>
             <IconButton
               size='small'
               color='success'
@@ -177,7 +159,7 @@ const ShipmentManagementPage: React.FC = () => {
               <MapPin size={16} />
             </IconButton>
           </Tooltip>
-          <Tooltip title='取消'>
+          <Tooltip title={i18n.t('tms.shipment_management_page.k17')}>
             <IconButton
               size='small'
               color='error'
@@ -192,11 +174,10 @@ const ShipmentManagementPage: React.FC = () => {
     }
     return <Typography variant='body2' color='text.secondary'>-</Typography>;
   };
-
   return (
     <PageContainer
-      title='运单管理'
-      subtitle='管理运输运单及状态流转'
+      title={i18n.t('tms.shipment_management_page.k18')}
+      subtitle={i18n.t('tms.shipment_management_page.k19')}
       maxWidth={false}
     >
       <Stack
@@ -211,7 +192,7 @@ const ShipmentManagementPage: React.FC = () => {
         >
           <TextField
             size='small'
-            placeholder='按运单号搜索'
+            placeholder={i18n.t('tms.shipment_management_page.k20')}
             value={searchInput}
             onChange={(e) => setSearchInput(e.target.value)}
             onKeyDown={(e) => {
@@ -229,9 +210,9 @@ const ShipmentManagementPage: React.FC = () => {
             size='small'
             onClick={handleSearchSubmit}
           >
-            搜索
+            {i18n.t('pages.shipment_management_page.k0')}
           </Button>
-          <Tooltip title='刷新'>
+          <Tooltip title={i18n.t('tms.shipment_management_page.k21')}>
             <IconButton
               size='small'
               onClick={handleRefresh}
@@ -245,29 +226,28 @@ const ShipmentManagementPage: React.FC = () => {
           spacing={1}
           sx={{ alignItems: 'center' }}
         >
-          <Chip size='small' color='warning' label='待发车' />
-          <Chip size='small' color='info' label='运输中' />
-          <Chip size='small' color='success' label='已送达' />
-          <Chip size='small' color='default' label='已取消' />
+          <Chip size='small' color='warning' label={i18n.t('tms.shipment_management_page.k22')} />
+          <Chip size='small' color='info' label={i18n.t('tms.shipment_management_page.k23')} />
+          <Chip size='small' color='success' label={i18n.t('tms.shipment_management_page.k24')} />
+          <Chip size='small' color='default' label={i18n.t('tms.shipment_management_page.k25')} />
         </Stack>
       </Stack>
-
       <Card variant='outlined'>
         <TableContainer>
           <Table size='small'>
             <TableHead>
               <TableRow>
-                <TableCell>运单号</TableCell>
-                <TableCell>承运商</TableCell>
-                <TableCell>车辆</TableCell>
-                <TableCell>司机</TableCell>
-                <TableCell>路线</TableCell>
-                <TableCell>起点</TableCell>
-                <TableCell>终点</TableCell>
-                <TableCell>状态</TableCell>
-                <TableCell>计划出发</TableCell>
-                <TableCell>计划到达</TableCell>
-                <TableCell align='center'>操作</TableCell>
+                <TableCell>{i18n.t('tms.shipment_management_page.k26')}</TableCell>
+                <TableCell>{i18n.t('tms.shipment_management_page.k27')}</TableCell>
+                <TableCell>{i18n.t('tms.shipment_management_page.k28')}</TableCell>
+                <TableCell>{i18n.t('tms.shipment_management_page.k29')}</TableCell>
+                <TableCell>{i18n.t('tms.shipment_management_page.k30')}</TableCell>
+                <TableCell>{i18n.t('tms.shipment_management_page.k31')}</TableCell>
+                <TableCell>{i18n.t('tms.shipment_management_page.k32')}</TableCell>
+                <TableCell>{i18n.t('tms.shipment_management_page.k33')}</TableCell>
+                <TableCell>{i18n.t('tms.shipment_management_page.k34')}</TableCell>
+                <TableCell>{i18n.t('tms.shipment_management_page.k35')}</TableCell>
+                <TableCell align='center'>{i18n.t('tms.shipment_management_page.k36')}</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
@@ -288,7 +268,7 @@ const ShipmentManagementPage: React.FC = () => {
                     align='center'
                     sx={{ py: 4, color: 'text.secondary' }}
                   >
-                    暂无运单数据
+                    {i18n.t('pages.shipment_management_page.k1')}
                   </TableCell>
                 </TableRow>
               ) : (
@@ -325,12 +305,11 @@ const ShipmentManagementPage: React.FC = () => {
             setPage(1);
           }}
           rowsPerPageOptions={[10, 20, 50]}
-          labelRowsPerPage='每页'
-          labelDisplayedRows={({ from, to, count }) => `${from}-${to} / 共 ${count} 条`}
+          labelRowsPerPage={i18n.t('tms.shipment_management_page.k37')}
+          labelDisplayedRows={({ from, to, count }) => `${from}-${to}${i18n.t('pages.shipment_management_page.k0')}${count}${i18n.t('pages.shipment_management_page.k1')}`}
         />
       </Card>
     </PageContainer>
   );
 };
-
 export default ShipmentManagementPage;

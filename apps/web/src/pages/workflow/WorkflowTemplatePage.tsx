@@ -2,7 +2,6 @@ import React, { useCallback } from 'react';
 import { Typography } from '@mui/material';
 import { Copy, FileText } from 'lucide-react';
 import { useQueryClient } from '@tanstack/react-query';
-
 import CrudPage, { type CrudApiAdapter } from '@/components/templates/CrudPage';
 import type { ColumnDef, RowAction } from '@/components/templates/list/types';
 import { PageContainer } from '@/components/common';
@@ -10,13 +9,12 @@ import { useNotificationStore } from '@/store/notificationStore';
 import { workflowDefinitionApi } from '@/api/workflow';
 import type { Workflow } from '@/api/workflow';
 import { workflowTemplateSchema, renderTemplateTypeBadge } from '@/schemas/workflow';
-
+import i18n from '@/i18n';
 // ============ 列定义（覆盖 Schema 自动生成的列，加入审计字段） ============
-
 const customColumns: ColumnDef[] = [
   {
     id: 'name',
-    label: '模板名称',
+    label: i18n.t('workflow.workflow_template_page.k0'),
     width: 240,
     render: (row) =>
       React.createElement(
@@ -27,38 +25,36 @@ const customColumns: ColumnDef[] = [
   },
   {
     id: 'type',
-    label: '模板类型',
+    label: i18n.t('workflow.workflow_template_page.k1'),
     width: 140,
     render: (row) => renderTemplateTypeBadge(String(row.type || 'approval')),
   },
   {
     id: 'scope',
-    label: '适用范围',
+    label: i18n.t('workflow.workflow_template_page.k2'),
     width: 140,
     render: (row) => String(row.scope || ''),
   },
   {
     id: 'usageCount',
-    label: '使用次数',
+    label: i18n.t('workflow.workflow_template_page.k3'),
     width: 120,
     render: (row) => String(row.usageCount ?? 0),
   },
   {
     id: 'creator',
-    label: '创建人',
+    label: i18n.t('workflow.workflow_template_page.k4'),
     width: 140,
     render: (row) => String(row.creator || '-'),
   },
   {
     id: 'createdAt',
-    label: '创建时间',
+    label: i18n.t('workflow.workflow_template_page.k5'),
     width: 140,
     render: (row) => String(row.createdAt || '-'),
   },
 ];
-
 // ============ API 适配器：在 Workflow API 与扁平 Schema 记录间转换 ============
-
 interface FlowTemplateRecord {
   id: string;
   name: string;
@@ -68,19 +64,17 @@ interface FlowTemplateRecord {
   creator: string;
   createdAt: string;
 }
-
 function toRecord(w: Workflow): FlowTemplateRecord {
   return {
     id: w.id,
     name: w.name,
     type: String(w.data?.type || 'approval'),
-    scope: String(w.data?.scope || '全公司'),
+    scope: String(w.data?.scope || i18n.t('workflow.workflow_template_page.k6')),
     usageCount: Number(w.data?.usageCount || 0),
     creator: w.created_by || '-',
     createdAt: w.created_at ? new Date(w.created_at).toISOString().split('T')[0] : '-',
   };
 }
-
 const apiAdapter: CrudApiAdapter<FlowTemplateRecord> = {
   list: async (params) => {
     const response = await workflowDefinitionApi.list({
@@ -102,12 +96,12 @@ const apiAdapter: CrudApiAdapter<FlowTemplateRecord> = {
       isactive: false,
       data: {
         type: data.type ?? 'approval',
-        scope: data.scope ?? '全公司',
+        scope: data.scope ?? i18n.t('workflow.workflow_template_page.k7'),
         usageCount: 0,
       },
     } as Partial<Workflow>);
     if (response.success === false) {
-      throw new Error(response.message || '创建模板失败');
+      throw new Error(response.message || i18n.t('workflow.workflow_template_page.k8'));
     }
     return (response.data ?? {}) as unknown as FlowTemplateRecord;
   },
@@ -116,29 +110,26 @@ const apiAdapter: CrudApiAdapter<FlowTemplateRecord> = {
       name: data.name as string | undefined,
       data: {
         type: data.type ?? 'approval',
-        scope: data.scope ?? '全公司',
+        scope: data.scope ?? i18n.t('workflow.workflow_template_page.k9'),
         usageCount: data.usageCount ?? 0,
       },
     } as Partial<Workflow>);
     if (response.success === false) {
-      throw new Error(response.message || '更新模板失败');
+      throw new Error(response.message || i18n.t('workflow.workflow_template_page.k10'));
     }
     return (response.data ?? {}) as unknown as FlowTemplateRecord;
   },
   delete: async (id) => {
     const response = await workflowDefinitionApi.delete(id);
     if (response.success === false) {
-      throw new Error(response.message || '删除模板失败');
+      throw new Error(response.message || i18n.t('workflow.workflow_template_page.k11'));
     }
   },
 };
-
 // ============ 页面组件 ============
-
 const WorkflowTemplatePage: React.FC = () => {
   const queryClient = useQueryClient();
   const { addNotification } = useNotificationStore();
-
   const handleCopy = useCallback(
     async (row: Record<string, unknown>) => {
       const id = String(row.id);
@@ -147,7 +138,7 @@ const WorkflowTemplatePage: React.FC = () => {
         if (response.success && response.data) {
           const workflow = response.data;
           await workflowDefinitionApi.create({
-            name: `${workflow.name} (副本)`,
+            name: `${workflow.name}${i18n.t('pages.workflow_template_page.k0')}`,
             description: workflow.description,
             definition: workflow.definition,
             isactive: false,
@@ -159,32 +150,30 @@ const WorkflowTemplatePage: React.FC = () => {
 });
           addNotification({
             type: 'success',
-            title: '复制成功',
-            message: `已复制模板「${workflow.name}」`,
+            title: i18n.t('workflow.workflow_template_page.k12'),
+            message: `${i18n.t('pages.workflow_template_page.k1')}${workflow.name}」`,
           });
         } else if (response.success === false) {
-          throw new Error(response.message || '加载模板失败');
+          throw new Error(response.message || i18n.t('workflow.workflow_template_page.k13'));
         }
       } catch (err) {
         addNotification({
           type: 'error',
-          title: '复制失败',
+          title: i18n.t('workflow.workflow_template_page.k14'),
           message: err instanceof Error ? err.message : '',
         });
       }
     },
     [queryClient, addNotification]
   );
-
   const customRowActions: RowAction[] = [
     {
       key: 'copy',
-      label: '复制',
+      label: i18n.t('workflow.workflow_template_page.k15'),
       icon: <Copy size={16} />,
       onClick: handleCopy,
     },
   ];
-
   return (
     <PageContainer headerProps={{ pageIcon: <FileText size={20} /> }}>
       <CrudPage
@@ -192,10 +181,9 @@ const WorkflowTemplatePage: React.FC = () => {
         apiAdapter={apiAdapter}
         customColumns={customColumns}
         customRowActions={customRowActions}
-        breadcrumbs={[{ label: '首页', href: '/' }, { label: '工作流' }, { label: '流程模板' }]}
+        breadcrumbs={[{ label: i18n.t('workflow.workflow_template_page.k18'), href: '/' }, { label: i18n.t('workflow.workflow_template_page.k17') }, { label: i18n.t('workflow.workflow_template_page.k16') }]}
       />
     </PageContainer>
   );
 };
-
 export default WorkflowTemplatePage;

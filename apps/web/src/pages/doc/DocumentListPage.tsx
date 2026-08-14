@@ -11,6 +11,7 @@ import { apiLogger } from '@/utils/logger';
 
 
 import { QUERY_KEYS } from '@/lib/reactQuery';
+import i18n from '@/i18n';
 
 export const DocumentListPage: React.FC = () => {
   const addNotification = useNotificationStore((state) => state.addNotification);
@@ -69,8 +70,8 @@ export const DocumentListPage: React.FC = () => {
   refetchType: 'active',
 });
     addNotification({
-      title: '成功',
-      message: '刷新成功',
+      title: i18n.t('pages.document_list_page.k0'),
+      message: i18n.t('pages.document_list_page.k1'),
       type: 'success',
     });
   }, [addNotification, queryClient]);
@@ -88,15 +89,15 @@ export const DocumentListPage: React.FC = () => {
         a.remove();
         window.URL.revokeObjectURL(url);
         addNotification({
-          title: '成功',
-          message: '文件下载成功',
+          title: i18n.t('pages.document_list_page.k2'),
+          message: i18n.t('pages.document_list_page.k3'),
           type: 'success',
         });
       } catch (err: unknown) {
-        apiLogger.error('下载失败:', err);
+        apiLogger.error(i18n.t('pages.document_list_page.k0'), err);
         addNotification({
-          title: '失败',
-          message: '文件下载失败',
+          title: i18n.t('pages.document_list_page.k4'),
+          message: i18n.t('pages.document_list_page.k5'),
           type: 'error',
         });
       }
@@ -107,8 +108,8 @@ export const DocumentListPage: React.FC = () => {
   const handleShare = useCallback(
     (row: Record<string, unknown>) => {
       addNotification({
-        title: '提示',
-        message: `分享功能开发中 - ${String(row.name)}`,
+        title: i18n.t('pages.document_list_page.k6'),
+        message: `${i18n.t('pages.document_list_page.k1')}${String(row.name)}`,
         type: 'info',
       });
     },
@@ -118,8 +119,8 @@ export const DocumentListPage: React.FC = () => {
   const handleOpen = useCallback(
     (row: Record<string, unknown>) => {
       addNotification({
-        title: '打开文档',
-        message: `正在打开"${String(row.name)}"...`,
+        title: i18n.t('pages.document_list_page.k7'),
+        message: `${i18n.t('pages.document_list_page.k2')}${String(row.name)}"...`,
         type: 'info',
       });
     },
@@ -128,17 +129,17 @@ export const DocumentListPage: React.FC = () => {
 
   const customRowActions = [
     {
-      label: '打开',
+      label: i18n.t('pages.document_list_page.k8'),
       icon: <Eye size={16} />,
       onClick: handleOpen,
     },
     {
-      label: '下载',
+      label: i18n.t('pages.document_list_page.k9'),
       icon: <Download size={16} />,
       onClick: handleDownload,
     },
     {
-      label: '分享',
+      label: i18n.t('pages.document_list_page.k10'),
       icon: <Share2 size={16} />,
       onClick: handleShare,
     },

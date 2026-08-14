@@ -11,6 +11,7 @@ import {
   ListItemText,
   Chip,
 } from '@mui/material';
+import i18n from '@/i18n';
 import { styled } from '@mui/material/styles';
 import {
   File as FileIcon,
@@ -25,6 +26,7 @@ import {
   Pause,
   Play,
 } from 'lucide-react';
+import { designTokens } from '@topems/tokens';
 
 /**
  * 文件上传组件属性
@@ -110,7 +112,7 @@ const FileUpload: React.FC<FileUploadProps> = ({
   height = 150,
   disabled = false,
   className,
-  uploadText = '选择文件',
+  uploadText = i18n.t('shared.file_upload.k0'),
 }) => {
   const [files, setFiles] = useState<UploadFile[]>(
     value.map((url, index) => {
@@ -149,7 +151,7 @@ const FileUpload: React.FC<FileUploadProps> = ({
    * 格式化文件大小
    */
   const formatSize = (bytes: number) => {
-    if (bytes === 0) return '未知大小';
+    if (bytes === 0) return i18n.t('shared.file_upload.k1');
     const k = 1024;
     const sizes = ['B', 'KB', 'MB', 'GB'];
     const i = Math.floor(Math.log(bytes) / Math.log(k));
@@ -179,22 +181,22 @@ const FileUpload: React.FC<FileUploadProps> = ({
 
       Array.from(selectedFiles).forEach((file) => {
         if (validFiles.length >= remainingSlots) {
-          logger.warn('已达到最大文件数量限制');
+          logger.warn(i18n.t('shared.file_upload.k2'));
           return;
         }
 
         if (!validateFileType(file)) {
-          logger.warn(`文件 ${file.name} 类型不允许`);
+          logger.warn(`${i18n.t('components.file_upload.k0')}${file.name}${i18n.t('components.file_upload.k1')}`);
           return;
         }
 
         if (file.size > maxSize * 1024 * 1024) {
-          logger.warn(`文件 ${file.name} 超过大小限制 ${maxSize}MB`);
+          logger.warn(`${i18n.t('components.file_upload.k2')}${file.name}${i18n.t('components.file_upload.k3')}${maxSize}MB`);
           return;
         }
 
         if (totalSize + file.size > maxTotalSize * 1024 * 1024) {
-          logger.warn('文件总大小超过限制');
+          logger.warn(i18n.t('shared.file_upload.k3'));
           return;
         }
 
@@ -364,7 +366,7 @@ const FileUpload: React.FC<FileUploadProps> = ({
           variant='body1'
           sx={{ mt: 1 }}
         >
-          {dragging ? '松开以上传' : '拖拽文件到此处或点击上传'}
+          {dragging ? i18n.t('shared.file_upload.k5') : i18n.t('shared.file_upload.k4')}
         </Typography>
         <Typography
           variant='body2'
@@ -415,7 +417,7 @@ const FileUpload: React.FC<FileUploadProps> = ({
               borderColor: 'divider',
               borderRadius: 8,
               mb: 1,
-              p: '8px 12px',
+              p: `${designTokens.spacing.sm} 12px`,
             },
           }}
         >
@@ -450,7 +452,7 @@ const FileUpload: React.FC<FileUploadProps> = ({
                         variant='caption'
                         color='success.main'
                       >
-                        上传完成
+                        {i18n.t('components.file_upload.k0')}
                       </Typography>
                     )}
                     {file.status === 'error' && (
@@ -458,7 +460,7 @@ const FileUpload: React.FC<FileUploadProps> = ({
                         variant='caption'
                         color='error.main'
                       >
-                        {file.error || '上传失败'}
+                        {file.error || i18n.t('shared.file_upload.k6')}
                       </Typography>
                     )}
                     {file.status === 'paused' && (
@@ -466,7 +468,7 @@ const FileUpload: React.FC<FileUploadProps> = ({
                         variant='caption'
                         color='warning.main'
                       >
-                        已暂停
+                        {i18n.t('components.file_upload.k1')}
                       </Typography>
                     )}
                   </Box>
@@ -486,7 +488,7 @@ const FileUpload: React.FC<FileUploadProps> = ({
                   <IconButton
                     size='small'
                     onClick={() => window.open(file.url)}
-                    aria-label='下载'
+                    aria-label={i18n.t('shared.file_upload.k7')}
                   >
                     <Download size={16} />
                   </IconButton>
@@ -495,7 +497,7 @@ const FileUpload: React.FC<FileUploadProps> = ({
                   <IconButton
                     size='small'
                     onClick={() => handlePause(file.id)}
-                    aria-label='执行'
+                    aria-label={i18n.t('shared.file_upload.k8')}
                   >
                     {file.status === 'paused' ? <Play size={16} /> : <Pause size={16} />}
                   </IconButton>
@@ -503,7 +505,7 @@ const FileUpload: React.FC<FileUploadProps> = ({
                 <IconButton
                   size='small'
                   onClick={() => handleDelete(file.id)}
-                  aria-label='关闭'
+                  aria-label={i18n.t('shared.file_upload.k9')}
                 >
                   <X size={16} />
                 </IconButton>

@@ -9,6 +9,7 @@ import type { ChartConfig } from '@/components/templates/StatsPageTemplate';
 import apiClient from '@/api/client';
 import { PageContainer } from '@/components/common';
 import { useCrmMock, type FunnelData, type Period } from '@/api/crm';
+import i18n from '@/i18n';
 
 type FunnelViewMode = 'count' | 'weighted';
 
@@ -142,7 +143,7 @@ const CRMSalesFunnelPage: React.FC = () => {
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
           {mockEnabled && (
             <Chip
-              label={t('crm.common.mock_demo_badge') || 'Mock 演示'}
+              label={t('crm.common.mock_demo_badge') || i18n.t('pages.crm_sales_funnel_page.mock_0')}
               color='warning'
               size='small'
               variant='outlined'
@@ -155,9 +156,9 @@ const CRMSalesFunnelPage: React.FC = () => {
             onChange={(_, v) => v && setViewMode(v)}
             size='small'
           >
-            <ToggleButton value='count'>{t('crm.salesFunnel.view_count') || '按数量'}</ToggleButton>
+            <ToggleButton value='count'>{t('crm.salesFunnel.view_count') || i18n.t('pages.crm_sales_funnel_page.k1')}</ToggleButton>
             <ToggleButton value='weighted'>
-              {t('crm.salesFunnel.view_weighted') || '按金额'}
+              {t('crm.salesFunnel.view_weighted') || i18n.t('pages.crm_sales_funnel_page.k2')}
             </ToggleButton>
           </ToggleButtonGroup>
         </Box>
@@ -170,10 +171,10 @@ const CRMSalesFunnelPage: React.FC = () => {
         loading={loading}
         onRefresh={() => funnelQuery.refetch()}
         timeRangeOptions={[
-          { value: 'MTD', label: t('crm.period.mtd') || '本月' },
-          { value: 'QTD', label: t('crm.period.qtd') || '本季度' },
-          { value: 'YTD', label: t('crm.period.ytd') || '本年' },
-          { value: 'ROLLING_12M', label: t('crm.period.r12') || '近12月' },
+          { value: 'MTD', label: t('crm.period.mtd') || i18n.t('pages.crm_sales_funnel_page.k3') },
+          { value: 'QTD', label: t('crm.period.qtd') || i18n.t('pages.crm_sales_funnel_page.k4') },
+          { value: 'YTD', label: t('crm.period.ytd') || i18n.t('pages.crm_sales_funnel_page.k5') },
+          { value: 'ROLLING_12M', label: t('crm.period.r12') || i18n.t('pages.crm_sales_funnel_page.12_6') },
         ]}
         onTimeRangeChange={(v) => setPeriod(v as Period)}
       />

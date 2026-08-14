@@ -18,6 +18,7 @@ import {
   CardContent,
   Button,
 } from '@mui/material';
+import i18n from '@/i18n';
 import { PageContainer } from '@/components/common';
 import { DetailPageTemplate, type SectionConfig } from '@/components/templates';
 import { limsApi } from '@/api/lims';
@@ -25,28 +26,24 @@ import type { Instrument, CalibrationRecord, MaintenanceRecord, InspectionTask }
 import dayjs from 'dayjs';
 import { designTokens } from '@/theme/tokens';
 import { LIMS_PATHS } from '@/modules/lims/config';
-
 const ct= designTokens.colors;
-
 interface LimsListResponse<T> {
   items?: T[];
   records?: T[];
   tasks?: T[];
   instruments?: T[];
 }
-
 const statusColorMap: Record<string, { bg: string; color: string }> = {
-  正常: { bg: 'success.lighter', color: 'success.700' },
-  校准中: { bg: 'primary.100', color: 'primary.dark' },
-  维修中: { bg: ct.error[50], color: 'error.700' },
-  停用: { bg: 'grey.100', color: 'grey.600' },
-  报废: { bg: 'grey.100', color: 'grey.600' },
+  [i18n.t('pages.lims_instrument_detail_page.k0')]: { bg: 'success.lighter', color: 'success.700' },
+  [i18n.t('pages.lims_instrument_detail_page.k1')]: { bg: 'primary.100', color: 'primary.dark' },
+  [i18n.t('pages.lims_instrument_detail_page.k2')]: { bg: ct.error[50], color: 'error.700' },
+  [i18n.t('pages.lims_instrument_detail_page.k3')]: { bg: 'grey.100', color: 'grey.600' },
+  [i18n.t('pages.lims_instrument_detail_page.k4')]: { bg: 'grey.100', color: 'grey.600' },
   normal: { bg: 'success.lighter', color: 'success.700' },
   calibration: { bg: 'primary.100', color: 'primary.dark' },
   maintenance: { bg: ct.error[50], color: 'error.700' },
   disabled: { bg: 'grey.100', color: 'grey.600' },
 };
-
 function getStatusBadge(status: string) {
   const colors = statusColorMap[status] || { bg: 'grey.100', color: ct.grey[600] };
   return (
@@ -61,12 +58,10 @@ function getStatusBadge(status: string) {
     />
   );
 }
-
 function formatDate(dateStr?: string | null) {
   if (!dateStr) return '-';
   return new Date(dateStr).toLocaleDateString('zh-CN');
 }
-
 function SimpleTable<T extends { id: string }>({
   columns,
   data,
@@ -122,23 +117,21 @@ function SimpleTable<T extends { id: string }>({
     </TableContainer>
   );
 }
-
 function InfoGrid({ instrument }: { instrument: Instrument }) {
   const fields = [
-    { label: '仪器名称', value: instrument.name },
-    { label: '仪器编号', value: instrument.code, mono: true },
-    { label: '型号', value: instrument.model },
-    { label: '序列号', value: instrument.serial_number, mono: true },
-    { label: '类型', value: instrument.type },
-    { label: '制造商', value: instrument.manufacturer },
-    { label: '存放位置', value: instrument.location },
-    { label: '负责人', value: instrument.responsible_person },
-    { label: '状态', value: instrument.status, isStatus: true },
-    { label: '购买日期', value: formatDate(instrument.purchase_date) },
-    { label: '上次校准日期', value: formatDate(instrument.calibration_date) },
-    { label: '下次校准日期', value: formatDate(instrument.next_calibration_date), isNextCal: true },
+    { label: i18n.t('lims.lims_instrument_detail_page.k0'), value: instrument.name },
+    { label: i18n.t('lims.lims_instrument_detail_page.k1'), value: instrument.code, mono: true },
+    { label: i18n.t('lims.lims_instrument_detail_page.k2'), value: instrument.model },
+    { label: i18n.t('lims.lims_instrument_detail_page.k3'), value: instrument.serial_number, mono: true },
+    { label: i18n.t('lims.lims_instrument_detail_page.k4'), value: instrument.type },
+    { label: i18n.t('lims.lims_instrument_detail_page.k5'), value: instrument.manufacturer },
+    { label: i18n.t('lims.lims_instrument_detail_page.k6'), value: instrument.location },
+    { label: i18n.t('lims.lims_instrument_detail_page.k7'), value: instrument.responsible_person },
+    { label: i18n.t('lims.lims_instrument_detail_page.k8'), value: instrument.status, isStatus: true },
+    { label: i18n.t('lims.lims_instrument_detail_page.k9'), value: formatDate(instrument.purchase_date) },
+    { label: i18n.t('lims.lims_instrument_detail_page.k10'), value: formatDate(instrument.calibration_date) },
+    { label: i18n.t('lims.lims_instrument_detail_page.k11'), value: formatDate(instrument.next_calibration_date), isNextCal: true },
   ];
-
   return (
     <Box
       sx={{
@@ -180,14 +173,13 @@ function InfoGrid({ instrument }: { instrument: Instrument }) {
           color='text.secondary'
           sx={{ mb: 0.5 }}
         >
-          描述
+          {i18n.t('pages.lims_instrument_detail_page.k5')}
         </Typography>
         <Typography sx={{ fontWeight: 'medium' }}>{instrument.description || '-'}</Typography>
       </Box>
     </Box>
   );
 }
-
 function SidebarTasks({
   tasks,
   navigate,
@@ -196,13 +188,12 @@ function SidebarTasks({
   navigate: ReturnType<typeof useNavigate>;
 }) {
   const taskStatusColor = (status: string) => {
-    if (status === '已完成' || status === 'completed')
+    if (status === i18n.t('lims.lims_instrument_detail_page.k12') || status === 'completed')
       return { bg: 'success.lighter', color: 'success.dark' };
-    if (status === '进行中' || status === 'in_progress')
+    if (status === i18n.t('lims.lims_instrument_detail_page.k13') || status === 'in_progress')
       return { bg: 'primary.100', color: 'primary.dark' };
     return { bg: 'warning.100', color: ct.yellow[600] };
   };
-
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
       <Typography
@@ -210,7 +201,7 @@ function SidebarTasks({
         sx={{ fontWeight: 600, display: 'flex', alignItems: 'center', gap: 1 }}
       >
         <FileText sx={{ fontSize: 20, color: 'primary.dark' }} />
-        相关检验任务
+        {i18n.t('pages.lims_instrument_detail_page.k6')}
       </Typography>
       {tasks.length > 0 ? (
         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
@@ -235,7 +226,7 @@ function SidebarTasks({
                       {task.task_no || task.id}
                     </Typography>
                     <Chip
-                      label={task.status || '待处理'}
+                      label={task.status || i18n.t('lims.lims_instrument_detail_page.k14')}
                       size='small'
                       sx={{ backgroundColor: sc.bg, color: sc.color }}
                     />
@@ -266,32 +257,28 @@ function SidebarTasks({
       ) : (
         <Box sx={{ textAlign: 'center', py: 3, color: 'text.secondary' }}>
           <FileText sx={{ width: 48, height: 48, opacity: 0.5, mx: 'auto', mb: 1 }} />
-          <Typography variant='body2'>暂无相关检验任务</Typography>
+          <Typography variant='body2'>{i18n.t('lims.lims_instrument_detail_page.k15')}</Typography>
         </Box>
       )}
     </Box>
   );
 }
-
 const LimsInstrumentDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-
   const { data, isPending, error, refetch } = useQuery({
     queryKey: QUERY_KEYS.LIMS.INSTRUMENT(id || ''),
     queryFn: async () => {
-      if (!id) return { instrument: null, error: '无效的仪器ID' };
+      if (!id) return { instrument: null, error: i18n.t('lims.lims_instrument_detail_page.id_16') };
       const [instrumentRes, calibrationRes, maintenanceRes, tasksRes] = await Promise.all([
         limsApi.getInstrument(id),
         limsApi.listCalibrationRecords(id),
         limsApi.listMaintenanceByInstrument(id),
         limsApi.listTasks().catch(() => null),
       ]);
-
       const instrument =
         instrumentRes.success && instrumentRes.data ? (instrumentRes.data as Instrument) : null;
-      const instrError = instrument ? null : '仪器不存在或已被删除';
-
+      const instrError = instrument ? null : i18n.t('lims.lims_instrument_detail_page.k17');
       const extractList = <T,>(
         res: { success?: boolean; data?: unknown },
         keys: (keyof LimsListResponse<T>)[]
@@ -304,7 +291,6 @@ const LimsInstrumentDetailPage: React.FC = () => {
         }
         return [];
       };
-
       const calibrationRecords = extractList<CalibrationRecord>(calibrationRes, [
         'items',
         'records',
@@ -312,7 +298,6 @@ const LimsInstrumentDetailPage: React.FC = () => {
       const maintenanceRecords = extractList<MaintenanceRecord>(maintenanceRes, ['items']);
       const allTasks = tasksRes ? extractList<InspectionTask>(tasksRes, ['items', 'tasks']) : [];
       const relatedTasks = allTasks.slice(0, 5);
-
       return {
         instrument,
         error: instrError,
@@ -324,104 +309,98 @@ const LimsInstrumentDetailPage: React.FC = () => {
     enabled: !!id,
   
       staleTime: CACHE_DURATIONS.MEDIUM,});
-
   const instrument = data?.instrument || null;
   const calibrationRecords = data?.calibrationRecords || [];
   const maintenanceRecords = data?.maintenanceRecords || [];
   const relatedTasks = data?.relatedTasks || [];
-  const pageError = error ? '加载仪器详情失败' : data?.error || null;
-
+  const pageError = error ? i18n.t('lims.lims_instrument_detail_page.k18') : data?.error || null;
   const usageDays = useMemo(() => {
     if (!instrument) return 0;
     const created = instrument.purchase_date || instrument.created_at;
     if (!created) return 0;
     return dayjs().diff(dayjs(created), 'day');
   }, [instrument]);
-
   const calibrationColumns = [
     {
       id: 'calibration_date',
-      label: '校准日期',
+      label: i18n.t('lims.lims_instrument_detail_page.k19'),
       render: (row: CalibrationRecord) => formatDate(row.calibration_date),
     },
-    { id: 'calibration_type', label: '校准类型' },
-    { id: 'result', label: '校准结果' },
+    { id: 'calibration_type', label: i18n.t('lims.lims_instrument_detail_page.k20') },
+    { id: 'result', label: i18n.t('lims.lims_instrument_detail_page.k21') },
     {
       id: 'certificate_no',
-      label: '证书编号',
+      label: i18n.t('lims.lims_instrument_detail_page.k22'),
       render: (row: CalibrationRecord) => row.certificate_no || '-',
     },
-    { id: 'performed_by', label: '校准人' },
+    { id: 'performed_by', label: i18n.t('lims.lims_instrument_detail_page.k23') },
     {
       id: 'next_calibration_date',
-      label: '下次校准',
+      label: i18n.t('lims.lims_instrument_detail_page.k24'),
       render: (row: CalibrationRecord) => formatDate(row.next_calibration_date),
     },
   ];
-
   const maintenanceColumns = [
     {
       id: 'performed_at',
-      label: '维护日期',
+      label: i18n.t('lims.lims_instrument_detail_page.k25'),
       render: (row: MaintenanceRecord) => formatDate(row.performed_at),
     },
-    { id: 'maintenance_type', label: '维护类型' },
-    { id: 'description', label: '维护描述' },
-    { id: 'performed_by', label: '执行人' },
+    { id: 'maintenance_type', label: i18n.t('lims.lims_instrument_detail_page.k26') },
+    { id: 'description', label: i18n.t('lims.lims_instrument_detail_page.k27') },
+    { id: 'performed_by', label: i18n.t('lims.lims_instrument_detail_page.k28') },
     {
       id: 'next_maintenance_date',
-      label: '下次维护',
+      label: i18n.t('lims.lims_instrument_detail_page.k29'),
       render: (row: MaintenanceRecord) => formatDate(row.next_maintenance_date),
     },
     {
       id: 'cost',
-      label: '费用',
+      label: i18n.t('lims.lims_instrument_detail_page.k30'),
       render: (row: MaintenanceRecord) => (row.cost ? `¥${row.cost}` : '-'),
     },
   ];
-
   const sections: SectionConfig[] = [
     {
       id: 'basic',
-      title: '基本信息',
+      title: i18n.t('lims.lims_instrument_detail_page.k31'),
       content: instrument ? <InfoGrid instrument={instrument} /> : null,
     },
     {
       id: 'calibration',
-      title: '校准记录',
+      title: i18n.t('lims.lims_instrument_detail_page.k32'),
       content: (
         <SimpleTable
           columns={calibrationColumns}
           data={calibrationRecords}
           emptyIcon={<CheckCircle sx={{ width: 64, height: 64 }} />}
-          emptyText='暂无校准记录'
+          emptyText={i18n.t('lims.lims_instrument_detail_page.k33')}
         />
       ),
     },
     {
       id: 'maintenance',
-      title: '维护保养',
+      title: i18n.t('lims.lims_instrument_detail_page.k34'),
       content: (
         <SimpleTable
           columns={maintenanceColumns}
           data={maintenanceRecords}
           emptyIcon={<Wrench sx={{ width: 64, height: 64 }} />}
-          emptyText='暂无维护保养记录'
+          emptyText={i18n.t('lims.lims_instrument_detail_page.k35')}
         />
       ),
     },
     {
       id: 'usage',
-      title: '使用日志',
+      title: i18n.t('lims.lims_instrument_detail_page.k36'),
       content: (
         <Box sx={{ textAlign: 'center', py: 4, color: 'text.secondary' }}>
           <Clock sx={{ width: 64, height: 64, opacity: 0.5, mx: 'auto', mb: 2 }} />
-          <Typography>暂无使用日志</Typography>
+          <Typography>{i18n.t('lims.lims_instrument_detail_page.k37')}</Typography>
         </Box>
       ),
     },
   ];
-
   if (isPending) {
     return (
       <Box
@@ -447,12 +426,11 @@ const LimsInstrumentDetailPage: React.FC = () => {
               mb: 2,
             }}
           />
-          <Typography sx={{ color: 'slate.600' }}>加载中...</Typography>
+          <Typography sx={{ color: 'slate.600' }}>{i18n.t('pages.lims_instrument_detail_page.k0')}</Typography>
         </Box>
       </Box>
     );
   }
-
   if (pageError || !instrument) {
     return (
       <Box
@@ -468,18 +446,17 @@ const LimsInstrumentDetailPage: React.FC = () => {
           <AlertCircle
             sx={{ width: 64, height: 64, color: 'error.main', mb: 2, mx: 'auto', display: 'block' }}
           />
-          <p style={{ color: ct.grey[600] }}>{pageError || '仪器不存在或已被删除'}</p>
+          <p style={{ color: ct.grey[600] }}>{pageError || i18n.t('lims.lims_instrument_detail_page.k38')}</p>
           <Button
             onClick={() => navigate(LIMS_PATHS.instrument)}
             sx={{ mt: 2 }}
           >
-            返回仪器列表
+            {i18n.t('pages.lims_instrument_detail_page.k7')}
           </Button>
         </Box>
       </Box>
     );
   }
-
   return (
     <PageContainer
       padding={false}
@@ -492,12 +469,12 @@ const LimsInstrumentDetailPage: React.FC = () => {
       <DetailPageTemplate
         title=''
         subtitle=''
-        detailItemName={instrument?.name || instrument?.code || '仪器详情'}
+        detailItemName={instrument?.name || instrument?.code || i18n.t('lims.lims_instrument_detail_page.k39')}
         breadcrumbs={[
-          { label: '首页', href: '/dashboard' },
+          { label: i18n.t('lims.lims_instrument_detail_page.k40'), href: '/dashboard' },
           { label: 'LIMS', href: LIMS_PATHS.root },
-          { label: '仪器管理', href: LIMS_PATHS.instrument },
-          { label: '仪器详情' },
+          { label: i18n.t('lims.lims_instrument_detail_page.k41'), href: LIMS_PATHS.instrument },
+          { label: i18n.t('lims.lims_instrument_detail_page.k42') },
         ]}
         backHref={LIMS_PATHS.instrument}
         loading={isPending}
@@ -508,9 +485,9 @@ const LimsInstrumentDetailPage: React.FC = () => {
           subtitle: instrument.code,
           tags: [instrument.status, instrument.type].filter(Boolean),
           stats: [
-            { label: '校准次数', value: calibrationRecords.length },
-            { label: '维护次数', value: maintenanceRecords.length },
-            { label: '使用天数', value: usageDays },
+            { label: i18n.t('lims.lims_instrument_detail_page.k43'), value: calibrationRecords.length },
+            { label: i18n.t('lims.lims_instrument_detail_page.k44'), value: maintenanceRecords.length },
+            { label: i18n.t('lims.lims_instrument_detail_page.k45'), value: usageDays },
           ],
         }}
         sidebar={
@@ -524,5 +501,4 @@ const LimsInstrumentDetailPage: React.FC = () => {
     </PageContainer>
   );
 };
-
 export default LimsInstrumentDetailPage;

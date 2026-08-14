@@ -1,5 +1,4 @@
 import React from 'react';
-import { useTranslation } from 'react-i18next';
 import { TrendingUp } from 'lucide-react';
 import {
   Box,
@@ -13,22 +12,19 @@ import {
   TableRow,
   Badge,
 } from '@mui/material';
+import i18n from '@/i18n';
 import type { ProjectBenefit } from '@/api/pm';
-
 export interface PmReportBenefitsTableProps {
   benefits: ProjectBenefit[];
 }
-
 const PmReportBenefitsTable: React.FC<PmReportBenefitsTableProps> = ({ benefits }) => {
-  const { t } = useTranslation();
-
   return (
     <Box sx={{ mb: 3 }}>
       <Typography
         variant='h6'
         sx={{ fontWeight: 600, mb: 2 }}
       >
-        {t('pm.pm_report_page.text_9d57d4')}
+        {i18n.t('pm.pm_report_page.text_9d57d4')}
       </Typography>
       <Card>
         <CardContent>
@@ -38,7 +34,7 @@ const PmReportBenefitsTable: React.FC<PmReportBenefitsTableProps> = ({ benefits 
                 <TableHead>
                   <TableRow>
                     <TableCell sx={{ fontWeight: 'medium', color: 'grey.600' }}>
-                      {t('pm.pm_report_page.text_2f4339')}
+                      {i18n.t('pm.pm_report_page.text_2f4339')}
                     </TableCell>
                     <TableCell
                       align='right'
@@ -127,7 +123,7 @@ const PmReportBenefitsTable: React.FC<PmReportBenefitsTableProps> = ({ benefits 
           ) : (
             <Box sx={{ textAlign: 'center', py: 4, color: 'grey.500' }}>
               <TrendingUp sx={{ width: 48, height: 48, mx: 'auto', mb: 2, color: 'grey.300' }} />
-              <Typography>{t('pm.pm_report_page.text_8fe0ff')}</Typography>
+              <Typography>{i18n.t('pm.pm_report_page.text_8fe0ff')}</Typography>
             </Box>
           )}
         </CardContent>
@@ -135,5 +131,4 @@ const PmReportBenefitsTable: React.FC<PmReportBenefitsTableProps> = ({ benefits 
     </Box>
   );
 };
-
 export default PmReportBenefitsTable;

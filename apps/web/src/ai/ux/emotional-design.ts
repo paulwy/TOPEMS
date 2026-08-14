@@ -1,3 +1,4 @@
+import i18n from '@/i18n';
 export type Valence = 'positive' | 'neutral' | 'negative';
 export type Arousal = 'low' | 'medium' | 'high';
 export type EmotionType =
@@ -486,21 +487,21 @@ export class EmotionalDesignEngine {
     if (valence === 'positive') {
       tone = 'encouraging';
       style = 'casual';
-      if (emotion === 'satisfaction') suggestions.push('继续保持！');
-      if (emotion === 'joy') suggestions.push('太棒了！');
-      if (emotion === 'excitement') suggestions.push('很高兴看到你的热情！');
+      if (emotion === 'satisfaction') suggestions.push(i18n.t('ai.emotional-design.k0'));
+      if (emotion === 'joy') suggestions.push(i18n.t('ai.emotional-design.k1'));
+      if (emotion === 'excitement') suggestions.push(i18n.t('ai.emotional-design.k2'));
     } else if (valence === 'negative') {
       tone = 'empathetic';
       style = 'professional';
-      if (emotion === 'frustration') suggestions.push('我理解这可能令人沮丧。让我们一起解决。');
-      if (emotion === 'confusion') suggestions.push('这部分确实复杂，我来帮你梳理。');
-      if (emotion === 'boredom') suggestions.push('让我们让这个过程更有趣一些。');
-      if (emotion === 'anger') suggestions.push('深呼吸，我们来分析问题。');
+      if (emotion === 'frustration') suggestions.push(i18n.t('ai.emotional-design.k3'));
+      if (emotion === 'confusion') suggestions.push(i18n.t('ai.emotional-design.k4'));
+      if (emotion === 'boredom') suggestions.push(i18n.t('ai.emotional-design.k5'));
+      if (emotion === 'anger') suggestions.push(i18n.t('ai.emotional-design.k6'));
     } else {
       tone = 'neutral';
       style = 'professional';
-      if (emotion === 'anticipation') suggestions.push('让我们看看接下来会发生什么。');
-      if (emotion === 'surprise') suggestions.push('这是一个有趣的变化！');
+      if (emotion === 'anticipation') suggestions.push(i18n.t('ai.emotional-design.k7'));
+      if (emotion === 'surprise') suggestions.push(i18n.t('ai.emotional-design.k8'));
     }
 
     return { tone, style, suggestions };

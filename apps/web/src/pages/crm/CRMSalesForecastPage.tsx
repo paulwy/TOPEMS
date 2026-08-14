@@ -12,6 +12,7 @@ import type {
   DataTable,
   TableColumn,
 } from '@/components/templates/StatsPageTemplate';
+import i18n from '@/i18n';
 import { PageContainer } from '@/components/common';
 import { designTokens } from '@/theme/tokens';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -247,17 +248,17 @@ const CRMSalesForecastPage: React.FC = () => {
   );
 
   const timeRangeOptions = [
-    { label: t('crm.period.mtd') || '本月', value: 'MTD' },
-    { label: t('crm.period.qtd') || '本季度', value: 'QTD' },
-    { label: t('crm.period.ytd') || '本年', value: 'YTD' },
-    { label: t('crm.period.r12') || '近12月', value: 'ROLLING_12M' },
+    { label: t('crm.period.mtd') || i18n.t('pages.crm_sales_forecast_page.k0'), value: 'MTD' },
+    { label: t('crm.period.qtd') || i18n.t('pages.crm_sales_forecast_page.k1'), value: 'QTD' },
+    { label: t('crm.period.ytd') || i18n.t('pages.crm_sales_forecast_page.k2'), value: 'YTD' },
+    { label: t('crm.period.r12') || i18n.t('pages.crm_sales_forecast_page.12_3'), value: 'ROLLING_12M' },
   ];
 
   const customToolbar = (
     <Box sx={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: 2 }}>
       {mockEnabled && (
         <Chip
-          label={t('crm.common.mock_demo_badge') || 'Mock 演示'}
+          label={t('crm.common.mock_demo_badge') || i18n.t('pages.crm_sales_forecast_page.mock_4')}
           color='warning'
           size='small'
           variant='outlined'

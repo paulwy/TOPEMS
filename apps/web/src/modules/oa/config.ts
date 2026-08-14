@@ -1,6 +1,7 @@
 import { lazyWithRetry } from '@/routes/utils';
 import type { RouteModuleConfig } from '@/routes/v2/types';
 import type { ModuleNavConfig } from '@/lib/navigation/types';
+import i18n from '@/i18n';
 
 export const OA_PATHS = {
   root: '/oa',
@@ -13,21 +14,21 @@ export const OA_PATHS = {
 
 export const oaModuleConfig: RouteModuleConfig = {
   code: 'oa',
-  name: '办公自动化',
+  name: i18n.t('shared.config.k0'),
   icon: 'FileText',
   path: OA_PATHS.root,
   source: 'plugin',
   suite: 'collaboration',
   status: 'online',
   order: 92,
-  description: '企业办公自动化系统',
+  description: i18n.t('shared.config.k1'),
   permission: 'oa:documents:read',
   routes: [
     {
       path: OA_PATHS.dashboard,
       element: lazyWithRetry(() => import('@/pages/oa/DashboardPage'), 'DashboardPage'),
       module: 'oa',
-      title: '办公自动化概览',
+      title: i18n.t('shared.config.k2'),
       code: 'oa-dashboard',
       requiredPermissions: ['oa:dashboard:read'],
       action: 'read',
@@ -42,7 +43,7 @@ export const oaModuleConfig: RouteModuleConfig = {
       ),
       module: 'oa',
       code: 'oa-documents',
-      title: '公文列表',
+      title: i18n.t('shared.config.k3'),
       template: 'list',
       group: 'business',
       requiredPermissions: ['oa:document:read'],
@@ -53,7 +54,7 @@ export const oaModuleConfig: RouteModuleConfig = {
       element: lazyWithRetry(() => import('@/pages/oa/AnnouncementPage'), 'AnnouncementPage'),
       module: 'oa',
       code: 'oa-announcements',
-      title: '公告通知',
+      title: i18n.t('shared.config.k4'),
       template: 'list',
       group: 'master',
       requiredPermissions: ['oa:announcement:read'],
@@ -67,7 +68,7 @@ export const oaModuleConfig: RouteModuleConfig = {
       ),
       module: 'oa',
       code: 'oa-meetings',
-      title: '会议流程',
+      title: i18n.t('shared.config.k5'),
       template: 'form',
       group: 'process',
       requiredPermissions: ['oa:meeting:read'],
@@ -81,7 +82,7 @@ export const oaModuleConfig: RouteModuleConfig = {
       ),
       module: 'oa',
       code: 'oa-vehicles',
-      title: '车辆列表',
+      title: i18n.t('shared.config.k6'),
       template: 'list',
       group: 'business',
       requiredPermissions: ['oa:vehicle:read'],
@@ -92,7 +93,7 @@ export const oaModuleConfig: RouteModuleConfig = {
 
 export const oaNavConfig: ModuleNavConfig = {
   code: 'oa',
-  name: '办公自动化',
+  name: i18n.t('shared.config.k7'),
   icon: 'FileText',
   path: OA_PATHS.root,
   source: 'plugin' as const,
@@ -101,18 +102,18 @@ export const oaNavConfig: ModuleNavConfig = {
   navItems: [
     {
       code: 'oa-dashboard',
-      label: '办公自动化概览',
+      label: i18n.t('shared.config.k8'),
       icon: 'LayoutDashboard',
       path: OA_PATHS.dashboard,
       permission: 'oa:dashboard:read',
       order: 0,
       group: 'overview',
       showInTabs: true,
-      description: '办公自动化数据概览',
+      description: i18n.t('shared.config.k9'),
     },
     {
       code: 'oa-documents',
-      label: '公文列表',
+      label: i18n.t('shared.config.k10'),
       path: OA_PATHS.documents,
       permission: 'oa:document:read',
       group: 'business',
@@ -120,7 +121,7 @@ export const oaNavConfig: ModuleNavConfig = {
     },
     {
       code: 'oa-announcements',
-      label: '公告通知',
+      label: i18n.t('shared.config.k11'),
       path: OA_PATHS.announcements,
       permission: 'oa:announcement:read',
       group: 'master',
@@ -128,7 +129,7 @@ export const oaNavConfig: ModuleNavConfig = {
     },
     {
       code: 'oa-meetings',
-      label: '会议流程',
+      label: i18n.t('shared.config.k12'),
       path: OA_PATHS.meetings,
       permission: 'oa:meeting:read',
       group: 'process',
@@ -136,7 +137,7 @@ export const oaNavConfig: ModuleNavConfig = {
     },
     {
       code: 'oa-vehicles',
-      label: '车辆列表',
+      label: i18n.t('shared.config.k13'),
       path: OA_PATHS.vehicles,
       permission: 'oa:vehicle:read',
       group: 'business',

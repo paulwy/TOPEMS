@@ -104,7 +104,7 @@ const EhsHazardPage: React.FC = () => {
                 variant='body2'
                 sx={{ color: 'slate.600', fontSize: '0.875rem' }}
               >
-                隐患总数
+                {i18n.t('pages.ehs_hazard_page.k0')}
               </Typography>
               <Typography
                 variant='h5'
@@ -137,7 +137,7 @@ const EhsHazardPage: React.FC = () => {
                 variant='body2'
                 sx={{ color: 'slate.600', fontSize: '0.875rem' }}
               >
-                重大/严重
+                {i18n.t('pages.ehs_hazard_page.k1')}
               </Typography>
               <Typography
                 variant='h5'
@@ -170,7 +170,7 @@ const EhsHazardPage: React.FC = () => {
                 variant='body2'
                 sx={{ color: 'slate.600', fontSize: '0.875rem' }}
               >
-                待处理
+                {i18n.t('pages.ehs_hazard_page.k2')}
               </Typography>
               <Typography
                 variant='h5'
@@ -203,7 +203,7 @@ const EhsHazardPage: React.FC = () => {
                 variant='body2'
                 sx={{ color: 'slate.600', fontSize: '0.875rem' }}
               >
-                已闭环
+                {i18n.t('pages.ehs_hazard_page.k3')}
               </Typography>
               <Typography
                 variant='h5'

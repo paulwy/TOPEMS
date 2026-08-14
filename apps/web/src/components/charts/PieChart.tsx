@@ -17,7 +17,7 @@ const DEFAULT_COLORS = [
   'secondary.main', // Violet
   'colors.cyan.500', // Cyan
   designTokens.colors.pink.main, // Pink
-  '#84CC16', // Lime
+  designTokens.colors.neon.lime[500], // Lime
 ];
 
 export const PieChartComponent: React.FC<PieChartProps> = ({ data, title }) => {

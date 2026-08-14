@@ -4,6 +4,7 @@ import { X, FileText, AlertCircle, Loader2 } from 'lucide-react';
 import { docApi } from '../api/doc';
 import { logger } from '@/utils/logger';
 import { designTokens, semanticTokens } from '@topems/tokens';
+import i18n from '@/i18n';
 
 interface DocumentPreviewModalProps {
   isOpen: boolean;
@@ -30,10 +31,10 @@ export const DocumentPreviewModal: React.FC<DocumentPreviewModalProps> = ({
     if (!isOpen) return;
 
     const loadAndPreview = async () => {
-      logger.info('开始预览:', { fileName, contentType, fileId });
+      logger.info(i18n.t('components.document_preview_modal.k0'), { fileName, contentType, fileId });
 
       if (!containerRef.current) {
-        logger.error('容器引用为 null');
+        logger.error(i18n.t('components.document_preview_modal.null_0'));
         return;
       }
 
@@ -43,10 +44,10 @@ export const DocumentPreviewModal: React.FC<DocumentPreviewModalProps> = ({
       try {
         const container = containerRef.current;
         container.innerHTML = '';
-        logger.info('容器已清空');
+        logger.info(i18n.t('components.document_preview_modal.k1'));
 
         if (contentType.includes('image/')) {
-          logger.info('预览图片');
+          logger.info(i18n.t('components.document_preview_modal.k2'));
           const imgUrl = await docApi.preview(fileId);
           const img = document.createElement('img');
           img.src = imgUrl;
@@ -56,9 +57,9 @@ export const DocumentPreviewModal: React.FC<DocumentPreviewModalProps> = ({
           img.alt = fileName;
           container.appendChild(img);
         } else if (contentType.includes('application/pdf')) {
-          logger.info('预览 PDF');
+          logger.info(i18n.t('components.document_preview_modal.pdf_3'));
           const blob = await docApi.download(fileId);
-          logger.info('获取到 PDF Blob，大小:', blob.size);
+          logger.info(i18n.t('components.document_preview_modal.k1'), blob.size);
           const blobUrl = URL.createObjectURL(blob);
           blobUrlRef.current = blobUrl;
           const iframe = document.createElement('iframe');
@@ -78,42 +79,42 @@ export const DocumentPreviewModal: React.FC<DocumentPreviewModalProps> = ({
           };
           container.appendChild(iframe);
         } else if (fileName.endsWith('.docx')) {
-          logger.info('预览 DOCX');
+          logger.info(i18n.t('components.document_preview_modal.docx_4'));
           const blob = await docApi.download(fileId);
-          logger.info('获取到 Blob，大小:', blob.size, '类型:', blob.type);
+          logger.info(i18n.t('components.document_preview_modal.blob_2'), blob.size, i18n.t('components.document_preview_modal.k3'), blob.type);
 
           // 检查 blob 内容
           const text = await blob.text();
-          logger.info('Blob 内容前 100 字符:', text.substring(0, 100));
+          logger.info(i18n.t('components.document_preview_modal.k4'), text.substring(0, 100));
 
           // 如果内容不是以 PK (ZIP 头) 开头，说明返回了错误
           const bytes = await blob.arrayBuffer();
           const view = new DataView(bytes);
           const header =
             String.fromCharCode(view.getUint8(0)) + String.fromCharCode(view.getUint8(1));
-          logger.info('文件头:', header, "(应该是 'PK')");
+          logger.info(i18n.t('components.document_preview_modal.k5'), header, "(应该是 'PK')");
 
           if (header !== 'PK') {
-            throw new Error(`文件格式错误：期望 DOCX (ZIP)，实际得到 ${blob.type || 'unknown'}`);
+            throw new Error(`${i18n.t('components.document_preview_modal.k6')} ${blob.type || 'unknown'}`);
           }
 
           // 动态导入 docx-preview (这是一个较大的库，仅在需要预览 docx 时加载)
           if (containerRef.current) {
-            logger.info('开始动态导入 docx-preview');
+            logger.info(i18n.t('components.document_preview_modal.docxpreview_5'));
             const { renderAsync } = await import('docx-preview');
-            logger.info('开始调用 docx-preview renderAsync');
+            logger.info(i18n.t('components.document_preview_modal.k6'));
             await renderAsync(blob, containerRef.current);
-            logger.info('DOCX 渲染完成');
+            logger.info(i18n.t('components.document_preview_modal.docx_7'));
           }
         } else if (
           contentType.includes('text/') ||
           fileName.endsWith('.md') ||
           fileName.endsWith('.txt')
         ) {
-          logger.info('预览文本/Markdown');
+          logger.info(i18n.t('components.document_preview_modal.markdown_7'));
           const blob = await docApi.download(fileId);
           const text = await blob.text();
-          logger.info('获取到文本内容，长度:', text.length);
+          logger.info(i18n.t('components.document_preview_modal.k8'), text.length);
           const pre = document.createElement('pre');
           pre.textContent = text;
           pre.style.whiteSpace = 'pre-wrap';
@@ -126,13 +127,13 @@ export const DocumentPreviewModal: React.FC<DocumentPreviewModalProps> = ({
           pre.style.fontSize = '14px';
           container.appendChild(pre);
         } else {
-          logger.info('不支持的文件类型');
-          setError(`不支持直接预览 ${fileName}，请下载后查看`);
+          logger.info(i18n.t('components.document_preview_modal.k8'));
+          setError(`${i18n.t('components.document_preview_modal.k9')} ${fileName}${i18n.t('components.document_preview_modal.k10')}`);
         }
       } catch (err: unknown) {
         logger.error('Preview error:', err);
         setError(
-          `预览失败: ${err instanceof Error ? (err as { message?: string }).message : '未知错误'}`
+          `${i18n.t('components.document_preview_modal.k11')} ${err instanceof Error ? (err as { message?: string }).message : i18n.t('components.document_preview_modal.k9')}`
         );
       } finally {
         setLoading(false);
@@ -261,7 +262,7 @@ export const DocumentPreviewModal: React.FC<DocumentPreviewModalProps> = ({
                   marginBottom: 1.5,
                 }}
               />
-              <p style={{ color: theme.palette.text.secondary }}>正在加载文档...</p>
+              <p style={{ color: theme.palette.text.secondary }}>{i18n.t('components.document_preview_modal.k12')}</p>
             </div>
           )}
 
@@ -299,7 +300,7 @@ export const DocumentPreviewModal: React.FC<DocumentPreviewModalProps> = ({
                   transition: 'background-color 0.2s',
                 }}
               >
-                关闭
+                {i18n.t('components.document_preview_modal.k13')}
               </button>
             </div>
           )}
@@ -332,7 +333,7 @@ export const DocumentPreviewModal: React.FC<DocumentPreviewModalProps> = ({
               transition: 'background-color 0.2s',
             }}
           >
-            关闭
+            {i18n.t('components.document_preview_modal.k14')}
           </button>
         </div>
       </div>

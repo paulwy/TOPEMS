@@ -11,6 +11,7 @@ import {
   ListItemIcon,
   ListItemText,
 } from '@mui/material';
+import i18n from '@/i18n';
 import { MoreVertical, RefreshCw, Download, Maximize, ChevronDown } from 'lucide-react';
 import type { ChartCard as ChartCardType } from './types';
 
@@ -91,7 +92,7 @@ export const ChartCardComponent: React.FC<ChartCardType> = ({
                     transform: expanded ? 'rotate(180deg)' : 'rotate(0deg)',
                     transition: 'transform 0.3s',
                   }}
-                  aria-label='展开'
+                  aria-label={i18n.t('templates.chart_card_component.k0')}
                 >
                   <ChevronDown style={{ width: 18, height: 18 }} />
                 </IconButton>
@@ -99,7 +100,7 @@ export const ChartCardComponent: React.FC<ChartCardType> = ({
               <IconButton
                 size='small'
                 onClick={(e) => setAnchorEl(e.currentTarget)}
-                aria-label='更多'
+                aria-label={i18n.t('templates.chart_card_component.k1')}
               >
                 <MoreVertical style={{ width: 18, height: 18 }} />
               </IconButton>
@@ -118,7 +119,7 @@ export const ChartCardComponent: React.FC<ChartCardType> = ({
                     <ListItemIcon>
                       <RefreshCw style={{ width: 18, height: 18 }} />
                     </ListItemIcon>
-                    <ListItemText>刷新</ListItemText>
+                    <ListItemText>{i18n.t('templates.chart_card_component.k2')}</ListItemText>
                   </MenuItem>
                 )}
                 {onDownload && (
@@ -131,7 +132,7 @@ export const ChartCardComponent: React.FC<ChartCardType> = ({
                     <ListItemIcon>
                       <Download style={{ width: 18, height: 18 }} />
                     </ListItemIcon>
-                    <ListItemText>下载</ListItemText>
+                    <ListItemText>{i18n.t('templates.chart_card_component.k3')}</ListItemText>
                   </MenuItem>
                 )}
                 {onFullscreen && (
@@ -144,7 +145,7 @@ export const ChartCardComponent: React.FC<ChartCardType> = ({
                     <ListItemIcon>
                       <Maximize style={{ width: 18, height: 18 }} />
                     </ListItemIcon>
-                    <ListItemText>全屏</ListItemText>
+                    <ListItemText>{i18n.t('templates.chart_card_component.k4')}</ListItemText>
                   </MenuItem>
                 )}
               </Menu>

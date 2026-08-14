@@ -33,6 +33,7 @@ import {
   DialogActions,
   Card,
 } from '@mui/material';
+import i18n from '@/i18n';
 import {
   X as XIcon,
   Shield,
@@ -114,17 +115,17 @@ const CATEGORY_COLORS: Record<RiskCategory, string> = {
 };
 
 const CATEGORY_LABELS: Record<RiskCategory, string> = {
-  Security: '安全',
-  Compliance: '合规',
-  Performance: '性能',
-  Financial: '财务',
+  Security: i18n.t('ai.v57-governance-panel.k0'),
+  Compliance: i18n.t('ai.v57-governance-panel.k1'),
+  Performance: i18n.t('ai.v57-governance-panel.k2'),
+  Financial: i18n.t('ai.v57-governance-panel.k3'),
 };
 
 const LEVEL_LABELS: Record<RiskLevel, string> = {
-  critical: '严重',
-  high: '高危',
-  medium: '中等',
-  low: '低',
+  critical: i18n.t('ai.v57-governance-panel.k4'),
+  high: i18n.t('ai.v57-governance-panel.k5'),
+  medium: i18n.t('ai.v57-governance-panel.k6'),
+  low: i18n.t('ai.v57-governance-panel.k7'),
 };
 
 export const V57GovernancePanel: React.FC<{ onClose: () => void }> = ({ onClose }) => {
@@ -279,25 +280,25 @@ export const V57GovernancePanel: React.FC<{ onClose: () => void }> = ({ onClose 
             <Tab
               icon={<Shield size={16} />}
               iconPosition='start'
-              label='合规仪表盘'
+              label={i18n.t('ai.v57-governance-panel.k8')}
               value='compliance'
             />
             <Tab
               icon={<AlertTriangle size={16} />}
               iconPosition='start'
-              label={`风险预警${alerts.some((a) => !a.resolved) ? ` (${alerts.filter((a) => !a.resolved).length})` : ''}`}
+              label={`${i18n.t('ai.v57-governance-panel.k0')}${alerts.some((a) => !a.resolved) ? ` (${alerts.filter((a) => !a.resolved).length})` : ''}`}
               value='risk'
             />
             <Tab
               icon={<Scale size={16} />}
               iconPosition='start'
-              label={`策略管理${policies.length > 0 ? ` (${policies.length})` : ''}`}
+              label={`${i18n.t('ai.v57-governance-panel.k1')}${policies.length > 0 ? ` (${policies.length})` : ''}`}
               value='policy'
             />
             <Tab
               icon={<FileText size={16} />}
               iconPosition='start'
-              label={`审计追踪${auditLog.length > 0 ? ` (${auditLog.length})` : ''}`}
+              label={`${i18n.t('ai.v57-governance-panel.k2')}${auditLog.length > 0 ? ` (${auditLog.length})` : ''}`}
               value='audit'
             />
           </Tabs>
@@ -372,39 +373,39 @@ export const V57GovernancePanel: React.FC<{ onClose: () => void }> = ({ onClose 
           maxWidth='sm'
           fullWidth
         >
-          <DialogTitle>创建新策略</DialogTitle>
+          <DialogTitle>{i18n.t('ai.v57-governance-panel.k9')}</DialogTitle>
           <DialogContent>
             <Stack
               spacing={2}
               sx={{ mt: 1 }}
             >
               <TextField
-                label='策略名称'
+                label={i18n.t('ai.v57-governance-panel.k10')}
                 value={newPolicy.name}
                 onChange={(e) => setNewPolicy({ ...newPolicy, name: e.target.value })}
                 fullWidth
                 size='small'
               />
               <FormControl size='small'>
-                <InputLabel>作用域</InputLabel>
+                <InputLabel>{i18n.t('ai.v57-governance-panel.k11')}</InputLabel>
                 <Select
                   value={newPolicy.scope}
-                  label='作用域'
+                  label={i18n.t('ai.v57-governance-panel.k12')}
                   onChange={(e) =>
                     setNewPolicy({ ...newPolicy, scope: e.target.value as Policy['scope'] })
                   }
                 >
-                  <MenuItem value='global'>全局</MenuItem>
-                  <MenuItem value='module'>模块</MenuItem>
-                  <MenuItem value='entity'>实体</MenuItem>
-                  <MenuItem value='user'>用户</MenuItem>
+                  <MenuItem value='global'>{i18n.t('ai.v57-governance-panel.k13')}</MenuItem>
+                  <MenuItem value='module'>{i18n.t('ai.v57-governance-panel.k14')}</MenuItem>
+                  <MenuItem value='entity'>{i18n.t('ai.v57-governance-panel.k15')}</MenuItem>
+                  <MenuItem value='user'>{i18n.t('ai.v57-governance-panel.k16')}</MenuItem>
                 </Select>
               </FormControl>
               <FormControl size='small'>
-                <InputLabel>执行模式</InputLabel>
+                <InputLabel>{i18n.t('ai.v57-governance-panel.k17')}</InputLabel>
                 <Select
                   value={newPolicy.enforcement_mode}
-                  label='执行模式'
+                  label={i18n.t('ai.v57-governance-panel.k18')}
                   onChange={(e) =>
                     setNewPolicy({
                       ...newPolicy,
@@ -412,13 +413,13 @@ export const V57GovernancePanel: React.FC<{ onClose: () => void }> = ({ onClose 
                     })
                   }
                 >
-                  <MenuItem value='enforce'>强制</MenuItem>
-                  <MenuItem value='audit'>审计</MenuItem>
-                  <MenuItem value='advisory'>建议</MenuItem>
+                  <MenuItem value='enforce'>{i18n.t('ai.v57-governance-panel.k19')}</MenuItem>
+                  <MenuItem value='audit'>{i18n.t('ai.v57-governance-panel.k20')}</MenuItem>
+                  <MenuItem value='advisory'>{i18n.t('ai.v57-governance-panel.k21')}</MenuItem>
                 </Select>
               </FormControl>
               <TextField
-                label='描述'
+                label={i18n.t('ai.v57-governance-panel.k22')}
                 value={newPolicy.description}
                 onChange={(e) => setNewPolicy({ ...newPolicy, description: e.target.value })}
                 fullWidth
@@ -429,13 +430,13 @@ export const V57GovernancePanel: React.FC<{ onClose: () => void }> = ({ onClose 
             </Stack>
           </DialogContent>
           <DialogActions>
-            <Button onClick={() => setPolicyDialogOpen(false)}>取消</Button>
+            <Button onClick={() => setPolicyDialogOpen(false)}>{i18n.t('ai.v57-governance-panel.k23')}</Button>
             <Button
               variant='contained'
               onClick={handleCreatePolicy}
               disabled={!newPolicy.name}
             >
-              创建
+              {i18n.t('ai.v57-governance-panel.k3')}
             </Button>
           </DialogActions>
         </Dialog>
@@ -474,13 +475,13 @@ const V57PanelHeader: React.FC<{ onClose: () => void }> = ({ onClose }) => (
           variant='h6'
           sx={{ fontWeight: 700, fontSize: 18 }}
         >
-          V57.0 AI 治理面板
+          {i18n.t('ai.v57-governance-panel.v570ai_4')}
         </Typography>
         <Typography
           variant='caption'
           sx={{ opacity: 0.85, fontSize: 12 }}
         >
-          合规自动化 · 风险预警 · 策略执行 · 审计追踪
+          {i18n.t('ai.v57-governance-panel.k5')}
         </Typography>
       </Box>
     </Box>
@@ -526,7 +527,7 @@ const ComplianceTab: React.FC<{
   if (!status) {
     return (
       <Box sx={{ p: 3 }}>
-        <Alert severity='info'>暂无合规数据，请点击"运行检查"开始分析</Alert>
+        <Alert severity='info'>暂无合规数据，请点击"{i18n.t('ai.v57-governance-panel.k24')}"{i18n.t('ai.document_analysis.button.start_analysis')}</Alert>
       </Box>
     );
   }
@@ -550,7 +551,7 @@ const ComplianceTab: React.FC<{
           sx={{ fontWeight: 600, display: 'flex', alignItems: 'center', gap: 1 }}
         >
           <Shield size={20} />
-          合规自动化仪表盘
+          {i18n.t('ai.v57-governance-panel.k8')}
         </Typography>
         <Button
           variant='outlined'
@@ -558,17 +559,17 @@ const ComplianceTab: React.FC<{
           onClick={onReRun}
           size='small'
         >
-          重新检查
+          {i18n.t('ai.v57-governance-panel.k9')}
         </Button>
       </Stack>
 
       <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 2, mb: 3 }}>
         <ScoreCard
-          title='总体合规率'
+          title={i18n.t('ai.v57-governance-panel.k25')}
           score={status.overall_pass_rate}
           color={getScoreColor(status.overall_pass_rate)}
           icon={<Gauge size={24} />}
-          subtitle={`${status.total_checks} 项检查`}
+          subtitle={`${status.total_checks} ${i18n.t('ai.v57-governance-panel.k10')}`}
         />
         {(['GDPR', 'SOX', 'HIPAA', 'PCI'] as Regulation[]).map((reg) => {
           const regData = status.regulations[reg];
@@ -579,7 +580,7 @@ const ComplianceTab: React.FC<{
               score={regData.pass_rate}
               color={getScoreColor(regData.pass_rate)}
               icon={<Scale size={24} />}
-              subtitle={`${regData.passed}/${regData.total} 通过`}
+              subtitle={`${regData.passed}/${regData.total} ${i18n.t('ai.v57-governance-panel.k11')}`}
             />
           );
         })}
@@ -592,7 +593,7 @@ const ComplianceTab: React.FC<{
             sx={{ fontWeight: 600, mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}
           >
             <BarChart3 size={16} />
-            合规分布
+            {i18n.t('ai.v57-governance-panel.k12')}
           </Typography>
           <Stack
             direction='column'
@@ -634,7 +635,7 @@ const ComplianceTab: React.FC<{
               sx={{ fontWeight: 600, mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}
             >
               <Target size={16} />
-              合规建议
+              {i18n.t('ai.v57-governance-panel.k13')}
             </Typography>
             <List dense>
               {report.recommendations.map((rec, idx) => (
@@ -671,7 +672,7 @@ const ComplianceTab: React.FC<{
         sx={{ mb: 2 }}
       >
         <Chip
-          label='全部'
+          label={i18n.t('ai.v57-governance-panel.k26')}
           size='small'
           onClick={() => setFilter('all')}
           sx={{
@@ -700,11 +701,11 @@ const ComplianceTab: React.FC<{
           <Table size='small'>
             <TableHead>
               <TableRow>
-                <TableCell sx={{ fontWeight: 600, fontSize: 12 }}>状态</TableCell>
-                <TableCell sx={{ fontWeight: 600, fontSize: 12 }}>规则</TableCell>
-                <TableCell sx={{ fontWeight: 600, fontSize: 12 }}>法规</TableCell>
-                <TableCell sx={{ fontWeight: 600, fontSize: 12 }}>实体</TableCell>
-                <TableCell sx={{ fontWeight: 600, fontSize: 12 }}>证据</TableCell>
+                <TableCell sx={{ fontWeight: 600, fontSize: 12 }}>{i18n.t('ai.v57-governance-panel.k27')}</TableCell>
+                <TableCell sx={{ fontWeight: 600, fontSize: 12 }}>{i18n.t('ai.v57-governance-panel.k28')}</TableCell>
+                <TableCell sx={{ fontWeight: 600, fontSize: 12 }}>{i18n.t('ai.v57-governance-panel.k29')}</TableCell>
+                <TableCell sx={{ fontWeight: 600, fontSize: 12 }}>{i18n.t('ai.v57-governance-panel.k30')}</TableCell>
+                <TableCell sx={{ fontWeight: 600, fontSize: 12 }}>{i18n.t('ai.v57-governance-panel.k31')}</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
@@ -833,7 +834,7 @@ const RiskTab: React.FC<{
           sx={{ fontWeight: 600, display: 'flex', alignItems: 'center', gap: 1 }}
         >
           <AlertTriangle size={20} />
-          风险预警中心
+          {i18n.t('ai.v57-governance-panel.k14')}
         </Typography>
         <Button
           variant='outlined'
@@ -841,18 +842,18 @@ const RiskTab: React.FC<{
           onClick={onReRun}
           size='small'
         >
-          重新评估
+          {i18n.t('ai.v57-governance-panel.k15')}
         </Button>
       </Stack>
 
       {score && (
         <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 2, mb: 3 }}>
           <ScoreCard
-            title='总体风险分'
+            title={i18n.t('ai.v57-governance-panel.k32')}
             score={score.overall}
             color={getScoreColor(score.overall)}
             icon={<Gauge size={24} />}
-            subtitle={`趋势: ${score.trend === 'improving' ? '改善' : score.trend === 'deteriorating' ? '恶化' : '稳定'}`}
+            subtitle={`${i18n.t('ai.v57-governance-panel.k16')} ${score.trend === 'improving' ? i18n.t('ai.v57-governance-panel.k35') : score.trend === 'deteriorating' ? i18n.t('ai.v57-governance-panel.k34') : i18n.t('ai.v57-governance-panel.k33')}`}
           />
           {(['Security', 'Compliance', 'Performance', 'Financial'] as RiskCategory[]).map((cat) => (
             <ScoreCard
@@ -871,7 +872,7 @@ const RiskTab: React.FC<{
                   <TrendingUp size={24} />
                 )
               }
-              subtitle={`权重分: ${score.by_category[cat]}`}
+              subtitle={`${i18n.t('ai.v57-governance-panel.k17')} ${score.by_category[cat]}`}
             />
           ))}
         </Box>
@@ -884,7 +885,7 @@ const RiskTab: React.FC<{
             sx={{ fontWeight: 600, mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}
           >
             <Activity size={16} />
-            风险指标状态
+            {i18n.t('ai.v57-governance-panel.k18')}
           </Typography>
           <Stack
             direction='column'
@@ -952,7 +953,7 @@ const RiskTab: React.FC<{
                       variant='caption'
                       sx={{ color: 'text.secondary' }}
                     >
-                      阈值: {ind.threshold}
+                      [i18n.t('ai.v57-governance-panel.k19')]: {ind.threshold}
                       {ind.unit}
                     </Typography>
                   </Box>
@@ -968,7 +969,7 @@ const RiskTab: React.FC<{
             sx={{ fontWeight: 600, mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}
           >
             <Bell size={16} />
-            预警统计
+            {i18n.t('ai.v57-governance-panel.k20')}
           </Typography>
           {score && (
             <Stack
@@ -1008,12 +1009,12 @@ const RiskTab: React.FC<{
                   variant='body2'
                   sx={{ fontSize: 12 }}
                 >
-                  整体趋势:{' '}
+                  [i18n.t('ai.v57-governance-panel.k21')]:{' '}
                   {score.trend === 'improving'
-                    ? '正在改善'
+                    ? i18n.t('ai.v57-governance-panel.k36')
                     : score.trend === 'deteriorating'
-                      ? '正在恶化'
-                      : '保持稳定'}
+                      ? i18n.t('ai.v57-governance-panel.k37')
+                      : i18n.t('ai.v57-governance-panel.k38')}
                 </Typography>
               </Box>
             </Stack>
@@ -1030,31 +1031,31 @@ const RiskTab: React.FC<{
           size='small'
           sx={{ minWidth: 120 }}
         >
-          <InputLabel sx={{ fontSize: 11 }}>状态</InputLabel>
+          <InputLabel sx={{ fontSize: 11 }}>{i18n.t('ai.v57-governance-panel.k39')}</InputLabel>
           <Select
             value={statusFilter}
-            label='状态'
+            label={i18n.t('ai.v57-governance-panel.k40')}
             onChange={(e) => setStatusFilter(e.target.value as typeof statusFilter)}
             sx={{ fontSize: 12 }}
           >
-            <MenuItem value='all'>全部</MenuItem>
-            <MenuItem value='active'>活跃</MenuItem>
-            <MenuItem value='acknowledged'>已确认</MenuItem>
-            <MenuItem value='resolved'>已解决</MenuItem>
+            <MenuItem value='all'>{i18n.t('ai.v57-governance-panel.k41')}</MenuItem>
+            <MenuItem value='active'>{i18n.t('ai.v57-governance-panel.k42')}</MenuItem>
+            <MenuItem value='acknowledged'>{i18n.t('ai.v57-governance-panel.k43')}</MenuItem>
+            <MenuItem value='resolved'>{i18n.t('ai.v57-governance-panel.k44')}</MenuItem>
           </Select>
         </FormControl>
         <FormControl
           size='small'
           sx={{ minWidth: 120 }}
         >
-          <InputLabel sx={{ fontSize: 11 }}>分类</InputLabel>
+          <InputLabel sx={{ fontSize: 11 }}>{i18n.t('ai.v57-governance-panel.k45')}</InputLabel>
           <Select
             value={categoryFilter}
-            label='分类'
+            label={i18n.t('ai.v57-governance-panel.k46')}
             onChange={(e) => setCategoryFilter(e.target.value as typeof categoryFilter)}
             sx={{ fontSize: 12 }}
           >
-            <MenuItem value='all'>全部</MenuItem>
+            <MenuItem value='all'>{i18n.t('ai.v57-governance-panel.k47')}</MenuItem>
             {(['Security', 'Compliance', 'Performance', 'Financial'] as RiskCategory[]).map(
               (cat) => (
                 <MenuItem
@@ -1070,18 +1071,18 @@ const RiskTab: React.FC<{
       </Stack>
 
       {filteredAlerts.length === 0 ? (
-        <Alert severity='info'>暂无匹配的预警</Alert>
+        <Alert severity='info'>{i18n.t('ai.v57-governance-panel.k48')}</Alert>
       ) : (
         <Card variant='outlined' sx={{ p: 2 }}>
           <TableContainer>
             <Table size='small'>
               <TableHead>
                 <TableRow>
-                  <TableCell sx={{ fontWeight: 600, fontSize: 12 }}>严重程度</TableCell>
-                  <TableCell sx={{ fontWeight: 600, fontSize: 12 }}>指标</TableCell>
-                  <TableCell sx={{ fontWeight: 600, fontSize: 12 }}>消息</TableCell>
-                  <TableCell sx={{ fontWeight: 600, fontSize: 12 }}>状态</TableCell>
-                  <TableCell sx={{ fontWeight: 600, fontSize: 12 }}>操作</TableCell>
+                  <TableCell sx={{ fontWeight: 600, fontSize: 12 }}>{i18n.t('ai.v57-governance-panel.k49')}</TableCell>
+                  <TableCell sx={{ fontWeight: 600, fontSize: 12 }}>{i18n.t('ai.v57-governance-panel.k50')}</TableCell>
+                  <TableCell sx={{ fontWeight: 600, fontSize: 12 }}>{i18n.t('ai.v57-governance-panel.k51')}</TableCell>
+                  <TableCell sx={{ fontWeight: 600, fontSize: 12 }}>{i18n.t('ai.v57-governance-panel.k52')}</TableCell>
+                  <TableCell sx={{ fontWeight: 600, fontSize: 12 }}>{i18n.t('ai.v57-governance-panel.k53')}</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
@@ -1105,7 +1106,7 @@ const RiskTab: React.FC<{
                     <TableCell>
                       {alert.resolved ? (
                         <Chip
-                          label='已解决'
+                          label={i18n.t('ai.v57-governance-panel.k54')}
                           size='small'
                           sx={{
                             fontSize: 10,
@@ -1117,7 +1118,7 @@ const RiskTab: React.FC<{
                         />
                       ) : alert.acknowledged ? (
                         <Chip
-                          label='已确认'
+                          label={i18n.t('ai.v57-governance-panel.k55')}
                           size='small'
                           sx={{
                             fontSize: 10,
@@ -1129,7 +1130,7 @@ const RiskTab: React.FC<{
                         />
                       ) : (
                         <Chip
-                          label='活跃'
+                          label={i18n.t('ai.v57-governance-panel.k56')}
                           size='small'
                           sx={{
                             fontSize: 10,
@@ -1152,7 +1153,7 @@ const RiskTab: React.FC<{
                             onClick={() => onAcknowledge(alert.id)}
                             startIcon={<CheckCircle2 size={12} />}
                           >
-                            确认
+                            {i18n.t('ai.v57-governance-panel.k22')}
                           </Button>
                         )}
                         {!alert.resolved && (
@@ -1161,7 +1162,7 @@ const RiskTab: React.FC<{
                             onClick={() => onResolve(alert.id)}
                             startIcon={<XCircle size={12} />}
                           >
-                            解决
+                            {i18n.t('ai.v57-governance-panel.k23')}
                           </Button>
                         )}
                       </Stack>
@@ -1208,7 +1209,7 @@ const PolicyTab: React.FC<{
           sx={{ fontWeight: 600, display: 'flex', alignItems: 'center', gap: 1 }}
         >
           <Scale size={20} />
-          策略管理
+          {i18n.t('ai.v57-governance-panel.k24')}
         </Typography>
         <Stack
           direction='row'
@@ -1220,7 +1221,7 @@ const PolicyTab: React.FC<{
             onClick={onEvaluate}
             size='small'
           >
-            执行策略
+            {i18n.t('ai.v57-governance-panel.k25')}
           </Button>
           <Button
             variant='outlined'
@@ -1228,7 +1229,7 @@ const PolicyTab: React.FC<{
             onClick={onCreatePolicy}
             size='small'
           >
-            新建策略
+            {i18n.t('ai.v57-governance-panel.k26')}
           </Button>
         </Stack>
       </Stack>
@@ -1246,7 +1247,7 @@ const PolicyTab: React.FC<{
               severity='info'
               sx={{ fontSize: 12 }}
             >
-              暂无活动策略
+              {i18n.t('ai.v57-governance-panel.k27')}
             </Alert>
           ) : (
             <List dense>
@@ -1354,10 +1355,10 @@ const PolicyTab: React.FC<{
                 <Table size='small'>
                   <TableHead>
                     <TableRow>
-                      <TableCell sx={{ fontSize: 11, fontWeight: 600 }}>优先级</TableCell>
-                      <TableCell sx={{ fontSize: 11, fontWeight: 600 }}>规则名</TableCell>
-                      <TableCell sx={{ fontSize: 11, fontWeight: 600 }}>条件</TableCell>
-                      <TableCell sx={{ fontSize: 11, fontWeight: 600 }}>动作</TableCell>
+                      <TableCell sx={{ fontSize: 11, fontWeight: 600 }}>{i18n.t('ai.v57-governance-panel.k57')}</TableCell>
+                      <TableCell sx={{ fontSize: 11, fontWeight: 600 }}>{i18n.t('ai.v57-governance-panel.k58')}</TableCell>
+                      <TableCell sx={{ fontSize: 11, fontWeight: 600 }}>{i18n.t('ai.v57-governance-panel.k59')}</TableCell>
+                      <TableCell sx={{ fontSize: 11, fontWeight: 600 }}>{i18n.t('ai.v57-governance-panel.k60')}</TableCell>
                     </TableRow>
                   </TableHead>
                   <TableBody>
@@ -1409,24 +1410,24 @@ const PolicyTab: React.FC<{
                 variant='subtitle2'
                 sx={{ fontWeight: 600, mb: 1 }}
               >
-                最近决策
+                {i18n.t('ai.v57-governance-panel.k28')}
               </Typography>
               {decisions.filter((d) => d.policy_id === selectedPolicy.id).length === 0 ? (
                 <Alert
                   severity='info'
                   sx={{ fontSize: 12 }}
                 >
-                  暂无该策略的决策记录
+                  {i18n.t('ai.v57-governance-panel.k29')}
                 </Alert>
               ) : (
                 <TableContainer>
                   <Table size='small'>
                     <TableHead>
                       <TableRow>
-                        <TableCell sx={{ fontSize: 11, fontWeight: 600 }}>规则</TableCell>
-                        <TableCell sx={{ fontSize: 11, fontWeight: 600 }}>决策</TableCell>
-                        <TableCell sx={{ fontSize: 11, fontWeight: 600 }}>原因</TableCell>
-                        <TableCell sx={{ fontSize: 11, fontWeight: 600 }}>时间</TableCell>
+                        <TableCell sx={{ fontSize: 11, fontWeight: 600 }}>{i18n.t('ai.v57-governance-panel.k61')}</TableCell>
+                        <TableCell sx={{ fontSize: 11, fontWeight: 600 }}>{i18n.t('ai.v57-governance-panel.k62')}</TableCell>
+                        <TableCell sx={{ fontSize: 11, fontWeight: 600 }}>{i18n.t('ai.v57-governance-panel.k63')}</TableCell>
+                        <TableCell sx={{ fontSize: 11, fontWeight: 600 }}>{i18n.t('ai.v57-governance-panel.k64')}</TableCell>
                       </TableRow>
                     </TableHead>
                     <TableBody>
@@ -1439,7 +1440,7 @@ const PolicyTab: React.FC<{
                             <TableCell>
                               {decision.allowed ? (
                                 <Chip
-                                  label='允许'
+                                  label={i18n.t('ai.v57-governance-panel.k65')}
                                   size='small'
                                   sx={{
                                     fontSize: 10,
@@ -1451,7 +1452,7 @@ const PolicyTab: React.FC<{
                                 />
                               ) : (
                                 <Chip
-                                  label='拒绝'
+                                  label={i18n.t('ai.v57-governance-panel.k66')}
                                   size='small'
                                   sx={{
                                     fontSize: 10,
@@ -1477,7 +1478,7 @@ const PolicyTab: React.FC<{
               )}
             </>
           ) : (
-            <Alert severity='info'>请从左侧选择一个策略查看详情</Alert>
+            <Alert severity='info'>{i18n.t('ai.v57-governance-panel.k67')}</Alert>
           )}
         </Card>
       </Box>
@@ -1510,7 +1511,7 @@ const AuditTab: React.FC<{
           sx={{ fontWeight: 600, display: 'flex', alignItems: 'center', gap: 1 }}
         >
           <FileText size={20} />
-          审计追踪查看器
+          {i18n.t('ai.v57-governance-panel.k30')}
         </Typography>
         <Typography
           variant='body2'
@@ -1526,7 +1527,7 @@ const AuditTab: React.FC<{
         sx={{ mb: 2 }}
       >
         <Chip
-          label='全部'
+          label={i18n.t('ai.v57-governance-panel.k68')}
           size='small'
           onClick={() => onFilterChange('all')}
           sx={{
@@ -1536,7 +1537,7 @@ const AuditTab: React.FC<{
           }}
         />
         <Chip
-          label='已允许'
+          label={i18n.t('ai.v57-governance-panel.k69')}
           size='small'
           onClick={() => onFilterChange('allowed')}
           sx={{
@@ -1546,7 +1547,7 @@ const AuditTab: React.FC<{
           }}
         />
         <Chip
-          label='已拒绝'
+          label={i18n.t('ai.v57-governance-panel.k70')}
           size='small'
           onClick={() => onFilterChange('denied')}
           sx={{
@@ -1556,7 +1557,7 @@ const AuditTab: React.FC<{
           }}
         />
         <Chip
-          label='模拟'
+          label={i18n.t('ai.v57-governance-panel.k71')}
           size='small'
           onClick={() => onFilterChange('simulated')}
           sx={{
@@ -1568,20 +1569,20 @@ const AuditTab: React.FC<{
       </Stack>
 
       {filtered.length === 0 ? (
-        <Alert severity='info'>暂无审计记录</Alert>
+        <Alert severity='info'>{i18n.t('ai.v57-governance-panel.k72')}</Alert>
       ) : (
         <Card variant='outlined' sx={{ p: 2 }}>
           <TableContainer>
             <Table size='small'>
               <TableHead>
                 <TableRow>
-                  <TableCell sx={{ fontWeight: 600, fontSize: 12 }}>时间</TableCell>
-                  <TableCell sx={{ fontWeight: 600, fontSize: 12 }}>策略</TableCell>
-                  <TableCell sx={{ fontWeight: 600, fontSize: 12 }}>规则</TableCell>
-                  <TableCell sx={{ fontWeight: 600, fontSize: 12 }}>操作</TableCell>
-                  <TableCell sx={{ fontWeight: 600, fontSize: 12 }}>决策</TableCell>
-                  <TableCell sx={{ fontWeight: 600, fontSize: 12 }}>用户</TableCell>
-                  <TableCell sx={{ fontWeight: 600, fontSize: 12 }}>详情</TableCell>
+                  <TableCell sx={{ fontWeight: 600, fontSize: 12 }}>{i18n.t('ai.v57-governance-panel.k73')}</TableCell>
+                  <TableCell sx={{ fontWeight: 600, fontSize: 12 }}>{i18n.t('ai.v57-governance-panel.k74')}</TableCell>
+                  <TableCell sx={{ fontWeight: 600, fontSize: 12 }}>{i18n.t('ai.v57-governance-panel.k75')}</TableCell>
+                  <TableCell sx={{ fontWeight: 600, fontSize: 12 }}>{i18n.t('ai.v57-governance-panel.k76')}</TableCell>
+                  <TableCell sx={{ fontWeight: 600, fontSize: 12 }}>{i18n.t('ai.v57-governance-panel.k77')}</TableCell>
+                  <TableCell sx={{ fontWeight: 600, fontSize: 12 }}>{i18n.t('ai.v57-governance-panel.k78')}</TableCell>
+                  <TableCell sx={{ fontWeight: 600, fontSize: 12 }}>{i18n.t('ai.v57-governance-panel.k79')}</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
@@ -1652,7 +1653,7 @@ const AuditRow: React.FC<{ decision: PolicyDecision }> = ({ decision }) => {
         <TableCell>
           {decision.allowed ? (
             <Chip
-              label='允许'
+              label={i18n.t('ai.v57-governance-panel.k80')}
               size='small'
               sx={{
                 fontSize: 10,
@@ -1664,7 +1665,7 @@ const AuditRow: React.FC<{ decision: PolicyDecision }> = ({ decision }) => {
             />
           ) : (
             <Chip
-              label='拒绝'
+              label={i18n.t('ai.v57-governance-panel.k81')}
               size='small'
               sx={{
                 fontSize: 10,
@@ -1680,7 +1681,7 @@ const AuditRow: React.FC<{ decision: PolicyDecision }> = ({ decision }) => {
         <TableCell>
           {decision.simulation ? (
             <Chip
-              label='模拟'
+              label={i18n.t('ai.v57-governance-panel.k82')}
               size='small'
               sx={{
                 fontSize: 9,
@@ -1692,7 +1693,7 @@ const AuditRow: React.FC<{ decision: PolicyDecision }> = ({ decision }) => {
             />
           ) : (
             <Chip
-              label='实时'
+              label={i18n.t('ai.v57-governance-panel.k83')}
               size='small'
               sx={{ fontSize: 9, height: 16 }}
             />
@@ -1710,7 +1711,7 @@ const AuditRow: React.FC<{ decision: PolicyDecision }> = ({ decision }) => {
                 variant='caption'
                 sx={{ fontWeight: 600, display: 'block', mb: 1 }}
               >
-                原因:
+                [i18n.t('ai.v57-governance-panel.k31')]:
               </Typography>
               <Typography
                 variant='body2'
@@ -1722,7 +1723,7 @@ const AuditRow: React.FC<{ decision: PolicyDecision }> = ({ decision }) => {
                 variant='caption'
                 sx={{ fontWeight: 600, display: 'block', mb: 1 }}
               >
-                证据:
+                [i18n.t('ai.v57-governance-panel.k32')]:
               </Typography>
               <Typography
                 variant='body2'

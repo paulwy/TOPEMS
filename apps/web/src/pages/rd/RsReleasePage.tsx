@@ -13,7 +13,7 @@ import { PageContainer } from '@/components/common';
 import { useNotificationStore } from '@/store';
 import { QUERY_KEYS } from '@/lib/reactQuery';
 import { logger } from '@/utils/logger';
-
+import i18n from '@/i18n';
 const baseAdapter = createCrudPageAdapter<Deploy, CreateDeployRequest>({
   list: deployApi.listDeploys,
   create: deployApi.createDeploy,
@@ -24,48 +24,40 @@ const baseAdapter = createCrudPageAdapter<Deploy, CreateDeployRequest>({
     throw new Error('Deploy delete not supported');
   },
 });
-
 const releaseAdapter = baseAdapter as unknown as CrudApiAdapter<Deploy>;
-
 const STATUS_COLOR_MAP: Record<string, 'success' | 'warning' | 'error' | 'default'> = {
   released: 'success',
   planning: 'warning',
   rolled_back: 'error',
 };
-
 const STATUS_LABEL_MAP: Record<string, string> = {
-  released: '已发布',
-  planning: '规划中',
-  rolled_back: '已回滚',
+  released: i18n.t('rd.rs_release_page.k0'),
+  planning: i18n.t('rd.rs_release_page.k1'),
+  rolled_back: i18n.t('rd.rs_release_page.k2'),
 };
-
 const ENV_COLOR_MAP: Record<string, 'error' | 'warning' | 'success' | 'default'> = {
   production: 'error',
   staging: 'warning',
   development: 'success',
 };
-
 const ENV_LABEL_MAP: Record<string, string> = {
-  production: '生产环境',
-  staging: '预发布环境',
-  development: '开发环境',
+  production: i18n.t('rd.rs_release_page.k3'),
+  staging: i18n.t('rd.rs_release_page.k4'),
+  development: i18n.t('rd.rs_release_page.k5'),
 };
-
 function transformStatus(status: string): string {
   if (status === 'success') return 'released';
   if (status === 'failed') return 'rolled_back';
   return 'planning';
 }
-
 const RsReleasePage: React.FC = () => {
   const queryClient = useQueryClient();
   const { addNotification } = useNotificationStore();
-
   const createDeployMutation = useMutation({
     mutationFn: async (data: CreateDeployRequest) => {
       const response = await deployApi.createDeploy(data);
       if (!response.success) {
-        throw new Error(response.message || '创建发布失败');
+        throw new Error(response.message || i18n.t('rd.rs_release_page.k6'));
       }
       return response;
     },
@@ -80,15 +72,14 @@ const RsReleasePage: React.FC = () => {
 });
     },
     onError: (error: unknown) => {
-      logger.error('创建发布失败:', error);
+      logger.error(i18n.t('pages.rs_release_page.k0'), error);
       addNotification({
         type: 'error',
-        title: '操作失败',
-        message: error instanceof Error ? error.message : '创建发布失败',
+        title: i18n.t('rd.rs_release_page.k7'),
+        message: error instanceof Error ? error.message : i18n.t('rd.rs_release_page.k8'),
       });
     },
   });
-
   const handleRollback = async (row: Record<string, unknown>) => {
     try {
       const createData: CreateDeployRequest = {
@@ -103,26 +94,24 @@ const RsReleasePage: React.FC = () => {
       await createDeployMutation.mutateAsync(createData);
       addNotification({
         type: 'success',
-        title: '操作成功',
-        message: '回滚任务已提交',
+        title: i18n.t('rd.rs_release_page.k9'),
+        message: i18n.t('rd.rs_release_page.k10'),
       });
     } catch (e) { console.error("[RD] Failed to submit rollback deployment", e); }
   };
-
   const customRowActions: RowAction<Record<string, unknown>>[] = [
     {
-      label: '查看详情',
+      label: i18n.t('rd.rs_release_page.k11'),
       icon: <Eye size={16} />,
       onClick: () => {},
     },
     {
-      label: '回滚',
+      label: i18n.t('rd.rs_release_page.k12'),
       icon: <RotateCcw size={16} />,
       onClick: handleRollback,
       show: (row) => transformStatus(String(row.status ?? '')) === 'released',
     },
   ];
-
   const detailContent = (row: Record<string, unknown>) => {
     const status = transformStatus(String(row.status ?? ''));
     const statusLabel = STATUS_LABEL_MAP[status] || status;
@@ -130,7 +119,6 @@ const RsReleasePage: React.FC = () => {
     const env = String(row.environment || row.env || '');
     const envLabel = ENV_LABEL_MAP[env] || env;
     const envColor = ENV_COLOR_MAP[env] || 'default';
-
     return (
       <Box sx={{ py: 2 }}>
         <Typography
@@ -160,7 +148,7 @@ const RsReleasePage: React.FC = () => {
             variant='subtitle2'
             color='text.secondary'
           >
-            发布说明
+            {i18n.t('pages.rs_release_page.k0')}
           </Typography>
           <Paper sx={{ p: 2, mt: 1, bgcolor: 'grey.100' }}>
             <Typography variant='body2'>
@@ -178,7 +166,7 @@ const RsReleasePage: React.FC = () => {
               variant='caption'
               color='text.secondary'
             >
-              发布时间
+              {i18n.t('pages.rs_release_page.k1')}
             </Typography>
             <Typography
               variant='body1'
@@ -192,7 +180,7 @@ const RsReleasePage: React.FC = () => {
               variant='caption'
               color='text.secondary'
             >
-              发布人
+              {i18n.t('pages.rs_release_page.k2')}
             </Typography>
             <Typography
               variant='body1'
@@ -205,20 +193,19 @@ const RsReleasePage: React.FC = () => {
       </Box>
     );
   };
-
   return (
     <PageContainer
-      title='配方发布'
-      subtitle='管理配方发布和版本部署'
+      title={i18n.t('rd.rs_release_page.k13')}
+      subtitle={i18n.t('rd.rs_release_page.k14')}
       maxWidth='xl'
     >
       <CrudPage
         schema={releaseSchema}
         apiAdapter={releaseAdapter}
         breadcrumbs={[
-          { label: '首页', href: '/dashboard' },
-          { label: '研发', href: '/rs' },
-          { label: '配方发布' },
+          { label: i18n.t('rd.rs_release_page.k15'), href: '/dashboard' },
+          { label: i18n.t('rd.rs_release_page.k16'), href: '/rs' },
+          { label: i18n.t('rd.rs_release_page.k17') },
         ]}
         customRowActions={customRowActions}
         detailContent={detailContent}
@@ -227,5 +214,4 @@ const RsReleasePage: React.FC = () => {
     </PageContainer>
   );
 };
-
 export default RsReleasePage;

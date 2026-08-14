@@ -12,6 +12,7 @@ import {
   Thermometer,
   Box,
 } from 'lucide-react';
+import i18n from '@/i18n';
 import type { ToolMode } from '../types';
 import { designTokens, semanticTokens } from '@topems/tokens';
 
@@ -73,7 +74,7 @@ const Toolbar: React.FC<ToolbarProps> = ({
           variant='caption'
           sx={{ fontWeight: 'medium', color: 'text.secondary' }}
         >
-          工具
+          {i18n.t('components.toolbar.k0')}
         </Typography>
       </MuiBox>
       <MuiBox
@@ -100,7 +101,7 @@ const Toolbar: React.FC<ToolbarProps> = ({
             },
             fontSize: '0.75rem',
           }}
-          title='选择工具'
+          title={i18n.t('components.toolbar.k0')}
         >
           <MuiBox
             sx={{
@@ -110,7 +111,7 @@ const Toolbar: React.FC<ToolbarProps> = ({
               borderRadius: 1,
             }}
           />
-          选择
+          {i18n.t('components.toolbar.k1')}
         </Button>
         <Button
           fullWidth
@@ -128,10 +129,10 @@ const Toolbar: React.FC<ToolbarProps> = ({
             },
             fontSize: '0.75rem',
           }}
-          title='距离测量'
+          title={i18n.t('components.toolbar.k1')}
         >
           <Ruler size={16} />
-          测距
+          {i18n.t('components.toolbar.k2')}
         </Button>
         <Button
           fullWidth
@@ -149,10 +150,10 @@ const Toolbar: React.FC<ToolbarProps> = ({
             },
             fontSize: '0.75rem',
           }}
-          title='面积测量'
+          title={i18n.t('components.toolbar.k2')}
         >
           <Ruler size={16} />
-          测面积
+          {i18n.t('components.toolbar.k3')}
         </Button>
         <MuiBox sx={{ borderTop: '1px solid grey.100', my: 1 }} />
         <Button
@@ -171,10 +172,10 @@ const Toolbar: React.FC<ToolbarProps> = ({
             },
             fontSize: '0.75rem',
           }}
-          title='绘制点'
+          title={i18n.t('components.toolbar.k3')}
         >
           <Pencil size={16} />
-          绘点
+          {i18n.t('components.toolbar.k4')}
         </Button>
         <Button
           fullWidth
@@ -192,10 +193,10 @@ const Toolbar: React.FC<ToolbarProps> = ({
             },
             fontSize: '0.75rem',
           }}
-          title='绘制线'
+          title={i18n.t('components.toolbar.k4')}
         >
           <Pencil size={16} />
-          绘线
+          {i18n.t('components.toolbar.k5')}
         </Button>
         <Button
           fullWidth
@@ -213,10 +214,10 @@ const Toolbar: React.FC<ToolbarProps> = ({
             },
             fontSize: '0.75rem',
           }}
-          title='绘制多边形'
+          title={i18n.t('components.toolbar.k5')}
         >
           <Pencil size={16} />
-          绘多边形
+          {i18n.t('components.toolbar.k6')}
         </Button>
         <MuiBox sx={{ borderTop: '1px solid grey.100', my: 1 }} />
         {(toolMode === 'measure-distance' || toolMode === 'measure-area') && (
@@ -236,10 +237,10 @@ const Toolbar: React.FC<ToolbarProps> = ({
               },
               fontSize: '0.75rem',
             }}
-            title='清除测量'
+            title={i18n.t('components.toolbar.k6')}
           >
             <Eraser size={16} />
-            清除
+            {i18n.t('components.toolbar.k7')}
           </Button>
         )}
         {drawFeaturesLength > 0 && (
@@ -259,10 +260,10 @@ const Toolbar: React.FC<ToolbarProps> = ({
               },
               fontSize: '0.75rem',
             }}
-            title='清除所有绘制'
+            title={i18n.t('components.toolbar.k7')}
           >
             <Trash2 size={16} />
-            清除绘制
+            {i18n.t('components.toolbar.k8')}
           </Button>
         )}
         {currentDrawing && (
@@ -282,9 +283,9 @@ const Toolbar: React.FC<ToolbarProps> = ({
               },
               fontSize: '0.75rem',
             }}
-            title='完成绘制 (Enter)'
+            title={i18n.t('components.toolbar.enter_8')}
           >
-            完成绘制
+            {i18n.t('components.toolbar.k9')}
           </Button>
         )}
         <MuiBox sx={{ borderTop: '1px solid grey.100', my: 1 }} />
@@ -307,10 +308,10 @@ const Toolbar: React.FC<ToolbarProps> = ({
             },
             fontSize: '0.75rem',
           }}
-          title='设备轨迹追踪'
+          title={i18n.t('components.toolbar.k9')}
         >
           <PlayCircle size={16} />
-          轨迹追踪
+          {i18n.t('components.toolbar.k10')}
         </Button>
         <MuiBox sx={{ borderTop: '1px solid grey.100', my: 1 }} />
         <Button
@@ -329,10 +330,10 @@ const Toolbar: React.FC<ToolbarProps> = ({
             },
             fontSize: '0.75rem',
           }}
-          title='导出GeoJSON'
+          title={i18n.t('components.toolbar.geojson_10')}
         >
           <Download size={16} />
-          导出GeoJSON
+          {i18n.t('components.toolbar.geojson_11')}
         </Button>
         <Button
           fullWidth
@@ -350,10 +351,10 @@ const Toolbar: React.FC<ToolbarProps> = ({
             },
             fontSize: '0.75rem',
           }}
-          title='导出绘制图形'
+          title={i18n.t('components.toolbar.k11')}
         >
           <FileJson size={16} />
-          导出绘制图形
+          {i18n.t('components.toolbar.k12')}
         </Button>
         <MuiBox sx={{ borderTop: '1px solid grey.100', my: 1 }} />
         <Button
@@ -372,10 +373,10 @@ const Toolbar: React.FC<ToolbarProps> = ({
             },
             fontSize: '0.75rem',
           }}
-          title='切换地图'
+          title={i18n.t('components.toolbar.k12')}
         >
           <Globe size={16} />
-          {mapType === 'osm' ? '切换高德' : '切换OSM'}
+          {mapType === 'osm' ? i18n.t('components.toolbar.k14') : i18n.t('components.toolbar.osm_13')}
         </Button>
         <MuiBox sx={{ borderTop: '1px solid grey.100', my: 1 }} />
         <Button
@@ -394,10 +395,10 @@ const Toolbar: React.FC<ToolbarProps> = ({
             },
             fontSize: '0.75rem',
           }}
-          title='热力图'
+          title={i18n.t('components.toolbar.k15')}
         >
           <Thermometer size={16} />
-          热力图
+          {i18n.t('components.toolbar.k13')}
         </Button>
         {showHeatmap && (
           <MuiBox
@@ -423,7 +424,7 @@ const Toolbar: React.FC<ToolbarProps> = ({
                 fontSize: '0.75rem',
               }}
             >
-              密度模式
+              {i18n.t('components.toolbar.k14')}
             </Button>
             <Button
               fullWidth
@@ -440,7 +441,7 @@ const Toolbar: React.FC<ToolbarProps> = ({
                 fontSize: '0.75rem',
               }}
             >
-              状态模式
+              {i18n.t('components.toolbar.k15')}
             </Button>
           </MuiBox>
         )}
@@ -463,10 +464,10 @@ const Toolbar: React.FC<ToolbarProps> = ({
             },
             fontSize: '0.75rem',
           }}
-          title='3D视图'
+          title={i18n.t('components.toolbar.3d_16')}
         >
           <Box size={16} />
-          3D视图
+          {i18n.t('components.toolbar.3d_17')}
         </Button>
       </MuiBox>
     </Paper>

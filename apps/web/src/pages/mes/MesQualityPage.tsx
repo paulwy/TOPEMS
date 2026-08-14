@@ -2,6 +2,8 @@ import CrudPage from '@/components/templates/CrudPage';
 import { createCrudPageAdapter } from '@/schema/crudPageAdapter';
 import { qualitySchema } from '@/schemas/mes';
 import { qualityApi } from '@/api/mes';
+import { useTranslation } from 'react-i18next';
+import i18n from '@/i18n';
 
 const apiAdapter = createCrudPageAdapter({
   list: qualityApi.listInspections,
@@ -15,7 +17,7 @@ export default function MesQualityPage() {
     <CrudPage
       schema={qualitySchema}
       apiAdapter={apiAdapter}
-      breadcrumbs={[{ label: 'MES' }, { label: '质量检验' }]}
+      breadcrumbs={[{ label: 'MES' }, { label: i18n.t('mes.mes_quality_page.k0') }]}
     />
   );
 }

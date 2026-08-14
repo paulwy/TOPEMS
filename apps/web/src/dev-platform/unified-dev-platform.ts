@@ -1,3 +1,4 @@
+import i18n from '@/i18n';
 /**
  * V53.0 微前端平台终局 — 统一开发平台
  *
@@ -244,8 +245,8 @@ export class UnifiedDevPlatform {
   private initDefaultPipelines(): void {
     this.pipelines.set('build-only', {
       id: 'build-only',
-      name: '仅构建',
-      description: '安装依赖 + 构建 + 产物生成',
+      name: i18n.t('pages.unified-dev-platform.k0'),
+      description: i18n.t('pages.unified-dev-platform.k1'),
       stages: [
         this.createStage('install', 'install', { command: 'pnpm install' }),
         this.createStage('lint', 'lint', { command: 'pnpm lint', timeout: 120000 }),
@@ -259,8 +260,8 @@ export class UnifiedDevPlatform {
 
     this.pipelines.set('build-deploy', {
       id: 'build-deploy',
-      name: '构建并部署',
-      description: '完整 CI/CD 流水线：安装 + 测试 + 构建 + 部署',
+      name: i18n.t('pages.unified-dev-platform.k2'),
+      description: i18n.t('pages.unified-dev-platform.k3'),
       stages: [
         this.createStage('install', 'install', { command: 'pnpm install' }),
         this.createStage('lint', 'lint', { command: 'pnpm lint', timeout: 120000 }),
@@ -280,8 +281,8 @@ export class UnifiedDevPlatform {
 
     this.pipelines.set('preview', {
       id: 'preview',
-      name: '预览部署',
-      description: '快速预览环境部署：轻量构建 + 预览部署',
+      name: i18n.t('pages.unified-dev-platform.k4'),
+      description: i18n.t('pages.unified-dev-platform.k5'),
       stages: [
         this.createStage('install', 'install', { command: 'pnpm install' }),
         this.createStage('build', 'build', { command: 'pnpm build:preview', timeout: 180000 }),
@@ -348,7 +349,7 @@ export class UnifiedDevPlatform {
     const project: DevProject = {
       id: projectId,
       name: options.name,
-      description: options.description || `${options.name} - V53 微前端项目`,
+      description: options.description || `${options.name}${i18n.t('pages.unified-dev-platform.v53_6')}`,
       stack,
       modules: options.modules || [],
       config: {
@@ -731,9 +732,9 @@ export class UnifiedDevPlatform {
         id: `health_${Date.now()}_1`,
         severity: 'medium',
         category: 'code-quality',
-        title: '项目尚未集成任何模块',
-        description: '建议至少集成一个核心模块以提供完整功能',
-        suggestion: '使用 addModule() 集成必要的业务模块',
+        title: i18n.t('pages.unified-dev-platform.k7'),
+        description: i18n.t('pages.unified-dev-platform.k8'),
+        suggestion: i18n.t('pages.unified-dev-platform.k9'),
         detectedAt: Date.now(),
       });
     }
@@ -744,9 +745,9 @@ export class UnifiedDevPlatform {
         id: `health_${Date.now()}_2`,
         severity: 'low',
         category: 'dependency',
-        title: '项目超过 30 天未更新',
-        description: '依赖项可能存在过时风险',
-        suggestion: '运行依赖更新检查并升级关键依赖',
+        title: i18n.t('pages.unified-dev-platform.30_10'),
+        description: i18n.t('pages.unified-dev-platform.k11'),
+        suggestion: i18n.t('pages.unified-dev-platform.k12'),
         detectedAt: Date.now(),
       });
     }

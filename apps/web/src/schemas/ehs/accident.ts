@@ -1,10 +1,11 @@
 import React from 'react';
 import type { EntitySchema } from '@/schema';
+import i18n from '@/i18n';
 
 export const accidentSchema: EntitySchema = {
   entity: 'ehsAccident',
-  title: '事故管理',
-  description: '管理企业事故信息，包括事故类别、级别、损失、状态等',
+  title: i18n.t('ehs.accident.k0'),
+  description: i18n.t('ehs.accident.k1'),
 
   api: {
     module: 'ehs',
@@ -14,7 +15,7 @@ export const accidentSchema: EntitySchema = {
   fields: [
     {
       name: 'accident_no',
-      label: '事故编号',
+      label: i18n.t('ehs.accident.k2'),
       type: 'text',
       required: true,
       readonlyOnEdit: true,
@@ -23,7 +24,7 @@ export const accidentSchema: EntitySchema = {
     },
     {
       name: 'title',
-      label: '事故标题',
+      label: i18n.t('ehs.accident.k3'),
       type: 'text',
       required: true,
       listWidth: 180,
@@ -31,60 +32,60 @@ export const accidentSchema: EntitySchema = {
     },
     {
       name: 'category',
-      label: '事故类别',
+      label: i18n.t('ehs.accident.k4'),
       type: 'select',
       required: true,
       defaultValue: 'safety',
       options: {
         type: 'static',
         options: [
-          { value: 'safety', label: '安全事故' },
-          { value: 'environment', label: '环境事故' },
-          { value: 'health', label: '健康事故' },
-          { value: 'property', label: '财产事故' },
+          { value: 'safety', label: i18n.t('ehs.accident.k5') },
+          { value: 'environment', label: i18n.t('ehs.accident.k6') },
+          { value: 'health', label: i18n.t('ehs.accident.k7') },
+          { value: 'property', label: i18n.t('ehs.accident.k8') },
         ],
       },
       listWidth: 120,
     },
     {
       name: 'level',
-      label: '事故级别',
+      label: i18n.t('ehs.accident.k9'),
       type: 'select',
       required: true,
-      defaultValue: '一般',
+      defaultValue: i18n.t('ehs.accident.k10'),
       options: {
         type: 'static',
         options: [
-          { value: '一般', label: '一般' },
-          { value: '较大', label: '较大' },
-          { value: '重大', label: '重大' },
-          { value: '特别重大', label: '特别重大' },
+          { value: i18n.t('ehs.accident.k11'), label: i18n.t('ehs.accident.k12') },
+          { value: i18n.t('ehs.accident.k13'), label: i18n.t('ehs.accident.k14') },
+          { value: i18n.t('ehs.accident.k15'), label: i18n.t('ehs.accident.k16') },
+          { value: i18n.t('ehs.accident.k17'), label: i18n.t('ehs.accident.k18') },
         ],
       },
       listWidth: 120,
     },
     {
       name: 'location',
-      label: '事故地点',
+      label: i18n.t('ehs.accident.k19'),
       type: 'text',
       listWidth: 160,
       validation: [{ type: 'maxLength', value: 128 }],
     },
     {
       name: 'department_id',
-      label: '所属部门',
+      label: i18n.t('ehs.accident.k20'),
       type: 'text',
       showInList: false,
     },
     {
       name: 'casualties',
-      label: '伤亡人数',
+      label: i18n.t('ehs.accident.k21'),
       type: 'number',
       showInList: false,
     },
     {
       name: 'direct_loss',
-      label: '直接损失',
+      label: i18n.t('ehs.accident.k22'),
       type: 'number',
       listWidth: 140,
       renderCell: (row: Record<string, unknown>) => {
@@ -97,22 +98,22 @@ export const accidentSchema: EntitySchema = {
     },
     {
       name: 'accident_date',
-      label: '事故日期',
+      label: i18n.t('ehs.accident.k23'),
       type: 'date',
       listWidth: 120,
     },
     {
       name: 'status',
-      label: '状态',
+      label: i18n.t('ehs.accident.k24'),
       type: 'select',
-      defaultValue: '调查中',
+      defaultValue: i18n.t('ehs.accident.k25'),
       options: {
         type: 'static',
         options: [
-          { value: '调查中', label: '调查中' },
-          { value: '处理中', label: '处理中' },
-          { value: '已结案', label: '已结案' },
-          { value: '已归档', label: '已归档' },
+          { value: i18n.t('ehs.accident.k26'), label: i18n.t('ehs.accident.k27') },
+          { value: i18n.t('ehs.accident.k28'), label: i18n.t('ehs.accident.k29') },
+          { value: i18n.t('ehs.accident.k30'), label: i18n.t('ehs.accident.k31') },
+          { value: i18n.t('ehs.accident.k32'), label: i18n.t('ehs.accident.k33') },
         ],
       },
       listWidth: 100,
@@ -120,7 +121,7 @@ export const accidentSchema: EntitySchema = {
     },
     {
       name: 'description',
-      label: '描述',
+      label: i18n.t('ehs.accident.k34'),
       type: 'textarea',
       showInList: false,
     },
@@ -133,41 +134,41 @@ export const accidentSchema: EntitySchema = {
     statusBadge: {
       field: 'status',
       colorMap: {
-        调查中: 'warning',
-        处理中: 'primary',
-        已结案: 'success',
-        已归档: 'default',
+        [i18n.t('schemas.accident.k0')]: 'warning',
+        [i18n.t('schemas.accident.k1')]: 'primary',
+        [i18n.t('schemas.accident.k2')]: 'success',
+        [i18n.t('schemas.accident.k3')]: 'default',
       },
       labelMap: {
-        调查中: '调查中',
-        处理中: '处理中',
-        已结案: '已结案',
-        已归档: '已归档',
+        [i18n.t('schemas.accident.k4')]: i18n.t('ehs.accident.k35'),
+        [i18n.t('schemas.accident.k5')]: i18n.t('ehs.accident.k36'),
+        [i18n.t('schemas.accident.k6')]: i18n.t('ehs.accident.k37'),
+        [i18n.t('schemas.accident.k7')]: i18n.t('ehs.accident.k38'),
       },
     },
     filters: [
       {
         id: 'category',
-        label: '事故类别',
+        label: i18n.t('ehs.accident.k39'),
         type: 'select',
         options: [
-          { label: '全部', value: 'all' },
-          { label: '安全事故', value: 'safety' },
-          { label: '环境事故', value: 'environment' },
-          { label: '健康事故', value: 'health' },
-          { label: '财产事故', value: 'property' },
+          { label: i18n.t('ehs.accident.k40'), value: 'all' },
+          { label: i18n.t('ehs.accident.k41'), value: 'safety' },
+          { label: i18n.t('ehs.accident.k42'), value: 'environment' },
+          { label: i18n.t('ehs.accident.k43'), value: 'health' },
+          { label: i18n.t('ehs.accident.k44'), value: 'property' },
         ],
       },
       {
         id: 'level',
-        label: '事故级别',
+        label: i18n.t('ehs.accident.k45'),
         type: 'select',
         options: [
-          { label: '全部', value: 'all' },
-          { label: '一般', value: '一般' },
-          { label: '较大', value: '较大' },
-          { label: '重大', value: '重大' },
-          { label: '特别重大', value: '特别重大' },
+          { label: i18n.t('ehs.accident.k46'), value: 'all' },
+          { label: i18n.t('ehs.accident.k47'), value: i18n.t('ehs.accident.k48') },
+          { label: i18n.t('ehs.accident.k49'), value: i18n.t('ehs.accident.k50') },
+          { label: i18n.t('ehs.accident.k51'), value: i18n.t('ehs.accident.k52') },
+          { label: i18n.t('ehs.accident.k53'), value: i18n.t('ehs.accident.k54') },
         ],
       },
     ],
@@ -177,21 +178,21 @@ export const accidentSchema: EntitySchema = {
 
   formSections: [
     {
-      title: '基本信息',
+      title: i18n.t('ehs.accident.k55'),
       fields: ['accident_no', 'title', 'category', 'level'],
     },
     {
-      title: '事故地点',
+      title: i18n.t('ehs.accident.k56'),
       fields: ['location', 'department_id', 'accident_date'],
     },
     {
-      title: '损失与状态',
+      title: i18n.t('ehs.accident.k57'),
       fields: ['casualties', 'direct_loss', 'status', 'description'],
     },
   ],
 
   formColCount: 2,
-  createTitle: '新建事故',
-  editTitle: '编辑事故',
-  detailTitle: '事故详情',
+  createTitle: i18n.t('ehs.accident.k58'),
+  editTitle: i18n.t('ehs.accident.k59'),
+  detailTitle: i18n.t('ehs.accident.k60'),
 };

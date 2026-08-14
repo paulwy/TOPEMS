@@ -1,9 +1,10 @@
 import type { EntitySchema } from '@/schema';
+import i18n from '@/i18n';
 
 export const supplierSchema: EntitySchema = {
   entity: 'supplier',
-  title: '供应商管理',
-  description: '管理供应商基础信息，包括编码、名称、分类、级别、联系方式等',
+  title: i18n.t('scm.supplier.k0'),
+  description: i18n.t('scm.supplier.k1'),
 
   api: {
     module: 'scm',
@@ -13,7 +14,7 @@ export const supplierSchema: EntitySchema = {
   fields: [
     {
       name: 'code',
-      label: '供应商编码',
+      label: i18n.t('scm.supplier.k2'),
       type: 'text',
       required: true,
       readonlyOnEdit: true,
@@ -23,7 +24,7 @@ export const supplierSchema: EntitySchema = {
     },
     {
       name: 'name',
-      label: '供应商名称',
+      label: i18n.t('scm.supplier.k3'),
       type: 'text',
       required: true,
       sortable: true,
@@ -32,18 +33,18 @@ export const supplierSchema: EntitySchema = {
     },
     {
       name: 'category',
-      label: '分类',
+      label: i18n.t('scm.supplier.k4'),
       type: 'select',
       options: {
         type: 'static',
         options: [
-          { value: 'raw_material', label: '原材料' },
-          { value: 'packaging', label: '包装辅料' },
-          { value: 'machinery', label: '机械设备' },
-          { value: 'electronics', label: '电子元器件' },
-          { value: 'chemicals', label: '化学用品' },
-          { value: 'services', label: '服务类' },
-          { value: 'other', label: '其他' },
+          { value: 'raw_material', label: i18n.t('scm.supplier.k5') },
+          { value: 'packaging', label: i18n.t('scm.supplier.k6') },
+          { value: 'machinery', label: i18n.t('scm.supplier.k7') },
+          { value: 'electronics', label: i18n.t('scm.supplier.k8') },
+          { value: 'chemicals', label: i18n.t('scm.supplier.k9') },
+          { value: 'services', label: i18n.t('scm.supplier.k10') },
+          { value: 'other', label: i18n.t('scm.supplier.k11') },
         ],
       },
       listWidth: 120,
@@ -51,31 +52,31 @@ export const supplierSchema: EntitySchema = {
     },
     {
       name: 'level',
-      label: '级别',
+      label: i18n.t('scm.supplier.k12'),
       type: 'select',
       options: {
         type: 'static',
         options: [
-          { value: 'strategic', label: '战略供应商' },
-          { value: 'preferred', label: '优选供应商' },
-          { value: 'regular', label: '常规供应商' },
-          { value: 'qualified', label: '合格供应商' },
-          { value: 'new', label: '新供应商' },
+          { value: 'strategic', label: i18n.t('scm.supplier.k13') },
+          { value: 'preferred', label: i18n.t('scm.supplier.k14') },
+          { value: 'regular', label: i18n.t('scm.supplier.k15') },
+          { value: 'qualified', label: i18n.t('scm.supplier.k16') },
+          { value: 'new', label: i18n.t('scm.supplier.k17') },
         ],
       },
       listWidth: 120,
     },
     {
       name: 'status',
-      label: '状态',
+      label: i18n.t('scm.supplier.k18'),
       type: 'select',
       defaultValue: 'active',
       options: {
         type: 'static',
         options: [
-          { value: 'active', label: '活跃' },
-          { value: 'inactive', label: '禁用' },
-          { value: 'pending', label: '待审核' },
+          { value: 'active', label: i18n.t('scm.supplier.k19') },
+          { value: 'inactive', label: i18n.t('scm.supplier.k20') },
+          { value: 'pending', label: i18n.t('scm.supplier.k21') },
         ],
       },
       listWidth: 100,
@@ -83,34 +84,34 @@ export const supplierSchema: EntitySchema = {
     },
     {
       name: 'contact',
-      label: '联系人',
+      label: i18n.t('scm.supplier.k22'),
       type: 'text',
       listWidth: 100,
     },
     {
       name: 'phone',
-      label: '联系电话',
+      label: i18n.t('scm.supplier.k23'),
       type: 'text',
       listWidth: 120,
       validation: [{ type: 'maxLength', value: 20 }],
     },
     {
       name: 'email',
-      label: '邮箱',
+      label: i18n.t('scm.supplier.k24'),
       type: 'text',
       showInList: false,
       validation: [{ type: 'maxLength', value: 100 }],
     },
     {
       name: 'address',
-      label: '地址',
+      label: i18n.t('scm.supplier.k25'),
       type: 'textarea',
       showInList: false,
       validation: [{ type: 'maxLength', value: 500 }],
     },
     {
       name: 'rating',
-      label: '评分',
+      label: i18n.t('scm.supplier.k26'),
       type: 'number',
       defaultValue: 0,
       sortable: true,
@@ -118,7 +119,7 @@ export const supplierSchema: EntitySchema = {
     },
     {
       name: 'create_date',
-      label: '创建日期',
+      label: i18n.t('scm.supplier.k27'),
       type: 'date',
       sortable: true,
       listWidth: 120,
@@ -137,36 +138,36 @@ export const supplierSchema: EntitySchema = {
         pending: 'warning',
       },
       labelMap: {
-        active: '活跃',
-        inactive: '禁用',
-        pending: '待审核',
+        active: i18n.t('scm.supplier.k28'),
+        inactive: i18n.t('scm.supplier.k29'),
+        pending: i18n.t('scm.supplier.k30'),
       },
     },
     filters: [
       {
         id: 'status',
-        label: '状态',
+        label: i18n.t('scm.supplier.k31'),
         type: 'select',
         options: [
-          { label: '全部状态', value: 'all' },
-          { label: '活跃', value: 'active' },
-          { label: '禁用', value: 'inactive' },
-          { label: '待审核', value: 'pending' },
+          { label: i18n.t('scm.supplier.k32'), value: 'all' },
+          { label: i18n.t('scm.supplier.k33'), value: 'active' },
+          { label: i18n.t('scm.supplier.k34'), value: 'inactive' },
+          { label: i18n.t('scm.supplier.k35'), value: 'pending' },
         ],
       },
       {
         id: 'category',
-        label: '分类',
+        label: i18n.t('scm.supplier.k36'),
         type: 'select',
         options: [
-          { label: '全部分类', value: 'all' },
-          { label: '原材料', value: 'raw_material' },
-          { label: '包装辅料', value: 'packaging' },
-          { label: '机械设备', value: 'machinery' },
-          { label: '电子元器件', value: 'electronics' },
-          { label: '化学用品', value: 'chemicals' },
-          { label: '服务类', value: 'services' },
-          { label: '其他', value: 'other' },
+          { label: i18n.t('scm.supplier.k37'), value: 'all' },
+          { label: i18n.t('scm.supplier.k38'), value: 'raw_material' },
+          { label: i18n.t('scm.supplier.k39'), value: 'packaging' },
+          { label: i18n.t('scm.supplier.k40'), value: 'machinery' },
+          { label: i18n.t('scm.supplier.k41'), value: 'electronics' },
+          { label: i18n.t('scm.supplier.k42'), value: 'chemicals' },
+          { label: i18n.t('scm.supplier.k43'), value: 'services' },
+          { label: i18n.t('scm.supplier.k44'), value: 'other' },
         ],
       },
     ],
@@ -176,21 +177,21 @@ export const supplierSchema: EntitySchema = {
 
   formSections: [
     {
-      title: '基本信息',
+      title: i18n.t('scm.supplier.k45'),
       fields: ['code', 'name', 'category', 'level', 'status'],
     },
     {
-      title: '联系信息',
+      title: i18n.t('scm.supplier.k46'),
       fields: ['contact', 'phone', 'email', 'address'],
     },
     {
-      title: '评级信息',
+      title: i18n.t('scm.supplier.k47'),
       fields: ['rating', 'create_date'],
     },
   ],
 
   formColCount: 2,
-  createTitle: '新增供应商',
-  editTitle: '编辑供应商',
-  detailTitle: '供应商详情',
+  createTitle: i18n.t('scm.supplier.k48'),
+  editTitle: i18n.t('scm.supplier.k49'),
+  detailTitle: i18n.t('scm.supplier.k50'),
 };

@@ -2,32 +2,33 @@ import React from 'react';
 import { Box, Chip, Typography } from '@mui/material';
 import { FileText, User, Calendar } from 'lucide-react';
 import type { EntitySchema, SchemaField } from '@/schema';
+import i18n from '@/i18n';
 
 export const REPORT_TYPE_CONFIG: Record<
   string,
   { color: 'primary' | 'success' | 'warning' | 'secondary' | 'info' | 'default'; label: string }
 > = {
-  daily: { color: 'info', label: '日报' },
-  weekly: { color: 'success', label: '周报' },
-  monthly: { color: 'warning', label: '月报' },
-  quarterly: { color: 'secondary', label: '季报' },
-  annual: { color: 'primary', label: '年报' },
-  custom: { color: 'default', label: '自定义' },
+  daily: { color: 'info', label: i18n.t('shared.report.k0') },
+  weekly: { color: 'success', label: i18n.t('shared.report.k1') },
+  monthly: { color: 'warning', label: i18n.t('shared.report.k2') },
+  quarterly: { color: 'secondary', label: i18n.t('shared.report.k3') },
+  annual: { color: 'primary', label: i18n.t('shared.report.k4') },
+  custom: { color: 'default', label: i18n.t('shared.report.k5') },
 };
 
 export const REPORT_STATUS_CONFIG: Record<
   string,
   { color: 'success' | 'warning' | 'default' | 'error' | 'info' | 'primary'; label: string }
 > = {
-  active: { color: 'success', label: '启用' },
-  draft: { color: 'warning', label: '草稿' },
-  archived: { color: 'default', label: '归档' },
+  active: { color: 'success', label: i18n.t('shared.report.k6') },
+  draft: { color: 'warning', label: i18n.t('shared.report.k7') },
+  archived: { color: 'default', label: i18n.t('shared.report.k8') },
 };
 
 const reportFields: SchemaField[] = [
   {
     name: 'name',
-    label: '报表名称',
+    label: i18n.t('shared.report.k9'),
     type: 'text',
     required: true,
     sortable: true,
@@ -48,20 +49,20 @@ const reportFields: SchemaField[] = [
           React.createElement(
             Typography,
             { variant: 'caption', color: 'text.secondary' },
-            String(row.description ?? '暂无描述')
+            String(row.description ?? i18n.t('shared.report.k10'))
           )
         )
       ),
   },
   {
     name: 'description',
-    label: '描述',
+    label: i18n.t('shared.report.k11'),
     type: 'textarea',
     showInList: false,
   },
   {
     name: 'report_type',
-    label: '报表类型',
+    label: i18n.t('shared.report.k12'),
     type: 'select',
     required: true,
     listWidth: 110,
@@ -87,7 +88,7 @@ const reportFields: SchemaField[] = [
   },
   {
     name: 'created_by',
-    label: '创建人',
+    label: i18n.t('shared.report.k13'),
     type: 'text',
     listWidth: 120,
     renderCell: (row: Record<string, unknown>) =>
@@ -95,12 +96,12 @@ const reportFields: SchemaField[] = [
         Box,
         { sx: { display: 'flex', alignItems: 'center', gap: 0.5 } },
         React.createElement(User, { size: 14, color: 'grey.600' }),
-        React.createElement(Typography, { variant: 'body2' }, String(row.created_by ?? '未知'))
+        React.createElement(Typography, { variant: 'body2' }, String(row.created_by ?? i18n.t('shared.report.k14')))
       ),
   },
   {
     name: 'created_at',
-    label: '创建时间',
+    label: i18n.t('shared.report.k15'),
     type: 'datetime',
     sortable: true,
     listWidth: 140,
@@ -118,7 +119,7 @@ const reportFields: SchemaField[] = [
   },
   {
     name: 'status',
-    label: '状态',
+    label: i18n.t('shared.report.k16'),
     type: 'select',
     listWidth: 100,
     options: {
@@ -144,8 +145,8 @@ const reportFields: SchemaField[] = [
 
 export const reportSchema: EntitySchema = {
   entity: 'bi_report',
-  title: 'BI 报表',
-  description: '创建和管理 BI 报表',
+  title: i18n.t('shared.report.bi_0'),
+  description: i18n.t('shared.report.bi_17'),
 
   api: {
     module: 'bi',
@@ -160,10 +161,10 @@ export const reportSchema: EntitySchema = {
     filters: [
       {
         id: 'reportType',
-        label: '报表类型',
+        label: i18n.t('shared.report.k18'),
         type: 'select',
         options: [
-          { label: '全部类型', value: 'all' },
+          { label: i18n.t('shared.report.k19'), value: 'all' },
           ...Object.entries(REPORT_TYPE_CONFIG).map(([value, cfg]) => ({
             label: cfg.label,
             value,
@@ -172,10 +173,10 @@ export const reportSchema: EntitySchema = {
       },
       {
         id: 'status',
-        label: '状态',
+        label: i18n.t('shared.report.k20'),
         type: 'select',
         options: [
-          { label: '全部状态', value: 'all' },
+          { label: i18n.t('shared.report.k21'), value: 'all' },
           ...Object.entries(REPORT_STATUS_CONFIG).map(([value, cfg]) => ({
             label: cfg.label,
             value,
@@ -189,13 +190,13 @@ export const reportSchema: EntitySchema = {
 
   formSections: [
     {
-      title: '基本信息',
+      title: i18n.t('shared.report.k22'),
       fields: ['name', 'description', 'report_type', 'status'],
     },
   ],
 
   formColCount: 2,
-  createTitle: '新建报表',
-  editTitle: '编辑报表',
-  detailTitle: '报表详情',
+  createTitle: i18n.t('shared.report.k23'),
+  editTitle: i18n.t('shared.report.k24'),
+  detailTitle: i18n.t('shared.report.k25'),
 };

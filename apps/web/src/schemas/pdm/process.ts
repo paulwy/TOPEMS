@@ -1,9 +1,10 @@
 import type { EntitySchema } from '@/schema';
+import i18n from '@/i18n';
 
 export const processSchema: EntitySchema = {
   entity: 'pdm_process',
-  title: '生产工艺',
-  description: '管理生产工艺，包括工艺编号、名称、版本、状态等',
+  title: i18n.t('pdm.process.k0'),
+  description: i18n.t('pdm.process.k1'),
 
   api: {
     module: 'pdm',
@@ -13,7 +14,7 @@ export const processSchema: EntitySchema = {
   fields: [
     {
       name: 'process_no',
-      label: '工艺编号',
+      label: i18n.t('pdm.process.k2'),
       type: 'text',
       required: true,
       readonlyOnEdit: true,
@@ -23,7 +24,7 @@ export const processSchema: EntitySchema = {
     },
     {
       name: 'name',
-      label: '工艺名称',
+      label: i18n.t('pdm.process.k3'),
       type: 'text',
       required: true,
       sortable: true,
@@ -32,7 +33,7 @@ export const processSchema: EntitySchema = {
     },
     {
       name: 'version',
-      label: '版本',
+      label: i18n.t('pdm.process.k4'),
       type: 'text',
       defaultValue: '1.0',
       listWidth: 100,
@@ -40,14 +41,14 @@ export const processSchema: EntitySchema = {
     },
     {
       name: 'status',
-      label: '状态',
+      label: i18n.t('pdm.process.k5'),
       type: 'select',
       defaultValue: 'active',
       options: {
         type: 'static',
         options: [
-          { value: 'active', label: '启用' },
-          { value: 'inactive', label: '禁用' },
+          { value: 'active', label: i18n.t('pdm.process.k6') },
+          { value: 'inactive', label: i18n.t('pdm.process.k7') },
         ],
       },
       listWidth: 100,
@@ -55,13 +56,13 @@ export const processSchema: EntitySchema = {
     },
     {
       name: 'description',
-      label: '描述',
+      label: i18n.t('pdm.process.k8'),
       type: 'textarea',
       showInList: false,
     },
     {
       name: 'created_at',
-      label: '创建时间',
+      label: i18n.t('pdm.process.k9'),
       type: 'datetime',
       readonly: true,
       sortable: true,
@@ -70,7 +71,7 @@ export const processSchema: EntitySchema = {
     },
     {
       name: 'updated_at',
-      label: '更新时间',
+      label: i18n.t('pdm.process.k10'),
       type: 'datetime',
       readonly: true,
       hideInForm: true,
@@ -89,19 +90,19 @@ export const processSchema: EntitySchema = {
         inactive: 'error',
       },
       labelMap: {
-        active: '启用',
-        inactive: '禁用',
+        active: i18n.t('pdm.process.k11'),
+        inactive: i18n.t('pdm.process.k12'),
       },
     },
     filters: [
       {
         id: 'status',
-        label: '状态',
+        label: i18n.t('pdm.process.k13'),
         type: 'select',
         options: [
-          { label: '全部状态', value: 'all' },
-          { label: '启用', value: 'active' },
-          { label: '禁用', value: 'inactive' },
+          { label: i18n.t('pdm.process.k14'), value: 'all' },
+          { label: i18n.t('pdm.process.k15'), value: 'active' },
+          { label: i18n.t('pdm.process.k16'), value: 'inactive' },
         ],
       },
     ],
@@ -111,17 +112,17 @@ export const processSchema: EntitySchema = {
 
   formSections: [
     {
-      title: '基本信息',
+      title: i18n.t('pdm.process.k17'),
       fields: ['process_no', 'name', 'version', 'status'],
     },
     {
-      title: '描述',
+      title: i18n.t('pdm.process.k18'),
       fields: ['description'],
     },
   ],
 
   formColCount: 2,
-  createTitle: '新增生产工艺',
-  editTitle: '编辑生产工艺',
-  detailTitle: '生产工艺详情',
+  createTitle: i18n.t('pdm.process.k19'),
+  editTitle: i18n.t('pdm.process.k20'),
+  detailTitle: i18n.t('pdm.process.k21'),
 };

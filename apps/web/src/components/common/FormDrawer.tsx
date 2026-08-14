@@ -29,6 +29,7 @@
 import React from 'react';
 import { Drawer, type DrawerAnchor } from './Drawer';
 import { designTokens, semanticTokens } from '@topems/tokens';
+import i18n from '@/i18n';
 
 // ============ 类型定义 ============
 
@@ -72,8 +73,8 @@ export const FormDrawer = React.memo(function FormDrawer({
   loading = false,
   width = 480,
   anchor = 'right',
-  confirmText = '保存',
-  cancelText = '取消',
+  confirmText = i18n.t('shared.form_drawer.k0'),
+  cancelText = i18n.t('shared.form_drawer.k1'),
   disableSubmit = false,
   closeOnBackdropClick = false,
   contentSx,
@@ -98,9 +99,9 @@ export const FormDrawer = React.memo(function FormDrawer({
         onClick={onClose}
         disabled={loading}
         style={{
-          padding: '8px 16px',
+          padding: `${designTokens.spacing.sm} 16px`,
           borderRadius: 4,
-          border: '1px solid #d0d0d0',
+          border: `1px solid ${designTokens.colors.grey[300]}`,
           backgroundColor: 'common.white',
           cursor: loading ? 'not-allowed' : 'pointer',
           fontSize: 14,
@@ -114,10 +115,10 @@ export const FormDrawer = React.memo(function FormDrawer({
         onClick={onSubmit}
         disabled={loading || disableSubmit}
         style={{
-          padding: '8px 16px',
+          padding: `${designTokens.spacing.sm} 16px`,
           borderRadius: 4,
           border: 'none',
-          backgroundColor: loading || disableSubmit ? '#a0c4e8' : designTokens.colors.primary.dark,
+          backgroundColor: loading || disableSubmit ? designTokens.colors.info[200] : designTokens.colors.primary.dark,
           cursor: loading || disableSubmit ? 'not-allowed' : 'pointer',
           fontSize: 14,
           color: 'common.white',
@@ -132,7 +133,7 @@ export const FormDrawer = React.memo(function FormDrawer({
             style={{
               width: 14,
               height: 14,
-              border: '2px solid rgba(255,255,255,0.3)',
+              border: `2px solid ${designTokens.colors.cyber.metal.topLight}`,
               borderTopColor: 'common.white',
               borderRadius: '50%',
               animation: 'spin 0.8s linear infinite',

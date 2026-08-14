@@ -3,51 +3,51 @@ import {
   KanbanPageTemplate,
   type KanbanColumn,
 } from '../../components/templates/KanbanPageTemplate';
+import i18n from '@/i18n';
 import { Plus } from 'lucide-react';
-
 const initialColumns: KanbanColumn[] = [
   {
     id: 'backlog',
-    title: '待办',
+    title: i18n.t('pm.project_task_kanban_page.k0'),
     status: 'backlog',
     color: 'text.muted',
     cards: [
       {
         id: 'card-1',
-        title: '完成产品需求文档',
-        description: '编写详细的产品需求文档，包含功能描述和用户故事',
+        title: i18n.t('pm.project_task_kanban_page.k1'),
+        description: i18n.t('pm.project_task_kanban_page.k2'),
         priority: 'high',
-        assignee: { id: '1', name: '张三' },
+        assignee: { id: '1', name: i18n.t('pm.project_task_kanban_page.k3') },
         dueDate: '2026-03-20',
-        tags: [{ label: '文档', color: 'primary.main' }],
+        tags: [{ label: i18n.t('pm.project_task_kanban_page.k4'), color: 'primary.main' }],
         subtasks: { total: 5, completed: 3 },
         comments: 2,
       },
       {
         id: 'card-2',
-        title: '设计系统架构图',
-        description: '绘制系统整体架构图，包括模块划分和数据流',
+        title: i18n.t('pm.project_task_kanban_page.k5'),
+        description: i18n.t('pm.project_task_kanban_page.k6'),
         priority: 'medium',
-        assignee: { id: '2', name: '李四' },
+        assignee: { id: '2', name: i18n.t('pm.project_task_kanban_page.k7') },
         dueDate: '2026-03-22',
-        tags: [{ label: '设计', color: 'secondary.main' }],
+        tags: [{ label: i18n.t('pm.project_task_kanban_page.k8'), color: 'secondary.main' }],
       },
     ],
   },
   {
     id: 'in-progress',
-    title: '进行中',
+    title: i18n.t('pm.project_task_kanban_page.k9'),
     status: 'in-progress',
     color: 'primary.500',
     cards: [
       {
         id: 'card-3',
-        title: '数据库设计',
-        description: '设计数据库表结构，定义索引和约束',
+        title: i18n.t('pm.project_task_kanban_page.k10'),
+        description: i18n.t('pm.project_task_kanban_page.k11'),
         priority: 'high',
-        assignee: { id: '3', name: '王五' },
+        assignee: { id: '3', name: i18n.t('pm.project_task_kanban_page.k12') },
         dueDate: '2026-03-18',
-        tags: [{ label: '开发', color: 'success.main' }],
+        tags: [{ label: i18n.t('pm.project_task_kanban_page.k13'), color: 'success.main' }],
         subtasks: { total: 8, completed: 5 },
         comments: 5,
         attachments: 3,
@@ -56,67 +56,61 @@ const initialColumns: KanbanColumn[] = [
   },
   {
     id: 'review',
-    title: '待评审',
+    title: i18n.t('pm.project_task_kanban_page.k14'),
     status: 'review',
     color: 'warning.500',
     cards: [
       {
         id: 'card-4',
-        title: 'API接口文档',
-        description: '编写RESTful API接口文档',
+        title: i18n.t('pages.project_task_kanban_page.api_0'),
+        description: i18n.t('pm.project_task_kanban_page.restfulapi_15'),
         priority: 'medium',
-        assignee: { id: '4', name: '赵六' },
+        assignee: { id: '4', name: i18n.t('pm.project_task_kanban_page.k16') },
         dueDate: '2026-03-19',
-        tags: [{ label: '文档', color: 'primary.main' }],
+        tags: [{ label: i18n.t('pm.project_task_kanban_page.k17'), color: 'primary.main' }],
       },
     ],
   },
   {
     id: 'completed',
-    title: '已完成',
+    title: i18n.t('pm.project_task_kanban_page.k18'),
     status: 'completed',
     color: 'success.500',
     collapsible: true,
     cards: [
       {
         id: 'card-5',
-        title: '项目立项',
-        description: '完成项目立项申请和审批',
-        assignee: { id: '1', name: '张三' },
+        title: i18n.t('pm.project_task_kanban_page.k19'),
+        description: i18n.t('pm.project_task_kanban_page.k20'),
+        assignee: { id: '1', name: i18n.t('pm.project_task_kanban_page.k21') },
         dueDate: '2026-03-10',
       },
       {
         id: 'card-6',
-        title: '团队组建',
-        description: '确定项目团队成员和职责分工',
-        assignee: { id: '2', name: '李四' },
+        title: i18n.t('pm.project_task_kanban_page.k22'),
+        description: i18n.t('pm.project_task_kanban_page.k23'),
+        assignee: { id: '2', name: i18n.t('pm.project_task_kanban_page.k24') },
         dueDate: '2026-03-12',
       },
     ],
   },
 ];
-
 export const ProjectTaskKanbanPage: React.FC = () => {
   const [columns, setColumns] = useState<KanbanColumn[]>(initialColumns);
-
   const handleCardMove = (cardId: string, sourceColumn: string, targetColumn: string) => {
     const sourceCol = columns.find((col) => col.id === sourceColumn);
     const targetCol = columns.find((col) => col.id === targetColumn);
     if (!sourceCol || !targetCol) return;
-
     const cardIndex = sourceCol.cards.findIndex((card) => card.id === cardId);
     if (cardIndex === -1) return;
-
     const [card] = sourceCol.cards.splice(cardIndex, 1);
     targetCol.cards.push(card);
-
     setColumns([...columns]);
   };
-
   return (
     <KanbanPageTemplate
-      title='项目任务看板'
-      subtitle='可视化管理项目任务，拖拽卡片调整状态'
+      title={i18n.t('pm.project_task_kanban_page.k25')}
+      subtitle={i18n.t('pm.project_task_kanban_page.k26')}
       columns={columns}
       onCardMove={handleCardMove}
       showStats
@@ -124,7 +118,7 @@ export const ProjectTaskKanbanPage: React.FC = () => {
       showFilter
       actions={[
         {
-          label: '新建任务',
+          label: i18n.t('pm.project_task_kanban_page.k27'),
           icon: <Plus style={{ width: 16, height: 16 }} />,
           onClick: () => {},
         },
@@ -132,5 +126,4 @@ export const ProjectTaskKanbanPage: React.FC = () => {
     />
   );
 };
-
 export default ProjectTaskKanbanPage;

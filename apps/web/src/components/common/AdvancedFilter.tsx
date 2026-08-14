@@ -9,6 +9,7 @@ import {
   Popover,
   Button,
 } from '@mui/material';
+import i18n from '@/i18n';
 import { useState, type Key } from 'react';
 
 import { Filter, X, Plus } from 'lucide-react';
@@ -42,31 +43,31 @@ export const AdvancedFilterPanel = <T extends Record<string, unknown>>({
 
   const operators: Record<string, { label: string; value: string }[]> = {
     text: [
-      { label: '包含', value: 'contains' },
-      { label: '不包含', value: 'not_contains' },
-      { label: '等于', value: 'equals' },
-      { label: '不等于', value: 'not_equals' },
-      { label: '为空', value: 'is_empty' },
+      { label: i18n.t('shared.advanced_filter.k0'), value: 'contains' },
+      { label: i18n.t('shared.advanced_filter.k1'), value: 'not_contains' },
+      { label: i18n.t('shared.advanced_filter.k2'), value: 'equals' },
+      { label: i18n.t('shared.advanced_filter.k3'), value: 'not_equals' },
+      { label: i18n.t('shared.advanced_filter.k4'), value: 'is_empty' },
     ],
     number: [
-      { label: '等于', value: 'equals' },
-      { label: '不等于', value: 'not_equals' },
-      { label: '大于', value: 'greater_than' },
-      { label: '小于', value: 'less_than' },
-      { label: '大于等于', value: 'greater_or_equal' },
-      { label: '小于等于', value: 'less_or_equal' },
+      { label: i18n.t('shared.advanced_filter.k5'), value: 'equals' },
+      { label: i18n.t('shared.advanced_filter.k6'), value: 'not_equals' },
+      { label: i18n.t('shared.advanced_filter.k7'), value: 'greater_than' },
+      { label: i18n.t('shared.advanced_filter.k8'), value: 'less_than' },
+      { label: i18n.t('shared.advanced_filter.k9'), value: 'greater_or_equal' },
+      { label: i18n.t('shared.advanced_filter.k10'), value: 'less_or_equal' },
     ],
     date: [
-      { label: '等于', value: 'equals' },
-      { label: '不等于', value: 'not_equals' },
-      { label: '在之前', value: 'before' },
-      { label: '在之后', value: 'after' },
-      { label: '在期间', value: 'between' },
+      { label: i18n.t('shared.advanced_filter.k11'), value: 'equals' },
+      { label: i18n.t('shared.advanced_filter.k12'), value: 'not_equals' },
+      { label: i18n.t('shared.advanced_filter.k13'), value: 'before' },
+      { label: i18n.t('shared.advanced_filter.k14'), value: 'after' },
+      { label: i18n.t('shared.advanced_filter.k15'), value: 'between' },
     ],
     select: [
-      { label: '等于', value: 'equals' },
-      { label: '不等于', value: 'not_equals' },
-      { label: '在列表中', value: 'in' },
+      { label: i18n.t('shared.advanced_filter.k16'), value: 'equals' },
+      { label: i18n.t('shared.advanced_filter.k17'), value: 'not_equals' },
+      { label: i18n.t('shared.advanced_filter.k18'), value: 'in' },
     ],
   };
 
@@ -114,7 +115,7 @@ export const AdvancedFilterPanel = <T extends Record<string, unknown>>({
         endIcon={<Plus style={{ width: 16, height: 16 }} />}
         sx={{ gap: 1 }}
       >
-        高级筛选
+        {i18n.t('components.advanced_filter.k0')}
       </Button>
 
       <Popover
@@ -136,7 +137,7 @@ export const AdvancedFilterPanel = <T extends Record<string, unknown>>({
               mb: 2,
             }}
           >
-            <Box sx={{ fontWeight: 500 }}>高级筛选</Box>
+            <Box sx={{ fontWeight: 500 }}>{i18n.t('shared.advanced_filter.k19')}</Box>
             {conditions.length > 0 && (
               <Button
                 variant='text'
@@ -144,7 +145,7 @@ export const AdvancedFilterPanel = <T extends Record<string, unknown>>({
                 onClick={resetFilters}
                 startIcon={<X style={{ width: 16, height: 16 }} />}
               >
-                重置
+                {i18n.t('components.advanced_filter.k1')}
               </Button>
             )}
           </Box>
@@ -156,13 +157,13 @@ export const AdvancedFilterPanel = <T extends Record<string, unknown>>({
                   component='p'
                   sx={{ mb: 1 }}
                 >
-                  暂无筛选条件
+                  {i18n.t('components.advanced_filter.k2')}
                 </Box>
                 <Box
                   component='p'
                   sx={{ fontSize: '0.875rem' }}
                 >
-                  点击下方按钮添加筛选条件
+                  {i18n.t('components.advanced_filter.k3')}
                 </Box>
               </Box>
             ) : (
@@ -186,10 +187,10 @@ export const AdvancedFilterPanel = <T extends Record<string, unknown>>({
                       size='small'
                       sx={{ width: 112 }}
                     >
-                      <InputLabel>字段</InputLabel>
+                      <InputLabel>{i18n.t('shared.advanced_filter.k20')}</InputLabel>
                       <Select
                         value={condition.field}
-                        label='字段'
+                        label={i18n.t('shared.advanced_filter.k21')}
                         onChange={(e) => updateCondition(index, { field: e.target.value })}
                       >
                         {fields.map((field) => (
@@ -207,10 +208,10 @@ export const AdvancedFilterPanel = <T extends Record<string, unknown>>({
                       size='small'
                       sx={{ width: 112 }}
                     >
-                      <InputLabel>操作</InputLabel>
+                      <InputLabel>{i18n.t('shared.advanced_filter.k22')}</InputLabel>
                       <Select
                         value={condition.operator}
-                        label='操作'
+                        label={i18n.t('shared.advanced_filter.k23')}
                         onChange={(e) => updateCondition(index, { operator: e.target.value })}
                       >
                         {(operators[fieldType] || []).map((op) => (
@@ -231,10 +232,10 @@ export const AdvancedFilterPanel = <T extends Record<string, unknown>>({
                             size='small'
                             sx={{ width: '100%' }}
                           >
-                            <InputLabel>选择值</InputLabel>
+                            <InputLabel>{i18n.t('shared.advanced_filter.k24')}</InputLabel>
                             <Select
                               value={String(condition.value || '')}
-                              label='选择值'
+                              label={i18n.t('shared.advanced_filter.k25')}
                               onChange={(e) =>
                                 updateCondition(index, {
                                   value: e.target.value,
@@ -274,7 +275,7 @@ export const AdvancedFilterPanel = <T extends Record<string, unknown>>({
                           <TextField
                             type='number'
                             size='small'
-                            placeholder='输入数值'
+                            placeholder={i18n.t('shared.advanced_filter.k26')}
                             value={condition.value as number | undefined}
                             onChange={(e) =>
                               updateCondition(index, {
@@ -286,7 +287,7 @@ export const AdvancedFilterPanel = <T extends Record<string, unknown>>({
                         ) : (
                           <TextField
                             size='small'
-                            placeholder='输入值'
+                            placeholder={i18n.t('shared.advanced_filter.k27')}
                             value={condition.value as string | undefined}
                             onChange={(e) => updateCondition(index, { value: e.target.value })}
                             sx={{ width: '100%' }}
@@ -327,7 +328,7 @@ export const AdvancedFilterPanel = <T extends Record<string, unknown>>({
               startIcon={<Plus style={{ width: 16, height: 16 }} />}
               sx={{ gap: 0.5 }}
             >
-              添加条件
+              {i18n.t('components.advanced_filter.k4')}
             </Button>
             <Box sx={{ display: 'flex', gap: 1 }}>
               <Button
@@ -335,14 +336,14 @@ export const AdvancedFilterPanel = <T extends Record<string, unknown>>({
                 size='small'
                 onClick={() => setAnchorEl(null)}
               >
-                取消
+                {i18n.t('components.advanced_filter.k5')}
               </Button>
               <Button
                 size='small'
                 variant='contained'
                 onClick={applyFilters}
               >
-                应用筛选
+                {i18n.t('components.advanced_filter.k6')}
               </Button>
             </Box>
           </Box>

@@ -5,35 +5,33 @@ import CrudPage, { type CrudApiAdapter } from '@/components/templates/CrudPage';
 import { auditSchema } from '@/schemas/qms';
 import { auditApi } from '@/api/qms';
 import type { AuditPlan } from '@/api/qms';
-
+import i18n from '@/i18n';
 const apiAdapter: CrudApiAdapter<AuditPlan> = {
   list: async () => {
     const res = await auditApi.listAuditPlans();
     if (!res.success) {
-      throw new Error(res.message || '加载审核计划失败');
+      throw new Error(res.message || i18n.t('qms.qms_audit_management_page.k0'));
     }
     const data = res.data || [];
     return { data, total: data.length };
   },
   create: async () => {
-    throw new Error('暂不支持创建审核计划');
+    throw new Error(i18n.t('qms.qms_audit_management_page.k1'));
   },
   update: async () => {
-    throw new Error('暂不支持更新审核计划');
+    throw new Error(i18n.t('qms.qms_audit_management_page.k2'));
   },
   delete: async () => {
-    throw new Error('暂不支持删除审核计划');
+    throw new Error(i18n.t('qms.qms_audit_management_page.k3'));
   },
 };
-
 function AuditStatsCards({ rows }: { rows: AuditPlan[] }) {
   const stats = {
     totalAudits: rows.length,
-    completedAudits: rows.filter((a) => a.status === 'completed' || a.status === '已完成').length,
-    inProgressAudits: rows.filter((a) => a.status === 'in_progress' || a.status === '进行中')
+    completedAudits: rows.filter((a) => a.status === 'completed' || a.status === i18n.t('qms.qms_audit_management_page.k4')).length,
+    inProgressAudits: rows.filter((a) => a.status === 'in_progress' || a.status === i18n.t('qms.qms_audit_management_page.k5'))
       .length,
   };
-
   return (
     <Box
       sx={{
@@ -64,7 +62,7 @@ function AuditStatsCards({ rows }: { rows: AuditPlan[] }) {
                 variant='body2'
                 sx={{ color: 'slate.600', fontSize: '0.875rem' }}
               >
-                审核总数
+                {i18n.t('pages.qms_audit_management_page.k0')}
               </Typography>
               <Typography
                 variant='h5'
@@ -97,7 +95,7 @@ function AuditStatsCards({ rows }: { rows: AuditPlan[] }) {
                 variant='body2'
                 sx={{ color: 'slate.600', fontSize: '0.875rem' }}
               >
-                进行中审核
+                {i18n.t('pages.qms_audit_management_page.k1')}
               </Typography>
               <Typography
                 variant='h5'
@@ -130,7 +128,7 @@ function AuditStatsCards({ rows }: { rows: AuditPlan[] }) {
                 variant='body2'
                 sx={{ color: 'slate.600', fontSize: '0.875rem' }}
               >
-                已完成审核
+                {i18n.t('pages.qms_audit_management_page.k2')}
               </Typography>
               <Typography
                 variant='h5'
@@ -145,17 +143,15 @@ function AuditStatsCards({ rows }: { rows: AuditPlan[] }) {
     </Box>
   );
 }
-
 const QmsAuditManagementPage: React.FC = () => {
   return (
     <CrudPage
       schema={auditSchema}
       apiAdapter={apiAdapter}
-      breadcrumbs={[{ label: 'QMS' }, { label: '审核管理' }]}
+      breadcrumbs={[{ label: 'QMS' }, { label: i18n.t('qms.qms_audit_management_page.k6') }]}
       headerContent={(rows) => <AuditStatsCards rows={rows as AuditPlan[]} />}
       detailMaxWidth='lg'
     />
   );
 };
-
 export default QmsAuditManagementPage;

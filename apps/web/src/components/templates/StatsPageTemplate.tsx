@@ -21,6 +21,7 @@ import {
   Tab,
   Button,
 } from '@mui/material';
+import i18n from '@/i18n';
 import { Search, RefreshCw, Download, Calendar } from 'lucide-react';
 import { EmptyState } from '@topems/shared-components';
 
@@ -223,7 +224,7 @@ export const StatsPageTemplate: React.FC<StatsPageTemplateProps> = ({
   search,
   onSearch,
   onExport,
-  exportText = '导出',
+  exportText = i18n.t('templates.stats_page_template.k0'),
   onRefresh,
   tabs = [],
   tabValue,
@@ -469,7 +470,7 @@ export const StatsPageTemplate: React.FC<StatsPageTemplateProps> = ({
                 }}
               >
                 <Typography color='text.secondary'>
-                  图表: {chart.type} - {chart.data.length} 项数据
+                  [i18n.t('components.stats_page_template.k0')]: {chart.type} - {chart.data.length} {i18n.t('components.stats_page_template.k1')}
                 </Typography>
               </Box>
             </Paper>
@@ -557,7 +558,7 @@ export const StatsPageTemplate: React.FC<StatsPageTemplateProps> = ({
                         colSpan={table.columns.length}
                         style={{ textAlign: 'center', padding: 40 }}
                       >
-                        <Typography color='text.secondary'>加载中...</Typography>
+                        <Typography color='text.secondary'>{i18n.t('components.stats_page_template.k0')}</Typography>
                       </td>
                     </tr>
                   ) : table.data.length === 0 ? (
@@ -566,7 +567,7 @@ export const StatsPageTemplate: React.FC<StatsPageTemplateProps> = ({
                         colSpan={table.columns.length}
                         style={{ textAlign: 'center', padding: 40 }}
                       >
-                        <Typography color='text.secondary'>暂无数据</Typography>
+                        <Typography color='text.secondary'>{i18n.t('templates.stats_page_template.k1')}</Typography>
                       </td>
                     </tr>
                   ) : (
@@ -662,7 +663,7 @@ export const StatsPageTemplate: React.FC<StatsPageTemplateProps> = ({
       <Box sx={{ p: { xs: 2, md: 3 } }}>
         <EmptyState
           emoji={emptyState?.emoji || '📊'}
-          title={emptyState?.title || '暂无数据'}
+          title={emptyState?.title || i18n.t('templates.stats_page_template.k2')}
           description={emptyState?.description}
           actionLabel={emptyState?.actionLabel}
           onAction={emptyState?.onAction}
@@ -711,11 +712,11 @@ export const StatsPageTemplate: React.FC<StatsPageTemplateProps> = ({
           }}
         >
           {showRefresh && onRefresh && (
-            <Tooltip title='刷新'>
+            <Tooltip title={i18n.t('templates.stats_page_template.k3')}>
               <IconButton
                 onClick={onRefresh}
                 disabled={loading}
-                aria-label='刷新'
+                aria-label={i18n.t('templates.stats_page_template.k4')}
               >
                 <RefreshCw
                   sx={{
@@ -788,7 +789,7 @@ export const StatsPageTemplate: React.FC<StatsPageTemplateProps> = ({
           {showSearch && search && (
             <TextField
               size='small'
-              placeholder={search.placeholder || '搜索...'}
+              placeholder={search.placeholder || i18n.t('components.stats_page_template.k1')}
               value={search.value}
               onChange={(e) => search.onChange(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && onSearch?.()}
@@ -846,7 +847,7 @@ export const StatsPageTemplate: React.FC<StatsPageTemplateProps> = ({
               size='small'
               onClick={onSearch}
             >
-              搜索
+              {i18n.t('components.stats_page_template.k2')}
             </Button>
           )}
         </Box>

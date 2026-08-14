@@ -27,6 +27,7 @@ import {
   Typography,
   Chip,
 } from '@mui/material';
+import i18n from '@/i18n';
 import { TreeView, TreeItem } from '@mui/lab';
 import {
   ChevronRight as ChevronRightIcon,
@@ -194,7 +195,7 @@ const CustomContent: React.FC<CustomContentProps> = ({
             size='small'
             onClick={handleMenuOpen}
             sx={{ opacity: 0.5, '&:hover': { opacity: 1 } }}
-            aria-label='更多'
+            aria-label={i18n.t('templates.tree_builder.k0')}
           >
             <MoreIcon size={16} />
           </IconButton>
@@ -213,7 +214,7 @@ const CustomContent: React.FC<CustomContentProps> = ({
               <ListItemIcon>
                 <PlusIcon size={16} />
               </ListItemIcon>
-              <ListItemText>新增子节点</ListItemText>
+              <ListItemText>{i18n.t('templates.tree_builder.k1')}</ListItemText>
             </MenuItem>
             <MenuItem
               onClick={() => {
@@ -224,7 +225,7 @@ const CustomContent: React.FC<CustomContentProps> = ({
               <ListItemIcon>
                 <EditIcon size={16} />
               </ListItemIcon>
-              <ListItemText>编辑</ListItemText>
+              <ListItemText>{i18n.t('templates.tree_builder.k2')}</ListItemText>
             </MenuItem>
             <MenuItem
               onClick={() => {
@@ -236,7 +237,7 @@ const CustomContent: React.FC<CustomContentProps> = ({
               <ListItemIcon sx={{ color: 'error.main' }}>
                 <TrashIcon size={16} />
               </ListItemIcon>
-              <ListItemText>删除</ListItemText>
+              <ListItemText>{i18n.t('templates.tree_builder.k3')}</ListItemText>
             </MenuItem>
           </Menu>
         </>
@@ -369,7 +370,7 @@ export function TreeBuilder({
 
   const handleDelete = useCallback(
     async (node: TreeNode) => {
-      if (!window.confirm(`确定要删除节点「${node.label}」吗？`)) return;
+      if (!window.confirm(`${i18n.t('components.tree_builder.k0')}${node.label}${i18n.t('components.tree_builder.k1')}`)) return;
       if (onNodeDelete) {
         await onNodeDelete(node.id);
       }
@@ -412,7 +413,7 @@ export function TreeBuilder({
 
   const dialogFields = useMemo(() => {
     if (fields.length > 0) return fields;
-    return [{ name: labelField, label: '名称', type: 'text' as const, required: true }];
+    return [{ name: labelField, label: i18n.t('templates.tree_builder.k4'), type: 'text' as const, required: true }];
   }, [fields, labelField]);
 
   return (
@@ -424,10 +425,10 @@ export function TreeBuilder({
             startIcon={<PlusIcon size={16} />}
             onClick={() => openAddDialog(null)}
           >
-            新增根节点
+            {i18n.t('components.tree_builder.k0')}
           </Button>
           <Chip
-            label={`共 ${flattenTree(internalData).length} 个节点`}
+            label={`${i18n.t('components.tree_builder.k2')}${flattenTree(internalData).length}${i18n.t('components.tree_builder.k3')}`}
             size='small'
             variant='outlined'
           />
@@ -454,7 +455,7 @@ export function TreeBuilder({
             color='text.secondary'
             sx={{ p: 2 }}
           >
-            加载中...
+            {i18n.t('components.tree_builder.k1')}
           </Typography>
         ) : internalData.length === 0 ? (
           <Typography
@@ -462,7 +463,7 @@ export function TreeBuilder({
             color='text.secondary'
             sx={{ p: 2 }}
           >
-            暂无数据
+            {i18n.t('components.tree_builder.k2')}
           </Typography>
         ) : (
           <TreeView
@@ -484,7 +485,7 @@ export function TreeBuilder({
         maxWidth='sm'
         fullWidth
       >
-        <DialogTitle>{editDialog.mode === 'edit' ? '编辑节点' : '新增节点'}</DialogTitle>
+        <DialogTitle>{editDialog.mode === 'edit' ? i18n.t('templates.tree_builder.k6') : i18n.t('templates.tree_builder.k5')}</DialogTitle>
         <DialogContent>
           <Box sx={{ pt: 1, display: 'flex', flexDirection: 'column', gap: 2 }}>
             {dialogFields.map((field) => (
@@ -502,13 +503,13 @@ export function TreeBuilder({
           </Box>
         </DialogContent>
         <DialogActions>
-          <Button onClick={closeDialog}>取消</Button>
+          <Button onClick={closeDialog}>{i18n.t('templates.tree_builder.k7')}</Button>
           <Button
             onClick={handleSave}
             variant='contained'
             disabled={!editForm[labelField]?.trim()}
           >
-            {editDialog.mode === 'edit' ? '保存' : '新增'}
+            {editDialog.mode === 'edit' ? i18n.t('templates.tree_builder.k9') : i18n.t('templates.tree_builder.k8')}
           </Button>
         </DialogActions>
       </Dialog>

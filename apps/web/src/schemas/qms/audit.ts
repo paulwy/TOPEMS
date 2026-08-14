@@ -1,6 +1,7 @@
 import React from 'react';
 import { Chip } from '@mui/material';
 import type { EntitySchema } from '@/schema';
+import i18n from '@/i18n';
 
 const auditStatusColorMap: Record<string, 'primary' | 'warning' | 'success' | 'default'> = {
   scheduled: 'primary',
@@ -10,16 +11,16 @@ const auditStatusColorMap: Record<string, 'primary' | 'warning' | 'success' | 'd
 };
 
 const auditStatusLabelMap: Record<string, string> = {
-  scheduled: '已计划',
-  planning: '计划中',
-  in_progress: '进行中',
-  completed: '已完成',
+  scheduled: i18n.t('qms.audit.k0'),
+  planning: i18n.t('qms.audit.k1'),
+  in_progress: i18n.t('qms.audit.k2'),
+  completed: i18n.t('qms.audit.k3'),
 };
 
 export const auditSchema: EntitySchema = {
   entity: 'audit_plan',
-  title: '审核管理',
-  description: 'Audit Management — 管理审核计划，跟踪审核类型、状态、审核人和涉及部门',
+  title: i18n.t('qms.audit.k4'),
+  description: i18n.t('shared.audit.k0'),
 
   api: {
     module: 'qms',
@@ -29,7 +30,7 @@ export const auditSchema: EntitySchema = {
   fields: [
     {
       name: 'plan_no',
-      label: '审核编号',
+      label: i18n.t('qms.audit.k5'),
       type: 'text',
       readonlyOnEdit: true,
       sortable: true,
@@ -37,19 +38,19 @@ export const auditSchema: EntitySchema = {
     },
     {
       name: 'title',
-      label: '审核标题',
+      label: i18n.t('qms.audit.k6'),
       type: 'text',
       sortable: true,
       listWidth: 200,
     },
     {
       name: 'audit_type',
-      label: '审核类型',
+      label: i18n.t('qms.audit.k7'),
       type: 'text',
       listWidth: 120,
       renderCell: (row: Record<string, unknown>) => {
         const val = String(row.audit_type ?? '');
-        const label = val === 'internal' ? '内部审核' : val === 'external' ? '外部审核' : val;
+        const label = val === 'internal' ? i18n.t('qms.audit.k9') : val === 'external' ? i18n.t('qms.audit.k8') : val;
         return React.createElement(Chip, {
           label,
           size: 'small',
@@ -60,16 +61,16 @@ export const auditSchema: EntitySchema = {
     },
     {
       name: 'status',
-      label: '状态',
+      label: i18n.t('qms.audit.k10'),
       type: 'select',
       defaultValue: 'scheduled',
       options: {
         type: 'static',
         options: [
-          { value: 'scheduled', label: '已计划' },
-          { value: 'planning', label: '计划中' },
-          { value: 'in_progress', label: '进行中' },
-          { value: 'completed', label: '已完成' },
+          { value: 'scheduled', label: i18n.t('qms.audit.k11') },
+          { value: 'planning', label: i18n.t('qms.audit.k12') },
+          { value: 'in_progress', label: i18n.t('qms.audit.k13') },
+          { value: 'completed', label: i18n.t('qms.audit.k14') },
         ],
       },
       listWidth: 110,
@@ -88,19 +89,19 @@ export const auditSchema: EntitySchema = {
     },
     {
       name: 'auditor',
-      label: '审核人',
+      label: i18n.t('qms.audit.k15'),
       type: 'text',
       listWidth: 120,
     },
     {
       name: 'start_date',
-      label: '审核日期',
+      label: i18n.t('qms.audit.k16'),
       type: 'date',
       listWidth: 120,
     },
     {
       name: 'departments',
-      label: '涉及部门',
+      label: i18n.t('qms.audit.k17'),
       type: 'text',
       listWidth: 160,
       renderCell: (row: Record<string, unknown>) => {
@@ -110,25 +111,25 @@ export const auditSchema: EntitySchema = {
     },
     {
       name: 'description',
-      label: '描述',
+      label: i18n.t('qms.audit.k18'),
       type: 'textarea',
       showInList: false,
     },
     {
       name: 'scope',
-      label: '审核范围',
+      label: i18n.t('qms.audit.k19'),
       type: 'textarea',
       showInList: false,
     },
     {
       name: 'end_date',
-      label: '结束日期',
+      label: i18n.t('qms.audit.k20'),
       type: 'date',
       showInList: false,
     },
     {
       name: 'created_at',
-      label: '创建日期',
+      label: i18n.t('qms.audit.k21'),
       type: 'date',
       readonly: true,
       showInList: false,
@@ -142,14 +143,14 @@ export const auditSchema: EntitySchema = {
     filters: [
       {
         id: 'status',
-        label: '状态',
+        label: i18n.t('qms.audit.k22'),
         type: 'select',
         options: [
-          { label: '全部状态', value: 'all' },
-          { label: '已计划', value: 'scheduled' },
-          { label: '计划中', value: 'planning' },
-          { label: '进行中', value: 'in_progress' },
-          { label: '已完成', value: 'completed' },
+          { label: i18n.t('qms.audit.k23'), value: 'all' },
+          { label: i18n.t('qms.audit.k24'), value: 'scheduled' },
+          { label: i18n.t('qms.audit.k25'), value: 'planning' },
+          { label: i18n.t('qms.audit.k26'), value: 'in_progress' },
+          { label: i18n.t('qms.audit.k27'), value: 'completed' },
         ],
         defaultValue: 'all',
       },
@@ -163,17 +164,17 @@ export const auditSchema: EntitySchema = {
 
   formSections: [
     {
-      title: '基本信息',
+      title: i18n.t('qms.audit.k28'),
       fields: ['plan_no', 'title', 'audit_type', 'status', 'auditor'],
     },
     {
-      title: '审核详情',
+      title: i18n.t('qms.audit.k29'),
       fields: ['start_date', 'end_date', 'departments', 'scope', 'description'],
     },
   ],
 
   formColCount: 2,
-  detailTitle: '审核计划详情',
+  detailTitle: i18n.t('qms.audit.k30'),
 
   actions: ['detail'],
 };

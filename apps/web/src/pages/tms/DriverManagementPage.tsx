@@ -1,6 +1,5 @@
 import React, { useMemo, useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { useTranslation } from 'react-i18next';
 import {
   Box,
   Typography,
@@ -25,112 +24,98 @@ import {
   Stack,
   CircularProgress,
 } from '@mui/material';
+import i18n from '@/i18n';
 import { Plus, Pencil, Trash2, Search, RefreshCw } from 'lucide-react';
 import { PageContainer } from '@/components/common';
 import { useNotificationStore } from '@/store/notificationStore';
 import { driverApi } from '@/api/tms';
 import type { Driver, CreateDriverRequest, DriverStatus } from '@/api/tms';
-
 const QUERY_KEY = 'tms-drivers';
-
 const statusOptions = [
-  { value: 'active', label: '启用' },
-  { value: 'inactive', label: '停用' },
+  { value: 'active', label: i18n.t('tms.driver_management_page.k0') },
+  { value: 'inactive', label: i18n.t('tms.driver_management_page.k1') },
 ];
-
 const renderStatusChip = (status?: string) => {
-  if (status === 'active') return <Chip size='small' color='success' label='启用' />;
-  if (status === 'inactive') return <Chip size='small' color='default' label='停用' />;
+  if (status === 'active') return <Chip size='small' color='success' label={i18n.t('tms.driver_management_page.k2')} />;
+  if (status === 'inactive') return <Chip size='small' color='default' label={i18n.t('tms.driver_management_page.k3')} />;
   return <Chip size='small' color='default' label={status || '-'} />;
 };
-
 const DriverManagementPage: React.FC = () => {
-  const { t: _t } = useTranslation();
   const queryClient = useQueryClient();
   const { addNotification } = useNotificationStore();
-
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
   const [search, setSearch] = useState('');
   const [searchInput, setSearchInput] = useState('');
-
   const [formOpen, setFormOpen] = useState(false);
   const [formMode, setFormMode] = useState<'create' | 'edit'>('create');
   const [formData, setFormData] = useState<Partial<Driver>>({});
   const [deleteTarget, setDeleteTarget] = useState<Driver | null>(null);
-
   const queryKey = useMemo(() => [QUERY_KEY, page, pageSize, search], [page, pageSize, search]);
-
   const { data, isLoading } = useQuery({
     queryKey,
     queryFn: async () => {
       const res = await driverApi.list({ page, pageSize, search: search || undefined });
-      if (!res.success) throw new Error('加载司机列表失败');
+      if (!res.success) throw new Error(i18n.t('tms.driver_management_page.k4'));
       return { items: res.data?.items || [], total: res.data?.total || 0 };
     },
   });
-
   const createMutation = useMutation({
     mutationFn: (data: CreateDriverRequest) => driverApi.create(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [QUERY_KEY] });
-      addNotification({ type: 'success', title: '创建成功', message: '司机档案已创建' });
+      addNotification({ type: 'success', title: i18n.t('tms.driver_management_page.k6'), message: i18n.t('tms.driver_management_page.k5') });
       setFormOpen(false);
     },
     onError: (err: unknown) => {
       addNotification({
         type: 'error',
-        title: '创建失败',
+        title: i18n.t('tms.driver_management_page.k7'),
         message: err instanceof Error ? err.message : '',
       });
     },
   });
-
   const updateMutation = useMutation({
     mutationFn: ({ id, data }: { id: string; data: Partial<CreateDriverRequest> }) =>
       driverApi.update(id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [QUERY_KEY] });
-      addNotification({ type: 'success', title: '更新成功', message: '司机档案已更新' });
+      addNotification({ type: 'success', title: i18n.t('tms.driver_management_page.k9'), message: i18n.t('tms.driver_management_page.k8') });
       setFormOpen(false);
     },
     onError: (err: unknown) => {
       addNotification({
         type: 'error',
-        title: '更新失败',
+        title: i18n.t('tms.driver_management_page.k10'),
         message: err instanceof Error ? err.message : '',
       });
     },
   });
-
   const deleteMutation = useMutation({
     mutationFn: (id: string) => driverApi.delete(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [QUERY_KEY] });
-      addNotification({ type: 'success', title: '删除成功', message: '司机档案已删除' });
+      addNotification({ type: 'success', title: i18n.t('tms.driver_management_page.k12'), message: i18n.t('tms.driver_management_page.k11') });
       setDeleteTarget(null);
     },
     onError: (err: unknown) => {
       addNotification({
         type: 'error',
-        title: '删除失败',
+        title: i18n.t('tms.driver_management_page.k13'),
         message: err instanceof Error ? err.message : '',
       });
     },
   });
-
   const handleOpenCreate = () => {
     setFormMode('create');
     setFormData({ status: 'active' });
     setFormOpen(true);
   };
-
   const handleOpenEdit = (row: Driver) => {
     setFormMode('edit');
     setFormData({ ...row });
     setFormOpen(true);
   };
-
   const handleSubmit = () => {
     const payload: CreateDriverRequest = {
       driver_no: formData.driver_no || '',
@@ -147,24 +132,20 @@ const DriverManagementPage: React.FC = () => {
       updateMutation.mutate({ id: formData.id, data: payload });
     }
   };
-
   const handleSearchSubmit = () => {
     setSearch(searchInput);
     setPage(1);
   };
-
   const handleRefresh = () => {
     queryClient.invalidateQueries({ queryKey: [QUERY_KEY] });
   };
-
   const rows = data?.items || [];
   const total = data?.total || 0;
   const submitting = createMutation.isPending || updateMutation.isPending;
-
   return (
     <PageContainer
-      title='司机档案'
-      subtitle='管理司机档案信息'
+      title={i18n.t('tms.driver_management_page.k14')}
+      subtitle={i18n.t('tms.driver_management_page.k15')}
       maxWidth={false}
     >
       <Stack
@@ -179,7 +160,7 @@ const DriverManagementPage: React.FC = () => {
         >
           <TextField
             size='small'
-            placeholder='按司机编号 / 姓名搜索'
+            placeholder={i18n.t('tms.driver_management_page.k16')}
             value={searchInput}
             onChange={(e) => setSearchInput(e.target.value)}
             onKeyDown={(e) => {
@@ -197,9 +178,9 @@ const DriverManagementPage: React.FC = () => {
             size='small'
             onClick={handleSearchSubmit}
           >
-            搜索
+            {i18n.t('pages.driver_management_page.k0')}
           </Button>
-          <Tooltip title='刷新'>
+          <Tooltip title={i18n.t('tms.driver_management_page.k17')}>
             <IconButton
               size='small'
               onClick={handleRefresh}
@@ -214,22 +195,21 @@ const DriverManagementPage: React.FC = () => {
           startIcon={<Plus size={16} />}
           onClick={handleOpenCreate}
         >
-          新增司机
+          {i18n.t('pages.driver_management_page.k1')}
         </Button>
       </Stack>
-
       <Card variant='outlined'>
         <TableContainer>
           <Table size='small'>
             <TableHead>
               <TableRow>
-                <TableCell>司机编号</TableCell>
-                <TableCell>姓名</TableCell>
-                <TableCell>电话</TableCell>
-                <TableCell>驾照号</TableCell>
-                <TableCell>驾照类型</TableCell>
-                <TableCell>状态</TableCell>
-                <TableCell align='center'>操作</TableCell>
+                <TableCell>{i18n.t('tms.driver_management_page.k18')}</TableCell>
+                <TableCell>{i18n.t('tms.driver_management_page.k19')}</TableCell>
+                <TableCell>{i18n.t('tms.driver_management_page.k20')}</TableCell>
+                <TableCell>{i18n.t('tms.driver_management_page.k21')}</TableCell>
+                <TableCell>{i18n.t('tms.driver_management_page.k22')}</TableCell>
+                <TableCell>{i18n.t('tms.driver_management_page.k23')}</TableCell>
+                <TableCell align='center'>{i18n.t('tms.driver_management_page.k24')}</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
@@ -250,7 +230,7 @@ const DriverManagementPage: React.FC = () => {
                     align='center'
                     sx={{ py: 4, color: 'text.secondary' }}
                   >
-                    暂无司机数据
+                    {i18n.t('pages.driver_management_page.k2')}
                   </TableCell>
                 </TableRow>
               ) : (
@@ -271,7 +251,7 @@ const DriverManagementPage: React.FC = () => {
                         spacing={0.5}
                         sx={{ justifyContent: 'center' }}
                       >
-                        <Tooltip title='编辑'>
+                        <Tooltip title={i18n.t('tms.driver_management_page.k25')}>
                           <IconButton
                             size='small'
                             onClick={() => handleOpenEdit(row)}
@@ -279,7 +259,7 @@ const DriverManagementPage: React.FC = () => {
                             <Pencil size={16} />
                           </IconButton>
                         </Tooltip>
-                        <Tooltip title='删除'>
+                        <Tooltip title={i18n.t('tms.driver_management_page.k26')}>
                           <IconButton
                             size='small'
                             color='error'
@@ -307,18 +287,17 @@ const DriverManagementPage: React.FC = () => {
             setPage(1);
           }}
           rowsPerPageOptions={[10, 20, 50]}
-          labelRowsPerPage='每页'
-          labelDisplayedRows={({ from, to, count }) => `${from}-${to} / 共 ${count} 条`}
+          labelRowsPerPage={i18n.t('tms.driver_management_page.k27')}
+          labelDisplayedRows={({ from, to, count }) => `${from}-${to}${i18n.t('pages.driver_management_page.k0')}${count}${i18n.t('pages.driver_management_page.k1')}`}
         />
       </Card>
-
       <Dialog
         open={formOpen}
         onClose={() => setFormOpen(false)}
         maxWidth='md'
         fullWidth
       >
-        <DialogTitle>{formMode === 'create' ? '新增司机' : '编辑司机'}</DialogTitle>
+        <DialogTitle>{formMode === 'create' ? i18n.t('tms.driver_management_page.k29') : i18n.t('tms.driver_management_page.k28')}</DialogTitle>
         <DialogContent>
           <Box
             sx={{
@@ -329,39 +308,39 @@ const DriverManagementPage: React.FC = () => {
             }}
           >
             <TextField
-              label='司机编号'
+              label={i18n.t('tms.driver_management_page.k30')}
               value={formData.driver_no || ''}
               onChange={(e) => setFormData({ ...formData, driver_no: e.target.value })}
               size='small'
               required
             />
             <TextField
-              label='姓名'
+              label={i18n.t('tms.driver_management_page.k31')}
               value={formData.name || ''}
               onChange={(e) => setFormData({ ...formData, name: e.target.value })}
               size='small'
               required
             />
             <TextField
-              label='电话'
+              label={i18n.t('tms.driver_management_page.k32')}
               value={formData.phone || ''}
               onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
               size='small'
             />
             <TextField
-              label='驾照号'
+              label={i18n.t('tms.driver_management_page.k33')}
               value={formData.license_no || ''}
               onChange={(e) => setFormData({ ...formData, license_no: e.target.value })}
               size='small'
             />
             <TextField
-              label='驾照类型'
+              label={i18n.t('tms.driver_management_page.k34')}
               value={formData.license_type || ''}
               onChange={(e) => setFormData({ ...formData, license_type: e.target.value })}
               size='small'
             />
             <TextField
-              label='状态'
+              label={i18n.t('tms.driver_management_page.k35')}
               select
               value={formData.status || 'active'}
               onChange={(e) => setFormData({ ...formData, status: e.target.value as DriverStatus })}
@@ -379,43 +358,41 @@ const DriverManagementPage: React.FC = () => {
           </Box>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setFormOpen(false)}>取消</Button>
+          <Button onClick={() => setFormOpen(false)}>{i18n.t('tms.driver_management_page.k36')}</Button>
           <Button
             variant='contained'
             onClick={handleSubmit}
             disabled={submitting || !formData.driver_no || !formData.name}
           >
-            {submitting ? '保存中...' : '保存'}
+            {submitting ? i18n.t('pages.driver_management_page.k2') : i18n.t('tms.driver_management_page.k37')}
           </Button>
         </DialogActions>
       </Dialog>
-
       <Dialog
         open={!!deleteTarget}
         onClose={() => setDeleteTarget(null)}
         maxWidth='xs'
         fullWidth
       >
-        <DialogTitle>确认删除</DialogTitle>
+        <DialogTitle>{i18n.t('tms.driver_management_page.k38')}</DialogTitle>
         <DialogContent>
           <Typography>
             确定要删除司机「{deleteTarget?.name}」吗？此操作不可撤销。
           </Typography>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setDeleteTarget(null)}>取消</Button>
+          <Button onClick={() => setDeleteTarget(null)}>{i18n.t('tms.driver_management_page.k39')}</Button>
           <Button
             color='error'
             variant='contained'
             onClick={() => deleteTarget && deleteMutation.mutate(deleteTarget.id)}
             disabled={deleteMutation.isPending}
           >
-            {deleteMutation.isPending ? '删除中...' : '删除'}
+            {deleteMutation.isPending ? i18n.t('pages.driver_management_page.k3') : i18n.t('tms.driver_management_page.k40')}
           </Button>
         </DialogActions>
       </Dialog>
     </PageContainer>
   );
 };
-
 export default DriverManagementPage;

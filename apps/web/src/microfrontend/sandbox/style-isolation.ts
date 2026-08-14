@@ -17,6 +17,7 @@
  */
 
 import { conflictDetector } from './conflict-detector';
+import i18n from '@/i18n';
 
 // ==================== 类型定义 ====================
 
@@ -102,7 +103,7 @@ export class StyleIsolation {
   createShadowRoot(element: HTMLElement): ShadowRoot {
     if (this.options.mode !== 'shadow') {
       console.warn(
-        `[StyleIsolation] 模块 ${this.moduleId} 当前模式为 ${this.options.mode}，createShadowRoot 仅在 shadow 模式生效`
+        `${i18n.t('microfrontend.style-isolation.styleisolation_0')}${this.moduleId}${i18n.t('microfrontend.style-isolation.k1')}${this.options.mode}${i18n.t('microfrontend.style-isolation.k2')}`
       );
     }
     // 已存在 shadow root 时直接复用
@@ -256,7 +257,7 @@ export class StyleIsolation {
           modules: c.modules,
           timestamp: c.timestamp,
           severity: c.severity,
-          details: `选择器 "${c.selector}" 被多个模块使用: ${c.modules.join(', ')}`,
+          details: `${i18n.t('microfrontend.style-isolation.k3')}${c.selector}${i18n.t('microfrontend.style-isolation.k4')}${c.modules.join(', ')}`,
         });
       }
     }

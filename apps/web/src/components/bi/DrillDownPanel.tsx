@@ -10,6 +10,7 @@ import {
   Button,
   useTheme,
 } from '@mui/material';
+import i18n from '@/i18n';
 
 interface DrillDownData extends Record<string, unknown> {
   id: string;
@@ -128,7 +129,7 @@ export function DrillDownPanel({
             <Chip
               variant='outlined'
               size='small'
-              label={`${data.length} 条记录`}
+              label={`${data.length} ${i18n.t('components.drill_down_panel.k0')}`}
             />
           </div>
         </CardHeader>
@@ -155,7 +156,7 @@ export function DrillDownPanel({
               }}
             />
             <TextField
-              placeholder='搜索...'
+              placeholder={i18n.t('components.drill_down_panel.k1')}
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               size='small'
@@ -168,7 +169,7 @@ export function DrillDownPanel({
             sx={{ textTransform: 'none' }}
           >
             <Filter style={{ width: 16, height: 16, marginRight: 4 }} />
-            筛选
+            {i18n.t('components.drill_down_panel.k2')}
           </Button>
           <Button
             variant='outlined'
@@ -176,7 +177,7 @@ export function DrillDownPanel({
             sx={{ textTransform: 'none' }}
           >
             <RefreshCw style={{ width: 16, height: 16, marginRight: 4 }} />
-            刷新
+            {i18n.t('components.drill_down_panel.k3')}
           </Button>
         </div>
 

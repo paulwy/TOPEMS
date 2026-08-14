@@ -1,3 +1,4 @@
+import i18n from '@/i18n';
 export type AuditType = 'InputValidation' | 'OutputFilter' | 'PromptInjection' | 'DataLeakage';
 
 export type AuditSeverity = 'critical' | 'high' | 'medium' | 'low' | 'info';
@@ -39,43 +40,43 @@ export interface AuditRule {
 const DEFAULT_RULES: AuditRule[] = [
   {
     id: 'rule-input-validation',
-    name: '输入验证审计',
+    name: i18n.t('ai.ai-security-audit.k0'),
     type: 'InputValidation',
-    description: '检测模型输入是否经过适当验证',
+    description: i18n.t('ai.ai-security-audit.k1'),
     pattern: 'input_validation',
     severity: 'high',
     enabled: true,
-    remediation: '实施严格的输入验证和清理机制',
+    remediation: i18n.t('ai.ai-security-audit.k2'),
   },
   {
     id: 'rule-output-filter',
-    name: '输出过滤审计',
+    name: i18n.t('ai.ai-security-audit.k3'),
     type: 'OutputFilter',
-    description: '检测模型输出是否包含不当内容',
+    description: i18n.t('ai.ai-security-audit.k4'),
     pattern: 'output_filter',
     severity: 'medium',
     enabled: true,
-    remediation: '添加输出内容过滤层，审查生成内容',
+    remediation: i18n.t('ai.ai-security-audit.k5'),
   },
   {
     id: 'rule-prompt-injection',
-    name: '提示注入防护',
+    name: i18n.t('ai.ai-security-audit.k6'),
     type: 'PromptInjection',
-    description: '检测是否存在提示注入攻击向量',
+    description: i18n.t('ai.ai-security-audit.k7'),
     pattern: 'prompt_injection',
     severity: 'critical',
     enabled: true,
-    remediation: '实施输入/输出边界隔离，使用系统提示保护',
+    remediation: i18n.t('ai.ai-security-audit.k8'),
   },
   {
     id: 'rule-data-leakage',
-    name: '数据泄漏检测',
+    name: i18n.t('ai.ai-security-audit.k9'),
     type: 'DataLeakage',
-    description: '检测模型是否可能泄漏敏感信息',
+    description: i18n.t('ai.ai-security-audit.k10'),
     pattern: 'data_leakage',
     severity: 'critical',
     enabled: true,
-    remediation: '对训练数据进行脱敏，添加输出检查层',
+    remediation: i18n.t('ai.ai-security-audit.k11'),
   },
 ];
 
@@ -252,10 +253,10 @@ export class AISecurityAuditor {
 
   private generateFinding(rule: AuditRule, modelId: string): string {
     const templates: Record<AuditType, string> = {
-      InputValidation: `模型 ${modelId} 输入验证审计发现：${rule.description}。建议检查输入预处理层是否完整覆盖所有输入字段。`,
-      OutputFilter: `模型 ${modelId} 输出过滤审计发现：${rule.description}。建议审查输出内容的安全性和合规性。`,
-      PromptInjection: `模型 ${modelId} 提示注入审计发现：${rule.description}。检测到潜在的注入攻击面，需立即加固。`,
-      DataLeakage: `模型 ${modelId} 数据泄漏审计发现：${rule.description}。存在敏感信息泄漏风险，需要数据脱敏处理。`,
+      InputValidation: `${i18n.t('ai.ai-security-audit.k0')}${modelId}${i18n.t('ai.ai-security-audit.k1')}${rule.description}${i18n.t('ai.ai-security-audit.k2')}`,
+      OutputFilter: `${i18n.t('ai.ai-security-audit.k3')}${modelId}${i18n.t('ai.ai-security-audit.k4')}${rule.description}${i18n.t('ai.ai-security-audit.k5')}`,
+      PromptInjection: `${i18n.t('ai.ai-security-audit.k6')}${modelId}${i18n.t('ai.ai-security-audit.k7')}${rule.description}${i18n.t('ai.ai-security-audit.k8')}`,
+      DataLeakage: `${i18n.t('ai.ai-security-audit.k9')}${modelId}${i18n.t('ai.ai-security-audit.k10')}${rule.description}${i18n.t('ai.ai-security-audit.k11')}`,
     };
     return templates[rule.type];
   }
@@ -280,7 +281,7 @@ export class AISecurityAuditor {
       recs.add(finding.remediation);
     }
     if (findings.length === 0) {
-      recs.add('继续保持当前安全措施，定期进行审计复查');
+      recs.add(i18n.t('ai.ai-security-audit.k12'));
     }
     return Array.from(recs);
   }

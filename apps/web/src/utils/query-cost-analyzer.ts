@@ -10,6 +10,7 @@
 
 import { parseQueryName } from './graphql-performance';
 import { designTokens, semanticTokens } from '@topems/tokens';
+import i18n from '@/i18n';
 
 export type CostLevel = 'low' | 'medium' | 'high' | 'critical';
 
@@ -331,11 +332,11 @@ function generateSuggestions(
   const suggestions: string[] = [];
 
   if (depth > 5) {
-    suggestions.push(`查询嵌套过深(${depth}层)，建议减少嵌套层级或使用分页`);
+    suggestions.push(`${i18n.t('shared.query-cost-analyzer.k0')}${depth}${i18n.t('shared.query-cost-analyzer.k1')}`);
   }
 
   if (fieldCount > 30) {
-    suggestions.push(`查询字段过多(${fieldCount}个)，建议按需选择字段`);
+    suggestions.push(`${i18n.t('shared.query-cost-analyzer.k2')}${fieldCount}${i18n.t('shared.query-cost-analyzer.k3')}`);
   }
 
   const largeLists: string[] = [];
@@ -343,7 +344,7 @@ function generateSuggestions(
     for (const node of ns) {
       const currentPath = path ? `${path}.${node.name}` : node.name;
       if (node.isList && node.listSize > 100) {
-        largeLists.push(`${currentPath}(${node.listSize}条)`);
+        largeLists.push(`${currentPath}(${node.listSize}${i18n.t('shared.query-cost-analyzer.k4')}`);
       }
       if (node.children.length > 0) {
         findLargeLists(node.children, currentPath);
@@ -353,15 +354,15 @@ function generateSuggestions(
   findLargeLists(nodes, '');
 
   if (largeLists.length > 0) {
-    suggestions.push(`大列表查询: ${largeLists.join(', ')}，建议使用分页或游标`);
+    suggestions.push(`${i18n.t('shared.query-cost-analyzer.k5')}${largeLists.join(', ')}${i18n.t('shared.query-cost-analyzer.k6')}`);
   }
 
   if (score > COST_THRESHOLDS.high) {
-    suggestions.push('查询成本较高，考虑拆分查询或使用缓存');
+    suggestions.push(i18n.t('shared.query-cost-analyzer.k0'));
   }
 
   if (suggestions.length === 0 && score <= COST_THRESHOLDS.low) {
-    suggestions.push('查询成本正常，无需优化');
+    suggestions.push(i18n.t('shared.query-cost-analyzer.k1'));
   }
 
   return suggestions;
@@ -398,7 +399,7 @@ export function analyzeQueryCost(
       fieldCount: 0,
       depth: 0,
       estimatedSizeKB: 0,
-      suggestions: ['无法解析查询，跳过成本分析'],
+      suggestions: [i18n.t('shared.query-cost-analyzer.k2')],
     };
   }
 }
@@ -430,7 +431,7 @@ export function validateQuery(
   return {
     valid,
     score: analysis.score,
-    reason: valid ? '查询成本在限制范围内' : `查询成本(${analysis.score})超过限制(${maxScore})`,
+    reason: valid ? i18n.t('shared.query-cost-analyzer.k3') : `${i18n.t('shared.query-cost-analyzer.k7')}${analysis.score}${i18n.t('shared.query-cost-analyzer.k8')}${maxScore})`,
   };
 }
 
@@ -446,10 +447,10 @@ export function getCostLevelColor(level: CostLevel): string {
 
 export function getCostLevelLabel(level: CostLevel): string {
   const labels: Record<CostLevel, string> = {
-    low: '低',
-    medium: '中',
-    high: '高',
-    critical: '严重',
+    low: i18n.t('shared.query-cost-analyzer.k4'),
+    medium: i18n.t('shared.query-cost-analyzer.k5'),
+    high: i18n.t('shared.query-cost-analyzer.k6'),
+    critical: i18n.t('shared.query-cost-analyzer.k7'),
   };
   return labels[level];
 }

@@ -5,13 +5,14 @@
 import React from 'react';
 import type { EntitySchema } from '@/schema';
 import { designTokens } from '@topems/tokens';
+import i18n from '@/i18n';
 
 const MAINTENANCE_TYPE_OPTIONS = [
-  { value: 'routine', label: '日常维护' },
-  { value: 'preventive', label: '预防性维护' },
-  { value: 'corrective', label: '故障维修' },
-  { value: 'calibration', label: '校准维护' },
-  { value: 'other', label: '其他' },
+  { value: 'routine', label: i18n.t('lims.instrument_maintenance.k0') },
+  { value: 'preventive', label: i18n.t('lims.instrument_maintenance.k1') },
+  { value: 'corrective', label: i18n.t('lims.instrument_maintenance.k2') },
+  { value: 'calibration', label: i18n.t('lims.instrument_maintenance.k3') },
+  { value: 'other', label: i18n.t('lims.instrument_maintenance.k4') },
 ];
 
 const renderBadge = (
@@ -22,24 +23,24 @@ const renderBadge = (
     primary: `var(--color-primary-main, ${designTokens.colors.primary.dark})`,
     success: `var(--color-success-main, ${designTokens.colors.success.dark})`,
     error: `var(--color-error-main, ${designTokens.colors.error['800']})`,
-    info: 'var(--color-info-main, #0288d1)',
-    warning: 'var(--color-warning-main, #ed6c02)',
-    default: 'var(--color-text-secondary, rgba(0,0,0,0.6))',
+    info: `var(--color-info-main, ${designTokens.colors.info[600]}`,
+    warning: `var(--color-warning-main, ${designTokens.colors.warning[500]}`,
+    default: `var(--color-text-secondary, ${designTokens.colors.cyber.metal.bottomShadow}`,
   };
   const bgColorMap: Record<string, string> = {
     primary: `var(--color-primary-lighter, ${designTokens.colors.primary['50']})`,
     success: `var(--color-success-lighter, ${designTokens.colors.success['50']})`,
-    error: 'var(--color-error-lighter, #ffebee)',
-    info: 'var(--color-info-lighter, #e1f5fe)',
-    warning: 'var(--color-warning-lighter, #fff3e0)',
-    default: 'var(--color-action-hover, rgba(0,0,0,0.04))',
+    error: `var(--color-error-lighter, ${designTokens.colors.error[50]}`,
+    info: `var(--color-info-lighter, ${designTokens.colors.info[50]}`,
+    warning: `var(--color-warning-lighter, ${designTokens.colors.warning[50]}`,
+    default: `var(--color-action-hover, ${designTokens.colors.action.hover}`,
   };
   return React.createElement(
     'span',
     {
       style: {
         display: 'inline-block',
-        padding: '2px 8px',
+        padding: `${designTokens.spacing.xs} 8px`,
         borderRadius: 12,
         fontSize: 12,
         fontWeight: 500,
@@ -63,17 +64,17 @@ const MAINTENANCE_TYPE_COLORS: Record<
 };
 
 const MAINTENANCE_TYPE_LABELS: Record<string, string> = {
-  routine: '日常维护',
-  preventive: '预防性维护',
-  corrective: '故障维修',
-  calibration: '校准维护',
-  other: '其他',
+  routine: i18n.t('lims.instrument_maintenance.k5'),
+  preventive: i18n.t('lims.instrument_maintenance.k6'),
+  corrective: i18n.t('lims.instrument_maintenance.k7'),
+  calibration: i18n.t('lims.instrument_maintenance.k8'),
+  other: i18n.t('lims.instrument_maintenance.k9'),
 };
 
 export const instrumentMaintenanceSchema: EntitySchema = {
   entity: 'limsInstrumentMaintenance',
-  title: '仪器维护记录',
-  description: '管理仪器维护记录，包括维护类型、描述、执行人、执行时间、费用等信息',
+  title: i18n.t('lims.instrument_maintenance.k10'),
+  description: i18n.t('lims.instrument_maintenance.k11'),
 
   api: {
     module: 'lims',
@@ -83,7 +84,7 @@ export const instrumentMaintenanceSchema: EntitySchema = {
   fields: [
     {
       name: 'maintenance_type',
-      label: '维护类型',
+      label: i18n.t('lims.instrument_maintenance.k12'),
       type: 'select',
       required: true,
       defaultValue: 'routine',
@@ -101,7 +102,7 @@ export const instrumentMaintenanceSchema: EntitySchema = {
     },
     {
       name: 'description',
-      label: '维护描述',
+      label: i18n.t('lims.instrument_maintenance.k13'),
       type: 'text',
       required: true,
       sortable: false,
@@ -109,14 +110,14 @@ export const instrumentMaintenanceSchema: EntitySchema = {
     },
     {
       name: 'performed_by',
-      label: '执行人',
+      label: i18n.t('lims.instrument_maintenance.k14'),
       type: 'text',
       required: true,
       listWidth: 100,
     },
     {
       name: 'performed_at',
-      label: '执行时间',
+      label: i18n.t('lims.instrument_maintenance.k15'),
       type: 'datetime',
       required: true,
       sortable: true,
@@ -124,13 +125,13 @@ export const instrumentMaintenanceSchema: EntitySchema = {
     },
     {
       name: 'next_maintenance_date',
-      label: '下次维护日期',
+      label: i18n.t('lims.instrument_maintenance.k16'),
       type: 'date',
       listWidth: 130,
     },
     {
       name: 'cost',
-      label: '维护费用',
+      label: i18n.t('lims.instrument_maintenance.k17'),
       type: 'number',
       listWidth: 110,
       renderCell: (row: Record<string, unknown>) => {
@@ -141,20 +142,20 @@ export const instrumentMaintenanceSchema: EntitySchema = {
     },
     {
       name: 'instrument_id',
-      label: '仪器ID',
+      label: i18n.t('lims.instrument_maintenance.id_18'),
       type: 'text',
       showInList: false,
       required: true,
     },
     {
       name: 'notes',
-      label: '备注',
+      label: i18n.t('lims.instrument_maintenance.k19'),
       type: 'textarea',
       showInList: false,
     },
     {
       name: 'created_at',
-      label: '创建时间',
+      label: i18n.t('lims.instrument_maintenance.k20'),
       type: 'datetime',
       readonly: true,
       showInList: false,
@@ -175,9 +176,9 @@ export const instrumentMaintenanceSchema: EntitySchema = {
     filters: [
       {
         id: 'maintenance_type',
-        label: '维护类型',
+        label: i18n.t('lims.instrument_maintenance.k21'),
         type: 'select',
-        options: [{ label: '全部类型', value: 'all' }, ...MAINTENANCE_TYPE_OPTIONS],
+        options: [{ label: i18n.t('lims.instrument_maintenance.k22'), value: 'all' }, ...MAINTENANCE_TYPE_OPTIONS],
       },
     ],
   },
@@ -186,21 +187,21 @@ export const instrumentMaintenanceSchema: EntitySchema = {
 
   formSections: [
     {
-      title: '基本信息',
+      title: i18n.t('lims.instrument_maintenance.k23'),
       fields: ['instrument_id', 'maintenance_type', 'description'],
     },
     {
-      title: '执行信息',
+      title: i18n.t('lims.instrument_maintenance.k24'),
       fields: ['performed_by', 'performed_at', 'next_maintenance_date', 'cost'],
     },
     {
-      title: '其他信息',
+      title: i18n.t('lims.instrument_maintenance.k25'),
       fields: ['notes'],
     },
   ],
 
   formColCount: 2,
-  createTitle: '新增维护记录',
-  editTitle: '编辑维护记录',
-  detailTitle: '维护记录详情',
+  createTitle: i18n.t('lims.instrument_maintenance.k26'),
+  editTitle: i18n.t('lims.instrument_maintenance.k27'),
+  detailTitle: i18n.t('lims.instrument_maintenance.k28'),
 };

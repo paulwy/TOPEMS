@@ -12,6 +12,7 @@ import {
   Legend,
   Cell,
 } from 'recharts';
+import i18n from '@/i18n';
 import { useWmsMock, type WmsMockShape } from '@/api/wms/_mock';
 import { designTokens, semanticTokens } from '@topems/tokens';
 
@@ -46,16 +47,16 @@ export default function WmsOrderFulfillmentPage() {
   return (
     <div className='space-y-4 p-4'>
       <div className='flex items-center justify-between'>
-        <h1 className='text-2xl font-bold'>订单履约与 SLA 分析</h1>
+        <h1 className='text-2xl font-bold'>{i18n.t('pages.wms_order_fulfillment_page.sla_0')}</h1>
       </div>
 
       <div className='grid grid-cols-1 gap-4 md:grid-cols-4'>
         <div className='rounded-lg border p-4'>
-          <p className='text-sm text-gray-600'>平均准时履约率</p>
+          <p className='text-sm text-gray-600'>{i18n.t('pages.wms_order_fulfillment_page.k1')}</p>
           <p className='mt-1 text-3xl font-bold text-green-600'>{avgOnTime}%</p>
         </div>
         <div className='rounded-lg border p-4'>
-          <p className='text-sm text-gray-600'>平均出库时长</p>
+          <p className='text-sm text-gray-600'>{i18n.t('pages.wms_order_fulfillment_page.k2')}</p>
           <p className='mt-1 text-3xl font-bold text-blue-600'>{avgHours} 小时</p>
         </div>
         <div className='rounded-lg border p-4'>
@@ -63,7 +64,7 @@ export default function WmsOrderFulfillmentPage() {
           <p className='mt-1 text-3xl font-bold text-purple-600'>{avgSla}%</p>
         </div>
         <div className='rounded-lg border p-4'>
-          <p className='text-sm text-gray-600'>最佳履约仓库</p>
+          <p className='text-sm text-gray-600'>{i18n.t('pages.wms_order_fulfillment_page.k3')}</p>
           <p className='mt-1 text-3xl font-bold text-orange-600'>{best}</p>
         </div>
       </div>
@@ -88,7 +89,7 @@ export default function WmsOrderFulfillmentPage() {
             >
               <RadialBar
                 dataKey='onTimeRate'
-                name='准时履约率 %'
+                name={i18n.t('pages.wms_order_fulfillment_page.k4')}
                 cornerRadius={8}
                 background={{ fill: 'colors.grey.100' }}
               />
@@ -97,13 +98,13 @@ export default function WmsOrderFulfillmentPage() {
                 layout='horizontal'
                 verticalAlign='bottom'
               />
-              <Tooltip formatter={(v: unknown) => [`${v}%`, '准时履约率']} />
+              <Tooltip formatter={(v: unknown) => [`${v}%`, i18n.t('pages.wms_order_fulfillment_page.k5')]} />
             </RadialBarChart>
           </ResponsiveContainer>
         </div>
 
         <div className='rounded-lg border p-4'>
-          <h3 className='mb-2 font-semibold'>平均出库时长（小时）by 仓库</h3>
+          <h3 className='mb-2 font-semibold'>{i18n.t('pages.wms_order_fulfillment_page.by_6')}</h3>
           <ResponsiveContainer
             width='100%'
             height={360}
@@ -126,7 +127,7 @@ export default function WmsOrderFulfillmentPage() {
               <Tooltip />
               <Bar
                 dataKey='avgHours'
-                name='平均出库时长（小时）'
+                name={i18n.t('pages.wms_order_fulfillment_page.k7')}
                 radius={[0, 6, 6, 0]}
               >
                 {fulfillment.map((f, i) => (
@@ -169,13 +170,13 @@ export default function WmsOrderFulfillmentPage() {
             <Legend />
             <Bar
               dataKey='onTimeRate'
-              name='准时履约率'
+              name={i18n.t('pages.wms_order_fulfillment_page.k8')}
               fill={designTokens.colors.primary.main}
               radius={[4, 4, 0, 0]}
             />
             <Bar
               dataKey='slaPass'
-              name='SLA 达标率'
+              name={i18n.t('pages.wms_order_fulfillment_page.sla_0')}
               fill={designTokens.colors.success.dark}
               radius={[4, 4, 0, 0]}
             />

@@ -10,54 +10,47 @@ import { pmApi, type Project } from '@/api/pm';
 import { useNotification } from '@/hooks/useNotification';
 import { logger } from '@/utils/logger';
 import { PM_PATHS } from '@/modules/pm/config';
-
 import {QUERY_KEYS, CACHE_DURATIONS} from '@/lib/reactQuery';
-
+import i18n from '@/i18n';
 const contractSchema = z.object({
   project_id: z.string().optional(),
-  contract_code: z.string().min(1, '合同编号不能为空'),
-  contract_name: z.string().min(1, '合同名称不能为空'),
+  contract_code: z.string().min(1, i18n.t('pm.pm_contract_create_page.k0')),
+  contract_name: z.string().min(1, i18n.t('pm.pm_contract_create_page.k1')),
   contract_type: z.enum(['construction', 'service', 'purchase', 'sales']),
   contract_category: z.enum(['main', 'supplement', 'servicelevel']),
   party_a_name: z.string().optional(),
   party_b_name: z.string().optional(),
-  amount: z.string().refine((val) => parseFloat(val) > 0, '合同金额必须大于0'),
+  amount: z.string().refine((val) => parseFloat(val) > 0, i18n.t('pm.pm_contract_create_page.0_2')),
   currency: z.enum(['CNY', 'USD', 'EUR']),
   tax_rate: z
     .string()
-    .refine((val) => parseFloat(val) >= 0 && parseFloat(val) <= 100, '税率必须在0-100之间'),
+    .refine((val) => parseFloat(val) >= 0 && parseFloat(val) <= 100, i18n.t('pm.pm_contract_create_page.0100_3')),
   signing_date: z.string().optional(),
   effective_date: z.string().optional(),
   end_date: z.string().optional(),
   description: z.string().optional(),
 });
-
 type ContractFormData = z.infer<typeof contractSchema>;
-
 const CONTRACT_TYPES = [
-  { value: 'construction', label: '工程合同' },
-  { value: 'service', label: '服务合同' },
-  { value: 'purchase', label: '采购合同' },
-  { value: 'sales', label: '销售合同' },
+  { value: 'construction', label: i18n.t('pm.pm_contract_create_page.k4') },
+  { value: 'service', label: i18n.t('pm.pm_contract_create_page.k5') },
+  { value: 'purchase', label: i18n.t('pm.pm_contract_create_page.k6') },
+  { value: 'sales', label: i18n.t('pm.pm_contract_create_page.k7') },
 ];
-
 const CONTRACT_CATEGORIES = [
-  { value: 'main', label: '主合同' },
-  { value: 'supplement', label: '补充协议' },
-  { value: 'servicelevel', label: '服务协议' },
+  { value: 'main', label: i18n.t('pm.pm_contract_create_page.k8') },
+  { value: 'supplement', label: i18n.t('pm.pm_contract_create_page.k9') },
+  { value: 'servicelevel', label: i18n.t('pm.pm_contract_create_page.k10') },
 ];
-
 const CURRENCIES = [
-  { value: 'CNY', label: '人民币' },
-  { value: 'USD', label: '美元' },
-  { value: 'EUR', label: '欧元' },
+  { value: 'CNY', label: i18n.t('pm.pm_contract_create_page.k11') },
+  { value: 'USD', label: i18n.t('pm.pm_contract_create_page.k12') },
+  { value: 'EUR', label: i18n.t('pm.pm_contract_create_page.k13') },
 ];
-
 const PmContractCreatePage: React.FC = () => {
   const navigate = useNavigate();
   const { success, error } = useNotification();
   const queryClient = useQueryClient();
-
   const { data: projectsData, isPending: loading} = useQuery({
     queryKey: QUERY_KEYS.PM.PROJECTS,
     queryFn: async (): Promise<Project[]> => {
@@ -66,7 +59,6 @@ const PmContractCreatePage: React.FC = () => {
     },
   
       staleTime: CACHE_DURATIONS.MEDIUM,});
-
   const createMutation = useMutation({
     mutationFn: async (formData: ContractFormData) => {
       return pmApi.contracts.create({
@@ -92,29 +84,26 @@ const PmContractCreatePage: React.FC = () => {
   refetchType: 'active',
 });
       if (response.code === 200 || response.code === 201) {
-        success('合同创建成功');
+        success(i18n.t('pm.pm_contract_create_page.k14'));
         navigate(PM_PATHS.contracts);
       } else {
-        error(response.message || '创建失败');
+        error(response.message || i18n.t('pm.pm_contract_create_page.k15'));
       }
     },
     onError: (err: unknown) => {
       logger.error('Failed to create contract:', err);
-      error('创建合同失败');
+      error(i18n.t('pm.pm_contract_create_page.k16'));
     },
   });
-
   const handleSubmit = useCallback(
     (data: unknown) => {
       createMutation.mutate(data as ContractFormData);
     },
     [createMutation]
   );
-
   const handleCancel = () => {
     navigate(PM_PATHS.contracts);
   };
-
   const projects = projectsData ?? [];
   const projectOptions = useMemo(() => {
     return projects.map((project: Project) => ({
@@ -122,39 +111,38 @@ const PmContractCreatePage: React.FC = () => {
       value: project.id,
     }));
   }, [projects]);
-
   const sections: FormSection[] = [
     {
       id: 'basic',
-      title: '基本信息',
-      description: '合同基本信息',
+      title: i18n.t('pm.pm_contract_create_page.k17'),
+      description: i18n.t('pm.pm_contract_create_page.k18'),
       icon: <FileText style={{ width: 18, height: 18 }} />,
       collapsible: false,
       fields: [
         {
           name: 'project_id',
-          label: '关联项目',
+          label: i18n.t('pm.pm_contract_create_page.k19'),
           type: 'select',
-          options: [{ label: '请选择项目', value: '' }, ...projectOptions],
-          placeholder: '请选择项目',
+          options: [{ label: i18n.t('pm.pm_contract_create_page.k20'), value: '' }, ...projectOptions],
+          placeholder: i18n.t('pm.pm_contract_create_page.k21'),
         },
         {
           name: 'contract_code',
-          label: '合同编号',
+          label: i18n.t('pm.pm_contract_create_page.k22'),
           type: 'text',
           required: true,
-          placeholder: '请输入合同编号',
+          placeholder: i18n.t('pm.pm_contract_create_page.k23'),
         },
         {
           name: 'contract_name',
-          label: '合同名称',
+          label: i18n.t('pm.pm_contract_create_page.k24'),
           type: 'text',
           required: true,
-          placeholder: '请输入合同名称',
+          placeholder: i18n.t('pm.pm_contract_create_page.k25'),
         },
         {
           name: 'contract_type',
-          label: '合同类型',
+          label: i18n.t('pm.pm_contract_create_page.k26'),
           type: 'select',
           required: true,
           options: CONTRACT_TYPES.map((type) => ({
@@ -165,7 +153,7 @@ const PmContractCreatePage: React.FC = () => {
         },
         {
           name: 'contract_category',
-          label: '合同类别',
+          label: i18n.t('pm.pm_contract_create_page.k27'),
           type: 'select',
           options: CONTRACT_CATEGORIES.map((category) => ({
             label: category.label,
@@ -177,41 +165,41 @@ const PmContractCreatePage: React.FC = () => {
     },
     {
       id: 'parties',
-      title: '合同双方',
-      description: '合同甲乙双方信息',
+      title: i18n.t('pm.pm_contract_create_page.k28'),
+      description: i18n.t('pm.pm_contract_create_page.k29'),
       icon: <Users style={{ width: 18, height: 18 }} />,
       collapsible: false,
       fields: [
         {
           name: 'party_a_name',
-          label: '甲方',
+          label: i18n.t('pm.pm_contract_create_page.k30'),
           type: 'text',
-          placeholder: '请输入甲方名称',
+          placeholder: i18n.t('pm.pm_contract_create_page.k31'),
         },
         {
           name: 'party_b_name',
-          label: '乙方',
+          label: i18n.t('pm.pm_contract_create_page.k32'),
           type: 'text',
-          placeholder: '请输入乙方名称',
+          placeholder: i18n.t('pm.pm_contract_create_page.k33'),
         },
       ],
     },
     {
       id: 'amount',
-      title: '金额与货币',
-      description: '合同金额信息',
+      title: i18n.t('pm.pm_contract_create_page.k34'),
+      description: i18n.t('pm.pm_contract_create_page.k35'),
       collapsible: false,
       fields: [
         {
           name: 'amount',
-          label: '合同金额',
+          label: i18n.t('pm.pm_contract_create_page.k36'),
           type: 'number',
           required: true,
-          placeholder: '请输入合同金额',
+          placeholder: i18n.t('pm.pm_contract_create_page.k37'),
         },
         {
           name: 'currency',
-          label: '货币',
+          label: i18n.t('pm.pm_contract_create_page.k38'),
           type: 'select',
           options: CURRENCIES.map((currency) => ({
             label: currency.label,
@@ -221,71 +209,70 @@ const PmContractCreatePage: React.FC = () => {
         },
         {
           name: 'tax_rate',
-          label: '税率 (%)',
+          label: i18n.t('pm.pm_contract_create_page.k39'),
           type: 'number',
           defaultValue: '13',
-          placeholder: '请输入税率',
+          placeholder: i18n.t('pm.pm_contract_create_page.k40'),
         },
       ],
     },
     {
       id: 'dates',
-      title: '日期信息',
-      description: '合同日期相关信息',
+      title: i18n.t('pm.pm_contract_create_page.k41'),
+      description: i18n.t('pm.pm_contract_create_page.k42'),
       icon: <Calendar style={{ width: 18, height: 18 }} />,
       collapsible: false,
       fields: [
         {
           name: 'signing_date',
-          label: '签约日期',
+          label: i18n.t('pm.pm_contract_create_page.k43'),
           type: 'date',
-          placeholder: '请选择签约日期',
+          placeholder: i18n.t('pm.pm_contract_create_page.k44'),
         },
         {
           name: 'effective_date',
-          label: '生效日期',
+          label: i18n.t('pm.pm_contract_create_page.k45'),
           type: 'date',
-          placeholder: '请选择生效日期',
+          placeholder: i18n.t('pm.pm_contract_create_page.k46'),
         },
         {
           name: 'end_date',
-          label: '结束日期',
+          label: i18n.t('pm.pm_contract_create_page.k47'),
           type: 'date',
-          placeholder: '请选择结束日期',
+          placeholder: i18n.t('pm.pm_contract_create_page.k48'),
         },
       ],
     },
     {
       id: 'description',
-      title: '合同描述',
-      description: '合同详细描述',
+      title: i18n.t('pm.pm_contract_create_page.k49'),
+      description: i18n.t('pm.pm_contract_create_page.k50'),
       collapsible: false,
       fields: [
         {
           name: 'description',
-          label: '描述',
+          label: i18n.t('pm.pm_contract_create_page.k51'),
           type: 'textarea',
           rows: 4,
-          placeholder: '请输入合同描述...',
+          placeholder: i18n.t('pages.pm_contract_create_page.k0'),
         },
       ],
     },
   ];
-
   return (
     <PageContainer
-      title='创建合同'
-      subtitle='填写合同基本信息'
+      title={i18n.t('pm.pm_contract_create_page.k52')}
+      subtitle={i18n.t('pm.pm_contract_create_page.k53')}
     >
       <FormPageTemplate
         title=''
         subtitle=''
         backHref={PM_PATHS.contracts}
         breadcrumbs={[
-          { label: '首页', href: '/dashboard' },
-          { label: '项目管理', href: PM_PATHS.root },
-          { label: '合同管理', href: PM_PATHS.contracts },
-          { label: '创建合同' },
+          { label: i18n.t('pm.pm_contract_create_page.k54'), href: '/dashboard' },
+          { label: i18n.t('pm.pm_contract_create_page.k55'), href: PM_PATHS.root },
+          { label: i18n.t('pm.pm_contract_create_page.k56'), href: PM_PATHS.contracts },
+          { label: i18n.t('pm.pm_contract_create_page.k57') },
         ]}
         sections={sections}
         schema={contractSchema}
@@ -293,13 +280,12 @@ const PmContractCreatePage: React.FC = () => {
         submitting={createMutation.isPending}
         onSubmit={handleSubmit}
         onCancel={handleCancel}
-        submitText='创建合同'
-        cancelText='取消'
+        submitText={i18n.t('pm.pm_contract_create_page.k58')}
+        cancelText={i18n.t('pm.pm_contract_create_page.k59')}
         columns={2}
         stickyFooter={true}
       />
     </PageContainer>
   );
 };
-
 export default PmContractCreatePage;

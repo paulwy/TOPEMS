@@ -1,3 +1,4 @@
+import i18n from '@/i18n';
 export interface PerfSnapshot {
   timestamp: number;
   fps: number;
@@ -227,8 +228,8 @@ export class PerformanceAnalyzerV59 {
           type: 'MemoryLeak',
           severity: memoryGrowth > 50 * 1024 * 1024 ? 'critical' : 'high',
           location: 'heap',
-          description: `内存增长 ${(memoryGrowth / 1024 / 1024).toFixed(1)}MB，可能存在内存泄漏`,
-          suggestion: '检查未清理的事件监听器、定时器和全局引用',
+          description: `${i18n.t('ai.performance-analyzer.k0')}${(memoryGrowth / 1024 / 1024).toFixed(1)}${i18n.t('ai.performance-analyzer.mb_1')}`,
+          suggestion: i18n.t('ai.performance-analyzer.k0'),
         });
       }
 
@@ -238,8 +239,8 @@ export class PerformanceAnalyzerV59 {
           type: 'LongTask',
           severity: 'medium',
           location: 'main-thread',
-          description: `FPS 下降 ${fpsDrop.toFixed(0)}，主线程可能存在长任务`,
-          suggestion: '拆分长任务为更小的异步单元或使用 Web Worker',
+          description: `${i18n.t('ai.performance-analyzer.fps_2')}${fpsDrop.toFixed(0)}${i18n.t('ai.performance-analyzer.k3')}`,
+          suggestion: i18n.t('ai.performance-analyzer.k1'),
         });
       }
     }
@@ -249,8 +250,8 @@ export class PerformanceAnalyzerV59 {
         type: 'ExcessiveRenders',
         severity: snapshot.cpu > 95 ? 'critical' : 'high',
         location: 'cpu',
-        description: `CPU 使用率 ${snapshot.cpu.toFixed(1)}%，超过预算 ${this.budget.maxCpuUsage}%`,
-        suggestion: '优化渲染逻辑、使用 memoization 或减少计算量',
+        description: `${i18n.t('ai.performance-analyzer.cpu_4')}${snapshot.cpu.toFixed(1)}${i18n.t('ai.performance-analyzer.k5')}${this.budget.maxCpuUsage}%`,
+        suggestion: i18n.t('ai.performance-analyzer.k2'),
       });
     }
 
@@ -259,8 +260,8 @@ export class PerformanceAnalyzerV59 {
         type: 'LayoutThrash',
         severity: 'medium',
         location: 'render',
-        description: `渲染时间 ${snapshot.renderTime.toFixed(1)}ms，超过预算 ${this.budget.maxRenderTime}ms`,
-        suggestion: '避免在渲染中触发布局重排，使用 transform 而非修改布局属性',
+        description: `${i18n.t('ai.performance-analyzer.k6')}${snapshot.renderTime.toFixed(1)}${i18n.t('ai.performance-analyzer.ms_7')}${this.budget.maxRenderTime}ms`,
+        suggestion: i18n.t('ai.performance-analyzer.k3'),
       });
     }
 
@@ -269,8 +270,8 @@ export class PerformanceAnalyzerV59 {
         type: 'LongTask',
         severity: 'medium',
         location: 'script',
-        description: `脚本执行时间 ${snapshot.scriptTime.toFixed(1)}ms，超过预算`,
-        suggestion: '优化热点代码路径，使用懒加载或代码分割',
+        description: `${i18n.t('ai.performance-analyzer.k8')}${snapshot.scriptTime.toFixed(1)}${i18n.t('ai.performance-analyzer.ms_9')}`,
+        suggestion: i18n.t('ai.performance-analyzer.k4'),
       });
     }
   }
@@ -490,12 +491,12 @@ export class PerformanceAnalyzerV59 {
     const overagePct = limit > 0 ? ((overage / limit) * 100).toFixed(1) : '0';
 
     const suggestions: Record<BudgetCategory, string> = {
-      fps: `FPS 低于预算 ${overagePct}%，减少动画和重渲染`,
-      memory: `内存超出预算 ${overagePct}%，检查内存泄漏和大对象引用`,
-      cpu: `CPU 超出预算 ${overagePct}%，优化计算密集型操作`,
-      render: `渲染时间超出预算 ${overagePct}%，使用 React.memo 或 useMemo`,
-      script: `脚本执行超出预算 ${overagePct}%，拆分代码或使用 Web Worker`,
-      paint: `绘制时间超出预算 ${overagePct}%，优化 CSS 和 DOM 操作`,
+      fps: `${i18n.t('ai.performance-analyzer.fps_10')}${overagePct}${i18n.t('ai.performance-analyzer.k11')}`,
+      memory: `${i18n.t('ai.performance-analyzer.k12')}${overagePct}${i18n.t('ai.performance-analyzer.k13')}`,
+      cpu: `${i18n.t('ai.performance-analyzer.cpu_14')}${overagePct}${i18n.t('ai.performance-analyzer.k15')}`,
+      render: `${i18n.t('ai.performance-analyzer.k16')}${overagePct}${i18n.t('ai.performance-analyzer.k17')}`,
+      script: `${i18n.t('ai.performance-analyzer.k18')}${overagePct}${i18n.t('ai.performance-analyzer.webworker_19')}`,
+      paint: `${i18n.t('ai.performance-analyzer.k20')}${overagePct}${i18n.t('ai.performance-analyzer.cssdom_21')}`,
     };
 
     return suggestions[category];

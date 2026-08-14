@@ -1,7 +1,6 @@
 import React, { useMemo } from 'react';
 import { Box, Typography, Card, CardContent } from '@mui/material';
 import { Barcode as BarcodeIcon, Printer, ScanLine } from 'lucide-react';
-
 import CrudPage, { type CrudApiAdapter } from '@/components/templates/CrudPage';
 import type { RowAction } from '@/components/templates/list/types';
 import { PageContainer } from '@/components/common';
@@ -12,16 +11,14 @@ import {
   type CreateBarcodeRequest,
   type UpdateBarcodeRequest,
 } from '@/api/lims';
+import i18n from '@/i18n';
 import { designTokens } from '@/theme/tokens';
 import { LIMS_PATHS } from '@/modules/lims/config';
 import { DASHBOARD_PATHS } from '@/routes/dashboard';
 import { useNotificationStore } from '@/store';
-
 const ct= designTokens.colors;
-
 const BarcodePage: React.FC = () => {
   const addNotification = useNotificationStore((state) => state.addNotification);
-
   const barcodeApiAdapter: CrudApiAdapter<BarcodeType> = useMemo(
     () => ({
       list: async (params) => {
@@ -32,7 +29,7 @@ const BarcodePage: React.FC = () => {
           status: params?.status && params.status !== 'all' ? (params.status as string) : undefined,
         });
         if (!response.success || !response.data) {
-          throw new Error('加载条码列表失败');
+          throw new Error(i18n.t('lims.barcode_page.k0'));
         }
         const data = response.data as { items?: BarcodeType[]; total?: number } | BarcodeType[];
         if (Array.isArray(data)) {
@@ -43,11 +40,10 @@ const BarcodePage: React.FC = () => {
           total: data.total || data.items?.length || 0,
         };
       },
-
       create: async (data) => {
         const response = await limsApi.generateBarcode(data as CreateBarcodeRequest);
         if (!response.success) {
-          throw new Error(response.message || '生成条码失败');
+          throw new Error(response.message || i18n.t('lims.barcode_page.k1'));
         }
         const created = response.data as unknown as BarcodeType[] | BarcodeType;
         if (Array.isArray(created)) {
@@ -55,77 +51,72 @@ const BarcodePage: React.FC = () => {
         }
         return created;
       },
-
       update: async (id, data) => {
         const response = await limsApi.updateBarcode(id, data as UpdateBarcodeRequest);
         if (!response.success) {
-          throw new Error(response.message || '更新条码失败');
+          throw new Error(response.message || i18n.t('lims.barcode_page.k2'));
         }
         return response.data as unknown as BarcodeType;
       },
-
       delete: async (id) => {
         const response = await limsApi.deleteBarcode(id);
         if (!response.success) {
-          throw new Error(response.message || '删除条码失败');
+          throw new Error(response.message || i18n.t('lims.barcode_page.k3'));
         }
       },
     }),
     []
   );
-
   const handlePrint = async (row: Record<string, unknown>) => {
     const id = String(row.id);
     try {
       const response = await limsApi.printBarcode({ barcode_ids: [id] });
       if (response.success) {
-        addNotification({ title: '成功', message: '条码已开始打印', type: 'success' });
+        addNotification({ title: i18n.t('lims.barcode_page.k5'), message: i18n.t('lims.barcode_page.k4'), type: 'success' });
       } else {
-        addNotification({ title: '错误', message: response.message || '打印失败', type: 'error' });
+        addNotification({ title: i18n.t('lims.barcode_page.k7'), message: response.message || i18n.t('lims.barcode_page.k6'), type: 'error' });
       }
     } catch (err) {
       addNotification({
-        title: '错误',
-        message: (err as { message?: string })?.message || '打印条码失败',
+        title: i18n.t('lims.barcode_page.k8'),
+        message: (err as { message?: string })?.message || i18n.t('lims.barcode_page.k9'),
         type: 'error',
       });
     }
   };
-
   const handleScan = async (row: Record<string, unknown>) => {
     const barcode = String(row.barcode);
     try {
       const response = await limsApi.scanBarcode(barcode);
       if (response.success) {
         addNotification({
-          title: '扫描成功',
-          message: `条码 ${barcode} 扫描成功`,
+          title: i18n.t('lims.barcode_page.k10'),
+          message: `${i18n.t('pages.barcode_page.k0')}${barcode}${i18n.t('pages.barcode_page.k1')}`,
           type: 'success',
         });
       } else {
-        addNotification({ title: '错误', message: response.message || '扫描失败', type: 'error' });
+        addNotification({ title: i18n.t('lims.barcode_page.k12'), message: response.message || i18n.t('lims.barcode_page.k11'), type: 'error' });
       }
     } catch (err) {
       addNotification({
-        title: '错误',
-        message: (err as { message?: string })?.message || '条码扫描失败',
+        title: i18n.t('lims.barcode_page.k13'),
+        message: (err as { message?: string })?.message || i18n.t('lims.barcode_page.k14'),
         type: 'error',
       });
     }
   };
-
   const customRowActions: RowAction[] = useMemo(
     () => [
       {
         key: 'print',
-        label: '打印',
+        label: i18n.t('lims.barcode_page.k15'),
         icon: <Printer size={14} />,
         color: 'info',
         onClick: (row: Record<string, unknown>) => handlePrint(row),
       },
       {
         key: 'scan',
-        label: '扫描',
+        label: i18n.t('lims.barcode_page.k16'),
         icon: <ScanLine size={14} />,
         color: 'primary',
         onClick: (row: Record<string, unknown>) => handleScan(row),
@@ -133,43 +124,40 @@ const BarcodePage: React.FC = () => {
     ],
     []
   );
-
   const statsContent = (rows: Record<string, unknown>[]) => {
     const barcodes = rows as unknown as BarcodeType[];
     const stats = {
       total: barcodes.length,
-      normal: barcodes.filter((b) => b.status === '正常' || b.status === 'normal').length,
-      printed: barcodes.filter((b) => b.status === '已打印' || b.status === 'printed').length,
-      scanned: barcodes.filter((b) => b.status === '已扫描' || b.status === 'scanned').length,
+      normal: barcodes.filter((b) => b.status === i18n.t('lims.barcode_page.k17') || b.status === 'normal').length,
+      printed: barcodes.filter((b) => b.status === i18n.t('lims.barcode_page.k18') || b.status === 'printed').length,
+      scanned: barcodes.filter((b) => b.status === i18n.t('lims.barcode_page.k19') || b.status === 'scanned').length,
     };
-
     const cards = [
       {
-        label: '条码总数',
+        label: i18n.t('lims.barcode_page.k20'),
         value: stats.total,
         icon: <BarcodeIcon sx={{ width: 20, height: 20, color: 'info.main' }} />,
         bg: 'info.lighter',
       },
       {
-        label: '正常',
+        label: i18n.t('lims.barcode_page.k21'),
         value: stats.normal,
         icon: <BarcodeIcon sx={{ width: 20, height: 20, color: 'success.main' }} />,
         bg: 'success.lighter',
       },
       {
-        label: '已打印',
+        label: i18n.t('lims.barcode_page.k22'),
         value: stats.printed,
         icon: <Printer sx={{ width: 20, height: 20, color: 'info.main' }} />,
         bg: 'info.lighter',
       },
       {
-        label: '已扫描',
+        label: i18n.t('lims.barcode_page.k23'),
         value: stats.scanned,
         icon: <ScanLine sx={{ width: 20, height: 20, color: 'primary.main' }} />,
         bg: 'primary.lighter',
       },
     ];
-
     return (
       <Box
         sx={{
@@ -220,29 +208,27 @@ const BarcodePage: React.FC = () => {
       </Box>
     );
   };
-
   const detailContent = (row: Record<string, unknown>) => {
     const barcode = row as unknown as BarcodeType;
-
     const statusColorMap: Record<string, string> = {
-      正常: 'success.lighter',
-      已打印: 'info.lighter',
-      已扫描: 'primary.lighter',
-      停用: 'grey.100',
+      [i18n.t('pages.barcode_page.k0')]: 'success.lighter',
+      [i18n.t('pages.barcode_page.k1')]: 'info.lighter',
+      [i18n.t('pages.barcode_page.k2')]: 'primary.lighter',
+      [i18n.t('pages.barcode_page.k3')]: 'grey.100',
       normal: 'success.lighter',
       printed: 'info.lighter',
       scanned: 'primary.lighter',
       disabled: 'grey.100',
     };
     const statusLabelMap: Record<string, string> = {
-      正常: '正常',
-      已打印: '已打印',
-      已扫描: '已扫描',
-      停用: '停用',
-      normal: '正常',
-      printed: '已打印',
-      scanned: '已扫描',
-      disabled: '停用',
+      [i18n.t('pages.barcode_page.k4')]: i18n.t('lims.barcode_page.k24'),
+      [i18n.t('pages.barcode_page.k5')]: i18n.t('lims.barcode_page.k25'),
+      [i18n.t('pages.barcode_page.k6')]: i18n.t('lims.barcode_page.k26'),
+      [i18n.t('pages.barcode_page.k7')]: i18n.t('lims.barcode_page.k27'),
+      normal: i18n.t('lims.barcode_page.k28'),
+      printed: i18n.t('lims.barcode_page.k29'),
+      scanned: i18n.t('lims.barcode_page.k30'),
+      disabled: i18n.t('lims.barcode_page.k31'),
     };
     const bg = statusColorMap[barcode.status] || 'grey.100';
     const color =
@@ -253,7 +239,6 @@ const BarcodePage: React.FC = () => {
           : bg === 'primary.lighter'
             ? 'primary.dark'
             : 'text.secondary';
-
     return (
       <Box
         sx={{
@@ -268,7 +253,7 @@ const BarcodePage: React.FC = () => {
             component='span'
             sx={{ color: 'text.secondary', fontSize: '0.875rem' }}
           >
-            条码
+            {i18n.t('pages.barcode_page.k8')}
           </Box>
           <Box sx={{ fontWeight: 500, fontFamily: 'monospace' }}>{barcode.barcode}</Box>
         </Box>
@@ -277,7 +262,7 @@ const BarcodePage: React.FC = () => {
             component='span'
             sx={{ color: 'text.secondary', fontSize: '0.875rem' }}
           >
-            状态
+            {i18n.t('pages.barcode_page.k9')}
           </Box>
           <Box sx={{ mt: 0.5 }}>
             <Box
@@ -301,7 +286,7 @@ const BarcodePage: React.FC = () => {
             component='span'
             sx={{ color: 'text.secondary', fontSize: '0.875rem' }}
           >
-            条码类型
+            {i18n.t('pages.barcode_page.k10')}
           </Box>
           <Box>{barcode.barcode_type || '-'}</Box>
         </Box>
@@ -310,7 +295,7 @@ const BarcodePage: React.FC = () => {
             component='span'
             sx={{ color: 'text.secondary', fontSize: '0.875rem' }}
           >
-            格式
+            {i18n.t('pages.barcode_page.k11')}
           </Box>
           <Box>{barcode.format}</Box>
         </Box>
@@ -319,7 +304,7 @@ const BarcodePage: React.FC = () => {
             component='span'
             sx={{ color: 'text.secondary', fontSize: '0.875rem' }}
           >
-            关联样品
+            {i18n.t('pages.barcode_page.k12')}
           </Box>
           <Box>{barcode.sample_name || '-'}</Box>
         </Box>
@@ -328,7 +313,7 @@ const BarcodePage: React.FC = () => {
             component='span'
             sx={{ color: 'text.secondary', fontSize: '0.875rem' }}
           >
-            内容
+            {i18n.t('pages.barcode_page.k13')}
           </Box>
           <Box>{barcode.content || '-'}</Box>
         </Box>
@@ -337,7 +322,7 @@ const BarcodePage: React.FC = () => {
             component='span'
             sx={{ color: 'text.secondary', fontSize: '0.875rem' }}
           >
-            生成时间
+            {i18n.t('pages.barcode_page.k14')}
           </Box>
           <Box>
             {barcode.generated_at ? new Date(barcode.generated_at).toLocaleString('zh-CN') : '-'}
@@ -348,7 +333,7 @@ const BarcodePage: React.FC = () => {
             component='span'
             sx={{ color: 'text.secondary', fontSize: '0.875rem' }}
           >
-            打印时间
+            {i18n.t('pages.barcode_page.k15')}
           </Box>
           <Box>
             {barcode.printed_at ? new Date(barcode.printed_at).toLocaleString('zh-CN') : '-'}
@@ -359,7 +344,7 @@ const BarcodePage: React.FC = () => {
             component='span'
             sx={{ color: 'text.secondary', fontSize: '0.875rem' }}
           >
-            扫描时间
+            {i18n.t('pages.barcode_page.k16')}
           </Box>
           <Box>
             {barcode.scanned_at ? new Date(barcode.scanned_at).toLocaleString('zh-CN') : '-'}
@@ -370,17 +355,16 @@ const BarcodePage: React.FC = () => {
             component='span'
             sx={{ color: 'text.secondary', fontSize: '0.875rem' }}
           >
-            创建人
+            {i18n.t('pages.barcode_page.k17')}
           </Box>
           <Box>{barcode.created_by || '-'}</Box>
         </Box>
       </Box>
     );
   };
-
   return (
     <PageContainer
-      title='条码管理'
+      title={i18n.t('lims.barcode_page.k32')}
       subtitle='Barcode Management'
       headerProps={{
         pageIcon: <BarcodeIcon style={{ width: 20, height: 20 }} />,
@@ -395,14 +379,13 @@ const BarcodePage: React.FC = () => {
         detailContent={detailContent}
         detailMaxWidth='md'
         breadcrumbs={[
-          { label: '首页', href: DASHBOARD_PATHS.dashboard },
+          { label: i18n.t('lims.barcode_page.k33'), href: DASHBOARD_PATHS.dashboard },
           { label: 'LIMS', href: LIMS_PATHS.root },
-          { label: '条码管理' },
+          { label: i18n.t('lims.barcode_page.k34') },
         ]}
         idField='id'
       />
     </PageContainer>
   );
 };
-
 export default BarcodePage;

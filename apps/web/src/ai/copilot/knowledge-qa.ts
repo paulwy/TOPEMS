@@ -1,3 +1,4 @@
+import i18n from '@/i18n';
 export interface QAEntry {
   id: string;
   question: string;
@@ -208,11 +209,11 @@ export class KnowledgeQA {
     context?: string
   ): string {
     if (relevantDocs.length === 0) {
-      return `抱歉，我没有找到关于"${question}"的相关知识。您可以：\n\n1. 尝试使用更具体的关键词搜索\n2. 使用"添加文档"功能上传相关知识\n3. 查看建议的相关问题`;
+      return `${i18n.t('ai.knowledge-qa.k0')}${question}${i18n.t('ai.knowledge-qa.k1')}`;
     }
 
     const parts: string[] = [];
-    parts.push(`根据知识库中的 ${relevantDocs.length} 篇相关文档，关于"${question}"：`);
+    parts.push(`${i18n.t('ai.knowledge-qa.k2')}${relevantDocs.length}${i18n.t('ai.knowledge-qa.k3')}${question}"：`);
     parts.push('');
 
     const mainDoc = relevantDocs[0];
@@ -221,7 +222,7 @@ export class KnowledgeQA {
 
     if (relevantDocs.length > 1) {
       parts.push('');
-      parts.push(`相关参考：`);
+      parts.push(i18n.t('ai.knowledge-qa.k0'));
       for (let i = 1; i < Math.min(relevantDocs.length, 4); i++) {
         parts.push(`  ${i}. ${relevantDocs[i].title}`);
       }
@@ -229,7 +230,7 @@ export class KnowledgeQA {
 
     if (context) {
       parts.push('');
-      parts.push(`上下文补充：${context}`);
+      parts.push(`${i18n.t('ai.knowledge-qa.k4')}${context}`);
     }
 
     return parts.join('\n');
@@ -263,16 +264,16 @@ export class KnowledgeQA {
 
         for (const word of relevantWords) {
           if (secondSentence.toLowerCase().includes(word)) {
-            suggestions.push(`关于"${secondSentence.substring(0, 40)}"的更多细节？`);
+            suggestions.push(`${i18n.t('ai.knowledge-qa.k5')}${secondSentence.substring(0, 40)}${i18n.t('ai.knowledge-qa.k6')}`);
             break;
           }
         }
       }
     }
 
-    suggestions.push(`能否提供更多关于此主题的示例代码？`);
-    suggestions.push(`这个概念在实际项目中如何应用？`);
-    suggestions.push(`与相关技术对比有什么优势？`);
+    suggestions.push(i18n.t('ai.knowledge-qa.k1'));
+    suggestions.push(i18n.t('ai.knowledge-qa.k2'));
+    suggestions.push(i18n.t('ai.knowledge-qa.k3'));
 
     return suggestions.slice(0, 3);
   }

@@ -1,5 +1,4 @@
 import React from 'react';
-import { useTranslation } from 'react-i18next';
 import {
   Box,
   Typography,
@@ -23,10 +22,10 @@ import {
   Paper,
   Chip,
 } from '@mui/material';
+import i18n from '@/i18n';
 import { Settings, Download, Upload, Play } from 'lucide-react';
 import { ConfirmDialog } from '@/components/common';
 import type { TableInfo, ColumnInfo } from '@/api/erp/database';
-
 interface DatabaseManagementModalsProps {
   // Structure Modal
   showStructureModal: boolean;
@@ -34,24 +33,20 @@ interface DatabaseManagementModalsProps {
   currentTable: TableInfo | null;
   tableColumns: ColumnInfo[];
   tableRowCount: number | null;
-
   // Backup Modal
   showBackupModal: boolean;
   onCloseBackupModal: () => void;
   onStartBackup: () => void;
-
   // Restore Modal
   showRestoreModal: boolean;
   onCloseRestoreModal: () => void;
   onConfirmRestore: () => void;
   restoreBackupName: string;
-
   // Delete Dialog
   deleteBackupDialogOpen: boolean;
   onCloseDeleteDialog: () => void;
   onConfirmDelete: () => void;
 }
-
 export const DatabaseManagementModals: React.FC<DatabaseManagementModalsProps> = ({
   showStructureModal,
   onCloseStructureModal,
@@ -69,8 +64,6 @@ export const DatabaseManagementModals: React.FC<DatabaseManagementModalsProps> =
   onCloseDeleteDialog,
   onConfirmDelete,
 }) => {
-  const { t } = useTranslation();
-
   return (
     <>
       {/* Table Structure Modal */}
@@ -83,7 +76,7 @@ export const DatabaseManagementModals: React.FC<DatabaseManagementModalsProps> =
         <DialogTitle>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
             <Settings size={20} />
-            {t('erp.database.label.table_structure', { name: currentTable?.table_name })}
+            {i18n.t('erp.database.label.table_structure', { name: currentTable?.table_name })}
           </Box>
         </DialogTitle>
         <DialogContent dividers>
@@ -101,7 +94,7 @@ export const DatabaseManagementModals: React.FC<DatabaseManagementModalsProps> =
                     variant='body2'
                     sx={{ color: 'text.secondary', mb: 0.5 }}
                   >
-                    {t('erp.database.label.table_name')}
+                    {i18n.t('erp.database.label.table_name')}
                   </Typography>
                   <Typography sx={{ fontFamily: 'monospace', fontWeight: 500 }}>
                     {currentTable.table_name}
@@ -112,7 +105,7 @@ export const DatabaseManagementModals: React.FC<DatabaseManagementModalsProps> =
                     variant='body2'
                     sx={{ color: 'text.secondary', mb: 0.5 }}
                   >
-                    {t('erp.database.label.type')}
+                    {i18n.t('erp.database.label.type')}
                   </Typography>
                   <Typography sx={{ fontWeight: 500 }}>{currentTable.table_type}</Typography>
                 </Box>
@@ -121,21 +114,19 @@ export const DatabaseManagementModals: React.FC<DatabaseManagementModalsProps> =
                     variant='body2'
                     sx={{ color: 'text.secondary', mb: 0.5 }}
                   >
-                    {t('erp.database.label.record_count')}
+                    {i18n.t('erp.database.label.record_count')}
                   </Typography>
                   <Typography sx={{ fontWeight: 500 }}>
                     {tableRowCount?.toLocaleString() || '-'}
                   </Typography>
                 </Box>
               </Box>
-
               <Typography
                 variant='subtitle2'
                 sx={{ fontWeight: 600, mt: 1 }}
               >
-                {t('erp.database.label.field_list')}
+                {i18n.t('erp.database.label.field_list')}
               </Typography>
-
               <TableContainer
                 component={Paper}
                 variant='outlined'
@@ -144,22 +135,22 @@ export const DatabaseManagementModals: React.FC<DatabaseManagementModalsProps> =
                   <TableHead>
                     <TableRow sx={{ bgcolor: 'grey.50' }}>
                       <TableCell sx={{ fontWeight: 'bold' }}>
-                        {t('erp.database.label.field_name')}
+                        {i18n.t('erp.database.label.field_name')}
                       </TableCell>
                       <TableCell sx={{ fontWeight: 'bold' }}>
-                        {t('erp.database.label.type')}
+                        {i18n.t('erp.database.label.type')}
                       </TableCell>
                       <TableCell sx={{ fontWeight: 'bold' }}>
-                        {t('erp.database.label.length')}
+                        {i18n.t('erp.database.label.length')}
                       </TableCell>
                       <TableCell sx={{ fontWeight: 'bold' }}>
-                        {t('erp.database.label.nullable')}
+                        {i18n.t('erp.database.label.nullable')}
                       </TableCell>
                       <TableCell sx={{ fontWeight: 'bold' }}>
-                        {t('erp.database.label.default_value')}
+                        {i18n.t('erp.database.label.default_value')}
                       </TableCell>
                       <TableCell sx={{ fontWeight: 'bold' }}>
-                        {t('erp.database.label.description')}
+                        {i18n.t('erp.database.label.description')}
                       </TableCell>
                     </TableRow>
                   </TableHead>
@@ -182,14 +173,14 @@ export const DatabaseManagementModals: React.FC<DatabaseManagementModalsProps> =
                         <TableCell>
                           {col.is_nullable === 'YES' ? (
                             <Chip
-                              label={t('erp.database.label.yes')}
+                              label={i18n.t('erp.database.label.yes')}
                               size='small'
                               color='default'
                               variant='outlined'
                             />
                           ) : (
                             <Chip
-                              label={t('erp.database.label.no')}
+                              label={i18n.t('erp.database.label.no')}
                               size='small'
                               color='warning'
                               variant='outlined'
@@ -211,10 +202,9 @@ export const DatabaseManagementModals: React.FC<DatabaseManagementModalsProps> =
           )}
         </DialogContent>
         <DialogActions sx={{ px: 3, py: 2 }}>
-          <Button onClick={onCloseStructureModal}>{t('erp.database.label.close')}</Button>
+          <Button onClick={onCloseStructureModal}>{i18n.t('erp.database.label.close')}</Button>
         </DialogActions>
       </Dialog>
-
       {/* Backup Modal */}
       <Dialog
         open={showBackupModal}
@@ -225,45 +215,44 @@ export const DatabaseManagementModals: React.FC<DatabaseManagementModalsProps> =
         <DialogTitle>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
             <Download size={20} />
-            {t('erp.database.label.create_backup')}
+            {i18n.t('erp.database.label.create_backup')}
           </Box>
         </DialogTitle>
         <DialogContent dividers>
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, pt: 1 }}>
-            <Alert severity='info'>{t('erp.database.label.backup_warning')}</Alert>
+            <Alert severity='info'>{i18n.t('erp.database.label.backup_warning')}</Alert>
             <FormControl size='small'>
-              <InputLabel>{t('erp.database.label.backup_type')}</InputLabel>
+              <InputLabel>{i18n.t('erp.database.label.backup_type')}</InputLabel>
               <Select
                 value='full'
-                label={t('erp.database.label.backup_type')}
+                label={i18n.t('erp.database.label.backup_type')}
               >
-                <MenuItem value='full'>{t('erp.database.label.full_backup')}</MenuItem>
+                <MenuItem value='full'>{i18n.t('erp.database.label.full_backup')}</MenuItem>
                 <MenuItem value='incremental'>
-                  {t('erp.database.label.incremental_backup')}
+                  {i18n.t('erp.database.label.incremental_backup')}
                 </MenuItem>
               </Select>
             </FormControl>
             <TextField
               size='small'
-              label={t('erp.database.label.backup_remark')}
+              label={i18n.t('erp.database.label.backup_remark')}
               multiline
               rows={2}
-              placeholder={t('erp.database.label.backup_remark_placeholder')}
+              placeholder={i18n.t('erp.database.label.backup_remark_placeholder')}
             />
           </Box>
         </DialogContent>
         <DialogActions sx={{ px: 3, py: 2 }}>
-          <Button onClick={onCloseBackupModal}>{t('erp.database.label.cancel')}</Button>
+          <Button onClick={onCloseBackupModal}>{i18n.t('erp.database.label.cancel')}</Button>
           <Button
             variant='contained'
             startIcon={<Play size={16} />}
             onClick={onStartBackup}
           >
-            {t('erp.database.label.start_backup')}
+            {i18n.t('erp.database.label.start_backup')}
           </Button>
         </DialogActions>
       </Dialog>
-
       {/* Restore Modal */}
       <Dialog
         open={showRestoreModal}
@@ -274,7 +263,7 @@ export const DatabaseManagementModals: React.FC<DatabaseManagementModalsProps> =
         <DialogTitle>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
             <Upload size={20} />
-            {t('erp.database.label.restore_confirm_title')}
+            {i18n.t('erp.database.label.restore_confirm_title')}
           </Box>
         </DialogTitle>
         <DialogContent dividers>
@@ -284,10 +273,10 @@ export const DatabaseManagementModals: React.FC<DatabaseManagementModalsProps> =
                 variant='body2'
                 sx={{ fontWeight: 500, mb: 1 }}
               >
-                {t('erp.database.label.restore_warning')}
+                {i18n.t('erp.database.label.restore_warning')}
               </Typography>
               <Typography variant='body2'>
-                {t('erp.database.label.restore_warning_desc')}
+                {i18n.t('erp.database.label.restore_warning_desc')}
               </Typography>
             </Alert>
             <Box sx={{ mt: 2, p: 2, bgcolor: 'grey.50', borderRadius: 1 }}>
@@ -295,7 +284,7 @@ export const DatabaseManagementModals: React.FC<DatabaseManagementModalsProps> =
                 variant='body2'
                 sx={{ color: 'text.secondary', mb: 0.5 }}
               >
-                {t('erp.database.label.backup_to_restore')}
+                {i18n.t('erp.database.label.backup_to_restore')}
               </Typography>
               <Typography sx={{ fontWeight: 500, fontFamily: 'monospace' }}>
                 {restoreBackupName || '-'}
@@ -304,25 +293,24 @@ export const DatabaseManagementModals: React.FC<DatabaseManagementModalsProps> =
           </Box>
         </DialogContent>
         <DialogActions sx={{ px: 3, py: 2 }}>
-          <Button onClick={onCloseRestoreModal}>{t('erp.database.label.cancel')}</Button>
+          <Button onClick={onCloseRestoreModal}>{i18n.t('erp.database.label.cancel')}</Button>
           <Button
             variant='contained'
             color='warning'
             startIcon={<Upload size={16} />}
             onClick={onConfirmRestore}
           >
-            {t('erp.database.label.confirm_restore')}
+            {i18n.t('erp.database.label.confirm_restore')}
           </Button>
         </DialogActions>
       </Dialog>
-
       {/* Delete Backup Dialog */}
       <ConfirmDialog
         isOpen={deleteBackupDialogOpen}
         onClose={onCloseDeleteDialog}
         onConfirm={onConfirmDelete}
-        title={t('erp.database.label.confirm_delete')}
-        message={t('erp.database.label.confirm_delete_message')}
+        title={i18n.t('erp.database.label.confirm_delete')}
+        message={i18n.t('erp.database.label.confirm_delete_message')}
         danger
       />
     </>

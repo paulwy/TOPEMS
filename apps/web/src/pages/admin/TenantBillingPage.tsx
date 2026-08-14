@@ -15,6 +15,7 @@ import {
   LinearProgress,
   Alert,
 } from '@mui/material';
+import i18n from '@/i18n';
 import {
   CreditCard,
   Check,
@@ -34,87 +35,85 @@ import type { CrudApiAdapter, RowAction } from '@/components/templates/CrudPage'
 import { tenantApi } from '@/api/tenant';
 import type { TenantInvoice, Tenant, UsageMetrics, TenantBillingInfo } from '@/api/tenant/types';
 import { tenantInvoiceSchema } from '@/schemas/admin';
-
 const plans = [
   {
     id: 'free',
-    name: '免费版',
+    name: i18n.t('admin.tenant_billing_page.k0'),
     price: 0,
-    description: '适合个人和小团队试用',
+    description: i18n.t('admin.tenant_billing_page.k1'),
     features: [
-      { name: '最多 5 个用户', included: true },
-      { name: '5 GB 存储空间', included: true },
-      { name: '1000 次 API 调用/天', included: true },
-      { name: '基础功能模块', included: true },
-      { name: '社区支持', included: true },
-      { name: '高级报表', included: false },
-      { name: 'SSO 单点登录', included: false },
-      { name: '自定义品牌', included: false },
-      { name: '专属客户经理', included: false },
+      { name: i18n.t('admin.tenant_billing_page.5_2'), included: true },
+      { name: i18n.t('pages.tenant_billing_page.5gb_0'), included: true },
+      { name: i18n.t('pages.tenant_billing_page.1000api_1'), included: true },
+      { name: i18n.t('admin.tenant_billing_page.k3'), included: true },
+      { name: i18n.t('admin.tenant_billing_page.k4'), included: true },
+      { name: i18n.t('admin.tenant_billing_page.k5'), included: false },
+      { name: i18n.t('pages.tenant_billing_page.sso_2'), included: false },
+      { name: i18n.t('admin.tenant_billing_page.k6'), included: false },
+      { name: i18n.t('admin.tenant_billing_page.k7'), included: false },
     ],
     icon: Users,
     color: 'default',
   },
   {
     id: 'basic',
-    name: '基础版',
+    name: i18n.t('admin.tenant_billing_page.k8'),
     price: 299,
-    description: '适合小型企业使用',
+    description: i18n.t('admin.tenant_billing_page.k9'),
     features: [
-      { name: '最多 25 个用户', included: true },
-      { name: '50 GB 存储空间', included: true },
-      { name: '50,000 次 API 调用/天', included: true },
-      { name: '全部功能模块', included: true },
-      { name: '邮件支持', included: true },
-      { name: '高级报表', included: true },
-      { name: 'SSO 单点登录', included: false },
-      { name: '自定义品牌', included: false },
-      { name: '专属客户经理', included: false },
+      { name: i18n.t('admin.tenant_billing_page.25_10'), included: true },
+      { name: i18n.t('pages.tenant_billing_page.50gb_3'), included: true },
+      { name: i18n.t('pages.tenant_billing_page.50000api_4'), included: true },
+      { name: i18n.t('admin.tenant_billing_page.k11'), included: true },
+      { name: i18n.t('admin.tenant_billing_page.k12'), included: true },
+      { name: i18n.t('admin.tenant_billing_page.k13'), included: true },
+      { name: i18n.t('pages.tenant_billing_page.sso_5'), included: false },
+      { name: i18n.t('admin.tenant_billing_page.k14'), included: false },
+      { name: i18n.t('admin.tenant_billing_page.k15'), included: false },
     ],
     icon: Building2,
     color: 'primary',
   },
   {
     id: 'professional',
-    name: '专业版',
+    name: i18n.t('admin.tenant_billing_page.k16'),
     price: 999,
-    description: '适合中型企业使用',
+    description: i18n.t('admin.tenant_billing_page.k17'),
     popular: true,
     features: [
-      { name: '最多 100 个用户', included: true },
-      { name: '200 GB 存储空间', included: true },
-      { name: '200,000 次 API 调用/天', included: true },
-      { name: '全部功能模块', included: true },
-      { name: '优先技术支持', included: true },
-      { name: '高级报表', included: true },
-      { name: 'SSO 单点登录', included: true },
-      { name: '自定义品牌', included: true },
-      { name: '专属客户经理', included: false },
+      { name: i18n.t('admin.tenant_billing_page.100_18'), included: true },
+      { name: i18n.t('pages.tenant_billing_page.200gb_6'), included: true },
+      { name: i18n.t('pages.tenant_billing_page.200000api_7'), included: true },
+      { name: i18n.t('admin.tenant_billing_page.k19'), included: true },
+      { name: i18n.t('admin.tenant_billing_page.k20'), included: true },
+      { name: i18n.t('admin.tenant_billing_page.k21'), included: true },
+      { name: i18n.t('pages.tenant_billing_page.sso_8'), included: true },
+      { name: i18n.t('admin.tenant_billing_page.k22'), included: true },
+      { name: i18n.t('admin.tenant_billing_page.k23'), included: false },
     ],
     icon: Zap,
     color: 'secondary',
   },
   {
     id: 'enterprise',
-    name: '企业版',
-    price: '定制',
-    description: '适合大型企业定制',
+    name: i18n.t('admin.tenant_billing_page.k24'),
+    price: i18n.t('admin.tenant_billing_page.k25'),
+    description: i18n.t('admin.tenant_billing_page.k26'),
     features: [
-      { name: '无限用户数', included: true },
-      { name: '无限存储空间', included: true },
-      { name: '无限 API 调用', included: true },
-      { name: '全部功能模块', included: true },
-      { name: '7x24 专属支持', included: true },
-      { name: '高级报表', included: true },
-      { name: 'SSO 单点登录', included: true },
-      { name: '自定义品牌', included: true },
-      { name: '专属客户经理', included: true },
+      { name: i18n.t('admin.tenant_billing_page.k27'), included: true },
+      { name: i18n.t('admin.tenant_billing_page.k28'), included: true },
+      { name: i18n.t('admin.tenant_billing_page.api_29'), included: true },
+      { name: i18n.t('admin.tenant_billing_page.k30'), included: true },
+      { name: i18n.t('pages.tenant_billing_page.7x24_9'), included: true },
+      { name: i18n.t('admin.tenant_billing_page.k31'), included: true },
+      { name: i18n.t('pages.tenant_billing_page.sso_10'), included: true },
+      { name: i18n.t('admin.tenant_billing_page.k32'), included: true },
+      { name: i18n.t('admin.tenant_billing_page.k33'), included: true },
     ],
     icon: Crown,
     color: 'success',
   },
 ];
-
 const TenantBillingPage: React.FC = () => {
   const contextQuery = useQuery({
     queryKey: QUERY_KEYS.TENANT.CURRENT,
@@ -123,13 +122,11 @@ const TenantBillingPage: React.FC = () => {
       if (res.success && res.data) {
         return res.data;
       }
-      throw new Error('加载租户上下文失败');
+      throw new Error(i18n.t('admin.tenant_billing_page.k34'));
     },
   
       staleTime: CACHE_DURATIONS.LONG,});
-
   const tenantId = contextQuery.data?.tenant_id;
-
   const tenantQuery = useQuery({
     queryKey: QUERY_KEYS.TENANT.TENANT(tenantId ?? ''),
     queryFn: async () => {
@@ -138,12 +135,11 @@ const TenantBillingPage: React.FC = () => {
       if (res.success && res.data) {
         return res.data;
       }
-      throw new Error('加载租户信息失败');
+      throw new Error(i18n.t('admin.tenant_billing_page.k35'));
     },
     enabled: !!tenantId,
   
       staleTime: CACHE_DURATIONS.LONG,});
-
   const billingQuery = useQuery({
     queryKey: QUERY_KEYS.TENANT.BILLING(tenantId ?? ''),
     queryFn: async () => {
@@ -152,12 +148,11 @@ const TenantBillingPage: React.FC = () => {
       if (res.success && res.data) {
         return res.data;
       }
-      throw new Error('加载计费信息失败');
+      throw new Error(i18n.t('admin.tenant_billing_page.k36'));
     },
     enabled: !!tenantId,
   
       staleTime: CACHE_DURATIONS.LONG,});
-
   const usageQuery = useQuery({
     queryKey: QUERY_KEYS.TENANT.USAGE(tenantId ?? ''),
     queryFn: async () => {
@@ -166,51 +161,47 @@ const TenantBillingPage: React.FC = () => {
       if (res.success && res.data) {
         return res.data;
       }
-      throw new Error('加载使用情况失败');
+      throw new Error(i18n.t('admin.tenant_billing_page.k37'));
     },
     enabled: !!tenantId,
   
       staleTime: CACHE_DURATIONS.LONG,});
-
   const tenant = tenantQuery.data ?? null;
   const billingInfo = billingQuery.data ?? null;
   const usage = usageQuery.data ?? null;
   const loading = contextQuery.isLoading || tenantQuery.isLoading;
-
   const invoiceApiAdapter = useMemo<CrudApiAdapter<TenantInvoice> | null>(() => {
     if (!tenantId) return null;
     return {
       list: async () => {
         const res = await tenantApi.getInvoices(tenantId);
         if (!res.success) {
-          throw new Error(res.message || '加载账单失败');
+          throw new Error(res.message || i18n.t('admin.tenant_billing_page.k38'));
         }
         const data = res.data || [];
         return { data, total: data.length };
       },
       create: async () => {
-        throw new Error('不支持创建账单');
+        throw new Error(i18n.t('admin.tenant_billing_page.k39'));
       },
       update: async () => {
-        throw new Error('不支持更新账单');
+        throw new Error(i18n.t('admin.tenant_billing_page.k40'));
       },
       delete: async () => {
-        throw new Error('不支持删除账单');
+        throw new Error(i18n.t('admin.tenant_billing_page.k41'));
       },
     };
   }, [tenantId]);
-
   const invoiceRowActions = useMemo<RowAction[]>(
     () => [
       {
-        label: '下载发票',
+        label: i18n.t('admin.tenant_billing_page.k42'),
         icon: <Download size={16} />,
         onClick: () => {},
       },
     ],
     []
   );
-
   if (loading || !tenant) {
     return (
       <PageContainer loading>
@@ -218,13 +209,11 @@ const TenantBillingPage: React.FC = () => {
       </PageContainer>
     );
   }
-
   const currentPlan = plans.find((p) => p.id === tenant.plan) || plans[0];
-
   return (
     <PageContainer
-      title='订阅与计费'
-      subtitle='管理您的订阅计划和账单信息'
+      title={i18n.t('admin.tenant_billing_page.k43')}
+      subtitle={i18n.t('admin.tenant_billing_page.k44')}
       headerProps={{
         pageIcon: <CreditCard size={20} />,
       }}
@@ -238,13 +227,12 @@ const TenantBillingPage: React.FC = () => {
           {billingInfo ? new Date(billingInfo.next_billing_date).toLocaleDateString('zh-CN') : '-'}
         </strong>
       </Alert>
-
       <Box sx={{ mb: 4 }}>
         <Typography
           variant='h6'
           sx={{ fontWeight: 600, mb: 2 }}
         >
-          使用情况
+          {i18n.t('pages.tenant_billing_page.k0')}
         </Typography>
         <Grid
           container
@@ -266,7 +254,7 @@ const TenantBillingPage: React.FC = () => {
                     variant='subtitle2'
                     color='text.secondary'
                   >
-                    用户数
+                    {i18n.t('pages.tenant_billing_page.k1')}
                   </Typography>
                 </Box>
                 <Typography
@@ -306,7 +294,7 @@ const TenantBillingPage: React.FC = () => {
                     variant='subtitle2'
                     color='text.secondary'
                   >
-                    存储空间
+                    {i18n.t('pages.tenant_billing_page.k2')}
                   </Typography>
                 </Box>
                 <Typography
@@ -349,7 +337,7 @@ const TenantBillingPage: React.FC = () => {
                     variant='subtitle2'
                     color='text.secondary'
                   >
-                    API 调用（今日）
+                    {i18n.t('pages.tenant_billing_page.api_3')}
                   </Typography>
                 </Box>
                 <Typography
@@ -378,14 +366,13 @@ const TenantBillingPage: React.FC = () => {
           </Grid>
         </Grid>
       </Box>
-
       <Box sx={{ mb: 4 }}>
         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
           <Typography
             variant='h6'
             sx={{ fontWeight: 600 }}
           >
-            套餐选择
+            {i18n.t('pages.tenant_billing_page.k4')}
           </Typography>
         </Box>
         <Grid
@@ -413,7 +400,7 @@ const TenantBillingPage: React.FC = () => {
                 >
                   {plan.popular && (
                     <Chip
-                      label='最受欢迎'
+                      label={i18n.t('admin.tenant_billing_page.k45')}
                       color='secondary'
                       size='small'
                       sx={{
@@ -445,7 +432,7 @@ const TenantBillingPage: React.FC = () => {
                           variant='body2'
                           color='text.secondary'
                         >
-                          /月
+                          {i18n.t('pages.tenant_billing_page.k5')}
                         </Typography>
                       )}
                     </Typography>
@@ -498,7 +485,7 @@ const TenantBillingPage: React.FC = () => {
                           variant='outlined'
                           disabled
                         >
-                          当前套餐
+                          {i18n.t('pages.tenant_billing_page.k6')}
                         </Button>
                       ) : (
                         <Button
@@ -507,7 +494,7 @@ const TenantBillingPage: React.FC = () => {
                           endIcon={<ArrowUpRight size={16} />}
                           disabled={plan.id === 'enterprise' ? false : false}
                         >
-                          {plan.id === 'enterprise' ? '联系销售' : '升级套餐'}
+                          {plan.id === 'enterprise' ? i18n.t('admin.tenant_billing_page.k47') : i18n.t('admin.tenant_billing_page.k46')}
                         </Button>
                       )}
                     </Box>
@@ -518,7 +505,6 @@ const TenantBillingPage: React.FC = () => {
           })}
         </Grid>
       </Box>
-
       {invoiceApiAdapter && (
         <Box sx={{ mb: 4 }}>
           <CrudPage
@@ -528,7 +514,6 @@ const TenantBillingPage: React.FC = () => {
           />
         </Box>
       )}
-
       <Box sx={{ mt: 4 }}>
         <Card variant='outlined'>
           <CardContent>
@@ -538,7 +523,7 @@ const TenantBillingPage: React.FC = () => {
                 variant='h6'
                 sx={{ fontWeight: 600 }}
               >
-                支付方式
+                {i18n.t('pages.tenant_billing_page.k7')}
               </Typography>
             </Box>
             <Grid
@@ -574,11 +559,11 @@ const TenantBillingPage: React.FC = () => {
                       variant='caption'
                       color='text.secondary'
                     >
-                      到期 12/2025
+                      {i18n.t('pages.tenant_billing_page.122025_8')}
                     </Typography>
                   </Box>
                   <Chip
-                    label='默认'
+                    label={i18n.t('admin.tenant_billing_page.k48')}
                     size='small'
                     color='primary'
                     sx={{ ml: 'auto' }}
@@ -591,8 +576,8 @@ const TenantBillingPage: React.FC = () => {
                 md={6}
                 sx={{ display: 'flex', justifyContent: 'flex-end', gap: 1 }}
               >
-                <Button variant='outlined'>更换支付方式</Button>
-                <Button variant='outlined'>添加支付方式</Button>
+                <Button variant='outlined'>{i18n.t('admin.tenant_billing_page.k49')}</Button>
+                <Button variant='outlined'>{i18n.t('admin.tenant_billing_page.k50')}</Button>
               </Grid>
             </Grid>
           </CardContent>
@@ -601,5 +586,4 @@ const TenantBillingPage: React.FC = () => {
     </PageContainer>
   );
 };
-
 export default TenantBillingPage;

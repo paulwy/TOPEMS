@@ -3,9 +3,9 @@ import {
   MasterDetailPageTemplate,
   type MasterColumn,
 } from '../../components/templates/MasterDetailPageTemplate';
+import i18n from '@/i18n';
 import { Box, Typography, Chip, Divider } from '@mui/material';
 import { Calendar, User, DollarSign, Target, CheckCircle } from 'lucide-react';
-
 interface ProjectItem {
   id: string;
   name: string;
@@ -18,78 +18,75 @@ interface ProjectItem {
   budget: number;
   description?: string;
 }
-
 const initialProjects: ProjectItem[] = [
   {
     id: '1',
-    name: '数字化转型项目',
-    manager: '张三',
+    name: i18n.t('pm.project_master_detail_page.k0'),
+    manager: i18n.t('pm.project_master_detail_page.k1'),
     status: 'active',
     priority: 'high',
     progress: 65,
     startDate: '2026-01-15',
     endDate: '2026-06-30',
     budget: 500000,
-    description: '公司整体数字化转型项目，包括ERP系统升级、数据分析平台建设等',
+    description: i18n.t('pm.project_master_detail_page.k2'),
   },
   {
     id: '2',
-    name: '客户管理系统',
-    manager: '李四',
+    name: i18n.t('pm.project_master_detail_page.k3'),
+    manager: i18n.t('pm.project_master_detail_page.k4'),
     status: 'active',
     priority: 'medium',
     progress: 30,
     startDate: '2026-02-01',
     endDate: '2026-05-15',
     budget: 150000,
-    description: '新一代客户关系管理系统，支持多渠道客户接入和智能分析',
+    description: i18n.t('pm.project_master_detail_page.k5'),
   },
   {
     id: '3',
-    name: '供应链优化项目',
-    manager: '王五',
+    name: i18n.t('pm.project_master_detail_page.k6'),
+    manager: i18n.t('pm.project_master_detail_page.k7'),
     status: 'completed',
     priority: 'high',
     progress: 100,
     startDate: '2025-08-01',
     endDate: '2026-01-31',
     budget: 300000,
-    description: '供应链流程优化，降低库存成本，提高配送效率',
+    description: i18n.t('pm.project_master_detail_page.k8'),
   },
   {
     id: '4',
-    name: '智能仓储系统',
-    manager: '赵六',
+    name: i18n.t('pm.project_master_detail_page.k9'),
+    manager: i18n.t('pm.project_master_detail_page.k10'),
     status: 'inactive',
     priority: 'medium',
     progress: 20,
     startDate: '2026-01-01',
     endDate: '2026-12-31',
     budget: 400000,
-    description: '基于AI的智能仓储管理系统，实现自动化入库出库',
+    description: i18n.t('pm.project_master_detail_page.k11'),
   },
 ];
-
 export const ProjectMasterDetailPage: React.FC = () => {
   const [projects] = useState<ProjectItem[]>(initialProjects);
-
   const columns: MasterColumn<ProjectItem>[] = [
-    { id: 'name', label: '项目名称', width: 'flex', minWidth: 150 },
+    { id: 'name', label: i18n.t('pm.project_master_detail_page.k12'), width: 'flex', minWidth: 150 },
     {
       id: 'manager',
-      label: '负责人',
+      label: i18n.t('pm.project_master_detail_page.k13'),
       width: 100,
     },
     {
       id: 'status',
-      label: '状态',
+      label: i18n.t('pm.project_master_detail_page.k14'),
       width: 80,
       align: 'center',
       render: (_value, row) => {
         const statusConfig = {
-          active: { label: '进行中', color: 'success' as const },
-          inactive: { label: '暂停', color: 'warning' as const },
-          completed: { label: '已完成', color: 'default' as const },
+          active: { label: i18n.t('pm.project_master_detail_page.k15'), color: 'success' as const },
+          inactive: { label: i18n.t('pm.project_master_detail_page.k16'), color: 'warning' as const },
+          completed: { label: i18n.t('pm.project_master_detail_page.k17'), color: 'default' as const },
         };
         const config = statusConfig[row.status];
         return (
@@ -103,7 +100,7 @@ export const ProjectMasterDetailPage: React.FC = () => {
     },
     {
       id: 'progress',
-      label: '进度',
+      label: i18n.t('pm.project_master_detail_page.k18'),
       width: 120,
       align: 'right',
       render: (_value, row) => (
@@ -117,7 +114,7 @@ export const ProjectMasterDetailPage: React.FC = () => {
     },
     {
       id: 'budget',
-      label: '预算',
+      label: i18n.t('pm.project_master_detail_page.k19'),
       width: 100,
       align: 'right',
       render: (_value, row) => (
@@ -125,10 +122,8 @@ export const ProjectMasterDetailPage: React.FC = () => {
       ),
     },
   ];
-
   const renderDetail = (item: ProjectItem | null) => {
     if (!item) return null;
-
     return (
       <Box sx={{ p: 2 }}>
         <Typography
@@ -137,7 +132,6 @@ export const ProjectMasterDetailPage: React.FC = () => {
         >
           {item.name}
         </Typography>
-
         {item.description && (
           <Typography
             variant='body2'
@@ -147,9 +141,7 @@ export const ProjectMasterDetailPage: React.FC = () => {
             {item.description}
           </Typography>
         )}
-
         <Divider sx={{ mb: 4 }} />
-
         <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
           <Box sx={{ flex: '1 1 250px' }}>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
@@ -171,7 +163,7 @@ export const ProjectMasterDetailPage: React.FC = () => {
                   variant='caption'
                   color='text.secondary'
                 >
-                  负责人
+                  {i18n.t('pages.project_master_detail_page.k0')}
                 </Typography>
                 <Typography
                   variant='body2'
@@ -182,7 +174,6 @@ export const ProjectMasterDetailPage: React.FC = () => {
               </Box>
             </Box>
           </Box>
-
           <Box sx={{ flex: '1 1 250px' }}>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
               <Box
@@ -203,21 +194,20 @@ export const ProjectMasterDetailPage: React.FC = () => {
                   variant='caption'
                   color='text.secondary'
                 >
-                  优先级
+                  {i18n.t('pages.project_master_detail_page.k1')}
                 </Typography>
                 <Typography
                   variant='body2'
                   sx={{ fontWeight: 500 }}
                 >
-                  {item.priority === 'low' && '低'}
-                  {item.priority === 'medium' && '中'}
-                  {item.priority === 'high' && '高'}
-                  {item.priority === 'urgent' && '紧急'}
+                  {item.priority === 'low' && i18n.t('pm.project_master_detail_page.k20')}
+                  {item.priority === 'medium' && i18n.t('pm.project_master_detail_page.k21')}
+                  {item.priority === 'high' && i18n.t('pm.project_master_detail_page.k22')}
+                  {item.priority === 'urgent' && i18n.t('pm.project_master_detail_page.k23')}
                 </Typography>
               </Box>
             </Box>
           </Box>
-
           <Box sx={{ flex: '1 1 250px' }}>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
               <Box
@@ -238,7 +228,7 @@ export const ProjectMasterDetailPage: React.FC = () => {
                   variant='caption'
                   color='text.secondary'
                 >
-                  时间范围
+                  {i18n.t('pages.project_master_detail_page.k2')}
                 </Typography>
                 <Typography
                   variant='body2'
@@ -249,7 +239,6 @@ export const ProjectMasterDetailPage: React.FC = () => {
               </Box>
             </Box>
           </Box>
-
           <Box sx={{ flex: '1 1 250px' }}>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
               <Box
@@ -270,7 +259,7 @@ export const ProjectMasterDetailPage: React.FC = () => {
                   variant='caption'
                   color='text.secondary'
                 >
-                  预算
+                  {i18n.t('pages.project_master_detail_page.k3')}
                 </Typography>
                 <Typography
                   variant='body2'
@@ -282,14 +271,12 @@ export const ProjectMasterDetailPage: React.FC = () => {
             </Box>
           </Box>
         </Box>
-
         <Divider sx={{ my: 4 }} />
-
         <Typography
           variant='subtitle2'
           sx={{ fontWeight: 600, mb: 2 }}
         >
-          项目进度
+          {i18n.t('pages.project_master_detail_page.k4')}
         </Typography>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
           <Box
@@ -312,14 +299,12 @@ export const ProjectMasterDetailPage: React.FC = () => {
             {item.progress}%
           </Typography>
         </Box>
-
         <Divider sx={{ my: 4 }} />
-
         <Typography
           variant='subtitle2'
           sx={{ fontWeight: 600, mb: 2 }}
         >
-          项目状态
+          {i18n.t('pages.project_master_detail_page.k5')}
         </Typography>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
           {item.status === 'completed' ? (
@@ -338,32 +323,30 @@ export const ProjectMasterDetailPage: React.FC = () => {
             <Box sx={{ width: 12, height: 12, borderRadius: '50%', bgcolor: 'warning.main' }} />
           )}
           <Typography variant='body2'>
-            {item.status === 'active' && '项目进行中'}
-            {item.status === 'inactive' && '项目已暂停'}
-            {item.status === 'completed' && '项目已完成'}
+            {item.status === 'active' && i18n.t('pm.project_master_detail_page.k24')}
+            {item.status === 'inactive' && i18n.t('pm.project_master_detail_page.k25')}
+            {item.status === 'completed' && i18n.t('pm.project_master_detail_page.k26')}
           </Typography>
         </Box>
       </Box>
     );
   };
-
   return (
     <MasterDetailPageTemplate<ProjectItem>
-      title='项目列表'
-      subtitle='查看和管理所有项目，点击项目查看详情'
+      title={i18n.t('pm.project_master_detail_page.k27')}
+      subtitle={i18n.t('pm.project_master_detail_page.k28')}
       items={projects}
       columns={columns}
       getRowId={(item) => item.id}
       renderDetail={renderDetail}
-      detailEmptyTitle='选择项目'
-      detailEmptyDescription='从左侧列表中选择一个项目查看详细信息'
+      detailEmptyTitle={i18n.t('pm.project_master_detail_page.k29')}
+      detailEmptyDescription={i18n.t('pm.project_master_detail_page.k30')}
       onAdd={() => {}}
-      addButtonText='新建项目'
+      addButtonText={i18n.t('pm.project_master_detail_page.k31')}
       masterWidth={520}
       collapsible
       enableEditMode
     />
   );
 };
-
 export default ProjectMasterDetailPage;

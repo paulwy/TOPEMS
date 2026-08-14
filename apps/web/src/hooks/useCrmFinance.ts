@@ -9,6 +9,7 @@ import { crmFinanceApi } from '../api/crmFinance';
 import type { CustomerFinanceInfo, SalesInvoice, CollectionRecord } from '../api/crmFinance';
 
 import { CACHE_DURATIONS, QUERY_KEYS, queryClient } from '@/lib/reactQuery';
+import i18n from '@/i18n';
 
 // ============================================
 // 一、客户财务信息Hooks
@@ -46,10 +47,10 @@ export function useUpdateCustomerFinanceInfo() {
   exact: false,
   refetchType: 'active',
 });
-      success('客户财务信息更新成功');
+      success(i18n.t('shared.use_crm_finance.k0'));
     },
     onError: (err) => {
-      error(err.message || '客户财务信息更新失败');
+      error(err.message || i18n.t('shared.use_crm_finance.k1'));
     },
   });
 }
@@ -107,10 +108,10 @@ export function useCreateSalesInvoice() {
   exact: false,
   refetchType: 'active',
 });
-      success('销售发票创建成功');
+      success(i18n.t('shared.use_crm_finance.k2'));
     },
     onError: (err) => {
-      error(err.message || '销售发票创建失败');
+      error(err.message || i18n.t('shared.use_crm_finance.k3'));
     },
   });
 }
@@ -134,10 +135,10 @@ export function useUpdateSalesInvoice() {
   exact: false,
   refetchType: 'active',
 });
-      success('销售发票更新成功');
+      success(i18n.t('shared.use_crm_finance.k4'));
     },
     onError: (err) => {
-      error(err.message || '销售发票更新失败');
+      error(err.message || i18n.t('shared.use_crm_finance.k5'));
     },
   });
 }
@@ -160,10 +161,10 @@ export function useDeleteSalesInvoice() {
   exact: false,
   refetchType: 'active',
 });
-      success('销售发票删除成功');
+      success(i18n.t('shared.use_crm_finance.k6'));
     },
     onError: (err) => {
-      error(err.message || '销售发票删除失败');
+      error(err.message || i18n.t('shared.use_crm_finance.k7'));
     },
   });
 }
@@ -186,10 +187,10 @@ export function useIssueSalesInvoice() {
   exact: false,
   refetchType: 'active',
 });
-      success('发票开具成功');
+      success(i18n.t('shared.use_crm_finance.k8'));
     },
     onError: (err) => {
-      error(err.message || '发票开具失败');
+      error(err.message || i18n.t('shared.use_crm_finance.k9'));
     },
   });
 }
@@ -213,10 +214,10 @@ export function useVoidSalesInvoice() {
   exact: false,
   refetchType: 'active',
 });
-      success('发票已作废');
+      success(i18n.t('shared.use_crm_finance.k10'));
     },
     onError: (err) => {
-      error(err.message || '发票作废失败');
+      error(err.message || i18n.t('shared.use_crm_finance.k11'));
     },
   });
 }
@@ -240,10 +241,10 @@ export function useRedFlushSalesInvoice() {
   exact: false,
   refetchType: 'active',
 });
-      success('发票已红冲');
+      success(i18n.t('shared.use_crm_finance.k12'));
     },
     onError: (err) => {
-      error(err.message || '发票红冲失败');
+      error(err.message || i18n.t('shared.use_crm_finance.k13'));
     },
   });
 }
@@ -308,10 +309,10 @@ export function useCreateCollectionRecord() {
   exact: false,
   refetchType: 'active',
 });
-      success('收款记录创建成功');
+      success(i18n.t('shared.use_crm_finance.k14'));
     },
     onError: (err) => {
-      error(err.message || '收款记录创建失败');
+      error(err.message || i18n.t('shared.use_crm_finance.k15'));
     },
   });
 }
@@ -342,10 +343,10 @@ export function useConfirmCollection() {
   exact: false,
   refetchType: 'active',
 });
-      success('收款已确认');
+      success(i18n.t('shared.use_crm_finance.k16'));
     },
     onError: (err) => {
-      error(err.message || '收款确认失败');
+      error(err.message || i18n.t('shared.use_crm_finance.k17'));
     },
   });
 }
@@ -379,13 +380,13 @@ export function useBatchConfirmCollections() {
       const successCount = result?.data?.success || 0;
       const failedCount = result?.data?.failed || 0;
       if (failedCount > 0) {
-        showError(`成功确认 ${successCount} 条，失败 ${failedCount} 条`);
+        showError(`${i18n.t('shared.use_crm_finance.k0')}${successCount}${i18n.t('shared.use_crm_finance.k1')}${failedCount}${i18n.t('shared.use_crm_finance.k2')}`);
       } else {
-        success(`成功确认 ${successCount} 条`);
+        success(`${i18n.t('shared.use_crm_finance.k3')}${successCount}${i18n.t('shared.use_crm_finance.k4')}`);
       }
     },
     onError: (err) => {
-      showError(err.message || '批量确认失败');
+      showError(err.message || i18n.t('shared.use_crm_finance.k18'));
     },
   });
 }
@@ -476,10 +477,10 @@ export function useExportSalesInvoices() {
           exact: false,
           refetchType: 'active',
         });
-      success('销售发票已导出');
+      success(i18n.t('shared.use_crm_finance.k19'));
     },
     onError: (err) => {
-      error(err.message || '导出失败');
+      error(err.message || i18n.t('shared.use_crm_finance.k20'));
     },
   });
 }
@@ -515,10 +516,10 @@ export function useExportCollectionRecords() {
           exact: false,
           refetchType: 'active',
         });
-      success('收款记录已导出');
+      success(i18n.t('shared.use_crm_finance.k21'));
     },
     onError: (err) => {
-      error(err.message || '导出失败');
+      error(err.message || i18n.t('shared.use_crm_finance.k22'));
     },
   });
 }
@@ -554,10 +555,10 @@ export function useExportReceivableAging() {
           exact: false,
           refetchType: 'active',
         });
-      success('应收账龄分析已导出');
+      success(i18n.t('shared.use_crm_finance.k23'));
     },
     onError: (err) => {
-      error(err.message || '导出失败');
+      error(err.message || i18n.t('shared.use_crm_finance.k24'));
     },
   });
 }

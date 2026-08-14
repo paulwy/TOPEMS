@@ -1,10 +1,11 @@
 import React from 'react';
 import type { EntitySchema } from '@/schema';
+import i18n from '@/i18n';
 
 export const contractSchema: EntitySchema = {
   entity: 'supplier_contract',
-  title: '合同管理',
-  description: '管理供应商合同，跟踪合同状态、归档合同文档',
+  title: i18n.t('srm.contract.k0'),
+  description: i18n.t('srm.contract.k1'),
 
   api: {
     module: 'srm',
@@ -14,7 +15,7 @@ export const contractSchema: EntitySchema = {
   fields: [
     {
       name: 'contractNo',
-      label: '合同编号',
+      label: i18n.t('srm.contract.k2'),
       type: 'text',
       required: true,
       readonlyOnEdit: true,
@@ -24,7 +25,7 @@ export const contractSchema: EntitySchema = {
     },
     {
       name: 'title',
-      label: '合同名称',
+      label: i18n.t('srm.contract.k3'),
       type: 'text',
       required: true,
       sortable: true,
@@ -33,7 +34,7 @@ export const contractSchema: EntitySchema = {
     },
     {
       name: 'supplier_id',
-      label: '供应商',
+      label: i18n.t('srm.contract.k4'),
       type: 'text',
       required: true,
       listWidth: 150,
@@ -45,17 +46,17 @@ export const contractSchema: EntitySchema = {
     },
     {
       name: 'contract_type',
-      label: '合同类型',
+      label: i18n.t('srm.contract.k5'),
       type: 'select',
       required: true,
       options: {
         type: 'static',
         options: [
-          { value: '采购合同', label: '采购合同' },
-          { value: '销售合同', label: '销售合同' },
-          { value: '服务合同', label: '服务合同' },
-          { value: '框架协议', label: '框架协议' },
-          { value: '其他', label: '其他' },
+          { value: i18n.t('srm.contract.k6'), label: i18n.t('srm.contract.k7') },
+          { value: i18n.t('srm.contract.k8'), label: i18n.t('srm.contract.k9') },
+          { value: i18n.t('srm.contract.k10'), label: i18n.t('srm.contract.k11') },
+          { value: i18n.t('srm.contract.k12'), label: i18n.t('srm.contract.k13') },
+          { value: i18n.t('srm.contract.k14'), label: i18n.t('srm.contract.k15') },
         ],
       },
       listWidth: 120,
@@ -63,7 +64,7 @@ export const contractSchema: EntitySchema = {
     },
     {
       name: 'total_amount',
-      label: '合同金额',
+      label: i18n.t('srm.contract.k16'),
       type: 'number',
       sortable: true,
       listWidth: 130,
@@ -80,15 +81,15 @@ export const contractSchema: EntitySchema = {
     },
     {
       name: 'currency',
-      label: '币种',
+      label: i18n.t('srm.contract.k17'),
       type: 'select',
       defaultValue: 'CNY',
       options: {
         type: 'static',
         options: [
-          { value: 'CNY', label: '人民币 (CNY)' },
-          { value: 'USD', label: '美元 (USD)' },
-          { value: 'EUR', label: '欧元 (EUR)' },
+          { value: 'CNY', label: i18n.t('srm.contract.cny_18') },
+          { value: 'USD', label: i18n.t('srm.contract.usd_19') },
+          { value: 'EUR', label: i18n.t('srm.contract.eur_20') },
         ],
       },
       listWidth: 80,
@@ -97,37 +98,37 @@ export const contractSchema: EntitySchema = {
     },
     {
       name: 'sign_date',
-      label: '签署日期',
+      label: i18n.t('srm.contract.k21'),
       type: 'date',
       sortable: true,
       listWidth: 120,
     },
     {
       name: 'start_date',
-      label: '开始日期',
+      label: i18n.t('srm.contract.k22'),
       type: 'date',
       sortable: true,
       listWidth: 120,
     },
     {
       name: 'end_date',
-      label: '结束日期',
+      label: i18n.t('srm.contract.k23'),
       type: 'date',
       sortable: true,
       listWidth: 120,
     },
     {
       name: 'status',
-      label: '状态',
+      label: i18n.t('srm.contract.k24'),
       type: 'select',
       defaultValue: 'pending',
       options: {
         type: 'static',
         options: [
-          { value: 'pending', label: '待签署' },
-          { value: 'active', label: '执行中' },
-          { value: 'completed', label: '已完成' },
-          { value: 'terminated', label: '已终止' },
+          { value: 'pending', label: i18n.t('srm.contract.k25') },
+          { value: 'active', label: i18n.t('srm.contract.k26') },
+          { value: 'completed', label: i18n.t('srm.contract.k27') },
+          { value: 'terminated', label: i18n.t('srm.contract.k28') },
         ],
       },
       listWidth: 100,
@@ -135,13 +136,13 @@ export const contractSchema: EntitySchema = {
     },
     {
       name: 'remarks',
-      label: '备注',
+      label: i18n.t('srm.contract.k29'),
       type: 'textarea',
       showInList: false,
     },
     {
       name: 'created_at',
-      label: '创建时间',
+      label: i18n.t('srm.contract.k30'),
       type: 'datetime',
       readonly: true,
       hideInForm: true,
@@ -150,7 +151,7 @@ export const contractSchema: EntitySchema = {
     },
     {
       name: 'updated_at',
-      label: '更新时间',
+      label: i18n.t('srm.contract.k31'),
       type: 'datetime',
       readonly: true,
       hideInForm: true,
@@ -180,23 +181,23 @@ export const contractSchema: EntitySchema = {
         terminated: 'error',
       },
       labelMap: {
-        pending: '待签署',
-        active: '执行中',
-        completed: '已完成',
-        terminated: '已终止',
+        pending: i18n.t('srm.contract.k32'),
+        active: i18n.t('srm.contract.k33'),
+        completed: i18n.t('srm.contract.k34'),
+        terminated: i18n.t('srm.contract.k35'),
       },
     },
     filters: [
       {
         id: 'status',
-        label: '状态',
+        label: i18n.t('srm.contract.k36'),
         type: 'select',
         options: [
-          { label: '全部状态', value: 'all' },
-          { label: '待签署', value: 'pending' },
-          { label: '执行中', value: 'active' },
-          { label: '已完成', value: 'completed' },
-          { label: '已终止', value: 'terminated' },
+          { label: i18n.t('srm.contract.k37'), value: 'all' },
+          { label: i18n.t('srm.contract.k38'), value: 'pending' },
+          { label: i18n.t('srm.contract.k39'), value: 'active' },
+          { label: i18n.t('srm.contract.k40'), value: 'completed' },
+          { label: i18n.t('srm.contract.k41'), value: 'terminated' },
         ],
       },
     ],
@@ -206,21 +207,21 @@ export const contractSchema: EntitySchema = {
 
   formSections: [
     {
-      title: '基本信息',
+      title: i18n.t('srm.contract.k42'),
       fields: ['contractNo', 'title', 'supplier_id', 'contract_type', 'status'],
     },
     {
-      title: '金额与日期',
+      title: i18n.t('srm.contract.k43'),
       fields: ['total_amount', 'currency', 'sign_date', 'start_date', 'end_date'],
     },
     {
-      title: '备注',
+      title: i18n.t('srm.contract.k44'),
       fields: ['remarks'],
     },
   ],
 
   formColCount: 2,
-  createTitle: '新增合同',
-  editTitle: '编辑合同',
-  detailTitle: '合同详情',
+  createTitle: i18n.t('srm.contract.k45'),
+  editTitle: i18n.t('srm.contract.k46'),
+  detailTitle: i18n.t('srm.contract.k47'),
 };

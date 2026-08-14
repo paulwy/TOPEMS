@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useRef } from 'react';
 import { Building2, Users, User } from 'lucide-react';
 import { FormControl, InputLabel, Select, MenuItem, Box, Typography } from '@mui/material';
 import { useOrganization } from '../../hooks/useOrganization';
+import i18n from '@/i18n';
 
 export interface OrganizationFilterValue {
   orgId?: string;
@@ -88,10 +89,10 @@ const OrganizationFilter: React.FC<OrganizationFilterProps> = ({
             sx={{ minWidth: 160 }}
             disabled={disabled}
           >
-            <InputLabel>选择公司</InputLabel>
+            <InputLabel>{i18n.t('components.organization_filter.k0')}</InputLabel>
             <Select
               value={value.orgId || 'all'}
-              label='选择公司'
+              label={i18n.t('components.organization_filter.k1')}
               onChange={(e) =>
                 onChange({
                   orgId: e.target.value === 'all' ? undefined : e.target.value,
@@ -100,7 +101,7 @@ const OrganizationFilter: React.FC<OrganizationFilterProps> = ({
                 })
               }
             >
-              <MenuItem value='all'>全部公司</MenuItem>
+              <MenuItem value='all'>{i18n.t('components.organization_filter.k2')}</MenuItem>
               {companies.map((company) => (
                 <MenuItem
                   key={company.id}
@@ -122,10 +123,10 @@ const OrganizationFilter: React.FC<OrganizationFilterProps> = ({
             sx={{ minWidth: 160 }}
             disabled={disabled || (!value.orgId && companies.length > 0)}
           >
-            <InputLabel>选择部门</InputLabel>
+            <InputLabel>{i18n.t('components.organization_filter.k3')}</InputLabel>
             <Select
               value={value.departmentId || 'all'}
-              label='选择部门'
+              label={i18n.t('components.organization_filter.k4')}
               onChange={(e) =>
                 onChange({
                   ...value,
@@ -134,7 +135,7 @@ const OrganizationFilter: React.FC<OrganizationFilterProps> = ({
                 })
               }
             >
-              <MenuItem value='all'>全部部门</MenuItem>
+              <MenuItem value='all'>{i18n.t('components.organization_filter.k5')}</MenuItem>
               {filteredDepartments.map((department) => (
                 <MenuItem
                   key={department.id}
@@ -156,10 +157,10 @@ const OrganizationFilter: React.FC<OrganizationFilterProps> = ({
             sx={{ minWidth: 160 }}
             disabled={disabled || (!value.departmentId && departments.length > 0)}
           >
-            <InputLabel>选择员工</InputLabel>
+            <InputLabel>{i18n.t('components.organization_filter.k6')}</InputLabel>
             <Select
               value={value.employeeId || 'all'}
-              label='选择员工'
+              label={i18n.t('components.organization_filter.k7')}
               onChange={(e) =>
                 onChange({
                   ...value,
@@ -167,7 +168,7 @@ const OrganizationFilter: React.FC<OrganizationFilterProps> = ({
                 })
               }
             >
-              <MenuItem value='all'>全部员工</MenuItem>
+              <MenuItem value='all'>{i18n.t('components.organization_filter.k8')}</MenuItem>
               {filteredEmployees.map((employee) => (
                 <MenuItem
                   key={employee.id}
@@ -192,7 +193,7 @@ const OrganizationFilter: React.FC<OrganizationFilterProps> = ({
             variant='body2'
             sx={{ fontWeight: 500 }}
           >
-            已选:
+            [i18n.t('components.organization_filter.k0')]:
           </Typography>
           {selectedCompany && (
             <Typography

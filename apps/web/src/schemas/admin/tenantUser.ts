@@ -4,16 +4,16 @@ import type { EntitySchema } from '@/schema';
 import i18n from '@/i18n';
 
 const roleLabels: Record<string, string> = {
-  owner: '所有者',
-  admin: '管理员',
-  member: '成员',
-  guest: '访客',
+  owner: i18n.t('admin.tenant_user.k0'),
+  admin: i18n.t('admin.tenant_user.k1'),
+  member: i18n.t('admin.tenant_user.k2'),
+  guest: i18n.t('admin.tenant_user.k3'),
 };
 
 const userStatusLabels: Record<string, string> = {
-  active: '活跃',
-  invited: '已邀请',
-  suspended: '已停用',
+  active: i18n.t('admin.tenant_user.k4'),
+  invited: i18n.t('admin.tenant_user.k5'),
+  suspended: i18n.t('admin.tenant_user.k6'),
 };
 
 const userStatusColors: Record<string, 'success' | 'warning' | 'error' | 'default'> = {
@@ -59,10 +59,10 @@ function renderRoleCell(row: Record<string, unknown>) {
       size: 'small',
       onChange: () => {},
       children: [
-        React.createElement(MenuItem, { value: 'owner', children: '所有者' }),
-        React.createElement(MenuItem, { value: 'admin', children: '管理员' }),
-        React.createElement(MenuItem, { value: 'member', children: '成员' }),
-        React.createElement(MenuItem, { value: 'guest', children: '访客' }),
+        React.createElement(MenuItem, { value: 'owner', children: i18n.t('admin.tenant_user.k7') }),
+        React.createElement(MenuItem, { value: 'admin', children: i18n.t('admin.tenant_user.k8') }),
+        React.createElement(MenuItem, { value: 'member', children: i18n.t('admin.tenant_user.k9') }),
+        React.createElement(MenuItem, { value: 'guest', children: i18n.t('admin.tenant_user.k10') }),
       ],
     }),
   });
@@ -81,7 +81,7 @@ function renderStatusCell(row: Record<string, unknown>) {
 
 function renderDateCell(row: Record<string, unknown>, field: string) {
   const val = row[field] as string | null | undefined;
-  if (!val) return field === 'last_login' ? '从未登录' : '-';
+  if (!val) return field === 'last_login' ? i18n.t('admin.tenant_user.k11') : '-';
   return new Date(val).toLocaleDateString('zh-CN');
 }
 

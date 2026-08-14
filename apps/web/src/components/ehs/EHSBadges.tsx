@@ -1,5 +1,6 @@
 import { Chip } from '@mui/material';
 import React from 'react';
+import i18n from '@/i18n';
 
 const colorMap: Record<string, { bg: string; color: string }> = {
   'bg-red-100': { bg: 'error.lighter', color: 'error.dark' },
@@ -31,101 +32,101 @@ interface EHSStatusBadgeProps {
 }
 
 const hazardStatusConfig: Record<string, { color: string; label: string }> = {
-  active: { color: 'bg-red-100 text-red-700 border-red-200', label: '活动中' },
-  活动中: { color: 'bg-red-100 text-red-700 border-red-200', label: '活动中' },
+  active: { color: 'bg-red-100 text-red-700 border-red-200', label: i18n.t('components.ehs_badges.k12') },
+  [i18n.t('components.ehs_badges.k21')]: { color: 'bg-red-100 text-red-700 border-red-200', label: i18n.t('components.ehs_badges.k13') },
   controlled: {
     color: 'bg-yellow-100 text-yellow-700 border-yellow-200',
-    label: '已控制',
+    label: i18n.t('components.ehs_badges.k14'),
   },
-  已控制: {
+  [i18n.t('components.ehs_badges.k22')]: {
     color: 'bg-yellow-100 text-yellow-700 border-yellow-200',
-    label: '已控制',
+    label: i18n.t('components.ehs_badges.k15'),
   },
   eliminated: {
     color: 'bg-green-100 text-green-700 border-green-200',
-    label: '已消除',
+    label: i18n.t('components.ehs_badges.k16'),
   },
-  已消除: {
+  [i18n.t('components.ehs_badges.k23')]: {
     color: 'bg-green-100 text-green-700 border-green-200',
-    label: '已消除',
+    label: i18n.t('components.ehs_badges.k17'),
   },
   archived: {
     color: 'bg-gray-100 text-gray-700 border-gray-200',
-    label: '已归档',
+    label: i18n.t('components.ehs_badges.k18'),
   },
-  已归档: {
+  [i18n.t('components.ehs_badges.k24')]: {
     color: 'bg-gray-100 text-gray-700 border-gray-200',
-    label: '已归档',
+    label: i18n.t('components.ehs_badges.k19'),
   },
 };
 
 const incidentStatusConfig: Record<string, { color: string; label: string }> = {
   pending: {
     color: 'bg-yellow-100 text-yellow-700 border-yellow-200',
-    label: '待处理',
+    label: i18n.t('components.ehs_badges.k20'),
   },
-  待处理: {
+  [i18n.t('components.ehs_badges.k25')]: {
     color: 'bg-yellow-100 text-yellow-700 border-yellow-200',
-    label: '待处理',
+    label: i18n.t('components.ehs_badges.k21'),
   },
   investigating: {
     color: 'bg-blue-100 text-blue-700 border-blue-200',
-    label: '调查中',
+    label: i18n.t('components.ehs_badges.k22'),
   },
-  调查中: {
+  [i18n.t('components.ehs_badges.k26')]: {
     color: 'bg-blue-100 text-blue-700 border-blue-200',
-    label: '调查中',
+    label: i18n.t('components.ehs_badges.k23'),
   },
   resolved: {
     color: 'bg-green-100 text-green-700 border-green-200',
-    label: '已解决',
+    label: i18n.t('components.ehs_badges.k24'),
   },
-  已解决: {
+  [i18n.t('components.ehs_badges.k27')]: {
     color: 'bg-green-100 text-green-700 border-green-200',
-    label: '已解决',
+    label: i18n.t('components.ehs_badges.k25'),
   },
   closed: {
     color: 'bg-gray-100 text-gray-700 border-gray-200',
-    label: '已关闭',
+    label: i18n.t('components.ehs_badges.k26'),
   },
-  已关闭: {
+  [i18n.t('components.ehs_badges.k28')]: {
     color: 'bg-gray-100 text-gray-700 border-gray-200',
-    label: '已关闭',
+    label: i18n.t('components.ehs_badges.k27'),
   },
 };
 
 const controlStatusConfig: Record<string, { color: string; label: string }> = {
   pending: {
     color: 'bg-yellow-100 text-yellow-700 border-yellow-200',
-    label: '待处理',
+    label: i18n.t('components.ehs_badges.k28'),
   },
-  待处理: {
+  [i18n.t('components.ehs_badges.k29')]: {
     color: 'bg-yellow-100 text-yellow-700 border-yellow-200',
-    label: '待处理',
+    label: i18n.t('components.ehs_badges.k29'),
   },
   in_progress: {
     color: 'bg-blue-100 text-blue-700 border-blue-200',
-    label: '进行中',
+    label: i18n.t('components.ehs_badges.k30'),
   },
-  进行中: {
+  [i18n.t('components.ehs_badges.k30')]: {
     color: 'bg-blue-100 text-blue-700 border-blue-200',
-    label: '进行中',
+    label: i18n.t('components.ehs_badges.k31'),
   },
   completed: {
     color: 'bg-green-100 text-green-700 border-green-200',
-    label: '已完成',
+    label: i18n.t('components.ehs_badges.k32'),
   },
-  已完成: {
+  [i18n.t('components.ehs_badges.k31')]: {
     color: 'bg-green-100 text-green-700 border-green-200',
-    label: '已完成',
+    label: i18n.t('components.ehs_badges.k33'),
   },
   verified: {
     color: 'bg-emerald-100 text-emerald-700 border-emerald-200',
-    label: '已验证',
+    label: i18n.t('components.ehs_badges.k34'),
   },
-  已验证: {
+  [i18n.t('components.ehs_badges.k32')]: {
     color: 'bg-emerald-100 text-emerald-700 border-emerald-200',
-    label: '已验证',
+    label: i18n.t('components.ehs_badges.k35'),
   },
 };
 
@@ -184,38 +185,38 @@ interface EHSSeverityBadgeProps {
 }
 
 const severityConfig: Record<string, { color: string; label: string }> = {
-  high: { color: 'bg-red-100 text-red-700 border-red-200', label: '高' },
-  高: { color: 'bg-red-100 text-red-700 border-red-200', label: '高' },
-  fatal: { color: 'bg-red-100 text-red-700 border-red-200', label: '致命' },
-  致命: { color: 'bg-red-100 text-red-700 border-red-200', label: '致命' },
+  high: { color: 'bg-red-100 text-red-700 border-red-200', label: i18n.t('components.ehs_badges.k43') },
+  [i18n.t('components.ehs_badges.k40')]: { color: 'bg-red-100 text-red-700 border-red-200', label: i18n.t('components.ehs_badges.k44') },
+  fatal: { color: 'bg-red-100 text-red-700 border-red-200', label: i18n.t('components.ehs_badges.k45') },
+  [i18n.t('components.ehs_badges.k41')]: { color: 'bg-red-100 text-red-700 border-red-200', label: i18n.t('components.ehs_badges.k46') },
   serious: {
     color: 'bg-orange-100 text-orange-700 border-orange-200',
-    label: '严重',
+    label: i18n.t('components.ehs_badges.k47'),
   },
-  严重: {
+  [i18n.t('components.ehs_badges.k42')]: {
     color: 'bg-orange-100 text-orange-700 border-orange-200',
-    label: '严重',
+    label: i18n.t('components.ehs_badges.k48'),
   },
   medium: {
     color: 'bg-yellow-100 text-yellow-700 border-yellow-200',
-    label: '中',
+    label: i18n.t('components.ehs_badges.k49'),
   },
-  中: { color: 'bg-yellow-100 text-yellow-700 border-yellow-200', label: '中' },
+  [i18n.t('components.ehs_badges.k43')]: { color: 'bg-yellow-100 text-yellow-700 border-yellow-200', label: i18n.t('components.ehs_badges.k50') },
   minor: {
     color: 'bg-yellow-100 text-yellow-700 border-yellow-200',
-    label: '轻微',
+    label: i18n.t('components.ehs_badges.k51'),
   },
-  轻微: {
+  [i18n.t('components.ehs_badges.k44')]: {
     color: 'bg-yellow-100 text-yellow-700 border-yellow-200',
-    label: '轻微',
+    label: i18n.t('components.ehs_badges.k52'),
   },
-  low: { color: 'bg-green-100 text-green-700 border-green-200', label: '低' },
-  低: { color: 'bg-green-100 text-green-700 border-green-200', label: '低' },
+  low: { color: 'bg-green-100 text-green-700 border-green-200', label: i18n.t('components.ehs_badges.k53') },
+  [i18n.t('components.ehs_badges.k45')]: { color: 'bg-green-100 text-green-700 border-green-200', label: i18n.t('components.ehs_badges.k54') },
   near_miss: {
     color: 'bg-blue-100 text-blue-700 border-blue-200',
-    label: '未遂',
+    label: i18n.t('components.ehs_badges.k55'),
   },
-  未遂: { color: 'bg-blue-100 text-blue-700 border-blue-200', label: '未遂' },
+  [i18n.t('components.ehs_badges.k46')]: { color: 'bg-blue-100 text-blue-700 border-blue-200', label: i18n.t('components.ehs_badges.k56') },
 };
 
 export const EHSSeverityBadge: React.FC<EHSSeverityBadgeProps> = ({ severity }) => {
@@ -249,23 +250,23 @@ interface EHSRiskLevelBadgeProps {
 }
 
 const riskLevelConfig: Record<string, { color: string; label: string }> = {
-  high: { color: 'bg-red-100 text-red-700 border-red-200', label: '高风险' },
-  高: { color: 'bg-red-100 text-red-700 border-red-200', label: '高风险' },
+  high: { color: 'bg-red-100 text-red-700 border-red-200', label: i18n.t('components.ehs_badges.k57') },
+  [i18n.t('components.ehs_badges.k50')]: { color: 'bg-red-100 text-red-700 border-red-200', label: i18n.t('components.ehs_badges.k58') },
   medium: {
     color: 'bg-yellow-100 text-yellow-700 border-yellow-200',
-    label: '中风险',
+    label: i18n.t('components.ehs_badges.k59'),
   },
-  中: {
+  [i18n.t('components.ehs_badges.k51')]: {
     color: 'bg-yellow-100 text-yellow-700 border-yellow-200',
-    label: '中风险',
+    label: i18n.t('components.ehs_badges.k60'),
   },
   low: {
     color: 'bg-green-100 text-green-700 border-green-200',
-    label: '低风险',
+    label: i18n.t('components.ehs_badges.k61'),
   },
-  低: {
+  [i18n.t('components.ehs_badges.k52')]: {
     color: 'bg-green-100 text-green-700 border-green-200',
-    label: '低风险',
+    label: i18n.t('components.ehs_badges.k62'),
   },
 };
 
@@ -306,27 +307,27 @@ interface EHSMeasureTypeBadgeProps {
 const measureTypeConfig: Record<string, { color: string; label: string }> = {
   engineering: {
     color: 'bg-blue-100 text-blue-700 border-blue-200',
-    label: '工程控制',
+    label: i18n.t('components.ehs_badges.k66'),
   },
-  工程控制: {
+  [i18n.t('components.ehs_badges.k58')]: {
     color: 'bg-blue-100 text-blue-700 border-blue-200',
-    label: '工程控制',
+    label: i18n.t('components.ehs_badges.k67'),
   },
   administrative: {
     color: 'bg-purple-100 text-purple-700 border-purple-200',
-    label: '管理控制',
+    label: i18n.t('components.ehs_badges.k68'),
   },
-  管理控制: {
+  [i18n.t('components.ehs_badges.k59')]: {
     color: 'bg-purple-100 text-purple-700 border-purple-200',
-    label: '管理控制',
+    label: i18n.t('components.ehs_badges.k69'),
   },
   ppe: {
     color: 'bg-orange-100 text-orange-700 border-orange-200',
-    label: '个人防护',
+    label: i18n.t('components.ehs_badges.k70'),
   },
-  个人防护: {
+  [i18n.t('components.ehs_badges.k60')]: {
     color: 'bg-orange-100 text-orange-700 border-orange-200',
-    label: '个人防护',
+    label: i18n.t('components.ehs_badges.k71'),
   },
 };
 
@@ -375,37 +376,37 @@ interface EHSIncidentTypeBadgeProps {
 const incidentTypeConfig: Record<string, { color: string; label: string }> = {
   near_miss: {
     color: 'bg-blue-100 text-blue-700 border-blue-200',
-    label: '未遂事件',
+    label: i18n.t('components.ehs_badges.k77'),
   },
-  未遂事件: {
+  [i18n.t('components.ehs_badges.k66')]: {
     color: 'bg-blue-100 text-blue-700 border-blue-200',
-    label: '未遂事件',
+    label: i18n.t('components.ehs_badges.k78'),
   },
-  accident: { color: 'bg-red-100 text-red-700 border-red-200', label: '事故' },
-  事故: { color: 'bg-red-100 text-red-700 border-red-200', label: '事故' },
+  accident: { color: 'bg-red-100 text-red-700 border-red-200', label: i18n.t('components.ehs_badges.k79') },
+  [i18n.t('components.ehs_badges.k67')]: { color: 'bg-red-100 text-red-700 border-red-200', label: i18n.t('components.ehs_badges.k80') },
   injury: {
     color: 'bg-orange-100 text-orange-700 border-orange-200',
-    label: '人员伤害',
+    label: i18n.t('components.ehs_badges.k81'),
   },
-  人员伤害: {
+  [i18n.t('components.ehs_badges.k68')]: {
     color: 'bg-orange-100 text-orange-700 border-orange-200',
-    label: '人员伤害',
+    label: i18n.t('components.ehs_badges.k82'),
   },
   environmental: {
     color: 'bg-green-100 text-green-700 border-green-200',
-    label: '环境事件',
+    label: i18n.t('components.ehs_badges.k83'),
   },
-  环境事件: {
+  [i18n.t('components.ehs_badges.k69')]: {
     color: 'bg-green-100 text-green-700 border-green-200',
-    label: '环境事件',
+    label: i18n.t('components.ehs_badges.k84'),
   },
   equipment: {
     color: 'bg-yellow-100 text-yellow-700 border-yellow-200',
-    label: '设备故障',
+    label: i18n.t('components.ehs_badges.k85'),
   },
-  设备故障: {
+  [i18n.t('components.ehs_badges.k70')]: {
     color: 'bg-yellow-100 text-yellow-700 border-yellow-200',
-    label: '设备故障',
+    label: i18n.t('components.ehs_badges.k86'),
   },
 };
 

@@ -14,6 +14,7 @@ import {
   TextField,
   Avatar,
 } from '@mui/material';
+import i18n from '@/i18n';
 import type { Plugin, PluginReview, PluginVersion } from '@/api/plugin';
 import { getPluginReviews, getPluginVersions, submitPluginReview } from '@/api/plugin';
 import { usePluginStore } from '@/store/pluginStore';
@@ -59,8 +60,8 @@ export const PluginDetailModal: React.FC<PluginDetailModalProps> = ({ plugin, on
         content: reviewContent || undefined,
       });
       addNotification({
-        title: '评价成功',
-        message: '感谢您的评价',
+        title: i18n.t('components.plugin_detail_modal.k0'),
+        message: i18n.t('components.plugin_detail_modal.k1'),
         type: 'success',
       });
       setRating(0);
@@ -80,8 +81,8 @@ export const PluginDetailModal: React.FC<PluginDetailModalProps> = ({ plugin, on
     const success = await installPlugin(plugin.code);
     if (success) {
       addNotification({
-        title: '安装成功',
-        message: `${plugin.name} 插件已安装`,
+        title: i18n.t('components.plugin_detail_modal.k2'),
+        message: `${plugin.name} ${i18n.t('components.plugin_detail_modal.k0')}`,
         type: 'success',
       });
       onClose();
@@ -120,7 +121,7 @@ export const PluginDetailModal: React.FC<PluginDetailModalProps> = ({ plugin, on
           onClick={onClose}
           startIcon={<X className='w-5 h-5' />}
         >
-          关闭
+          {i18n.t('components.plugin_detail_modal.k1')}
         </Button>
       </DialogTitle>
 
@@ -132,13 +133,13 @@ export const PluginDetailModal: React.FC<PluginDetailModalProps> = ({ plugin, on
                 variant='h6'
                 sx={{ fontWeight: 'bold' }}
               >
-                描述
+                {i18n.t('components.plugin_detail_modal.k2')}
               </Typography>
               <Typography
                 variant='body1'
                 color='textSecondary'
               >
-                {plugin.description || '暂无描述'}
+                {plugin.description || i18n.t('components.plugin_detail_modal.k3')}
               </Typography>
             </div>
 
@@ -147,7 +148,7 @@ export const PluginDetailModal: React.FC<PluginDetailModalProps> = ({ plugin, on
                 variant='h6'
                 sx={{ fontWeight: 'bold' }}
               >
-                版本历史
+                {i18n.t('components.plugin_detail_modal.k3')}
               </Typography>
               <div className='space-y-2'>
                 {versions.length > 0 ? (
@@ -161,7 +162,7 @@ export const PluginDetailModal: React.FC<PluginDetailModalProps> = ({ plugin, on
                           <Typography sx={{ fontWeight: 'medium' }}>{v.version}</Typography>
                           {v.is_latest && (
                             <Chip
-                              label='最新'
+                              label={i18n.t('components.plugin_detail_modal.k4')}
                               size='small'
                               color='primary'
                               variant='outlined'
@@ -169,7 +170,7 @@ export const PluginDetailModal: React.FC<PluginDetailModalProps> = ({ plugin, on
                           )}
                           {v.is_stable && (
                             <Chip
-                              label='稳定'
+                              label={i18n.t('components.plugin_detail_modal.k5')}
                               size='small'
                               color='success'
                               variant='outlined'
@@ -199,7 +200,7 @@ export const PluginDetailModal: React.FC<PluginDetailModalProps> = ({ plugin, on
                     variant='body2'
                     color='textSecondary'
                   >
-                    暂无版本信息
+                    {i18n.t('components.plugin_detail_modal.k4')}
                   </Typography>
                 )}
               </div>
@@ -224,7 +225,7 @@ export const PluginDetailModal: React.FC<PluginDetailModalProps> = ({ plugin, on
                           <Avatar>{review.user_name?.charAt(0) || 'U'}</Avatar>
                           <div>
                             <Typography sx={{ fontWeight: 'medium' }}>
-                              {review.user_name || '匿名用户'}
+                              {review.user_name || i18n.t('components.plugin_detail_modal.k6')}
                             </Typography>
                             <Typography
                               variant='body2'
@@ -253,7 +254,7 @@ export const PluginDetailModal: React.FC<PluginDetailModalProps> = ({ plugin, on
                       )}
                       {review.is_verified_purchase && (
                         <Chip
-                          label='已购买'
+                          label={i18n.t('components.plugin_detail_modal.k7')}
                           size='small'
                           color='primary'
                           variant='outlined'
@@ -267,7 +268,7 @@ export const PluginDetailModal: React.FC<PluginDetailModalProps> = ({ plugin, on
                     variant='body2'
                     color='textSecondary'
                   >
-                    暂无评价
+                    {i18n.t('components.plugin_detail_modal.k5')}
                   </Typography>
                 )}
               </div>
@@ -282,7 +283,7 @@ export const PluginDetailModal: React.FC<PluginDetailModalProps> = ({ plugin, on
                     variant='h6'
                     sx={{ fontWeight: 'bold' }}
                   >
-                    评分
+                    {i18n.t('components.plugin_detail_modal.k6')}
                   </Typography>
                   <div style={{ textAlign: 'center' }}>
                     <Typography
@@ -301,21 +302,21 @@ export const PluginDetailModal: React.FC<PluginDetailModalProps> = ({ plugin, on
                 <Divider />
 
                 <div className='flex items-center justify-between'>
-                  <span style={{ color: 'var(--mui-palette-text-secondary)' }}>下载量</span>
+                  <span style={{ color: 'var(--mui-palette-text-secondary)' }}>{i18n.t('components.plugin_detail_modal.k8')}</span>
                   <Typography sx={{ fontWeight: 'medium' }}>
                     {plugin.install_count?.toLocaleString() || 0}
                   </Typography>
                 </div>
 
                 <div className='flex items-center justify-between'>
-                  <span style={{ color: 'var(--mui-palette-text-secondary)' }}>分类</span>
+                  <span style={{ color: 'var(--mui-palette-text-secondary)' }}>{i18n.t('components.plugin_detail_modal.k9')}</span>
                   <Typography sx={{ fontWeight: 'medium' }}>{plugin.category}</Typography>
                 </div>
 
                 <div className='flex items-center justify-between'>
-                  <span style={{ color: 'var(--mui-palette-text-secondary)' }}>作者</span>
+                  <span style={{ color: 'var(--mui-palette-text-secondary)' }}>{i18n.t('components.plugin_detail_modal.k10')}</span>
                   <Typography sx={{ fontWeight: 'medium' }}>
-                    {plugin.author_name || '未知'}
+                    {plugin.author_name || i18n.t('components.plugin_detail_modal.k11')}
                   </Typography>
                 </div>
 
@@ -335,7 +336,7 @@ export const PluginDetailModal: React.FC<PluginDetailModalProps> = ({ plugin, on
                     )
                   }
                 >
-                  {installed ? '已安装' : plugin.is_free ? '免费安装' : '购买'}
+                  {installed ? i18n.t('components.plugin_detail_modal.k14') : plugin.is_free ? i18n.t('components.plugin_detail_modal.k13') : i18n.t('components.plugin_detail_modal.k12')}
                 </Button>
               </CardContent>
             </Card>
@@ -346,7 +347,7 @@ export const PluginDetailModal: React.FC<PluginDetailModalProps> = ({ plugin, on
                   variant='h6'
                   sx={{ fontWeight: 'bold', mb: 4 }}
                 >
-                  发表评价
+                  {i18n.t('components.plugin_detail_modal.k7')}
                 </Typography>
                 <div className='space-y-3'>
                   <Rating
@@ -354,13 +355,13 @@ export const PluginDetailModal: React.FC<PluginDetailModalProps> = ({ plugin, on
                     onChange={(_, newValue) => setRating(newValue || 0)}
                   />
                   <TextField
-                    label='标题'
+                    label={i18n.t('components.plugin_detail_modal.k15')}
                     value={reviewTitle}
                     onChange={(e) => setReviewTitle(e.target.value)}
                     fullWidth
                   />
                   <TextField
-                    label='评价内容'
+                    label={i18n.t('components.plugin_detail_modal.k16')}
                     value={reviewContent}
                     onChange={(e) => setReviewContent(e.target.value)}
                     fullWidth
@@ -373,7 +374,7 @@ export const PluginDetailModal: React.FC<PluginDetailModalProps> = ({ plugin, on
                     onClick={handleSubmitReview}
                     disabled={rating === 0 || isSubmitting}
                   >
-                    {isSubmitting ? '提交中...' : '提交评价'}
+                    {isSubmitting ? i18n.t('components.plugin_detail_modal.k8') : i18n.t('components.plugin_detail_modal.k17')}
                   </Button>
                 </div>
               </CardContent>

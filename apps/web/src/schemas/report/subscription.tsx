@@ -1,12 +1,13 @@
 import React from 'react';
 import type { EntitySchema } from '@/schema';
 import type { SubscriptionFrequency } from '@/api/report';
+import i18n from '@/i18n';
 
 const FREQUENCY_OPTIONS: { value: SubscriptionFrequency; label: string }[] = [
-  { value: 'daily', label: '每天' },
-  { value: 'weekly', label: '每周' },
-  { value: 'monthly', label: '每月' },
-  { value: 'quarterly', label: '每季度' },
+  { value: 'daily', label: i18n.t('shared.subscription.k0') },
+  { value: 'weekly', label: i18n.t('shared.subscription.k1') },
+  { value: 'monthly', label: i18n.t('shared.subscription.k2') },
+  { value: 'quarterly', label: i18n.t('shared.subscription.k3') },
 ];
 
 const getFrequencyLabel = (frequency: SubscriptionFrequency) => {
@@ -15,8 +16,8 @@ const getFrequencyLabel = (frequency: SubscriptionFrequency) => {
 
 export const subscriptionSchema: EntitySchema = {
   entity: 'report_subscription',
-  title: '报表订阅管理',
-  description: '管理报表订阅，设置订阅者、订阅方式和订阅频率',
+  title: i18n.t('shared.subscription.k4'),
+  description: i18n.t('shared.subscription.k5'),
 
   api: {
     module: 'report',
@@ -26,7 +27,7 @@ export const subscriptionSchema: EntitySchema = {
   fields: [
     {
       name: 'template_name',
-      label: '报表模板',
+      label: i18n.t('shared.subscription.k6'),
       type: 'text',
       required: true,
       sortable: true,
@@ -34,7 +35,7 @@ export const subscriptionSchema: EntitySchema = {
     },
     {
       name: 'template_id',
-      label: '模板ID',
+      label: i18n.t('shared.subscription.id_7'),
       type: 'text',
       required: true,
       listWidth: 120,
@@ -42,7 +43,7 @@ export const subscriptionSchema: EntitySchema = {
     },
     {
       name: 'user_id',
-      label: '用户ID',
+      label: i18n.t('shared.subscription.id_8'),
       type: 'text',
       required: true,
       listWidth: 120,
@@ -50,13 +51,13 @@ export const subscriptionSchema: EntitySchema = {
     },
     {
       name: 'email',
-      label: '邮箱',
+      label: i18n.t('shared.subscription.k9'),
       type: 'text',
       listWidth: 200,
     },
     {
       name: 'frequency',
-      label: '订阅频率',
+      label: i18n.t('shared.subscription.k10'),
       type: 'select',
       required: true,
       defaultValue: 'weekly',
@@ -70,14 +71,14 @@ export const subscriptionSchema: EntitySchema = {
     },
     {
       name: 'enabled',
-      label: '状态',
+      label: i18n.t('shared.subscription.k11'),
       type: 'switch',
       defaultValue: true,
       listWidth: 120,
     },
     {
       name: 'created_at',
-      label: '创建时间',
+      label: i18n.t('shared.subscription.k12'),
       type: 'datetime',
       readonly: true,
       hideInForm: true,
@@ -99,28 +100,28 @@ export const subscriptionSchema: EntitySchema = {
         false: 'default',
       },
       labelMap: {
-        true: '已启用',
-        false: '已禁用',
+        true: i18n.t('shared.subscription.k13'),
+        false: i18n.t('shared.subscription.k14'),
       },
     },
     filters: [
       {
         id: 'frequency',
-        label: '订阅频率',
+        label: i18n.t('shared.subscription.k15'),
         type: 'select',
         options: [
-          { label: '全部频率', value: 'all' },
+          { label: i18n.t('shared.subscription.k16'), value: 'all' },
           ...FREQUENCY_OPTIONS.map((o) => ({ label: o.label, value: o.value })),
         ],
       },
       {
         id: 'status',
-        label: '状态',
+        label: i18n.t('shared.subscription.k17'),
         type: 'select',
         options: [
-          { label: '全部状态', value: 'all' },
-          { label: '已启用', value: 'enabled' },
-          { label: '已禁用', value: 'disabled' },
+          { label: i18n.t('shared.subscription.k18'), value: 'all' },
+          { label: i18n.t('shared.subscription.k19'), value: 'enabled' },
+          { label: i18n.t('shared.subscription.k20'), value: 'disabled' },
         ],
       },
     ],
@@ -130,17 +131,17 @@ export const subscriptionSchema: EntitySchema = {
 
   formSections: [
     {
-      title: '基本信息',
+      title: i18n.t('shared.subscription.k21'),
       fields: ['template_id', 'template_name', 'user_id', 'email'],
     },
     {
-      title: '订阅设置',
+      title: i18n.t('shared.subscription.k22'),
       fields: ['frequency', 'enabled'],
     },
   ],
 
   formColCount: 2,
-  createTitle: '新建订阅',
-  editTitle: '编辑订阅',
-  detailTitle: '订阅详情',
+  createTitle: i18n.t('shared.subscription.k23'),
+  editTitle: i18n.t('shared.subscription.k24'),
+  detailTitle: i18n.t('shared.subscription.k25'),
 };

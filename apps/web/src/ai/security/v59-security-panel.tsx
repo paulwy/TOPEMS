@@ -30,6 +30,7 @@ import {
   InputLabel,
   TextField,
 } from '@mui/material';
+import i18n from '@/i18n';
 import {
   X as XIcon,
   Shield,
@@ -82,17 +83,17 @@ const SEVERITY_COLORS: Record<AuditSeverity, string> = {
 };
 
 const ATTACK_TYPE_LABELS: Record<AttackType, string> = {
-  PromptInjection: '提示注入',
-  ModelPoisoning: '模型投毒',
-  DataExfiltration: '数据泄漏',
-  SideChannel: '侧信道',
+  PromptInjection: i18n.t('ai.v59-security-panel.k0'),
+  ModelPoisoning: i18n.t('ai.v59-security-panel.k1'),
+  DataExfiltration: i18n.t('ai.v59-security-panel.k2'),
+  SideChannel: i18n.t('ai.v59-security-panel.k3'),
 };
 
 const AUDIT_TYPE_LABELS: Record<AuditType, string> = {
-  InputValidation: '输入验证',
-  OutputFilter: '输出过滤',
-  PromptInjection: '提示注入',
-  DataLeakage: '数据泄漏',
+  InputValidation: i18n.t('ai.v59-security-panel.k4'),
+  OutputFilter: i18n.t('ai.v59-security-panel.k5'),
+  PromptInjection: i18n.t('ai.v59-security-panel.k6'),
+  DataLeakage: i18n.t('ai.v59-security-panel.k7'),
 };
 
 const SAMPLE_MODEL_ID = 'v59-demo-model';
@@ -223,7 +224,7 @@ export const V59SecurityPanel: React.FC<{ onClose: () => void }> = ({ onClose })
               variant='h6'
               sx={{ fontWeight: 600 }}
             >
-              V59.0 AI 安全 — 安全审计 · 对抗鲁棒性 · 隐私增强
+              {i18n.t('ai.v59-security-panel.k0')}
             </Typography>
           </Box>
           <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
@@ -241,7 +242,7 @@ export const V59SecurityPanel: React.FC<{ onClose: () => void }> = ({ onClose })
                 size={14}
                 style={{ marginRight: 4 }}
               />
-              刷新
+              {i18n.t('ai.v59-security-panel.k1')}
             </Button>
             <IconButton
               size='small'
@@ -263,25 +264,25 @@ export const V59SecurityPanel: React.FC<{ onClose: () => void }> = ({ onClose })
             <Tab
               icon={<Shield size={16} />}
               iconPosition='start'
-              label='安全审计'
+              label={i18n.t('ai.v59-security-panel.k8')}
               value='audit'
             />
             <Tab
               icon={<Target size={16} />}
               iconPosition='start'
-              label='对抗鲁棒性'
+              label={i18n.t('ai.v59-security-panel.k9')}
               value='robustness'
             />
             <Tab
               icon={<Lock size={16} />}
               iconPosition='start'
-              label='隐私增强'
+              label={i18n.t('ai.v59-security-panel.k10')}
               value='privacy'
             />
             <Tab
               icon={<BarChart3 size={16} />}
               iconPosition='start'
-              label='威胁模型摘要'
+              label={i18n.t('ai.v59-security-panel.k11')}
               value='summary'
             />
           </Tabs>
@@ -377,11 +378,11 @@ const AuditTab: React.FC<{
               variant='subtitle2'
               sx={{ fontWeight: 600 }}
             >
-              AI 安全审计结果
+              {i18n.t('ai.v59-security-panel.ai_2')}
             </Typography>
             <Chip
               size='small'
-              label={`${audits.length} 条审计`}
+              label={`${audits.length} ${i18n.t('ai.v59-security-panel.k3')}`}
               color='primary'
               variant='outlined'
               sx={{ ml: 'auto' }}
@@ -397,17 +398,17 @@ const AuditTab: React.FC<{
               size='small'
               sx={{ minWidth: 140 }}
             >
-              <InputLabel>最低严重级别</InputLabel>
+              <InputLabel>{i18n.t('ai.v59-security-panel.k12')}</InputLabel>
               <Select
                 value={severity}
-                label='最低严重级别'
+                label={i18n.t('ai.v59-security-panel.k13')}
                 onChange={(e) => onSeverityChange(e.target.value as AuditSeverity)}
               >
-                <MenuItem value='info'>信息</MenuItem>
-                <MenuItem value='low'>低</MenuItem>
-                <MenuItem value='medium'>中</MenuItem>
-                <MenuItem value='high'>高</MenuItem>
-                <MenuItem value='critical'>严重</MenuItem>
+                <MenuItem value='info'>{i18n.t('ai.v59-security-panel.k14')}</MenuItem>
+                <MenuItem value='low'>{i18n.t('ai.v59-security-panel.k4')}</MenuItem>
+                <MenuItem value='medium'>{i18n.t('ai.v59-security-panel.k5')}</MenuItem>
+                <MenuItem value='high'>{i18n.t('ai.v59-security-panel.k6')}</MenuItem>
+                <MenuItem value='critical'>{i18n.t('ai.v59-security-panel.k15')}</MenuItem>
               </Select>
             </FormControl>
             <Button
@@ -421,7 +422,7 @@ const AuditTab: React.FC<{
                 size={14}
                 style={{ marginRight: 4 }}
               />
-              {isRunning ? '审计中...' : '运行安全审计'}
+              {isRunning ? i18n.t('ai.v59-security-panel.k7') : i18n.t('ai.v59-security-panel.k16')}
             </Button>
           </Stack>
 
@@ -431,7 +432,7 @@ const AuditTab: React.FC<{
               variant='outlined'
               sx={{ mb: 2 }}
             >
-              审计 {selectedAudit.auditId}: {selectedAudit.passed ? '通过' : '未通过'} · 得分{' '}
+              {i18n.t('ai.v59-security-panel.k8')}{selectedAudit.auditId}: {selectedAudit.passed ? i18n.t('ai.v59-security-panel.k18') : i18n.t('ai.v59-security-panel.k17')} · 得分{' '}
               {(selectedAudit.score * 100).toFixed(1)}% · 耗时 {selectedAudit.duration_ms}ms
             </Alert>
           )}
@@ -441,19 +442,19 @@ const AuditTab: React.FC<{
               severity='info'
               variant='outlined'
             >
-              暂无审计记录。点击"运行安全审计"开始。
+              {i18n.t('ai.v59-security-panel.i18n_10')}.t('ai.v59-security-panel.k19')开始。
             </Alert>
           ) : (
             <TableContainer>
               <Table size='small'>
                 <TableHead>
                   <TableRow>
-                    <TableCell>审计 ID</TableCell>
-                    <TableCell>模型</TableCell>
-                    <TableCell>得分</TableCell>
-                    <TableCell>状态</TableCell>
-                    <TableCell>发现数</TableCell>
-                    <TableCell>时间</TableCell>
+                    <TableCell>{i18n.t('ai.v59-security-panel.id_20')}</TableCell>
+                    <TableCell>{i18n.t('ai.v59-security-panel.k21')}</TableCell>
+                    <TableCell>{i18n.t('ai.v59-security-panel.k22')}</TableCell>
+                    <TableCell>{i18n.t('ai.v59-security-panel.k23')}</TableCell>
+                    <TableCell>{i18n.t('ai.v59-security-panel.k24')}</TableCell>
+                    <TableCell>{i18n.t('ai.v59-security-panel.k25')}</TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
@@ -502,13 +503,13 @@ const AuditTab: React.FC<{
                         {audit.passed ? (
                           <Chip
                             size='small'
-                            label='通过'
+                            label={i18n.t('ai.v59-security-panel.k26')}
                             color='success'
                           />
                         ) : (
                           <Chip
                             size='small'
-                            label='未通过'
+                            label={i18n.t('ai.v59-security-panel.k27')}
                             color='error'
                           />
                         )}
@@ -536,7 +537,7 @@ const AuditTab: React.FC<{
                 variant='subtitle2'
                 sx={{ fontWeight: 600, mb: 1 }}
               >
-                审计发现详情
+                {i18n.t('ai.v59-security-panel.k12')}
               </Typography>
               <List dense>
                 {selectedAudit.findings.map((finding) => (
@@ -577,7 +578,7 @@ const AuditTab: React.FC<{
                         variant='caption'
                         color='text.secondary'
                       >
-                        修复建议: {finding.remediation}
+                        [i18n.t('ai.v59-security-panel.k13')]: {finding.remediation}
                       </Typography>
                     </Box>
                   </ListItem>
@@ -606,7 +607,7 @@ const AuditTab: React.FC<{
                 variant='subtitle2'
                 sx={{ fontWeight: 600 }}
               >
-                审计概况
+                {i18n.t('ai.v59-security-panel.k14')}
               </Typography>
             </Stack>
             <Grid
@@ -615,14 +616,14 @@ const AuditTab: React.FC<{
             >
               <Grid size={6}>
                 <StatBlock
-                  label='总审计'
+                  label={i18n.t('ai.v59-security-panel.k28')}
                   value={summary.total_audits}
                   icon={<FileText size={14} />}
                 />
               </Grid>
               <Grid size={6}>
                 <StatBlock
-                  label='通过'
+                  label={i18n.t('ai.v59-security-panel.k29')}
                   value={summary.passed_audits}
                   color={designTokens.colors.success.dark}
                   icon={<CheckCircle2 size={14} />}
@@ -630,7 +631,7 @@ const AuditTab: React.FC<{
               </Grid>
               <Grid size={6}>
                 <StatBlock
-                  label='失败'
+                  label={i18n.t('ai.v59-security-panel.k30')}
                   value={summary.failed_audits}
                   color={designTokens.colors.error.main}
                   icon={<XCircle size={14} />}
@@ -638,7 +639,7 @@ const AuditTab: React.FC<{
               </Grid>
               <Grid size={6}>
                 <StatBlock
-                  label='平均分'
+                  label={i18n.t('ai.v59-security-panel.k31')}
                   value={`${(summary.avg_score * 100).toFixed(0)}%`}
                   color='colors.cyan.600'
                   icon={<TrendingUp size={14} />}
@@ -663,7 +664,7 @@ const AuditTab: React.FC<{
                 variant='subtitle2'
                 sx={{ fontWeight: 600 }}
               >
-                按类型分布
+                {i18n.t('ai.v59-security-panel.k15')}
               </Typography>
             </Stack>
             {Object.entries(summary.byType).map(([type, count]) => (
@@ -714,7 +715,7 @@ const AuditTab: React.FC<{
                 variant='subtitle2'
                 sx={{ fontWeight: 600 }}
               >
-                修复建议
+                {i18n.t('ai.v59-security-panel.k16')}
               </Typography>
             </Stack>
             {selectedAudit && selectedAudit.recommendations.length > 0 ? (
@@ -742,7 +743,7 @@ const AuditTab: React.FC<{
                 variant='body2'
                 color='text.secondary'
               >
-                运行审计后显示建议
+                {i18n.t('ai.v59-security-panel.k17')}
               </Typography>
             )}
           </CardContent>
@@ -781,7 +782,7 @@ const RobustnessTab: React.FC<{
               variant='subtitle2'
               sx={{ fontWeight: 600 }}
             >
-              攻击向量库
+              {i18n.t('ai.v59-security-panel.k18')}
             </Typography>
           </Stack>
           <Grid
@@ -834,7 +835,7 @@ const RobustnessTab: React.FC<{
                     variant='caption'
                     color='text.secondary'
                   >
-                    防御: {v.mitigation}
+                    [i18n.t('ai.v59-security-panel.k19')]: {v.mitigation}
                   </Typography>
                   <Box sx={{ mt: 1 }}>
                     <Button
@@ -851,7 +852,7 @@ const RobustnessTab: React.FC<{
                         size={12}
                         style={{ marginRight: 3 }}
                       />
-                      运行测试
+                      {i18n.t('ai.v59-security-panel.k20')}
                     </Button>
                   </Box>
                 </Paper>
@@ -879,7 +880,7 @@ const RobustnessTab: React.FC<{
                 variant='subtitle2'
                 sx={{ fontWeight: 600 }}
               >
-                防御状态
+                {i18n.t('ai.v59-security-panel.k21')}
               </Typography>
             </Stack>
             <Grid
@@ -888,14 +889,14 @@ const RobustnessTab: React.FC<{
             >
               <Grid size={6}>
                 <StatBlock
-                  label='总防御'
+                  label={i18n.t('ai.v59-security-panel.k32')}
                   value={defenseStatus.total_defenses}
                   icon={<Shield size={14} />}
                 />
               </Grid>
               <Grid size={6}>
                 <StatBlock
-                  label='已启用'
+                  label={i18n.t('ai.v59-security-panel.k33')}
                   value={defenseStatus.enabled_defenses}
                   color={designTokens.colors.success.dark}
                   icon={<CheckCircle2 size={14} />}
@@ -907,7 +908,7 @@ const RobustnessTab: React.FC<{
               variant='caption'
               sx={{ color: 'text.secondary', mb: 1 }}
             >
-              按攻击类型
+              {i18n.t('ai.v59-security-panel.k22')}
             </Typography>
             {Object.entries(defenseStatus.byType).map(([type, data]) => (
               <Box
@@ -938,7 +939,7 @@ const RobustnessTab: React.FC<{
                   variant='caption'
                   color='text.secondary'
                 >
-                  平均有效性: {(data.avg_effectiveness * 100).toFixed(0)}%
+                  [i18n.t('ai.v59-security-panel.k23')]: {(data.avg_effectiveness * 100).toFixed(0)}%
                 </Typography>
               </Box>
             ))}
@@ -960,7 +961,7 @@ const RobustnessTab: React.FC<{
                 variant='subtitle2'
                 sx={{ fontWeight: 600 }}
               >
-                最近测试结果
+                {i18n.t('ai.v59-security-panel.k24')}
               </Typography>
             </Stack>
             {tests.length === 0 ? (
@@ -968,7 +969,7 @@ const RobustnessTab: React.FC<{
                 severity='info'
                 variant='outlined'
               >
-                暂无测试记录。点击攻击向量的"运行测试"开始。
+                {i18n.t('ai.v59-security-panel.k25')}.t('ai.v59-security-panel.k34')开始。
               </Alert>
             ) : (
               <List dense>
@@ -1015,7 +1016,7 @@ const RobustnessTab: React.FC<{
                             variant='caption'
                             color='text.secondary'
                           >
-                            攻击成功率
+                            {i18n.t('ai.v59-security-panel.k27')}
                           </Typography>
                           <Typography
                             variant='body2'
@@ -1029,7 +1030,7 @@ const RobustnessTab: React.FC<{
                             variant='caption'
                             color='text.secondary'
                           >
-                            防御率
+                            {i18n.t('ai.v59-security-panel.k28')}
                           </Typography>
                           <Typography
                             variant='body2'
@@ -1098,7 +1099,7 @@ const PrivacyTab: React.FC<{
               variant='subtitle2'
               sx={{ fontWeight: 600 }}
             >
-              隐私配置
+              {i18n.t('ai.v59-security-panel.k29')}
             </Typography>
             <Button
               size='small'
@@ -1111,7 +1112,7 @@ const PrivacyTab: React.FC<{
                 size={12}
                 style={{ marginRight: 3 }}
               />
-              {isRunning ? '评估中...' : '评估隐私'}
+              {isRunning ? i18n.t('ai.v59-security-panel.k30') : i18n.t('ai.v59-security-panel.k35')}
             </Button>
           </Stack>
 
@@ -1142,14 +1143,14 @@ const PrivacyTab: React.FC<{
                 {config.differential_privacy_enabled ? (
                   <Chip
                     size='small'
-                    label='DP 已启用'
+                    label={i18n.t('ai.v59-security-panel.dp_31')}
                     color='success'
                     sx={{ height: 18 }}
                   />
                 ) : (
                   <Chip
                     size='small'
-                    label='DP 未启用'
+                    label={i18n.t('ai.v59-security-panel.dp_32')}
                     color='warning'
                     sx={{ height: 18 }}
                   />
@@ -1182,7 +1183,7 @@ const PrivacyTab: React.FC<{
                     variant='caption'
                     color='text.secondary'
                   >
-                    噪声
+                    {i18n.t('ai.v59-security-panel.k33')}
                   </Typography>
                   <Typography variant='body2'>{config.noise_strategy}</Typography>
                 </Grid>
@@ -1197,7 +1198,7 @@ const PrivacyTab: React.FC<{
                 variant='subtitle2'
                 sx={{ fontWeight: 600, mb: 1 }}
               >
-                更新配置
+                {i18n.t('ai.v59-security-panel.k34')}
               </Typography>
               <Grid
                 container
@@ -1222,20 +1223,20 @@ const PrivacyTab: React.FC<{
                     size='small'
                     fullWidth
                   >
-                    <InputLabel>噪声策略</InputLabel>
+                    <InputLabel>{i18n.t('ai.v59-security-panel.k36')}</InputLabel>
                     <Select
                       value={selectedConfig.noise_strategy}
-                      label='噪声策略'
+                      label={i18n.t('ai.v59-security-panel.k37')}
                       onChange={(e) =>
                         privacyEnhancer.updateConfig(selectedConfig.id, {
                           noise_strategy: e.target.value as NoiseStrategy,
                         })
                       }
                     >
-                      <MenuItem value='gaussian'>高斯</MenuItem>
-                      <MenuItem value='laplace'>拉普拉斯</MenuItem>
-                      <MenuItem value='exponential'>指数</MenuItem>
-                      <MenuItem value='none'>无</MenuItem>
+                      <MenuItem value='gaussian'>{i18n.t('ai.v59-security-panel.k38')}</MenuItem>
+                      <MenuItem value='laplace'>{i18n.t('ai.v59-security-panel.k39')}</MenuItem>
+                      <MenuItem value='exponential'>{i18n.t('ai.v59-security-panel.k40')}</MenuItem>
+                      <MenuItem value='none'>{i18n.t('ai.v59-security-panel.k35')}</MenuItem>
                     </Select>
                   </FormControl>
                 </Grid>
@@ -1263,7 +1264,7 @@ const PrivacyTab: React.FC<{
                 variant='subtitle2'
                 sx={{ fontWeight: 600 }}
               >
-                隐私报告
+                {i18n.t('ai.v59-security-panel.k36')}
               </Typography>
             </Stack>
 
@@ -1280,7 +1281,7 @@ const PrivacyTab: React.FC<{
                     variant='caption'
                     color='text.secondary'
                   >
-                    隐私评分 (满分 100)
+                    {i18n.t('ai.v59-security-panel.100_37')}
                   </Typography>
                   <LinearProgress
                     variant='determinate'
@@ -1296,14 +1297,14 @@ const PrivacyTab: React.FC<{
                 >
                   <Grid size={6}>
                     <RiskItem
-                      label='重识别风险'
+                      label={i18n.t('ai.v59-security-panel.k41')}
                       value={report.reidentification_risk}
                       icon={<Eye size={14} />}
                     />
                   </Grid>
                   <Grid size={6}>
                     <RiskItem
-                      label='数据泄漏风险'
+                      label={i18n.t('ai.v59-security-panel.k42')}
                       value={report.data_leakage_risk}
                       icon={<Database size={14} />}
                     />
@@ -1315,7 +1316,7 @@ const PrivacyTab: React.FC<{
                   variant='caption'
                   sx={{ color: 'text.secondary', mb: 1 }}
                 >
-                  评分明细
+                  {i18n.t('ai.v59-security-panel.k38')}
                 </Typography>
                 {Object.entries(report.breakdown).map(([key, value]) => (
                   <Box
@@ -1353,7 +1354,7 @@ const PrivacyTab: React.FC<{
                 severity='info'
                 variant='outlined'
               >
-                点击"评估隐私"生成报告
+                {i18n.t('ai.v59-security-panel.i18n_39')}.t('ai.v59-security-panel.k43')生成报告
               </Alert>
             )}
           </CardContent>
@@ -1382,13 +1383,13 @@ const PrivacyTab: React.FC<{
                 variant='subtitle2'
                 sx={{ fontWeight: 600 }}
               >
-                泄漏风险分析
+                {i18n.t('ai.v59-security-panel.k41')}
               </Typography>
             </Stack>
 
             <Box sx={{ textAlign: 'center', mb: 1 }}>
               <Chip
-                label={`风险等级: ${leakageRisk.risk_level}`}
+                label={`${i18n.t('ai.v59-security-panel.k42')} ${leakageRisk.risk_level}`}
                 color={
                   leakageRisk.risk_level === 'low'
                     ? 'success'
@@ -1413,7 +1414,7 @@ const PrivacyTab: React.FC<{
                   variant='caption'
                   sx={{ color: 'text.secondary', mb: 1 }}
                 >
-                  风险因素
+                  {i18n.t('ai.v59-security-panel.k43')}
                 </Typography>
                 {leakageRisk.factors.map((factor, i) => (
                   <Box
@@ -1465,7 +1466,7 @@ const PrivacyTab: React.FC<{
                   variant='subtitle2'
                   sx={{ fontWeight: 600 }}
                 >
-                  隐私建议
+                  {i18n.t('ai.v59-security-panel.k44')}
                 </Typography>
               </Stack>
               <List dense>
@@ -1496,10 +1497,10 @@ const PrivacyTab: React.FC<{
 );
 
 const BREAKDOWN_LABELS: Record<string, string> = {
-  differential_privacy: '差分隐私',
-  data_anonymization: '数据匿名化',
-  access_control: '访问控制',
-  audit_compliance: '审计合规',
+  differential_privacy: i18n.t('ai.v59-security-panel.k44'),
+  data_anonymization: i18n.t('ai.v59-security-panel.k45'),
+  access_control: i18n.t('ai.v59-security-panel.k46'),
+  audit_compliance: i18n.t('ai.v59-security-panel.k47'),
 };
 
 const ThreatSummaryTab: React.FC<{
@@ -1537,7 +1538,7 @@ const ThreatSummaryTab: React.FC<{
                 variant='h6'
                 sx={{ fontWeight: 600 }}
               >
-                AI 安全威胁模型摘要
+                {i18n.t('ai.v59-security-panel.ai_45')}
               </Typography>
               <Box sx={{ ml: 'auto', textAlign: 'center' }}>
                 <Typography
@@ -1554,7 +1555,7 @@ const ThreatSummaryTab: React.FC<{
                   variant='caption'
                   color='text.secondary'
                 >
-                  综合安全评分
+                  {i18n.t('ai.v59-security-panel.k46')}
                 </Typography>
               </Box>
             </Stack>
@@ -1578,7 +1579,7 @@ const ThreatSummaryTab: React.FC<{
                 variant='subtitle2'
                 sx={{ fontWeight: 600 }}
               >
-                严重威胁
+                {i18n.t('ai.v59-security-panel.k47')}
               </Typography>
             </Stack>
             <Box sx={{ textAlign: 'center', py: 1 }}>
@@ -1592,7 +1593,7 @@ const ThreatSummaryTab: React.FC<{
                 variant='caption'
                 color='text.secondary'
               >
-                严重级别发现
+                {i18n.t('ai.v59-security-panel.k48')}
               </Typography>
             </Box>
             <Divider sx={{ my: 1 }} />
@@ -1607,7 +1608,7 @@ const ThreatSummaryTab: React.FC<{
                 variant='caption'
                 color='text.secondary'
               >
-                高级别发现
+                {i18n.t('ai.v59-security-panel.k49')}
               </Typography>
             </Box>
           </CardContent>
@@ -1630,7 +1631,7 @@ const ThreatSummaryTab: React.FC<{
                 variant='subtitle2'
                 sx={{ fontWeight: 600 }}
               >
-                隐私保护
+                {i18n.t('ai.v59-security-panel.k50')}
               </Typography>
             </Stack>
             {privacyReport ? (
@@ -1646,7 +1647,7 @@ const ThreatSummaryTab: React.FC<{
                     variant='caption'
                     color='text.secondary'
                   >
-                    隐私评分
+                    {i18n.t('ai.v59-security-panel.k51')}
                   </Typography>
                 </Box>
                 <Grid
@@ -1655,14 +1656,14 @@ const ThreatSummaryTab: React.FC<{
                 >
                   <Grid size={6}>
                     <StatBlock
-                      label='重识别'
+                      label={i18n.t('ai.v59-security-panel.k48')}
                       value={`${(privacyReport.reidentification_risk * 100).toFixed(0)}%`}
                       color={privacyReport.reidentification_risk < 0.3 ? designTokens.colors.success.dark : designTokens.colors.error.main}
                     />
                   </Grid>
                   <Grid size={6}>
                     <StatBlock
-                      label='泄漏'
+                      label={i18n.t('ai.v59-security-panel.k49')}
                       value={`${(privacyReport.data_leakage_risk * 100).toFixed(0)}%`}
                       color={privacyReport.data_leakage_risk < 0.3 ? designTokens.colors.success.dark : designTokens.colors.error.main}
                     />
@@ -1674,7 +1675,7 @@ const ThreatSummaryTab: React.FC<{
                 severity='info'
                 variant='outlined'
               >
-                暂无隐私数据
+                {i18n.t('ai.v59-security-panel.k52')}
               </Alert>
             )}
           </CardContent>
@@ -1697,7 +1698,7 @@ const ThreatSummaryTab: React.FC<{
                 variant='subtitle2'
                 sx={{ fontWeight: 600 }}
               >
-                防御就绪
+                {i18n.t('ai.v59-security-panel.k53')}
               </Typography>
             </Stack>
             <Box sx={{ textAlign: 'center', py: 1 }}>
@@ -1711,7 +1712,7 @@ const ThreatSummaryTab: React.FC<{
                 variant='caption'
                 color='text.secondary'
               >
-                防御措施已启用
+                {i18n.t('ai.v59-security-panel.k54')}
               </Typography>
             </Box>
             <LinearProgress
@@ -1741,7 +1742,7 @@ const ThreatSummaryTab: React.FC<{
                 variant='subtitle2'
                 sx={{ fontWeight: 600 }}
               >
-                关键建议
+                {i18n.t('ai.v59-security-panel.k55')}
               </Typography>
             </Stack>
             <Grid
@@ -1780,7 +1781,7 @@ const ThreatSummaryTab: React.FC<{
                       sx={{ fontSize: 12 }}
                     >
                       类型 "{AUDIT_TYPE_LABELS[finding.type]}"
-                      是当前最常见的安全发现类型，建议优先处理。
+                      {i18n.t('ai.v59-security-panel.k56')}
                     </Typography>
                   </Paper>
                 </Grid>
@@ -1793,7 +1794,7 @@ const ThreatSummaryTab: React.FC<{
                   variant='subtitle2'
                   sx={{ fontWeight: 600, mb: 1 }}
                 >
-                  隐私保护建议
+                  {i18n.t('ai.v59-security-panel.k57')}
                 </Typography>
                 <List dense>
                   {privacyReport.recommendations.map((rec, i) => (

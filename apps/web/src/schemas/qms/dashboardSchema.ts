@@ -1,6 +1,7 @@
 import { qualityDashboardApi } from '@/api/qms';
 import type { QualityOverview } from '@/api/qms/types';
 import type { DashboardSchema, StatCardSchema, ChartSchema } from '@/schema';
+import i18n from '@/i18n';
 
 declare global {
   interface Window {
@@ -13,54 +14,54 @@ export function useQmsDashboardSchema(): DashboardSchema {
   const statCards: StatCardSchema[] = [
     {
       id: 'pass-rate',
-      title: '合格率',
+      title: i18n.t('qms.dashboard_schema.k0'),
       value: () => {
         const stats = window.__qmsStats;
         return stats ? `${stats.passRate.toFixed(1)}%` : '-';
       },
       icon: 'CheckCircle',
       color: 'success',
-      trend: { value: 0, label: '上月' },
+      trend: { value: 0, label: i18n.t('qms.dashboard_schema.k1') },
     },
     {
       id: 'total-inspections',
-      title: '检测总数',
+      title: i18n.t('qms.dashboard_schema.k2'),
       value: () => {
         const stats = window.__qmsStats;
         return stats?.totalInspections.toLocaleString() ?? '-';
       },
       icon: 'ClipboardList',
       color: 'primary',
-      trend: { value: 0, label: '上月' },
+      trend: { value: 0, label: i18n.t('qms.dashboard_schema.k3') },
     },
     {
       id: 'open-issues',
-      title: '待处理问题',
+      title: i18n.t('qms.dashboard_schema.k4'),
       value: () => {
         const stats = window.__qmsStats;
         return stats?.totalIssues.toLocaleString() ?? '-';
       },
       icon: 'AlertCircle',
       color: 'warning',
-      trend: { value: 0, label: '上月' },
+      trend: { value: 0, label: i18n.t('qms.dashboard_schema.k5') },
     },
     {
       id: 'customer-complaints',
-      title: '客户投诉',
+      title: i18n.t('qms.dashboard_schema.k6'),
       value: () => {
         const stats = window.__qmsStats;
         return stats?.customerComplaintCount.toLocaleString() ?? '-';
       },
       icon: 'Users',
       color: 'error',
-      trend: { value: 0, label: '上月' },
+      trend: { value: 0, label: i18n.t('qms.dashboard_schema.k7') },
     },
   ];
 
   const charts: ChartSchema[] = [
     {
       id: 'quality-trend',
-      title: '质量趋势',
+      title: i18n.t('qms.dashboard_schema.k8'),
       type: 'line',
       data: () => {
         const stats = window.__qmsStats;
@@ -74,7 +75,7 @@ export function useQmsDashboardSchema(): DashboardSchema {
     },
     {
       id: 'issue-type-distribution',
-      title: '问题类型分布',
+      title: i18n.t('qms.dashboard_schema.k9'),
       type: 'pie',
       data: () => {
         const stats = window.__qmsStats;
@@ -88,7 +89,7 @@ export function useQmsDashboardSchema(): DashboardSchema {
     },
     {
       id: 'inspection-pass-rate',
-      title: '检测合格率',
+      title: i18n.t('qms.dashboard_schema.k10'),
       type: 'bar',
       data: () => {
         const stats = window.__qmsStats;
@@ -103,7 +104,7 @@ export function useQmsDashboardSchema(): DashboardSchema {
   ];
 
   return {
-    title: 'QMS 仪表盘',
+    title: i18n.t('shared.dashboard_schema.qms_0'),
     loader: async () => {
       const response = await qualityDashboardApi.getQualityOverview();
       if (response.success && response.data) {

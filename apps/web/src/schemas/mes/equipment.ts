@@ -1,9 +1,10 @@
 import type { EntitySchema } from '@/schema';
+import i18n from '@/i18n';
 
 export const equipmentSchema: EntitySchema = {
   entity: 'mes_equipment',
-  title: '设备管理',
-  description: '管理生产设备，包括编码、名称、型号、位置、状态等',
+  title: i18n.t('mes.equipment.k0'),
+  description: i18n.t('mes.equipment.k1'),
 
   api: {
     module: 'mes',
@@ -13,7 +14,7 @@ export const equipmentSchema: EntitySchema = {
   fields: [
     {
       name: 'code',
-      label: '设备编码',
+      label: i18n.t('mes.equipment.k2'),
       type: 'text',
       required: true,
       readonlyOnEdit: true,
@@ -22,7 +23,7 @@ export const equipmentSchema: EntitySchema = {
     },
     {
       name: 'name',
-      label: '设备名称',
+      label: i18n.t('mes.equipment.k3'),
       type: 'text',
       required: true,
       sortable: true,
@@ -31,60 +32,60 @@ export const equipmentSchema: EntitySchema = {
     },
     {
       name: 'type',
-      label: '设备类型',
+      label: i18n.t('mes.equipment.k4'),
       type: 'select',
       options: {
         type: 'static',
         options: [
-          { value: 'cnc', label: '数控机床' },
-          { value: 'assembly', label: '装配设备' },
-          { value: 'testing', label: '检测设备' },
-          { value: 'packaging', label: '包装设备' },
-          { value: 'conveyor', label: '输送设备' },
-          { value: 'other', label: '其他' },
+          { value: 'cnc', label: i18n.t('mes.equipment.k5') },
+          { value: 'assembly', label: i18n.t('mes.equipment.k6') },
+          { value: 'testing', label: i18n.t('mes.equipment.k7') },
+          { value: 'packaging', label: i18n.t('mes.equipment.k8') },
+          { value: 'conveyor', label: i18n.t('mes.equipment.k9') },
+          { value: 'other', label: i18n.t('mes.equipment.k10') },
         ],
       },
       listWidth: 100,
     },
     {
       name: 'model',
-      label: '型号',
+      label: i18n.t('mes.equipment.k11'),
       type: 'text',
       listWidth: 100,
       validation: [{ type: 'maxLength', value: 64 }],
     },
     {
       name: 'manufacturer',
-      label: '制造商',
+      label: i18n.t('mes.equipment.k12'),
       type: 'text',
       listWidth: 120,
       validation: [{ type: 'maxLength', value: 128 }],
     },
     {
       name: 'purchase_date',
-      label: '采购日期',
+      label: i18n.t('mes.equipment.k13'),
       type: 'date',
       listWidth: 120,
     },
     {
       name: 'location',
-      label: '位置',
+      label: i18n.t('mes.equipment.k14'),
       type: 'text',
       listWidth: 120,
       validation: [{ type: 'maxLength', value: 256 }],
     },
     {
       name: 'status',
-      label: '状态',
+      label: i18n.t('mes.equipment.k15'),
       type: 'select',
       defaultValue: 'idle',
       options: {
         type: 'static',
         options: [
-          { value: 'idle', label: '空闲' },
-          { value: 'running', label: '运行中' },
-          { value: 'maintenance', label: '维护中' },
-          { value: 'fault', label: '故障' },
+          { value: 'idle', label: i18n.t('mes.equipment.k16') },
+          { value: 'running', label: i18n.t('mes.equipment.k17') },
+          { value: 'maintenance', label: i18n.t('mes.equipment.k18') },
+          { value: 'fault', label: i18n.t('mes.equipment.k19') },
         ],
       },
       listWidth: 100,
@@ -92,13 +93,13 @@ export const equipmentSchema: EntitySchema = {
     },
     {
       name: 'value',
-      label: '价值',
+      label: i18n.t('mes.equipment.k20'),
       type: 'number',
       listWidth: 100,
     },
     {
       name: 'description',
-      label: '描述',
+      label: i18n.t('mes.equipment.k21'),
       type: 'textarea',
       showInList: false,
     },
@@ -117,37 +118,37 @@ export const equipmentSchema: EntitySchema = {
         fault: 'error',
       },
       labelMap: {
-        running: '运行中',
-        idle: '空闲',
-        maintenance: '维护中',
-        fault: '故障',
+        running: i18n.t('mes.equipment.k22'),
+        idle: i18n.t('mes.equipment.k23'),
+        maintenance: i18n.t('mes.equipment.k24'),
+        fault: i18n.t('mes.equipment.k25'),
       },
     },
     filters: [
       {
         id: 'status',
-        label: '状态',
+        label: i18n.t('mes.equipment.k26'),
         type: 'select',
         options: [
-          { label: '全部状态', value: 'all' },
-          { label: '运行中', value: 'running' },
-          { label: '空闲', value: 'idle' },
-          { label: '维护中', value: 'maintenance' },
-          { label: '故障', value: 'fault' },
+          { label: i18n.t('mes.equipment.k27'), value: 'all' },
+          { label: i18n.t('mes.equipment.k28'), value: 'running' },
+          { label: i18n.t('mes.equipment.k29'), value: 'idle' },
+          { label: i18n.t('mes.equipment.k30'), value: 'maintenance' },
+          { label: i18n.t('mes.equipment.k31'), value: 'fault' },
         ],
       },
       {
         id: 'type',
-        label: '设备类型',
+        label: i18n.t('mes.equipment.k32'),
         type: 'select',
         options: [
-          { label: '全部类型', value: 'all' },
-          { label: '数控机床', value: 'cnc' },
-          { label: '装配设备', value: 'assembly' },
-          { label: '检测设备', value: 'testing' },
-          { label: '包装设备', value: 'packaging' },
-          { label: '输送设备', value: 'conveyor' },
-          { label: '其他', value: 'other' },
+          { label: i18n.t('mes.equipment.k33'), value: 'all' },
+          { label: i18n.t('mes.equipment.k34'), value: 'cnc' },
+          { label: i18n.t('mes.equipment.k35'), value: 'assembly' },
+          { label: i18n.t('mes.equipment.k36'), value: 'testing' },
+          { label: i18n.t('mes.equipment.k37'), value: 'packaging' },
+          { label: i18n.t('mes.equipment.k38'), value: 'conveyor' },
+          { label: i18n.t('mes.equipment.k39'), value: 'other' },
         ],
       },
     ],
@@ -157,21 +158,21 @@ export const equipmentSchema: EntitySchema = {
 
   formSections: [
     {
-      title: '基本信息',
+      title: i18n.t('mes.equipment.k40'),
       fields: ['code', 'name', 'type', 'model', 'manufacturer'],
     },
     {
-      title: '位置与采购',
+      title: i18n.t('mes.equipment.k41'),
       fields: ['location', 'purchase_date', 'value'],
     },
     {
-      title: '状态与描述',
+      title: i18n.t('mes.equipment.k42'),
       fields: ['status', 'description'],
     },
   ],
 
   formColCount: 2,
-  createTitle: '新增设备',
-  editTitle: '编辑设备',
-  detailTitle: '设备详情',
+  createTitle: i18n.t('mes.equipment.k43'),
+  editTitle: i18n.t('mes.equipment.k44'),
+  detailTitle: i18n.t('mes.equipment.k45'),
 };

@@ -1,17 +1,18 @@
 import React from 'react';
 import { Skeleton, Box, useTheme } from '@mui/material';
+import { designTokens } from '@topems/tokens';
 
 const useSkeletonSx = () => {
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
   return {
     bg: isDark ? 'glass.bgLight' : 'background.paper',
-    border: isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0,0,0,0.06)',
-    shadow: isDark ? '0 4px 24px rgba(0,0,0,0.3)' : '0 1px 3px rgba(0,0,0,0.1)',
+    border: isDark ? designTokens.colors.cyber.glass.bgLight : designTokens.colors.action.hover,
+    shadow: isDark ? '0 4px 24px ${designTokens.colors.cyber.glass.divider}' : `0 1px 3px ${designTokens.colors.action.selected}`,
     subtleBorder: isDark ? 'glass.bgLight' : 'colors.action.hover',
     pageBg: isDark ? 'background.default' : 'grey.50',
-    gradientFrom: isDark ? 'rgba(255, 255, 255, 0.05)' : '#f8fafc',
-    gradientTo: isDark ? 'rgba(255, 255, 255, 0.02)' : theme.palette.grey[100],
+    gradientFrom: isDark ? designTokens.colors.cyber.glass.bgLight : '#f8fafc',
+    gradientTo: isDark ? designTokens.colors.cyber.glass.bgLight : theme.palette.grey[100],
   };
 };
 
@@ -192,7 +193,7 @@ export const ActivityItemSkeleton: React.FC<{ className?: string }> = ({ classNa
       gap: 2,
       p: 1.5,
       borderRadius: 1.5,
-      border: '1px solid rgba(0,0,0,0.08)',
+      border: `1px solid ${designTokens.colors.action.selected}`,
     }}
   >
     <Skeleton sx={{ width: 40, height: 40, borderRadius: 1.5 }} />

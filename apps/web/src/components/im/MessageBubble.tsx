@@ -3,6 +3,7 @@ import { useTheme } from '@mui/material';
 import { User, FileText, Check, CheckCheck, MoreVertical, Trash2, Edit3 } from 'lucide-react';
 import type { ChatMessage } from '../../api/im';
 import { designTokens, semanticTokens } from '@topems/tokens';
+import i18n from '@/i18n';
 
 interface MessageBubbleProps {
   message: ChatMessage;
@@ -159,7 +160,7 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
                   display: 'flex',
                   alignItems: 'center',
                   gap: 8,
-                  padding: '8px 16px',
+                  padding: `${designTokens.spacing.sm} 16px`,
                   fontSize: 14,
                   color: theme.palette.grey[700],
                   backgroundColor: 'transparent',
@@ -169,7 +170,7 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
                 }}
               >
                 <Edit3 style={{ width: 16, height: 16 }} />
-                编辑
+                {i18n.t('components.message_bubble.k0')}
               </button>
               <button
                 onClick={handleDelete}
@@ -177,7 +178,7 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
                   display: 'flex',
                   alignItems: 'center',
                   gap: 8,
-                  padding: '8px 16px',
+                  padding: `${designTokens.spacing.sm} 16px`,
                   fontSize: 14,
                   color: theme.palette.error.dark,
                   backgroundColor: 'transparent',
@@ -187,7 +188,7 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
                 }}
               >
                 <Trash2 style={{ width: 16, height: 16 }} />
-                删除
+                {i18n.t('components.message_bubble.k1')}
               </button>
             </div>
           )}
@@ -227,7 +228,7 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
                   onClick={handleCancelEdit}
                   style={{
                     fontSize: 12,
-                    padding: '4px 12px',
+                    padding: `${designTokens.spacing.xs} 12px`,
                     borderRadius: 4,
                     backgroundColor: isSent ? theme.palette.primary.light : theme.palette.grey[200],
                     color: isSent ? 'white' : theme.palette.grey[700],
@@ -235,13 +236,13 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
                     cursor: 'pointer',
                   }}
                 >
-                  取消
+                  {i18n.t('components.message_bubble.k2')}
                 </button>
                 <button
                   onClick={handleSaveEdit}
                   style={{
                     fontSize: 12,
-                    padding: '4px 12px',
+                    padding: `${designTokens.spacing.xs} 12px`,
                     borderRadius: 4,
                     backgroundColor: isSent ? 'white' : theme.palette.primary.main,
                     color: isSent ? theme.palette.primary.main : 'white',
@@ -249,7 +250,7 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
                     cursor: 'pointer',
                   }}
                 >
-                  保存
+                  {i18n.t('components.message_bubble.k3')}
                 </button>
               </div>
             </div>
@@ -262,7 +263,7 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
               >
                 <img
                   src={message.content}
-                  alt='聊天图片'
+                  alt={i18n.t('im.message_bubble.k0')}
                   style={{
                     borderRadius: 8,
                     maxWidth: '100%',

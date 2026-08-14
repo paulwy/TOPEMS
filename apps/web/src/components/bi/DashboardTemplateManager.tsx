@@ -23,6 +23,7 @@ import {
   Switch,
   FormControlLabel,
 } from '@mui/material';
+import i18n from '@/i18n';
 import {
   fetchDashboardTemplates,
   createDashboardTemplate,
@@ -46,12 +47,12 @@ export const DashboardTemplateManager: React.FC<{
   const [newTemplate, setNewTemplate] = useState({
     name: '',
     description: '',
-    category: '通用',
+    category: i18n.t('components.dashboard_template_manager.k0'),
     tags: [] as string[],
     isactive: true,
   });
 
-  const categories = ['all', '通用', '销售', '财务', '运营', '市场'];
+  const categories = ['all', i18n.t('components.dashboard_template_manager.k5'), i18n.t('components.dashboard_template_manager.k4'), i18n.t('components.dashboard_template_manager.k3'), i18n.t('components.dashboard_template_manager.k2'), i18n.t('components.dashboard_template_manager.k1')];
 
   const loadTemplates = async () => {
     setLoading(true);
@@ -80,7 +81,7 @@ export const DashboardTemplateManager: React.FC<{
         setNewTemplate({
           name: '',
           description: '',
-          category: '通用',
+          category: i18n.t('components.dashboard_template_manager.k6'),
           tags: [],
           isactive: true,
         });
@@ -101,7 +102,7 @@ export const DashboardTemplateManager: React.FC<{
         setNewTemplate({
           name: '',
           description: '',
-          category: '通用',
+          category: i18n.t('components.dashboard_template_manager.k7'),
           tags: [],
           isactive: true,
         });
@@ -112,7 +113,7 @@ export const DashboardTemplateManager: React.FC<{
   };
 
   const handleDeleteTemplate = async (id: string) => {
-    if (!confirm('确定要删除这个模板吗？')) return;
+    if (!confirm(i18n.t('components.dashboard_template_manager.k8'))) return;
     try {
       const res = await deleteDashboardTemplate(id);
       if (res.success) {
@@ -126,7 +127,7 @@ export const DashboardTemplateManager: React.FC<{
   const handleCreateDashboard = async (templateId: string) => {
     try {
       const template = templates.find((t) => t.id === templateId);
-      const name = template ? `${template.name} - 副本` : '新仪表盘';
+      const name = template ? `${template.name} ${i18n.t('components.dashboard_template_manager.k0')}` : i18n.t('components.dashboard_template_manager.k9');
       const res = await createDashboardFromTemplate(templateId, { name, is_public: false });
       if (res.success) {
         onDashboardCreated?.();
@@ -141,7 +142,7 @@ export const DashboardTemplateManager: React.FC<{
     setNewTemplate({
       name: template.name,
       description: template.description || '',
-      category: template.category || '通用',
+      category: template.category || i18n.t('components.dashboard_template_manager.k10'),
       tags: template.tags || [],
       isactive: template.isactive || true,
     });
@@ -171,7 +172,7 @@ export const DashboardTemplateManager: React.FC<{
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 4 }}>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 3 }}>
           <TextField
-            placeholder='搜索模板...'
+            placeholder={i18n.t('components.dashboard_template_manager.k1')}
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             size='small'
@@ -181,10 +182,10 @@ export const DashboardTemplateManager: React.FC<{
             size='small'
             sx={{ minWidth: 120 }}
           >
-            <InputLabel>分类</InputLabel>
+            <InputLabel>{i18n.t('components.dashboard_template_manager.k11')}</InputLabel>
             <Select
               value={selectedCategory}
-              label='分类'
+              label={i18n.t('components.dashboard_template_manager.k12')}
               onChange={(e) => setSelectedCategory(e.target.value)}
             >
               {categories.map((cat) => (
@@ -192,7 +193,7 @@ export const DashboardTemplateManager: React.FC<{
                   key={cat}
                   value={cat}
                 >
-                  {cat === 'all' ? '全部' : cat}
+                  {cat === 'all' ? i18n.t('components.dashboard_template_manager.k13') : cat}
                 </MenuItem>
               ))}
             </Select>
@@ -203,7 +204,7 @@ export const DashboardTemplateManager: React.FC<{
           startIcon={<Plus />}
           onClick={() => setShowCreateModal(true)}
         >
-          创建模板
+          {i18n.t('components.dashboard_template_manager.k2')}
         </Button>
       </Box>
 
@@ -230,15 +231,15 @@ export const DashboardTemplateManager: React.FC<{
           }}
         >
           <FolderOpen sx={{ width: 64, height: 64, mb: 3, opacity: 0.5 }} />
-          <Typography variant='h6'>暂无模板</Typography>
-          <Typography variant='body2'>点击上方按钮创建您的第一个模板</Typography>
+          <Typography variant='h6'>{i18n.t('components.dashboard_template_manager.k14')}</Typography>
+          <Typography variant='body2'>{i18n.t('components.dashboard_template_manager.k15')}</Typography>
           <Button
             variant='contained'
             startIcon={<Plus />}
             sx={{ mt: 3 }}
             onClick={() => setShowCreateModal(true)}
           >
-            创建模板
+            {i18n.t('components.dashboard_template_manager.k3')}
           </Button>
         </Box>
       ) : (
@@ -345,36 +346,36 @@ export const DashboardTemplateManager: React.FC<{
                     variant='caption'
                     sx={{ color: 'error' }}
                   >
-                    已禁用
+                    {i18n.t('components.dashboard_template_manager.k4')}
                   </Typography>
                 )}
               </CardContent>
               <CardActions sx={{ justifyContent: 'flex-end', gap: 1 }}>
-                <Tooltip title='从模板创建'>
+                <Tooltip title={i18n.t('components.dashboard_template_manager.k16')}>
                   <IconButton
                     size='small'
                     onClick={() => handleCreateDashboard(template.id)}
                     disabled={!template.isactive}
-                    aria-label='复制'
+                    aria-label={i18n.t('components.dashboard_template_manager.k17')}
                   >
                     <Copy sx={{ width: 18, height: 18 }} />
                   </IconButton>
                 </Tooltip>
-                <Tooltip title='编辑'>
+                <Tooltip title={i18n.t('components.dashboard_template_manager.k18')}>
                   <IconButton
                     size='small'
                     onClick={() => handleOpenEditModal(template)}
-                    aria-label='编辑'
+                    aria-label={i18n.t('components.dashboard_template_manager.k19')}
                   >
                     <Edit2 sx={{ width: 18, height: 18 }} />
                   </IconButton>
                 </Tooltip>
-                <Tooltip title='删除'>
+                <Tooltip title={i18n.t('components.dashboard_template_manager.k20')}>
                   <IconButton
                     size='small'
                     color='error'
                     onClick={() => handleDeleteTemplate(template.id)}
-                    aria-label='删除'
+                    aria-label={i18n.t('components.dashboard_template_manager.k21')}
                   >
                     <Trash2 sx={{ width: 18, height: 18 }} />
                   </IconButton>
@@ -391,10 +392,10 @@ export const DashboardTemplateManager: React.FC<{
         maxWidth='sm'
         fullWidth
       >
-        <DialogTitle>{editingTemplate ? '编辑模板' : '创建模板'}</DialogTitle>
+        <DialogTitle>{editingTemplate ? i18n.t('components.dashboard_template_manager.k23') : i18n.t('components.dashboard_template_manager.k22')}</DialogTitle>
         <DialogContent sx={{ mt: 2 }}>
           <TextField
-            label='模板名称'
+            label={i18n.t('components.dashboard_template_manager.k24')}
             fullWidth
             value={newTemplate.name}
             onChange={(e) => setNewTemplate((prev) => ({ ...prev, name: e.target.value }))}
@@ -402,7 +403,7 @@ export const DashboardTemplateManager: React.FC<{
             autoFocus
           />
           <TextField
-            label='描述'
+            label={i18n.t('components.dashboard_template_manager.k25')}
             fullWidth
             multiline
             rows={3}
@@ -414,10 +415,10 @@ export const DashboardTemplateManager: React.FC<{
             fullWidth
             sx={{ mb: 3 }}
           >
-            <InputLabel>分类</InputLabel>
+            <InputLabel>{i18n.t('components.dashboard_template_manager.k26')}</InputLabel>
             <Select
               value={newTemplate.category}
-              label='分类'
+              label={i18n.t('components.dashboard_template_manager.k27')}
               onChange={(e) => setNewTemplate((prev) => ({ ...prev, category: e.target.value }))}
             >
               {categories
@@ -437,7 +438,7 @@ export const DashboardTemplateManager: React.FC<{
               variant='body2'
               sx={{ fontWeight: 500, mb: 1.5 }}
             >
-              标签
+              {i18n.t('components.dashboard_template_manager.k5')}
             </Typography>
             <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap', mb: 2 }}>
               {newTemplate.tags.map((tag) => (
@@ -450,7 +451,7 @@ export const DashboardTemplateManager: React.FC<{
               ))}
             </Box>
             <TextField
-              placeholder='输入标签后按回车'
+              placeholder={i18n.t('components.dashboard_template_manager.k28')}
               fullWidth
               size='small'
               onKeyDown={(e: React.KeyboardEvent<HTMLInputElement>) => {
@@ -471,7 +472,7 @@ export const DashboardTemplateManager: React.FC<{
                 }
               />
             }
-            label='启用模板'
+            label={i18n.t('components.dashboard_template_manager.k29')}
           />
         </DialogContent>
         <DialogActions>
@@ -482,14 +483,14 @@ export const DashboardTemplateManager: React.FC<{
               setEditingTemplate(null);
             }}
           >
-            取消
+            {i18n.t('components.dashboard_template_manager.k6')}
           </Button>
           <Button
             variant='contained'
             onClick={editingTemplate ? handleUpdateTemplate : handleCreateTemplate}
             disabled={!newTemplate.name.trim()}
           >
-            {editingTemplate ? '保存' : '创建'}
+            {editingTemplate ? i18n.t('components.dashboard_template_manager.k31') : i18n.t('components.dashboard_template_manager.k30')}
           </Button>
         </DialogActions>
       </Dialog>

@@ -11,6 +11,7 @@ import {
   bulkMarkAsRead,
   bulkDeleteNotifications,
 } from '@/api/notification';
+import i18n from '@/i18n';
 import NotificationItem from '@/components/notification/NotificationItem';
 import NotificationSettings from '@/components/notification/NotificationSettings';
 import useNotificationSettings from '@/hooks/useNotificationSettings';
@@ -59,8 +60,8 @@ const NotificationCenter: React.FC = () => {
       apiLogger.error('Failed to fetch notifications:', error);
       addNotification({
         type: 'error',
-        title: '加载失败',
-        message: '无法加载通知列表',
+        title: i18n.t('pages.notification_center.k0'),
+        message: i18n.t('pages.notification_center.k1'),
       });
     }
   }, [isError, error]);
@@ -89,8 +90,8 @@ const NotificationCenter: React.FC = () => {
       apiLogger.error('Failed to mark as read:', error);
       addNotification({
         type: 'error',
-        title: '操作失败',
-        message: '标记已读失败',
+        title: i18n.t('pages.notification_center.k2'),
+        message: i18n.t('pages.notification_center.k3'),
       });
     },
   });
@@ -108,8 +109,8 @@ const NotificationCenter: React.FC = () => {
       apiLogger.error('Failed to mark all as read:', error);
       addNotification({
         type: 'error',
-        title: '操作失败',
-        message: '全部标记已读失败',
+        title: i18n.t('pages.notification_center.k4'),
+        message: i18n.t('pages.notification_center.k5'),
       });
     },
   });
@@ -144,8 +145,8 @@ const NotificationCenter: React.FC = () => {
       apiLogger.error('Failed to delete notification:', error);
       addNotification({
         type: 'error',
-        title: '操作失败',
-        message: '删除通知失败',
+        title: i18n.t('pages.notification_center.k6'),
+        message: i18n.t('pages.notification_center.k7'),
       });
     },
   });
@@ -164,8 +165,8 @@ const NotificationCenter: React.FC = () => {
       apiLogger.error('Failed to bulk delete:', error);
       addNotification({
         type: 'error',
-        title: '操作失败',
-        message: '批量删除失败',
+        title: i18n.t('pages.notification_center.k8'),
+        message: i18n.t('pages.notification_center.k9'),
       });
     },
   });
@@ -184,8 +185,8 @@ const NotificationCenter: React.FC = () => {
       apiLogger.error('Failed to bulk mark as read:', error);
       addNotification({
         type: 'error',
-        title: '操作失败',
-        message: '批量标记已读失败',
+        title: i18n.t('pages.notification_center.k10'),
+        message: i18n.t('pages.notification_center.k11'),
       });
     },
   });
@@ -246,19 +247,19 @@ const NotificationCenter: React.FC = () => {
   const getFilterLabel = (filter: NotificationFilterType) => {
     switch (filter) {
       case 'all':
-        return '全部';
+        return i18n.t('pages.notification_center.k12');
       case 'system':
-        return '系统通知';
+        return i18n.t('pages.notification_center.k13');
       case 'workflow':
-        return '审批通知';
+        return i18n.t('pages.notification_center.k14');
       case 'reminder':
-        return '提醒通知';
+        return i18n.t('pages.notification_center.k15');
       case 'alert':
-        return '告警通知';
+        return i18n.t('pages.notification_center.k16');
       case 'message':
-        return '消息通知';
+        return i18n.t('pages.notification_center.k17');
       default:
-        return '全部';
+        return i18n.t('pages.notification_center.k18');
     }
   };
 
@@ -268,8 +269,8 @@ const NotificationCenter: React.FC = () => {
     <PageContainer
       maxWidth={false}
       padding={false}
-      title='通知中心'
-      subtitle={`共 ${total} 条通知，${unreadCount} 条未读`}
+      title={i18n.t('pages.notification_center.k19')}
+      subtitle={`${i18n.t('pages.notification_center.k0')} ${total} ${i18n.t('pages.notification_center.k1')}${unreadCount} ${i18n.t('pages.notification_center.k2')}`}
       headerProps={{
         pageIcon: <Bell size={20} />,
         pageGradient: `linear-gradient(135deg, ${ct.primary.main}, ${ct.primary.dark})`,
@@ -296,7 +297,7 @@ const NotificationCenter: React.FC = () => {
             />
             <input
               type='text'
-              placeholder='搜索通知...'
+              placeholder={i18n.t('pages.notification_center.k3')}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               style={{
@@ -385,9 +386,9 @@ const NotificationCenter: React.FC = () => {
                 variant='h6'
                 sx={{ mt: 2 }}
               >
-                暂无通知
+                {i18n.t('pages.notification_center.k4')}
               </Typography>
-              <Typography variant='body2'>您还没有任何通知消息</Typography>
+              <Typography variant='body2'>{i18n.t('pages.notification_center.k20')}</Typography>
             </Box>
           ) : (
             <div>
@@ -419,7 +420,7 @@ const NotificationCenter: React.FC = () => {
                       checked={selectedNotifications.size === filteredNotifications.length}
                       onChange={() => toggleSelectAll()}
                     />
-                    <span>全选</span>
+                    <span>{i18n.t('pages.notification_center.k21')}</span>
                   </button>
                   <div style={{ flex: 1 }}></div>
                   <button
@@ -434,7 +435,7 @@ const NotificationCenter: React.FC = () => {
                       cursor: 'pointer',
                     }}
                   >
-                    标记已读
+                    {i18n.t('pages.notification_center.k5')}
                   </button>
                   <button
                     onClick={handleBulkDelete}
@@ -448,7 +449,7 @@ const NotificationCenter: React.FC = () => {
                       cursor: 'pointer',
                     }}
                   >
-                    删除
+                    {i18n.t('pages.notification_center.k6')}
                   </button>
                 </Box>
               )}
@@ -573,7 +574,7 @@ const NotificationCenter: React.FC = () => {
         maxWidth='sm'
         fullWidth
       >
-        <DialogTitle>通知设置</DialogTitle>
+        <DialogTitle>{i18n.t('pages.notification_center.k22')}</DialogTitle>
         <DialogContent>
           <NotificationSettings />
         </DialogContent>

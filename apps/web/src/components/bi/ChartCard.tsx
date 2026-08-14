@@ -15,6 +15,7 @@ import {
   Target,
   Grid3X3,
 } from 'lucide-react';
+import i18n from '@/i18n';
 import {
   Card,
   CardHeader,
@@ -27,6 +28,7 @@ import {
   Box,
   Button,
 } from '@mui/material';
+import { designTokens } from '@topems/tokens';
 
 type ChartType = 'bar' | 'line' | 'area' | 'pie' | 'histogram' | 'gauge' | 'scatter' | 'radar';
 
@@ -36,12 +38,12 @@ interface TimeRange {
 }
 
 const timeRanges: TimeRange[] = [
-  { label: '今日', value: 'today' },
-  { label: '本周', value: 'week' },
-  { label: '本月', value: 'month' },
-  { label: '本季度', value: 'quarter' },
-  { label: '本年', value: 'year' },
-  { label: '自定义', value: 'custom' },
+  { label: i18n.t('shared.chart_card.k0'), value: 'today' },
+  { label: i18n.t('shared.chart_card.k1'), value: 'week' },
+  { label: i18n.t('shared.chart_card.k2'), value: 'month' },
+  { label: i18n.t('shared.chart_card.k3'), value: 'quarter' },
+  { label: i18n.t('shared.chart_card.k4'), value: 'year' },
+  { label: i18n.t('shared.chart_card.k5'), value: 'custom' },
 ];
 
 interface ChartCardProps {
@@ -149,15 +151,15 @@ export const ChartCard: React.FC<ChartCardProps> = ({
         overflow: 'hidden',
         transition: 'all 0.3s ease',
         '&:hover': { boxShadow: elevation + 2 },
-        border: bordered ? '1px solid rgba(0,0,0,0.05)' : 'none',
+        border: bordered ? `1px solid ${designTokens.colors.action.hover}` : 'none',
         boxShadow: elevation || 0,
       }}
       className={`bi-chart-card ${className || ''}`.trim()}
     >
       <CardHeader
         sx={{
-          padding: '16px 24px',
-          borderBottom: bordered ? '1px solid rgba(0,0,0,0.05)' : 'none',
+          padding: `${designTokens.spacing.md} 24px`,
+          borderBottom: bordered ? `1px solid ${designTokens.colors.action.hover}` : 'none',
         }}
         action={
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
@@ -182,7 +184,7 @@ export const ChartCard: React.FC<ChartCardProps> = ({
                       backgroundColor: activeChartType === type ? 'white' : 'transparent',
                       color: activeChartType === type ? 'primary.700' : 'text.secondary',
                       cursor: 'pointer',
-                      boxShadow: activeChartType === type ? '0 1px 2px rgba(0,0,0,0.1)' : 'none',
+                      boxShadow: activeChartType === type ? `0 1px 2px ${designTokens.colors.action.selected}` : 'none',
                       transition: 'all 0.2s ease',
                     }}
                     title={type}
@@ -198,10 +200,10 @@ export const ChartCard: React.FC<ChartCardProps> = ({
                 variant='text'
                 size='small'
                 onClick={(e) => setTimeMenuAnchor(e.currentTarget)}
-                sx={{ textTransform: 'none', padding: '6px 12px' }}
+                sx={{ textTransform: 'none', padding: `${designTokens.spacing.sm} 12px` }}
               >
                 <Calendar style={{ width: 16, height: 16, marginRight: 4 }} />
-                <span>{timeRanges.find((r) => r.value === timeRange)?.label || '本月'}</span>
+                <span>{timeRanges.find((r) => r.value === timeRange)?.label || i18n.t('shared.chart_card.k6')}</span>
               </Button>
             )}
 
@@ -244,7 +246,7 @@ export const ChartCard: React.FC<ChartCardProps> = ({
           )}
           {showDrillDown && onDrillDown && (
             <Chip
-              label='下钻'
+              label={i18n.t('shared.chart_card.k7')}
               size='small'
               onClick={onDrillDown}
               sx={{
@@ -312,7 +314,7 @@ export const ChartCard: React.FC<ChartCardProps> = ({
                 onClick={onRefresh}
               >
                 <RefreshCw style={{ width: 16, height: 16, marginRight: 4 }} />
-                重试
+                {i18n.t('components.chart_card.k0')}
               </Button>
             )}
           </div>
@@ -327,7 +329,7 @@ export const ChartCard: React.FC<ChartCardProps> = ({
                   gap: 2,
                   marginTop: 3,
                   paddingTop: 2,
-                  borderTop: '1px solid rgba(0,0,0,0.05)',
+                  borderTop: `1px solid ${designTokens.colors.action.hover}`,
                 }}
               >
                 {summary.total !== undefined && (
@@ -336,7 +338,7 @@ export const ChartCard: React.FC<ChartCardProps> = ({
                       variant='caption'
                       color='text.secondary'
                     >
-                      总计
+                      {i18n.t('components.chart_card.k1')}
                     </Typography>
                     <Typography
                       variant='body2'
@@ -354,7 +356,7 @@ export const ChartCard: React.FC<ChartCardProps> = ({
                       variant='caption'
                       color='text.secondary'
                     >
-                      平均
+                      {i18n.t('components.chart_card.k2')}
                     </Typography>
                     <Typography
                       variant='body2'
@@ -370,7 +372,7 @@ export const ChartCard: React.FC<ChartCardProps> = ({
                       variant='caption'
                       color='text.secondary'
                     >
-                      最大
+                      {i18n.t('components.chart_card.k3')}
                     </Typography>
                     <Typography
                       variant='body2'
@@ -386,7 +388,7 @@ export const ChartCard: React.FC<ChartCardProps> = ({
                       variant='caption'
                       color='text.secondary'
                     >
-                      最小
+                      {i18n.t('components.chart_card.k4')}
                     </Typography>
                     <Typography
                       variant='body2'
@@ -434,7 +436,7 @@ export const ChartCard: React.FC<ChartCardProps> = ({
             }}
           >
             <RefreshCw style={{ width: 16, height: 16, marginRight: 8 }} />
-            刷新数据
+            {i18n.t('components.chart_card.k5')}
           </MenuItem>
         )}
         {showExport && (
@@ -445,7 +447,7 @@ export const ChartCard: React.FC<ChartCardProps> = ({
             }}
           >
             <Download style={{ width: 16, height: 16, marginRight: 8 }} />
-            导出数据
+            {i18n.t('components.chart_card.k6')}
           </MenuItem>
         )}
         {showFullscreen && (
@@ -456,7 +458,7 @@ export const ChartCard: React.FC<ChartCardProps> = ({
             }}
           >
             <Maximize2 style={{ width: 16, height: 16, marginRight: 8 }} />
-            全屏查看
+            {i18n.t('components.chart_card.k7')}
           </MenuItem>
         )}
         {showDrillDown && onDrillDown && (
@@ -467,7 +469,7 @@ export const ChartCard: React.FC<ChartCardProps> = ({
             }}
           >
             <TrendingUp style={{ width: 16, height: 16, marginRight: 8 }} />
-            数据下钻
+            {i18n.t('components.chart_card.k8')}
           </MenuItem>
         )}
       </Menu>

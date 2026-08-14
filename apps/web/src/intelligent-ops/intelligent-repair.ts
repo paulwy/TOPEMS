@@ -1,3 +1,4 @@
+import i18n from '@/i18n';
 export type RepairType = 'Restart' | 'ScaleUp' | 'ConfigUpdate' | 'Patched';
 export type RepairStatus =
   'Pending' | 'Approved' | 'Executing' | 'Completed' | 'Failed' | 'RolledBack';
@@ -50,7 +51,7 @@ class IntelligentRepairImpl {
         approval_required: false,
         rollback_enabled: true,
         status: 'Active',
-        description: '自动处理 CPU 过载场景',
+        description: i18n.t('shared.intelligent-repair.cpu_0'),
       },
       {
         name: 'Database Connection Recovery',
@@ -68,7 +69,7 @@ class IntelligentRepairImpl {
         approval_required: true,
         rollback_enabled: true,
         status: 'Active',
-        description: '数据库连接池耗尽恢复',
+        description: i18n.t('shared.intelligent-repair.k1'),
       },
       {
         name: 'Memory Leak Mitigation',
@@ -80,7 +81,7 @@ class IntelligentRepairImpl {
         approval_required: true,
         rollback_enabled: true,
         status: 'Active',
-        description: '内存泄漏紧急缓解',
+        description: i18n.t('shared.intelligent-repair.k2'),
       },
     ];
 

@@ -10,56 +10,51 @@ import { formulaApi } from '@/api/rd';
 import type { Formula, CreateFormulaRequest, UpdateFormulaRequest } from '@/api/rd';
 import { PageContainer } from '@/components/common';
 import { RD_PATHS } from '@/modules/rd/config';
-
+import i18n from '@/i18n';
 const baseAdapter = createCrudPageAdapter<Formula, CreateFormulaRequest, UpdateFormulaRequest>({
   list: formulaApi.listFormulas,
   create: formulaApi.createFormula,
   update: formulaApi.updateFormula,
   delete: formulaApi.deleteFormula,
 });
-
 const formulaAdapter = baseAdapter as unknown as CrudApiAdapter<Formula>;
-
 const RsFormulaListPage: React.FC = () => {
   const navigate = useNavigate();
-
   const customRowActions: RowAction<Record<string, unknown>>[] = [
     {
-      label: '查看',
+      label: i18n.t('rd.rs_formula_list_page.k0'),
       icon: <Eye size={16} />,
       onClick: (row) => navigate(`${RD_PATHS.formula}/${row.id}`),
     },
     {
-      label: '编辑',
+      label: i18n.t('rd.rs_formula_list_page.k1'),
       icon: <Edit size={16} />,
       onClick: (row) => navigate(`${RD_PATHS.formula}/${row.id}/edit`),
     },
     {
-      label: '删除',
+      label: i18n.t('rd.rs_formula_list_page.k2'),
       icon: <Trash2 size={16} />,
       color: 'error',
       onClick: () => {},
     },
   ];
-
   return (
     <PageContainer
-      title='配方管理'
-      subtitle='管理研发配方、版本控制、配方发布'
+      title={i18n.t('rd.rs_formula_list_page.k3')}
+      subtitle={i18n.t('rd.rs_formula_list_page.k4')}
       maxWidth='xl'
     >
       <CrudPage
         schema={formulaSchema}
         apiAdapter={formulaAdapter}
         breadcrumbs={[
-          { label: '首页', href: '/dashboard' },
-          { label: '研发', href: '/rs' },
-          { label: '配方管理' },
+          { label: i18n.t('rd.rs_formula_list_page.k5'), href: '/dashboard' },
+          { label: i18n.t('rd.rs_formula_list_page.k6'), href: '/rs' },
+          { label: i18n.t('rd.rs_formula_list_page.k7') },
         ]}
         customRowActions={customRowActions}
       />
     </PageContainer>
   );
 };
-
 export default RsFormulaListPage;

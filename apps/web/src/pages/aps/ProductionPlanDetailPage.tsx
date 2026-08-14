@@ -10,9 +10,12 @@ import { productionPlanApi } from '@/api/aps';
 import type { ProductionPlan } from '@/api/aps/types';
 import { StatusBadge } from '@/components/aps/StatusBadge';
 import { FSMActionButtons } from '@/components/aps/FSMActionButtons';
+import { useTranslation } from 'react-i18next';
+import i18n from '@/i18n';
 
 export default function ProductionPlanDetailPage() {
   const { id } = useParams<{ id: string }>();
+  const { t } = useTranslation('aps');
   const navigate = useNavigate();
   const [plan, setPlan] = useState<ProductionPlan | null>(null);
   const [loading, setLoading] = useState(true);
@@ -45,18 +48,18 @@ export default function ProductionPlanDetailPage() {
   };
 
   if (loading) {
-    return <div className='p-4 text-gray-600'>加载中...</div>;
+    return <div className='p-4 text-gray-600'>{i18n.t('pages.production_plan_detail_page.k0')}</div>;
   }
 
   if (!plan) {
     return (
       <div className='p-4'>
-        <p className='text-gray-600'>未找到生产计划数据。</p>
+        <p className='text-gray-600'>{t('aps.production_plan_detail_page.k0')}</p>
         <button
           onClick={() => navigate('/aps/production-plans')}
           className='mt-2 text-blue-600 underline'
         >
-          返回列表
+          {i18n.t('pages.production_plan_detail_page.k0')}
         </button>
       </div>
     );
@@ -70,7 +73,7 @@ export default function ProductionPlanDetailPage() {
             onClick={() => navigate('/aps/production-plans')}
             className='mb-2 text-sm text-blue-600 hover:underline'
           >
-            ← 返回生产计划列表
+            {i18n.t('pages.production_plan_detail_page.k1')}
           </button>
           <h1 className='text-2xl font-bold'>{plan.plan_no}</h1>
           <p className='mt-1 text-sm text-gray-500'>{plan.plan_name}</p>
@@ -82,7 +85,7 @@ export default function ProductionPlanDetailPage() {
       </div>
 
       <div className='rounded-lg border p-4'>
-        <p className='mb-3 text-sm font-semibold text-gray-700'>状态机操作</p>
+        <p className='mb-3 text-sm font-semibold text-gray-700'>{t('aps.production_plan_detail_page.k1')}</p>
         <FSMActionButtons
           fsm='production_plan'
           currentStatus={plan.status ?? 'draft'}
@@ -91,38 +94,38 @@ export default function ProductionPlanDetailPage() {
       </div>
 
       <div className='rounded-lg border p-4'>
-        <h3 className='mb-3 font-semibold'>基本信息</h3>
+        <h3 className='mb-3 font-semibold'>{t('aps.production_plan_detail_page.k2')}</h3>
         <dl className='grid grid-cols-2 gap-4 text-sm'>
           <div>
-            <dt className='text-gray-500'>计划编号</dt>
+            <dt className='text-gray-500'>{t('aps.production_plan_detail_page.k3')}</dt>
             <dd className='font-medium'>{plan.plan_no}</dd>
           </div>
           <div>
-            <dt className='text-gray-500'>计划名称</dt>
+            <dt className='text-gray-500'>{t('aps.production_plan_detail_page.k4')}</dt>
             <dd className='font-medium'>{plan.plan_name}</dd>
           </div>
           <div>
-            <dt className='text-gray-500'>计划类型</dt>
+            <dt className='text-gray-500'>{t('aps.production_plan_detail_page.k5')}</dt>
             <dd className='font-medium'>{plan.plan_type ?? '-'}</dd>
           </div>
           <div>
-            <dt className='text-gray-500'>产品名称</dt>
+            <dt className='text-gray-500'>{t('aps.production_plan_detail_page.k6')}</dt>
             <dd className='font-medium'>{plan.product_name ?? '-'}</dd>
           </div>
           <div>
-            <dt className='text-gray-500'>目标产量</dt>
+            <dt className='text-gray-500'>{t('aps.production_plan_detail_page.k7')}</dt>
             <dd className='font-medium'>{plan.target_quantity?.toLocaleString() ?? '-'}</dd>
           </div>
           <div>
-            <dt className='text-gray-500'>开始日期</dt>
+            <dt className='text-gray-500'>{t('aps.production_plan_detail_page.k8')}</dt>
             <dd className='font-medium'>{plan.start_date ?? '-'}</dd>
           </div>
           <div>
-            <dt className='text-gray-500'>结束日期</dt>
+            <dt className='text-gray-500'>{t('aps.production_plan_detail_page.k9')}</dt>
             <dd className='font-medium'>{plan.end_date ?? '-'}</dd>
           </div>
           <div>
-            <dt className='text-gray-500'>备注</dt>
+            <dt className='text-gray-500'>{t('aps.production_plan_detail_page.k10')}</dt>
             <dd className='font-medium'>{plan.notes ?? '-'}</dd>
           </div>
         </dl>

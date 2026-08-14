@@ -14,6 +14,7 @@ import type { ApiResponse } from '../client';
 import { performanceMark, performanceMeasure, parseQueryName } from '@/utils/graphql-performance';
 import type { QueryPerformanceRecord } from '@/utils/graphql-performance';
 import { logger } from '@/utils/logger';
+import i18n from '@/i18n';
 
 const perfLogger = logger.child({ prefix: 'BFF-GraphQL' });
 
@@ -56,7 +57,7 @@ function notifyPerformance(
     try {
       cb(query, duration, success, cached, variables, error);
     } catch (e) {
-      perfLogger.error('性能回调执行失败:', e);
+      perfLogger.error(i18n.t('shared.index.k0'), e);
     }
   });
 }
@@ -305,7 +306,7 @@ export async function bffGraphQL<T = unknown>(
     const finalDuration = duration > 0 ? duration : 0;
 
     perfLogger.debug(
-      `GraphQL 查询: ${operationName} - ${finalDuration.toFixed(0)}ms - ${success ? '成功' : '失败'} - ${cached ? '缓存命中' : '缓存未命中'}`
+      `${i18n.t('shared.index.graphql_1')}${operationName} - ${finalDuration.toFixed(0)}ms - ${success ? i18n.t('api.index.k0') : i18n.t('api.index.k2')} - ${cached ? '缓存命中' : '缓存未命中'}`
     );
 
     notifyPerformance(query, finalDuration, success, cached, variables, errorMsg);
@@ -3403,7 +3404,7 @@ export async function setFieldPermission(
     body: JSON.stringify(permission),
   });
   if (!response.ok) {
-    throw new Error(`设置字段权限失败: ${response.status}`);
+    throw new Error(`${i18n.t('shared.index.k2')}${response.status}`);
   }
   return response.json();
 }
@@ -3425,7 +3426,7 @@ export async function removeFieldPermission(
     body: JSON.stringify({ entity_type: entityType, field_name: fieldName }),
   });
   if (!response.ok) {
-    throw new Error(`移除字段权限失败: ${response.status}`);
+    throw new Error(`${i18n.t('shared.index.k3')}${response.status}`);
   }
   return response.json();
 }
@@ -3463,7 +3464,7 @@ export async function setMaskingRule(
     body: JSON.stringify(rule),
   });
   if (!response.ok) {
-    throw new Error(`设置掩码规则失败: ${response.status}`);
+    throw new Error(`${i18n.t('shared.index.k4')}${response.status}`);
   }
   return response.json();
 }
@@ -3485,7 +3486,7 @@ export async function removeMaskingRule(
     body: JSON.stringify({ entity_type: entityType, field_name: fieldName }),
   });
   if (!response.ok) {
-    throw new Error(`移除掩码规则失败: ${response.status}`);
+    throw new Error(`${i18n.t('shared.index.k5')}${response.status}`);
   }
   return response.json();
 }
@@ -3575,7 +3576,7 @@ export async function updateSecurityConfig(
     body: JSON.stringify(config),
   });
   if (!response.ok) {
-    throw new Error(`更新安全配置失败: ${response.status}`);
+    throw new Error(`${i18n.t('shared.index.k6')}${response.status}`);
   }
   return response.json();
 }

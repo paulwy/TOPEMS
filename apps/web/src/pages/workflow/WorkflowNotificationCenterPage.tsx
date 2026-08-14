@@ -10,27 +10,22 @@ import { LoadingSpinner } from '@topems/shared-components';
 import { PageContainer } from '@/components/common';
 import { WORKFLOW_PATHS } from '@/modules/workflow/config';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-
-
 import { QUERY_KEYS } from '@/lib/reactQuery';
-
+import i18n from '@/i18n';
 const FlowNotificationCenter: React.FC = () => {
   const navigate = useNavigate();
   const addNotification = useNotificationStore((state) => state.addNotification);
   const user = useAuthStore((state) => state.user);
   const queryClient = useQueryClient();
   const [filter, setFilter] = useState<'all' | 'unread'>('all');
-
   const notificationsQuery = useQuery<Notification[]>({
     queryKey: [...QUERY_KEYS.AD_HOC.WORKFLOW_NOTIFICATIONS_BASE, filter],
     queryFn: async (): Promise<Notification[]> => {
       const userId = user?.id || 'current-user-id';
-
       const params: ListParams = {};
       if (filter === 'unread') {
         // This would need backend support to filter by is_read
       }
-
       const response = await workflowApi.listNotifications(userId, params);
       if (response.success && response.data) {
         return response.data;
@@ -39,26 +34,22 @@ const FlowNotificationCenter: React.FC = () => {
     },
     staleTime: 5 * 60 * 1000,
   });
-
   const notifications = notificationsQuery.data ?? [];
   const loading = notificationsQuery.isLoading;
-
   const unreadCount = useMemo(
     () => notifications.filter((n) => !n.is_read).length,
     [notifications]
   );
-
   useEffect(() => {
     if (notificationsQuery.isError) {
-      apiLogger.error('加载通知失败:', notificationsQuery.error);
+      apiLogger.error(i18n.t('pages.workflow_notification_center_page.k0'), notificationsQuery.error);
       addNotification({
-        title: '错误',
-        message: '加载通知失败',
+        title: i18n.t('workflow.workflow_notification_center_page.k0'),
+        message: i18n.t('workflow.workflow_notification_center_page.k1'),
         type: 'error',
       });
     }
   }, [notificationsQuery.isError, notificationsQuery.error, addNotification]);
-
   const markAsReadMutation = useMutation({
     mutationFn: (userId: string) => workflowApi.markNotificationsAsRead(userId),
     onSuccess: () => {
@@ -67,29 +58,26 @@ const FlowNotificationCenter: React.FC = () => {
   refetchType: 'active',
 });
       addNotification({
-        title: '成功',
-        message: '所有通知已标记为已读',
+        title: i18n.t('workflow.workflow_notification_center_page.k2'),
+        message: i18n.t('workflow.workflow_notification_center_page.k3'),
         type: 'success',
       });
     },
     onError: (err: unknown) => {
-      addNotification({ title: '错误', message: '标记失败', type: 'error' });
-      apiLogger.error('标记失败:', err);
+      addNotification({ title: i18n.t('workflow.workflow_notification_center_page.k5'), message: i18n.t('workflow.workflow_notification_center_page.k4'), type: 'error' });
+      apiLogger.error(i18n.t('pages.workflow_notification_center_page.k1'), err);
     },
   });
-
   const handleMarkAsRead = () => {
     const userId = user?.id || 'current-user-id';
     markAsReadMutation.mutate(userId);
   };
-
   const handleNotificationClick = (notification: Notification) => {
     // Mark as read if unread
     if (!notification.is_read) {
       // In a real app, we'd mark this single notification as read
       // For now, we'll just navigate
     }
-
     // Navigate based on notification type
     if (notification.workflow_instance_id) {
       navigate(WORKFLOW_PATHS.instances);
@@ -97,7 +85,6 @@ const FlowNotificationCenter: React.FC = () => {
       navigate(WORKFLOW_PATHS.approvals);
     }
   };
-
   const getNotificationIcon = (type: string) => {
     switch (type) {
       case 'approval_created':
@@ -114,26 +101,23 @@ const FlowNotificationCenter: React.FC = () => {
         return <Bell sx={{ width: 20, height: 20, color: 'grey.600' }} />;
     }
   };
-
   const getNotificationText = (type: string) => {
     const typeMap: Record<string, string> = {
-      approval_created: '新审批任务',
-      approval_completed: '审批已完成',
-      workflow_started: '工作流已启动',
-      workflow_completed: '工作流已完成',
-      workflow_rejected: '工作流被拒绝',
+      approval_created: i18n.t('workflow.workflow_notification_center_page.k6'),
+      approval_completed: i18n.t('workflow.workflow_notification_center_page.k7'),
+      workflow_started: i18n.t('workflow.workflow_notification_center_page.k8'),
+      workflow_completed: i18n.t('workflow.workflow_notification_center_page.k9'),
+      workflow_rejected: i18n.t('workflow.workflow_notification_center_page.k10'),
     };
     return typeMap[type] || type;
   };
-
   const filteredNotifications =
     filter === 'unread' ? notifications.filter((n) => !n.is_read) : notifications;
-
   const headerActions = useMemo(() => {
     if (unreadCount <= 0) return [];
     return [
       {
-        label: '全部标记为已读',
+        label: i18n.t('workflow.workflow_notification_center_page.k11'),
         icon: <Check size={18} />,
         onClick: handleMarkAsRead,
         variant: 'contained' as const,
@@ -141,17 +125,15 @@ const FlowNotificationCenter: React.FC = () => {
       },
     ];
   }, [unreadCount]);
-
   const subtitleText = useMemo(() => {
     if (unreadCount > 0) {
-      return `${unreadCount} 条未读通知`;
+      return `${unreadCount}${i18n.t('pages.workflow_notification_center_page.k2')}`;
     }
-    return '暂无未读通知';
+    return i18n.t('workflow.workflow_notification_center_page.k12');
   }, [unreadCount]);
-
   return (
     <PageContainer
-      title='通知中心'
+      title={i18n.t('workflow.workflow_notification_center_page.k13')}
       subtitle={subtitleText}
       headerProps={{
         pageIcon: <Bell size={24} />,
@@ -167,7 +149,7 @@ const FlowNotificationCenter: React.FC = () => {
           sx={{ borderBottom: 1, borderColor: 'divider' }}
         >
           <Tab
-            label={`全部通知 (${notifications.length})`}
+            label={`${i18n.t('pages.workflow_notification_center_page.k3')}${notifications.length})`}
             value='all'
             sx={{
               textTransform: 'none',
@@ -178,7 +160,7 @@ const FlowNotificationCenter: React.FC = () => {
             }}
           />
           <Tab
-            label={`未读 (${unreadCount})`}
+            label={`${i18n.t('pages.workflow_notification_center_page.k4')}${unreadCount})`}
             value='unread'
             sx={{
               textTransform: 'none',
@@ -190,7 +172,6 @@ const FlowNotificationCenter: React.FC = () => {
           />
         </Tabs>
       </Box>
-
       {/* Notification List */}
       <Box sx={{ bgcolor: 'background.paper', borderRadius: 1, p: 3 }}>
         {loading ? (
@@ -208,7 +189,7 @@ const FlowNotificationCenter: React.FC = () => {
           <Box sx={{ textAlign: 'center', py: 6 }}>
             <Bell sx={{ width: 64, height: 64, color: 'grey.300', mb: 2 }} />
             <Typography color='text.secondary'>
-              {filter === 'unread' ? '暂无未读通知' : '暂无通知'}
+              {filter === 'unread' ? i18n.t('workflow.workflow_notification_center_page.k15') : i18n.t('workflow.workflow_notification_center_page.k14')}
             </Typography>
           </Box>
         ) : (
@@ -349,7 +330,7 @@ const FlowNotificationCenter: React.FC = () => {
                           variant='caption'
                           color='text.disabled'
                         >
-                          实例
+                          {i18n.t('pages.workflow_notification_center_page.k0')}
                         </Typography>
                       </Box>
                     )}
@@ -366,7 +347,7 @@ const FlowNotificationCenter: React.FC = () => {
                           variant='caption'
                           color='text.disabled'
                         >
-                          审批
+                          {i18n.t('pages.workflow_notification_center_page.k1')}
                         </Typography>
                       </Box>
                     )}
@@ -385,7 +366,7 @@ const FlowNotificationCenter: React.FC = () => {
                           variant='caption'
                           sx={{ color: 'primary.700' }}
                         >
-                          未读
+                          {i18n.t('pages.workflow_notification_center_page.k2')}
                         </Typography>
                       </Box>
                     )}
@@ -399,5 +380,4 @@ const FlowNotificationCenter: React.FC = () => {
     </PageContainer>
   );
 };
-
 export default FlowNotificationCenter;

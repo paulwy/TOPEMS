@@ -1,7 +1,6 @@
 import React, { useCallback, useMemo } from 'react';
 import { Box, Typography } from '@mui/material';
 import { Download, CheckCircle } from 'lucide-react';
-
 import CrudPage, { type CrudApiAdapter } from '@/components/templates/CrudPage';
 import type { RowAction } from '@/components/templates/list/types';
 import { PageContainer } from '@/components/common';
@@ -9,11 +8,9 @@ import { useNotificationStore } from '@/store';
 import { qualitySchema } from '@/schemas/mes';
 import { qualityApi } from '@/api/mes/quality';
 import type { QualityInspection } from '@/api/mes/quality';
-import { useTranslation } from 'react-i18next';
 import { designTokens } from '@/theme/tokens';
-
+import i18n from '@/i18n';
 const ct= designTokens.colors;
-
 const qualityApiAdapter: CrudApiAdapter<QualityInspection> = {
   list: async (params) => {
     const response = await qualityApi.listInspections({
@@ -23,121 +20,110 @@ const qualityApiAdapter: CrudApiAdapter<QualityInspection> = {
       status: params?.status && params.status !== 'all' ? (params.status as string) : undefined,
     });
     if (!response.success || !response.data) {
-      throw new Error('加载质量检验记录失败');
+      throw new Error(i18n.t('mes.quality_inspection_page.k0'));
     }
     return {
       data: response.data.inspections,
       total: response.data.total,
     };
   },
-
   create: async (data) => {
     const response = await qualityApi.createInspection(
       data as Parameters<typeof qualityApi.createInspection>[0]
     );
     if (!response.success) {
-      throw new Error(response.message || '创建质量检验记录失败');
+      throw new Error(response.message || i18n.t('mes.quality_inspection_page.k1'));
     }
     return response.data as unknown as QualityInspection;
   },
-
   update: async (id, data) => {
     const response = await qualityApi.updateInspection(
       id,
       data as Parameters<typeof qualityApi.updateInspection>[1]
     );
     if (!response.success) {
-      throw new Error(response.message || '更新质量检验记录失败');
+      throw new Error(response.message || i18n.t('mes.quality_inspection_page.k2'));
     }
     return response.data as unknown as QualityInspection;
   },
-
   delete: async (id) => {
     const response = await qualityApi.deleteInspection(id);
     if (!response.success) {
-      throw new Error(response.message || '删除质量检验记录失败');
+      throw new Error(response.message || i18n.t('mes.quality_inspection_page.k3'));
     }
   },
 };
-
 const QualityInspectionPage: React.FC = () => {
-  const { t } = useTranslation();
   const { addNotification } = useNotificationStore();
-
   const handleBatchExport = useCallback(
     async (rows: QualityInspection[]) => {
       if (rows.length === 0) {
         addNotification({
           type: 'warning',
-          title: t('mes.quality_inspection_page.hint'),
-          message: t('mes.quality_inspection_page.please_select'),
+          title: i18n.t('mes.quality_inspection_page.hint'),
+          message: i18n.t('mes.quality_inspection_page.please_select'),
         });
         return;
       }
-
       try {
         const XLSX = await import('xlsx');
         const typeLabelMap: Record<string, string> = {
-          incoming: t('mes.quality_inspection_page.inspection'),
-          process: t('mes.quality_inspection_page.type_process'),
-          final: t('mes.quality_inspection_page.inspection_1'),
-          outgoing: t('mes.quality_inspection_page.inspection_2'),
-          patrol: t('mes.quality_inspection_page.patrol'),
+          incoming: i18n.t('mes.quality_inspection_page.inspection'),
+          process: i18n.t('mes.quality_inspection_page.type_process'),
+          final: i18n.t('mes.quality_inspection_page.inspection_1'),
+          outgoing: i18n.t('mes.quality_inspection_page.inspection_2'),
+          patrol: i18n.t('mes.quality_inspection_page.patrol'),
         };
         const statusLabelMap: Record<string, string> = {
-          pending: t('mes.quality_inspection_page.status_pending'),
-          inspecting: t('mes.quality_inspection_page.status_in_progress'),
-          passed: t('mes.quality_inspection_page.result_qualified'),
-          failed: t('mes.quality_inspection_page.result_unqualified'),
-          rework: t('mes.quality_inspection_page.text_98e01c'),
-          scrapped: t('mes.quality_inspection_page.scrap'),
+          pending: i18n.t('mes.quality_inspection_page.status_pending'),
+          inspecting: i18n.t('mes.quality_inspection_page.status_in_progress'),
+          passed: i18n.t('mes.quality_inspection_page.result_qualified'),
+          failed: i18n.t('mes.quality_inspection_page.result_unqualified'),
+          rework: i18n.t('mes.quality_inspection_page.text_98e01c'),
+          scrapped: i18n.t('mes.quality_inspection_page.scrap'),
         };
-
         const exportData = rows.map((item) => ({
-          检验单号: item.inspection_no,
-          生产订单: item.order_number || '',
-          产品编码: item.product_code,
-          产品名称: item.product_name,
-          工序: item.process_name || '',
-          检验类型: typeLabelMap[item.inspection_type] || item.inspection_type,
-          检验数量: item.quantity,
-          合格数: item.qualified_quantity,
-          不合格数: item.unqualified_quantity,
-          合格率: `${item.qualification_rate?.toFixed(2) || 0}%`,
-          检验员: item.inspector || '',
-          检验时间: item.inspection_time
+          [i18n.t('pages.quality_inspection_page.k0')]: item.inspection_no,
+          [i18n.t('pages.quality_inspection_page.k1')]: item.order_number || '',
+          [i18n.t('pages.quality_inspection_page.k2')]: item.product_code,
+          [i18n.t('pages.quality_inspection_page.k3')]: item.product_name,
+          [i18n.t('pages.quality_inspection_page.k4')]: item.process_name || '',
+          [i18n.t('pages.quality_inspection_page.k5')]: typeLabelMap[item.inspection_type] || item.inspection_type,
+          [i18n.t('pages.quality_inspection_page.k6')]: item.quantity,
+          [i18n.t('pages.quality_inspection_page.k7')]: item.qualified_quantity,
+          [i18n.t('pages.quality_inspection_page.k8')]: item.unqualified_quantity,
+          [i18n.t('pages.quality_inspection_page.k9')]: `${item.qualification_rate?.toFixed(2) || 0}%`,
+          [i18n.t('pages.quality_inspection_page.k10')]: item.inspector || '',
+          [i18n.t('pages.quality_inspection_page.k11')]: item.inspection_time
             ? new Date(item.inspection_time).toLocaleString('zh-CN')
             : '',
-          检验结果: item.result || '',
-          状态: statusLabelMap[item.status] || item.status,
+          [i18n.t('pages.quality_inspection_page.k12')]: item.result || '',
+          [i18n.t('pages.quality_inspection_page.k13')]: statusLabelMap[item.status] || item.status,
         }));
-
         const worksheet = XLSX.utils.json_to_sheet(exportData);
         const workbook = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(workbook, worksheet, '质检记录');
-        XLSX.writeFile(workbook, `质检记录_${new Date().toISOString().split('T')[0]}.xlsx`);
-
+        XLSX.utils.book_append_sheet(workbook, worksheet, i18n.t('mes.quality_inspection_page.k4'));
+        XLSX.writeFile(workbook, `${i18n.t('pages.quality_inspection_page.__0')}${new Date().toISOString().split('T')[0]}.xlsx`);
         addNotification({
           type: 'success',
-          title: t('mes.quality_inspection_page.export'),
-          message: `已导出 ${rows.length} 条质检记录`,
+          title: i18n.t('mes.quality_inspection_page.export'),
+          message: `${i18n.t('pages.quality_inspection_page.k1')}${rows.length}${i18n.t('pages.quality_inspection_page.k2')}`,
         });
       } catch (error: unknown) {
         addNotification({
           type: 'error',
-          title: t('mes.quality_inspection_page.export_2'),
-          message: t('mes.quality_inspection_page.export_3'),
+          title: i18n.t('mes.quality_inspection_page.export_2'),
+          message: i18n.t('mes.quality_inspection_page.export_3'),
         });
       }
     },
-    [addNotification, t]
+    [addNotification, i18n.t]
   );
-
   const customRowActions: RowAction[] = useMemo(
     () => [
       {
         key: 'export-selected',
-        label: t('mes.quality_inspection_page.batch_export_1'),
+        label: i18n.t('mes.quality_inspection_page.batch_export_1'),
         icon: <Download size={16} />,
         color: 'primary',
         onClick: (row: Record<string, unknown>) => {
@@ -145,16 +131,14 @@ const QualityInspectionPage: React.FC = () => {
         },
       },
     ],
-    [handleBatchExport, t]
+    [handleBatchExport, i18n.t]
   );
-
   const handleStatsExport = useCallback(
     (rows: Record<string, unknown>[]) => {
       handleBatchExport(rows as unknown as QualityInspection[]);
     },
     [handleBatchExport]
   );
-
   return (
     <PageContainer
       autoTitle
@@ -170,7 +154,7 @@ const QualityInspectionPage: React.FC = () => {
         customRowActions={customRowActions}
         breadcrumbs={[
           {
-            label: t('mes.quality_inspection_page.breadcrumb_home'),
+            label: i18n.t('mes.quality_inspection_page.breadcrumb_home'),
             href: '/dashboard',
           },
           {
@@ -178,7 +162,7 @@ const QualityInspectionPage: React.FC = () => {
             href: '/mes',
           },
           {
-            label: t('mes.quality_inspection_page.breadcrumb_current'),
+            label: i18n.t('mes.quality_inspection_page.breadcrumb_current'),
           },
         ]}
         headerContent={(rows) => {
@@ -196,7 +180,6 @@ const QualityInspectionPage: React.FC = () => {
             failed: items.filter((i) => i.status === 'failed').length,
             avgRate,
           };
-
           return (
             <Box
               sx={{
@@ -214,7 +197,7 @@ const QualityInspectionPage: React.FC = () => {
                   variant='body2'
                   sx={{ color: 'text.secondary' }}
                 >
-                  总检验数
+                  {i18n.t('pages.quality_inspection_page.k14')}
                 </Typography>
                 <Typography
                   variant='h5'
@@ -228,7 +211,7 @@ const QualityInspectionPage: React.FC = () => {
                   variant='body2'
                   sx={{ color: 'text.secondary' }}
                 >
-                  待检验
+                  {i18n.t('pages.quality_inspection_page.k15')}
                 </Typography>
                 <Typography
                   variant='h5'
@@ -242,7 +225,7 @@ const QualityInspectionPage: React.FC = () => {
                   variant='body2'
                   sx={{ color: 'text.secondary' }}
                 >
-                  合格数
+                  {i18n.t('pages.quality_inspection_page.k16')}
                 </Typography>
                 <Typography
                   variant='h5'
@@ -256,7 +239,7 @@ const QualityInspectionPage: React.FC = () => {
                   variant='body2'
                   sx={{ color: 'text.secondary' }}
                 >
-                  不合格数
+                  {i18n.t('pages.quality_inspection_page.k17')}
                 </Typography>
                 <Typography
                   variant='h5'
@@ -273,13 +256,13 @@ const QualityInspectionPage: React.FC = () => {
                   cursor: 'pointer',
                 }}
                 onClick={() => handleStatsExport(rows)}
-                title={t('mes.quality_inspection_page.batch_export_1')}
+                title={i18n.t('mes.quality_inspection_page.batch_export_1')}
               >
                 <Typography
                   variant='body2'
                   sx={{ color: 'text.secondary' }}
                 >
-                  平均合格率
+                  {i18n.t('pages.quality_inspection_page.k18')}
                 </Typography>
                 <Typography
                   variant='h5'
@@ -296,5 +279,4 @@ const QualityInspectionPage: React.FC = () => {
     </PageContainer>
   );
 };
-
 export default QualityInspectionPage;

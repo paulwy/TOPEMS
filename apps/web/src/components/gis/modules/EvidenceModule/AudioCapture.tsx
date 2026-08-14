@@ -3,6 +3,7 @@ import React, { useRef, useState, useCallback, useEffect } from 'react';
 import { Mic, Square, Pause, Play, X, Check } from 'lucide-react';
 import { Box, IconButton, Typography, Paper, Button, useTheme } from '@mui/material';
 import { logger } from '@/utils/logger';
+import i18n from '@/i18n';
 
 interface AudioCaptureProps {
   onCapture: (file: File, duration: number) => void;
@@ -78,7 +79,7 @@ const AudioCapture: React.FC<AudioCaptureProps> = ({
         });
       }, 1000);
     } catch (err: unknown) {
-      setError('无法访问麦克风，请确保已授予麦克风权限');
+      setError(i18n.t('gis.audio_capture.k0'));
       logger.error('Audio capture error:', err);
     }
   }, [maxDuration]);
@@ -123,7 +124,7 @@ const AudioCapture: React.FC<AudioCaptureProps> = ({
   const saveRecording = useCallback(() => {
     if (recordedBlob) {
       if (recordedBlob.size > maxFileSize) {
-        setError(`文件大小超过限制 (${maxFileSize / 1024 / 1024}MB)`);
+        setError(`${i18n.t('components.audio_capture.k0')}${maxFileSize / 1024 / 1024}MB)`);
         return;
       }
       const file = new File([recordedBlob], `recording-${Date.now()}.webm`, {
@@ -165,11 +166,11 @@ const AudioCapture: React.FC<AudioCaptureProps> = ({
           borderColor: 'grey.700',
         }}
       >
-        <Typography sx={{ color: 'common.white', fontWeight: 500 }}>录音取证</Typography>
+        <Typography sx={{ color: 'common.white', fontWeight: 500 }}>{i18n.t('gis.audio_capture.k1')}</Typography>
         <IconButton
           onClick={onCancel}
           sx={{ borderRadius: 4, '&:hover': { bgcolor: 'grey.800' } }}
-          aria-label='关闭'
+          aria-label={i18n.t('gis.audio_capture.k2')}
         >
           <X
             size={20}
@@ -233,7 +234,7 @@ const AudioCapture: React.FC<AudioCaptureProps> = ({
                 color: 'common.white',
                 '&:hover': { bgcolor: 'error.dark' },
               }}
-              aria-label='麦克风'
+              aria-label={i18n.t('gis.audio_capture.k3')}
             >
               <Mic size={32} />
             </IconButton>
@@ -250,7 +251,7 @@ const AudioCapture: React.FC<AudioCaptureProps> = ({
                   color: 'common.white',
                   '&:hover': { bgcolor: 'text.secondary' },
                 }}
-                aria-label='执行'
+                aria-label={i18n.t('gis.audio_capture.k4')}
               >
                 {isPaused ? <Play size={24} /> : <Pause size={24} />}
               </IconButton>
@@ -263,7 +264,7 @@ const AudioCapture: React.FC<AudioCaptureProps> = ({
                   color: 'common.white',
                   '&:hover': { bgcolor: 'error.dark' },
                 }}
-                aria-label='选择'
+                aria-label={i18n.t('gis.audio_capture.k5')}
               >
                 <Square size={32} />
               </IconButton>
@@ -302,7 +303,7 @@ const AudioCapture: React.FC<AudioCaptureProps> = ({
                   '&:hover': { bgcolor: 'text.secondary' },
                 }}
               >
-                重新录制
+                {i18n.t('components.audio_capture.k0')}
               </Button>
               <Button
                 onClick={saveRecording}
@@ -316,7 +317,7 @@ const AudioCapture: React.FC<AudioCaptureProps> = ({
                   '&:hover': { bgcolor: 'success.dark' },
                 }}
               >
-                保存
+                {i18n.t('components.audio_capture.k1')}
               </Button>
             </Box>
           </Box>

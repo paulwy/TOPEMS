@@ -1,20 +1,16 @@
 import React from 'react';
-import { useTranslation } from 'react-i18next';
 import { Box, Card, CardContent, CardHeader, LinearProgress, Typography } from '@mui/material';
 import type { PmStatistics } from '@/api/pm';
-
+import i18n from '@/i18n';
 export interface PmReportBudgetCardProps {
   stats: PmStatistics;
   budgetUtilization: number;
 }
-
 const PmReportBudgetCard: React.FC<PmReportBudgetCardProps> = ({ stats, budgetUtilization }) => {
-  const { t } = useTranslation();
-
   return (
     <Card sx={{ mb: 3 }}>
       <CardHeader
-        title={<Typography variant='h6'>{t('pm.pm_report_page.text_42acf5')}</Typography>}
+        title={<Typography variant='h6'>{i18n.t('pm.pm_report_page.text_42acf5')}</Typography>}
       />
       <CardContent sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
         <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
@@ -22,7 +18,7 @@ const PmReportBudgetCard: React.FC<PmReportBudgetCardProps> = ({ stats, budgetUt
             variant='body2'
             sx={{ color: 'grey.600' }}
           >
-            {t('pm.pm_report_page.text_0a134c')}
+            {i18n.t('pm.pm_report_page.text_0a134c')}
           </Typography>
           <Typography
             variant='body2'
@@ -42,7 +38,7 @@ const PmReportBudgetCard: React.FC<PmReportBudgetCardProps> = ({ stats, budgetUt
               variant='body2'
               sx={{ color: 'blue.600' }}
             >
-              {t('pm.pm_report_page.text_b91eb1')}
+              {i18n.t('pm.pm_report_page.text_b91eb1')}
             </Typography>
             <Typography
               variant='h6'
@@ -56,7 +52,7 @@ const PmReportBudgetCard: React.FC<PmReportBudgetCardProps> = ({ stats, budgetUt
               variant='body2'
               sx={{ color: 'green.600' }}
             >
-              {t('pm.pm_report_page.text_b59b00')}
+              {i18n.t('pm.pm_report_page.text_b59b00')}
             </Typography>
             <Typography
               variant='h6'
@@ -70,7 +66,7 @@ const PmReportBudgetCard: React.FC<PmReportBudgetCardProps> = ({ stats, budgetUt
               variant='body2'
               sx={{ color: 'grey.600' }}
             >
-              {t('pm.pm_report_page.text_43b510')}
+              {i18n.t('pm.pm_report_page.text_43b510')}
             </Typography>
             <Typography
               variant='h6'
@@ -84,5 +80,4 @@ const PmReportBudgetCard: React.FC<PmReportBudgetCardProps> = ({ stats, budgetUt
     </Card>
   );
 };
-
 export default PmReportBudgetCard;

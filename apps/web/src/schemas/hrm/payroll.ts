@@ -1,9 +1,10 @@
 import type { EntitySchema } from '@/schema';
+import i18n from '@/i18n';
 
 export const payrollSchema: EntitySchema = {
   entity: 'hrm_payroll',
-  title: '工资发放',
-  description: '管理工资发放批次，包括工资核算、发放等流程',
+  title: i18n.t('hrm.payroll.k0'),
+  description: i18n.t('hrm.payroll.k1'),
 
   api: {
     module: 'hrm',
@@ -13,7 +14,7 @@ export const payrollSchema: EntitySchema = {
   fields: [
     {
       name: 'pay_period',
-      label: '工资周期',
+      label: i18n.t('hrm.payroll.k2'),
       type: 'text',
       required: true,
       sortable: true,
@@ -21,28 +22,28 @@ export const payrollSchema: EntitySchema = {
     },
     {
       name: 'employee_count',
-      label: '员工数量',
+      label: i18n.t('hrm.payroll.k3'),
       type: 'number',
       listWidth: 100,
     },
     {
       name: 'total_amount',
-      label: '总金额',
+      label: i18n.t('hrm.payroll.k4'),
       type: 'number',
       listWidth: 120,
     },
     {
       name: 'status',
-      label: '状态',
+      label: i18n.t('hrm.payroll.k5'),
       type: 'select',
       required: true,
       defaultValue: 'draft',
       options: {
         type: 'static',
         options: [
-          { value: 'draft', label: '草稿' },
-          { value: 'calculated', label: '已核算' },
-          { value: 'paid', label: '已发放' },
+          { value: 'draft', label: i18n.t('hrm.payroll.k6') },
+          { value: 'calculated', label: i18n.t('hrm.payroll.k7') },
+          { value: 'paid', label: i18n.t('hrm.payroll.k8') },
         ],
       },
       listWidth: 100,
@@ -50,13 +51,13 @@ export const payrollSchema: EntitySchema = {
     },
     {
       name: 'paid_at',
-      label: '支付时间',
+      label: i18n.t('hrm.payroll.k9'),
       type: 'datetime',
       listWidth: 160,
     },
     {
       name: 'created_at',
-      label: '创建时间',
+      label: i18n.t('hrm.payroll.k10'),
       type: 'datetime',
       readonly: true,
       hideInForm: true,
@@ -65,7 +66,7 @@ export const payrollSchema: EntitySchema = {
     },
     {
       name: 'updated_at',
-      label: '更新时间',
+      label: i18n.t('hrm.payroll.k11'),
       type: 'datetime',
       readonly: true,
       hideInForm: true,
@@ -86,21 +87,21 @@ export const payrollSchema: EntitySchema = {
         paid: 'success',
       },
       labelMap: {
-        draft: '草稿',
-        calculated: '已核算',
-        paid: '已发放',
+        draft: i18n.t('hrm.payroll.k12'),
+        calculated: i18n.t('hrm.payroll.k13'),
+        paid: i18n.t('hrm.payroll.k14'),
       },
     },
     filters: [
       {
         id: 'status',
-        label: '状态',
+        label: i18n.t('hrm.payroll.k15'),
         type: 'select',
         options: [
-          { label: '全部状态', value: 'all' },
-          { label: '草稿', value: 'draft' },
-          { label: '已核算', value: 'calculated' },
-          { label: '已发放', value: 'paid' },
+          { label: i18n.t('hrm.payroll.k16'), value: 'all' },
+          { label: i18n.t('hrm.payroll.k17'), value: 'draft' },
+          { label: i18n.t('hrm.payroll.k18'), value: 'calculated' },
+          { label: i18n.t('hrm.payroll.k19'), value: 'paid' },
         ],
       },
     ],
@@ -108,19 +109,19 @@ export const payrollSchema: EntitySchema = {
 
   formSections: [
     {
-      title: '基本信息',
+      title: i18n.t('hrm.payroll.k20'),
       fields: ['pay_period', 'status'],
     },
     {
-      title: '详细信息',
+      title: i18n.t('hrm.payroll.k21'),
       fields: ['employee_count', 'total_amount', 'paid_at'],
     },
   ],
 
   formColCount: 2,
-  createTitle: '创建工资发放批次',
-  editTitle: '编辑工资发放批次',
-  detailTitle: '工资发放批次详情',
+  createTitle: i18n.t('hrm.payroll.k22'),
+  editTitle: i18n.t('hrm.payroll.k23'),
+  detailTitle: i18n.t('hrm.payroll.k24'),
 
   actions: ['create', 'detail', 'delete'],
 };

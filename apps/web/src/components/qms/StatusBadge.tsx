@@ -1,3 +1,4 @@
+import i18n from '@/i18n';
 /**
  * QMS 状态徽章组件
  *
@@ -88,26 +89,26 @@ const FSM_STATUS_COLORS: Record<QmsFsmType, Record<string, string>> = {
 
 // 状态中文标签映射（跨 FSM 通用，状态值相同时取同一标签）
 const STATUS_LABELS: Record<string, string> = {
-  pending: '待处理',
-  in_progress: '进行中',
-  pending_audit: '待审核',
-  completed: '已完成',
-  rejected: '已驳回',
-  open: '待处理',
-  resolved: '已解决',
-  closed: '已关闭',
-  cancelled: '已取消',
-  draft: '草稿',
-  scheduled: '已排程',
-  verified: '已验证',
-  initiated: '已启动',
-  containment: '临时措施',
-  root_cause: '根因分析',
-  permanent_action: '永久措施',
-  planning: '计划中',
-  in_design: '设计中',
-  in_pilot: '试点中',
-  in_production: '生产中',
+  pending: i18n.t('components.status_badge.k0'),
+  in_progress: i18n.t('components.status_badge.k1'),
+  pending_audit: i18n.t('components.status_badge.k2'),
+  completed: i18n.t('components.status_badge.k3'),
+  rejected: i18n.t('components.status_badge.k4'),
+  open: i18n.t('components.status_badge.k5'),
+  resolved: i18n.t('components.status_badge.k6'),
+  closed: i18n.t('components.status_badge.k7'),
+  cancelled: i18n.t('components.status_badge.k8'),
+  draft: i18n.t('components.status_badge.k9'),
+  scheduled: i18n.t('components.status_badge.k10'),
+  verified: i18n.t('components.status_badge.k11'),
+  initiated: i18n.t('components.status_badge.k12'),
+  containment: i18n.t('components.status_badge.k13'),
+  root_cause: i18n.t('components.status_badge.k14'),
+  permanent_action: i18n.t('components.status_badge.k15'),
+  planning: i18n.t('components.status_badge.k16'),
+  in_design: i18n.t('components.status_badge.k17'),
+  in_pilot: i18n.t('components.status_badge.k18'),
+  in_production: i18n.t('components.status_badge.k19'),
 };
 
 interface StatusBadgeProps {

@@ -1,4 +1,5 @@
 import { logger } from '@/utils/logger';
+import i18n from '@/i18n';
 
 const SW_PATH = '/service-worker.js';
 const UPDATE_CHECK_INTERVAL = 24 * 60 * 60 * 1000;
@@ -50,7 +51,7 @@ export const registerSW = async (): Promise<ServiceWorkerRegistration | null> =>
         newWorker.addEventListener('statechange', () => {
           if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
             logger.info('New Service Worker available');
-            if (window.confirm('发现新版本，是否立即更新？')) {
+            if (window.confirm(i18n.t('shared.pwa.k0'))) {
               currentRegistration.waiting?.postMessage({ type: 'SKIP_WAITING' });
               window.location.reload();
             }

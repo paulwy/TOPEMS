@@ -7,13 +7,11 @@ import {
   FlaskConical as ScienceIcon,
   Folder as FolderIcon,
 } from 'lucide-react';
+import i18n from '@/i18n';
 import { StatsPageTemplate, type TableColumn } from '@/components/templates/StatsPageTemplate';
 import { apiClient } from '@/api/client';
 import { PageContainer } from '@/components/common';
-
-
 import { QUERY_KEYS } from '@/lib/reactQuery';
-
 interface RsReportData {
   projects: {
     total: number;
@@ -36,7 +34,6 @@ interface RsReportData {
   };
   monthlyProgress: Array<{ month: string; projects: number; experiments: number }>;
 }
-
 const defaultReportData: RsReportData = {
   projects: {
     total: 24,
@@ -66,7 +63,6 @@ const defaultReportData: RsReportData = {
     { month: '2024-06', projects: 6, experiments: 38 },
   ],
 };
-
 const RsReportPage: React.FC = () => {
   const reportQuery = useQuery<RsReportData>({
     queryKey: QUERY_KEYS.AD_HOC.RD_REPORT_SUMMARY_BASE,
@@ -77,65 +73,61 @@ const RsReportPage: React.FC = () => {
     },
     staleTime: 5 * 60 * 1000,
   });
-
   const reportData = reportQuery.data ?? defaultReportData;
   const loading = reportQuery.isLoading;
-
   useEffect(() => {
     if (reportQuery.isError) {
-      apiLogger.error('加载研发报表数据失败:', reportQuery.error);
+      apiLogger.error(i18n.t('pages.rs_report_page.k0'), reportQuery.error);
     }
   }, [reportQuery.isError, reportQuery.error]);
-
   const statCards = [
     {
       id: 'project-stats',
-      title: '项目统计',
+      title: i18n.t('rd.rs_report_page.k0'),
       value: reportData.projects.total,
       icon: <FolderIcon size={24} />,
       color: 'primary' as const,
-      description: `进行中 ${reportData.projects.active} | 已完成 ${reportData.projects.completed}`,
+      description: `${i18n.t('pages.rs_report_page.k1')}${reportData.projects.active}${i18n.t('pages.rs_report_page.k2')}${reportData.projects.completed}`,
     },
     {
       id: 'experiment-stats',
-      title: '试验统计',
+      title: i18n.t('rd.rs_report_page.k1'),
       value: reportData.experiments.total,
       icon: <ScienceIcon size={24} />,
       color: 'warning' as const,
-      description: `成功率 ${reportData.experiments.successRate}%`,
+      description: `${i18n.t('pages.rs_report_page.k3')}${reportData.experiments.successRate}%`,
       trend: {
         value: reportData.experiments.successRate,
         direction: 'up' as const,
-        label: '成功率',
+        label: i18n.t('rd.rs_report_page.k2'),
       },
     },
     {
       id: 'formula-stats',
-      title: '配方统计',
+      title: i18n.t('rd.rs_report_page.k3'),
       value: reportData.formulas.total,
       icon: <AnalyticsIcon size={24} />,
       color: 'info' as const,
-      description: `已发布 ${reportData.formulas.published} | 测试中 ${reportData.formulas.testing}`,
+      description: `${i18n.t('pages.rs_report_page.k4')}${reportData.formulas.published}${i18n.t('pages.rs_report_page.k5')}${reportData.formulas.testing}`,
     },
   ];
-
   const charts = [
     {
       id: 'experiment-phase-distribution',
-      title: '试验阶段分布',
+      title: i18n.t('rd.rs_report_page.k4'),
       type: 'pie' as const,
       dataKey: 'value',
       nameKey: 'name',
       data: [
-        { name: '小试阶段', value: reportData.experiments.lab },
-        { name: '中试阶段', value: reportData.experiments.pilot },
-        { name: '放大试验', value: reportData.experiments.scaleup },
+        { name: i18n.t('rd.rs_report_page.k5'), value: reportData.experiments.lab },
+        { name: i18n.t('rd.rs_report_page.k6'), value: reportData.experiments.pilot },
+        { name: i18n.t('rd.rs_report_page.k7'), value: reportData.experiments.scaleup },
       ],
       colors: ['primary.main', 'warning.main', 'error.main'],
     },
     {
       id: 'monthly-progress-trend',
-      title: '月度进展趋势',
+      title: i18n.t('rd.rs_report_page.k8'),
       type: 'bar' as const,
       dataKey: 'projects',
       nameKey: 'month',
@@ -147,33 +139,32 @@ const RsReportPage: React.FC = () => {
       colors: ['primary.main', 'success.main'],
     },
   ];
-
   const tables = [
     {
       id: 'experiment-phase-details',
-      title: '试验阶段详情',
+      title: i18n.t('rd.rs_report_page.k9'),
       columns: [
-        { id: 'phase', label: '阶段' },
-        { id: 'count', label: '数量' },
+        { id: 'phase', label: i18n.t('rd.rs_report_page.k10') },
+        { id: 'count', label: i18n.t('rd.rs_report_page.k11') },
         {
           id: 'percentage',
-          label: '占比',
+          label: i18n.t('rd.rs_report_page.k12'),
           render: (value: unknown) => `${(value as number).toFixed(1)}%`,
         },
       ] as TableColumn[],
       data: [
         {
-          phase: '小试阶段',
+          phase: i18n.t('rd.rs_report_page.k13'),
           count: reportData.experiments.lab,
           percentage: (reportData.experiments.lab / reportData.experiments.total) * 100,
         },
         {
-          phase: '中试阶段',
+          phase: i18n.t('rd.rs_report_page.k14'),
           count: reportData.experiments.pilot,
           percentage: (reportData.experiments.pilot / reportData.experiments.total) * 100,
         },
         {
-          phase: '放大试验',
+          phase: i18n.t('rd.rs_report_page.k15'),
           count: reportData.experiments.scaleup,
           percentage: (reportData.experiments.scaleup / reportData.experiments.total) * 100,
         },
@@ -181,11 +172,11 @@ const RsReportPage: React.FC = () => {
     },
     {
       id: 'monthly-progress-details',
-      title: '月度进展详情',
+      title: i18n.t('rd.rs_report_page.k16'),
       columns: [
-        { id: 'month', label: '月份' },
-        { id: 'projects', label: '项目数' },
-        { id: 'experiments', label: '试验数' },
+        { id: 'month', label: i18n.t('rd.rs_report_page.k17') },
+        { id: 'projects', label: i18n.t('rd.rs_report_page.k18') },
+        { id: 'experiments', label: i18n.t('rd.rs_report_page.k19') },
       ],
       data: reportData.monthlyProgress.map((item) => ({
         month: item.month,
@@ -194,24 +185,21 @@ const RsReportPage: React.FC = () => {
       })),
     },
   ];
-
   const timeRangeOptions = [
-    { label: '本周', value: 'week' },
-    { label: '本月', value: 'month' },
-    { label: '本季度', value: 'quarter' },
-    { label: '本年', value: 'year' },
+    { label: i18n.t('rd.rs_report_page.k20'), value: 'week' },
+    { label: i18n.t('rd.rs_report_page.k21'), value: 'month' },
+    { label: i18n.t('rd.rs_report_page.k22'), value: 'quarter' },
+    { label: i18n.t('rd.rs_report_page.k23'), value: 'year' },
   ];
-
   const [timeRange, setTimeRange] = useState('month');
-
   return (
     <PageContainer
       padding={false}
       maxWidth={false}
     >
       <StatsPageTemplate
-        title='研发报表分析'
-        subtitle='研发项目统计分析、试验数据汇总、成果评估'
+        title={i18n.t('rd.rs_report_page.k24')}
+        subtitle={i18n.t('rd.rs_report_page.k25')}
         statCards={statCards}
         statColumns={3}
         charts={charts}
@@ -225,11 +213,10 @@ const RsReportPage: React.FC = () => {
         showRefresh={true}
         showExport={true}
         showSearch={false}
-        chartSectionTitle='数据分析'
-        tableSectionTitle='详细数据'
+        chartSectionTitle={i18n.t('rd.rs_report_page.k26')}
+        tableSectionTitle={i18n.t('rd.rs_report_page.k27')}
       />
     </PageContainer>
   );
 };
-
 export default RsReportPage;

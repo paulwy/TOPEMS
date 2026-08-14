@@ -11,6 +11,7 @@ import { useQuery } from '@tanstack/react-query';
 
 import { QUERY_KEYS } from '@/lib/reactQuery';
 import { designTokens, semanticTokens } from '@topems/tokens';
+import i18n from '@/i18n';
 
 const SrmContractDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -18,10 +19,10 @@ const SrmContractDetailPage: React.FC = () => {
   const contractQuery = useQuery<SupplierContract | null>({
     queryKey: QUERY_KEYS.SRM.CONTRACT(id || ''),
     queryFn: async () => {
-      if (!id) throw new Error('合同ID为空');
+      if (!id) throw new Error(i18n.t('pages.srm_contract_detail_page.id_0'));
       const res = await srmApi.getContract(id);
       if (res.success && res.data) return res.data;
-      throw new Error(res.message || '加载合同信息失败');
+      throw new Error(res.message || i18n.t('pages.srm_contract_detail_page.k1'));
     },
     enabled: !!id,
     staleTime: 5 * 60 * 1000,
@@ -32,12 +33,12 @@ const SrmContractDetailPage: React.FC = () => {
   const error = contractQuery.isError
     ? contractQuery.error instanceof Error
       ? contractQuery.error.message
-      : '加载合同信息失败'
+      : i18n.t('pages.srm_contract_detail_page.k2')
     : undefined;
 
   useEffect(() => {
     if (contractQuery.isError) {
-      apiLogger.error('加载合同信息失败', contractQuery.error);
+      apiLogger.error(i18n.t('pages.srm_contract_detail_page.k3'), contractQuery.error);
     }
   }, [contractQuery.isError, contractQuery.error]);
 
@@ -50,11 +51,11 @@ const SrmContractDetailPage: React.FC = () => {
   };
 
   const statusLabels: Record<string, string> = {
-    pending: '待签署',
-    signed: '已签署',
-    expired: '已到期',
-    terminated: '已终止',
-    active: '履行中',
+    pending: i18n.t('pages.srm_contract_detail_page.k4'),
+    signed: i18n.t('pages.srm_contract_detail_page.k5'),
+    expired: i18n.t('pages.srm_contract_detail_page.k6'),
+    terminated: i18n.t('pages.srm_contract_detail_page.k7'),
+    active: i18n.t('pages.srm_contract_detail_page.k8'),
   };
 
   const infoCard = useMemo(
@@ -78,7 +79,7 @@ const SrmContractDetailPage: React.FC = () => {
     if (!contract) return { id: 'time', content: null };
     return {
       id: 'time',
-      title: '时间信息',
+      title: i18n.t('pages.srm_contract_detail_page.k9'),
       content: (
         <Box
           sx={{
@@ -93,7 +94,7 @@ const SrmContractDetailPage: React.FC = () => {
                 <Calendar sx={{ width: 16, height: 16, color: 'primary.main' }} />
               </Avatar>
               <Box>
-                <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>签署日期</InputLabel>
+                <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>{i18n.t('pages.srm_contract_detail_page.k10')}</InputLabel>
                 <Typography sx={{ mt: 0.5 }}>
                   {new Date(contract.sign_date).toLocaleDateString('zh-CN')}
                 </Typography>
@@ -106,7 +107,7 @@ const SrmContractDetailPage: React.FC = () => {
                 <Calendar sx={{ width: 16, height: 16, color: 'primary.main' }} />
               </Avatar>
               <Box>
-                <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>开始日期</InputLabel>
+                <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>{i18n.t('pages.srm_contract_detail_page.k11')}</InputLabel>
                 <Typography sx={{ mt: 0.5 }}>
                   {new Date(contract.start_date).toLocaleDateString('zh-CN')}
                 </Typography>
@@ -119,7 +120,7 @@ const SrmContractDetailPage: React.FC = () => {
                 <Calendar sx={{ width: 16, height: 16, color: 'primary.main' }} />
               </Avatar>
               <Box>
-                <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>结束日期</InputLabel>
+                <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>{i18n.t('pages.srm_contract_detail_page.k12')}</InputLabel>
                 <Typography sx={{ mt: 0.5 }}>
                   {new Date(contract.end_date).toLocaleDateString('zh-CN')}
                 </Typography>
@@ -135,7 +136,7 @@ const SrmContractDetailPage: React.FC = () => {
     if (!contract) return { id: 'contract', content: null };
     return {
       id: 'contract',
-      title: '合同信息',
+      title: i18n.t('pages.srm_contract_detail_page.k13'),
       content: (
         <Box
           sx={{
@@ -145,21 +146,21 @@ const SrmContractDetailPage: React.FC = () => {
           }}
         >
           <Box>
-            <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>合同类型</InputLabel>
+            <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>{i18n.t('pages.srm_contract_detail_page.k14')}</InputLabel>
             <Typography sx={{ mt: 0.5 }}>{contract.contract_type}</Typography>
           </Box>
           <Box>
-            <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>供应商</InputLabel>
+            <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>{i18n.t('pages.srm_contract_detail_page.k15')}</InputLabel>
             <Box sx={{ mt: 0.5 }}>
               <Chip
                 icon={<Building2 sx={{ width: 14, height: 14 }} />}
-                label={contract.supplier_name || '未知供应商'}
+                label={contract.supplier_name || i18n.t('pages.srm_contract_detail_page.k16')}
                 size='small'
               />
             </Box>
           </Box>
           <Box>
-            <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>合同金额</InputLabel>
+            <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>{i18n.t('pages.srm_contract_detail_page.k17')}</InputLabel>
             <Box sx={{ mt: 0.5 }}>
               <Chip
                 icon={<DollarSign sx={{ width: 14, height: 14 }} />}
@@ -169,23 +170,23 @@ const SrmContractDetailPage: React.FC = () => {
             </Box>
           </Box>
           <Box>
-            <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>供应商ID</InputLabel>
+            <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>{i18n.t('pages.srm_contract_detail_page.id_18')}</InputLabel>
             <Typography sx={{ mt: 0.5 }}>{contract.supplier_id}</Typography>
           </Box>
           {contract.remarks && (
             <Box sx={{ gridColumn: 'span 2' }}>
-              <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>备注</InputLabel>
+              <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>{i18n.t('pages.srm_contract_detail_page.k19')}</InputLabel>
               <Typography sx={{ mt: 0.5 }}>{contract.remarks}</Typography>
             </Box>
           )}
           <Box>
-            <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>创建时间</InputLabel>
+            <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>{i18n.t('pages.srm_contract_detail_page.k20')}</InputLabel>
             <Typography sx={{ mt: 0.5 }}>
               {new Date(contract.created_at).toLocaleString('zh-CN')}
             </Typography>
           </Box>
           <Box>
-            <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>更新时间</InputLabel>
+            <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>{i18n.t('pages.srm_contract_detail_page.k21')}</InputLabel>
             <Typography sx={{ mt: 0.5 }}>
               {new Date(contract.updated_at).toLocaleString('zh-CN')}
             </Typography>
@@ -197,9 +198,9 @@ const SrmContractDetailPage: React.FC = () => {
 
   if (loading) {
     return (
-      <PageContainer title='合同详情'>
+      <PageContainer title={i18n.t('pages.srm_contract_detail_page.k22')}>
         <Box sx={{ display: 'flex', justifyContent: 'center', py: 8 }}>
-          <Typography>加载中...</Typography>
+          <Typography>{i18n.t('pages.srm_contract_detail_page.k0')}</Typography>
         </Box>
       </PageContainer>
     );
@@ -207,9 +208,9 @@ const SrmContractDetailPage: React.FC = () => {
 
   if (error || !contract) {
     return (
-      <PageContainer title='合同详情'>
+      <PageContainer title={i18n.t('pages.srm_contract_detail_page.k23')}>
         <Box sx={{ display: 'flex', justifyContent: 'center', py: 8 }}>
-          <Typography color='error'>{error || '合同不存在'}</Typography>
+          <Typography color='error'>{error || i18n.t('pages.srm_contract_detail_page.k24')}</Typography>
         </Box>
       </PageContainer>
     );
@@ -217,14 +218,14 @@ const SrmContractDetailPage: React.FC = () => {
 
   return (
     <PageContainer
-      title='合同详情'
+      title={i18n.t('pages.srm_contract_detail_page.k25')}
       autoTitle
       autoBreadcrumbs
     >
       <DetailPageTemplate
         title=''
         subtitle=''
-        detailItemName={contract?.title || contract?.contractNo || contract?.id || '合同详情'}
+        detailItemName={contract?.title || contract?.contractNo || contract?.id || i18n.t('pages.srm_contract_detail_page.k26')}
         backHref={SRM_PATHS.contract}
         loading={loading}
         error={error || undefined}

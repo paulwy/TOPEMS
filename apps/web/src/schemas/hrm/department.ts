@@ -3,10 +3,11 @@ import { departmentApi, companyApi } from '@/api/hrm';
 
 
 import { QUERY_KEYS } from '@/lib/reactQuery';
+import i18n from '@/i18n';
 
 const STATUS_OPTIONS = [
-  { value: 'active', label: '启用' },
-  { value: 'inactive', label: '停用' },
+  { value: 'active', label: i18n.t('hrm.department.k0') },
+  { value: 'inactive', label: i18n.t('hrm.department.k1') },
 ];
 
 const STATUS_COLOR_MAP: Record<
@@ -18,14 +19,14 @@ const STATUS_COLOR_MAP: Record<
 };
 
 const STATUS_LABEL_MAP: Record<string, string> = {
-  active: '启用',
-  inactive: '停用',
+  active: i18n.t('hrm.department.k2'),
+  inactive: i18n.t('hrm.department.k3'),
 };
 
 export const departmentSchema: EntitySchema = {
   entity: 'hrm_department',
-  title: '部门管理',
-  description: '管理企业组织架构中的部门，包括层级关系、负责人和联系方式',
+  title: i18n.t('hrm.department.k4'),
+  description: i18n.t('hrm.department.k5'),
 
   api: {
     module: 'hrm',
@@ -35,7 +36,7 @@ export const departmentSchema: EntitySchema = {
   fields: [
     {
       name: 'name',
-      label: '部门名称',
+      label: i18n.t('hrm.department.k6'),
       type: 'text',
       required: true,
       sortable: true,
@@ -44,7 +45,7 @@ export const departmentSchema: EntitySchema = {
     },
     {
       name: 'code',
-      label: '部门编码',
+      label: i18n.t('hrm.department.k7'),
       type: 'text',
       readonlyOnEdit: true,
       sortable: true,
@@ -53,7 +54,7 @@ export const departmentSchema: EntitySchema = {
     },
     {
       name: 'org_id',
-      label: '所属公司',
+      label: i18n.t('hrm.department.k8'),
       type: 'select',
       listWidth: 140,
       options: {
@@ -66,7 +67,7 @@ export const departmentSchema: EntitySchema = {
     },
     {
       name: 'parentId',
-      label: '上级部门',
+      label: i18n.t('hrm.department.k9'),
       type: 'select',
       listWidth: 140,
       options: {
@@ -74,18 +75,18 @@ export const departmentSchema: EntitySchema = {
         resolver: 'departments',
       },
       renderCell: (row: Record<string, unknown>) => {
-        return (row.parent_name as string) || '顶级部门';
+        return (row.parent_name as string) || i18n.t('hrm.department.k10');
       },
     },
     {
       name: 'description',
-      label: '部门描述',
+      label: i18n.t('hrm.department.k11'),
       type: 'textarea',
       listWidth: 200,
     },
     {
       name: 'status',
-      label: '状态',
+      label: i18n.t('hrm.department.k12'),
       type: 'select',
       defaultValue: 'active',
       options: {
@@ -109,9 +110,9 @@ export const departmentSchema: EntitySchema = {
     filters: [
       {
         id: 'status',
-        label: '状态',
+        label: i18n.t('hrm.department.k13'),
         type: 'select',
-        options: [{ label: '全部状态', value: 'all' }, ...STATUS_OPTIONS],
+        options: [{ label: i18n.t('hrm.department.k14'), value: 'all' }, ...STATUS_OPTIONS],
       },
     ],
   },
@@ -120,23 +121,23 @@ export const departmentSchema: EntitySchema = {
 
   formSections: [
     {
-      title: '基本信息',
+      title: i18n.t('hrm.department.k15'),
       fields: ['name', 'code'],
     },
     {
-      title: '组织关系',
+      title: i18n.t('hrm.department.k16'),
       fields: ['org_id', 'parentId'],
     },
     {
-      title: '其他',
+      title: i18n.t('hrm.department.k17'),
       fields: ['description', 'status'],
     },
   ],
 
   formColCount: 2,
-  createTitle: '新增部门',
-  editTitle: '编辑部门',
-  detailTitle: '部门详情',
+  createTitle: i18n.t('hrm.department.k18'),
+  editTitle: i18n.t('hrm.department.k19'),
+  detailTitle: i18n.t('hrm.department.k20'),
 
   dynamicOptions: [
     {

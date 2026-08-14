@@ -11,6 +11,7 @@ import {
   MenuItem,
   Button,
 } from '@mui/material';
+import i18n from '@/i18n';
 import { BarChart3, ChevronDown, ChevronUp, Plus, Trash2 } from 'lucide-react';
 import type { GroupByConfig, DataSourceField } from '../types';
 import { AGGREGATE_OPTIONS } from '../types';
@@ -51,7 +52,7 @@ export const GroupPanel: React.FC<GroupPanelProps> = ({
             variant='subtitle1'
             sx={{ fontWeight: 600 }}
           >
-            分组设置
+            {i18n.t('components.group_panel.k0')}
           </Typography>
           {groupBy.length > 0 && (
             <Chip
@@ -63,7 +64,7 @@ export const GroupPanel: React.FC<GroupPanelProps> = ({
         </Box>
         <IconButton
           size='small'
-          aria-label='展开'
+          aria-label={i18n.t('templates.group_panel.k0')}
         >
           {showGroupPanel ? (
             <ChevronUp sx={{ width: 18, height: 18 }} />
@@ -81,11 +82,11 @@ export const GroupPanel: React.FC<GroupPanelProps> = ({
               sx={{ display: 'flex', gap: 2, flexWrap: 'wrap', alignItems: 'center' }}
             >
               <FormControl sx={{ minWidth: 150 }}>
-                <InputLabel size='small'>分组字段</InputLabel>
+                <InputLabel size='small'>{i18n.t('templates.group_panel.k1')}</InputLabel>
                 <Select
                   size='small'
                   value={group.fieldId}
-                  label='分组字段'
+                  label={i18n.t('templates.group_panel.k2')}
                   onChange={(e) => {
                     const field = availableFields.find((f) => f.id === e.target.value);
                     handleUpdateGroupBy(index, {
@@ -105,18 +106,18 @@ export const GroupPanel: React.FC<GroupPanelProps> = ({
                 </Select>
               </FormControl>
               <FormControl sx={{ minWidth: 120 }}>
-                <InputLabel size='small'>聚合方式</InputLabel>
+                <InputLabel size='small'>{i18n.t('templates.group_panel.k3')}</InputLabel>
                 <Select
                   size='small'
                   value={group.aggregate || ''}
-                  label='聚合方式'
+                  label={i18n.t('templates.group_panel.k4')}
                   onChange={(e) =>
                     handleUpdateGroupBy(index, {
                       aggregate: e.target.value as GroupByConfig['aggregate'],
                     })
                   }
                 >
-                  <MenuItem value=''>无</MenuItem>
+                  <MenuItem value=''>{i18n.t('components.group_panel.k1')}</MenuItem>
                   {AGGREGATE_OPTIONS.map((op) => (
                     <MenuItem
                       key={op.value}
@@ -130,7 +131,7 @@ export const GroupPanel: React.FC<GroupPanelProps> = ({
               <IconButton
                 size='small'
                 onClick={() => handleRemoveGroupBy(index)}
-                aria-label='删除'
+                aria-label={i18n.t('templates.group_panel.k5')}
               >
                 <Trash2 sx={{ width: 16, height: 16, color: 'error.main' }} />
               </IconButton>
@@ -142,7 +143,7 @@ export const GroupPanel: React.FC<GroupPanelProps> = ({
             onClick={handleAddGroupBy}
             disabled={availableFields.length === 0}
           >
-            添加分组
+            {i18n.t('components.group_panel.k2')}
           </Button>
         </Box>
       )}

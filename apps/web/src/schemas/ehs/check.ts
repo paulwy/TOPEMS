@@ -1,9 +1,10 @@
 import type { EntitySchema } from '@/schema';
+import i18n from '@/i18n';
 
 export const inspectionPlanSchema: EntitySchema = {
   entity: 'ehsInspectionPlan',
-  title: '检查计划',
-  description: '管理企业安全检查计划，包括检查类型、频率、负责人、状态等',
+  title: i18n.t('ehs.check.k0'),
+  description: i18n.t('ehs.check.k1'),
 
   api: {
     module: 'ehs',
@@ -13,7 +14,7 @@ export const inspectionPlanSchema: EntitySchema = {
   fields: [
     {
       name: 'plan_no',
-      label: '计划编号',
+      label: i18n.t('ehs.check.k2'),
       type: 'text',
       readonlyOnEdit: true,
       listWidth: 140,
@@ -21,7 +22,7 @@ export const inspectionPlanSchema: EntitySchema = {
     },
     {
       name: 'title',
-      label: '计划名称',
+      label: i18n.t('ehs.check.k3'),
       type: 'text',
       required: true,
       sortable: true,
@@ -30,31 +31,31 @@ export const inspectionPlanSchema: EntitySchema = {
     },
     {
       name: 'inspection_type',
-      label: '检查类型',
+      label: i18n.t('ehs.check.k4'),
       type: 'select',
       required: true,
       defaultValue: 'daily',
       options: {
         type: 'static',
         options: [
-          { value: 'daily', label: '日常检查' },
-          { value: 'weekly', label: '周检查' },
-          { value: 'monthly', label: '月度检查' },
-          { value: 'quarterly', label: '季度检查' },
-          { value: 'yearly', label: '年度检查' },
-          { value: 'special', label: '专项检查' },
+          { value: 'daily', label: i18n.t('ehs.check.k5') },
+          { value: 'weekly', label: i18n.t('ehs.check.k6') },
+          { value: 'monthly', label: i18n.t('ehs.check.k7') },
+          { value: 'quarterly', label: i18n.t('ehs.check.k8') },
+          { value: 'yearly', label: i18n.t('ehs.check.k9') },
+          { value: 'special', label: i18n.t('ehs.check.k10') },
         ],
       },
       listWidth: 120,
       renderCell: (row: Record<string, unknown>) => {
         const v = row.inspection_type as string;
         const map: Record<string, string> = {
-          daily: '日常检查',
-          weekly: '周检查',
-          monthly: '月度检查',
-          quarterly: '季度检查',
-          yearly: '年度检查',
-          special: '专项检查',
+          daily: i18n.t('ehs.check.k11'),
+          weekly: i18n.t('ehs.check.k12'),
+          monthly: i18n.t('ehs.check.k13'),
+          quarterly: i18n.t('ehs.check.k14'),
+          yearly: i18n.t('ehs.check.k15'),
+          special: i18n.t('ehs.check.k16'),
         };
         return map[v] || v || '-';
       },
@@ -62,29 +63,29 @@ export const inspectionPlanSchema: EntitySchema = {
     },
     {
       name: 'frequency',
-      label: '检查频率',
+      label: i18n.t('ehs.check.k17'),
       type: 'select',
       required: true,
       defaultValue: 'daily',
       options: {
         type: 'static',
         options: [
-          { value: 'daily', label: '每天' },
-          { value: 'weekly', label: '每周' },
-          { value: 'monthly', label: '每月' },
-          { value: 'quarterly', label: '每季度' },
-          { value: 'yearly', label: '每年' },
+          { value: 'daily', label: i18n.t('ehs.check.k18') },
+          { value: 'weekly', label: i18n.t('ehs.check.k19') },
+          { value: 'monthly', label: i18n.t('ehs.check.k20') },
+          { value: 'quarterly', label: i18n.t('ehs.check.k21') },
+          { value: 'yearly', label: i18n.t('ehs.check.k22') },
         ],
       },
       listWidth: 100,
       renderCell: (row: Record<string, unknown>) => {
         const v = row.frequency as string;
         const map: Record<string, string> = {
-          daily: '每天',
-          weekly: '每周',
-          monthly: '每月',
-          quarterly: '每季度',
-          yearly: '每年',
+          daily: i18n.t('ehs.check.k23'),
+          weekly: i18n.t('ehs.check.k24'),
+          monthly: i18n.t('ehs.check.k25'),
+          quarterly: i18n.t('ehs.check.k26'),
+          yearly: i18n.t('ehs.check.k27'),
         };
         return map[v] || v || '-';
       },
@@ -92,7 +93,7 @@ export const inspectionPlanSchema: EntitySchema = {
     },
     {
       name: 'inspector',
-      label: '负责人',
+      label: i18n.t('ehs.check.k28'),
       type: 'text',
       listWidth: 120,
       renderCell: (row: Record<string, unknown>) => {
@@ -103,7 +104,7 @@ export const inspectionPlanSchema: EntitySchema = {
     },
     {
       name: 'start_date',
-      label: '开始日期',
+      label: i18n.t('ehs.check.k29'),
       type: 'date',
       listWidth: 120,
       showInList: false,
@@ -114,7 +115,7 @@ export const inspectionPlanSchema: EntitySchema = {
     },
     {
       name: 'end_date',
-      label: '结束日期',
+      label: i18n.t('ehs.check.k30'),
       type: 'date',
       listWidth: 120,
       showInList: false,
@@ -125,14 +126,14 @@ export const inspectionPlanSchema: EntitySchema = {
     },
     {
       name: 'status',
-      label: '状态',
+      label: i18n.t('ehs.check.k31'),
       type: 'select',
       defaultValue: 'active',
       options: {
         type: 'static',
         options: [
-          { value: 'active', label: '启用' },
-          { value: 'inactive', label: '停用' },
+          { value: 'active', label: i18n.t('ehs.check.k32') },
+          { value: 'inactive', label: i18n.t('ehs.check.k33') },
         ],
       },
       listWidth: 100,
@@ -140,7 +141,7 @@ export const inspectionPlanSchema: EntitySchema = {
     },
     {
       name: 'description',
-      label: '描述',
+      label: i18n.t('ehs.check.k34'),
       type: 'textarea',
       showInList: false,
       colSpan: 2,
@@ -158,19 +159,19 @@ export const inspectionPlanSchema: EntitySchema = {
         inactive: 'default',
       },
       labelMap: {
-        active: '启用',
-        inactive: '停用',
+        active: i18n.t('ehs.check.k35'),
+        inactive: i18n.t('ehs.check.k36'),
       },
     },
     filters: [
       {
         id: 'status',
-        label: '状态',
+        label: i18n.t('ehs.check.k37'),
         type: 'select',
         options: [
-          { label: '全部', value: 'all' },
-          { label: '启用', value: 'active' },
-          { label: '停用', value: 'inactive' },
+          { label: i18n.t('ehs.check.k38'), value: 'all' },
+          { label: i18n.t('ehs.check.k39'), value: 'active' },
+          { label: i18n.t('ehs.check.k40'), value: 'inactive' },
         ],
       },
     ],
@@ -180,25 +181,25 @@ export const inspectionPlanSchema: EntitySchema = {
 
   formSections: [
     {
-      title: '基本信息',
+      title: i18n.t('ehs.check.k41'),
       fields: ['title', 'description', 'inspection_type', 'frequency'],
     },
     {
-      title: '时间安排',
+      title: i18n.t('ehs.check.k42'),
       fields: ['start_date', 'end_date', 'inspector'],
     },
   ],
 
   formColCount: 2,
-  createTitle: '新增检查计划',
-  editTitle: '编辑检查计划',
-  detailTitle: '检查计划详情',
+  createTitle: i18n.t('ehs.check.k43'),
+  editTitle: i18n.t('ehs.check.k44'),
+  detailTitle: i18n.t('ehs.check.k45'),
 };
 
 export const inspectionRecordSchema: EntitySchema = {
   entity: 'ehsInspectionRecord',
-  title: '检查记录',
-  description: '管理企业安全检查记录，包括检查类型、位置、检查人、结果、状态等',
+  title: i18n.t('ehs.check.k46'),
+  description: i18n.t('ehs.check.k47'),
 
   api: {
     module: 'ehs',
@@ -208,7 +209,7 @@ export const inspectionRecordSchema: EntitySchema = {
   fields: [
     {
       name: 'record_no',
-      label: '记录编号',
+      label: i18n.t('ehs.check.k48'),
       type: 'text',
       readonlyOnEdit: true,
       listWidth: 140,
@@ -216,7 +217,7 @@ export const inspectionRecordSchema: EntitySchema = {
     },
     {
       name: 'title',
-      label: '检查名称',
+      label: i18n.t('ehs.check.k49'),
       type: 'text',
       required: true,
       sortable: true,
@@ -225,31 +226,31 @@ export const inspectionRecordSchema: EntitySchema = {
     },
     {
       name: 'inspection_type',
-      label: '检查类型',
+      label: i18n.t('ehs.check.k50'),
       type: 'select',
       required: true,
       defaultValue: 'daily',
       options: {
         type: 'static',
         options: [
-          { value: 'daily', label: '日常检查' },
-          { value: 'weekly', label: '周检查' },
-          { value: 'monthly', label: '月度检查' },
-          { value: 'quarterly', label: '季度检查' },
-          { value: 'yearly', label: '年度检查' },
-          { value: 'special', label: '专项检查' },
+          { value: 'daily', label: i18n.t('ehs.check.k51') },
+          { value: 'weekly', label: i18n.t('ehs.check.k52') },
+          { value: 'monthly', label: i18n.t('ehs.check.k53') },
+          { value: 'quarterly', label: i18n.t('ehs.check.k54') },
+          { value: 'yearly', label: i18n.t('ehs.check.k55') },
+          { value: 'special', label: i18n.t('ehs.check.k56') },
         ],
       },
       listWidth: 120,
       renderCell: (row: Record<string, unknown>) => {
         const v = row.inspection_type as string;
         const map: Record<string, string> = {
-          daily: '日常检查',
-          weekly: '周检查',
-          monthly: '月度检查',
-          quarterly: '季度检查',
-          yearly: '年度检查',
-          special: '专项检查',
+          daily: i18n.t('ehs.check.k57'),
+          weekly: i18n.t('ehs.check.k58'),
+          monthly: i18n.t('ehs.check.k59'),
+          quarterly: i18n.t('ehs.check.k60'),
+          yearly: i18n.t('ehs.check.k61'),
+          special: i18n.t('ehs.check.k62'),
         };
         return map[v] || v || '-';
       },
@@ -257,7 +258,7 @@ export const inspectionRecordSchema: EntitySchema = {
     },
     {
       name: 'location',
-      label: '位置',
+      label: i18n.t('ehs.check.k63'),
       type: 'text',
       listWidth: 140,
       renderCell: (row: Record<string, unknown>) => {
@@ -268,7 +269,7 @@ export const inspectionRecordSchema: EntitySchema = {
     },
     {
       name: 'inspector',
-      label: '检查人',
+      label: i18n.t('ehs.check.k64'),
       type: 'text',
       listWidth: 120,
       renderCell: (row: Record<string, unknown>) => {
@@ -279,7 +280,7 @@ export const inspectionRecordSchema: EntitySchema = {
     },
     {
       name: 'inspected_at',
-      label: '检查时间',
+      label: i18n.t('ehs.check.k65'),
       type: 'date',
       listWidth: 140,
       renderCell: (row: Record<string, unknown>) => {
@@ -289,7 +290,7 @@ export const inspectionRecordSchema: EntitySchema = {
     },
     {
       name: 'result',
-      label: '检查结果',
+      label: i18n.t('ehs.check.k66'),
       type: 'text',
       listWidth: 120,
       showInList: false,
@@ -301,15 +302,15 @@ export const inspectionRecordSchema: EntitySchema = {
     },
     {
       name: 'status',
-      label: '状态',
+      label: i18n.t('ehs.check.k67'),
       type: 'select',
       defaultValue: 'pending',
       options: {
         type: 'static',
         options: [
-          { value: 'pending', label: '待处理' },
-          { value: 'in_progress', label: '进行中' },
-          { value: 'completed', label: '已完成' },
+          { value: 'pending', label: i18n.t('ehs.check.k68') },
+          { value: 'in_progress', label: i18n.t('ehs.check.k69') },
+          { value: 'completed', label: i18n.t('ehs.check.k70') },
         ],
       },
       listWidth: 100,
@@ -337,21 +338,21 @@ export const inspectionRecordSchema: EntitySchema = {
         completed: 'success',
       },
       labelMap: {
-        pending: '待处理',
-        in_progress: '进行中',
-        completed: '已完成',
+        pending: i18n.t('ehs.check.k71'),
+        in_progress: i18n.t('ehs.check.k72'),
+        completed: i18n.t('ehs.check.k73'),
       },
     },
     filters: [
       {
         id: 'status',
-        label: '状态',
+        label: i18n.t('ehs.check.k74'),
         type: 'select',
         options: [
-          { label: '全部', value: 'all' },
-          { label: '待处理', value: 'pending' },
-          { label: '进行中', value: 'in_progress' },
-          { label: '已完成', value: 'completed' },
+          { label: i18n.t('ehs.check.k75'), value: 'all' },
+          { label: i18n.t('ehs.check.k76'), value: 'pending' },
+          { label: i18n.t('ehs.check.k77'), value: 'in_progress' },
+          { label: i18n.t('ehs.check.k78'), value: 'completed' },
         ],
       },
     ],
@@ -361,15 +362,15 @@ export const inspectionRecordSchema: EntitySchema = {
 
   formSections: [
     {
-      title: '基本信息',
+      title: i18n.t('ehs.check.k79'),
       fields: ['record_no', 'title', 'inspection_type', 'status'],
     },
     {
-      title: '检查详情',
+      title: i18n.t('ehs.check.k80'),
       fields: ['location', 'inspector', 'inspected_at', 'result'],
     },
   ],
 
   formColCount: 2,
-  detailTitle: '检查记录详情',
+  detailTitle: i18n.t('ehs.check.k81'),
 };

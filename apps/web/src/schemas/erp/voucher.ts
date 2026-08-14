@@ -16,20 +16,20 @@ import { voucherApi } from '@/api/finance/voucher';
 // ============ 凭证明细子表配置 ============
 
 const voucherItemsFields: NestedTableConfig['fields'] = [
-  { name: 'line_number', label: '行号', type: 'number', required: true, listWidth: 60 },
-  { name: 'subject_code', label: '科目编码', type: 'text', required: true, listWidth: 100 },
-  { name: 'subject_name', label: '科目名称', type: 'text', listWidth: 120 },
-  { name: 'summary', label: '摘要', type: 'text', listWidth: 150 },
-  { name: 'debit_amount', label: '借方金额', type: 'number', required: true, listWidth: 110 },
-  { name: 'credit_amount', label: '贷方金额', type: 'number', required: true, listWidth: 110 },
-  { name: 'unit', label: '单位', type: 'text' },
-  { name: 'quantity', label: '数量', type: 'number' },
-  { name: 'price', label: '单价', type: 'number' },
+  { name: 'line_number', label: i18n.t('shared.voucher.k0'), type: 'number', required: true, listWidth: 60 },
+  { name: 'subject_code', label: i18n.t('shared.voucher.k1'), type: 'text', required: true, listWidth: 100 },
+  { name: 'subject_name', label: i18n.t('shared.voucher.k2'), type: 'text', listWidth: 120 },
+  { name: 'summary', label: i18n.t('shared.voucher.k3'), type: 'text', listWidth: 150 },
+  { name: 'debit_amount', label: i18n.t('shared.voucher.k4'), type: 'number', required: true, listWidth: 110 },
+  { name: 'credit_amount', label: i18n.t('shared.voucher.k5'), type: 'number', required: true, listWidth: 110 },
+  { name: 'unit', label: i18n.t('shared.voucher.k6'), type: 'text' },
+  { name: 'quantity', label: i18n.t('shared.voucher.k7'), type: 'number' },
+  { name: 'price', label: i18n.t('shared.voucher.k8'), type: 'number' },
 ];
 
 const voucherItemsTable: NestedTableConfig = {
   field: 'items',
-  title: '凭证明细',
+  title: i18n.t('shared.voucher.k9'),
   columns: columnsFromFields(voucherItemsFields, {
     debit_amount: { align: 'right' },
     credit_amount: { align: 'right' },
@@ -41,7 +41,7 @@ const voucherItemsTable: NestedTableConfig = {
   allowEdit: true,
   allowDelete: true,
   allowDuplicate: true,
-  addButtonText: '添加明细行',
+  addButtonText: i18n.t('shared.voucher.k10'),
   rowKeyField: 'line_number',
   minRows: 1,
   maxRows: 50,
@@ -53,7 +53,7 @@ const voucherItemsTable: NestedTableConfig = {
       totalCredit += Number(row.credit_amount) || 0;
     }
     if (totalDebit !== totalCredit) {
-      return `借贷不平衡：借方 ${totalDebit.toFixed(2)} ≠ 贷方 ${totalCredit.toFixed(2)}`;
+      return `${i18n.t('shared.voucher.k0')}${totalDebit.toFixed(2)}${i18n.t('shared.voucher.k1')}${totalCredit.toFixed(2)}`;
     }
     return null;
   },
@@ -65,41 +65,41 @@ const voucherWizard: WizardConfig = {
   steps: [
     {
       key: 'basic',
-      title: '基本信息',
-      description: '填写凭证的基本信息',
+      title: i18n.t('shared.voucher.k11'),
+      description: i18n.t('shared.voucher.k12'),
       fields: ['voucher_number', 'voucher_date', 'period', 'voucher_type', 'summary'],
-      groupTitle: '凭证基本信息',
+      groupTitle: i18n.t('shared.voucher.k13'),
       validate: (values) => {
-        if (!values.voucher_number) return '请填写凭证号';
-        if (!values.voucher_date) return '请选择凭证日期';
+        if (!values.voucher_number) return i18n.t('shared.voucher.k14');
+        if (!values.voucher_date) return i18n.t('shared.voucher.k15');
         return null;
       },
     },
     {
       key: 'items',
-      title: '凭证明细',
-      description: '添加凭证的明细科目行',
+      title: i18n.t('shared.voucher.k16'),
+      description: i18n.t('shared.voucher.k17'),
       fields: ['items'],
-      groupTitle: '凭证明细行',
+      groupTitle: i18n.t('shared.voucher.k18'),
       validate: () => null,
     },
     {
       key: 'confirm',
-      title: '确认提交',
-      description: '核对凭证信息并提交',
+      title: i18n.t('shared.voucher.k19'),
+      description: i18n.t('shared.voucher.k20'),
       fields: ['attachment_count'],
-      groupTitle: '确认信息',
+      groupTitle: i18n.t('shared.voucher.k21'),
       isFinalStep: true,
     },
   ],
-  title: '创建凭证',
+  title: i18n.t('shared.voucher.k22'),
   navigationPosition: 'top',
   showProgress: true,
   allowBack: true,
   showSummaryOnComplete: true,
-  finishButtonText: '提交凭证',
-  nextButtonText: '下一步',
-  prevButtonText: '上一步',
+  finishButtonText: i18n.t('shared.voucher.k23'),
+  nextButtonText: i18n.t('shared.voucher.k24'),
+  prevButtonText: i18n.t('shared.voucher.k25'),
 };
 
 // ============ 图标辅助 ============
@@ -153,13 +153,13 @@ export const voucherSchema: EntitySchema & {
       options: {
         type: 'static',
         options: [
-          { label: i18n.t('schema:erp.voucher.voucher_type.option.记'), value: '记' },
-          { label: i18n.t('schema:erp.voucher.voucher_type.option.收'), value: '收' },
-          { label: i18n.t('schema:erp.voucher.voucher_type.option.付'), value: '付' },
-          { label: i18n.t('schema:erp.voucher.voucher_type.option.转'), value: '转' },
+          { label: i18n.t('schema:erp.voucher.voucher_type.option.记'), value: i18n.t('shared.voucher.k2') },
+          { label: i18n.t('schema:erp.voucher.voucher_type.option.收'), value: i18n.t('shared.voucher.k3') },
+          { label: i18n.t('schema:erp.voucher.voucher_type.option.付'), value: i18n.t('shared.voucher.k4') },
+          { label: i18n.t('schema:erp.voucher.voucher_type.option.转'), value: i18n.t('shared.voucher.k5') },
         ],
       },
-      defaultValue: '记',
+      defaultValue: i18n.t('shared.voucher.k26'),
       showInList: true,
     },
     {
@@ -219,10 +219,10 @@ export const voucherSchema: EntitySchema & {
         type: 'select',
         options: [
           { label: i18n.t('schema:erp.voucher.filter.voucher_type.option.all'), value: 'all' },
-          { label: i18n.t('schema:erp.voucher.filter.voucher_type.option.记'), value: '记' },
-          { label: i18n.t('schema:erp.voucher.filter.voucher_type.option.收'), value: '收' },
-          { label: i18n.t('schema:erp.voucher.filter.voucher_type.option.付'), value: '付' },
-          { label: i18n.t('schema:erp.voucher.filter.voucher_type.option.转'), value: '转' },
+          { label: i18n.t('schema:erp.voucher.filter.voucher_type.option.记'), value: i18n.t('shared.voucher.k6') },
+          { label: i18n.t('schema:erp.voucher.filter.voucher_type.option.收'), value: i18n.t('shared.voucher.k7') },
+          { label: i18n.t('schema:erp.voucher.filter.voucher_type.option.付'), value: i18n.t('shared.voucher.k8') },
+          { label: i18n.t('schema:erp.voucher.filter.voucher_type.option.转'), value: i18n.t('shared.voucher.k9') },
         ],
         defaultValue: 'all',
       },
@@ -279,20 +279,20 @@ export const voucherSchema: EntitySchema & {
           if (res.code === 0 || res.success) {
             alert(
               i18n.t('schema:erp.voucher.batchAction.batchSubmit.success', {
-                defaultValue: '提交成功',
+                defaultValue: i18n.t('shared.voucher.k27'),
               })
             );
           } else {
             alert(
               i18n.t('schema:erp.voucher.batchAction.batchSubmit.fail', {
-                defaultValue: res.message || '提交失败',
+                defaultValue: res.message || i18n.t('shared.voucher.k28'),
               })
             );
           }
         } catch (e: any) {
           alert(
             i18n.t('schema:erp.voucher.batchAction.batchSubmit.error', {
-              defaultValue: String(e?.message || '网络错误'),
+              defaultValue: String(e?.message || i18n.t('shared.voucher.k29')),
             })
           );
         }
@@ -312,20 +312,20 @@ export const voucherSchema: EntitySchema & {
           if (res.code === 0 || res.success) {
             alert(
               i18n.t('schema:erp.voucher.batchAction.batchApprove.success', {
-                defaultValue: '审批成功',
+                defaultValue: i18n.t('shared.voucher.k30'),
               })
             );
           } else {
             alert(
               i18n.t('schema:erp.voucher.batchAction.batchApprove.fail', {
-                defaultValue: res.message || '审批失败',
+                defaultValue: res.message || i18n.t('shared.voucher.k31'),
               })
             );
           }
         } catch (e: any) {
           alert(
             i18n.t('schema:erp.voucher.batchAction.batchApprove.error', {
-              defaultValue: String(e?.message || '网络错误'),
+              defaultValue: String(e?.message || i18n.t('shared.voucher.k32')),
             })
           );
         }

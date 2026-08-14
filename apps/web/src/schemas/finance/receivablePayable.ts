@@ -2,6 +2,7 @@ import React from 'react';
 import type { EntitySchema } from '@/schema';
 import type { SchemaExtensions, NestedTableConfig } from '@/schema/schemaExtensions';
 import { columnsFromFields } from '@/schema/schemaExtensions';
+import i18n from '@/i18n';
 
 const formatMoney = (amount: number | undefined) => {
   const style: React.CSSProperties = { fontWeight: 'medium' };
@@ -15,14 +16,14 @@ const formatMoney = (amount: number | undefined) => {
 const paymentDetailFields = [
   {
     name: 'date',
-    label: '收付款日期',
+    label: i18n.t('finance.receivable_payable.k0'),
     type: 'date' as const,
     required: true,
     listWidth: 120,
   },
   {
     name: 'amount',
-    label: '金额',
+    label: i18n.t('finance.receivable_payable.k1'),
     type: 'number' as const,
     required: true,
     defaultValue: 0,
@@ -31,29 +32,29 @@ const paymentDetailFields = [
   },
   {
     name: 'method',
-    label: '收付款方式',
+    label: i18n.t('finance.receivable_payable.k2'),
     type: 'select' as const,
     defaultValue: 'bank_transfer',
     options: {
       type: 'static' as const,
       options: [
-        { value: 'bank_transfer', label: '银行转账' },
-        { value: 'cash', label: '现金' },
-        { value: 'check', label: '支票' },
-        { value: 'online', label: '在线支付' },
+        { value: 'bank_transfer', label: i18n.t('finance.receivable_payable.k3') },
+        { value: 'cash', label: i18n.t('finance.receivable_payable.k4') },
+        { value: 'check', label: i18n.t('finance.receivable_payable.k5') },
+        { value: 'online', label: i18n.t('finance.receivable_payable.k6') },
       ],
     },
     listWidth: 120,
   },
   {
     name: 'reference_no',
-    label: '关联单号',
+    label: i18n.t('finance.receivable_payable.k7'),
     type: 'text' as const,
     listWidth: 140,
   },
   {
     name: 'remark',
-    label: '备注',
+    label: i18n.t('finance.receivable_payable.k8'),
     type: 'textarea' as const,
     listWidth: 150,
     showInList: false,
@@ -62,20 +63,20 @@ const paymentDetailFields = [
 
 const paymentDetailTable: NestedTableConfig = {
   field: 'payment_details',
-  title: '收付款明细',
+  title: i18n.t('finance.receivable_payable.k9'),
   columns: columnsFromFields(paymentDetailFields),
   fields: paymentDetailFields,
   allowAdd: true,
   allowEdit: true,
   allowDelete: true,
-  addButtonText: '新增收付款明细',
+  addButtonText: i18n.t('finance.receivable_payable.k10'),
   rowKeyField: 'id',
   formColCount: 2,
 };
 
 export const receivableSchema: EntitySchema & SchemaExtensions = {
   entity: 'financeReceivable',
-  title: '应收单',
+  title: i18n.t('finance.receivable_payable.k11'),
 
   api: {
     module: 'finance',
@@ -85,7 +86,7 @@ export const receivableSchema: EntitySchema & SchemaExtensions = {
   fields: [
     {
       name: 'invoice_no',
-      label: '发票号',
+      label: i18n.t('finance.receivable_payable.k12'),
       type: 'text',
       required: true,
       readonlyOnEdit: true,
@@ -93,7 +94,7 @@ export const receivableSchema: EntitySchema & SchemaExtensions = {
     },
     {
       name: 'customer_name',
-      label: '客户名称',
+      label: i18n.t('finance.receivable_payable.k13'),
       type: 'text',
       required: true,
       listWidth: 160,
@@ -101,7 +102,7 @@ export const receivableSchema: EntitySchema & SchemaExtensions = {
     },
     {
       name: 'amount',
-      label: '金额',
+      label: i18n.t('finance.receivable_payable.k14'),
       type: 'number',
       required: true,
       defaultValue: 0,
@@ -110,7 +111,7 @@ export const receivableSchema: EntitySchema & SchemaExtensions = {
     },
     {
       name: 'tax_amount',
-      label: '税额',
+      label: i18n.t('finance.receivable_payable.k15'),
       type: 'number',
       defaultValue: 0,
       listWidth: 120,
@@ -118,42 +119,42 @@ export const receivableSchema: EntitySchema & SchemaExtensions = {
     },
     {
       name: 'invoice_date',
-      label: '开票日期',
+      label: i18n.t('finance.receivable_payable.k16'),
       type: 'date',
       listWidth: 120,
     },
     {
       name: 'due_date',
-      label: '到期日期',
+      label: i18n.t('finance.receivable_payable.k17'),
       type: 'date',
       listWidth: 120,
     },
     {
       name: 'invoice_type',
-      label: '发票类型',
+      label: i18n.t('finance.receivable_payable.k18'),
       type: 'select',
       defaultValue: 'normal',
       options: {
         type: 'static',
         options: [
-          { value: 'normal', label: '普通发票' },
-          { value: 'special', label: '增值税专用发票' },
+          { value: 'normal', label: i18n.t('finance.receivable_payable.k19') },
+          { value: 'special', label: i18n.t('finance.receivable_payable.k20') },
         ],
       },
       listWidth: 120,
     },
     {
       name: 'status',
-      label: '状态',
+      label: i18n.t('finance.receivable_payable.k21'),
       type: 'select',
       defaultValue: 'draft',
       options: {
         type: 'static',
         options: [
-          { value: 'draft', label: '草稿' },
-          { value: 'approved', label: '已审核' },
-          { value: 'posted', label: '已过账' },
-          { value: 'cancelled', label: '已取消' },
+          { value: 'draft', label: i18n.t('finance.receivable_payable.k22') },
+          { value: 'approved', label: i18n.t('finance.receivable_payable.k23') },
+          { value: 'posted', label: i18n.t('finance.receivable_payable.k24') },
+          { value: 'cancelled', label: i18n.t('finance.receivable_payable.k25') },
         ],
       },
       listWidth: 100,
@@ -183,33 +184,33 @@ export const receivableSchema: EntitySchema & SchemaExtensions = {
         cancelled: 'error',
       },
       labelMap: {
-        draft: '草稿',
-        approved: '已审核',
-        posted: '已过账',
-        cancelled: '已取消',
+        draft: i18n.t('finance.receivable_payable.k26'),
+        approved: i18n.t('finance.receivable_payable.k27'),
+        posted: i18n.t('finance.receivable_payable.k28'),
+        cancelled: i18n.t('finance.receivable_payable.k29'),
       },
     },
     filters: [
       {
         id: 'invoice_type',
-        label: '发票类型',
+        label: i18n.t('finance.receivable_payable.k30'),
         type: 'select',
         options: [
-          { label: '全部类型', value: 'all' },
-          { label: '普通发票', value: 'normal' },
-          { label: '增值税专用发票', value: 'special' },
+          { label: i18n.t('finance.receivable_payable.k31'), value: 'all' },
+          { label: i18n.t('finance.receivable_payable.k32'), value: 'normal' },
+          { label: i18n.t('finance.receivable_payable.k33'), value: 'special' },
         ],
       },
       {
         id: 'status',
-        label: '状态',
+        label: i18n.t('finance.receivable_payable.k34'),
         type: 'select',
         options: [
-          { label: '全部状态', value: 'all' },
-          { label: '草稿', value: 'draft' },
-          { label: '已审核', value: 'approved' },
-          { label: '已过账', value: 'posted' },
-          { label: '已取消', value: 'cancelled' },
+          { label: i18n.t('finance.receivable_payable.k35'), value: 'all' },
+          { label: i18n.t('finance.receivable_payable.k36'), value: 'draft' },
+          { label: i18n.t('finance.receivable_payable.k37'), value: 'approved' },
+          { label: i18n.t('finance.receivable_payable.k38'), value: 'posted' },
+          { label: i18n.t('finance.receivable_payable.k39'), value: 'cancelled' },
         ],
       },
     ],
@@ -219,30 +220,30 @@ export const receivableSchema: EntitySchema & SchemaExtensions = {
 
   formSections: [
     {
-      title: '基本信息',
+      title: i18n.t('finance.receivable_payable.k40'),
       fields: ['invoice_no', 'customer_name', 'invoice_type'],
     },
     {
-      title: '金额与日期',
+      title: i18n.t('finance.receivable_payable.k41'),
       fields: ['amount', 'tax_amount', 'invoice_date', 'due_date'],
     },
     {
-      title: '状态',
+      title: i18n.t('finance.receivable_payable.k42'),
       fields: ['status'],
     },
   ],
 
   formColCount: 2,
-  createTitle: '新增应收单',
-  editTitle: '编辑应收单',
-  detailTitle: '应收单详情',
+  createTitle: i18n.t('finance.receivable_payable.k43'),
+  editTitle: i18n.t('finance.receivable_payable.k44'),
+  detailTitle: i18n.t('finance.receivable_payable.k45'),
 
   nestedTables: [paymentDetailTable],
 };
 
 export const payableSchema: EntitySchema & SchemaExtensions = {
   entity: 'financePayable',
-  title: '应付单',
+  title: i18n.t('finance.receivable_payable.k46'),
 
   api: {
     module: 'finance',
@@ -252,7 +253,7 @@ export const payableSchema: EntitySchema & SchemaExtensions = {
   fields: [
     {
       name: 'invoice_no',
-      label: '发票号',
+      label: i18n.t('finance.receivable_payable.k47'),
       type: 'text',
       required: true,
       readonlyOnEdit: true,
@@ -260,7 +261,7 @@ export const payableSchema: EntitySchema & SchemaExtensions = {
     },
     {
       name: 'supplier_name',
-      label: '供应商名称',
+      label: i18n.t('finance.receivable_payable.k48'),
       type: 'text',
       required: true,
       listWidth: 160,
@@ -268,7 +269,7 @@ export const payableSchema: EntitySchema & SchemaExtensions = {
     },
     {
       name: 'amount',
-      label: '金额',
+      label: i18n.t('finance.receivable_payable.k49'),
       type: 'number',
       required: true,
       defaultValue: 0,
@@ -277,7 +278,7 @@ export const payableSchema: EntitySchema & SchemaExtensions = {
     },
     {
       name: 'tax_amount',
-      label: '税额',
+      label: i18n.t('finance.receivable_payable.k50'),
       type: 'number',
       defaultValue: 0,
       listWidth: 120,
@@ -285,42 +286,42 @@ export const payableSchema: EntitySchema & SchemaExtensions = {
     },
     {
       name: 'invoice_date',
-      label: '开票日期',
+      label: i18n.t('finance.receivable_payable.k51'),
       type: 'date',
       listWidth: 120,
     },
     {
       name: 'due_date',
-      label: '到期日期',
+      label: i18n.t('finance.receivable_payable.k52'),
       type: 'date',
       listWidth: 120,
     },
     {
       name: 'invoice_type',
-      label: '发票类型',
+      label: i18n.t('finance.receivable_payable.k53'),
       type: 'select',
       defaultValue: 'normal',
       options: {
         type: 'static',
         options: [
-          { value: 'normal', label: '普通发票' },
-          { value: 'special', label: '增值税专用发票' },
+          { value: 'normal', label: i18n.t('finance.receivable_payable.k54') },
+          { value: 'special', label: i18n.t('finance.receivable_payable.k55') },
         ],
       },
       listWidth: 120,
     },
     {
       name: 'status',
-      label: '状态',
+      label: i18n.t('finance.receivable_payable.k56'),
       type: 'select',
       defaultValue: 'draft',
       options: {
         type: 'static',
         options: [
-          { value: 'draft', label: '草稿' },
-          { value: 'approved', label: '已审核' },
-          { value: 'posted', label: '已过账' },
-          { value: 'cancelled', label: '已取消' },
+          { value: 'draft', label: i18n.t('finance.receivable_payable.k57') },
+          { value: 'approved', label: i18n.t('finance.receivable_payable.k58') },
+          { value: 'posted', label: i18n.t('finance.receivable_payable.k59') },
+          { value: 'cancelled', label: i18n.t('finance.receivable_payable.k60') },
         ],
       },
       listWidth: 100,
@@ -350,33 +351,33 @@ export const payableSchema: EntitySchema & SchemaExtensions = {
         cancelled: 'error',
       },
       labelMap: {
-        draft: '草稿',
-        approved: '已审核',
-        posted: '已过账',
-        cancelled: '已取消',
+        draft: i18n.t('finance.receivable_payable.k61'),
+        approved: i18n.t('finance.receivable_payable.k62'),
+        posted: i18n.t('finance.receivable_payable.k63'),
+        cancelled: i18n.t('finance.receivable_payable.k64'),
       },
     },
     filters: [
       {
         id: 'invoice_type',
-        label: '发票类型',
+        label: i18n.t('finance.receivable_payable.k65'),
         type: 'select',
         options: [
-          { label: '全部类型', value: 'all' },
-          { label: '普通发票', value: 'normal' },
-          { label: '增值税专用发票', value: 'special' },
+          { label: i18n.t('finance.receivable_payable.k66'), value: 'all' },
+          { label: i18n.t('finance.receivable_payable.k67'), value: 'normal' },
+          { label: i18n.t('finance.receivable_payable.k68'), value: 'special' },
         ],
       },
       {
         id: 'status',
-        label: '状态',
+        label: i18n.t('finance.receivable_payable.k69'),
         type: 'select',
         options: [
-          { label: '全部状态', value: 'all' },
-          { label: '草稿', value: 'draft' },
-          { label: '已审核', value: 'approved' },
-          { label: '已过账', value: 'posted' },
-          { label: '已取消', value: 'cancelled' },
+          { label: i18n.t('finance.receivable_payable.k70'), value: 'all' },
+          { label: i18n.t('finance.receivable_payable.k71'), value: 'draft' },
+          { label: i18n.t('finance.receivable_payable.k72'), value: 'approved' },
+          { label: i18n.t('finance.receivable_payable.k73'), value: 'posted' },
+          { label: i18n.t('finance.receivable_payable.k74'), value: 'cancelled' },
         ],
       },
     ],
@@ -386,23 +387,23 @@ export const payableSchema: EntitySchema & SchemaExtensions = {
 
   formSections: [
     {
-      title: '基本信息',
+      title: i18n.t('finance.receivable_payable.k75'),
       fields: ['invoice_no', 'supplier_name', 'invoice_type'],
     },
     {
-      title: '金额与日期',
+      title: i18n.t('finance.receivable_payable.k76'),
       fields: ['amount', 'tax_amount', 'invoice_date', 'due_date'],
     },
     {
-      title: '状态',
+      title: i18n.t('finance.receivable_payable.k77'),
       fields: ['status'],
     },
   ],
 
   formColCount: 2,
-  createTitle: '新增应付单',
-  editTitle: '编辑应付单',
-  detailTitle: '应付单详情',
+  createTitle: i18n.t('finance.receivable_payable.k78'),
+  editTitle: i18n.t('finance.receivable_payable.k79'),
+  detailTitle: i18n.t('finance.receivable_payable.k80'),
 
   nestedTables: [paymentDetailTable],
 };

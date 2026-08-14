@@ -15,6 +15,7 @@
  */
 
 import { logger } from '@/utils/logger';
+import i18n from '@/i18n';
 
 const fallbackLogger = logger.child({ prefix: 'BFF-Fallback' });
 
@@ -268,7 +269,7 @@ export class FallbackManager {
   register<T = unknown>(strategy: FallbackStrategy<T>): () => void {
     this.strategies.set(strategy.name, strategy as FallbackStrategy);
     fallbackLogger.debug(
-      `注册降级策略: ${strategy.name} (level=${strategy.level}, priority=${strategy.priority})`
+      `${i18n.t('shared.fallback-strategy.k0')}${strategy.name} (level=${strategy.level}, priority=${strategy.priority})`
     );
     return () => {
       this.strategies.delete(strategy.name);
@@ -324,7 +325,7 @@ export class FallbackManager {
       try {
         conditionMet = strategy.condition(context);
       } catch (condErr) {
-        fallbackLogger.warn(`策略 ${strategy.name} condition 执行失败:`, condErr);
+        fallbackLogger.warn(`${i18n.t('shared.fallback-strategy.k1')}${strategy.name}${i18n.t('shared.fallback-strategy.condition_2')}`, condErr);
         continue;
       }
 
@@ -353,7 +354,7 @@ export class FallbackManager {
           userId: context.userId,
         });
         fallbackLogger.info(
-          `降级成功: ${context.operationName} → ${strategy.name} (${durationMs}ms)`
+          `${i18n.t('shared.fallback-strategy.k3')}${context.operationName} → ${strategy.name} (${durationMs}ms)`
         );
         return result;
       } catch (actionErr) {
@@ -370,7 +371,7 @@ export class FallbackManager {
           userId: context.userId,
         });
         fallbackLogger.warn(
-          `降级失败: ${context.operationName} → ${strategy.name} (${durationMs}ms): ${reason}`
+          `${i18n.t('shared.fallback-strategy.k4')}${context.operationName} → ${strategy.name} (${durationMs}ms): ${reason}`
         );
         // 继续尝试下一个策略
         if (strategy.terminal) break;
@@ -383,7 +384,7 @@ export class FallbackManager {
       level: FallbackLevel.OFFLINE,
       strategyName: 'none',
       durationMs: totalMs,
-      reason: context.error instanceof Error ? context.error.message : '所有降级策略均失败',
+      reason: context.error instanceof Error ? context.error.message : i18n.t('shared.fallback-strategy.k0'),
     };
   }
 
@@ -487,7 +488,7 @@ export class FallbackManager {
         this.records = JSON.parse(raw) as FallbackRecord[];
       }
     } catch (err) {
-      fallbackLogger.warn('加载降级记录失败:', err);
+      fallbackLogger.warn(i18n.t('shared.fallback-strategy.k5'), err);
     }
   }
 
@@ -496,7 +497,7 @@ export class FallbackManager {
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(this.records.slice(0, MAX_RECORDS)));
     } catch (err) {
-      fallbackLogger.warn('持久化降级记录失败:', err);
+      fallbackLogger.warn(i18n.t('shared.fallback-strategy.k6'), err);
     }
   }
 
@@ -506,7 +507,7 @@ export class FallbackManager {
       try {
         listener(stats);
       } catch (err) {
-        fallbackLogger.error('降级统计监听器执行失败:', err);
+        fallbackLogger.error(i18n.t('shared.fallback-strategy.k7'), err);
       }
     });
   }

@@ -4,16 +4,17 @@ import { Home, FileText, Settings, Bell, ChevronLeft, Menu, X } from 'lucide-rea
 import { Badge } from '@mui/material';
 import { shouldUseMobileLayout } from '@/utils/mobileDetector';
 import { useAuth } from '@/hooks/useAuth';
+import i18n from '@/i18n';
 
 interface MobileLayoutProps {
   children: React.ReactNode;
 }
 
 const navItems = [
-  { id: 'dashboard', label: '首页', icon: Home, path: '/dashboard' },
-  { id: 'workflow', label: '流程', icon: FileText, path: '/workflow' },
-  { id: 'notification', label: '通知', icon: Bell, path: '/notifications' },
-  { id: 'settings', label: '设置', icon: Settings, path: '/settings' },
+  { id: 'dashboard', label: i18n.t('pages.mobile_layout.k0'), icon: Home, path: '/dashboard' },
+  { id: 'workflow', label: i18n.t('pages.mobile_layout.k1'), icon: FileText, path: '/workflow' },
+  { id: 'notification', label: i18n.t('pages.mobile_layout.k2'), icon: Bell, path: '/notifications' },
+  { id: 'settings', label: i18n.t('pages.mobile_layout.k3'), icon: Settings, path: '/settings' },
 ];
 
 export const MobileLayout: React.FC<MobileLayoutProps> = ({ children }) => {
@@ -92,7 +93,7 @@ export const MobileLayout: React.FC<MobileLayoutProps> = ({ children }) => {
                 </span>
               </div>
               <div>
-                <p className='font-semibold text-gray-800'>{user?.name || '用户'}</p>
+                <p className='font-semibold text-gray-800'>{user?.name || i18n.t('pages.mobile_layout.k4')}</p>
                 <p className='text-sm text-gray-500'>{user?.email || ''}</p>
               </div>
             </div>
@@ -102,7 +103,7 @@ export const MobileLayout: React.FC<MobileLayoutProps> = ({ children }) => {
               onClick={handleLogout}
               className='w-full py-2 px-4 text-left text-red-600 hover:bg-red-50 rounded-lg transition-colors'
             >
-              退出登录
+              {i18n.t('layouts.mobile_layout.k0')}
             </button>
           </div>
         </div>

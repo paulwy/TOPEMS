@@ -18,6 +18,7 @@
 import { normalizeListResponse, type CrudApiAdapterConfig } from './adapterFactory';
 import type { CrudApiAdapter as PageCrudApiAdapter } from '@/components/templates/CrudPage';
 import type { ApiResponse } from '@/api/client';
+import i18n from '@/i18n';
 
 /**
  * CrudApi 的最小接口 —— 覆盖所有标准 API 客户端的形态
@@ -80,7 +81,7 @@ export function createCrudPageAdapter<T, TCreate = Partial<T>, TUpdate = Partial
 
     const responseLike = asResponse(await api.list(normalizedParams));
     if (responseLike.success === false) {
-      throw new Error(responseLike.message || '加载列表失败');
+      throw new Error(responseLike.message || i18n.t('schema.crud_page_adapter.k0'));
     }
 
     const { items, total } = normalizeListResponse<T>(
@@ -92,19 +93,19 @@ export function createCrudPageAdapter<T, TCreate = Partial<T>, TUpdate = Partial
 
   const create = async (data: Partial<Record<string, unknown>>) => {
     const raw = asResponse<T>(await api.create(data as unknown as TCreate));
-    if (raw.success === false) throw new Error(raw.message || '创建失败');
+    if (raw.success === false) throw new Error(raw.message || i18n.t('schema.crud_page_adapter.k1'));
     return (raw.data ?? {}) as unknown as Record<string, unknown>;
   };
 
   const update = async (id: string, data: Partial<Record<string, unknown>>) => {
     const raw = asResponse<T>(await api.update(id, data as unknown as TUpdate));
-    if (raw.success === false) throw new Error(raw.message || '更新失败');
+    if (raw.success === false) throw new Error(raw.message || i18n.t('schema.crud_page_adapter.k2'));
     return (raw.data ?? {}) as unknown as Record<string, unknown>;
   };
 
   const del = async (id: string) => {
     const raw = asResponse(await api.delete(id));
-    if (raw.success === false) throw new Error(raw.message || '删除失败');
+    if (raw.success === false) throw new Error(raw.message || i18n.t('schema.crud_page_adapter.k3'));
   };
 
   return { list, create, update, delete: del };

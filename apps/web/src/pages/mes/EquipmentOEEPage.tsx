@@ -10,32 +10,27 @@ import { useQuery } from '@tanstack/react-query';
 import {QUERY_KEYS, CACHE_DURATIONS} from '@/lib/reactQuery';
 import { Gauge, Activity, TrendingUp, CheckCircle2 } from 'lucide-react';
 import { designTokens } from '@/theme/tokens';
-
+import i18n from '@/i18n';
 const ct= designTokens.colors;
-
 const apiAdapter = createCrudPageAdapter(mesApi.equipmentOee, {
   itemsField: 'records',
 });
-
 const getOEEColor = (value: number | undefined | null) => {
   if (value == null || isNaN(value)) return 'primary';
   if (value >= 85) return 'success';
   if (value >= 70) return 'warning';
   return 'error';
 };
-
 const getOEEColorHex = (value: number | undefined | null) => {
   if (value == null || isNaN(value)) return 'text.primary';
   if (value >= 85) return 'success.700';
   if (value >= 70) return 'warning.700';
   return 'error.700';
 };
-
 const formatPercent = (value: number | undefined | null) => {
   if (value == null || isNaN(value)) return '-';
   return `${value.toFixed(1)}%`;
 };
-
 const EquipmentOEEPage: React.FC = () => {
   const { data: statistics } = useQuery({
     queryKey: QUERY_KEYS.MES.EQUIPMENT_OEE_STATISTICS,
@@ -48,7 +43,6 @@ const EquipmentOEEPage: React.FC = () => {
     },
   
       staleTime: CACHE_DURATIONS.MEDIUM,});
-
   const renderDetailContent = (row: Record<string, unknown>) => {
     const record = row as unknown as OeeRecord;
     return (
@@ -61,7 +55,7 @@ const EquipmentOEEPage: React.FC = () => {
           }}
         >
           <Box>
-            <InputLabel sx={{ color: 'text.secondary', fontSize: 12 }}>设备编号</InputLabel>
+            <InputLabel sx={{ color: 'text.secondary', fontSize: 12 }}>{i18n.t('mes.equipment_oee_page.k0')}</InputLabel>
             <Box
               component='span'
               sx={{ fontWeight: 500 }}
@@ -70,19 +64,18 @@ const EquipmentOEEPage: React.FC = () => {
             </Box>
           </Box>
           <Box>
-            <InputLabel sx={{ color: 'text.secondary', fontSize: 12 }}>设备名称</InputLabel>
+            <InputLabel sx={{ color: 'text.secondary', fontSize: 12 }}>{i18n.t('mes.equipment_oee_page.k1')}</InputLabel>
             <Box component='span'>{record.equipment_name}</Box>
           </Box>
           <Box>
-            <InputLabel sx={{ color: 'text.secondary', fontSize: 12 }}>记录日期</InputLabel>
+            <InputLabel sx={{ color: 'text.secondary', fontSize: 12 }}>{i18n.t('mes.equipment_oee_page.k2')}</InputLabel>
             <Box component='span'>{new Date(record.record_date).toLocaleDateString('zh-CN')}</Box>
           </Box>
           <Box>
-            <InputLabel sx={{ color: 'text.secondary', fontSize: 12 }}>班次</InputLabel>
+            <InputLabel sx={{ color: 'text.secondary', fontSize: 12 }}>{i18n.t('mes.equipment_oee_page.k3')}</InputLabel>
             <Box component='span'>{record.shift || '-'}</Box>
           </Box>
         </Box>
-
         <Box
           sx={{
             display: 'grid',
@@ -95,7 +88,7 @@ const EquipmentOEEPage: React.FC = () => {
               variant='body2'
               sx={{ color: 'text.secondary', mb: 0.5 }}
             >
-              综合OEE
+              {i18n.t('pages.equipment_oee_page.oee_0')}
             </Typography>
             <Typography
               variant='h5'
@@ -112,7 +105,7 @@ const EquipmentOEEPage: React.FC = () => {
               variant='body2'
               sx={{ color: 'text.secondary', mb: 0.5 }}
             >
-              可用率
+              {i18n.t('pages.equipment_oee_page.k1')}
             </Typography>
             <Typography
               variant='h5'
@@ -126,7 +119,7 @@ const EquipmentOEEPage: React.FC = () => {
               variant='body2'
               sx={{ color: 'text.secondary', mb: 0.5 }}
             >
-              性能率
+              {i18n.t('pages.equipment_oee_page.k2')}
             </Typography>
             <Typography
               variant='h5'
@@ -140,7 +133,7 @@ const EquipmentOEEPage: React.FC = () => {
               variant='body2'
               sx={{ color: 'text.secondary', mb: 0.5 }}
             >
-              质量率
+              {i18n.t('pages.equipment_oee_page.k3')}
             </Typography>
             <Typography
               variant='h5'
@@ -150,7 +143,6 @@ const EquipmentOEEPage: React.FC = () => {
             </Typography>
           </Box>
         </Box>
-
         <Box
           sx={{
             display: 'grid',
@@ -159,27 +151,27 @@ const EquipmentOEEPage: React.FC = () => {
           }}
         >
           <Box>
-            <InputLabel sx={{ color: 'text.secondary', fontSize: 12 }}>计划生产时间</InputLabel>
+            <InputLabel sx={{ color: 'text.secondary', fontSize: 12 }}>{i18n.t('mes.equipment_oee_page.k4')}</InputLabel>
             <Box component='span'>{record.planned_production_time} 分钟</Box>
           </Box>
           <Box>
-            <InputLabel sx={{ color: 'text.secondary', fontSize: 12 }}>运行时间</InputLabel>
+            <InputLabel sx={{ color: 'text.secondary', fontSize: 12 }}>{i18n.t('mes.equipment_oee_page.k5')}</InputLabel>
             <Box component='span'>{record.run_time} 分钟</Box>
           </Box>
           <Box>
-            <InputLabel sx={{ color: 'text.secondary', fontSize: 12 }}>停机时间</InputLabel>
+            <InputLabel sx={{ color: 'text.secondary', fontSize: 12 }}>{i18n.t('mes.equipment_oee_page.k6')}</InputLabel>
             <Box component='span'>{record.downtime} 分钟</Box>
           </Box>
           <Box>
-            <InputLabel sx={{ color: 'text.secondary', fontSize: 12 }}>理想周期时间</InputLabel>
+            <InputLabel sx={{ color: 'text.secondary', fontSize: 12 }}>{i18n.t('mes.equipment_oee_page.k7')}</InputLabel>
             <Box component='span'>{record.ideal_cycle_time} 秒</Box>
           </Box>
           <Box>
-            <InputLabel sx={{ color: 'text.secondary', fontSize: 12 }}>总产量</InputLabel>
+            <InputLabel sx={{ color: 'text.secondary', fontSize: 12 }}>{i18n.t('mes.equipment_oee_page.k8')}</InputLabel>
             <Box component='span'>{record.total_count} 件</Box>
           </Box>
           <Box>
-            <InputLabel sx={{ color: 'text.secondary', fontSize: 12 }}>合格数量</InputLabel>
+            <InputLabel sx={{ color: 'text.secondary', fontSize: 12 }}>{i18n.t('mes.equipment_oee_page.k9')}</InputLabel>
             <Box
               component='span'
               sx={{ color: 'success.dark' }}
@@ -188,7 +180,7 @@ const EquipmentOEEPage: React.FC = () => {
             </Box>
           </Box>
           <Box>
-            <InputLabel sx={{ color: 'text.secondary', fontSize: 12 }}>不良数量</InputLabel>
+            <InputLabel sx={{ color: 'text.secondary', fontSize: 12 }}>{i18n.t('mes.equipment_oee_page.k10')}</InputLabel>
             <Box
               component='span'
               sx={{ color: 'error.dark' }}
@@ -197,7 +189,6 @@ const EquipmentOEEPage: React.FC = () => {
             </Box>
           </Box>
         </Box>
-
         <Box
           sx={{
             display: 'grid',
@@ -206,18 +197,17 @@ const EquipmentOEEPage: React.FC = () => {
           }}
         >
           <Box>
-            <InputLabel sx={{ color: 'text.secondary', fontSize: 12 }}>创建时间</InputLabel>
+            <InputLabel sx={{ color: 'text.secondary', fontSize: 12 }}>{i18n.t('mes.equipment_oee_page.k11')}</InputLabel>
             <Box component='span'>{new Date(record.created_at).toLocaleString('zh-CN')}</Box>
           </Box>
           <Box>
-            <InputLabel sx={{ color: 'text.secondary', fontSize: 12 }}>更新时间</InputLabel>
+            <InputLabel sx={{ color: 'text.secondary', fontSize: 12 }}>{i18n.t('mes.equipment_oee_page.k12')}</InputLabel>
             <Box component='span'>{new Date(record.updated_at).toLocaleString('zh-CN')}</Box>
           </Box>
         </Box>
       </Box>
     );
   };
-
   const statsContent = (
     <Box
       sx={{
@@ -237,7 +227,7 @@ const EquipmentOEEPage: React.FC = () => {
             variant='body2'
             sx={{ color: 'text.secondary' }}
           >
-            综合OEE
+            {i18n.t('pages.equipment_oee_page.oee_4')}
           </Typography>
         </Box>
         <Typography
@@ -266,7 +256,7 @@ const EquipmentOEEPage: React.FC = () => {
             variant='body2'
             sx={{ color: 'text.secondary' }}
           >
-            可用率
+            {i18n.t('pages.equipment_oee_page.k5')}
           </Typography>
         </Box>
         <Typography
@@ -292,7 +282,7 @@ const EquipmentOEEPage: React.FC = () => {
             variant='body2'
             sx={{ color: 'text.secondary' }}
           >
-            性能率
+            {i18n.t('pages.equipment_oee_page.k6')}
           </Typography>
         </Box>
         <Typography
@@ -318,7 +308,7 @@ const EquipmentOEEPage: React.FC = () => {
             variant='body2'
             sx={{ color: 'text.secondary' }}
           >
-            质量率
+            {i18n.t('pages.equipment_oee_page.k7')}
           </Typography>
         </Box>
         <Typography
@@ -336,7 +326,6 @@ const EquipmentOEEPage: React.FC = () => {
       </Box>
     </Box>
   );
-
   return (
     <PageContainer
       autoTitle
@@ -349,7 +338,7 @@ const EquipmentOEEPage: React.FC = () => {
       <CrudPage
         schema={equipmentOeeSchema}
         apiAdapter={apiAdapter as CrudApiAdapter}
-        breadcrumbs={[{ label: 'MES' }, { label: '设备OEE' }]}
+        breadcrumbs={[{ label: 'MES' }, { label: i18n.t('mes.equipment_oee_page.oee_13') }]}
         detailMaxWidth='md'
         detailContent={renderDetailContent}
         headerContent={statsContent}
@@ -357,5 +346,4 @@ const EquipmentOEEPage: React.FC = () => {
     </PageContainer>
   );
 };
-
 export default EquipmentOEEPage;

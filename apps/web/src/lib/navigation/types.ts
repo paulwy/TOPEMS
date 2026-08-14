@@ -1,3 +1,4 @@
+import i18n from '@/i18n';
 /**
  * L3 菜单子组标准枚举（四层模型 v2.0 强制规范）
  * 顺序 order 与 操作心智一致：概览 → 主数据 → 流程 → 单据 → 分析 → 报表 → 设置 → 其他
@@ -82,29 +83,29 @@ export interface ModuleCardConfig {
 }
 
 export const NAV_GROUPS: Record<NavGroup, { label: string; icon: string; order: number }> = {
-  overview: { label: '概览仪表盘', icon: 'LayoutDashboard', order: 0 },
-  master: { label: '基础主数据', icon: 'Database', order: 10 },
-  process: { label: '核心业务流程', icon: 'Workflow', order: 20 },
-  business: { label: '业务单据管理', icon: 'Briefcase', order: 30 },
-  analytics: { label: '统计分析', icon: 'BarChart3', order: 40 },
-  report: { label: '报表与打印', icon: 'FileSpreadsheet', order: 50 },
-  setting: { label: '配置与模板', icon: 'Settings', order: 60 },
-  other: { label: '其他', icon: 'MoreHorizontal', order: 99 },
+  overview: { label: i18n.t('shared.types.k0'), icon: 'LayoutDashboard', order: 0 },
+  master: { label: i18n.t('shared.types.k1'), icon: 'Database', order: 10 },
+  process: { label: i18n.t('shared.types.k2'), icon: 'Workflow', order: 20 },
+  business: { label: i18n.t('shared.types.k3'), icon: 'Briefcase', order: 30 },
+  analytics: { label: i18n.t('shared.types.k4'), icon: 'BarChart3', order: 40 },
+  report: { label: i18n.t('shared.types.k5'), icon: 'FileSpreadsheet', order: 50 },
+  setting: { label: i18n.t('shared.types.k6'), icon: 'Settings', order: 60 },
+  other: { label: i18n.t('shared.types.k7'), icon: 'MoreHorizontal', order: 99 },
 };
 
 export const SUITE_GROUPS: Record<
   ModuleSuite | 'other',
   { label: string; emoji: string; icon: string; order: number }
 > = {
-  enterprise: { label: '企业平台', emoji: '🏢', icon: 'Building2', order: 10 },
-  manufacturing: { label: '制造域', emoji: '🏭', icon: 'Factory', order: 20 },
-  quality: { label: '质量域', emoji: '🔬', icon: 'ShieldCheck', order: 30 },
-  supply: { label: '供应链域', emoji: '📦', icon: 'Truck', order: 40 },
-  finance: { label: '财务域', emoji: '💰', icon: 'Wallet', order: 50 },
-  hr: { label: '人力域', emoji: '👥', icon: 'Users', order: 60 },
-  crm: { label: '客户域', emoji: '🤝', icon: 'Users', order: 70 },
-  project: { label: '项目域', emoji: '🗓️', icon: 'Briefcase', order: 80 },
-  collaboration: { label: '工具与协同域', emoji: '🧰', icon: 'MessagesSquare', order: 90 },
-  platform: { label: '平台能力域', emoji: '⚙️', icon: 'LayoutDashboard', order: 100 },
-  other: { label: '其他应用', emoji: '❓', icon: 'MoreHorizontal', order: 999 },
+  enterprise: { label: i18n.t('shared.types.k8'), emoji: '🏢', icon: 'Building2', order: 10 },
+  manufacturing: { label: i18n.t('shared.types.k9'), emoji: '🏭', icon: 'Factory', order: 20 },
+  quality: { label: i18n.t('shared.types.k10'), emoji: '🔬', icon: 'ShieldCheck', order: 30 },
+  supply: { label: i18n.t('shared.types.k11'), emoji: '📦', icon: 'Truck', order: 40 },
+  finance: { label: i18n.t('shared.types.k12'), emoji: '💰', icon: 'Wallet', order: 50 },
+  hr: { label: i18n.t('shared.types.k13'), emoji: '👥', icon: 'Users', order: 60 },
+  crm: { label: i18n.t('shared.types.k14'), emoji: '🤝', icon: 'Users', order: 70 },
+  project: { label: i18n.t('shared.types.k15'), emoji: '🗓️', icon: 'Briefcase', order: 80 },
+  collaboration: { label: i18n.t('shared.types.k16'), emoji: '🧰', icon: 'MessagesSquare', order: 90 },
+  platform: { label: i18n.t('shared.types.k17'), emoji: '⚙️', icon: 'LayoutDashboard', order: 100 },
+  other: { label: i18n.t('shared.types.k18'), emoji: '❓', icon: 'MoreHorizontal', order: 999 },
 };

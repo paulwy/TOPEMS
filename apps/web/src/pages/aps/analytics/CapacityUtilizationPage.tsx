@@ -1,4 +1,5 @@
 import { designTokens, semanticTokens } from '@topems/tokens';
+import i18n from '@/i18n';
 /**
  * 产能利用率分析页
  *
@@ -19,7 +20,6 @@ import {
   Legend,
   ReferenceLine,
 } from 'recharts';
-
 const mockData = [
   { date: 'W1', wcA: 78, wcB: 65, wcC: 88 },
   { date: 'W2', wcA: 82, wcB: 70, wcC: 91 },
@@ -34,50 +34,43 @@ const mockData = [
   { date: 'W11', wcA: 87, wcB: 83, wcC: 88 },
   { date: 'W12', wcA: 93, wcB: 89, wcC: 95 },
 ];
-
 export default function CapacityUtilizationPage() {
   const data = mockData;
-
   const avgUtilization = useMemo(() => {
     const allValues = data.flatMap((d) => [d.wcA, d.wcB, d.wcC]);
     return Math.round((allValues.reduce((s, v) => s + v, 0) / allValues.length) * 10) / 10;
   }, [data]);
-
   const maxUtilization = useMemo(() => {
     return Math.max(...data.flatMap((d) => [d.wcA, d.wcB, d.wcC]));
   }, [data]);
-
   const minUtilization = useMemo(() => {
     return Math.min(...data.flatMap((d) => [d.wcA, d.wcB, d.wcC]));
   }, [data]);
-
   return (
     <div className='space-y-4 p-4'>
       <div className='flex items-center justify-between'>
-        <h1 className='text-2xl font-bold'>产能利用率分析</h1>
-        <span className='text-sm text-gray-500'>工作中心利用率趋势</span>
+        <h1 className='text-2xl font-bold'>{i18n.t('aps.capacity_utilization_page.k0')}</h1>
+        <span className='text-sm text-gray-500'>{i18n.t('aps.capacity_utilization_page.k1')}</span>
       </div>
       <p className='text-sm text-gray-600'>
-        展示各工作中心近 12 周的产能利用率趋势，识别瓶颈工序与闲置产能，辅助产能调配决策。
+        {i18n.t('pages.capacity_utilization_page.k0')}
       </p>
-
       <div className='grid grid-cols-1 gap-4 md:grid-cols-3'>
         <div className='rounded-lg border p-4'>
-          <p className='text-sm text-gray-600'>平均利用率</p>
+          <p className='text-sm text-gray-600'>{i18n.t('aps.capacity_utilization_page.k2')}</p>
           <p className='mt-1 text-3xl font-bold text-blue-600'>{avgUtilization}%</p>
         </div>
         <div className='rounded-lg border p-4'>
-          <p className='text-sm text-gray-600'>最高利用率</p>
+          <p className='text-sm text-gray-600'>{i18n.t('aps.capacity_utilization_page.k3')}</p>
           <p className='mt-1 text-3xl font-bold text-green-600'>{maxUtilization}%</p>
         </div>
         <div className='rounded-lg border p-4'>
-          <p className='text-sm text-gray-600'>最低利用率</p>
+          <p className='text-sm text-gray-600'>{i18n.t('aps.capacity_utilization_page.k4')}</p>
           <p className='mt-1 text-3xl font-bold text-orange-600'>{minUtilization}%</p>
         </div>
       </div>
-
       <div className='rounded-lg border p-4'>
-        <h3 className='mb-2 font-semibold'>工作中心利用率趋势</h3>
+        <h3 className='mb-2 font-semibold'>{i18n.t('aps.capacity_utilization_page.k5')}</h3>
         <ResponsiveContainer
           width='100%'
           height={340}
@@ -95,7 +88,7 @@ export default function CapacityUtilizationPage() {
               domain={[50, 100]}
               unit='%'
               fontSize={11}
-              label={{ value: '利用率', angle: -90, position: 'insideLeft' }}
+              label={{ value: i18n.t('aps.capacity_utilization_page.k6'), angle: -90, position: 'insideLeft' }}
             />
             <Tooltip />
             <Legend />
@@ -103,12 +96,12 @@ export default function CapacityUtilizationPage() {
               y={85}
               stroke={designTokens.colors.success.dark}
               strokeDasharray='4 4'
-              label='目标 85%'
+              label={i18n.t('aps.capacity_utilization_page.85_7')}
             />
             <Line
               type='monotone'
               dataKey='wcA'
-              name='工作中心A'
+              name={i18n.t('aps.capacity_utilization_page.a_8')}
               stroke={designTokens.colors.secondary.dark}
               strokeWidth={2}
               dot={{ r: 3 }}
@@ -116,7 +109,7 @@ export default function CapacityUtilizationPage() {
             <Line
               type='monotone'
               dataKey='wcB'
-              name='工作中心B'
+              name={i18n.t('aps.capacity_utilization_page.b_9')}
               stroke={designTokens.colors.warning.main}
               strokeWidth={2}
               dot={{ r: 3 }}
@@ -124,7 +117,7 @@ export default function CapacityUtilizationPage() {
             <Line
               type='monotone'
               dataKey='wcC'
-              name='工作中心C'
+              name={i18n.t('aps.capacity_utilization_page.c_10')}
               stroke={designTokens.colors.success.dark}
               strokeWidth={2}
               dot={{ r: 3 }}

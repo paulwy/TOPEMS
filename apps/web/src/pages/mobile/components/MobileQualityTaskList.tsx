@@ -5,12 +5,11 @@
 import React from 'react';
 import { Box, Typography, Paper, Chip, List, Divider } from '@mui/material';
 import { CheckCircle, XCircle, Clock, ClipboardCheck } from 'lucide-react';
-import { useTranslation } from 'react-i18next';
 import { useNotificationStore } from '@/store';
 import { MobileButton } from '@/components/mobile';
 import type { QualityTask } from '@/api/mobile';
 import type { TaskAction, ChipColor } from '../hooks/useMobileQuality';
-
+import i18n from '@/i18n';
 interface MobileQualityTaskListProps {
   filteredTasks: QualityTask[];
   getTypeLabel: (type: string) => string;
@@ -19,7 +18,6 @@ interface MobileQualityTaskListProps {
   onTaskAction: (task: QualityTask, action: TaskAction) => void;
   onReportDefect: (task: QualityTask) => void;
 }
-
 const getStatusIcon = (status: string) => {
   switch (status) {
     case 'passed':
@@ -32,7 +30,6 @@ const getStatusIcon = (status: string) => {
       return <ClipboardCheck style={{ width: 20, height: 20 }} />;
   }
 };
-
 export const MobileQualityTaskList: React.FC<MobileQualityTaskListProps> = ({
   filteredTasks,
   getTypeLabel,
@@ -41,9 +38,7 @@ export const MobileQualityTaskList: React.FC<MobileQualityTaskListProps> = ({
   onTaskAction,
   onReportDefect,
 }) => {
-  const { t } = useTranslation();
   const { addNotification } = useNotificationStore();
-
   return (
     <List disablePadding>
       {filteredTasks.map((task, index) => (
@@ -101,7 +96,7 @@ export const MobileQualityTaskList: React.FC<MobileQualityTaskListProps> = ({
                   color='text.secondary'
                   sx={{ display: 'block', mb: 0.5 }}
                 >
-                  {t('mobile.quality.label.batch_no')}
+                  {i18n.t('mobile.quality.label.batch_no')}
                 </Typography>
                 <Typography variant='body2'>{task.batch_no}</Typography>
               </Box>
@@ -111,7 +106,7 @@ export const MobileQualityTaskList: React.FC<MobileQualityTaskListProps> = ({
                   color='text.secondary'
                   sx={{ display: 'block', mb: 0.5 }}
                 >
-                  {t('mobile.quality.label.quantity')}
+                  {i18n.t('mobile.quality.label.quantity')}
                 </Typography>
                 <Typography variant='body2'>{task.quantity.toLocaleString()}</Typography>
               </Box>
@@ -121,7 +116,7 @@ export const MobileQualityTaskList: React.FC<MobileQualityTaskListProps> = ({
                   color='text.secondary'
                   sx={{ display: 'block', mb: 0.5 }}
                 >
-                  {t('mobile.quality.label.inspector')}
+                  {i18n.t('mobile.quality.label.inspector')}
                 </Typography>
                 <Typography variant='body2'>{task.inspector}</Typography>
               </Box>
@@ -140,7 +135,7 @@ export const MobileQualityTaskList: React.FC<MobileQualityTaskListProps> = ({
                 variant='caption'
                 color='text.secondary'
               >
-                {t('mobile.quality.label.due_date_value', { date: task.due_date })}
+                {i18n.t('mobile.quality.label.due_date_value', { date: task.due_date })}
               </Typography>
               <Box sx={{ display: 'flex', gap: 1 }}>
                 {task.status === 'pending' && (
@@ -149,7 +144,7 @@ export const MobileQualityTaskList: React.FC<MobileQualityTaskListProps> = ({
                     variant='contained'
                     onClick={() => onTaskAction(task, 'start')}
                   >
-                    {t('mobile.quality.action.start_inspection')}
+                    {i18n.t('mobile.quality.action.start_inspection')}
                   </MobileButton>
                 )}
                 {task.status === 'in_progress' && (
@@ -160,7 +155,7 @@ export const MobileQualityTaskList: React.FC<MobileQualityTaskListProps> = ({
                       color='error'
                       onClick={() => onReportDefect(task)}
                     >
-                      {t('mobile.quality.action.report_defect')}
+                      {i18n.t('mobile.quality.action.report_defect')}
                     </MobileButton>
                     <MobileButton
                       size='small'
@@ -168,7 +163,7 @@ export const MobileQualityTaskList: React.FC<MobileQualityTaskListProps> = ({
                       color='success'
                       onClick={() => onTaskAction(task, 'pass')}
                     >
-                      {t('mobile.quality.action.pass')}
+                      {i18n.t('mobile.quality.action.pass')}
                     </MobileButton>
                   </>
                 )}
@@ -178,13 +173,13 @@ export const MobileQualityTaskList: React.FC<MobileQualityTaskListProps> = ({
                     variant='outlined'
                     onClick={() =>
                       addNotification({
-                        title: t('mobile.quality.action.view_report'),
-                        message: t('mobile.quality.action.view_inspection_detail'),
+                        title: i18n.t('mobile.quality.action.view_report'),
+                        message: i18n.t('mobile.quality.action.view_inspection_detail'),
                         type: 'info',
                       })
                     }
                   >
-                    {t('mobile.quality.action.view_report')}
+                    {i18n.t('mobile.quality.action.view_report')}
                   </MobileButton>
                 )}
               </Box>

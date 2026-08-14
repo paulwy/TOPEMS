@@ -18,6 +18,7 @@ import {
   Button,
   useTheme,
 } from '@mui/material';
+import i18n from '@/i18n';
 import type { SxProps, Theme } from '@mui/material/styles';
 import {
   TrendingUp,
@@ -245,7 +246,7 @@ const COLOR_MAP: Record<string, { bg: string; gradient: string; light: string; m
   },
   success: {
     bg: 'success.main',
-    gradient: 'linear-gradient(135deg, #388e3c, success.dark)',
+    gradient: `linear-gradient(135deg, ${designTokens.colors.success[600]}, success.dark)`,
     light: 'success.lightest',
     main: 'success.main',
   },
@@ -263,7 +264,7 @@ const COLOR_MAP: Record<string, { bg: string; gradient: string; light: string; m
   },
   info: {
     bg: 'info.main',
-    gradient: 'linear-gradient(135deg, #0288d1, #0277bd)',
+    gradient: `linear-gradient(135deg, ${designTokens.colors.info[600]}, #0277bd)`,
     light: 'info.lightest',
     main: 'info.main',
   },
@@ -273,11 +274,11 @@ const COLOR_MAP: Record<string, { bg: string; gradient: string; light: string; m
  * 默认时间范围配置
  */
 const DEFAULT_TIME_RANGES: TimeRange[] = [
-  { label: '今日', value: 'today' },
-  { label: '本周', value: 'week' },
-  { label: '本月', value: 'month' },
-  { label: '本季度', value: 'quarter' },
-  { label: '本年', value: 'year' },
+  { label: i18n.t('shared.stat_card.k0'), value: 'today' },
+  { label: i18n.t('shared.stat_card.k1'), value: 'week' },
+  { label: i18n.t('shared.stat_card.k2'), value: 'month' },
+  { label: i18n.t('shared.stat_card.k3'), value: 'quarter' },
+  { label: i18n.t('shared.stat_card.k4'), value: 'year' },
 ];
 
 // ============ Sparkline组件 ============
@@ -603,8 +604,8 @@ export const StatCardBase: React.FC<StatCardBaseProps> = ({
                 justifyContent: 'center',
                 background: iconGradient,
                 boxShadow: isHovered
-                  ? '0 8px 25px rgba(0, 0, 0, 0.15)'
-                  : '0 4px 15px rgba(0, 0, 0, 0.1)',
+                  ? `0 8px 25px ${designTokens.colors.action.selected}`
+                  : `0 4px 15px ${designTokens.colors.action.selected}`,
                 transition: 'all 0.3s',
                 transform: isHovered ? 'scale(1.05)' : 'scale(1)',
                 color: 'common.white',
@@ -648,7 +649,7 @@ export const StatCardBase: React.FC<StatCardBaseProps> = ({
                 variant='caption'
                 sx={{ color: 'text.disabled', fontSize: '0.7rem' }}
               >
-                vs 上期
+                {i18n.t('components.stat_card.vs_0')}
               </Typography>
             </Box>
           </Box>
@@ -769,7 +770,7 @@ export const MetricCard: React.FC<MetricCardProps> = ({
                   variant='caption'
                   color='text.secondary'
                 >
-                  目标进度
+                  {i18n.t('components.stat_card.k1')}
                 </Typography>
                 <Typography
                   variant='caption'
@@ -954,14 +955,14 @@ export const ChartCard: React.FC<ChartCardProps> = ({
                 sx={{ textTransform: 'none' }}
               >
                 <Calendar style={{ width: 16, height: 16, marginRight: 0.5 }} />
-                {DEFAULT_TIME_RANGES.find((r) => r.value === timeRange)?.label || '本月'}
+                {DEFAULT_TIME_RANGES.find((r) => r.value === timeRange)?.label || i18n.t('shared.stat_card.k5')}
               </Button>
             )}
 
             <IconButton
               size='small'
               onClick={(e) => setActionMenuAnchor(e.currentTarget)}
-              aria-label='更多'
+              aria-label={i18n.t('shared.stat_card.k6')}
             >
               <MoreVertical style={{ width: 16, height: 16 }} />
             </IconButton>
@@ -1014,7 +1015,7 @@ export const ChartCard: React.FC<ChartCardProps> = ({
                 onClick={onRefresh}
                 startIcon={<RefreshCw style={{ width: 16, height: 16 }} />}
               >
-                重试
+                {i18n.t('components.stat_card.k2')}
               </Button>
             )}
           </Box>
@@ -1057,7 +1058,7 @@ export const ChartCard: React.FC<ChartCardProps> = ({
             }}
           >
             <RefreshCw style={{ width: 16, height: 16, marginRight: 1 }} />
-            刷新数据
+            {i18n.t('components.stat_card.k3')}
           </MenuItem>
         )}
         {showExport && onExport && (
@@ -1068,7 +1069,7 @@ export const ChartCard: React.FC<ChartCardProps> = ({
             }}
           >
             <Download style={{ width: 16, height: 16, marginRight: 1 }} />
-            导出数据
+            {i18n.t('components.stat_card.k4')}
           </MenuItem>
         )}
         {showFullscreen && onFullscreen && (
@@ -1079,7 +1080,7 @@ export const ChartCard: React.FC<ChartCardProps> = ({
             }}
           >
             <Maximize2 style={{ width: 16, height: 16, marginRight: 1 }} />
-            全屏查看
+            {i18n.t('components.stat_card.k5')}
           </MenuItem>
         )}
       </Menu>

@@ -1,12 +1,14 @@
 // EHS Risk Calculation Utilities
 
+import i18n from '@/i18n';
+
 export type SeverityValue = 'high' | 'medium' | 'low';
 export type LikelihoodValue = 'high' | 'medium' | 'low';
 export type ExposureValue = 'high' | 'medium' | 'low';
 
 export interface RiskCalculationResult {
   score: number;
-  level: '高' | '中' | '低';
+  level: string;
   color: string;
   bgColor: string;
   description: string;
@@ -46,29 +48,29 @@ export function calculateRiskLevel(
   if (score >= 6) {
     return {
       score,
-      level: '高',
+      level: i18n.t('shared.risk_utils.k3'),
       color: 'text-red-600',
       bgColor: 'bg-red-100',
-      description: '高风险：需要立即采取控制措施',
+      description: i18n.t('shared.risk_utils.k4'),
     };
   }
 
   if (score >= 3) {
     return {
       score,
-      level: '中',
+      level: i18n.t('shared.risk_utils.k5'),
       color: 'text-yellow-600',
       bgColor: 'bg-yellow-100',
-      description: '中风险：需要制定控制计划',
+      description: i18n.t('shared.risk_utils.k6'),
     };
   }
 
   return {
     score,
-    level: '低',
+    level: i18n.t('shared.risk_utils.k7'),
     color: 'text-green-600',
     bgColor: 'bg-green-100',
-    description: '低风险：可以接受，定期监控',
+    description: i18n.t('shared.risk_utils.k8'),
   };
 }
 
@@ -96,10 +98,10 @@ export function calculateComprehensiveRisk(
   if (normalizedScore >= 12) {
     return {
       score: normalizedScore,
-      level: '高',
+      level: i18n.t('shared.risk_utils.k9'),
       color: 'text-red-600',
       bgColor: 'bg-red-100',
-      description: '高风险：需要立即采取控制措施并上报管理层',
+      description: i18n.t('shared.risk_utils.k10'),
       exposureScore: e,
       severityScore: s,
       likelihoodScore: l,
@@ -109,10 +111,10 @@ export function calculateComprehensiveRisk(
   if (normalizedScore >= 6) {
     return {
       score: normalizedScore,
-      level: '中',
+      level: i18n.t('shared.risk_utils.k11'),
       color: 'text-yellow-600',
       bgColor: 'bg-yellow-100',
-      description: '中风险：需要制定控制计划并定期评估',
+      description: i18n.t('shared.risk_utils.k12'),
       exposureScore: e,
       severityScore: s,
       likelihoodScore: l,
@@ -121,10 +123,10 @@ export function calculateComprehensiveRisk(
 
   return {
     score: normalizedScore,
-    level: '低',
+    level: i18n.t('shared.risk_utils.k13'),
     color: 'text-green-600',
     bgColor: 'bg-green-100',
-    description: '低风险：可以接受，保持现有控制措施',
+    description: i18n.t('shared.risk_utils.k14'),
     exposureScore: e,
     severityScore: s,
     likelihoodScore: l,
@@ -137,11 +139,11 @@ export function calculateComprehensiveRisk(
 export function getRiskLevelColor(level: string): string {
   const colorMap: Record<string, string> = {
     high: 'bg-red-100 text-red-700',
-    高: 'bg-red-100 text-red-700',
+    [i18n.t('components.risk_utils.k0')]: 'bg-red-100 text-red-700',
     medium: 'bg-yellow-100 text-yellow-700',
-    中: 'bg-yellow-100 text-yellow-700',
+    [i18n.t('components.risk_utils.k1')]: 'bg-yellow-100 text-yellow-700',
     low: 'bg-green-100 text-green-700',
-    低: 'bg-green-100 text-green-700',
+    [i18n.t('components.risk_utils.k2')]: 'bg-green-100 text-green-700',
   };
   return colorMap[level] || 'bg-gray-100 text-gray-700';
 }
@@ -151,9 +153,9 @@ export function getRiskLevelColor(level: string): string {
  */
 export function getSeverityLabel(severity: string): string {
   const labelMap: Record<string, string> = {
-    high: '高',
-    medium: '中',
-    low: '低',
+    high: i18n.t('shared.risk_utils.k15'),
+    medium: i18n.t('shared.risk_utils.k16'),
+    low: i18n.t('shared.risk_utils.k17'),
   };
   return labelMap[severity] || severity;
 }
@@ -163,9 +165,9 @@ export function getSeverityLabel(severity: string): string {
  */
 export function getLikelihoodLabel(likelihood: string): string {
   const labelMap: Record<string, string> = {
-    high: '高',
-    medium: '中',
-    low: '低',
+    high: i18n.t('shared.risk_utils.k18'),
+    medium: i18n.t('shared.risk_utils.k19'),
+    low: i18n.t('shared.risk_utils.k20'),
   };
   return labelMap[likelihood] || likelihood;
 }
@@ -175,9 +177,9 @@ export function getLikelihoodLabel(likelihood: string): string {
  */
 export function getExposureLabel(exposure: string): string {
   const labelMap: Record<string, string> = {
-    high: '高',
-    medium: '中',
-    low: '低',
+    high: i18n.t('shared.risk_utils.k21'),
+    medium: i18n.t('shared.risk_utils.k22'),
+    low: i18n.t('shared.risk_utils.k23'),
   };
   return labelMap[exposure] || exposure;
 }
@@ -191,21 +193,21 @@ export const riskMatrixData = [
     severity: 'high',
     likelihood: 'high',
     score: 9,
-    level: '高',
+    level: i18n.t('shared.risk_utils.k24'),
     color: 'error.main',
   },
   {
     severity: 'high',
     likelihood: 'medium',
     score: 6,
-    level: '高',
+    level: i18n.t('shared.risk_utils.k25'),
     color: 'error.main',
   },
   {
     severity: 'high',
     likelihood: 'low',
     score: 3,
-    level: '中',
+    level: i18n.t('shared.risk_utils.k26'),
     color: 'warning.main',
   },
   // Medium severity
@@ -213,21 +215,21 @@ export const riskMatrixData = [
     severity: 'medium',
     likelihood: 'high',
     score: 6,
-    level: '高',
+    level: i18n.t('shared.risk_utils.k27'),
     color: 'error.main',
   },
   {
     severity: 'medium',
     likelihood: 'medium',
     score: 4,
-    level: '中',
+    level: i18n.t('shared.risk_utils.k28'),
     color: 'warning.main',
   },
   {
     severity: 'medium',
     likelihood: 'low',
     score: 2,
-    level: '低',
+    level: i18n.t('shared.risk_utils.k29'),
     color: 'success.main',
   },
   // Low severity
@@ -235,21 +237,21 @@ export const riskMatrixData = [
     severity: 'low',
     likelihood: 'high',
     score: 3,
-    level: '中',
+    level: i18n.t('shared.risk_utils.k30'),
     color: 'warning.main',
   },
   {
     severity: 'low',
     likelihood: 'medium',
     score: 2,
-    level: '低',
+    level: i18n.t('shared.risk_utils.k31'),
     color: 'success.main',
   },
   {
     severity: 'low',
     likelihood: 'low',
     score: 1,
-    level: '低',
+    level: i18n.t('shared.risk_utils.k32'),
     color: 'success.main',
   },
 ];
@@ -261,9 +263,9 @@ export type EffectivenessLevel = 'high' | 'medium' | 'low';
 
 export function getEffectivenessLabel(effectiveness: string): string {
   const labelMap: Record<string, string> = {
-    high: '高效',
-    medium: '中等',
-    low: '低效',
+    high: i18n.t('shared.risk_utils.k33'),
+    medium: i18n.t('shared.risk_utils.k34'),
+    low: i18n.t('shared.risk_utils.k35'),
   };
   return labelMap[effectiveness] || effectiveness;
 }
@@ -287,28 +289,28 @@ export function calculateResidualRisk(
   if (residualScore >= 6) {
     return {
       score: residualScore,
-      level: '高',
+      level: i18n.t('shared.risk_utils.k36'),
       color: 'text-red-600',
       bgColor: 'bg-red-100',
-      description: '控制措施效果不足，需要加强',
+      description: i18n.t('shared.risk_utils.k37'),
     };
   }
 
   if (residualScore >= 3) {
     return {
       score: residualScore,
-      level: '中',
+      level: i18n.t('shared.risk_utils.k38'),
       color: 'text-yellow-600',
       bgColor: 'bg-yellow-100',
-      description: '控制措施有效，需要持续监控',
+      description: i18n.t('shared.risk_utils.k39'),
     };
   }
 
   return {
     score: residualScore,
-    level: '低',
+    level: i18n.t('shared.risk_utils.k40'),
     color: 'text-green-600',
     bgColor: 'bg-green-100',
-    description: '控制措施效果良好，风险可控',
+    description: i18n.t('shared.risk_utils.k41'),
   };
 }

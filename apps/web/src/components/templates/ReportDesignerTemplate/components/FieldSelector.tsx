@@ -2,6 +2,7 @@ import React from 'react';
 import { Box, Typography, Paper, IconButton, Checkbox, TextField } from '@mui/material';
 import { Plus, MoveVertical, Trash2 } from 'lucide-react';
 import type { DataSourceField, SelectedField } from '../types';
+import i18n from '@/i18n';
 
 interface FieldSelectorProps {
   unselectedFields: DataSourceField[];
@@ -27,7 +28,7 @@ export const FieldSelector: React.FC<FieldSelectorProps> = ({
           variant='subtitle2'
           sx={{ fontWeight: 600, mb: 1, color: 'grey.600' }}
         >
-          可用字段
+          {i18n.t('components.field_selector.k0')}
         </Typography>
         <Paper sx={{ p: 1, maxHeight: 300, overflowY: 'auto', borderRadius: 1 }}>
           {unselectedFields.length === 0 ? (
@@ -35,7 +36,7 @@ export const FieldSelector: React.FC<FieldSelectorProps> = ({
               variant='caption'
               sx={{ p: 2, display: 'block', color: 'grey.400' }}
             >
-              所有字段已添加
+              {i18n.t('components.field_selector.k1')}
             </Typography>
           ) : (
             unselectedFields.map((field) => (
@@ -68,7 +69,7 @@ export const FieldSelector: React.FC<FieldSelectorProps> = ({
                   size='small'
                   onClick={() => handleAddField(field)}
                   sx={{ p: 0.5 }}
-                  aria-label='新增'
+                  aria-label={i18n.t('templates.field_selector.k0')}
                 >
                   <Plus sx={{ width: 16, height: 16, color: 'primary.main' }} />
                 </IconButton>
@@ -90,7 +91,7 @@ export const FieldSelector: React.FC<FieldSelectorProps> = ({
             variant='caption'
             sx={{ color: 'grey.400' }}
           >
-            拖拽排序
+            {i18n.t('components.field_selector.k2')}
           </Typography>
         </Box>
         <Paper sx={{ p: 1, maxHeight: 300, overflowY: 'auto', borderRadius: 1 }}>
@@ -99,7 +100,7 @@ export const FieldSelector: React.FC<FieldSelectorProps> = ({
               variant='caption'
               sx={{ p: 2, display: 'block', color: 'grey.400' }}
             >
-              请从左侧添加字段
+              {i18n.t('components.field_selector.k3')}
             </Typography>
           ) : (
             selectedFields.map((field, index) => (
@@ -117,7 +118,7 @@ export const FieldSelector: React.FC<FieldSelectorProps> = ({
               >
                 <IconButton
                   size='small'
-                  aria-label='拖拽排序'
+                  aria-label={i18n.t('templates.field_selector.k1')}
                   sx={{ p: 0.5, cursor: 'move', opacity: 0.5 }}
                   onMouseDown={() => {
                     const handleDragOver = (e: DragEvent) => {
@@ -153,7 +154,7 @@ export const FieldSelector: React.FC<FieldSelectorProps> = ({
                   size='small'
                   onClick={() => handleRemoveField(field.fieldId)}
                   sx={{ p: 0.5 }}
-                  aria-label='删除'
+                  aria-label={i18n.t('templates.field_selector.k2')}
                 >
                   <Trash2 sx={{ width: 14, height: 14, color: 'error.main' }} />
                 </IconButton>

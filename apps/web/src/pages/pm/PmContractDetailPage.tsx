@@ -14,7 +14,7 @@ import {
   TableHead,
   TableRow,
 } from '@mui/material';
-
+import i18n from '@/i18n';
 import type { Contract, ContractMilestone, ContractPaymentSchedule } from '@/api/pm';
 import { pmApi } from '@/api/pm';
 import { DetailPageTemplate, type TabConfig } from '@/components/templates';
@@ -22,20 +22,16 @@ import { PageContainer } from '@/components/common';
 import { designTokens } from '@/theme/tokens';
 import { PM_PATHS } from '@/modules/pm/config';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-
 import { QUERY_KEYS } from '@/lib/reactQuery';
-
 const ct= designTokens.colors;
-
 const STATUS_LABELS: Record<string, string> = {
-  draft: '草稿',
-  pending: '待审批',
-  approved: '已批准',
-  active: '执行中',
-  completed: '已完成',
-  cancelled: '已取消',
+  draft: i18n.t('pm.pm_contract_detail_page.k0'),
+  pending: i18n.t('pm.pm_contract_detail_page.k1'),
+  approved: i18n.t('pm.pm_contract_detail_page.k2'),
+  active: i18n.t('pm.pm_contract_detail_page.k3'),
+  completed: i18n.t('pm.pm_contract_detail_page.k4'),
+  cancelled: i18n.t('pm.pm_contract_detail_page.k5'),
 };
-
 const STATUS_COLORS: Record<string, { bgcolor: string; color: string }> = {
   draft: { bgcolor: 'grey.100', color: 'grey.700' },
   pending: { bgcolor: 'warning.100', color: ct.yellow[700] },
@@ -44,19 +40,16 @@ const STATUS_COLORS: Record<string, { bgcolor: string; color: string }> = {
   completed: { bgcolor: 'primary.100', color: 'primary.800' },
   cancelled: { bgcolor: 'grey.100', color: 'grey.800' },
 };
-
 const CONTRACT_TYPE_LABELS: Record<string, string> = {
-  construction: '工程合同',
-  service: '服务合同',
-  purchase: '采购合同',
-  sales: '销售合同',
+  construction: i18n.t('pm.pm_contract_detail_page.k6'),
+  service: i18n.t('pm.pm_contract_detail_page.k7'),
+  purchase: i18n.t('pm.pm_contract_detail_page.k8'),
+  sales: i18n.t('pm.pm_contract_detail_page.k9'),
 };
-
 const PmContractDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-
   const contractQuery = useQuery({
     queryKey: QUERY_KEYS.PM.CONTRACT(id || ''),
     queryFn: () => pmApi.contracts.get(id || ''),
@@ -64,7 +57,6 @@ const PmContractDetailPage: React.FC = () => {
     staleTime: 5 * 60 * 1000,
     gcTime: 10 * 60 * 1000,
   });
-
   const milestonesQuery = useQuery({
     queryKey: [...QUERY_KEYS.PM.CONTRACT(id || ''), 'milestones'],
     queryFn: () => pmApi.contracts.milestones.list(id || ''),
@@ -72,7 +64,6 @@ const PmContractDetailPage: React.FC = () => {
     staleTime: 5 * 60 * 1000,
     gcTime: 10 * 60 * 1000,
   });
-
   const paymentsQuery = useQuery({
     queryKey: [...QUERY_KEYS.PM.CONTRACT(id || ''), 'payments'],
     queryFn: () => pmApi.contracts.payments.list(id || ''),
@@ -80,7 +71,6 @@ const PmContractDetailPage: React.FC = () => {
     staleTime: 5 * 60 * 1000,
     gcTime: 10 * 60 * 1000,
   });
-
   const contract =
     contractQuery.data?.success && contractQuery.data.data ? contractQuery.data.data : null;
   const milestones =
@@ -93,12 +83,10 @@ const PmContractDetailPage: React.FC = () => {
       : [];
   const loading = contractQuery.isLoading || milestonesQuery.isLoading || paymentsQuery.isLoading;
   const error = contractQuery.error || milestonesQuery.error || paymentsQuery.error;
-
   const formatDate = (dateStr?: string) => {
     if (!dateStr) return '-';
     return new Date(dateStr).toLocaleDateString('zh-CN');
   };
-
   const formatCurrency = (amount?: number) => {
     if (!amount) return '-';
     return new Intl.NumberFormat('zh-CN', {
@@ -107,7 +95,6 @@ const PmContractDetailPage: React.FC = () => {
       minimumFractionDigits: 0,
     }).format(amount);
   };
-
   const getMilestoneStatusSx = (status?: string) => {
     if (status === 'completed') {
       return { bgcolor: 'success.lighter', color: ct.success[800] };
@@ -117,7 +104,6 @@ const PmContractDetailPage: React.FC = () => {
     }
     return { bgcolor: 'grey.100', color: 'grey.700' };
   };
-
   const getPaymentStatusSx = (status?: string) => {
     if (status === 'paid') {
       return { bgcolor: 'success.lighter', color: ct.success[800] };
@@ -130,10 +116,8 @@ const PmContractDetailPage: React.FC = () => {
     }
     return { bgcolor: 'grey.100', color: 'grey.700' };
   };
-
   const overviewContent = useMemo(() => {
     if (!contract) return null;
-
     return (
       <Box
         sx={{
@@ -148,7 +132,7 @@ const PmContractDetailPage: React.FC = () => {
               variant='h6'
               sx={{ fontSize: '1.125rem' }}
             >
-              基本信息
+              {i18n.t('pages.pm_contract_detail_page.k0')}
             </Typography>
           </CardHeader>
           <CardContent sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
@@ -162,7 +146,7 @@ const PmContractDetailPage: React.FC = () => {
                 borderColor: 'grey.100',
               }}
             >
-              <Typography sx={{ color: 'grey.500' }}>合同编号</Typography>
+              <Typography sx={{ color: 'grey.500' }}>{i18n.t('pm.pm_contract_detail_page.k10')}</Typography>
               <Typography sx={{ fontWeight: 500, color: 'grey.900' }}>
                 {contract.contractNo}
               </Typography>
@@ -177,7 +161,7 @@ const PmContractDetailPage: React.FC = () => {
                 borderColor: 'grey.100',
               }}
             >
-              <Typography sx={{ color: 'grey.500' }}>合同类型</Typography>
+              <Typography sx={{ color: 'grey.500' }}>{i18n.t('pm.pm_contract_detail_page.k11')}</Typography>
               <Typography sx={{ fontWeight: 500, color: 'grey.900' }}>
                 {CONTRACT_TYPE_LABELS[contract.contract_type] || contract.contract_type}
               </Typography>
@@ -192,7 +176,7 @@ const PmContractDetailPage: React.FC = () => {
                 borderColor: 'grey.100',
               }}
             >
-              <Typography sx={{ color: 'grey.500' }}>合同金额</Typography>
+              <Typography sx={{ color: 'grey.500' }}>{i18n.t('pm.pm_contract_detail_page.k12')}</Typography>
               <Typography sx={{ fontWeight: 500, color: 'grey.900' }}>
                 {formatCurrency(contract.amount)}
               </Typography>
@@ -207,7 +191,7 @@ const PmContractDetailPage: React.FC = () => {
                 borderColor: 'grey.100',
               }}
             >
-              <Typography sx={{ color: 'grey.500' }}>签署日期</Typography>
+              <Typography sx={{ color: 'grey.500' }}>{i18n.t('pm.pm_contract_detail_page.k13')}</Typography>
               <Typography sx={{ fontWeight: 500, color: 'grey.900' }}>
                 {formatDate(contract.sign_date)}
               </Typography>
@@ -220,21 +204,20 @@ const PmContractDetailPage: React.FC = () => {
                 py: 1,
               }}
             >
-              <Typography sx={{ color: 'grey.500' }}>到期日期</Typography>
+              <Typography sx={{ color: 'grey.500' }}>{i18n.t('pm.pm_contract_detail_page.k14')}</Typography>
               <Typography sx={{ fontWeight: 500, color: 'grey.900' }}>
                 {formatDate(contract.end_date)}
               </Typography>
             </Box>
           </CardContent>
         </Card>
-
         <Card>
           <CardHeader sx={{ pb: 2 }}>
             <Typography
               variant='h6'
               sx={{ fontSize: '1.125rem' }}
             >
-              合同方信息
+              {i18n.t('pages.pm_contract_detail_page.k1')}
             </Typography>
           </CardHeader>
           <CardContent sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
@@ -248,7 +231,7 @@ const PmContractDetailPage: React.FC = () => {
                 borderColor: 'grey.100',
               }}
             >
-              <Typography sx={{ color: 'grey.500' }}>甲方</Typography>
+              <Typography sx={{ color: 'grey.500' }}>{i18n.t('pm.pm_contract_detail_page.k15')}</Typography>
               <Typography sx={{ fontWeight: 500, color: 'grey.900' }}>
                 {contract.party_a || '-'}
               </Typography>
@@ -263,7 +246,7 @@ const PmContractDetailPage: React.FC = () => {
                 borderColor: 'grey.100',
               }}
             >
-              <Typography sx={{ color: 'grey.500' }}>乙方</Typography>
+              <Typography sx={{ color: 'grey.500' }}>{i18n.t('pm.pm_contract_detail_page.k16')}</Typography>
               <Typography sx={{ fontWeight: 500, color: 'grey.900' }}>
                 {contract.party_b || '-'}
               </Typography>
@@ -278,7 +261,7 @@ const PmContractDetailPage: React.FC = () => {
                 borderColor: 'grey.100',
               }}
             >
-              <Typography sx={{ color: 'grey.500' }}>甲方联系人</Typography>
+              <Typography sx={{ color: 'grey.500' }}>{i18n.t('pm.pm_contract_detail_page.k17')}</Typography>
               <Typography sx={{ fontWeight: 500, color: 'grey.900' }}>-</Typography>
             </Box>
             <Box
@@ -289,19 +272,18 @@ const PmContractDetailPage: React.FC = () => {
                 py: 1,
               }}
             >
-              <Typography sx={{ color: 'grey.500' }}>乙方联系人</Typography>
+              <Typography sx={{ color: 'grey.500' }}>{i18n.t('pm.pm_contract_detail_page.k18')}</Typography>
               <Typography sx={{ fontWeight: 500, color: 'grey.900' }}>-</Typography>
             </Box>
           </CardContent>
         </Card>
-
         <Card sx={{ lg: { gridColumn: 'span 2' } }}>
           <CardHeader sx={{ pb: 2 }}>
             <Typography
               variant='h6'
               sx={{ fontSize: '1.125rem' }}
             >
-              合同描述
+              {i18n.t('pages.pm_contract_detail_page.k2')}
             </Typography>
           </CardHeader>
           <CardContent>
@@ -311,7 +293,6 @@ const PmContractDetailPage: React.FC = () => {
       </Box>
     );
   }, [contract]);
-
   const milestonesContent = useMemo(
     () => (
       <Card>
@@ -320,13 +301,13 @@ const PmContractDetailPage: React.FC = () => {
             variant='h6'
             sx={{ fontSize: '1.125rem' }}
           >
-            合同里程碑
+            {i18n.t('pages.pm_contract_detail_page.k3')}
           </Typography>
         </CardHeader>
         <CardContent>
           {milestones.length === 0 ? (
             <Typography sx={{ textAlign: 'center', color: 'grey.500', py: 6 }}>
-              暂无里程碑数据
+              {i18n.t('pages.pm_contract_detail_page.k4')}
             </Typography>
           ) : (
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
@@ -353,9 +334,9 @@ const PmContractDetailPage: React.FC = () => {
                         <Typography sx={{ fontWeight: 500 }}>{milestone.name}</Typography>
                         <Badge sx={getMilestoneStatusSx(milestone.status)}>
                           {milestone.status === 'completed'
-                            ? '已完成'
+                            ? i18n.t('pm.pm_contract_detail_page.k19')
                             : milestone.status === 'pending'
-                              ? '进行中'
+                              ? i18n.t('pm.pm_contract_detail_page.k20')
                               : milestone.status}
                         </Badge>
                       </Box>
@@ -373,7 +354,7 @@ const PmContractDetailPage: React.FC = () => {
                         variant='body2'
                         sx={{ color: 'grey.500' }}
                       >
-                        目标日期
+                        {i18n.t('pages.pm_contract_detail_page.k5')}
                       </Typography>
                       <Typography sx={{ fontWeight: 500 }}>
                         {formatDate(milestone.target_date)}
@@ -395,7 +376,6 @@ const PmContractDetailPage: React.FC = () => {
     ),
     [milestones]
   );
-
   const paymentsContent = useMemo(
     () => (
       <Card>
@@ -404,25 +384,25 @@ const PmContractDetailPage: React.FC = () => {
             variant='h6'
             sx={{ fontSize: '1.125rem' }}
           >
-            付款计划
+            {i18n.t('pages.pm_contract_detail_page.k6')}
           </Typography>
         </CardHeader>
         <CardContent sx={{ p: 0 }}>
           {payments.length === 0 ? (
             <Typography sx={{ textAlign: 'center', color: 'grey.500', py: 6 }}>
-              暂无付款计划数据
+              {i18n.t('pages.pm_contract_detail_page.k7')}
             </Typography>
           ) : (
             <Box sx={{ overflowX: 'auto' }}>
               <Table>
                 <TableHead>
                   <TableRow>
-                    <TableCell>期次</TableCell>
-                    <TableCell>付款日期</TableCell>
-                    <TableCell>金额</TableCell>
-                    <TableCell>比例</TableCell>
-                    <TableCell>状态</TableCell>
-                    <TableCell>备注</TableCell>
+                    <TableCell>{i18n.t('pm.pm_contract_detail_page.k21')}</TableCell>
+                    <TableCell>{i18n.t('pm.pm_contract_detail_page.k22')}</TableCell>
+                    <TableCell>{i18n.t('pm.pm_contract_detail_page.k23')}</TableCell>
+                    <TableCell>{i18n.t('pm.pm_contract_detail_page.k24')}</TableCell>
+                    <TableCell>{i18n.t('pm.pm_contract_detail_page.k25')}</TableCell>
+                    <TableCell>{i18n.t('pm.pm_contract_detail_page.k26')}</TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
@@ -444,11 +424,11 @@ const PmContractDetailPage: React.FC = () => {
                       <TableCell>
                         <Badge sx={getPaymentStatusSx(payment.status)}>
                           {payment.status === 'paid'
-                            ? '已支付'
+                            ? i18n.t('pm.pm_contract_detail_page.k27')
                             : payment.status === 'pending'
-                              ? '待支付'
+                              ? i18n.t('pm.pm_contract_detail_page.k28')
                               : payment.status === 'overdue'
-                                ? '已逾期'
+                                ? i18n.t('pm.pm_contract_detail_page.k29')
                                 : payment.status || '-'}
                         </Badge>
                       </TableCell>
@@ -464,33 +444,29 @@ const PmContractDetailPage: React.FC = () => {
     ),
     [payments]
   );
-
   const tabs: TabConfig[] = useMemo(
     () => [
       {
         id: 'overview',
-        label: '合同概览',
+        label: i18n.t('pm.pm_contract_detail_page.k30'),
         content: overviewContent,
       },
       {
         id: 'milestones',
-        label: '里程碑',
+        label: i18n.t('pm.pm_contract_detail_page.k31'),
         content: milestonesContent,
       },
       {
         id: 'payments',
-        label: '付款计划',
+        label: i18n.t('pm.pm_contract_detail_page.k32'),
         content: paymentsContent,
       },
     ],
     [overviewContent, milestonesContent, paymentsContent]
   );
-
   const infoCard = useMemo(() => {
     if (!contract) return;
-
     const statusKey = contract.status || 'draft';
-
     return {
       title: contract.contract_name,
       subtitle: contract.contractNo,
@@ -499,14 +475,13 @@ const PmContractDetailPage: React.FC = () => {
         CONTRACT_TYPE_LABELS[contract.contract_type] || contract.contract_type,
       ],
       stats: [
-        { label: '合同金额', value: formatCurrency(contract.amount) },
-        { label: '甲方', value: contract.party_a || '-' },
-        { label: '乙方', value: contract.party_b || '-' },
-        { label: '签署日期', value: formatDate(contract.sign_date) },
+        { label: i18n.t('pm.pm_contract_detail_page.k33'), value: formatCurrency(contract.amount) },
+        { label: i18n.t('pm.pm_contract_detail_page.k34'), value: contract.party_a || '-' },
+        { label: i18n.t('pm.pm_contract_detail_page.k35'), value: contract.party_b || '-' },
+        { label: i18n.t('pm.pm_contract_detail_page.k36'), value: formatDate(contract.sign_date) },
       ],
     };
   }, [contract]);
-
   const handleRefresh = () => {
     queryClient.invalidateQueries({ queryKey: QUERY_KEYS.PM.CONTRACT(id || '') ,
   exact: false,
@@ -523,21 +498,20 @@ const PmContractDetailPage: React.FC = () => {
   refetchType: 'active',
 });
   };
-
   return (
     <PageContainer
-      title={contract?.contract_name || '合同详情'}
+      title={contract?.contract_name || i18n.t('pm.pm_contract_detail_page.k37')}
       subtitle={contract?.contractNo}
     >
       <DetailPageTemplate
         title=''
         subtitle=''
-        detailItemName={contract?.name || contract?.contractNo || '合同详情'}
+        detailItemName={contract?.name || contract?.contractNo || i18n.t('pm.pm_contract_detail_page.k38')}
         breadcrumbs={[
-          { label: '首页', href: '/dashboard' },
-          { label: '项目管理', href: PM_PATHS.projects },
-          { label: '合同', href: PM_PATHS.contracts },
-          { label: '合同详情' },
+          { label: i18n.t('pm.pm_contract_detail_page.k39'), href: '/dashboard' },
+          { label: i18n.t('pm.pm_contract_detail_page.k40'), href: PM_PATHS.projects },
+          { label: i18n.t('pm.pm_contract_detail_page.k41'), href: PM_PATHS.contracts },
+          { label: i18n.t('pm.pm_contract_detail_page.k42') },
         ]}
         loading={loading}
         error={error ? (error as Error).message : ''}
@@ -551,5 +525,4 @@ const PmContractDetailPage: React.FC = () => {
     </PageContainer>
   );
 };
-
 export default PmContractDetailPage;

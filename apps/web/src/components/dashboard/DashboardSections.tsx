@@ -9,6 +9,7 @@ import {
   useTheme,
   useMediaQuery,
 } from '@mui/material';
+import i18n from '@/i18n';
 import { ChevronDown, ChevronUp } from 'lucide-react';
 import { ModuleCard, type ModuleItem } from './ModuleCard';
 import { designTokens, semanticTokens } from '@topems/tokens';
@@ -16,7 +17,7 @@ import { designTokens, semanticTokens } from '@topems/tokens';
 export const MODULE_SECTIONS = [
   {
     key: 'core',
-    title: '核心平台',
+    title: i18n.t('shared.dashboard_sections.k0'),
     collapsedLimit: 6,
     moduleKeys: [
       'iam',
@@ -33,19 +34,19 @@ export const MODULE_SECTIONS = [
   },
   {
     key: 'operation',
-    title: '运营管理',
+    title: i18n.t('shared.dashboard_sections.k1'),
     collapsedLimit: 6,
     moduleKeys: ['crm', 'srm', 'scm', 'wms', 'erp', 'finance', 'hrm', 'pm'],
   },
   {
     key: 'production',
-    title: '生产制造',
+    title: i18n.t('shared.dashboard_sections.k2'),
     collapsedLimit: 6,
     moduleKeys: ['mes', 'pdca', 'qms', 'ehs', 'lims', 'pdm', 'rd'],
   },
   {
     key: 'intelligent',
-    title: '智能与数据',
+    title: i18n.t('shared.dashboard_sections.k3'),
     collapsedLimit: 6,
     moduleKeys: ['ai', 'bi', 'analytics', 'report', 'search', 'portal', 'gis', 'mobile', 'lowcode'],
   },
@@ -92,7 +93,7 @@ export const ModuleSection: React.FC<ModuleSectionProps> = ({
           </Typography>
         </Typography>
         {shouldCollapse ? (
-          <Tooltip title={collapsed ? '展开全部' : '收起'}>
+          <Tooltip title={collapsed ? i18n.t('shared.dashboard_sections.k5') : i18n.t('shared.dashboard_sections.k4')}>
             <IconButton
               size='small'
               onClick={() => setCollapsed((v) => !v)}
@@ -245,7 +246,7 @@ export const DashboardSection: React.FC<DashboardSectionProps> = ({
                 bgcolor: 'grey.100',
                 '&:hover': { bgcolor: 'grey.200' },
               }}
-              aria-label='展开'
+              aria-label={i18n.t('shared.dashboard_sections.k6')}
             >
               {expanded ? (
                 <ChevronUp
@@ -280,7 +281,7 @@ export interface TodayOverviewSectionProps {
 export const TodayOverviewSection: React.FC<TodayOverviewSectionProps> = ({ children }) => {
   return (
     <DashboardSection
-      title='今日概览'
+      title={i18n.t('shared.dashboard_sections.k7')}
       sx={{ mb: 4 }}
     >
       {children}
@@ -300,7 +301,7 @@ export const QuickAccessSection: React.FC<QuickAccessSectionProps> = ({
 }) => {
   return (
     <DashboardSection
-      title='快捷入口'
+      title={i18n.t('shared.dashboard_sections.k8')}
       collapsible
       defaultExpanded={defaultExpanded}
     >
@@ -317,7 +318,7 @@ export interface TodoListSectionProps {
 export const TodoListSection: React.FC<TodoListSectionProps> = ({ children }) => {
   return (
     <DashboardSection
-      title='待办事项'
+      title={i18n.t('shared.dashboard_sections.k9')}
       collapsible
       defaultExpanded={true}
     >
@@ -337,7 +338,7 @@ export interface ModuleNavigationSectionProps {
 
 export const ModuleNavigationSection: React.FC<ModuleNavigationSectionProps> = ({
   children,
-  title = '模块导航',
+  title = i18n.t('shared.dashboard_sections.k10'),
   icon,
   collapsible,
   defaultExpanded,
@@ -368,7 +369,7 @@ export const ServiceMonitorSection: React.FC<ServiceMonitorSectionProps> = ({
 }) => {
   return (
     <DashboardSection
-      title='服务状态监测'
+      title={i18n.t('shared.dashboard_sections.k11')}
       collapsible={collapsible}
       defaultExpanded={defaultExpanded}
     >
@@ -391,7 +392,7 @@ export const RecentActivitySection: React.FC<RecentActivitySectionProps> = ({
 }) => {
   return (
     <DashboardSection
-      title='最近活动'
+      title={i18n.t('shared.dashboard_sections.k12')}
       collapsible
       defaultExpanded={defaultExpanded}
       headerRight={headerRight}

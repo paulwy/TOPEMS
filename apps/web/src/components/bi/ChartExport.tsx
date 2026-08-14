@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Image, Download, FileImage, Copy, Check } from 'lucide-react';
 import { Menu, MenuItem, Button, useTheme } from '@mui/material';
 import { logger } from '@/utils/logger';
+import i18n from '@/i18n';
 
 interface ChartExportProps {
   chartRef: React.RefObject<HTMLDivElement | null>;
@@ -45,7 +46,7 @@ export const ChartExport = ({ chartRef, filename = 'chart' }: ChartExportProps) 
       }
     } catch (error: unknown) {
       logger.error('Failed to export chart:', error);
-      alert('导出失败，请重试');
+      alert(i18n.t('shared.chart_export.k0'));
     }
     setAnchorEl(null);
   };
@@ -68,7 +69,7 @@ export const ChartExport = ({ chartRef, filename = 'chart' }: ChartExportProps) 
       }
     } catch (error: unknown) {
       logger.error('Failed to copy chart:', error);
-      alert('复制失败，请重试');
+      alert(i18n.t('shared.chart_export.k1'));
     }
     setAnchorEl(null);
   };
@@ -79,7 +80,7 @@ export const ChartExport = ({ chartRef, filename = 'chart' }: ChartExportProps) 
         variant='text'
         size='small'
         onClick={(e) => setAnchorEl(e.currentTarget)}
-        title='导出图表'
+        title={i18n.t('shared.chart_export.k2')}
       >
         <Image sx={{ width: 16, height: 16, marginRight: 4 }} />
         <Download sx={{ width: 16, height: 16 }} />
@@ -91,7 +92,7 @@ export const ChartExport = ({ chartRef, filename = 'chart' }: ChartExportProps) 
       >
         <MenuItem disabled>
           <span style={{ fontSize: 12, fontWeight: 500, color: theme.palette.text.secondary }}>
-            导出格式
+            {i18n.t('components.chart_export.k0')}
           </span>
         </MenuItem>
         {exportFormats.map((format) => (
@@ -107,12 +108,12 @@ export const ChartExport = ({ chartRef, filename = 'chart' }: ChartExportProps) 
           {copied ? (
             <>
               <Check sx={{ width: 16, height: 16, marginRight: 8, color: 'success.main' }} />
-              已复制
+              {i18n.t('components.chart_export.k1')}
             </>
           ) : (
             <>
               <Copy sx={{ width: 16, height: 16, marginRight: 8 }} />
-              复制到剪贴板
+              {i18n.t('components.chart_export.k2')}
             </>
           )}
         </MenuItem>

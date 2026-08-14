@@ -1,43 +1,44 @@
 import { z } from 'zod';
+import i18n from '@/i18n';
 
 export const fieldName = () =>
-  z.string().min(2, '名称至少 2 个字符').max(50, '名称不能超过 50 个字符');
+  z.string().min(2, i18n.t('shared.form_schemas.2_1')).max(50, i18n.t('shared.form_schemas.50_0'));
 
 export const fieldCode = () =>
   z
     .string()
-    .regex(/^[a-zA-Z][a-zA-Z0-9_]*$/, '必须以字母开头，只允许字母数字下划线')
-    .min(2, '编码至少 2 个字符')
-    .max(32, '编码不能超过 32 个字符');
+    .regex(/^[a-zA-Z][a-zA-Z0-9_]*$/, i18n.t('shared.form_schemas.k2'))
+    .min(2, i18n.t('shared.form_schemas.2_3'))
+    .max(32, i18n.t('shared.form_schemas.32_4'));
 
 export const fieldDescription = () =>
-  z.string().max(500, '描述不能超过 500 个字符').optional().or(z.literal(''));
+  z.string().max(500, i18n.t('shared.form_schemas.500_5')).optional().or(z.literal(''));
 
-export const fieldEmail = () => z.string().email('请输入有效的邮箱地址').or(z.literal(''));
+export const fieldEmail = () => z.string().email(i18n.t('shared.form_schemas.k6')).or(z.literal(''));
 
 export const fieldPhone = () =>
   z
     .string()
-    .regex(/^1[3-9]\d{9}$/, '请输入有效的手机号码')
+    .regex(/^1[3-9]\d{9}$/, i18n.t('shared.form_schemas.k7'))
     .or(z.literal(''));
 
 export const fieldAmount = () =>
   z
     .number()
-    .min(0, '金额不能为负数')
-    .refine((val) => Number.isFinite(val), '请输入有效的金额');
+    .min(0, i18n.t('shared.form_schemas.k8'))
+    .refine((val) => Number.isFinite(val), i18n.t('shared.form_schemas.k9'));
 
 export const fieldPercentage = () =>
-  z.number().min(0, '百分比不能为负数').max(100, '百分比不能超过 100');
+  z.number().min(0, i18n.t('shared.form_schemas.k11')).max(100, i18n.t('shared.form_schemas.100_10'));
 
 export const fieldDateRange = () =>
   z
     .object({
-      start: z.string().min(1, '请选择开始日期'),
-      end: z.string().min(1, '请选择结束日期'),
+      start: z.string().min(1, i18n.t('shared.form_schemas.k12')),
+      end: z.string().min(1, i18n.t('shared.form_schemas.k13')),
     })
     .refine((data) => new Date(data.start) <= new Date(data.end), {
-      message: '结束日期不能早于开始日期',
+      message: i18n.t('shared.form_schemas.k14'),
       path: ['end'],
     });
 
@@ -72,7 +73,7 @@ export const partySchema = baseEntitySchema.extend({
 
 export const materialSchema = baseEntitySchema.extend({
   category: z.string().optional(),
-  unit: z.string().min(1, '请选择单位').optional(),
+  unit: z.string().min(1, i18n.t('shared.form_schemas.k15')).optional(),
   specification: z.string().max(100).optional(),
   minStock: z.number().min(0).optional(),
   maxStock: z.number().min(0).optional(),
@@ -80,7 +81,7 @@ export const materialSchema = baseEntitySchema.extend({
 
 export const orderSchema = z.object({
   orderNo: fieldCode(),
-  orderDate: z.string().min(1, '请选择订单日期'),
+  orderDate: z.string().min(1, i18n.t('shared.form_schemas.k16')),
   expectedDate: z.string().optional(),
   totalAmount: fieldAmount().optional(),
   status: z
@@ -90,7 +91,7 @@ export const orderSchema = z.object({
 });
 
 export const projectSchema = baseEntitySchema.extend({
-  startDate: z.string().min(1, '请选择开始日期'),
+  startDate: z.string().min(1, i18n.t('shared.form_schemas.k17')),
   endDate: z.string().optional(),
   manager: fieldName().optional(),
   priority: z.enum(['low', 'medium', 'high', 'urgent']).default('medium'),

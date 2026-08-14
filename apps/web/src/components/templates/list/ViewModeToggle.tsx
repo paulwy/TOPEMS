@@ -3,6 +3,7 @@ import { Box, IconButton, Tooltip } from '@mui/material';
 import { Columns3, FileText } from 'lucide-react';
 import type { ListViewMode } from './types';
 import { useTranslation } from 'react-i18next';
+import i18n from '@/i18n';
 
 export interface ViewModeToggleProps {
   modes: ListViewMode[];
@@ -42,7 +43,7 @@ export const ViewModeToggle: React.FC<ViewModeToggleProps> = ({ modes, current, 
                   bgcolor: current === mode ? 'background.paper' : 'action.selected',
                 },
               }}
-              aria-label='配置列'
+              aria-label={i18n.t('templates.view_mode_toggle.k0')}
             >
               {mode === 'table' ? <Columns3 size={18} /> : <FileText size={18} />}
             </IconButton>

@@ -1,10 +1,11 @@
 import React from 'react';
 import type { EntitySchema } from '@/schema';
+import i18n from '@/i18n';
 
 export const ledgerSchema: EntitySchema = {
   entity: 'finance_ledger',
-  title: '总账管理',
-  description: '管理会计科目总账，查看账户余额和发生额',
+  title: i18n.t('finance.ledger.k0'),
+  description: i18n.t('finance.ledger.k1'),
 
   api: {
     module: 'finance',
@@ -14,7 +15,7 @@ export const ledgerSchema: EntitySchema = {
   fields: [
     {
       name: 'code',
-      label: '科目编码',
+      label: i18n.t('finance.ledger.k2'),
       type: 'text',
       required: true,
       sortable: true,
@@ -22,7 +23,7 @@ export const ledgerSchema: EntitySchema = {
     },
     {
       name: 'name',
-      label: '科目名称',
+      label: i18n.t('finance.ledger.k3'),
       type: 'text',
       required: true,
       sortable: true,
@@ -30,56 +31,56 @@ export const ledgerSchema: EntitySchema = {
     },
     {
       name: 'category',
-      label: '科目类别',
+      label: i18n.t('finance.ledger.k4'),
       type: 'select',
       required: true,
       options: {
         type: 'static',
         options: [
-          { value: 'asset', label: '资产类' },
-          { value: 'liability', label: '负债类' },
-          { value: 'equity', label: '权益类' },
-          { value: 'cost', label: '成本类' },
-          { value: 'expense', label: '费用类' },
-          { value: 'income', label: '收入类' },
+          { value: 'asset', label: i18n.t('finance.ledger.k5') },
+          { value: 'liability', label: i18n.t('finance.ledger.k6') },
+          { value: 'equity', label: i18n.t('finance.ledger.k7') },
+          { value: 'cost', label: i18n.t('finance.ledger.k8') },
+          { value: 'expense', label: i18n.t('finance.ledger.k9') },
+          { value: 'income', label: i18n.t('finance.ledger.k10') },
         ],
       },
       listWidth: 120,
     },
     {
       name: 'level',
-      label: '科目级别',
+      label: i18n.t('finance.ledger.k11'),
       type: 'select',
       required: true,
       defaultValue: 1,
       options: {
         type: 'static',
         options: [
-          { value: 1, label: '一级' },
-          { value: 2, label: '二级' },
-          { value: 3, label: '三级' },
-          { value: 4, label: '四级' },
+          { value: 1, label: i18n.t('finance.ledger.k12') },
+          { value: 2, label: i18n.t('finance.ledger.k13') },
+          { value: 3, label: i18n.t('finance.ledger.k14') },
+          { value: 4, label: i18n.t('finance.ledger.k15') },
         ],
       },
       listWidth: 100,
     },
     {
       name: 'parent_code',
-      label: '上级科目',
+      label: i18n.t('finance.ledger.k16'),
       type: 'text',
       listWidth: 140,
       showInList: false,
     },
     {
       name: 'is_cash_flow',
-      label: '现金流量科目',
+      label: i18n.t('finance.ledger.k17'),
       type: 'select',
       defaultValue: false,
       options: {
         type: 'static',
         options: [
-          { value: true, label: '是' },
-          { value: false, label: '否' },
+          { value: true, label: i18n.t('finance.ledger.k18') },
+          { value: false, label: i18n.t('finance.ledger.k19') },
         ],
       },
       listWidth: 100,
@@ -87,28 +88,28 @@ export const ledgerSchema: EntitySchema = {
     },
     {
       name: 'status',
-      label: '状态',
+      label: i18n.t('finance.ledger.k20'),
       type: 'select',
       required: true,
       defaultValue: 'active',
       options: {
         type: 'static',
         options: [
-          { value: 'active', label: '启用' },
-          { value: 'disabled', label: '停用' },
+          { value: 'active', label: i18n.t('finance.ledger.k21') },
+          { value: 'disabled', label: i18n.t('finance.ledger.k22') },
         ],
       },
       listWidth: 100,
     },
     {
       name: 'description',
-      label: '备注',
+      label: i18n.t('finance.ledger.k23'),
       type: 'textarea',
       showInList: false,
     },
     {
       name: 'created_at',
-      label: '创建时间',
+      label: i18n.t('finance.ledger.k24'),
       type: 'datetime',
       readonly: true,
       hideInForm: true,
@@ -117,7 +118,7 @@ export const ledgerSchema: EntitySchema = {
     },
     {
       name: 'updated_at',
-      label: '更新时间',
+      label: i18n.t('finance.ledger.k25'),
       type: 'datetime',
       readonly: true,
       hideInForm: true,
@@ -137,33 +138,33 @@ export const ledgerSchema: EntitySchema = {
         disabled: 'error',
       },
       labelMap: {
-        active: '启用',
-        disabled: '停用',
+        active: i18n.t('finance.ledger.k26'),
+        disabled: i18n.t('finance.ledger.k27'),
       },
     },
     filters: [
       {
         id: 'category',
-        label: '科目类别',
+        label: i18n.t('finance.ledger.k28'),
         type: 'select',
         options: [
-          { label: '全部类别', value: 'all' },
-          { label: '资产类', value: 'asset' },
-          { label: '负债类', value: 'liability' },
-          { label: '权益类', value: 'equity' },
-          { label: '成本类', value: 'cost' },
-          { label: '费用类', value: 'expense' },
-          { label: '收入类', value: 'income' },
+          { label: i18n.t('finance.ledger.k29'), value: 'all' },
+          { label: i18n.t('finance.ledger.k30'), value: 'asset' },
+          { label: i18n.t('finance.ledger.k31'), value: 'liability' },
+          { label: i18n.t('finance.ledger.k32'), value: 'equity' },
+          { label: i18n.t('finance.ledger.k33'), value: 'cost' },
+          { label: i18n.t('finance.ledger.k34'), value: 'expense' },
+          { label: i18n.t('finance.ledger.k35'), value: 'income' },
         ],
       },
       {
         id: 'status',
-        label: '状态',
+        label: i18n.t('finance.ledger.k36'),
         type: 'select',
         options: [
-          { label: '全部状态', value: 'all' },
-          { label: '启用', value: 'active' },
-          { label: '停用', value: 'disabled' },
+          { label: i18n.t('finance.ledger.k37'), value: 'all' },
+          { label: i18n.t('finance.ledger.k38'), value: 'active' },
+          { label: i18n.t('finance.ledger.k39'), value: 'disabled' },
         ],
       },
     ],
@@ -173,21 +174,21 @@ export const ledgerSchema: EntitySchema = {
 
   formSections: [
     {
-      title: '基本信息',
+      title: i18n.t('finance.ledger.k40'),
       fields: ['code', 'name', 'category', 'level', 'status'],
     },
     {
-      title: '科目关系',
+      title: i18n.t('finance.ledger.k41'),
       fields: ['parent_code', 'is_cash_flow'],
     },
     {
-      title: '备注',
+      title: i18n.t('finance.ledger.k42'),
       fields: ['description'],
     },
   ],
 
   formColCount: 2,
-  createTitle: '新增会计科目',
-  editTitle: '编辑会计科目',
-  detailTitle: '会计科目详情',
+  createTitle: i18n.t('finance.ledger.k43'),
+  editTitle: i18n.t('finance.ledger.k44'),
+  detailTitle: i18n.t('finance.ledger.k45'),
 };

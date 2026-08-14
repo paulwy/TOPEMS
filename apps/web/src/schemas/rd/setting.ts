@@ -1,9 +1,10 @@
 import type { EntitySchema } from '@/schema';
+import i18n from '@/i18n';
 
 export const settingSchema: EntitySchema = {
   entity: 'rd_setting',
-  title: '配置项',
-  description: '管理研发系统配置项',
+  title: i18n.t('rd.setting.k0'),
+  description: i18n.t('rd.setting.k1'),
 
   api: {
     module: 'rd',
@@ -21,7 +22,7 @@ export const settingSchema: EntitySchema = {
     },
     {
       name: 'name',
-      label: '名称',
+      label: i18n.t('rd.setting.k2'),
       type: 'text',
       required: true,
       sortable: true,
@@ -29,13 +30,13 @@ export const settingSchema: EntitySchema = {
     },
     {
       name: 'description',
-      label: '描述',
+      label: i18n.t('rd.setting.k3'),
       type: 'text',
       listWidth: 300,
     },
     {
       name: 'enabled',
-      label: '状态',
+      label: i18n.t('rd.setting.k4'),
       type: 'switch',
       defaultValue: true,
       listWidth: 100,
@@ -51,15 +52,15 @@ export const settingSchema: EntitySchema = {
 
   formSections: [
     {
-      title: '基本信息',
+      title: i18n.t('rd.setting.k5'),
       fields: ['name', 'description', 'enabled'],
     },
   ],
 
   formColCount: 2,
-  createTitle: '新增配置',
-  editTitle: '编辑配置',
-  detailTitle: '配置详情',
+  createTitle: i18n.t('rd.setting.k6'),
+  editTitle: i18n.t('rd.setting.k7'),
+  detailTitle: i18n.t('rd.setting.k8'),
 
   actions: ['create', 'edit', 'detail', 'delete'],
 };

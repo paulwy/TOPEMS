@@ -12,6 +12,7 @@ import {
   FileType,
   Trash2,
 } from 'lucide-react';
+import i18n from '@/i18n';
 import { DashboardTemplate } from '@/components/templates';
 import type { StatCard, ChartCard, QuickAction, RecentItem } from '@/components/templates';
 import { PageContainer } from '@/components/common';
@@ -37,9 +38,9 @@ const iconMap: Record<string, React.ReactNode> = {
 
 const getGreeting = (): string => {
   const hour = new Date().getHours();
-  if (hour < 12) return '上午好';
-  if (hour < 18) return '下午好';
-  return '晚上好';
+  if (hour < 12) return i18n.t('pages.dashboard_page.k0');
+  if (hour < 18) return i18n.t('pages.dashboard_page.k1');
+  return i18n.t('pages.dashboard_page.k2');
 };
 
 export const DocumentDashboardPage: React.FC = () => {
@@ -62,56 +63,56 @@ export const DocumentDashboardPage: React.FC = () => {
     return [
       {
         id: 'total-documents',
-        title: '文档总数',
+        title: i18n.t('pages.dashboard_page.k3'),
         value: statsData.total_documents.toLocaleString(),
         icon: iconMap.FileText,
         change: 0,
-        changeLabel: 'vs 上周',
+        changeLabel: i18n.t('pages.dashboard_page.vs_0'),
         color: 'primary',
       },
       {
         id: 'published-documents',
-        title: '已发布',
+        title: i18n.t('pages.dashboard_page.k4'),
         value: statsData.published_documents.toLocaleString(),
         icon: iconMap.FolderOpen,
         change: 0,
-        changeLabel: 'vs 上周',
+        changeLabel: i18n.t('pages.dashboard_page.vs_1'),
         color: 'success',
       },
       {
         id: 'draft-documents',
-        title: '草稿',
+        title: i18n.t('pages.dashboard_page.k5'),
         value: statsData.draft_documents.toLocaleString(),
         icon: iconMap.Clock,
         change: 0,
-        changeLabel: 'vs 上周',
+        changeLabel: i18n.t('pages.dashboard_page.vs_2'),
         color: 'info',
       },
       {
         id: 'archived-documents',
-        title: '已归档',
+        title: i18n.t('pages.dashboard_page.k6'),
         value: statsData.archived_documents.toLocaleString(),
         icon: iconMap.Star,
         change: 0,
-        changeLabel: 'vs 上周',
+        changeLabel: i18n.t('pages.dashboard_page.vs_3'),
         color: 'warning',
       },
       {
         id: 'total-folders',
-        title: '文件夹',
+        title: i18n.t('pages.dashboard_page.k7'),
         value: statsData.total_folders.toLocaleString(),
         icon: iconMap.HardDrive,
         change: 0,
-        changeLabel: 'vs 上周',
+        changeLabel: i18n.t('pages.dashboard_page.vs_4'),
         color: 'secondary',
       },
       {
         id: 'templates',
-        title: '文档模板',
+        title: i18n.t('pages.dashboard_page.k8'),
         value: statsData.total_templates.toLocaleString(),
         icon: iconMap.FileSpreadsheet,
         change: 0,
-        changeLabel: 'vs 上周',
+        changeLabel: i18n.t('pages.dashboard_page.vs_5'),
         color: 'error',
       },
     ];
@@ -120,27 +121,27 @@ export const DocumentDashboardPage: React.FC = () => {
   const charts: ChartCard[] = useMemo(() => {
     if (!statsData) return [];
     const pieData = [
-      { name: '已发布', value: statsData.published_documents },
-      { name: '草稿', value: statsData.draft_documents },
-      { name: '已归档', value: statsData.archived_documents },
+      { name: i18n.t('pages.dashboard_page.k9'), value: statsData.published_documents },
+      { name: i18n.t('pages.dashboard_page.k10'), value: statsData.draft_documents },
+      { name: i18n.t('pages.dashboard_page.k11'), value: statsData.archived_documents },
     ];
     const lineData = [
-      { name: '文档', value: statsData.total_documents },
-      { name: '模板', value: statsData.total_templates },
-      { name: '文件夹', value: statsData.total_folders },
-      { name: '本月新增', value: statsData.this_month_created },
-      { name: '本月更新', value: statsData.this_month_updated },
+      { name: i18n.t('pages.dashboard_page.k12'), value: statsData.total_documents },
+      { name: i18n.t('pages.dashboard_page.k13'), value: statsData.total_templates },
+      { name: i18n.t('pages.dashboard_page.k14'), value: statsData.total_folders },
+      { name: i18n.t('pages.dashboard_page.k15'), value: statsData.this_month_created },
+      { name: i18n.t('pages.dashboard_page.k16'), value: statsData.this_month_updated },
     ];
     return [
       {
         id: 'document-type-distribution',
-        title: '文档状态分布',
+        title: i18n.t('pages.dashboard_page.k17'),
         chart: <LazyChart type='pie' data={pieData} />,
         height: 300,
       },
       {
         id: 'upload-trend',
-        title: '文档统计',
+        title: i18n.t('pages.dashboard_page.k18'),
         chart: (
           <LazyChart type='line'
             data={lineData}
@@ -159,48 +160,48 @@ export const DocumentDashboardPage: React.FC = () => {
   const quickActions: QuickAction[] = [
     {
       id: 'upload-document',
-      label: '上传文档',
+      label: i18n.t('pages.dashboard_page.k19'),
       icon: <Upload size={18} />,
       onClick: () => {
         addNotification({
-          title: '提示',
-          message: '上传文档功能开发中',
+          title: i18n.t('pages.dashboard_page.k20'),
+          message: i18n.t('pages.dashboard_page.k21'),
           type: 'info',
         });
       },
     },
     {
       id: 'new-folder',
-      label: '新建文件夹',
+      label: i18n.t('pages.dashboard_page.k22'),
       icon: <FolderPlus size={18} />,
       onClick: () => {
         addNotification({
-          title: '提示',
-          message: '新建文件夹功能开发中',
+          title: i18n.t('pages.dashboard_page.k23'),
+          message: i18n.t('pages.dashboard_page.k24'),
           type: 'info',
         });
       },
     },
     {
       id: 'document-template',
-      label: '文档模板',
+      label: i18n.t('pages.dashboard_page.k25'),
       icon: <FileType size={18} />,
       onClick: () => {
         addNotification({
-          title: '提示',
-          message: '文档模板功能开发中',
+          title: i18n.t('pages.dashboard_page.k26'),
+          message: i18n.t('pages.dashboard_page.k27'),
           type: 'info',
         });
       },
     },
     {
       id: 'recycle-bin',
-      label: '回收站',
+      label: i18n.t('pages.dashboard_page.k28'),
       icon: <Trash2 size={18} />,
       onClick: () => {
         addNotification({
-          title: '提示',
-          message: '回收站功能开发中',
+          title: i18n.t('pages.dashboard_page.k29'),
+          message: i18n.t('pages.dashboard_page.k30'),
           type: 'info',
         });
       },
@@ -209,8 +210,8 @@ export const DocumentDashboardPage: React.FC = () => {
 
   return (
     <PageContainer
-      title='仪表盘'
-      subtitle={`${getGreeting()}，文档管理中心`}
+      title={i18n.t('pages.dashboard_page.k31')}
+      subtitle={`${getGreeting()}${i18n.t('pages.dashboard_page.k6')}`}
       headerProps={{
         pageIcon: <FileText style={{ width: 20, height: 20 }} />,
         pageGradient: `linear-gradient(135deg, ${ct.primary.main} 0%, ${ct.cyan.main} 100%)`,
@@ -224,9 +225,9 @@ export const DocumentDashboardPage: React.FC = () => {
         stats={stats}
         charts={charts}
         recentItems={recentItems}
-        recentTitle='最近文档'
+        recentTitle={i18n.t('pages.dashboard_page.k32')}
         quickActions={quickActions}
-        quickActionsTitle='快捷操作'
+        quickActionsTitle={i18n.t('pages.dashboard_page.k33')}
         loading={loading}
       />
     </PageContainer>

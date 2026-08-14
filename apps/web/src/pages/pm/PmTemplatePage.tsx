@@ -14,6 +14,7 @@ import { PageContainer } from '@/components/common';
 import { PM_PATHS } from '@/modules/pm/config';
 
 import { queryClient, QUERY_KEYS } from '@/lib/reactQuery';
+import i18n from '@/i18n';
 
 const PmTemplatePage: React.FC = () => {
   const navigate = useNavigate();
@@ -37,78 +38,78 @@ const PmTemplatePage: React.FC = () => {
     },
     onError: (err: unknown) => {
       logger.error('Failed to create project:', err);
-      addNotification({ title: '错误', message: '创建项目失败', type: 'error' });
+      addNotification({ title: i18n.t('pages.pm_template_page.k1'), message: i18n.t('pages.pm_template_page.k0'), type: 'error' });
     },
   });
 
   const templates: ProjectTemplate[] = [
     {
       id: '1',
-      name: '研发项目模板',
+      name: i18n.t('pages.pm_template_page.k2'),
       description:
-        '适用于软件研发、产品开发等技术类项目，包含需求分析、设计、开发、测试、上线等阶段',
+        i18n.t('pages.pm_template_page.k3'),
       project_type: 'research',
       icon: 'code',
       phases_count: 5,
       estimated_days: 90,
       default_budget: 500000,
-      tags: ['研发', '技术', '敏捷'],
+      tags: [i18n.t('pages.pm_template_page.k6'), i18n.t('pages.pm_template_page.k5'), i18n.t('pages.pm_template_page.k4')],
     },
     {
       id: '2',
-      name: '施工项目模板',
-      description: '适用于建筑施工、基础设施建设等工程项目，包含规划、设计、施工、验收等阶段',
+      name: i18n.t('pages.pm_template_page.k7'),
+      description: i18n.t('pages.pm_template_page.k8'),
       project_type: 'construction',
       icon: 'building',
       phases_count: 6,
       estimated_days: 180,
       default_budget: 2000000,
-      tags: ['施工', '建筑', '工程'],
+      tags: [i18n.t('pages.pm_template_page.k11'), i18n.t('pages.pm_template_page.k10'), i18n.t('pages.pm_template_page.k9')],
     },
     {
       id: '3',
-      name: '设计项目模板',
-      description: '适用于产品设计、UI设计、品牌设计等创意项目，包含调研、概念设计、方案确认等阶段',
+      name: i18n.t('pages.pm_template_page.k12'),
+      description: i18n.t('pages.pm_template_page.k13'),
       project_type: 'design',
       icon: 'palette',
       phases_count: 4,
       estimated_days: 45,
       default_budget: 100000,
-      tags: ['设计', '创意', '品牌'],
+      tags: [i18n.t('pages.pm_template_page.k16'), i18n.t('pages.pm_template_page.k15'), i18n.t('pages.pm_template_page.k14')],
     },
     {
       id: '4',
-      name: '市场推广模板',
-      description: '适用于市场活动、营销推广、品牌宣传等项目，包含策划、执行、监测、评估等阶段',
+      name: i18n.t('pages.pm_template_page.k17'),
+      description: i18n.t('pages.pm_template_page.k18'),
       project_type: 'service',
       icon: 'trending-up',
       phases_count: 4,
       estimated_days: 30,
       default_budget: 80000,
-      tags: ['市场', '营销', '推广'],
+      tags: [i18n.t('pages.pm_template_page.k21'), i18n.t('pages.pm_template_page.k20'), i18n.t('pages.pm_template_page.k19')],
     },
     {
       id: '5',
-      name: '生产项目模板',
-      description: '适用于产品生产、批量制造等项目，包含工艺设计、采购、生产、质检等阶段',
+      name: i18n.t('pages.pm_template_page.k22'),
+      description: i18n.t('pages.pm_template_page.k23'),
       project_type: 'production',
       icon: 'factory',
       phases_count: 5,
       estimated_days: 120,
       default_budget: 800000,
-      tags: ['生产', '制造', '工艺'],
+      tags: [i18n.t('pages.pm_template_page.k26'), i18n.t('pages.pm_template_page.k25'), i18n.t('pages.pm_template_page.k24')],
     },
     {
       id: '6',
-      name: '培训项目模板',
+      name: i18n.t('pages.pm_template_page.k27'),
       description:
-        '适用于员工培训、技能提升、知识普及等项目，包含需求分析、课程设计、实施评估等阶段',
+        i18n.t('pages.pm_template_page.k28'),
       project_type: 'service',
       icon: 'graduation-cap',
       phases_count: 4,
       estimated_days: 60,
       default_budget: 50000,
-      tags: ['培训', '教育', '学习'],
+      tags: [i18n.t('pages.pm_template_page.k31'), i18n.t('pages.pm_template_page.k30'), i18n.t('pages.pm_template_page.k29')],
     },
   ];
 
@@ -134,7 +135,7 @@ const PmTemplatePage: React.FC = () => {
       headerProps={{
         actions: [
           {
-            label: '新建项目',
+            label: i18n.t('pages.pm_template_page.k32'),
             icon: <Plus sx={{ width: 16, height: 16 }} />,
             onClick: () => navigate(PM_PATHS.projectCreate),
             variant: 'contained',
@@ -146,7 +147,7 @@ const PmTemplatePage: React.FC = () => {
         <CardContent sx={{ p: 2 }}>
           <TextField
             type='text'
-            placeholder='搜索模板名称、类型或标签...'
+            placeholder={i18n.t('pages.pm_template_page.k0')}
             value={searchTerm}
             onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSearchTerm(e.target.value)}
             sx={{ width: 400 }}
@@ -186,7 +187,7 @@ const PmTemplatePage: React.FC = () => {
       {filteredTemplates.length === 0 && (
         <Card>
           <CardContent sx={{ p: 6, textAlign: 'center' }}>
-            <Typography sx={{ color: 'text.secondary' }}>未找到匹配的模板</Typography>
+            <Typography sx={{ color: 'text.secondary' }}>{i18n.t('pages.pm_template_page.k33')}</Typography>
           </CardContent>
         </Card>
       )}

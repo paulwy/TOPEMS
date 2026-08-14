@@ -12,36 +12,37 @@ import React from 'react';
 import type { EntitySchema } from '@/schema';
 import { columnsFromFields } from '@/schema/schemaExtensions';
 import type { NestedTableConfig, WizardConfig } from '@/schema/schemaExtensions';
+import i18n from '@/i18n';
 
 // ============ 费用明细子表配置 ============
 
 const expenseItemFields: NestedTableConfig['fields'] = [
   {
     name: 'date',
-    label: '日期',
+    label: i18n.t('finance.expense_approval.k0'),
     type: 'date',
     listWidth: 120,
   },
   {
     name: 'category',
-    label: '类别',
+    label: i18n.t('finance.expense_approval.k1'),
     type: 'select',
     listWidth: 120,
     options: {
       type: 'static',
       options: [
-        { label: '交通费', value: 'transport' },
-        { label: '住宿费', value: 'accommodation' },
-        { label: '餐饮费', value: 'meal' },
-        { label: '办公费', value: 'office' },
-        { label: '通讯费', value: 'communication' },
-        { label: '其他', value: 'other' },
+        { label: i18n.t('finance.expense_approval.k2'), value: 'transport' },
+        { label: i18n.t('finance.expense_approval.k3'), value: 'accommodation' },
+        { label: i18n.t('finance.expense_approval.k4'), value: 'meal' },
+        { label: i18n.t('finance.expense_approval.k5'), value: 'office' },
+        { label: i18n.t('finance.expense_approval.k6'), value: 'communication' },
+        { label: i18n.t('finance.expense_approval.k7'), value: 'other' },
       ],
     },
   },
   {
     name: 'amount',
-    label: '金额',
+    label: i18n.t('finance.expense_approval.k8'),
     type: 'number',
     required: true,
     defaultValue: 0,
@@ -49,13 +50,13 @@ const expenseItemFields: NestedTableConfig['fields'] = [
   },
   {
     name: 'receipt_no',
-    label: '票据编号',
+    label: i18n.t('finance.expense_approval.k9'),
     type: 'text',
     listWidth: 140,
   },
   {
     name: 'description',
-    label: '说明',
+    label: i18n.t('finance.expense_approval.k10'),
     type: 'text',
     listWidth: 180,
   },
@@ -63,7 +64,7 @@ const expenseItemFields: NestedTableConfig['fields'] = [
 
 const expenseItemsTable: NestedTableConfig = {
   field: 'items',
-  title: '费用明细',
+  title: i18n.t('finance.expense_approval.k11'),
   columns: columnsFromFields(expenseItemFields, {
     amount: { align: 'right' },
   }),
@@ -72,7 +73,7 @@ const expenseItemsTable: NestedTableConfig = {
   allowEdit: true,
   allowDelete: true,
   allowDuplicate: true,
-  addButtonText: '添加明细',
+  addButtonText: i18n.t('finance.expense_approval.k12'),
   rowKeyField: 'id',
   minRows: 0,
   maxRows: 100,
@@ -85,8 +86,8 @@ const expenseApprovalWizard: WizardConfig = {
   steps: [
     {
       key: 'expense_info',
-      title: '费用填写',
-      description: '填写费用基本信息和费用明细',
+      title: i18n.t('finance.expense_approval.k13'),
+      description: i18n.t('finance.expense_approval.k14'),
       fields: [
         'expense_no',
         'employee_id',
@@ -98,42 +99,42 @@ const expenseApprovalWizard: WizardConfig = {
         'description',
         'items',
       ],
-      groupTitle: '基本信息与费用明细',
+      groupTitle: i18n.t('finance.expense_approval.k15'),
       validate: (values) => {
-        if (!values.expense_no) return '请填写费用单号';
-        if (!values.employee_id) return '请填写员工ID';
-        if (!values.expense_date) return '请选择费用日期';
+        if (!values.expense_no) return i18n.t('finance.expense_approval.k16');
+        if (!values.employee_id) return i18n.t('finance.expense_approval.id_17');
+        if (!values.expense_date) return i18n.t('finance.expense_approval.k18');
         return null;
       },
     },
     {
       key: 'approval',
-      title: '审批流程',
-      description: '选择审批人并填写附加信息',
+      title: i18n.t('finance.expense_approval.k19'),
+      description: i18n.t('finance.expense_approval.k20'),
       fields: ['approver_id', 'approver_name', 'approval_note'],
-      groupTitle: '审批人信息',
+      groupTitle: i18n.t('finance.expense_approval.k21'),
       validate: (values) => {
-        if (!values.approver_id) return '请选择审批人';
+        if (!values.approver_id) return i18n.t('finance.expense_approval.k22');
         return null;
       },
     },
     {
       key: 'confirm',
-      title: '确认提交',
-      description: '确认费用汇总信息并提交审批',
+      title: i18n.t('finance.expense_approval.k23'),
+      description: i18n.t('finance.expense_approval.k24'),
       fields: ['status'],
-      groupTitle: '确认费用汇总',
+      groupTitle: i18n.t('finance.expense_approval.k25'),
       isFinalStep: true,
     },
   ],
-  title: '费用审批流程',
+  title: i18n.t('finance.expense_approval.k26'),
   navigationPosition: 'top',
   showProgress: true,
   allowBack: true,
   showSummaryOnComplete: true,
-  finishButtonText: '提交审批',
-  nextButtonText: '下一步',
-  prevButtonText: '上一步',
+  finishButtonText: i18n.t('finance.expense_approval.k27'),
+  nextButtonText: i18n.t('finance.expense_approval.k28'),
+  prevButtonText: i18n.t('finance.expense_approval.k29'),
 };
 
 // ============ 主 Schema ============
@@ -143,8 +144,8 @@ export const expenseApprovalSchema: EntitySchema & {
   wizard: WizardConfig;
 } = {
   entity: 'financeExpenseApproval',
-  title: '费用审批',
-  description: '员工费用报销审批流程，支持多步骤向导填写和明细录入',
+  title: i18n.t('finance.expense_approval.k30'),
+  description: i18n.t('finance.expense_approval.k31'),
 
   api: {
     module: 'finance',
@@ -154,7 +155,7 @@ export const expenseApprovalSchema: EntitySchema & {
   fields: [
     {
       name: 'expense_no',
-      label: '费用单号',
+      label: i18n.t('finance.expense_approval.k32'),
       type: 'text',
       required: true,
       readonlyOnEdit: true,
@@ -163,49 +164,49 @@ export const expenseApprovalSchema: EntitySchema & {
     },
     {
       name: 'employee_id',
-      label: '员工ID',
+      label: i18n.t('finance.expense_approval.id_33'),
       type: 'text',
       required: true,
       listWidth: 120,
     },
     {
       name: 'employee_name',
-      label: '员工姓名',
+      label: i18n.t('finance.expense_approval.k34'),
       type: 'text',
       listWidth: 120,
     },
     {
       name: 'department',
-      label: '部门',
+      label: i18n.t('finance.expense_approval.k35'),
       type: 'text',
       listWidth: 140,
     },
     {
       name: 'expense_date',
-      label: '费用日期',
+      label: i18n.t('finance.expense_approval.k36'),
       type: 'date',
       required: true,
       listWidth: 120,
     },
     {
       name: 'expense_type',
-      label: '费用类型',
+      label: i18n.t('finance.expense_approval.k37'),
       type: 'select',
       defaultValue: 'travel',
       listWidth: 120,
       options: {
         type: 'static',
         options: [
-          { label: '差旅费', value: 'travel' },
-          { label: '招待费', value: 'entertainment' },
-          { label: '办公费', value: 'office' },
-          { label: '其他', value: 'other' },
+          { label: i18n.t('finance.expense_approval.k38'), value: 'travel' },
+          { label: i18n.t('finance.expense_approval.k39'), value: 'entertainment' },
+          { label: i18n.t('finance.expense_approval.k40'), value: 'office' },
+          { label: i18n.t('finance.expense_approval.k41'), value: 'other' },
         ],
       },
     },
     {
       name: 'total_amount',
-      label: '合计金额',
+      label: i18n.t('finance.expense_approval.k42'),
       type: 'number',
       readonly: true,
       defaultValue: 0,
@@ -222,24 +223,24 @@ export const expenseApprovalSchema: EntitySchema & {
     },
     {
       name: 'status',
-      label: '状态',
+      label: i18n.t('finance.expense_approval.k43'),
       type: 'select',
       defaultValue: 'draft',
       listWidth: 110,
       options: {
         type: 'static',
         options: [
-          { label: '草稿', value: 'draft' },
-          { label: '待审批', value: 'pending_approval' },
-          { label: '已批准', value: 'approved' },
-          { label: '已驳回', value: 'rejected' },
-          { label: '已报销', value: 'reimbursed' },
+          { label: i18n.t('finance.expense_approval.k44'), value: 'draft' },
+          { label: i18n.t('finance.expense_approval.k45'), value: 'pending_approval' },
+          { label: i18n.t('finance.expense_approval.k46'), value: 'approved' },
+          { label: i18n.t('finance.expense_approval.k47'), value: 'rejected' },
+          { label: i18n.t('finance.expense_approval.k48'), value: 'reimbursed' },
         ],
       },
     },
     {
       name: 'description',
-      label: '说明',
+      label: i18n.t('finance.expense_approval.k49'),
       type: 'textarea',
       showInList: false,
     },
@@ -247,19 +248,19 @@ export const expenseApprovalSchema: EntitySchema & {
     // ── 审批步骤字段 ──
     {
       name: 'approver_id',
-      label: '审批人ID',
+      label: i18n.t('finance.expense_approval.id_50'),
       type: 'text',
       showInList: false,
     },
     {
       name: 'approver_name',
-      label: '审批人姓名',
+      label: i18n.t('finance.expense_approval.k51'),
       type: 'text',
       showInList: false,
     },
     {
       name: 'approval_note',
-      label: '审批备注',
+      label: i18n.t('finance.expense_approval.k52'),
       type: 'textarea',
       showInList: false,
     },
@@ -287,38 +288,38 @@ export const expenseApprovalSchema: EntitySchema & {
         reimbursed: 'primary',
       },
       labelMap: {
-        draft: '草稿',
-        pending_approval: '待审批',
-        approved: '已批准',
-        rejected: '已驳回',
-        reimbursed: '已报销',
+        draft: i18n.t('finance.expense_approval.k53'),
+        pending_approval: i18n.t('finance.expense_approval.k54'),
+        approved: i18n.t('finance.expense_approval.k55'),
+        rejected: i18n.t('finance.expense_approval.k56'),
+        reimbursed: i18n.t('finance.expense_approval.k57'),
       },
     },
     filters: [
       {
         id: 'expense_type',
-        label: '费用类型',
+        label: i18n.t('finance.expense_approval.k58'),
         type: 'select',
         options: [
-          { label: '全部类型', value: 'all' },
-          { label: '差旅费', value: 'travel' },
-          { label: '招待费', value: 'entertainment' },
-          { label: '办公费', value: 'office' },
-          { label: '其他', value: 'other' },
+          { label: i18n.t('finance.expense_approval.k59'), value: 'all' },
+          { label: i18n.t('finance.expense_approval.k60'), value: 'travel' },
+          { label: i18n.t('finance.expense_approval.k61'), value: 'entertainment' },
+          { label: i18n.t('finance.expense_approval.k62'), value: 'office' },
+          { label: i18n.t('finance.expense_approval.k63'), value: 'other' },
         ],
         defaultValue: 'all',
       },
       {
         id: 'status',
-        label: '状态',
+        label: i18n.t('finance.expense_approval.k64'),
         type: 'select',
         options: [
-          { label: '全部状态', value: 'all' },
-          { label: '草稿', value: 'draft' },
-          { label: '待审批', value: 'pending_approval' },
-          { label: '已批准', value: 'approved' },
-          { label: '已驳回', value: 'rejected' },
-          { label: '已报销', value: 'reimbursed' },
+          { label: i18n.t('finance.expense_approval.k65'), value: 'all' },
+          { label: i18n.t('finance.expense_approval.k66'), value: 'draft' },
+          { label: i18n.t('finance.expense_approval.k67'), value: 'pending_approval' },
+          { label: i18n.t('finance.expense_approval.k68'), value: 'approved' },
+          { label: i18n.t('finance.expense_approval.k69'), value: 'rejected' },
+          { label: i18n.t('finance.expense_approval.k70'), value: 'reimbursed' },
         ],
         defaultValue: 'all',
       },
@@ -327,7 +328,7 @@ export const expenseApprovalSchema: EntitySchema & {
 
   formSections: [
     {
-      title: '基本信息',
+      title: i18n.t('finance.expense_approval.k71'),
       fields: [
         'expense_no',
         'employee_id',
@@ -338,15 +339,15 @@ export const expenseApprovalSchema: EntitySchema & {
       ],
     },
     {
-      title: '费用汇总',
+      title: i18n.t('finance.expense_approval.k72'),
       fields: ['total_amount', 'description'],
     },
   ],
 
   formColCount: 2,
-  createTitle: '发起费用审批',
-  editTitle: '编辑费用审批',
-  detailTitle: '费用审批详情',
+  createTitle: i18n.t('finance.expense_approval.k73'),
+  editTitle: i18n.t('finance.expense_approval.k74'),
+  detailTitle: i18n.t('finance.expense_approval.k75'),
 
   actions: ['create', 'edit', 'detail', 'delete'],
 

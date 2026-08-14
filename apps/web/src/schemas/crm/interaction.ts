@@ -1,9 +1,10 @@
 import type { EntitySchema } from '@/schema';
+import i18n from '@/i18n';
 
 export const interactionSchema: EntitySchema = {
   entity: 'interaction',
-  title: '交互记录管理',
-  description: '管理客户交互记录，包括电话、邮件、会议、拜访等',
+  title: i18n.t('shared.interaction.k0'),
+  description: i18n.t('shared.interaction.k1'),
 
   api: {
     module: 'crm',
@@ -13,70 +14,70 @@ export const interactionSchema: EntitySchema = {
   fields: [
     {
       name: 'customer_id',
-      label: '客户ID',
+      label: i18n.t('shared.interaction.id_2'),
       type: 'text',
       listWidth: 120,
     },
     {
       name: 'contact_id',
-      label: '联系人ID',
+      label: i18n.t('shared.interaction.id_3'),
       type: 'text',
       listWidth: 120,
     },
     {
       name: 'type',
-      label: '类型',
+      label: i18n.t('shared.interaction.k4'),
       type: 'select',
       required: true,
       defaultValue: 'call',
       options: {
         type: 'static',
         options: [
-          { value: 'call', label: '电话' },
-          { value: 'email', label: '邮件' },
-          { value: 'meeting', label: '会议' },
-          { value: 'visit', label: '拜访' },
-          { value: 'other', label: '其他' },
+          { value: 'call', label: i18n.t('shared.interaction.k5') },
+          { value: 'email', label: i18n.t('shared.interaction.k6') },
+          { value: 'meeting', label: i18n.t('shared.interaction.k7') },
+          { value: 'visit', label: i18n.t('shared.interaction.k8') },
+          { value: 'other', label: i18n.t('shared.interaction.k9') },
         ],
       },
       listWidth: 100,
     },
     {
       name: 'subject',
-      label: '主题',
+      label: i18n.t('shared.interaction.k10'),
       type: 'text',
       listWidth: 200,
       validation: [{ type: 'maxLength', value: 255 }],
     },
     {
       name: 'content',
-      label: '内容',
+      label: i18n.t('shared.interaction.k11'),
       type: 'textarea',
       showInList: false,
     },
     {
       name: 'scheduled_at',
-      label: '计划时间',
+      label: i18n.t('shared.interaction.k12'),
       type: 'datetime',
       listWidth: 160,
     },
     {
       name: 'completed_at',
-      label: '完成时间',
+      label: i18n.t('shared.interaction.k13'),
       type: 'datetime',
       showInList: false,
     },
     {
       name: 'status',
-      label: '状态',
+      label: i18n.t('shared.interaction.k14'),
       type: 'select',
       defaultValue: 'scheduled',
       options: {
         type: 'static',
         options: [
-          { value: 'scheduled', label: '已计划' },
-          { value: 'completed', label: '已完成' },
-          { value: 'cancelled', label: '已取消' },
+          { value: 'scheduled', label: i18n.t('shared.interaction.k15') },
+          { value: 'completed', label: i18n.t('shared.interaction.k16') },
+          { value: 'cancelled', label: i18n.t('shared.interaction.k17') },
         ],
       },
       listWidth: 100,
@@ -84,7 +85,7 @@ export const interactionSchema: EntitySchema = {
     },
     {
       name: 'created_at',
-      label: '创建时间',
+      label: i18n.t('shared.interaction.k18'),
       type: 'datetime',
       readonlyOnEdit: true,
       showInForm: false,
@@ -104,34 +105,34 @@ export const interactionSchema: EntitySchema = {
         cancelled: 'error',
       },
       labelMap: {
-        scheduled: '已计划',
-        completed: '已完成',
-        cancelled: '已取消',
+        scheduled: i18n.t('shared.interaction.k19'),
+        completed: i18n.t('shared.interaction.k20'),
+        cancelled: i18n.t('shared.interaction.k21'),
       },
     },
     filters: [
       {
         id: 'type',
-        label: '类型',
+        label: i18n.t('shared.interaction.k22'),
         type: 'select',
         options: [
-          { label: '全部', value: 'all' },
-          { label: '电话', value: 'call' },
-          { label: '邮件', value: 'email' },
-          { label: '会议', value: 'meeting' },
-          { label: '拜访', value: 'visit' },
-          { label: '其他', value: 'other' },
+          { label: i18n.t('shared.interaction.k23'), value: 'all' },
+          { label: i18n.t('shared.interaction.k24'), value: 'call' },
+          { label: i18n.t('shared.interaction.k25'), value: 'email' },
+          { label: i18n.t('shared.interaction.k26'), value: 'meeting' },
+          { label: i18n.t('shared.interaction.k27'), value: 'visit' },
+          { label: i18n.t('shared.interaction.k28'), value: 'other' },
         ],
       },
       {
         id: 'status',
-        label: '状态',
+        label: i18n.t('shared.interaction.k29'),
         type: 'select',
         options: [
-          { label: '全部', value: 'all' },
-          { label: '已计划', value: 'scheduled' },
-          { label: '已完成', value: 'completed' },
-          { label: '已取消', value: 'cancelled' },
+          { label: i18n.t('shared.interaction.k30'), value: 'all' },
+          { label: i18n.t('shared.interaction.k31'), value: 'scheduled' },
+          { label: i18n.t('shared.interaction.k32'), value: 'completed' },
+          { label: i18n.t('shared.interaction.k33'), value: 'cancelled' },
         ],
       },
     ],
@@ -141,21 +142,21 @@ export const interactionSchema: EntitySchema = {
 
   formSections: [
     {
-      title: '关联信息',
+      title: i18n.t('shared.interaction.k34'),
       fields: ['customer_id', 'contact_id', 'type'],
     },
     {
-      title: '交互详情',
+      title: i18n.t('shared.interaction.k35'),
       fields: ['subject', 'content', 'scheduled_at'],
     },
     {
-      title: '状态',
+      title: i18n.t('shared.interaction.k36'),
       fields: ['status'],
     },
   ],
 
   formColCount: 2,
-  createTitle: '新增交互记录',
-  editTitle: '编辑交互记录',
-  detailTitle: '交互记录详情',
+  createTitle: i18n.t('shared.interaction.k37'),
+  editTitle: i18n.t('shared.interaction.k38'),
+  detailTitle: i18n.t('shared.interaction.k39'),
 };

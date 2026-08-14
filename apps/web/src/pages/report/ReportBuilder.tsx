@@ -11,6 +11,7 @@ import {
   CheckCircle,
   AlertCircle,
 } from 'lucide-react';
+import i18n from '@/i18n';
 import { Box, Typography, TextField, Checkbox, Button } from '@mui/material';
 import { PageContainer } from '@/components/common';
 import type { ReportTypeInfo, ReportType, ExportFormat, CreateReportRequest } from '@/api/report';
@@ -24,33 +25,33 @@ interface ReportBuilderProps {
 }
 
 const DEFAULT_REPORT_TYPES: ReportTypeInfo[] = [
-  { type: 'rs_project_progress', name: '研发项目进度报表', module: 'RS' },
-  { type: 'rs_experiment_record', name: '试验记录报表', module: 'RS' },
-  { type: 'lims_inspection_stats', name: '实验室检验统计', module: 'LIMS' },
-  { type: 'lims_sample_summary', name: '样品汇总报表', module: 'LIMS' },
-  { type: 'qms_quality_analysis', name: '质量分析报表', module: 'QMS' },
-  { type: 'qms_defect_stats', name: '缺陷统计报表', module: 'QMS' },
-  { type: 'ehs_safety_check', name: '安全检查报表', module: 'EHS' },
-  { type: 'ehs_risk_assessment', name: '风险评估报表', module: 'EHS' },
-  { type: 'srm_supplier_eval', name: '供应商评估报表', module: 'SRM' },
-  { type: 'srm_purchase_stats', name: '采购统计报表', module: 'SRM' },
-  { type: 'pdm_production_stats', name: '生产统计报表', module: 'PDM' },
-  { type: 'pdm_process_summary', name: '工艺汇总报表', module: 'PDM' },
+  { type: 'rs_project_progress', name: i18n.t('pages.report_builder.k0'), module: 'RS' },
+  { type: 'rs_experiment_record', name: i18n.t('pages.report_builder.k1'), module: 'RS' },
+  { type: 'lims_inspection_stats', name: i18n.t('pages.report_builder.k2'), module: 'LIMS' },
+  { type: 'lims_sample_summary', name: i18n.t('pages.report_builder.k3'), module: 'LIMS' },
+  { type: 'qms_quality_analysis', name: i18n.t('pages.report_builder.k4'), module: 'QMS' },
+  { type: 'qms_defect_stats', name: i18n.t('pages.report_builder.k5'), module: 'QMS' },
+  { type: 'ehs_safety_check', name: i18n.t('pages.report_builder.k6'), module: 'EHS' },
+  { type: 'ehs_risk_assessment', name: i18n.t('pages.report_builder.k7'), module: 'EHS' },
+  { type: 'srm_supplier_eval', name: i18n.t('pages.report_builder.k8'), module: 'SRM' },
+  { type: 'srm_purchase_stats', name: i18n.t('pages.report_builder.k9'), module: 'SRM' },
+  { type: 'pdm_production_stats', name: i18n.t('pages.report_builder.k10'), module: 'PDM' },
+  { type: 'pdm_process_summary', name: i18n.t('pages.report_builder.k11'), module: 'PDM' },
 ];
 
 const REPORT_COLUMNS: Record<ReportType, string[]> = {
-  rs_project_progress: ['项目名称', '负责人', '开始时间', '结束时间', '进度', '状态'],
-  rs_experiment_record: ['实验编号', '实验名称', '实验类型', '负责人', '开始时间', '结果', '状态'],
-  lims_inspection_stats: ['样本编号', '样本名称', '检测项目', '检测结果', '检测时间', '检测人'],
-  lims_sample_summary: ['样本编号', '样本类型', '接收时间', '检测数量', '合格数量', '合格率'],
-  qms_quality_analysis: ['问题编号', '问题类型', '严重程度', '发生时间', '责任人', '状态'],
-  qms_defect_stats: ['产品名称', '缺陷类型', '缺陷数量', '合格率', '检测批次', '负责人'],
-  ehs_safety_check: ['检查项', '检查日期', '检查人', '检查结果', '整改要求', '完成状态'],
-  ehs_risk_assessment: ['风险点', '风险等级', '风险类型', '管控措施', '责任人', '评估日期'],
-  srm_supplier_eval: ['供应商名称', '评估项目', '评估分数', '评估日期', '评估人', '等级'],
-  srm_purchase_stats: ['订单编号', '供应商', '采购物品', '采购数量', '订单金额', '订单状态'],
-  pdm_production_stats: ['产品名称', '批次号', '生产数量', '合格数量', '生产日期', '生产人'],
-  pdm_process_summary: ['工序名称', '工序编号', '标准时间', '实际时间', '效率', '负责人'],
+  rs_project_progress: [i18n.t('pages.report_builder.k17'), i18n.t('pages.report_builder.k16'), i18n.t('pages.report_builder.k15'), i18n.t('pages.report_builder.k14'), i18n.t('pages.report_builder.k13'), i18n.t('pages.report_builder.k12')],
+  rs_experiment_record: [i18n.t('pages.report_builder.k24'), i18n.t('pages.report_builder.k23'), i18n.t('pages.report_builder.k22'), i18n.t('pages.report_builder.k21'), i18n.t('pages.report_builder.k20'), i18n.t('pages.report_builder.k19'), i18n.t('pages.report_builder.k18')],
+  lims_inspection_stats: [i18n.t('pages.report_builder.k30'), i18n.t('pages.report_builder.k29'), i18n.t('pages.report_builder.k28'), i18n.t('pages.report_builder.k27'), i18n.t('pages.report_builder.k26'), i18n.t('pages.report_builder.k25')],
+  lims_sample_summary: [i18n.t('pages.report_builder.k36'), i18n.t('pages.report_builder.k35'), i18n.t('pages.report_builder.k34'), i18n.t('pages.report_builder.k33'), i18n.t('pages.report_builder.k32'), i18n.t('pages.report_builder.k31')],
+  qms_quality_analysis: [i18n.t('pages.report_builder.k42'), i18n.t('pages.report_builder.k41'), i18n.t('pages.report_builder.k40'), i18n.t('pages.report_builder.k39'), i18n.t('pages.report_builder.k38'), i18n.t('pages.report_builder.k37')],
+  qms_defect_stats: [i18n.t('pages.report_builder.k48'), i18n.t('pages.report_builder.k47'), i18n.t('pages.report_builder.k46'), i18n.t('pages.report_builder.k45'), i18n.t('pages.report_builder.k44'), i18n.t('pages.report_builder.k43')],
+  ehs_safety_check: [i18n.t('pages.report_builder.k54'), i18n.t('pages.report_builder.k53'), i18n.t('pages.report_builder.k52'), i18n.t('pages.report_builder.k51'), i18n.t('pages.report_builder.k50'), i18n.t('pages.report_builder.k49')],
+  ehs_risk_assessment: [i18n.t('pages.report_builder.k60'), i18n.t('pages.report_builder.k59'), i18n.t('pages.report_builder.k58'), i18n.t('pages.report_builder.k57'), i18n.t('pages.report_builder.k56'), i18n.t('pages.report_builder.k55')],
+  srm_supplier_eval: [i18n.t('pages.report_builder.k66'), i18n.t('pages.report_builder.k65'), i18n.t('pages.report_builder.k64'), i18n.t('pages.report_builder.k63'), i18n.t('pages.report_builder.k62'), i18n.t('pages.report_builder.k61')],
+  srm_purchase_stats: [i18n.t('pages.report_builder.k72'), i18n.t('pages.report_builder.k71'), i18n.t('pages.report_builder.k70'), i18n.t('pages.report_builder.k69'), i18n.t('pages.report_builder.k68'), i18n.t('pages.report_builder.k67')],
+  pdm_production_stats: [i18n.t('pages.report_builder.k78'), i18n.t('pages.report_builder.k77'), i18n.t('pages.report_builder.k76'), i18n.t('pages.report_builder.k75'), i18n.t('pages.report_builder.k74'), i18n.t('pages.report_builder.k73')],
+  pdm_process_summary: [i18n.t('pages.report_builder.k84'), i18n.t('pages.report_builder.k83'), i18n.t('pages.report_builder.k82'), i18n.t('pages.report_builder.k81'), i18n.t('pages.report_builder.k80'), i18n.t('pages.report_builder.k79')],
 };
 
 const ReportBuilder: React.FC<ReportBuilderProps> = ({
@@ -106,19 +107,19 @@ const ReportBuilder: React.FC<ReportBuilderProps> = ({
     const newErrors: Record<string, string> = {};
 
     if (!formData.title.trim()) {
-      newErrors.title = '请输入报表标题';
+      newErrors.title = i18n.t('pages.report_builder.k85');
     }
 
     if (!formData.reportType) {
-      newErrors.reportType = '请选择报表类型';
+      newErrors.reportType = i18n.t('pages.report_builder.k86');
     }
 
     if (formData.selectedColumns.length === 0) {
-      newErrors.selectedColumns = '请至少选择一列';
+      newErrors.selectedColumns = i18n.t('pages.report_builder.k87');
     }
 
     if (formData.startDate && formData.endDate && formData.startDate > formData.endDate) {
-      newErrors.dateRange = '开始日期不能晚于结束日期';
+      newErrors.dateRange = i18n.t('pages.report_builder.k88');
     }
 
     setErrors(newErrors);
@@ -145,11 +146,11 @@ const ReportBuilder: React.FC<ReportBuilderProps> = ({
         },
       };
 
-      logger.info('生成报表:', request);
+      logger.info(i18n.t('pages.report_builder.k0'), request);
       onSuccess();
     } catch (err: unknown) {
-      logger.error('生成报表失败:', err);
-      setErrors({ submit: '生成报表失败，请重试' });
+      logger.error(i18n.t('pages.report_builder.k1'), err);
+      setErrors({ submit: i18n.t('pages.report_builder.k89') });
     } finally {
       setSubmitting(false);
     }
@@ -180,7 +181,7 @@ const ReportBuilder: React.FC<ReportBuilderProps> = ({
             variant='h5'
             sx={{ fontWeight: 700 }}
           >
-            报表构建器
+            {i18n.t('pages.report_builder.k0')}
           </Typography>
         </Box>
         {isModal && (
@@ -199,7 +200,7 @@ const ReportBuilder: React.FC<ReportBuilderProps> = ({
         )}
       </Box>
       <Typography sx={{ color: 'primary.light', fontSize: 14, mt: 1 }}>
-        创建自定义报表，灵活配置字段和时间范围
+        {i18n.t('pages.report_builder.k1')}
       </Typography>
     </Box>
   );
@@ -222,7 +223,7 @@ const ReportBuilder: React.FC<ReportBuilderProps> = ({
             variant='h6'
             sx={{ fontWeight: 600 }}
           >
-            基本信息
+            {i18n.t('pages.report_builder.k2')}
           </Typography>
         </Box>
 
@@ -247,7 +248,7 @@ const ReportBuilder: React.FC<ReportBuilderProps> = ({
               setFormData((prev) => ({ ...prev, title: e.target.value }));
               setErrors((prev) => ({ ...prev, title: '' }));
             }}
-            placeholder='例如：2024年Q1项目进度报表'
+            placeholder={i18n.t('pages.report_builder.2024q1_90')}
             error={!!errors.title}
             sx={{
               '& .MuiOutlinedInput-root': {
@@ -277,7 +278,7 @@ const ReportBuilder: React.FC<ReportBuilderProps> = ({
             variant='body2'
             sx={{ fontWeight: 500, mb: 1, color: 'grey.700' }}
           >
-            报表描述
+            {i18n.t('pages.report_builder.k3')}
           </Typography>
           <TextField
             fullWidth
@@ -291,7 +292,7 @@ const ReportBuilder: React.FC<ReportBuilderProps> = ({
                 description: e.target.value,
               }))
             }
-            placeholder='可选的报表描述信息'
+            placeholder={i18n.t('pages.report_builder.k91')}
             sx={{ '& .MuiOutlinedInput-root': { borderRadius: 3 } }}
           />
         </Box>
@@ -373,7 +374,7 @@ const ReportBuilder: React.FC<ReportBuilderProps> = ({
             variant='h6'
             sx={{ fontWeight: 600 }}
           >
-            时间范围
+            {i18n.t('pages.report_builder.k4')}
           </Typography>
         </Box>
 
@@ -383,7 +384,7 @@ const ReportBuilder: React.FC<ReportBuilderProps> = ({
               variant='body2'
               sx={{ fontWeight: 500, mb: 1, color: 'grey.700' }}
             >
-              开始日期
+              {i18n.t('pages.report_builder.k5')}
             </Typography>
             <TextField
               type='date'
@@ -404,7 +405,7 @@ const ReportBuilder: React.FC<ReportBuilderProps> = ({
               variant='body2'
               sx={{ fontWeight: 500, mb: 1, color: 'grey.700' }}
             >
-              结束日期
+              {i18n.t('pages.report_builder.k6')}
             </Typography>
             <TextField
               type='date'
@@ -469,7 +470,7 @@ const ReportBuilder: React.FC<ReportBuilderProps> = ({
                   '&:hover': { bgcolor: 'primary.light' },
                 }}
               >
-                全选
+                {i18n.t('pages.report_builder.k7')}
               </Button>
               <Typography sx={{ color: 'grey.400', lineHeight: '32px' }}>|</Typography>
               <Button
@@ -480,7 +481,7 @@ const ReportBuilder: React.FC<ReportBuilderProps> = ({
                   '&:hover': { bgcolor: 'grey.100' },
                 }}
               >
-                取消全选
+                {i18n.t('pages.report_builder.k8')}
               </Button>
             </Box>
           </Box>
@@ -559,7 +560,7 @@ const ReportBuilder: React.FC<ReportBuilderProps> = ({
             variant='h6'
             sx={{ fontWeight: 600 }}
           >
-            导出格式
+            {i18n.t('pages.report_builder.k9')}
           </Typography>
         </Box>
 
@@ -596,9 +597,9 @@ const ReportBuilder: React.FC<ReportBuilderProps> = ({
                 variant='caption'
                 sx={{ color: 'grey.500', mt: 0.5 }}
               >
-                {format === 'excel' && '.xlsx 文件'}
-                {format === 'pdf' && '.pdf 文件'}
-                {format === 'csv' && '.csv 文件'}
+                {format === 'excel' && i18n.t('pages.report_builder.xlsx_2')}
+                {format === 'pdf' && i18n.t('pages.report_builder.pdf_3')}
+                {format === 'csv' && i18n.t('pages.report_builder.csv_4')}
               </Typography>
             </Box>
           ))}
@@ -660,7 +661,7 @@ const ReportBuilder: React.FC<ReportBuilderProps> = ({
                 '&:hover': { bgcolor: 'grey.100' },
               }}
             >
-              取消
+              {i18n.t('pages.report_builder.k10')}
             </Button>
           )}
           <Button
@@ -682,7 +683,7 @@ const ReportBuilder: React.FC<ReportBuilderProps> = ({
             }
             sx={{ borderRadius: 3 }}
           >
-            {submitting ? '生成中...' : '生成报表'}
+            {submitting ? i18n.t('pages.report_builder.k5') : i18n.t('pages.report_builder.k92')}
           </Button>
         </Box>
       </Box>

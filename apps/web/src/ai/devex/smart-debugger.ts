@@ -1,3 +1,4 @@
+import i18n from '@/i18n';
 export interface DebugSession {
   id: string;
   file: string;
@@ -157,19 +158,19 @@ export class SmartDebugger {
       if (typeof value === 'object' && value !== null) {
         if (Array.isArray(value)) {
           immutable = false;
-          issues.push(`数组类型字段 "${key}" 可能导致不必要的重渲染`);
+          issues.push(`${i18n.t('ai.smart-debugger.k0')}${key}${i18n.t('ai.smart-debugger.k1')}`);
         } else {
           immutable = false;
-          issues.push(`对象类型字段 "${key}" 引用不稳定`);
+          issues.push(`${i18n.t('ai.smart-debugger.k2')}${key}${i18n.t('ai.smart-debugger.k3')}`);
         }
       }
       if (value === undefined) {
-        issues.push(`字段 "${key}" 为 undefined，可能导致条件渲染问题`);
+        issues.push(`${i18n.t('ai.smart-debugger.k4')}${key}${i18n.t('ai.smart-debugger.k5')}`);
       }
     }
 
     if (stateSize > 10000) {
-      issues.push('状态对象过大，考虑拆分或使用 selector');
+      issues.push(i18n.t('ai.smart-debugger.k0'));
     }
 
     return {
@@ -192,8 +193,8 @@ export class SmartDebugger {
         id: generateId(),
         type: 'bug',
         severity: 'high',
-        message: '调试会话处于暂停状态',
-        suggestion: '检查断点条件是否正确，或使用 step-over 继续执行',
+        message: i18n.t('ai.smart-debugger.k1'),
+        suggestion: i18n.t('ai.smart-debugger.k2'),
         location: { file: session.file, line: session.line },
       });
     }
@@ -204,8 +205,8 @@ export class SmartDebugger {
         id: generateId(),
         type: 'performance',
         severity: 'medium',
-        message: `变量数量过多 (${variableCount})`,
-        suggestion: '减少组件中变量数量，使用解构或 useMemo 优化',
+        message: `${i18n.t('ai.smart-debugger.k6')}${variableCount})`,
+        suggestion: i18n.t('ai.smart-debugger.k3'),
         location: { file: session.file, line: session.line },
       });
     }
@@ -216,8 +217,8 @@ export class SmartDebugger {
         id: generateId(),
         type: 'performance',
         severity: 'high',
-        message: `调用栈过深 (${callStackDepth} 层)`,
-        suggestion: '可能存在递归调用或无限循环，检查终止条件',
+        message: `${i18n.t('ai.smart-debugger.k7')}${callStackDepth}${i18n.t('ai.smart-debugger.k8')}`,
+        suggestion: i18n.t('ai.smart-debugger.k4'),
         location: { file: session.file, line: session.line },
       });
     }
@@ -229,8 +230,8 @@ export class SmartDebugger {
         id: generateId(),
         type: 'logic',
         severity: 'medium',
-        message: '存在 undefined 值',
-        suggestion: '检查数据获取是否完成，添加空值检查或默认值',
+        message: i18n.t('ai.smart-debugger.undefined_5'),
+        suggestion: i18n.t('ai.smart-debugger.k6'),
         location: { file: session.file, line: session.line },
       });
     }
@@ -249,7 +250,7 @@ export class SmartDebugger {
   ): { success: boolean; value: unknown; error?: string } {
     const session = this.sessions.get(sessionId);
     if (!session) {
-      return { success: false, value: null, error: '会话不存在' };
+      return { success: false, value: null, error: i18n.t('ai.smart-debugger.k7') };
     }
 
     try {
@@ -277,8 +278,8 @@ export class SmartDebugger {
         id: generateId(),
         type: 'style',
         severity: 'low',
-        message: `当前文件有 ${enabledBreakpoints.length} 个启用的断点`,
-        suggestion: '清理不需要的断点以保持调试整洁',
+        message: `${i18n.t('ai.smart-debugger.k9')}${enabledBreakpoints.length}${i18n.t('ai.smart-debugger.k10')}`,
+        suggestion: i18n.t('ai.smart-debugger.k8'),
       });
     }
 

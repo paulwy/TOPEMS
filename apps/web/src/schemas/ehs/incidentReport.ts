@@ -1,10 +1,11 @@
 import React from 'react';
 import type { EntitySchema } from '@/schema';
+import i18n from '@/i18n';
 
 export const incidentReportSchema: EntitySchema = {
   entity: 'ehsIncident',
-  title: '事故报告',
-  description: '管理企业事故报告信息，包括事故类型、严重程度、状态等',
+  title: i18n.t('ehs.incident_report.k0'),
+  description: i18n.t('ehs.incident_report.k1'),
 
   api: {
     module: 'ehs',
@@ -14,7 +15,7 @@ export const incidentReportSchema: EntitySchema = {
   fields: [
     {
       name: 'incident_no',
-      label: '事故编号',
+      label: i18n.t('ehs.incident_report.k2'),
       type: 'text',
       required: true,
       readonlyOnEdit: true,
@@ -23,7 +24,7 @@ export const incidentReportSchema: EntitySchema = {
     },
     {
       name: 'title',
-      label: '事故标题',
+      label: i18n.t('ehs.incident_report.k3'),
       type: 'text',
       required: true,
       listWidth: 180,
@@ -31,77 +32,77 @@ export const incidentReportSchema: EntitySchema = {
     },
     {
       name: 'type',
-      label: '事故类型',
+      label: i18n.t('ehs.incident_report.k4'),
       type: 'select',
       required: true,
       defaultValue: 'injury',
       options: {
         type: 'static',
         options: [
-          { value: 'injury', label: '伤害事故' },
-          { value: 'illness', label: '职业病' },
-          { value: 'environment', label: '环境事故' },
-          { value: 'property', label: '财产损失' },
-          { value: 'near_miss', label: '未遂事件' },
+          { value: 'injury', label: i18n.t('ehs.incident_report.k5') },
+          { value: 'illness', label: i18n.t('ehs.incident_report.k6') },
+          { value: 'environment', label: i18n.t('ehs.incident_report.k7') },
+          { value: 'property', label: i18n.t('ehs.incident_report.k8') },
+          { value: 'near_miss', label: i18n.t('ehs.incident_report.k9') },
         ],
       },
       listWidth: 120,
     },
     {
       name: 'severity',
-      label: '严重程度',
+      label: i18n.t('ehs.incident_report.k10'),
       type: 'select',
       required: true,
       defaultValue: 'minor',
       options: {
         type: 'static',
         options: [
-          { value: 'minor', label: '轻微' },
-          { value: 'serious', label: '严重' },
-          { value: 'critical', label: '重大' },
-          { value: 'fatal', label: '致命' },
+          { value: 'minor', label: i18n.t('ehs.incident_report.k11') },
+          { value: 'serious', label: i18n.t('ehs.incident_report.k12') },
+          { value: 'critical', label: i18n.t('ehs.incident_report.k13') },
+          { value: 'fatal', label: i18n.t('ehs.incident_report.k14') },
         ],
       },
       listWidth: 100,
     },
     {
       name: 'location',
-      label: '发生地点',
+      label: i18n.t('ehs.incident_report.k15'),
       type: 'text',
       listWidth: 160,
       validation: [{ type: 'maxLength', value: 256 }],
     },
     {
       name: 'department_id',
-      label: '所属部门',
+      label: i18n.t('ehs.incident_report.k16'),
       type: 'text',
       showInList: false,
     },
     {
       name: 'reporter',
-      label: '报告人',
+      label: i18n.t('ehs.incident_report.k17'),
       type: 'text',
       showInList: false,
     },
     {
       name: 'report_date',
-      label: '报告日期',
+      label: i18n.t('ehs.incident_report.k18'),
       type: 'date',
       listWidth: 120,
     },
     {
       name: 'status',
-      label: '状态',
+      label: i18n.t('ehs.incident_report.k19'),
       type: 'select',
       defaultValue: 'draft',
       options: {
         type: 'static',
         options: [
-          { value: 'draft', label: '草稿' },
-          { value: 'submitted', label: '已提交' },
-          { value: 'investigating', label: '调查中' },
-          { value: 'closed', label: '已结案' },
-          { value: 'escalated', label: '已升级' },
+          { value: 'draft', label: i18n.t('ehs.incident_report.k20') },
+          { value: 'submitted', label: i18n.t('ehs.incident_report.k21') },
+          { value: 'investigating', label: i18n.t('ehs.incident_report.k22') },
+          { value: 'closed', label: i18n.t('ehs.incident_report.k23') },
+          { value: 'escalated', label: i18n.t('ehs.incident_report.k24') },
         ],
       },
       listWidth: 100,
@@ -109,7 +110,7 @@ export const incidentReportSchema: EntitySchema = {
     },
     {
       name: 'description',
-      label: '描述',
+      label: i18n.t('ehs.incident_report.k25'),
       type: 'textarea',
       showInList: false,
     },
@@ -128,36 +129,36 @@ export const incidentReportSchema: EntitySchema = {
         fatal: 'error',
       },
       labelMap: {
-        minor: '轻微',
-        serious: '严重',
-        critical: '重大',
-        fatal: '致命',
+        minor: i18n.t('ehs.incident_report.k26'),
+        serious: i18n.t('ehs.incident_report.k27'),
+        critical: i18n.t('ehs.incident_report.k28'),
+        fatal: i18n.t('ehs.incident_report.k29'),
       },
     },
     filters: [
       {
         id: 'type',
-        label: '事故类型',
+        label: i18n.t('ehs.incident_report.k30'),
         type: 'select',
         options: [
-          { label: '全部', value: 'all' },
-          { label: '伤害事故', value: 'injury' },
-          { label: '职业病', value: 'illness' },
-          { label: '环境事故', value: 'environment' },
-          { label: '财产损失', value: 'property' },
-          { label: '未遂事件', value: 'near_miss' },
+          { label: i18n.t('ehs.incident_report.k31'), value: 'all' },
+          { label: i18n.t('ehs.incident_report.k32'), value: 'injury' },
+          { label: i18n.t('ehs.incident_report.k33'), value: 'illness' },
+          { label: i18n.t('ehs.incident_report.k34'), value: 'environment' },
+          { label: i18n.t('ehs.incident_report.k35'), value: 'property' },
+          { label: i18n.t('ehs.incident_report.k36'), value: 'near_miss' },
         ],
       },
       {
         id: 'severity',
-        label: '严重程度',
+        label: i18n.t('ehs.incident_report.k37'),
         type: 'select',
         options: [
-          { label: '全部', value: 'all' },
-          { label: '轻微', value: 'minor' },
-          { label: '严重', value: 'serious' },
-          { label: '重大', value: 'critical' },
-          { label: '致命', value: 'fatal' },
+          { label: i18n.t('ehs.incident_report.k38'), value: 'all' },
+          { label: i18n.t('ehs.incident_report.k39'), value: 'minor' },
+          { label: i18n.t('ehs.incident_report.k40'), value: 'serious' },
+          { label: i18n.t('ehs.incident_report.k41'), value: 'critical' },
+          { label: i18n.t('ehs.incident_report.k42'), value: 'fatal' },
         ],
       },
     ],
@@ -167,21 +168,21 @@ export const incidentReportSchema: EntitySchema = {
 
   formSections: [
     {
-      title: '基本信息',
+      title: i18n.t('ehs.incident_report.k43'),
       fields: ['incident_no', 'title', 'type', 'severity'],
     },
     {
-      title: '发生地点',
+      title: i18n.t('ehs.incident_report.k44'),
       fields: ['location', 'department_id', 'reporter', 'report_date'],
     },
     {
-      title: '状态与描述',
+      title: i18n.t('ehs.incident_report.k45'),
       fields: ['status', 'description'],
     },
   ],
 
   formColCount: 2,
-  createTitle: '新建事故报告',
-  editTitle: '编辑事故报告',
-  detailTitle: '事故报告详情',
+  createTitle: i18n.t('ehs.incident_report.k46'),
+  editTitle: i18n.t('ehs.incident_report.k47'),
+  detailTitle: i18n.t('ehs.incident_report.k48'),
 };

@@ -2,6 +2,7 @@ import React from 'react';
 import { Box, Typography, IconButton, Tooltip } from '@mui/material';
 import type { SxProps, Theme } from '@mui/material/styles';
 import { ChevronDown, Info } from 'lucide-react';
+import i18n from '@/i18n';
 
 export interface FormFieldGroupProps {
   title: string;
@@ -85,7 +86,7 @@ export const FormFieldGroup: React.FC<FormFieldGroupProps> = ({
           <Tooltip title={tooltip}>
             <IconButton
               size='small'
-              aria-label='信息'
+              aria-label={i18n.t('shared.form_field_group.k0')}
             >
               <Info size={16} />
             </IconButton>
@@ -95,7 +96,7 @@ export const FormFieldGroup: React.FC<FormFieldGroupProps> = ({
           <IconButton
             size='small'
             onClick={() => setExpanded(!expanded)}
-            aria-label='展开'
+            aria-label={i18n.t('shared.form_field_group.k1')}
           >
             <ChevronDown
               size={16}

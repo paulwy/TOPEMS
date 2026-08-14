@@ -2,11 +2,12 @@ import React from 'react';
 import { Box, Typography } from '@mui/material';
 import { Shield } from 'lucide-react';
 import type { EntitySchema } from '@/schema';
+import i18n from '@/i18n';
 
 export const roleSchema: EntitySchema = {
   entity: 'role',
-  title: '角色管理',
-  description: '管理用户角色、权限配置',
+  title: i18n.t('shared.role.k0'),
+  description: i18n.t('shared.role.k1'),
 
   api: {
     module: 'iam',
@@ -16,7 +17,7 @@ export const roleSchema: EntitySchema = {
   fields: [
     {
       name: 'name',
-      label: '角色名称',
+      label: i18n.t('shared.role.k2'),
       type: 'text',
       required: true,
       sortable: true,
@@ -60,13 +61,13 @@ export const roleSchema: EntitySchema = {
     },
     {
       name: 'description',
-      label: '描述',
+      label: i18n.t('shared.role.k3'),
       type: 'textarea',
       listWidth: 250,
     },
     {
       name: 'created_at',
-      label: '创建时间',
+      label: i18n.t('shared.role.k4'),
       type: 'datetime',
       sortable: true,
       listWidth: 180,
@@ -89,13 +90,13 @@ export const roleSchema: EntitySchema = {
 
   formSections: [
     {
-      title: '基本信息',
+      title: i18n.t('shared.role.k5'),
       fields: ['name', 'description'],
     },
   ],
 
   formColCount: 2,
-  createTitle: '创建角色',
-  editTitle: '编辑角色',
-  detailTitle: '角色详情',
+  createTitle: i18n.t('shared.role.k6'),
+  editTitle: i18n.t('shared.role.k7'),
+  detailTitle: i18n.t('shared.role.k8'),
 };

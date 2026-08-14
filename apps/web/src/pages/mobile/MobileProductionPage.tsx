@@ -6,17 +6,15 @@ import { MobileLayout, PullToRefresh, MobileSkeleton } from '@/components/mobile
 import { useNotificationStore } from '@/store';
 import { MOBILE_PATHS } from '@/modules/mobile/config';
 import { PageContainer } from '@/components/common';
-
 import { useMobileProduction } from './hooks/useMobileProduction';
 import { MobileProductionFilters } from './components/MobileProductionFilters';
 import { MobileProductionCard } from './components/MobileProductionCard';
 import { MobileProductionReportDialog } from './components/MobileProductionReportDialog';
-
+import i18n from '@/i18n';
 const MobileProductionPage: React.FC = () => {
   const navigate = useNavigate();
   const { addNotification } = useNotificationStore();
   const [activeTab, setActiveTab] = useState(0);
-
   const {
     searchQuery,
     setSearchQuery,
@@ -34,18 +32,15 @@ const MobileProductionPage: React.FC = () => {
     handleSubmitReport,
     handleOrderAction,
   } = useMobileProduction();
-
   const handleTabChange = (_event: React.SyntheticEvent, newValue: number) => {
     setActiveTab(newValue);
   };
-
   const filteredOrders = productionOrders.filter(
     (order) =>
       !searchQuery ||
       order.product_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       order.orderNo.toLowerCase().includes(searchQuery.toLowerCase())
   );
-
   const handleBottomTabChange = (tabId: string) => {
     switch (tabId) {
       case 'home':
@@ -65,23 +60,21 @@ const MobileProductionPage: React.FC = () => {
         break;
     }
   };
-
   const bottomTabs = [
-    { id: 'home', label: '工作台', icon: <Home style={{ width: 22, height: 22 }} /> },
-    { id: 'tasks', label: '任务', icon: <ListTodo style={{ width: 22, height: 22 }} /> },
-    { id: 'scan', label: '扫码', icon: <ScanLine style={{ width: 22, height: 22 }} /> },
+    { id: 'home', label: i18n.t('mobile.mobile_production_page.k0'), icon: <Home style={{ width: 22, height: 22 }} /> },
+    { id: 'tasks', label: i18n.t('mobile.mobile_production_page.k1'), icon: <ListTodo style={{ width: 22, height: 22 }} /> },
+    { id: 'scan', label: i18n.t('mobile.mobile_production_page.k2'), icon: <ScanLine style={{ width: 22, height: 22 }} /> },
     {
       id: 'approval',
-      label: '审批',
+      label: i18n.t('mobile.mobile_production_page.k3'),
       icon: <CheckSquare style={{ width: 22, height: 22 }} />,
       badge: 3,
     },
-    { id: 'profile', label: '我的', icon: <User style={{ width: 22, height: 22 }} /> },
+    { id: 'profile', label: i18n.t('mobile.mobile_production_page.k4'), icon: <User style={{ width: 22, height: 22 }} /> },
   ];
-
   return (
     <MobileLayout
-      title='移动生产'
+      title={i18n.t('mobile.mobile_production_page.k5')}
       showBack
       onBackClick={() => navigate(MOBILE_PATHS.workbench)}
       showNotifications
@@ -95,7 +88,7 @@ const MobileProductionPage: React.FC = () => {
           size='large'
           sx={{ minWidth: 44, minHeight: 44 }}
           onClick={() => navigate(MOBILE_PATHS.scanPage)}
-          aria-label='扫码'
+          aria-label={i18n.t('mobile.mobile_production_page.k6')}
         >
           <Barcode style={{ width: 20, height: 20 }} />
         </IconButton>
@@ -113,7 +106,6 @@ const MobileProductionPage: React.FC = () => {
           searchQuery={searchQuery}
           onSearchChange={setSearchQuery}
         />
-
         <PullToRefresh onRefresh={handleRefresh}>
           {loading ? (
             <MobileSkeleton
@@ -131,7 +123,6 @@ const MobileProductionPage: React.FC = () => {
             />
           )}
         </PullToRefresh>
-
         <MobileProductionReportDialog
           open={reportDialogOpen}
           onClose={() => setReportDialogOpen(false)}
@@ -144,5 +135,4 @@ const MobileProductionPage: React.FC = () => {
     </MobileLayout>
   );
 };
-
 export default MobileProductionPage;

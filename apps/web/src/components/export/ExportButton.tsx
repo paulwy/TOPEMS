@@ -3,6 +3,8 @@ import { useTheme } from '@mui/material';
 import { Download, Loader2, CheckCircle } from 'lucide-react';
 import type { ExportFormat } from '@/api/report';
 import { logger } from '@/utils/logger';
+import { designTokens } from '@topems/tokens';
+import i18n from '@/i18n';
 
 interface ExportButtonProps {
   data: Record<string, unknown>[];
@@ -22,7 +24,7 @@ const ExportButton: React.FC<ExportButtonProps> = ({
   columns,
   filename,
   format = 'csv',
-  buttonText = '导出',
+  buttonText = i18n.t('components.export_button.k0'),
   buttonClassName = '',
   disabled = false,
   onExportStart,
@@ -113,7 +115,7 @@ const ExportButton: React.FC<ExportButtonProps> = ({
         setExportComplete(false);
       }, 2000);
     } catch (error: unknown) {
-      logger.error('导出失败:', error);
+      logger.error(i18n.t('components.export_button.k1'), error);
       onExportError?.(error as Error);
     } finally {
       setExporting(false);
@@ -125,7 +127,7 @@ const ExportButton: React.FC<ExportButtonProps> = ({
       onClick={handleExport}
       disabled={disabled || exporting}
       style={{
-        padding: '8px 16px',
+        padding: `${designTokens.spacing.sm} 16px`,
         borderRadius: 'md',
         fontWeight: 500,
         transition: 'all 0.2s',
@@ -146,12 +148,12 @@ const ExportButton: React.FC<ExportButtonProps> = ({
       {exporting ? (
         <>
           <Loader2 sx={{ width: 16, height: 16, animation: 'spin 1s linear infinite' }} />
-          <span>导出中...</span>
+          <span>{i18n.t('components.export_button.k2')}</span>
         </>
       ) : exportComplete ? (
         <>
           <CheckCircle sx={{ width: 16, height: 16 }} />
-          <span>导出成功</span>
+          <span>{i18n.t('components.export_button.k3')}</span>
         </>
       ) : (
         <>

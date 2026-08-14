@@ -1,4 +1,5 @@
 import createLogger from './logger';
+import i18n from '@/i18n';
 
 const logger = createLogger('ErrorHandler');
 
@@ -63,16 +64,16 @@ export const handleApiError = (error: unknown): AppError => {
       case 401:
         return {
           code: ErrorCode.UNAUTHORIZED,
-          message: '未授权访问，请重新登录',
+          message: i18n.t('shared.errors.k0'),
         };
       case 403:
-        return { code: ErrorCode.FORBIDDEN, message: '无权限访问此资源' };
+        return { code: ErrorCode.FORBIDDEN, message: i18n.t('shared.errors.k1') };
       case 404:
-        return { code: ErrorCode.NOT_FOUND, message: '资源未找到' };
+        return { code: ErrorCode.NOT_FOUND, message: i18n.t('shared.errors.k2') };
       case 400:
         return { code: ErrorCode.VALIDATION, message };
       case 500:
-        return { code: ErrorCode.SERVER, message: '服务器内部错误' };
+        return { code: ErrorCode.SERVER, message: i18n.t('shared.errors.k3') };
       default:
         return { code: ErrorCode.UNKNOWN, message };
     }
@@ -80,16 +81,16 @@ export const handleApiError = (error: unknown): AppError => {
 
   const networkError = error as { code?: string };
   if (networkError?.code === 'ECONNABORTED') {
-    return { code: ErrorCode.TIMEOUT, message: '请求超时，请稍后重试' };
+    return { code: ErrorCode.TIMEOUT, message: i18n.t('shared.errors.k4') };
   }
 
   if (networkError?.code === 'ERR_NETWORK' || networkError?.code === 'ENOTFOUND') {
-    return { code: ErrorCode.NETWORK, message: '网络连接失败，请检查网络设置' };
+    return { code: ErrorCode.NETWORK, message: i18n.t('shared.errors.k5') };
   }
 
   return {
     code: ErrorCode.UNKNOWN,
-    message: '发生未知错误，请稍后重试',
+    message: i18n.t('shared.errors.k6'),
     originalError: error,
   };
 };
@@ -98,14 +99,14 @@ export const getErrorMessage = (error: AppError | unknown): string => {
   if (error && typeof error === 'object' && 'message' in error) {
     return (error as { message: string }).message;
   }
-  return '发生未知错误';
+  return i18n.t('shared.errors.k7');
 };
 
 /**
  * 从未知错误中提取消息（兼容 axios 错误响应）
  * 优先使用服务端返回的 message 字段，否则使用 Error.message，最后使用兜底值
  */
-export const extractErrorMessage = (error: unknown, fallback = '操作失败'): string => {
+export const extractErrorMessage = (error: unknown, fallback = i18n.t('shared.errors.k8')): string => {
   if (!error) return fallback;
   const err = error as {
     response?: { data?: { message?: string } };

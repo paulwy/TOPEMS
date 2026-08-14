@@ -1,3 +1,4 @@
+import i18n from '@/i18n';
 export type ExplainabilityMethod = 'SHAP' | 'LIME' | 'Attention';
 
 export interface Explanation {
@@ -160,11 +161,11 @@ export class ExplainabilityEngine {
     );
 
     const limitations = [
-      '当前解释基于 SHAP/LIME 近似，可能与实际模型行为存在偏差',
-      '高基数特征的解释精度可能受限',
-      '非线性特征交互的解释需要更复杂的方法',
-      '解释结果仅供参考，不应作为唯一决策依据',
-      '对于黑箱模型，解释可能不完整',
+      i18n.t('ai.explainability.k0'),
+      i18n.t('ai.explainability.k1'),
+      i18n.t('ai.explainability.k2'),
+      i18n.t('ai.explainability.k3'),
+      i18n.t('ai.explainability.k4'),
     ];
 
     const report: ExplainabilityReport = {
@@ -271,20 +272,20 @@ export class ExplainabilityEngine {
     const topFeatures = sorted.slice(0, 3);
 
     const methodLabels: Record<ExplainabilityMethod, string> = {
-      SHAP: 'SHAP 值归因分析',
-      LIME: 'LIME 局部可解释模型',
-      Attention: '注意力权重分析',
+      SHAP: i18n.t('ai.explainability.shap_0'),
+      LIME: i18n.t('ai.explainability.lime_1'),
+      Attention: i18n.t('ai.explainability.k5'),
     };
 
-    const parts = [`基于${methodLabels[method]}，该预测的主要影响因素包括：`];
+    const parts = [`${i18n.t('ai.explainability.k2')}${methodLabels[method]}${i18n.t('ai.explainability.k3')}`];
 
     for (const [feature, value] of topFeatures) {
-      const direction = value > 0 ? '正向' : '负向';
-      parts.push(`- ${feature} 贡献了 ${direction} 影响 (${Math.abs(value).toFixed(3)})`);
+      const direction = value > 0 ? i18n.t('ai.explainability.k7') : i18n.t('ai.explainability.k6');
+      parts.push(`- ${feature}${i18n.t('ai.explainability.k4')}${direction}${i18n.t('ai.explainability.k5')}${Math.abs(value).toFixed(3)})`);
     }
 
     if (topFeatures.length === 0) {
-      parts.push('未检测到显著的特征贡献');
+      parts.push(i18n.t('ai.explainability.k8'));
     }
 
     return parts.join('\n');

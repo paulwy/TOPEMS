@@ -1,6 +1,8 @@
 import React from 'react';
 import { useTheme } from '@mui/material';
 import { AlertCircle, X } from 'lucide-react';
+import { designTokens } from '@topems/tokens';
+import i18n from '@/i18n';
 
 interface FieldErrorProps {
   error: string | undefined;
@@ -46,7 +48,7 @@ export const FormError: React.FC<FormErrorProps> = ({ errors, fields = [] }) => 
     <div
       style={{
         backgroundColor: theme.palette.error.light,
-        border: '1px solid #fecaca',
+        border: `1px solid ${designTokens.colors.error[200]}`,
         borderRadius: 'md',
         padding: 4,
         marginBottom: 4,
@@ -63,7 +65,7 @@ export const FormError: React.FC<FormErrorProps> = ({ errors, fields = [] }) => 
               marginBottom: 1,
             }}
           >
-            请修正以下错误：
+            {i18n.t('components.validation_error.k0')}
           </h4>
           <ul
             style={{
@@ -85,8 +87,8 @@ export const FormError: React.FC<FormErrorProps> = ({ errors, fields = [] }) => 
               >
                 <span
                   style={{
-                    width: '4px',
-                    height: '4px',
+                    width: designTokens.spacing.xs,
+                    height: designTokens.spacing.xs,
                     backgroundColor: theme.palette.error.dark,
                     borderRadius: 'full',
                     marginTop: 2,
@@ -127,8 +129,8 @@ export const ValidationHint: React.FC<ValidationHintProps> = ({ field, rules }) 
           >
             <span
               style={{
-                width: '4px',
-                height: '4px',
+                width: designTokens.spacing.xs,
+                height: designTokens.spacing.xs,
                 backgroundColor: 'grey.400',
                 borderRadius: 'full',
               }}
@@ -165,26 +167,26 @@ export const InlineValidation: React.FC<InlineValidationProps> = ({
   const theme = useTheme();
   React.useEffect(() => {
     if (!value && rules.required) {
-      setError(`${fieldName}不能为空`);
+      setError(`${fieldName}${i18n.t('components.validation_error.k0')}`);
       onValidChange?.(false);
       return;
     }
 
     if (value) {
       if (rules.minLength && value.length < rules.minLength) {
-        setError(`${fieldName}至少需要${rules.minLength}个字符`);
+        setError(`${fieldName}${i18n.t('components.validation_error.k1')}${rules.minLength}${i18n.t('components.validation_error.k2')}`);
         onValidChange?.(false);
         return;
       }
 
       if (rules.maxLength && value.length > rules.maxLength) {
-        setError(`${fieldName}不能超过${rules.maxLength}个字符`);
+        setError(`${fieldName}${i18n.t('components.validation_error.k3')}${rules.maxLength}${i18n.t('components.validation_error.k4')}`);
         onValidChange?.(false);
         return;
       }
 
       if (rules.pattern && !rules.pattern.test(value)) {
-        setError(`${fieldName}格式不正确`);
+        setError(`${fieldName}${i18n.t('components.validation_error.k5')}`);
         onValidChange?.(false);
         return;
       }
@@ -192,7 +194,7 @@ export const InlineValidation: React.FC<InlineValidationProps> = ({
       if (rules.custom) {
         const result = rules.custom(value);
         if (result !== true) {
-          setError(typeof result === 'string' ? result : `${fieldName}验证失败`);
+          setError(typeof result === 'string' ? result : `${fieldName}${i18n.t('components.validation_error.k6')}`);
           onValidChange?.(false);
           return;
         }
@@ -233,7 +235,7 @@ export const SuccessMessage: React.FC<SuccessMessageProps> = ({ message, onClose
     <div
       style={{
         backgroundColor: theme.palette.success.light,
-        border: '1px solid #bbf7d0',
+        border: `1px solid ${designTokens.colors.success[200]}`,
         borderRadius: 'md',
         padding: 4,
         display: 'flex',
@@ -244,8 +246,8 @@ export const SuccessMessage: React.FC<SuccessMessageProps> = ({ message, onClose
       <div style={{ display: 'flex', alignItems: 'center', gap: 3 }}>
         <div
           style={{
-            width: '32px',
-            height: '32px',
+            width: designTokens.spacing.xl,
+            height: designTokens.spacing.xl,
             backgroundColor: 'success.lighter',
             borderRadius: 'full',
             display: 'flex',

@@ -9,6 +9,7 @@ import {
 } from '@mui/material';
 import React, { useState, useRef } from 'react';
 import { AlertCircle, Download, Upload, FileText, CheckCircle } from 'lucide-react';
+import i18n from '@/i18n';
 import type { ExportColumn, ImportResult } from '@/utils/importExport';
 import {
   exportToExcel,
@@ -93,7 +94,7 @@ export const ImportExportModal = <T extends Record<string, unknown>>({
       maxWidth='sm'
       fullWidth
     >
-      <DialogTitle>数据导入导出</DialogTitle>
+      <DialogTitle>{i18n.t('components.import_export_modal.k0')}</DialogTitle>
       <DialogContent>
         {importResult ? (
           <Box sx={{ py: 3 }}>
@@ -118,7 +119,7 @@ export const ImportExportModal = <T extends Record<string, unknown>>({
                   variant='h6'
                   sx={{ color: 'success.main', mb: 1 }}
                 >
-                  导入成功
+                  {i18n.t('components.import_export_modal.k0')}
                 </Typography>
                 <Typography
                   variant='body2'
@@ -152,7 +153,7 @@ export const ImportExportModal = <T extends Record<string, unknown>>({
                       variant='body2'
                       sx={{ fontWeight: 500, color: 'error.main' }}
                     >
-                      导入失败
+                      {i18n.t('components.import_export_modal.k1')}
                     </Typography>
                     <Typography
                       variant='body2'
@@ -199,7 +200,7 @@ export const ImportExportModal = <T extends Record<string, unknown>>({
                 variant='body2'
                 color='text.secondary'
               >
-                导出数据
+                {i18n.t('components.import_export_modal.k2')}
               </Typography>
               <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 1 }}>
                 <Button
@@ -207,14 +208,14 @@ export const ImportExportModal = <T extends Record<string, unknown>>({
                   onClick={handleExportExcel}
                   startIcon={<Download style={{ width: 16, height: 16 }} />}
                 >
-                  导出 Excel
+                  {i18n.t('components.import_export_modal.excel_3')}
                 </Button>
                 <Button
                   variant='outlined'
                   onClick={handleExportCSV}
                   startIcon={<FileText style={{ width: 16, height: 16 }} />}
                 >
-                  导出 CSV
+                  {i18n.t('components.import_export_modal.csv_4')}
                 </Button>
               </Box>
             </Box>
@@ -226,7 +227,7 @@ export const ImportExportModal = <T extends Record<string, unknown>>({
                 variant='body2'
                 color='text.secondary'
               >
-                导入数据
+                {i18n.t('components.import_export_modal.k5')}
               </Typography>
               <input
                 ref={fileInputRef}
@@ -244,7 +245,7 @@ export const ImportExportModal = <T extends Record<string, unknown>>({
                   startIcon={<Upload style={{ width: 16, height: 16 }} />}
                   disabled={importing}
                 >
-                  {importing ? '导入中...' : '上传文件'}
+                  {importing ? i18n.t('components.import_export_modal.k2') : i18n.t('components.import_export_modal.k1')}
                 </Button>
               </label>
               <Button
@@ -253,13 +254,13 @@ export const ImportExportModal = <T extends Record<string, unknown>>({
                 onClick={handleDownloadTemplate}
                 startIcon={<Download style={{ width: 16, height: 16 }} />}
               >
-                下载导入模板
+                {i18n.t('components.import_export_modal.k6')}
               </Button>
               <Typography
                 variant='caption'
                 color='text.secondary'
               >
-                支持 Excel (.xlsx, .xls) 和 CSV (.csv) 格式
+                {i18n.t('components.import_export_modal.k7')}
               </Typography>
             </Box>
           </Box>
@@ -280,13 +281,13 @@ export const ImportExportModal = <T extends Record<string, unknown>>({
                 variant='outlined'
                 onClick={handleRetry}
               >
-                重新导入
+                {i18n.t('components.import_export_modal.k8')}
               </Button>
             )}
-            <Button onClick={handleClose}>确定</Button>
+            <Button onClick={handleClose}>{i18n.t('components.import_export_modal.k3')}</Button>
           </Box>
         ) : (
-          <Button onClick={handleClose}>关闭</Button>
+          <Button onClick={handleClose}>{i18n.t('components.import_export_modal.k4')}</Button>
         )}
       </DialogActions>
     </Dialog>

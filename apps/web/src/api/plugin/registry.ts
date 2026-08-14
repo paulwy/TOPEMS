@@ -2,13 +2,14 @@ import axios from 'axios';
 import { apiLogger } from '@/utils/logger';
 import { PLUGIN_TIMEOUT } from '@topems/shared-constants';
 import type { PluginRuntimeInfo, SuiteInfo } from './types';
+import i18n from '@/i18n';
 
 export const SUITES: SuiteInfo[] = [
   {
     id: 'finance',
     code: 'finance',
-    name: '财务套件',
-    description: '完整财务管理解决方案',
+    name: i18n.t('shared.registry.k0'),
+    description: i18n.t('shared.registry.k1'),
     icon: 'DollarSign',
     plugins: ['finance'],
     category: 'finance',
@@ -17,8 +18,8 @@ export const SUITES: SuiteInfo[] = [
   {
     id: 'hr',
     code: 'hr',
-    name: '人力套件',
-    description: '人力资源全生命周期管理',
+    name: i18n.t('shared.registry.k2'),
+    description: i18n.t('shared.registry.k3'),
     icon: 'Users',
     plugins: ['hrm'],
     category: 'hr',
@@ -27,8 +28,8 @@ export const SUITES: SuiteInfo[] = [
   {
     id: 'manufacturing',
     code: 'manufacturing',
-    name: '制造套件',
-    description: '智能制造执行系统',
+    name: i18n.t('shared.registry.k4'),
+    description: i18n.t('shared.registry.k5'),
     icon: 'Factory',
     plugins: ['mes', 'pdm', 'wms'],
     category: 'manufacturing',
@@ -37,8 +38,8 @@ export const SUITES: SuiteInfo[] = [
   {
     id: 'quality',
     code: 'quality',
-    name: '质量套件',
-    description: '质量管控与实验室管理',
+    name: i18n.t('shared.registry.k6'),
+    description: i18n.t('shared.registry.k7'),
     icon: 'ShieldCheck',
     plugins: ['qms', 'lims', 'ehs'],
     category: 'quality',
@@ -47,8 +48,8 @@ export const SUITES: SuiteInfo[] = [
   {
     id: 'supply',
     code: 'supply',
-    name: '供应链套件',
-    description: '采购与供应商管理',
+    name: i18n.t('shared.registry.k8'),
+    description: i18n.t('shared.registry.k9'),
     icon: 'Truck',
     plugins: ['scm', 'srm'],
     category: 'supply',
@@ -57,8 +58,8 @@ export const SUITES: SuiteInfo[] = [
   {
     id: 'crm',
     code: 'crm',
-    name: '客户套件',
-    description: '客户关系与销售管理',
+    name: i18n.t('shared.registry.k10'),
+    description: i18n.t('shared.registry.k11'),
     icon: 'Target',
     plugins: ['crm', 'bi'],
     category: 'crm',
@@ -67,8 +68,8 @@ export const SUITES: SuiteInfo[] = [
   {
     id: 'project',
     code: 'project',
-    name: '项目套件',
-    description: '项目与研发过程管理',
+    name: i18n.t('shared.registry.k12'),
+    description: i18n.t('shared.registry.k13'),
     icon: 'FolderKanban',
     plugins: ['pm', 'rd'],
     category: 'project',
@@ -77,8 +78,8 @@ export const SUITES: SuiteInfo[] = [
   {
     id: 'gis',
     code: 'gis',
-    name: '地理套件',
-    description: '地理信息与空间分析',
+    name: i18n.t('shared.registry.k14'),
+    description: i18n.t('shared.registry.k15'),
     icon: 'Map',
     plugins: ['gis'],
     category: 'gis',
@@ -108,25 +109,25 @@ export const PLUGIN_REGISTRY: Record<
   string,
   { url: string; port: number; name: string; icon: string }
 > = {
-  workflow: { url: '/api/core/flow', port: 8000, name: '工作流', icon: 'GitBranch' },
+  workflow: { url: '/api/core/flow', port: 8000, name: i18n.t('shared.registry.k16'), icon: 'GitBranch' },
   erp: { url: '/api/erp', port: 8010, name: 'ERP', icon: 'Building2' },
-  hrm: { url: '/api/hrm', port: 8020, name: '人力资源', icon: 'Users' },
-  pm: { url: '/api/pm', port: 8023, name: '项目管理', icon: 'Target' },
-  crm: { url: '/api/crm', port: 8029, name: '客户管理', icon: 'Users' },
-  mes: { url: '/api/mes', port: 8030, name: '生产执行', icon: 'Factory' },
-  pdm: { url: '/api/pdm', port: 8031, name: '产品数据', icon: 'Layers' },
-  scm: { url: '/api/scm', port: 8040, name: '供应链', icon: 'Truck' },
-  wms: { url: '/api/wms', port: 8041, name: '仓储管理', icon: 'Warehouse' },
-  srm: { url: '/api/srm', port: 8042, name: '供应商', icon: 'Handshake' },
-  qms: { url: '/api/qms', port: 8050, name: '质量管理', icon: 'Shield' },
-  lims: { url: '/api/lims', port: 8051, name: '实验室', icon: 'FlaskConical' },
-  ehs: { url: '/api/ehs', port: 8052, name: '环境安全', icon: 'Leaf' },
-  rd: { url: '/api/rd', port: 8053, name: '研发管理', icon: 'FlaskRound' },
-  bi: { url: '/api/bi', port: 8060, name: '商业智能', icon: 'BarChart3' },
-  portal: { url: '/api/portal', port: 8063, name: '企业门户', icon: 'LayoutDashboard' },
-  mobile: { url: '/api/mobile', port: 8070, name: '移动端', icon: 'Smartphone' },
-  gis: { url: '/api/gis', port: 8071, name: '地理信息', icon: 'Map' },
-  integration: { url: '/api/integration', port: 8072, name: '数据交换', icon: 'Network' },
+  hrm: { url: '/api/hrm', port: 8020, name: i18n.t('shared.registry.k17'), icon: 'Users' },
+  pm: { url: '/api/pm', port: 8023, name: i18n.t('shared.registry.k18'), icon: 'Target' },
+  crm: { url: '/api/crm', port: 8029, name: i18n.t('shared.registry.k19'), icon: 'Users' },
+  mes: { url: '/api/mes', port: 8030, name: i18n.t('shared.registry.k20'), icon: 'Factory' },
+  pdm: { url: '/api/pdm', port: 8031, name: i18n.t('shared.registry.k21'), icon: 'Layers' },
+  scm: { url: '/api/scm', port: 8040, name: i18n.t('shared.registry.k22'), icon: 'Truck' },
+  wms: { url: '/api/wms', port: 8041, name: i18n.t('shared.registry.k23'), icon: 'Warehouse' },
+  srm: { url: '/api/srm', port: 8042, name: i18n.t('shared.registry.k24'), icon: 'Handshake' },
+  qms: { url: '/api/qms', port: 8050, name: i18n.t('shared.registry.k25'), icon: 'Shield' },
+  lims: { url: '/api/lims', port: 8051, name: i18n.t('shared.registry.k26'), icon: 'FlaskConical' },
+  ehs: { url: '/api/ehs', port: 8052, name: i18n.t('shared.registry.k27'), icon: 'Leaf' },
+  rd: { url: '/api/rd', port: 8053, name: i18n.t('shared.registry.k28'), icon: 'FlaskRound' },
+  bi: { url: '/api/bi', port: 8060, name: i18n.t('shared.registry.k29'), icon: 'BarChart3' },
+  portal: { url: '/api/portal', port: 8063, name: i18n.t('shared.registry.k30'), icon: 'LayoutDashboard' },
+  mobile: { url: '/api/mobile', port: 8070, name: i18n.t('shared.registry.k31'), icon: 'Smartphone' },
+  gis: { url: '/api/gis', port: 8071, name: i18n.t('shared.registry.k32'), icon: 'Map' },
+  integration: { url: '/api/integration', port: 8072, name: i18n.t('shared.registry.k33'), icon: 'Network' },
 };
 
 const runtimeAxios = axios.create({

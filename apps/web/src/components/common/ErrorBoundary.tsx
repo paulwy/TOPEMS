@@ -3,6 +3,7 @@ import { Component } from 'react';
 import { Alert, AlertTitle, Button, Box } from '@mui/material';
 import { RefreshCw, AlertTriangle } from 'lucide-react';
 import { logger } from '@/utils/logger';
+import i18n from '@/i18n';
 
 interface Props {
   children: ReactNode;
@@ -68,17 +69,17 @@ class ErrorBoundary extends Component<Props, State> {
             <AlertTitle>
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
                 <AlertTriangle sx={{ width: 24, height: 24 }} />
-                操作出现错误
+                {i18n.t('components.error_boundary.k0')}
               </Box>
             </AlertTitle>
-            <p>{this.state.error?.message || '未知错误'}</p>
+            <p>{this.state.error?.message || i18n.t('shared.error_boundary.k0')}</p>
             <Button
               onClick={this.handleRetry}
               startIcon={<RefreshCw />}
               color='inherit'
               sx={{ mt: 2 }}
             >
-              重试操作
+              {i18n.t('components.error_boundary.k1')}
             </Button>
           </Alert>
         </Box>

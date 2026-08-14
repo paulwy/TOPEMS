@@ -3,6 +3,7 @@ import { pluginApi, pluginApiAggregated } from '../../api/plugin';
 import { apiLogger } from '../../utils/logger';
 import { navigationRegistryV2 } from '../navigation/NavigationRegistryV2';
 import type { ModuleNavConfig, NavItemConfig, ModuleSuite } from '../navigation/types';
+import i18n from '@/i18n';
 
 type PluginStatus = 'installing' | 'installed' | 'running' | 'disabled' | 'error' | 'uninstalled';
 
@@ -148,7 +149,7 @@ export class PluginManager {
         code,
         name,
         version: '1.0.0',
-        description: `${name} - 核心服务`,
+        description: `${name}${i18n.t('shared.plugin_manager.k0')}`,
         pluginType,
         status: 'running',
         isActive: true,
@@ -160,38 +161,38 @@ export class PluginManager {
 
   private getPluginName(code: string): string {
     const names: Record<string, string> = {
-      iam: '身份认证',
-      workflow: '工作流',
-      notification: '通知中心',
-      doc: '文档管理',
-      report: '报表中心',
-      monitor: '系统监控',
-      integration: '数据集成',
-      ai: 'AI助手',
-      mobile: '移动端',
-      hrm: '人力资源',
-      finance: '财务管理',
-      crm: '客户管理',
-      pm: '项目管理',
-      scm: '供应链',
-      qms: '质量管理',
-      bi: '商业智能',
-      mes: '生产执行',
-      wms: '仓储管理',
-      pdm: '产品数据',
-      srm: '供应商',
-      lims: '实验室',
-      ehs: '环境安全',
-      rs: '研发管理',
-      gis: '地理信息',
-      portal: '企业门户',
+      iam: i18n.t('shared.plugin_manager.k0'),
+      workflow: i18n.t('shared.plugin_manager.k1'),
+      notification: i18n.t('shared.plugin_manager.k2'),
+      doc: i18n.t('shared.plugin_manager.k3'),
+      report: i18n.t('shared.plugin_manager.k4'),
+      monitor: i18n.t('shared.plugin_manager.k5'),
+      integration: i18n.t('shared.plugin_manager.k6'),
+      ai: i18n.t('shared.plugin_manager.ai_1'),
+      mobile: i18n.t('shared.plugin_manager.k7'),
+      hrm: i18n.t('shared.plugin_manager.k8'),
+      finance: i18n.t('shared.plugin_manager.k9'),
+      crm: i18n.t('shared.plugin_manager.k10'),
+      pm: i18n.t('shared.plugin_manager.k11'),
+      scm: i18n.t('shared.plugin_manager.k12'),
+      qms: i18n.t('shared.plugin_manager.k13'),
+      bi: i18n.t('shared.plugin_manager.k14'),
+      mes: i18n.t('shared.plugin_manager.k15'),
+      wms: i18n.t('shared.plugin_manager.k16'),
+      pdm: i18n.t('shared.plugin_manager.k17'),
+      srm: i18n.t('shared.plugin_manager.k18'),
+      lims: i18n.t('shared.plugin_manager.k19'),
+      ehs: i18n.t('shared.plugin_manager.k20'),
+      rs: i18n.t('shared.plugin_manager.k21'),
+      gis: i18n.t('shared.plugin_manager.k22'),
+      portal: i18n.t('shared.plugin_manager.k23'),
       erp: 'ERP',
-      asset: '资产管理',
-      oa: '办公自动化',
-      im: '即时通讯',
-      admin: '系统管理',
-      lowcode: '低代码',
-      plugin: '插件市场',
+      asset: i18n.t('shared.plugin_manager.k24'),
+      oa: i18n.t('shared.plugin_manager.k25'),
+      im: i18n.t('shared.plugin_manager.k26'),
+      admin: i18n.t('shared.plugin_manager.k27'),
+      lowcode: i18n.t('shared.plugin_manager.k28'),
+      plugin: i18n.t('shared.plugin_manager.k29'),
     };
     return names[code] || code;
   }
@@ -560,7 +561,7 @@ export class PluginManager {
       hrm: [
         {
           code: 'hrm-employees',
-          label: '员工管理',
+          label: i18n.t('shared.plugin_manager.k30'),
           path: '/hrm/employees',
           icon: 'Users',
           order: 10,
@@ -568,7 +569,7 @@ export class PluginManager {
         },
         {
           code: 'hrm-departments',
-          label: '部门管理',
+          label: i18n.t('shared.plugin_manager.k31'),
           path: '/hrm/departments',
           icon: 'Building2',
           order: 20,
@@ -576,7 +577,7 @@ export class PluginManager {
         },
         {
           code: 'hrm-attendance',
-          label: '考勤管理',
+          label: i18n.t('shared.plugin_manager.k32'),
           path: '/hrm/attendance',
           icon: 'Calendar',
           order: 30,
@@ -584,7 +585,7 @@ export class PluginManager {
         },
         {
           code: 'hrm-recruitment',
-          label: '招聘管理',
+          label: i18n.t('shared.plugin_manager.k33'),
           path: '/hrm/recruitment',
           icon: 'Users',
           order: 40,
@@ -592,7 +593,7 @@ export class PluginManager {
         },
         {
           code: 'hrm-settings',
-          label: '人事设置',
+          label: i18n.t('shared.plugin_manager.k34'),
           path: '/hrm/settings',
           icon: 'Settings',
           order: 50,
@@ -602,7 +603,7 @@ export class PluginManager {
       crm: [
         {
           code: 'crm-customers',
-          label: '客户管理',
+          label: i18n.t('shared.plugin_manager.k35'),
           path: '/crm/customers',
           icon: 'Users',
           order: 10,
@@ -610,7 +611,7 @@ export class PluginManager {
         },
         {
           code: 'crm-leads',
-          label: '线索管理',
+          label: i18n.t('shared.plugin_manager.k36'),
           path: '/crm/leads',
           icon: 'Target',
           order: 20,
@@ -618,7 +619,7 @@ export class PluginManager {
         },
         {
           code: 'crm-opportunities',
-          label: '商机管理',
+          label: i18n.t('shared.plugin_manager.k37'),
           path: '/crm/opportunities',
           icon: 'TrendingUp',
           order: 30,
@@ -626,7 +627,7 @@ export class PluginManager {
         },
         {
           code: 'crm-contacts',
-          label: '联系人',
+          label: i18n.t('shared.plugin_manager.k38'),
           path: '/crm/contacts',
           icon: 'User',
           order: 40,
@@ -636,7 +637,7 @@ export class PluginManager {
       pm: [
         {
           code: 'pm-projects',
-          label: '项目列表',
+          label: i18n.t('shared.plugin_manager.k39'),
           path: '/pm/projects',
           icon: 'FolderKanban',
           order: 10,
@@ -644,7 +645,7 @@ export class PluginManager {
         },
         {
           code: 'pm-tasks',
-          label: '任务管理',
+          label: i18n.t('shared.plugin_manager.k40'),
           path: '/pm/tasks',
           icon: 'CheckSquare',
           order: 20,
@@ -652,7 +653,7 @@ export class PluginManager {
         },
         {
           code: 'pm-timelines',
-          label: '项目进度',
+          label: i18n.t('shared.plugin_manager.k41'),
           path: '/pm/timelines',
           icon: 'Calendar',
           order: 30,
@@ -662,7 +663,7 @@ export class PluginManager {
       mes: [
         {
           code: 'mes-orders',
-          label: '生产订单',
+          label: i18n.t('shared.plugin_manager.k42'),
           path: '/mes/orders',
           icon: 'ClipboardList',
           order: 10,
@@ -670,7 +671,7 @@ export class PluginManager {
         },
         {
           code: 'mes-workstations',
-          label: '工位管理',
+          label: i18n.t('shared.plugin_manager.k43'),
           path: '/mes/workstations',
           icon: 'Factory',
           order: 20,
@@ -678,7 +679,7 @@ export class PluginManager {
         },
         {
           code: 'mes-equipment',
-          label: '设备管理',
+          label: i18n.t('shared.plugin_manager.k44'),
           path: '/mes/equipment',
           icon: 'Wrench',
           order: 30,
@@ -688,7 +689,7 @@ export class PluginManager {
       wms: [
         {
           code: 'wms-inventory',
-          label: '库存管理',
+          label: i18n.t('shared.plugin_manager.k45'),
           path: '/wms/inventory',
           icon: 'Warehouse',
           order: 10,
@@ -696,7 +697,7 @@ export class PluginManager {
         },
         {
           code: 'wms-inbound',
-          label: '入库管理',
+          label: i18n.t('shared.plugin_manager.k46'),
           path: '/wms/inbound',
           icon: 'ArrowDownCircle',
           order: 20,
@@ -704,7 +705,7 @@ export class PluginManager {
         },
         {
           code: 'wms-outbound',
-          label: '出库管理',
+          label: i18n.t('shared.plugin_manager.k47'),
           path: '/wms/outbound',
           icon: 'ArrowUpCircle',
           order: 30,
@@ -714,7 +715,7 @@ export class PluginManager {
       qms: [
         {
           code: 'qms-inspections',
-          label: '质量检验',
+          label: i18n.t('shared.plugin_manager.k48'),
           path: '/qms/inspections',
           icon: 'CheckCircle',
           order: 10,
@@ -722,7 +723,7 @@ export class PluginManager {
         },
         {
           code: 'qms-spc',
-          label: '统计过程控制',
+          label: i18n.t('shared.plugin_manager.k49'),
           path: '/qms/spc',
           icon: 'Activity',
           order: 20,
@@ -730,7 +731,7 @@ export class PluginManager {
         },
         {
           code: 'qms-fmea',
-          label: 'FMEA分析',
+          label: i18n.t('shared.plugin_manager.fmea_2'),
           path: '/qms/fmea',
           icon: 'AlertTriangle',
           order: 30,
@@ -740,7 +741,7 @@ export class PluginManager {
       erp: [
         {
           code: 'erp-finance',
-          label: '财务管理',
+          label: i18n.t('shared.plugin_manager.k50'),
           path: '/erp/finance',
           icon: 'DollarSign',
           order: 10,
@@ -748,7 +749,7 @@ export class PluginManager {
         },
         {
           code: 'erp-assets',
-          label: '资产管理',
+          label: i18n.t('shared.plugin_manager.k51'),
           path: '/erp/assets',
           icon: 'Package',
           order: 20,
@@ -756,7 +757,7 @@ export class PluginManager {
         },
         {
           code: 'erp-sales',
-          label: '销售管理',
+          label: i18n.t('shared.plugin_manager.k52'),
           path: '/erp/sales',
           icon: 'ShoppingCart',
           order: 30,
@@ -766,7 +767,7 @@ export class PluginManager {
       scm: [
         {
           code: 'scm-purchase',
-          label: '采购管理',
+          label: i18n.t('shared.plugin_manager.k53'),
           path: '/scm/purchase',
           icon: 'ShoppingBag',
           order: 10,
@@ -774,7 +775,7 @@ export class PluginManager {
         },
         {
           code: 'scm-suppliers',
-          label: '供应商',
+          label: i18n.t('shared.plugin_manager.k54'),
           path: '/scm/suppliers',
           icon: 'Handshake',
           order: 20,
@@ -782,7 +783,7 @@ export class PluginManager {
         },
         {
           code: 'scm-mrp',
-          label: '物料需求',
+          label: i18n.t('shared.plugin_manager.k55'),
           path: '/scm/mrp',
           icon: 'Layers',
           order: 30,
@@ -795,7 +796,7 @@ export class PluginManager {
       navItemMap[pluginCode] || [
         {
           code: `${pluginCode}-overview`,
-          label: '概览',
+          label: i18n.t('shared.plugin_manager.k56'),
           path: `/${pluginCode}`,
           icon: PLUGIN_ICON_MAP[pluginCode] || 'LayoutDashboard',
           order: 10,

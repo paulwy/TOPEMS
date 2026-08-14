@@ -3,6 +3,8 @@ import { Box, CircularProgress, Divider, Paper, Tooltip, Typography, Stack } fro
 import { Calendar } from 'lucide-react';
 import type { ProductionSchedule } from '@/api/mes';
 import { ct, SCHEDULE_STATUS_META } from '../constants';
+import { designTokens } from '@topems/tokens';
+import i18n from '@/i18n';
 
 const ProductionGantt: React.FC<{
   schedules: ProductionSchedule[];
@@ -85,7 +87,7 @@ const ProductionGantt: React.FC<{
             variant='subtitle1'
             sx={{ fontWeight: 600 }}
           >
-            生产进度甘特图
+            {i18n.t('pages.production_gantt.k0')}
           </Typography>
         </Stack>
         <Stack
@@ -135,7 +137,7 @@ const ProductionGantt: React.FC<{
             variant='body2'
             sx={{ color: 'text.secondary' }}
           >
-            暂无排产计划
+            {i18n.t('pages.production_gantt.k1')}
           </Typography>
         </Box>
       ) : (
@@ -263,7 +265,7 @@ const ProductionGantt: React.FC<{
                           <Typography variant='caption'>{s.order_number || s.id}</Typography>
                           <br />
                           <Typography variant='caption'>
-                            数量: {s.quantity} | 状态: {meta.label}
+                            [i18n.t('pages.production_gantt.k2')]: {s.quantity} | {i18n.t('pages.production_gantt.k3')}{meta.label}
                           </Typography>
                           <br />
                           <Typography variant='caption'>
@@ -287,11 +289,11 @@ const ProductionGantt: React.FC<{
                           alignItems: 'center',
                           px: 1,
                           cursor: 'pointer',
-                          boxShadow: '0 1px 2px rgba(0,0,0,0.08)',
+                          boxShadow: `0 1px 2px ${designTokens.colors.action.selected}`,
                           transition: 'transform 0.2s, box-shadow 0.2s',
                           '&:hover': {
                             transform: 'translateY(-1px)',
-                            boxShadow: '0 4px 8px rgba(0,0,0,0.12)',
+                            boxShadow: `0 4px 8px ${designTokens.colors.action.selected}`,
                           },
                         }}
                       >

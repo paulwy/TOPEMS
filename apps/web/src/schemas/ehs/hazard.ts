@@ -1,9 +1,10 @@
 import type { EntitySchema } from '@/schema';
+import i18n from '@/i18n';
 
 export const hazardSchema: EntitySchema = {
   entity: 'ehsHazard',
-  title: '危险源管理',
-  description: '管理企业危险源信息，包括类别、严重程度、风险等级、状态等',
+  title: i18n.t('ehs.hazard.k0'),
+  description: i18n.t('ehs.hazard.k1'),
 
   api: {
     module: 'ehs',
@@ -13,7 +14,7 @@ export const hazardSchema: EntitySchema = {
   fields: [
     {
       name: 'hazard_no',
-      label: '危险源编号',
+      label: i18n.t('ehs.hazard.k2'),
       type: 'text',
       required: true,
       readonlyOnEdit: true,
@@ -23,7 +24,7 @@ export const hazardSchema: EntitySchema = {
     },
     {
       name: 'name',
-      label: '危险源名称',
+      label: i18n.t('ehs.hazard.k3'),
       type: 'text',
       required: true,
       sortable: true,
@@ -31,19 +32,19 @@ export const hazardSchema: EntitySchema = {
     },
     {
       name: 'category',
-      label: '类别',
+      label: i18n.t('ehs.hazard.k4'),
       type: 'select',
       required: true,
       defaultValue: 'equipment',
       options: {
         type: 'static',
         options: [
-          { value: 'equipment', label: '设备设施' },
-          { value: 'chemical', label: '化学品' },
-          { value: 'physical', label: '物理因素' },
-          { value: 'biological', label: '生物因素' },
-          { value: 'ergonomic', label: '人机工效' },
-          { value: 'environmental', label: '环境因素' },
+          { value: 'equipment', label: i18n.t('ehs.hazard.k5') },
+          { value: 'chemical', label: i18n.t('ehs.hazard.k6') },
+          { value: 'physical', label: i18n.t('ehs.hazard.k7') },
+          { value: 'biological', label: i18n.t('ehs.hazard.k8') },
+          { value: 'ergonomic', label: i18n.t('ehs.hazard.k9') },
+          { value: 'environmental', label: i18n.t('ehs.hazard.k10') },
         ],
       },
       listWidth: 120,
@@ -51,64 +52,64 @@ export const hazardSchema: EntitySchema = {
     },
     {
       name: 'severity',
-      label: '严重程度',
+      label: i18n.t('ehs.hazard.k11'),
       type: 'select',
       required: true,
       defaultValue: 'medium',
       options: {
         type: 'static',
         options: [
-          { value: 'high', label: '高' },
-          { value: 'medium', label: '中' },
-          { value: 'low', label: '低' },
+          { value: 'high', label: i18n.t('ehs.hazard.k12') },
+          { value: 'medium', label: i18n.t('ehs.hazard.k13') },
+          { value: 'low', label: i18n.t('ehs.hazard.k14') },
         ],
       },
       listWidth: 100,
     },
     {
       name: 'exposure',
-      label: '暴露程度',
+      label: i18n.t('ehs.hazard.k15'),
       type: 'select',
       required: true,
       defaultValue: 'medium',
       options: {
         type: 'static',
         options: [
-          { value: 'high', label: '高' },
-          { value: 'medium', label: '中' },
-          { value: 'low', label: '低' },
+          { value: 'high', label: i18n.t('ehs.hazard.k16') },
+          { value: 'medium', label: i18n.t('ehs.hazard.k17') },
+          { value: 'low', label: i18n.t('ehs.hazard.k18') },
         ],
       },
       showInList: false,
     },
     {
       name: 'likelihood',
-      label: '可能性',
+      label: i18n.t('ehs.hazard.k19'),
       type: 'select',
       required: true,
       defaultValue: 'medium',
       options: {
         type: 'static',
         options: [
-          { value: 'high', label: '高' },
-          { value: 'medium', label: '中' },
-          { value: 'low', label: '低' },
+          { value: 'high', label: i18n.t('ehs.hazard.k20') },
+          { value: 'medium', label: i18n.t('ehs.hazard.k21') },
+          { value: 'low', label: i18n.t('ehs.hazard.k22') },
         ],
       },
       showInList: false,
     },
     {
       name: 'level',
-      label: '风险等级',
+      label: i18n.t('ehs.hazard.k23'),
       type: 'select',
       defaultValue: 'medium',
       options: {
         type: 'static',
         options: [
-          { value: 'extreme', label: '极高' },
-          { value: 'high', label: '高' },
-          { value: 'medium', label: '中' },
-          { value: 'low', label: '低' },
+          { value: 'extreme', label: i18n.t('ehs.hazard.k24') },
+          { value: 'high', label: i18n.t('ehs.hazard.k25') },
+          { value: 'medium', label: i18n.t('ehs.hazard.k26') },
+          { value: 'low', label: i18n.t('ehs.hazard.k27') },
         ],
       },
       listWidth: 100,
@@ -116,7 +117,7 @@ export const hazardSchema: EntitySchema = {
     },
     {
       name: 'location',
-      label: '位置',
+      label: i18n.t('ehs.hazard.k28'),
       type: 'text',
       listWidth: 140,
       renderCell: (row: Record<string, unknown>) => {
@@ -127,16 +128,16 @@ export const hazardSchema: EntitySchema = {
     },
     {
       name: 'status',
-      label: '状态',
+      label: i18n.t('ehs.hazard.k29'),
       type: 'select',
       defaultValue: 'active',
       options: {
         type: 'static',
         options: [
-          { value: 'active', label: '活跃' },
-          { value: 'controlled', label: '已控制' },
-          { value: 'eliminated', label: '已消除' },
-          { value: 'archived', label: '已归档' },
+          { value: 'active', label: i18n.t('ehs.hazard.k30') },
+          { value: 'controlled', label: i18n.t('ehs.hazard.k31') },
+          { value: 'eliminated', label: i18n.t('ehs.hazard.k32') },
+          { value: 'archived', label: i18n.t('ehs.hazard.k33') },
         ],
       },
       listWidth: 100,
@@ -144,7 +145,7 @@ export const hazardSchema: EntitySchema = {
     },
     {
       name: 'description',
-      label: '描述',
+      label: i18n.t('ehs.hazard.k34'),
       type: 'textarea',
       showInList: false,
     },
@@ -163,34 +164,34 @@ export const hazardSchema: EntitySchema = {
         archived: 'default',
       },
       labelMap: {
-        active: '活跃',
-        controlled: '已控制',
-        eliminated: '已消除',
-        archived: '已归档',
+        active: i18n.t('ehs.hazard.k35'),
+        controlled: i18n.t('ehs.hazard.k36'),
+        eliminated: i18n.t('ehs.hazard.k37'),
+        archived: i18n.t('ehs.hazard.k38'),
       },
     },
     filters: [
       {
         id: 'severity',
-        label: '严重程度',
+        label: i18n.t('ehs.hazard.k39'),
         type: 'select',
         options: [
-          { label: '全部', value: 'all' },
-          { label: '高', value: 'high' },
-          { label: '中', value: 'medium' },
-          { label: '低', value: 'low' },
+          { label: i18n.t('ehs.hazard.k40'), value: 'all' },
+          { label: i18n.t('ehs.hazard.k41'), value: 'high' },
+          { label: i18n.t('ehs.hazard.k42'), value: 'medium' },
+          { label: i18n.t('ehs.hazard.k43'), value: 'low' },
         ],
       },
       {
         id: 'status',
-        label: '状态',
+        label: i18n.t('ehs.hazard.k44'),
         type: 'select',
         options: [
-          { label: '全部', value: 'all' },
-          { label: '活跃', value: 'active' },
-          { label: '已控制', value: 'controlled' },
-          { label: '已消除', value: 'eliminated' },
-          { label: '已归档', value: 'archived' },
+          { label: i18n.t('ehs.hazard.k45'), value: 'all' },
+          { label: i18n.t('ehs.hazard.k46'), value: 'active' },
+          { label: i18n.t('ehs.hazard.k47'), value: 'controlled' },
+          { label: i18n.t('ehs.hazard.k48'), value: 'eliminated' },
+          { label: i18n.t('ehs.hazard.k49'), value: 'archived' },
         ],
       },
     ],
@@ -200,21 +201,21 @@ export const hazardSchema: EntitySchema = {
 
   formSections: [
     {
-      title: '基本信息',
+      title: i18n.t('ehs.hazard.k50'),
       fields: ['hazard_no', 'name', 'category', 'location'],
     },
     {
-      title: '风险评估',
+      title: i18n.t('ehs.hazard.k51'),
       fields: ['severity', 'exposure', 'likelihood', 'level'],
     },
     {
-      title: '状态与描述',
+      title: i18n.t('ehs.hazard.k52'),
       fields: ['status', 'description'],
     },
   ],
 
   formColCount: 3,
-  createTitle: '登记危险源',
-  editTitle: '编辑危险源',
-  detailTitle: '危险源详情',
+  createTitle: i18n.t('ehs.hazard.k53'),
+  editTitle: i18n.t('ehs.hazard.k54'),
+  detailTitle: i18n.t('ehs.hazard.k55'),
 };

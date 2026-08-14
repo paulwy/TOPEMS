@@ -3,6 +3,7 @@ import { Box, Button } from '@mui/material';
 import { Type, Clock, SortAsc, SortDesc } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import type { SortField, SortOrder } from '../types';
+import { designTokens } from '@topems/tokens';
 
 interface DocumentFiltersProps {
   fileTypeFilter: string;
@@ -56,7 +57,7 @@ const DocumentFilters: React.FC<DocumentFiltersProps> = ({
             backgroundColor: 'transparent',
             border: 'none',
             borderRadius: 8,
-            padding: '6px 12px',
+            padding: `${designTokens.spacing.sm} 12px`,
             fontSize: '0.875rem',
           }}
         >

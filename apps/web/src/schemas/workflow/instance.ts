@@ -2,28 +2,29 @@ import React from 'react';
 import { Chip, Box, Typography, Avatar } from '@mui/material';
 import { PlaySquare, GitBranch, Clock } from 'lucide-react';
 import type { EntitySchema } from '@/schema';
+import i18n from '@/i18n';
 
 const STATUS_CONFIG: Record<
   string,
   { label: string; color: 'primary' | 'success' | 'error' | 'warning' | 'default' }
 > = {
-  running: { label: '运行中', color: 'primary' },
-  completed: { label: '已完成', color: 'success' },
-  cancelled: { label: '已取消', color: 'error' },
-  suspended: { label: '已挂起', color: 'warning' },
-  terminated: { label: '已终止', color: 'error' },
-  pending: { label: '待处理', color: 'warning' },
-  rejected: { label: '已拒绝', color: 'error' },
+  running: { label: i18n.t('shared.instance.k0'), color: 'primary' },
+  completed: { label: i18n.t('shared.instance.k1'), color: 'success' },
+  cancelled: { label: i18n.t('shared.instance.k2'), color: 'error' },
+  suspended: { label: i18n.t('shared.instance.k3'), color: 'warning' },
+  terminated: { label: i18n.t('shared.instance.k4'), color: 'error' },
+  pending: { label: i18n.t('shared.instance.k5'), color: 'warning' },
+  rejected: { label: i18n.t('shared.instance.k6'), color: 'error' },
 };
 
 const TYPE_CONFIG: Record<
   string,
   { label: string; color: 'primary' | 'success' | 'info' | 'warning' }
 > = {
-  approval: { label: '审批流', color: 'primary' },
-  business: { label: '业务流', color: 'success' },
-  notification: { label: '通知流', color: 'info' },
-  automation: { label: '自动化', color: 'warning' },
+  approval: { label: i18n.t('shared.instance.k7'), color: 'primary' },
+  business: { label: i18n.t('shared.instance.k8'), color: 'success' },
+  notification: { label: i18n.t('shared.instance.k9'), color: 'info' },
+  automation: { label: i18n.t('shared.instance.k10'), color: 'warning' },
 };
 
 const statusOptions = Object.entries(STATUS_CONFIG).map(([value, config]) => ({
@@ -38,8 +39,8 @@ const typeOptions = Object.entries(TYPE_CONFIG).map(([value, config]) => ({
 
 export const workflowInstanceSchema: EntitySchema = {
   entity: 'workflow-instance',
-  title: '工作流实例',
-  description: '管理工作流实例列表',
+  title: i18n.t('shared.instance.k11'),
+  description: i18n.t('shared.instance.k12'),
 
   api: {
     module: 'workflow',
@@ -49,7 +50,7 @@ export const workflowInstanceSchema: EntitySchema = {
   fields: [
     {
       name: 'workflow_name',
-      label: '流程名称',
+      label: i18n.t('shared.instance.k13'),
       type: 'text',
       readonly: true,
       listMinWidth: 240,
@@ -90,7 +91,7 @@ export const workflowInstanceSchema: EntitySchema = {
     },
     {
       name: 'workflow_type',
-      label: '流程类型',
+      label: i18n.t('shared.instance.k14'),
       type: 'select',
       readonly: true,
       options: {
@@ -110,7 +111,7 @@ export const workflowInstanceSchema: EntitySchema = {
     },
     {
       name: 'initiator_name',
-      label: '发起人',
+      label: i18n.t('shared.instance.k15'),
       type: 'text',
       readonly: true,
       renderCell: (row: Record<string, unknown>) =>
@@ -136,7 +137,7 @@ export const workflowInstanceSchema: EntitySchema = {
     },
     {
       name: 'currentnode',
-      label: '当前节点',
+      label: i18n.t('shared.instance.k16'),
       type: 'text',
       readonly: true,
       renderCell: (row: Record<string, unknown>) =>
@@ -153,7 +154,7 @@ export const workflowInstanceSchema: EntitySchema = {
     },
     {
       name: 'status',
-      label: '状态',
+      label: i18n.t('shared.instance.k17'),
       type: 'select',
       readonly: true,
       options: {
@@ -173,7 +174,7 @@ export const workflowInstanceSchema: EntitySchema = {
     },
     {
       name: 'started_at',
-      label: '发起时间',
+      label: i18n.t('shared.instance.k18'),
       type: 'datetime',
       readonly: true,
       renderCell: (row: Record<string, unknown>) =>
@@ -196,15 +197,15 @@ export const workflowInstanceSchema: EntitySchema = {
     filters: [
       {
         id: 'status',
-        label: '状态',
+        label: i18n.t('shared.instance.k19'),
         type: 'select',
-        options: [{ label: '全部状态', value: 'all' }, ...statusOptions],
+        options: [{ label: i18n.t('shared.instance.k20'), value: 'all' }, ...statusOptions],
       },
       {
         id: 'type',
-        label: '流程类型',
+        label: i18n.t('shared.instance.k21'),
         type: 'select',
-        options: [{ label: '全部类型', value: 'all' }, ...typeOptions],
+        options: [{ label: i18n.t('shared.instance.k22'), value: 'all' }, ...typeOptions],
       },
     ],
     statusBadge: {

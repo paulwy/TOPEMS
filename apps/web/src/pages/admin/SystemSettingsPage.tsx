@@ -2,7 +2,6 @@
  * 系统设置页面
  * 管理系统基础配置、邮件设置、短信设置、日志设置
  */
-
 import React, { useState, useMemo, useCallback } from 'react';
 import { apiLogger } from '@/utils/logger';
 import { Box, Tabs, Tab, Paper } from '@mui/material';
@@ -13,18 +12,18 @@ import type {
   FormField,
   FieldDependency,
 } from '@/components/templates/FormPageTemplate';
+import i18n from '@/i18n';
 import { PageContainer } from '@/components/common';
 import { ADMIN_PATHS } from '@/modules/admin/config';
-
 // ============ Mock 数据 ============
 const mockSettings = {
   basic: {
-    systemName: 'TOPEMS 企业管理系统',
+    systemName: i18n.t('pages.system_settings_page.topems_0'),
     systemLogo: '',
-    companyName: '示例公司',
+    companyName: i18n.t('admin.system_settings_page.k0'),
     contactEmail: 'admin@example.com',
     contactPhone: '400-123-4567',
-    address: '北京市朝阳区某某路123号',
+    address: i18n.t('admin.system_settings_page.123_1'),
   },
   mail: {
     enabled: true,
@@ -34,7 +33,7 @@ const mockSettings = {
     smtpPassword: '',
     useTLS: true,
     fromEmail: 'noreply@example.com',
-    fromName: 'TOPEMS 系统',
+    fromName: i18n.t('pages.system_settings_page.topems_1'),
   },
   sms: {
     enabled: false,
@@ -51,129 +50,123 @@ const mockSettings = {
     enableSecurityLog: true,
   },
 };
-
 interface TabConfig {
   id: string;
   label: string;
   icon: React.ElementType;
 }
-
 const tabsConfig: TabConfig[] = [
-  { id: 'basic', label: '基础配置', icon: Settings },
-  { id: 'mail', label: '邮件设置', icon: Mail },
-  { id: 'sms', label: '短信设置', icon: MessageSquare },
-  { id: 'log', label: '日志设置', icon: FileText },
+  { id: 'basic', label: i18n.t('admin.system_settings_page.k2'), icon: Settings },
+  { id: 'mail', label: i18n.t('admin.system_settings_page.k3'), icon: Mail },
+  { id: 'sms', label: i18n.t('admin.system_settings_page.k4'), icon: MessageSquare },
+  { id: 'log', label: i18n.t('admin.system_settings_page.k5'), icon: FileText },
 ];
-
 // ============ 表单字段定义 ============
-
 const getBasicFields = (): FormField[] => [
   {
     name: 'systemName',
-    label: '系统名称',
+    label: i18n.t('admin.system_settings_page.k6'),
     type: 'text',
     defaultValue: mockSettings.basic.systemName,
   },
   {
     name: 'companyName',
-    label: '公司名称',
+    label: i18n.t('admin.system_settings_page.k7'),
     type: 'text',
     defaultValue: mockSettings.basic.companyName,
   },
   {
     name: 'contactEmail',
-    label: '联系邮箱',
+    label: i18n.t('admin.system_settings_page.k8'),
     type: 'email',
     defaultValue: mockSettings.basic.contactEmail,
   },
   {
     name: 'contactPhone',
-    label: '联系电话',
+    label: i18n.t('admin.system_settings_page.k9'),
     type: 'text',
     defaultValue: mockSettings.basic.contactPhone,
   },
   {
     name: 'address',
-    label: '公司地址',
+    label: i18n.t('admin.system_settings_page.k10'),
     type: 'textarea',
     rows: 2,
     defaultValue: mockSettings.basic.address,
   },
 ];
-
 const getMailFields = (): FormField[] => [
   {
     name: 'enabled',
-    label: '启用邮件服务',
+    label: i18n.t('admin.system_settings_page.k11'),
     type: 'switch',
     defaultValue: mockSettings.mail.enabled,
   },
   {
     name: 'smtpHost',
-    label: 'SMTP 服务器',
+    label: i18n.t('pages.system_settings_page.smtp_2'),
     type: 'text',
     defaultValue: mockSettings.mail.smtpHost,
     dependsOn: ['enabled'],
   },
   {
     name: 'smtpPort',
-    label: 'SMTP 端口',
+    label: i18n.t('pages.system_settings_page.smtp_3'),
     type: 'number',
     defaultValue: mockSettings.mail.smtpPort,
     dependsOn: ['enabled'],
   },
   {
     name: 'smtpUsername',
-    label: '用户名',
+    label: i18n.t('admin.system_settings_page.k12'),
     type: 'text',
     defaultValue: mockSettings.mail.smtpUsername,
     dependsOn: ['enabled'],
   },
   {
     name: 'smtpPassword',
-    label: '密码',
+    label: i18n.t('admin.system_settings_page.k13'),
     type: 'password',
     defaultValue: mockSettings.mail.smtpPassword,
     dependsOn: ['enabled'],
   },
   {
     name: 'useTLS',
-    label: '使用 TLS',
+    label: i18n.t('admin.system_settings_page.tls_14'),
     type: 'switch',
     defaultValue: mockSettings.mail.useTLS,
     dependsOn: ['enabled'],
   },
   {
     name: 'fromEmail',
-    label: '发件人邮箱',
+    label: i18n.t('admin.system_settings_page.k15'),
     type: 'email',
     defaultValue: mockSettings.mail.fromEmail,
     dependsOn: ['enabled'],
   },
   {
     name: 'fromName',
-    label: '发件人名称',
+    label: i18n.t('admin.system_settings_page.k16'),
     type: 'text',
     defaultValue: mockSettings.mail.fromName,
     dependsOn: ['enabled'],
   },
 ];
-
 const getSmsFields = (): FormField[] => [
   {
     name: 'enabled',
-    label: '启用短信服务',
+    label: i18n.t('admin.system_settings_page.k17'),
     type: 'switch',
     defaultValue: mockSettings.sms.enabled,
   },
   {
     name: 'provider',
-    label: '短信服务商',
+    label: i18n.t('admin.system_settings_page.k18'),
     type: 'select',
     options: [
-      { label: '阿里云', value: 'aliyun' },
-      { label: '腾讯云', value: 'tencent' },
-      { label: '华为云', value: 'huawei' },
+      { label: i18n.t('admin.system_settings_page.k19'), value: 'aliyun' },
+      { label: i18n.t('admin.system_settings_page.k20'), value: 'tencent' },
+      { label: i18n.t('admin.system_settings_page.k21'), value: 'huawei' },
     ],
     defaultValue: mockSettings.sms.provider,
     dependsOn: ['enabled'],
@@ -194,17 +187,16 @@ const getSmsFields = (): FormField[] => [
   },
   {
     name: 'signName',
-    label: '签名名称',
+    label: i18n.t('admin.system_settings_page.k22'),
     type: 'text',
     defaultValue: mockSettings.sms.signName,
     dependsOn: ['enabled'],
   },
 ];
-
 const getLogFields = (): FormField[] => [
   {
     name: 'level',
-    label: '日志级别',
+    label: i18n.t('admin.system_settings_page.k23'),
     type: 'select',
     options: [
       { label: 'Debug', value: 'debug' },
@@ -216,53 +208,49 @@ const getLogFields = (): FormField[] => [
   },
   {
     name: 'retentionDays',
-    label: '日志保留天数',
+    label: i18n.t('admin.system_settings_page.k24'),
     type: 'number',
     defaultValue: mockSettings.log.retentionDays,
   },
   {
     name: 'enableAccessLog',
-    label: '启用访问日志',
+    label: i18n.t('admin.system_settings_page.k25'),
     type: 'switch',
     defaultValue: mockSettings.log.enableAccessLog,
   },
   {
     name: 'enableOperationLog',
-    label: '启用操作日志',
+    label: i18n.t('admin.system_settings_page.k26'),
     type: 'switch',
     defaultValue: mockSettings.log.enableOperationLog,
   },
   {
     name: 'enableSecurityLog',
-    label: '启用安全日志',
+    label: i18n.t('admin.system_settings_page.k27'),
     type: 'switch',
     defaultValue: mockSettings.log.enableSecurityLog,
   },
 ];
-
 const getSections = (tabId: string): FormSection[] => {
   switch (tabId) {
     case 'basic':
-      return [{ id: 'basic', title: '基础配置', fields: getBasicFields() }];
+      return [{ id: 'basic', title: i18n.t('admin.system_settings_page.k28'), fields: getBasicFields() }];
     case 'mail':
-      return [{ id: 'mail', title: '邮件设置', fields: getMailFields() }];
+      return [{ id: 'mail', title: i18n.t('admin.system_settings_page.k29'), fields: getMailFields() }];
     case 'sms':
-      return [{ id: 'sms', title: '短信设置', fields: getSmsFields() }];
+      return [{ id: 'sms', title: i18n.t('admin.system_settings_page.k30'), fields: getSmsFields() }];
     case 'log':
-      return [{ id: 'log', title: '日志设置', fields: getLogFields() }];
+      return [{ id: 'log', title: i18n.t('admin.system_settings_page.k31'), fields: getLogFields() }];
     default:
       return [];
   }
 };
-
 export default function SystemSettingsPage() {
   const [activeTab, setActiveTab] = useState('basic');
   const [settings, setSettings] = useState(mockSettings);
-
   // 计算字段依赖：enabled 字段控制其他字段的禁用状态
   const dependencies = useMemo(() => {
     const deps: FieldDependency[] = [];
-
     // 邮件设置依赖
     if (activeTab === 'mail') {
       [
@@ -283,7 +271,6 @@ export default function SystemSettingsPage() {
         });
       });
     }
-
     // 短信设置依赖
     if (activeTab === 'sms') {
       ['provider', 'accessKeyId', 'accessKeySecret', 'signName'].forEach((field) => {
@@ -296,18 +283,14 @@ export default function SystemSettingsPage() {
         });
       });
     }
-
     return deps;
   }, [activeTab]);
-
   // 当前 tab 的默认值
   const defaultValues = useMemo(() => {
     return settings[activeTab as keyof typeof settings];
   }, [activeTab, settings]);
-
   // 当前 tab 的 sections
   const sections = useMemo(() => getSections(activeTab), [activeTab]);
-
   const handleSubmit = useCallback(
     async (data: unknown) => {
       const formData = data as unknown as Record<string, unknown>;
@@ -318,26 +301,23 @@ export default function SystemSettingsPage() {
           ...formData,
         },
       }));
-      apiLogger.info('保存设置:', { tab: activeTab, data });
+      apiLogger.info(i18n.t('pages.system_settings_page.k4'), { tab: activeTab, data });
     },
     [activeTab]
   );
-
   const handleReset = useCallback(() => {
     setSettings((prev) => ({
       ...prev,
       [activeTab]: mockSettings[activeTab as keyof typeof mockSettings],
     }));
   }, [activeTab]);
-
   const handleTabChange = (_event: React.SyntheticEvent, newValue: string) => {
     setActiveTab(newValue);
   };
-
   return (
     <PageContainer
-      title='系统设置'
-      subtitle='管理系统基础配置、邮件设置、短信设置、日志设置'
+      title={i18n.t('admin.system_settings_page.k32')}
+      subtitle={i18n.t('admin.system_settings_page.k33')}
     >
       {/* Tab 导航 */}
       <Paper sx={{ borderRadius: 2, mb: 3 }}>
@@ -370,7 +350,6 @@ export default function SystemSettingsPage() {
             );
           })}
         </Tabs>
-
         {/* 表单内容 */}
         <Box sx={{ p: 3 }}>
           <FormPageTemplate
@@ -382,8 +361,8 @@ export default function SystemSettingsPage() {
             dependencies={dependencies}
             onSubmit={handleSubmit}
             onReset={handleReset}
-            submitText='保存'
-            resetText='重置'
+            submitText={i18n.t('admin.system_settings_page.k34')}
+            resetText={i18n.t('admin.system_settings_page.k35')}
             columns={2}
             stickyFooter={true}
             showGroupTabs={false}

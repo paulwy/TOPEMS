@@ -14,12 +14,13 @@ import {
   Scatter,
   ZAxis,
 } from 'recharts';
+import i18n from '@/i18n';
 import type { MtbfData } from '@/api/mes/types';
 import { designTokens, semanticTokens } from '@topems/tokens';
 
 function useMtbfMock(): MtbfData {
   return useMemo(() => {
-    const types = ['CNC', '注塑机', '装配线', '检测机', '激光机', '包装机'];
+    const types = ['CNC', i18n.t('pages.mes_equipment_mtbf_page.k4'), i18n.t('pages.mes_equipment_mtbf_page.k3'), i18n.t('pages.mes_equipment_mtbf_page.k2'), i18n.t('pages.mes_equipment_mtbf_page.k1'), i18n.t('pages.mes_equipment_mtbf_page.k0')];
     return {
       by_equipment_type: types.map((t, i) => ({
         type: t,
@@ -27,14 +28,14 @@ function useMtbfMock(): MtbfData {
         mttr_hours: Math.round((2 + ((i * 3) % 5)) * 10) / 10,
       })),
       fault_reasons: [
-        '机械磨损',
-        '电气故障',
-        '传感器失灵',
-        '润滑不足',
-        '程序异常',
-        '气源问题',
-        '人为误操作',
-        '环境因素',
+        i18n.t('pages.mes_equipment_mtbf_page.k5'),
+        i18n.t('pages.mes_equipment_mtbf_page.k6'),
+        i18n.t('pages.mes_equipment_mtbf_page.k7'),
+        i18n.t('pages.mes_equipment_mtbf_page.k8'),
+        i18n.t('pages.mes_equipment_mtbf_page.k9'),
+        i18n.t('pages.mes_equipment_mtbf_page.k10'),
+        i18n.t('pages.mes_equipment_mtbf_page.k11'),
+        i18n.t('pages.mes_equipment_mtbf_page.k12'),
       ].map((reason, i) => ({
         reason,
         frequency: Math.round(60 - i * 6 + Math.sin(i) * 4),
@@ -66,12 +67,12 @@ export default function MesEquipmentMtbfPage() {
           value={severity}
           onChange={(e) => setSeverity(e.target.value)}
           className="border rounded px-3 py-1.5 text-sm"
-          aria-label="故障级别"
+          aria-label={i18n.t('pages.mes_equipment_mtbf_page.k13')}
         >
-          <option value="all">全部级别</option>
-          <option value="critical">严重</option>
-          <option value="major">一般</option>
-          <option value="minor">轻微</option>
+          <option value="all">{i18n.t('pages.mes_equipment_mtbf_page.k14')}</option>
+          <option value="critical">{i18n.t('pages.mes_equipment_mtbf_page.k15')}</option>
+          <option value="major">{i18n.t('pages.mes_equipment_mtbf_page.k16')}</option>
+          <option value="minor">{i18n.t('pages.mes_equipment_mtbf_page.k17')}</option>
         </select>
       </div>
 
@@ -88,7 +89,7 @@ export default function MesEquipmentMtbfPage() {
             <Line
               type="monotone"
               dataKey="target"
-              name="目标"
+              name={i18n.t('pages.mes_equipment_mtbf_page.k18')}
               stroke={designTokens.colors.error.main}
               strokeDasharray="4 4"
               dot={false}
@@ -99,7 +100,7 @@ export default function MesEquipmentMtbfPage() {
 
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
         <div className="rounded-lg border p-4">
-          <h3 className="mb-2 font-semibold">设备类型 MTTR 对比</h3>
+          <h3 className="mb-2 font-semibold">{i18n.t('pages.mes_equipment_mtbf_page.mttr_19')}</h3>
           <ResponsiveContainer width="100%" height={260}>
             <BarChart data={data.by_equipment_type}>
               <CartesianGrid strokeDasharray="3 3" />
@@ -107,7 +108,7 @@ export default function MesEquipmentMtbfPage() {
               <YAxis unit="h" />
               <Tooltip />
               <Legend />
-              <Bar dataKey="mttr_hours" name="MTTR (小时)" fill={designTokens.colors.warning.main} radius={[4, 4, 0, 0]} />
+              <Bar dataKey="mttr_hours" name={i18n.t('pages.mes_equipment_mtbf_page.mttr_0')} fill={designTokens.colors.warning.main} radius={[4, 4, 0, 0]} />
             </BarChart>
           </ResponsiveContainer>
         </div>
@@ -128,14 +129,14 @@ export default function MesEquipmentMtbfPage() {
       </div>
 
       <div className="rounded-lg border p-4">
-        <h3 className="mb-2 font-semibold">故障原因 Top N</h3>
+        <h3 className="mb-2 font-semibold">{i18n.t('pages.mes_equipment_mtbf_page.topn_20')}</h3>
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead className="bg-gray-50 text-left text-gray-600">
               <tr>
-                <th className="px-3 py-2">故障原因</th>
-                <th className="px-3 py-2">发生频次</th>
-                <th className="px-3 py-2">占比</th>
+                <th className="px-3 py-2">{i18n.t('pages.mes_equipment_mtbf_page.k21')}</th>
+                <th className="px-3 py-2">{i18n.t('pages.mes_equipment_mtbf_page.k22')}</th>
+                <th className="px-3 py-2">{i18n.t('pages.mes_equipment_mtbf_page.k23')}</th>
               </tr>
             </thead>
             <tbody>

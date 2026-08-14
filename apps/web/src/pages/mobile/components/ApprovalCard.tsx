@@ -4,7 +4,6 @@
  */
 import React from 'react';
 import { Box, Typography, Chip, ListItem, ListItemText, useTheme } from '@mui/material';
-import { useTranslation } from 'react-i18next';
 import { ChevronRight, Clock, User as UserIcon, Check, X } from 'lucide-react';
 import { SwipeAction, type SwipeActionItem } from '@/components/mobile';
 import type { ApprovalItem } from '../hooks/useMobileApproval';
@@ -14,42 +13,37 @@ import {
   getPriorityColor,
   getPriorityLabel,
 } from '../hooks/useMobileApproval';
-
+import i18n from '@/i18n';
 interface ApprovalCardProps {
   approval: ApprovalItem;
   onClick: () => void;
   onApprove?: () => void;
   onReject?: () => void;
 }
-
 export const ApprovalCard: React.FC<ApprovalCardProps> = ({
   approval,
   onClick,
   onApprove,
   onReject,
 }) => {
-  const { t } = useTranslation();
   const theme = useTheme();
-
   const typeColor = getTypeColor(approval.type);
-
   const rightSwipeActions: SwipeActionItem[] = [
     {
       id: 'approve',
       icon: <Check style={{ width: 20, height: 20 }} />,
-      label: t('mobile.approval.action.approve'),
+      label: i18n.t('mobile.approval.action.approve'),
       color: theme.palette.success.main,
       onClick: onApprove || (() => {}),
     },
     {
       id: 'reject',
       icon: <X style={{ width: 20, height: 20 }} />,
-      label: t('mobile.approval.action.reject'),
+      label: i18n.t('mobile.approval.action.reject'),
       color: theme.palette.error.main,
       onClick: onReject || (() => {}),
     },
   ];
-
   return (
     <SwipeAction rightActions={rightSwipeActions}>
       <ListItem
@@ -114,7 +108,7 @@ export const ApprovalCard: React.FC<ApprovalCardProps> = ({
             <Box sx={{ ml: 0, mt: 1 }}>
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
                 <Chip
-                  label={getPriorityLabel(approval.priority, t)}
+                  label={getPriorityLabel(approval.priority, i18n.t)}
                   size='small'
                   color={
                     getPriorityColor(approval.priority) as React.ComponentProps<

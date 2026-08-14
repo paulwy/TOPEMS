@@ -3,6 +3,7 @@ import { Box, Chip, CircularProgress, Divider, Paper, Typography, Stack } from '
 import { Cpu, PlayCircle, Wrench, XCircle } from 'lucide-react';
 import { PieChart } from '@/components/charts';
 import type { EquipmentStatusBucket } from '../types';
+import i18n from '@/i18n';
 
 const EquipmentStatusPanel: React.FC<{
   buckets: EquipmentStatusBucket[];
@@ -41,7 +42,7 @@ const EquipmentStatusPanel: React.FC<{
             variant='subtitle1'
             sx={{ fontWeight: 600 }}
           >
-            设备运行状态
+            {i18n.t('pages.equipment_status_panel.k0')}
           </Typography>
         </Stack>
         <Typography
@@ -65,21 +66,21 @@ const EquipmentStatusPanel: React.FC<{
           >
             <Chip
               icon={<PlayCircle size={14} />}
-              label={`运行 ${running?.count ?? 0}`}
+              label={`${i18n.t('pages.equipment_status_panel.k0')}${running?.count ?? 0}`}
               color='success'
               variant='outlined'
               size='small'
             />
             <Chip
               icon={<Wrench size={14} />}
-              label={`维护 ${maintenance?.count ?? 0}`}
+              label={`${i18n.t('pages.equipment_status_panel.k1')}${maintenance?.count ?? 0}`}
               color='warning'
               variant='outlined'
               size='small'
             />
             <Chip
               icon={<XCircle size={14} />}
-              label={`故障 ${fault?.count ?? 0}`}
+              label={`${i18n.t('pages.equipment_status_panel.k2')}${fault?.count ?? 0}`}
               color='error'
               variant='outlined'
               size='small'

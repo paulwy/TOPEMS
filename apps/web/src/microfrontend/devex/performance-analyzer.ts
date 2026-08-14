@@ -1,3 +1,5 @@
+import i18n from '@/i18n';
+
 export type CoreWebVitalName = 'LCP' | 'FID' | 'CLS' | 'INP' | 'FCP' | 'TTFB';
 
 export interface CoreWebVital {
@@ -237,9 +239,9 @@ export class PerformanceAnalyzer {
       let recommendation: string | undefined;
       if (status === 'slow') {
         if (m.isLazy) {
-          recommendation = '考虑增加预加载策略或减少模块体积';
+          recommendation = i18n.t('shared.performance-analyzer.k0');
         } else {
-          recommendation = '考虑使用懒加载或代码分割';
+          recommendation = i18n.t('shared.performance-analyzer.k1');
         }
       }
       return { moduleId: m.moduleId, status, duration: m.duration, recommendation };
@@ -414,11 +416,11 @@ export class PerformanceAnalyzer {
     return Array.from(this.lazyEffectiveness.values()).map((e) => {
       let recommendation: string | undefined;
       if (!e.wasLazy && e.usageCount < 3) {
-        recommendation = '低频使用模块，建议改为懒加载';
+        recommendation = i18n.t('shared.performance-analyzer.k2');
       } else if (e.wasLazy && e.firstUseDelay > 3000) {
-        recommendation = '首次使用延迟过高，考虑预加载策略';
+        recommendation = i18n.t('shared.performance-analyzer.k3');
       } else if (e.effectivenessScore < 50) {
-        recommendation = '懒加载效果不佳，评估是否需要合并模块';
+        recommendation = i18n.t('shared.performance-analyzer.k4');
       }
       return {
         moduleId: e.moduleId,
@@ -514,32 +516,32 @@ export class PerformanceAnalyzer {
 
     const lcp = this.coreWebVitals.get('LCP');
     if (lcp) {
-      results.push(this.checkMetric('LCP', lcp.value, this.budget.lcp, 'LCP 时间'));
+      results.push(this.checkMetric('LCP', lcp.value, this.budget.lcp, i18n.t('microfrontend.performance-analyzer.lcp_0')));
     }
 
     const fid = this.coreWebVitals.get('FID');
     if (fid) {
-      results.push(this.checkMetric('FID', fid.value, this.budget.fid, 'FID 时间'));
+      results.push(this.checkMetric('FID', fid.value, this.budget.fid, i18n.t('microfrontend.performance-analyzer.fid_1')));
     }
 
     const cls = this.coreWebVitals.get('CLS');
     if (cls) {
-      results.push(this.checkMetric('CLS', cls.value, this.budget.cls, 'CLS 值'));
+      results.push(this.checkMetric('CLS', cls.value, this.budget.cls, i18n.t('microfrontend.performance-analyzer.cls_2')));
     }
 
     const inp = this.coreWebVitals.get('INP');
     if (inp) {
-      results.push(this.checkMetric('INP', inp.value, this.budget.inp, 'INP 时间'));
+      results.push(this.checkMetric('INP', inp.value, this.budget.inp, i18n.t('microfrontend.performance-analyzer.inp_3')));
     }
 
     const fcp = this.coreWebVitals.get('FCP');
     if (fcp) {
-      results.push(this.checkMetric('FCP', fcp.value, this.budget.fcp, 'FCP 时间'));
+      results.push(this.checkMetric('FCP', fcp.value, this.budget.fcp, i18n.t('microfrontend.performance-analyzer.fcp_4')));
     }
 
     const ttfb = this.coreWebVitals.get('TTFB');
     if (ttfb) {
-      results.push(this.checkMetric('TTFB', ttfb.value, this.budget.ttfb, 'TTFB 时间'));
+      results.push(this.checkMetric('TTFB', ttfb.value, this.budget.ttfb, i18n.t('microfrontend.performance-analyzer.ttfb_5')));
     }
 
     for (const [, metric] of this.moduleLoads) {
@@ -548,7 +550,7 @@ export class PerformanceAnalyzer {
           `load_${metric.moduleId}`,
           metric.duration,
           this.budget.maxModuleLoadTime,
-          `模块 ${metric.moduleId} 加载时间`
+          `$i18n.t('microfrontend.performance-analyzer.k6') ${metric.moduleId} $i18n.t('microfrontend.performance-analyzer.k7')`
         )
       );
     }
@@ -560,7 +562,7 @@ export class PerformanceAnalyzer {
           'memory',
           currentMemory.usedJSHeapSize,
           this.budget.maxMemoryUsage,
-          '内存使用'
+          i18n.t('shared.performance-analyzer.k5')
         )
       );
     }
@@ -571,7 +573,7 @@ export class PerformanceAnalyzer {
           `bundle_${bundle.moduleId}`,
           bundle.totalSize,
           this.budget.maxBundleSize,
-          `模块 ${bundle.moduleId} Bundle 大小`
+          `$i18n.t('microfrontend.performance-analyzer.k8') ${bundle.moduleId} $i18n.t('microfrontend.performance-analyzer.bundle_9')`
         )
       );
     }
@@ -591,13 +593,13 @@ export class PerformanceAnalyzer {
 
     if (ratio <= 0.8) {
       status = 'pass';
-      message = `${label}: ${(value / 1024).toFixed(1)}KB (预算 ${(threshold / 1024).toFixed(1)}KB) ✅`;
+      message = `${label}: ${(value / 1024).toFixed(1)}$i18n.t('microfrontend.performance-analyzer.kb_10') ${(threshold / 1024).toFixed(1)}KB) ✅`;
     } else if (ratio <= 1) {
       status = 'warn';
-      message = `${label}: ${(value / 1024).toFixed(1)}KB (预算 ${(threshold / 1024).toFixed(1)}KB) ⚠️`;
+      message = `${label}: ${(value / 1024).toFixed(1)}$i18n.t('microfrontend.performance-analyzer.kb_11') ${(threshold / 1024).toFixed(1)}KB) ⚠️`;
     } else {
       status = 'fail';
-      message = `${label}: ${(value / 1024).toFixed(1)}KB 超出预算 ${((value - threshold) / 1024).toFixed(1)}KB ❌`;
+      message = `${label}: ${(value / 1024).toFixed(1)}$i18n.t('microfrontend.performance-analyzer.kb_12') ${((value - threshold) / 1024).toFixed(1)}KB ❌`;
     }
 
     return { metric: name, value, threshold, status, message };
@@ -649,29 +651,29 @@ export class PerformanceAnalyzer {
     const warnedChecks = budgetResults.filter((r) => r.status === 'warn');
 
     if (ratings['LCP'] === 'poor' || ratings['LCP'] === 'needs-improvement') {
-      recommendations.push('LCP 指标需要改善: 考虑优化首屏内容、使用骨架屏或预加载关键资源');
+      recommendations.push(i18n.t('microfrontend.performance-analyzer.k13'));
     }
     if (ratings['INP'] === 'poor' || ratings['INP'] === 'needs-improvement') {
-      recommendations.push('INP 指标需要改善: 减少主线程阻塞、使用 Web Worker 处理密集计算');
+      recommendations.push(i18n.t('microfrontend.performance-analyzer.k14'));
     }
     if (ratings['CLS'] === 'poor' || ratings['CLS'] === 'needs-improvement') {
-      recommendations.push('CLS 指标需要改善: 为图像/广告预留空间、避免动态内容插入');
+      recommendations.push(i18n.t('microfrontend.performance-analyzer.k15'));
     }
     if (ratings['FID'] === 'poor' || ratings['FID'] === 'needs-improvement') {
-      recommendations.push('FID 指标需要改善: 减少 JS 执行时间、优化关键渲染路径');
+      recommendations.push(i18n.t('microfrontend.performance-analyzer.k16'));
     }
 
     const slowModules = this.analyzeModuleLoads().filter((m) => m.status === 'slow');
     if (slowModules.length > 0) {
       recommendations.push(
-        `发现 ${slowModules.length} 个慢速加载模块，考虑优化或懒加载: ${slowModules.map((m) => m.moduleId).join(', ')}`
+        `$i18n.t('microfrontend.performance-analyzer.k17') ${slowModules.length} $i18n.t('microfrontend.performance-analyzer.k18') ${slowModules.map((m) => m.moduleId).join(', ')}`
       );
     }
 
     const slowComponents = this.getSlowComponents();
     if (slowComponents.length > 0) {
       recommendations.push(
-        `发现 ${slowComponents.length} 个渲染性能不佳的组件，考虑 React.memo 或 useMemo 优化`
+        `$i18n.t('microfrontend.performance-analyzer.k19') ${slowComponents.length} $i18n.t('microfrontend.performance-analyzer.k20')`
       );
     }
 
@@ -685,15 +687,15 @@ export class PerformanceAnalyzer {
     const criticalBundles = this.analyzeBundleSizes().filter((b) => b.status === 'critical');
     if (criticalBundles.length > 0) {
       recommendations.push(
-        `发现 ${criticalBundles.length} 个超大 Bundle，考虑进一步拆分: ${criticalBundles.map((b) => b.moduleId).join(', ')}`
+        `$i18n.t('microfrontend.performance-analyzer.k22') ${criticalBundles.length} $i18n.t('microfrontend.performance-analyzer.k23') ${criticalBundles.map((b) => b.moduleId).join(', ')}`
       );
     }
 
     if (failedChecks.length > 0) {
-      recommendations.push(`${failedChecks.length} 项预算检查未通过，需要重点关注`);
+      recommendations.push(`${failedChecks.length} $i18n.t('microfrontend.performance-analyzer.k24')`);
     }
     if (warnedChecks.length > 0) {
-      recommendations.push(`${warnedChecks.length} 项预算检查接近阈值，建议提前优化`);
+      recommendations.push(`${warnedChecks.length} $i18n.t('microfrontend.performance-analyzer.k25')`);
     }
 
     return recommendations;

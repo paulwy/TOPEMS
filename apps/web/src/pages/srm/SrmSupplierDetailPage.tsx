@@ -11,6 +11,7 @@ import { useQuery } from '@tanstack/react-query';
 
 import { QUERY_KEYS } from '@/lib/reactQuery';
 import { designTokens, semanticTokens } from '@topems/tokens';
+import i18n from '@/i18n';
 
 const SrmSupplierDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -18,10 +19,10 @@ const SrmSupplierDetailPage: React.FC = () => {
   const supplierQuery = useQuery<Supplier | null>({
     queryKey: QUERY_KEYS.SRM.SUPPLIER(id || ''),
     queryFn: async () => {
-      if (!id) throw new Error('供应商ID为空');
+      if (!id) throw new Error(i18n.t('pages.srm_supplier_detail_page.id_0'));
       const res = await srmApi.getSupplier(id);
       if (res.success && res.data) return res.data;
-      throw new Error(res.message || '加载供应商信息失败');
+      throw new Error(res.message || i18n.t('pages.srm_supplier_detail_page.k1'));
     },
     enabled: !!id,
     staleTime: 5 * 60 * 1000,
@@ -32,12 +33,12 @@ const SrmSupplierDetailPage: React.FC = () => {
   const error = supplierQuery.isError
     ? supplierQuery.error instanceof Error
       ? supplierQuery.error.message
-      : '加载供应商信息失败'
+      : i18n.t('pages.srm_supplier_detail_page.k2')
     : null;
 
   useEffect(() => {
     if (supplierQuery.isError) {
-      apiLogger.error('加载供应商信息失败', supplierQuery.error);
+      apiLogger.error(i18n.t('pages.srm_supplier_detail_page.k3'), supplierQuery.error);
     }
   }, [supplierQuery.isError, supplierQuery.error]);
 
@@ -65,10 +66,10 @@ const SrmSupplierDetailPage: React.FC = () => {
       subtitle: supplier?.supplier_no,
       tags: [
         supplier?.status === 'active'
-          ? '活跃'
+          ? i18n.t('pages.srm_supplier_detail_page.k4')
           : supplier?.status === 'inactive'
-            ? '停用'
-            : '待审核',
+            ? i18n.t('pages.srm_supplier_detail_page.k5')
+            : i18n.t('pages.srm_supplier_detail_page.k6'),
       ],
     }),
     [supplier]
@@ -78,7 +79,7 @@ const SrmSupplierDetailPage: React.FC = () => {
     if (!supplier) return { id: 'contact', content: null };
     return {
       id: 'contact',
-      title: '联系信息',
+      title: i18n.t('pages.srm_supplier_detail_page.k7'),
       content: (
         <Box
           sx={{
@@ -93,7 +94,7 @@ const SrmSupplierDetailPage: React.FC = () => {
                 <Building2 sx={{ width: 16, height: 16, color: 'primary.main' }} />
               </Avatar>
               <Box>
-                <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>联系人</InputLabel>
+                <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>{i18n.t('pages.srm_supplier_detail_page.k8')}</InputLabel>
                 <Typography sx={{ mt: 0.5 }}>{supplier.contact_person}</Typography>
               </Box>
             </Box>
@@ -104,7 +105,7 @@ const SrmSupplierDetailPage: React.FC = () => {
                 <Phone sx={{ width: 16, height: 16, color: 'primary.main' }} />
               </Avatar>
               <Box>
-                <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>联系电话</InputLabel>
+                <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>{i18n.t('pages.srm_supplier_detail_page.k9')}</InputLabel>
                 <Typography sx={{ mt: 0.5 }}>{supplier.phone}</Typography>
               </Box>
             </Box>
@@ -115,7 +116,7 @@ const SrmSupplierDetailPage: React.FC = () => {
                 <Mail sx={{ width: 16, height: 16, color: 'primary.main' }} />
               </Avatar>
               <Box>
-                <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>邮箱</InputLabel>
+                <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>{i18n.t('pages.srm_supplier_detail_page.k10')}</InputLabel>
                 <Typography sx={{ mt: 0.5 }}>{supplier.email}</Typography>
               </Box>
             </Box>
@@ -126,7 +127,7 @@ const SrmSupplierDetailPage: React.FC = () => {
                 <MapPin sx={{ width: 16, height: 16, color: 'primary.main' }} />
               </Avatar>
               <Box>
-                <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>地址</InputLabel>
+                <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>{i18n.t('pages.srm_supplier_detail_page.k11')}</InputLabel>
                 <Typography sx={{ mt: 0.5 }}>{supplier.address}</Typography>
               </Box>
             </Box>
@@ -137,7 +138,7 @@ const SrmSupplierDetailPage: React.FC = () => {
                 <Building2 sx={{ width: 16, height: 16, color: 'primary.main' }} />
               </Avatar>
               <Box>
-                <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>官网</InputLabel>
+                <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>{i18n.t('pages.srm_supplier_detail_page.k12')}</InputLabel>
                 <Typography sx={{ mt: 0.5 }}>{supplier.website}</Typography>
               </Box>
             </Box>
@@ -151,7 +152,7 @@ const SrmSupplierDetailPage: React.FC = () => {
     if (!supplier) return { id: 'basic', content: null };
     return {
       id: 'basic',
-      title: '基本信息',
+      title: i18n.t('pages.srm_supplier_detail_page.k13'),
       content: (
         <Box
           sx={{
@@ -162,31 +163,31 @@ const SrmSupplierDetailPage: React.FC = () => {
         >
           {supplier.legal_name && (
             <Box>
-              <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>法定名称</InputLabel>
+              <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>{i18n.t('pages.srm_supplier_detail_page.k14')}</InputLabel>
               <Typography sx={{ mt: 0.5 }}>{supplier.legal_name}</Typography>
             </Box>
           )}
           {supplier.tax_id && (
             <Box>
-              <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>税号</InputLabel>
+              <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>{i18n.t('pages.srm_supplier_detail_page.k15')}</InputLabel>
               <Typography sx={{ mt: 0.5 }}>{supplier.tax_id}</Typography>
             </Box>
           )}
           <Box>
-            <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>品类</InputLabel>
+            <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>{i18n.t('pages.srm_supplier_detail_page.k16')}</InputLabel>
             <Typography sx={{ mt: 0.5 }}>{supplier.category}</Typography>
           </Box>
           <Box>
-            <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>风险等级</InputLabel>
+            <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>{i18n.t('pages.srm_supplier_detail_page.k17')}</InputLabel>
             <Box sx={{ mt: 0.5 }}>
               <Chip
                 icon={<AlertTriangle sx={{ width: 14, height: 14 }} />}
                 label={
                   supplier.risklevel === 'low'
-                    ? '低'
+                    ? i18n.t('pages.srm_supplier_detail_page.k18')
                     : supplier.risklevel === 'medium'
-                      ? '中'
-                      : '高'
+                      ? i18n.t('pages.srm_supplier_detail_page.k19')
+                      : i18n.t('pages.srm_supplier_detail_page.k20')
                 }
                 color={riskColors[supplier.risklevel] as React.ComponentProps<typeof Chip>['color']}
                 size='small'
@@ -195,7 +196,7 @@ const SrmSupplierDetailPage: React.FC = () => {
           </Box>
           {supplier.credit_rating && (
             <Box>
-              <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>信用等级</InputLabel>
+              <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>{i18n.t('pages.srm_supplier_detail_page.k21')}</InputLabel>
               <Box sx={{ mt: 0.5 }}>
                 <Chip
                   icon={<CreditCard sx={{ width: 14, height: 14 }} />}
@@ -206,7 +207,7 @@ const SrmSupplierDetailPage: React.FC = () => {
             </Box>
           )}
           <Box>
-            <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>创建时间</InputLabel>
+            <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>{i18n.t('pages.srm_supplier_detail_page.k22')}</InputLabel>
             <Typography sx={{ mt: 0.5 }}>
               {new Date(supplier.created_at).toLocaleString('zh-CN')}
             </Typography>
@@ -218,9 +219,9 @@ const SrmSupplierDetailPage: React.FC = () => {
 
   if (loading) {
     return (
-      <PageContainer title='供应商详情'>
+      <PageContainer title={i18n.t('pages.srm_supplier_detail_page.k23')}>
         <Box sx={{ display: 'flex', justifyContent: 'center', py: 8 }}>
-          <Typography>加载中...</Typography>
+          <Typography>{i18n.t('pages.srm_supplier_detail_page.k0')}</Typography>
         </Box>
       </PageContainer>
     );
@@ -228,9 +229,9 @@ const SrmSupplierDetailPage: React.FC = () => {
 
   if (error || !supplier) {
     return (
-      <PageContainer title='供应商详情'>
+      <PageContainer title={i18n.t('pages.srm_supplier_detail_page.k24')}>
         <Box sx={{ display: 'flex', justifyContent: 'center', py: 8 }}>
-          <Typography color='error'>{error || '供应商不存在'}</Typography>
+          <Typography color='error'>{error || i18n.t('pages.srm_supplier_detail_page.k25')}</Typography>
         </Box>
       </PageContainer>
     );
@@ -238,14 +239,14 @@ const SrmSupplierDetailPage: React.FC = () => {
 
   return (
     <PageContainer
-      title='供应商详情'
+      title={i18n.t('pages.srm_supplier_detail_page.k26')}
       autoTitle
       autoBreadcrumbs
     >
       <DetailPageTemplate
         title=''
         subtitle=''
-        detailItemName={supplier?.name || supplier?.id || '供应商详情'}
+        detailItemName={supplier?.name || supplier?.id || i18n.t('pages.srm_supplier_detail_page.k27')}
         backHref={SRM_PATHS.supplier}
         loading={loading}
         error={error || undefined}

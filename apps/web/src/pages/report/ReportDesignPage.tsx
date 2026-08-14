@@ -7,6 +7,7 @@ import {
   ChartBar as ChartBarIcon,
   Layout as LayoutIcon,
 } from 'lucide-react';
+import i18n from '@/i18n';
 import { designTokens } from '@/theme/tokens';
 
 const ct= designTokens.colors;
@@ -14,8 +15,8 @@ const ct= designTokens.colors;
 const ReportDesignPage: React.FC = () => {
   return (
     <PageContainer
-      title='报表设计'
-      subtitle='可视化报表设计器，支持拖拽式布局和多种组件'
+      title={i18n.t('pages.report_design_page.k0')}
+      subtitle={i18n.t('pages.report_design_page.k1')}
     >
       <Card>
         <CardContent>
@@ -35,14 +36,14 @@ const ReportDesignPage: React.FC = () => {
               variant='h5'
               sx={{ mt: 4, mb: 2 }}
             >
-              报表设计器
+              {i18n.t('pages.report_design_page.k0')}
             </Typography>
             <Typography
               variant='body1'
               color='text.secondary'
               sx={{ textAlign: 'center' }}
             >
-              可视化拖拽式报表设计工具，支持表格、图表、文本等多种组件
+              {i18n.t('pages.report_design_page.k1')}
             </Typography>
 
             <Box sx={{ mt: 6, display: 'flex', gap: 3 }}>
@@ -51,21 +52,21 @@ const ReportDesignPage: React.FC = () => {
                 startIcon={<TableIcon />}
                 size='large'
               >
-                添加表格
+                {i18n.t('pages.report_design_page.k2')}
               </Button>
               <Button
                 variant='contained'
                 startIcon={<ChartBarIcon />}
                 size='large'
               >
-                添加图表
+                {i18n.t('pages.report_design_page.k3')}
               </Button>
               <Button
                 variant='contained'
                 startIcon={<LayoutIcon />}
                 size='large'
               >
-                布局设置
+                {i18n.t('pages.report_design_page.k4')}
               </Button>
             </Box>
           </Box>

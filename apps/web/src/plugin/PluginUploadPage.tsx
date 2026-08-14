@@ -1,10 +1,11 @@
 import React from 'react';
+import i18n from '@/i18n';
 
 const PluginUploadPage: React.FC = () => {
   return React.createElement(
     'div',
     { className: 'page-placeholder' },
-    'PluginUploadPage 页面开发中'
+    i18n.t('plugin.plugin_upload_page.k0')
   );
 };
 

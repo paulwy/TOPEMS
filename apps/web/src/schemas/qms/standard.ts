@@ -1,6 +1,7 @@
 import React from 'react';
 import { Chip } from '@mui/material';
 import type { EntitySchema } from '@/schema';
+import i18n from '@/i18n';
 
 const statusColorMap: Record<string, 'success' | 'warning' | 'error' | 'default'> = {
   active: 'success',
@@ -10,10 +11,10 @@ const statusColorMap: Record<string, 'success' | 'warning' | 'error' | 'default'
 };
 
 const statusLabelMap: Record<string, string> = {
-  active: '有效',
-  draft: '草稿',
-  expired: '已过期',
-  archived: '已归档',
+  active: i18n.t('qms.standard.k0'),
+  draft: i18n.t('qms.standard.k1'),
+  expired: i18n.t('qms.standard.k2'),
+  archived: i18n.t('qms.standard.k3'),
 };
 
 function renderStatusCell(row: Record<string, unknown>) {
@@ -42,8 +43,8 @@ function renderDateCell(row: Record<string, unknown>, field: string) {
 
 export const qualityStandardSchema: EntitySchema = {
   entity: 'qmsQualityStandard',
-  title: '质量标准',
-  description: '管理质量标准文件，包括标准编号、名称、分类、版本、状态和生效日期等',
+  title: i18n.t('qms.standard.k4'),
+  description: i18n.t('qms.standard.k5'),
 
   api: {
     module: 'qms',
@@ -57,7 +58,7 @@ export const qualityStandardSchema: EntitySchema = {
   fields: [
     {
       name: 'code',
-      label: '标准编号',
+      label: i18n.t('qms.standard.k6'),
       type: 'text',
       required: true,
       readonlyOnEdit: true,
@@ -68,43 +69,43 @@ export const qualityStandardSchema: EntitySchema = {
     },
     {
       name: 'name',
-      label: '标准名称',
+      label: i18n.t('qms.standard.k7'),
       type: 'text',
       required: true,
       sortable: true,
       listWidth: 200,
-      placeholder: '请输入标准名称',
+      placeholder: i18n.t('qms.standard.k8'),
       validation: [{ type: 'maxLength', value: 256 }],
     },
     {
       name: 'category',
-      label: '分类',
+      label: i18n.t('qms.standard.k9'),
       type: 'text',
       listWidth: 120,
-      placeholder: '请输入分类',
+      placeholder: i18n.t('qms.standard.k10'),
     },
     {
       name: 'version',
-      label: '版本',
+      label: i18n.t('qms.standard.k11'),
       type: 'text',
       listWidth: 100,
       renderCell: renderVersionCell,
-      placeholder: '如 1.0',
+      placeholder: i18n.t('shared.standard.10_0'),
       validation: [{ type: 'maxLength', value: 32 }],
     },
     {
       name: 'status',
-      label: '状态',
+      label: i18n.t('qms.standard.k12'),
       type: 'select',
       required: true,
       defaultValue: 'active',
       options: {
         type: 'static',
         options: [
-          { value: 'active', label: '有效' },
-          { value: 'draft', label: '草稿' },
-          { value: 'expired', label: '已过期' },
-          { value: 'archived', label: '已归档' },
+          { value: 'active', label: i18n.t('qms.standard.k13') },
+          { value: 'draft', label: i18n.t('qms.standard.k14') },
+          { value: 'expired', label: i18n.t('qms.standard.k15') },
+          { value: 'archived', label: i18n.t('qms.standard.k16') },
         ],
       },
       listWidth: 100,
@@ -113,14 +114,14 @@ export const qualityStandardSchema: EntitySchema = {
     },
     {
       name: 'effective_date',
-      label: '生效日期',
+      label: i18n.t('qms.standard.k17'),
       type: 'date',
       listWidth: 120,
       renderCell: (row: Record<string, unknown>) => renderDateCell(row, 'effective_date'),
     },
     {
       name: 'created_at',
-      label: '创建日期',
+      label: i18n.t('qms.standard.k18'),
       type: 'date',
       readonly: true,
       sortable: true,
@@ -130,14 +131,14 @@ export const qualityStandardSchema: EntitySchema = {
     },
     {
       name: 'description',
-      label: '标准描述',
+      label: i18n.t('qms.standard.k19'),
       type: 'textarea',
       showInList: false,
-      placeholder: '请输入标准描述',
+      placeholder: i18n.t('qms.standard.k20'),
     },
     {
       name: 'content',
-      label: '标准内容',
+      label: i18n.t('qms.standard.k21'),
       type: 'textarea',
       showInList: false,
       showInDetail: true,
@@ -150,14 +151,14 @@ export const qualityStandardSchema: EntitySchema = {
     filters: [
       {
         id: 'status',
-        label: '状态',
+        label: i18n.t('qms.standard.k22'),
         type: 'select',
         options: [
-          { label: '全部', value: 'all' },
-          { label: '有效', value: 'active' },
-          { label: '草稿', value: 'draft' },
-          { label: '已过期', value: 'expired' },
-          { label: '已归档', value: 'archived' },
+          { label: i18n.t('qms.standard.k23'), value: 'all' },
+          { label: i18n.t('qms.standard.k24'), value: 'active' },
+          { label: i18n.t('qms.standard.k25'), value: 'draft' },
+          { label: i18n.t('qms.standard.k26'), value: 'expired' },
+          { label: i18n.t('qms.standard.k27'), value: 'archived' },
         ],
         defaultValue: 'all',
       },
@@ -171,19 +172,19 @@ export const qualityStandardSchema: EntitySchema = {
 
   formSections: [
     {
-      title: '基本信息',
+      title: i18n.t('qms.standard.k28'),
       fields: ['code', 'name', 'category', 'version', 'status'],
     },
     {
-      title: '其他信息',
+      title: i18n.t('qms.standard.k29'),
       fields: ['effective_date', 'description'],
     },
   ],
 
   formColCount: 2,
-  createTitle: '新增质量标准',
-  editTitle: '编辑质量标准',
-  detailTitle: '质量标准详情',
+  createTitle: i18n.t('qms.standard.k30'),
+  editTitle: i18n.t('qms.standard.k31'),
+  detailTitle: i18n.t('qms.standard.k32'),
 
   actions: ['create', 'edit', 'detail', 'delete'],
 };

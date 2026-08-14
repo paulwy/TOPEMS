@@ -13,6 +13,7 @@ import { useBffPerformance } from './useBffPerformance';
 import type { QueryPerformanceRecord } from '@/utils/graphql-performance';
 import { formatDuration } from '@/utils/graphql-performance';
 import { logger } from '@/utils/logger';
+import i18n from '@/i18n';
 
 const alertLogger = logger.child({ prefix: 'SlowQuery-Alert' });
 
@@ -143,7 +144,7 @@ export function useSlowQueryAlert(options: SlowQueryAlertOptions = {}): UseSlowQ
       }
 
       if (consoleAlertRef.current) {
-        const msg = `[慢查询告警] ${record.operationName} 耗时 ${formatDuration(record.duration)} (阈值: ${formatDuration(threshold)})`;
+        const msg = `${i18n.t('shared.use_slow_query_alert.k0')}${record.operationName}${i18n.t('shared.use_slow_query_alert.k1')}${formatDuration(record.duration)}${i18n.t('shared.use_slow_query_alert.k2')}${formatDuration(threshold)})`;
         switch (alertLevelRef.current) {
           case 'error':
             alertLogger.error(msg, record);
@@ -162,7 +163,7 @@ export function useSlowQueryAlert(options: SlowQueryAlertOptions = {}): UseSlowQ
         try {
           onAlertRef.current(record, threshold);
         } catch (e) {
-          alertLogger.error('告警回调执行失败:', e);
+          alertLogger.error(i18n.t('shared.use_slow_query_alert.k3'), e);
         }
       }
 
@@ -178,7 +179,7 @@ export function useSlowQueryAlert(options: SlowQueryAlertOptions = {}): UseSlowQ
             timestamp: new Date(record.timestamp).toISOString(),
           }),
         }).catch((e) => {
-          alertLogger.error('慢查询上报失败:', e);
+          alertLogger.error(i18n.t('shared.use_slow_query_alert.k4'), e);
         });
       }
     },

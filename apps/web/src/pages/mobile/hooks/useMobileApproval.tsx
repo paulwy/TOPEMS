@@ -4,7 +4,6 @@
  */
 import { useState, useCallback, useEffect, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { useTranslation } from 'react-i18next';
 import { useAuthStore, useNotificationStore } from '@/store';
 import { approvalTaskApi } from '@/api/workflow/approval';
 import type { ListParams } from '@/api/workflow/types';
@@ -12,10 +11,8 @@ import { apiLogger } from '@/utils/logger';
 import { useNavigate } from 'react-router-dom';
 import { MOBILE_PATHS } from '@/modules/mobile/config';
 import { Package, Users, DollarSign, FileText } from 'lucide-react';
-
-
 import { QUERY_KEYS } from '@/lib/reactQuery';
-
+import i18n from '@/i18n';
 export interface ApprovalItem {
   id: string;
   title: string;
@@ -33,7 +30,6 @@ export interface ApprovalItem {
     time?: string;
   }[];
 }
-
 export interface ApiApproval {
   id?: string;
   task_id?: string;
@@ -57,7 +53,6 @@ export interface ApiApproval {
     time?: string;
   }>;
 }
-
 export const getTypeIcon = (type: ApprovalItem['type']) => {
   switch (type) {
     case 'purchase':
@@ -72,7 +67,6 @@ export const getTypeIcon = (type: ApprovalItem['type']) => {
       return <FileText style={{ width: 20, height: 20 }} />;
   }
 };
-
 export const getTypeColor = (type: ApprovalItem['type']) => {
   switch (type) {
     case 'purchase':
@@ -87,7 +81,6 @@ export const getTypeColor = (type: ApprovalItem['type']) => {
       return 'default';
   }
 };
-
 export const getPriorityColor = (priority: ApprovalItem['priority']) => {
   switch (priority) {
     case 'high':
@@ -98,42 +91,36 @@ export const getPriorityColor = (priority: ApprovalItem['priority']) => {
       return 'success';
   }
 };
-
 export const getPriorityLabel = (
   priority: ApprovalItem['priority'],
   t: (key: string) => string
 ) => {
   switch (priority) {
     case 'high':
-      return t('mobile.approval.priority.urgent');
+      return i18n.t('mobile.approval.priority.urgent');
     case 'medium':
-      return t('mobile.approval.priority.normal');
+      return i18n.t('mobile.approval.priority.normal');
     case 'low':
-      return t('mobile.approval.priority.low');
+      return i18n.t('mobile.approval.priority.low');
   }
 };
-
 export const useMobileApproval = () => {
-  const { t } = useTranslation();
   const navigate = useNavigate();
   const { user } = useAuthStore();
   const { addNotification } = useNotificationStore();
   const queryClient = useQueryClient();
-
   const [activeTab, setActiveTab] = useState(0);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedApproval, setSelectedApproval] = useState<ApprovalItem | null>(null);
   const [approvalComment, setApprovalComment] = useState('');
-
   const tabs = useMemo(
     () => [
-      t('mobile.approval.tab.pending'),
-      t('mobile.approval.tab.approved'),
-      t('mobile.approval.tab.initiated'),
+      i18n.t('mobile.approval.tab.pending'),
+      i18n.t('mobile.approval.tab.approved'),
+      i18n.t('mobile.approval.tab.initiated'),
     ],
-    [t]
+    [i18n.t]
   );
-
   const mapApiApprovalToApprovalItem = useCallback(
     (apiApproval: ApiApproval): ApprovalItem => {
       const typeMap: Record<string, ApprovalItem['type']> = {
@@ -157,13 +144,13 @@ export const useMobileApproval = () => {
         title:
           apiApproval.title ||
           apiApproval.task_name ||
-          `${t('mobile.approval.nav.approval')} ${apiApproval.id}`,
+          `${i18n.t('mobile.approval.nav.approval')} ${apiApproval.id}`,
         type: apiApproval.type ? typeMap[apiApproval.type] : 'other',
         applicant:
           apiApproval.applicant_name ||
           apiApproval.assignee_name ||
           apiApproval.applicant ||
-          t('mobile.approval.priority.unknown'),
+          i18n.t('mobile.approval.priority.unknown'),
         department: apiApproval.department || apiApproval.department_name || '',
         submitTime: apiApproval.created_at
           ? new Date(apiApproval.created_at).toLocaleString('zh-CN')
@@ -173,14 +160,13 @@ export const useMobileApproval = () => {
         status: apiApproval.status ? statusMap[apiApproval.status] : 'pending',
         description: apiApproval.description || apiApproval.remarks || '',
         steps: apiApproval.steps || [
-          { name: t('mobile.approval.action.submit'), status: 'completed' },
-          { name: t('mobile.approval.status.processing'), status: 'current' },
+          { name: i18n.t('mobile.approval.action.submit'), status: 'completed' },
+          { name: i18n.t('mobile.approval.status.processing'), status: 'current' },
         ],
       };
     },
-    [t]
+    [i18n.t]
   );
-
   const approvalsQuery = useQuery<ApprovalItem[]>({
     queryKey: [...QUERY_KEYS.AD_HOC.MOBILE_APPROVALS_BASE, activeTab, searchQuery, user?.id],
     queryFn: async () => {
@@ -188,7 +174,6 @@ export const useMobileApproval = () => {
       if (searchQuery) {
         params.search = searchQuery;
       }
-
       if (activeTab === 0) {
         params.status = 'pending';
         params.assignee_id = user?.id;
@@ -198,7 +183,6 @@ export const useMobileApproval = () => {
       } else if (activeTab === 2) {
         params.initiator_id = user?.id;
       }
-
       const response = await approvalTaskApi.listApprovalTasks(params);
       if (response.success && response.data) {
         const data = response.data as unknown as Record<string, unknown>;
@@ -211,24 +195,19 @@ export const useMobileApproval = () => {
     },
     staleTime: 5 * 60 * 1000,
   });
-
   const approvals = approvalsQuery.data ?? [];
   const loading = approvalsQuery.isLoading;
-
   useEffect(() => {
     if (approvalsQuery.isError) {
-      apiLogger.error(t('mobile.approval.message.load_failed'), approvalsQuery.error);
+      apiLogger.error(i18n.t('mobile.approval.message.load_failed'), approvalsQuery.error);
     }
-  }, [approvalsQuery.isError, approvalsQuery.error, t]);
-
+  }, [approvalsQuery.isError, approvalsQuery.error, i18n.t]);
   const handleRefresh = useCallback(async () => {
     await approvalsQuery.refetch();
   }, [approvalsQuery]);
-
   const handleTabChange = useCallback((_event: React.SyntheticEvent, newValue: number) => {
     setActiveTab(newValue);
   }, []);
-
   const handleBottomTabChange = useCallback(
     (tabId: string) => {
       switch (tabId) {
@@ -250,7 +229,6 @@ export const useMobileApproval = () => {
     },
     [navigate]
   );
-
   const approveMutation = useMutation({
     mutationFn: (approval: ApprovalItem) =>
       approvalTaskApi.approveTask(approval.id, { comment: approvalComment }),
@@ -262,28 +240,26 @@ export const useMobileApproval = () => {
       setSelectedApproval(null);
       setApprovalComment('');
       addNotification({
-        title: t('mobile.approval.status.approved'),
-        message: `${approval.title} ${t('mobile.approval.status.passed')}`,
+        title: i18n.t('mobile.approval.status.approved'),
+        message: `${approval.title} ${i18n.t('mobile.approval.status.passed')}`,
         type: 'success',
       });
     },
     onError: (err: unknown) => {
-      apiLogger.error(t('mobile.approval.message.approve_failed'), err);
+      apiLogger.error(i18n.t('mobile.approval.message.approve_failed'), err);
       addNotification({
-        title: t('mobile.approval.message.action_failed'),
-        message: t('mobile.approval.message.approve_retry'),
+        title: i18n.t('mobile.approval.message.action_failed'),
+        message: i18n.t('mobile.approval.message.approve_retry'),
         type: 'error',
       });
     },
   });
-
   const handleApprove = useCallback(
     (approval: ApprovalItem) => {
       approveMutation.mutate(approval);
     },
     [approveMutation]
   );
-
   const rejectMutation = useMutation({
     mutationFn: (approval: ApprovalItem) =>
       approvalTaskApi.rejectTask(approval.id, { comment: approvalComment }),
@@ -295,30 +271,27 @@ export const useMobileApproval = () => {
       setSelectedApproval(null);
       setApprovalComment('');
       addNotification({
-        title: t('mobile.approval.status.rejected'),
-        message: `${approval.title} ${t('mobile.approval.status.rejected')}`,
+        title: i18n.t('mobile.approval.status.rejected'),
+        message: `${approval.title} ${i18n.t('mobile.approval.status.rejected')}`,
         type: 'warning',
       });
     },
     onError: (err: unknown) => {
-      apiLogger.error(t('mobile.approval.message.reject_failed'), err);
+      apiLogger.error(i18n.t('mobile.approval.message.reject_failed'), err);
       addNotification({
-        title: t('mobile.approval.message.action_failed'),
-        message: t('mobile.approval.message.reject_retry'),
+        title: i18n.t('mobile.approval.message.action_failed'),
+        message: i18n.t('mobile.approval.message.reject_retry'),
         type: 'error',
       });
     },
   });
-
   const handleReject = useCallback(
     (approval: ApprovalItem) => {
       rejectMutation.mutate(approval);
     },
     [rejectMutation]
   );
-
   const processing = approveMutation.isPending || rejectMutation.isPending;
-
   const filteredApprovals = useMemo(
     () =>
       approvals.filter((approval) => {
@@ -331,7 +304,6 @@ export const useMobileApproval = () => {
       }),
     [approvals, searchQuery]
   );
-
   return {
     activeTab,
     setActiveTab,

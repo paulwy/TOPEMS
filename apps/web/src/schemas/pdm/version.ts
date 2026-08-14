@@ -5,6 +5,7 @@ import { pdmApi } from '@/api/pdm';
 
 
 import { QUERY_KEYS } from '@/lib/reactQuery';
+import i18n from '@/i18n';
 
 const VERSION_TYPE_COLOR_MAP: Record<string, 'error' | 'warning' | 'success' | 'default'> = {
   major: 'error',
@@ -13,9 +14,9 @@ const VERSION_TYPE_COLOR_MAP: Record<string, 'error' | 'warning' | 'success' | '
 };
 
 const VERSION_TYPE_LABEL_MAP: Record<string, string> = {
-  major: '重大版本',
-  minor: '次要版本',
-  patch: '补丁版本',
+  major: i18n.t('pdm.version.k0'),
+  minor: i18n.t('pdm.version.k1'),
+  patch: i18n.t('pdm.version.k2'),
 };
 
 const STATUS_COLOR_MAP: Record<string, 'success' | 'warning' | 'error' | 'default' | 'info'> = {
@@ -27,17 +28,17 @@ const STATUS_COLOR_MAP: Record<string, 'success' | 'warning' | 'error' | 'defaul
 };
 
 const STATUS_LABEL_MAP: Record<string, string> = {
-  published: '已发布',
-  draft: '草稿',
-  review: '审核中',
-  approved: '已批准',
-  deprecated: '已废弃',
+  published: i18n.t('pdm.version.k3'),
+  draft: i18n.t('pdm.version.k4'),
+  review: i18n.t('pdm.version.k5'),
+  approved: i18n.t('pdm.version.k6'),
+  deprecated: i18n.t('pdm.version.k7'),
 };
 
 export const versionSchema: EntitySchema = {
   entity: 'pdm_version',
-  title: '文档版本',
-  description: '管理文档版本，包括版本号、标题、描述、类型、状态等',
+  title: i18n.t('pdm.version.k8'),
+  description: i18n.t('pdm.version.k9'),
 
   api: {
     module: 'pdm',
@@ -47,14 +48,14 @@ export const versionSchema: EntitySchema = {
   fields: [
     {
       name: 'version_number',
-      label: '版本号',
+      label: i18n.t('pdm.version.k10'),
       type: 'text',
       sortable: true,
       listWidth: 180,
     },
     {
       name: 'title',
-      label: '版本标题',
+      label: i18n.t('pdm.version.k11'),
       type: 'text',
       required: true,
       sortable: true,
@@ -62,22 +63,22 @@ export const versionSchema: EntitySchema = {
     },
     {
       name: 'description',
-      label: '描述',
+      label: i18n.t('pdm.version.k12'),
       type: 'textarea',
       listWidth: 200,
     },
     {
       name: 'type',
-      label: '版本类型',
+      label: i18n.t('pdm.version.k13'),
       type: 'select',
       required: true,
       defaultValue: 'minor',
       options: {
         type: 'static',
         options: [
-          { value: 'major', label: '重大版本 (Major)' },
-          { value: 'minor', label: '次要版本 (Minor)' },
-          { value: 'patch', label: '补丁版本 (Patch)' },
+          { value: 'major', label: i18n.t('pdm.version.major_14') },
+          { value: 'minor', label: i18n.t('pdm.version.minor_15') },
+          { value: 'patch', label: i18n.t('pdm.version.patch_16') },
         ],
       },
       listWidth: 120,
@@ -94,35 +95,35 @@ export const versionSchema: EntitySchema = {
     },
     {
       name: 'status',
-      label: '状态',
+      label: i18n.t('pdm.version.k17'),
       type: 'select',
       defaultValue: 'draft',
       options: {
         type: 'static',
         options: [
-          { value: 'draft', label: '草稿' },
-          { value: 'review', label: '审核中' },
-          { value: 'approved', label: '已批准' },
-          { value: 'published', label: '已发布' },
+          { value: 'draft', label: i18n.t('pdm.version.k18') },
+          { value: 'review', label: i18n.t('pdm.version.k19') },
+          { value: 'approved', label: i18n.t('pdm.version.k20') },
+          { value: 'published', label: i18n.t('pdm.version.k21') },
         ],
       },
       listWidth: 110,
     },
     {
       name: 'changes',
-      label: '变更内容',
+      label: i18n.t('pdm.version.k22'),
       type: 'textarea',
       showInList: false,
     },
     {
       name: 'created_by',
-      label: '创建人',
+      label: i18n.t('pdm.version.k23'),
       type: 'text',
       listWidth: 100,
     },
     {
       name: 'created_at',
-      label: '创建时间',
+      label: i18n.t('pdm.version.k24'),
       type: 'datetime',
       readonly: true,
       sortable: true,
@@ -131,7 +132,7 @@ export const versionSchema: EntitySchema = {
     },
     {
       name: 'updated_at',
-      label: '更新时间',
+      label: i18n.t('pdm.version.k25'),
       type: 'datetime',
       readonly: true,
       hideInForm: true,
@@ -139,7 +140,7 @@ export const versionSchema: EntitySchema = {
     },
     {
       name: 'document_id',
-      label: '关联文档',
+      label: i18n.t('pdm.version.k26'),
       type: 'select',
       required: true,
       showInList: false,
@@ -157,20 +158,20 @@ export const versionSchema: EntitySchema = {
     filters: [
       {
         id: 'document',
-        label: '关联文档',
+        label: i18n.t('pdm.version.k27'),
         type: 'select',
-        options: [{ label: '全部文档', value: 'all' }],
+        options: [{ label: i18n.t('pdm.version.k28'), value: 'all' }],
         defaultValue: 'all',
       },
       {
         id: 'type',
-        label: '版本类型',
+        label: i18n.t('pdm.version.k29'),
         type: 'select',
         options: [
-          { label: '全部类型', value: 'all' },
-          { label: '重大版本', value: 'major' },
-          { label: '次要版本', value: 'minor' },
-          { label: '补丁版本', value: 'patch' },
+          { label: i18n.t('pdm.version.k30'), value: 'all' },
+          { label: i18n.t('pdm.version.k31'), value: 'major' },
+          { label: i18n.t('pdm.version.k32'), value: 'minor' },
+          { label: i18n.t('pdm.version.k33'), value: 'patch' },
         ],
         defaultValue: 'all',
       },
@@ -184,10 +185,10 @@ export const versionSchema: EntitySchema = {
         published: 'success',
       },
       labelMap: {
-        draft: '草稿',
-        review: '审核中',
-        approved: '已批准',
-        published: '已发布',
+        draft: i18n.t('pdm.version.k34'),
+        review: i18n.t('pdm.version.k35'),
+        approved: i18n.t('pdm.version.k36'),
+        published: i18n.t('pdm.version.k37'),
       },
     },
   },
@@ -213,19 +214,19 @@ export const versionSchema: EntitySchema = {
 
   formSections: [
     {
-      title: '基本信息',
+      title: i18n.t('pdm.version.k38'),
       fields: ['document_id', 'version_number', 'title', 'type', 'status'],
     },
     {
-      title: '版本详情',
+      title: i18n.t('pdm.version.k39'),
       fields: ['description', 'changes'],
     },
   ],
 
   formColCount: 2,
-  createTitle: '创建新版本',
-  editTitle: '编辑版本',
-  detailTitle: '版本详情',
+  createTitle: i18n.t('pdm.version.k40'),
+  editTitle: i18n.t('pdm.version.k41'),
+  detailTitle: i18n.t('pdm.version.k42'),
 
   actions: ['create', 'edit', 'detail', 'delete'],
 };

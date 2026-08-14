@@ -10,6 +10,7 @@ import { NOTIFICATION_PATHS } from '@/modules/notification/config';
 import { useAuthStore } from '@/store/authStore';
 import { useNotificationWebSocket } from '@/hooks/useNotificationWebSocket';
 import { designTokens, semanticTokens } from '@topems/tokens';
+import i18n from '@/i18n';
 
 interface NotificationPanelProps {
   onClose: () => void;
@@ -41,7 +42,7 @@ const NotificationPanel: React.FC<NotificationPanelProps> = ({ onClose, onUnread
         (ws) =>
           ({
             id: ws.id,
-            title: ws.title || '新通知',
+            title: ws.title || i18n.t('shared.notification_panel.k0'),
             content: ws.message,
             notification_type: ws.type,
             is_read: false,
@@ -153,13 +154,13 @@ const NotificationPanel: React.FC<NotificationPanelProps> = ({ onClose, onUnread
         }}
       >
         <h3 style={{ fontSize: 18, fontWeight: 600, color: theme.palette.text.primary }}>
-          通知中心
+          {i18n.t('components.notification_panel.k0')}
         </h3>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           {wsConnected ? (
             <Chip
               icon={<Wifi size={14} />}
-              label='实时'
+              label={i18n.t('shared.notification_panel.k1')}
               size='small'
               color='success'
               variant='outlined'
@@ -168,7 +169,7 @@ const NotificationPanel: React.FC<NotificationPanelProps> = ({ onClose, onUnread
           ) : (
             <Chip
               icon={<WifiOff size={14} />}
-              label='离线'
+              label={i18n.t('shared.notification_panel.k2')}
               size='small'
               color='default'
               variant='outlined'
@@ -186,7 +187,7 @@ const NotificationPanel: React.FC<NotificationPanelProps> = ({ onClose, onUnread
               cursor: 'pointer',
               transition: 'all 0.15s',
             }}
-            title='通知设置'
+            title={i18n.t('shared.notification_panel.k3')}
           >
             <Settings style={{ width: 20, height: 20 }} />
           </button>
@@ -201,7 +202,7 @@ const NotificationPanel: React.FC<NotificationPanelProps> = ({ onClose, onUnread
               cursor: 'pointer',
               transition: 'all 0.15s',
             }}
-            title='刷新'
+            title={i18n.t('shared.notification_panel.k4')}
           >
             <RefreshCw style={{ width: 20, height: 20 }} />
           </button>
@@ -252,7 +253,7 @@ const NotificationPanel: React.FC<NotificationPanelProps> = ({ onClose, onUnread
             borderBottom: activeTab === 'all' ? '2px solid primary.dark' : '2px solid transparent',
           }}
         >
-          全部通知
+          {i18n.t('components.notification_panel.k1')}
         </button>
         <button
           onClick={() => setActiveTab('unread')}
@@ -272,7 +273,7 @@ const NotificationPanel: React.FC<NotificationPanelProps> = ({ onClose, onUnread
             position: 'relative',
           }}
         >
-          未读通知
+          {i18n.t('components.notification_panel.k2')}
           {totalUnread > 0 && (
             <span
               style={{
@@ -281,7 +282,7 @@ const NotificationPanel: React.FC<NotificationPanelProps> = ({ onClose, onUnread
                 color: 'common.white',
                 fontSize: 12,
                 borderRadius: 9999,
-                padding: '2px 6px',
+                padding: `${designTokens.spacing.xs} 6px`,
               }}
             >
               {totalUnread}
@@ -293,7 +294,7 @@ const NotificationPanel: React.FC<NotificationPanelProps> = ({ onClose, onUnread
       {totalUnread > 0 && !showSettings && (
         <div
           style={{
-            padding: '8px 16px',
+            padding: `${designTokens.spacing.sm} 16px`,
             backgroundColor: theme.palette.primary.light,
             borderBottom: '1px solid primary.100',
           }}
@@ -313,7 +314,7 @@ const NotificationPanel: React.FC<NotificationPanelProps> = ({ onClose, onUnread
             }}
           >
             <Check style={{ width: 16, height: 16 }} />
-            全部标记为已读
+            {i18n.t('components.notification_panel.k3')}
           </button>
         </div>
       )}
@@ -368,7 +369,7 @@ const NotificationPanel: React.FC<NotificationPanelProps> = ({ onClose, onUnread
                 d='M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9'
               />
             </svg>
-            <p style={{ fontSize: 14 }}>{activeTab === 'unread' ? '暂无未读通知' : '暂无通知'}</p>
+            <p style={{ fontSize: 14 }}>{activeTab === 'unread' ? i18n.t('shared.notification_panel.k6') : i18n.t('shared.notification_panel.k5')}</p>
           </div>
         ) : (
           <div style={{ borderTop: '1px solid var(--mui-palette-grey-100)' }}>
@@ -402,7 +403,7 @@ const NotificationPanel: React.FC<NotificationPanelProps> = ({ onClose, onUnread
               fontWeight: 500,
             }}
           >
-            查看全部通知
+            {i18n.t('components.notification_panel.k4')}
           </a>
         </div>
       )}

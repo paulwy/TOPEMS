@@ -22,6 +22,7 @@ import type {
   // 连接测试
   ConnectionTestRequest,
 } from '../types/external-erp';
+import i18n from '@/i18n';
 
 // ============================================
 // 一、连接配置管理
@@ -78,10 +79,10 @@ export function useCreateErpConnection() {
   exact: false,
   refetchType: 'active',
 });
-      success('ERP连接创建成功');
+      success(i18n.t('shared.use_external_erp.erp_0'));
     },
     onError: (err) => {
-      error(err.message || 'ERP连接创建失败');
+      error(err.message || i18n.t('shared.use_external_erp.erp_1'));
     },
   });
 }
@@ -106,10 +107,10 @@ export function useUpdateErpConnection() {
   exact: false,
   refetchType: 'active',
 });
-      success('ERP连接更新成功');
+      success(i18n.t('shared.use_external_erp.erp_2'));
     },
     onError: (err) => {
-      error(err.message || 'ERP连接更新失败');
+      error(err.message || i18n.t('shared.use_external_erp.erp_3'));
     },
   });
 }
@@ -128,10 +129,10 @@ export function useDeleteErpConnection() {
   exact: false,
   refetchType: 'active',
 });
-      success('ERP连接删除成功');
+      success(i18n.t('shared.use_external_erp.erp_4'));
     },
     onError: (err) => {
-      error(err.message || 'ERP连接删除失败');
+      error(err.message || i18n.t('shared.use_external_erp.erp_5'));
     },
   });
 }
@@ -152,13 +153,13 @@ export function useTestErpConnection() {
           refetchType: 'active',
         });
       if (result.success) {
-        success('连接测试成功');
+        success(i18n.t('shared.use_external_erp.k0'));
       } else {
-        error(result.data?.error_message || '连接测试失败');
+        error(result.data?.error_message || i18n.t('shared.use_external_erp.k1'));
       }
     },
     onError: (err) => {
-      error(err.message || '连接测试失败');
+      error(err.message || i18n.t('shared.use_external_erp.k2'));
     },
   });
 }
@@ -178,10 +179,10 @@ export function useToggleErpConnection() {
   exact: false,
   refetchType: 'active',
 });
-      success('连接状态更新成功');
+      success(i18n.t('shared.use_external_erp.k3'));
     },
     onError: (err) => {
-      error(err.message || '连接状态更新失败');
+      error(err.message || i18n.t('shared.use_external_erp.k4'));
     },
   });
 }
@@ -210,10 +211,10 @@ export function useSyncAccounts() {
   exact: false,
   refetchType: 'active',
 });
-      success(`成功同步 ${result.data.created_count + result.data.updated_count} 个科目`);
+      success(`${i18n.t('shared.use_external_erp.k6')}${result.data.created_count + result.data.updated_count}${i18n.t('shared.use_external_erp.k7')}`);
     },
     onError: (err) => {
-      error(err.message || '科目同步失败');
+      error(err.message || i18n.t('shared.use_external_erp.k5'));
     },
   });
 }
@@ -238,10 +239,10 @@ export function useSyncCustomers() {
   exact: false,
   refetchType: 'active',
 });
-      success(`成功同步 ${result.data.created_count + result.data.updated_count} 个客户`);
+      success(`${i18n.t('shared.use_external_erp.k8')}${result.data.created_count + result.data.updated_count}${i18n.t('shared.use_external_erp.k9')}`);
     },
     onError: (err) => {
-      error(err.message || '客户同步失败');
+      error(err.message || i18n.t('shared.use_external_erp.k6'));
     },
   });
 }
@@ -266,10 +267,10 @@ export function useSyncSuppliers() {
   exact: false,
   refetchType: 'active',
 });
-      success(`成功同步 ${result.data.created_count + result.data.updated_count} 个供应商`);
+      success(`${i18n.t('shared.use_external_erp.k10')}${result.data.created_count + result.data.updated_count}${i18n.t('shared.use_external_erp.k11')}`);
     },
     onError: (err) => {
-      error(err.message || '供应商同步失败');
+      error(err.message || i18n.t('shared.use_external_erp.k7'));
     },
   });
 }
@@ -297,13 +298,13 @@ export function useSyncVouchers() {
   refetchType: 'active',
 });
       if (result.data.failed_count > 0) {
-        error(`成功同步 ${result.data.synced_count} 个，失败 ${result.data.failed_count} 个`);
+        error(`${i18n.t('shared.use_external_erp.k12')}${result.data.synced_count}${i18n.t('shared.use_external_erp.k13')}${result.data.failed_count}${i18n.t('shared.use_external_erp.k14')}`);
       } else {
-        success(`成功同步 ${result.data.synced_count} 个凭证`);
+        success(`${i18n.t('shared.use_external_erp.k15')}${result.data.synced_count}${i18n.t('shared.use_external_erp.k16')}`);
       }
     },
     onError: (err) => {
-      error(err.message || '凭证同步失败');
+      error(err.message || i18n.t('shared.use_external_erp.k8'));
     },
   });
 }
@@ -323,10 +324,10 @@ export function useFullSync() {
   exact: false,
   refetchType: 'active',
 });
-      success('全量同步任务已启动');
+      success(i18n.t('shared.use_external_erp.k9'));
     },
     onError: (err) => {
-      error(err.message || '全量同步失败');
+      error(err.message || i18n.t('shared.use_external_erp.k10'));
     },
   });
 }
@@ -428,10 +429,10 @@ export function useImportAccountMappings() {
   exact: false,
   refetchType: 'active',
 });
-      success('科目映射导入成功');
+      success(i18n.t('shared.use_external_erp.k11'));
     },
     onError: (err) => {
-      error(err.message || '科目映射导入失败');
+      error(err.message || i18n.t('shared.use_external_erp.k12'));
     },
   });
 }
@@ -452,10 +453,10 @@ export function useAutoMatchAccountMappings() {
   exact: false,
   refetchType: 'active',
 });
-      success('科目映射自动匹配完成');
+      success(i18n.t('shared.use_external_erp.k13'));
     },
     onError: (err) => {
-      error(err.message || '科目映射自动匹配失败');
+      error(err.message || i18n.t('shared.use_external_erp.k14'));
     },
   });
 }
@@ -484,10 +485,10 @@ export function useUpdateAccountMapping() {
   exact: false,
   refetchType: 'active',
 });
-      success('科目映射更新成功');
+      success(i18n.t('shared.use_external_erp.k15'));
     },
     onError: (err) => {
-      error(err.message || '科目映射更新失败');
+      error(err.message || i18n.t('shared.use_external_erp.k16'));
     },
   });
 }
@@ -536,10 +537,10 @@ export function useImportCustomerMappings() {
   exact: false,
   refetchType: 'active',
 });
-      success('客户映射导入成功');
+      success(i18n.t('shared.use_external_erp.k17'));
     },
     onError: (err) => {
-      error(err.message || '客户映射导入失败');
+      error(err.message || i18n.t('shared.use_external_erp.k18'));
     },
   });
 }
@@ -568,10 +569,10 @@ export function useUpdateCustomerMapping() {
   exact: false,
   refetchType: 'active',
 });
-      success('客户映射更新成功');
+      success(i18n.t('shared.use_external_erp.k19'));
     },
     onError: (err) => {
-      error(err.message || '客户映射更新失败');
+      error(err.message || i18n.t('shared.use_external_erp.k20'));
     },
   });
 }
@@ -620,10 +621,10 @@ export function useImportSupplierMappings() {
   exact: false,
   refetchType: 'active',
 });
-      success('供应商映射导入成功');
+      success(i18n.t('shared.use_external_erp.k21'));
     },
     onError: (err) => {
-      error(err.message || '供应商映射导入失败');
+      error(err.message || i18n.t('shared.use_external_erp.k22'));
     },
   });
 }
@@ -652,10 +653,10 @@ export function useUpdateSupplierMapping() {
   exact: false,
   refetchType: 'active',
 });
-      success('供应商映射更新成功');
+      success(i18n.t('shared.use_external_erp.k23'));
     },
     onError: (err) => {
-      error(err.message || '供应商映射更新失败');
+      error(err.message || i18n.t('shared.use_external_erp.k24'));
     },
   });
 }
@@ -758,10 +759,10 @@ export function useExportSyncLogs() {
           exact: false,
           refetchType: 'active',
         });
-      success('同步日志导出成功');
+      success(i18n.t('shared.use_external_erp.k25'));
     },
     onError: (err) => {
-      error(err.message || '导出失败');
+      error(err.message || i18n.t('shared.use_external_erp.k26'));
     },
   });
 }
@@ -796,10 +797,10 @@ export function useExportMappingRules() {
           exact: false,
           refetchType: 'active',
         });
-      success('映射规则导出成功');
+      success(i18n.t('shared.use_external_erp.k27'));
     },
     onError: (err) => {
-      error(err.message || '导出失败');
+      error(err.message || i18n.t('shared.use_external_erp.k28'));
     },
   });
 }

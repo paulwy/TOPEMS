@@ -1,10 +1,11 @@
 import type { EntitySchema } from '@/schema';
 import type { SchemaExtensions } from '@/schema/schemaExtensions';
+import i18n from '@/i18n';
 
 export const areaSchema: EntitySchema & SchemaExtensions = {
   entity: 'wms_area',
-  title: '库区管理',
-  description: '管理仓库库区层级结构，支持仓库、区域、库区、库位等多级管理',
+  title: i18n.t('wms.area.k0'),
+  description: i18n.t('wms.area.k1'),
 
   api: {
     module: 'wms',
@@ -14,7 +15,7 @@ export const areaSchema: EntitySchema & SchemaExtensions = {
   fields: [
     {
       name: 'name',
-      label: '名称',
+      label: i18n.t('wms.area.k2'),
       type: 'text',
       required: true,
       sortable: true,
@@ -22,7 +23,7 @@ export const areaSchema: EntitySchema & SchemaExtensions = {
     },
     {
       name: 'code',
-      label: '编码',
+      label: i18n.t('wms.area.k3'),
       type: 'text',
       readonlyOnEdit: true,
       sortable: true,
@@ -30,45 +31,45 @@ export const areaSchema: EntitySchema & SchemaExtensions = {
     },
     {
       name: 'area_type',
-      label: '类型',
+      label: i18n.t('wms.area.k4'),
       type: 'select',
       required: true,
       defaultValue: 'zone',
       options: {
         type: 'static',
         options: [
-          { value: 'warehouse', label: '仓库' },
-          { value: 'zone', label: '区域' },
-          { value: 'area', label: '库区' },
-          { value: 'location', label: '库位' },
+          { value: 'warehouse', label: i18n.t('wms.area.k5') },
+          { value: 'zone', label: i18n.t('wms.area.k6') },
+          { value: 'area', label: i18n.t('wms.area.k7') },
+          { value: 'location', label: i18n.t('wms.area.k8') },
         ],
       },
       listWidth: 100,
     },
     {
       name: 'parentId',
-      label: '上级区域',
+      label: i18n.t('wms.area.k9'),
       type: 'text',
       showInList: false,
       showInDetail: false,
     },
     {
       name: 'capacity',
-      label: '容量',
+      label: i18n.t('wms.area.k10'),
       type: 'number',
       listWidth: 100,
     },
     {
       name: 'status',
-      label: '状态',
+      label: i18n.t('wms.area.k11'),
       type: 'select',
       defaultValue: 'active',
       options: {
         type: 'static',
         options: [
-          { value: 'active', label: '启用' },
-          { value: 'inactive', label: '停用' },
-          { value: 'maintenance', label: '维护中' },
+          { value: 'active', label: i18n.t('wms.area.k12') },
+          { value: 'inactive', label: i18n.t('wms.area.k13') },
+          { value: 'maintenance', label: i18n.t('wms.area.k14') },
         ],
       },
       listWidth: 100,
@@ -87,9 +88,9 @@ export const areaSchema: EntitySchema & SchemaExtensions = {
         maintenance: 'warning',
       },
       labelMap: {
-        active: '启用',
-        inactive: '停用',
-        maintenance: '维护中',
+        active: i18n.t('wms.area.k15'),
+        inactive: i18n.t('wms.area.k16'),
+        maintenance: i18n.t('wms.area.k17'),
       },
     },
   },
@@ -104,21 +105,21 @@ export const areaSchema: EntitySchema & SchemaExtensions = {
 
   formSections: [
     {
-      title: '基本信息',
+      title: i18n.t('wms.area.k18'),
       fields: ['name', 'code', 'area_type'],
     },
     {
-      title: '层级关系',
+      title: i18n.t('wms.area.k19'),
       fields: ['parentId'],
     },
     {
-      title: '容量与状态',
+      title: i18n.t('wms.area.k20'),
       fields: ['capacity', 'status'],
     },
   ],
 
   formColCount: 2,
-  createTitle: '新增库区',
-  editTitle: '编辑库区',
-  detailTitle: '库区详情',
+  createTitle: i18n.t('wms.area.k21'),
+  editTitle: i18n.t('wms.area.k22'),
+  detailTitle: i18n.t('wms.area.k23'),
 };

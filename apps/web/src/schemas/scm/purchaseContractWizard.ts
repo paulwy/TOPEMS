@@ -12,27 +12,28 @@ import React from 'react';
 import type { EntitySchema } from '@/schema';
 import { columnsFromFields } from '@/schema/schemaExtensions';
 import type { NestedTableConfig, WizardConfig } from '@/schema/schemaExtensions';
+import i18n from '@/i18n';
 
 // ============ 物料明细子表配置 ============
 
 const contractItemFields: NestedTableConfig['fields'] = [
   {
     name: 'product_code',
-    label: '产品编码',
+    label: i18n.t('scm.purchase_contract_wizard.k0'),
     type: 'text',
     required: true,
     listWidth: 140,
   },
   {
     name: 'product_name',
-    label: '产品名称',
+    label: i18n.t('scm.purchase_contract_wizard.k1'),
     type: 'text',
     required: true,
     listWidth: 180,
   },
   {
     name: 'quantity',
-    label: '数量',
+    label: i18n.t('scm.purchase_contract_wizard.k2'),
     type: 'number',
     required: true,
     defaultValue: 1,
@@ -40,7 +41,7 @@ const contractItemFields: NestedTableConfig['fields'] = [
   },
   {
     name: 'unit_price',
-    label: '单价',
+    label: i18n.t('scm.purchase_contract_wizard.k3'),
     type: 'number',
     required: true,
     defaultValue: 0,
@@ -48,7 +49,7 @@ const contractItemFields: NestedTableConfig['fields'] = [
   },
   {
     name: 'subtotal',
-    label: '小计',
+    label: i18n.t('scm.purchase_contract_wizard.k4'),
     type: 'number',
     readonly: true,
     defaultValue: 0,
@@ -58,7 +59,7 @@ const contractItemFields: NestedTableConfig['fields'] = [
 
 const contractItemsTable: NestedTableConfig = {
   field: 'items',
-  title: '物料明细',
+  title: i18n.t('scm.purchase_contract_wizard.k5'),
   columns: columnsFromFields(contractItemFields, {
     quantity: { align: 'right' },
     unit_price: { align: 'right' },
@@ -69,7 +70,7 @@ const contractItemsTable: NestedTableConfig = {
   allowEdit: true,
   allowDelete: true,
   allowDuplicate: true,
-  addButtonText: '添加物料',
+  addButtonText: i18n.t('scm.purchase_contract_wizard.k6'),
   rowKeyField: 'id',
   minRows: 0,
   maxRows: 200,
@@ -82,8 +83,8 @@ const purchaseContractWizard: WizardConfig = {
   steps: [
     {
       key: 'basic_info',
-      title: '合同基本信息',
-      description: '填写合同编号、供应商、金额等基本信息',
+      title: i18n.t('scm.purchase_contract_wizard.k7'),
+      description: i18n.t('scm.purchase_contract_wizard.k8'),
       fields: [
         'contractNo',
         'supplier_id',
@@ -94,45 +95,45 @@ const purchaseContractWizard: WizardConfig = {
         'end_date',
         'status',
       ],
-      groupTitle: '合同基本信息',
+      groupTitle: i18n.t('scm.purchase_contract_wizard.k9'),
       validate: (values) => {
-        if (!values.contractNo) return '请填写合同编号';
-        if (!values.supplier_id) return '请填写供应商ID';
+        if (!values.contractNo) return i18n.t('scm.purchase_contract_wizard.k10');
+        if (!values.supplier_id) return i18n.t('scm.purchase_contract_wizard.id_11');
         return null;
       },
     },
     {
       key: 'terms_and_items',
-      title: '条款与明细',
-      description: '填写合同条款和物料明细',
+      title: i18n.t('scm.purchase_contract_wizard.k12'),
+      description: i18n.t('scm.purchase_contract_wizard.k13'),
       fields: ['terms', 'items'],
-      groupTitle: '合同条款与物料明细',
+      groupTitle: i18n.t('scm.purchase_contract_wizard.k14'),
       validate: (values) => {
-        if (!values.terms) return '请填写合同条款';
+        if (!values.terms) return i18n.t('scm.purchase_contract_wizard.k15');
         return null;
       },
     },
     {
       key: 'review_and_sign',
-      title: '评审与签署',
-      description: '确认合同评审结果和签署信息',
+      title: i18n.t('scm.purchase_contract_wizard.k16'),
+      description: i18n.t('scm.purchase_contract_wizard.k17'),
       fields: ['reviewer_id', 'reviewer_name', 'review_comment', 'sign_date'],
-      groupTitle: '评审与签署信息',
+      groupTitle: i18n.t('scm.purchase_contract_wizard.k18'),
       isFinalStep: true,
       validate: (values) => {
-        if (!values.reviewer_id) return '请选择评审人';
+        if (!values.reviewer_id) return i18n.t('scm.purchase_contract_wizard.k19');
         return null;
       },
     },
   ],
-  title: '采购合同评审流程',
+  title: i18n.t('scm.purchase_contract_wizard.k20'),
   navigationPosition: 'top',
   showProgress: true,
   allowBack: true,
   showSummaryOnComplete: true,
-  finishButtonText: '提交评审',
-  nextButtonText: '下一步',
-  prevButtonText: '上一步',
+  finishButtonText: i18n.t('scm.purchase_contract_wizard.k21'),
+  nextButtonText: i18n.t('scm.purchase_contract_wizard.k22'),
+  prevButtonText: i18n.t('scm.purchase_contract_wizard.k23'),
 };
 
 // ============ 主 Schema ============
@@ -142,8 +143,8 @@ export const purchaseContractWizardSchema: EntitySchema & {
   wizard: WizardConfig;
 } = {
   entity: 'scmPurchaseContractWizard',
-  title: '采购合同评审',
-  description: '采购合同评审签署流程，支持多步骤向导填写和物料明细录入',
+  title: i18n.t('scm.purchase_contract_wizard.k24'),
+  description: i18n.t('scm.purchase_contract_wizard.k25'),
 
   api: {
     module: 'scm',
@@ -153,7 +154,7 @@ export const purchaseContractWizardSchema: EntitySchema & {
   fields: [
     {
       name: 'contractNo',
-      label: '合同编号',
+      label: i18n.t('scm.purchase_contract_wizard.k26'),
       type: 'text',
       required: true,
       readonlyOnEdit: true,
@@ -162,35 +163,35 @@ export const purchaseContractWizardSchema: EntitySchema & {
     },
     {
       name: 'supplier_id',
-      label: '供应商ID',
+      label: i18n.t('scm.purchase_contract_wizard.id_27'),
       type: 'text',
       required: true,
       listWidth: 140,
     },
     {
       name: 'supplier_name',
-      label: '供应商名称',
+      label: i18n.t('scm.purchase_contract_wizard.k28'),
       type: 'text',
       listWidth: 160,
     },
     {
       name: 'contract_type',
-      label: '合同类型',
+      label: i18n.t('scm.purchase_contract_wizard.k29'),
       type: 'select',
       defaultValue: 'purchase',
       listWidth: 120,
       options: {
         type: 'static',
         options: [
-          { label: '采购合同', value: 'purchase' },
-          { label: '供应合同', value: 'supply' },
-          { label: '框架合同', value: 'framework' },
+          { label: i18n.t('scm.purchase_contract_wizard.k30'), value: 'purchase' },
+          { label: i18n.t('scm.purchase_contract_wizard.k31'), value: 'supply' },
+          { label: i18n.t('scm.purchase_contract_wizard.k32'), value: 'framework' },
         ],
       },
     },
     {
       name: 'total_amount',
-      label: '合同总金额',
+      label: i18n.t('scm.purchase_contract_wizard.k33'),
       type: 'number',
       defaultValue: 0,
       sortable: true,
@@ -206,37 +207,37 @@ export const purchaseContractWizardSchema: EntitySchema & {
     },
     {
       name: 'start_date',
-      label: '生效日期',
+      label: i18n.t('scm.purchase_contract_wizard.k34'),
       type: 'date',
       listWidth: 120,
     },
     {
       name: 'end_date',
-      label: '到期日期',
+      label: i18n.t('scm.purchase_contract_wizard.k35'),
       type: 'date',
       listWidth: 120,
     },
     {
       name: 'status',
-      label: '状态',
+      label: i18n.t('scm.purchase_contract_wizard.k36'),
       type: 'select',
       defaultValue: 'draft',
       listWidth: 110,
       options: {
         type: 'static',
         options: [
-          { label: '草稿', value: 'draft' },
-          { label: '评审中', value: 'reviewing' },
-          { label: '已批准', value: 'approved' },
-          { label: '已签署', value: 'signed' },
-          { label: '已到期', value: 'expired' },
-          { label: '已终止', value: 'terminated' },
+          { label: i18n.t('scm.purchase_contract_wizard.k37'), value: 'draft' },
+          { label: i18n.t('scm.purchase_contract_wizard.k38'), value: 'reviewing' },
+          { label: i18n.t('scm.purchase_contract_wizard.k39'), value: 'approved' },
+          { label: i18n.t('scm.purchase_contract_wizard.k40'), value: 'signed' },
+          { label: i18n.t('scm.purchase_contract_wizard.k41'), value: 'expired' },
+          { label: i18n.t('scm.purchase_contract_wizard.k42'), value: 'terminated' },
         ],
       },
     },
     {
       name: 'terms',
-      label: '合同条款',
+      label: i18n.t('scm.purchase_contract_wizard.k43'),
       type: 'textarea',
       showInList: false,
     },
@@ -244,25 +245,25 @@ export const purchaseContractWizardSchema: EntitySchema & {
     // ── 评审与签署步骤字段 ──
     {
       name: 'reviewer_id',
-      label: '评审人ID',
+      label: i18n.t('scm.purchase_contract_wizard.id_44'),
       type: 'text',
       showInList: false,
     },
     {
       name: 'reviewer_name',
-      label: '评审人姓名',
+      label: i18n.t('scm.purchase_contract_wizard.k45'),
       type: 'text',
       showInList: false,
     },
     {
       name: 'review_comment',
-      label: '评审意见',
+      label: i18n.t('scm.purchase_contract_wizard.k46'),
       type: 'textarea',
       showInList: false,
     },
     {
       name: 'sign_date',
-      label: '签署日期',
+      label: i18n.t('scm.purchase_contract_wizard.k47'),
       type: 'date',
       showInList: false,
     },
@@ -291,39 +292,39 @@ export const purchaseContractWizardSchema: EntitySchema & {
         terminated: 'error',
       },
       labelMap: {
-        draft: '草稿',
-        reviewing: '评审中',
-        approved: '已批准',
-        signed: '已签署',
-        expired: '已到期',
-        terminated: '已终止',
+        draft: i18n.t('scm.purchase_contract_wizard.k48'),
+        reviewing: i18n.t('scm.purchase_contract_wizard.k49'),
+        approved: i18n.t('scm.purchase_contract_wizard.k50'),
+        signed: i18n.t('scm.purchase_contract_wizard.k51'),
+        expired: i18n.t('scm.purchase_contract_wizard.k52'),
+        terminated: i18n.t('scm.purchase_contract_wizard.k53'),
       },
     },
     filters: [
       {
         id: 'contract_type',
-        label: '合同类型',
+        label: i18n.t('scm.purchase_contract_wizard.k54'),
         type: 'select',
         options: [
-          { label: '全部类型', value: 'all' },
-          { label: '采购合同', value: 'purchase' },
-          { label: '供应合同', value: 'supply' },
-          { label: '框架合同', value: 'framework' },
+          { label: i18n.t('scm.purchase_contract_wizard.k55'), value: 'all' },
+          { label: i18n.t('scm.purchase_contract_wizard.k56'), value: 'purchase' },
+          { label: i18n.t('scm.purchase_contract_wizard.k57'), value: 'supply' },
+          { label: i18n.t('scm.purchase_contract_wizard.k58'), value: 'framework' },
         ],
         defaultValue: 'all',
       },
       {
         id: 'status',
-        label: '状态',
+        label: i18n.t('scm.purchase_contract_wizard.k59'),
         type: 'select',
         options: [
-          { label: '全部状态', value: 'all' },
-          { label: '草稿', value: 'draft' },
-          { label: '评审中', value: 'reviewing' },
-          { label: '已批准', value: 'approved' },
-          { label: '已签署', value: 'signed' },
-          { label: '已到期', value: 'expired' },
-          { label: '已终止', value: 'terminated' },
+          { label: i18n.t('scm.purchase_contract_wizard.k60'), value: 'all' },
+          { label: i18n.t('scm.purchase_contract_wizard.k61'), value: 'draft' },
+          { label: i18n.t('scm.purchase_contract_wizard.k62'), value: 'reviewing' },
+          { label: i18n.t('scm.purchase_contract_wizard.k63'), value: 'approved' },
+          { label: i18n.t('scm.purchase_contract_wizard.k64'), value: 'signed' },
+          { label: i18n.t('scm.purchase_contract_wizard.k65'), value: 'expired' },
+          { label: i18n.t('scm.purchase_contract_wizard.k66'), value: 'terminated' },
         ],
         defaultValue: 'all',
       },
@@ -332,23 +333,23 @@ export const purchaseContractWizardSchema: EntitySchema & {
 
   formSections: [
     {
-      title: '合同基本信息',
+      title: i18n.t('scm.purchase_contract_wizard.k67'),
       fields: ['contractNo', 'supplier_id', 'supplier_name', 'contract_type', 'status'],
     },
     {
-      title: '金额与日期',
+      title: i18n.t('scm.purchase_contract_wizard.k68'),
       fields: ['total_amount', 'start_date', 'end_date'],
     },
     {
-      title: '合同条款',
+      title: i18n.t('scm.purchase_contract_wizard.k69'),
       fields: ['terms'],
     },
   ],
 
   formColCount: 2,
-  createTitle: '发起采购合同评审',
-  editTitle: '编辑采购合同评审',
-  detailTitle: '采购合同评审详情',
+  createTitle: i18n.t('scm.purchase_contract_wizard.k70'),
+  editTitle: i18n.t('scm.purchase_contract_wizard.k71'),
+  detailTitle: i18n.t('scm.purchase_contract_wizard.k72'),
 
   actions: ['create', 'edit', 'detail', 'delete'],
 

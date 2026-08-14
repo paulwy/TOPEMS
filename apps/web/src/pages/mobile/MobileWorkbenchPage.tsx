@@ -18,6 +18,7 @@ import {
   TrendingUp,
   Zap,
 } from 'lucide-react';
+import i18n from '@/i18n';
 import { useNavigate } from 'react-router-dom';
 import { MobileLayout, PullToRefresh, MobileSkeleton, MobileCard } from '@/components/mobile';
 import { useAuthStore } from '@/store';
@@ -26,10 +27,7 @@ import { apiLogger } from '@/utils/logger';
 import { useQuery } from '@tanstack/react-query';
 import { MOBILE_PATHS } from '@/modules/mobile/config';
 import { NOTIFICATION_PATHS } from '@/modules/notification/config';
-
-
 import { QUERY_KEYS } from '@/lib/reactQuery';
-
 interface StatCard {
   id: string;
   label: string;
@@ -38,7 +36,6 @@ interface StatCard {
   color: 'primary' | 'success' | 'warning' | 'error' | 'info';
   badge?: number;
 }
-
 interface QuickAction {
   id: string;
   label: string;
@@ -47,7 +44,6 @@ interface QuickAction {
   color: string;
   badge?: number;
 }
-
 interface WorkbenchItem {
   id: string;
   title: string;
@@ -57,12 +53,10 @@ interface WorkbenchItem {
   type: 'task' | 'approval' | 'notification' | 'production' | 'quality';
   status?: string;
 }
-
 const MobileWorkbenchPage: React.FC = () => {
   const theme = useTheme();
   const navigate = useNavigate();
   const { user } = useAuthStore();
-
   const workbenchQuery = useQuery<{
     stats: StatCard[];
     workbenchItems: WorkbenchItem[];
@@ -79,11 +73,10 @@ const MobileWorkbenchPage: React.FC = () => {
         today_quality_pass_rate: 98.5,
         shortcuts: [],
       };
-
       const stats: StatCard[] = [
         {
           id: '1',
-          label: '待办任务',
+          label: i18n.t('mobile.mobile_workbench_page.k0'),
           value: workbenchData.pending_tasks,
           icon: <ListTodo style={{ width: 20, height: 20 }} />,
           color: 'primary' as const,
@@ -91,7 +84,7 @@ const MobileWorkbenchPage: React.FC = () => {
         },
         {
           id: '2',
-          label: '待审批',
+          label: i18n.t('mobile.mobile_workbench_page.k1'),
           value: workbenchData.pending_approvals,
           icon: <CheckSquare style={{ width: 20, height: 20 }} />,
           color: 'warning' as const,
@@ -99,67 +92,65 @@ const MobileWorkbenchPage: React.FC = () => {
         },
         {
           id: '3',
-          label: '今日产量',
+          label: i18n.t('mobile.mobile_workbench_page.k2'),
           value: workbenchData.today_production_output,
           icon: <Factory style={{ width: 20, height: 20 }} />,
           color: 'success' as const,
         },
         {
           id: '4',
-          label: '合格率',
+          label: i18n.t('mobile.mobile_workbench_page.k3'),
           value: `${workbenchData.today_quality_pass_rate}%`,
           icon: <TrendingUp style={{ width: 20, height: 20 }} />,
           color: 'info' as const,
         },
       ];
-
       const workbenchItems: WorkbenchItem[] = [
         {
           id: 'task-1',
-          title: 'A3仓库盘点任务',
-          subtitle: '库存盘点 · 今日截止',
+          title: i18n.t('pages.mobile_workbench_page.a3_0'),
+          subtitle: i18n.t('mobile.mobile_workbench_page.k4'),
           time: '10:30',
           avatar: <ClipboardList style={{ width: 20, height: 20 }} />,
           type: 'task',
-          status: '进行中',
+          status: i18n.t('mobile.mobile_workbench_page.k5'),
         },
         {
           id: 'approval-1',
-          title: '采购订单审批',
-          subtitle: '张明提交 · ¥12,500',
+          title: i18n.t('mobile.mobile_workbench_page.k6'),
+          subtitle: i18n.t('pages.mobile_workbench_page.12500_1'),
           time: '09:45',
           avatar: <CheckSquare style={{ width: 20, height: 20 }} />,
           type: 'approval',
-          status: '待审批',
+          status: i18n.t('mobile.mobile_workbench_page.k7'),
         },
         {
           id: 'production-1',
-          title: '生产工单 #PO-2024-0678',
-          subtitle: '智能传感器 · 500件',
+          title: i18n.t('pages.mobile_workbench_page.po20240678_2'),
+          subtitle: i18n.t('mobile.mobile_workbench_page.500_8'),
           time: '08:00',
           avatar: <Factory style={{ width: 20, height: 20 }} />,
           type: 'production',
-          status: '生产中',
+          status: i18n.t('mobile.mobile_workbench_page.k9'),
         },
         {
           id: 'quality-1',
-          title: '来料质检任务',
-          subtitle: '电子元件批次 #B20240601',
-          time: '昨天 16:20',
+          title: i18n.t('mobile.mobile_workbench_page.k10'),
+          subtitle: i18n.t('pages.mobile_workbench_page.b20240601_3'),
+          time: i18n.t('pages.mobile_workbench_page.1620_4'),
           avatar: <ClipboardCheck style={{ width: 20, height: 20 }} />,
           type: 'quality',
-          status: '待检验',
+          status: i18n.t('mobile.mobile_workbench_page.k11'),
         },
         {
           id: 'notification-1',
-          title: '系统维护通知',
-          subtitle: '今晚22:00-24:00系统升级',
-          time: '昨天 14:00',
+          title: i18n.t('mobile.mobile_workbench_page.k12'),
+          subtitle: i18n.t('pages.mobile_workbench_page.22002400_5'),
+          time: i18n.t('pages.mobile_workbench_page.1400_6'),
           avatar: <Bell style={{ width: 20, height: 20 }} />,
           type: 'notification',
         },
       ];
-
       return { stats, workbenchItems, unreadCount: workbenchData.unread_notifications };
     },
     staleTime: 5 * 60 * 1000,
@@ -168,31 +159,29 @@ const MobileWorkbenchPage: React.FC = () => {
   const workbenchItems = workbenchQuery.data?.workbenchItems ?? [];
   const unreadCount = workbenchQuery.data?.unreadCount ?? 0;
   const loading = workbenchQuery.isLoading;
-
   useEffect(() => {
     if (workbenchQuery.isError) {
-      apiLogger.error('加载工作台数据失败:', workbenchQuery.error);
+      apiLogger.error(i18n.t('pages.mobile_workbench_page.k7'), workbenchQuery.error);
     }
   }, [workbenchQuery.isError, workbenchQuery.error]);
-
   const quickActions: QuickAction[] = [
     {
       id: 'attendance',
-      label: '考勤打卡',
+      label: i18n.t('mobile.mobile_workbench_page.k13'),
       icon: <CalendarCheck style={{ width: 24, height: 24 }} />,
       path: MOBILE_PATHS.attendance,
       color: 'primary',
     },
     {
       id: 'scan',
-      label: '扫码',
+      label: i18n.t('mobile.mobile_workbench_page.k14'),
       icon: <ScanLine style={{ width: 24, height: 24 }} />,
       path: MOBILE_PATHS.scanPage,
       color: 'success',
     },
     {
       id: 'approval',
-      label: '审批',
+      label: i18n.t('mobile.mobile_workbench_page.k15'),
       icon: <CheckSquare style={{ width: 24, height: 24 }} />,
       path: MOBILE_PATHS.approvals,
       color: 'warning',
@@ -200,45 +189,43 @@ const MobileWorkbenchPage: React.FC = () => {
     },
     {
       id: 'inventory',
-      label: '库存',
+      label: i18n.t('mobile.mobile_workbench_page.k16'),
       icon: <Package style={{ width: 24, height: 24 }} />,
       path: MOBILE_PATHS.inventory,
       color: 'info',
     },
     {
       id: 'quality',
-      label: '质检',
+      label: i18n.t('mobile.mobile_workbench_page.k17'),
       icon: <ClipboardCheck style={{ width: 24, height: 24 }} />,
       path: MOBILE_PATHS.quality,
       color: 'error',
     },
     {
       id: 'production',
-      label: '生产',
+      label: i18n.t('mobile.mobile_workbench_page.k18'),
       icon: <Factory style={{ width: 24, height: 24 }} />,
       path: MOBILE_PATHS.production,
       color: 'secondary',
     },
     {
       id: 'tasks',
-      label: '任务',
+      label: i18n.t('mobile.mobile_workbench_page.k19'),
       icon: <ListTodo style={{ width: 24, height: 24 }} />,
       path: MOBILE_PATHS.tasks,
       color: 'primary',
     },
     {
       id: 'more',
-      label: '更多',
+      label: i18n.t('mobile.mobile_workbench_page.k20'),
       icon: <Zap style={{ width: 24, height: 24 }} />,
       path: MOBILE_PATHS.home,
       color: 'info',
     },
   ];
-
   const handleRefresh = useCallback(async () => {
     await workbenchQuery.refetch();
   }, [workbenchQuery]);
-
   const getAvatarBgColor = (type: string) => {
     switch (type) {
       case 'task':
@@ -255,7 +242,6 @@ const MobileWorkbenchPage: React.FC = () => {
         return 'grey.100';
     }
   };
-
   const getAvatarColor = (type: string) => {
     switch (type) {
       case 'task':
@@ -272,22 +258,20 @@ const MobileWorkbenchPage: React.FC = () => {
         return 'text.primary';
     }
   };
-
   const getStatusColor = (status: string) => {
     switch (status) {
-      case '进行中':
-      case '生产中':
+      case i18n.t('mobile.mobile_workbench_page.k21'):
+      case i18n.t('mobile.mobile_workbench_page.k22'):
         return 'primary';
-      case '待审批':
-      case '待检验':
+      case i18n.t('mobile.mobile_workbench_page.k23'):
+      case i18n.t('mobile.mobile_workbench_page.k24'):
         return 'warning';
-      case '已完成':
+      case i18n.t('mobile.mobile_workbench_page.k25'):
         return 'success';
       default:
         return 'default';
     }
   };
-
   const handleTabChange = (tabId: string) => {
     switch (tabId) {
       case 'home':
@@ -307,11 +291,9 @@ const MobileWorkbenchPage: React.FC = () => {
         break;
     }
   };
-
   const handleQuickAction = (action: QuickAction) => {
     navigate(action.path);
   };
-
   const handleItemClick = (item: WorkbenchItem) => {
     switch (item.type) {
       case 'task':
@@ -331,23 +313,21 @@ const MobileWorkbenchPage: React.FC = () => {
         break;
     }
   };
-
   const tabs = [
-    { id: 'home', label: '工作台', icon: <Home style={{ width: 22, height: 22 }} /> },
-    { id: 'tasks', label: '任务', icon: <ListTodo style={{ width: 22, height: 22 }} /> },
-    { id: 'scan', label: '扫码', icon: <ScanLine style={{ width: 22, height: 22 }} /> },
+    { id: 'home', label: i18n.t('mobile.mobile_workbench_page.k26'), icon: <Home style={{ width: 22, height: 22 }} /> },
+    { id: 'tasks', label: i18n.t('mobile.mobile_workbench_page.k27'), icon: <ListTodo style={{ width: 22, height: 22 }} /> },
+    { id: 'scan', label: i18n.t('mobile.mobile_workbench_page.k28'), icon: <ScanLine style={{ width: 22, height: 22 }} /> },
     {
       id: 'approval',
-      label: '审批',
+      label: i18n.t('mobile.mobile_workbench_page.k29'),
       icon: <CheckSquare style={{ width: 22, height: 22 }} />,
       badge: 3,
     },
-    { id: 'profile', label: '我的', icon: <User style={{ width: 22, height: 22 }} /> },
+    { id: 'profile', label: i18n.t('mobile.mobile_workbench_page.k30'), icon: <User style={{ width: 22, height: 22 }} /> },
   ];
-
   return (
     <MobileLayout
-      title='工作台'
+      title={i18n.t('mobile.mobile_workbench_page.k31')}
       showBack={false}
       showMenu={false}
       showNotifications
@@ -391,13 +371,13 @@ const MobileWorkbenchPage: React.FC = () => {
                     variant='h6'
                     sx={{ fontWeight: 600, mb: 0.5 }}
                   >
-                    {user?.fullName || user?.username || '用户'}
+                    {user?.fullName || user?.username || i18n.t('mobile.mobile_workbench_page.k32')}
                   </Typography>
                   <Typography
                     variant='body2'
                     sx={{ opacity: 0.8 }}
                   >
-                    {user?.department || '生产部 · 操作员'}
+                    {user?.department || i18n.t('mobile.mobile_workbench_page.k33')}
                   </Typography>
                 </Box>
                 <Badge
@@ -413,11 +393,10 @@ const MobileWorkbenchPage: React.FC = () => {
                   variant='body2'
                   sx={{ opacity: 0.9 }}
                 >
-                  今日已签到 · 工作顺利！
+                  {i18n.t('pages.mobile_workbench_page.k0')}
                 </Typography>
               </Box>
             </Paper>
-
             {loading ? (
               <MobileSkeleton
                 type='dashboard'
@@ -477,7 +456,6 @@ const MobileWorkbenchPage: React.FC = () => {
                     </Grid>
                   ))}
                 </Grid>
-
                 <Paper
                   elevation={0}
                   sx={{
@@ -500,7 +478,7 @@ const MobileWorkbenchPage: React.FC = () => {
                       variant='subtitle2'
                       sx={{ fontWeight: 600 }}
                     >
-                      常用功能
+                      {i18n.t('pages.mobile_workbench_page.k1')}
                     </Typography>
                   </Box>
                   <Grid
@@ -563,7 +541,6 @@ const MobileWorkbenchPage: React.FC = () => {
                     ))}
                   </Grid>
                 </Paper>
-
                 <Paper
                   elevation={0}
                   sx={{
@@ -587,7 +564,7 @@ const MobileWorkbenchPage: React.FC = () => {
                       variant='subtitle2'
                       sx={{ fontWeight: 600 }}
                     >
-                      待办事项
+                      {i18n.t('pages.mobile_workbench_page.k2')}
                     </Typography>
                     <Box
                       sx={{
@@ -598,7 +575,7 @@ const MobileWorkbenchPage: React.FC = () => {
                       }}
                       onClick={() => navigate(MOBILE_PATHS.tasks)}
                     >
-                      <Typography variant='caption'>查看全部</Typography>
+                      <Typography variant='caption'>{i18n.t('mobile.mobile_workbench_page.k34')}</Typography>
                       <ChevronRight style={{ width: 16, height: 16 }} />
                     </Box>
                   </Box>
@@ -667,5 +644,4 @@ const MobileWorkbenchPage: React.FC = () => {
     </MobileLayout>
   );
 };
-
 export default MobileWorkbenchPage;

@@ -4,7 +4,6 @@
  * 使用 CrudPage + accountSchema 实现 schema 驱动的 CRUD。
  * 支持列表展示、创建、编辑、删除、筛选，以及余额展示和统计卡片。
  */
-
 import React, { useMemo, useCallback } from 'react';
 import { Box, Typography } from '@mui/material';
 import CrudPage, { type CrudApiAdapter } from '@/components/templates/CrudPage';
@@ -15,10 +14,9 @@ import type { Account, AccountBalance } from '@/types/finance';
 import { useNotificationStore } from '@/store';
 import { logger } from '@/utils/logger';
 import { designTokens } from '@topems/tokens';
-
+import i18n from '@/i18n';
 const AccountManagementPage: React.FC = () => {
   const addNotification = useNotificationStore((state) => state.addNotification);
-
   const apiAdapter: CrudApiAdapter = useMemo(
     () => ({
       list: async (params) => {
@@ -27,7 +25,6 @@ const AccountManagementPage: React.FC = () => {
         const search = (params?.search as string) || '';
         const typeFilter = (params?.type as string) || undefined;
         const isDetailFilter = (params?.is_detail as string) || undefined;
-
         const queryParams: Record<string, unknown> = {
           page,
           pagesize: pageSize,
@@ -37,14 +34,11 @@ const AccountManagementPage: React.FC = () => {
         if (isDetailFilter && isDetailFilter !== 'all') {
           queryParams.status = isDetailFilter === 'detail' ? 'detail' : 'summary';
         }
-
         const response = await accountApi.list(queryParams);
         if (!response.success || !response.data) {
           return { data: [], total: 0 };
         }
-
         const accounts = response.data.items || [];
-
         // 尝试获取余额数据并合并
         let balances: AccountBalance[] = [];
         try {
@@ -57,9 +51,8 @@ const AccountManagementPage: React.FC = () => {
             balances = balanceResp.data;
           }
         } catch (err) {
-          logger.warn('获取科目余额失败:', err);
+          logger.warn(i18n.t('pages.account_management_page.k0'), err);
         }
-
         const merged = accounts.map((account: Account) => {
           const balance = balances.find((b) => b.account_id === account.id);
           return {
@@ -67,7 +60,6 @@ const AccountManagementPage: React.FC = () => {
             balance: balance ? balance.debit_balance || balance.credit_balance || 0 : null,
           };
         });
-
         return {
           data: merged as unknown as Record<string, unknown>[],
           total: response.data.total || accounts.length,
@@ -76,11 +68,11 @@ const AccountManagementPage: React.FC = () => {
       create: async (data) => {
         const response = await accountApi.create(data as Partial<Account>);
         if (!response.success) {
-          throw new Error(response.message || '创建科目失败');
+          throw new Error(response.message || i18n.t('admin.account_management_page.k0'));
         }
         addNotification({
-          title: '创建成功',
-          message: '科目已创建',
+          title: i18n.t('admin.account_management_page.k1'),
+          message: i18n.t('admin.account_management_page.k2'),
           type: 'success',
         });
         return response.data as unknown as Record<string, unknown>;
@@ -88,11 +80,11 @@ const AccountManagementPage: React.FC = () => {
       update: async (id, data) => {
         const response = await accountApi.update(String(id), data as Partial<Account>);
         if (!response.success) {
-          throw new Error(response.message || '更新科目失败');
+          throw new Error(response.message || i18n.t('admin.account_management_page.k3'));
         }
         addNotification({
-          title: '更新成功',
-          message: '科目已更新',
+          title: i18n.t('admin.account_management_page.k4'),
+          message: i18n.t('admin.account_management_page.k5'),
           type: 'success',
         });
         return response.data as unknown as Record<string, unknown>;
@@ -100,23 +92,22 @@ const AccountManagementPage: React.FC = () => {
       delete: async (id) => {
         const response = await accountApi.delete(String(id));
         if (!response.success) {
-          throw new Error(response.message || '删除科目失败');
+          throw new Error(response.message || i18n.t('admin.account_management_page.k6'));
         }
         addNotification({
-          title: '删除成功',
-          message: '科目已删除',
+          title: i18n.t('admin.account_management_page.k7'),
+          message: i18n.t('admin.account_management_page.k8'),
           type: 'success',
         });
       },
     }),
     [addNotification]
   );
-
   const customColumns: ColumnDef[] = useMemo(
     () => [
       {
         id: 'code',
-        label: '科目编码',
+        label: i18n.t('admin.account_management_page.k9'),
         sortable: true,
         width: 140,
         render: (row) => (
@@ -127,7 +118,7 @@ const AccountManagementPage: React.FC = () => {
       },
       {
         id: 'name',
-        label: '科目名称',
+        label: i18n.t('admin.account_management_page.k10'),
         sortable: true,
         width: 180,
         render: (row) => (
@@ -138,33 +129,33 @@ const AccountManagementPage: React.FC = () => {
       },
       {
         id: 'type',
-        label: '科目类型',
+        label: i18n.t('admin.account_management_page.k11'),
         width: 100,
         render: (row) => {
           const type = String(row.type || '');
           const labels: Record<string, string> = {
-            asset: '资产',
-            liability: '负债',
-            equity: '权益',
-            revenue: '收入',
-            expense: '费用',
-            cost: '成本',
+            asset: i18n.t('admin.account_management_page.k12'),
+            liability: i18n.t('admin.account_management_page.k13'),
+            equity: i18n.t('admin.account_management_page.k14'),
+            revenue: i18n.t('admin.account_management_page.k15'),
+            expense: i18n.t('admin.account_management_page.k16'),
+            cost: i18n.t('admin.account_management_page.k17'),
           };
           const colors: Record<string, string> = {
             asset: `var(--color-primary-main, ${designTokens.colors.primary.dark})`,
             liability: `var(--color-error-main, ${designTokens.colors.error['800']})`,
             equity: `var(--color-success-main, ${designTokens.colors.success.dark})`,
-            revenue: 'var(--color-info-main, #0288d1)',
-            expense: 'var(--color-warning-main, #ed6c02)',
-            cost: 'var(--color-text-secondary, rgba(0,0,0,0.6))',
+            revenue: `var(--color-info-main, ${designTokens.colors.info[600]}`,
+            expense: `var(--color-warning-main, ${designTokens.colors.warning[500]}`,
+            cost: `var(--color-text-secondary, ${designTokens.colors.cyber.metal.bottomShadow}`,
           };
           const bgColors: Record<string, string> = {
             asset: `var(--color-primary-lighter, ${designTokens.colors.primary['50']})`,
-            liability: 'var(--color-error-lighter, #ffebee)',
+            liability: `var(--color-error-lighter, ${designTokens.colors.error[50]}`,
             equity: `var(--color-success-lighter, ${designTokens.colors.success['50']})`,
-            revenue: 'var(--color-info-lighter, #e1f5fe)',
-            expense: 'var(--color-warning-lighter, #fff3e0)',
-            cost: 'var(--color-action-hover, rgba(0,0,0,0.04))',
+            revenue: `var(--color-info-lighter, ${designTokens.colors.info[50]}`,
+            expense: `var(--color-warning-lighter, ${designTokens.colors.warning[50]}`,
+            cost: `var(--color-action-hover, ${designTokens.colors.action.hover}`,
           };
           const label = labels[type] || type;
           const color = colors[type] || colors.cost;
@@ -173,7 +164,7 @@ const AccountManagementPage: React.FC = () => {
             <span
               style={{
                 display: 'inline-block',
-                padding: '2px 8px',
+                padding: `${designTokens.spacing.xs} 8px`,
                 borderRadius: 12,
                 fontSize: 12,
                 fontWeight: 500,
@@ -188,11 +179,11 @@ const AccountManagementPage: React.FC = () => {
       },
       {
         id: 'balance_direction',
-        label: '余额方向',
+        label: i18n.t('admin.account_management_page.k18'),
         width: 100,
         render: (row) => {
           const direction = String(row.balance_direction || '');
-          const label = direction === 'debit' ? '借' : direction === 'credit' ? '贷' : direction;
+          const label = direction === 'debit' ? i18n.t('admin.account_management_page.k20') : direction === 'credit' ? i18n.t('admin.account_management_page.k19') : direction;
           const color =
             direction === 'debit'
               ? `var(--color-primary-main, ${designTokens.colors.primary.dark})`
@@ -200,12 +191,12 @@ const AccountManagementPage: React.FC = () => {
           const bgColor =
             direction === 'debit'
               ? `var(--color-primary-lighter, ${designTokens.colors.primary['50']})`
-              : 'var(--color-error-lighter, #ffebee)';
+              : `var(--color-error-lighter, ${designTokens.colors.error[50]}`;
           return (
             <span
               style={{
                 display: 'inline-block',
-                padding: '2px 8px',
+                padding: `${designTokens.spacing.xs} 8px`,
                 borderRadius: 12,
                 fontSize: 12,
                 fontWeight: 500,
@@ -220,7 +211,7 @@ const AccountManagementPage: React.FC = () => {
       },
       {
         id: 'is_detail',
-        label: '明细',
+        label: i18n.t('admin.account_management_page.k21'),
         width: 110,
         render: (row) => {
           const isDetail = row.is_detail === true;
@@ -228,41 +219,41 @@ const AccountManagementPage: React.FC = () => {
             <span
               style={{
                 display: 'inline-block',
-                padding: '2px 8px',
+                padding: `${designTokens.spacing.xs} 8px`,
                 borderRadius: 12,
                 fontSize: 12,
                 fontWeight: 500,
-                border: `1px solid ${isDetail ? 'var(--color-primary-main, #1976d2)' : 'var(--color-divider, rgba(0,0,0,0.12))'}`,
+                border: `1px solid ${isDetail ? `var(--color-primary-main, ${designTokens.colors.primary[700]}` : `var(--color-divider, ${designTokens.colors.action.selected}`}`,
                 backgroundColor: isDetail ? `var(--color-primary-lighter, ${designTokens.colors.primary['50']})` : 'transparent',
                 color: isDetail
                   ? `var(--color-primary-main, ${designTokens.colors.primary.dark})`
-                  : 'var(--color-text-secondary, rgba(0,0,0,0.6))',
+                  : `var(--color-text-secondary, ${designTokens.colors.cyber.metal.bottomShadow}`,
               }}
             >
-              {isDetail ? '明细科目' : '总账科目'}
+              {isDetail ? i18n.t('admin.account_management_page.k23') : i18n.t('admin.account_management_page.k22')}
             </span>
           );
         },
       },
       {
         id: 'isactive',
-        label: '状态',
+        label: i18n.t('admin.account_management_page.k24'),
         width: 90,
         render: (row) => {
           const isActive = row.isactive !== false;
           const color = isActive
             ? `var(--color-success-main, ${designTokens.colors.success.dark})`
-            : 'var(--color-text-secondary, rgba(0,0,0,0.6))';
+            : `var(--color-text-secondary, ${designTokens.colors.cyber.metal.bottomShadow}`;
           const bgColor = isActive
             ? `var(--color-success-lighter, ${designTokens.colors.success['50']})`
-            : 'var(--color-action-hover, rgba(0,0,0,0.04))';
+            : `var(--color-action-hover, ${designTokens.colors.action.hover}`;
           return (
             <span
               style={{
                 display: 'inline-flex',
                 alignItems: 'center',
                 gap: 4,
-                padding: '2px 8px',
+                padding: `${designTokens.spacing.xs} 8px`,
                 borderRadius: 12,
                 fontSize: 12,
                 fontWeight: 500,
@@ -278,14 +269,14 @@ const AccountManagementPage: React.FC = () => {
                   backgroundColor: color,
                 }}
               />
-              {isActive ? '启用' : '停用'}
+              {isActive ? i18n.t('admin.account_management_page.k26') : i18n.t('admin.account_management_page.k25')}
             </span>
           );
         },
       },
       {
         id: 'balance',
-        label: '余额',
+        label: i18n.t('admin.account_management_page.k27'),
         align: 'right',
         width: 140,
         render: (row) => {
@@ -311,7 +302,6 @@ const AccountManagementPage: React.FC = () => {
     ],
     []
   );
-
   const headerContent = useCallback((rows: Record<string, unknown>[]) => {
     const accounts = rows as unknown as Account[];
     const stats = {
@@ -320,14 +310,12 @@ const AccountManagementPage: React.FC = () => {
       summary: accounts.filter((a) => !a.is_detail).length,
       inactive: accounts.filter((a) => !a.isactive).length,
     };
-
     const statCards = [
-      { label: '科目总数', value: stats.total, color: 'primary.main' },
-      { label: '明细科目', value: stats.detail, color: 'success.main' },
-      { label: '总账科目', value: stats.summary, color: 'info.main' },
-      { label: '已停用', value: stats.inactive, color: 'warning.main' },
+      { label: i18n.t('admin.account_management_page.k28'), value: stats.total, color: 'primary.main' },
+      { label: i18n.t('admin.account_management_page.k29'), value: stats.detail, color: 'success.main' },
+      { label: i18n.t('admin.account_management_page.k30'), value: stats.summary, color: 'info.main' },
+      { label: i18n.t('admin.account_management_page.k31'), value: stats.inactive, color: 'warning.main' },
     ];
-
     return (
       <Box sx={{ mb: 3 }}>
         <Box
@@ -360,7 +348,6 @@ const AccountManagementPage: React.FC = () => {
       </Box>
     );
   }, []);
-
   return (
     <CrudPage
       schema={accountSchema}
@@ -368,12 +355,11 @@ const AccountManagementPage: React.FC = () => {
       customColumns={customColumns}
       headerContent={headerContent}
       breadcrumbs={[
-        { label: '首页', href: '/dashboard' },
-        { label: '系统管理' },
-        { label: '会计科目管理' },
+        { label: i18n.t('admin.account_management_page.k32'), href: '/dashboard' },
+        { label: i18n.t('admin.account_management_page.k33') },
+        { label: i18n.t('admin.account_management_page.k34') },
       ]}
     />
   );
 };
-
 export default AccountManagementPage;

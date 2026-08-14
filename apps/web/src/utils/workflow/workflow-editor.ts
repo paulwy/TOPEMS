@@ -1,3 +1,4 @@
+import i18n from '@/i18n';
 /**
  * V48.0 前端智能编排 — 工作流可视化编辑器
  *
@@ -349,7 +350,7 @@ export class WorkflowEditor {
     if (!workflow) {
       return {
         valid: false,
-        errors: [{ code: 'WORKFLOW_NOT_FOUND', message: `工作流 ${workflowId} 不存在` }],
+        errors: [{ code: 'WORKFLOW_NOT_FOUND', message: `${i18n.t('shared.workflow-editor.k0')}${workflowId}${i18n.t('shared.workflow-editor.k1')}` }],
         warnings: [],
       };
     }
@@ -358,10 +359,10 @@ export class WorkflowEditor {
 
     // 必填字段
     if (!workflow.name) {
-      errors.push({ code: 'NAME_REQUIRED', message: '工作流名称不能为空' });
+      errors.push({ code: 'NAME_REQUIRED', message: i18n.t('shared.workflow-editor.k0') });
     }
     if (workflow.nodes.length === 0) {
-      errors.push({ code: 'NO_NODES', message: '工作流必须包含至少一个节点' });
+      errors.push({ code: 'NO_NODES', message: i18n.t('shared.workflow-editor.k1') });
       return { valid: false, errors, warnings };
     }
 
@@ -369,18 +370,18 @@ export class WorkflowEditor {
     const startNodes = workflow.nodes.filter((n) => n.type === NodeType.START);
     const endNodes = workflow.nodes.filter((n) => n.type === NodeType.END);
     if (startNodes.length === 0) {
-      errors.push({ code: 'NO_START', message: '工作流必须包含一个开始节点' });
+      errors.push({ code: 'NO_START', message: i18n.t('shared.workflow-editor.k2') });
     }
     if (startNodes.length > 1) {
       errors.push({
         code: 'MULTIPLE_START',
-        message: '工作流只能包含一个开始节点',
+        message: i18n.t('shared.workflow-editor.k3'),
       });
     }
     if (endNodes.length === 0) {
       warnings.push({
         code: 'NO_END',
-        message: '建议添加结束节点以明确工作流终止',
+        message: i18n.t('shared.workflow-editor.k4'),
       });
     }
 
@@ -390,7 +391,7 @@ export class WorkflowEditor {
         errors.push({
           node_id: node.node_id,
           code: 'NODE_NAME_REQUIRED',
-          message: `节点 ${node.node_id} 缺少名称`,
+          message: `${i18n.t('shared.workflow-editor.k2')}${node.node_id}${i18n.t('shared.workflow-editor.k3')}`,
         });
       }
       // 非起止节点应有输入
@@ -398,7 +399,7 @@ export class WorkflowEditor {
         warnings.push({
           node_id: node.node_id,
           code: 'NO_INPUTS',
-          message: `节点 ${node.name} 没有输入端口`,
+          message: `${i18n.t('shared.workflow-editor.k4')}${node.name}${i18n.t('shared.workflow-editor.k5')}`,
         });
       }
     }
@@ -411,14 +412,14 @@ export class WorkflowEditor {
         errors.push({
           edge_id: edge.edge_id,
           code: 'INVALID_SOURCE',
-          message: `边 ${edge.edge_id} 引用了不存在的源节点 ${edge.source_node_id}`,
+          message: `${i18n.t('shared.workflow-editor.k6')}${edge.edge_id}${i18n.t('shared.workflow-editor.k7')}${edge.source_node_id}`,
         });
       }
       if (!targetExists) {
         errors.push({
           edge_id: edge.edge_id,
           code: 'INVALID_TARGET',
-          message: `边 ${edge.edge_id} 引用了不存在的目标节点 ${edge.target_node_id}`,
+          message: `${i18n.t('shared.workflow-editor.k8')}${edge.edge_id}${i18n.t('shared.workflow-editor.k9')}${edge.target_node_id}`,
         });
       }
     }
@@ -433,7 +434,7 @@ export class WorkflowEditor {
         warnings.push({
           node_id: node.node_id,
           code: 'UNREACHABLE',
-          message: `节点 ${node.name} 从开始节点不可达`,
+          message: `${i18n.t('shared.workflow-editor.k10')}${node.name}${i18n.t('shared.workflow-editor.k11')}`,
         });
       }
     }
@@ -443,7 +444,7 @@ export class WorkflowEditor {
     if (cycle) {
       errors.push({
         code: 'CYCLE_DETECTED',
-        message: `检测到循环依赖，涉及节点: ${cycle.join(' → ')}`,
+        message: `${i18n.t('shared.workflow-editor.k12')}${cycle.join(' → ')}`,
       });
     }
 
@@ -607,7 +608,7 @@ export class WorkflowEditor {
           suggestions.push({
             node_id: nodeId,
             position: { x: 100 * (idx + 1), y: 100 },
-            reason: '与其它节点位置重叠，建议偏移',
+            reason: i18n.t('shared.workflow-editor.k5'),
           });
         });
       }
@@ -621,7 +622,7 @@ export class WorkflowEditor {
         suggestions.push({
           node_id: node.node_id,
           position: { x: node.position.x + 200, y: node.position.y },
-          reason: '节点无连接，建议靠近主流程或删除',
+          reason: i18n.t('shared.workflow-editor.k6'),
         });
       }
     }

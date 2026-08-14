@@ -4,11 +4,12 @@
 
 import React from 'react';
 import type { EntitySchema } from '@/schema';
+import i18n from '@/i18n';
 
 export const testMethodSchema: EntitySchema = {
   entity: 'test_method',
-  title: '检测方法管理',
-  description: '管理检测方法基础信息，包括方法编号、名称、分类、标准、状态等',
+  title: i18n.t('lims.test_method.k0'),
+  description: i18n.t('lims.test_method.k1'),
 
   api: {
     module: 'lims',
@@ -18,7 +19,7 @@ export const testMethodSchema: EntitySchema = {
   fields: [
     {
       name: 'method_code',
-      label: '方法编号',
+      label: i18n.t('lims.test_method.k2'),
       type: 'text',
       required: true,
       readonlyOnEdit: true,
@@ -27,7 +28,7 @@ export const testMethodSchema: EntitySchema = {
     },
     {
       name: 'method_name',
-      label: '方法名称',
+      label: i18n.t('lims.test_method.k3'),
       type: 'text',
       required: true,
       sortable: true,
@@ -35,17 +36,17 @@ export const testMethodSchema: EntitySchema = {
     },
     {
       name: 'category_id',
-      label: '方法分类',
+      label: i18n.t('lims.test_method.k4'),
       type: 'select',
       defaultValue: '',
       options: {
         type: 'static',
         options: [
-          { value: '', label: '请选择分类' },
-          { value: '理化分析', label: '理化分析' },
-          { value: '微生物检测', label: '微生物检测' },
-          { value: '仪器分析', label: '仪器分析' },
-          { value: '感官检验', label: '感官检验' },
+          { value: '', label: i18n.t('lims.test_method.k5') },
+          { value: i18n.t('lims.test_method.k6'), label: i18n.t('lims.test_method.k7') },
+          { value: i18n.t('lims.test_method.k8'), label: i18n.t('lims.test_method.k9') },
+          { value: i18n.t('lims.test_method.k10'), label: i18n.t('lims.test_method.k11') },
+          { value: i18n.t('lims.test_method.k12'), label: i18n.t('lims.test_method.k13') },
         ],
       },
       listWidth: 120,
@@ -55,34 +56,34 @@ export const testMethodSchema: EntitySchema = {
     },
     {
       name: 'standard',
-      label: '参考标准',
+      label: i18n.t('lims.test_method.k14'),
       type: 'text',
       listWidth: 140,
     },
     {
       name: 'version',
-      label: '版本',
+      label: i18n.t('lims.test_method.k15'),
       type: 'text',
       listWidth: 80,
     },
     {
       name: 'status',
-      label: '状态',
+      label: i18n.t('lims.test_method.k16'),
       type: 'select',
-      defaultValue: '草稿',
+      defaultValue: i18n.t('lims.test_method.k17'),
       options: {
         type: 'static',
         options: [
-          { value: '草稿', label: '草稿' },
-          { value: '已发布', label: '已发布' },
-          { value: '已归档', label: '已归档' },
+          { value: i18n.t('lims.test_method.k18'), label: i18n.t('lims.test_method.k19') },
+          { value: i18n.t('lims.test_method.k20'), label: i18n.t('lims.test_method.k21') },
+          { value: i18n.t('lims.test_method.k22'), label: i18n.t('lims.test_method.k23') },
         ],
       },
       listWidth: 100,
     },
     {
       name: 'description',
-      label: '描述',
+      label: i18n.t('lims.test_method.k24'),
       type: 'textarea',
       showInList: false,
     },
@@ -95,38 +96,38 @@ export const testMethodSchema: EntitySchema = {
     statusBadge: {
       field: 'status',
       colorMap: {
-        草稿: 'default',
-        已发布: 'success',
-        已归档: 'primary',
+        [i18n.t('schemas.test_method.k0')]: 'default',
+        [i18n.t('schemas.test_method.k1')]: 'success',
+        [i18n.t('schemas.test_method.k2')]: 'primary',
       },
       labelMap: {
-        草稿: '草稿',
-        已发布: '已发布',
-        已归档: '已归档',
+        [i18n.t('schemas.test_method.k3')]: i18n.t('lims.test_method.k25'),
+        [i18n.t('schemas.test_method.k4')]: i18n.t('lims.test_method.k26'),
+        [i18n.t('schemas.test_method.k5')]: i18n.t('lims.test_method.k27'),
       },
     },
     filters: [
       {
         id: 'category',
-        label: '方法分类',
+        label: i18n.t('lims.test_method.k28'),
         type: 'select',
         options: [
-          { label: '全部分类', value: 'all' },
-          { label: '理化分析', value: '理化分析' },
-          { label: '微生物检测', value: '微生物检测' },
-          { label: '仪器分析', value: '仪器分析' },
-          { label: '感官检验', value: '感官检验' },
+          { label: i18n.t('lims.test_method.k29'), value: 'all' },
+          { label: i18n.t('lims.test_method.k30'), value: i18n.t('lims.test_method.k31') },
+          { label: i18n.t('lims.test_method.k32'), value: i18n.t('lims.test_method.k33') },
+          { label: i18n.t('lims.test_method.k34'), value: i18n.t('lims.test_method.k35') },
+          { label: i18n.t('lims.test_method.k36'), value: i18n.t('lims.test_method.k37') },
         ],
       },
       {
         id: 'status',
-        label: '状态',
+        label: i18n.t('lims.test_method.k38'),
         type: 'select',
         options: [
-          { label: '全部状态', value: 'all' },
-          { label: '草稿', value: '草稿' },
-          { label: '已发布', value: '已发布' },
-          { label: '已归档', value: '已归档' },
+          { label: i18n.t('lims.test_method.k39'), value: 'all' },
+          { label: i18n.t('lims.test_method.k40'), value: i18n.t('lims.test_method.k41') },
+          { label: i18n.t('lims.test_method.k42'), value: i18n.t('lims.test_method.k43') },
+          { label: i18n.t('lims.test_method.k44'), value: i18n.t('lims.test_method.k45') },
         ],
       },
     ],
@@ -136,17 +137,17 @@ export const testMethodSchema: EntitySchema = {
 
   formSections: [
     {
-      title: '基本信息',
+      title: i18n.t('lims.test_method.k46'),
       fields: ['method_code', 'method_name', 'category_id', 'standard'],
     },
     {
-      title: '状态与描述',
+      title: i18n.t('lims.test_method.k47'),
       fields: ['status', 'description'],
     },
   ],
 
   formColCount: 2,
-  createTitle: '新增检测方法',
-  editTitle: '编辑检测方法',
-  detailTitle: '检测方法详情',
+  createTitle: i18n.t('lims.test_method.k48'),
+  editTitle: i18n.t('lims.test_method.k49'),
+  detailTitle: i18n.t('lims.test_method.k50'),
 };

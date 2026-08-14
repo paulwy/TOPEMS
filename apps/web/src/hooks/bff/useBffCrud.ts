@@ -39,6 +39,7 @@ import {
   type UseQueryResult,
   type UseMutationResult,
 } from '@tanstack/react-query';
+import i18n from '@/i18n';
 import {
   listEntitiesGql,
   getFederatedEntityGql,
@@ -212,8 +213,8 @@ export function useBffCrud<T, TCreate = Partial<T>, TUpdate = Partial<T>>(
         queryClient.setQueryData(detailKey, item);
         return item;
       } catch (err) {
-        const message = extractErrorMessage(err, '获取数据失败');
-        addNotification({ title: '错误', message, type: 'error' });
+        const message = extractErrorMessage(err, i18n.t('shared.use_bff_crud.k0'));
+        addNotification({ title: i18n.t('shared.use_bff_crud.k1'), message, type: 'error' });
         return null;
       }
     },
@@ -231,7 +232,7 @@ export function useBffCrud<T, TCreate = Partial<T>, TUpdate = Partial<T>>(
   // ---- 通知辅助 ----
   const notifySuccess = useCallback(
     (message: string) => {
-      addNotification({ title: '成功', message, type: 'success' });
+      addNotification({ title: i18n.t('shared.use_bff_crud.k2'), message, type: 'success' });
     },
     [addNotification]
   );
@@ -239,20 +240,20 @@ export function useBffCrud<T, TCreate = Partial<T>, TUpdate = Partial<T>>(
   const notifyError = useCallback(
     (err: unknown, defaultMessage: string) => {
       const message = extractErrorMessage(err, defaultMessage);
-      addNotification({ title: '错误', message, type: 'error' });
+      addNotification({ title: i18n.t('shared.use_bff_crud.k3'), message, type: 'error' });
     },
     [addNotification]
   );
 
   // 语义化通知文案
-  const label = entityName ?? '记录';
-  const msgCreate = `${label}创建成功`;
-  const msgUpdate = `${label}更新成功`;
-  const msgDelete = `${label}删除成功`;
-  const msgCreateErr = `${label}创建失败`;
-  const msgUpdateErr = `${label}更新失败`;
-  const msgDeleteErr = `${label}删除失败`;
-  const msgBulkDeleteErr = `${label}批量删除失败`;
+  const label = entityName ?? i18n.t('shared.use_bff_crud.k4');
+  const msgCreate = `${label}${i18n.t('shared.use_bff_crud.k0')}`;
+  const msgUpdate = `${label}${i18n.t('shared.use_bff_crud.k1')}`;
+  const msgDelete = `${label}${i18n.t('shared.use_bff_crud.k2')}`;
+  const msgCreateErr = `${label}${i18n.t('shared.use_bff_crud.k3')}`;
+  const msgUpdateErr = `${label}${i18n.t('shared.use_bff_crud.k4')}`;
+  const msgDeleteErr = `${label}${i18n.t('shared.use_bff_crud.k5')}`;
+  const msgBulkDeleteErr = `${label}${i18n.t('shared.use_bff_crud.k6')}`;
 
   // ---- create ----
   const createMutation = useMutation<T | null, Error, TCreate, unknown>({
@@ -322,8 +323,8 @@ export function useBffCrud<T, TCreate = Partial<T>, TUpdate = Partial<T>>(
 });
       notifySuccess(
         entityName
-          ? `已删除 ${variables.length} 个${entityName}`
-          : `已删除 ${variables.length} 条记录`
+          ? `${i18n.t('shared.use_bff_crud.k7')}${variables.length}${i18n.t('shared.use_bff_crud.k8')}${entityName}`
+          : `${i18n.t('shared.use_bff_crud.k9')}${variables.length}${i18n.t('shared.use_bff_crud.k10')}`
       );
     },
     onError: (err) => notifyError(err, msgBulkDeleteErr),

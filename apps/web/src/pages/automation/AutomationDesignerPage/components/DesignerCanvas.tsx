@@ -234,7 +234,7 @@ export const DesignerCanvas: React.FC<DesignerCanvasProps> = ({
           px: 0.5,
           py: 0.25,
           borderRadius: 1,
-          bgcolor: 'rgba(255,255,255,0.92)',
+          bgcolor: designTokens.colors.common.white,
           boxShadow: 1,
           zIndex: 10,
         }}
@@ -290,7 +290,7 @@ export const DesignerCanvas: React.FC<DesignerCanvasProps> = ({
             top: 8,
             right: 8,
             p: 0.5,
-            bgcolor: 'rgba(255,255,255,0.92)',
+            bgcolor: designTokens.colors.common.white,
             pointerEvents: 'none',
           }}
         >

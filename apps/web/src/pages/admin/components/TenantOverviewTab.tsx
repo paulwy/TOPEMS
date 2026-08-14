@@ -12,45 +12,40 @@ import {
   ListItemSecondaryAction,
   Divider,
 } from '@mui/material';
+import i18n from '@/i18n';
 import { Users, Activity, HardDrive, BarChart3 } from 'lucide-react';
-import { useTranslation } from 'react-i18next';
 import type { Tenant, TenantStats } from '@/api/tenant/types';
-
 interface TenantOverviewTabProps {
   tenant: Tenant;
   stats: TenantStats;
 }
-
 const TenantOverviewTab: React.FC<TenantOverviewTabProps> = ({ tenant, stats }) => {
-  const { t } = useTranslation();
-
   const statCards = [
     {
-      label: t('admin.tenant_detail.total_users'),
+      label: i18n.t('admin.tenant_detail.total_users'),
       value: stats.total_users,
       icon: Users,
       color: 'primary',
     },
     {
-      label: t('admin.tenant_detail.active_users'),
+      label: i18n.t('admin.tenant_detail.active_users'),
       value: stats.active_users,
       icon: Activity,
       color: 'success',
     },
     {
-      label: t('admin.tenant_detail.storage_usage'),
+      label: i18n.t('admin.tenant_detail.storage_usage'),
       value: `${stats.storage_used_gb}/${tenant.settings.max_storage_gb}GB`,
       icon: HardDrive,
       color: 'warning',
     },
     {
-      label: t('admin.tenant_detail_page.label_6d6418'),
+      label: i18n.t('admin.tenant_detail_page.label_6d6418'),
       value: stats.last_30d_logins,
       icon: BarChart3,
       color: 'secondary',
     },
   ];
-
   return (
     <Box>
       <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 2, mb: 3 }}>
@@ -93,14 +88,13 @@ const TenantOverviewTab: React.FC<TenantOverviewTabProps> = ({ tenant, stats }) 
           </Card>
         ))}
       </Box>
-
       <Card variant='outlined'>
         <CardContent>
           <Typography
             variant='h6'
             sx={{ fontWeight: 600, mb: 2 }}
           >
-            {t('admin.tenant_detail_page.text_207914')}
+            {i18n.t('admin.tenant_detail_page.text_207914')}
           </Typography>
           <List disablePadding>
             <ListItem sx={{ px: 0 }}>
@@ -110,8 +104,8 @@ const TenantOverviewTab: React.FC<TenantOverviewTabProps> = ({ tenant, stats }) 
                 </Avatar>
               </ListItemAvatar>
               <ListItemText
-                primary={t('admin.tenant_detail.user_quota')}
-                secondary={t('admin.tenant_detail_page.text_82d3a8', {
+                primary={i18n.t('admin.tenant_detail.user_quota')}
+                secondary={i18n.t('admin.tenant_detail_page.text_82d3a8', {
                   var0: stats.total_users,
                   var1: tenant.settings.max_users,
                 })}
@@ -133,8 +127,8 @@ const TenantOverviewTab: React.FC<TenantOverviewTabProps> = ({ tenant, stats }) 
                 </Avatar>
               </ListItemAvatar>
               <ListItemText
-                primary={t('admin.tenant_detail.storage_space')}
-                secondary={t('admin.tenant_detail_page.text_e7bb98', {
+                primary={i18n.t('admin.tenant_detail.storage_space')}
+                secondary={i18n.t('admin.tenant_detail_page.text_e7bb98', {
                   var0: stats.storage_used_gb,
                   var1: tenant.settings.max_storage_gb,
                 })}
@@ -156,8 +150,8 @@ const TenantOverviewTab: React.FC<TenantOverviewTabProps> = ({ tenant, stats }) 
                 </Avatar>
               </ListItemAvatar>
               <ListItemText
-                primary={t('admin.tenant_detail_page.attr_66e1a1')}
-                secondary={t('admin.tenant_detail_page.text_bbac12', {
+                primary={i18n.t('admin.tenant_detail_page.attr_66e1a1')}
+                secondary={i18n.t('admin.tenant_detail_page.text_bbac12', {
                   var0: stats.api_requests_today.toLocaleString(),
                   var1: tenant.settings.max_api_requests_per_day.toLocaleString(),
                 })}
@@ -180,5 +174,4 @@ const TenantOverviewTab: React.FC<TenantOverviewTabProps> = ({ tenant, stats }) 
     </Box>
   );
 };
-
 export default TenantOverviewTab;

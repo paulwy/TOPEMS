@@ -21,6 +21,7 @@ import {
   type BffErrorType,
   type ErrorRecoveryStrategy,
 } from '@/components/bff/BffErrorBoundary';
+import i18n from '@/i18n';
 import {
   fallbackManager,
   type FallbackContext,
@@ -359,7 +360,7 @@ export function useBffFallback<T>(
       setLoading(false);
       return;
     } catch (primaryErr) {
-      errHookLogger.warn('主函数失败，尝试降级:', primaryErr);
+      errHookLogger.warn(i18n.t('shared.use_bff_error_handling.k0'), primaryErr);
       const error = primaryErr instanceof Error ? primaryErr : new Error(String(primaryErr));
 
       // 构造降级上下文
@@ -385,7 +386,7 @@ export function useBffFallback<T>(
         return;
       } catch (fallbackErr) {
         // 降级函数也失败，尝试责任链
-        errHookLogger.warn('降级函数失败，尝试责任链:', fallbackErr);
+        errHookLogger.warn(i18n.t('shared.use_bff_error_handling.k1'), fallbackErr);
         const chainResult = await fallbackManager.execute<T>(context);
         if (chainResult.success && chainResult.data !== undefined) {
           setData(chainResult.data);

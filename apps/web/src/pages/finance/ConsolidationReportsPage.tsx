@@ -327,8 +327,8 @@ export default function ConsolidationReportsPage() {
             ? `¥${report.total_assets.toLocaleString('zh-CN')}`
             : '-',
           net_profit:
-            report['归属于母公司净利润'] || report.net_profit
-              ? `¥${Math.abs(report['归属于母公司净利润'] || report.net_profit || 0).toLocaleString('zh-CN')}`
+            (report as unknown as Record<string, unknown>)[i18n.t('pages.consolidation_reports_page.k0')] || report.net_profit
+              ? `¥${Math.abs((report as unknown as Record<string, unknown>)[i18n.t('pages.consolidation_reports_page.k1')] as number || report.net_profit || 0).toLocaleString('zh-CN')}`
               : '-',
           status: STATUS_CONFIG[report.status]?.label || report.status,
           approval_status:

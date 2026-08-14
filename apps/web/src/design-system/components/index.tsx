@@ -38,6 +38,7 @@ import {
   type SxProps,
   type Theme,
 } from '@mui/material';
+import i18n from '@/i18n';
 import { Search, X as XIcon, CheckCircle2, AlertCircle, Info, AlertTriangle } from 'lucide-react';
 import { v51DesignTokens } from '../tokens/v51-tokens';
 
@@ -398,7 +399,7 @@ export const V51Select: React.FC<V51SelectProps> = ({
   value,
   defaultValue,
   options,
-  placeholder = '请选择',
+  placeholder = i18n.t('design-system.index.k0'),
   searchable = false,
   error = false,
   required = false,
@@ -498,7 +499,7 @@ export const V51Select: React.FC<V51SelectProps> = ({
                 autoFocus
                 value={searchText}
                 onChange={(e) => setSearchText(e.target.value)}
-                placeholder='搜索...'
+                placeholder={i18n.t('design_system.index.k0')}
                 style={{
                   border: 'none',
                   outline: 'none',
@@ -615,7 +616,7 @@ export function V51Table<T extends Record<string, unknown>>({
   onPageChange,
   onPageSizeChange,
   loading = false,
-  emptyMessage = '暂无数据',
+  emptyMessage = i18n.t('design-system.index.k1'),
   maxHeight,
   sx,
   density = 'default',
@@ -890,8 +891,8 @@ export const V51Dialog: React.FC<V51DialogProps> = ({
   onClose,
   title,
   children,
-  confirmText = '确认',
-  cancelText = '取消',
+  confirmText = i18n.t('design-system.index.k2'),
+  cancelText = i18n.t('design-system.index.k3'),
   onConfirm,
   onCancel,
   confirmLoading = false,

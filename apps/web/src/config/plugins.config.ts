@@ -7,6 +7,7 @@
  */
 
 import { MF_PORTS } from './ports';
+import i18n from '@/i18n';
 
 export interface RemoteModuleConfig {
   name: string;
@@ -33,7 +34,7 @@ export const REMOTE_MODULES: RemoteModuleConfig[] = [
   {
     name: 'Core',
     code: 'topems_core',
-    description: '核心模块 - 认证、权限、工作流等基础服务',
+    description: i18n.t('shared.plugins.config.k0'),
     port: MF_PORTS.topems_core,
     url: `http://localhost:${MF_PORTS.topems_core}`,
     category: 'system',
@@ -45,7 +46,7 @@ export const REMOTE_MODULES: RemoteModuleConfig[] = [
   {
     name: 'HRM',
     code: 'topems_hrm',
-    description: '人力资源管理 - 员工、考勤、薪酬、招聘',
+    description: i18n.t('shared.plugins.config.k1'),
     port: MF_PORTS.topems_hrm,
     url: `http://localhost:${MF_PORTS.topems_hrm}`,
     category: 'business',
@@ -58,7 +59,7 @@ export const REMOTE_MODULES: RemoteModuleConfig[] = [
   {
     name: 'CRM',
     code: 'topems_crm',
-    description: '客户关系管理 - 客户、销售、商机',
+    description: i18n.t('shared.plugins.config.k2'),
     port: MF_PORTS.topems_crm,
     url: `http://localhost:${MF_PORTS.topems_crm}`,
     category: 'business',
@@ -71,7 +72,7 @@ export const REMOTE_MODULES: RemoteModuleConfig[] = [
   {
     name: 'PM',
     code: 'topems_pm',
-    description: '项目管理 - 项目计划、任务分配、进度跟踪',
+    description: i18n.t('shared.plugins.config.k3'),
     port: MF_PORTS.topems_pm,
     url: `http://localhost:${MF_PORTS.topems_pm}`,
     category: 'business',
@@ -84,7 +85,7 @@ export const REMOTE_MODULES: RemoteModuleConfig[] = [
   {
     name: 'Finance',
     code: 'topems_finance',
-    description: '财务管理 - 预算、费用、报表',
+    description: i18n.t('shared.plugins.config.k4'),
     port: MF_PORTS.topems_finance,
     url: `http://localhost:${MF_PORTS.topems_finance}`,
     category: 'business',
@@ -97,7 +98,7 @@ export const REMOTE_MODULES: RemoteModuleConfig[] = [
   {
     name: 'Supply Chain',
     code: 'topems_scm',
-    description: '供应链管理 - 采购、库存、物流',
+    description: i18n.t('shared.plugins.config.k5'),
     port: MF_PORTS.topems_scm,
     url: `http://localhost:${MF_PORTS.topems_scm}`,
     category: 'supply',
@@ -110,7 +111,7 @@ export const REMOTE_MODULES: RemoteModuleConfig[] = [
   {
     name: 'Quality',
     code: 'topems_qms',
-    description: '质量管理 - 质量控制、检验、追溯',
+    description: i18n.t('shared.plugins.config.k6'),
     port: MF_PORTS.topems_qms,
     url: `http://localhost:${MF_PORTS.topems_qms}`,
     category: 'quality',
@@ -123,7 +124,7 @@ export const REMOTE_MODULES: RemoteModuleConfig[] = [
   {
     name: 'BI',
     code: 'topems_bi',
-    description: '商业智能 - 数据分析、可视化',
+    description: i18n.t('shared.plugins.config.k7'),
     port: MF_PORTS.topems_bi,
     url: `http://localhost:${MF_PORTS.topems_bi}`,
     category: 'analytics',
@@ -136,7 +137,7 @@ export const REMOTE_MODULES: RemoteModuleConfig[] = [
   {
     name: 'MES',
     code: 'topems_mes',
-    description: '制造执行系统 - 生产跟踪、设备管理',
+    description: i18n.t('shared.plugins.config.k8'),
     port: MF_PORTS.topems_mes,
     url: `http://localhost:${MF_PORTS.topems_mes}`,
     category: 'business',
@@ -149,7 +150,7 @@ export const REMOTE_MODULES: RemoteModuleConfig[] = [
   {
     name: 'WMS',
     code: 'topems_wms',
-    description: '仓储管理系统 - 库存、出入库',
+    description: i18n.t('shared.plugins.config.k9'),
     port: MF_PORTS.topems_wms,
     url: `http://localhost:${MF_PORTS.topems_wms}`,
     category: 'supply',
@@ -162,13 +163,13 @@ export const REMOTE_MODULES: RemoteModuleConfig[] = [
 ];
 
 export const MODULE_CATEGORIES = [
-  { id: 'system', name: '系统核心', icon: 'Settings' },
-  { id: 'business', name: '业务模块', icon: 'Briefcase' },
-  { id: 'analytics', name: '数据分析', icon: 'BarChart3' },
-  { id: 'supply', name: '供应链', icon: 'Package' },
-  { id: 'quality', name: '质量管理', icon: 'Shield' },
-  { id: 'rd', name: '研发管理', icon: 'FlaskConical' },
-  { id: 'infrastructure', name: '基础设施', icon: 'Server' },
+  { id: 'system', name: i18n.t('shared.plugins.config.k10'), icon: 'Settings' },
+  { id: 'business', name: i18n.t('shared.plugins.config.k11'), icon: 'Briefcase' },
+  { id: 'analytics', name: i18n.t('shared.plugins.config.k12'), icon: 'BarChart3' },
+  { id: 'supply', name: i18n.t('shared.plugins.config.k13'), icon: 'Package' },
+  { id: 'quality', name: i18n.t('shared.plugins.config.k14'), icon: 'Shield' },
+  { id: 'rd', name: i18n.t('shared.plugins.config.k15'), icon: 'FlaskConical' },
+  { id: 'infrastructure', name: i18n.t('shared.plugins.config.k16'), icon: 'Server' },
 ];
 
 export const getModuleByCode = (code: string): RemoteModuleConfig | undefined => {

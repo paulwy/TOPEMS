@@ -1,10 +1,11 @@
 import React from 'react';
+import i18n from '@/i18n';
 
 const VoucherDetailPage: React.FC = () => {
   return React.createElement(
     'div',
     { className: 'page-placeholder' },
-    'VoucherDetailPage 页面开发中'
+    i18n.t('finance.voucher_detail_page.k0')
   );
 };
 

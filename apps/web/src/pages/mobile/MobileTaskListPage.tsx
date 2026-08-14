@@ -15,6 +15,7 @@ import {
   CircularProgress,
   Button,
 } from '@mui/material';
+import i18n from '@/i18n';
 import { useInfiniteQuery } from '@tanstack/react-query';
 import {
   Home,
@@ -37,10 +38,7 @@ import { SwipeAction, type SwipeActionItem } from '@/components/mobile';
 import { mobileApi } from '@/api/mobile';
 import { MOBILE_PATHS } from '@/modules/mobile/config';
 import { PageContainer } from '@/components/common';
-
-
 import { QUERY_KEYS } from '@/lib/reactQuery';
-
 interface Task {
   id: string;
   title: string;
@@ -51,7 +49,6 @@ interface Task {
   dueDate: string;
   tag: string;
 }
-
 interface ApiTask {
   id?: string;
   task_no?: string;
@@ -66,49 +63,44 @@ interface ApiTask {
   task_type?: string;
   tag?: string;
 }
-
 const mapApiTaskToTask = (apiTask: ApiTask): Task => {
   const statusMap: Record<string, Task['status']> = {
     pending: 'pending',
-    待办: 'pending',
+    [i18n.t('pages.mobile_task_list_page.k0')]: 'pending',
     in_progress: 'in_progress',
-    进行中: 'in_progress',
+    [i18n.t('pages.mobile_task_list_page.k1')]: 'in_progress',
     completed: 'completed',
-    已完成: 'completed',
+    [i18n.t('pages.mobile_task_list_page.k2')]: 'completed',
     paused: 'paused',
-    已暂停: 'paused',
+    [i18n.t('pages.mobile_task_list_page.k3')]: 'paused',
   };
   const priorityMap: Record<string, Task['priority']> = {
     high: 'high',
-    高: 'high',
+    [i18n.t('pages.mobile_task_list_page.k4')]: 'high',
     medium: 'medium',
-    中: 'medium',
+    [i18n.t('pages.mobile_task_list_page.k5')]: 'medium',
     low: 'low',
-    低: 'low',
+    [i18n.t('pages.mobile_task_list_page.k6')]: 'low',
   };
   return {
     id: apiTask.id || String(apiTask.task_no || apiTask.id),
-    title: apiTask.title || apiTask.task_name || `任务 ${apiTask.id}`,
+    title: apiTask.title || apiTask.task_name || `${i18n.t('pages.mobile_task_list_page.k0')}${apiTask.id}`,
     description: apiTask.description || '',
     status: apiTask.status ? statusMap[apiTask.status] : 'pending',
     priority: apiTask.priority ? priorityMap[apiTask.priority] : 'medium',
-    assignee: apiTask.assignee || apiTask.assigned_to_name || '未知',
+    assignee: apiTask.assignee || apiTask.assigned_to_name || i18n.t('mobile.mobile_task_list_page.k0'),
     dueDate: apiTask.due_date ? new Date(apiTask.due_date).toLocaleDateString('zh-CN') : '',
-    tag: apiTask.task_type || apiTask.tag || '任务',
+    tag: apiTask.task_type || apiTask.tag || i18n.t('mobile.mobile_task_list_page.k1'),
   };
 };
-
 const pageSize = 10;
-
 const MobileTaskListPage: React.FC = () => {
   const theme = useTheme();
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState(0);
   const [searchQuery, setSearchQuery] = useState('');
   const loadMoreRef = useRef<HTMLDivElement>(null);
-
-  const tabs = ['全部', '待办', '进行中', '已完成'];
-
+  const tabs = [i18n.t('mobile.mobile_task_list_page.k5'), i18n.t('mobile.mobile_task_list_page.k4'), i18n.t('mobile.mobile_task_list_page.k3'), i18n.t('mobile.mobile_task_list_page.k2')];
   const tasksQuery = useInfiniteQuery({
     queryKey: [...QUERY_KEYS.AD_HOC.MOBILE_TASKS_BASE, activeTab],
     queryFn: async ({ pageParam = 1 }) => {
@@ -138,7 +130,6 @@ const MobileTaskListPage: React.FC = () => {
     staleTime: 30 * 1000,
     retry: 2,
   });
-
   const tasks = useMemo(
     () => tasksQuery.data?.pages.flatMap((page) => page.tasks) || [],
     [tasksQuery.data]
@@ -146,7 +137,6 @@ const MobileTaskListPage: React.FC = () => {
   const hasMore = !!tasksQuery.hasNextPage;
   const loading = tasksQuery.isLoading;
   const loadingMore = tasksQuery.isFetchingNextPage;
-
   useEffect(() => {
     const observer = new IntersectionObserver(
       (entries) => {
@@ -156,81 +146,72 @@ const MobileTaskListPage: React.FC = () => {
       },
       { threshold: 0.1 }
     );
-
     if (loadMoreRef.current) {
       observer.observe(loadMoreRef.current);
     }
-
     return () => observer.disconnect();
   }, [hasMore, loadingMore, loading, tasksQuery]);
-
   const handleRefresh = useCallback(async () => {
     await tasksQuery.refetch();
   }, [tasksQuery]);
-
   const getStatusConfig = (status: Task['status']) => {
     switch (status) {
       case 'pending':
         return {
-          label: '待办',
+          label: i18n.t('mobile.mobile_task_list_page.k6'),
           color: 'warning' as const,
           icon: <Clock style={{ width: 14, height: 14 }} />,
         };
       case 'in_progress':
         return {
-          label: '进行中',
+          label: i18n.t('mobile.mobile_task_list_page.k7'),
           color: 'primary' as const,
           icon: <ListTodo style={{ width: 14, height: 14 }} />,
         };
       case 'completed':
         return {
-          label: '已完成',
+          label: i18n.t('mobile.mobile_task_list_page.k8'),
           color: 'success' as const,
           icon: <CheckCircle2 style={{ width: 14, height: 14 }} />,
         };
       case 'paused':
         return {
-          label: '已暂停',
+          label: i18n.t('mobile.mobile_task_list_page.k9'),
           color: 'default' as const,
           icon: <PauseCircle style={{ width: 14, height: 14 }} />,
         };
     }
   };
-
   const getPriorityConfig = (priority: Task['priority']) => {
     switch (priority) {
       case 'high':
-        return { label: '高', color: 'error' as const };
+        return { label: i18n.t('mobile.mobile_task_list_page.k10'), color: 'error' as const };
       case 'medium':
-        return { label: '中', color: 'warning' as const };
+        return { label: i18n.t('mobile.mobile_task_list_page.k11'), color: 'warning' as const };
       case 'low':
-        return { label: '低', color: 'success' as const };
+        return { label: i18n.t('mobile.mobile_task_list_page.k12'), color: 'success' as const };
     }
   };
-
   const handleTabChange = (_event: React.SyntheticEvent, newValue: number) => {
     setActiveTab(newValue);
   };
-
   const handleTaskClick = (_task: Task) => {};
-
   const rightSwipeActions: SwipeActionItem[] = [
     {
       id: 'complete',
       icon: <CheckSquare style={{ width: 20, height: 20 }} />,
-      label: '完成',
+      label: i18n.t('mobile.mobile_task_list_page.k13'),
       color: theme.palette.success.main,
       onClick: () => {},
     },
     {
       id: 'delete',
       icon: <AlertCircle style={{ width: 20, height: 20 }} />,
-      label: '删除',
+      label: i18n.t('mobile.mobile_task_list_page.k14'),
       color: theme.palette.error.main,
       onClick: () => {},
     },
   ];
-
   const handleBottomTabChange = (tabId: string) => {
     switch (tabId) {
       case 'home':
@@ -249,7 +230,6 @@ const MobileTaskListPage: React.FC = () => {
         break;
     }
   };
-
   const filteredTasks = tasks
     .filter((task) => {
       if (activeTab === 0) return true;
@@ -265,23 +245,21 @@ const MobileTaskListPage: React.FC = () => {
         task.id.toLowerCase().includes(searchQuery.toLowerCase())
       );
     });
-
   const bottomTabs = [
-    { id: 'home', label: '首页', icon: <Home style={{ width: 22, height: 22 }} /> },
-    { id: 'tasks', label: '任务', icon: <ListTodo style={{ width: 22, height: 22 }} /> },
-    { id: 'scan', label: '扫码', icon: <ScanLine style={{ width: 22, height: 22 }} /> },
+    { id: 'home', label: i18n.t('mobile.mobile_task_list_page.k15'), icon: <Home style={{ width: 22, height: 22 }} /> },
+    { id: 'tasks', label: i18n.t('mobile.mobile_task_list_page.k16'), icon: <ListTodo style={{ width: 22, height: 22 }} /> },
+    { id: 'scan', label: i18n.t('mobile.mobile_task_list_page.k17'), icon: <ScanLine style={{ width: 22, height: 22 }} /> },
     {
       id: 'approval',
-      label: '审批',
+      label: i18n.t('mobile.mobile_task_list_page.k18'),
       icon: <CheckSquare style={{ width: 22, height: 22 }} />,
       badge: 3,
     },
-    { id: 'profile', label: '我的', icon: <User style={{ width: 22, height: 22 }} /> },
+    { id: 'profile', label: i18n.t('mobile.mobile_task_list_page.k19'), icon: <User style={{ width: 22, height: 22 }} /> },
   ];
-
   return (
     <MobileLayout
-      title='我的任务'
+      title={i18n.t('mobile.mobile_task_list_page.k20')}
       showBack={false}
       showMenu={false}
       showSearch
@@ -302,7 +280,7 @@ const MobileTaskListPage: React.FC = () => {
           <TextField
             fullWidth
             size='small'
-            placeholder='搜索任务编号或标题'
+            placeholder={i18n.t('mobile.mobile_task_list_page.k21')}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             sx={{
@@ -326,7 +304,7 @@ const MobileTaskListPage: React.FC = () => {
                       onClick={() => setSearchQuery('')}
                       sx={{ minWidth: 'auto', p: 0 }}
                     >
-                      清除
+                      {i18n.t('pages.mobile_task_list_page.k7')}
                     </Button>
                   </InputAdornment>
                 ) : undefined,
@@ -334,7 +312,6 @@ const MobileTaskListPage: React.FC = () => {
             }}
           />
         </Box>
-
         <Tabs
           value={activeTab}
           onChange={handleTabChange}
@@ -355,7 +332,6 @@ const MobileTaskListPage: React.FC = () => {
             />
           ))}
         </Tabs>
-
         <PullToRefresh onRefresh={handleRefresh}>
           {loading ? (
             <MobileSkeleton
@@ -391,14 +367,14 @@ const MobileTaskListPage: React.FC = () => {
                 variant='subtitle1'
                 sx={{ mb: 1, fontWeight: 500 }}
               >
-                暂无任务
+                {i18n.t('pages.mobile_task_list_page.k8')}
               </Typography>
               <Typography
                 variant='body2'
                 color='text.secondary'
                 sx={{ textAlign: 'center' }}
               >
-                {searchQuery ? '没有找到匹配的任务' : '当前分类下暂无任务'}
+                {searchQuery ? i18n.t('mobile.mobile_task_list_page.k23') : i18n.t('mobile.mobile_task_list_page.k22')}
               </Typography>
             </Box>
           ) : (
@@ -406,7 +382,6 @@ const MobileTaskListPage: React.FC = () => {
               {filteredTasks.map((task, index) => {
                 const statusConfig = getStatusConfig(task.status);
                 const priorityConfig = getPriorityConfig(task.priority);
-
                 return (
                   <React.Fragment key={task.id}>
                     <SwipeAction rightActions={rightSwipeActions}>
@@ -472,7 +447,7 @@ const MobileTaskListPage: React.FC = () => {
                                   }}
                                 />
                                 <Chip
-                                  label={`${priorityConfig.label}优先级`}
+                                  label={`${priorityConfig.label}${i18n.t('pages.mobile_task_list_page.k1')}`}
                                   size='small'
                                   color={priorityConfig.color}
                                   variant='outlined'
@@ -527,7 +502,6 @@ const MobileTaskListPage: React.FC = () => {
               })}
             </List>
           )}
-
           <Box
             ref={loadMoreRef}
             sx={{ py: 3, display: 'flex', justifyContent: 'center' }}
@@ -542,7 +516,7 @@ const MobileTaskListPage: React.FC = () => {
                   variant='body2'
                   color='text.secondary'
                 >
-                  加载更多...
+                  {i18n.t('pages.mobile_task_list_page.k9')}
                 </Typography>
               </Box>
             )}
@@ -551,7 +525,7 @@ const MobileTaskListPage: React.FC = () => {
                 variant='caption'
                 color='text.secondary'
               >
-                没有更多了
+                {i18n.t('pages.mobile_task_list_page.k10')}
               </Typography>
             )}
           </Box>
@@ -560,5 +534,4 @@ const MobileTaskListPage: React.FC = () => {
     </MobileLayout>
   );
 };
-
 export default MobileTaskListPage;

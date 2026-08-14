@@ -9,7 +9,7 @@ import type { Deploy, CreateDeployRequest } from '@/api/rd';
 import { QUERY_KEYS } from '@/lib/reactQuery';
 import { useNotificationStore } from '@/store';
 import { logger } from '@/utils/logger';
-
+import i18n from '@/i18n';
 const deployApiAdapter: CrudApiAdapter<Deploy> = {
   list: async (params) => {
     const queryParams: Record<string, unknown> = {
@@ -19,17 +19,15 @@ const deployApiAdapter: CrudApiAdapter<Deploy> = {
     if (params?.search) queryParams.search = params.search;
     if (params?.env) queryParams.env = params.env;
     if (params?.status) queryParams.status = params.status;
-
     const response = await rdApi.listDeploys(queryParams);
     if (!response.success || !response.data) {
-      throw new Error(response.message || '加载部署记录失败');
+      throw new Error(response.message || i18n.t('rd.rs_deploy_page.k0'));
     }
     return {
       data: response.data.deploys || [],
       total: response.data.total || 0,
     };
   },
-
   create: async (data) => {
     const createData: CreateDeployRequest = {
       project_id: String(data.project_id ?? ''),
@@ -42,24 +40,20 @@ const deployApiAdapter: CrudApiAdapter<Deploy> = {
     };
     const response = await rdApi.createDeploy(createData);
     if (!response.success || !response.data) {
-      throw new Error(response.message || '创建部署任务失败');
+      throw new Error(response.message || i18n.t('rd.rs_deploy_page.k1'));
     }
     return response.data;
   },
-
   update: async () => {
-    throw new Error('部署记录不支持编辑');
+    throw new Error(i18n.t('rd.rs_deploy_page.k2'));
   },
-
   delete: async () => {
-    throw new Error('部署记录不支持删除');
+    throw new Error(i18n.t('rd.rs_deploy_page.k3'));
   },
 };
-
 const RsDeployPage: React.FC = () => {
   const queryClient = useQueryClient();
   const { addNotification } = useNotificationStore();
-
   const redeployMutation = useMutation({
     mutationFn: async (deploy: Deploy) => {
       const createData: CreateDeployRequest = {
@@ -73,7 +67,7 @@ const RsDeployPage: React.FC = () => {
       };
       const response = await rdApi.createDeploy(createData);
       if (!response.success) {
-        throw new Error(response.message || '重新部署失败');
+        throw new Error(response.message || i18n.t('rd.rs_deploy_page.k4'));
       }
       return response;
     },
@@ -84,42 +78,38 @@ const RsDeployPage: React.FC = () => {
 });
       addNotification({
         type: 'success',
-        title: '操作成功',
-        message: '部署任务已提交',
+        title: i18n.t('rd.rs_deploy_page.k5'),
+        message: i18n.t('rd.rs_deploy_page.k6'),
       });
     },
     onError: (error: unknown) => {
-      logger.error('重新部署失败:', error);
+      logger.error(i18n.t('pages.rs_deploy_page.k0'), error);
       addNotification({
         type: 'error',
-        title: '操作失败',
-        message: error instanceof Error ? error.message : '无法重新部署',
+        title: i18n.t('rd.rs_deploy_page.k7'),
+        message: error instanceof Error ? error.message : i18n.t('rd.rs_deploy_page.k8'),
       });
     },
   });
-
   const handleRedeploy = (row: Record<string, unknown>) => {
     redeployMutation.mutate(row as unknown as Deploy);
   };
-
   const customRowActions: RowAction[] = [
     {
       key: 'redeploy',
-      label: '重新部署',
+      label: i18n.t('rd.rs_deploy_page.k9'),
       icon: <RotateCcw size={16} />,
       color: 'primary',
       onClick: handleRedeploy,
     },
   ];
-
   return (
     <CrudPage
       schema={deploySchema}
       apiAdapter={deployApiAdapter}
       customRowActions={customRowActions}
-      breadcrumbs={[{ label: '研发管理', href: '/rd' }, { label: '部署管理' }]}
+      breadcrumbs={[{ label: i18n.t('rd.rs_deploy_page.k11'), href: '/rd' }, { label: i18n.t('rd.rs_deploy_page.k10') }]}
     />
   );
 };
-
 export default RsDeployPage;

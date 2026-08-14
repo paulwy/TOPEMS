@@ -1,5 +1,6 @@
 import apiClient from './client';
 import { apiLogger } from '@/utils/logger';
+import i18n from '@/i18n';
 
 export interface PermissionError {
   code: number;
@@ -13,7 +14,7 @@ export const createPermissionInterceptor = () => {
       (response) => response,
       (error) => {
         if (error.response?.status === 403) {
-          const errorMessage = error.response?.data?.message || '权限不足';
+          const errorMessage = error.response?.data?.message || i18n.t('shared.permission_interceptor.k0');
           apiLogger.warn('Permission denied:', errorMessage);
 
           window.dispatchEvent(
@@ -32,10 +33,10 @@ export const createPermissionInterceptor = () => {
           const currentPath = window.location.pathname;
           const hasToken = !!localStorage.getItem('token');
 
-          apiLogger.warn(`[日志3-权限拦截器检测401] ${error.config?.url || ''}`, {
+          apiLogger.warn(`${i18n.t('shared.permission_interceptor.3401_0')}${error.config?.url || ''}`, {
             currentPath,
             hasToken,
-            note: '401已由client.ts统一处理，此处仅做记录',
+            note: i18n.t('shared.permission_interceptor.k1'),
             handledByPrimaryInterceptor: true,
             timestamp: new Date().toISOString(),
           });
@@ -58,7 +59,7 @@ export const checkPermissionBeforeRequest = (permission: string, callback: () =>
     window.dispatchEvent(
       new CustomEvent('permission-denied', {
         detail: {
-          message: `您没有 ${permission} 权限`,
+          message: `${i18n.t('shared.permission_interceptor.k2')}${permission}${i18n.t('shared.permission_interceptor.k3')}`,
           requiredPermission: permission,
         },
       })
@@ -80,7 +81,7 @@ export const withPermissionCheck = async <T>(
         success: false,
         error: {
           code: 403,
-          message: err.response?.data?.message || '权限不足',
+          message: err.response?.data?.message || i18n.t('shared.permission_interceptor.k1'),
           requiredPermission: permission,
         },
       };

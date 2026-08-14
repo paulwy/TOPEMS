@@ -4,6 +4,7 @@ import { useMap } from 'react-leaflet';
 import L from 'leaflet';
 import { Box, Typography, Paper } from '@mui/material';
 import type { DevicePoint, StorageLocation } from '../../../../api/gis';
+import i18n from '@/i18n';
 
 interface HeatmapLayerProps {
   devicePoints: DevicePoint[];
@@ -31,11 +32,11 @@ const HeatmapLayer: React.FC<HeatmapLayerProps> = ({
     devicePoints.forEach((point) => {
       let intensity = 0.5;
       if (intensityMode === 'status') {
-        if (point.status?.toLowerCase().includes('active') || point.status?.includes('启用')) {
+        if (point.status?.toLowerCase().includes('active') || point.status?.includes(i18n.t('gis.heatmap_layer.k0'))) {
           intensity = 1.0;
         } else if (
           point.status?.toLowerCase().includes('pending') ||
-          point.status?.includes('待处理')
+          point.status?.includes(i18n.t('gis.heatmap_layer.k1'))
         ) {
           intensity = 0.6;
         } else {
@@ -199,7 +200,7 @@ const HeatmapLegend: React.FC<{ mode: 'density' | 'status' }> = ({ mode }) => {
         variant='caption'
         sx={{ fontWeight: 500, color: 'grey.700', mb: 2 }}
       >
-        力图
+        {i18n.t('components.heatmap_layer.k0')}
       </Typography>
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
         <Box
@@ -216,13 +217,13 @@ const HeatmapLegend: React.FC<{ mode: 'density' | 'status' }> = ({ mode }) => {
           variant='caption'
           sx={{ color: 'text.secondary' }}
         >
-          低
+          {i18n.t('components.heatmap_layer.k1')}
         </Typography>
         <Typography
           variant='caption'
           sx={{ color: 'text.secondary' }}
         >
-          高
+          {i18n.t('components.heatmap_layer.k2')}
         </Typography>
       </Box>
       {mode === 'status' && (
@@ -240,7 +241,7 @@ const HeatmapLegend: React.FC<{ mode: 'density' | 'status' }> = ({ mode }) => {
               variant='caption'
               sx={{ color: 'text.secondary' }}
             >
-              活跃
+              {i18n.t('components.heatmap_layer.k3')}
             </Typography>
           </Box>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 1 }}>
@@ -256,7 +257,7 @@ const HeatmapLegend: React.FC<{ mode: 'density' | 'status' }> = ({ mode }) => {
               variant='caption'
               sx={{ color: 'text.secondary' }}
             >
-              待处理
+              {i18n.t('components.heatmap_layer.k4')}
             </Typography>
           </Box>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
@@ -272,7 +273,7 @@ const HeatmapLegend: React.FC<{ mode: 'density' | 'status' }> = ({ mode }) => {
               variant='caption'
               sx={{ color: 'text.secondary' }}
             >
-              禁用
+              {i18n.t('components.heatmap_layer.k5')}
             </Typography>
           </Box>
         </Box>

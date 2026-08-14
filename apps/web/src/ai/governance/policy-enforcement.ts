@@ -1,3 +1,4 @@
+import i18n from '@/i18n';
 export type EnforcementMode = 'enforce' | 'audit' | 'advisory';
 export type PolicyStatus = 'active' | 'draft' | 'archived';
 
@@ -54,12 +55,12 @@ interface PolicyEvaluationContext {
 const DEFAULT_POLICIES: Policy[] = [
   {
     id: 'pol-data-access',
-    name: '数据访问权限策略',
+    name: i18n.t('ai.policy-enforcement.k0'),
     scope: 'global',
     scope_target: 'all',
     enforcement_mode: 'enforce',
     status: 'active',
-    description: '控制敏感数据的访问权限，基于角色和上下文进行动态决策',
+    description: i18n.t('ai.policy-enforcement.k1'),
     created_at: Date.now() - 86400000 * 30,
     updated_at: Date.now() - 86400000 * 5,
     version: 3,
@@ -67,46 +68,46 @@ const DEFAULT_POLICIES: Policy[] = [
     rules: [
       {
         id: 'rule-admin',
-        name: '管理员全权限',
+        name: i18n.t('ai.policy-enforcement.k2'),
         condition: 'user.role == "admin"',
         action: 'allow',
-        description: '管理员拥有对所有数据的访问权限',
+        description: i18n.t('ai.policy-enforcement.k3'),
         priority: 1,
       },
       {
         id: 'rule-confidential',
-        name: '机密数据限制',
+        name: i18n.t('ai.policy-enforcement.k4'),
         condition: 'data.classification == "confidential" && user.clearance < 3',
         action: 'deny',
-        description: '非授权人员禁止访问机密数据',
+        description: i18n.t('ai.policy-enforcement.k5'),
         priority: 2,
       },
       {
         id: 'rule-consent',
-        name: '用户同意检查',
+        name: i18n.t('ai.policy-enforcement.k6'),
         condition: 'data.type == "personal" && !user.has_consent',
         action: 'deny',
-        description: '未经用户同意不得处理个人数据',
+        description: i18n.t('ai.policy-enforcement.k7'),
         priority: 3,
       },
       {
         id: 'rule-approve',
-        name: '敏感操作审批',
+        name: i18n.t('ai.policy-enforcement.k8'),
         condition: 'action.type == "bulk_export" && user.role != "manager"',
         action: 'require_approval',
-        description: '批量导出需要经理审批',
+        description: i18n.t('ai.policy-enforcement.k9'),
         priority: 4,
       },
     ],
   },
   {
     id: 'pol-financial-controls',
-    name: '财务控制策略',
+    name: i18n.t('ai.policy-enforcement.k10'),
     scope: 'module',
     scope_target: 'finance',
     enforcement_mode: 'enforce',
     status: 'active',
-    description: '财务操作的职责分离和审批流程控制',
+    description: i18n.t('ai.policy-enforcement.k11'),
     created_at: Date.now() - 86400000 * 60,
     updated_at: Date.now() - 86400000 * 10,
     version: 5,
@@ -114,38 +115,38 @@ const DEFAULT_POLICIES: Policy[] = [
     rules: [
       {
         id: 'rule-segregation',
-        name: '职责分离',
+        name: i18n.t('ai.policy-enforcement.k12'),
         condition: 'transaction.approver == transaction.requester',
         action: 'deny',
-        description: '交易审批人和申请人不能是同一人',
+        description: i18n.t('ai.policy-enforcement.k13'),
         priority: 1,
       },
       {
         id: 'rule-threshold',
-        name: '大额交易审批',
+        name: i18n.t('ai.policy-enforcement.k14'),
         condition: 'transaction.amount > 100000 && user.role != "director"',
         action: 'require_approval',
-        description: '超过10万元的交易需要总监审批',
+        description: i18n.t('ai.policy-enforcement.10_15'),
         priority: 2,
       },
       {
         id: 'rule-budget',
-        name: '预算检查',
+        name: i18n.t('ai.policy-enforcement.k16'),
         condition: 'project.budget_remaining < transaction.amount',
         action: 'deny',
-        description: '超出预算的支出将被拒绝',
+        description: i18n.t('ai.policy-enforcement.k17'),
         priority: 3,
       },
     ],
   },
   {
     id: 'pol-ai-governance',
-    name: 'AI 治理策略',
+    name: i18n.t('ai.policy-enforcement.ai_0'),
     scope: 'module',
     scope_target: 'ai',
     enforcement_mode: 'advisory',
     status: 'active',
-    description: 'AI 模型使用和输出的合规治理策略',
+    description: i18n.t('ai.policy-enforcement.ai_1'),
     created_at: Date.now() - 86400000 * 15,
     updated_at: Date.now() - 86400000 * 2,
     version: 1,
@@ -153,26 +154,26 @@ const DEFAULT_POLICIES: Policy[] = [
     rules: [
       {
         id: 'rule-toxic',
-        name: '有害内容过滤',
+        name: i18n.t('ai.policy-enforcement.k18'),
         condition: 'output.harm_score > 0.8',
         action: 'deny',
-        description: '拒绝高有害评分的 AI 输出',
+        description: i18n.t('ai.policy-enforcement.ai_19'),
         priority: 1,
       },
       {
         id: 'rule-bias',
-        name: '偏见检测',
+        name: i18n.t('ai.policy-enforcement.k20'),
         condition: 'output.bias_score > 0.6',
         action: 'warn',
-        description: '对有偏见的输出发出警告',
+        description: i18n.t('ai.policy-enforcement.k21'),
         priority: 2,
       },
       {
         id: 'rule-pii',
-        name: 'PII 泄露防护',
+        name: i18n.t('ai.policy-enforcement.pii_2'),
         condition: 'output.contains_pii == true',
         action: 'deny',
-        description: '禁止输出包含个人身份信息的内容',
+        description: i18n.t('ai.policy-enforcement.k22'),
         priority: 3,
       },
     ],
@@ -235,13 +236,13 @@ export class PolicyEnforcer {
       const defaultDecision: PolicyDecision = {
         id: `decision-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
         policy_id: 'default',
-        policy_name: '默认策略',
+        policy_name: i18n.t('ai.policy-enforcement.k23'),
         rule_id: 'default-allow',
-        rule_name: '默认允许',
+        rule_name: i18n.t('ai.policy-enforcement.k24'),
         action: 'allow',
         allowed: true,
-        reason: '没有匹配的策略规则，默认允许操作',
-        evidence: '所有活动策略的规则均未匹配当前上下文',
+        reason: i18n.t('ai.policy-enforcement.k25'),
+        evidence: i18n.t('ai.policy-enforcement.k26'),
         context: JSON.parse(JSON.stringify(context)),
         decided_at: Date.now(),
         user_id: context.user?.id,
@@ -352,7 +353,7 @@ export class PolicyEnforcer {
     if (!policy) {
       return {
         decisions: [],
-        impact_summary: '策略不存在',
+        impact_summary: i18n.t('ai.policy-enforcement.k27'),
         affectedRules: [],
       };
     }
@@ -398,8 +399,8 @@ export class PolicyEnforcer {
     return {
       decisions,
       impact_summary: allowed
-        ? `策略模拟通过：${policy.name} 允许该操作`
-        : `策略模拟拒绝：${policy.name} 将阻止该操作`,
+        ? `${i18n.t('ai.policy-enforcement.k3')}${policy.name}${i18n.t('ai.policy-enforcement.k4')}`
+        : `${i18n.t('ai.policy-enforcement.k5')}${policy.name}${i18n.t('ai.policy-enforcement.k6')}`,
       affectedRules,
     };
   }
@@ -477,12 +478,12 @@ export class PolicyEnforcer {
 
   private generateReason(rule: PolicyRule, _context: Record<string, unknown>): string {
     const actionLabels: Record<PolicyRule['action'], string> = {
-      allow: '允许',
-      deny: '拒绝',
-      warn: '警告',
-      require_approval: '需要审批',
+      allow: i18n.t('ai.policy-enforcement.k28'),
+      deny: i18n.t('ai.policy-enforcement.k29'),
+      warn: i18n.t('ai.policy-enforcement.k30'),
+      require_approval: i18n.t('ai.policy-enforcement.k31'),
     };
-    return `规则 "${rule.name}" 匹配条件：${rule.condition}。执行操作：${actionLabels[rule.action]}。`;
+    return `${i18n.t('ai.policy-enforcement.k7')}${rule.name}${i18n.t('ai.policy-enforcement.k8')}${rule.condition}${i18n.t('ai.policy-enforcement.k9')}${actionLabels[rule.action]}。`;
   }
 
   private generateEvidence(rule: PolicyRule, context: Record<string, unknown>): string {
@@ -494,7 +495,7 @@ export class PolicyEnforcer {
     if (context.project) relevantContext.project = context.project;
     if (context.output) relevantContext.output = context.output;
 
-    return `规则 ID: ${rule.id}，优先级: ${rule.priority}，匹配上下文: ${JSON.stringify(relevantContext)}`;
+    return `${i18n.t('ai.policy-enforcement.id_10')}${rule.id}${i18n.t('ai.policy-enforcement.k11')}${rule.priority}${i18n.t('ai.policy-enforcement.k12')}${JSON.stringify(relevantContext)}`;
   }
 }
 

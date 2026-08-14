@@ -2,6 +2,7 @@ import { Button } from '@mui/material';
 import { Sparkles, Loader2 } from 'lucide-react';
 
 import type { ButtonProps } from '@mui/material/Button';
+import i18n from '@/i18n';
 
 export interface AIHelperButtonProps {
   type: 'generate' | 'optimize' | 'validate' | 'complete';
@@ -14,10 +15,10 @@ export interface AIHelperButtonProps {
 }
 
 const typeLabels = {
-  generate: 'AI 生成',
-  optimize: 'AI 优化',
-  validate: 'AI 校验',
-  complete: 'AI 补全',
+  generate: i18n.t('components.ai_helper_button.ai_0'),
+  optimize: i18n.t('components.ai_helper_button.ai_1'),
+  validate: i18n.t('components.ai_helper_button.ai_2'),
+  complete: i18n.t('components.ai_helper_button.ai_3'),
 };
 
 export function AIHelperButton({
@@ -44,7 +45,7 @@ export function AIHelperButton({
             style={{ width: 16, height: 16, marginRight: 8 }}
             className='animate-spin'
           />
-          处理中...
+          {i18n.t('components.ai_helper_button.k0')}
         </>
       ) : (
         <>

@@ -23,6 +23,7 @@ import {
   Tabs,
   Tab,
 } from '@mui/material';
+import i18n from '@/i18n';
 import { ArrowLeft, Edit, Delete, RefreshCw, Copy, Check } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import useBffCrud from '@/hooks/bff/useBffCrud';
@@ -169,7 +170,7 @@ function DetailField({
           size='small'
           onClick={handleCopy}
           sx={{ ml: -0.5 }}
-          aria-label='确认'
+          aria-label={i18n.t('components.bff_detail_page.k0')}
         >
           {copied ? (
             <Check
@@ -365,7 +366,7 @@ function BffDetailPageInner<T extends { id?: string; [key: string]: unknown }>(
 
   const handleDelete = useCallback(async () => {
     if (!entityId || !currentData) return;
-    const confirmed = window.confirm(`确定要删除这条${entityName ?? '记录'}吗？`);
+    const confirmed = window.confirm(`${i18n.t('components.bff_detail_page.k0')}${entityName ?? i18n.t('components.bff_detail_page.k1')}${i18n.t('components.bff_detail_page.k1')}`);
     if (!confirmed) return;
 
     try {
@@ -402,8 +403,8 @@ function BffDetailPageInner<T extends { id?: string; [key: string]: unknown }>(
         }
       } catch (err) {
         addNotification({
-          title: '加载失败',
-          message: '关联数据加载失败',
+          title: i18n.t('components.bff_detail_page.k2'),
+          message: i18n.t('components.bff_detail_page.k3'),
           type: 'error',
         });
       } finally {
@@ -421,7 +422,7 @@ function BffDetailPageInner<T extends { id?: string; [key: string]: unknown }>(
     });
   }, []);
 
-  const displayTitle = String(title ?? dataObj.name ?? dataObj.title ?? entityName ?? '详情');
+  const displayTitle = String(title ?? dataObj.name ?? dataObj.title ?? entityName ?? i18n.t('components.bff_detail_page.k4'));
   const displaySubtitle = subtitle ?? (dataObj.code as string) ?? '';
 
   const loading = crud.loading;
@@ -443,7 +444,7 @@ function BffDetailPageInner<T extends { id?: string; [key: string]: unknown }>(
           <IconButton
             onClick={handleBack}
             size='small'
-            aria-label='返回'
+            aria-label={i18n.t('components.bff_detail_page.k5')}
           >
             <ArrowLeft size={20} />
           </IconButton>
@@ -480,33 +481,33 @@ function BffDetailPageInner<T extends { id?: string; [key: string]: unknown }>(
             )}
           </Box>
           <Box sx={{ display: 'flex', gap: 1 }}>
-            <Tooltip title='刷新'>
+            <Tooltip title={i18n.t('components.bff_detail_page.k6')}>
               <IconButton
                 onClick={() => entityId && crud.get(entityId)}
                 size='small'
-                aria-label='刷新'
+                aria-label={i18n.t('components.bff_detail_page.k7')}
               >
                 <RefreshCw size={18} />
               </IconButton>
             </Tooltip>
             {onEdit && (
-              <Tooltip title='编辑'>
+              <Tooltip title={i18n.t('components.bff_detail_page.k8')}>
                 <IconButton
                   onClick={handleEdit}
                   size='small'
-                  aria-label='编辑'
+                  aria-label={i18n.t('components.bff_detail_page.k9')}
                 >
                   <Edit size={18} />
                 </IconButton>
               </Tooltip>
             )}
             {onDelete && (
-              <Tooltip title='删除'>
+              <Tooltip title={i18n.t('components.bff_detail_page.k10')}>
                 <IconButton
                   onClick={handleDelete}
                   size='small'
                   color='error'
-                  aria-label='删除'
+                  aria-label={i18n.t('components.bff_detail_page.k11')}
                 >
                   <Delete size={18} />
                 </IconButton>
@@ -584,7 +585,7 @@ function BffDetailPageInner<T extends { id?: string; [key: string]: unknown }>(
             onChange={(_, v) => setActiveTab(v)}
             sx={{ borderBottom: 1, borderColor: 'divider', px: 2 }}
           >
-            <Tab label='基本信息' />
+            <Tab label={i18n.t('components.bff_detail_page.k12')} />
             {relatedQueries.map((q, _i) => {
               const icon = React.isValidElement(q.icon) ? q.icon : undefined;
               return (
@@ -619,7 +620,7 @@ function BffDetailPageInner<T extends { id?: string; [key: string]: unknown }>(
                       variant='outlined'
                       onClick={() => loadRelated(q.key)}
                     >
-                      加载数据
+                      {i18n.t('components.bff_detail_page.k0')}
                     </Button>
                   </Box>
                 )}

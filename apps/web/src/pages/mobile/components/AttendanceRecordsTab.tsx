@@ -4,30 +4,25 @@
  */
 import React from 'react';
 import { Box, Typography, List, Avatar, Chip } from '@mui/material';
-import { useTranslation } from 'react-i18next';
 import { Clock } from 'lucide-react';
 import { MobileCard } from '@/components/mobile';
 import type { AttendanceRecord } from '@/api/mobile';
-
+import i18n from '@/i18n';
 interface AttendanceRecordsTabProps {
   records: AttendanceRecord[];
 }
-
 export const AttendanceRecordsTab: React.FC<AttendanceRecordsTabProps> = ({ records }) => {
-  const { t } = useTranslation();
-
   const getStatusLabel = (status: string) => {
     const map: Record<string, string> = {
-      normal: t('mobile.attendance.status.normal'),
-      late: t('mobile.attendance.status.late'),
-      early_leave: t('mobile.attendance.status.early_leave'),
-      absent: t('mobile.attendance.status.absent'),
-      leave: t('mobile.attendance.section.leave'),
-      business_trip: t('mobile.attendance.leave_type.business'),
+      normal: i18n.t('mobile.attendance.status.normal'),
+      late: i18n.t('mobile.attendance.status.late'),
+      early_leave: i18n.t('mobile.attendance.status.early_leave'),
+      absent: i18n.t('mobile.attendance.status.absent'),
+      leave: i18n.t('mobile.attendance.section.leave'),
+      business_trip: i18n.t('mobile.attendance.leave_type.business'),
     };
     return map[status] || status;
   };
-
   const getStatusColor = (status: string) => {
     const map: Record<string, 'success' | 'warning' | 'error' | 'info' | 'default'> = {
       normal: 'success',
@@ -39,7 +34,6 @@ export const AttendanceRecordsTab: React.FC<AttendanceRecordsTabProps> = ({ reco
     };
     return map[status] || 'default';
   };
-
   return (
     <List disablePadding>
       {records.map((record, index) => (

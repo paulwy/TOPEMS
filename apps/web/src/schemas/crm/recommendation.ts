@@ -10,11 +10,12 @@ import { crmApi } from '@/api/crm';
 
 
 import { QUERY_KEYS } from '@/lib/reactQuery';
+import i18n from '@/i18n';
 
 export const recommendationSchema: EntitySchema = {
   entity: 'crm_recommendation',
-  title: '客户推荐',
-  description: '基于 AI 的智能客户推荐系统',
+  title: i18n.t('shared.recommendation.k0'),
+  description: i18n.t('shared.recommendation.ai_1'),
 
   api: {
     module: 'crm',
@@ -24,34 +25,34 @@ export const recommendationSchema: EntitySchema = {
   fields: [
     {
       name: 'customer_id',
-      label: '选择客户',
+      label: i18n.t('shared.recommendation.k2'),
       type: 'select',
       required: true,
       showInList: false,
     },
     {
       name: 'recommendation_type',
-      label: '推荐类型',
+      label: i18n.t('shared.recommendation.k3'),
       type: 'select',
       required: true,
       defaultValue: 'product',
       options: {
         type: 'static',
         options: [
-          { value: 'product', label: '产品推荐' },
-          { value: 'opportunity', label: '商机推荐' },
-          { value: 'service', label: '服务推荐' },
-          { value: 'cross-sell', label: '交叉销售' },
-          { value: 'upsell', label: '增值销售' },
-          { value: 'content', label: '内容推荐' },
-          { value: 'general', label: '综合推荐' },
+          { value: 'product', label: i18n.t('shared.recommendation.k4') },
+          { value: 'opportunity', label: i18n.t('shared.recommendation.k5') },
+          { value: 'service', label: i18n.t('shared.recommendation.k6') },
+          { value: 'cross-sell', label: i18n.t('shared.recommendation.k7') },
+          { value: 'upsell', label: i18n.t('shared.recommendation.k8') },
+          { value: 'content', label: i18n.t('shared.recommendation.k9') },
+          { value: 'general', label: i18n.t('shared.recommendation.k10') },
         ],
       },
       showInList: false,
     },
     {
       name: 'top_k',
-      label: '推荐数量',
+      label: i18n.t('shared.recommendation.k11'),
       type: 'number',
       defaultValue: 10,
       showInList: false,
@@ -66,14 +67,14 @@ export const recommendationSchema: EntitySchema = {
 
   formSections: [
     {
-      title: '生成推荐',
+      title: i18n.t('shared.recommendation.k12'),
       fields: ['customer_id', 'recommendation_type', 'top_k'],
     },
   ],
 
   formColCount: 1,
-  createTitle: '生成客户推荐',
-  detailTitle: '推荐详情',
+  createTitle: i18n.t('shared.recommendation.k13'),
+  detailTitle: i18n.t('shared.recommendation.k14'),
 
   dynamicOptions: [
     {

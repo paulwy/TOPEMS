@@ -364,7 +364,7 @@ const MonitorLogsPage: React.FC = () => {
               <IconButton
                 size='small'
                 onClick={handleExport}
-                aria-label='下载'
+                aria-label={t('monitor.monitor_logs_page.k0')}
               >
                 <Download size={18} />
               </IconButton>

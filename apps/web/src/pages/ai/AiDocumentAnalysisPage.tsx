@@ -50,9 +50,9 @@ const ct= designTokens.colors;
 type AnalysisTab = 'summary' | 'translate' | 'qa' | 'extract' | 'ocr';
 
 const recentDocuments = [
-  { id: '1', name: '员工手册2024版.pdf', type: 'pdf', size: '2.3 MB', date: '2024-06-20' },
-  { id: '2', name: '产品规格书.docx', type: 'docx', size: '856 KB', date: '2024-06-19' },
-  { id: '3', name: '年度报告.pdf', type: 'pdf', size: '5.1 MB', date: '2024-06-18' },
+  { id: '1', name: i18n.t('pages.ai_document_analysis_page.2024pdf_0'), type: 'pdf', size: '2.3 MB', date: '2024-06-20' },
+  { id: '2', name: i18n.t('pages.ai_document_analysis_page.docx_1'), type: 'docx', size: '856 KB', date: '2024-06-19' },
+  { id: '3', name: i18n.t('pages.ai_document_analysis_page.pdf_2'), type: 'pdf', size: '5.1 MB', date: '2024-06-18' },
 ];
 
 const summaryResult = `本文档是一份企业员工手册，主要内容包括：
@@ -85,7 +85,7 @@ const summaryResult = `本文档是一份企业员工手册，主要内容包括
 总体而言，这份员工手册系统地规范了员工的权利和义务，是企业管理的重要指导性文件。`;
 
 const keyPoints = [
-  '公司实行双休制，工作时间为周一至周五 9:00-18:00',
+  i18n.t('pages.ai_document_analysis_page.k3'),
   i18n.t('ai.ai_document_analysis_page.k0'),
   i18n.t('ai.ai_document_analysis_page.k1'),
   i18n.t('ai.ai_document_analysis_page.k2'),
@@ -847,7 +847,7 @@ export const AiDocumentAnalysisPage: React.FC = () => {
                           variant='body2'
                           sx={{ lineHeight: 1.8, whiteSpace: 'pre-wrap' }}
                         >
-                          {`[OCR识别结果示例]\n\n这是文档的第一页内容...\n\n这是文档的第二页内容...\n\n这是文档的第三页内容...`}
+                          {i18n.t('pages.ai_document_analysis_page.k4')}
                         </Typography>
                       </Paper>
                     </Box>

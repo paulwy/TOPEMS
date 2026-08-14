@@ -2,6 +2,7 @@ import React, { Suspense, lazy, useEffect, useState, useCallback } from 'react';
 import { CircularProgress, Box, Typography, Alert, AlertTitle } from '@mui/material';
 import { LOADER_TIMEOUT } from '@topems/shared-constants';
 import { EventEmitter } from 'eventemitter3';
+import i18n from '@/i18n';
 
 export interface PluginManifest {
   pluginCode: string;
@@ -75,7 +76,7 @@ export const ModuleLoadingFallback: React.FC = () => (
       variant='body2'
       color='text.secondary'
     >
-      加载模块中...
+      {i18n.t('lib.plugin_loader.k0')}
     </Typography>
   </Box>
 );
@@ -97,7 +98,7 @@ export const ModuleErrorFallback: React.FC<{ error?: Error }> = ({ error }) => (
       variant='h6'
       color='error'
     >
-      模块加载失败
+      {i18n.t('lib.plugin_loader.k1')}
     </Typography>
     {error && (
       <Typography
@@ -532,7 +533,7 @@ export const PluginLoaderProvider: React.FC<PluginLoaderProviderProps> = ({
     return (
       <Box sx={{ padding: 3 }}>
         <Alert severity='error'>
-          <AlertTitle>插件加载错误</AlertTitle>
+          <AlertTitle>{i18n.t('lib.plugin_loader.k3')}</AlertTitle>
           {Object.entries(errors).map(([code, message]) => (
             <div key={code}>
               {code}: {message}

@@ -2,6 +2,7 @@ import React from 'react';
 import { Box, Typography } from '@mui/material';
 import { Loader2 } from 'lucide-react';
 import { designTokens } from '@/theme/tokens';
+import i18n from '@/i18n';
 
 const ct= designTokens.colors;
 
@@ -27,7 +28,7 @@ const LoadingState: React.FC = () => {
             mb: 2,
           }}
         />
-        <Typography sx={{ color: 'grey.700' }}>加载中...</Typography>
+        <Typography sx={{ color: 'grey.700' }}>{i18n.t('pages.loading_state.k0')}</Typography>
       </Box>
     </Box>
   );

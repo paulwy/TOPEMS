@@ -12,6 +12,7 @@ import {
   Button,
   useTheme,
 } from '@mui/material';
+import i18n from '@/i18n';
 import React, { useState, useEffect } from 'react';
 
 import { Plus, Trash2, GripVertical, Sparkles, Eye, EyeOff } from 'lucide-react';
@@ -33,22 +34,22 @@ interface TemplateEditorProps {
 }
 
 const TEMPLATE_TYPES: { value: TemplateType; label: string }[] = [
-  { value: 'document', label: '文档模板' },
-  { value: 'workflow', label: '工作流模板' },
-  { value: 'form', label: '表单模板' },
-  { value: 'report', label: '报表模板' },
-  { value: 'notification', label: '通知模板' },
+  { value: 'document', label: i18n.t('components.template_editor.k0') },
+  { value: 'workflow', label: i18n.t('components.template_editor.k1') },
+  { value: 'form', label: i18n.t('components.template_editor.k2') },
+  { value: 'report', label: i18n.t('components.template_editor.k3') },
+  { value: 'notification', label: i18n.t('components.template_editor.k4') },
 ];
 
 const VARIABLE_TYPES: { value: string; label: string }[] = [
-  { value: 'string', label: '文本' },
-  { value: 'number', label: '数字' },
-  { value: 'date', label: '日期' },
-  { value: 'select', label: '单选' },
-  { value: 'multiselect', label: '多选' },
-  { value: 'lookup', label: '查找' },
-  { value: 'user', label: '用户' },
-  { value: 'now', label: '当前时间' },
+  { value: 'string', label: i18n.t('components.template_editor.k5') },
+  { value: 'number', label: i18n.t('components.template_editor.k6') },
+  { value: 'date', label: i18n.t('components.template_editor.k7') },
+  { value: 'select', label: i18n.t('components.template_editor.k8') },
+  { value: 'multiselect', label: i18n.t('components.template_editor.k9') },
+  { value: 'lookup', label: i18n.t('components.template_editor.k10') },
+  { value: 'user', label: i18n.t('components.template_editor.k11') },
+  { value: 'now', label: i18n.t('components.template_editor.k12') },
 ];
 
 const TemplateEditor: React.FC<TemplateEditorProps> = ({
@@ -101,7 +102,7 @@ const TemplateEditor: React.FC<TemplateEditorProps> = ({
   const handleVariableAdd = () => {
     const newVariable: TemplateVariable = {
       key: `var_${Date.now()}`,
-      label: '新变量',
+      label: i18n.t('components.template_editor.k13'),
       type: 'string',
       required: false,
     };
@@ -176,7 +177,7 @@ const TemplateEditor: React.FC<TemplateEditorProps> = ({
           variant='h6'
           sx={{ mb: 3 }}
         >
-          {template ? '编辑模板' : '创建模板'}
+          {template ? i18n.t('components.template_editor.k15') : i18n.t('components.template_editor.k14')}
         </Typography>
 
         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
@@ -197,7 +198,7 @@ const TemplateEditor: React.FC<TemplateEditorProps> = ({
                 size='small'
                 value={formData.name}
                 onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                placeholder='输入模板名称'
+                placeholder={i18n.t('components.template_editor.k16')}
                 sx={{ mt: 1 }}
               />
             </Box>
@@ -208,7 +209,7 @@ const TemplateEditor: React.FC<TemplateEditorProps> = ({
                 size='small'
                 value={formData.code}
                 onChange={(e) => setFormData({ ...formData, code: e.target.value })}
-                placeholder='输入模板编码'
+                placeholder={i18n.t('components.template_editor.k17')}
                 disabled={!!template}
                 sx={{ mt: 1 }}
               />
@@ -226,7 +227,7 @@ const TemplateEditor: React.FC<TemplateEditorProps> = ({
             }}
           >
             <Box>
-              <FormLabel component='legend'>模板类型</FormLabel>
+              <FormLabel component='legend'>{i18n.t('components.template_editor.k18')}</FormLabel>
               <Select
                 fullWidth
                 size='small'
@@ -250,7 +251,7 @@ const TemplateEditor: React.FC<TemplateEditorProps> = ({
               </Select>
             </Box>
             <Box>
-              <FormLabel component='legend'>分类</FormLabel>
+              <FormLabel component='legend'>{i18n.t('components.template_editor.k19')}</FormLabel>
               <Select
                 fullWidth
                 size='small'
@@ -276,7 +277,7 @@ const TemplateEditor: React.FC<TemplateEditorProps> = ({
           </Box>
 
           <Box>
-            <FormLabel component='legend'>描述</FormLabel>
+            <FormLabel component='legend'>{i18n.t('components.template_editor.k20')}</FormLabel>
             <TextField
               fullWidth
               size='small'
@@ -284,7 +285,7 @@ const TemplateEditor: React.FC<TemplateEditorProps> = ({
               rows={2}
               value={formData.description}
               onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-              placeholder='输入模板描述'
+              placeholder={i18n.t('components.template_editor.k21')}
               sx={{ mt: 1 }}
             />
           </Box>
@@ -304,13 +305,13 @@ const TemplateEditor: React.FC<TemplateEditorProps> = ({
                 gap: 1,
               }}
             >
-              <span>模板变量</span>
+              <span>{i18n.t('components.template_editor.k22')}</span>
               <Button
                 size='small'
                 onClick={handleVariableAdd}
                 startIcon={<Plus size={16} />}
               >
-                添加变量
+                {i18n.t('components.template_editor.k0')}
               </Button>
             </Typography>
             <Button
@@ -319,7 +320,7 @@ const TemplateEditor: React.FC<TemplateEditorProps> = ({
               onClick={() => setIsPreview(!isPreview)}
               startIcon={isPreview ? <EyeOff size={16} /> : <Eye size={16} />}
             >
-              {isPreview ? '编辑模式' : '预览模式'}
+              {isPreview ? i18n.t('components.template_editor.k24') : i18n.t('components.template_editor.k23')}
             </Button>
           </Box>
 
@@ -362,7 +363,7 @@ const TemplateEditor: React.FC<TemplateEditorProps> = ({
                         component='legend'
                         sx={{ fontSize: '0.75rem' }}
                       >
-                        变量标识
+                        {i18n.t('components.template_editor.k1')}
                       </FormLabel>
                       <TextField
                         fullWidth
@@ -377,7 +378,7 @@ const TemplateEditor: React.FC<TemplateEditorProps> = ({
                         component='legend'
                         sx={{ fontSize: '0.75rem' }}
                       >
-                        显示名称
+                        {i18n.t('components.template_editor.k2')}
                       </FormLabel>
                       <TextField
                         fullWidth
@@ -392,7 +393,7 @@ const TemplateEditor: React.FC<TemplateEditorProps> = ({
                         component='legend'
                         sx={{ fontSize: '0.75rem' }}
                       >
-                        类型
+                        {i18n.t('components.template_editor.k3')}
                       </FormLabel>
                       <Select
                         fullWidth
@@ -421,7 +422,7 @@ const TemplateEditor: React.FC<TemplateEditorProps> = ({
                           }
                         />
                         <Typography sx={{ fontSize: '0.75rem', color: 'text.secondary' }}>
-                          必填
+                          {i18n.t('components.template_editor.k4')}
                         </Typography>
                       </Box>
                       <Button
@@ -448,7 +449,7 @@ const TemplateEditor: React.FC<TemplateEditorProps> = ({
                 mb: 1,
               }}
             >
-              <FormLabel component='legend'>模板内容</FormLabel>
+              <FormLabel component='legend'>{i18n.t('components.template_editor.k25')}</FormLabel>
               <Box sx={{ display: 'flex', gap: 1 }}>
                 {(formData.variables || []).map((v) => (
                   <Button
@@ -482,7 +483,7 @@ const TemplateEditor: React.FC<TemplateEditorProps> = ({
                 rows={8}
                 value={formData.content}
                 onChange={(e) => setFormData({ ...formData, content: e.target.value })}
-                placeholder='输入模板内容，使用 {{变量名}} 引用变量'
+                placeholder={i18n.t('components.template_editor.k5')}
                 sx={{
                   mt: 1,
                   '& .MuiInputBase-input': {
@@ -517,7 +518,7 @@ const TemplateEditor: React.FC<TemplateEditorProps> = ({
                   checked={formData.isactive || false}
                   onChange={(e) => setFormData({ ...formData, isactive: e.target.checked })}
                 />
-                <FormLabel component='legend'>启用状态</FormLabel>
+                <FormLabel component='legend'>{i18n.t('components.template_editor.k26')}</FormLabel>
               </Box>
             </Box>
             <Box
@@ -533,7 +534,7 @@ const TemplateEditor: React.FC<TemplateEditorProps> = ({
                   checked={formData.is_public || false}
                   onChange={(e) => setFormData({ ...formData, is_public: e.target.checked })}
                 />
-                <FormLabel component='legend'>公开模板</FormLabel>
+                <FormLabel component='legend'>{i18n.t('components.template_editor.k27')}</FormLabel>
               </Box>
             </Box>
             <Box
@@ -557,7 +558,7 @@ const TemplateEditor: React.FC<TemplateEditorProps> = ({
                     size={16}
                     style={{ color: theme.palette.warning.main }}
                   />
-                  AI 辅助
+                  {i18n.t('components.template_editor.ai_6')}
                 </FormLabel>
               </Box>
             </Box>
@@ -569,13 +570,13 @@ const TemplateEditor: React.FC<TemplateEditorProps> = ({
             variant='outlined'
             onClick={() => onOpenChange(false)}
           >
-            取消
+            {i18n.t('components.template_editor.k7')}
           </Button>
           <Button
             variant='contained'
             onClick={handleSubmit}
           >
-            {template ? '更新模板' : '创建模板'}
+            {template ? i18n.t('components.template_editor.k29') : i18n.t('components.template_editor.k28')}
           </Button>
         </DialogActions>
       </DialogContent>

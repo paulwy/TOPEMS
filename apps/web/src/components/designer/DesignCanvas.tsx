@@ -15,6 +15,7 @@ import { ArrowUp, ArrowDown, Trash2 } from 'lucide-react';
 import { LazyIcon } from '@/components/icons/LazyIcon';
 import type { CanvasNode, DesignerComponent } from './types';
 import { getComponentByType } from './types';
+import i18n from '@/i18n';
 
 interface DesignCanvasProps {
   nodes: CanvasNode[];
@@ -79,14 +80,14 @@ export function DesignCanvas({
       >
         <EmptyState
           icon='layout'
-          title='空白画布'
-          description='从左侧组件库拖拽组件到此处开始构建页面'
+          title={i18n.t('components.design_canvas.k0')}
+          description={i18n.t('components.design_canvas.k1')}
         >
           <Typography
             variant='caption'
             sx={{ color: 'text.secondary' }}
           >
-            或点击下方按钮添加
+            {i18n.t('components.design_canvas.k0')}
           </Typography>
         </EmptyState>
       </Box>
@@ -183,10 +184,10 @@ function CanvasNodeItem({
         )}
 
         <Box sx={{ ml: 'auto', display: 'flex', gap: 0.5 }}>
-          <Tooltip title='上移'>
+          <Tooltip title={i18n.t('components.design_canvas.k2')}>
             <IconButton
               size='small'
-              aria-label='上移'
+              aria-label={i18n.t('components.design_canvas.k3')}
               onClick={(e: React.MouseEvent) => {
                 e.stopPropagation();
                 onMoveUp();
@@ -195,10 +196,10 @@ function CanvasNodeItem({
               <ArrowUp size={14} />
             </IconButton>
           </Tooltip>
-          <Tooltip title='下移'>
+          <Tooltip title={i18n.t('components.design_canvas.k4')}>
             <IconButton
               size='small'
-              aria-label='下移'
+              aria-label={i18n.t('components.design_canvas.k5')}
               onClick={(e: React.MouseEvent) => {
                 e.stopPropagation();
                 onMoveDown();
@@ -207,10 +208,10 @@ function CanvasNodeItem({
               <ArrowDown size={14} />
             </IconButton>
           </Tooltip>
-          <Tooltip title='删除'>
+          <Tooltip title={i18n.t('components.design_canvas.k6')}>
             <IconButton
               size='small'
-              aria-label='删除'
+              aria-label={i18n.t('components.design_canvas.k7')}
               onClick={(e: React.MouseEvent) => {
                 e.stopPropagation();
                 onRemove();

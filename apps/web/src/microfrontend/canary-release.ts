@@ -17,6 +17,7 @@
 
 import { REMOTE_MODULES } from './config';
 import { logger } from '@/utils/logger';
+import i18n from '@/i18n';
 
 // ==================== 类型定义 ====================
 
@@ -81,7 +82,7 @@ function writeStorage<T>(key: string, value: T): void {
   try {
     localStorage.setItem(key, JSON.stringify(value));
   } catch (err) {
-    logger.warn('[CanaryRelease] localStorage 写入失败', err);
+    logger.warn(i18n.t('microfrontend.canary-release.k0'), err);
   }
 }
 
@@ -167,7 +168,7 @@ class CanaryReleaseManager {
     });
 
     this.persist();
-    logger.info('[CanaryRelease] 初始化完成，已加载', this.configs.size, '个灰度配置');
+    logger.info(i18n.t('microfrontend.canary-release.k1'), this.configs.size, i18n.t('microfrontend.canary-release.k0'));
   }
 
   /**
@@ -204,9 +205,9 @@ class CanaryReleaseManager {
       });
 
       this.persist();
-      logger.info('[CanaryRelease] 从服务端同步灰度配置成功', serverConfigs.length, '条');
+      logger.info(i18n.t('microfrontend.canary-release.k2'), serverConfigs.length, i18n.t('microfrontend.canary-release.k1'));
     } catch (err) {
-      logger.warn('[CanaryRelease] 服务端配置同步失败，使用本地配置:', err);
+      logger.warn(i18n.t('microfrontend.canary-release.k3'), err);
     }
   }
 
@@ -275,7 +276,7 @@ class CanaryReleaseManager {
     const entry = useCanary ? config.canaryEntry : config.stableEntry;
 
     logger.debug(
-      `[CanaryRelease] ${moduleId} 用户 ${userId} → ${useCanary ? '灰度版' : '稳定版'} (${entry})`
+      `[CanaryRelease] ${moduleId}${i18n.t('microfrontend.canary-release.k4')}${userId} → ${useCanary ? i18n.t('microfrontend.canary-release.k3') : i18n.t('microfrontend.canary-release.k2')} (${entry})`
     );
 
     return entry;
@@ -312,7 +313,7 @@ class CanaryReleaseManager {
     this.persist();
     this.notifyListeners(moduleId, config);
 
-    logger.info(`[CanaryRelease] 启用 ${moduleId} 灰度: ${config.percentage}%`, {
+    logger.info(`${i18n.t('microfrontend.canary-release.canaryrelease_5')}${moduleId}${i18n.t('microfrontend.canary-release.k6')}${config.percentage}%`, {
       canaryEntry: config.canaryEntry,
       canaryVersion: config.canaryVersion,
     });
@@ -337,7 +338,7 @@ class CanaryReleaseManager {
     this.persist();
     this.notifyListeners(moduleId, config);
 
-    logger.info(`[CanaryRelease] 禁用 ${moduleId} 灰度，已回滚到稳定版本`);
+    logger.info(`${i18n.t('microfrontend.canary-release.canaryrelease_7')}${moduleId}${i18n.t('microfrontend.canary-release.k8')}`);
   }
 
   /**
@@ -397,7 +398,7 @@ class CanaryReleaseManager {
       this.syncFromServer().catch(() => {});
     }, intervalMs);
 
-    logger.info(`[CanaryRelease] 启动服务端配置同步，间隔 ${intervalMs / 1000}s`);
+    logger.info(`${i18n.t('microfrontend.canary-release.k9')}${intervalMs / 1000}s`);
   }
 
   /**
@@ -407,7 +408,7 @@ class CanaryReleaseManager {
     if (this.syncTimer) {
       clearInterval(this.syncTimer);
       this.syncTimer = null;
-      logger.info('[CanaryRelease] 已停止服务端配置同步');
+      logger.info(i18n.t('microfrontend.canary-release.k10'));
     }
   }
 
@@ -430,7 +431,7 @@ class CanaryReleaseManager {
       try {
         cb(moduleId, config);
       } catch (err) {
-        logger.error('[CanaryRelease] 配置变更回调执行失败', err);
+        logger.error(i18n.t('microfrontend.canary-release.k11'), err);
       }
     });
   }

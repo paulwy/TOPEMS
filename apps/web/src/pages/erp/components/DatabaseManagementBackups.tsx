@@ -1,5 +1,4 @@
 import React from 'react';
-import { useTranslation } from 'react-i18next';
 import {
   Box,
   Typography,
@@ -15,10 +14,10 @@ import {
   IconButton,
   Tooltip,
 } from '@mui/material';
+import i18n from '@/i18n';
 import { Database, Download, Upload, Trash2, Play } from 'lucide-react';
 import { StatusBadge } from '@/components/common';
 import type { BackupRecord } from '../hooks/useDatabaseManagement';
-
 interface DatabaseManagementBackupsProps {
   backups: BackupRecord[];
   loading: boolean;
@@ -26,7 +25,6 @@ interface DatabaseManagementBackupsProps {
   onRestore: (backupId: string) => void;
   onDelete: (backupId: string) => void;
 }
-
 export const DatabaseManagementBackups: React.FC<DatabaseManagementBackupsProps> = ({
   backups,
   loading,
@@ -34,8 +32,6 @@ export const DatabaseManagementBackups: React.FC<DatabaseManagementBackupsProps>
   onRestore,
   onDelete,
 }) => {
-  const { t } = useTranslation();
-
   const getBackupStatusBadge = (status: string) => {
     const badges: Record<
       string,
@@ -43,17 +39,17 @@ export const DatabaseManagementBackups: React.FC<DatabaseManagementBackupsProps>
     > = {
       success: {
         color: 'success',
-        label: t('erp.database.status.success'),
+        label: i18n.t('erp.database.status.success'),
         icon: <CheckCircle size={14} />,
       },
       failed: {
         color: 'error',
-        label: t('erp.database.status.failed'),
+        label: i18n.t('erp.database.status.failed'),
         icon: <AlertCircle size={14} />,
       },
       running: {
         color: 'info',
-        label: t('erp.database.status.running'),
+        label: i18n.t('erp.database.status.running'),
         icon: <CircularProgress size={14} />,
       },
     };
@@ -67,7 +63,6 @@ export const DatabaseManagementBackups: React.FC<DatabaseManagementBackupsProps>
       />
     );
   };
-
   return (
     <>
       <Box
@@ -88,7 +83,7 @@ export const DatabaseManagementBackups: React.FC<DatabaseManagementBackupsProps>
           startIcon={<Upload size={16} />}
           onClick={() => {}}
         >
-          {t('erp.database.label.upload_backup')}
+          {i18n.t('erp.database.label.upload_backup')}
         </Button>
         <Button
           variant='contained'
@@ -96,10 +91,9 @@ export const DatabaseManagementBackups: React.FC<DatabaseManagementBackupsProps>
           startIcon={<Play size={16} />}
           onClick={onBackup}
         >
-          {t('erp.database.label.backup_now')}
+          {i18n.t('erp.database.label.backup_now')}
         </Button>
       </Box>
-
       {loading ? (
         <Box sx={{ display: 'flex', justifyContent: 'center', py: 8 }}>
           <CircularProgress />
@@ -110,25 +104,25 @@ export const DatabaseManagementBackups: React.FC<DatabaseManagementBackupsProps>
             <TableHead>
               <TableRow sx={{ bgcolor: 'grey.50' }}>
                 <TableCell sx={{ fontWeight: 'bold' }}>
-                  {t('erp.database.label.backup_name')}
+                  {i18n.t('erp.database.label.backup_name')}
                 </TableCell>
-                <TableCell sx={{ fontWeight: 'bold' }}>{t('erp.database.label.type')}</TableCell>
+                <TableCell sx={{ fontWeight: 'bold' }}>{i18n.t('erp.database.label.type')}</TableCell>
                 <TableCell sx={{ fontWeight: 'bold' }}>
-                  {t('erp.database.label.file_size')}
+                  {i18n.t('erp.database.label.file_size')}
                 </TableCell>
-                <TableCell sx={{ fontWeight: 'bold' }}>{t('erp.database.label.status')}</TableCell>
+                <TableCell sx={{ fontWeight: 'bold' }}>{i18n.t('erp.database.label.status')}</TableCell>
                 <TableCell sx={{ fontWeight: 'bold' }}>
-                  {t('erp.database.label.created_by')}
+                  {i18n.t('erp.database.label.created_by')}
                 </TableCell>
                 <TableCell sx={{ fontWeight: 'bold' }}>
-                  {t('erp.database.label.created_at')}
+                  {i18n.t('erp.database.label.created_at')}
                 </TableCell>
-                <TableCell sx={{ fontWeight: 'bold' }}>{t('erp.database.label.remark')}</TableCell>
+                <TableCell sx={{ fontWeight: 'bold' }}>{i18n.t('erp.database.label.remark')}</TableCell>
                 <TableCell
                   align='center'
                   sx={{ fontWeight: 'bold', width: 160 }}
                 >
-                  {t('erp.database.label.operation')}
+                  {i18n.t('erp.database.label.operation')}
                 </TableCell>
               </TableRow>
             </TableHead>
@@ -152,7 +146,7 @@ export const DatabaseManagementBackups: React.FC<DatabaseManagementBackupsProps>
                       variant='body1'
                       sx={{ color: 'text.secondary' }}
                     >
-                      {t('erp.database.label.no_backups')}
+                      {i18n.t('erp.database.label.no_backups')}
                     </Typography>
                   </TableCell>
                 </TableRow>
@@ -183,8 +177,8 @@ export const DatabaseManagementBackups: React.FC<DatabaseManagementBackupsProps>
                       <Chip
                         label={
                           backup.backup_type === 'full'
-                            ? ` + ${t('erp.database.label.full_backup')} + `
-                            : t('erp.database.label.incremental_backup')
+                            ? ` + ${i18n.t('erp.database.label.full_backup')} + `
+                            : i18n.t('erp.database.label.incremental_backup')
                         }
                         size='small'
                         color={backup.backup_type === 'full' ? 'primary' : 'default'}
@@ -217,33 +211,33 @@ export const DatabaseManagementBackups: React.FC<DatabaseManagementBackupsProps>
                     </TableCell>
                     <TableCell align='center'>
                       <Box sx={{ display: 'flex', justifyContent: 'center', gap: 0.5 }}>
-                        <Tooltip title={t('erp.database.label.download')}>
+                        <Tooltip title={i18n.t('erp.database.label.download')}>
                           <IconButton
                             size='small'
                             color='primary'
-                            aria-label='下载'
+                            aria-label={i18n.t('erp.database_management_backups.k0')}
                           >
                             <Download size={16} />
                           </IconButton>
                         </Tooltip>
                         {backup.status === 'success' && (
-                          <Tooltip title={t('erp.database.label.restore')}>
+                          <Tooltip title={i18n.t('erp.database.label.restore')}>
                             <IconButton
                               size='small'
                               color='warning'
                               onClick={() => onRestore(backup.id)}
-                              aria-label='上传'
+                              aria-label={i18n.t('erp.database_management_backups.k1')}
                             >
                               <Upload size={16} />
                             </IconButton>
                           </Tooltip>
                         )}
-                        <Tooltip title={t('erp.database.label.delete')}>
+                        <Tooltip title={i18n.t('erp.database.label.delete')}>
                           <IconButton
                             size='small'
                             color='error'
                             onClick={() => onDelete(backup.id)}
-                            aria-label='删除'
+                            aria-label={i18n.t('erp.database_management_backups.k2')}
                           >
                             <Trash2 size={16} />
                           </IconButton>
@@ -260,7 +254,6 @@ export const DatabaseManagementBackups: React.FC<DatabaseManagementBackupsProps>
     </>
   );
 };
-
 // Helper icons for status badge
 const CheckCircle = ({ size }: { size: number }) => (
   <svg
@@ -277,7 +270,6 @@ const CheckCircle = ({ size }: { size: number }) => (
     <polyline points='22 4 12 14.01 9 11.01' />
   </svg>
 );
-
 const AlertCircle = ({ size }: { size: number }) => (
   <svg
     width={size}
@@ -308,7 +300,6 @@ const AlertCircle = ({ size }: { size: number }) => (
     />
   </svg>
 );
-
 const Info = ({ size }: { size: number }) => (
   <svg
     width={size}

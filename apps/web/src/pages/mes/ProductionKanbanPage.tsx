@@ -15,10 +15,10 @@ import {
   Paper,
   Divider,
 } from '@mui/material';
+import i18n from '@/i18n';
 import { PageContainer } from '@/components/common';
 import React, { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { useTranslation } from 'react-i18next';
 import {QUERY_KEYS, CACHE_DURATIONS} from '@/lib/reactQuery';
 import { mesApi } from '@/api/mes';
 import type { ProductionKanbanData } from '@/api/mes';
@@ -34,11 +34,8 @@ import {
   Wrench,
 } from 'lucide-react';
 import { designTokens } from '@/theme/tokens';
-
 const ct= designTokens.colors;
-
 const ProductionKanbanPage: React.FC = () => {
-  const { t } = useTranslation();
   const { data: kanbanData, isPending: loading} = useQuery<ProductionKanbanData | null>({
     queryKey: QUERY_KEYS.MES.KANBAN_DASHBOARD,
     queryFn: async () => {
@@ -51,7 +48,6 @@ const ProductionKanbanPage: React.FC = () => {
     refetchInterval: 60000,
   
       staleTime: CACHE_DURATIONS.MEDIUM,});
-
   const statusColorMap = useMemo<Record<string, string>>(
     () => ({
       running: 'success.main',
@@ -64,25 +60,21 @@ const ProductionKanbanPage: React.FC = () => {
     }),
     []
   );
-
   const getStatusColor = (status: string) => statusColorMap[status] || 'text.secondary';
-
   const getStatusText = (status: string) => {
     const textMap: Record<string, string> = {
-      running: t('mes.production_kanban_page.status_running'),
-      idle: t('mes.production_kanban_page.status_idle'),
-      maintenance: t('mes.production_kanban_page.status_maintenance'),
-      error: t('mes.production_kanban_page.status_error'),
-      in_progress: t('mes.production_kanban_page.status_in_progress'),
-      pending: t('mes.production_kanban_page.status_pending'),
-      completed: t('mes.production_kanban_page.status_completed'),
+      running: i18n.t('mes.production_kanban_page.status_running'),
+      idle: i18n.t('mes.production_kanban_page.status_idle'),
+      maintenance: i18n.t('mes.production_kanban_page.status_maintenance'),
+      error: i18n.t('mes.production_kanban_page.status_error'),
+      in_progress: i18n.t('mes.production_kanban_page.status_in_progress'),
+      pending: i18n.t('mes.production_kanban_page.status_pending'),
+      completed: i18n.t('mes.production_kanban_page.status_completed'),
     };
     return textMap[status] || status;
   };
-
   if (loading) return <LoadingSpinner />;
   if (!kanbanData) return null;
-
   const {
     summary,
     order_progress: orderProgress = [],
@@ -90,9 +82,7 @@ const ProductionKanbanPage: React.FC = () => {
     quality_trend: qualityTrend = [],
     equipment_status: equipmentStatus = [],
   } = kanbanData;
-
   if (!summary) return null;
-
   return (
     <PageContainer
       autoTitle
@@ -113,7 +103,7 @@ const ProductionKanbanPage: React.FC = () => {
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
                   <Factory size={24} />
                   <Typography variant='body2'>
-                    {t('mes.production_kanban_page.stat_total_orders')}
+                    {i18n.t('mes.production_kanban_page.stat_total_orders')}
                   </Typography>
                 </Box>
                 <Typography
@@ -131,7 +121,7 @@ const ProductionKanbanPage: React.FC = () => {
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
                   <Activity size={24} />
                   <Typography variant='body2'>
-                    {t('mes.production_kanban_page.stat_in_progress')}
+                    {i18n.t('mes.production_kanban_page.stat_in_progress')}
                   </Typography>
                 </Box>
                 <Typography
@@ -149,7 +139,7 @@ const ProductionKanbanPage: React.FC = () => {
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
                   <CheckCircle size={24} />
                   <Typography variant='body2'>
-                    {t('mes.production_kanban_page.stat_completed')}
+                    {i18n.t('mes.production_kanban_page.stat_completed')}
                   </Typography>
                 </Box>
                 <Typography
@@ -167,7 +157,7 @@ const ProductionKanbanPage: React.FC = () => {
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
                   <Package size={24} />
                   <Typography variant='body2'>
-                    {t('mes.production_kanban_page.stat_today_output')}
+                    {i18n.t('mes.production_kanban_page.stat_today_output')}
                   </Typography>
                 </Box>
                 <Typography
@@ -185,7 +175,7 @@ const ProductionKanbanPage: React.FC = () => {
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
                   <TrendingUp size={24} />
                   <Typography variant='body2'>
-                    {t('mes.production_kanban_page.stat_pass_rate')}
+                    {i18n.t('mes.production_kanban_page.stat_pass_rate')}
                   </Typography>
                 </Box>
                 <Typography
@@ -203,7 +193,7 @@ const ProductionKanbanPage: React.FC = () => {
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
                   <Gauge size={24} />
                   <Typography variant='body2'>
-                    {t('mes.production_kanban_page.stat_oee')}
+                    {i18n.t('mes.production_kanban_page.stat_oee')}
                   </Typography>
                 </Box>
                 <Typography
@@ -217,7 +207,6 @@ const ProductionKanbanPage: React.FC = () => {
           </Grid>
         </Grid>
       </Box>
-
       <Grid
         container
         spacing={3}
@@ -234,7 +223,7 @@ const ProductionKanbanPage: React.FC = () => {
                   variant='h6'
                   sx={{ fontWeight: 600 }}
                 >
-                  {t('mes.production_kanban_page.section_progress')}
+                  {i18n.t('mes.production_kanban_page.section_progress')}
                 </Typography>
               </Box>
               <Divider sx={{ mb: 2 }} />
@@ -244,7 +233,7 @@ const ProductionKanbanPage: React.FC = () => {
                     variant='body2'
                     sx={{ color: 'text.secondary', textAlign: 'center', py: 4 }}
                   >
-                    {t('mes.production_kanban_page.no_order_data')}
+                    {i18n.t('mes.production_kanban_page.no_order_data')}
                   </Typography>
                 ) : (
                   <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
@@ -276,9 +265,9 @@ const ProductionKanbanPage: React.FC = () => {
                               variant='body2'
                               sx={{ color: 'text.secondary' }}
                             >
-                              {t('mes.production_kanban_page.label_planned')}:{' '}
+                              {i18n.t('mes.production_kanban_page.label_planned')}:{' '}
                               {order.plannedQuantity} /{' '}
-                              {t('mes.production_kanban_page.label_completed')}:{' '}
+                              {i18n.t('mes.production_kanban_page.label_completed')}:{' '}
                               {order.completed_quantity}
                             </Typography>
                           </Box>
@@ -338,7 +327,6 @@ const ProductionKanbanPage: React.FC = () => {
             </CardContent>
           </Card>
         </Grid>
-
         <Grid size={{ xs: 12, lg: 4 }}>
           <Card sx={{ height: '100%' }}>
             <CardContent>
@@ -351,7 +339,7 @@ const ProductionKanbanPage: React.FC = () => {
                   variant='h6'
                   sx={{ fontWeight: 600 }}
                 >
-                  {t('mes.production_kanban_page.section_workstation_status')}
+                  {i18n.t('mes.production_kanban_page.section_workstation_status')}
                 </Typography>
               </Box>
               <Divider sx={{ mb: 2 }} />
@@ -361,7 +349,7 @@ const ProductionKanbanPage: React.FC = () => {
                     variant='body2'
                     sx={{ color: 'text.secondary', textAlign: 'center', py: 4 }}
                   >
-                    {t('mes.production_kanban_page.no_workstation_data')}
+                    {i18n.t('mes.production_kanban_page.no_workstation_data')}
                   </Typography>
                 ) : (
                   <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
@@ -389,7 +377,7 @@ const ProductionKanbanPage: React.FC = () => {
                             variant='caption'
                             sx={{ color: 'text.secondary' }}
                           >
-                            {ws.current_product || t('mes.production_kanban_page.status_idle')}
+                            {ws.current_product || i18n.t('mes.production_kanban_page.status_idle')}
                           </Typography>
                         </Box>
                         <Box
@@ -408,7 +396,6 @@ const ProductionKanbanPage: React.FC = () => {
             </CardContent>
           </Card>
         </Grid>
-
         <Grid size={{ xs: 12, lg: 6 }}>
           <Card sx={{ height: '100%' }}>
             <CardContent>
@@ -421,7 +408,7 @@ const ProductionKanbanPage: React.FC = () => {
                   variant='h6'
                   sx={{ fontWeight: 600 }}
                 >
-                  {t('mes.production_kanban_page.section_quality_trend')}
+                  {i18n.t('mes.production_kanban_page.section_quality_trend')}
                 </Typography>
               </Box>
               <Divider sx={{ mb: 2 }} />
@@ -432,15 +419,15 @@ const ProductionKanbanPage: React.FC = () => {
                 <Table size='small'>
                   <TableHead>
                     <TableRow sx={{ bgcolor: 'grey.50' }}>
-                      <TableCell>{t('mes.production_kanban_page.col_date')}</TableCell>
+                      <TableCell>{i18n.t('mes.production_kanban_page.col_date')}</TableCell>
                       <TableCell align='right'>
-                        {t('mes.production_kanban_page.col_total_output')}
+                        {i18n.t('mes.production_kanban_page.col_total_output')}
                       </TableCell>
                       <TableCell align='right'>
-                        {t('mes.production_kanban_page.col_qualified')}
+                        {i18n.t('mes.production_kanban_page.col_qualified')}
                       </TableCell>
                       <TableCell align='right'>
-                        {t('mes.production_kanban_page.col_pass_rate')}
+                        {i18n.t('mes.production_kanban_page.col_pass_rate')}
                       </TableCell>
                     </TableRow>
                   </TableHead>
@@ -452,7 +439,7 @@ const ProductionKanbanPage: React.FC = () => {
                           align='center'
                           sx={{ py: 4, color: 'text.secondary' }}
                         >
-                          {t('mes.production_kanban_page.no_quality_data')}
+                          {i18n.t('mes.production_kanban_page.no_quality_data')}
                         </TableCell>
                       </TableRow>
                     ) : (
@@ -496,7 +483,6 @@ const ProductionKanbanPage: React.FC = () => {
             </CardContent>
           </Card>
         </Grid>
-
         <Grid size={{ xs: 12, lg: 6 }}>
           <Card sx={{ height: '100%' }}>
             <CardContent>
@@ -509,7 +495,7 @@ const ProductionKanbanPage: React.FC = () => {
                   variant='h6'
                   sx={{ fontWeight: 600 }}
                 >
-                  {t('mes.production_kanban_page.section_equipment_status')}
+                  {i18n.t('mes.production_kanban_page.section_equipment_status')}
                 </Typography>
               </Box>
               <Divider sx={{ mb: 2 }} />
@@ -520,12 +506,12 @@ const ProductionKanbanPage: React.FC = () => {
                 <Table size='small'>
                   <TableHead>
                     <TableRow sx={{ bgcolor: 'grey.50' }}>
-                      <TableCell>{t('mes.production_kanban_page.col_equipment_code')}</TableCell>
-                      <TableCell>{t('mes.production_kanban_page.col_equipment_name')}</TableCell>
+                      <TableCell>{i18n.t('mes.production_kanban_page.col_equipment_code')}</TableCell>
+                      <TableCell>{i18n.t('mes.production_kanban_page.col_equipment_name')}</TableCell>
                       <TableCell align='center'>
-                        {t('mes.production_kanban_page.col_status')}
+                        {i18n.t('mes.production_kanban_page.col_status')}
                       </TableCell>
-                      <TableCell align='right'>{t('mes.production_kanban_page.col_oee')}</TableCell>
+                      <TableCell align='right'>{i18n.t('mes.production_kanban_page.col_oee')}</TableCell>
                     </TableRow>
                   </TableHead>
                   <TableBody>
@@ -536,7 +522,7 @@ const ProductionKanbanPage: React.FC = () => {
                           align='center'
                           sx={{ py: 4, color: 'text.secondary' }}
                         >
-                          {t('mes.production_kanban_page.no_equipment_data')}
+                          {i18n.t('mes.production_kanban_page.no_equipment_data')}
                         </TableCell>
                       </TableRow>
                     ) : (
@@ -585,5 +571,4 @@ const ProductionKanbanPage: React.FC = () => {
     </PageContainer>
   );
 };
-
 export default ProductionKanbanPage;

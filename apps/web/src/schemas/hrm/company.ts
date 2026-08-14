@@ -1,9 +1,10 @@
 import type { EntitySchema } from '@/schema';
+import i18n from '@/i18n';
 
 export const companySchema: EntitySchema = {
   entity: 'hrm_company',
-  title: '公司管理',
-  description: '管理企业公司信息，包括公司名称、注册号、税号、联系方式等',
+  title: i18n.t('hrm.company.k0'),
+  description: i18n.t('hrm.company.k1'),
 
   api: {
     module: 'hrm',
@@ -13,7 +14,7 @@ export const companySchema: EntitySchema = {
   fields: [
     {
       name: 'name',
-      label: '公司名称',
+      label: i18n.t('hrm.company.k2'),
       type: 'text',
       required: true,
       sortable: true,
@@ -22,64 +23,64 @@ export const companySchema: EntitySchema = {
     },
     {
       name: 'short_name',
-      label: '公司简称',
+      label: i18n.t('hrm.company.k3'),
       type: 'text',
       listWidth: 120,
       validation: [{ type: 'maxLength', value: 100 }],
     },
     {
       name: 'registration_number',
-      label: '注册号',
+      label: i18n.t('hrm.company.k4'),
       type: 'text',
       listWidth: 140,
       validation: [{ type: 'maxLength', value: 100 }],
     },
     {
       name: 'tax_number',
-      label: '税号',
+      label: i18n.t('hrm.company.k5'),
       type: 'text',
       listWidth: 140,
       validation: [{ type: 'maxLength', value: 100 }],
     },
     {
       name: 'address',
-      label: '地址',
+      label: i18n.t('hrm.company.k6'),
       type: 'text',
       listWidth: 200,
     },
     {
       name: 'contact_phone',
-      label: '联系电话',
+      label: i18n.t('hrm.company.k7'),
       type: 'text',
       listWidth: 130,
       validation: [{ type: 'maxLength', value: 50 }],
     },
     {
       name: 'email',
-      label: '邮箱',
+      label: i18n.t('hrm.company.k8'),
       type: 'text',
       listWidth: 150,
       validation: [{ type: 'maxLength', value: 100 }],
     },
     {
       name: 'website',
-      label: '网站',
+      label: i18n.t('hrm.company.k9'),
       type: 'text',
       listWidth: 150,
       validation: [{ type: 'maxLength', value: 255 }],
     },
     {
       name: 'status',
-      label: '状态',
+      label: i18n.t('hrm.company.k10'),
       type: 'select',
       required: true,
       defaultValue: 'active',
       options: {
         type: 'static',
         options: [
-          { value: 'active', label: '启用' },
-          { value: 'inactive', label: '禁用' },
-          { value: 'archived', label: '归档' },
+          { value: 'active', label: i18n.t('hrm.company.k11') },
+          { value: 'inactive', label: i18n.t('hrm.company.k12') },
+          { value: 'archived', label: i18n.t('hrm.company.k13') },
         ],
       },
       listWidth: 100,
@@ -87,7 +88,7 @@ export const companySchema: EntitySchema = {
     },
     {
       name: 'created_at',
-      label: '创建时间',
+      label: i18n.t('hrm.company.k14'),
       type: 'datetime',
       readonly: true,
       hideInForm: true,
@@ -96,7 +97,7 @@ export const companySchema: EntitySchema = {
     },
     {
       name: 'updated_at',
-      label: '更新时间',
+      label: i18n.t('hrm.company.k15'),
       type: 'datetime',
       readonly: true,
       hideInForm: true,
@@ -126,21 +127,21 @@ export const companySchema: EntitySchema = {
         archived: 'warning',
       },
       labelMap: {
-        active: '启用',
-        inactive: '禁用',
-        archived: '归档',
+        active: i18n.t('hrm.company.k16'),
+        inactive: i18n.t('hrm.company.k17'),
+        archived: i18n.t('hrm.company.k18'),
       },
     },
     filters: [
       {
         id: 'status',
-        label: '状态',
+        label: i18n.t('hrm.company.k19'),
         type: 'select',
         options: [
-          { label: '全部状态', value: 'all' },
-          { label: '启用', value: 'active' },
-          { label: '禁用', value: 'inactive' },
-          { label: '归档', value: 'archived' },
+          { label: i18n.t('hrm.company.k20'), value: 'all' },
+          { label: i18n.t('hrm.company.k21'), value: 'active' },
+          { label: i18n.t('hrm.company.k22'), value: 'inactive' },
+          { label: i18n.t('hrm.company.k23'), value: 'archived' },
         ],
       },
     ],
@@ -148,23 +149,23 @@ export const companySchema: EntitySchema = {
 
   formSections: [
     {
-      title: '基本信息',
+      title: i18n.t('hrm.company.k24'),
       fields: ['name', 'short_name', 'status'],
     },
     {
-      title: '注册信息',
+      title: i18n.t('hrm.company.k25'),
       fields: ['registration_number', 'tax_number'],
     },
     {
-      title: '联系信息',
+      title: i18n.t('hrm.company.k26'),
       fields: ['address', 'contact_phone', 'email', 'website'],
     },
   ],
 
   formColCount: 2,
-  createTitle: '新增公司',
-  editTitle: '编辑公司',
-  detailTitle: '公司详情',
+  createTitle: i18n.t('hrm.company.k27'),
+  editTitle: i18n.t('hrm.company.k28'),
+  detailTitle: i18n.t('hrm.company.k29'),
 
   actions: ['create', 'edit', 'detail', 'delete'],
 };

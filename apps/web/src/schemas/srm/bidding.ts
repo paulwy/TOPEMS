@@ -1,24 +1,25 @@
 import React from 'react';
 import type { EntitySchema } from '@/schema';
+import i18n from '@/i18n';
 
 const statusConfig: Record<
   string,
   { label: string; color: 'default' | 'primary' | 'success' | 'warning' | 'error' | 'info' }
 > = {
-  draft: { label: '草稿', color: 'default' },
-  published: { label: '已发布', color: 'primary' },
-  bidding: { label: '投标中', color: 'warning' },
-  opened: { label: '已开标', color: 'info' },
-  evaluating: { label: '评标中', color: 'primary' },
-  awarded: { label: '已定标', color: 'success' },
-  cancelled: { label: '已取消', color: 'error' },
-  completed: { label: '已完成', color: 'success' },
+  draft: { label: i18n.t('srm.bidding.k0'), color: 'default' },
+  published: { label: i18n.t('srm.bidding.k1'), color: 'primary' },
+  bidding: { label: i18n.t('srm.bidding.k2'), color: 'warning' },
+  opened: { label: i18n.t('srm.bidding.k3'), color: 'info' },
+  evaluating: { label: i18n.t('srm.bidding.k4'), color: 'primary' },
+  awarded: { label: i18n.t('srm.bidding.k5'), color: 'success' },
+  cancelled: { label: i18n.t('srm.bidding.k6'), color: 'error' },
+  completed: { label: i18n.t('srm.bidding.k7'), color: 'success' },
 };
 
 export const biddingSchema: EntitySchema = {
   entity: 'srm_bidding',
-  title: '招投标管理',
-  description: '管理招标项目、投标、开标、评标、定标全流程',
+  title: i18n.t('srm.bidding.k8'),
+  description: i18n.t('srm.bidding.k9'),
 
   api: {
     module: 'srm',
@@ -28,7 +29,7 @@ export const biddingSchema: EntitySchema = {
   fields: [
     {
       name: 'bidding_no',
-      label: '招标编号',
+      label: i18n.t('srm.bidding.k10'),
       type: 'text',
       required: true,
       readonlyOnEdit: true,
@@ -37,7 +38,7 @@ export const biddingSchema: EntitySchema = {
     },
     {
       name: 'title',
-      label: '项目名称',
+      label: i18n.t('srm.bidding.k11'),
       type: 'text',
       required: true,
       sortable: true,
@@ -46,44 +47,44 @@ export const biddingSchema: EntitySchema = {
     },
     {
       name: 'category',
-      label: '项目类别',
+      label: i18n.t('srm.bidding.k12'),
       type: 'select',
       required: true,
       defaultValue: 'equipment',
       options: {
         type: 'static',
         options: [
-          { value: 'raw_material', label: '原材料' },
-          { value: 'component', label: '零部件' },
-          { value: 'equipment', label: '设备' },
-          { value: 'service', label: '服务' },
-          { value: 'engineering', label: '工程' },
-          { value: 'other', label: '其他' },
+          { value: 'raw_material', label: i18n.t('srm.bidding.k13') },
+          { value: 'component', label: i18n.t('srm.bidding.k14') },
+          { value: 'equipment', label: i18n.t('srm.bidding.k15') },
+          { value: 'service', label: i18n.t('srm.bidding.k16') },
+          { value: 'engineering', label: i18n.t('srm.bidding.k17') },
+          { value: 'other', label: i18n.t('srm.bidding.k18') },
         ],
       },
       listWidth: 100,
     },
     {
       name: 'bidding_type',
-      label: '招标方式',
+      label: i18n.t('srm.bidding.k19'),
       type: 'select',
       required: true,
       defaultValue: 'open',
       options: {
         type: 'static',
         options: [
-          { value: 'open', label: '公开招标' },
-          { value: 'invite', label: '邀请招标' },
-          { value: 'competitive', label: '竞争性谈判' },
-          { value: 'single_source', label: '单一来源' },
-          { value: 'inquiry', label: '询价采购' },
+          { value: 'open', label: i18n.t('srm.bidding.k20') },
+          { value: 'invite', label: i18n.t('srm.bidding.k21') },
+          { value: 'competitive', label: i18n.t('srm.bidding.k22') },
+          { value: 'single_source', label: i18n.t('srm.bidding.k23') },
+          { value: 'inquiry', label: i18n.t('srm.bidding.k24') },
         ],
       },
       listWidth: 100,
     },
     {
       name: 'budget_amount',
-      label: '预算金额',
+      label: i18n.t('srm.bidding.k25'),
       type: 'number',
       sortable: true,
       listWidth: 120,
@@ -99,15 +100,15 @@ export const biddingSchema: EntitySchema = {
     },
     {
       name: 'currency',
-      label: '币种',
+      label: i18n.t('srm.bidding.k26'),
       type: 'select',
       defaultValue: 'CNY',
       options: {
         type: 'static',
         options: [
-          { value: 'CNY', label: '人民币 (CNY)' },
-          { value: 'USD', label: '美元 (USD)' },
-          { value: 'EUR', label: '欧元 (EUR)' },
+          { value: 'CNY', label: i18n.t('srm.bidding.cny_27') },
+          { value: 'USD', label: i18n.t('srm.bidding.usd_28') },
+          { value: 'EUR', label: i18n.t('srm.bidding.eur_29') },
         ],
       },
       listWidth: 80,
@@ -115,14 +116,14 @@ export const biddingSchema: EntitySchema = {
     },
     {
       name: 'bid_deadline',
-      label: '投标截止日期',
+      label: i18n.t('srm.bidding.k30'),
       type: 'date',
       sortable: true,
       listWidth: 120,
     },
     {
       name: 'open_date',
-      label: '开标日期',
+      label: i18n.t('srm.bidding.k31'),
       type: 'date',
       sortable: true,
       listWidth: 120,
@@ -130,20 +131,20 @@ export const biddingSchema: EntitySchema = {
     },
     {
       name: 'status',
-      label: '状态',
+      label: i18n.t('srm.bidding.k32'),
       type: 'select',
       defaultValue: 'draft',
       options: {
         type: 'static',
         options: [
-          { value: 'draft', label: '草稿' },
-          { value: 'published', label: '已发布' },
-          { value: 'bidding', label: '投标中' },
-          { value: 'opened', label: '已开标' },
-          { value: 'evaluating', label: '评标中' },
-          { value: 'awarded', label: '已定标' },
-          { value: 'cancelled', label: '已取消' },
-          { value: 'completed', label: '已完成' },
+          { value: 'draft', label: i18n.t('srm.bidding.k33') },
+          { value: 'published', label: i18n.t('srm.bidding.k34') },
+          { value: 'bidding', label: i18n.t('srm.bidding.k35') },
+          { value: 'opened', label: i18n.t('srm.bidding.k36') },
+          { value: 'evaluating', label: i18n.t('srm.bidding.k37') },
+          { value: 'awarded', label: i18n.t('srm.bidding.k38') },
+          { value: 'cancelled', label: i18n.t('srm.bidding.k39') },
+          { value: 'completed', label: i18n.t('srm.bidding.k40') },
         ],
       },
       listWidth: 100,
@@ -151,7 +152,7 @@ export const biddingSchema: EntitySchema = {
     },
     {
       name: 'supplier_count',
-      label: '投标数',
+      label: i18n.t('srm.bidding.k41'),
       type: 'number',
       readonly: true,
       hideInForm: true,
@@ -159,7 +160,7 @@ export const biddingSchema: EntitySchema = {
     },
     {
       name: 'winner_supplier_name',
-      label: '中标供应商',
+      label: i18n.t('srm.bidding.k42'),
       type: 'text',
       readonly: true,
       hideInForm: true,
@@ -167,13 +168,13 @@ export const biddingSchema: EntitySchema = {
     },
     {
       name: 'description',
-      label: '项目描述',
+      label: i18n.t('srm.bidding.k43'),
       type: 'textarea',
       showInList: false,
     },
     {
       name: 'remarks',
-      label: '备注',
+      label: i18n.t('srm.bidding.k44'),
       type: 'textarea',
       showInList: false,
     },
@@ -210,25 +211,25 @@ export const biddingSchema: EntitySchema = {
     filters: [
       {
         id: 'status',
-        label: '状态',
+        label: i18n.t('srm.bidding.k45'),
         type: 'select',
         options: [
-          { label: '全部状态', value: 'all' },
+          { label: i18n.t('srm.bidding.k46'), value: 'all' },
           ...Object.entries(statusConfig).map(([k, v]) => ({ label: v.label, value: k })),
         ],
       },
       {
         id: 'category',
-        label: '项目类别',
+        label: i18n.t('srm.bidding.k47'),
         type: 'select',
         options: [
-          { label: '全部', value: 'all' },
-          { label: '原材料', value: 'raw_material' },
-          { label: '零部件', value: 'component' },
-          { label: '设备', value: 'equipment' },
-          { label: '服务', value: 'service' },
-          { label: '工程', value: 'engineering' },
-          { label: '其他', value: 'other' },
+          { label: i18n.t('srm.bidding.k48'), value: 'all' },
+          { label: i18n.t('srm.bidding.k49'), value: 'raw_material' },
+          { label: i18n.t('srm.bidding.k50'), value: 'component' },
+          { label: i18n.t('srm.bidding.k51'), value: 'equipment' },
+          { label: i18n.t('srm.bidding.k52'), value: 'service' },
+          { label: i18n.t('srm.bidding.k53'), value: 'engineering' },
+          { label: i18n.t('srm.bidding.k54'), value: 'other' },
         ],
       },
     ],
@@ -238,21 +239,21 @@ export const biddingSchema: EntitySchema = {
 
   formSections: [
     {
-      title: '基本信息',
+      title: i18n.t('srm.bidding.k55'),
       fields: ['bidding_no', 'title', 'category', 'bidding_type', 'status'],
     },
     {
-      title: '预算与日期',
+      title: i18n.t('srm.bidding.k56'),
       fields: ['budget_amount', 'currency', 'bid_deadline', 'open_date'],
     },
     {
-      title: '描述与备注',
+      title: i18n.t('srm.bidding.k57'),
       fields: ['description', 'remarks'],
     },
   ],
 
   formColCount: 2,
-  createTitle: '新建招标项目',
-  editTitle: '编辑招标项目',
-  detailTitle: '招标项目详情',
+  createTitle: i18n.t('srm.bidding.k58'),
+  editTitle: i18n.t('srm.bidding.k59'),
+  detailTitle: i18n.t('srm.bidding.k60'),
 };

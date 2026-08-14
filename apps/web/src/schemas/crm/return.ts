@@ -1,8 +1,9 @@
 import type { EntitySchema } from '@/schema';
+import i18n from '@/i18n';
 
 export const returnSchema: EntitySchema = {
   entity: 'return',
-  title: '退货/售后管理',
+  title: i18n.t('shared.return.k0'),
 
   api: {
     module: 'crm',
@@ -12,7 +13,7 @@ export const returnSchema: EntitySchema = {
   fields: [
     {
       name: 'return_no',
-      label: '退货单号',
+      label: i18n.t('shared.return.k1'),
       type: 'text',
       required: true,
       readonlyOnEdit: true,
@@ -21,27 +22,27 @@ export const returnSchema: EntitySchema = {
     },
     {
       name: 'customer_id',
-      label: '客户ID',
+      label: i18n.t('shared.return.id_2'),
       type: 'text',
       required: true,
       listWidth: 120,
     },
     {
       name: 'order_id',
-      label: '订单ID',
+      label: i18n.t('shared.return.id_3'),
       type: 'text',
       showInList: false,
     },
     {
       name: 'return_type',
-      label: '类型',
+      label: i18n.t('shared.return.k4'),
       type: 'select',
       required: true,
       options: {
         type: 'static',
         options: [
-          { value: 'return', label: '退货' },
-          { value: 'exchange', label: '换货' },
+          { value: 'return', label: i18n.t('shared.return.k5') },
+          { value: 'exchange', label: i18n.t('shared.return.k6') },
         ],
       },
       listWidth: 100,
@@ -49,31 +50,31 @@ export const returnSchema: EntitySchema = {
     },
     {
       name: 'reason',
-      label: '原因',
+      label: i18n.t('shared.return.k7'),
       type: 'text',
       required: true,
       listWidth: 160,
     },
     {
       name: 'reason_detail',
-      label: '详细原因',
+      label: i18n.t('shared.return.k8'),
       type: 'textarea',
       showInList: false,
     },
     {
       name: 'status',
-      label: '状态',
+      label: i18n.t('shared.return.k9'),
       type: 'select',
       defaultValue: 'pending',
       options: {
         type: 'static',
         options: [
-          { value: 'pending', label: '待审核' },
-          { value: 'approved', label: '已审核' },
-          { value: 'rejected', label: '已拒绝' },
-          { value: 'received', label: '已收货' },
-          { value: 'completed', label: '已完成' },
-          { value: 'cancelled', label: '已取消' },
+          { value: 'pending', label: i18n.t('shared.return.k10') },
+          { value: 'approved', label: i18n.t('shared.return.k11') },
+          { value: 'rejected', label: i18n.t('shared.return.k12') },
+          { value: 'received', label: i18n.t('shared.return.k13') },
+          { value: 'completed', label: i18n.t('shared.return.k14') },
+          { value: 'cancelled', label: i18n.t('shared.return.k15') },
         ],
       },
       listWidth: 100,
@@ -81,19 +82,19 @@ export const returnSchema: EntitySchema = {
     },
     {
       name: 'refund_amount',
-      label: '退款金额',
+      label: i18n.t('shared.return.k16'),
       type: 'number',
       listWidth: 120,
     },
     {
       name: 'warehouse_id',
-      label: '仓库ID',
+      label: i18n.t('shared.return.id_17'),
       type: 'text',
       showInList: false,
     },
     {
       name: 'created_at',
-      label: '创建时间',
+      label: i18n.t('shared.return.k18'),
       type: 'datetime',
       readonlyOnEdit: true,
       showInForm: false,
@@ -124,37 +125,37 @@ export const returnSchema: EntitySchema = {
         cancelled: 'default',
       },
       labelMap: {
-        pending: '待审核',
-        approved: '已审核',
-        rejected: '已拒绝',
-        received: '已收货',
-        completed: '已完成',
-        cancelled: '已取消',
+        pending: i18n.t('shared.return.k19'),
+        approved: i18n.t('shared.return.k20'),
+        rejected: i18n.t('shared.return.k21'),
+        received: i18n.t('shared.return.k22'),
+        completed: i18n.t('shared.return.k23'),
+        cancelled: i18n.t('shared.return.k24'),
       },
     },
     filters: [
       {
         id: 'status',
-        label: '状态',
+        label: i18n.t('shared.return.k25'),
         type: 'select',
         options: [
-          { label: '全部', value: 'all' },
-          { label: '待审核', value: 'pending' },
-          { label: '已审核', value: 'approved' },
-          { label: '已拒绝', value: 'rejected' },
-          { label: '已收货', value: 'received' },
-          { label: '已完成', value: 'completed' },
-          { label: '已取消', value: 'cancelled' },
+          { label: i18n.t('shared.return.k26'), value: 'all' },
+          { label: i18n.t('shared.return.k27'), value: 'pending' },
+          { label: i18n.t('shared.return.k28'), value: 'approved' },
+          { label: i18n.t('shared.return.k29'), value: 'rejected' },
+          { label: i18n.t('shared.return.k30'), value: 'received' },
+          { label: i18n.t('shared.return.k31'), value: 'completed' },
+          { label: i18n.t('shared.return.k32'), value: 'cancelled' },
         ],
       },
       {
         id: 'return_type',
-        label: '类型',
+        label: i18n.t('shared.return.k33'),
         type: 'select',
         options: [
-          { label: '全部', value: 'all' },
-          { label: '退货', value: 'return' },
-          { label: '换货', value: 'exchange' },
+          { label: i18n.t('shared.return.k34'), value: 'all' },
+          { label: i18n.t('shared.return.k35'), value: 'return' },
+          { label: i18n.t('shared.return.k36'), value: 'exchange' },
         ],
       },
     ],
@@ -164,21 +165,21 @@ export const returnSchema: EntitySchema = {
 
   formSections: [
     {
-      title: '基本信息',
+      title: i18n.t('shared.return.k37'),
       fields: ['return_no', 'customer_id', 'order_id', 'return_type'],
     },
     {
-      title: '退货详情',
+      title: i18n.t('shared.return.k38'),
       fields: ['reason', 'reason_detail', 'refund_amount'],
     },
     {
-      title: '其他',
+      title: i18n.t('shared.return.k39'),
       fields: ['status', 'warehouse_id'],
     },
   ],
 
   formColCount: 2,
-  createTitle: '创建退货单',
-  editTitle: '编辑退货单',
-  detailTitle: '退货单详情',
+  createTitle: i18n.t('shared.return.k40'),
+  editTitle: i18n.t('shared.return.k41'),
+  detailTitle: i18n.t('shared.return.k42'),
 };

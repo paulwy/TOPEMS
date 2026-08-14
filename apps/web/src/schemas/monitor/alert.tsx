@@ -10,6 +10,7 @@ import { Box, Chip, Typography, Stack, Avatar } from '@mui/material';
 import { AlertCircle, AlertTriangle, Info, Clock, Server } from 'lucide-react';
 import type { EntitySchema, SchemaField } from '@/schema';
 import { designTokens } from '@/theme/tokens';
+import i18n from '@/i18n';
 
 const ct= designTokens.colors;
 
@@ -17,9 +18,9 @@ type AlertSeverity = 'critical' | 'warning' | 'info';
 type AlertStatus = 'active' | 'acknowledged' | 'resolved';
 
 const SEVERITY_LABELS: Record<AlertSeverity, string> = {
-  critical: '严重',
-  warning: '警告',
-  info: '通知',
+  critical: i18n.t('shared.alert.k0'),
+  warning: i18n.t('shared.alert.k1'),
+  info: i18n.t('shared.alert.k2'),
 };
 
 const SEVERITY_COLORS: Record<AlertSeverity, 'error' | 'warning' | 'info'> = {
@@ -29,9 +30,9 @@ const SEVERITY_COLORS: Record<AlertSeverity, 'error' | 'warning' | 'info'> = {
 };
 
 const STATUS_LABELS: Record<AlertStatus, string> = {
-  active: '活动',
-  acknowledged: '已确认',
-  resolved: '已解决',
+  active: i18n.t('shared.alert.k3'),
+  acknowledged: i18n.t('shared.alert.k4'),
+  resolved: i18n.t('shared.alert.k5'),
 };
 
 const STATUS_COLORS: Record<AlertStatus, 'error' | 'warning' | 'success'> = {
@@ -54,7 +55,7 @@ const getSeverityIcon = (severity: AlertSeverity): React.ReactNode => {
 const alertFields: SchemaField[] = [
   {
     name: 'title',
-    label: '告警名称',
+    label: i18n.t('shared.alert.k6'),
     type: 'text',
     minWidth: 200,
     renderCell: (row: Record<string, unknown>) => {
@@ -101,7 +102,7 @@ const alertFields: SchemaField[] = [
   },
   {
     name: 'severity',
-    label: '严重级别',
+    label: i18n.t('shared.alert.k7'),
     type: 'select',
     listWidth: 100,
     renderCell: (row: Record<string, unknown>) => {
@@ -118,7 +119,7 @@ const alertFields: SchemaField[] = [
   },
   {
     name: 'service_name',
-    label: '所属服务',
+    label: i18n.t('shared.alert.k8'),
     type: 'text',
     listWidth: 140,
     renderCell: (row: Record<string, unknown>) => (
@@ -142,7 +143,7 @@ const alertFields: SchemaField[] = [
   },
   {
     name: 'message',
-    label: '告警描述',
+    label: i18n.t('shared.alert.k9'),
     type: 'textarea',
     minWidth: 240,
     showInForm: false,
@@ -163,7 +164,7 @@ const alertFields: SchemaField[] = [
   },
   {
     name: 'created_at',
-    label: '触发时间',
+    label: i18n.t('shared.alert.k10'),
     type: 'datetime',
     listWidth: 160,
     hideInForm: true,
@@ -189,7 +190,7 @@ const alertFields: SchemaField[] = [
   },
   {
     name: 'status',
-    label: '状态',
+    label: i18n.t('shared.alert.k11'),
     type: 'select',
     listWidth: 100,
     renderCell: (row: Record<string, unknown>) => {
@@ -206,7 +207,7 @@ const alertFields: SchemaField[] = [
   },
   {
     name: 'acknowledged_at',
-    label: '确认时间',
+    label: i18n.t('shared.alert.k12'),
     type: 'datetime',
     showInList: false,
     showInDetail: true,
@@ -214,7 +215,7 @@ const alertFields: SchemaField[] = [
   },
   {
     name: 'resolved_at',
-    label: '解决时间',
+    label: i18n.t('shared.alert.k13'),
     type: 'datetime',
     showInList: false,
     showInDetail: true,
@@ -222,7 +223,7 @@ const alertFields: SchemaField[] = [
   },
   {
     name: 'alert_type',
-    label: '告警类型',
+    label: i18n.t('shared.alert.k14'),
     type: 'text',
     showInList: false,
     showInDetail: true,
@@ -232,8 +233,8 @@ const alertFields: SchemaField[] = [
 
 export const alertSchema: EntitySchema = {
   entity: 'monitor_alert',
-  title: '告警',
-  description: '查看和处理系统告警，支持确认、解决和批量操作',
+  title: i18n.t('shared.alert.k15'),
+  description: i18n.t('shared.alert.k16'),
 
   api: {
     module: 'monitor',
@@ -249,32 +250,32 @@ export const alertSchema: EntitySchema = {
     filters: [
       {
         id: 'severity',
-        label: '严重级别',
+        label: i18n.t('shared.alert.k17'),
         type: 'select',
         options: [
-          { label: '全部级别', value: 'all' },
-          { label: '严重', value: 'critical' },
-          { label: '警告', value: 'warning' },
-          { label: '通知', value: 'info' },
+          { label: i18n.t('shared.alert.k18'), value: 'all' },
+          { label: i18n.t('shared.alert.k19'), value: 'critical' },
+          { label: i18n.t('shared.alert.k20'), value: 'warning' },
+          { label: i18n.t('shared.alert.k21'), value: 'info' },
         ],
       },
       {
         id: 'status',
-        label: '状态',
+        label: i18n.t('shared.alert.k22'),
         type: 'select',
         options: [
-          { label: '全部状态', value: 'all' },
-          { label: '活动', value: 'active' },
-          { label: '已确认', value: 'acknowledged' },
-          { label: '已解决', value: 'resolved' },
+          { label: i18n.t('shared.alert.k23'), value: 'all' },
+          { label: i18n.t('shared.alert.k24'), value: 'active' },
+          { label: i18n.t('shared.alert.k25'), value: 'acknowledged' },
+          { label: i18n.t('shared.alert.k26'), value: 'resolved' },
         ],
       },
       {
         id: 'service',
-        label: '服务',
+        label: i18n.t('shared.alert.k27'),
         type: 'select',
         paramName: 'service_name',
-        options: [{ label: '全部服务', value: 'all' }],
+        options: [{ label: i18n.t('shared.alert.k28'), value: 'all' }],
       },
     ],
   },
@@ -284,24 +285,24 @@ export const alertSchema: EntitySchema = {
   batchActions: [
     {
       key: 'batch-acknowledge',
-      label: '批量确认',
+      label: i18n.t('shared.alert.k29'),
       color: 'primary',
       onClick: () => {},
       confirm: true,
-      confirmMessage: '确定要确认选中的告警吗？',
+      confirmMessage: i18n.t('shared.alert.k30'),
     },
     {
       key: 'batch-resolve',
-      label: '批量解决',
+      label: i18n.t('shared.alert.k31'),
       color: 'success',
       onClick: () => {},
       confirm: true,
-      confirmMessage: '确定要标记选中的告警为已解决吗？',
+      confirmMessage: i18n.t('shared.alert.k32'),
     },
   ],
 
   formColCount: 2,
-  detailTitle: '告警详情',
+  detailTitle: i18n.t('shared.alert.k33'),
   detailMaxWidth: 'md',
 };
 

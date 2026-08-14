@@ -1,3 +1,4 @@
+import i18n from '@/i18n';
 export type TestType = 'unit' | 'integration' | 'e2e';
 export type TestPriority = 'low' | 'medium' | 'high' | 'critical';
 export type TestStatus = 'pending' | 'running' | 'passed' | 'failed' | 'skipped';
@@ -69,15 +70,15 @@ const generateId = () => `test_${Date.now()}_${Math.random().toString(36).slice(
 const DEFAULT_SCENARIOS: TestScenario[] = [
   {
     id: generateId(),
-    name: '用户登录流程',
+    name: i18n.t('ai.smart-testing.k0'),
     type: 'e2e',
     steps: [
-      { name: '打开登录页', action: 'navigate("/login")', expected: '页面加载完成' },
-      { name: '填写用户名', action: 'fill("username", "admin")', expected: '用户名已填入' },
-      { name: '填写密码', action: 'fill("password", "password123")', expected: '密码已填入' },
-      { name: '点击登录', action: 'click("login-btn")', expected: '跳转到仪表盘' },
+      { name: i18n.t('ai.smart-testing.k2'), action: 'navigate("/login")', expected: i18n.t('ai.smart-testing.k1') },
+      { name: i18n.t('ai.smart-testing.k4'), action: 'fill("username", "admin")', expected: i18n.t('ai.smart-testing.k3') },
+      { name: i18n.t('ai.smart-testing.k6'), action: 'fill("password", "password123")', expected: i18n.t('ai.smart-testing.k5') },
+      { name: i18n.t('ai.smart-testing.k8'), action: 'click("login-btn")', expected: i18n.t('ai.smart-testing.k7') },
     ],
-    expected_result: '用户成功登录并跳转到仪表盘',
+    expected_result: i18n.t('ai.smart-testing.k9'),
     priority: 'critical',
     status: 'pending',
     created_at: new Date().toISOString(),
@@ -86,14 +87,14 @@ const DEFAULT_SCENARIOS: TestScenario[] = [
   },
   {
     id: generateId(),
-    name: '数据列表分页',
+    name: i18n.t('ai.smart-testing.k10'),
     type: 'integration',
     steps: [
-      { name: '加载列表', action: 'fetch("/api/items?page=1")', expected: '返回第一页数据' },
-      { name: '切换到第二页', action: 'click("page-2")', expected: '加载第二页数据' },
-      { name: '验证数据更新', action: 'assert(items.length > 0)', expected: '数据已更新' },
+      { name: i18n.t('ai.smart-testing.k12'), action: 'fetch("/api/items?page=1")', expected: i18n.t('ai.smart-testing.k11') },
+      { name: i18n.t('ai.smart-testing.k14'), action: 'click("page-2")', expected: i18n.t('ai.smart-testing.k13') },
+      { name: i18n.t('ai.smart-testing.k16'), action: 'assert(items.length > 0)', expected: i18n.t('ai.smart-testing.k15') },
     ],
-    expected_result: '分页功能正常工作',
+    expected_result: i18n.t('ai.smart-testing.k17'),
     priority: 'high',
     status: 'pending',
     created_at: new Date().toISOString(),
@@ -102,15 +103,15 @@ const DEFAULT_SCENARIOS: TestScenario[] = [
   },
   {
     id: generateId(),
-    name: '表单验证 - 必填字段',
+    name: i18n.t('ai.smart-testing.k18'),
     type: 'unit',
     steps: [
-      { name: '创建表单', action: 'createForm()', expected: '表单实例已创建' },
-      { name: '提交空表单', action: 'submit()', expected: '验证失败' },
-      { name: '填写必填字段', action: 'fill(requiredFields)', expected: '字段已填写' },
-      { name: '再次提交', action: 'submit()', expected: '验证通过' },
+      { name: i18n.t('ai.smart-testing.k20'), action: 'createForm()', expected: i18n.t('ai.smart-testing.k19') },
+      { name: i18n.t('ai.smart-testing.k22'), action: 'submit()', expected: i18n.t('ai.smart-testing.k21') },
+      { name: i18n.t('ai.smart-testing.k24'), action: 'fill(requiredFields)', expected: i18n.t('ai.smart-testing.k23') },
+      { name: i18n.t('ai.smart-testing.k26'), action: 'submit()', expected: i18n.t('ai.smart-testing.k25') },
     ],
-    expected_result: '表单正确验证必填字段',
+    expected_result: i18n.t('ai.smart-testing.k27'),
     priority: 'high',
     status: 'pending',
     created_at: new Date().toISOString(),
@@ -119,15 +120,15 @@ const DEFAULT_SCENARIOS: TestScenario[] = [
   },
   {
     id: generateId(),
-    name: 'API 响应缓存',
+    name: i18n.t('ai.smart-testing.api_0'),
     type: 'unit',
     steps: [
-      { name: '首次请求', action: 'fetch("/api/data")', expected: '请求发送到服务器' },
-      { name: '二次请求', action: 'fetch("/api/data")', expected: '从缓存返回' },
-      { name: '清除缓存', action: 'clearCache()', expected: '缓存已清除' },
-      { name: '再次请求', action: 'fetch("/api/data")', expected: '请求发送到服务器' },
+      { name: i18n.t('ai.smart-testing.k29'), action: 'fetch("/api/data")', expected: i18n.t('ai.smart-testing.k28') },
+      { name: i18n.t('ai.smart-testing.k31'), action: 'fetch("/api/data")', expected: i18n.t('ai.smart-testing.k30') },
+      { name: i18n.t('ai.smart-testing.k33'), action: 'clearCache()', expected: i18n.t('ai.smart-testing.k32') },
+      { name: i18n.t('ai.smart-testing.k35'), action: 'fetch("/api/data")', expected: i18n.t('ai.smart-testing.k34') },
     ],
-    expected_result: '缓存机制正常工作',
+    expected_result: i18n.t('ai.smart-testing.k36'),
     priority: 'medium',
     status: 'pending',
     created_at: new Date().toISOString(),
@@ -136,14 +137,14 @@ const DEFAULT_SCENARIOS: TestScenario[] = [
   },
   {
     id: generateId(),
-    name: '主题切换',
+    name: i18n.t('ai.smart-testing.k37'),
     type: 'integration',
     steps: [
-      { name: '获取当前主题', action: 'getTheme()', expected: '返回当前主题' },
-      { name: '切换主题', action: 'toggleTheme()', expected: '主题已切换' },
-      { name: '验证持久化', action: 'reload()', expected: '主题保持切换后状态' },
+      { name: i18n.t('ai.smart-testing.k39'), action: 'getTheme()', expected: i18n.t('ai.smart-testing.k38') },
+      { name: i18n.t('ai.smart-testing.k41'), action: 'toggleTheme()', expected: i18n.t('ai.smart-testing.k40') },
+      { name: i18n.t('ai.smart-testing.k43'), action: 'reload()', expected: i18n.t('ai.smart-testing.k42') },
     ],
-    expected_result: '主题切换正常工作且持久化',
+    expected_result: i18n.t('ai.smart-testing.k44'),
     priority: 'medium',
     status: 'pending',
     created_at: new Date().toISOString(),
@@ -200,15 +201,15 @@ class SmartTesterImpl {
 
       const scenario: TestScenario = {
         id,
-        name: `AI 生成测试 - ${module} #${i + 1}`,
+        name: `${i18n.t('ai.smart-testing.ai_1')}${module} #${i + 1}`,
         type,
         steps: [
-          { name: '初始化', action: `setup_${module}()`, expected: '环境已初始化' },
-          { name: '执行操作', action: `execute_${type}_test()`, expected: '操作完成' },
-          { name: '验证结果', action: 'assert_result()', expected: '结果符合预期' },
-          { name: '清理', action: 'teardown()', expected: '环境已清理' },
+          { name: i18n.t('ai.smart-testing.k46'), action: `setup_${module}()`, expected: i18n.t('ai.smart-testing.k45') },
+          { name: i18n.t('ai.smart-testing.k48'), action: `execute_${type}_test()`, expected: i18n.t('ai.smart-testing.k47') },
+          { name: i18n.t('ai.smart-testing.k50'), action: 'assert_result()', expected: i18n.t('ai.smart-testing.k49') },
+          { name: i18n.t('ai.smart-testing.k52'), action: 'teardown()', expected: i18n.t('ai.smart-testing.k51') },
         ],
-        expected_result: `${type.toUpperCase()} 测试通过`,
+        expected_result: `${type.toUpperCase()}${i18n.t('ai.smart-testing.k2')}`,
         priority,
         status: 'pending',
         created_at: new Date().toISOString(),
@@ -365,7 +366,7 @@ class SmartTesterImpl {
       stack_trace: scenario
         ? `at ${scenario.name} (${scenario.id})\n  at TestRunner.execute (test-runner.ts)\n  at AsyncTestQueue.process (test-queue.ts)`
         : undefined,
-      suggestion: '检查相关依赖是否正常，验证输入数据格式是否符合预期。',
+      suggestion: i18n.t('ai.smart-testing.k53'),
       similar_failures: failures.slice(-3).map((f) => f.error_message || 'Unknown'),
       first_seen: failures[0] ? new Date().toISOString() : new Date().toISOString(),
       occurrence_count: failures.length,

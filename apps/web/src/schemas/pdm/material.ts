@@ -1,9 +1,10 @@
 import type { EntitySchema } from '@/schema';
+import i18n from '@/i18n';
 
 export const materialSchema: EntitySchema = {
   entity: 'pdm_material',
-  title: '物料管理',
-  description: '管理物料基础信息，包括编码、名称、规格、分类等',
+  title: i18n.t('pdm.material.k0'),
+  description: i18n.t('pdm.material.k1'),
 
   api: {
     module: 'pdm',
@@ -13,7 +14,7 @@ export const materialSchema: EntitySchema = {
   fields: [
     {
       name: 'code',
-      label: '物料编码',
+      label: i18n.t('pdm.material.k2'),
       type: 'text',
       required: true,
       readonlyOnEdit: true,
@@ -23,7 +24,7 @@ export const materialSchema: EntitySchema = {
     },
     {
       name: 'name',
-      label: '物料名称',
+      label: i18n.t('pdm.material.k3'),
       type: 'text',
       required: true,
       sortable: true,
@@ -32,18 +33,18 @@ export const materialSchema: EntitySchema = {
     },
     {
       name: 'category',
-      label: '分类',
+      label: i18n.t('pdm.material.k4'),
       type: 'select',
       defaultValue: 'raw_material',
       options: {
         type: 'static',
         options: [
-          { value: 'raw_material', label: '原材料' },
-          { value: 'auxiliary', label: '辅助材料' },
-          { value: 'packaging', label: '包装材料' },
-          { value: 'finished_goods', label: '成品' },
-          { value: 'semi_finished', label: '半成品' },
-          { value: 'spare_parts', label: '备品备件' },
+          { value: 'raw_material', label: i18n.t('pdm.material.k5') },
+          { value: 'auxiliary', label: i18n.t('pdm.material.k6') },
+          { value: 'packaging', label: i18n.t('pdm.material.k7') },
+          { value: 'finished_goods', label: i18n.t('pdm.material.k8') },
+          { value: 'semi_finished', label: i18n.t('pdm.material.k9') },
+          { value: 'spare_parts', label: i18n.t('pdm.material.k10') },
         ],
       },
       listWidth: 100,
@@ -51,14 +52,14 @@ export const materialSchema: EntitySchema = {
     },
     {
       name: 'specification',
-      label: '规格',
+      label: i18n.t('pdm.material.k11'),
       type: 'text',
       listWidth: 120,
       validation: [{ type: 'maxLength', value: 500 }],
     },
     {
       name: 'unit',
-      label: '单位',
+      label: i18n.t('pdm.material.k12'),
       type: 'text',
       defaultValue: 'kg',
       listWidth: 80,
@@ -66,7 +67,7 @@ export const materialSchema: EntitySchema = {
     },
     {
       name: 'unit_price',
-      label: '单价',
+      label: i18n.t('pdm.material.k13'),
       type: 'number',
       defaultValue: 0,
       listWidth: 100,
@@ -74,22 +75,22 @@ export const materialSchema: EntitySchema = {
     },
     {
       name: 'supplier',
-      label: '供应商',
+      label: i18n.t('pdm.material.k14'),
       type: 'text',
       showInList: false,
     },
     {
       name: 'status',
-      label: '状态',
+      label: i18n.t('pdm.material.k15'),
       type: 'select',
       defaultValue: 'active',
       options: {
         type: 'static',
         options: [
-          { value: 'active', label: '活跃' },
-          { value: 'inactive', label: '未激活' },
-          { value: 'low_stock', label: '库存不足' },
-          { value: 'out_of_stock', label: '缺货' },
+          { value: 'active', label: i18n.t('pdm.material.k16') },
+          { value: 'inactive', label: i18n.t('pdm.material.k17') },
+          { value: 'low_stock', label: i18n.t('pdm.material.k18') },
+          { value: 'out_of_stock', label: i18n.t('pdm.material.k19') },
         ],
       },
       listWidth: 100,
@@ -97,7 +98,7 @@ export const materialSchema: EntitySchema = {
     },
     {
       name: 'inventory_quantity',
-      label: '库存',
+      label: i18n.t('pdm.material.k20'),
       type: 'number',
       defaultValue: 0,
       listWidth: 80,
@@ -105,7 +106,7 @@ export const materialSchema: EntitySchema = {
     },
     {
       name: 'safety_stock',
-      label: '安全库存',
+      label: i18n.t('pdm.material.k21'),
       type: 'number',
       defaultValue: 0,
       listWidth: 100,
@@ -113,7 +114,7 @@ export const materialSchema: EntitySchema = {
     },
     {
       name: 'created_at',
-      label: '创建时间',
+      label: i18n.t('pdm.material.k22'),
       type: 'datetime',
       readonly: true,
       sortable: true,
@@ -122,7 +123,7 @@ export const materialSchema: EntitySchema = {
     },
     {
       name: 'updated_at',
-      label: '更新时间',
+      label: i18n.t('pdm.material.k23'),
       type: 'datetime',
       readonly: true,
       hideInForm: true,
@@ -153,37 +154,37 @@ export const materialSchema: EntitySchema = {
         out_of_stock: 'error',
       },
       labelMap: {
-        active: '活跃',
-        inactive: '未激活',
-        low_stock: '库存不足',
-        out_of_stock: '缺货',
+        active: i18n.t('pdm.material.k24'),
+        inactive: i18n.t('pdm.material.k25'),
+        low_stock: i18n.t('pdm.material.k26'),
+        out_of_stock: i18n.t('pdm.material.k27'),
       },
     },
     filters: [
       {
         id: 'category',
-        label: '物料分类',
+        label: i18n.t('pdm.material.k28'),
         type: 'select',
         options: [
-          { label: '全部分类', value: 'all' },
-          { label: '原材料', value: 'raw_material' },
-          { label: '辅助材料', value: 'auxiliary' },
-          { label: '包装材料', value: 'packaging' },
-          { label: '成品', value: 'finished_goods' },
-          { label: '半成品', value: 'semi_finished' },
-          { label: '备品备件', value: 'spare_parts' },
+          { label: i18n.t('pdm.material.k29'), value: 'all' },
+          { label: i18n.t('pdm.material.k30'), value: 'raw_material' },
+          { label: i18n.t('pdm.material.k31'), value: 'auxiliary' },
+          { label: i18n.t('pdm.material.k32'), value: 'packaging' },
+          { label: i18n.t('pdm.material.k33'), value: 'finished_goods' },
+          { label: i18n.t('pdm.material.k34'), value: 'semi_finished' },
+          { label: i18n.t('pdm.material.k35'), value: 'spare_parts' },
         ],
       },
       {
         id: 'status',
-        label: '状态',
+        label: i18n.t('pdm.material.k36'),
         type: 'select',
         options: [
-          { label: '全部状态', value: 'all' },
-          { label: '活跃', value: 'active' },
-          { label: '未激活', value: 'inactive' },
-          { label: '库存不足', value: 'low_stock' },
-          { label: '缺货', value: 'out_of_stock' },
+          { label: i18n.t('pdm.material.k37'), value: 'all' },
+          { label: i18n.t('pdm.material.k38'), value: 'active' },
+          { label: i18n.t('pdm.material.k39'), value: 'inactive' },
+          { label: i18n.t('pdm.material.k40'), value: 'low_stock' },
+          { label: i18n.t('pdm.material.k41'), value: 'out_of_stock' },
         ],
       },
     ],
@@ -193,17 +194,17 @@ export const materialSchema: EntitySchema = {
 
   formSections: [
     {
-      title: '基本信息',
+      title: i18n.t('pdm.material.k42'),
       fields: ['code', 'name', 'category', 'specification', 'unit', 'unit_price'],
     },
     {
-      title: '库存信息',
+      title: i18n.t('pdm.material.k43'),
       fields: ['inventory_quantity', 'safety_stock', 'supplier', 'status'],
     },
   ],
 
   formColCount: 2,
-  createTitle: '添加物料',
-  editTitle: '编辑物料',
-  detailTitle: '物料详情',
+  createTitle: i18n.t('pdm.material.k44'),
+  editTitle: i18n.t('pdm.material.k45'),
+  detailTitle: i18n.t('pdm.material.k46'),
 };

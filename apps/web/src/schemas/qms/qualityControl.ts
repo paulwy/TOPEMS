@@ -1,6 +1,7 @@
 import React from 'react';
 import { Chip } from '@mui/material';
 import type { EntitySchema } from '@/schema';
+import i18n from '@/i18n';
 
 const severityColorMap: Record<string, 'error' | 'warning' | 'success'> = {
   high: 'error',
@@ -10,10 +11,10 @@ const severityColorMap: Record<string, 'error' | 'warning' | 'success'> = {
 };
 
 const severityLabelMap: Record<string, string> = {
-  high: '严重',
-  critical: '严重',
-  medium: '中等',
-  low: '轻微',
+  high: i18n.t('qms.quality_control.k0'),
+  critical: i18n.t('qms.quality_control.k1'),
+  medium: i18n.t('qms.quality_control.k2'),
+  low: i18n.t('qms.quality_control.k3'),
 };
 
 const issueStatusColorMap: Record<string, 'error' | 'warning' | 'success' | 'default'> = {
@@ -24,10 +25,10 @@ const issueStatusColorMap: Record<string, 'error' | 'warning' | 'success' | 'def
 };
 
 const issueStatusLabelMap: Record<string, string> = {
-  open: '待处理',
-  in_progress: '处理中',
-  closed: '已关闭',
-  resolved: '已解决',
+  open: i18n.t('qms.quality_control.k4'),
+  in_progress: i18n.t('qms.quality_control.k5'),
+  closed: i18n.t('qms.quality_control.k6'),
+  resolved: i18n.t('qms.quality_control.k7'),
 };
 
 const auditStatusColorMap: Record<string, 'primary' | 'warning' | 'success' | 'default'> = {
@@ -38,16 +39,16 @@ const auditStatusColorMap: Record<string, 'primary' | 'warning' | 'success' | 'd
 };
 
 const auditStatusLabelMap: Record<string, string> = {
-  scheduled: '已计划',
-  planning: '计划中',
-  in_progress: '进行中',
-  completed: '已完成',
+  scheduled: i18n.t('qms.quality_control.k8'),
+  planning: i18n.t('qms.quality_control.k9'),
+  in_progress: i18n.t('qms.quality_control.k10'),
+  completed: i18n.t('qms.quality_control.k11'),
 };
 
 export const qualityIssueSchema: EntitySchema = {
   entity: 'quality_issue',
-  title: '不合格品',
-  description: '管理不合格品记录，跟踪问题描述、严重程度、处理状态和责任人',
+  title: i18n.t('qms.quality_control.k12'),
+  description: i18n.t('qms.quality_control.k13'),
 
   api: {
     module: 'qms',
@@ -57,7 +58,7 @@ export const qualityIssueSchema: EntitySchema = {
   fields: [
     {
       name: 'issue_no',
-      label: '编号',
+      label: i18n.t('qms.quality_control.k14'),
       type: 'text',
       readonlyOnEdit: true,
       sortable: true,
@@ -66,32 +67,32 @@ export const qualityIssueSchema: EntitySchema = {
     },
     {
       name: 'title',
-      label: '问题标题',
+      label: i18n.t('qms.quality_control.k15'),
       type: 'text',
       required: true,
       sortable: true,
       listWidth: 200,
-      placeholder: '请输入问题标题',
+      placeholder: i18n.t('qms.quality_control.k16'),
     },
     {
       name: 'category',
-      label: '类别',
+      label: i18n.t('qms.quality_control.k17'),
       type: 'text',
       listWidth: 120,
-      placeholder: '外观缺陷、尺寸问题、包装问题等',
+      placeholder: i18n.t('qms.quality_control.k18'),
     },
     {
       name: 'severity',
-      label: '严重程度',
+      label: i18n.t('qms.quality_control.k19'),
       type: 'select',
       required: true,
       defaultValue: 'medium',
       options: {
         type: 'static',
         options: [
-          { value: 'high', label: '严重' },
-          { value: 'medium', label: '中等' },
-          { value: 'low', label: '轻微' },
+          { value: 'high', label: i18n.t('qms.quality_control.k20') },
+          { value: 'medium', label: i18n.t('qms.quality_control.k21') },
+          { value: 'low', label: i18n.t('qms.quality_control.k22') },
         ],
       },
       listWidth: 110,
@@ -110,36 +111,36 @@ export const qualityIssueSchema: EntitySchema = {
     },
     {
       name: 'status',
-      label: '状态',
+      label: i18n.t('qms.quality_control.k23'),
       type: 'select',
       defaultValue: 'open',
       options: {
         type: 'static',
         options: [
-          { value: 'open', label: '待处理' },
-          { value: 'in_progress', label: '处理中' },
-          { value: 'closed', label: '已关闭' },
-          { value: 'resolved', label: '已解决' },
+          { value: 'open', label: i18n.t('qms.quality_control.k24') },
+          { value: 'in_progress', label: i18n.t('qms.quality_control.k25') },
+          { value: 'closed', label: i18n.t('qms.quality_control.k26') },
+          { value: 'resolved', label: i18n.t('qms.quality_control.k27') },
         ],
       },
       listWidth: 110,
     },
     {
       name: 'assignee',
-      label: '负责人',
+      label: i18n.t('qms.quality_control.k28'),
       type: 'text',
       listWidth: 120,
     },
     {
       name: 'description',
-      label: '问题描述',
+      label: i18n.t('qms.quality_control.k29'),
       type: 'textarea',
-      placeholder: '请详细描述问题...',
+      placeholder: i18n.t('shared.quality_control.k0'),
       showInList: false,
     },
     {
       name: 'created_at',
-      label: '创建日期',
+      label: i18n.t('qms.quality_control.k30'),
       type: 'date',
       readonly: true,
       sortable: true,
@@ -147,20 +148,20 @@ export const qualityIssueSchema: EntitySchema = {
     },
     {
       name: 'updated_at',
-      label: '更新日期',
+      label: i18n.t('qms.quality_control.k31'),
       type: 'date',
       readonly: true,
       showInList: false,
     },
     {
       name: 'due_date',
-      label: '截止日期',
+      label: i18n.t('qms.quality_control.k32'),
       type: 'date',
       showInList: false,
     },
     {
       name: 'resolution',
-      label: '解决方案',
+      label: i18n.t('qms.quality_control.k33'),
       type: 'textarea',
       showInList: false,
     },
@@ -172,26 +173,26 @@ export const qualityIssueSchema: EntitySchema = {
     filters: [
       {
         id: 'severity',
-        label: '严重程度',
+        label: i18n.t('qms.quality_control.k34'),
         type: 'select',
         options: [
-          { label: '全部等级', value: 'all' },
-          { label: '严重', value: 'high' },
-          { label: '中等', value: 'medium' },
-          { label: '轻微', value: 'low' },
+          { label: i18n.t('qms.quality_control.k35'), value: 'all' },
+          { label: i18n.t('qms.quality_control.k36'), value: 'high' },
+          { label: i18n.t('qms.quality_control.k37'), value: 'medium' },
+          { label: i18n.t('qms.quality_control.k38'), value: 'low' },
         ],
         defaultValue: 'all',
       },
       {
         id: 'status',
-        label: '状态',
+        label: i18n.t('qms.quality_control.k39'),
         type: 'select',
         options: [
-          { label: '全部状态', value: 'all' },
-          { label: '待处理', value: 'open' },
-          { label: '处理中', value: 'in_progress' },
-          { label: '已关闭', value: 'closed' },
-          { label: '已解决', value: 'resolved' },
+          { label: i18n.t('qms.quality_control.k40'), value: 'all' },
+          { label: i18n.t('qms.quality_control.k41'), value: 'open' },
+          { label: i18n.t('qms.quality_control.k42'), value: 'in_progress' },
+          { label: i18n.t('qms.quality_control.k43'), value: 'closed' },
+          { label: i18n.t('qms.quality_control.k44'), value: 'resolved' },
         ],
         defaultValue: 'all',
       },
@@ -205,27 +206,27 @@ export const qualityIssueSchema: EntitySchema = {
 
   formSections: [
     {
-      title: '基本信息',
+      title: i18n.t('qms.quality_control.k45'),
       fields: ['issue_no', 'title', 'category', 'severity', 'status'],
     },
     {
-      title: '问题描述',
+      title: i18n.t('qms.quality_control.k46'),
       fields: ['description', 'assignee', 'due_date'],
     },
   ],
 
   formColCount: 2,
-  createTitle: '新增不合格品',
-  editTitle: '编辑不合格品',
-  detailTitle: '不合格品详情',
+  createTitle: i18n.t('qms.quality_control.k47'),
+  editTitle: i18n.t('qms.quality_control.k48'),
+  detailTitle: i18n.t('qms.quality_control.k49'),
 
   actions: ['create', 'edit', 'detail', 'delete'],
 };
 
 export const auditPlanSchema: EntitySchema = {
   entity: 'audit_plan',
-  title: '审核管理',
-  description: '管理审核计划，跟踪审核类型、状态、审核人和涉及部门',
+  title: i18n.t('qms.quality_control.k50'),
+  description: i18n.t('qms.quality_control.k51'),
 
   api: {
     module: 'qms',
@@ -235,7 +236,7 @@ export const auditPlanSchema: EntitySchema = {
   fields: [
     {
       name: 'plan_no',
-      label: '审核编号',
+      label: i18n.t('qms.quality_control.k52'),
       type: 'text',
       readonly: true,
       sortable: true,
@@ -243,7 +244,7 @@ export const auditPlanSchema: EntitySchema = {
     },
     {
       name: 'title',
-      label: '审核标题',
+      label: i18n.t('qms.quality_control.k53'),
       type: 'text',
       readonly: true,
       sortable: true,
@@ -251,13 +252,13 @@ export const auditPlanSchema: EntitySchema = {
     },
     {
       name: 'audit_type',
-      label: '审核类型',
+      label: i18n.t('qms.quality_control.k54'),
       type: 'text',
       readonly: true,
       listWidth: 120,
       renderCell: (row: Record<string, unknown>) => {
         const val = String(row.audit_type ?? '');
-        const label = val === 'internal' ? '内部审核' : val === 'external' ? '外部审核' : val;
+        const label = val === 'internal' ? i18n.t('qms.quality_control.k56') : val === 'external' ? i18n.t('qms.quality_control.k55') : val;
         return React.createElement(Chip, {
           label,
           size: 'small',
@@ -268,37 +269,37 @@ export const auditPlanSchema: EntitySchema = {
     },
     {
       name: 'status',
-      label: '状态',
+      label: i18n.t('qms.quality_control.k57'),
       type: 'select',
       defaultValue: 'scheduled',
       options: {
         type: 'static',
         options: [
-          { value: 'scheduled', label: '已计划' },
-          { value: 'planning', label: '计划中' },
-          { value: 'in_progress', label: '进行中' },
-          { value: 'completed', label: '已完成' },
+          { value: 'scheduled', label: i18n.t('qms.quality_control.k58') },
+          { value: 'planning', label: i18n.t('qms.quality_control.k59') },
+          { value: 'in_progress', label: i18n.t('qms.quality_control.k60') },
+          { value: 'completed', label: i18n.t('qms.quality_control.k61') },
         ],
       },
       listWidth: 110,
     },
     {
       name: 'auditor',
-      label: '审核人',
+      label: i18n.t('qms.quality_control.k62'),
       type: 'text',
       readonly: true,
       listWidth: 120,
     },
     {
       name: 'start_date',
-      label: '审核日期',
+      label: i18n.t('qms.quality_control.k63'),
       type: 'date',
       readonly: true,
       listWidth: 120,
     },
     {
       name: 'departments',
-      label: '涉及部门',
+      label: i18n.t('qms.quality_control.k64'),
       type: 'text',
       readonly: true,
       listWidth: 160,
@@ -309,28 +310,28 @@ export const auditPlanSchema: EntitySchema = {
     },
     {
       name: 'description',
-      label: '描述',
+      label: i18n.t('qms.quality_control.k65'),
       type: 'textarea',
       readonly: true,
       showInList: false,
     },
     {
       name: 'scope',
-      label: '审核范围',
+      label: i18n.t('qms.quality_control.k66'),
       type: 'textarea',
       readonly: true,
       showInList: false,
     },
     {
       name: 'end_date',
-      label: '结束日期',
+      label: i18n.t('qms.quality_control.k67'),
       type: 'date',
       readonly: true,
       showInList: false,
     },
     {
       name: 'created_at',
-      label: '创建日期',
+      label: i18n.t('qms.quality_control.k68'),
       type: 'date',
       readonly: true,
       showInList: false,
@@ -343,14 +344,14 @@ export const auditPlanSchema: EntitySchema = {
     filters: [
       {
         id: 'status',
-        label: '状态',
+        label: i18n.t('qms.quality_control.k69'),
         type: 'select',
         options: [
-          { label: '全部状态', value: 'all' },
-          { label: '已计划', value: 'scheduled' },
-          { label: '计划中', value: 'planning' },
-          { label: '进行中', value: 'in_progress' },
-          { label: '已完成', value: 'completed' },
+          { label: i18n.t('qms.quality_control.k70'), value: 'all' },
+          { label: i18n.t('qms.quality_control.k71'), value: 'scheduled' },
+          { label: i18n.t('qms.quality_control.k72'), value: 'planning' },
+          { label: i18n.t('qms.quality_control.k73'), value: 'in_progress' },
+          { label: i18n.t('qms.quality_control.k74'), value: 'completed' },
         ],
         defaultValue: 'all',
       },
@@ -364,17 +365,17 @@ export const auditPlanSchema: EntitySchema = {
 
   formSections: [
     {
-      title: '基本信息',
+      title: i18n.t('qms.quality_control.k75'),
       fields: ['plan_no', 'title', 'audit_type', 'status', 'auditor'],
     },
     {
-      title: '审核详情',
+      title: i18n.t('qms.quality_control.k76'),
       fields: ['start_date', 'end_date', 'departments', 'scope', 'description'],
     },
   ],
 
   formColCount: 2,
-  detailTitle: '审核计划详情',
+  detailTitle: i18n.t('qms.quality_control.k77'),
 
   actions: ['detail'],
 };

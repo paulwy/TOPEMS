@@ -16,18 +16,17 @@ import {
   Moon,
   Globe,
 } from 'lucide-react';
+import i18n from '@/i18n';
 import { useNavigate } from 'react-router-dom';
 import { MobileLayout, MobileCard } from '@/components/mobile';
 import { useAuthStore } from '@/store';
 import { MOBILE_PATHS } from '@/modules/mobile/config';
 import { AUTH_PATHS } from '@/routes/auth';
 import { PageContainer } from '@/components/common';
-
 interface SettingGroup {
   title: string;
   items: SettingItem[];
 }
-
 interface SettingItem {
   id: string;
   icon: React.ReactNode;
@@ -39,39 +38,37 @@ interface SettingItem {
   onToggle?: (value: boolean) => void;
   badge?: React.ReactNode;
 }
-
 const MobileSettingsPage: React.FC = () => {
   const theme = useTheme();
   const navigate = useNavigate();
   const { user, setUser } = useAuthStore();
   const [darkMode, setDarkMode] = useState(false);
   const [pushEnabled, setPushEnabled] = useState(true);
-
   const settingGroups: SettingGroup[] = [
     {
-      title: '通用设置',
+      title: i18n.t('mobile.mobile_profile_page.k0'),
       items: [
         {
           id: 'notifications',
           icon: <Bell style={{ width: 20, height: 20 }} />,
-          label: '通知设置',
-          subtitle: '推送、声音、振动',
+          label: i18n.t('mobile.mobile_profile_page.k1'),
+          subtitle: i18n.t('mobile.mobile_profile_page.k2'),
           type: 'navigate',
           path: MOBILE_PATHS.notifications,
         },
         {
           id: 'scan',
           icon: <ScanLine style={{ width: 20, height: 20 }} />,
-          label: '扫码设置',
-          subtitle: '条码格式、扫描模式',
+          label: i18n.t('mobile.mobile_profile_page.k3'),
+          subtitle: i18n.t('mobile.mobile_profile_page.k4'),
           type: 'navigate',
           path: MOBILE_PATHS.scan,
         },
         {
           id: 'offline',
           icon: <Database style={{ width: 20, height: 20 }} />,
-          label: '离线同步',
-          subtitle: '缓存、同步策略',
+          label: i18n.t('mobile.mobile_profile_page.k5'),
+          subtitle: i18n.t('mobile.mobile_profile_page.k6'),
           type: 'navigate',
           path: MOBILE_PATHS.offlineSync,
           badge: (
@@ -86,20 +83,20 @@ const MobileSettingsPage: React.FC = () => {
         {
           id: 'app-settings',
           icon: <Smartphone style={{ width: 20, height: 20 }} />,
-          label: '应用设置',
-          subtitle: '更新、版本管理',
+          label: i18n.t('mobile.mobile_profile_page.k7'),
+          subtitle: i18n.t('mobile.mobile_profile_page.k8'),
           type: 'navigate',
           path: MOBILE_PATHS.settingsApp,
         },
       ],
     },
     {
-      title: '偏好设置',
+      title: i18n.t('mobile.mobile_profile_page.k9'),
       items: [
         {
           id: 'dark-mode',
           icon: <Moon style={{ width: 20, height: 20 }} />,
-          label: '深色模式',
+          label: i18n.t('mobile.mobile_profile_page.k10'),
           type: 'switch',
           value: darkMode,
           onToggle: (value) => setDarkMode(value),
@@ -107,8 +104,8 @@ const MobileSettingsPage: React.FC = () => {
         {
           id: 'push',
           icon: <Bell style={{ width: 20, height: 20 }} />,
-          label: '推送通知',
-          subtitle: '接收应用推送消息',
+          label: i18n.t('mobile.mobile_profile_page.k11'),
+          subtitle: i18n.t('mobile.mobile_profile_page.k12'),
           type: 'switch',
           value: pushEnabled,
           onToggle: (value) => setPushEnabled(value),
@@ -116,60 +113,58 @@ const MobileSettingsPage: React.FC = () => {
         {
           id: 'language',
           icon: <Globe style={{ width: 20, height: 20 }} />,
-          label: '语言',
-          subtitle: '简体中文',
+          label: i18n.t('mobile.mobile_profile_page.k13'),
+          subtitle: i18n.t('mobile.mobile_profile_page.k14'),
           type: 'navigate',
           path: MOBILE_PATHS.settings,
         },
       ],
     },
     {
-      title: '账号与安全',
+      title: i18n.t('mobile.mobile_profile_page.k15'),
       items: [
         {
           id: 'security',
           icon: <Shield style={{ width: 20, height: 20 }} />,
-          label: '账号安全',
-          subtitle: '密码、指纹、面容',
+          label: i18n.t('mobile.mobile_profile_page.k16'),
+          subtitle: i18n.t('mobile.mobile_profile_page.k17'),
           type: 'navigate',
           path: MOBILE_PATHS.settings,
         },
         {
           id: 'privacy',
           icon: <Shield style={{ width: 20, height: 20 }} />,
-          label: '隐私设置',
+          label: i18n.t('mobile.mobile_profile_page.k18'),
           type: 'navigate',
           path: MOBILE_PATHS.settings,
         },
       ],
     },
     {
-      title: '其他',
+      title: i18n.t('mobile.mobile_profile_page.k19'),
       items: [
         {
           id: 'help',
           icon: <HelpCircle style={{ width: 20, height: 20 }} />,
-          label: '帮助中心',
+          label: i18n.t('mobile.mobile_profile_page.k20'),
           type: 'navigate',
           path: '/help',
         },
         {
           id: 'about',
           icon: <Info style={{ width: 20, height: 20 }} />,
-          label: '关于 TOPEMS',
-          subtitle: '版本 2.1.0',
+          label: i18n.t('mobile.mobile_profile_page.topems_21'),
+          subtitle: i18n.t('pages.mobile_profile_page.210_0'),
           type: 'navigate',
           path: MOBILE_PATHS.settings,
         },
       ],
     },
   ];
-
   const handleLogout = () => {
     setUser(null);
     navigate(AUTH_PATHS.login);
   };
-
   const handleBottomTabChange = (tabId: string) => {
     switch (tabId) {
       case 'home':
@@ -188,29 +183,26 @@ const MobileSettingsPage: React.FC = () => {
         break;
     }
   };
-
   const bottomTabs = [
-    { id: 'home', label: '首页', icon: <Home style={{ width: 22, height: 22 }} /> },
-    { id: 'tasks', label: '任务', icon: <ListTodo style={{ width: 22, height: 22 }} /> },
-    { id: 'scan', label: '扫码', icon: <ScanLine style={{ width: 22, height: 22 }} /> },
+    { id: 'home', label: i18n.t('mobile.mobile_profile_page.k22'), icon: <Home style={{ width: 22, height: 22 }} /> },
+    { id: 'tasks', label: i18n.t('mobile.mobile_profile_page.k23'), icon: <ListTodo style={{ width: 22, height: 22 }} /> },
+    { id: 'scan', label: i18n.t('mobile.mobile_profile_page.k24'), icon: <ScanLine style={{ width: 22, height: 22 }} /> },
     {
       id: 'approval',
-      label: '审批',
+      label: i18n.t('mobile.mobile_profile_page.k25'),
       icon: <CheckSquare style={{ width: 22, height: 22 }} />,
       badge: 3,
     },
-    { id: 'profile', label: '我的', icon: <User style={{ width: 22, height: 22 }} /> },
+    { id: 'profile', label: i18n.t('mobile.mobile_profile_page.k26'), icon: <User style={{ width: 22, height: 22 }} /> },
   ];
-
   const handleNavigate = (path?: string) => {
     if (path) {
       navigate(path);
     }
   };
-
   return (
     <MobileLayout
-      title='我的'
+      title={i18n.t('mobile.mobile_profile_page.k27')}
       showBack={false}
       showMenu={false}
       showNotifications
@@ -255,7 +247,7 @@ const MobileSettingsPage: React.FC = () => {
                 variant='h6'
                 sx={{ fontWeight: 600, mb: 0.5 }}
               >
-                {user?.fullName || user?.username || '用户'}
+                {user?.fullName || user?.username || i18n.t('mobile.mobile_profile_page.k28')}
               </Typography>
               <Typography
                 variant='body2'
@@ -265,7 +257,7 @@ const MobileSettingsPage: React.FC = () => {
                 {user?.email || 'user@example.com'}
               </Typography>
               <Chip
-                label={user?.role || '管理员'}
+                label={user?.role || i18n.t('mobile.mobile_profile_page.k29')}
                 size='small'
                 color='primary'
                 variant='outlined'
@@ -274,7 +266,6 @@ const MobileSettingsPage: React.FC = () => {
             </Box>
             <ChevronRight style={{ width: 20, height: 20, color: theme.palette.text.secondary }} />
           </Box>
-
           {settingGroups.map((group, _groupIndex) => (
             <Box
               key={group.title}
@@ -327,7 +318,6 @@ const MobileSettingsPage: React.FC = () => {
               </Paper>
             </Box>
           ))}
-
           <Box
             sx={{
               display: 'flex',
@@ -349,5 +339,4 @@ const MobileSettingsPage: React.FC = () => {
     </MobileLayout>
   );
 };
-
 export default MobileSettingsPage;

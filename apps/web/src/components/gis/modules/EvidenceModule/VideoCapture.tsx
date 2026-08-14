@@ -3,6 +3,8 @@ import React, { useRef, useState, useCallback, useEffect } from 'react';
 import { Video, Square, Pause, Play, SwitchCamera, X, Check } from 'lucide-react';
 import { Box, IconButton, Typography, Button } from '@mui/material';
 import { logger } from '@/utils/logger';
+import { designTokens } from '@topems/tokens';
+import i18n from '@/i18n';
 
 interface VideoCaptureProps {
   onCapture: (file: File, thumbnail?: string, duration?: number) => void;
@@ -61,7 +63,7 @@ const VideoCapture: React.FC<VideoCaptureProps> = ({
       }
       setError(null);
     } catch (err: unknown) {
-      setError('无法访问摄像头，请确保已授予摄像头和麦克风权限');
+      setError(i18n.t('gis.video_capture.k0'));
       logger.error('Camera error:', err);
     }
   }, [facingMode]);
@@ -107,7 +109,7 @@ const VideoCapture: React.FC<VideoCaptureProps> = ({
         });
       }, 1000);
     } catch (err: unknown) {
-      setError('无法开始录制，请重试');
+      setError(i18n.t('gis.video_capture.k1'));
       logger.error('Recording error:', err);
     }
   }, [maxDuration]);
@@ -157,7 +159,7 @@ const VideoCapture: React.FC<VideoCaptureProps> = ({
   const saveRecording = useCallback(() => {
     if (recordedBlob) {
       if (recordedBlob.size > maxFileSize) {
-        setError(`文件大小超过限制 (${maxFileSize / 1024 / 1024}MB)`);
+        setError(`${i18n.t('components.video_capture.k0')}${maxFileSize / 1024 / 1024}MB)`);
         return;
       }
 
@@ -250,7 +252,7 @@ const VideoCapture: React.FC<VideoCaptureProps> = ({
                   }}
                 />
                 <Typography sx={{ color: 'common.white', fontSize: '0.875rem', fontWeight: 500 }}>
-                  录制中
+                  {i18n.t('components.video_capture.k0')}
                 </Typography>
               </Box>
             )}
@@ -288,17 +290,17 @@ const VideoCapture: React.FC<VideoCaptureProps> = ({
                 disabled={isRecording}
                 sx={{
                   borderRadius: 'full',
-                  bgcolor: isRecording ? 'rgba(31,41,55,0.5)' : 'colors.cyber.glass.divider',
+                  bgcolor: isRecording ? designTokens.colors.grey[800] : 'colors.cyber.glass.divider',
                   color: isRecording ? 'text.secondary' : 'white',
                   '&:hover': {
-                    bgcolor: isRecording ? 'rgba(31,41,55,0.5)' : 'rgba(0,0,0,0.7)',
+                    bgcolor: isRecording ? designTokens.colors.grey[800] : designTokens.colors.cyber.metal.bottomShadow,
                   },
                   '&.Mui-disabled': {
                     bgcolor: 'common.white',
                     color: 'text.secondary',
                   },
                 }}
-                aria-label='切换相机'
+                aria-label={i18n.t('gis.video_capture.k2')}
               >
                 <SwitchCamera size={24} />
               </IconButton>
@@ -337,7 +339,7 @@ const VideoCapture: React.FC<VideoCaptureProps> = ({
                   '&:hover': { bgcolor: 'text.secondary' },
                 }}
               >
-                关闭
+                {i18n.t('components.video_capture.k1')}
               </Button>
             </Box>
           </Box>
@@ -354,7 +356,7 @@ const VideoCapture: React.FC<VideoCaptureProps> = ({
                 color: 'common.white',
                 '&:hover': { bgcolor: 'action.active' },
               }}
-              aria-label='关闭'
+              aria-label={i18n.t('gis.video_capture.k3')}
             >
               <X size={24} />
             </IconButton>
@@ -381,7 +383,7 @@ const VideoCapture: React.FC<VideoCaptureProps> = ({
               color: 'common.white',
               '&:hover': { bgcolor: 'error.dark' },
             }}
-            aria-label='视频'
+            aria-label={i18n.t('gis.video_capture.k4')}
           >
             <Video size={32} />
           </IconButton>
@@ -399,7 +401,7 @@ const VideoCapture: React.FC<VideoCaptureProps> = ({
                 mx: 8,
                 '&:hover': { bgcolor: 'text.secondary' },
               }}
-              aria-label='执行'
+              aria-label={i18n.t('gis.video_capture.k5')}
             >
               {isPaused ? <Play size={24} /> : <Pause size={24} />}
             </IconButton>
@@ -413,7 +415,7 @@ const VideoCapture: React.FC<VideoCaptureProps> = ({
                 mx: 8,
                 '&:hover': { bgcolor: 'error.dark' },
               }}
-              aria-label='选择'
+              aria-label={i18n.t('gis.video_capture.k6')}
             >
               <Square size={32} />
             </IconButton>
@@ -438,7 +440,7 @@ const VideoCapture: React.FC<VideoCaptureProps> = ({
                 '&:hover': { bgcolor: 'text.secondary' },
               }}
             >
-              重新录制
+              {i18n.t('components.video_capture.k2')}
             </Button>
             <Button
               onClick={saveRecording}
@@ -452,7 +454,7 @@ const VideoCapture: React.FC<VideoCaptureProps> = ({
                 '&:hover': { bgcolor: 'success.dark' },
               }}
             >
-              保存
+              {i18n.t('components.video_capture.k3')}
             </Button>
           </Box>
         )}

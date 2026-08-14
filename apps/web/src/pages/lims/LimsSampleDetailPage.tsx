@@ -17,6 +17,7 @@ import {
   MenuItem,
   Button,
 } from '@mui/material';
+import i18n from '@/i18n';
 
 import { DataTable } from '@/components/common/DataTable';
 import { PageContainer } from '@/components/common';
@@ -141,10 +142,10 @@ const LimsSampleDetailPage: React.FC = () => {
 
   const updateMutation = useMutation({
     mutationFn: async (data: { name: string; description: string; status: string }) => {
-      if (!sample) throw new Error('样品不存在');
+      if (!sample) throw new Error(i18n.t('pages.lims_sample_detail_page.k0'));
       const response = await limsApi.updateSample(sample.id, data);
       if (!response.success) {
-        throw new Error('更新失败，请稍后重试');
+        throw new Error(i18n.t('pages.lims_sample_detail_page.k1'));
       }
       return response;
     },
@@ -162,17 +163,17 @@ const LimsSampleDetailPage: React.FC = () => {
       setShowEditModal(false);
     },
     onError: (error: unknown) => {
-      logger.error('更新样品失败:', error);
-      addNotification({ title: '错误', message: '更新失败，请稍后重试', type: 'error' });
+      logger.error(i18n.t('pages.lims_sample_detail_page.k0'), error);
+      addNotification({ title: i18n.t('pages.lims_sample_detail_page.k3'), message: i18n.t('pages.lims_sample_detail_page.k2'), type: 'error' });
     },
   });
 
   const deleteMutation = useMutation({
     mutationFn: async () => {
-      if (!sample) throw new Error('样品不存在');
+      if (!sample) throw new Error(i18n.t('pages.lims_sample_detail_page.k4'));
       const response = await limsApi.deleteSample(sample.id);
       if (!response.success) {
-        throw new Error('删除失败，请稍后重试');
+        throw new Error(i18n.t('pages.lims_sample_detail_page.k5'));
       }
       return response;
     },
@@ -184,21 +185,21 @@ const LimsSampleDetailPage: React.FC = () => {
       navigate(LIMS_PATHS.root);
     },
     onError: (error: unknown) => {
-      logger.error('删除样品失败:', error);
-      addNotification({ title: '错误', message: '删除失败，请稍后重试', type: 'error' });
+      logger.error(i18n.t('pages.lims_sample_detail_page.k1'), error);
+      addNotification({ title: i18n.t('pages.lims_sample_detail_page.k7'), message: i18n.t('pages.lims_sample_detail_page.k6'), type: 'error' });
     },
   });
 
   const getStatusBadge = (status: string) => {
     const statusMap: Record<string, { bg: string; color: string; label: string }> = {
-      pending: { bg: 'warning.100', color: ct.yellow[600], label: '待测试' },
-      待测试: { bg: 'warning.100', color: ct.yellow[600], label: '待测试' },
-      in_progress: { bg: 'primary.100', color: 'primary.dark', label: '测试中' },
-      测试中: { bg: 'primary.100', color: 'primary.dark', label: '测试中' },
-      completed: { bg: 'success.lighter', color: 'success.dark', label: '已完成' },
-      已完成: { bg: 'success.lighter', color: 'success.dark', label: '已完成' },
-      cancelled: { bg: 'error.lighter', color: 'error.dark', label: '已终止' },
-      已终止: { bg: 'error.lighter', color: 'error.dark', label: '已终止' },
+      pending: { bg: 'warning.100', color: ct.yellow[600], label: i18n.t('pages.lims_sample_detail_page.k8') },
+      [i18n.t('pages.lims_sample_detail_page.k2')]: { bg: 'warning.100', color: ct.yellow[600], label: i18n.t('pages.lims_sample_detail_page.k9') },
+      in_progress: { bg: 'primary.100', color: 'primary.dark', label: i18n.t('pages.lims_sample_detail_page.k10') },
+      [i18n.t('pages.lims_sample_detail_page.k3')]: { bg: 'primary.100', color: 'primary.dark', label: i18n.t('pages.lims_sample_detail_page.k11') },
+      completed: { bg: 'success.lighter', color: 'success.dark', label: i18n.t('pages.lims_sample_detail_page.k12') },
+      [i18n.t('pages.lims_sample_detail_page.k4')]: { bg: 'success.lighter', color: 'success.dark', label: i18n.t('pages.lims_sample_detail_page.k13') },
+      cancelled: { bg: 'error.lighter', color: 'error.dark', label: i18n.t('pages.lims_sample_detail_page.k14') },
+      [i18n.t('pages.lims_sample_detail_page.k5')]: { bg: 'error.lighter', color: 'error.dark', label: i18n.t('pages.lims_sample_detail_page.k15') },
     };
     const item = statusMap[status] || {
       bg: 'grey.100',
@@ -217,7 +218,7 @@ const LimsSampleDetailPage: React.FC = () => {
   const handleEdit = async () => {
     if (!sample) return;
     if (!formData.name.trim()) {
-      addNotification({ title: '错误', message: '请输入样品名称', type: 'error' });
+      addNotification({ title: i18n.t('pages.lims_sample_detail_page.k17'), message: i18n.t('pages.lims_sample_detail_page.k16'), type: 'error' });
       return;
     }
     await updateMutation.mutateAsync(formData);
@@ -225,45 +226,45 @@ const LimsSampleDetailPage: React.FC = () => {
 
   const handleDelete = async () => {
     if (!sample) return;
-    if (!confirm(`确定要删除样品 "${sample.name}" 吗？`)) return;
+    if (!confirm(`${i18n.t('pages.lims_sample_detail_page.k6')}${sample.name}${i18n.t('pages.lims_sample_detail_page.k7')}`)) return;
     await deleteMutation.mutateAsync();
   };
 
   const getTestStatistics = () => {
     const stats = {
       total: records.length,
-      passed: records.filter((r) => r.conclusion === '合格').length,
-      failed: records.filter((r) => r.conclusion === '不合格').length,
-      pending: records.filter((r) => r.conclusion === '待定' || r.conclusion === '-').length,
+      passed: records.filter((r) => r.conclusion === i18n.t('pages.lims_sample_detail_page.k18')).length,
+      failed: records.filter((r) => r.conclusion === i18n.t('pages.lims_sample_detail_page.k19')).length,
+      pending: records.filter((r) => r.conclusion === i18n.t('pages.lims_sample_detail_page.k20') || r.conclusion === '-').length,
     };
     return stats;
   };
 
   const chartData = [
-    { name: '已完成', value: records.length, fill: 'success.main' },
+    { name: i18n.t('pages.lims_sample_detail_page.k21'), value: records.length, fill: 'success.main' },
     {
-      name: '合格',
-      value: records.filter((r) => r.conclusion === '合格').length,
+      name: i18n.t('pages.lims_sample_detail_page.k22'),
+      value: records.filter((r) => r.conclusion === i18n.t('pages.lims_sample_detail_page.k23')).length,
       fill: 'success.dark',
     },
     {
-      name: '不合格',
-      value: records.filter((r) => r.conclusion === '不合格').length,
+      name: i18n.t('pages.lims_sample_detail_page.k24'),
+      value: records.filter((r) => r.conclusion === i18n.t('pages.lims_sample_detail_page.k25')).length,
       fill: 'error.main',
     },
     {
-      name: '待定',
-      value: records.filter((r) => r.conclusion === '待定' || r.conclusion === '-').length,
+      name: i18n.t('pages.lims_sample_detail_page.k26'),
+      value: records.filter((r) => r.conclusion === i18n.t('pages.lims_sample_detail_page.k27') || r.conclusion === '-').length,
       fill: 'warning.main',
     },
   ];
 
   const recordColumns: ColumnDef<SampleTestRecord>[] = [
-    { accessorKey: 'step_name', header: '检验步骤' },
-    { accessorKey: 'inspector', header: '检验员' },
-    { accessorKey: 'result', header: '检验结果' },
-    { accessorKey: 'conclusion', header: '结论' },
-    { accessorKey: 'tested_at', header: '检验时间' },
+    { accessorKey: 'step_name', header: i18n.t('pages.lims_sample_detail_page.k28') },
+    { accessorKey: 'inspector', header: i18n.t('pages.lims_sample_detail_page.k29') },
+    { accessorKey: 'result', header: i18n.t('pages.lims_sample_detail_page.k30') },
+    { accessorKey: 'conclusion', header: i18n.t('pages.lims_sample_detail_page.k31') },
+    { accessorKey: 'tested_at', header: i18n.t('pages.lims_sample_detail_page.k32') },
   ];
 
   const stats = getTestStatistics();
@@ -276,7 +277,7 @@ const LimsSampleDetailPage: React.FC = () => {
         sx={{ fontWeight: 600, display: 'flex', alignItems: 'center', gap: 1 }}
       >
         <FileText sx={{ fontSize: 20, color: 'primary.dark' }} />
-        关联检验任务
+        {i18n.t('pages.lims_sample_detail_page.k8')}
       </Typography>
       {tasks.length > 0 ? (
         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
@@ -306,29 +307,29 @@ const LimsSampleDetailPage: React.FC = () => {
                       variant='body2'
                       color='text.secondary'
                     >
-                      {task.sample_name || '样品检验'}
+                      {task.sample_name || i18n.t('pages.lims_sample_detail_page.k33')}
                     </Typography>
                   </Box>
                   <Chip
                     label={
-                      task.status === 'completed' || task.status === '已完成'
-                        ? '已完成'
-                        : task.status === 'in_progress' || task.status === '进行中'
-                          ? '进行中'
-                          : '待处理'
+                      task.status === 'completed' || task.status === i18n.t('pages.lims_sample_detail_page.k34')
+                        ? i18n.t('pages.lims_sample_detail_page.k35')
+                        : task.status === 'in_progress' || task.status === i18n.t('pages.lims_sample_detail_page.k36')
+                          ? i18n.t('pages.lims_sample_detail_page.k37')
+                          : i18n.t('pages.lims_sample_detail_page.k38')
                     }
                     size='small'
                     sx={{
                       backgroundColor:
-                        task.status === 'completed' || task.status === '已完成'
+                        task.status === 'completed' || task.status === i18n.t('pages.lims_sample_detail_page.k39')
                           ? 'success.lighter'
-                          : task.status === 'in_progress' || task.status === '进行中'
+                          : task.status === 'in_progress' || task.status === i18n.t('pages.lims_sample_detail_page.k40')
                             ? 'primary.100'
                             : 'warning.100',
                       color:
-                        task.status === 'completed' || task.status === '已完成'
+                        task.status === 'completed' || task.status === i18n.t('pages.lims_sample_detail_page.k41')
                           ? 'success.dark'
-                          : task.status === 'in_progress' || task.status === '进行中'
+                          : task.status === 'in_progress' || task.status === i18n.t('pages.lims_sample_detail_page.k42')
                             ? 'primary.dark'
                             : ct.yellow[600],
                     }}
@@ -359,7 +360,7 @@ const LimsSampleDetailPage: React.FC = () => {
       ) : (
         <Box sx={{ textAlign: 'center', py: 3, color: 'text.secondary' }}>
           <FileText sx={{ width: 48, height: 48, opacity: 0.5, mx: 'auto', mb: 1 }} />
-          <Typography variant='body2'>暂无检验任务</Typography>
+          <Typography variant='body2'>{i18n.t('pages.lims_sample_detail_page.k43')}</Typography>
         </Box>
       )}
     </Box>
@@ -369,7 +370,7 @@ const LimsSampleDetailPage: React.FC = () => {
   const sections: SectionConfig[] = [
     {
       id: 'statistics',
-      title: '检验统计',
+      title: i18n.t('pages.lims_sample_detail_page.k44'),
       content: (
         <Box>
           <Box sx={{ height: 256 }}>
@@ -389,7 +390,7 @@ const LimsSampleDetailPage: React.FC = () => {
                   width={60}
                 />
                 <Tooltip
-                  formatter={(value: unknown) => [`${value} 条`, '数量']}
+                  formatter={(value: unknown) => [`${value} ${i18n.t('pages.lims_sample_detail_page.k9')}`, i18n.t('pages.lims_sample_detail_page.k45')]}
                   contentStyle={{
                     backgroundColor: 'common.white',
                     border: '1px solid border.default',
@@ -433,7 +434,7 @@ const LimsSampleDetailPage: React.FC = () => {
                 variant='caption'
                 sx={{ color: 'text.secondary', mt: 0.5 }}
               >
-                检验总数
+                {i18n.t('pages.lims_sample_detail_page.k10')}
               </Typography>
             </Box>
             <Box
@@ -451,7 +452,7 @@ const LimsSampleDetailPage: React.FC = () => {
                 variant='caption'
                 sx={{ color: 'success.dark', mt: 0.5 }}
               >
-                合格
+                {i18n.t('pages.lims_sample_detail_page.k11')}
               </Typography>
             </Box>
             <Box
@@ -469,7 +470,7 @@ const LimsSampleDetailPage: React.FC = () => {
                 variant='caption'
                 sx={{ color: 'error.dark', mt: 0.5 }}
               >
-                不合格
+                {i18n.t('pages.lims_sample_detail_page.k12')}
               </Typography>
             </Box>
             <Box
@@ -487,7 +488,7 @@ const LimsSampleDetailPage: React.FC = () => {
                 variant='caption'
                 sx={{ color: ct.yellow[600], mt: 0.5 }}
               >
-                待定
+                {i18n.t('pages.lims_sample_detail_page.k13')}
               </Typography>
             </Box>
           </Box>
@@ -496,7 +497,7 @@ const LimsSampleDetailPage: React.FC = () => {
     },
     {
       id: 'records',
-      title: '检验记录',
+      title: i18n.t('pages.lims_sample_detail_page.k46'),
       content: (
         <Box>
           {records.length > 0 ? (
@@ -508,7 +509,7 @@ const LimsSampleDetailPage: React.FC = () => {
           ) : (
             <Box sx={{ textAlign: 'center', py: 4, color: 'text.secondary' }}>
               <CheckCircle sx={{ width: 64, height: 64, opacity: 0.5, mx: 'auto', mb: 2 }} />
-              <Typography>暂无检验记录</Typography>
+              <Typography>{i18n.t('pages.lims_sample_detail_page.k47')}</Typography>
             </Box>
           )}
         </Box>
@@ -539,7 +540,7 @@ const LimsSampleDetailPage: React.FC = () => {
               margin: '0 auto 16px auto',
             }}
           ></div>
-          <p style={{ color: ct.grey[600] }}>加载中...</p>
+          <p style={{ color: ct.grey[600] }}>{i18n.t('pages.lims_sample_detail_page.k14')}</p>
         </div>
       </div>
     );
@@ -565,12 +566,12 @@ const LimsSampleDetailPage: React.FC = () => {
               margin: '0 auto 16px auto',
             }}
           />
-          <p style={{ color: ct.grey[600] }}>样品不存在或已被删除</p>
+          <p style={{ color: ct.grey[600] }}>{i18n.t('pages.lims_sample_detail_page.k48')}</p>
           <Button
             onClick={() => navigate(LIMS_PATHS.root)}
             sx={{ mt: 2 }}
           >
-            返回列表
+            {i18n.t('pages.lims_sample_detail_page.k15')}
           </Button>
         </div>
       </div>
@@ -589,11 +590,11 @@ const LimsSampleDetailPage: React.FC = () => {
       <DetailPageTemplate
         title=''
         subtitle=''
-        detailItemName={sample?.name || sample?.sample_no || sample?.id || '样品详情'}
+        detailItemName={sample?.name || sample?.sample_no || sample?.id || i18n.t('pages.lims_sample_detail_page.k49')}
         breadcrumbs={[
-          { label: '首页', href: '/dashboard' },
+          { label: i18n.t('pages.lims_sample_detail_page.k50'), href: '/dashboard' },
           { label: 'LIMS', href: LIMS_PATHS.root },
-          { label: '样品详情' },
+          { label: i18n.t('pages.lims_sample_detail_page.k51') },
         ]}
         backHref={LIMS_PATHS.root}
         loading={loading}
@@ -605,8 +606,8 @@ const LimsSampleDetailPage: React.FC = () => {
           subtitle: sample.sample_no || sample.id,
           tags: [sample.status],
           stats: [
-            { label: '关联任务', value: tasks.length },
-            { label: '检验记录', value: records.length },
+            { label: i18n.t('pages.lims_sample_detail_page.k52'), value: tasks.length },
+            { label: i18n.t('pages.lims_sample_detail_page.k53'), value: records.length },
           ],
         }}
         sidebar={sidebarContent}
@@ -618,19 +619,19 @@ const LimsSampleDetailPage: React.FC = () => {
           maxWidth='sm'
           fullWidth
         >
-          <DialogTitle>编辑样品信息</DialogTitle>
+          <DialogTitle>{i18n.t('pages.lims_sample_detail_page.k54')}</DialogTitle>
           <DialogContent>
             <Box sx={{ mt: 1, display: 'flex', flexDirection: 'column', gap: 2 }}>
               <TextField
-                label='样品名称 *'
+                label={i18n.t('pages.lims_sample_detail_page.k16')}
                 value={formData.name}
                 onChange={(e) => setFormData((prev) => ({ ...prev, name: e.target.value }))}
                 fullWidth
                 size='small'
-                placeholder='请输入样品名称'
+                placeholder={i18n.t('pages.lims_sample_detail_page.k55')}
               />
               <TextField
-                label='描述'
+                label={i18n.t('pages.lims_sample_detail_page.k56')}
                 value={formData.description}
                 onChange={(e) =>
                   setFormData((prev) => ({
@@ -641,20 +642,20 @@ const LimsSampleDetailPage: React.FC = () => {
                 fullWidth
                 multiline
                 rows={3}
-                placeholder='请输入样品描述'
+                placeholder={i18n.t('pages.lims_sample_detail_page.k57')}
               />
               <TextField
                 select
-                label='状态'
+                label={i18n.t('pages.lims_sample_detail_page.k58')}
                 value={formData.status}
                 onChange={(e) => setFormData((prev) => ({ ...prev, status: e.target.value }))}
                 fullWidth
                 size='small'
               >
-                <MenuItem value='待测试'>待测试</MenuItem>
-                <MenuItem value='测试中'>测试中</MenuItem>
-                <MenuItem value='已完成'>已完成</MenuItem>
-                <MenuItem value='已终止'>已终止</MenuItem>
+                <MenuItem value={i18n.t('pages.lims_sample_detail_page.k59')}>{i18n.t('pages.lims_sample_detail_page.k60')}</MenuItem>
+                <MenuItem value={i18n.t('pages.lims_sample_detail_page.k61')}>{i18n.t('pages.lims_sample_detail_page.k62')}</MenuItem>
+                <MenuItem value={i18n.t('pages.lims_sample_detail_page.k63')}>{i18n.t('pages.lims_sample_detail_page.k64')}</MenuItem>
+                <MenuItem value={i18n.t('pages.lims_sample_detail_page.k65')}>{i18n.t('pages.lims_sample_detail_page.k66')}</MenuItem>
               </TextField>
             </Box>
           </DialogContent>
@@ -663,14 +664,14 @@ const LimsSampleDetailPage: React.FC = () => {
               variant='outlined'
               onClick={() => setShowEditModal(false)}
             >
-              取消
+              {i18n.t('pages.lims_sample_detail_page.k17')}
             </Button>
             <Button
               variant='contained'
               onClick={handleEdit}
               disabled={updateMutation.isPending}
             >
-              {updateMutation.isPending ? '保存中...' : '保存'}
+              {updateMutation.isPending ? i18n.t('pages.lims_sample_detail_page.k18') : i18n.t('pages.lims_sample_detail_page.k67')}
             </Button>
           </DialogActions>
         </Dialog>
@@ -681,37 +682,37 @@ const LimsSampleDetailPage: React.FC = () => {
           maxWidth='sm'
           fullWidth
         >
-          <DialogTitle>添加检验记录</DialogTitle>
+          <DialogTitle>{i18n.t('pages.lims_sample_detail_page.k68')}</DialogTitle>
           <DialogContent>
             <Box sx={{ mt: 1, display: 'flex', flexDirection: 'column', gap: 2 }}>
               <TextField
-                label='检验步骤'
+                label={i18n.t('pages.lims_sample_detail_page.k69')}
                 fullWidth
                 size='small'
-                placeholder='请输入检验步骤名称'
+                placeholder={i18n.t('pages.lims_sample_detail_page.k70')}
               />
               <TextField
-                label='检验员'
+                label={i18n.t('pages.lims_sample_detail_page.k71')}
                 fullWidth
                 size='small'
-                placeholder='请输入检验员姓名'
+                placeholder={i18n.t('pages.lims_sample_detail_page.k72')}
               />
               <TextField
-                label='检验结果'
+                label={i18n.t('pages.lims_sample_detail_page.k73')}
                 fullWidth
                 multiline
                 rows={3}
-                placeholder='请输入检验结果'
+                placeholder={i18n.t('pages.lims_sample_detail_page.k74')}
               />
               <TextField
                 select
-                label='结论'
+                label={i18n.t('pages.lims_sample_detail_page.k75')}
                 fullWidth
                 size='small'
               >
-                <MenuItem value='合格'>合格</MenuItem>
-                <MenuItem value='不合格'>不合格</MenuItem>
-                <MenuItem value='待定'>待定</MenuItem>
+                <MenuItem value={i18n.t('pages.lims_sample_detail_page.k76')}>{i18n.t('pages.lims_sample_detail_page.k77')}</MenuItem>
+                <MenuItem value={i18n.t('pages.lims_sample_detail_page.k78')}>{i18n.t('pages.lims_sample_detail_page.k79')}</MenuItem>
+                <MenuItem value={i18n.t('pages.lims_sample_detail_page.k80')}>{i18n.t('pages.lims_sample_detail_page.k81')}</MenuItem>
               </TextField>
             </Box>
           </DialogContent>
@@ -720,13 +721,13 @@ const LimsSampleDetailPage: React.FC = () => {
               variant='outlined'
               onClick={() => setShowRecordModal(false)}
             >
-              取消
+              {i18n.t('pages.lims_sample_detail_page.k19')}
             </Button>
             <Button
               variant='contained'
               onClick={() => setShowRecordModal(false)}
             >
-              保存
+              {i18n.t('pages.lims_sample_detail_page.k20')}
             </Button>
           </DialogActions>
         </Dialog>

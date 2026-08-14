@@ -1,3 +1,4 @@
+import i18n from '@/i18n';
 export type ScalingDirection = 'up' | 'down' | 'none';
 export type ScalingStatus = 'pending' | 'scaling' | 'completed' | 'failed' | 'cancelled';
 
@@ -312,7 +313,7 @@ export class AutoScaler {
         direction: 'none',
         currentInstances: metrics.currentInstances,
         targetInstances: metrics.currentInstances,
-        reason: '无需扩缩容',
+        reason: i18n.t('microfrontend.auto-scaler.k0'),
         metrics: scalingMetrics,
         confidence: 0,
         timestamp: now,
@@ -324,7 +325,7 @@ export class AutoScaler {
       direction,
       currentInstances: metrics.currentInstances,
       targetInstances,
-      reason: direction === 'up' ? '指标超过扩容阈值' : '指标低于缩容阈值',
+      reason: direction === 'up' ? i18n.t('microfrontend.auto-scaler.k2') : i18n.t('microfrontend.auto-scaler.k1'),
       metrics: scalingMetrics,
       confidence,
       timestamp: now,
@@ -365,7 +366,7 @@ export class AutoScaler {
       fromInstances: count.current,
       toInstances: target,
       status: 'scaling',
-      reason: '预热扩容',
+      reason: i18n.t('microfrontend.auto-scaler.k3'),
       triggeredBy: 'prewarm',
       startedAt: Date.now(),
     };
@@ -390,7 +391,7 @@ export class AutoScaler {
       fromInstances: count.current,
       toInstances: count.min,
       status: 'scaling',
-      reason: '缩容至最小实例数',
+      reason: i18n.t('microfrontend.auto-scaler.k4'),
       triggeredBy: 'manual',
       startedAt: Date.now(),
     };

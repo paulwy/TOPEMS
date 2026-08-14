@@ -13,6 +13,7 @@ import {
   MenuItem,
   Chip,
 } from '@mui/material';
+import i18n from '@/i18n';
 import { Database, Globe, FileSpreadsheet, ChevronDown, ChevronUp } from 'lucide-react';
 import type { DataSourceType, DataSourceConfig } from '../types';
 
@@ -56,12 +57,12 @@ export const DataSourcePanel: React.FC<DataSourcePanelProps> = ({
             variant='subtitle1'
             sx={{ fontWeight: 600 }}
           >
-            数据源
+            {i18n.t('components.data_source_panel.k0')}
           </Typography>
         </Box>
         <IconButton
           size='small'
-          aria-label='展开'
+          aria-label={i18n.t('templates.data_source_panel.k0')}
         >
           {showDataSourcePanel ? (
             <ChevronUp sx={{ width: 18, height: 18 }} />
@@ -85,7 +86,7 @@ export const DataSourcePanel: React.FC<DataSourcePanelProps> = ({
               label={
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                   <Database sx={{ width: 16, height: 16 }} />
-                  <span>数据库表</span>
+                  <span>{i18n.t('templates.data_source_panel.k1')}</span>
                 </Box>
               }
             />
@@ -113,10 +114,10 @@ export const DataSourcePanel: React.FC<DataSourcePanelProps> = ({
 
           {dataSource.type === 'database' && (
             <FormControl fullWidth>
-              <InputLabel>选择数据表</InputLabel>
+              <InputLabel>{i18n.t('templates.data_source_panel.k2')}</InputLabel>
               <Select
                 value={dataSource.tableName || ''}
-                label='选择数据表'
+                label={i18n.t('templates.data_source_panel.k3')}
                 onChange={(e) => handleTableSelect(e.target.value)}
               >
                 {availableTables.map((table) => (
@@ -133,10 +134,10 @@ export const DataSourcePanel: React.FC<DataSourcePanelProps> = ({
 
           {dataSource.type === 'api' && (
             <FormControl fullWidth>
-              <InputLabel>选择API接口</InputLabel>
+              <InputLabel>{i18n.t('templates.data_source_panel.api_4')}</InputLabel>
               <Select
                 value={dataSource.apiUrl || ''}
-                label='选择API接口'
+                label={i18n.t('templates.data_source_panel.api_5')}
                 onChange={(e) =>
                   handleApiSelect(availableApis.find((a) => a.url === e.target.value)?.name || '')
                 }
@@ -183,13 +184,13 @@ export const DataSourcePanel: React.FC<DataSourcePanelProps> = ({
                     variant='body1'
                     sx={{ color: 'grey.600' }}
                   >
-                    点击上传Excel文件
+                    {i18n.t('components.data_source_panel.excel_1')}
                   </Typography>
                   <Typography
                     variant='caption'
                     sx={{ color: 'grey.400' }}
                   >
-                    支持 .xlsx, .xls, .csv 格式
+                    {i18n.t('components.data_source_panel.k2')}
                   </Typography>
                 </Box>
               </label>
@@ -198,7 +199,7 @@ export const DataSourcePanel: React.FC<DataSourcePanelProps> = ({
 
           {dataSource.name && (
             <Chip
-              label={`已选择: ${dataSource.name}`}
+              label={`${i18n.t('components.data_source_panel.k0')}${dataSource.name}`}
               color='success'
               sx={{ alignSelf: 'flex-start' }}
             />

@@ -6,11 +6,12 @@
  */
 
 import type { EntitySchema } from '@/schema';
+import i18n from '@/i18n';
 
 export const alertRuleSchema: EntitySchema = {
   entity: 'monitor_alert_rule',
-  title: '告警规则',
-  description: '管理系统告警规则，配置监控指标、触发条件和通知方式',
+  title: i18n.t('monitor.alert_rule.k0'),
+  description: i18n.t('monitor.alert_rule.k1'),
 
   api: {
     module: 'monitor',
@@ -20,7 +21,7 @@ export const alertRuleSchema: EntitySchema = {
   fields: [
     {
       name: 'name',
-      label: '规则名称',
+      label: i18n.t('monitor.alert_rule.k2'),
       type: 'text',
       required: true,
       sortable: true,
@@ -28,43 +29,43 @@ export const alertRuleSchema: EntitySchema = {
     },
     {
       name: 'description',
-      label: '描述',
+      label: i18n.t('monitor.alert_rule.k3'),
       type: 'textarea',
       showInList: false,
     },
     {
       name: 'service_name',
-      label: '服务',
+      label: i18n.t('monitor.alert_rule.k4'),
       type: 'text',
       listWidth: 120,
     },
     {
       name: 'severity',
-      label: '严重级别',
+      label: i18n.t('monitor.alert_rule.k5'),
       type: 'select',
       required: true,
       defaultValue: 'warning',
       options: {
         type: 'static',
         options: [
-          { value: 'critical', label: '严重' },
-          { value: 'error', label: '错误' },
-          { value: 'warning', label: '警告' },
-          { value: 'info', label: '信息' },
+          { value: 'critical', label: i18n.t('monitor.alert_rule.k6') },
+          { value: 'error', label: i18n.t('monitor.alert_rule.k7') },
+          { value: 'warning', label: i18n.t('monitor.alert_rule.k8') },
+          { value: 'info', label: i18n.t('monitor.alert_rule.k9') },
         ],
       },
       listWidth: 100,
     },
     {
       name: 'enabled',
-      label: '启用状态',
+      label: i18n.t('monitor.alert_rule.k10'),
       type: 'switch',
       defaultValue: true,
       listWidth: 80,
     },
     {
       name: 'updated_at',
-      label: '更新时间',
+      label: i18n.t('monitor.alert_rule.k11'),
       type: 'datetime',
       hideInForm: true,
       sortable: true,
@@ -78,14 +79,14 @@ export const alertRuleSchema: EntitySchema = {
     filters: [
       {
         id: 'severity',
-        label: '严重级别',
+        label: i18n.t('monitor.alert_rule.k12'),
         type: 'select',
         options: [
-          { label: '全部级别', value: 'all' },
-          { label: '严重', value: 'critical' },
-          { label: '错误', value: 'error' },
-          { label: '警告', value: 'warning' },
-          { label: '信息', value: 'info' },
+          { label: i18n.t('monitor.alert_rule.k13'), value: 'all' },
+          { label: i18n.t('monitor.alert_rule.k14'), value: 'critical' },
+          { label: i18n.t('monitor.alert_rule.k15'), value: 'error' },
+          { label: i18n.t('monitor.alert_rule.k16'), value: 'warning' },
+          { label: i18n.t('monitor.alert_rule.k17'), value: 'info' },
         ],
       },
     ],
@@ -95,17 +96,17 @@ export const alertRuleSchema: EntitySchema = {
 
   formSections: [
     {
-      title: '基本信息',
+      title: i18n.t('monitor.alert_rule.k18'),
       fields: ['name', 'description', 'service_name', 'severity'],
     },
     {
-      title: '启用状态',
+      title: i18n.t('monitor.alert_rule.k19'),
       fields: ['enabled'],
     },
   ],
 
   formColCount: 2,
-  createTitle: '新建告警规则',
-  editTitle: '编辑告警规则',
-  detailTitle: '告警规则详情',
+  createTitle: i18n.t('monitor.alert_rule.k20'),
+  editTitle: i18n.t('monitor.alert_rule.k21'),
+  detailTitle: i18n.t('monitor.alert_rule.k22'),
 };

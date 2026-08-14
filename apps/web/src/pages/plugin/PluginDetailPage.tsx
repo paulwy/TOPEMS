@@ -16,6 +16,7 @@ import {
   ChevronDown,
   ChevronUp,
 } from 'lucide-react';
+import i18n from '@/i18n';
 import {
   Box,
   Typography,
@@ -123,25 +124,25 @@ const PluginDetailPage: React.FC = () => {
 
   useEffect(() => {
     if (pluginQuery.isError && pluginQuery.error) {
-      logger.error('加载插件详情失败:', pluginQuery.error);
+      logger.error(i18n.t('pages.plugin_detail_page.k0'), pluginQuery.error);
     }
   }, [pluginQuery.isError, pluginQuery.error]);
 
   useEffect(() => {
     if (versionsQuery.isError && versionsQuery.error) {
-      logger.error('加载插件版本失败:', versionsQuery.error);
+      logger.error(i18n.t('pages.plugin_detail_page.k1'), versionsQuery.error);
     }
   }, [versionsQuery.isError, versionsQuery.error]);
 
   useEffect(() => {
     if (reviewsQuery.isError && reviewsQuery.error) {
-      logger.error('加载插件评价失败:', reviewsQuery.error);
+      logger.error(i18n.t('pages.plugin_detail_page.k2'), reviewsQuery.error);
     }
   }, [reviewsQuery.isError, reviewsQuery.error]);
 
   useEffect(() => {
     if (healthQuery.isError && healthQuery.error) {
-      logger.error('加载健康状态失败:', healthQuery.error);
+      logger.error(i18n.t('pages.plugin_detail_page.k3'), healthQuery.error);
     }
   }, [healthQuery.isError, healthQuery.error]);
 
@@ -172,7 +173,7 @@ const PluginDetailPage: React.FC = () => {
 });
     },
     onError: (error: unknown) => {
-      logger.error('提交评价失败:', error);
+      logger.error(i18n.t('pages.plugin_detail_page.k4'), error);
       const err = error as { message?: string };
       addNotification({
         title: t('plugin.message.review_failed_title'),

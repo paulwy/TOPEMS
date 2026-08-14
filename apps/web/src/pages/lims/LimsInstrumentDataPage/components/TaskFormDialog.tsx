@@ -12,6 +12,7 @@ import {
   MenuItem,
   Button,
 } from '@mui/material';
+import i18n from '@/i18n';
 import type { CreateCollectionTaskRequest } from '@/api/lims';
 
 interface TaskFormDialogProps {
@@ -40,23 +41,23 @@ const TaskFormDialog: React.FC<TaskFormDialogProps> = ({
       maxWidth='sm'
       fullWidth
     >
-      <DialogTitle>{isEditing ? '编辑采集任务' : '新建采集任务'}</DialogTitle>
+      <DialogTitle>{isEditing ? i18n.t('pages.task_form_dialog.k1') : i18n.t('pages.task_form_dialog.k0')}</DialogTitle>
       <DialogContent dividers>
         <Stack
           spacing={2}
           sx={{ mt: 1 }}
         >
           <TextField
-            label='任务名称'
+            label={i18n.t('pages.task_form_dialog.k2')}
             fullWidth
             value={formData.task_name}
             onChange={(e) => onFormDataChange({ ...formData, task_name: e.target.value })}
           />
           <FormControl fullWidth>
-            <InputLabel>协议类型</InputLabel>
+            <InputLabel>{i18n.t('pages.task_form_dialog.k3')}</InputLabel>
             <Select
               value={formData.protocol}
-              label='协议类型'
+              label={i18n.t('pages.task_form_dialog.k4')}
               onChange={(e) => onFormDataChange({ ...formData, protocol: e.target.value })}
             >
               <MenuItem value='JSON'>JSON</MenuItem>
@@ -65,20 +66,20 @@ const TaskFormDialog: React.FC<TaskFormDialogProps> = ({
             </Select>
           </FormControl>
           <FormControl fullWidth>
-            <InputLabel>采集方式</InputLabel>
+            <InputLabel>{i18n.t('pages.task_form_dialog.k5')}</InputLabel>
             <Select
               value={formData.collection_mode}
-              label='采集方式'
+              label={i18n.t('pages.task_form_dialog.k6')}
               onChange={(e) => onFormDataChange({ ...formData, collection_mode: e.target.value })}
             >
-              <MenuItem value='manual'>手动触发</MenuItem>
-              <MenuItem value='scheduled'>定时采集</MenuItem>
-              <MenuItem value='interval'>间隔采集</MenuItem>
+              <MenuItem value='manual'>{i18n.t('pages.task_form_dialog.k7')}</MenuItem>
+              <MenuItem value='scheduled'>{i18n.t('pages.task_form_dialog.k8')}</MenuItem>
+              <MenuItem value='interval'>{i18n.t('pages.task_form_dialog.k9')}</MenuItem>
             </Select>
           </FormControl>
           {formData.collection_mode === 'scheduled' && (
             <TextField
-              label='Cron 表达式'
+              label={i18n.t('pages.task_form_dialog.cron_0')}
               fullWidth
               placeholder='0 0 * * *'
               value={formData.cron_expression}
@@ -87,7 +88,7 @@ const TaskFormDialog: React.FC<TaskFormDialogProps> = ({
           )}
           {formData.collection_mode === 'interval' && (
             <TextField
-              label='间隔时间（分钟）'
+              label={i18n.t('pages.task_form_dialog.k10')}
               type='number'
               fullWidth
               value={formData.interval_minutes}
@@ -102,13 +103,13 @@ const TaskFormDialog: React.FC<TaskFormDialogProps> = ({
         </Stack>
       </DialogContent>
       <DialogActions>
-        <Button onClick={onClose}>取消</Button>
+        <Button onClick={onClose}>{i18n.t('pages.task_form_dialog.k11')}</Button>
         <Button
           variant='contained'
           onClick={onSave}
           disabled={submitting}
         >
-          {submitting ? '保存中...' : '保存'}
+          {submitting ? i18n.t('pages.task_form_dialog.k1') : i18n.t('pages.task_form_dialog.k12')}
         </Button>
       </DialogActions>
     </Dialog>

@@ -44,6 +44,7 @@ import {
   FormGroup,
   Input,
 } from '@mui/material';
+import i18n from '@/i18n';
 import {
   AlertTriangle as WarningIcon,
   MoreHorizontal,
@@ -145,7 +146,7 @@ export function ListPageTemplate<T extends { id?: string | number }>({
   onPageChange,
   onPageSizeChange,
   searchable,
-  searchPlaceholder = '搜索...',
+  searchPlaceholder = i18n.t('components.list_page_template.k0'),
   searchValue,
   onSearch,
   onSearchChange,
@@ -158,7 +159,7 @@ export function ListPageTemplate<T extends { id?: string | number }>({
   rowActions,
   onRefresh,
   showBatchActionBar = true,
-  emptyMessage = '暂无数据',
+  emptyMessage = i18n.t('templates.list_page_template.k0'),
   emptyIcon,
   headerContent,
   filterContent,
@@ -384,7 +385,7 @@ export function ListPageTemplate<T extends { id?: string | number }>({
             const value = (safeRow as Record<string, unknown>)[field.key];
             return (
               <Chip
-                label={value ? '是' : '否'}
+                label={value ? i18n.t('templates.list_page_template.k2') : i18n.t('templates.list_page_template.k1')}
                 size='small'
                 color={value ? 'success' : 'default'}
                 variant='outlined'
@@ -804,9 +805,9 @@ export function ListPageTemplate<T extends { id?: string | number }>({
   }, [searchable, crud, onSearch, onSearchChange, searchValue]);
 
   const resolvedSearchPlaceholder = useMemo(() => {
-    if (searchPlaceholder !== '搜索...') return searchPlaceholder;
+    if (searchPlaceholder !== i18n.t('components.list_page_template.k1')) return searchPlaceholder;
     if (crud?.searchPlaceholder) return crud.searchPlaceholder;
-    if (title) return `搜索${title}...`;
+    if (title) return `${i18n.t('components.list_page_template.k2')}${title}...`;
     return searchPlaceholder;
   }, [searchPlaceholder, crud, title]);
 
@@ -852,7 +853,7 @@ export function ListPageTemplate<T extends { id?: string | number }>({
     // 总数卡片
     cards.push({
       key: 'total',
-      label: '总数',
+      label: i18n.t('templates.list_page_template.k3'),
       value: crudResult.pagination.total ?? 0,
       color: 'primary',
     });
@@ -919,7 +920,7 @@ export function ListPageTemplate<T extends { id?: string | number }>({
     if (crud.quickFilterShowAll !== false) {
       filters.push({
         key: 'all',
-        label: '全部',
+        label: i18n.t('templates.list_page_template.k4'),
         filters: {},
       });
     }
@@ -1072,7 +1073,7 @@ export function ListPageTemplate<T extends { id?: string | number }>({
       if (!crud) return false;
       const rowId = getRowId ? getRowId(record) : (record as Record<string, unknown>).id;
       if (!rowId) return false;
-      if (!confirm(`确定要删除这条记录吗？此操作不可恢复。`)) return false;
+      if (!confirm(i18n.t('components.list_page_template.k0'))) return false;
       try {
         await crudResult.delete(String(rowId));
         return true;
@@ -1134,7 +1135,7 @@ export function ListPageTemplate<T extends { id?: string | number }>({
           (Array.isArray(value) && value.length === 0))
       ) {
         const rule = field.rules?.find((r) => r.type === 'required');
-        errors[field.key] = rule?.message || `${field.label}不能为空`;
+        errors[field.key] = rule?.message || `${field.label}${i18n.t('components.list_page_template.k3')}`;
         return;
       }
 
@@ -1149,45 +1150,45 @@ export function ListPageTemplate<T extends { id?: string | number }>({
           if (rule.type === 'email') {
             const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
             if (!emailRegex.test(String(value))) {
-              errors[field.key] = rule.message || '请输入有效的邮箱地址';
+              errors[field.key] = rule.message || i18n.t('templates.list_page_template.k5');
               break;
             }
           }
 
           if (rule.type === 'number' && isNaN(Number(value))) {
-            errors[field.key] = rule.message || '请输入有效的数字';
+            errors[field.key] = rule.message || i18n.t('templates.list_page_template.k6');
             break;
           }
 
           if (rule.type === 'min' && Number(value) < (rule.min ?? 0)) {
-            errors[field.key] = rule.message || `不能小于${rule.min}`;
+            errors[field.key] = rule.message || `${i18n.t('components.list_page_template.k4')}${rule.min}`;
             break;
           }
 
           if (rule.type === 'max' && Number(value) > (rule.max ?? Infinity)) {
-            errors[field.key] = rule.message || `不能大于${rule.max}`;
+            errors[field.key] = rule.message || `${i18n.t('components.list_page_template.k5')}${rule.max}`;
             break;
           }
 
           if (rule.type === 'minLength' && String(value).length < (rule.minLength ?? 0)) {
-            errors[field.key] = rule.message || `最少${rule.minLength}个字符`;
+            errors[field.key] = rule.message || `${i18n.t('components.list_page_template.k6')}${rule.minLength}${i18n.t('components.list_page_template.k7')}`;
             break;
           }
 
           if (rule.type === 'maxLength' && String(value).length > (rule.maxLength ?? Infinity)) {
-            errors[field.key] = rule.message || `最多${rule.maxLength}个字符`;
+            errors[field.key] = rule.message || `${i18n.t('components.list_page_template.k8')}${rule.maxLength}${i18n.t('components.list_page_template.k9')}`;
             break;
           }
 
           if (rule.type === 'pattern' && rule.pattern && !rule.pattern.test(String(value))) {
-            errors[field.key] = rule.message || '格式不正确';
+            errors[field.key] = rule.message || i18n.t('templates.list_page_template.k7');
             break;
           }
 
           if (rule.validator) {
             const result = rule.validator(value);
             if (result !== true) {
-              errors[field.key] = typeof result === 'string' ? result : rule.message || '验证失败';
+              errors[field.key] = typeof result === 'string' ? result : rule.message || i18n.t('templates.list_page_template.k8');
               break;
             }
           }
@@ -1276,14 +1277,14 @@ export function ListPageTemplate<T extends { id?: string | number }>({
         if (fieldType === 'switch') {
           return val ? (
             <Chip
-              label='是'
+              label={i18n.t('templates.list_page_template.k9')}
               size='small'
               color='success'
               variant='outlined'
             />
           ) : (
             <Chip
-              label='否'
+              label={i18n.t('templates.list_page_template.k10')}
               size='small'
               color='default'
               variant='outlined'
@@ -1399,7 +1400,7 @@ export function ListPageTemplate<T extends { id?: string | number }>({
               <TextField
                 fullWidth
                 size='small'
-                label={`${field.label}（最小）`}
+                label={`${field.label}${i18n.t('components.list_page_template.k10')}`}
                 type='number'
                 value={(value as Record<string, unknown>)?.min ?? ''}
                 onChange={(e) =>
@@ -1408,7 +1409,7 @@ export function ListPageTemplate<T extends { id?: string | number }>({
                     min: e.target.value,
                   })
                 }
-                placeholder='最小值'
+                placeholder={i18n.t('templates.list_page_template.k11')}
                 disabled={disabled}
                 slotProps={{
                   input: {
@@ -1430,7 +1431,7 @@ export function ListPageTemplate<T extends { id?: string | number }>({
               <TextField
                 fullWidth
                 size='small'
-                label={`${field.label}（最大）`}
+                label={`${field.label}${i18n.t('components.list_page_template.k11')}`}
                 type='number'
                 value={(value as Record<string, unknown>)?.max ?? ''}
                 onChange={(e) =>
@@ -1439,7 +1440,7 @@ export function ListPageTemplate<T extends { id?: string | number }>({
                     max: e.target.value,
                   })
                 }
-                placeholder='最大值'
+                placeholder={i18n.t('templates.list_page_template.k12')}
                 disabled={disabled}
                 slotProps={{
                   input: {
@@ -1733,7 +1734,7 @@ export function ListPageTemplate<T extends { id?: string | number }>({
   const effectiveActions = useMemo(() => {
     if (!hasForm || !crud || crud.showCreateButton === false) return actions;
     const createAction = {
-      label: crud.createButtonText || '新建',
+      label: crud.createButtonText || i18n.t('templates.list_page_template.k13'),
       icon: <Plus size={18} />,
       variant: 'contained' as const,
       onClick: openCreateForm,
@@ -2043,13 +2044,13 @@ export function ListPageTemplate<T extends { id?: string | number }>({
     const builtInActions: BatchAction<T>[] = [];
     if (crud.selectable && crudResult?.bulkDelete) {
       builtInActions.push({
-        label: '批量删除',
+        label: i18n.t('templates.list_page_template.k14'),
         icon: null,
         color: 'error',
         onClick: (selectedRows: T[]) => {
           const ids = selectedRows.map((row: T) => row.id).filter(Boolean);
           if (ids.length === 0) return;
-          if (confirm(`确定删除选中的 ${ids.length} 条记录吗？`)) {
+          if (confirm(`${i18n.t('components.list_page_template.k12')}${ids.length}${i18n.t('components.list_page_template.k13')}`)) {
             crudResult.bulkDelete(ids as string[]);
           }
         },
@@ -2068,13 +2069,13 @@ export function ListPageTemplate<T extends { id?: string | number }>({
     const builtInActions: RowAction<T>[] = [];
     builtInActions.push({
       key: 'edit',
-      label: '编辑',
+      label: i18n.t('templates.list_page_template.k15'),
       icon: <Edit size={16} />,
       onClick: (row: T) => openEditForm(row),
     });
     builtInActions.push({
       key: 'delete',
-      label: '删除',
+      label: i18n.t('templates.list_page_template.k16'),
       icon: <Trash2 size={16} />,
       color: 'error',
       onClick: (row: T) => handleDelete(row),
@@ -2529,7 +2530,7 @@ export function ListPageTemplate<T extends { id?: string | number }>({
         }
 
         if (exportDataRows.length === 0) {
-          logger.warn('没有可导出的数据');
+          logger.warn(i18n.t('templates.list_page_template.k17'));
           setExporting(false);
           return;
         }
@@ -2620,7 +2621,7 @@ export function ListPageTemplate<T extends { id?: string | number }>({
           setExportComplete(false);
         }, 2000);
       } catch (error) {
-        logger.error('导出失败:', error);
+        logger.error(i18n.t('components.list_page_template.k14'), error);
       } finally {
         setExporting(false);
       }
@@ -2818,7 +2819,7 @@ export function ListPageTemplate<T extends { id?: string | number }>({
                     },
                     zIndex: 3,
                   }}
-                  title='拖拽调整列宽，双击重置'
+                  title={i18n.t('templates.list_page_template.k18')}
                 />
               )}
             </TableCell>
@@ -2829,7 +2830,7 @@ export function ListPageTemplate<T extends { id?: string | number }>({
             align='right'
             sx={{ width: 80 }}
           >
-            操作
+            {i18n.t('components.list_page_template.k1')}
           </TableCell>
         )}
         {columnConfigurable && (
@@ -2837,11 +2838,11 @@ export function ListPageTemplate<T extends { id?: string | number }>({
             align='right'
             sx={{ width: 48 }}
           >
-            <Tooltip title='配置列'>
+            <Tooltip title={i18n.t('templates.list_page_template.k19')}>
               <IconButton
                 size='small'
                 onClick={(e) => setColumnConfigAnchor(e.currentTarget)}
-                aria-label='配置列'
+                aria-label={i18n.t('templates.list_page_template.k20')}
               >
                 <Columns3 style={{ width: 18, height: 18 }} />
               </IconButton>
@@ -2954,7 +2955,7 @@ export function ListPageTemplate<T extends { id?: string | number }>({
             <EmptyState
               icon={emptyIcon}
               title={emptyMessage}
-              description='暂无数据，点击添加按钮创建新记录'
+              description={i18n.t('templates.list_page_template.k21')}
               action={
                 emptyActionButton
                   ? { label: emptyActionButton.label, onClick: emptyActionButton.onClick }
@@ -3055,7 +3056,7 @@ export function ListPageTemplate<T extends { id?: string | number }>({
                     e.stopPropagation();
                     handleExpandRow(row);
                   }}
-                  aria-label='展开'
+                  aria-label={i18n.t('templates.list_page_template.k22')}
                 >
                   <ChevronRight
                     style={{
@@ -3086,7 +3087,7 @@ export function ListPageTemplate<T extends { id?: string | number }>({
                       e.stopPropagation();
                       toggleExpand(rowId);
                     }}
-                    aria-label='展开'
+                    aria-label={i18n.t('templates.list_page_template.k23')}
                   >
                     <ChevronRight
                       style={{
@@ -3182,7 +3183,7 @@ export function ListPageTemplate<T extends { id?: string | number }>({
                   <IconButton
                     size='small'
                     onClick={(e) => handleRowActionClick(e, row)}
-                    aria-label='更多操作'
+                    aria-label={i18n.t('templates.list_page_template.k24')}
                   >
                     <MoreHorizontal style={{ width: 18, height: 18 }} />
                   </IconButton>
@@ -3219,7 +3220,7 @@ export function ListPageTemplate<T extends { id?: string | number }>({
                       <IconButton
                         size='small'
                         onClick={(e) => handleRowActionClick(e, row)}
-                        aria-label='更多操作'
+                        aria-label={i18n.t('templates.list_page_template.k25')}
                       >
                         <MoreHorizontal style={{ width: 16, height: 16 }} />
                       </IconButton>
@@ -3292,7 +3293,7 @@ export function ListPageTemplate<T extends { id?: string | number }>({
               bgcolor: 'inherit',
             }}
           >
-            合计
+            {i18n.t('components.list_page_template.k2')}
           </TableCell>
         )}
         {resolvedTreeView && (
@@ -3382,8 +3383,8 @@ export function ListPageTemplate<T extends { id?: string | number }>({
         rowsPerPage={resolvedPagination.pageSize}
         onRowsPerPageChange={(e) => resolvedPagination.onPageSizeChange?.(Number(e.target.value))}
         rowsPerPageOptions={[10, 20, 50, 100]}
-        labelRowsPerPage='每页行数'
-        labelDisplayedRows={({ from, to, count }) => `${from}-${to} 共 ${count} 条`}
+        labelRowsPerPage={i18n.t('templates.list_page_template.k26')}
+        labelDisplayedRows={({ from, to, count }) => `${from}-${to}${i18n.t('components.list_page_template.k15')}${count}${i18n.t('components.list_page_template.k16')}`}
       />
     );
   };
@@ -3464,7 +3465,7 @@ export function ListPageTemplate<T extends { id?: string | number }>({
           const rowObj = row as unknown as Record<string, unknown>;
           const title = mobileCardTitleKey
             ? rowObj[mobileCardTitleKey]
-            : rowObj.name || rowObj.title || rowObj.code || `项目 ${index + 1}`;
+            : rowObj.name || rowObj.title || rowObj.code || `${i18n.t('components.list_page_template.k17')}${index + 1}`;
           const subtitle = mobileCardSubtitleKey ? rowObj[mobileCardSubtitleKey] : '';
 
           return (
@@ -3535,7 +3536,7 @@ export function ListPageTemplate<T extends { id?: string | number }>({
                     <IconButton
                       size='small'
                       onClick={(e) => handleRowActionClick(e, row)}
-                      aria-label='更多操作'
+                      aria-label={i18n.t('templates.list_page_template.k27')}
                     >
                       <MoreHorizontal style={{ width: 18, height: 18 }} />
                     </IconButton>
@@ -3554,8 +3555,8 @@ export function ListPageTemplate<T extends { id?: string | number }>({
                         ? '-'
                         : typeof value === 'boolean'
                           ? value
-                            ? '是'
-                            : '否'
+                            ? i18n.t('templates.list_page_template.k28')
+                            : i18n.t('templates.list_page_template.k29')
                           : String(value);
 
                     return (
@@ -3703,11 +3704,11 @@ export function ListPageTemplate<T extends { id?: string | number }>({
                 )}
                 {/* 刷新按钮 */}
                 {onRefresh && (
-                  <Tooltip title='刷新'>
+                  <Tooltip title={i18n.t('templates.list_page_template.k30')}>
                     <IconButton
                       onClick={onRefresh}
                       size='small'
-                      aria-label='刷新'
+                      aria-label={i18n.t('templates.list_page_template.k31')}
                     >
                       <RefreshCw size={18} />
                     </IconButton>
@@ -3717,14 +3718,14 @@ export function ListPageTemplate<T extends { id?: string | number }>({
                 {resolvedExportable && (
                   <div>
                     <Tooltip
-                      title={exporting ? '导出中...' : exportComplete ? '导出成功' : '导出数据'}
+                      title={exporting ? i18n.t('components.list_page_template.k18') : exportComplete ? i18n.t('templates.list_page_template.k33') : i18n.t('templates.list_page_template.k32')}
                     >
                       <IconButton
                         onClick={(e) => setExportAnchorEl(e.currentTarget)}
                         size='small'
                         disabled={data.length === 0 || exporting}
                         color={exportComplete ? 'primary' : 'inherit'}
-                        aria-label='下载'
+                        aria-label={i18n.t('templates.list_page_template.k34')}
                       >
                         <Download size={18} />
                       </IconButton>
@@ -3742,7 +3743,7 @@ export function ListPageTemplate<T extends { id?: string | number }>({
                             sx={{ pointerEvents: 'none', opacity: 0.6 }}
                           >
                             <ListItemText sx={{ fontWeight: 600, fontSize: 12 }}>
-                              导出当前页
+                              {i18n.t('components.list_page_template.k3')}
                             </ListItemText>
                           </MenuItem>
                           {resolvedExportFormats.includes('csv') && (
@@ -3846,10 +3847,10 @@ export function ListPageTemplate<T extends { id?: string | number }>({
                       ))}
                       {hiddenActions.length > 0 && (
                         <>
-                          <Tooltip title='更多操作'>
+                          <Tooltip title={i18n.t('templates.list_page_template.k35')}>
                             <IconButton
                               size='small'
-                              aria-label='更多'
+                              aria-label={i18n.t('templates.list_page_template.k36')}
                               onClick={(e) => setMobileMenuEl(e.currentTarget)}
                             >
                               <MoreHorizontal style={{ width: 20, height: 20 }} />
@@ -3910,7 +3911,7 @@ export function ListPageTemplate<T extends { id?: string | number }>({
                       onClick={() => setSelectedIds(new Set())}
                       sx={{ whiteSpace: 'nowrap' }}
                     >
-                      取消选择
+                      {i18n.t('components.list_page_template.k4')}
                     </Button>
                   </div>
                 )}
@@ -4019,12 +4020,12 @@ export function ListPageTemplate<T extends { id?: string | number }>({
             {effectiveViewModes.map((mode) => (
               <Tooltip
                 key={mode}
-                title={mode === 'table' ? '表格视图' : '卡片视图'}
+                title={mode === 'table' ? i18n.t('templates.list_page_template.k38') : i18n.t('templates.list_page_template.k37')}
               >
                 <IconButton
                   size='small'
                   onClick={() => handleViewModeChange(mode)}
-                  aria-label={mode === 'table' ? '表格视图' : '卡片视图'}
+                  aria-label={mode === 'table' ? i18n.t('templates.list_page_template.k40') : i18n.t('templates.list_page_template.k39')}
                   sx={{
                     borderRadius: 1.5,
                     bgcolor: effectiveViewMode === mode ? 'background.paper' : 'transparent',
@@ -4073,13 +4074,13 @@ export function ListPageTemplate<T extends { id?: string | number }>({
                       ? [
                           {
                             key: 'edit',
-                            label: '编辑',
+                            label: i18n.t('templates.list_page_template.k41'),
                             icon: <Edit size={16} />,
                             onClick: (row: T) => openEditForm(row),
                           },
                           {
                             key: 'delete',
-                            label: '删除',
+                            label: i18n.t('templates.list_page_template.k42'),
                             icon: <Trash2 size={16} />,
                             color: 'error' as const,
                             onClick: (row: T) => handleDelete(row),
@@ -4199,7 +4200,7 @@ export function ListPageTemplate<T extends { id?: string | number }>({
           </Box>
         </DialogContent>
         <DialogActions sx={{ gap: 2 }}>
-          <Button onClick={handleCancelConfirm}>取消</Button>
+          <Button onClick={handleCancelConfirm}>{i18n.t('templates.list_page_template.k43')}</Button>
           <Button
             onClick={handleConfirmBatchAction}
             color='primary'
@@ -4217,21 +4218,21 @@ export function ListPageTemplate<T extends { id?: string | number }>({
       >
         <DialogTitle sx={{ fontWeight: 600 }}>
           {batchOperationState.isCancelled
-            ? `${batchOperationState.actionLabel}已取消`
-            : `${batchOperationState.actionLabel}中...`}
+            ? `${batchOperationState.actionLabel}${i18n.t('components.list_page_template.k19')}`
+            : `${batchOperationState.actionLabel}${i18n.t('components.list_page_template.k20')}`}
         </DialogTitle>
         <DialogContent sx={{ mt: 2 }}>
           <Box sx={{ mb: 3 }}>
             <Typography variant='body1'>
               {batchOperationState.isCancelled ? (
-                <span>操作已取消，正在回滚...</span>
+                <span>{i18n.t('components.list_page_template.k21')}</span>
               ) : (
                 <span>
                   正在处理{' '}
                   <strong>
                     {batchOperationState.processed}/{batchOperationState.total}
                   </strong>{' '}
-                  条数据
+                  {i18n.t('components.list_page_template.k5')}
                 </span>
               )}
             </Typography>
@@ -4248,7 +4249,7 @@ export function ListPageTemplate<T extends { id?: string | number }>({
               onClick={handleCancelBatchOperation}
               color='error'
             >
-              取消操作
+              {i18n.t('components.list_page_template.k6')}
             </Button>
           )}
         </DialogActions>
@@ -4261,10 +4262,10 @@ export function ListPageTemplate<T extends { id?: string | number }>({
             open={formOpen}
             title={
               formMode === 'create'
-                ? `新建${crud!.entityName || ''}`
+                ? `${i18n.t('components.list_page_template.k22')}${crud!.entityName || ''}`
                 : formMode === 'edit'
-                  ? `编辑${crud!.entityName || ''}`
-                  : `查看${crud!.entityName || ''}`
+                  ? `${i18n.t('components.list_page_template.k23')}${crud!.entityName || ''}`
+                  : `${i18n.t('components.list_page_template.k24')}${crud!.entityName || ''}`
             }
             onClose={closeForm}
             onSubmit={() => {
@@ -4281,10 +4282,10 @@ export function ListPageTemplate<T extends { id?: string | number }>({
             open={formOpen}
             title={
               formMode === 'create'
-                ? `新建${crud!.entityName || ''}`
+                ? `${i18n.t('components.list_page_template.k25')}${crud!.entityName || ''}`
                 : formMode === 'edit'
-                  ? `编辑${crud!.entityName || ''}`
-                  : `查看${crud!.entityName || ''}`
+                  ? `${i18n.t('components.list_page_template.k26')}${crud!.entityName || ''}`
+                  : `${i18n.t('components.list_page_template.k27')}${crud!.entityName || ''}`
             }
             onClose={closeForm}
             onSubmit={() => {

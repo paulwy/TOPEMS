@@ -30,7 +30,6 @@ import {
   getFactoryMapColumns,
   getBusinessLocationColumns,
 } from './TableUtils';
-
 interface DataTableSectionProps {
   activeTab: TabType;
   loading: boolean;
@@ -41,7 +40,6 @@ interface DataTableSectionProps {
   onEdit: (item: GisEntity) => void;
   onDelete: (id: string) => void;
 }
-
 const tableConfig: Record<
   Exclude<TabType, 'map'>,
   {
@@ -97,7 +95,6 @@ const tableConfig: Record<
       getBusinessLocationColumns(onEdit, onDelete) as ColumnDef<GisEntity>[],
   },
 };
-
 export const DataTableSection: React.FC<DataTableSectionProps> = ({
   activeTab,
   loading,
@@ -109,10 +106,8 @@ export const DataTableSection: React.FC<DataTableSectionProps> = ({
   onDelete,
 }) => {
   if (activeTab === 'map') return null;
-
   const config = tableConfig[activeTab];
   const columns = config.getColumns(onEdit, onDelete);
-
   return (
     <Paper
       elevation={0}
@@ -158,7 +153,7 @@ export const DataTableSection: React.FC<DataTableSectionProps> = ({
             onClick={onDownloadTemplate}
             sx={{ color: 'text.secondary' }}
           >
-            下载模板
+            {i18n.t('pages.data_table_section.k0')}
           </Button>
         </Stack>
       </Box>
@@ -194,7 +189,7 @@ export const DataTableSection: React.FC<DataTableSectionProps> = ({
                 color='text.disabled'
               />
             </Box>
-            <Typography color='text.secondary'>暂无数据</Typography>
+            <Typography color='text.secondary'>{i18n.t('bi.data_table_section.k0')}</Typography>
           </Box>
         ) : (
           <DataTable

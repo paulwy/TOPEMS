@@ -19,6 +19,7 @@ import {
   MenuItem,
   Button,
 } from '@mui/material';
+import i18n from '@/i18n';
 import {
   Home,
   ListTodo,
@@ -42,10 +43,7 @@ import { apiLogger } from '@/utils/logger';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { MOBILE_PATHS } from '@/modules/mobile/config';
 import { PageContainer } from '@/components/common';
-
-
 import { QUERY_KEYS } from '@/lib/reactQuery';
-
 const MobileQualityPage: React.FC = () => {
   const theme = useTheme();
   const navigate = useNavigate();
@@ -61,11 +59,8 @@ const MobileQualityPage: React.FC = () => {
     quantity: 1,
     description: '',
   });
-
-  const tabs = ['质检任务', '缺陷上报'];
-
+  const tabs = [i18n.t('mobile.mobile_quality_page.k1'), i18n.t('mobile.mobile_quality_page.k0')];
   const queryClient = useQueryClient();
-
   const tasksQuery = useQuery<QualityTask[]>({
     queryKey: [...QUERY_KEYS.AD_HOC.MOBILE_QUALITY_TASKS_BASE, user?.fullName],
     queryFn: async () => {
@@ -74,7 +69,7 @@ const MobileQualityPage: React.FC = () => {
           id: '1',
           task_no: 'QT-2024-06-001',
           type: 'incoming',
-          product_name: '电子元件 电阻10kΩ',
+          product_name: i18n.t('pages.mobile_quality_page.10k_0'),
           batch_no: 'B20240601',
           quantity: 5000,
           status: 'pending',
@@ -86,7 +81,7 @@ const MobileQualityPage: React.FC = () => {
           id: '2',
           task_no: 'QT-2024-06-002',
           type: 'process',
-          product_name: 'PCB电路板焊接',
+          product_name: i18n.t('pages.mobile_quality_page.pcb_1'),
           batch_no: 'B20240602',
           quantity: 1000,
           status: 'in_progress',
@@ -98,11 +93,11 @@ const MobileQualityPage: React.FC = () => {
           id: '3',
           task_no: 'QT-2024-06-003',
           type: 'finished',
-          product_name: '智能传感器模块',
+          product_name: i18n.t('mobile.mobile_quality_page.k2'),
           batch_no: 'FG20240625',
           quantity: 320,
           status: 'passed',
-          inspector: '李华',
+          inspector: i18n.t('mobile.mobile_quality_page.k3'),
           due_date: '2024-06-27',
           created_at: '2024-06-27T10:00:00Z',
         },
@@ -110,11 +105,11 @@ const MobileQualityPage: React.FC = () => {
           id: '4',
           task_no: 'QT-2024-06-004',
           type: 'outgoing',
-          product_name: '数据采集器',
+          product_name: i18n.t('mobile.mobile_quality_page.k4'),
           batch_no: 'FG20240620',
           quantity: 150,
           status: 'failed',
-          inspector: '王强',
+          inspector: i18n.t('mobile.mobile_quality_page.k5'),
           due_date: '2024-06-26',
           created_at: '2024-06-26T14:00:00Z',
         },
@@ -122,7 +117,7 @@ const MobileQualityPage: React.FC = () => {
           id: '5',
           task_no: 'QT-2024-06-005',
           type: 'incoming',
-          product_name: '塑料外壳',
+          product_name: i18n.t('mobile.mobile_quality_page.k6'),
           batch_no: 'B20240603',
           quantity: 2000,
           status: 'pending',
@@ -136,7 +131,6 @@ const MobileQualityPage: React.FC = () => {
     staleTime: 5 * 60 * 1000,
   });
   const qualityTasks = tasksQuery.data ?? [];
-
   const defectsQuery = useQuery<DefectRecord[]>({
     queryKey: [...QUERY_KEYS.AD_HOC.MOBILE_QUALITY_DEFECTS_BASE, user?.fullName],
     queryFn: async () => {
@@ -144,12 +138,12 @@ const MobileQualityPage: React.FC = () => {
         {
           id: '1',
           task_id: 'QT-2024-06-002',
-          product_name: 'PCB电路板焊接',
+          product_name: i18n.t('pages.mobile_quality_page.pcb_2'),
           batch_no: 'B20240602',
-          defect_type: '虚焊',
+          defect_type: i18n.t('mobile.mobile_quality_page.k7'),
           severity: 'major',
           quantity: 5,
-          description: '部分焊点存在虚焊问题，需要返工',
+          description: i18n.t('mobile.mobile_quality_page.k8'),
           reporter: user?.fullName || '',
           reported_at: '2024-06-28T10:30:00Z',
           status: 'open',
@@ -157,25 +151,25 @@ const MobileQualityPage: React.FC = () => {
         {
           id: '2',
           task_id: 'QT-2024-06-004',
-          product_name: '数据采集器',
+          product_name: i18n.t('mobile.mobile_quality_page.k9'),
           batch_no: 'FG20240620',
-          defect_type: '外观划痕',
+          defect_type: i18n.t('mobile.mobile_quality_page.k10'),
           severity: 'minor',
           quantity: 3,
-          description: '外壳表面有轻微划痕，不影响功能',
-          reporter: '王强',
+          description: i18n.t('mobile.mobile_quality_page.k11'),
+          reporter: i18n.t('mobile.mobile_quality_page.k12'),
           reported_at: '2024-06-26T15:00:00Z',
           status: 'closed',
         },
         {
           id: '3',
           task_id: 'QT-2024-06-002',
-          product_name: 'PCB电路板焊接',
+          product_name: i18n.t('pages.mobile_quality_page.pcb_3'),
           batch_no: 'B20240602',
-          defect_type: '元件错位',
+          defect_type: i18n.t('mobile.mobile_quality_page.k13'),
           severity: 'critical',
           quantity: 2,
-          description: '关键元件位置偏移，可能导致功能故障',
+          description: i18n.t('mobile.mobile_quality_page.k14'),
           reporter: user?.fullName || '',
           reported_at: '2024-06-28T11:00:00Z',
           status: 'processing',
@@ -187,47 +181,41 @@ const MobileQualityPage: React.FC = () => {
   });
   const defectRecords = defectsQuery.data ?? [];
   const loading = tasksQuery.isLoading || defectsQuery.isLoading;
-
   useEffect(() => {
     if (tasksQuery.isError) {
-      apiLogger.error('加载质检任务失败:', tasksQuery.error);
+      apiLogger.error(i18n.t('pages.mobile_quality_page.k4'), tasksQuery.error);
     }
     if (defectsQuery.isError) {
-      apiLogger.error('加载缺陷记录失败:', defectsQuery.error);
+      apiLogger.error(i18n.t('pages.mobile_quality_page.k5'), defectsQuery.error);
     }
   }, [tasksQuery.isError, tasksQuery.error, defectsQuery.isError, defectsQuery.error]);
-
   const handleRefresh = useCallback(async () => {
     await Promise.all([tasksQuery.refetch(), defectsQuery.refetch()]);
   }, [tasksQuery, defectsQuery]);
-
   const handleTabChange = (_event: React.SyntheticEvent, newValue: number) => {
     setActiveTab(newValue);
   };
-
   const getTypeLabel = (type: string) => {
     const map: Record<string, string> = {
-      incoming: '来料检验',
-      process: '过程检验',
-      finished: '成品检验',
-      outgoing: '出厂检验',
+      incoming: i18n.t('mobile.mobile_quality_page.k15'),
+      process: i18n.t('mobile.mobile_quality_page.k16'),
+      finished: i18n.t('mobile.mobile_quality_page.k17'),
+      outgoing: i18n.t('mobile.mobile_quality_page.k18'),
     };
     return map[type] || type;
   };
-
   const getStatusLabel = (status: string) => {
     const map: Record<string, string> = {
-      pending: '待检验',
-      in_progress: '检验中',
-      passed: '合格',
-      failed: '不合格',
-      open: '待处理',
-      processing: '处理中',
-      closed: '已关闭',
+      pending: i18n.t('mobile.mobile_quality_page.k19'),
+      in_progress: i18n.t('mobile.mobile_quality_page.k20'),
+      passed: i18n.t('mobile.mobile_quality_page.k21'),
+      failed: i18n.t('mobile.mobile_quality_page.k22'),
+      open: i18n.t('mobile.mobile_quality_page.k23'),
+      processing: i18n.t('mobile.mobile_quality_page.k24'),
+      closed: i18n.t('mobile.mobile_quality_page.k25'),
     };
     return map[status] || status;
   };
-
   const getStatusColor = (status: string) => {
     const map: Record<string, 'warning' | 'primary' | 'success' | 'error' | 'info' | 'default'> = {
       pending: 'warning',
@@ -240,16 +228,14 @@ const MobileQualityPage: React.FC = () => {
     };
     return map[status] || 'default';
   };
-
   const getSeverityLabel = (severity: string) => {
     const map: Record<string, string> = {
-      minor: '轻微',
-      major: '严重',
-      critical: '致命',
+      minor: i18n.t('mobile.mobile_quality_page.k26'),
+      major: i18n.t('mobile.mobile_quality_page.k27'),
+      critical: i18n.t('mobile.mobile_quality_page.k28'),
     };
     return map[severity] || severity;
   };
-
   const getSeverityColor = (severity: string) => {
     const map: Record<string, 'warning' | 'error' | 'default'> = {
       minor: 'warning',
@@ -258,7 +244,6 @@ const MobileQualityPage: React.FC = () => {
     };
     return map[severity] || 'default';
   };
-
   const getStatusIcon = (status: string) => {
     switch (status) {
       case 'passed':
@@ -271,7 +256,6 @@ const MobileQualityPage: React.FC = () => {
         return <ClipboardCheck style={{ width: 20, height: 20 }} />;
     }
   };
-
   const filteredTasks = qualityTasks.filter(
     (task) =>
       !searchQuery ||
@@ -279,7 +263,6 @@ const MobileQualityPage: React.FC = () => {
       task.task_no.toLowerCase().includes(searchQuery.toLowerCase()) ||
       task.batch_no.toLowerCase().includes(searchQuery.toLowerCase())
   );
-
   const handleReportDefect = (task: QualityTask) => {
     setSelectedTask(task);
     setDefectForm({
@@ -290,7 +273,6 @@ const MobileQualityPage: React.FC = () => {
     });
     setDefectDialogOpen(true);
   };
-
   const submitDefectMutation = useMutation({
     mutationFn: async () => {
       await new Promise((resolve) => setTimeout(resolve, 1000));
@@ -316,33 +298,31 @@ const MobileQualityPage: React.FC = () => {
       );
       setDefectDialogOpen(false);
       addNotification({
-        title: '上报成功',
-        message: '缺陷已成功上报',
+        title: i18n.t('mobile.mobile_quality_page.k29'),
+        message: i18n.t('mobile.mobile_quality_page.k30'),
         type: 'success',
       });
     },
     onError: (err: unknown) => {
-      apiLogger.error('缺陷上报失败:', err);
+      apiLogger.error(i18n.t('pages.mobile_quality_page.k6'), err);
       addNotification({
-        title: '上报失败',
-        message: '缺陷上报失败，请重试',
+        title: i18n.t('mobile.mobile_quality_page.k31'),
+        message: i18n.t('mobile.mobile_quality_page.k32'),
         type: 'error',
       });
     },
   });
-
   const handleSubmitDefect = () => {
     if (!defectForm.defect_type || !defectForm.description) {
       addNotification({
-        title: '请填写完整',
-        message: '请填写缺陷类型和描述',
+        title: i18n.t('mobile.mobile_quality_page.k33'),
+        message: i18n.t('mobile.mobile_quality_page.k34'),
         type: 'warning',
       });
       return;
     }
     submitDefectMutation.mutate();
   };
-
   const updateTaskStatusMutation = useMutation({
     mutationFn: async (params: { task: QualityTask; action: 'start' | 'pass' | 'fail' }) => {
       return params;
@@ -363,17 +343,15 @@ const MobileQualityPage: React.FC = () => {
         })
       );
       addNotification({
-        title: '操作成功',
-        message: `任务状态已更新`,
+        title: i18n.t('mobile.mobile_quality_page.k35'),
+        message: i18n.t('pages.mobile_quality_page.k0'),
         type: 'success',
       });
     },
   });
-
   const handleTaskAction = (task: QualityTask, action: 'start' | 'pass' | 'fail') => {
     updateTaskStatusMutation.mutate({ task, action });
   };
-
   const handleBottomTabChange = (tabId: string) => {
     switch (tabId) {
       case 'home':
@@ -393,23 +371,21 @@ const MobileQualityPage: React.FC = () => {
         break;
     }
   };
-
   const bottomTabs = [
-    { id: 'home', label: '工作台', icon: <Home style={{ width: 22, height: 22 }} /> },
-    { id: 'tasks', label: '任务', icon: <ListTodo style={{ width: 22, height: 22 }} /> },
-    { id: 'scan', label: '扫码', icon: <ScanLine style={{ width: 22, height: 22 }} /> },
+    { id: 'home', label: i18n.t('mobile.mobile_quality_page.k36'), icon: <Home style={{ width: 22, height: 22 }} /> },
+    { id: 'tasks', label: i18n.t('mobile.mobile_quality_page.k37'), icon: <ListTodo style={{ width: 22, height: 22 }} /> },
+    { id: 'scan', label: i18n.t('mobile.mobile_quality_page.k38'), icon: <ScanLine style={{ width: 22, height: 22 }} /> },
     {
       id: 'approval',
-      label: '审批',
+      label: i18n.t('mobile.mobile_quality_page.k39'),
       icon: <CheckSquare style={{ width: 22, height: 22 }} />,
       badge: 3,
     },
-    { id: 'profile', label: '我的', icon: <User style={{ width: 22, height: 22 }} /> },
+    { id: 'profile', label: i18n.t('mobile.mobile_quality_page.k40'), icon: <User style={{ width: 22, height: 22 }} /> },
   ];
-
   return (
     <MobileLayout
-      title='移动质检'
+      title={i18n.t('mobile.mobile_quality_page.k41')}
       showBack
       onBackClick={() => navigate(MOBILE_PATHS.workbench)}
       showNotifications
@@ -423,7 +399,7 @@ const MobileQualityPage: React.FC = () => {
           size='large'
           sx={{ minWidth: 44, minHeight: 44 }}
           onClick={() => navigate(MOBILE_PATHS.scanPage)}
-          aria-label='扫码'
+          aria-label={i18n.t('mobile.mobile_quality_page.k42')}
         >
           <Barcode style={{ width: 20, height: 20 }} />
         </IconButton>
@@ -453,13 +429,12 @@ const MobileQualityPage: React.FC = () => {
             />
           ))}
         </Tabs>
-
         {activeTab === 0 && (
           <Box sx={{ px: 2, pt: 2 }}>
             <TextField
               fullWidth
               size='small'
-              placeholder='搜索产品名称、任务编号、批次号'
+              placeholder={i18n.t('mobile.mobile_quality_page.k43')}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               sx={{
@@ -481,7 +456,6 @@ const MobileQualityPage: React.FC = () => {
             />
           </Box>
         )}
-
         <PullToRefresh onRefresh={handleRefresh}>
           {loading ? (
             <MobileSkeleton
@@ -551,7 +525,7 @@ const MobileQualityPage: React.FC = () => {
                               color='text.secondary'
                               sx={{ display: 'block', mb: 0.5 }}
                             >
-                              批次号
+                              {i18n.t('pages.mobile_quality_page.k1')}
                             </Typography>
                             <Typography variant='body2'>{task.batch_no}</Typography>
                           </Box>
@@ -561,7 +535,7 @@ const MobileQualityPage: React.FC = () => {
                               color='text.secondary'
                               sx={{ display: 'block', mb: 0.5 }}
                             >
-                              数量
+                              {i18n.t('pages.mobile_quality_page.k2')}
                             </Typography>
                             <Typography variant='body2'>
                               {task.quantity.toLocaleString()}
@@ -573,7 +547,7 @@ const MobileQualityPage: React.FC = () => {
                               color='text.secondary'
                               sx={{ display: 'block', mb: 0.5 }}
                             >
-                              检验员
+                              {i18n.t('pages.mobile_quality_page.k3')}
                             </Typography>
                             <Typography variant='body2'>{task.inspector}</Typography>
                           </Box>
@@ -592,7 +566,7 @@ const MobileQualityPage: React.FC = () => {
                             variant='caption'
                             color='text.secondary'
                           >
-                            截止日期: {task.due_date}
+                            [i18n.t('pages.mobile_quality_page.k4')]: {task.due_date}
                           </Typography>
                           <Box sx={{ display: 'flex', gap: 1 }}>
                             {task.status === 'pending' && (
@@ -601,7 +575,7 @@ const MobileQualityPage: React.FC = () => {
                                 variant='contained'
                                 onClick={() => handleTaskAction(task, 'start')}
                               >
-                                开始检验
+                                {i18n.t('pages.mobile_quality_page.k5')}
                               </MobileButton>
                             )}
                             {task.status === 'in_progress' && (
@@ -612,7 +586,7 @@ const MobileQualityPage: React.FC = () => {
                                   color='error'
                                   onClick={() => handleReportDefect(task)}
                                 >
-                                  报缺陷
+                                  {i18n.t('pages.mobile_quality_page.k6')}
                                 </MobileButton>
                                 <MobileButton
                                   size='small'
@@ -620,7 +594,7 @@ const MobileQualityPage: React.FC = () => {
                                   color='success'
                                   onClick={() => handleTaskAction(task, 'pass')}
                                 >
-                                  合格
+                                  {i18n.t('pages.mobile_quality_page.k7')}
                                 </MobileButton>
                               </>
                             )}
@@ -630,13 +604,13 @@ const MobileQualityPage: React.FC = () => {
                                 variant='outlined'
                                 onClick={() =>
                                   addNotification({
-                                    title: '查看报告',
-                                    message: '查看检验报告详情',
+                                    title: i18n.t('mobile.mobile_quality_page.k44'),
+                                    message: i18n.t('mobile.mobile_quality_page.k45'),
                                     type: 'info',
                                   })
                                 }
                               >
-                                查看报告
+                                {i18n.t('pages.mobile_quality_page.k8')}
                               </MobileButton>
                             )}
                           </Box>
@@ -647,7 +621,6 @@ const MobileQualityPage: React.FC = () => {
                   ))}
                 </List>
               )}
-
               {activeTab === 1 && (
                 <List disablePadding>
                   {defectRecords.map((defect, index) => (
@@ -713,13 +686,13 @@ const MobileQualityPage: React.FC = () => {
                             variant='caption'
                             color='text.secondary'
                           >
-                            批次: {defect.batch_no}
+                            [i18n.t('pages.mobile_quality_page.k9')]: {defect.batch_no}
                           </Typography>
                           <Typography
                             variant='caption'
                             color='text.secondary'
                           >
-                            数量: {defect.quantity}
+                            [i18n.t('pages.mobile_quality_page.k10')]: {defect.quantity}
                           </Typography>
                         </Box>
                         <Typography
@@ -766,14 +739,13 @@ const MobileQualityPage: React.FC = () => {
             </>
           )}
         </PullToRefresh>
-
         <Dialog
           open={defectDialogOpen}
           onClose={() => setDefectDialogOpen(false)}
           fullWidth
           maxWidth='sm'
         >
-          <DialogTitle>上报缺陷</DialogTitle>
+          <DialogTitle>{i18n.t('mobile.mobile_quality_page.k46')}</DialogTitle>
           <DialogContent>
             <Box sx={{ pt: 1, display: 'flex', flexDirection: 'column', gap: 2 }}>
               {selectedTask && (
@@ -790,7 +762,7 @@ const MobileQualityPage: React.FC = () => {
                     color='text.secondary'
                     sx={{ display: 'block', mb: 0.5 }}
                   >
-                    当前任务
+                    {i18n.t('pages.mobile_quality_page.k11')}
                   </Typography>
                   <Typography
                     variant='body2'
@@ -808,17 +780,17 @@ const MobileQualityPage: React.FC = () => {
               )}
               <TextField
                 fullWidth
-                label='缺陷类型'
+                label={i18n.t('mobile.mobile_quality_page.k47')}
                 value={defectForm.defect_type}
                 onChange={(e) =>
                   setDefectForm((prev) => ({ ...prev, defect_type: e.target.value }))
                 }
-                placeholder='请输入缺陷类型'
+                placeholder={i18n.t('mobile.mobile_quality_page.k48')}
               />
               <TextField
                 select
                 fullWidth
-                label='严重程度'
+                label={i18n.t('mobile.mobile_quality_page.k49')}
                 value={defectForm.severity}
                 onChange={(e) =>
                   setDefectForm((prev) => ({
@@ -827,14 +799,14 @@ const MobileQualityPage: React.FC = () => {
                   }))
                 }
               >
-                <MenuItem value='minor'>轻微</MenuItem>
-                <MenuItem value='major'>严重</MenuItem>
-                <MenuItem value='critical'>致命</MenuItem>
+                <MenuItem value='minor'>{i18n.t('mobile.mobile_quality_page.k50')}</MenuItem>
+                <MenuItem value='major'>{i18n.t('mobile.mobile_quality_page.k51')}</MenuItem>
+                <MenuItem value='critical'>{i18n.t('mobile.mobile_quality_page.k52')}</MenuItem>
               </TextField>
               <TextField
                 fullWidth
                 type='number'
-                label='缺陷数量'
+                label={i18n.t('mobile.mobile_quality_page.k53')}
                 value={defectForm.quantity}
                 onChange={(e) =>
                   setDefectForm((prev) => ({
@@ -848,12 +820,12 @@ const MobileQualityPage: React.FC = () => {
                 fullWidth
                 multiline
                 rows={3}
-                label='缺陷描述'
+                label={i18n.t('mobile.mobile_quality_page.k54')}
                 value={defectForm.description}
                 onChange={(e) =>
                   setDefectForm((prev) => ({ ...prev, description: e.target.value }))
                 }
-                placeholder='请详细描述缺陷情况'
+                placeholder={i18n.t('mobile.mobile_quality_page.k55')}
               />
               <Box sx={{ display: 'flex', gap: 1 }}>
                 <Button
@@ -861,20 +833,20 @@ const MobileQualityPage: React.FC = () => {
                   startIcon={<Camera style={{ width: 18, height: 18 }} />}
                   fullWidth
                 >
-                  拍照上传
+                  {i18n.t('pages.mobile_quality_page.k12')}
                 </Button>
               </Box>
             </Box>
           </DialogContent>
           <DialogActions sx={{ px: 3, pb: 2 }}>
-            <Button onClick={() => setDefectDialogOpen(false)}>取消</Button>
+            <Button onClick={() => setDefectDialogOpen(false)}>{i18n.t('mobile.mobile_quality_page.k56')}</Button>
             <MobileButton
               variant='contained'
               color='error'
               onClick={handleSubmitDefect}
               startIcon={<AlertTriangle style={{ width: 18, height: 18 }} />}
             >
-              提交上报
+              {i18n.t('pages.mobile_quality_page.k13')}
             </MobileButton>
           </DialogActions>
         </Dialog>
@@ -882,5 +854,4 @@ const MobileQualityPage: React.FC = () => {
     </MobileLayout>
   );
 };
-
 export default MobileQualityPage;

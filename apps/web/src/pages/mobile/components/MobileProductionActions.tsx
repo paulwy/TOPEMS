@@ -4,26 +4,22 @@
  */
 import React from 'react';
 import { Box, Typography } from '@mui/material';
-import { useTranslation } from 'react-i18next';
 import { Play, Pause, Plus } from 'lucide-react';
 import { MobileButton } from '@/components/mobile';
 import { useNotificationStore } from '@/store';
 import type { ProductionOrder } from '@/api/mobile';
-
+import i18n from '@/i18n';
 interface MobileProductionActionsProps {
   order: ProductionOrder;
   onOrderAction: (order: ProductionOrder, action: 'start' | 'pause' | 'resume') => void;
   onStartReport: (order: ProductionOrder) => void;
 }
-
 export const MobileProductionActions: React.FC<MobileProductionActionsProps> = ({
   order,
   onOrderAction,
   onStartReport,
 }) => {
-  const { t } = useTranslation();
   const { addNotification } = useNotificationStore();
-
   return (
     <Box
       sx={{
@@ -39,7 +35,7 @@ export const MobileProductionActions: React.FC<MobileProductionActionsProps> = (
         variant='caption'
         color='text.secondary'
       >
-        {t('mobile.production.label.due_date_value', { date: order.due_date })}
+        {i18n.t('mobile.production.label.due_date_value', { date: order.due_date })}
       </Typography>
       <Box sx={{ display: 'flex', gap: 1 }}>
         {order.status === 'pending' && (
@@ -49,7 +45,7 @@ export const MobileProductionActions: React.FC<MobileProductionActionsProps> = (
             startIcon={<Play style={{ width: 16, height: 16 }} />}
             onClick={() => onOrderAction(order, 'start')}
           >
-            {t('mobile.production.action.start')}
+            {i18n.t('mobile.production.action.start')}
           </MobileButton>
         )}
         {order.status === 'in_progress' && (
@@ -60,7 +56,7 @@ export const MobileProductionActions: React.FC<MobileProductionActionsProps> = (
               startIcon={<Pause style={{ width: 16, height: 16 }} />}
               onClick={() => onOrderAction(order, 'pause')}
             >
-              {t('mobile.production.action.pause')}
+              {i18n.t('mobile.production.action.pause')}
             </MobileButton>
             <MobileButton
               size='small'
@@ -68,7 +64,7 @@ export const MobileProductionActions: React.FC<MobileProductionActionsProps> = (
               startIcon={<Plus style={{ width: 16, height: 16 }} />}
               onClick={() => onStartReport(order)}
             >
-              {t('mobile.production.action.report')}
+              {i18n.t('mobile.production.action.report')}
             </MobileButton>
           </>
         )}
@@ -79,7 +75,7 @@ export const MobileProductionActions: React.FC<MobileProductionActionsProps> = (
             startIcon={<Play style={{ width: 16, height: 16 }} />}
             onClick={() => onOrderAction(order, 'resume')}
           >
-            {t('mobile.production.action.continue')}
+            {i18n.t('mobile.production.action.continue')}
           </MobileButton>
         )}
         {order.status === 'completed' && (
@@ -88,13 +84,13 @@ export const MobileProductionActions: React.FC<MobileProductionActionsProps> = (
             variant='outlined'
             onClick={() =>
               addNotification({
-                title: t('mobile.production.action.view_detail'),
-                message: t('mobile.production.action.view_order_detail'),
+                title: i18n.t('mobile.production.action.view_detail'),
+                message: i18n.t('mobile.production.action.view_order_detail'),
                 type: 'info',
               })
             }
           >
-            {t('mobile.production.action.detail')}
+            {i18n.t('mobile.production.action.detail')}
           </MobileButton>
         )}
       </Box>

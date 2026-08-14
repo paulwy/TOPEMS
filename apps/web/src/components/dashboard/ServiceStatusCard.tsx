@@ -1,5 +1,6 @@
 import React from 'react';
 import { Box, Typography } from '@mui/material';
+import { designTokens } from '@topems/tokens';
 
 interface ServiceStatusCardProps {
   name: string;
@@ -47,7 +48,7 @@ export const ServiceStatusCard: React.FC<ServiceStatusCardProps> = ({
         backgroundColor: colors.bg,
         transition: 'all 0.3s ease',
         '&:hover': {
-          boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
+          boxShadow: `0 4px 12px ${designTokens.colors.action.selected}`,
           transform: 'translateY(-2px)',
         },
       }}
@@ -69,7 +70,7 @@ export const ServiceStatusCard: React.FC<ServiceStatusCardProps> = ({
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+            boxShadow: `0 2px 4px ${designTokens.colors.action.selected}`,
           }}
         >
           <Icon style={{ width: 16, height: 16, color: colors.iconColor }} />
@@ -80,7 +81,7 @@ export const ServiceStatusCard: React.FC<ServiceStatusCardProps> = ({
             height: 10,
             borderRadius: '50%',
             backgroundColor: colors.dot,
-            boxShadow: '0 1px 2px rgba(0,0,0,0.2)',
+            boxShadow: `0 1px 2px ${designTokens.colors.cyber.glass.divider}`,
           }}
         />
       </Box>

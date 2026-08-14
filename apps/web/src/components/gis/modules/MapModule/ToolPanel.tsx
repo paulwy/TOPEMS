@@ -12,6 +12,7 @@ import {
   Box,
   Globe,
 } from 'lucide-react';
+import i18n from '@/i18n';
 import { Box as MuiBox, Typography, Paper, Divider, Button } from '@mui/material';
 import type { DrawFeature } from '../shared/types';
 
@@ -87,7 +88,7 @@ const ToolPanel: React.FC<ToolPanelProps> = ({
           variant='caption'
           sx={{ fontWeight: 500, color: 'text.secondary' }}
         >
-          工具
+          {i18n.t('components.tool_panel.k0')}
         </Typography>
       </MuiBox>
       <MuiBox sx={{ p: 2 }}>
@@ -107,7 +108,7 @@ const ToolPanel: React.FC<ToolPanelProps> = ({
             },
             textTransform: 'none',
           }}
-          title='选择工具'
+          title={i18n.t('components.tool_panel.k0')}
         >
           <MuiBox
             sx={{
@@ -118,7 +119,7 @@ const ToolPanel: React.FC<ToolPanelProps> = ({
               borderRadius: 1,
             }}
           />
-          <Typography variant='caption'>选择</Typography>
+          <Typography variant='caption'>{i18n.t('components.tool_panel.k1')}</Typography>
         </Button>
         <Button
           onClick={() => onSetTool('measure-distance')}
@@ -138,10 +139,10 @@ const ToolPanel: React.FC<ToolPanelProps> = ({
             textTransform: 'none',
             mt: 1,
           }}
-          title='距离测量'
+          title={i18n.t('components.tool_panel.k2')}
         >
           <Ruler size={16} />
-          <Typography variant='caption'>测距</Typography>
+          <Typography variant='caption'>{i18n.t('components.tool_panel.k3')}</Typography>
         </Button>
         <Button
           onClick={() => onSetTool('measure-area')}
@@ -160,10 +161,10 @@ const ToolPanel: React.FC<ToolPanelProps> = ({
             textTransform: 'none',
             mt: 1,
           }}
-          title='面积测量'
+          title={i18n.t('components.tool_panel.k4')}
         >
           <Ruler size={16} />
-          <Typography variant='caption'>测面积</Typography>
+          <Typography variant='caption'>{i18n.t('components.tool_panel.k5')}</Typography>
         </Button>
         <Divider sx={{ my: 2 }} />
         <Button
@@ -182,10 +183,10 @@ const ToolPanel: React.FC<ToolPanelProps> = ({
             },
             textTransform: 'none',
           }}
-          title='绘制点'
+          title={i18n.t('components.tool_panel.k6')}
         >
           <Pencil size={16} />
-          <Typography variant='caption'>绘点</Typography>
+          <Typography variant='caption'>{i18n.t('components.tool_panel.k7')}</Typography>
         </Button>
         <Button
           onClick={() => onSetTool('draw-line')}
@@ -204,10 +205,10 @@ const ToolPanel: React.FC<ToolPanelProps> = ({
             textTransform: 'none',
             mt: 1,
           }}
-          title='绘制线'
+          title={i18n.t('components.tool_panel.k8')}
         >
           <Pencil size={16} />
-          <Typography variant='caption'>绘线</Typography>
+          <Typography variant='caption'>{i18n.t('components.tool_panel.k9')}</Typography>
         </Button>
         <Button
           onClick={() => onSetTool('draw-polygon')}
@@ -226,10 +227,10 @@ const ToolPanel: React.FC<ToolPanelProps> = ({
             textTransform: 'none',
             mt: 1,
           }}
-          title='绘制多边形'
+          title={i18n.t('components.tool_panel.k10')}
         >
           <Pencil size={16} />
-          <Typography variant='caption'>绘多边形</Typography>
+          <Typography variant='caption'>{i18n.t('components.tool_panel.k11')}</Typography>
         </Button>
         <Divider sx={{ my: 2 }} />
         {(toolMode === 'measure-distance' || toolMode === 'measure-area') &&
@@ -248,10 +249,10 @@ const ToolPanel: React.FC<ToolPanelProps> = ({
                 '&:hover': { bgcolor: 'grey.200' },
                 textTransform: 'none',
               }}
-              title='清除测量'
+              title={i18n.t('components.tool_panel.k12')}
             >
               <Eraser size={16} />
-              <Typography variant='caption'>清除</Typography>
+              <Typography variant='caption'>{i18n.t('components.tool_panel.k13')}</Typography>
             </Button>
           )}
         {drawFeaturesLength > 0 && (
@@ -270,10 +271,10 @@ const ToolPanel: React.FC<ToolPanelProps> = ({
               textTransform: 'none',
               mt: 1,
             }}
-            title='清除所有绘制'
+            title={i18n.t('components.tool_panel.k14')}
           >
             <Trash2 size={16} />
-            <Typography variant='caption'>清除绘制</Typography>
+            <Typography variant='caption'>{i18n.t('components.tool_panel.k15')}</Typography>
           </Button>
         )}
         {currentDrawing && (
@@ -292,9 +293,9 @@ const ToolPanel: React.FC<ToolPanelProps> = ({
               textTransform: 'none',
               mt: 1,
             }}
-            title='完成绘制 (Enter)'
+            title={i18n.t('components.tool_panel.enter_16')}
           >
-            <Typography variant='caption'>完成绘制</Typography>
+            <Typography variant='caption'>{i18n.t('components.tool_panel.k17')}</Typography>
           </Button>
         )}
         <Divider sx={{ my: 2 }} />
@@ -312,10 +313,10 @@ const ToolPanel: React.FC<ToolPanelProps> = ({
             '&:hover': { bgcolor: showTrackPanel ? 'secondary.dark' : 'grey.50' },
             textTransform: 'none',
           }}
-          title='设备轨迹追踪'
+          title={i18n.t('components.tool_panel.k18')}
         >
           <PlayCircle size={16} />
-          <Typography variant='caption'>轨迹追踪</Typography>
+          <Typography variant='caption'>{i18n.t('components.tool_panel.k19')}</Typography>
         </Button>
         <Divider sx={{ my: 2 }} />
         <Button
@@ -332,10 +333,10 @@ const ToolPanel: React.FC<ToolPanelProps> = ({
             '&:hover': { bgcolor: 'primary.100' },
             textTransform: 'none',
           }}
-          title='导出GeoJSON'
+          title={i18n.t('components.tool_panel.geojson_20')}
         >
           <Download size={16} />
-          <Typography variant='caption'>导出GeoJSON</Typography>
+          <Typography variant='caption'>{i18n.t('components.tool_panel.geojson_21')}</Typography>
         </Button>
         <Button
           onClick={onExportDrawings}
@@ -352,10 +353,10 @@ const ToolPanel: React.FC<ToolPanelProps> = ({
             textTransform: 'none',
             mt: 1,
           }}
-          title='导出绘制图形'
+          title={i18n.t('components.tool_panel.k22')}
         >
           <FileJson size={16} />
-          <Typography variant='caption'>导出绘制图形</Typography>
+          <Typography variant='caption'>{i18n.t('components.tool_panel.k23')}</Typography>
         </Button>
         <Divider sx={{ my: 2 }} />
         <Button
@@ -372,10 +373,10 @@ const ToolPanel: React.FC<ToolPanelProps> = ({
             '&:hover': { bgcolor: mapType === 'amap' ? 'primary.dark' : 'grey.50' },
             textTransform: 'none',
           }}
-          title='切换地图'
+          title={i18n.t('components.tool_panel.k24')}
         >
           <Globe size={16} />
-          <Typography variant='caption'>{mapType === 'osm' ? '切换高德' : '切换OSM'}</Typography>
+          <Typography variant='caption'>{mapType === 'osm' ? i18n.t('components.tool_panel.k26') : i18n.t('components.tool_panel.osm_25')}</Typography>
         </Button>
         <Divider sx={{ my: 2 }} />
         <Button
@@ -392,10 +393,10 @@ const ToolPanel: React.FC<ToolPanelProps> = ({
             '&:hover': { bgcolor: showHeatmap ? 'error.darker' : 'grey.50' },
             textTransform: 'none',
           }}
-          title='热力图'
+          title={i18n.t('components.tool_panel.k27')}
         >
           <Thermometer size={16} />
-          <Typography variant='caption'>热力图</Typography>
+          <Typography variant='caption'>{i18n.t('components.tool_panel.k28')}</Typography>
         </Button>
         {showHeatmap && (
           <MuiBox sx={{ px: 2, py: 1 }}>
@@ -415,7 +416,7 @@ const ToolPanel: React.FC<ToolPanelProps> = ({
                 fontSize: '0.75rem',
               }}
             >
-              密度模式
+              {i18n.t('components.tool_panel.k1')}
             </Button>
             <Button
               onClick={() => onSetHeatmapMode('status')}
@@ -434,7 +435,7 @@ const ToolPanel: React.FC<ToolPanelProps> = ({
                 mt: 1,
               }}
             >
-              状态模式
+              {i18n.t('components.tool_panel.k2')}
             </Button>
           </MuiBox>
         )}
@@ -452,7 +453,7 @@ const ToolPanel: React.FC<ToolPanelProps> = ({
             '&:hover': { bgcolor: showHeatmap ? 'primary.main' : 'grey.50' },
             textTransform: 'none',
           }}
-          title='3D视图'
+          title={i18n.t('components.tool_panel.3d_3')}
         >
           <Box size={16} />
           <Typography variant='caption'>3D视图</Typography>
@@ -472,9 +473,9 @@ const ToolPanel: React.FC<ToolPanelProps> = ({
             '&:hover': { bgcolor: offlineMode ? 'success.700' : 'grey.50' },
             textTransform: 'none',
           }}
-          title='离线模式'
+          title={i18n.t('components.tool_panel.k29')}
         >
-          <Typography variant='caption'>{offlineMode ? '离线模式' : '在线模式'}</Typography>
+          <Typography variant='caption'>{offlineMode ? i18n.t('components.tool_panel.k31') : i18n.t('components.tool_panel.k30')}</Typography>
         </Button>
       </MuiBox>
     </Paper>

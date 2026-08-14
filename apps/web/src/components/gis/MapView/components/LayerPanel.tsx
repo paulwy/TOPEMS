@@ -4,6 +4,7 @@ import { Layers, ChevronUp, ChevronDown, MapPin, Navigation, Info, Pencil } from
 import LayerToggle from './LayerToggle';
 import type { VisibleLayers } from '../types';
 import { designTokens } from '@/theme/tokens';
+import i18n from '@/i18n';
 
 const ct= designTokens.colors;
 
@@ -40,7 +41,7 @@ const LayerPanel: React.FC<LayerPanelProps> = ({
         fullWidth
         onClick={() => setShowLayerPanel(!showLayerPanel)}
         sx={{
-          padding: '8px 16px',
+          padding: `${designTokens.spacing.sm} 16px`,
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
@@ -58,7 +59,7 @@ const LayerPanel: React.FC<LayerPanelProps> = ({
             variant='body2'
             sx={{ fontWeight: 'medium', color: 'grey.700' }}
           >
-            图层
+            {i18n.t('components.layer_panel.k0')}
           </Typography>
         </MuiBox>
         {showLayerPanel ? (
@@ -84,21 +85,21 @@ const LayerPanel: React.FC<LayerPanelProps> = ({
           }}
         >
           <LayerToggle
-            label='设备点位'
+            label={i18n.t('gis.layer_panel.k0')}
             icon={<MapPin size={16} />}
             checked={visibleLayers.devices}
             onChange={() => toggleLayer('devices')}
             color={ct.success.main}
           />
           <LayerToggle
-            label='管线'
+            label={i18n.t('gis.layer_panel.k1')}
             icon={<Navigation size={16} />}
             checked={visibleLayers.pipelines}
             onChange={() => toggleLayer('pipelines')}
             color={ct.secondary[400]}
           />
           <LayerToggle
-            label='仓储位置'
+            label={i18n.t('gis.layer_panel.k2')}
             icon={<Info size={16} />}
             checked={visibleLayers.storage}
             onChange={() => toggleLayer('storage')}
@@ -113,7 +114,7 @@ const LayerPanel: React.FC<LayerPanelProps> = ({
               }}
             >
               <LayerToggle
-                label='绘制图形'
+                label={i18n.t('gis.layer_panel.k3')}
                 icon={<Pencil size={16} />}
                 checked={true}
                 onChange={() => {}}

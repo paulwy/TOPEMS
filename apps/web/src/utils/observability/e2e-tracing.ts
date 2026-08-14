@@ -1,4 +1,5 @@
 import { logger } from '../logger';
+import i18n from '@/i18n';
 
 export interface Span {
   traceId: string;
@@ -129,7 +130,7 @@ export class E2ETracer {
     }
 
     this.initialized = true;
-    logger.info('[E2ETracer] 端到端追踪已初始化');
+    logger.info(i18n.t('shared.e2e-tracing.k0'));
   }
 
   private shouldSample(): boolean {

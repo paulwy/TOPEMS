@@ -1,5 +1,4 @@
 import React from 'react';
-import { useTranslation } from 'react-i18next';
 import { Search, RefreshCw } from 'lucide-react';
 import {
   Box,
@@ -14,12 +13,10 @@ import {
   Button,
   InputAdornment,
 } from '@mui/material';
+import i18n from '@/i18n';
 import type { VoucherManagementReturn } from '../hooks/useVoucherManagement';
-
 export type VoucherFiltersProps = VoucherManagementReturn;
-
 const VoucherFilters: React.FC<VoucherFiltersProps> = (vm) => {
-  const { t } = useTranslation();
   const {
     activeTab,
     handleTabChange,
@@ -33,7 +30,6 @@ const VoucherFilters: React.FC<VoucherFiltersProps> = (vm) => {
     setPage,
     vouchersQuery,
   } = vm;
-
   return (
     <>
       <Tabs
@@ -58,7 +54,6 @@ const VoucherFilters: React.FC<VoucherFiltersProps> = (vm) => {
           />
         ))}
       </Tabs>
-
       <Box
         sx={{
           p: 2,
@@ -72,7 +67,7 @@ const VoucherFilters: React.FC<VoucherFiltersProps> = (vm) => {
       >
         <TextField
           size='small'
-          placeholder={t('erp.voucher_mgmt.label.search_placeholder')}
+          placeholder={i18n.t('erp.voucher_mgmt.label.search_placeholder')}
           value={searchQuery}
           // @controlled-uncontrolled-mixed uses {value + onChange} two-way binding + V79 will migrate to Controller
           onChange={(e) => setSearchQuery(e.target.value)}
@@ -94,27 +89,27 @@ const VoucherFilters: React.FC<VoucherFiltersProps> = (vm) => {
           size='small'
           sx={{ minWidth: 140 }}
         >
-          <InputLabel>{t('erp.voucher_mgmt.label.voucher_type')}</InputLabel>
+          <InputLabel>{i18n.t('erp.voucher_mgmt.label.voucher_type')}</InputLabel>
           <Select
             value={voucherTypeFilter}
-            label={t('erp.voucher_mgmt.label.voucher_type')}
+            label={i18n.t('erp.voucher_mgmt.label.voucher_type')}
             onChange={(e) => {
               setVoucherTypeFilter(e.target.value);
               setPage(0);
             }}
           >
-            <MenuItem value=''>{t('erp.voucher_mgmt.label.all_types')}</MenuItem>
-            <MenuItem value={t('erp.voucher_mgmt.voucher_type_short.receipt')}>
-              {t('erp.voucher_mgmt.voucher_type.receipt')}
+            <MenuItem value=''>{i18n.t('erp.voucher_mgmt.label.all_types')}</MenuItem>
+            <MenuItem value={i18n.t('erp.voucher_mgmt.voucher_type_short.receipt')}>
+              {i18n.t('erp.voucher_mgmt.voucher_type.receipt')}
             </MenuItem>
-            <MenuItem value={t('erp.voucher_mgmt.voucher_type_short.payment')}>
-              {t('erp.voucher_mgmt.voucher_type.payment')}
+            <MenuItem value={i18n.t('erp.voucher_mgmt.voucher_type_short.payment')}>
+              {i18n.t('erp.voucher_mgmt.voucher_type.payment')}
             </MenuItem>
-            <MenuItem value={t('erp.voucher_mgmt.voucher_type_short.transfer')}>
-              {t('erp.voucher_mgmt.voucher_type.transfer')}
+            <MenuItem value={i18n.t('erp.voucher_mgmt.voucher_type_short.transfer')}>
+              {i18n.t('erp.voucher_mgmt.voucher_type.transfer')}
             </MenuItem>
-            <MenuItem value={t('erp.voucher_mgmt.voucher_type_short.accounting')}>
-              {t('erp.voucher_mgmt.voucher_type.accounting')}
+            <MenuItem value={i18n.t('erp.voucher_mgmt.voucher_type_short.accounting')}>
+              {i18n.t('erp.voucher_mgmt.voucher_type.accounting')}
             </MenuItem>
           </Select>
         </FormControl>
@@ -122,22 +117,22 @@ const VoucherFilters: React.FC<VoucherFiltersProps> = (vm) => {
           size='small'
           sx={{ minWidth: 160 }}
         >
-          <InputLabel>{t('erp.voucher_mgmt.label.period')}</InputLabel>
+          <InputLabel>{i18n.t('erp.voucher_mgmt.label.period')}</InputLabel>
           <Select
             value={periodFilter}
-            label={t('erp.voucher_mgmt.label.period')}
+            label={i18n.t('erp.voucher_mgmt.label.period')}
             onChange={(e) => {
               setPeriodFilter(e.target.value);
               setPage(0);
             }}
           >
-            <MenuItem value=''>{t('erp.voucher_mgmt.label.all_periods')}</MenuItem>
-            <MenuItem value='2024-01'>{t('erp.voucher_mgmt.period.2024_01')}</MenuItem>
-            <MenuItem value='2024-02'>{t('erp.voucher_mgmt.period.2024_02')}</MenuItem>
-            <MenuItem value='2024-03'>{t('erp.voucher_mgmt.period.2024_03')}</MenuItem>
-            <MenuItem value='2024-04'>{t('erp.voucher_mgmt.period.2024_04')}</MenuItem>
-            <MenuItem value='2024-05'>{t('erp.voucher_mgmt.period.2024_05')}</MenuItem>
-            <MenuItem value='2024-06'>{t('erp.voucher_mgmt.period.2024_06')}</MenuItem>
+            <MenuItem value=''>{i18n.t('erp.voucher_mgmt.label.all_periods')}</MenuItem>
+            <MenuItem value='2024-01'>{i18n.t('erp.voucher_mgmt.period.2024_01')}</MenuItem>
+            <MenuItem value='2024-02'>{i18n.t('erp.voucher_mgmt.period.2024_02')}</MenuItem>
+            <MenuItem value='2024-03'>{i18n.t('erp.voucher_mgmt.period.2024_03')}</MenuItem>
+            <MenuItem value='2024-04'>{i18n.t('erp.voucher_mgmt.period.2024_04')}</MenuItem>
+            <MenuItem value='2024-05'>{i18n.t('erp.voucher_mgmt.period.2024_05')}</MenuItem>
+            <MenuItem value='2024-06'>{i18n.t('erp.voucher_mgmt.period.2024_06')}</MenuItem>
           </Select>
         </FormControl>
         <Box sx={{ flexGrow: 1 }} />
@@ -147,11 +142,10 @@ const VoucherFilters: React.FC<VoucherFiltersProps> = (vm) => {
           startIcon={<RefreshCw size={16} />}
           onClick={() => vouchersQuery.refetch()}
         >
-          {t('erp.voucher_mgmt.label.refresh')}
+          {i18n.t('erp.voucher_mgmt.label.refresh')}
         </Button>
       </Box>
     </>
   );
 };
-
 export default VoucherFilters;

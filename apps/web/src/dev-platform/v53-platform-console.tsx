@@ -39,6 +39,7 @@ import {
   Switch,
   FormControlLabel,
 } from '@mui/material';
+import i18n from '@/i18n';
 import {
   X as XIcon,
   Rocket,
@@ -111,10 +112,10 @@ const UI_LABELS: Record<UIType, string> = {
 };
 
 const ENV_LABELS: Record<EnvironmentName, string> = {
-  development: '开发环境',
-  staging: '预发环境',
-  production: '生产环境',
-  preview: '预览环境',
+  development: i18n.t('dev-platform.v53-platform-console.k0'),
+  staging: i18n.t('dev-platform.v53-platform-console.k1'),
+  production: i18n.t('dev-platform.v53-platform-console.k2'),
+  preview: i18n.t('dev-platform.v53-platform-console.k3'),
 };
 
 const STATUS_COLORS: Record<string, string> = {
@@ -222,37 +223,37 @@ const V53PlatformConsole: React.FC<{ onClose: () => void }> = ({ onClose }) => {
             <Tab
               icon={<Activity size={16} />}
               iconPosition='start'
-              label='总览仪表盘'
+              label={i18n.t('dev-platform.v53-platform-console.k4')}
               value='dashboard'
             />
             <Tab
               icon={<Rocket size={16} />}
               iconPosition='start'
-              label='开发平台'
+              label={i18n.t('dev-platform.v53-platform-console.k5')}
               value='platform'
             />
             <Tab
               icon={<Layout size={16} />}
               iconPosition='start'
-              label='低代码搭建'
+              label={i18n.t('dev-platform.v53-platform-console.k6')}
               value='builder'
             />
             <Tab
               icon={<Blocks size={16} />}
               iconPosition='start'
-              label='插件市场'
+              label={i18n.t('dev-platform.v53-platform-console.k7')}
               value='marketplace'
             />
             <Tab
               icon={<Workflow size={16} />}
               iconPosition='start'
-              label='流水线'
+              label={i18n.t('dev-platform.v53-platform-console.k8')}
               value='pipelines'
             />
             <Tab
               icon={<Zap size={16} />}
               iconPosition='start'
-              label='活动'
+              label={i18n.t('dev-platform.v53-platform-console.k9')}
               value='activity'
             />
           </Tabs>
@@ -318,13 +319,13 @@ const V53ConsoleHeader: React.FC<{ onClose: () => void }> = ({ onClose }) => (
           variant='h6'
           sx={{ fontWeight: 700, fontSize: 18 }}
         >
-          V53.0 微前端平台终局
+          {i18n.t('dev_platform.v53-platform-console.v530_0')}
         </Typography>
         <Typography
           variant='caption'
           sx={{ opacity: 0.9 }}
         >
-          统一开发平台 · 低代码搭建 · 插件市场 · 流水线编排
+          {i18n.t('dev_platform.v53-platform-console.k1')}
         </Typography>
       </Box>
     </Box>
@@ -358,7 +359,7 @@ const DashboardTab: React.FC<{
       >
         <Grid size={{ xs: 12, sm: 6, md: 3 }}>
           <StatCard
-            title='项目总数'
+            title={i18n.t('dev-platform.v53-platform-console.k10')}
             value={platformStats.totalProjects}
             icon={<Package size={24} />}
             color={designTokens.colors.secondary.dark}
@@ -366,7 +367,7 @@ const DashboardTab: React.FC<{
         </Grid>
         <Grid size={{ xs: 12, sm: 6, md: 3 }}>
           <StatCard
-            title='运行中流水线'
+            title={i18n.t('dev-platform.v53-platform-console.k11')}
             value={platformStats.totalPipelines}
             icon={<Workflow size={24} />}
             color={designTokens.colors.pink.main}
@@ -374,7 +375,7 @@ const DashboardTab: React.FC<{
         </Grid>
         <Grid size={{ xs: 12, sm: 6, md: 3 }}>
           <StatCard
-            title='插件总数'
+            title={i18n.t('dev-platform.v53-platform-console.k12')}
             value={marketStats.totalPlugins}
             icon={<Blocks size={24} />}
             color={`${designTokens.colors.teal['500']}`}
@@ -382,7 +383,7 @@ const DashboardTab: React.FC<{
         </Grid>
         <Grid size={{ xs: 12, sm: 6, md: 3 }}>
           <StatCard
-            title='健康项目'
+            title={i18n.t('dev-platform.v53-platform-console.k13')}
             value={`${healthyProjects}/${platformStats.totalProjects || 0}`}
             icon={<Shield size={24} />}
             color={`${designTokens.colors.success.main}`}
@@ -392,7 +393,7 @@ const DashboardTab: React.FC<{
         <Grid size={{ xs: 12, md: 8 }}>
           <Card variant='outlined'>
             <CardHeader
-              title='项目状态'
+              title={i18n.t('dev-platform.v53-platform-console.k14')}
               avatar={<Rocket size={18} />}
             />
             <CardContent>
@@ -400,10 +401,10 @@ const DashboardTab: React.FC<{
                 <Table size='small'>
                   <TableHead>
                     <TableRow>
-                      <TableCell>项目名</TableCell>
-                      <TableCell>技术栈</TableCell>
-                      <TableCell>状态</TableCell>
-                      <TableCell align='right'>健康度</TableCell>
+                      <TableCell>{i18n.t('dev-platform.v53-platform-console.k15')}</TableCell>
+                      <TableCell>{i18n.t('dev-platform.v53-platform-console.k16')}</TableCell>
+                      <TableCell>{i18n.t('dev-platform.v53-platform-console.k17')}</TableCell>
+                      <TableCell align='right'>{i18n.t('dev-platform.v53-platform-console.k18')}</TableCell>
                     </TableRow>
                   </TableHead>
                   <TableBody>
@@ -414,7 +415,7 @@ const DashboardTab: React.FC<{
                           align='center'
                           sx={{ py: 4, color: 'text.secondary' }}
                         >
-                          暂无项目，前往"开发平台"创建第一个项目
+                          暂无项目，前往i18n.t('dev-platform.v53-platform-console.k19')创建第一个项目
                         </TableCell>
                       </TableRow>
                     ) : (
@@ -497,7 +498,7 @@ const DashboardTab: React.FC<{
         <Grid size={{ xs: 12, md: 4 }}>
           <Card variant='outlined'>
             <CardHeader
-              title='插件安装状态'
+              title={i18n.t('dev-platform.v53-platform-console.k20')}
               avatar={<Blocks size={18} />}
             />
             <CardContent>
@@ -509,8 +510,8 @@ const DashboardTab: React.FC<{
                       color={designTokens.colors.secondary.dark}
                     />
                   }
-                  label='已安装插件'
-                  value={`${installedPlugins.length} 个`}
+                  label={i18n.t('dev-platform.v53-platform-console.k21')}
+                  value={`${installedPlugins.length} ${i18n.t('dev_platform.v53-platform-console.k2')}`}
                 />
                 <InfoRow
                   icon={
@@ -519,8 +520,8 @@ const DashboardTab: React.FC<{
                       color={`${designTokens.colors.teal['500']}`}
                     />
                   }
-                  label='可更新插件'
-                  value={`${installedPlugins.filter((p) => p.updateAvailable).length} 个`}
+                  label={i18n.t('dev-platform.v53-platform-console.k22')}
+                  value={`${installedPlugins.filter((p) => p.updateAvailable).length} ${i18n.t('dev_platform.v53-platform-console.k3')}`}
                 />
                 <InfoRow
                   icon={
@@ -529,8 +530,8 @@ const DashboardTab: React.FC<{
                       color={designTokens.colors.warning.main}
                     />
                   }
-                  label='精选推荐'
-                  value={`${marketStats.featuredPlugins} 个`}
+                  label={i18n.t('dev-platform.v53-platform-console.k23')}
+                  value={`${marketStats.featuredPlugins} ${i18n.t('dev_platform.v53-platform-console.k4')}`}
                 />
                 <InfoRow
                   icon={
@@ -539,8 +540,8 @@ const DashboardTab: React.FC<{
                       color={`${designTokens.colors.success.main}`}
                     />
                   }
-                  label='认证插件'
-                  value={`${marketStats.verifiedPlugins} 个`}
+                  label={i18n.t('dev-platform.v53-platform-console.k24')}
+                  value={`${marketStats.verifiedPlugins} ${i18n.t('dev_platform.v53-platform-console.k5')}`}
                 />
               </Stack>
             </CardContent>
@@ -550,7 +551,7 @@ const DashboardTab: React.FC<{
         <Grid size={{ xs: 12, md: 6 }}>
           <Card variant='outlined'>
             <CardHeader
-              title='最近流水线运行'
+              title={i18n.t('dev-platform.v53-platform-console.k25')}
               avatar={<Workflow size={18} />}
             />
             <CardContent>
@@ -561,7 +562,7 @@ const DashboardTab: React.FC<{
                     color='text.secondary'
                     sx={{ py: 2, textAlign: 'center' }}
                   >
-                    暂无流水线记录
+                    {i18n.t('dev_platform.v53-platform-console.k6')}
                   </Typography>
                 ) : (
                   recentRuns.map((run) => (
@@ -620,7 +621,7 @@ const DashboardTab: React.FC<{
         <Grid size={{ xs: 12, md: 6 }}>
           <Card variant='outlined'>
             <CardHeader
-              title='低代码页面'
+              title={i18n.t('dev-platform.v53-platform-console.k26')}
               avatar={<Layout size={18} />}
             />
             <CardContent>
@@ -631,7 +632,7 @@ const DashboardTab: React.FC<{
                     color='text.secondary'
                     sx={{ py: 2, textAlign: 'center' }}
                   >
-                    暂无低代码页面
+                    {i18n.t('dev_platform.v53-platform-console.k7')}
                   </Typography>
                 ) : (
                   pages.map((page) => (
@@ -772,7 +773,7 @@ const PlatformTab: React.FC<{ projects: DevProject[] }> = ({ projects }) => {
           variant='h6'
           sx={{ fontWeight: 600 }}
         >
-          开发平台
+          {i18n.t('dev_platform.v53-platform-console.k8')}
         </Typography>
         <Button
           variant='contained'
@@ -783,7 +784,7 @@ const PlatformTab: React.FC<{ projects: DevProject[] }> = ({ projects }) => {
             background: `linear-gradient(135deg, ${designTokens.colors.primary.dark}, ${designTokens.colors.secondary.main})`,
           }}
         >
-          创建项目
+          {i18n.t('dev_platform.v53-platform-console.k9')}
         </Button>
       </Box>
 
@@ -802,21 +803,21 @@ const PlatformTab: React.FC<{ projects: DevProject[] }> = ({ projects }) => {
                 variant='h6'
                 sx={{ mt: 2, color: 'text.secondary' }}
               >
-                还没有项目
+                {i18n.t('dev_platform.v53-platform-console.k10')}
               </Typography>
               <Typography
                 variant='body2'
                 color='text.secondary'
                 sx={{ mb: 2 }}
               >
-                点击"创建项目"开始你的第一个 V53 微前端项目
+                点击i18n.t('dev-platform.v53-platform-console.k27')开始你的第一个 V53 微前端项目
               </Typography>
               <Button
                 variant='contained'
                 startIcon={<Plus size={16} />}
                 onClick={() => setShowCreate(true)}
               >
-                立即创建
+                {i18n.t('dev_platform.v53-platform-console.k11')}
               </Button>
             </Paper>
           </Grid>
@@ -831,7 +832,7 @@ const PlatformTab: React.FC<{ projects: DevProject[] }> = ({ projects }) => {
                   title={project.name}
                   avatar={<Code2 size={18} />}
                   action={
-                    <Tooltip title='查看详情'>
+                    <Tooltip title={i18n.t('dev-platform.v53-platform-console.k28')}>
                       <IconButton
                         size='small'
                         onClick={() => setSelectedProject(project)}
@@ -884,7 +885,7 @@ const PlatformTab: React.FC<{ projects: DevProject[] }> = ({ projects }) => {
                         variant='caption'
                         color='text.secondary'
                       >
-                        健康度: {project.health.score}
+                        [i18n.t('dev_platform.v53-platform-console.k12')]: {project.health.score}
                       </Typography>
                     </Box>
 
@@ -895,7 +896,7 @@ const PlatformTab: React.FC<{ projects: DevProject[] }> = ({ projects }) => {
                         startIcon={<Play size={14} />}
                         onClick={() => handleRunPipeline(project.id, 'build-only')}
                       >
-                        构建
+                        {i18n.t('dev_platform.v53-platform-console.k13')}
                       </Button>
                       <Button
                         size='small'
@@ -904,7 +905,7 @@ const PlatformTab: React.FC<{ projects: DevProject[] }> = ({ projects }) => {
                         startIcon={<Rocket size={14} />}
                         onClick={() => handleRunPipeline(project.id, 'build-deploy')}
                       >
-                        部署
+                        {i18n.t('dev_platform.v53-platform-console.k14')}
                       </Button>
                     </Box>
                   </Stack>
@@ -923,7 +924,7 @@ const PlatformTab: React.FC<{ projects: DevProject[] }> = ({ projects }) => {
               sx={{ fontWeight: 600 }}
               gutterBottom
             >
-              创建新项目
+              {i18n.t('dev_platform.v53-platform-console.k15')}
             </Typography>
             <Grid
               container
@@ -932,18 +933,18 @@ const PlatformTab: React.FC<{ projects: DevProject[] }> = ({ projects }) => {
               <Grid size={{ xs: 12, md: 4 }}>
                 <TextField
                   fullWidth
-                  label='项目名称'
+                  label={i18n.t('dev-platform.v53-platform-console.k29')}
                   value={newProjectName}
                   onChange={(e) => setNewProjectName(e.target.value)}
-                  placeholder='输入项目名称'
+                  placeholder={i18n.t('dev-platform.v53-platform-console.k30')}
                 />
               </Grid>
               <Grid size={{ xs: 12, md: 4 }}>
                 <FormControl fullWidth>
-                  <InputLabel>技术栈预设</InputLabel>
+                  <InputLabel>{i18n.t('dev-platform.v53-platform-console.k31')}</InputLabel>
                   <Select
                     value={selectedStack}
-                    label='技术栈预设'
+                    label={i18n.t('dev-platform.v53-platform-console.k32')}
                     onChange={(e) => setSelectedStack(e.target.value)}
                   >
                     {presetStacks.map((s) => (
@@ -964,9 +965,9 @@ const PlatformTab: React.FC<{ projects: DevProject[] }> = ({ projects }) => {
                     onClick={handleCreate}
                     sx={{ flex: 1 }}
                   >
-                    创建
+                    {i18n.t('dev_platform.v53-platform-console.k16')}
                   </Button>
-                  <Button onClick={() => setShowCreate(false)}>取消</Button>
+                  <Button onClick={() => setShowCreate(false)}>{i18n.t('dev-platform.v53-platform-console.k33')}</Button>
                 </Box>
               </Grid>
             </Grid>
@@ -1027,7 +1028,7 @@ const ProjectDetailDialog: React.FC<{ project: DevProject; onClose: () => void }
             variant='caption'
             color='text.secondary'
           >
-            技术栈
+            {i18n.t('dev_platform.v53-platform-console.k17')}
           </Typography>
           <Stack
             direction='row'
@@ -1057,7 +1058,7 @@ const ProjectDetailDialog: React.FC<{ project: DevProject; onClose: () => void }
             variant='caption'
             color='text.secondary'
           >
-            环境配置
+            {i18n.t('dev_platform.v53-platform-console.k18')}
           </Typography>
           <Grid
             container
@@ -1096,7 +1097,7 @@ const ProjectDetailDialog: React.FC<{ project: DevProject; onClose: () => void }
             variant='caption'
             color='text.secondary'
           >
-            健康状况
+            {i18n.t('dev_platform.v53-platform-console.k19')}
           </Typography>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 0.5 }}>
             <LinearProgress
@@ -1175,14 +1176,14 @@ const BuilderTab: React.FC<{ pages: CanvasPage[] }> = ({ pages }) => {
   };
 
   const componentTypes: Array<{ type: string; label: string; icon: React.ReactNode }> = [
-    { type: 'text', label: '文本', icon: <MousePointerClick size={16} /> },
-    { type: 'heading', label: '标题', icon: <MousePointerClick size={16} /> },
-    { type: 'button', label: '按钮', icon: <MousePointerClick size={16} /> },
-    { type: 'input', label: '输入框', icon: <MousePointerClick size={16} /> },
-    { type: 'card', label: '卡片', icon: <MousePointerClick size={16} /> },
-    { type: 'table', label: '表格', icon: <MousePointerClick size={16} /> },
-    { type: 'chart', label: '图表', icon: <MousePointerClick size={16} /> },
-    { type: 'container', label: '容器', icon: <BoxIcon size={16} /> },
+    { type: 'text', label: i18n.t('dev-platform.v53-platform-console.k34'), icon: <MousePointerClick size={16} /> },
+    { type: 'heading', label: i18n.t('dev-platform.v53-platform-console.k35'), icon: <MousePointerClick size={16} /> },
+    { type: 'button', label: i18n.t('dev-platform.v53-platform-console.k36'), icon: <MousePointerClick size={16} /> },
+    { type: 'input', label: i18n.t('dev-platform.v53-platform-console.k37'), icon: <MousePointerClick size={16} /> },
+    { type: 'card', label: i18n.t('dev-platform.v53-platform-console.k38'), icon: <MousePointerClick size={16} /> },
+    { type: 'table', label: i18n.t('dev-platform.v53-platform-console.k39'), icon: <MousePointerClick size={16} /> },
+    { type: 'chart', label: i18n.t('dev-platform.v53-platform-console.k40'), icon: <MousePointerClick size={16} /> },
+    { type: 'container', label: i18n.t('dev-platform.v53-platform-console.k41'), icon: <BoxIcon size={16} /> },
   ];
 
   return (
@@ -1194,7 +1195,7 @@ const BuilderTab: React.FC<{ pages: CanvasPage[] }> = ({ pages }) => {
         <Grid size={{ xs: 12, md: 3 }}>
           <Card variant='outlined'>
             <CardHeader
-              title='页面列表'
+              title={i18n.t('dev-platform.v53-platform-console.k42')}
               avatar={<Layout size={18} />}
             />
             <CardContent>
@@ -1202,7 +1203,7 @@ const BuilderTab: React.FC<{ pages: CanvasPage[] }> = ({ pages }) => {
                 <Box sx={{ display: 'flex', gap: 1 }}>
                   <TextField
                     size='small'
-                    placeholder='新建页面...'
+                    placeholder={i18n.t('dev_platform.v53-platform-console.k20')}
                     value={newPageName}
                     onChange={(e) => setNewPageName(e.target.value)}
                     sx={{ flex: 1 }}
@@ -1235,7 +1236,7 @@ const BuilderTab: React.FC<{ pages: CanvasPage[] }> = ({ pages }) => {
                     >
                       <ListItemText
                         primary={page.name}
-                        secondary={`${page.components.length} 组件 · ${page.status}`}
+                        secondary={`${page.components.length} ${i18n.t('dev_platform.v53-platform-console.k21')} ${page.status}`}
                       />
                     </ListItem>
                   ))}
@@ -1245,7 +1246,7 @@ const BuilderTab: React.FC<{ pages: CanvasPage[] }> = ({ pages }) => {
                       color='text.secondary'
                       sx={{ p: 2, textAlign: 'center' }}
                     >
-                      暂无页面
+                      {i18n.t('dev_platform.v53-platform-console.k22')}
                     </Typography>
                   )}
                 </List>
@@ -1257,7 +1258,7 @@ const BuilderTab: React.FC<{ pages: CanvasPage[] }> = ({ pages }) => {
         <Grid size={{ xs: 12, md: 6 }}>
           <Card variant='outlined'>
             <CardHeader
-              title={selectedPage ? selectedPage.name : '画布'}
+              title={selectedPage ? selectedPage.name : i18n.t('dev-platform.v53-platform-console.k43')}
               avatar={<BoxIcon size={18} />}
               action={
                 selectedPage && (
@@ -1270,7 +1271,7 @@ const BuilderTab: React.FC<{ pages: CanvasPage[] }> = ({ pages }) => {
                       size={14}
                       style={{ marginRight: 4 }}
                     />{' '}
-                    发布
+                    {i18n.t('dev_platform.v53-platform-console.k23')}
                   </Button>
                 )
               }
@@ -1294,7 +1295,7 @@ const BuilderTab: React.FC<{ pages: CanvasPage[] }> = ({ pages }) => {
                         variant='body2'
                         sx={{ mt: 1 }}
                       >
-                        从左侧拖拽或点击组件添加到画布
+                        {i18n.t('dev_platform.v53-platform-console.k24')}
                       </Typography>
                     </Box>
                   ) : (
@@ -1352,7 +1353,7 @@ const BuilderTab: React.FC<{ pages: CanvasPage[] }> = ({ pages }) => {
                     variant='body2'
                     color='text.secondary'
                   >
-                    选择或创建一个页面开始搭建
+                    {i18n.t('dev_platform.v53-platform-console.k25')}
                   </Typography>
                 </Box>
               )}
@@ -1363,7 +1364,7 @@ const BuilderTab: React.FC<{ pages: CanvasPage[] }> = ({ pages }) => {
         <Grid size={{ xs: 12, md: 3 }}>
           <Card variant='outlined'>
             <CardHeader
-              title='组件库'
+              title={i18n.t('dev-platform.v53-platform-console.k44')}
               avatar={<Layers size={18} />}
             />
             <CardContent>
@@ -1391,7 +1392,7 @@ const BuilderTab: React.FC<{ pages: CanvasPage[] }> = ({ pages }) => {
               sx={{ mt: 2 }}
             >
               <CardHeader
-                title='页面属性'
+                title={i18n.t('dev-platform.v53-platform-console.k45')}
                 avatar={<Settings size={18} />}
               />
               <CardContent>
@@ -1403,8 +1404,8 @@ const BuilderTab: React.FC<{ pages: CanvasPage[] }> = ({ pages }) => {
                         color={designTokens.colors.secondary.dark}
                       />
                     }
-                    label='数据源'
-                    value={`${selectedPage.dataSources.length} 个`}
+                    label={i18n.t('dev-platform.v53-platform-console.k46')}
+                    value={`${selectedPage.dataSources.length} ${i18n.t('dev_platform.v53-platform-console.k26')}`}
                   />
                   <InfoRow
                     icon={
@@ -1413,7 +1414,7 @@ const BuilderTab: React.FC<{ pages: CanvasPage[] }> = ({ pages }) => {
                         color={designTokens.colors.pink.main}
                       />
                     }
-                    label='主题模式'
+                    label={i18n.t('dev-platform.v53-platform-console.k47')}
                     value={selectedPage.theme.mode}
                   />
                   <InfoRow
@@ -1423,7 +1424,7 @@ const BuilderTab: React.FC<{ pages: CanvasPage[] }> = ({ pages }) => {
                         color={`${designTokens.colors.teal['500']}`}
                       />
                     }
-                    label='版本'
+                    label={i18n.t('dev-platform.v53-platform-console.k48')}
                     value={selectedPage.version}
                   />
                 </Stack>
@@ -1473,7 +1474,7 @@ const MarketplaceTab: React.FC<{ installedPlugins: InstalledPlugin[] }> = ({
       <Box sx={{ display: 'flex', gap: 2, mb: 3 }}>
         <TextField
           size='small'
-          placeholder='搜索插件...'
+          placeholder={i18n.t('dev_platform.v53-platform-console.k27')}
           value={searchQuery}
           onChange={(e) => handleSearch(e.target.value)}
           slotProps={{
@@ -1492,7 +1493,7 @@ const MarketplaceTab: React.FC<{ installedPlugins: InstalledPlugin[] }> = ({
         <Grid size={{ xs: 12, md: 8 }}>
           <Card variant='outlined'>
             <CardHeader
-              title={`插件市场 (${searchResults.total})`}
+              title={`${i18n.t('dev_platform.v53-platform-console.k28')}${searchResults.total})`}
               avatar={<Blocks size={18} />}
             />
             <CardContent>
@@ -1575,7 +1576,7 @@ const MarketplaceTab: React.FC<{ installedPlugins: InstalledPlugin[] }> = ({
                           />
                           {plugin.isVerified && (
                             <Chip
-                              label='认证'
+                              label={i18n.t('dev-platform.v53-platform-console.k49')}
                               size='small'
                               color='success'
                               variant='outlined'
@@ -1594,7 +1595,7 @@ const MarketplaceTab: React.FC<{ installedPlugins: InstalledPlugin[] }> = ({
                                 handleUninstall(plugin.id);
                               }}
                             >
-                              卸载
+                              {i18n.t('dev_platform.v53-platform-console.k29')}
                             </Button>
                           ) : (
                             <Button
@@ -1606,7 +1607,7 @@ const MarketplaceTab: React.FC<{ installedPlugins: InstalledPlugin[] }> = ({
                                 handleInstall(plugin.id);
                               }}
                             >
-                              安装
+                              {i18n.t('dev_platform.v53-platform-console.k30')}
                             </Button>
                           )}
                         </Box>
@@ -1622,7 +1623,7 @@ const MarketplaceTab: React.FC<{ installedPlugins: InstalledPlugin[] }> = ({
         <Grid size={{ xs: 12, md: 4 }}>
           <Card variant='outlined'>
             <CardHeader
-              title='已安装'
+              title={i18n.t('dev-platform.v53-platform-console.k50')}
               avatar={<Package size={18} />}
             />
             <CardContent>
@@ -1633,7 +1634,7 @@ const MarketplaceTab: React.FC<{ installedPlugins: InstalledPlugin[] }> = ({
                     color='text.secondary'
                     sx={{ py: 2, textAlign: 'center' }}
                   >
-                    暂无已安装插件
+                    {i18n.t('dev_platform.v53-platform-console.k31')}
                   </Typography>
                 ) : (
                   installedPlugins.map((p) => (
@@ -1654,7 +1655,7 @@ const MarketplaceTab: React.FC<{ installedPlugins: InstalledPlugin[] }> = ({
                           {p.manifest.name}
                         </Typography>
                         <Chip
-                          label={p.enabled ? '启用' : '禁用'}
+                          label={p.enabled ? i18n.t('dev-platform.v53-platform-console.k52') : i18n.t('dev-platform.v53-platform-console.k51')}
                           size='small'
                           color={p.enabled ? 'success' : 'default'}
                         />
@@ -1717,7 +1718,7 @@ const MarketplaceTab: React.FC<{ installedPlugins: InstalledPlugin[] }> = ({
                   variant='caption'
                   color='text.secondary'
                 >
-                  兼容性检查
+                  {i18n.t('dev_platform.v53-platform-console.k32')}
                 </Typography>
                 <Box sx={{ mt: 0.5 }}>
                   {compatibility.compatible ? (
@@ -1725,7 +1726,7 @@ const MarketplaceTab: React.FC<{ installedPlugins: InstalledPlugin[] }> = ({
                       severity='success'
                       variant='outlined'
                     >
-                      此插件与当前环境兼容
+                      {i18n.t('dev_platform.v53-platform-console.k33')}
                     </Alert>
                   ) : (
                     <Alert
@@ -1759,7 +1760,7 @@ const MarketplaceTab: React.FC<{ installedPlugins: InstalledPlugin[] }> = ({
                   variant='caption'
                   color='text.secondary'
                 >
-                  权限要求
+                  {i18n.t('dev_platform.v53-platform-console.k34')}
                 </Typography>
                 <Stack
                   direction='row'
@@ -1800,7 +1801,7 @@ const PipelinesTab: React.FC<{
         sx={{ fontWeight: 600 }}
         gutterBottom
       >
-        流水线运行历史
+        {i18n.t('dev_platform.v53-platform-console.k35')}
       </Typography>
 
       <Grid
@@ -1810,7 +1811,7 @@ const PipelinesTab: React.FC<{
         <Grid size={{ xs: 12, md: 8 }}>
           <Card variant='outlined'>
             <CardHeader
-              title='运行记录'
+              title={i18n.t('dev-platform.v53-platform-console.k53')}
               avatar={<Workflow size={18} />}
             />
             <CardContent>
@@ -1818,11 +1819,11 @@ const PipelinesTab: React.FC<{
                 <Table size='small'>
                   <TableHead>
                     <TableRow>
-                      <TableCell>流水线</TableCell>
-                      <TableCell>状态</TableCell>
-                      <TableCell>阶段</TableCell>
-                      <TableCell>耗时</TableCell>
-                      <TableCell align='right'>操作</TableCell>
+                      <TableCell>{i18n.t('dev-platform.v53-platform-console.k54')}</TableCell>
+                      <TableCell>{i18n.t('dev-platform.v53-platform-console.k55')}</TableCell>
+                      <TableCell>{i18n.t('dev-platform.v53-platform-console.k56')}</TableCell>
+                      <TableCell>{i18n.t('dev-platform.v53-platform-console.k57')}</TableCell>
+                      <TableCell align='right'>{i18n.t('dev-platform.v53-platform-console.k58')}</TableCell>
                     </TableRow>
                   </TableHead>
                   <TableBody>
@@ -1833,7 +1834,7 @@ const PipelinesTab: React.FC<{
                           align='center'
                           sx={{ py: 4, color: 'text.secondary' }}
                         >
-                          暂无流水线记录
+                          {i18n.t('dev_platform.v53-platform-console.k36')}
                         </TableCell>
                       </TableRow>
                     ) : (
@@ -1916,7 +1917,7 @@ const PipelinesTab: React.FC<{
         <Grid size={{ xs: 12, md: 4 }}>
           <Card variant='outlined'>
             <CardHeader
-              title='快速操作'
+              title={i18n.t('dev-platform.v53-platform-console.k59')}
               avatar={<Play size={18} />}
             />
             <CardContent>
@@ -1940,14 +1941,14 @@ const PipelinesTab: React.FC<{
                         variant='outlined'
                         onClick={() => unifiedDevPlatform.runPipeline(project.id, 'build-only')}
                       >
-                        仅构建
+                        {i18n.t('dev_platform.v53-platform-console.k37')}
                       </Button>
                       <Button
                         size='small'
                         variant='contained'
                         onClick={() => unifiedDevPlatform.runPipeline(project.id, 'build-deploy')}
                       >
-                        构建部署
+                        {i18n.t('dev_platform.v53-platform-console.k38')}
                       </Button>
                     </Box>
                   </Paper>
@@ -1958,7 +1959,7 @@ const PipelinesTab: React.FC<{
                     color='text.secondary'
                     sx={{ textAlign: 'center' }}
                   >
-                    暂无项目
+                    {i18n.t('dev_platform.v53-platform-console.k39')}
                   </Typography>
                 )}
               </Stack>
@@ -2026,7 +2027,7 @@ const PipelineDetailDialog: React.FC<{ run: PipelineRun; onClose: () => void }> 
               variant='caption'
               sx={{ ml: 1 }}
             >
-              耗时: {(run.totalDurationMs / 1000).toFixed(1)}s
+              [i18n.t('dev_platform.v53-platform-console.k40')]: {(run.totalDurationMs / 1000).toFixed(1)}s
             </Typography>
           )}
         </Box>
@@ -2036,7 +2037,7 @@ const PipelineDetailDialog: React.FC<{ run: PipelineRun; onClose: () => void }> 
             color='text.secondary'
             gutterBottom
           >
-            阶段详情
+            {i18n.t('dev_platform.v53-platform-console.k41')}
           </Typography>
           <Stack spacing={1}>
             {run.stages.map((stage, i) => (
@@ -2161,7 +2162,7 @@ const ActivityTab: React.FC<{
       id: `p_${p.id}`,
       time: new Date(p.updated_at).toLocaleString(),
       type: 'project',
-      message: `项目 "${p.name}" 状态更新为 ${p.status}`,
+      message: `${i18n.t('dev_platform.v53-platform-console.k42')}${p.name}${i18n.t('dev_platform.v53-platform-console.k43')} ${p.status}`,
       color: 'secondary.500',
     });
   });
@@ -2171,7 +2172,7 @@ const ActivityTab: React.FC<{
       id: `r_${r.id}`,
       time: new Date(r.startedAt).toLocaleString(),
       type: 'pipeline',
-      message: `流水线 ${r.pipelineId} ${r.status}`,
+      message: `${i18n.t('dev_platform.v53-platform-console.k44')} ${r.pipelineId} ${r.status}`,
       color: STATUS_COLORS[r.status] || 'colors.grey.500',
     });
   });
@@ -2185,11 +2186,11 @@ const ActivityTab: React.FC<{
         sx={{ fontWeight: 600 }}
         gutterBottom
       >
-        活动日志
+        {i18n.t('dev_platform.v53-platform-console.k45')}
       </Typography>
       <Card variant='outlined'>
         <CardHeader
-          title='最近活动'
+          title={i18n.t('dev-platform.v53-platform-console.k60')}
           avatar={<Activity size={18} />}
         />
         <CardContent>
@@ -2200,7 +2201,7 @@ const ActivityTab: React.FC<{
                 color='text.secondary'
                 sx={{ py: 4, textAlign: 'center' }}
               >
-                暂无活动记录
+                {i18n.t('dev_platform.v53-platform-console.k46')}
               </Typography>
             ) : (
               <Stack spacing={1}>

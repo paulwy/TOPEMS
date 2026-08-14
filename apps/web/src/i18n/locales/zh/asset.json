@@ -195,5 +195,9 @@
   "transfer_page.ast_008_01": "AST-008 - 监控摄像头-01",
   "asset.dashboard_page.k0": "资产管理概览",
   "asset.dashboard_page.k1": "资产管理数据概览",
-  "asset.dashboard_page.k2": "快捷操作"
+  "asset.dashboard_page.k2": "快捷操作",
+  "asset.asset_list_page.k0": "AssetListPage 页面开发中",
+  "asset.category_management_page.k0": "CategoryManagementPage 页面开发中",
+  "asset.depreciation_page.k0": "DepreciationPage 页面开发中",
+  "asset.transfer_page.k0": "TransferPage 页面开发中"
 }

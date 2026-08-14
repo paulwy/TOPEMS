@@ -12,12 +12,12 @@ import {
   Button,
   IconButton,
 } from '@mui/material';
+import i18n from '@/i18n';
 import { PageContainer } from '@/components/common';
 import { ClipboardList, FileText, Play, CheckCircle, X } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { limsApi, type InspectionProcess, type LimsStatistics } from '@/api/lims';
 import { useQuery } from '@tanstack/react-query';
-
 import CrudPage from '@/components/templates/CrudPage';
 import type { CrudApiAdapter } from '@/components/templates/CrudPage';
 import { processSchema } from '@/schemas/lims';
@@ -25,12 +25,8 @@ import { MetricCard } from '@/components/bi/MetricCard';
 import { designTokens } from '@/theme/tokens';
 import { LIMS_PATHS } from '@/modules/lims/config';
 import { DASHBOARD_PATHS } from '@/routes/dashboard';
-
-
 import { QUERY_KEYS } from '@/lib/reactQuery';
-
 const ct= designTokens.colors;
-
 const processAdapter: CrudApiAdapter<InspectionProcess> = {
   list: async (params) => {
     const response = await limsApi.processes.list({
@@ -40,7 +36,7 @@ const processAdapter: CrudApiAdapter<InspectionProcess> = {
       status: params?.status as string | undefined,
     });
     if (!response.success) {
-      throw new Error('加载检验流程失败');
+      throw new Error(i18n.t('lims.lims_process_page.k0'));
     }
     const data = response.data as unknown as Record<string, unknown>;
     const items =
@@ -52,7 +48,6 @@ const processAdapter: CrudApiAdapter<InspectionProcess> = {
   update: async () => ({}) as InspectionProcess,
   delete: async () => {},
 };
-
 const LimsProcessPage: React.FC = () => {
   const navigate = useNavigate();
   const [serviceStatuses, setServiceStatuses] = useState<{
@@ -62,16 +57,13 @@ const LimsProcessPage: React.FC = () => {
   });
   const [showTaskModal, setShowTaskModal] = useState(false);
   const [selectedProcess, setSelectedProcess] = useState<InspectionProcess | null>(null);
-
   const isServiceUp = (serviceName: string): boolean => {
     return serviceStatuses[serviceName] || false;
   };
-
   const checkServiceStatus = async (serviceName: string, setStatus: (up: boolean) => void) => {
     try {
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 2000);
-
       const response = await fetch(`/${serviceName}/health`, {
         signal: controller.signal,
         method: 'GET',
@@ -82,18 +74,14 @@ const LimsProcessPage: React.FC = () => {
       setStatus(false);
     }
   };
-
   useEffect(() => {
     const checkAllServices = () => {
       checkServiceStatus('lims', (up) => setServiceStatuses((prev) => ({ ...prev, lims: up })));
     };
-
     checkAllServices();
     const intervalId = setInterval(checkAllServices, 10000);
-
     return () => clearInterval(intervalId);
   }, []);
-
   const statisticsQuery = useQuery({
     queryKey: QUERY_KEYS.AD_HOC.LIMS_STATISTICS_BASE,
     queryFn: async () => {
@@ -106,7 +94,6 @@ const LimsProcessPage: React.FC = () => {
     enabled: isServiceUp('lims'),
     staleTime: 5 * 60 * 1000,
   });
-
   const stats = statisticsQuery.data || {
     total_samples: 0,
     pending_samples: 0,
@@ -124,21 +111,18 @@ const LimsProcessPage: React.FC = () => {
     maintenance_instruments: 0,
     disabled_instruments: 0,
   };
-
   const openTaskModal = (process?: InspectionProcess) => {
     setSelectedProcess(process || null);
     setShowTaskModal(true);
   };
-
   const customRowActions = [
     {
-      label: '使用此流程',
+      label: i18n.t('lims.lims_process_page.k1'),
       icon: <Play sx={{ width: 16, height: 16 }} />,
       color: 'secondary' as const,
       onClick: (row: Record<string, unknown>) => openTaskModal(row as unknown as InspectionProcess),
     },
   ];
-
   const headerContent = () => (
     <Box sx={{ mb: 4 }}>
       <Box
@@ -150,30 +134,30 @@ const LimsProcessPage: React.FC = () => {
         }}
       >
         <MetricCard
-          title='样品总数'
+          title={i18n.t('lims.lims_process_page.k2')}
           value={stats.total_samples}
           icon={<ClipboardList size={24} />}
           gradient={[ct.secondary.main, ct.secondary.dark]}
-          subtitle={`待测试: ${stats.pending_samples}`}
+          subtitle={`${i18n.t('pages.lims_process_page.k0')}${stats.pending_samples}`}
           trend={stats.pending_samples > 0 ? 'up' : 'neutral'}
         />
         <MetricCard
-          title='检验任务'
+          title={i18n.t('lims.lims_process_page.k3')}
           value={stats.total_tasks}
           icon={<ClipboardList size={24} />}
           gradient={[ct.secondary[400], ct.secondary[600]]}
-          subtitle={`进行中: ${stats.in_progress_tasks}`}
+          subtitle={`${i18n.t('pages.lims_process_page.k1')}${stats.in_progress_tasks}`}
           trend={stats.in_progress_tasks > 0 ? 'up' : 'neutral'}
         />
         <MetricCard
-          title='检验流程'
+          title={i18n.t('lims.lims_process_page.k4')}
           value={stats.total_processes}
           icon={<FileText size={24} />}
           gradient={[ct.warning.main, ct.warning.dark]}
           trend='neutral'
         />
         <MetricCard
-          title='已完成样品'
+          title={i18n.t('lims.lims_process_page.k5')}
           value={stats.completed_samples}
           icon={<CheckCircle size={24} />}
           gradient={[ct.success.main, ct.success.dark]}
@@ -182,7 +166,6 @@ const LimsProcessPage: React.FC = () => {
       </Box>
     </Box>
   );
-
   if (!isServiceUp('lims') && !statisticsQuery.isLoading) {
     return (
       <Box
@@ -223,26 +206,25 @@ const LimsProcessPage: React.FC = () => {
             variant='h5'
             sx={{ ...{ mb: 2 }, fontWeight: 'bold' }}
           >
-            实验室管理服务未启动
+            {i18n.t('pages.lims_process_page.k0')}
           </Typography>
           <Typography
             color='text.secondary'
             sx={{ mb: 3 }}
           >
-            LIMS 服务正在启动中，请稍后刷新页面，或者联系管理员启动服务。
+            {i18n.t('pages.lims_process_page.k1')}
           </Typography>
           <Button
             variant='contained'
             color='primary'
             onClick={() => navigate(DASHBOARD_PATHS.dashboard)}
           >
-            返回首页
+            {i18n.t('pages.lims_process_page.k2')}
           </Button>
         </Paper>
       </Box>
     );
   }
-
   return (
     <PageContainer
       headerProps={{
@@ -253,11 +235,10 @@ const LimsProcessPage: React.FC = () => {
       <CrudPage
         schema={processSchema}
         apiAdapter={processAdapter}
-        breadcrumbs={[{ label: 'LIMS' }, { label: '检验流程' }]}
+        breadcrumbs={[{ label: 'LIMS' }, { label: i18n.t('lims.lims_process_page.k6') }]}
         headerContent={headerContent}
         customRowActions={customRowActions}
       />
-
       <Dialog
         open={showTaskModal}
         onClose={() => setShowTaskModal(false)}
@@ -275,12 +256,12 @@ const LimsProcessPage: React.FC = () => {
             variant='h6'
             sx={{ fontWeight: 'semibold' }}
           >
-            新建检验任务
+            {i18n.t('pages.lims_process_page.k3')}
           </Typography>
           <IconButton
             size='small'
             onClick={() => setShowTaskModal(false)}
-            aria-label='关闭'
+            aria-label={i18n.t('lims.lims_process_page.k7')}
           >
             <X size={20} />
           </IconButton>
@@ -291,14 +272,14 @@ const LimsProcessPage: React.FC = () => {
               color='text.secondary'
               variant='body2'
             >
-              检验任务创建功能已迁移至检验任务页面，请前往对应页面创建任务。
+              {i18n.t('pages.lims_process_page.k4')}
             </Typography>
             {selectedProcess && (
               <Typography
                 color='primary'
                 variant='body2'
               >
-                当前选择流程: {selectedProcess.name}
+                [i18n.t('pages.lims_process_page.k5')]: {selectedProcess.name}
               </Typography>
             )}
           </Stack>
@@ -312,12 +293,11 @@ const LimsProcessPage: React.FC = () => {
             variant='contained'
             color='secondary'
           >
-            前往任务页面
+            {i18n.t('pages.lims_process_page.k6')}
           </Button>
         </DialogActions>
       </Dialog>
     </PageContainer>
   );
 };
-
 export default LimsProcessPage;

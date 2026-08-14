@@ -30,6 +30,7 @@ import React, {
   useCallback,
   type ReactNode,
 } from 'react';
+import i18n from '@/i18n';
 import { useQueryClient } from '@tanstack/react-query';
 import {
   getCacheVersion,
@@ -207,7 +208,7 @@ export const BffDataProvider: React.FC<BffDataProviderProps> = ({
 export function useBffData(): BffDataContextValue {
   const ctx = useContext(BffDataContext);
   if (!ctx) {
-    throw new Error('useBffData 必须在 BffDataProvider 内部使用');
+    throw new Error(i18n.t('components.bff_data_provider.k0'));
   }
   return ctx;
 }

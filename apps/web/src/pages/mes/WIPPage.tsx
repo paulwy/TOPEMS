@@ -9,9 +9,9 @@ import {
   Stack,
   Typography,
 } from '@mui/material';
+import i18n from '@/i18n';
 import { useQuery } from '@tanstack/react-query';
 import { ArrowRightLeft, Package, Scale } from 'lucide-react';
-
 import { PageContainer } from '@/components/common';
 import CrudPage from '@/components/templates/CrudPage';
 import type { RowAction } from '@/components/templates/list/types';
@@ -21,15 +21,11 @@ import { wipApi } from '@/api/mes';
 import type { Wip, WipStatistics } from '@/api/mes';
 import {QUERY_KEYS, CACHE_DURATIONS} from '@/lib/reactQuery';
 import { designTokens } from '@/theme/tokens';
-
 const ct= designTokens.colors;
-
 const apiAdapter = createCrudPageAdapter(wipApi, { itemsField: 'wips' });
-
 const WIPPage: React.FC = () => {
   const [showTransferDialog, setShowTransferDialog] = useState(false);
   const [selectedWip, setSelectedWip] = useState<Wip | null>(null);
-
   const { data: stats } = useQuery<WipStatistics>({
     queryKey: [QUERY_KEYS.MES.WIP, 'statistics'],
     queryFn: async () => {
@@ -39,7 +35,6 @@ const WIPPage: React.FC = () => {
     },
   
       staleTime: CACHE_DURATIONS.MEDIUM,});
-
   const headerContent = useMemo(() => {
     return (
       <Stack
@@ -62,7 +57,7 @@ const WIPPage: React.FC = () => {
               variant='body2'
               color='text.secondary'
             >
-              在制品总数
+              {i18n.t('pages.wip_page.k0')}
             </Typography>
           </Box>
           <Typography
@@ -87,7 +82,7 @@ const WIPPage: React.FC = () => {
               variant='body2'
               color='text.secondary'
             >
-              总数量
+              {i18n.t('pages.wip_page.k1')}
             </Typography>
           </Box>
           <Typography
@@ -100,11 +95,10 @@ const WIPPage: React.FC = () => {
       </Stack>
     );
   }, [stats]);
-
   const customRowActions = useMemo(
     () => [
       {
-        label: '转移',
+        label: i18n.t('mes.wip_page.k0'),
         icon: <ArrowRightLeft size={16} />,
         onClick: (row: Wip) => {
           setSelectedWip(row);
@@ -114,37 +108,34 @@ const WIPPage: React.FC = () => {
     ],
     []
   );
-
   return (
     <PageContainer>
       <CrudPage
         schema={wipSchema}
         apiAdapter={apiAdapter}
-        breadcrumbs={[{ label: 'MES' }, { label: '在制品管理' }]}
+        breadcrumbs={[{ label: 'MES' }, { label: i18n.t('mes.wip_page.k1') }]}
         headerContent={headerContent}
         customRowActions={customRowActions as unknown as RowAction<Record<string, unknown>>[]}
       />
-
       <Dialog
         open={showTransferDialog}
         onClose={() => setShowTransferDialog(false)}
         maxWidth='sm'
         fullWidth
       >
-        <DialogTitle>在制品转移</DialogTitle>
+        <DialogTitle>{i18n.t('mes.wip_page.k2')}</DialogTitle>
         <DialogContent>
           <Typography>
             {selectedWip
-              ? `转移在制品 ${selectedWip.order_number || selectedWip.order_id}...`
-              : '转移功能开发中...'}
+              ? `${i18n.t('pages.wip_page.k0')}${selectedWip.order_number || selectedWip.order_id}...`
+              : i18n.t('pages.wip_page.k1')}
           </Typography>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setShowTransferDialog(false)}>取消</Button>
+          <Button onClick={() => setShowTransferDialog(false)}>{i18n.t('mes.wip_page.k3')}</Button>
         </DialogActions>
       </Dialog>
     </PageContainer>
   );
 };
-
 export default WIPPage;

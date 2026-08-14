@@ -5,6 +5,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { navigationRegistryV2 } from '@/lib/navigation';
 import type { NavItem } from '@/lib/navigation/types';
 import { DASHBOARD_PATHS } from '@/routes/dashboard';
+import i18n from '@/i18n';
 
 export const HeaderBreadcrumbs: React.FC = () => {
   const navigate = useNavigate();
@@ -34,7 +35,7 @@ export const HeaderBreadcrumbs: React.FC = () => {
     >
       <Breadcrumbs
         separator={<ChevronRight style={{ width: 14, height: 14 }} />}
-        aria-label='面包屑导航'
+        aria-label={i18n.t('shared.header_breadcrumbs.k0')}
         sx={{
           '& .MuiBreadcrumbs-ol': {
             flexWrap: 'nowrap',
@@ -58,7 +59,7 @@ export const HeaderBreadcrumbs: React.FC = () => {
           onClick={() => navigate(DASHBOARD_PATHS.dashboard)}
         >
           <Home style={{ width: 14, height: 14 }} />
-          首页
+          {i18n.t('components.header_breadcrumbs.k0')}
         </Link>
         {breadcrumbItems.map((item, index) => {
           const isLast = index === breadcrumbItems.length - 1;

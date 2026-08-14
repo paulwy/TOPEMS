@@ -1,3 +1,4 @@
+import i18n from '@/i18n';
 /**
  * Phase 7-3 — 全局错误处理工具
  *
@@ -37,7 +38,7 @@ function isErrorLike(error: unknown): error is ErrorLike {
 
 export function classifyError(error: unknown): AppError {
   if (!error) {
-    return { category: 'unknown', message: '未知错误' };
+    return { category: 'unknown', message: i18n.t('shared.error_handler.k0') };
   }
 
   if (!isErrorLike(error)) {
@@ -45,11 +46,11 @@ export function classifyError(error: unknown): AppError {
   }
 
   if (error.code === 'ERR_NETWORK' || error.message === 'Network Error') {
-    return { category: 'network', message: '网络连接失败，请检查网络设置', originalError: error };
+    return { category: 'network', message: i18n.t('shared.error_handler.k1'), originalError: error };
   }
 
   if (error.code === 'ECONNABORTED') {
-    return { category: 'network', message: '请求超时，请稍后重试', originalError: error };
+    return { category: 'network', message: i18n.t('shared.error_handler.k2'), originalError: error };
   }
 
   if (error.response) {
@@ -58,28 +59,28 @@ export function classifyError(error: unknown): AppError {
       case 401:
         return {
           category: 'auth',
-          message: '登录已过期，请重新登录',
+          message: i18n.t('shared.error_handler.k3'),
           code: status,
           originalError: error,
         };
       case 403:
         return {
           category: 'permission',
-          message: '没有权限执行此操作',
+          message: i18n.t('shared.error_handler.k4'),
           code: status,
           originalError: error,
         };
       case 404:
         return {
           category: 'business',
-          message: data?.message || '请求的资源不存在',
+          message: data?.message || i18n.t('shared.error_handler.k5'),
           code: status,
           originalError: error,
         };
       case 422:
         return {
           category: 'business',
-          message: data?.message || '请求数据验证失败',
+          message: data?.message || i18n.t('shared.error_handler.k6'),
           detail: JSON.stringify(data?.errors || data?.details || []),
           code: status,
           originalError: error,
@@ -87,7 +88,7 @@ export function classifyError(error: unknown): AppError {
       case 500:
         return {
           category: 'server',
-          message: '服务器内部错误，请联系管理员',
+          message: i18n.t('shared.error_handler.k7'),
           code: status,
           originalError: error,
         };
@@ -95,14 +96,14 @@ export function classifyError(error: unknown): AppError {
       case 503:
         return {
           category: 'server',
-          message: '服务暂时不可用，请稍后重试',
+          message: i18n.t('shared.error_handler.k8'),
           code: status,
           originalError: error,
         };
       default:
         return {
           category: 'unknown',
-          message: data?.message || `请求失败 (${status})`,
+          message: data?.message || `${i18n.t('shared.error_handler.k0')}${status})`,
           code: status,
           originalError: error,
         };
@@ -110,14 +111,14 @@ export function classifyError(error: unknown): AppError {
   }
 
   if (error.request) {
-    return { category: 'network', message: '服务器未响应，请检查网络连接', originalError: error };
+    return { category: 'network', message: i18n.t('shared.error_handler.k9'), originalError: error };
   }
 
   if (error instanceof Error) {
-    return { category: 'unknown', message: error.message || '操作失败', originalError: error };
+    return { category: 'unknown', message: error.message || i18n.t('shared.error_handler.k10'), originalError: error };
   }
 
-  return { category: 'unknown', message: '操作失败', originalError: error };
+  return { category: 'unknown', message: i18n.t('shared.error_handler.k11'), originalError: error };
 }
 
 /**

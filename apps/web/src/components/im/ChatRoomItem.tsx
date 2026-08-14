@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { useTheme } from '@mui/material';
 import { MessageSquare, Users, User, Clock, BellOff, Pin, MoreVertical } from 'lucide-react';
 import type { ChatRoom } from '../../api/im';
+import { designTokens } from '@topems/tokens';
+import i18n from '@/i18n';
 
 interface ChatRoomItemProps {
   chatRoom: ChatRoom;
@@ -65,9 +67,9 @@ export const ChatRoomItem: React.FC<ChatRoomItemProps> = ({
         minute: '2-digit',
       });
     } else if (days === 1) {
-      return '昨天';
+      return i18n.t('im.chat_room_item.k0');
     } else if (days < 7) {
-      return `${days}天前`;
+      return `${days}${i18n.t('components.chat_room_item.k0')}`;
     } else {
       return date.toLocaleDateString('zh-CN', {
         month: 'short',
@@ -109,7 +111,7 @@ export const ChatRoomItem: React.FC<ChatRoomItemProps> = ({
         cursor: 'pointer',
         transition: 'background-color 0.15s',
         backgroundColor: isActive
-          ? '#eef2ff'
+          ? designTokens.colors.secondary[50]
           : chatRoom.is_pinned
             ? 'rgba(251, 191, 36, 0.1)'
             : undefined,
@@ -182,7 +184,7 @@ export const ChatRoomItem: React.FC<ChatRoomItemProps> = ({
                 paddingRight: 32,
               }}
             >
-              {chatRoom.name || '未命名会话'}
+              {chatRoom.name || i18n.t('im.chat_room_item.k1')}
             </h3>
             {chatRoom.last_message_time && (
               <span
@@ -217,7 +219,7 @@ export const ChatRoomItem: React.FC<ChatRoomItemProps> = ({
                 flex: 1,
               }}
             >
-              {chatRoom.last_message || '暂无消息'}
+              {chatRoom.last_message || i18n.t('im.chat_room_item.k2')}
             </p>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
               {chatRoom.room_type !== 'direct' && (
@@ -250,7 +252,7 @@ export const ChatRoomItem: React.FC<ChatRoomItemProps> = ({
                     color: isOnline ? theme.palette.success.dark : theme.palette.text.disabled,
                   }}
                 >
-                  {isOnline ? '在线' : '离线'}
+                  {isOnline ? i18n.t('im.chat_room_item.k4') : i18n.t('im.chat_room_item.k3')}
                 </span>
               )}
               {onSettings && (

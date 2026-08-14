@@ -8,6 +8,7 @@ import {
   Download,
   FileBarChart,
 } from 'lucide-react';
+import i18n from '@/i18n';
 import { useNavigate } from 'react-router-dom';
 import { useMutation } from '@tanstack/react-query';
 import { CrudPage, type CrudApiAdapter } from '@/components/templates/CrudPage';
@@ -29,7 +30,7 @@ const reportApiAdapter: CrudApiAdapter<ReportData> = {
   list: async (params) => {
     const response = await reportApi.listReports();
     if (!response.success) {
-      throw new Error(response.message || '加载报表数据失败');
+      throw new Error(response.message || i18n.t('pages.report_list_page.k0'));
     }
     let items = Array.isArray(response.data) ? response.data : [];
 
@@ -48,15 +49,15 @@ const reportApiAdapter: CrudApiAdapter<ReportData> = {
     return { data: paged, total };
   },
   create: async () => {
-    throw new Error('暂不支持通过表单创建报表');
+    throw new Error(i18n.t('pages.report_list_page.k1'));
   },
   update: async () => {
-    throw new Error('暂不支持通过表单编辑报表');
+    throw new Error(i18n.t('pages.report_list_page.k2'));
   },
   delete: async (id) => {
     const response = await reportApi.deleteReport(id);
     if (!response.success) {
-      throw new Error(response.message || '删除报表失败');
+      throw new Error(response.message || i18n.t('pages.report_list_page.k3'));
     }
   },
 };
@@ -69,7 +70,7 @@ const ReportListPage: React.FC = () => {
     mutationFn: async (report: ReportData) => {
       const response = await reportApi.exportReport(report.id, { format: 'excel' });
       if (!response.success || !response.data) {
-        throw new Error(response.message || '导出报表失败');
+        throw new Error(response.message || i18n.t('pages.report_list_page.k4'));
       }
       return response.data;
     },
@@ -82,16 +83,16 @@ const ReportListPage: React.FC = () => {
         });
       addNotification({
         type: 'success',
-        title: '导出成功',
-        message: '导出报表成功',
+        title: i18n.t('pages.report_list_page.k5'),
+        message: i18n.t('pages.report_list_page.k6'),
       });
     },
     onError: (error: unknown) => {
-      apiLogger.error('导出报表失败:', error);
+      apiLogger.error(i18n.t('pages.report_list_page.k0'), error);
       addNotification({
         type: 'error',
-        title: '导出失败',
-        message: '导出报表失败',
+        title: i18n.t('pages.report_list_page.k7'),
+        message: i18n.t('pages.report_list_page.k8'),
       });
     },
   });
@@ -100,7 +101,7 @@ const ReportListPage: React.FC = () => {
     () => [
       {
         key: 'view-detail',
-        label: '查看详情',
+        label: i18n.t('pages.report_list_page.k9'),
         onClick: (row) => {
           const id = String(row.id);
           if (id) {
@@ -110,7 +111,7 @@ const ReportListPage: React.FC = () => {
       },
       {
         key: 'export',
-        label: '导出',
+        label: i18n.t('pages.report_list_page.k10'),
         icon: <Download size={16} />,
         onClick: (row) => {
           exportMutation.mutate(row as unknown as ReportData);
@@ -128,10 +129,10 @@ const ReportListPage: React.FC = () => {
     }).length;
 
     const stats = [
-      { label: '报表总数', value: rows.length, icon: FileTextIcon, color: 'primary' },
-      { label: '今日生成', value: today, icon: AnalyticsIcon, color: 'success' },
-      { label: '定时任务', value: 0, icon: ClockIcon, color: 'warning' },
-      { label: '订阅用户', value: 0, icon: UsersIcon, color: 'info' },
+      { label: i18n.t('pages.report_list_page.k11'), value: rows.length, icon: FileTextIcon, color: 'primary' },
+      { label: i18n.t('pages.report_list_page.k12'), value: today, icon: AnalyticsIcon, color: 'success' },
+      { label: i18n.t('pages.report_list_page.k13'), value: 0, icon: ClockIcon, color: 'warning' },
+      { label: i18n.t('pages.report_list_page.k14'), value: 0, icon: UsersIcon, color: 'info' },
     ];
 
     return (
@@ -180,8 +181,8 @@ const ReportListPage: React.FC = () => {
 
   return (
     <PageContainer
-      title='报表中心'
-      subtitle='统一报表管理平台，支持多种报表类型和导出格式'
+      title={i18n.t('pages.report_list_page.k15')}
+      subtitle={i18n.t('pages.report_list_page.k16')}
       headerProps={{
         pageIcon: <FileBarChart style={{ width: 20, height: 20 }} />,
         pageGradient: `linear-gradient(135deg, ${ct.primary.main} 0%, ${ct.primary.dark} 100%)`,
@@ -197,7 +198,7 @@ const ReportListPage: React.FC = () => {
             total: number
           ) => React.ReactNode
         }
-        breadcrumbs={[{ label: '首页', href: '/dashboard' }, { label: '报表中心' }]}
+        breadcrumbs={[{ label: i18n.t('pages.report_list_page.k18'), href: '/dashboard' }, { label: i18n.t('pages.report_list_page.k17') }]}
       />
     </PageContainer>
   );

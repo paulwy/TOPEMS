@@ -1,26 +1,27 @@
 import type { EntitySchema } from '@/schema';
 import { columnsFromFields } from '@/schema/schemaExtensions';
 import type { NestedTableConfig, WizardConfig } from '@/schema/schemaExtensions';
+import i18n from '@/i18n';
 
 const spcDataPointFields: NestedTableConfig['fields'] = [
-  { name: 'sampleNo', label: '样本号', type: 'text', listWidth: 100 },
-  { name: 'sampleTime', label: '采样时间', type: 'datetime', listWidth: 160 },
-  { name: 'values', label: '测量值', type: 'text', listWidth: 150 },
-  { name: 'mean', label: '均值', type: 'number', listWidth: 80 },
-  { name: 'range', label: '极差', type: 'number', listWidth: 80 },
-  { name: 'operator', label: '操作员', type: 'text', listWidth: 100 },
-  { name: 'remark', label: '备注', type: 'text', listWidth: 200 },
+  { name: 'sampleNo', label: i18n.t('qms.spc.k0'), type: 'text', listWidth: 100 },
+  { name: 'sampleTime', label: i18n.t('qms.spc.k1'), type: 'datetime', listWidth: 160 },
+  { name: 'values', label: i18n.t('qms.spc.k2'), type: 'text', listWidth: 150 },
+  { name: 'mean', label: i18n.t('qms.spc.k3'), type: 'number', listWidth: 80 },
+  { name: 'range', label: i18n.t('qms.spc.k4'), type: 'number', listWidth: 80 },
+  { name: 'operator', label: i18n.t('qms.spc.k5'), type: 'text', listWidth: 100 },
+  { name: 'remark', label: i18n.t('qms.spc.k6'), type: 'text', listWidth: 200 },
 ];
 
 const spcDataPointsTable: NestedTableConfig = {
   field: 'dataPoints',
-  title: '数据点',
+  title: i18n.t('qms.spc.k7'),
   columns: columnsFromFields(spcDataPointFields),
   fields: spcDataPointFields,
   allowAdd: true,
   allowEdit: true,
   allowDelete: true,
-  addButtonText: '添加数据点',
+  addButtonText: i18n.t('qms.spc.k8'),
   rowKeyField: 'id',
   minRows: 0,
 };
@@ -29,8 +30,8 @@ const spcWizard: WizardConfig = {
   steps: [
     {
       key: 'config',
-      title: '控制图配置',
-      description: '设置控制图类型、产品和规格限',
+      title: i18n.t('qms.spc.k9'),
+      description: i18n.t('qms.spc.k10'),
       fields: [
         'chartName',
         'chartType',
@@ -45,48 +46,48 @@ const spcWizard: WizardConfig = {
         'samplingFrequency',
         'status',
       ],
-      groupTitle: '控制图基本配置',
+      groupTitle: i18n.t('qms.spc.k11'),
       validate: (values) => {
-        if (!values.chartName) return '请填写控制图名称';
-        if (!values.chartType) return '请选择控制图类型';
-        if (!values.characteristic) return '请填写质量特性';
+        if (!values.chartName) return i18n.t('qms.spc.k12');
+        if (!values.chartType) return i18n.t('qms.spc.k13');
+        if (!values.characteristic) return i18n.t('qms.spc.k14');
         return null;
       },
     },
     {
       key: 'dataEntry',
-      title: '数据点录入',
-      description: '录入原始数据点用于控制图分析',
+      title: i18n.t('qms.spc.k15'),
+      description: i18n.t('qms.spc.k16'),
       fields: ['dataPoints'],
-      groupTitle: '数据录入',
+      groupTitle: i18n.t('qms.spc.k17'),
       validate: (values) => {
         const dataPoints = (values.dataPoints as Record<string, unknown>[]) || [];
-        if (dataPoints.length < 2) return '请至少录入 2 个数据点';
+        if (dataPoints.length < 2) return i18n.t('qms.spc.2_18');
         return null;
       },
     },
     {
       key: 'controlLimits',
-      title: '控制限计算与确认',
-      description: '计算控制限并确认控制图状态',
+      title: i18n.t('qms.spc.k19'),
+      description: i18n.t('qms.spc.k20'),
       fields: ['ucl', 'lcl', 'cl', 'status'],
-      groupTitle: '控制限',
+      groupTitle: i18n.t('qms.spc.k21'),
       isFinalStep: true,
       validate: (values) => {
-        if (values.ucl === undefined || values.ucl === null) return '请确认上控制限 (UCL)';
-        if (values.lcl === undefined || values.lcl === null) return '请确认下控制限 (LCL)';
+        if (values.ucl === undefined || values.ucl === null) return i18n.t('qms.spc.ucl_22');
+        if (values.lcl === undefined || values.lcl === null) return i18n.t('qms.spc.lcl_23');
         return null;
       },
     },
   ],
-  title: 'SPC 统计过程控制',
+  title: i18n.t('shared.spc.spc_0'),
   navigationPosition: 'top',
   showProgress: true,
   allowBack: true,
   showSummaryOnComplete: true,
-  finishButtonText: '提交控制图',
-  nextButtonText: '下一步',
-  prevButtonText: '上一步',
+  finishButtonText: i18n.t('qms.spc.k24'),
+  nextButtonText: i18n.t('qms.spc.k25'),
+  prevButtonText: i18n.t('qms.spc.k26'),
 };
 
 export const spcSchema: EntitySchema & {
@@ -94,8 +95,8 @@ export const spcSchema: EntitySchema & {
   wizard: WizardConfig;
 } = {
   entity: 'spc',
-  title: 'SPC 统计过程控制',
-  description: 'Statistical Process Control — 基于控制图的过程稳定性监控',
+  title: i18n.t('shared.spc.spc_1'),
+  description: i18n.t('shared.spc.k2'),
 
   api: {
     module: 'qms',
@@ -105,7 +106,7 @@ export const spcSchema: EntitySchema & {
   fields: [
     {
       name: 'chartNo',
-      label: '控制图编号',
+      label: i18n.t('qms.spc.k27'),
       type: 'text',
       readonlyOnEdit: true,
       sortable: true,
@@ -114,7 +115,7 @@ export const spcSchema: EntitySchema & {
     },
     {
       name: 'chartName',
-      label: '控制图名称',
+      label: i18n.t('qms.spc.k28'),
       type: 'text',
       required: true,
       sortable: true,
@@ -123,19 +124,19 @@ export const spcSchema: EntitySchema & {
     },
     {
       name: 'chartType',
-      label: '控制图类型',
+      label: i18n.t('qms.spc.k29'),
       type: 'select',
       required: true,
       options: {
         type: 'static',
         options: [
-          { label: 'X-bar R (均值-极差图)', value: 'x-bar-r' },
-          { label: 'X-bar S (均值-标准差图)', value: 'x-bar-s' },
-          { label: 'I-MR (单值-移动极差图)', value: 'i-mr' },
-          { label: 'P 图 (不合格率)', value: 'p' },
-          { label: 'C 图 (缺陷数)', value: 'c' },
-          { label: 'U 图 (单位缺陷数)', value: 'u' },
-          { label: 'NP 图 (不合格品数)', value: 'np' },
+          { label: i18n.t('shared.spc.xbarr_3'), value: 'x-bar-r' },
+          { label: i18n.t('shared.spc.xbars_4'), value: 'x-bar-s' },
+          { label: i18n.t('shared.spc.imr_5'), value: 'i-mr' },
+          { label: i18n.t('shared.spc.p_6'), value: 'p' },
+          { label: i18n.t('shared.spc.c_7'), value: 'c' },
+          { label: i18n.t('shared.spc.u_8'), value: 'u' },
+          { label: i18n.t('shared.spc.np_9'), value: 'np' },
         ],
       },
       showInList: true,
@@ -144,33 +145,33 @@ export const spcSchema: EntitySchema & {
     },
     {
       name: 'productId',
-      label: '产品 ID',
+      label: i18n.t('qms.spc.id_30'),
       type: 'text',
       showInList: false,
     },
     {
       name: 'productName',
-      label: '产品名称',
+      label: i18n.t('qms.spc.k31'),
       type: 'text',
       showInList: true,
       listWidth: 140,
     },
     {
       name: 'processId',
-      label: '过程 ID',
+      label: i18n.t('qms.spc.id_32'),
       type: 'text',
       showInList: false,
     },
     {
       name: 'processName',
-      label: '过程名称',
+      label: i18n.t('qms.spc.k33'),
       type: 'text',
       showInList: true,
       listWidth: 140,
     },
     {
       name: 'characteristic',
-      label: '质量特性',
+      label: i18n.t('qms.spc.k34'),
       type: 'text',
       required: true,
       showInList: true,
@@ -178,7 +179,7 @@ export const spcSchema: EntitySchema & {
     },
     {
       name: 'unit',
-      label: '单位',
+      label: i18n.t('qms.spc.k35'),
       type: 'text',
       defaultValue: 'mm',
       showInList: true,
@@ -186,72 +187,72 @@ export const spcSchema: EntitySchema & {
     },
     {
       name: 'usl',
-      label: '上规格限 (USL)',
+      label: i18n.t('qms.spc.usl_36'),
       type: 'number',
       showInList: true,
       listWidth: 120,
     },
     {
       name: 'lsl',
-      label: '下规格限 (LSL)',
+      label: i18n.t('qms.spc.lsl_37'),
       type: 'number',
       showInList: true,
       listWidth: 120,
     },
     {
       name: 'target',
-      label: '目标值',
+      label: i18n.t('qms.spc.k38'),
       type: 'number',
       showInList: true,
       listWidth: 100,
     },
     {
       name: 'ucl',
-      label: '上控制限 (UCL)',
+      label: i18n.t('qms.spc.ucl_39'),
       type: 'number',
       showInList: true,
       listWidth: 120,
     },
     {
       name: 'lcl',
-      label: '下控制限 (LCL)',
+      label: i18n.t('qms.spc.lcl_40'),
       type: 'number',
       showInList: true,
       listWidth: 120,
     },
     {
       name: 'cl',
-      label: '中心线 (CL)',
+      label: i18n.t('qms.spc.cl_41'),
       type: 'number',
       showInList: true,
       listWidth: 100,
     },
     {
       name: 'sampleSize',
-      label: '样本大小',
+      label: i18n.t('qms.spc.k42'),
       type: 'number',
       defaultValue: 5,
       showInList: false,
     },
     {
       name: 'samplingFrequency',
-      label: '采样频率',
+      label: i18n.t('qms.spc.k43'),
       type: 'text',
-      placeholder: '如：每小时一次',
+      placeholder: i18n.t('qms.spc.k44'),
       showInList: false,
     },
     {
       name: 'status',
-      label: '状态',
+      label: i18n.t('qms.spc.k45'),
       type: 'select',
       options: {
         type: 'static',
         options: [
-          { label: '草稿', value: 'draft' },
-          { label: '进行中', value: 'in_progress' },
-          { label: '已稳定', value: 'stable' },
-          { label: '失控', value: 'out_of_control' },
-          { label: '已归档', value: 'archived' },
+          { label: i18n.t('qms.spc.k46'), value: 'draft' },
+          { label: i18n.t('qms.spc.k47'), value: 'in_progress' },
+          { label: i18n.t('qms.spc.k48'), value: 'stable' },
+          { label: i18n.t('qms.spc.k49'), value: 'out_of_control' },
+          { label: i18n.t('qms.spc.k50'), value: 'archived' },
         ],
       },
       defaultValue: 'draft',
@@ -260,14 +261,14 @@ export const spcSchema: EntitySchema & {
     },
     {
       name: 'description',
-      label: '描述',
+      label: i18n.t('qms.spc.k51'),
       type: 'textarea',
-      placeholder: '请描述控制图的用途和范围',
+      placeholder: i18n.t('qms.spc.k52'),
       showInList: false,
     },
     {
       name: 'createdAt',
-      label: '创建日期',
+      label: i18n.t('qms.spc.k53'),
       type: 'date',
       readonly: true,
       showInList: true,
@@ -281,31 +282,31 @@ export const spcSchema: EntitySchema & {
     filters: [
       {
         id: 'chartType',
-        label: '控制图类型',
+        label: i18n.t('qms.spc.k54'),
         type: 'select',
         options: [
-          { label: '全部类型', value: 'all' },
+          { label: i18n.t('qms.spc.k55'), value: 'all' },
           { label: 'X-bar R', value: 'x-bar-r' },
           { label: 'X-bar S', value: 'x-bar-s' },
           { label: 'I-MR', value: 'i-mr' },
-          { label: 'P 图', value: 'p' },
-          { label: 'C 图', value: 'c' },
-          { label: 'U 图', value: 'u' },
-          { label: 'NP 图', value: 'np' },
+          { label: i18n.t('shared.spc.p_10'), value: 'p' },
+          { label: i18n.t('shared.spc.c_11'), value: 'c' },
+          { label: i18n.t('shared.spc.u_12'), value: 'u' },
+          { label: i18n.t('shared.spc.np_13'), value: 'np' },
         ],
         defaultValue: 'all',
       },
       {
         id: 'status',
-        label: '状态',
+        label: i18n.t('qms.spc.k56'),
         type: 'select',
         options: [
-          { label: '全部状态', value: 'all' },
-          { label: '草稿', value: 'draft' },
-          { label: '进行中', value: 'in_progress' },
-          { label: '已稳定', value: 'stable' },
-          { label: '失控', value: 'out_of_control' },
-          { label: '已归档', value: 'archived' },
+          { label: i18n.t('qms.spc.k57'), value: 'all' },
+          { label: i18n.t('qms.spc.k58'), value: 'draft' },
+          { label: i18n.t('qms.spc.k59'), value: 'in_progress' },
+          { label: i18n.t('qms.spc.k60'), value: 'stable' },
+          { label: i18n.t('qms.spc.k61'), value: 'out_of_control' },
+          { label: i18n.t('qms.spc.k62'), value: 'archived' },
         ],
         defaultValue: 'all',
       },
@@ -320,18 +321,18 @@ export const spcSchema: EntitySchema & {
         archived: 'default',
       },
       labelMap: {
-        draft: '草稿',
-        in_progress: '进行中',
-        stable: '已稳定',
-        out_of_control: '失控',
-        archived: '已归档',
+        draft: i18n.t('qms.spc.k63'),
+        in_progress: i18n.t('qms.spc.k64'),
+        stable: i18n.t('qms.spc.k65'),
+        out_of_control: i18n.t('qms.spc.k66'),
+        archived: i18n.t('qms.spc.k67'),
       },
     },
   },
 
   formSections: [
     {
-      title: '基础信息',
+      title: i18n.t('qms.spc.k68'),
       fields: [
         'chartNo',
         'chartName',
@@ -343,23 +344,23 @@ export const spcSchema: EntitySchema & {
       ],
     },
     {
-      title: '规格限',
+      title: i18n.t('qms.spc.k69'),
       fields: ['usl', 'lsl', 'target'],
     },
     {
-      title: '采样设置',
+      title: i18n.t('qms.spc.k70'),
       fields: ['sampleSize', 'samplingFrequency'],
     },
     {
-      title: '描述',
+      title: i18n.t('qms.spc.k71'),
       fields: ['description'],
     },
   ],
 
   formColCount: 2,
-  createTitle: '新建 SPC 控制图',
-  editTitle: '编辑 SPC 控制图',
-  detailTitle: 'SPC 控制图详情',
+  createTitle: i18n.t('qms.spc.spc_72'),
+  editTitle: i18n.t('qms.spc.spc_73'),
+  detailTitle: i18n.t('shared.spc.spc_14'),
 
   actions: ['create', 'edit', 'detail', 'delete'],
 

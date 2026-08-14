@@ -11,6 +11,7 @@ import {
   type SxProps,
   type Theme,
 } from '@mui/material';
+import i18n from '@/i18n';
 import { Search, X, History } from 'lucide-react';
 
 export interface MobileSearchProps {
@@ -24,7 +25,7 @@ export interface MobileSearchProps {
 
 export function MobileSearch({
   onSearch,
-  placeholder = '搜索...',
+  placeholder = i18n.t('components.mobile_search.k0'),
   history = [],
   onHistoryClick,
   onHistoryClear,
@@ -78,7 +79,7 @@ export function MobileSearch({
               setQuery('');
               inputRef.current?.focus();
             }}
-            aria-label='关闭'
+            aria-label={i18n.t('shared.mobile_search.k0')}
           >
             <X size={16} />
           </IconButton>
@@ -101,7 +102,7 @@ export function MobileSearch({
               variant='caption'
               color='text.secondary'
             >
-              搜索历史
+              {i18n.t('components.mobile_search.k0')}
             </Typography>
             {onHistoryClear && (
               <Typography
@@ -110,7 +111,7 @@ export function MobileSearch({
                 sx={{ cursor: 'pointer' }}
                 onClick={onHistoryClear}
               >
-                清除
+                {i18n.t('components.mobile_search.k1')}
               </Typography>
             )}
           </Box>

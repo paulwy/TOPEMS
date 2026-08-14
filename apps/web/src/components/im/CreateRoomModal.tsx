@@ -10,6 +10,7 @@ import {
   Button,
   useTheme,
 } from '@mui/material';
+import i18n from '@/i18n';
 import React, { useState } from 'react';
 import { X, Users, User, Save, MessageSquare } from 'lucide-react';
 
@@ -85,7 +86,7 @@ export const CreateRoomModal: React.FC<CreateRoomModalProps> = ({
     if (!chatRoomMembers.length && chatRoomType === 'direct') {
       addNotification({
         title: 'Error',
-        message: '请至少添加一位成员',
+        message: i18n.t('im.create_room_modal.k0'),
         type: 'error',
       });
       return;
@@ -109,7 +110,7 @@ export const CreateRoomModal: React.FC<CreateRoomModalProps> = ({
       if (response.success) {
         addNotification({
           title: 'Success',
-          message: '聊天室创建成功',
+          message: i18n.t('im.create_room_modal.k1'),
           type: 'success',
         });
         onCreated();
@@ -117,7 +118,7 @@ export const CreateRoomModal: React.FC<CreateRoomModalProps> = ({
       } else {
         addNotification({
           title: 'Error',
-          message: response.message || '创建聊天室失败',
+          message: response.message || i18n.t('im.create_room_modal.k2'),
           type: 'error',
         });
       }
@@ -125,7 +126,7 @@ export const CreateRoomModal: React.FC<CreateRoomModalProps> = ({
       logger.error('Failed to create chat room:', error);
       addNotification({
         title: 'Error',
-        message: '创建聊天室失败',
+        message: i18n.t('im.create_room_modal.k3'),
         type: 'error',
       });
     } finally {
@@ -137,7 +138,7 @@ export const CreateRoomModal: React.FC<CreateRoomModalProps> = ({
     if (!groupName.trim()) {
       addNotification({
         title: 'Error',
-        message: '请输入群组名称',
+        message: i18n.t('im.create_room_modal.k4'),
         type: 'error',
       });
       return;
@@ -156,7 +157,7 @@ export const CreateRoomModal: React.FC<CreateRoomModalProps> = ({
       if (response.success) {
         addNotification({
           title: 'Success',
-          message: '项目群组创建成功',
+          message: i18n.t('im.create_room_modal.k5'),
           type: 'success',
         });
         onCreated();
@@ -164,7 +165,7 @@ export const CreateRoomModal: React.FC<CreateRoomModalProps> = ({
       } else {
         addNotification({
           title: 'Error',
-          message: response.message || '创建群组失败',
+          message: response.message || i18n.t('im.create_room_modal.k6'),
           type: 'error',
         });
       }
@@ -172,7 +173,7 @@ export const CreateRoomModal: React.FC<CreateRoomModalProps> = ({
       logger.error('Failed to create project group:', error);
       addNotification({
         title: 'Error',
-        message: '创建群组失败',
+        message: i18n.t('im.create_room_modal.k7'),
         type: 'error',
       });
     } finally {
@@ -196,7 +197,7 @@ export const CreateRoomModal: React.FC<CreateRoomModalProps> = ({
             mb: 2,
           }}
         >
-          <DialogTitle sx={{ m: 0, p: 0 }}>创建新会话</DialogTitle>
+          <DialogTitle sx={{ m: 0, p: 0 }}>{i18n.t('im.create_room_modal.k8')}</DialogTitle>
           <Button
             variant='text'
             size='small'
@@ -215,13 +216,13 @@ export const CreateRoomModal: React.FC<CreateRoomModalProps> = ({
             value='chat'
             icon={<MessageSquare sx={{ width: 16, height: 16 }} />}
             iconPosition='start'
-            label='聊天室'
+            label={i18n.t('im.create_room_modal.k9')}
           />
           <Tab
             value='group'
             icon={<Users sx={{ width: 16, height: 16 }} />}
             iconPosition='start'
-            label='项目群组'
+            label={i18n.t('im.create_room_modal.k10')}
           />
         </Tabs>
 
@@ -235,7 +236,7 @@ export const CreateRoomModal: React.FC<CreateRoomModalProps> = ({
                   color: 'var(--mui-palette-text-secondary)',
                 }}
               >
-                聊天室类型
+                {i18n.t('components.create_room_modal.k0')}
               </span>
               <Box sx={{ display: 'flex', gap: 1 }}>
                 <Button
@@ -244,7 +245,7 @@ export const CreateRoomModal: React.FC<CreateRoomModalProps> = ({
                   size='small'
                   startIcon={<User sx={{ width: 16, height: 16 }} />}
                 >
-                  私聊
+                  {i18n.t('components.create_room_modal.k1')}
                 </Button>
                 <Button
                   variant={chatRoomType === 'group' ? 'contained' : 'outlined'}
@@ -252,18 +253,18 @@ export const CreateRoomModal: React.FC<CreateRoomModalProps> = ({
                   size='small'
                   startIcon={<Users sx={{ width: 16, height: 16 }} />}
                 >
-                  群聊
+                  {i18n.t('components.create_room_modal.k2')}
                 </Button>
               </Box>
             </Box>
 
             <TextField
               size='small'
-              placeholder={chatRoomType === 'direct' ? '输入聊天室名称（可选）' : '输入群组名称'}
+              placeholder={chatRoomType === 'direct' ? i18n.t('im.create_room_modal.k12') : i18n.t('im.create_room_modal.k11')}
               value={chatRoomName}
               onChange={(e) => setChatRoomName(e.target.value)}
-              label='名称'
-              helperText={chatRoomType === 'direct' ? '(可选)' : ''}
+              label={i18n.t('im.create_room_modal.k13')}
+              helperText={chatRoomType === 'direct' ? i18n.t('components.create_room_modal.k0') : ''}
             />
 
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
@@ -274,12 +275,12 @@ export const CreateRoomModal: React.FC<CreateRoomModalProps> = ({
                   color: 'var(--mui-palette-text-secondary)',
                 }}
               >
-                添加成员
+                {i18n.t('components.create_room_modal.k3')}
               </span>
               <Box sx={{ display: 'flex', gap: 1 }}>
                 <TextField
                   size='small'
-                  placeholder='输入用户ID'
+                  placeholder={i18n.t('im.create_room_modal.id_14')}
                   value={newMemberInput}
                   onChange={(e) => setNewMemberInput(e.target.value)}
                   onKeyDown={(e) => {
@@ -306,7 +307,7 @@ export const CreateRoomModal: React.FC<CreateRoomModalProps> = ({
                   variant='contained'
                   size='small'
                 >
-                  添加
+                  {i18n.t('components.create_room_modal.k4')}
                 </Button>
               </Box>
               {chatRoomMembers.length > 0 && (
@@ -349,7 +350,7 @@ export const CreateRoomModal: React.FC<CreateRoomModalProps> = ({
                 variant='contained'
                 startIcon={<Save sx={{ width: 16, height: 16 }} />}
               >
-                {loading ? '创建中...' : '创建聊天室'}
+                {loading ? i18n.t('components.create_room_modal.k1') : i18n.t('im.create_room_modal.k15')}
               </Button>
             </DialogActions>
           </Box>
@@ -359,18 +360,18 @@ export const CreateRoomModal: React.FC<CreateRoomModalProps> = ({
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, py: 2 }}>
             <TextField
               size='small'
-              placeholder='输入群组名称'
+              placeholder={i18n.t('im.create_room_modal.k16')}
               value={groupName}
               onChange={(e) => setGroupName(e.target.value)}
-              label='群组名称'
+              label={i18n.t('im.create_room_modal.k17')}
             />
 
             <TextField
               size='small'
-              placeholder='输入群组描述（可选）'
+              placeholder={i18n.t('im.create_room_modal.k18')}
               value={groupDescription}
               onChange={(e) => setGroupDescription(e.target.value)}
-              label='群组描述'
+              label={i18n.t('im.create_room_modal.k19')}
               multiline
               rows={3}
             />
@@ -383,12 +384,12 @@ export const CreateRoomModal: React.FC<CreateRoomModalProps> = ({
                   color: 'var(--mui-palette-text-secondary)',
                 }}
               >
-                添加成员
+                {i18n.t('components.create_room_modal.k5')}
               </span>
               <Box sx={{ display: 'flex', gap: 1 }}>
                 <TextField
                   size='small'
-                  placeholder='输入用户ID'
+                  placeholder={i18n.t('im.create_room_modal.id_20')}
                   value={newGroupMemberInput}
                   onChange={(e) => setNewGroupMemberInput(e.target.value)}
                   onKeyDown={(e) => {
@@ -415,7 +416,7 @@ export const CreateRoomModal: React.FC<CreateRoomModalProps> = ({
                   variant='contained'
                   size='small'
                 >
-                  添加
+                  {i18n.t('components.create_room_modal.k6')}
                 </Button>
               </Box>
               {groupMembers.length > 0 && (
@@ -458,7 +459,7 @@ export const CreateRoomModal: React.FC<CreateRoomModalProps> = ({
                 variant='contained'
                 startIcon={<Save sx={{ width: 16, height: 16 }} />}
               >
-                {loading ? '创建中...' : '创建群组'}
+                {loading ? i18n.t('components.create_room_modal.k2') : i18n.t('im.create_room_modal.k21')}
               </Button>
             </DialogActions>
           </Box>

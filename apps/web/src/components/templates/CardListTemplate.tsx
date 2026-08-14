@@ -23,6 +23,7 @@ import {
   useTheme,
   Button,
 } from '@mui/material';
+import i18n from '@/i18n';
 import { Search, RefreshCw, Filter, Plus, ChevronDown, ChevronUp, Grid, List } from 'lucide-react';
 import { EmptyState } from '@topems/shared-components';
 
@@ -437,14 +438,14 @@ export const CardListTemplate: React.FC<CardListTemplateProps> = ({
             size='small'
             onClick={onSearch}
           >
-            搜索
+            {i18n.t('components.card_list_template.k0')}
           </Button>
           <Button
             variant='outlined'
             size='small'
             onClick={handleReset}
           >
-            重置
+            {i18n.t('components.card_list_template.k1')}
           </Button>
         </Box>
       </Box>
@@ -469,12 +470,12 @@ export const CardListTemplate: React.FC<CardListTemplateProps> = ({
                 variant='subtitle2'
                 color='text.secondary'
               >
-                筛选条件
+                {i18n.t('components.card_list_template.k2')}
               </Typography>
             </Box>
             <IconButton
               size='small'
-              aria-label='展开'
+              aria-label={i18n.t('templates.card_list_template.k0')}
             >
               {filterExpanded ? (
                 <ChevronUp sx={{ width: 18, height: 18 }} />
@@ -798,7 +799,7 @@ export const CardListTemplate: React.FC<CardListTemplateProps> = ({
                   bgcolor: viewMode === 'grid' ? 'background.paper' : 'transparent',
                   boxShadow: viewMode === 'grid' ? 1 : 0,
                 }}
-                aria-label='网格'
+                aria-label={i18n.t('templates.card_list_template.k1')}
               >
                 <Grid sx={{ width: 16, height: 16 }} />
               </IconButton>
@@ -809,7 +810,7 @@ export const CardListTemplate: React.FC<CardListTemplateProps> = ({
                   bgcolor: viewMode === 'list' ? 'background.paper' : 'transparent',
                   boxShadow: viewMode === 'list' ? 1 : 0,
                 }}
-                aria-label='列表'
+                aria-label={i18n.t('templates.card_list_template.k2')}
               >
                 <List sx={{ width: 16, height: 16 }} />
               </IconButton>
@@ -817,11 +818,11 @@ export const CardListTemplate: React.FC<CardListTemplateProps> = ({
           )}
 
           {onRefresh && (
-            <Tooltip title='刷新'>
+            <Tooltip title={i18n.t('templates.card_list_template.k3')}>
               <IconButton
                 onClick={onRefresh}
                 disabled={loading}
-                aria-label='刷新'
+                aria-label={i18n.t('templates.card_list_template.k4')}
               >
                 <RefreshCw
                   sx={{
@@ -844,7 +845,7 @@ export const CardListTemplate: React.FC<CardListTemplateProps> = ({
               startIcon={addButton.icon || <Plus style={{ width: 18, height: 18 }} />}
               onClick={addButton.onClick}
             >
-              {addButton.text || '新增'}
+              {addButton.text || i18n.t('templates.card_list_template.k5')}
             </Button>
           )}
         </Box>
@@ -870,11 +871,11 @@ export const CardListTemplate: React.FC<CardListTemplateProps> = ({
               variant='subtitle1'
               sx={{ fontWeight: 600 }}
             >
-              数据概览
+              {i18n.t('components.card_list_template.k3')}
             </Typography>
             <IconButton
               size='small'
-              aria-label='展开'
+              aria-label={i18n.t('templates.card_list_template.k6')}
             >
               {statsOverviewExpanded ? (
                 <ChevronUp sx={{ width: 18, height: 18 }} />
@@ -918,7 +919,7 @@ export const CardListTemplate: React.FC<CardListTemplateProps> = ({
           <Box sx={{ p: 6, textAlign: 'center' }}>
             <EmptyState
               emoji={emptyState?.emoji || '📋'}
-              title={emptyState?.title || '暂无数据'}
+              title={emptyState?.title || i18n.t('templates.card_list_template.k7')}
               description={emptyState?.description}
               actionLabel={emptyState?.actionLabel}
               onAction={emptyState?.onAction}

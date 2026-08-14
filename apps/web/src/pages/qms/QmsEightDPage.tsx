@@ -26,6 +26,7 @@ import type {
   WizardStepRenderProps,
   TreeConfig,
 } from '@/schema/schemaExtensions';
+import i18n from '@/i18n';
 import type { SchemaField } from '@/schema/types';
 
 
@@ -46,25 +47,25 @@ function EightDStats() {
     queryKey: QUERY_KEYS.AD_HOC.QMS_EIGHTD_STATS_BASE,
     queryFn: async () => {
       const response = await eightDApi.listEightDReports();
-      if (!response.success) throw new Error('加载 8D 统计失败');
+      if (!response.success) throw new Error(i18n.t('pages.qms_eight_d_page.8d_0'));
       const reports = response.data || [];
       return {
         total: reports.length,
-        open: reports.filter((r) => r.status === 'open' || r.status === '待处理').length,
-        inProgress: reports.filter((r) => r.status === 'in_progress' || r.status === '进行中')
+        open: reports.filter((r) => r.status === 'open' || r.status === i18n.t('pages.qms_eight_d_page.k1')).length,
+        inProgress: reports.filter((r) => r.status === 'in_progress' || r.status === i18n.t('pages.qms_eight_d_page.k2'))
           .length,
-        completed: reports.filter((r) => r.status === 'completed' || r.status === '已完成').length,
-        closed: reports.filter((r) => r.status === 'closed' || r.status === '已关闭').length,
+        completed: reports.filter((r) => r.status === 'completed' || r.status === i18n.t('pages.qms_eight_d_page.k3')).length,
+        closed: reports.filter((r) => r.status === 'closed' || r.status === i18n.t('pages.qms_eight_d_page.k4')).length,
       };
     },
     staleTime: 5 * 60 * 1000,
   });
 
   const cards = [
-    { label: '报告总数', value: stats?.total ?? 0, icon: FileText, color: 'primary.main' },
-    { label: '待处理', value: stats?.open ?? 0, icon: AlertCircle, color: 'error.main' },
-    { label: '进行中', value: stats?.inProgress ?? 0, icon: Clock, color: 'warning.main' },
-    { label: '已完成', value: stats?.completed ?? 0, icon: CheckCircle, color: 'success.main' },
+    { label: i18n.t('pages.qms_eight_d_page.k5'), value: stats?.total ?? 0, icon: FileText, color: 'primary.main' },
+    { label: i18n.t('pages.qms_eight_d_page.k6'), value: stats?.open ?? 0, icon: AlertCircle, color: 'error.main' },
+    { label: i18n.t('pages.qms_eight_d_page.k7'), value: stats?.inProgress ?? 0, icon: Clock, color: 'warning.main' },
+    { label: i18n.t('pages.qms_eight_d_page.k8'), value: stats?.completed ?? 0, icon: CheckCircle, color: 'success.main' },
   ];
 
   return (
@@ -103,11 +104,11 @@ function EightDStats() {
 // ============ D4 根因分析自定义渲染 ============
 
 const rootCausesFields: SchemaField[] = [
-  { name: 'cause', label: '原因描述', type: 'text' },
-  { name: 'category', label: '类别', type: 'select' },
-  { name: 'level', label: '层级', type: 'select' },
-  { name: 'is_root', label: '是否根因', type: 'switch' },
-  { name: 'analysis_method', label: '分析方法', type: 'select' },
+  { name: 'cause', label: i18n.t('pages.qms_eight_d_page.k9'), type: 'text' },
+  { name: 'category', label: i18n.t('pages.qms_eight_d_page.k10'), type: 'select' },
+  { name: 'level', label: i18n.t('pages.qms_eight_d_page.k11'), type: 'select' },
+  { name: 'is_root', label: i18n.t('pages.qms_eight_d_page.k12'), type: 'switch' },
+  { name: 'analysis_method', label: i18n.t('pages.qms_eight_d_page.k13'), type: 'select' },
 ];
 
 const rootCauseTreeConfig: TreeConfig = {
@@ -130,7 +131,7 @@ const RootCauseStepContent: React.FC<WizardStepRenderProps> = ({
   const handleAddRoot = () => {
     const newNode: TreeNode = {
       id: `cause-${Date.now()}`,
-      label: '新原因',
+      label: i18n.t('pages.qms_eight_d_page.k14'),
       children: [],
       data: { cause: '', category: 'man', level: 1, is_root: false, analysis_method: '5why' },
     };
@@ -144,7 +145,7 @@ const RootCauseStepContent: React.FC<WizardStepRenderProps> = ({
         color='text.secondary'
         sx={{ mb: 2 }}
       >
-        使用树形结构进行鱼骨图 / 5Why 分析。点击节点可添加子原因。
+        {i18n.t('pages.qms_eight_d_page.k0')}
       </Typography>
       <TreeBuilder
         config={rootCauseTreeConfig}
@@ -164,7 +165,7 @@ const RootCauseStepContent: React.FC<WizardStepRenderProps> = ({
           onClick={handleAddRoot}
           disabled={disabled}
         >
-          添加根原因
+          {i18n.t('pages.qms_eight_d_page.k1')}
         </Button>
         <Button
           size='small'
@@ -174,7 +175,7 @@ const RootCauseStepContent: React.FC<WizardStepRenderProps> = ({
           color='error'
           startIcon={<Trash2 size={14} />}
         >
-          清空
+          {i18n.t('pages.qms_eight_d_page.k2')}
         </Button>
       </Box>
       {!disabled && nodes.length === 0 && (
@@ -187,7 +188,7 @@ const RootCauseStepContent: React.FC<WizardStepRenderProps> = ({
             color: 'text.secondary',
           }}
         >
-          <Typography variant='body2'>暂无根因分析数据，点击上方"添加根原因"开始分析</Typography>
+          <Typography variant='body2'>暂无根因分析数据，点击上方"{i18n.t('pages.qms_eight_d_page.k15')}"{i18n.t('ai.document_analysis.button.start_analysis')}</Typography>
         </Paper>
       )}
     </Box>
@@ -202,7 +203,7 @@ injectRootCauseRenderer((props) => <RootCauseStepContent {...props} />);
 const eightDAdapter: CrudApiAdapter = {
   list: async (params) => {
     const response = await eightDApi.listEightDReports();
-    if (!response.success) throw new Error(response.message || '加载 8D 报告列表失败');
+    if (!response.success) throw new Error(response.message || i18n.t('pages.qms_eight_d_page.8d_16'));
     const items = response.data || [];
 
     const search = params?.search as string | undefined;
@@ -237,20 +238,20 @@ const eightDAdapter: CrudApiAdapter = {
   create: async (data) => {
     const payload = data as unknown as Parameters<typeof eightDApi.createEightDReport>[0];
     const response = await eightDApi.createEightDReport(payload);
-    if (!response.success) throw new Error(response.message || '创建 8D 报告失败');
+    if (!response.success) throw new Error(response.message || i18n.t('pages.qms_eight_d_page.8d_17'));
     return (response.data ?? {}) as Record<string, unknown>;
   },
 
   update: async (id, data) => {
     const payload = data as Parameters<typeof eightDApi.updateEightDReport>[1];
     const response = await eightDApi.updateEightDReport(id, payload);
-    if (!response.success) throw new Error(response.message || '更新 8D 报告失败');
+    if (!response.success) throw new Error(response.message || i18n.t('pages.qms_eight_d_page.8d_18'));
     return (response.data ?? {}) as Record<string, unknown>;
   },
 
   delete: async (id) => {
     const response = await eightDApi.deleteEightDReport(id);
-    if (!response.success) throw new Error(response.message || '删除 8D 报告失败');
+    if (!response.success) throw new Error(response.message || i18n.t('pages.qms_eight_d_page.8d_19'));
   },
 };
 
@@ -263,7 +264,7 @@ export default function QmsEightDPage() {
     <CrudPage
       schema={schema}
       apiAdapter={eightDAdapter}
-      breadcrumbs={[{ label: '质量管理' }, { label: '8D 问题解决' }]}
+      breadcrumbs={[{ label: i18n.t('pages.qms_eight_d_page.k20') }, { label: i18n.t('pages.qms_eight_d_page.8d_5') }]}
       headerContent={<EightDStats />}
       idField='id'
     />

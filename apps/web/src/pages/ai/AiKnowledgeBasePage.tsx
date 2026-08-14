@@ -38,7 +38,7 @@ const ct= designTokens.colors;
 const sampleDocuments = [
   {
     id: 'doc-001',
-    title: 'ERP 系统操作手册',
+    title: i18n.t('pages.ai_knowledge_base_page.erp_0'),
     type: 'manual',
     size: '2.3 MB',
     updatedAt: '2024-01-10',
@@ -52,14 +52,14 @@ const sampleDocuments = [
   },
   {
     id: 'doc-003',
-    title: 'HRM 员工入职流程',
+    title: i18n.t('pages.ai_knowledge_base_page.hrm_1'),
     type: 'process',
     size: '512 KB',
     updatedAt: '2024-01-05',
   },
   {
     id: 'doc-004',
-    title: 'MES 生产工单管理',
+    title: i18n.t('pages.ai_knowledge_base_page.mes_2'),
     type: 'manual',
     size: '3.5 MB',
     updatedAt: '2024-01-03',
@@ -70,9 +70,9 @@ const sampleAnswers = [
   {
     question: i18n.t('ai.ai_knowledge_base_page.k1'),
     answer:
-      '创建财务凭证的步骤如下：\n\n1. 登录 ERP 系统，进入财务模块\n2. 点击「凭证管理」->「新建凭证」\n3. 选择凭证类型（记账凭证、收款凭证、付款凭证等）\n4. 填写凭证日期和凭证号\n5. 添加会计分录，包括科目、借方金额、贷方金额\n6. 录入凭证摘要\n7. 保存并审核凭证\n8. 审核通过后进行记账操作\n\n注意：凭证借贷必须平衡，且需要有对应的原始单据。',
+      i18n.t('pages.ai_knowledge_base_page.k3'),
     sources: [
-      { title: 'ERP 系统操作手册', similarity: 0.92 },
+      { title: i18n.t('pages.ai_knowledge_base_page.erp_4'), similarity: 0.92 },
       { title: i18n.t('ai.ai_knowledge_base_page.k2'), similarity: 0.85 },
     ],
     confidence: 0.95,

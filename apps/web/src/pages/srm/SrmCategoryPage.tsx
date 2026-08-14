@@ -5,6 +5,7 @@ import { categorySchema } from '@/schemas/srm';
 import { Box, Card, CardContent, Typography } from '@mui/material';
 import { FolderTree } from 'lucide-react';
 import { designTokens } from '@/theme/tokens';
+import i18n from '@/i18n';
 
 const ct= designTokens.colors;
 
@@ -24,8 +25,8 @@ const mockCategories: SupplierCategory[] = [
   {
     id: '1',
     code: 'CAT-001',
-    name: '原材料供应商',
-    description: '提供原材料的供应商分类',
+    name: i18n.t('pages.srm_category_page.k0'),
+    description: i18n.t('pages.srm_category_page.k1'),
     supplier_count: 28,
     level: 1,
     status: 'active',
@@ -35,8 +36,8 @@ const mockCategories: SupplierCategory[] = [
   {
     id: '2',
     code: 'CAT-002',
-    name: '零部件供应商',
-    description: '提供零部件的供应商',
+    name: i18n.t('pages.srm_category_page.k2'),
+    description: i18n.t('pages.srm_category_page.k3'),
     supplier_count: 45,
     level: 1,
     status: 'active',
@@ -46,8 +47,8 @@ const mockCategories: SupplierCategory[] = [
   {
     id: '3',
     code: 'CAT-003',
-    name: '包装材料供应商',
-    description: '提供包装材料的供应商',
+    name: i18n.t('pages.srm_category_page.k4'),
+    description: i18n.t('pages.srm_category_page.k5'),
     supplier_count: 12,
     level: 1,
     status: 'active',
@@ -57,8 +58,8 @@ const mockCategories: SupplierCategory[] = [
   {
     id: '4',
     code: 'CAT-004',
-    name: '设备供应商',
-    description: '提供生产设备的供应商',
+    name: i18n.t('pages.srm_category_page.k6'),
+    description: i18n.t('pages.srm_category_page.k7'),
     supplier_count: 8,
     level: 1,
     status: 'active',
@@ -68,8 +69,8 @@ const mockCategories: SupplierCategory[] = [
   {
     id: '5',
     code: 'CAT-005',
-    name: '化工原料供应商',
-    description: '提供化工原料的供应商',
+    name: i18n.t('pages.srm_category_page.k8'),
+    description: i18n.t('pages.srm_category_page.k9'),
     supplier_count: 15,
     level: 2,
     status: 'active',
@@ -79,8 +80,8 @@ const mockCategories: SupplierCategory[] = [
   {
     id: '6',
     code: 'CAT-006',
-    name: '电子元器件供应商',
-    description: '提供电子元器件的供应商',
+    name: i18n.t('pages.srm_category_page.k10'),
+    description: i18n.t('pages.srm_category_page.k11'),
     supplier_count: 32,
     level: 2,
     status: 'active',
@@ -90,8 +91,8 @@ const mockCategories: SupplierCategory[] = [
   {
     id: '7',
     code: 'CAT-007',
-    name: '物流服务商',
-    description: '提供物流配送服务的供应商',
+    name: i18n.t('pages.srm_category_page.k12'),
+    description: i18n.t('pages.srm_category_page.k13'),
     supplier_count: 6,
     level: 1,
     status: 'inactive',
@@ -101,8 +102,8 @@ const mockCategories: SupplierCategory[] = [
   {
     id: '8',
     code: 'CAT-008',
-    name: '检测设备供应商',
-    description: '提供检测设备的供应商',
+    name: i18n.t('pages.srm_category_page.k14'),
+    description: i18n.t('pages.srm_category_page.k15'),
     supplier_count: 4,
     level: 2,
     status: 'active',
@@ -148,7 +149,7 @@ const categoryApiAdapter: CrudApiAdapter = {
   },
   update: async (id, data) => {
     const idx = categoryStore.findIndex((c) => c.id === id);
-    if (idx === -1) throw new Error('分类不存在');
+    if (idx === -1) throw new Error(i18n.t('pages.srm_category_page.k16'));
     const updated = {
       ...categoryStore[idx],
       ...data,
@@ -174,11 +175,11 @@ const CategoryStats: React.FC<{ rows: SupplierCategory[] }> = ({ rows }) => {
   );
 
   const statCards = [
-    { label: '分类总数', value: stats.total, color: ct.purple[500], bgColor: 'secondary.light' },
-    { label: '已启用', value: stats.active, color: 'success.dark', bgColor: 'success.lighter' },
-    { label: '含供应商', value: stats.withSuppliers, color: 'info.dark', bgColor: 'info.lighter' },
+    { label: i18n.t('pages.srm_category_page.k17'), value: stats.total, color: ct.purple[500], bgColor: 'secondary.light' },
+    { label: i18n.t('pages.srm_category_page.k18'), value: stats.active, color: 'success.dark', bgColor: 'success.lighter' },
+    { label: i18n.t('pages.srm_category_page.k19'), value: stats.withSuppliers, color: 'info.dark', bgColor: 'info.lighter' },
     {
-      label: '供应商总数',
+      label: i18n.t('pages.srm_category_page.k20'),
       value: stats.totalSuppliers,
       color: 'primary.dark',
       bgColor: 'primary.lighter',
@@ -238,7 +239,7 @@ const SrmCategoryPage: React.FC = () => {
     <CrudPage
       schema={categorySchema}
       apiAdapter={categoryApiAdapter}
-      breadcrumbs={[{ label: 'SRM' }, { label: '供应商分类' }]}
+      breadcrumbs={[{ label: 'SRM' }, { label: i18n.t('pages.srm_category_page.k21') }]}
       headerContent={(rows) => <CategoryStats rows={rows as SupplierCategory[]} />}
     />
   );

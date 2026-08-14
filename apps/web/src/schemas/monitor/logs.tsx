@@ -10,6 +10,7 @@ import { Box, Chip, Typography, Paper, Stack, Tooltip } from '@mui/material';
 import { Clock, AlertCircle, AlertTriangle, Info, Bug, Server } from 'lucide-react';
 import type { EntitySchema, SchemaField } from '@/schema';
 import { designTokens } from '@/theme/tokens';
+import i18n from '@/i18n';
 
 const ct= designTokens.colors;
 
@@ -17,17 +18,17 @@ type LogLevel = 'error' | 'warn' | 'info' | 'debug';
 type LogType = 'access' | 'error' | 'application' | 'slow_query';
 
 const LEVEL_LABELS: Record<LogLevel, string> = {
-  error: '错误',
-  warn: '警告',
-  info: '信息',
-  debug: '调试',
+  error: i18n.t('shared.logs.k0'),
+  warn: i18n.t('shared.logs.k1'),
+  info: i18n.t('shared.logs.k2'),
+  debug: i18n.t('shared.logs.k3'),
 };
 
 const TYPE_LABELS: Record<LogType, string> = {
-  access: '访问日志',
-  error: '错误日志',
-  application: '应用日志',
-  slow_query: '慢查询',
+  access: i18n.t('shared.logs.k4'),
+  error: i18n.t('shared.logs.k5'),
+  application: i18n.t('shared.logs.k6'),
+  slow_query: i18n.t('shared.logs.k7'),
 };
 
 const LEVEL_COLORS: Record<LogLevel, { bg: string; color: string; border: string }> = {
@@ -38,14 +39,14 @@ const LEVEL_COLORS: Record<LogLevel, { bg: string; color: string; border: string
 };
 
 const SERVICES = [
-  '用户服务',
-  '订单服务',
-  '支付服务',
-  '库存服务',
-  '消息服务',
-  '文件服务',
-  '网关服务',
-  '认证服务',
+  i18n.t('shared.logs.k8'),
+  i18n.t('shared.logs.k9'),
+  i18n.t('shared.logs.k10'),
+  i18n.t('shared.logs.k11'),
+  i18n.t('shared.logs.k12'),
+  i18n.t('shared.logs.k13'),
+  i18n.t('shared.logs.k14'),
+  i18n.t('shared.logs.k15'),
 ];
 
 const formatTimeWithMs = (isoString: string): string => {
@@ -106,7 +107,7 @@ const highlightText = (text: string, keyword: string): React.ReactNode => {
 const logFields: SchemaField[] = [
   {
     name: 'timestamp',
-    label: '时间',
+    label: i18n.t('shared.logs.k16'),
     type: 'datetime',
     sortable: true,
     listWidth: 180,
@@ -131,14 +132,14 @@ const logFields: SchemaField[] = [
   },
   {
     name: 'level',
-    label: '级别',
+    label: i18n.t('shared.logs.k17'),
     type: 'select',
     listWidth: 100,
     renderCell: (row: Record<string, unknown>) => getLevelChip(row.level as LogLevel),
   },
   {
     name: 'service',
-    label: '服务名',
+    label: i18n.t('shared.logs.k18'),
     type: 'text',
     listWidth: 140,
     renderCell: (row: Record<string, unknown>) => (
@@ -170,7 +171,7 @@ const logFields: SchemaField[] = [
   },
   {
     name: 'message',
-    label: '日志内容',
+    label: i18n.t('shared.logs.k19'),
     type: 'textarea',
     listWidth: 400,
     renderCell: (row: Record<string, unknown>) => {
@@ -214,7 +215,7 @@ const logFields: SchemaField[] = [
   },
   {
     name: 'duration_ms',
-    label: '耗时',
+    label: i18n.t('shared.logs.k20'),
     type: 'number',
     listWidth: 80,
     renderCell: (row: Record<string, unknown>) => {
@@ -241,7 +242,7 @@ const logFields: SchemaField[] = [
   },
   {
     name: 'type',
-    label: '日志类型',
+    label: i18n.t('shared.logs.k21'),
     type: 'select',
     listWidth: 110,
     renderCell: (row: Record<string, unknown>) => {
@@ -259,8 +260,8 @@ const logFields: SchemaField[] = [
 
 export const logSchema: EntitySchema = {
   entity: 'monitor_log',
-  title: '系统日志',
-  description: '查看系统运行日志，追踪服务状态和异常',
+  title: i18n.t('shared.logs.k22'),
+  description: i18n.t('shared.logs.k23'),
 
   api: {
     module: 'monitor',
@@ -275,41 +276,41 @@ export const logSchema: EntitySchema = {
     filters: [
       {
         id: 'level',
-        label: '日志级别',
+        label: i18n.t('shared.logs.k24'),
         type: 'select',
         options: [
-          { label: '全部级别', value: 'all' },
+          { label: i18n.t('shared.logs.k25'), value: 'all' },
           ...Object.entries(LEVEL_LABELS).map(([value, label]) => ({ label, value })),
         ],
       },
       {
         id: 'service',
-        label: '服务',
+        label: i18n.t('shared.logs.k26'),
         type: 'select',
         options: [
-          { label: '全部服务', value: 'all' },
+          { label: i18n.t('shared.logs.k27'), value: 'all' },
           ...SERVICES.map((s) => ({ label: s, value: s })),
         ],
       },
       {
         id: 'type',
-        label: '日志类型',
+        label: i18n.t('shared.logs.k28'),
         type: 'select',
         options: [
-          { label: '全部类型', value: 'all' },
+          { label: i18n.t('shared.logs.k29'), value: 'all' },
           ...Object.entries(TYPE_LABELS).map(([value, label]) => ({ label, value })),
         ],
       },
       {
         id: 'timeRange',
-        label: '时间范围',
+        label: i18n.t('shared.logs.k30'),
         type: 'select',
         options: [
-          { label: '近1小时', value: '1h' },
-          { label: '近6小时', value: '6h' },
-          { label: '近24小时', value: '24h' },
-          { label: '近7天', value: '7d' },
-          { label: '近30天', value: '30d' },
+          { label: i18n.t('shared.logs.1_31'), value: '1h' },
+          { label: i18n.t('shared.logs.6_32'), value: '6h' },
+          { label: i18n.t('shared.logs.24_33'), value: '24h' },
+          { label: i18n.t('shared.logs.7_34'), value: '7d' },
+          { label: i18n.t('shared.logs.30_35'), value: '30d' },
         ],
       },
     ],
@@ -321,16 +322,16 @@ export const logSchema: EntitySchema = {
   batchActions: [
     {
       key: 'batch-delete',
-      label: '批量删除',
+      label: i18n.t('shared.logs.k36'),
       icon: undefined,
       color: 'error',
       onClick: () => {},
       confirm: true,
-      confirmMessage: '确定要删除选中的日志吗？此操作不可撤销。',
+      confirmMessage: i18n.t('shared.logs.k37'),
     },
   ],
 
-  detailTitle: '日志详情',
+  detailTitle: i18n.t('shared.logs.k38'),
   detailMaxWidth: 'lg',
 
   renderDetail: (row) => {
@@ -348,7 +349,7 @@ export const logSchema: EntitySchema = {
                 color='text.secondary'
                 gutterBottom
               >
-                基本信息
+                {i18n.t('schemas.logs.k0')}
               </Typography>
               <Stack spacing={1.5}>
                 <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
@@ -356,7 +357,7 @@ export const logSchema: EntitySchema = {
                     variant='body2'
                     color='text.secondary'
                   >
-                    日志ID
+                    {i18n.t('schemas.logs.id_1')}
                   </Typography>
                   <Typography
                     variant='body2'
@@ -370,7 +371,7 @@ export const logSchema: EntitySchema = {
                     variant='body2'
                     color='text.secondary'
                   >
-                    时间
+                    {i18n.t('schemas.logs.k2')}
                   </Typography>
                   <Typography
                     variant='body2'
@@ -386,7 +387,7 @@ export const logSchema: EntitySchema = {
                     variant='body2'
                     color='text.secondary'
                   >
-                    级别
+                    {i18n.t('schemas.logs.k3')}
                   </Typography>
                   {getLevelChip(level)}
                 </Box>
@@ -395,7 +396,7 @@ export const logSchema: EntitySchema = {
                     variant='body2'
                     color='text.secondary'
                   >
-                    类型
+                    {i18n.t('schemas.logs.k4')}
                   </Typography>
                   <Chip
                     size='small'
@@ -413,7 +414,7 @@ export const logSchema: EntitySchema = {
                 color='text.secondary'
                 gutterBottom
               >
-                服务信息
+                {i18n.t('schemas.logs.k5')}
               </Typography>
               <Stack spacing={1.5}>
                 <Box
@@ -423,7 +424,7 @@ export const logSchema: EntitySchema = {
                     variant='body2'
                     color='text.secondary'
                   >
-                    服务名
+                    {i18n.t('schemas.logs.k6')}
                   </Typography>
                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                     <Box
@@ -471,7 +472,7 @@ export const logSchema: EntitySchema = {
                     variant='body2'
                     color='text.secondary'
                   >
-                    耗时
+                    {i18n.t('schemas.logs.k7')}
                   </Typography>
                   <Typography
                     variant='body2'
@@ -501,7 +502,7 @@ export const logSchema: EntitySchema = {
                 color='text.secondary'
                 gutterBottom
               >
-                日志内容
+                {i18n.t('schemas.logs.k8')}
               </Typography>
               <Typography
                 variant='body2'

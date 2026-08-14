@@ -1,3 +1,4 @@
+import i18n from '@/i18n';
 /**
  * V47.0 前端 AI 增强 — 自动化测试生成器
  *
@@ -211,13 +212,13 @@ export class TestGenerator {
 
     const suggestions: string[] = [];
     if (coveragePercentage < 80) {
-      suggestions.push('覆盖率低于 80%，建议增加更多边界值测试用例');
+      suggestions.push(i18n.t('shared.test-generator.k0'));
     }
     if (uncoveredFunctions.length > 0) {
-      suggestions.push(`以下函数未被测试: ${uncoveredFunctions.join(', ')}`);
+      suggestions.push(`${i18n.t('shared.test-generator.k0')}${uncoveredFunctions.join(', ')}`);
     }
     if (test_cases.length < functions.length) {
-      suggestions.push('测试用例数量少于函数数量，建议为每个函数添加至少一个测试');
+      suggestions.push(i18n.t('shared.test-generator.k1'));
     }
 
     return {
@@ -255,22 +256,22 @@ export class TestGenerator {
     // 通用边界情况
     edgeCases.push(
       {
-        description: '空输入',
+        description: i18n.t('shared.test-generator.k2'),
         input: {},
-        reason: '验证函数对空输入的处理',
-        expected_behavior: '应返回默认值或抛出明确错误',
+        reason: i18n.t('shared.test-generator.k3'),
+        expected_behavior: i18n.t('shared.test-generator.k4'),
       },
       {
-        description: 'null 输入',
+        description: i18n.t('shared.test-generator.null_1'),
         input: { value: null },
-        reason: '验证函数对 null 的处理',
-        expected_behavior: '应优雅处理 null 值',
+        reason: i18n.t('shared.test-generator.null_5'),
+        expected_behavior: i18n.t('shared.test-generator.null_6'),
       },
       {
-        description: 'undefined 输入',
+        description: i18n.t('shared.test-generator.undefined_2'),
         input: { value: undefined },
-        reason: '验证函数对 undefined 的处理',
-        expected_behavior: '应优雅处理 undefined 值',
+        reason: i18n.t('shared.test-generator.undefined_7'),
+        expected_behavior: i18n.t('shared.test-generator.undefined_8'),
       }
     );
 
@@ -314,7 +315,7 @@ export class TestGenerator {
       const key = `${tc.name}-${JSON.stringify(tc.input)}`;
       if (seen.has(key)) {
         removedCases.push(tc);
-        recommendations.push(`移除重复测试用例: ${tc.name}`);
+        recommendations.push(`${i18n.t('shared.test-generator.k3')}${tc.name}`);
       } else {
         seen.add(key);
         deduped.push(tc);
@@ -326,22 +327,22 @@ export class TestGenerator {
       for (const fnName of coverage_analysis.uncovered_functions) {
         addedCases.push({
           name: `should handle ${fnName} function`,
-          description: `为未覆盖函数 ${fnName} 添加测试`,
+          description: `${i18n.t('shared.test-generator.k4')}${fnName}${i18n.t('shared.test-generator.k5')}`,
           input: {},
           expected_output: undefined,
           test_type: TestType.UNIT,
           design_method: TestCaseDesignMethod.ERRORGUESSING,
         });
-        recommendations.push(`添加缺失函数测试: ${fnName}`);
+        recommendations.push(`${i18n.t('shared.test-generator.k6')}${fnName}`);
       }
     }
 
     if (coverage_analysis.coverage_percentage < 80) {
-      recommendations.push('覆盖率不足，建议增加边界值测试');
+      recommendations.push(i18n.t('shared.test-generator.k9'));
     }
 
     if (deduped.length < 3) {
-      recommendations.push('测试用例过少，建议至少覆盖正常、边界、异常三种场景');
+      recommendations.push(i18n.t('shared.test-generator.k10'));
     }
 
     return {
@@ -399,7 +400,7 @@ export class TestGenerator {
         cases.push(
           {
             name: `${fnName} should handle minimum boundary`,
-            description: `测试 ${fnName} 最小边界值`,
+            description: `${i18n.t('shared.test-generator.k7')}${fnName}${i18n.t('shared.test-generator.k8')}`,
             input: this.getBoundaryValues(fn, 'min'),
             expected_output: this.inferExpectedOutput(fn, 'min'),
             test_type: testType,
@@ -407,7 +408,7 @@ export class TestGenerator {
           },
           {
             name: `${fnName} should handle maximum boundary`,
-            description: `测试 ${fnName} 最大边界值`,
+            description: `${i18n.t('shared.test-generator.k9')}${fnName}${i18n.t('shared.test-generator.k10')}`,
             input: this.getBoundaryValues(fn, 'max'),
             expected_output: this.inferExpectedOutput(fn, 'max'),
             test_type: testType,
@@ -415,7 +416,7 @@ export class TestGenerator {
           },
           {
             name: `${fnName} should handle zero/empty boundary`,
-            description: `测试 ${fnName} 零值/空值边界`,
+            description: `${i18n.t('shared.test-generator.k11')}${fnName}${i18n.t('shared.test-generator.k12')}`,
             input: this.getBoundaryValues(fn, 'zero'),
             expected_output: this.inferExpectedOutput(fn, 'zero'),
             test_type: testType,
@@ -428,7 +429,7 @@ export class TestGenerator {
         cases.push(
           {
             name: `${fnName} should handle valid input (positive case)`,
-            description: `测试 ${fnName} 正常有效输入`,
+            description: `${i18n.t('shared.test-generator.k13')}${fnName}${i18n.t('shared.test-generator.k14')}`,
             input: this.getValidInput(fn),
             expected_output: this.inferExpectedOutput(fn, 'valid'),
             test_type: testType,
@@ -436,7 +437,7 @@ export class TestGenerator {
           },
           {
             name: `${fnName} should handle invalid input (negative case)`,
-            description: `测试 ${fnName} 无效输入`,
+            description: `${i18n.t('shared.test-generator.k15')}${fnName}${i18n.t('shared.test-generator.k16')}`,
             input: this.getInvalidInput(fn),
             expected_output: this.inferExpectedOutput(fn, 'invalid'),
             test_type: testType,
@@ -449,7 +450,7 @@ export class TestGenerator {
         cases.push(
           {
             name: `${fnName} should throw error for null input`,
-            description: `测试 ${fnName} null 输入是否抛错`,
+            description: `${i18n.t('shared.test-generator.k17')}${fnName}${i18n.t('shared.test-generator.null_18')}`,
             input: { [fn.parameters[0]?.name ?? 'input']: null },
             expected_output: 'throw Error',
             test_type: testType,
@@ -457,7 +458,7 @@ export class TestGenerator {
           },
           {
             name: `${fnName} should throw error for undefined input`,
-            description: `测试 ${fnName} undefined 输入是否抛错`,
+            description: `${i18n.t('shared.test-generator.k19')}${fnName}${i18n.t('shared.test-generator.undefined_20')}`,
             input: { [fn.parameters[0]?.name ?? 'input']: undefined },
             expected_output: 'throw Error',
             test_type: testType,
@@ -469,7 +470,7 @@ export class TestGenerator {
       case TestCaseDesignMethod.DECISIONTABLE:
         cases.push({
           name: `${fnName} should handle decision table case 1`,
-          description: `基于决策表的测试用例`,
+          description: i18n.t('utils.test-generator.k0'),
           input: this.getValidInput(fn),
           expected_output: this.inferExpectedOutput(fn, 'valid'),
           test_type: testType,
@@ -480,7 +481,7 @@ export class TestGenerator {
       case TestCaseDesignMethod.STATETRANSITION:
         cases.push({
           name: `${fnName} should handle state transition`,
-          description: `基于状态转换的测试用例`,
+          description: i18n.t('utils.test-generator.k1'),
           input: this.getValidInput(fn),
           expected_output: this.inferExpectedOutput(fn, 'valid'),
           test_type: testType,
@@ -497,42 +498,42 @@ export class TestGenerator {
     return [
       {
         name: `${componentName} should render without crashing`,
-        description: `验证 ${componentName} 组件能正常渲染`,
+        description: `${i18n.t('shared.test-generator.k21')}${componentName}${i18n.t('shared.test-generator.k22')}`,
         input: { props: {} },
         expected_output: 'rendered component',
         test_type: request.test_type,
       },
       {
         name: `${componentName} should render with props`,
-        description: `验证 ${componentName} 组件能接受 props 并渲染`,
+        description: `${i18n.t('shared.test-generator.k23')}${componentName}${i18n.t('shared.test-generator.props_24')}`,
         input: { props: { title: 'Test', visible: true } },
         expected_output: 'rendered with props',
         test_type: request.test_type,
       },
       {
         name: `${componentName} should handle user interaction`,
-        description: `验证 ${componentName} 组件能响应用户交互`,
+        description: `${i18n.t('shared.test-generator.k25')}${componentName}${i18n.t('shared.test-generator.k26')}`,
         input: { action: 'click', target: 'button' },
         expected_output: 'callback called',
         test_type: request.test_type,
       },
       {
         name: `${componentName} should handle empty state`,
-        description: `验证 ${componentName} 组件空状态渲染`,
+        description: `${i18n.t('shared.test-generator.k27')}${componentName}${i18n.t('shared.test-generator.k28')}`,
         input: { props: { data: [] } },
         expected_output: 'empty state shown',
         test_type: request.test_type,
       },
       {
         name: `${componentName} should handle loading state`,
-        description: `验证 ${componentName} 组件加载状态`,
+        description: `${i18n.t('shared.test-generator.k29')}${componentName}${i18n.t('shared.test-generator.k30')}`,
         input: { props: { loading: true } },
         expected_output: 'loading indicator shown',
         test_type: request.test_type,
       },
       {
         name: `${componentName} should handle error state`,
-        description: `验证 ${componentName} 组件错误状态`,
+        description: `${i18n.t('shared.test-generator.k31')}${componentName}${i18n.t('shared.test-generator.k32')}`,
         input: { props: { error: new Error('Test error') } },
         expected_output: 'error message shown',
         test_type: request.test_type,
@@ -544,28 +545,28 @@ export class TestGenerator {
     return [
       {
         name: 'API should return data on successful request',
-        description: '验证 API 成功请求返回数据',
+        description: i18n.t('shared.test-generator.api_11'),
         input: { method: 'GET', endpoint: '/api/test', params: {} },
         expected_output: { status: 200, data: [] },
         test_type: TestType.INTEGRATION,
       },
       {
         name: 'API should handle 404 error',
-        description: '验证 API 404 错误处理',
+        description: i18n.t('shared.test-generator.api404_12'),
         input: { method: 'GET', endpoint: '/api/nonexistent' },
         expected_output: { status: 404 },
         test_type: TestType.INTEGRATION,
       },
       {
         name: 'API should handle 500 error',
-        description: '验证 API 服务器错误处理',
+        description: i18n.t('shared.test-generator.api_13'),
         input: { method: 'GET', endpoint: '/api/error' },
         expected_output: { status: 500 },
         test_type: TestType.INTEGRATION,
       },
       {
         name: 'API should handle network timeout',
-        description: '验证 API 超时处理',
+        description: i18n.t('shared.test-generator.api_14'),
         input: { method: 'GET', endpoint: '/api/timeout', timeout: 1000 },
         expected_output: 'timeout error',
         test_type: TestType.INTEGRATION,
@@ -577,21 +578,21 @@ export class TestGenerator {
     return [
       {
         name: 'should navigate to page',
-        description: 'E2E: 验证页面导航',
+        description: i18n.t('shared.test-generator.e2e_33'),
         input: { url: '/' },
         expected_output: 'page loaded',
         test_type: TestType.E2E,
       },
       {
         name: 'should login successfully',
-        description: 'E2E: 验证登录流程',
+        description: i18n.t('shared.test-generator.e2e_34'),
         input: { username: 'test', password: 'test' },
         expected_output: 'redirected to dashboard',
         test_type: TestType.E2E,
       },
       {
         name: 'should perform CRUD operations',
-        description: 'E2E: 验证增删改查流程',
+        description: i18n.t('shared.test-generator.e2e_35'),
         input: { action: 'create' },
         expected_output: 'record created',
         test_type: TestType.E2E,
@@ -698,10 +699,10 @@ export class TestGenerator {
 
     // 导入部分
     lines.push('/**');
-    lines.push(` * 自动生成的测试文件`);
-    lines.push(` * 测试类型: ${this.getTestTypeName(request.test_type)}`);
-    lines.push(` * 测试框架: ${this.getFrameworkName(framework)}`);
-    lines.push(` * 生成时间: ${new Date().toISOString()}`);
+    lines.push(i18n.t('utils.test-generator.k2'));
+    lines.push(`${i18n.t('shared.test-generator.k36')}${this.getTestTypeName(request.test_type)}`);
+    lines.push(`${i18n.t('shared.test-generator.k37')}${this.getFrameworkName(framework)}`);
+    lines.push(`${i18n.t('shared.test-generator.k38')}${new Date().toISOString()}`);
     lines.push(' */');
     lines.push('');
 
@@ -718,7 +719,7 @@ export class TestGenerator {
 
     // Mock 设置
     if (mockFunctions.length > 0) {
-      lines.push('// ============ Mock 设置 ============');
+      lines.push(i18n.t('shared.test-generator.k39'));
       for (const mock of mockFunctions) {
         lines.push(`vi.mock('${mock.module}', () => ({`);
         if (mock.is_default) {
@@ -732,7 +733,7 @@ export class TestGenerator {
 
     // Mock 数据
     if (Object.keys(mockData).length > 0) {
-      lines.push('// ============ Mock 数据 ============');
+      lines.push(i18n.t('shared.test-generator.k40'));
       lines.push(`const mockData = ${JSON.stringify(mockData, null, 2)};`);
       lines.push('');
     }
@@ -759,8 +760,8 @@ export class TestGenerator {
       const testFn = tc.only ? 'it.only' : tc.skip ? 'it.skip' : 'it';
       lines.push(`  ${testFn}('${tc.name}', async () => {`);
       lines.push(`    // ${tc.description}`);
-      lines.push(`    // 输入: ${JSON.stringify(tc.input)}`);
-      lines.push(`    // 期望: ${JSON.stringify(tc.expected_output)}`);
+      lines.push(`${i18n.t('shared.test-generator.k41')}${JSON.stringify(tc.input)}`);
+      lines.push(`${i18n.t('shared.test-generator.k42')}${JSON.stringify(tc.expected_output)}`);
 
       if (request.test_type === TestType.SNAPSHOT) {
         lines.push('    // const { container } = render(<Component />);');
@@ -771,7 +772,7 @@ export class TestGenerator {
         lines.push('    // await expect(page).toHaveTitle(/.*/);');
         lines.push('    expect(true).toBe(true);');
       } else {
-        lines.push('    // TODO: 实现测试逻辑');
+        lines.push(i18n.t('shared.test-generator.todo_43'));
         lines.push('    expect(true).toBe(true);');
       }
 
@@ -947,28 +948,28 @@ export class TestGenerator {
       if (lowerType.includes('number')) {
         cases.push(
           {
-            description: `${fn.name}: ${param.name} = -1 (负数)`,
+            description: `${fn.name}: ${param.name}${i18n.t('shared.test-generator.1_44')}`,
             input: { [param.name]: -1 },
-            reason: '验证负数输入',
-            expected_behavior: '应正确处理或拒绝负数',
+            reason: i18n.t('shared.test-generator.k15'),
+            expected_behavior: i18n.t('shared.test-generator.k16'),
           },
           {
-            description: `${fn.name}: ${param.name} = 0 (零值)`,
+            description: `${fn.name}: ${param.name}${i18n.t('shared.test-generator.0_45')}`,
             input: { [param.name]: 0 },
-            reason: '验证零值边界',
-            expected_behavior: '应正确处理零值',
+            reason: i18n.t('shared.test-generator.k17'),
+            expected_behavior: i18n.t('shared.test-generator.k18'),
           },
           {
             description: `${fn.name}: ${param.name} = NaN`,
             input: { [param.name]: NaN },
-            reason: '验证 NaN 输入',
-            expected_behavior: '应正确处理或拒绝 NaN',
+            reason: i18n.t('shared.test-generator.nan_19'),
+            expected_behavior: i18n.t('shared.test-generator.nan_20'),
           },
           {
             description: `${fn.name}: ${param.name} = Infinity`,
             input: { [param.name]: Infinity },
-            reason: '验证无穷大输入',
-            expected_behavior: '应正确处理或拒绝无穷大',
+            reason: i18n.t('shared.test-generator.k21'),
+            expected_behavior: i18n.t('shared.test-generator.k22'),
           }
         );
       }
@@ -976,22 +977,22 @@ export class TestGenerator {
       if (lowerType.includes('string')) {
         cases.push(
           {
-            description: `${fn.name}: ${param.name} = '' (空字符串)`,
+            description: `${fn.name}: ${param.name}${i18n.t('shared.test-generator.k46')}`,
             input: { [param.name]: '' },
-            reason: '验证空字符串',
-            expected_behavior: '应正确处理空字符串',
+            reason: i18n.t('shared.test-generator.k23'),
+            expected_behavior: i18n.t('shared.test-generator.k24'),
           },
           {
             description: `${fn.name}: ${param.name} = very long string`,
             input: { [param.name]: 'a'.repeat(10000) },
-            reason: '验证超长字符串',
-            expected_behavior: '应正确处理超长字符串',
+            reason: i18n.t('shared.test-generator.k25'),
+            expected_behavior: i18n.t('shared.test-generator.k26'),
           },
           {
             description: `${fn.name}: ${param.name} = special characters`,
             input: { [param.name]: '<script>alert("xss")</script>' },
-            reason: '验证特殊字符（XSS）',
-            expected_behavior: '应正确转义特殊字符',
+            reason: i18n.t('shared.test-generator.xss_27'),
+            expected_behavior: i18n.t('shared.test-generator.k28'),
           }
         );
       }
@@ -999,16 +1000,16 @@ export class TestGenerator {
       if (lowerType.includes('array') || lowerType.includes('[]')) {
         cases.push(
           {
-            description: `${fn.name}: ${param.name} = [] (空数组)`,
+            description: `${fn.name}: ${param.name}${i18n.t('shared.test-generator.k47')}`,
             input: { [param.name]: [] },
-            reason: '验证空数组',
-            expected_behavior: '应正确处理空数组',
+            reason: i18n.t('shared.test-generator.k29'),
+            expected_behavior: i18n.t('shared.test-generator.k30'),
           },
           {
             description: `${fn.name}: ${param.name} = [null, undefined]`,
             input: { [param.name]: [null, undefined] },
-            reason: '验证包含空值的数组',
-            expected_behavior: '应正确处理数组中的空值',
+            reason: i18n.t('shared.test-generator.k31'),
+            expected_behavior: i18n.t('shared.test-generator.k32'),
           }
         );
       }
@@ -1095,12 +1096,12 @@ export class TestGenerator {
 
   private getTestTypeName(type: TestType): string {
     const names: Record<TestType, string> = {
-      [TestType.UNIT]: '单元测试',
-      [TestType.INTEGRATION]: '集成测试',
-      [TestType.SNAPSHOT]: '快照测试',
-      [TestType.E2E]: '端到端测试',
+      [TestType.UNIT]: i18n.t('shared.test-generator.k33'),
+      [TestType.INTEGRATION]: i18n.t('shared.test-generator.k34'),
+      [TestType.SNAPSHOT]: i18n.t('shared.test-generator.k35'),
+      [TestType.E2E]: i18n.t('shared.test-generator.k36'),
     };
-    return names[type] ?? '单元测试';
+    return names[type] ?? i18n.t('shared.test-generator.k37');
   }
 
   private getFrameworkName(framework: TestFramework): string {

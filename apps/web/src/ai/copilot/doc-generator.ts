@@ -1,3 +1,4 @@
+import i18n from '@/i18n';
 export interface DocTemplate {
   id: string;
   name: string;
@@ -118,21 +119,21 @@ export class DocGenerator {
 
     if (options.features && options.features.length > 0) {
       sections.push({
-        title: '## ✨ 特性',
+        title: i18n.t('ai.doc-generator.k0'),
         content: options.features.map((f) => `- ${f}`).join('\n'),
       });
     }
 
     if (options.installation) {
       sections.push({
-        title: '## 📦 安装',
+        title: i18n.t('ai.doc-generator.k1'),
         content: `\`\`\`bash\n${options.installation}\n\`\`\``,
       });
     }
 
     if (options.usage) {
       sections.push({
-        title: '## 🚀 使用',
+        title: i18n.t('ai.doc-generator.k2'),
         content: `\`\`\`typescript\n${options.usage}\n\`\`\``,
       });
     }
@@ -151,16 +152,16 @@ export class DocGenerator {
 
     if (options.examples && options.examples.length > 0) {
       sections.push({
-        title: '## 💡 示例',
+        title: i18n.t('ai.doc-generator.k3'),
         content: options.examples
-          .map((e, i) => `### 示例 ${i + 1}\n\n\`\`\`typescript\n${e}\n\`\`\``)
+          .map((e, i) => `${i18n.t('ai.doc-generator.k4')}${i + 1}\n\n\`\`\`typescript\n${e}\n\`\`\``)
           .join('\n\n'),
       });
     }
 
     if (options.license) {
       sections.push({
-        title: '## 📄 许可证',
+        title: i18n.t('ai.doc-generator.k5'),
         content: options.license,
       });
     }
@@ -198,12 +199,12 @@ export class DocGenerator {
     }
 
     const typeLabels: Record<string, string> = {
-      added: '🚀 新增',
-      changed: '♻️ 变更',
-      fixed: '🐛 修复',
-      removed: '🗑️ 移除',
-      deprecated: '⚠️ 废弃',
-      security: '🔒 安全',
+      added: i18n.t('ai.doc-generator.k6'),
+      changed: i18n.t('ai.doc-generator.k7'),
+      fixed: i18n.t('ai.doc-generator.k8'),
+      removed: i18n.t('ai.doc-generator.k9'),
+      deprecated: i18n.t('ai.doc-generator.k10'),
+      security: i18n.t('ai.doc-generator.k11'),
     };
 
     const lines: string[] = [];
@@ -226,7 +227,7 @@ export class DocGenerator {
     }
 
     if (!hasContent) {
-      lines.push('暂无变更记录。');
+      lines.push(i18n.t('ai.doc-generator.k0'));
       lines.push('');
     }
 

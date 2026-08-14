@@ -11,6 +11,7 @@ import { designTokens } from '@/theme/tokens';
 
 
 import { QUERY_KEYS } from '@/lib/reactQuery';
+import i18n from '@/i18n';
 
 const ct= designTokens.colors;
 
@@ -64,7 +65,7 @@ const evaluationApiAdapter: CrudApiAdapter = {
     const response = await srmApi.createEvaluation(
       data as unknown as Parameters<typeof srmApi.createEvaluation>[0]
     );
-    if (!response.success || !response.data) throw new Error('创建评估失败');
+    if (!response.success || !response.data) throw new Error(i18n.t('pages.srm_evaluation_page.k0'));
     return response.data as unknown as Record<string, unknown>;
   },
   update: async (id, data) => {
@@ -72,12 +73,12 @@ const evaluationApiAdapter: CrudApiAdapter = {
       id,
       data as unknown as Parameters<typeof srmApi.updateEvaluation>[1]
     );
-    if (!response.success || !response.data) throw new Error('更新评估失败');
+    if (!response.success || !response.data) throw new Error(i18n.t('pages.srm_evaluation_page.k1'));
     return response.data as unknown as Record<string, unknown>;
   },
   delete: async (id) => {
     const response = await srmApi.deleteEvaluation(id);
-    if (!response.success) throw new Error('删除评估失败');
+    if (!response.success) throw new Error(i18n.t('pages.srm_evaluation_page.k2'));
   },
 };
 
@@ -101,13 +102,13 @@ const getStatusColor = (
 const getStatusLabel = (status: string): string => {
   switch (status) {
     case 'in_progress':
-      return '进行中';
+      return i18n.t('pages.srm_evaluation_page.k3');
     case 'completed':
-      return '已完成';
+      return i18n.t('pages.srm_evaluation_page.k4');
     case 'pending':
-      return '待审核';
+      return i18n.t('pages.srm_evaluation_page.k5');
     case 'rejected':
-      return '已驳回';
+      return i18n.t('pages.srm_evaluation_page.k6');
     default:
       return status;
   }
@@ -116,7 +117,7 @@ const getStatusLabel = (status: string): string => {
 const customColumns: ColumnDef[] = [
   {
     id: 'overall_score',
-    label: '综合评分',
+    label: i18n.t('pages.srm_evaluation_page.k7'),
     width: 180,
     sortable: true,
     render: (row) => {
@@ -137,7 +138,7 @@ const customColumns: ColumnDef[] = [
   },
   {
     id: 'status',
-    label: '状态',
+    label: i18n.t('pages.srm_evaluation_page.k8'),
     width: 100,
     sortable: true,
     render: (row) => {
@@ -176,28 +177,28 @@ const EvaluationStats: React.FC = () => {
 
   const statCards = [
     {
-      label: '评估总数',
+      label: i18n.t('pages.srm_evaluation_page.k9'),
       value: stats.total,
       color: ct.purple[500],
       bgColor: 'secondary.light',
       icon: <FileText sx={{ width: 20, height: 20 }} />,
     },
     {
-      label: '进行中',
+      label: i18n.t('pages.srm_evaluation_page.k10'),
       value: stats.inProgress,
       color: 'primary.dark',
       bgColor: 'primary.lighter',
       icon: <Clock sx={{ width: 20, height: 20 }} />,
     },
     {
-      label: '已完成',
+      label: i18n.t('pages.srm_evaluation_page.k11'),
       value: stats.completed,
       color: 'success.dark',
       bgColor: 'success.lighter',
       icon: <CheckCircle sx={{ width: 20, height: 20 }} />,
     },
     {
-      label: '待审核',
+      label: i18n.t('pages.srm_evaluation_page.k12'),
       value: stats.pending,
       color: 'warning.dark',
       bgColor: 'warning.lighter',
@@ -256,7 +257,7 @@ const EvaluationStats: React.FC = () => {
 const SrmEvaluationPage: React.FC = () => {
   const customRowActions: RowAction[] = [
     {
-      label: '查看详情',
+      label: i18n.t('pages.srm_evaluation_page.k13'),
       onClick: () => {},
     },
   ];
@@ -266,7 +267,7 @@ const SrmEvaluationPage: React.FC = () => {
       schema={evaluationSchema}
       apiAdapter={evaluationApiAdapter}
       customColumns={customColumns}
-      breadcrumbs={[{ label: 'SRM' }, { label: '供应商评估' }]}
+      breadcrumbs={[{ label: 'SRM' }, { label: i18n.t('pages.srm_evaluation_page.k14') }]}
       headerContent={<EvaluationStats />}
       customRowActions={customRowActions}
     />

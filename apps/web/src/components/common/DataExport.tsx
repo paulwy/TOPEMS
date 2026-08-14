@@ -21,7 +21,9 @@ import {
   Divider,
   Button,
 } from '@mui/material';
+import i18n from '@/i18n';
 import { Download, FileSpreadsheet, FileText, File, ChevronDown, Settings, X } from 'lucide-react';
+import { designTokens } from '@topems/tokens';
 
 // ============ 类型定义 ============
 
@@ -120,7 +122,7 @@ const DataExport: React.FC<DataExportProps> = ({
   data,
   fields,
   defaultFileName = 'export',
-  buttonText = '导出',
+  buttonText = i18n.t('shared.data_export.k0'),
   showFieldSelection = true,
   showFormatSelection = true,
   showSettingsDialog = true,
@@ -262,9 +264,9 @@ const DataExport: React.FC<DataExportProps> = ({
           <head>
             <title>${name}</title>
             <style>
-              body { font-family: Arial, sans-serif; padding: 20px; }
+              body { font-family: Arial, sans-serif; padding: designTokens.spacing.lg; }
               table { width: 100%; border-collapse: collapse; }
-              th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+              th, td { border: 1px solid #ddd; padding: designTokens.spacing.sm; text-align: left; }
               th { background-color: grey.100; }
               h1 { font-size: 18px; margin-bottom: 20px; }
               .export-time { color: #666; font-size: 12px; margin-bottom: 10px; }
@@ -386,19 +388,19 @@ const DataExport: React.FC<DataExportProps> = ({
               <ListItemIcon>
                 <FileSpreadsheet size={18} />
               </ListItemIcon>
-              <ListItemText>导出 Excel</ListItemText>
+              <ListItemText>{i18n.t('shared.data_export.excel_1')}</ListItemText>
             </MenuItem>
             <MenuItem onClick={() => handleExport('csv')}>
               <ListItemIcon>
                 <File size={18} />
               </ListItemIcon>
-              <ListItemText>导出 CSV</ListItemText>
+              <ListItemText>{i18n.t('shared.data_export.csv_2')}</ListItemText>
             </MenuItem>
             <MenuItem onClick={() => handleExport('pdf')}>
               <ListItemIcon>
                 <FileText size={18} />
               </ListItemIcon>
-              <ListItemText>导出 PDF</ListItemText>
+              <ListItemText>{i18n.t('shared.data_export.pdf_3')}</ListItemText>
             </MenuItem>
             <Divider />
           </>
@@ -408,7 +410,7 @@ const DataExport: React.FC<DataExportProps> = ({
             <ListItemIcon>
               <Settings size={18} />
             </ListItemIcon>
-            <ListItemText>导出设置</ListItemText>
+            <ListItemText>{i18n.t('shared.data_export.k4')}</ListItemText>
           </MenuItem>
         )}
       </Menu>
@@ -422,7 +424,7 @@ const DataExport: React.FC<DataExportProps> = ({
       >
         <DialogTitle>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-            导出设置
+            {i18n.t('components.data_export.k0')}
             <Box sx={{ flex: 1 }} />
             <Button
               onClick={handleCloseSettings}
@@ -439,14 +441,14 @@ const DataExport: React.FC<DataExportProps> = ({
               variant='subtitle2'
               sx={{ mb: 1 }}
             >
-              文件名
+              {i18n.t('components.data_export.k1')}
             </Typography>
             <TextField
               fullWidth
               size='small'
               value={fileName}
               onChange={(e) => setFileName(e.target.value)}
-              placeholder='请输入文件名'
+              placeholder={i18n.t('shared.data_export.k5')}
             />
           </Box>
 
@@ -456,7 +458,7 @@ const DataExport: React.FC<DataExportProps> = ({
               variant='subtitle2'
               sx={{ mb: 1 }}
             >
-              导出格式
+              {i18n.t('components.data_export.k2')}
             </Typography>
             <Box sx={{ display: 'flex', gap: 1 }}>
               {(['xlsx', 'csv', 'pdf'] as ExportFormat[]).map((format) => (
@@ -483,19 +485,19 @@ const DataExport: React.FC<DataExportProps> = ({
                 mb: 1,
               }}
             >
-              <Typography variant='subtitle2'>选择导出字段</Typography>
+              <Typography variant='subtitle2'>{i18n.t('shared.data_export.k6')}</Typography>
               <Box>
                 <Button
                   size='small'
                   onClick={() => handleSelectAll(true)}
                 >
-                  全选
+                  {i18n.t('components.data_export.k3')}
                 </Button>
                 <Button
                   size='small'
                   onClick={() => handleSelectAll(false)}
                 >
-                  取消全选
+                  {i18n.t('components.data_export.k4')}
                 </Button>
               </Box>
             </Box>
@@ -541,18 +543,18 @@ const DataExport: React.FC<DataExportProps> = ({
               color='text.secondary'
             >
               共 {data.length} 条数据，已选择 {selectedFields.filter((f) => f.selected).length}{' '}
-              个字段
+              {i18n.t('components.data_export.k5')}
             </Typography>
           </Box>
         </DialogContent>
         <DialogActions>
-          <Button onClick={handleCloseSettings}>取消</Button>
+          <Button onClick={handleCloseSettings}>{i18n.t('shared.data_export.k7')}</Button>
           <Button
             onClick={handleConfirmExport}
             variant='contained'
             startIcon={<Download size={16} />}
           >
-            确认导出
+            {i18n.t('components.data_export.k6')}
           </Button>
         </DialogActions>
       </Dialog>

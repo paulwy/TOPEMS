@@ -530,7 +530,7 @@ export function useMailPage() {
       if (res.success) {
         addNotification({
           title: i18n.t('im.hooks.k35'),
-          message: `模板已${variables.newStatus === 'active' ? i18n.t('im.hooks.k37') : i18n.t('im.hooks.k36')}`,
+          message: `${i18n.t('pages.hooks.k0')}${variables.newStatus === 'active' ? i18n.t('im.hooks.k37') : i18n.t('im.hooks.k36')}`,
           type: 'success',
         });
         queryClient.invalidateQueries({

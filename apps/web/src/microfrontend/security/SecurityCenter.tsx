@@ -31,6 +31,7 @@ import {
   Snackbar,
   Alert,
 } from '@mui/material';
+import i18n from '@/i18n';
 import {
   Shield as ShieldIcon,
   AlertTriangle as AlertTriangleIcon,
@@ -75,11 +76,11 @@ const severityColors: Record<SecurityIssueSeverity, string> = {
 };
 
 const severityLabels: Record<SecurityIssueSeverity, string> = {
-  info: '信息',
-  low: '低危',
-  medium: '中危',
-  high: '高危',
-  critical: '严重',
+  info: i18n.t('microfrontend.security_center.k0'),
+  low: i18n.t('microfrontend.security_center.k1'),
+  medium: i18n.t('microfrontend.security_center.k2'),
+  high: i18n.t('microfrontend.security_center.k3'),
+  critical: i18n.t('microfrontend.security_center.k4'),
 };
 
 const categoryIcons: Record<SecurityCategory, React.ReactNode> = {
@@ -92,12 +93,12 @@ const categoryIcons: Record<SecurityCategory, React.ReactNode> = {
 };
 
 const categoryLabels: Record<SecurityCategory, string> = {
-  [SecurityCategory.DEPENDENCY]: '依赖',
-  [SecurityCategory.PERMISSION]: '权限',
-  [SecurityCategory.SANDBOX]: '沙箱',
-  [SecurityCategory.NETWORK]: '网络',
-  [SecurityCategory.DATA]: '数据',
-  [SecurityCategory.CODE]: '代码',
+  [SecurityCategory.DEPENDENCY]: i18n.t('microfrontend.security_center.k5'),
+  [SecurityCategory.PERMISSION]: i18n.t('microfrontend.security_center.k6'),
+  [SecurityCategory.SANDBOX]: i18n.t('microfrontend.security_center.k7'),
+  [SecurityCategory.NETWORK]: i18n.t('microfrontend.security_center.k8'),
+  [SecurityCategory.DATA]: i18n.t('microfrontend.security_center.k9'),
+  [SecurityCategory.CODE]: i18n.t('microfrontend.security_center.k10'),
 };
 
 const StatCard: React.FC<{
@@ -186,7 +187,7 @@ const SecurityScoreGauge: React.FC<{ score: number }> = ({ score }) => {
           textAnchor='middle'
           style={{ fontSize: 14, fill: 'grey.500' }}
         >
-          安全评分
+          {i18n.t('microfrontend.security_center.k0')}
         </text>
       </svg>
       <Typography
@@ -194,7 +195,7 @@ const SecurityScoreGauge: React.FC<{ score: number }> = ({ score }) => {
         color='text.secondary'
         sx={{ mt: 1 }}
       >
-        {score >= 90 ? '优秀' : score >= 70 ? '良好' : score >= 50 ? '一般' : '较差'}
+        {score >= 90 ? i18n.t('microfrontend.security_center.k14') : score >= 70 ? i18n.t('microfrontend.security_center.k13') : score >= 50 ? i18n.t('microfrontend.security_center.k12') : i18n.t('microfrontend.security_center.k11')}
       </Typography>
     </Box>
   );
@@ -257,7 +258,7 @@ const IssueItem: React.FC<{
             {issue.fixed && (
               <Chip
                 icon={<CheckIcon size={12} />}
-                label='已修复'
+                label={i18n.t('microfrontend.security_center.k15')}
                 size='small'
                 color='success'
                 variant='outlined'
@@ -316,7 +317,7 @@ const IssueItem: React.FC<{
               color='text.secondary'
               sx={{ mb: 2 }}
             >
-              修复版本: {issue.fixed_version}
+              [i18n.t('microfrontend.security_center.k1')]: {issue.fixed_version}
             </Typography>
           )}
           {!issue.fixed && onFix && (
@@ -330,7 +331,7 @@ const IssueItem: React.FC<{
                 onFix();
               }}
             >
-              修复此问题
+              {i18n.t('microfrontend.security_center.k2')}
             </Button>
           )}
         </Box>
@@ -344,11 +345,11 @@ const PermissionAuditTable: React.FC<{ permissions: PermissionAudit[] }> = ({ pe
     <Table size='small'>
       <TableHead>
         <TableRow>
-          <TableCell>权限</TableCell>
-          <TableCell>是否必需</TableCell>
-          <TableCell>说明</TableCell>
-          <TableCell>风险</TableCell>
-          <TableCell>替代方案</TableCell>
+          <TableCell>{i18n.t('microfrontend.security_center.k16')}</TableCell>
+          <TableCell>{i18n.t('microfrontend.security_center.k17')}</TableCell>
+          <TableCell>{i18n.t('microfrontend.security_center.k18')}</TableCell>
+          <TableCell>{i18n.t('microfrontend.security_center.k19')}</TableCell>
+          <TableCell>{i18n.t('microfrontend.security_center.k20')}</TableCell>
         </TableRow>
       </TableHead>
       <TableBody>
@@ -357,7 +358,7 @@ const PermissionAuditTable: React.FC<{ permissions: PermissionAudit[] }> = ({ pe
             <TableCell sx={{ fontWeight: 600 }}>{perm.permission}</TableCell>
             <TableCell>
               <Chip
-                label={perm.required ? '必需' : '可选'}
+                label={perm.required ? i18n.t('microfrontend.security_center.k22') : i18n.t('microfrontend.security_center.k21')}
                 size='small'
                 color={perm.required ? 'primary' : 'default'}
                 variant='outlined'
@@ -366,7 +367,7 @@ const PermissionAuditTable: React.FC<{ permissions: PermissionAudit[] }> = ({ pe
             <TableCell>{perm.justification}</TableCell>
             <TableCell>
               <Chip
-                label={perm.risky ? '有风险' : '安全'}
+                label={perm.risky ? i18n.t('microfrontend.security_center.k24') : i18n.t('microfrontend.security_center.k23')}
                 size='small'
                 color={perm.risky ? 'warning' : 'success'}
                 variant='outlined'
@@ -388,7 +389,7 @@ const ScanHistoryList: React.FC<{ history: ScanHistoryEntry[] }> = ({ history })
           size={48}
           style={{ opacity: 0.3, marginBottom: 16 }}
         />
-        <Typography color='text.secondary'>暂无扫描历史</Typography>
+        <Typography color='text.secondary'>{i18n.t('microfrontend.security_center.k25')}</Typography>
       </Paper>
     );
   }
@@ -410,10 +411,10 @@ const ScanHistoryList: React.FC<{ history: ScanHistoryEntry[] }> = ({ history })
                 variant='body2'
                 sx={{ fontWeight: 600 }}
               >
-                全量扫描
+                {i18n.t('microfrontend.security_center.k3')}
               </Typography>
               <Chip
-                label={`${entry.avg_score}分`}
+                label={`${entry.avg_score}${i18n.t('microfrontend.security_center.k4')}`}
                 size='small'
                 color={entry.avg_score >= 80 ? 'success' : 'warning'}
               />
@@ -422,28 +423,28 @@ const ScanHistoryList: React.FC<{ history: ScanHistoryEntry[] }> = ({ history })
               variant='caption'
               color='text.secondary'
             >
-              {new Date(entry.scan_time).toLocaleString('zh-CN')} · {entry.module_count} 个模块 ·{' '}
+              {new Date(entry.scan_time).toLocaleString('zh-CN')}
               {entry.total_issues} 个问题
             </Typography>
           </Box>
           <Box sx={{ display: 'flex', gap: 1 }}>
             {entry.critical_count > 0 && (
               <Chip
-                label={`严重 ${entry.critical_count}`}
+                label={`${i18n.t('microfrontend.security_center.k6')} ${entry.critical_count}`}
                 size='small'
                 sx={{ bgcolor: 'error.600', color: 'error.600' }}
               />
             )}
             {entry.high_count > 0 && (
               <Chip
-                label={`高危 ${entry.high_count}`}
+                label={`${i18n.t('microfrontend.security_center.k7')} ${entry.high_count}`}
                 size='small'
                 sx={{ bgcolor: 'error.500', color: 'error.500' }}
               />
             )}
             {entry.medium_count > 0 && (
               <Chip
-                label={`中危 ${entry.medium_count}`}
+                label={`${i18n.t('microfrontend.security_center.k8')} ${entry.medium_count}`}
                 size='small'
                 sx={{ bgcolor: 'warning.500', color: 'warning.500' }}
               />
@@ -508,7 +509,7 @@ const SecurityCenter: React.FC<SecurityCenterProps> = ({ onClose }) => {
     if (success) {
       setAllIssues(securityScanner.getSecurityIssues());
       setOverallScore(securityScanner.getSecurityScore());
-      setSnackbar({ open: true, message: '问题已标记为修复', type: 'success' });
+      setSnackbar({ open: true, message: i18n.t('microfrontend.security_center.k26'), type: 'success' });
     }
   };
 
@@ -520,7 +521,7 @@ const SecurityCenter: React.FC<SecurityCenterProps> = ({ onClose }) => {
     });
     setAllIssues(securityScanner.getSecurityIssues());
     setOverallScore(securityScanner.getSecurityScore());
-    setSnackbar({ open: true, message: `已自动修复 ${fixedCount} 个低风险问题`, type: 'success' });
+    setSnackbar({ open: true, message: `${i18n.t('microfrontend.security_center.k9')} ${fixedCount} ${i18n.t('microfrontend.security_center.k10')}`, type: 'success' });
   };
 
   return (
@@ -550,7 +551,7 @@ const SecurityCenter: React.FC<SecurityCenterProps> = ({ onClose }) => {
           variant='h6'
           sx={{ fontWeight: 700 }}
         >
-          安全中心
+          {i18n.t('microfrontend.security_center.k11')}
         </Typography>
         <Box sx={{ flex: 1 }} />
         <Button
@@ -560,7 +561,7 @@ const SecurityCenter: React.FC<SecurityCenterProps> = ({ onClose }) => {
           onClick={handleAutoFix}
           disabled={scanning}
         >
-          一键修复
+          {i18n.t('microfrontend.security_center.k12')}
         </Button>
         <Button
           variant='contained'
@@ -577,7 +578,7 @@ const SecurityCenter: React.FC<SecurityCenterProps> = ({ onClose }) => {
           onClick={runScan}
           disabled={scanning}
         >
-          {scanning ? '扫描中...' : '开始扫描'}
+          {scanning ? i18n.t('microfrontend.security_center.k13') : i18n.t('microfrontend.security_center.k27')}
         </Button>
       </Box>
 
@@ -602,7 +603,7 @@ const SecurityCenter: React.FC<SecurityCenterProps> = ({ onClose }) => {
             >
               <Grid size={{ xs: 6, sm: 3 }}>
                 <StatCard
-                  label='已扫描模块'
+                  label={i18n.t('microfrontend.security_center.k28')}
                   value={scanResults.length}
                   icon={<PackageIcon size={20} />}
                   color={designTokens.colors.primary.dark}
@@ -610,7 +611,7 @@ const SecurityCenter: React.FC<SecurityCenterProps> = ({ onClose }) => {
               </Grid>
               <Grid size={{ xs: 6, sm: 3 }}>
                 <StatCard
-                  label='严重问题'
+                  label={i18n.t('microfrontend.security_center.k29')}
                   value={criticalCount}
                   icon={<XCircleIcon size={20} />}
                   color={designTokens.colors.error.dark}
@@ -618,7 +619,7 @@ const SecurityCenter: React.FC<SecurityCenterProps> = ({ onClose }) => {
               </Grid>
               <Grid size={{ xs: 6, sm: 3 }}>
                 <StatCard
-                  label='高危问题'
+                  label={i18n.t('microfrontend.security_center.k30')}
                   value={highCount}
                   icon={<AlertTriangleIcon size={20} />}
                   color={designTokens.colors.error.main}
@@ -626,7 +627,7 @@ const SecurityCenter: React.FC<SecurityCenterProps> = ({ onClose }) => {
               </Grid>
               <Grid size={{ xs: 6, sm: 3 }}>
                 <StatCard
-                  label='中低危问题'
+                  label={i18n.t('microfrontend.security_center.k31')}
                   value={mediumCount + lowCount}
                   icon={<AlertCircleIcon size={20} />}
                   color={designTokens.colors.warning.main}
@@ -643,22 +644,22 @@ const SecurityCenter: React.FC<SecurityCenterProps> = ({ onClose }) => {
           onChange={(_, v) => setActiveTab(v)}
         >
           <Tab
-            label='问题列表'
+            label={i18n.t('microfrontend.security_center.k32')}
             icon={<AlertTriangleIcon size={16} />}
             iconPosition='start'
           />
           <Tab
-            label='模块安全'
+            label={i18n.t('microfrontend.security_center.k33')}
             icon={<PackageIcon size={16} />}
             iconPosition='start'
           />
           <Tab
-            label='权限审计'
+            label={i18n.t('microfrontend.security_center.k34')}
             icon={<LockIcon size={16} />}
             iconPosition='start'
           />
           <Tab
-            label='扫描历史'
+            label={i18n.t('microfrontend.security_center.k35')}
             icon={<ClockIcon size={16} />}
             iconPosition='start'
           />
@@ -673,37 +674,37 @@ const SecurityCenter: React.FC<SecurityCenterProps> = ({ onClose }) => {
                 size='small'
                 sx={{ minWidth: 150 }}
               >
-                <InputLabel>严重程度</InputLabel>
+                <InputLabel>{i18n.t('microfrontend.security_center.k36')}</InputLabel>
                 <Select
                   value={selectedSeverity}
-                  label='严重程度'
+                  label={i18n.t('microfrontend.security_center.k37')}
                   onChange={(e) => setSelectedSeverity(e.target.value)}
                 >
-                  <MenuItem value=''>全部</MenuItem>
-                  <MenuItem value='critical'>严重</MenuItem>
-                  <MenuItem value='high'>高危</MenuItem>
-                  <MenuItem value='medium'>中危</MenuItem>
-                  <MenuItem value='low'>低危</MenuItem>
-                  <MenuItem value='info'>信息</MenuItem>
+                  <MenuItem value=''>{i18n.t('microfrontend.security_center.k38')}</MenuItem>
+                  <MenuItem value='critical'>{i18n.t('microfrontend.security_center.k39')}</MenuItem>
+                  <MenuItem value='high'>{i18n.t('microfrontend.security_center.k40')}</MenuItem>
+                  <MenuItem value='medium'>{i18n.t('microfrontend.security_center.k41')}</MenuItem>
+                  <MenuItem value='low'>{i18n.t('microfrontend.security_center.k42')}</MenuItem>
+                  <MenuItem value='info'>{i18n.t('microfrontend.security_center.k43')}</MenuItem>
                 </Select>
               </FormControl>
               <FormControl
                 size='small'
                 sx={{ minWidth: 150 }}
               >
-                <InputLabel>类别</InputLabel>
+                <InputLabel>{i18n.t('microfrontend.security_center.k44')}</InputLabel>
                 <Select
                   value={selectedCategory}
-                  label='类别'
+                  label={i18n.t('microfrontend.security_center.k45')}
                   onChange={(e) => setSelectedCategory(e.target.value)}
                 >
-                  <MenuItem value=''>全部</MenuItem>
-                  <MenuItem value='dependency'>依赖</MenuItem>
-                  <MenuItem value='permission'>权限</MenuItem>
-                  <MenuItem value='sandbox'>沙箱</MenuItem>
-                  <MenuItem value='network'>网络</MenuItem>
-                  <MenuItem value='data'>数据</MenuItem>
-                  <MenuItem value='code'>代码</MenuItem>
+                  <MenuItem value=''>{i18n.t('microfrontend.security_center.k46')}</MenuItem>
+                  <MenuItem value='dependency'>{i18n.t('microfrontend.security_center.k47')}</MenuItem>
+                  <MenuItem value='permission'>{i18n.t('microfrontend.security_center.k48')}</MenuItem>
+                  <MenuItem value='sandbox'>{i18n.t('microfrontend.security_center.k49')}</MenuItem>
+                  <MenuItem value='network'>{i18n.t('microfrontend.security_center.k50')}</MenuItem>
+                  <MenuItem value='data'>{i18n.t('microfrontend.security_center.k51')}</MenuItem>
+                  <MenuItem value='code'>{i18n.t('microfrontend.security_center.k52')}</MenuItem>
                 </Select>
               </FormControl>
               <Box sx={{ flex: 1 }} />
@@ -726,13 +727,13 @@ const SecurityCenter: React.FC<SecurityCenterProps> = ({ onClose }) => {
                   variant='h6'
                   sx={{ fontWeight: 600, mb: 1 }}
                 >
-                  没有发现安全问题
+                  {i18n.t('microfrontend.security_center.k14')}
                 </Typography>
                 <Typography
                   variant='body2'
                   color='text.secondary'
                 >
-                  当前筛选条件下未发现安全问题
+                  {i18n.t('microfrontend.security_center.k15')}
                 </Typography>
               </Paper>
             ) : (
@@ -774,7 +775,7 @@ const SecurityCenter: React.FC<SecurityCenterProps> = ({ onClose }) => {
                       </Typography>
                     </Box>
                     <Chip
-                      label={`${result.overall_score}分`}
+                      label={`${result.overall_score}${i18n.t('microfrontend.security_center.k16')}`}
                       color={
                         result.overall_score >= 80
                           ? 'success'
@@ -807,20 +808,20 @@ const SecurityCenter: React.FC<SecurityCenterProps> = ({ onClose }) => {
               color='text.secondary'
               sx={{ mb: 2 }}
             >
-              选择模块查看权限审计详情
+              {i18n.t('microfrontend.security_center.k17')}
             </Typography>
             <FormControl
               fullWidth
               size='small'
               sx={{ mb: 2 }}
             >
-              <InputLabel>选择模块</InputLabel>
+              <InputLabel>{i18n.t('microfrontend.security_center.k53')}</InputLabel>
               <Select
                 value={selectedModule}
-                label='选择模块'
+                label={i18n.t('microfrontend.security_center.k54')}
                 onChange={(e) => setSelectedModule(e.target.value)}
               >
-                <MenuItem value=''>请选择模块</MenuItem>
+                <MenuItem value=''>{i18n.t('microfrontend.security_center.k55')}</MenuItem>
                 {scanResults.map((result) => (
                   <MenuItem
                     key={result.module_id}

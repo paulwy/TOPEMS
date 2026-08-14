@@ -2,13 +2,14 @@ import type { EntitySchema } from '@/schema';
 import React from 'react';
 import { Box, Typography, Chip, Stack } from '@mui/material';
 import { FileText, FileSpreadsheet, File, Image, FolderOpen } from 'lucide-react';
+import i18n from '@/i18n';
 
 const TYPE_LABELS: Record<string, string> = {
   pdf: 'PDF',
   word: 'Word',
   excel: 'Excel',
   ppt: 'PPT',
-  image: '图片',
+  image: i18n.t('shared.document.k0'),
 };
 
 const TYPE_COLORS: Record<string, string> = {
@@ -95,8 +96,8 @@ const formatFileSize = (bytes: number): string => {
 
 export const documentSchema: EntitySchema = {
   entity: 'document',
-  title: '文档',
-  description: '管理您的所有文档',
+  title: i18n.t('shared.document.k1'),
+  description: i18n.t('shared.document.k2'),
 
   api: {
     module: 'doc',
@@ -106,7 +107,7 @@ export const documentSchema: EntitySchema = {
   fields: [
     {
       name: 'name',
-      label: '文档名称',
+      label: i18n.t('shared.document.k3'),
       type: 'text',
       listWidth: 240,
       renderCell: (row: Record<string, unknown>) => {
@@ -147,18 +148,18 @@ export const documentSchema: EntitySchema = {
     },
     {
       name: 'type',
-      label: '类型',
+      label: i18n.t('shared.document.k4'),
       type: 'select',
       listWidth: 100,
       options: {
         type: 'static',
         options: [
-          { value: 'all', label: '全部类型' },
+          { value: 'all', label: i18n.t('shared.document.k5') },
           { value: 'pdf', label: 'PDF' },
           { value: 'word', label: 'Word' },
           { value: 'excel', label: 'Excel' },
           { value: 'ppt', label: 'PPT' },
-          { value: 'image', label: '图片' },
+          { value: 'image', label: i18n.t('shared.document.k6') },
         ],
       },
       renderCell: (row: Record<string, unknown>) => {
@@ -181,7 +182,7 @@ export const documentSchema: EntitySchema = {
     },
     {
       name: 'size',
-      label: '大小',
+      label: i18n.t('shared.document.k7'),
       type: 'text',
       listWidth: 100,
       renderCell: (row: Record<string, unknown>) => (
@@ -195,7 +196,7 @@ export const documentSchema: EntitySchema = {
     },
     {
       name: 'folder_id',
-      label: '所在文件夹',
+      label: i18n.t('shared.document.k8'),
       type: 'text',
       listWidth: 140,
       renderCell: (row: Record<string, unknown>) => (
@@ -212,14 +213,14 @@ export const documentSchema: EntitySchema = {
             variant='body2'
             color='text.secondary'
           >
-            {(row as unknown as DocumentRow).folder_id || '根目录'}
+            {(row as unknown as DocumentRow).folder_id || i18n.t('shared.document.k9')}
           </Typography>
         </Stack>
       ),
     },
     {
       name: 'updated_at',
-      label: '修改时间',
+      label: i18n.t('shared.document.k10'),
       type: 'datetime',
       listWidth: 160,
       hideInForm: true,
@@ -240,26 +241,26 @@ export const documentSchema: EntitySchema = {
     filters: [
       {
         id: 'type',
-        label: '类型',
+        label: i18n.t('shared.document.k11'),
         type: 'select',
         options: [
-          { label: '全部类型', value: 'all' },
+          { label: i18n.t('shared.document.k12'), value: 'all' },
           { label: 'PDF', value: 'pdf' },
           { label: 'Word', value: 'word' },
           { label: 'Excel', value: 'excel' },
           { label: 'PPT', value: 'ppt' },
-          { label: '图片', value: 'image' },
+          { label: i18n.t('shared.document.k13'), value: 'image' },
         ],
       },
       {
         id: 'category',
-        label: '分类',
+        label: i18n.t('shared.document.k14'),
         type: 'select',
         options: [
-          { label: '全部分类', value: 'all' },
-          { label: '工作', value: 'work' },
-          { label: '个人', value: 'personal' },
-          { label: '项目', value: 'project' },
+          { label: i18n.t('shared.document.k15'), value: 'all' },
+          { label: i18n.t('shared.document.k16'), value: 'work' },
+          { label: i18n.t('shared.document.k17'), value: 'personal' },
+          { label: i18n.t('shared.document.k18'), value: 'project' },
         ],
       },
     ],
@@ -268,5 +269,5 @@ export const documentSchema: EntitySchema = {
   actions: ['detail', 'delete'],
 
   formColCount: 2,
-  detailTitle: '文档详情',
+  detailTitle: i18n.t('shared.document.k19'),
 };

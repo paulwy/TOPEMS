@@ -1,10 +1,11 @@
 import React from 'react';
+import i18n from '@/i18n';
 
 const WorkflowStatisticsPage: React.FC = () => {
   return React.createElement(
     'div',
     { className: 'page-placeholder' },
-    'WorkflowStatisticsPage 页面开发中'
+    i18n.t('workflow.workflow_statistics_page.k0')
   );
 };
 

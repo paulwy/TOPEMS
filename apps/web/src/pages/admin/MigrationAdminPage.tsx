@@ -1,5 +1,4 @@
 import React, { useState, useMemo } from 'react';
-import { useTranslation } from 'react-i18next';
 import { Play, Eye, RotateCcw, FileSearch, Database } from 'lucide-react';
 import {
   Box,
@@ -16,6 +15,7 @@ import {
   Paper,
   Button,
 } from '@mui/material';
+import i18n from '@/i18n';
 import { useNotificationStore } from '@/store';
 import CrudPage from '@/components/templates/CrudPage';
 import type { CrudApiAdapter, RowAction } from '@/components/templates/CrudPage';
@@ -26,19 +26,13 @@ import { apiLogger } from '@/utils/logger';
 import { ConfirmDialog } from '@topems/shared-components';
 import { useConfirmDialog } from '@/hooks';
 import { migrationSchema } from '@/schemas/admin';
-
-
 import { QUERY_KEYS } from '@/lib/reactQuery';
-
 interface ServiceStatusMap {
   [serviceName: string]: MigrationStatus;
 }
-
 const MigrationAdminPage: React.FC = () => {
-  const { t } = useTranslation();
   const { addNotification } = useNotificationStore();
   const queryClient = useQueryClient();
-
   const [batchApplying, setBatchApplying] = useState(false);
   const [activeService, setActiveService] = useState<MigrationService | null>(null);
   const [statusDialogOpen, setStatusDialogOpen] = useState(false);
@@ -50,7 +44,6 @@ const MigrationAdminPage: React.FC = () => {
     openConfirm: openConfirmDialog,
     closeConfirm: setConfirmDialogClosed,
   } = useConfirmDialog();
-
   const servicesQuery = useQuery({
     queryKey: QUERY_KEYS.AD_HOC.MIGRATION_SERVICES_BASE,
     queryFn: async () => {
@@ -59,17 +52,14 @@ const MigrationAdminPage: React.FC = () => {
     },
     staleTime: 5 * 60 * 1000,
   });
-
   const statusQuery = useQuery({
     queryKey: [...QUERY_KEYS.AD_HOC.MIGRATION_STATUS_BASE, servicesQuery.data?.map((s) => s.name) || []],
     queryFn: async () => {
       const services = servicesQuery.data || [];
       if (services.length === 0) return {};
-
       const results = await Promise.all(
         services.map((svc) => migrationApi.getMigrationStatus(svc.name).catch(() => null))
       );
-
       const statusMap: ServiceStatusMap = {};
       services.forEach((svc, idx) => {
         if (results[idx]) statusMap[svc.name] = results[idx] as MigrationStatus;
@@ -79,10 +69,8 @@ const MigrationAdminPage: React.FC = () => {
     enabled: !!servicesQuery.data && servicesQuery.data.length > 0,
     staleTime: 5 * 60 * 1000,
   });
-
   const services = servicesQuery.data || [];
   const statusMap = statusQuery.data || {};
-
   const apiAdapter: CrudApiAdapter<MigrationService> = useMemo(
     () => ({
       list: async () => {
@@ -90,24 +78,23 @@ const MigrationAdminPage: React.FC = () => {
         return { data, total: data.length };
       },
       create: async () => {
-        throw new Error(t('admin:migration_admin_page.unsupported_create'));
+        throw new Error(i18n.t('admin:migration_admin_page.unsupported_create'));
       },
       update: async () => {
-        throw new Error(t('admin:migration_admin_page.unsupported_update'));
+        throw new Error(i18n.t('admin:migration_admin_page.unsupported_update'));
       },
       delete: async () => {
-        throw new Error(t('admin:migration_admin_page.unsupported_delete'));
+        throw new Error(i18n.t('admin:migration_admin_page.unsupported_delete'));
       },
     }),
     []
   );
-
   const applyMutation = useMutation({
     mutationFn: (serviceName: string) => migrationApi.applyMigration(serviceName, 'schema'),
     onSuccess: (result, serviceName) => {
       addNotification({
-        title: t('admin:migration_admin_page.success_title'),
-        message: t('admin:migration_admin_page.apply_success_msg', {
+        title: i18n.t('admin:migration_admin_page.success_title'),
+        message: i18n.t('admin:migration_admin_page.apply_success_msg', {
           serviceName,
           count: result.files.length,
         }),
@@ -119,27 +106,26 @@ const MigrationAdminPage: React.FC = () => {
 });
     },
     onError: (error: unknown, serviceName) => {
-      apiLogger.error(t('admin:migration_admin_page.apply_failed_log'), error);
+      apiLogger.error(i18n.t('admin:migration_admin_page.apply_failed_log'), error);
       addNotification({
-        title: t('admin:migration_admin_page.error_title'),
+        title: i18n.t('admin:migration_admin_page.error_title'),
         message:
           (error as { message?: string }).message ||
-          t('admin:migration_admin_page.apply_failed_msg', { serviceName }),
+          i18n.t('admin:migration_admin_page.apply_failed_msg', { serviceName }),
         type: 'error',
       });
     },
   });
-
   const rollbackMutation = useMutation({
     mutationFn: (serviceName: string) => migrationApi.rollbackMigration(serviceName),
     onSuccess: (result, serviceName) => {
       addNotification({
-        title: t('admin:migration_admin_page.success_title'),
-        message: t('admin:migration_admin_page.rollback_success_msg', {
+        title: i18n.t('admin:migration_admin_page.success_title'),
+        message: i18n.t('admin:migration_admin_page.rollback_success_msg', {
           serviceName,
           result: result.record
-            ? t('admin:migration_admin_page.removed_records')
-            : t('admin:migration_admin_page.no_records_to_rollback'),
+            ? i18n.t('admin:migration_admin_page.removed_records')
+            : i18n.t('admin:migration_admin_page.no_records_to_rollback'),
         }),
         type: 'success',
       });
@@ -149,27 +135,25 @@ const MigrationAdminPage: React.FC = () => {
 });
     },
     onError: (error: unknown, serviceName) => {
-      apiLogger.error(t('admin:migration_admin_page.rollback_failed_log'), error);
+      apiLogger.error(i18n.t('admin:migration_admin_page.rollback_failed_log'), error);
       addNotification({
-        title: t('admin:migration_admin_page.error_title'),
+        title: i18n.t('admin:migration_admin_page.error_title'),
         message:
           (error as { message?: string }).message ||
-          t('admin:migration_admin_page.rollback_failed_msg', { serviceName }),
+          i18n.t('admin:migration_admin_page.rollback_failed_msg', { serviceName }),
         type: 'error',
       });
     },
   });
-
   const handleApply = async (service: MigrationService) => {
     setApplyingService(service.name);
     await applyMutation.mutateAsync(service.name);
     setApplyingService(null);
   };
-
   const handleRollback = (service: MigrationService) => {
     openConfirmDialog({
-      title: t('admin:migration_admin_page.confirm_rollback_title'),
-      message: t('admin:migration_admin_page.confirm_rollback_msg', { serviceName: service.name }),
+      title: i18n.t('admin:migration_admin_page.confirm_rollback_title'),
+      message: i18n.t('admin:migration_admin_page.confirm_rollback_msg', { serviceName: service.name }),
       danger: true,
       onConfirm: async () => {
         setRollingBackService(service.name);
@@ -178,7 +162,6 @@ const MigrationAdminPage: React.FC = () => {
       },
     });
   };
-
   const handleShowStatus = async (service: MigrationService) => {
     setActiveService(service);
     setStatusDialogOpen(true);
@@ -189,18 +172,16 @@ const MigrationAdminPage: React.FC = () => {
 });
     }
   };
-
   const handleBatchApply = () => {
     if (services.length === 0) return;
     openConfirmDialog({
-      title: t('admin:migration_admin_page.confirm_batch_title'),
-      message: t('admin:migration_admin_page.confirm_batch_msg', { count: services.length }),
+      title: i18n.t('admin:migration_admin_page.confirm_batch_title'),
+      message: i18n.t('admin:migration_admin_page.confirm_batch_msg', { count: services.length }),
       danger: true,
       onConfirm: async () => {
         setBatchApplying(true);
         let succeeded = 0;
         let failed = 0;
-
         for (const svc of services) {
           try {
             await migrationApi.applyMigration(svc.name, 'schema');
@@ -208,66 +189,60 @@ const MigrationAdminPage: React.FC = () => {
           } catch (err: unknown) {
             failed += 1;
             addNotification({
-              title: t('admin:migration_admin_page.error_title'),
-              message: t('admin:migration_admin_page.batch_failed_msg', {
+              title: i18n.t('admin:migration_admin_page.error_title'),
+              message: i18n.t('admin:migration_admin_page.batch_failed_msg', {
                 serviceName: svc.name,
                 message:
                   (err as { message?: string }).message ||
-                  t('admin:migration_admin_page.unknown_error'),
+                  i18n.t('admin:migration_admin_page.unknown_error'),
               }),
               type: 'error',
             });
           }
         }
-
         queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.MIGRATION_STATUS_BASE ,
   exact: false,
   refetchType: 'active',
 });
-
         addNotification({
           title:
             failed === 0
-              ? t('admin:migration_admin_page.success_title')
-              : t('admin:migration_admin_page.warning_title'),
-          message: t('admin:migration_admin_page.batch_complete_msg', { succeeded, failed }),
+              ? i18n.t('admin:migration_admin_page.success_title')
+              : i18n.t('admin:migration_admin_page.warning_title'),
+          message: i18n.t('admin:migration_admin_page.batch_complete_msg', { succeeded, failed }),
           type: failed === 0 ? 'success' : 'warning',
         });
         setBatchApplying(false);
       },
     });
   };
-
   const getPendingCount = (serviceName: string) => statusMap[serviceName]?.pending?.length ?? 0;
   const getAppliedCount = (serviceName: string) => statusMap[serviceName]?.applied?.length ?? 0;
-
   const customRowActions: RowAction[] = useMemo(
     () => [
       {
-        label: t('admin:migration_admin_page.view_status'),
+        label: i18n.t('admin:migration_admin_page.view_status'),
         icon: <Eye size={16} />,
         onClick: (row) => handleShowStatus(row as unknown as MigrationService),
       },
       {
-        label: t('admin:migration_admin_page.rollback'),
+        label: i18n.t('admin:migration_admin_page.rollback'),
         icon: <RotateCcw size={16} />,
         color: 'warning',
         onClick: (row) => handleRollback(row as unknown as MigrationService),
       },
       {
-        label: t('admin:migration_admin_page.apply_migration'),
+        label: i18n.t('admin:migration_admin_page.apply_migration'),
         icon: <Play size={16} />,
         onClick: (row) => handleApply(row as unknown as MigrationService),
       },
     ],
     [statusMap]
   );
-
   const headerContent = useMemo(() => {
     const totalServices = services.length;
     const totalPending = services.reduce((sum, svc) => sum + getPendingCount(svc.name), 0);
     const totalApplied = services.reduce((sum, svc) => sum + getAppliedCount(svc.name), 0);
-
     return (
       <Paper sx={{ p: 3, mb: 3 }}>
         <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 3 }}>
@@ -286,7 +261,7 @@ const MigrationAdminPage: React.FC = () => {
                 variant='body2'
                 color='text.secondary'
               >
-                {t('admin:migration_admin_page.total_services')}
+                {i18n.t('admin:migration_admin_page.total_services')}
               </Typography>
             </Box>
             <Typography
@@ -312,7 +287,7 @@ const MigrationAdminPage: React.FC = () => {
                 variant='body2'
                 color='text.secondary'
               >
-                {t('admin:migration_admin_page.pending_migration')}
+                {i18n.t('admin:migration_admin_page.pending_migration')}
               </Typography>
             </Box>
             <Typography
@@ -338,7 +313,7 @@ const MigrationAdminPage: React.FC = () => {
                 variant='body2'
                 color='text.secondary'
               >
-                {t('admin:migration_admin_page.applied_migration')}
+                {i18n.t('admin:migration_admin_page.applied_migration')}
               </Typography>
             </Box>
             <Typography
@@ -366,7 +341,7 @@ const MigrationAdminPage: React.FC = () => {
                 disabled={batchApplying}
                 fullWidth
               >
-                {t('admin:migration_admin_page.batch_migration')}
+                {i18n.t('admin:migration_admin_page.batch_migration')}
               </Button>
             </Box>
           </Box>
@@ -374,11 +349,10 @@ const MigrationAdminPage: React.FC = () => {
       </Paper>
     );
   }, [services, statusMap, batchApplying]);
-
   return (
     <PageContainer
-      title={t('admin:migration_admin_page.page_title')}
-      subtitle={t('admin:migration_admin_page.page_subtitle')}
+      title={i18n.t('admin:migration_admin_page.page_title')}
+      subtitle={i18n.t('admin:migration_admin_page.page_subtitle')}
     >
       <CrudPage
         schema={migrationSchema}
@@ -387,7 +361,6 @@ const MigrationAdminPage: React.FC = () => {
         customRowActions={customRowActions}
         idField='name'
       />
-
       <Dialog
         open={statusDialogOpen}
         onClose={() => setStatusDialogOpen(false)}
@@ -397,23 +370,22 @@ const MigrationAdminPage: React.FC = () => {
         <DialogContent>
           <DialogTitle>
             {activeService
-              ? t('admin:migration_admin_page.service_status_title', {
+              ? i18n.t('admin:migration_admin_page.service_status_title', {
                   serviceName: activeService.name,
                 })
-              : t('admin:migration_admin_page.migration_status')}
+              : i18n.t('admin:migration_admin_page.migration_status')}
           </DialogTitle>
           <Typography
             variant='body2'
             sx={{ color: 'text.secondary', mb: 4 }}
           >
             {activeService
-              ? t('admin:migration_admin_page.schema_port_info', {
+              ? i18n.t('admin:migration_admin_page.schema_port_info', {
                   schema: activeService.schema,
                   port: activeService.port,
                 })
               : ''}
           </Typography>
-
           {activeService && statusMap[activeService.name] ? (
             <Box sx={{ maxHeight: '60vh', overflowY: 'auto' }}>
               <Box sx={{ mt: 4 }}>
@@ -435,7 +407,7 @@ const MigrationAdminPage: React.FC = () => {
                       bgcolor: 'warning.main',
                     }}
                   />
-                  {t('admin:migration_admin_page.pending_with_count', {
+                  {i18n.t('admin:migration_admin_page.pending_with_count', {
                     count: statusMap[activeService.name].pending.length,
                   })}
                 </Typography>
@@ -445,7 +417,7 @@ const MigrationAdminPage: React.FC = () => {
                       variant='body2'
                       sx={{ color: 'text.secondary' }}
                     >
-                      {t('admin:migration_admin_page.no_pending_files')}
+                      {i18n.t('admin:migration_admin_page.no_pending_files')}
                     </Typography>
                   </Paper>
                 ) : (
@@ -468,7 +440,6 @@ const MigrationAdminPage: React.FC = () => {
                   </Paper>
                 )}
               </Box>
-
               <Box sx={{ mt: 4 }}>
                 <Typography
                   variant='subtitle2'
@@ -488,7 +459,7 @@ const MigrationAdminPage: React.FC = () => {
                       bgcolor: 'success.main',
                     }}
                   />
-                  {t('admin:migration_admin_page.applied_with_count', {
+                  {i18n.t('admin:migration_admin_page.applied_with_count', {
                     count: statusMap[activeService.name].applied.length,
                   })}
                 </Typography>
@@ -498,7 +469,7 @@ const MigrationAdminPage: React.FC = () => {
                       variant='body2'
                       sx={{ color: 'text.secondary' }}
                     >
-                      {t('admin:migration_admin_page.no_applied_records')}
+                      {i18n.t('admin:migration_admin_page.no_applied_records')}
                     </Typography>
                   </Paper>
                 ) : (
@@ -507,13 +478,13 @@ const MigrationAdminPage: React.FC = () => {
                       <TableHead>
                         <TableRow>
                           <TableCell sx={{ width: 120, fontWeight: 600 }}>
-                            {t('admin:migration_admin_page.version')}
+                            {i18n.t('admin:migration_admin_page.version')}
                           </TableCell>
                           <TableCell sx={{ fontWeight: 600 }}>
-                            {t('admin:migration_admin_page.name')}
+                            {i18n.t('admin:migration_admin_page.name')}
                           </TableCell>
                           <TableCell sx={{ width: 180, fontWeight: 600 }}>
-                            {t('admin:migration_admin_page.execution_time')}
+                            {i18n.t('admin:migration_admin_page.execution_time')}
                           </TableCell>
                           <TableCell
                             sx={{
@@ -522,7 +493,7 @@ const MigrationAdminPage: React.FC = () => {
                               fontWeight: 600,
                             }}
                           >
-                            {t('admin:migration_admin_page.duration_ms')}
+                            {i18n.t('admin:migration_admin_page.duration_ms')}
                           </TableCell>
                         </TableRow>
                       </TableHead>
@@ -556,13 +527,12 @@ const MigrationAdminPage: React.FC = () => {
           ) : (
             <Box sx={{ py: 10, textAlign: 'center', color: 'text.secondary' }}>
               <Typography variant='body2'>
-                {t('admin:migration_admin_page.no_status_info')}
+                {i18n.t('admin:migration_admin_page.no_status_info')}
               </Typography>
             </Box>
           )}
         </DialogContent>
       </Dialog>
-
       <ConfirmDialog
         isOpen={confirmDialogOpen}
         onClose={setConfirmDialogClosed}
@@ -577,5 +547,4 @@ const MigrationAdminPage: React.FC = () => {
     </PageContainer>
   );
 };
-
 export default MigrationAdminPage;

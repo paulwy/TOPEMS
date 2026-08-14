@@ -1,3 +1,4 @@
+import i18n from '@/i18n';
 export type UXMetricType = 'CLS' | 'LCP' | 'INP' | 'FCP';
 export type AlertStatus = 'active' | 'acknowledged' | 'resolved';
 export type UserSegment =
@@ -59,10 +60,10 @@ const UX_THRESHOLDS: Record<
 };
 
 const METRIC_LABELS: Record<UXMetricType, string> = {
-  CLS: '累积布局偏移',
-  LCP: '最大内容渲染',
-  INP: '交互到响应',
-  FCP: '首次内容渲染',
+  CLS: i18n.t('ai.ux-monitor.k0'),
+  LCP: i18n.t('ai.ux-monitor.k1'),
+  INP: i18n.t('ai.ux-monitor.k2'),
+  FCP: i18n.t('ai.ux-monitor.k3'),
 };
 
 function generateId(): string {
@@ -205,7 +206,7 @@ class UXMonitorImpl {
         userImpact,
         status: 'active',
         createdAt: new Date().toISOString(),
-        message: `${METRIC_LABELS[metric.type]} 超过阈值: ${metric.value.toFixed(2)} > ${threshold}`,
+        message: `${METRIC_LABELS[metric.type]}${i18n.t('ai.ux-monitor.k0')}${metric.value.toFixed(2)} > ${threshold}`,
       };
       this.alerts.set(alert.id, alert);
       this.emit({ type: 'alert_created', alertId: alert.id, metric: metric.type });
@@ -262,7 +263,7 @@ class UXMonitorImpl {
         }),
       status: 'active',
       createdAt: new Date().toISOString(),
-      message: `手动创建的告警: ${METRIC_LABELS[metric]} 阈值 ${threshold}`,
+      message: `${i18n.t('ai.ux-monitor.k1')}${METRIC_LABELS[metric]}${i18n.t('ai.ux-monitor.k2')}${threshold}`,
     };
 
     this.alerts.set(alert.id, alert);
@@ -346,7 +347,7 @@ class UXMonitorImpl {
   }
 
   getFunnelAnalysis(steps?: string[]): FunnelAnalysis {
-    const defaultSteps = steps || ['首页访问', '产品浏览', '加入购物车', '结算开始', '支付完成'];
+    const defaultSteps = steps || [i18n.t('ai.ux-monitor.k8'), i18n.t('ai.ux-monitor.k7'), i18n.t('ai.ux-monitor.k6'), i18n.t('ai.ux-monitor.k5'), i18n.t('ai.ux-monitor.k4')];
     const values = defaultSteps.map((_, i) => {
       if (i === 0) return 10000 + Math.floor(Math.random() * 2000);
       const prev = 10000 * Math.pow(0.75, i);
@@ -373,7 +374,7 @@ class UXMonitorImpl {
 
     const analysis: FunnelAnalysis = {
       id: generateId(),
-      name: '用户转化漏斗',
+      name: i18n.t('ai.ux-monitor.k9'),
       steps: funnelSteps,
       dropOff,
       analyzedAt: new Date().toISOString(),

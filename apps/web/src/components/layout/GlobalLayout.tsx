@@ -13,6 +13,7 @@ import {
   useSetUnreadNotificationCount,
   useUnreadNotificationCount,
 } from '@/store';
+import i18n from '@/i18n';
 import { getUnreadCount } from '@/api/notification';
 import { apiLogger } from '@/utils/logger';
 import { FloatingAIHelper } from '../ai/FloatingAIHelper';
@@ -98,7 +99,7 @@ export const GlobalLayout: React.FC<GlobalLayoutProps> = ({ children }) => {
       pathname: window.location.pathname || '/',
       source: 'shortcut',
       intent: 'chat',
-      breadcrumbs: ['快捷键'],
+      breadcrumbs: [i18n.t('shared.global_layout.k0')],
     });
     navigate(AI_PATHS.root);
   }, [navigate]);

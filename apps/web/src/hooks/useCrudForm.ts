@@ -49,6 +49,7 @@ import { apiLogger } from '@/utils/logger';
 
 
 import { QUERY_KEYS } from '@/lib/reactQuery';
+import i18n from '@/i18n';
 
 export type CrudFormMode = 'create' | 'view' | 'edit';
 
@@ -171,8 +172,8 @@ export function useCrudForm<T = any, TCreate = Partial<T>, TUpdate = Partial<T>>
           result = await onCreate(data as TCreate);
           if (showSuccessNotification) {
             addNotification({
-              title: '操作成功',
-              message: `成功创建${entityName}`,
+              title: i18n.t('shared.use_crud_form.k0'),
+              message: `${i18n.t('shared.use_crud_form.k0')}${entityName}`,
               type: 'success',
             });
           }
@@ -187,8 +188,8 @@ export function useCrudForm<T = any, TCreate = Partial<T>, TUpdate = Partial<T>>
           result = await onUpdate(id, data as TUpdate);
           if (showSuccessNotification) {
             addNotification({
-              title: '操作成功',
-              message: `成功更新${entityName}`,
+              title: i18n.t('shared.use_crud_form.k1'),
+              message: `${i18n.t('shared.use_crud_form.k1')}${entityName}`,
               type: 'success',
             });
           }
@@ -205,9 +206,9 @@ export function useCrudForm<T = any, TCreate = Partial<T>, TUpdate = Partial<T>>
 
         if (showErrorNotification) {
           addNotification({
-            title: '操作失败',
+            title: i18n.t('shared.use_crud_form.k2'),
             message:
-              extractErrorMessage(err) || `${mode === 'create' ? '创建' : '更新'}${entityName}失败`,
+              extractErrorMessage(err) || `${mode === 'create' ? i18n.t('shared.use_crud_form.k4') : i18n.t('shared.use_crud_form.k3')}${entityName}${i18n.t('shared.use_crud_form.k2')}`,
             type: 'error',
           });
         }

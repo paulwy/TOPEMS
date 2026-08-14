@@ -8,8 +8,7 @@ import {
   DialogActions,
   Button,
 } from '@mui/material';
-import { useTranslation } from 'react-i18next';
-
+import i18n from '@/i18n';
 interface DictionaryImportModalProps {
   open: boolean;
   importFile: File | null;
@@ -17,7 +16,6 @@ interface DictionaryImportModalProps {
   onImport: () => void;
   onFileChange: (file: File | null) => void;
 }
-
 const DictionaryImportModal: React.FC<DictionaryImportModalProps> = ({
   open,
   importFile,
@@ -25,8 +23,6 @@ const DictionaryImportModal: React.FC<DictionaryImportModalProps> = ({
   onImport,
   onFileChange,
 }) => {
-  const { t } = useTranslation();
-
   return (
     <Dialog
       open={open}
@@ -34,14 +30,14 @@ const DictionaryImportModal: React.FC<DictionaryImportModalProps> = ({
       maxWidth='sm'
       fullWidth
     >
-      <DialogTitle> {t('admin.dictionary_management.import_dictionary_items')} </DialogTitle>
+      <DialogTitle> {i18n.t('admin.dictionary_management.import_dictionary_items')} </DialogTitle>
       <DialogContent>
         <Box sx={{ pt: 1 }}>
           <Typography
             variant='body2'
             sx={{ mb: 1 }}
           >
-            {t('admin.dictionary_management_page.text_13bf99')}
+            {i18n.t('admin.dictionary_management_page.text_13bf99')}
           </Typography>
           <input
             type='file'
@@ -56,18 +52,17 @@ const DictionaryImportModal: React.FC<DictionaryImportModalProps> = ({
           variant='outlined'
           onClick={onClose}
         >
-          {t('admin.dictionary_management_page.text_625fb2')}
+          {i18n.t('admin.dictionary_management_page.text_625fb2')}
         </Button>
         <Button
           variant='contained'
           onClick={onImport}
           disabled={!importFile}
         >
-          {t('admin.dictionary_management_page.text_3e36a9')}
+          {i18n.t('admin.dictionary_management_page.text_3e36a9')}
         </Button>
       </DialogActions>
     </Dialog>
   );
 };
-
 export default DictionaryImportModal;

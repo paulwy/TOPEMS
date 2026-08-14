@@ -15,6 +15,7 @@ import {
 
 import { DashboardTemplate } from './DashboardTemplate';
 import type { StatCard, ChartCard, RecentItem, QuickAction } from './DashboardTemplate';
+import { designTokens } from '@topems/tokens';
 
 const meta = {
   title: 'Templates/DashboardTemplate',
@@ -158,7 +159,7 @@ const mockQuickActions: QuickAction[] = [
     label: '创建工单',
     icon: <Plus style={{ width: 20, height: 20 }} />,
     description: '创建新的生产工单',
-    color: '#1976d2',
+    color: designTokens.colors.primary[700],
   },
   {
     id: 'add-product',
@@ -172,14 +173,14 @@ const mockQuickActions: QuickAction[] = [
     label: '导出报表',
     icon: <Download style={{ width: 20, height: 20 }} />,
     description: '导出业务数据报表',
-    color: '#ed6c02',
+    color: designTokens.colors.warning[500],
   },
   {
     id: 'settings',
     label: '系统设置',
     icon: <Settings style={{ width: 20, height: 20 }} />,
     description: '配置系统参数',
-    color: '#7b1fa2',
+    color: designTokens.colors.secondary[700],
     badge: 2,
   },
 ];

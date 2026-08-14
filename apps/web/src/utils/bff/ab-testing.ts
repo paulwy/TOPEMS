@@ -12,6 +12,7 @@
  */
 
 import { logger } from '@/utils/logger';
+import i18n from '@/i18n';
 
 const abLogger = logger.child({ prefix: 'BFF-ABTest' });
 
@@ -258,20 +259,20 @@ export class ABTestEngine {
     const id = input.id ?? `exp-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
 
     if (this.experiments.has(id)) {
-      throw new Error(`实验已存在: ${id}`);
+      throw new Error(`${i18n.t('shared.ab-testing.k0')}${id}`);
     }
 
     // 校验变体：至少 2 个，且恰好 1 个对照组
     if (input.variants.length < 2) {
-      throw new Error('实验至少需要 2 个变体');
+      throw new Error(i18n.t('shared.ab-testing.2_0'));
     }
     const controlCount = input.variants.filter((v) => v.is_control).length;
     if (controlCount !== 1) {
-      throw new Error('实验必须且只能有 1 个对照组');
+      throw new Error(i18n.t('shared.ab-testing.1_1'));
     }
     // 校验权重
     if (input.variants.some((v) => v.weight <= 0)) {
-      throw new Error('变体权重必须为正数');
+      throw new Error(i18n.t('shared.ab-testing.k2'));
     }
 
     const variants: Variant[] = input.variants.map((v, idx) => ({
@@ -300,16 +301,16 @@ export class ABTestEngine {
     this.experiments.set(id, experiment);
     this.persist();
     this.notifyListeners();
-    abLogger.info(`创建实验: ${id} (${experiment.name})`);
+    abLogger.info(`${i18n.t('shared.ab-testing.k1')}${id} (${experiment.name})`);
     return experiment;
   }
 
   /** 启动实验 */
   startExperiment(experimentId: string): Experiment {
     const exp = this.experiments.get(experimentId);
-    if (!exp) throw new Error(`实验不存在: ${experimentId}`);
+    if (!exp) throw new Error(`${i18n.t('shared.ab-testing.k2')}${experimentId}`);
     if (exp.status === ExperimentStatus.RUNNING) {
-      throw new Error('实验已在运行中');
+      throw new Error(i18n.t('shared.ab-testing.k3'));
     }
     exp.status = ExperimentStatus.RUNNING;
     exp.start_date = exp.start_date ?? new Date().toISOString();
@@ -317,37 +318,37 @@ export class ABTestEngine {
     this.experiments.set(experimentId, exp);
     this.persist();
     this.notifyListeners();
-    abLogger.info(`启动实验: ${experimentId}`);
+    abLogger.info(`${i18n.t('shared.ab-testing.k3')}${experimentId}`);
     return exp;
   }
 
   /** 暂停实验 */
   pauseExperiment(experimentId: string): Experiment {
     const exp = this.experiments.get(experimentId);
-    if (!exp) throw new Error(`实验不存在: ${experimentId}`);
+    if (!exp) throw new Error(`${i18n.t('shared.ab-testing.k4')}${experimentId}`);
     if (exp.status !== ExperimentStatus.RUNNING) {
-      throw new Error('只能暂停运行中的实验');
+      throw new Error(i18n.t('shared.ab-testing.k4'));
     }
     exp.status = ExperimentStatus.PAUSED;
     exp.updated_at = new Date().toISOString();
     this.experiments.set(experimentId, exp);
     this.persist();
     this.notifyListeners();
-    abLogger.info(`暂停实验: ${experimentId}`);
+    abLogger.info(`${i18n.t('shared.ab-testing.k5')}${experimentId}`);
     return exp;
   }
 
   /** 完成实验 */
   completeExperiment(experimentId: string): Experiment {
     const exp = this.experiments.get(experimentId);
-    if (!exp) throw new Error(`实验不存在: ${experimentId}`);
+    if (!exp) throw new Error(`${i18n.t('shared.ab-testing.k6')}${experimentId}`);
     exp.status = ExperimentStatus.COMPLETED;
     exp.end_date = new Date().toISOString();
     exp.updated_at = new Date().toISOString();
     this.experiments.set(experimentId, exp);
     this.persist();
     this.notifyListeners();
-    abLogger.info(`完成实验: ${experimentId}`);
+    abLogger.info(`${i18n.t('shared.ab-testing.k7')}${experimentId}`);
     return exp;
   }
 
@@ -480,12 +481,12 @@ export class ABTestEngine {
   ): void {
     const exp = this.experiments.get(experimentId);
     if (!exp) {
-      abLogger.warn(`转化追踪失败：实验不存在 ${experimentId}`);
+      abLogger.warn(`${i18n.t('shared.ab-testing.k8')}${experimentId}`);
       return;
     }
     const assignment = this.assignments.get(`${experimentId}:${userId}`);
     if (!assignment) {
-      abLogger.debug(`转化追踪跳过：用户 ${userId} 未分配到实验 ${experimentId}`);
+      abLogger.debug(`${i18n.t('shared.ab-testing.k9')}${userId}${i18n.t('shared.ab-testing.k10')}${experimentId}`);
       return;
     }
 
@@ -697,7 +698,7 @@ export class ABTestEngine {
       try {
         listener();
       } catch (err) {
-        abLogger.error('A/B 测试监听器执行失败:', err);
+        abLogger.error(i18n.t('shared.ab-testing.ab_11'), err);
       }
     });
   }
@@ -712,7 +713,7 @@ export class ABTestEngine {
       };
       localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
     } catch (err) {
-      abLogger.warn('持久化 A/B 测试数据失败:', err);
+      abLogger.warn(i18n.t('shared.ab-testing.ab_12'), err);
     }
   }
 
@@ -734,7 +735,7 @@ export class ABTestEngine {
       }
       this.conversions = (data.conversions ?? []).slice(0, MAX_EVENTS);
     } catch (err) {
-      abLogger.warn('加载 A/B 测试数据失败:', err);
+      abLogger.warn(i18n.t('shared.ab-testing.ab_13'), err);
     }
   }
 }

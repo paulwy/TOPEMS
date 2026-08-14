@@ -2,6 +2,7 @@ import React from 'react';
 import { Box, Card, CardContent, Skeleton, Typography, Chip, Stack } from '@mui/material';
 import { TrendingUp, TrendingDown, Minus } from 'lucide-react';
 import type { StatCard as StatCardType } from './types';
+import i18n from '@/i18n';
 
 const colorMap: Record<string, string> = {
   primary: 'primary.main',
@@ -182,7 +183,7 @@ export const StatCardComponent: React.FC<StatCardType & { loading?: boolean }> =
                         variant='caption'
                         color='text.secondary'
                       >
-                        {progressLabel || '进度'}
+                        {progressLabel || i18n.t('templates.stat_card_component.k0')}
                       </Typography>
                       <Typography
                         variant='caption'

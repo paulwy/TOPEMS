@@ -11,6 +11,7 @@ import {
   capitalizeFirstLetter as sharedCapitalizeFirstLetter,
   clearCloneCache,
 } from '@topems/shared-utils';
+import i18n from '@/i18n';
 
 // 重新导出共享工具
 export {
@@ -124,12 +125,12 @@ export const formatDuration = (seconds: number): string => {
   const secs = Math.floor(seconds % 60);
 
   if (hours > 0) {
-    return `${hours}小时${minutes}分钟${secs}秒`;
+    return `${hours}${i18n.t('shared.format.k0')}${minutes}${i18n.t('shared.format.k1')}${secs}${i18n.t('shared.format.k2')}`;
   }
   if (minutes > 0) {
-    return `${minutes}分钟${secs}秒`;
+    return `${minutes}${i18n.t('shared.format.k3')}${secs}${i18n.t('shared.format.k4')}`;
   }
-  return `${secs}秒`;
+  return `${secs}${i18n.t('shared.format.k5')}`;
 };
 
 export const formatRelativeTime = (dateString: string): string => {
@@ -146,41 +147,41 @@ export const formatRelativeTime = (dateString: string): string => {
   const year = 365 * day;
 
   if (diff < minute) {
-    return '刚刚';
+    return i18n.t('shared.format.k0');
   } else if (diff < hour) {
-    return `${Math.floor(diff / minute)}分钟前`;
+    return `${Math.floor(diff / minute)}${i18n.t('shared.format.k6')}`;
   } else if (diff < day) {
-    return `${Math.floor(diff / hour)}小时前`;
+    return `${Math.floor(diff / hour)}${i18n.t('shared.format.k7')}`;
   } else if (diff < week) {
-    return `${Math.floor(diff / day)}天前`;
+    return `${Math.floor(diff / day)}${i18n.t('shared.format.k8')}`;
   } else if (diff < month) {
-    return `${Math.floor(diff / week)}周前`;
+    return `${Math.floor(diff / week)}${i18n.t('shared.format.k9')}`;
   } else if (diff < year) {
-    return `${Math.floor(diff / month)}个月前`;
+    return `${Math.floor(diff / month)}${i18n.t('shared.format.k10')}`;
   } else {
-    return `${Math.floor(diff / year)}年前`;
+    return `${Math.floor(diff / year)}${i18n.t('shared.format.k11')}`;
   }
 };
 
 export const formatStatus = (status: string | number): string => {
   const statusMap: Record<string, string> = {
-    0: '未启用',
-    1: '已启用',
-    active: '活跃',
-    inactive: '停用',
-    pending: '待处理',
-    approved: '已批准',
-    rejected: '已拒绝',
-    completed: '已完成',
-    processing: '处理中',
-    cancelled: '已取消',
-    draft: '草稿',
-    published: '已发布',
-    deleted: '已删除',
-    success: '成功',
-    failed: '失败',
-    warning: '警告',
-    error: '错误',
+    0: i18n.t('shared.format.k1'),
+    1: i18n.t('shared.format.k2'),
+    active: i18n.t('shared.format.k3'),
+    inactive: i18n.t('shared.format.k4'),
+    pending: i18n.t('shared.format.k5'),
+    approved: i18n.t('shared.format.k6'),
+    rejected: i18n.t('shared.format.k7'),
+    completed: i18n.t('shared.format.k8'),
+    processing: i18n.t('shared.format.k9'),
+    cancelled: i18n.t('shared.format.k10'),
+    draft: i18n.t('shared.format.k11'),
+    published: i18n.t('shared.format.k12'),
+    deleted: i18n.t('shared.format.k13'),
+    success: i18n.t('shared.format.k14'),
+    failed: i18n.t('shared.format.k15'),
+    warning: i18n.t('shared.format.k16'),
+    error: i18n.t('shared.format.k17'),
   };
   return statusMap[String(status).toLowerCase()] || String(status);
 };
@@ -239,7 +240,7 @@ export const formatDateRange = (startDate: string, endDate: string): string => {
 };
 
 export const formatMonth = (dateString: string): string => {
-  return formatDate(dateString, 'YYYY年MM月');
+  return formatDate(dateString, i18n.t('shared.format.yyyymm_12'));
 };
 
 export const formatWeek = (dateString: string): string => {

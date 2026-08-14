@@ -24,6 +24,7 @@ import {
   Stack,
   Button,
 } from '@mui/material';
+import i18n from '@/i18n';
 import {
   Package,
   Play,
@@ -61,24 +62,24 @@ interface MarketplacePlugin {
 }
 
 const PLUGIN_DISPLAY_NAMES: Record<string, string> = {
-  workflow: '工作流引擎',
-  erp: '企业资源计划',
-  hrm: '人力资源管理',
-  crm: '客户关系管理',
-  mes: '制造执行系统',
-  qa: '质量管理与安全',
-  scm: '供应链管理',
-  wms: '仓储管理',
-  bi: '商业智能',
-  pm: '项目管理',
-  ai: 'AI 智能服务',
-  gis: '地理信息服务',
-  mobile: '移动端服务',
-  rs: '研发管理',
-  srm: '供应商管理',
-  monitor: '监控告警',
-  portal: '企业门户',
-  integration: '系统集成',
+  workflow: i18n.t('pages.plugin_management_page.k0'),
+  erp: i18n.t('pages.plugin_management_page.k1'),
+  hrm: i18n.t('pages.plugin_management_page.k2'),
+  crm: i18n.t('pages.plugin_management_page.k3'),
+  mes: i18n.t('pages.plugin_management_page.k4'),
+  qa: i18n.t('pages.plugin_management_page.k5'),
+  scm: i18n.t('pages.plugin_management_page.k6'),
+  wms: i18n.t('pages.plugin_management_page.k7'),
+  bi: i18n.t('pages.plugin_management_page.k8'),
+  pm: i18n.t('pages.plugin_management_page.k9'),
+  ai: i18n.t('pages.plugin_management_page.ai_0'),
+  gis: i18n.t('pages.plugin_management_page.k10'),
+  mobile: i18n.t('pages.plugin_management_page.k11'),
+  rs: i18n.t('pages.plugin_management_page.k12'),
+  srm: i18n.t('pages.plugin_management_page.k13'),
+  monitor: i18n.t('pages.plugin_management_page.k14'),
+  portal: i18n.t('pages.plugin_management_page.k15'),
+  integration: i18n.t('pages.plugin_management_page.k16'),
 };
 
 const PLUGIN_CATEGORIES: Record<string, string> = {
@@ -175,13 +176,13 @@ const PluginManagementPage: React.FC = () => {
         return { data: filtered as unknown as Record<string, unknown>[], total: filtered.length };
       },
       create: async () => {
-        throw new Error('插件通过市场安装，不支持直接创建');
+        throw new Error(i18n.t('pages.plugin_management_page.k17'));
       },
       update: async () => {
-        throw new Error('插件配置不支持直接编辑');
+        throw new Error(i18n.t('pages.plugin_management_page.k18'));
       },
       delete: async () => {
-        throw new Error('请使用卸载操作移除插件');
+        throw new Error(i18n.t('pages.plugin_management_page.k19'));
       },
     }),
     [fetchInstalledPlugins, fetchHealthStatus]
@@ -190,7 +191,7 @@ const PluginManagementPage: React.FC = () => {
   const enableMutation = useMutation({
     mutationFn: async (pluginCode: string) => {
       const success = await enablePlugin(pluginCode);
-      if (!success) throw new Error('启用失败');
+      if (!success) throw new Error(i18n.t('pages.plugin_management_page.k20'));
       return pluginCode;
     },
     onSuccess: (pluginCode) => {
@@ -201,16 +202,16 @@ const PluginManagementPage: React.FC = () => {
           refetchType: 'active',
         });
       addNotification({
-        title: '启用成功',
-        message: `${pluginCode} 插件已启用`,
+        title: i18n.t('pages.plugin_management_page.k21'),
+        message: `${pluginCode} ${i18n.t('pages.plugin_management_page.k1')}`,
         type: 'success',
       });
       loadPlugins();
     },
     onError: (err: unknown) => {
       addNotification({
-        title: '失败',
-        message: (err as Error).message || '启用失败',
+        title: i18n.t('pages.plugin_management_page.k22'),
+        message: (err as Error).message || i18n.t('pages.plugin_management_page.k23'),
         type: 'error',
       });
     },
@@ -219,7 +220,7 @@ const PluginManagementPage: React.FC = () => {
   const disableMutation = useMutation({
     mutationFn: async (pluginCode: string) => {
       const success = await disablePlugin(pluginCode);
-      if (!success) throw new Error('禁用失败');
+      if (!success) throw new Error(i18n.t('pages.plugin_management_page.k24'));
       return pluginCode;
     },
     onSuccess: (pluginCode) => {
@@ -230,16 +231,16 @@ const PluginManagementPage: React.FC = () => {
           refetchType: 'active',
         });
       addNotification({
-        title: '禁用成功',
-        message: `${pluginCode} 插件已禁用`,
+        title: i18n.t('pages.plugin_management_page.k25'),
+        message: `${pluginCode} ${i18n.t('pages.plugin_management_page.k2')}`,
         type: 'success',
       });
       loadPlugins();
     },
     onError: (err: unknown) => {
       addNotification({
-        title: '失败',
-        message: (err as Error).message || '禁用失败',
+        title: i18n.t('pages.plugin_management_page.k26'),
+        message: (err as Error).message || i18n.t('pages.plugin_management_page.k27'),
         type: 'error',
       });
     },
@@ -248,7 +249,7 @@ const PluginManagementPage: React.FC = () => {
   const upgradeMutation = useMutation({
     mutationFn: async (pluginCode: string) => {
       const success = await upgradePlugin(pluginCode);
-      if (!success) throw new Error('升级失败');
+      if (!success) throw new Error(i18n.t('pages.plugin_management_page.k28'));
       return pluginCode;
     },
     onSuccess: (pluginCode) => {
@@ -259,16 +260,16 @@ const PluginManagementPage: React.FC = () => {
           refetchType: 'active',
         });
       addNotification({
-        title: '升级成功',
-        message: `${pluginCode} 插件已升级`,
+        title: i18n.t('pages.plugin_management_page.k29'),
+        message: `${pluginCode} ${i18n.t('pages.plugin_management_page.k3')}`,
         type: 'success',
       });
       loadPlugins();
     },
     onError: (err: unknown) => {
       addNotification({
-        title: '失败',
-        message: (err as Error).message || '升级失败',
+        title: i18n.t('pages.plugin_management_page.k30'),
+        message: (err as Error).message || i18n.t('pages.plugin_management_page.k31'),
         type: 'error',
       });
     },
@@ -277,7 +278,7 @@ const PluginManagementPage: React.FC = () => {
   const uninstallMutation = useMutation({
     mutationFn: async ({ pluginCode, tier }: { pluginCode: string; tier: UninstallTier }) => {
       const success = await uninstallPlugin(pluginCode, tier);
-      if (!success) throw new Error('卸载失败');
+      if (!success) throw new Error(i18n.t('pages.plugin_management_page.k32'));
       return { pluginCode, tier };
     },
     onSuccess: ({ pluginCode, tier }) => {
@@ -288,21 +289,21 @@ const PluginManagementPage: React.FC = () => {
           refetchType: 'active',
         });
       addNotification({
-        title: '操作成功',
+        title: i18n.t('pages.plugin_management_page.k33'),
         message:
           tier === 'delete'
-            ? `${pluginCode} 插件已彻底删除`
+            ? `${pluginCode} ${i18n.t('pages.plugin_management_page.k4')}`
             : tier === 'disable'
-              ? `${pluginCode} 插件已禁用`
-              : `${pluginCode} 插件已卸载`,
+              ? `${pluginCode} ${i18n.t('pages.plugin_management_page.k5')}`
+              : `${pluginCode} ${i18n.t('pages.plugin_management_page.k6')}`,
         type: 'success',
       });
       loadPlugins();
     },
     onError: (err: unknown) => {
       addNotification({
-        title: '失败',
-        message: (err as Error).message || '卸载失败',
+        title: i18n.t('pages.plugin_management_page.k34'),
+        message: (err as Error).message || i18n.t('pages.plugin_management_page.k35'),
         type: 'error',
       });
     },
@@ -314,7 +315,7 @@ const PluginManagementPage: React.FC = () => {
   const installMutation = useMutation({
     mutationFn: async (pluginCode: string) => {
       const success = await installPlugin(pluginCode);
-      if (!success) throw new Error('安装失败');
+      if (!success) throw new Error(i18n.t('pages.plugin_management_page.k36'));
       return pluginCode;
     },
   
@@ -333,7 +334,7 @@ const PluginManagementPage: React.FC = () => {
         name: PLUGIN_DISPLAY_NAMES[code] || code.toUpperCase(),
         version: '1.0.0',
         latest_version: '1.0.0',
-        description: `${PLUGIN_DISPLAY_NAMES[code] || code} 服务运行在端口 ${config.port}`,
+        description: `${PLUGIN_DISPLAY_NAMES[code] || code} ${i18n.t('pages.plugin_management_page.k7')} ${config.port}`,
         author: 'TOPEMS',
         published_at: '2024-01-01',
         downloads: 0,
@@ -395,7 +396,7 @@ const PluginManagementPage: React.FC = () => {
         setInstallStep(2);
         loadPlugins();
       } catch (err: unknown) {
-        setInstallError(extractErrorMessage(err, '安装失败'));
+        setInstallError(extractErrorMessage(err, i18n.t('pages.plugin_management_page.k37')));
       } finally {
         setInstallLoading(false);
       }
@@ -413,34 +414,34 @@ const PluginManagementPage: React.FC = () => {
   const getUninstallMessage = (pluginCode: string, tier: UninstallTier) => {
     switch (tier) {
       case 'disable':
-        return `确定要禁用 "${pluginCode}" 插件吗？禁用后数据将保留，可重新启用。`;
+        return `${i18n.t('pages.plugin_management_page.k8')}${pluginCode}${i18n.t('pages.plugin_management_page.k9')}`;
       case 'uninstall':
-        return `确定要卸载 "${pluginCode}" 插件吗？数据将保留90天，可重新安装恢复。`;
+        return `${i18n.t('pages.plugin_management_page.k10')}${pluginCode}${i18n.t('pages.plugin_management_page.k11')}`;
       case 'delete':
-        return `确定要彻底删除 "${pluginCode}" 插件吗？此操作将删除所有相关数据，无法恢复！`;
+        return `${i18n.t('pages.plugin_management_page.k12')}${pluginCode}${i18n.t('pages.plugin_management_page.k13')}`;
       default:
-        return `确定要卸载 "${pluginCode}" 插件吗？`;
+        return `${i18n.t('pages.plugin_management_page.k14')}${pluginCode}${i18n.t('pages.plugin_management_page.k15')}`;
     }
   };
 
   const customRowActions: RowAction[] = useMemo(
     () => [
       {
-        label: '启用',
+        label: i18n.t('pages.plugin_management_page.k38'),
         icon: <Play size={16} />,
         onClick: (row) => enableMutation.mutate(String(row.code)),
         color: 'success',
         show: (row) => row.runtime_status !== 'running',
       },
       {
-        label: '禁用',
+        label: i18n.t('pages.plugin_management_page.k39'),
         icon: <Square size={16} />,
         onClick: (row) => disableMutation.mutate(String(row.code)),
         color: 'warning',
         show: (row) => row.runtime_status === 'running',
       },
       {
-        label: '升级',
+        label: i18n.t('pages.plugin_management_page.k40'),
         icon: <Download size={16} />,
         onClick: (row) => upgradeMutation.mutate(String(row.code)),
         color: 'primary',
@@ -451,7 +452,7 @@ const PluginManagementPage: React.FC = () => {
         },
       },
       {
-        label: '卸载',
+        label: i18n.t('pages.plugin_management_page.k41'),
         icon: <Trash2 size={16} />,
         onClick: (row) => setUninstallTarget({ code: String(row.code), tier: 'uninstall' }),
         color: 'error',
@@ -469,7 +470,7 @@ const PluginManagementPage: React.FC = () => {
           startIcon={<Store size={16} />}
           onClick={handleOpenMarketplace}
         >
-          浏览市场
+          {i18n.t('pages.plugin_management_page.k16')}
         </Button>
       </Box>
     ),
@@ -484,9 +485,9 @@ const PluginManagementPage: React.FC = () => {
         customRowActions={customRowActions}
         headerContent={headerContent}
         breadcrumbs={[
-          { label: '首页', href: '/dashboard' },
-          { label: '系统管理' },
-          { label: '插件管理' },
+          { label: i18n.t('pages.plugin_management_page.k42'), href: '/dashboard' },
+          { label: i18n.t('pages.plugin_management_page.k43') },
+          { label: i18n.t('pages.plugin_management_page.k44') },
         ]}
       />
 
@@ -496,7 +497,7 @@ const PluginManagementPage: React.FC = () => {
         onClose={() => setUninstallTarget(null)}
       >
         <DialogTitle>
-          {uninstallTarget?.tier === 'delete' ? '彻底删除插件' : '卸载插件'}
+          {uninstallTarget?.tier === 'delete' ? i18n.t('pages.plugin_management_page.k46') : i18n.t('pages.plugin_management_page.k45')}
         </DialogTitle>
         <DialogContent>
           {uninstallTarget && (
@@ -509,7 +510,7 @@ const PluginManagementPage: React.FC = () => {
                   variant='body2'
                   sx={{ fontWeight: 500, mb: 1 }}
                 >
-                  卸载级别：
+                  {i18n.t('pages.plugin_management_page.k17')}
                 </Typography>
                 <Stack
                   direction='row'
@@ -522,7 +523,7 @@ const PluginManagementPage: React.FC = () => {
                       setUninstallTarget((prev) => (prev ? { ...prev, tier: 'disable' } : null))
                     }
                   >
-                    禁用
+                    {i18n.t('pages.plugin_management_page.k18')}
                   </Button>
                   <Button
                     variant={uninstallTarget.tier === 'uninstall' ? 'contained' : 'outlined'}
@@ -531,7 +532,7 @@ const PluginManagementPage: React.FC = () => {
                       setUninstallTarget((prev) => (prev ? { ...prev, tier: 'uninstall' } : null))
                     }
                   >
-                    卸载
+                    {i18n.t('pages.plugin_management_page.k19')}
                   </Button>
                   <Button
                     variant={uninstallTarget.tier === 'delete' ? 'contained' : 'outlined'}
@@ -541,7 +542,7 @@ const PluginManagementPage: React.FC = () => {
                       setUninstallTarget((prev) => (prev ? { ...prev, tier: 'delete' } : null))
                     }
                   >
-                    彻底删除
+                    {i18n.t('pages.plugin_management_page.k20')}
                   </Button>
                 </Stack>
               </Box>
@@ -549,15 +550,15 @@ const PluginManagementPage: React.FC = () => {
                 variant='caption'
                 color='textSecondary'
               >
-                {uninstallTarget.tier === 'disable' && '禁用：仅停止插件运行，数据完整保留'}
-                {uninstallTarget.tier === 'uninstall' && '卸载：移除插件安装记录，数据保留90天'}
-                {uninstallTarget.tier === 'delete' && '彻底删除：删除所有数据，不可恢复'}
+                {uninstallTarget.tier === 'disable' && i18n.t('pages.plugin_management_page.k47')}
+                {uninstallTarget.tier === 'uninstall' && i18n.t('pages.plugin_management_page.90_48')}
+                {uninstallTarget.tier === 'delete' && i18n.t('pages.plugin_management_page.k49')}
               </Typography>
             </>
           )}
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setUninstallTarget(null)}>取消</Button>
+          <Button onClick={() => setUninstallTarget(null)}>{i18n.t('pages.plugin_management_page.k50')}</Button>
           <Button
             onClick={() => {
               if (uninstallTarget) {
@@ -572,10 +573,10 @@ const PluginManagementPage: React.FC = () => {
             disabled={uninstallMutation.isPending}
           >
             {uninstallMutation.isPending
-              ? '处理中...'
+              ? i18n.t('pages.plugin_management_page.k21')
               : uninstallTarget?.tier === 'delete'
-                ? '确认删除'
-                : '确认'}
+                ? i18n.t('pages.plugin_management_page.k51')
+                : i18n.t('pages.plugin_management_page.k52')}
           </Button>
         </DialogActions>
       </Dialog>
@@ -590,7 +591,7 @@ const PluginManagementPage: React.FC = () => {
         <DialogTitle>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
             <Store size={24} />
-            插件市场
+            {i18n.t('pages.plugin_management_page.k22')}
           </Box>
         </DialogTitle>
         <DialogContent>
@@ -601,13 +602,13 @@ const PluginManagementPage: React.FC = () => {
                 sx={{ mb: 3 }}
               >
                 <Step>
-                  <StepLabel>确认</StepLabel>
+                  <StepLabel>{i18n.t('pages.plugin_management_page.k53')}</StepLabel>
                 </Step>
                 <Step>
-                  <StepLabel>安装</StepLabel>
+                  <StepLabel>{i18n.t('pages.plugin_management_page.k54')}</StepLabel>
                 </Step>
                 <Step>
-                  <StepLabel>完成</StepLabel>
+                  <StepLabel>{i18n.t('pages.plugin_management_page.k55')}</StepLabel>
                 </Step>
               </Stepper>
 
@@ -617,13 +618,13 @@ const PluginManagementPage: React.FC = () => {
                     variant='h6'
                     gutterBottom
                   >
-                    确认安装
+                    {i18n.t('pages.plugin_management_page.k23')}
                   </Typography>
                   <Typography
                     variant='body1'
                     sx={{ mb: 2 }}
                   >
-                    您即将安装以下插件：
+                    {i18n.t('pages.plugin_management_page.k24')}
                   </Typography>
                   <Box sx={{ p: 2, mb: 2, border: 1, borderColor: 'divider', borderRadius: 1 }}>
                     <Typography
@@ -646,13 +647,13 @@ const PluginManagementPage: React.FC = () => {
                       <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
                         <GitBranch size={14} />
                         <Typography variant='caption'>
-                          版本: {installingPlugin.latest_version}
+                          [i18n.t('pages.plugin_management_page.k25')]: {installingPlugin.latest_version}
                         </Typography>
                       </Box>
                       <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
                         <Download size={14} />
                         <Typography variant='caption'>
-                          下载量: {installingPlugin.downloads}
+                          [i18n.t('pages.plugin_management_page.k26')]: {installingPlugin.downloads}
                         </Typography>
                       </Box>
                     </Stack>
@@ -662,7 +663,7 @@ const PluginManagementPage: React.FC = () => {
                     color='text.secondary'
                     sx={{ mb: 2 }}
                   >
-                    此插件将请求以下权限：
+                    {i18n.t('pages.plugin_management_page.k27')}
                   </Typography>
                   <List dense>
                     {installingPlugin.permissions.map((perm) => (
@@ -715,7 +716,7 @@ const PluginManagementPage: React.FC = () => {
                     variant='h6'
                     gutterBottom
                   >
-                    安装完成！
+                    {i18n.t('pages.plugin_management_page.k28')}
                   </Typography>
                   <Typography color='text.secondary'>
                     {installingPlugin?.name} 已成功安装。
@@ -733,7 +734,7 @@ const PluginManagementPage: React.FC = () => {
                     onClick={handleInstallBack}
                     disabled={installLoading}
                   >
-                    上一步
+                    {i18n.t('pages.plugin_management_page.k29')}
                   </Button>
                 )}
                 {installStep < 2 ? (
@@ -742,14 +743,14 @@ const PluginManagementPage: React.FC = () => {
                     onClick={handleInstallNext}
                     disabled={installLoading}
                   >
-                    {installStep === 0 ? '下一步' : '安装'}
+                    {installStep === 0 ? i18n.t('pages.plugin_management_page.k57') : i18n.t('pages.plugin_management_page.k56')}
                   </Button>
                 ) : (
                   <Button
                     variant='contained'
                     onClick={handleInstallNext}
                   >
-                    完成
+                    {i18n.t('pages.plugin_management_page.k30')}
                   </Button>
                 )}
               </Stack>
@@ -758,7 +759,7 @@ const PluginManagementPage: React.FC = () => {
             <Box>
               <TextField
                 fullWidth
-                placeholder='搜索插件...'
+                placeholder={i18n.t('pages.plugin_management_page.k31')}
                 value={marketplaceSearch}
                 onChange={(e) => setMarketplaceSearch(e.target.value)}
                 sx={{ mb: 2 }}
@@ -777,10 +778,10 @@ const PluginManagementPage: React.FC = () => {
                 onChange={(_, v) => setMarketplaceTab(v)}
                 sx={{ mb: 2 }}
               >
-                <Tab label='全部插件' />
-                <Tab label='业务插件' />
-                <Tab label='分析插件' />
-                <Tab label='系统插件' />
+                <Tab label={i18n.t('pages.plugin_management_page.k58')} />
+                <Tab label={i18n.t('pages.plugin_management_page.k59')} />
+                <Tab label={i18n.t('pages.plugin_management_page.k60')} />
+                <Tab label={i18n.t('pages.plugin_management_page.k61')} />
               </Tabs>
               <List>
                 {filteredMarketplace
@@ -799,7 +800,7 @@ const PluginManagementPage: React.FC = () => {
                         secondaryAction={
                           isInstalled ? (
                             <Chip
-                              label='已安装'
+                              label={i18n.t('pages.plugin_management_page.k62')}
                               color='success'
                               size='small'
                             />
@@ -810,7 +811,7 @@ const PluginManagementPage: React.FC = () => {
                               startIcon={<Download size={14} />}
                               onClick={() => handleInstallPlugin(plugin)}
                             >
-                              安装
+                              {i18n.t('pages.plugin_management_page.k32')}
                             </Button>
                           )
                         }
@@ -862,7 +863,7 @@ const PluginManagementPage: React.FC = () => {
           )}
         </DialogContent>
         <DialogActions>
-          <Button onClick={handleCloseMarketplace}>关闭</Button>
+          <Button onClick={handleCloseMarketplace}>{i18n.t('pages.plugin_management_page.k63')}</Button>
         </DialogActions>
       </Dialog>
     </>

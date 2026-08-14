@@ -25,6 +25,7 @@ import {
   DialogContent,
   DialogActions,
 } from '@mui/material';
+import i18n from '@/i18n';
 import React, { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
@@ -152,7 +153,7 @@ const MonitoringAlertPage: React.FC<MonitoringAlertPageProps> = () => {
       apiLogger.error('Failed to load alerts:', alertsQuery.error);
       addNotification({
         type: 'error',
-        message: `加载告警列表失败: ${extractErrorMessage(alertsQuery.error)}`,
+        message: `${i18n.t('pages.monitoring_alert_page.k0')} ${extractErrorMessage(alertsQuery.error)}`,
       });
     }
   }, [alertsQuery.isError, alertsQuery.error, addNotification]);
@@ -162,7 +163,7 @@ const MonitoringAlertPage: React.FC<MonitoringAlertPageProps> = () => {
       apiLogger.error('Failed to load rules:', rulesQuery.error);
       addNotification({
         type: 'error',
-        message: `加载告警规则失败: ${extractErrorMessage(rulesQuery.error)}`,
+        message: `${i18n.t('pages.monitoring_alert_page.k1')} ${extractErrorMessage(rulesQuery.error)}`,
       });
     }
   }, [rulesQuery.isError, rulesQuery.error, addNotification]);
@@ -172,7 +173,7 @@ const MonitoringAlertPage: React.FC<MonitoringAlertPageProps> = () => {
       apiLogger.error('Failed to load system health:', healthQuery.error);
       addNotification({
         type: 'error',
-        message: `加载系统健康状态失败: ${extractErrorMessage(healthQuery.error)}`,
+        message: `${i18n.t('pages.monitoring_alert_page.k2')} ${extractErrorMessage(healthQuery.error)}`,
       });
     }
   }, [healthQuery.isError, healthQuery.error, addNotification]);
@@ -204,10 +205,10 @@ const MonitoringAlertPage: React.FC<MonitoringAlertPageProps> = () => {
           refetchType: 'active',
         });
       invalidateAlerts();
-      addNotification({ type: 'success', message: '告警已确认' });
+      addNotification({ type: 'success', message: i18n.t('pages.monitoring_alert_page.k0') });
     },
     onError: (err: unknown) => {
-      addNotification({ type: 'error', message: `确认告警失败: ${extractErrorMessage(err)}` });
+      addNotification({ type: 'error', message: `${i18n.t('pages.monitoring_alert_page.k3')} ${extractErrorMessage(err)}` });
     },
   });
 
@@ -221,10 +222,10 @@ const MonitoringAlertPage: React.FC<MonitoringAlertPageProps> = () => {
           refetchType: 'active',
         });
       invalidateAlerts();
-      addNotification({ type: 'success', message: '告警已解决' });
+      addNotification({ type: 'success', message: i18n.t('pages.monitoring_alert_page.k1') });
     },
     onError: (err: unknown) => {
-      addNotification({ type: 'error', message: `解决告警失败: ${extractErrorMessage(err)}` });
+      addNotification({ type: 'error', message: `${i18n.t('pages.monitoring_alert_page.k4')} ${extractErrorMessage(err)}` });
     },
   });
 
@@ -238,10 +239,10 @@ const MonitoringAlertPage: React.FC<MonitoringAlertPageProps> = () => {
           refetchType: 'active',
         });
       invalidateAlerts();
-      addNotification({ type: 'success', message: '告警已升级' });
+      addNotification({ type: 'success', message: i18n.t('pages.monitoring_alert_page.k2') });
     },
     onError: (err: unknown) => {
-      addNotification({ type: 'error', message: `升级告警失败: ${extractErrorMessage(err)}` });
+      addNotification({ type: 'error', message: `${i18n.t('pages.monitoring_alert_page.k5')} ${extractErrorMessage(err)}` });
     },
   });
 
@@ -258,10 +259,10 @@ const MonitoringAlertPage: React.FC<MonitoringAlertPageProps> = () => {
           refetchType: 'active',
         });
       invalidateRules();
-      addNotification({ type: 'success', message: params.enabled ? '规则已启用' : '规则已禁用' });
+      addNotification({ type: 'success', message: params.enabled ? i18n.t('pages.monitoring_alert_page.k4') : i18n.t('pages.monitoring_alert_page.k3') });
     },
     onError: (err: unknown) => {
-      addNotification({ type: 'error', message: `更新规则状态失败: ${extractErrorMessage(err)}` });
+      addNotification({ type: 'error', message: `${i18n.t('pages.monitoring_alert_page.k6')} ${extractErrorMessage(err)}` });
     },
   });
 
@@ -275,10 +276,10 @@ const MonitoringAlertPage: React.FC<MonitoringAlertPageProps> = () => {
           refetchType: 'active',
         });
       invalidateRules();
-      addNotification({ type: 'success', message: '规则已删除' });
+      addNotification({ type: 'success', message: i18n.t('pages.monitoring_alert_page.k5') });
     },
     onError: (err: unknown) => {
-      addNotification({ type: 'error', message: `删除规则失败: ${extractErrorMessage(err)}` });
+      addNotification({ type: 'error', message: `${i18n.t('pages.monitoring_alert_page.k7')} ${extractErrorMessage(err)}` });
     },
   });
 
@@ -297,12 +298,12 @@ const MonitoringAlertPage: React.FC<MonitoringAlertPageProps> = () => {
       invalidateRules();
       addNotification({
         type: 'success',
-        message: params.id ? '规则已更新' : '规则已创建',
+        message: params.id ? i18n.t('pages.monitoring_alert_page.k7') : i18n.t('pages.monitoring_alert_page.k6'),
       });
       setRuleDialogOpen(false);
     },
     onError: (err: unknown) => {
-      addNotification({ type: 'error', message: `保存规则失败: ${extractErrorMessage(err)}` });
+      addNotification({ type: 'error', message: `${i18n.t('pages.monitoring_alert_page.k8')} ${extractErrorMessage(err)}` });
     },
   });
 
@@ -341,10 +342,10 @@ const MonitoringAlertPage: React.FC<MonitoringAlertPageProps> = () => {
 
   const getLevelLabel = (level: string) => {
     const labels: Record<string, string> = {
-      critical: '严重',
-      warning: '警告',
-      info: '信息',
-      error: '错误',
+      critical: i18n.t('pages.monitoring_alert_page.k8'),
+      warning: i18n.t('pages.monitoring_alert_page.k9'),
+      info: i18n.t('pages.monitoring_alert_page.k10'),
+      error: i18n.t('pages.monitoring_alert_page.k11'),
     };
     return labels[level] || level;
   };
@@ -365,11 +366,11 @@ const MonitoringAlertPage: React.FC<MonitoringAlertPageProps> = () => {
 
   const getStatusLabel = (status: string) => {
     const labels: Record<string, string> = {
-      pending: '待处理',
-      acknowledged: '已确认',
-      resolved: '已解决',
-      escalated: '已升级',
-      dismissed: '已忽略',
+      pending: i18n.t('pages.monitoring_alert_page.k12'),
+      acknowledged: i18n.t('pages.monitoring_alert_page.k13'),
+      resolved: i18n.t('pages.monitoring_alert_page.k14'),
+      escalated: i18n.t('pages.monitoring_alert_page.k15'),
+      dismissed: i18n.t('pages.monitoring_alert_page.k16'),
     };
     return labels[status] || status;
   };
@@ -436,8 +437,8 @@ const MonitoringAlertPage: React.FC<MonitoringAlertPageProps> = () => {
 
   return (
     <PageContainer
-      title='监控告警'
-      subtitle='管理系统告警和监控规则'
+      title={i18n.t('pages.monitoring_alert_page.k17')}
+      subtitle={i18n.t('pages.monitoring_alert_page.k18')}
       headerActions={
         activeTab === 'alerts'
           ? [
@@ -447,7 +448,7 @@ const MonitoringAlertPage: React.FC<MonitoringAlertPageProps> = () => {
                 startIcon={<RefreshCw className='w-4 h-4' />}
                 variant='outlined'
               >
-                刷新
+                {i18n.t('pages.monitoring_alert_page.k9')}
               </Button>,
               <Button
                 key='export'
@@ -455,7 +456,7 @@ const MonitoringAlertPage: React.FC<MonitoringAlertPageProps> = () => {
                 startIcon={<Download className='w-4 h-4' />}
                 variant='contained'
               >
-                导出
+                {i18n.t('pages.monitoring_alert_page.k10')}
               </Button>,
             ]
           : activeTab === 'rules'
@@ -469,7 +470,7 @@ const MonitoringAlertPage: React.FC<MonitoringAlertPageProps> = () => {
                   startIcon={<Settings className='w-4 h-4' />}
                   variant='contained'
                 >
-                  添加规则
+                  {i18n.t('pages.monitoring_alert_page.k11')}
                 </Button>,
               ]
             : [
@@ -479,7 +480,7 @@ const MonitoringAlertPage: React.FC<MonitoringAlertPageProps> = () => {
                   startIcon={<RefreshCw className='w-4 h-4' />}
                   variant='outlined'
                 >
-                  刷新状态
+                  {i18n.t('pages.monitoring_alert_page.k12')}
                 </Button>,
               ]
       }
@@ -497,7 +498,7 @@ const MonitoringAlertPage: React.FC<MonitoringAlertPageProps> = () => {
                         variant='body2'
                         color='textSecondary'
                       >
-                        待处理告警
+                        {i18n.t('pages.monitoring_alert_page.k13')}
                       </Typography>
                       <Typography
                         variant='h4'
@@ -521,7 +522,7 @@ const MonitoringAlertPage: React.FC<MonitoringAlertPageProps> = () => {
                         variant='body2'
                         color='textSecondary'
                       >
-                        今日告警
+                        {i18n.t('pages.monitoring_alert_page.k14')}
                       </Typography>
                       <Typography
                         variant='h4'
@@ -545,7 +546,7 @@ const MonitoringAlertPage: React.FC<MonitoringAlertPageProps> = () => {
                         variant='body2'
                         color='textSecondary'
                       >
-                        已解决
+                        {i18n.t('pages.monitoring_alert_page.k15')}
                       </Typography>
                       <Typography
                         variant='h4'
@@ -569,7 +570,7 @@ const MonitoringAlertPage: React.FC<MonitoringAlertPageProps> = () => {
                         variant='body2'
                         color='textSecondary'
                       >
-                        告警规则数
+                        {i18n.t('pages.monitoring_alert_page.k16')}
                       </Typography>
                       <Typography
                         variant='h4'
@@ -594,21 +595,21 @@ const MonitoringAlertPage: React.FC<MonitoringAlertPageProps> = () => {
                   variant={activeTab === 'alerts' ? 'contained' : 'outlined'}
                   startIcon={<AlertTriangle className='w-4 h-4' />}
                 >
-                  告警列表
+                  {i18n.t('pages.monitoring_alert_page.k17')}
                 </Button>
                 <Button
                   onClick={() => setActiveTab('rules')}
                   variant={activeTab === 'rules' ? 'contained' : 'outlined'}
                   startIcon={<Settings className='w-4 h-4' />}
                 >
-                  告警规则
+                  {i18n.t('pages.monitoring_alert_page.k18')}
                 </Button>
                 <Button
                   onClick={() => setActiveTab('health')}
                   variant={activeTab === 'health' ? 'contained' : 'outlined'}
                   startIcon={<Server className='w-4 h-4' />}
                 >
-                  系统健康
+                  {i18n.t('pages.monitoring_alert_page.k19')}
                 </Button>
               </Box>
 
@@ -617,10 +618,10 @@ const MonitoringAlertPage: React.FC<MonitoringAlertPageProps> = () => {
                   <Box sx={{ display: 'flex', gap: 2, mb: 3 }}>
                     <TextField
                       fullWidth
-                      label='搜索'
+                      label={i18n.t('pages.monitoring_alert_page.k19')}
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
-                      placeholder='搜索告警内容'
+                      placeholder={i18n.t('pages.monitoring_alert_page.k20')}
                       slotProps={{
                         input: {
                           startAdornment: <Search className='w-4 h-4 mr-2 text-gray-400' />,
@@ -628,29 +629,29 @@ const MonitoringAlertPage: React.FC<MonitoringAlertPageProps> = () => {
                       }}
                     />
                     <FormControl sx={{ minWidth: 120 }}>
-                      <InputLabel>级别</InputLabel>
+                      <InputLabel>{i18n.t('pages.monitoring_alert_page.k21')}</InputLabel>
                       <Select
                         value={filterLevel}
                         onChange={(e) => setFilterLevel(e.target.value)}
-                        label='级别'
+                        label={i18n.t('pages.monitoring_alert_page.k22')}
                       >
-                        <MenuItem value='all'>全部级别</MenuItem>
-                        <MenuItem value='critical'>严重</MenuItem>
-                        <MenuItem value='warning'>警告</MenuItem>
-                        <MenuItem value='info'>信息</MenuItem>
+                        <MenuItem value='all'>{i18n.t('pages.monitoring_alert_page.k23')}</MenuItem>
+                        <MenuItem value='critical'>{i18n.t('pages.monitoring_alert_page.k24')}</MenuItem>
+                        <MenuItem value='warning'>{i18n.t('pages.monitoring_alert_page.k25')}</MenuItem>
+                        <MenuItem value='info'>{i18n.t('pages.monitoring_alert_page.k26')}</MenuItem>
                       </Select>
                     </FormControl>
                     <FormControl sx={{ minWidth: 120 }}>
-                      <InputLabel>状态</InputLabel>
+                      <InputLabel>{i18n.t('pages.monitoring_alert_page.k27')}</InputLabel>
                       <Select
                         value={filterStatus}
                         onChange={(e) => setFilterStatus(e.target.value)}
-                        label='状态'
+                        label={i18n.t('pages.monitoring_alert_page.k28')}
                       >
-                        <MenuItem value='all'>全部状态</MenuItem>
-                        <MenuItem value='pending'>待处理</MenuItem>
-                        <MenuItem value='acknowledged'>已确认</MenuItem>
-                        <MenuItem value='resolved'>已解决</MenuItem>
+                        <MenuItem value='all'>{i18n.t('pages.monitoring_alert_page.k29')}</MenuItem>
+                        <MenuItem value='pending'>{i18n.t('pages.monitoring_alert_page.k30')}</MenuItem>
+                        <MenuItem value='acknowledged'>{i18n.t('pages.monitoring_alert_page.k31')}</MenuItem>
+                        <MenuItem value='resolved'>{i18n.t('pages.monitoring_alert_page.k32')}</MenuItem>
                       </Select>
                     </FormControl>
                   </Box>
@@ -659,13 +660,13 @@ const MonitoringAlertPage: React.FC<MonitoringAlertPageProps> = () => {
                     <Table>
                       <TableHead>
                         <TableRow>
-                          <TableCell>级别</TableCell>
-                          <TableCell>标题</TableCell>
-                          <TableCell>内容</TableCell>
-                          <TableCell>来源</TableCell>
-                          <TableCell>时间</TableCell>
-                          <TableCell>状态</TableCell>
-                          <TableCell>操作</TableCell>
+                          <TableCell>{i18n.t('pages.monitoring_alert_page.k33')}</TableCell>
+                          <TableCell>{i18n.t('pages.monitoring_alert_page.k34')}</TableCell>
+                          <TableCell>{i18n.t('pages.monitoring_alert_page.k35')}</TableCell>
+                          <TableCell>{i18n.t('pages.monitoring_alert_page.k36')}</TableCell>
+                          <TableCell>{i18n.t('pages.monitoring_alert_page.k37')}</TableCell>
+                          <TableCell>{i18n.t('pages.monitoring_alert_page.k38')}</TableCell>
+                          <TableCell>{i18n.t('pages.monitoring_alert_page.k39')}</TableCell>
                         </TableRow>
                       </TableHead>
                       <TableBody>
@@ -677,7 +678,7 @@ const MonitoringAlertPage: React.FC<MonitoringAlertPageProps> = () => {
                                   variant='body1'
                                   color='textSecondary'
                                 >
-                                  加载中...
+                                  {i18n.t('pages.monitoring_alert_page.k20')}
                                 </Typography>
                               </Box>
                             </TableCell>
@@ -690,7 +691,7 @@ const MonitoringAlertPage: React.FC<MonitoringAlertPageProps> = () => {
                                   variant='body1'
                                   color='textSecondary'
                                 >
-                                  暂无告警记录
+                                  {i18n.t('pages.monitoring_alert_page.k21')}
                                 </Typography>
                               </Box>
                             </TableCell>
@@ -754,7 +755,7 @@ const MonitoringAlertPage: React.FC<MonitoringAlertPageProps> = () => {
                                       onClick={() => handleAcknowledge(alert.id)}
                                       variant='outlined'
                                     >
-                                      确认
+                                      {i18n.t('pages.monitoring_alert_page.k22')}
                                     </Button>
                                   )}
                                   {alert.status === 'acknowledged' && (
@@ -763,7 +764,7 @@ const MonitoringAlertPage: React.FC<MonitoringAlertPageProps> = () => {
                                       onClick={() => handleResolve(alert.id)}
                                       variant='contained'
                                     >
-                                      解决
+                                      {i18n.t('pages.monitoring_alert_page.k23')}
                                     </Button>
                                   )}
                                   {alert.status !== 'escalated' && alert.status !== 'resolved' && (
@@ -773,7 +774,7 @@ const MonitoringAlertPage: React.FC<MonitoringAlertPageProps> = () => {
                                       variant='outlined'
                                       color='error'
                                     >
-                                      升级
+                                      {i18n.t('pages.monitoring_alert_page.k24')}
                                     </Button>
                                   )}
                                 </Box>
@@ -802,13 +803,13 @@ const MonitoringAlertPage: React.FC<MonitoringAlertPageProps> = () => {
                   <Table>
                     <TableHead>
                       <TableRow>
-                        <TableCell>名称</TableCell>
-                        <TableCell>级别</TableCell>
-                        <TableCell>触发条件</TableCell>
-                        <TableCell>通知方式</TableCell>
-                        <TableCell>状态</TableCell>
-                        <TableCell>创建时间</TableCell>
-                        <TableCell>操作</TableCell>
+                        <TableCell>{i18n.t('pages.monitoring_alert_page.k40')}</TableCell>
+                        <TableCell>{i18n.t('pages.monitoring_alert_page.k41')}</TableCell>
+                        <TableCell>{i18n.t('pages.monitoring_alert_page.k42')}</TableCell>
+                        <TableCell>{i18n.t('pages.monitoring_alert_page.k43')}</TableCell>
+                        <TableCell>{i18n.t('pages.monitoring_alert_page.k44')}</TableCell>
+                        <TableCell>{i18n.t('pages.monitoring_alert_page.k45')}</TableCell>
+                        <TableCell>{i18n.t('pages.monitoring_alert_page.k46')}</TableCell>
                       </TableRow>
                     </TableHead>
                     <TableBody>
@@ -820,7 +821,7 @@ const MonitoringAlertPage: React.FC<MonitoringAlertPageProps> = () => {
                                 variant='body1'
                                 color='textSecondary'
                               >
-                                加载中...
+                                {i18n.t('pages.monitoring_alert_page.k25')}
                               </Typography>
                             </Box>
                           </TableCell>
@@ -833,7 +834,7 @@ const MonitoringAlertPage: React.FC<MonitoringAlertPageProps> = () => {
                                 variant='body1'
                                 color='textSecondary'
                               >
-                                暂无告警规则
+                                {i18n.t('pages.monitoring_alert_page.k26')}
                               </Typography>
                             </Box>
                           </TableCell>
@@ -858,19 +859,19 @@ const MonitoringAlertPage: React.FC<MonitoringAlertPageProps> = () => {
                               <Box sx={{ display: 'flex', gap: 1 }}>
                                 {rule.notification_channels?.includes('email') && (
                                   <Chip
-                                    label='邮件'
+                                    label={i18n.t('pages.monitoring_alert_page.k47')}
                                     size='small'
                                   />
                                 )}
                                 {rule.notification_channels?.includes('sms') && (
                                   <Chip
-                                    label='短信'
+                                    label={i18n.t('pages.monitoring_alert_page.k48')}
                                     size='small'
                                   />
                                 )}
                                 {rule.notification_channels?.includes('internal') && (
                                   <Chip
-                                    label='站内信'
+                                    label={i18n.t('pages.monitoring_alert_page.k49')}
                                     size='small'
                                   />
                                 )}
@@ -883,7 +884,7 @@ const MonitoringAlertPage: React.FC<MonitoringAlertPageProps> = () => {
                                   onChange={() => handleToggleRule(rule.id, !rule.enabled)}
                                   color={rule.enabled ? 'primary' : 'default'}
                                 />
-                                <Typography>{rule.enabled ? '启用' : '禁用'}</Typography>
+                                <Typography>{rule.enabled ? i18n.t('pages.monitoring_alert_page.k51') : i18n.t('pages.monitoring_alert_page.k50')}</Typography>
                               </Box>
                             </TableCell>
                             <TableCell>
@@ -901,7 +902,7 @@ const MonitoringAlertPage: React.FC<MonitoringAlertPageProps> = () => {
                                   }}
                                   variant='outlined'
                                 >
-                                  编辑
+                                  {i18n.t('pages.monitoring_alert_page.k27')}
                                 </Button>
                                 <Button
                                   size='small'
@@ -909,7 +910,7 @@ const MonitoringAlertPage: React.FC<MonitoringAlertPageProps> = () => {
                                   variant='outlined'
                                   color='error'
                                 >
-                                  删除
+                                  {i18n.t('pages.monitoring_alert_page.k28')}
                                 </Button>
                               </Box>
                             </TableCell>
@@ -928,7 +929,7 @@ const MonitoringAlertPage: React.FC<MonitoringAlertPageProps> = () => {
                       <CardContent>
                         <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 3 }}>
                           <Server className='w-5 h-5 text-blue-600' />
-                          <Typography variant='h6'>服务状态</Typography>
+                          <Typography variant='h6'>{i18n.t('pages.monitoring_alert_page.k52')}</Typography>
                         </Box>
                         <Grid spacing={2}>
                           {systemHealth.services?.map((service) => (
@@ -945,7 +946,7 @@ const MonitoringAlertPage: React.FC<MonitoringAlertPageProps> = () => {
                               >
                                 <Typography>{service.name}</Typography>
                                 <Chip
-                                  label={service.status === 'healthy' ? '健康' : '异常'}
+                                  label={service.status === 'healthy' ? i18n.t('pages.monitoring_alert_page.k54') : i18n.t('pages.monitoring_alert_page.k53')}
                                   size='small'
                                   color={service.status === 'healthy' ? 'success' : 'error'}
                                 />
@@ -961,7 +962,7 @@ const MonitoringAlertPage: React.FC<MonitoringAlertPageProps> = () => {
                       <CardContent>
                         <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 3 }}>
                           <Cpu className='w-5 h-5 text-green-600' />
-                          <Typography variant='h6'>系统资源</Typography>
+                          <Typography variant='h6'>{i18n.t('pages.monitoring_alert_page.k55')}</Typography>
                         </Box>
                         <Grid spacing={2}>
                           <Grid size={{ xs: 6 }}>
@@ -969,7 +970,7 @@ const MonitoringAlertPage: React.FC<MonitoringAlertPageProps> = () => {
                               variant='body2'
                               color='textSecondary'
                             >
-                              CPU 使用率
+                              {i18n.t('pages.monitoring_alert_page.cpu_29')}
                             </Typography>
                             <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
                               <Typography
@@ -981,10 +982,10 @@ const MonitoringAlertPage: React.FC<MonitoringAlertPageProps> = () => {
                               <Chip
                                 label={
                                   (systemHealth.cpu_usage ?? 0) >= 90
-                                    ? '高'
+                                    ? i18n.t('pages.monitoring_alert_page.k56')
                                     : (systemHealth.cpu_usage ?? 0) >= 70
-                                      ? '中'
-                                      : '低'
+                                      ? i18n.t('pages.monitoring_alert_page.k57')
+                                      : i18n.t('pages.monitoring_alert_page.k58')
                                 }
                                 size='small'
                                 color={getHealthStatus(systemHealth.cpu_usage ?? 0, 'cpu')}
@@ -996,7 +997,7 @@ const MonitoringAlertPage: React.FC<MonitoringAlertPageProps> = () => {
                               variant='body2'
                               color='textSecondary'
                             >
-                              内存使用率
+                              {i18n.t('pages.monitoring_alert_page.k30')}
                             </Typography>
                             <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
                               <Typography
@@ -1008,10 +1009,10 @@ const MonitoringAlertPage: React.FC<MonitoringAlertPageProps> = () => {
                               <Chip
                                 label={
                                   (systemHealth.memory_usage ?? 0) >= 90
-                                    ? '高'
+                                    ? i18n.t('pages.monitoring_alert_page.k59')
                                     : (systemHealth.memory_usage ?? 0) >= 70
-                                      ? '中'
-                                      : '低'
+                                      ? i18n.t('pages.monitoring_alert_page.k60')
+                                      : i18n.t('pages.monitoring_alert_page.k61')
                                 }
                                 size='small'
                                 color={getHealthStatus(systemHealth.memory_usage ?? 0, 'memory')}
@@ -1023,7 +1024,7 @@ const MonitoringAlertPage: React.FC<MonitoringAlertPageProps> = () => {
                               variant='body2'
                               color='textSecondary'
                             >
-                              磁盘使用率
+                              {i18n.t('pages.monitoring_alert_page.k31')}
                             </Typography>
                             <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
                               <Typography
@@ -1035,10 +1036,10 @@ const MonitoringAlertPage: React.FC<MonitoringAlertPageProps> = () => {
                               <Chip
                                 label={
                                   (systemHealth.disk_usage ?? 0) >= 90
-                                    ? '高'
+                                    ? i18n.t('pages.monitoring_alert_page.k62')
                                     : (systemHealth.disk_usage ?? 0) >= 70
-                                      ? '中'
-                                      : '低'
+                                      ? i18n.t('pages.monitoring_alert_page.k63')
+                                      : i18n.t('pages.monitoring_alert_page.k64')
                                 }
                                 size='small'
                                 color={getHealthStatus(systemHealth.disk_usage ?? 0, 'disk')}
@@ -1050,7 +1051,7 @@ const MonitoringAlertPage: React.FC<MonitoringAlertPageProps> = () => {
                               variant='body2'
                               color='textSecondary'
                             >
-                              网络延迟
+                              {i18n.t('pages.monitoring_alert_page.k32')}
                             </Typography>
                             <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
                               <Typography
@@ -1062,10 +1063,10 @@ const MonitoringAlertPage: React.FC<MonitoringAlertPageProps> = () => {
                               <Chip
                                 label={
                                   (systemHealth.network_latency ?? 0) > 100
-                                    ? '高'
+                                    ? i18n.t('pages.monitoring_alert_page.k65')
                                     : (systemHealth.network_latency ?? 0) > 50
-                                      ? '中'
-                                      : '低'
+                                      ? i18n.t('pages.monitoring_alert_page.k66')
+                                      : i18n.t('pages.monitoring_alert_page.k67')
                                 }
                                 size='small'
                                 color={
@@ -1087,7 +1088,7 @@ const MonitoringAlertPage: React.FC<MonitoringAlertPageProps> = () => {
                       <CardContent>
                         <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 3 }}>
                           <TrendingUp className='w-5 h-5 text-purple-600' />
-                          <Typography variant='h6'>性能指标</Typography>
+                          <Typography variant='h6'>{i18n.t('pages.monitoring_alert_page.k68')}</Typography>
                         </Box>
                         <Grid spacing={2}>
                           <Grid size={{ xs: 3 }}>
@@ -1095,7 +1096,7 @@ const MonitoringAlertPage: React.FC<MonitoringAlertPageProps> = () => {
                               variant='body2'
                               color='textSecondary'
                             >
-                              API 请求数
+                              {i18n.t('pages.monitoring_alert_page.api_33')}
                             </Typography>
                             <Typography
                               variant='h4'
@@ -1109,7 +1110,7 @@ const MonitoringAlertPage: React.FC<MonitoringAlertPageProps> = () => {
                               variant='body2'
                               color='textSecondary'
                             >
-                              平均响应时间
+                              {i18n.t('pages.monitoring_alert_page.k34')}
                             </Typography>
                             <Typography
                               variant='h4'
@@ -1123,7 +1124,7 @@ const MonitoringAlertPage: React.FC<MonitoringAlertPageProps> = () => {
                               variant='body2'
                               color='textSecondary'
                             >
-                              错误率
+                              {i18n.t('pages.monitoring_alert_page.k35')}
                             </Typography>
                             <Typography
                               variant='h4'
@@ -1138,7 +1139,7 @@ const MonitoringAlertPage: React.FC<MonitoringAlertPageProps> = () => {
                               variant='body2'
                               color='textSecondary'
                             >
-                              在线用户数
+                              {i18n.t('pages.monitoring_alert_page.k36')}
                             </Typography>
                             <Typography
                               variant='h4'
@@ -1163,47 +1164,47 @@ const MonitoringAlertPage: React.FC<MonitoringAlertPageProps> = () => {
         onClose={() => setRuleDialogOpen(false)}
         maxWidth='md'
       >
-        <DialogTitle>{editingRule ? '编辑告警规则' : '添加告警规则'}</DialogTitle>
+        <DialogTitle>{editingRule ? i18n.t('pages.monitoring_alert_page.k70') : i18n.t('pages.monitoring_alert_page.k69')}</DialogTitle>
         <DialogContent>
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3, mt: 2 }}>
             <TextField
               fullWidth
-              label='规则名称'
+              label={i18n.t('pages.monitoring_alert_page.k71')}
               defaultValue={editingRule?.name}
-              placeholder='输入规则名称'
+              placeholder={i18n.t('pages.monitoring_alert_page.k72')}
             />
             <TextField
               fullWidth
-              label='触发条件'
+              label={i18n.t('pages.monitoring_alert_page.k73')}
               defaultValue={editingRule?.condition}
-              placeholder='例如: cpu_usage > 90'
+              placeholder={i18n.t('pages.monitoring_alert_page.k37')}
             />
             <FormControl fullWidth>
-              <InputLabel>告警级别</InputLabel>
+              <InputLabel>{i18n.t('pages.monitoring_alert_page.k74')}</InputLabel>
               <Select
                 defaultValue={editingRule?.level || 'warning'}
-                label='告警级别'
+                label={i18n.t('pages.monitoring_alert_page.k75')}
               >
-                <MenuItem value='info'>信息</MenuItem>
-                <MenuItem value='warning'>警告</MenuItem>
-                <MenuItem value='critical'>严重</MenuItem>
+                <MenuItem value='info'>{i18n.t('pages.monitoring_alert_page.k76')}</MenuItem>
+                <MenuItem value='warning'>{i18n.t('pages.monitoring_alert_page.k77')}</MenuItem>
+                <MenuItem value='critical'>{i18n.t('pages.monitoring_alert_page.k78')}</MenuItem>
               </Select>
             </FormControl>
             <FormControl fullWidth>
-              <InputLabel>通知方式</InputLabel>
+              <InputLabel>{i18n.t('pages.monitoring_alert_page.k79')}</InputLabel>
               <Select
                 defaultValue={editingRule?.notification_channels?.[0] || 'internal'}
-                label='通知方式'
+                label={i18n.t('pages.monitoring_alert_page.k80')}
               >
-                <MenuItem value='internal'>站内信</MenuItem>
-                <MenuItem value='email'>邮件</MenuItem>
-                <MenuItem value='sms'>短信</MenuItem>
+                <MenuItem value='internal'>{i18n.t('pages.monitoring_alert_page.k81')}</MenuItem>
+                <MenuItem value='email'>{i18n.t('pages.monitoring_alert_page.k82')}</MenuItem>
+                <MenuItem value='sms'>{i18n.t('pages.monitoring_alert_page.k83')}</MenuItem>
               </Select>
             </FormControl>
           </Box>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setRuleDialogOpen(false)}>取消</Button>
+          <Button onClick={() => setRuleDialogOpen(false)}>{i18n.t('pages.monitoring_alert_page.k84')}</Button>
           <Button
             onClick={() => {
               if (editingRule) {
@@ -1214,7 +1215,7 @@ const MonitoringAlertPage: React.FC<MonitoringAlertPageProps> = () => {
             }}
             variant='contained'
           >
-            {editingRule ? '保存' : '创建'}
+            {editingRule ? i18n.t('pages.monitoring_alert_page.k86') : i18n.t('pages.monitoring_alert_page.k85')}
           </Button>
         </DialogActions>
       </Dialog>

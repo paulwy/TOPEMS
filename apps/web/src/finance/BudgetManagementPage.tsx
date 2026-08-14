@@ -1,10 +1,11 @@
 import React from 'react';
+import i18n from '@/i18n';
 
 const BudgetManagementPage: React.FC = () => {
   return React.createElement(
     'div',
     { className: 'page-placeholder' },
-    'BudgetManagementPage 页面开发中'
+    i18n.t('finance.budget_management_page.k0')
   );
 };
 

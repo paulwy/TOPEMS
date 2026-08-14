@@ -1,3 +1,4 @@
+import i18n from '@/i18n';
 export type VersionStatus = 'active' | 'canary' | 'deprecated' | 'rollback';
 
 export type VersioningStrategy = 'semver' | 'date' | 'hash';
@@ -158,7 +159,7 @@ export class VersionPlatform {
     const versions = this.moduleVersions.get(moduleId) || [];
 
     if (versions.some((v) => v.version === versionInfo.version)) {
-      throw new Error(`模块 ${moduleId} 的版本 ${versionInfo.version} 已存在`);
+      throw new Error(`${i18n.t('microfrontend.version-platform.k0')}${moduleId}${i18n.t('microfrontend.version-platform.k1')}${versionInfo.version}${i18n.t('microfrontend.version-platform.k2')}`);
     }
 
     const version: ModuleVersion = {
@@ -295,9 +296,9 @@ export class VersionPlatform {
 
     target.status = 'deprecated';
     if (reason && target.releaseNotes) {
-      target.releaseNotes = `${target.releaseNotes}\n\n降级原因: ${reason}`;
+      target.releaseNotes = `${target.releaseNotes}${i18n.t('microfrontend.version-platform.nn_3')}${reason}`;
     } else if (reason) {
-      target.releaseNotes = `降级原因: ${reason}`;
+      target.releaseNotes = `${i18n.t('microfrontend.version-platform.k4')}${reason}`;
     }
 
     this.persist();

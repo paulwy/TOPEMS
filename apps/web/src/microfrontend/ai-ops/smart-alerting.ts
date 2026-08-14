@@ -1,3 +1,4 @@
+import i18n from '@/i18n';
 export type AlertSeverity = 'low' | 'medium' | 'high' | 'critical';
 export type AlertStatus = 'firing' | 'acknowledged' | 'resolved' | 'suppressed';
 export type AlertConditionOperator = 'gt' | 'gte' | 'lt' | 'lte' | 'eq' | 'neq' | 'in' | 'nin';
@@ -417,7 +418,7 @@ export class SmartAlertManager {
       );
 
       if (recentAlerts.length >= rule.minAlerts) {
-        alert.message = `[关联告警 ${recentAlerts.length} 个] ${alert.message}`;
+        alert.message = `${i18n.t('microfrontend.smart-alerting.k0')}${recentAlerts.length}${i18n.t('microfrontend.smart-alerting.k1')}${alert.message}`;
       }
     }
   }

@@ -14,6 +14,7 @@ import {
   StepLabel,
   StepContent,
 } from '@mui/material';
+import i18n from '@/i18n';
 import { Workflow, RefreshCw, Lightbulb, ArrowRight, CheckCircle, Clock, User } from 'lucide-react';
 import { assistantApi } from '../../api/ai/assistant';
 import { useNotificationStore } from '@/store/notificationStore';
@@ -40,7 +41,7 @@ export const AIFlowAssistant: React.FC<AIFlowAssistantProps> = ({ initialQuery, 
 
   const handleAnalyzeFlow = async () => {
     if (!query.trim()) {
-      addNotification({ title: '警告', message: '请输入查询内容', type: 'warning' });
+      addNotification({ title: i18n.t('components.ai_flow_assistant.k1'), message: i18n.t('components.ai_flow_assistant.k0'), type: 'warning' });
       return;
     }
 
@@ -61,25 +62,25 @@ export const AIFlowAssistant: React.FC<AIFlowAssistantProps> = ({ initialQuery, 
           steps: response.data.steps as unknown as Record<string, unknown>[],
           suggestions: response.data.suggestions,
         });
-        addNotification({ title: '成功', message: '流程分析完成', type: 'success' });
+        addNotification({ title: i18n.t('components.ai_flow_assistant.k3'), message: i18n.t('components.ai_flow_assistant.k2'), type: 'success' });
       } else {
-        setError(response.message || '流程分析失败');
+        setError(response.message || i18n.t('components.ai_flow_assistant.k4'));
       }
     } catch (err: unknown) {
-      logger.error('流程助手调用失败:', err);
-      setError('流程助手服务暂不可用');
-      addNotification({ title: '错误', message: '流程助手服务暂不可用', type: 'error' });
+      logger.error(i18n.t('components.ai_flow_assistant.k0'), err);
+      setError(i18n.t('components.ai_flow_assistant.k5'));
+      addNotification({ title: i18n.t('components.ai_flow_assistant.k7'), message: i18n.t('components.ai_flow_assistant.k6'), type: 'error' });
     } finally {
       setIsLoading(false);
     }
   };
 
   const examples = [
-    '如何创建采购订单',
-    '销售订单审批流程',
-    '库存盘点流程',
-    '费用报销流程',
-    '生产工单创建流程',
+    i18n.t('components.ai_flow_assistant.k8'),
+    i18n.t('components.ai_flow_assistant.k9'),
+    i18n.t('components.ai_flow_assistant.k10'),
+    i18n.t('components.ai_flow_assistant.k11'),
+    i18n.t('components.ai_flow_assistant.k12'),
   ];
 
   const moduleOptions = [
@@ -87,14 +88,14 @@ export const AIFlowAssistant: React.FC<AIFlowAssistantProps> = ({ initialQuery, 
     { value: 'mes', label: 'MES' },
     { value: 'crm', label: 'CRM' },
     { value: 'srm', label: 'SRM' },
-    { value: 'workflow', label: '工作流' },
+    { value: 'workflow', label: i18n.t('components.ai_flow_assistant.k13') },
   ];
 
   return (
     <Card>
       <CardHeader
-        title='AI 流程助手'
-        subheader='用自然语言描述您想要了解的流程，AI 将为您提供详细指导'
+        title={i18n.t('components.ai_flow_assistant.ai_1')}
+        subheader={i18n.t('components.ai_flow_assistant.k14')}
       />
       <CardContent>
         <Box sx={{ mb: 3 }}>
@@ -102,7 +103,7 @@ export const AIFlowAssistant: React.FC<AIFlowAssistantProps> = ({ initialQuery, 
             variant='subtitle2'
             sx={{ mb: 2, color: 'text.secondary' }}
           >
-            快速示例:
+            [i18n.t('components.ai_flow_assistant.k2')]:
           </Typography>
           <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1.5 }}>
             {examples.map((example, idx) => (
@@ -119,8 +120,8 @@ export const AIFlowAssistant: React.FC<AIFlowAssistantProps> = ({ initialQuery, 
 
         <TextField
           fullWidth
-          label='输入流程需求'
-          placeholder='例如：如何创建销售订单'
+          label={i18n.t('components.ai_flow_assistant.k15')}
+          placeholder={i18n.t('components.ai_flow_assistant.k16')}
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           size='small'
@@ -132,7 +133,7 @@ export const AIFlowAssistant: React.FC<AIFlowAssistantProps> = ({ initialQuery, 
             variant='subtitle2'
             sx={{ mb: 1.5, color: 'text.secondary' }}
           >
-            选择模块（可选）:
+            {i18n.t('components.ai_flow_assistant.k3')}
           </Typography>
           <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1.5 }}>
             {moduleOptions.map((option) => (
@@ -163,7 +164,7 @@ export const AIFlowAssistant: React.FC<AIFlowAssistantProps> = ({ initialQuery, 
           }
           fullWidth
         >
-          {isLoading ? '分析中...' : '分析流程'}
+          {isLoading ? i18n.t('components.ai_flow_assistant.k4') : i18n.t('components.ai_flow_assistant.k17')}
         </Button>
 
         {error && (
@@ -249,7 +250,7 @@ export const AIFlowAssistant: React.FC<AIFlowAssistantProps> = ({ initialQuery, 
                           variant='subtitle1'
                           sx={{ fontWeight: 600 }}
                         >
-                          优化建议
+                          {i18n.t('components.ai_flow_assistant.k5')}
                         </Typography>
                       </Box>
                       <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>

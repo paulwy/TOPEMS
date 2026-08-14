@@ -59,7 +59,7 @@ const fallbackColors = [
   { bg: designTokens.colors.warning['50'], fg: '#E65100' },
   { bg: '#FCE4EC', fg: '#C2185B' },
   { bg: '#E0F7FA', fg: designTokens.colors.teal['700'] },
-  { bg: '#FFF8E1', fg: '#F57F17' },
+  { bg: `${designTokens.colors.common.white}8E1`, fg: '#F57F17' },
   { bg: '#F1F8E9', fg: '#558B2F' },
 ];
 
