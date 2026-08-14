@@ -265,3 +265,63 @@ impl FinanceService {
         Ok(())
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use chrono::Utc;
+    use serde::{Deserialize, Serialize};
+    use serde_json::{from_value, to_value, Value};
+    use uuid::Uuid;
+
+    fn uid() -> Uuid {
+        Uuid::new_v4()
+    }
+    fn now() -> chrono::DateTime<Utc> {
+        Utc::now()
+    }
+
+    fn roundtrip<T: Serialize + for<'de> Deserialize<'de>>(v: &T) {
+        let a = to_value(v).unwrap();
+        let b: T = from_value(a.clone()).unwrap();
+        let c = to_value(&b).unwrap();
+        assert_eq!(a, c);
+    }
+
+    #[test]
+    fn u8_import_record_roundtrip() {
+        let full = U8ImportRecord {
+            id: uid(),
+            tenant_id: uid(),
+            import_batch_no: "U8IMP-20260815-001".into(),
+            source_system: "U8".into(),
+            import_time: now(),
+            total_count: 100,
+            success_count: 99,
+            failed_count: 1,
+            status: "completed".into(),
+            error_log: Some("row 50 boom".into()),
+            created_by: Some("admin".into()),
+            created_at: now(),
+            updated_at: now(),
+        };
+        roundtrip(&full);
+
+        let minimal = U8ImportRecord {
+            id: uid(),
+            tenant_id: uid(),
+            import_batch_no: "X".into(),
+            source_system: "Sap".into(),
+            import_time: now(),
+            total_count: 0,
+            success_count: 0,
+            failed_count: 0,
+            status: "processing".into(),
+            error_log: None,
+            created_by: None,
+            created_at: now(),
+            updated_at: now(),
+        };
+        roundtrip(&minimal);
+    }
+}

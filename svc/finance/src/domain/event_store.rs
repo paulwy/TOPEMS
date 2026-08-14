@@ -211,3 +211,79 @@ impl EventStore for InMemoryEventStore {
             .unwrap_or(0))
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::domain::events::{FinanceDomainEvent, VoucherPostedEvent};
+    use serde::{Deserialize, Serialize};
+
+    fn roundtrip<T: Serialize + for<'de> Deserialize<'de>>(item: &T) {
+        let json = serde_json::to_string(item).unwrap();
+        let v1: serde_json::Value = serde_json::from_str(&json).unwrap();
+        let back: T = serde_json::from_str(&json).unwrap();
+        let json2 = serde_json::to_string(&back).unwrap();
+        let v2: serde_json::Value = serde_json::from_str(&json2).unwrap();
+        assert_eq!(v1, v2);
+    }
+
+    fn now() -> chrono::DateTime<chrono::Utc> { chrono::Utc::now() }
+
+    fn uid() -> String { uuid::Uuid::new_v4().to_string() }
+
+    fn sample_event() -> FinanceDomainEvent {
+        FinanceDomainEvent::VoucherPosted(VoucherPostedEvent {
+            voucher_id: uid(),
+            voucher_no: "V-001".into(),
+            posted_by: "alice".into(),
+            occurred_at: now(),
+        })
+    }
+
+    #[test]
+    fn rt_event_metadata_default() {
+        roundtrip(&EventMetadata::default());
+    }
+
+    #[test]
+    fn rt_event_metadata_all_some() {
+        roundtrip(&EventMetadata {
+            causation_id: Some(uid()),
+            correlation_id: Some(uid()),
+            user_id: Some("user-123".into()),
+            ip_address: Some("10.0.0.1".into()),
+            extra: serde_json::json!({ "trace_id": "abc-123" }),
+        });
+    }
+
+    #[test]
+    fn rt_event_record_full() {
+        roundtrip(&EventRecord {
+            id: uid(),
+            aggregate_id: "voucher-1".into(),
+            aggregate_type: "Voucher".into(),
+            event_type: "VoucherPosted".into(),
+            version: 3,
+            payload: sample_event(),
+            metadata: EventMetadata {
+                causation_id: Some(uid()),
+                correlation_id: Some(uid()),
+                user_id: Some("alice".into()),
+                ip_address: None,
+                extra: serde_json::Value::Null,
+            },
+            occurred_at: now(),
+        });
+    }
+
+    #[test]
+    fn rt_snapshot_record() {
+        roundtrip(&SnapshotRecord {
+            aggregate_id: "voucher-1".into(),
+            aggregate_type: "Voucher".into(),
+            version: 5,
+            state: serde_json::json!({ "status": "Posted", "lines": [] }),
+            created_at: now(),
+        });
+    }
+}

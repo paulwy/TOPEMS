@@ -328,3 +328,176 @@ pub fn event_routes() -> Router<AppState> {
         .route("/sagas/{saga_id}/compensate", post(compensate_saga))
         .route("/pipeline/stats", get(pipeline_stats))
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::domain::events::VoucherCreatedEvent;
+    use crate::domain::saga::{SagaAction, SagaActionType, SagaInstance, SagaStep, SagaStepStatus};
+    use chrono::Utc;
+    use serde::{Deserialize, Serialize};
+    use serde_json::{from_value, to_value, Value};
+
+    fn uid() -> String {
+        uuid::Uuid::new_v4().to_string()
+    }
+    fn now() -> chrono::DateTime<Utc> {
+        Utc::now()
+    }
+
+    fn roundtrip<T: Serialize + for<'de> Deserialize<'de>>(v: &T) {
+        let a = to_value(v).unwrap();
+        let b: T = from_value(a.clone()).unwrap();
+        let c = to_value(&b).unwrap();
+        assert_eq!(a, c);
+    }
+
+    #[test]
+    fn handlers_response_roundtrip() {
+        roundtrip(&HandlersResponse {
+            handlers: vec!["h1".into(), "h2".into()],
+            count: 2,
+        });
+        roundtrip(&HandlersResponse {
+            handlers: vec![],
+            count: 0,
+        });
+    }
+
+    #[test]
+    fn route_event_request_roundtrip() {
+        let evt = FinanceDomainEvent::VoucherCreated(VoucherCreatedEvent {
+            voucher_id: uid(),
+            voucher_no: "V-001".into(),
+            voucher_type: "journal".into(),
+            total_amount: 123.45,
+            created_by: "tester".into(),
+            occurred_at: now(),
+        });
+        roundtrip(&RouteEventRequest {
+            event: evt,
+            aggregate_id: uid(),
+        });
+    }
+
+    #[test]
+    fn route_event_response_roundtrip() {
+        let success = RouteResultDto {
+            handler_name: "h".into(),
+            success: true,
+            error: None,
+            side_effects_count: 0,
+        };
+        let failed = RouteResultDto {
+            handler_name: "h".into(),
+            success: false,
+            error: Some("boom".into()),
+            side_effects_count: 0,
+        };
+        roundtrip(&RouteEventResponse {
+            results: vec![success, failed],
+            handlers_invoked: 2,
+        });
+    }
+
+    #[test]
+    fn route_result_dto_roundtrip() {
+        roundtrip(&RouteResultDto {
+            handler_name: "h".into(),
+            success: true,
+            error: None,
+            side_effects_count: 3,
+        });
+        roundtrip(&RouteResultDto {
+            handler_name: "h".into(),
+            success: false,
+            error: Some("oops".into()),
+            side_effects_count: 0,
+        });
+    }
+
+    #[test]
+    fn start_saga_request_roundtrip() {
+        roundtrip(&StartSagaRequest {
+            saga_type: "VoucherPosting".into(),
+            payload: Value::from(uid()),
+        });
+    }
+
+    #[test]
+    fn start_saga_response_roundtrip() {
+        roundtrip(&StartSagaResponse {
+            saga_id: uid(),
+            status: SagaStatus::Running,
+        });
+        roundtrip(&StartSagaResponse {
+            saga_id: uid(),
+            status: SagaStatus::Completed,
+        });
+    }
+
+    #[test]
+    fn compensate_saga_response_roundtrip() {
+        roundtrip(&CompensateSagaResponse {
+            saga_id: uid(),
+            status: SagaStatus::Compensated,
+        });
+    }
+
+    #[test]
+    fn sagas_list_response_roundtrip() {
+        roundtrip(&SagasListResponse { items: vec![], total: 0 });
+        let step = SagaStep {
+            id: uid(),
+            name: "step-1".into(),
+            action: SagaAction {
+                action_type: SagaActionType::HttpPost,
+                target_service: "fin".into(),
+                endpoint: "/do".into(),
+                payload: Value::Null,
+            },
+            compensation: SagaAction {
+                action_type: SagaActionType::HttpPost,
+                target_service: "fin".into(),
+                endpoint: "/undo".into(),
+                payload: Value::Null,
+            },
+            status: SagaStepStatus::Completed,
+            started_at: Some(now()),
+            completed_at: Some(now()),
+            error: None,
+        };
+        let inst = SagaInstance {
+            id: uid(),
+            saga_type: "VoucherPosting".into(),
+            status: SagaStatus::Completed,
+            steps: vec![step],
+            current_step: 1,
+            started_at: now(),
+            completed_at: Some(now()),
+            correlation_id: uid(),
+            payload: Value::from(42),
+            result: Some(Value::from("ok")),
+            error: None,
+        };
+        roundtrip(&SagasListResponse {
+            items: vec![inst],
+            total: 1,
+        });
+    }
+
+    #[test]
+    fn process_events_request_roundtrip() {
+        let evt = FinanceDomainEvent::VoucherCreated(VoucherCreatedEvent {
+            voucher_id: uid(),
+            voucher_no: "V-1".into(),
+            voucher_type: "journal".into(),
+            total_amount: 1.0,
+            created_by: "u".into(),
+            occurred_at: now(),
+        });
+        roundtrip(&ProcessEventsRequest {
+            events: vec![(evt, uid())],
+        });
+    }
+}

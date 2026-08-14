@@ -474,3 +474,88 @@ impl FinanceService {
         }))
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use chrono::Utc;
+    use serde::{Deserialize, Serialize};
+    use serde_json::{from_value, to_value, Value};
+    use uuid::Uuid;
+
+    fn uid() -> Uuid {
+        Uuid::new_v4()
+    }
+    fn now() -> chrono::DateTime<Utc> {
+        Utc::now()
+    }
+
+    fn roundtrip<T: Serialize + for<'de> Deserialize<'de>>(v: &T) {
+        let a = to_value(v).unwrap();
+        let b: T = from_value(a.clone()).unwrap();
+        let c = to_value(&b).unwrap();
+        assert_eq!(a, c);
+    }
+
+    #[test]
+    fn voucher_template_roundtrip() {
+        let full = VoucherTemplate {
+            id: uid(),
+            tenant_id: uid(),
+            name: "sales-tpl".into(),
+            description: Some("desc".into()),
+            voucher_type: "sales".into(),
+            default_debit_account: Some("1001".into()),
+            default_credit_account: Some("6001".into()),
+            is_default: true,
+            status: "active".into(),
+            created_at: now(),
+            updated_at: now(),
+            created_by: Some("u".into()),
+        };
+        roundtrip(&full);
+
+        let minimal = VoucherTemplate {
+            id: uid(),
+            tenant_id: uid(),
+            name: "x".into(),
+            description: None,
+            voucher_type: "x".into(),
+            default_debit_account: None,
+            default_credit_account: None,
+            is_default: false,
+            status: "inactive".into(),
+            created_at: now(),
+            updated_at: now(),
+            created_by: None,
+        };
+        roundtrip(&minimal);
+    }
+
+    #[test]
+    fn voucher_template_line_roundtrip() {
+        let full = VoucherTemplateLine {
+            id: uid(),
+            template_id: uid(),
+            description: Some("line desc".into()),
+            account_code: "1001".into(),
+            direction: "debit".into(),
+            amount_formula: Some("total".into()),
+            sort_order: 1,
+            created_at: now(),
+        };
+        roundtrip(&full);
+
+        let minimal = VoucherTemplateLine {
+            id: uid(),
+            template_id: uid(),
+            description: None,
+            account_code: "6001".into(),
+            direction: "credit".into(),
+            amount_formula: None,
+            sort_order: 0,
+            created_at: now(),
+        };
+        roundtrip(&minimal);
+    }
+}

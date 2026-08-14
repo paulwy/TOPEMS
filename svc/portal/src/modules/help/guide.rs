@@ -297,3 +297,148 @@ pub async fn get_guide_categories(State(state): State<AppState>) -> Json<ApiResp
 
     Json(api_success(categories))
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use serde::{Deserialize, Serialize};
+    use serde_json::{from_value, to_value, Value};
+
+    fn roundtrip<T>(s: &T) -> Value
+    where
+        T: Serialize + for<'de> Deserialize<'de>,
+    {
+        let v1 = to_value(s).expect("serialize first");
+        let s2: T = from_value(v1.clone()).expect("deserialize");
+        let v2 = to_value(&s2).expect("serialize second");
+        assert_eq!(v1, v2, "roundtrip value mismatch");
+        v1
+    }
+
+    fn uid() -> Uuid {
+        Uuid::new_v4()
+    }
+
+    fn now() -> chrono::DateTime<chrono::Utc> {
+        chrono::Utc::now()
+    }
+
+    #[test]
+    fn guide_roundtrip() {
+        let s = Guide {
+            id: uid(),
+            title: "入门指南".to_string(),
+            description: "新手指引".to_string(),
+            category: "getting-started".to_string(),
+            duration: "30min".to_string(),
+            lessons_count: 5,
+            is_active: true,
+            sort_order: 1,
+            created_at: now(),
+            updated_at: now(),
+        };
+        roundtrip(&s);
+    }
+
+    #[test]
+    fn guide_lesson_roundtrip() {
+        let s = GuideLesson {
+            id: uid(),
+            guide_id: uid(),
+            title: "第一课".to_string(),
+            content: "内容".to_string(),
+            duration: "10min".to_string(),
+            sort_order: 1,
+            is_active: true,
+            created_at: now(),
+        };
+        roundtrip(&s);
+    }
+
+    #[test]
+    fn guide_progress_roundtrip() {
+        let s = GuideProgress {
+            guide_id: uid(),
+            user_id: "user-1".to_string(),
+            completed_lessons: vec![uid(), uid()],
+            progress: 80,
+            completed_at: Some(now()),
+            updated_at: now(),
+        };
+        roundtrip(&s);
+    }
+
+    #[test]
+    fn guide_query_roundtrip() {
+        let s = GuideQuery {
+            category: Some("erp".to_string()),
+            keyword: None,
+            page: Some(1),
+            page_size: Some(10),
+        };
+        roundtrip(&s);
+    }
+
+    #[test]
+    fn guide_list_response_roundtrip() {
+        let s = GuideListResponse {
+            items: vec![],
+            total: 0,
+            page: 1,
+            page_size: 10,
+        };
+        roundtrip(&s);
+    }
+
+    #[test]
+    fn guide_detail_response_roundtrip() {
+        let guide = Guide {
+            id: uid(),
+            title: "t".to_string(),
+            description: "d".to_string(),
+            category: "c".to_string(),
+            duration: "1h".to_string(),
+            lessons_count: 1,
+            is_active: true,
+            sort_order: 0,
+            created_at: now(),
+            updated_at: now(),
+        };
+        let s = GuideDetailResponse {
+            guide,
+            lessons: vec![],
+            progress: None,
+        };
+        roundtrip(&s);
+    }
+
+    #[test]
+    fn create_guide_request_roundtrip() {
+        let s = CreateGuideRequest {
+            title: "新指南".to_string(),
+            description: "desc".to_string(),
+            category: "erp".to_string(),
+            duration: "1h".to_string(),
+            lessons_count: 3,
+            sort_order: Some(5),
+        };
+        roundtrip(&s);
+    }
+
+    #[test]
+    fn create_lesson_request_roundtrip() {
+        let s = CreateLessonRequest {
+            title: "新课".to_string(),
+            content: "content".to_string(),
+            duration: "10min".to_string(),
+            sort_order: None,
+        };
+        roundtrip(&s);
+    }
+
+    #[test]
+    fn complete_lesson_request_roundtrip() {
+        let s = CompleteLessonRequest { lesson_id: uid() };
+        roundtrip(&s);
+    }
+}

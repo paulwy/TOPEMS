@@ -274,3 +274,38 @@ pub fn init_pg_cqrs_context(pool: sqlx::PgPool) -> &'static Arc<PgCqrsContext> {
 pub fn get_pg_cqrs_context() -> Option<&'static Arc<PgCqrsContext>> {
     PG_CQRS_CONTEXT.get()
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use serde::{Deserialize, Serialize};
+
+    fn roundtrip<T: Serialize + for<'de> Deserialize<'de>>(item: &T) {
+        let json = serde_json::to_string(item).unwrap();
+        let v1: serde_json::Value = serde_json::from_str(&json).unwrap();
+        let back: T = serde_json::from_str(&json).unwrap();
+        let json2 = serde_json::to_string(&back).unwrap();
+        let v2: serde_json::Value = serde_json::from_str(&json2).unwrap();
+        assert_eq!(v1, v2);
+    }
+
+    fn uid() -> String { uuid::Uuid::new_v4().to_string() }
+
+    #[test]
+    fn rt_command_result() {
+        roundtrip(&CommandResult {
+            aggregate_id: uid(),
+            version: 5,
+            events_count: 2,
+        });
+    }
+
+    #[test]
+    fn rt_command_result_minimal() {
+        roundtrip(&CommandResult {
+            aggregate_id: "test-agg".into(),
+            version: 0,
+            events_count: 0,
+        });
+    }
+}

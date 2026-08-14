@@ -265,3 +265,90 @@ pub async fn get_faq_categories(State(state): State<AppState>) -> Json<ApiRespon
 
     Json(api_success(categories))
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use serde::{Deserialize, Serialize};
+    use serde_json::{from_value, to_value, Value};
+
+    fn roundtrip<T>(s: &T) -> Value
+    where
+        T: Serialize + for<'de> Deserialize<'de>,
+    {
+        let v1 = to_value(s).expect("serialize first");
+        let s2: T = from_value(v1.clone()).expect("deserialize");
+        let v2 = to_value(&s2).expect("serialize second");
+        assert_eq!(v1, v2, "roundtrip value mismatch");
+        v1
+    }
+
+    fn uid() -> Uuid {
+        Uuid::new_v4()
+    }
+
+    fn now() -> chrono::DateTime<chrono::Utc> {
+        chrono::Utc::now()
+    }
+
+    #[test]
+    fn faq_roundtrip() {
+        let s = Faq {
+            id: uid(),
+            question: "如何重置密码？".to_string(),
+            answer: "在设置页修改".to_string(),
+            category: "账户".to_string(),
+            views: 128,
+            is_active: true,
+            sort_order: 1,
+            created_at: now(),
+            updated_at: now(),
+        };
+        roundtrip(&s);
+    }
+
+    #[test]
+    fn faq_query_roundtrip() {
+        let s = FaqQuery {
+            category: Some("账户".to_string()),
+            keyword: None,
+            page: Some(1),
+            page_size: Some(20),
+        };
+        roundtrip(&s);
+    }
+
+    #[test]
+    fn faq_list_response_roundtrip() {
+        let s = FaqListResponse {
+            items: vec![],
+            total: 0,
+            page: 1,
+            page_size: 10,
+        };
+        roundtrip(&s);
+    }
+
+    #[test]
+    fn create_faq_request_roundtrip() {
+        let s = CreateFaqRequest {
+            question: "q".to_string(),
+            answer: "a".to_string(),
+            category: "c".to_string(),
+            sort_order: Some(3),
+        };
+        roundtrip(&s);
+    }
+
+    #[test]
+    fn update_faq_request_roundtrip() {
+        let s = UpdateFaqRequest {
+            question: None,
+            answer: Some("新答案".to_string()),
+            category: None,
+            is_active: Some(false),
+            sort_order: None,
+        };
+        roundtrip(&s);
+    }
+}

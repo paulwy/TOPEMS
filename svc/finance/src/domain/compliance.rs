@@ -297,3 +297,110 @@ impl<T: EventStore + Send + Sync + 'static> ComplianceChecker<T> {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use serde::{Deserialize, Serialize};
+
+    fn roundtrip<T: Serialize + for<'de> Deserialize<'de>>(item: &T) {
+        let json = serde_json::to_string(item).unwrap();
+        let v1: serde_json::Value = serde_json::from_str(&json).unwrap();
+        let back: T = serde_json::from_str(&json).unwrap();
+        let json2 = serde_json::to_string(&back).unwrap();
+        let v2: serde_json::Value = serde_json::from_str(&json2).unwrap();
+        assert_eq!(v1, v2);
+    }
+
+    fn now() -> chrono::DateTime<chrono::Utc> { chrono::Utc::now() }
+
+    fn uid() -> String { uuid::Uuid::new_v4().to_string() }
+
+    #[test]
+    fn rt_compliance_severity_variants() {
+        roundtrip(&ComplianceSeverity::Critical);
+        roundtrip(&ComplianceSeverity::High);
+        roundtrip(&ComplianceSeverity::Medium);
+        roundtrip(&ComplianceSeverity::Low);
+        roundtrip(&ComplianceSeverity::Info);
+    }
+
+    #[test]
+    fn rt_compliance_issue() {
+        roundtrip(&ComplianceIssue {
+            severity: ComplianceSeverity::High,
+            category: "SegregationOfDuties".into(),
+            description: "User both created and posted vouchers".into(),
+            evidence: serde_json::json!({ "actor": "alice", "voucher_count": 3 }),
+        });
+    }
+
+    #[test]
+    fn rt_compliance_summary() {
+        roundtrip(&ComplianceSummary {
+            critical_count: 0,
+            high_count: 2,
+            medium_count: 1,
+            low_count: 3,
+            info_count: 5,
+            total_issues: 11,
+            overall_compliant: false,
+        });
+    }
+
+    #[test]
+    fn rt_compliance_summary_clean() {
+        roundtrip(&ComplianceSummary {
+            critical_count: 0,
+            high_count: 0,
+            medium_count: 0,
+            low_count: 0,
+            info_count: 0,
+            total_issues: 0,
+            overall_compliant: true,
+        });
+    }
+
+    #[test]
+    fn rt_compliance_report_minimal() {
+        roundtrip(&ComplianceReport {
+            report_id: uid(),
+            generated_at: now(),
+            period_start: now() - Duration::days(30),
+            period_end: now(),
+            issues: vec![],
+            summary: ComplianceSummary {
+                critical_count: 0, high_count: 0, medium_count: 0, low_count: 0,
+                info_count: 0, total_issues: 0, overall_compliant: true,
+            },
+        });
+    }
+
+    #[test]
+    fn rt_compliance_report_with_issues() {
+        let summary = ComplianceSummary {
+            critical_count: 1, high_count: 1, medium_count: 0, low_count: 0,
+            info_count: 0, total_issues: 2, overall_compliant: false,
+        };
+        let issue1 = ComplianceIssue {
+            severity: ComplianceSeverity::Critical,
+            category: "DataRetention".into(),
+            description: "Data older than 7 years found".into(),
+            evidence: serde_json::json!({ "count": 5000 }),
+        };
+        let issue2 = ComplianceIssue {
+            severity: ComplianceSeverity::High,
+            category: "SegregationOfDuties".into(),
+            description: "Single actor has conflicting roles".into(),
+            evidence: serde_json::json!({ "actor": "bob", "roles": ["create", "approve"] }),
+        };
+        roundtrip(&ComplianceReport {
+            report_id: uid(),
+            generated_at: now(),
+            period_start: now() - Duration::days(90),
+            period_end: now(),
+            issues: vec![issue1, issue2],
+            summary,
+        });
+    }
+}

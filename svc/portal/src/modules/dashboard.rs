@@ -343,3 +343,39 @@ pub async fn warmup_dashboard_cache(state: AppState) {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use serde::{Deserialize, Serialize};
+    use serde_json::{from_value, to_value, Value};
+
+    fn roundtrip<T>(s: &T) -> Value
+    where
+        T: Serialize + for<'de> Deserialize<'de>,
+    {
+        let v1 = to_value(s).expect("serialize first");
+        let s2: T = from_value(v1.clone()).expect("deserialize");
+        let v2 = to_value(&s2).expect("serialize second");
+        assert_eq!(v1, v2, "roundtrip value mismatch");
+        v1
+    }
+
+    #[test]
+    fn public_dashboard_stats_roundtrip() {
+        let s = PublicDashboardStats::default();
+        roundtrip(&s);
+    }
+
+    #[test]
+    fn cache_stats_response_roundtrip() {
+        let s = CacheStatsResponse {
+            total_entries: 42,
+            hit_count: 100,
+            miss_count: 5,
+            hit_rate: 0.95,
+            evictions: 0,
+        };
+        roundtrip(&s);
+    }
+}

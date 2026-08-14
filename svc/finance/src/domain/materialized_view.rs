@@ -304,3 +304,98 @@ fn classify_aging_bucket(days: i64) -> String {
         _ => "180天以上".to_string(),
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::domain::value_objects::AgingBucket;
+    use serde::{Deserialize, Serialize};
+
+    fn roundtrip<T: Serialize + for<'de> Deserialize<'de>>(item: &T) {
+        let json = serde_json::to_string(item).unwrap();
+        let v1: serde_json::Value = serde_json::from_str(&json).unwrap();
+        let back: T = serde_json::from_str(&json).unwrap();
+        let json2 = serde_json::to_string(&back).unwrap();
+        let v2: serde_json::Value = serde_json::from_str(&json2).unwrap();
+        assert_eq!(v1, v2);
+    }
+
+    fn now() -> chrono::DateTime<chrono::Utc> { chrono::Utc::now() }
+
+    fn today() -> chrono::NaiveDate { chrono::Utc::now().date_naive() }
+
+    fn uid() -> String { uuid::Uuid::new_v4().to_string() }
+
+    #[test]
+    fn rt_voucher_summary_view_posted_at_none() {
+        roundtrip(&VoucherSummaryView {
+            id: uid(),
+            voucher_no: "V-001".into(),
+            voucher_date: today(),
+            voucher_type: "journal".into(),
+            status: "Draft".into(),
+            summary: "draft summary".into(),
+            total_amount: 1234.56,
+            created_by: "alice".into(),
+            created_at: now(),
+            posted_at: None,
+        });
+    }
+
+    #[test]
+    fn rt_voucher_summary_view_posted_at_some() {
+        roundtrip(&VoucherSummaryView {
+            id: uid(),
+            voucher_no: "V-002".into(),
+            voucher_date: today(),
+            voucher_type: "adjustment".into(),
+            status: "Posted".into(),
+            summary: "adjustment summary".into(),
+            total_amount: 999.99,
+            created_by: "bob".into(),
+            created_at: now(),
+            posted_at: Some(now()),
+        });
+    }
+
+    #[test]
+    fn rt_receivable_aging_view_empty_buckets() {
+        roundtrip(&ReceivableAgingView {
+            id: uid(),
+            receivable_no: "AR-001".into(),
+            customer_id: "cust-1".into(),
+            customer_name: "Foo Corp".into(),
+            total_amount: 5000.0,
+            settled_amount: 0.0,
+            remaining_amount: 5000.0,
+            status: "Unsettled".into(),
+            due_date: today(),
+            days_overdue: 0,
+            aging_bucket: "0-30天".into(),
+            buckets: vec![],
+            updated_at: now(),
+        });
+    }
+
+    #[test]
+    fn rt_receivable_aging_view_with_buckets() {
+        roundtrip(&ReceivableAgingView {
+            id: uid(),
+            receivable_no: "AR-002".into(),
+            customer_id: "cust-2".into(),
+            customer_name: "Bar Ltd".into(),
+            total_amount: 10000.0,
+            settled_amount: 6000.0,
+            remaining_amount: 4000.0,
+            status: "PartiallySettled".into(),
+            due_date: today(),
+            days_overdue: 15,
+            aging_bucket: "0-30天".into(),
+            buckets: vec![
+                AgingBucket { label: "0-30天".into(), min_days: 0, max_days: Some(30), amount: 4000.0 },
+                AgingBucket { label: "31-60天".into(), min_days: 31, max_days: Some(60), amount: 0.0 },
+            ],
+            updated_at: now(),
+        });
+    }
+}

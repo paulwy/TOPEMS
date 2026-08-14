@@ -463,3 +463,116 @@ pub fn aggregation_routes() -> axum::Router<AppState> {
             get(get_unified_todos),
         )
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use serde::{Deserialize, Serialize};
+    use serde_json::{from_value, to_value, Value};
+
+    fn roundtrip<T>(s: &T) -> Value
+    where
+        T: Serialize + for<'de> Deserialize<'de>,
+    {
+        let v1 = to_value(s).expect("serialize first");
+        let s2: T = from_value(v1.clone()).expect("deserialize");
+        let v2 = to_value(&s2).expect("serialize second");
+        assert_eq!(v1, v2, "roundtrip value mismatch");
+        v1
+    }
+
+    fn uid() -> String {
+        uuid::Uuid::new_v4().to_string()
+    }
+
+    fn now() -> String {
+        chrono::Utc::now().to_rfc3339()
+    }
+
+    #[test]
+    fn erp_stats_roundtrip() {
+        let s = ErpStats::default();
+        roundtrip(&s);
+    }
+
+    #[test]
+    fn crm_stats_roundtrip() {
+        let s = CrmStats::default();
+        roundtrip(&s);
+    }
+
+    #[test]
+    fn hrm_stats_roundtrip() {
+        let s = HrmStats::default();
+        roundtrip(&s);
+    }
+
+    #[test]
+    fn finance_stats_roundtrip() {
+        let s = FinanceStats::default();
+        roundtrip(&s);
+    }
+
+    #[test]
+    fn mes_stats_roundtrip() {
+        let s = MesStats::default();
+        roundtrip(&s);
+    }
+
+    #[test]
+    fn workflow_stats_roundtrip() {
+        let s = WorkflowStats::default();
+        roundtrip(&s);
+    }
+
+    #[test]
+    fn business_stats_aggregation_roundtrip() {
+        let s = BusinessStatsAggregation {
+            generated_at: now(),
+            erp: ErpStats::default(),
+            crm: CrmStats::default(),
+            hrm: HrmStats::default(),
+            finance: FinanceStats::default(),
+            mes: MesStats::default(),
+            workflow: WorkflowStats::default(),
+        };
+        roundtrip(&s);
+    }
+
+    #[test]
+    fn unified_todo_item_roundtrip() {
+        let s = UnifiedTodoItem {
+            id: uid(),
+            title: "审批采购单".to_string(),
+            description: "请审批 PO-2024-001".to_string(),
+            source: "workflow".to_string(),
+            source_url: "/workflow/tasks".to_string(),
+            priority: "high".to_string(),
+            created_at: Some(now()),
+            due_date: None,
+        };
+        roundtrip(&s);
+    }
+
+    #[test]
+    fn unified_todos_aggregation_roundtrip() {
+        let item = UnifiedTodoItem {
+            id: uid(),
+            title: "t".to_string(),
+            description: "d".to_string(),
+            source: "portal".to_string(),
+            source_url: "/todos".to_string(),
+            priority: "normal".to_string(),
+            created_at: Some(now()),
+            due_date: Some(now()),
+        };
+        let mut by_source = std::collections::HashMap::new();
+        by_source.insert("portal".to_string(), 1);
+        let s = UnifiedTodosAggregation {
+            total: 1,
+            by_source,
+            items: vec![item],
+        };
+        roundtrip(&s);
+    }
+}

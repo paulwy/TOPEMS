@@ -436,3 +436,85 @@ pub fn cqrs_routes() -> Router<AppState> {
             axum::routing::post(replay_view),
         )
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::domain::event_store::{EventMetadata, EventRecord};
+    use crate::domain::events::{FinanceDomainEvent, VoucherCreatedEvent};
+    use chrono::Utc;
+    use serde::{Deserialize, Serialize};
+    use serde_json::{from_value, to_value, Value};
+
+    fn uid() -> String {
+        uuid::Uuid::new_v4().to_string()
+    }
+    fn now() -> chrono::DateTime<Utc> {
+        Utc::now()
+    }
+
+    fn roundtrip<T: Serialize + for<'de> Deserialize<'de>>(v: &T) {
+        let a = to_value(v).unwrap();
+        let b: T = from_value(a.clone()).unwrap();
+        let c = to_value(&b).unwrap();
+        assert_eq!(a, c);
+    }
+
+    #[test]
+    fn cqrs_stats_response_roundtrip() {
+        roundtrip(&CqrsStatsResponse {
+            view_names: vec!["v1".into(), "v2".into()],
+            voucher_summary_count: 10,
+            receivable_aging_count: 5,
+            event_count: 100,
+            snapshot_count: 3,
+        });
+        roundtrip(&CqrsStatsResponse {
+            view_names: vec![],
+            voucher_summary_count: 0,
+            receivable_aging_count: 0,
+            event_count: 0,
+            snapshot_count: 0,
+        });
+    }
+
+    #[test]
+    fn paginated_events_response_roundtrip() {
+        let evt = FinanceDomainEvent::VoucherCreated(VoucherCreatedEvent {
+            voucher_id: uid(),
+            voucher_no: "V-001".into(),
+            voucher_type: "journal".into(),
+            total_amount: 100.0,
+            created_by: "u".into(),
+            occurred_at: now(),
+        });
+        let record = EventRecord {
+            id: uid(),
+            aggregate_id: uid(),
+            aggregate_type: "Voucher".into(),
+            event_type: "VoucherCreated".into(),
+            version: 1,
+            payload: evt,
+            metadata: EventMetadata {
+                causation_id: None,
+                correlation_id: Some(uid()),
+                user_id: Some("u".into()),
+                ip_address: None,
+                extra: Value::Null,
+            },
+            occurred_at: now(),
+        };
+        roundtrip(&PaginatedEventsResponse {
+            items: vec![record],
+            total: 1,
+            page: 1,
+            page_size: 20,
+        });
+        roundtrip(&PaginatedEventsResponse {
+            items: vec![],
+            total: 0,
+            page: 1,
+            page_size: 20,
+        });
+    }
+}
