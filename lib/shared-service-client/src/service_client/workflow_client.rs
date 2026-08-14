@@ -269,3 +269,303 @@ impl WorkflowServiceClient {
         .await
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn sample_dt() -> DateTime<Utc> {
+        "2024-01-01T00:00:00Z".parse().unwrap()
+    }
+
+    // ========== WorkflowTask serde tests ==========
+
+    #[test]
+    fn workflow_task_serde_roundtrip_full() {
+        let original = WorkflowTask {
+            id: Uuid::nil(),
+            instance_id: Uuid::nil(),
+            node_id: "node-1".to_string(),
+            assignee_id: Uuid::nil(),
+            status: "pending".to_string(),
+            comment: Some("Please review".to_string()),
+            priority: Some("high".to_string()),
+            due_time: Some(sample_dt()),
+            created_at: sample_dt(),
+            completed_at: Some(sample_dt()),
+            claimed_at: Some(sample_dt()),
+            instance_title: Some("Leave Request".to_string()),
+            workflow_name: Some("Leave Approval".to_string()),
+        };
+        let json = serde_json::to_string(&original).unwrap();
+        let deserialized: WorkflowTask = serde_json::from_str(&json).unwrap();
+        let val1 = serde_json::to_value(&original).unwrap();
+        let val2 = serde_json::to_value(&deserialized).unwrap();
+        assert_eq!(val1, val2);
+    }
+
+    #[test]
+    fn workflow_task_serde_roundtrip_with_none_fields() {
+        let original = WorkflowTask {
+            id: Uuid::nil(),
+            instance_id: Uuid::nil(),
+            node_id: "node-2".to_string(),
+            assignee_id: Uuid::nil(),
+            status: "completed".to_string(),
+            comment: None,
+            priority: None,
+            due_time: None,
+            created_at: sample_dt(),
+            completed_at: None,
+            claimed_at: None,
+            instance_title: None,
+            workflow_name: None,
+        };
+        let json = serde_json::to_string(&original).unwrap();
+        let deserialized: WorkflowTask = serde_json::from_str(&json).unwrap();
+        let val1 = serde_json::to_value(&original).unwrap();
+        let val2 = serde_json::to_value(&deserialized).unwrap();
+        assert_eq!(val1, val2);
+    }
+
+    #[test]
+    fn workflow_task_deserialize_from_json() {
+        let json = r#"{
+            "id": "550e8400-e29b-41d4-a716-446655440000",
+            "instance_id": "660e8400-e29b-41d4-a716-446655440000",
+            "node_id": "approval",
+            "assignee_id": "770e8400-e29b-41d4-a716-446655440000",
+            "status": "todo",
+            "comment": null,
+            "priority": "medium",
+            "due_time": null,
+            "created_at": "2024-01-01T00:00:00Z",
+            "completed_at": null,
+            "claimed_at": null,
+            "instance_title": "Title",
+            "workflow_name": "WF"
+        }"#;
+        let task: WorkflowTask = serde_json::from_str(json).unwrap();
+        assert_eq!(task.node_id, "approval");
+        assert_eq!(task.status, "todo");
+        assert!(task.comment.is_none());
+        assert_eq!(task.priority, Some("medium".to_string()));
+    }
+
+    // ========== TaskStats serde tests ==========
+
+    #[test]
+    fn task_stats_serde_roundtrip() {
+        let original = TaskStats {
+            todo: 5,
+            done: 10,
+            sent: 3,
+            cc: 2,
+            my_pending: 4,
+            my_completed: 20,
+            my_involved: 30,
+            my_created: 8,
+            candidate: 6,
+        };
+        let json = serde_json::to_string(&original).unwrap();
+        let deserialized: TaskStats = serde_json::from_str(&json).unwrap();
+        let val1 = serde_json::to_value(&original).unwrap();
+        let val2 = serde_json::to_value(&deserialized).unwrap();
+        assert_eq!(val1, val2);
+    }
+
+    #[test]
+    fn task_stats_deserialize_from_json() {
+        let json = r#"{"todo":1,"done":2,"sent":3,"cc":4,"my_pending":5,"my_completed":6,"my_involved":7,"my_created":8,"candidate":9}"#;
+        let stats: TaskStats = serde_json::from_str(json).unwrap();
+        assert_eq!(stats.todo, 1);
+        assert_eq!(stats.done, 2);
+        assert_eq!(stats.candidate, 9);
+    }
+
+    // ========== WorkflowInstance serde tests ==========
+
+    #[test]
+    fn workflow_instance_serde_roundtrip_full() {
+        let original = WorkflowInstance {
+            id: Uuid::nil(),
+            workflow_id: Uuid::nil(),
+            title: "Leave Request".to_string(),
+            initiator_id: Uuid::nil(),
+            current_node_id: Some("approval".to_string()),
+            status: "running".to_string(),
+            variables: Some(serde_json::json!({"days": 3})),
+            started_at: sample_dt(),
+            completed_at: Some(sample_dt()),
+            created_at: sample_dt(),
+            updated_at: sample_dt(),
+        };
+        let json = serde_json::to_string(&original).unwrap();
+        let deserialized: WorkflowInstance = serde_json::from_str(&json).unwrap();
+        let val1 = serde_json::to_value(&original).unwrap();
+        let val2 = serde_json::to_value(&deserialized).unwrap();
+        assert_eq!(val1, val2);
+    }
+
+    #[test]
+    fn workflow_instance_serde_roundtrip_with_none_fields() {
+        let original = WorkflowInstance {
+            id: Uuid::nil(),
+            workflow_id: Uuid::nil(),
+            title: "Test".to_string(),
+            initiator_id: Uuid::nil(),
+            current_node_id: None,
+            status: "completed".to_string(),
+            variables: None,
+            started_at: sample_dt(),
+            completed_at: None,
+            created_at: sample_dt(),
+            updated_at: sample_dt(),
+        };
+        let json = serde_json::to_string(&original).unwrap();
+        let deserialized: WorkflowInstance = serde_json::from_str(&json).unwrap();
+        let val1 = serde_json::to_value(&original).unwrap();
+        let val2 = serde_json::to_value(&deserialized).unwrap();
+        assert_eq!(val1, val2);
+    }
+
+    // ========== WorkflowStatistics serde tests ==========
+
+    #[test]
+    fn workflow_statistics_serde_roundtrip() {
+        let original = WorkflowStatistics {
+            total_workflows: 100,
+            active_workflows: 50,
+            total_instances: 500,
+            running_instances: 30,
+            completed_instances: 400,
+            rejected_instances: 70,
+            total_approvals: 1000,
+            pending_approvals: 100,
+            approved_approvals: 800,
+            rejected_approvals: 100,
+            avg_approval_time: 3.5,
+            approval_rate: 0.8,
+            rejection_rate: 0.1,
+        };
+        let json = serde_json::to_string(&original).unwrap();
+        let deserialized: WorkflowStatistics = serde_json::from_str(&json).unwrap();
+        let val1 = serde_json::to_value(&original).unwrap();
+        let val2 = serde_json::to_value(&deserialized).unwrap();
+        assert_eq!(val1, val2);
+    }
+
+    #[test]
+    fn workflow_statistics_deserialize_from_json() {
+        let json = r#"{
+            "total_workflows": 10,
+            "active_workflows": 5,
+            "total_instances": 50,
+            "running_instances": 3,
+            "completed_instances": 40,
+            "rejected_instances": 7,
+            "total_approvals": 100,
+            "pending_approvals": 10,
+            "approved_approvals": 80,
+            "rejected_approvals": 10,
+            "avg_approval_time": 2.0,
+            "approval_rate": 0.8,
+            "rejection_rate": 0.1
+        }"#;
+        let stats: WorkflowStatistics = serde_json::from_str(json).unwrap();
+        assert_eq!(stats.total_workflows, 10);
+        assert_eq!(stats.running_instances, 3);
+        assert_eq!(stats.approval_rate, 0.8);
+    }
+
+    // ========== CreateInstanceRequest serialization tests (Serialize only) ==========
+
+    #[test]
+    fn create_instance_request_serialization() {
+        let req = CreateInstanceRequest {
+            workflow_id: Uuid::nil(),
+            title: "Test Workflow".to_string(),
+            variables: Some(serde_json::json!({"key": "value"})),
+        };
+        let val = serde_json::to_value(&req).unwrap();
+        assert_eq!(val["title"], "Test Workflow");
+        assert_eq!(val["workflow_id"], Uuid::nil().to_string());
+        assert!(val["variables"].is_object());
+    }
+
+    #[test]
+    fn create_instance_request_serialization_without_variables() {
+        let req = CreateInstanceRequest {
+            workflow_id: Uuid::nil(),
+            title: "No Vars".to_string(),
+            variables: None,
+        };
+        let val = serde_json::to_value(&req).unwrap();
+        assert_eq!(val["title"], "No Vars");
+        assert!(val["variables"].is_null());
+    }
+
+    // ========== TaskActionRequest serialization tests (Serialize only) ==========
+
+    #[test]
+    fn task_action_request_serialization_with_comment() {
+        let req = TaskActionRequest {
+            comment: Some("test comment".to_string()),
+        };
+        let val = serde_json::to_value(&req).unwrap();
+        assert_eq!(val["comment"], "test comment");
+    }
+
+    #[test]
+    fn task_action_request_serialization_without_comment() {
+        let req = TaskActionRequest { comment: None };
+        let val = serde_json::to_value(&req).unwrap();
+        assert!(val["comment"].is_null());
+    }
+
+    // ========== WorkflowServiceClient construction tests ==========
+
+    #[test]
+    fn workflow_client_new_succeeds() {
+        let client = WorkflowServiceClient::new("http://localhost:8000");
+        assert!(client.is_ok());
+    }
+
+    #[test]
+    fn workflow_client_new_with_empty_url_fails() {
+        let result = WorkflowServiceClient::new("");
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn workflow_client_from_env_succeeds() {
+        let client = WorkflowServiceClient::from_env();
+        assert!(client.is_ok());
+    }
+
+    #[test]
+    fn workflow_client_set_auth_token_does_not_panic() {
+        let mut client = WorkflowServiceClient::new("http://localhost:8000").unwrap();
+        client.set_auth_token("token-abc");
+    }
+
+    #[test]
+    fn workflow_client_with_auth_token_returns_self() {
+        let client = WorkflowServiceClient::new("http://localhost:8000").unwrap();
+        let _client = client.with_auth_token("token-xyz");
+    }
+
+    #[test]
+    fn workflow_client_add_header_does_not_panic() {
+        let mut client = WorkflowServiceClient::new("http://localhost:8000").unwrap();
+        client.add_header("X-Tenant-Id", "tenant-001");
+    }
+
+    #[tokio::test]
+    async fn workflow_client_get_health_unreachable_returns_false() {
+        let client = WorkflowServiceClient::new("http://127.0.0.1:1").unwrap();
+        let result = client.get_health().await;
+        assert!(result.is_ok());
+        assert_eq!(result.unwrap(), false);
+    }
+}

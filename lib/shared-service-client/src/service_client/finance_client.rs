@@ -417,3 +417,140 @@ crate::define_service_client!(
         }
     }
 );
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn finance_client_new_succeeds() {
+        let client = FinanceServiceClient::new("http://localhost:8011");
+        assert!(client.is_ok());
+    }
+
+    #[test]
+    fn finance_client_new_with_https_url_succeeds() {
+        let client = FinanceServiceClient::new("https://finance.example.com");
+        assert!(client.is_ok());
+    }
+
+    #[test]
+    fn finance_client_new_with_empty_url_fails() {
+        let result = FinanceServiceClient::new("");
+        match result {
+            Err(crate::service_client::error::ServiceClientError::InvalidUrl(msg)) => {
+                assert_eq!(msg, "Base URL cannot be empty");
+            }
+            Err(other) => panic!("Expected InvalidUrl, got {:?}", other),
+            Ok(_) => panic!("Expected error for empty URL"),
+        }
+    }
+
+    #[test]
+    fn finance_client_from_env_succeeds() {
+        let client = FinanceServiceClient::from_env();
+        assert!(client.is_ok());
+    }
+
+    #[test]
+    fn finance_client_set_auth_token_does_not_panic() {
+        let mut client = FinanceServiceClient::new("http://localhost:8011").unwrap();
+        client.set_auth_token("bearer-token-abc");
+    }
+
+    #[test]
+    fn finance_client_with_auth_token_returns_self() {
+        let client = FinanceServiceClient::new("http://localhost:8011").unwrap();
+        let _client = client.with_auth_token("bearer-token-xyz");
+    }
+
+    #[test]
+    fn finance_client_add_header_does_not_panic() {
+        let mut client = FinanceServiceClient::new("http://localhost:8011").unwrap();
+        client.add_header("X-Tenant-Id", "tenant-001");
+    }
+
+    #[test]
+    fn finance_client_add_multiple_headers_does_not_panic() {
+        let mut client = FinanceServiceClient::new("http://localhost:8011").unwrap();
+        client.add_header("X-Tenant-Id", "tenant-001");
+        client.add_header("X-Request-Id", "req-abc");
+        client.add_header("X-Trace-Id", "trace-xyz");
+    }
+
+    #[test]
+    fn finance_client_set_auth_then_add_header_does_not_panic() {
+        let mut client = FinanceServiceClient::new("http://localhost:8011").unwrap();
+        client.set_auth_token("token-1");
+        client.add_header("X-Custom", "value");
+    }
+
+    #[test]
+    fn finance_client_with_auth_then_add_header_does_not_panic() {
+        let mut client = FinanceServiceClient::new("http://localhost:8011")
+            .unwrap()
+            .with_auth_token("token-2");
+        client.add_header("X-Custom", "val2");
+    }
+
+    #[tokio::test]
+    async fn finance_client_get_health_unreachable_returns_false() {
+        let client = FinanceServiceClient::new("http://127.0.0.1:1").unwrap();
+        let result = client.get_health().await;
+        assert!(result.is_ok());
+        assert_eq!(result.unwrap(), false);
+    }
+
+    #[tokio::test]
+    async fn finance_client_get_health_unreachable_with_auth_returns_false() {
+        let client = FinanceServiceClient::new("http://127.0.0.1:1")
+            .unwrap()
+            .with_auth_token("tok");
+        let result = client.get_health().await;
+        assert!(result.is_ok());
+        assert_eq!(result.unwrap(), false);
+    }
+
+    #[tokio::test]
+    async fn finance_client_list_accounts_unreachable_returns_error() {
+        let client = FinanceServiceClient::new("http://127.0.0.1:1").unwrap();
+        let result = client.list_accounts().await;
+        assert!(result.is_err());
+    }
+
+    #[tokio::test]
+    async fn finance_client_get_account_unreachable_returns_error() {
+        let client = FinanceServiceClient::new("http://127.0.0.1:1").unwrap();
+        let result = client.get_account("test-id").await;
+        assert!(result.is_err());
+    }
+
+    #[tokio::test]
+    async fn finance_client_create_account_unreachable_returns_error() {
+        let client = FinanceServiceClient::new("http://127.0.0.1:1").unwrap();
+        let body = serde_json::json!({"name": "test"});
+        let result = client.create_account(&body).await;
+        assert!(result.is_err());
+    }
+
+    #[tokio::test]
+    async fn finance_client_open_period_unreachable_returns_error() {
+        let client = FinanceServiceClient::new("http://127.0.0.1:1").unwrap();
+        let result = client.open_period(2024, 1).await;
+        assert!(result.is_err());
+    }
+
+    #[tokio::test]
+    async fn finance_client_get_trial_balance_unreachable_returns_error() {
+        let client = FinanceServiceClient::new("http://127.0.0.1:1").unwrap();
+        let result = client.get_trial_balance("2024-01").await;
+        assert!(result.is_err());
+    }
+
+    #[tokio::test]
+    async fn finance_client_delete_voucher_unreachable_returns_error() {
+        let client = FinanceServiceClient::new("http://127.0.0.1:1").unwrap();
+        let result = client.delete_voucher("voucher-001").await;
+        assert!(result.is_err());
+    }
+}
