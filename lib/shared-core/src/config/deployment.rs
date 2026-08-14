@@ -214,4 +214,364 @@ mod tests {
         assert!(saas_config.check_tenant_access(tenant1, tenant2).is_err());
         assert!(saas_config.check_tenant_access(tenant1, tenant1).is_ok());
     }
+
+    // ===== 以下为补充测试 =====
+    use std::sync::Mutex;
+
+    /// env var 测试全局锁，避免并行 set_var/remove_var 竞态
+    static ENV_LOCK: Mutex<()> = Mutex::new(());
+
+    fn clear_deployment_env_vars() {
+        for k in [
+            "DEPLOYMENT_MODE",
+            "MULTI_TENANT_ENABLED",
+            "DEFAULT_TENANT_ID",
+            "QUOTA_ENABLED",
+            "BILLING_ENABLED",
+            "TENANT_MANAGEMENT",
+            "SSO_ENABLED",
+            "TWO_FACTOR_REQUIRED",
+            "IP_WHITELIST_ENABLED",
+        ] {
+            std::env::remove_var(k);
+        }
+    }
+
+    #[test]
+    fn deployment_mode_default_is_on_premise() {
+        assert_eq!(DeploymentMode::default(), DeploymentMode::OnPremise);
+    }
+
+    #[test]
+    fn deployment_mode_display_strings() {
+        assert_eq!(format!("{}", DeploymentMode::SaaS), "saas");
+        assert_eq!(format!("{}", DeploymentMode::OnPremise), "on-premise");
+    }
+
+    #[test]
+    fn deployment_mode_copy_and_clone_equal() {
+        let a = DeploymentMode::SaaS;
+        let b = a; // Copy
+        let c = a.clone();
+        assert_eq!(a, b);
+        assert_eq!(a, c);
+        let d = DeploymentMode::OnPremise;
+        assert_ne!(a, d);
+    }
+
+    #[test]
+    fn deployment_mode_serde_json_roundtrip() {
+        for mode in [DeploymentMode::SaaS, DeploymentMode::OnPremise] {
+            let json = serde_json::to_string(&mode).expect("serialize");
+            let back: DeploymentMode = serde_json::from_str(&json).expect("deserialize");
+            assert_eq!(back, mode);
+        }
+    }
+
+    #[test]
+    fn deployment_mode_serde_yaml_roundtrip() {
+        for mode in [DeploymentMode::SaaS, DeploymentMode::OnPremise] {
+            let yaml = serde_yaml::to_string(&mode).expect("serialize yaml");
+            let back: DeploymentMode = serde_yaml::from_str(&yaml).expect("deserialize yaml");
+            assert_eq!(back, mode);
+        }
+    }
+
+    #[test]
+    fn deployment_mode_serde_uses_kebab_case() {
+        // serde rename_all = "kebab-case" 拆词结果：
+        //   SaaS      -> "saa-s"
+        //   OnPremise -> "on-premise"
+        // 注意：这与 Display/from_env 使用的 "saas" 不同（既有设计）
+        assert_eq!(
+            serde_json::to_string(&DeploymentMode::SaaS).unwrap(),
+            "\"saa-s\""
+        );
+        assert_eq!(
+            serde_json::to_string(&DeploymentMode::OnPremise).unwrap(),
+            "\"on-premise\""
+        );
+        let m: DeploymentMode = serde_json::from_str("\"on-premise\"").unwrap();
+        assert_eq!(m, DeploymentMode::OnPremise);
+        let m: DeploymentMode = serde_json::from_str("\"saa-s\"").unwrap();
+        assert_eq!(m, DeploymentMode::SaaS);
+    }
+
+    #[test]
+    fn feature_flags_default_all_false() {
+        let f = FeatureFlags::default();
+        assert!(!f.quota_enabled);
+        assert!(!f.billing_enabled);
+        assert!(!f.tenant_management);
+        assert!(!f.sso_enabled);
+        assert!(!f.two_factor_required);
+        assert!(!f.ip_whitelist_enabled);
+    }
+
+    #[test]
+    fn feature_flags_clone_preserves_fields() {
+        let f = FeatureFlags {
+            quota_enabled: true,
+            billing_enabled: true,
+            tenant_management: false,
+            sso_enabled: true,
+            two_factor_required: false,
+            ip_whitelist_enabled: true,
+        };
+        let c = f.clone();
+        assert_eq!(c.quota_enabled, f.quota_enabled);
+        assert_eq!(c.billing_enabled, f.billing_enabled);
+        assert_eq!(c.tenant_management, f.tenant_management);
+        assert_eq!(c.sso_enabled, f.sso_enabled);
+        assert_eq!(c.two_factor_required, f.two_factor_required);
+        assert_eq!(c.ip_whitelist_enabled, f.ip_whitelist_enabled);
+    }
+
+    #[test]
+    fn feature_flags_serde_json_roundtrip() {
+        let f = FeatureFlags {
+            quota_enabled: true,
+            billing_enabled: false,
+            tenant_management: true,
+            sso_enabled: false,
+            two_factor_required: true,
+            ip_whitelist_enabled: false,
+        };
+        let json = serde_json::to_string(&f).expect("serialize");
+        let back: FeatureFlags = serde_json::from_str(&json).expect("deserialize");
+        assert_eq!(back.quota_enabled, f.quota_enabled);
+        assert_eq!(back.billing_enabled, f.billing_enabled);
+        assert_eq!(back.tenant_management, f.tenant_management);
+        assert_eq!(back.sso_enabled, f.sso_enabled);
+        assert_eq!(back.two_factor_required, f.two_factor_required);
+        assert_eq!(back.ip_whitelist_enabled, f.ip_whitelist_enabled);
+    }
+
+    #[test]
+    fn feature_flags_serde_yaml_roundtrip() {
+        let f = FeatureFlags {
+            quota_enabled: true,
+            billing_enabled: true,
+            tenant_management: false,
+            sso_enabled: true,
+            two_factor_required: false,
+            ip_whitelist_enabled: true,
+        };
+        let yaml = serde_yaml::to_string(&f).expect("serialize yaml");
+        let back: FeatureFlags = serde_yaml::from_str(&yaml).expect("deserialize yaml");
+        assert_eq!(back.quota_enabled, f.quota_enabled);
+        assert_eq!(back.billing_enabled, f.billing_enabled);
+        assert_eq!(back.sso_enabled, f.sso_enabled);
+        assert_eq!(back.ip_whitelist_enabled, f.ip_whitelist_enabled);
+    }
+
+    #[test]
+    fn deployment_config_default_values() {
+        let c = DeploymentConfig::default();
+        assert_eq!(c.mode, DeploymentMode::OnPremise);
+        assert!(!c.multi_tenant_enabled);
+        assert_eq!(c.default_tenant_id, Uuid::nil());
+        assert!(!c.features.quota_enabled);
+        assert!(!c.features.billing_enabled);
+    }
+
+    #[test]
+    fn deployment_config_clone_preserves_fields() {
+        let c = DeploymentConfig {
+            mode: DeploymentMode::SaaS,
+            multi_tenant_enabled: true,
+            default_tenant_id: Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap(),
+            features: FeatureFlags {
+                quota_enabled: true,
+                billing_enabled: true,
+                tenant_management: true,
+                sso_enabled: true,
+                two_factor_required: true,
+                ip_whitelist_enabled: true,
+            },
+        };
+        let c2 = c.clone();
+        assert_eq!(c2.mode, c.mode);
+        assert_eq!(c2.multi_tenant_enabled, c.multi_tenant_enabled);
+        assert_eq!(c2.default_tenant_id, c.default_tenant_id);
+        assert_eq!(c2.features.quota_enabled, c.features.quota_enabled);
+        assert_eq!(c2.features.billing_enabled, c.features.billing_enabled);
+    }
+
+    #[test]
+    fn deployment_config_serde_json_roundtrip() {
+        let c = DeploymentConfig {
+            mode: DeploymentMode::SaaS,
+            multi_tenant_enabled: true,
+            default_tenant_id: Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap(),
+            features: FeatureFlags {
+                quota_enabled: true,
+                billing_enabled: false,
+                tenant_management: true,
+                sso_enabled: false,
+                two_factor_required: true,
+                ip_whitelist_enabled: false,
+            },
+        };
+        let json = serde_json::to_string(&c).expect("serialize");
+        let back: DeploymentConfig = serde_json::from_str(&json).expect("deserialize");
+        assert_eq!(back.mode, c.mode);
+        assert_eq!(back.multi_tenant_enabled, c.multi_tenant_enabled);
+        assert_eq!(back.default_tenant_id, c.default_tenant_id);
+        assert_eq!(back.features.quota_enabled, c.features.quota_enabled);
+        assert_eq!(back.features.billing_enabled, c.features.billing_enabled);
+        assert_eq!(back.features.sso_enabled, c.features.sso_enabled);
+    }
+
+    #[test]
+    fn deployment_config_serde_yaml_roundtrip() {
+        let c = DeploymentConfig::default();
+        let yaml = serde_yaml::to_string(&c).expect("serialize yaml");
+        let back: DeploymentConfig = serde_yaml::from_str(&yaml).expect("deserialize yaml");
+        assert_eq!(back.mode, c.mode);
+        assert_eq!(back.multi_tenant_enabled, c.multi_tenant_enabled);
+        assert_eq!(back.default_tenant_id, c.default_tenant_id);
+    }
+
+    #[test]
+    fn is_saas_and_is_on_premise_flags() {
+        let saas = DeploymentConfig {
+            mode: DeploymentMode::SaaS,
+            ..Default::default()
+        };
+        let op = DeploymentConfig::default();
+        assert!(saas.is_saas());
+        assert!(!saas.is_on_premise());
+        assert!(!op.is_saas());
+        assert!(op.is_on_premise());
+    }
+
+    #[test]
+    fn is_multi_tenant_reflects_flag() {
+        let mut c = DeploymentConfig::default();
+        assert!(!c.is_multi_tenant());
+        c.multi_tenant_enabled = true;
+        assert!(c.is_multi_tenant());
+    }
+
+    #[test]
+    fn should_check_quota_requires_both_flags() {
+        let mut c = DeploymentConfig::default();
+        assert!(!c.should_check_quota());
+        c.features.quota_enabled = true;
+        assert!(!c.should_check_quota()); // multi_tenant 仍为 false
+        c.multi_tenant_enabled = true;
+        assert!(c.should_check_quota());
+        c.features.quota_enabled = false;
+        assert!(!c.should_check_quota());
+    }
+
+    #[test]
+    fn show_tenant_management_requires_both_flags() {
+        let mut c = DeploymentConfig::default();
+        assert!(!c.show_tenant_management());
+        c.features.tenant_management = true;
+        assert!(!c.show_tenant_management()); // multi_tenant 仍为 false
+        c.multi_tenant_enabled = true;
+        assert!(c.show_tenant_management());
+    }
+
+    #[test]
+    fn check_tenant_access_on_premise_always_ok() {
+        let c = DeploymentConfig::default(); // on-premise, multi_tenant off
+        let t1 = Uuid::new_v4();
+        let t2 = Uuid::new_v4();
+        assert!(c.check_tenant_access(t1, t2).is_ok());
+        assert!(c.check_tenant_access(t1, t1).is_ok());
+    }
+
+    #[test]
+    fn from_env_defaults_when_no_env_vars() {
+        let _guard = ENV_LOCK.lock().unwrap();
+        clear_deployment_env_vars();
+        let c = DeploymentConfig::from_env();
+        assert_eq!(c.mode, DeploymentMode::OnPremise);
+        assert!(!c.multi_tenant_enabled);
+        // DEFAULT_TENANT_ID 缺省回退值
+        assert_eq!(
+            c.default_tenant_id,
+            Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap()
+        );
+        assert!(!c.features.quota_enabled);
+        assert!(!c.features.billing_enabled);
+        assert!(!c.features.sso_enabled);
+    }
+
+    #[test]
+    fn from_env_saas_mode_and_all_flags_true() {
+        let _guard = ENV_LOCK.lock().unwrap();
+        clear_deployment_env_vars();
+        std::env::set_var("DEPLOYMENT_MODE", "SaaS");
+        std::env::set_var("MULTI_TENANT_ENABLED", "true");
+        std::env::set_var("QUOTA_ENABLED", "true");
+        std::env::set_var("BILLING_ENABLED", "TRUE");
+        std::env::set_var("TENANT_MANAGEMENT", "true");
+        std::env::set_var("SSO_ENABLED", "true");
+        std::env::set_var("TWO_FACTOR_REQUIRED", "true");
+        std::env::set_var("IP_WHITELIST_ENABLED", "true");
+
+        let c = DeploymentConfig::from_env();
+        assert_eq!(c.mode, DeploymentMode::SaaS);
+        assert!(c.multi_tenant_enabled);
+        assert!(c.features.quota_enabled);
+        assert!(c.features.billing_enabled);
+        assert!(c.features.tenant_management);
+        assert!(c.features.sso_enabled);
+        assert!(c.features.two_factor_required);
+        assert!(c.features.ip_whitelist_enabled);
+        clear_deployment_env_vars();
+    }
+
+    #[test]
+    fn from_env_custom_tenant_id() {
+        let _guard = ENV_LOCK.lock().unwrap();
+        clear_deployment_env_vars();
+        std::env::set_var("DEFAULT_TENANT_ID", "12345678-1234-1234-1234-1234567890ab");
+        let c = DeploymentConfig::from_env();
+        assert_eq!(
+            c.default_tenant_id,
+            Uuid::parse_str("12345678-1234-1234-1234-1234567890ab").unwrap()
+        );
+        clear_deployment_env_vars();
+    }
+
+    #[test]
+    fn from_env_invalid_tenant_id_falls_back() {
+        let _guard = ENV_LOCK.lock().unwrap();
+        clear_deployment_env_vars();
+        std::env::set_var("DEFAULT_TENANT_ID", "not-a-uuid");
+        let c = DeploymentConfig::from_env();
+        assert_eq!(
+            c.default_tenant_id,
+            Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap()
+        );
+        clear_deployment_env_vars();
+    }
+
+    #[test]
+    fn from_env_non_true_values_treated_as_false() {
+        let _guard = ENV_LOCK.lock().unwrap();
+        clear_deployment_env_vars();
+        std::env::set_var("MULTI_TENANT_ENABLED", "yes");
+        std::env::set_var("QUOTA_ENABLED", "1");
+        let c = DeploymentConfig::from_env();
+        assert!(!c.multi_tenant_enabled);
+        assert!(!c.features.quota_enabled);
+        clear_deployment_env_vars();
+    }
+
+    #[test]
+    fn from_env_uppercase_saas_normalizes_to_saas_mode() {
+        let _guard = ENV_LOCK.lock().unwrap();
+        clear_deployment_env_vars();
+        std::env::set_var("DEPLOYMENT_MODE", "SAAS");
+        let c = DeploymentConfig::from_env();
+        assert_eq!(c.mode, DeploymentMode::SaaS);
+        clear_deployment_env_vars();
+    }
 }

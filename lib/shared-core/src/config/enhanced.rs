@@ -640,4 +640,671 @@ mod tests {
         assert_eq!(get_default_port("hrm"), 8020);
         assert_eq!(get_default_port("unknown"), 8080);
     }
+
+    // ===== 以下为补充测试 =====
+    use std::sync::Mutex;
+
+    /// env var 测试全局锁，避免并行 set_var/remove_var 竞态
+    static ENV_LOCK: Mutex<()> = Mutex::new(());
+
+    fn clear_enhanced_env_vars() {
+        for k in [
+            "DATABASE_URL",
+            "DB_MAX_CONNECTIONS",
+            "DB_MIN_CONNECTIONS",
+            "DB_CONNECT_TIMEOUT",
+            "DB_IDLE_TIMEOUT",
+            "DB_MAX_LIFETIME",
+            "DB_TEST_INTERVAL",
+            "DB_ENABLE_CONNECTION_REUSE",
+            "SERVER_PORT",
+            "PORT",
+            "SERVICE_VERSION",
+            "SERVICE_DESCRIPTION",
+            "ENABLE_AUTH",
+            "ENABLE_CORS",
+            "ENABLE_LOGGING",
+            "LOG_LEVEL",
+            "REDIS_URL",
+            "REDIS_MAX_CONNECTIONS",
+            "REDIS_CONNECT_TIMEOUT",
+            "JWT_SECRET",
+            "JWT_EXPIRATION",
+            "JWT_REFRESH_EXPIRATION",
+            "OPENAI_API_KEY",
+            "OPENAI_BASE_URL",
+            "OPENAI_MODEL",
+            "USE_OLLAMA",
+            "EMBEDDING_MODEL",
+            "AI_DOCS_DIR",
+            "AI_CHUNK_SIZE",
+            "AI_CHUNK_OVERLAP",
+            "CACHE_TYPE",
+            "CACHE_MAX_SIZE",
+            "CACHE_DEFAULT_TTL",
+            "CACHE_EVICTION_POLICY",
+        ] {
+            std::env::remove_var(k);
+        }
+    }
+
+    // ---------- DatabaseConfig ----------
+    #[test]
+    fn database_config_default_values() {
+        let c = DatabaseConfig::default();
+        assert!(!c.url.is_empty());
+        assert_eq!(c.max_connections, 4);
+        assert_eq!(c.min_connections, Some(1));
+        assert_eq!(c.connect_timeout, Some(30));
+        assert_eq!(c.idle_timeout, Some(300));
+        assert_eq!(c.max_lifetime, Some(1800));
+        assert_eq!(c.test_interval, Some(60));
+        assert_eq!(c.enable_connection_reuse, Some(true));
+    }
+
+    #[test]
+    fn database_config_clone_preserves_fields() {
+        let c = DatabaseConfig {
+            url: "postgres://u:p@h:5432/db".to_string(),
+            max_connections: 8,
+            min_connections: Some(2),
+            connect_timeout: Some(15),
+            idle_timeout: Some(120),
+            max_lifetime: Some(900),
+            test_interval: Some(30),
+            enable_connection_reuse: Some(false),
+        };
+        let c2 = c.clone();
+        assert_eq!(c2.url, c.url);
+        assert_eq!(c2.max_connections, c.max_connections);
+        assert_eq!(c2.min_connections, c.min_connections);
+        assert_eq!(c2.connect_timeout, c.connect_timeout);
+        assert_eq!(c2.enable_connection_reuse, c.enable_connection_reuse);
+    }
+
+    #[test]
+    fn database_config_serde_json_roundtrip() {
+        let c = DatabaseConfig {
+            url: "postgres://u:p@h:5432/db".to_string(),
+            max_connections: 8,
+            min_connections: Some(2),
+            connect_timeout: Some(15),
+            idle_timeout: Some(120),
+            max_lifetime: Some(900),
+            test_interval: Some(30),
+            enable_connection_reuse: Some(false),
+        };
+        let json = serde_json::to_string(&c).expect("serialize");
+        let back: DatabaseConfig = serde_json::from_str(&json).expect("deserialize");
+        assert_eq!(back.url, c.url);
+        assert_eq!(back.max_connections, c.max_connections);
+        assert_eq!(back.min_connections, c.min_connections);
+        assert_eq!(back.connect_timeout, c.connect_timeout);
+        assert_eq!(back.idle_timeout, c.idle_timeout);
+        assert_eq!(back.max_lifetime, c.max_lifetime);
+        assert_eq!(back.test_interval, c.test_interval);
+        assert_eq!(back.enable_connection_reuse, c.enable_connection_reuse);
+    }
+
+    #[test]
+    fn database_config_serde_yaml_roundtrip() {
+        let c = DatabaseConfig {
+            url: "postgres://u:p@h:5432/db".to_string(),
+            max_connections: 16,
+            min_connections: None,
+            connect_timeout: None,
+            idle_timeout: Some(60),
+            max_lifetime: None,
+            test_interval: None,
+            enable_connection_reuse: None,
+        };
+        let yaml = serde_yaml::to_string(&c).expect("serialize yaml");
+        let back: DatabaseConfig = serde_yaml::from_str(&yaml).expect("deserialize yaml");
+        assert_eq!(back.url, c.url);
+        assert_eq!(back.max_connections, c.max_connections);
+        assert_eq!(back.min_connections, None);
+        assert_eq!(back.connect_timeout, None);
+        assert_eq!(back.idle_timeout, Some(60));
+        assert_eq!(back.enable_connection_reuse, None);
+    }
+
+    #[test]
+    fn database_config_validate_empty_url_errors() {
+        let c = DatabaseConfig {
+            url: "".to_string(),
+            max_connections: 4,
+            ..Default::default()
+        };
+        assert!(c.validate().is_err());
+    }
+
+    #[test]
+    fn database_config_validate_zero_max_connections_errors() {
+        let c = DatabaseConfig {
+            url: "x".to_string(),
+            max_connections: 0,
+            ..Default::default()
+        };
+        assert!(c.validate().is_err());
+    }
+
+    #[test]
+    fn database_config_validate_min_gt_max_errors() {
+        let c = DatabaseConfig {
+            url: "x".to_string(),
+            max_connections: 2,
+            min_connections: Some(5),
+            ..Default::default()
+        };
+        assert!(c.validate().is_err());
+    }
+
+    #[test]
+    fn database_config_validate_valid_ok() {
+        let c = DatabaseConfig::default();
+        assert!(c.validate().is_ok());
+    }
+
+    #[test]
+    fn database_config_from_env_missing_url_errors() {
+        let _g = ENV_LOCK.lock().unwrap();
+        clear_enhanced_env_vars();
+        assert!(DatabaseConfig::from_env().is_err());
+    }
+
+    #[test]
+    fn database_config_from_env_with_url_and_overrides() {
+        let _g = ENV_LOCK.lock().unwrap();
+        clear_enhanced_env_vars();
+        std::env::set_var("DATABASE_URL", "postgres://custom/db");
+        std::env::set_var("DB_MAX_CONNECTIONS", "20");
+        std::env::set_var("DB_MIN_CONNECTIONS", "5");
+        std::env::set_var("DB_CONNECT_TIMEOUT", "7");
+        let c = DatabaseConfig::from_env().expect("ok");
+        assert_eq!(c.url, "postgres://custom/db");
+        assert_eq!(c.max_connections, 20);
+        assert_eq!(c.min_connections, Some(5));
+        assert_eq!(c.connect_timeout, Some(7));
+        clear_enhanced_env_vars();
+    }
+
+    // ---------- ServiceConfig ----------
+    #[test]
+    fn service_config_default_values() {
+        let c = ServiceConfig::default();
+        assert_eq!(c.name, "unknown");
+        assert_eq!(c.port, 8000);
+        assert_eq!(c.version, "0.1.0");
+        assert!(c.description.is_none());
+        assert!(c.enable_auth);
+        assert!(c.enable_cors);
+        assert!(c.enable_logging);
+        assert_eq!(c.log_level, "info");
+    }
+
+    #[test]
+    fn service_config_clone_preserves_fields() {
+        let c = ServiceConfig {
+            name: "svc".to_string(),
+            port: 9000,
+            version: "2.0.0".to_string(),
+            description: Some("desc".to_string()),
+            enable_auth: false,
+            enable_cors: false,
+            enable_logging: false,
+            log_level: "debug".to_string(),
+        };
+        let c2 = c.clone();
+        assert_eq!(c2.name, c.name);
+        assert_eq!(c2.port, c.port);
+        assert_eq!(c2.version, c.version);
+        assert_eq!(c2.description, c.description);
+        assert_eq!(c2.enable_auth, c.enable_auth);
+        assert_eq!(c2.log_level, c.log_level);
+    }
+
+    #[test]
+    fn service_config_serde_json_roundtrip() {
+        let c = ServiceConfig {
+            name: "svc".to_string(),
+            port: 9000,
+            version: "2.0.0".to_string(),
+            description: Some("desc".to_string()),
+            enable_auth: false,
+            enable_cors: false,
+            enable_logging: false,
+            log_level: "debug".to_string(),
+        };
+        let json = serde_json::to_string(&c).expect("serialize");
+        let back: ServiceConfig = serde_json::from_str(&json).expect("deserialize");
+        assert_eq!(back.name, c.name);
+        assert_eq!(back.port, c.port);
+        assert_eq!(back.version, c.version);
+        assert_eq!(back.description, c.description);
+        assert_eq!(back.enable_auth, c.enable_auth);
+        assert_eq!(back.log_level, c.log_level);
+    }
+
+    #[test]
+    fn service_config_serde_yaml_roundtrip() {
+        let c = ServiceConfig::default();
+        let yaml = serde_yaml::to_string(&c).expect("serialize yaml");
+        let back: ServiceConfig = serde_yaml::from_str(&yaml).expect("deserialize yaml");
+        assert_eq!(back.name, c.name);
+        assert_eq!(back.port, c.port);
+        assert_eq!(back.log_level, c.log_level);
+    }
+
+    #[test]
+    fn service_config_validate_empty_name_errors() {
+        let c = ServiceConfig {
+            name: "".to_string(),
+            ..Default::default()
+        };
+        assert!(c.validate().is_err());
+    }
+
+    #[test]
+    fn service_config_validate_zero_port_errors() {
+        let c = ServiceConfig {
+            port: 0,
+            ..Default::default()
+        };
+        assert!(c.validate().is_err());
+    }
+
+    #[test]
+    fn service_config_validate_valid_ok() {
+        let c = ServiceConfig::default();
+        assert!(c.validate().is_ok());
+    }
+
+    #[test]
+    fn service_config_from_env_defaults() {
+        let _g = ENV_LOCK.lock().unwrap();
+        clear_enhanced_env_vars();
+        let c = ServiceConfig::from_env("my-svc", 8800).expect("ok");
+        assert_eq!(c.name, "my-svc");
+        assert_eq!(c.port, 8800); // 无 SERVER_PORT/PORT → 使用默认端口
+        assert_eq!(c.version, "0.1.0");
+        assert!(c.enable_auth);
+        assert_eq!(c.log_level, "info");
+        clear_enhanced_env_vars();
+    }
+
+    #[test]
+    fn service_config_from_env_server_port_overrides() {
+        let _g = ENV_LOCK.lock().unwrap();
+        clear_enhanced_env_vars();
+        std::env::set_var("SERVER_PORT", "7777");
+        std::env::set_var("SERVICE_VERSION", "9.9.9");
+        std::env::set_var("LOG_LEVEL", "trace");
+        let c = ServiceConfig::from_env("svc", 8800).expect("ok");
+        assert_eq!(c.port, 7777);
+        assert_eq!(c.version, "9.9.9");
+        assert_eq!(c.log_level, "trace");
+        clear_enhanced_env_vars();
+    }
+
+    #[test]
+    fn service_config_from_env_port_var_fallback() {
+        let _g = ENV_LOCK.lock().unwrap();
+        clear_enhanced_env_vars();
+        std::env::set_var("PORT", "6666");
+        let c = ServiceConfig::from_env("svc", 8800).expect("ok");
+        assert_eq!(c.port, 6666);
+        clear_enhanced_env_vars();
+    }
+
+    // ---------- RedisConfig ----------
+    #[test]
+    fn redis_config_default_values() {
+        let c = RedisConfig::default();
+        assert_eq!(c.url, "redis://localhost:6379");
+        assert_eq!(c.max_connections, 10);
+        assert_eq!(c.connect_timeout, Some(5));
+    }
+
+    #[test]
+    fn redis_config_serde_json_roundtrip() {
+        let c = RedisConfig {
+            url: "redis://r:6379".to_string(),
+            max_connections: 20,
+            connect_timeout: Some(10),
+        };
+        let json = serde_json::to_string(&c).expect("serialize");
+        let back: RedisConfig = serde_json::from_str(&json).expect("deserialize");
+        assert_eq!(back.url, c.url);
+        assert_eq!(back.max_connections, c.max_connections);
+        assert_eq!(back.connect_timeout, c.connect_timeout);
+    }
+
+    #[test]
+    fn redis_config_from_env_missing_url_errors() {
+        let _g = ENV_LOCK.lock().unwrap();
+        clear_enhanced_env_vars();
+        assert!(RedisConfig::from_env().is_err());
+    }
+
+    #[test]
+    fn redis_config_from_env_with_url() {
+        let _g = ENV_LOCK.lock().unwrap();
+        clear_enhanced_env_vars();
+        std::env::set_var("REDIS_URL", "redis://custom:6380");
+        std::env::set_var("REDIS_MAX_CONNECTIONS", "42");
+        std::env::set_var("REDIS_CONNECT_TIMEOUT", "9");
+        let c = RedisConfig::from_env().expect("ok");
+        assert_eq!(c.url, "redis://custom:6380");
+        assert_eq!(c.max_connections, 42);
+        assert_eq!(c.connect_timeout, Some(9));
+        clear_enhanced_env_vars();
+    }
+
+    // ---------- JwtConfig ----------
+    #[test]
+    fn jwt_config_default_values() {
+        let c = JwtConfig::default();
+        assert!(!c.secret.is_empty());
+        assert_eq!(c.expiration, 3600);
+        assert_eq!(c.refresh_expiration, 86400 * 7);
+    }
+
+    #[test]
+    fn jwt_config_serde_json_roundtrip() {
+        let c = JwtConfig {
+            secret: "a".repeat(40),
+            expiration: 100,
+            refresh_expiration: 200,
+        };
+        let json = serde_json::to_string(&c).expect("serialize");
+        let back: JwtConfig = serde_json::from_str(&json).expect("deserialize");
+        assert_eq!(back.secret, c.secret);
+        assert_eq!(back.expiration, c.expiration);
+        assert_eq!(back.refresh_expiration, c.refresh_expiration);
+    }
+
+    #[test]
+    fn jwt_config_validate_short_secret_errors() {
+        let c = JwtConfig {
+            secret: "short".to_string(),
+            expiration: 3600,
+            refresh_expiration: 86400,
+        };
+        assert!(c.validate().is_err());
+    }
+
+    #[test]
+    fn jwt_config_validate_zero_expiration_errors() {
+        let c = JwtConfig {
+            secret: "a".repeat(40),
+            expiration: 0,
+            refresh_expiration: 86400,
+        };
+        assert!(c.validate().is_err());
+    }
+
+    #[test]
+    fn jwt_config_validate_valid_ok() {
+        let c = JwtConfig {
+            secret: "a".repeat(40),
+            expiration: 3600,
+            refresh_expiration: 86400,
+        };
+        assert!(c.validate().is_ok());
+    }
+
+    #[test]
+    fn jwt_config_from_env_missing_secret_errors() {
+        let _g = ENV_LOCK.lock().unwrap();
+        clear_enhanced_env_vars();
+        assert!(JwtConfig::from_env().is_err());
+    }
+
+    #[test]
+    fn jwt_config_from_env_with_secret() {
+        let _g = ENV_LOCK.lock().unwrap();
+        clear_enhanced_env_vars();
+        std::env::set_var("JWT_SECRET", "my-super-secret-key-1234567890");
+        std::env::set_var("JWT_EXPIRATION", "7200");
+        std::env::set_var("JWT_REFRESH_EXPIRATION", "100000");
+        let c = JwtConfig::from_env().expect("ok");
+        assert_eq!(c.secret, "my-super-secret-key-1234567890");
+        assert_eq!(c.expiration, 7200);
+        assert_eq!(c.refresh_expiration, 100000);
+        clear_enhanced_env_vars();
+    }
+
+    // ---------- AIConfig ----------
+    #[test]
+    fn ai_config_default_values() {
+        let c = AIConfig::default();
+        assert!(c.use_ollama);
+        assert_eq!(c.chunk_size, 512);
+        assert_eq!(c.chunk_overlap, 128);
+        assert_eq!(c.base_url, "http://localhost:11434/v1");
+        assert_eq!(c.model, "qwen2.5:7b-instruct");
+        assert_eq!(c.embedding_model, "all-minilm");
+        assert_eq!(c.docs_dir, "docs");
+    }
+
+    #[test]
+    fn ai_config_serde_json_roundtrip() {
+        let c = AIConfig {
+            api_key: Some("k".to_string()),
+            base_url: "http://x/v1".to_string(),
+            model: "m".to_string(),
+            use_ollama: false,
+            embedding_model: "e".to_string(),
+            docs_dir: "d".to_string(),
+            chunk_size: 100,
+            chunk_overlap: 20,
+        };
+        let json = serde_json::to_string(&c).expect("serialize");
+        let back: AIConfig = serde_json::from_str(&json).expect("deserialize");
+        assert_eq!(back.api_key, c.api_key);
+        assert_eq!(back.base_url, c.base_url);
+        assert_eq!(back.model, c.model);
+        assert_eq!(back.use_ollama, c.use_ollama);
+        assert_eq!(back.chunk_size, c.chunk_size);
+        assert_eq!(back.chunk_overlap, c.chunk_overlap);
+    }
+
+    #[test]
+    fn ai_config_from_env_defaults() {
+        let _g = ENV_LOCK.lock().unwrap();
+        clear_enhanced_env_vars();
+        let c = AIConfig::from_env().expect("ok");
+        assert!(c.use_ollama);
+        assert_eq!(c.chunk_size, 512);
+        assert_eq!(c.chunk_overlap, 128);
+        assert_eq!(c.model, "qwen2.5:7b-instruct");
+        clear_enhanced_env_vars();
+    }
+
+    // ---------- CacheConfig ----------
+    #[test]
+    fn cache_config_default_values() {
+        let c = CacheConfig::default();
+        assert_eq!(c.cache_type, "memory");
+        assert_eq!(c.max_size, 1000);
+        assert_eq!(c.default_ttl, 3600);
+        assert_eq!(c.eviction_policy, "lru");
+    }
+
+    #[test]
+    fn cache_config_serde_json_roundtrip() {
+        let c = CacheConfig {
+            cache_type: "redis".to_string(),
+            max_size: 5000,
+            default_ttl: 60,
+            eviction_policy: "fifo".to_string(),
+        };
+        let json = serde_json::to_string(&c).expect("serialize");
+        let back: CacheConfig = serde_json::from_str(&json).expect("deserialize");
+        assert_eq!(back.cache_type, c.cache_type);
+        assert_eq!(back.max_size, c.max_size);
+        assert_eq!(back.default_ttl, c.default_ttl);
+        assert_eq!(back.eviction_policy, c.eviction_policy);
+    }
+
+    #[test]
+    fn cache_config_from_env_defaults() {
+        let _g = ENV_LOCK.lock().unwrap();
+        clear_enhanced_env_vars();
+        let c = CacheConfig::from_env().expect("ok");
+        assert_eq!(c.cache_type, "memory");
+        assert_eq!(c.max_size, 1000);
+        assert_eq!(c.default_ttl, 3600);
+        assert_eq!(c.eviction_policy, "lru");
+        clear_enhanced_env_vars();
+    }
+
+    #[test]
+    fn cache_config_from_env_with_overrides() {
+        let _g = ENV_LOCK.lock().unwrap();
+        clear_enhanced_env_vars();
+        std::env::set_var("CACHE_TYPE", "redis");
+        std::env::set_var("CACHE_MAX_SIZE", "2000");
+        std::env::set_var("CACHE_DEFAULT_TTL", "120");
+        std::env::set_var("CACHE_EVICTION_POLICY", "ttl");
+        let c = CacheConfig::from_env().expect("ok");
+        assert_eq!(c.cache_type, "redis");
+        assert_eq!(c.max_size, 2000);
+        assert_eq!(c.default_ttl, 120);
+        assert_eq!(c.eviction_policy, "ttl");
+        clear_enhanced_env_vars();
+    }
+
+    // ---------- AppConfig ----------
+    #[test]
+    fn app_config_serde_json_roundtrip_minimal() {
+        // redis 与 ai 为 None 的最小 AppConfig
+        let c = AppConfig {
+            service: ServiceConfig::default(),
+            database: DatabaseConfig::default(),
+            redis: None,
+            jwt: JwtConfig::default(),
+            ai: None,
+            cache: CacheConfig::default(),
+        };
+        let json = serde_json::to_string(&c).expect("serialize");
+        let back: AppConfig = serde_json::from_str(&json).expect("deserialize");
+        assert_eq!(back.service.name, c.service.name);
+        assert_eq!(back.database.max_connections, c.database.max_connections);
+        assert!(back.redis.is_none());
+        assert!(back.ai.is_none());
+        assert_eq!(back.cache.cache_type, c.cache.cache_type);
+    }
+
+    #[test]
+    fn app_config_validate_calls_sub_validates() {
+        // database url 为空 → validate 报错
+        let c = AppConfig {
+            service: ServiceConfig::default(),
+            database: DatabaseConfig {
+                url: "".to_string(),
+                ..Default::default()
+            },
+            redis: None,
+            jwt: JwtConfig::default(),
+            ai: None,
+            cache: CacheConfig::default(),
+        };
+        assert!(c.validate().is_err());
+    }
+
+    #[test]
+    fn app_config_validate_redis_empty_url_errors() {
+        let c = AppConfig {
+            service: ServiceConfig::default(),
+            database: DatabaseConfig::default(),
+            redis: Some(RedisConfig {
+                url: "".to_string(),
+                max_connections: 1,
+                connect_timeout: None,
+            }),
+            jwt: JwtConfig {
+                secret: "a".repeat(40),
+                expiration: 3600,
+                refresh_expiration: 86400,
+            },
+            ai: None,
+            cache: CacheConfig::default(),
+        };
+        assert!(c.validate().is_err());
+    }
+
+    #[test]
+    fn app_config_validate_valid_ok() {
+        let c = AppConfig {
+            service: ServiceConfig::default(),
+            database: DatabaseConfig::default(),
+            redis: Some(RedisConfig {
+                url: "redis://localhost:6379".to_string(),
+                max_connections: 1,
+                connect_timeout: None,
+            }),
+            jwt: JwtConfig {
+                secret: "a".repeat(40),
+                expiration: 3600,
+                refresh_expiration: 86400,
+            },
+            ai: None,
+            cache: CacheConfig::default(),
+        };
+        assert!(c.validate().is_ok());
+    }
+
+    // ---------- ServiceRegistry ----------
+    #[test]
+    fn service_registry_default_eq_new() {
+        let a = ServiceRegistry::new();
+        let b = ServiceRegistry::default();
+        assert_eq!(a.get_port("core"), b.get_port("core"));
+        assert_eq!(a.list_services().len(), b.list_services().len());
+    }
+
+    #[test]
+    fn service_registry_get_url_format() {
+        let r = ServiceRegistry::new();
+        assert_eq!(r.get_url("core"), Some("http://localhost:8000".to_string()));
+        assert_eq!(r.get_url("hrm"), Some("http://localhost:8020".to_string()));
+        assert_eq!(r.get_url("unknown-xxx"), None);
+    }
+
+    #[test]
+    fn service_registry_register_adds_and_overrides() {
+        let mut r = ServiceRegistry::new();
+        let before = r.list_services().len();
+        r.register("brand-new".to_string(), 9999);
+        assert_eq!(r.get_port("brand-new"), Some(9999));
+        assert_eq!(r.list_services().len(), before + 1);
+        // 覆盖已有
+        r.register("core".to_string(), 1234);
+        assert_eq!(r.get_port("core"), Some(1234));
+    }
+
+    #[test]
+    fn service_registry_list_services_contains_core() {
+        let r = ServiceRegistry::new();
+        let list = r.list_services();
+        assert!(list.iter().any(|(k, _)| k == "core"));
+        assert!(list.iter().any(|(k, _)| k == "hrm"));
+    }
+
+    #[test]
+    fn service_registry_clone_preserves_entries() {
+        let r = ServiceRegistry::new();
+        let r2 = r.clone();
+        assert_eq!(r.get_port("core"), r2.get_port("core"));
+        assert_eq!(r.get_port("mes"), r2.get_port("mes"));
+    }
+
+    #[test]
+    fn get_default_port_function_known_and_unknown() {
+        assert_eq!(get_default_port("core"), 8000);
+        assert_eq!(get_default_port("hrm"), 8020);
+        assert_eq!(get_default_port("mes"), 8030);
+        assert_eq!(get_default_port("unknown-xyz"), 8080);
+    }
 }
