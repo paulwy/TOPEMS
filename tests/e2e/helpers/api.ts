@@ -195,6 +195,14 @@ export const API_PATHS = {
   mes: {
     productionOrder: '/api/mes/production-orders',
     workOrder: '/api/mes/work-orders',
+    equipment: '/api/mes/equipment',
+    workStation: '/api/mes/work-stations',
+    team: '/api/mes/teams',
+    processRoute: '/api/mes/process-routes',
+    materialRequirement: '/api/mes/material-requirements',
+    productionSchedule: '/api/mes/production-schedules',
+    wip: '/api/mes/wip',
+    qualityInspection: '/api/mes/quality-inspections',
   },
   scm: {
     purchaseOrder: '/api/scm/purchase-orders',
@@ -211,9 +219,33 @@ export const API_PATHS = {
   qms: {
     fmea: '/api/qms/fmea',
     spc: '/api/qms/spc/charts',
+    qualityIssue: '/api/qms/quality-issues',
+    inspection: '/api/qms/inspections',
+  },
+  srm: {
+    supplier: '/api/srm/suppliers',
+    inquiry: '/api/srm/inquiries',
   },
   hrm: {
+    employee: '/api/hrm/employees',
     organization: '/api/hrm/organizations',
+    department: '/api/hrm/departments',
+    position: '/api/hrm/positions',
+    contract: '/api/hrm/contracts',
+    attendance: '/api/hrm/attendance',
+    leave: '/api/hrm/leaves',
+    recruitment: '/api/hrm/recruitment',
+    training: '/api/hrm/training',
+    performance: '/api/hrm/performance',
+    payroll: '/api/hrm/payroll',
+  },
+  crm: {
+    customer: '/api/crm/customers',
+    contact: '/api/crm/contacts',
+    opportunity: '/api/crm/opportunities',
+    interaction: '/api/crm/interactions',
+    billing: '/api/crm/billing',
+    returns: '/api/crm/returns',
   },
   pdm: {
     productCategory: '/api/pdm/product-categories',
