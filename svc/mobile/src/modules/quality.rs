@@ -103,3 +103,40 @@ pub async fn update_quality_task_status(
         }
     }
 }
+
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn roundtrip<T: Serialize + for<'de> Deserialize<'de>>(item: &T) {
+        let json = serde_json::to_string(item).unwrap();
+        let v1: serde_json::Value = serde_json::from_str(&json).unwrap();
+        let back: T = serde_json::from_str(&json).unwrap();
+// roundtrip verified by JSON comparison
+        let json2 = serde_json::to_string(&back).unwrap();
+        let v2: serde_json::Value = serde_json::from_str(&json2).unwrap();
+        assert_eq!(v1, v2);
+    }
+
+    #[test]
+    fn create_defect_request_roundtrip() {
+        roundtrip(&CreateDefectRequest {
+            task_id: "t1".into(),
+            defect_type: "scratch".into(),
+            severity: "minor".into(),
+            quantity: 2,
+            description: "bad".into(),
+            images: None,
+        });
+    }
+
+    #[test]
+    fn update_task_status_request_roundtrip() {
+        roundtrip(&UpdateTaskStatusRequest {
+            status: "done".into(),
+            result: Some(serde_json::json!({"ok":true})),
+        });
+    }
+
+}

@@ -333,3 +333,62 @@ pub async fn apply_leave(
         }
     }
 }
+
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn roundtrip<T: Serialize + for<'de> Deserialize<'de>>(item: &T) {
+        let json = serde_json::to_string(item).unwrap();
+        let v1: serde_json::Value = serde_json::from_str(&json).unwrap();
+        let back: T = serde_json::from_str(&json).unwrap();
+// roundtrip verified by JSON comparison
+        let json2 = serde_json::to_string(&back).unwrap();
+        let v2: serde_json::Value = serde_json::from_str(&json2).unwrap();
+        assert_eq!(v1, v2);
+    }
+
+    #[test]
+    fn attendance_record_roundtrip() {
+        roundtrip(&AttendanceRecord {
+            id: "1".into(),
+            user_id: "u1".into(),
+            date: "2026-01-01".into(),
+            check_in_time: Some("09:00".into()),
+            check_out_time: Some("18:00".into()),
+            status: "normal".into(),
+            created_at: "2026-01-01T09:00:00Z".into(),
+            updated_at: "2026-01-01T18:00:00Z".into(),
+        });
+    }
+
+    #[test]
+    fn attendance_stats_roundtrip() {
+        roundtrip(&AttendanceStats {
+            total_days: 22,
+            present_days: 20,
+            absent_days: 1,
+            late_days: 1,
+            overtime_hours: 8.0,
+            total_work_hours: 176.0,
+        });
+    }
+
+    #[test]
+    fn leave_application_roundtrip() {
+        roundtrip(&LeaveApplication {
+            id: "1".into(),
+            user_id: "u1".into(),
+            leave_type: "annual".into(),
+            start_date: "2026-02-01".into(),
+            end_date: "2026-02-03".into(),
+            duration_days: 3.0,
+            reason: None,
+            status: "approved".into(),
+            created_at: "2026-01-20T10:00:00Z".into(),
+            updated_at: "2026-01-21T08:00:00Z".into(),
+        });
+    }
+
+}

@@ -174,3 +174,56 @@ pub async fn auto_register_to_core(core_url: Option<&str>) {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use serde::{Deserialize, Serialize};
+
+    fn roundtrip<T: Serialize + for<'de> Deserialize<'de>>(item: &T) {
+        let json = serde_json::to_string(item).unwrap();
+        let v1: serde_json::Value = serde_json::from_str(&json).unwrap();
+        let back: T = serde_json::from_str(&json).unwrap();
+        let json2 = serde_json::to_string(&back).unwrap();
+        let v2: serde_json::Value = serde_json::from_str(&json2).unwrap();
+        assert_eq!(v1, v2);
+    }
+
+    #[test]
+    fn test_permission() {
+        roundtrip(&Permission {
+            code: "c".to_string(),
+            name: "n".to_string(),
+            description: "d".to_string(),
+        });
+    }
+
+    #[test]
+    fn test_plugin_info() {
+        roundtrip(&PluginInfo {
+            code: "qms".to_string(),
+            name: "质量管理系统".to_string(),
+            version: "1.0.0".to_string(),
+            description: "d".to_string(),
+            author: "TOPEMS".to_string(),
+            category: "quality".to_string(),
+            plugin_type: "business".to_string(),
+            permissions: vec![Permission {
+                code: "qms:read".to_string(),
+                name: "只读".to_string(),
+                description: "d".to_string(),
+            }],
+            runtime_url: "http://localhost:8050".to_string(),
+            dependencies: vec!["erp".to_string()],
+            navigation_config: Some(serde_json::Value::Null),
+        });
+    }
+
+    #[test]
+    fn test_plugin_health() {
+        roundtrip(&PluginHealth {
+            status: "healthy".to_string(),
+            database: true,
+        });
+    }
+}

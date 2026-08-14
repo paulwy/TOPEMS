@@ -110,3 +110,34 @@ pub async fn get_equipment(
         }
     }
 }
+
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn roundtrip<T: Serialize + for<'de> Deserialize<'de>>(item: &T) {
+        let json = serde_json::to_string(item).unwrap();
+        let v1: serde_json::Value = serde_json::from_str(&json).unwrap();
+        let back: T = serde_json::from_str(&json).unwrap();
+// roundtrip verified by JSON comparison
+        let json2 = serde_json::to_string(&back).unwrap();
+        let v2: serde_json::Value = serde_json::from_str(&json2).unwrap();
+        assert_eq!(v1, v2);
+    }
+
+    #[test]
+    fn create_work_report_request_roundtrip() {
+        roundtrip(&CreateWorkReportRequest {
+            order_id: "ord1".into(),
+            workstation: "WS01".into(),
+            operator: "alice".into(),
+            quantity: 100,
+            good_quantity: 98,
+            bad_quantity: 2,
+            start_time: "2026-01-01T08:00:00Z".into(),
+            end_time: "2026-01-01T17:00:00Z".into(),
+        });
+    }
+
+}

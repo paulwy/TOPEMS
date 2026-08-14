@@ -549,3 +549,80 @@ pub async fn get_notification_by_id(
         )
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn roundtrip<T: Serialize + for<'de> Deserialize<'de>>(item: &T) {
+        let json = serde_json::to_string(item).unwrap();
+        let v1: serde_json::Value = serde_json::from_str(&json).unwrap();
+        let back: T = serde_json::from_str(&json).unwrap();
+// roundtrip verified by JSON comparison
+        let json2 = serde_json::to_string(&back).unwrap();
+        let v2: serde_json::Value = serde_json::from_str(&json2).unwrap();
+        assert_eq!(v1, v2);
+    }
+
+    #[test]
+    fn push_stats_roundtrip() {
+        roundtrip(&PushStats {
+            total_sent: 100,
+            delivered_count: 90,
+            clicked_count: 10,
+            delivery_rate: 90.0,
+            click_rate: 11.1,
+        });
+    }
+
+    #[test]
+    fn send_notification_request_roundtrip() {
+        roundtrip(&SendNotificationRequest {
+            title: "t".into(),
+            body: "b".into(),
+            notification_type: "alert".into(),
+            data: None,
+            target_type: "user".into(),
+            target_ids: vec!["u1".into()],
+            template_id: None,
+            template_params: None,
+        });
+    }
+
+    #[test]
+    fn send_notification_response_roundtrip() {
+        roundtrip(&SendNotificationResponse {
+            notification_id: Uuid::new_v4(),
+            status: "sent".into(),
+            sent_count: 1,
+            message: "ok".into(),
+        });
+    }
+
+    #[test]
+    fn push_notification_list_response_roundtrip() {
+        roundtrip(&PushNotificationListResponse {
+            items: vec![],
+            total: 0,
+        });
+    }
+
+    #[test]
+    fn create_push_template_request_roundtrip() {
+        roundtrip(&CreatePushTemplateRequest {
+            name: "n".into(),
+            title_template: "{{name}}".into(),
+            body_template: "hello".into(),
+            notification_type: "alert".into(),
+            description: None,
+        });
+    }
+
+    #[test]
+    fn notification_list_query_roundtrip() {
+        roundtrip(&NotificationListQuery {
+            page: Some(1),
+            size: Some(20),
+        });
+    }
+}

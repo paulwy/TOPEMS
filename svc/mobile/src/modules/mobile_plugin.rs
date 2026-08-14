@@ -205,3 +205,59 @@ pub async fn auto_register_to_core(core_url: Option<&str>) {
         }
     }
 }
+
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn roundtrip<T: Serialize + for<'de> Deserialize<'de>>(item: &T) {
+        let json = serde_json::to_string(item).unwrap();
+        let v1: serde_json::Value = serde_json::from_str(&json).unwrap();
+        let back: T = serde_json::from_str(&json).unwrap();
+// roundtrip verified by JSON comparison
+        let json2 = serde_json::to_string(&back).unwrap();
+        let v2: serde_json::Value = serde_json::from_str(&json2).unwrap();
+        assert_eq!(v1, v2);
+    }
+
+    #[test]
+    fn permission_roundtrip() {
+        roundtrip(&Permission {
+            code: "x:y:z".into(),
+            name: "xxx".into(),
+            resource_type: "device".into(),
+            action: "read".into(),
+        });
+    }
+
+    #[test]
+    fn plugin_info_roundtrip() {
+        roundtrip(&PluginInfo {
+            code: "mobile".into(),
+            name: "Mobile".into(),
+            version: "1.0.0".into(),
+            description: "desc".into(),
+            category: "other".into(),
+            plugin_type: "business".into(),
+            permissions: vec![Permission {
+                code: "a".into(),
+                name: "b".into(),
+                resource_type: "c".into(),
+                action: "d".into(),
+            }],
+            runtime_url: "http://localhost:8070".into(),
+            dependencies: vec!["dep1".into()],
+            navigation_config: Some(serde_json::json!({"x":1})),
+        });
+    }
+
+    #[test]
+    fn plugin_health_roundtrip() {
+        roundtrip(&PluginHealth {
+            status: "ok".into(),
+            database: true,
+        });
+    }
+
+}

@@ -184,3 +184,48 @@ pub async fn create_shortcut(
         Json(ApiResponse::success(shortcut, "创建快捷操作成功")),
     )
 }
+
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn roundtrip<T: Serialize + for<'de> Deserialize<'de>>(item: &T) {
+        let json = serde_json::to_string(item).unwrap();
+        let v1: serde_json::Value = serde_json::from_str(&json).unwrap();
+        let back: T = serde_json::from_str(&json).unwrap();
+// roundtrip verified by JSON comparison
+        let json2 = serde_json::to_string(&back).unwrap();
+        let v2: serde_json::Value = serde_json::from_str(&json2).unwrap();
+        assert_eq!(v1, v2);
+    }
+
+    #[test]
+    fn shortcut_roundtrip() {
+        use chrono::Utc;
+        roundtrip(&Shortcut {
+            id: uuid::Uuid::new_v4(),
+            user_id: uuid::Uuid::new_v4(),
+            name: "scan".into(),
+            icon: "Scan".into(),
+            action_type: "navigate".into(),
+            action_params: Some(serde_json::json!({"path":"/scan"})),
+            sort_order: 1,
+            is_active: true,
+            created_at: Utc::now(),
+            updated_at: Utc::now(),
+        });
+    }
+
+    #[test]
+    fn create_shortcut_request_roundtrip() {
+        roundtrip(&CreateShortcutRequest {
+            name: "scan".into(),
+            icon: "Scan".into(),
+            action_type: "navigate".into(),
+            action_params: None,
+            sort_order: Some(1),
+        });
+    }
+
+}

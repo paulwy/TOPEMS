@@ -602,3 +602,427 @@ pub struct CreatePushTemplateRequest {
     pub notification_type: String,
     pub description: Option<String>,
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use chrono::{Duration, NaiveDate};
+
+    fn roundtrip<T: Serialize + for<'de> Deserialize<'de>>(item: &T) {
+        let json = serde_json::to_string(item).unwrap();
+        let v1: serde_json::Value = serde_json::from_str(&json).unwrap();
+        let back: T = serde_json::from_str(&json).unwrap();
+// roundtrip verified by JSON comparison
+        let json2 = serde_json::to_string(&back).unwrap();
+        let v2: serde_json::Value = serde_json::from_str(&json2).unwrap();
+        assert_eq!(v1, v2);
+    }
+
+    fn uid() -> Uuid {
+        Uuid::new_v4()
+    }
+
+    fn now() -> DateTime<Utc> {
+        Utc::now()
+    }
+
+    #[test]
+    fn patrol_record_roundtrip() {
+        roundtrip(&PatrolRecord {
+            id: uid(),
+            tenant_id: uid(),
+            title: "巡检".into(),
+            description: Some("desc".into()),
+            location_lat: 30.0,
+            location_lng: 120.0,
+            address: Some("addr".into()),
+            patrol_type: "daily".into(),
+            status: "open".into(),
+            checked_by: "user".into(),
+            checked_at: now(),
+            created_at: now(),
+        });
+    }
+
+    #[test]
+    fn create_patrol_record_roundtrip() {
+        roundtrip(&CreatePatrolRecord {
+            title: "t".into(),
+            description: None,
+            location_lat: 0.0,
+            location_lng: 0.0,
+            address: None,
+            patrol_type: "daily".into(),
+            status: None,
+            checked_by: "u".into(),
+        });
+    }
+
+    #[test]
+    fn scan_record_roundtrip() {
+        roundtrip(&ScanRecord {
+            id: uid(),
+            tenant_id: uid(),
+            barcode: "BC001".into(),
+            location_lat: 1.0,
+            location_lng: 2.0,
+            item_type: "part".into(),
+            quantity: Some(10.5),
+            operator: "op".into(),
+            scanned_at: now(),
+            created_at: now(),
+        });
+    }
+
+    #[test]
+    fn create_scan_record_roundtrip() {
+        roundtrip(&CreateScanRecord {
+            barcode: "BC001".into(),
+            location_lat: 1.0,
+            location_lng: 2.0,
+            item_type: "part".into(),
+            quantity: None,
+            operator: "op".into(),
+        });
+    }
+
+    #[test]
+    fn photo_evidence_roundtrip() {
+        roundtrip(&PhotoEvidence {
+            id: uid(),
+            tenant_id: uid(),
+            title: "photo".into(),
+            description: Some("d".into()),
+            location_lat: 0.0,
+            location_lng: 0.0,
+            address: None,
+            file_url: Some("http://x.jpg".into()),
+            recorded_by: "u".into(),
+            recorded_at: now(),
+            created_at: now(),
+        });
+    }
+
+    #[test]
+    fn create_photo_evidence_roundtrip() {
+        roundtrip(&CreatePhotoEvidence {
+            title: "t".into(),
+            description: None,
+            location_lat: 0.0,
+            location_lng: 0.0,
+            address: None,
+            file_url: None,
+            recorded_by: "u".into(),
+        });
+    }
+
+    #[test]
+    fn audio_recording_roundtrip() {
+        roundtrip(&AudioRecording {
+            id: uid(),
+            tenant_id: uid(),
+            title: "audio".into(),
+            description: None,
+            location_lat: 0.0,
+            location_lng: 0.0,
+            address: None,
+            duration_seconds: Some(60),
+            file_url: None,
+            recorded_by: "u".into(),
+            recorded_at: now(),
+            created_at: now(),
+        });
+    }
+
+    #[test]
+    fn create_audio_recording_roundtrip() {
+        roundtrip(&CreateAudioRecording {
+            title: "t".into(),
+            description: None,
+            location_lat: 0.0,
+            location_lng: 0.0,
+            address: None,
+            duration_seconds: None,
+            file_url: None,
+            recorded_by: "u".into(),
+        });
+    }
+
+    #[test]
+    fn video_recording_roundtrip() {
+        roundtrip(&VideoRecording {
+            id: uid(),
+            tenant_id: uid(),
+            title: "v".into(),
+            description: None,
+            start_location_lat: 0.0,
+            start_location_lng: 0.0,
+            location_track: serde_json::json!([{"lat":0,"lng":0}]),
+            duration_seconds: Some(120),
+            file_url: None,
+            thumbnail_url: None,
+            recorded_by: "u".into(),
+            recorded_at: now(),
+            created_at: now(),
+        });
+    }
+
+    #[test]
+    fn create_video_recording_roundtrip() {
+        roundtrip(&CreateVideoRecording {
+            title: "t".into(),
+            description: None,
+            start_location_lat: 0.0,
+            start_location_lng: 0.0,
+            location_track: serde_json::json!({}),
+            duration_seconds: None,
+            file_url: None,
+            thumbnail_url: None,
+            recorded_by: "u".into(),
+        });
+    }
+
+    #[test]
+    fn mobile_task_roundtrip() {
+        roundtrip(&MobileTask {
+            id: uid(),
+            tenant_id: uid(),
+            title: "task".into(),
+            description: None,
+            task_type: "work".into(),
+            priority: "high".into(),
+            status: "open".into(),
+            assignee: "u".into(),
+            location_lat: 0.0,
+            location_lng: 0.0,
+            due_date: NaiveDate::from_ymd_opt(2026, 12, 31),
+            completed_at: Some(now()),
+            created_at: now(),
+            updated_at: now(),
+        });
+    }
+
+    #[test]
+    fn create_mobile_task_roundtrip() {
+        roundtrip(&CreateMobileTask {
+            title: "t".into(),
+            description: None,
+            task_type: "work".into(),
+            priority: Some("high".into()),
+            assignee: "u".into(),
+            location_lat: 0.0,
+            location_lng: 0.0,
+            due_date: Some("2026-12-31".into()),
+        });
+    }
+
+    #[test]
+    fn barcode_scan_roundtrip() {
+        roundtrip(&BarcodeScan {
+            id: uid(),
+            tenant_id: uid(),
+            user_id: uid(),
+            barcode: "BC".into(),
+            barcode_type: "qrcode".into(),
+            decoded_data: "data".into(),
+            location_lat: Some(0.0),
+            location_lng: None,
+            result_action: None,
+            result_data: Some(serde_json::json!({"ok":true})),
+            scanned_at: now(),
+            created_at: now(),
+        });
+    }
+
+    #[test]
+    fn create_barcode_scan_roundtrip() {
+        roundtrip(&CreateBarcodeScan {
+            barcode: "BC".into(),
+            barcode_type: "qrcode".into(),
+            decoded_data: "d".into(),
+            location_lat: None,
+            location_lng: None,
+        });
+    }
+
+    #[test]
+    fn offline_operation_roundtrip() {
+        roundtrip(&OfflineOperation {
+            id: uid(),
+            tenant_id: uid(),
+            user_id: uid(),
+            operation_type: "create".into(),
+            entity_type: "task".into(),
+            entity_id: "123".into(),
+            operation_data: serde_json::json!({"x":1}),
+            sync_status: "pending".into(),
+            sync_attempts: 0,
+            last_sync_error: None,
+            created_at: now(),
+            synced_at: None,
+        });
+    }
+
+    #[test]
+    fn create_offline_operation_roundtrip() {
+        roundtrip(&CreateOfflineOperation {
+            operation_type: "create".into(),
+            entity_type: "task".into(),
+            entity_id: "1".into(),
+            operation_data: serde_json::json!({}),
+        });
+    }
+
+    #[test]
+    fn sync_policy_roundtrip() {
+        roundtrip(&SyncPolicy {
+            id: uid(),
+            tenant_id: uid(),
+            user_id: uid(),
+            auto_sync_enabled: true,
+            sync_interval_minutes: 15,
+            sync_on_network_change: true,
+            conflict_strategy: "server_wins".into(),
+            created_at: now(),
+            updated_at: now(),
+        });
+    }
+
+    #[test]
+    fn update_sync_policy_roundtrip() {
+        roundtrip(&UpdateSyncPolicy {
+            auto_sync_enabled: Some(false),
+            sync_interval_minutes: None,
+            sync_on_network_change: None,
+            conflict_strategy: None,
+        });
+    }
+
+    #[test]
+    fn photo_upload_roundtrip() {
+        roundtrip(&PhotoUpload {
+            id: uid(),
+            tenant_id: uid(),
+            user_id: uid(),
+            file_name: "a.jpg".into(),
+            file_path: "/tmp/a.jpg".into(),
+            file_size: 1024,
+            mime_type: "image/jpeg".into(),
+            width: Some(1024),
+            height: None,
+            compression_ratio: Some(0.8),
+            has_watermark: true,
+            watermark_text: Some("TOPEMS".into()),
+            upload_status: "done".into(),
+            upload_progress: 100,
+            thumbnail_url: None,
+            location_lat: None,
+            location_lng: None,
+            created_at: now(),
+            uploaded_at: Some(now()),
+        });
+    }
+
+    #[test]
+    fn create_photo_upload_roundtrip() {
+        roundtrip(&CreatePhotoUpload {
+            file_name: "a.jpg".into(),
+            file_size: 1024,
+            mime_type: "image/jpeg".into(),
+            width: None,
+            height: None,
+            compression_ratio: None,
+            has_watermark: false,
+            watermark_text: None,
+            location_lat: None,
+            location_lng: None,
+        });
+    }
+
+    #[test]
+    fn push_notification_roundtrip() {
+        roundtrip(&PushNotification {
+            id: uid(),
+            tenant_id: uid(),
+            title: "hi".into(),
+            body: "msg".into(),
+            notification_type: "alert".into(),
+            data: Some(serde_json::json!({})),
+            target_type: "user".into(),
+            target_ids: vec!["u1".into(), "u2".into()],
+            status: "sent".into(),
+            sent_count: 2,
+            delivered_count: 1,
+            clicked_count: 0,
+            created_at: now(),
+            sent_at: Some(now()),
+        });
+    }
+
+    #[test]
+    fn create_push_notification_roundtrip() {
+        roundtrip(&CreatePushNotification {
+            title: "t".into(),
+            body: "b".into(),
+            notification_type: "alert".into(),
+            data: None,
+            target_type: "user".into(),
+            target_ids: vec![],
+        });
+    }
+
+    #[test]
+    fn push_device_roundtrip() {
+        roundtrip(&PushDevice {
+            id: uid(),
+            tenant_id: uid(),
+            user_id: uid(),
+            device_token: "tok".into(),
+            platform: "ios".into(),
+            device_model: Some("iPhone".into()),
+            app_version: None,
+            os_version: None,
+            is_active: true,
+            created_at: now(),
+            updated_at: now(),
+        });
+    }
+
+    #[test]
+    fn create_push_device_roundtrip() {
+        roundtrip(&CreatePushDevice {
+            device_token: "tok".into(),
+            platform: "android".into(),
+            device_model: None,
+            app_version: None,
+            os_version: None,
+        });
+    }
+
+    #[test]
+    fn push_template_roundtrip() {
+        roundtrip(&PushTemplate {
+            id: uid(),
+            tenant_id: uid(),
+            name: "n".into(),
+            title_template: "hello".into(),
+            body_template: "world".into(),
+            notification_type: "alert".into(),
+            description: None,
+            is_active: true,
+            created_at: now(),
+            updated_at: now(),
+        });
+    }
+
+    #[test]
+    fn create_push_template_request_roundtrip() {
+        roundtrip(&CreatePushTemplateRequest {
+            name: "n".into(),
+            title_template: "t".into(),
+            body_template: "b".into(),
+            notification_type: "alert".into(),
+            description: None,
+        });
+    }
+}

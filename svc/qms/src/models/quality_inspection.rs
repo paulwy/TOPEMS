@@ -124,3 +124,154 @@ pub struct InspectionResult {
     pub remark: Option<String>,
     pub created_at: Option<String>,
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use serde::{Deserialize, Serialize};
+
+    fn roundtrip<T: Serialize + for<'de> Deserialize<'de>>(item: &T) {
+        let json = serde_json::to_string(item).unwrap();
+        let v1: serde_json::Value = serde_json::from_str(&json).unwrap();
+        let back: T = serde_json::from_str(&json).unwrap();
+        let json2 = serde_json::to_string(&back).unwrap();
+        let v2: serde_json::Value = serde_json::from_str(&json2).unwrap();
+        assert_eq!(v1, v2);
+    }
+
+    #[test]
+    fn test_inspection_query() {
+        roundtrip(&InspectionQuery {
+            page: Some(1),
+            page_size: Some(10),
+            status: Some("pending".to_string()),
+            inspection_type: None,
+            search: None,
+        });
+    }
+
+    #[test]
+    fn test_list_inspections_response() {
+        roundtrip(&ListInspectionsResponse {
+            inspections: vec![],
+            total: 0,
+            page: 1,
+            page_size: 10,
+        });
+    }
+
+    #[test]
+    fn test_inspection() {
+        roundtrip(&Inspection {
+            id: "id".to_string(),
+            tenant_id: "t".to_string(),
+            inspection_no: "IN001".to_string(),
+            inspection_type: "i".to_string(),
+            product_id: Some(Uuid::new_v4()),
+            product_name: None,
+            standard_id: None,
+            quantity: BigDecimal::from(100),
+            qualified_quantity: Some(BigDecimal::from(95)),
+            unqualified_quantity: None,
+            qualification_rate: None,
+            status: None,
+            inspector: None,
+            assignee: None,
+            inspected_at: None,
+            result: None,
+            memo: None,
+            created_by: None,
+            created_at: None,
+            updated_at: None,
+        });
+    }
+
+    #[test]
+    fn test_create_inspection_request() {
+        roundtrip(&CreateInspectionRequest {
+            inspection_type: "i".to_string(),
+            product_id: None,
+            product_name: None,
+            standard_id: None,
+            quantity: BigDecimal::from(0),
+            created_by: None,
+        });
+    }
+
+    #[test]
+    fn test_assign_inspection_request() {
+        roundtrip(&AssignInspectionRequest {
+            assignee: "a".to_string(),
+            operator: "op".to_string(),
+        });
+    }
+
+    #[test]
+    fn test_submit_inspection_result_request() {
+        roundtrip(&SubmitInspectionResultRequest {
+            qualified_quantity: BigDecimal::from(10),
+            unqualified_quantity: BigDecimal::from(0),
+            qualification_rate: None,
+            result: None,
+            memo: None,
+            inspector: "ins".to_string(),
+            results: Some(vec![InspectionResultItem {
+                item_name: "n".to_string(),
+                standard_value: None,
+                measured_value: None,
+                is_qualified: true,
+                remark: None,
+            }]),
+        });
+    }
+
+    #[test]
+    fn test_audit_inspection_request() {
+        roundtrip(&AuditInspectionRequest {
+            action: "approve".to_string(),
+            operator: "op".to_string(),
+            comment: None,
+        });
+    }
+
+    #[test]
+    fn test_update_inspection_request() {
+        roundtrip(&UpdateInspectionRequest {
+            inspection_type: None,
+            product_id: None,
+            product_name: None,
+            standard_id: None,
+            quantity: None,
+        });
+    }
+
+    #[test]
+    fn test_inspection_audit() {
+        roundtrip(&InspectionAudit {
+            id: "id".to_string(),
+            tenant_id: "t".to_string(),
+            inspection_id: "in".to_string(),
+            status_from: "a".to_string(),
+            status_to: "b".to_string(),
+            action: "ap".to_string(),
+            operator: "op".to_string(),
+            comment: None,
+            created_at: None,
+        });
+    }
+
+    #[test]
+    fn test_inspection_result() {
+        roundtrip(&InspectionResult {
+            id: "id".to_string(),
+            tenant_id: "t".to_string(),
+            inspection_id: "in".to_string(),
+            item_name: "n".to_string(),
+            standard_value: None,
+            measured_value: None,
+            is_qualified: true,
+            remark: None,
+            created_at: None,
+        });
+    }
+}

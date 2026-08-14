@@ -96,3 +96,132 @@ pub struct QualityCostStatistics {
     pub category_summary: Vec<CostCategorySummary>,
     pub department_summary: Vec<CostDepartmentSummary>,
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use serde::{Deserialize, Serialize};
+
+    fn roundtrip<T: Serialize + for<'de> Deserialize<'de>>(item: &T) {
+        let json = serde_json::to_string(item).unwrap();
+        let v1: serde_json::Value = serde_json::from_str(&json).unwrap();
+        let back: T = serde_json::from_str(&json).unwrap();
+        let json2 = serde_json::to_string(&back).unwrap();
+        let v2: serde_json::Value = serde_json::from_str(&json2).unwrap();
+        assert_eq!(v1, v2);
+    }
+
+    #[test]
+    fn test_quality_cost_query() {
+        roundtrip(&QualityCostQuery {
+            page: Some(1),
+            page_size: Some(10),
+            cost_category: None,
+            department: None,
+            start_date: None,
+            end_date: None,
+        });
+    }
+
+    #[test]
+    fn test_quality_cost() {
+        roundtrip(&QualityCost {
+            id: "id".to_string(),
+            tenant_id: "t".to_string(),
+            cost_no: "QC001".to_string(),
+            cost_category: "prevention".to_string(),
+            cost_type: None,
+            amount: BigDecimal::from(0),
+            department: None,
+            description: None,
+            related_issue_id: None,
+            incurred_date: None,
+            created_by: None,
+            created_at: None,
+            updated_at: None,
+        });
+    }
+
+    #[test]
+    fn test_list_quality_costs_response() {
+        roundtrip(&ListQualityCostsResponse {
+            costs: vec![],
+            total: 0,
+            page: 1,
+            page_size: 10,
+        });
+    }
+
+    #[test]
+    fn test_create_quality_cost_request() {
+        roundtrip(&CreateQualityCostRequest {
+            cost_category: "prevention".to_string(),
+            cost_type: None,
+            amount: BigDecimal::from(0),
+            department: None,
+            description: None,
+            related_issue_id: None,
+            incurred_date: NaiveDate::from_ymd_opt(2025, 1, 1),
+            created_by: None,
+        });
+    }
+
+    #[test]
+    fn test_update_quality_cost_request() {
+        roundtrip(&UpdateQualityCostRequest {
+            cost_category: None,
+            cost_type: None,
+            amount: None,
+            department: None,
+            description: None,
+            related_issue_id: None,
+            incurred_date: None,
+        });
+    }
+
+    #[test]
+    fn test_cost_category_summary() {
+        roundtrip(&CostCategorySummary {
+            category: "prevention".to_string(),
+            total_amount: 0.0,
+            count: 0,
+            percentage: 0.0,
+        });
+    }
+
+    #[test]
+    fn test_cost_trend_item() {
+        roundtrip(&CostTrendItem {
+            period: "2025-Q1".to_string(),
+            prevention: 0.0,
+            appraisal: 0.0,
+            internal_failure: 0.0,
+            external_failure: 0.0,
+            total: 0.0,
+        });
+    }
+
+    #[test]
+    fn test_cost_department_summary() {
+        roundtrip(&CostDepartmentSummary {
+            department: "d".to_string(),
+            total_amount: 0.0,
+            count: 0,
+            percentage: 0.0,
+        });
+    }
+
+    #[test]
+    fn test_quality_cost_statistics() {
+        roundtrip(&QualityCostStatistics {
+            total_cost: 0.0,
+            category_summary: vec![CostCategorySummary {
+                category: "c".to_string(),
+                total_amount: 0.0,
+                count: 0,
+                percentage: 0.0,
+            }],
+            department_summary: vec![],
+        });
+    }
+}
