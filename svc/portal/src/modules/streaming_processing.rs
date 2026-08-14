@@ -1489,3 +1489,274 @@ pub async fn reset_counter_handler(
         Err(e) => Json(ApiResponse::error(404, &e)),
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use serde::Serialize;
+
+    fn roundtrip<T: Serialize + for<'de> Deserialize<'de>>(item: &T) {
+        let json = serde_json::to_string(item).unwrap();
+        let v1: serde_json::Value = serde_json::from_str(&json).unwrap();
+        let back: T = serde_json::from_str(&json).unwrap();
+        let json2 = serde_json::to_string(&back).unwrap();
+        let v2: serde_json::Value = serde_json::from_str(&json2).unwrap();
+        assert_eq!(v1, v2);
+    }
+
+    // ==================== Enum roundtrip ====================
+
+    #[test]
+    fn stream_type_roundtrip() {
+        for v in StreamType::all() {
+            roundtrip(&v);
+        }
+    }
+
+    #[test]
+    fn stream_status_roundtrip() {
+        for v in &[
+            StreamStatus::Active,
+            StreamStatus::Paused,
+            StreamStatus::Completed,
+            StreamStatus::Failed,
+        ] {
+            roundtrip(v);
+        }
+    }
+
+    #[test]
+    fn dedup_strategy_roundtrip() {
+        for v in &[
+            DedupStrategy::FirstWriter,
+            DedupStrategy::LastWriter,
+            DedupStrategy::Merge,
+        ] {
+            roundtrip(v);
+        }
+    }
+
+    #[test]
+    fn dedup_action_roundtrip() {
+        for v in &[DedupAction::Pass, DedupAction::Drop, DedupAction::Merge] {
+            roundtrip(v);
+        }
+    }
+
+    #[test]
+    fn overflow_strategy_roundtrip() {
+        for v in &[
+            OverflowStrategy::Drop,
+            OverflowStrategy::Backpressure,
+            OverflowStrategy::Sample,
+            OverflowStrategy::Batch,
+        ] {
+            roundtrip(v);
+        }
+    }
+
+    // ==================== Enum as_str/from_str ====================
+
+    #[test]
+    fn stream_type_as_str_from_str() {
+        for v in StreamType::all() {
+            assert_eq!(StreamType::from_str(v.as_str()), v);
+        }
+    }
+
+    #[test]
+    fn stream_status_as_str_from_str() {
+        for v in &[
+            StreamStatus::Active,
+            StreamStatus::Paused,
+            StreamStatus::Completed,
+            StreamStatus::Failed,
+        ] {
+            assert_eq!(StreamStatus::from_str(v.as_str()), *v);
+        }
+    }
+
+    #[test]
+    fn dedup_strategy_as_str_from_str() {
+        for v in &[
+            DedupStrategy::FirstWriter,
+            DedupStrategy::LastWriter,
+            DedupStrategy::Merge,
+        ] {
+            assert_eq!(DedupStrategy::from_str(v.as_str()), *v);
+        }
+    }
+
+    #[test]
+    fn dedup_action_as_str() {
+        assert_eq!(DedupAction::Pass.as_str(), "pass");
+        assert_eq!(DedupAction::Drop.as_str(), "drop");
+        assert_eq!(DedupAction::Merge.as_str(), "merge");
+    }
+
+    #[test]
+    fn overflow_strategy_as_str_from_str() {
+        for v in &[
+            OverflowStrategy::Drop,
+            OverflowStrategy::Backpressure,
+            OverflowStrategy::Sample,
+            OverflowStrategy::Batch,
+        ] {
+            assert_eq!(OverflowStrategy::from_str(v.as_str()), *v);
+        }
+    }
+
+    // ==================== Struct roundtrip ====================
+
+    #[test]
+    fn stream_roundtrip() {
+        let s = Stream {
+            id: "st-1".into(),
+            topic: "orders".into(),
+            stream_type: StreamType::EventStream,
+            filter: Some(serde_json::json!({"status": "new"})),
+            batch_size: 100,
+            status: StreamStatus::Active,
+        };
+        roundtrip(&s);
+    }
+
+    #[test]
+    fn stream_event_roundtrip() {
+        let e = StreamEvent {
+            id: "ev-1".into(),
+            stream_id: "st-1".into(),
+            event_type: "order_created".into(),
+            payload: serde_json::json!({"order_id": 1}),
+            sequence: 1,
+            timestamp: "2025-01-01T00:00:00Z".into(),
+        };
+        roundtrip(&e);
+    }
+
+    #[test]
+    fn stream_event_list_roundtrip() {
+        let l = StreamEventList {
+            events: vec![],
+            total: 0,
+        };
+        roundtrip(&l);
+    }
+
+    #[test]
+    fn stream_stats_roundtrip() {
+        let s = StreamStats {
+            stream_id: "st-1".into(),
+            event_count: 1000,
+            subscriber_count: 5,
+            last_sequence: 999,
+            last_event_at: Some("2025-01-01T00:00:00Z".into()),
+        };
+        roundtrip(&s);
+    }
+
+    #[test]
+    fn dedup_rule_roundtrip() {
+        let r = DedupRule {
+            id: "dr-1".into(),
+            stream_id: "st-1".into(),
+            dedup_key: "order_id".into(),
+            window_ms: 5000,
+            strategy: DedupStrategy::FirstWriter,
+            enabled: true,
+        };
+        roundtrip(&r);
+    }
+
+    #[test]
+    fn dedup_result_roundtrip() {
+        let r = DedupResult {
+            id: "dr-1".into(),
+            rule_id: "rul-1".into(),
+            original_id: "evt-1".into(),
+            duplicate_of: Some("evt-0".into()),
+            action: DedupAction::Drop,
+            merged_payload: None,
+        };
+        roundtrip(&r);
+    }
+
+    #[test]
+    fn dedup_stats_roundtrip() {
+        let s = DedupStats {
+            rule_id: "rul-1".into(),
+            total_checks: 1000,
+            passed: 800,
+            dropped: 200,
+            merged: 0,
+            pass_rate: 0.8,
+        };
+        roundtrip(&s);
+    }
+
+    #[test]
+    fn dedup_history_entry_roundtrip() {
+        let e = DedupHistoryEntry {
+            id: "he-1".into(),
+            rule_id: "rul-1".into(),
+            original_id: "evt-1".into(),
+            duplicate_of: None,
+            action: DedupAction::Pass,
+            created_at: "2025-01-01T00:00:00Z".into(),
+        };
+        roundtrip(&e);
+    }
+
+    #[test]
+    fn backpressure_config_roundtrip() {
+        let c = BackpressureConfig {
+            id: "bp-1".into(),
+            stream_id: "st-1".into(),
+            max_queue_size: 10000,
+            high_watermark: 0.8,
+            low_watermark: 0.2,
+            overflow_strategy: OverflowStrategy::Drop,
+        };
+        roundtrip(&c);
+    }
+
+    #[test]
+    fn backpressure_state_roundtrip() {
+        let s = BackpressureState {
+            id: "bp-1".into(),
+            stream_id: "st-1".into(),
+            queue_depth: 500,
+            utilization: 0.05,
+            dropped_count: 0,
+            last_drop_reason: None,
+            updated_at: "2025-01-01T00:00:00Z".into(),
+        };
+        roundtrip(&s);
+    }
+
+    #[test]
+    fn backpressure_stats_roundtrip() {
+        let s = BackpressureStats {
+            stream_id: "st-1".into(),
+            total_dropped: 100,
+            total_processed: 10000,
+            avg_queue_depth: 250.0,
+            max_queue_depth: 8000,
+            current_utilization: 0.05,
+            overflow_events: 2,
+        };
+        roundtrip(&s);
+    }
+
+    #[test]
+    fn dropped_event_roundtrip() {
+        let e = DroppedEvent {
+            id: "de-1".into(),
+            stream_id: "st-1".into(),
+            event_id: "evt-99".into(),
+            reason: "queue_full".into(),
+            dropped_at: "2025-01-01T00:00:00Z".into(),
+        };
+        roundtrip(&e);
+    }
+}

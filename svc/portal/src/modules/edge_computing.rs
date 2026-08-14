@@ -1144,3 +1144,216 @@ pub async fn get_latency_stats_handler(
     let stats = LatencyOptimizer::get_latency_stats().await;
     Json(ApiResponse::success(stats, "延迟统计"))
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use serde::Serialize;
+
+    fn roundtrip<T: Serialize + for<'de> Deserialize<'de>>(item: &T) {
+        let json = serde_json::to_string(item).unwrap();
+        let v1: serde_json::Value = serde_json::from_str(&json).unwrap();
+        let back: T = serde_json::from_str(&json).unwrap();
+        let json2 = serde_json::to_string(&back).unwrap();
+        let v2: serde_json::Value = serde_json::from_str(&json2).unwrap();
+        assert_eq!(v1, v2);
+    }
+
+    // ==================== Enum roundtrip ====================
+
+    #[test]
+    fn edge_location_roundtrip() {
+        for v in EdgeLocation::all() {
+            roundtrip(&v);
+        }
+        roundtrip(&EdgeLocation::EdgeNode("custom-node".into()));
+    }
+
+    #[test]
+    fn routing_strategy_roundtrip() {
+        for v in &[
+            RoutingStrategy::Nearest,
+            RoutingStrategy::Fastest,
+            RoutingStrategy::RoundRobin,
+            RoutingStrategy::LoadBalanced,
+            RoutingStrategy::GeoAffinity,
+        ] {
+            roundtrip(v);
+        }
+    }
+
+    #[test]
+    fn compression_algorithm_roundtrip() {
+        for v in &[
+            CompressionAlgorithm::Gzip,
+            CompressionAlgorithm::Brotli,
+            CompressionAlgorithm::None,
+        ] {
+            roundtrip(v);
+        }
+    }
+
+    // ==================== Enum as_str/from_str ====================
+
+    #[test]
+    fn edge_location_as_str_from_str() {
+        for v in EdgeLocation::all() {
+            assert_eq!(EdgeLocation::from_str(v.as_str()), v);
+        }
+        assert_eq!(
+            EdgeLocation::from_str("custom-node"),
+            EdgeLocation::EdgeNode("custom-node".into())
+        );
+    }
+
+    #[test]
+    fn routing_strategy_as_str_from_str() {
+        for v in &[
+            RoutingStrategy::Nearest,
+            RoutingStrategy::Fastest,
+            RoutingStrategy::RoundRobin,
+            RoutingStrategy::LoadBalanced,
+            RoutingStrategy::GeoAffinity,
+        ] {
+            assert_eq!(RoutingStrategy::from_str(v.as_str()), *v);
+        }
+    }
+
+    #[test]
+    fn compression_algorithm_as_str() {
+        assert_eq!(CompressionAlgorithm::Gzip.as_str(), "gzip");
+        assert_eq!(CompressionAlgorithm::Brotli.as_str(), "brotli");
+        assert_eq!(CompressionAlgorithm::None.as_str(), "none");
+    }
+
+    // ==================== Struct roundtrip ====================
+
+    #[test]
+    fn render_request_roundtrip() {
+        let r = RenderRequest::default();
+        roundtrip(&r);
+    }
+
+    #[test]
+    fn render_result_roundtrip() {
+        let r = RenderResult {
+            data: serde_json::json!({"ok": true}),
+            rendered_at: "2025-01-01T00:00:00Z".into(),
+            location: EdgeLocation::APAC,
+            latency_ms: 42,
+            cache_hit: true,
+        };
+        roundtrip(&r);
+    }
+
+    #[test]
+    fn edge_function_roundtrip() {
+        let f = EdgeFunction {
+            id: "fn-1".into(),
+            name: "my-render".into(),
+            code: "function() {}".into(),
+            location: EdgeLocation::EMEA,
+            enabled: true,
+            timeout_ms: 5000,
+        };
+        roundtrip(&f);
+    }
+
+    #[test]
+    fn edge_status_roundtrip() {
+        let s = EdgeStatus {
+            location: EdgeLocation::APAC,
+            active_functions: 5,
+            cache_entries: 100,
+            avg_latency_ms: 25.5,
+            healthy: true,
+        };
+        roundtrip(&s);
+    }
+
+    #[test]
+    fn render_history_entry_roundtrip() {
+        let e = RenderHistoryEntry {
+            id: "h-1".into(),
+            query_hash: "abc123".into(),
+            location: EdgeLocation::AMER,
+            latency_ms: 30,
+            cache_hit: false,
+            rendered_at: "2025-01-01T00:00:00Z".into(),
+        };
+        roundtrip(&e);
+    }
+
+    #[test]
+    fn accel_config_roundtrip() {
+        let c = AccelConfig::default();
+        roundtrip(&c);
+    }
+
+    #[test]
+    fn accelerated_response_roundtrip() {
+        let r = AcceleratedResponse {
+            data: serde_json::json!({"users": []}),
+            compressed: true,
+            compression_algorithm: CompressionAlgorithm::Brotli,
+            selected_location: EdgeLocation::APAC,
+            routing_strategy: RoutingStrategy::Nearest,
+            ttl_ms: 3600000,
+            accelerated_at: "2025-01-01T00:00:00Z".into(),
+        };
+        roundtrip(&r);
+    }
+
+    #[test]
+    fn accel_stats_roundtrip() {
+        let s = AccelStats::default();
+        roundtrip(&s);
+    }
+
+    #[test]
+    fn latency_budget_roundtrip() {
+        let b = LatencyBudget::default();
+        roundtrip(&b);
+    }
+
+    #[test]
+    fn optimized_response_roundtrip() {
+        let r = OptimizedResponse {
+            data: serde_json::json!({"ok": true}),
+            latency_budget: LatencyBudget::default(),
+            actual_total_ms: 150,
+            within_budget: true,
+            optimizations_applied: vec!["merge_queries".into()],
+        };
+        roundtrip(&r);
+    }
+
+    #[test]
+    fn precomputed_response_roundtrip() {
+        let r = PrecomputedResponse {
+            id: "pr-1".into(),
+            template_id: "tpl-1".into(),
+            data: serde_json::json!({"precomputed": true}),
+            expires_at: "2025-12-31T00:00:00Z".into(),
+            created_at: "2025-01-01T00:00:00Z".into(),
+        };
+        roundtrip(&r);
+    }
+
+    #[test]
+    fn coalesced_request_roundtrip() {
+        let r = CoalescedRequest {
+            id: "cr-1".into(),
+            request_count: 5,
+            query_hash: "abc".into(),
+            coalesced_at: "2025-01-01T00:00:00Z".into(),
+        };
+        roundtrip(&r);
+    }
+
+    #[test]
+    fn latency_stats_roundtrip() {
+        let s = LatencyStats::default();
+        roundtrip(&s);
+    }
+}

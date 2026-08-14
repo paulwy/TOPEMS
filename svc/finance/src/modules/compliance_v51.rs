@@ -1525,3 +1525,139 @@ pub fn create_routes() -> Router<AppState> {
             axum::routing::get(export_compliance_report_handler),
         )
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn rt<T: Serialize + for<'de> Deserialize<'de>>(val: &T) {
+        let json = serde_json::to_value(val).unwrap();
+        let back: T = serde_json::from_value(json.clone()).unwrap();
+        let back_json = serde_json::to_value(&back).unwrap();
+        assert_eq!(json, back_json, "roundtrip Value mismatch");
+    }
+
+    #[test] fn enum_control_category() {
+        rt(&ControlCategory::Authorization);
+        rt(&ControlCategory::Segregation);
+        rt(&ControlCategory::Approval);
+        rt(&ControlCategory::Monitoring);
+    }
+
+    #[test] fn enum_risk_level() {
+        rt(&RiskLevel::Low);
+        rt(&RiskLevel::Medium);
+        rt(&RiskLevel::High);
+        rt(&RiskLevel::Critical);
+    }
+
+    #[test] fn enum_control_type() {
+        rt(&ControlType::Preventive);
+        rt(&ControlType::Detective);
+        rt(&ControlType::Corrective);
+    }
+
+    #[test] fn enum_report_type() {
+        rt(&ReportType::Periodic);
+        rt(&ReportType::EventBased);
+        rt(&ReportType::AdHoc);
+    }
+
+    #[test] fn enum_severity() {
+        rt(&Severity::Low);
+        rt(&Severity::Medium);
+        rt(&Severity::High);
+        rt(&Severity::Critical);
+    }
+
+    #[test] fn struct_control_point() {
+        let v = ControlPoint {
+            id: Uuid::new_v4(), tenant_id: Uuid::new_v4(),
+            code: "C-001".into(), name: "审批控制".into(),
+            description: "描述".into(), category: "authorization".into(),
+            risk_level: "medium".into(), control_type: "preventive".into(),
+            frequency: "daily".into(), is_active: true, created_by: "tester".into(),
+            created_at: Utc::now(), updated_at: Utc::now(),
+        };
+        rt(&v);
+    }
+
+    #[test] fn struct_control_matrix() {
+        let v = ControlMatrix {
+            id: Uuid::new_v4(), tenant_id: Uuid::new_v4(),
+            name: "Q1矩阵".into(), period: "2024-Q1".into(),
+            controls: serde_json::json!([{"code":"C-001","status":"effective"}]),
+            total_controls: 10, effective_controls: 8, compliance_rate: 0.8,
+            created_by: "tester".into(), created_at: Utc::now(),
+        };
+        rt(&v);
+    }
+
+    #[test] fn struct_risk_assessment() {
+        let v = RiskAssessment {
+            id: Uuid::new_v4(), tenant_id: Uuid::new_v4(),
+            control_point_id: Uuid::new_v4(),
+            likelihood: "medium".into(), impact: "high".into(),
+            risk_score: 12, risk_level: "high".into(),
+            mitigation_strategy: "加强审批".into(),
+            residual_risk: "low".into(), assessed_by: "tester".into(),
+            created_at: Utc::now(), updated_at: Utc::now(),
+        };
+        rt(&v);
+    }
+
+    #[test] fn struct_risk_summary() {
+        let v = RiskSummary {
+            total_assessments: 100, critical_count: 2, high_count: 10,
+            medium_count: 30, low_count: 58, average_score: 5.5,
+        };
+        rt(&v);
+    }
+
+    #[test] fn struct_compliance_report_v51() {
+        let v = ComplianceReportV51 {
+            id: Uuid::new_v4(), tenant_id: Uuid::new_v4(),
+            report_type: "periodic".into(),
+            period_start: Utc::now(), period_end: Utc::now(), generated_at: Utc::now(),
+            controls_checked: 50, issues_found: 3,
+            risk_assessments: serde_json::json!([{"level":"high","count":2}]),
+            executive_summary: "整体良好".into(),
+            recommendations: serde_json::json!(["加强监控"]),
+            created_by: "tester".into(),
+        };
+        rt(&v);
+    }
+
+    #[test] fn struct_compliance_issue_v51() {
+        let v = ComplianceIssueV51 {
+            id: Uuid::new_v4(), report_id: Uuid::new_v4(),
+            severity: "high".into(), category: "authorization".into(),
+            control_point_code: "C-001".into(), description: "缺少审批".into(),
+            evidence: serde_json::json!({"doc":"ref-001"}),
+            impact_assessment: "中等影响".into(),
+        };
+        rt(&v);
+    }
+
+    #[test] fn struct_exported_compliance_report() {
+        let v = ExportedComplianceReport {
+            report: ComplianceReportV51 {
+                id: Uuid::new_v4(), tenant_id: Uuid::new_v4(),
+                report_type: "periodic".into(),
+                period_start: Utc::now(), period_end: Utc::now(), generated_at: Utc::now(),
+                controls_checked: 10, issues_found: 0,
+                risk_assessments: serde_json::json!([]),
+                executive_summary: "ok".into(),
+                recommendations: serde_json::json!([]),
+                created_by: "tester".into(),
+            },
+            issues: vec![ComplianceIssueV51 {
+                id: Uuid::new_v4(), report_id: Uuid::new_v4(),
+                severity: "low".into(), category: "monitoring".into(),
+                control_point_code: "C-002".into(), description: "ok".into(),
+                evidence: serde_json::Value::Null, impact_assessment: "none".into(),
+            }],
+        };
+        rt(&v);
+    }
+}

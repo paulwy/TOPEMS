@@ -1393,3 +1393,206 @@ pub fn init_smart_gateway() {
     };
     configure_policy(default_policy);
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use serde::Serialize;
+    use serde_json::Value;
+
+    fn roundtrip<T: Serialize + for<'de> Deserialize<'de>>(item: &T) {
+        let json = serde_json::to_string(item).unwrap();
+        let v1: Value = serde_json::from_str(&json).unwrap();
+        let back: T = serde_json::from_str(&json).unwrap();
+        let json2 = serde_json::to_string(&back).unwrap();
+        let v2: Value = serde_json::from_str(&json2).unwrap();
+        assert_eq!(v1, v2);
+    }
+
+    #[test]
+    fn test_supported_protocol_roundtrip_all_variants() {
+        for v in [
+            SupportedProtocol::GraphQL,
+            SupportedProtocol::REST,
+            SupportedProtocol::GrPC,
+            SupportedProtocol::WebSocket,
+            SupportedProtocol::SSE,
+            SupportedProtocol::WebDAV,
+        ] {
+            roundtrip(&v);
+        }
+    }
+
+    #[test]
+    fn test_supported_protocol_as_str_from_str() {
+        for v in [
+            SupportedProtocol::GraphQL,
+            SupportedProtocol::REST,
+            SupportedProtocol::GrPC,
+            SupportedProtocol::WebSocket,
+            SupportedProtocol::SSE,
+            SupportedProtocol::WebDAV,
+        ] {
+            let s = v.as_str();
+            let back = SupportedProtocol::from_str(s);
+            assert!(back.is_some());
+            roundtrip(back.as_ref().unwrap());
+        }
+        assert!(SupportedProtocol::from_str("bogus").is_none());
+    }
+
+    #[test]
+    fn test_routing_strategy_roundtrip_all_variants() {
+        for v in [
+            RoutingStrategy::RoundRobin,
+            RoutingStrategy::LeastLatency,
+            RoutingStrategy::Weighted,
+            RoutingStrategy::Geographic,
+            RoutingStrategy::ContentBased,
+        ] {
+            roundtrip(&v);
+        }
+    }
+
+    #[test]
+    fn test_routing_strategy_as_str() {
+        for v in [
+            RoutingStrategy::RoundRobin,
+            RoutingStrategy::LeastLatency,
+            RoutingStrategy::Weighted,
+            RoutingStrategy::Geographic,
+            RoutingStrategy::ContentBased,
+        ] {
+            let _ = v.as_str();
+        }
+    }
+
+    #[test]
+    fn test_degradation_level_roundtrip_all_variants() {
+        for v in [
+            DegradationLevel::Normal,
+            DegradationLevel::Degraded,
+            DegradationLevel::Limited,
+            DegradationLevel::Emergency,
+            DegradationLevel::Offline,
+        ] {
+            roundtrip(&v);
+        }
+    }
+
+    #[test]
+    fn test_degradation_level_as_str_severity() {
+        for v in [
+            DegradationLevel::Normal,
+            DegradationLevel::Degraded,
+            DegradationLevel::Limited,
+            DegradationLevel::Emergency,
+            DegradationLevel::Offline,
+        ] {
+            let _ = v.as_str();
+            let _ = v.severity();
+        }
+    }
+
+    #[test]
+    fn test_protocol_config_roundtrip() {
+        let c = ProtocolConfig {
+            protocol: SupportedProtocol::GraphQL,
+            enabled: true,
+            max_connections: 1000,
+            timeout_ms: 5000,
+            rate_limit_per_sec: 500,
+        };
+        roundtrip(&c);
+    }
+
+    #[test]
+    fn test_circuit_breaker_config_roundtrip() {
+        let c = CircuitBreakerConfig {
+            failure_threshold: 5,
+            success_threshold: 3,
+            timeout_ms: 30000,
+            half_open_max_requests: 3,
+        };
+        roundtrip(&c);
+    }
+
+    #[test]
+    fn test_smart_route_roundtrip() {
+        let r = SmartRoute {
+            id: "r1".to_string(),
+            name: "GQL Primary".to_string(),
+            protocol: SupportedProtocol::GraphQL,
+            path_pattern: "/graphql".to_string(),
+            target_service: "gql-svc".to_string(),
+            priority: 100,
+            conditions: vec![],
+            load_balancing_strategy: RoutingStrategy::RoundRobin,
+            circuit_breaker_config: CircuitBreakerConfig::default(),
+            enabled: true,
+        };
+        roundtrip(&r);
+    }
+
+    #[test]
+    fn test_degradation_triggers_roundtrip() {
+        let t = DegradationTriggers {
+            latency_threshold_ms: 2000,
+            error_rate_threshold: 0.15,
+            cpu_threshold: 0.90,
+        };
+        roundtrip(&t);
+    }
+
+    #[test]
+    fn test_degradation_policy_roundtrip() {
+        let p = DegradationPolicy {
+            level: DegradationLevel::Normal,
+            triggers: DegradationTriggers::default(),
+            fallback_strategy: "cache".to_string(),
+            notification_channels: vec!["alert".to_string()],
+        };
+        roundtrip(&p);
+    }
+
+    #[test]
+    fn test_health_metrics_roundtrip() {
+        let m = HealthMetrics {
+            service_name: "svc1".to_string(),
+            latency_ms: 100,
+            error_rate: 0.01,
+            cpu_usage: 0.3,
+            memory_usage: 0.5,
+            request_count: 1000,
+            success_count: 990,
+            failure_count: 10,
+        };
+        roundtrip(&m);
+    }
+
+    #[test]
+    fn test_gateway_status_roundtrip() {
+        let s = GatewayStatus {
+            version: "1.0.0".to_string(),
+            uptime_secs: 3600,
+            active_protocols: vec!["graphql".to_string()],
+            total_routes: 10,
+            active_routes: 8,
+            degradation_level: DegradationLevel::Normal,
+            health: HealthMetrics::default(),
+        };
+        roundtrip(&s);
+    }
+
+    #[test]
+    fn test_route_match_result_roundtrip() {
+        let r = RouteMatchResult {
+            matched: true,
+            route_id: Some("r1".to_string()),
+            target_service: Some("svc1".to_string()),
+            protocol: Some(SupportedProtocol::GraphQL),
+            strategy: Some(RoutingStrategy::RoundRobin),
+        };
+        roundtrip(&r);
+    }
+}

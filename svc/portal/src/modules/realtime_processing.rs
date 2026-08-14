@@ -1342,3 +1342,265 @@ pub async fn get_aggregation_stats_handler(
         None => Json(ApiResponse::error(404, "聚合不存在")),
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn roundtrip<T: serde::Serialize + for<'d> serde::Deserialize<'d>>(value: &T) -> bool {
+        let json = serde_json::to_value(value).unwrap();
+        let back: T = serde_json::from_value(json.clone()).unwrap();
+        let json2 = serde_json::to_value(&back).unwrap();
+        json == json2
+    }
+
+    // ---- SubscriptionStatus ----
+
+    fn subscription_status_all() -> Vec<SubscriptionStatus> {
+        vec![
+            SubscriptionStatus::Active,
+            SubscriptionStatus::Paused,
+            SubscriptionStatus::Expired,
+            SubscriptionStatus::Failed,
+        ]
+    }
+
+    #[test]
+    fn subscription_status_roundtrip_all() {
+        for v in subscription_status_all() {
+            assert!(roundtrip(&v));
+        }
+    }
+
+    #[test]
+    fn subscription_status_as_str_from_str() {
+        for v in subscription_status_all() {
+            let s = v.as_str();
+            assert_eq!(SubscriptionStatus::from_str(s).as_str(), s);
+        }
+        assert_eq!(SubscriptionStatus::from_str("__unknown__"), SubscriptionStatus::Active);
+    }
+
+    // ---- ReplayType ----
+
+    fn replay_type_all() -> Vec<ReplayType> {
+        vec![
+            ReplayType::Full,
+            ReplayType::Incremental,
+            ReplayType::Live,
+        ]
+    }
+
+    #[test]
+    fn replay_type_roundtrip_all() {
+        for v in replay_type_all() {
+            assert!(roundtrip(&v));
+        }
+    }
+
+    #[test]
+    fn replay_type_as_str_from_str() {
+        for v in replay_type_all() {
+            let s = v.as_str();
+            assert_eq!(ReplayType::from_str(s).as_str(), s);
+        }
+        assert_eq!(ReplayType::from_str("__unknown__"), ReplayType::Full);
+    }
+
+    // ---- ReplayStatus ----
+
+    fn replay_status_all() -> Vec<ReplayStatus> {
+        vec![
+            ReplayStatus::Pending,
+            ReplayStatus::InProgress,
+            ReplayStatus::Completed,
+            ReplayStatus::Failed,
+        ]
+    }
+
+    #[test]
+    fn replay_status_roundtrip_all() {
+        for v in replay_status_all() {
+            assert!(roundtrip(&v));
+        }
+    }
+
+    #[test]
+    fn replay_status_as_str_from_str() {
+        for v in replay_status_all() {
+            let s = v.as_str();
+            assert_eq!(ReplayStatus::from_str(s).as_str(), s);
+        }
+        assert_eq!(ReplayStatus::from_str("__unknown__"), ReplayStatus::Pending);
+    }
+
+    // ---- AggregationType (has all()) ----
+
+    #[test]
+    fn aggregation_type_roundtrip_all() {
+        for v in AggregationType::all() {
+            assert!(roundtrip(&v));
+        }
+    }
+
+    #[test]
+    fn aggregation_type_as_str_from_str() {
+        for v in AggregationType::all() {
+            let s = v.as_str();
+            assert_eq!(AggregationType::from_str(s).as_str(), s);
+        }
+        assert_eq!(AggregationType::from_str("__unknown__"), AggregationType::Count);
+    }
+
+    // ---- Aggregator (has all()) ----
+
+    #[test]
+    fn aggregator_roundtrip_all() {
+        for v in Aggregator::all() {
+            assert!(roundtrip(&v));
+        }
+    }
+
+    #[test]
+    fn aggregator_as_str_from_str() {
+        for v in Aggregator::all() {
+            let s = v.as_str();
+            assert_eq!(Aggregator::from_str(s).as_str(), s);
+        }
+        assert_eq!(Aggregator::from_str("__unknown__"), Aggregator::TumblingWindow);
+    }
+
+    #[test]
+    fn enum_all_nonempty() {
+        assert!(!AggregationType::all().is_empty());
+        assert!(!Aggregator::all().is_empty());
+    }
+
+    // ---- struct roundtrip ----
+
+    #[test]
+    fn struct_roundtrip_subscription_record() {
+        let v = SubscriptionRecord {
+            id: "s1".into(),
+            subscriber_id: "sub1".into(),
+            topic: "orders".into(),
+            filter: None,
+            status: SubscriptionStatus::Active,
+            created_at: "2025-01-01T00:00:00Z".into(),
+            last_activity: "2025-01-01T00:00:00Z".into(),
+            delivered_count: 0,
+        };
+        assert!(roundtrip(&v));
+    }
+
+    #[test]
+    fn struct_roundtrip_subscription_event() {
+        let v = SubscriptionEvent {
+            id: "e1".into(),
+            subscription_id: "s1".into(),
+            event_type: "created".into(),
+            payload: serde_json::json!({"id": 1}),
+            sequence: 1,
+            delivered_at: None,
+            expires_at: None,
+        };
+        assert!(roundtrip(&v));
+    }
+
+    #[test]
+    fn struct_roundtrip_pending_events_list() {
+        let v = PendingEventsList {
+            events: vec![],
+            total: 0,
+        };
+        assert!(roundtrip(&v));
+    }
+
+    #[test]
+    fn struct_roundtrip_replay_request() {
+        let v = ReplayRequest {
+            id: "rq1".into(),
+            subscription_id: "s1".into(),
+            from_sequence: 1,
+            to_sequence: Some(100),
+            batch_size: 50,
+            replay_type: ReplayType::Incremental,
+        };
+        assert!(roundtrip(&v));
+    }
+
+    #[test]
+    fn struct_roundtrip_replay_result() {
+        let v = ReplayResult {
+            id: "rr1".into(),
+            request_id: "rq1".into(),
+            events_replayed: 100,
+            events_skipped: 5,
+            duration_ms: 2000,
+            status: ReplayStatus::Completed,
+        };
+        assert!(roundtrip(&v));
+    }
+
+    #[test]
+    fn struct_roundtrip_replay_history_entry() {
+        let v = ReplayHistoryEntry {
+            request_id: "rq1".into(),
+            subscription_id: "s1".into(),
+            replay_type: ReplayType::Full,
+            events_replayed: 500,
+            status: ReplayStatus::Completed,
+            created_at: "2025-01-01T00:00:00Z".into(),
+        };
+        assert!(roundtrip(&v));
+    }
+
+    #[test]
+    fn struct_roundtrip_event_sequence_info() {
+        let v = EventSequenceInfo {
+            sequence: 42,
+            event_type: "order.created".into(),
+            created_at: "2025-01-01T00:00:00Z".into(),
+        };
+        assert!(roundtrip(&v));
+    }
+
+    #[test]
+    fn struct_roundtrip_aggregation_config() {
+        let v = AggregationConfig {
+            id: "a1".into(),
+            topic: "metrics".into(),
+            window_size_ms: 60000,
+            aggregation_type: AggregationType::Count,
+            group_by: Some(vec!["host".into()]),
+            filter_expr: None,
+            aggregator: Aggregator::TumblingWindow,
+        };
+        assert!(roundtrip(&v));
+    }
+
+    #[test]
+    fn struct_roundtrip_aggregation_result() {
+        let v = AggregationResult {
+            config_id: "a1".into(),
+            window_start: "2025-01-01T00:00:00Z".into(),
+            window_end: "2025-01-01T00:01:00Z".into(),
+            groups: vec![serde_json::json!({"host": "a"})],
+            values: serde_json::json!({"count": 100}),
+            computed_at: "2025-01-01T00:01:00Z".into(),
+        };
+        assert!(roundtrip(&v));
+    }
+
+    #[test]
+    fn struct_roundtrip_aggregation_stats() {
+        let v = AggregationStats {
+            config_id: "a1".into(),
+            processed_events: 1000,
+            windows_completed: 10,
+            avg_processing_time_ms: 5.0,
+            active: true,
+        };
+        assert!(roundtrip(&v));
+    }
+}

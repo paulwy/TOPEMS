@@ -251,3 +251,174 @@ pub fn generate_id() -> String {
 pub fn now_utc() -> DateTime<Utc> {
     Utc::now()
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use serde::Serialize;
+    use serde_json::Value;
+
+    fn roundtrip<T: Serialize + for<'de> Deserialize<'de>>(item: &T) {
+        let json = serde_json::to_string(item).unwrap();
+        let v1: Value = serde_json::from_str(&json).unwrap();
+        let back: T = serde_json::from_str(&json).unwrap();
+        let json2 = serde_json::to_string(&back).unwrap();
+        let v2: Value = serde_json::from_str(&json2).unwrap();
+        assert_eq!(v1, v2);
+    }
+
+    #[test]
+    fn test_breaking_change_type_roundtrip_all_variants() {
+        for v in [
+            BreakingChangeType::FieldRemoved,
+            BreakingChangeType::FieldTypeChanged,
+            BreakingChangeType::TypeRemoved,
+            BreakingChangeType::ArgumentRemoved,
+            BreakingChangeType::ArgumentTypeChanged,
+            BreakingChangeType::EnumValueRemoved,
+            BreakingChangeType::NullabilityChanged,
+        ] {
+            roundtrip(&v);
+        }
+    }
+
+    #[test]
+    fn test_breaking_change_type_as_str() {
+        for v in [
+            BreakingChangeType::FieldRemoved,
+            BreakingChangeType::FieldTypeChanged,
+            BreakingChangeType::TypeRemoved,
+            BreakingChangeType::ArgumentRemoved,
+            BreakingChangeType::ArgumentTypeChanged,
+            BreakingChangeType::EnumValueRemoved,
+            BreakingChangeType::NullabilityChanged,
+        ] {
+            let _ = v.as_str();
+        }
+    }
+
+    #[test]
+    fn test_severity_roundtrip_all_variants() {
+        for v in [Severity::Critical, Severity::High, Severity::Medium, Severity::Low] {
+            roundtrip(&v);
+        }
+    }
+
+    #[test]
+    fn test_severity_as_str() {
+        for v in [Severity::Critical, Severity::High, Severity::Medium, Severity::Low] {
+            let _ = v.as_str();
+        }
+    }
+
+    #[test]
+    fn test_version_negotiation_strategy_roundtrip_all_variants() {
+        for v in [
+            VersionNegotiationStrategy::ExactMatch,
+            VersionNegotiationStrategy::LatestCompatible,
+            VersionNegotiationStrategy::DeprecatedWithFallback,
+            VersionNegotiationStrategy::ForceVersion,
+        ] {
+            roundtrip(&v);
+        }
+    }
+
+    #[test]
+    fn test_version_status_roundtrip_all_variants() {
+        for v in [VersionStatus::Active, VersionStatus::Deprecated, VersionStatus::Sunset, VersionStatus::Unsupported] {
+            roundtrip(&v);
+        }
+    }
+
+    #[test]
+    fn test_version_status_as_str() {
+        for v in [VersionStatus::Active, VersionStatus::Deprecated, VersionStatus::Sunset, VersionStatus::Unsupported] {
+            let _ = v.as_str();
+        }
+    }
+
+    #[test]
+    fn test_schema_version_roundtrip() {
+        let v = SchemaVersion {
+            id: "sv1".to_string(),
+            version: "1.0.0".to_string(),
+            schema_definition: "type Query { id: ID }".to_string(),
+            change_type: "breaking".to_string(),
+            created_at: Utc::now(),
+            change_description: "initial".to_string(),
+            approved_by: None,
+        };
+        roundtrip(&v);
+    }
+
+    #[test]
+    fn test_migration_record_roundtrip() {
+        let m = MigrationRecord {
+            id: "mr1".to_string(),
+            from_version: "1.0.0".to_string(),
+            to_version: "1.1.0".to_string(),
+            operation: "upgrade".to_string(),
+            performed_at: Utc::now(),
+            performed_by: Some("admin".to_string()),
+            notes: None,
+        };
+        roundtrip(&m);
+    }
+
+    #[test]
+    fn test_schema_evolution_roundtrip() {
+        let e = SchemaEvolution {
+            current_version: Some("2.0.0".to_string()),
+            versions: vec![],
+            migration_history: vec![],
+        };
+        roundtrip(&e);
+    }
+
+    #[test]
+    fn test_breaking_change_roundtrip() {
+        let bc = BreakingChange {
+            change_type: BreakingChangeType::FieldRemoved,
+            path: "Query.oldField".to_string(),
+            description: "removed".to_string(),
+            affected_queries: vec!["q1".to_string()],
+            severity: Severity::Critical,
+        };
+        roundtrip(&bc);
+    }
+
+    #[test]
+    fn test_breaking_change_report_roundtrip() {
+        let r = BreakingChangeReport {
+            changes: vec![],
+            total_count: 5,
+            breaking_count: 2,
+            safe_count: 3,
+            summary: "found 2 breaking".to_string(),
+        };
+        roundtrip(&r);
+    }
+
+    #[test]
+    fn test_supported_version_roundtrip() {
+        let sv = SupportedVersion {
+            version: "1.0.0".to_string(),
+            status: VersionStatus::Deprecated,
+            deprecated_at: Some(Utc::now()),
+            sunset_at: None,
+        };
+        roundtrip(&sv);
+    }
+
+    #[test]
+    fn test_negotiated_version_roundtrip() {
+        let nv = NegotiatedVersion {
+            requested_version: "1.0".to_string(),
+            matched_version: Some("1.1.0".to_string()),
+            fallback_used: false,
+            supported_versions: vec!["1.1.0".to_string()],
+            strategy_used: "latest_compatible".to_string(),
+        };
+        roundtrip(&nv);
+    }
+}

@@ -1867,3 +1867,137 @@ pub fn create_routes() -> Router<AppState> {
         )
         .route("/finance-v57/trend", axum::routing::get(get_trend_handler))
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use serde::Serialize;
+    use serde_json::Value;
+
+    fn roundtrip<T: Serialize + for<'de> Deserialize<'de>>(item: &T) {
+        let json = serde_json::to_string(item).unwrap();
+        let v1: Value = serde_json::from_str(&json).unwrap();
+        let back: T = serde_json::from_str(&json).unwrap();
+        let json2 = serde_json::to_string(&back).unwrap();
+        let v2: Value = serde_json::from_str(&json2).unwrap();
+        assert_eq!(v1, v2);
+    }
+
+    #[test] fn enum_report_type() {
+        roundtrip(&ReportType::BalanceSheet);
+        roundtrip(&ReportType::IncomeStatement);
+        roundtrip(&ReportType::CashFlow);
+        roundtrip(&ReportType::AR);
+        roundtrip(&ReportType::AP);
+        roundtrip(&ReportType::Tax);
+    }
+
+    #[test] fn enum_report_layout() {
+        roundtrip(&ReportLayout::JSON);
+        roundtrip(&ReportLayout::CSV);
+        roundtrip(&ReportLayout::PDF);
+        roundtrip(&ReportLayout::Excel);
+    }
+
+    #[test] fn enum_report_schedule() {
+        roundtrip(&ReportSchedule::Daily);
+        roundtrip(&ReportSchedule::Weekly);
+        roundtrip(&ReportSchedule::Monthly);
+        roundtrip(&ReportSchedule::Quarterly);
+        roundtrip(&ReportSchedule::Yearly);
+    }
+
+    #[test] fn enum_report_status() {
+        roundtrip(&ReportStatus::Pending);
+        roundtrip(&ReportStatus::Generating);
+        roundtrip(&ReportStatus::Completed);
+        roundtrip(&ReportStatus::Failed);
+    }
+
+    #[test] fn enum_analysis_dimension_name() {
+        roundtrip(&AnalysisDimensionName::Time);
+        roundtrip(&AnalysisDimensionName::Department);
+        roundtrip(&AnalysisDimensionName::Project);
+        roundtrip(&AnalysisDimensionName::CostCenter);
+        roundtrip(&AnalysisDimensionName::Region);
+        roundtrip(&AnalysisDimensionName::Product);
+    }
+
+    #[test] fn enum_forecast_model_type() {
+        roundtrip(&ForecastModelType::LinearRegression);
+        roundtrip(&ForecastModelType::ExponentialSmoothing);
+        roundtrip(&ForecastModelType::ARIMA);
+        roundtrip(&ForecastModelType::Prophet);
+    }
+
+    #[test] fn enum_insight_type() {
+        roundtrip(&InsightType::Trend);
+        roundtrip(&InsightType::Anomaly);
+        roundtrip(&InsightType::Forecast);
+        roundtrip(&InsightType::Recommendation);
+    }
+
+    #[test] fn struct_report_template() {
+        let v = ReportTemplate {
+            id: Uuid::new_v4(), name: "月报模板".into(),
+            report_type: "balance_sheet".into(), layout: "json".into(),
+            parameters: Some(serde_json::json!({"level":"summary"})),
+            schedule: Some("monthly".into()),
+            created_at: Utc::now(), updated_at: Utc::now(),
+        };
+        roundtrip(&v);
+    }
+
+    #[test] fn struct_generated_report() {
+        let v = GeneratedReport {
+            id: Uuid::new_v4(), template_id: Some(Uuid::new_v4()),
+            period_start: Utc::now(), period_end: Utc::now(),
+            data: Some(serde_json::json!({"total":100})),
+            generated_at: Utc::now(), status: "completed".into(),
+            format: "json".into(),
+        };
+        roundtrip(&v);
+    }
+
+    #[test] fn struct_analysis_dimension() {
+        let v = AnalysisDimension {
+            id: Uuid::new_v4(), name: "time".into(),
+            hierarchy: Some(vec!["year".into(), "quarter".into(), "month".into()]),
+            filters: Some(serde_json::json!({"year":2024})),
+        };
+        roundtrip(&v);
+    }
+
+    #[test] fn struct_analysis_result() {
+        let v = AnalysisResult {
+            id: Uuid::new_v4(),
+            dimensions: vec!["time".into(), "department".into()],
+            measures: vec!["revenue".into(), "cost".into()],
+            data: Some(serde_json::json!([{}])),
+            aggregations: Some(serde_json::json!({"revenue":"sum"})),
+            created_at: Utc::now(),
+        };
+        roundtrip(&v);
+    }
+
+    #[test] fn struct_forecast_model() {
+        let v = ForecastModel {
+            id: Uuid::new_v4(), model_type: "arima".into(),
+            target_metric: "revenue".into(),
+            features: Some(vec!["gdp".into(), "season".into()]),
+            accuracy: Some(0.88), trained_at: Some(Utc::now()),
+        };
+        roundtrip(&v);
+    }
+
+    #[test] fn struct_insight() {
+        let v = Insight {
+            id: Uuid::new_v4(), insight_type: "trend".into(),
+            description: "收入上升趋势".into(),
+            confidence: Some(0.92),
+            data: Some(serde_json::json!({"slope":1000})),
+            created_at: Utc::now(),
+        };
+        roundtrip(&v);
+    }
+}

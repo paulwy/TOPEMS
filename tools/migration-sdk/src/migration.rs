@@ -156,3 +156,125 @@ impl MigrationBundle {
         &self.migrations
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn rt<T: Serialize + serde::de::DeserializeOwned>(val: &T) -> T {
+        let s = serde_json::to_string(val).unwrap();
+        serde_json::from_str(&s).unwrap()
+    }
+
+    #[test]
+    fn migration_status_roundtrip_all_variants() {
+        for v in [MigrationStatus::Pending, MigrationStatus::Applied, MigrationStatus::Failed, MigrationStatus::RolledBack] {
+            let back = rt(&v);
+            assert_eq!(back, v);
+        }
+    }
+
+    #[test]
+    fn migration_status_serde_snake_case() {
+        let json = serde_json::to_string(&MigrationStatus::RolledBack).unwrap();
+        assert_eq!(json, "\"rolled_back\"");
+    }
+
+    #[test]
+    fn migration_status_display() {
+        assert_eq!(MigrationStatus::Pending.to_string(), "pending");
+        assert_eq!(MigrationStatus::Applied.to_string(), "applied");
+        assert_eq!(MigrationStatus::Failed.to_string(), "failed");
+        assert_eq!(MigrationStatus::RolledBack.to_string(), "rolled_back");
+    }
+
+    #[test]
+    fn migration_script_roundtrip() {
+        let s = MigrationScript {
+            version: "20260101000001".into(),
+            name: "create_users".into(),
+            description: "create user table".into(),
+            reversible: true,
+        };
+        let back = rt(&s);
+        assert_eq!(back.version, s.version);
+        assert_eq!(back.name, s.name);
+        assert_eq!(back.description, s.description);
+        assert_eq!(back.reversible, s.reversible);
+    }
+
+    #[test]
+    fn migration_script_default_values() {
+        let s = MigrationScript {
+            version: "1.0.0".into(),
+            name: "init".into(),
+            description: String::new(),
+            reversible: false,
+        };
+        let json = serde_json::to_string(&s).unwrap();
+        assert!(json.contains("\"version\":\"1.0.0\""));
+        assert!(json.contains("\"reversible\":false"));
+    }
+
+    #[test]
+    fn sql_migration_new_not_reversible() {
+        let m = SqlMigration::new(
+            "20260101000001",
+            "create_users",
+            "create user table",
+            "CREATE TABLE users (id UUID PRIMARY KEY);",
+        );
+        assert_eq!(m.script.version, "20260101000001");
+        assert_eq!(m.script.name, "create_users");
+        assert_eq!(m.script.description, "create user table");
+        assert!(!m.script.reversible);
+        assert_eq!(m.down_sql, None);
+        assert_eq!(m.up_sql, "CREATE TABLE users (id UUID PRIMARY KEY);");
+    }
+
+    #[test]
+    fn sql_migration_reversible_has_down_sql() {
+        let m = SqlMigration::reversible(
+            "20260101000002",
+            "add_email",
+            "add email column",
+            "ALTER TABLE users ADD COLUMN email TEXT;",
+            "ALTER TABLE users DROP COLUMN email;",
+        );
+        assert!(m.script.reversible);
+        assert_eq!(m.down_sql.as_deref(), Some("ALTER TABLE users DROP COLUMN email;"));
+    }
+
+    #[test]
+    fn migration_default_methods() {
+        use crate::error::Result as MResult;
+        struct Stub { script: MigrationScript }
+        #[async_trait]
+        impl Migration for Stub {
+            fn metadata(&self) -> &MigrationScript { &self.script }
+            async fn up(&self, _pool: &sqlx::PgPool) -> MResult<()> { Ok(()) }
+        }
+        let s = Stub { script: MigrationScript {
+            version: "9.9.9".into(), name: "stub".into(),
+            description: "stub migration".into(), reversible: false,
+        }};
+        assert_eq!(s.version(), "9.9.9");
+        assert_eq!(s.name(), "stub");
+    }
+
+    #[test]
+    fn migration_builder_push_and_count() {
+        let bundle = MigrationBundle::new("test-plugin")
+            .push_migration(SqlMigration::new("1", "a", "d1", "SELECT 1"))
+            .push_migration(SqlMigration::new("2", "b", "d2", "SELECT 2"));
+        assert_eq!(bundle.plugin_name, "test-plugin");
+        assert_eq!(bundle.migrations().len(), 2);
+    }
+
+    #[test]
+    fn migration_bundle_new_is_empty() {
+        let bundle = MigrationBundle::new("empty");
+        assert_eq!(bundle.plugin_name, "empty");
+        assert!(bundle.migrations().is_empty());
+    }
+}

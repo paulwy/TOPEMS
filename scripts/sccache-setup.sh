@@ -179,10 +179,10 @@ esac
 
 export RUSTC_WRAPPER="$SCCACHE_BIN"
 export CARGO_BUILD_RUSTC_WRAPPER="$SCCACHE_BIN"
-# Useful env for builds that need a deterministic cache
-export CARGO_INCREMENTAL=0
-export CARGO_PROFILE_DEV_DEBUG=0
-export CARGO_PROFILE_TEST_DEBUG=0
+# 注：不再硬设 CARGO_INCREMENTAL=0 / CARGO_PROFILE_* 环境变量！
+# 这些 env 会覆盖 workspace Cargo.toml 和 .cargo/config.toml 中的 profile.* 配置，
+# 导致 dev 丢失 debug=1+strip="symbols"、test 丢失 opt-level=1 等优化。
+# workspace profile 以 Cargo.toml 为准，本脚本只负责 sccache 注入。
 
 log "Exported RUSTC_WRAPPER=$RUSTC_WRAPPER"
 log "Exported CARGO_BUILD_RUSTC_WRAPPER=$CARGO_BUILD_RUSTC_WRAPPER"

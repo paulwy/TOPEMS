@@ -589,6 +589,16 @@ main() {
     if ! $SKIP_CLEAN; then
       info "Cleaning intermediate profraw/profdata..."
       rm -rf "$OUTPUT_DIR/profraw" "$OUTPUT_DIR/profdata"
+      # cargo-llvm-cov 独立 target 目录（cargo clean 不会碰它，会持续吃磁盘）
+      if [ -d "$PROJECT_ROOT/target/llvm-cov-target" ]; then
+        local cov_size
+        cov_size=$(du -sh "$PROJECT_ROOT/target/llvm-cov-target" 2>/dev/null | awk '{print $1}')
+        info "Cleaning llvm-cov-target ($cov_size)..."
+        rm -rf "$PROJECT_ROOT/target/llvm-cov-target"
+      fi
+      # 兜底 kill 可能遗留的后台 cargo-llvm-cov 进程
+      pkill -9 -f "cargo-llvm-cov" 2>/dev/null || true
+      pkill -9 -f "cargo test.*llvm-cov" 2>/dev/null || true
     fi
   fi
 

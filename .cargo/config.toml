@@ -35,14 +35,14 @@ debug = false
 strip = true
 
 [profile.dev]
-# 兜底：workspace Cargo.toml 中 opt-level=1 + codegen-units=256 为准
+# 兜底：workspace Cargo.toml 中 opt-level=1 + debug=1 + strip="symbols" + codegen-units=256 为准
 opt-level = 1
 debug = 1
+strip = "symbols"
 
 [profile.test]
 opt-level = 1
-debug = true
-split-debuginfo = "unpacked"
+debug = 1
 
 [features]
 coverage = ["instrument-coverage"]

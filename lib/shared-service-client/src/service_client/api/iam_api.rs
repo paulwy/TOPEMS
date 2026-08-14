@@ -72,3 +72,53 @@ impl TypedServiceClient<IamApi> {
             .await
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn rt<T: Serialize + serde::de::DeserializeOwned>(val: &T) -> T {
+        let s = serde_json::to_string(val).unwrap();
+        serde_json::from_str(&s).unwrap()
+    }
+
+    #[test]
+    fn iam_user_roundtrip() {
+        let u = IamUser {
+            id: Uuid::parse_str("550e8400-e29b-41d4-a716-446655440000").unwrap(),
+            username: "alice".into(),
+            email: "alice@example.com".into(),
+            is_active: true,
+            is_superuser: false,
+        };
+        let back = rt(&u);
+        assert_eq!(back.id, u.id);
+        assert_eq!(back.username, u.username);
+        assert_eq!(back.email, u.email);
+        assert!(back.is_active);
+        assert!(!back.is_superuser);
+    }
+
+    #[test]
+    fn iam_role_roundtrip() {
+        let r = IamRole {
+            id: Uuid::parse_str("6ba7b810-9dad-11d1-80b4-00c04fd430c8").unwrap(),
+            name: "admin".into(),
+            description: Some("full access".into()),
+        };
+        let back = rt(&r);
+        assert_eq!(back.name, "admin");
+        assert_eq!(back.description.as_deref(), Some("full access"));
+    }
+
+    #[test]
+    fn iam_role_no_description() {
+        let r = IamRole {
+            id: Uuid::new_v4(),
+            name: "viewer".into(),
+            description: None,
+        };
+        let back = rt(&r);
+        assert!(back.description.is_none());
+    }
+}

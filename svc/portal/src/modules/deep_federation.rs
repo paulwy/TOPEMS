@@ -1564,3 +1564,345 @@ pub async fn get_auth_status_handler(
         Err(e) => Json(ApiResponse::error(404, &e)),
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use serde::Serialize;
+
+    fn roundtrip<T: Serialize + for<'de> Deserialize<'de>>(item: &T) {
+        let json = serde_json::to_string(item).unwrap();
+        let v1: serde_json::Value = serde_json::from_str(&json).unwrap();
+        let back: T = serde_json::from_str(&json).unwrap();
+        let json2 = serde_json::to_string(&back).unwrap();
+        let v2: serde_json::Value = serde_json::from_str(&json2).unwrap();
+        assert_eq!(v1, v2);
+    }
+
+    // ==================== Enum roundtrip ====================
+
+    #[test]
+    fn consistency_model_roundtrip() {
+        for v in ConsistencyModel::all() {
+            roundtrip(&v);
+        }
+    }
+
+    #[test]
+    fn check_status_roundtrip() {
+        for v in &[CheckStatus::Passed, CheckStatus::Failed, CheckStatus::Warning] {
+            roundtrip(v);
+        }
+    }
+
+    #[test]
+    fn query_status_roundtrip() {
+        for v in &[
+            QueryStatus::Pending,
+            QueryStatus::Running,
+            QueryStatus::Completed,
+            QueryStatus::Failed,
+            QueryStatus::Cancelled,
+        ] {
+            roundtrip(v);
+        }
+    }
+
+    #[test]
+    fn sub_query_status_roundtrip() {
+        for v in &[
+            SubQueryStatus::Pending,
+            SubQueryStatus::Running,
+            SubQueryStatus::Completed,
+            SubQueryStatus::Failed,
+        ] {
+            roundtrip(v);
+        }
+    }
+
+    #[test]
+    fn auth_provider_roundtrip() {
+        for v in &[
+            AuthProvider::JWT,
+            AuthProvider::OAuth2,
+            AuthProvider::SAML,
+            AuthProvider::APIKey,
+        ] {
+            roundtrip(v);
+        }
+    }
+
+    #[test]
+    fn auth_status_roundtrip() {
+        for v in &[
+            AuthStatus::Active,
+            AuthStatus::Expired,
+            AuthStatus::Revoked,
+            AuthStatus::Invalid,
+        ] {
+            roundtrip(v);
+        }
+    }
+
+    // ==================== Enum as_str/from_str ====================
+
+    #[test]
+    fn consistency_model_as_str_from_str() {
+        for v in ConsistencyModel::all() {
+            assert_eq!(ConsistencyModel::from_str(v.as_str()), v);
+        }
+    }
+
+    #[test]
+    fn check_status_as_str_from_str() {
+        assert_eq!(CheckStatus::from_str(CheckStatus::Passed.as_str()), CheckStatus::Passed);
+        assert_eq!(CheckStatus::from_str(CheckStatus::Failed.as_str()), CheckStatus::Failed);
+        assert_eq!(CheckStatus::from_str(CheckStatus::Warning.as_str()), CheckStatus::Warning);
+    }
+
+    #[test]
+    fn query_status_as_str_from_str() {
+        for v in &[
+            QueryStatus::Pending,
+            QueryStatus::Running,
+            QueryStatus::Completed,
+            QueryStatus::Failed,
+            QueryStatus::Cancelled,
+        ] {
+            assert_eq!(QueryStatus::from_str(v.as_str()), *v);
+        }
+    }
+
+    #[test]
+    fn sub_query_status_as_str_from_str() {
+        for v in &[
+            SubQueryStatus::Pending,
+            SubQueryStatus::Running,
+            SubQueryStatus::Completed,
+            SubQueryStatus::Failed,
+        ] {
+            assert_eq!(SubQueryStatus::from_str(v.as_str()), *v);
+        }
+    }
+
+    #[test]
+    fn auth_provider_as_str_from_str() {
+        for v in &[
+            AuthProvider::JWT,
+            AuthProvider::OAuth2,
+            AuthProvider::SAML,
+            AuthProvider::APIKey,
+        ] {
+            assert_eq!(AuthProvider::from_str(v.as_str()), *v);
+        }
+    }
+
+    #[test]
+    fn auth_status_as_str_from_str() {
+        for v in &[
+            AuthStatus::Active,
+            AuthStatus::Expired,
+            AuthStatus::Revoked,
+            AuthStatus::Invalid,
+        ] {
+            assert_eq!(AuthStatus::from_str(v.as_str()), *v);
+        }
+    }
+
+    // ==================== Struct roundtrip ====================
+
+    #[test]
+    fn version_vector_roundtrip() {
+        let vv = VersionVector {
+            entity_id: "e-1".into(),
+            versions: HashMap::from([("svc-a".into(), 3u64)]),
+            timestamp: "2025-01-01T00:00:00Z".into(),
+        };
+        roundtrip(&vv);
+    }
+
+    #[test]
+    fn consistency_violation_roundtrip() {
+        let v = ConsistencyViolation {
+            entity_id: "e-1".into(),
+            violation_type: "conflict".into(),
+            description: "version mismatch".into(),
+            detected_at: "2025-01-01T00:00:00Z".into(),
+        };
+        roundtrip(&v);
+    }
+
+    #[test]
+    fn consistency_check_roundtrip() {
+        let vv = VersionVector {
+            entity_id: "e-1".into(),
+            versions: HashMap::new(),
+            timestamp: "2025-01-01T00:00:00Z".into(),
+        };
+        let vi = ConsistencyViolation {
+            entity_id: "e-1".into(),
+            violation_type: "conflict".into(),
+            description: "x".into(),
+            detected_at: "2025-01-01T00:00:00Z".into(),
+        };
+        let c = ConsistencyCheck {
+            id: "ck-1".into(),
+            entities: vec!["e-1".into()],
+            model: ConsistencyModel::StrongEventual,
+            violations: vec![vi],
+            status: CheckStatus::Passed,
+            checked_at: "2025-01-01T00:00:00Z".into(),
+        };
+        roundtrip(&c);
+        let _ = vv;
+    }
+
+    #[test]
+    fn consistency_report_roundtrip() {
+        let r = ConsistencyReport {
+            total_checks: 10,
+            passed: 8,
+            failed: 1,
+            warnings: 1,
+            model_distribution: HashMap::from([("strong_eventual".into(), 8u64)]),
+            recent_violations: vec![],
+        };
+        roundtrip(&r);
+    }
+
+    #[test]
+    fn conflict_info_roundtrip() {
+        let v1 = VersionVector {
+            entity_id: "e-1".into(),
+            versions: HashMap::new(),
+            timestamp: "2025-01-01T00:00:00Z".into(),
+        };
+        let v2 = VersionVector {
+            entity_id: "e-1".into(),
+            versions: HashMap::new(),
+            timestamp: "2025-01-02T00:00:00Z".into(),
+        };
+        let ci = ConflictInfo {
+            entity_id: "e-1".into(),
+            version_a: v1,
+            version_b: v2,
+            conflict_type: "simultaneous_update".into(),
+            resolution_strategy: "last_write_wins".into(),
+        };
+        roundtrip(&ci);
+    }
+
+    #[test]
+    fn sub_query_roundtrip() {
+        let sq = SubQuery {
+            id: "sq-1".into(),
+            service: "user-svc".into(),
+            query: "{ users { id } }".into(),
+            variables: Some(serde_json::json!({"limit": 10})),
+            depends_on: vec!["sq-0".into()],
+            result: None,
+        };
+        roundtrip(&sq);
+    }
+
+    #[test]
+    fn distributed_query_roundtrip() {
+        let dq = DistributedQuery {
+            id: "dq-1".into(),
+            query_plan: serde_json::json!({"op": "GetUser"}),
+            sub_queries: vec![],
+            routing_map: serde_json::json!({}),
+            consistency_requirement: ConsistencyModel::Causal,
+            timeout_ms: 30000,
+            status: QueryStatus::Pending,
+            created_at: "2025-01-01T00:00:00Z".into(),
+        };
+        roundtrip(&dq);
+    }
+
+    #[test]
+    fn query_status_info_roundtrip() {
+        let i = QueryStatusInfo {
+            query_id: "dq-1".into(),
+            status: QueryStatus::Running,
+            completed_sub_queries: 2,
+            total_sub_queries: 4,
+            failed_sub_queries: 0,
+            elapsed_ms: 1500,
+        };
+        roundtrip(&i);
+    }
+
+    #[test]
+    fn query_history_entry_roundtrip() {
+        let e = QueryHistoryEntry {
+            id: "dq-1".into(),
+            status: QueryStatus::Completed,
+            sub_query_count: 4,
+            created_at: "2025-01-01T00:00:00Z".into(),
+        };
+        roundtrip(&e);
+    }
+
+    #[test]
+    fn merged_result_roundtrip() {
+        let m = MergedResult {
+            query_id: "dq-1".into(),
+            merge_strategy: "union".into(),
+            sub_query_results: vec![serde_json::json!({"id": 1})],
+            merged_data: serde_json::json!({"users": []}),
+            merge_time_ms: 50,
+        };
+        roundtrip(&m);
+    }
+
+    #[test]
+    fn federated_identity_roundtrip() {
+        let id = FederatedIdentity {
+            id: "id-1".into(),
+            provider: AuthProvider::JWT,
+            claims: serde_json::json!({"sub": "user1"}),
+            scopes: vec!["read".into()],
+            authenticated_at: "2025-01-01T00:00:00Z".into(),
+        };
+        roundtrip(&id);
+    }
+
+    #[test]
+    fn auth_policy_roundtrip() {
+        let p = AuthPolicy {
+            id: "pol-1".into(),
+            federation_id: "fed-1".into(),
+            required_roles: vec!["admin".into()],
+            token_issuer: "https://issuer".into(),
+            audience: "https://portal".into(),
+            token_validity: 3600,
+            created_at: "2025-01-01T00:00:00Z".into(),
+            updated_at: "2025-01-01T00:00:00Z".into(),
+        };
+        roundtrip(&p);
+    }
+
+    #[test]
+    fn auth_status_info_roundtrip() {
+        let i = AuthStatusInfo {
+            identity_id: "id-1".into(),
+            provider: AuthProvider::OAuth2,
+            status: AuthStatus::Active,
+            scopes: vec!["read".into(), "write".into()],
+            expires_at: Some("2025-02-01T00:00:00Z".into()),
+        };
+        roundtrip(&i);
+    }
+
+    #[test]
+    fn token_chain_roundtrip() {
+        let t = TokenChain {
+            chain_id: "chain-1".into(),
+            tokens: vec![serde_json::json!({"jti": "t1"})],
+            verified: true,
+            verified_at: "2025-01-01T00:00:00Z".into(),
+        };
+        roundtrip(&t);
+    }
+}

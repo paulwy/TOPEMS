@@ -1459,3 +1459,198 @@ pub fn init_adaptive_execution() {
 
     tracing::info!("📊 V52.0 BFF Phase 22 已初始化：自适应执行引擎 + AI 查询优化 + 流式订阅增强");
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use serde::Serialize;
+    use serde_json::Value;
+
+    fn roundtrip<T: Serialize + for<'de> Deserialize<'de>>(item: &T) {
+        let json = serde_json::to_string(item).unwrap();
+        let v1: Value = serde_json::from_str(&json).unwrap();
+        let back: T = serde_json::from_str(&json).unwrap();
+        let json2 = serde_json::to_string(&back).unwrap();
+        let v2: Value = serde_json::from_str(&json2).unwrap();
+        assert_eq!(v1, v2);
+    }
+
+    #[test]
+    fn test_adaptive_strategy_roundtrip_all_variants() {
+        for v in [AdaptiveStrategy::PerformanceFirst, AdaptiveStrategy::AccuracyFirst, AdaptiveStrategy::Balanced] {
+            roundtrip(&v);
+        }
+    }
+
+    #[test]
+    fn test_adaptive_strategy_as_str_from_str() {
+        for v in [AdaptiveStrategy::PerformanceFirst, AdaptiveStrategy::AccuracyFirst, AdaptiveStrategy::Balanced] {
+            let s = v.as_str();
+            let back = AdaptiveStrategy::from_str(s);
+            assert!(back.is_some());
+            roundtrip(back.as_ref().unwrap());
+        }
+        assert!(AdaptiveStrategy::from_str("bogus").is_none());
+    }
+
+    #[test]
+    fn test_suggestion_type_roundtrip_all_variants() {
+        for v in [
+            SuggestionType::FieldPruning,
+            SuggestionType::QueryMerging,
+            SuggestionType::PaginationOptimization,
+            SuggestionType::CacheKeyOptimization,
+            SuggestionType::IndexSuggestion,
+            SuggestionType::ConnectionOptimization,
+        ] {
+            roundtrip(&v);
+        }
+    }
+
+    #[test]
+    fn test_suggestion_type_as_str() {
+        for v in [
+            SuggestionType::FieldPruning,
+            SuggestionType::QueryMerging,
+            SuggestionType::PaginationOptimization,
+            SuggestionType::CacheKeyOptimization,
+            SuggestionType::IndexSuggestion,
+            SuggestionType::ConnectionOptimization,
+        ] {
+            let _ = v.as_str();
+        }
+    }
+
+    #[test]
+    fn test_stream_state_roundtrip_all_variants() {
+        for v in [StreamState::Active, StreamState::Paused, StreamState::Reconnecting, StreamState::Closed, StreamState::Error] {
+            roundtrip(&v);
+        }
+    }
+
+    #[test]
+    fn test_stream_state_as_str() {
+        for v in [StreamState::Active, StreamState::Paused, StreamState::Reconnecting, StreamState::Closed, StreamState::Error] {
+            let _ = v.as_str();
+        }
+    }
+
+    #[test]
+    fn test_execution_profile_roundtrip() {
+        let p = ExecutionProfile {
+            query_hash: "qh1".to_string(),
+            complexity_score: 5.0,
+            estimated_cost: 2.0,
+            timeout_ms: 5000,
+            parallelism_level: 4,
+            degradation_applied: false,
+            strategy: AdaptiveStrategy::Balanced,
+            field_count: 10,
+            query_depth: 3,
+            connection_count: 1,
+            created_at: Utc::now(),
+        };
+        roundtrip(&p);
+    }
+
+    #[test]
+    fn test_execution_metrics_roundtrip() {
+        let m = ExecutionMetrics {
+            total_queries: 1000,
+            successful_queries: 950,
+            failed_queries: 50,
+            avg_complexity: 3.5,
+            avg_timeout_ms: 4500.0,
+            avg_parallelism: 3.2,
+            degraded_queries: 20,
+            total_execution_time_ms: 500000,
+            last_updated: Utc::now(),
+        };
+        roundtrip(&m);
+    }
+
+    #[test]
+    fn test_optimization_suggestion_roundtrip() {
+        let s = OptimizationSuggestion {
+            id: "os1".to_string(),
+            suggestion_type: SuggestionType::FieldPruning,
+            description: "remove unused".to_string(),
+            current_cost: 10.0,
+            suggested_cost: 5.0,
+            confidence: 0.9,
+            applicable: true,
+            created_at: Utc::now(),
+        };
+        roundtrip(&s);
+    }
+
+    #[test]
+    fn test_optimized_query_plan_roundtrip() {
+        let p = OptimizedQueryPlan {
+            original_query: "{ me { id name } }".to_string(),
+            optimized_query: "{ me { id } }".to_string(),
+            improvements: vec![],
+            estimated_savings: 0.5,
+            original_cost: 10.0,
+            optimized_cost: 5.0,
+            cache_key: "ck1".to_string(),
+        };
+        roundtrip(&p);
+    }
+
+    #[test]
+    fn test_stream_config_roundtrip() {
+        let c = StreamConfig {
+            buffer_size: 2000,
+            batch_interval_ms: 50,
+            max_subscribers: 500,
+            filter_expression: None,
+            heartbeat_interval_ms: 15000,
+            reconnect_max_attempts: 10,
+        };
+        roundtrip(&c);
+    }
+
+    #[test]
+    fn test_stream_event_roundtrip() {
+        let e = StreamEvent {
+            id: "se1".to_string(),
+            stream_id: "s1".to_string(),
+            event_type: "update".to_string(),
+            payload: Value::Null,
+            timestamp: Utc::now(),
+            sequence: 42,
+        };
+        roundtrip(&e);
+    }
+
+    #[test]
+    fn test_stream_info_roundtrip() {
+        let info = StreamInfo {
+            id: "s1".to_string(),
+            name: "ticket-updates".to_string(),
+            topic: "tickets".to_string(),
+            state: StreamState::Active,
+            config: StreamConfig::default(),
+            subscriber_count: 10,
+            event_count: 100,
+            created_at: Utc::now(),
+            last_event_at: None,
+        };
+        roundtrip(&info);
+    }
+
+    #[test]
+    fn test_stream_metrics_roundtrip() {
+        let m = StreamMetrics {
+            total_streams: 5,
+            active_streams: 3,
+            total_subscribers: 100,
+            total_events: 5000,
+            events_per_second: 50.0,
+            avg_latency_ms: 10.0,
+            buffer_usage: 0.3,
+        };
+        roundtrip(&m);
+    }
+}

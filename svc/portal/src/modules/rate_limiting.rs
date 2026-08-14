@@ -2414,3 +2414,97 @@ impl RateLimitingMutationRoot {
             .ok_or_else(|| async_graphql::Error::new("Policy not found after set"))?)
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use serde::Serialize;
+    use serde_json::Value;
+
+    fn roundtrip<T: Serialize + for<'de> Deserialize<'de>>(item: &T) {
+        let json = serde_json::to_string(item).unwrap();
+        let v1: Value = serde_json::from_str(&json).unwrap();
+        let back: T = serde_json::from_str(&json).unwrap();
+        let json2 = serde_json::to_string(&back).unwrap();
+        let v2: Value = serde_json::from_str(&json2).unwrap();
+        assert_eq!(v1, v2);
+    }
+
+    #[test]
+    fn test_query_intent_roundtrip_all_variants() {
+        for v in [
+            QueryIntent::EntityRead,
+            QueryIntent::ListQuery,
+            QueryIntent::AnalyticsQuery,
+            QueryIntent::WriteOperation,
+            QueryIntent::Subscription,
+            QueryIntent::FederationQuery,
+            QueryIntent::Unknown,
+        ] {
+            roundtrip(&v);
+        }
+    }
+
+    #[test]
+    fn test_routing_strategy_v2_roundtrip_all_variants() {
+        for v in [RoutingStrategy::Direct, RoutingStrategy::Sharded, RoutingStrategy::Parallel, RoutingStrategy::Fallback] {
+            roundtrip(&v);
+        }
+    }
+
+    #[test]
+    fn test_circuit_state_gql_roundtrip_all_variants() {
+        for v in [CircuitStateGql::Closed, CircuitStateGql::Open, CircuitStateGql::HalfOpen] {
+            roundtrip(&v);
+        }
+    }
+
+    #[test]
+    fn test_ai_query_intent_roundtrip_all_variants() {
+        for v in [
+            AiQueryIntent::EntityRead,
+            AiQueryIntent::ListQuery,
+            AiQueryIntent::AnalyticsQuery,
+            AiQueryIntent::MutationWrite,
+            AiQueryIntent::SubscriptionStream,
+            AiQueryIntent::Unknown,
+        ] {
+            roundtrip(&v);
+        }
+    }
+
+    #[test]
+    fn test_ai_routing_strategy_roundtrip_all_variants() {
+        for v in [AiRoutingStrategy::Direct, AiRoutingStrategy::Sharded, AiRoutingStrategy::Parallel, AiRoutingStrategy::Fallback] {
+            roundtrip(&v);
+        }
+    }
+
+    #[test]
+    fn test_type_merge_strategy_roundtrip_all_variants() {
+        for v in [TypeMergeStrategy::PrimaryWin, TypeMergeStrategy::FieldLevel, TypeMergeStrategy::Versioned] {
+            roundtrip(&v);
+        }
+    }
+
+    #[test]
+    fn test_access_pattern_roundtrip_all_variants() {
+        for v in [AccessPattern::Frequent, AccessPattern::Burst, AccessPattern::Periodic, AccessPattern::Sparse] {
+            roundtrip(&v);
+        }
+    }
+
+    #[test]
+    fn test_consistency_level_roundtrip_all_variants() {
+        for v in [ConsistencyLevel::Strong, ConsistencyLevel::Eventual, ConsistencyLevel::StaleWhileRevalidate] {
+            roundtrip(&v);
+        }
+    }
+
+    #[test]
+    fn test_invalidation_strategy_roundtrip_all_variants() {
+        for v in [InvalidationStrategy::TTL, InvalidationStrategy::EventDriven, InvalidationStrategy::Versioned, InvalidationStrategy::Manual] {
+            roundtrip(&v);
+        }
+    }
+}

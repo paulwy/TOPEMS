@@ -2004,3 +2004,194 @@ pub fn create_routes() -> Router<AppState> {
             axum::routing::get(get_supported_methods_handler),
         )
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use serde::Serialize;
+    use serde_json::Value;
+
+    fn roundtrip<T: Serialize + for<'de> Deserialize<'de>>(item: &T) {
+        let json = serde_json::to_string(item).unwrap();
+        let v1: Value = serde_json::from_str(&json).unwrap();
+        let back: T = serde_json::from_str(&json).unwrap();
+        let json2 = serde_json::to_string(&back).unwrap();
+        let v2: Value = serde_json::from_str(&json2).unwrap();
+        assert_eq!(v1, v2);
+    }
+
+    #[test] fn enum_match_type() {
+        roundtrip(&MatchType::Exact);
+        roundtrip(&MatchType::Fuzzy);
+        roundtrip(&MatchType::Amount);
+        roundtrip(&MatchType::Temporal);
+    }
+
+    #[test] fn enum_match_status() {
+        roundtrip(&MatchStatus::Matched);
+        roundtrip(&MatchStatus::Partial);
+        roundtrip(&MatchStatus::Unmatched);
+        roundtrip(&MatchStatus::Discrepancy);
+    }
+
+    #[test] fn enum_system_record_type() {
+        roundtrip(&SystemRecordType::Invoice);
+        roundtrip(&SystemRecordType::Payment);
+        roundtrip(&SystemRecordType::Receipt);
+    }
+
+    #[test] fn enum_invoice_status() {
+        roundtrip(&InvoiceStatus::Pending);
+        roundtrip(&InvoiceStatus::Recognized);
+        roundtrip(&InvoiceStatus::Verified);
+        roundtrip(&InvoiceStatus::Posted);
+    }
+
+    #[test] fn enum_payment_method() {
+        roundtrip(&PaymentMethod::BankTransfer);
+        roundtrip(&PaymentMethod::EWallet);
+        roundtrip(&PaymentMethod::CreditCard);
+        roundtrip(&PaymentMethod::ACH);
+        roundtrip(&PaymentMethod::WireTransfer);
+        roundtrip(&PaymentMethod::QRCode);
+    }
+
+    #[test] fn enum_payment_status() {
+        roundtrip(&PaymentStatus::Pending);
+        roundtrip(&PaymentStatus::Processing);
+        roundtrip(&PaymentStatus::Completed);
+        roundtrip(&PaymentStatus::Failed);
+        roundtrip(&PaymentStatus::Reversed);
+    }
+
+    #[test] fn struct_reconciliation_rule() {
+        let v = ReconciliationRule {
+            id: Uuid::new_v4(), name: "精确匹配".into(),
+            match_type: "exact".into(), tolerance: 0.01, enabled: true,
+        };
+        roundtrip(&v);
+    }
+
+    #[test] fn struct_reconciliation_result() {
+        let v = ReconciliationResult {
+            id: Uuid::new_v4(), bank_transaction_id: "BT-001".into(),
+            system_record_id: "SR-001".into(),
+            match_status: "matched".into(), confidence: 0.98,
+            difference_amount: 0.0, notes: None,
+        };
+        roundtrip(&v);
+    }
+
+    #[test] fn struct_bank_transaction() {
+        let v = BankTransaction {
+            id: "BT-001".into(), date: Utc::now(),
+            description: "转账".into(), amount: 5000.0,
+            currency: "CNY".into(), reference: "REF-001".into(),
+            counterparty: "供应商".into(),
+        };
+        roundtrip(&v);
+    }
+
+    #[test] fn struct_system_record() {
+        let v = SystemRecord {
+            id: "SR-001".into(), date: Utc::now(),
+            record_type: "payment".into(), amount: 5000.0,
+            currency: "CNY".into(), reference: "REF-001".into(),
+            counterparty: "供应商".into(),
+        };
+        roundtrip(&v);
+    }
+
+    #[test] fn struct_invoice() {
+        let v = Invoice {
+            id: Uuid::new_v4(), number: "INV-2024-001".into(),
+            vendor: "供应商A".into(), invoice_date: Utc::now(),
+            total_amount: 1130.0, tax_amount: 130.0,
+            status: "verified".into(),
+        };
+        roundtrip(&v);
+    }
+
+    #[test] fn struct_invoice_item() {
+        let v = InvoiceItem {
+            id: Uuid::new_v4(), invoice_id: Uuid::new_v4(),
+            description: "商品".into(), quantity: 10.0,
+            unit_price: 100.0, amount: 1000.0, tax_rate: 0.13,
+        };
+        roundtrip(&v);
+    }
+
+    #[test] fn struct_invoice_with_items() {
+        let v = InvoiceWithItems {
+            invoice: Invoice {
+                id: Uuid::new_v4(), number: "INV-002".into(),
+                vendor: "B".into(), invoice_date: Utc::now(),
+                total_amount: 200.0, tax_amount: 0.0, status: "pending".into(),
+            },
+            items: vec![InvoiceItem {
+                id: Uuid::new_v4(), invoice_id: Uuid::new_v4(),
+                description: "x".into(), quantity: 1.0,
+                unit_price: 200.0, amount: 200.0, tax_rate: 0.0,
+            }],
+        };
+        roundtrip(&v);
+    }
+
+    #[test] fn struct_payment_request() {
+        let v = PaymentRequest {
+            id: Uuid::new_v4(), amount: 9999.0, currency: "CNY".into(),
+            from_account: "ACC-A".into(), to_account: "ACC-B".into(),
+            method: "bank_transfer".into(), reference: "REF-PAY-001".into(),
+            scheduled_at: None,
+        };
+        roundtrip(&v);
+    }
+
+    #[test] fn struct_payment_result() {
+        let v = PaymentResult {
+            id: Uuid::new_v4(), request_id: Uuid::new_v4(),
+            status: "completed".into(),
+            transaction_ref: Some("TX-999".into()),
+            fee: 5.0, processed_at: Some(Utc::now()),
+        };
+        roundtrip(&v);
+    }
+
+    #[test] fn struct_reconciliation_response() {
+        let v = ReconciliationResponse {
+            id: Uuid::new_v4(), bank_transaction_id: "BT-002".into(),
+            system_record_id: "SR-002".into(),
+            match_status: "partial".into(), confidence: 0.8,
+            difference_amount: 10.0, notes: Some("金额差10元".into()),
+        };
+        roundtrip(&v);
+    }
+
+    #[test] fn struct_recognized_invoice() {
+        let v = RecognizedInvoice {
+            invoice: Invoice {
+                id: Uuid::new_v4(), number: "INV-003".into(),
+                vendor: "C".into(), invoice_date: Utc::now(),
+                total_amount: 100.0, tax_amount: 0.0, status: "recognized".into(),
+            },
+            items: vec![],
+        };
+        roundtrip(&v);
+    }
+
+    #[test] fn struct_payment_initiation_result() {
+        let v = PaymentInitiationResult {
+            request: PaymentRequest {
+                id: Uuid::new_v4(), amount: 100.0, currency: "USD".into(),
+                from_account: "X".into(), to_account: "Y".into(),
+                method: "ach".into(), reference: "R".into(), scheduled_at: None,
+            },
+            result: PaymentResult {
+                id: Uuid::new_v4(), request_id: Uuid::new_v4(),
+                status: "pending".into(), transaction_ref: None,
+                fee: 0.2, processed_at: None,
+            },
+        };
+        roundtrip(&v);
+    }
+}

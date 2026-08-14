@@ -1775,3 +1775,302 @@ pub async fn get_rollback_status_handler(
     let _ = params;
     Json(ApiResponse::success(status, "回滚状态"))
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use serde::Serialize;
+
+    fn roundtrip<T: Serialize + for<'de> Deserialize<'de>>(item: &T) {
+        let json = serde_json::to_string(item).unwrap();
+        let v1: serde_json::Value = serde_json::from_str(&json).unwrap();
+        let back: T = serde_json::from_str(&json).unwrap();
+        let json2 = serde_json::to_string(&back).unwrap();
+        let v2: serde_json::Value = serde_json::from_str(&json2).unwrap();
+        assert_eq!(v1, v2);
+    }
+
+    // ==================== Enum roundtrip ====================
+
+    #[test]
+    fn environment_roundtrip() {
+        for v in Environment::all() {
+            roundtrip(&v);
+        }
+    }
+
+    #[test]
+    fn deployment_status_roundtrip() {
+        for v in DeploymentStatus::all() {
+            roundtrip(&v);
+        }
+    }
+
+    #[test]
+    fn deployment_strategy_roundtrip() {
+        for v in DeploymentStrategy::all() {
+            roundtrip(&v);
+        }
+    }
+
+    #[test]
+    fn step_type_roundtrip() {
+        for v in StepType::all() {
+            roundtrip(&v);
+        }
+    }
+
+    #[test]
+    fn step_status_roundtrip() {
+        for v in &[
+            StepStatus::Pending,
+            StepStatus::Running,
+            StepStatus::Completed,
+            StepStatus::Failed,
+        ] {
+            roundtrip(v);
+        }
+    }
+
+    #[test]
+    fn rollback_trigger_roundtrip() {
+        for v in &[RollbackTrigger::Automatic, RollbackTrigger::Manual] {
+            roundtrip(v);
+        }
+    }
+
+    #[test]
+    fn rollback_action_type_roundtrip() {
+        for v in &[
+            RollbackActionType::RevertConfig,
+            RollbackActionType::RestartService,
+            RollbackActionType::ScaleDown,
+        ] {
+            roundtrip(v);
+        }
+    }
+
+    #[test]
+    fn rollback_action_status_roundtrip() {
+        for v in &[
+            RollbackActionStatus::Pending,
+            RollbackActionStatus::Executing,
+            RollbackActionStatus::Completed,
+            RollbackActionStatus::Failed,
+        ] {
+            roundtrip(v);
+        }
+    }
+
+    // ==================== Enum as_str/from_str ====================
+
+    #[test]
+    fn environment_as_str_from_str() {
+        for v in Environment::all() {
+            assert_eq!(Environment::from_str(v.as_str()), Some(v.clone()));
+        }
+        assert_eq!(Environment::from_str("unknown"), None);
+    }
+
+    #[test]
+    fn deployment_status_as_str_from_str() {
+        for v in DeploymentStatus::all() {
+            assert_eq!(DeploymentStatus::from_str(v.as_str()), Some(v.clone()));
+        }
+        assert_eq!(DeploymentStatus::from_str("unknown"), None);
+    }
+
+    #[test]
+    fn deployment_strategy_as_str_from_str() {
+        for v in DeploymentStrategy::all() {
+            assert_eq!(DeploymentStrategy::from_str(v.as_str()), Some(v.clone()));
+        }
+        assert_eq!(DeploymentStrategy::from_str("unknown"), None);
+    }
+
+    #[test]
+    fn step_type_as_str_from_str() {
+        for v in StepType::all() {
+            assert_eq!(StepType::from_str(v.as_str()), Some(v.clone()));
+        }
+        assert_eq!(StepType::from_str("unknown"), None);
+    }
+
+    #[test]
+    fn step_status_as_str_from_str() {
+        for v in &[
+            StepStatus::Pending,
+            StepStatus::Running,
+            StepStatus::Completed,
+            StepStatus::Failed,
+        ] {
+            assert_eq!(StepStatus::from_str(v.as_str()), Some(v.clone()));
+        }
+        assert_eq!(StepStatus::from_str("unknown"), None);
+    }
+
+    #[test]
+    fn rollback_trigger_as_str_from_str() {
+        for v in &[RollbackTrigger::Automatic, RollbackTrigger::Manual] {
+            assert_eq!(RollbackTrigger::from_str(v.as_str()), Some(v.clone()));
+        }
+        assert_eq!(RollbackTrigger::from_str("unknown"), None);
+    }
+
+    #[test]
+    fn rollback_action_type_as_str_from_str() {
+        for v in &[
+            RollbackActionType::RevertConfig,
+            RollbackActionType::RestartService,
+            RollbackActionType::ScaleDown,
+        ] {
+            assert_eq!(RollbackActionType::from_str(v.as_str()), Some(v.clone()));
+        }
+        assert_eq!(RollbackActionType::from_str("unknown"), None);
+    }
+
+    #[test]
+    fn rollback_action_status_as_str_from_str() {
+        for v in &[
+            RollbackActionStatus::Pending,
+            RollbackActionStatus::Executing,
+            RollbackActionStatus::Completed,
+            RollbackActionStatus::Failed,
+        ] {
+            assert_eq!(RollbackActionStatus::from_str(v.as_str()), Some(v.clone()));
+        }
+        assert_eq!(RollbackActionStatus::from_str("unknown"), None);
+    }
+
+    // ==================== Struct roundtrip ====================
+
+    #[test]
+    fn deployment_roundtrip() {
+        let d = Deployment::new(
+            "v1.0.0".into(),
+            Environment::Staging,
+            DeploymentStrategy::Canary,
+        );
+        roundtrip(&d);
+    }
+
+    #[test]
+    fn deployment_step_roundtrip() {
+        let s = DeploymentStep::new("dep-1".into(), StepType::Deploy);
+        roundtrip(&s);
+    }
+
+    #[test]
+    fn deployment_rollout_roundtrip() {
+        let r = DeploymentRollout::new("dep-1".into());
+        roundtrip(&r);
+    }
+
+    #[test]
+    fn deployment_list_roundtrip() {
+        let d = Deployment::new(
+            "v1.0.0".into(),
+            Environment::Production,
+            DeploymentStrategy::Rolling,
+        );
+        let list = DeploymentList {
+            deployments: vec![d],
+            total: 1,
+        };
+        roundtrip(&list);
+    }
+
+    #[test]
+    fn deployment_status_info_roundtrip() {
+        let info = DeploymentStatusInfo {
+            deployment_id: "dep-1".into(),
+            status: DeploymentStatus::Deploying,
+            progress: 0.75,
+            current_step: Some("deploying pods".into()),
+            steps_completed: 3,
+            total_steps: 4,
+        };
+        roundtrip(&info);
+    }
+
+    #[test]
+    fn gateway_config_roundtrip() {
+        let cfg = GatewayConfig::new(
+            "main-gw".into(),
+            "v2".into(),
+            Environment::Production,
+            serde_json::json!({"timeout": 30}),
+        );
+        roundtrip(&cfg);
+    }
+
+    #[test]
+    fn config_diff_roundtrip() {
+        let d = ConfigDiff {
+            config_id: "cfg-1".into(),
+            old_config: serde_json::json!({"a": 1}),
+            new_config: serde_json::json!({"a": 2}),
+            changed_at: "2025-01-01T00:00:00Z".into(),
+            changed_by: Some("admin".into()),
+        };
+        roundtrip(&d);
+    }
+
+    #[test]
+    fn config_environment_roundtrip() {
+        let ce = ConfigEnvironment::new("dev-1".into(), "development".into());
+        roundtrip(&ce);
+    }
+
+    #[test]
+    fn config_list_roundtrip() {
+        let cfg = GatewayConfig::new(
+            "gw".into(),
+            "v1".into(),
+            Environment::Development,
+            serde_json::json!({}),
+        );
+        let list = ConfigList {
+            configs: vec![cfg],
+            total: 1,
+        };
+        roundtrip(&list);
+    }
+
+    #[test]
+    fn rollback_policy_roundtrip() {
+        let p = RollbackPolicy::new("auto-rollback".into(), RollbackTrigger::Automatic);
+        roundtrip(&p);
+    }
+
+    #[test]
+    fn rollback_action_roundtrip() {
+        let a = RollbackAction::new("pol-1".into(), RollbackActionType::RevertConfig);
+        roundtrip(&a);
+    }
+
+    #[test]
+    fn rollback_status_roundtrip() {
+        let s = RollbackStatus {
+            policy_id: "pol-1".into(),
+            enabled: true,
+            last_execution: None,
+            total_executions: 0,
+            last_result: None,
+        };
+        roundtrip(&s);
+    }
+
+    #[test]
+    fn rollback_history_entry_roundtrip() {
+        let e = RollbackHistoryEntry {
+            id: "his-1".into(),
+            policy_id: "pol-1".into(),
+            action: RollbackActionType::RestartService,
+            status: RollbackActionStatus::Completed,
+            executed_at: Some("2025-01-01T00:00:00Z".into()),
+            reason: Some("health check failed".into()),
+        };
+        roundtrip(&e);
+    }
+}

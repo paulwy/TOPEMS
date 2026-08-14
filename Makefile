@@ -10,7 +10,8 @@
 SHELL := /bin/bash
 
 .PHONY: help sqlx-prepare sqlx-prepare-pkg sqlx-check sqlx-offline-test \
-        check-online check-offline check-migrations
+        check-online check-offline check-migrations \
+        clean clean-rust clean-frontend
 
 # 默认目标
 help: ## 显示本帮助
@@ -53,4 +54,14 @@ check-iam: ## 仅离线 check topems-unified-core（IAM 端口 8000）
 	DATABASE_URL= SQLX_OFFLINE=true cargo check -p topems-unified-core
 
 check-finance: ## 仅离线 check topems-finance（端口 8011）
-	DATABASE_URL= SQLX_OFFLINE=true cargo check -p topems-finance
+        DATABASE_URL= SQLX_OFFLINE=true cargo check -p topems-finance
+
+# ---------- 磁盘空间 / 构建清理 ----------
+clean: ## 全量清理（推荐，等效 topems clean）
+	./scripts/topems.sh clean
+
+clean-rust: ## 仅清理 Rust 编译产物 + kill 后台 cargo 进程
+	./scripts/topems.sh clean --rust
+
+clean-frontend: ## 仅清理前端 dist / .vite / coverage 产物
+	./scripts/topems.sh clean --frontend

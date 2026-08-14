@@ -83,3 +83,28 @@ impl TypedServiceClient<ErpApi> {
         self.get(&self.build_path("/finance/summary")).await
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn rt<T: Serialize + serde::de::DeserializeOwned>(val: &T) -> T {
+        let s = serde_json::to_string(val).unwrap();
+        serde_json::from_str(&s).unwrap()
+    }
+
+    #[test]
+    fn erp_asset_roundtrip() {
+        let a = ErpAsset {
+            id: "ast-001".into(),
+            name: "CNC Machine A".into(),
+            asset_code: "EQ-2024-0001".into(),
+            status: "active".into(),
+        };
+        let back = rt(&a);
+        assert_eq!(back.id, a.id);
+        assert_eq!(back.name, a.name);
+        assert_eq!(back.asset_code, a.asset_code);
+        assert_eq!(back.status, a.status);
+    }
+}

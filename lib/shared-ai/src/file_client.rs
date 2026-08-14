@@ -220,3 +220,106 @@ impl FileServiceClient {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use chrono::{TimeZone, Utc};
+
+    fn rt<T: Serialize + serde::de::DeserializeOwned>(val: &T) -> T {
+        let s = serde_json::to_string(val).unwrap();
+        serde_json::from_str(&s).unwrap()
+    }
+
+    fn ts() -> DateTime<Utc> {
+        Utc.with_ymd_and_hms(2026, 8, 15, 14, 0, 0).unwrap()
+    }
+
+    fn sample_metadata() -> FileMetadataResponse {
+        FileMetadataResponse {
+            id: Uuid::parse_str("aaaabbbb-cccc-dddd-eeee-ffffffffffff").unwrap(),
+            filename: "report.pdf".into(),
+            storage_path: "/uploads/2026/08/report.pdf".into(),
+            file_size: 1048576,
+            content_type: "application/pdf".into(),
+            owner_id: Uuid::parse_str("11112222-3333-4444-5555-666677778888").unwrap(),
+            owner_department_id: Some(Uuid::parse_str("99990000-1111-2222-3333-444455556666").unwrap()),
+            file_type: "document".into(),
+            category: Some("financial".into()),
+            version: 3,
+            parent_id: None,
+            vector_status: "indexed".into(),
+            vector_document_id: Some(Uuid::parse_str("aaaabbbb-1111-2222-3333-444455556666").unwrap()),
+            is_shared: true,
+            visibility: "internal".into(),
+            status: "active".into(),
+            created_at: ts(),
+            updated_at: ts(),
+            deleted_at: None,
+        }
+    }
+
+    fn sample_upload() -> UploadResponse {
+        UploadResponse {
+            id: Uuid::parse_str("aaaabbbb-cccc-dddd-eeee-ffffffffffff").unwrap(),
+            filename: "report.pdf".into(),
+            storage_path: "/uploads/2026/08/report.pdf".into(),
+            file_size: 1048576,
+            content_type: "application/pdf".into(),
+            owner_id: Uuid::parse_str("11112222-3333-4444-5555-666677778888").unwrap(),
+            owner_department_id: Some(Uuid::parse_str("99990000-1111-2222-3333-444455556666").unwrap()),
+            file_type: "document".into(),
+            category: Some("financial".into()),
+            version: 1,
+            parent_id: None,
+            vector_status: "pending".into(),
+            vector_document_id: None,
+            is_shared: false,
+            visibility: "private".into(),
+            status: "active".into(),
+            created_at: ts(),
+            updated_at: ts(),
+            deleted_at: None,
+        }
+    }
+
+    #[test]
+    fn file_metadata_roundtrip_full() {
+        let m = sample_metadata();
+        let back = rt(&m);
+        assert_eq!(back.id, m.id);
+        assert_eq!(back.filename, "report.pdf");
+        assert_eq!(back.file_size, 1048576);
+        assert_eq!(back.content_type, "application/pdf");
+        assert_eq!(back.version, 3);
+        assert!(back.is_shared);
+        assert_eq!(back.visibility, "internal");
+        assert_eq!(back.vector_status, "indexed");
+        assert!(back.parent_id.is_none());
+        assert!(back.deleted_at.is_none());
+    }
+
+    #[test]
+    fn file_metadata_with_all_optionals() {
+        let mut m = sample_metadata();
+        m.parent_id = Some(Uuid::parse_str("12341234-5678-90ab-cdef-1234567890ab").unwrap());
+        m.category = None;
+        m.deleted_at = Some(Utc.with_ymd_and_hms(2026, 8, 20, 0, 0, 0).unwrap());
+        let back = rt(&m);
+        assert!(back.parent_id.is_some());
+        assert!(back.category.is_none());
+        assert!(back.deleted_at.is_some());
+    }
+
+    #[test]
+    fn upload_response_roundtrip() {
+        let u = sample_upload();
+        let back = rt(&u);
+        assert_eq!(back.id, u.id);
+        assert_eq!(back.filename, "report.pdf");
+        assert_eq!(back.version, 1);
+        assert!(!back.is_shared);
+        assert_eq!(back.visibility, "private");
+        assert_eq!(back.vector_status, "pending");
+    }
+}

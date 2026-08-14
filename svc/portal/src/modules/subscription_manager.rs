@@ -945,3 +945,185 @@ pub async fn get_push_queue_length_handler(
     let length = PushOptimizer::get_queue_length().await;
     Json(ApiResponse::success(length, "推送队列长度"))
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use serde::Serialize;
+    use serde_json::Value;
+
+    fn roundtrip<T: Serialize + for<'de> Deserialize<'de>>(item: &T) {
+        let json = serde_json::to_string(item).unwrap();
+        let v1: Value = serde_json::from_str(&json).unwrap();
+        let back: T = serde_json::from_str(&json).unwrap();
+        let json2 = serde_json::to_string(&back).unwrap();
+        let v2: Value = serde_json::from_str(&json2).unwrap();
+        assert_eq!(v1, v2);
+    }
+
+    #[test]
+    fn test_subscription_channel_roundtrip_all_variants() {
+        for v in SubscriptionChannel::all() {
+            roundtrip(&v);
+        }
+    }
+
+    #[test]
+    fn test_subscription_channel_as_str_from_str_all() {
+        for v in SubscriptionChannel::all() {
+            let s = v.as_str();
+            let back = SubscriptionChannel::from_str(s);
+            assert!(back.is_some());
+            roundtrip(back.as_ref().unwrap());
+        }
+        assert_eq!(SubscriptionChannel::all().len(), 6);
+    }
+
+    #[test]
+    fn test_queue_provider_roundtrip_all_variants() {
+        for v in [QueueProvider::Redis, QueueProvider::NATS, QueueProvider::Kafka, QueueProvider::InMemory] {
+            roundtrip(&v);
+        }
+    }
+
+    #[test]
+    fn test_queue_provider_as_str_from_str() {
+        for v in [QueueProvider::Redis, QueueProvider::NATS, QueueProvider::Kafka, QueueProvider::InMemory] {
+            let s = v.as_str();
+            let back = QueueProvider::from_str(s);
+            assert!(back.is_some());
+            roundtrip(back.as_ref().unwrap());
+        }
+        assert!(QueueProvider::from_str("bogus").is_none());
+    }
+
+    #[test]
+    fn test_push_priority_roundtrip_all_variants() {
+        for v in [PushPriority::Critical, PushPriority::High, PushPriority::Normal, PushPriority::Low] {
+            roundtrip(&v);
+        }
+    }
+
+    #[test]
+    fn test_push_priority_as_str_from_str() {
+        for v in [PushPriority::Critical, PushPriority::High, PushPriority::Normal, PushPriority::Low] {
+            let s = v.as_str();
+            let back = PushPriority::from_str(s);
+            roundtrip(&back);
+        }
+    }
+
+    #[test]
+    fn test_subscriber_roundtrip() {
+        let s = Subscriber {
+            id: "sub1".to_string(),
+            client_id: "c1".to_string(),
+            channels: vec![SubscriptionChannel::TicketUpdates],
+            last_seen: "2025-01-01T00:00:00Z".to_string(),
+            connected_at: "2025-01-01T00:00:00Z".to_string(),
+        };
+        roundtrip(&s);
+    }
+
+    #[test]
+    fn test_subscription_message_roundtrip() {
+        let m = SubscriptionMessage {
+            id: "m1".to_string(),
+            channel: SubscriptionChannel::AuditLogs,
+            payload: Value::Null,
+            seq: 1,
+            created_at: "2025-01-01T00:00:00Z".to_string(),
+        };
+        roundtrip(&m);
+    }
+
+    #[test]
+    fn test_channel_stats_roundtrip() {
+        let cs = ChannelStats {
+            channel: SubscriptionChannel::SystemAlerts,
+            subscriber_count: 10,
+            message_count: 100,
+            last_message_at: None,
+        };
+        roundtrip(&cs);
+    }
+
+    #[test]
+    fn test_queue_config_roundtrip() {
+        let qc = QueueConfig {
+            name: "q1".to_string(),
+            provider: QueueProvider::Redis,
+            max_size: 1000,
+            batch_size: 50,
+        };
+        roundtrip(&qc);
+    }
+
+    #[test]
+    fn test_queue_message_roundtrip() {
+        let qm = QueueMessage {
+            id: "qm1".to_string(),
+            topic: "t1".to_string(),
+            key: Some("k1".to_string()),
+            value: Value::Null,
+            headers: Some(HashMap::new()),
+            timestamp: "2025-01-01T00:00:00Z".to_string(),
+        };
+        roundtrip(&qm);
+    }
+
+    #[test]
+    fn test_queue_stats_roundtrip() {
+        let qs = QueueStats {
+            name: "q1".to_string(),
+            provider: QueueProvider::Kafka,
+            total_messages: 10000,
+            pending_messages: 50,
+            consumed_messages: 9900,
+            dead_letter_count: 50,
+        };
+        roundtrip(&qs);
+    }
+
+    #[test]
+    fn test_dead_letter_entry_roundtrip() {
+        let d = DeadLetterEntry {
+            id: "dl1".to_string(),
+            original_message_id: "om1".to_string(),
+            topic: "t1".to_string(),
+            message_value: Value::Null,
+            error_reason: "timeout".to_string(),
+            retry_count: 3,
+            max_retries: 5,
+            status: "failed".to_string(),
+            last_retry_at: None,
+            created_at: "2025-01-01T00:00:00Z".to_string(),
+        };
+        roundtrip(&d);
+    }
+
+    #[test]
+    fn test_push_batch_roundtrip() {
+        let pb = PushBatch {
+            messages: vec![],
+            aggregated_at: "2025-01-01T00:00:00Z".to_string(),
+            target_subscribers: 5,
+            size_estimate: 1024,
+        };
+        roundtrip(&pb);
+    }
+
+    #[test]
+    fn test_push_stats_roundtrip() {
+        let ps = PushStats {
+            batch_window_ms: 100,
+            total_pushes: 1000,
+            batched_pushes: 800,
+            messages_pushed: 5000,
+            avg_batch_size: 5.0,
+            backpressure_events: 10,
+            queue_length: 42,
+        };
+        roundtrip(&ps);
+    }
+}

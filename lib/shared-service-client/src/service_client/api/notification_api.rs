@@ -99,3 +99,58 @@ impl TypedServiceClient<NotificationApi> {
         self.get(&self.build_path("/notifications/stats/me")).await
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn rt<T: Serialize + serde::de::DeserializeOwned>(val: &T) -> T {
+        let s = serde_json::to_string(val).unwrap();
+        serde_json::from_str(&s).unwrap()
+    }
+
+    #[test]
+    fn notification_item_roundtrip() {
+        let n = NotificationItem {
+            id: "notif-001".into(),
+            user_id: "user-123".into(),
+            notification_type: "email".into(),
+            title: "Welcome!".into(),
+            content: "Hello world".into(),
+            is_read: false,
+            priority: 5,
+        };
+        let back = rt(&n);
+        assert_eq!(back.id, "notif-001");
+        assert_eq!(back.title, "Welcome!");
+        assert!(!back.is_read);
+        assert_eq!(back.priority, 5);
+    }
+
+    #[test]
+    fn create_notification_with_optionals() {
+        let c = CreateNotification {
+            title: "Alert".into(),
+            content: "Server down".into(),
+            notification_type: Some("system".into()),
+            priority: Some(10),
+        };
+        let json = serde_json::to_string(&c).unwrap();
+        assert!(json.contains("\"notification_type\":\"system\""));
+        let back: CreateNotification = serde_json::from_str(&json).unwrap();
+        assert_eq!(back.priority, Some(10));
+    }
+
+    #[test]
+    fn create_notification_minimal_skips_none() {
+        let c = CreateNotification {
+            title: "Hi".into(),
+            content: "there".into(),
+            notification_type: None,
+            priority: None,
+        };
+        let json = serde_json::to_string(&c).unwrap();
+        assert!(!json.contains("notification_type"));
+        assert!(!json.contains("priority"));
+    }
+}

@@ -214,8 +214,10 @@ strip = true
 opt-level = 1
 # 开启增量编译（Rust 默认 true，这里显式声明）
 incremental = true
-# 保留 debug info（debugger/backtrace 友好）
+# 仅保留行号表：比 debug=2 节省 70%+ 符号体积，仍可 backtrace
 debug = 1
+# 去除私有符号表：不影响 panic backtrace，rlib 体积再减 30~50%
+strip = "symbols"
 # 代码生成并行（多核机器加速）
 codegen-units = 256
 # dev 模式跳过 LTO（节省增量编译时间）

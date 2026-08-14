@@ -232,3 +232,82 @@ impl MigrationHistory {
         Ok(result.rows_affected())
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use chrono::{TimeZone, Utc};
+
+    fn rt<T: Serialize + serde::de::DeserializeOwned>(val: &T) -> T {
+        let s = serde_json::to_string(val).unwrap();
+        serde_json::from_str(&s).unwrap()
+    }
+
+    fn sample_history() -> MigrationHistory {
+        MigrationHistory {
+            id: Uuid::parse_str("550e8400-e29b-41d4-a716-446655440000").unwrap(),
+            plugin_name: "my-plugin".into(),
+            version: "20260101000001".into(),
+            description: Some("init migration".into()),
+            script_name: "20260101000001_init.sql".into(),
+            checksum: "abc123def456".into(),
+            status: "applied".into(),
+            applied_at: Some(Utc.with_ymd_and_hms(2026, 1, 1, 0, 0, 1).unwrap()),
+            rolled_back_at: None,
+            execution_time_ms: Some(150),
+            error_message: None,
+            created_at: Utc.with_ymd_and_hms(2026, 1, 1, 0, 0, 0).unwrap(),
+        }
+    }
+
+    #[test]
+    fn migration_history_roundtrip_full() {
+        let h = sample_history();
+        let back = rt(&h);
+        assert_eq!(back.id, h.id);
+        assert_eq!(back.plugin_name, h.plugin_name);
+        assert_eq!(back.version, h.version);
+        assert_eq!(back.description, h.description);
+        assert_eq!(back.script_name, h.script_name);
+        assert_eq!(back.checksum, h.checksum);
+        assert_eq!(back.status, h.status);
+        assert_eq!(back.applied_at, h.applied_at);
+        assert_eq!(back.rolled_back_at, h.rolled_back_at);
+        assert_eq!(back.execution_time_ms, h.execution_time_ms);
+        assert_eq!(back.error_message, h.error_message);
+        assert_eq!(back.created_at, h.created_at);
+    }
+
+    #[test]
+    fn migration_history_with_error() {
+        let mut h = sample_history();
+        h.status = "failed".into();
+        h.applied_at = None;
+        h.execution_time_ms = None;
+        h.error_message = Some("syntax error near 'CREATE'".into());
+        let back = rt(&h);
+        assert_eq!(back.status, "failed");
+        assert!(back.applied_at.is_none());
+        assert_eq!(back.error_message.as_deref(), Some("syntax error near 'CREATE'"));
+    }
+
+    #[test]
+    fn migration_history_rolled_back() {
+        let mut h = sample_history();
+        h.status = "rolled_back".into();
+        h.rolled_back_at = Some(Utc.with_ymd_and_hms(2026, 1, 2, 0, 0, 0).unwrap());
+        let back = rt(&h);
+        assert_eq!(back.status, "rolled_back");
+        assert!(back.rolled_back_at.is_some());
+    }
+
+    #[test]
+    fn migration_history_json_serializable() {
+        let h = sample_history();
+        let json = serde_json::to_string(&h).unwrap();
+        assert!(json.contains("\"plugin_name\":\"my-plugin\""));
+        assert!(json.contains("\"version\":\"20260101000001\""));
+        assert!(json.contains("\"checksum\":\"abc123def456\""));
+        assert!(json.contains("\"status\":\"applied\""));
+    }
+}
