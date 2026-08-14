@@ -3134,7 +3134,7 @@ QMS 全量 cargo test：85 passed（V198 基线无回归）
 > - ✅ **数据库迁移完整性门禁**：同上（commit 6fbb9181c）
 > - ✅ **日志结构化升级（Phase 7）**：JsonEventFormatter · OTEL trace 全链路 · HTTP 追踪头注入（commit d539541ab）
 >
-> **V213 已完成**：✅ 覆盖率冲刺 P2 → P3 全量推进（详见下方 V213 章节，26 commits · ~2930 新增 tests）
+> **V213 已完成**：✅ 覆盖率冲刺 P2 → P3 全量推进（详见下方 V213 章节，28 commits · ~3131 新增 tests）
 >
 > **V214 候选（按 ROI 估算，均未启动）**：
 > - **方向 C 续 · 2845 条硬编码再收敛到 -40%**：V212 达到 -21.8% 后推进到 V214 净减 ≥728 条（含 fixed-px-spacing 640 + rgb-color 561 + box-shadow 145 专项）
@@ -3148,7 +3148,7 @@ QMS 全量 cargo test：85 passed（V198 基线无回归）
 > **承接**：V211 方向 B 闭环后启动覆盖率冲刺。V203 已完成 18 crate 纯函数提取（1439+ tests · 10% 达标），V213 在此基础上推进 P2→P3 全量覆盖。
 > **基线** (2026-08-14)：shared-core 53% · shared-auth 65% · shared-bootstrap 43% · shared-observability 71%
 > **目标**：全 workspace 覆盖率 ≥20% 阈值门禁 · shared-core 推至 65%+ · 关键 shared crate 补齐核心模块测试
-> **最终结果**：26 commits · ~2930 新增 unit tests · CI 覆盖率门禁扩展至全 workspace + TOTAL≥20% 阈值 ✅
+> **最终结果**：28 commits · ~3131 新增 unit tests · CI 覆盖率门禁扩展至全 workspace + TOTAL≥20% 阈值 ✅
 > **日期**：2026-08-14
 
 ### ✅ 验证结果
@@ -3205,16 +3205,18 @@ QMS 全量 cargo test：85 passed（V198 基线无回归）
 | `8349a9c96` | topems-ai | 257 | AI models + modules |
 | `dd893bc53` | topems-pm | 290 | PM models + modules |
 | `5f30db7a5` | topems-srm | 290 | SRM models + modules |
-| **小计** | | **2175** | |
+| `6ecb7f26d` | shared crates fmt | — | cargo fmt alignment · 50 files · 8 shared crates |
+| `7a14409f2` | topems-erp + topems-ehs + topems-unified-core | 201 | ERP 125 + EHS 12 + unified-core 64 · serde/clone/edge-case tests |
+| **小计** | | **2376** | |
 
 ### 📊 汇总统计
 
 | 维度 | 数值 |
 |------|------|
-| 总 commit 数 | 26（含 1 CI 门禁 commit） |
-| 新增 unit tests | ~2930 |
-| 新增代码行 | ~29,800+ insertions |
-| 覆盖 crate 数 | 14（7 shared + 7 业务服务） |
+| 总 commit 数 | 28（含 1 CI 门禁 commit + 1 fmt alignment） |
+| 新增 unit tests | ~3131 |
+| 新增代码行 | ~35,300+ insertions |
+| 覆盖 crate 数 | 17（7 shared + 10 业务服务） |
 | shared-core 行覆盖率 | 53% → 65% ✅ |
 | CI 门禁 | 全 workspace + TOTAL≥20% 阈值 ✅ |
 
@@ -3236,7 +3238,10 @@ QMS 全量 cargo test：85 passed（V198 基线无回归）
 | | topems-ai | 265 |
 | | topems-pm | 290 |
 | | topems-srm | 290 |
-| **合计** | | **~2930** |
+| | topems-erp | 125 |
+| | topems-ehs | 12 |
+| | topems-unified-core | 64 |
+| **合计** | | **~3131** |
 
 ### 关键修复
 
@@ -3262,6 +3267,9 @@ QMS 全量 cargo test：85 passed（V198 基线无回归）
 | `svc/ai/**` | 265 tests（含 shared-ai models） |
 | `svc/pm/**` | 290 tests |
 | `svc/srm/**` | 290 tests |
+| `svc/erp/**` | 125 tests · material/asset/dict/finance/leave_request/meeting_room/office_supplies/production_order/vehicle |
+| `svc/ehs/**` | 12 tests · hazard/risk · 含 Deserialize+Clone derive 补充 |
+| `svc/unified-core/**` | 64 tests · audit_log/doc/flow/iam-auth/iam-user/menu/tenant · 含 Deserialize derive 补充 |
 | `.github/workflows/ci.yml` | 覆盖率门禁扩展至全 workspace + 20% 阈值 |
 
 ### V203 → V213 覆盖率推进全景
@@ -3269,5 +3277,5 @@ QMS 全量 cargo test：85 passed（V198 基线无回归）
 | 版本 | 阶段 | 新增 tests | 累计 tests | 覆盖率目标 |
 |------|------|--------:|--------:|-----------|
 | V203 | 18 crate 纯函数提取 P1 | 1439 | 1439 | ≥10% ✅ |
-| V213 | P2→P3 全量冲刺 | ~2930 | ~4369 | ≥20% ✅ |
+| V213 | P2→P3 全量冲刺 | ~3131 | ~4570 | ≥20% ✅ |
 
