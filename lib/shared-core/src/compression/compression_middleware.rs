@@ -377,4 +377,302 @@ mod tests {
 
         assert!(middleware.should_compress(&response));
     }
+
+    #[test]
+    fn test_compression_config_lenient_min_length() {
+        let config = CompressionConfig::lenient();
+        assert_eq!(config.min_content_length, 512);
+        assert!(config.enabled);
+    }
+
+    #[test]
+    fn test_compression_config_strict_min_length() {
+        let config = CompressionConfig::strict();
+        assert_eq!(config.min_content_length, 4096);
+    }
+
+    #[test]
+    fn test_compression_config_with_min_content_length_builder() {
+        let config = CompressionConfig::default().with_min_content_length(2048);
+        assert_eq!(config.min_content_length, 2048);
+    }
+
+    #[test]
+    fn test_compression_config_with_excluded_mime_types_overrides() {
+        let mut types = HashSet::new();
+        types.insert("application/custom".to_string());
+        let config = CompressionConfig::default().with_excluded_mime_types(types);
+        assert!(!config.excluded_mime_types.contains("image/png"));
+        assert!(config.excluded_mime_types.contains("application/custom"));
+    }
+
+    #[test]
+    fn test_compression_config_add_excluded_mime_type_appends() {
+        let config = CompressionConfig::default().add_excluded_mime_type("application/x-custom");
+        assert!(config.excluded_mime_types.contains("application/x-custom"));
+        // Original entries remain
+        assert!(config.excluded_mime_types.contains("image/png"));
+    }
+
+    #[test]
+    fn test_compression_config_with_supported_algorithms_overrides() {
+        let mut algs = HashSet::new();
+        algs.insert(CompressionAlgorithm::Gzip);
+        let config = CompressionConfig::default().with_supported_algorithms(algs);
+        assert!(config
+            .supported_algorithms
+            .contains(&CompressionAlgorithm::Gzip));
+        assert!(!config
+            .supported_algorithms
+            .contains(&CompressionAlgorithm::Brotli));
+    }
+
+    #[test]
+    fn test_compression_algorithm_to_header_value_all_variants() {
+        assert_eq!(CompressionAlgorithm::Gzip.to_header_value(), "gzip");
+        assert_eq!(CompressionAlgorithm::Deflate.to_header_value(), "deflate");
+        assert_eq!(CompressionAlgorithm::Brotli.to_header_value(), "br");
+    }
+
+    #[test]
+    fn test_compression_algorithm_clone_and_equality() {
+        let a = CompressionAlgorithm::Gzip;
+        let b = a.clone();
+        assert_eq!(a, b);
+        assert_ne!(CompressionAlgorithm::Gzip, CompressionAlgorithm::Brotli);
+    }
+
+    #[test]
+    fn test_compression_middleware_new_preserves_config() {
+        let config = CompressionConfig::default().with_min_content_length(100);
+        let middleware = CompressionMiddleware::new(config);
+        // No public accessor; just ensure construction does not panic
+        let _ = middleware;
+    }
+
+    #[test]
+    fn test_compression_middleware_into_middleware_returns_arc() {
+        let middleware = CompressionMiddleware::new(CompressionConfig::default());
+        let arc = middleware.into_middleware();
+        assert_eq!(Arc::strong_count(&arc), 1);
+    }
+
+    #[test]
+    fn test_compress_gzip_roundtrip_restores_original() {
+        use flate2::read::GzDecoder;
+        use std::io::Read;
+        let middleware = CompressionMiddleware::new(CompressionConfig::default());
+        let original = b"Hello, world! The quick brown fox jumps over the lazy dog. ".repeat(20);
+        let compressed = middleware
+            .compress_gzip(&original)
+            .expect("gzip compression failed");
+        let mut decoder = GzDecoder::new(&compressed[..]);
+        let mut restored = Vec::new();
+        decoder.read_to_end(&mut restored).expect("gzip decompress");
+        assert_eq!(restored, original);
+    }
+
+    #[test]
+    fn test_compress_deflate_roundtrip_restores_original() {
+        use flate2::read::DeflateDecoder;
+        use std::io::Read;
+        let middleware = CompressionMiddleware::new(CompressionConfig::default());
+        let original = b"Deflate payload: lorem ipsum dolor sit amet ".repeat(30);
+        let compressed = middleware
+            .compress_deflate(&original)
+            .expect("deflate compression failed");
+        let mut decoder = DeflateDecoder::new(&compressed[..]);
+        let mut restored = Vec::new();
+        decoder.read_to_end(&mut restored).expect("deflate decompress");
+        assert_eq!(restored, original);
+    }
+
+    #[test]
+    fn test_compress_brotli_roundtrip_restores_original() {
+        use std::io::Read;
+        let middleware = CompressionMiddleware::new(CompressionConfig::default());
+        let original = b"Brotli payload: the quick brown fox is fast ".repeat(30);
+        let compressed = middleware
+            .compress_brotli(&original)
+            .expect("brotli compression failed");
+        let mut decoder = brotli::Decompressor::new(&compressed[..], 4096);
+        let mut restored = Vec::new();
+        decoder.read_to_end(&mut restored).expect("brotli decompress");
+        assert_eq!(restored, original);
+    }
+
+    #[test]
+    fn test_should_compress_returns_false_for_redirect() {
+        let middleware = CompressionMiddleware::new(CompressionConfig::default());
+        let response = Response::builder()
+            .status(301)
+            .header(header::CONTENT_TYPE, "text/html")
+            .header(header::CONTENT_LENGTH, "5000")
+            .body(Body::empty())
+            .expect("build response");
+        assert!(!middleware.should_compress(&response));
+    }
+
+    #[test]
+    fn test_should_compress_returns_false_for_informational() {
+        let middleware = CompressionMiddleware::new(CompressionConfig::default());
+        let response = Response::builder()
+            .status(100)
+            .header(header::CONTENT_TYPE, "text/html")
+            .body(Body::empty())
+            .expect("build response");
+        assert!(!middleware.should_compress(&response));
+    }
+
+    #[test]
+    fn test_should_compress_returns_false_when_already_encoded() {
+        let middleware = CompressionMiddleware::new(CompressionConfig::default());
+        let response = Response::builder()
+            .header(header::CONTENT_TYPE, "application/json")
+            .header(header::CONTENT_LENGTH, "5000")
+            .header(header::CONTENT_ENCODING, "gzip")
+            .body(Body::empty())
+            .expect("build response");
+        assert!(!middleware.should_compress(&response));
+    }
+
+    #[test]
+    fn test_should_compress_returns_false_when_below_threshold() {
+        let middleware = CompressionMiddleware::new(CompressionConfig::default());
+        let response = Response::builder()
+            .header(header::CONTENT_TYPE, "application/json")
+            .header(header::CONTENT_LENGTH, "100") // below default 1024
+            .body(Body::empty())
+            .expect("build response");
+        assert!(!middleware.should_compress(&response));
+    }
+
+    #[test]
+    fn test_should_compress_returns_true_when_no_content_length() {
+        let middleware = CompressionMiddleware::new(CompressionConfig::default());
+        let response = Response::builder()
+            .header(header::CONTENT_TYPE, "application/json")
+            .body(Body::empty())
+            .expect("build response");
+        assert!(middleware.should_compress(&response));
+    }
+
+    #[tokio::test]
+    async fn test_middleware_disabled_passes_response_through() {
+        use axum::{routing::get, Router};
+        use tower::ServiceExt;
+        let config = CompressionConfig {
+            enabled: false,
+            ..Default::default()
+        };
+        let mw = CompressionMiddleware::new(config).into_middleware();
+        let app: Router = Router::new()
+            .route("/", get(|| async { "hello world" }))
+            .layer(axum::middleware::from_fn(move |req, next| {
+                let mw = mw.clone();
+                async move { mw.middleware(req, next).await }
+            }));
+        let request = Request::builder()
+            .header(header::ACCEPT_ENCODING, "gzip")
+            .body(Body::empty())
+            .expect("build request");
+        let response = app.oneshot(request).await.expect("oneshot failed");
+        // No content-encoding header should be set when disabled
+        assert!(response.headers().get(header::CONTENT_ENCODING).is_none());
+    }
+
+    #[tokio::test]
+    async fn test_middleware_no_accept_encoding_passes_through() {
+        use axum::{routing::get, Router};
+        use tower::ServiceExt;
+        let mw = CompressionMiddleware::new(CompressionConfig::default()).into_middleware();
+        let app: Router = Router::new()
+            .route("/", get(|| async { "hello world" }))
+            .layer(axum::middleware::from_fn(move |req, next| {
+                let mw = mw.clone();
+                async move { mw.middleware(req, next).await }
+            }));
+        let request = Request::builder()
+            .body(Body::empty())
+            .expect("build request");
+        let response = app.oneshot(request).await.expect("oneshot failed");
+        assert!(response.headers().get(header::CONTENT_ENCODING).is_none());
+    }
+
+    #[tokio::test]
+    async fn test_middleware_compresses_large_text_response_with_gzip() {
+        use axum::{http::StatusCode, routing::get, Router};
+        use tower::ServiceExt;
+        let mw = CompressionMiddleware::new(CompressionConfig::default()).into_middleware();
+        let app: Router = Router::new()
+            .route(
+                "/",
+                get(|| async {
+                    (
+                        StatusCode::OK,
+                        [("content-type", "text/plain")],
+                        "x".repeat(2000),
+                    )
+                }),
+            )
+            .layer(axum::middleware::from_fn(move |req, next| {
+                let mw = mw.clone();
+                async move { mw.middleware(req, next).await }
+            }));
+        let request = Request::builder()
+            .header(header::ACCEPT_ENCODING, "gzip")
+            .body(Body::empty())
+            .expect("build request");
+        let response = app.oneshot(request).await.expect("oneshot failed");
+        assert_eq!(
+            response
+                .headers()
+                .get(header::CONTENT_ENCODING)
+                .and_then(|v| v.to_str().ok()),
+            Some("gzip")
+        );
+    }
+
+    #[tokio::test]
+    async fn test_middleware_skips_already_encoded_response() {
+        use axum::{http::StatusCode, routing::get, Router};
+        use tower::ServiceExt;
+        let mw = CompressionMiddleware::new(CompressionConfig::default()).into_middleware();
+        let app: Router = Router::new()
+            .route(
+                "/",
+                get(|| async {
+                    (
+                        StatusCode::OK,
+                        [
+                            ("content-type", "text/plain"),
+                            ("content-encoding", "gzip"),
+                        ],
+                        "x".repeat(2000),
+                    )
+                }),
+            )
+            .layer(axum::middleware::from_fn(move |req, next| {
+                let mw = mw.clone();
+                async move { mw.middleware(req, next).await }
+            }));
+        let request = Request::builder()
+            .header(header::ACCEPT_ENCODING, "gzip")
+            .body(Body::empty())
+            .expect("build request");
+        let response = app.oneshot(request).await.expect("oneshot failed");
+        // The middleware should not re-encode; the existing content-encoding header stays
+        assert_eq!(
+            response
+                .headers()
+                .get(header::CONTENT_ENCODING)
+                .and_then(|v| v.to_str().ok()),
+            Some("gzip")
+        );
+        // Body should remain the original uncompressed bytes (since should_compress returned false)
+        let bytes = axum::body::to_bytes(response.into_body(), 10 * 1024 * 1024)
+            .await
+            .expect("read body");
+        assert_eq!(bytes.len(), 2000);
+    }
 }

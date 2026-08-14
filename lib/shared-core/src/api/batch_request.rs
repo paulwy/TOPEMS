@@ -379,4 +379,208 @@ mod tests {
         assert!(normal > low);
         assert!(high > low);
     }
+
+    #[test]
+    fn test_request_priority_default_is_normal() {
+        let p: RequestPriority = Default::default();
+        assert_eq!(p, RequestPriority::Normal);
+    }
+
+    #[test]
+    fn test_request_priority_clone_and_equality() {
+        let a = RequestPriority::High;
+        let b = a.clone();
+        assert_eq!(a, b);
+        assert_ne!(RequestPriority::Low, RequestPriority::High);
+    }
+
+    #[test]
+    fn test_request_priority_sort_orders_low_to_high() {
+        let mut v = vec![
+            RequestPriority::Low,
+            RequestPriority::High,
+            RequestPriority::Normal,
+        ];
+        v.sort();
+        assert_eq!(
+            v,
+            vec![
+                RequestPriority::Low,
+                RequestPriority::Normal,
+                RequestPriority::High,
+            ]
+        );
+    }
+
+    #[test]
+    fn test_batch_request_new_has_no_options() {
+        let batch = BatchRequest::new(vec![]);
+        assert!(batch.requests.is_empty());
+        assert_eq!(batch.timeout_ms, None);
+        assert_eq!(batch.max_concurrent, None);
+    }
+
+    #[test]
+    fn test_batch_request_builder_chain() {
+        let batch = BatchRequest::new(vec![])
+            .with_timeout(1000)
+            .with_max_concurrent(2);
+        assert_eq!(batch.timeout_ms, Some(1000));
+        assert_eq!(batch.max_concurrent, Some(2));
+    }
+
+    #[test]
+    fn test_single_request_serde_roundtrip() {
+        let mut headers = HashMap::new();
+        headers.insert("X-Test".to_string(), "v".to_string());
+        let req = SingleRequest {
+            id: "rid".to_string(),
+            method: "POST".to_string(),
+            url: "http://x/api".to_string(),
+            headers: Some(headers),
+            body: Some(serde_json::json!({"k": 42})),
+            priority: Some("High".to_string()),
+            service_group: Some("svc".to_string()),
+        };
+        let json = serde_json::to_string(&req).expect("serialize");
+        let de: SingleRequest = serde_json::from_str(&json).expect("deserialize");
+        assert_eq!(de.id, "rid");
+        assert_eq!(de.method, "POST");
+        assert_eq!(de.url, "http://x/api");
+        assert_eq!(
+            de.headers.as_ref().unwrap().get("X-Test"),
+            Some(&"v".to_string())
+        );
+        assert_eq!(de.body.as_ref().unwrap().get("k"), Some(&serde_json::json!(42)));
+        assert_eq!(de.priority.as_deref(), Some("High"));
+        assert_eq!(de.service_group.as_deref(), Some("svc"));
+    }
+
+    #[test]
+    fn test_batch_request_serde_roundtrip() {
+        let batch = BatchRequest::new(vec![SingleRequest {
+            id: "1".to_string(),
+            method: "GET".to_string(),
+            url: "http://a/api".to_string(),
+            headers: None,
+            body: None,
+            priority: None,
+            service_group: None,
+        }])
+        .with_timeout(200)
+        .with_max_concurrent(1);
+        let json = serde_json::to_string(&batch).expect("serialize");
+        let de: BatchRequest = serde_json::from_str(&json).expect("deserialize");
+        assert_eq!(de.requests.len(), 1);
+        assert_eq!(de.timeout_ms, Some(200));
+        assert_eq!(de.max_concurrent, Some(1));
+    }
+
+    #[test]
+    fn test_batch_response_serde_roundtrip() {
+        let resp = BatchResponse {
+            success: true,
+            results: vec![SingleResponse {
+                request_id: "r1".to_string(),
+                status_code: 200,
+                success: true,
+                data: Some(serde_json::json!({"ok": true})),
+                error: None,
+                latency_ms: 12,
+            }],
+            successful_count: 1,
+            failed_count: 0,
+            total_time_ms: 12,
+        };
+        let json = serde_json::to_string(&resp).expect("serialize");
+        let de: BatchResponse = serde_json::from_str(&json).expect("deserialize");
+        assert!(de.success);
+        assert_eq!(de.successful_count, 1);
+        assert_eq!(de.failed_count, 0);
+        assert_eq!(de.results[0].status_code, 200);
+        assert_eq!(de.results[0].latency_ms, 12);
+    }
+
+    #[test]
+    fn test_single_response_serde_minimal() {
+        let resp = SingleResponse {
+            request_id: "r2".to_string(),
+            status_code: 500,
+            success: false,
+            data: None,
+            error: Some("boom".to_string()),
+            latency_ms: 0,
+        };
+        let json = serde_json::to_string(&resp).expect("serialize");
+        let de: SingleResponse = serde_json::from_str(&json).expect("deserialize");
+        assert!(!de.success);
+        assert_eq!(de.error.as_deref(), Some("boom"));
+        assert!(de.data.is_none());
+    }
+
+    #[test]
+    fn test_batch_request_handler_default() {
+        let handler = BatchRequestHandler::default();
+        let _ = handler;
+    }
+
+    #[test]
+    fn test_batch_request_handler_builder_chain() {
+        let handler = BatchRequestHandler::new()
+            .with_timeout(Duration::from_secs(10))
+            .with_max_concurrent(20);
+        let _ = handler;
+    }
+
+    #[test]
+    fn test_extract_service_from_url_valid() {
+        let handler = BatchRequestHandler::new();
+        let svc = handler.extract_service_from_url("https://api.example.com:8080/path");
+        assert_eq!(svc, "api.example.com");
+    }
+
+    #[test]
+    fn test_extract_service_from_url_invalid_returns_unknown() {
+        let handler = BatchRequestHandler::new();
+        let svc = handler.extract_service_from_url("not-a-url");
+        assert_eq!(svc, "unknown");
+    }
+
+    #[test]
+    fn test_group_by_service_uses_url_when_no_group() {
+        let handler = BatchRequestHandler::new();
+        let requests = vec![
+            SingleRequest {
+                id: "1".to_string(),
+                method: "GET".to_string(),
+                url: "http://hrm:8080/a".to_string(),
+                headers: None,
+                body: None,
+                priority: None,
+                service_group: None,
+            },
+            SingleRequest {
+                id: "2".to_string(),
+                method: "GET".to_string(),
+                url: "http://iam:8081/b".to_string(),
+                headers: None,
+                body: None,
+                priority: None,
+                service_group: None,
+            },
+        ];
+        let groups = handler.group_by_service(&requests);
+        assert_eq!(groups.len(), 2);
+        assert!(groups.contains_key("hrm"));
+        assert!(groups.contains_key("iam"));
+    }
+
+    #[test]
+    fn test_single_response_result_error_construction() {
+        let r = SingleResponseResult::error(503, "service unavailable".to_string());
+        assert_eq!(r.status_code, 503);
+        assert!(!r.success);
+        assert!(r.data.is_none());
+        assert_eq!(r.error.as_deref(), Some("service unavailable"));
+    }
 }
