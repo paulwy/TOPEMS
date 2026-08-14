@@ -189,9 +189,9 @@ export const createCustomTheme = (): Theme => {
     zIndex: designTokens.zIndex,
     shadows: lightShadows as ThemeOptions['shadows'],
     customShadows: {
-      card: '0 1px 2px 0 rgba(0,0,0,0.04), 0 1px 3px 0 rgba(0,0,0,0.03)',
-      dropdown: '0 4px 12px rgba(0,0,0,0.08), 0 2px 4px rgba(0,0,0,0.04)',
-      dialog: '0 24px 48px rgba(0,0,0,0.16), 0 8px 16px rgba(0,0,0,0.08)',
+      card: `0 1px 2px 0 ${designTokens.colors.action.hover}, 0 1px 3px 0 rgba(0,0,0,0.03)`,
+      dropdown: `0 4px 12px ${designTokens.colors.action.selected}, 0 2px 4px ${designTokens.colors.action.hover}`,
+      dialog: `0 24px 48px rgba(0,0,0,0.16), 0 8px 16px ${designTokens.colors.action.selected}`,
       focus: '0 0 0 3px rgba(59, 130, 246, 0.15)',
       dangerButton: '0 4px 12px rgba(239, 68, 68, 0.30)',
       dangerButtonHover: '0 6px 16px rgba(239, 68, 68, 0.40)',
@@ -215,7 +215,7 @@ export const createCustomTheme = (): Theme => {
             borderRadius: designTokens.borderRadius.md,
             fontWeight: designTokens.typography.fontWeight.medium,
             fontSize: designTokens.typography.fontSize.sm,
-            padding: '6px 16px',
+            padding: `${designTokens.spacing.sm} 16px`,
             minWidth: 'auto',
             '&.MuiButton-contained': {
               boxShadow: designTokens.shadows.sm,
@@ -227,7 +227,7 @@ export const createCustomTheme = (): Theme => {
               borderWidth: '1px',
             },
             '&.MuiButton-text': {
-              padding: '6px 12px',
+              padding: `${designTokens.spacing.sm} 12px`,
             },
           },
         },
@@ -312,7 +312,7 @@ export const createCustomTheme = (): Theme => {
           tooltip: {
             borderRadius: semanticTokens.radius.small,
             fontSize: designTokens.typography.fontSize.xs,
-            padding: '8px 12px',
+            padding: `${designTokens.spacing.sm} 12px`,
           },
         },
       },
@@ -351,7 +351,7 @@ export const createCustomTheme = (): Theme => {
       MuiTableCell: {
         styleOverrides: {
           root: {
-            padding: '12px 16px',
+            padding: `${designTokens.spacing.md} 16px`,
             borderBottom: semanticTokens.border.default,
           },
           head: ({ theme }) => ({
@@ -404,7 +404,7 @@ export const createCustomTheme = (): Theme => {
             textTransform: 'none',
             fontWeight: designTokens.typography.fontWeight.medium,
             minWidth: 'auto',
-            padding: '12px 20px',
+            padding: `${designTokens.spacing.md} 20px`,
           },
         },
       },
@@ -609,7 +609,7 @@ export const createCustomTheme = (): Theme => {
           root: {
             fontSize: designTokens.typography.fontSize.sm,
             borderRadius: designTokens.borderRadius.sm,
-            margin: '2px 6px',
+            margin: `${designTokens.spacing.xs} 6px`,
             minHeight: 36,
           },
         },
@@ -718,7 +718,7 @@ export const createCustomTheme = (): Theme => {
       MuiAccordionSummary: {
         styleOverrides: {
           root: {
-            padding: '12px 20px',
+            padding: `${designTokens.spacing.md} 20px`,
             minHeight: 48,
             '&.Mui-expanded': {
               minHeight: 48,
@@ -726,7 +726,7 @@ export const createCustomTheme = (): Theme => {
           },
           content: {
             '&.Mui-expanded': {
-              margin: '12px 0',
+              margin: `${designTokens.spacing.md} 0`,
             },
           },
         },
@@ -734,7 +734,7 @@ export const createCustomTheme = (): Theme => {
       MuiAccordionDetails: {
         styleOverrides: {
           root: {
-            padding: '16px 20px 20px',
+            padding: `${designTokens.spacing.md} 20px 20px`,
             borderTop: semanticTokens.border.default,
           },
         },
@@ -818,7 +818,7 @@ export const createCustomTheme = (): Theme => {
       MuiCardHeader: {
         styleOverrides: {
           root: {
-            padding: '16px 20px',
+            padding: `${designTokens.spacing.md} 20px`,
           },
           title: {
             fontSize: designTokens.typography.fontSize.lg,
@@ -832,7 +832,7 @@ export const createCustomTheme = (): Theme => {
       MuiCardContent: {
         styleOverrides: {
           root: {
-            padding: '16px 20px',
+            padding: `${designTokens.spacing.md} 20px`,
             '&:last-child': {
               paddingBottom: 4,
             },
@@ -842,7 +842,7 @@ export const createCustomTheme = (): Theme => {
       MuiCardActions: {
         styleOverrides: {
           root: {
-            padding: '12px 20px 16px',
+            padding: `${designTokens.spacing.md} 20px 16px`,
             gap: 8,
           },
         },

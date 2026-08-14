@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
+import i18n from '@/i18n';
 
 /**
  * 主题类型
@@ -12,10 +13,10 @@ export type Theme = 'light' | 'dark' | 'cyberpunk' | 'system';
 
 /** 主题列表（用于主题选择器 UI） */
 export const themeList: { value: Theme; label: string; description: string }[] = [
-  { value: 'light', label: '亮色', description: '明亮清晰，适合白天使用' },
-  { value: 'dark', label: '暗色', description: '深色背景，护眼舒适' },
-  { value: 'cyberpunk', label: '赛博朋克', description: '霓虹科技风，深空背景' },
-  { value: 'system', label: '跟随系统', description: '自动跟随系统偏好' },
+  { value: 'light', label: i18n.t('store.theme_store.k0'), description: '明亮清晰，适合白天使用' },
+  { value: 'dark', label: i18n.t('store.theme_store.k2'), description: '深色背景，护眼舒适' },
+  { value: 'cyberpunk', label: i18n.t('store.theme_store.k4'), description: '霓虹科技风，深空背景' },
+  { value: 'system', label: i18n.t('store.theme_store.k6'), description: '自动跟随系统偏好' },
 ];
 
 interface ThemeState {

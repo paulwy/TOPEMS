@@ -1,4 +1,5 @@
 import type { ThemeOptions } from '@mui/material/styles';
+import { designTokens } from '@topems/tokens';
 
 /**
  * MUI X DataGrid theme overrides
@@ -62,13 +63,13 @@ export const getDataGridTheme = (): Record<string, unknown> => ({
         },
 
         '& .MuiDataGrid-toolbarContainer': {
-          padding: '8px 16px',
+          padding: `${designTokens.spacing.sm} 16px`,
           borderBottom: '1px solid var(--mui-palette-divider)',
           gap: 8,
         },
 
         '& .MuiDataGrid-filterForm': {
-          padding: '8px 16px',
+          padding: `${designTokens.spacing.sm} 16px`,
         },
         '& .MuiDataGrid-filterFormColumnInput': {
           paddingRight: 8,
@@ -132,14 +133,14 @@ export const getDataGridTheme = (): Record<string, unknown> => ({
       root: {
         '& .MuiDataGrid-pinnedColumnHeaders': {
           backgroundColor: 'var(--mui-palette-grey-50)',
-          boxShadow: '2px 0 4px -1px rgba(0, 0, 0, 0.1)',
+          boxShadow: `2px 0 4px -1px ${designTokens.colors.action.selected}`,
         },
         '& .MuiDataGrid-pinnedColumns': {
           backgroundColor: 'var(--mui-palette-grey-50)',
-          boxShadow: '2px 0 4px -1px rgba(0, 0, 0, 0.08)',
+          boxShadow: `2px 0 4px -1px ${designTokens.colors.action.selected}`,
         },
         '& .MuiDataGrid-pinnedRows': {
-          boxShadow: '0 -2px 4px -1px rgba(0, 0, 0, 0.1)',
+          boxShadow: `0 -2px 4px -1px ${designTokens.colors.action.selected}`,
         },
         '& .MuiDataGrid-rowReorderColumn': { cursor: 'grab' },
         '& .MuiDataGrid-rowReorderColumn:active': { cursor: 'grabbing' },
