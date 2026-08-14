@@ -426,3 +426,57 @@ impl DomainEventHandler for PayableSettledHandler {
         Ok(result)
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use serde::{Deserialize, Serialize};
+
+    fn roundtrip<T: Serialize + for<'de> Deserialize<'de>>(item: &T) {
+        let json = serde_json::to_string(item).unwrap();
+        let v1: serde_json::Value = serde_json::from_str(&json).unwrap();
+        let back: T = serde_json::from_str(&json).unwrap();
+        let json2 = serde_json::to_string(&back).unwrap();
+        let v2: serde_json::Value = serde_json::from_str(&json2).unwrap();
+        assert_eq!(v1, v2);
+    }
+
+    #[test]
+    fn rt_side_effect_send_notification() {
+        roundtrip(&SideEffect::SendNotification {
+            recipient: "alice".into(),
+            message: "Voucher posted".into(),
+        });
+    }
+
+    #[test]
+    fn rt_side_effect_trigger_sync() {
+        roundtrip(&SideEffect::TriggerSync {
+            target_service: "ledger".into(),
+            entity_type: "Voucher".into(),
+            entity_id: "v-001".into(),
+        });
+    }
+
+    #[test]
+    fn rt_side_effect_update_cache() {
+        roundtrip(&SideEffect::UpdateCache {
+            cache_key: "voucher:v-001:posted".into(),
+        });
+    }
+
+    #[test]
+    fn rt_side_effect_invalidate_view() {
+        roundtrip(&SideEffect::InvalidateView {
+            view_name: "voucher_summary".into(),
+        });
+    }
+
+    #[test]
+    fn rt_side_effect_publish_external_event() {
+        roundtrip(&SideEffect::PublishExternalEvent {
+            routing_key: "finance.voucher.posted".into(),
+            payload: serde_json::json!({ "voucher_id": "v-001", "amount": 1000 }),
+        });
+    }
+}

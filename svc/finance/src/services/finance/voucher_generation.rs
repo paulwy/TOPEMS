@@ -322,3 +322,63 @@ impl FinanceService {
         })
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use chrono::Utc;
+    use serde::{Deserialize, Serialize};
+    use serde_json::{from_value, to_value, Value};
+    use uuid::Uuid;
+
+    fn uid() -> Uuid {
+        Uuid::new_v4()
+    }
+    fn now() -> chrono::DateTime<Utc> {
+        Utc::now()
+    }
+
+    fn roundtrip<T: Serialize + for<'de> Deserialize<'de>>(v: &T) {
+        let a = to_value(v).unwrap();
+        let b: T = from_value(a.clone()).unwrap();
+        let c = to_value(&b).unwrap();
+        assert_eq!(a, c);
+    }
+
+    #[test]
+    fn voucher_generation_rule_roundtrip() {
+        let full = VoucherGenerationRule {
+            id: uid(),
+            tenant_id: uid(),
+            name: "r1".into(),
+            source_type: "order".into(),
+            source_filter: Some(Value::from("{}")),
+            mapping_config: Value::from("{\"a\":1}"),
+            output_voucher_type: "sales".into(),
+            status: "active".into(),
+            priority: 1,
+            description: Some("desc".into()),
+            created_at: now(),
+            updated_at: now(),
+            created_by: Some("u".into()),
+        };
+        roundtrip(&full);
+
+        let minimal = VoucherGenerationRule {
+            id: uid(),
+            tenant_id: uid(),
+            name: "r2".into(),
+            source_type: "order".into(),
+            source_filter: None,
+            mapping_config: Value::Null,
+            output_voucher_type: "sales".into(),
+            status: "inactive".into(),
+            priority: 0,
+            description: None,
+            created_at: now(),
+            updated_at: now(),
+            created_by: None,
+        };
+        roundtrip(&minimal);
+    }
+}

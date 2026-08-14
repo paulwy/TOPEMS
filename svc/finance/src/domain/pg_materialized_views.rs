@@ -474,3 +474,79 @@ impl MaterializedView for PgReceivableAgingView {
         Ok(())
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use serde::{Deserialize, Serialize};
+
+    fn roundtrip<T: Serialize + for<'de> Deserialize<'de>>(item: &T) {
+        let json = serde_json::to_string(item).unwrap();
+        let v1: serde_json::Value = serde_json::from_str(&json).unwrap();
+        let back: T = serde_json::from_str(&json).unwrap();
+        let json2 = serde_json::to_string(&back).unwrap();
+        let v2: serde_json::Value = serde_json::from_str(&json2).unwrap();
+        assert_eq!(v1, v2);
+    }
+
+    fn now() -> chrono::DateTime<chrono::Utc> { chrono::Utc::now() }
+
+    fn today() -> chrono::NaiveDate { chrono::Utc::now().date_naive() }
+
+    fn uid() -> String { uuid::Uuid::new_v4().to_string() }
+
+    fn dec(n: i64) -> rust_decimal::Decimal { rust_decimal::Decimal::from(n) }
+
+    #[test]
+    fn rt_pg_voucher_summary_posted_at_none() {
+        roundtrip(&PgVoucherSummary {
+            id: uid(),
+            voucher_no: "V-001".into(),
+            voucher_date: today(),
+            voucher_type: "journal".into(),
+            status: "Draft".into(),
+            summary: "draft".into(),
+            total_amount: dec(1000),
+            created_by: "alice".into(),
+            created_at: now(),
+            posted_at: None,
+            version: 1,
+        });
+    }
+
+    #[test]
+    fn rt_pg_voucher_summary_posted_at_some() {
+        roundtrip(&PgVoucherSummary {
+            id: uid(),
+            voucher_no: "V-002".into(),
+            voucher_date: today(),
+            voucher_type: "adjustment".into(),
+            status: "Posted".into(),
+            summary: "adjustment summary".into(),
+            total_amount: dec(2500),
+            created_by: "bob".into(),
+            created_at: now(),
+            posted_at: Some(now()),
+            version: 3,
+        });
+    }
+
+    #[test]
+    fn rt_pg_receivable_aging() {
+        roundtrip(&PgReceivableAging {
+            id: uid(),
+            customer_id: "cust-1".into(),
+            customer_name: "Foo Corp".into(),
+            total_amount: dec(50000),
+            current_amount: dec(5000),
+            bucket_30_amount: dec(10000),
+            bucket_60_amount: dec(8000),
+            bucket_90_amount: dec(12000),
+            bucket_180_amount: dec(10000),
+            over_180_amount: dec(5000),
+            status: "PartiallySettled".into(),
+            version: 7,
+            updated_at: now(),
+        });
+    }
+}

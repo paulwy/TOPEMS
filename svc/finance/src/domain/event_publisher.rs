@@ -257,3 +257,69 @@ impl DomainEventPublisherExt for CompositeEventPublisher {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::domain::events::{FinanceDomainEvent, VoucherCreatedEvent};
+    use serde::{Deserialize, Serialize};
+
+    fn roundtrip<T: Serialize + for<'de> Deserialize<'de>>(item: &T) {
+        let json = serde_json::to_string(item).unwrap();
+        let v1: serde_json::Value = serde_json::from_str(&json).unwrap();
+        let back: T = serde_json::from_str(&json).unwrap();
+        let json2 = serde_json::to_string(&back).unwrap();
+        let v2: serde_json::Value = serde_json::from_str(&json2).unwrap();
+        assert_eq!(v1, v2);
+    }
+
+    fn now() -> chrono::DateTime<chrono::Utc> { chrono::Utc::now() }
+
+    fn uid() -> String { uuid::Uuid::new_v4().to_string() }
+
+    fn sample_event() -> FinanceDomainEvent {
+        FinanceDomainEvent::VoucherCreated(VoucherCreatedEvent {
+            voucher_id: uid(),
+            voucher_no: "V-001".into(),
+            voucher_type: "journal".into(),
+            total_amount: 100.0,
+            created_by: "alice".into(),
+            occurred_at: now(),
+        })
+    }
+
+    #[test]
+    fn rt_event_priority_variants() {
+        roundtrip(&EventPriority::Low);
+        roundtrip(&EventPriority::Normal);
+        roundtrip(&EventPriority::High);
+        roundtrip(&EventPriority::Critical);
+    }
+
+    #[test]
+    fn rt_event_publish_metadata_default() {
+        roundtrip(&EventPublishMetadata::default());
+    }
+
+    #[test]
+    fn rt_event_publish_metadata_all_some() {
+        roundtrip(&EventPublishMetadata {
+            correlation_id: uid(),
+            causation_id: Some(uid()),
+            user_id: Some("alice".into()),
+            tenant_id: Some("tenant-1".into()),
+            source: "topems-finance".into(),
+            priority: EventPriority::High,
+        });
+    }
+
+    #[test]
+    fn rt_published_event() {
+        roundtrip(&PublishedEvent {
+            event: sample_event(),
+            aggregate_id: "voucher-1".into(),
+            metadata: EventPublishMetadata::new(uid(), "test"),
+            published_at: now(),
+        });
+    }
+}

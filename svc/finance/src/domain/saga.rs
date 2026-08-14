@@ -672,3 +672,206 @@ pub fn saga_type_for_event(event: &FinanceDomainEvent) -> Option<&'static str> {
         _ => None,
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use serde::{Deserialize, Serialize};
+    use std::collections::HashMap;
+
+    fn roundtrip<T: Serialize + for<'de> Deserialize<'de>>(item: &T) {
+        let json = serde_json::to_string(item).unwrap();
+        let v1: serde_json::Value = serde_json::from_str(&json).unwrap();
+        let back: T = serde_json::from_str(&json).unwrap();
+        let json2 = serde_json::to_string(&back).unwrap();
+        let v2: serde_json::Value = serde_json::from_str(&json2).unwrap();
+        assert_eq!(v1, v2);
+    }
+
+    fn now() -> chrono::DateTime<chrono::Utc> { chrono::Utc::now() }
+
+    fn uid() -> String { uuid::Uuid::new_v4().to_string() }
+
+    #[test]
+    fn rt_saga_action_type_variants() {
+        roundtrip(&SagaActionType::HttpPost);
+        roundtrip(&SagaActionType::HttpPut);
+        roundtrip(&SagaActionType::HttpDelete);
+        roundtrip(&SagaActionType::PublishEvent);
+        roundtrip(&SagaActionType::LocalCall);
+    }
+
+    #[test]
+    fn rt_saga_step_status_variants() {
+        roundtrip(&SagaStepStatus::Pending);
+        roundtrip(&SagaStepStatus::Running);
+        roundtrip(&SagaStepStatus::Completed);
+        roundtrip(&SagaStepStatus::Failed);
+        roundtrip(&SagaStepStatus::Compensated);
+        roundtrip(&SagaStepStatus::Skipped);
+    }
+
+    #[test]
+    fn rt_saga_status_variants() {
+        roundtrip(&SagaStatus::Running);
+        roundtrip(&SagaStatus::Completed);
+        roundtrip(&SagaStatus::Failed);
+        roundtrip(&SagaStatus::Compensating);
+        roundtrip(&SagaStatus::Compensated);
+        roundtrip(&SagaStatus::Aborted);
+    }
+
+    #[test]
+    fn rt_saga_action_with_payload() {
+        roundtrip(&SagaAction {
+            action_type: SagaActionType::HttpPost,
+            target_service: "finance".into(),
+            endpoint: "/api/v1/vouchers/post".into(),
+            payload: serde_json::json!({ "voucher_id": "v1", "force_fail": false }),
+        });
+    }
+
+    #[test]
+    fn rt_saga_step_all_none() {
+        roundtrip(&SagaStep {
+            id: uid(),
+            name: "validate".into(),
+            action: SagaAction {
+                action_type: SagaActionType::LocalCall,
+                target_service: "finance".into(),
+                endpoint: "/internal/validate".into(),
+                payload: serde_json::json!({}),
+            },
+            compensation: SagaAction {
+                action_type: SagaActionType::LocalCall,
+                target_service: "finance".into(),
+                endpoint: "/internal/validate/undo".into(),
+                payload: serde_json::json!({}),
+            },
+            status: SagaStepStatus::Pending,
+            started_at: None,
+            completed_at: None,
+            error: None,
+        });
+    }
+
+    #[test]
+    fn rt_saga_step_all_some() {
+        roundtrip(&SagaStep {
+            id: uid(),
+            name: "post".into(),
+            action: SagaAction {
+                action_type: SagaActionType::HttpPost,
+                target_service: "ledger".into(),
+                endpoint: "/api/ledger".into(),
+                payload: serde_json::json!({ "amount": 100 }),
+            },
+            compensation: SagaAction {
+                action_type: SagaActionType::HttpPost,
+                target_service: "ledger".into(),
+                endpoint: "/api/ledger/reverse".into(),
+                payload: serde_json::json!({ "amount": 100 }),
+            },
+            status: SagaStepStatus::Failed,
+            started_at: Some(now()),
+            completed_at: Some(now()),
+            error: Some("timeout".into()),
+        });
+    }
+
+    #[test]
+    fn rt_saga_instance_minimal() {
+        roundtrip(&SagaInstance {
+            id: uid(),
+            saga_type: "VoucherPosting".into(),
+            status: SagaStatus::Running,
+            steps: vec![],
+            current_step: 0,
+            started_at: now(),
+            completed_at: None,
+            correlation_id: uid(),
+            payload: serde_json::json!({ "voucher_id": "v1" }),
+            result: None,
+            error: None,
+        });
+    }
+
+    #[test]
+    fn rt_saga_instance_full() {
+        let step_ok = SagaStep {
+            id: uid(),
+            name: "validate".into(),
+            action: SagaAction {
+                action_type: SagaActionType::LocalCall,
+                target_service: "finance".into(),
+                endpoint: "/internal/validate".into(),
+                payload: serde_json::json!({}),
+            },
+            compensation: SagaAction {
+                action_type: SagaActionType::LocalCall,
+                target_service: "finance".into(),
+                endpoint: "/internal/validate/undo".into(),
+                payload: serde_json::json!({}),
+            },
+            status: SagaStepStatus::Completed,
+            started_at: Some(now()),
+            completed_at: Some(now()),
+            error: None,
+        };
+        let step_bad = SagaStep {
+            id: uid(),
+            name: "post".into(),
+            action: SagaAction {
+                action_type: SagaActionType::HttpPost,
+                target_service: "ledger".into(),
+                endpoint: "/api/ledger".into(),
+                payload: serde_json::json!({}),
+            },
+            compensation: SagaAction {
+                action_type: SagaActionType::HttpPost,
+                target_service: "ledger".into(),
+                endpoint: "/api/ledger/reverse".into(),
+                payload: serde_json::json!({}),
+            },
+            status: SagaStepStatus::Failed,
+            started_at: Some(now()),
+            completed_at: Some(now()),
+            error: Some("downstream error".into()),
+        };
+        roundtrip(&SagaInstance {
+            id: uid(),
+            saga_type: "VoucherPosting".into(),
+            status: SagaStatus::Failed,
+            steps: vec![step_ok, step_bad],
+            current_step: 1,
+            started_at: now(),
+            completed_at: Some(now()),
+            correlation_id: uid(),
+            payload: serde_json::json!({ "voucher_id": "v1" }),
+            result: Some(serde_json::json!({ "ok": false })),
+            error: Some("step failed".into()),
+        });
+    }
+
+    #[test]
+    fn rt_saga_stats_default() {
+        roundtrip(&SagaStats::default());
+    }
+
+    #[test]
+    fn rt_saga_stats_with_counts() {
+        let mut by_type = HashMap::new();
+        by_type.insert("VoucherPosting".to_string(), 3usize);
+        by_type.insert("ReceivableSettlement".to_string(), 2usize);
+        roundtrip(&SagaStats {
+            total: 10,
+            running: 1,
+            completed: 6,
+            failed: 1,
+            compensating: 1,
+            compensated: 1,
+            aborted: 0,
+            by_type,
+        });
+    }
+}

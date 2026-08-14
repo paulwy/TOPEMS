@@ -260,3 +260,44 @@ impl<T: EventStore + Send + Sync + 'static> EventReplayer<T> {
         serde_json::Value::Object(state)
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use serde::{Deserialize, Serialize};
+
+    fn roundtrip<T: Serialize + for<'de> Deserialize<'de>>(item: &T) {
+        let json = serde_json::to_string(item).unwrap();
+        let v1: serde_json::Value = serde_json::from_str(&json).unwrap();
+        let back: T = serde_json::from_str(&json).unwrap();
+        let json2 = serde_json::to_string(&back).unwrap();
+        let v2: serde_json::Value = serde_json::from_str(&json2).unwrap();
+        assert_eq!(v1, v2);
+    }
+
+    fn uid() -> String { uuid::Uuid::new_v4().to_string() }
+
+    #[test]
+    fn rt_replay_result() {
+        roundtrip(&ReplayResult {
+            final_state: serde_json::json!({ "status": "Posted", "total_amount": 1000 }),
+            events_count: 3,
+            duration_ms: 42,
+            version: 3,
+            aggregate_id: uid(),
+            aggregate_type: "Voucher".into(),
+        });
+    }
+
+    #[test]
+    fn rt_replay_result_empty_state() {
+        roundtrip(&ReplayResult {
+            final_state: serde_json::Value::Null,
+            events_count: 0,
+            duration_ms: 0,
+            version: 0,
+            aggregate_id: "new-agg".into(),
+            aggregate_type: "Receivable".into(),
+        });
+    }
+}

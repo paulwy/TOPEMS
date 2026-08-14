@@ -160,3 +160,79 @@ pub fn get_pipeline_stats() -> PipelineStats {
         saga_stats: pipeline.get_saga_coordinator().get_stats(),
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::domain::event_handler::SideEffect;
+    use crate::domain::saga::SagaStats;
+    use serde::{Deserialize, Serialize};
+    use std::collections::HashMap;
+
+    fn roundtrip<T: Serialize + for<'de> Deserialize<'de>>(item: &T) {
+        let json = serde_json::to_string(item).unwrap();
+        let v1: serde_json::Value = serde_json::from_str(&json).unwrap();
+        let back: T = serde_json::from_str(&json).unwrap();
+        let json2 = serde_json::to_string(&back).unwrap();
+        let v2: serde_json::Value = serde_json::from_str(&json2).unwrap();
+        assert_eq!(v1, v2);
+    }
+
+    #[test]
+    fn rt_pipeline_result_default() {
+        roundtrip(&PipelineResult::default());
+    }
+
+    #[test]
+    fn rt_pipeline_result_with_side_effects() {
+        let effects = vec![
+            SideEffect::SendNotification {
+                recipient: "alice".into(),
+                message: "Voucher posted".into(),
+            },
+            SideEffect::TriggerSync {
+                target_service: "ledger".into(),
+                entity_type: "Voucher".into(),
+                entity_id: "v-001".into(),
+            },
+            SideEffect::UpdateCache {
+                cache_key: "voucher:v-001".into(),
+            },
+            SideEffect::InvalidateView {
+                view_name: "voucher_summary".into(),
+            },
+            SideEffect::PublishExternalEvent {
+                routing_key: "finance.voucher.posted".into(),
+                payload: serde_json::json!({ "voucher_id": "v-001" }),
+            },
+        ];
+        roundtrip(&PipelineResult {
+            events_published: 2,
+            handlers_invoked: 4,
+            side_effects: effects,
+            sagas_started: vec!["saga-1".into()],
+            route_results: vec![],
+        });
+    }
+
+    #[test]
+    fn rt_pipeline_stats() {
+        let mut by_type = HashMap::new();
+        by_type.insert("VoucherPosting".to_string(), 3usize);
+        roundtrip(&PipelineStats {
+            published_events: 100,
+            registered_handlers: 4,
+            registered_saga_definitions: 4,
+            saga_stats: SagaStats {
+                total: 10,
+                running: 1,
+                completed: 6,
+                failed: 1,
+                compensating: 1,
+                compensated: 1,
+                aborted: 0,
+                by_type,
+            },
+        });
+    }
+}

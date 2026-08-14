@@ -177,3 +177,60 @@ pub async fn auto_register_to_core(core_url: Option<&str>) {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use serde::{Deserialize, Serialize};
+    use serde_json::{from_value, to_value, Value};
+
+    fn roundtrip<T>(s: &T) -> Value
+    where
+        T: Serialize + for<'de> Deserialize<'de>,
+    {
+        let v1 = to_value(s).expect("serialize first");
+        let s2: T = from_value(v1.clone()).expect("deserialize");
+        let v2 = to_value(&s2).expect("serialize second");
+        assert_eq!(v1, v2, "roundtrip value mismatch");
+        v1
+    }
+
+    #[test]
+    fn deployment_info_roundtrip() {
+        let s = DeploymentInfo {
+            port: 8063,
+            base_path: "/api/portal".to_string(),
+        };
+        roundtrip(&s);
+    }
+
+    #[test]
+    fn permission_def_roundtrip() {
+        let s = PermissionDef {
+            code: "announcement".to_string(),
+        };
+        roundtrip(&s);
+    }
+
+    #[test]
+    fn plugin_info_roundtrip() {
+        let s = PluginInfo {
+            code: "portal".to_string(),
+            name: "企业门户".to_string(),
+            version: "1.0.0".to_string(),
+            description: "desc".to_string(),
+            deployment: DeploymentInfo {
+                port: 8063,
+                base_path: "/api/portal".to_string(),
+            },
+            permissions: vec![PermissionDef {
+                code: "shortcut".to_string(),
+            }],
+            runtime_url: "http://localhost:8063".to_string(),
+            dependencies: vec!["topems-shared".to_string()],
+            navigation_config: Some(serde_json::json!({"key": "value"})),
+            category: Some("other".to_string()),
+        };
+        roundtrip(&s);
+    }
+}

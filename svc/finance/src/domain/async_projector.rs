@@ -317,3 +317,48 @@ impl AsyncProjector {
         Ok(())
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use serde::{Deserialize, Serialize};
+
+    fn roundtrip<T: Serialize + for<'de> Deserialize<'de>>(item: &T) {
+        let json = serde_json::to_string(item).unwrap();
+        let v1: serde_json::Value = serde_json::from_str(&json).unwrap();
+        let back: T = serde_json::from_str(&json).unwrap();
+        let json2 = serde_json::to_string(&back).unwrap();
+        let v2: serde_json::Value = serde_json::from_str(&json2).unwrap();
+        assert_eq!(v1, v2);
+    }
+
+    fn now() -> chrono::DateTime<chrono::Utc> { chrono::Utc::now() }
+
+    fn uid() -> String { uuid::Uuid::new_v4().to_string() }
+
+    #[test]
+    fn rt_projection_progress_all_none() {
+        roundtrip(&ProjectionProgress {
+            view_name: "voucher_summary".into(),
+            last_event_id: None,
+            last_event_time: None,
+            processed_count: 0,
+            error_count: 0,
+            last_error: None,
+            updated_at: now(),
+        });
+    }
+
+    #[test]
+    fn rt_projection_progress_all_some() {
+        roundtrip(&ProjectionProgress {
+            view_name: "receivable_aging".into(),
+            last_event_id: Some(uid()),
+            last_event_time: Some(now()),
+            processed_count: 1234,
+            error_count: 2,
+            last_error: Some("downstream timeout".into()),
+            updated_at: now(),
+        });
+    }
+}
