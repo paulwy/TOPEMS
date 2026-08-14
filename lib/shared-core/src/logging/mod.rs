@@ -468,4 +468,305 @@ mod tests {
         let child = TraceContext::new().with_parent(&parent);
         assert_eq!(child.parent_span_id, parent.span_id);
     }
+
+    #[test]
+    fn test_log_entry_new_sets_basic_fields() {
+        let entry = LogEntry::new("INFO", "hello", "svc-a");
+        assert_eq!(entry.level, "INFO");
+        assert_eq!(entry.message, "hello");
+        assert_eq!(entry.service, "svc-a");
+        assert!(entry.trace_id.is_none());
+        assert!(entry.span_id.is_none());
+        assert!(entry.duration_ms.is_none());
+        assert!(entry.user_id.is_none());
+        assert!(entry.request_id.is_none());
+        assert!(entry.fields.is_empty());
+    }
+
+    #[test]
+    fn test_log_entry_with_trace_builder() {
+        let entry = LogEntry::new("INFO", "m", "s").with_trace("t1".to_string(), "sp1".to_string());
+        assert_eq!(entry.trace_id.as_deref(), Some("t1"));
+        assert_eq!(entry.span_id.as_deref(), Some("sp1"));
+    }
+
+    #[test]
+    fn test_log_entry_with_duration_builder() {
+        let entry = LogEntry::new("INFO", "m", "s").with_duration(42);
+        assert_eq!(entry.duration_ms, Some(42));
+    }
+
+    #[test]
+    fn test_log_entry_with_user_builder() {
+        let entry = LogEntry::new("INFO", "m", "s").with_user("u-1".to_string());
+        assert_eq!(entry.user_id.as_deref(), Some("u-1"));
+    }
+
+    #[test]
+    fn test_log_entry_with_field_builder() {
+        let entry = LogEntry::new("INFO", "m", "s")
+            .with_field("count", serde_json::json!(7))
+            .with_field("name", serde_json::json!("bob"));
+        assert_eq!(entry.fields.get("count"), Some(&serde_json::json!(7)));
+        assert_eq!(entry.fields.get("name"), Some(&serde_json::json!("bob")));
+    }
+
+    #[test]
+    fn test_log_entry_builder_chain() {
+        let entry = LogEntry::new("INFO", "m", "s")
+            .with_trace("t".to_string(), "sp".to_string())
+            .with_duration(10)
+            .with_user("u".to_string())
+            .with_request_id("r".to_string())
+            .with_field("k", serde_json::json!(1));
+        assert_eq!(entry.trace_id.as_deref(), Some("t"));
+        assert_eq!(entry.span_id.as_deref(), Some("sp"));
+        assert_eq!(entry.duration_ms, Some(10));
+        assert_eq!(entry.user_id.as_deref(), Some("u"));
+        assert_eq!(entry.request_id.as_deref(), Some("r"));
+        assert_eq!(entry.fields.get("k"), Some(&serde_json::json!(1)));
+    }
+
+    #[test]
+    fn test_log_entry_serde_roundtrip() {
+        let entry = LogEntry::new("WARN", "warn-msg", "svc")
+            .with_trace("tid".to_string(), "sid".to_string())
+            .with_duration(99)
+            .with_request_id("rid".to_string())
+            .with_field("k", serde_json::json!("v"));
+        let json = serde_json::to_string(&entry).expect("serialize");
+        let de: LogEntry = serde_json::from_str(&json).expect("deserialize");
+        assert_eq!(de.level, "WARN");
+        assert_eq!(de.message, "warn-msg");
+        assert_eq!(de.service, "svc");
+        assert_eq!(de.trace_id.as_deref(), Some("tid"));
+        assert_eq!(de.span_id.as_deref(), Some("sid"));
+        assert_eq!(de.duration_ms, Some(99));
+        assert_eq!(de.request_id.as_deref(), Some("rid"));
+        assert_eq!(de.fields.get("k"), Some(&serde_json::json!("v")));
+    }
+
+    #[test]
+    fn test_log_entry_clone() {
+        let entry = LogEntry::new("INFO", "m", "s").with_user("u".to_string());
+        let cloned = entry.clone();
+        assert_eq!(entry.level, cloned.level);
+        assert_eq!(entry.user_id, cloned.user_id);
+    }
+
+    #[test]
+    fn test_log_query_default_has_default_limit_offset() {
+        let q = LogQuery::default();
+        assert!(q.level.is_none());
+        assert!(q.service.is_none());
+        assert!(q.from.is_none());
+        assert!(q.to.is_none());
+        assert!(q.search.is_none());
+        assert!(q.trace_id.is_none());
+        assert!(q.user_id.is_none());
+        assert!(q.request_id.is_none());
+        assert_eq!(q.limit, Some(100));
+        assert_eq!(q.offset, Some(0));
+    }
+
+    #[test]
+    fn test_log_query_serde_roundtrip() {
+        let q = LogQuery {
+            level: Some("ERROR".to_string()),
+            service: Some("svc".to_string()),
+            from: None,
+            to: None,
+            search: Some("panic".to_string()),
+            trace_id: Some("t".to_string()),
+            user_id: None,
+            request_id: Some("r".to_string()),
+            limit: Some(10),
+            offset: Some(5),
+        };
+        let json = serde_json::to_string(&q).expect("serialize");
+        let de: LogQuery = serde_json::from_str(&json).expect("deserialize");
+        assert_eq!(de.level.as_deref(), Some("ERROR"));
+        assert_eq!(de.service.as_deref(), Some("svc"));
+        assert_eq!(de.search.as_deref(), Some("panic"));
+        assert_eq!(de.trace_id.as_deref(), Some("t"));
+        assert_eq!(de.request_id.as_deref(), Some("r"));
+        assert_eq!(de.limit, Some(10));
+        assert_eq!(de.offset, Some(5));
+    }
+
+    #[test]
+    fn test_log_stats_serde_roundtrip() {
+        let mut by_level = HashMap::new();
+        by_level.insert("INFO".to_string(), 5u64);
+        by_level.insert("ERROR".to_string(), 2u64);
+        let mut by_service = HashMap::new();
+        by_service.insert("svc".to_string(), 7u64);
+        let stats = LogStats {
+            total_count: 7,
+            by_level,
+            by_service,
+            error_rate: 28.57,
+            avg_response_time_ms: 12.5,
+            top_errors: vec![ErrorStat {
+                message: "boom".to_string(),
+                count: 2,
+                last_occurrence: Utc::now(),
+            }],
+        };
+        let json = serde_json::to_string(&stats).expect("serialize");
+        let de: LogStats = serde_json::from_str(&json).expect("deserialize");
+        assert_eq!(de.total_count, 7);
+        assert_eq!(de.by_level.get("INFO"), Some(&5));
+        assert_eq!(de.by_level.get("ERROR"), Some(&2));
+        assert_eq!(de.by_service.get("svc"), Some(&7));
+        assert_eq!(de.top_errors.len(), 1);
+        assert_eq!(de.top_errors[0].message, "boom");
+        assert_eq!(de.top_errors[0].count, 2);
+    }
+
+    #[test]
+    fn test_error_stat_serde_roundtrip() {
+        let stat = ErrorStat {
+            message: "disk full".to_string(),
+            count: 3,
+            last_occurrence: Utc::now(),
+        };
+        let json = serde_json::to_string(&stat).expect("serialize");
+        let de: ErrorStat = serde_json::from_str(&json).expect("deserialize");
+        assert_eq!(de.message, "disk full");
+        assert_eq!(de.count, 3);
+    }
+
+    #[test]
+    fn test_log_aggregator_default_capacity() {
+        let aggregator = LogAggregator::default();
+        assert_eq!(aggregator.max_entries, 10000);
+    }
+
+    #[tokio::test]
+    async fn test_log_aggregator_caps_at_max_entries() {
+        let aggregator = LogAggregator::new(3);
+        for i in 0..5 {
+            aggregator
+                .add_log(LogEntry::new("INFO", &format!("m{}", i), "s"))
+                .await;
+        }
+        let all = aggregator.query(&LogQuery::default()).await;
+        assert_eq!(all.len(), 3);
+        // Oldest entries are removed first; only the last 3 should remain
+        assert_eq!(all[0].message, "m2");
+        assert_eq!(all[2].message, "m4");
+    }
+
+    #[tokio::test]
+    async fn test_log_aggregator_clear() {
+        let aggregator = LogAggregator::new(100);
+        aggregator
+            .add_log(LogEntry::new("INFO", "m", "s"))
+            .await;
+        assert_eq!(aggregator.query(&LogQuery::default()).await.len(), 1);
+        aggregator.clear().await;
+        assert_eq!(aggregator.query(&LogQuery::default()).await.len(), 0);
+    }
+
+    #[tokio::test]
+    async fn test_log_aggregator_query_by_service() {
+        let aggregator = LogAggregator::new(100);
+        aggregator
+            .add_log(LogEntry::new("INFO", "m1", "svc-a"))
+            .await;
+        aggregator
+            .add_log(LogEntry::new("INFO", "m2", "svc-b"))
+            .await;
+        let q = LogQuery {
+            service: Some("svc-a".to_string()),
+            ..Default::default()
+        };
+        let results = aggregator.query(&q).await;
+        assert_eq!(results.len(), 1);
+        assert_eq!(results[0].service, "svc-a");
+    }
+
+    #[tokio::test]
+    async fn test_log_aggregator_query_by_search_case_insensitive() {
+        let aggregator = LogAggregator::new(100);
+        aggregator
+            .add_log(LogEntry::new("INFO", "Database PANIC detected", "s"))
+            .await;
+        aggregator
+            .add_log(LogEntry::new("INFO", "normal op", "s"))
+            .await;
+        let q = LogQuery {
+            search: Some("panic".to_string()),
+            ..Default::default()
+        };
+        let results = aggregator.query(&q).await;
+        assert_eq!(results.len(), 1);
+        assert!(results[0].message.contains("PANIC"));
+    }
+
+    #[tokio::test]
+    async fn test_log_aggregator_query_by_trace_id() {
+        let aggregator = LogAggregator::new(100);
+        aggregator
+            .add_log(
+                LogEntry::new("INFO", "m1", "s").with_trace("t1".to_string(), "s1".to_string()),
+            )
+            .await;
+        aggregator
+            .add_log(
+                LogEntry::new("INFO", "m2", "s").with_trace("t2".to_string(), "s2".to_string()),
+            )
+            .await;
+        let q = LogQuery {
+            trace_id: Some("t1".to_string()),
+            ..Default::default()
+        };
+        let results = aggregator.query(&q).await;
+        assert_eq!(results.len(), 1);
+        assert_eq!(results[0].trace_id.as_deref(), Some("t1"));
+    }
+
+    #[tokio::test]
+    async fn test_log_aggregator_query_pagination() {
+        let aggregator = LogAggregator::new(100);
+        for i in 0..10 {
+            aggregator
+                .add_log(LogEntry::new("INFO", &format!("m{}", i), "s"))
+                .await;
+        }
+        let q = LogQuery {
+            limit: Some(3),
+            offset: Some(5),
+            ..Default::default()
+        };
+        let results = aggregator.query(&q).await;
+        assert_eq!(results.len(), 3);
+        assert_eq!(results[0].message, "m5");
+        assert_eq!(results[2].message, "m7");
+    }
+
+    #[test]
+    fn test_trace_context_default_is_empty() {
+        let ctx = TraceContext::default();
+        assert!(ctx.trace_id.is_none());
+        assert!(ctx.span_id.is_none());
+        assert!(ctx.parent_span_id.is_none());
+    }
+
+    #[test]
+    fn test_trace_context_clone_preserves_fields() {
+        let ctx = TraceContext::new();
+        let cloned = ctx.clone();
+        assert_eq!(ctx.trace_id, cloned.trace_id);
+        assert_eq!(ctx.span_id, cloned.span_id);
+        assert_eq!(ctx.parent_span_id, cloned.parent_span_id);
+    }
+
+    #[test]
+    fn test_create_log_filter_returns_env_filter() {
+        let _filter = create_log_filter("my-svc", "debug");
+        // Successful construction without panic is the contract;
+        // EnvFilter is opaque so we just ensure it builds.
+    }
 }

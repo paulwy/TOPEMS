@@ -406,4 +406,254 @@ mod tests {
         state.unregister_probe("db").await;
         assert_eq!(state.probe_count().await, 0);
     }
+
+    // ===== Additional test fixtures =====
+
+    struct CriticalUnhealthy;
+
+    #[async_trait]
+    impl DependencyProbe for CriticalUnhealthy {
+        fn id(&self) -> HealthProbeId {
+            "critical-unhealthy".to_string()
+        }
+        fn kind(&self) -> ProbeKind {
+            ProbeKind::Database
+        }
+        fn is_critical(&self) -> bool {
+            true
+        }
+        async fn probe(&self) -> GrpcHealthStatus {
+            GrpcHealthStatus::NotServing
+        }
+    }
+
+    struct CountingProbe {
+        id: String,
+        count: Arc<std::sync::atomic::AtomicU32>,
+    }
+
+    #[async_trait]
+    impl DependencyProbe for CountingProbe {
+        fn id(&self) -> HealthProbeId {
+            self.id.clone()
+        }
+        fn kind(&self) -> ProbeKind {
+            ProbeKind::Custom
+        }
+        fn is_critical(&self) -> bool {
+            false
+        }
+        async fn probe(&self) -> GrpcHealthStatus {
+            self.count
+                .fetch_add(1, std::sync::atomic::Ordering::SeqCst);
+            GrpcHealthStatus::Serving
+        }
+    }
+
+    // ===== Additional tests =====
+
+    #[test]
+    fn test_grpc_health_status_unknown_is_not_healthy() {
+        assert!(!GrpcHealthStatus::Unknown.is_healthy());
+    }
+
+    #[test]
+    fn test_grpc_health_status_service_unknown_is_not_healthy() {
+        assert!(!GrpcHealthStatus::ServiceUnknown.is_healthy());
+        assert!(GrpcHealthStatus::Serving.is_healthy());
+        assert!(!GrpcHealthStatus::NotServing.is_healthy());
+    }
+
+    #[test]
+    fn test_grpc_health_status_as_i32_all_variants() {
+        assert_eq!(GrpcHealthStatus::Unknown.as_i32(), 0);
+        assert_eq!(GrpcHealthStatus::Serving.as_i32(), 1);
+        assert_eq!(GrpcHealthStatus::NotServing.as_i32(), 2);
+        assert_eq!(GrpcHealthStatus::ServiceUnknown.as_i32(), 3);
+    }
+
+    #[test]
+    fn test_grpc_health_status_from_i32_all_variants() {
+        assert_eq!(GrpcHealthStatus::from(0), GrpcHealthStatus::Unknown);
+        assert_eq!(GrpcHealthStatus::from(1), GrpcHealthStatus::Serving);
+        assert_eq!(GrpcHealthStatus::from(2), GrpcHealthStatus::NotServing);
+        assert_eq!(GrpcHealthStatus::from(3), GrpcHealthStatus::ServiceUnknown);
+        // Out-of-range values fall back to Unknown
+        assert_eq!(GrpcHealthStatus::from(-1), GrpcHealthStatus::Unknown);
+        assert_eq!(GrpcHealthStatus::from(99), GrpcHealthStatus::Unknown);
+    }
+
+    #[test]
+    fn test_grpc_health_check_response_serving_constructor() {
+        let resp = GrpcHealthCheckResponse::serving("my-svc");
+        assert_eq!(resp.service, "my-svc");
+        assert_eq!(resp.status, GrpcHealthStatus::Serving);
+        assert_eq!(resp.message, "Service is healthy");
+        assert!(resp.dependencies.is_empty());
+    }
+
+    #[test]
+    fn test_grpc_health_check_response_not_serving_constructor() {
+        let resp = GrpcHealthCheckResponse::not_serving("my-svc", "DB down");
+        assert_eq!(resp.service, "my-svc");
+        assert_eq!(resp.status, GrpcHealthStatus::NotServing);
+        assert_eq!(resp.message, "DB down");
+        assert!(resp.dependencies.is_empty());
+    }
+
+    #[test]
+    fn test_grpc_health_check_response_clone_preserves_fields() {
+        let resp = GrpcHealthCheckResponse::serving("svc");
+        let cloned = resp.clone();
+        assert_eq!(cloned.service, resp.service);
+        assert_eq!(cloned.status, resp.status);
+        assert_eq!(cloned.message, resp.message);
+    }
+
+    #[test]
+    fn test_probe_kind_variants_equality() {
+        assert_eq!(ProbeKind::Database, ProbeKind::Database);
+        assert_ne!(ProbeKind::Database, ProbeKind::Cache);
+        assert_ne!(ProbeKind::Cache, ProbeKind::MessageQueue);
+        assert_ne!(ProbeKind::MessageQueue, ProbeKind::DownstreamGrpc);
+        assert_ne!(ProbeKind::DownstreamGrpc, ProbeKind::DownstreamHttp);
+        assert_ne!(ProbeKind::DownstreamHttp, ProbeKind::Custom);
+    }
+
+    #[test]
+    fn test_probe_kind_is_copy() {
+        let a = ProbeKind::Database;
+        let b = a; // Copy — no clone needed
+        assert_eq!(a, b);
+    }
+
+    #[test]
+    fn test_grpc_health_state_debug_format() {
+        let state = GrpcHealthState::new("debug-svc", Duration::from_secs(30));
+        let debug_str = format!("{:?}", state);
+        assert!(debug_str.contains("GrpcHealthState"));
+        assert!(debug_str.contains("debug-svc"));
+        assert!(debug_str.contains("probe_count"));
+    }
+
+    #[tokio::test]
+    async fn test_critical_failure_marks_not_serving() {
+        let state = GrpcHealthState::new("test-service", Duration::from_secs(60));
+        state.register_probe(Arc::new(CriticalUnhealthy)).await;
+        let response = state.check().await;
+        assert_eq!(response.status, GrpcHealthStatus::NotServing);
+        assert!(response.message.contains("Critical"));
+        assert_eq!(
+            response.dependencies.get("critical-unhealthy"),
+            Some(&GrpcHealthStatus::NotServing)
+        );
+    }
+
+    #[tokio::test]
+    async fn test_multiple_probes_mixed_statuses_stay_serving_when_non_critical_fails() {
+        let state = GrpcHealthState::new("test-service", Duration::from_secs(60));
+        // Critical healthy probe + non-critical unhealthy probe
+        state
+            .register_probe(Arc::new(AlwaysHealthy {
+                id: "db-critical".to_string(),
+            }))
+            .await;
+        state.register_probe(Arc::new(AlwaysUnhealthy)).await;
+        let response = state.check().await;
+        // Non-critical failure → still Serving but degraded message
+        assert_eq!(response.status, GrpcHealthStatus::Serving);
+        assert!(response.message.contains("degraded"));
+        assert_eq!(response.dependencies.len(), 2);
+    }
+
+    #[tokio::test]
+    async fn test_register_probe_overwrites_same_id() {
+        let state = GrpcHealthState::new("test-svc", Duration::from_secs(60));
+        state
+            .register_probe(Arc::new(AlwaysHealthy {
+                id: "dup".to_string(),
+            }))
+            .await;
+        assert_eq!(state.probe_count().await, 1);
+        // Re-registering with the same id should overwrite, not add
+        state
+            .register_probe(Arc::new(AlwaysHealthy {
+                id: "dup".to_string(),
+            }))
+            .await;
+        assert_eq!(state.probe_count().await, 1);
+    }
+
+    #[tokio::test]
+    async fn test_grpc_health_server_check_sets_service_name() {
+        let state = Arc::new(GrpcHealthState::new("internal-name", Duration::from_secs(60)));
+        let server = GrpcHealthServer::new(state);
+        let response = server.check("external-name").await;
+        // The server overrides the service name with the one passed to check()
+        assert_eq!(response.service, "external-name");
+        assert_eq!(response.status, GrpcHealthStatus::Serving);
+    }
+
+    #[tokio::test]
+    async fn test_probe_caching_within_ttl_avoids_reprobe() {
+        let count = Arc::new(std::sync::atomic::AtomicU32::new(0));
+        let state = GrpcHealthState::new("test-svc", Duration::from_secs(60));
+        state
+            .register_probe(Arc::new(CountingProbe {
+                id: "counter".to_string(),
+                count: count.clone(),
+            }))
+            .await;
+        // First check — probe is invoked once and cached
+        let _ = state.check().await;
+        assert_eq!(
+            count.load(std::sync::atomic::Ordering::SeqCst),
+            1
+        );
+        // Second check within TTL — cache hit, no new probe invocation
+        let _ = state.check().await;
+        assert_eq!(
+            count.load(std::sync::atomic::Ordering::SeqCst),
+            1
+        );
+    }
+
+    #[tokio::test]
+    async fn test_grpc_health_server_watch_emits_responses() {
+        let state = Arc::new(GrpcHealthState::new("test-svc", Duration::from_secs(60)));
+        let server = GrpcHealthServer::new(state);
+        let (tx, mut rx) = tokio::sync::mpsc::channel::<GrpcHealthCheckResponse>(8);
+        // Spawn the watch loop in the background
+        tokio::spawn(async move {
+            server
+                .watch("watched-svc", tx, Duration::from_millis(10))
+                .await;
+        });
+        // Wait for at least one response (with a generous timeout)
+        let resp = tokio::time::timeout(Duration::from_millis(500), rx.recv())
+            .await
+            .expect("timed out waiting for watch response")
+            .expect("watch channel closed unexpectedly");
+        assert_eq!(resp.service, "watched-svc");
+        assert_eq!(resp.status, GrpcHealthStatus::Serving);
+    }
+
+    #[tokio::test]
+    async fn test_unregister_probe_clears_cache() {
+        let state = GrpcHealthState::new("test-svc", Duration::from_secs(60));
+        state
+            .register_probe(Arc::new(AlwaysHealthy {
+                id: "temp".to_string(),
+            }))
+            .await;
+        // Trigger a check to populate the cache
+        let _ = state.check().await;
+        assert_eq!(state.probe_count().await, 1);
+        // Unregister should remove both the probe and its cache entry
+        state.unregister_probe("temp").await;
+        assert_eq!(state.probe_count().await, 0);
+        // Subsequent check should return serving (empty state)
+        let response = state.check().await;
+        assert_eq!(response.status, GrpcHealthStatus::Serving);
+    }
 }

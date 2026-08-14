@@ -377,4 +377,176 @@ mod tests {
         assert_eq!(stats.healthy_endpoints, 0);
         assert_eq!(stats.total_acquires, 0);
     }
+
+    #[test]
+    fn test_load_balancing_strategy_variants_equality() {
+        assert_eq!(LoadBalancingStrategy::RoundRobin, LoadBalancingStrategy::RoundRobin);
+        assert_ne!(
+            LoadBalancingStrategy::RoundRobin,
+            LoadBalancingStrategy::Random
+        );
+        assert_ne!(LoadBalancingStrategy::Random, LoadBalancingStrategy::Priority);
+        assert_ne!(LoadBalancingStrategy::Priority, LoadBalancingStrategy::LeastUsed);
+    }
+
+    #[test]
+    fn test_load_balancing_strategy_is_copy() {
+        let a = LoadBalancingStrategy::LeastUsed;
+        let b = a; // Copy semantics — no clone needed
+        assert_eq!(a, b);
+    }
+
+    #[test]
+    fn test_grpc_pool_config_clone_preserves_fields() {
+        let config = GrpcPoolConfig {
+            strategy: LoadBalancingStrategy::Priority,
+            connect_timeout: Duration::from_millis(500),
+            request_timeout: Duration::from_secs(10),
+            health_check_interval: Duration::from_secs(5),
+            max_retries: 7,
+        };
+        let cloned = config.clone();
+        assert_eq!(cloned.strategy, LoadBalancingStrategy::Priority);
+        assert_eq!(cloned.connect_timeout, Duration::from_millis(500));
+        assert_eq!(cloned.request_timeout, Duration::from_secs(10));
+        assert_eq!(cloned.health_check_interval, Duration::from_secs(5));
+        assert_eq!(cloned.max_retries, 7);
+    }
+
+    #[test]
+    fn test_grpc_pool_config_debug_format_contains_fields() {
+        let config = GrpcPoolConfig::default();
+        let debug_str = format!("{:?}", config);
+        assert!(debug_str.contains("GrpcPoolConfig"));
+        assert!(debug_str.contains("strategy"));
+        assert!(debug_str.contains("max_retries"));
+    }
+
+    #[test]
+    fn test_grpc_pool_stats_default_is_zeroed() {
+        let stats = GrpcPoolStats::default();
+        assert_eq!(stats.total_endpoints, 0);
+        assert_eq!(stats.healthy_endpoints, 0);
+        assert_eq!(stats.total_acquires, 0);
+        assert_eq!(stats.total_failures, 0);
+    }
+
+    #[test]
+    fn test_grpc_pool_stats_clone_preserves_fields() {
+        let stats = GrpcPoolStats {
+            total_endpoints: 3,
+            healthy_endpoints: 2,
+            total_acquires: 10,
+            total_failures: 1,
+        };
+        let cloned = stats.clone();
+        assert_eq!(cloned.total_endpoints, 3);
+        assert_eq!(cloned.healthy_endpoints, 2);
+        assert_eq!(cloned.total_acquires, 10);
+        assert_eq!(cloned.total_failures, 1);
+    }
+
+    #[test]
+    fn test_grpc_pool_error_no_healthy_endpoints_display() {
+        let err = GrpcPoolError::NoHealthyEndpoints("group-a".to_string());
+        let msg = format!("{}", err);
+        assert!(msg.contains("no healthy endpoints"));
+        assert!(msg.contains("group-a"));
+    }
+
+    #[test]
+    fn test_grpc_pool_error_invalid_url_display() {
+        let err = GrpcPoolError::InvalidUrl("bad scheme".to_string());
+        let msg = format!("{}", err);
+        assert!(msg.contains("invalid endpoint URL"));
+        assert!(msg.contains("bad scheme"));
+    }
+
+    #[test]
+    fn test_grpc_pool_error_endpoint_creation_display() {
+        let err = GrpcPoolError::EndpointCreation("connection refused".to_string());
+        let msg = format!("{}", err);
+        assert!(msg.contains("endpoint creation failed"));
+        assert!(msg.contains("connection refused"));
+    }
+
+    #[test]
+    fn test_grpc_channel_pool_into_arc_shares_state() {
+        let pool = GrpcChannelPool::new(GrpcPoolConfig::default());
+        let arc = pool.into_arc();
+        assert_eq!(Arc::strong_count(&arc), 1);
+    }
+
+    #[tokio::test]
+    async fn test_add_endpoint_invalid_url_returns_error() {
+        let pool = GrpcChannelPool::new(GrpcPoolConfig::default());
+        // Invalid URL should produce either InvalidUrl (parse failure) or
+        // EndpointCreation (transport failure) — both are valid error responses
+        let result = pool.add_endpoint("not-a-valid-url", 0, "g").await;
+        assert!(result.is_err());
+        match result.unwrap_err() {
+            GrpcPoolError::InvalidUrl(_) | GrpcPoolError::EndpointCreation(_) => {}
+            other => panic!("expected InvalidUrl or EndpointCreation, got: {:?}", other),
+        }
+    }
+
+    #[tokio::test]
+    async fn test_mark_unhealthy_nonexistent_group_is_noop() {
+        let pool = GrpcChannelPool::new(GrpcPoolConfig::default());
+        // Should not panic and should complete successfully
+        pool.mark_unhealthy("nonexistent-group", "http://x:1234").await;
+        let stats = pool.stats().await;
+        assert_eq!(stats.total_endpoints, 0);
+    }
+
+    #[tokio::test]
+    async fn test_remove_endpoint_nonexistent_group_is_noop() {
+        let pool = GrpcChannelPool::new(GrpcPoolConfig::default());
+        pool.remove_endpoint("nonexistent-group", "http://x:1234").await;
+        // saturating_sub keeps the count at 0
+        let stats = pool.stats().await;
+        assert_eq!(stats.total_endpoints, 0);
+    }
+
+    #[tokio::test]
+    async fn test_list_endpoints_nonexistent_group_returns_empty() {
+        let pool = GrpcChannelPool::new(GrpcPoolConfig::default());
+        let endpoints = pool.list_endpoints("never-existed").await;
+        assert!(endpoints.is_empty());
+    }
+
+    #[tokio::test]
+    async fn test_pooled_channel_clone_preserves_endpoint_url() {
+        let endpoint = Endpoint::from_shared("http://localhost:1234".to_string())
+            .expect("parse endpoint");
+        let channel = endpoint.connect_lazy();
+        let pc = PooledChannel {
+            channel,
+            endpoint_url: "http://localhost:1234".to_string(),
+        };
+        let cloned = pc.clone();
+        assert_eq!(pc.endpoint_url, cloned.endpoint_url);
+    }
+
+    #[tokio::test]
+    async fn test_pooled_channel_debug_format() {
+        let endpoint = Endpoint::from_shared("http://localhost:1234".to_string())
+            .expect("parse endpoint");
+        let channel = endpoint.connect_lazy();
+        let pc = PooledChannel {
+            channel,
+            endpoint_url: "http://localhost:1234".to_string(),
+        };
+        let debug_str = format!("{:?}", pc);
+        assert!(debug_str.contains("PooledChannel"));
+        assert!(debug_str.contains("http://localhost:1234"));
+    }
+
+    #[tokio::test]
+    async fn test_grpc_channel_pool_debug_format() {
+        let pool = GrpcChannelPool::new(GrpcPoolConfig::default());
+        let debug_str = format!("{:?}", pool);
+        assert!(debug_str.contains("GrpcChannelPool"));
+        assert!(debug_str.contains("config"));
+    }
 }
