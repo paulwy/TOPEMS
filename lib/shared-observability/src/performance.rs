@@ -969,3 +969,282 @@ pub mod v28 {
         }
     }
 }
+
+#[cfg(test)]
+mod top_level_tests {
+    use super::*;
+
+    #[test]
+    fn test_performance_metrics_new_default_empty_stats() {
+        let m = PerformanceMetrics::new();
+        let stats = m.get_stats();
+        assert_eq!(stats.request_count, 0);
+        assert_eq!(stats.success_count, 0);
+        assert_eq!(stats.error_count, 0);
+        assert_eq!(stats.success_rate, 100.0);
+        assert_eq!(stats.avg_duration_ms, 0.0);
+        // Default should match new()
+        let m_default = PerformanceMetrics::default();
+        assert_eq!(m_default.get_stats().request_count, 0);
+    }
+
+    #[test]
+    fn test_performance_metrics_record_success_and_error() {
+        let m = PerformanceMetrics::new();
+        m.record_request(Duration::from_millis(100), true);
+        m.record_request(Duration::from_millis(200), true);
+        m.record_request(Duration::from_millis(300), false);
+        let stats = m.get_stats();
+        assert_eq!(stats.request_count, 3);
+        assert_eq!(stats.success_count, 2);
+        assert_eq!(stats.error_count, 1);
+        assert_eq!(stats.avg_duration_ms, 200.0);
+        assert!((stats.success_rate - 66.66666).abs() < 0.01);
+    }
+
+    #[test]
+    fn test_performance_metrics_reset() {
+        let m = PerformanceMetrics::new();
+        m.record_request(Duration::from_millis(100), true);
+        m.record_request(Duration::from_millis(200), false);
+        assert_eq!(m.get_stats().request_count, 2);
+        m.reset();
+        let stats = m.get_stats();
+        assert_eq!(stats.request_count, 0);
+        assert_eq!(stats.success_count, 0);
+        assert_eq!(stats.error_count, 0);
+        assert_eq!(stats.success_rate, 100.0);
+        assert_eq!(stats.avg_duration_ms, 0.0);
+    }
+
+    #[test]
+    fn test_request_timer_drop_records_failure() {
+        let m = PerformanceMetrics::new();
+        {
+            let mut timer = RequestTimer::new(m.clone());
+            timer.set_success(false);
+            // Timer drops here, should record one failed request.
+        }
+        let stats = m.get_stats();
+        assert_eq!(stats.request_count, 1);
+        assert_eq!(stats.error_count, 1);
+        assert_eq!(stats.success_count, 0);
+    }
+
+    #[test]
+    fn test_request_timer_default_success_on_drop() {
+        let m = PerformanceMetrics::new();
+        {
+            let _timer = RequestTimer::new(m.clone());
+            // Default success=true, drop records a success.
+        }
+        let stats = m.get_stats();
+        assert_eq!(stats.request_count, 1);
+        assert_eq!(stats.success_count, 1);
+    }
+
+    #[test]
+    fn test_request_timer_set_success_toggle() {
+        let m = PerformanceMetrics::new();
+        let mut timer = RequestTimer::new(m.clone());
+        timer.set_success(false);
+        assert!(!timer.success);
+        timer.set_success(true);
+        assert!(timer.success);
+        timer.finish();
+    }
+
+    #[test]
+    fn test_metrics_snapshot_clone() {
+        let snapshot = MetricsSnapshot {
+            request_count: 10,
+            success_count: 8,
+            error_count: 2,
+            success_rate: 80.0,
+            avg_duration_ms: 50.0,
+        };
+        let cloned = snapshot.clone();
+        assert_eq!(cloned.request_count, 10);
+        assert_eq!(cloned.success_rate, 80.0);
+        assert_eq!(cloned.avg_duration_ms, 50.0);
+    }
+
+    #[test]
+    fn test_api_call_metrics_new() {
+        let m = ApiCallMetrics::new(
+            "/api/users".to_string(),
+            Duration::from_millis(42),
+            "200".to_string(),
+        );
+        assert_eq!(m.endpoint, "/api/users");
+        assert_eq!(m.duration_ms, 42);
+        assert_eq!(m.status, "200");
+    }
+
+    #[test]
+    fn test_database_query_metrics_new() {
+        let m = DatabaseQueryMetrics::new(
+            "SELECT".to_string(),
+            "users".to_string(),
+            Duration::from_millis(15),
+            Some(100),
+            true,
+        );
+        assert_eq!(m.query_type, "SELECT");
+        assert_eq!(m.table_name, "users");
+        assert_eq!(m.duration_ms, 15);
+        assert_eq!(m.row_count, Some(100));
+        assert!(m.success);
+    }
+
+    #[test]
+    fn test_cache_metrics_new() {
+        let m = CacheMetrics::new(true, "user:1".to_string(), "redis".to_string());
+        assert!(m.cache_hit);
+        assert_eq!(m.key, "user:1");
+        assert_eq!(m.cache_type, "redis");
+    }
+
+    #[test]
+    fn test_comprehensive_metrics_api_and_cache_stats() {
+        let cm = ComprehensiveMetrics::new(Duration::from_millis(500));
+        cm.record_api_call(
+            "/api/a".to_string(),
+            Duration::from_millis(10),
+            "200".to_string(),
+        );
+        cm.record_api_call(
+            "/api/a".to_string(),
+            Duration::from_millis(20),
+            "500".to_string(),
+        );
+        cm.record_api_call(
+            "/api/b".to_string(),
+            Duration::from_millis(30),
+            "404".to_string(),
+        );
+        let api_stats = cm.get_api_stats();
+        assert_eq!(api_stats.total_requests, 3);
+        assert_eq!(api_stats.endpoint_stats.len(), 2);
+        let a_stats = api_stats
+            .endpoint_stats
+            .iter()
+            .find(|e| e.endpoint == "/api/a")
+            .unwrap();
+        assert_eq!(a_stats.count, 2);
+        assert_eq!(a_stats.total_duration, 30);
+        assert_eq!(a_stats.max_duration, 20);
+        assert_eq!(a_stats.error_count, 1);
+
+        cm.record_cache_operation(true, "k1".to_string(), "redis".to_string());
+        cm.record_cache_operation(false, "k2".to_string(), "redis".to_string());
+        cm.record_cache_operation(true, "k3".to_string(), "redis".to_string());
+        let hit_rate = cm.get_cache_hit_rate();
+        assert!((hit_rate - 2.0 / 3.0).abs() < 0.001);
+    }
+
+    #[test]
+    fn test_comprehensive_metrics_db_stats_and_slow_queries() {
+        let cm = ComprehensiveMetrics::new(Duration::from_millis(50));
+        cm.record_db_query(
+            "SELECT".to_string(),
+            "users".to_string(),
+            Duration::from_millis(10),
+            Some(5),
+            true,
+        );
+        cm.record_db_query(
+            "UPDATE".to_string(),
+            "users".to_string(),
+            Duration::from_millis(100),
+            None,
+            false,
+        );
+        let db_stats = cm.get_db_stats();
+        assert_eq!(db_stats.total_queries, 2);
+        assert_eq!(db_stats.error_count, 1);
+        assert_eq!(db_stats.avg_query_duration, 55.0);
+        assert_eq!(db_stats.slow_queries.len(), 1);
+        assert_eq!(db_stats.slow_queries[0].query_type, "UPDATE");
+        let users_stats = db_stats
+            .table_stats
+            .iter()
+            .find(|t| t.table_name == "users")
+            .unwrap();
+        assert_eq!(users_stats.query_count, 2);
+        assert_eq!(users_stats.error_count, 1);
+        assert_eq!(users_stats.max_duration, 100);
+    }
+
+    #[test]
+    fn test_comprehensive_metrics_empty_cache_hit_rate() {
+        let cm = ComprehensiveMetrics::new(Duration::from_millis(50));
+        // No cache ops → total=0 → returns 1.0
+        assert_eq!(cm.get_cache_hit_rate(), 1.0);
+    }
+
+    #[test]
+    fn test_comprehensive_metrics_reset_and_comprehensive_stats() {
+        let cm = ComprehensiveMetrics::new(Duration::from_millis(50));
+        cm.record_api_call(
+            "/api".to_string(),
+            Duration::from_millis(10),
+            "200".to_string(),
+        );
+        cm.record_db_query(
+            "SELECT".to_string(),
+            "t".to_string(),
+            Duration::from_millis(5),
+            None,
+            true,
+        );
+        cm.record_cache_operation(true, "k".to_string(), "redis".to_string());
+        let stats = cm.get_comprehensive_stats();
+        assert_eq!(stats.api_stats.total_requests, 1);
+        assert_eq!(stats.db_stats.total_queries, 1);
+        assert_eq!(stats.cache_hits, 1);
+        assert_eq!(stats.cache_misses, 0);
+        assert_eq!(stats.cache_hit_rate, 1.0);
+        cm.reset();
+        let stats_after = cm.get_comprehensive_stats();
+        assert_eq!(stats_after.api_stats.total_requests, 0);
+        assert_eq!(stats_after.db_stats.total_queries, 0);
+        assert_eq!(stats_after.cache_hits, 0);
+        assert_eq!(stats_after.cache_misses, 0);
+        assert_eq!(stats_after.cache_hit_rate, 1.0);
+    }
+
+    #[test]
+    fn test_database_query_timer_finish_records_once() {
+        let cm = Arc::new(ComprehensiveMetrics::new(Duration::from_millis(50)));
+        {
+            let timer = DatabaseQueryTimer::new(
+                cm.clone(),
+                "SELECT".to_string(),
+                "orders".to_string(),
+            );
+            timer.finish(Some(10), true);
+        }
+        let db_stats = cm.get_db_stats();
+        assert_eq!(db_stats.total_queries, 1);
+        assert_eq!(db_stats.table_stats.len(), 1);
+        assert_eq!(db_stats.table_stats[0].table_name, "orders");
+    }
+
+    #[test]
+    fn test_cache_operation_recorder_hit_and_miss() {
+        let cm = Arc::new(ComprehensiveMetrics::new(Duration::from_millis(50)));
+        let recorder = CacheOperationRecorder::new(
+            cm.clone(),
+            "user:1".to_string(),
+            "redis".to_string(),
+        );
+        recorder.record_hit();
+        recorder.record_hit();
+        recorder.record_miss();
+        let stats = cm.get_comprehensive_stats();
+        assert_eq!(stats.cache_hits, 2);
+        assert_eq!(stats.cache_misses, 1);
+        assert!((stats.cache_hit_rate - 2.0 / 3.0).abs() < 0.001);
+    }
+}

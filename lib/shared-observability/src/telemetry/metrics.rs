@@ -231,6 +231,7 @@ mod tests {
 
     #[test]
     fn test_metrics_disabled_by_default() {
+        let _env_lock = crate::telemetry::test_support::OTEL_ENV_LOCK.lock().unwrap();
         std::env::remove_var("OTEL_METRICS_ENABLED");
         let guard = init_metrics("test-service", TelemetryExporter::Stdout);
         assert!(!guard.enabled);
@@ -238,11 +239,80 @@ mod tests {
 
     #[test]
     fn test_meter_returns_noop_when_disabled() {
+        let _env_lock = crate::telemetry::test_support::OTEL_ENV_LOCK.lock().unwrap();
         std::env::remove_var("OTEL_METRICS_ENABLED");
         let _guard = init_metrics("test-service", TelemetryExporter::Stdout);
         let meter = meter("test");
         let counter = meter.u64_counter("test_counter").build();
         // Noop counter should not panic
         counter.add(1, &[]);
+    }
+
+    #[test]
+    fn test_u64_counter_helper_noop_does_not_panic() {
+        // global::meter is noop when no provider is set; no env-var read here.
+        let counter = u64_counter("test_u64_counter", "test counter", Some("ms"));
+        counter.add(42, &[]);
+        counter.add(58, &[]);
+        // Noop counter — no observable state to assert beyond "no panic".
+    }
+
+    #[test]
+    fn test_f64_counter_helper_noop_does_not_panic() {
+        let counter = f64_counter("test_f64_counter", "test f64 counter", None);
+        counter.add(1.5, &[]);
+        counter.add(2.5, &[]);
+    }
+
+    #[test]
+    fn test_u64_histogram_helper_noop_does_not_panic() {
+        let histogram = u64_histogram("test_u64_histogram", "test histogram", Some("ms"));
+        histogram.record(10, &[]);
+        histogram.record(100, &[]);
+    }
+
+    #[test]
+    fn test_f64_histogram_helper_noop_does_not_panic() {
+        let histogram = f64_histogram("test_f64_histogram", "test f64 histogram", None);
+        histogram.record(0.5, &[]);
+        histogram.record(1.5, &[]);
+    }
+
+    #[test]
+    fn test_i64_up_down_counter_helper_noop_does_not_panic() {
+        let counter = i64_up_down_counter("test_up_down", "test up-down", None);
+        counter.add(10, &[]);
+        counter.add(-5, &[]);
+        counter.add(-5, &[]);
+    }
+
+    #[test]
+    fn test_register_u64_observable_gauge_noop_does_not_panic() {
+        fn gauge_cb(_inst: &dyn opentelemetry::metrics::AsyncInstrument<u64>) {}
+        register_u64_observable_gauge(
+            "test_observable_gauge",
+            "test observable gauge",
+            Some("count"),
+            vec![gauge_cb, gauge_cb, gauge_cb],
+        );
+        // Noop registration — just ensure it does not panic with multiple callbacks.
+    }
+
+    #[test]
+    fn test_metrics_guard_disabled_drop_is_no_op() {
+        let _env_lock = crate::telemetry::test_support::OTEL_ENV_LOCK.lock().unwrap();
+        std::env::remove_var("OTEL_METRICS_ENABLED");
+        let guard = init_metrics("test-service-disabled", TelemetryExporter::Stdout);
+        assert!(!guard.enabled);
+        // Drop is a no-op when disabled; this should not panic.
+        drop(guard);
+    }
+
+    #[test]
+    fn test_meter_function_returns_meter() {
+        let m = meter("test-meter-instance");
+        // A meter (even noop) should be able to build an instrument.
+        let _counter = m.u64_counter("instance_counter").build();
+        let _histogram = m.f64_histogram("instance_histogram").build();
     }
 }

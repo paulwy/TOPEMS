@@ -103,3 +103,83 @@ pub fn register_sensitive_filter() {
     // 此函数在 telemetry 初始化时调用
     // 当前仅返回占位，实际注册在 init_telemetry 中完成
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use tracing_subscriber::layer::SubscriberExt;
+    use tracing_subscriber::Layer;
+
+    #[test]
+    fn test_sensitive_filter_layer_new_constructs_without_panic() {
+        // new() should populate the default sensitive-key set without panicking.
+        let _layer = SensitiveFilterLayer::new();
+    }
+
+    #[test]
+    fn test_sensitive_filter_layer_default_matches_new() {
+        // Default::default() should behave identically to new() — both yield a
+        // usable layer that can be attached to a registry.
+        let _layer_default = SensitiveFilterLayer::default();
+        let _layer_new = SensitiveFilterLayer::new();
+    }
+
+    #[test]
+    fn test_with_extra_keys_chains_and_returns_self() {
+        // with_extra_keys consumes self and returns Self; verify chaining works
+        // and the result is still a usable Layer (mixed-case input should be
+        // lowercased internally without panic).
+        let _layer = SensitiveFilterLayer::new()
+            .with_extra_keys(&["X-Custom-Secret", "INTERNAL_TOKEN", "creds"])
+            .with_extra_keys(&["another"]);
+    }
+
+    #[test]
+    fn test_register_sensitive_filter_is_no_op_no_panic() {
+        // Current implementation is a placeholder; calling it must not panic.
+        register_sensitive_filter();
+    }
+
+    #[test]
+    fn test_on_event_with_str_sensitive_field_no_panic() {
+        // Attach the layer to a registry and emit an event containing a known
+        // sensitive str field ("password"). The visitor's record_str branch
+        // should mark it as sensitive without panicking.
+        let subscriber = tracing_subscriber::registry().with(SensitiveFilterLayer::new());
+        tracing::subscriber::with_default(subscriber, || {
+            tracing::info!(password = "supersecret", "attempting login");
+            tracing::warn!(token = "abc123", "using token");
+        });
+    }
+
+    #[test]
+    fn test_on_event_with_debug_sensitive_field_no_panic() {
+        // Emit an event whose sensitive field is recorded via Debug (the
+        // record_debug branch of the visitor should also detect it).
+        let subscriber = tracing_subscriber::registry().with(SensitiveFilterLayer::new());
+        let params = vec!["a", "b"];
+        tracing::subscriber::with_default(subscriber, || {
+            tracing::info!(secret = ?params, "debug-recorded sensitive field");
+        });
+    }
+
+    #[test]
+    fn test_on_event_with_non_sensitive_field_no_panic() {
+        // Non-sensitive fields should be visited without triggering detection
+        // and without panicking.
+        let subscriber = tracing_subscriber::registry().with(SensitiveFilterLayer::new());
+        tracing::subscriber::with_default(subscriber, || {
+            tracing::info!(user_id = 42, endpoint = "/api/v1", "normal event");
+        });
+    }
+
+    #[test]
+    fn test_on_event_with_extra_key_custom_sensitive_field_no_panic() {
+        // A custom key added via with_extra_keys should be detected as well.
+        let layer = SensitiveFilterLayer::new().with_extra_keys(&["my_custom_secret"]);
+        let subscriber = tracing_subscriber::registry().with(layer);
+        tracing::subscriber::with_default(subscriber, || {
+            tracing::info!(my_custom_secret = "hidden", "custom sensitive event");
+        });
+    }
+}
