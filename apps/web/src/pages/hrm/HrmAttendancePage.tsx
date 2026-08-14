@@ -172,7 +172,7 @@ const HrmAttendancePage: React.FC = () => {
                 startIcon={<Download size={18} />}
                 onClick={handleExport}
               >
-                导出
+                {t('hrm.hrm_attendance_page.e1')}
               </Button>
             </Box>
             <StatisticsChips selectedDate={selectedDate} />

@@ -119,7 +119,7 @@ export const FormListPage: React.FC = () => {
             startIcon={<AddIcon />}
             onClick={() => setCreateOpen(true)}
           >
-            新建表单
+            {t('lowcode.form_list_page.e1')}
           </Button>
         </Stack>
 
@@ -160,7 +160,7 @@ export const FormListPage: React.FC = () => {
                       colSpan={6}
                       align='center'
                     >
-                      暂无表单
+                      {t('lowcode.form_list_page.e2')}
                     </TableCell>
                   </TableRow>
                 ) : (

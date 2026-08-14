@@ -121,7 +121,7 @@ const FinanceAssetPage: React.FC = () => {
         const response = await financeApi.voucher.create({
           voucher_date: new Date().toISOString().split('T')[0],
           period: currentPeriod,
-          summary: `计提折旧 - ${asset.name}`,
+          summary: t('finance.finance_asset_page.e1', { v1: asset.name }),
           entries: [
             {
               account_id: '1602',
@@ -169,7 +169,7 @@ const FinanceAssetPage: React.FC = () => {
         }
         addNotification({
           title: t('finance.finance_asset_page.success'),
-          message: `科目 "${asset.name}" 已停用`,
+          message: i18n.t('finance.finance_asset_page.e2', { v1: asset.name }),
           type: 'success',
         });
         setDisableTarget(null);
@@ -311,13 +311,13 @@ const FinanceAssetPage: React.FC = () => {
                   >
                     <Calculator size={28} />
                   </Box>
-                  资产管理
+                  {t('finance.finance_asset_page.e3')}
                 </Typography>
                 <Typography
                   variant='body2'
                   color='text.secondary'
                 >
-                  管理企业固定资产，计提折旧和处理报废
+                  {t('finance.finance_asset_page.e4')}
                 </Typography>
               </Box>
             </Stack>
@@ -330,7 +330,7 @@ const FinanceAssetPage: React.FC = () => {
                 startIcon={<Download size={20} />}
                 onClick={handleExport}
               >
-                导出
+                {t('finance.finance_asset_page.e5')}
               </Button>
             </Stack>
           </Stack>
@@ -364,7 +364,7 @@ const FinanceAssetPage: React.FC = () => {
                   variant='body2'
                   color='text.secondary'
                 >
-                  科目名称
+                  {t('finance.finance_asset_page.e6')}
                 </Typography>
                 <Typography
                   variant='body1'
@@ -378,7 +378,7 @@ const FinanceAssetPage: React.FC = () => {
                   variant='body2'
                   color='text.secondary'
                 >
-                  科目编码
+                  {t('finance.finance_asset_page.e7')}
                 </Typography>
                 <Typography
                   variant='body1'
@@ -399,7 +399,7 @@ const FinanceAssetPage: React.FC = () => {
                   variant='body2'
                   color='text.secondary'
                 >
-                  折旧金额
+                  {t('finance.finance_asset_page.e8')}
                 </Typography>
                 <Typography
                   variant='h5'
@@ -412,7 +412,7 @@ const FinanceAssetPage: React.FC = () => {
                 variant='body2'
                 color='text.secondary'
               >
-                此操作将创建一张计提折旧凭证，借方为累计折旧科目，贷方为该资产科目。
+                {t('finance.finance_asset_page.e9')}
               </Typography>
             </Stack>
           )}
@@ -426,7 +426,7 @@ const FinanceAssetPage: React.FC = () => {
             color='success'
             onClick={() => depreciationTarget && handleDepreciation(depreciationTarget)}
           >
-            确认计提
+            {t('finance.finance_asset_page.e10')}
           </Button>
         </DialogActions>
       </Dialog>
@@ -438,7 +438,7 @@ const FinanceAssetPage: React.FC = () => {
           if (disableTarget) handleDisable(disableTarget);
         }}
         title={t('finance.finance_asset_page.inactive_2')}
-        message={`确定要停用科目 "${disableTarget?.name}" 吗？`}
+        message={t('finance.finance_asset_page.e11', { v1: disableTarget?.name })}
         type='warning'
         confirmLabel={t('finance.finance_asset_page.inactive')}
         cancelLabel={t('finance.finance_asset_page.cancel')}

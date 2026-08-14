@@ -79,7 +79,7 @@ const ConfirmDialogs: React.FC<ConfirmDialogsProps> = ({
         onClose={() => setBatchDeleteDialogOpen(false)}
         onConfirm={handleBatchDeleteEmails}
         title={t('im.confirm_dialogs.k6')}
-        message={`确定要删除选中的 ${selectedEmails.length} 条邮件记录吗？`}
+        message={t('im.mail_page_components_confirm_dialogs.e1', { v1: selectedEmails.length })}
         danger
       />
 
@@ -88,7 +88,7 @@ const ConfirmDialogs: React.FC<ConfirmDialogsProps> = ({
         onClose={() => setBatchResendDialogOpen(false)}
         onConfirm={handleBatchResendEmails}
         title={t('im.confirm_dialogs.k7')}
-        message={`确定要重新发送选中的 ${selectedEmails.length} 条邮件吗？`}
+        message={t('im.mail_page_components_confirm_dialogs.e2', { v1: selectedEmails.length })}
         type='warning'
         confirmLabel={t('im.confirm_dialogs.k8')}
         cancelLabel={t('im.confirm_dialogs.k9')}

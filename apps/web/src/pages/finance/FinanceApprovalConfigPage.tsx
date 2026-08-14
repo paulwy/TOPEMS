@@ -129,7 +129,7 @@ function NodesTable({ nodes }: { nodes: ApprovalNode[] }) {
           variant='body2'
           color='text.secondary'
         >
-          暂无审批节点
+          {t('finance.finance_approval_config_page.e1')}
         </Typography>
       </Paper>
     );
@@ -162,7 +162,7 @@ function NodesTable({ nodes }: { nodes: ApprovalNode[] }) {
               align='center'
               sx={{ fontWeight: 600 }}
             >
-              状态
+              {t('finance.finance_approval_config_page.e2')}
             </TableCell>
           </TableRow>
         </TableHead>
@@ -172,7 +172,7 @@ function NodesTable({ nodes }: { nodes: ApprovalNode[] }) {
               <TableCell>
                 <Chip
                   size='small'
-                  label={`第 ${node.nodeLevel} 级`}
+                  label={t('finance.finance_approval_config_page.e3', { v1: node.nodeLevel })}
                   color='primary'
                   variant='outlined'
                 />

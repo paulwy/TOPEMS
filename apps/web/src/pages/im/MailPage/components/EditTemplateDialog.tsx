@@ -127,7 +127,7 @@ const EditTemplateDialog: React.FC<EditTemplateDialogProps> = ({
                       value=''
                       disabled
                     >
-                      选择分类
+                      {t('im.mail_page_components_create_template_dialog.e2')}
                     </MenuItem>
                     {TEMPLATE_CATEGORIES.map((cat) => (
                       <MenuItem
@@ -218,7 +218,7 @@ const EditTemplateDialog: React.FC<EditTemplateDialogProps> = ({
                   resetTemplateForm();
                 }}
               >
-                取消
+                {t('im.mail_page_components_create_template_dialog.e5')}
               </Button>
               <Button type='submit'>{t('im.edit_template_dialog.k11')}</Button>
             </DialogActions>

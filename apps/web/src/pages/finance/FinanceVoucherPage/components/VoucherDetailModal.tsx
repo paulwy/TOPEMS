@@ -44,7 +44,7 @@ const VoucherDetailModal: React.FC<VoucherDetailModalProps> = ({
                 variant='body2'
                 sx={{ color: 'grey.500' }}
               >
-                凭证编号
+                {t('finance.finance_voucher_page_components_voucher_detail_modal.e1')}
               </Typography>
               <Typography
                 variant='h6'
@@ -58,7 +58,7 @@ const VoucherDetailModal: React.FC<VoucherDetailModalProps> = ({
                 variant='body2'
                 sx={{ color: 'grey.500' }}
               >
-                凭证日期
+                {t('finance.finance_voucher_page_components_voucher_detail_modal.e2')}
               </Typography>
               <Typography
                 variant='h6'
@@ -72,7 +72,7 @@ const VoucherDetailModal: React.FC<VoucherDetailModalProps> = ({
                 variant='body2'
                 sx={{ color: 'grey.500' }}
               >
-                期间
+                {t('finance.finance_voucher_page_components_voucher_detail_modal.e3')}
               </Typography>
               <Typography
                 variant='h6'
@@ -86,7 +86,7 @@ const VoucherDetailModal: React.FC<VoucherDetailModalProps> = ({
                 variant='body2'
                 sx={{ color: 'grey.500' }}
               >
-                状态
+                {t('finance.finance_approval_config_page.e2')}
               </Typography>
               {getStatusBadge(currentVoucher.status)}
             </Box>
@@ -96,7 +96,7 @@ const VoucherDetailModal: React.FC<VoucherDetailModalProps> = ({
               variant='body2'
               sx={{ color: 'grey.500' }}
             >
-              摘要
+              {t('finance.finance_voucher_page_components_voucher_detail_modal.e5')}
             </Typography>
             <Typography
               variant='body1'
@@ -117,7 +117,7 @@ const VoucherDetailModal: React.FC<VoucherDetailModalProps> = ({
                 variant='body2'
                 sx={{ color: 'grey.500' }}
               >
-                制单人
+                {t('finance.finance_voucher_page_components_voucher_detail_modal.e6')}
               </Typography>
               <Typography
                 variant='body1'
@@ -131,7 +131,7 @@ const VoucherDetailModal: React.FC<VoucherDetailModalProps> = ({
                 variant='body2'
                 sx={{ color: 'grey.500' }}
               >
-                审核人
+                {t('finance.finance_voucher_page_components_voucher_detail_modal.e7')}
               </Typography>
               <Typography
                 variant='body1'
@@ -146,7 +146,7 @@ const VoucherDetailModal: React.FC<VoucherDetailModalProps> = ({
               variant='subtitle1'
               sx={{ fontWeight: 600 }}
             >
-              凭证明细
+              {t('finance.finance_voucher_page_components_voucher_detail_modal.e8')}
             </Typography>
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
               {voucherItems.map((item) => (
@@ -208,7 +208,7 @@ const VoucherDetailModal: React.FC<VoucherDetailModalProps> = ({
                   variant='body2'
                   sx={{ color: 'grey.500' }}
                 >
-                  借方合计
+                  {t('finance.finance_voucher_page_components_voucher_detail_modal.e9')}
                 </Typography>
                 <Typography
                   variant='h6'
@@ -222,7 +222,7 @@ const VoucherDetailModal: React.FC<VoucherDetailModalProps> = ({
                   variant='body2'
                   sx={{ color: 'grey.500' }}
                 >
-                  贷方合计
+                  {t('finance.finance_voucher_page_components_voucher_detail_modal.e10')}
                 </Typography>
                 <Typography
                   variant='h6'

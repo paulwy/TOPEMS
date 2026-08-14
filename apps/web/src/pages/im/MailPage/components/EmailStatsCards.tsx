@@ -42,7 +42,7 @@ const EmailStatsCards: React.FC<EmailStatsCardsProps> = ({ stats, statsLoading }
           >
             <Box>
               <Typography sx={{ color: 'primary.light', fontSize: '0.875rem' }}>
-                邮件总数
+                {t('im.mail_page_components_email_stats_cards.e1')}
               </Typography>
               <Typography
                 sx={{

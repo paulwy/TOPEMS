@@ -322,7 +322,7 @@ export const GisFencePage: React.FC = () => {
       setSearchTerm(query);
       addNotification({
         title: t('gis.gis_fence_page.k18'),
-        message: `搜索: ${query}`,
+        message: i18n.t('gis.gis_fence_page.e1', { v1: query }),
         type: 'info',
       });
     },
@@ -333,7 +333,7 @@ export const GisFencePage: React.FC = () => {
     (fence: GeoFence) => {
       addNotification({
         title: t('gis.gis_fence_page.k19'),
-        message: `选中: ${fence.name}`,
+        message: i18n.t('gis.gis_fence_page.e2', { v1: fence.name }),
         type: 'info',
       });
     },
@@ -406,13 +406,13 @@ export const GisFencePage: React.FC = () => {
               variant='h4'
               sx={{ fontWeight: 'bold', mb: 1 }}
             >
-              地理围栏管理
+              {t('gis.gis_fence_page.e3')}
             </Typography>
             <Typography
               variant='body2'
               color='text.secondary'
             >
-              定义和管理地理围栏区域，设置进出告警规则
+              {t('gis.gis_fence_page.e4')}
             </Typography>
           </div>
           <Button
@@ -420,7 +420,7 @@ export const GisFencePage: React.FC = () => {
             startIcon={<Plus />}
             onClick={handleCreateFence}
           >
-            创建围栏
+            {t('gis.gis_fence_page.e5')}
           </Button>
         </Box>
 
@@ -727,7 +727,7 @@ export const GisFencePage: React.FC = () => {
                 variant='body2'
                 sx={{ fontWeight: 500 }}
               >
-                告警规则
+                {t('gis.gis_fence_page.e6')}
               </Typography>
               <Box sx={{ display: 'flex', gap: 4 }}>
                 <FormControlLabel
@@ -747,7 +747,7 @@ export const GisFencePage: React.FC = () => {
               variant='contained'
               onClick={handleSaveFence}
             >
-              创建围栏
+              {t('gis.gis_fence_page.e5')}
             </Button>
           </DialogActions>
         </Dialog>

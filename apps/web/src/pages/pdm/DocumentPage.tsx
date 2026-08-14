@@ -275,7 +275,7 @@ export const DocumentPage: React.FC = () => {
                 variant='body2'
                 sx={{ color: 'text.secondary', fontSize: '0.875rem' }}
               >
-                文档总数
+                {t('pdm.document_page.e1')}
               </Typography>
               <Typography
                 variant='h5'
@@ -308,7 +308,7 @@ export const DocumentPage: React.FC = () => {
                 variant='body2'
                 sx={{ color: 'text.secondary', fontSize: '0.875rem' }}
               >
-                已发布
+                {t('pdm.document_page.e2')}
               </Typography>
               <Typography
                 variant='h5'
@@ -341,7 +341,7 @@ export const DocumentPage: React.FC = () => {
                 variant='body2'
                 sx={{ color: 'text.secondary', fontSize: '0.875rem' }}
               >
-                审核中
+                {t('pdm.document_page.e3')}
               </Typography>
               <Typography
                 variant='h5'
@@ -379,7 +379,7 @@ export const DocumentPage: React.FC = () => {
             component='span'
             sx={{ color: 'text.secondary', fontSize: '0.875rem' }}
           >
-            文档编号
+            {t('pdm.document_page.e4')}
           </Box>
           <Box sx={{ fontWeight: 500 }}>{doc.document_no}</Box>
         </Box>
@@ -388,7 +388,7 @@ export const DocumentPage: React.FC = () => {
             component='span'
             sx={{ color: 'text.secondary', fontSize: '0.875rem' }}
           >
-            类型
+            {t('pdm.document_page.e5')}
           </Box>
           <Box>{typeLabel}</Box>
         </Box>
@@ -397,7 +397,7 @@ export const DocumentPage: React.FC = () => {
             component='span'
             sx={{ color: 'text.secondary', fontSize: '0.875rem' }}
           >
-            文档名称
+            {t('pdm.document_page.e6')}
           </Box>
           <Box>{doc.name}</Box>
         </Box>
@@ -406,7 +406,7 @@ export const DocumentPage: React.FC = () => {
             component='span'
             sx={{ color: 'text.secondary', fontSize: '0.875rem' }}
           >
-            当前版本
+            {t('pdm.document_page.e7')}
           </Box>
           <Box>v{doc.current_version || '1.0'}</Box>
         </Box>
@@ -415,7 +415,7 @@ export const DocumentPage: React.FC = () => {
             component='span'
             sx={{ color: 'text.secondary', fontSize: '0.875rem' }}
           >
-            版本数
+            {t('pdm.document_page.e8')}
           </Box>
           <Box>{doc.version_count || 1}</Box>
         </Box>
@@ -424,7 +424,7 @@ export const DocumentPage: React.FC = () => {
             component='span'
             sx={{ color: 'text.secondary', fontSize: '0.875rem' }}
           >
-            分类
+            {t('pdm.document_page.e9')}
           </Box>
           <Box>{doc.category || '-'}</Box>
         </Box>
@@ -433,7 +433,7 @@ export const DocumentPage: React.FC = () => {
             component='span'
             sx={{ color: 'text.secondary', fontSize: '0.875rem' }}
           >
-            状态
+            {t('pdm.bom_page.e6')}
           </Box>
           <Box sx={{ mt: 0.5 }}>
             <Chip
@@ -452,7 +452,7 @@ export const DocumentPage: React.FC = () => {
             component='span'
             sx={{ color: 'text.secondary', fontSize: '0.875rem' }}
           >
-            上传人
+            {t('pdm.document_page.e11')}
           </Box>
           <Box>{doc.uploader_name || '-'}</Box>
         </Box>
@@ -461,7 +461,7 @@ export const DocumentPage: React.FC = () => {
             component='span'
             sx={{ color: 'text.secondary', fontSize: '0.875rem' }}
           >
-            创建时间
+            {t('pdm.bom_page.e8')}
           </Box>
           <Box>{doc.created_at ? new Date(doc.created_at).toLocaleDateString('zh-CN') : '-'}</Box>
         </Box>
@@ -471,7 +471,7 @@ export const DocumentPage: React.FC = () => {
               component='span'
               sx={{ color: 'text.secondary', fontSize: '0.875rem' }}
             >
-              描述
+              {t('pdm.bom_page.e9')}
             </Box>
             <Box>{doc.description}</Box>
           </Box>
@@ -607,7 +607,7 @@ export const DocumentPage: React.FC = () => {
               });
             }}
           >
-            上传新版本
+            {t('pdm.document_page.e14')}
           </Button>
         </DialogActions>
       </Dialog>
@@ -650,7 +650,7 @@ export const DocumentPage: React.FC = () => {
               variant='body2'
               sx={{ color: 'text.secondary' }}
             >
-              点击或拖拽文件到此处上传
+              {t('pdm.document_page.e15')}
             </Typography>
           </Box>
         </DialogContent>
@@ -660,7 +660,7 @@ export const DocumentPage: React.FC = () => {
             variant='contained'
             disabled
           >
-            上传
+            {t('pdm.document_page.e16')}
           </Button>
         </DialogActions>
       </Dialog>

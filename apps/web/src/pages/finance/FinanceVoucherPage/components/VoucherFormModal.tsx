@@ -176,7 +176,7 @@ const VoucherFormModal: React.FC<VoucherFormModalProps> = ({
               variant='subtitle1'
               sx={{ fontWeight: 600 }}
             >
-              凭证明细
+              {t('finance.finance_voucher_page_components_voucher_detail_modal.e8')}
             </Typography>
             <ActionButton
               label={t('finance.finance_voucher_page_components__voucher_form_modal.text_8f114f')}
@@ -284,7 +284,7 @@ const VoucherFormModal: React.FC<VoucherFormModalProps> = ({
                 variant='body2'
                 sx={{ color: 'text.secondary' }}
               >
-                借方合计
+                {t('finance.finance_voucher_page_components_voucher_detail_modal.e9')}
               </Typography>
               <Typography sx={{ fontWeight: 'bold', color: 'error.main' }}>
                 {formatCurrency(newVoucher.items.reduce((sum, item) => sum + item.debit_amount, 0))}
@@ -295,7 +295,7 @@ const VoucherFormModal: React.FC<VoucherFormModalProps> = ({
                 variant='body2'
                 sx={{ color: 'text.secondary' }}
               >
-                贷方合计
+                {t('finance.finance_voucher_page_components_voucher_detail_modal.e10')}
               </Typography>
               <Typography sx={{ fontWeight: 'bold', color: 'success.main' }}>
                 {formatCurrency(

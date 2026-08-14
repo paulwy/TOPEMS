@@ -87,13 +87,13 @@ const CacheConfigPanel: React.FC<CacheConfigPanelProps> = ({
                   variant='subtitle1'
                   sx={{ fontWeight: 600 }}
                 >
-                  缓存状态
+                  {t('system.system_params_page_components_cache_config_panel.e1')}
                 </Typography>
                 <Typography
                   variant='caption'
                   color='text.secondary'
                 >
-                  当前缓存使用情况统计
+                  {t('system.system_params_page_components_cache_config_panel.e2')}
                 </Typography>
               </Box>
             </Box>
@@ -143,7 +143,7 @@ const CacheConfigPanel: React.FC<CacheConfigPanelProps> = ({
                       variant='body2'
                       sx={{ color: 'text.secondary', mt: 1 }}
                     >
-                      缓存键数量
+                      {t('system.system_params_page_components_cache_config_panel.e3')}
                     </Typography>
                   </Box>
                 </Grid>
@@ -178,7 +178,7 @@ const CacheConfigPanel: React.FC<CacheConfigPanelProps> = ({
                       variant='body2'
                       sx={{ color: 'text.secondary', mt: 1 }}
                     >
-                      内存使用
+                      {t('system.system_params_page_components_cache_config_panel.e4')}
                     </Typography>
                   </Box>
                 </Grid>
@@ -213,7 +213,7 @@ const CacheConfigPanel: React.FC<CacheConfigPanelProps> = ({
                       variant='body2'
                       sx={{ color: 'text.secondary', mt: 1 }}
                     >
-                      命中率
+                      {t('system.system_params_page_components_cache_config_panel.e5')}
                     </Typography>
                   </Box>
                 </Grid>
@@ -250,13 +250,13 @@ const CacheConfigPanel: React.FC<CacheConfigPanelProps> = ({
                   variant='subtitle1'
                   sx={{ fontWeight: 600 }}
                 >
-                  缓存设置
+                  {t('system.system_params_page_components_cache_config_panel.e6')}
                 </Typography>
                 <Typography
                   variant='caption'
                   color='text.secondary'
                 >
-                  缓存引擎和参数配置
+                  {t('system.system_params_page_components_cache_config_panel.e7')}
                 </Typography>
               </Box>
             </Box>

@@ -304,7 +304,7 @@ export default function OpeningBalancePage() {
               onClick={() => refetch()}
             >
               <RefreshCw sx={{ width: 16, height: 16, marginRight: 8 }} />
-              刷新
+              {t('finance.opening_balance_page.e1')}
             </Button>
           </Box>
         </CardContent>
@@ -362,7 +362,7 @@ export default function OpeningBalancePage() {
               variant='h6'
               sx={{ fontWeight: 600 }}
             >
-              科目期初余额
+              {t('finance.opening_balance_page.e2')}
             </Typography>
           </Box>
         </CardHeader>
@@ -401,7 +401,7 @@ export default function OpeningBalancePage() {
                       variant='body2'
                       color='text.secondary'
                     >
-                      暂无科目数据
+                      {t('finance.opening_balance_page.e3')}
                     </Typography>
                   </TableCell>
                 </TableRow>
@@ -508,7 +508,7 @@ export default function OpeningBalancePage() {
                               variant='text'
                               onClick={handleCancelEdit}
                             >
-                              取消
+                              {t('finance.budget_management_page.e7')}
                             </Button>
                           </Box>
                         ) : (
@@ -606,7 +606,7 @@ export default function OpeningBalancePage() {
                     color='warning.main'
                     sx={{ fontWeight: 500 }}
                   >
-                    注意事项
+                    {t('finance.opening_balance_page.e5')}
                   </Typography>
                   <ul
                     style={{
@@ -630,13 +630,13 @@ export default function OpeningBalancePage() {
             variant='outlined'
             onClick={() => setShowCarryForwardModal(false)}
           >
-            取消
+            {t('finance.budget_management_page.e7')}
           </Button>
           <Button
             variant='contained'
             onClick={handleCarryForward}
           >
-            确认结转
+            {t('finance.opening_balance_page.e7')}
           </Button>
         </DialogActions>
       </Dialog>

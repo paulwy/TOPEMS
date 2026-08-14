@@ -57,7 +57,7 @@ export const PaymentPrintTemplate: React.FC<PaymentPrintTemplateProps> = ({ paym
             variant='h4'
             sx={{ fontWeight: 700, mb: 1 }}
           >
-            付款单
+            {t('finance.payment_print_template.e1')}
           </Typography>
           <Typography
             variant='body2'
@@ -78,7 +78,7 @@ export const PaymentPrintTemplate: React.FC<PaymentPrintTemplateProps> = ({ paym
                 variant='body2'
                 color='text.secondary'
               >
-                付款单号：
+                {t('finance.payment_print_template.e2')}
               </Typography>
               <Typography
                 variant='body1'
@@ -98,7 +98,7 @@ export const PaymentPrintTemplate: React.FC<PaymentPrintTemplateProps> = ({ paym
                 variant='body2'
                 color='text.secondary'
               >
-                创建日期：
+                {t('finance.payment_print_template.e3')}
               </Typography>
               <Typography variant='body1'>
                 {payment.createdAt ? new Date(payment.createdAt).toLocaleDateString('zh-CN') : '-'}
@@ -115,7 +115,7 @@ export const PaymentPrintTemplate: React.FC<PaymentPrintTemplateProps> = ({ paym
                 variant='body2'
                 color='text.secondary'
               >
-                供应商：
+                {t('finance.payment_print_template.e4')}
               </Typography>
               <Typography
                 variant='body1'
@@ -135,7 +135,7 @@ export const PaymentPrintTemplate: React.FC<PaymentPrintTemplateProps> = ({ paym
                 variant='body2'
                 color='text.secondary'
               >
-                制单人：
+                {t('finance.payment_print_template.e5')}
               </Typography>
               <Typography variant='body1'>{payment.createdBy || '-'}</Typography>
             </Box>
@@ -150,7 +150,7 @@ export const PaymentPrintTemplate: React.FC<PaymentPrintTemplateProps> = ({ paym
                 variant='body2'
                 color='text.secondary'
               >
-                付款方式：
+                {t('finance.payment_print_template.e6')}
               </Typography>
               <Typography variant='body1'>
                 {paymentMethodOptions.find((m) => m.value === payment.paymentMethod)?.label ||
@@ -164,7 +164,7 @@ export const PaymentPrintTemplate: React.FC<PaymentPrintTemplateProps> = ({ paym
                 variant='body2'
                 color='text.secondary'
               >
-                状态：
+                {t('finance.payment_print_template.e7')}
               </Typography>
               <Typography variant='body1'>
                 {statusOptions[payment.status] || payment.status}
@@ -177,7 +177,7 @@ export const PaymentPrintTemplate: React.FC<PaymentPrintTemplateProps> = ({ paym
                 variant='body2'
                 color='text.secondary'
               >
-                货币：
+                {t('finance.payment_print_template.e8')}
               </Typography>
               <Typography variant='body1'>{payment.currency || 'CNY'}</Typography>
             </Box>
@@ -192,7 +192,7 @@ export const PaymentPrintTemplate: React.FC<PaymentPrintTemplateProps> = ({ paym
                 variant='body2'
                 color='text.secondary'
               >
-                计划付款日期：
+                {t('finance.payment_print_template.e9')}
               </Typography>
               <Typography variant='body1'>
                 {payment.paymentDate
@@ -216,7 +216,7 @@ export const PaymentPrintTemplate: React.FC<PaymentPrintTemplateProps> = ({ paym
               variant='subtitle2'
               sx={{ fontWeight: 600, mb: 2 }}
             >
-              银行信息
+              {t('finance.payment_print_template.e10')}
             </Typography>
             <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 3 }}>
               <Box sx={{ flex: '1 1 280px', minWidth: '280px' }}>
@@ -224,7 +224,7 @@ export const PaymentPrintTemplate: React.FC<PaymentPrintTemplateProps> = ({ paym
                   variant='body2'
                   color='text.secondary'
                 >
-                  开户银行：
+                  {t('finance.payment_print_template.e11')}
                 </Typography>
                 <Typography variant='body1'>{payment.bankName}</Typography>
               </Box>
@@ -233,7 +233,7 @@ export const PaymentPrintTemplate: React.FC<PaymentPrintTemplateProps> = ({ paym
                   variant='body2'
                   color='text.secondary'
                 >
-                  银行账号：
+                  {t('finance.payment_print_template.e12')}
                 </Typography>
                 <Typography variant='body1'>{payment.bankAccountNo}</Typography>
               </Box>
@@ -254,7 +254,7 @@ export const PaymentPrintTemplate: React.FC<PaymentPrintTemplateProps> = ({ paym
               variant='subtitle2'
               sx={{ fontWeight: 600, mb: 2 }}
             >
-              付款执行信息
+              {t('finance.payment_print_template.e13')}
             </Typography>
             <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 3 }}>
               <Box sx={{ flex: '1 1 280px', minWidth: '280px' }}>
@@ -262,7 +262,7 @@ export const PaymentPrintTemplate: React.FC<PaymentPrintTemplateProps> = ({ paym
                   variant='body2'
                   color='text.secondary'
                 >
-                  实际付款日期：
+                  {t('finance.payment_print_template.e14')}
                 </Typography>
                 <Typography variant='body1'>
                   {payment.actualPaymentDate
@@ -275,7 +275,7 @@ export const PaymentPrintTemplate: React.FC<PaymentPrintTemplateProps> = ({ paym
                   variant='body2'
                   color='text.secondary'
                 >
-                  银行流水号：
+                  {t('finance.payment_print_template.e15')}
                 </Typography>
                 <Typography variant='body1'>{payment.bankTransactionNo || '-'}</Typography>
               </Box>
@@ -284,7 +284,7 @@ export const PaymentPrintTemplate: React.FC<PaymentPrintTemplateProps> = ({ paym
                   variant='body2'
                   color='text.secondary'
                 >
-                  执行人员：
+                  {t('finance.payment_print_template.e16')}
                 </Typography>
                 <Typography variant='body1'>{payment.executedBy || '-'}</Typography>
               </Box>
@@ -298,7 +298,7 @@ export const PaymentPrintTemplate: React.FC<PaymentPrintTemplateProps> = ({ paym
               variant='subtitle2'
               sx={{ fontWeight: 600, mb: 2 }}
             >
-              付款明细
+              {t('finance.payment_print_template.e17')}
             </Typography>
             <TableContainer
               component={Paper}
@@ -369,7 +369,7 @@ export const PaymentPrintTemplate: React.FC<PaymentPrintTemplateProps> = ({ paym
                   variant='body2'
                   color='text.secondary'
                 >
-                  付款总金额：
+                  {t('finance.payment_print_template.e18')}
                 </Typography>
                 <Typography
                   variant='h5'
@@ -403,7 +403,7 @@ export const PaymentPrintTemplate: React.FC<PaymentPrintTemplateProps> = ({ paym
                 variant='body2'
                 color='text.secondary'
               >
-                制单：
+                {t('finance.payment_print_template.e19')}
               </Typography>
               <Box
                 sx={{
@@ -418,7 +418,7 @@ export const PaymentPrintTemplate: React.FC<PaymentPrintTemplateProps> = ({ paym
                 variant='body2'
                 color='text.secondary'
               >
-                审核：
+                {t('finance.payment_print_template.e20')}
               </Typography>
               <Box
                 sx={{
@@ -433,7 +433,7 @@ export const PaymentPrintTemplate: React.FC<PaymentPrintTemplateProps> = ({ paym
                 variant='body2'
                 color='text.secondary'
               >
-                审批：
+                {t('finance.payment_print_template.e21')}
               </Typography>
               <Box
                 sx={{

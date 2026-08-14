@@ -100,7 +100,7 @@ export const DataModelListPage: React.FC = () => {
             startIcon={<AddIcon />}
             onClick={() => setCreateOpen(true)}
           >
-            新建模型
+            {t('lowcode.data_model_list_page.e1')}
           </Button>
         </Stack>
 
@@ -141,7 +141,7 @@ export const DataModelListPage: React.FC = () => {
                       colSpan={6}
                       align='center'
                     >
-                      暂无数据模型
+                      {t('lowcode.data_model_list_page.e2')}
                     </TableCell>
                   </TableRow>
                 ) : (

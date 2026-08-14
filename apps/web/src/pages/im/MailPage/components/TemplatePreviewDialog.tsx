@@ -8,6 +8,7 @@ import {
   Typography,
 } from '@mui/material';
 import { Eye } from 'lucide-react';
+import i18n from '@/i18n';
 
 interface PreviewContent {
   subject: string;
@@ -33,14 +34,14 @@ const TemplatePreviewDialog: React.FC<TemplatePreviewDialogProps> = ({
       <DialogContent sx={{ maxWidth: 600 }}>
         <DialogTitle sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
           <Eye size={20} />
-          模板预览
+          {i18n.t('im.mail_page_components_template_preview_dialog.e1')}
         </DialogTitle>
         <Typography
           variant='body2'
           color='text.secondary'
           sx={{ mb: 2 }}
         >
-          以下是模板渲染后的预览效果
+          {i18n.t('im.mail_page_components_template_preview_dialog.e2')}
         </Typography>
         {previewContent && (
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3, py: 2 }}>
@@ -49,7 +50,7 @@ const TemplatePreviewDialog: React.FC<TemplatePreviewDialogProps> = ({
                 variant='body2'
                 color='text.secondary'
               >
-                主题
+                {i18n.t('im.mail_page_components_email_list.e3')}
               </Typography>
               <Typography variant='h6'>{previewContent.subject}</Typography>
             </Box>
@@ -58,7 +59,7 @@ const TemplatePreviewDialog: React.FC<TemplatePreviewDialogProps> = ({
                 variant='body2'
                 color='text.secondary'
               >
-                正文内容
+                {i18n.t('im.mail_page_components_template_preview_dialog.e4')}
               </Typography>
               <Box
                 sx={{
@@ -89,7 +90,7 @@ const TemplatePreviewDialog: React.FC<TemplatePreviewDialogProps> = ({
             variant='outlined'
             onClick={onClose}
           >
-            关闭
+            {i18n.t('im.mail_page_components_email_detail_dialog.e10')}
           </Button>
         </DialogActions>
       </DialogContent>

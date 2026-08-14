@@ -164,7 +164,11 @@ export const BomPage: React.FC = () => {
       if (response.success && response.data) {
         addNotification({
           title: t('pdm.bom_page.k10'),
-          message: `发现差异：新增 ${response.data.differences.addeditems.length} 项，移除 ${response.data.differences.removeditems.length} 项，修改 ${response.data.differences.modifieditems.length} 项`,
+          message: i18n.t('pdm.bom_page.e1', {
+            v1: response.data.differences.addeditems.length,
+            v2: response.data.differences.removeditems.length,
+            v3: response.data.differences.modifieditems.length,
+          }),
           type: 'success',
         });
       }
@@ -314,7 +318,7 @@ export const BomPage: React.FC = () => {
                 variant='body2'
                 sx={{ color: 'text.secondary', fontSize: '0.875rem' }}
               >
-                激活版本
+                {t('pdm.bom_page.e2')}
               </Typography>
               <Typography
                 variant='h5'
@@ -347,7 +351,7 @@ export const BomPage: React.FC = () => {
                 variant='body2'
                 sx={{ color: 'text.secondary', fontSize: '0.875rem' }}
               >
-                草稿版本
+                {t('pdm.bom_page.e3')}
               </Typography>
               <Typography
                 variant='h5'
@@ -393,7 +397,7 @@ export const BomPage: React.FC = () => {
             component='span'
             sx={{ color: 'text.secondary', fontSize: '0.875rem' }}
           >
-            版本
+            {t('pdm.bom_page.e4')}
           </Box>
           <Box>v{bom.version || '1.0'}</Box>
         </Box>
@@ -411,7 +415,7 @@ export const BomPage: React.FC = () => {
             component='span'
             sx={{ color: 'text.secondary', fontSize: '0.875rem' }}
           >
-            产品
+            {t('pdm.bom_page.e5')}
           </Box>
           <Box>{bom.product_name || '-'}</Box>
         </Box>
@@ -420,7 +424,7 @@ export const BomPage: React.FC = () => {
             component='span'
             sx={{ color: 'text.secondary', fontSize: '0.875rem' }}
           >
-            状态
+            {t('pdm.bom_page.e6')}
           </Box>
           <Box sx={{ mt: 0.5 }}>
             <Chip
@@ -439,7 +443,7 @@ export const BomPage: React.FC = () => {
             component='span'
             sx={{ color: 'text.secondary', fontSize: '0.875rem' }}
           >
-            生效日期
+            {t('pdm.bom_page.e7')}
           </Box>
           <Box>{bom.effective_date || '-'}</Box>
         </Box>
@@ -448,7 +452,7 @@ export const BomPage: React.FC = () => {
             component='span'
             sx={{ color: 'text.secondary', fontSize: '0.875rem' }}
           >
-            创建时间
+            {t('pdm.bom_page.e8')}
           </Box>
           <Box>{bom.created_at ? new Date(bom.created_at).toLocaleDateString('zh-CN') : '-'}</Box>
         </Box>
@@ -458,7 +462,7 @@ export const BomPage: React.FC = () => {
               component='span'
               sx={{ color: 'text.secondary', fontSize: '0.875rem' }}
             >
-              描述
+              {t('pdm.bom_page.e9')}
             </Box>
             <Box>{bom.description}</Box>
           </Box>
@@ -498,7 +502,7 @@ export const BomPage: React.FC = () => {
               id: 'level',
               label: t('pdm.bom_page.k18'),
               render: (row: Record<string, unknown>) =>
-                `第 ${(row as unknown as BomItem).level} 层`,
+                t('pdm.bom_page.e10', { v1: (row as unknown as BomItem).level }),
             },
           ]}
         />
@@ -527,7 +531,7 @@ export const BomPage: React.FC = () => {
         onClick={() => setCompareDialogOpen(true)}
         sx={{ mt: 2 }}
       >
-        开始对比
+        {t('pdm.bom_page.e11')}
       </Button>
     </Box>
   );
@@ -622,7 +626,7 @@ export const BomPage: React.FC = () => {
             onClick={handleCompare}
             disabled={!compareVersionA || !compareVersionB}
           >
-            开始对比
+            {t('pdm.bom_page.e11')}
           </Button>
         </DialogActions>
       </Dialog>

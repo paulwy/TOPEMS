@@ -80,7 +80,7 @@ const EmployeeFormDialog: React.FC<EmployeeFormDialogProps> = ({
               color='text.secondary'
               sx={{ mb: 1, display: 'block' }}
             >
-              员工头像
+              {t('hrm.hrm_employee_page_components_employee_form_dialog.e1')}
             </Typography>
             <ImageUpload
               value={
@@ -142,7 +142,9 @@ const EmployeeFormDialog: React.FC<EmployeeFormDialogProps> = ({
               label={t('hrm.hrm_employee_page_components__employee_form_dialog.text_68923b')}
               onChange={(e) => onChange('department_id', e.target.value)}
             >
-              <MenuItem value=''>无</MenuItem>
+              <MenuItem value=''>
+                {t('hrm.hrm_employee_page_components_employee_form_dialog.e2')}
+              </MenuItem>
               {departments.map((d) => (
                 <MenuItem
                   key={d.id}
@@ -211,7 +213,7 @@ const EmployeeFormDialog: React.FC<EmployeeFormDialogProps> = ({
                 onClick={onClose}
                 variant='outlined'
               >
-                取消
+                {t('hrm.employee_finance_tab.e2')}
               </Button>
               <Button
                 type='submit'

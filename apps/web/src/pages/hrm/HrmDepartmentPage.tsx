@@ -139,7 +139,7 @@ const HrmDepartmentPage: React.FC = () => {
             variant='body2'
             sx={{ color: 'text.secondary' }}
           >
-            部门总数
+            {t('hrm.hrm_department_page.e1')}
           </Typography>
           <Typography
             variant='h5'
@@ -153,7 +153,7 @@ const HrmDepartmentPage: React.FC = () => {
             variant='body2'
             sx={{ color: 'text.secondary' }}
           >
-            启用部门
+            {t('hrm.hrm_department_page.e2')}
           </Typography>
           <Typography
             variant='h5'
@@ -167,7 +167,7 @@ const HrmDepartmentPage: React.FC = () => {
             variant='body2'
             sx={{ color: 'text.secondary' }}
           >
-            停用部门
+            {t('hrm.hrm_department_page.e3')}
           </Typography>
           <Typography
             variant='h5'
@@ -181,7 +181,7 @@ const HrmDepartmentPage: React.FC = () => {
             variant='body2'
             sx={{ color: 'text.secondary' }}
           >
-            选中部门人数
+            {t('hrm.hrm_department_page.e4')}
           </Typography>
           <Typography
             variant='h5'
@@ -205,12 +205,12 @@ const HrmDepartmentPage: React.FC = () => {
               variant='subtitle1'
               sx={{ fontWeight: 600 }}
             >
-              部门成员
+              {t('hrm.hrm_department_page.e5')}
             </Typography>
             <Chip
               size='small'
               variant='outlined'
-              label={`${employees.length} 人`}
+              label={t('hrm.hrm_department_page.e6')}
               sx={{ ml: 'auto' }}
             />
           </Box>

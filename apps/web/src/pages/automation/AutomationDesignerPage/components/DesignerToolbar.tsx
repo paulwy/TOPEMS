@@ -111,14 +111,14 @@ export const DesignerToolbar: React.FC<DesignerToolbarProps> = ({
                 size={16}
                 style={{ marginRight: 4 }}
               />
-              画布模式
+              {t('automation.automation_designer_page_components_designer_toolbar.e1')}
             </ToggleButton>
             <ToggleButton value='form'>
               <FormModeIcon
                 size={16}
                 style={{ marginRight: 4 }}
               />
-              表单模式
+              {t('automation.automation_designer_page_components_designer_toolbar.e2')}
             </ToggleButton>
           </ToggleButtonGroup>
         </Stack>
@@ -133,7 +133,7 @@ export const DesignerToolbar: React.FC<DesignerToolbarProps> = ({
             size='small'
             disabled={!selectedRuleId || loading}
           >
-            重载
+            {t('automation.automation_designer_page_components_designer_toolbar.e3')}
           </Button>
           <Button
             startIcon={<EyeIcon />}
@@ -150,7 +150,7 @@ export const DesignerToolbar: React.FC<DesignerToolbarProps> = ({
             color='warning'
             disabled={nodes.length === 0}
           >
-            清空
+            {t('automation.automation_designer_page_components_designer_toolbar.e4')}
           </Button>
           <Button
             startIcon={<SaveIcon />}
@@ -205,7 +205,7 @@ export const DesignerToolbar: React.FC<DesignerToolbarProps> = ({
           disabled={!selectedRuleId}
           variant='outlined'
         >
-          同步到规则
+          {t('automation.automation_designer_page_components_designer_toolbar.e5')}
         </Button>
       </Stack>
 
@@ -279,7 +279,7 @@ export const DesignerToolbar: React.FC<DesignerToolbarProps> = ({
                 color='text.secondary'
                 sx={{ textAlign: 'center', mt: 4 }}
               >
-                画布为空，请从上方添加节点
+                {t('automation.automation_designer_page_components_designer_toolbar.e6')}
               </Typography>
             ) : (
               <Stack spacing={1}>
@@ -319,7 +319,7 @@ export const DesignerToolbar: React.FC<DesignerToolbarProps> = ({
                       size='small'
                       onClick={() => setEditNode(node)}
                     >
-                      编辑
+                      {t('automation.automation_designer_page_components_designer_toolbar.e7')}
                     </Button>
                     <IconButton
                       size='small'

@@ -136,7 +136,7 @@ const HrmCompanyPage: React.FC = () => {
             variant='body2'
             sx={{ color: 'text.secondary' }}
           >
-            公司总数
+            {t('hrm.hrm_company_page.e1')}
           </Typography>
           <Typography
             variant='h5'
@@ -150,7 +150,7 @@ const HrmCompanyPage: React.FC = () => {
             variant='body2'
             sx={{ color: 'text.secondary' }}
           >
-            启用公司
+            {t('hrm.hrm_company_page.e2')}
           </Typography>
           <Typography
             variant='h5'
@@ -164,7 +164,7 @@ const HrmCompanyPage: React.FC = () => {
             variant='body2'
             sx={{ color: 'text.secondary' }}
           >
-            禁用公司
+            {t('hrm.hrm_company_page.e3')}
           </Typography>
           <Typography
             variant='h5'
@@ -178,7 +178,7 @@ const HrmCompanyPage: React.FC = () => {
             variant='body2'
             sx={{ color: 'text.secondary' }}
           >
-            归档公司
+            {t('hrm.hrm_company_page.e4')}
           </Typography>
           <Typography
             variant='h5'
@@ -258,7 +258,7 @@ const HrmCompanyPage: React.FC = () => {
                   variant='caption'
                   color='text.secondary'
                 >
-                  部门数量
+                  {t('hrm.hrm_company_page.e5')}
                 </Typography>
                 <Typography
                   variant='h5'
@@ -272,7 +272,7 @@ const HrmCompanyPage: React.FC = () => {
                   variant='caption'
                   color='text.secondary'
                 >
-                  员工数量
+                  {t('hrm.hrm_company_page.e6')}
                 </Typography>
                 <Typography
                   variant='h5'
@@ -287,7 +287,7 @@ const HrmCompanyPage: React.FC = () => {
                     variant='caption'
                     color='text.secondary'
                   >
-                    注册号
+                    {t('hrm.hrm_company_page.e7')}
                   </Typography>
                   <Typography
                     variant='body2'
@@ -303,7 +303,7 @@ const HrmCompanyPage: React.FC = () => {
                     variant='caption'
                     color='text.secondary'
                   >
-                    税号
+                    {t('hrm.hrm_company_page.e8')}
                   </Typography>
                   <Typography
                     variant='body2'
@@ -322,7 +322,7 @@ const HrmCompanyPage: React.FC = () => {
                   color='text.secondary'
                   sx={{ mb: 0.5 }}
                 >
-                  地址
+                  {t('hrm.hrm_company_page.e9')}
                 </Typography>
                 <Typography variant='body2'>{company.address}</Typography>
               </Box>
@@ -364,12 +364,12 @@ const HrmCompanyPage: React.FC = () => {
                   variant='subtitle1'
                   sx={{ fontWeight: 600 }}
                 >
-                  部门列表
+                  {t('hrm.hrm_company_page.e10')}
                 </Typography>
                 <Chip
                   size='small'
                   variant='outlined'
-                  label={`${companyDepts.length} 个`}
+                  label={t('hrm.hrm_company_page.e11')}
                   sx={{ ml: 'auto' }}
                 />
               </Box>
@@ -380,7 +380,7 @@ const HrmCompanyPage: React.FC = () => {
                   color='text.secondary'
                   sx={{ py: 2, textAlign: 'center' }}
                 >
-                  暂无部门
+                  {t('hrm.hrm_company_page.e12')}
                 </Typography>
               ) : (
                 <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>

@@ -202,7 +202,7 @@ export const AutomationRulesPage: React.FC = () => {
             startIcon={<AddIcon />}
             onClick={() => setCreateOpen(true)}
           >
-            新建规则
+            {t('automation.automation_rules_page.e1')}
           </Button>
         </Stack>
 
@@ -245,7 +245,7 @@ export const AutomationRulesPage: React.FC = () => {
                       colSpan={8}
                       align='center'
                     >
-                      暂无规则，点击右上角新建
+                      {t('automation.automation_rules_page.e2')}
                     </TableCell>
                   </TableRow>
                 ) : (

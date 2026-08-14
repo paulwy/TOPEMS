@@ -40,7 +40,9 @@ const ConfirmDialogs: React.FC<ConfirmDialogsProps> = ({
         onClose={onCloseBatchDelete}
         onConfirm={onConfirmBatchDelete}
         title={t('finance.finance_voucher_page_components__confirm_dialogs.batch_delete')}
-        message={`确定要删除选中的 ${selectedIds.length} 张凭证吗？`}
+        message={t('finance.finance_voucher_page_components_confirm_dialogs.e1', {
+          v1: selectedIds.length,
+        })}
         danger
       />
     </>

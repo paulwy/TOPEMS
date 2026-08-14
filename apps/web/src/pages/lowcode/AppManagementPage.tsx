@@ -173,7 +173,7 @@ export const AppManagementPage: React.FC = () => {
                   startIcon={<CloudOffIcon />}
                   onClick={handleUnpublish}
                 >
-                  下架
+                  {t('lowcode.app_management_page.e1')}
                 </Button>
               ) : (
                 <Button
@@ -182,7 +182,7 @@ export const AppManagementPage: React.FC = () => {
                   startIcon={<CloudUploadIcon />}
                   onClick={handlePublish}
                 >
-                  发布
+                  {t('lowcode.app_management_page.e2')}
                 </Button>
               )}
               <Typography

@@ -153,14 +153,14 @@ export default function FinanceReceivablePayablePage() {
             variant='h4'
             sx={{ fontWeight: 'bold' }}
           >
-            应收应付管理
+            {t('finance.finance_receivable_payable_page.e1')}
           </Typography>
           <Typography
             variant='body2'
             color='text.secondary'
             sx={{ mt: 0.5 }}
           >
-            管理企业应收账款和应付账款
+            {t('finance.finance_receivable_payable_page.e2')}
           </Typography>
         </Box>
       </Box>
@@ -185,7 +185,9 @@ export default function FinanceReceivablePayablePage() {
                   <Chip
                     size='small'
                     color='error'
-                    label={`逾期 ${formatCurrency(overdueReceivable)}`}
+                    label={t('finance.finance_receivable_payable_page.e3', {
+                      v1: formatCurrency(overdueReceivable),
+                    })}
                   />
                 )}
               </Box>
@@ -201,7 +203,9 @@ export default function FinanceReceivablePayablePage() {
                   <Chip
                     size='small'
                     color='error'
-                    label={`逾期 ${formatCurrency(overduePayable)}`}
+                    label={t('finance.finance_receivable_payable_page.e3', {
+                      v1: formatCurrency(overduePayable),
+                    })}
                   />
                 )}
               </Box>

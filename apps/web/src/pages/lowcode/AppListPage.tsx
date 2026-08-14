@@ -106,7 +106,7 @@ export const AppListPage: React.FC = () => {
             startIcon={<AddIcon />}
             onClick={() => setCreateOpen(true)}
           >
-            新建应用
+            {t('lowcode.app_list_page.e1')}
           </Button>
         </Stack>
 
@@ -147,7 +147,7 @@ export const AppListPage: React.FC = () => {
                       colSpan={6}
                       align='center'
                     >
-                      暂无应用，点击右上角新建
+                      {t('lowcode.app_list_page.e2')}
                     </TableCell>
                   </TableRow>
                 ) : (

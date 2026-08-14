@@ -80,13 +80,13 @@ const SystemConfigPanel: React.FC<SystemConfigPanelProps> = ({
                   variant='subtitle1'
                   sx={{ fontWeight: 600 }}
                 >
-                  基本信息
+                  {t('system.system_params_page_components_system_config_panel.e1')}
                 </Typography>
                 <Typography
                   variant='caption'
                   color='text.secondary'
                 >
-                  站点名称、描述和图标配置
+                  {t('system.system_params_page_components_system_config_panel.e2')}
                 </Typography>
               </Box>
             </Box>
@@ -192,13 +192,13 @@ const SystemConfigPanel: React.FC<SystemConfigPanelProps> = ({
                   variant='subtitle1'
                   sx={{ fontWeight: 600 }}
                 >
-                  外观配置
+                  {t('system.system_params_page_components_system_config_panel.e3')}
                 </Typography>
                 <Typography
                   variant='caption'
                   color='text.secondary'
                 >
-                  主题颜色和界面设置
+                  {t('system.system_params_page_components_system_config_panel.e4')}
                 </Typography>
               </Box>
             </Box>
@@ -318,13 +318,13 @@ const SystemConfigPanel: React.FC<SystemConfigPanelProps> = ({
                   variant='subtitle1'
                   sx={{ fontWeight: 600 }}
                 >
-                  安全配置
+                  {t('system.system_params_page_components_system_config_panel.e5')}
                 </Typography>
                 <Typography
                   variant='caption'
                   color='text.secondary'
                 >
-                  用户认证和密码策略
+                  {t('system.system_params_page_components_system_config_panel.e6')}
                 </Typography>
               </Box>
             </Box>
@@ -446,7 +446,7 @@ const SystemConfigPanel: React.FC<SystemConfigPanelProps> = ({
                 variant='body2'
                 sx={{ fontWeight: 600, mb: 2 }}
               >
-                密码复杂度要求
+                {t('system.system_params_page_components_system_config_panel.e7')}
               </Typography>
               <Box sx={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>
                 <FormControlLabel

@@ -72,13 +72,13 @@ const MailPage: React.FC = () => {
                       color='primary.dark'
                       style={{ marginRight: 12 }}
                     />
-                    邮件管理
+                    {t('im.mail_page_index.e1')}
                   </Typography>
                   <Typography
                     variant='body2'
                     sx={{ mt: 0.5, color: 'grey.500' }}
                   >
-                    管理邮件发送和邮件模板
+                    {t('im.mail_page_index.e2')}
                   </Typography>
                 </Box>
               </Box>
@@ -89,7 +89,7 @@ const MailPage: React.FC = () => {
                       size={20}
                       style={{ marginRight: 8 }}
                     />
-                    发送邮件
+                    {t('im.mail_page_components_send_email_dialog.e1')}
                   </Button>
                 )}
                 {m.activeTab === 'templates' && (
@@ -98,7 +98,7 @@ const MailPage: React.FC = () => {
                       size={20}
                       style={{ marginRight: 8 }}
                     />
-                    创建模板
+                    {t('im.mail_page_index.e4')}
                   </Button>
                 )}
               </Box>

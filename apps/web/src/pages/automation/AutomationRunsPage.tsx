@@ -117,7 +117,7 @@ export const AutomationRunsPage: React.FC = () => {
             onClick={load}
             size='small'
           >
-            刷新
+            {t('automation.automation_runs_page.e1')}
           </Button>
         </Stack>
 
@@ -160,7 +160,7 @@ export const AutomationRunsPage: React.FC = () => {
                       colSpan={8}
                       align='center'
                     >
-                      暂无执行记录
+                      {t('automation.automation_runs_page.e2')}
                     </TableCell>
                   </TableRow>
                 ) : (
@@ -278,7 +278,7 @@ export const AutomationRunsPage: React.FC = () => {
                         variant='subtitle2'
                         color='error.main'
                       >
-                        错误信息
+                        {t('automation.automation_runs_page.e3')}
                       </Typography>
                     </Stack>
                     <Paper

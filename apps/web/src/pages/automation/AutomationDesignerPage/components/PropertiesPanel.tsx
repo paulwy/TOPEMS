@@ -58,7 +58,7 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
               variant='subtitle2'
               sx={{ flex: 1 }}
             >
-              节点属性
+              {t('automation.automation_designer_page_components_properties_panel.e1')}
             </Typography>
             <Tooltip title='复制节点 (Ctrl/Cmd+D)'>
               <IconButton
@@ -86,7 +86,7 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
               variant='caption'
               color='text.secondary'
             >
-              节点 ID
+              {t('automation.automation_designer_page_components_properties_panel.e2')}
             </Typography>
             <Typography
               variant='body2'
@@ -101,7 +101,7 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
               color='text.secondary'
               sx={{ mb: 0.5, display: 'block' }}
             >
-              节点类型
+              {t('automation.automation_designer_page_components_node_library.e1')}
             </Typography>
             <Chip
               size='small'
@@ -155,7 +155,7 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
               color='text.secondary'
               sx={{ mb: 0.5, display: 'block' }}
             >
-              节点配置（JSON）
+              {t('automation.automation_designer_page_components_properties_panel.e4')}
             </Typography>
             <TextField
               value={configDraft}
@@ -171,7 +171,7 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
               onClick={onApplyConfig}
               sx={{ mt: 0.5 }}
             >
-              应用配置
+              {t('automation.automation_designer_page_components_properties_panel.e5')}
             </Button>
           </Box>
           <Box>
@@ -180,7 +180,7 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
               color='text.secondary'
               sx={{ mb: 0.5, display: 'block' }}
             >
-              下游节点（连线）
+              {t('automation.automation_designer_page_components_properties_panel.e6')}
             </Typography>
             <Stack spacing={0.5}>
               {nodes
@@ -222,7 +222,7 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
                   variant='body2'
                   color='text.secondary'
                 >
-                  暂无其他节点可连接
+                  {t('automation.automation_designer_page_components_properties_panel.e7')}
                 </Typography>
               )}
             </Stack>

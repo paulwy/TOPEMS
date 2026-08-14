@@ -129,7 +129,7 @@ export const WorkflowConfigPage: React.FC = () => {
             startIcon={<AddIcon />}
             onClick={() => setCreateOpen(true)}
           >
-            新建工作流
+            {t('lowcode.workflow_config_page.e1')}
           </Button>
         </Stack>
 
@@ -138,8 +138,8 @@ export const WorkflowConfigPage: React.FC = () => {
           color='text.secondary'
           sx={{ mb: 2 }}
         >
-          低代码应用内嵌工作流（表单提交/定时/事件触发）。 与 BPM 审批流程（workflow
-          模块）不同——本表用于数据/系统自动化。
+          {t('lowcode.workflow_config_page.e2')}
+          {t('lowcode.workflow_config_page.e3')}
         </Typography>
 
         {error && (
@@ -179,7 +179,7 @@ export const WorkflowConfigPage: React.FC = () => {
                       colSpan={6}
                       align='center'
                     >
-                      暂无工作流
+                      {t('lowcode.workflow_config_page.e4')}
                     </TableCell>
                   </TableRow>
                 ) : (

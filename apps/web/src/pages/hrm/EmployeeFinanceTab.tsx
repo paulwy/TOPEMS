@@ -119,7 +119,7 @@ export const EmployeeFinanceTab: React.FC<EmployeeFinanceTabProps> = ({
               onClick={handleEdit}
               sx={{ mt: 2 }}
             >
-              初始化财务信息
+              {t('hrm.employee_finance_tab.e1')}
             </Button>
           </Box>
         </CardContent>
@@ -161,7 +161,7 @@ export const EmployeeFinanceTab: React.FC<EmployeeFinanceTabProps> = ({
               onClick={handleCancel}
             >
               <X style={{ width: 16, height: 16, marginRight: 4 }} />
-              取消
+              {t('hrm.employee_finance_tab.e2')}
             </Button>
             <Button
               size='small'
@@ -170,7 +170,7 @@ export const EmployeeFinanceTab: React.FC<EmployeeFinanceTabProps> = ({
               disabled={updateFinanceInfo.isPending}
               startIcon={<Save style={{ width: 16, height: 16, marginRight: 4 }} />}
             >
-              保存
+              {t('hrm.employee_finance_tab.e3')}
             </Button>
           </Box>
         ) : (
@@ -388,7 +388,7 @@ export const EmployeeFinanceTab: React.FC<EmployeeFinanceTabProps> = ({
                   variant='body2'
                   sx={{ color: 'text.secondary' }}
                 >
-                  月薪合计
+                  {t('hrm.employee_finance_tab.e4')}
                 </Typography>
                 <Typography
                   variant='h6'
@@ -737,7 +737,7 @@ export const EmployeeFinanceTab: React.FC<EmployeeFinanceTabProps> = ({
               ) : (
                 <Typography sx={{ mt: 0.5, fontWeight: 500 }}>
                   {financeInfo?.taxlevel
-                    ? `${financeInfo.taxlevel}孩扣除`
+                    ? t('hrm.employee_finance_tab.e5')
                     : t('hrm.employee_finance_tab.text_cd9b27')}
                 </Typography>
               )}

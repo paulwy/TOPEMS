@@ -151,7 +151,10 @@ const BudgetManagementPage: React.FC = () => {
       const successCount = results.filter((r) => r.success).length;
       addNotification({
         title: t('finance.budget_management_page.update'),
-        message: `成功更新 ${successCount} 条预算状态，失败 ${batchStatusTargetIds.length - successCount} 条`,
+        message: i18n.t('finance.budget_management_page.e1', {
+          v1: successCount,
+          v2: batchStatusTargetIds.length - successCount,
+        }),
         type: 'success',
       });
       setBatchStatusTargetIds(null);
@@ -174,7 +177,10 @@ const BudgetManagementPage: React.FC = () => {
         const successCount = results.filter((r) => r.success).length;
         addNotification({
           title: t('finance.budget_management_page.batch_delete'),
-          message: `成功删除 ${successCount} 条预算，失败 ${ids.length - successCount} 条`,
+          message: i18n.t('finance.budget_management_page.e2', {
+            v1: successCount,
+            v2: ids.length - successCount,
+          }),
           type: 'success',
         });
       } catch (err) {
@@ -301,13 +307,13 @@ const BudgetManagementPage: React.FC = () => {
                       color: 'success.main',
                     }}
                   />
-                  预算管理
+                  {t('finance.budget_management_page.e3')}
                 </Typography>
                 <Typography
                   variant='body2'
                   sx={{ mt: 0.5, color: 'grey.500' }}
                 >
-                  管理各部门预算，追踪预算使用情况
+                  {t('finance.budget_management_page.e4')}
                 </Typography>
               </Box>
             </Box>
@@ -353,7 +359,7 @@ const BudgetManagementPage: React.FC = () => {
                     value=''
                     disabled
                   >
-                    请选择状态
+                    {t('finance.budget_management_page.e5')}
                   </MenuItem>
                   <MenuItem value='active'>{t('finance.budget_management_page.k2')}</MenuItem>
                   <MenuItem value='frozen'>{t('finance.budget_management_page.k3')}</MenuItem>
@@ -372,7 +378,7 @@ const BudgetManagementPage: React.FC = () => {
               >
                 {batchStatusTargetIds?.length ?? 0}
               </Box>{' '}
-              条预算的状态
+              {t('finance.budget_management_page.e6')}
             </Typography>
           </Box>
         </DialogContent>
@@ -384,14 +390,14 @@ const BudgetManagementPage: React.FC = () => {
               setBatchStatusValue('');
             }}
           >
-            取消
+            {t('finance.budget_management_page.e7')}
           </Button>
           <Button
             variant='contained'
             onClick={confirmBatchUpdateStatus}
             disabled={!batchStatusValue}
           >
-            确认更新
+            {t('finance.budget_management_page.e8')}
           </Button>
         </DialogActions>
       </Dialog>

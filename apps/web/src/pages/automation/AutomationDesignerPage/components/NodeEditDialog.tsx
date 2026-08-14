@@ -95,7 +95,7 @@ export const NodeEditDialog: React.FC<NodeEditDialogProps> = ({ node, onClose, o
           onClick={handleSave}
           variant='contained'
         >
-          保存
+          {t('automation.automation_designer_page_components_node_edit_dialog.e1')}
         </Button>
       </DialogActions>
     </Dialog>

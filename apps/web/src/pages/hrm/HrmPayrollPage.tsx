@@ -357,7 +357,7 @@ const HrmPayrollPage: React.FC = () => {
               variant='h6'
               sx={{ mb: 2, color: 'grey.900' }}
             >
-              薪资构成比例
+              {t('hrm.hrm_payroll_page.e1')}
             </Typography>
             <StatsChart
               type='pie'
@@ -370,7 +370,7 @@ const HrmPayrollPage: React.FC = () => {
               variant='h6'
               sx={{ mb: 2, color: 'grey.900' }}
             >
-              工资发放状态
+              {t('hrm.hrm_payroll_page.e2')}
             </Typography>
             <StatsChart
               type='pie'
@@ -424,7 +424,7 @@ const HrmPayrollPage: React.FC = () => {
             startIcon={<Download size={16} />}
             sx={{ display: 'flex', alignItems: 'center', px: 2, py: 1, borderRadius: 3 }}
           >
-            导出
+            {t('hrm.hrm_attendance_page.e1')}
           </Button>
         </Box>
       }
@@ -437,7 +437,7 @@ const HrmPayrollPage: React.FC = () => {
         variant='h6'
         sx={{ mb: 3, color: 'grey.900' }}
       >
-        个税计算器
+        {t('hrm.hrm_payroll_page.e4')}
       </Typography>
       <Box
         sx={{
@@ -520,7 +520,7 @@ const HrmPayrollPage: React.FC = () => {
               '&:hover': { bgcolor: 'primary.dark' },
             }}
           >
-            计算
+            {t('hrm.hrm_payroll_page.e5')}
           </Button>
         </Box>
       </Box>

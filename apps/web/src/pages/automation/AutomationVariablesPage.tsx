@@ -159,7 +159,7 @@ export const AutomationVariablesPage: React.FC = () => {
             startIcon={<AddIcon />}
             onClick={() => setCreateOpen(true)}
           >
-            新建变量
+            {t('automation.automation_variables_page.e1')}
           </Button>
         </Stack>
 
@@ -186,7 +186,7 @@ export const AutomationVariablesPage: React.FC = () => {
               <TableHead>
                 <TableRow>
                   <TableCell>{t('automation.automation_variables_page.k9')}</TableCell>
-                  <TableCell>值</TableCell>
+                  <TableCell>{t('automation.automation_variables_page.e2')}</TableCell>
                   <TableCell>{t('automation.automation_variables_page.k10')}</TableCell>
                   <TableCell>{t('automation.automation_variables_page.k11')}</TableCell>
                   <TableCell>{t('automation.automation_variables_page.id_12')}</TableCell>
@@ -204,7 +204,7 @@ export const AutomationVariablesPage: React.FC = () => {
                       colSpan={8}
                       align='center'
                     >
-                      暂无变量
+                      {t('automation.automation_variables_page.e3')}
                     </TableCell>
                   </TableRow>
                 ) : (

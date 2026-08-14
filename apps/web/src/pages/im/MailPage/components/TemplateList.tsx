@@ -177,7 +177,7 @@ const TemplateList: React.FC<TemplateListProps> = ({
                         color: 'grey.500',
                       }}
                     >
-                      名称
+                      {t('im.mail_page_components_template_list.e1')}
                     </Box>
                     <Box
                       component='th'
@@ -190,7 +190,7 @@ const TemplateList: React.FC<TemplateListProps> = ({
                         color: 'grey.500',
                       }}
                     >
-                      编码
+                      {t('im.mail_page_components_template_list.e2')}
                     </Box>
                     <Box
                       component='th'
@@ -203,7 +203,7 @@ const TemplateList: React.FC<TemplateListProps> = ({
                         color: 'grey.500',
                       }}
                     >
-                      分类
+                      {t('im.mail_page_components_template_list.e3')}
                     </Box>
                     <Box
                       component='th'
@@ -216,7 +216,7 @@ const TemplateList: React.FC<TemplateListProps> = ({
                         color: 'grey.500',
                       }}
                     >
-                      主题模板
+                      {t('im.mail_page_components_template_list.e4')}
                     </Box>
                     <Box
                       component='th'
@@ -229,7 +229,7 @@ const TemplateList: React.FC<TemplateListProps> = ({
                         color: 'grey.500',
                       }}
                     >
-                      状态
+                      {t('im.mail_page_components_email_list.e6')}
                     </Box>
                     <Box
                       component='th'
@@ -242,7 +242,7 @@ const TemplateList: React.FC<TemplateListProps> = ({
                         color: 'grey.500',
                       }}
                     >
-                      创建时间
+                      {t('im.mail_page_components_email_detail_dialog.e6')}
                     </Box>
                     <Box
                       component='th'
@@ -255,7 +255,7 @@ const TemplateList: React.FC<TemplateListProps> = ({
                         color: 'grey.500',
                       }}
                     >
-                      操作
+                      {t('im.mail_page_components_email_list.e9')}
                     </Box>
                   </Box>
                 </Box>

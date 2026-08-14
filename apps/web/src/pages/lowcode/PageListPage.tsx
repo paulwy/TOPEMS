@@ -136,7 +136,7 @@ export const PageListPage: React.FC = () => {
             startIcon={<AddIcon />}
             onClick={() => setCreateOpen(true)}
           >
-            新建页面
+            {t('lowcode.page_list_page.e1')}
           </Button>
         </Stack>
 
@@ -177,7 +177,7 @@ export const PageListPage: React.FC = () => {
                       colSpan={6}
                       align='center'
                     >
-                      暂无页面
+                      {t('lowcode.page_list_page.e2')}
                     </TableCell>
                   </TableRow>
                 ) : (

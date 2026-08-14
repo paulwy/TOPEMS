@@ -72,13 +72,13 @@ const LogConfigPanel: React.FC<LogConfigPanelProps> = ({
                   variant='subtitle1'
                   sx={{ fontWeight: 600 }}
                 >
-                  日志级别和格式
+                  {t('system.system_params_page_components_log_config_panel.e1')}
                 </Typography>
                 <Typography
                   variant='caption'
                   color='text.secondary'
                 >
-                  控制日志输出级别和格式
+                  {t('system.system_params_page_components_log_config_panel.e2')}
                 </Typography>
               </Box>
             </Box>
@@ -203,13 +203,13 @@ const LogConfigPanel: React.FC<LogConfigPanelProps> = ({
                   variant='subtitle1'
                   sx={{ fontWeight: 600 }}
                 >
-                  文件输出配置
+                  {t('system.system_params_page_components_log_config_panel.e3')}
                 </Typography>
                 <Typography
                   variant='caption'
                   color='text.secondary'
                 >
-                  日志文件存储路径和滚动策略
+                  {t('system.system_params_page_components_log_config_panel.e4')}
                 </Typography>
               </Box>
             </Box>
@@ -230,7 +230,7 @@ const LogConfigPanel: React.FC<LogConfigPanelProps> = ({
                 }
                 label={
                   <span>
-                    文件输出
+                    {t('system.system_params_page_components_log_config_panel.e5')}
                     <Chip
                       label={
                         logConfig.output === 'console'
@@ -326,13 +326,13 @@ const LogConfigPanel: React.FC<LogConfigPanelProps> = ({
                   variant='subtitle1'
                   sx={{ fontWeight: 600 }}
                 >
-                  高级配置
+                  {t('system.system_params_page_components_log_config_panel.e6')}
                 </Typography>
                 <Typography
                   variant='caption'
                   color='text.secondary'
                 >
-                  控制台和远程日志配置
+                  {t('system.system_params_page_components_log_config_panel.e7')}
                 </Typography>
               </Box>
             </Box>

@@ -288,7 +288,7 @@ const BackupPage: React.FC = () => {
               sx={{ mr: 1 }}
             />
           ) : null}
-          创建备份
+          {t('system.backup_page.e1')}
         </Button>
       </Box>
 
@@ -458,9 +458,7 @@ const BackupPage: React.FC = () => {
             >
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                 <AlertCircle size={16} />
-                <Typography variant='body2'>
-                  备份过程中请保持页面打开，请勿刷新或关闭浏览器。
-                </Typography>
+                <Typography variant='body2'>{t('system.backup_page.e2')}</Typography>
               </Box>
             </Alert>
           </Box>
@@ -478,7 +476,7 @@ const BackupPage: React.FC = () => {
                 sx={{ mr: 1 }}
               />
             ) : null}
-            开始备份
+            {t('system.backup_page.e3')}
           </Button>
         </DialogActions>
       </Dialog>
@@ -497,7 +495,7 @@ const BackupPage: React.FC = () => {
                 variant='subtitle2'
                 sx={{ fontWeight: 600 }}
               >
-                即将恢复以下备份：
+                {t('system.backup_page.e4')}
               </Typography>
               <Box sx={{ mt: 2, p: 2, bgcolor: 'background.default', borderRadius: 1 }}>
                 <Typography>{selectedBackup.backup_name}</Typography>
@@ -526,9 +524,7 @@ const BackupPage: React.FC = () => {
               >
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                   <AlertCircle size={16} />
-                  <Typography variant='body2'>
-                    恢复备份将覆盖当前数据，请确保已备份最新数据。此操作不可撤销！
-                  </Typography>
+                  <Typography variant='body2'>{t('system.backup_page.e5')}</Typography>
                 </Box>
               </Alert>
             </Box>
@@ -548,7 +544,7 @@ const BackupPage: React.FC = () => {
                 sx={{ mr: 1 }}
               />
             ) : null}
-            确认恢复
+            {t('system.backup_page.e6')}
           </Button>
         </DialogActions>
       </Dialog>
@@ -569,7 +565,7 @@ const BackupPage: React.FC = () => {
                     variant='subtitle2'
                     sx={{ fontWeight: 600 }}
                   >
-                    备份名称
+                    {t('system.backup_page.e7')}
                   </Typography>
                   <Typography>{selectedBackup.backup_name}</Typography>
                 </Box>
@@ -578,7 +574,7 @@ const BackupPage: React.FC = () => {
                     variant='subtitle2'
                     sx={{ fontWeight: 600 }}
                   >
-                    备份类型
+                    {t('system.backup_page.e8')}
                   </Typography>
                   <Typography>{getBackupTypeLabel(selectedBackup.backup_type)}</Typography>
                 </Box>
@@ -587,7 +583,7 @@ const BackupPage: React.FC = () => {
                     variant='subtitle2'
                     sx={{ fontWeight: 600 }}
                   >
-                    状态
+                    {t('system.backup_page.e9')}
                   </Typography>
                   {getStatusChip(selectedBackup.status)}
                 </Box>
@@ -596,7 +592,7 @@ const BackupPage: React.FC = () => {
                     variant='subtitle2'
                     sx={{ fontWeight: 600 }}
                   >
-                    文件大小
+                    {t('system.backup_page.e10')}
                   </Typography>
                   <Typography>{formatFileSize(selectedBackup.file_size || 0)}</Typography>
                 </Box>
@@ -605,7 +601,7 @@ const BackupPage: React.FC = () => {
                     variant='subtitle2'
                     sx={{ fontWeight: 600 }}
                   >
-                    创建时间
+                    {t('system.backup_page.e11')}
                   </Typography>
                   <Typography>{formatDateTime(selectedBackup.created_at)}</Typography>
                 </Box>
@@ -614,7 +610,7 @@ const BackupPage: React.FC = () => {
                     variant='subtitle2'
                     sx={{ fontWeight: 600 }}
                   >
-                    耗时
+                    {t('system.backup_page.e12')}
                   </Typography>
                   <Typography>{selectedBackup.duration_seconds}秒</Typography>
                 </Box>
@@ -623,7 +619,7 @@ const BackupPage: React.FC = () => {
                     variant='subtitle2'
                     sx={{ fontWeight: 600 }}
                   >
-                    备份ID
+                    {t('system.backup_page.e13')}
                   </Typography>
                   <Typography
                     variant='body2'
@@ -637,7 +633,7 @@ const BackupPage: React.FC = () => {
                     variant='subtitle2'
                     sx={{ fontWeight: 600 }}
                   >
-                    文件路径
+                    {t('system.backup_page.e14')}
                   </Typography>
                   <Typography
                     variant='body2'
@@ -653,7 +649,7 @@ const BackupPage: React.FC = () => {
                       sx={{ fontWeight: 600 }}
                       color='error'
                     >
-                      错误信息
+                      {t('system.backup_page.e15')}
                     </Typography>
                     <Typography
                       variant='body2'
