@@ -877,3 +877,230 @@ async fn list_tender_awards(
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use bigdecimal::FromPrimitive;
+
+    fn sample_tender() -> Tender {
+        Tender {
+            id: Uuid::new_v4(),
+            tenant_id: Uuid::new_v4(),
+            tender_no: "TD-20260101-001".to_string(),
+            title: "Test Tender".to_string(),
+            description: Some("A test tender".to_string()),
+            r#type: "public".to_string(),
+            budget: Some(BigDecimal::from_f64(100000.0).unwrap_or_default()),
+            status: "draft".to_string(),
+            start_date: Some(Utc::now()),
+            end_date: Some(Utc::now()),
+            created_by: Some(Uuid::new_v4()),
+            created_at: Utc::now(),
+            updated_at: Utc::now(),
+        }
+    }
+
+    fn sample_tender_bid() -> TenderBid {
+        TenderBid {
+            id: Uuid::new_v4(),
+            tenant_id: Uuid::new_v4(),
+            tender_id: Uuid::new_v4(),
+            supplier_id: Some(Uuid::new_v4()),
+            supplier_name: Some("Test Supplier".to_string()),
+            bid_price: Some(BigDecimal::from_f64(95000.0).unwrap_or_default()),
+            currency: Some("CNY".to_string()),
+            technical_score: Some(BigDecimal::from_f64(85.0).unwrap_or_default()),
+            commercial_score: Some(BigDecimal::from_f64(90.0).unwrap_or_default()),
+            total_score: Some(BigDecimal::from_f64(87.5).unwrap_or_default()),
+            status: "pending".to_string(),
+            remarks: Some("Good bid".to_string()),
+            created_by: Some(Uuid::new_v4()),
+            created_at: Utc::now(),
+            updated_at: Utc::now(),
+        }
+    }
+
+    fn sample_tender_award() -> TenderAward {
+        TenderAward {
+            id: Uuid::new_v4(),
+            tenant_id: Uuid::new_v4(),
+            award_no: "AW-20260101-001".to_string(),
+            tender_id: Uuid::new_v4(),
+            bid_id: Some(Uuid::new_v4()),
+            supplier_id: Some(Uuid::new_v4()),
+            supplier_name: Some("Winning Supplier".to_string()),
+            award_price: Some(BigDecimal::from_f64(95000.0).unwrap_or_default()),
+            currency: Some("CNY".to_string()),
+            status: "active".to_string(),
+            created_by: Some(Uuid::new_v4()),
+            created_at: Utc::now(),
+            updated_at: Utc::now(),
+        }
+    }
+
+    #[test]
+    fn test_tender_serde_roundtrip() {
+        let tender = sample_tender();
+        let json = serde_json::to_string(&tender).unwrap();
+        let deserialized: Tender = serde_json::from_str(&json).unwrap();
+        assert_eq!(deserialized.tender_no, tender.tender_no);
+        assert_eq!(deserialized.title, tender.title);
+        assert_eq!(deserialized.r#type, tender.r#type);
+    }
+
+    #[test]
+    fn test_tender_serde_roundtrip_with_none() {
+        let tender = Tender {
+            id: Uuid::new_v4(),
+            tenant_id: Uuid::new_v4(),
+            tender_no: "TD-002".to_string(),
+            title: "Minimal".to_string(),
+            description: None,
+            r#type: "private".to_string(),
+            budget: None,
+            status: "draft".to_string(),
+            start_date: None,
+            end_date: None,
+            created_by: None,
+            created_at: Utc::now(),
+            updated_at: Utc::now(),
+        };
+        let json = serde_json::to_string(&tender).unwrap();
+        let deserialized: Tender = serde_json::from_str(&json).unwrap();
+        assert_eq!(deserialized.description, None);
+        assert_eq!(deserialized.budget, None);
+    }
+
+    #[test]
+    fn test_tender_clone() {
+        let tender = sample_tender();
+        let cloned = tender.clone();
+        assert_eq!(cloned.tender_no, tender.tender_no);
+        assert_eq!(cloned.title, tender.title);
+    }
+
+    #[test]
+    fn test_tender_json_field_names() {
+        let tender = sample_tender();
+        let json = serde_json::to_value(&tender).unwrap();
+        assert!(json.get("tender_no").is_some());
+        assert!(json.get("tenant_id").is_some());
+        assert!(json.get("type").is_some());
+    }
+
+    #[test]
+    fn test_tender_from_json_string() {
+        let json_str = r#"{
+            "id": "550e8400-e29b-41d4-a716-446655440000",
+            "tenant_id": "550e8400-e29b-41d4-a716-446655440001",
+            "tender_no": "TD-JSON",
+            "title": "From JSON",
+            "description": null,
+            "type": "public",
+            "budget": null,
+            "status": "draft",
+            "start_date": null,
+            "end_date": null,
+            "created_by": null,
+            "created_at": "2026-01-01T00:00:00Z",
+            "updated_at": "2026-01-01T00:00:00Z"
+        }"#;
+        let tender: Tender = serde_json::from_str(json_str).unwrap();
+        assert_eq!(tender.tender_no, "TD-JSON");
+        assert_eq!(tender.r#type, "public");
+    }
+
+    #[test]
+    fn test_tender_bid_serde_roundtrip() {
+        let bid = sample_tender_bid();
+        let json = serde_json::to_string(&bid).unwrap();
+        let deserialized: TenderBid = serde_json::from_str(&json).unwrap();
+        assert_eq!(deserialized.status, bid.status);
+        assert_eq!(deserialized.supplier_name, bid.supplier_name);
+    }
+
+    #[test]
+    fn test_tender_bid_serde_roundtrip_with_none() {
+        let bid = TenderBid {
+            id: Uuid::new_v4(),
+            tenant_id: Uuid::new_v4(),
+            tender_id: Uuid::new_v4(),
+            supplier_id: None,
+            supplier_name: None,
+            bid_price: None,
+            currency: None,
+            technical_score: None,
+            commercial_score: None,
+            total_score: None,
+            status: "pending".to_string(),
+            remarks: None,
+            created_by: None,
+            created_at: Utc::now(),
+            updated_at: Utc::now(),
+        };
+        let json = serde_json::to_string(&bid).unwrap();
+        let deserialized: TenderBid = serde_json::from_str(&json).unwrap();
+        assert_eq!(deserialized.supplier_id, None);
+        assert_eq!(deserialized.bid_price, None);
+    }
+
+    #[test]
+    fn test_tender_bid_clone() {
+        let bid = sample_tender_bid();
+        let cloned = bid.clone();
+        assert_eq!(cloned.status, bid.status);
+    }
+
+    #[test]
+    fn test_tender_bid_json_field_names() {
+        let bid = sample_tender_bid();
+        let json = serde_json::to_value(&bid).unwrap();
+        assert!(json.get("tender_id").is_some());
+        assert!(json.get("technical_score").is_some());
+        assert!(json.get("total_score").is_some());
+    }
+
+    #[test]
+    fn test_tender_award_serde_roundtrip() {
+        let award = sample_tender_award();
+        let json = serde_json::to_string(&award).unwrap();
+        let deserialized: TenderAward = serde_json::from_str(&json).unwrap();
+        assert_eq!(deserialized.award_no, award.award_no);
+        assert_eq!(deserialized.status, award.status);
+    }
+
+    #[test]
+    fn test_tender_award_clone() {
+        let award = sample_tender_award();
+        let cloned = award.clone();
+        assert_eq!(cloned.award_no, award.award_no);
+    }
+
+    #[test]
+    fn test_tender_award_json_field_names() {
+        let award = sample_tender_award();
+        let json = serde_json::to_value(&award).unwrap();
+        assert!(json.get("award_no").is_some());
+        assert!(json.get("tender_id").is_some());
+        assert!(json.get("award_price").is_some());
+    }
+
+    #[test]
+    fn test_tender_status_draft() {
+        let tender = sample_tender();
+        assert_eq!(tender.status, "draft");
+    }
+
+    #[test]
+    fn test_tender_bid_status_pending() {
+        let bid = sample_tender_bid();
+        assert_eq!(bid.status, "pending");
+    }
+
+    #[test]
+    fn test_tender_award_status_active() {
+        let award = sample_tender_award();
+        assert_eq!(award.status, "active");
+    }
+}

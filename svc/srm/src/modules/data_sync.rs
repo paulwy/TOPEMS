@@ -14,17 +14,17 @@ use crate::shared::permission::{check_permission, ModulePermission};
 use topems_shared_auth::auth::Claims;
 use topems_shared_core::response::{api_error, ApiResponse};
 
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct SyncSupplierFromScmRequest {
     pub supplier_id: String,
 }
 
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct SyncSupplierToScmRequest {
     pub supplier_id: String,
 }
 
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct SyncLogsRequest {
     pub sync_type: Option<String>,
     pub status: Option<String>,
@@ -868,4 +868,149 @@ async fn record_sync_log(
     .execute(db)
     .await?;
     Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_sync_supplier_from_scm_request_serde_roundtrip() {
+        let req = SyncSupplierFromScmRequest {
+            supplier_id: "550e8400-e29b-41d4-a716-446655440000".to_string(),
+        };
+        let json = serde_json::to_string(&req).unwrap();
+        let deserialized: SyncSupplierFromScmRequest = serde_json::from_str(&json).unwrap();
+        assert_eq!(deserialized.supplier_id, req.supplier_id);
+    }
+
+    #[test]
+    fn test_sync_supplier_from_scm_request_from_json() {
+        let json_str = r#"{"supplier_id": "abc-123"}"#;
+        let req: SyncSupplierFromScmRequest = serde_json::from_str(json_str).unwrap();
+        assert_eq!(req.supplier_id, "abc-123");
+    }
+
+    #[test]
+    fn test_sync_supplier_from_scm_request_clone() {
+        let req = SyncSupplierFromScmRequest {
+            supplier_id: "test-id".to_string(),
+        };
+        let cloned = req.clone();
+        assert_eq!(cloned.supplier_id, req.supplier_id);
+    }
+
+    #[test]
+    fn test_sync_supplier_to_scm_request_serde_roundtrip() {
+        let req = SyncSupplierToScmRequest {
+            supplier_id: "660e8400-e29b-41d4-a716-446655440000".to_string(),
+        };
+        let json = serde_json::to_string(&req).unwrap();
+        let deserialized: SyncSupplierToScmRequest = serde_json::from_str(&json).unwrap();
+        assert_eq!(deserialized.supplier_id, req.supplier_id);
+    }
+
+    #[test]
+    fn test_sync_supplier_to_scm_request_from_json() {
+        let json_str = r#"{"supplier_id": "xyz-456"}"#;
+        let req: SyncSupplierToScmRequest = serde_json::from_str(json_str).unwrap();
+        assert_eq!(req.supplier_id, "xyz-456");
+    }
+
+    #[test]
+    fn test_sync_supplier_to_scm_request_clone() {
+        let req = SyncSupplierToScmRequest {
+            supplier_id: "clone-me".to_string(),
+        };
+        let cloned = req.clone();
+        assert_eq!(cloned.supplier_id, req.supplier_id);
+    }
+
+    #[test]
+    fn test_sync_logs_request_serde_full() {
+        let req = SyncLogsRequest {
+            sync_type: Some("supplier_sync".to_string()),
+            status: Some("success".to_string()),
+            source_module: Some("scm".to_string()),
+            page: Some(1),
+            page_size: Some(20),
+        };
+        let json = serde_json::to_string(&req).unwrap();
+        let deserialized: SyncLogsRequest = serde_json::from_str(&json).unwrap();
+        assert_eq!(deserialized.sync_type, req.sync_type);
+        assert_eq!(deserialized.status, req.status);
+        assert_eq!(deserialized.source_module, req.source_module);
+        assert_eq!(deserialized.page, req.page);
+        assert_eq!(deserialized.page_size, req.page_size);
+    }
+
+    #[test]
+    fn test_sync_logs_request_serde_all_none() {
+        let req = SyncLogsRequest {
+            sync_type: None,
+            status: None,
+            source_module: None,
+            page: None,
+            page_size: None,
+        };
+        let json = serde_json::to_string(&req).unwrap();
+        let deserialized: SyncLogsRequest = serde_json::from_str(&json).unwrap();
+        assert_eq!(deserialized.sync_type, None);
+        assert_eq!(deserialized.status, None);
+        assert_eq!(deserialized.page, None);
+    }
+
+    #[test]
+    fn test_sync_logs_request_from_json() {
+        let json_str = r#"{
+            "sync_type": "supplier_sync",
+            "status": null,
+            "source_module": "srm",
+            "page": 2,
+            "page_size": 50
+        }"#;
+        let req: SyncLogsRequest = serde_json::from_str(json_str).unwrap();
+        assert_eq!(req.sync_type, Some("supplier_sync".to_string()));
+        assert_eq!(req.status, None);
+        assert_eq!(req.source_module, Some("srm".to_string()));
+        assert_eq!(req.page, Some(2));
+        assert_eq!(req.page_size, Some(50));
+    }
+
+    #[test]
+    fn test_sync_logs_request_clone() {
+        let req = SyncLogsRequest {
+            sync_type: Some("clone".to_string()),
+            status: Some("ok".to_string()),
+            source_module: None,
+            page: Some(1),
+            page_size: None,
+        };
+        let cloned = req.clone();
+        assert_eq!(cloned.sync_type, req.sync_type);
+        assert_eq!(cloned.status, req.status);
+    }
+
+    #[test]
+    fn test_sync_logs_request_json_field_names() {
+        let req = SyncLogsRequest {
+            sync_type: Some("t".to_string()),
+            status: Some("s".to_string()),
+            source_module: Some("m".to_string()),
+            page: Some(1),
+            page_size: Some(10),
+        };
+        let json = serde_json::to_value(&req).unwrap();
+        assert!(json.get("sync_type").is_some());
+        assert!(json.get("source_module").is_some());
+        assert!(json.get("page_size").is_some());
+    }
+
+    #[test]
+    fn test_sync_logs_request_empty_json() {
+        let json_str = r#"{}"#;
+        let req: SyncLogsRequest = serde_json::from_str(json_str).unwrap();
+        assert_eq!(req.sync_type, None);
+        assert_eq!(req.page, None);
+    }
 }

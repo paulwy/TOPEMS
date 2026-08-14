@@ -876,3 +876,192 @@ async fn get_bid_comparison(
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn sample_bid_request() -> BidRequest {
+        BidRequest {
+            id: Uuid::new_v4(),
+            tenant_id: Uuid::new_v4(),
+            request_no: "BR-20260101-001".to_string(),
+            title: "Test Bid Request".to_string(),
+            description: Some("A test bid request".to_string()),
+            deadline: Some(Utc::now()),
+            status: "pending".to_string(),
+            created_by: Some(Uuid::new_v4()),
+            created_at: Utc::now(),
+            updated_at: Utc::now(),
+        }
+    }
+
+    fn sample_bid() -> Bid {
+        Bid {
+            id: Uuid::new_v4(),
+            tenant_id: Uuid::new_v4(),
+            request_id: Uuid::new_v4(),
+            supplier_id: Some(Uuid::new_v4()),
+            supplier_name: Some("Test Supplier".to_string()),
+            price: Some(BigDecimal::from_f64(999.99).unwrap_or_default()),
+            currency: Some("CNY".to_string()),
+            valid_until: Some(Utc::now()),
+            status: "pending".to_string(),
+            remarks: Some("Test remarks".to_string()),
+            created_by: Some(Uuid::new_v4()),
+            created_at: Utc::now(),
+            updated_at: Utc::now(),
+        }
+    }
+
+    #[test]
+    fn test_bid_request_serde_roundtrip() {
+        let req = sample_bid_request();
+        let json = serde_json::to_string(&req).unwrap();
+        let deserialized: BidRequest = serde_json::from_str(&json).unwrap();
+        assert_eq!(deserialized.request_no, req.request_no);
+        assert_eq!(deserialized.title, req.title);
+        assert_eq!(deserialized.status, req.status);
+    }
+
+    #[test]
+    fn test_bid_request_serde_roundtrip_with_none() {
+        let req = BidRequest {
+            id: Uuid::new_v4(),
+            tenant_id: Uuid::new_v4(),
+            request_no: "BR-002".to_string(),
+            title: "Minimal".to_string(),
+            description: None,
+            deadline: None,
+            status: "draft".to_string(),
+            created_by: None,
+            created_at: Utc::now(),
+            updated_at: Utc::now(),
+        };
+        let json = serde_json::to_string(&req).unwrap();
+        let deserialized: BidRequest = serde_json::from_str(&json).unwrap();
+        assert_eq!(deserialized.description, None);
+        assert_eq!(deserialized.deadline, None);
+        assert_eq!(deserialized.created_by, None);
+    }
+
+    #[test]
+    fn test_bid_request_clone() {
+        let req = sample_bid_request();
+        let cloned = req.clone();
+        assert_eq!(cloned.request_no, req.request_no);
+        assert_eq!(cloned.title, req.title);
+    }
+
+    #[test]
+    fn test_bid_request_json_field_names() {
+        let req = sample_bid_request();
+        let json = serde_json::to_value(&req).unwrap();
+        assert!(json.get("request_no").is_some());
+        assert!(json.get("tenant_id").is_some());
+        assert!(json.get("created_at").is_some());
+    }
+
+    #[test]
+    fn test_bid_request_from_json_string() {
+        let json_str = r#"{
+            "id": "550e8400-e29b-41d4-a716-446655440000",
+            "tenant_id": "550e8400-e29b-41d4-a716-446655440001",
+            "request_no": "BR-TEST",
+            "title": "From JSON",
+            "description": null,
+            "deadline": null,
+            "status": "pending",
+            "created_by": null,
+            "created_at": "2026-01-01T00:00:00Z",
+            "updated_at": "2026-01-01T00:00:00Z"
+        }"#;
+        let req: BidRequest = serde_json::from_str(json_str).unwrap();
+        assert_eq!(req.request_no, "BR-TEST");
+        assert_eq!(req.title, "From JSON");
+        assert_eq!(req.status, "pending");
+    }
+
+    #[test]
+    fn test_bid_serde_roundtrip() {
+        let bid = sample_bid();
+        let json = serde_json::to_string(&bid).unwrap();
+        let deserialized: Bid = serde_json::from_str(&json).unwrap();
+        assert_eq!(deserialized.status, bid.status);
+        assert_eq!(deserialized.supplier_name, bid.supplier_name);
+    }
+
+    #[test]
+    fn test_bid_serde_roundtrip_with_none() {
+        let bid = Bid {
+            id: Uuid::new_v4(),
+            tenant_id: Uuid::new_v4(),
+            request_id: Uuid::new_v4(),
+            supplier_id: None,
+            supplier_name: None,
+            price: None,
+            currency: None,
+            valid_until: None,
+            status: "pending".to_string(),
+            remarks: None,
+            created_by: None,
+            created_at: Utc::now(),
+            updated_at: Utc::now(),
+        };
+        let json = serde_json::to_string(&bid).unwrap();
+        let deserialized: Bid = serde_json::from_str(&json).unwrap();
+        assert_eq!(deserialized.supplier_id, None);
+        assert_eq!(deserialized.price, None);
+    }
+
+    #[test]
+    fn test_bid_clone() {
+        let bid = sample_bid();
+        let cloned = bid.clone();
+        assert_eq!(cloned.status, bid.status);
+        assert_eq!(cloned.supplier_name, bid.supplier_name);
+    }
+
+    #[test]
+    fn test_bid_json_field_names() {
+        let bid = sample_bid();
+        let json = serde_json::to_value(&bid).unwrap();
+        assert!(json.get("request_id").is_some());
+        assert!(json.get("supplier_name").is_some());
+        assert!(json.get("valid_until").is_some());
+    }
+
+    #[test]
+    fn test_bid_from_json_string() {
+        let json_str = r#"{
+            "id": "550e8400-e29b-41d4-a716-446655440000",
+            "tenant_id": "550e8400-e29b-41d4-a716-446655440001",
+            "request_id": "550e8400-e29b-41d4-a716-446655440002",
+            "supplier_id": null,
+            "supplier_name": null,
+            "price": null,
+            "currency": "CNY",
+            "valid_until": null,
+            "status": "active",
+            "remarks": null,
+            "created_by": null,
+            "created_at": "2026-01-01T00:00:00Z",
+            "updated_at": "2026-01-01T00:00:00Z"
+        }"#;
+        let bid: Bid = serde_json::from_str(json_str).unwrap();
+        assert_eq!(bid.status, "active");
+        assert_eq!(bid.currency, Some("CNY".to_string()));
+    }
+
+    #[test]
+    fn test_bid_request_status_pending() {
+        let req = sample_bid_request();
+        assert_eq!(req.status, "pending");
+    }
+
+    #[test]
+    fn test_bid_price_present() {
+        let bid = sample_bid();
+        assert!(bid.price.is_some());
+    }
+}

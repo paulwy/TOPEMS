@@ -104,6 +104,34 @@ pub fn get_tenant_id(claims: &Claims, headers: &axum::http::HeaderMap) -> Uuid {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use topems_shared_auth::auth::Claims;
+
+    fn sample_claims(tenant_id: Option<&str>) -> Claims {
+        Claims {
+            sub: "00000000-0000-0000-0000-000000000001".to_string(),
+            username: "tester".to_string(),
+            role: "user".to_string(),
+            roles: vec![],
+            permissions: vec![],
+            is_superuser: false,
+            exp: 9999999999,
+            iat: 0,
+            email: None,
+            department: None,
+            tenant_id: tenant_id.map(|s| s.to_string()),
+            department_id: None,
+            position_id: None,
+            position_code: None,
+        }
+    }
+
+    fn make_headers(tenant_id: Option<&str>) -> axum::http::HeaderMap {
+        let mut headers = axum::http::HeaderMap::new();
+        if let Some(tid) = tenant_id {
+            headers.insert("x-tenant-id", tid.parse().unwrap());
+        }
+        headers
+    }
 
     #[tokio::test]
     async fn test_tenant_context_creation() {
@@ -111,5 +139,113 @@ mod tests {
         let pool = PgPool::connect_lazy("postgres://localhost/test").unwrap();
         let ctx = TenantContext { tenant_id, pool };
         assert_eq!(ctx.tenant_id, tenant_id);
+    }
+
+    #[tokio::test]
+    async fn test_extract_tenant_id_returns_context_id() {
+        let tenant_id = Uuid::new_v4();
+        let pool = PgPool::connect_lazy("postgres://localhost/test").unwrap();
+        let ctx = TenantContext { tenant_id, pool };
+        assert_eq!(extract_tenant_id(&ctx), tenant_id);
+    }
+
+    #[test]
+    fn test_get_tenant_id_from_claims() {
+        let tid = "550e8400-e29b-41d4-a716-446655440000";
+        let claims = sample_claims(Some(tid));
+        let headers = axum::http::HeaderMap::new();
+        let result = get_tenant_id(&claims, &headers);
+        assert_eq!(result.to_string(), tid);
+    }
+
+    #[test]
+    fn test_get_tenant_id_from_headers_when_claims_missing() {
+        let claims = sample_claims(None);
+        let tid = "550e8400-e29b-41d4-a716-446655440000";
+        let headers = make_headers(Some(tid));
+        let result = get_tenant_id(&claims, &headers);
+        assert_eq!(result.to_string(), tid);
+    }
+
+    #[test]
+    fn test_get_tenant_id_headers_override_when_claims_invalid() {
+        let claims = sample_claims(Some("not-a-uuid"));
+        let tid = "550e8400-e29b-41d4-a716-446655440000";
+        let headers = make_headers(Some(tid));
+        let result = get_tenant_id(&claims, &headers);
+        assert_eq!(result.to_string(), tid);
+    }
+
+    #[test]
+    fn test_get_tenant_id_generates_random_when_both_missing() {
+        let claims = sample_claims(None);
+        let headers = axum::http::HeaderMap::new();
+        let result = get_tenant_id(&claims, &headers);
+        // Should generate a valid UUID (not nil)
+        assert_ne!(result, Uuid::nil());
+    }
+
+    #[test]
+    fn test_get_tenant_id_invalid_header_fallback() {
+        let claims = sample_claims(None);
+        let mut headers = axum::http::HeaderMap::new();
+        headers.insert("x-tenant-id", "garbage".parse().unwrap());
+        let result = get_tenant_id(&claims, &headers);
+        // Should generate a random UUID
+        assert_ne!(result, Uuid::nil());
+    }
+
+    #[tokio::test]
+    async fn test_tenant_data_access_new() {
+        let pool = PgPool::connect_lazy("postgres://localhost/test").unwrap();
+        let tenant_id = Uuid::new_v4();
+        let access = TenantDataAccess::new(pool, tenant_id);
+        assert_eq!(access.tenant_id(), tenant_id);
+    }
+
+    #[tokio::test]
+    async fn test_tenant_data_access_pool() {
+        let pool = PgPool::connect_lazy("postgres://localhost/test").unwrap();
+        let tenant_id = Uuid::new_v4();
+        let access = TenantDataAccess::new(pool, tenant_id);
+        // A lazy pool should not be closed (it just hasn't connected yet)
+        assert!(!access.pool().is_closed());
+    }
+
+    #[tokio::test]
+    async fn test_tenant_context_clone() {
+        let tenant_id = Uuid::new_v4();
+        let pool = PgPool::connect_lazy("postgres://localhost/test").unwrap();
+        let ctx = TenantContext { tenant_id, pool };
+        let cloned = ctx.clone();
+        assert_eq!(cloned.tenant_id, tenant_id);
+    }
+
+    #[tokio::test]
+    async fn test_tenant_context_into_extension() {
+        let tenant_id = Uuid::new_v4();
+        let pool = PgPool::connect_lazy("postgres://localhost/test").unwrap();
+        let ctx = TenantContext { tenant_id, pool };
+        let ext = ctx.into_extension();
+        assert_eq!(ext.0.tenant_id, tenant_id);
+    }
+
+    #[tokio::test]
+    async fn test_tenant_request_struct_holds_context() {
+        let tenant_id = Uuid::new_v4();
+        let pool = PgPool::connect_lazy("postgres://localhost/test").unwrap();
+        let ctx = TenantContext { tenant_id, pool };
+        let req = TenantRequest { ctx: ctx.clone() };
+        assert_eq!(req.ctx.tenant_id, tenant_id);
+    }
+
+    #[test]
+    fn test_get_tenant_id_claims_takes_precedence_over_headers() {
+        let claims_tid = "550e8400-e29b-41d4-a716-446655440000";
+        let header_tid = "660e8400-e29b-41d4-a716-446655440000";
+        let claims = sample_claims(Some(claims_tid));
+        let headers = make_headers(Some(header_tid));
+        let result = get_tenant_id(&claims, &headers);
+        assert_eq!(result.to_string(), claims_tid);
     }
 }
