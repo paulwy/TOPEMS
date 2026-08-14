@@ -1,0 +1,10 @@
+{
+  "layouts.global_actions.k0": "工具箱",
+  "layouts.global_actions.k1": "工具箱",
+  "layouts.mobile_layout.k0": "退出登录",
+  "layouts.user_menu.k0": "退出登录",
+  "layouts.user_menu.k1": "确认退出登录？",
+  "layouts.user_menu.k2": "退出后清除本地会话需重登。您确定要退出当前账号吗？",
+  "layouts.user_menu.k3": "取消",
+  "layouts.user_menu.k4": "确认退出"
+}

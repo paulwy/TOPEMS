@@ -1,0 +1,7 @@
+{
+  "hooks.use_bff_suspense.k0": "数据加载失败",
+  "hooks.use_bff_suspense.k1": "重试",
+  "hooks.use_bff_suspense.k2": "Suspense 边界${name ?",
+  "hooks.use_bff_suspense.k3": " : ''} 捕获错误:",
+  "hooks.use_bff_suspense.k4": "Suspense 统计监听器执行失败:"
+}
