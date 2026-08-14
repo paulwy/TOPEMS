@@ -14,13 +14,16 @@ import {
   XCircle,
   AlertCircle,
 } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
+import i18n from '@/i18n';
 
 const FinanceBudgetStats: React.FC = () => {
+  const { t } = useTranslation('finance');
   const { data } = useQuery({
     queryKey: [QUERY_KEYS.ERP.BUDGET, 'stats'],
     queryFn: async () => {
       const response = await budgetApi.list({ page: 0, pagesize: 1000 });
-      if (!response.success) throw new Error('加载预算统计失败');
+      if (!response.success) throw new Error(t('finance.finance_budget_page.k0'));
       return response.data;
     },
     staleTime: 5 * 60 * 1000,
@@ -45,7 +48,7 @@ const FinanceBudgetStats: React.FC = () => {
 
   const statCards = [
     {
-      label: '预算总额',
+      label: t('finance.finance_budget_page.k1'),
       value: formatCurrency(totalBudget),
       color: 'primary.lighter',
       textColor: 'text.secondary',
@@ -57,7 +60,7 @@ const FinanceBudgetStats: React.FC = () => {
       ),
     },
     {
-      label: '已使用',
+      label: t('finance.finance_budget_page.k2'),
       value: formatCurrency(totalUsed),
       color: 'warning.lighter',
       textColor: 'warning.dark',
@@ -69,7 +72,7 @@ const FinanceBudgetStats: React.FC = () => {
       ),
     },
     {
-      label: '剩余预算',
+      label: t('finance.finance_budget_page.k3'),
       value: formatCurrency(totalRemaining),
       color: 'success.lighter',
       textColor: 'success.dark',
@@ -81,7 +84,7 @@ const FinanceBudgetStats: React.FC = () => {
       ),
     },
     {
-      label: '平均使用率',
+      label: t('finance.finance_budget_page.k4'),
       value: formatPercent(avgUsageRate),
       color: 'secondary.light',
       textColor: 'text.secondary',
@@ -93,7 +96,7 @@ const FinanceBudgetStats: React.FC = () => {
       ),
     },
     {
-      label: '活跃预算',
+      label: t('finance.finance_budget_page.k5'),
       value: activeBudgets,
       color: 'success.lighter',
       textColor: 'success.dark',
@@ -105,7 +108,7 @@ const FinanceBudgetStats: React.FC = () => {
       ),
     },
     {
-      label: '已完成',
+      label: t('finance.finance_budget_page.k6'),
       value: completedBudgets,
       color: 'primary.lighter',
       textColor: 'primary.dark',
@@ -117,7 +120,7 @@ const FinanceBudgetStats: React.FC = () => {
       ),
     },
     {
-      label: '已冻结',
+      label: t('finance.finance_budget_page.k7'),
       value: frozenBudgets,
       color: 'grey.100',
       textColor: 'text.secondary',
@@ -129,7 +132,7 @@ const FinanceBudgetStats: React.FC = () => {
       ),
     },
     {
-      label: '已过期',
+      label: t('finance.finance_budget_page.k8'),
       value: expiredBudgets,
       color: 'error.lighter',
       textColor: 'error.dark',
@@ -203,7 +206,7 @@ const budgetApiAdapter: CrudApiAdapter = {
       status: params?.status as string | undefined,
     } as Parameters<typeof budgetApi.list>[0]);
     if (!response.success) {
-      throw new Error('加载预算列表失败');
+      throw new Error(i18n.t('finance.finance_budget_page.k9'));
     }
     const data = response.data;
     return {
@@ -215,7 +218,7 @@ const budgetApiAdapter: CrudApiAdapter = {
   create: async (data) => {
     const response = await budgetApi.create(data as Parameters<typeof budgetApi.create>[0]);
     if (!response.success) {
-      throw new Error('创建预算失败');
+      throw new Error(i18n.t('finance.finance_budget_page.k10'));
     }
     return response.data as unknown as Record<string, unknown>;
   },
@@ -223,7 +226,7 @@ const budgetApiAdapter: CrudApiAdapter = {
   update: async (id, data) => {
     const response = await budgetApi.update(id, data as Parameters<typeof budgetApi.update>[1]);
     if (!response.success) {
-      throw new Error('更新预算失败');
+      throw new Error(i18n.t('finance.finance_budget_page.k11'));
     }
     return response.data as unknown as Record<string, unknown>;
   },
@@ -231,20 +234,21 @@ const budgetApiAdapter: CrudApiAdapter = {
   delete: async (id) => {
     const response = await budgetApi.delete(id);
     if (!response.success) {
-      throw new Error('删除预算失败');
+      throw new Error(i18n.t('finance.finance_budget_page.k12'));
     }
   },
 };
 
 const FinanceBudgetPage: React.FC = () => {
+  const { t } = useTranslation('finance');
   return (
     <CrudPage
       schema={budgetSchema}
       apiAdapter={budgetApiAdapter}
       breadcrumbs={[
-        { label: '首页', href: '/dashboard' },
-        { label: '财务', href: '/finance' },
-        { label: '预算管理' },
+        { label: t('finance.finance_budget_page.k13'), href: '/dashboard' },
+        { label: t('finance.finance_budget_page.k14'), href: '/finance' },
+        { label: t('finance.finance_budget_page.k15') },
       ]}
       headerContent={<FinanceBudgetStats />}
     />

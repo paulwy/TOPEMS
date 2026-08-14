@@ -29,10 +29,12 @@ import {
 import { lowcodeDataSourcesApi } from '@/api/lowcode';
 import type { LowcodeDataSource, DataSourceType, DataSourceTestResult } from '@/api/lowcode';
 import { PageContainer } from '@/components/common';
+import { useTranslation } from 'react-i18next';
 
 const DS_TYPES: DataSourceType[] = ['mysql', 'postgres', 'sqlite', 'rest', 'mongodb', 'redis'];
 
 export const DataSourcePage: React.FC = () => {
+  const { t } = useTranslation('lowcode');
   const [sources, setSources] = useState<LowcodeDataSource[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -59,7 +61,7 @@ export const DataSourcePage: React.FC = () => {
       const res = await lowcodeDataSourcesApi.list({ page: 1, pageSize: 100 });
       setSources(res.data?.items ?? []);
     } catch (err) {
-      setError(err instanceof Error ? err.message : '加载数据源失败');
+      setError(err instanceof Error ? err.message : t('lowcode.data_source_page.k0'));
     } finally {
       setLoading(false);
     }
@@ -89,7 +91,7 @@ export const DataSourcePage: React.FC = () => {
       setCreateOpen(false);
       await load();
     } catch (err) {
-      setError(err instanceof Error ? err.message : '创建数据源失败');
+      setError(err instanceof Error ? err.message : t('lowcode.data_source_page.k1'));
     } finally {
       setCreating(false);
     }
@@ -100,7 +102,7 @@ export const DataSourcePage: React.FC = () => {
       await lowcodeDataSourcesApi.remove(id);
       await load();
     } catch (err) {
-      setError(err instanceof Error ? err.message : '删除数据源失败');
+      setError(err instanceof Error ? err.message : t('lowcode.data_source_page.k2'));
     }
   };
 
@@ -111,21 +113,21 @@ export const DataSourcePage: React.FC = () => {
       const res = await lowcodeDataSourcesApi.testById(id);
       setTestResult(res.data ?? null);
     } catch (err) {
-      setError(err instanceof Error ? err.message : '测试连接失败');
+      setError(err instanceof Error ? err.message : t('lowcode.data_source_page.k3'));
     } finally {
       setTesting(null);
     }
   };
 
   return (
-    <PageContainer title='数据源管理'>
+    <PageContainer title={t('lowcode.data_source_page.k4')}>
       <Box sx={{ p: 3 }}>
         <Stack
           direction='row'
           spacing={2}
           sx={{ mb: 2, justifyContent: 'space-between', alignItems: 'center' }}
         >
-          <Typography variant='h5'>数据源管理</Typography>
+          <Typography variant='h5'>{t('lowcode.data_source_page.k5')}</Typography>
           <Button
             variant='contained'
             startIcon={<AddIcon />}
@@ -157,11 +159,11 @@ export const DataSourcePage: React.FC = () => {
             <Table size='small'>
               <TableHead>
                 <TableRow>
-                  <TableCell>名称</TableCell>
-                  <TableCell>类型</TableCell>
+                  <TableCell>{t('lowcode.data_source_page.k6')}</TableCell>
+                  <TableCell>{t('lowcode.data_source_page.k7')}</TableCell>
                   <TableCell>主机/库</TableCell>
-                  <TableCell>状态</TableCell>
-                  <TableCell align='right'>操作</TableCell>
+                  <TableCell>{t('lowcode.data_source_page.k8')}</TableCell>
+                  <TableCell align='right'>{t('lowcode.data_source_page.k9')}</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
@@ -201,8 +203,8 @@ export const DataSourcePage: React.FC = () => {
                           size='small'
                           onClick={() => handleTest(s.id)}
                           disabled={testing === s.id}
-                          aria-label='测试连接'
-                          title='测试连接'
+                          aria-label={t('lowcode.data_source_page.k10')}
+                          title={t('lowcode.data_source_page.k11')}
                         >
                           <NetworkCheckIcon size={18} />
                         </IconButton>
@@ -210,7 +212,7 @@ export const DataSourcePage: React.FC = () => {
                           size='small'
                           color='error'
                           onClick={() => handleDelete(s.id)}
-                          aria-label='删除'
+                          aria-label={t('lowcode.data_source_page.k12')}
                         >
                           <DeleteOutlineIcon size={18} />
                         </IconButton>
@@ -241,28 +243,28 @@ export const DataSourcePage: React.FC = () => {
           maxWidth='sm'
           fullWidth
         >
-          <DialogTitle>新建数据源</DialogTitle>
+          <DialogTitle>{t('lowcode.data_source_page.k13')}</DialogTitle>
           <DialogContent>
             <Stack
               spacing={2}
               sx={{ mt: 1 }}
             >
               <TextField
-                label='所属应用 ID'
+                label={t('lowcode.data_source_page.id_14')}
                 value={createForm.app_id}
                 onChange={(e) => setCreateForm({ ...createForm, app_id: e.target.value })}
                 fullWidth
                 required
               />
               <TextField
-                label='数据源名称'
+                label={t('lowcode.data_source_page.k15')}
                 value={createForm.name}
                 onChange={(e) => setCreateForm({ ...createForm, name: e.target.value })}
                 fullWidth
                 required
               />
               <TextField
-                label='类型'
+                label={t('lowcode.data_source_page.k16')}
                 value={createForm.type}
                 onChange={(e) =>
                   setCreateForm({ ...createForm, type: e.target.value as DataSourceType })
@@ -284,20 +286,20 @@ export const DataSourcePage: React.FC = () => {
                 spacing={2}
               >
                 <TextField
-                  label='主机'
+                  label={t('lowcode.data_source_page.k17')}
                   value={createForm.host}
                   onChange={(e) => setCreateForm({ ...createForm, host: e.target.value })}
                   fullWidth
                 />
                 <TextField
-                  label='端口'
+                  label={t('lowcode.data_source_page.k18')}
                   value={createForm.port}
                   onChange={(e) => setCreateForm({ ...createForm, port: e.target.value })}
                   sx={{ width: 120 }}
                 />
               </Stack>
               <TextField
-                label='数据库'
+                label={t('lowcode.data_source_page.k19')}
                 value={createForm.database}
                 onChange={(e) => setCreateForm({ ...createForm, database: e.target.value })}
                 fullWidth
@@ -307,13 +309,13 @@ export const DataSourcePage: React.FC = () => {
                 spacing={2}
               >
                 <TextField
-                  label='用户名'
+                  label={t('lowcode.data_source_page.k20')}
                   value={createForm.username}
                   onChange={(e) => setCreateForm({ ...createForm, username: e.target.value })}
                   fullWidth
                 />
                 <TextField
-                  label='密码'
+                  label={t('lowcode.data_source_page.k21')}
                   type='password'
                   value={createForm.password}
                   onChange={(e) => setCreateForm({ ...createForm, password: e.target.value })}
@@ -321,7 +323,7 @@ export const DataSourcePage: React.FC = () => {
                 />
               </Stack>
               <TextField
-                label='描述'
+                label={t('lowcode.data_source_page.k22')}
                 value={createForm.description}
                 onChange={(e) => setCreateForm({ ...createForm, description: e.target.value })}
                 fullWidth
@@ -331,13 +333,15 @@ export const DataSourcePage: React.FC = () => {
             </Stack>
           </DialogContent>
           <DialogActions>
-            <Button onClick={() => setCreateOpen(false)}>取消</Button>
+            <Button onClick={() => setCreateOpen(false)}>
+              {t('lowcode.data_source_page.k23')}
+            </Button>
             <Button
               onClick={handleCreate}
               variant='contained'
               disabled={creating || !createForm.app_id || !createForm.name}
             >
-              {creating ? '创建中…' : '创建'}
+              {creating ? '创建中…' : t('lowcode.data_source_page.k24')}
             </Button>
           </DialogActions>
         </Dialog>

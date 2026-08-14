@@ -36,6 +36,8 @@ import type {
   AutomationActionType,
 } from '@/api/automation';
 import { PageContainer } from '@/components/common';
+import { useTranslation } from 'react-i18next';
+import i18n from '@/i18n';
 
 const RULE_STATUS_COLOR: Record<AutomationRuleStatus, 'success' | 'default' | 'warning'> = {
   enabled: 'success',
@@ -44,9 +46,9 @@ const RULE_STATUS_COLOR: Record<AutomationRuleStatus, 'success' | 'default' | 'w
 };
 
 const RULE_STATUS_LABEL: Record<AutomationRuleStatus, string> = {
-  enabled: '启用',
-  disabled: '禁用',
-  draft: '草稿',
+  enabled: i18n.t('automation.automation_rules_page.k0'),
+  disabled: i18n.t('automation.automation_rules_page.k1'),
+  draft: i18n.t('automation.automation_rules_page.k2'),
 };
 
 const TRIGGER_TYPES: AutomationTriggerType[] = [
@@ -85,6 +87,7 @@ const INITIAL_FORM: CreateForm = {
 };
 
 export const AutomationRulesPage: React.FC = () => {
+  const { t } = useTranslation('automation');
   const [rules, setRules] = useState<AutomationRule[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -99,7 +102,7 @@ export const AutomationRulesPage: React.FC = () => {
       const res = await automationRulesApi.list({ page: 1, pageSize: 50 });
       setRules(res.data?.items ?? []);
     } catch (err) {
-      setError(err instanceof Error ? err.message : '加载规则列表失败');
+      setError(err instanceof Error ? err.message : t('automation.automation_rules_page.k3'));
     } finally {
       setLoading(false);
     }
@@ -139,7 +142,7 @@ export const AutomationRulesPage: React.FC = () => {
       setCreateForm(INITIAL_FORM);
       await load();
     } catch (err) {
-      setError(err instanceof Error ? err.message : '创建规则失败');
+      setError(err instanceof Error ? err.message : t('automation.automation_rules_page.k4'));
     } finally {
       setCreating(false);
     }
@@ -150,7 +153,7 @@ export const AutomationRulesPage: React.FC = () => {
       await automationRulesApi.remove(id);
       await load();
     } catch (err) {
-      setError(err instanceof Error ? err.message : '删除规则失败');
+      setError(err instanceof Error ? err.message : t('automation.automation_rules_page.k5'));
     }
   };
 
@@ -159,7 +162,7 @@ export const AutomationRulesPage: React.FC = () => {
       await automationRulesApi.duplicate(id);
       await load();
     } catch (err) {
-      setError(err instanceof Error ? err.message : '复制规则失败');
+      setError(err instanceof Error ? err.message : t('automation.automation_rules_page.k6'));
     }
   };
 
@@ -172,7 +175,7 @@ export const AutomationRulesPage: React.FC = () => {
       }
       await load();
     } catch (err) {
-      setError(err instanceof Error ? err.message : '切换规则状态失败');
+      setError(err instanceof Error ? err.message : t('automation.automation_rules_page.k7'));
     }
   };
 
@@ -181,19 +184,19 @@ export const AutomationRulesPage: React.FC = () => {
       await automationRulesApi.trigger(id);
       await load();
     } catch (err) {
-      setError(err instanceof Error ? err.message : '手动触发失败');
+      setError(err instanceof Error ? err.message : t('automation.automation_rules_page.k8'));
     }
   };
 
   return (
-    <PageContainer title='自动化规则'>
+    <PageContainer title={t('automation.automation_rules_page.k9')}>
       <Box sx={{ p: 3 }}>
         <Stack
           direction='row'
           spacing={2}
           sx={{ mb: 2, justifyContent: 'space-between', alignItems: 'center' }}
         >
-          <Typography variant='h5'>自动化规则</Typography>
+          <Typography variant='h5'>{t('automation.automation_rules_page.k10')}</Typography>
           <Button
             variant='contained'
             startIcon={<AddIcon />}
@@ -225,14 +228,14 @@ export const AutomationRulesPage: React.FC = () => {
             <Table size='small'>
               <TableHead>
                 <TableRow>
-                  <TableCell>规则名称</TableCell>
-                  <TableCell>编码</TableCell>
-                  <TableCell>触发器</TableCell>
-                  <TableCell>动作</TableCell>
-                  <TableCell>状态</TableCell>
+                  <TableCell>{t('automation.automation_rules_page.k11')}</TableCell>
+                  <TableCell>{t('automation.automation_rules_page.k12')}</TableCell>
+                  <TableCell>{t('automation.automation_rules_page.k13')}</TableCell>
+                  <TableCell>{t('automation.automation_rules_page.k14')}</TableCell>
+                  <TableCell>{t('automation.automation_rules_page.k15')}</TableCell>
                   <TableCell>运行/成功/失败</TableCell>
-                  <TableCell>最近运行</TableCell>
-                  <TableCell align='right'>操作</TableCell>
+                  <TableCell>{t('automation.automation_rules_page.k16')}</TableCell>
+                  <TableCell align='right'>{t('automation.automation_rules_page.k17')}</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
@@ -267,24 +270,32 @@ export const AutomationRulesPage: React.FC = () => {
                         <IconButton
                           size='small'
                           onClick={() => handleTrigger(rule.id)}
-                          aria-label='手动触发'
-                          title='手动触发'
+                          aria-label={t('automation.automation_rules_page.k18')}
+                          title={t('automation.automation_rules_page.k19')}
                         >
                           <PlayIcon size={18} />
                         </IconButton>
                         <IconButton
                           size='small'
                           onClick={() => handleToggle(rule)}
-                          aria-label={rule.status === 'enabled' ? '禁用' : '启用'}
-                          title={rule.status === 'enabled' ? '禁用' : '启用'}
+                          aria-label={
+                            rule.status === 'enabled'
+                              ? t('automation.automation_rules_page.k21')
+                              : t('automation.automation_rules_page.k20')
+                          }
+                          title={
+                            rule.status === 'enabled'
+                              ? t('automation.automation_rules_page.k23')
+                              : t('automation.automation_rules_page.k22')
+                          }
                         >
                           <PowerIcon size={18} />
                         </IconButton>
                         <IconButton
                           size='small'
                           onClick={() => handleDuplicate(rule.id)}
-                          aria-label='复制'
-                          title='复制'
+                          aria-label={t('automation.automation_rules_page.k24')}
+                          title={t('automation.automation_rules_page.k25')}
                         >
                           <ContentCopyIcon size={18} />
                         </IconButton>
@@ -292,8 +303,8 @@ export const AutomationRulesPage: React.FC = () => {
                           size='small'
                           color='error'
                           onClick={() => handleDelete(rule.id)}
-                          aria-label='删除'
-                          title='删除'
+                          aria-label={t('automation.automation_rules_page.k26')}
+                          title={t('automation.automation_rules_page.k27')}
                         >
                           <DeleteOutlineIcon size={18} />
                         </IconButton>
@@ -312,29 +323,29 @@ export const AutomationRulesPage: React.FC = () => {
           maxWidth='sm'
           fullWidth
         >
-          <DialogTitle>新建自动化规则</DialogTitle>
+          <DialogTitle>{t('automation.automation_rules_page.k28')}</DialogTitle>
           <DialogContent>
             <Stack
               spacing={2}
               sx={{ mt: 1 }}
             >
               <TextField
-                label='规则名称'
+                label={t('automation.automation_rules_page.k29')}
                 value={createForm.name}
                 onChange={(e) => setCreateForm({ ...createForm, name: e.target.value })}
                 fullWidth
                 required
               />
               <TextField
-                label='规则编码'
+                label={t('automation.automation_rules_page.k30')}
                 value={createForm.code}
                 onChange={(e) => setCreateForm({ ...createForm, code: e.target.value })}
                 fullWidth
                 required
-                helperText='规则唯一标识，创建后不可修改'
+                helperText={t('automation.automation_rules_page.k31')}
               />
               <TextField
-                label='描述'
+                label={t('automation.automation_rules_page.k32')}
                 value={createForm.description}
                 onChange={(e) => setCreateForm({ ...createForm, description: e.target.value })}
                 fullWidth
@@ -343,7 +354,7 @@ export const AutomationRulesPage: React.FC = () => {
               />
               <TextField
                 select
-                label='触发器类型'
+                label={t('automation.automation_rules_page.k33')}
                 value={createForm.trigger_type}
                 onChange={(e) =>
                   setCreateForm({
@@ -363,7 +374,7 @@ export const AutomationRulesPage: React.FC = () => {
                 ))}
               </TextField>
               <TextField
-                label='触发器载荷（JSON）'
+                label={t('automation.automation_rules_page.json_34')}
                 value={createForm.trigger_payload}
                 onChange={(e) => setCreateForm({ ...createForm, trigger_payload: e.target.value })}
                 fullWidth
@@ -373,7 +384,7 @@ export const AutomationRulesPage: React.FC = () => {
               />
               <TextField
                 select
-                label='动作类型'
+                label={t('automation.automation_rules_page.k35')}
                 value={createForm.action_type}
                 onChange={(e) =>
                   setCreateForm({
@@ -393,7 +404,7 @@ export const AutomationRulesPage: React.FC = () => {
                 ))}
               </TextField>
               <TextField
-                label='动作目标 ID'
+                label={t('automation.automation_rules_page.id_36')}
                 value={createForm.action_target}
                 onChange={(e) => setCreateForm({ ...createForm, action_target: e.target.value })}
                 fullWidth
@@ -402,13 +413,15 @@ export const AutomationRulesPage: React.FC = () => {
             </Stack>
           </DialogContent>
           <DialogActions>
-            <Button onClick={() => setCreateOpen(false)}>取消</Button>
+            <Button onClick={() => setCreateOpen(false)}>
+              {t('automation.automation_rules_page.k37')}
+            </Button>
             <Button
               onClick={handleCreate}
               variant='contained'
               disabled={creating || !createForm.name || !createForm.code}
             >
-              {creating ? '创建中…' : '创建'}
+              {creating ? '创建中…' : t('automation.automation_rules_page.k38')}
             </Button>
           </DialogActions>
         </Dialog>

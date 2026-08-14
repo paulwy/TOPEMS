@@ -2,6 +2,8 @@ import React from 'react';
 import { Divider, Paper, Stack, Tooltip, Typography } from '@mui/material';
 import type { AutomationNodeType } from '@/api/automation';
 import { NODE_TYPE_BORDER_COLOR, NODE_TYPE_ICON, NODE_TYPE_LABEL } from '../shared';
+import { useTranslation } from 'react-i18next';
+import i18n from '@/i18n';
 
 export interface NodeLibraryProps {
   availableNodeTypes: AutomationNodeType[];
@@ -14,6 +16,7 @@ export const NodeLibrary: React.FC<NodeLibraryProps> = ({
   nodesCount,
   onAddNodeAt,
 }) => {
+  const { t } = useTranslation('automation');
   return (
     <Paper
       variant='outlined'
@@ -32,7 +35,7 @@ export const NodeLibrary: React.FC<NodeLibraryProps> = ({
           return (
             <Tooltip
               key={t}
-              title='拖拽到画布或点击添加'
+              title={i18n.t('automation.node_library.k0')}
               placement='right'
             >
               <Paper

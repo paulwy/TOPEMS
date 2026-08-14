@@ -15,16 +15,18 @@ import CreateTemplateDialog from './components/CreateTemplateDialog';
 import EditTemplateDialog from './components/EditTemplateDialog';
 import TemplatePreviewDialog from './components/TemplatePreviewDialog';
 import ConfirmDialogs from './components/ConfirmDialogs';
+import { useTranslation } from 'react-i18next';
 
-const ct= designTokens.colors;
+const ct = designTokens.colors;
 
 const MailPage: React.FC = () => {
+  const { t } = useTranslation('im');
   const navigate = useNavigate();
   const m = useMailPage();
 
   return (
     <PageContainer
-      title='即时通讯'
+      title={t('im.index.k0')}
       padding={false}
       maxWidth={false}
       headerProps={{
@@ -122,14 +124,14 @@ const MailPage: React.FC = () => {
                 icon={<Mail size={16} />}
                 iconPosition='start'
                 sx={{ textTransform: 'none', minHeight: 48 }}
-                label='邮件记录'
+                label={t('im.index.k1')}
               />
               <Tab
                 value='templates'
                 icon={<FileText />}
                 iconPosition='start'
                 sx={{ textTransform: 'none', minHeight: 48 }}
-                label='邮件模板'
+                label={t('im.index.k2')}
               />
             </Tabs>
           </Box>

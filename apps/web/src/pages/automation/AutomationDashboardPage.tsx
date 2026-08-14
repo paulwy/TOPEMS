@@ -18,6 +18,8 @@ import { Zap, CheckCircle2, XCircle, Activity, Clock, TrendingUp } from 'lucide-
 import { automationApi } from '@/api/automation';
 import type { AutomationDashboardStats, AutomationRunStatus } from '@/api/automation';
 import { PageContainer } from '@/components/common';
+import { useTranslation } from 'react-i18next';
+import i18n from '@/i18n';
 
 interface StatCardProps {
   label: string;
@@ -64,15 +66,16 @@ const RUN_STATUS_COLOR: Record<
 };
 
 const RUN_STATUS_LABEL: Record<AutomationRunStatus, string> = {
-  success: '成功',
-  failed: '失败',
-  running: '运行中',
-  pending: '等待',
-  cancelled: '已取消',
-  timeout: '超时',
+  success: i18n.t('automation.automation_dashboard_page.k0'),
+  failed: i18n.t('automation.automation_dashboard_page.k1'),
+  running: i18n.t('automation.automation_dashboard_page.k2'),
+  pending: i18n.t('automation.automation_dashboard_page.k3'),
+  cancelled: i18n.t('automation.automation_dashboard_page.k4'),
+  timeout: i18n.t('automation.automation_dashboard_page.k5'),
 };
 
 export const AutomationDashboardPage: React.FC = () => {
+  const { t } = useTranslation('automation');
   const [stats, setStats] = useState<AutomationDashboardStats | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -89,7 +92,9 @@ export const AutomationDashboardPage: React.FC = () => {
         }
       } catch (err) {
         if (!cancelled) {
-          setError(err instanceof Error ? err.message : '加载统计数据失败');
+          setError(
+            err instanceof Error ? err.message : t('automation.automation_dashboard_page.k6')
+          );
         }
       } finally {
         if (!cancelled) setLoading(false);
@@ -110,7 +115,7 @@ export const AutomationDashboardPage: React.FC = () => {
   }
 
   return (
-    <PageContainer title='自动化总览'>
+    <PageContainer title={t('automation.automation_dashboard_page.k7')}>
       <Box sx={{ p: 3 }}>
         <Typography
           variant='h5'
@@ -134,7 +139,7 @@ export const AutomationDashboardPage: React.FC = () => {
         >
           <Grid size={{ xs: 12, sm: 6, md: 4, lg: 3 }}>
             <StatCard
-              label='规则总数'
+              label={t('automation.automation_dashboard_page.k8')}
               value={stats?.total_rules ?? 0}
               icon={<Zap size={22} />}
               color='primary.main'
@@ -142,7 +147,7 @@ export const AutomationDashboardPage: React.FC = () => {
           </Grid>
           <Grid size={{ xs: 12, sm: 6, md: 4, lg: 3 }}>
             <StatCard
-              label='启用规则'
+              label={t('automation.automation_dashboard_page.k9')}
               value={stats?.enabled_rules ?? 0}
               icon={<Zap size={22} />}
               color='success.main'
@@ -182,7 +187,7 @@ export const AutomationDashboardPage: React.FC = () => {
           </Grid>
           <Grid size={{ xs: 12, sm: 6, md: 4, lg: 3 }}>
             <StatCard
-              label='平均耗时'
+              label={t('automation.automation_dashboard_page.k10')}
               value={`${stats?.avg_duration_ms ?? 0}ms`}
               icon={<Clock size={22} />}
               color='info.main'
@@ -190,7 +195,7 @@ export const AutomationDashboardPage: React.FC = () => {
           </Grid>
           <Grid size={{ xs: 12, sm: 6, md: 4, lg: 3 }}>
             <StatCard
-              label='禁用规则'
+              label={t('automation.automation_dashboard_page.k11')}
               value={stats?.disabled_rules ?? 0}
               icon={<Zap size={22} />}
               color='text.disabled'
@@ -213,10 +218,16 @@ export const AutomationDashboardPage: React.FC = () => {
               <Table size='small'>
                 <TableHead>
                   <TableRow>
-                    <TableCell>日期</TableCell>
-                    <TableCell align='right'>总数</TableCell>
-                    <TableCell align='right'>成功</TableCell>
-                    <TableCell align='right'>失败</TableCell>
+                    <TableCell>{t('automation.automation_dashboard_page.k12')}</TableCell>
+                    <TableCell align='right'>
+                      {t('automation.automation_dashboard_page.k13')}
+                    </TableCell>
+                    <TableCell align='right'>
+                      {t('automation.automation_dashboard_page.k14')}
+                    </TableCell>
+                    <TableCell align='right'>
+                      {t('automation.automation_dashboard_page.k15')}
+                    </TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
@@ -259,11 +270,13 @@ export const AutomationDashboardPage: React.FC = () => {
               <Table size='small'>
                 <TableHead>
                   <TableRow>
-                    <TableCell>规则</TableCell>
-                    <TableCell>触发方式</TableCell>
-                    <TableCell>状态</TableCell>
-                    <TableCell>开始时间</TableCell>
-                    <TableCell align='right'>耗时</TableCell>
+                    <TableCell>{t('automation.automation_dashboard_page.k16')}</TableCell>
+                    <TableCell>{t('automation.automation_dashboard_page.k17')}</TableCell>
+                    <TableCell>{t('automation.automation_dashboard_page.k18')}</TableCell>
+                    <TableCell>{t('automation.automation_dashboard_page.k19')}</TableCell>
+                    <TableCell align='right'>
+                      {t('automation.automation_dashboard_page.k20')}
+                    </TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>

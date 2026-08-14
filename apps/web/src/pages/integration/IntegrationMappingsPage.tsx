@@ -26,6 +26,8 @@ import {
   type MappingType,
   type MappingStatus,
 } from '@/schemas/integration';
+import { useTranslation } from 'react-i18next';
+import i18n from '@/i18n';
 
 interface Mapping {
   id: string;
@@ -42,58 +44,58 @@ interface Mapping {
 const MOCK_MAPPINGS: Mapping[] = [
   {
     id: 'map-001',
-    name: '用户数据同步映射',
+    name: i18n.t('integration.integration_mappings_page.k0'),
     type: 'field',
     source: 'IAM用户表',
     target: 'CRM客户表',
     status: 'active',
     fieldCount: 15,
     lastSyncTime: '2024-01-15 14:30:00',
-    description: '将IAM系统用户信息同步到CRM作为客户',
+    description: i18n.t('integration.integration_mappings_page.iamcrm_1'),
   },
   {
     id: 'map-002',
-    name: '订单金额转换映射',
+    name: i18n.t('integration.integration_mappings_page.k2'),
     type: 'transform',
     source: 'ERP订单表',
     target: 'BI销售报表',
     status: 'active',
     fieldCount: 8,
     lastSyncTime: '2024-01-15 13:20:00',
-    description: '将订单金额从分转换为元并计算汇率',
+    description: i18n.t('integration.integration_mappings_page.k3'),
   },
   {
     id: 'map-003',
-    name: '库存数据过滤映射',
+    name: i18n.t('integration.integration_mappings_page.k4'),
     type: 'filter',
     source: 'WMS库存表',
     target: 'SCM供货表',
     status: 'inactive',
     fieldCount: 12,
     lastSyncTime: '2024-01-14 22:00:00',
-    description: '过滤掉虚拟库存和预占库存',
+    description: i18n.t('integration.integration_mappings_page.k5'),
   },
   {
     id: 'map-004',
-    name: '产品质量验证映射',
+    name: i18n.t('integration.integration_mappings_page.k6'),
     type: 'validate',
     source: 'QMS质检表',
     target: 'MES工序表',
     status: 'active',
     fieldCount: 20,
     lastSyncTime: '2024-01-15 10:15:00',
-    description: '质检数据验证后写入生产工序',
+    description: i18n.t('integration.integration_mappings_page.k7'),
   },
   {
     id: 'map-005',
-    name: '供应商数据映射',
+    name: i18n.t('integration.integration_mappings_page.k8'),
     type: 'field',
     source: 'SRM供应商表',
     target: 'ERP供应商表',
     status: 'draft',
     fieldCount: 25,
     lastSyncTime: '-',
-    description: '供应商主数据同步映射规则',
+    description: i18n.t('integration.integration_mappings_page.k9'),
   },
 ];
 
@@ -104,28 +106,28 @@ const renderStatsCards = (rows: Record<string, unknown>[]) => {
   const stats = [
     {
       id: 'total',
-      title: '映射规则',
+      title: i18n.t('integration.integration_mappings_page.k10'),
       value: mappings.length,
       icon: <GitMerge size={20} />,
       color: 'primary' as const,
     },
     {
       id: 'active',
-      title: '启用中',
+      title: i18n.t('integration.integration_mappings_page.k11'),
       value: mappings.filter((m) => m.status === 'active').length,
       icon: <Play size={20} />,
       color: 'success' as const,
     },
     {
       id: 'field',
-      title: '字段映射',
+      title: i18n.t('integration.integration_mappings_page.k12'),
       value: mappings.filter((m) => m.type === 'field').length,
       icon: <ArrowRight size={20} />,
       color: 'info' as const,
     },
     {
       id: 'transform',
-      title: '数据转换',
+      title: i18n.t('integration.integration_mappings_page.k13'),
       value: mappings.filter((m) => m.type === 'transform').length,
       icon: <Copy size={20} />,
       color: 'warning' as const,
@@ -186,6 +188,7 @@ const renderStatsCards = (rows: Record<string, unknown>[]) => {
 };
 
 export const IntegrationMappingsPage: React.FC = () => {
+  const { t } = useTranslation('integration');
   const queryClient = useQueryClient();
   const addNotification = useNotificationStore((state) => state.addNotification);
 
@@ -203,14 +206,15 @@ export const IntegrationMappingsPage: React.FC = () => {
             : old
         );
         addNotification({
-          title: '状态更新',
-          message: `映射规则「${mapping.name}」已${mapping.status === 'active' ? '停用' : '启用'}`,
+          title: t('integration.integration_mappings_page.k14'),
+          message: `映射规则「${mapping.name}」已${mapping.status === 'active' ? t('integration.integration_mappings_page.k16') : t('integration.integration_mappings_page.k15')}`,
           type: 'success',
         });
       } catch (err) {
         addNotification({
-          title: '状态更新失败',
-          message: err instanceof Error ? err.message : '操作失败',
+          title: t('integration.integration_mappings_page.k17'),
+          message:
+            err instanceof Error ? err.message : t('integration.integration_mappings_page.k18'),
           type: 'error',
         });
       }
@@ -245,14 +249,14 @@ export const IntegrationMappingsPage: React.FC = () => {
       URL.revokeObjectURL(url);
 
       addNotification({
-        title: '导出成功',
-        message: '映射规则导出成功',
+        title: t('integration.integration_mappings_page.k19'),
+        message: t('integration.integration_mappings_page.k20'),
         type: 'success',
       });
     } catch (err) {
       addNotification({
-        title: '导出失败',
-        message: extractErrorMessage(err, '导出失败'),
+        title: t('integration.integration_mappings_page.k21'),
+        message: extractErrorMessage(err, t('integration.integration_mappings_page.k22')),
         type: 'error',
       });
     }
@@ -276,7 +280,7 @@ export const IntegrationMappingsPage: React.FC = () => {
           description: (data.description as string) ?? '',
         };
         addNotification({
-          title: '新建成功',
+          title: t('integration.integration_mappings_page.k23'),
           message: `已创建映射规则「${mapping.name}」`,
           type: 'success',
         });
@@ -284,16 +288,16 @@ export const IntegrationMappingsPage: React.FC = () => {
       },
       update: async (_id, data) => {
         addNotification({
-          title: '更新成功',
-          message: '映射规则已更新',
+          title: t('integration.integration_mappings_page.k24'),
+          message: t('integration.integration_mappings_page.k25'),
           type: 'success',
         });
         return data as Mapping;
       },
       delete: async () => {
         addNotification({
-          title: '删除成功',
-          message: '映射规则已删除',
+          title: t('integration.integration_mappings_page.k26'),
+          message: t('integration.integration_mappings_page.k27'),
           type: 'success',
         });
       },
@@ -304,7 +308,7 @@ export const IntegrationMappingsPage: React.FC = () => {
   const customRowActions = useMemo<RowAction[]>(
     () => [
       {
-        label: '启用/停用',
+        label: t('integration.integration_mappings_page.k28'),
         icon: <Play size={16} />,
         onClick: (row) => {
           void handleToggleStatus(row as unknown as Mapping);
@@ -339,7 +343,10 @@ export const IntegrationMappingsPage: React.FC = () => {
         apiAdapter={apiAdapter}
         customRowActions={customRowActions}
         headerContent={renderStatsCards}
-        breadcrumbs={[{ label: '集成' }, { label: '数据映射' }]}
+        breadcrumbs={[
+          { label: t('integration.integration_mappings_page.k30') },
+          { label: t('integration.integration_mappings_page.k29') },
+        ]}
       />
     </PageContainer>
   );

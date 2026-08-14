@@ -1,4 +1,6 @@
 import { ConfirmDialog } from '@topems/shared-components';
+import { useTranslation } from 'react-i18next';
+import i18n from '@/i18n';
 
 interface ConfirmDialogsProps {
   deleteEmailDialogOpen: boolean;
@@ -43,6 +45,7 @@ const ConfirmDialogs: React.FC<ConfirmDialogsProps> = ({
   handleDeleteTemplate,
   selectedEmails,
 }) => {
+  const { t } = useTranslation('im');
   return (
     <>
       <ConfirmDialog
@@ -52,8 +55,8 @@ const ConfirmDialogs: React.FC<ConfirmDialogsProps> = ({
           setDeletingEmailId(null);
         }}
         onConfirm={handleDeleteEmail}
-        title='确认删除'
-        message='确定要删除这个邮件记录吗？'
+        title={i18n.t('im.confirm_dialogs.k0')}
+        message={i18n.t('im.confirm_dialogs.k1')}
         danger
       />
 
@@ -64,18 +67,18 @@ const ConfirmDialogs: React.FC<ConfirmDialogsProps> = ({
           setResendingEmailId(null);
         }}
         onConfirm={handleResendEmail}
-        title='确认重发'
-        message='确定要重新发送这封邮件吗？'
+        title={t('im.confirm_dialogs.k2')}
+        message={t('im.confirm_dialogs.k3')}
         type='warning'
-        confirmLabel='重发'
-        cancelLabel='取消'
+        confirmLabel={t('im.confirm_dialogs.k4')}
+        cancelLabel={t('im.confirm_dialogs.k5')}
       />
 
       <ConfirmDialog
         isOpen={batchDeleteDialogOpen}
         onClose={() => setBatchDeleteDialogOpen(false)}
         onConfirm={handleBatchDeleteEmails}
-        title='确认批量删除'
+        title={t('im.confirm_dialogs.k6')}
         message={`确定要删除选中的 ${selectedEmails.length} 条邮件记录吗？`}
         danger
       />
@@ -84,11 +87,11 @@ const ConfirmDialogs: React.FC<ConfirmDialogsProps> = ({
         isOpen={batchResendDialogOpen}
         onClose={() => setBatchResendDialogOpen(false)}
         onConfirm={handleBatchResendEmails}
-        title='确认批量重发'
+        title={t('im.confirm_dialogs.k7')}
         message={`确定要重新发送选中的 ${selectedEmails.length} 条邮件吗？`}
         type='warning'
-        confirmLabel='批量重发'
-        cancelLabel='取消'
+        confirmLabel={t('im.confirm_dialogs.k8')}
+        cancelLabel={t('im.confirm_dialogs.k9')}
       />
 
       <ConfirmDialog
@@ -98,8 +101,8 @@ const ConfirmDialogs: React.FC<ConfirmDialogsProps> = ({
           setDeletingTemplateId(null);
         }}
         onConfirm={handleDeleteTemplate}
-        title='确认删除'
-        message='确定要删除这个模板吗？'
+        title={t('im.confirm_dialogs.k10')}
+        message={t('im.confirm_dialogs.k11')}
         danger
       />
     </>

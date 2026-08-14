@@ -9,12 +9,14 @@ import { designTokens } from '@/theme/tokens';
 import { SCM_PATHS } from '@/modules/scm/config';
 import { LazyChart } from '@/components/charts';
 
-
 import { QUERY_KEYS } from '@/lib/reactQuery';
+import { useTranslation } from 'react-i18next';
+import i18n from '@/i18n';
 
-const ct= designTokens.colors;
+const ct = designTokens.colors;
 
 const ScmOverviewPage: React.FC = () => {
+  const { t } = useTranslation('scm');
   const navigate = useNavigate();
 
   const loadingQuery = useQuery<boolean>({
@@ -28,29 +30,29 @@ const ScmOverviewPage: React.FC = () => {
     () => [
       {
         id: 'supplier-total',
-        title: '供应商总数',
+        title: i18n.t('scm.scm_overview_page.k0'),
         value: '128',
         icon: <Users size={24} />,
         change: 8,
-        changeLabel: '较上月',
+        changeLabel: i18n.t('scm.scm_overview_page.k1'),
         color: 'primary',
       },
       {
         id: 'purchase-orders',
-        title: '采购订单',
+        title: i18n.t('scm.scm_overview_page.k2'),
         value: '56',
         icon: <ShoppingCart size={24} />,
         change: 12,
-        changeLabel: '较上月',
+        changeLabel: i18n.t('scm.scm_overview_page.k3'),
         color: 'info',
       },
       {
         id: 'pending-approval',
-        title: '待审批',
+        title: i18n.t('scm.scm_overview_page.k4'),
         value: '13',
         icon: <Clock size={24} />,
         change: 5,
-        changeLabel: '待处理',
+        changeLabel: i18n.t('scm.scm_overview_page.k5'),
         color: 'warning',
       },
       {
@@ -59,16 +61,16 @@ const ScmOverviewPage: React.FC = () => {
         value: '8',
         icon: <Calculator size={24} />,
         change: 3,
-        changeLabel: '进行中',
+        changeLabel: i18n.t('scm.scm_overview_page.k6'),
         color: 'success',
       },
       {
         id: 'supplier-rating',
-        title: '供应商评估',
+        title: i18n.t('scm.scm_overview_page.k7'),
         value: '92.5',
         icon: <Award size={24} />,
         change: 1.2,
-        changeLabel: '平均评分',
+        changeLabel: i18n.t('scm.scm_overview_page.k8'),
         color: 'primary',
       },
     ],
@@ -85,28 +87,29 @@ const ScmOverviewPage: React.FC = () => {
   ];
 
   const supplierRatingData = [
-    { name: '优秀(A)', value: 45 },
-    { name: '良好(B)', value: 35 },
-    { name: '合格(C)', value: 15 },
-    { name: '不合格(D)', value: 5 },
+    { name: t('scm.scm_overview_page.a_9'), value: 45 },
+    { name: t('scm.scm_overview_page.b_10'), value: 35 },
+    { name: t('scm.scm_overview_page.c_11'), value: 15 },
+    { name: t('scm.scm_overview_page.d_12'), value: 5 },
   ];
 
   const mrpStatusData = [
-    { name: '第1周', value: 5 },
-    { name: '第2周', value: 8 },
-    { name: '第3周', value: 6 },
-    { name: '第4周', value: 10 },
-    { name: '第5周', value: 7 },
-    { name: '第6周', value: 12 },
+    { name: t('scm.scm_overview_page.1_13'), value: 5 },
+    { name: t('scm.scm_overview_page.2_14'), value: 8 },
+    { name: t('scm.scm_overview_page.3_15'), value: 6 },
+    { name: t('scm.scm_overview_page.4_16'), value: 10 },
+    { name: t('scm.scm_overview_page.5_17'), value: 7 },
+    { name: t('scm.scm_overview_page.6_18'), value: 12 },
   ];
 
   const charts: ChartCard[] = useMemo(
     () => [
       {
         id: 'order-trend',
-        title: '采购订单趋势',
+        title: i18n.t('scm.scm_overview_page.k19'),
         chart: (
-          <LazyChart type='bar'
+          <LazyChart
+            type='bar'
             data={orderTrendData}
             xKey='name'
             yKey='value'
@@ -116,15 +119,21 @@ const ScmOverviewPage: React.FC = () => {
       },
       {
         id: 'supplier-rating',
-        title: '供应商评级分布',
-        chart: <LazyChart type='pie' data={supplierRatingData} />,
+        title: i18n.t('scm.scm_overview_page.k20'),
+        chart: (
+          <LazyChart
+            type='pie'
+            data={supplierRatingData}
+          />
+        ),
         height: 300,
       },
       {
         id: 'mrp-suggestion',
         title: 'MRP建议状态',
         chart: (
-          <LazyChart type='line'
+          <LazyChart
+            type='line'
             data={mrpStatusData}
             xKey='name'
             yKey='value'
@@ -140,14 +149,14 @@ const ScmOverviewPage: React.FC = () => {
     () => [
       {
         id: 'supplier-manage',
-        label: '供应商管理',
+        label: i18n.t('scm.scm_overview_page.k21'),
         icon: <Users size={20} />,
         onClick: () => navigate(SCM_PATHS.suppliers),
         color: ct.primary.dark,
       },
       {
         id: 'purchase-order',
-        label: '采购订单',
+        label: i18n.t('scm.scm_overview_page.k22'),
         icon: <ShoppingCart size={20} />,
         onClick: () => navigate(SCM_PATHS.purchaseOrders),
         color: ct.secondary[700],
@@ -161,14 +170,14 @@ const ScmOverviewPage: React.FC = () => {
       },
       {
         id: 'supplier-eval',
-        label: '供应商评估',
+        label: i18n.t('scm.scm_overview_page.k23'),
         icon: <Award size={20} />,
         onClick: () => navigate(SCM_PATHS.supplierEvaluation),
         color: ct.warning[700],
       },
       {
         id: 'delivery-appointment',
-        label: '送货预约',
+        label: i18n.t('scm.scm_overview_page.k24'),
         icon: <Truck size={20} />,
         onClick: () => navigate(SCM_PATHS.deliveryAppointment),
         color: ct.teal[700],
@@ -182,16 +191,16 @@ const ScmOverviewPage: React.FC = () => {
       {
         id: 'po1',
         title: 'PO-2026-0098',
-        description: '向供应商A采购原材料',
+        description: i18n.t('scm.scm_overview_page.a_25'),
         time: '2026-06-29 09:00',
         icon: <ShoppingCart size={18} />,
         status: 'warning',
-        tags: [{ label: '待审批', color: ct.warning[700] }],
+        tags: [{ label: i18n.t('scm.scm_overview_page.k26'), color: ct.warning[700] }],
         onClick: () => navigate(SCM_PATHS.purchaseOrders),
       },
       {
         id: 'sup1',
-        title: '供应商B年度评审',
+        title: i18n.t('scm.scm_overview_page.b_27'),
         description: '综合评分: A (95分)',
         time: '2026-06-28 16:30',
         icon: <Star size={18} />,
@@ -205,27 +214,27 @@ const ScmOverviewPage: React.FC = () => {
         time: '2026-06-28 14:00',
         icon: <Calculator size={18} />,
         status: 'info',
-        tags: [{ label: '已生成', color: ct.primary.dark }],
+        tags: [{ label: i18n.t('scm.scm_overview_page.k28'), color: ct.primary.dark }],
         onClick: () => navigate(SCM_PATHS.mrpPlan),
       },
       {
         id: 'po2',
         title: 'PO-2026-0097',
-        description: '设备配件采购',
+        description: i18n.t('scm.scm_overview_page.k29'),
         time: '2026-06-28 11:20',
         icon: <ShoppingCart size={18} />,
         status: 'success',
-        tags: [{ label: '已入库', color: ct.success[700] }],
+        tags: [{ label: i18n.t('scm.scm_overview_page.k30'), color: ct.success[700] }],
         onClick: () => navigate(SCM_PATHS.purchaseOrders),
       },
       {
         id: 'del1',
-        title: '送货单 DL-2026-0035',
-        description: '供应商C - 预计6月30日到货',
+        title: i18n.t('scm.scm_overview_page.dl20260035_31'),
+        description: i18n.t('scm.scm_overview_page.c630_32'),
         time: '2026-06-27 10:00',
         icon: <Truck size={18} />,
         status: 'default',
-        tags: [{ label: '运输中', color: ct.grey[600] }],
+        tags: [{ label: i18n.t('scm.scm_overview_page.k33'), color: ct.grey[600] }],
         onClick: () => navigate(SCM_PATHS.deliveryAppointment),
       },
     ],
@@ -234,20 +243,23 @@ const ScmOverviewPage: React.FC = () => {
 
   return (
     <PageContainer
-      title='供应链管理'
+      title={t('scm.scm_overview_page.k34')}
       padding={false}
       maxWidth={false}
     >
       <DashboardTemplate
         title=''
         subtitle=''
-        breadcrumbs={[{ label: '首页', href: '/dashboard' }, { label: '供应链' }]}
+        breadcrumbs={[
+          { label: t('scm.scm_overview_page.k36'), href: '/dashboard' },
+          { label: t('scm.scm_overview_page.k35') },
+        ]}
         stats={stats}
         charts={charts}
         recentItems={recentItems}
-        recentTitle='最近动态'
+        recentTitle={t('scm.scm_overview_page.k37')}
         quickActions={quickActions}
-        quickActionsTitle='快捷操作'
+        quickActionsTitle={t('scm.scm_overview_page.k38')}
         loading={loading}
       />
     </PageContainer>

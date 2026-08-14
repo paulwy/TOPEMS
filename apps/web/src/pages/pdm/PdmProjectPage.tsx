@@ -40,8 +40,9 @@ import {
 import { designTokens } from '@/theme/tokens';
 
 import { QUERY_KEYS } from '@/lib/reactQuery';
+import i18n from '@/i18n';
 
-const ct= designTokens.colors;
+const ct = designTokens.colors;
 
 const STATUS_COLORS: Record<
   string,
@@ -76,29 +77,30 @@ const MEMBER_ROLE_COLORS: Record<
 };
 
 const STATUS_OPTIONS = [
-  { label: '规划中', value: 'planning' },
-  { label: '进行中', value: 'active' },
-  { label: '暂停', value: 'on_hold' },
-  { label: '已完成', value: 'completed' },
-  { label: '已取消', value: 'cancelled' },
+  { label: i18n.t('pdm.pdm_project_page.k0'), value: 'planning' },
+  { label: i18n.t('pdm.pdm_project_page.k1'), value: 'active' },
+  { label: i18n.t('pdm.pdm_project_page.k2'), value: 'on_hold' },
+  { label: i18n.t('pdm.pdm_project_page.k3'), value: 'completed' },
+  { label: i18n.t('pdm.pdm_project_page.k4'), value: 'cancelled' },
 ];
 
 const PHASE_OPTIONS = [
-  { label: '启动', value: 'initiation' },
-  { label: '规划', value: 'planning' },
-  { label: '执行', value: 'execution' },
-  { label: '监控', value: 'monitoring' },
-  { label: '收尾', value: 'closing' },
+  { label: i18n.t('pdm.pdm_project_page.k5'), value: 'initiation' },
+  { label: i18n.t('pdm.pdm_project_page.k6'), value: 'planning' },
+  { label: i18n.t('pdm.pdm_project_page.k7'), value: 'execution' },
+  { label: i18n.t('pdm.pdm_project_page.k8'), value: 'monitoring' },
+  { label: i18n.t('pdm.pdm_project_page.k9'), value: 'closing' },
 ];
 
 const MEMBER_ROLE_OPTIONS = [
-  { label: '项目经理', value: 'manager' },
-  { label: '开发人员', value: 'developer' },
-  { label: '审核人员', value: 'reviewer' },
-  { label: '查看者', value: 'viewer' },
+  { label: i18n.t('pdm.pdm_project_page.k10'), value: 'manager' },
+  { label: i18n.t('pdm.pdm_project_page.k11'), value: 'developer' },
+  { label: i18n.t('pdm.pdm_project_page.k12'), value: 'reviewer' },
+  { label: i18n.t('pdm.pdm_project_page.k13'), value: 'viewer' },
 ];
 
 const PdmProjectPage: React.FC = () => {
+  const { t } = useTranslation('pdm');
   const queryClient = useQueryClient();
   const { addNotification } = useNotificationStore();
 
@@ -137,16 +139,24 @@ const PdmProjectPage: React.FC = () => {
     mutationFn: ({ projectId, userId }: { projectId: string; userId: string }) =>
       projectApi.removeMember(projectId, userId),
     onSuccess: (_data, variables) => {
-      addNotification({ title: '成功', message: '成员移除成功', type: 'success' });
+      addNotification({
+        title: t('pdm.pdm_project_page.k15'),
+        message: t('pdm.pdm_project_page.k14'),
+        type: 'success',
+      });
       queryClient.invalidateQueries({
         queryKey: QUERY_KEYS.PDM.PROJECT_MEMBERS(variables.projectId),
-      
-  exact: false,
-  refetchType: 'active',
-});
+
+        exact: false,
+        refetchType: 'active',
+      });
     },
     onError: () => {
-      addNotification({ title: '错误', message: '移除成员失败', type: 'error' });
+      addNotification({
+        title: t('pdm.pdm_project_page.k17'),
+        message: t('pdm.pdm_project_page.k16'),
+        type: 'error',
+      });
     },
   });
 
@@ -157,17 +167,25 @@ const PdmProjectPage: React.FC = () => {
       role: 'manager' | 'developer' | 'reviewer' | 'viewer';
     }) => projectApi.addMember(data),
     onSuccess: () => {
-      addNotification({ title: '成功', message: '成员添加成功', type: 'success' });
+      addNotification({
+        title: t('pdm.pdm_project_page.k19'),
+        message: t('pdm.pdm_project_page.k18'),
+        type: 'success',
+      });
       setMemberDialogOpen(false);
       queryClient.invalidateQueries({
         queryKey: QUERY_KEYS.PDM.PROJECT_MEMBERS(selectedProjectId || ''),
-      
-  exact: false,
-  refetchType: 'active',
-});
+
+        exact: false,
+        refetchType: 'active',
+      });
     },
     onError: () => {
-      addNotification({ title: '错误', message: '添加成员失败', type: 'error' });
+      addNotification({
+        title: t('pdm.pdm_project_page.k21'),
+        message: t('pdm.pdm_project_page.k20'),
+        type: 'error',
+      });
     },
   });
 
@@ -236,14 +254,14 @@ const PdmProjectPage: React.FC = () => {
         if (res.success && res.data) {
           return res.data as unknown as Record<string, unknown>;
         }
-        throw new Error(res.message || '创建失败');
+        throw new Error(res.message || t('pdm.pdm_project_page.k22'));
       },
       update: async (id, data) => {
         const res = await projectApi.update(id, data as Partial<CreatePdmProjectRequest>);
         if (res.success && res.data) {
           return res.data as unknown as Record<string, unknown>;
         }
-        throw new Error(res.message || '更新失败');
+        throw new Error(res.message || t('pdm.pdm_project_page.k23'));
       },
       delete: async (id) => {
         await projectApi.delete(id);
@@ -256,7 +274,7 @@ const PdmProjectPage: React.FC = () => {
     () => [
       {
         key: 'view-detail',
-        label: '查看详情',
+        label: i18n.t('pdm.pdm_project_page.k24'),
         icon: <FolderKanban size={16} />,
         color: 'primary',
         onClick: handleViewProject,
@@ -333,7 +351,7 @@ const PdmProjectPage: React.FC = () => {
             size={48}
             style={{ marginBottom: 16, opacity: 0.5 }}
           />
-          <Box>请先选择一个项目查看详情</Box>
+          <Box>{t('pdm.pdm_project_page.k25')}</Box>
         </Box>
       );
     }
@@ -362,11 +380,11 @@ const PdmProjectPage: React.FC = () => {
                 mb: 2,
               }}
             >
-              <Typography variant='h6'>项目成员</Typography>
+              <Typography variant='h6'>{t('pdm.pdm_project_page.k26')}</Typography>
               <IconButton
                 size='small'
                 onClick={() => setMemberDialogOpen(true)}
-                aria-label='添加用户'
+                aria-label={t('pdm.pdm_project_page.k27')}
               >
                 <UserPlus size={16} />
               </IconButton>
@@ -380,7 +398,7 @@ const PdmProjectPage: React.FC = () => {
                       edge='end'
                       size='small'
                       onClick={() => handleRemoveMember(selectedProjectId, member.user_id)}
-                      aria-label='移除用户'
+                      aria-label={t('pdm.pdm_project_page.k28')}
                     >
                       <UserMinus size={14} />
                     </IconButton>
@@ -403,7 +421,9 @@ const PdmProjectPage: React.FC = () => {
                 </ListItem>
               ))}
               {members.length === 0 && (
-                <Box sx={{ textAlign: 'center', py: 2, color: 'text.secondary' }}>暂无成员</Box>
+                <Box sx={{ textAlign: 'center', py: 2, color: 'text.secondary' }}>
+                  {t('pdm.pdm_project_page.k29')}
+                </Box>
               )}
             </List>
           </Box>
@@ -457,10 +477,10 @@ const PdmProjectPage: React.FC = () => {
                   <Chip
                     label={
                       phase.status === 'completed'
-                        ? '已完成'
+                        ? t('pdm.pdm_project_page.k30')
                         : phase.status === 'in_progress'
-                          ? '进行中'
-                          : '待开始'
+                          ? t('pdm.pdm_project_page.k31')
+                          : t('pdm.pdm_project_page.k32')
                     }
                     color={
                       phase.status === 'completed'
@@ -475,7 +495,9 @@ const PdmProjectPage: React.FC = () => {
                 </Box>
               ))}
               {phases.length === 0 && (
-                <Box sx={{ textAlign: 'center', py: 2, color: 'text.secondary' }}>暂无阶段数据</Box>
+                <Box sx={{ textAlign: 'center', py: 2, color: 'text.secondary' }}>
+                  {t('pdm.pdm_project_page.k33')}
+                </Box>
               )}
             </Box>
           </Box>
@@ -491,7 +513,7 @@ const PdmProjectPage: React.FC = () => {
       maxWidth='sm'
       fullWidth
     >
-      <DialogTitle>添加项目成员</DialogTitle>
+      <DialogTitle>{t('pdm.pdm_project_page.k34')}</DialogTitle>
       <DialogContent>
         <AddMemberForm
           onSubmit={handleAddMember}
@@ -504,12 +526,12 @@ const PdmProjectPage: React.FC = () => {
   const tabs = [
     {
       id: 'list',
-      label: '项目列表',
+      label: t('pdm.pdm_project_page.k35'),
       content: null as unknown as React.ReactNode,
     },
     {
       id: 'detail',
-      label: '项目详情',
+      label: t('pdm.pdm_project_page.k36'),
       content: renderProjectDetail(),
     },
   ];
@@ -517,7 +539,7 @@ const PdmProjectPage: React.FC = () => {
   return (
     <PageContainer
       title='PDM项目管理'
-      subtitle='管理产品开发项目，包括成员和阶段'
+      subtitle={t('pdm.pdm_project_page.k37')}
       headerProps={{
         pageIcon: <FolderKanban style={{ width: 20, height: 20 }} />,
         pageGradient: `linear-gradient(135deg, ${ct.secondary.main} 0%, ${ct.secondary.dark} 100%)`,
@@ -562,9 +584,9 @@ const AddMemberForm: React.FC<AddMemberFormProps> = ({ onSubmit, onCancel }) => 
         onChange={(e) => setUserId(e.target.value)}
       />
       <FormControl fullWidth>
-        <InputLabel>角色</InputLabel>
+        <InputLabel>{t('pdm.pdm_project_page.k38')}</InputLabel>
         <Select
-          label='角色'
+          label={t('pdm.pdm_project_page.k39')}
           value={role}
           onChange={(e) => setRole(e.target.value)}
         >

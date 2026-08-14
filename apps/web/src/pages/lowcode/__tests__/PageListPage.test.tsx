@@ -32,8 +32,28 @@ vi.mock('@/components/common', () => ({
 }));
 
 const pages = [
-  { id: 'p1', app_id: 'crm', name: '客户列表', code: 'customer_list', type: 'table', route_path: '/crm/customers', status: 'published', is_home: true, updated_at: '2026-08-10' },
-  { id: 'p2', app_id: 'crm', name: '客户详情', code: 'customer_detail', type: 'form', route_path: '/crm/customers/:id', status: 'draft', is_home: false, updated_at: '2026-08-11' },
+  {
+    id: 'p1',
+    app_id: 'crm',
+    name: '客户列表',
+    code: 'customer_list',
+    type: 'table',
+    route_path: '/crm/customers',
+    status: 'published',
+    is_home: true,
+    updated_at: '2026-08-10',
+  },
+  {
+    id: 'p2',
+    app_id: 'crm',
+    name: '客户详情',
+    code: 'customer_detail',
+    type: 'form',
+    route_path: '/crm/customers/:id',
+    status: 'draft',
+    is_home: false,
+    updated_at: '2026-08-11',
+  },
 ];
 
 describe('PageListPage', () => {
@@ -43,7 +63,11 @@ describe('PageListPage', () => {
 
   it('shows loading', async () => {
     let resolvePromise: ((v: any) => void) | undefined;
-    mockList.mockReturnValue(new Promise((res) => { resolvePromise = res; }));
+    mockList.mockReturnValue(
+      new Promise((res) => {
+        resolvePromise = res;
+      })
+    );
 
     renderWithProviders(<PageListPage />);
 

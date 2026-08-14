@@ -31,8 +31,9 @@ import { SCM_PATHS } from '@/modules/scm/config';
 import { designTokens } from '@/theme/tokens';
 
 import { queryClient, QUERY_KEYS } from '@/lib/reactQuery';
+import { useTranslation } from 'react-i18next';
 
-const ct= designTokens.colors;
+const ct = designTokens.colors;
 
 const apiAdapter = createCrudPageAdapter<MrpPlan, CreateMrpPlanRequest, UpdateMrpPlanRequest>(
   scmApi.mrpPlans
@@ -46,33 +47,35 @@ interface PendingAction {
 }
 
 const MrpPlanPage: React.FC = () => {
+  const { t } = useTranslation('scm');
   const queryClient = useQueryClient();
   const { addNotification } = useNotificationStore();
   const [pendingAction, setPendingAction] = useState<PendingAction | null>(null);
   const [calculationResult, setCalculationResult] = useState<MrpCalculationResult | null>(null);
   const [showResultDialog, setShowResultDialog] = useState(false);
 
-  const invalidatePlans = () => queryClient.invalidateQueries({ queryKey: [mrpPlanSchema.entity] ,
-  exact: false,
-  refetchType: 'active',
-});
+  const invalidatePlans = () =>
+    queryClient.invalidateQueries({
+      queryKey: [mrpPlanSchema.entity],
+      exact: false,
+      refetchType: 'active',
+    });
 
   const calculateMutation = useMutation({
     mutationFn: (id: string) => scmApi.mrpPlans.calculate(id),
     onSuccess: (data) => {
-      
       queryClient.invalidateQueries({
-          queryKey: QUERY_KEYS.SCM.OVERVIEW,
-          exact: false,
-          refetchType: 'active',
-        });
+        queryKey: QUERY_KEYS.SCM.OVERVIEW,
+        exact: false,
+        refetchType: 'active',
+      });
       invalidatePlans();
       if (data.success && data.data) {
         setCalculationResult(data.data);
         setShowResultDialog(true);
         addNotification({
           type: 'success',
-          title: '运算完成',
+          title: t('scm.mrp_plan_page.k0'),
           message: data.data.message || 'MRP运算已完成',
         });
       }
@@ -81,7 +84,7 @@ const MrpPlanPage: React.FC = () => {
       apiLogger.error('MRP运算失败:', err);
       addNotification({
         type: 'error',
-        title: '运算失败',
+        title: t('scm.mrp_plan_page.k1'),
         message: 'MRP运算执行失败',
       });
     },
@@ -89,7 +92,7 @@ const MrpPlanPage: React.FC = () => {
 
   const handleCalculate = (plan: MrpPlan) => {
     setPendingAction({
-      title: '确认运算',
+      title: t('scm.mrp_plan_page.k2'),
       message: `确定要对MRP计划 "${plan.plan_name}" 进行MRP运算吗？`,
       onConfirm: () => calculateMutation.mutate(plan.id),
     });
@@ -102,7 +105,7 @@ const MrpPlanPage: React.FC = () => {
   const customRowActions: RowAction<MrpPlan>[] = [
     {
       key: 'calculate',
-      label: '运算',
+      label: t('scm.mrp_plan_page.k3'),
       icon: <Calculator size={14} />,
       color: 'primary',
       show: (row) => row.status === 'draft',
@@ -110,7 +113,7 @@ const MrpPlanPage: React.FC = () => {
     },
     {
       key: 'viewSuggestions',
-      label: '查看建议',
+      label: t('scm.mrp_plan_page.k4'),
       icon: <Eye size={14} />,
       color: 'info',
       show: (row) => row.status === 'calculated',
@@ -151,25 +154,33 @@ const MrpPlanPage: React.FC = () => {
                 }}
               >
                 <Box sx={{ p: 2, border: `1px solid ${ct.border.default}`, borderRadius: 1 }}>
-                  <Box sx={{ fontSize: '0.875rem', color: 'text.secondary' }}>总物料项</Box>
+                  <Box sx={{ fontSize: '0.875rem', color: 'text.secondary' }}>
+                    {t('scm.mrp_plan_page.k5')}
+                  </Box>
                   <Box sx={{ fontSize: '1.5rem', fontWeight: 500 }}>
                     {calculationResult.totalitems}
                   </Box>
                 </Box>
                 <Box sx={{ p: 2, border: `1px solid ${ct.border.default}`, borderRadius: 1 }}>
-                  <Box sx={{ fontSize: '0.875rem', color: 'text.secondary' }}>总建议数</Box>
+                  <Box sx={{ fontSize: '0.875rem', color: 'text.secondary' }}>
+                    {t('scm.mrp_plan_page.k6')}
+                  </Box>
                   <Box sx={{ fontSize: '1.5rem', fontWeight: 500 }}>
                     {calculationResult.total_suggestions}
                   </Box>
                 </Box>
                 <Box sx={{ p: 2, border: `1px solid ${ct.border.default}`, borderRadius: 1 }}>
-                  <Box sx={{ fontSize: '0.875rem', color: 'text.secondary' }}>采购建议</Box>
+                  <Box sx={{ fontSize: '0.875rem', color: 'text.secondary' }}>
+                    {t('scm.mrp_plan_page.k7')}
+                  </Box>
                   <Box sx={{ fontSize: '1.5rem', fontWeight: 500, color: 'primary.main' }}>
                     {calculationResult.purchase_suggestions}
                   </Box>
                 </Box>
                 <Box sx={{ p: 2, border: `1px solid ${ct.border.default}`, borderRadius: 1 }}>
-                  <Box sx={{ fontSize: '0.875rem', color: 'text.secondary' }}>生产建议</Box>
+                  <Box sx={{ fontSize: '0.875rem', color: 'text.secondary' }}>
+                    {t('scm.mrp_plan_page.k8')}
+                  </Box>
                   <Box sx={{ fontSize: '1.5rem', fontWeight: 500, color: 'success.main' }}>
                     {calculationResult.production_suggestions}
                   </Box>
@@ -179,7 +190,7 @@ const MrpPlanPage: React.FC = () => {
           )}
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setShowResultDialog(false)}>关闭</Button>
+          <Button onClick={() => setShowResultDialog(false)}>{t('scm.mrp_plan_page.k9')}</Button>
           <Button
             variant='contained'
             onClick={() => {

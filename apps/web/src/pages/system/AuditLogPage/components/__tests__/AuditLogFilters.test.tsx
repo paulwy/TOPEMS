@@ -48,16 +48,12 @@ describe('AuditLogFilters', () => {
     const inputs = document.querySelectorAll('input');
     expect(inputs.length).toBe(7);
     expect(inputs[0].getAttribute('type')).toBe('text');
-    expect(inputs[0].getAttribute('placeholder')).toBe(
-      'system.auditPage.search_placeholder'
-    );
+    expect(inputs[0].getAttribute('placeholder')).toBe('system.auditPage.search_placeholder');
 
     const comboboxes = screen.getAllByRole('combobox');
     expect(comboboxes.length).toBe(4);
 
-    const dateInputs = document.querySelectorAll(
-      'input[type="datetime-local"]'
-    );
+    const dateInputs = document.querySelectorAll('input[type="datetime-local"]');
     expect(dateInputs.length).toBe(2);
   });
 
@@ -76,10 +72,7 @@ describe('AuditLogFilters', () => {
       />
     );
 
-    fireEvent.change(
-      document.querySelector('input[type="text"]')!,
-      { target: { value: 'error' } }
-    );
+    fireEvent.change(document.querySelector('input[type="text"]')!, { target: { value: 'error' } });
 
     expect(updateFilter).toHaveBeenCalledWith('searchQuery', 'error');
   });
@@ -99,9 +92,7 @@ describe('AuditLogFilters', () => {
       />
     );
 
-    expect(
-      screen.queryByText('system.action.clear_filter')
-    ).not.toBeInTheDocument();
+    expect(screen.queryByText('system.action.clear_filter')).not.toBeInTheDocument();
 
     rerender(
       <AuditLogFilters
@@ -137,18 +128,10 @@ describe('AuditLogFilters', () => {
 
     fireEvent.mouseDown(statusComboBox);
 
-    expect(
-      screen.getByRole('option', { name: 'system.status.success' })
-    ).toBeInTheDocument();
-    expect(
-      screen.getByRole('option', { name: 'system.status.failed' })
-    ).toBeInTheDocument();
-    expect(
-      screen.getByRole('option', { name: 'system.status.error' })
-    ).toBeInTheDocument();
-    expect(
-      screen.getByRole('option', { name: 'system.status.warning' })
-    ).toBeInTheDocument();
+    expect(screen.getByRole('option', { name: 'system.status.success' })).toBeInTheDocument();
+    expect(screen.getByRole('option', { name: 'system.status.failed' })).toBeInTheDocument();
+    expect(screen.getByRole('option', { name: 'system.status.error' })).toBeInTheDocument();
+    expect(screen.getByRole('option', { name: 'system.status.warning' })).toBeInTheDocument();
     expect(
       screen.getByRole('option', { name: 'system.status.partial_success' })
     ).toBeInTheDocument();
@@ -169,9 +152,7 @@ describe('AuditLogFilters', () => {
       />
     );
 
-    const dateInputs = document.querySelectorAll(
-      'input[type="datetime-local"]'
-    );
+    const dateInputs = document.querySelectorAll('input[type="datetime-local"]');
     fireEvent.change(dateInputs[0], {
       target: { value: '2024-01-01T00:00' },
     });
@@ -202,11 +183,7 @@ describe('AuditLogFilters', () => {
     expect(screen.getByRole('option', { name: 'bob' })).toBeInTheDocument();
 
     fireEvent.mouseDown(comboboxes[1]);
-    expect(
-      screen.getByRole('option', { name: 'FORMATTED:login' })
-    ).toBeInTheDocument();
-    expect(
-      screen.getByRole('option', { name: 'FORMATTED:logout' })
-    ).toBeInTheDocument();
+    expect(screen.getByRole('option', { name: 'FORMATTED:login' })).toBeInTheDocument();
+    expect(screen.getByRole('option', { name: 'FORMATTED:logout' })).toBeInTheDocument();
   });
 });

@@ -10,11 +10,13 @@ import {
   TEMPLATE_CATEGORIES,
 } from '@/api/mail';
 import { useNotificationStore } from '@/store';
-import {QUERY_KEYS, queryClient, CACHE_DURATIONS} from '@/lib/reactQuery';
+import { QUERY_KEYS, queryClient, CACHE_DURATIONS } from '@/lib/reactQuery';
 import { useCrudMutations } from '@/hooks';
 import { validateEmailList, validateJson } from './utils';
 import { STATUS_MAP, PRIORITY_MAP, PREVIEW_SAMPLE_DATA } from './constants';
 import type { SendForm, TemplateForm, PreviewContent } from './types';
+import { useTranslation } from 'react-i18next';
+import i18n from '@/i18n';
 
 const INITIAL_SEND_FORM: SendForm = {
   subject: '',
@@ -89,16 +91,17 @@ export function useMailPage() {
         }
       } catch (err: unknown) {
         addNotification({
-          title: '加载失败',
-          message: (err as { message?: string }).message || '加载统计数据失败',
+          title: i18n.t('im.hooks.k0'),
+          message: (err as { message?: string }).message || i18n.t('im.hooks.k1'),
           type: 'error',
         });
       }
       return null;
     },
     enabled: activeTab === 'emails',
-  
-      staleTime: CACHE_DURATIONS.MEDIUM,});
+
+    staleTime: CACHE_DURATIONS.MEDIUM,
+  });
 
   const emailsQuery = useQuery<{ items: Email[]; total: number }>({
     queryKey: [
@@ -124,16 +127,17 @@ export function useMailPage() {
         }
       } catch (err: unknown) {
         addNotification({
-          title: '加载失败',
-          message: (err as { message?: string }).message || '加载邮件列表失败',
+          title: i18n.t('im.hooks.k2'),
+          message: (err as { message?: string }).message || i18n.t('im.hooks.k3'),
           type: 'error',
         });
       }
       return { items: [], total: 0 };
     },
     enabled: activeTab === 'emails',
-  
-      staleTime: CACHE_DURATIONS.MEDIUM,});
+
+    staleTime: CACHE_DURATIONS.MEDIUM,
+  });
 
   const templatesQuery = useQuery<{ items: EmailTemplate[]; total: number }>({
     queryKey: [
@@ -157,16 +161,17 @@ export function useMailPage() {
         }
       } catch (err: unknown) {
         addNotification({
-          title: '加载失败',
-          message: (err as { message?: string }).message || '加载模板列表失败',
+          title: i18n.t('im.hooks.k4'),
+          message: (err as { message?: string }).message || i18n.t('im.hooks.k5'),
           type: 'error',
         });
       }
       return { items: [], total: 0 };
     },
     enabled: activeTab === 'templates',
-  
-      staleTime: CACHE_DURATIONS.MEDIUM,});
+
+    staleTime: CACHE_DURATIONS.MEDIUM,
+  });
 
   const emails = emailsQuery.data?.items ?? [];
   const templates = templatesQuery.data?.items ?? [];
@@ -224,21 +229,30 @@ export function useMailPage() {
     },
     onSuccess: (res) => {
       if (res.success) {
-        addNotification({ title: '成功', message: '邮件发送成功', type: 'success' });
+        addNotification({
+          title: i18n.t('im.hooks.k7'),
+          message: i18n.t('im.hooks.k6'),
+          type: 'success',
+        });
         setShowSendModal(false);
         resetSendForm();
-        queryClient.invalidateQueries({ queryKey: QUERY_KEYS.MAIL.EMAILS ,
-  exact: false,
-  refetchType: 'active',
-});
+        queryClient.invalidateQueries({
+          queryKey: QUERY_KEYS.MAIL.EMAILS,
+          exact: false,
+          refetchType: 'active',
+        });
       } else {
-        addNotification({ title: '失败', message: res.message || '发送邮件失败', type: 'error' });
+        addNotification({
+          title: i18n.t('im.hooks.k9'),
+          message: res.message || i18n.t('im.hooks.k8'),
+          type: 'error',
+        });
       }
     },
     onError: (err: unknown) => {
       addNotification({
-        title: '失败',
-        message: (err as { message?: string }).message || '发送邮件失败',
+        title: i18n.t('im.hooks.k10'),
+        message: (err as { message?: string }).message || i18n.t('im.hooks.k11'),
         type: 'error',
       });
     },
@@ -249,11 +263,11 @@ export function useMailPage() {
     const errors: Record<string, string> = {};
 
     if (!sendForm.subject.trim()) {
-      errors.subject = '请输入邮件主题';
+      errors.subject = i18n.t('im.hooks.k12');
     }
 
     if (!sendForm.to_addresses.trim()) {
-      errors.to_addresses = '请输入收件人邮箱';
+      errors.to_addresses = i18n.t('im.hooks.k13');
     } else {
       const { valid, invalidEmails } = validateEmailList(sendForm.to_addresses);
       if (!valid) {
@@ -272,7 +286,7 @@ export function useMailPage() {
     }
 
     if (!sendForm.body.trim()) {
-      errors.body = '请输入邮件内容';
+      errors.body = i18n.t('im.hooks.k14');
     }
 
     if (
@@ -281,7 +295,7 @@ export function useMailPage() {
       sendForm.templateData &&
       !validateJson(sendForm.templateData)
     ) {
-      errors.templateData = '无效的JSON格式';
+      errors.templateData = i18n.t('im.hooks.json_15');
     }
 
     if (Object.keys(errors).length > 0) {
@@ -325,20 +339,29 @@ export function useMailPage() {
     mutationFn: (id: string) => emailApi.delete(id),
     onSuccess: (res, id) => {
       if (res.success) {
-        addNotification({ title: '成功', message: '邮件记录删除成功', type: 'success' });
+        addNotification({
+          title: i18n.t('im.hooks.k17'),
+          message: i18n.t('im.hooks.k16'),
+          type: 'success',
+        });
         setSelectedEmails((prev) => prev.filter((emailId) => emailId !== id));
-        queryClient.invalidateQueries({ queryKey: QUERY_KEYS.MAIL.EMAILS ,
-  exact: false,
-  refetchType: 'active',
-});
+        queryClient.invalidateQueries({
+          queryKey: QUERY_KEYS.MAIL.EMAILS,
+          exact: false,
+          refetchType: 'active',
+        });
       } else {
-        addNotification({ title: '失败', message: res.message || '删除失败', type: 'error' });
+        addNotification({
+          title: i18n.t('im.hooks.k19'),
+          message: res.message || i18n.t('im.hooks.k18'),
+          type: 'error',
+        });
       }
     },
     onError: (err: unknown) => {
       addNotification({
-        title: '失败',
-        message: (err as { message?: string }).message || '删除失败',
+        title: i18n.t('im.hooks.k20'),
+        message: (err as { message?: string }).message || i18n.t('im.hooks.k21'),
         type: 'error',
       });
     },
@@ -382,27 +405,32 @@ export function useMailPage() {
           priority: email.priority,
         });
       }
-      throw new Error('无法获取邮件详情');
+      throw new Error(i18n.t('im.hooks.k22'));
     },
     onSuccess: (sendRes) => {
       if (sendRes.success) {
-        addNotification({ title: '成功', message: '邮件重新发送成功', type: 'success' });
-        queryClient.invalidateQueries({ queryKey: QUERY_KEYS.MAIL.EMAILS ,
-  exact: false,
-  refetchType: 'active',
-});
+        addNotification({
+          title: i18n.t('im.hooks.k24'),
+          message: i18n.t('im.hooks.k23'),
+          type: 'success',
+        });
+        queryClient.invalidateQueries({
+          queryKey: QUERY_KEYS.MAIL.EMAILS,
+          exact: false,
+          refetchType: 'active',
+        });
       } else {
         addNotification({
-          title: '失败',
-          message: sendRes.message || '重发邮件失败',
+          title: i18n.t('im.hooks.k25'),
+          message: sendRes.message || i18n.t('im.hooks.k26'),
           type: 'error',
         });
       }
     },
     onError: (err: unknown) => {
       addNotification({
-        title: '失败',
-        message: (err as { message?: string }).message || '重发邮件失败',
+        title: i18n.t('im.hooks.k27'),
+        message: (err as { message?: string }).message || i18n.t('im.hooks.k28'),
         type: 'error',
       });
     },
@@ -433,15 +461,16 @@ export function useMailPage() {
     },
     onSuccess: (result) => {
       addNotification({
-        title: '完成',
+        title: i18n.t('im.hooks.k29'),
         message: `成功删除 ${result.successCount}/${result.total} 条记录`,
         type: result.successCount === result.total ? 'success' : 'warning',
       });
       setSelectedEmails([]);
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.MAIL.EMAILS ,
-  exact: false,
-  refetchType: 'active',
-});
+      queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.MAIL.EMAILS,
+        exact: false,
+        refetchType: 'active',
+      });
     },
   });
 
@@ -456,27 +485,33 @@ export function useMailPage() {
       if (res.success && res.data) {
         const result = res.data;
         addNotification({
-          title: '完成',
+          title: i18n.t('im.hooks.k30'),
           message: `成功重发 ${result.success}/${result.total} 条邮件`,
           type: result.success === result.total ? 'success' : 'warning',
         });
       } else {
-        addNotification({ title: '失败', message: res.message || '批量重发失败', type: 'error' });
+        addNotification({
+          title: i18n.t('im.hooks.k32'),
+          message: res.message || i18n.t('im.hooks.k31'),
+          type: 'error',
+        });
       }
       setSelectedEmails([]);
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.MAIL.EMAILS ,
-  exact: false,
-  refetchType: 'active',
-});
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.MAIL.STATS ,
-  exact: false,
-  refetchType: 'active',
-});
+      queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.MAIL.EMAILS,
+        exact: false,
+        refetchType: 'active',
+      });
+      queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.MAIL.STATS,
+        exact: false,
+        refetchType: 'active',
+      });
     },
     onError: (err: unknown) => {
       addNotification({
-        title: '失败',
-        message: (err as { message?: string }).message || '批量重发失败',
+        title: i18n.t('im.hooks.k33'),
+        message: (err as { message?: string }).message || i18n.t('im.hooks.k34'),
         type: 'error',
       });
       setSelectedEmails([]);
@@ -494,22 +529,27 @@ export function useMailPage() {
     onSuccess: (res, variables) => {
       if (res.success) {
         addNotification({
-          title: '成功',
-          message: `模板已${variables.newStatus === 'active' ? '启用' : '禁用'}`,
+          title: i18n.t('im.hooks.k35'),
+          message: `模板已${variables.newStatus === 'active' ? i18n.t('im.hooks.k37') : i18n.t('im.hooks.k36')}`,
           type: 'success',
         });
-        queryClient.invalidateQueries({ queryKey: QUERY_KEYS.MAIL.TEMPLATES_LIST ,
-  exact: false,
-  refetchType: 'active',
-});
+        queryClient.invalidateQueries({
+          queryKey: QUERY_KEYS.MAIL.TEMPLATES_LIST,
+          exact: false,
+          refetchType: 'active',
+        });
       } else {
-        addNotification({ title: '失败', message: res.message || '更新状态失败', type: 'error' });
+        addNotification({
+          title: i18n.t('im.hooks.k39'),
+          message: res.message || i18n.t('im.hooks.k38'),
+          type: 'error',
+        });
       }
     },
     onError: (err: unknown) => {
       addNotification({
-        title: '失败',
-        message: (err as { message?: string }).message || '更新状态失败',
+        title: i18n.t('im.hooks.k40'),
+        message: (err as { message?: string }).message || i18n.t('im.hooks.k41'),
         type: 'error',
       });
     },
@@ -524,12 +564,11 @@ export function useMailPage() {
     mutationFn: ({ code, sampleData }: { code: string; sampleData: Record<string, string> }) =>
       templateApi.render(code, sampleData),
     onSuccess: (res) => {
-      
       queryClient.invalidateQueries({
-          queryKey: QUERY_KEYS.REPORT.TEMPLATES,
-          exact: false,
-          refetchType: 'active',
-        });
+        queryKey: QUERY_KEYS.REPORT.TEMPLATES,
+        exact: false,
+        refetchType: 'active',
+      });
       if (res.success && res.data) {
         setPreviewContent({
           subject: res.data.subject,
@@ -540,8 +579,8 @@ export function useMailPage() {
     },
     onError: (err: unknown) => {
       addNotification({
-        title: '失败',
-        message: (err as { message?: string }).message || '预览模板失败',
+        title: i18n.t('im.hooks.k42'),
+        message: (err as { message?: string }).message || i18n.t('im.hooks.k43'),
         type: 'error',
       });
     },
@@ -570,25 +609,25 @@ export function useMailPage() {
     createFn: async (data) => {
       const res = await templateApi.create(data);
       if (!res.success) {
-        throw new Error(res.message || '创建模板失败');
+        throw new Error(res.message || i18n.t('im.hooks.k44'));
       }
       return res;
     },
     updateFn: async ({ id, data }) => {
       const res = await templateApi.update(String(id), data);
       if (!res.success) {
-        throw new Error(res.message || '更新模板失败');
+        throw new Error(res.message || i18n.t('im.hooks.k45'));
       }
       return res;
     },
     deleteFn: async (id) => {
       const res = await templateApi.delete(String(id));
       if (!res.success) {
-        throw new Error(res.message || '删除模板失败');
+        throw new Error(res.message || i18n.t('im.hooks.k46'));
       }
       return res;
     },
-    entityName: '模板',
+    entityName: i18n.t('im.hooks.k47'),
     onCreateSuccess: () => {
       setShowTemplateModal(false);
       resetTemplateForm();

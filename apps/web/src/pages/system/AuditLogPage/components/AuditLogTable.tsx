@@ -97,7 +97,7 @@ const AuditLogTable: React.FC<AuditLogTableProps> = ({
                       <IconButton
                         size='small'
                         onClick={() => onViewDetail(log)}
-                        aria-label='查看'
+                        aria-label={t('system.audit_log_table.k0')}
                       >
                         <Eye size={16} />
                       </IconButton>

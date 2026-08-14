@@ -1,7 +1,7 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import {QUERY_KEYS, CACHE_DURATIONS} from '@/lib/reactQuery';
+import { QUERY_KEYS, CACHE_DURATIONS } from '@/lib/reactQuery';
 import { z } from 'zod';
 import { User, Mail, MapPin, Briefcase } from 'lucide-react';
 import FormPageTemplate from '@/components/templates/FormPageTemplate';
@@ -13,11 +13,12 @@ import { HRM_PATHS } from '@/modules/hrm/config';
 import { logger } from '@/utils/logger';
 
 import { useTranslation } from 'react-i18next';
+import i18n from '@/i18n';
 
 const employeeSchema = z.object({
-  name: z.string().min(1, '姓名不能为空'),
-  employee_no: z.string().min(1, '工号不能为空'),
-  email: z.string().email('请输入有效的邮箱地址').optional(),
+  name: z.string().min(1, i18n.t('hrm.hrm_employee_create_page.k0')),
+  employee_no: z.string().min(1, i18n.t('hrm.hrm_employee_create_page.k1')),
+  email: z.string().email(i18n.t('hrm.hrm_employee_create_page.k2')).optional(),
   phone: z.string().optional(),
   gender: z.enum(['male', 'female']).default('male'),
   birth_date: z.string().optional(),
@@ -47,8 +48,9 @@ const HrmEmployeeCreatePage: React.FC = () => {
       }
       return [];
     },
-  
-      staleTime: CACHE_DURATIONS.MEDIUM,});
+
+    staleTime: CACHE_DURATIONS.MEDIUM,
+  });
 
   const positionsQuery = useQuery<Position[]>({
     queryKey: QUERY_KEYS.HRM.POSITION,
@@ -59,8 +61,9 @@ const HrmEmployeeCreatePage: React.FC = () => {
       }
       return [];
     },
-  
-      staleTime: CACHE_DURATIONS.MEDIUM,});
+
+    staleTime: CACHE_DURATIONS.MEDIUM,
+  });
 
   const departments = departmentsQuery.data || [];
   const positions = positionsQuery.data || [];
@@ -79,10 +82,11 @@ const HrmEmployeeCreatePage: React.FC = () => {
     },
     onSuccess: () => {
       success(t('hrm.hrm_employee_create_page.create_1'));
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.HRM.EMPLOYEES ,
-  exact: false,
-  refetchType: 'active',
-});
+      queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.HRM.EMPLOYEES,
+        exact: false,
+        refetchType: 'active',
+      });
       navigate(HRM_PATHS.employees);
     },
     onError: (err: Error) => {

@@ -4,6 +4,7 @@ import { organizationSchema } from '@/schemas/hrm';
 import type { EntitySchema } from '@/schema';
 import type { SchemaExtensions } from '@/schema/schemaExtensions';
 import { hrmApi, type Department } from '@/api/hrm';
+import { useTranslation } from 'react-i18next';
 
 const apiAdapter = createCrudPageAdapter(hrmApi.departments);
 
@@ -25,12 +26,13 @@ const treeDataAdapter = {
 };
 
 export default function HrmOrganizationPage() {
+  const { t } = useTranslation('hrm');
   return (
     <CrudPage
       schema={organizationSchema as EntitySchema & SchemaExtensions}
       apiAdapter={apiAdapter}
       treeDataAdapter={treeDataAdapter}
-      breadcrumbs={[{ label: 'HRM' }, { label: '组织架构' }]}
+      breadcrumbs={[{ label: 'HRM' }, { label: t('hrm.hrm_organization_page.k0') }]}
     />
   );
 }

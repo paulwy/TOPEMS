@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import {QUERY_KEYS, CACHE_DURATIONS} from '@/lib/reactQuery';
+import { QUERY_KEYS, CACHE_DURATIONS } from '@/lib/reactQuery';
 import { PageContainer, StatCardGroup } from '@/components/common';
 import { Tabs, Tab, Box, Typography, Chip } from '@mui/material';
 import { ArrowUpRight, ArrowDownRight, CreditCard } from 'lucide-react';
@@ -11,6 +11,7 @@ import { financeApi } from '@/api/finance';
 import { useTranslation } from 'react-i18next';
 import type { EntitySchema } from '@/schema';
 import type { SchemaExtensions } from '@/schema/schemaExtensions';
+import i18n from '@/i18n';
 
 const receivableAdapter = createCrudPageAdapter({
   list: (params?: Record<string, unknown>) =>
@@ -55,8 +56,9 @@ export default function FinanceReceivablePayablePage() {
       }
       return [];
     },
-  
-      staleTime: CACHE_DURATIONS.MEDIUM,});
+
+    staleTime: CACHE_DURATIONS.MEDIUM,
+  });
 
   const payablesQuery = useQuery({
     queryKey: QUERY_KEYS.FINANCE.PAYABLES,
@@ -67,8 +69,9 @@ export default function FinanceReceivablePayablePage() {
       }
       return [];
     },
-  
-      staleTime: CACHE_DURATIONS.MEDIUM,});
+
+    staleTime: CACHE_DURATIONS.MEDIUM,
+  });
 
   const receivables = receivablesQuery.data || [];
   const payables = payablesQuery.data || [];
@@ -83,10 +86,7 @@ export default function FinanceReceivablePayablePage() {
 
   const isPaid = (status: string) => status === 'posted';
 
-  const totalReceivable = receivables.reduce(
-    (sum: number, r) => sum + (r.total_amount || 0),
-    0
-  );
+  const totalReceivable = receivables.reduce((sum: number, r) => sum + (r.total_amount || 0), 0);
   const pendingReceivable = receivables
     .filter((r) => !isPaid(r.status))
     .reduce((sum: number, r) => sum + ((r.total_amount || 0) - (r.received_amount || 0)), 0);
@@ -105,25 +105,25 @@ export default function FinanceReceivablePayablePage() {
   const statCards = useMemo(
     () => [
       {
-        title: t('finance.finance_receivable_payable_page.text_9ef10c'),
+        title: i18n.t('finance.finance_receivable_payable_page.text_9ef10c'),
         value: formatCurrency(totalReceivable),
         icon: <ArrowUpRight size={24} />,
         color: 'primary' as const,
       },
       {
-        title: t('finance.finance_receivable_payable_page.text_1a8469'),
+        title: i18n.t('finance.finance_receivable_payable_page.text_1a8469'),
         value: formatCurrency(totalPayable),
         icon: <ArrowDownRight size={24} />,
         color: 'success' as const,
       },
       {
-        title: t('finance.finance_receivable_payable_page.amount'),
+        title: i18n.t('finance.finance_receivable_payable_page.amount'),
         value: formatCurrency(pendingReceivable),
         icon: <CreditCard size={24} />,
         color: 'warning' as const,
       },
       {
-        title: t('finance.finance_receivable_payable_page.amount_1'),
+        title: i18n.t('finance.finance_receivable_payable_page.amount_1'),
         value: formatCurrency(pendingPayable),
         icon: <CreditCard size={24} />,
         color: 'secondary' as const,
@@ -180,7 +180,7 @@ export default function FinanceReceivablePayablePage() {
             label={
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                 <ArrowUpRight sx={{ width: 16, height: 16 }} />
-                <span>应收账款</span>
+                <span>{t('finance.finance_receivable_payable_page.k0')}</span>
                 {overdueReceivable > 0 && (
                   <Chip
                     size='small'
@@ -196,7 +196,7 @@ export default function FinanceReceivablePayablePage() {
             label={
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                 <ArrowDownRight sx={{ width: 16, height: 16 }} />
-                <span>应付账款</span>
+                <span>{t('finance.finance_receivable_payable_page.k1')}</span>
                 {overduePayable > 0 && (
                   <Chip
                     size='small'
@@ -214,7 +214,11 @@ export default function FinanceReceivablePayablePage() {
         <CrudPage
           schema={receivableSchema as EntitySchema & SchemaExtensions}
           apiAdapter={receivableAdapter}
-          breadcrumbs={[{ label: '财务' }, { label: '应收应付' }, { label: '应收单' }]}
+          breadcrumbs={[
+            { label: t('finance.finance_receivable_payable_page.k4') },
+            { label: t('finance.finance_receivable_payable_page.k3') },
+            { label: t('finance.finance_receivable_payable_page.k2') },
+          ]}
         />
       )}
 
@@ -222,7 +226,11 @@ export default function FinanceReceivablePayablePage() {
         <CrudPage
           schema={payableSchema as EntitySchema & SchemaExtensions}
           apiAdapter={payableAdapter}
-          breadcrumbs={[{ label: '财务' }, { label: '应收应付' }, { label: '应付单' }]}
+          breadcrumbs={[
+            { label: t('finance.finance_receivable_payable_page.k7') },
+            { label: t('finance.finance_receivable_payable_page.k6') },
+            { label: t('finance.finance_receivable_payable_page.k5') },
+          ]}
         />
       )}
     </PageContainer>

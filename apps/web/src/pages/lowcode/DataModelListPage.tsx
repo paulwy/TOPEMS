@@ -24,8 +24,10 @@ import { Plus as AddIcon, Trash2 as DeleteOutlineIcon } from 'lucide-react';
 import { lowcodeDataModelsApi } from '@/api/lowcode';
 import type { LowcodeDataModel } from '@/api/lowcode';
 import { PageContainer } from '@/components/common';
+import { useTranslation } from 'react-i18next';
 
 export const DataModelListPage: React.FC = () => {
+  const { t } = useTranslation('lowcode');
   const [models, setModels] = useState<LowcodeDataModel[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -45,7 +47,7 @@ export const DataModelListPage: React.FC = () => {
       const res = await lowcodeDataModelsApi.list({ page: 1, pageSize: 100 });
       setModels(res.data?.items ?? []);
     } catch (err) {
-      setError(err instanceof Error ? err.message : '加载数据模型失败');
+      setError(err instanceof Error ? err.message : t('lowcode.data_model_list_page.k0'));
     } finally {
       setLoading(false);
     }
@@ -69,7 +71,7 @@ export const DataModelListPage: React.FC = () => {
       setCreateForm({ app_id: '', model_name: '', label: '', description: '' });
       await load();
     } catch (err) {
-      setError(err instanceof Error ? err.message : '创建数据模型失败');
+      setError(err instanceof Error ? err.message : t('lowcode.data_model_list_page.k1'));
     } finally {
       setCreating(false);
     }
@@ -80,19 +82,19 @@ export const DataModelListPage: React.FC = () => {
       await lowcodeDataModelsApi.remove(id);
       await load();
     } catch (err) {
-      setError(err instanceof Error ? err.message : '删除数据模型失败');
+      setError(err instanceof Error ? err.message : t('lowcode.data_model_list_page.k2'));
     }
   };
 
   return (
-    <PageContainer title='数据模型'>
+    <PageContainer title={t('lowcode.data_model_list_page.k3')}>
       <Box sx={{ p: 3 }}>
         <Stack
           direction='row'
           spacing={2}
           sx={{ mb: 2, justifyContent: 'space-between', alignItems: 'center' }}
         >
-          <Typography variant='h5'>数据模型</Typography>
+          <Typography variant='h5'>{t('lowcode.data_model_list_page.k4')}</Typography>
           <Button
             variant='contained'
             startIcon={<AddIcon />}
@@ -124,12 +126,12 @@ export const DataModelListPage: React.FC = () => {
             <Table size='small'>
               <TableHead>
                 <TableRow>
-                  <TableCell>模型名称</TableCell>
-                  <TableCell>显示名</TableCell>
-                  <TableCell>字段数</TableCell>
-                  <TableCell>已物化</TableCell>
-                  <TableCell>更新时间</TableCell>
-                  <TableCell align='right'>操作</TableCell>
+                  <TableCell>{t('lowcode.data_model_list_page.k5')}</TableCell>
+                  <TableCell>{t('lowcode.data_model_list_page.k6')}</TableCell>
+                  <TableCell>{t('lowcode.data_model_list_page.k7')}</TableCell>
+                  <TableCell>{t('lowcode.data_model_list_page.k8')}</TableCell>
+                  <TableCell>{t('lowcode.data_model_list_page.k9')}</TableCell>
+                  <TableCell align='right'>{t('lowcode.data_model_list_page.k10')}</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
@@ -148,14 +150,18 @@ export const DataModelListPage: React.FC = () => {
                       <TableCell>{m.model_name}</TableCell>
                       <TableCell>{m.label}</TableCell>
                       <TableCell>{m.fields?.length ?? 0}</TableCell>
-                      <TableCell>{m.materialized ? '是' : '否'}</TableCell>
+                      <TableCell>
+                        {m.materialized
+                          ? t('lowcode.data_model_list_page.k12')
+                          : t('lowcode.data_model_list_page.k11')}
+                      </TableCell>
                       <TableCell>{m.updated_at}</TableCell>
                       <TableCell align='right'>
                         <IconButton
                           size='small'
                           color='error'
                           onClick={() => handleDelete(m.id)}
-                          aria-label='删除'
+                          aria-label={t('lowcode.data_model_list_page.k13')}
                         >
                           <DeleteOutlineIcon size={18} />
                         </IconButton>
@@ -174,14 +180,14 @@ export const DataModelListPage: React.FC = () => {
           maxWidth='sm'
           fullWidth
         >
-          <DialogTitle>新建数据模型</DialogTitle>
+          <DialogTitle>{t('lowcode.data_model_list_page.k14')}</DialogTitle>
           <DialogContent>
             <Stack
               spacing={2}
               sx={{ mt: 1 }}
             >
               <TextField
-                label='所属应用 ID'
+                label={t('lowcode.data_model_list_page.id_15')}
                 value={createForm.app_id}
                 onChange={(e) => setCreateForm({ ...createForm, app_id: e.target.value })}
                 fullWidth
@@ -189,11 +195,11 @@ export const DataModelListPage: React.FC = () => {
                 select
               >
                 <MenuItem value=''>
-                  <em>请输入应用 ID</em>
+                  <em>{t('lowcode.data_model_list_page.id_16')}</em>
                 </MenuItem>
               </TextField>
               <TextField
-                label='模型物理名'
+                label={t('lowcode.data_model_list_page.k17')}
                 value={createForm.model_name}
                 onChange={(e) => setCreateForm({ ...createForm, model_name: e.target.value })}
                 fullWidth
@@ -201,14 +207,14 @@ export const DataModelListPage: React.FC = () => {
                 helperText='snake_case，如 leave_request'
               />
               <TextField
-                label='显示名'
+                label={t('lowcode.data_model_list_page.k18')}
                 value={createForm.label}
                 onChange={(e) => setCreateForm({ ...createForm, label: e.target.value })}
                 fullWidth
                 required
               />
               <TextField
-                label='描述'
+                label={t('lowcode.data_model_list_page.k19')}
                 value={createForm.description}
                 onChange={(e) => setCreateForm({ ...createForm, description: e.target.value })}
                 fullWidth
@@ -218,7 +224,9 @@ export const DataModelListPage: React.FC = () => {
             </Stack>
           </DialogContent>
           <DialogActions>
-            <Button onClick={() => setCreateOpen(false)}>取消</Button>
+            <Button onClick={() => setCreateOpen(false)}>
+              {t('lowcode.data_model_list_page.k20')}
+            </Button>
             <Button
               onClick={handleCreate}
               variant='contained'
@@ -226,7 +234,7 @@ export const DataModelListPage: React.FC = () => {
                 creating || !createForm.app_id || !createForm.model_name || !createForm.label
               }
             >
-              {creating ? '创建中…' : '创建'}
+              {creating ? '创建中…' : t('lowcode.data_model_list_page.k21')}
             </Button>
           </DialogActions>
         </Dialog>

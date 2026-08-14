@@ -91,12 +91,8 @@ describe('AuditLogTable', () => {
       />
     );
 
-    expect(
-      screen.getByText('system.message.no_audit_logs')
-    ).toBeInTheDocument();
-    expect(
-      document.querySelector('table')
-    ).toBeInTheDocument();
+    expect(screen.getByText('system.message.no_audit_logs')).toBeInTheDocument();
+    expect(document.querySelector('table')).toBeInTheDocument();
   });
 
   it('renders table rows for each log with formatted action and user', () => {

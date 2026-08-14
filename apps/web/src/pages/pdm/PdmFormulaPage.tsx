@@ -6,10 +6,12 @@ import { formulaSchema } from '@/schemas/pdm';
 import { pdmApi, type ProductionFormula } from '@/api/pdm';
 import { QUERY_KEYS } from '@/lib/reactQuery';
 import { designTokens } from '@/theme/tokens';
+import { useTranslation } from 'react-i18next';
 
-const ct= designTokens.colors;
+const ct = designTokens.colors;
 
 export default function PdmFormulaPage() {
+  const { t } = useTranslation('pdm');
   const queryClient = useQueryClient();
 
   const apiAdapter = useMemo<CrudApiAdapter<ProductionFormula>>(
@@ -39,11 +41,12 @@ export default function PdmFormulaPage() {
         const response = await pdmApi.createFormula(
           data as Parameters<typeof pdmApi.createFormula>[0]
         );
-        if (!response.success) throw new Error(response.message || '创建失败');
-        queryClient.invalidateQueries({ queryKey: QUERY_KEYS.PDM.FORMULAS ,
-  exact: false,
-  refetchType: 'active',
-});
+        if (!response.success) throw new Error(response.message || t('pdm.pdm_formula_page.k0'));
+        queryClient.invalidateQueries({
+          queryKey: QUERY_KEYS.PDM.FORMULAS,
+          exact: false,
+          refetchType: 'active',
+        });
         return (response.data ?? {}) as ProductionFormula;
       },
       update: async (id, data) => {
@@ -51,20 +54,22 @@ export default function PdmFormulaPage() {
           id,
           data as Parameters<typeof pdmApi.updateFormula>[1]
         );
-        if (!response.success) throw new Error(response.message || '更新失败');
-        queryClient.invalidateQueries({ queryKey: QUERY_KEYS.PDM.FORMULAS ,
-  exact: false,
-  refetchType: 'active',
-});
+        if (!response.success) throw new Error(response.message || t('pdm.pdm_formula_page.k1'));
+        queryClient.invalidateQueries({
+          queryKey: QUERY_KEYS.PDM.FORMULAS,
+          exact: false,
+          refetchType: 'active',
+        });
         return (response.data ?? {}) as ProductionFormula;
       },
       delete: async (id) => {
         const response = await pdmApi.deleteFormula(id);
-        if (!response.success) throw new Error(response.message || '删除失败');
-        queryClient.invalidateQueries({ queryKey: QUERY_KEYS.PDM.FORMULAS ,
-  exact: false,
-  refetchType: 'active',
-});
+        if (!response.success) throw new Error(response.message || t('pdm.pdm_formula_page.k2'));
+        queryClient.invalidateQueries({
+          queryKey: QUERY_KEYS.PDM.FORMULAS,
+          exact: false,
+          refetchType: 'active',
+        });
       },
     }),
     [queryClient]
@@ -150,7 +155,7 @@ export default function PdmFormulaPage() {
     <CrudPage
       schema={formulaSchema}
       apiAdapter={apiAdapter}
-      breadcrumbs={[{ label: 'PDM' }, { label: '生产配方' }]}
+      breadcrumbs={[{ label: 'PDM' }, { label: t('pdm.pdm_formula_page.k3') }]}
       headerContent={headerContent}
     />
   );

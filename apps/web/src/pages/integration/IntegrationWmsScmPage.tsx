@@ -10,31 +10,38 @@ import { useNotificationStore } from '@/store';
 import { apiLogger } from '@/utils/logger';
 import { extractErrorMessage } from '@/utils/errors';
 
-
 import { QUERY_KEYS } from '@/lib/reactQuery';
+import { useTranslation } from 'react-i18next';
 
 const IntegrationWmsScmPage: React.FC = () => {
+  const { t } = useTranslation('integration');
   const addNotification = useNotificationStore((state) => state.addNotification);
   const queryClient = useQueryClient();
 
   const syncMutation = useMutation({
     mutationFn: async (id: string) => {
       const res = await integrationApi.syncWmsScm(id);
-      if (!res.success) throw new Error(res.message || '同步失败');
+      if (!res.success)
+        throw new Error(res.message || t('integration.integration_wms_scm_page.k0'));
       return res.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.INTEGRATION_WMS_SCM_SYNC_BASE ,
-  exact: false,
-  refetchType: 'active',
-});
-      addNotification({ title: '成功', message: '同步成功', type: 'success' });
+      queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.AD_HOC.INTEGRATION_WMS_SCM_SYNC_BASE,
+        exact: false,
+        refetchType: 'active',
+      });
+      addNotification({
+        title: t('integration.integration_wms_scm_page.k2'),
+        message: t('integration.integration_wms_scm_page.k1'),
+        type: 'success',
+      });
     },
     onError: (err: unknown) => {
       apiLogger.error('WMS-SCM 同步失败:', err);
       addNotification({
-        title: '失败',
-        message: extractErrorMessage(err, '同步失败'),
+        title: t('integration.integration_wms_scm_page.k3'),
+        message: extractErrorMessage(err, t('integration.integration_wms_scm_page.k4')),
         type: 'error',
       });
     },
@@ -46,20 +53,21 @@ const IntegrationWmsScmPage: React.FC = () => {
       if (res.success && res.data !== undefined) {
         return { data: res.data, total: res.data.length };
       }
-      throw new Error(res.message || '加载 WMS-SCM 同步数据失败');
+      throw new Error(res.message || t('integration.integration_wms_scm_page.wmsscm_5'));
     },
     create: async (data: Partial<WmsScmSync>) => {
       const res = await integrationApi.createWmsScmSync(data as CreateWmsScmSyncRequest);
-      if (!res.success) throw new Error(res.message || '创建失败');
+      if (!res.success)
+        throw new Error(res.message || t('integration.integration_wms_scm_page.k6'));
       return res.data;
     },
     update: async () => {
-      throw new Error('编辑功能暂未实现');
+      throw new Error(t('integration.integration_wms_scm_page.k7'));
     },
     delete: async () => {
       addNotification({
-        title: '提示',
-        message: '删除接口尚未实现',
+        title: t('integration.integration_wms_scm_page.k8'),
+        message: t('integration.integration_wms_scm_page.k9'),
         type: 'warning',
       });
     },
@@ -67,7 +75,7 @@ const IntegrationWmsScmPage: React.FC = () => {
 
   const customRowActions = [
     {
-      label: '同步',
+      label: t('integration.integration_wms_scm_page.k10'),
       icon: <RefreshCw size={16} />,
       onClick: (row: Record<string, unknown>) => {
         syncMutation.mutate(String(row.id));
@@ -79,7 +87,7 @@ const IntegrationWmsScmPage: React.FC = () => {
   return (
     <PageContainer
       title='WMS ↔ SCM 同步'
-      subtitle='管理 WMS 库存与 SCM 供应的同步'
+      subtitle={t('integration.integration_wms_scm_page.wmsscm_11')}
     >
       <CrudPage
         schema={wmsScmSyncSchema}

@@ -27,6 +27,7 @@ import { StatCardGroup } from '@/components';
 import { FINANCE_PATHS } from '@/modules/finance/config';
 import { useNotificationStore } from '@/store';
 import { useTranslation } from 'react-i18next';
+import i18n from '@/i18n';
 
 const FinanceCostPage: React.FC = () => {
   const { t } = useTranslation();
@@ -87,11 +88,11 @@ const FinanceCostPage: React.FC = () => {
         const payload = { ...(data as Partial<Account>), category: 'cost' as const };
         const response = await accountApi.create(payload);
         if (!response.success) {
-          throw new Error(response.message || '创建成本科目失败');
+          throw new Error(response.message || t('finance.finance_cost_page.k0'));
         }
         addNotification({
           title: t('finance.finance_cost_page.text_7f9f6f'),
-          message: '成本科目已创建',
+          message: t('finance.finance_cost_page.k1'),
           type: 'success',
         });
         return response.data as unknown as Record<string, unknown>;
@@ -99,11 +100,11 @@ const FinanceCostPage: React.FC = () => {
       update: async (id, data) => {
         const response = await accountApi.update(String(id), data as Partial<Account>);
         if (!response.success) {
-          throw new Error(response.message || '更新成本科目失败');
+          throw new Error(response.message || t('finance.finance_cost_page.k2'));
         }
         addNotification({
           title: t('finance.finance_cost_page.text_7f9f6f'),
-          message: '成本科目已更新',
+          message: t('finance.finance_cost_page.k3'),
           type: 'success',
         });
         return response.data as unknown as Record<string, unknown>;
@@ -111,11 +112,11 @@ const FinanceCostPage: React.FC = () => {
       delete: async (id) => {
         const response = await accountApi.delete(String(id));
         if (!response.success) {
-          throw new Error(response.message || '删除成本科目失败');
+          throw new Error(response.message || t('finance.finance_cost_page.k4'));
         }
         addNotification({
           title: t('finance.finance_cost_page.text_7f9f6f'),
-          message: '成本科目已删除',
+          message: t('finance.finance_cost_page.k5'),
           type: 'success',
         });
       },
@@ -134,7 +135,7 @@ const FinanceCostPage: React.FC = () => {
   const customRowActions: RowAction[] = useMemo(
     () => [
       {
-        label: t('finance.finance_cost_page.text_7f9f6f'),
+        label: i18n.t('finance.finance_cost_page.text_7f9f6f'),
         icon: <BarChart3 size={16} />,
         color: 'success',
         onClick: (row) => setAnalysisTarget(row as unknown as Account),
@@ -388,7 +389,9 @@ const FinanceCostPage: React.FC = () => {
           )}
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setAnalysisTarget(null)}>关闭</Button>
+          <Button onClick={() => setAnalysisTarget(null)}>
+            {t('finance.finance_cost_page.k6')}
+          </Button>
         </DialogActions>
       </Dialog>
     </PageContainer>

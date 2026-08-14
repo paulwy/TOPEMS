@@ -24,6 +24,8 @@ import {
 } from 'lucide-react';
 import type { EmailTemplate } from '@/api/mail';
 import { TEMPLATE_CATEGORIES } from '@/api/mail';
+import { useTranslation } from 'react-i18next';
+import i18n from '@/i18n';
 
 interface TemplateListProps {
   searchQuery: string;
@@ -64,6 +66,7 @@ const TemplateList: React.FC<TemplateListProps> = ({
   handleNextPage,
   getCategoryLabel,
 }) => {
+  const { t } = useTranslation('im');
   return (
     <Box sx={{ mt: 0 }}>
       <Box sx={{ mb: 3, display: 'flex', alignItems: 'center', gap: 2 }}>
@@ -99,16 +102,16 @@ const TemplateList: React.FC<TemplateListProps> = ({
           size='small'
           sx={{ minWidth: 120 }}
         >
-          <InputLabel>分类</InputLabel>
+          <InputLabel>{i18n.t('im.template_list.k0')}</InputLabel>
           <Select
             value={categoryFilter || 'all'}
-            label='分类'
+            label={i18n.t('im.template_list.k1')}
             onChange={(e) => {
               setCategoryFilter(e.target.value === 'all' ? '' : e.target.value);
               setCurrentPage(1);
             }}
           >
-            <MenuItem value='all'>全部</MenuItem>
+            <MenuItem value='all'>{i18n.t('im.template_list.k2')}</MenuItem>
             {TEMPLATE_CATEGORIES.map((cat) => (
               <MenuItem
                 key={cat.value}
@@ -150,7 +153,7 @@ const TemplateList: React.FC<TemplateListProps> = ({
                 color='text.disabled'
                 style={{ margin: '0 auto 12px' }}
               />
-              <Typography sx={{ color: 'grey.500' }}>暂无邮件模板</Typography>
+              <Typography sx={{ color: 'grey.500' }}>{t('im.template_list.k3')}</Typography>
             </Box>
           ) : (
             <Box sx={{ overflowX: 'auto' }}>
@@ -324,7 +327,11 @@ const TemplateList: React.FC<TemplateListProps> = ({
                         <Chip
                           size='small'
                           variant={template.status === 'active' ? 'filled' : 'outlined'}
-                          label={template.status === 'active' ? '启用' : '禁用'}
+                          label={
+                            template.status === 'active'
+                              ? t('im.template_list.k5')
+                              : t('im.template_list.k4')
+                          }
                         />
                       </Box>
                       <Box
@@ -354,7 +361,7 @@ const TemplateList: React.FC<TemplateListProps> = ({
                             variant='text'
                             size='small'
                             onClick={() => handleEyeTemplate(template)}
-                            title='预览模板'
+                            title={t('im.template_list.k6')}
                           >
                             <Eye size={16} />
                           </Button>
@@ -362,7 +369,7 @@ const TemplateList: React.FC<TemplateListProps> = ({
                             variant='text'
                             size='small'
                             onClick={() => openEditTemplate(template)}
-                            title='编辑'
+                            title={t('im.template_list.k7')}
                           >
                             <Edit size={16} />
                           </Button>
@@ -370,7 +377,11 @@ const TemplateList: React.FC<TemplateListProps> = ({
                             variant='text'
                             size='small'
                             onClick={() => handleToggleTemplateStatus(template)}
-                            title={template.status === 'active' ? '禁用模板' : '启用模板'}
+                            title={
+                              template.status === 'active'
+                                ? t('im.template_list.k9')
+                                : t('im.template_list.k8')
+                            }
                             sx={
                               template.status === 'active'
                                 ? {
@@ -401,7 +412,7 @@ const TemplateList: React.FC<TemplateListProps> = ({
                               '&:hover': { color: 'error.dark' },
                             }}
                             onClick={() => openDeleteTemplateDialog(template.id)}
-                            title='删除'
+                            title={t('im.template_list.k10')}
                           >
                             <Trash2 size={16} />
                           </Button>
@@ -436,7 +447,7 @@ const TemplateList: React.FC<TemplateListProps> = ({
                 size='small'
                 onClick={handlePrevPage}
                 disabled={currentPage === 1}
-                aria-label='上一页'
+                aria-label={t('im.template_list.k11')}
               >
                 <ChevronLeft size={16} />
               </Button>

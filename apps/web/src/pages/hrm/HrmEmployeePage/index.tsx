@@ -13,12 +13,14 @@ import { designTokens } from '@/theme/tokens';
 import EmployeeDetailDialog from './components/EmployeeDetailDialog';
 import type { EmployeeListParams } from './types';
 
-
 import { QUERY_KEYS } from '@/lib/reactQuery';
+import { useTranslation } from 'react-i18next';
+import i18n from '@/i18n';
 
-const ct= designTokens.colors;
+const ct = designTokens.colors;
 
 const HrmEmployeePage: React.FC = () => {
+  const { t } = useTranslation('hrm');
   const queryClient = useQueryClient();
   const { addNotification } = useNotificationStore();
 
@@ -50,40 +52,41 @@ const HrmEmployeePage: React.FC = () => {
         const res = await employeeApi.create(data as Partial<Employee>);
         if (res.success && res.data) {
           addNotification({
-            title: '成功',
-            message: '员工创建成功',
+            title: t('hrm.index.k0'),
+            message: t('hrm.index.k1'),
             type: 'success',
           });
           return res.data as Employee;
         }
-        throw new Error(res.message || '创建失败');
+        throw new Error(res.message || t('hrm.index.k2'));
       },
       update: async (id, data) => {
         const res = await employeeApi.update(id, data as Partial<Employee>);
         if (res.success && res.data) {
           addNotification({
-            title: '成功',
-            message: '员工更新成功',
+            title: t('hrm.index.k3'),
+            message: t('hrm.index.k4'),
             type: 'success',
           });
-          queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.HRM_EMPLOYEES_BASE ,
-  exact: false,
-  refetchType: 'active',
-});
+          queryClient.invalidateQueries({
+            queryKey: QUERY_KEYS.AD_HOC.HRM_EMPLOYEES_BASE,
+            exact: false,
+            refetchType: 'active',
+          });
           return res.data as Employee;
         }
-        throw new Error(res.message || '更新失败');
+        throw new Error(res.message || t('hrm.index.k5'));
       },
       delete: async (id) => {
         const res = await employeeApi.delete(id);
         if (res.success) {
           addNotification({
-            title: '成功',
-            message: '员工删除成功',
+            title: t('hrm.index.k6'),
+            message: t('hrm.index.k7'),
             type: 'success',
           });
         } else {
-          throw new Error(res.message || '删除失败');
+          throw new Error(res.message || t('hrm.index.k8'));
         }
       },
     }),
@@ -94,7 +97,7 @@ const HrmEmployeePage: React.FC = () => {
     () => [
       {
         key: 'view-detail',
-        label: '查看详情',
+        label: i18n.t('hrm.index.k9'),
         icon: <Users size={16} />,
         color: 'primary',
         onClick: (row: Record<string, unknown>) => {
@@ -185,8 +188,8 @@ const HrmEmployeePage: React.FC = () => {
     <PageContainer
       padding={false}
       maxWidth={false}
-      title='员工管理'
-      subtitle='管理员工基础信息，包括工号、姓名、部门、职位、联系方式等'
+      title={t('hrm.index.k10')}
+      subtitle={t('hrm.index.k11')}
       autoTitle
       autoBreadcrumbs
       headerProps={{

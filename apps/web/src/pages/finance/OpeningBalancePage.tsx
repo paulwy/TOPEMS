@@ -49,6 +49,7 @@ import type { Account, AccountOpeningBalance, AccountCategory } from '@/types/fi
 import { PageContainer } from '@/components/common';
 
 import { useTranslation } from 'react-i18next';
+import i18n from '@/i18n';
 // 科目类别配置
 const CATEGORY_CONFIG: Record<
   AccountCategory,
@@ -57,18 +58,18 @@ const CATEGORY_CONFIG: Record<
     color: 'default' | 'primary' | 'secondary' | 'success' | 'error' | 'info' | 'warning';
   }
 > = {
-  asset: { label: '资产类', color: 'primary' },
-  liability: { label: '负债类', color: 'error' },
-  equity: { label: '权益类', color: 'success' },
-  cost: { label: '成本类', color: 'warning' },
-  expense: { label: '费用类', color: 'info' },
-  income: { label: '收入类', color: 'default' },
+  asset: { label: i18n.t('finance.opening_balance_page.k0'), color: 'primary' },
+  liability: { label: i18n.t('finance.opening_balance_page.k1'), color: 'error' },
+  equity: { label: i18n.t('finance.opening_balance_page.k2'), color: 'success' },
+  cost: { label: i18n.t('finance.opening_balance_page.k3'), color: 'warning' },
+  expense: { label: i18n.t('finance.opening_balance_page.k4'), color: 'info' },
+  income: { label: i18n.t('finance.opening_balance_page.k5'), color: 'default' },
 };
 
 // 余额方向配置
 const BALANCE_DIRECTION_CONFIG = {
-  debit: { label: '借方', color: 'primary' },
-  credit: { label: '贷方', color: 'error' },
+  debit: { label: i18n.t('finance.opening_balance_page.k6'), color: 'primary' },
+  credit: { label: i18n.t('finance.opening_balance_page.k7'), color: 'error' },
 };
 
 export default function OpeningBalancePage() {
@@ -265,13 +266,13 @@ export default function OpeningBalancePage() {
               size='small'
               fullWidth
             >
-              <InputLabel>科目类别</InputLabel>
+              <InputLabel>{t('finance.opening_balance_page.k8')}</InputLabel>
               <Select
                 value={selectedCategory}
                 label={t('finance.opening_balance_page.text_f31b4e')}
                 onChange={(e) => setSelectedCategory(e.target.value as AccountCategory)}
               >
-                <MenuItem value=''>全部类别</MenuItem>
+                <MenuItem value=''>{t('finance.opening_balance_page.k9')}</MenuItem>
                 {Object.entries(CATEGORY_CONFIG).map(([key, config]) => (
                   <MenuItem
                     key={key}
@@ -369,9 +370,9 @@ export default function OpeningBalancePage() {
           <Table size='small'>
             <TableHead>
               <TableRow>
-                <TableCell sx={{ width: 120 }}>科目编码</TableCell>
-                <TableCell>科目名称</TableCell>
-                <TableCell sx={{ width: 100 }}>明细</TableCell>
+                <TableCell sx={{ width: 120 }}>{t('finance.opening_balance_page.k10')}</TableCell>
+                <TableCell>{t('finance.opening_balance_page.k11')}</TableCell>
+                <TableCell sx={{ width: 100 }}>{t('finance.opening_balance_page.k12')}</TableCell>
                 <TableCell align='right'>期初余额（借/贷）</TableCell>
               </TableRow>
             </TableHead>
@@ -562,7 +563,7 @@ export default function OpeningBalancePage() {
         maxWidth='xs'
         fullWidth
       >
-        <DialogTitle>结转期初余额</DialogTitle>
+        <DialogTitle>{t('finance.opening_balance_page.k13')}</DialogTitle>
         <DialogContent>
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 1 }}>
             <TextField
@@ -615,9 +616,9 @@ export default function OpeningBalancePage() {
                       color: theme.palette.warning.dark,
                     }}
                   >
-                    <li>结转会将源期间的期末余额作为目标期间的期初余额</li>
-                    <li>目标期间原有的期初余额将被覆盖</li>
-                    <li>请确认后再操作</li>
+                    <li>{t('finance.opening_balance_page.k14')}</li>
+                    <li>{t('finance.opening_balance_page.k15')}</li>
+                    <li>{t('finance.opening_balance_page.k16')}</li>
                   </ul>
                 </Box>
               </Box>

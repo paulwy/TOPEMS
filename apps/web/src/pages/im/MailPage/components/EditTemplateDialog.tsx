@@ -13,6 +13,8 @@ import {
 } from '@mui/material';
 import type { EmailTemplate } from '@/api/mail';
 import { TEMPLATE_CATEGORIES } from '@/api/mail';
+import { useTranslation } from 'react-i18next';
+import i18n from '@/i18n';
 
 interface TemplateForm {
   code: string;
@@ -46,18 +48,21 @@ const EditTemplateDialog: React.FC<EditTemplateDialogProps> = ({
   resetTemplateForm,
   setSelectedTemplate,
 }) => {
+  const { t } = useTranslation('im');
   return (
     <Dialog
       open={open}
       onClose={onClose}
     >
       <DialogContent sx={{ maxWidth: 600 }}>
-        <DialogTitle>编辑邮件模板</DialogTitle>
+        <DialogTitle>{i18n.t('im.edit_template_dialog.k0')}</DialogTitle>
         {selectedTemplate && (
           <form onSubmit={handleUpdateTemplate}>
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, py: 2 }}>
               <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-                <InputLabel htmlFor='edit-template-code'>模板编码</InputLabel>
+                <InputLabel htmlFor='edit-template-code'>
+                  {i18n.t('im.edit_template_dialog.k1')}
+                </InputLabel>
                 <TextField
                   id='edit-template-code'
                   value={templateForm.code}
@@ -67,7 +72,9 @@ const EditTemplateDialog: React.FC<EditTemplateDialogProps> = ({
                 />
               </Box>
               <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-                <InputLabel htmlFor='edit-template-name'>模板名称</InputLabel>
+                <InputLabel htmlFor='edit-template-name'>
+                  {i18n.t('im.edit_template_dialog.k2')}
+                </InputLabel>
                 <TextField
                   id='edit-template-name'
                   value={templateForm.name}
@@ -82,7 +89,9 @@ const EditTemplateDialog: React.FC<EditTemplateDialogProps> = ({
                 />
               </Box>
               <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-                <InputLabel htmlFor='edit-template-description'>描述</InputLabel>
+                <InputLabel htmlFor='edit-template-description'>
+                  {i18n.t('im.edit_template_dialog.k3')}
+                </InputLabel>
                 <TextField
                   id='edit-template-description'
                   value={templateForm.description}
@@ -92,12 +101,14 @@ const EditTemplateDialog: React.FC<EditTemplateDialogProps> = ({
                       description: e.target.value,
                     }))
                   }
-                  placeholder='简要描述此模板的用途'
+                  placeholder={i18n.t('im.edit_template_dialog.k4')}
                   size='small'
                 />
               </Box>
               <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-                <InputLabel htmlFor='edit-template-category'>分类</InputLabel>
+                <InputLabel htmlFor='edit-template-category'>
+                  {t('im.edit_template_dialog.k5')}
+                </InputLabel>
                 <FormControl
                   size='small'
                   sx={{ width: '100%' }}
@@ -130,7 +141,9 @@ const EditTemplateDialog: React.FC<EditTemplateDialogProps> = ({
                 </FormControl>
               </Box>
               <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-                <InputLabel htmlFor='edit-template-tags'>标签</InputLabel>
+                <InputLabel htmlFor='edit-template-tags'>
+                  {t('im.edit_template_dialog.k6')}
+                </InputLabel>
                 <TextField
                   id='edit-template-tags'
                   value={templateForm.tags}
@@ -140,12 +153,14 @@ const EditTemplateDialog: React.FC<EditTemplateDialogProps> = ({
                       tags: e.target.value,
                     }))
                   }
-                  placeholder='多个标签用逗号分隔'
+                  placeholder={t('im.edit_template_dialog.k7')}
                   size='small'
                 />
               </Box>
               <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-                <InputLabel htmlFor='edit-template-subject'>主题模板</InputLabel>
+                <InputLabel htmlFor='edit-template-subject'>
+                  {t('im.edit_template_dialog.k8')}
+                </InputLabel>
                 <TextField
                   id='edit-template-subject'
                   value={templateForm.subject_template}
@@ -155,12 +170,14 @@ const EditTemplateDialog: React.FC<EditTemplateDialogProps> = ({
                       subject_template: e.target.value,
                     }))
                   }
-                  placeholder='支持变量替换'
+                  placeholder={t('im.edit_template_dialog.k9')}
                   size='small'
                 />
               </Box>
               <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-                <InputLabel htmlFor='edit-template-body'>正文模板</InputLabel>
+                <InputLabel htmlFor='edit-template-body'>
+                  {t('im.edit_template_dialog.k10')}
+                </InputLabel>
                 <TextField
                   id='edit-template-body'
                   value={templateForm.body_template}
@@ -203,7 +220,7 @@ const EditTemplateDialog: React.FC<EditTemplateDialogProps> = ({
               >
                 取消
               </Button>
-              <Button type='submit'>保存修改</Button>
+              <Button type='submit'>{t('im.edit_template_dialog.k11')}</Button>
             </DialogActions>
           </form>
         )}

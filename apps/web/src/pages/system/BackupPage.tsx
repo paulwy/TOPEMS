@@ -48,6 +48,7 @@ import { extractErrorMessage } from '@/utils/errors';
 import { formatDateTime } from '@/utils/date';
 
 import { QUERY_KEYS } from '@/lib/reactQuery';
+import { useTranslation } from 'react-i18next';
 
 type BackupRecord = {
   id: string;
@@ -64,6 +65,7 @@ type BackupRecord = {
 };
 
 const BackupPage: React.FC = () => {
+  const { t } = useTranslation('system');
   const queryClient = useQueryClient();
   const addNotification = useNotificationStore((state) => state.addNotification);
 
@@ -103,21 +105,22 @@ const BackupPage: React.FC = () => {
     },
     onSuccess: () => {
       addNotification({
-        title: '成功',
-        message: '备份创建成功',
+        title: t('system.backup_page.k0'),
+        message: t('system.backup_page.k1'),
         type: 'success',
       });
       setShowCreateModal(false);
       setBackupName('');
-      queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.ADMIN.BACKUP] ,
-  exact: false,
-  refetchType: 'active',
-});
+      queryClient.invalidateQueries({
+        queryKey: [QUERY_KEYS.ADMIN.BACKUP],
+        exact: false,
+        refetchType: 'active',
+      });
     },
     onError: (err) => {
       addNotification({
-        title: '错误',
-        message: extractErrorMessage(err, '创建备份失败'),
+        title: t('system.backup_page.k2'),
+        message: extractErrorMessage(err, t('system.backup_page.k3')),
         type: 'error',
       });
     },
@@ -129,21 +132,22 @@ const BackupPage: React.FC = () => {
     },
     onSuccess: () => {
       addNotification({
-        title: '成功',
-        message: '备份恢复成功',
+        title: t('system.backup_page.k4'),
+        message: t('system.backup_page.k5'),
         type: 'success',
       });
       setShowRestoreModal(false);
       setSelectedBackup(null);
-      queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.ADMIN.BACKUP] ,
-  exact: false,
-  refetchType: 'active',
-});
+      queryClient.invalidateQueries({
+        queryKey: [QUERY_KEYS.ADMIN.BACKUP],
+        exact: false,
+        refetchType: 'active',
+      });
     },
     onError: (err) => {
       addNotification({
-        title: '错误',
-        message: extractErrorMessage(err, '恢复备份失败'),
+        title: t('system.backup_page.k6'),
+        message: extractErrorMessage(err, t('system.backup_page.k7')),
         type: 'error',
       });
     },
@@ -155,19 +159,20 @@ const BackupPage: React.FC = () => {
     },
     onSuccess: () => {
       addNotification({
-        title: '成功',
-        message: '备份删除成功',
+        title: t('system.backup_page.k8'),
+        message: t('system.backup_page.k9'),
         type: 'success',
       });
-      queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.ADMIN.BACKUP] ,
-  exact: false,
-  refetchType: 'active',
-});
+      queryClient.invalidateQueries({
+        queryKey: [QUERY_KEYS.ADMIN.BACKUP],
+        exact: false,
+        refetchType: 'active',
+      });
     },
     onError: (err) => {
       addNotification({
-        title: '错误',
-        message: extractErrorMessage(err, '删除备份失败'),
+        title: t('system.backup_page.k10'),
+        message: extractErrorMessage(err, t('system.backup_page.k11')),
         type: 'error',
       });
     },
@@ -186,8 +191,8 @@ const BackupPage: React.FC = () => {
   const handleDeleteBackup = useCallback(
     (backupId: string) => {
       openConfirmDialog({
-        title: '确认删除',
-        message: '确定要删除这个备份吗？此操作不可恢复。',
+        title: t('system.backup_page.k12'),
+        message: t('system.backup_page.k13'),
         danger: true,
         onConfirm: () => {
           deleteBackupMutation.mutate(backupId);
@@ -216,18 +221,18 @@ const BackupPage: React.FC = () => {
 
   const getBackupTypeLabel = (type: string) => {
     const labels: Record<string, string> = {
-      full: '完整备份',
-      incremental: '增量备份',
-      schema: '结构备份',
+      full: t('system.backup_page.k14'),
+      incremental: t('system.backup_page.k15'),
+      schema: t('system.backup_page.k16'),
     };
     return labels[type] || type;
   };
 
   const getBackupTypeChip = (type: string) => {
     const chips: Record<string, { color: 'primary' | 'secondary' | 'default'; label: string }> = {
-      full: { color: 'primary', label: '完整' },
-      incremental: { color: 'secondary', label: '增量' },
-      schema: { color: 'default', label: '结构' },
+      full: { color: 'primary', label: t('system.backup_page.k17') },
+      incremental: { color: 'secondary', label: t('system.backup_page.k18') },
+      schema: { color: 'default', label: t('system.backup_page.k19') },
     };
     const chip = chips[type];
     return (
@@ -244,10 +249,10 @@ const BackupPage: React.FC = () => {
       string,
       { color: 'success' | 'error' | 'warning' | 'default'; label: string }
     > = {
-      completed: { color: 'success', label: '已完成' },
-      failed: { color: 'error', label: '失败' },
-      in_progress: { color: 'warning', label: '进行中' },
-      pending: { color: 'default', label: '待处理' },
+      completed: { color: 'success', label: t('system.backup_page.k20') },
+      failed: { color: 'error', label: t('system.backup_page.k21') },
+      in_progress: { color: 'warning', label: t('system.backup_page.k22') },
+      pending: { color: 'default', label: t('system.backup_page.k23') },
     };
     const chip = chips[status];
     return (
@@ -269,7 +274,7 @@ const BackupPage: React.FC = () => {
   const displayBackups = backups || [];
 
   return (
-    <PageContainer title='数据备份与恢复'>
+    <PageContainer title={t('system.backup_page.k24')}>
       <Box sx={{ mb: 3 }}>
         <Button
           variant='contained'
@@ -293,13 +298,13 @@ const BackupPage: React.FC = () => {
             <Table>
               <TableHead>
                 <TableRow>
-                  <TableCell>备份名称</TableCell>
-                  <TableCell>类型</TableCell>
-                  <TableCell>状态</TableCell>
-                  <TableCell>大小</TableCell>
-                  <TableCell>创建时间</TableCell>
-                  <TableCell>耗时</TableCell>
-                  <TableCell>操作</TableCell>
+                  <TableCell>{t('system.backup_page.k25')}</TableCell>
+                  <TableCell>{t('system.backup_page.k26')}</TableCell>
+                  <TableCell>{t('system.backup_page.k27')}</TableCell>
+                  <TableCell>{t('system.backup_page.k28')}</TableCell>
+                  <TableCell>{t('system.backup_page.k29')}</TableCell>
+                  <TableCell>{t('system.backup_page.k30')}</TableCell>
+                  <TableCell>{t('system.backup_page.k31')}</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
@@ -319,7 +324,7 @@ const BackupPage: React.FC = () => {
                       align='center'
                     >
                       <Alert severity='error'>
-                        {extractErrorMessage(error, '加载备份列表失败')}
+                        {extractErrorMessage(error, t('system.backup_page.k32'))}
                       </Alert>
                     </TableCell>
                   </TableRow>
@@ -329,7 +334,7 @@ const BackupPage: React.FC = () => {
                       colSpan={7}
                       align='center'
                     >
-                      <Typography color='text.secondary'>暂无备份记录</Typography>
+                      <Typography color='text.secondary'>{t('system.backup_page.k33')}</Typography>
                     </TableCell>
                   </TableRow>
                 ) : (
@@ -362,44 +367,44 @@ const BackupPage: React.FC = () => {
                       </TableCell>
                       <TableCell>
                         <Box sx={{ display: 'flex', gap: 1 }}>
-                          <Tooltip title='查看详情'>
+                          <Tooltip title={t('system.backup_page.k34')}>
                             <IconButton
                               size='small'
                               onClick={() => handleOpenDetailModal(backup)}
-                              aria-label='查看'
+                              aria-label={t('system.backup_page.k35')}
                             >
                               <Eye size={16} />
                             </IconButton>
                           </Tooltip>
                           {backup.status === 'completed' && (
-                            <Tooltip title='恢复备份'>
+                            <Tooltip title={t('system.backup_page.k36')}>
                               <IconButton
                                 size='small'
                                 onClick={() => handleOpenRestoreModal(backup)}
                                 disabled={restoreBackupMutation.isPending}
-                                aria-label='上传'
+                                aria-label={t('system.backup_page.k37')}
                               >
                                 <Upload size={16} />
                               </IconButton>
                             </Tooltip>
                           )}
                           {backup.status === 'completed' && (
-                            <Tooltip title='下载备份'>
+                            <Tooltip title={t('system.backup_page.k38')}>
                               <IconButton
                                 size='small'
-                                aria-label='下载'
+                                aria-label={t('system.backup_page.k39')}
                               >
                                 <Download size={16} />
                               </IconButton>
                             </Tooltip>
                           )}
-                          <Tooltip title='删除备份'>
+                          <Tooltip title={t('system.backup_page.k40')}>
                             <IconButton
                               size='small'
                               onClick={() => handleDeleteBackup(backup.id)}
                               disabled={deleteBackupMutation.isPending}
                               sx={{ color: 'error.main' }}
-                              aria-label='删除'
+                              aria-label={t('system.backup_page.k41')}
                             >
                               <Trash2 size={16} />
                             </IconButton>
@@ -421,30 +426,30 @@ const BackupPage: React.FC = () => {
         maxWidth='sm'
         fullWidth
       >
-        <DialogTitle>创建备份</DialogTitle>
+        <DialogTitle>{t('system.backup_page.k42')}</DialogTitle>
         <DialogContent>
           <Box sx={{ mt: 2 }}>
             <TextField
               fullWidth
-              label='备份名称'
+              label={t('system.backup_page.k43')}
               value={backupName}
               onChange={(e) => setBackupName(e.target.value)}
-              placeholder='例如：weekly-backup-20240115'
+              placeholder={t('system.backup_page.k44')}
               margin='normal'
             />
             <FormControl
               fullWidth
               margin='normal'
             >
-              <InputLabel>备份类型</InputLabel>
+              <InputLabel>{t('system.backup_page.k45')}</InputLabel>
               <Select
                 value={backupType}
                 onChange={(e) => setBackupType(e.target.value as 'full' | 'incremental' | 'schema')}
-                label='备份类型'
+                label={t('system.backup_page.k46')}
               >
-                <MenuItem value='full'>完整备份 - 备份所有数据</MenuItem>
-                <MenuItem value='incremental'>增量备份 - 仅备份变更数据</MenuItem>
-                <MenuItem value='schema'>结构备份 - 仅备份数据库结构</MenuItem>
+                <MenuItem value='full'>{t('system.backup_page.k47')}</MenuItem>
+                <MenuItem value='incremental'>{t('system.backup_page.k48')}</MenuItem>
+                <MenuItem value='schema'>{t('system.backup_page.k49')}</MenuItem>
               </Select>
             </FormControl>
             <Alert
@@ -461,7 +466,7 @@ const BackupPage: React.FC = () => {
           </Box>
         </DialogContent>
         <DialogActions>
-          <Button onClick={handleCloseModal}>取消</Button>
+          <Button onClick={handleCloseModal}>{t('system.backup_page.k50')}</Button>
           <Button
             variant='contained'
             onClick={handleCreateBackup}
@@ -484,7 +489,7 @@ const BackupPage: React.FC = () => {
         maxWidth='sm'
         fullWidth
       >
-        <DialogTitle>恢复备份</DialogTitle>
+        <DialogTitle>{t('system.backup_page.k51')}</DialogTitle>
         <DialogContent>
           {selectedBackup && (
             <Box sx={{ mt: 2 }}>
@@ -530,7 +535,7 @@ const BackupPage: React.FC = () => {
           )}
         </DialogContent>
         <DialogActions>
-          <Button onClick={handleCloseModal}>取消</Button>
+          <Button onClick={handleCloseModal}>{t('system.backup_page.k52')}</Button>
           <Button
             variant='contained'
             color='warning'
@@ -554,7 +559,7 @@ const BackupPage: React.FC = () => {
         maxWidth='md'
         fullWidth
       >
-        <DialogTitle>备份详情</DialogTitle>
+        <DialogTitle>{t('system.backup_page.k53')}</DialogTitle>
         <DialogContent>
           {selectedBackup && (
             <Box sx={{ mt: 2 }}>
@@ -663,7 +668,7 @@ const BackupPage: React.FC = () => {
           )}
         </DialogContent>
         <DialogActions>
-          <Button onClick={handleCloseModal}>关闭</Button>
+          <Button onClick={handleCloseModal}>{t('system.backup_page.k54')}</Button>
         </DialogActions>
       </Dialog>
 

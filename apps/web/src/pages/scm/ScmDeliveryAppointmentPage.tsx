@@ -11,12 +11,14 @@ import { deliveryAppointmentSchema } from '@/schemas/scm';
 import { useNotificationStore } from '@/store';
 import { QUERY_KEYS } from '@/lib/reactQuery';
 import { apiLogger } from '@/utils/logger';
+import { useTranslation } from 'react-i18next';
 
 const apiAdapter = createCrudPageAdapter(scmApi.deliveryAppointments);
 
 const ENTITY_QUERY_KEY = ['deliveryAppointment'];
 
 const StatsCards: React.FC = () => {
+  const { t } = useTranslation('scm');
   const { data: stats } = useQuery<DeliveryAppointmentStats | null>({
     queryKey: [...QUERY_KEYS.SCM.DELIVERY_APPOINTMENTS, 'stats'],
     queryFn: async () => {
@@ -32,9 +34,13 @@ const StatsCards: React.FC = () => {
   if (!stats) return null;
 
   const cards = [
-    { label: '预约总数', value: stats.total, color: 'primary.main' },
-    { label: '即将到期', value: stats.upcoming, color: 'success.main' },
-    { label: '已逾期', value: stats.overdue, color: 'error.main' },
+    { label: t('scm.scm_delivery_appointment_page.k0'), value: stats.total, color: 'primary.main' },
+    {
+      label: t('scm.scm_delivery_appointment_page.k1'),
+      value: stats.upcoming,
+      color: 'success.main',
+    },
+    { label: t('scm.scm_delivery_appointment_page.k2'), value: stats.overdue, color: 'error.main' },
   ];
 
   return (
@@ -64,6 +70,7 @@ const StatsCards: React.FC = () => {
 };
 
 const ScmDeliveryAppointmentPage: React.FC = () => {
+  const { t } = useTranslation('scm');
   const queryClient = useQueryClient();
   const { addNotification } = useNotificationStore();
 
@@ -76,17 +83,22 @@ const ScmDeliveryAppointmentPage: React.FC = () => {
     ) => {
       try {
         await fn(appointment.id);
-        queryClient.invalidateQueries({ queryKey: ENTITY_QUERY_KEY ,
-  exact: false,
-  refetchType: 'active',
-});
+        queryClient.invalidateQueries({
+          queryKey: ENTITY_QUERY_KEY,
+          exact: false,
+          refetchType: 'active',
+        });
         queryClient.invalidateQueries({
           queryKey: [...QUERY_KEYS.SCM.DELIVERY_APPOINTMENTS, 'stats'],
-        
-  exact: false,
-  refetchType: 'active',
-});
-        addNotification({ type: 'success', title: '操作成功', message: successMessage });
+
+          exact: false,
+          refetchType: 'active',
+        });
+        addNotification({
+          type: 'success',
+          title: t('scm.scm_delivery_appointment_page.k3'),
+          message: successMessage,
+        });
       } catch (err) {
         apiLogger.error(`${action}失败:`, err);
         addNotification({
@@ -102,7 +114,7 @@ const ScmDeliveryAppointmentPage: React.FC = () => {
   const customRowActions = React.useMemo<RowAction[]>(
     () => [
       {
-        label: '审批通过',
+        label: t('scm.scm_delivery_appointment_page.k4'),
         icon: <Check size={14} />,
         color: 'success',
         show: (row) => row.status === 'pending',
@@ -110,16 +122,19 @@ const ScmDeliveryAppointmentPage: React.FC = () => {
           const apt = row as unknown as SupplierDeliveryAppointment;
           if (window.confirm(`确定要审批通过预约 "${apt.appointment_no}" 吗？`)) {
             void runStatusAction(
-              '审批',
+              t('scm.scm_delivery_appointment_page.k5'),
               apt,
-              (id) => scmApi.deliveryAppointments.approve(id, { remarks: '审批通过' }),
-              '预约已审批通过'
+              (id) =>
+                scmApi.deliveryAppointments.approve(id, {
+                  remarks: t('scm.scm_delivery_appointment_page.k6'),
+                }),
+              t('scm.scm_delivery_appointment_page.k7')
             );
           }
         },
       },
       {
-        label: '驳回',
+        label: t('scm.scm_delivery_appointment_page.k8'),
         icon: <XCircle size={14} />,
         color: 'error',
         show: (row) => row.status === 'pending',
@@ -127,16 +142,19 @@ const ScmDeliveryAppointmentPage: React.FC = () => {
           const apt = row as unknown as SupplierDeliveryAppointment;
           if (window.confirm(`确定要驳回预约 "${apt.appointment_no}" 吗？`)) {
             void runStatusAction(
-              '驳回',
+              t('scm.scm_delivery_appointment_page.k9'),
               apt,
-              (id) => scmApi.deliveryAppointments.reject(id, { remarks: '不符合送货要求' }),
-              '预约已驳回'
+              (id) =>
+                scmApi.deliveryAppointments.reject(id, {
+                  remarks: t('scm.scm_delivery_appointment_page.k10'),
+                }),
+              t('scm.scm_delivery_appointment_page.k11')
             );
           }
         },
       },
       {
-        label: '到货确认',
+        label: t('scm.scm_delivery_appointment_page.k12'),
         icon: <CalendarCheck size={14} />,
         color: 'primary',
         show: (row) => row.status === 'approved',
@@ -144,16 +162,19 @@ const ScmDeliveryAppointmentPage: React.FC = () => {
           const apt = row as unknown as SupplierDeliveryAppointment;
           if (window.confirm(`确定要确认预约 "${apt.appointment_no}" 已到货吗？`)) {
             void runStatusAction(
-              '到货确认',
+              t('scm.scm_delivery_appointment_page.k13'),
               apt,
-              (id) => scmApi.deliveryAppointments.confirmArrival(id, { remarks: '已到货' }),
-              '已确认到货'
+              (id) =>
+                scmApi.deliveryAppointments.confirmArrival(id, {
+                  remarks: t('scm.scm_delivery_appointment_page.k14'),
+                }),
+              t('scm.scm_delivery_appointment_page.k15')
             );
           }
         },
       },
       {
-        label: '完成',
+        label: t('scm.scm_delivery_appointment_page.k16'),
         icon: <PackageCheck size={14} />,
         color: 'success',
         show: (row) => row.status === 'arrived',
@@ -161,16 +182,19 @@ const ScmDeliveryAppointmentPage: React.FC = () => {
           const apt = row as unknown as SupplierDeliveryAppointment;
           if (window.confirm(`确定要将预约 "${apt.appointment_no}" 标记为已完成吗？`)) {
             void runStatusAction(
-              '完成',
+              t('scm.scm_delivery_appointment_page.k17'),
               apt,
-              (id) => scmApi.deliveryAppointments.complete(id, { remarks: '入库完成' }),
-              '预约已完成'
+              (id) =>
+                scmApi.deliveryAppointments.complete(id, {
+                  remarks: t('scm.scm_delivery_appointment_page.k18'),
+                }),
+              t('scm.scm_delivery_appointment_page.k19')
             );
           }
         },
       },
       {
-        label: '取消',
+        label: t('scm.scm_delivery_appointment_page.k20'),
         icon: <Ban size={14} />,
         color: 'warning',
         show: (row) => row.status === 'pending' || row.status === 'approved',
@@ -178,10 +202,13 @@ const ScmDeliveryAppointmentPage: React.FC = () => {
           const apt = row as unknown as SupplierDeliveryAppointment;
           if (window.confirm(`确定要取消预约 "${apt.appointment_no}" 吗？`)) {
             void runStatusAction(
-              '取消',
+              t('scm.scm_delivery_appointment_page.k21'),
               apt,
-              (id) => scmApi.deliveryAppointments.cancel(id, { reason: '业务调整' }),
-              '预约已取消'
+              (id) =>
+                scmApi.deliveryAppointments.cancel(id, {
+                  reason: t('scm.scm_delivery_appointment_page.k22'),
+                }),
+              t('scm.scm_delivery_appointment_page.k23')
             );
           }
         },
@@ -196,7 +223,7 @@ const ScmDeliveryAppointmentPage: React.FC = () => {
       apiAdapter={apiAdapter}
       customRowActions={customRowActions}
       headerContent={<StatsCards />}
-      breadcrumbs={[{ label: 'SCM' }, { label: '供应商送货预约' }]}
+      breadcrumbs={[{ label: 'SCM' }, { label: t('scm.scm_delivery_appointment_page.k24') }]}
     />
   );
 };

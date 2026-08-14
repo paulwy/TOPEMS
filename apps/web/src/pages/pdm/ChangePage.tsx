@@ -14,8 +14,10 @@ import { designTokens } from '@/theme/tokens';
 import { useNotificationStore } from '@/store';
 
 import { QUERY_KEYS } from '@/lib/reactQuery';
+import { useTranslation } from 'react-i18next';
+import i18n from '@/i18n';
 
-const ct= designTokens.colors;
+const ct = designTokens.colors;
 
 const baseAdapter = createCrudPageAdapter<ChangeOrder, CreateChangeOrderRequest>({
   list: pdmApi.listChangeOrders,
@@ -30,6 +32,7 @@ const changeAdapter: CrudApiAdapter<Record<string, unknown>> = {
 
 const statusColorMap: Record<string, { bg: string; color: string }> = {
   pending: { bg: 'warning.lighter', color: 'warning.dark' },
+
   reviewing: { bg: 'info.lighter', color: 'info.dark' },
   approved: { bg: 'success.lighter', color: 'success.dark' },
   rejected: { bg: 'error.lighter', color: 'error.dark' },
@@ -38,12 +41,12 @@ const statusColorMap: Record<string, { bg: string; color: string }> = {
 };
 
 const statusLabelMap: Record<string, string> = {
-  pending: '待审批',
-  reviewing: '审批中',
-  approved: '已批准',
-  rejected: '已驳回',
-  implemented: '已实施',
-  closed: '已关闭',
+  pending: i18n.t('pdm.change_page.k0'),
+  reviewing: i18n.t('pdm.change_page.k1'),
+  approved: i18n.t('pdm.change_page.k2'),
+  rejected: i18n.t('pdm.change_page.k3'),
+  implemented: i18n.t('pdm.change_page.k4'),
+  closed: i18n.t('pdm.change_page.k5'),
 };
 
 function extractListData(response: unknown): ChangeOrder[] {
@@ -62,6 +65,7 @@ function extractListData(response: unknown): ChangeOrder[] {
 }
 
 export const ChangePage: React.FC = () => {
+  const { t } = useTranslation('pdm');
   const queryClient = useQueryClient();
   const addNotification = useNotificationStore((state) => state.addNotification);
 
@@ -85,14 +89,23 @@ export const ChangePage: React.FC = () => {
     mutationFn: (id: string) =>
       pdmApi.updateChangeOrder(id, { status: 'approved' } as Partial<CreateChangeOrderRequest>),
     onSuccess: () => {
-      addNotification({ title: '成功', message: '变更单已批准', type: 'success' });
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.PDM.CHANGE_ORDERS ,
-  exact: false,
-  refetchType: 'active',
-});
+      addNotification({
+        title: t('pdm.change_page.k7'),
+        message: t('pdm.change_page.k6'),
+        type: 'success',
+      });
+      queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.PDM.CHANGE_ORDERS,
+        exact: false,
+        refetchType: 'active',
+      });
     },
     onError: () => {
-      addNotification({ title: '错误', message: '批准失败', type: 'error' });
+      addNotification({
+        title: t('pdm.change_page.k9'),
+        message: t('pdm.change_page.k8'),
+        type: 'error',
+      });
     },
   });
 
@@ -100,25 +113,34 @@ export const ChangePage: React.FC = () => {
     mutationFn: (id: string) =>
       pdmApi.updateChangeOrder(id, { status: 'rejected' } as Partial<CreateChangeOrderRequest>),
     onSuccess: () => {
-      addNotification({ title: '成功', message: '变更单已驳回', type: 'success' });
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.PDM.CHANGE_ORDERS ,
-  exact: false,
-  refetchType: 'active',
-});
+      addNotification({
+        title: t('pdm.change_page.k11'),
+        message: t('pdm.change_page.k10'),
+        type: 'success',
+      });
+      queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.PDM.CHANGE_ORDERS,
+        exact: false,
+        refetchType: 'active',
+      });
     },
     onError: () => {
-      addNotification({ title: '错误', message: '驳回失败', type: 'error' });
+      addNotification({
+        title: t('pdm.change_page.k13'),
+        message: t('pdm.change_page.k12'),
+        type: 'error',
+      });
     },
   });
 
   const customRowActions = [
     {
-      label: '批准',
+      label: t('pdm.change_page.k14'),
       icon: <CheckCircle size={16} />,
       color: 'success' as const,
       onClick: (row: Record<string, unknown>) => {
         const change = row as unknown as ChangeOrder;
-        if (window.confirm('确定要批准这个变更单吗？')) {
+        if (window.confirm(t('pdm.change_page.k15'))) {
           approveMutation.mutate(change.id);
         }
       },
@@ -128,12 +150,12 @@ export const ChangePage: React.FC = () => {
       },
     },
     {
-      label: '驳回',
+      label: t('pdm.change_page.k16'),
       icon: <XCircle size={16} />,
       color: 'error' as const,
       onClick: (row: Record<string, unknown>) => {
         const change = row as unknown as ChangeOrder;
-        if (window.confirm('确定要驳回这个变更单吗？')) {
+        if (window.confirm(t('pdm.change_page.k17'))) {
           rejectMutation.mutate(change.id);
         }
       },
@@ -458,7 +480,7 @@ export const ChangePage: React.FC = () => {
       <CrudPage
         schema={changeSchema}
         apiAdapter={changeAdapter}
-        breadcrumbs={[{ label: 'PDM' }, { label: '变更管理' }]}
+        breadcrumbs={[{ label: 'PDM' }, { label: t('pdm.change_page.k18') }]}
         headerContent={headerContent}
         detailContent={detailContent}
         detailMaxWidth='lg'

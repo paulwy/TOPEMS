@@ -4,6 +4,7 @@ import { productCategorySchema } from '@/schemas/pdm';
 import type { EntitySchema } from '@/schema';
 import type { SchemaExtensions } from '@/schema/schemaExtensions';
 import { documentApi } from '@/api/pdm';
+import { useTranslation } from 'react-i18next';
 
 const apiAdapter = createCrudPageAdapter(documentApi);
 
@@ -24,12 +25,13 @@ const treeDataAdapter = {
 };
 
 export default function PdmProductCategoryPage() {
+  const { t } = useTranslation('pdm');
   return (
     <CrudPage
       schema={productCategorySchema as EntitySchema & SchemaExtensions}
       apiAdapter={apiAdapter}
       treeDataAdapter={treeDataAdapter}
-      breadcrumbs={[{ label: 'PDM' }, { label: '产品分类' }]}
+      breadcrumbs={[{ label: 'PDM' }, { label: t('pdm.pdm_product_category_page.k0') }]}
     />
   );
 }

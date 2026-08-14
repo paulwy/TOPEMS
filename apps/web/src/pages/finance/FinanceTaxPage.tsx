@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import {QUERY_KEYS, CACHE_DURATIONS} from '@/lib/reactQuery';
+import { QUERY_KEYS, CACHE_DURATIONS } from '@/lib/reactQuery';
 import {
   Receipt,
   CheckCircle,
@@ -31,6 +31,7 @@ import {
   Stack,
   Button,
 } from '@mui/material';
+import i18n from '@/i18n';
 
 // ============ 类型定义 ============
 
@@ -142,13 +143,13 @@ const taxApiAdapter: CrudApiAdapter<TaxEntry> = {
     return { data, total };
   },
   create: async () => {
-    throw new Error('税务记录为聚合数据，不支持创建');
+    throw new Error(i18n.t('finance.finance_tax_page.k0'));
   },
   update: async () => {
-    throw new Error('税务记录为聚合数据，不支持编辑');
+    throw new Error(i18n.t('finance.finance_tax_page.k1'));
   },
   delete: async () => {
-    throw new Error('税务记录为聚合数据，不支持删除');
+    throw new Error(i18n.t('finance.finance_tax_page.k2'));
   },
 };
 
@@ -159,8 +160,9 @@ const TaxHeader: React.FC = () => {
   const { data: taxData = [] } = useQuery<TaxEntry[]>({
     queryKey: QUERY_KEYS.FINANCE.TAX,
     queryFn: aggregateTaxEntries,
-  
-      staleTime: CACHE_DURATIONS.MEDIUM,});
+
+    staleTime: CACHE_DURATIONS.MEDIUM,
+  });
 
   const totalTaxAmount = useMemo(
     () => taxData.reduce((sum, item) => sum + item.tax_amount, 0),
@@ -215,14 +217,14 @@ const TaxHeader: React.FC = () => {
 
   const exportFields = useMemo(
     () => [
-      { key: 'tax_type', title: t('finance.finance_tax_page.text_185dea') },
-      { key: 'declaration_period', title: t('finance.finance_tax_page.text_b107cc') },
-      { key: 'taxable_income', title: t('finance.finance_tax_page.text_45aec3') },
-      { key: 'tax_rate', title: t('finance.finance_tax_page.text_2a79a7') },
-      { key: 'tax_amount', title: t('finance.finance_tax_page.text_87b755') },
-      { key: 'paid_amount', title: t('finance.finance_tax_page.amount_1') },
-      { key: 'owed_amount', title: t('finance.finance_tax_page.amount_2') },
-      { key: 'status', title: t('finance.finance_tax_page.status_1') },
+      { key: 'tax_type', title: i18n.t('finance.finance_tax_page.text_185dea') },
+      { key: 'declaration_period', title: i18n.t('finance.finance_tax_page.text_b107cc') },
+      { key: 'taxable_income', title: i18n.t('finance.finance_tax_page.text_45aec3') },
+      { key: 'tax_rate', title: i18n.t('finance.finance_tax_page.text_2a79a7') },
+      { key: 'tax_amount', title: i18n.t('finance.finance_tax_page.text_87b755') },
+      { key: 'paid_amount', title: i18n.t('finance.finance_tax_page.amount_1') },
+      { key: 'owed_amount', title: i18n.t('finance.finance_tax_page.amount_2') },
+      { key: 'status', title: i18n.t('finance.finance_tax_page.status_1') },
     ],
     [t]
   );
@@ -259,14 +261,16 @@ const FinanceTaxPage: React.FC = () => {
   const [selectedTax, setSelectedTax] = useState<TaxEntry | null>(null);
 
   const invalidateTaxData = () => {
-    queryClient.invalidateQueries({ queryKey: QUERY_KEYS.FINANCE.TAX ,
-  exact: false,
-  refetchType: 'active',
-});
-    queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.FINANCE_TAX_BASE ,
-  exact: false,
-  refetchType: 'active',
-});
+    queryClient.invalidateQueries({
+      queryKey: QUERY_KEYS.FINANCE.TAX,
+      exact: false,
+      refetchType: 'active',
+    });
+    queryClient.invalidateQueries({
+      queryKey: QUERY_KEYS.AD_HOC.FINANCE_TAX_BASE,
+      exact: false,
+      refetchType: 'active',
+    });
   };
 
   const handleDeclare = (tax: TaxEntry) => {
@@ -334,7 +338,10 @@ const FinanceTaxPage: React.FC = () => {
       <CrudPage
         schema={taxSchema}
         apiAdapter={taxApiAdapter}
-        breadcrumbs={[{ label: '财务管理' }, { label: '税务管理' }]}
+        breadcrumbs={[
+          { label: t('finance.finance_tax_page.k4') },
+          { label: t('finance.finance_tax_page.k3') },
+        ]}
         headerContent={<TaxHeader />}
         customRowActions={customRowActions}
       />
@@ -346,7 +353,7 @@ const FinanceTaxPage: React.FC = () => {
         maxWidth='sm'
         fullWidth
       >
-        <DialogTitle>税务申报</DialogTitle>
+        <DialogTitle>{t('finance.finance_tax_page.k5')}</DialogTitle>
         <DialogContent>
           {selectedTax && (
             <Stack
@@ -450,7 +457,9 @@ const FinanceTaxPage: React.FC = () => {
           )}
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setShowDeclareModal(false)}>取消</Button>
+          <Button onClick={() => setShowDeclareModal(false)}>
+            {t('finance.finance_tax_page.k6')}
+          </Button>
           <Button
             variant='contained'
             color='success'
@@ -468,7 +477,7 @@ const FinanceTaxPage: React.FC = () => {
         maxWidth='sm'
         fullWidth
       >
-        <DialogTitle>税款缴纳</DialogTitle>
+        <DialogTitle>{t('finance.finance_tax_page.k7')}</DialogTitle>
         <DialogContent>
           {selectedTax && (
             <Stack
@@ -572,7 +581,7 @@ const FinanceTaxPage: React.FC = () => {
           )}
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setShowPayModal(false)}>取消</Button>
+          <Button onClick={() => setShowPayModal(false)}>{t('finance.finance_tax_page.k8')}</Button>
           <Button
             variant='contained'
             color='warning'
@@ -590,7 +599,7 @@ const FinanceTaxPage: React.FC = () => {
         maxWidth='sm'
         fullWidth
       >
-        <DialogTitle>税务分析</DialogTitle>
+        <DialogTitle>{t('finance.finance_tax_page.k9')}</DialogTitle>
         <DialogContent>
           {selectedTax && (
             <Stack
@@ -703,7 +712,9 @@ const FinanceTaxPage: React.FC = () => {
           )}
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setShowAnalysisModal(false)}>关闭</Button>
+          <Button onClick={() => setShowAnalysisModal(false)}>
+            {t('finance.finance_tax_page.k10')}
+          </Button>
         </DialogActions>
       </Dialog>
     </>

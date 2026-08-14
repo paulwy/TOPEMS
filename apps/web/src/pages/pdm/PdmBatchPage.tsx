@@ -6,8 +6,10 @@ import { batchSchema } from '@/schemas/pdm';
 import { pdmApi, type ProductionBatch } from '@/api/pdm';
 
 import { QUERY_KEYS } from '@/lib/reactQuery';
+import { useTranslation } from 'react-i18next';
 
 export default function PdmBatchPage() {
+  const { t } = useTranslation('pdm');
   const queryClient = useQueryClient();
 
   const apiAdapter = useMemo<CrudApiAdapter<ProductionBatch>>(
@@ -35,11 +37,12 @@ export default function PdmBatchPage() {
       },
       create: async (data) => {
         const response = await pdmApi.createBatch(data as Parameters<typeof pdmApi.createBatch>[0]);
-        if (!response.success) throw new Error(response.message || '创建失败');
-        queryClient.invalidateQueries({ queryKey: QUERY_KEYS.PDM.BATCHES ,
-  exact: false,
-  refetchType: 'active',
-});
+        if (!response.success) throw new Error(response.message || t('pdm.pdm_batch_page.k0'));
+        queryClient.invalidateQueries({
+          queryKey: QUERY_KEYS.PDM.BATCHES,
+          exact: false,
+          refetchType: 'active',
+        });
         return (response.data ?? {}) as ProductionBatch;
       },
       update: async (id, data) => {
@@ -47,20 +50,22 @@ export default function PdmBatchPage() {
           id,
           data as Parameters<typeof pdmApi.updateBatch>[1]
         );
-        if (!response.success) throw new Error(response.message || '更新失败');
-        queryClient.invalidateQueries({ queryKey: QUERY_KEYS.PDM.BATCHES ,
-  exact: false,
-  refetchType: 'active',
-});
+        if (!response.success) throw new Error(response.message || t('pdm.pdm_batch_page.k1'));
+        queryClient.invalidateQueries({
+          queryKey: QUERY_KEYS.PDM.BATCHES,
+          exact: false,
+          refetchType: 'active',
+        });
         return (response.data ?? {}) as ProductionBatch;
       },
       delete: async (id) => {
         const response = await pdmApi.deleteBatch(id);
-        if (!response.success) throw new Error(response.message || '删除失败');
-        queryClient.invalidateQueries({ queryKey: QUERY_KEYS.PDM.BATCHES ,
-  exact: false,
-  refetchType: 'active',
-});
+        if (!response.success) throw new Error(response.message || t('pdm.pdm_batch_page.k2'));
+        queryClient.invalidateQueries({
+          queryKey: QUERY_KEYS.PDM.BATCHES,
+          exact: false,
+          refetchType: 'active',
+        });
       },
     }),
     [queryClient]
@@ -146,7 +151,7 @@ export default function PdmBatchPage() {
     <CrudPage
       schema={batchSchema}
       apiAdapter={apiAdapter}
-      breadcrumbs={[{ label: 'PDM' }, { label: '生产批次' }]}
+      breadcrumbs={[{ label: 'PDM' }, { label: t('pdm.pdm_batch_page.k3') }]}
       headerContent={headerContent}
     />
   );

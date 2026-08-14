@@ -31,11 +31,13 @@ import {
 import { automationVariablesApi } from '@/api/automation';
 import type { AutomationVariable, AutomationVariableScope } from '@/api/automation';
 import { PageContainer } from '@/components/common';
+import { useTranslation } from 'react-i18next';
+import i18n from '@/i18n';
 
 const SCOPE_LABEL: Record<AutomationVariableScope, string> = {
-  global: '全局',
-  workspace: '工作区',
-  rule: '规则级',
+  global: i18n.t('automation.automation_variables_page.k0'),
+  workspace: i18n.t('automation.automation_variables_page.k1'),
+  rule: i18n.t('automation.automation_variables_page.k2'),
 };
 
 const SCOPE_COLOR: Record<AutomationVariableScope, 'error' | 'warning' | 'info'> = {
@@ -63,6 +65,7 @@ const INITIAL_FORM: CreateForm = {
 };
 
 export const AutomationVariablesPage: React.FC = () => {
+  const { t } = useTranslation('automation');
   const [variables, setVariables] = useState<AutomationVariable[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -79,7 +82,7 @@ export const AutomationVariablesPage: React.FC = () => {
       const res = await automationVariablesApi.list({ page: 1, pageSize: 100 });
       setVariables(res.data?.items ?? []);
     } catch (err) {
-      setError(err instanceof Error ? err.message : '加载变量列表失败');
+      setError(err instanceof Error ? err.message : t('automation.automation_variables_page.k3'));
     } finally {
       setLoading(false);
     }
@@ -105,7 +108,7 @@ export const AutomationVariablesPage: React.FC = () => {
       setCreateForm(INITIAL_FORM);
       await load();
     } catch (err) {
-      setError(err instanceof Error ? err.message : '创建变量失败');
+      setError(err instanceof Error ? err.message : t('automation.automation_variables_page.k4'));
     } finally {
       setCreating(false);
     }
@@ -116,7 +119,7 @@ export const AutomationVariablesPage: React.FC = () => {
       await automationVariablesApi.remove(key);
       await load();
     } catch (err) {
-      setError(err instanceof Error ? err.message : '删除变量失败');
+      setError(err instanceof Error ? err.message : t('automation.automation_variables_page.k5'));
     }
   };
 
@@ -134,7 +137,7 @@ export const AutomationVariablesPage: React.FC = () => {
         setRevealedKeys((prev) => ({ ...prev, [key]: res.data.value }));
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : '解密失败');
+      setError(err instanceof Error ? err.message : t('automation.automation_variables_page.k6'));
     } finally {
       setRevealing(null);
     }
@@ -143,14 +146,14 @@ export const AutomationVariablesPage: React.FC = () => {
   const maskValue = (v: string) => '•'.repeat(Math.min(v.length, 12) || 8);
 
   return (
-    <PageContainer title='环境变量'>
+    <PageContainer title={t('automation.automation_variables_page.k7')}>
       <Box sx={{ p: 3 }}>
         <Stack
           direction='row'
           spacing={2}
           sx={{ mb: 2, justifyContent: 'space-between', alignItems: 'center' }}
         >
-          <Typography variant='h5'>环境变量</Typography>
+          <Typography variant='h5'>{t('automation.automation_variables_page.k8')}</Typography>
           <Button
             variant='contained'
             startIcon={<AddIcon />}
@@ -182,14 +185,16 @@ export const AutomationVariablesPage: React.FC = () => {
             <Table size='small'>
               <TableHead>
                 <TableRow>
-                  <TableCell>变量名</TableCell>
+                  <TableCell>{t('automation.automation_variables_page.k9')}</TableCell>
                   <TableCell>值</TableCell>
-                  <TableCell>范围</TableCell>
-                  <TableCell>密钥</TableCell>
-                  <TableCell>规则 ID</TableCell>
-                  <TableCell>描述</TableCell>
-                  <TableCell>更新时间</TableCell>
-                  <TableCell align='right'>操作</TableCell>
+                  <TableCell>{t('automation.automation_variables_page.k10')}</TableCell>
+                  <TableCell>{t('automation.automation_variables_page.k11')}</TableCell>
+                  <TableCell>{t('automation.automation_variables_page.id_12')}</TableCell>
+                  <TableCell>{t('automation.automation_variables_page.k13')}</TableCell>
+                  <TableCell>{t('automation.automation_variables_page.k14')}</TableCell>
+                  <TableCell align='right'>
+                    {t('automation.automation_variables_page.k15')}
+                  </TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
@@ -229,8 +234,16 @@ export const AutomationVariablesPage: React.FC = () => {
                                 size='small'
                                 onClick={() => handleReveal(v.key)}
                                 disabled={revealing === v.key}
-                                aria-label={revealed ? '隐藏' : '解密'}
-                                title={revealed ? '隐藏' : '解密'}
+                                aria-label={
+                                  revealed
+                                    ? t('automation.automation_variables_page.k17')
+                                    : t('automation.automation_variables_page.k16')
+                                }
+                                title={
+                                  revealed
+                                    ? t('automation.automation_variables_page.k19')
+                                    : t('automation.automation_variables_page.k18')
+                                }
                               >
                                 {revealed ? <EyeOffIcon size={16} /> : <EyeIcon size={16} />}
                               </IconButton>
@@ -246,7 +259,11 @@ export const AutomationVariablesPage: React.FC = () => {
                             label={SCOPE_LABEL[v.scope]}
                           />
                         </TableCell>
-                        <TableCell>{v.is_secret ? '是' : '否'}</TableCell>
+                        <TableCell>
+                          {v.is_secret
+                            ? t('automation.automation_variables_page.k21')
+                            : t('automation.automation_variables_page.k20')}
+                        </TableCell>
                         <TableCell>{v.rule_id ?? '-'}</TableCell>
                         <TableCell>{v.description ?? '-'}</TableCell>
                         <TableCell>{v.updated_at}</TableCell>
@@ -255,8 +272,8 @@ export const AutomationVariablesPage: React.FC = () => {
                             size='small'
                             color='error'
                             onClick={() => handleDelete(v.key)}
-                            aria-label='删除'
-                            title='删除'
+                            aria-label={t('automation.automation_variables_page.k22')}
+                            title={t('automation.automation_variables_page.k23')}
                           >
                             <DeleteIcon size={18} />
                           </IconButton>
@@ -276,14 +293,14 @@ export const AutomationVariablesPage: React.FC = () => {
           maxWidth='sm'
           fullWidth
         >
-          <DialogTitle>新建环境变量</DialogTitle>
+          <DialogTitle>{t('automation.automation_variables_page.k24')}</DialogTitle>
           <DialogContent>
             <Stack
               spacing={2}
               sx={{ mt: 1 }}
             >
               <TextField
-                label='变量名（key）'
+                label={t('automation.automation_variables_page.key_25')}
                 value={createForm.key}
                 onChange={(e) => setCreateForm({ ...createForm, key: e.target.value })}
                 fullWidth
@@ -291,7 +308,7 @@ export const AutomationVariablesPage: React.FC = () => {
                 helperText='变量名唯一，建议大写+下划线，如 API_KEY'
               />
               <TextField
-                label='变量值'
+                label={t('automation.automation_variables_page.k26')}
                 value={createForm.value}
                 onChange={(e) => setCreateForm({ ...createForm, value: e.target.value })}
                 fullWidth
@@ -301,7 +318,7 @@ export const AutomationVariablesPage: React.FC = () => {
               />
               <TextField
                 select
-                label='范围'
+                label={t('automation.automation_variables_page.k27')}
                 value={createForm.scope}
                 onChange={(e) =>
                   setCreateForm({
@@ -311,13 +328,15 @@ export const AutomationVariablesPage: React.FC = () => {
                 }
                 fullWidth
               >
-                <MenuItem value='global'>全局</MenuItem>
-                <MenuItem value='workspace'>工作区</MenuItem>
-                <MenuItem value='rule'>规则级</MenuItem>
+                <MenuItem value='global'>{t('automation.automation_variables_page.k28')}</MenuItem>
+                <MenuItem value='workspace'>
+                  {t('automation.automation_variables_page.k29')}
+                </MenuItem>
+                <MenuItem value='rule'>{t('automation.automation_variables_page.k30')}</MenuItem>
               </TextField>
               {createForm.scope === 'rule' && (
                 <TextField
-                  label='规则 ID'
+                  label={t('automation.automation_variables_page.id_31')}
                   value={createForm.rule_id}
                   onChange={(e) => setCreateForm({ ...createForm, rule_id: e.target.value })}
                   fullWidth
@@ -326,18 +345,20 @@ export const AutomationVariablesPage: React.FC = () => {
               )}
               <TextField
                 select
-                label='是否为密钥'
+                label={t('automation.automation_variables_page.k32')}
                 value={createForm.is_secret ? 'true' : 'false'}
                 onChange={(e) =>
                   setCreateForm({ ...createForm, is_secret: e.target.value === 'true' })
                 }
                 fullWidth
               >
-                <MenuItem value='false'>否（普通变量）</MenuItem>
-                <MenuItem value='true'>是（密钥，读取时 mask）</MenuItem>
+                <MenuItem value='false'>{t('automation.automation_variables_page.k33')}</MenuItem>
+                <MenuItem value='true'>
+                  {t('automation.automation_variables_page.mask_34')}
+                </MenuItem>
               </TextField>
               <TextField
-                label='描述'
+                label={t('automation.automation_variables_page.k35')}
                 value={createForm.description}
                 onChange={(e) => setCreateForm({ ...createForm, description: e.target.value })}
                 fullWidth
@@ -345,7 +366,9 @@ export const AutomationVariablesPage: React.FC = () => {
             </Stack>
           </DialogContent>
           <DialogActions>
-            <Button onClick={() => setCreateOpen(false)}>取消</Button>
+            <Button onClick={() => setCreateOpen(false)}>
+              {t('automation.automation_variables_page.k36')}
+            </Button>
             <Button
               onClick={handleCreate}
               variant='contained'
@@ -353,7 +376,7 @@ export const AutomationVariablesPage: React.FC = () => {
                 creating || !createForm.key || (createForm.scope === 'rule' && !createForm.rule_id)
               }
             >
-              {creating ? '创建中…' : '创建'}
+              {creating ? '创建中…' : t('automation.automation_variables_page.k37')}
             </Button>
           </DialogActions>
         </Dialog>

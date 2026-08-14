@@ -13,7 +13,13 @@ import {
   Target,
 } from 'lucide-react';
 import { DashboardTemplate } from '@/components/templates';
-import type { StatCardConfig, ChartConfig, ChartCard, RecentItem, QuickAction } from '@/components/templates/DashboardTemplate';
+import type {
+  StatCardConfig,
+  ChartConfig,
+  ChartCard,
+  RecentItem,
+  QuickAction,
+} from '@/components/templates/DashboardTemplate';
 import { PageContainer } from '@/components/common';
 import { usePdmDashboardSchema } from '@/schemas/pdm';
 
@@ -35,15 +41,16 @@ const iconMap: Record<string, React.ComponentType<{ size?: number; className?: s
 const PdmDashboardPage: React.FC = () => {
   const schema = usePdmDashboardSchema();
 
-  const { isPending: loading} = useQuery({
+  const { isPending: loading } = useQuery({
     queryKey: QUERY_KEYS.AD_HOC.PDM_DASHBOARD_SCHEMA_BASE,
     queryFn: async () => {
       if (schema.loader) return schema.loader();
       return null;
     },
     enabled: !!schema.loader,
-  
-      staleTime: CACHE_DURATIONS.MEDIUM,});
+
+    staleTime: CACHE_DURATIONS.MEDIUM,
+  });
 
   const statCards = useMemo<StatCardConfig[]>(() => {
     if (!schema.statCards) return [];

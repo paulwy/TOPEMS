@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import {QUERY_KEYS, CACHE_DURATIONS} from '@/lib/reactQuery';
+import { QUERY_KEYS, CACHE_DURATIONS } from '@/lib/reactQuery';
 import { designTokens } from '@/theme/tokens';
 import {
   TrendingUp,
@@ -37,7 +37,7 @@ import { PageContainer } from '@/components/common';
 
 import { useTranslation } from 'react-i18next';
 
-const ct= designTokens.colors;
+const ct = designTokens.colors;
 
 const FinanceReportsPage: React.FC = () => {
   const { t } = useTranslation();
@@ -63,8 +63,9 @@ const FinanceReportsPage: React.FC = () => {
         departmentSummaries: departments.success && departments.data ? departments.data : [],
       };
     },
-  
-      staleTime: CACHE_DURATIONS.MEDIUM,});
+
+    staleTime: CACHE_DURATIONS.MEDIUM,
+  });
 
   const businessOverview = reportsQuery.data?.businessOverview ?? null;
   const projectSummaries = reportsQuery.data?.projectSummaries ?? [];
@@ -317,13 +318,13 @@ const FinanceReportsPage: React.FC = () => {
           size='small'
           sx={{ minWidth: 144 }}
         >
-          <InputLabel>选择期间</InputLabel>
+          <InputLabel>{t('finance.finance_reports_page.k0')}</InputLabel>
           <Select
             value={period}
             label={t('finance.finance_reports_page.text_0d80a7')}
             onChange={(e) => setPeriod(e.target.value)}
           >
-            <MenuItem value=''>全部期间</MenuItem>
+            <MenuItem value=''>{t('finance.finance_reports_page.k1')}</MenuItem>
             <MenuItem value='2024-01'>2024年01月</MenuItem>
             <MenuItem value='2024-02'>2024年02月</MenuItem>
             <MenuItem value='2024-03'>2024年03月</MenuItem>

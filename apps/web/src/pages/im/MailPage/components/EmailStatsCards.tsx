@@ -2,8 +2,9 @@ import { Card, CardContent, Typography, Box } from '@mui/material';
 import { Mail, CheckCircle, Clock, XCircle } from 'lucide-react';
 import { designTokens } from '@/theme/tokens';
 import type { EmailStats } from '@/api/mail';
+import { useTranslation } from 'react-i18next';
 
-const ct= designTokens.colors;
+const ct = designTokens.colors;
 
 interface EmailStatsCardsProps {
   stats: EmailStats | null;
@@ -11,6 +12,7 @@ interface EmailStatsCardsProps {
 }
 
 const EmailStatsCards: React.FC<EmailStatsCardsProps> = ({ stats, statsLoading }) => {
+  const { t } = useTranslation('im');
   return (
     <Box
       sx={{
@@ -87,7 +89,9 @@ const EmailStatsCards: React.FC<EmailStatsCardsProps> = ({ stats, statsLoading }
             }}
           >
             <Box>
-              <Typography sx={{ color: 'success.light', fontSize: '0.875rem' }}>已发送</Typography>
+              <Typography sx={{ color: 'success.light', fontSize: '0.875rem' }}>
+                {t('im.email_stats_cards.k0')}
+              </Typography>
               <Typography
                 sx={{
                   fontSize: '1.875rem',
@@ -133,7 +137,9 @@ const EmailStatsCards: React.FC<EmailStatsCardsProps> = ({ stats, statsLoading }
             }}
           >
             <Box>
-              <Typography sx={{ color: 'warning.100', fontSize: '0.875rem' }}>待发送</Typography>
+              <Typography sx={{ color: 'warning.100', fontSize: '0.875rem' }}>
+                {t('im.email_stats_cards.k1')}
+              </Typography>
               <Typography
                 sx={{
                   fontSize: '1.875rem',
@@ -179,7 +185,9 @@ const EmailStatsCards: React.FC<EmailStatsCardsProps> = ({ stats, statsLoading }
             }}
           >
             <Box>
-              <Typography sx={{ color: 'error.light', fontSize: '0.875rem' }}>发送失败</Typography>
+              <Typography sx={{ color: 'error.light', fontSize: '0.875rem' }}>
+                {t('im.email_stats_cards.k2')}
+              </Typography>
               <Typography
                 sx={{
                   fontSize: '1.875rem',

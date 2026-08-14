@@ -18,6 +18,7 @@ import { AIHelperButton } from '@/components/ai';
 import type { EmployeeFormDialogProps } from '../types';
 
 import { useTranslation } from 'react-i18next';
+import i18n from '@/i18n';
 
 const EmployeeFormDialog: React.FC<EmployeeFormDialogProps> = ({
   open,
@@ -42,8 +43,8 @@ const EmployeeFormDialog: React.FC<EmployeeFormDialogProps> = ({
     >
       <DialogTitle>
         {mode === 'create'
-          ? t('hrm.hrm_employee_page_components__employee_form_dialog.add')
-          : t('hrm.hrm_employee_page_components__employee_form_dialog.edit')}
+          ? i18n.t('hrm.hrm_employee_page_components__employee_form_dialog.add')
+          : i18n.t('hrm.hrm_employee_page_components__employee_form_dialog.edit')}
       </DialogTitle>
       <DialogContent>
         <Box
@@ -58,7 +59,7 @@ const EmployeeFormDialog: React.FC<EmployeeFormDialogProps> = ({
             <InputLabel>所属公司 *</InputLabel>
             <Select
               value={(formData as { org_id?: string })?.org_id || ''}
-              label={t('hrm.hrm_employee_page_components__employee_form_dialog.text_c3846b')}
+              label={i18n.t('hrm.hrm_employee_page_components__employee_form_dialog.text_c3846b')}
               onChange={(e) => onChange('org_id', e.target.value)}
               required
             >
@@ -135,7 +136,7 @@ const EmployeeFormDialog: React.FC<EmployeeFormDialogProps> = ({
             size='small'
             fullWidth
           >
-            <InputLabel>所属部门</InputLabel>
+            <InputLabel>{t('hrm.employee_form_dialog.k0')}</InputLabel>
             <Select
               value={(formData as { department_id?: string })?.department_id || ''}
               label={t('hrm.hrm_employee_page_components__employee_form_dialog.text_68923b')}
@@ -173,14 +174,14 @@ const EmployeeFormDialog: React.FC<EmployeeFormDialogProps> = ({
             size='small'
             fullWidth
           >
-            <InputLabel>状态</InputLabel>
+            <InputLabel>{t('hrm.employee_form_dialog.k1')}</InputLabel>
             <Select
               value={(formData as { status?: string })?.status || 'active'}
               label={t('hrm.hrm_employee_page_components__employee_form_dialog.status')}
               onChange={(e) => onChange('status', e.target.value)}
             >
-              <MenuItem value='active'>在职</MenuItem>
-              <MenuItem value='inactive'>离职</MenuItem>
+              <MenuItem value='active'>{t('hrm.employee_form_dialog.k2')}</MenuItem>
+              <MenuItem value='inactive'>{t('hrm.employee_form_dialog.k3')}</MenuItem>
             </Select>
           </FormControl>
 

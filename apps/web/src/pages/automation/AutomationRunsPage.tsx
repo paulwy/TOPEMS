@@ -28,6 +28,8 @@ import {
 import { automationRunsApi } from '@/api/automation';
 import type { AutomationRun, AutomationRunStatus } from '@/api/automation';
 import { PageContainer } from '@/components/common';
+import { useTranslation } from 'react-i18next';
+import i18n from '@/i18n';
 
 const RUN_STATUS_COLOR: Record<
   AutomationRunStatus,
@@ -42,15 +44,16 @@ const RUN_STATUS_COLOR: Record<
 };
 
 const RUN_STATUS_LABEL: Record<AutomationRunStatus, string> = {
-  success: '成功',
-  failed: '失败',
-  running: '运行中',
-  pending: '等待',
-  cancelled: '已取消',
-  timeout: '超时',
+  success: i18n.t('automation.automation_runs_page.k0'),
+  failed: i18n.t('automation.automation_runs_page.k1'),
+  running: i18n.t('automation.automation_runs_page.k2'),
+  pending: i18n.t('automation.automation_runs_page.k3'),
+  cancelled: i18n.t('automation.automation_runs_page.k4'),
+  timeout: i18n.t('automation.automation_runs_page.k5'),
 };
 
 export const AutomationRunsPage: React.FC = () => {
+  const { t } = useTranslation('automation');
   const [runs, setRuns] = useState<AutomationRun[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -63,7 +66,7 @@ export const AutomationRunsPage: React.FC = () => {
       const res = await automationRunsApi.list({ page: 1, pageSize: 50 });
       setRuns(res.data?.items ?? []);
     } catch (err) {
-      setError(err instanceof Error ? err.message : '加载执行历史失败');
+      setError(err instanceof Error ? err.message : t('automation.automation_runs_page.k6'));
     } finally {
       setLoading(false);
     }
@@ -78,7 +81,7 @@ export const AutomationRunsPage: React.FC = () => {
       await automationRunsApi.retry(id);
       await load();
     } catch (err) {
-      setError(err instanceof Error ? err.message : '重试失败');
+      setError(err instanceof Error ? err.message : t('automation.automation_runs_page.k7'));
     }
   };
 
@@ -87,7 +90,7 @@ export const AutomationRunsPage: React.FC = () => {
       await automationRunsApi.cancel(id);
       await load();
     } catch (err) {
-      setError(err instanceof Error ? err.message : '取消失败');
+      setError(err instanceof Error ? err.message : t('automation.automation_runs_page.k8'));
     }
   };
 
@@ -96,19 +99,19 @@ export const AutomationRunsPage: React.FC = () => {
       const res = await automationRunsApi.get(run.id);
       if (res.data) setDetailRun(res.data);
     } catch (err) {
-      setError(err instanceof Error ? err.message : '加载详情失败');
+      setError(err instanceof Error ? err.message : t('automation.automation_runs_page.k9'));
     }
   };
 
   return (
-    <PageContainer title='执行历史'>
+    <PageContainer title={t('automation.automation_runs_page.k10')}>
       <Box sx={{ p: 3 }}>
         <Stack
           direction='row'
           spacing={2}
           sx={{ mb: 2, justifyContent: 'space-between', alignItems: 'center' }}
         >
-          <Typography variant='h5'>执行历史</Typography>
+          <Typography variant='h5'>{t('automation.automation_runs_page.k11')}</Typography>
           <Button
             startIcon={<RefreshIcon />}
             onClick={load}
@@ -140,14 +143,14 @@ export const AutomationRunsPage: React.FC = () => {
             <Table size='small'>
               <TableHead>
                 <TableRow>
-                  <TableCell>规则</TableCell>
-                  <TableCell>触发方式</TableCell>
-                  <TableCell>状态</TableCell>
-                  <TableCell>开始时间</TableCell>
-                  <TableCell>结束时间</TableCell>
-                  <TableCell align='right'>耗时</TableCell>
-                  <TableCell>重试</TableCell>
-                  <TableCell align='right'>操作</TableCell>
+                  <TableCell>{t('automation.automation_runs_page.k12')}</TableCell>
+                  <TableCell>{t('automation.automation_runs_page.k13')}</TableCell>
+                  <TableCell>{t('automation.automation_runs_page.k14')}</TableCell>
+                  <TableCell>{t('automation.automation_runs_page.k15')}</TableCell>
+                  <TableCell>{t('automation.automation_runs_page.k16')}</TableCell>
+                  <TableCell align='right'>{t('automation.automation_runs_page.k17')}</TableCell>
+                  <TableCell>{t('automation.automation_runs_page.k18')}</TableCell>
+                  <TableCell align='right'>{t('automation.automation_runs_page.k19')}</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
@@ -182,8 +185,8 @@ export const AutomationRunsPage: React.FC = () => {
                         <IconButton
                           size='small'
                           onClick={() => handleViewDetail(run)}
-                          aria-label='查看详情'
-                          title='查看详情'
+                          aria-label={t('automation.automation_runs_page.k20')}
+                          title={t('automation.automation_runs_page.k21')}
                         >
                           <ChevronRightIcon size={18} />
                         </IconButton>
@@ -191,8 +194,8 @@ export const AutomationRunsPage: React.FC = () => {
                           <IconButton
                             size='small'
                             onClick={() => handleRetry(run.id)}
-                            aria-label='重试'
-                            title='重试'
+                            aria-label={t('automation.automation_runs_page.k22')}
+                            title={t('automation.automation_runs_page.k23')}
                           >
                             <RefreshIcon size={18} />
                           </IconButton>
@@ -202,8 +205,8 @@ export const AutomationRunsPage: React.FC = () => {
                             size='small'
                             color='error'
                             onClick={() => handleCancel(run.id)}
-                            aria-label='取消'
-                            title='取消'
+                            aria-label={t('automation.automation_runs_page.k24')}
+                            title={t('automation.automation_runs_page.k25')}
                           >
                             <CancelIcon size={18} />
                           </IconButton>
@@ -223,7 +226,7 @@ export const AutomationRunsPage: React.FC = () => {
           maxWidth='md'
           fullWidth
         >
-          <DialogTitle>运行详情</DialogTitle>
+          <DialogTitle>{t('automation.automation_runs_page.k26')}</DialogTitle>
           <DialogContent>
             {detailRun && (
               <Stack
@@ -231,13 +234,17 @@ export const AutomationRunsPage: React.FC = () => {
                 sx={{ mt: 1 }}
               >
                 <Box>
-                  <Typography variant='subtitle2'>规则</Typography>
+                  <Typography variant='subtitle2'>
+                    {t('automation.automation_runs_page.k27')}
+                  </Typography>
                   <Typography variant='body2'>
                     {detailRun.rule_name ?? detailRun.rule_code ?? detailRun.rule_id}
                   </Typography>
                 </Box>
                 <Box>
-                  <Typography variant='subtitle2'>状态</Typography>
+                  <Typography variant='subtitle2'>
+                    {t('automation.automation_runs_page.k28')}
+                  </Typography>
                   <Chip
                     size='small'
                     color={RUN_STATUS_COLOR[detailRun.status]}
@@ -245,7 +252,9 @@ export const AutomationRunsPage: React.FC = () => {
                   />
                 </Box>
                 <Box>
-                  <Typography variant='subtitle2'>时间</Typography>
+                  <Typography variant='subtitle2'>
+                    {t('automation.automation_runs_page.k29')}
+                  </Typography>
                   <Typography variant='body2'>
                     开始：{detailRun.started_at}
                     <br />
@@ -288,7 +297,9 @@ export const AutomationRunsPage: React.FC = () => {
                 )}
                 {detailRun.steps && detailRun.steps.length > 0 && (
                   <Box>
-                    <Typography variant='subtitle2'>步骤明细</Typography>
+                    <Typography variant='subtitle2'>
+                      {t('automation.automation_runs_page.k30')}
+                    </Typography>
                     <TableContainer
                       component={Paper}
                       variant='outlined'
@@ -298,10 +309,12 @@ export const AutomationRunsPage: React.FC = () => {
                         <TableHead>
                           <TableRow>
                             <TableCell>#</TableCell>
-                            <TableCell>步骤</TableCell>
-                            <TableCell>类型</TableCell>
-                            <TableCell>状态</TableCell>
-                            <TableCell align='right'>耗时</TableCell>
+                            <TableCell>{t('automation.automation_runs_page.k31')}</TableCell>
+                            <TableCell>{t('automation.automation_runs_page.k32')}</TableCell>
+                            <TableCell>{t('automation.automation_runs_page.k33')}</TableCell>
+                            <TableCell align='right'>
+                              {t('automation.automation_runs_page.k34')}
+                            </TableCell>
                           </TableRow>
                         </TableHead>
                         <TableBody>
@@ -325,7 +338,9 @@ export const AutomationRunsPage: React.FC = () => {
             )}
           </DialogContent>
           <DialogActions>
-            <Button onClick={() => setDetailRun(null)}>关闭</Button>
+            <Button onClick={() => setDetailRun(null)}>
+              {t('automation.automation_runs_page.k35')}
+            </Button>
           </DialogActions>
         </Dialog>
       </Box>

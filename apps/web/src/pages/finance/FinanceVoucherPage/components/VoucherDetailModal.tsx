@@ -4,6 +4,7 @@ import { Dialog } from '@/components/common';
 import type { FinancialVoucher, VoucherItem } from '@/api/erp';
 
 import { useTranslation } from 'react-i18next';
+import i18n from '@/i18n';
 
 interface VoucherDetailModalProps {
   open: boolean;
@@ -27,7 +28,7 @@ const VoucherDetailModal: React.FC<VoucherDetailModalProps> = ({
     <Dialog
       open={open}
       onClose={onClose}
-      title={t('finance.finance_voucher_page_components__voucher_detail_modal.detail')}
+      title={i18n.t('finance.finance_voucher_page_components__voucher_detail_modal.detail')}
     >
       {currentVoucher && (
         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 1 }}>

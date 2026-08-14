@@ -13,7 +13,13 @@ import {
   Target,
 } from 'lucide-react';
 import { DashboardTemplate } from '@/components/templates';
-import type { StatCardConfig, ChartConfig, ChartCard, RecentItem, QuickAction } from '@/components/templates/DashboardTemplate';
+import type {
+  StatCardConfig,
+  ChartConfig,
+  ChartCard,
+  RecentItem,
+  QuickAction,
+} from '@/components/templates/DashboardTemplate';
 import { PageContainer } from '@/components/common';
 import { useHrmDashboardSchema } from '@/schemas/hrm';
 import type { StatCardSchema, ChartSchema } from '@/schema';
@@ -36,15 +42,16 @@ const iconMap: Record<string, React.ComponentType<{ size?: number; className?: s
 const HrmDashboardPage: React.FC = () => {
   const schema = useHrmDashboardSchema();
 
-  const { isPending: loading} = useQuery({
+  const { isPending: loading } = useQuery({
     queryKey: QUERY_KEYS.AD_HOC.HRM_DASHBOARD_SCHEMA_BASE,
     queryFn: async () => {
       if (schema.loader) return schema.loader();
       return null;
     },
     enabled: !!schema.loader,
-  
-      staleTime: CACHE_DURATIONS.MEDIUM,});
+
+    staleTime: CACHE_DURATIONS.MEDIUM,
+  });
 
   const statCards = useMemo<StatCardConfig[]>(() => {
     if (!schema.statCards) return [];

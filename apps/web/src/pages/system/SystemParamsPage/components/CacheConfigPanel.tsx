@@ -19,6 +19,8 @@ import {
   Alert,
 } from '@mui/material';
 import { Grid } from '@/components/common';
+import { useTranslation } from 'react-i18next';
+import i18n from '@/i18n';
 
 interface CacheConfigType {
   enabled: boolean;
@@ -59,6 +61,7 @@ const CacheConfigPanel: React.FC<CacheConfigPanelProps> = ({
   onClearCache,
   isClearingCache,
 }) => {
+  const { t } = useTranslation('system');
   return (
     <Box sx={{ mt: 2 }}>
       <Card sx={{ mb: 3 }}>
@@ -103,7 +106,7 @@ const CacheConfigPanel: React.FC<CacheConfigPanelProps> = ({
               onClick={onClearCache}
               disabled={isClearingCache || !cacheConfig.enabled}
             >
-              {isClearingCache ? '清除中...' : '清除缓存'}
+              {isClearingCache ? '清除中...' : i18n.t('system.cache_config_panel.k0')}
             </Button>
           }
         />
@@ -216,10 +219,10 @@ const CacheConfigPanel: React.FC<CacheConfigPanelProps> = ({
                 </Grid>
               </Grid>
             ) : (
-              <Alert severity='info'>无法获取缓存统计信息</Alert>
+              <Alert severity='info'>{t('system.cache_config_panel.k1')}</Alert>
             )
           ) : (
-            <Alert severity='warning'>缓存未启用，请先启用缓存功能</Alert>
+            <Alert severity='warning'>{t('system.cache_config_panel.k2')}</Alert>
           )}
         </CardContent>
       </Card>
@@ -277,7 +280,7 @@ const CacheConfigPanel: React.FC<CacheConfigPanelProps> = ({
                     }
                   />
                 }
-                label='启用缓存'
+                label={t('system.cache_config_panel.k3')}
               />
             </Grid>
             <Grid
@@ -285,10 +288,10 @@ const CacheConfigPanel: React.FC<CacheConfigPanelProps> = ({
               sm={6}
             >
               <FormControl fullWidth>
-                <InputLabel>缓存提供者</InputLabel>
+                <InputLabel>{t('system.cache_config_panel.k4')}</InputLabel>
                 <Select
                   value={cacheConfig.provider}
-                  label='缓存提供者'
+                  label={t('system.cache_config_panel.k5')}
                   onChange={(e) =>
                     setCacheConfig((prev) => ({
                       ...prev,
@@ -298,7 +301,7 @@ const CacheConfigPanel: React.FC<CacheConfigPanelProps> = ({
                   disabled={!cacheConfig.enabled}
                 >
                   <MenuItem value='redis'>Redis</MenuItem>
-                  <MenuItem value='memory'>内存</MenuItem>
+                  <MenuItem value='memory'>{t('system.cache_config_panel.k6')}</MenuItem>
                   <MenuItem value='memcached'>Memcached</MenuItem>
                 </Select>
               </FormControl>
@@ -309,7 +312,7 @@ const CacheConfigPanel: React.FC<CacheConfigPanelProps> = ({
             >
               <TextField
                 fullWidth
-                label='缓存前缀'
+                label={t('system.cache_config_panel.k7')}
                 value={cacheConfig.cache_prefix}
                 onChange={(e) =>
                   setCacheConfig((prev) => ({
@@ -390,7 +393,7 @@ const CacheConfigPanel: React.FC<CacheConfigPanelProps> = ({
             >
               <TextField
                 fullWidth
-                label='默认TTL(秒)'
+                label={t('system.cache_config_panel.ttl_8')}
                 type='number'
                 value={cacheConfig.default_ttl_seconds}
                 onChange={(e) =>
@@ -408,7 +411,7 @@ const CacheConfigPanel: React.FC<CacheConfigPanelProps> = ({
             >
               <TextField
                 fullWidth
-                label='最大内存(MB)'
+                label={t('system.cache_config_panel.mb_9')}
                 type='number'
                 value={cacheConfig.max_memory_mb}
                 onChange={(e) =>
@@ -434,7 +437,7 @@ const CacheConfigPanel: React.FC<CacheConfigPanelProps> = ({
                     disabled={!cacheConfig.enabled}
                   />
                 }
-                label='启用压缩'
+                label={t('system.cache_config_panel.k10')}
               />
             </Grid>
           </Grid>
@@ -448,7 +451,7 @@ const CacheConfigPanel: React.FC<CacheConfigPanelProps> = ({
           onClick={onSave}
           disabled={isSaving}
         >
-          {isSaving ? '保存中...' : '保存配置'}
+          {isSaving ? '保存中...' : t('system.cache_config_panel.k11')}
         </Button>
       </Box>
     </Box>

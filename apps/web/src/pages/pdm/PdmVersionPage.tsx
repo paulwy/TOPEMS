@@ -5,7 +5,9 @@ import { type EntitySchema } from '@/schema';
 import { versionSchema } from '@/schemas/pdm';
 import { documentApi, pdmApi, type DocumentVersion, type Document } from '@/api/pdm';
 
-import {QUERY_KEYS, CACHE_DURATIONS} from '@/lib/reactQuery';
+import { QUERY_KEYS, CACHE_DURATIONS } from '@/lib/reactQuery';
+import { useTranslation } from 'react-i18next';
+import i18n from '@/i18n';
 
 const versionApiAdapter: CrudApiAdapter<DocumentVersion> = {
   list: async (params) => {
@@ -32,7 +34,7 @@ const versionApiAdapter: CrudApiAdapter<DocumentVersion> = {
     const response = await documentApi.createVersion(
       data as Parameters<typeof documentApi.createVersion>[0]
     );
-    if (!response.success) throw new Error(response.message || '创建失败');
+    if (!response.success) throw new Error(response.message || i18n.t('pdm.pdm_version_page.k0'));
     const result = (response.data ?? {}) as DocumentVersion;
     if (result.document_id && result.id) {
       (result as unknown as Record<string, unknown>).id = `${result.document_id}:${result.id}`;
@@ -50,7 +52,7 @@ const versionApiAdapter: CrudApiAdapter<DocumentVersion> = {
       versionId,
       rest as Parameters<typeof documentApi.updateVersion>[2]
     );
-    if (!response.success) throw new Error(response.message || '更新失败');
+    if (!response.success) throw new Error(response.message || i18n.t('pdm.pdm_version_page.k1'));
     const result = (response.data ?? {}) as DocumentVersion;
     if (result.document_id && result.id) {
       (result as unknown as Record<string, unknown>).id = `${result.document_id}:${result.id}`;
@@ -63,11 +65,12 @@ const versionApiAdapter: CrudApiAdapter<DocumentVersion> = {
     const documentId = parts[0];
     const versionId = parts[1];
     const response = await documentApi.deleteVersion(documentId, versionId);
-    if (!response.success) throw new Error(response.message || '删除失败');
+    if (!response.success) throw new Error(response.message || i18n.t('pdm.pdm_version_page.k2'));
   },
 };
 
 export default function PdmVersionPage() {
+  const { t } = useTranslation('pdm');
   const { data: documents = [] } = useQuery<Document[]>({
     queryKey: QUERY_KEYS.PDM.DOCUMENTS,
     queryFn: async (): Promise<Document[]> => {
@@ -78,12 +81,13 @@ export default function PdmVersionPage() {
       }
       return [];
     },
-  
-      staleTime: CACHE_DURATIONS.MEDIUM,});
+
+    staleTime: CACHE_DURATIONS.MEDIUM,
+  });
 
   const dynamicSchema = useMemo<EntitySchema>(() => {
     const docOptions = [
-      { label: '全部文档', value: 'all' },
+      { label: t('pdm.pdm_version_page.k3'), value: 'all' },
       ...documents.map((d) => ({ value: d.id, label: d.name })),
     ];
 
@@ -105,7 +109,7 @@ export default function PdmVersionPage() {
     <CrudPage
       schema={dynamicSchema}
       apiAdapter={versionApiAdapter}
-      breadcrumbs={[{ label: 'PDM' }, { label: '文档版本' }]}
+      breadcrumbs={[{ label: 'PDM' }, { label: t('pdm.pdm_version_page.k4') }]}
     />
   );
 }

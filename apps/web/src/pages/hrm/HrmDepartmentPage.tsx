@@ -13,12 +13,14 @@ import React, { useMemo, useState } from 'react';
 import { departmentSchema } from '@/schemas/hrm';
 import { EmptyState } from '@/components';
 
-
 import { QUERY_KEYS } from '@/lib/reactQuery';
+import { useTranslation } from 'react-i18next';
+import i18n from '@/i18n';
 
-const ct= designTokens.colors;
+const ct = designTokens.colors;
 
 const HrmDepartmentPage: React.FC = () => {
+  const { t } = useTranslation('hrm');
   const queryClient = useQueryClient();
   const { addNotification } = useNotificationStore();
 
@@ -60,30 +62,43 @@ const HrmDepartmentPage: React.FC = () => {
       create: async (data) => {
         const res = await departmentApi.create(data as Partial<Department>);
         if (res.success && res.data) {
-          addNotification({ title: '成功', message: '部门创建成功', type: 'success' });
+          addNotification({
+            title: t('hrm.hrm_department_page.k1'),
+            message: t('hrm.hrm_department_page.k0'),
+            type: 'success',
+          });
           return res.data as Department;
         }
-        throw new Error(res.message || '创建失败');
+        throw new Error(res.message || t('hrm.hrm_department_page.k2'));
       },
       update: async (id, data) => {
         const res = await departmentApi.update(id, data as Partial<Department>);
         if (res.success && res.data) {
-          addNotification({ title: '成功', message: '部门更新成功', type: 'success' });
-          queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.HRM_DEPARTMENTS_BASE ,
-  exact: false,
-  refetchType: 'active',
-});
+          addNotification({
+            title: t('hrm.hrm_department_page.k4'),
+            message: t('hrm.hrm_department_page.k3'),
+            type: 'success',
+          });
+          queryClient.invalidateQueries({
+            queryKey: QUERY_KEYS.AD_HOC.HRM_DEPARTMENTS_BASE,
+            exact: false,
+            refetchType: 'active',
+          });
           return res.data as Department;
         }
-        throw new Error(res.message || '更新失败');
+        throw new Error(res.message || t('hrm.hrm_department_page.k5'));
       },
       delete: async (id) => {
         const res = await departmentApi.delete(id);
         if (res.success) {
-          addNotification({ title: '成功', message: '部门删除成功', type: 'success' });
+          addNotification({
+            title: t('hrm.hrm_department_page.k7'),
+            message: t('hrm.hrm_department_page.k6'),
+            type: 'success',
+          });
           if (selectedDeptId === id) setSelectedDeptId(null);
         } else {
-          throw new Error(res.message || '删除失败');
+          throw new Error(res.message || t('hrm.hrm_department_page.k8'));
         }
       },
     }),
@@ -94,7 +109,7 @@ const HrmDepartmentPage: React.FC = () => {
     () => [
       {
         key: 'view-members',
-        label: '查看成员',
+        label: i18n.t('hrm.hrm_department_page.k9'),
         icon: <User size={16} />,
         color: 'primary',
         onClick: (row: Record<string, unknown>) => {
@@ -205,7 +220,7 @@ const HrmDepartmentPage: React.FC = () => {
         {employees.length === 0 ? (
           <EmptyState
             emoji='👤'
-            title='暂无成员'
+            title={t('hrm.hrm_department_page.k10')}
             compact
           />
         ) : (
@@ -240,7 +255,11 @@ const HrmDepartmentPage: React.FC = () => {
                   </Typography>
                 </Box>
                 <Chip
-                  label={emp.status === 'active' ? '在职' : '离职'}
+                  label={
+                    emp.status === 'active'
+                      ? t('hrm.hrm_department_page.k12')
+                      : t('hrm.hrm_department_page.k11')
+                  }
                   color={emp.status === 'active' ? 'success' : 'default'}
                   size='small'
                 />
@@ -255,12 +274,12 @@ const HrmDepartmentPage: React.FC = () => {
   const tabs = [
     {
       id: 'list',
-      label: '部门列表',
+      label: t('hrm.hrm_department_page.k13'),
       content: null,
     },
     {
       id: 'members',
-      label: '部门成员',
+      label: t('hrm.hrm_department_page.k14'),
       content: memberPanel,
     },
   ];
@@ -269,8 +288,8 @@ const HrmDepartmentPage: React.FC = () => {
     <PageContainer
       padding={false}
       maxWidth={false}
-      title='部门管理'
-      subtitle='管理组织部门结构，包括层级、负责人和成员'
+      title={t('hrm.hrm_department_page.k15')}
+      subtitle={t('hrm.hrm_department_page.k16')}
       autoTitle
       autoBreadcrumbs
       headerProps={{

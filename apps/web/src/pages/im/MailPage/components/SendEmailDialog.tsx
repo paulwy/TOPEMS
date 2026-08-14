@@ -15,6 +15,8 @@ import { Send as SendIcon } from 'lucide-react';
 import type { EmailTemplate } from '@/api/mail';
 import { PRIORITY_OPTIONS } from '@/api/mail';
 import type { SendForm } from '../types';
+import { useTranslation } from 'react-i18next';
+import i18n from '@/i18n';
 
 interface SendEmailDialogProps {
   open: boolean;
@@ -39,6 +41,7 @@ const SendEmailDialog: React.FC<SendEmailDialogProps> = ({
   handleSendEmail,
   resetSendForm,
 }) => {
+  const { t } = useTranslation('im');
   return (
     <Dialog
       open={open}
@@ -58,7 +61,9 @@ const SendEmailDialog: React.FC<SendEmailDialogProps> = ({
                 justifyContent: 'space-between',
               }}
             >
-              <InputLabel sx={{ fontSize: '1rem', fontWeight: 500 }}>使用模板</InputLabel>
+              <InputLabel sx={{ fontSize: '1rem', fontWeight: 500 }}>
+                {i18n.t('im.send_email_dialog.k0')}
+              </InputLabel>
               <Button
                 variant='text'
                 size='small'
@@ -70,13 +75,15 @@ const SendEmailDialog: React.FC<SendEmailDialogProps> = ({
                 }
                 sx={sendForm.useTemplate ? { color: 'primary.main' } : {}}
               >
-                {sendForm.useTemplate ? '取消使用模板' : '使用模板'}
+                {sendForm.useTemplate
+                  ? i18n.t('im.send_email_dialog.k2')
+                  : i18n.t('im.send_email_dialog.k1')}
               </Button>
             </Box>
 
             {sendForm.useTemplate && (
               <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                <InputLabel htmlFor='template-select'>选择模板</InputLabel>
+                <InputLabel htmlFor='template-select'>{t('im.send_email_dialog.k3')}</InputLabel>
                 <FormControl
                   size='small'
                   sx={{ width: '100%' }}
@@ -109,10 +116,12 @@ const SendEmailDialog: React.FC<SendEmailDialogProps> = ({
                   </Select>
                 </FormControl>
                 <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-                  <InputLabel htmlFor='template-data'>模板数据（JSON格式）</InputLabel>
+                  <InputLabel htmlFor='template-data'>
+                    {t('im.send_email_dialog.json_4')}
+                  </InputLabel>
                   <TextField
                     id='template-data'
-                    placeholder={`{"user_name": "张三", "process_name": "报销申请"}`}
+                    placeholder={`{"user_name": t('im.send_email_dialog.k6'), "process_name": t('im.send_email_dialog.k5')}`}
                     value={sendForm.templateData}
                     onChange={(e) =>
                       setSendForm((prev) => ({
@@ -141,7 +150,7 @@ const SendEmailDialog: React.FC<SendEmailDialogProps> = ({
                     subject: e.target.value,
                   }))
                 }
-                placeholder='输入邮件主题'
+                placeholder={t('im.send_email_dialog.k7')}
                 error={!!formErrors.subject}
                 helperText={formErrors.subject}
               />
@@ -158,14 +167,14 @@ const SendEmailDialog: React.FC<SendEmailDialogProps> = ({
                     to_addresses: e.target.value,
                   }))
                 }
-                placeholder='多个邮箱用逗号分隔'
+                placeholder={t('im.send_email_dialog.k8')}
                 error={!!formErrors.to_addresses}
                 helperText={formErrors.to_addresses}
               />
             </Box>
 
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-              <InputLabel htmlFor='send-cc'>抄送</InputLabel>
+              <InputLabel htmlFor='send-cc'>{t('im.send_email_dialog.k9')}</InputLabel>
               <TextField
                 id='send-cc'
                 value={sendForm.cc_addresses}
@@ -175,14 +184,14 @@ const SendEmailDialog: React.FC<SendEmailDialogProps> = ({
                     cc_addresses: e.target.value,
                   }))
                 }
-                placeholder='多个邮箱用逗号分隔'
+                placeholder={t('im.send_email_dialog.k10')}
                 error={!!formErrors.cc_addresses}
                 helperText={formErrors.cc_addresses}
               />
             </Box>
 
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-              <InputLabel htmlFor='send-bcc'>密送</InputLabel>
+              <InputLabel htmlFor='send-bcc'>{t('im.send_email_dialog.k11')}</InputLabel>
               <TextField
                 id='send-bcc'
                 value={sendForm.bcc_addresses}
@@ -192,7 +201,7 @@ const SendEmailDialog: React.FC<SendEmailDialogProps> = ({
                     bcc_addresses: e.target.value,
                   }))
                 }
-                placeholder='多个邮箱用逗号分隔'
+                placeholder={t('im.send_email_dialog.k12')}
                 error={!!formErrors.bcc_addresses}
                 helperText={formErrors.bcc_addresses}
               />
@@ -235,7 +244,7 @@ const SendEmailDialog: React.FC<SendEmailDialogProps> = ({
                 id='send-body'
                 value={sendForm.body}
                 onChange={(e) => setSendForm((prev) => ({ ...prev, body: e.target.value }))}
-                placeholder='输入邮件内容'
+                placeholder={t('im.send_email_dialog.k13')}
                 multiline
                 minRows={4}
                 error={!!formErrors.body}
@@ -254,7 +263,7 @@ const SendEmailDialog: React.FC<SendEmailDialogProps> = ({
             >
               取消
             </Button>
-            <Button type='submit'>发送邮件</Button>
+            <Button type='submit'>{t('im.send_email_dialog.k14')}</Button>
           </DialogActions>
         </form>
       </DialogContent>

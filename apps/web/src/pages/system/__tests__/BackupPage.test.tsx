@@ -37,9 +37,18 @@ vi.mock('@/components/common', () => ({
 vi.mock('@topems/shared-components', () => ({
   ConfirmDialog: ({ isOpen, onClose, onConfirm }: any) =>
     isOpen ? (
-      <div role="dialog" data-testid="confirm-dialog">
-        <button data-testid="confirm-ok" onClick={onConfirm} />
-        <button data-testid="confirm-close" onClick={onClose} />
+      <div
+        role='dialog'
+        data-testid='confirm-dialog'
+      >
+        <button
+          data-testid='confirm-ok'
+          onClick={onConfirm}
+        />
+        <button
+          data-testid='confirm-close'
+          onClick={onClose}
+        />
       </div>
     ) : null,
 }));
@@ -124,9 +133,7 @@ describe('BackupPage', () => {
     fireEvent.click(cancelButtons[0]);
 
     await waitFor(() => {
-      expect(
-        screen.queryByRole('heading', { name: '创建备份' })
-      ).not.toBeInTheDocument();
+      expect(screen.queryByRole('heading', { name: '创建备份' })).not.toBeInTheDocument();
     });
   });
 });

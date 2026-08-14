@@ -5,6 +5,7 @@ import { ActionButton, FormField, FormSelect, Dialog, CurrencyField } from '@/co
 import type { VoucherItemRequest, AccountingSubject } from '@/api/erp';
 
 import { useTranslation } from 'react-i18next';
+import i18n from '@/i18n';
 
 interface NewVoucherState {
   voucher_number: string;
@@ -54,11 +55,11 @@ const VoucherFormModal: React.FC<VoucherFormModalProps> = ({
       onClose={onClose}
       title={title}
       cancelButton={{
-        label: t('finance.finance_voucher_page_components__voucher_form_modal.cancel'),
+        label: i18n.t('finance.finance_voucher_page_components__voucher_form_modal.cancel'),
         onClick: onClose,
       }}
       confirmButton={{
-        label: t('finance.finance_voucher_page_components__voucher_form_modal.save'),
+        label: i18n.t('finance.finance_voucher_page_components__voucher_form_modal.save'),
         onClick: onSubmit,
       }}
     >
@@ -72,7 +73,9 @@ const VoucherFormModal: React.FC<VoucherFormModalProps> = ({
         >
           <FormField
             name='voucher_number'
-            label={t('finance.finance_voucher_page_components__voucher_form_modal.text_7c0ad7')}
+            label={i18n.t(
+              'finance.finance_voucher_page_components__voucher_form_modal.text_7c0ad7'
+            )}
             value={newVoucher.voucher_number}
             onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
               setNewVoucher((prev) => ({
@@ -86,7 +89,7 @@ const VoucherFormModal: React.FC<VoucherFormModalProps> = ({
           />
           <FormField
             name='voucher_date'
-            label={t('finance.finance_voucher_page_components__voucher_form_modal.date')}
+            label={i18n.t('finance.finance_voucher_page_components__voucher_form_modal.date')}
             type='date'
             value={newVoucher.voucher_date}
             onChange={(e: React.ChangeEvent<HTMLInputElement>) =>

@@ -19,10 +19,10 @@ import apiClient from '@/api/client';
 
 import { useTranslation } from 'react-i18next';
 
-
 import { QUERY_KEYS } from '@/lib/reactQuery';
+import i18n from '@/i18n';
 
-const ct= designTokens.colors;
+const ct = designTokens.colors;
 
 interface EmployeeSummary {
   total_employees: number;
@@ -163,42 +163,42 @@ const HrmReportsPage: React.FC = () => {
         return [
           {
             id: 'total-employees',
-            title: t('hrm.hrm_reports_page.text_cf4555'),
+            title: i18n.t('hrm.hrm_reports_page.text_cf4555'),
             value: formatNumber(employeeSummary?.total_employees || 0),
             icon: <Users size={24} />,
             color: 'primary' as const,
           },
           {
             id: 'active-employees',
-            title: t('hrm.hrm_reports_page.text_4d9eda'),
+            title: i18n.t('hrm.hrm_reports_page.text_4d9eda'),
             value: formatNumber(employeeSummary?.active_employees || 0),
             icon: <Briefcase size={24} />,
             color: 'success' as const,
           },
           {
             id: 'active-contracts',
-            title: t('hrm.hrm_reports_page.active'),
+            title: i18n.t('hrm.hrm_reports_page.active'),
             value: formatNumber(contractSummary?.active_contracts || 0),
             icon: <FileText size={24} />,
             color: 'secondary' as const,
           },
           {
             id: 'new-hires',
-            title: t('hrm.hrm_reports_page.this_month'),
+            title: i18n.t('hrm.hrm_reports_page.this_month'),
             value: formatNumber(employeeSummary?.new_hires_this_month || 0),
             icon: <TrendingUp size={24} />,
             color: 'warning' as const,
           },
           {
             id: 'training-completion',
-            title: t('hrm.hrm_reports_page.completed'),
+            title: i18n.t('hrm.hrm_reports_page.completed'),
             value: `${trainingSummary?.avg_completion_rate || 0}%`,
             icon: <BookOpen size={24} />,
             color: 'error' as const,
           },
           {
             id: 'attendance-rate',
-            title: t('hrm.hrm_reports_page.text_7cdb55'),
+            title: i18n.t('hrm.hrm_reports_page.text_7cdb55'),
             value: `${attendanceSummary?.attendance_rate || 0}%`,
             icon: <Clock size={24} />,
             color: 'info' as const,
@@ -315,7 +315,7 @@ const HrmReportsPage: React.FC = () => {
         return [
           {
             id: 'department-distribution',
-            title: t('hrm.hrm_reports_page.personnel'),
+            title: i18n.t('hrm.hrm_reports_page.personnel'),
             type: 'bar' as const,
             dataKey: 'employee_count',
             nameKey: 'department_name',
@@ -327,28 +327,28 @@ const HrmReportsPage: React.FC = () => {
           },
           {
             id: 'attendance-stats',
-            title: t('hrm.hrm_reports_page.text_d88c02'),
+            title: i18n.t('hrm.hrm_reports_page.text_d88c02'),
             type: 'pie' as const,
             dataKey: 'value',
             nameKey: 'name',
             data: [
               {
-                name: t('hrm.hrm_reports_page.text_27ff5f'),
+                name: i18n.t('hrm.hrm_reports_page.text_27ff5f'),
                 value: attendanceSummary?.on_time_count || 0,
                 color: 'success.main',
               },
               {
-                name: t('hrm.hrm_reports_page.text_0a4fd7'),
+                name: i18n.t('hrm.hrm_reports_page.text_0a4fd7'),
                 value: attendanceSummary?.late_count || 0,
                 color: ct.yellow[600],
               },
               {
-                name: t('hrm.hrm_reports_page.text_10399d'),
+                name: i18n.t('hrm.hrm_reports_page.text_10399d'),
                 value: attendanceSummary?.absent_count || 0,
                 color: 'error.main',
               },
               {
-                name: t('hrm.hrm_reports_page.text_11bc8a'),
+                name: i18n.t('hrm.hrm_reports_page.text_11bc8a'),
                 value: attendanceSummary?.leave_count || 0,
                 color: 'primary.main',
               },
@@ -356,7 +356,7 @@ const HrmReportsPage: React.FC = () => {
           },
           {
             id: 'contract-expiry',
-            title: t('hrm.hrm_reports_page.text_0be4f0'),
+            title: i18n.t('hrm.hrm_reports_page.text_0be4f0'),
             type: 'bar' as const,
             dataKey: 'value',
             nameKey: 'name',
@@ -545,24 +545,24 @@ const HrmReportsPage: React.FC = () => {
         return [
           {
             id: 'department-summary',
-            title: t('hrm.hrm_reports_page.personnel_2'),
+            title: i18n.t('hrm.hrm_reports_page.personnel_2'),
             columns: [
               {
                 id: 'department_name',
-                label: t('hrm.hrm_reports_page.name'),
+                label: i18n.t('hrm.hrm_reports_page.name'),
                 field: 'department_name',
               },
               {
                 id: 'employee_count',
-                label: t('hrm.hrm_reports_page.text_c9088f'),
+                label: i18n.t('hrm.hrm_reports_page.text_c9088f'),
                 field: 'employee_count',
               },
               {
                 id: 'active_count',
-                label: t('hrm.hrm_reports_page.text_518449'),
+                label: i18n.t('hrm.hrm_reports_page.text_518449'),
                 field: 'active_count',
               },
-              { id: 'rate', label: t('hrm.hrm_reports_page.text_72dbeb'), field: 'rate' },
+              { id: 'rate', label: i18n.t('hrm.hrm_reports_page.text_72dbeb'), field: 'rate' },
             ],
             data: departmentSummary.map((d) => ({
               ...d,
@@ -575,15 +575,15 @@ const HrmReportsPage: React.FC = () => {
         return [
           {
             id: 'employee-status',
-            title: t('hrm.hrm_reports_page.status'),
+            title: i18n.t('hrm.hrm_reports_page.status'),
             columns: [
-              { id: 'status', label: t('hrm.hrm_reports_page.status_1'), field: 'status' },
-              { id: 'count', label: t('hrm.hrm_reports_page.text_3640d2'), field: 'count' },
-              { id: 'rate', label: t('hrm.hrm_reports_page.text_6eada8'), field: 'rate' },
+              { id: 'status', label: i18n.t('hrm.hrm_reports_page.status_1'), field: 'status' },
+              { id: 'count', label: i18n.t('hrm.hrm_reports_page.text_3640d2'), field: 'count' },
+              { id: 'rate', label: i18n.t('hrm.hrm_reports_page.text_6eada8'), field: 'rate' },
             ],
             data: [
               {
-                status: t('hrm.hrm_reports_page.text_b5509b'),
+                status: i18n.t('hrm.hrm_reports_page.text_b5509b'),
                 count: employeeSummary?.active_employees || 0,
                 rate: employeeSummary?.total_employees
                   ? Math.round(

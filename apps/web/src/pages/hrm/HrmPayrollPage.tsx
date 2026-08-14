@@ -25,10 +25,10 @@ import { designTokens } from '@/theme/tokens';
 import { payrollApi, salaryAdjustmentApi, type PayrollRun, type SalaryAdjustment } from '@/api/hrm';
 import { payrollSchema, salaryAdjustmentSchema } from '@/schemas/hrm';
 
-
 import { QUERY_KEYS } from '@/lib/reactQuery';
+import i18n from '@/i18n';
 
-const ct= designTokens.colors;
+const ct = designTokens.colors;
 
 const HrmPayrollPage: React.FC = () => {
   const { t } = useTranslation();
@@ -45,10 +45,11 @@ const HrmPayrollPage: React.FC = () => {
             title: t('hrm.hrm_payroll_page.completed'),
             message: t('hrm.hrm_payroll_page.completed'),
           });
-          queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.HRM_PAYROLL_BASE ,
-  exact: false,
-  refetchType: 'active',
-});
+          queryClient.invalidateQueries({
+            queryKey: QUERY_KEYS.AD_HOC.HRM_PAYROLL_BASE,
+            exact: false,
+            refetchType: 'active',
+          });
         } catch {
           addNotification({
             type: 'error',
@@ -71,10 +72,11 @@ const HrmPayrollPage: React.FC = () => {
             title: t('hrm.hrm_payroll_page.completed_1'),
             message: t('hrm.hrm_payroll_page.completed_1'),
           });
-          queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.HRM_PAYROLL_BASE ,
-  exact: false,
-  refetchType: 'active',
-});
+          queryClient.invalidateQueries({
+            queryKey: QUERY_KEYS.AD_HOC.HRM_PAYROLL_BASE,
+            exact: false,
+            refetchType: 'active',
+          });
         } catch {
           addNotification({
             type: 'error',
@@ -98,10 +100,14 @@ const HrmPayrollPage: React.FC = () => {
     create: async (data) => {
       const res = await payrollApi.create(data as { pay_period: string });
       if (res.success && res.data) {
-        addNotification({ title: '成功', message: '工资发放批次创建成功', type: 'success' });
+        addNotification({
+          title: t('hrm.hrm_payroll_page.k1'),
+          message: t('hrm.hrm_payroll_page.k0'),
+          type: 'success',
+        });
         return res.data;
       }
-      throw new Error(res.message || '创建失败');
+      throw new Error(res.message || t('hrm.hrm_payroll_page.k2'));
     },
     update: async (id, data) => {
       const res = await (
@@ -113,17 +119,25 @@ const HrmPayrollPage: React.FC = () => {
         }
       ).update(id, data);
       if (res.success && res.data) {
-        addNotification({ title: '成功', message: '工资发放批次更新成功', type: 'success' });
+        addNotification({
+          title: t('hrm.hrm_payroll_page.k4'),
+          message: t('hrm.hrm_payroll_page.k3'),
+          type: 'success',
+        });
         return res.data;
       }
-      throw new Error(res.message || '更新失败');
+      throw new Error(res.message || t('hrm.hrm_payroll_page.k5'));
     },
     delete: async (id) => {
       const res = await payrollApi.delete(id);
       if (res.success) {
-        addNotification({ title: '成功', message: '工资发放批次删除成功', type: 'success' });
+        addNotification({
+          title: t('hrm.hrm_payroll_page.k7'),
+          message: t('hrm.hrm_payroll_page.k6'),
+          type: 'success',
+        });
       } else {
-        throw new Error(res.message || '删除失败');
+        throw new Error(res.message || t('hrm.hrm_payroll_page.k8'));
       }
     },
   };
@@ -141,25 +155,37 @@ const HrmPayrollPage: React.FC = () => {
     create: async (data) => {
       const res = await salaryAdjustmentApi.create(data as Partial<SalaryAdjustment>);
       if (res.success && res.data) {
-        addNotification({ title: '成功', message: '薪酬调整创建成功', type: 'success' });
+        addNotification({
+          title: t('hrm.hrm_payroll_page.k10'),
+          message: t('hrm.hrm_payroll_page.k9'),
+          type: 'success',
+        });
         return res.data;
       }
-      throw new Error(res.message || '创建失败');
+      throw new Error(res.message || t('hrm.hrm_payroll_page.k11'));
     },
     update: async (id, data) => {
       const res = await salaryAdjustmentApi.update(id, data as Partial<SalaryAdjustment>);
       if (res.success && res.data) {
-        addNotification({ title: '成功', message: '薪酬调整更新成功', type: 'success' });
+        addNotification({
+          title: t('hrm.hrm_payroll_page.k13'),
+          message: t('hrm.hrm_payroll_page.k12'),
+          type: 'success',
+        });
         return res.data;
       }
-      throw new Error(res.message || '更新失败');
+      throw new Error(res.message || t('hrm.hrm_payroll_page.k14'));
     },
     delete: async (id) => {
       const res = await salaryAdjustmentApi.delete(id);
       if (res.success) {
-        addNotification({ title: '成功', message: '薪酬调整删除成功', type: 'success' });
+        addNotification({
+          title: t('hrm.hrm_payroll_page.k16'),
+          message: t('hrm.hrm_payroll_page.k15'),
+          type: 'success',
+        });
       } else {
-        throw new Error(res.message || '删除失败');
+        throw new Error(res.message || t('hrm.hrm_payroll_page.k17'));
       }
     },
   };
@@ -168,7 +194,7 @@ const HrmPayrollPage: React.FC = () => {
     () => [
       {
         key: 'calculate',
-        label: t('hrm.hrm_payroll_page.text_ed8d89'),
+        label: i18n.t('hrm.hrm_payroll_page.text_ed8d89'),
         icon: <Calculator size={16} />,
         color: 'success',
         show: (row: Record<string, unknown>) => row.status === 'draft',
@@ -176,7 +202,7 @@ const HrmPayrollPage: React.FC = () => {
       },
       {
         key: 'pay',
-        label: t('hrm.hrm_payroll_page.text_df6e5e'),
+        label: i18n.t('hrm.hrm_payroll_page.text_df6e5e'),
         icon: <CreditCard size={16} />,
         color: 'success',
         show: (row: Record<string, unknown>) => row.status === 'calculated',
@@ -364,20 +390,29 @@ const HrmPayrollPage: React.FC = () => {
       customRowActions={[
         {
           key: 'approve',
-          label: '审批',
+          label: t('hrm.hrm_payroll_page.k18'),
           icon: <CheckCircle size={16} />,
           color: 'success',
           show: (row) => row.status === 'pending',
           onClick: async (row) => {
             try {
               await salaryAdjustmentApi.approve(row.id as string, 'current_user');
-              addNotification({ title: '成功', message: '审批成功', type: 'success' });
-              queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.HRM_SALARY_ADJUSTMENTS_BASE ,
-  exact: false,
-  refetchType: 'active',
-});
+              addNotification({
+                title: t('hrm.hrm_payroll_page.k20'),
+                message: t('hrm.hrm_payroll_page.k19'),
+                type: 'success',
+              });
+              queryClient.invalidateQueries({
+                queryKey: QUERY_KEYS.AD_HOC.HRM_SALARY_ADJUSTMENTS_BASE,
+                exact: false,
+                refetchType: 'active',
+              });
             } catch {
-              addNotification({ title: '失败', message: '审批失败', type: 'error' });
+              addNotification({
+                title: t('hrm.hrm_payroll_page.k22'),
+                message: t('hrm.hrm_payroll_page.k21'),
+                type: 'error',
+              });
             }
           },
         },
@@ -496,8 +531,8 @@ const HrmPayrollPage: React.FC = () => {
     <PageContainer
       padding={false}
       maxWidth={false}
-      title='工资管理'
-      subtitle='管理工资发放批次，包括工资核算、发放等流程'
+      title={t('hrm.hrm_payroll_page.k23')}
+      subtitle={t('hrm.hrm_payroll_page.k24')}
       autoTitle
       autoBreadcrumbs
       headerProps={{
@@ -525,7 +560,7 @@ const HrmPayrollPage: React.FC = () => {
           },
           {
             id: 'calculator',
-            label: '个税计算器',
+            label: t('hrm.hrm_payroll_page.k25'),
             icon: <Calculator sx={{ width: 20, height: 20 }} />,
             content: calculatorContent,
           },

@@ -2,17 +2,19 @@ import React from 'react';
 import { Settings } from 'lucide-react';
 import { PageContainer } from '@/components/common';
 import { SettingsPageTemplate } from '@/components/templates';
+import { useTranslation } from 'react-i18next';
 
 export const DocApprovalFlowPage: React.FC = () => {
+  const { t } = useTranslation('pdm');
   return (
     <PageContainer
-      title='文档审批流'
-      subtitle='产品数据管理 · 系统设置'
+      title={t('pdm.doc_approval_flow_page.k0')}
+      subtitle={t('pdm.doc_approval_flow_page.k1')}
       padding={false}
       maxWidth={false}
     >
       <SettingsPageTemplate
-        title='文档审批流'
+        title={t('pdm.doc_approval_flow_page.k2')}
         description='文档审批流相关配置参数（页面建设中…）'
         icon={<Settings size={24} />}
         sections={[]}

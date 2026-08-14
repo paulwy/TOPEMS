@@ -5,8 +5,10 @@ import { useSearchParams } from 'react-router-dom';
 import { lowcodeAppsApi } from '@/api/lowcode';
 import type { LowcodeApp } from '@/api/lowcode';
 import { PageContainer } from '@/components/common';
+import { useTranslation } from 'react-i18next';
 
 export const AppManagementPage: React.FC = () => {
+  const { t } = useTranslation('lowcode');
   const [searchParams] = useSearchParams();
   const appId = searchParams.get('app_id') || '';
 
@@ -33,7 +35,8 @@ export const AppManagementPage: React.FC = () => {
           });
         }
       } catch (err) {
-        if (!cancelled) setError(err instanceof Error ? err.message : '加载应用失败');
+        if (!cancelled)
+          setError(err instanceof Error ? err.message : t('lowcode.app_management_page.k0'));
       } finally {
         if (!cancelled) setLoading(false);
       }
@@ -56,7 +59,7 @@ export const AppManagementPage: React.FC = () => {
       });
       if (res.data) setApp(res.data);
     } catch (err) {
-      setError(err instanceof Error ? err.message : '保存失败');
+      setError(err instanceof Error ? err.message : t('lowcode.app_management_page.k1'));
     } finally {
       setSaving(false);
     }
@@ -68,7 +71,7 @@ export const AppManagementPage: React.FC = () => {
       const res = await lowcodeAppsApi.publish(app.id);
       if (res.data) setApp(res.data);
     } catch (err) {
-      setError(err instanceof Error ? err.message : '发布失败');
+      setError(err instanceof Error ? err.message : t('lowcode.app_management_page.k2'));
     }
   };
 
@@ -78,13 +81,13 @@ export const AppManagementPage: React.FC = () => {
       const res = await lowcodeAppsApi.unpublish(app.id);
       if (res.data) setApp(res.data);
     } catch (err) {
-      setError(err instanceof Error ? err.message : '下架失败');
+      setError(err instanceof Error ? err.message : t('lowcode.app_management_page.k3'));
     }
   };
 
   if (!appId) {
     return (
-      <PageContainer title='应用管理'>
+      <PageContainer title={t('lowcode.app_management_page.k4')}>
         <Box sx={{ p: 3 }}>
           <Typography color='text.secondary'>
             请在 URL 上携带 ?app_id=xxx 以管理具体应用。
@@ -96,7 +99,7 @@ export const AppManagementPage: React.FC = () => {
 
   if (loading) {
     return (
-      <PageContainer title='应用管理'>
+      <PageContainer title={t('lowcode.app_management_page.k5')}>
         <Box sx={{ display: 'flex', justifyContent: 'center', p: 4 }}>
           <CircularProgress />
         </Box>
@@ -105,7 +108,7 @@ export const AppManagementPage: React.FC = () => {
   }
 
   return (
-    <PageContainer title='应用管理'>
+    <PageContainer title={t('lowcode.app_management_page.k6')}>
       <Box sx={{ p: 3, maxWidth: 720 }}>
         <Typography
           variant='h5'
@@ -125,27 +128,27 @@ export const AppManagementPage: React.FC = () => {
         {app && (
           <Stack spacing={2}>
             <TextField
-              label='应用名称'
+              label={t('lowcode.app_management_page.k7')}
               value={editForm.name}
               onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
               fullWidth
             />
             <TextField
-              label='应用编码'
+              label={t('lowcode.app_management_page.k8')}
               value={app.code}
               disabled
               fullWidth
-              helperText='编码创建后不可修改'
+              helperText={t('lowcode.app_management_page.k9')}
             />
             <TextField
-              label='访问路径'
+              label={t('lowcode.app_management_page.k10')}
               value={editForm.access_path}
               onChange={(e) => setEditForm({ ...editForm, access_path: e.target.value })}
               fullWidth
-              helperText='如 /app/leave-request'
+              helperText={t('lowcode.app_management_page.appleaverequest_11')}
             />
             <TextField
-              label='描述'
+              label={t('lowcode.app_management_page.k12')}
               value={editForm.description}
               onChange={(e) => setEditForm({ ...editForm, description: e.target.value })}
               fullWidth
@@ -161,7 +164,7 @@ export const AppManagementPage: React.FC = () => {
                 onClick={handleUpdate}
                 disabled={saving}
               >
-                {saving ? '保存中…' : '保存'}
+                {saving ? '保存中…' : t('lowcode.app_management_page.k13')}
               </Button>
               {app.status === 'published' ? (
                 <Button

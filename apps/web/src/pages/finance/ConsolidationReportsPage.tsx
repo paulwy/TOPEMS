@@ -46,35 +46,52 @@ import type { ConsolidationReport, ConsolidationReportType } from '@/types/conso
 import { PageContainer } from '@/components/common';
 
 import { useTranslation } from 'react-i18next';
+import i18n from '@/i18n';
 
-const ct= designTokens.colors;
+const ct = designTokens.colors;
 
 const REPORT_TYPE_CONFIG: Record<
   ConsolidationReportType,
   { name: string; icon: React.ElementType; color: string }
 > = {
-  consolidated_balance_sheet: { name: '合并资产负债表', icon: Building2, color: ct.primary.dark },
-  consolidated_income_statement: { name: '合并利润表', icon: TrendingUp, color: ct.success.main },
-  consolidated_cash_flow: { name: '合并现金流量表', icon: DollarSign, color: 'secondary.main' },
+  consolidated_balance_sheet: {
+    name: i18n.t('finance.consolidation_reports_page.k0'),
+    icon: Building2,
+    color: ct.primary.dark,
+  },
+  consolidated_income_statement: {
+    name: i18n.t('finance.consolidation_reports_page.k1'),
+    icon: TrendingUp,
+    color: ct.success.main,
+  },
+  consolidated_cash_flow: {
+    name: i18n.t('finance.consolidation_reports_page.k2'),
+    icon: DollarSign,
+    color: 'secondary.main',
+  },
   consolidated_statement_changes: {
-    name: '合并所有者权益变动表',
+    name: i18n.t('finance.consolidation_reports_page.k3'),
     icon: BarChart3,
     color: 'warning.main',
   },
-  elimination_work_sheet: { name: '抵消工作底稿', icon: FileSpreadsheet, color: ct.secondary[400] },
+  elimination_work_sheet: {
+    name: i18n.t('finance.consolidation_reports_page.k4'),
+    icon: FileSpreadsheet,
+    color: ct.secondary[400],
+  },
 };
 
 const STATUS_CONFIG: Record<string, { label: string; color: string }> = {
-  draft: { label: '草稿', color: 'grey.500' },
-  calculating: { label: '计算中', color: 'primary' },
-  completed: { label: '已完成', color: 'success' },
-  published: { label: '已发布', color: 'secondary' },
+  draft: { label: i18n.t('finance.consolidation_reports_page.k5'), color: 'grey.500' },
+  calculating: { label: i18n.t('finance.consolidation_reports_page.k6'), color: 'primary' },
+  completed: { label: i18n.t('finance.consolidation_reports_page.k7'), color: 'success' },
+  published: { label: i18n.t('finance.consolidation_reports_page.k8'), color: 'secondary' },
 };
 
 const APPROVAL_STATUS_CONFIG: Record<string, { label: string; color: string }> = {
-  pending: { label: '待审批', color: 'warning' },
-  approved: { label: '已审批', color: 'success' },
-  rejected: { label: '已驳回', color: 'error' },
+  pending: { label: i18n.t('finance.consolidation_reports_page.k9'), color: 'warning' },
+  approved: { label: i18n.t('finance.consolidation_reports_page.k10'), color: 'success' },
+  rejected: { label: i18n.t('finance.consolidation_reports_page.k11'), color: 'error' },
 };
 
 export default function ConsolidationReportsPage() {
@@ -324,13 +341,13 @@ export default function ConsolidationReportsPage() {
         size='small'
         sx={{ minWidth: 140 }}
       >
-        <InputLabel>合并范围</InputLabel>
+        <InputLabel>{t('finance.consolidation_reports_page.k12')}</InputLabel>
         <Select
           value={selectedScope}
           onChange={(e) => setSelectedScope(e.target.value)}
           displayEmpty
         >
-          <MenuItem value=''>全部范围</MenuItem>
+          <MenuItem value=''>{t('finance.consolidation_reports_page.k13')}</MenuItem>
           {scopesData?.items?.map((scope) => (
             <MenuItem
               key={scope.id}
@@ -346,13 +363,13 @@ export default function ConsolidationReportsPage() {
         size='small'
         sx={{ minWidth: 140 }}
       >
-        <InputLabel>报表类型</InputLabel>
+        <InputLabel>{t('finance.consolidation_reports_page.k14')}</InputLabel>
         <Select
           value={reportType}
           onChange={(e) => setReportType(e.target.value as ConsolidationReportType)}
           displayEmpty
         >
-          <MenuItem value=''>全部类型</MenuItem>
+          <MenuItem value=''>{t('finance.consolidation_reports_page.k15')}</MenuItem>
           {Object.entries(REPORT_TYPE_CONFIG).map(([key, config]) => (
             <MenuItem
               key={key}
@@ -653,7 +670,9 @@ export default function ConsolidationReportsPage() {
               <Download style={{ width: 16, height: 16, marginRight: 8 }} />
               导出Excel
             </Button>
-            <Button onClick={() => setShowDetail(false)}>关闭</Button>
+            <Button onClick={() => setShowDetail(false)}>
+              {t('finance.consolidation_reports_page.k16')}
+            </Button>
           </DialogActions>
         </Dialog>
       )}
@@ -665,7 +684,7 @@ export default function ConsolidationReportsPage() {
         maxWidth='sm'
         fullWidth
       >
-        <DialogTitle>生成合并报表</DialogTitle>
+        <DialogTitle>{t('finance.consolidation_reports_page.k17')}</DialogTitle>
         <DialogContent>
           <Box sx={{ pt: 1, display: 'flex', flexDirection: 'column', gap: 2 }}>
             <FormControl fullWidth>
@@ -677,7 +696,7 @@ export default function ConsolidationReportsPage() {
                   setGenerateFormData({ ...generateFormData, scope_id: e.target.value })
                 }
               >
-                <MenuItem value=''>请选择合并范围</MenuItem>
+                <MenuItem value=''>{t('finance.consolidation_reports_page.k18')}</MenuItem>
                 {scopesData?.items?.map((scope) => (
                   <MenuItem
                     key={scope.id}
@@ -700,7 +719,7 @@ export default function ConsolidationReportsPage() {
                   })
                 }
               >
-                <MenuItem value=''>请选择报表类型</MenuItem>
+                <MenuItem value=''>{t('finance.consolidation_reports_page.k19')}</MenuItem>
                 {Object.entries(REPORT_TYPE_CONFIG).map(([key, config]) => (
                   <MenuItem
                     key={key}
