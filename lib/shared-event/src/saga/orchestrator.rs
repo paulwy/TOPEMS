@@ -350,3 +350,312 @@ impl SagaOrchestrator {
         Ok(())
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::saga::store::InMemorySagaStore;
+
+    fn make_orchestrator() -> SagaOrchestrator {
+        let store = Arc::new(InMemorySagaStore::new());
+        SagaOrchestrator::new(store, None)
+    }
+
+    fn ok_step(name: &str) -> SagaStepDefinition {
+        SagaStepDefinition {
+            name: name.to_string(),
+            forward_action: Box::new(|_saga| Box::pin(async { Ok(()) })),
+            compensate_action: Some(Box::new(|_saga| Box::pin(async { Ok(()) }))),
+        }
+    }
+
+    fn fail_step(name: &str, err: &str) -> SagaStepDefinition {
+        let err = err.to_string();
+        SagaStepDefinition {
+            name: name.to_string(),
+            forward_action: Box::new(move |_saga| {
+                let err = err.clone();
+                Box::pin(async move { Err(SagaError::StepFailed(err)) })
+            }),
+            compensate_action: Some(Box::new(|_saga| Box::pin(async { Ok(()) }))),
+        }
+    }
+
+    #[test]
+    fn test_saga_instance_new_defaults() {
+        let saga = SagaInstance::new("order_create", serde_json::json!({"amount": 100}));
+        assert_eq!(saga.saga_type, "order_create");
+        assert_eq!(saga.status, SagaStatus::Pending);
+        assert!(saga.completed_at.is_none());
+        assert!(saga.steps.is_empty());
+        assert_eq!(saga.current_step_index, 0);
+        assert!(saga.error.is_none());
+        assert_eq!(saga.payload["amount"], 100);
+    }
+
+    #[test]
+    fn test_saga_status_equality() {
+        assert_eq!(SagaStatus::Pending, SagaStatus::Pending);
+        assert_ne!(SagaStatus::Running, SagaStatus::Completed);
+        assert_ne!(SagaStatus::Compensating, SagaStatus::Compensated);
+        assert_ne!(SagaStatus::Failed, SagaStatus::Aborted);
+    }
+
+    #[test]
+    fn test_saga_status_serialization() {
+        let json = serde_json::to_string(&SagaStatus::Running).unwrap();
+        assert!(json.contains("Running"));
+        let back: SagaStatus = serde_json::from_str(&json).unwrap();
+        assert_eq!(back, SagaStatus::Running);
+    }
+
+    #[test]
+    fn test_saga_instance_serialization() {
+        let saga = SagaInstance::new("test", serde_json::json!({"x": 1}));
+        let json = serde_json::to_string(&saga).unwrap();
+        let back: SagaInstance = serde_json::from_str(&json).unwrap();
+        assert_eq!(back.saga_type, "test");
+        assert_eq!(back.payload["x"], 1);
+    }
+
+    #[tokio::test]
+    async fn test_execute_saga_all_steps_succeed() {
+        let orch = make_orchestrator();
+        let steps = vec![
+            ok_step("create_order"),
+            ok_step("reserve_inventory"),
+            ok_step("charge_payment"),
+        ];
+
+        let saga_id = orch
+            .execute_saga("order_flow", serde_json::json!({}), steps)
+            .await
+            .expect("saga should complete");
+
+        let saga = orch.store.load_saga(saga_id).await.unwrap();
+        assert_eq!(saga.status, SagaStatus::Completed);
+        assert!(saga.completed_at.is_some());
+        assert_eq!(saga.steps.len(), 3);
+        for step in &saga.steps {
+            assert_eq!(step.status, StepStatus::Completed);
+        }
+    }
+
+    #[tokio::test]
+    async fn test_execute_saga_single_step() {
+        let orch = make_orchestrator();
+        let saga_id = orch
+            .execute_saga("simple", serde_json::json!({}), vec![ok_step("only_step")])
+            .await
+            .unwrap();
+
+        let saga = orch.store.load_saga(saga_id).await.unwrap();
+        assert_eq!(saga.status, SagaStatus::Completed);
+        assert_eq!(saga.steps.len(), 1);
+    }
+
+    #[tokio::test]
+    async fn test_execute_saga_empty_steps_completes() {
+        let orch = make_orchestrator();
+        let saga_id = orch
+            .execute_saga("noop", serde_json::json!({}), vec![])
+            .await
+            .unwrap();
+
+        let saga = orch.store.load_saga(saga_id).await.unwrap();
+        assert_eq!(saga.status, SagaStatus::Completed);
+        assert!(saga.steps.is_empty());
+    }
+
+    #[tokio::test]
+    async fn test_execute_saga_step_fails_triggers_compensation() {
+        let orch = make_orchestrator();
+        let steps = vec![
+            ok_step("step_a"),
+            fail_step("step_b", "network error"),
+            ok_step("step_c"), // should never run
+        ];
+
+        let result = orch
+            .execute_saga("fail_flow", serde_json::json!({}), steps)
+            .await;
+
+        assert!(result.is_err());
+        let saga_id = result.unwrap_err().to_string();
+
+        // The saga should be in Compensated state (all compensations succeeded)
+        let sagas = orch.store.list_failed_sagas().await.unwrap();
+        // list_failed only returns Failed status, but our saga is Compensated
+        assert!(sagas.is_empty());
+
+        // Verify by listing pending - should also be empty
+        let pending = orch.store.list_pending_sagas().await.unwrap();
+        assert!(pending.is_empty());
+    }
+
+    #[tokio::test]
+    async fn test_execute_saga_first_step_fails_no_compensation_needed() {
+        let orch = make_orchestrator();
+        let steps = vec![
+            fail_step("step_a", "immediate failure"),
+            ok_step("step_b"),
+        ];
+
+        let result = orch
+            .execute_saga("early_fail", serde_json::json!({}), steps)
+            .await;
+
+        assert!(result.is_err());
+    }
+
+    #[tokio::test]
+    async fn test_execute_saga_compensation_failure_aborts() {
+        let orch = make_orchestrator();
+        // Step A succeeds (Completed) but its compensation fails.
+        // Step B fails → triggers compensation of step A → compensation fails → Aborted.
+        let steps = vec![
+            SagaStepDefinition {
+                name: "step_a".to_string(),
+                forward_action: Box::new(|_saga| Box::pin(async { Ok(()) })),
+                compensate_action: Some(Box::new(|_saga| {
+                    Box::pin(async { Err(SagaError::CompensationFailed("rollback failed".into())) })
+                })),
+            },
+            fail_step("step_b", "forward failure"),
+        ];
+
+        let result = orch
+            .execute_saga("comp_fail", serde_json::json!({}), steps)
+            .await;
+
+        assert!(result.is_err());
+        let err = result.unwrap_err();
+        assert!(err.to_string().contains("rollback failed"));
+    }
+
+    #[tokio::test]
+    async fn test_execute_saga_step_without_compensation_skipped() {
+        let orch = make_orchestrator();
+        let steps = vec![
+            SagaStepDefinition {
+                name: "no_comp".to_string(),
+                forward_action: Box::new(|_saga| Box::pin(async { Ok(()) })),
+                compensate_action: None, // No compensation
+            },
+            fail_step("fail_step", "fail"),
+        ];
+
+        let result = orch
+            .execute_saga("no_comp_flow", serde_json::json!({}), steps)
+            .await;
+
+        assert!(result.is_err());
+        // The saga should be compensated (step without compensation is skipped)
+    }
+
+    #[tokio::test]
+    async fn test_compensate_saga_manual() {
+        let orch = make_orchestrator();
+
+        // First, create a saga manually and save it
+        let mut saga = SagaInstance::new("manual_comp", serde_json::json!({}));
+        saga.steps.push(crate::saga::step::SagaStep::new("s1", 0));
+        saga.steps[0].status = StepStatus::Completed;
+        saga.steps.push(crate::saga::step::SagaStep::new("s2", 1));
+        saga.steps[1].status = StepStatus::Completed;
+        let saga_id = saga.id;
+        orch.store.save_saga(&saga).await.unwrap();
+
+        // Now compensate
+        orch.compensate_saga(saga_id).await.expect("compensation should succeed");
+
+        let loaded = orch.store.load_saga(saga_id).await.unwrap();
+        assert_eq!(loaded.status, SagaStatus::Compensated);
+        assert!(loaded.completed_at.is_some());
+        // All completed steps should be compensated
+        for step in &loaded.steps {
+            assert_eq!(step.status, StepStatus::Compensated);
+        }
+    }
+
+    #[tokio::test]
+    async fn test_compensate_saga_skips_non_completed_steps() {
+        let orch = make_orchestrator();
+        let mut saga = SagaInstance::new("skip_comp", serde_json::json!({}));
+        saga.steps.push(crate::saga::step::SagaStep::new("completed", 0));
+        saga.steps[0].status = StepStatus::Completed;
+        saga.steps.push(crate::saga::step::SagaStep::new("pending", 1));
+        saga.steps[1].status = StepStatus::Pending;
+        let saga_id = saga.id;
+        orch.store.save_saga(&saga).await.unwrap();
+
+        orch.compensate_saga(saga_id).await.unwrap();
+
+        let loaded = orch.store.load_saga(saga_id).await.unwrap();
+        assert_eq!(loaded.steps[0].status, StepStatus::Compensated);
+        // Pending step should remain Pending
+        assert_eq!(loaded.steps[1].status, StepStatus::Pending);
+    }
+
+    #[tokio::test]
+    async fn test_compensate_nonexistent_saga_returns_error() {
+        let orch = make_orchestrator();
+        let result = orch.compensate_saga(Uuid::new_v4()).await;
+        assert!(result.is_err());
+    }
+
+    #[tokio::test]
+    async fn test_execute_saga_with_payload() {
+        let orch = make_orchestrator();
+        let payload = serde_json::json!({
+            "order_id": "12345",
+            "amount": 99.99,
+            "currency": "USD"
+        });
+
+        let saga_id = orch
+            .execute_saga("payload_test", payload.clone(), vec![ok_step("process")])
+            .await
+            .unwrap();
+
+        let saga = orch.store.load_saga(saga_id).await.unwrap();
+        assert_eq!(saga.payload["order_id"], "12345");
+        assert_eq!(saga.payload["amount"], 99.99);
+        assert_eq!(saga.payload["currency"], "USD");
+    }
+
+    #[tokio::test]
+    async fn test_execute_saga_persists_to_store() {
+        let store = Arc::new(InMemorySagaStore::new());
+        let orch = SagaOrchestrator::new(store.clone(), None);
+
+        let saga_id = orch
+            .execute_saga("persist_test", serde_json::json!({}), vec![ok_step("s1")])
+            .await
+            .unwrap();
+
+        // Verify it's persisted in the shared store
+        let loaded = store.load_saga(saga_id).await.unwrap();
+        assert_eq!(loaded.saga_type, "persist_test");
+    }
+
+    #[tokio::test]
+    async fn test_multiple_sagas_independent() {
+        let orch = make_orchestrator();
+
+        let id1 = orch
+            .execute_saga("saga_1", serde_json::json!({}), vec![ok_step("a")])
+            .await
+            .unwrap();
+        let id2 = orch
+            .execute_saga("saga_2", serde_json::json!({}), vec![ok_step("b")])
+            .await
+            .unwrap();
+
+        assert_ne!(id1, id2);
+        let s1 = orch.store.load_saga(id1).await.unwrap();
+        let s2 = orch.store.load_saga(id2).await.unwrap();
+        assert_eq!(s1.saga_type, "saga_1");
+        assert_eq!(s2.saga_type, "saga_2");
+    }
+}
