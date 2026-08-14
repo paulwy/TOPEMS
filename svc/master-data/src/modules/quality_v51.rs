@@ -1582,4 +1582,562 @@ mod tests {
         let s = calculate_quality_score(10.0, 10.0, 10.0, 10.0);
         assert_eq!(quality_grade_from_score(s), "F");
     }
+
+    // ---------- quality_status_from_str ----------
+
+    #[test]
+    fn test_quality_status_from_str_failed() {
+        assert_eq!(quality_status_from_str("failed"), QualityStatus::Failed);
+    }
+
+    #[test]
+    fn test_quality_status_from_str_warning() {
+        assert_eq!(quality_status_from_str("warning"), QualityStatus::Warning);
+    }
+
+    #[test]
+    fn test_quality_status_from_str_passed() {
+        assert_eq!(quality_status_from_str("passed"), QualityStatus::Passed);
+    }
+
+    #[test]
+    fn test_quality_status_from_str_unknown_defaults_passed() {
+        assert_eq!(quality_status_from_str("xxx"), QualityStatus::Passed);
+        assert_eq!(quality_status_from_str(""), QualityStatus::Passed);
+    }
+
+    // ---------- fix_status_from_str ----------
+
+    #[test]
+    fn test_fix_status_from_str_applied() {
+        assert_eq!(fix_status_from_str("applied"), FixStatus::Applied);
+    }
+
+    #[test]
+    fn test_fix_status_from_str_verified() {
+        assert_eq!(fix_status_from_str("verified"), FixStatus::Verified);
+    }
+
+    #[test]
+    fn test_fix_status_from_str_failed() {
+        assert_eq!(fix_status_from_str("failed"), FixStatus::Failed);
+    }
+
+    #[test]
+    fn test_fix_status_from_str_pending_default() {
+        assert_eq!(fix_status_from_str("pending"), FixStatus::Pending);
+        assert_eq!(fix_status_from_str("unknown"), FixStatus::Pending);
+    }
+
+    // ---------- suggestion_type_from_str ----------
+
+    #[test]
+    fn test_suggestion_type_from_str_enrich() {
+        assert_eq!(suggestion_type_from_str("enrich"), SuggestionType::Enrich);
+    }
+
+    #[test]
+    fn test_suggestion_type_from_str_deprecate() {
+        assert_eq!(
+            suggestion_type_from_str("deprecate"),
+            SuggestionType::Deprecate
+        );
+    }
+
+    #[test]
+    fn test_suggestion_type_from_str_merge() {
+        assert_eq!(suggestion_type_from_str("merge"), SuggestionType::Merge);
+    }
+
+    #[test]
+    fn test_suggestion_type_from_str_standardize_default() {
+        assert_eq!(
+            suggestion_type_from_str("standardize"),
+            SuggestionType::Standardize
+        );
+        assert_eq!(
+            suggestion_type_from_str("unknown"),
+            SuggestionType::Standardize
+        );
+    }
+
+    // ---------- action_type_from_str ----------
+
+    #[test]
+    fn test_action_type_from_str_default_value() {
+        assert_eq!(
+            action_type_from_str("default_value"),
+            AutoFixActionType::DefaultValue
+        );
+    }
+
+    #[test]
+    fn test_action_type_from_str_map_value() {
+        assert_eq!(
+            action_type_from_str("map_value"),
+            AutoFixActionType::MapValue
+        );
+    }
+
+    #[test]
+    fn test_action_type_from_str_remove_duplicate() {
+        assert_eq!(
+            action_type_from_str("remove_duplicate"),
+            AutoFixActionType::RemoveDuplicate
+        );
+    }
+
+    #[test]
+    fn test_action_type_from_str_standardize() {
+        assert_eq!(
+            action_type_from_str("standardize"),
+            AutoFixActionType::Standardize
+        );
+    }
+
+    #[test]
+    fn test_action_type_from_str_normalize_default() {
+        assert_eq!(
+            action_type_from_str("normalize"),
+            AutoFixActionType::Normalize
+        );
+        assert_eq!(
+            action_type_from_str("unknown"),
+            AutoFixActionType::Normalize
+        );
+    }
+
+    // ---------- compute_score ----------
+
+    fn make_check(status: QualityStatus) -> QualityCheckV51 {
+        QualityCheckV51 {
+            id: uuid::Uuid::new_v4().to_string(),
+            entity_type: "test".to_string(),
+            entity_id: "T-1".to_string(),
+            rule_id: "r-1".to_string(),
+            status,
+            score: 0.0,
+            details: serde_json::json!({}),
+            checked_at: "2024-01-01T00:00:00Z".to_string(),
+        }
+    }
+
+    #[test]
+    fn test_compute_score_empty_returns_100() {
+        let checks: Vec<QualityCheckV51> = vec![];
+        assert!((compute_score(&checks) - 100.0).abs() < f64::EPSILON);
+    }
+
+    #[test]
+    fn test_compute_score_all_passed_returns_100() {
+        let checks = vec![
+            make_check(QualityStatus::Passed),
+            make_check(QualityStatus::Passed),
+        ];
+        assert!((compute_score(&checks) - 100.0).abs() < f64::EPSILON);
+    }
+
+    #[test]
+    fn test_compute_score_all_failed_returns_0() {
+        let checks = vec![
+            make_check(QualityStatus::Failed),
+            make_check(QualityStatus::Failed),
+        ];
+        assert!((compute_score(&checks) - 0.0).abs() < f64::EPSILON);
+    }
+
+    #[test]
+    fn test_compute_score_mixed_weights() {
+        // 1 passed (1.0) + 1 warning (0.5) + 1 failed (0.0) = 1.5 / 3 = 50.0
+        let checks = vec![
+            make_check(QualityStatus::Passed),
+            make_check(QualityStatus::Warning),
+            make_check(QualityStatus::Failed),
+        ];
+        assert!((compute_score(&checks) - 50.0).abs() < 0.001);
+    }
+
+    #[test]
+    fn test_compute_score_warning_only() {
+        let checks = vec![
+            make_check(QualityStatus::Warning),
+            make_check(QualityStatus::Warning),
+        ];
+        assert!((compute_score(&checks) - 50.0).abs() < f64::EPSILON);
+    }
+
+    #[test]
+    fn test_compute_score_half_passed_half_failed() {
+        let checks = vec![
+            make_check(QualityStatus::Passed),
+            make_check(QualityStatus::Failed),
+        ];
+        assert!((compute_score(&checks) - 50.0).abs() < f64::EPSILON);
+    }
+
+    // ---------- 枚举 serde 往返 ----------
+
+    #[test]
+    fn test_quality_status_serde_roundtrip() {
+        for v in [
+            QualityStatus::Passed,
+            QualityStatus::Failed,
+            QualityStatus::Warning,
+        ] {
+            let json = serde_json::to_string(&v).unwrap();
+            let back: QualityStatus = serde_json::from_str(&json).unwrap();
+            assert_eq!(v, back);
+        }
+    }
+
+    #[test]
+    fn test_quality_status_serde_uses_snake_case() {
+        assert_eq!(
+            serde_json::to_string(&QualityStatus::Passed).unwrap(),
+            "\"passed\""
+        );
+        assert_eq!(
+            serde_json::to_string(&QualityStatus::Failed).unwrap(),
+            "\"failed\""
+        );
+        assert_eq!(
+            serde_json::to_string(&QualityStatus::Warning).unwrap(),
+            "\"warning\""
+        );
+    }
+
+    #[test]
+    fn test_quality_loop_stage_serde_roundtrip() {
+        for v in [
+            QualityLoopStage::Monitor,
+            QualityLoopStage::Detect,
+            QualityLoopStage::Analyze,
+            QualityLoopStage::Fix,
+            QualityLoopStage::Verify,
+            QualityLoopStage::Report,
+        ] {
+            let json = serde_json::to_string(&v).unwrap();
+            let back: QualityLoopStage = serde_json::from_str(&json).unwrap();
+            assert_eq!(v, back);
+        }
+    }
+
+    #[test]
+    fn test_auto_fix_action_type_serde_roundtrip() {
+        for v in [
+            AutoFixActionType::Normalize,
+            AutoFixActionType::DefaultValue,
+            AutoFixActionType::MapValue,
+            AutoFixActionType::RemoveDuplicate,
+            AutoFixActionType::Standardize,
+        ] {
+            let json = serde_json::to_string(&v).unwrap();
+            let back: AutoFixActionType = serde_json::from_str(&json).unwrap();
+            assert_eq!(v, back);
+        }
+    }
+
+    #[test]
+    fn test_fix_status_serde_roundtrip() {
+        for v in [
+            FixStatus::Pending,
+            FixStatus::Applied,
+            FixStatus::Verified,
+            FixStatus::Failed,
+        ] {
+            let json = serde_json::to_string(&v).unwrap();
+            let back: FixStatus = serde_json::from_str(&json).unwrap();
+            assert_eq!(v, back);
+        }
+    }
+
+    #[test]
+    fn test_fix_strategy_serde_roundtrip() {
+        for v in [
+            FixStrategy::NormalizeText,
+            FixStrategy::FillMissingDefaults,
+            FixStrategy::MapToStandardValues,
+            FixStrategy::RemoveDuplicates,
+            FixStrategy::StandardizeDateFormat,
+            FixStrategy::EnrichFromReference,
+        ] {
+            let json = serde_json::to_string(&v).unwrap();
+            let back: FixStrategy = serde_json::from_str(&json).unwrap();
+            assert_eq!(v, back);
+        }
+    }
+
+    #[test]
+    fn test_suggestion_type_serde_roundtrip() {
+        for v in [
+            SuggestionType::Standardize,
+            SuggestionType::Enrich,
+            SuggestionType::Deprecate,
+            SuggestionType::Merge,
+        ] {
+            let json = serde_json::to_string(&v).unwrap();
+            let back: SuggestionType = serde_json::from_str(&json).unwrap();
+            assert_eq!(v, back);
+        }
+    }
+
+    #[test]
+    fn test_suggestion_status_serde_roundtrip() {
+        for v in [
+            SuggestionStatus::Pending,
+            SuggestionStatus::Approved,
+            SuggestionStatus::Rejected,
+        ] {
+            let json = serde_json::to_string(&v).unwrap();
+            let back: SuggestionStatus = serde_json::from_str(&json).unwrap();
+            assert_eq!(v, back);
+        }
+    }
+
+    // ---------- 结构体 serde 往返 ----------
+
+    #[test]
+    fn test_quality_check_v51_serde_roundtrip() {
+        let check = QualityCheckV51 {
+            id: "c-1".to_string(),
+            entity_type: "customer".to_string(),
+            entity_id: "C001".to_string(),
+            rule_id: "r-1".to_string(),
+            status: QualityStatus::Passed,
+            score: 99.5,
+            details: serde_json::json!({"k": "v"}),
+            checked_at: "2024-01-01T00:00:00Z".to_string(),
+        };
+        let json = serde_json::to_string(&check).unwrap();
+        let back: QualityCheckV51 = serde_json::from_str(&json).unwrap();
+        assert_eq!(back.id, "c-1");
+        assert_eq!(back.entity_type, "customer");
+        assert_eq!(back.status, QualityStatus::Passed);
+        assert!((back.score - 99.5).abs() < f64::EPSILON);
+    }
+
+    #[test]
+    fn test_quality_rule_serde_roundtrip() {
+        let rule = QualityRule {
+            id: "r-1".to_string(),
+            name: "rule".to_string(),
+            entity_type: "customer".to_string(),
+            rule_type: "format".to_string(),
+            description: "desc".to_string(),
+            severity: "warning".to_string(),
+            parameters: serde_json::json!({"min": 1}),
+            enabled: true,
+            created_at: "2024-01-01T00:00:00Z".to_string(),
+            updated_at: "2024-01-01T00:00:00Z".to_string(),
+        };
+        let json = serde_json::to_string(&rule).unwrap();
+        let back: QualityRule = serde_json::from_str(&json).unwrap();
+        assert_eq!(back.id, "r-1");
+        assert!(back.enabled);
+        assert_eq!(back.severity, "warning");
+    }
+
+    #[test]
+    fn test_quality_loop_config_serde_roundtrip() {
+        let cfg = QualityLoopConfig {
+            entity_type: "customer".to_string(),
+            enabled_rules: vec!["r-1".to_string()],
+            auto_fix_enabled: true,
+            notification_channels: vec!["email".to_string()],
+            max_retries: 3,
+        };
+        let json = serde_json::to_string(&cfg).unwrap();
+        let back: QualityLoopConfig = serde_json::from_str(&json).unwrap();
+        assert_eq!(back.entity_type, "customer");
+        assert!(back.auto_fix_enabled);
+        assert_eq!(back.max_retries, 3);
+        assert_eq!(back.enabled_rules.len(), 1);
+    }
+
+    #[test]
+    fn test_auto_fix_action_serde_roundtrip() {
+        let action = AutoFixAction {
+            id: "a-1".to_string(),
+            rule_id: "r-1".to_string(),
+            entity_type: "customer".to_string(),
+            entity_id: "C001".to_string(),
+            action_type: AutoFixActionType::Normalize,
+            before_value: serde_json::json!("x"),
+            after_value: Some(serde_json::json!("y")),
+            confidence: 0.9,
+            status: FixStatus::Applied,
+            applied_at: Some("2024-01-01T00:00:00Z".to_string()),
+        };
+        let json = serde_json::to_string(&action).unwrap();
+        let back: AutoFixAction = serde_json::from_str(&json).unwrap();
+        assert_eq!(back.id, "a-1");
+        assert_eq!(back.action_type, AutoFixActionType::Normalize);
+        assert_eq!(back.status, FixStatus::Applied);
+        assert!(back.after_value.is_some());
+    }
+
+    #[test]
+    fn test_governance_suggestion_serde_roundtrip() {
+        let s = GovernanceSuggestion {
+            id: "s-1".to_string(),
+            entity_type: "customer".to_string(),
+            entity_id: "C001".to_string(),
+            suggestion_type: SuggestionType::Standardize,
+            confidence: 0.88,
+            rationale: "rationale".to_string(),
+            suggested_action: "action".to_string(),
+            ai_model_version: "v1".to_string(),
+            status: SuggestionStatus::Pending,
+            created_at: "2024-01-01T00:00:00Z".to_string(),
+        };
+        let json = serde_json::to_string(&s).unwrap();
+        let back: GovernanceSuggestion = serde_json::from_str(&json).unwrap();
+        assert_eq!(back.id, "s-1");
+        assert_eq!(back.suggestion_type, SuggestionType::Standardize);
+    }
+
+    #[test]
+    fn test_governance_insight_serde_roundtrip() {
+        let i = GovernanceInsight {
+            insight_type: "data_quality".to_string(),
+            severity: "high".to_string(),
+            affected_records: 42,
+            trend_analysis: "up".to_string(),
+            recommendations: vec!["rec1".to_string()],
+        };
+        let json = serde_json::to_string(&i).unwrap();
+        let back: GovernanceInsight = serde_json::from_str(&json).unwrap();
+        assert_eq!(back.affected_records, 42);
+        assert_eq!(back.recommendations.len(), 1);
+    }
+
+    #[test]
+    fn test_quality_score_serde_roundtrip() {
+        let s = QualityScore {
+            overall_score: 88.5,
+            by_entity_type: HashMap::from([("customer".to_string(), 90.0)]),
+            by_severity: HashMap::from([("error".to_string(), 1)]),
+            total_checks: 10,
+            passed_checks: 8,
+            failed_checks: 1,
+            warning_checks: 1,
+        };
+        let json = serde_json::to_string(&s).unwrap();
+        let back: QualityScore = serde_json::from_str(&json).unwrap();
+        assert_eq!(back.total_checks, 10);
+        assert!((back.overall_score - 88.5).abs() < f64::EPSILON);
+    }
+
+    #[test]
+    fn test_quality_dashboard_serde_roundtrip() {
+        let d = QualityDashboard {
+            total_entities: 5,
+            quality_score: 75.0,
+            checks_last_7d: 20,
+            fix_actions_pending: 3,
+            fix_actions_applied: 7,
+            suggestions_pending: 2,
+            insights: vec![],
+            entity_type_distribution: HashMap::new(),
+        };
+        let json = serde_json::to_string(&d).unwrap();
+        let back: QualityDashboard = serde_json::from_str(&json).unwrap();
+        assert_eq!(back.total_entities, 5);
+        assert_eq!(back.fix_actions_applied, 7);
+    }
+
+    #[test]
+    fn test_fix_history_entry_serde_roundtrip() {
+        let e = FixHistoryEntry {
+            id: "h-1".to_string(),
+            entity_type: "customer".to_string(),
+            entity_id: "C001".to_string(),
+            action_type: "normalize".to_string(),
+            before_value: serde_json::json!("x"),
+            after_value: None,
+            confidence: 0.5,
+            status: "applied".to_string(),
+            applied_at: "2024-01-01T00:00:00Z".to_string(),
+            reverted: false,
+        };
+        let json = serde_json::to_string(&e).unwrap();
+        let back: FixHistoryEntry = serde_json::from_str(&json).unwrap();
+        assert_eq!(back.id, "h-1");
+        assert!(!back.reverted);
+        assert!(back.after_value.is_none());
+    }
+
+    #[test]
+    fn test_quality_trend_point_serde_roundtrip() {
+        let p = QualityTrendPoint {
+            date: "2024-01-01".to_string(),
+            score: 92.5,
+            checks: 10,
+            issues_found: 1,
+            issues_fixed: 1,
+        };
+        let json = serde_json::to_string(&p).unwrap();
+        let back: QualityTrendPoint = serde_json::from_str(&json).unwrap();
+        assert_eq!(back.date, "2024-01-01");
+        assert_eq!(back.checks, 10);
+    }
+
+    // ---------- Clone trait ----------
+
+    #[test]
+    fn test_quality_status_clone_eq() {
+        let a = QualityStatus::Passed;
+        let b = a.clone();
+        assert_eq!(a, b);
+    }
+
+    #[test]
+    fn test_quality_rule_clone_eq() {
+        let r = QualityRule {
+            id: "r-1".to_string(),
+            name: "n".to_string(),
+            entity_type: "e".to_string(),
+            rule_type: "format".to_string(),
+            description: "d".to_string(),
+            severity: "warning".to_string(),
+            parameters: serde_json::json!({}),
+            enabled: true,
+            created_at: "t1".to_string(),
+            updated_at: "t2".to_string(),
+        };
+        let cloned = r.clone();
+        assert_eq!(r.id, cloned.id);
+        assert_eq!(r.enabled, cloned.enabled);
+    }
+
+    #[test]
+    fn test_auto_fix_action_clone_eq() {
+        let a = AutoFixAction {
+            id: "a".to_string(),
+            rule_id: "r".to_string(),
+            entity_type: "e".to_string(),
+            entity_id: "i".to_string(),
+            action_type: AutoFixActionType::DefaultValue,
+            before_value: serde_json::Value::Null,
+            after_value: None,
+            confidence: 1.0,
+            status: FixStatus::Pending,
+            applied_at: None,
+        };
+        let cloned = a.clone();
+        assert_eq!(a.id, cloned.id);
+        assert_eq!(a.action_type, cloned.action_type);
+    }
+
+    #[test]
+    fn test_quality_loop_stage_eq() {
+        assert_eq!(QualityLoopStage::Monitor, QualityLoopStage::Monitor);
+        assert_ne!(QualityLoopStage::Monitor, QualityLoopStage::Detect);
+    }
+
+    #[test]
+    fn test_fix_strategy_eq() {
+        assert_eq!(FixStrategy::NormalizeText, FixStrategy::NormalizeText);
+        assert_ne!(FixStrategy::NormalizeText, FixStrategy::RemoveDuplicates);
+    }
 }

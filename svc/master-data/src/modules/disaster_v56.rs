@@ -1529,3 +1529,628 @@ pub async fn get_region_health(
         "地域健康状态",
     ))
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    // ---------- snapshot_type_from_str ----------
+
+    #[test]
+    fn test_snapshot_type_from_str_incremental() {
+        assert_eq!(
+            snapshot_type_from_str("incremental"),
+            SnapshotType::Incremental
+        );
+    }
+
+    #[test]
+    fn test_snapshot_type_from_str_differential() {
+        assert_eq!(
+            snapshot_type_from_str("differential"),
+            SnapshotType::Differential
+        );
+    }
+
+    #[test]
+    fn test_snapshot_type_from_str_full_default() {
+        assert_eq!(snapshot_type_from_str("full"), SnapshotType::Full);
+        assert_eq!(snapshot_type_from_str("unknown"), SnapshotType::Full);
+        assert_eq!(snapshot_type_from_str(""), SnapshotType::Full);
+    }
+
+    // ---------- priority_from_str ----------
+
+    #[test]
+    fn test_priority_from_str_high() {
+        assert_eq!(priority_from_str("high"), RecoveryPlanPriority::High);
+    }
+
+    #[test]
+    fn test_priority_from_str_medium() {
+        assert_eq!(priority_from_str("medium"), RecoveryPlanPriority::Medium);
+    }
+
+    #[test]
+    fn test_priority_from_str_low() {
+        assert_eq!(priority_from_str("low"), RecoveryPlanPriority::Low);
+    }
+
+    #[test]
+    fn test_priority_from_str_critical_default() {
+        assert_eq!(
+            priority_from_str("critical"),
+            RecoveryPlanPriority::Critical
+        );
+        assert_eq!(priority_from_str("unknown"), RecoveryPlanPriority::Critical);
+        assert_eq!(priority_from_str(""), RecoveryPlanPriority::Critical);
+    }
+
+    // ---------- strategy_from_str ----------
+
+    #[test]
+    fn test_strategy_from_str_cold_standby() {
+        assert_eq!(
+            strategy_from_str("cold_standby"),
+            RecoveryStrategy::ColdStandby
+        );
+    }
+
+    #[test]
+    fn test_strategy_from_str_warm_standby() {
+        assert_eq!(
+            strategy_from_str("warm_standby"),
+            RecoveryStrategy::WarmStandby
+        );
+    }
+
+    #[test]
+    fn test_strategy_from_str_active_active() {
+        assert_eq!(
+            strategy_from_str("active_active"),
+            RecoveryStrategy::ActiveActive
+        );
+    }
+
+    #[test]
+    fn test_strategy_from_str_active_passive() {
+        assert_eq!(
+            strategy_from_str("active_passive"),
+            RecoveryStrategy::ActivePassive
+        );
+    }
+
+    #[test]
+    fn test_strategy_from_str_hot_standby_default() {
+        assert_eq!(
+            strategy_from_str("hot_standby"),
+            RecoveryStrategy::HotStandby
+        );
+        assert_eq!(strategy_from_str("unknown"), RecoveryStrategy::HotStandby);
+        assert_eq!(strategy_from_str(""), RecoveryStrategy::HotStandby);
+    }
+
+    // ---------- replication_mode_from_str ----------
+
+    #[test]
+    fn test_replication_mode_from_str_synchronous() {
+        assert_eq!(
+            replication_mode_from_str("synchronous"),
+            ReplicationMode::Synchronous
+        );
+    }
+
+    #[test]
+    fn test_replication_mode_from_str_manual() {
+        assert_eq!(replication_mode_from_str("manual"), ReplicationMode::Manual);
+    }
+
+    #[test]
+    fn test_replication_mode_from_str_asynchronous_default() {
+        assert_eq!(
+            replication_mode_from_str("asynchronous"),
+            ReplicationMode::Asynchronous
+        );
+        assert_eq!(
+            replication_mode_from_str("unknown"),
+            ReplicationMode::Asynchronous
+        );
+        assert_eq!(replication_mode_from_str(""), ReplicationMode::Asynchronous);
+    }
+
+    // ---------- region_status_from_str ----------
+
+    #[test]
+    fn test_region_status_from_str_offline() {
+        assert_eq!(region_status_from_str("offline"), RegionStatus::Offline);
+    }
+
+    #[test]
+    fn test_region_status_from_str_degraded() {
+        assert_eq!(region_status_from_str("degraded"), RegionStatus::Degraded);
+    }
+
+    #[test]
+    fn test_region_status_from_str_online_default() {
+        assert_eq!(region_status_from_str("online"), RegionStatus::Online);
+        assert_eq!(region_status_from_str("unknown"), RegionStatus::Online);
+        assert_eq!(region_status_from_str(""), RegionStatus::Online);
+    }
+
+    // ---------- simple_hash ----------
+
+    #[test]
+    fn test_simple_hash_default_state() {
+        let h = simple_hash::SimpleHash::default();
+        let result = h.finalize();
+        // FNV offset basis
+        assert_eq!(result, "cbf29ce484222325");
+    }
+
+    #[test]
+    fn test_simple_hash_empty_update() {
+        let mut h = simple_hash::SimpleHash::default();
+        h.update(b"");
+        assert_eq!(h.finalize(), "cbf29ce484222325");
+    }
+
+    #[test]
+    fn test_simple_hash_deterministic() {
+        let mut h1 = simple_hash::SimpleHash::default();
+        let mut h2 = simple_hash::SimpleHash::default();
+        h1.update(b"hello world");
+        h2.update(b"hello world");
+        assert_eq!(h1.finalize(), h2.finalize());
+    }
+
+    #[test]
+    fn test_simple_hash_different_input_different_output() {
+        let mut h1 = simple_hash::SimpleHash::default();
+        let mut h2 = simple_hash::SimpleHash::default();
+        h1.update(b"alice");
+        h2.update(b"bob");
+        assert_ne!(h1.finalize(), h2.finalize());
+    }
+
+    #[test]
+    fn test_simple_hash_is_hex_string() {
+        let mut h = simple_hash::SimpleHash::default();
+        h.update(b"test data");
+        let result = h.finalize();
+        assert_eq!(result.len(), 16);
+        assert!(result.chars().all(|c| c.is_ascii_hexdigit()));
+    }
+
+    #[test]
+    fn test_simple_hash_incremental_update() {
+        let mut h1 = simple_hash::SimpleHash::default();
+        h1.update(b"hello world");
+
+        let mut h2 = simple_hash::SimpleHash::default();
+        h2.update(b"hello ");
+        h2.update(b"world");
+
+        assert_eq!(h1.finalize(), h2.finalize());
+    }
+
+    // ---------- generate_checksum ----------
+
+    #[test]
+    fn test_generate_checksum_deterministic() {
+        let rp = RecoveryPoint {
+            id: "rp-1".to_string(),
+            snapshot_type: SnapshotType::Full,
+            entity_type: "customer".to_string(),
+            entity_id: "all".to_string(),
+            data: serde_json::json!({"count": 100}),
+            checksum: String::new(),
+            created_at: "2024-01-01T00:00:00Z".to_string(),
+            size_bytes: 1024,
+        };
+        let c1 = generate_checksum(&rp);
+        let c2 = generate_checksum(&rp);
+        assert_eq!(c1, c2);
+    }
+
+    #[test]
+    fn test_generate_checksum_different_data_different_checksum() {
+        let rp1 = RecoveryPoint {
+            id: "rp-1".to_string(),
+            snapshot_type: SnapshotType::Full,
+            entity_type: "customer".to_string(),
+            entity_id: "all".to_string(),
+            data: serde_json::json!({"count": 100}),
+            checksum: String::new(),
+            created_at: "2024-01-01T00:00:00Z".to_string(),
+            size_bytes: 1024,
+        };
+        let rp2 = RecoveryPoint {
+            id: "rp-1".to_string(),
+            snapshot_type: SnapshotType::Full,
+            entity_type: "customer".to_string(),
+            entity_id: "all".to_string(),
+            data: serde_json::json!({"count": 200}),
+            checksum: String::new(),
+            created_at: "2024-01-01T00:00:00Z".to_string(),
+            size_bytes: 1024,
+        };
+        assert_ne!(generate_checksum(&rp1), generate_checksum(&rp2));
+    }
+
+    #[test]
+    fn test_generate_checksum_is_hex() {
+        let rp = RecoveryPoint {
+            id: "rp-1".to_string(),
+            snapshot_type: SnapshotType::Full,
+            entity_type: "customer".to_string(),
+            entity_id: "all".to_string(),
+            data: serde_json::json!({}),
+            checksum: String::new(),
+            created_at: "2024-01-01T00:00:00Z".to_string(),
+            size_bytes: 0,
+        };
+        let checksum = generate_checksum(&rp);
+        assert!(!checksum.is_empty());
+        assert!(checksum.chars().all(|c| c.is_ascii_hexdigit()));
+    }
+
+    // ---------- 枚举 serde 往返 ----------
+
+    #[test]
+    fn test_snapshot_type_serde_roundtrip() {
+        for v in [
+            SnapshotType::Full,
+            SnapshotType::Incremental,
+            SnapshotType::Differential,
+        ] {
+            let json = serde_json::to_string(&v).unwrap();
+            let back: SnapshotType = serde_json::from_str(&json).unwrap();
+            assert_eq!(v, back);
+        }
+    }
+
+    #[test]
+    fn test_recovery_plan_priority_serde_roundtrip() {
+        for v in [
+            RecoveryPlanPriority::Critical,
+            RecoveryPlanPriority::High,
+            RecoveryPlanPriority::Medium,
+            RecoveryPlanPriority::Low,
+        ] {
+            let json = serde_json::to_string(&v).unwrap();
+            let back: RecoveryPlanPriority = serde_json::from_str(&json).unwrap();
+            assert_eq!(v, back);
+        }
+    }
+
+    #[test]
+    fn test_recovery_plan_status_serde_roundtrip() {
+        for v in [
+            RecoveryPlanStatus::Draft,
+            RecoveryPlanStatus::Active,
+            RecoveryPlanStatus::Executing,
+            RecoveryPlanStatus::Completed,
+            RecoveryPlanStatus::Failed,
+        ] {
+            let json = serde_json::to_string(&v).unwrap();
+            let back: RecoveryPlanStatus = serde_json::from_str(&json).unwrap();
+            assert_eq!(v, back);
+        }
+    }
+
+    #[test]
+    fn test_continuity_plan_status_serde_roundtrip() {
+        for v in [
+            ContinuityPlanStatus::Draft,
+            ContinuityPlanStatus::Active,
+            ContinuityPlanStatus::Tested,
+            ContinuityPlanStatus::Expired,
+        ] {
+            let json = serde_json::to_string(&v).unwrap();
+            let back: ContinuityPlanStatus = serde_json::from_str(&json).unwrap();
+            assert_eq!(v, back);
+        }
+    }
+
+    #[test]
+    fn test_recovery_strategy_serde_roundtrip() {
+        for v in [
+            RecoveryStrategy::ColdStandby,
+            RecoveryStrategy::WarmStandby,
+            RecoveryStrategy::HotStandby,
+            RecoveryStrategy::ActiveActive,
+            RecoveryStrategy::ActivePassive,
+        ] {
+            let json = serde_json::to_string(&v).unwrap();
+            let back: RecoveryStrategy = serde_json::from_str(&json).unwrap();
+            assert_eq!(v, back);
+        }
+    }
+
+    #[test]
+    fn test_region_status_serde_roundtrip() {
+        for v in [
+            RegionStatus::Online,
+            RegionStatus::Offline,
+            RegionStatus::Degraded,
+        ] {
+            let json = serde_json::to_string(&v).unwrap();
+            let back: RegionStatus = serde_json::from_str(&json).unwrap();
+            assert_eq!(v, back);
+        }
+    }
+
+    #[test]
+    fn test_replication_mode_serde_roundtrip() {
+        for v in [
+            ReplicationMode::Synchronous,
+            ReplicationMode::Asynchronous,
+            ReplicationMode::Manual,
+        ] {
+            let json = serde_json::to_string(&v).unwrap();
+            let back: ReplicationMode = serde_json::from_str(&json).unwrap();
+            assert_eq!(v, back);
+        }
+    }
+
+    #[test]
+    fn test_replication_status_serde_roundtrip() {
+        for v in [
+            ReplicationStatus::Stopped,
+            ReplicationStatus::Running,
+            ReplicationStatus::Paused,
+            ReplicationStatus::Lagging,
+        ] {
+            let json = serde_json::to_string(&v).unwrap();
+            let back: ReplicationStatus = serde_json::from_str(&json).unwrap();
+            assert_eq!(v, back);
+        }
+    }
+
+    #[test]
+    fn test_failover_trigger_serde_roundtrip() {
+        for v in [
+            FailoverTrigger::Manual,
+            FailoverTrigger::Automatic,
+            FailoverTrigger::Scheduled,
+        ] {
+            let json = serde_json::to_string(&v).unwrap();
+            let back: FailoverTrigger = serde_json::from_str(&json).unwrap();
+            assert_eq!(v, back);
+        }
+    }
+
+    #[test]
+    fn test_failover_status_serde_roundtrip() {
+        for v in [
+            FailoverStatus::Initiated,
+            FailoverStatus::InProgress,
+            FailoverStatus::Completed,
+            FailoverStatus::RolledBack,
+        ] {
+            let json = serde_json::to_string(&v).unwrap();
+            let back: FailoverStatus = serde_json::from_str(&json).unwrap();
+            assert_eq!(v, back);
+        }
+    }
+
+    // ---------- 结构体 serde 往返 ----------
+
+    #[test]
+    fn test_recovery_point_serde_roundtrip() {
+        let rp = RecoveryPoint {
+            id: "rp-1".to_string(),
+            snapshot_type: SnapshotType::Full,
+            entity_type: "customer".to_string(),
+            entity_id: "all".to_string(),
+            data: serde_json::json!({"count": 100}),
+            checksum: "abc123".to_string(),
+            created_at: "2024-01-01T00:00:00Z".to_string(),
+            size_bytes: 1024,
+        };
+        let json = serde_json::to_string(&rp).unwrap();
+        let back: RecoveryPoint = serde_json::from_str(&json).unwrap();
+        assert_eq!(back.id, "rp-1");
+        assert_eq!(back.snapshot_type, SnapshotType::Full);
+    }
+
+    #[test]
+    fn test_recovery_step_serde_roundtrip() {
+        let s = RecoveryStep {
+            id: "rs-1".to_string(),
+            description: "验证数据".to_string(),
+            action: "verify_data".to_string(),
+            order: 1,
+            status: "pending".to_string(),
+        };
+        let json = serde_json::to_string(&s).unwrap();
+        let back: RecoveryStep = serde_json::from_str(&json).unwrap();
+        assert_eq!(back.id, "rs-1");
+        assert_eq!(back.order, 1);
+    }
+
+    #[test]
+    fn test_recovery_plan_serde_roundtrip() {
+        let p = RecoveryPlan {
+            id: "plan-1".to_string(),
+            name: "恢复计划".to_string(),
+            priority: RecoveryPlanPriority::Critical,
+            rto_minutes: 30,
+            rpo_minutes: 5,
+            steps: vec![],
+            status: RecoveryPlanStatus::Draft,
+        };
+        let json = serde_json::to_string(&p).unwrap();
+        let back: RecoveryPlan = serde_json::from_str(&json).unwrap();
+        assert_eq!(back.id, "plan-1");
+        assert_eq!(back.priority, RecoveryPlanPriority::Critical);
+    }
+
+    #[test]
+    fn test_critical_function_serde_roundtrip() {
+        let cf = CriticalFunction {
+            id: "cf-1".to_string(),
+            name: "订单处理".to_string(),
+            description: "核心业务".to_string(),
+            dependencies: vec!["db".to_string()],
+            max_downtime_minutes: 15,
+            recovery_procedure: "恢复流程".to_string(),
+        };
+        let json = serde_json::to_string(&cf).unwrap();
+        let back: CriticalFunction = serde_json::from_str(&json).unwrap();
+        assert_eq!(back.id, "cf-1");
+        assert_eq!(back.max_downtime_minutes, 15);
+    }
+
+    #[test]
+    fn test_continuity_plan_serde_roundtrip() {
+        let p = ContinuityPlan {
+            id: "cp-1".to_string(),
+            name: "BCP".to_string(),
+            scope: "核心业务".to_string(),
+            critical_functions: vec![],
+            recovery_strategy: RecoveryStrategy::HotStandby,
+            test_frequency: "quarterly".to_string(),
+            last_tested: Some("2024-01-01T00:00:00Z".to_string()),
+            status: ContinuityPlanStatus::Active,
+        };
+        let json = serde_json::to_string(&p).unwrap();
+        let back: ContinuityPlan = serde_json::from_str(&json).unwrap();
+        assert_eq!(back.id, "cp-1");
+        assert_eq!(back.recovery_strategy, RecoveryStrategy::HotStandby);
+    }
+
+    #[test]
+    fn test_bc_test_serde_roundtrip() {
+        let t = BCTest {
+            id: "bt-1".to_string(),
+            plan_id: "cp-1".to_string(),
+            tested_at: "2024-01-01T00:00:00Z".to_string(),
+            result: "passed".to_string(),
+            duration_minutes: 45,
+            issues_found: vec![],
+        };
+        let json = serde_json::to_string(&t).unwrap();
+        let back: BCTest = serde_json::from_str(&json).unwrap();
+        assert_eq!(back.id, "bt-1");
+        assert_eq!(back.result, "passed");
+    }
+
+    #[test]
+    fn test_region_config_serde_roundtrip() {
+        let r = RegionConfig {
+            region_id: "cn-east-1".to_string(),
+            primary: true,
+            endpoint: "https://cn-east-1.local".to_string(),
+            latency_ms: 5,
+            status: RegionStatus::Online,
+        };
+        let json = serde_json::to_string(&r).unwrap();
+        let back: RegionConfig = serde_json::from_str(&json).unwrap();
+        assert_eq!(back.region_id, "cn-east-1");
+        assert!(back.primary);
+    }
+
+    #[test]
+    fn test_replication_config_serde_roundtrip() {
+        let r = ReplicationConfig {
+            id: "rc-1".to_string(),
+            source_region: "cn-east-1".to_string(),
+            target_region: "ap-southeast-1".to_string(),
+            replication_mode: ReplicationMode::Asynchronous,
+            lag_max_ms: 1000,
+            status: ReplicationStatus::Running,
+        };
+        let json = serde_json::to_string(&r).unwrap();
+        let back: ReplicationConfig = serde_json::from_str(&json).unwrap();
+        assert_eq!(back.id, "rc-1");
+        assert_eq!(back.replication_mode, ReplicationMode::Asynchronous);
+    }
+
+    #[test]
+    fn test_failover_record_serde_roundtrip() {
+        let f = FailoverRecord {
+            id: "fr-1".to_string(),
+            from_region: "cn-east-1".to_string(),
+            to_region: "ap-southeast-1".to_string(),
+            trigger: FailoverTrigger::Manual,
+            started_at: "2024-01-01T00:00:00Z".to_string(),
+            completed_at: None,
+            reason: "测试故障转移".to_string(),
+            status: FailoverStatus::Initiated,
+        };
+        let json = serde_json::to_string(&f).unwrap();
+        let back: FailoverRecord = serde_json::from_str(&json).unwrap();
+        assert_eq!(back.id, "fr-1");
+        assert_eq!(back.trigger, FailoverTrigger::Manual);
+        assert!(back.completed_at.is_none());
+    }
+
+    // ---------- Clone/Eq trait ----------
+
+    #[test]
+    fn test_snapshot_type_clone_eq() {
+        assert_eq!(SnapshotType::Full, SnapshotType::Full);
+        assert_ne!(SnapshotType::Full, SnapshotType::Incremental);
+    }
+
+    #[test]
+    fn test_recovery_plan_priority_clone_eq() {
+        assert_eq!(
+            RecoveryPlanPriority::Critical,
+            RecoveryPlanPriority::Critical
+        );
+        assert_ne!(RecoveryPlanPriority::Critical, RecoveryPlanPriority::Low);
+    }
+
+    #[test]
+    fn test_region_status_clone_eq() {
+        assert_eq!(RegionStatus::Online, RegionStatus::Online);
+        assert_ne!(RegionStatus::Online, RegionStatus::Offline);
+    }
+
+    #[test]
+    fn test_recovery_strategy_clone_eq() {
+        assert_eq!(
+            RecoveryStrategy::ActiveActive,
+            RecoveryStrategy::ActiveActive
+        );
+        assert_ne!(
+            RecoveryStrategy::ActiveActive,
+            RecoveryStrategy::ColdStandby
+        );
+    }
+
+    #[test]
+    fn test_recovery_point_clone() {
+        let rp = RecoveryPoint {
+            id: "rp-1".to_string(),
+            snapshot_type: SnapshotType::Full,
+            entity_type: "customer".to_string(),
+            entity_id: "all".to_string(),
+            data: serde_json::json!({"k": "v"}),
+            checksum: "h".to_string(),
+            created_at: "t".to_string(),
+            size_bytes: 100,
+        };
+        let cloned = rp.clone();
+        assert_eq!(cloned.id, rp.id);
+        assert_eq!(cloned.snapshot_type, rp.snapshot_type);
+    }
+
+    #[test]
+    fn test_recovery_plan_clone() {
+        let p = RecoveryPlan {
+            id: "p1".to_string(),
+            name: "plan".to_string(),
+            priority: RecoveryPlanPriority::High,
+            rto_minutes: 30,
+            rpo_minutes: 5,
+            steps: vec![],
+            status: RecoveryPlanStatus::Active,
+        };
+        let cloned = p.clone();
+        assert_eq!(cloned.id, p.id);
+        assert_eq!(cloned.priority, p.priority);
+    }
+}
