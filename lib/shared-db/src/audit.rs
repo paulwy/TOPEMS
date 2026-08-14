@@ -250,3 +250,271 @@ impl AuditLogRecord {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use serde_json::json;
+
+    #[test]
+    fn test_create_audit_log_request_new_defaults() {
+        let req = CreateAuditLogRequest::new(
+            "create".to_string(),
+            "user".to_string(),
+            "success".to_string(),
+        );
+        assert_eq!(req.action, "create");
+        assert_eq!(req.entity_type, "user");
+        assert_eq!(req.status, "success");
+        assert!(req.entity_id.is_none());
+        assert!(req.entity_ids.is_none());
+        assert!(req.user_id.is_none());
+        assert!(req.user_name.is_none());
+        assert!(req.request_details.is_none());
+        assert!(req.response_details.is_none());
+        assert!(req.error_message.is_none());
+        assert!(req.ip_address.is_none());
+        assert!(req.user_agent.is_none());
+    }
+
+    #[test]
+    fn test_with_entity_id() {
+        let id = Uuid::new_v4();
+        let req = CreateAuditLogRequest::new(
+            "a".to_string(),
+            "e".to_string(),
+            "s".to_string(),
+        )
+        .with_entity_id(id);
+        assert_eq!(req.entity_id, Some(id));
+    }
+
+    #[test]
+    fn test_with_entity_ids() {
+        let ids = json!(["id1", "id2"]);
+        let req = CreateAuditLogRequest::new(
+            "a".to_string(),
+            "e".to_string(),
+            "s".to_string(),
+        )
+        .with_entity_ids(ids.clone());
+        assert_eq!(req.entity_ids, Some(ids));
+    }
+
+    #[test]
+    fn test_with_user() {
+        let req = CreateAuditLogRequest::new(
+            "a".to_string(),
+            "e".to_string(),
+            "s".to_string(),
+        )
+        .with_user("user123".to_string(), "Alice".to_string());
+        assert_eq!(req.user_id.as_deref(), Some("user123"));
+        assert_eq!(req.user_name.as_deref(), Some("Alice"));
+    }
+
+    #[test]
+    fn test_with_request_details() {
+        let details = json!({"key": "value"});
+        let req = CreateAuditLogRequest::new(
+            "a".to_string(),
+            "e".to_string(),
+            "s".to_string(),
+        )
+        .with_request_details(details.clone());
+        assert_eq!(req.request_details, Some(details));
+    }
+
+    #[test]
+    fn test_with_response_details() {
+        let details = json!({"result": "ok"});
+        let req = CreateAuditLogRequest::new(
+            "a".to_string(),
+            "e".to_string(),
+            "s".to_string(),
+        )
+        .with_response_details(details.clone());
+        assert_eq!(req.response_details, Some(details));
+    }
+
+    #[test]
+    fn test_with_error() {
+        let req = CreateAuditLogRequest::new(
+            "a".to_string(),
+            "e".to_string(),
+            "s".to_string(),
+        )
+        .with_error("boom".to_string());
+        assert_eq!(req.error_message.as_deref(), Some("boom"));
+    }
+
+    #[test]
+    fn test_with_request_info() {
+        let req = CreateAuditLogRequest::new(
+            "a".to_string(),
+            "e".to_string(),
+            "s".to_string(),
+        )
+        .with_request_info(
+            Some("127.0.0.1".to_string()),
+            Some("Mozilla".to_string()),
+        );
+        assert_eq!(req.ip_address.as_deref(), Some("127.0.0.1"));
+        assert_eq!(req.user_agent.as_deref(), Some("Mozilla"));
+    }
+
+    #[test]
+    fn test_with_request_info_none() {
+        let req = CreateAuditLogRequest::new(
+            "a".to_string(),
+            "e".to_string(),
+            "s".to_string(),
+        )
+        .with_request_info(None, None);
+        assert!(req.ip_address.is_none());
+        assert!(req.user_agent.is_none());
+    }
+
+    #[test]
+    fn test_full_builder_chain() {
+        let id = Uuid::new_v4();
+        let ids = json!(["a", "b"]);
+        let req_details = json!({"k": "v"});
+        let resp_details = json!({"ok": true});
+        let req = CreateAuditLogRequest::new(
+            "action".to_string(),
+            "entity".to_string(),
+            "success".to_string(),
+        )
+        .with_entity_id(id)
+        .with_entity_ids(ids.clone())
+        .with_user("u1".to_string(), "Bob".to_string())
+        .with_request_details(req_details.clone())
+        .with_response_details(resp_details.clone())
+        .with_error("err".to_string())
+        .with_request_info(
+            Some("1.2.3.4".to_string()),
+            Some("agent".to_string()),
+        );
+        assert_eq!(req.action, "action");
+        assert_eq!(req.entity_type, "entity");
+        assert_eq!(req.status, "success");
+        assert_eq!(req.entity_id, Some(id));
+        assert_eq!(req.entity_ids, Some(ids));
+        assert_eq!(req.user_id.as_deref(), Some("u1"));
+        assert_eq!(req.user_name.as_deref(), Some("Bob"));
+        assert_eq!(req.request_details, Some(req_details));
+        assert_eq!(req.response_details, Some(resp_details));
+        assert_eq!(req.error_message.as_deref(), Some("err"));
+        assert_eq!(req.ip_address.as_deref(), Some("1.2.3.4"));
+        assert_eq!(req.user_agent.as_deref(), Some("agent"));
+    }
+
+    #[test]
+    fn test_audit_log_query_default_fields() {
+        let query = AuditLogQuery {
+            action: None,
+            entity_type: None,
+            user_id: None,
+            status: None,
+            start_date: None,
+            end_date: None,
+            page: None,
+            page_size: None,
+        };
+        assert!(query.action.is_none());
+        assert!(query.entity_type.is_none());
+        assert!(query.user_id.is_none());
+        assert!(query.status.is_none());
+        assert!(query.start_date.is_none());
+        assert!(query.end_date.is_none());
+        assert!(query.page.is_none());
+        assert!(query.page_size.is_none());
+    }
+
+    #[test]
+    fn test_audit_log_query_all_fields() {
+        let start = Utc::now();
+        let end = start + chrono::Duration::hours(1);
+        let query = AuditLogQuery {
+            action: Some("create".to_string()),
+            entity_type: Some("user".to_string()),
+            user_id: Some("u1".to_string()),
+            status: Some("success".to_string()),
+            start_date: Some(start),
+            end_date: Some(end),
+            page: Some(1),
+            page_size: Some(20),
+        };
+        assert_eq!(query.action.as_deref(), Some("create"));
+        assert_eq!(query.entity_type.as_deref(), Some("user"));
+        assert_eq!(query.user_id.as_deref(), Some("u1"));
+        assert_eq!(query.status.as_deref(), Some("success"));
+        assert_eq!(query.start_date, Some(start));
+        assert_eq!(query.end_date, Some(end));
+        assert_eq!(query.page, Some(1));
+        assert_eq!(query.page_size, Some(20));
+    }
+
+    #[test]
+    fn test_audit_log_query_serde_roundtrip() {
+        let start = Utc::now();
+        let end = start + chrono::Duration::hours(2);
+        let query = AuditLogQuery {
+            action: Some("delete".to_string()),
+            entity_type: Some("doc".to_string()),
+            user_id: Some("u9".to_string()),
+            status: Some("failed".to_string()),
+            start_date: Some(start),
+            end_date: Some(end),
+            page: Some(2),
+            page_size: Some(50),
+        };
+        let json_str = serde_json::to_string(&query).expect("serialize");
+        let deserialized: AuditLogQuery =
+            serde_json::from_str(&json_str).expect("deserialize");
+        assert_eq!(deserialized.action, query.action);
+        assert_eq!(deserialized.entity_type, query.entity_type);
+        assert_eq!(deserialized.user_id, query.user_id);
+        assert_eq!(deserialized.status, query.status);
+        assert_eq!(deserialized.start_date, query.start_date);
+        assert_eq!(deserialized.end_date, query.end_date);
+        assert_eq!(deserialized.page, query.page);
+        assert_eq!(deserialized.page_size, query.page_size);
+    }
+
+    #[test]
+    fn test_create_audit_log_request_serde_roundtrip() {
+        let id = Uuid::new_v4();
+        let ids = json!([1, 2, 3]);
+        let req_details = json!({"k": "v"});
+        let resp_details = json!({"ok": true});
+        let req = CreateAuditLogRequest::new(
+            "act".to_string(),
+            "ent".to_string(),
+            "ok".to_string(),
+        )
+        .with_entity_id(id)
+        .with_entity_ids(ids.clone())
+        .with_user("u".to_string(), "N".to_string())
+        .with_request_details(req_details.clone())
+        .with_response_details(resp_details.clone())
+        .with_error("e".to_string())
+        .with_request_info(Some("ip".to_string()), Some("ua".to_string()));
+        let json_str = serde_json::to_string(&req).expect("serialize");
+        let deserialized: CreateAuditLogRequest =
+            serde_json::from_str(&json_str).expect("deserialize");
+        assert_eq!(deserialized.action, req.action);
+        assert_eq!(deserialized.entity_type, req.entity_type);
+        assert_eq!(deserialized.entity_id, req.entity_id);
+        assert_eq!(deserialized.entity_ids, req.entity_ids);
+        assert_eq!(deserialized.user_id, req.user_id);
+        assert_eq!(deserialized.user_name, req.user_name);
+        assert_eq!(deserialized.request_details, req.request_details);
+        assert_eq!(deserialized.response_details, req.response_details);
+        assert_eq!(deserialized.status, req.status);
+        assert_eq!(deserialized.error_message, req.error_message);
+        assert_eq!(deserialized.ip_address, req.ip_address);
+        assert_eq!(deserialized.user_agent, req.user_agent);
+    }
+}

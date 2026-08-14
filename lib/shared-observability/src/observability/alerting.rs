@@ -348,4 +348,130 @@ mod tests {
         assert_eq!(stats.critical, 1);
         assert_eq!(stats.emergency, 1);
     }
+
+    #[test]
+    fn test_alert_manager_new_empty_state() {
+        let manager = AlertManager::new();
+        assert_eq!(manager.get_active_alerts().len(), 0);
+        assert_eq!(manager.get_history(10).len(), 0);
+        let stats = manager.get_stats();
+        assert_eq!(stats.total, 0);
+        assert_eq!(stats.info, 0);
+        assert_eq!(stats.warning, 0);
+        assert_eq!(stats.critical, 0);
+        assert_eq!(stats.emergency, 0);
+    }
+
+    #[test]
+    fn test_alert_fire_nonexistent_rule_creates_nothing() {
+        let manager = AlertManager::new();
+        manager.fire_alert("nonexistent-rule", 1.0, "should be ignored");
+        assert_eq!(manager.get_active_alerts().len(), 0);
+        assert_eq!(manager.get_history(10).len(), 0);
+    }
+
+    #[test]
+    fn test_alert_history_reverse_order_and_limit() {
+        let manager = AlertManager::new();
+        manager.add_rule(make_rule("h1", AlertSeverity::Warning));
+        for i in 0..5u64 {
+            manager.fire_alert("h1", i as f64, &format!("alert {}", i));
+        }
+        // History should contain 5 entries from firing.
+        let all = manager.get_history(100);
+        assert_eq!(all.len(), 5);
+        // Reverse order: most recent first.
+        assert_eq!(all[0].message, "alert 4");
+        assert_eq!(all[1].message, "alert 3");
+        assert_eq!(all[2].message, "alert 2");
+        // Limited.
+        let limited = manager.get_history(2);
+        assert_eq!(limited.len(), 2);
+        assert_eq!(limited[0].message, "alert 4");
+        assert_eq!(limited[1].message, "alert 3");
+    }
+
+    #[test]
+    fn test_alert_severity_serde_roundtrip() {
+        let variants = vec![
+            AlertSeverity::Info,
+            AlertSeverity::Warning,
+            AlertSeverity::Critical,
+            AlertSeverity::Emergency,
+        ];
+        for original in variants {
+            let json = serde_json::to_string(&original).expect("serialize AlertSeverity");
+            let back: AlertSeverity =
+                serde_json::from_str(&json).expect("deserialize AlertSeverity");
+            assert_eq!(original, back, "AlertSeverity serde roundtrip mismatch");
+        }
+    }
+
+    #[test]
+    fn test_alert_state_serde_roundtrip() {
+        let variants = vec![
+            AlertState::Firing,
+            AlertState::Acknowledged,
+            AlertState::Resolved,
+            AlertState::Silenced,
+        ];
+        for original in variants {
+            let json = serde_json::to_string(&original).expect("serialize AlertState");
+            let back: AlertState = serde_json::from_str(&json).expect("deserialize AlertState");
+            assert_eq!(original, back, "AlertState serde roundtrip mismatch");
+        }
+    }
+
+    #[test]
+    fn test_alert_rule_serde_roundtrip() {
+        let original = make_rule("rule-serde", AlertSeverity::Critical);
+        let json = serde_json::to_string(&original).expect("serialize AlertRule");
+        let back: AlertRule = serde_json::from_str(&json).expect("deserialize AlertRule");
+        let json_again = serde_json::to_string(&back).expect("serialize AlertRule again");
+        assert_eq!(json, json_again, "AlertRule serde roundtrip mismatch");
+    }
+
+    #[test]
+    fn test_alert_event_serde_roundtrip() {
+        let original = AlertEvent {
+            id: "evt-1".to_string(),
+            rule_id: "r1".to_string(),
+            rule_name: "rule-1".to_string(),
+            severity: AlertSeverity::Critical,
+            state: AlertState::Firing,
+            message: "service down".to_string(),
+            fired_at: Utc::now(),
+            resolved_at: Some(Utc::now()),
+            labels: HashMap::new(),
+            value: 2.5,
+        };
+        let json = serde_json::to_string(&original).expect("serialize AlertEvent");
+        let back: AlertEvent = serde_json::from_str(&json).expect("deserialize AlertEvent");
+        let json_again = serde_json::to_string(&back).expect("serialize AlertEvent again");
+        assert_eq!(json, json_again, "AlertEvent serde roundtrip mismatch");
+    }
+
+    #[test]
+    fn test_notification_channels_via_fire_all_severities() {
+        // Firing alerts with all severity levels should not panic and should
+        // produce active alerts (exercises notification_channels internally).
+        let manager = AlertManager::new();
+        manager.add_rule(make_rule("info", AlertSeverity::Info));
+        manager.add_rule(make_rule("warn", AlertSeverity::Warning));
+        manager.add_rule(make_rule("crit", AlertSeverity::Critical));
+        manager.add_rule(make_rule("emerg", AlertSeverity::Emergency));
+
+        manager.fire_alert("info", 1.0, "info msg");
+        manager.fire_alert("warn", 2.0, "warn msg");
+        manager.fire_alert("crit", 3.0, "crit msg");
+        manager.fire_alert("emerg", 4.0, "emerg msg");
+
+        let active = manager.get_active_alerts();
+        assert_eq!(active.len(), 4);
+        let stats = manager.get_stats();
+        assert_eq!(stats.info, 1);
+        assert_eq!(stats.warning, 1);
+        assert_eq!(stats.critical, 1);
+        assert_eq!(stats.emergency, 1);
+    }
 }

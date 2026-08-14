@@ -232,4 +232,210 @@ mod tests {
         assert_eq!(AIProviderType::Ollama.to_string(), "ollama");
         assert_eq!(AIProviderType::AzureOpenAI.to_string(), "azure_openai");
     }
+
+    #[test]
+    fn test_provider_display_custom() {
+        assert_eq!(AIProviderType::Custom.to_string(), "custom");
+    }
+
+    #[test]
+    fn test_ai_provider_type_default() {
+        assert_eq!(AIProviderType::default(), AIProviderType::Ollama);
+    }
+
+    #[test]
+    fn test_ai_provider_type_serde_roundtrip() {
+        for provider in [
+            AIProviderType::OpenAI,
+            AIProviderType::Gemini,
+            AIProviderType::Ollama,
+            AIProviderType::AzureOpenAI,
+            AIProviderType::Custom,
+        ] {
+            let json = serde_json::to_string(&provider).unwrap();
+            let deserialized: AIProviderType = serde_json::from_str(&json).unwrap();
+            assert_eq!(deserialized, provider, "roundtrip failed for {:?}", provider);
+        }
+    }
+
+    #[test]
+    fn test_ai_model_config_serde_roundtrip() {
+        let config = AIModelConfig {
+            provider: AIProviderType::OpenAI,
+            model_name: "gpt-4".to_string(),
+            base_url: "https://api.openai.com/v1".to_string(),
+            api_key: Some("sk-test".to_string()),
+            api_key_env: None,
+            model_type: ModelType::Chat,
+            dimension: None,
+            max_tokens: Some(2048),
+            temperature: Some(0.3),
+            timeout: Some(60),
+            organization: Some("org-123".to_string()),
+            deployment_name: None,
+        };
+        let json = serde_json::to_string(&config).unwrap();
+        let deserialized: AIModelConfig = serde_json::from_str(&json).unwrap();
+        assert_eq!(deserialized.provider, AIProviderType::OpenAI);
+        assert_eq!(deserialized.model_name, "gpt-4");
+        assert_eq!(deserialized.base_url, "https://api.openai.com/v1");
+        assert_eq!(deserialized.api_key.as_deref(), Some("sk-test"));
+        assert_eq!(deserialized.max_tokens, Some(2048));
+        assert_eq!(deserialized.temperature, Some(0.3));
+        assert_eq!(deserialized.timeout, Some(60));
+        assert_eq!(deserialized.organization.as_deref(), Some("org-123"));
+    }
+
+    #[test]
+    fn test_ai_model_config_get_api_key_direct() {
+        let config = AIModelConfig {
+            api_key: Some("sk-direct".to_string()),
+            ..Default::default()
+        };
+        assert_eq!(config.get_api_key().as_deref(), Some("sk-direct"));
+    }
+
+    #[test]
+    fn test_ai_model_config_get_api_key_from_env() {
+        std::env::set_var("TEST_AI_API_KEY", "sk-from-env");
+        let config = AIModelConfig {
+            api_key: None,
+            api_key_env: Some("TEST_AI_API_KEY".to_string()),
+            ..Default::default()
+        };
+        assert_eq!(config.get_api_key().as_deref(), Some("sk-from-env"));
+        std::env::remove_var("TEST_AI_API_KEY");
+    }
+
+    #[test]
+    fn test_ai_model_config_get_api_key_none() {
+        let config = AIModelConfig {
+            api_key: None,
+            api_key_env: None,
+            ..Default::default()
+        };
+        assert!(config.get_api_key().is_none());
+    }
+
+    #[test]
+    fn test_ai_model_config_get_api_key_direct_takes_priority() {
+        // api_key 优先于 api_key_env
+        std::env::set_var("TEST_AI_API_KEY_2", "sk-env");
+        let config = AIModelConfig {
+            api_key: Some("sk-direct".to_string()),
+            api_key_env: Some("TEST_AI_API_KEY_2".to_string()),
+            ..Default::default()
+        };
+        assert_eq!(config.get_api_key().as_deref(), Some("sk-direct"));
+        std::env::remove_var("TEST_AI_API_KEY_2");
+    }
+
+    #[test]
+    fn test_get_base_url() {
+        let config = AIModelConfig {
+            base_url: "https://example.com".to_string(),
+            ..Default::default()
+        };
+        assert_eq!(config.get_base_url(), "https://example.com");
+    }
+
+    #[test]
+    fn test_get_temperature_with_value() {
+        let config = AIModelConfig {
+            temperature: Some(0.9),
+            ..Default::default()
+        };
+        assert_eq!(config.get_temperature(), 0.9);
+    }
+
+    #[test]
+    fn test_get_temperature_default_when_none() {
+        let config = AIModelConfig {
+            temperature: None,
+            ..Default::default()
+        };
+        assert_eq!(config.get_temperature(), 0.7);
+    }
+
+    #[test]
+    fn test_get_max_tokens_with_value() {
+        let config = AIModelConfig {
+            max_tokens: Some(8192),
+            ..Default::default()
+        };
+        assert_eq!(config.get_max_tokens(), 8192);
+    }
+
+    #[test]
+    fn test_get_max_tokens_default_when_none() {
+        let config = AIModelConfig {
+            max_tokens: None,
+            ..Default::default()
+        };
+        assert_eq!(config.get_max_tokens(), 4096);
+    }
+
+    #[test]
+    fn test_get_timeout_with_value() {
+        let config = AIModelConfig {
+            timeout: Some(30),
+            ..Default::default()
+        };
+        assert_eq!(config.get_timeout(), std::time::Duration::from_secs(30));
+    }
+
+    #[test]
+    fn test_get_timeout_default_when_none() {
+        let config = AIModelConfig {
+            timeout: None,
+            ..Default::default()
+        };
+        assert_eq!(config.get_timeout(), std::time::Duration::from_secs(120));
+    }
+
+    #[test]
+    fn test_ai_client_config_default() {
+        let config = AIClientConfig::default();
+        assert_eq!(config.chat_model.provider, AIProviderType::Ollama);
+        assert_eq!(config.chat_model.model_name, "qwen2.5:7b-instruct");
+        assert_eq!(config.embedding_model.model_name, "nomic-embed-text");
+        assert_eq!(config.embedding_model.dimension, Some(768));
+        assert!(config.multimodal_model.is_none());
+        assert!(config.enable_streaming);
+        assert_eq!(config.default_temperature, 0.7);
+        assert_eq!(config.default_max_tokens, 4096);
+    }
+
+    #[test]
+    fn test_ai_client_config_serde_roundtrip() {
+        let config = AIClientConfig {
+            chat_model: AIModelConfig::default(),
+            embedding_model: AIModelConfig {
+                provider: AIProviderType::OpenAI,
+                model_name: "text-embedding-3-small".to_string(),
+                base_url: "https://api.openai.com/v1".to_string(),
+                api_key: Some("sk-test".to_string()),
+                api_key_env: None,
+                model_type: ModelType::Embedding,
+                dimension: Some(1536),
+                max_tokens: None,
+                temperature: None,
+                timeout: Some(60),
+                organization: None,
+                deployment_name: None,
+            },
+            multimodal_model: None,
+            enable_streaming: false,
+            default_temperature: 0.5,
+            default_max_tokens: 2048,
+        };
+        let json = serde_json::to_string(&config).unwrap();
+        let deserialized: AIClientConfig = serde_json::from_str(&json).unwrap();
+        assert_eq!(deserialized.chat_model.model_name, "qwen2.5:7b-instruct");
+        assert_eq!(deserialized.embedding_model.model_name, "text-embedding-3-small");
+        assert_eq!(deserialized.embedding_model.dimension, Some(1536));
+        assert!(!deserialized.enable_streaming);
+        assert_eq!(deserialized.default_temperature, 0.5);
+        assert_eq!(deserialized.default_max_tokens, 2048);
+    }
 }

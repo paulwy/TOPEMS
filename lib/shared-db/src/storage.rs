@@ -352,4 +352,165 @@ mod tests {
         assert_eq!(files.len(), 2);
         Ok(())
     }
+
+    #[test]
+    fn test_file_metadata_default() {
+        let fm = FileMetadata::default();
+        assert!(!fm.id.is_empty());
+        assert_eq!(fm.filename, "");
+        assert_eq!(fm.path, "");
+        assert_eq!(fm.size, 0);
+        assert_eq!(fm.content_type, "application/octet-stream");
+        assert!(fm.etag.is_none());
+        assert!(fm.metadata.is_empty());
+        // created_at should be roughly now (within a minute)
+        let now = chrono::Utc::now();
+        let diff = (now - fm.created_at).num_seconds().abs();
+        assert!(diff < 60);
+    }
+
+    #[test]
+    fn test_file_metadata_serde_roundtrip() {
+        let mut meta = std::collections::HashMap::new();
+        meta.insert("k1".to_string(), "v1".to_string());
+        meta.insert("k2".to_string(), "v2".to_string());
+        let fm = FileMetadata {
+            id: "abc".to_string(),
+            filename: "f.txt".to_string(),
+            path: "/p/f.txt".to_string(),
+            size: 100,
+            content_type: "text/plain".to_string(),
+            created_at: chrono::Utc::now(),
+            etag: Some("etag1".to_string()),
+            metadata: meta,
+        };
+        let s = serde_json::to_string(&fm).expect("serialize");
+        let d: FileMetadata = serde_json::from_str(&s).expect("deserialize");
+        assert_eq!(d.id, fm.id);
+        assert_eq!(d.filename, fm.filename);
+        assert_eq!(d.path, fm.path);
+        assert_eq!(d.size, fm.size);
+        assert_eq!(d.content_type, fm.content_type);
+        assert_eq!(d.created_at, fm.created_at);
+        assert_eq!(d.etag, fm.etag);
+        assert_eq!(d.metadata, fm.metadata);
+    }
+
+    #[test]
+    fn test_storage_config_construction() {
+        let cfg = StorageConfig {
+            provider: "local".to_string(),
+            local_path: "/tmp/x".to_string(),
+            s3_bucket: Some("bucket".to_string()),
+            s3_region: Some("us-east-1".to_string()),
+            max_file_size: 1024,
+            allowed_types: vec!["text/plain".to_string(), "image/png".to_string()],
+        };
+        assert_eq!(cfg.provider, "local");
+        assert_eq!(cfg.local_path, "/tmp/x");
+        assert_eq!(cfg.s3_bucket.as_deref(), Some("bucket"));
+        assert_eq!(cfg.s3_region.as_deref(), Some("us-east-1"));
+        assert_eq!(cfg.max_file_size, 1024);
+        assert_eq!(cfg.allowed_types.len(), 2);
+        assert_eq!(cfg.allowed_types[0], "text/plain");
+        assert_eq!(cfg.allowed_types[1], "image/png");
+    }
+
+    #[test]
+    fn test_local_storage_new_with_path() {
+        let mut tmp = std::env::temp_dir();
+        tmp.push(format!("topems_test_{}", uuid::Uuid::new_v4()));
+        let path_str = tmp.to_str().expect("path").to_string();
+        let storage = LocalStorage::new_with_path(&path_str).expect("create storage");
+        assert_eq!(storage.base_path, path_str);
+        // The directory should now exist
+        assert!(tmp.exists());
+        // cleanup
+        let _ = std::fs::remove_dir_all(&tmp);
+    }
+
+    #[test]
+    fn test_validate_file_too_large() {
+        let mut tmp = std::env::temp_dir();
+        tmp.push(format!(
+            "topems_test_large_{}",
+            uuid::Uuid::new_v4()
+        ));
+        let cfg = StorageConfig {
+            provider: "local".to_string(),
+            local_path: tmp.to_str().expect("path").to_string(),
+            s3_bucket: None,
+            s3_region: None,
+            max_file_size: 10,
+            allowed_types: vec![],
+        };
+        let storage = LocalStorage::new(&cfg).expect("create");
+        let big_content = vec![0u8; 100];
+        let result = storage.validate_file(&big_content, "text/plain");
+        assert!(result.is_err(), "expected validation error for too-large file");
+        let _ = std::fs::remove_dir_all(&tmp);
+    }
+
+    #[test]
+    fn test_validate_file_invalid_content_type() {
+        let mut tmp = std::env::temp_dir();
+        tmp.push(format!("topems_test_ct_{}", uuid::Uuid::new_v4()));
+        let cfg = StorageConfig {
+            provider: "local".to_string(),
+            local_path: tmp.to_str().expect("path").to_string(),
+            s3_bucket: None,
+            s3_region: None,
+            max_file_size: 100 * 1024 * 1024,
+            allowed_types: vec!["text/plain".to_string(), "image/png".to_string()],
+        };
+        let storage = LocalStorage::new(&cfg).expect("create");
+        let result = storage.validate_file(b"hello", "application/json");
+        assert!(
+            result.is_err(),
+            "expected validation error for disallowed content type"
+        );
+        let _ = std::fs::remove_dir_all(&tmp);
+    }
+
+    #[test]
+    fn test_validate_file_valid() {
+        let mut tmp = std::env::temp_dir();
+        tmp.push(format!("topems_test_valid_{}", uuid::Uuid::new_v4()));
+        let cfg = StorageConfig {
+            provider: "local".to_string(),
+            local_path: tmp.to_str().expect("path").to_string(),
+            s3_bucket: None,
+            s3_region: None,
+            max_file_size: 100 * 1024 * 1024,
+            allowed_types: vec!["text/plain".to_string()],
+        };
+        let storage = LocalStorage::new(&cfg).expect("create");
+        let result = storage.validate_file(b"hello", "text/plain");
+        assert!(result.is_ok(), "expected valid file to pass validation");
+        let _ = std::fs::remove_dir_all(&tmp);
+    }
+
+    #[test]
+    fn test_validate_file_empty_allowed_types_allows_all() {
+        let mut tmp = std::env::temp_dir();
+        tmp.push(format!("topems_test_empty_{}", uuid::Uuid::new_v4()));
+        let cfg = StorageConfig {
+            provider: "local".to_string(),
+            local_path: tmp.to_str().expect("path").to_string(),
+            s3_bucket: None,
+            s3_region: None,
+            max_file_size: 100 * 1024 * 1024,
+            allowed_types: vec![],
+        };
+        let storage = LocalStorage::new(&cfg).expect("create");
+        // Any content type should be accepted when allowed_types is empty
+        let result = storage.validate_file(b"hello", "application/octet-stream");
+        assert!(
+            result.is_ok(),
+            "expected any content type to pass when allowed_types is empty"
+        );
+        let result2 = storage.validate_file(b"hello", "weird/type");
+        assert!(result2.is_ok(), "expected weird content type to also pass");
+        let _ = std::fs::remove_dir_all(&tmp);
+    }
 }

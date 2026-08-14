@@ -308,4 +308,137 @@ mod tests {
         assert_eq!(report.breaching_count, 1);
         assert_eq!(report.overall_health, SLOStatus::Breaching);
     }
+
+    #[test]
+    fn test_slo_status_from_measurement_all_branches() {
+        // value >= target → Healthy
+        assert_eq!(
+            SLOStatus::from_measurement(99.9, 99.9, 99.5),
+            SLOStatus::Healthy
+        );
+        assert_eq!(
+            SLOStatus::from_measurement(100.0, 99.9, 99.5),
+            SLOStatus::Healthy
+        );
+
+        // alert_threshold <= value < target → Warning
+        assert_eq!(
+            SLOStatus::from_measurement(99.5, 99.9, 99.5),
+            SLOStatus::Warning
+        );
+        assert_eq!(
+            SLOStatus::from_measurement(99.7, 99.9, 99.5),
+            SLOStatus::Warning
+        );
+
+        // value < alert_threshold → Breaching
+        assert_eq!(
+            SLOStatus::from_measurement(99.4, 99.9, 99.5),
+            SLOStatus::Breaching
+        );
+        assert_eq!(
+            SLOStatus::from_measurement(0.0, 99.9, 99.5),
+            SLOStatus::Breaching
+        );
+    }
+
+    #[test]
+    fn test_slo_manager_new_empty_state() {
+        let manager = SLOManager::new();
+        assert_eq!(manager.get_all_statuses().len(), 0);
+        let report = manager.generate_report();
+        assert_eq!(report.total_slos, 0);
+        assert_eq!(report.healthy_count, 0);
+        assert_eq!(report.warning_count, 0);
+        assert_eq!(report.breaching_count, 0);
+        assert_eq!(report.overall_health, SLOStatus::InsufficientData);
+        assert!(manager.get_history("any-slo", 10).is_empty());
+    }
+
+    #[test]
+    fn test_slo_get_history_nonexistent_returns_empty() {
+        let manager = SLOManager::new();
+        let history = manager.get_history("nonexistent-slo", 10);
+        assert!(history.is_empty());
+    }
+
+    #[test]
+    fn test_slo_report_with_zero_slos() {
+        let manager = SLOManager::new();
+        let report = manager.generate_report();
+        assert_eq!(report.total_slos, 0);
+        assert_eq!(report.healthy_count, 0);
+        assert_eq!(report.warning_count, 0);
+        assert_eq!(report.breaching_count, 0);
+        assert_eq!(report.overall_health, SLOStatus::InsufficientData);
+    }
+
+    #[test]
+    fn test_slo_measurement_eviction() {
+        let manager = SLOManager::new();
+        manager.register(make_definition("slo-evict", 99.9, 99.5));
+        // Record 1001 measurements; only the most recent 1000 should be kept.
+        for i in 0..1001u64 {
+            manager.record_measurement(make_measurement("slo-evict", 99.0 + (i as f64) / 10000.0));
+        }
+        let history = manager.get_history("slo-evict", usize::MAX);
+        assert_eq!(history.len(), 1000);
+        // The oldest measurement (i=0) should have been evicted; the newest (i=1000) kept.
+        assert_eq!(history[0].current_value, 99.0 + (1000.0 / 10000.0));
+        assert_ne!(history.last().unwrap().current_value, 99.0);
+    }
+
+    #[test]
+    fn test_slo_type_serde_roundtrip() {
+        let variants = vec![
+            SLOType::Availability,
+            SLOType::Latency {
+                percentile: 99.0,
+                threshold_ms: 500,
+            },
+            SLOType::Throughput { min_rps: 1000.0 },
+            SLOType::ErrorRate { max_rate: 0.01 },
+        ];
+        for original in variants {
+            let json = serde_json::to_string(&original).expect("serialize SLOType");
+            let back: SLOType = serde_json::from_str(&json).expect("deserialize SLOType");
+            let json_again = serde_json::to_string(&back).expect("serialize SLOType again");
+            assert_eq!(json, json_again, "SLOType serde roundtrip mismatch");
+        }
+    }
+
+    #[test]
+    fn test_slo_status_serde_roundtrip() {
+        let variants = vec![
+            SLOStatus::Healthy,
+            SLOStatus::Warning,
+            SLOStatus::Breaching,
+            SLOStatus::InsufficientData,
+        ];
+        for original in variants {
+            let json = serde_json::to_string(&original).expect("serialize SLOStatus");
+            let back: SLOStatus = serde_json::from_str(&json).expect("deserialize SLOStatus");
+            assert_eq!(original, back, "SLOStatus serde roundtrip mismatch");
+        }
+    }
+
+    #[test]
+    fn test_slo_definition_serde_roundtrip() {
+        let original = make_definition("slo-serde", 99.9, 99.5);
+        let json = serde_json::to_string(&original).expect("serialize SLODefinition");
+        let back: SLODefinition =
+            serde_json::from_str(&json).expect("deserialize SLODefinition");
+        let json_again = serde_json::to_string(&back).expect("serialize SLODefinition again");
+        assert_eq!(json, json_again, "SLODefinition serde roundtrip mismatch");
+    }
+
+    #[test]
+    fn test_slo_measurement_serde_roundtrip() {
+        let original = make_measurement("slo-meas", 99.95);
+        let json = serde_json::to_string(&original).expect("serialize SLOMeasurement");
+        let back: SLOMeasurement =
+            serde_json::from_str(&json).expect("deserialize SLOMeasurement");
+        let json_again = serde_json::to_string(&back).expect("serialize SLOMeasurement again");
+        assert_eq!(json, json_again, "SLOMeasurement serde roundtrip mismatch");
+    }
 }
