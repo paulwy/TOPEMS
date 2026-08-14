@@ -167,6 +167,7 @@ impl TracedRequestExt for reqwest::RequestBuilder {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use opentelemetry::propagation::Injector;
 
     #[test]
     fn test_inject_trace_context_no_op_without_otel_init() {
@@ -233,5 +234,107 @@ mod tests {
                 .unwrap(),
             "application/json"
         );
+    }
+
+    #[test]
+    fn test_header_map_extractor_get_returns_existing_value() {
+        let mut headers = HeaderMap::new();
+        headers.insert(
+            HeaderName::from_static("x-test"),
+            HeaderValue::from_static("value-1"),
+        );
+        let extractor = HeaderMapExtractor(&headers);
+        assert_eq!(extractor.get("x-test"), Some("value-1"));
+    }
+
+    #[test]
+    fn test_header_map_extractor_get_returns_none_for_missing() {
+        let headers = HeaderMap::new();
+        let extractor = HeaderMapExtractor(&headers);
+        assert_eq!(extractor.get("x-missing"), None);
+    }
+
+    #[test]
+    fn test_header_map_extractor_keys_returns_empty_vec() {
+        // Per design, keys() returns an empty Vec (W3C TraceContext only uses get()).
+        let mut headers = HeaderMap::new();
+        headers.insert(
+            HeaderName::from_static("x-anything"),
+            HeaderValue::from_static("v"),
+        );
+        let extractor = HeaderMapExtractor(&headers);
+        assert!(extractor.keys().is_empty());
+    }
+
+    #[test]
+    fn test_header_map_injector_set_valid_header() {
+        let mut headers = HeaderMap::new();
+        {
+            let mut injector = HeaderMapInjector(&mut headers);
+            injector.set("x-custom", "injected-value".to_string());
+        }
+        assert_eq!(
+            headers
+                .get(HeaderName::from_static("x-custom"))
+                .unwrap()
+                .to_str()
+                .unwrap(),
+            "injected-value"
+        );
+    }
+
+    #[test]
+    fn test_header_map_injector_ignores_invalid_header_name() {
+        let mut headers = HeaderMap::new();
+        {
+            let mut injector = HeaderMapInjector(&mut headers);
+            // A space in the header name is invalid and should be silently ignored.
+            injector.set("invalid header name", "v".to_string());
+        }
+        assert!(headers.is_empty());
+    }
+
+    #[test]
+    fn test_traced_request_ext_for_request_with_trace_no_panic() {
+        let mut req = reqwest::Request::new(
+            reqwest::Method::GET,
+            reqwest::Url::parse("http://example.com/api/v1").unwrap(),
+        );
+        req.headers_mut().insert(
+            HeaderName::from_static("x-existing"),
+            HeaderValue::from_static("keep"),
+        );
+        let traced = req.with_trace();
+        // Without OTel init, no trace headers are injected; existing headers preserved.
+        assert_eq!(
+            traced
+                .headers()
+                .get(HeaderName::from_static("x-existing"))
+                .unwrap()
+                .to_str()
+                .unwrap(),
+            "keep"
+        );
+    }
+
+    #[test]
+    fn test_traced_request_ext_for_request_builder_with_trace_no_panic() {
+        let client = reqwest::Client::builder().build().unwrap();
+        let builder = client
+            .get("http://example.com/api/v2")
+            .with_trace();
+        // with_trace returns a RequestBuilder; building the request should succeed
+        // and not panic even though OTel is not initialized.
+        let req = builder.build().expect("build request");
+        assert_eq!(req.method(), reqwest::Method::GET);
+    }
+
+    #[test]
+    fn test_telemetry_ext_with_telemetry_returns_router() {
+        // with_telemetry should wrap a Router with the telemetry middleware and
+        // return a usable Router (no panic).
+        let router: axum::Router = axum::Router::<()>::new().with_telemetry();
+        // Sanity-check the router exists; we don't run it.
+        let _ = router;
     }
 }

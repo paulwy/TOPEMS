@@ -141,3 +141,85 @@ macro_rules! trace_service {
         $crate::telemetry::business_spans::trace_service_call($service, $endpoint, $future).await
     };
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[tokio::test]
+    async fn test_trace_db_query_ok_returns_value() {
+        let result: Result<i32, sqlx::Error> =
+            trace_db_query("SELECT 1", &[], async { Ok(42) }).await;
+        assert_eq!(result.unwrap(), 42);
+    }
+
+    #[tokio::test]
+    async fn test_trace_db_query_preserves_result_value() {
+        // Larger value to ensure no accidental transformation of the payload.
+        let result: Result<u64, sqlx::Error> =
+            trace_db_query("SELECT $1", &["42"], async { Ok(1_000_000) }).await;
+        assert_eq!(result.unwrap(), 1_000_000);
+    }
+
+    #[tokio::test]
+    async fn test_trace_db_query_propagates_error() {
+        let err = sqlx::Error::Configuration(Box::new(std::io::Error::new(
+            std::io::ErrorKind::Other,
+            "db test error",
+        )));
+        let result: Result<i32, sqlx::Error> =
+            trace_db_query("SELECT broken", &[], async { Err(err) }).await;
+        assert!(result.is_err());
+    }
+
+    #[tokio::test]
+    async fn test_trace_external_call_ok_returns_value() {
+        let result: Result<i32, reqwest::Error> =
+            trace_external_call("http://example.com/api", "GET", async { Ok(7) }).await;
+        assert_eq!(result.unwrap(), 7);
+    }
+
+    #[tokio::test]
+    async fn test_trace_rabbitmq_publish_ok_returns_value() {
+        let result: Result<i32, amqprs::error::Error> =
+            trace_rabbitmq_publish("amq.topic", "routing.key", async { Ok(1) }).await;
+        assert_eq!(result.unwrap(), 1);
+    }
+
+    #[tokio::test]
+    async fn test_trace_redis_operation_ok_without_key() {
+        let result: redis::RedisResult<i32> =
+            trace_redis_operation("GET", None, async { Ok(99) }).await;
+        assert_eq!(result.unwrap(), 99);
+    }
+
+    #[tokio::test]
+    async fn test_trace_redis_operation_ok_with_key() {
+        // Exercises the `if let Some(key)` logging branch.
+        let result: redis::RedisResult<String> =
+            trace_redis_operation("SET", Some("user:1"), async { Ok("OK".to_string()) }).await;
+        assert_eq!(result.unwrap(), "OK");
+    }
+
+    #[tokio::test]
+    async fn test_trace_service_call_ok_returns_value() {
+        let result: Result<i32, std::io::Error> =
+            trace_service_call("user-svc", "/users/1", async { Ok(5) }).await;
+        assert_eq!(result.unwrap(), 5);
+    }
+
+    #[tokio::test]
+    async fn test_trace_service_call_propagates_error() {
+        let err = std::io::Error::new(std::io::ErrorKind::Other, "service down");
+        let result: Result<i32, std::io::Error> =
+            trace_service_call("user-svc", "/users/1", async { Err(err) }).await;
+        assert!(result.is_err());
+    }
+
+    #[tokio::test]
+    async fn test_trace_db_macro_invokes_helper() {
+        // The macro should delegate to trace_db_query and return the inner result.
+        let result: Result<i32, sqlx::Error> = trace_db!("SELECT 1", &[], async { Ok(123) });
+        assert_eq!(result.unwrap(), 123);
+    }
+}

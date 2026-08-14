@@ -11,7 +11,9 @@
 pub mod business_spans;
 pub mod config;
 pub mod macros;
+pub mod metrics;
 pub mod middleware;
+pub mod sensitive_filter;
 
 pub use business_spans::*;
 pub use config::*;
@@ -222,4 +224,61 @@ fn __ensure_send_sync() {
     fn assert_sync<T: Sync>() {}
     assert_send::<TelemetryGuard>();
     assert_sync::<TelemetryGuard>();
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_get_current_trace_context_no_active_span() {
+        // Without an active OTel span, trace context should be (None, None).
+        let (trace_id, span_id) = get_current_trace_context();
+        assert!(trace_id.is_none(), "trace_id should be None without active span");
+        assert!(span_id.is_none(), "span_id should be None without active span");
+    }
+
+    #[test]
+    fn test_telemetry_guard_disabled_drop_is_no_op() {
+        // A disabled guard (otel_enabled=false) should drop without panicking
+        // and without touching the global TRACER_PROVIDER mutex.
+        let guard = TelemetryGuard { otel_enabled: false };
+        drop(guard);
+    }
+
+    #[test]
+    fn test_telemetry_guard_enabled_drop_with_no_provider_no_panic() {
+        // When otel_enabled=true but no provider was ever stored (None in the
+        // mutex), Drop should still not panic — it just logs and skips shutdown.
+        let guard = TelemetryGuard { otel_enabled: true };
+        drop(guard);
+    }
+
+    #[test]
+    fn test_telemetry_guard_pub_field_accessible() {
+        let guard = TelemetryGuard { otel_enabled: false };
+        assert!(!guard.otel_enabled);
+    }
+
+    #[test]
+    fn test_ensure_send_sync_runs_without_panic() {
+        // Compile-time Send/Sync assertions for TelemetryGuard; calling the
+        // function should be a no-op at runtime.
+        __ensure_send_sync();
+    }
+}
+
+/// Test-only shared serialization for tests that mutate `OTEL_*` environment
+/// variables.
+///
+/// Environment variables are process-global in the test binary, so parallel
+/// tests that `set_var`/`remove_var` the same `OTEL_*` variable race against
+/// each other (e.g. config tests vs. metrics tests on `OTEL_METRICS_ENABLED`).
+/// Tests that touch any `OTEL_*` env var should acquire this lock for the
+/// duration of their env-mutating section.
+#[cfg(test)]
+pub(crate) mod test_support {
+    use std::sync::Mutex;
+
+    pub(crate) static OTEL_ENV_LOCK: Mutex<()> = Mutex::new(());
 }
