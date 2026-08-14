@@ -130,3 +130,163 @@ pub fn require_module_permission(
         })
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use axum::{body::Body, http::Request, routing::get, Router};
+    use tower::ServiceExt;
+
+    fn make_claims(perms: &[&str], is_superuser: bool) -> Claims {
+        Claims {
+            sub: "123e4567-e89b-12d3-a456-426614174000".to_string(),
+            username: "tester".to_string(),
+            role: "user".to_string(),
+            roles: vec![],
+            permissions: perms.iter().map(|s| s.to_string()).collect(),
+            is_superuser,
+            exp: 9999999999,
+            iat: 0,
+            email: None,
+            department: None,
+            tenant_id: None,
+            department_id: None,
+            position_id: None,
+            position_code: None,
+        }
+    }
+
+    async fn send<F>(mw: F, claims: Option<Claims>) -> StatusCode
+    where
+        F: Fn(Request<Body>, Next) -> std::pin::Pin<Box<dyn std::future::Future<Output = axum::response::Response> + Send>>
+            + Clone
+            + Send
+            + Sync
+            + 'static,
+    {
+        let app = Router::new()
+            .route("/protected", get(|| async { "ok" }))
+            .layer(axum::middleware::from_fn(mw));
+        let mut req = Request::builder()
+            .uri("/protected")
+            .body(Body::empty())
+            .unwrap();
+        if let Some(c) = claims {
+            req.extensions_mut().insert(c);
+        }
+        app.oneshot(req).await.expect("infallible").status()
+    }
+
+    // ===== require_module_active =====
+    #[tokio::test]
+    async fn test_require_module_active_unauthorized_without_claims() {
+        let status = send(require_module_active(ModuleCode::Iam), None).await;
+        assert_eq!(status, StatusCode::UNAUTHORIZED);
+    }
+
+    #[tokio::test]
+    async fn test_require_module_active_ok_for_superuser() {
+        let claims = make_claims(&[], true);
+        let status = send(require_module_active(ModuleCode::Iam), Some(claims)).await;
+        assert_eq!(status, StatusCode::OK);
+    }
+
+    #[tokio::test]
+    async fn test_require_module_active_ok_with_read_permission() {
+        let claims = make_claims(&["iam:read"], false);
+        let status = send(require_module_active(ModuleCode::Iam), Some(claims)).await;
+        assert_eq!(status, StatusCode::OK);
+    }
+
+    #[tokio::test]
+    async fn test_require_module_active_ok_with_admin_permission() {
+        let claims = make_claims(&["iam:admin"], false);
+        let status = send(require_module_active(ModuleCode::Iam), Some(claims)).await;
+        assert_eq!(status, StatusCode::OK);
+    }
+
+    #[tokio::test]
+    async fn test_require_module_active_forbidden_without_permission() {
+        let claims = make_claims(&["hrm:read"], false);
+        let status = send(require_module_active(ModuleCode::Iam), Some(claims)).await;
+        assert_eq!(status, StatusCode::FORBIDDEN);
+    }
+
+    // ===== require_module_permission =====
+    #[tokio::test]
+    async fn test_require_module_permission_unauthorized_without_claims() {
+        let status = send(
+            require_module_permission(ModuleCode::Iam, PermissionAction::Read),
+            None,
+        )
+        .await;
+        assert_eq!(status, StatusCode::UNAUTHORIZED);
+    }
+
+    #[tokio::test]
+    async fn test_require_module_permission_ok_for_superuser() {
+        let claims = make_claims(&[], true);
+        let status = send(
+            require_module_permission(ModuleCode::Iam, PermissionAction::Write),
+            Some(claims),
+        )
+        .await;
+        assert_eq!(status, StatusCode::OK);
+    }
+
+    #[tokio::test]
+    async fn test_require_module_permission_ok_with_exact_permission() {
+        let claims = make_claims(&["iam:write"], false);
+        let status = send(
+            require_module_permission(ModuleCode::Iam, PermissionAction::Write),
+            Some(claims),
+        )
+        .await;
+        assert_eq!(status, StatusCode::OK);
+    }
+
+    #[tokio::test]
+    async fn test_require_module_permission_ok_with_admin_permission() {
+        let claims = make_claims(&["iam:admin"], false);
+        let status = send(
+            require_module_permission(ModuleCode::Iam, PermissionAction::Write),
+            Some(claims),
+        )
+        .await;
+        assert_eq!(status, StatusCode::OK);
+    }
+
+    #[tokio::test]
+    async fn test_require_module_permission_read_ok_with_read_only() {
+        let claims = make_claims(&["iam:read"], false);
+        let status = send(
+            require_module_permission(ModuleCode::Iam, PermissionAction::Read),
+            Some(claims),
+        )
+        .await;
+        assert_eq!(status, StatusCode::OK);
+    }
+
+    #[tokio::test]
+    async fn test_require_module_permission_write_forbidden_with_read_only() {
+        // read 不蕴含 write
+        let claims = make_claims(&["iam:read"], false);
+        let status = send(
+            require_module_permission(ModuleCode::Iam, PermissionAction::Write),
+            Some(claims),
+        )
+        .await;
+        assert_eq!(status, StatusCode::FORBIDDEN);
+    }
+
+    #[tokio::test]
+    async fn test_require_module_permission_forbidden_without_permission() {
+        let claims = make_claims(&["hrm:read"], false);
+        let status = send(
+            require_module_permission(ModuleCode::Iam, PermissionAction::Read),
+            Some(claims),
+        )
+        .await;
+        assert_eq!(status, StatusCode::FORBIDDEN);
+    }
+}
