@@ -18,6 +18,7 @@
 mod common;
 mod config;
 mod registry;
+mod assistant;
 
 mod crm_forms;
 mod ehs_forms;
@@ -43,3 +44,7 @@ mod tests;
 pub use common::{AiFeatures, BusinessTerm, FieldDefinition, FormDomain, FormValidationRule};
 pub use config::FormConfig;
 pub use registry::{default_registry, FormRegistry};
+pub use assistant::{
+    AiFormAssistant, AiFormAssistantClient, AiFormAssistantRequest, AiFormAssistantResponse,
+    FieldSuggestion, FormAssistantAction, ValidationResult,
+};

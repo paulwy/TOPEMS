@@ -1,4 +1,5 @@
 pub mod agent;
+pub mod ai_form;
 pub mod ai_math_calc;
 pub mod ai_plugin;
 pub mod ai_search_calc;
