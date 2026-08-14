@@ -225,3 +225,236 @@ impl CodeAssistantApi {
         ))
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    // ── CodeGenerateRequest ──
+
+    #[test]
+    fn test_code_generate_request_deserialize_full() {
+        let json = r#"{"prompt":"write a fn","language":"rust","framework":"axum"}"#;
+        let req: CodeGenerateRequest = serde_json::from_str(json).unwrap();
+        assert_eq!(req.prompt, "write a fn");
+        assert_eq!(req.language.as_deref(), Some("rust"));
+        assert_eq!(req.framework.as_deref(), Some("axum"));
+    }
+
+    #[test]
+    fn test_code_generate_request_minimal() {
+        let req: CodeGenerateRequest = serde_json::from_str(r#"{"prompt":"p"}"#).unwrap();
+        assert_eq!(req.prompt, "p");
+        assert!(req.language.is_none());
+        assert!(req.framework.is_none());
+    }
+
+    // ── CodeGenerateResponse ──
+
+    #[test]
+    fn test_code_generate_response_serialize() {
+        let resp = CodeGenerateResponse {
+            code: "fn main() {}".into(),
+            language: "rust".into(),
+            framework: "none".into(),
+        };
+        let json = serde_json::to_string(&resp).unwrap();
+        assert!(json.contains("\"language\":\"rust\""));
+    }
+
+    // ── CodeExplainRequest ──
+
+    #[test]
+    fn test_code_explain_request_deserialize() {
+        let json = r#"{"code":"let x = 1;","language":"rust"}"#;
+        let req: CodeExplainRequest = serde_json::from_str(json).unwrap();
+        assert_eq!(req.code, "let x = 1;");
+        assert_eq!(req.language.as_deref(), Some("rust"));
+    }
+
+    #[test]
+    fn test_code_explain_response_serialize() {
+        let resp = CodeExplainResponse {
+            explanation: "this code...".into(),
+            language: "rust".into(),
+            key_points: vec!["point1".into()],
+        };
+        let json = serde_json::to_string(&resp).unwrap();
+        assert!(json.contains("\"key_points\":[\"point1\"]"));
+    }
+
+    // ── CodeFixRequest/Response ──
+
+    #[test]
+    fn test_code_fix_request_deserialize() {
+        let json = r#"{"code":"x","language":"py","issue_description":"bug"}"#;
+        let req: CodeFixRequest = serde_json::from_str(json).unwrap();
+        assert_eq!(req.code, "x");
+        assert_eq!(req.issue_description.as_deref(), Some("bug"));
+    }
+
+    #[test]
+    fn test_code_fix_response_serialize() {
+        let resp = CodeFixResponse {
+            fixed_code: "fixed".into(),
+            fixes: vec!["fix1".into(), "fix2".into()],
+            explanation: "expl".into(),
+        };
+        let json = serde_json::to_string(&resp).unwrap();
+        assert!(json.contains("\"fixed_code\":\"fixed\""));
+    }
+
+    // ── CodeOptimizeRequest/Response ──
+
+    #[test]
+    fn test_code_optimize_request_deserialize() {
+        let req: CodeOptimizeRequest =
+            serde_json::from_str(r#"{"code":"abc","language":"ts"}"#).unwrap();
+        assert_eq!(req.code, "abc");
+    }
+
+    #[test]
+    fn test_code_optimize_response_serialize_with_sizes() {
+        let resp = CodeOptimizeResponse {
+            optimized_code: "// opt\ncode".into(),
+            optimizations: vec!["opt1".into()],
+            before_size: Some(4),
+            after_size: Some(10),
+        };
+        let json = serde_json::to_string(&resp).unwrap();
+        assert!(json.contains("\"before_size\":4"));
+        assert!(json.contains("\"after_size\":10"));
+    }
+
+    #[test]
+    fn test_code_optimize_response_no_sizes() {
+        let resp = CodeOptimizeResponse {
+            optimized_code: "x".into(),
+            optimizations: vec![],
+            before_size: None,
+            after_size: None,
+        };
+        let json = serde_json::to_string(&resp).unwrap();
+        assert!(json.contains("\"before_size\":null"));
+    }
+
+    // ── CodeReviewRequest/Response ──
+
+    #[test]
+    fn test_code_review_request_deserialize() {
+        let req: CodeReviewRequest =
+            serde_json::from_str(r#"{"code":"fn()","language":"js"}"#).unwrap();
+        assert_eq!(req.language.as_deref(), Some("js"));
+    }
+
+    #[test]
+    fn test_code_review_response_serialize() {
+        let resp = CodeReviewResponse {
+            score: 75,
+            issues: vec![CodeReviewIssue {
+                severity: "error".into(),
+                line: 3,
+                description: "missing semicolon".into(),
+                suggestion: "add ;".into(),
+            }],
+            suggestions: vec!["test more".into()],
+        };
+        let json = serde_json::to_string(&resp).unwrap();
+        assert!(json.contains("\"score\":75"));
+        assert!(json.contains("\"severity\":\"error\""));
+    }
+
+    #[test]
+    fn test_code_review_issue_serialize() {
+        let issue = CodeReviewIssue {
+            severity: "warning".into(),
+            line: 42,
+            description: "unused var".into(),
+            suggestion: "rename with _".into(),
+        };
+        let json = serde_json::to_string(&issue).unwrap();
+        assert!(json.contains("\"line\":42"));
+    }
+
+    // ── Handler tests via Extension+Json ──
+
+    fn sample_claims() -> Claims {
+        Claims {
+            sub: "00000000-0000-0000-0000-000000000001".into(),
+            username: "tester".into(),
+            role: "user".into(),
+            roles: vec![],
+            permissions: vec![],
+            is_superuser: false,
+            exp: 0,
+            iat: 0,
+            email: None,
+            department: None,
+            tenant_id: None,
+            department_id: None,
+            position_id: None,
+            position_code: None,
+        }
+    }
+
+    #[tokio::test]
+    async fn test_generate_handler_returns_response() {
+        let req = CodeGenerateRequest {
+            prompt: "hello".into(),
+            language: Some("rust".into()),
+            framework: None,
+        };
+        let resp = CodeAssistantApi::generate(Extension(sample_claims()), Json(req)).await;
+        let body = resp.0.data.expect("response data");
+        assert_eq!(body.language, "rust");
+        assert_eq!(body.framework, "none");
+        assert!(body.code.contains("hello"));
+    }
+
+    #[tokio::test]
+    async fn test_explain_handler_counts_lines() {
+        let req = CodeExplainRequest {
+            code: "line1\nline2\nline3".into(),
+            language: Some("rust".into()),
+        };
+        let resp = CodeAssistantApi::explain(Extension(sample_claims()), Json(req)).await;
+        let body = resp.0.data.expect("response data");
+        assert!(body.key_points[0].contains("3 行"));
+    }
+
+    #[tokio::test]
+    async fn test_fix_handler_echoes_code() {
+        let req = CodeFixRequest {
+            code: "fn main() {}".into(),
+            language: Some("rust".into()),
+            issue_description: None,
+        };
+        let resp = CodeAssistantApi::fix(Extension(sample_claims()), Json(req)).await;
+        let body = resp.0.data.expect("response data");
+        assert_eq!(body.fixed_code, "fn main() {}");
+        assert!(!body.fixes.is_empty());
+    }
+
+    #[tokio::test]
+    async fn test_optimize_handler_increases_size() {
+        let req = CodeOptimizeRequest {
+            code: "x".into(),
+            language: None,
+        };
+        let resp = CodeAssistantApi::optimize(Extension(sample_claims()), Json(req)).await;
+        let body = resp.0.data.expect("response data");
+        assert!(body.after_size.unwrap() > body.before_size.unwrap());
+    }
+
+    #[tokio::test]
+    async fn test_review_handler_returns_score() {
+        let req = CodeReviewRequest {
+            code: "x".into(),
+            language: None,
+        };
+        let resp = CodeAssistantApi::review(Extension(sample_claims()), Json(req)).await;
+        let body = resp.0.data.expect("response data");
+        assert_eq!(body.score, 80);
+        assert!(!body.issues.is_empty());
+    }
+}

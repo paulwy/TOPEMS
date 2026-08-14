@@ -153,3 +153,99 @@ pub fn has_ai_permission(claims: &Claims, permission: &AiPermission) -> bool {
     let perm_str = permission.to_string();
     claims.has_permission(&perm_str) || claims.has_permission("ai:admin")
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn sample_claims(is_superuser: bool, permissions: Vec<String>) -> Claims {
+        Claims {
+            sub: "00000000-0000-0000-0000-000000000001".into(),
+            username: "tester".into(),
+            role: "user".into(),
+            roles: vec![],
+            permissions,
+            is_superuser,
+            exp: 0,
+            iat: 0,
+            email: None,
+            department: None,
+            tenant_id: None,
+            department_id: None,
+            position_id: None,
+            position_code: None,
+        }
+    }
+
+    #[test]
+    fn test_ai_permission_equality() {
+        assert_eq!(AiPermission::VectorRead, AiPermission::VectorRead);
+        assert_ne!(AiPermission::VectorRead, AiPermission::VectorWrite);
+        assert_eq!(AiPermission::Manage, AiPermission::Manage);
+    }
+
+    #[test]
+    fn test_ai_permission_clone() {
+        let perm = AiPermission::DocumentRead;
+        let cloned = perm.clone();
+        assert_eq!(perm, cloned);
+    }
+
+    #[test]
+    fn test_ai_permission_debug() {
+        let perm = AiPermission::QaWrite;
+        let debug_str = format!("{:?}", perm);
+        assert!(debug_str.contains("QaWrite"));
+    }
+
+    #[test]
+    fn test_has_ai_permission_superuser() {
+        let claims = sample_claims(true, vec![]);
+        assert!(has_ai_permission(&claims, &AiPermission::VectorRead));
+        assert!(has_ai_permission(&claims, &AiPermission::Manage));
+        assert!(has_ai_permission(&claims, &AiPermission::DocumentDelete));
+    }
+
+    #[test]
+    fn test_has_ai_permission_normal_user_without_perms() {
+        let claims = sample_claims(false, vec![]);
+        assert!(!has_ai_permission(&claims, &AiPermission::VectorRead));
+        assert!(!has_ai_permission(&claims, &AiPermission::Manage));
+    }
+
+    #[test]
+    fn test_ai_permission_all_variants_distinct() {
+        let all = vec![
+            AiPermission::VectorRead,
+            AiPermission::VectorWrite,
+            AiPermission::VectorDelete,
+            AiPermission::VectorSearch,
+            AiPermission::DocumentRead,
+            AiPermission::DocumentWrite,
+            AiPermission::DocumentDelete,
+            AiPermission::DocumentProcess,
+            AiPermission::QaRead,
+            AiPermission::QaWrite,
+            AiPermission::QaFeedback,
+            AiPermission::AnalysisRead,
+            AiPermission::AnalysisWrite,
+            AiPermission::ConnectorRead,
+            AiPermission::ConnectorWrite,
+            AiPermission::ConnectorDelete,
+            AiPermission::Manage,
+        ];
+        // All variants should be unique
+        for i in 0..all.len() {
+            for j in (i + 1)..all.len() {
+                assert_ne!(all[i], all[j], "variants at {} and {} are equal", i, j);
+            }
+        }
+    }
+
+    #[test]
+    fn test_module_permission_type_alias() {
+        // ModulePermission is a type alias for AiPermission
+        let perm: ModulePermission = AiPermission::VectorRead;
+        assert_eq!(perm, AiPermission::VectorRead);
+    }
+}

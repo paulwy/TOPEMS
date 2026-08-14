@@ -173,3 +173,51 @@ async fn check_ai_service_health() -> DependencyHealth {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[tokio::test]
+    async fn test_home_returns_non_empty_string() {
+        let result = home().await;
+        assert!(!result.is_empty());
+    }
+
+    #[tokio::test]
+    async fn test_home_contains_api_info() {
+        let result = home().await;
+        assert!(result.contains("TOPEMS-AI"));
+        assert!(result.contains("health"));
+    }
+
+    #[tokio::test]
+    async fn test_home_mentions_documents_endpoint() {
+        let result = home().await;
+        assert!(result.contains("documents"));
+    }
+
+    #[tokio::test]
+    async fn test_home_mentions_qa_endpoint() {
+        let result = home().await;
+        assert!(result.contains("qa"));
+    }
+
+    #[tokio::test]
+    async fn test_home_mentions_analysis_endpoint() {
+        let result = home().await;
+        assert!(result.contains("analysis"));
+    }
+
+    #[tokio::test]
+    async fn test_home_mentions_connectors_endpoint() {
+        let result = home().await;
+        assert!(result.contains("connectors"));
+    }
+
+    #[tokio::test]
+    async fn test_home_mentions_vectors_endpoint() {
+        let result = home().await;
+        assert!(result.contains("vectors"));
+    }
+}

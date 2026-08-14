@@ -1132,3 +1132,364 @@ impl WorkflowOrchestrator {
             .any(|r| r.step_id == step_id && r.status == expected)
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    // ── AgentTool ──
+
+    #[test]
+    fn test_agent_tool_to_string_all_variants() {
+        assert_eq!(AgentTool::Search.to_string(), "search");
+        assert_eq!(AgentTool::DocumentQA.to_string(), "document_qa");
+        assert_eq!(AgentTool::Calculator.to_string(), "calculator");
+        assert_eq!(AgentTool::Weather.to_string(), "weather");
+        assert_eq!(AgentTool::DatabaseQuery.to_string(), "database_query");
+        assert_eq!(AgentTool::CodeExecution.to_string(), "code_execution");
+        assert_eq!(AgentTool::WebSearch.to_string(), "web_search");
+    }
+
+    #[test]
+    fn test_agent_tool_serde_roundtrip() {
+        let tool = AgentTool::Calculator;
+        let json = serde_json::to_string(&tool).unwrap();
+        let back: AgentTool = serde_json::from_str(&json).unwrap();
+        assert_eq!(back.to_string(), "calculator");
+    }
+
+    #[test]
+    fn test_agent_tool_clone_debug() {
+        let tool = AgentTool::Search;
+        let cloned = tool.clone();
+        assert_eq!(tool.to_string(), cloned.to_string());
+        let debug_str = format!("{:?}", tool);
+        assert!(debug_str.contains("Search"));
+    }
+
+    // ── ToolCall ──
+
+    #[test]
+    fn test_tool_call_serde_roundtrip() {
+        let mut args = HashMap::new();
+        args.insert("query".to_string(), serde_json::json!("rust async"));
+        let call = ToolCall {
+            tool: AgentTool::Search,
+            arguments: args,
+            thought: "need to search".into(),
+        };
+        let json = serde_json::to_string(&call).unwrap();
+        let back: ToolCall = serde_json::from_str(&json).unwrap();
+        assert_eq!(back.tool.to_string(), "search");
+        assert_eq!(back.thought, "need to search");
+        assert!(back.arguments.contains_key("query"));
+    }
+
+    #[test]
+    fn test_tool_call_empty_arguments() {
+        let call = ToolCall {
+            tool: AgentTool::Weather,
+            arguments: HashMap::new(),
+            thought: String::new(),
+        };
+        let json = serde_json::to_string(&call).unwrap();
+        let back: ToolCall = serde_json::from_str(&json).unwrap();
+        assert!(back.arguments.is_empty());
+    }
+
+    // ── ToolResult ──
+
+    #[test]
+    fn test_tool_result_success_serde() {
+        let result = ToolResult {
+            tool: AgentTool::Calculator,
+            success: true,
+            result: "42".into(),
+            error: None,
+        };
+        let json = serde_json::to_string(&result).unwrap();
+        let back: ToolResult = serde_json::from_str(&json).unwrap();
+        assert!(back.success);
+        assert_eq!(back.result, "42");
+        assert!(back.error.is_none());
+    }
+
+    #[test]
+    fn test_tool_result_failure_serde() {
+        let result = ToolResult {
+            tool: AgentTool::WebSearch,
+            success: false,
+            result: String::new(),
+            error: Some("timeout".into()),
+        };
+        let json = serde_json::to_string(&result).unwrap();
+        let back: ToolResult = serde_json::from_str(&json).unwrap();
+        assert!(!back.success);
+        assert_eq!(back.error.as_deref(), Some("timeout"));
+    }
+
+    // ── AgentMessage ──
+
+    #[test]
+    fn test_agent_message_serde_roundtrip() {
+        let msg = AgentMessage {
+            role: "user".into(),
+            content: "hello".into(),
+            tool_calls: None,
+            tool_results: None,
+        };
+        let json = serde_json::to_string(&msg).unwrap();
+        let back: AgentMessage = serde_json::from_str(&json).unwrap();
+        assert_eq!(back.role, "user");
+        assert_eq!(back.content, "hello");
+        assert!(back.tool_calls.is_none());
+    }
+
+    #[test]
+    fn test_agent_message_with_tool_calls() {
+        let msg = AgentMessage {
+            role: "assistant".into(),
+            content: "".into(),
+            tool_calls: Some(vec![ToolCall {
+                tool: AgentTool::Search,
+                arguments: HashMap::new(),
+                thought: "thinking".into(),
+            }]),
+            tool_results: Some(vec![]),
+        };
+        let json = serde_json::to_string(&msg).unwrap();
+        let back: AgentMessage = serde_json::from_str(&json).unwrap();
+        assert_eq!(back.tool_calls.as_ref().unwrap().len(), 1);
+        assert!(back.tool_results.as_ref().unwrap().is_empty());
+    }
+
+    // ── AgentState ──
+
+    #[test]
+    fn test_agent_state_serde_roundtrip() {
+        let state = AgentState {
+            conversation_id: "conv-123".into(),
+            messages: vec![AgentMessage {
+                role: "user".into(),
+                content: "hi".into(),
+                tool_calls: None,
+                tool_results: None,
+            }],
+            context: HashMap::new(),
+            max_iterations: 5,
+            current_iteration: 0,
+        };
+        let json = serde_json::to_string(&state).unwrap();
+        let back: AgentState = serde_json::from_str(&json).unwrap();
+        assert_eq!(back.conversation_id, "conv-123");
+        assert_eq!(back.messages.len(), 1);
+        assert_eq!(back.max_iterations, 5);
+    }
+
+    // ── AgentRequest ──
+
+    #[test]
+    fn test_agent_request_serde_full() {
+        let req = AgentRequest {
+            query: "分析销售数据".into(),
+            conversation_id: Some("conv-1".into()),
+            max_iterations: Some(10),
+            tools: Some(vec![AgentTool::Search, AgentTool::Calculator]),
+        };
+        let json = serde_json::to_string(&req).unwrap();
+        let back: AgentRequest = serde_json::from_str(&json).unwrap();
+        assert_eq!(back.query, "分析销售数据");
+        assert_eq!(back.max_iterations, Some(10));
+        assert_eq!(back.tools.as_ref().unwrap().len(), 2);
+    }
+
+    #[test]
+    fn test_agent_request_minimal() {
+        let req: AgentRequest = serde_json::from_str("{\"query\":\"hello\"}").unwrap();
+        assert_eq!(req.query, "hello");
+        assert!(req.conversation_id.is_none());
+        assert!(req.max_iterations.is_none());
+        assert!(req.tools.is_none());
+    }
+
+    // ── AgentResponse ──
+
+    #[test]
+    fn test_agent_response_serde_roundtrip() {
+        let resp = AgentResponse {
+            answer: "最终答案".into(),
+            conversation_id: "conv-1".into(),
+            steps: vec!["步骤1".into(), "步骤2".into()],
+            tools_used: vec!["search".into(), "calculator".into()],
+            confidence: 0.85,
+        };
+        let json = serde_json::to_string(&resp).unwrap();
+        let back: AgentResponse = serde_json::from_str(&json).unwrap();
+        assert_eq!(back.answer, "最终答案");
+        assert_eq!(back.steps.len(), 2);
+        assert_eq!(back.tools_used.len(), 2);
+        assert!((back.confidence - 0.85).abs() < f64::EPSILON);
+    }
+
+    // ── WorkflowStep ──
+
+    #[test]
+    fn test_workflow_step_serde_roundtrip() {
+        let step = WorkflowStep {
+            id: "step1".into(),
+            name: "搜索".into(),
+            description: "执行搜索".into(),
+            tool: Some(AgentTool::Search),
+            prompt: "请搜索...".into(),
+            condition: Some("step1.status == 'success'".into()),
+            retry_count: 3,
+            timeout_seconds: 30,
+        };
+        let json = serde_json::to_string(&step).unwrap();
+        let back: WorkflowStep = serde_json::from_str(&json).unwrap();
+        assert_eq!(back.id, "step1");
+        assert_eq!(back.retry_count, 3);
+        assert!(back.tool.is_some());
+    }
+
+    #[test]
+    fn test_workflow_step_no_tool_no_condition() {
+        let step = WorkflowStep {
+            id: "s".into(),
+            name: "n".into(),
+            description: "d".into(),
+            tool: None,
+            prompt: "p".into(),
+            condition: None,
+            retry_count: 0,
+            timeout_seconds: 60,
+        };
+        let json = serde_json::to_string(&step).unwrap();
+        let back: WorkflowStep = serde_json::from_str(&json).unwrap();
+        assert!(back.tool.is_none());
+        assert!(back.condition.is_none());
+    }
+
+    // ── AgentWorkflow ──
+
+    #[test]
+    fn test_agent_workflow_serde_roundtrip() {
+        let wf = AgentWorkflow {
+            id: "wf-1".into(),
+            name: "分析工作流".into(),
+            description: "数据分析".into(),
+            steps: vec![],
+            max_parallel_steps: 3,
+            on_failure: "abort".into(),
+        };
+        let json = serde_json::to_string(&wf).unwrap();
+        let back: AgentWorkflow = serde_json::from_str(&json).unwrap();
+        assert_eq!(back.id, "wf-1");
+        assert_eq!(back.max_parallel_steps, 3);
+        assert!(back.steps.is_empty());
+    }
+
+    // ── StepResult ──
+
+    #[test]
+    fn test_step_result_serde_roundtrip() {
+        let sr = StepResult {
+            step_id: "step1".into(),
+            step_name: "搜索步骤".into(),
+            status: "success".into(),
+            input: serde_json::json!({"q": "test"}),
+            output: Some("result".into()),
+            error: None,
+            duration_ms: 1500,
+        };
+        let json = serde_json::to_string(&sr).unwrap();
+        let back: StepResult = serde_json::from_str(&json).unwrap();
+        assert_eq!(back.step_id, "step1");
+        assert_eq!(back.status, "success");
+        assert_eq!(back.duration_ms, 1500);
+    }
+
+    #[test]
+    fn test_step_result_error_case() {
+        let sr = StepResult {
+            step_id: "s".into(),
+            step_name: "n".into(),
+            status: "failed".into(),
+            input: serde_json::json!(null),
+            output: None,
+            error: Some("connection refused".into()),
+            duration_ms: 100,
+        };
+        let json = serde_json::to_string(&sr).unwrap();
+        let back: StepResult = serde_json::from_str(&json).unwrap();
+        assert_eq!(back.error.as_deref(), Some("connection refused"));
+    }
+
+    // ── WorkflowExecution ──
+
+    #[test]
+    fn test_workflow_execution_serde_roundtrip() {
+        let exec = WorkflowExecution {
+            workflow_id: "wf-1".into(),
+            execution_id: "exec-1".into(),
+            status: "running".into(),
+            started_at: "2025-01-01T00:00:00Z".into(),
+            completed_at: None,
+            current_step: Some(2),
+            results: vec![],
+            context: HashMap::new(),
+            error: None,
+        };
+        let json = serde_json::to_string(&exec).unwrap();
+        let back: WorkflowExecution = serde_json::from_str(&json).unwrap();
+        assert_eq!(back.execution_id, "exec-1");
+        assert_eq!(back.current_step, Some(2));
+        assert!(back.completed_at.is_none());
+    }
+
+    // ── WorkflowExecutionRequest ──
+
+    #[test]
+    fn test_workflow_execution_request_serde() {
+        let req = WorkflowExecutionRequest {
+            workflow_id: "wf-1".into(),
+            context: None,
+        };
+        let json = serde_json::to_string(&req).unwrap();
+        let back: WorkflowExecutionRequest = serde_json::from_str(&json).unwrap();
+        assert_eq!(back.workflow_id, "wf-1");
+        assert!(back.context.is_none());
+    }
+
+    #[test]
+    fn test_workflow_execution_request_with_context() {
+        let mut ctx = HashMap::new();
+        ctx.insert("key".to_string(), serde_json::json!("value"));
+        let req = WorkflowExecutionRequest {
+            workflow_id: "wf-2".into(),
+            context: Some(ctx),
+        };
+        let json = serde_json::to_string(&req).unwrap();
+        let back: WorkflowExecutionRequest = serde_json::from_str(&json).unwrap();
+        assert!(back.context.is_some());
+        assert!(back.context.unwrap().contains_key("key"));
+    }
+
+    // ── WorkflowExecutionResponse ──
+
+    #[test]
+    fn test_workflow_execution_response_serde_roundtrip() {
+        let resp = WorkflowExecutionResponse {
+            execution_id: "exec-1".into(),
+            status: "completed".into(),
+            results: vec![],
+            final_output: Some("done".into()),
+            error: None,
+            duration_ms: 5000,
+        };
+        let json = serde_json::to_string(&resp).unwrap();
+        let back: WorkflowExecutionResponse = serde_json::from_str(&json).unwrap();
+        assert_eq!(back.status, "completed");
+        assert_eq!(back.final_output.as_deref(), Some("done"));
+    }
+}

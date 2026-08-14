@@ -653,3 +653,380 @@ impl MultimodalService {
         Ok(tags)
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    // ── ImageAnalysisRequest ──
+
+    #[test]
+    fn test_image_analysis_request_serde_roundtrip() {
+        let req = ImageAnalysisRequest {
+            image_base64: "base64data==".into(),
+            prompt: Some("描述图片".into()),
+            analysis_type: "caption".into(),
+        };
+        let json = serde_json::to_string(&req).unwrap();
+        let back: ImageAnalysisRequest = serde_json::from_str(&json).unwrap();
+        assert_eq!(back.image_base64, "base64data==");
+        assert_eq!(back.analysis_type, "caption");
+        assert_eq!(back.prompt.as_deref(), Some("描述图片"));
+    }
+
+    #[test]
+    fn test_image_analysis_request_minimal() {
+        let req: ImageAnalysisRequest =
+            serde_json::from_str("{\"image_base64\":\"d\",\"analysis_type\":\"objects\"}").unwrap();
+        assert!(req.prompt.is_none());
+    }
+
+    // ── ImageAnalysisResponse ──
+
+    #[test]
+    fn test_image_analysis_response_serde_roundtrip() {
+        let resp = ImageAnalysisResponse {
+            image_id: "img-123".into(),
+            analysis_type: "caption".into(),
+            result: serde_json::json!({"caption": "一张图片"}),
+            confidence: 0.9,
+        };
+        let json = serde_json::to_string(&resp).unwrap();
+        let back: ImageAnalysisResponse = serde_json::from_str(&json).unwrap();
+        assert_eq!(back.image_id, "img-123");
+        assert!((back.confidence - 0.9).abs() < f64::EPSILON);
+    }
+
+    // ── ImageCaptionResponse ──
+
+    #[test]
+    fn test_image_caption_response_serde_roundtrip() {
+        let resp = ImageCaptionResponse {
+            caption: "办公室场景".into(),
+            confidence: 0.88,
+            tags: vec!["办公".into(), "电脑".into()],
+        };
+        let json = serde_json::to_string(&resp).unwrap();
+        let back: ImageCaptionResponse = serde_json::from_str(&json).unwrap();
+        assert_eq!(back.caption, "办公室场景");
+        assert_eq!(back.tags.len(), 2);
+    }
+
+    // ── BoundingBox ──
+
+    #[test]
+    fn test_bounding_box_serde_roundtrip() {
+        let bb = BoundingBox {
+            x: 10,
+            y: 20,
+            width: 100,
+            height: 200,
+        };
+        let json = serde_json::to_string(&bb).unwrap();
+        let back: BoundingBox = serde_json::from_str(&json).unwrap();
+        assert_eq!(back.x, 10);
+        assert_eq!(back.width, 100);
+    }
+
+    #[test]
+    fn test_bounding_box_zero_values() {
+        let bb = BoundingBox {
+            x: 0,
+            y: 0,
+            width: 0,
+            height: 0,
+        };
+        let json = serde_json::to_string(&bb).unwrap();
+        let back: BoundingBox = serde_json::from_str(&json).unwrap();
+        assert_eq!(back.height, 0);
+    }
+
+    // ── DetectedObject ──
+
+    #[test]
+    fn test_detected_object_serde_roundtrip() {
+        let obj = DetectedObject {
+            name: "电脑".into(),
+            confidence: 0.95,
+            bounding_box: BoundingBox {
+                x: 1,
+                y: 2,
+                width: 3,
+                height: 4,
+            },
+        };
+        let json = serde_json::to_string(&obj).unwrap();
+        let back: DetectedObject = serde_json::from_str(&json).unwrap();
+        assert_eq!(back.name, "电脑");
+        assert_eq!(back.bounding_box.x, 1);
+    }
+
+    // ── ImageObjectResponse ──
+
+    #[test]
+    fn test_image_object_response_serde_roundtrip() {
+        let resp = ImageObjectResponse {
+            objects: vec![DetectedObject {
+                name: "桌子".into(),
+                confidence: 0.8,
+                bounding_box: BoundingBox {
+                    x: 0,
+                    y: 0,
+                    width: 50,
+                    height: 50,
+                },
+            }],
+            image_width: 1920,
+            image_height: 1080,
+        };
+        let json = serde_json::to_string(&resp).unwrap();
+        let back: ImageObjectResponse = serde_json::from_str(&json).unwrap();
+        assert_eq!(back.objects.len(), 1);
+        assert_eq!(back.image_width, 1920);
+    }
+
+    #[test]
+    fn test_image_object_response_empty() {
+        let resp = ImageObjectResponse {
+            objects: vec![],
+            image_width: 0,
+            image_height: 0,
+        };
+        let json = serde_json::to_string(&resp).unwrap();
+        let back: ImageObjectResponse = serde_json::from_str(&json).unwrap();
+        assert!(back.objects.is_empty());
+    }
+
+    // ── TextRegion ──
+
+    #[test]
+    fn test_text_region_serde_roundtrip() {
+        let tr = TextRegion {
+            text: "Hello".into(),
+            confidence: 0.92,
+            bounding_box: BoundingBox {
+                x: 5,
+                y: 10,
+                width: 50,
+                height: 20,
+            },
+        };
+        let json = serde_json::to_string(&tr).unwrap();
+        let back: TextRegion = serde_json::from_str(&json).unwrap();
+        assert_eq!(back.text, "Hello");
+        assert_eq!(back.bounding_box.width, 50);
+    }
+
+    // ── ImageTextResponse ──
+
+    #[test]
+    fn test_image_text_response_serde_roundtrip() {
+        let resp = ImageTextResponse {
+            text: "完整文本".into(),
+            confidence: 0.87,
+            text_regions: vec![],
+        };
+        let json = serde_json::to_string(&resp).unwrap();
+        let back: ImageTextResponse = serde_json::from_str(&json).unwrap();
+        assert_eq!(back.text, "完整文本");
+        assert!(back.text_regions.is_empty());
+    }
+
+    // ── VideoAnalysisRequest ──
+
+    #[test]
+    fn test_video_analysis_request_serde_roundtrip() {
+        let req = VideoAnalysisRequest {
+            video_url: "https://example.com/video.mp4".into(),
+            analysis_type: "summary".into(),
+            sampling_interval: Some(30),
+        };
+        let json = serde_json::to_string(&req).unwrap();
+        let back: VideoAnalysisRequest = serde_json::from_str(&json).unwrap();
+        assert_eq!(back.video_url, "https://example.com/video.mp4");
+        assert_eq!(back.sampling_interval, Some(30));
+    }
+
+    #[test]
+    fn test_video_analysis_request_minimal() {
+        let req: VideoAnalysisRequest =
+            serde_json::from_str("{\"video_url\":\"url\",\"analysis_type\":\"analyze\"}").unwrap();
+        assert!(req.sampling_interval.is_none());
+    }
+
+    // ── VideoAnalysisResponse ──
+
+    #[test]
+    fn test_video_analysis_response_serde_roundtrip() {
+        let resp = VideoAnalysisResponse {
+            video_id: "vid-1".into(),
+            analysis_type: "summary".into(),
+            result: serde_json::json!({"summary": "视频摘要"}),
+            frame_count: 300,
+        };
+        let json = serde_json::to_string(&resp).unwrap();
+        let back: VideoAnalysisResponse = serde_json::from_str(&json).unwrap();
+        assert_eq!(back.video_id, "vid-1");
+        assert_eq!(back.frame_count, 300);
+    }
+
+    // ── ImageQualityAssessment ──
+
+    #[test]
+    fn test_image_quality_assessment_serde_roundtrip() {
+        let qa = ImageQualityAssessment {
+            overall_score: 0.85,
+            sharpness: 0.9,
+            brightness: 0.8,
+            contrast: 0.75,
+            color_balance: 0.82,
+            noise_level: 0.1,
+            recommendations: vec!["增加亮度".into()],
+        };
+        let json = serde_json::to_string(&qa).unwrap();
+        let back: ImageQualityAssessment = serde_json::from_str(&json).unwrap();
+        assert!((back.overall_score - 0.85).abs() < f64::EPSILON);
+        assert_eq!(back.recommendations.len(), 1);
+    }
+
+    // ── DataPoint ──
+
+    #[test]
+    fn test_data_point_serde_roundtrip() {
+        let dp = DataPoint {
+            x: "Jan".into(),
+            y: 100.5,
+            label: Some("一月".into()),
+        };
+        let json = serde_json::to_string(&dp).unwrap();
+        let back: DataPoint = serde_json::from_str(&json).unwrap();
+        assert_eq!(back.x, "Jan");
+        assert!((back.y - 100.5).abs() < f64::EPSILON);
+    }
+
+    #[test]
+    fn test_data_point_no_label() {
+        let dp = DataPoint {
+            x: "Feb".into(),
+            y: 200.0,
+            label: None,
+        };
+        let json = serde_json::to_string(&dp).unwrap();
+        let back: DataPoint = serde_json::from_str(&json).unwrap();
+        assert!(back.label.is_none());
+    }
+
+    // ── ChartAnalysisResult ──
+
+    #[test]
+    fn test_chart_analysis_result_serde_roundtrip() {
+        let cr = ChartAnalysisResult {
+            chart_type: "bar".into(),
+            title: Some("销售图表".into()),
+            x_axis_label: Some("月份".into()),
+            y_axis_label: Some("销售额".into()),
+            data_points: vec![DataPoint {
+                x: "1月".into(),
+                y: 5000.0,
+                label: None,
+            }],
+            summary: "图表显示增长趋势".into(),
+        };
+        let json = serde_json::to_string(&cr).unwrap();
+        let back: ChartAnalysisResult = serde_json::from_str(&json).unwrap();
+        assert_eq!(back.chart_type, "bar");
+        assert_eq!(back.data_points.len(), 1);
+    }
+
+    // ── Emotion ──
+
+    #[test]
+    fn test_emotion_serde_roundtrip() {
+        let e = Emotion {
+            emotion: "happy".into(),
+            confidence: 0.95,
+        };
+        let json = serde_json::to_string(&e).unwrap();
+        let back: Emotion = serde_json::from_str(&json).unwrap();
+        assert_eq!(back.emotion, "happy");
+    }
+
+    // ── FaceInfo ──
+
+    #[test]
+    fn test_face_info_serde_roundtrip() {
+        let fi = FaceInfo {
+            bounding_box: BoundingBox {
+                x: 10,
+                y: 20,
+                width: 80,
+                height: 80,
+            },
+            confidence: 0.99,
+            age_estimate: Some(30),
+            gender_estimate: Some("male".into()),
+            emotions: vec![Emotion {
+                emotion: "neutral".into(),
+                confidence: 0.7,
+            }],
+        };
+        let json = serde_json::to_string(&fi).unwrap();
+        let back: FaceInfo = serde_json::from_str(&json).unwrap();
+        assert_eq!(back.age_estimate, Some(30));
+        assert_eq!(back.emotions.len(), 1);
+    }
+
+    #[test]
+    fn test_face_info_minimal() {
+        let fi = FaceInfo {
+            bounding_box: BoundingBox {
+                x: 0,
+                y: 0,
+                width: 0,
+                height: 0,
+            },
+            confidence: 0.5,
+            age_estimate: None,
+            gender_estimate: None,
+            emotions: vec![],
+        };
+        let json = serde_json::to_string(&fi).unwrap();
+        let back: FaceInfo = serde_json::from_str(&json).unwrap();
+        assert!(back.emotions.is_empty());
+    }
+
+    // ── FaceDetectionResult ──
+
+    #[test]
+    fn test_face_detection_result_serde_roundtrip() {
+        let result = FaceDetectionResult {
+            faces: vec![],
+            count: 0,
+        };
+        let json = serde_json::to_string(&result).unwrap();
+        let back: FaceDetectionResult = serde_json::from_str(&json).unwrap();
+        assert_eq!(back.count, 0);
+    }
+
+    #[test]
+    fn test_face_detection_result_with_faces() {
+        let result = FaceDetectionResult {
+            faces: vec![FaceInfo {
+                bounding_box: BoundingBox {
+                    x: 1,
+                    y: 1,
+                    width: 1,
+                    height: 1,
+                },
+                confidence: 0.9,
+                age_estimate: None,
+                gender_estimate: None,
+                emotions: vec![],
+            }],
+            count: 1,
+        };
+        let json = serde_json::to_string(&result).unwrap();
+        let back: FaceDetectionResult = serde_json::from_str(&json).unwrap();
+        assert_eq!(back.faces.len(), 1);
+    }
+}
