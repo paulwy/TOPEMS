@@ -1602,3 +1602,230 @@ pub async fn train_model_handler(
         Err(e) => Json(ApiResponse::error(400, &e)),
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn roundtrip<T: serde::Serialize + for<'d> serde::Deserialize<'d>>(value: &T) -> bool {
+        let json = serde_json::to_value(value).unwrap();
+        let back: T = serde_json::from_value(json.clone()).unwrap();
+        let json2 = serde_json::to_value(&back).unwrap();
+        json == json2
+    }
+
+    // ---- MetricType ----
+
+    #[test]
+    fn metric_type_roundtrip_all() {
+        for v in MetricType::all() {
+            assert!(roundtrip(&v), "roundtrip failed for {:?}", v);
+        }
+    }
+
+    #[test]
+    fn metric_type_as_str_from_str() {
+        for v in MetricType::all() {
+            let s = v.as_str();
+            assert_eq!(MetricType::from_str(s), Some(v.clone()));
+        }
+        assert_eq!(MetricType::from_str("__unknown__"), None);
+    }
+
+    // ---- HealthStatus ----
+
+    #[test]
+    fn health_status_roundtrip_all() {
+        for v in HealthStatus::all() {
+            assert!(roundtrip(&v), "roundtrip failed for {:?}", v);
+        }
+    }
+
+    #[test]
+    fn health_status_as_str_from_str() {
+        for v in HealthStatus::all() {
+            let s = v.as_str();
+            assert_eq!(HealthStatus::from_str(s), Some(v.clone()));
+        }
+        assert_eq!(HealthStatus::from_str("__unknown__"), None);
+    }
+
+    // ---- AnomalyType ----
+
+    #[test]
+    fn anomaly_type_roundtrip_all() {
+        for v in AnomalyType::all() {
+            assert!(roundtrip(&v), "roundtrip failed for {:?}", v);
+        }
+    }
+
+    #[test]
+    fn anomaly_type_as_str_from_str() {
+        for v in AnomalyType::all() {
+            let s = v.as_str();
+            assert_eq!(AnomalyType::from_str(s), Some(v.clone()));
+        }
+        assert_eq!(AnomalyType::from_str("__unknown__"), None);
+    }
+
+    // ---- AnomalySeverity ----
+
+    #[test]
+    fn anomaly_severity_roundtrip_all() {
+        for v in AnomalySeverity::all() {
+            assert!(roundtrip(&v), "roundtrip failed for {:?}", v);
+        }
+    }
+
+    #[test]
+    fn anomaly_severity_as_str_from_str() {
+        for v in AnomalySeverity::all() {
+            let s = v.as_str();
+            assert_eq!(AnomalySeverity::from_str(s), Some(v.clone()));
+        }
+        assert_eq!(AnomalySeverity::from_str("__unknown__"), None);
+    }
+
+    // ---- DetectionAlgorithm ----
+
+    #[test]
+    fn detection_algorithm_roundtrip_all() {
+        for v in DetectionAlgorithm::all() {
+            assert!(roundtrip(&v), "roundtrip failed for {:?}", v);
+        }
+    }
+
+    #[test]
+    fn detection_algorithm_as_str_from_str() {
+        for v in DetectionAlgorithm::all() {
+            let s = v.as_str();
+            assert_eq!(DetectionAlgorithm::from_str(s), Some(v.clone()));
+        }
+        assert_eq!(DetectionAlgorithm::from_str("__unknown__"), None);
+    }
+
+    #[test]
+    fn enum_all_nonempty() {
+        assert!(!MetricType::all().is_empty());
+        assert!(!HealthStatus::all().is_empty());
+        assert!(!AnomalyType::all().is_empty());
+        assert!(!AnomalySeverity::all().is_empty());
+        assert!(!DetectionAlgorithm::all().is_empty());
+    }
+
+    // ---- struct roundtrip ----
+
+    #[test]
+    fn struct_roundtrip_metric() {
+        let v = Metric {
+            id: "m1".into(),
+            name: "test_metric".into(),
+            metric_type: MetricType::Counter,
+            value: 42.0,
+            labels: serde_json::json!({"host": "a"}),
+            checked_at: "2025-01-01T00:00:00Z".into(),
+        };
+        assert!(roundtrip(&v));
+    }
+
+    #[test]
+    fn struct_roundtrip_gateway_health() {
+        let v = GatewayHealth::default();
+        assert!(roundtrip(&v));
+    }
+
+    #[test]
+    fn struct_roundtrip_dashboard() {
+        let v = Dashboard {
+            total_metrics: 10,
+            metrics_by_type: [(MetricType::Counter.as_str().to_string(), 1usize)].into_iter().collect(),
+            avg_latency_p99: 50.0,
+            avg_error_rate: 0.01,
+            total_throughput: 1000.0,
+            active_connections: 50,
+            health_status: HealthStatus::Healthy,
+            alerts_count: 3,
+        };
+        assert!(roundtrip(&v));
+    }
+
+    #[test]
+    fn struct_roundtrip_resolver_timing() {
+        let v = ResolverTiming {
+            path: "Query.user".into(),
+            duration_ms: 15,
+            start_time: "2025-01-01T00:00:00Z".into(),
+            end_time: "2025-01-01T00:00:00Z".into(),
+        };
+        assert!(roundtrip(&v));
+    }
+
+    #[test]
+    fn struct_roundtrip_trace() {
+        let v = Trace {
+            id: "t1".into(),
+            query_hash: Some("abc".into()),
+            duration_ms: 100,
+            resolver_timings: vec![],
+            cache_hits: 2,
+            errors: vec![],
+            traced_at: "2025-01-01T00:00:00Z".into(),
+        };
+        assert!(roundtrip(&v));
+    }
+
+    #[test]
+    fn struct_roundtrip_performance_summary() {
+        let v = PerformanceSummary {
+            total_traces: 1000,
+            avg_duration_ms: 45.0,
+            p95_duration_ms: 120.0,
+            p99_duration_ms: 200.0,
+            slow_queries_count: 5,
+            cache_hit_rate: 0.85,
+            error_rate: 0.02,
+            top_slow_queries: vec![],
+        };
+        assert!(roundtrip(&v));
+    }
+
+    #[test]
+    fn struct_roundtrip_anomaly() {
+        let v = Anomaly {
+            id: "a1".into(),
+            anomaly_type: AnomalyType::Spike,
+            severity: AnomalySeverity::High,
+            metric_name: "latency_p99".into(),
+            expected_value: 50.0,
+            actual_value: 500.0,
+            deviation: 10.0,
+            detected_at: "2025-01-01T00:00:00Z".into(),
+        };
+        assert!(roundtrip(&v));
+    }
+
+    #[test]
+    fn struct_roundtrip_detection_model() {
+        let v = DetectionModel::default();
+        assert!(roundtrip(&v));
+    }
+
+    #[test]
+    fn struct_roundtrip_anomaly_summary() {
+        let v = AnomalySummary {
+            total_anomalies: 7,
+            by_type: [("spike".into(), 2usize)].into_iter().collect(),
+            by_severity: [("high".into(), 3usize)].into_iter().collect(),
+            by_metric: [("latency".into(), 1usize)].into_iter().collect(),
+            critical_count: 1,
+            high_count: 3,
+        };
+        assert!(roundtrip(&v));
+    }
+
+    #[test]
+    fn struct_roundtrip_alert_threshold() {
+        let v = AlertThreshold::default();
+        assert!(roundtrip(&v));
+    }
+}

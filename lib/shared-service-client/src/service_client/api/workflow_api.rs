@@ -201,3 +201,68 @@ impl TypedServiceClient<WorkflowApi> {
         self.post_and_unwrap(&path, &body).await
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use chrono::{TimeZone, Utc};
+
+    fn rt<T: Serialize + serde::de::DeserializeOwned>(val: &T) -> T {
+        let s = serde_json::to_string(val).unwrap();
+        serde_json::from_str(&s).unwrap()
+    }
+
+    #[test]
+    fn workflow_task_roundtrip() {
+        let t = WorkflowTask {
+            id: Uuid::parse_str("a1a2a3a4-b1b2-c1c2-d1d2-e1e2e3e4e5e6").unwrap(),
+            instance_id: Uuid::parse_str("f1f2f3f4-f5f6-f7f8-f9fa-fbfcfdfeff00").unwrap(),
+            node_id: "node-approve".into(),
+            assignee_id: Uuid::parse_str("11111111-2222-3333-4444-555555555555").unwrap(),
+            status: "pending".into(),
+            comment: None,
+        };
+        let back = rt(&t);
+        assert_eq!(back.node_id, "node-approve");
+        assert_eq!(back.status, "pending");
+        assert!(back.comment.is_none());
+    }
+
+    #[test]
+    fn task_stats_roundtrip() {
+        let s = TaskStats {
+            todo: 5,
+            done: 10,
+            my_pending: 3,
+            my_completed: 7,
+        };
+        let back = rt(&s);
+        assert_eq!(back.todo, 5);
+        assert_eq!(back.done, 10);
+        assert_eq!(back.my_pending, 3);
+        assert_eq!(back.my_completed, 7);
+    }
+
+    #[test]
+    fn workflow_instance_roundtrip() {
+        let inst = WorkflowInstance {
+            id: Uuid::parse_str("a1a1a1a1-b2b2-c3c3-d4d4-e5e5e5e5e5e5").unwrap(),
+            workflow_id: Uuid::parse_str("f6f6f6f6-7777-8888-9999-0a0a0a0a0a0a").unwrap(),
+            title: "Leave request".into(),
+            initiator_id: Uuid::parse_str("12345678-1234-5678-1234-567812345678").unwrap(),
+            current_node_id: Some("manager-review".into()),
+            status: "running".into(),
+            variables: Some(serde_json::json!({"days": 3, "reason": "vacation"})),
+            started_at: Utc.with_ymd_and_hms(2026, 8, 1, 9, 0, 0).unwrap(),
+            completed_at: None,
+            created_at: Utc.with_ymd_and_hms(2026, 8, 1, 8, 55, 0).unwrap(),
+            updated_at: Utc.with_ymd_and_hms(2026, 8, 1, 9, 0, 0).unwrap(),
+        };
+        let back = rt(&inst);
+        assert_eq!(back.title, "Leave request");
+        assert_eq!(back.current_node_id.as_deref(), Some("manager-review"));
+        assert_eq!(back.status, "running");
+        assert!(back.variables.is_some());
+        assert!(back.completed_at.is_none());
+    }
+}

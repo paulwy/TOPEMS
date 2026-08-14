@@ -227,3 +227,108 @@ impl TypedServiceClient<HrmApi> {
         self.post(&path, data).await
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use chrono::{TimeZone, Utc};
+
+    fn rt<T: Serialize + serde::de::DeserializeOwned>(val: &T) -> T {
+        let s = serde_json::to_string(val).unwrap();
+        serde_json::from_str(&s).unwrap()
+    }
+
+    fn ts() -> chrono::DateTime<chrono::Utc> {
+        Utc.with_ymd_and_hms(2026, 8, 15, 10, 30, 0).unwrap()
+    }
+
+    #[test]
+    fn hrm_employee_roundtrip() {
+        let e = HrmEmployee {
+            id: Uuid::parse_str("11111111-1111-1111-1111-111111111111").unwrap(),
+            name: "Alice Smith".into(),
+            email: "alice@company.com".into(),
+            phone: Some("+86-138-0000-1111".into()),
+            department_id: Some(Uuid::parse_str("22222222-2222-2222-2222-222222222222").unwrap()),
+            company_id: Uuid::parse_str("33333333-3333-3333-3333-333333333333").unwrap(),
+            status: "active".into(),
+            created_at: ts(),
+            updated_at: ts(),
+        };
+        let back = rt(&e);
+        assert_eq!(back.name, "Alice Smith");
+        assert_eq!(back.email, "alice@company.com");
+        assert_eq!(back.phone.as_deref(), Some("+86-138-0000-1111"));
+        assert_eq!(back.status, "active");
+    }
+
+    #[test]
+    fn hrm_employee_minimal_optionals_none() {
+        let e = HrmEmployee {
+            id: Uuid::new_v4(),
+            name: "Bob".into(),
+            email: "bob@c.com".into(),
+            phone: None,
+            department_id: None,
+            company_id: Uuid::new_v4(),
+            status: "active".into(),
+            created_at: ts(),
+            updated_at: ts(),
+        };
+        let back = rt(&e);
+        assert!(back.phone.is_none());
+        assert!(back.department_id.is_none());
+    }
+
+    #[test]
+    fn hrm_department_roundtrip() {
+        let d = HrmDepartment {
+            id: Uuid::parse_str("44444444-4444-4444-4444-444444444444").unwrap(),
+            name: "Engineering".into(),
+            description: Some("Dev team".into()),
+            company_id: Uuid::parse_str("33333333-3333-3333-3333-333333333333").unwrap(),
+            parent_id: None,
+            created_at: ts(),
+            updated_at: ts(),
+        };
+        let back = rt(&d);
+        assert_eq!(back.name, "Engineering");
+        assert_eq!(back.description.as_deref(), Some("Dev team"));
+        assert!(back.parent_id.is_none());
+    }
+
+    #[test]
+    fn hrm_company_roundtrip() {
+        let c = HrmCompany {
+            id: Uuid::parse_str("33333333-3333-3333-3333-333333333333").unwrap(),
+            name: "TOPEMS Inc.".into(),
+            code: "TOPEMS".into(),
+            description: None,
+            created_at: ts(),
+            updated_at: ts(),
+        };
+        let back = rt(&c);
+        assert_eq!(back.name, "TOPEMS Inc.");
+        assert_eq!(back.code, "TOPEMS");
+        assert!(back.description.is_none());
+    }
+
+    #[test]
+    fn hrm_attendance_stats_roundtrip() {
+        let s = HrmAttendanceStats {
+            total_days: 22,
+            present_days: 20,
+            absent_days: 1,
+            late_days: 1,
+            overtime_hours: 8.5,
+            total_work_hours: 176.0,
+        };
+        let back = rt(&s);
+        assert_eq!(back.total_days, 22);
+        assert_eq!(back.present_days, 20);
+        assert_eq!(back.absent_days, 1);
+        assert_eq!(back.late_days, 1);
+        assert!((back.overtime_hours - 8.5).abs() < 0.001);
+        assert!((back.total_work_hours - 176.0).abs() < 0.001);
+    }
+}

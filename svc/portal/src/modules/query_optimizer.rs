@@ -1239,3 +1239,217 @@ pub async fn get_performance_profile_handler(
     let profile = ExecutionAccelerator::get_performance_profile().await;
     Json(ApiResponse::success(profile, "性能画像"))
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use serde::Serialize;
+    use serde_json::Value;
+
+    fn roundtrip<T: Serialize + for<'de> Deserialize<'de>>(item: &T) {
+        let json = serde_json::to_string(item).unwrap();
+        let v1: Value = serde_json::from_str(&json).unwrap();
+        let back: T = serde_json::from_str(&json).unwrap();
+        let json2 = serde_json::to_string(&back).unwrap();
+        let v2: Value = serde_json::from_str(&json2).unwrap();
+        assert_eq!(v1, v2);
+    }
+
+    #[test]
+    fn test_compilation_rule_type_roundtrip_all_variants() {
+        for v in CompilationRuleType::all() {
+            roundtrip(&v);
+        }
+    }
+
+    #[test]
+    fn test_compilation_rule_type_as_str_from_str_all() {
+        for v in CompilationRuleType::all() {
+            let s = v.as_str();
+            let back = CompilationRuleType::from_str(s);
+            roundtrip(&back);
+        }
+        assert_eq!(CompilationRuleType::all().len(), 5);
+    }
+
+    #[test]
+    fn test_acceleration_strategy_roundtrip_all_variants() {
+        for v in AccelerationStrategy::all() {
+            roundtrip(&v);
+        }
+    }
+
+    #[test]
+    fn test_acceleration_strategy_as_str_from_str_all() {
+        for v in AccelerationStrategy::all() {
+            let s = v.as_str();
+            let back = AccelerationStrategy::from_str(s);
+            roundtrip(&back);
+        }
+        assert_eq!(AccelerationStrategy::all().len(), 5);
+    }
+
+    #[test]
+    fn test_plan_step_strategy_roundtrip_all_variants() {
+        for v in [PlanStepStrategy::Sequential, PlanStepStrategy::Parallel, PlanStepStrategy::Pipelined, PlanStepStrategy::Batched] {
+            roundtrip(&v);
+        }
+    }
+
+    #[test]
+    fn test_plan_step_strategy_as_str_from_str() {
+        for v in [PlanStepStrategy::Sequential, PlanStepStrategy::Parallel, PlanStepStrategy::Pipelined, PlanStepStrategy::Batched] {
+            let s = v.as_str();
+            let back = PlanStepStrategy::from_str(s);
+            roundtrip(&back);
+        }
+    }
+
+    #[test]
+    fn test_compilation_rule_roundtrip() {
+        let r = CompilationRule {
+            id: "cr1".to_string(),
+            rule_type: CompilationRuleType::FieldPruning,
+            description: Some("prune unused".to_string()),
+            enabled: true,
+            created_at: "2025-01-01T00:00:00Z".to_string(),
+            updated_at: "2025-01-01T00:00:00Z".to_string(),
+        };
+        roundtrip(&r);
+    }
+
+    #[test]
+    fn test_compiled_query_roundtrip() {
+        let q = CompiledQuery {
+            id: "cq1".to_string(),
+            original_query: "{ me { id name } }".to_string(),
+            optimized_query: "{ me { id } }".to_string(),
+            hash: "abc123".to_string(),
+            complexity_score: 3.5,
+            estimated_cost: 1.2,
+            optimizations_applied: vec!["field_pruning".to_string()],
+            created_at: "2025-01-01T00:00:00Z".to_string(),
+        };
+        roundtrip(&q);
+    }
+
+    #[test]
+    fn test_compilation_stats_roundtrip() {
+        let s = CompilationStats {
+            total_compilations: 500,
+            rules_applied: HashMap::new(),
+            avg_complexity_reduction: 0.3,
+            avg_cost_reduction: 0.25,
+            enabled_rules: 5,
+        };
+        roundtrip(&s);
+    }
+
+    #[test]
+    fn test_plan_step_roundtrip() {
+        let ps = PlanStep {
+            id: "s1".to_string(),
+            service: "svc".to_string(),
+            field_path: "me.name".to_string(),
+            depends_on: vec!["s0".to_string()],
+            estimated_time_ms: 100,
+            strategy: PlanStepStrategy::Parallel,
+        };
+        roundtrip(&ps);
+    }
+
+    #[test]
+    fn test_execution_plan_roundtrip() {
+        let ep = ExecutionPlan {
+            id: "p1".to_string(),
+            query_hash: "qh1".to_string(),
+            steps: vec![],
+            estimated_cost: 2.5,
+            parallelism: 4,
+            score: 0.85,
+            created_at: "2025-01-01T00:00:00Z".to_string(),
+        };
+        roundtrip(&ep);
+    }
+
+    #[test]
+    fn test_plan_compare_result_roundtrip() {
+        let plan_a = ExecutionPlan {
+            id: "pa".to_string(),
+            query_hash: "qh".to_string(),
+            steps: vec![],
+            estimated_cost: 3.0,
+            parallelism: 2,
+            score: 0.7,
+            created_at: "".to_string(),
+        };
+        let plan_b = ExecutionPlan {
+            id: "pb".to_string(),
+            query_hash: "qh".to_string(),
+            steps: vec![],
+            estimated_cost: 1.5,
+            parallelism: 8,
+            score: 0.9,
+            created_at: "".to_string(),
+        };
+        let r = PlanCompareResult {
+            plan_a,
+            plan_b,
+            cost_diff: -1.5,
+            score_diff: 0.2,
+            recommendation: "use plan_b".to_string(),
+        };
+        roundtrip(&r);
+    }
+
+    #[test]
+    fn test_planner_stats_roundtrip() {
+        let s = PlannerStats {
+            total_plans: 200,
+            avg_estimated_cost: 2.0,
+            avg_parallelism: 4.5,
+            most_expensive_service: None,
+            step_distribution: HashMap::new(),
+        };
+        roundtrip(&s);
+    }
+
+    #[test]
+    fn test_acceleration_result_roundtrip() {
+        let r = AccelerationResult {
+            id: "ar1".to_string(),
+            strategy: AccelerationStrategy::ParallelExecution,
+            original_time_ms: 1000,
+            optimized_time_ms: 250,
+            speedup_factor: 4.0,
+            steps_saved: 3,
+            created_at: "2025-01-01T00:00:00Z".to_string(),
+        };
+        roundtrip(&r);
+    }
+
+    #[test]
+    fn test_acceleration_config_roundtrip() {
+        let c = AccelerationConfig {
+            id: "ac1".to_string(),
+            strategy: AccelerationStrategy::BatchExecution,
+            enabled: true,
+            parameters: Value::Null,
+            updated_at: "2025-01-01T00:00:00Z".to_string(),
+        };
+        roundtrip(&c);
+    }
+
+    #[test]
+    fn test_performance_profile_roundtrip() {
+        let p = PerformanceProfile {
+            total_accelerations: 1000,
+            avg_speedup: 2.5,
+            strategy_distribution: HashMap::new(),
+            best_strategy: Some("parallel_execution".to_string()),
+            avg_original_time_ms: 500.0,
+            avg_optimized_time_ms: 200.0,
+        };
+        roundtrip(&p);
+    }
+}

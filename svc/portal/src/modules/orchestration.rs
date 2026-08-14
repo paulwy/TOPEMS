@@ -1253,3 +1253,200 @@ pub async fn get_routing_stats_handler(
     let stats = DynamicRouter::get_routing_stats().await;
     Json(ApiResponse::success(stats, "路由统计"))
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use serde::Serialize;
+    use serde_json::Value;
+
+    fn roundtrip<T: Serialize + for<'de> Deserialize<'de>>(item: &T) {
+        let json = serde_json::to_string(item).unwrap();
+        let v1: Value = serde_json::from_str(&json).unwrap();
+        let back: T = serde_json::from_str(&json).unwrap();
+        let json2 = serde_json::to_string(&back).unwrap();
+        let v2: Value = serde_json::from_str(&json2).unwrap();
+        assert_eq!(v1, v2);
+    }
+
+    #[test]
+    fn test_plan_status_roundtrip_all_variants() {
+        for v in [PlanStatus::Pending, PlanStatus::Running, PlanStatus::Completed, PlanStatus::Failed, PlanStatus::Cancelled] {
+            roundtrip(&v);
+        }
+    }
+
+    #[test]
+    fn test_plan_status_as_str_from_str() {
+        for v in [PlanStatus::Pending, PlanStatus::Running, PlanStatus::Completed, PlanStatus::Failed, PlanStatus::Cancelled] {
+            let s = v.as_str();
+            let back = PlanStatus::from_str(s);
+            roundtrip(&back);
+        }
+        let unknown = PlanStatus::from_str("nonexistent");
+        assert_eq!(unknown, PlanStatus::Pending);
+    }
+
+    #[test]
+    fn test_step_status_roundtrip_all_variants() {
+        for v in [StepStatus::Pending, StepStatus::Running, StepStatus::Completed, StepStatus::Failed] {
+            roundtrip(&v);
+        }
+    }
+
+    #[test]
+    fn test_step_status_as_str_from_str() {
+        for v in [StepStatus::Pending, StepStatus::Running, StepStatus::Completed, StepStatus::Failed] {
+            let s = v.as_str();
+            let back = StepStatus::from_str(s);
+            roundtrip(&back);
+        }
+    }
+
+    #[test]
+    fn test_health_status_roundtrip_all_variants() {
+        for v in HealthStatus::all() {
+            roundtrip(&v);
+        }
+    }
+
+    #[test]
+    fn test_health_status_as_str_from_str_all() {
+        for v in HealthStatus::all() {
+            let s = v.as_str();
+            let back = HealthStatus::from_str(s);
+            roundtrip(&back);
+        }
+        assert_eq!(HealthStatus::all().len(), 4);
+    }
+
+    #[test]
+    fn test_execution_step_roundtrip() {
+        let s = ExecutionStep {
+            id: "s1".to_string(),
+            service: "svc".to_string(),
+            operation: "op".to_string(),
+            depends_on: vec!["d1".to_string()],
+            status: StepStatus::Running,
+            result: Some(Value::String("ok".to_string())),
+        };
+        roundtrip(&s);
+    }
+
+    #[test]
+    fn test_orchestration_plan_roundtrip() {
+        let p = OrchestrationPlan {
+            id: "p1".to_string(),
+            query_id: "q1".to_string(),
+            execution_steps: vec![],
+            dependencies: vec![vec!["a".to_string()]],
+            estimated_cost: 1.5,
+            timeout_ms: 5000,
+            status: PlanStatus::Pending,
+            created_at: "2025-01-01T00:00:00Z".to_string(),
+            updated_at: "2025-01-01T00:00:00Z".to_string(),
+        };
+        roundtrip(&p);
+    }
+
+    #[test]
+    fn test_plan_status_info_roundtrip() {
+        let info = PlanStatusInfo {
+            plan_id: "p1".to_string(),
+            status: PlanStatus::Completed,
+            completed_steps: 3,
+            total_steps: 5,
+            failed_steps: 0,
+            elapsed_ms: 1200,
+        };
+        roundtrip(&info);
+    }
+
+    #[test]
+    fn test_execution_history_entry_roundtrip() {
+        let e = ExecutionHistoryEntry {
+            plan_id: "p1".to_string(),
+            query_id: "q1".to_string(),
+            status: PlanStatus::Failed,
+            step_count: 4,
+            created_at: "2025-01-01T00:00:00Z".to_string(),
+        };
+        roundtrip(&e);
+    }
+
+    #[test]
+    fn test_service_descriptor_roundtrip() {
+        let sd = ServiceDescriptor {
+            id: "svc1".to_string(),
+            name: "Test Svc".to_string(),
+            version: "1.0.0".to_string(),
+            endpoint: "http://localhost:8080".to_string(),
+            capabilities: vec!["query".to_string()],
+            health_status: HealthStatus::Healthy,
+            last_heartbeat: Some("2025-01-01T00:00:00Z".to_string()),
+            metadata: Value::Null,
+        };
+        roundtrip(&sd);
+    }
+
+    #[test]
+    fn test_service_heartbeat_roundtrip() {
+        let hb = ServiceHeartbeat {
+            id: "h1".to_string(),
+            service_id: "svc1".to_string(),
+            status: HealthStatus::Degraded,
+            latency_ms: 150,
+            checked_at: "2025-01-01T00:00:00Z".to_string(),
+        };
+        roundtrip(&hb);
+    }
+
+    #[test]
+    fn test_registry_stats_roundtrip() {
+        let stats = RegistryStats {
+            total_services: 10,
+            healthy_count: 8,
+            degraded_count: 1,
+            unhealthy_count: 1,
+            capabilities_distribution: HashMap::new(),
+        };
+        roundtrip(&stats);
+    }
+
+    #[test]
+    fn test_route_rule_roundtrip() {
+        let r = RouteRule {
+            id: "r1".to_string(),
+            pattern: "/api/*".to_string(),
+            target_service: "svc1".to_string(),
+            condition: None,
+            priority: 1,
+            weight: 100,
+            enabled: true,
+        };
+        roundtrip(&r);
+    }
+
+    #[test]
+    fn test_routing_decision_roundtrip() {
+        let rd = RoutingDecision {
+            request_id: "req1".to_string(),
+            matched_rule: None,
+            target_service: "svc1".to_string(),
+            confidence: 0.95,
+            latency_ms: 25,
+        };
+        roundtrip(&rd);
+    }
+
+    #[test]
+    fn test_routing_stats_roundtrip() {
+        let rs = RoutingStats {
+            total_requests: 1000,
+            requests_per_service: HashMap::new(),
+            avg_latency_ms: 42.0,
+            rule_match_count: HashMap::new(),
+        };
+        roundtrip(&rs);
+    }
+}

@@ -1469,3 +1469,294 @@ pub async fn list_conflicts_handler(
         "类型冲突列表",
     ))
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn roundtrip<T: serde::Serialize + for<'d> serde::Deserialize<'d>>(value: &T) -> bool {
+        let json = serde_json::to_value(value).unwrap();
+        let back: T = serde_json::from_value(json.clone()).unwrap();
+        let json2 = serde_json::to_value(&back).unwrap();
+        json == json2
+    }
+
+    // ---- QueryIntent ----
+
+    fn query_intent_all() -> Vec<QueryIntent> {
+        vec![
+            QueryIntent::Read,
+            QueryIntent::Write,
+            QueryIntent::Aggregate,
+            QueryIntent::Subscribe,
+        ]
+    }
+
+    #[test]
+    fn query_intent_roundtrip_all() {
+        for v in query_intent_all() {
+            assert!(roundtrip(&v));
+        }
+    }
+
+    #[test]
+    fn query_intent_as_str_from_str() {
+        for v in query_intent_all() {
+            let s = v.as_str();
+            assert_eq!(QueryIntent::from_str(s).as_str(), s);
+        }
+        assert_eq!(QueryIntent::from_str("__unknown__"), QueryIntent::Read);
+    }
+
+    // ---- RoutingStrategy (no from_str, no all) ----
+
+    fn routing_strategy_all() -> Vec<RoutingStrategy> {
+        vec![
+            RoutingStrategy::ServiceAffinity,
+            RoutingStrategy::LoadBased,
+            RoutingStrategy::LatencyBased,
+            RoutingStrategy::CacheAware,
+            RoutingStrategy::Fallback,
+            RoutingStrategy::ABTest,
+        ]
+    }
+
+    #[test]
+    fn routing_strategy_roundtrip_all() {
+        for v in routing_strategy_all() {
+            assert!(roundtrip(&v));
+        }
+    }
+
+    #[test]
+    fn routing_strategy_as_str() {
+        for v in routing_strategy_all() {
+            let s = v.as_str();
+            assert!(!s.is_empty());
+        }
+    }
+
+    // ---- StitchStatus ----
+
+    fn stitch_status_all() -> Vec<StitchStatus> {
+        vec![
+            StitchStatus::Pending,
+            StitchStatus::Discovering,
+            StitchStatus::Planning,
+            StitchStatus::Executing,
+            StitchStatus::Validating,
+            StitchStatus::Completed,
+            StitchStatus::Failed,
+            StitchStatus::RolledBack,
+        ]
+    }
+
+    #[test]
+    fn stitch_status_roundtrip_all() {
+        for v in stitch_status_all() {
+            assert!(roundtrip(&v));
+        }
+    }
+
+    #[test]
+    fn stitch_status_as_str_from_str() {
+        for v in stitch_status_all() {
+            let s = v.as_str();
+            assert_eq!(StitchStatus::from_str(s).as_str(), s);
+        }
+        assert_eq!(StitchStatus::from_str("__unknown__"), StitchStatus::Pending);
+    }
+
+    // ---- ConflictStatus ----
+
+    fn conflict_status_all() -> Vec<ConflictStatus> {
+        vec![
+            ConflictStatus::Pending,
+            ConflictStatus::Resolved,
+            ConflictStatus::Escalated,
+            ConflictStatus::Rejected,
+        ]
+    }
+
+    #[test]
+    fn conflict_status_roundtrip_all() {
+        for v in conflict_status_all() {
+            assert!(roundtrip(&v));
+        }
+    }
+
+    #[test]
+    fn conflict_status_as_str_from_str() {
+        for v in conflict_status_all() {
+            let s = v.as_str();
+            assert_eq!(ConflictStatus::from_str(s).as_str(), s);
+        }
+        assert_eq!(ConflictStatus::from_str("__unknown__"), ConflictStatus::Pending);
+    }
+
+    // ---- ResolutionStrategy ----
+
+    fn resolution_strategy_all() -> Vec<ResolutionStrategy> {
+        vec![
+            ResolutionStrategy::TakeFirst,
+            ResolutionStrategy::MergeFields,
+            ResolutionStrategy::PickNewest,
+            ResolutionStrategy::ExplicitOverride,
+            ResolutionStrategy::Reject,
+        ]
+    }
+
+    #[test]
+    fn resolution_strategy_roundtrip_all() {
+        for v in resolution_strategy_all() {
+            assert!(roundtrip(&v));
+        }
+    }
+
+    #[test]
+    fn resolution_strategy_as_str_from_str() {
+        for v in resolution_strategy_all() {
+            let s = v.as_str();
+            assert_eq!(ResolutionStrategy::from_str(s).as_str(), s);
+        }
+        assert_eq!(ResolutionStrategy::from_str("__unknown__"), ResolutionStrategy::TakeFirst);
+    }
+
+    // ---- struct roundtrip ----
+
+    #[test]
+    fn struct_roundtrip_service_load() {
+        let v = ServiceLoad {
+            service_id: "svc1".into(),
+            cpu_usage: 0.5,
+            memory_usage: 0.6,
+            request_rate: 100.0,
+            latency_ms: 50.0,
+            cache_freshness: 0.9,
+            is_healthy: true,
+        };
+        assert!(roundtrip(&v));
+    }
+
+    #[test]
+    fn struct_roundtrip_routing_decision() {
+        let v = RoutingDecision {
+            query_hash: "abc123".into(),
+            intent: QueryIntent::Read,
+            target_service: "svc1".into(),
+            confidence: 0.95,
+            reason: "service affinity".into(),
+            alternatives: vec![RoutingAlternative {
+                service_id: "svc2".into(),
+                score: 0.8,
+                strategy: RoutingStrategy::LoadBased,
+            }],
+        };
+        assert!(roundtrip(&v));
+    }
+
+    #[test]
+    fn struct_roundtrip_routing_alternative() {
+        let v = RoutingAlternative {
+            service_id: "svc2".into(),
+            score: 0.7,
+            strategy: RoutingStrategy::Fallback,
+        };
+        assert!(roundtrip(&v));
+    }
+
+    #[test]
+    fn struct_roundtrip_service_affinity() {
+        let v = ServiceAffinity {
+            service_id: "svc1".into(),
+            entity_types: vec!["User".into()],
+            score: 0.9,
+            last_updated: "2025-01-01T00:00:00Z".into(),
+        };
+        assert!(roundtrip(&v));
+    }
+
+    #[test]
+    fn struct_roundtrip_routing_table_entry() {
+        let v = RoutingTableEntry {
+            id: "rt1".into(),
+            query_hash: "abc123".into(),
+            intent: QueryIntent::Read,
+            target_service: "svc1".into(),
+            confidence: 0.9,
+            reason: "cache hit".into(),
+            alternatives: vec![],
+            created_at: "2025-01-01T00:00:00Z".into(),
+        };
+        assert!(roundtrip(&v));
+    }
+
+    #[test]
+    fn struct_roundtrip_subgraph_info() {
+        let v = SubgraphInfo {
+            id: "sg1".into(),
+            name: "user-svc".into(),
+            url: "http://user-svc/graphql".into(),
+            types: vec!["User".into()],
+            entities: vec!["User".into()],
+            version: "v1".into(),
+        };
+        assert!(roundtrip(&v));
+    }
+
+    #[test]
+    fn struct_roundtrip_type_conflict() {
+        let v = TypeConflict {
+            id: "tc1".into(),
+            type_name: "User".into(),
+            conflicting_fields: vec![serde_json::json!({"field": "phone"})],
+            resolution: ResolutionStrategy::MergeFields,
+            status: ConflictStatus::Pending,
+            created_at: "2025-01-01T00:00:00Z".into(),
+        };
+        assert!(roundtrip(&v));
+    }
+
+    #[test]
+    fn struct_roundtrip_stitch_plan() {
+        let v = StitchPlan {
+            id: "sp1".into(),
+            subgraphs: vec![],
+            merged_types: vec![],
+            conflicts: vec![],
+            resolution_strategy: ResolutionStrategy::TakeFirst,
+            status: StitchStatus::Pending,
+            created_at: "2025-01-01T00:00:00Z".into(),
+        };
+        assert!(roundtrip(&v));
+    }
+
+    #[test]
+    fn struct_roundtrip_stitch_log_entry() {
+        let v = StitchLogEntry {
+            id: "sl1".into(),
+            plan_id: "sp1".into(),
+            action: "discover".into(),
+            status: "ok".into(),
+            details: Some(serde_json::json!({"count": 10})),
+            created_at: "2025-01-01T00:00:00Z".into(),
+        };
+        assert!(roundtrip(&v));
+    }
+
+    #[test]
+    fn struct_roundtrip_stitch_status_report() {
+        let v = StitchStatusReport {
+            plan_id: "sp1".into(),
+            status: StitchStatus::Executing,
+            progress_percent: 45.0,
+            subgraph_count: 3,
+            merged_type_count: 20,
+            conflict_count: 2,
+            resolved_conflicts: 1,
+            last_action: Some("merged User".into()),
+            updated_at: "2025-01-01T00:00:00Z".into(),
+        };
+        assert!(roundtrip(&v));
+    }
+}

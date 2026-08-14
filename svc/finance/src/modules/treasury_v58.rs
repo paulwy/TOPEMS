@@ -1865,3 +1865,151 @@ pub fn create_routes() -> Router<AppState> {
             axum::routing::get(get_optimization_history_handler),
         )
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use serde::Serialize;
+    use serde_json::Value;
+
+    fn roundtrip<T: Serialize + for<'de> Deserialize<'de>>(item: &T) {
+        let json = serde_json::to_string(item).unwrap();
+        let v1: Value = serde_json::from_str(&json).unwrap();
+        let back: T = serde_json::from_str(&json).unwrap();
+        let json2 = serde_json::to_string(&back).unwrap();
+        let v2: Value = serde_json::from_str(&json2).unwrap();
+        assert_eq!(v1, v2);
+    }
+
+    #[test] fn enum_pool_type() {
+        roundtrip(&PoolType::Physical);
+        roundtrip(&PoolType::Virtual);
+        roundtrip(&PoolType::Notional);
+    }
+
+    #[test] fn enum_transfer_status() {
+        roundtrip(&TransferStatus::Pending);
+        roundtrip(&TransferStatus::Completed);
+        roundtrip(&TransferStatus::Failed);
+    }
+
+    #[test] fn enum_forecast_type() {
+        roundtrip(&ForecastType::ShortTerm);
+        roundtrip(&ForecastType::MediumTerm);
+        roundtrip(&ForecastType::LongTerm);
+    }
+
+    #[test] fn enum_cash_flow_item_type() {
+        roundtrip(&CashFlowItemType::Inflow);
+        roundtrip(&CashFlowItemType::Outflow);
+    }
+
+    #[test] fn enum_action_type() {
+        roundtrip(&ActionType::Invest);
+        roundtrip(&ActionType::Borrow);
+        roundtrip(&ActionType::Transfer);
+        roundtrip(&ActionType::Hedge);
+    }
+
+    #[test] fn enum_risk_level() {
+        roundtrip(&RiskLevel::Low);
+        roundtrip(&RiskLevel::Medium);
+        roundtrip(&RiskLevel::High);
+    }
+
+    #[test] fn struct_cash_pool() {
+        let v = CashPool {
+            id: Uuid::new_v4(), name: "集团现金池".into(),
+            pool_type: "physical".into(), currency: "CNY".into(),
+            balance: 1000000.0, entities: vec!["A".into(), "B".into()],
+            created_at: Utc::now(),
+        };
+        roundtrip(&v);
+    }
+
+    #[test] fn struct_pool_allocation() {
+        let v = PoolAllocation {
+            id: Uuid::new_v4(), pool_id: Uuid::new_v4(),
+            entity_id: "Entity-A".into(), amount: 500000.0,
+            percentage: 50.0, allocated_at: Utc::now(),
+        };
+        roundtrip(&v);
+    }
+
+    #[test] fn struct_pool_transfer() {
+        let v = PoolTransfer {
+            id: Uuid::new_v4(), from_pool: Uuid::new_v4(),
+            to_pool: Uuid::new_v4(), amount: 100000.0,
+            currency: "CNY".into(), reference: "TR-001".into(),
+            status: "completed".into(), created_at: Utc::now(),
+        };
+        roundtrip(&v);
+    }
+
+    #[test] fn struct_forecast_scenario() {
+        let v = ForecastScenario {
+            id: Uuid::new_v4(), name: "Q1预测".into(),
+            scenario_type: "medium_term".into(), horizon_days: 90,
+            assumptions: Some(serde_json::json!({"growth":0.1})),
+            confidence: 0.85,
+        };
+        roundtrip(&v);
+    }
+
+    #[test] fn struct_forecast_result() {
+        let v = ForecastResult {
+            id: Uuid::new_v4(), scenario_id: Uuid::new_v4(),
+            date: NaiveDate::from_ymd_opt(2024, 1, 15).unwrap(),
+            inflow: 100000.0, outflow: 80000.0, net: 20000.0,
+            closing_balance: 520000.0,
+            confidence_interval: Some(serde_json::json!({"lower":18000,"upper":22000})),
+        };
+        roundtrip(&v);
+    }
+
+    #[test] fn struct_cash_flow_item() {
+        let v = CashFlowItem {
+            id: Uuid::new_v4(), scenario_id: Uuid::new_v4(),
+            item_date: NaiveDate::from_ymd_opt(2024, 2, 1).unwrap(),
+            item_type: "inflow".into(), category: "sales".into(),
+            amount: 50000.0, counterparty: Some("客户A".into()),
+            probability: 0.9,
+        };
+        roundtrip(&v);
+    }
+
+    #[test] fn struct_liquidity_target() {
+        let v = LiquidityTarget {
+            id: Uuid::new_v4(), entity_id: "Entity-A".into(),
+            min_balance: 100000.0, max_balance: 500000.0,
+            target_balance: 300000.0, currency: "CNY".into(),
+        };
+        roundtrip(&v);
+    }
+
+    #[test] fn struct_optimization_result() {
+        let v = OptimizationResult {
+            id: Uuid::new_v4(), entity_id: "Entity-A".into(),
+            recommended_actions: Some(serde_json::json!([{"type":"invest"}])),
+            projected_savings: 5000.0, risk_level: "low".into(),
+        };
+        roundtrip(&v);
+    }
+
+    #[test] fn struct_action() {
+        let v = Action {
+            action_type: "invest".into(), amount: 100000.0,
+            reason: "闲置资金投资".into(),
+            expected_return: 0.03, risk: "low".into(),
+        };
+        roundtrip(&v);
+    }
+
+    #[test] fn struct_allocation_item() {
+        let v = AllocationItem {
+            entity_id: "Entity-A".into(), amount: 50000.0,
+            percentage: Some(50.0),
+        };
+        roundtrip(&v);
+    }
+}

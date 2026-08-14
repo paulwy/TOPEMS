@@ -2114,3 +2114,126 @@ pub fn create_routes() -> Router<AppState> {
             axum::routing::post(acknowledge_alert_handler),
         )
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use serde::Serialize;
+    use serde_json::Value;
+
+    fn roundtrip<T: Serialize + for<'de> Deserialize<'de>>(item: &T) {
+        let json = serde_json::to_string(item).unwrap();
+        let v1: Value = serde_json::from_str(&json).unwrap();
+        let back: T = serde_json::from_str(&json).unwrap();
+        let json2 = serde_json::to_string(&back).unwrap();
+        let v2: Value = serde_json::from_str(&json2).unwrap();
+        assert_eq!(v1, v2);
+    }
+
+    #[test] fn enum_audit_severity() {
+        roundtrip(&AuditSeverity::Low);
+        roundtrip(&AuditSeverity::Medium);
+        roundtrip(&AuditSeverity::High);
+        roundtrip(&AuditSeverity::Critical);
+    }
+
+    #[test] fn enum_finding_status() {
+        roundtrip(&FindingStatus::Open);
+        roundtrip(&FindingStatus::Resolved);
+        roundtrip(&FindingStatus::Ignored);
+    }
+
+    #[test] fn enum_alert_channel() {
+        roundtrip(&AlertChannel::WebSocket);
+        roundtrip(&AlertChannel::Email);
+        roundtrip(&AlertChannel::DingTalk);
+        roundtrip(&AlertChannel::Webhook);
+    }
+
+    #[test] fn enum_detection_type() {
+        roundtrip(&DetectionType::ZScore);
+        roundtrip(&DetectionType::Benford);
+        roundtrip(&DetectionType::TimeBased);
+        roundtrip(&DetectionType::Frequency);
+        roundtrip(&DetectionType::AmountVelocity);
+    }
+
+    #[test] fn struct_audit_rule() {
+        let v = AuditRule {
+            id: Uuid::new_v4(), tenant_id: Uuid::new_v4(),
+            name: "rule-1".into(), category: "revenue".into(),
+            condition: serde_json::json!({"op":">","val":10000}),
+            severity: "high".into(), schedule: "daily".into(),
+            is_active: true, created_by: "tester".into(),
+            created_at: Utc::now(), updated_at: Utc::now(),
+        };
+        roundtrip(&v);
+    }
+
+    #[test] fn struct_audit_finding() {
+        let v = AuditFinding {
+            id: Uuid::new_v4(), tenant_id: Uuid::new_v4(),
+            rule_id: Uuid::new_v4(),
+            entity_type: "invoice".into(), entity_id: "INV-001".into(),
+            finding_type: "amount_anomaly".into(), severity: "medium".into(),
+            description: "金额异常".into(),
+            evidence: serde_json::json!({"expected":100,"actual":500}),
+            status: "open".into(),
+            detected_at: Utc::now(),
+            resolved_at: None, resolved_by: None,
+        };
+        roundtrip(&v);
+    }
+
+    #[test] fn struct_anomaly_alert() {
+        let v = AnomalyAlert {
+            id: Uuid::new_v4(), tenant_id: Uuid::new_v4(),
+            detection_type: "z_score".into(),
+            entity_type: "transaction".into(), entity_id: "TX-001".into(),
+            metric_value: 999.0, expected_range: "0-100".into(),
+            confidence: 0.95, severity: "high".into(),
+            description: "统计异常".into(),
+            is_resolved: false, created_at: Utc::now(),
+        };
+        roundtrip(&v);
+    }
+
+    #[test] fn struct_alert_config() {
+        let v = AlertConfig {
+            id: Uuid::new_v4(), tenant_id: Uuid::new_v4(),
+            channel: "email".into(), threshold: "high".into(),
+            cooldown: 300,
+            recipients: serde_json::json!(["a@b.com"]),
+            is_active: true,
+            created_at: Utc::now(), updated_at: Utc::now(),
+        };
+        roundtrip(&v);
+    }
+
+    #[test] fn struct_alert_history() {
+        let v = AlertHistory {
+            id: Uuid::new_v4(), tenant_id: Uuid::new_v4(),
+            channel: "webhook".into(), alert_type: "anomaly".into(),
+            entity_id: "ENT-001".into(), severity: "critical".into(),
+            message: "test alert".into(),
+            is_delivered: true, is_acknowledged: false,
+            acknowledged_by: None, created_at: Utc::now(),
+        };
+        roundtrip(&v);
+    }
+
+    #[test] fn struct_detection_summary() {
+        let v = DetectionSummary {
+            total_alerts: 100, critical_count: 2, high_count: 10,
+            medium_count: 30, low_count: 58,
+            by_type: [("z_score".into(), 40i64)].into(),
+            resolved_count: 50,
+        };
+        roundtrip(&v);
+    }
+
+    #[test] fn struct_run_audit_request() {
+        roundtrip(&RunAuditRequest { rule_ids: None });
+        roundtrip(&RunAuditRequest { rule_ids: Some(vec![Uuid::new_v4()]) });
+    }
+}

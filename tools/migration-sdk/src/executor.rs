@@ -343,3 +343,63 @@ impl MigrationExecutor {
         Ok(pending)
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use sha2::{Digest, Sha256};
+
+    #[test]
+    fn executor_config_new_defaults() {
+        let c = ExecutorConfig::new("my-plugin");
+        assert_eq!(c.plugin_name, "my-plugin");
+        assert!(c.redis_url.is_none());
+        assert_eq!(c.lock_timeout_secs, 300);
+        assert!(c.enable_rollback);
+    }
+
+    #[test]
+    fn executor_config_builder_chain() {
+        let c = ExecutorConfig::new("p1")
+            .with_redis("redis://localhost:6379")
+            .with_lock_timeout(600)
+            .with_rollback(false);
+        assert_eq!(c.plugin_name, "p1");
+        assert_eq!(c.redis_url.as_deref(), Some("redis://localhost:6379"));
+        assert_eq!(c.lock_timeout_secs, 600);
+        assert!(!c.enable_rollback);
+    }
+
+    #[test]
+    fn calculate_checksum_deterministic() {
+        let a = MigrationExecutor::calculate_checksum("SELECT 1");
+        let b = MigrationExecutor::calculate_checksum("SELECT 1");
+        assert_eq!(a, b);
+        assert_eq!(a.len(), 64);
+    }
+
+    #[test]
+    fn calculate_checksum_sha256_hex() {
+        let mut hasher = Sha256::new();
+        hasher.update(b"hello");
+        let expected = format!("{:x}", hasher.finalize());
+        let got = MigrationExecutor::calculate_checksum("hello");
+        assert_eq!(got, expected);
+    }
+
+    #[test]
+    fn calculate_checksum_different_inputs_different_outputs() {
+        let a = MigrationExecutor::calculate_checksum("foo");
+        let b = MigrationExecutor::calculate_checksum("bar");
+        assert_ne!(a, b);
+    }
+
+    #[test]
+    fn calculate_checksum_empty_string() {
+        let got = MigrationExecutor::calculate_checksum("");
+        let mut hasher = Sha256::new();
+        hasher.update(b"");
+        let expected = format!("{:x}", hasher.finalize());
+        assert_eq!(got, expected);
+    }
+}

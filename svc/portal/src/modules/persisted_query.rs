@@ -1238,3 +1238,194 @@ pub async fn edge_set_policy_handler(
         Err(e) => Json(ApiResponse::error(500, &e)),
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use serde::Serialize;
+    use serde_json::Value;
+
+    fn roundtrip<T: Serialize + for<'de> Deserialize<'de>>(item: &T) {
+        let json = serde_json::to_string(item).unwrap();
+        let v1: Value = serde_json::from_str(&json).unwrap();
+        let back: T = serde_json::from_str(&json).unwrap();
+        let json2 = serde_json::to_string(&back).unwrap();
+        let v2: Value = serde_json::from_str(&json2).unwrap();
+        assert_eq!(v1, v2);
+    }
+
+    #[test]
+    fn test_query_status_roundtrip_all_variants() {
+        for v in [QueryStatus::Active, QueryStatus::Deprecated, QueryStatus::Archived] {
+            roundtrip(&v);
+        }
+    }
+
+    #[test]
+    fn test_query_status_as_str_from_str() {
+        for v in [QueryStatus::Active, QueryStatus::Deprecated, QueryStatus::Archived] {
+            let s = v.as_str();
+            let back = QueryStatus::from_str(s);
+            roundtrip(&back);
+        }
+    }
+
+    #[test]
+    fn test_edge_cache_location_roundtrip_all_variants() {
+        for v in EdgeCacheLocation::all() {
+            roundtrip(&v);
+        }
+    }
+
+    #[test]
+    fn test_edge_cache_location_as_str_from_str_all() {
+        for v in EdgeCacheLocation::all() {
+            let s = v.as_str();
+            let back = EdgeCacheLocation::from_str(s);
+            roundtrip(&back);
+        }
+        assert_eq!(EdgeCacheLocation::all().len(), 4);
+    }
+
+    #[test]
+    fn test_sync_status_roundtrip_all_variants() {
+        for v in [SyncStatus::Synced, SyncStatus::Pending, SyncStatus::Failed] {
+            roundtrip(&v);
+        }
+    }
+
+    #[test]
+    fn test_sync_status_as_str_from_str() {
+        for v in [SyncStatus::Synced, SyncStatus::Pending, SyncStatus::Failed] {
+            let s = v.as_str();
+            let back = SyncStatus::from_str(s);
+            roundtrip(&back);
+        }
+    }
+
+    #[test]
+    fn test_persisted_entry_v2_roundtrip() {
+        let e = PersistedEntryV2 {
+            id: "e1".to_string(),
+            query_hash: "hash1".to_string(),
+            operation_name: Some("Op".to_string()),
+            query_text: "{ me { id } }".to_string(),
+            version: 1,
+            status: QueryStatus::Active,
+            created_by: None,
+            created_at: "2025-01-01T00:00:00Z".to_string(),
+            updated_at: "2025-01-01T00:00:00Z".to_string(),
+            access_count: 42,
+        };
+        roundtrip(&e);
+    }
+
+    #[test]
+    fn test_persisted_list_roundtrip() {
+        let list = PersistedList {
+            entries: vec![],
+            total: 100,
+            page: 1,
+            per_page: 20,
+        };
+        roundtrip(&list);
+    }
+
+    #[test]
+    fn test_persisted_version_info_roundtrip() {
+        let info = PersistedVersionInfo {
+            version: 2,
+            query_text: "{ me { name } }".to_string(),
+            status: QueryStatus::Deprecated,
+            created_by: Some("admin".to_string()),
+            created_at: "2025-01-01T00:00:00Z".to_string(),
+        };
+        roundtrip(&info);
+    }
+
+    #[test]
+    fn test_cache_entry_v2_roundtrip() {
+        let ce = CacheEntryV2 {
+            key: "k1".to_string(),
+            value: Value::String("cached".to_string()),
+            version: "v1".to_string(),
+            checksum: None,
+            created_at: "2025-01-01T00:00:00Z".to_string(),
+            expires_at: None,
+            size_bytes: 256,
+            tags: vec!["hot".to_string()],
+        };
+        roundtrip(&ce);
+    }
+
+    #[test]
+    fn test_cache_version_roundtrip() {
+        let cv = CacheVersion {
+            version_id: "cv1".to_string(),
+            description: Some("initial".to_string()),
+            entry_count: 50,
+            created_at: "2025-01-01T00:00:00Z".to_string(),
+            active: true,
+        };
+        roundtrip(&cv);
+    }
+
+    #[test]
+    fn test_cache_stats_roundtrip() {
+        let cs = CacheStats {
+            total_entries: 1000,
+            total_versions: 5,
+            active_versions: 2,
+            expired_entries: 100,
+            total_size_bytes: 1024000,
+        };
+        roundtrip(&cs);
+    }
+
+    #[test]
+    fn test_edge_entry_roundtrip() {
+        let ee = EdgeEntry {
+            key: "ek1".to_string(),
+            value: Value::Null,
+            location: EdgeCacheLocation::CDN,
+            ttl_ms: 3600000,
+            replicated_at: "2025-01-01T00:00:00Z".to_string(),
+            sync_status: SyncStatus::Synced,
+        };
+        roundtrip(&ee);
+    }
+
+    #[test]
+    fn test_edge_replication_policy_roundtrip() {
+        let p = EdgeReplicationPolicy {
+            target_locations: vec![EdgeCacheLocation::CDN, EdgeCacheLocation::Regional],
+            ttl_ms: 3600000,
+            sync_mode: "async".to_string(),
+        };
+        roundtrip(&p);
+    }
+
+    #[test]
+    fn test_edge_replication_stats_roundtrip() {
+        let s = EdgeReplicationStats {
+            total_replications: 100,
+            successful: 95,
+            failed: 3,
+            pending: 2,
+            by_location: HashMap::new(),
+        };
+        roundtrip(&s);
+    }
+
+    #[test]
+    fn test_edge_status_info_roundtrip() {
+        let info = EdgeStatusInfo {
+            location: EdgeCacheLocation::Global,
+            entries_count: 500,
+            synced_entries: 480,
+            pending_entries: 15,
+            failed_entries: 5,
+        };
+        roundtrip(&info);
+    }
+}

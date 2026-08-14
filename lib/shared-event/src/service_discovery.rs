@@ -741,3 +741,174 @@ impl SmartServiceClient {
         Ok(response)
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn rt<T: Serialize + serde::de::DeserializeOwned>(val: &T) -> T {
+        let s = serde_json::to_string(val).unwrap();
+        serde_json::from_str(&s).unwrap()
+    }
+
+    #[test]
+    fn service_category_roundtrip_all_variants() {
+        for (v, expected) in [
+            (ServiceCategory::Core, "\"core\""),
+            (ServiceCategory::Business, "\"business\""),
+            (ServiceCategory::Support, "\"support\""),
+            (ServiceCategory::Analytics, "\"analytics\""),
+            (ServiceCategory::Integration, "\"integration\""),
+        ] {
+            let json = serde_json::to_string(&v).unwrap();
+            assert_eq!(json, expected);
+            let back: ServiceCategory = serde_json::from_str(&json).unwrap();
+            assert_eq!(back, v);
+        }
+    }
+
+    #[test]
+    fn service_registry_status_roundtrip() {
+        for (v, expected) in [
+            (ServiceRegistryStatus::Active, "\"active\""),
+            (ServiceRegistryStatus::Inactive, "\"inactive\""),
+            (ServiceRegistryStatus::Maintenance, "\"maintenance\""),
+        ] {
+            let json = serde_json::to_string(&v).unwrap();
+            assert_eq!(json, expected);
+            let back: ServiceRegistryStatus = serde_json::from_str(&json).unwrap();
+            assert_eq!(back, v);
+        }
+    }
+
+    #[test]
+    fn service_info_roundtrip() {
+        let info = ServiceInfo {
+            name: "HRM".into(),
+            code: "hrm".into(),
+            description: "Human Resource Management".into(),
+            icon: Some("👤".into()),
+            category: ServiceCategory::Business,
+            status: ServiceRegistryStatus::Active,
+            url: Some("https://hrm.topems.local".into()),
+            api_prefix: Some("/api/hrm".into()),
+            port: 8020,
+            version: "1.0.0".into(),
+            order: 1,
+            tags: vec!["hr".into(), "employee".into()],
+        };
+        let back = rt(&info);
+        assert_eq!(back.name, "HRM");
+        assert_eq!(back.code, "hrm");
+        assert_eq!(back.category, ServiceCategory::Business);
+        assert_eq!(back.status, ServiceRegistryStatus::Active);
+        assert_eq!(back.port, 8020);
+        assert_eq!(back.tags.len(), 2);
+    }
+
+    #[test]
+    fn service_info_minimal_optionals_none() {
+        let info = ServiceInfo {
+            name: "x".into(),
+            code: "x".into(),
+            description: "d".into(),
+            icon: None,
+            category: ServiceCategory::Core,
+            status: ServiceRegistryStatus::Maintenance,
+            url: None,
+            api_prefix: None,
+            port: 0,
+            version: "0.0.1".into(),
+            order: 0,
+            tags: vec![],
+        };
+        let back = rt(&info);
+        assert!(back.icon.is_none());
+        assert!(back.url.is_none());
+        assert!(back.api_prefix.is_none());
+        assert!(back.tags.is_empty());
+        assert_eq!(back.category, ServiceCategory::Core);
+        assert_eq!(back.status, ServiceRegistryStatus::Maintenance);
+    }
+
+    #[test]
+    fn service_endpoint_roundtrip() {
+        let ep = ServiceEndpoint {
+            path: "/api/hrm/employees".into(),
+            method: "GET".into(),
+            status: "ok".into(),
+            response_time_ms: Some(42),
+        };
+        let back = rt(&ep);
+        assert_eq!(back.path, "/api/hrm/employees");
+        assert_eq!(back.method, "GET");
+        assert_eq!(back.response_time_ms, Some(42));
+    }
+
+    #[test]
+    fn service_health_status_roundtrip_with_endpoints() {
+        let health = ServiceHealthStatus {
+            code: "hrm".into(),
+            name: "HRM Service".into(),
+            status: "healthy".into(),
+            response_time_ms: Some(15),
+            last_check: "2026-08-15T14:00:00Z".into(),
+            endpoints: vec![
+                ServiceEndpoint {
+                    path: "/health".into(),
+                    method: "GET".into(),
+                    status: "ok".into(),
+                    response_time_ms: Some(5),
+                },
+                ServiceEndpoint {
+                    path: "/api/hrm/employees".into(),
+                    method: "GET".into(),
+                    status: "ok".into(),
+                    response_time_ms: Some(25),
+                },
+            ],
+        };
+        let back = rt(&health);
+        assert_eq!(back.code, "hrm");
+        assert_eq!(back.endpoints.len(), 2);
+        assert_eq!(back.endpoints[0].path, "/health");
+        assert_eq!(back.endpoints[1].response_time_ms, Some(25));
+    }
+
+    #[test]
+    fn service_instance_roundtrip() {
+        let inst = ServiceInstance {
+            id: "inst-001".into(),
+            name: "hrm-instance-1".into(),
+            address: "10.0.0.1".into(),
+            port: 8020,
+            tags: vec!["primary".into(), "v1".into()],
+        };
+        let back = rt(&inst);
+        assert_eq!(back.id, "inst-001");
+        assert_eq!(back.address, "10.0.0.1");
+        assert_eq!(back.port, 8020);
+        assert_eq!(back.tags, vec!["primary", "v1"]);
+    }
+
+    #[test]
+    fn nested_enum_serde_values_in_json() {
+        let info = ServiceInfo {
+            name: "X".into(),
+            code: "x".into(),
+            description: "d".into(),
+            icon: None,
+            category: ServiceCategory::Analytics,
+            status: ServiceRegistryStatus::Inactive,
+            url: None,
+            api_prefix: None,
+            port: 0,
+            version: "1.0".into(),
+            order: 0,
+            tags: vec![],
+        };
+        let json = serde_json::to_string(&info).unwrap();
+        assert!(json.contains("\"category\":\"analytics\""));
+        assert!(json.contains("\"status\":\"inactive\""));
+    }
+}

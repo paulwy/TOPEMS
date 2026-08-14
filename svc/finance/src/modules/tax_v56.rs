@@ -2181,3 +2181,194 @@ pub fn create_routes() -> Router<AppState> {
             axum::routing::get(get_compliance_handler),
         )
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use serde::Serialize;
+    use serde_json::Value;
+
+    fn roundtrip<T: Serialize + for<'de> Deserialize<'de>>(item: &T) {
+        let json = serde_json::to_string(item).unwrap();
+        let v1: Value = serde_json::from_str(&json).unwrap();
+        let back: T = serde_json::from_str(&json).unwrap();
+        let json2 = serde_json::to_string(&back).unwrap();
+        let v2: Value = serde_json::from_str(&json2).unwrap();
+        assert_eq!(v1, v2);
+    }
+
+    #[test] fn enum_tax_form_type() {
+        roundtrip(&TaxFormType::VAT);
+        roundtrip(&TaxFormType::CIT);
+        roundtrip(&TaxFormType::PIT);
+        roundtrip(&TaxFormType::Withholding);
+        roundtrip(&TaxFormType::Stamp);
+    }
+
+    #[test] fn enum_tax_form_status() {
+        roundtrip(&TaxFormStatus::Draft);
+        roundtrip(&TaxFormStatus::Calculated);
+        roundtrip(&TaxFormStatus::Submitted);
+        roundtrip(&TaxFormStatus::Accepted);
+        roundtrip(&TaxFormStatus::Rejected);
+    }
+
+    #[test] fn enum_tax_rate_type() {
+        roundtrip(&TaxRateType::VAT);
+        roundtrip(&TaxRateType::CIT);
+        roundtrip(&TaxRateType::PIT);
+        roundtrip(&TaxRateType::Withholding);
+        roundtrip(&TaxRateType::Stamp);
+    }
+
+    #[test] fn enum_tax_plan_strategy() {
+        roundtrip(&TaxPlanStrategy::LegalOptimization);
+        roundtrip(&TaxPlanStrategy::DeductionMaximization);
+        roundtrip(&TaxPlanStrategy::TimingStrategy);
+        roundtrip(&TaxPlanStrategy::HoldingOptimization);
+    }
+
+    #[test] fn enum_tax_plan_risk_level() {
+        roundtrip(&TaxPlanRiskLevel::Low);
+        roundtrip(&TaxPlanRiskLevel::Medium);
+        roundtrip(&TaxPlanRiskLevel::High);
+    }
+
+    #[test] fn enum_tax_plan_status() {
+        roundtrip(&TaxPlanStatus::Draft);
+        roundtrip(&TaxPlanStatus::Proposed);
+        roundtrip(&TaxPlanStatus::UnderReview);
+        roundtrip(&TaxPlanStatus::Approved);
+        roundtrip(&TaxPlanStatus::Rejected);
+        roundtrip(&TaxPlanStatus::Executed);
+    }
+
+    #[test] fn struct_tax_form() {
+        let v = TaxForm {
+            id: Uuid::new_v4(), form_type: "vat".into(),
+            jurisdiction: "CN".into(),
+            period_start: Utc::now(), period_end: Utc::now(),
+            status: "draft".into(), total_tax_amount: 1300.0,
+            filed_at: None, accepted_at: None,
+        };
+        roundtrip(&v);
+    }
+
+    #[test] fn struct_tax_line() {
+        let v = TaxLine {
+            id: Uuid::new_v4(), form_id: Uuid::new_v4(),
+            line_no: 1, description: "销项".into(),
+            taxable_amount: 10000.0, tax_rate: 0.13,
+            tax_amount: 1300.0,
+        };
+        roundtrip(&v);
+    }
+
+    #[test] fn struct_tax_form_with_lines() {
+        let v = TaxFormWithLines {
+            form: TaxForm {
+                id: Uuid::new_v4(), form_type: "vat".into(),
+                jurisdiction: "CN".into(),
+                period_start: Utc::now(), period_end: Utc::now(),
+                status: "calculated".into(), total_tax_amount: 0.0,
+                filed_at: None, accepted_at: None,
+            },
+            lines: vec![TaxLine {
+                id: Uuid::new_v4(), form_id: Uuid::new_v4(),
+                line_no: 1, description: "进项".into(),
+                taxable_amount: 5000.0, tax_rate: 0.13, tax_amount: 650.0,
+            }],
+        };
+        roundtrip(&v);
+    }
+
+    #[test] fn struct_tax_rate() {
+        let v = TaxRate {
+            id: Uuid::new_v4(), jurisdiction: "CN".into(),
+            rate_type: "vat".into(), rate: 0.13,
+            effective_from: Utc::now(), effective_to: None,
+            description: Some("标准税率".into()),
+        };
+        roundtrip(&v);
+    }
+
+    #[test] fn struct_tax_bracket() {
+        let v = TaxBracket {
+            id: Uuid::new_v4(), rate_id: Uuid::new_v4(),
+            bracket_order: 1, threshold_from: 0.0,
+            threshold_to: Some(3000.0), rate: 0.03,
+        };
+        roundtrip(&v);
+    }
+
+    #[test] fn struct_tax_breakdown() {
+        let v = TaxBreakdown {
+            bracket_order: 1, threshold_from: 0.0,
+            threshold_to: Some(3000.0), rate: 0.03,
+            taxable_in_bracket: 3000.0, tax_in_bracket: 90.0,
+        };
+        roundtrip(&v);
+    }
+
+    #[test] fn struct_tax_result() {
+        let v = TaxResult {
+            taxable_amount: 5000.0, rate: 0.1, tax_amount: 500.0,
+            breakdown: vec![TaxBreakdown {
+                bracket_order: 1, threshold_from: 0.0,
+                threshold_to: Some(3000.0), rate: 0.03,
+                taxable_in_bracket: 3000.0, tax_in_bracket: 90.0,
+            }],
+        };
+        roundtrip(&v);
+    }
+
+    #[test] fn struct_tax_plan() {
+        let v = TaxPlan {
+            id: Uuid::new_v4(), entity: "Entity-A".into(),
+            period: "2024".into(), strategy: "legal_optimization".into(),
+            projected_savings: 50000.0,
+            risk_level: "low".into(), status: "approved".into(),
+            approved_at: Some(Utc::now()),
+        };
+        roundtrip(&v);
+    }
+
+    #[test] fn struct_tax_suggestion() {
+        let v = TaxSuggestion {
+            id: Uuid::new_v4(), plan_id: Uuid::new_v4(),
+            category: "deduction".into(),
+            description: "增加研发费用扣除".into(),
+            estimated_savings: 20000.0, confidence: 0.85,
+            action_items: Some(vec!["整理凭证".into()]),
+        };
+        roundtrip(&v);
+    }
+
+    #[test] fn struct_compliance_check_result() {
+        let v = ComplianceCheckResult {
+            compliant: true,
+            issues: vec![],
+            warnings: vec!["建议复核".into()],
+            suggestions: vec!["保存发票".into()],
+        };
+        roundtrip(&v);
+    }
+
+    #[test] fn struct_tax_line_input() {
+        let v = TaxLineInput {
+            line_no: 1, description: "test".into(),
+            taxable_amount: 100.0, tax_rate: 0.06,
+        };
+        roundtrip(&v);
+    }
+
+    #[test] fn struct_scenario_analysis() {
+        let v = ScenarioAnalysis {
+            scenario_name: "乐观".into(),
+            projected_tax: 80000.0, projected_savings: 20000.0,
+            risk_level: "low".into(),
+            suggestions: vec!["可行".into()],
+        };
+        roundtrip(&v);
+    }
+}

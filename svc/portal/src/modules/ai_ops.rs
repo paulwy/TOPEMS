@@ -1769,3 +1769,330 @@ pub async fn get_health_summary_handler(
     let summary = SelfHealingEngine::get_health_summary().await;
     Json(ApiResponse::success(summary, "健康汇总"))
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use serde::Serialize;
+
+    fn roundtrip<T: Serialize + for<'de> Deserialize<'de>>(item: &T) {
+        let json = serde_json::to_string(item).unwrap();
+        let v1: serde_json::Value = serde_json::from_str(&json).unwrap();
+        let back: T = serde_json::from_str(&json).unwrap();
+        let json2 = serde_json::to_string(&back).unwrap();
+        let v2: serde_json::Value = serde_json::from_str(&json2).unwrap();
+        assert_eq!(v1, v2);
+    }
+
+    // ==================== Enum roundtrip ====================
+
+    #[test]
+    fn routing_condition_roundtrip() {
+        for v in &[
+            RoutingCondition::QueryHash,
+            RoutingCondition::OperationName,
+            RoutingCondition::ServicePattern,
+            RoutingCondition::Custom,
+        ] {
+            roundtrip(v);
+        }
+    }
+
+    #[test]
+    fn cache_scope_roundtrip() {
+        for v in CacheScope::all() {
+            roundtrip(&v);
+        }
+    }
+
+    #[test]
+    fn invalidation_strategy_roundtrip() {
+        for v in InvalidationStrategy::all() {
+            roundtrip(&v);
+        }
+    }
+
+    #[test]
+    fn health_check_type_roundtrip() {
+        for v in HealthCheckType::all() {
+            roundtrip(&v);
+        }
+    }
+
+    #[test]
+    fn healing_trigger_roundtrip() {
+        for v in &[
+            HealingTrigger::HealthCheck,
+            HealingTrigger::Failure,
+            HealingTrigger::Timeout,
+        ] {
+            roundtrip(v);
+        }
+    }
+
+    #[test]
+    fn healing_action_type_roundtrip() {
+        for v in HealingActionType::all() {
+            roundtrip(&v);
+        }
+    }
+
+    #[test]
+    fn healing_status_roundtrip() {
+        for v in &[
+            HealingStatus::Pending,
+            HealingStatus::Executing,
+            HealingStatus::Completed,
+            HealingStatus::Failed,
+        ] {
+            roundtrip(v);
+        }
+    }
+
+    #[test]
+    fn recovery_status_roundtrip() {
+        for v in &[
+            RecoveryStatus::Pending,
+            RecoveryStatus::InProgress,
+            RecoveryStatus::Completed,
+            RecoveryStatus::Failed,
+            RecoveryStatus::Cancelled,
+        ] {
+            roundtrip(v);
+        }
+    }
+
+    // ==================== Enum as_str/from_str ====================
+
+    #[test]
+    fn routing_condition_as_str() {
+        assert_eq!(RoutingCondition::QueryHash.as_str(), "query_hash");
+        assert_eq!(RoutingCondition::OperationName.as_str(), "operation_name");
+        assert_eq!(RoutingCondition::ServicePattern.as_str(), "service_pattern");
+        assert_eq!(RoutingCondition::Custom.as_str(), "custom");
+    }
+
+    #[test]
+    fn cache_scope_as_str_from_str() {
+        for v in CacheScope::all() {
+            assert_eq!(CacheScope::from_str(v.as_str()), v);
+        }
+    }
+
+    #[test]
+    fn invalidation_strategy_as_str_from_str() {
+        for v in InvalidationStrategy::all() {
+            assert_eq!(InvalidationStrategy::from_str(v.as_str()), v);
+        }
+    }
+
+    #[test]
+    fn health_check_type_as_str_from_str() {
+        for v in HealthCheckType::all() {
+            assert_eq!(HealthCheckType::from_str(v.as_str()), v);
+        }
+    }
+
+    #[test]
+    fn healing_trigger_as_str_from_str() {
+        assert_eq!(
+            HealingTrigger::from_str(HealingTrigger::HealthCheck.as_str()),
+            HealingTrigger::HealthCheck
+        );
+        assert_eq!(
+            HealingTrigger::from_str(HealingTrigger::Failure.as_str()),
+            HealingTrigger::Failure
+        );
+        assert_eq!(
+            HealingTrigger::from_str(HealingTrigger::Timeout.as_str()),
+            HealingTrigger::Timeout
+        );
+    }
+
+    #[test]
+    fn healing_action_type_as_str_from_str() {
+        for v in HealingActionType::all() {
+            assert_eq!(HealingActionType::from_str(v.as_str()), v);
+        }
+    }
+
+    #[test]
+    fn healing_status_as_str_from_str() {
+        assert_eq!(
+            HealingStatus::from_str(HealingStatus::Pending.as_str()),
+            HealingStatus::Pending
+        );
+        assert_eq!(
+            HealingStatus::from_str(HealingStatus::Executing.as_str()),
+            HealingStatus::Executing
+        );
+        assert_eq!(
+            HealingStatus::from_str(HealingStatus::Completed.as_str()),
+            HealingStatus::Completed
+        );
+        assert_eq!(
+            HealingStatus::from_str(HealingStatus::Failed.as_str()),
+            HealingStatus::Failed
+        );
+    }
+
+    #[test]
+    fn recovery_status_as_str_from_str() {
+        assert_eq!(
+            RecoveryStatus::from_str(RecoveryStatus::Pending.as_str()),
+            RecoveryStatus::Pending
+        );
+        assert_eq!(
+            RecoveryStatus::from_str(RecoveryStatus::InProgress.as_str()),
+            RecoveryStatus::InProgress
+        );
+        assert_eq!(
+            RecoveryStatus::from_str(RecoveryStatus::Completed.as_str()),
+            RecoveryStatus::Completed
+        );
+        assert_eq!(
+            RecoveryStatus::from_str(RecoveryStatus::Failed.as_str()),
+            RecoveryStatus::Failed
+        );
+        assert_eq!(
+            RecoveryStatus::from_str(RecoveryStatus::Cancelled.as_str()),
+            RecoveryStatus::Cancelled
+        );
+    }
+
+    // ==================== Struct roundtrip ====================
+
+    #[test]
+    fn routing_rule_roundtrip() {
+        let r = RoutingRule::new(
+            "main-rule".into(),
+            serde_json::json!({"operation": "GetUsers"}),
+            "user-service".into(),
+            10,
+            100,
+        );
+        roundtrip(&r);
+    }
+
+    #[test]
+    fn routing_decision_roundtrip() {
+        let d = RoutingDecision {
+            id: "dec-1".into(),
+            query_hash: Some("abc123".into()),
+            matched_rule_id: Some("rule-1".into()),
+            target_service: "user-service".into(),
+            reason: "matched".into(),
+            confidence: 0.95,
+            routed_at: "2025-01-01T00:00:00Z".into(),
+        };
+        roundtrip(&d);
+    }
+
+    #[test]
+    fn service_load_roundtrip() {
+        let l = ServiceLoad::new("svc-1".into());
+        roundtrip(&l);
+    }
+
+    #[test]
+    fn route_stats_roundtrip() {
+        let s = RouteStats {
+            total_routes: 100,
+            routes_by_service: HashMap::from([("svc".into(), 50u64)]),
+            avg_confidence: 0.8,
+            rule_hit_rate: 0.6,
+            top_rules: vec![("rule-1".into(), 30u64)],
+        };
+        roundtrip(&s);
+    }
+
+    #[test]
+    fn cache_policy_roundtrip() {
+        let p = CachePolicy::new(
+            "query-cache".into(),
+            CacheScope::Query,
+            3600000,
+            InvalidationStrategy::TimeBased,
+            10000,
+        );
+        roundtrip(&p);
+    }
+
+    #[test]
+    fn cache_entry_roundtrip() {
+        let e = CacheEntry::new("key-1".into(), serde_json::json!({"data": 1}), 3600000);
+        roundtrip(&e);
+    }
+
+    #[test]
+    fn invalidation_event_roundtrip() {
+        let e = InvalidationEvent::new(
+            "key-1".into(),
+            "updated".into(),
+            "user".into(),
+        );
+        roundtrip(&e);
+    }
+
+    #[test]
+    fn cache_stats_roundtrip() {
+        let s = CacheStats {
+            total_entries: 100,
+            total_hits: 800,
+            total_misses: 200,
+            hit_rate: 0.8,
+            expired_entries: 10,
+            evicted_entries: 5,
+            policies_count: 3,
+        };
+        roundtrip(&s);
+    }
+
+    #[test]
+    fn health_check_roundtrip() {
+        let h = HealthCheck::new(
+            "svc-1".into(),
+            HealthCheckType::Liveness,
+            10000,
+            5000,
+            2,
+            3,
+        );
+        roundtrip(&h);
+    }
+
+    #[test]
+    fn healing_action_roundtrip() {
+        let a = HealingAction::new(
+            HealingTrigger::Failure,
+            HealingActionType::Restart,
+            "svc-1".into(),
+        );
+        roundtrip(&a);
+    }
+
+    #[test]
+    fn recovery_plan_roundtrip() {
+        let p = RecoveryPlan::new(
+            "svc-1".into(),
+            vec!["restart".into(), "verify".into()],
+            300000,
+        );
+        roundtrip(&p);
+    }
+
+    #[test]
+    fn health_summary_roundtrip() {
+        let s = HealthSummary {
+            total_checks: 10,
+            healthy_services: 8,
+            degraded_services: 1,
+            unhealthy_services: 1,
+            total_healing_actions: 2,
+            successful_healing: 1,
+            failed_healing: 1,
+            active_recovery_plans: 0,
+        };
+        roundtrip(&s);
+    }
+}

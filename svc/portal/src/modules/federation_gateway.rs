@@ -937,3 +937,178 @@ pub async fn recover_transaction_handler(
         Err(e) => Json(ApiResponse::error(400, &e)),
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use serde::{Deserialize, Serialize};
+    use serde_json::Value;
+
+    fn roundtrip<T: Serialize + for<'de> Deserialize<'de>>(item: &T) {
+        let json = serde_json::to_string(item).unwrap();
+        let v1: Value = serde_json::from_str(&json).unwrap();
+        let back: T = serde_json::from_str(&json).unwrap();
+        let json2 = serde_json::to_string(&back).unwrap();
+        let v2: Value = serde_json::from_str(&json2).unwrap();
+        assert_eq!(v1, v2);
+    }
+
+    #[test]
+    fn test_health_status_roundtrip_all_variants() {
+        for v in [HealthStatus::Healthy, HealthStatus::Degraded, HealthStatus::Unhealthy, HealthStatus::Unknown] {
+            roundtrip(&v);
+        }
+    }
+
+    #[test]
+    fn test_health_status_as_str_from_str() {
+        for v in [HealthStatus::Healthy, HealthStatus::Degraded, HealthStatus::Unhealthy, HealthStatus::Unknown] {
+            let s = v.as_str();
+            let back = HealthStatus::from_str(s);
+            roundtrip(&back);
+        }
+    }
+
+    #[test]
+    fn test_transaction_state_roundtrip_all_variants() {
+        for v in [
+            TransactionState::Init,
+            TransactionState::Preparing,
+            TransactionState::Committing,
+            TransactionState::Compensating,
+            TransactionState::Completed,
+            TransactionState::Failed,
+            TransactionState::Recovering,
+        ] {
+            roundtrip(&v);
+        }
+    }
+
+    #[test]
+    fn test_transaction_state_as_str_from_str() {
+        for v in [
+            TransactionState::Init,
+            TransactionState::Preparing,
+            TransactionState::Committing,
+            TransactionState::Compensating,
+            TransactionState::Completed,
+            TransactionState::Failed,
+            TransactionState::Recovering,
+        ] {
+            let s = v.as_str();
+            let back = TransactionState::from_str(s);
+            roundtrip(&back);
+        }
+    }
+
+    #[test]
+    fn test_compensation_action_roundtrip_all_variants() {
+        for v in [CompensationAction::Compensate, CompensationAction::Confirm] {
+            roundtrip(&v);
+        }
+    }
+
+    #[test]
+    fn test_step_status_roundtrip_all_variants() {
+        for v in [StepStatus::Pending, StepStatus::Executing, StepStatus::Completed, StepStatus::Failed, StepStatus::Compensated] {
+            roundtrip(&v);
+        }
+    }
+
+    #[test]
+    fn test_subgraph_config_roundtrip() {
+        let c = SubgraphConfig {
+            id: "sg1".to_string(),
+            name: "Inventory".to_string(),
+            url: "http://inv.local".to_string(),
+            types: vec!["Item".to_string()],
+            entities: vec!["Item".to_string()],
+            version: 1,
+            health_status: HealthStatus::Healthy,
+        };
+        roundtrip(&c);
+    }
+
+    #[test]
+    fn test_federated_query_operation_roundtrip() {
+        let op = FederatedQueryOperation {
+            subgraph_id: "sg1".to_string(),
+            query_fragment: "{ items { id } }".to_string(),
+            estimated_cost: 1.0,
+        };
+        roundtrip(&op);
+    }
+
+    #[test]
+    fn test_federated_query_plan_roundtrip() {
+        let p = FederatedQueryPlan {
+            query_id: "q1".to_string(),
+            operations: vec![],
+            merge_strategy: "sequential".to_string(),
+        };
+        roundtrip(&p);
+    }
+
+    #[test]
+    fn test_subgraph_registration_request_roundtrip() {
+        let r = SubgraphRegistrationRequest {
+            name: "Users".to_string(),
+            url: "http://users.local".to_string(),
+            types: vec!["User".to_string()],
+            entities: vec!["User".to_string()],
+            version: Some(2),
+        };
+        roundtrip(&r);
+    }
+
+    #[test]
+    fn test_federation_health_report_roundtrip() {
+        let r = FederationHealthReport {
+            total_subgraphs: 3,
+            healthy_count: 2,
+            degraded_count: 1,
+            unhealthy_count: 0,
+            subgraphs: vec![],
+        };
+        roundtrip(&r);
+    }
+
+    #[test]
+    fn test_compensation_step_roundtrip() {
+        let s = CompensationStep {
+            step_id: "s1".to_string(),
+            action: CompensationAction::Compensate,
+            target_service: "svc1".to_string(),
+            payload: None,
+            status: StepStatus::Pending,
+        };
+        roundtrip(&s);
+    }
+
+    #[test]
+    fn test_transaction_context_roundtrip() {
+        let ctx = TransactionContext {
+            id: "tx1".to_string(),
+            participants: vec!["svc1".to_string()],
+            state: TransactionState::Init,
+            steps: vec![],
+            timeout_ms: 30000,
+            created_at: "2025-01-01T00:00:00Z".to_string(),
+        };
+        roundtrip(&ctx);
+    }
+
+    #[test]
+    fn test_transaction_log_roundtrip() {
+        let l = TransactionLog {
+            id: "tl1".to_string(),
+            transaction_id: "tx1".to_string(),
+            step_id: "s1".to_string(),
+            compensation_action: "compensate".to_string(),
+            status: "ok".to_string(),
+            error_message: None,
+            created_at: "2025-01-01T00:00:00Z".to_string(),
+        };
+        roundtrip(&l);
+    }
+}

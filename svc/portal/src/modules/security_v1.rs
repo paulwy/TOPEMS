@@ -1306,3 +1306,190 @@ pub async fn get_field_rules_handler(
     let rules = DataMasker::get_field_rules(&field_path).await;
     Json(ApiResponse::success(rules, "字段脱敏规则"))
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use serde::Serialize;
+    use serde_json::Value;
+
+    fn roundtrip<T: Serialize + for<'de> Deserialize<'de>>(item: &T) {
+        let json = serde_json::to_string(item).unwrap();
+        let v1: Value = serde_json::from_str(&json).unwrap();
+        let back: T = serde_json::from_str(&json).unwrap();
+        let json2 = serde_json::to_string(&back).unwrap();
+        let v2: Value = serde_json::from_str(&json2).unwrap();
+        assert_eq!(v1, v2);
+    }
+
+    #[test]
+    fn test_security_event_type_roundtrip_all_variants() {
+        for v in SecurityEventType::all() {
+            roundtrip(&v);
+        }
+    }
+
+    #[test]
+    fn test_security_event_type_as_str_from_str_all() {
+        for v in SecurityEventType::all() {
+            let s = v.as_str();
+            let back = SecurityEventType::from_str(s);
+            assert!(back.is_some());
+            roundtrip(back.as_ref().unwrap());
+        }
+        assert_eq!(SecurityEventType::all().len(), 5);
+    }
+
+    #[test]
+    fn test_trust_decision_type_roundtrip_all_variants() {
+        for v in [TrustDecisionType::Allow, TrustDecisionType::Deny, TrustDecisionType::Challenge] {
+            roundtrip(&v);
+        }
+    }
+
+    #[test]
+    fn test_trust_decision_type_as_str_from_str() {
+        for v in [TrustDecisionType::Allow, TrustDecisionType::Deny, TrustDecisionType::Challenge] {
+            let s = v.as_str();
+            let back = TrustDecisionType::from_str(s);
+            assert!(back.is_some());
+            roundtrip(back.as_ref().unwrap());
+        }
+        assert!(TrustDecisionType::from_str("bogus").is_none());
+    }
+
+    #[test]
+    fn test_mask_type_roundtrip_all_variants() {
+        for v in MaskType::all() {
+            roundtrip(&v);
+        }
+    }
+
+    #[test]
+    fn test_mask_type_as_str_from_str_all() {
+        for v in MaskType::all() {
+            let s = v.as_str();
+            let back = MaskType::from_str(s);
+            assert!(back.is_some());
+            roundtrip(back.as_ref().unwrap());
+        }
+        assert_eq!(MaskType::all().len(), 5);
+    }
+
+    #[test]
+    fn test_security_policy_roundtrip() {
+        let p = SecurityPolicy {
+            id: "p1".to_string(),
+            name: "default".to_string(),
+            rate_limit_per_sec: 100,
+            max_query_depth: 10,
+            max_complexity: 1000,
+            require_auth: true,
+            allowed_operations: vec!["query".to_string()],
+            enabled: true,
+        };
+        roundtrip(&p);
+    }
+
+    #[test]
+    fn test_security_event_roundtrip() {
+        let e = SecurityEvent {
+            id: "e1".to_string(),
+            event_type: SecurityEventType::AuthFail,
+            client_ip: Some("127.0.0.1".to_string()),
+            query_hash: None,
+            timestamp: "2025-01-01T00:00:00Z".to_string(),
+            action: None,
+            details: Some(Value::Null),
+        };
+        roundtrip(&e);
+    }
+
+    #[test]
+    fn test_validation_result_roundtrip() {
+        let r = ValidationResult {
+            valid: true,
+            reason: None,
+            depth: Some(5),
+            complexity: Some(50),
+        };
+        roundtrip(&r);
+    }
+
+    #[test]
+    fn test_identity_context_roundtrip() {
+        let c = IdentityContext {
+            user_id: Some("u1".to_string()),
+            session_id: None,
+            device_id: None,
+            ip: Some("10.0.0.1".to_string()),
+            location: None,
+            mfa_completed: false,
+        };
+        roundtrip(&c);
+    }
+
+    #[test]
+    fn test_trust_decision_roundtrip() {
+        let d = TrustDecision {
+            id: "td1".to_string(),
+            identity: "user:u1".to_string(),
+            context: IdentityContext::default(),
+            risk_score: 0.1,
+            decision: TrustDecisionType::Allow,
+            reason: "ok".to_string(),
+            created_at: "2025-01-01T00:00:00Z".to_string(),
+        };
+        roundtrip(&d);
+    }
+
+    #[test]
+    fn test_identity_policy_roundtrip() {
+        let p = IdentityPolicy {
+            id: "ip1".to_string(),
+            name: "strict".to_string(),
+            description: None,
+            risk_threshold: 0.8,
+            require_mfa: true,
+            allowed_locations: vec!["US".to_string()],
+            allowed_devices: vec![],
+            enabled: true,
+        };
+        roundtrip(&p);
+    }
+
+    #[test]
+    fn test_session_trust_roundtrip() {
+        let st = SessionTrust {
+            session_id: "sess1".to_string(),
+            trust_score: 0.95,
+            decision: TrustDecisionType::Allow,
+            risk_factors: vec![],
+        };
+        roundtrip(&st);
+    }
+
+    #[test]
+    fn test_masking_rule_roundtrip() {
+        let r = MaskingRule {
+            id: "mr1".to_string(),
+            field_path: "user.password".to_string(),
+            mask_type: MaskType::Partial,
+            pattern: Some("***".to_string()),
+            applied_to: vec!["user".to_string()],
+            enabled: true,
+        };
+        roundtrip(&r);
+    }
+
+    #[test]
+    fn test_masked_field_roundtrip() {
+        let f = MaskedField {
+            original: "secret".to_string(),
+            masked: "******".to_string(),
+            rule_id: "mr1".to_string(),
+            applied_at: "2025-01-01T00:00:00Z".to_string(),
+        };
+        roundtrip(&f);
+    }
+}

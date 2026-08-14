@@ -211,3 +211,37 @@ impl LockContext {
         if let Some(_guard) = self.lock.take() {}
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::time::Duration;
+
+    #[test]
+    fn dist_lock_new_defaults() {
+        let lock = DistLock::new("redis://localhost:6379");
+        assert_eq!(lock.lock_prefix, "migration:lock:");
+        assert_eq!(lock.default_ttl, Duration::from_secs(300));
+    }
+
+    #[test]
+    fn dist_lock_with_prefix() {
+        let lock = DistLock::new("redis://x").with_prefix("custom:");
+        assert_eq!(lock.lock_prefix, "custom:");
+    }
+
+    #[test]
+    fn dist_lock_with_ttl() {
+        let lock = DistLock::new("redis://x").with_ttl(Duration::from_secs(60));
+        assert_eq!(lock.default_ttl, Duration::from_secs(60));
+    }
+
+    #[test]
+    fn dist_lock_builder_chain() {
+        let lock = DistLock::new("redis://chain")
+            .with_prefix("pfx:")
+            .with_ttl(Duration::from_secs(120));
+        assert_eq!(lock.lock_prefix, "pfx:");
+        assert_eq!(lock.default_ttl, Duration::from_secs(120));
+    }
+}

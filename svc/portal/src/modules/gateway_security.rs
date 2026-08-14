@@ -1650,3 +1650,228 @@ pub async fn simulate_access_handler(
         AccessControlV2::simulate_access(&req.actor_id, &req.resource, &req.action).await;
     Json(ApiResponse::success(decision, "访问模拟完成"))
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use serde::Serialize;
+
+    fn roundtrip<T: Serialize + for<'de> Deserialize<'de>>(item: &T) {
+        let json = serde_json::to_string(item).unwrap();
+        let v1: serde_json::Value = serde_json::from_str(&json).unwrap();
+        let back: T = serde_json::from_str(&json).unwrap();
+        let json2 = serde_json::to_string(&back).unwrap();
+        let v2: serde_json::Value = serde_json::from_str(&json2).unwrap();
+        assert_eq!(v1, v2);
+    }
+
+    // ==================== Enum roundtrip ====================
+
+    #[test]
+    fn authentication_type_roundtrip() {
+        for v in AuthenticationType::all() {
+            roundtrip(&v);
+        }
+    }
+
+    #[test]
+    fn incident_type_roundtrip() {
+        for v in IncidentType::all() {
+            roundtrip(&v);
+        }
+    }
+
+    #[test]
+    fn severity_roundtrip() {
+        for v in Severity::all() {
+            roundtrip(&v);
+        }
+    }
+
+    #[test]
+    fn actor_type_roundtrip() {
+        for v in &[ActorType::User, ActorType::Service, ActorType::System] {
+            roundtrip(v);
+        }
+    }
+
+    #[test]
+    fn access_effect_roundtrip() {
+        for v in &[AccessEffect::Allow, AccessEffect::Deny] {
+            roundtrip(v);
+        }
+    }
+
+    #[test]
+    fn access_decision_type_roundtrip() {
+        for v in &[
+            AccessDecisionType::Allow,
+            AccessDecisionType::Deny,
+            AccessDecisionType::Challenge,
+        ] {
+            roundtrip(v);
+        }
+    }
+
+    // ==================== Enum as_str/from_str ====================
+
+    #[test]
+    fn authentication_type_as_str_from_str() {
+        for v in AuthenticationType::all() {
+            assert_eq!(AuthenticationType::from_str(v.as_str()), Some(v.clone()));
+        }
+        assert_eq!(AuthenticationType::from_str("unknown"), None);
+    }
+
+    #[test]
+    fn incident_type_as_str_from_str() {
+        for v in IncidentType::all() {
+            assert_eq!(IncidentType::from_str(v.as_str()), Some(v.clone()));
+        }
+        assert_eq!(IncidentType::from_str("unknown"), None);
+    }
+
+    #[test]
+    fn severity_as_str_from_str() {
+        for v in Severity::all() {
+            assert_eq!(Severity::from_str(v.as_str()), Some(v.clone()));
+        }
+        assert_eq!(Severity::from_str("unknown"), None);
+    }
+
+    #[test]
+    fn actor_type_as_str_from_str() {
+        for v in &[ActorType::User, ActorType::Service, ActorType::System] {
+            assert_eq!(ActorType::from_str(v.as_str()), Some(v.clone()));
+        }
+        assert_eq!(ActorType::from_str("unknown"), None);
+    }
+
+    #[test]
+    fn access_effect_as_str_from_str() {
+        for v in &[AccessEffect::Allow, AccessEffect::Deny] {
+            assert_eq!(AccessEffect::from_str(v.as_str()), Some(v.clone()));
+        }
+        assert_eq!(AccessEffect::from_str("unknown"), None);
+    }
+
+    #[test]
+    fn access_decision_type_as_str_from_str() {
+        for v in &[
+            AccessDecisionType::Allow,
+            AccessDecisionType::Deny,
+            AccessDecisionType::Challenge,
+        ] {
+            assert_eq!(AccessDecisionType::from_str(v.as_str()), Some(v.clone()));
+        }
+        assert_eq!(AccessDecisionType::from_str("unknown"), None);
+    }
+
+    // ==================== Struct roundtrip ====================
+
+    #[test]
+    fn security_policy_v2_roundtrip() {
+        let p = SecurityPolicyV2::default();
+        roundtrip(&p);
+    }
+
+    #[test]
+    fn security_incident_roundtrip() {
+        let i = SecurityIncident::new(
+            IncidentType::UnauthorizedAccess,
+            Severity::High,
+            Some("192.168.1.1".into()),
+            Some("Mozilla".into()),
+            None,
+        );
+        roundtrip(&i);
+    }
+
+    #[test]
+    fn token_validation_result_roundtrip() {
+        let r = TokenValidationResult {
+            valid: true,
+            reason: None,
+            policy_id: Some("pol-1".into()),
+        };
+        roundtrip(&r);
+    }
+
+    #[test]
+    fn audit_entry_v2_roundtrip() {
+        let e = AuditEntryV2::new(
+            Some("user-1".into()),
+            ActorType::User,
+            "login".into(),
+            "auth".into(),
+            None,
+            None,
+            None,
+            Some("192.168.1.1".into()),
+            None,
+        );
+        roundtrip(&e);
+    }
+
+    #[test]
+    fn audit_filter_roundtrip() {
+        let f = AuditFilter::default();
+        roundtrip(&f);
+    }
+
+    #[test]
+    fn audit_summary_roundtrip() {
+        let s = AuditSummary {
+            total_entries: 100,
+            by_action: HashMap::from([("login".into(), 50usize)]),
+            by_resource_type: HashMap::from([("auth".into(), 50usize)]),
+            by_actor_type: HashMap::from([("user".into(), 80usize)]),
+            date_range: Some(("2025-01-01".into(), "2025-02-01".into())),
+        };
+        roundtrip(&s);
+    }
+
+    #[test]
+    fn audit_export_roundtrip() {
+        let e = AuditExport {
+            id: "exp-1".into(),
+            format: "json".into(),
+            filter: AuditFilter::default(),
+            created_by: Some("admin".into()),
+            created_at: "2025-01-01T00:00:00Z".into(),
+            expires_at: None,
+        };
+        roundtrip(&e);
+    }
+
+    #[test]
+    fn access_policy_roundtrip() {
+        let p = AccessPolicy::default();
+        roundtrip(&p);
+    }
+
+    #[test]
+    fn access_decision_roundtrip() {
+        let d = AccessDecision::new(
+            Some("req-1".into()),
+            "user-1".into(),
+            "/users/1".into(),
+            "GET".into(),
+            AccessDecisionType::Allow,
+            "matched policy".into(),
+            Some("pol-1".into()),
+        );
+        roundtrip(&d);
+    }
+
+    #[test]
+    fn user_permissions_roundtrip() {
+        let p = UserPermissions {
+            user_id: "user-1".into(),
+            roles: vec!["admin".into()],
+            allowed_actions: vec!["*".into()],
+            denied_actions: vec![],
+        };
+        roundtrip(&p);
+    }
+}

@@ -224,3 +224,43 @@ pub async fn rls_middleware(
 
     next.run(req).await
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn rt<T: Serialize + serde::de::DeserializeOwned>(val: &T) -> T {
+        let s = serde_json::to_string(val).unwrap();
+        serde_json::from_str(&s).unwrap()
+    }
+
+    #[test]
+    fn rls_config_default() {
+        let c = RlsConfig::default();
+        assert!(c.enabled);
+        assert!(c.default_tenant_id.is_none());
+        assert_eq!(c.schema_name, "public");
+    }
+
+    #[test]
+    fn rls_config_roundtrip() {
+        let c = RlsConfig {
+            enabled: false,
+            default_tenant_id: Some("tenant-001".into()),
+            schema_name: "app_schema".into(),
+        };
+        let back = rt(&c);
+        assert!(!back.enabled);
+        assert_eq!(back.default_tenant_id.as_deref(), Some("tenant-001"));
+        assert_eq!(back.schema_name, "app_schema");
+    }
+
+    #[test]
+    fn rls_config_json_roundtrip_default() {
+        let c = RlsConfig::default();
+        let json = serde_json::to_string(&c).unwrap();
+        let back: RlsConfig = serde_json::from_str(&json).unwrap();
+        assert_eq!(back.enabled, c.enabled);
+        assert_eq!(back.schema_name, c.schema_name);
+    }
+}

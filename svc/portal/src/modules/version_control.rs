@@ -1375,3 +1375,278 @@ impl Default for CanaryCondition {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn roundtrip<T: serde::Serialize + for<'d> serde::Deserialize<'d>>(value: &T) -> bool {
+        let json = serde_json::to_value(value).unwrap();
+        let back: T = serde_json::from_value(json.clone()).unwrap();
+        let json2 = serde_json::to_value(&back).unwrap();
+        json == json2
+    }
+
+    // ---- APIVersionStatus ----
+
+    fn api_version_status_all() -> Vec<APIVersionStatus> {
+        vec![
+            APIVersionStatus::Active,
+            APIVersionStatus::Deprecated,
+            APIVersionStatus::Sunset,
+            APIVersionStatus::Preview,
+        ]
+    }
+
+    #[test]
+    fn api_version_status_roundtrip_all() {
+        for v in api_version_status_all() {
+            assert!(roundtrip(&v), "roundtrip failed for {:?}", v);
+        }
+    }
+
+    #[test]
+    fn api_version_status_as_str_from_str() {
+        for v in api_version_status_all() {
+            let s = v.as_str();
+            let parsed = APIVersionStatus::from_str(s);
+            assert_eq!(parsed.as_str(), s, "from_str roundtrip for {}", s);
+        }
+        assert_eq!(APIVersionStatus::from_str("__unknown__"), APIVersionStatus::Active);
+    }
+
+    // ---- CompatibilityLevel ----
+
+    fn compatibility_level_all() -> Vec<CompatibilityLevel> {
+        vec![
+            CompatibilityLevel::Full,
+            CompatibilityLevel::Partial,
+            CompatibilityLevel::None,
+        ]
+    }
+
+    #[test]
+    fn compatibility_level_roundtrip_all() {
+        for v in compatibility_level_all() {
+            assert!(roundtrip(&v), "roundtrip failed for {:?}", v);
+        }
+    }
+
+    #[test]
+    fn compatibility_level_as_str_from_str() {
+        for v in compatibility_level_all() {
+            let s = v.as_str();
+            let parsed = CompatibilityLevel::from_str(s);
+            assert_eq!(parsed.as_str(), s, "from_str roundtrip for {}", s);
+        }
+        assert_eq!(CompatibilityLevel::from_str("__unknown__"), CompatibilityLevel::None);
+    }
+
+    // ---- CanaryStatus ----
+
+    fn canary_status_all() -> Vec<CanaryStatus> {
+        vec![
+            CanaryStatus::Draft,
+            CanaryStatus::Running,
+            CanaryStatus::Paused,
+            CanaryStatus::Completed,
+            CanaryStatus::RolledBack,
+        ]
+    }
+
+    #[test]
+    fn canary_status_roundtrip_all() {
+        for v in canary_status_all() {
+            assert!(roundtrip(&v), "roundtrip failed for {:?}", v);
+        }
+    }
+
+    #[test]
+    fn canary_status_as_str_from_str() {
+        for v in canary_status_all() {
+            let s = v.as_str();
+            let parsed = CanaryStatus::from_str(s);
+            assert_eq!(parsed.as_str(), s, "from_str roundtrip for {}", s);
+        }
+        assert_eq!(CanaryStatus::from_str("__unknown__"), CanaryStatus::Draft);
+    }
+
+    // ---- BreakingChangeType (has all()) ----
+
+    #[test]
+    fn breaking_change_type_roundtrip_all() {
+        for v in BreakingChangeType::all() {
+            assert!(roundtrip(&v), "roundtrip failed for {:?}", v);
+        }
+    }
+
+    #[test]
+    fn breaking_change_type_as_str_from_str() {
+        for v in BreakingChangeType::all() {
+            let s = v.as_str();
+            let parsed = BreakingChangeType::from_str(s);
+            assert_eq!(parsed.as_str(), s, "from_str roundtrip for {}", s);
+        }
+        assert_eq!(BreakingChangeType::from_str("__unknown__"), BreakingChangeType::NullableChanged);
+    }
+
+    // ---- CanaryWinner ----
+
+    fn canary_winner_all() -> Vec<CanaryWinner> {
+        vec![
+            CanaryWinner::Canary,
+            CanaryWinner::Baseline,
+            CanaryWinner::Inconclusive,
+        ]
+    }
+
+    #[test]
+    fn canary_winner_roundtrip_all() {
+        for v in canary_winner_all() {
+            assert!(roundtrip(&v), "roundtrip failed for {:?}", v);
+        }
+    }
+
+    #[test]
+    fn canary_winner_as_str_from_str() {
+        for v in canary_winner_all() {
+            let s = v.as_str();
+            let parsed = CanaryWinner::from_str(s);
+            assert_eq!(parsed.as_str(), s, "from_str roundtrip for {}", s);
+        }
+        assert_eq!(CanaryWinner::from_str("__unknown__"), CanaryWinner::Inconclusive);
+    }
+
+    // ---- struct roundtrip ----
+
+    #[test]
+    fn struct_roundtrip_breaking_change() {
+        let v = BreakingChange {
+            change_type: BreakingChangeType::FieldRemoved,
+            entity: "User".into(),
+            field: Some("phone".into()),
+            description: "phone removed".into(),
+            mitigation: None,
+        };
+        assert!(roundtrip(&v));
+    }
+
+    #[test]
+    fn struct_roundtrip_api_version() {
+        let v = APIVersion {
+            version: "v1".into(),
+            status: APIVersionStatus::Active,
+            released_at: "2025-01-01".into(),
+            deprecated_at: None,
+            sunset_at: None,
+            changelog: Some("init".into()),
+            breaking_changes: vec![],
+        };
+        assert!(roundtrip(&v));
+    }
+
+    #[test]
+    fn struct_roundtrip_version_mapping() {
+        let v = VersionMapping {
+            id: "1".into(),
+            client_version: "v1".into(),
+            server_version: "v1".into(),
+            compatibility: CompatibilityLevel::Full,
+            notes: None,
+        };
+        assert!(roundtrip(&v));
+    }
+
+    #[test]
+    fn struct_roundtrip_changelog_entry() {
+        let v = ChangelogEntry {
+            version: "v1".into(),
+            changes: vec!["add api".into()],
+            breaking: vec![],
+        };
+        assert!(roundtrip(&v));
+    }
+
+    #[test]
+    fn struct_roundtrip_canary_condition() {
+        let v = CanaryCondition::default();
+        assert!(roundtrip(&v));
+    }
+
+    #[test]
+    fn struct_roundtrip_canary_config() {
+        let v = CanaryConfig {
+            id: "c1".into(),
+            version: "v2".into(),
+            percentage: 10,
+            conditions: CanaryCondition::default(),
+            start_time: None,
+            end_time: None,
+            status: CanaryStatus::Draft,
+        };
+        assert!(roundtrip(&v));
+    }
+
+    #[test]
+    fn struct_roundtrip_canary_result() {
+        let v = CanaryResult {
+            id: "r1".into(),
+            config_id: "c1".into(),
+            total_requests: 1000,
+            canary_requests: 100,
+            baseline_requests: 900,
+            error_rate_canary: 0.01,
+            error_rate_baseline: 0.02,
+            winner: Some(CanaryWinner::Canary),
+            recorded_at: "2025-01-01T00:00:00Z".into(),
+        };
+        assert!(roundtrip(&v));
+    }
+
+    #[test]
+    fn struct_roundtrip_compatibility_report() {
+        let v = CompatibilityReport {
+            id: "rep1".into(),
+            from_version: "v1".into(),
+            to_version: "v2".into(),
+            breaking_changes: vec![],
+            deprecated_fields: vec![],
+            compatible: true,
+            migration_path: Some(vec!["step1".into()]),
+            created_at: "2025-01-01T00:00:00Z".into(),
+        };
+        assert!(roundtrip(&v));
+    }
+
+    #[test]
+    fn struct_roundtrip_compatibility_policy() {
+        let v = CompatibilityPolicy {
+            id: "pol1".into(),
+            name: "strict".into(),
+            min_compatibility_level: CompatibilityLevel::Partial,
+            require_migration_path: true,
+            enabled: true,
+        };
+        assert!(roundtrip(&v));
+    }
+
+    #[test]
+    fn struct_roundtrip_compatibility_status() {
+        let v = CompatibilityStatus {
+            client_version: "v1".into(),
+            server_version: "v2".into(),
+            compatible: true,
+            compatibility_level: CompatibilityLevel::Full,
+            breaking_changes_count: 0,
+            migration_available: false,
+        };
+        assert!(roundtrip(&v));
+    }
+
+    #[test]
+    fn compatibility_level_helper_count() {
+        assert_eq!(CompatibilityLevel::Full.breaking_changes_count(), 0);
+        assert_eq!(CompatibilityLevel::Partial.breaking_changes_count(), 1);
+        assert_eq!(CompatibilityLevel::None.breaking_changes_count(), 10);
+    }
+}
