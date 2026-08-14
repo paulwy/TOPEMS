@@ -1,1 +1,16 @@
-{}
+{
+  "title": "Performance Monitor",
+  "overview": "Overview",
+  "metrics": "Metrics",
+  "alerts": "Alerts",
+  "reports": "Reports",
+  "dashboard": "Dashboard",
+  "response_time": "Response Time",
+  "throughput": "Throughput",
+  "error_rate": "Error Rate",
+  "cpu": "CPU",
+  "memory": "Memory",
+  "disk": "Disk",
+  "network": "Network",
+  "uptime": "Uptime"
+}

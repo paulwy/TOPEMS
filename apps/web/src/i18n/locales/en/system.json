@@ -1,1 +1,19 @@
-{}
+{
+  "title": "System Management",
+  "user_management": "User Management",
+  "role_management": "Role Management",
+  "permission_management": "Permission Management",
+  "system_settings": "System Settings",
+  "audit_log": "Audit Log",
+  "user": "User",
+  "role": "Role",
+  "permission": "Permission",
+  "admin": "Admin",
+  "settings": "Settings",
+  "logs": "Logs",
+  "add_user": "Add User",
+  "add_role": "Add Role",
+  "total_users": "Total Users",
+  "total_roles": "Total Roles",
+  "online_users": "Online Users"
+}

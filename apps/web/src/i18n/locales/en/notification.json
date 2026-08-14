@@ -1,1 +1,16 @@
-{}
+{
+  "title": "Notification Center",
+  "all": "All",
+  "unread": "Unread",
+  "read": "Read",
+  "mark_read": "Mark as Read",
+  "mark_all_read": "Mark All as Read",
+  "delete": "Delete",
+  "clear": "Clear",
+  "settings": "Settings",
+  "channels": "Channels",
+  "email": "Email",
+  "sms": "SMS",
+  "push": "Push",
+  "in_app": "In-App"
+}

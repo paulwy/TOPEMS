@@ -1,1 +1,22 @@
-{}
+{
+  "title": "Product Data Management",
+  "product_management": "Product Management",
+  "recipe_management": "Recipe Management",
+  "process_management": "Process Management",
+  "batch_management": "Batch Management",
+  "product": "Product",
+  "recipe": "Recipe",
+  "process": "Process",
+  "batch": "Batch",
+  "version": "Version",
+  "status_draft": "Draft",
+  "status_active": "Active",
+  "status_retired": "Retired",
+  "total_products": "Total Products",
+  "total_recipes": "Total Recipes",
+  "active_recipes": "Active Recipes",
+  "recent_batches": "Recent Batches",
+  "add_product": "Add Product",
+  "add_recipe": "Add Recipe",
+  "create_batch": "Create Batch"
+}

@@ -1,1 +1,16 @@
-{}
+{
+  "title": "Low-Code Builder",
+  "components": "Components",
+  "pages": "Pages",
+  "properties": "Properties",
+  "events": "Events",
+  "datasource": "Data Source",
+  "preview": "Preview",
+  "publish": "Publish",
+  "save": "Save",
+  "undo": "Undo",
+  "redo": "Redo",
+  "layout": "Layout",
+  "responsive": "Responsive",
+  "code_export": "Code Export"
+}
