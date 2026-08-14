@@ -1036,3 +1036,205 @@ pub fn create_routes() -> Router<AppState> {
             axum::routing::post(export_report_handler),
         )
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use serde::{Serialize, Deserialize};
+    fn roundtrip<T: Serialize + for<'de> Deserialize<'de>>(item: &T) {
+        let json = serde_json::to_string(item).unwrap();
+        let v1: serde_json::Value = serde_json::from_str(&json).unwrap();
+        let back: T = serde_json::from_str(&json).unwrap();
+        let json2 = serde_json::to_string(&back).unwrap();
+        let v2: serde_json::Value = serde_json::from_str(&json2).unwrap();
+        assert_eq!(v1, v2);
+    }
+
+    #[test]
+    fn rq_balance_sheet_item() {
+        roundtrip(&BalanceSheetItem {
+            account_code: "c".to_string(),
+            account_name: "n".to_string(),
+            amount: Decimal::from(0),
+            percentage: Decimal::from(0),
+            period_amount: Decimal::from(0),
+            year_amount: Decimal::from(0),
+        });
+    }
+
+    #[test]
+    fn rq_balance_sheet_enhanced() {
+        roundtrip(&BalanceSheetEnhanced {
+            period: "p".to_string(),
+            current_assets: vec![],
+            non_current_assets: vec![],
+            current_liabilities: vec![],
+            non_current_liabilities: vec![],
+            equity: vec![],
+            total_current_assets: Decimal::from(0),
+            total_non_current_assets: Decimal::from(0),
+            total_assets: Decimal::from(0),
+            total_current_liabilities: Decimal::from(0),
+            total_non_current_liabilities: Decimal::from(0),
+            total_liabilities: Decimal::from(0),
+            total_equity: Decimal::from(0),
+            last_year_total_assets: Decimal::from(0),
+            last_year_total_liabilities: Decimal::from(0),
+            last_year_total_equity: Decimal::from(0),
+            assets_yoy_growth: Decimal::from(0),
+            liabilities_yoy_growth: Decimal::from(0),
+            equity_yoy_growth: Decimal::from(0),
+        });
+    }
+
+    #[test]
+    fn rq_income_statement_item() {
+        roundtrip(&IncomeStatementItem {
+            project_code: "c".to_string(),
+            project_name: "n".to_string(),
+            current_amount: Decimal::from(0),
+            previous_amount: Decimal::from(0),
+            year_cumulative: Decimal::from(0),
+            yoy_change: Decimal::from(0),
+        });
+    }
+
+    #[test]
+    fn rq_period_trend() {
+        roundtrip(&PeriodTrend {
+            period: "p".to_string(),
+            revenue: Decimal::from(0),
+            net_profit: Decimal::from(0),
+            gross_margin: Decimal::from(0),
+        });
+    }
+
+    #[test]
+    fn rq_income_statement_enhanced() {
+        roundtrip(&IncomeStatementEnhanced {
+            period: "p".to_string(),
+            items: vec![],
+            operating_revenue: Decimal::from(0),
+            operating_cost: Decimal::from(0),
+            period_expenses: Decimal::from(0),
+            total_profit: Decimal::from(0),
+            net_profit: Decimal::from(0),
+            eps: Decimal::from(0),
+            gross_margin: Decimal::from(0),
+            net_margin: Decimal::from(0),
+            expense_ratio: Decimal::from(0),
+            trend: vec![],
+        });
+    }
+
+    #[test]
+    fn rq_cash_flow_item() {
+        roundtrip(&CashFlowItem {
+            item_code: "c".to_string(),
+            item_name: "n".to_string(),
+            amount: Decimal::from(0),
+        });
+    }
+
+    #[test]
+    fn rq_cash_flow_ratios() {
+        roundtrip(&CashFlowRatios {
+            operating_cash_to_revenue: Decimal::from(0),
+            operating_cash_to_net_profit: Decimal::from(0),
+            cash_flow_adequacy: Decimal::from(0),
+            free_cash_flow: Decimal::from(0),
+        });
+    }
+
+    #[test]
+    fn rq_cash_flow_statement_enhanced() {
+        roundtrip(&CashFlowStatementEnhanced {
+            period: "p".to_string(),
+            operating_activities: vec![],
+            investing_activities: vec![],
+            financing_activities: vec![],
+            net_operating: Decimal::from(0),
+            net_investing: Decimal::from(0),
+            net_financing: Decimal::from(0),
+            net_change: Decimal::from(0),
+            opening_balance: Decimal::from(0),
+            closing_balance: Decimal::from(0),
+            indirect_adjustments: vec![],
+            ratios: CashFlowRatios {
+                operating_cash_to_revenue: Decimal::from(0),
+                operating_cash_to_net_profit: Decimal::from(0),
+                cash_flow_adequacy: Decimal::from(0),
+                free_cash_flow: Decimal::from(0),
+            },
+        });
+    }
+
+    #[test]
+    fn rq_financial_ratios() {
+        roundtrip(&FinancialRatios {
+            current_ratio: Decimal::from(0),
+            quick_ratio: Decimal::from(0),
+            debt_to_asset_ratio: Decimal::from(0),
+            accounts_receivable_turnover: Decimal::from(0),
+            inventory_turnover: Decimal::from(0),
+            total_asset_turnover: Decimal::from(0),
+            gross_margin: Decimal::from(0),
+            net_margin: Decimal::from(0),
+            roe: Decimal::from(0),
+            roa: Decimal::from(0),
+            revenue_growth_rate: Decimal::from(0),
+            net_profit_growth_rate: Decimal::from(0),
+            total_asset_growth_rate: Decimal::from(0),
+        });
+    }
+
+    #[test]
+    fn rq_financial_analysis_report() {
+        roundtrip(&FinancialAnalysisReport {
+            period: "p".to_string(),
+            ratios: FinancialRatios {
+                current_ratio: Decimal::from(0),
+                quick_ratio: Decimal::from(0),
+                debt_to_asset_ratio: Decimal::from(0),
+                accounts_receivable_turnover: Decimal::from(0),
+                inventory_turnover: Decimal::from(0),
+                total_asset_turnover: Decimal::from(0),
+                gross_margin: Decimal::from(0),
+                net_margin: Decimal::from(0),
+                roe: Decimal::from(0),
+                roa: Decimal::from(0),
+                revenue_growth_rate: Decimal::from(0),
+                net_profit_growth_rate: Decimal::from(0),
+                total_asset_growth_rate: Decimal::from(0),
+            },
+            grade: "g".to_string(),
+            score: Decimal::from(0),
+            suggestions: vec![],
+            warnings: vec![],
+            trend_judgment: "t".to_string(),
+        });
+    }
+
+    #[test]
+    fn rq_period_summary() {
+        roundtrip(&PeriodSummary {
+            period: "p".to_string(),
+            total_assets: Decimal::from(0),
+            total_liabilities: Decimal::from(0),
+            total_equity: Decimal::from(0),
+            revenue: Decimal::from(0),
+            net_profit: Decimal::from(0),
+            net_operating_cash_flow: Decimal::from(0),
+        });
+    }
+
+    #[test]
+    fn rq_comparative_report() {
+        roundtrip(&ComparativeReport {
+            periods: vec![],
+            balance_sheet_summary: vec![],
+            income_statement_summary: vec![],
+            cash_flow_summary: vec![],
+        });
+    }
+}

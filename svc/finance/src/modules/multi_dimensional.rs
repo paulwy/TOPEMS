@@ -1208,3 +1208,245 @@ pub fn create_routes() -> Router<AppState> {
             axum::routing::get(get_project_summary_handler),
         )
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use serde::{Serialize, Deserialize};
+    fn roundtrip<T: Serialize + for<'de> Deserialize<'de>>(item: &T) {
+        let json = serde_json::to_string(item).unwrap();
+        let v1: serde_json::Value = serde_json::from_str(&json).unwrap();
+        let back: T = serde_json::from_str(&json).unwrap();
+        let json2 = serde_json::to_string(&back).unwrap();
+        let v2: serde_json::Value = serde_json::from_str(&json2).unwrap();
+        assert_eq!(v1, v2);
+    }
+
+    #[test]
+    fn rq_cost_center_type() {
+        roundtrip(&CostCenterType::Department);
+    }
+
+    #[test]
+    fn rq_cost_behavior() {
+        roundtrip(&CostBehavior::Fixed);
+    }
+
+    #[test]
+    fn rq_cost_center_item() {
+        roundtrip(&CostCenterItem {
+            cost_center_id: Uuid::new_v4(),
+            cost_center_code: "c".to_string(),
+            cost_center_name: "n".to_string(),
+            center_type: CostCenterType::Department,
+            department: None,
+            total_cost: Decimal::from(0),
+            budget_cost: Decimal::from(0),
+            variance: Decimal::from(0),
+            variance_percentage: Decimal::from(0),
+            cost_behavior: CostBehavior::Fixed,
+            headcount: 0,
+            cost_per_head: Decimal::from(0),
+        });
+    }
+
+    #[test]
+    fn rq_cost_category_summary() {
+        roundtrip(&CostCategorySummary {
+            category: "c".to_string(),
+            total_amount: Decimal::from(0),
+            proportion: Decimal::from(0),
+            center_count: 0,
+        });
+    }
+
+    #[test]
+    fn rq_cost_trend_point() {
+        roundtrip(&CostTrendPoint {
+            period: "p".to_string(),
+            total_cost: Decimal::from(0),
+            budget_cost: Decimal::from(0),
+            variance: Decimal::from(0),
+            change_percentage: Decimal::from(0),
+        });
+    }
+
+    #[test]
+    fn rq_cost_efficiency() {
+        roundtrip(&CostEfficiency {
+            cost_center_id: Uuid::new_v4(),
+            cost_center_name: "n".to_string(),
+            output_value: Decimal::from(0),
+            total_cost: Decimal::from(0),
+            efficiency_ratio: Decimal::from(0),
+            cost_per_unit: Decimal::from(0),
+            benchmark: Decimal::from(0),
+            ranking: 0,
+        });
+    }
+
+    #[test]
+    fn rq_cost_center_report() {
+        roundtrip(&CostCenterReport {
+            report_id: Uuid::new_v4(),
+            period: "p".to_string(),
+            total_cost: Decimal::from(0),
+            total_budget: Decimal::from(0),
+            total_variance: Decimal::from(0),
+            variance_percentage: Decimal::from(0),
+            center_count: 0,
+            items: vec![],
+            category_summary: vec![],
+        });
+    }
+
+    #[test]
+    fn rq_profit_center_type() {
+        roundtrip(&ProfitCenterType::ProductLine);
+    }
+
+    #[test]
+    fn rq_profit_center_item() {
+        roundtrip(&ProfitCenterItem {
+            profit_center_id: Uuid::new_v4(),
+            profit_center_code: "c".to_string(),
+            profit_center_name: "n".to_string(),
+            center_type: ProfitCenterType::ProductLine,
+            revenue: Decimal::from(0),
+            cost: Decimal::from(0),
+            gross_profit: Decimal::from(0),
+            gross_margin: Decimal::from(0),
+            operating_profit: Decimal::from(0),
+            net_profit: Decimal::from(0),
+            roi: Decimal::from(0),
+            revenue_growth: Decimal::from(0),
+            profit_growth: Decimal::from(0),
+        });
+    }
+
+    #[test]
+    fn rq_profit_center_ranking() {
+        roundtrip(&ProfitCenterRanking {
+            rank: 0,
+            profit_center_id: Uuid::new_v4(),
+            profit_center_name: "n".to_string(),
+            total_score: Decimal::from(0),
+            revenue_score: Decimal::from(0),
+            margin_score: Decimal::from(0),
+            growth_score: Decimal::from(0),
+            roi_score: Decimal::from(0),
+        });
+    }
+
+    #[test]
+    fn rq_profit_trend_point() {
+        roundtrip(&ProfitTrendPoint {
+            period: "p".to_string(),
+            revenue: Decimal::from(0),
+            cost: Decimal::from(0),
+            gross_profit: Decimal::from(0),
+            gross_margin: Decimal::from(0),
+        });
+    }
+
+    #[test]
+    fn rq_profit_center_report() {
+        roundtrip(&ProfitCenterReport {
+            report_id: Uuid::new_v4(),
+            period: "p".to_string(),
+            total_revenue: Decimal::from(0),
+            total_cost: Decimal::from(0),
+            total_gross_profit: Decimal::from(0),
+            overall_gross_margin: Decimal::from(0),
+            total_operating_profit: Decimal::from(0),
+            total_net_profit: Decimal::from(0),
+            center_count: 0,
+            items: vec![],
+        });
+    }
+
+    #[test]
+    fn rq_project_status() {
+        roundtrip(&ProjectStatus::Planning);
+    }
+
+    #[test]
+    fn rq_project_account_item() {
+        roundtrip(&ProjectAccountItem {
+            project_id: Uuid::new_v4(),
+            project_code: "c".to_string(),
+            project_name: "n".to_string(),
+            status: ProjectStatus::Planning,
+            budget_amount: Decimal::from(0),
+            actual_cost: Decimal::from(0),
+            committed_cost: Decimal::from(0),
+            remaining_budget: Decimal::from(0),
+            completion_percentage: Decimal::from(0),
+            cost_variance: Decimal::from(0),
+            cost_variance_percentage: Decimal::from(0),
+            schedule_variance: Decimal::from(0),
+            earned_value: Decimal::from(0),
+        });
+    }
+
+    #[test]
+    fn rq_project_progress() {
+        roundtrip(&ProjectProgress {
+            project_id: Uuid::new_v4(),
+            project_name: "n".to_string(),
+            planned_value: Decimal::from(0),
+            earned_value: Decimal::from(0),
+            actual_cost: Decimal::from(0),
+            cv: Decimal::from(0),
+            sv: Decimal::from(0),
+            cpi: Decimal::from(0),
+            spi: Decimal::from(0),
+            status: "s".to_string(),
+        });
+    }
+
+    #[test]
+    fn rq_project_profitability() {
+        roundtrip(&ProjectProfitability {
+            project_id: Uuid::new_v4(),
+            project_name: "n".to_string(),
+            contract_amount: Decimal::from(0),
+            total_cost: Decimal::from(0),
+            gross_profit: Decimal::from(0),
+            gross_margin: Decimal::from(0),
+            roi: Decimal::from(0),
+            payback_months: Decimal::from(0),
+            profit_per_month: Decimal::from(0),
+        });
+    }
+
+    #[test]
+    fn rq_project_account_report() {
+        roundtrip(&ProjectAccountReport {
+            report_id: Uuid::new_v4(),
+            period: "p".to_string(),
+            project_count: 0,
+            active_count: 0,
+            total_budget: Decimal::from(0),
+            total_actual_cost: Decimal::from(0),
+            total_committed_cost: Decimal::from(0),
+            total_remaining: Decimal::from(0),
+            total_variance: Decimal::from(0),
+            items: vec![],
+        });
+    }
+
+    #[test]
+    fn rq_project_summary() {
+        roundtrip(&ProjectSummary {
+            total_projects: 0,
+            by_status: std::collections::HashMap::new(),
+            total_budget: Decimal::from(0),
+            total_actual: Decimal::from(0),
+            total_committed: Decimal::from(0),
+            avg_completion: Decimal::from(0),
+            on_schedule_count: 0,
+            over_budget_count: 0,
+        });
+    }
+}

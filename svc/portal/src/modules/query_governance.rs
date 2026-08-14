@@ -1755,3 +1755,1099 @@ impl QueryGovernanceMutationRoot {
         Ok(set_field_access_control(input))
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use serde::Serialize;
+    use serde_json::Value;
+
+    fn roundtrip<T: Serialize + for<'de> Deserialize<'de>>(item: &T) {
+        let json = serde_json::to_string(item).unwrap();
+        let v1: Value = serde_json::from_str(&json).unwrap();
+        let back: T = serde_json::from_str(&json).unwrap();
+        let json2 = serde_json::to_string(&back).unwrap();
+        let v2: Value = serde_json::from_str(&json2).unwrap();
+        assert_eq!(v1, v2);
+    }
+
+    fn make_input(text: &str) -> PersistedQueryInput {
+        PersistedQueryInput {
+            query_text: text.to_string(),
+            operation_name: None,
+            created_by: "tester".to_string(),
+            tags: None,
+            status: None,
+        }
+    }
+
+    fn make_audit_entry(
+        audit_id: &str,
+        event_type: AuditEventType,
+        user_id: &str,
+        risk_level: QueryRisk,
+    ) -> QueryAuditEntryGql {
+        QueryAuditEntryGql {
+            audit_id: audit_id.to_string(),
+            event_type,
+            query_hash: Some("abc123".to_string()),
+            query_text: None,
+            operation_name: None,
+            user_id: user_id.to_string(),
+            team_id: None,
+            org_id: None,
+            client_ip: "127.0.0.1".to_string(),
+            user_agent: None,
+            timestamp: Utc::now().to_rfc3339(),
+            latency_ms: 100,
+            complexity: 10,
+            depth: 3,
+            result_count: 1,
+            error_message: None,
+            risk_level,
+            tags: Vec::new(),
+        }
+    }
+
+    // ==================== PersistedQueryManager 测试 ====================
+
+    #[test]
+    fn test_pqm_register_basic() {
+        let mut mgr = PersistedQueryManager::new();
+        let gql = mgr.register(make_input("{ user { id } }"));
+        assert_eq!(gql.created_by, "tester");
+        assert_eq!(gql.version, 1);
+        assert_eq!(gql.status, QueryStatus::Active);
+        assert!(!gql.query_hash.is_empty());
+        assert_eq!(gql.usage_count, 0);
+        assert_eq!(gql.tags, Vec::<String>::new());
+    }
+
+    #[test]
+    fn test_pqm_register_with_tags_and_status() {
+        let mut mgr = PersistedQueryManager::new();
+        let mut input = make_input("{ user { id } }");
+        input.tags = Some(vec!["api".to_string(), "v2".to_string()]);
+        input.status = Some(QueryStatus::Deprecated);
+        input.operation_name = Some("GetUser".to_string());
+        let gql = mgr.register(input);
+        assert_eq!(gql.status, QueryStatus::Deprecated);
+        assert_eq!(gql.tags, vec!["api", "v2"]);
+        assert_eq!(gql.operation_name.as_deref(), Some("GetUser"));
+    }
+
+    #[test]
+    fn test_pqm_register_and_get() {
+        let mut mgr = PersistedQueryManager::new();
+        let registered = mgr.register(make_input("{ user { id name } }"));
+        let got = mgr.get(&registered.query_hash).unwrap();
+        assert_eq!(got.query_hash, registered.query_hash);
+        assert_eq!(got.query_text, registered.query_text);
+    }
+
+    #[test]
+    fn test_pqm_get_not_found() {
+        let mgr = PersistedQueryManager::new();
+        assert!(mgr.get("nonexistent").is_none());
+    }
+
+    #[test]
+    fn test_pqm_get_by_hash() {
+        let mut mgr = PersistedQueryManager::new();
+        let gql = mgr.register(make_input("{ user { id } }"));
+        let text = mgr.get_by_hash(&gql.query_hash).unwrap();
+        assert_eq!(text, "{ user { id } }");
+        assert!(mgr.get_by_hash("ghost").is_none());
+    }
+
+    #[test]
+    fn test_pqm_update_status() {
+        let mut mgr = PersistedQueryManager::new();
+        let gql = mgr.register(make_input("{ user { id } }"));
+        let updated = mgr.update_status(&gql.query_hash, QueryStatus::Archived).unwrap();
+        assert_eq!(updated.status, QueryStatus::Archived);
+        let got = mgr.get(&gql.query_hash).unwrap();
+        assert_eq!(got.status, QueryStatus::Archived);
+    }
+
+    #[test]
+    fn test_pqm_update_status_not_found() {
+        let mut mgr = PersistedQueryManager::new();
+        assert!(mgr.update_status("missing", QueryStatus::Active).is_none());
+    }
+
+    #[test]
+    fn test_pqm_record_usage_then_avg_latency() {
+        let mut mgr = PersistedQueryManager::new();
+        let gql = mgr.register(make_input("{ user { id } }"));
+        mgr.record_usage(&gql.query_hash, 100);
+        mgr.record_usage(&gql.query_hash, 200);
+        let got = mgr.get(&gql.query_hash).unwrap();
+        assert_eq!(got.usage_count, 2);
+        assert!((got.avg_latency_ms - 150.0).abs() < 0.01);
+    }
+
+    #[test]
+    fn test_pqm_list_pagination() {
+        let mut mgr = PersistedQueryManager::new();
+        for i in 0..5 {
+            let text = format!("{{ field{} {{ id }} }}", i);
+            mgr.register(make_input(&text));
+        }
+        let page1 = mgr.list(1, 2, None);
+        assert_eq!(page1.total_count, 5);
+        assert_eq!(page1.queries.len(), 2);
+        let page3 = mgr.list(3, 2, None);
+        assert_eq!(page3.queries.len(), 1);
+        let page_empty = mgr.list(100, 10, None);
+        assert!(page_empty.queries.is_empty());
+    }
+
+    #[test]
+    fn test_pqm_list_filter_by_status() {
+        let mut mgr = PersistedQueryManager::new();
+        mgr.register(make_input("{ a { id } }"));
+        let mut input = make_input("{ b { id } }");
+        input.status = Some(QueryStatus::Deprecated);
+        mgr.register(input);
+
+        let all = mgr.list(1, 20, None);
+        assert_eq!(all.queries.len(), 2);
+
+        let active = mgr.list(1, 20, Some(QueryStatus::Active));
+        assert_eq!(active.queries.len(), 1);
+        assert_eq!(active.queries[0].status, QueryStatus::Active);
+
+        let deprecated = mgr.list(1, 20, Some(QueryStatus::Deprecated));
+        assert_eq!(deprecated.queries.len(), 1);
+
+        let archived = mgr.list(1, 20, Some(QueryStatus::Archived));
+        assert!(archived.queries.is_empty());
+    }
+
+    #[test]
+    fn test_pqm_delete() {
+        let mut mgr = PersistedQueryManager::new();
+        let gql = mgr.register(make_input("{ user { id } }"));
+        assert!(mgr.delete(&gql.query_hash));
+        assert!(mgr.get(&gql.query_hash).is_none());
+        assert!(!mgr.delete("nonexistent"));
+    }
+
+    #[test]
+    fn test_pqm_estimate_complexity() {
+        let empty = PersistedQueryManager::estimate_complexity("");
+        assert!(empty >= 1);
+
+        let simple = PersistedQueryManager::estimate_complexity("{ user { id } }");
+        assert!(simple > 0);
+
+        let complex = PersistedQueryManager::estimate_complexity(
+            "{ a { b { c { d { e { f } } } } } }",
+        );
+        assert!(complex >= simple);
+    }
+
+    #[test]
+    fn test_pqm_add_remove_search_tag() {
+        let mut mgr = PersistedQueryManager::new();
+        let gql = mgr.register(make_input("{ user { id } }"));
+
+        let updated = mgr.add_tag(&gql.query_hash, "important").unwrap();
+        assert!(updated.tags.contains(&"important".to_string()));
+
+        let found = mgr.search_by_tag("important");
+        assert_eq!(found.len(), 1);
+        assert_eq!(found[0].query_hash, gql.query_hash);
+
+        let after = mgr.remove_tag(&gql.query_hash, "important").unwrap();
+        assert!(!after.tags.contains(&"important".to_string()));
+        assert!(mgr.search_by_tag("important").is_empty());
+    }
+
+    #[test]
+    fn test_pqm_add_tag_nonexistent() {
+        let mut mgr = PersistedQueryManager::new();
+        assert!(mgr.add_tag("ghost", "x").is_none());
+        assert!(mgr.remove_tag("ghost", "x").is_none());
+    }
+
+    #[test]
+    fn test_pqm_calculate_hash_deterministic() {
+        let h1 = PersistedQueryEntry::calculate_hash("{ user { id } }");
+        let h2 = PersistedQueryEntry::calculate_hash("{ user { id } }");
+        assert_eq!(h1, h2);
+        let h3 = PersistedQueryEntry::calculate_hash("{ user { name } }");
+        assert_ne!(h1, h3);
+    }
+
+    // ==================== QueryQuotaTracker 测试 ====================
+
+    #[test]
+    fn test_qqt_set_and_get_quota() {
+        let mut tracker = QueryQuotaTracker::new();
+        let q = tracker.set_quota(QueryQuotaInput {
+            entity_id: "u1".to_string(),
+            entity_type: "user".to_string(),
+            max_queries: 100,
+            period: QuotaPeriod::Hour,
+            enforcement: Some(true),
+        });
+        assert_eq!(q.max_queries, 100);
+        assert_eq!(q.entity_id, "u1");
+        assert!(q.enforcement);
+        let got = tracker.get_quota("user", "u1").unwrap();
+        assert_eq!(got.max_queries, 100);
+        assert_eq!(got.remaining, 100);
+    }
+
+    #[test]
+    fn test_qqt_default_enforcement() {
+        let mut tracker = QueryQuotaTracker::new();
+        let q = tracker.set_quota(QueryQuotaInput {
+            entity_id: "u2".to_string(),
+            entity_type: "user".to_string(),
+            max_queries: 50,
+            period: QuotaPeriod::Day,
+            enforcement: None,
+        });
+        assert!(q.enforcement);
+    }
+
+    #[test]
+    fn test_qqt_check_quota_before_usage() {
+        let mut tracker = QueryQuotaTracker::new();
+        tracker.set_quota(QueryQuotaInput {
+            entity_id: "u3".to_string(),
+            entity_type: "user".to_string(),
+            max_queries: 5,
+            period: QuotaPeriod::Minute,
+            enforcement: None,
+        });
+        let (allowed, remaining) = tracker.check_quota("user", "u3").unwrap();
+        assert!(allowed);
+        assert_eq!(remaining, 5);
+    }
+
+    #[test]
+    fn test_qqt_record_usage_and_exhaust() {
+        let mut tracker = QueryQuotaTracker::new();
+        tracker.set_quota(QueryQuotaInput {
+            entity_id: "u4".to_string(),
+            entity_type: "user".to_string(),
+            max_queries: 3,
+            period: QuotaPeriod::Hour,
+            enforcement: None,
+        });
+        assert_eq!(tracker.record_usage("user", "u4"), 1);
+        assert_eq!(tracker.record_usage("user", "u4"), 2);
+        assert_eq!(tracker.record_usage("user", "u4"), 3);
+
+        let (allowed, remaining) = tracker.check_quota("user", "u4").unwrap();
+        assert!(!allowed);
+        assert_eq!(remaining, 0);
+
+        let got = tracker.get_quota("user", "u4").unwrap();
+        assert_eq!(got.current_usage, 3);
+        assert_eq!(got.remaining, 0);
+    }
+
+    #[test]
+    fn test_qqt_unknown_entity() {
+        let tracker = QueryQuotaTracker::new();
+        assert!(tracker.check_quota("user", "ghost").is_none());
+        assert!(tracker.get_quota("user", "ghost").is_none());
+        assert_eq!(tracker.record_usage("user", "ghost"), 0);
+    }
+
+    #[test]
+    fn test_qqt_calculate_reset_at_all_periods() {
+        let now = Utc::now();
+        for period in [
+            QuotaPeriod::Second,
+            QuotaPeriod::Minute,
+            QuotaPeriod::Hour,
+            QuotaPeriod::Day,
+            QuotaPeriod::Month,
+        ] {
+            let reset_str = QueryQuotaTracker::calculate_reset_at(&period);
+            let reset_dt = chrono::DateTime::parse_from_rfc3339(&reset_str)
+                .unwrap()
+                .with_timezone(&Utc);
+            assert!(reset_dt > now);
+        }
+    }
+
+    // ==================== ApprovalWorkflow 测试 ====================
+
+    fn make_approval_input() -> ApprovalRequestInput {
+        ApprovalRequestInput {
+            query_hash: "hash123".to_string(),
+            query_text: "{ user { id } }".to_string(),
+            requester_id: "alice".to_string(),
+            team_id: Some("team-a".to_string()),
+            org_id: None,
+            reason: "need data".to_string(),
+        }
+    }
+
+    #[test]
+    fn test_aw_create_and_get() {
+        let mut aw = ApprovalWorkflow::new();
+        let req = aw.create_request(make_approval_input());
+        assert_eq!(req.status, ApprovalStatus::Pending);
+        assert_eq!(req.requester_id, "alice");
+        assert!(req.reviewed_at.is_none());
+        assert!(req.expires_at.is_none());
+
+        let got = aw.get_request(&req.request_id).unwrap();
+        assert_eq!(got.request_id, req.request_id);
+    }
+
+    #[test]
+    fn test_aw_review_approved_with_expiry() {
+        let mut aw = ApprovalWorkflow::new();
+        let req = aw.create_request(make_approval_input());
+        let reviewed = aw.review(ApprovalReviewInput {
+            request_id: req.request_id.clone(),
+            reviewer_id: "boss".to_string(),
+            approved: true,
+            review_notes: Some("LGTM".to_string()),
+            expires_in_hours: Some(24),
+        }).unwrap();
+        assert_eq!(reviewed.status, ApprovalStatus::Approved);
+        assert_eq!(reviewed.reviewer_id.as_deref(), Some("boss"));
+        assert_eq!(reviewed.review_notes.as_deref(), Some("LGTM"));
+        assert!(reviewed.expires_at.is_some());
+    }
+
+    #[test]
+    fn test_aw_review_rejected() {
+        let mut aw = ApprovalWorkflow::new();
+        let req = aw.create_request(make_approval_input());
+        let reviewed = aw.review(ApprovalReviewInput {
+            request_id: req.request_id,
+            reviewer_id: "boss".to_string(),
+            approved: false,
+            review_notes: None,
+            expires_in_hours: None,
+        }).unwrap();
+        assert_eq!(reviewed.status, ApprovalStatus::Rejected);
+    }
+
+    #[test]
+    fn test_aw_review_non_pending_fails() {
+        let mut aw = ApprovalWorkflow::new();
+        let req = aw.create_request(make_approval_input());
+        aw.review(ApprovalReviewInput {
+            request_id: req.request_id.clone(),
+            reviewer_id: "boss".to_string(),
+            approved: true,
+            review_notes: None,
+            expires_in_hours: None,
+        });
+        let result = aw.review(ApprovalReviewInput {
+            request_id: req.request_id,
+            reviewer_id: "other".to_string(),
+            approved: false,
+            review_notes: None,
+            expires_in_hours: None,
+        });
+        assert!(result.is_none());
+    }
+
+    #[test]
+    fn test_aw_list_pending() {
+        let mut aw = ApprovalWorkflow::new();
+        let req1 = aw.create_request(make_approval_input());
+        let mut input2 = make_approval_input();
+        input2.reason = "another".to_string();
+        let req2 = aw.create_request(input2);
+
+        let pending = aw.list_pending();
+        assert_eq!(pending.len(), 2);
+
+        aw.review(ApprovalReviewInput {
+            request_id: req1.request_id,
+            reviewer_id: "x".to_string(),
+            approved: true,
+            review_notes: None,
+            expires_in_hours: None,
+        });
+
+        let pending_after = aw.list_pending();
+        assert_eq!(pending_after.len(), 1);
+        assert_eq!(pending_after[0].request_id, req2.request_id);
+    }
+
+    #[test]
+    fn test_aw_is_approved_no_expiry() {
+        let mut aw = ApprovalWorkflow::new();
+        let req = aw.create_request(make_approval_input());
+        aw.review(ApprovalReviewInput {
+            request_id: req.request_id,
+            reviewer_id: "boss".to_string(),
+            approved: true,
+            review_notes: None,
+            expires_in_hours: None,
+        });
+        assert!(aw.is_approved("hash123", "alice"));
+        assert!(!aw.is_approved("hash123", "bob"));
+        assert!(!aw.is_approved("other_hash", "alice"));
+    }
+
+    #[test]
+    fn test_aw_is_approved_with_future_expiry() {
+        let mut aw = ApprovalWorkflow::new();
+        let req = aw.create_request(make_approval_input());
+        aw.review(ApprovalReviewInput {
+            request_id: req.request_id,
+            reviewer_id: "boss".to_string(),
+            approved: true,
+            review_notes: None,
+            expires_in_hours: Some(48),
+        });
+        assert!(aw.is_approved("hash123", "alice"));
+    }
+
+    // ==================== GovernanceEngine 测试 ====================
+
+    fn make_policy_input(name: &str) -> GovernancePolicyInput {
+        GovernancePolicyInput {
+            policy_name: name.to_string(),
+            description: "desc".to_string(),
+            compliance_level: ComplianceLevel::Standard,
+            enabled: Some(true),
+            rules: None,
+        }
+    }
+
+    #[test]
+    fn test_ge_create_and_get_policy() {
+        let mut ge = GovernanceEngine::new();
+        let p = ge.create_policy(make_policy_input("Security"));
+        assert!(p.policy_id.starts_with("policy_"));
+        assert_eq!(p.policy_name, "Security");
+        assert_eq!(p.compliance_level, ComplianceLevel::Standard);
+        assert!(p.enabled);
+        assert!(p.rules.is_empty());
+
+        let got = ge.get_policy(&p.policy_id).unwrap();
+        assert_eq!(got.policy_id, p.policy_id);
+    }
+
+    #[test]
+    fn test_ge_create_policy_with_rules() {
+        let mut ge = GovernanceEngine::new();
+        let input = GovernancePolicyInput {
+            policy_name: "Full".to_string(),
+            description: "d".to_string(),
+            compliance_level: ComplianceLevel::Strict,
+            enabled: Some(false),
+            rules: Some(vec![
+                GovernanceRuleInput {
+                    rule_type: "deny".to_string(),
+                    condition: "depth>10".to_string(),
+                    action: "block".to_string(),
+                    severity: Some("critical".to_string()),
+                    enabled: Some(true),
+                },
+                GovernanceRuleInput {
+                    rule_type: "warn".to_string(),
+                    condition: "complexity>100".to_string(),
+                    action: "warn".to_string(),
+                    severity: None,
+                    enabled: None,
+                },
+            ]),
+        };
+        let p = ge.create_policy(input);
+        assert_eq!(p.rules.len(), 2);
+        assert_eq!(p.rules[0].severity, "critical");
+        assert_eq!(p.rules[1].severity, "medium");
+        assert!(p.rules[1].enabled);
+        assert!(!p.enabled);
+    }
+
+    #[test]
+    fn test_ge_list_policies() {
+        let mut ge = GovernanceEngine::new();
+        ge.create_policy(make_policy_input("A"));
+        ge.create_policy(make_policy_input("B"));
+        assert_eq!(ge.list_policies().len(), 2);
+    }
+
+    #[test]
+    fn test_ge_set_and_get_field_control() {
+        let mut ge = GovernanceEngine::new();
+        let fc = ge.set_field_control(FieldAccessControlInput {
+            field_path: "User.email".to_string(),
+            allowed_roles: Some(vec!["admin".to_string()]),
+            denied_roles: None,
+            requires_approval: Some(true),
+            pii: Some(true),
+            audit: None,
+        });
+        assert_eq!(fc.field_path, "User.email");
+        assert_eq!(fc.allowed_roles, vec!["admin"]);
+        assert!(fc.requires_approval);
+        assert!(fc.pii);
+        assert!(fc.audit);
+
+        let got = ge.get_field_control("User.email").unwrap();
+        assert_eq!(got.field_path, "User.email");
+        assert!(ge.get_field_control("ghost").is_none());
+    }
+
+    #[test]
+    fn test_ge_field_control_defaults() {
+        let mut ge = GovernanceEngine::new();
+        let fc = ge.set_field_control(FieldAccessControlInput {
+            field_path: "X.y".to_string(),
+            allowed_roles: None,
+            denied_roles: None,
+            requires_approval: None,
+            pii: None,
+            audit: None,
+        });
+        assert!(fc.allowed_roles.is_empty());
+        assert!(fc.denied_roles.is_empty());
+        assert!(!fc.requires_approval);
+        assert!(!fc.pii);
+        assert!(fc.audit);
+    }
+
+    #[test]
+    fn test_ge_check_governance_all_allowed() {
+        let ge = GovernanceEngine::new();
+        let result = ge.check_governance("h1", "u1", &["admin".to_string()], &["User.email".to_string()]);
+        assert!(result.allowed);
+        assert!(result.denial_reason.is_none());
+    }
+
+    #[test]
+    fn test_ge_check_governance_pii_triggers_warning() {
+        let mut ge = GovernanceEngine::new();
+        ge.set_field_control(FieldAccessControlInput {
+            field_path: "User.ssn".to_string(),
+            allowed_roles: Some(vec!["admin".to_string()]),
+            denied_roles: None,
+            requires_approval: None,
+            pii: Some(true),
+            audit: None,
+        });
+        let result = ge.check_governance("h1", "u1", &["admin".to_string()], &["User.ssn".to_string()]);
+        assert!(result.warnings.iter().any(|w| w.contains("PII")));
+    }
+
+    #[test]
+    fn test_ge_check_governance_denied_role() {
+        let mut ge = GovernanceEngine::new();
+        ge.set_field_control(FieldAccessControlInput {
+            field_path: "User.secret".to_string(),
+            allowed_roles: None,
+            denied_roles: Some(vec!["guest".to_string()]),
+            requires_approval: None,
+            pii: None,
+            audit: Some(true),
+        });
+        let result = ge.check_governance(
+            "h1",
+            "u1",
+            &["guest".to_string()],
+            &["User.secret".to_string()],
+        );
+        assert!(!result.allowed);
+        assert!(result.field_restrictions.contains(&"User.secret".to_string()));
+        assert!(!result.warnings.is_empty());
+    }
+
+    #[test]
+    fn test_ge_check_governance_allowed_role_missing() {
+        let mut ge = GovernanceEngine::new();
+        ge.set_field_control(FieldAccessControlInput {
+            field_path: "User.internal".to_string(),
+            allowed_roles: Some(vec!["admin".to_string()]),
+            denied_roles: None,
+            requires_approval: None,
+            pii: None,
+            audit: None,
+        });
+        let result = ge.check_governance(
+            "h1",
+            "u1",
+            &["user".to_string()],
+            &["User.internal".to_string()],
+        );
+        assert!(!result.allowed);
+        assert!(result.denial_reason.is_some());
+    }
+
+    #[test]
+    fn test_ge_check_governance_wildcard_allowed() {
+        let mut ge = GovernanceEngine::new();
+        ge.set_field_control(FieldAccessControlInput {
+            field_path: "BusinessStats.data".to_string(),
+            allowed_roles: Some(vec!["*".to_string()]),
+            denied_roles: None,
+            requires_approval: None,
+            pii: None,
+            audit: None,
+        });
+        let result = ge.check_governance(
+            "h1",
+            "u1",
+            &["nobody".to_string()],
+            &["BusinessStats.data".to_string()],
+        );
+        assert!(result.allowed);
+    }
+
+    #[test]
+    fn test_ge_check_governance_requires_approval() {
+        let mut ge = GovernanceEngine::new();
+        ge.set_field_control(FieldAccessControlInput {
+            field_path: "User.ssn".to_string(),
+            allowed_roles: None,
+            denied_roles: None,
+            requires_approval: Some(true),
+            pii: None,
+            audit: None,
+        });
+        let result = ge.check_governance(
+            "h1",
+            "u1",
+            &["admin".to_string()],
+            &["User.ssn".to_string()],
+        );
+        assert!(result.required_approvals.contains(&"User.ssn".to_string()));
+    }
+
+    #[test]
+    fn test_ge_check_governance_policy_applied() {
+        let mut ge = GovernanceEngine::new();
+        ge.create_policy(GovernancePolicyInput {
+            policy_name: "Sec".to_string(),
+            description: "d".to_string(),
+            compliance_level: ComplianceLevel::Standard,
+            enabled: Some(true),
+            rules: Some(vec![GovernanceRuleInput {
+                rule_type: "x".to_string(),
+                condition: "y".to_string(),
+                action: "z".to_string(),
+                severity: Some("critical".to_string()),
+                enabled: Some(true),
+            }]),
+        });
+        let result = ge.check_governance("h1", "u1", &[], &[]);
+        assert_eq!(result.applied_policies.len(), 1);
+        assert!(!result.warnings.is_empty());
+    }
+
+    // ==================== QueryAuditStore 测试 ====================
+
+    #[test]
+    fn test_qas_record_and_filter_by_event_type() {
+        let mut store = QueryAuditStore::new();
+        store.record(make_audit_entry("a1", AuditEventType::QueryExecuted, "u1", QueryRisk::Low));
+        store.record(make_audit_entry("a2", AuditEventType::QueryFailed, "u1", QueryRisk::High));
+        store.record(make_audit_entry("a3", AuditEventType::QueryExecuted, "u2", QueryRisk::Low));
+
+        let filter = QueryAuditFilterInput {
+            event_type: Some(AuditEventType::QueryFailed),
+            user_id: None,
+            team_id: None,
+            org_id: None,
+            risk_level: None,
+            start_time: None,
+            end_time: None,
+            query_hash: None,
+        };
+        let result = store.query(&filter, 1, 20);
+        assert_eq!(result.len(), 1);
+        assert_eq!(result[0].audit_id, "a2");
+    }
+
+    #[test]
+    fn test_qas_filter_by_user() {
+        let mut store = QueryAuditStore::new();
+        store.record(make_audit_entry("a1", AuditEventType::QueryExecuted, "u1", QueryRisk::Low));
+        store.record(make_audit_entry("a2", AuditEventType::QueryExecuted, "u2", QueryRisk::Low));
+
+        let filter = QueryAuditFilterInput {
+            event_type: None,
+            user_id: Some("u1".to_string()),
+            team_id: None,
+            org_id: None,
+            risk_level: None,
+            start_time: None,
+            end_time: None,
+            query_hash: None,
+        };
+        let result = store.query(&filter, 1, 20);
+        assert_eq!(result.len(), 1);
+        assert_eq!(result[0].user_id, "u1");
+    }
+
+    #[test]
+    fn test_qas_filter_by_risk_level() {
+        let mut store = QueryAuditStore::new();
+        store.record(make_audit_entry("a1", AuditEventType::QueryExecuted, "u1", QueryRisk::Low));
+        store.record(make_audit_entry("a2", AuditEventType::QueryExecuted, "u1", QueryRisk::High));
+
+        let filter = QueryAuditFilterInput {
+            event_type: None,
+            user_id: None,
+            team_id: None,
+            org_id: None,
+            risk_level: Some(QueryRisk::High),
+            start_time: None,
+            end_time: None,
+            query_hash: None,
+        };
+        let result = store.query(&filter, 1, 20);
+        assert_eq!(result.len(), 1);
+        assert_eq!(result[0].risk_level, QueryRisk::High);
+    }
+
+    #[test]
+    fn test_qas_filter_by_query_hash() {
+        let mut store = QueryAuditStore::new();
+        let mut e1 = make_audit_entry("a1", AuditEventType::QueryExecuted, "u1", QueryRisk::Low);
+        e1.query_hash = Some("hashA".to_string());
+        let mut e2 = make_audit_entry("a2", AuditEventType::QueryExecuted, "u1", QueryRisk::Low);
+        e2.query_hash = Some("hashB".to_string());
+        store.record(e1);
+        store.record(e2);
+
+        let filter = QueryAuditFilterInput {
+            event_type: None,
+            user_id: None,
+            team_id: None,
+            org_id: None,
+            risk_level: None,
+            start_time: None,
+            end_time: None,
+            query_hash: Some("hashA".to_string()),
+        };
+        let result = store.query(&filter, 1, 20);
+        assert_eq!(result.len(), 1);
+        assert_eq!(result[0].query_hash.as_deref(), Some("hashA"));
+    }
+
+    #[test]
+    fn test_qas_pagination() {
+        let mut store = QueryAuditStore::new();
+        for i in 0..5 {
+            store.record(make_audit_entry(
+                &format!("a{}", i),
+                AuditEventType::QueryExecuted,
+                "u1",
+                QueryRisk::Low,
+            ));
+        }
+        let page1 = store.query(
+            &QueryAuditFilterInput {
+                event_type: None,
+                user_id: None,
+                team_id: None,
+                org_id: None,
+                risk_level: None,
+                start_time: None,
+                end_time: None,
+                query_hash: None,
+            },
+            1,
+            2,
+        );
+        assert_eq!(page1.len(), 2);
+    }
+
+    #[test]
+    fn test_qas_stats_tracking() {
+        let mut store = QueryAuditStore::new();
+        store.record(make_audit_entry("a1", AuditEventType::QueryExecuted, "u1", QueryRisk::Low));
+        store.record(make_audit_entry("a2", AuditEventType::QueryExecuted, "u1", QueryRisk::Low));
+        store.record(make_audit_entry("a3", AuditEventType::QueryFailed, "u2", QueryRisk::High));
+        store.record(make_audit_entry("a4", AuditEventType::QueryDenied, "u3", QueryRisk::Critical));
+
+        let stats = store.get_stats();
+        assert_eq!(stats.total_queries, 3);
+        assert_eq!(stats.successful_queries, 2);
+        assert_eq!(stats.failed_queries, 1);
+        assert_eq!(stats.denied_queries, 1);
+    }
+
+    #[test]
+    fn test_qas_stats_top_users_and_queries() {
+        let mut store = QueryAuditStore::new();
+        let mut e1 = make_audit_entry("a1", AuditEventType::QueryExecuted, "alice", QueryRisk::Low);
+        e1.query_hash = Some("h1".to_string());
+        e1.latency_ms = 100;
+        let mut e2 = make_audit_entry("a2", AuditEventType::QueryExecuted, "alice", QueryRisk::Low);
+        e2.query_hash = Some("h1".to_string());
+        e2.latency_ms = 200;
+        let mut e3 = make_audit_entry("a3", AuditEventType::QueryExecuted, "bob", QueryRisk::Low);
+        e3.query_hash = Some("h2".to_string());
+        e3.latency_ms = 300;
+        store.record(e1);
+        store.record(e2);
+        store.record(e3);
+
+        let stats = store.get_stats();
+        assert_eq!(stats.top_users.len(), 2);
+        assert_eq!(stats.top_queries.len(), 2);
+        let alice = stats.top_users.iter().find(|u| u.user_id == "alice").unwrap();
+        assert_eq!(alice.query_count, 2);
+        let h1 = stats.top_queries.iter().find(|q| q.query_hash == "h1").unwrap();
+        assert_eq!(h1.count, 2);
+        assert!((h1.avg_latency_ms - 150.0).abs() < 0.01);
+    }
+
+    // ==================== QueryAuditor 测试 ====================
+
+    #[test]
+    fn test_qa_log_and_id_generation() {
+        let qa = QueryAuditor::new();
+        let entry = qa.log_query(
+            AuditEventType::QueryExecuted,
+            Some("h1".to_string()),
+            None,
+            None,
+            "alice".to_string(),
+            None,
+            None,
+            "127.0.0.1".to_string(),
+            None,
+            50,
+            5,
+            2,
+            10,
+            None,
+            QueryRisk::Low,
+        );
+        assert!(entry.audit_id.starts_with("audit_"));
+        assert_eq!(entry.user_id, "alice");
+
+        let entry2 = qa.log_query(
+            AuditEventType::QueryExecuted,
+            Some("h2".to_string()),
+            None,
+            None,
+            "bob".to_string(),
+            None,
+            None,
+            "127.0.0.1".to_string(),
+            None,
+            30,
+            3,
+            1,
+            5,
+            None,
+            QueryRisk::Low,
+        );
+        assert_ne!(entry.audit_id, entry2.audit_id);
+    }
+
+    #[test]
+    fn test_qa_filter_roundtrip() {
+        let qa = QueryAuditor::new();
+        qa.log_query(
+            AuditEventType::QueryExecuted,
+            Some("h1".to_string()),
+            None,
+            None,
+            "u1".to_string(),
+            None,
+            None,
+            "127.0.0.1".to_string(),
+            None,
+            10,
+            1,
+            1,
+            1,
+            None,
+            QueryRisk::Low,
+        );
+        let results = qa.query(
+            QueryAuditFilterInput {
+                event_type: Some(AuditEventType::QueryExecuted),
+                user_id: Some("u1".to_string()),
+                team_id: None,
+                org_id: None,
+                risk_level: None,
+                start_time: None,
+                end_time: None,
+                query_hash: None,
+            },
+            1,
+            20,
+        );
+        assert_eq!(results.len(), 1);
+    }
+
+    // ==================== Der Roundtrip 测试 ====================
+
+    #[test]
+    fn test_roundtrip_query_status_all_variants() {
+        for v in [
+            QueryStatus::Active,
+            QueryStatus::Deprecated,
+            QueryStatus::Archived,
+            QueryStatus::Draft,
+        ] {
+            roundtrip(&v);
+        }
+    }
+
+    #[test]
+    fn test_roundtrip_audit_event_type_all_variants() {
+        for v in [
+            AuditEventType::QueryExecuted,
+            AuditEventType::QueryFailed,
+            AuditEventType::QueryDenied,
+            AuditEventType::QuotaExceeded,
+            AuditEventType::UnauthorizedAccess,
+            AuditEventType::SensitiveFieldAccess,
+            AuditEventType::AnomalyDetected,
+            AuditEventType::ApprovalRequired,
+            AuditEventType::ApprovalGranted,
+            AuditEventType::ApprovalRejected,
+        ] {
+            roundtrip(&v);
+        }
+    }
+
+    #[test]
+    fn test_roundtrip_query_risk_all_variants() {
+        for v in [QueryRisk::Low, QueryRisk::Medium, QueryRisk::High, QueryRisk::Critical] {
+            roundtrip(&v);
+        }
+    }
+
+    #[test]
+    fn test_roundtrip_quota_period_all_variants() {
+        for v in [
+            QuotaPeriod::Second,
+            QuotaPeriod::Minute,
+            QuotaPeriod::Hour,
+            QuotaPeriod::Day,
+            QuotaPeriod::Month,
+        ] {
+            roundtrip(&v);
+        }
+    }
+
+    #[test]
+    fn test_roundtrip_approval_status_all_variants() {
+        for v in [
+            ApprovalStatus::Pending,
+            ApprovalStatus::Approved,
+            ApprovalStatus::Rejected,
+            ApprovalStatus::InProgress,
+            ApprovalStatus::Cancelled,
+            ApprovalStatus::Expired,
+        ] {
+            roundtrip(&v);
+        }
+    }
+
+    #[test]
+    fn test_roundtrip_compliance_level_all_variants() {
+        for v in [
+            ComplianceLevel::Strict,
+            ComplianceLevel::Standard,
+            ComplianceLevel::Relaxed,
+            ComplianceLevel::Custom,
+        ] {
+            roundtrip(&v);
+        }
+    }
+
+    #[test]
+    fn test_roundtrip_approval_status_snake_case() {
+        let json = serde_json::to_string(&ApprovalStatus::Pending).unwrap();
+        assert_eq!(json, "\"pending\"");
+        let json2 = serde_json::to_string(&ApprovalStatus::Approved).unwrap();
+        assert_eq!(json2, "\"approved\"");
+        let json3 = serde_json::to_string(&ApprovalStatus::InProgress).unwrap();
+        assert_eq!(json3, "\"in_progress\"");
+    }
+
+    // ==================== EnterpriseGovernance 集成代理测试 ====================
+
+    #[test]
+    fn test_eg_proxy_set_and_check_quota() {
+        let eg = EnterpriseGovernance::new();
+        eg.set_quota(QueryQuotaInput {
+            entity_id: "user_x".to_string(),
+            entity_type: "user".to_string(),
+            max_queries: 10,
+            period: QuotaPeriod::Hour,
+            enforcement: None,
+        });
+        let (allowed, remaining) = eg.check_quota("user", "user_x").unwrap();
+        assert!(allowed);
+        assert_eq!(remaining, 10);
+        eg.record_quota_usage("user", "user_x");
+        let quota = eg.get_quota("user", "user_x").unwrap();
+        assert_eq!(quota.current_usage, 1);
+    }
+
+    #[test]
+    fn test_eg_proxy_approval_flow() {
+        let eg = EnterpriseGovernance::new();
+        let req = eg.create_approval_request(ApprovalRequestInput {
+            query_hash: "h".to_string(),
+            query_text: "t".to_string(),
+            requester_id: "r".to_string(),
+            team_id: None,
+            org_id: None,
+            reason: "need".to_string(),
+        });
+        assert_eq!(req.status, ApprovalStatus::Pending);
+
+        let pending = eg.list_pending_approvals();
+        assert_eq!(pending.len(), 1);
+
+        eg.review_approval(ApprovalReviewInput {
+            request_id: req.request_id.clone(),
+            reviewer_id: "boss".to_string(),
+            approved: true,
+            review_notes: None,
+            expires_in_hours: None,
+        });
+        assert!(eg.is_query_approved("h", "r"));
+    }
+
+    #[test]
+    fn test_eg_proxy_governance_flow() {
+        let eg = EnterpriseGovernance::new();
+        eg.create_policy(GovernancePolicyInput {
+            policy_name: "p1".to_string(),
+            description: "d".to_string(),
+            compliance_level: ComplianceLevel::Standard,
+            enabled: Some(true),
+            rules: None,
+        });
+        eg.set_field_control(FieldAccessControlInput {
+            field_path: "Ssn".to_string(),
+            allowed_roles: None,
+            denied_roles: None,
+            requires_approval: Some(true),
+            pii: Some(true),
+            audit: None,
+        });
+        let policies = eg.list_policies();
+        assert_eq!(policies.len(), 1);
+
+        let result = eg.check_governance(
+            "h",
+            "u",
+            &["guest".to_string()],
+            &["Ssn".to_string()],
+        );
+        assert!(result.warnings.iter().any(|w| w.contains("PII")));
+        assert!(result.required_approvals.contains(&"Ssn".to_string()));
+    }
+}

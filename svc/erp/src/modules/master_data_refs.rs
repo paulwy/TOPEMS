@@ -19994,3 +19994,1375 @@ pub async fn get_compliance_audit_stats_handler(
     let stats = get_compliance_audit_stats().await;
     Json(ApiResponse::success(stats, "合规审计统计获取成功"))
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use serde::{Serialize, Deserialize};
+    use std::collections::HashMap;
+
+    fn roundtrip<T: Serialize + for<'de> Deserialize<'de>>(item: &T) {
+        let json = serde_json::to_string(item).unwrap();
+        let v1: serde_json::Value = serde_json::from_str(&json).unwrap();
+        let back: T = serde_json::from_str(&json).unwrap();
+        let json2 = serde_json::to_string(&back).unwrap();
+        let v2: serde_json::Value = serde_json::from_str(&json2).unwrap();
+        assert_eq!(v1, v2);
+    }
+
+    // ============== ENUMS ==============
+
+    #[test]
+    fn rtu_enum_lifecycle_status() {
+        roundtrip(&LifecycleStatus::Active);
+        roundtrip(&LifecycleStatus::Archived);
+        roundtrip(&LifecycleStatus::PendingDestruction);
+        roundtrip(&LifecycleStatus::Destroyed);
+    }
+
+    #[test]
+    fn rtu_enum_merge_strategy() {
+        roundtrip(&MergeStrategy::LastWriteWins);
+        roundtrip(&MergeStrategy::SourcePriority);
+        roundtrip(&MergeStrategy::ManualReview);
+    }
+
+    #[test]
+    fn rtu_enum_quality_rule_type() {
+        roundtrip(&QualityRuleType::Required);
+        roundtrip(&QualityRuleType::Format);
+        roundtrip(&QualityRuleType::Range);
+        roundtrip(&QualityRuleType::Uniqueness);
+        roundtrip(&QualityRuleType::Reference);
+        roundtrip(&QualityRuleType::Custom);
+    }
+
+    #[test]
+    fn rtu_enum_quality_severity() {
+        roundtrip(&QualitySeverity::Error);
+        roundtrip(&QualitySeverity::Warning);
+        roundtrip(&QualitySeverity::Info);
+    }
+
+    #[test]
+    fn rtu_enum_sync_status() {
+        roundtrip(&SyncStatus::Pending);
+        roundtrip(&SyncStatus::Running);
+        roundtrip(&SyncStatus::Completed);
+        roundtrip(&SyncStatus::Failed);
+        roundtrip(&SyncStatus::PartiallyFailed);
+        roundtrip(&SyncStatus::Compensating);
+        roundtrip(&SyncStatus::Compensated);
+    }
+
+    #[test]
+    fn rtu_enum_quality_ticket_status() {
+        roundtrip(&QualityTicketStatus::Open);
+        roundtrip(&QualityTicketStatus::Assigned);
+        roundtrip(&QualityTicketStatus::InProgress);
+        roundtrip(&QualityTicketStatus::PendingReview);
+        roundtrip(&QualityTicketStatus::Resolved);
+        roundtrip(&QualityTicketStatus::Verified);
+        roundtrip(&QualityTicketStatus::Closed);
+        roundtrip(&QualityTicketStatus::Rejected);
+    }
+
+    #[test]
+    fn rtu_enum_repair_strategy() {
+        roundtrip(&RepairStrategy::AutoFix);
+        roundtrip(&RepairStrategy::ManualFix);
+        roundtrip(&RepairStrategy::Escalate);
+        roundtrip(&RepairStrategy::Ignore);
+    }
+
+    #[test]
+    fn rtu_enum_sync_job_priority() {
+        roundtrip(&SyncJobPriority::High);
+        roundtrip(&SyncJobPriority::Normal);
+        roundtrip(&SyncJobPriority::Low);
+    }
+
+    #[test]
+    fn rtu_enum_quality_risk_level() {
+        roundtrip(&QualityRiskLevel::Low);
+        roundtrip(&QualityRiskLevel::Medium);
+        roundtrip(&QualityRiskLevel::High);
+        roundtrip(&QualityRiskLevel::Critical);
+    }
+
+    #[test]
+    fn rtu_enum_match_type() {
+        roundtrip(&MatchType::Exact);
+        roundtrip(&MatchType::Fuzzy);
+        roundtrip(&MatchType::Phonetic);
+        roundtrip(&MatchType::Abbreviation);
+        roundtrip(&MatchType::Synonym);
+        roundtrip(&MatchType::Partial);
+    }
+
+    #[test]
+    fn rtu_enum_lineage_direction() {
+        roundtrip(&LineageDirection::Upstream);
+        roundtrip(&LineageDirection::Downstream);
+        roundtrip(&LineageDirection::Both);
+    }
+
+    #[test]
+    fn rtu_enum_lineage_relationship() {
+        roundtrip(&LineageRelationship::References);
+        roundtrip(&LineageRelationship::DependsOn);
+        roundtrip(&LineageRelationship::Produces);
+        roundtrip(&LineageRelationship::Consumes);
+        roundtrip(&LineageRelationship::Transforms);
+    }
+
+    #[test]
+    fn rtu_enum_impact_severity() {
+        roundtrip(&ImpactSeverity::Critical);
+        roundtrip(&ImpactSeverity::High);
+        roundtrip(&ImpactSeverity::Medium);
+        roundtrip(&ImpactSeverity::Low);
+        roundtrip(&ImpactSeverity::None);
+    }
+
+    #[test]
+    fn rtu_enum_change_type() {
+        roundtrip(&ChangeType::SchemaChange);
+        roundtrip(&ChangeType::DataChange);
+        roundtrip(&ChangeType::BusinessRuleChange);
+    }
+
+    #[test]
+    fn rtu_enum_graph_layout() {
+        roundtrip(&GraphLayout::Hierarchical);
+        roundtrip(&GraphLayout::ForceDirected);
+        roundtrip(&GraphLayout::Circular);
+        roundtrip(&GraphLayout::Radial);
+    }
+
+    #[test]
+    fn rtu_enum_maturity_dimension() {
+        roundtrip(&MaturityDimension::DataQuality);
+        roundtrip(&MaturityDimension::DataGovernance);
+        roundtrip(&MaturityDimension::DataStandards);
+        roundtrip(&MaturityDimension::DataLifecycle);
+        roundtrip(&MaturityDimension::DataSecurity);
+        roundtrip(&MaturityDimension::DataIntegration);
+        roundtrip(&MaturityDimension::DataStewardship);
+        roundtrip(&MaturityDimension::DataArchitecture);
+    }
+
+    #[test]
+    fn rtu_enum_maturity_level() {
+        roundtrip(&MaturityLevel::Initial);
+        roundtrip(&MaturityLevel::Developing);
+        roundtrip(&MaturityLevel::Defined);
+        roundtrip(&MaturityLevel::Managed);
+        roundtrip(&MaturityLevel::Optimizing);
+    }
+
+    #[test]
+    fn rtu_enum_catalog_classification() {
+        roundtrip(&CatalogClassification::Public);
+        roundtrip(&CatalogClassification::Internal);
+        roundtrip(&CatalogClassification::Confidential);
+        roundtrip(&CatalogClassification::Restricted);
+    }
+
+    #[test]
+    fn rtu_enum_metadata_field_type() {
+        roundtrip(&MetadataFieldType::String);
+        roundtrip(&MetadataFieldType::Integer);
+        roundtrip(&MetadataFieldType::Decimal);
+        roundtrip(&MetadataFieldType::Boolean);
+        roundtrip(&MetadataFieldType::Date);
+        roundtrip(&MetadataFieldType::DateTime);
+        roundtrip(&MetadataFieldType::Enum);
+        roundtrip(&MetadataFieldType::Reference);
+        roundtrip(&MetadataFieldType::Json);
+        roundtrip(&MetadataFieldType::Binary);
+    }
+
+    #[test]
+    fn rtu_enum_widget_type() {
+        roundtrip(&WidgetType::KpiCard);
+        roundtrip(&WidgetType::BarChart);
+        roundtrip(&WidgetType::LineChart);
+        roundtrip(&WidgetType::PieChart);
+        roundtrip(&WidgetType::HeatMap);
+        roundtrip(&WidgetType::DataTable);
+        roundtrip(&WidgetType::Gauge);
+        roundtrip(&WidgetType::TrendLine);
+        roundtrip(&WidgetType::RadarChart);
+        roundtrip(&WidgetType::TreeMap);
+    }
+
+    #[test]
+    fn rtu_enum_kpi_status() {
+        roundtrip(&KpiStatus::Good);
+        roundtrip(&KpiStatus::Warning);
+        roundtrip(&KpiStatus::Critical);
+        roundtrip(&KpiStatus::Neutral);
+    }
+
+    #[test]
+    fn rtu_enum_report_type() {
+        roundtrip(&ReportType::QualityReport);
+        roundtrip(&ReportType::MaturityReport);
+        roundtrip(&ReportType::ComplianceReport);
+        roundtrip(&ReportType::StewardshipReport);
+        roundtrip(&ReportType::DataAssetReport);
+        roundtrip(&ReportType::ExecutiveSummary);
+    }
+
+    #[test]
+    fn rtu_enum_report_frequency() {
+        roundtrip(&ReportFrequency::Daily);
+        roundtrip(&ReportFrequency::Weekly);
+        roundtrip(&ReportFrequency::Monthly);
+        roundtrip(&ReportFrequency::Quarterly);
+        roundtrip(&ReportFrequency::Yearly);
+        roundtrip(&ReportFrequency::OnDemand);
+    }
+
+    #[test]
+    fn rtu_enum_report_format() {
+        roundtrip(&ReportFormat::PDF);
+        roundtrip(&ReportFormat::Excel);
+        roundtrip(&ReportFormat::HTML);
+        roundtrip(&ReportFormat::JSON);
+        roundtrip(&ReportFormat::Markdown);
+    }
+
+    #[test]
+    fn rtu_enum_report_status() {
+        roundtrip(&ReportStatus::Pending);
+        roundtrip(&ReportStatus::Generating);
+        roundtrip(&ReportStatus::Completed);
+        roundtrip(&ReportStatus::Failed);
+        roundtrip(&ReportStatus::Delivered);
+    }
+
+    #[test]
+    fn rtu_enum_audit_framework() {
+        roundtrip(&AuditFramework::GDPR);
+        roundtrip(&AuditFramework::SOX);
+        roundtrip(&AuditFramework::ISO27001);
+        roundtrip(&AuditFramework::DataGovernance);
+        roundtrip(&AuditFramework::InternalPolicy);
+        roundtrip(&AuditFramework::Custom);
+    }
+
+    #[test]
+    fn rtu_enum_compliance_status() {
+        roundtrip(&ComplianceStatus::Compliant);
+        roundtrip(&ComplianceStatus::NonCompliant);
+        roundtrip(&ComplianceStatus::PartiallyCompliant);
+        roundtrip(&ComplianceStatus::NotApplicable);
+        roundtrip(&ComplianceStatus::PendingReview);
+    }
+
+    #[test]
+    fn rtu_enum_finding_severity() {
+        roundtrip(&FindingSeverity::Low);
+        roundtrip(&FindingSeverity::Medium);
+        roundtrip(&FindingSeverity::High);
+        roundtrip(&FindingSeverity::Critical);
+    }
+
+    #[test]
+    fn rtu_enum_finding_status() {
+        roundtrip(&FindingStatus::Open);
+        roundtrip(&FindingStatus::InProgress);
+        roundtrip(&FindingStatus::Resolved);
+        roundtrip(&FindingStatus::Accepted);
+        roundtrip(&FindingStatus::FalsePositive);
+    }
+
+    // ============== STRUCTS (leaf) ==============
+
+    #[test]
+    fn rtu_struct_quality_issue() {
+        roundtrip(&QualityIssue {
+            rule_id: uuid::Uuid::new_v4(),
+            rule_name: "x".to_string(),
+            master_data_id: "x".to_string(),
+            field_name: "x".to_string(),
+            current_value: None,
+            expected: "x".to_string(),
+            severity: QualitySeverity::Error,
+            suggestion: None,
+        });
+    }
+
+    #[test]
+    fn rtu_struct_ticket_history_entry() {
+        roundtrip(&TicketHistoryEntry {
+            action: "x".to_string(),
+            actor: "x".to_string(),
+            comment: None,
+            timestamp: chrono::Utc::now(),
+        });
+    }
+
+    #[test]
+    fn rtu_struct_sync_step() {
+        roundtrip(&SyncStep {
+            id: "x".to_string(),
+            step_name: "x".to_string(),
+            target_system: "x".to_string(),
+            status: SyncStatus::Pending,
+            order: 0,
+            retry_count: 0,
+            max_retries: 0,
+            started_at: None,
+            completed_at: None,
+            error_message: None,
+            compensation_status: None,
+        });
+    }
+
+    #[test]
+    fn rtu_struct_sync_job() {
+        roundtrip(&SyncJob {
+            id: "x".to_string(),
+            entity_type: "x".to_string(),
+            entity_id: "x".to_string(),
+            operation: "x".to_string(),
+            status: SyncStatus::Pending,
+            source_system: "x".to_string(),
+            target_systems: vec![],
+            steps: vec![],
+            current_step: 0,
+            retry_count: 0,
+            max_retries: 0,
+            created_at: chrono::Utc::now(),
+            updated_at: chrono::Utc::now(),
+            completed_at: None,
+            error_message: None,
+        });
+    }
+
+    #[test]
+    fn rtu_struct_compensation_action() {
+        roundtrip(&CompensationAction {
+            step_id: "x".to_string(),
+            action: "x".to_string(),
+            status: SyncStatus::Pending,
+            executed_at: None,
+        });
+    }
+
+    #[test]
+    fn rtu_struct_dead_letter_entry() {
+        roundtrip(&DeadLetterEntry {
+            id: "x".to_string(),
+            job_id: "x".to_string(),
+            step_id: "x".to_string(),
+            entity_type: "x".to_string(),
+            operation: "x".to_string(),
+            error_message: "x".to_string(),
+            retry_count: 0,
+            created_at: chrono::Utc::now(),
+            last_retry_at: None,
+        });
+    }
+
+    #[test]
+    fn rtu_struct_quality_ticket() {
+        roundtrip(&QualityTicket {
+            id: "x".to_string(),
+            issue_id: "x".to_string(),
+            entity_type: "x".to_string(),
+            entity_id: "x".to_string(),
+            rule_id: "x".to_string(),
+            severity: "x".to_string(),
+            status: QualityTicketStatus::Open,
+            assigned_to: None,
+            assigned_at: None,
+            resolution: None,
+            resolved_at: None,
+            verified_by: None,
+            verified_at: None,
+            created_at: chrono::Utc::now(),
+            updated_at: chrono::Utc::now(),
+            history: vec![],
+        });
+    }
+
+    #[test]
+    fn rtu_struct_repair_step() {
+        roundtrip(&RepairStep {
+            step_id: "x".to_string(),
+            step_name: "x".to_string(),
+            action: "x".to_string(),
+            target_field: "x".to_string(),
+            new_value: None,
+            status: "x".to_string(),
+            error_message: None,
+            executed_at: None,
+        });
+    }
+
+    #[test]
+    fn rtu_struct_repair_result() {
+        roundtrip(&RepairResult {
+            success: true,
+            fields_changed: 0,
+            before_value: serde_json::Value::Null,
+            after_value: serde_json::Value::Null,
+            verification_passed: true,
+            message: "x".to_string(),
+        });
+    }
+
+    #[test]
+    fn rtu_struct_repair_workflow() {
+        roundtrip(&RepairWorkflow {
+            id: "x".to_string(),
+            ticket_id: "x".to_string(),
+            strategy: RepairStrategy::AutoFix,
+            status: "x".to_string(),
+            steps: vec![],
+            current_step: 0,
+            auto_execute: true,
+            requires_approval: false,
+            approved_by: None,
+            approved_at: None,
+            executed_at: None,
+            result: None,
+            created_at: chrono::Utc::now(),
+        });
+    }
+
+    #[test]
+    fn rtu_struct_data_domain() {
+        roundtrip(&DataDomain {
+            id: "x".to_string(),
+            name: "x".to_string(),
+            description: "x".to_string(),
+            owner: "x".to_string(),
+            owner_email: None,
+            stewards: vec![],
+            entities: vec![],
+            sla_hours: 0,
+            created_at: chrono::Utc::now(),
+        });
+    }
+
+    #[test]
+    fn rtu_struct_data_ownership_matrix() {
+        roundtrip(&DataOwnershipMatrix {
+            entity_type: "x".to_string(),
+            data_domain: "x".to_string(),
+            data_owner: "x".to_string(),
+            data_steward: "x".to_string(),
+            approvers: vec![],
+            viewers: vec![],
+            auto_repair_enabled: false,
+            escalation_path: vec![],
+        });
+    }
+
+    #[test]
+    fn rtu_struct_quality_loop_stats() {
+        roundtrip(&QualityLoopStats {
+            total_tickets: 0,
+            open_tickets: 0,
+            in_progress: 0,
+            resolved: 0,
+            verified: 0,
+            closed: 0,
+            rejected: 0,
+            auto_repair_count: 0,
+            auto_repair_success_rate: 0.0,
+            avg_resolution_time_hours: 0.0,
+            sla_compliance_rate: 0.0,
+            tickets_by_severity: HashMap::new(),
+            tickets_by_domain: HashMap::new(),
+        });
+    }
+
+    #[test]
+    fn rtu_struct_graph_node() {
+        roundtrip(&GraphNode {
+            id: "x".to_string(),
+            label: "x".to_string(),
+            entity_type: "x".to_string(),
+            domain: "x".to_string(),
+            properties: serde_json::Value::Null,
+            degree: 0,
+            centrality: 0.0,
+            cluster: None,
+        });
+    }
+
+    #[test]
+    fn rtu_struct_graph_edge() {
+        roundtrip(&GraphEdge {
+            id: "x".to_string(),
+            source: "x".to_string(),
+            target: "x".to_string(),
+            relation_type: "x".to_string(),
+            label: "x".to_string(),
+            weight: 0.0,
+            properties: serde_json::Value::Null,
+        });
+    }
+
+    #[test]
+    fn rtu_struct_master_data_graph() {
+        roundtrip(&MasterDataGraph {
+            nodes: vec![],
+            edges: vec![],
+            node_count: 0,
+            edge_count: 0,
+            avg_degree: 0.0,
+            density: 0.0,
+            connected_components: 0,
+        });
+    }
+
+    #[test]
+    fn rtu_struct_graph_stats() {
+        roundtrip(&GraphStats {
+            node_count: 0,
+            edge_count: 0,
+            avg_degree: 0.0,
+            density: 0.0,
+            connected_components: 0,
+            nodes_by_domain: HashMap::new(),
+            edges_by_relation: HashMap::new(),
+            top_degree_nodes: vec![],
+            avg_clustering_coefficient: 0.0,
+        });
+    }
+
+    #[test]
+    fn rtu_struct_concept() {
+        roundtrip(&Concept {
+            id: "x".to_string(),
+            name: "x".to_string(),
+            concept_type: "x".to_string(),
+            description: "x".to_string(),
+            parent_id: None,
+            properties: serde_json::Value::Null,
+            synonyms: vec![],
+        });
+    }
+
+    #[test]
+    fn rtu_struct_knowledge_triple() {
+        roundtrip(&KnowledgeTriple {
+            subject: "x".to_string(),
+            predicate: "x".to_string(),
+            object: "x".to_string(),
+            confidence: 0.0,
+            source: "x".to_string(),
+            created_at: "x".to_string(),
+        });
+    }
+
+    #[test]
+    fn rtu_struct_inference_rule() {
+        roundtrip(&InferenceRule {
+            id: "x".to_string(),
+            name: "x".to_string(),
+            description: "x".to_string(),
+            condition_pattern: "x".to_string(),
+            conclusion_pattern: "x".to_string(),
+            confidence: 0.0,
+            enabled: true,
+        });
+    }
+
+    #[test]
+    fn rtu_struct_similar_entity() {
+        roundtrip(&SimilarEntity {
+            entity_id: "x".to_string(),
+            entity_type: "x".to_string(),
+            entity_name: "x".to_string(),
+            similarity: 0.0,
+            similarity_reasons: vec![],
+            shared_attributes: vec![],
+        });
+    }
+
+    #[test]
+    fn rtu_struct_association_recommendation() {
+        roundtrip(&AssociationRecommendation {
+            source_entity_id: "x".to_string(),
+            target_entity_id: "x".to_string(),
+            target_entity_name: "x".to_string(),
+            relation_type: "x".to_string(),
+            confidence: 0.0,
+            evidence: vec![],
+            support: 0,
+        });
+    }
+
+    #[test]
+    fn rtu_struct_completion_suggestion() {
+        roundtrip(&CompletionSuggestion {
+            entity_id: "x".to_string(),
+            entity_type: "x".to_string(),
+            field_name: "x".to_string(),
+            suggested_value: "x".to_string(),
+            confidence: 0.0,
+            source: "x".to_string(),
+            reasoning: "x".to_string(),
+        });
+    }
+
+    #[test]
+    fn rtu_struct_master_data_entity() {
+        roundtrip(&MasterDataEntity {
+            id: "x".to_string(),
+            code: "x".to_string(),
+            name: "x".to_string(),
+            domain: "x".to_string(),
+            status: "x".to_string(),
+            source_service: "x".to_string(),
+            created_at: "x".to_string(),
+            updated_at: "x".to_string(),
+            properties: serde_json::Value::Null,
+        });
+    }
+
+    #[test]
+    fn rtu_struct_master_data_edge() {
+        roundtrip(&MasterDataEdge {
+            node: MasterDataEntity {
+                id: "x".to_string(),
+                code: "x".to_string(),
+                name: "x".to_string(),
+                domain: "x".to_string(),
+                status: "x".to_string(),
+                source_service: "x".to_string(),
+                created_at: "x".to_string(),
+                updated_at: "x".to_string(),
+                properties: serde_json::Value::Null,
+            },
+            cursor: "x".to_string(),
+        });
+    }
+
+    #[test]
+    fn rtu_struct_page_info() {
+        roundtrip(&PageInfo {
+            has_next_page: false,
+            has_previous_page: false,
+            start_cursor: None,
+            end_cursor: None,
+        });
+    }
+
+    #[test]
+    fn rtu_struct_master_data_connection() {
+        roundtrip(&MasterDataConnection {
+            total_count: 0,
+            page_info: PageInfo {
+                has_next_page: false,
+                has_previous_page: false,
+                start_cursor: None,
+                end_cursor: None,
+            },
+            edges: vec![],
+        });
+    }
+
+    #[test]
+    fn rtu_struct_quality_info() {
+        roundtrip(&QualityInfo {
+            score: 0.0,
+            issues_count: 0,
+            last_check_at: "x".to_string(),
+        });
+    }
+
+    #[test]
+    fn rtu_struct_lineage_info() {
+        roundtrip(&LineageInfo {
+            upstream_count: 0,
+            downstream_count: 0,
+            lineage_depth: 0,
+        });
+    }
+
+    #[test]
+    fn rtu_struct_graph_info() {
+        roundtrip(&GraphInfo {
+            degree: 0,
+            centrality: 0.0,
+            community_id: "x".to_string(),
+        });
+    }
+
+    #[test]
+    fn rtu_struct_sync_job_v2() {
+        roundtrip(&SyncJobV2 {
+            id: "x".to_string(),
+            tenant_id: "x".to_string(),
+            entity_type: "x".to_string(),
+            entity_id: "x".to_string(),
+            operation: "x".to_string(),
+            status: "x".to_string(),
+            source_system: "x".to_string(),
+            target_systems: vec![],
+            priority: SyncJobPriority::Normal,
+            tags: vec![],
+            scheduled_at: None,
+            retries_exhausted: false,
+            dead_letter_reason: None,
+            current_step: 0,
+            retry_count: 0,
+            max_retries: 0,
+            created_at: "x".to_string(),
+            updated_at: "x".to_string(),
+            completed_at: None,
+            error_message: None,
+        });
+    }
+
+    #[test]
+    fn rtu_struct_dead_letter_v2() {
+        roundtrip(&DeadLetterV2 {
+            id: "x".to_string(),
+            job_id: "x".to_string(),
+            tenant_id: "x".to_string(),
+            entity_type: "x".to_string(),
+            operation: "x".to_string(),
+            error_message: "x".to_string(),
+            retry_count: 0,
+            last_retry_at: None,
+            retryable: true,
+            category: "x".to_string(),
+            created_at: "x".to_string(),
+            payload: None,
+        });
+    }
+
+    #[test]
+    fn rtu_struct_mdm_service_info() {
+        roundtrip(&MdmServiceInfo {
+            service_id: "x".to_string(),
+            service_name: "x".to_string(),
+            endpoint: "x".to_string(),
+            domains: vec![],
+            status: "x".to_string(),
+            last_heartbeat: "x".to_string(),
+            capabilities: vec![],
+        });
+    }
+
+    #[test]
+    fn rtu_struct_gateway_request() {
+        roundtrip(&GatewayRequest {
+            path: "x".to_string(),
+            method: "x".to_string(),
+            headers: HashMap::new(),
+            body: None,
+            tenant_id: None,
+        });
+    }
+
+    #[test]
+    fn rtu_struct_quality_ai_score() {
+        roundtrip(&QualityAiScore {
+            entity_id: "x".to_string(),
+            domain: "x".to_string(),
+            overall_score: 0.0,
+            completeness_score: 0.0,
+            accuracy_score: 0.0,
+            consistency_score: 0.0,
+            timeliness_score: 0.0,
+            uniqueness_score: 0.0,
+            validity_score: 0.0,
+            risk_level: "x".to_string(),
+            risk_factors: vec![],
+            recommendations: vec![],
+            scored_at: "x".to_string(),
+        });
+    }
+
+    #[test]
+    fn rtu_struct_quality_anomaly() {
+        roundtrip(&QualityAnomaly {
+            id: "x".to_string(),
+            entity_id: "x".to_string(),
+            domain: "x".to_string(),
+            anomaly_type: "x".to_string(),
+            severity: "x".to_string(),
+            description: "x".to_string(),
+            detected_value: "x".to_string(),
+            expected_range: "x".to_string(),
+            confidence: 0.0,
+            detected_at: "x".to_string(),
+        });
+    }
+
+    #[test]
+    fn rtu_struct_quality_prediction() {
+        roundtrip(&QualityPrediction {
+            entity_id: "x".to_string(),
+            domain: "x".to_string(),
+            predicted_quality_trend: "x".to_string(),
+            predicted_issues: vec![],
+            confidence: 0.0,
+            factors: vec![],
+            prediction_date: "x".to_string(),
+        });
+    }
+
+    #[test]
+    fn rtu_struct_match_field() {
+        roundtrip(&MatchField {
+            field_name: "x".to_string(),
+            source_value: "x".to_string(),
+            target_value: "x".to_string(),
+            similarity: 0.0,
+            match_type: "x".to_string(),
+        });
+    }
+
+    #[test]
+    fn rtu_struct_match_result() {
+        roundtrip(&MatchResult {
+            source_id: "x".to_string(),
+            target_id: "x".to_string(),
+            target_name: "x".to_string(),
+            match_score: 0.0,
+            match_fields: vec![],
+            match_details: "x".to_string(),
+            confidence: 0.0,
+            recommendation: "x".to_string(),
+        });
+    }
+
+    #[test]
+    fn rtu_struct_duplicate_group() {
+        roundtrip(&DuplicateGroup {
+            group_id: "x".to_string(),
+            domain: "x".to_string(),
+            entities: vec![],
+            confidence: 0.0,
+            primary_entity_id: "x".to_string(),
+            merge_recommendation: "x".to_string(),
+        });
+    }
+
+    #[test]
+    fn rtu_struct_classification_result() {
+        roundtrip(&ClassificationResult {
+            entity_id: "x".to_string(),
+            domain: "x".to_string(),
+            suggested_category: "x".to_string(),
+            category_path: "x".to_string(),
+            confidence: 0.0,
+            alternative_categories: vec![],
+            features_used: vec![],
+            reasoning: "x".to_string(),
+        });
+    }
+
+    #[test]
+    fn rtu_struct_category() {
+        roundtrip(&Category {
+            id: "x".to_string(),
+            name: "x".to_string(),
+            parent_id: None,
+            domain: "x".to_string(),
+            description: "x".to_string(),
+            keywords: vec![],
+            rules: vec![],
+            entity_count: 0,
+        });
+    }
+
+    #[test]
+    fn rtu_struct_classification_rule() {
+        roundtrip(&ClassificationRule {
+            id: "x".to_string(),
+            name: "x".to_string(),
+            domain: "x".to_string(),
+            conditions: vec![],
+            category_id: "x".to_string(),
+            priority: 0,
+            confidence: 0.0,
+            enabled: true,
+            learned: false,
+        });
+    }
+
+    #[test]
+    fn rtu_struct_classification_model() {
+        roundtrip(&ClassificationModel {
+            categories: vec![],
+            rules: vec![],
+            accuracy: 0.0,
+            trained_at: "x".to_string(),
+            training_samples: 0,
+        });
+    }
+
+    #[test]
+    fn rtu_struct_lineage_trace_query() {
+        roundtrip(&LineageTraceQuery {
+            entity_id: "x".to_string(),
+            trace_depth: None,
+            direction: None,
+            relationship_types: None,
+        });
+    }
+
+    #[test]
+    fn rtu_struct_impact_analysis_request() {
+        roundtrip(&ImpactAnalysisRequest {
+            entity_id: "x".to_string(),
+            change_type: ChangeType::SchemaChange,
+            affected_fields: None,
+        });
+    }
+
+    #[test]
+    fn rtu_struct_lineage_graph_node() {
+        roundtrip(&LineageGraphNode {
+            id: "x".to_string(),
+            label: "x".to_string(),
+            node_type: "x".to_string(),
+            domain: "x".to_string(),
+            attributes: serde_json::Value::Null,
+            level: 0,
+        });
+    }
+
+    #[test]
+    fn rtu_struct_lineage_graph_edge() {
+        roundtrip(&LineageGraphEdge {
+            id: "x".to_string(),
+            source: "x".to_string(),
+            target: "x".to_string(),
+            relationship: LineageRelationship::References,
+            weight: 0.0,
+            attributes: serde_json::Value::Null,
+        });
+    }
+
+    #[test]
+    fn rtu_struct_dimension_score() {
+        roundtrip(&DimensionScore {
+            dimension: MaturityDimension::DataQuality,
+            dimension_label: "x".to_string(),
+            score: 0.0,
+            level: MaturityLevel::Initial,
+            level_label: "x".to_string(),
+            strengths: vec![],
+            weaknesses: vec![],
+            improvement_actions: vec![],
+        });
+    }
+
+    #[test]
+    fn rtu_struct_improvement_action() {
+        roundtrip(&ImprovementAction {
+            action_id: "x".to_string(),
+            dimension: MaturityDimension::DataQuality,
+            dimension_label: "x".to_string(),
+            priority: "x".to_string(),
+            description: "x".to_string(),
+            estimated_effort: "x".to_string(),
+            expected_impact: "x".to_string(),
+            timeline: "x".to_string(),
+        });
+    }
+
+    #[test]
+    fn rtu_struct_maturity_assessment() {
+        roundtrip(&MaturityAssessment {
+            assessment_id: "x".to_string(),
+            assessed_at: "x".to_string(),
+            dimensions: vec![],
+            overall_score: 0.0,
+            overall_level: MaturityLevel::Initial,
+            overall_level_label: "x".to_string(),
+            recommendations: vec![],
+        });
+    }
+
+    #[test]
+    fn rtu_struct_dimension_delta() {
+        roundtrip(&DimensionDelta {
+            dimension: MaturityDimension::DataQuality,
+            dimension_label: "x".to_string(),
+            score_delta: 0.0,
+            level_delta: 0,
+        });
+    }
+
+    #[test]
+    fn rtu_struct_assessment_comparison() {
+        roundtrip(&AssessmentComparison {
+            baseline: MaturityAssessment {
+                assessment_id: "x".to_string(),
+                assessed_at: "x".to_string(),
+                dimensions: vec![],
+                overall_score: 0.0,
+                overall_level: MaturityLevel::Initial,
+                overall_level_label: "x".to_string(),
+                recommendations: vec![],
+            },
+            current: MaturityAssessment {
+                assessment_id: "y".to_string(),
+                assessed_at: "y".to_string(),
+                dimensions: vec![],
+                overall_score: 0.0,
+                overall_level: MaturityLevel::Initial,
+                overall_level_label: "y".to_string(),
+                recommendations: vec![],
+            },
+            score_delta: 0.0,
+            level_delta: 0,
+            dimension_deltas: vec![],
+            summary: "x".to_string(),
+        });
+    }
+
+    #[test]
+    fn rtu_struct_improvement_plan() {
+        roundtrip(&ImprovementPlan {
+            plan_id: "x".to_string(),
+            generated_at: "x".to_string(),
+            actions: vec![],
+            total_effort: "x".to_string(),
+            estimated_timeline: "x".to_string(),
+            expected_overall_score_gain: 0.0,
+        });
+    }
+
+    #[test]
+    fn rtu_struct_catalog_entry() {
+        roundtrip(&CatalogEntry {
+            entry_id: "x".to_string(),
+            name: "x".to_string(),
+            domain: "x".to_string(),
+            description: "x".to_string(),
+            owner: "x".to_string(),
+            steward: "x".to_string(),
+            tags: vec![],
+            classification: CatalogClassification::Public,
+            classification_label: "x".to_string(),
+            source_system: "x".to_string(),
+            created_at: "x".to_string(),
+            updated_at: "x".to_string(),
+            popularity: 0,
+            quality_score: 0.0,
+        });
+    }
+
+    #[test]
+    fn rtu_struct_catalog_facets() {
+        roundtrip(&CatalogFacets {
+            by_domain: HashMap::new(),
+            by_classification: HashMap::new(),
+            by_owner: HashMap::new(),
+            by_tag: HashMap::new(),
+        });
+    }
+
+    #[test]
+    fn rtu_struct_catalog_search_result() {
+        roundtrip(&CatalogSearchResult {
+            entries: vec![],
+            total: 0,
+            page: 0,
+            page_size: 0,
+            total_pages: 0,
+            facets: CatalogFacets {
+                by_domain: HashMap::new(),
+                by_classification: HashMap::new(),
+                by_owner: HashMap::new(),
+                by_tag: HashMap::new(),
+            },
+        });
+    }
+
+    #[test]
+    fn rtu_struct_catalog_stats() {
+        roundtrip(&CatalogStats {
+            total_entries: 0,
+            by_domain: HashMap::new(),
+            by_classification: HashMap::new(),
+            avg_quality_score: 0.0,
+            total_views: 0,
+            top_popular: vec![],
+        });
+    }
+
+    #[test]
+    fn rtu_struct_metadata_field() {
+        roundtrip(&MetadataField {
+            field_name: "x".to_string(),
+            field_type: MetadataFieldType::String,
+            field_type_label: "x".to_string(),
+            required: false,
+            unique: false,
+            default_value: None,
+            description: "x".to_string(),
+            validation_rules: vec![],
+        });
+    }
+
+    #[test]
+    fn rtu_struct_metadata_schema() {
+        roundtrip(&MetadataSchema {
+            schema_id: "x".to_string(),
+            name: "x".to_string(),
+            version: 0,
+            domain: "x".to_string(),
+            fields: vec![],
+            constraints: vec![],
+            created_at: "x".to_string(),
+            updated_at: "x".to_string(),
+        });
+    }
+
+    #[test]
+    fn rtu_struct_metadata_record() {
+        roundtrip(&MetadataRecord {
+            record_id: "x".to_string(),
+            schema_id: "x".to_string(),
+            entity_type: "x".to_string(),
+            entity_id: "x".to_string(),
+            values: serde_json::Value::Null,
+            created_at: "x".to_string(),
+            updated_at: "x".to_string(),
+            version: 0,
+        });
+    }
+
+    #[test]
+    fn rtu_struct_metadata_relation() {
+        roundtrip(&MetadataRelation {
+            relation_id: "x".to_string(),
+            source_entity: "x".to_string(),
+            target_entity: "x".to_string(),
+            relation_type: "x".to_string(),
+            cardinality: "x".to_string(),
+        });
+    }
+
+    #[test]
+    fn rtu_struct_metadata_stats() {
+        roundtrip(&MetadataStats {
+            total_schemas: 0,
+            total_records: 0,
+            total_relations: 0,
+            by_domain: HashMap::new(),
+            by_entity_type: HashMap::new(),
+        });
+    }
+
+    #[test]
+    fn rtu_struct_dashboard_widget() {
+        roundtrip(&DashboardWidget {
+            widget_id: "x".to_string(),
+            title: "x".to_string(),
+            widget_type: WidgetType::KpiCard,
+            data_source: "x".to_string(),
+            config: serde_json::Value::Null,
+            position: (0, 0),
+            refresh_interval: 0,
+            last_updated: "x".to_string(),
+        });
+    }
+
+    #[test]
+    fn rtu_struct_dashboard_filter() {
+        roundtrip(&DashboardFilter {
+            field: "x".to_string(),
+            operator: "x".to_string(),
+            value: serde_json::Value::Null,
+            label: "x".to_string(),
+        });
+    }
+
+    #[test]
+    fn rtu_struct_kpi_metric() {
+        roundtrip(&KpiMetric {
+            name: "x".to_string(),
+            value: 0.0,
+            unit: "x".to_string(),
+            target: None,
+            trend: None,
+            trend_percentage: None,
+            status: KpiStatus::Good,
+        });
+    }
+
+    #[test]
+    fn rtu_struct_dashboard_layout() {
+        roundtrip(&DashboardLayout {
+            dashboard_id: "x".to_string(),
+            name: "x".to_string(),
+            description: "x".to_string(),
+            widgets: vec![],
+            filters: vec![],
+            refresh_config: serde_json::Value::Null,
+            created_at: "x".to_string(),
+            updated_at: "x".to_string(),
+        });
+    }
+
+    #[test]
+    fn rtu_struct_dashboard_data() {
+        roundtrip(&DashboardData {
+            widgets_data: HashMap::new(),
+            summary: vec![],
+            generated_at: "x".to_string(),
+            period: "x".to_string(),
+        });
+    }
+
+    #[test]
+    fn rtu_struct_dashboard_stats() {
+        roundtrip(&DashboardStats {
+            total_dashboards: 0,
+            total_widgets: 0,
+            widgets_by_type: HashMap::new(),
+            avg_refresh_interval: 0.0,
+            last_refreshed: None,
+        });
+    }
+
+    #[test]
+    fn rtu_struct_report_schedule() {
+        roundtrip(&ReportSchedule {
+            frequency: ReportFrequency::Daily,
+            day_of_week: None,
+            day_of_month: None,
+            time: "x".to_string(),
+            timezone: "x".to_string(),
+            next_run_at: "x".to_string(),
+        });
+    }
+
+    #[test]
+    fn rtu_struct_report_section() {
+        roundtrip(&ReportSection {
+            section_id: "x".to_string(),
+            title: "x".to_string(),
+            data_source: "x".to_string(),
+            chart_type: None,
+            config: serde_json::Value::Null,
+        });
+    }
+
+    #[test]
+    fn rtu_struct_report_template() {
+        roundtrip(&ReportTemplate {
+            template_id: "x".to_string(),
+            name: "x".to_string(),
+            description: "x".to_string(),
+            report_type: ReportType::QualityReport,
+            schedule: None,
+            sections: vec![],
+            recipients: vec![],
+            format: ReportFormat::PDF,
+            created_at: "x".to_string(),
+        });
+    }
+
+    #[test]
+    fn rtu_struct_generated_report() {
+        roundtrip(&GeneratedReport {
+            report_id: "x".to_string(),
+            template_id: "x".to_string(),
+            generated_at: "x".to_string(),
+            period: "x".to_string(),
+            status: ReportStatus::Pending,
+            sections_data: HashMap::new(),
+            summary: "x".to_string(),
+            file_url: None,
+        });
+    }
+
+    #[test]
+    fn rtu_struct_report_automation_stats() {
+        roundtrip(&ReportAutomationStats {
+            total_templates: 0,
+            total_generated: 0,
+            templates_by_type: HashMap::new(),
+            generated_by_status: HashMap::new(),
+            scheduled_count: 0,
+            last_generated: None,
+        });
+    }
+
+    #[test]
+    fn rtu_struct_compliance_rule() {
+        roundtrip(&ComplianceRule {
+            rule_id: "x".to_string(),
+            framework: AuditFramework::GDPR,
+            name: "x".to_string(),
+            description: "x".to_string(),
+            severity: FindingSeverity::Low,
+            check_logic: "x".to_string(),
+            last_checked: None,
+            status: ComplianceStatus::Compliant,
+        });
+    }
+
+    #[test]
+    fn rtu_struct_audit_finding() {
+        roundtrip(&AuditFinding {
+            finding_id: "x".to_string(),
+            rule_id: "x".to_string(),
+            entity_type: "x".to_string(),
+            entity_id: "x".to_string(),
+            severity: FindingSeverity::Low,
+            description: "x".to_string(),
+            evidence: serde_json::Value::Null,
+            recommendation: "x".to_string(),
+            status: FindingStatus::Open,
+            found_at: "x".to_string(),
+        });
+    }
+
+    #[test]
+    fn rtu_struct_compliance_audit_report() {
+        roundtrip(&ComplianceAuditReport {
+            report_id: "x".to_string(),
+            framework: AuditFramework::GDPR,
+            audit_period: "x".to_string(),
+            total_rules: 0,
+            compliant_count: 0,
+            findings: vec![],
+            overall_status: ComplianceStatus::Compliant,
+            score: 0.0,
+            generated_at: "x".to_string(),
+        });
+    }
+
+    #[test]
+    fn rtu_struct_audit_scorecard() {
+        roundtrip(&AuditScorecard {
+            framework: AuditFramework::GDPR,
+            score: 0.0,
+            grade: "x".to_string(),
+            by_category: HashMap::new(),
+            trend: vec![],
+        });
+    }
+
+    #[test]
+    fn rtu_struct_compliance_audit_stats() {
+        roundtrip(&ComplianceAuditStats {
+            total_rules: 0,
+            total_findings: 0,
+            rules_by_framework: HashMap::new(),
+            findings_by_severity: HashMap::new(),
+            findings_by_status: HashMap::new(),
+            compliance_rate: 0.0,
+        });
+    }
+}
